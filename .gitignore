@@ -1,0 +1,14 @@
+# 原始商業遊戲檔案 — 版權屬 Enix / 精訊,不入公開版控
+# RE 工作需自行提供原版 dq3.zip 解壓到 assets_raw/
+dq3.zip
+work/
+assets_raw/
+assets_out/
+
+# 暫存
+*.pyc
+__pycache__/
+.venv/
+
+# 第三方完整攻略文件 (青衫先生),版權非本專案所有,本機參考用不公開
+references/*.html
