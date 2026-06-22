@@ -4,13 +4,13 @@
 
 ## 目標
 
-1. **還原 Pascal 原始碼** — 主程式 `DQ3.EXE` 為 Borland Pascal 7.0 DPMI 保護模式執行檔（檔頭 `MZP`），原始語言即 Pascal。目標是把它反組譯回可重新編譯的 Pascal 原始碼。
+1. **反組譯主程式** — 還原 `DQ3.EXE` 的程式邏輯。經偵察，它是 **16-bit real-mode、large model 的分段 DOS 程式**（非保護模式、非 Borland Pascal；先前依檔頭 `MZP` 的判斷已更正，詳見 [`docs/05-exe-recon.md`](docs/05-exe-recon.md)），鏈結了手寫組語的低階硬體驅動。還原目標語言（C／可讀虛擬碼／其他）待定。
 2. **拆解遊戲素材** — 字型、地圖、圖檔、文字腳本、音樂音效等，還原成可檢視 / 可再利用的格式。
 3. **挖掘技術** — 記錄這套未發售中文版採用的中文字型、文字編碼、地圖與封包等技術細節。
 
 ## 驗證方式
 
-反組譯產出的 Pascal 須能重新編譯，並在 **DOSBox**（容器內執行，不污染 host）跑出與原版一致的行為，以原版執行畫面為黃金對照基準。
+還原產出須能重建並在 **DOSBox**（容器內執行，不污染 host）跑出與原版一致的行為，以原版執行畫面為黃金對照基準。
 
 ## 版權與素材
 
@@ -39,9 +39,9 @@
 |---|---|---|
 | 資產 inventory 與格式偵察（194 檔） | ✅ | [`docs/01-asset-inventory.md`](docs/01-asset-inventory.md) |
 | 字型解碼 | ✅ | [`docs/02-font-format.md`](docs/02-font-format.md) |
-| 文字腳本解碼 | ✅ | [`docs/03-text-format.md`](docs/03-text-format.md) |
-| 地圖（BLK / CTY）還原 | ⬜ | — |
-| `DQ3.EXE` → Pascal 反組譯 | ⬜ | — |
+| 文字腳本解碼 + 純文字（UTF-8）dump | ✅ | [`docs/03-text-format.md`](docs/03-text-format.md)、[`docs/script/`](docs/script/) |
+| 地圖 tile + 世界地圖還原（城鎮佈局待 EXE） | ✅ | [`docs/04-map-format.md`](docs/04-map-format.md)、[`docs/maps/`](docs/maps/) |
+| `DQ3.EXE` 反組譯 | 🔄 recon 完成 | [`docs/05-exe-recon.md`](docs/05-exe-recon.md) |
 
 ### 已解出的重點
 
