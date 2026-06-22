@@ -1,6 +1,24 @@
 # 精訊版《勇者鬥惡龍 III：傳說的終章》反組譯
 
-中文標題「傳說的終章」對應日版 DQ3《そして伝説へ…》。本 repo 記錄精訊資訊（King Information）在 1990 年代製作、**最終未發售**的中文版 DQ3 的反組譯與素材還原工作。
+中文標題「傳說的終章」對應日版 DQ3《そして伝説へ…》（精訊版改名為 *Dragon Fighter 3* 以避商標）。本 repo 記錄精訊資訊（King Information）在 1990 年代製作、**最終未發售**的中文版 DQ3 的反組譯與素材還原工作。
+
+## 成果展示
+
+從原版資料檔反組譯、解碼、還原出的成果（皆由 `tools/` 內的工具從原始素材重新產生）：
+
+**開場畫面**（`FIRST.SCR` → 640×350 4bpp row-interleaved planar 解碼）：
+
+![開場原畫](docs/title/first_opening.png)
+
+**世界地圖**（`DQ3CON.MAP` 244×205 + `DQ3.BLK` tile 圖庫 + `DQ3.PAL`）：
+
+![世界地圖](docs/maps/world_con.png)
+
+**遊戲內中文字庫**（`D3TXT00.FON` 完整 1,476 字：拉丁／注音／職業／武器／防具／道具／咒文）：
+
+![字庫](docs/fonts/D3TXT00.FON.atlas.png)
+
+> 城鎮地圖（`CTY*.DAT`）見 [`docs/maps/cty00_town.png`](docs/maps/cty00_town.png)；劇情純文字劇本見 [`docs/script/`](docs/script/)；標題 logo（`DRAGON FIGHTER` / 傳說的終章）解碼中。
 
 ## 目標
 

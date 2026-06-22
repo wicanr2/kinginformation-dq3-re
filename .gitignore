@@ -12,3 +12,8 @@ __pycache__/
 
 # 第三方完整攻略文件 (青衫先生),版權非本專案所有,本機參考用不公開
 references/*.html
+
+# 第三方攻略截圖 (青衫先生), 版權非本專案, 不公開
+references/*.png
+references/*.jpg
+references/*.gif
