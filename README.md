@@ -32,6 +32,24 @@
 
 > 城鎮地圖（`CTY*.DAT`）見 [`docs/maps/cty00_town.png`](docs/maps/cty00_town.png)；劇情純文字劇本見 [`docs/script/`](docs/script/)；更多標題 / 過場圖（片尾、年代過場）見 [`docs/title/`](docs/title/)。
 
+## RE 正確性驗證 + 修正版
+
+**反組譯正確性已證實(兩個層級):**
+- **素材**:標題 / 開場 / 主選單 / 城鎮 tile / palette 在 [DOSBox 跑原版逐張比對](docs/14-dosbox-validation.md)一致。
+- **程式碼**:整檔反組譯 → nasm 重組,`sha256` 與原版**逐 byte 100% 相同**([docs/17](docs/17-build-toolchain.md))。
+- 原版編譯器經逐函式指紋鎖定為 **Microsoft C 5.x**([docs/19](docs/19-re-correctness.md));byte-match PoC 已通。
+
+**精訊 DQ3 修正版(binary patch 對照組,7 個 bug 處理 5 個)** —— 證明 RE 能精準修原版([docs/18](docs/18-bug-analysis.md)、[docs/20](docs/20-fixed-version.md)):
+
+| Bug(青衫先生記錄) | 修法 |
+|---|---|
+| 巴拉摩斯打不死 / 彩虹水滴卡關 / 勇者 MP 固定+1 / 隼劍只打一次 | ✅ EXE binary patch(共 25 byte,同長度不位移)|
+| 九頭龍/歐里狄加戰當機 | ✅ **重繪未完成的 sprite 補圖**(父子決鬥雙方)|
+| 祈禱之戒 | ✅ 反組譯確認本就生效,不需修 |
+| 高等級升級錯亂 / 數值 255 溢位 / 魔甲無抗魔 | ⬜ 留「C 重編」修(real-mode 無 cave 空間)|
+
+> 兩階段策略:**(a) binary patch 對照組(已完成)→ (b) 從 re 出的 C source 重編** —— bug 修進 C(無 real-mode 限制)、用 MSC 5.1 重編出 `RE-DQ3.EXE`,並以此乾淨 C 為基礎做 SDL2 現代移植。
+
 ## 目標
 
 1. **反組譯主程式 → 用 SDL2 重寫成現代版** — 還原 `DQ3.EXE` 的程式邏輯。經偵察與逐函式指紋，它是 **16-bit real-mode、near-code model 的 DOS C 程式，由 Microsoft C 5.x 編譯**（非保護模式、非 Pascal、非 large model；先前依檔頭 `MZP` 與遠呼叫的判斷已逐步更正，詳見 [`docs/05`](docs/05-exe-recon.md)、[`docs/07`](docs/07-dpmi-note.md)、[`docs/19`](docs/19-re-correctness.md)），鏈結手寫組語的硬體驅動。最終目標:把它**用現代 C + SDL2 跨平台重寫**,以 DOSBox 原版為 oracle 驗證一致。
