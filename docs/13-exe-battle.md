@@ -147,6 +147,44 @@ row pitch 0x54、`and es:[di]` 透明遮罩),與 BLK/SHP/packbg 同 4-bit planar
 `battle_leave_screen`(sub_c03f)重載地圖 BLK(`load_blk`)回到地表 / 城鎮
 (註:離場未還原 DQ3.PAL → 原版 bug #8 戰後變黃綠,見 docs/28)。
 
+## 視窗 / 文字座標系(從 RE 推導,非肉眼對圖)
+
+戰鬥各框由畫框 routine **`sub_f590`(file 0x10900)** 依一個 win_rect 結構繪製;
+文字由 **文字繪製器 `lcall 111b:214`/`:264`**(file 0x12734)畫。座標系:
+
+- **`[0x716]` = 文字游標 X(VRAM byte,×8 = 像素)**;每字 X 進 **2 byte = 16px**。
+- **`[0x718]` = 文字游標 Y(像素)**;換行碼 `0xfffe` 重設 X、Y += `0x10`(**行高 16px**)。
+- 字模 16×16(docs/02)。文字記錄取自 `seg_txt`([0x252e],D3TXT)。
+
+### win_rect 結構(`sub_f590` 解讀;si = rect 基底)
+
+| 欄位 | 意義 |
+|---|---|
+| `+0` | 框樣式 id(交 sub_10ea6 畫邊框)|
+| `+2` | 文字 X 原點(byte ×8 = px)→ [0x716] |
+| `+4` | 文字 Y 原點(px)→ [0x718] |
+| `+6` | 框高 |
+| `+8` | 框寬(byte)|
+| `+0xa` | 標題列文字記錄 id |
+| `+0xc` | 內容行數(迴圈次數)|
+| `+0xe` | 內容列文字記錄 id(逐行/逐欄)|
+| `+0x10` | footer 文字記錄 id |
+| `+0x14` | `0xfe` = **多欄模式**(每欄重設 Y、X 進 +0x16)|
+| `+0x16` | 多欄 X 進(byte;狀態框 = 0xa = **80px/欄**)|
+
+### 隊伍狀態框(`battle_draw_status` + win_rect [0x3e9c],RE 值)
+
+- 文字原點 **X = 0x13 byte = 152px、Y = 8px**;**4 欄**(隊伍人數),**欄距 0xa byte = 80px**;
+  框高 = `人數×0xa + 4`;標題/內容/footer 記錄 = `0x191/0x192/0x193`。
+- 即 game3.png 上方「勇者|武鬥家|僧侶|魔法師」4 欄,每欄含名 / H+HP / M+MP / 職業+等級。
+
+### 戰鬥訊息 / 敵名(`lcall 111b:264`,win_rect [0x3e6e])
+
+- 以基準游標 `[0x3e70]`/`[0x3e72]`(`battle_enter_screen` 設 0x12/0xf8)起算:
+  X = `[0x3e70]+2`、Y = `[0x3e72]+0x10 + 行*0x10`;敵名記錄 = `sprite_id + 0x258`。
+
+> remake `dq3_battlescene` 依此座標系排版(字/行 16px、狀態 4 欄 80px),不再肉眼對圖。
+
 ## 回合 / 指令選單:戰 / 逃 / 防 / 道具
 
 `battle_command_loop`(sub_c08b):本回合逐角色下指令。

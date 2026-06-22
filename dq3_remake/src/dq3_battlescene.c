@@ -90,20 +90,22 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
                 fb[yy*DQ3_SCREEN_W+xx]=spr->px[r][c];
         }
     }
-    /* ── 上方隊伍狀態列(4 員:名 / H+HP / M+MP / 職業+等級)── */
+    /* ── 上方隊伍狀態列(RE 座標系,docs/13):文字原點 X=0x13 byte=152px、Y=8px;
+     *    4 欄,欄距 0xa byte=80px;字/行 16px。每欄:名 / H+HP / M+MP / 職業+等級。 */
     {
-        int sx=116, sy=8, sw=408, sh=68, colw=sw/PARTY;
+        int tx0=0x13*8, ty0=8, colpx=0xa*8;       /* =152px 起、80px/欄 */
+        int sx=tx0-8, sy=ty0-6, sw=PARTY*colpx+8, sh=4*16+12;
         fillrect(fb,sx,sy,sw,sh,(uint8_t)black_idx);
         rect_border(fb,sx,sy,sw,sh,(uint8_t)white_idx);
         for(i=0;i<PARTY;i++){
-            int cx=sx+6+i*colw, fg = party[i].hp>0?white_idx:red_idx;
-            draw_glyphs(fb,cx,sy+2, party[i].name, party[i].name_len, (uint8_t)white_idx);
-            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,sy+18,22,(uint8_t)fg);      /* H */
-            draw_number(fb,cx+18,sy+18, party[i].hp, (uint8_t)fg);
-            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,sy+34,27,(uint8_t)white_idx); /* M */
-            draw_number(fb,cx+18,sy+34, party[i].mp, (uint8_t)white_idx);
-            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,sy+50,party[i].cls,(uint8_t)white_idx);
-            draw_number(fb,cx+18,sy+50, party[i].level, (uint8_t)white_idx);
+            int cx=tx0+i*colpx, fg = party[i].hp>0?white_idx:red_idx;
+            draw_glyphs(fb,cx,ty0,    party[i].name, party[i].name_len, (uint8_t)white_idx);
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,ty0+16,22,(uint8_t)fg);      /* H,行高16 */
+            draw_number(fb,cx+18,ty0+16, party[i].hp, (uint8_t)fg);
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,ty0+32,27,(uint8_t)white_idx); /* M */
+            draw_number(fb,cx+18,ty0+32, party[i].mp, (uint8_t)white_idx);
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,ty0+48,party[i].cls,(uint8_t)white_idx);
+            draw_number(fb,cx+18,ty0+48, party[i].level, (uint8_t)white_idx);
         }
     }
     /* ── 下方左:指令選單(角色名 + 2 欄 戰鬥/逃跑/防禦/道具 + ► 游標)── */
