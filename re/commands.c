@@ -34,8 +34,11 @@ extern void confirm_stage3(void);   /* sub_5b2d */
 
 /* 場景 / 物件 / 隊伍存取(本 slice 只呼叫) */
 extern void *obj_lookup(u16 idx);   /* sub_aba4  以索引取物件結構指標 → SI */
-extern void map_obj_walk(void);     /* sub_fa39  走訪地圖物件(Enter worker 用) */
-extern void event_run(u16 a, u16 b);/* sub_ba71 / sub_bae8  執行事件 / 對話 */
+extern u16  rng(u16 n);             /* sub_fa39  ★更正(原誤標 map_obj_walk):亂數 = rol[0xb5a]×3 + div n */
+extern void event_hit(u16 a, u16 b);/* sub_ba71  ★更正(原誤標泛用 event_run):傷害類事件 handler
+                                       (扣實體 HP [si+0x16]、訊息 di=0x14d/0x165);事件系統為多 handler,
+                                       依事件碼分派,對話派發另在他 handler。NPC/事件/腳本系統 RE 仍弱、待重做。 */
+extern void event_alt(u16 a, u16 b);/* sub_bae8  無事件 / 另一分支 */
 extern void event_none(void);       /* sub_ba41  「沒有任何事」訊息 */
 
 /* ============================================================
@@ -207,9 +210,9 @@ void examine_chain(void)  /* sub_7c50 */
  *       u8  ev = *(u8 *)(ft*3 + OBJ_TABLE);                    // [ft*3 + 0x37c4]
  *       if (ev != 0xff) {                                      // 有事件 / 對象
  *           bp = ev; if (bp==0) bp=1;
- *           map_obj_walk();                                    // sub_fa39 取對象資料
+ *           rng(...);                                          // sub_fa39 ★更正:亂數(非取對象)
  *           g_word(0x2593) = dx;                               // 對話 / 數值參數
- *           event_run(...);                                    // sub_ba71 跑事件 / 起對話
+ *           event_hit(...);                                    // sub_ba71 ★更正:傷害類事件 handler(非泛用)
  *           g_event_hit++;                                     // [0x2702]++
  *       } else {
  *           event_run_else();                                  // sub_bae8
