@@ -65,3 +65,25 @@ oracle 截到地表/城鎮主角為**小 sprite(~16px、透明底)**,金盔/髮 
   `DQ3MST.BLS`(115KB)/ `DQ3LIN.BLS`(46KB)/ BLK tile 某段 / 分頁小 sprite 段。
 - 下一步:反組譯地表場景的「玩家 sprite blit」呼叫(找讀取的段/檔與 sprite 編號),
   定位小走路 sprite 真正來源 + 子調色盤;以 oracle 畫面(`tools/oracle_crop_hero.py` 裁出)為基準校正。
+
+## 格式定案(反組譯角色 blit sub_1ed0 + masked 解碼,已驗)
+
+反組譯角色 sprite blit `sub_0x1ed0`(file 0x3240,wrapper `sub_0x1ea7`)解出**確切格式**:
+
+```
+out 0x3c4, 0x0802         ; VGA Sequencer Map Mask = plane(0x08→0x01 逐 plane)
+cx = 0x18 (24 rows)       ; 高 = 24
+es=[0x2532](VRAM 0xa000) ds=[0x2534](seg_blspage)
+每 row 讀 2 word(4 byte=32px):dest = (dest AND mask[bx]) OR data[si]
+bx = si + 0x180           ; ★ 遮罩在資料 +0x180(384)
+```
+
+→ **每角色 frame = 32×24,4-bit plane-major(plane3→0,384B 資料)+ AND 遮罩(+0x180,
+透明 blit)**。先前「背景填色」就是**沒套遮罩**。masked 解碼 + **stride 960**
+(= 222720 body / 232 entry)+ 遮罩 bit=1 透明 + **DQ3.PAL 低 16 色**,render 出
+**完全乾淨的角色 sprite**(透明底):國王(紅披風冠)、老人、勇者(深髮藍衣 / 金髮藍衣,
+各 **4 frame = 4 方向**)、白頭巾、士兵、騎士等。`tools/bls_probe5.py`(`bls_s960_dq3.png`)。
+
+**結論**:DQ3MAN.BLS **就是**地表/城鎮角色(含主角)的 sprite 來源;32×24 masked、每角色
+4 方向 frame、stride 960、DQ3.PAL。先前誤判「帶底大角色圖」是漏了 AND 遮罩 + stride 對不齊。
+→ 可直接在 remake 解碼並以透明 blit 取代佔位框(見 `dq3_sprite` 模組)。
