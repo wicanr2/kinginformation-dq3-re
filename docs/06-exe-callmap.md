@@ -45,6 +45,52 @@
 `e6c9`(41×)、`683a`(38×)、`6edf`(38×)、`f590`(34×)、`c642`(34×)… 這些是主迴圈
 /繪製/輸入處理的核心函式,待逐一命名。
 
+## 素材載入
+
+### 檔名字串池:DS:0x003d(主資料段 DS=0x14dd)
+
+啟動碼 `mov ax,0x14dd; mov ds,ax` 設定主資料段(file base 0x16140)。23 個素材檔名以
+null 結尾連續排放於 DS:0x003d 起:
+
+```
+DS:003d setup.dat   0047 player.dat  0052 dragon0.dat 005e cty00.dat
+0068 d3txt00.fon    0074 d3txt00.txt 0080 item.dat    0089 dq3con.map
+0094 dq3und.map     009f dq31.blk    00a8 dq3.blk     00b0 blkbm1.dat
+00bb blkbm.dat      00c5 dq3mst.bls  00d0 dq3man.bls  00db dq3lin.bls
+00e6 dq3.pal        00ee mnsbk.pal   00f8 d3mns.dat   0102 dq3mns.shp
+010d packbg.scr     0118 mbg.mcx     0120 ebg.mcx
+```
+
+帶序號的檔名(`cty00`/`dq31`/`blkbm1`)是**模板**,載入時就地改寫數字位元組產生 `cty01`、
+`dq32`、`blkbm2`…(見下)。
+
+### BLK tile 載入函式(file 0xfe64 = seg0:eaf4)
+
+完整的開檔→讀表頭→讀資料→關檔序列,並由旗標選地表/城鎮 block 檔:
+
+```asm
+cmp word [0x4f2d], 0        ; 0 = 地表(dq3.blk), 否則城鎮(dq3?.blk)
+je  use_overworld
+lea dx, [0x9f]             ; DX = "dq31.blk" 模板
+mov bx, [0x256c]           ; 地圖索引
+mov al, [bx+0xa04]         ; 查號碼
+dec al; add al, 0x31       ; → ASCII 數字
+mov [0xa2], al             ; 改寫檔名第 4 字 '?'(0x9f+3)→ dq31/dq32/...
+jmp open
+use_overworld:
+lea dx, [0xa8]             ; DX = "dq3.blk"
+open:
+mov ah, 0x3d; mov al, 0; int 21h   ; DOS 開檔 (DS:DX=檔名), BX=handle
+mov bx, ax
+lea dx, [0x2859]; mov cx, 6; mov ah, 0x3f; int 21h   ; 讀 6-byte 表頭到 DS:0x2859
+mov ds, [0x2532]; xor dx,dx; mov cx, 0xffff; mov ah, 0x3f; int 21h  ; 讀 tile 資料到遠段
+mov ah, 0x3e; int 21h      ; 關檔
+```
+
+**程式碼↔資料雙向印證**:讀表頭固定 `CX=6` → 確認 BLK 表頭為 **6 bytes**(`<u16 4><u16 24><u16 count>`,
+即地圖 agent 在 docs/04 解出的格式)。其餘素材沿用同一「DOS AH=3Dh 開檔 → AH=3Fh 讀 → AH=3Eh 關」樣式,
+檔名模板就地改號的技巧通用(`cty00`+index、`dq3?`+index、`blkbm`+index)。
+
 ## 下一步(RE → C)
 
 1. 反組譯並命名各 runtime 段函式 → 建 runtime API 標頭(keyboard/VGA/mouse/file/sound)。
