@@ -1,0 +1,68 @@
+{
+  "source_exe": "assets_raw/DQ3.EXE",
+  "exe_size": 115282,
+  "hdr": 4976,
+  "note": "青衫攻略「修改:DQ3.EXE」8 段官方 EXE patch,經反組譯交叉驗證。只收『修 bug』類同長度 in-place patch(對映已知 bug);金手指/相容性類(敵人消失/穿牆/致命一擊/生命不減/聲霸/相容)不收進修正版,完整 8 段見 docs/21-official-patches.md。file_offset = EXE 內絕對位移。",
+  "patches": [
+    {
+      "official_id": 2,
+      "title": "魔王打不死修正法",
+      "bug": 1,
+      "file_offset": 48644,
+      "file_offset_hex": "0xbe04",
+      "orig": "36",
+      "new": "34",
+      "kind": "in-place",
+      "source": "青衫官方",
+      "desc": "巴拉摩斯勝負判定:clamp 參照欄 [bx+0x2336]->[bx+0x2334],兩處 36->34"
+    },
+    {
+      "official_id": 2,
+      "title": "魔王打不死修正法",
+      "bug": 1,
+      "file_offset": 48650,
+      "file_offset_hex": "0xbe0a",
+      "orig": "36",
+      "new": "34",
+      "kind": "in-place",
+      "source": "青衫官方",
+      "desc": "巴拉摩斯勝負判定:clamp 參照欄 [bx+0x2336]->[bx+0x2334],兩處 36->34"
+    },
+    {
+      "official_id": 4,
+      "title": "五頭龍大王當機修正",
+      "bug": 3,
+      "file_offset": 110636,
+      "file_offset_hex": "0x1b02c",
+      "orig": "80",
+      "new": "7e",
+      "kind": "in-place",
+      "source": "青衫官方",
+      "desc": "boss 遭遇表換怪:0x80->0x7e / 0x81->0x7d(第一場)、0x81->0x7c(第二場)"
+    },
+    {
+      "official_id": 4,
+      "title": "五頭龍大王當機修正",
+      "bug": 3,
+      "file_offset": 110638,
+      "file_offset_hex": "0x1b02e",
+      "orig": "81",
+      "new": "7d",
+      "kind": "in-place",
+      "source": "青衫官方",
+      "desc": "boss 遭遇表換怪:0x80->0x7e / 0x81->0x7d(第一場)、0x81->0x7c(第二場)"
+    },
+    {
+      "official_id": 4,
+      "title": "五頭龍大王當機修正",
+      "bug": 3,
+      "file_offset": 110648,
+      "file_offset_hex": "0x1b038",
+      "orig": "81",
+      "new": "7c",
+      "kind": "in-place",
+      "source": "青衫官方",
+      "desc": "boss 遭遇表換怪:0x80->0x7e / 0x81->0x7d(第一場)、0x81->0x7c(第二場)"
+    }
+  ]
+}
