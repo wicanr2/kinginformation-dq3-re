@@ -63,24 +63,26 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
 {
     /* 版面對齊 references/game3.png:上方狀態列、中間綠地怪群、下方左指令/右敵名。
      * 天空(雲)0..GBAND_TOP、綠地帶 GBAND_TOP..GBAND_BOT、黑底 GBAND_BOT..底。 */
-    const int GBAND_TOP = 196, GBAND_BOT = 248;
+    /* 比例對齊 references/game3.png(640×350):狀態框 y8、packbg 場景 y80..246
+     * (含內建天空+綠地)、綠地平線 ~y230、黑底 y246+(指令/敵名框)。 */
+    const int FIELD_Y0 = 80, FIELD_Y1 = 246, GROUND_Y = 232;
     int i;
-    for(i=0;i<DQ3_SCREEN_H;i++){
-        uint8_t c = (i<GBAND_TOP)?(uint8_t)sky_idx : (i<GBAND_BOT)?(uint8_t)ground_idx : (uint8_t)black_idx;
-        memset(fb+(size_t)i*DQ3_SCREEN_W, c, DQ3_SCREEN_W);
-    }
-    /* packbg 天空(page 0 草原):88 row 垂直拉伸填滿 0..GBAND_TOP */
+    memset(fb, (uint8_t)black_idx, (size_t)DQ3_SCREEN_W*DQ3_SCREEN_H);
+    /* packbg 場景(含天空+綠地):88 row 映射到 y80..246 */
     if(g_sky_ok){
         int y,x;
-        for(y=0;y<GBAND_TOP;y++){
-            int sr = y*DQ3_PACKBG_H/GBAND_TOP; if(sr>=DQ3_PACKBG_H)sr=DQ3_PACKBG_H-1;
+        for(y=FIELD_Y0;y<FIELD_Y1;y++){
+            int sr = (y-FIELD_Y0)*DQ3_PACKBG_H/(FIELD_Y1-FIELD_Y0); if(sr>=DQ3_PACKBG_H)sr=DQ3_PACKBG_H-1;
             for(x=0;x<DQ3_SCREEN_W && x<DQ3_PACKBG_W;x++)
                 fb[y*DQ3_SCREEN_W+x]=g_sky[sr][x];
         }
+    } else {
+        for(i=FIELD_Y0;i<FIELD_Y1;i++)
+            memset(fb+(size_t)i*DQ3_SCREEN_W,(uint8_t)(i<GROUND_Y?sky_idx:ground_idx),DQ3_SCREEN_W);
     }
-    /* 怪群:站在綠地帶上(死的不畫)*/
+    /* 怪群:站在綠地平線上(死的不畫)*/
     for(i=0;i<en;i++){
-        int gx=(DQ3_SCREEN_W*(i+1))/(en+1)-spr->w/2, gy=GBAND_BOT-spr->h-2, r,c;
+        int gx=(DQ3_SCREEN_W*(i+1))/(en+1)-spr->w/2, gy=GROUND_Y+8-spr->h, r,c;
         if(ehp[i]<=0) continue;
         for(r=0;r<spr->h;r++)for(c=0;c<spr->w;c++){
             int yy=gy+r,xx=gx+c;
@@ -90,7 +92,7 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
     }
     /* ── 上方隊伍狀態列(4 員:名 / H+HP / M+MP / 職業+等級)── */
     {
-        int sx=116, sy=4, sw=408, sh=72, colw=sw/PARTY;
+        int sx=116, sy=8, sw=408, sh=68, colw=sw/PARTY;
         fillrect(fb,sx,sy,sw,sh,(uint8_t)black_idx);
         rect_border(fb,sx,sy,sw,sh,(uint8_t)white_idx);
         for(i=0;i<PARTY;i++){
@@ -106,7 +108,7 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
     }
     /* ── 下方左:指令選單(角色名 + 2 欄 戰鬥/逃跑/防禦/道具 + ► 游標)── */
     if(show_menu){
-        int mx=120,my=GBAND_BOT+8,mw=150,mh=92;
+        int mx=120,my=252,mw=150,mh=92;
         const uint16_t *col1[4]={CMD_WAR,CMD_FLEE,CMD_DEF,CMD_ITEM};
         int lead=0; while(lead<PARTY && party[lead].hp<=0) lead++;
         fillrect(fb,mx,my,mw,mh,(uint8_t)black_idx);
@@ -121,7 +123,7 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
     }
     /* ── 下方右:敵名 + 數量 ── */
     if(g_txt_ok){
-        int ex=290,ey=GBAND_BOT+14,ew=250,eh=36, alive=0;
+        int ex=290,ey=262,ew=250,eh=36, alive=0;
         for(i=0;i<en;i++) if(ehp[i]>0) alive++;
         fillrect(fb,ex,ey,ew,eh,(uint8_t)black_idx);
         rect_border(fb,ex,ey,ew,eh,(uint8_t)white_idx);
@@ -185,7 +187,7 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
 }
 
 int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
-                        const char *script, const char *dump, unsigned seed)
+                        int bg_page, const char *script, const char *dump, unsigned seed)
 {
     dq3_color pal[256]; int pn;
     uint8_t *raw; size_t rlen;
@@ -221,7 +223,8 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     /* 戰鬥背景:packbg page(隨地形;預設草原 terrain0 → page 0)。
      * DQ3_BG_PAGE 可指定其他地形頁(terrain*8,terrain3→0x19)。 */
     {
-        int bgpage = getenv("DQ3_BG_PAGE") ? atoi(getenv("DQ3_BG_PAGE")) : 0;
+        int bgpage = bg_page;
+        if (bgpage < 0) bgpage = getenv("DQ3_BG_PAGE") ? atoi(getenv("DQ3_BG_PAGE")) : 0;
         g_sky_ok = (dq3_packbg_decode(assets, bgpage, g_sky, err, sizeof err) == 0);
     }
 

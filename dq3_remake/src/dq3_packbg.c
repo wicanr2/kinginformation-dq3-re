@@ -18,7 +18,9 @@ int dq3_packbg_decode(const char *dir, int page,
     snprintf(path, sizeof path, "%s/PACKBG.SCR", dir);
     f = fopen(path, "rb");
     if (!f) FAIL("open PACKBG.SCR");
-    pos = (long)page * 0x3d80 + page;
+    /* PACKBG.SCR = 每 0x6e00(=88row×640 4-plane)一張背景的密集陣列;
+     * page 在此作背景索引(實證每張皆乾淨;page 0 = 草原)。 */
+    pos = (long)page * 0x6e00;
     if (fseek(f, pos, SEEK_SET) != 0) FAIL("seek");
     if (fread(buf, 1, need, f) != need) FAIL("read");
     fclose(f); f = NULL;

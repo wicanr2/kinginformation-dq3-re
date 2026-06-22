@@ -114,7 +114,7 @@ static int run_battle(const char *assets, const char *dump)
     int count = getenv("DQ3_MON_N") ? atoi(getenv("DQ3_MON_N")) : 3;
     const char *script = getenv("DQ3_BATTLE_SCRIPT");                  /* headless 指令序列 */
     unsigned seed = getenv("DQ3_SEED") ? (unsigned)strtoul(getenv("DQ3_SEED"),0,0) : 0x1234567u;
-    int oc = dq3_battlescene_run(assets, mon, count, script, dump, seed);
+    int oc = dq3_battlescene_run(assets, mon, count, -1, script, dump, seed);
     return oc < 0 ? 6 : 0;
 }
 
@@ -129,6 +129,29 @@ static void load_field_hero(dq3_scene *s, const char *assets)
     dq3_scene_load_hero(s, assets, 16, NULL);   /* 金髮勇者 */
 }
 
+/* 地形 → 戰鬥背景頁(packbg index)。terrain 取自 DQ3.EXE [0x4df6] 表(tile→terrain)。
+ * 對映到 packbg 陣列中視覺相符的背景(草原/丘陵/洞窟…)。 */
+static uint8_t g_terrain_tbl[256]; static int g_terrain_ok;
+static void load_terrain_tbl(const char *assets)
+{
+    char path[2048]; FILE *f; size_t off = 0x16140 + 0x4df6;  /* DGROUP DS:0x4df6 */
+    snprintf(path, sizeof path, "%s/DQ3.EXE", assets);
+    f = fopen(path, "rb");
+    if (f && fseek(f, (long)off, SEEK_SET) == 0 &&
+        fread(g_terrain_tbl, 1, 256, f) == 256) g_terrain_ok = 1;
+    if (f) fclose(f);
+}
+static int field_bg_page(const dq3_scene *s)
+{
+    /* terrain → packbg 索引(草原0 / 丘陵40 / 山20 / 洞窟30,其餘草原) */
+    static const int T2BG[8] = { 0, 40, 20, 30, 40, 20, 0, 0 };
+    int tile, terr;
+    if (!g_terrain_ok) return 0;
+    tile = s->index_map[s->py * s->map_w + s->px];
+    terr = g_terrain_tbl[tile & 0xff];
+    return T2BG[terr & 7];
+}
+
 static int run_game(const char *assets, const char *dump)
 {
     char err[256] = {0};
@@ -138,6 +161,7 @@ static int run_game(const char *assets, const char *dump)
 
     field = dq3_field_load(assets, err, sizeof err);
     if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
+    load_terrain_tbl(assets);
     load_field_hero(field, assets);
     cur = field; dq3_scene_apply_palette(cur);
     enc = 6 + (int)(grnd() % 8);
@@ -150,8 +174,8 @@ static int run_game(const char *assets, const char *dump)
             if (dq3_scene_input(cur, 0x4d)) {   /* 往右走 */
                 if (--enc <= 0) {
                     mon = over_pool[grnd() % 4];
-                    fprintf(stderr, "--- 第 %d 步:遭遇怪 id%d! ---\n", steps+1, mon);
-                    oc = dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), "FFFFFFFF", NULL, grnd());
+                    fprintf(stderr, "--- 第 %d 步:遭遇怪 id%d(背景頁 %d)! ---\n", steps+1, mon, field_bg_page(cur));
+                    oc = dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), "FFFFFFFF", NULL, grnd());
                     fprintf(stderr, "    戰鬥結束 outcome=%d,回地表(重套 palette)\n", oc);
                     dq3_scene_apply_palette(cur);   /* bug #8:回地表還原色盤 */
                     enc = 6 + (int)(grnd() % 8);
@@ -188,7 +212,7 @@ static int run_game(const char *assets, const char *dump)
             int moved = dq3_scene_input(cur, sc);
             if (moved && !in_town && --enc <= 0) {
                 int mon = over_pool[grnd() % 4];
-                dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), NULL, NULL, grnd());
+                dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), NULL, NULL, grnd());
                 dq3_scene_apply_palette(cur);   /* bug #8:戰後還原地表色盤 */
                 enc = 6 + (int)(grnd() % 8);
             }

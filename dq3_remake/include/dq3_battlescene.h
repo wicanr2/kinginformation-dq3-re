@@ -9,11 +9,12 @@
 
 /* 跑一場戰鬥。
  *   monster_id/count:敵群(count 隻同種)。
+ *   bg_page:戰鬥背景索引(隨地形;<0 = 讀 DQ3_BG_PAGE 環境變數,預設 0 草原)。
  *   script:headless 腳本(每字一回合指令:F=戰 R=逃 D=防 I=道具),NULL=互動。
  *   dump:非 NULL 時 headless,繪末幀寫 PPM。
  *   seed:RNG 種子(headless 確定性)。
  * 回傳結算(0 續/1 勝/2 敗;逃成功回 3)。 */
 int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
-                        const char *script, const char *dump, unsigned seed);
+                        int bg_page, const char *script, const char *dump, unsigned seed);
 
 #endif /* DQ3_BATTLESCENE_H */
