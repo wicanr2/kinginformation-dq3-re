@@ -18,5 +18,4 @@ references/*.png
 references/*.jpg
 references/*.gif
 
-# 個別怪物 sprite 散圖不入版控;怪物圖鑑總表 monster_sheet.png 保留展示
-docs/monsters/spr_*.png
+# 怪物 sprite 圖(圖鑑總表 + 個別散圖)保留展示
