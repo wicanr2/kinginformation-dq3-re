@@ -17,3 +17,6 @@ references/*.html
 references/*.png
 references/*.jpg
 references/*.gif
+
+# render 出的怪物 sprite 圖(含版權畫面內容,同 assets_out 規則,不入公開版控)
+docs/monsters/*.png
