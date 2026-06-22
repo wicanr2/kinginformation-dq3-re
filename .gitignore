@@ -18,5 +18,5 @@ references/*.png
 references/*.jpg
 references/*.gif
 
-# render 出的怪物 sprite 圖(含版權畫面內容,同 assets_out 規則,不入公開版控)
-docs/monsters/*.png
+# 個別怪物 sprite 散圖不入版控;怪物圖鑑總表 monster_sheet.png 保留展示
+docs/monsters/spr_*.png

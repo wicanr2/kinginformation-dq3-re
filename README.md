@@ -22,6 +22,10 @@
 
 ![字庫](docs/fonts/D3TXT00.FON.atlas.png)
 
+**怪物圖鑑**（`DQ3MNS.SHP` sprite + `mnsbk.pal`，128 隻全彩；id 5 = 史萊姆、id 2 = 金屬史萊姆，數值見 [`docs/data/d3mns_stats.json`](docs/data/d3mns_stats.json)）：
+
+![怪物圖鑑](docs/monsters/monster_sheet.png)
+
 > 城鎮地圖（`CTY*.DAT`）見 [`docs/maps/cty00_town.png`](docs/maps/cty00_town.png)；劇情純文字劇本見 [`docs/script/`](docs/script/)；更多標題 / 過場圖（片尾、年代過場）見 [`docs/title/`](docs/title/)。
 
 ## 目標
