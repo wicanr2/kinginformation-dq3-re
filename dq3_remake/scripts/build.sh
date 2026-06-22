@@ -64,6 +64,13 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
     cp /tmp/town1.ppm /repo/dq3_remake/town1.png
   echo "=== town headless dump OK ==="
 
+  # (1d) battle 戰鬥場景:史萊姆群(對 references/game3.png)
+  echo "--- battle: 史萊姆 ×6 ---"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/battle.ppm DQ3_MON=5 DQ3_MON_N=6 \
+    /build/dq3_remake /repo/assets_raw battle
+  pnmtopng /tmp/battle.ppm > /repo/dq3_remake/battle.png 2>/dev/null || cp /tmp/battle.ppm /repo/dq3_remake/battle.png
+  echo "=== battle headless dump OK ==="
+
   # (2) Xvfb:完整視窗路徑 + 截圖(timeout 包住,有界,不掛起)
   export DISPLAY=:99
   Xvfb :99 -screen 0 1280x720x24 >/tmp/xvfb.log 2>&1 &

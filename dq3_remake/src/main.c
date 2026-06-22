@@ -5,6 +5,7 @@
  *   field:地表場景(dq3_field → scene),方向鍵走動 + 碰撞 + 攝影機跟隨。
  *   town:城鎮場景(dq3_town → scene);CTY/section/BLK 編號可由環境變數指定:
  *         DQ3_CTY=CTY00.DAT DQ3_SECT=0 DQ3_BLKN=1。
+ *   battle:戰鬥場景(怪群 sprite + 天空/地面背景);DQ3_MON=怪 id、DQ3_MON_N=隻數。
  *
  * 用法:dq3_remake <assets_dir> [title|field|town] [titlefile]
  * headless 驗證(配 SDL_VIDEODRIVER=dummy):
@@ -16,6 +17,7 @@
 #include "dq3_field.h"
 #include "dq3_town.h"
 #include "dq3_scene.h"
+#include "dq3_monster.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -103,6 +105,73 @@ static int run_scene(dq3_scene *s, const char *dump)
     return 0;
 }
 
+/* ---- battle 模式:怪群 sprite 繪在天空/地面背景(對 references/game3.png)---- */
+static int pal_nearest(const dq3_color *pal, int n, int r, int g, int b)
+{
+    int i, best = 0; long bd = -1;
+    for (i = 0; i < n; i++) {
+        long dr = pal[i].r - r, dg = pal[i].g - g, db = pal[i].b - b;
+        long d = dr*dr + dg*dg + db*db;
+        if (bd < 0 || d < bd) { bd = d; best = i; }
+    }
+    return best;
+}
+
+static int run_battle(const char *assets, const char *dump)
+{
+    char err[256] = {0};
+    dq3_color pal[256]; int pn;
+    uint8_t *raw; size_t rlen;
+    dq3_monster_sprite spr;
+    int mon = getenv("DQ3_MON") ? atoi(getenv("DQ3_MON")) : 5;   /* 預設史萊姆 */
+    int count = getenv("DQ3_MON_N") ? atoi(getenv("DQ3_MON_N")) : 6;
+    int sky, ground, groundy = (int)(DQ3_SCREEN_H * 0.62);
+    uint8_t *fb = dq3_fb();
+    int i;
+
+    /* MNSBK.PAL → palette */
+    raw = dq3_load_file("MNSBK.PAL", &rlen);
+    if (!raw) { fprintf(stderr, "load MNSBK.PAL failed\n"); return 5; }
+    pn = dq3_pal_decode(raw, rlen, pal, 256); free(raw);
+    dq3_set_palette(pal, pn);
+
+    if (dq3_monster_sprite_decode(assets, mon, &spr, err, sizeof err) != 0) {
+        fprintf(stderr, "monster %d sprite: %s\n", mon, err); return 6;
+    }
+
+    sky    = pal_nearest(pal, pn, 60, 140, 240);    /* 天空藍 */
+    ground = pal_nearest(pal, pn, 40, 150, 40);     /* 地面綠 */
+
+    /* 背景:上天空、下地面 */
+    for (i = 0; i < DQ3_SCREEN_H; i++) {
+        uint8_t c = (i < groundy) ? (uint8_t)sky : (uint8_t)ground;
+        memset(fb + (size_t)i * DQ3_SCREEN_W, c, DQ3_SCREEN_W);
+    }
+
+    /* 怪群:橫向排開,站在地面線上方 */
+    if (count < 1) count = 1; if (count > 8) count = 8;
+    for (i = 0; i < count; i++) {
+        int gx = (DQ3_SCREEN_W * (i + 1)) / (count + 1) - spr.w / 2;
+        int gy = groundy - spr.h - 8;
+        int r, c;
+        for (r = 0; r < spr.h; r++)
+            for (c = 0; c < spr.w; c++) {
+                int yy = gy + r, xx = gx + c;
+                if (!spr.opaque[r][c]) continue;
+                if (yy >= 0 && yy < DQ3_SCREEN_H && xx >= 0 && xx < DQ3_SCREEN_W)
+                    fb[yy * DQ3_SCREEN_W + xx] = spr.px[r][c];
+            }
+    }
+
+    if (dump) {
+        dq3_present();
+        if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "battle mon=%d x%d -> %s OK\n", mon, count, dump);
+        return 0;
+    }
+    while (!dq3_should_quit()) { dq3_poll_scancode(); dq3_present(); dq3_delay_ms(16); }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     const char *assets = (argc > 1) ? argv[1] : ".";
@@ -139,6 +208,8 @@ int main(int argc, char **argv)
             rc = run_scene(s, dump);
             dq3_scene_free(s);
         }
+    } else if (strcmp(mode, "battle") == 0) {
+        rc = run_battle(assets, dump);
     } else {
         const char *title = (argc > 3) ? argv[3]
                           : (strcmp(mode, "title") == 0 ? "TITG.P" : mode);
