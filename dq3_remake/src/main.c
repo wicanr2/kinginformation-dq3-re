@@ -143,8 +143,8 @@ static void load_terrain_tbl(const char *assets)
 }
 static int field_bg_page(const dq3_scene *s)
 {
-    /* terrain → packbg 索引(草原0 / 丘陵40 / 山20 / 洞窟30,其餘草原) */
-    static const int T2BG[8] = { 0, 40, 20, 30, 40, 20, 0, 0 };
+    /* terrain → packbg 索引(草原22=藍天綠地對 game3.png / 丘陵40 / 山20 / 洞窟30) */
+    static const int T2BG[8] = { 22, 40, 20, 30, 40, 20, 22, 22 };
     int tile, terr;
     if (!g_terrain_ok) return 0;
     tile = s->index_map[s->py * s->map_w + s->px];

@@ -19,7 +19,7 @@ int dq3_packbg_decode(const char *dir, int page,
     f = fopen(path, "rb");
     if (!f) FAIL("open PACKBG.SCR");
     /* PACKBG.SCR = 每 0x6e00(=88row×640 4-plane)一張背景的密集陣列;
-     * page 在此作背景索引(實證每張皆乾淨;page 0 = 草原)。 */
+     * page 在此作背景索引(實證每張皆乾淨;page 22 = 草原(對 game3.png);page 0 為純天空變體)。 */
     pos = (long)page * 0x6e00;
     if (fseek(f, pos, SEEK_SET) != 0) FAIL("seek");
     if (fread(buf, 1, need, f) != need) FAIL("read");

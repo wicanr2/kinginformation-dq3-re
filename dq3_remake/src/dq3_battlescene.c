@@ -224,7 +224,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
      * DQ3_BG_PAGE 可指定其他地形頁(terrain*8,terrain3→0x19)。 */
     {
         int bgpage = bg_page;
-        if (bgpage < 0) bgpage = getenv("DQ3_BG_PAGE") ? atoi(getenv("DQ3_BG_PAGE")) : 0;
+        if (bgpage < 0) bgpage = getenv("DQ3_BG_PAGE") ? atoi(getenv("DQ3_BG_PAGE")) : 22;  /* 22=草原(對 game3.png) */
         g_sky_ok = (dq3_packbg_decode(assets, bgpage, g_sky, err, sizeof err) == 0);
     }
 
