@@ -2,7 +2,7 @@
  *
  * 這是 rule 60 要求的「快速、決定性 pass/fail 訊號」:證明 C 重寫層確實修好了
  * binary patch 修不了的 #5/#6,以及 #4 的成長提升。
- * 用法:dq3_stats_test <assets_dir>(需含使用者的 DQ3.EXE)。回傳 0=全通過。
+ * 用法:dq3_stats_test [dir]。資料用內建 dq3_exedata,不需 DQ3.EXE。回傳 0=全通過。
  */
 #include "dq3_stats.h"
 #include <stdio.h>

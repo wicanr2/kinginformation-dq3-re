@@ -20,6 +20,7 @@
 #include "dq3_scene.h"
 #include "dq3_battlescene.h"
 #include "dq3_text.h"
+#include "dq3_exedata.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,26 +130,14 @@ static void load_field_hero(dq3_scene *s, const char *assets)
     dq3_scene_load_hero(s, assets, 16, NULL);   /* 金髮勇者 */
 }
 
-/* 地形 → 戰鬥背景頁(packbg index)。terrain 取自 DQ3.EXE [0x4df6] 表(tile→terrain)。
- * 對映到 packbg 陣列中視覺相符的背景(草原/丘陵/洞窟…)。 */
-static uint8_t g_terrain_tbl[256]; static int g_terrain_ok;
-static void load_terrain_tbl(const char *assets)
-{
-    char path[2048]; FILE *f; size_t off = 0x16140 + 0x4df6;  /* DGROUP DS:0x4df6 */
-    snprintf(path, sizeof path, "%s/DQ3.EXE", assets);
-    f = fopen(path, "rb");
-    if (f && fseek(f, (long)off, SEEK_SET) == 0 &&
-        fread(g_terrain_tbl, 1, 256, f) == 256) g_terrain_ok = 1;
-    if (f) fclose(f);
-}
+/* 地形 → 戰鬥背景頁(packbg index)。terrain 取自內建 dq3x_terrain(DGROUP 抽出),
+ * 對映到 packbg 陣列中視覺相符的背景(草原/丘陵/洞窟…)。remake 不依賴 DQ3.EXE。 */
 static int field_bg_page(const dq3_scene *s)
 {
     /* terrain → packbg 索引(草原22=藍天綠地對 game3.png / 丘陵40 / 山20 / 洞窟30) */
     static const int T2BG[8] = { 22, 40, 20, 30, 40, 20, 22, 22 };
-    int tile, terr;
-    if (!g_terrain_ok) return 0;
-    tile = s->index_map[s->py * s->map_w + s->px];
-    terr = g_terrain_tbl[tile & 0xff];
+    int tile = s->index_map[s->py * s->map_w + s->px];
+    int terr = dq3x_terrain[tile & 0xff];
     return T2BG[terr & 7];
 }
 
@@ -161,7 +150,6 @@ static int run_game(const char *assets, const char *dump)
 
     field = dq3_field_load(assets, err, sizeof err);
     if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
-    load_terrain_tbl(assets);
     load_field_hero(field, assets);
     cur = field; dq3_scene_apply_palette(cur);
     enc = 6 + (int)(grnd() % 8);

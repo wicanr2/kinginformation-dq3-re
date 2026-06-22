@@ -1,53 +1,22 @@
-/* dq3_stats.c — 角色數值/升級系統實作(成長表 + 門檻表 + #4/#5/#6 修正)。 */
+/* dq3_stats.c — 角色數值/升級系統實作(成長表 + 門檻表 + #4/#5/#6 修正)。
+ * 資料改用 dq3_exedata(自 DQ3.EXE DGROUP 抽出編入,生成檔),不再執行期讀 DQ3.EXE。 */
 #include "dq3_stats.h"
+#include "dq3_exedata.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-
-/* DQ3.EXE DGROUP 定位(docs/05 / docs/23) */
-#define EXE_HDR      0x1370
-#define EXE_DGROUP   0x14dd
-#define GROWTH_DS    0x4366
-#define THR_PTR_DS   0x43d6
-#define GROWTH_FILE  (EXE_HDR + EXE_DGROUP * 16 + GROWTH_DS)   /* 0x1a4a6 */
-#define THR_PTR_FILE (EXE_HDR + EXE_DGROUP * 16 + THR_PTR_DS)  /* 0x1a516 */
-#define DS_TO_FILE(off) (EXE_HDR + EXE_DGROUP * 16 + (off))
-
-static uint16_t rd16(const uint8_t *d, size_t o) { return (uint16_t)(d[o] | (d[o+1] << 8)); }
-static uint32_t rd32(const uint8_t *d, size_t o) {
-    return (uint32_t)d[o] | ((uint32_t)d[o+1] << 8) | ((uint32_t)d[o+2] << 16) | ((uint32_t)d[o+3] << 24);
-}
 
 int dq3_stats_load(dq3_stats *st, const char *assets_dir, int apply_bug4_fix,
                    char *err, int errcap)
 {
-    char path[2048]; FILE *f; long sz; uint8_t *d = NULL; size_t n;
     int c, lv;
-    #define FAIL(m) do { if (err) snprintf(err, errcap, "%s", m); free(d); return -1; } while (0)
-
+    (void)assets_dir; (void)err; (void)errcap;   /* 不再需要 DQ3.EXE */
     memset(st, 0, sizeof *st);
-    snprintf(path, sizeof path, "%s/DQ3.EXE", assets_dir);
-    f = fopen(path, "rb");
-    if (!f) FAIL("open DQ3.EXE failed");
-    fseek(f, 0, SEEK_END); sz = ftell(f); fseek(f, 0, SEEK_SET);
-    if (sz <= 0) { fclose(f); FAIL("DQ3.EXE empty"); }
-    d = (uint8_t *)malloc((size_t)sz);
-    if (!d || fread(d, 1, (size_t)sz, f) != (size_t)sz) { fclose(f); FAIL("read DQ3.EXE"); }
-    fclose(f); n = (size_t)sz;
 
-    /* 成長表:8 職業 × 14 byte */
-    if (GROWTH_FILE + DQ3_NUM_CLASS * 14 > n) FAIL("growth table OOB");
-    for (c = 0; c < DQ3_NUM_CLASS; c++)
-        memcpy(st->growth[c], d + GROWTH_FILE + c * 14, 14);
-
-    /* 門檻表:指標表 8 × u16(DS off)→ 各 44 entry × u32 */
-    if (THR_PTR_FILE + DQ3_NUM_CLASS * 2 > n) FAIL("threshold ptr table OOB");
+    /* 成長表 + 門檻表:自內建 dq3_exedata 複製 */
     for (c = 0; c < DQ3_NUM_CLASS; c++) {
-        uint16_t ds_off = rd16(d, THR_PTR_FILE + c * 2);
-        size_t base = DS_TO_FILE(ds_off);
-        if (base + (size_t)(DQ3_MAX_LEVEL + 1) * 4 > n) FAIL("threshold table OOB");
+        memcpy(st->growth[c], dq3x_growth[c], 14);
         for (lv = 0; lv <= DQ3_MAX_LEVEL; lv++)
-            st->thresh[c][lv] = rd32(d, base + (size_t)lv * 4);
+            st->thresh[c][lv] = dq3x_thresh[c][lv];
     }
 
     /* #4 勇者(class0)MP 成長修正:base 列+2、slope 列+3 */
@@ -58,7 +27,6 @@ int dq3_stats_load(dq3_stats *st, const char *assets_dir, int apply_bug4_fix,
     }
 
     st->loaded = 1;
-    free(d);
     return 0;
     #undef FAIL
 }

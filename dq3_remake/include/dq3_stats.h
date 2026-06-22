@@ -1,6 +1,6 @@
 /* dq3_stats.h — 角色數值/升級系統(成長表 + 升級門檻),含 #4/#5/#6 修正。
  *
- * 資料來源:使用者自己的 DQ3.EXE 靜態映像(不把版權數值入 git),file offset 見
+ * 資料來源:內建 dq3_exedata(自 DQ3.EXE DGROUP 一次抽出編入,生成檔)。remake 不依賴 DQ3.EXE;
  * docs/23 / tools/re_stat_patch.py:
  *   成長表  file 0x1a4a6(DS:0x4366),8 職業 × 14 byte/列。
  *   門檻表  指標表 file 0x1a516(DS:0x43d6)→ 8 職業各 44 entry × u32 累積經驗。
@@ -37,7 +37,7 @@ typedef struct {
     int      apply_bug4_fix;                            /* 勇者 MP 成長修正開關 */
 } dq3_stats;
 
-/* 從 DQ3.EXE 讀成長表 + 門檻表。apply_bug4_fix!=0 時套用 #4 勇者 MP 修正。
+/* 載入成長表 + 門檻表(自內建 dq3_exedata)。apply_bug4_fix!=0 時套用 #4 勇者 MP 修正。
  * 失敗回 <0(err 可帶訊息)。 */
 int dq3_stats_load(dq3_stats *st, const char *assets_dir, int apply_bug4_fix,
                    char *err, int errcap);

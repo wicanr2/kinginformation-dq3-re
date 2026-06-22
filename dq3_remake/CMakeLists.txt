@@ -30,10 +30,11 @@ add_executable(dq3_remake
     src/dq3_battlescene.c
     src/dq3_text.c
     src/dq3_packbg.c
+    src/dq3_exedata.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
-add_executable(dq3_stats_test src/dq3_stats.c src/test_stats.c)
+add_executable(dq3_stats_test src/dq3_stats.c src/dq3_exedata.c src/test_stats.c)
 target_include_directories(dq3_stats_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_combat_test src/dq3_combat.c src/test_combat.c)
 target_include_directories(dq3_combat_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
