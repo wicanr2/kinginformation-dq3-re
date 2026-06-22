@@ -19,6 +19,7 @@ add_executable(dq3_remake
     src/dq3_pal.c
     src/dq3_font.c
     src/dq3_blk.c
+    src/dq3_field.c
 )
 
 target_include_directories(dq3_remake PRIVATE

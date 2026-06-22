@@ -15,11 +15,13 @@
 ## dq3_remake 剩餘 worklist
 
 ### 階段② 移植遊戲邏輯(主迴圈→可走動)
-- [ ] runtime shim 補完:鍵盤 scancode→SDL keysym(對應原版 0x48/0x50/0x4b/0x4d/Enter/Space)、計時(frame wait)、滑鼠(int33h→SDL)。
-- [ ] 資產載入 C 化補完:BLK tile(32×24 4-bit planar)+DQ3.PAL、MAP(`<w><h>`+1byte/tile)、CTY(section 偏移表→layout_ptr→`<w><h><spawn>`+w×h u16,見 docs/04/11)、D3TXT 文字(指標表+2-byte LE,值<1476=字模 index、>=0xffed=控制碼,docs/03)。
-- [ ] 主迴圈(re/mainloop.c `sub_93e3`):讀輸入→玩家座標(X@DS:0x2572/Y@0x2574/朝向0x26ad/方向0x4f1f)→11-entry 狀態機跳表(re/states.c)→繪場景/玩家/HUD/節拍。
-- [ ] 場景繪製(re/render.c `sub_255b` 地表 / `sub_19b8` 城鎮)+ 玩家移動碰撞(`sub_2dda`,查 tile 屬性 blkbm)。
-- [ ] **里程碑**:能在城鎮/世界地圖走動,對 DOSBox 原版同畫面比對一致。
+- [x] runtime shim:鍵盤 scancode→SDL keysym(0x48/0x50/0x4b/0x4d/Enter/Space/ESC)、計時、檔案 IO。(滑鼠 int33h→SDL 待戰鬥/選單時補)
+- [x] 資產載入 C 化(地表):DQ3.PAL(`dq3_pal`)、DQ3.BLK(`dq3_blk`,32×24 4-plane planar)、DQ3CON.MAP(`<w><h>`+1byte/tile)、BLKBM.DAT(u16/tile 屬性,bit0=阻擋)。
+- [x] **地表 field 引擎**(`dq3_field.c`):攝影機跟隨玩家(20×15 視窗,邊界夾住)+ tile 預解貼圖 + 方向移動 + bit0 碰撞。headless 驗證:走 16 步全成功、海/山正確擋住、捲動正確(`field0/1.png`)。
+- [ ] BLK 城鎮 + CTY 載入 C 化(section 偏移表→layout_ptr→`<w><h><spawn>`+w×h u16,見 docs/04/11);城鎮場景引擎。
+- [ ] 真主角 sprite:解 DQ3MAN.BLS 分頁 sprite 庫(4 方向行走幀),取代佔位框。
+- [ ] 主迴圈整合(re/mainloop.c `sub_93e3` 結構):場景旗標 [0x4f2d] 0=地表/1=城鎮切換、過場、11-entry 狀態機跳表(指令/對話/戰鬥)。
+- [ ] **里程碑**:能在城鎮/世界地圖走動,對 DOSBox 原版同畫面比對一致。(地表走動已通,城鎮 + 真主角 sprite + 換圖過場待補)
 
 ### 階段③ 對話/野外指令/戰鬥
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。

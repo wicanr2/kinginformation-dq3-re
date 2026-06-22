@@ -24,8 +24,22 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/titg.ppm \
     /build/dq3_remake /repo/assets_raw TITG.P
   pnmtopng /tmp/titg.ppm > /repo/dq3_remake/titg.png 2>/dev/null || \
-    cp /tmp/titg.ppm /repo/dq3_remake/titg.ppm
+    cp /tmp/titg.ppm /repo/dq3_remake/titg.png
   echo "=== headless dump OK ==="
+
+  # (1b) field 地表:繪一幀 + 腳本化走動(驗證捲動/碰撞)
+  echo "--- field: 初始幀 ---"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/field0.ppm \
+    /build/dq3_remake /repo/assets_raw field
+  pnmtopng /tmp/field0.ppm > /repo/dq3_remake/field0.png 2>/dev/null || \
+    cp /tmp/field0.ppm /repo/dq3_remake/field0.png
+  echo "--- field: 走動 16 步後 ---"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/field1.ppm \
+    DQ3_WALK="RRRRRRRRDDDDDDDD" \
+    /build/dq3_remake /repo/assets_raw field
+  pnmtopng /tmp/field1.ppm > /repo/dq3_remake/field1.png 2>/dev/null || \
+    cp /tmp/field1.ppm /repo/dq3_remake/field1.png
+  echo "=== field headless dump OK ==="
 
   # (2) Xvfb:完整視窗路徑 + 截圖(timeout 包住,有界,不掛起)
   export DISPLAY=:99
