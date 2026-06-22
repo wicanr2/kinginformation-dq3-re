@@ -22,7 +22,17 @@ add_executable(dq3_remake
     src/dq3_scene.c
     src/dq3_field.c
     src/dq3_town.c
+    src/dq3_stats.c
 )
+
+# 數值/升級系統單元測試(不依賴 SDL2,純邏輯;示範 #4/#5/#6 修正)
+add_executable(dq3_stats_test src/dq3_stats.c src/test_stats.c)
+target_include_directories(dq3_stats_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(MSVC)
+    target_compile_options(dq3_stats_test PRIVATE /W3)
+else()
+    target_compile_options(dq3_stats_test PRIVATE -Wall -Wextra)
+endif()
 
 target_include_directories(dq3_remake PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include

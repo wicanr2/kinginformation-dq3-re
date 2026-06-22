@@ -34,9 +34,10 @@
 - [ ] #1 巴拉摩斯打不死(勝負判定參照欄)
 - [ ] #2 彩虹水滴卡關(合成成品 item code 銀寶珠→彩虹水滴)
 - [ ] #3 九頭龍/歐里狄加當機(sprite 已復原,C 端確保 blit guard)
-- [ ] #4 勇者 MaxMP 成長偏低(成長表 base/slope;`rng%delta` 下限1)
-- [ ] **#5 高等級升級錯亂**(等級表 44 entry,lv44 越界讀下職業 entry[0]=0 → **C 加 clamp level≤43**)
-- [ ] **#6 數值 255 溢位**(C 用足夠寬型別 + clamp;原疑顯示/互動,實測釐清)
+- [x] **#4 勇者 MaxMP 成長偏低**:`dq3_stats` 從 DQ3.EXE 讀成長表,勇者 MP base 3→8/slope 5→10。單測:Lv43 MaxMP 110→223。
+- [x] **#5 高等級升級錯亂**:`dq3_stats_level_for_exp(fixed)` clamp level≤43。單測:原版越界連升到 99、修正版夾 43。(binary patch 因 code cave≤8B 做不到,C 層單行 if)
+- [x] **#6 數值 255 溢位**:`dq3_stats_add_clamped` 用 uint16 + 顯式 clamp(9999)。單測:200+100 原版 byte wrap=44、修正=300。
+- [x] 三者以 `dq3_stats_test` 決定性單元測試驗證(build.sh 整合,全通過);資料從使用者 DQ3.EXE 讀,不入 git。
 - [ ] **#7a 隼劍雙擊**(C 正確實作第二擊;原版機制存在但觸發條件接錯位元)
 - [ ] **#7b 魔法鎧甲抗魔**(C 端咒文扣血掃裝備找魔甲 0x2b→減半/抵抗;原版從不讀此旗標)
 - [ ] #7c 祈禱之戒:原版本就會壞(~25%),保持即可
