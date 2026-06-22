@@ -5,6 +5,7 @@
 #include "dq3_monster.h"
 #include "dq3_battle.h"
 #include "dq3_text.h"
+#include "dq3_packbg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,7 @@ typedef struct {
 
 static int sky_idx, ground_idx, white_idx, red_idx, green_idx, black_idx;
 static dq3_text g_txt; static int g_txt_ok;
+static uint8_t g_sky[DQ3_PACKBG_H][DQ3_PACKBG_W]; static int g_sky_ok;  /* packbg 天空 */
 
 /* 指令標籤(glyph index 對照 docs/03 + glyph_unicode_map):戰鬥/逃跑/防禦/道具 */
 static const uint16_t CMD_WAR[2]={107,207}, CMD_FLEE[2]={629,630}, CMD_DEF[2]={203,204}, CMD_ITEM[2]={402,1354};
@@ -66,6 +68,15 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
     for(i=0;i<DQ3_SCREEN_H;i++){
         uint8_t c = (i<GBAND_TOP)?(uint8_t)sky_idx : (i<GBAND_BOT)?(uint8_t)ground_idx : (uint8_t)black_idx;
         memset(fb+(size_t)i*DQ3_SCREEN_W, c, DQ3_SCREEN_W);
+    }
+    /* packbg 天空(page 0 草原):88 row 垂直拉伸填滿 0..GBAND_TOP */
+    if(g_sky_ok){
+        int y,x;
+        for(y=0;y<GBAND_TOP;y++){
+            int sr = y*DQ3_PACKBG_H/GBAND_TOP; if(sr>=DQ3_PACKBG_H)sr=DQ3_PACKBG_H-1;
+            for(x=0;x<DQ3_SCREEN_W && x<DQ3_PACKBG_W;x++)
+                fb[y*DQ3_SCREEN_W+x]=g_sky[sr][x];
+        }
     }
     /* 怪群:站在綠地帶上(死的不畫)*/
     for(i=0;i<en;i++){
@@ -206,6 +217,13 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
 
     /* 文字(敵名/指令/HP):D3TXT00.FON + D3TXT00.TXT */
     g_txt_ok = (dq3_text_load(&g_txt, assets, "D3TXT00.TXT", err, sizeof err) == 0);
+
+    /* 戰鬥背景:packbg page(隨地形;預設草原 terrain0 → page 0)。
+     * DQ3_BG_PAGE 可指定其他地形頁(terrain*8,terrain3→0x19)。 */
+    {
+        int bgpage = getenv("DQ3_BG_PAGE") ? atoi(getenv("DQ3_BG_PAGE")) : 0;
+        g_sky_ok = (dq3_packbg_decode(assets, bgpage, g_sky, err, sizeof err) == 0);
+    }
 
     if(dq3_monster_sprite_decode(assets,monster_id,&spr,err,sizeof err)!=0){
         fprintf(stderr,"monster %d sprite: %s\n",monster_id,err); return -1; }
