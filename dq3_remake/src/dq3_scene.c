@@ -69,20 +69,46 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
         }
     }
 
-    /* 玩家標記(暫:方框+十字;真主角 sprite 待解 DQ3MAN.BLS)。 */
+    /* 玩家:有真主角 sprite 則透明 blit,否則退回佔位方框。 */
     {
         int psx = (s->px - cam_x) * DQ3_TILE_W;
         int psy = (s->py - cam_y) * DQ3_TILE_H;
         int r2, c2;
-        for (r2 = 4; r2 < DQ3_TILE_H - 4; r2++)
-            for (c2 = 8; c2 < DQ3_TILE_W - 8; c2++) {
-                int yy = psy + r2, xx = psx + c2;
-                int edge  = (r2 == 4 || r2 == DQ3_TILE_H-5 || c2 == 8 || c2 == DQ3_TILE_W-9);
-                int cross = (c2 == DQ3_TILE_W/2 || r2 == DQ3_TILE_H/2);
-                if ((edge || cross) && yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
-                    fb[yy * fb_w + xx] = 15;
-            }
+        if (s->has_hero) {
+            int fr = s->frame_for_facing[s->facing & 3];
+            if (fr < 0 || fr >= DQ3_CHAR_FRAMES) fr = 0;
+            for (r2 = 0; r2 < DQ3_CHAR_H; r2++)
+                for (c2 = 0; c2 < DQ3_CHAR_W; c2++) {
+                    int yy = psy + r2, xx = psx + c2;
+                    if (!s->hero.opaque[fr][r2][c2]) continue;   /* 透明像素跳過 */
+                    if (yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
+                        fb[yy * fb_w + xx] = s->hero.px[fr][r2][c2];
+                }
+        } else {
+            for (r2 = 4; r2 < DQ3_TILE_H - 4; r2++)
+                for (c2 = 8; c2 < DQ3_TILE_W - 8; c2++) {
+                    int yy = psy + r2, xx = psx + c2;
+                    int edge  = (r2 == 4 || r2 == DQ3_TILE_H-5 || c2 == 8 || c2 == DQ3_TILE_W-9);
+                    int cross = (c2 == DQ3_TILE_W/2 || r2 == DQ3_TILE_H/2);
+                    if ((edge || cross) && yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
+                        fb[yy * fb_w + xx] = 15;
+                }
+        }
     }
+}
+
+int dq3_scene_load_hero(dq3_scene *s, const char *assets_dir, int entry_base,
+                        const int facing_order[4])
+{
+    int i;
+    char err[128];
+    for (i = 0; i < 4; i++) s->frame_for_facing[i] = facing_order ? facing_order[i] : i;
+    if (dq3_charsprite_load(&s->hero, assets_dir, entry_base, err, sizeof err) != 0) {
+        s->has_hero = 0;
+        return -1;
+    }
+    s->has_hero = 1;
+    return 0;
 }
 
 void dq3_scene_apply_palette(const dq3_scene *s)

@@ -113,21 +113,32 @@ int main(int argc, char **argv)
     if (dq3_rt_init("DQ3 (精訊) — 重製 Remake") != 0) return 1;
     dq3_set_assets_dir(assets);
 
-    if (strcmp(mode, "field") == 0) {
+    if (strcmp(mode, "field") == 0 || strcmp(mode, "town") == 0) {
         char err[256] = {0};
-        dq3_scene *s = dq3_field_load(assets, err, sizeof err);
-        if (!s) { fprintf(stderr, "field load failed: %s\n", err); rc = 3; }
-        else { rc = run_scene(s, dump); dq3_scene_free(s); }
-    } else if (strcmp(mode, "town") == 0) {
-        char err[256] = {0};
-        const char *cty = getenv("DQ3_CTY");
-        const char *sect = getenv("DQ3_SECT");
-        const char *blkn = getenv("DQ3_BLKN");
-        dq3_scene *s = dq3_town_load(assets, cty ? cty : "CTY00.DAT",
-                                     sect ? atoi(sect) : 0,
-                                     blkn ? atoi(blkn) : 1, err, sizeof err);
-        if (!s) { fprintf(stderr, "town load failed: %s\n", err); rc = 4; }
-        else { rc = run_scene(s, dump); dq3_scene_free(s); }
+        dq3_scene *s;
+        if (strcmp(mode, "field") == 0) {
+            s = dq3_field_load(assets, err, sizeof err);
+        } else {
+            const char *cty = getenv("DQ3_CTY");
+            const char *sect = getenv("DQ3_SECT");
+            const char *blkn = getenv("DQ3_BLKN");
+            s = dq3_town_load(assets, cty ? cty : "CTY00.DAT",
+                              sect ? atoi(sect) : 0,
+                              blkn ? atoi(blkn) : 1, err, sizeof err);
+        }
+        if (!s) { fprintf(stderr, "%s load failed: %s\n", mode, err); rc = 3; }
+        else {
+            /* 主角 sprite:entry 與 facing→frame 對映可由 env 調(對 oracle 鎖定) */
+            const char *he = getenv("DQ3_HERO_ENTRY");
+            const char *fo = getenv("DQ3_FACING_ORDER");  /* 如 "0,2,1,3" */
+            int entry = he ? atoi(he) : 16;   /* 預設金髮勇者(entry16,對 oracle 室內主角) */
+            int order[4] = {0,1,2,3}; const int *op = NULL;
+            if (fo && sscanf(fo, "%d,%d,%d,%d", &order[0],&order[1],&order[2],&order[3]) == 4) op = order;
+            if (dq3_scene_load_hero(s, assets, entry, op) != 0)
+                fprintf(stderr, "hero sprite load failed (entry %d) — 用佔位框\n", entry);
+            rc = run_scene(s, dump);
+            dq3_scene_free(s);
+        }
     } else {
         const char *title = (argc > 3) ? argv[3]
                           : (strcmp(mode, "title") == 0 ? "TITG.P" : mode);

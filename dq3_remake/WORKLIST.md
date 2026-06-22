@@ -13,7 +13,7 @@
 - **remake 地基(階段①)✅**:`dq3_remake/` SDL2 骨架編譯成功,headless 解 `TITG.P` 顯示標題正確(`scripts/build.sh`)。
 - **remake 階段② 進行中**:
   - `dq3_scene` 場景核心(攝影機/tile 貼圖/bit0 碰撞/走動)+ `dq3_field`(地表)/`dq3_town`(城鎮 CTY)薄載入器。headless 驗證走動+碰撞+捲動正確。
-  - `DQ3MAN.BLS` 角色 sprite 空間格式破解(384B/32×24/plane3-first,docs/27);色彩/真主角待 DOSBox oracle 校(暫用佔位框)。
+  - **真主角 sprite ✅**:DQ3MAN.BLS 完整破解(masked 32×24、stride960、4 方向,docs/27);`dq3_sprite` 解碼 + scene 透明 blit,entry16 金髮勇者顯示於地表/城鎮、朝向正確。DOSBox oracle 自動進遊戲打通(docs/29)。
 - **remake 階段④ C 層 bug 修正 ✅(可單測者)**:`dq3_stats`(#4/#5/#6)+ `dq3_combat`(#7a/#7b),各附決定性單元測試(`dq3_stats_test`/`dq3_combat_test`,build.sh 整合全通過)。#1/#2/#3 屬戰鬥/事件邏輯,根因+修正值已記錄,移植該系統時依正確值寫入即修復。
 
 ## dq3_remake 剩餘 worklist
@@ -24,7 +24,8 @@
 - [x] **地表 field 引擎**(`dq3_field.c`):攝影機跟隨玩家(20×15 視窗,邊界夾住)+ tile 預解貼圖 + 方向移動 + bit0 碰撞。headless 驗證:走 16 步全成功、海/山正確擋住、捲動正確(`field0/1.png`)。
 - [x] **scene 核心重構**:抽出 `dq3_scene`(攝影機/貼圖/bit0 碰撞/走動),地表/城鎮共用;`dq3_field`/`dq3_town` 降為薄載入器(deep module + adapters at edges)。
 - [x] **城鎮 CTY 引擎**(`dq3_town.c`):解 section 偏移表→layout_ptr→`<w><h><spawn>`+w×h u16(低 byte=index),載 DQ3N.BLK+BLKBMN.DAT。headless 驗證 CTY00 sect0(16×12):磚牆/紅地毯/床/寶箱正確,走動有牆碰撞(`town0/1.png`)。
-- [ ] 真主角 sprite:解 DQ3MAN.BLS 分頁 sprite 庫(4 方向行走幀),取代佔位框。**(未 RE 格式:header 04/24 似 BLK 但 body 為含偏移/命令子記錄,類怪物 SHP;留專門 RE 回合)**
+- [x] **真主角 sprite ✅**:破解 DQ3MAN.BLS 格式(反組譯 blit sub_1ed0:stride 960、32×24、4-plane plane-major + AND 遮罩@+0x180、DQ3.PAL,每角色 4 方向 frame,docs/27)。`dq3_sprite` C 解碼器 + scene 透明 blit;主角=entry16(金髮勇者,對 oracle 室內主角)、facing→frame 預設 {0下,1左,2上,3右}(frame0/2 已驗正面/背面)。實測:地表/城鎮顯示真主角、走動朝向正確、透明乾淨,取代佔位框。
+  - DOSBox oracle 自動進遊戲打通(`tools/dosbox_to_overworld.sh`,docs/29):注音輸入完成序列 RE 出 → 截到起始房間 + 城鎮主角,作為 sprite/palette 校正與 phase⑤ 比對基準。
 - [ ] 主迴圈整合(re/mainloop.c `sub_93e3` 結構):場景旗標 [0x4f2d] 0=地表/1=城鎮切換、過場、11-entry 狀態機跳表(指令/對話/戰鬥)。
 - [ ] **里程碑**:能在城鎮/世界地圖走動,對 DOSBox 原版同畫面比對一致。(地表走動已通,城鎮 + 真主角 sprite + 換圖過場待補)
 

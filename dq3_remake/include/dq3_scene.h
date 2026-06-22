@@ -15,6 +15,7 @@
 
 #include <stdint.h>
 #include "dq3_runtime.h"   /* dq3_color */
+#include "dq3_sprite.h"    /* dq3_charsprite */
 
 #define DQ3_TILE_W 32
 #define DQ3_TILE_H 24
@@ -31,6 +32,11 @@ typedef struct {
 
     int px, py;                   /* 玩家 tile 座標 */
     int facing;                   /* 0下 1左 2上 3右 */
+
+    /* 主角 sprite(DQ3MAN.BLS);has_hero=0 時退回佔位方框 */
+    dq3_charsprite hero;
+    int has_hero;
+    int frame_for_facing[4];      /* facing→BLS frame 對映(可調,對齊 oracle) */
 
     /* 釋放用:scene 接管的原始 buffer(loader 配置,scene_free 釋放) */
     void *owned[6];
@@ -53,6 +59,12 @@ void dq3_scene_apply_palette(const dq3_scene *s);
 
 /* 起點啟發式:挑 9×9 視窗內可走鄰居最多的可走 tile(用於地表開闊地)。 */
 void dq3_scene_pick_open_start(dq3_scene *s);
+
+/* 載入主角 sprite(DQ3MAN.BLS entry_base 起 4 方向 frame)。
+ * facing_order:facing(0下1左2上3右)→ BLS frame 的 4 元素對映(NULL=預設 0,1,2,3)。
+ * 失敗時 has_hero 維持 0(退回佔位方框),回傳 <0。 */
+int dq3_scene_load_hero(dq3_scene *s, const char *assets_dir, int entry_base,
+                        const int facing_order[4]);
 
 /* 釋放 scene 與其接管的 buffer。 */
 void dq3_scene_free(dq3_scene *s);
