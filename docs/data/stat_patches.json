@@ -1,0 +1,30 @@
+{
+  "source_exe": "assets_raw/DQ3.EXE",
+  "exe_size": 115282,
+  "hdr": 4976,
+  "dgroup_para": "0x14dd",
+  "note": "精訊版 DQ3 數值類 bug(#4 勇者MP / #5 升級錯亂 / #6 數值255溢位)修正。本 agent 自行反組譯核出根因,修正 docs/18 兩處誤判:(a)成長表在 EXE 靜態 DGROUP(DS:0x4366 -> file 0x1a4a6),非 dragon0.dat(後者是 2172 byte 存檔、多為 0xff);(b)成長公式 target 為 16-bit 正確(mul->ax, shr ax,1, add al/adc ah,0 正確進位),屬性欄位全程 word 讀寫無 byte 截斷,#6 255-wrap 不在此處。code cave 紀律:re_codecave_scan 全檔最大 cave 僅 8 byte(file 0x1169b / 0x11ecf,各 8 byte 零填充;0xa40f 6 byte NOP),放不下 x86-16 clamp+trampoline(需 11~19 byte),依安全優先原則不做 #5/#6 cave。本檔未使用任何 code cave。",
+  "growth_table": {
+    "ds_offset": "0x4366",
+    "file_offset": "0x1a4a6",
+    "classes": 8,
+    "stride": 14,
+    "class_order": ["0勇者", "1戰士", "2武鬥家", "3僧侶", "4魔法使者", "5賢者", "6商人", "7遊玩者"],
+    "record_layout": "[+0 HPbase, +1 HPslope, +2 MPbase, +3 MPslope, +4 b4base, +5 b4slope, +6 b6base, +7 b6slope, +8 b8base, +9 b8slope, +0xa bAbase, +0xb bAslope, +0xc, +0xd]",
+    "formula": "target = base + ((slope*level)>>1); 實得增量 = sub_fa57(target-current) = rng % (target-current),下限1"
+  },
+  "level_threshold_table": {
+    "ptr_table_ds": "0x43d6",
+    "max_level": 43,
+    "entries_per_class": 44,
+    "note": "8 職業各 44 entry(lv0..43);lv44 越界讀下一職業 entry[0]=0 → exp 永遠 ≥0 → 連升 + 學錯職業咒(bug#5)"
+  },
+  "patches": [
+    {"bug": 4, "name": "勇者MaxMP成長偏低", "category": "exe-data", "code_cave": null, "file_offset": 107688, "file_offset_hex": "0x1a4a8", "orig": "03", "new": "08", "confidence": "high", "desc": "成長表 勇者(class0)MP base 0x03->0x08"},
+    {"bug": 4, "name": "勇者MaxMP成長偏低", "category": "exe-data", "code_cave": null, "file_offset": 107689, "file_offset_hex": "0x1a4a9", "orig": "05", "new": "0a", "confidence": "high", "desc": "成長表 勇者(class0)MP slope 0x05->0x0a;lv43 MaxMP ~107->~217;8-bit 路徑驗證無 wrap;DOSBox 開機->標題->新遊戲命名畫面正常無回歸"}
+  ],
+  "not_patched_need_c_layer": [
+    {"bug": 5, "name": "高等級升級錯亂", "confidence": "high-rootcause", "reason": "MAX_LEVEL=43,lv44 越界讀下一職業門檻 entry[0]=0 -> 連升+學錯職業咒。修法=查表前 clamp level<=43;in-place 不可(原碼 9 byte 算 level*4,clamp 需多 ~7 byte);code cave 不可(全檔最大 8 byte,放不下 clamp+trampoline ~14 byte 且 boss/開機路徑風險高)。留 C/SDL 層。", "fix_c": "if (level > 43) level = 43; 於 sub_ecdb 查門檻/咒文表前"},
+    {"bug": 6, "name": "數值255溢位", "confidence": "mid", "reason": "docs/18 歸因成長公式有誤:該 target 計算為 16-bit 正確(add al+adc ah 正確進位),屬性欄位 [si+0x24]/[si+0x26] 全程 word 讀寫(查無 8a/88 byte 截斷)。255-wrap 較可能在顯示寬度或與 #5 越界垃圾互動,靜態反組譯無單一可信截斷點 -> 需 runtime 觀察。留 C/SDL 層。", "fix_c": "屬性中間值/顯示一律 uint16,寫回前明確 clamp(如 min(v,9999));防禦若 10-bit 改 u16+min(v,1023)"}
+  ]
+}
