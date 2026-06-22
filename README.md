@@ -6,6 +6,10 @@
 
 從原版資料檔反組譯、解碼、還原出的成果（皆由 `tools/` 內的工具從原始素材重新產生）：
 
+**標題畫面**（`TITG.P` → 解出為標準 ZSoft PCX：640×350、4bpp、RLE、palette 內含於檔）：
+
+![標題畫面](docs/title/title_logo.png)
+
 **開場畫面**（`FIRST.SCR` → 640×350 4bpp row-interleaved planar 解碼）：
 
 ![開場原畫](docs/title/first_opening.png)
@@ -18,7 +22,7 @@
 
 ![字庫](docs/fonts/D3TXT00.FON.atlas.png)
 
-> 城鎮地圖（`CTY*.DAT`）見 [`docs/maps/cty00_town.png`](docs/maps/cty00_town.png)；劇情純文字劇本見 [`docs/script/`](docs/script/)；標題 logo（`DRAGON FIGHTER` / 傳說的終章）解碼中。
+> 城鎮地圖（`CTY*.DAT`）見 [`docs/maps/cty00_town.png`](docs/maps/cty00_town.png)；劇情純文字劇本見 [`docs/script/`](docs/script/)；更多標題 / 過場圖（片尾、年代過場）見 [`docs/title/`](docs/title/)。
 
 ## 目標
 
