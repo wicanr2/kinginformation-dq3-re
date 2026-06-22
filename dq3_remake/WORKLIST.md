@@ -1,0 +1,53 @@
+# dq3_remake WORKLIST(compact 後接續依據)
+
+> 目標:把精訊版 DQ3(Dragon Fighter III, 1993)用現代 C + SDL2 **跨平台重製**,放在 `dq3_remake/`,
+> 行為與原版**一模一樣**(DOSBox 原版當 oracle 逐畫面驗證),且 **7 個 bug 全在 C 層修對**。
+> 紀律:**不用 subagent,全部自己在主執行緒做**;一切編譯/執行在 **docker**(不污染 host);每階段有產出就 commit+push。
+
+## 現況快照(已完成)
+
+- **素材全解碼**:字型(docs/02)、文字+UTF-8 劇本(03)、地圖 tile/世界圖/CTY 城鎮(04)、標題/PCX(docs/title)、怪物 sprite+數值(16)。
+- **EXE 反組譯**:recon(05)、callmap+runtime API(06)、函式圖(08,`docs/data/exe_funcs.json`)、loaders(09)、戰鬥(13)、注音輸入(15)。`re/*.c` 為邏輯草稿。
+- **RE 正確性鐵證**:整檔反組譯→nasm 重組 **sha256==原版(byte-identical 100%)**(docs/17)。編譯器=MSC 5.x(docs/19)。
+- **bug 對照組(a)**:binary patch 修正版 5/7(#1/2/3/4/7a 修、#7c 不需、#5/6/7b 留 C),DOSBox 驗無回歸(docs/18,20);完整遊戲包 `work/dq3_fixed_v1.zip`(本機,不公開)。
+- **remake 地基(階段①)✅**:`dq3_remake/` SDL2 骨架編譯成功,headless 解 `TITG.P` 顯示標題正確(`scripts/build.sh`)。
+
+## dq3_remake 剩餘 worklist
+
+### 階段② 移植遊戲邏輯(主迴圈→可走動)
+- [ ] runtime shim 補完:鍵盤 scancode→SDL keysym(對應原版 0x48/0x50/0x4b/0x4d/Enter/Space)、計時(frame wait)、滑鼠(int33h→SDL)。
+- [ ] 資產載入 C 化補完:BLK tile(32×24 4-bit planar)+DQ3.PAL、MAP(`<w><h>`+1byte/tile)、CTY(section 偏移表→layout_ptr→`<w><h><spawn>`+w×h u16,見 docs/04/11)、D3TXT 文字(指標表+2-byte LE,值<1476=字模 index、>=0xffed=控制碼,docs/03)。
+- [ ] 主迴圈(re/mainloop.c `sub_93e3`):讀輸入→玩家座標(X@DS:0x2572/Y@0x2574/朝向0x26ad/方向0x4f1f)→11-entry 狀態機跳表(re/states.c)→繪場景/玩家/HUD/節拍。
+- [ ] 場景繪製(re/render.c `sub_255b` 地表 / `sub_19b8` 城鎮)+ 玩家移動碰撞(`sub_2dda`,查 tile 屬性 blkbm)。
+- [ ] **里程碑**:能在城鎮/世界地圖走動,對 DOSBox 原版同畫面比對一致。
+
+### 階段③ 對話/野外指令/戰鬥
+- [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
+- [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。
+- [ ] 野外指令選單(DS:0x3baa 12 指令:話す/移動/調べる…)。
+- [ ] 戰鬥(re/battle.c:遭遇 sub_bd97→主迴圈 sub_bddf;怪物 D3MNS.DAT 130×41B、sprite DQ3MNS.SHP+MNSBK.PAL;指令戰/逃/防/道具)。**用復原的 Ortega(128)/Hydra(129)sprite**(tools/make_sprites.py)。
+
+### 階段④ 7 bug 全修進 C(根因見 docs/18,20,22,23)
+- [ ] #1 巴拉摩斯打不死(勝負判定參照欄)
+- [ ] #2 彩虹水滴卡關(合成成品 item code 銀寶珠→彩虹水滴)
+- [ ] #3 九頭龍/歐里狄加當機(sprite 已復原,C 端確保 blit guard)
+- [ ] #4 勇者 MaxMP 成長偏低(成長表 base/slope;`rng%delta` 下限1)
+- [ ] **#5 高等級升級錯亂**(等級表 44 entry,lv44 越界讀下職業 entry[0]=0 → **C 加 clamp level≤43**)
+- [ ] **#6 數值 255 溢位**(C 用足夠寬型別 + clamp;原疑顯示/互動,實測釐清)
+- [ ] **#7a 隼劍雙擊**(C 正確實作第二擊;原版機制存在但觸發條件接錯位元)
+- [ ] **#7b 魔法鎧甲抗魔**(C 端咒文扣血掃裝備找魔甲 0x2b→減半/抵抗;原版從不讀此旗標)
+- [ ] #7c 祈禱之戒:原版本就會壞(~25%),保持即可
+
+### 階段⑤ oracle 驗證 + 打包
+- [ ] DOSBox 原版 vs remake **逐畫面比對一模一樣**(bug 場景=修正後正確行為);用 `tools/dosbox*` 截原版、remake headless 截圖比對。
+- [ ] retro-cjk-hires-canvas:內部畫布原生解析、nearest 放大;CJK 16×16 正常。
+- [ ] 海面 palette cycling(DQ3.PAL idx2/10 DAC 動畫)。
+- [ ] 跨平台打包(Linux/Windows;AppImage/exe)。
+
+## 關鍵參考 / 工具 / 紀律
+
+- **格式/位址**:docs/02–16(素材)、docs/05–13/15(EXE 邏輯)、`docs/data/exe_funcs.json`(函式圖)、`re/*.c`(邏輯草稿,移植來源)。
+- **編譯/驗證**:`dq3_remake/scripts/build.sh`(docker SDL2 編譯+headless 標題驗證)、`tools/dockrun.sh`(docker uv python)、`tools/dosbox_run.sh`+`dq3-dosbox` image(原版 oracle)。
+- **原始素材**:`assets_raw/`(版權,gitignore;remake 執行期指向它)。
+- **不公開**:整套可玩遊戲(`work/dq3_fixed_v1.zip`)、原始檔、第三方攻略/截圖、render 的版權畫面像素(`*.ppm`/`titg*.png` 等)——見各 `.gitignore`。
+- **紀律**:不用 subagent;docker first;每階段 commit+push;commit message 繁中 + `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`。
