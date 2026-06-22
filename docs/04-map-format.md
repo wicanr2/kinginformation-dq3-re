@@ -88,28 +88,38 @@ index 對應 `DQ3.BLK` 的 tile。地表用到 107 種 tile、最大 index 160(<
 觸發**等屬性(每個 bit 一種屬性旗標)。這是原始碼匯出的資料表,逐位元語意需對照 EXE 中
 讀取此表的邏輯(尚未對齊到具體旗標),暫記為「每 tile 2 byte 屬性 mask」。
 
-## CTY00~87.DAT — 城鎮 / 場景(容器結構已解,tile 佈局未完全解碼)
+## CTY00~87.DAT — 城鎮 / 場景(已解)
 
-CTY 為**多段容器(container)**,結構為偏移表 + 多個資料段:
+CTY 為**多段容器(container)**。先前以為 tile 佈局是 RLE/壓縮而卡關;經反組譯 `DQ3.EXE`
+的 CTY 繪製邏輯(`sub_30cf`,見 [`docs/11-exe-gameplay.md`](11-exe-gameplay.md))確認**並非壓縮**——
+卡關是因漏了 section 偏移表的**間接定址**,且把 tile 當 u8(實為 u16)。正確結構:
 
-### Header
+```
++0      u16 n                      ; section 數
++2      n × u16 section_off        ; 各 section 偏移; 0xffff = 空
+section_off + 0x0e:  u16 layout_ptr        ; 版面資料指標 (相對 section_off)
+section_off + layout_ptr:
+        u16 width
+        u16 height
+        4 bytes spawn              ; 進入點 / 出生座標
+        width × height × u16 tile  ; 低 byte = BLK tile index, 高 byte = 屬性
+```
 
-| offset | 型別 | 意義 |
-|---|---|---|
-| 0 | u16 | section 數 n(觀察值 8 / 12 / 16) |
-| 2 | n×u16 | 各 section 的 byte offset;`0xffff` = 空 / 未使用 section |
+每格 tile 為 **u16**:低位元組 = `DQ31~35.BLK`(室內)或 `DQ3.BLK`(戶外段)的 tile index,
+高位元組 = 屬性(見下 BLKATT)。section 標頭 `+0x00..0x0d` 其餘欄位語意、spawn 單位待 DOSBox 對照。
 
-各 section 起點含一個小 sub-header,部分段為 `<u16 width><u16 height>` + 8×`0xff`
-(如某段 w=25、h=54),其後為命令式 / RLE tile 串(非平面陣列)。例:CTY00 內出現
-`w=25 h=54`(target 1350 格)但段長僅 461 byte,確認資料經壓縮。最大段(CTY00 @264)
-出現大量 `xx 00` pair(疑 u16 tile index)與分隔符,屬另一種 sub-format。
+**驗證**:`tools/re_gameplay_cty.py`(單段)、`tools/map_cty_gallery.py`(整鎮)依此格式 + `DQ3.PAL` +
+對應 BLK 貼出城鎮。CTY00(阿里阿罕,5 段)render 為 [`maps/cty00_town.png`](maps/cty00_town.png):
+室內房間(床/寶箱/紅地毯/磚牆)、城堡王座廳與庭院綠地皆清晰可辨,佈局解碼正確。
 
-**受阻點**:tile 佈局的 RLE / 命令串編碼尚未完全還原。已排除的假設:
-- `[tile][count]` / `[count][tile]` 簡單 RLE:run 數加總不等於 w×h(1350)。
-- 直接把任一段當平面 u8 / u16 tile 陣列(掃寬 16/20/24/32):render 無可辨識城鎮。
+> 註:同一 CTY 的不同 section 可能用不同 BLK 圖庫(室內 `DQ31~35.BLK` vs 戶外 `DQ3.BLK`);
+> 正確 BLK 由 section 標頭欄位選定(精確欄位待定,gallery 工具以合理性檢查過濾)。
 
-城鎮 tile 圖庫(`DQ31~35.BLK` 室內素材)本身已完整解出,缺的只是 CTY 的擺放佈局命令解碼。
-完整還原需對照 `DQ3.EXE` 中載入 CTY 並繪製場景的程式邏輯(下一階段)。
+### BLKATT.DAT — tile 屬性(已解語意)
+
+`blk_att_tab` 匯出表,每 tile 的 u16 屬性(執行期載入自 `blkbmN.dat` 到 DS:0x308e):
+`bit0`=阻擋牆、`0xe000`=事件地形、`bit5(0x20)`=可走且觸發、`bits6-7(0xc0)`=角落/出口。
+詳見 [`docs/11-exe-gameplay.md`](11-exe-gameplay.md)。
 
 ## 還原方法摘要
 
