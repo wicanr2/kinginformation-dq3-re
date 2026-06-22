@@ -1,0 +1,22 @@
+{
+  "source_exe": "assets_raw/DQ3.EXE",
+  "exe_size": 115282,
+  "hdr": 4976,
+  "note": "精訊版 DQ3 bug 修正 binary patch 清單。file_offset = EXE 內絕對位移。所有 patch 同長度、不位移。產生器 tools/re_bugpatch.py → work/DQ3_fixed.EXE。分析見 docs/18-bug-analysis.md。",
+  "patches": [
+    {"bug": 1, "name": "巴拉摩斯打不死", "file_offset": 48644, "file_offset_hex": "0xbe04", "orig": "36", "new": "34", "confidence": "high", "kind": "in-place", "desc": "cmp word[bx+0x2336]->[bx+0x2334];對應青衫官方碼 魔王打不死修正法 第1處"},
+    {"bug": 1, "name": "巴拉摩斯打不死", "file_offset": 48650, "file_offset_hex": "0xbe0a", "orig": "36", "new": "34", "confidence": "high", "kind": "in-place", "desc": "mov ax,word[bx+0x2336]->[bx+0x2334];第2處"},
+    {"bug": 2, "name": "彩虹水滴誤拿黃寶珠", "file_offset": 30697, "file_offset_hex": "0x77e9", "orig": "6b", "new": "75", "confidence": "high", "kind": "in-place", "desc": "合成成品 item code 0x6b(銀寶珠)->0x75(彩虹水滴)"},
+    {"bug": 3, "name": "九頭龍/五頭龍戰當機", "file_offset": 110636, "file_offset_hex": "0x1b02c", "orig": "80", "new": "7e", "confidence": "high", "kind": "in-place", "desc": "boss 表 歐里狄加 0x80(缺 sprite)->0x7e 冰河魔人(第一場)"},
+    {"bug": 3, "name": "九頭龍/五頭龍戰當機", "file_offset": 110638, "file_offset_hex": "0x1b02e", "orig": "81", "new": "7d", "confidence": "high", "kind": "in-place", "desc": "boss 表 五頭龍大王 0x81(缺 sprite)->0x7d 魔文(第一場)"},
+    {"bug": 3, "name": "九頭龍/五頭龍戰當機", "file_offset": 110648, "file_offset_hex": "0x1b038", "orig": "81", "new": "7c", "confidence": "high", "kind": "in-place", "desc": "boss 表 五頭龍大王 0x81(缺 sprite)->0x7c 索瑪(第二場)"}
+  ],
+  "not_patched_need_c_layer": [
+    {"bug": 4, "name": "勇者 MaxMP 成長固定+1", "confidence": "mid", "reason": "公式正確,根因疑在 dragon0.dat 成長表勇者列 MP slope 值偏低 + shr/2;需 dump dragon0.dat 比對,非單點 EXE patch"},
+    {"bug": 5, "name": "高等級升級錯亂", "confidence": "high-rootcause", "reason": "等級 byte 當索引×4 查門檻表/咒文表,超表長越界 -> 連升+學錯職業咒;clamp 需 code cave,非同長度 patch"},
+    {"bug": 6, "name": "數值255溢位", "confidence": "mid", "reason": "成長公式中間值 8-bit (mul dl + adc ah,0) wrap;源於 C 型別,組語層無單點;防禦1023疑為10-bit欄位;需 C 層改型別+clamp"},
+    {"bug": "7a", "name": "隼劍只打一次", "confidence": "high-rootcause", "reason": "double-hit 功能整段未實作(裝備特效只白名單 0x4d/0x11,不讀 item+5);需 code cave 補攻擊次數迴圈"},
+    {"bug": "7b", "name": "魔法鎧甲無抗魔", "confidence": "high-rootcause", "reason": "受咒文傷害減免功能整段未實作(扣血器不讀受方裝備抗性);需 C 層補"},
+    {"bug": "7c", "name": "祈禱之戒永不壞", "confidence": "high-conflict", "reason": "反組譯顯示破壞邏輯存在且~25%會觸發(file 0x5af4),與青衫前提衝突;不需 patch,建議 DOSBox 實測佐證"}
+  ]
+}
