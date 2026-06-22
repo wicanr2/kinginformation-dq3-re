@@ -2,9 +2,11 @@
 
 第一次在 DOSBox 把精訊版 DQ3(`DRAGON FIGHTER III / 傳說的終章`)原版 `DQ3.EXE` 跑起來,
 逐張截圖建立「黃金對照」,驗證本專案前面各 docs 從 `DQ3.EXE` + 素材檔靜態解出的 render
-是否與實機一致。結論:**已驗證的畫面(開場年代過場、標題、主選單、注音姓名輸入)與我們的
-靜態解碼逐項吻合**,palette、佈局、文字、字型皆對得上;town / 世界圖 / 戰鬥畫面卡在
-「注音姓名輸入」這道必填關卡,headless 自動推進未能在時限內突破,誠實標為受阻(見文末)。
+是否與實機一致。結論:**已驗證的畫面(開場年代過場、標題、主選單、注音姓名輸入、性別選擇、
+開場劇情、城鎮室內)與我們的靜態解碼逐項吻合**,palette、佈局、文字、字型、城鎮 tile 皆對得上。
+其中靠 `docs/15` / `re/nameinput.c` 的注音輸入法反組譯,自動化推過「注音姓名輸入」這道必填
+關卡,首次截到城鎮室內並驗證 CTY 解碼。**世界地圖 / 戰鬥**兩畫面仍受阻於室內出口尋路
+(盲走未命中出口 tile),誠實標記(見文末)。
 
 實機 raw 截圖屬原版商業遊戲畫面(版權 Enix / 精訊),**留在 `work/dosbox/` 不入版控**;
 本文以文字描述對照結論,需要圖時引用本專案已 commit 的 render(`docs/title/`、`docs/maps/`)。
@@ -101,23 +103,57 @@ title_logo;本次提供**第一手原版實機**確認,palette(取自 PCX header
 內建注音鍵盤 + 功能列。可作為「挖掘中文版相關技術」(CLAUDE.md 目標)的一筆素材;
 後續可從 `DQ3.EXE` 反組譯此姓名輸入 handler(注音→字碼映射、CHINA.FON 取字)補進 docs。
 
-## 受阻:town / 世界圖 / 戰鬥未截到(誠實標記)
+## 突破姓名輸入 → 性別選擇 → 開場劇情 → 城鎮室內 ✅
 
-目標清單中的**城鎮(室內)、世界地圖、戰鬥(史萊姆)**三畫面**本次未截到**,原因:
+接 `docs/15`(注音輸入法反組譯)+ `re/nameinput.c` 的精確按鍵語意,自動化推過姓名輸入
+這道必填關卡,首次截到**城鎮室內**(town interior)。
 
-- 上述三者都在**注音姓名輸入完成之後**才會進入;姓名輸入是必填關卡,Escape 不能跳過。
-- headless 自動推進時,方向鍵 / Enter / Tab / 直接打字(`xdotool type`)都只能在注音
-  鍵盤格內移動紅游標,**無法跨進右欄「完成」**把名字定案。該畫面的輸入 handler 對
-  按鍵的對應與標準方向鍵不同(游標被限制在注音表內),要可靠導到「完成」需先反組譯
-  `DQ3.EXE` 的姓名輸入 handler(哪個鍵切到功能列 / 確認),屬 gameplay 自動化範疇,
-  超出本次「建環境 + 黃金對照」目標,於時限內有界嘗試後停手。
+### 推過姓名輸入的可靠按鍵序列(對 re/nameinput.c)
 
-→ 後續要截 town / world / battle,兩條路其一:(a) 先反組譯姓名輸入 handler,得知切換到
-「完成」的鍵,補完自動推進腳本;(b) 用 DOSBox 存檔狀態(savestate)或既有進度存檔
-(`載入進度`)略過開場直接進遊戲。本次已驗證的標題 / 開場 / 選單 / 字型路徑,已足以
-確認我們對 `FIRST.SCR`、`TIT*.P`、CHINA.FON、選單系統的解碼正確;town / world / battle
-的對照(對 `docs/maps/cty00_town.png`、`world_con.png`、`docs/13` 戰鬥)留待解開姓名
-輸入關卡後補做。
+關鍵在於把注音鍵盤的 grid 當成 **1-D ring**(raw 0–44,Up=−9 / Down=+9 / Left=−1 /
+Right=+1,皆 mod 45),cell = `col*5 + row`(`row=raw/9`、`col=raw%9`)。實測起始游標
+固定在 raw 0(ㄅ),於是可純位移到達指定格:
+
+1. **進功能列**:raw0 → `Down×3 Right×8` = raw35 = cell43(`NI_CELL_TOFN` 切功能列)→ `Space`。
+2. **切英數模式**:功能列起始在 row1(英數),`Space` 即切到英數鍵盤(免組字,打一字最省事)。
+3. **打一個字**:英數 grid → `Up×3 Left×8` 回 raw0(左上字元格「0」)→ `Space`,名字列出現「0」。
+4. **完成**:raw0 → `Down×3 Right×8` = TOFN → `Space` 進功能列 → `Down×4`(row1→row5「完成」)
+   → `Space`。名字非空 + 選「完成」→ `ni_dispatch` 放行,離開姓名輸入。
+
+實機逐步截圖驗證每個轉場都對上 `re/nameinput.c`:選 cell43 確實進功能列、功能列 row1
+切換鍵盤(英數 grid 變成 `0 5 A F K… / OK`、功能列首列改顯「注音」)、選字元格名字列出現
+該字、選「完成」後畫面換成**「▶男性 / 女性」性別選擇選單**——姓名輸入關卡確認被推過。
+
+> 注意:此自動化對**時序敏感**(headless 無 window manager,xdotool 送鍵前須 `windowfocus`,
+> 且 DOSBox 取鍵與我們 sleep 的相對時序偶爾錯一拍導致某次 Space 落空)。多數 run 成功,
+> 少數 run 會卡回姓名格;重跑即可。腳本 `tools/dosbox_nameinput.sh` 以固定 raw-index 位移
+> 實作上述序列。
+
+### 截到的新畫面
+
+- **性別選擇「▶男性 / 女性」**:角色建立 modal(`re/nameinput.c` 的 `sub_0854`)在姓名後
+  接的性別選單,證實已離開姓名輸入。
+- **開場劇情旁白**:黑底對話框「這是 016 歲生日那天的事。」(名字「0」+ 年齡顯示在劇情中)。
+- **城鎮室內(town interior)** ✅ 吻合 `docs/maps/cty00_town.png`:橘紅地磚、米黃/白磚牆、
+  床、木箱、櫥櫃、NPC 與主角 sprite,搭配對話框「＊「今天是相當重要的一天呢。」實機的
+  tile 字彙、配色、牆面樣式、床/家具 sprite 與我們 CTY00.DAT 解出的 render(section 0–4)
+  **一致** → **CTY 城鎮 tile 解碼 + palette 驗證通過**。這是開場的主角故鄉(一棟封閉建築)。
+
+## 仍受阻:世界地圖 / 戰鬥(誠實標記)
+
+**世界地圖、戰鬥(史萊姆)兩畫面本次仍未截到**,原因:
+
+- 開場主角故鄉是一棟**封閉室內建築**;走到世界地圖要踏上特定「出口 tile」(樓梯 / 門)。
+- headless 盲走(各方向長距離 sweep + 清沿途對話)只能在室內各房移動,**未命中出口 tile**;
+  四周藍色是「室外」但室內走不過去。城鎮無隨機遇敵,故戰鬥也未觸發(要先到地表草地)。
+- 要可靠走到出口需**依截圖回授做尋路**(辨識出口 tile 座標再導航),屬逐格互動式自動化,
+  時限內有界嘗試後停手,不無限掛著。
+
+→ 後續截 world / battle 兩條路:(a) **截圖回授尋路**到出口 tile 走出城,到地表草地走動觸發
+遭遇(`docs/13` 的步數遭遇計數器);(b) 用 DOSBox **savestate** 或既有進度存檔(主選單
+「載入進度」)略過開場直接進地表。本次已把**靜態解碼的城鎮 tile 路徑**(CTY00.DAT →
+`docs/maps/cty00_town.png`)在實機驗證通過;世界地圖(`world_con.png`)與戰鬥(`docs/13` /
+DQ3MNS.SHP 史萊姆 sprite)的實機對照留待走出城後補做。
 
 ## 與我們 render 的對照總結
 
@@ -126,19 +162,25 @@ title_logo;本次提供**第一手原版實機**確認,palette(取自 PCX header
 | 開場「1989」過場 | `docs/title/scene_1989.png`(TITA.P) | ✅ 黑底金字、字體、色階吻合 |
 | 標題 DRAGON FIGHTER III | `docs/title/title_logo.png`(TITG.P) | ✅ logo / 副標 / © / 漸層天空 / 城堡剪影逐項吻合 |
 | 主選單 勇者鬥惡龍 | `docs/03` / `docs/12`(選單系統) | ✅ 選單框 / ▶游標 / 中文字型一致 |
-| 注音姓名輸入 | (新發現,尚未 RE) | ✅ 揭露中文版採注音輸入法;待反組譯 handler |
-| 城鎮(室內) | `docs/maps/cty00_town.png` | ⏸ 受阻(卡姓名輸入,未截到) |
-| 世界地圖 | `docs/maps/world_con.png` | ⏸ 受阻 |
-| 戰鬥(史萊姆) | `docs/13` / `references/game3.png` | ⏸ 受阻 |
+| 注音姓名輸入 | `docs/15` / `re/nameinput.c` | ✅ 揭露中文版採注音輸入法;按鍵序列實機驗證對上反組譯 |
+| 性別選擇 / 開場劇情 | `docs/03`(文字)/ `docs/11`(流程) | ✅ 角色建立 modal 後接性別選單 + 旁白,流程對上 |
+| 城鎮(室內) | `docs/maps/cty00_town.png`(CTY00.DAT) | ✅ tile 字彙 / 配色 / 牆面 / 家具 sprite 一致 |
+| 世界地圖 | `docs/maps/world_con.png` | ⏸ 受阻(卡室內出口尋路,未截到) |
+| 戰鬥(史萊姆) | `docs/13` / `references/game3.png` | ⏸ 受阻(需先到地表草地觸發遇敵) |
 
-未發現需修正的解碼偏差:已驗證畫面的 palette(PCX 自帶 16 色)、planar 重組、中文字型
-渲染均與實機一致。海面 palette cycling、CTY 城鎮貼圖等動態 / 室內畫面的對照,須待突破
-姓名輸入後才能在實機檢驗。
+未發現需修正的解碼偏差:已驗證畫面的 palette(PCX 自帶 16 色 / CTY tile palette)、planar
+重組、中文字型渲染、城鎮 tile 貼圖均與實機一致。世界地圖海面 palette cycling、戰鬥 sprite
+等動態畫面的對照,須待走出城 / 觸發戰鬥後在實機檢驗。
 
 ## 產出檔案
 
 - `tools/dosbox.conf` — DOSBox 設定(svga_s3 / nosound / autoexec 進遊戲)。
 - `tools/dosbox_run.sh` — 容器內驅動:Xvfb + DOSBox + xdotool 推進 + import 截圖
   (title / 開場 / 選單序列;有時間上界)。
-- `tools/dosbox_ingame.sh` — 進階序列(嘗試完成姓名 → 進遊戲;受阻於姓名輸入)。
-- `work/dosbox/live_*.png` — 實機 raw 截圖(版權,**不入版控**;留本機對照用)。
+- `tools/dosbox_ingame.sh` — 進階序列(早期嘗試;在解開姓名輸入前受阻,保留作對照)。
+- `tools/dosbox_nameinput.sh` — **推過注音姓名輸入**(raw-index 位移序列,對 re/nameinput.c)
+  → 性別選擇 → 開場劇情 → 城鎮室內,並做室內探索 / 嘗試觸發戰鬥(有時間上界)。
+- `work/dosbox/live_*.png` — 實機 raw 截圖(版權,**不入版控**;留本機對照用):
+  `live_00_opening_1989` / `live_01_title` / `live_02_mainmenu` / `live_03_name_entry` /
+  `live_04_gender_select` / `live_05_story_intro` / `live_06_town_interior` /
+  `live_07_town_explore`。
