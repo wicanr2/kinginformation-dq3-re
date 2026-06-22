@@ -1,7 +1,7 @@
 # 精訊版本的 DQ3 反組譯
 
-- 目的還原當年未發售的經典從 exe 檔透過 RE 變成 **Pascal** 的原始碼, 並且把遊戲素材都拆解出來
-  - 註:`DQ3.EXE` 檔頭為 `MZP` = Borland Pascal 7.0 DPMI 保護模式執行檔, 原始語言即 Pascal, 故 RE 目標訂為還原 Pascal 原始碼 (可同語言重編譯比對, 比翻成 C 正確)。
+- 目的還原當年未發售的經典從 exe 檔透過 RE 變成 **C** 的原始碼 (可重編譯), 並且把遊戲素材都拆解出來
+  - 註:`DQ3.EXE` 經反組譯偵察 (docs/05-exe-recon.md) 確認為 **16-bit real-mode、large model 分段 DOS 程式**, 鏈結手寫組語低階驅動;**非 Borland Pascal、非保護模式** (先前依檔頭 `MZP` 的 'P' 判為 Pascal 保護模式有誤, 那只是 e_cblp=80)。經使用者確認, RE 目標訂為還原成可用 DOS C 編譯器重建的 **C 原始碼**, 以 dosbox 比對原版驗證。
 
 驗證方式 RE的版本可以重新編譯執行, 與原版一模一樣 使用dosbox驗證
 
