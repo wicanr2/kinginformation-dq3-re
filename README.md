@@ -26,6 +26,10 @@
 
 ![怪物圖鑑](docs/monsters/monster_sheet.png)
 
+**復原未完成的 sprite**（未發售版只有 130 隻中 **2 隻沒做完**:id 128 歐里狄加、id 129 五頭龍大王——正是索瑪城「父親 vs 五頭龍」決鬥那場戲的雙方,缺圖導致該戰當機。依參考圖以精訊風格重繪、注入原格式,經遊戲 SHP 解碼器驗證):
+
+![復原父子決鬥](docs/monsters/restored_128_129.png)
+
 > 城鎮地圖（`CTY*.DAT`）見 [`docs/maps/cty00_town.png`](docs/maps/cty00_town.png)；劇情純文字劇本見 [`docs/script/`](docs/script/)；更多標題 / 過場圖（片尾、年代過場）見 [`docs/title/`](docs/title/)。
 
 ## 目標
