@@ -33,3 +33,6 @@ tools/build/*_view.png
 
 # 重繪參考圖(原版/網路素材,版權,本機參考用)
 dq3_org_pic/
+
+# DOSBox 實機截圖(含版權畫面)不公開
+dosbox/
