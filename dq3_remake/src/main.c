@@ -1,23 +1,26 @@
 /* main.c — DQ3 remake 進入點。
  *
- * 兩種模式:
- *   title(預設):顯示標題畫面(TIT*.P),證明 PCX 解碼 + 顯示管線。
- *   field:地表場景引擎(dq3_field),可方向鍵走動 + 碰撞,攝影機跟隨玩家。
+ * 模式:
+ *   title(預設):顯示標題畫面(TIT*.P)。
+ *   field:地表場景(dq3_field → scene),方向鍵走動 + 碰撞 + 攝影機跟隨。
+ *   town:城鎮場景(dq3_town → scene);CTY/section/BLK 編號可由環境變數指定:
+ *         DQ3_CTY=CTY00.DAT DQ3_SECT=0 DQ3_BLKN=1。
  *
- * 用法:
- *   dq3_remake <assets_dir> [title|field] [titlefile]
- * headless 驗證(CI / 容器,配 SDL_VIDEODRIVER=dummy):
- *   DQ3_DUMP=out.ppm           只跑載入+解碼+繪一幀+dump,不開視窗。
- *   DQ3_WALK="RRDDLLUU"        field 模式下先依序套用移動(R/L/U/D),再 dump 末幀。
+ * 用法:dq3_remake <assets_dir> [title|field|town] [titlefile]
+ * headless 驗證(配 SDL_VIDEODRIVER=dummy):
+ *   DQ3_DUMP=out.ppm        繪一幀 + dump,不開視窗。
+ *   DQ3_WALK="RRDDLLUU"     field/town 模式先依序套用移動(R/L/U/D),再 dump 末幀。
  */
 #include "dq3_runtime.h"
 #include "dq3_assets.h"
 #include "dq3_field.h"
+#include "dq3_town.h"
+#include "dq3_scene.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* ---- title 模式(原地基里程碑)---- */
+/* ---- title 模式 ---- */
 static int load_and_decode_title(const char *assets, const char *name,
                                  uint8_t *fb, dq3_color pal16[16])
 {
@@ -49,15 +52,11 @@ static int run_title(const char *assets, const char *title, const char *dump)
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "title %s -> %s OK\n", title, dump);
         return 0;
     }
-    while (!dq3_should_quit()) {
-        dq3_poll_scancode();
-        dq3_present();
-        dq3_delay_ms(16);
-    }
+    while (!dq3_should_quit()) { dq3_poll_scancode(); dq3_present(); dq3_delay_ms(16); }
     return 0;
 }
 
-/* ---- field 模式(地表走動)---- */
+/* ---- 場景(field / town)共用驅動 ---- */
 static uint8_t walk_char_to_scancode(char c)
 {
     switch (c) {
@@ -69,47 +68,39 @@ static uint8_t walk_char_to_scancode(char c)
     }
 }
 
-static int run_field(const char *assets, const char *dump)
+static int run_scene(dq3_scene *s, const char *dump)
 {
-    char err[256] = {0};
-    const dq3_color *pal; int pcount;
+    const dq3_color *pal = s->pal;
     int tx, ty;
-    dq3_field *f = dq3_field_create(assets, err, sizeof err);
-    if (!f) { fprintf(stderr, "field create failed: %s\n", err); return 3; }
-
-    pal = dq3_field_palette(f, &pcount);
-    dq3_set_palette(pal, pcount);
+    dq3_set_palette(pal, s->pal_count);
 
     if (dump) {
         const char *walk = getenv("DQ3_WALK");
-        dq3_field_get_player(f, &tx, &ty);
-        fprintf(stderr, "field start player=(%d,%d)\n", tx, ty);
+        fprintf(stderr, "scene %dx%d start player=(%d,%d)\n", s->map_w, s->map_h, s->px, s->py);
         if (walk) {
             int moved = 0, blocked = 0; const char *p;
             for (p = walk; *p; p++) {
                 uint8_t sc = walk_char_to_scancode(*p);
                 if (!sc) continue;
-                if (dq3_field_input(f, sc)) moved++; else blocked++;
+                if (dq3_scene_input(s, sc)) moved++; else blocked++;
             }
-            dq3_field_get_player(f, &tx, &ty);
+            tx = s->px; ty = s->py;
             fprintf(stderr, "after walk \"%s\": moved=%d blocked=%d player=(%d,%d)\n",
                     walk, moved, blocked, tx, ty);
         }
-        dq3_field_render(f, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        dq3_scene_render(s, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
-        if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "field -> %s OK\n", dump);
-        dq3_field_destroy(f);
+        if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "scene -> %s OK\n", dump);
         return 0;
     }
 
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
-        if (sc) dq3_field_input(f, sc);
-        dq3_field_render(f, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        if (sc) dq3_scene_input(s, sc);
+        dq3_scene_render(s, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         dq3_delay_ms(16);
     }
-    dq3_field_destroy(f);
     return 0;
 }
 
@@ -118,15 +109,26 @@ int main(int argc, char **argv)
     const char *assets = (argc > 1) ? argv[1] : ".";
     const char *mode   = (argc > 2) ? argv[2] : "title";
     const char *dump   = getenv("DQ3_DUMP");
-    int is_field = (strcmp(mode, "field") == 0);
     int rc;
 
-    if (dq3_rt_init(is_field ? "DQ3 (精訊) — 地表 Field"
-                             : "DQ3 (精訊) — 重製 Remake") != 0) return 1;
+    if (dq3_rt_init("DQ3 (精訊) — 重製 Remake") != 0) return 1;
     dq3_set_assets_dir(assets);
 
-    if (is_field) {
-        rc = run_field(assets, dump);
+    if (strcmp(mode, "field") == 0) {
+        char err[256] = {0};
+        dq3_scene *s = dq3_field_load(assets, err, sizeof err);
+        if (!s) { fprintf(stderr, "field load failed: %s\n", err); rc = 3; }
+        else { rc = run_scene(s, dump); dq3_scene_free(s); }
+    } else if (strcmp(mode, "town") == 0) {
+        char err[256] = {0};
+        const char *cty = getenv("DQ3_CTY");
+        const char *sect = getenv("DQ3_SECT");
+        const char *blkn = getenv("DQ3_BLKN");
+        dq3_scene *s = dq3_town_load(assets, cty ? cty : "CTY00.DAT",
+                                     sect ? atoi(sect) : 0,
+                                     blkn ? atoi(blkn) : 1, err, sizeof err);
+        if (!s) { fprintf(stderr, "town load failed: %s\n", err); rc = 4; }
+        else { rc = run_scene(s, dump); dq3_scene_free(s); }
     } else {
         const char *title = (argc > 3) ? argv[3]
                           : (strcmp(mode, "title") == 0 ? "TITG.P" : mode);

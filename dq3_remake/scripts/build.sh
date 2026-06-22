@@ -41,6 +41,21 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
     cp /tmp/field1.ppm /repo/dq3_remake/field1.png
   echo "=== field headless dump OK ==="
 
+  # (1c) town 城鎮:CTY00 section0 + DQ31.BLK(對照已驗證 cty00_sect0_verify.png)
+  echo "--- town: CTY00 section0 ---"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/town0.ppm \
+    DQ3_CTY=CTY00.DAT DQ3_SECT=0 DQ3_BLKN=1 \
+    /build/dq3_remake /repo/assets_raw town
+  pnmtopng /tmp/town0.ppm > /repo/dq3_remake/town0.png 2>/dev/null || \
+    cp /tmp/town0.ppm /repo/dq3_remake/town0.png
+  echo "--- town: 走動 ---"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/town1.ppm \
+    DQ3_CTY=CTY00.DAT DQ3_SECT=0 DQ3_BLKN=1 DQ3_WALK="DDDRRR" \
+    /build/dq3_remake /repo/assets_raw town
+  pnmtopng /tmp/town1.ppm > /repo/dq3_remake/town1.png 2>/dev/null || \
+    cp /tmp/town1.ppm /repo/dq3_remake/town1.png
+  echo "=== town headless dump OK ==="
+
   # (2) Xvfb:完整視窗路徑 + 截圖(timeout 包住,有界,不掛起)
   export DISPLAY=:99
   Xvfb :99 -screen 0 1280x720x24 >/tmp/xvfb.log 2>&1 &
