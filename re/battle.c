@@ -97,7 +97,7 @@ void battle_main(void)
     }
 
     battle_setup_party();          /* sub_c8c6:攤平隊伍 HP/MP/狀態 → [0x063a] */
-    battle_enter_screen();         /* sub_bfd1:載入 packbg 戰鬥背景(page 0x13)*/
+    battle_enter_screen();         /* sub_bfd1:載入 packbg 戰鬥背景(頁由地形決定,見下)*/
     battle_draw_status();          /* sub_c572:畫我方狀態框 */
     battle_draw_names();           /* sub_c59b:逐隻畫敵名 + 怪物群 */
     battle_command_loop();         /* sub_c08b:逐角色下指令 + 回合執行 */
@@ -249,8 +249,12 @@ void shp_load_sprite(u16 id)
  * 戰鬥背景 / 場景切換
  *
  * battle_enter_screen(sub_bfd1):凍滑鼠 → 設文字游標 [0x3e70]=0x12 / [0x3e72]=0xf8
- * → file_op 準備 → 載入 packbg 戰鬥背景(call 0xc688 → load_packbg_page,page 0x13)
- * → 套用 → modal on([0x72a]=1)。即「戰鬥畫面 = packbg 第 0x13 頁的藍天草原背景」。
+ * → file_op 準備(bp=0x13 是 lcall 1053:240 的參數,**非** packbg 頁)→ 載入 packbg
+ *   戰鬥背景(call 0xc688 → 選頁 wrapper sub_d9f8 → load_packbg_page)→ 套用 → modal on。
+ * ★ 更正(原註誤記 page 0x13):背景頁由**地形**決定 —— sub_d9f8 算
+ *   terrain = [tile + 0x4df6](tile→地形類別),page = [0xd73] + terrain*8(terrain==3 → 0x19),
+ *   [0xd73] 初值 0;每地形用 MNSBK.PAL 子調色盤 [0xd73]*0x30。PACKBG.SCR 為每 0x6e00
+ *   (640×88 4-plane)一張背景的密集陣列;草原戰鬥背景 = 陣列索引 22(藍天+綠地,對 game3.png)。
  *
  * battle_leave_screen(sub_c03f):設文字游標 [0x3e70]=0x13 / [0x3e72]=0xee → 重載
  * 地圖 BLK(call 0xeaf4 load_blk)→ 還原音效/鍵盤/滑鼠,回到地表 / 城鎮。
@@ -264,11 +268,11 @@ void battle_enter_screen(void)
     g_txt_cur_x = 0x12;
     g_txt_cur_y = 0xf8;
     file_op_dx(0x16c);                /* lcall 1053:16c */
-    file_op_dx(0x240);                /* lcall 1053:240,bp=0x13 = packbg page */
+    file_op_dx(0x240);                /* lcall 1053:240(bp=0x13 為此 file op 參數,非 packbg 頁)*/
     vid_flip();                       /* call 0xed39 */
     vid_mode(0x47);                   /* lcall 109c:47 */
     /* [0x72a]=1 modal on */
-    /* call 0xc688 → load_packbg_page(page 0x13)= 戰鬥背景圖 */
+    /* call 0xc688 → sub_d9f8 選頁 wrapper → load_packbg_page(頁由地形決定,見上)= 戰鬥背景圖 */
     extern void load_packbg_caller(void); /* sub_c688 */
     load_packbg_caller();
     mouse_op(0x3a0);                  /* lcall 10b6:3a0 */
