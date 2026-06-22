@@ -38,6 +38,28 @@
 → **EXE 程式碼這端完整印證了文字 agent 從 `D3TXT*.TXT` 資料推出的控制碼語意**(雙向驗證)。
 此函式即遊戲把 `D3TXT*.TXT` 的字碼序列逐字繪到畫面的核心常式。
 
+### `seg 0x111b` = VGA planar 繪圖驅動(585 次,最熱段)
+
+段內密集 `out dx, ax` 至 VGA 暫存器;blitter primitive(111b:0006 起)為:
+
+```asm
+mov dl, 0xc4              ; DX = 0x3c4 = VGA Sequencer port
+mov ds, [0x252c]         ; DS = tile/sprite 來源段
+mov ax, 0x0802           ; AL=2 (Map Mask reg), AH=8 (plane 3 mask)
+out dx, ax               ; 選寫入平面
+  mov cx, 0x10           ; 16 列
+  lodsw                  ; 取一字來源 (16px)
+  and word es:[di], ax   ; AND-mask 寫入 video memory (sprite 透明遮罩)
+  add di, 0x54           ; 下一列, pitch = 84
+  loop
+shr ah, 1; jnz 上面      ; 4 個 plane 輪流 (8→4→2→1)
+```
+
+**程式碼↔資料雙向印證**:`out 0x3c4` Map Mask + 4 plane 輪寫 = **4-bit planar** 圖形,
+正是地圖 agent 解出的 BLK/SHP tile 像素格式(docs/04)。`and es:[di]` 為 sprite 透明遮罩,
+row pitch = 0x54(84)。此段即遊戲所有畫面輸出(tile/sprite/字模)的底層,文字繪製器
+`111b:0264` 亦在其中。
+
 ## 主程式函式熱點(seg 0)
 
 近呼叫熱點(2,202 次近呼叫,過濾線性掃到資料的誤判):
