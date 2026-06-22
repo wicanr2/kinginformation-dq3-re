@@ -1,0 +1,9 @@
+# DQ3 SDL2 port build/verify 環境(不污染 host)。
+#   docker build -f tools/build/Dockerfile.sdl -t dq3-sdl tools/build
+#   tools/build/sdl_build.sh   # 在容器內 cmake build + headless 解碼驗證
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential cmake pkg-config libsdl2-dev \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+CMD ["bash"]

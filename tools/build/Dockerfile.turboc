@@ -1,0 +1,29 @@
+# Turbo C 2.01 (1989, Borland) 在 DOSBox 內跑 — byte-match PoC 用。
+# 原版 DQ3.EXE 經指紋分析最可能為 Borland Turbo C large model 編譯;
+# 此 image 提供 TCC.EXE / TLINK.EXE,以重現當年 codegen。
+#
+# 建置:
+#   docker build -f tools/build/Dockerfile.turboc -t dq3-turboc tools/build
+# 前置:tools/build/tc201.zip(archive.org TC201,不入 git)需先備妥。
+#
+# 用法見 tools/build/tcc_compile.sh(掛載原始碼進去編譯,dump .obj 出來)。
+FROM debian:bookworm-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends dosbox unzip arc && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tc
+COPY tc201.zip /tmp/tc201.zip
+
+# 攤平三張磁片到單一 C:\TC 目錄(TCC/TLINK + headers + libs)。
+RUN unzip -o -q /tmp/tc201.zip -d /tmp/tcx && \
+    mkdir -p /tc/bin /tc/include /tc/lib && \
+    cp /tmp/tcx/Disk2/TCC.EXE /tmp/tcx/Disk2/TLINK.EXE /tc/bin/ && \
+    cp /tmp/tcx/Disk1/C0*.OBJ /tmp/tcx/Disk1/*.LIB /tc/lib/ 2>/dev/null || true && \
+    cp /tmp/tcx/Disk3/*.H /tc/include/ 2>/dev/null || true && \
+    rm -rf /tmp/tcx /tmp/tc201.zip
+
+ENV SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy
+
+CMD ["bash"]

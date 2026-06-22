@@ -1,0 +1,23 @@
+# Microsoft C 5.1 (1988) 在 DOSBox 內跑 — byte-match PoC 用。
+# 指紋分析(LOOP/rol/ror/cdq/NOP-padding/AX-centric codegen)指向 MSC,非 Borland;
+# DQ3.EXE(精訊,~1991)entry 鏈進 MSC CRT0 startup。此 image 提供 CL/C1/C2/C3/LINK。
+#
+# 建置:
+#   1) 先把 MSC 5.1 floppy .img 解到 tools/build/msc51_img/(archive.org,不入 git)
+#   2) tools/build/msc_extract.sh   # 用 mtools 把元件抽到 tools/build/msc/
+#   3) docker build -f tools/build/Dockerfile.msc -t dq3-msc tools/build
+#
+# 用法見 tools/build/msc_compile.sh。
+FROM debian:bookworm-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends dosbox && \
+    rm -rf /var/lib/apt/lists/*
+
+# MSC 安裝樹:C:\MSC\BIN(編譯器), C:\MSC\LIB(SLIBCR/MLIBCR/LLIBCR), C:\MSC\INCLUDE
+COPY msc/BIN     /msc/BIN
+COPY msc/LIB     /msc/LIB
+COPY msc/INCLUDE/INCLUDE /msc/INCLUDE
+
+ENV SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy
+CMD ["bash"]

@@ -19,3 +19,14 @@ references/*.jpg
 references/*.gif
 
 # 怪物 sprite 圖(圖鑑總表 + 個別散圖)保留展示
+
+# tools/build:下載的古董編譯器與中間產物(版權/體積,不入公開版控)
+tools/build/tc201.zip
+tools/build/msc51.zip
+tools/build/tc_extract/
+tools/build/msc51_img/
+tools/build/msc/
+tools/build/*.obj
+tools/build/*.OBJ
+tools/build/*.ppm
+tools/build/*_view.png
