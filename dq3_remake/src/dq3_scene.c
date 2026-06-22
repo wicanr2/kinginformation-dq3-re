@@ -1,5 +1,6 @@
 /* dq3_scene.c — 場景核心實作(攝影機/貼圖/碰撞/走動)。 */
 #include "dq3_scene.h"
+#include "dq3_runtime.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -82,6 +83,12 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
                     fb[yy * fb_w + xx] = 15;
             }
     }
+}
+
+void dq3_scene_apply_palette(const dq3_scene *s)
+{
+    /* 修 bug #8(docs/28):場景進場/戰鬥返回必重套,DAC 不殘留前場景色盤。 */
+    dq3_set_palette(s->pal, s->pal_count);
 }
 
 void dq3_scene_pick_open_start(dq3_scene *s)

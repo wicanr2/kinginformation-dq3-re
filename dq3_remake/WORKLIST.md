@@ -46,6 +46,7 @@
 - [x] **#7b 魔法鎧甲抗魔**:`dq3_combat_spell_damage` 掃 8 格裝備 +6 bit2,命中減半。單測:魔甲 80→40、無魔甲 80。(binary patch 因需掃描迴圈+無 cave 做不到,C 層完成)
 - [x] #7a/#7b 以 `dq3_combat_test` 決定性單測驗證;ITEM.DAT(128×7)從使用者 DQ3.EXE 旁讀,不入 git。
 - [ ] #7c 祈禱之戒:原版本就會壞(~25%),保持即可(不需修)
+- [x] **#8 戰鬥後畫面變黃/綠不恢復**(玩家實機回報;docs/28):根因=戰鬥切 MNSBK.PAL 進 DAC、離場只重載 tile 不還原 DQ3.PAL。remake 從設計免疫:`dq3_scene_apply_palette` 契約,場景切換/戰鬥返回必重套目的 palette(已在 run_scene 落地)。原版 byte-level 修點留 DOSBox oracle 回合。
 
 ### 階段⑤ oracle 驗證 + 打包
 - [ ] DOSBox 原版 vs remake **逐畫面比對一模一樣**(bug 場景=修正後正確行為);用 `tools/dosbox*` 截原版、remake headless 截圖比對。

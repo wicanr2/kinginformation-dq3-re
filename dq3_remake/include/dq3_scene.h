@@ -46,6 +46,11 @@ int  dq3_scene_input(dq3_scene *s, uint8_t scancode);
 /* 把以玩家為中心的視窗繪進 indexed framebuffer。 */
 void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h);
 
+/* 把本場景 palette 套進 runtime DAC。
+ * 契約(修 bug #8,docs/28):任何場景切換 / 戰鬥返回後都必須呼叫一次,
+ * 確保 DAC 還原成目的場景的 palette,不殘留前一場景(如戰鬥 MNSBK)的色盤。 */
+void dq3_scene_apply_palette(const dq3_scene *s);
+
 /* 起點啟發式:挑 9×9 視窗內可走鄰居最多的可走 tile(用於地表開闊地)。 */
 void dq3_scene_pick_open_start(dq3_scene *s);
 

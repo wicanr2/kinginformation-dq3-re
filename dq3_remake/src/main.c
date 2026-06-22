@@ -70,9 +70,8 @@ static uint8_t walk_char_to_scancode(char c)
 
 static int run_scene(dq3_scene *s, const char *dump)
 {
-    const dq3_color *pal = s->pal;
     int tx, ty;
-    dq3_set_palette(pal, s->pal_count);
+    dq3_scene_apply_palette(s);   /* 進場套 palette(修 bug #8 契約,docs/28) */
 
     if (dump) {
         const char *walk = getenv("DQ3_WALK");
