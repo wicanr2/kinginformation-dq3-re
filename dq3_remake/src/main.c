@@ -5,7 +5,8 @@
  *   field:地表場景(dq3_field → scene),方向鍵走動 + 碰撞 + 攝影機跟隨。
  *   town:城鎮場景(dq3_town → scene);CTY/section/BLK 編號可由環境變數指定:
  *         DQ3_CTY=CTY00.DAT DQ3_SECT=0 DQ3_BLKN=1。
- *   battle:戰鬥場景(怪群 sprite + 天空/地面背景);DQ3_MON=怪 id、DQ3_MON_N=隻數。
+ *   battle:互動戰鬥(dq3_battlescene);DQ3_MON=怪 id、DQ3_MON_N=隻數、DQ3_BATTLE_SCRIPT、DQ3_SEED。
+ *   game:地表↔城鎮↔戰鬥串接(走動隨機遭遇、SPACE 進出城鎮、換場重套 palette)。
  *
  * 用法:dq3_remake <assets_dir> [title|field|town] [titlefile]
  * headless 驗證(配 SDL_VIDEODRIVER=dummy):
@@ -116,6 +117,89 @@ static int run_battle(const char *assets, const char *dump)
     return oc < 0 ? 6 : 0;
 }
 
+/* ---- game 模式:地表↔城鎮↔戰鬥 串接狀態機 ----
+ * 地表走動 → 步數遭遇隨機戰鬥;SPACE 進/出城鎮(demo 觸發,精確 tile→CTY 待 load_cty 表 RE)。
+ * 每次戰鬥/換場後重套目的場景 palette —— 實際運用 bug #8 修正(docs/28)。 */
+static unsigned g_seed = 0x2468ace0u;
+static unsigned grnd(void){ g_seed^=g_seed<<13; g_seed^=g_seed>>17; g_seed^=g_seed<<5; return g_seed; }
+
+static void load_field_hero(dq3_scene *s, const char *assets)
+{
+    dq3_scene_load_hero(s, assets, 16, NULL);   /* 金髮勇者 */
+}
+
+static int run_game(const char *assets, const char *dump)
+{
+    char err[256] = {0};
+    dq3_scene *field, *town = NULL, *cur;
+    int in_town = 0, enc, fx = 0, fy = 0;
+    const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
+
+    field = dq3_field_load(assets, err, sizeof err);
+    if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
+    load_field_hero(field, assets);
+    cur = field; dq3_scene_apply_palette(cur);
+    enc = 6 + (int)(grnd() % 8);
+
+    if (dump) {
+        /* headless demo:走到觸發戰鬥 → 進城鎮,沿途 log,dump 末幀 */
+        int steps, mon, oc;
+        fprintf(stderr, "=== game: 地表起點 ===\n");
+        for (steps = 0; steps < 12; steps++) {
+            if (dq3_scene_input(cur, 0x4d)) {   /* 往右走 */
+                if (--enc <= 0) {
+                    mon = over_pool[grnd() % 4];
+                    fprintf(stderr, "--- 第 %d 步:遭遇怪 id%d! ---\n", steps+1, mon);
+                    oc = dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), "FFFFFFFF", NULL, grnd());
+                    fprintf(stderr, "    戰鬥結束 outcome=%d,回地表(重套 palette)\n", oc);
+                    dq3_scene_apply_palette(cur);   /* bug #8:回地表還原色盤 */
+                    enc = 6 + (int)(grnd() % 8);
+                    break;
+                }
+            }
+        }
+        fprintf(stderr, "=== 進城鎮 CTY00(換場 + 重套 palette)===\n");
+        town = dq3_town_load(assets, "CTY00.DAT", 0, 1, err, sizeof err);
+        if (town) { load_field_hero(town, assets); cur = town; dq3_scene_apply_palette(cur); }
+        dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        dq3_present();
+        if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "game -> %s OK\n", dump);
+        if (town) dq3_scene_free(town);
+        dq3_scene_free(field);
+        return 0;
+    }
+
+    /* 互動:方向走動 + 隨機遭遇;SPACE 進/出城鎮 */
+    while (!dq3_should_quit()) {
+        uint8_t sc;
+        dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        dq3_present();
+        sc = dq3_poll_scancode();
+        if (sc == 0x39) {                 /* SPACE:進/出城鎮 */
+            if (!in_town) {
+                town = dq3_town_load(assets, "CTY00.DAT", 0, 1, err, sizeof err);
+                if (town) { load_field_hero(town, assets); cur = town; in_town = 1; dq3_scene_apply_palette(cur); }
+            } else {
+                if (town) { dq3_scene_free(town); town = NULL; }
+                cur = field; in_town = 0; dq3_scene_apply_palette(cur);
+            }
+        } else if (sc == 0x48 || sc == 0x50 || sc == 0x4b || sc == 0x4d) {
+            int moved = dq3_scene_input(cur, sc);
+            if (moved && !in_town && --enc <= 0) {
+                int mon = over_pool[grnd() % 4];
+                dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), NULL, NULL, grnd());
+                dq3_scene_apply_palette(cur);   /* bug #8:戰後還原地表色盤 */
+                enc = 6 + (int)(grnd() % 8);
+            }
+        }
+        dq3_delay_ms(16);
+        (void)fx; (void)fy;
+    }
+    if (town) dq3_scene_free(town);
+    dq3_scene_free(field);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     const char *assets = (argc > 1) ? argv[1] : ".";
@@ -154,6 +238,8 @@ int main(int argc, char **argv)
         }
     } else if (strcmp(mode, "battle") == 0) {
         rc = run_battle(assets, dump);
+    } else if (strcmp(mode, "game") == 0) {
+        rc = run_game(assets, dump);
     } else {
         const char *title = (argc > 3) ? argv[3]
                           : (strcmp(mode, "title") == 0 ? "TITG.P" : mode);

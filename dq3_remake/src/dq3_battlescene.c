@@ -177,8 +177,8 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     { int i; for(i=0;i<en;i++) ehp[i]=ehpmax; }
     fprintf(stderr,"=== 遭遇 %s ×%d (HP%d atk%d def%d) ===\n", ms.exp?"怪物":"怪物", en, ehpmax, eatk, edef);
 
-    /* ---- headless 腳本 ---- */
-    if(dump){
+    /* ---- headless 腳本(script 驅動;dump 選擇性)---- */
+    if(script){
         const char *p = script;
         while(p && *p && outcome==0){
             int cmd = (*p=='R'||*p=='r')?1:(*p=='D'||*p=='d')?2:(*p=='I'||*p=='i')?3:0;
@@ -188,11 +188,16 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             p++;
             if(turn>50) break;
         }
-        render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0);
-        dq3_present();
-        if(dq3_dump_ppm(dump)==0)
-            fprintf(stderr,"battle scene -> %s (outcome=%d: %s)\n", dump, outcome,
+        if(dump){
+            render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0);
+            dq3_present();
+            if(dq3_dump_ppm(dump)==0)
+                fprintf(stderr,"battle scene -> %s (outcome=%d: %s)\n", dump, outcome,
+                        outcome==1?"勝":outcome==2?"敗":outcome==3?"逃":"續");
+        } else {
+            fprintf(stderr,"battle outcome=%d (%s)\n", outcome,
                     outcome==1?"勝":outcome==2?"敗":outcome==3?"逃":"續");
+        }
         dq3_monsters_free(&mons);
         return outcome;
     }

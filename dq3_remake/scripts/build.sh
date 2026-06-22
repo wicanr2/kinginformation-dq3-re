@@ -72,6 +72,13 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
   pnmtopng /tmp/battle.ppm > /repo/dq3_remake/battle.png 2>/dev/null || cp /tmp/battle.ppm /repo/dq3_remake/battle.png
   echo "=== battle headless dump OK ==="
 
+  # (1e) game 串接:地表走動→遭遇戰鬥→進城鎮(換場 + 重套 palette,bug #8)
+  echo "--- game: 地表→戰鬥→城鎮 ---"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/game.ppm \
+    /build/dq3_remake /repo/assets_raw game 2>&1 | sed "s/^/    /"
+  pnmtopng /tmp/game.ppm > /repo/dq3_remake/game.png 2>/dev/null || cp /tmp/game.ppm /repo/dq3_remake/game.png
+  echo "=== game headless dump OK ==="
+
   # (2) Xvfb:完整視窗路徑 + 截圖(timeout 包住,有界,不掛起)
   export DISPLAY=:99
   Xvfb :99 -screen 0 1280x720x24 >/tmp/xvfb.log 2>&1 &
