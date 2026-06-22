@@ -19,6 +19,7 @@
 #include "dq3_town.h"
 #include "dq3_scene.h"
 #include "dq3_battlescene.h"
+#include "dq3_text.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -200,6 +201,50 @@ static int run_game(const char *assets, const char *dump)
     return 0;
 }
 
+/* ---- text 模式:對話視窗渲染(CJK 字模)---- */
+static int pal_near2(const dq3_color *p,int n,int r,int g,int b){
+    int i,best=0; long bd=-1;
+    for(i=0;i<n;i++){ long dr=p[i].r-r,dg=p[i].g-g,db=p[i].b-b,d=dr*dr+dg*dg+db*db;
+        if(bd<0||d<bd){bd=d;best=i;} }
+    return best;
+}
+static int run_text(const char *assets, const char *dump)
+{
+    char err[256]={0};
+    dq3_color pal[256]; int pn;
+    uint8_t *raw; size_t rl;
+    dq3_text t;
+    const char *txt = getenv("DQ3_TXT") ? getenv("DQ3_TXT") : "D3TXT01.TXT";
+    int rec = getenv("DQ3_REC") ? atoi(getenv("DQ3_REC")) : 1;
+    int white, black, frame, bg;
+    uint8_t *fb = dq3_fb();
+    int wx=40, wy=200, ww=DQ3_SCREEN_W-80, wh=130;
+
+    raw=dq3_load_file("DQ3.PAL",&rl);
+    if(!raw){ fprintf(stderr,"DQ3.PAL\n"); return 7; }
+    pn=dq3_pal_decode(raw,rl,pal,256); free(raw); dq3_set_palette(pal,pn);
+    white=pal_near2(pal,pn,255,255,255); black=pal_near2(pal,pn,0,0,0);
+    frame=pal_near2(pal,pn,255,255,255); bg=pal_near2(pal,pn,16,16,32);
+
+    if(dq3_text_load(&t,assets,txt,err,sizeof err)!=0){ fprintf(stderr,"text: %s\n",err); return 7; }
+    fprintf(stderr,"%s 記錄數=%d,畫 rec %d\n", txt, t.n_records, rec);
+
+    /* 背景 + 對話視窗框 */
+    memset(fb,(uint8_t)black,(size_t)DQ3_SCREEN_W*DQ3_SCREEN_H);
+    { int r,c; for(r=0;r<wh;r++)for(c=0;c<ww;c++){ int yy=wy+r,xx=wx+c;
+        if(yy>=0&&yy<DQ3_SCREEN_H&&xx>=0&&xx<DQ3_SCREEN_W) fb[yy*DQ3_SCREEN_W+xx]=(uint8_t)bg; } }
+    { int c; for(c=0;c<ww;c++){ fb[wy*DQ3_SCREEN_W+wx+c]=(uint8_t)frame; fb[(wy+wh-1)*DQ3_SCREEN_W+wx+c]=(uint8_t)frame; }
+      int r; for(r=0;r<wh;r++){ fb[(wy+r)*DQ3_SCREEN_W+wx]=(uint8_t)frame; fb[(wy+r)*DQ3_SCREEN_W+wx+ww-1]=(uint8_t)frame; } }
+
+    dq3_text_draw_record(&t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12,
+                         (ww-24)/DQ3_GLYPH_PX, (wh-24)/DQ3_GLYPH_PX, rec, (uint8_t)white);
+
+    if(dump){ dq3_present(); if(dq3_dump_ppm(dump)==0) fprintf(stderr,"text -> %s OK\n",dump);
+        dq3_text_free(&t); return 0; }
+    while(!dq3_should_quit()){ dq3_poll_scancode(); dq3_present(); dq3_delay_ms(16); }
+    dq3_text_free(&t); return 0;
+}
+
 int main(int argc, char **argv)
 {
     const char *assets = (argc > 1) ? argv[1] : ".";
@@ -240,6 +285,8 @@ int main(int argc, char **argv)
         rc = run_battle(assets, dump);
     } else if (strcmp(mode, "game") == 0) {
         rc = run_game(assets, dump);
+    } else if (strcmp(mode, "text") == 0) {
+        rc = run_text(assets, dump);
     } else {
         const char *title = (argc > 3) ? argv[3]
                           : (strcmp(mode, "title") == 0 ? "TITG.P" : mode);

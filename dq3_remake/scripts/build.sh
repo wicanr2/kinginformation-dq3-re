@@ -79,6 +79,13 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
   pnmtopng /tmp/game.ppm > /repo/dq3_remake/game.png 2>/dev/null || cp /tmp/game.ppm /repo/dq3_remake/game.png
   echo "=== game headless dump OK ==="
 
+  # (1f) text 對話視窗:阿里阿罕 NPC 對話(CJK 字模)
+  echo "--- text: D3TXT01 rec 1 ---"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/text.ppm DQ3_TXT=D3TXT01.TXT DQ3_REC=1 \
+    /build/dq3_remake /repo/assets_raw text 2>&1 | sed "s/^/    /"
+  pnmtopng /tmp/text.ppm > /repo/dq3_remake/text.png 2>/dev/null || cp /tmp/text.ppm /repo/dq3_remake/text.png
+  echo "=== text headless dump OK ==="
+
   # (2) Xvfb:完整視窗路徑 + 截圖(timeout 包住,有界,不掛起)
   export DISPLAY=:99
   Xvfb :99 -screen 0 1280x720x24 >/tmp/xvfb.log 2>&1 &
