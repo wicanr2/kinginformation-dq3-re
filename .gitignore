@@ -28,6 +28,8 @@ tools/build/msc51_img/
 tools/build/msc/
 tools/build/*.obj
 tools/build/*.OBJ
+re/match/*.obj
+re/match/*.OBJ
 tools/build/*.ppm
 tools/build/*_view.png
 
