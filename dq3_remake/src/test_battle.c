@@ -38,6 +38,20 @@ int main(void)
     CHECK(dq3_battle_apply_damage(30,50)==0, "HP30 受50傷 → 0(不下溢)");
     CHECK(dq3_battle_apply_damage(100,30)==70, "HP100 受30傷 → 70");
 
+    printf("== 物理傷害公式 ==\n");
+    {
+        int dmin = dq3_battle_phys_damage(40,20,0,0);    /* base=20-5=15,[7,15] */
+        int dmax = dq3_battle_phys_damage(40,20,255,0);
+        int dcrit= dq3_battle_phys_damage(40,20,0,1);    /* atk/2=20 */
+        printf("  atk40 def20: roll0=%d roll255=%d crit=%d\n", dmin, dmax, dcrit);
+        CHECK(dmin>=7 && dmin<=dmax && dmax<=15, "一般傷害落在 [base/2,base]=[7,15]");
+        CHECK(dcrit==20, "會心一擊=atk/2=20(無視防禦)");
+        CHECK(dq3_battle_phys_damage(10,80,255,0) <= 3, "高防禦→弱攻(小傷害)");
+    }
+    printf("== 逃跑判定 ==\n");
+    CHECK(dq3_battle_flee_ok(50,0,0)==1, "高敏捷低抗性 roll0 → 逃成功");
+    CHECK(dq3_battle_flee_ok(0,100,250)==0, "低敏捷高抗性 roll250 → 逃失敗");
+
     printf("\n%s (%d failures)\n", g_fail?"== 有測試未通過 ==":"== 全部通過 ==", g_fail);
     return g_fail?1:0;
 }

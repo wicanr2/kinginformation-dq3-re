@@ -28,4 +28,14 @@ dq3_battle_outcome dq3_battle_resolve_buggy(const uint16_t *party_hp, const uint
 /* 套用傷害(uint16,夾在 0,不下溢)。 */
 uint16_t dq3_battle_apply_damage(uint16_t hp, int dmg);
 
+/* 物理傷害(DQ 風格,roll=0..255 決定變異;crit=會心一擊忽略防禦)。
+ * 註:精確 FC 公式待對 DOSBox 校準(docs/13),此為合理近似、確定性可測。
+ *   一般:base = atk/2 - def/4;傷害 ∈ [base/2, base]。
+ *   弱攻(base<1):傷害 ∈ [0, (atk+4)/6]。
+ *   會心:atk/2(無視防禦)。 */
+int dq3_battle_phys_damage(int atk, int def, int roll, int crit);
+
+/* 逃跑是否成功:party_agi 對 enemy_flee_resist + roll(0..255)。 */
+int dq3_battle_flee_ok(int party_agi, int enemy_flee_resist, int roll);
+
 #endif /* DQ3_BATTLE_H */

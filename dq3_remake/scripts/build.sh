@@ -64,10 +64,11 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
     cp /tmp/town1.ppm /repo/dq3_remake/town1.png
   echo "=== town headless dump OK ==="
 
-  # (1d) battle 戰鬥場景:史萊姆群(對 references/game3.png)
-  echo "--- battle: 史萊姆 ×6 ---"
-  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/battle.ppm DQ3_MON=5 DQ3_MON_N=6 \
-    /build/dq3_remake /repo/assets_raw battle
+  # (1d) battle 互動戰鬥:史萊姆×3,腳本「戰戰戰戰」打到結算
+  echo "--- battle: 史萊姆 ×3 腳本 FFFF ---"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/battle.ppm \
+    DQ3_MON=5 DQ3_MON_N=3 DQ3_BATTLE_SCRIPT="FFFFFFFF" DQ3_SEED=12345 \
+    /build/dq3_remake /repo/assets_raw battle 2>&1 | sed "s/^/    /"
   pnmtopng /tmp/battle.ppm > /repo/dq3_remake/battle.png 2>/dev/null || cp /tmp/battle.ppm /repo/dq3_remake/battle.png
   echo "=== battle headless dump OK ==="
 

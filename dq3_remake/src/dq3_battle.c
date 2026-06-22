@@ -39,3 +39,26 @@ uint16_t dq3_battle_apply_damage(uint16_t hp, int dmg)
     if (v < 0) v = 0;
     return (uint16_t)v;
 }
+
+int dq3_battle_phys_damage(int atk, int def, int roll, int crit)
+{
+    int base, lo, span, hi;
+    if (roll < 0) roll = 0; if (roll > 255) roll = 255;
+    if (crit) { int d = atk / 2; return d > 0 ? d : 1; }
+    base = atk / 2 - def / 4;
+    if (base < 1) {                       /* 弱攻:0..(atk+4)/6 */
+        hi = (atk + 4) / 6; if (hi < 1) hi = 1;
+        return (hi * roll) / 255;
+    }
+    lo = base / 2; span = base - lo;      /* [base/2, base] */
+    return lo + (span * roll) / 255;
+}
+
+int dq3_battle_flee_ok(int party_agi, int enemy_flee_resist, int roll)
+{
+    /* 逃跑成功門檻:agi 越高越易、敵抗性越高越難。roll 0..255。 */
+    int chance = 128 + party_agi - enemy_flee_resist * 2;
+    if (chance < 16) chance = 16;          /* 至少有低機率 */
+    if (chance > 240) chance = 240;
+    return roll < chance;
+}

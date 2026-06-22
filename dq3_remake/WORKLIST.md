@@ -36,7 +36,8 @@
 - [~] 戰鬥(優先 2,進行中):
   - [x] **怪物資料 + sprite 基礎**:`dq3_monster` 讀 D3MNS.DAT(130×41 數值)+ 解 DQ3MNS.SHP(offset 表 + plane-major,MNSBK.PAL,色0 透明)。單測:史萊姆 HP6/exp4、金屬 exp4140、sprite 48×39。
   - [x] **戰鬥場景繪製**:`main.c` battle 模式 — MNSBK.PAL + 怪群 sprite blit(透明)+ 天空/地面背景。實測史萊姆×6 對 references/game3.png 一致(藍天/綠地/6 隻藍史萊姆)。
-  - [ ] 遭遇生成(sub_a7d5:遭遇區→候選怪→點數預算生群)、戰鬥主迴圈(指令戰/逃/防/道具)、packbg 戰鬥背景解碼、戰鬥 HUD/敵名。
+  - [x] **互動戰鬥迴圈**(`dq3_battlescene`):遭遇怪群 + 指令選單(戰/逃/防/道具,游標)+ 回合執行(物理傷害公式 `dq3_battle_phys_damage`,會心一擊、防禦減半、逃跑判定)+ #1 正確結算 + 隊伍 HP 條 HUD。可互動(方向+Enter)可 headless 腳本(DQ3_BATTLE_SCRIPT)。實測史萊姆×3 FFFF→勝。
+  - [ ] 潤飾:指令/敵名/HP 用 CJK font 文字(dq3_font 已具備,接 D3TXT 字模);packbg 戰鬥背景解碼;遭遇生成 sub_a7d5(遭遇區→候選怪→點數預算);用復原 Ortega/Hydra 填 #3 空槽;傷害公式對 DOSBox 校準。
   - [ ] 用復原的 Ortega(128)/Hydra(129)sprite(tools/make_sprites.py)填空槽。
 
 ### 階段④ 7 bug 全修進 C(根因見 docs/18,20,22,23)

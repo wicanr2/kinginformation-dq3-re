@@ -27,6 +27,7 @@ add_executable(dq3_remake
     src/dq3_sprite.c
     src/dq3_monster.c
     src/dq3_battle.c
+    src/dq3_battlescene.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
