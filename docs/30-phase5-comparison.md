@@ -51,3 +51,17 @@ remake 戰鬥 HUD 依 `references/game3.png` 重排,結構一致:
 每 page 讀 0x6e00=28160 bytes = 320×176×4bit;row-interleaved 解碼在 640×88 時右半出現
 清楚雲層,320×176 則有掃描線交錯雜訊 —— 確切寬度/交錯方式待進一步實驗。目前 remake
 戰鬥天空為純藍(非雲),屬已知待補的視覺差異,不影響版面結構與互動。
+
+## packbg 戰鬥背景格式(結構已解,完整像素待底層模擬)
+
+反組譯 `load_packbg_page`(file 0xda55..0xdb48)解出 packbg 寫入 pipeline:
+- 開 PACKBG.SCR,`lseek` 到 `page*0x3d80 + page`(page 0x13 = 草原戰鬥背景)。
+- **3 趟 AND 合成**到 VRAM(`and es:[di],al`,Map Mask `out 0x3c4` 逐 plane ah 1→8):
+  - 趟1:0x58=88 row × 4 plane × 0x50=80 byte(640px 寬);di pitch 0x54=84/row。
+  - 趟2:0x9e=158 row(接續 di)。趟3:8 row。合計 254 row。
+- 緩衝為 **640 寬 row-interleaved planar**(每 row plane0/1/2/3 各 80 byte)。
+- **戰鬥背景隨地圖不同**:不同 page = 不同地形背景(已實證:page 0x13 解出右半=草原藍天白雲綠地、另一段=海洋大浪)。
+
+**待解**:3 趟都是 `AND`(非 MOV),代表是**疊在一個預先畫好的底層**上(load_packbg_page
+之前由別的 routine 繪底圖)。只解 buffer 本身 → 右半雲層清楚但左緣殘留(底層缺失)。
+完整像素需連底層 routine 一起模擬。工具:`tools/packbg_probe*.py`(右半草原/海洋可見)。
