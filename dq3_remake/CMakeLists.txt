@@ -31,6 +31,7 @@ add_executable(dq3_remake
     src/dq3_text.c
     src/dq3_packbg.c
     src/dq3_exedata.c
+    src/dq3_dialogue.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)

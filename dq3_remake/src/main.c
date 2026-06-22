@@ -20,6 +20,7 @@
 #include "dq3_scene.h"
 #include "dq3_battlescene.h"
 #include "dq3_text.h"
+#include "dq3_dialogue.h"
 #include "dq3_exedata.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,17 +142,31 @@ static int field_bg_page(const dq3_scene *s)
     return T2BG[terr & 7];
 }
 
+/* 前方 tile 的物件事件碼(內建 dq3x_event;0xff=無)。facing:0下1左2上3右。 */
+static int front_tile_event(const dq3_scene *s)
+{
+    int dx=0,dy=0,fx,fy,tile;
+    switch (s->facing){ case 0:dy=1;break; case 1:dx=-1;break; case 2:dy=-1;break; case 3:dx=1;break; }
+    fx=s->px+dx; fy=s->py+dy;
+    if (fx<0||fy<0||fx>=s->map_w||fy>=s->map_h) return 0xff;
+    tile = s->index_map[fy*s->map_w+fx];
+    return dq3x_event[tile&0xff][0];
+}
+
 static int run_game(const char *assets, const char *dump)
 {
     char err[256] = {0};
     dq3_scene *field, *town = NULL, *cur;
     int in_town = 0, enc, fx = 0, fy = 0;
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
+    dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1;
 
     field = dq3_field_load(assets, err, sizeof err);
     if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
     load_field_hero(field, assets);
     cur = field; dq3_scene_apply_palette(cur);
+    /* 對話文字(阿里阿罕 = D3TXT01) */
+    dlg_ok = (dq3_dialogue_load(&dlg, assets, "D3TXT01.TXT", err, sizeof err) == 0);
     enc = 6 + (int)(grnd() % 8);
 
     if (dump) {
@@ -175,20 +190,35 @@ static int run_game(const char *assets, const char *dump)
         town = dq3_town_load(assets, "CTY00.DAT", 0, 1, err, sizeof err);
         if (town) { load_field_hero(town, assets); cur = town; dq3_scene_apply_palette(cur); }
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        /* demo:在城鎮開一段對話(D3TXT01 rec 1)疊在場景上 */
+        if (dlg_ok && dq3_dialogue_open(&dlg, 1) == 0) {
+            fprintf(stderr, "=== 對話 D3TXT01 rec1(疊在城鎮)===\n");
+            dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        }
         dq3_present();
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "game -> %s OK\n", dump);
+        if (dlg_ok) dq3_dialogue_free(&dlg);
         if (town) dq3_scene_free(town);
         dq3_scene_free(field);
         return 0;
     }
 
-    /* 互動:方向走動 + 隨機遭遇;SPACE 進/出城鎮 */
+    /* 互動:方向走動 + 隨機遭遇;SPACE 進/出城鎮;Enter 對話(前方有事件時)。 */
     while (!dq3_should_quit()) {
         uint8_t sc;
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        if (dlg_ok && dq3_dialogue_is_open(&dlg))
+            dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         sc = dq3_poll_scancode();
-        if (sc == 0x39) {                 /* SPACE:進/出城鎮 */
+        if (dlg_ok && dq3_dialogue_is_open(&dlg)) {
+            if (sc == 0x1c || sc == 0x39) dq3_dialogue_advance(&dlg);  /* Enter/Space 翻頁/關閉 */
+        } else if (sc == 0x1c) {            /* Enter:查前方事件 → 起對話 */
+            if (dlg_ok && front_tile_event(cur) != 0xff) {
+                dq3_dialogue_open(&dlg, dlg_rec);
+                dlg_rec = dlg_rec + 1; if (dlg_rec >= dlg.txt.n_records) dlg_rec = 1;
+            }
+        } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
                 town = dq3_town_load(assets, "CTY00.DAT", 0, 1, err, sizeof err);
                 if (town) { load_field_hero(town, assets); cur = town; in_town = 1; dq3_scene_apply_palette(cur); }
@@ -197,7 +227,7 @@ static int run_game(const char *assets, const char *dump)
                 cur = field; in_town = 0; dq3_scene_apply_palette(cur);
             }
         } else if (sc == 0x48 || sc == 0x50 || sc == 0x4b || sc == 0x4d) {
-            int moved = dq3_scene_input(cur, sc);
+            int moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
             if (moved && !in_town && --enc <= 0) {
                 int mon = over_pool[grnd() % 4];
                 dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), NULL, NULL, grnd());
@@ -208,6 +238,7 @@ static int run_game(const char *assets, const char *dump)
         dq3_delay_ms(16);
         (void)fx; (void)fy;
     }
+    if (dlg_ok) dq3_dialogue_free(&dlg);
     if (town) dq3_scene_free(town);
     dq3_scene_free(field);
     return 0;
