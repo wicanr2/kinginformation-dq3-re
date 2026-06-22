@@ -1,0 +1,9 @@
+# 中間 build 產物
+build/
+# headless 驗證輸出(含版權畫面像素,不公開)
+*.ppm
+*.png
+
+build/
+titg*.png
+titg*.ppm
