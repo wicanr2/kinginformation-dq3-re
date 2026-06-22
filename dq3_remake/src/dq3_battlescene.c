@@ -18,7 +18,11 @@ static unsigned g_rng;
 static unsigned rnd(void){ g_rng^=g_rng<<13; g_rng^=g_rng>>17; g_rng^=g_rng<<5; return g_rng; }
 static int roll255(void){ return (int)(rnd() & 0xff); }
 
-typedef struct { const char *name; int hp, maxhp, atk, def, agi, defending; } member;
+typedef struct {
+    const char *dbg;           /* stderr 用 */
+    uint16_t name[4]; int name_len; uint16_t cls;   /* 職業名 glyph + 單字職業 glyph */
+    int hp, maxhp, mp, maxmp, level, atk, def, agi, defending;
+} member;
 
 static int sky_idx, ground_idx, white_idx, red_idx, green_idx, black_idx;
 static dq3_text g_txt; static int g_txt_ok;
@@ -55,12 +59,17 @@ static void rect_border(uint8_t*fb,int x,int y,int w,int h,uint8_t c){
 static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int en,
                    const member*party, int cursor, int show_menu, int monster_id)
 {
+    /* 版面對齊 references/game3.png:上方狀態列、中間綠地怪群、下方左指令/右敵名。
+     * 天空(雲)0..GBAND_TOP、綠地帶 GBAND_TOP..GBAND_BOT、黑底 GBAND_BOT..底。 */
+    const int GBAND_TOP = 196, GBAND_BOT = 248;
     int i;
-    for(i=0;i<DQ3_SCREEN_H;i++)
-        memset(fb+(size_t)i*DQ3_SCREEN_W, (i<GROUNDY)?(uint8_t)sky_idx:(uint8_t)ground_idx, DQ3_SCREEN_W);
-    /* 怪群(死的不畫)*/
+    for(i=0;i<DQ3_SCREEN_H;i++){
+        uint8_t c = (i<GBAND_TOP)?(uint8_t)sky_idx : (i<GBAND_BOT)?(uint8_t)ground_idx : (uint8_t)black_idx;
+        memset(fb+(size_t)i*DQ3_SCREEN_W, c, DQ3_SCREEN_W);
+    }
+    /* 怪群:站在綠地帶上(死的不畫)*/
     for(i=0;i<en;i++){
-        int gx=(DQ3_SCREEN_W*(i+1))/(en+1)-spr->w/2, gy=GROUNDY-spr->h-6, r,c;
+        int gx=(DQ3_SCREEN_W*(i+1))/(en+1)-spr->w/2, gy=GBAND_BOT-spr->h-2, r,c;
         if(ehp[i]<=0) continue;
         for(r=0;r<spr->h;r++)for(c=0;c<spr->w;c++){
             int yy=gy+r,xx=gx+c;
@@ -68,40 +77,45 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
                 fb[yy*DQ3_SCREEN_W+xx]=spr->px[r][c];
         }
     }
-    /* 敵名(D3TXT00 rec 0x258+id),畫在怪群上方 */
-    if(g_txt_ok){
-        int nx=DQ3_SCREEN_W/2-48, ny=10;
-        fillrect(fb,nx-8,ny-4,160,24,(uint8_t)black_idx);
-        dq3_text_draw_record(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,nx,ny,9,1,0x258+monster_id,(uint8_t)white_idx);
-    }
-    /* 隊伍 HUD:下方 4 框 + HP 條 + HP 數字 */
+    /* ── 上方隊伍狀態列(4 員:名 / H+HP / M+MP / 職業+等級)── */
     {
-        int bx0=8, by=DQ3_SCREEN_H-70, bw=120, bh=58, gap=10;
+        int sx=116, sy=4, sw=408, sh=72, colw=sw/PARTY;
+        fillrect(fb,sx,sy,sw,sh,(uint8_t)black_idx);
+        rect_border(fb,sx,sy,sw,sh,(uint8_t)white_idx);
         for(i=0;i<PARTY;i++){
-            int x=bx0+i*(bw+gap);
-            fillrect(fb,x,by,bw,bh,(uint8_t)black_idx);
-            rect_border(fb,x,by,bw,bh,(uint8_t)white_idx);
-            draw_number(fb,x+8,by+6,party[i].hp,(uint8_t)(party[i].hp>0?white_idx:red_idx));
-            {
-                int hpw=bw-16, fillw = party[i].maxhp>0 ? hpw*party[i].hp/party[i].maxhp : 0;
-                if(fillw<0)fillw=0; if(fillw>hpw)fillw=hpw;
-                fillrect(fb,x+8,by+bh-14,hpw,8,(uint8_t)white_idx);
-                fillrect(fb,x+8,by+bh-14,fillw,8,(uint8_t)(party[i].hp>0?green_idx:red_idx));
-            }
-            if(party[i].hp<=0) rect_border(fb,x,by,bw,bh,(uint8_t)red_idx);
+            int cx=sx+6+i*colw, fg = party[i].hp>0?white_idx:red_idx;
+            draw_glyphs(fb,cx,sy+2, party[i].name, party[i].name_len, (uint8_t)white_idx);
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,sy+18,22,(uint8_t)fg);      /* H */
+            draw_number(fb,cx+18,sy+18, party[i].hp, (uint8_t)fg);
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,sy+34,27,(uint8_t)white_idx); /* M */
+            draw_number(fb,cx+18,sy+34, party[i].mp, (uint8_t)white_idx);
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,sy+50,party[i].cls,(uint8_t)white_idx);
+            draw_number(fb,cx+18,sy+50, party[i].level, (uint8_t)white_idx);
         }
     }
-    /* 指令選單(左下 4 格:戰鬥/逃跑/防禦/道具 CJK),游標高亮 */
+    /* ── 下方左:指令選單(角色名 + 2 欄 戰鬥/逃跑/防禦/道具 + ► 游標)── */
     if(show_menu){
-        int mx=8,my=GROUNDY+8,mw=86,mh=22;
-        const uint16_t *labels[4]={CMD_WAR,CMD_FLEE,CMD_DEF,CMD_ITEM};
+        int mx=120,my=GBAND_BOT+8,mw=150,mh=92;
+        const uint16_t *col1[4]={CMD_WAR,CMD_FLEE,CMD_DEF,CMD_ITEM};
+        int lead=0; while(lead<PARTY && party[lead].hp<=0) lead++;
+        fillrect(fb,mx,my,mw,mh,(uint8_t)black_idx);
+        rect_border(fb,mx,my,mw,mh,(uint8_t)white_idx);
+        if(lead<PARTY) draw_glyphs(fb,mx+44,my+4, party[lead].name, party[lead].name_len, (uint8_t)white_idx);
         for(i=0;i<4;i++){
-            int y=my+i*(mh+4);
-            fillrect(fb,mx,y,mw,mh,(uint8_t)black_idx);
-            rect_border(fb,mx,y,mw,mh,(uint8_t)(i==cursor?white_idx:ground_idx));
-            draw_glyphs(fb,mx+24,y+3,labels[i],2,(uint8_t)white_idx);
-            if(i==cursor) draw_glyphs(fb,mx+4,y+3,(const uint16_t[]){0x76},1,(uint8_t)white_idx); /* ▶ 游標(glyph 0x76 ~ 箭頭) */
+            int y=my+24+i*16;
+            if(i==cursor) dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,mx+8,y,0x77,(uint8_t)white_idx); /* ★/▶ 游標 */
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,mx+28,y,col1[i][0],(uint8_t)white_idx);
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,mx+72,y,col1[i][1],(uint8_t)white_idx);
         }
+    }
+    /* ── 下方右:敵名 + 數量 ── */
+    if(g_txt_ok){
+        int ex=290,ey=GBAND_BOT+14,ew=250,eh=36, alive=0;
+        for(i=0;i<en;i++) if(ehp[i]>0) alive++;
+        fillrect(fb,ex,ey,ew,eh,(uint8_t)black_idx);
+        rect_border(fb,ex,ey,ew,eh,(uint8_t)white_idx);
+        dq3_text_draw_record(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,ex+12,ey+8,12,1,0x258+monster_id,(uint8_t)white_idx);
+        draw_number(fb,ex+ew-40,ey+8, alive, (uint8_t)white_idx);
     }
 }
 
@@ -128,7 +142,7 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
     } else if(cmd==3){ /* 道具:簡化為治療帶頭存活者 */
         int t=pick_alive_party(party);
         if(t>=0){ int heal=30; party[t].hp+=heal; if(party[t].hp>party[t].maxhp)party[t].hp=party[t].maxhp;
-            fprintf(stderr,"  %s 使用藥草,回復 %d。\n", party[t].name, heal); }
+            fprintf(stderr,"  %s 使用藥草,回復 %d。\n", party[t].dbg, heal); }
     } else { /* 戰:每位存活成員打一隻敵人 */
         for(i=0;i<PARTY;i++){
             int e,crit,dmg;
@@ -137,7 +151,7 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
             crit=(roll255()<8);  /* ~1/32 會心 */
             dmg=dq3_battle_phys_damage(party[i].atk, edef, roll255(), crit);
             ehp[e]-= dmg; if(ehp[e]<0)ehp[e]=0;
-            fprintf(stderr,"  %s 攻擊敵%d%s,造成 %d 傷害%s\n", party[i].name, e,
+            fprintf(stderr,"  %s 攻擊敵%d%s,造成 %d 傷害%s\n", party[i].dbg, e,
                     crit?"(會心一擊!)":"", dmg, ehp[e]==0?" — 擊倒!":"");
         }
     }
@@ -151,7 +165,7 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
         dmg=dq3_battle_phys_damage(eatk, party[t].def, roll255(), roll255()<8);
         if(party[t].defending) dmg/=2;
         party[t].hp = (int)dq3_battle_apply_damage((uint16_t)party[t].hp, dmg);
-        fprintf(stderr,"  敵%d 攻擊 %s,造成 %d 傷害%s\n", i, party[t].name, dmg,
+        fprintf(stderr,"  敵%d 攻擊 %s,造成 %d 傷害%s\n", i, party[t].dbg, dmg,
                 party[t].hp==0?" — 倒下!":"");
     }
     /* #1 正確結算:我方全滅(含倒下)→ 敗 */
@@ -172,10 +186,11 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     char err[256]={0};
     int cursor=0, outcome=0, turn=0;
     member party[PARTY] = {
-        { "勇者",   35,35, 22,10,12, 0 },
-        { "戰士",   40,40, 26,14, 8, 0 },
-        { "僧侶",   28,28, 15,10,10, 0 },
-        { "魔法使者",22,22, 11, 6,11, 0 },
+        /* dbg, name[],len,cls,  hp,maxhp,mp,maxmp,level,atk,def,agi,def */
+        { "勇者",   {106,187},    2, 106, 35,35,  9, 9,1, 22,10,12, 0 },
+        { "武鬥家", {108,207,657},3, 108, 40,40,  0, 0,1, 26,14, 8, 0 },
+        { "僧侶",   {109,704},    2, 109, 28,28, 10,10,1, 15,10,10, 0 },
+        { "魔法師", {110,208,822},3, 110, 22,22, 11,11,1, 11, 6,11, 0 },
     };
 
     g_rng = seed ? seed : 0x1234567u;
