@@ -1,0 +1,60 @@
+{
+  "source_exe": "assets_raw/DQ3.EXE",
+  "exe_size": 115282,
+  "hdr": 4976,
+  "hdr_hex": "0x1370",
+  "note": "精訊版 DQ3 道具特效修正 (bugs.md #7)。本檔承接 docs/18 對 #7 的定位,聚焦『能不能用 binary patch 補上隼劍雙擊 / 魔甲抗魔 / 祈禱戒指損壞』。結論:#7a 可用『同長度區段改寫 + 復用 EXE 既有的 re-attack 機制』達成(無需獨立 code cave);#7b 需裝備掃描迴圈 → 無安全 code cave 可放,留 C 層 / SDL2;#7c 反組譯確認損壞邏輯本就存在 (~25%),不需 patch。產生器 tools/re_codecave_patch.py → work/DQ3_item_fixed.EXE。分析見 docs/22-item-fix.md。",
+  "codecave_survey": {
+    "result": "no_usable_resident_cave",
+    "detail": "resident seg0 (file 0x1370..0x12000) 連續 NOP 最長僅 6 byte (f00a40f),其餘 padding 多為 3 byte 函式間隔,不足以放新迴圈。檔內大型 0 區 (file 0x16ca1 len 6578、file 0x189c9 len 3473) 位於 seg-0x1000 group 的 overlay 資料段 (字串表 / 資料表旁),非固定 CS 可執行區,且 e_minalloc=0 → runtime 大緩衝 (sprite buf seg 0x1e8b、txt seg 0x0f4f) 由程式向 DOS 配置在 image 之上,並非落在這些 0 區。因此沒有『可執行、固定段、戰鬥全程不被覆寫』的 in-EXE code cave。改採『改寫既有判定區、復用原碼既有路徑』策略 (見 #7a)。",
+    "longest_nop_run": {"file_offset_hex": "0xa40f", "len": 6}
+  },
+  "official_patch_check": {
+    "source": "references/勇者鬥惡龍3:傳說的終章.html / 修改:DQ3.EXE",
+    "count": 8,
+    "covers_item_effects": false,
+    "detail": "官方 8 段 EXE patch 為:1.聲霸卡防當 2.魔王打不死 3.敵人消失 4.五頭龍當機 5.某些機器當機 6.穿牆 7.致命一擊 8.生命不減。均無隼劍雙擊 / 魔甲抗魔 / 祈禱戒指損壞 → 印證 #7 屬『功能未實作』,當年社群亦無對應修正碼。"
+  },
+  "patches": [
+    {
+      "bug": "7a",
+      "name": "隼劍(飛鷹劍 item 0x6e)雙擊",
+      "kind": "in-place-region-rewrite",
+      "file_offset": 49658,
+      "file_offset_hex": "0xc1fa",
+      "seg0_hex": "0xae8a",
+      "region_len": 25,
+      "orig_bytes": "803efe24007403e9f1008b36a9248a4c16f6c1107503e9e200",
+      "new_bytes": "803efe240075118b1e9c254bd1e38bb7154f807c3a6e7401c3",
+      "confidence": "high",
+      "asm_new": [
+        "cmp byte [0x24fe],0      ; 第二擊旗標;非0=已打過第二擊",
+        "jne 0xc212              ; 已第二擊 -> ret (不打第三擊)",
+        "mov bx,[0x259c]         ; 攻擊者 1-based index",
+        "dec bx",
+        "shl bx,1               ; (idx-1)*2",
+        "mov si,[bx+0x4f15]     ; 攻擊者隊員實體指標",
+        "cmp byte [si+0x3a],0x6e ; 首格裝備(武器) == 飛鷹劍?",
+        "je 0xc213              ; 是 -> 落入既有 re-attack 區塊(重印攻擊訊息+再次計傷)",
+        "ret                    ; 否則結束本次攻擊"
+      ],
+      "mechanism": "復用 EXE 既有的 re-attack 路徑:原碼於 file 0xc1fa 判 [0x24fe]==0 且 防方 [0x24a9].[+0x16]&0x10 時,經 0xc213 區塊(mov [0x24fe],1 -> 重設 -> jmp 0xbf97 重入攻擊 handler)再打一次。原觸發條件(防方 HP 低位元 bit4)語意可疑、形同未接線的多段攻擊機制。本 patch 把觸發條件改成『攻擊者武器==飛鷹劍 0x6e』,讓飛鷹劍正確觸發第二擊;[0x24fe] 旗標仍由 0xc213 區塊設 1,確保只打兩擊不無限迴圈。",
+      "notes": "FINISH(0xc2f5)實為一個 c3(ret),故失敗路徑直接以 1-byte ret 結束,省下原 far jmp 的 2 byte,使新碼剛好 25 byte fit。攻擊訊息『XX的攻擊!』與傷害計算皆在 re-attack 重入路徑內,故第二擊會完整顯示+計傷。武器旗標式偵測(item +5 bit7=0xc0)更通用,但需 ITEM.DAT 段指標查表;此處採直接比對 item code 0x6e,最小改動。"
+    }
+  ],
+  "not_patched_need_c_layer": [
+    {
+      "bug": "7b",
+      "name": "魔法鎧甲(item 0x2b)抗魔",
+      "confidence": "high-rootcause",
+      "reason": "受咒文傷害減免需在咒文扣血路徑(file 0xc22e..)掃描受方 8 格裝備(+0x3a stride2)找魔甲 0x2b 再打折。裝備非固定槽位 → 必須一個 loop;咒文扣血區為密集 live 碼,無 25 byte 等量可改寫區,且 resident seg0 無安全 code cave 可放迴圈。硬塞會破壞咒文傷害公式或越界,風險高 → 留 C 層 / SDL2 重寫(於咒文傷害套用前呼叫 magic_resist(target) 打折)。",
+      "code_anchor": {"spell_damage_path_hex": "0xc22e", "defender_struct_reg": "di", "side_flag": "[0xd75]&2==0 表受方為我方"}
+    },
+    {
+      "bug": "7c",
+      "name": "祈禱之戒(item 0x48)損壞",
+      "confidence": "high-conflict",
+      "reason": "反組譯 file 0x5af4 確認損壞邏輯存在且生效:call RNG(0xfa29)-> cmp al,0x40 -> al<=0x40(~25.4%)即印『戒指壞了』(di=0x188)並 call 0x5b0c 掃 8 格裝備移除 item 0x48。與青衫『永遠不會用壞』前提衝突。不需 patch;建議 DOSBox 反覆使用統計實際破壞率佐證。"
+    }
+  ]
+}
