@@ -38,9 +38,10 @@
 - [x] **#5 高等級升級錯亂**:`dq3_stats_level_for_exp(fixed)` clamp level≤43。單測:原版越界連升到 99、修正版夾 43。(binary patch 因 code cave≤8B 做不到,C 層單行 if)
 - [x] **#6 數值 255 溢位**:`dq3_stats_add_clamped` 用 uint16 + 顯式 clamp(9999)。單測:200+100 原版 byte wrap=44、修正=300。
 - [x] 三者以 `dq3_stats_test` 決定性單元測試驗證(build.sh 整合,全通過);資料從使用者 DQ3.EXE 讀,不入 git。
-- [ ] **#7a 隼劍雙擊**(C 正確實作第二擊;原版機制存在但觸發條件接錯位元)
-- [ ] **#7b 魔法鎧甲抗魔**(C 端咒文扣血掃裝備找魔甲 0x2b→減半/抵抗;原版從不讀此旗標)
-- [ ] #7c 祈禱之戒:原版本就會壞(~25%),保持即可
+- [x] **#7a 隼劍雙擊**:`dq3_combat_num_attacks` 依武器 +5 bit7 決定 2 次(通用,非寫死 0x6e)。單測:飛鷹劍 2 次、普通劍 1 次。
+- [x] **#7b 魔法鎧甲抗魔**:`dq3_combat_spell_damage` 掃 8 格裝備 +6 bit2,命中減半。單測:魔甲 80→40、無魔甲 80。(binary patch 因需掃描迴圈+無 cave 做不到,C 層完成)
+- [x] #7a/#7b 以 `dq3_combat_test` 決定性單測驗證;ITEM.DAT(128×7)從使用者 DQ3.EXE 旁讀,不入 git。
+- [ ] #7c 祈禱之戒:原版本就會壞(~25%),保持即可(不需修)
 
 ### 階段⑤ oracle 驗證 + 打包
 - [ ] DOSBox 原版 vs remake **逐畫面比對一模一樣**(bug 場景=修正後正確行為);用 `tools/dosbox*` 截原版、remake headless 截圖比對。

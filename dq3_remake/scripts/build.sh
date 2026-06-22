@@ -23,7 +23,8 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
   # 數值/升級系統單元測試(#4/#5/#6 修正驗證;非 0 即失敗)
   echo "--- 數值系統單元測試 ---"
   /build/dq3_stats_test /repo/assets_raw || { echo "stats test FAILED"; exit 1; }
-  echo "=== stats test OK ==="
+  /build/dq3_combat_test /repo/assets_raw || { echo "combat test FAILED"; exit 1; }
+  echo "=== unit tests OK ==="
 
   # (1) dummy:解碼驗證 → PPM
   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy DQ3_DUMP=/tmp/titg.ppm \

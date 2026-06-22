@@ -23,15 +23,20 @@ add_executable(dq3_remake
     src/dq3_field.c
     src/dq3_town.c
     src/dq3_stats.c
+    src/dq3_combat.c
 )
 
-# 數值/升級系統單元測試(不依賴 SDL2,純邏輯;示範 #4/#5/#6 修正)
+# 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
 add_executable(dq3_stats_test src/dq3_stats.c src/test_stats.c)
 target_include_directories(dq3_stats_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_combat_test src/dq3_combat.c src/test_combat.c)
+target_include_directories(dq3_combat_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(MSVC)
     target_compile_options(dq3_stats_test PRIVATE /W3)
+    target_compile_options(dq3_combat_test PRIVATE /W3)
 else()
     target_compile_options(dq3_stats_test PRIVATE -Wall -Wextra)
+    target_compile_options(dq3_combat_test PRIVATE -Wall -Wextra)
 endif()
 
 target_include_directories(dq3_remake PRIVATE
