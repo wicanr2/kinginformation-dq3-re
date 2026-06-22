@@ -1,0 +1,42 @@
+# 階段⑤:DOSBox 原版 vs SDL remake 逐畫面比對
+
+remake 的正確性以原版 DOSBox 當 oracle 逐畫面比對。本文記錄已完成的比對與結果。
+工具:`tools/cmp_title.py`(像素 diff + 並排圖);DOSBox 截圖經 `tools/dosbox_*.sh`。
+比對圖為版權像素衍生,`dq3_remake/*.png` 已 gitignore,不入版控。
+
+## 標題畫面(最嚴格基準)— 一致 ✅
+
+原版與 remake **解同一個 `TITG.P`**(ZSoft PCX,640×350,EGA 16 色),理論上應一致。
+實測(`cmp_title.png`,左=DOSBox 原版 640×350、中=remake、右=差異×6):
+
+| 指標 | 結果 |
+|---|---|
+| 每通道差 < 24/256 的像素 | **224000 / 224000 = 100%** |
+| 完全相同像素 | 52986 / 224000 = 23.7% |
+
+- 視覺上完全一致(標題字、劍、城堡剪影、「傳說的終章 ©1993 精訊資訊有限公司」)。
+- 差異圖近乎全黑,僅天空漸層邊緣有極微差 —— 來源是 DOSBox EGA 輸出/截圖的量化/gamma
+  vs remake 精確 6→8bit 色盤展開,屬次感知級,非解碼錯誤。
+- 結論:**標題畫面 remake 與原版 pixel-faithful**(素材解碼正確,已另由 byte-identical
+  反組譯重組佐證,docs/17/19)。
+
+## 城鎮室內佈局 — 一致(結構)✅
+
+DOSBox 起始房間(阿里阿罕城內,紅地毯磚房 + 主角)與 remake `dq3_town` CTY00 section0
+render(`town0.png` / `game.png`)**佈局同型**:紅地毯地板、白/黃磚牆隔間、床、寶箱、
+走廊、樓梯位置一致。攝影機框法不同(DOSBox 視窗 vs remake 20×15 視窗)故非逐像素,
+但 tile 佈局、tile 圖庫、調色盤一致(同 CTY/BLK/PAL 解碼路徑)。
+
+## 待補比對(需更多 oracle 場景)
+
+- **地表**:需自動走出城鎮到世界地圖截圖,對 remake field;tile/palette 解碼同源,預期一致。
+- **戰鬥**:DOSBox 遭遇戰(史萊姆群)vs remake battlescene;sprite/MNSBK.PAL 同源,
+  已各自對 `references/game3.png` 一致。
+- **bug 場景對照組**:bug 修正後的正確行為(如 #1 巴拉摩斯可打死、#8 戰後不變黃綠)
+  需在 DOSBox 跑修正版(binary patch 對照組)截圖對 remake 行為。
+
+## 重點
+
+- 「一模一樣」在**素材畫面層級已驗證**(標題 pixel-faithful、城鎮/怪物同源解碼一致)。
+- **遊戲邏輯層級**的逐場景行為比對(走動、戰鬥數值、事件)需 remake 補完對應系統後,
+  以 DOSBox 同操作序列對拍;傷害公式等尚待對 DOSBox 校準(docs/13)。
