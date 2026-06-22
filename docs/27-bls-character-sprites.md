@@ -52,3 +52,16 @@ body(檔首 +6 起)以 **384 byte / 32×24、4-bit plane-major** 切片即可 re
 3. 取代 remake scene 的佔位方框。
 
 在此之前,remake 以佔位方框代表玩家(誠實標示未定稿),不貼上色不正確的 sprite。
+
+## 後續發現(對照 DOSBox oracle,docs/29)
+
+oracle 截到地表/城鎮主角為**小 sprite(~16px、透明底)**,金盔/髮 + 藍衣 + 膚色。據此再驗:
+
+- **16 寬(w_bytes=2)重解 16×24/16×16**(`tools/bls_probe3.py`):糊掉,非乾淨單隻 → 不是單純 16 寬平面排列。
+- **32×24 掃 plane 順序 × palette 視窗**(`tools/bls_probe4.py`,MNSBK 10 個 16 色窗 + DQ3 窗):
+  角色頭像始終清楚,但**背景恆為填色(非透明),不隨視窗變透明**。
+- 研判:**DQ3MAN.BLS 的 32×24 sprite 較可能是戰鬥/選單用的「大角色圖(帶底)」,
+  不是地表那種 16px 透明走路 sprite**。地表小走路 sprite 來源另在他處,候選:
+  `DQ3MST.BLS`(115KB)/ `DQ3LIN.BLS`(46KB)/ BLK tile 某段 / 分頁小 sprite 段。
+- 下一步:反組譯地表場景的「玩家 sprite blit」呼叫(找讀取的段/檔與 sprite 編號),
+  定位小走路 sprite 真正來源 + 子調色盤;以 oracle 畫面(`tools/oracle_crop_hero.py` 裁出)為基準校正。
