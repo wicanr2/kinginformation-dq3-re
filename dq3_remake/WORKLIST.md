@@ -11,6 +11,10 @@
 - **RE 正確性鐵證**:整檔反組譯→nasm 重組 **sha256==原版(byte-identical 100%)**(docs/17)。編譯器=MSC 5.x(docs/19)。
 - **bug 對照組(a)**:binary patch 修正版 5/7(#1/2/3/4/7a 修、#7c 不需、#5/6/7b 留 C),DOSBox 驗無回歸(docs/18,20);完整遊戲包 `work/dq3_fixed_v1.zip`(本機,不公開)。
 - **remake 地基(階段①)✅**:`dq3_remake/` SDL2 骨架編譯成功,headless 解 `TITG.P` 顯示標題正確(`scripts/build.sh`)。
+- **remake 階段② 進行中**:
+  - `dq3_scene` 場景核心(攝影機/tile 貼圖/bit0 碰撞/走動)+ `dq3_field`(地表)/`dq3_town`(城鎮 CTY)薄載入器。headless 驗證走動+碰撞+捲動正確。
+  - `DQ3MAN.BLS` 角色 sprite 空間格式破解(384B/32×24/plane3-first,docs/27);色彩/真主角待 DOSBox oracle 校(暫用佔位框)。
+- **remake 階段④ C 層 bug 修正 ✅(可單測者)**:`dq3_stats`(#4/#5/#6)+ `dq3_combat`(#7a/#7b),各附決定性單元測試(`dq3_stats_test`/`dq3_combat_test`,build.sh 整合全通過)。#1/#2/#3 屬戰鬥/事件邏輯,根因+修正值已記錄,移植該系統時依正確值寫入即修復。
 
 ## dq3_remake 剩餘 worklist
 
@@ -31,9 +35,9 @@
 - [ ] 戰鬥(re/battle.c:遭遇 sub_bd97→主迴圈 sub_bddf;怪物 D3MNS.DAT 130×41B、sprite DQ3MNS.SHP+MNSBK.PAL;指令戰/逃/防/道具)。**用復原的 Ortega(128)/Hydra(129)sprite**(tools/make_sprites.py)。
 
 ### 階段④ 7 bug 全修進 C(根因見 docs/18,20,22,23)
-- [ ] #1 巴拉摩斯打不死(勝負判定參照欄)
-- [ ] #2 彩虹水滴卡關(合成成品 item code 銀寶珠→彩虹水滴)
-- [ ] #3 九頭龍/歐里狄加當機(sprite 已復原,C 端確保 blit guard)
+- [~] #1 巴拉摩斯打不死(勝負判定累積值 clamp 參照欄 +0x2336→+0x2334):根因/修正值已記錄(docs/18),屬戰鬥結算邏輯,移植 re/battle.c 結算時依正確欄位寫入即修復(非獨立公式,無法單測)。
+- [~] #2 彩虹水滴卡關(合成成品 item code 0x6b 銀寶珠→0x75 彩虹水滴):根因/修正值已記錄(docs/18),屬合成事件 handler,移植事件系統時產出 0x75 即修復。
+- [~] #3 九頭龍/歐里狄加當機(缺 sprite):sprite 已復原(tools/make_sprites.py,id128/129),移植戰鬥繪製時用復原 sprite + blit guard 即修復。
 - [x] **#4 勇者 MaxMP 成長偏低**:`dq3_stats` 從 DQ3.EXE 讀成長表,勇者 MP base 3→8/slope 5→10。單測:Lv43 MaxMP 110→223。
 - [x] **#5 高等級升級錯亂**:`dq3_stats_level_for_exp(fixed)` clamp level≤43。單測:原版越界連升到 99、修正版夾 43。(binary patch 因 code cave≤8B 做不到,C 層單行 if)
 - [x] **#6 數值 255 溢位**:`dq3_stats_add_clamped` 用 uint16 + 顯式 clamp(9999)。單測:200+100 原版 byte wrap=44、修正=300。
