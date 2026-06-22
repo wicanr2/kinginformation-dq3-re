@@ -30,7 +30,7 @@
 
 ## 目標
 
-1. **反組譯主程式** — 還原 `DQ3.EXE` 的程式邏輯。經偵察，它是 **16-bit real-mode、large model 的分段 DOS 程式**（非保護模式、非 Borland Pascal；先前依檔頭 `MZP` 的判斷已更正，詳見 [`docs/05-exe-recon.md`](docs/05-exe-recon.md)），鏈結了手寫組語的低階硬體驅動。還原目標語言（C／可讀虛擬碼／其他）待定。
+1. **反組譯主程式 → 用 SDL2 重寫成現代版** — 還原 `DQ3.EXE` 的程式邏輯。經偵察與逐函式指紋，它是 **16-bit real-mode、near-code model 的 DOS C 程式，由 Microsoft C 5.x 編譯**（非保護模式、非 Pascal、非 large model；先前依檔頭 `MZP` 與遠呼叫的判斷已逐步更正，詳見 [`docs/05`](docs/05-exe-recon.md)、[`docs/07`](docs/07-dpmi-note.md)、[`docs/19`](docs/19-re-correctness.md)），鏈結手寫組語的硬體驅動。最終目標:把它**用現代 C + SDL2 跨平台重寫**,以 DOSBox 原版為 oracle 驗證一致。
 2. **拆解遊戲素材** — 字型、地圖、圖檔、文字腳本、音樂音效等，還原成可檢視 / 可再利用的格式。
 3. **挖掘技術** — 記錄這套未發售中文版採用的中文字型、文字編碼、地圖與封包等技術細節。
 
@@ -42,7 +42,7 @@
 
 原始遊戲檔（`DQ3.EXE` 與全部素材）版權屬 Enix / 精訊資訊，**不納入本公開 repo**。要重現本專案的工作，需自行提供原版 `dq3.zip` 並解壓到 `assets_raw/`（已被 `.gitignore` 排除）。本 repo 只記錄：
 
-- 反組譯產出的 Pascal 原始碼（`re/`）
+- 反組譯產出的 C 原始碼 + SDL2 重寫（`re/`）
 - 格式分析與技術文件（`docs/`）
 - 操作原始檔的工具腳本（`tools/`）
 
@@ -50,7 +50,7 @@
 
 | 目錄 | 內容 |
 |---|---|
-| `re/` | 反組譯重建的 Pascal 原始碼 |
+| `re/` | 反組譯重建的 C 原始碼 + SDL2 移植（`re/sdl/`）|
 | `docs/` | 格式分析、結構地圖、技術筆記 |
 | `tools/` | 解析 / 抽取 / 渲染素材的腳本（Python，於 docker uv venv 執行） |
 | `references/` | 外部參考資料（青衫先生攻略等） |
@@ -67,7 +67,9 @@
 | 字型解碼 | ✅ | [`docs/02-font-format.md`](docs/02-font-format.md) |
 | 文字腳本解碼 + 純文字（UTF-8）dump | ✅ | [`docs/03-text-format.md`](docs/03-text-format.md)、[`docs/script/`](docs/script/) |
 | 地圖 tile + 世界地圖還原（城鎮佈局待 EXE） | ✅ | [`docs/04-map-format.md`](docs/04-map-format.md)、[`docs/maps/`](docs/maps/) |
-| `DQ3.EXE` 反組譯 → C | 🔄 主結構成 C(啟動/主迴圈/狀態機/野外指令/對話/戰鬥/場景/素材載入,~2900 行) | [`docs/05`](docs/05-exe-recon.md)–[`13`](docs/13-exe-battle.md)、[`re/`](re/) |
+| `DQ3.EXE` 反組譯 → C | 🔄 主結構成 C(啟動/主迴圈/狀態機/野外指令/對話/戰鬥/場景/素材載入/注音輸入) | [`docs/05`](docs/05-exe-recon.md)–[`19`](docs/19-re-correctness.md)、[`re/`](re/) |
+| RE 正確性確認(原版編譯器 = **MSC 5.x**,byte-match 驗證) | 🔄 方法已證、擴展中 | [`docs/19`](docs/19-re-correctness.md)、[`docs/17`](docs/17-build-toolchain.md) |
+| 最終目標:SDL2 現代跨平台重寫(DOSBox 原版當 oracle) | 🔄 骨架 PoC(SDL 顯示標題)| [`docs/17`](docs/17-build-toolchain.md)、[`re/sdl/`](re/sdl/) |
 
 ### 已解出的重點
 
@@ -81,4 +83,4 @@
 - glyph index → Unicode 對照表（OCR 1,476 字模）→ 把劇情 dump 成純 UTF-8。
 - `CHINA.FON` 殘留 ~7% 對齊、段內索引表精確語意。
 - 地圖（`DQ3*.BLK` / `CTY*.DAT`）格式與還原。
-- `DQ3.EXE`（Borland Pascal DPMI）反組譯為可重編譯 Pascal。
+- `DQ3.EXE`（Microsoft C 5.x）反組譯為 C、byte-match 確認後用 SDL2 重寫。
