@@ -41,7 +41,7 @@
 | 字型解碼 | ✅ | [`docs/02-font-format.md`](docs/02-font-format.md) |
 | 文字腳本解碼 + 純文字（UTF-8）dump | ✅ | [`docs/03-text-format.md`](docs/03-text-format.md)、[`docs/script/`](docs/script/) |
 | 地圖 tile + 世界地圖還原（城鎮佈局待 EXE） | ✅ | [`docs/04-map-format.md`](docs/04-map-format.md)、[`docs/maps/`](docs/maps/) |
-| `DQ3.EXE` 反組譯 | 🔄 recon 完成 | [`docs/05-exe-recon.md`](docs/05-exe-recon.md) |
+| `DQ3.EXE` 反組譯 → C | 🔄 骨架完成(280 函式圖、主迴圈、素材載入 C 草稿) | [`docs/05`](docs/05-exe-recon.md)、[`06`](docs/06-exe-callmap.md)、[`07`](docs/07-dpmi-note.md)、[`08`](docs/08-exe-functions.md)、[`09`](docs/09-exe-loaders.md)、[`re/`](re/) |
 
 ### 已解出的重點
 
