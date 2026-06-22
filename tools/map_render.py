@@ -13,6 +13,13 @@ out = sys.argv[4]
 scale = float(sys.argv[5]) if len(sys.argv) > 5 else 1.0
 
 pal = load_pal(palf)
+# 海面 fill tile (overworld idx 88) 用 palette idx 2/10,靜態 PAL 存成沙色,
+# 引擎執行時用 DAC palette cycle 顯示成藍。為可讀性把這兩格改成與海岸線同藍。
+# OCEAN_FIX=0 可關閉 (檢視原始 PAL)。
+import os
+if os.environ.get('OCEAN_FIX', '1') == '1' and len(pal) > 10:
+    pal[10] = (0, 70, 190)   # 深海藍
+    pal[2] = (40, 120, 230)  # 淺海藍
 flat = pal_flat(pal)
 count, tiles = read_blk(blk)
 W, H, data = read_map(mapf)
