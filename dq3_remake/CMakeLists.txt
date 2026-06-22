@@ -25,6 +25,8 @@ add_executable(dq3_remake
     src/dq3_stats.c
     src/dq3_combat.c
     src/dq3_sprite.c
+    src/dq3_monster.c
+    src/dq3_battle.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
@@ -32,12 +34,20 @@ add_executable(dq3_stats_test src/dq3_stats.c src/test_stats.c)
 target_include_directories(dq3_stats_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_combat_test src/dq3_combat.c src/test_combat.c)
 target_include_directories(dq3_combat_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_monster_test src/dq3_monster.c src/test_monster.c)
+target_include_directories(dq3_monster_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_battle_test src/dq3_battle.c src/test_battle.c)
+target_include_directories(dq3_battle_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(MSVC)
     target_compile_options(dq3_stats_test PRIVATE /W3)
     target_compile_options(dq3_combat_test PRIVATE /W3)
+    target_compile_options(dq3_monster_test PRIVATE /W3)
+    target_compile_options(dq3_battle_test PRIVATE /W3)
 else()
     target_compile_options(dq3_stats_test PRIVATE -Wall -Wextra)
     target_compile_options(dq3_combat_test PRIVATE -Wall -Wextra)
+    target_compile_options(dq3_monster_test PRIVATE -Wall -Wextra)
+    target_compile_options(dq3_battle_test PRIVATE -Wall -Wextra)
 endif()
 
 target_include_directories(dq3_remake PRIVATE

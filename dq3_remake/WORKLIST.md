@@ -33,12 +33,15 @@
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。
 - [ ] 野外指令選單(DS:0x3baa 12 指令:話す/移動/調べる…)。
-- [ ] 戰鬥(re/battle.c:遭遇 sub_bd97→主迴圈 sub_bddf;怪物 D3MNS.DAT 130×41B、sprite DQ3MNS.SHP+MNSBK.PAL;指令戰/逃/防/道具)。**用復原的 Ortega(128)/Hydra(129)sprite**(tools/make_sprites.py)。
+- [~] 戰鬥(優先 2,進行中):
+  - [x] **怪物資料 + sprite 基礎**:`dq3_monster` 讀 D3MNS.DAT(130×41 數值)+ 解 DQ3MNS.SHP(offset 表 + plane-major,MNSBK.PAL,色0 透明)。單測:史萊姆 HP6/exp4、金屬 exp4140、sprite 48×39。
+  - [ ] 遭遇生成(sub_a7d5:遭遇區→候選怪→點數預算生群)、戰鬥主迴圈(指令戰/逃/防/道具)、戰鬥場景繪製(packbg 背景 + 怪群 sprite blit)。
+  - [ ] 用復原的 Ortega(128)/Hydra(129)sprite(tools/make_sprites.py)填空槽。
 
 ### 階段④ 7 bug 全修進 C(根因見 docs/18,20,22,23)
-- [~] #1 巴拉摩斯打不死(勝負判定累積值 clamp 參照欄 +0x2336→+0x2334):根因/修正值已記錄(docs/18),屬戰鬥結算邏輯,移植 re/battle.c 結算時依正確欄位寫入即修復(非獨立公式,無法單測)。
-- [~] #2 彩虹水滴卡關(合成成品 item code 0x6b 銀寶珠→0x75 彩虹水滴):根因/修正值已記錄(docs/18),屬合成事件 handler,移植事件系統時產出 0x75 即修復。
-- [~] #3 九頭龍/歐里狄加當機(缺 sprite):sprite 已復原(tools/make_sprites.py,id128/129),移植戰鬥繪製時用復原 sprite + blit guard 即修復。
+- [x] **#1 巴拉摩斯打不死**:`dq3_battle_resolve` 正確結算(先判我方全滅含被吹飛→敗,再判敵全滅→勝)。單測:全隊被巴西魯拉吹飛+巴拉摩斯HP500 → 修正判敗、原版誤判勝(重現 #1)。
+- [~] #2 彩虹水滴卡關(合成成品 item code 0x6b→0x75):根因/修正值已記錄(docs/18),屬合成事件 handler,移植事件系統時產出 0x75 即修復。
+- [x] **#3 九頭龍/歐里狄加當機(缺 sprite)**:`dq3_monster_sprite_decode` 對空 sprite(id128/129)回 <0 = blit guard(不當機);單測坐實 id128/129 為空。復原 sprite(make_sprites.py)填槽待整合進戰鬥繪製。
 - [x] **#4 勇者 MaxMP 成長偏低**:`dq3_stats` 從 DQ3.EXE 讀成長表,勇者 MP base 3→8/slope 5→10。單測:Lv43 MaxMP 110→223。
 - [x] **#5 高等級升級錯亂**:`dq3_stats_level_for_exp(fixed)` clamp level≤43。單測:原版越界連升到 99、修正版夾 43。(binary patch 因 code cave≤8B 做不到,C 層單行 if)
 - [x] **#6 數值 255 溢位**:`dq3_stats_add_clamped` 用 uint16 + 顯式 clamp(9999)。單測:200+100 原版 byte wrap=44、修正=300。

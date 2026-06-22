@@ -24,6 +24,8 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
   echo "--- 數值系統單元測試 ---"
   /build/dq3_stats_test /repo/assets_raw || { echo "stats test FAILED"; exit 1; }
   /build/dq3_combat_test /repo/assets_raw || { echo "combat test FAILED"; exit 1; }
+  /build/dq3_monster_test /repo/assets_raw || { echo "monster test FAILED"; exit 1; }
+  /build/dq3_battle_test || { echo "battle test FAILED"; exit 1; }
   echo "=== unit tests OK ==="
 
   # (1) dummy:解碼驗證 → PPM
