@@ -4,6 +4,7 @@
 #include "dq3_assets.h"
 #include "dq3_monster.h"
 #include "dq3_battle.h"
+#include "dq3_text.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +21,21 @@ static int roll255(void){ return (int)(rnd() & 0xff); }
 typedef struct { const char *name; int hp, maxhp, atk, def, agi, defending; } member;
 
 static int sky_idx, ground_idx, white_idx, red_idx, green_idx, black_idx;
+static dq3_text g_txt; static int g_txt_ok;
+
+/* 指令標籤(glyph index 對照 docs/03 + glyph_unicode_map):戰鬥/逃跑/防禦/道具 */
+static const uint16_t CMD_WAR[2]={107,207}, CMD_FLEE[2]={629,630}, CMD_DEF[2]={203,204}, CMD_ITEM[2]={402,1354};
+
+static void draw_glyphs(uint8_t*fb,int x,int y,const uint16_t*g,int n,uint8_t fg){
+    int i; if(!g_txt_ok)return;
+    for(i=0;i<n;i++) dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,x+i*16,y,g[i],fg);
+}
+static void draw_number(uint8_t*fb,int x,int y,int val,uint8_t fg){
+    uint16_t d[6]; int k=0,i; if(!g_txt_ok)return; if(val<0)val=0;
+    if(val==0){ d[k++]=0; } else { int v=val; uint16_t tmp[6]; int tn=0;
+        while(v>0&&tn<6){ tmp[tn++]=(uint16_t)(v%10); v/=10; } for(i=tn-1;i>=0;i--) d[k++]=tmp[i]; }
+    draw_glyphs(fb,x,y,d,k,fg);
+}
 
 static int pal_near(const dq3_color *p,int n,int r,int g,int b){
     int i,best=0; long bd=-1;
@@ -37,7 +53,7 @@ static void rect_border(uint8_t*fb,int x,int y,int w,int h,uint8_t c){
 }
 
 static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int en,
-                   const member*party, int cursor, int show_menu)
+                   const member*party, int cursor, int show_menu, int monster_id)
 {
     int i;
     for(i=0;i<DQ3_SCREEN_H;i++)
@@ -52,33 +68,39 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
                 fb[yy*DQ3_SCREEN_W+xx]=spr->px[r][c];
         }
     }
-    /* 隊伍 HUD:下方 4 框 + HP 條 */
+    /* 敵名(D3TXT00 rec 0x258+id),畫在怪群上方 */
+    if(g_txt_ok){
+        int nx=DQ3_SCREEN_W/2-48, ny=10;
+        fillrect(fb,nx-8,ny-4,160,24,(uint8_t)black_idx);
+        dq3_text_draw_record(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,nx,ny,9,1,0x258+monster_id,(uint8_t)white_idx);
+    }
+    /* 隊伍 HUD:下方 4 框 + HP 條 + HP 數字 */
     {
         int bx0=8, by=DQ3_SCREEN_H-70, bw=120, bh=58, gap=10;
         for(i=0;i<PARTY;i++){
             int x=bx0+i*(bw+gap);
             fillrect(fb,x,by,bw,bh,(uint8_t)black_idx);
             rect_border(fb,x,by,bw,bh,(uint8_t)white_idx);
-            /* HP 條 */
+            draw_number(fb,x+8,by+6,party[i].hp,(uint8_t)(party[i].hp>0?white_idx:red_idx));
             {
                 int hpw=bw-16, fillw = party[i].maxhp>0 ? hpw*party[i].hp/party[i].maxhp : 0;
                 if(fillw<0)fillw=0; if(fillw>hpw)fillw=hpw;
-                fillrect(fb,x+8,by+bh-16,hpw,8,(uint8_t)white_idx);
-                fillrect(fb,x+8,by+bh-16,fillw,8,(uint8_t)(party[i].hp>0?green_idx:red_idx));
+                fillrect(fb,x+8,by+bh-14,hpw,8,(uint8_t)white_idx);
+                fillrect(fb,x+8,by+bh-14,fillw,8,(uint8_t)(party[i].hp>0?green_idx:red_idx));
             }
-            if(party[i].hp<=0) rect_border(fb,x,by,bw,bh,(uint8_t)red_idx);  /* 陣亡紅框 */
+            if(party[i].hp<=0) rect_border(fb,x,by,bw,bh,(uint8_t)red_idx);
         }
     }
-    /* 指令選單(左下 4 格:戰/逃/防/道具),游標高亮 */
+    /* 指令選單(左下 4 格:戰鬥/逃跑/防禦/道具 CJK),游標高亮 */
     if(show_menu){
-        int mx=8,my=GROUNDY+8,mw=80,mh=22;
+        int mx=8,my=GROUNDY+8,mw=86,mh=22;
+        const uint16_t *labels[4]={CMD_WAR,CMD_FLEE,CMD_DEF,CMD_ITEM};
         for(i=0;i<4;i++){
             int y=my+i*(mh+4);
             fillrect(fb,mx,y,mw,mh,(uint8_t)black_idx);
             rect_border(fb,mx,y,mw,mh,(uint8_t)(i==cursor?white_idx:ground_idx));
-            /* 簡單區分:每格內畫一條代表色(戰=紅/逃=綠/防=白/道具=天藍)*/
-            fillrect(fb,mx+6,y+8,mw-12,6,(uint8_t)(i==0?red_idx:i==1?green_idx:i==2?white_idx:sky_idx));
-            if(i==cursor) fillrect(fb,mx-6,y+mh/2-2,4,4,(uint8_t)white_idx);  /* 游標 ▸ */
+            draw_glyphs(fb,mx+24,y+3,labels[i],2,(uint8_t)white_idx);
+            if(i==cursor) draw_glyphs(fb,mx+4,y+3,(const uint16_t[]){0x76},1,(uint8_t)white_idx); /* ▶ 游標(glyph 0x76 ~ 箭頭) */
         }
     }
 }
@@ -167,6 +189,9 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     white_idx=pal_near(pal,pn,255,255,255); red_idx=pal_near(pal,pn,230,40,40);
     green_idx=pal_near(pal,pn,40,220,40); black_idx=pal_near(pal,pn,0,0,0);
 
+    /* 文字(敵名/指令/HP):D3TXT00.FON + D3TXT00.TXT */
+    g_txt_ok = (dq3_text_load(&g_txt, assets, "D3TXT00.TXT", err, sizeof err) == 0);
+
     if(dq3_monster_sprite_decode(assets,monster_id,&spr,err,sizeof err)!=0){
         fprintf(stderr,"monster %d sprite: %s\n",monster_id,err); return -1; }
     if(dq3_monsters_load(&mons,assets,err,sizeof err)!=0){
@@ -189,7 +214,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             if(turn>50) break;
         }
         if(dump){
-            render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0);
+            render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0,monster_id);
             dq3_present();
             if(dq3_dump_ppm(dump)==0)
                 fprintf(stderr,"battle scene -> %s (outcome=%d: %s)\n", dump, outcome,
@@ -198,14 +223,14 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             fprintf(stderr,"battle outcome=%d (%s)\n", outcome,
                     outcome==1?"勝":outcome==2?"敗":outcome==3?"逃":"續");
         }
-        dq3_monsters_free(&mons);
+        dq3_monsters_free(&mons); if(g_txt_ok)dq3_text_free(&g_txt);
         return outcome;
     }
 
     /* ---- 互動 ---- */
     while(!dq3_should_quit() && outcome==0){
         uint8_t sc;
-        render(dq3_fb(),&spr,ehp,en,party,cursor,1);
+        render(dq3_fb(),&spr,ehp,en,party,cursor,1,monster_id);
         dq3_present();
         sc=dq3_poll_scancode();
         if(sc==0x48){ cursor=(cursor+3)&3; }       /* 上 */
@@ -217,9 +242,9 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         dq3_delay_ms(16);
     }
     /* 結束:顯示末幀片刻 */
-    render(dq3_fb(),&spr,ehp,en,party,cursor,0);
+    render(dq3_fb(),&spr,ehp,en,party,cursor,0,monster_id);
     dq3_present();
     fprintf(stderr,"outcome=%d\n",outcome);
-    dq3_monsters_free(&mons);
+    dq3_monsters_free(&mons); if(g_txt_ok)dq3_text_free(&g_txt);
     return outcome;
 }
