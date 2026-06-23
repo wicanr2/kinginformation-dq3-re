@@ -14,7 +14,7 @@
 - **remake 階段② 進行中**:
   - `dq3_scene` 場景核心(攝影機/tile 貼圖/bit0 碰撞/走動)+ `dq3_field`(地表)/`dq3_town`(城鎮 CTY)薄載入器。headless 驗證走動+碰撞+捲動正確。
   - **真主角 sprite ✅**:DQ3MAN.BLS 完整破解(masked 32×24、stride960、4 方向,docs/27);`dq3_sprite` 解碼 + scene 透明 blit,entry16 金髮勇者顯示於地表/城鎮、朝向正確。DOSBox oracle 自動進遊戲打通(docs/29)。
-- **remake 階段④ C 層 bug 修正(誠實狀態,見階段④ claim 校正)**:**已整合進可玩系統** = #1 結算、#3 blit guard、#8 palette、真傷害公式;**邏輯實作+單測但未整合**(remake 升級/能力值/咒文系統未建)= #4/#5/#6/#7a/#7b;**未實作** = #2(事件系統剛落地,合成事件待做)。#6 另:原版確切 wrap 點未定位、clamp 9999 為佔位。不再籠統掛「全修好」。
+- **remake 階段④ C 層 bug 修正(誠實狀態,見階段④ claim 校正)**:**已整合進可玩系統** = #1 結算、#2 合成(gate CTY93)、#3 blit guard、#8 palette、真傷害公式、**#4/#5/#6 升級系統**(`dq3_member` + 戰鬥勝利結算)、#7a/#7b(battlescene)。**邏輯實作+單測** 已大致收斂。#6 註:原版確切 wrap 點未定位、核心修法為 uint16 全程(非 clamp 數值)。
 
 ## dq3_remake 剩餘 worklist
 
@@ -59,12 +59,16 @@
 - [整合] **#2 彩虹水滴卡關**:`dq3_inventory` + `dq3_synth_rainbow_drop`(對齊 RE file 0x77ce:消耗太陽之石0x72+雲雨之杖0x73→雲雨之杖格寫成品)。修正:產出彩虹水滴 0x75(原版誤產銀寶珠 0x6b)。**已接 in-game**:`dq3_synth_shrine_examine` + 劇情旗標 0x139(未合成過才觸發、成功設旗標),game 模式城鎮調べる持兩材料即合成(headless demo log:`result=0x75 flag0x139=1`)。`dq3_scripted_event_run` 鏡射 runner(0xabb2)的 id→handler 跳表(DS 0x3baa),合成 = scripted-event 83。單測:修正→0x75、原版→0x6b、缺料不合成、祠堂觸發+旗標、不重複、event 派發。**待(改動態)**:精確祠堂座標 — 靜態已窮舉(0x77ce=handler 0x776c 尾段;runner 0xabb2 **零靜態呼叫者**,經事件 VM 進入),需 DOSBox 中斷點 runner phys 0x9842 讀地圖/座標定位(docs/31)。
 - [整合(部分)] **#3 九頭龍/歐里狄加當機(缺 sprite)**:`dq3_monster_sprite_decode` 對空 sprite 回 <0 = blit guard,
   **已整合**(battlescene 不畫空 sprite 不當機)。**但復原的 Ortega/Hydra sprite 尚未填入**(仍只是 guard,非顯示)。
-- [單測] **#4 勇者 MaxMP 成長偏低**:`dq3_stats` 內建成長表,勇者 MP base 3→8/slope 5→10。單測 Lv43 110→223。
-  **未整合**:remake 還沒有升級/能力值系統會用到成長表。
-- [單測] **#5 高等級升級錯亂**:`dq3_stats_level_for_exp(fixed)` clamp level≤43。單測:原版連升到 99 vs 夾 43。
-  **未整合**:無升級流程呼叫它。
-- [單測] **#6 數值 255 溢位**:`dq3_stats_add_clamped`(uint16+clamp 9999)。單測:200+100 wrap44 vs 300。
-  **未整合且原版確切 wrap 點未定位**(docs/23 自承需 DOSBox 實機觀察);真正修法 = 能力值系統全程用 uint16(設計上免疫),那系統還沒建。clamp 9999 為佔位值,非原版行為。
+- [整合] **#4 勇者 MaxMP 成長偏低**:`dq3_stats` 內建成長表,勇者 MP base 3→8/slope 5→10。
+  **已整合**:`dq3_member`(隊員實體)init/gain_exp 用成長表;`dq3_battlescene` 勝利結算
+  套用 → 升級時 MaxMP 依修正表成長。單測 Lv43 110→223、整合測 gain_exp→Lv43 MaxMP=223。
+- [整合] **#5 高等級升級錯亂**:`dq3_stats_level_for_exp(fixed)` clamp level≤43。
+  **已整合**:`dq3_member_gain_exp` 一律用 fixed 版求等級 → 隊員 level 夾 43,杜絕越界連升。
+  單測:原版連升到 99 vs 夾 43;整合測:灌 9.96M exp → 隊員 level=43。
+- [整合] **#6 數值 255 溢位**:`dq3_stats_add_clamped`(uint16+clamp 9999)。
+  **已整合**:`dq3_member.stat[6]` 全程 uint16,`gain_exp` 升級套成長一律經 add_clamped 寫回
+  → 設計上免疫 255 wrap(=#6 真正修法)。單測:200+100 wrap44 vs 300;整合測:屬性 ≤9999。
+  註:原版確切 wrap 點仍未定位(docs/23);clamp 9999 為上限佔位,核心修正是 uint16 全程。
 - [整合] **#7a 隼劍雙擊**:`dq3_combat_num_attacks`(武器 +5 bit7;機制對齊 RE file 0xc1fa 二擊重入)。
   **已接進** `dq3_battlescene::do_turn`(飛鷹劍員打 2 次)。實測:勇者(飛鷹劍)第1擊+第2擊、武鬥家普通武器 1 次。單測:飛鷹劍 2 次。
 - [整合] **#7b 魔法鎧甲抗魔**:`dq3_combat_spell_damage`(裝備 +6 bit2 減半)。**已接進** battlescene 敵方咒文路徑。

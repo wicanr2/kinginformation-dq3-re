@@ -57,6 +57,24 @@ int main(int argc, char **argv)
         CHECK(dq3_stats_add_clamped(9000, 5000) == DQ3_STAT_CAP, "超上限 clamp 到 9999");
     }
 
+    printf("== 整合:隊員升級系統(#4/#5/#6 真生效)==\n");
+    {
+        dq3_member hero_fix, hero_orig; int gained;
+        big_exp = fix.thresh[0][DQ3_MAX_LEVEL] + 9000000u;
+        dq3_member_init(&hero_fix, &fix, 0, 1);
+        gained = dq3_member_gain_exp(&hero_fix, &fix, big_exp);
+        printf("  勇者(修正)Lv1→ gain %u exp: level=%d(升%d級)MaxHP=%u MaxMP=%u\n",
+               big_exp, hero_fix.level, gained, hero_fix.stat[DQ3_STAT_HP], hero_fix.stat[DQ3_STAT_MP]);
+        CHECK(hero_fix.level == DQ3_MAX_LEVEL, "#5 整合:隊員 level 夾在 43(無越界連升)");
+        CHECK(hero_fix.stat[DQ3_STAT_MP] >= 200, "#4 整合:勇者 Lv43 MaxMP>=200(成長修正生效)");
+        CHECK(hero_fix.stat[DQ3_STAT_HP] <= DQ3_STAT_CAP && hero_fix.stat[DQ3_STAT_MP] <= DQ3_STAT_CAP,
+              "#6 整合:屬性全程 uint16 不超 9999(無 255 wrap)");
+        dq3_member_init(&hero_orig, &orig, 0, 1);
+        dq3_member_gain_exp(&hero_orig, &orig, big_exp);
+        printf("  勇者(原版資料)Lv43 MaxMP=%u  vs 修正=%u\n", hero_orig.stat[DQ3_STAT_MP], hero_fix.stat[DQ3_STAT_MP]);
+        CHECK(hero_fix.stat[DQ3_STAT_MP] > hero_orig.stat[DQ3_STAT_MP], "整合後修正版 MaxMP 高於原版資料");
+    }
+
     printf("\n%s (%d failures)\n", g_fail ? "== 有測試未通過 ==" : "== 全部通過 ==", g_fail);
     return g_fail ? 1 : 0;
 }

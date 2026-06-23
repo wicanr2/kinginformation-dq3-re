@@ -54,4 +54,19 @@ int dq3_stats_level_for_exp(const dq3_stats *st, int cls, uint32_t exp, int fixe
 /* #6:屬性安全累加(uint16 + 顯式 clamp 到 DQ3_STAT_CAP,不 wrap)。 */
 uint16_t dq3_stats_add_clamped(uint16_t cur, int delta);
 
+/* ---- 隊員實體:把上述零件整合成可玩的升級系統(#4/#5/#6 在此真生效)---- */
+typedef struct {
+    int      cls;          /* 職業 0..7 */
+    int      level;        /* 1..43 */
+    uint32_t exp;          /* 累積經驗(uint32,不溢位)*/
+    uint16_t stat[6];      /* 6 屬性 uint16,順序同 dq3_stat_kind(HP MP B4 B6 B8 BA)*/
+} dq3_member;
+
+/* 以職業+等級初始化隊員:exp=該級門檻、各屬性=成長目標值(growth_target)。 */
+void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level);
+
+/* 獲得經驗 → 跨門檻則升級,逐級套成長 delta(以 add_clamped #6 寫回,等級用 #5 修正版)。
+ * 回傳本次升的等級數(0=未升)。#4 勇者 MP 由 st 載入時的成長表修正自動生效。 */
+int  dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add);
+
 #endif /* DQ3_STATS_H */

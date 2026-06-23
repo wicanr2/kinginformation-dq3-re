@@ -79,3 +79,32 @@ uint16_t dq3_stats_add_clamped(uint16_t cur, int delta)
     if (v > DQ3_STAT_CAP) v = DQ3_STAT_CAP;   /* 顯式上限,不 wrap */
     return (uint16_t)v;
 }
+
+void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
+{
+    int k;
+    if (level < 1) level = 1;
+    if (level > DQ3_MAX_LEVEL) level = DQ3_MAX_LEVEL;
+    m->cls = cls; m->level = level;
+    m->exp = st->thresh[cls][level];                  /* 該等級的門檻經驗 */
+    for (k = 0; k < 6; k++)
+        m->stat[k] = dq3_stats_growth_target(st, cls, (dq3_stat_kind)k, level);
+}
+
+int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
+{
+    int newlv, gained = 0, k;
+    m->exp += add;                                              /* uint32,不溢位 */
+    newlv = dq3_stats_level_for_exp(st, m->cls, m->exp, 1);     /* #5:夾在 [1,43] */
+    while (m->level < newlv) {
+        int lv0 = m->level, lv1 = m->level + 1;
+        for (k = 0; k < 6; k++) {                              /* 逐屬性套成長 delta */
+            int t0 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv0);
+            int t1 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv1);
+            int delta = t1 - t0; if (delta < 0) delta = 0;
+            m->stat[k] = dq3_stats_add_clamped(m->stat[k], delta);   /* #6:uint16+clamp */
+        }
+        m->level = lv1; gained++;
+    }
+    return gained;
+}

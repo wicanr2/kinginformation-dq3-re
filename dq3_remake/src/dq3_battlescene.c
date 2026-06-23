@@ -5,6 +5,7 @@
 #include "dq3_monster.h"
 #include "dq3_battle.h"
 #include "dq3_combat.h"
+#include "dq3_stats.h"
 #include "dq3_text.h"
 #include "dq3_packbg.h"
 #include <stdio.h>
@@ -31,6 +32,7 @@ typedef struct {
 static int sky_idx, ground_idx, white_idx, red_idx, green_idx, black_idx;
 static dq3_text g_txt; static int g_txt_ok;
 static dq3_items g_items; static int g_items_ok;   /* ITEM.DAT 旗標(#7a/#7b)*/
+static dq3_stats g_stats; static int g_stats_ok;   /* 成長/門檻表(#4/#5/#6 升級系統)*/
 static uint8_t g_sky[DQ3_PACKBG_H][DQ3_PACKBG_W]; static int g_sky_ok;  /* packbg 天空 */
 
 /* 指令標籤(glyph index 對照 docs/03 + glyph_unicode_map):戰鬥/逃跑/防禦/道具 */
@@ -207,6 +209,30 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
     return 0;
 }
 
+/* 隊伍職業索引(對 dq3_stats 成長表):勇者0 / 武鬥家2 / 僧侶3 / 魔法師4 */
+static const int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
+
+/* 勝利結算:存活隊員獲經驗 → 升級(#5 夾43)→ 套成長(#4 MP/#6 uint16 不wrap)→ 更新戰鬥屬性。 */
+static void apply_victory_exp(member *party, dq3_member *pm, uint32_t total_exp)
+{
+    int i;
+    if (!g_stats_ok) return;
+    fprintf(stderr, "=== 勝利!全隊獲得 %u 經驗 ===\n", total_exp);
+    for (i = 0; i < PARTY; i++) {
+        int gained;
+        if (party[i].hp <= 0) continue;                       /* 陣亡者不獲經驗 */
+        gained = dq3_member_gain_exp(&pm[i], &g_stats, total_exp);
+        if (gained > 0) {
+            party[i].level = pm[i].level;                     /* #5 */
+            party[i].maxhp = (int)pm[i].stat[DQ3_STAT_HP];    /* #6 */
+            party[i].maxmp = (int)pm[i].stat[DQ3_STAT_MP];    /* #4 */
+            if (party[i].hp > party[i].maxhp) party[i].hp = party[i].maxhp;
+            fprintf(stderr, "  ★ %s 升到 Lv%d!MaxHP=%d MaxMP=%d\n",
+                    party[i].dbg, party[i].level, party[i].maxhp, party[i].maxmp);
+        }
+    }
+}
+
 int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
                         int bg_page, const char *script, const char *dump, unsigned seed)
 {
@@ -219,6 +245,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     int eatk, edef, eagi, efree, ehpmax;
     char err[256]={0};
     int cursor=0, outcome=0, turn=0;
+    dq3_member pm[PARTY];          /* 升級用隊員實體(#4/#5/#6)*/
     member party[PARTY] = {
         /* dbg,name,len,cls, hp,maxhp,mp,maxmp,lv,atk,def,agi,def, weapon, equip[8] */
         { "勇者",   {106,187},    2, 106, 35,35,  9, 9,1, 22,10,12, 0, 0x6e, {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff} }, /* 飛鷹劍=雙擊(#7a) */
@@ -242,6 +269,10 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     g_txt_ok = (dq3_text_load(&g_txt, assets, "D3TXT00.TXT", err, sizeof err) == 0);
     /* ITEM.DAT 旗標(#7a 雙擊 / #7b 抗魔) */
     g_items_ok = (dq3_items_load(&g_items, assets, err, sizeof err) == 0);
+    /* 升級系統(成長/門檻表;apply_bug4_fix=1 → 勇者 MP 修正)+ 隊員實體 */
+    g_stats_ok = (dq3_stats_load(&g_stats, assets, 1, err, sizeof err) == 0);
+    { int i; for (i = 0; i < PARTY; i++)
+        if (g_stats_ok) dq3_member_init(&pm[i], &g_stats, g_cls_idx[i], party[i].level); }
 
     /* 戰鬥背景:packbg page(隨地形;預設草原 terrain0 → page 0)。
      * DQ3_BG_PAGE 可指定其他地形頁(terrain*8,terrain3→0x19)。 */
@@ -272,6 +303,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             p++;
             if(turn>50) break;
         }
+        if(outcome==1) apply_victory_exp(party, pm, (uint32_t)en * ms.exp);   /* 勝利→經驗→升級 */
         if(dump){
             render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0,monster_id);
             dq3_present();
@@ -300,6 +332,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         }
         dq3_delay_ms(16);
     }
+    if(outcome==1) apply_victory_exp(party, pm, (uint32_t)en * ms.exp);   /* 勝利→經驗→升級 */
     /* 結束:顯示末幀片刻 */
     render(dq3_fb(),&spr,ehp,en,party,cursor,0,monster_id);
     dq3_present();
