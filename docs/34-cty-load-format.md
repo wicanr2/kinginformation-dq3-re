@@ -87,6 +87,21 @@
 NPC/物件記錄 = **7 byte**:`{X, Y, b2, b3, b4, flags, b6}`(位置 = Y*寬+X;flags bit→[0x4f70] 屬性表決定顯示);
 複製到 `[0xb66]` 8-byte 槽。
 
+**`[0xb66]` 8-byte 槽欄位**(載入器 L031f0,逐 NPC 把 7B 記錄展成 8B 槽;移動/碰撞見 docs/31):
+
+| slot | 來源 | 內容 |
+|---|---|---|
+| +0 | rec[0] | **X** |
+| +1 | rec[1] | **Y** |
+| +2 | rec[2] | sprite/類型(stamp pass `[0x265d]` 比對用)|
+| +3 | rec[3] | **移動控制**:bits0-1=方向、**bit2(0x04)=移動開關**(set=隨機走動 / clear=靜止)、bit7(0x80)=暫時凍結 |
+| +4 | rec[4] | b4 |
+| +5 | rec[5] | flags(可見性閘:`flags&7`→bit、`flags>>3`→`[0x4f70]` byte;旗標未設則該 NPC 不載入)|
+| +6 | (執行期) | **被蓋住的底 tile 高 byte**(NPC 站上去前存,移動/離場時還原)|
+| +7 | rec[6] | b6 |
+
+載入時把 map tile 高 byte `&=0xc0` 後 `|= (0x20 | slot_index)`(`0x20`=NPC 佔位旗標,低 5 bit=槽號)。
+
 ## 門 dispatch:type-2(21 CTY)已解,其餘 68 CTY 待動態
 
 - **21 CTY**:建築門/階梯 = section 事件表 type-2 → warp[param]={dest section,spawn} → 已實作(A-2 核心)。

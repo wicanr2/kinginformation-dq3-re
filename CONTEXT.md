@@ -23,6 +23,7 @@
 - **subid** — tile 高 byte 低 5 bit = 事件碼;查 section 事件表(指標在 `section+8`)。
 - **BLK** — tile 圖庫 `DQ3?.BLK`,由 `map_blknum` 依 CTY 選用。
 - **warp 表 (0x4ea0)** — 門 / 階梯目的地,`[param*3 + 0x4ea0]` = `{dest, X, Y}`(3 byte);type-2 事件用。
+- **NPC 槽 / 移動** — NPC 載到 `[0xb66]` 8-byte 槽(byte0=X/1=Y/3=移動控制/6=底 tile)。slot[3] **bit2=移動開關**(set=隨機走動、clear=靜止)、bits0-1=朝向、bit7=凍結。mover=`L02025`(file 0x3395),每幀 RNG(4)==1 才評估、1/20 轉向、不貼玩家 3 格。_Avoid_: mover 位址寫成 `0x6240`/`0x62e9`(舊誤標,是 init/劇情碼)。
 - **鑰匙門 (locked door)** — 門 tile 的 attr **低 byte bits6-7** = 所需鑰匙等級(1/2/3);隊伍持有 ≥ 該級鑰匙(道具 id 0x55 盜賊 / 0x56 魔法 / 0x57 最終,級=id−0x54)即就地改 tile 開鎖。內嵌轉場 handler `0x488f`(`0x48c3` 掃級 / `0x4906` 開門),非獨立機制。_Avoid_: 把低 byte 0xc0 當「角落/出口」(那是高 byte 0xc000)。
 
 ### 事件 / 文字

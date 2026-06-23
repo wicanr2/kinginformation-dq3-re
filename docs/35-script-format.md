@@ -104,7 +104,7 @@ section 載入時全圖預掃(`0x46ac`),對每個事件 tile 測旗標:
 | 0 | **X** | 地圖格 X(位置 = `Y*width + X`)|
 | 1 | **Y** | 地圖格 Y |
 | 2 | **sprite 群 id** | 載入時去重映射到 sprite 快取槽(`0x265d` 表;`0x4634`)|
-| 3 | **方向 / 移動類型** | bits `0x38`(>>3)選移動 handler:0→`0x62e9`、1→(同 0)、2→`0x6355`、其餘→`0x839f`;bit `0x80`=已處理旗;低 2 bit=朝向 |
+| 3 | **方向 / 移動控制** | bits0-1=**朝向**(0-3)、**bit2 `0x04`=移動開關**(set=隨機走動 / clear=靜止)、bit7 `0x80`=暫時凍結。★ 舊註「bits0x38→handler 0x62e9/0x6355/0x839f」是**誤標**(那些位址是劇情/旗標碼,非 mover);真 mover = `L02025`(file 0x3395),見 §九 |
 | 4 | **對話 / 參數 id** | → `[0x2597]`(NPC 互動時用,接對話)|
 | 5 | **flags** | 低 3 bit = **可見性旗標 id**(查 `[0x4f70]`;旗標清 → NPC 隱形不載入,0x457c)|
 | 6 | b6 | 載入時被覆寫:存「NPC 站的那格原始 tile byte」供 NPC 移動後還原(`[di+6]`)|
@@ -115,8 +115,8 @@ section 載入時全圖預掃(`0x46ac`),對每個事件 tile 測旗標:
 3. **把 NPC 蓋進地圖**:`map[Y*width+X]` 高 byte = `0x20 | slot_idx`(供碰撞:玩家撞 `0x20` 位 → NPC 互動 `0x2ec5`;供繪圖)。
 4. `byte2` 經 `0x265d` sprite 快取去重(多個同型 NPC 共用一份 sprite)。
 
-**NPC 移動**:per-frame 處理(`0x6240`)依 `byte3` 的移動類型 handler 走隨機/巡邏步,更新槽 X/Y
-並重蓋地圖 tile(舊格用 `[di+6]` 還原)。→ remake 要做動的 NPC 時,實作這層;靜態擺放可先只用 X/Y/sprite/flags。
+**NPC 移動**:見 §九(per-frame 隨機走動 mover,**非** `0x6240` —— 該位址是場景 init,舊標誤)。
+→ remake 要做動的 NPC 時實作這層;靜態擺放可先只用 X/Y/sprite/flags。
 
 ## 五、轉場系統(`+0xc` 表)★ 門 / 階梯 / 出城 — 本次主解
 
@@ -211,8 +211,43 @@ section1 (16×12 室內):
 > (最終鑰匙開所有門)。開門 = 就地把 tile 改成通行並清事件/屬性位元(`seg_cty` 寫回),非走 +0xc 表。
 > remake:`dq3_town_load` 已解 attr;另加 `dq3_member` 鑰匙等級掃描 + 面向 tile 開鎖(改 tile + 清 attr)。
 
+## 九、NPC 移動(per-frame 隨機走動 mover)★ 已靜態全解
+
+> 由「會動 vs 不會動 NPC」現象反推:差別在 **slot[3] bit2(0x04)移動開關**。
+> mover 確認用 RNG(file 0xfa39);**糾正舊標**:doc 標的 `0x6240`(分派器)/`0x62e9`/`0x6355`/`0x839f`
+> (handler)全是場景 init / 劇情旗標碼,非 mover。真 mover = **`L02025`(file 0x3395)**,逐 NPC 呼叫。
+
+**slot[3] 移動控制**:bits0-1=朝向(0-3)、**bit2 `0x04`=移動開關**、bit7 `0x80`=暫時凍結。
+
+**步進規則**(`L02025` per NPC,每幀;`si`=該 NPC 8-byte 槽 `[0xb66]+slot*8`):
+```
+RNG(4);  if rng!=1: return                 ; ★ 節流:每幀 1/4 機率才評估這隻
+if [si+3] & 0x80: return                    ; 凍結中
+if !([si+3] & 4): return                    ; ★ bit2 清 = 靜止 NPC(不動)
+dir = RNG(4)                                ; 隨機方向
+if dir == ([si+3] & 3):  try_step(dir)      ; 與當前朝向同 → 直接走一步
+else:
+    if RNG(20)==1:                          ; 1/20 機率才轉向
+        new = (cur ± 1) & 3                  ; ±1 視 npc_index 與 count/2
+        [si+3] = ([si+3]&0xfc) | new;  try_step(new)
+    ; 否則本幀不動
+
+try_step(dir):                              ; 落步前 5 道閘(任一不過 → 取消 / 反向)
+  target = (slot.X,slot.Y) + ([dir*4+0xb35], [dir*4+0xb37])   ; ★ 與玩家同一張方向位移表
+  ① target 界內(0..[0xb28]寬 / 0..[0xb2a]高)
+  ② |玩家X − targetX| ≥ 3 且 |玩家Y − targetY| ≥ 3            ; ★ 不走進玩家 3 格內
+  ③ target ≠ 玩家所在格;若 == → 朝向反轉(dir+2)、不走
+  ④ target tile 高 byte bit `0x20` = 已有別的 NPC → 擋
+  ⑤ target tile attr bit0(`[idx*2+0x308e]` low!=0)= 牆 → 擋
+  全過 → 更新 slot X/Y + 還原舊格(slot[6])+ 重蓋新格(0x20|slot)
+```
+
+> 語意:NPC 每幀僅 ¼ 機率被評估(走得慢、不規則);移動者多沿當前朝向走、偶爾(1/20)轉向;
+> 不會貼近玩家(≥3 格)、不會疊在另一 NPC 或牆上。**靜態 NPC = bit2 清**(村裡站著不動的人)。
+> remake:NPC 槽加 byte3;town tick 每幀對 bit2 set 的 NPC 跑此步進(RNG + 5 閘 + 改 tile)。
+
 ## 待 RE(縮小後)
 
-- **NPC 移動 handler** `0x62e9`/`0x6355`/`0x839f` 的步進規則(隨機/巡邏/靜止)細節。
 - scripted-event 觸發點(祠堂座標)——資料驅動,靜態僅剩此處未定位。
+- ~~NPC 移動~~ **已解(見上 §九)**;~~鑰匙門~~ **已解(§八)**。
 - ~~鑰匙門~~ **已解(見上 §八)**。

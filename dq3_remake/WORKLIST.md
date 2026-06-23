@@ -43,7 +43,10 @@
 
 ### 階段③ 對話/野外指令/戰鬥
 - [x] **文字/對話系統**(`dq3_text`):載 D3TXT00.FON(16×16 字模)+ D3TXTNN.TXT(指標表+2-byte glyph index 記錄),渲染對話視窗,處理控制碼(0xfffe 換行/0xfffc 換頁/0xffed+ 變數占位)。實測渲染阿里阿罕 NPC 真繁中對話(「鎮上的人所說的魔王要消滅世界是胡說的吧」)。→ 解鎖對話/NPC/選單/敵名/道具名/系統訊息。
-- [ ] 把文字接進:戰鬥(指令戰/逃/防/道具、敵名、HP 數字)、城鎮 NPC 對話觸發、道具/咒文選單。
+- [部分] 把文字接進各系統:
+  - [x] **戰鬥文字**(`dq3_battlescene`:指令戰/逃/防/道具選單、敵名 rec 0x258+id、隊伍 HP 數字)— 已實作(同階段②.5 [x])。
+  - [x] **城鎮 NPC 對話觸發**(`main.c` Enter → `dq3_scene_tile_event` → `dq3_dialogue_open`)— 已接。
+  - [ ] **道具/咒文選單**(尚未做)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。
 - [ ] 野外指令選單(DS:0x3baa 12 指令:話す/移動/調べる…)。
@@ -102,7 +105,11 @@
     `dq3_scene_door_tier`/`_open_door`/`_try_open_facing_door`(鏡射 0x4906/0x4977)、
     main.c 城鎮被擋時試開門重試;單測 `dq3_door_test` + inventory 鑰匙級測試全綠,full build OK。
     剩:接真實隊伍道具來源(目前單一 `dq3_inventory`)、開門音效/動畫。
-- [ ] **NPC 移動步進規則**:handler `0x62e9`/`0x6355`/`0x839f`(隨機/巡邏/靜止)的步進條件。
+- [x] **NPC 移動步進規則 ✅ 靜態全解**(docs/35 §九):真 mover=`L02025`(file 0x3395),非舊標
+  `0x6240`/`0x62e9`/`0x6355`/`0x839f`(全是 init/劇情碼,誤標)。slot[3] bit2=移動開關(動 vs 不動)、
+  bits0-1=朝向、bit7=凍結;每幀 RNG(4)==1 才評估(節流)、多沿朝向走、1/20 轉向、不貼玩家 3 格/不疊
+  NPC/不撞牆。remake 待接:NPC 槽加 byte3 + town tick 跑步進。
+  > 由使用者「有會動有不會動 NPC」現象 + 回 EXE RNG 反查定位,又一個舊位址糾正案例。
 - [ ] **CTY→地名 對照收尾**(untracked WIP):`docs/maps/cty_name_fill.md` 只填到 CTY2;
   配套 `tools/_big.py`(cty_loc 疊圖)、`tools/dosbox_walk_test.sh`、`new_map_dq3/` 待決定納版控或 gitignore。
 
