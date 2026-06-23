@@ -52,6 +52,7 @@ int  dq3_synth_shrine_examine(dq3_inventory *inv, dq3_storyflags *flags, int fix
  * (地圖/劇本 → [0x631] → [0x722]);彩虹水滴合成 = scripted-event 83。
  * 目前僅實作 id 0x53;其餘回 -3(未實作)。 */
 #define DQ3_SEVENT_RAINBOW_SYNTH 0x53   /* 祠堂「雨和太陽合而為一」合成事件 id(handler 0x776c)*/
+#define DQ3_SHRINE_CTY           93     /* 合成祠堂 = CTY93(下層,利姆達爾CTY86南方;cty_loc+alefgard 比對,docs/32)*/
 int  dq3_scripted_event_run(int event_id, dq3_inventory *inv, dq3_storyflags *flags, int fixed);
 
 #endif /* DQ3_INVENTORY_H */

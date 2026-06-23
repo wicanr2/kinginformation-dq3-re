@@ -15,5 +15,6 @@ extern const uint8_t  dq3x_event[256][3];  /* tile→怪物/戰鬥事件(3B,docs
 #define DQ3X_WARP_N 128
 extern const uint8_t  dq3x_warp[DQ3X_WARP_N][3];  /* 傳送目的地:地圖+座標 */
 #define DQ3X_CTYLOC_N 100
-extern const uint8_t  dq3x_cty_loc[DQ3X_CTYLOC_N][2];  /* 地表(X,Y)→CTY號(index) */
+extern const uint8_t  dq3x_cty_loc[DQ3X_CTYLOC_N][3];   /* {X, local_y, map(0地面/1下層/0xff空)}→CTY號=index */
+extern const uint8_t  dq3x_map_blknum[DQ3X_CTYLOC_N];   /* 每CTY的BLK號(1..5);town loader blk_n */
 #endif

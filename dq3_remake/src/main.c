@@ -144,18 +144,20 @@ static int field_bg_page(const dq3_scene *s)
     return T2BG[terr & 7];
 }
 
-/* load_cty 查表(DGROUP 0x748):地表 (px,py) → CTY 號,無則 -1。
- * 對齊 RE(file 0x43b7):Y==loc.Y 且 (X==loc.X 或 X==loc.X+1)→ entry index = CTY。 */
-static int find_cty_at(int px, int py)
+/* load_cty 查表(DGROUP 0x748):某層 (px,py) → CTY 號,無則 -1。
+ * 對齊 RE(file 0x43b7):Y==loc.Y 且 (X==loc.X 或 X==loc.X+1)→ entry index = CTY。
+ * map:0=地面、1=下層;只配對同層 entry(dq3x_cty_loc[i][2]==map)。 */
+static int find_cty_at_map(int px, int py, int map)
 {
     int i;
     for (i = 0; i < DQ3X_CTYLOC_N; i++) {
-        int lx = dq3x_cty_loc[i][0], ly = dq3x_cty_loc[i][1];
-        if (lx == 0 && ly == 0) continue;            /* 空槽 */
+        int lx = dq3x_cty_loc[i][0], ly = dq3x_cty_loc[i][1], lm = dq3x_cty_loc[i][2];
+        if (lm != map) continue;                     /* 只配對同層 + 跳過空槽(0xff)*/
         if (py == ly && (px == lx || px == lx + 1)) return i;
     }
     return -1;
 }
+static int find_cty_at(int px, int py) { return find_cty_at_map(px, py, 0); }  /* 地面 */
 
 static int run_game(const char *assets, const char *dump)
 {
@@ -272,12 +274,13 @@ static int run_game(const char *assets, const char *dump)
                 if (!in_town) {
                     int cidx = find_cty_at(cur->px, cur->py);
                     if (cidx >= 0) {
-                        char cty[16]; sprintf(cty, "CTY%02d.DAT", cidx);
-                        town = dq3_town_load(assets, cty, 0, 1, err, sizeof err);
+                        char cty[16]; int bn = dq3x_map_blknum[cidx];   /* 每CTY BLK號(0x0a04)*/
+                        sprintf(cty, "CTY%02d.DAT", cidx);
+                        town = dq3_town_load(assets, cty, 0, bn, err, sizeof err);
                         if (town) { load_field_hero(town, assets); cur = town; in_town = 1;
                             dq3_scene_apply_palette(cur);
-                            fprintf(stderr, "入城:地表(%d,%d) → %s 事件數=%d\n",
-                                    cur->px, cur->py, cty, town->n_events); }
+                            fprintf(stderr, "入城:地表(%d,%d) → %s(BLK%d)事件數=%d\n",
+                                    cur->px, cur->py, cty, bn, town->n_events); }
                         else fprintf(stderr, "入城失敗 %s: %s\n", cty, err);
                     }
                 }

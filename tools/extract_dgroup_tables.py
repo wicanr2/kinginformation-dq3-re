@@ -26,7 +26,8 @@ EVENT_DS = 0x37c4           # tile→怪物/戰鬥事件(3 byte/entry;docs/31 �
 WARP_DS = 0x4ea0           # 傳送/門目的地表(3 byte/entry:地圖號 + 2 座標);type2 事件用
 WARP_N = 128
 CTYLOC_DS = 0x748          # load_cty 查表:地表 (X,Y) → CTY 號(100×4 byte {X,b1,Y u16})
-CTYLOC_N = 100
+CTYLOC_N = 100             # Y u16:地面 0..204(map0);下層 300..466(map1,local_y=Y-300,建築 sprite 驗證)
+MAPBLK_DS = 0x0a04         # 每 CTY 的 BLK 號(map_blknum;[0x256c]*1 索引,值 1..5)→ town loader blk_n
 
 NUM_CLASS = 8
 GROWTH_ROW = 14
@@ -42,10 +43,16 @@ def extract():
     terrain = list(d[fo(TERRAIN_DS): fo(TERRAIN_DS)+TERRAIN_N])
     event = [list(d[fo(EVENT_DS)+t*3: fo(EVENT_DS)+t*3+3]) for t in range(EVENT_N)]
     warp = [list(d[fo(WARP_DS)+t*3: fo(WARP_DS)+t*3+3]) for t in range(WARP_N)]
-    ctyloc = [(d[fo(CTYLOC_DS)+i*4], u16(fo(CTYLOC_DS)+i*4+2)) for i in range(CTYLOC_N)]  # (X, Y)
-    return growth, ptrs, thresh, terrain, event, warp, ctyloc
+    ctyloc = []   # (X, local_y, map):map0=地面 Y、map1=下層 Y-300
+    for i in range(CTYLOC_N):
+        x = d[fo(CTYLOC_DS)+i*4]; ry = u16(fo(CTYLOC_DS)+i*4+2)
+        if 300 < ry < 467:  ctyloc.append((x, ry-300, 1))
+        elif 0 < ry < 205:  ctyloc.append((x, ry, 0))
+        else:               ctyloc.append((0, 0, 0xff))   # 表尾雜值
+    mapblk = list(d[fo(MAPBLK_DS): fo(MAPBLK_DS)+CTYLOC_N])
+    return growth, ptrs, thresh, terrain, event, warp, ctyloc, mapblk
 
-def gen_c(growth, thresh, terrain, event, warp, ctyloc):
+def gen_c(growth, thresh, terrain, event, warp, ctyloc, mapblk):
     os.makedirs("dq3_remake/src", exist_ok=True)
     h = []
     h.append("/* dq3_exedata.h — 自 DQ3.EXE DGROUP 抽出的靜態資料表(生成檔,勿手改)。")
@@ -62,7 +69,8 @@ def gen_c(growth, thresh, terrain, event, warp, ctyloc):
     h.append("#define DQ3X_WARP_N %d"%WARP_N)
     h.append("extern const uint8_t  dq3x_warp[DQ3X_WARP_N][3];  /* 傳送目的地:地圖+座標 */")
     h.append("#define DQ3X_CTYLOC_N %d"%CTYLOC_N)
-    h.append("extern const uint8_t  dq3x_cty_loc[DQ3X_CTYLOC_N][2];  /* 地表(X,Y)→CTY號(index) */")
+    h.append("extern const uint8_t  dq3x_cty_loc[DQ3X_CTYLOC_N][3];   /* {X, local_y, map(0地面/1下層/0xff空)}→CTY號=index */")
+    h.append("extern const uint8_t  dq3x_map_blknum[DQ3X_CTYLOC_N];   /* 每CTY的BLK號(1..5);town loader blk_n */")
     h.append("#endif")
     open("dq3_remake/include/dq3_exedata.h","w").write("\n".join(h)+"\n")
 
@@ -89,9 +97,13 @@ def gen_c(growth, thresh, terrain, event, warp, ctyloc):
     for e in warp:
         c.append("  {0x%02x,0x%02x,0x%02x},"%(e[0],e[1],e[2]))
     c.append("};\n")
-    c.append("const uint8_t dq3x_cty_loc[DQ3X_CTYLOC_N][2] = {")
-    for (x,y) in ctyloc:
-        c.append("  {%d,%d},"%(x & 0xff, y & 0xff))
+    c.append("const uint8_t dq3x_cty_loc[DQ3X_CTYLOC_N][3] = {")
+    for (x,y,mp) in ctyloc:
+        c.append("  {%d,%d,0x%02x},"%(x & 0xff, y & 0xff, mp))
+    c.append("};\n")
+    c.append("const uint8_t dq3x_map_blknum[DQ3X_CTYLOC_N] = {")
+    for i in range(0, len(mapblk), 16):
+        c.append("  " + ",".join(str(b) for b in mapblk[i:i+16]) + ",")
     c.append("};")
     open("dq3_remake/src/dq3_exedata.c","w").write("\n".join(c)+"\n")
 
@@ -135,9 +147,10 @@ def gen_doc(growth, ptrs, thresh, terrain, event):
     open("docs/data/dgroup-tables.md","w").write("\n".join(L))
 
 def main():
-    growth, ptrs, thresh, terrain, event, warp, ctyloc = extract()
-    gen_c(growth, thresh, terrain, event, warp, ctyloc)
-    print('cty_loc CTY0..2:', ctyloc[:3])
+    growth, ptrs, thresh, terrain, event, warp, ctyloc, mapblk = extract()
+    gen_c(growth, thresh, terrain, event, warp, ctyloc, mapblk)
+    print('cty_loc CTY0..2:', ctyloc[:3], ' CTY86/93:', ctyloc[86], ctyloc[93])
+    print('map_blknum CTY0/86/93:', mapblk[0], mapblk[86], mapblk[93])
     gen_doc(growth, ptrs, thresh, terrain, event)
     print('warp 表 0..2:', warp[0], warp[1], warp[2])
     print("生成 dq3_remake/src/dq3_exedata.c + include/dq3_exedata.h + docs/data/dgroup-tables.md")
