@@ -32,6 +32,7 @@ add_executable(dq3_remake
     src/dq3_packbg.c
     src/dq3_exedata.c
     src/dq3_dialogue.c
+    src/dq3_inventory.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
@@ -43,6 +44,8 @@ add_executable(dq3_monster_test src/dq3_monster.c src/test_monster.c)
 target_include_directories(dq3_monster_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_battle_test src/dq3_battle.c src/test_battle.c)
 target_include_directories(dq3_battle_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_inventory_test src/dq3_inventory.c src/test_inventory.c)
+target_include_directories(dq3_inventory_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(MSVC)
     target_compile_options(dq3_stats_test PRIVATE /W3)
     target_compile_options(dq3_combat_test PRIVATE /W3)
