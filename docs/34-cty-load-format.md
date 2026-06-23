@@ -46,3 +46,27 @@
 - 新遊戲阿里阿罕(0x13be)→ `[0x256a]=4`。
 - warp/門(0x4916/0xdbc7)→ 由進入資料設(門/階梯指定目的 section)。
 - 旗標分支地點(0x396e)→ 依劇情旗標選不同 CTY(隨進度變的地點)。
+
+## section/CTY 轉場機制(門/階梯)— RE 編目
+
+踩到門/階梯 → 轉場到另一 section 或 CTY。鏈路:
+
+1. **type-2 事件**(section 事件表,docs/31)→ handler `0x9f32`:
+   `warp[param] = [param*3 + 0x4ea0]` = `{dest, X, Y}`(3 byte)→ 組成結構 `{?, cur_map, dest, X, Y}@0x2521`
+   → `call 0xd1f9`(轉場執行器)。
+2. **warp 表 0x4ea0**(113 個非零):多數成對(門兩端,X/Y 互換)。`dest` 多為**目標 section**
+   (intra-CTY/迷宮樓層,值 1..57+);warp[35+] 的大 dest(226/242)+ 大 X(127/168)疑為**跨 CTY/地表**。
+3. **轉場執行器 0xd1f9**:多 sub(0xd2a5 setup / 0xd966 判路徑 / 0xdc36 / 淡出),最後讀**待轉變數組**
+   設目的並重載:
+   ```
+   [0x4f52]=dest CTY  [0x4f50]=dest section  [0x4f4c/4e]=spawn(X,Y)  [0x4f48/4a]=地表位置
+   → lcall 0x1053:0xdc 載入(同 load_cty 路徑)
+   ```
+   `0x2803` 另存「當前位置」到該變數組(供返回/再進)。
+
+## 待實作(scope:大)
+
+- **多路徑轉場 VM** + **門編碼分歧**:section 事件表 type-2(顯式門事件)、warp 表 {dest,X,Y}、
+  城鎮外圍 section0 的建築入口(sb+8 事件表=0xffff → 推測 tile-based,踩建築 tile 進對應 section)。
+- remake 務實路徑:先支援「section 事件表 type-2 → warp[param] → 載入 dest section/CTY + spawn」
+  (顯式門),再補城鎮外圍的 tile-based 建築入口。屬 階段③ 互動完整化的一塊。
