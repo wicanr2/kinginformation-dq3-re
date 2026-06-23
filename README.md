@@ -2,6 +2,8 @@
 
 中文標題「傳說的終章」對應日版 DQ3《そして伝説へ…》（精訊版改名為 *Dragon Fighter 3* 以避商標）。本 repo 記錄精訊資訊（King Information）在 1990 年代製作、**最終未發售**的中文版 DQ3 的反組譯與素材還原工作。
 
+> 📖 知識庫入口:[`CONTEXT.md`](CONTEXT.md) — canonical 術語表 + `docs/` 全文件主題索引;逆向方法論見 [`docs/00`](docs/00-re-methodology.md)。
+
 ## 成果展示
 
 從原版資料檔反組譯、解碼、還原出的成果（皆由 `tools/` 內的工具從原始素材重新產生）。標題、開場、主選單、城鎮 tile / palette 已在 **DOSBox 實機跑原版逐張比對驗證**（見 [`docs/14`](docs/14-dosbox-validation.md)），與還原結果一致：
