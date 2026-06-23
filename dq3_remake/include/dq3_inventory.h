@@ -63,6 +63,10 @@ int  dq3_synth_shrine_examine(dq3_inventory *inv, dq3_storyflags *flags, int fix
  * 目前僅實作 id 0x53;其餘回 -3(未實作)。 */
 #define DQ3_SEVENT_RAINBOW_SYNTH 0x53   /* 祠堂「雨和太陽合而為一」合成事件 id(handler 0x776c)*/
 #define DQ3_SHRINE_CTY           93     /* 合成祠堂 = CTY93(下層,利姆達爾CTY86南方;cty_loc+alefgard 比對,docs/32)*/
+/* 祠堂祭司 NPC 座標(CTY93 section0 NPC 清單唯一一隻,17×17;靜態解,三證據:CTY 資料 +
+ * 劇本 txt08「神聖的祠堂」+ 地理 docs/32)。調べる此格 → 合成 scripted-event 83。 */
+#define DQ3_SHRINE_NPC_X         8
+#define DQ3_SHRINE_NPC_Y         8
 int  dq3_scripted_event_run(int event_id, dq3_inventory *inv, dq3_storyflags *flags, int fixed);
 
 #endif /* DQ3_INVENTORY_H */

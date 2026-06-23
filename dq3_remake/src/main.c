@@ -238,14 +238,21 @@ static int run_game(const char *assets, const char *dump)
             if (sc == 0x1c || sc == 0x39) dq3_dialogue_advance(&dlg);  /* Enter/Space 翻頁/關閉 */
         } else if (sc == 0x1c) {            /* Enter:調べる本格 tile 事件(docs/31 真事件系統)*/
             int et, ep;
-            /* #2 祠堂:只在合成祠堂 CTY93 調べる才觸發 scripted-event 83
-             * (runner 0xabb2 → handler 0x776c → 0x77ce 尾段;祠堂定位見 docs/32 地圖比對)。 */
-            if (in_town && cur_cty == DQ3_SHRINE_CTY) {
+            /* #2 祠堂:站在祭壇 NPC(CTY93 (8,8))旁、面向它調べる才觸發 scripted-event 83
+             * (祭司 NPC 座標靜態解,docs/32;runner 0xabb2 → handler 0x776c → 0x77ce 尾段)。 */
+            {
+                int fdx = (cur->facing==3)-(cur->facing==1);   /* 右+1 左-1 */
+                int fdy = (cur->facing==0)-(cur->facing==2);   /* 下+1 上-1 */
+                int faceX = cur->px + fdx, faceY = cur->py + fdy;
+                int at_altar = (faceX==DQ3_SHRINE_NPC_X && faceY==DQ3_SHRINE_NPC_Y)   /* 面向祭壇 */
+                            || (cur->px==DQ3_SHRINE_NPC_X && cur->py==DQ3_SHRINE_NPC_Y); /* 或站其上 */
+            if (in_town && cur_cty == DQ3_SHRINE_CTY && at_altar) {
                 int sr = dq3_scripted_event_run(DQ3_SEVENT_RAINBOW_SYNTH, &inv, &flags, 1);
                 if (sr >= 0) {
                     fprintf(stderr, "祠堂:雨和太陽合而為一 → 彩虹水滴 0x%02x(旗標0x139 已設)\n", sr);
                     if (dlg_ok) dq3_dialogue_open(&dlg, 1);
                 }
+            }
             }
             if (dq3_scene_tile_event(cur, cur->px, cur->py, &et, &ep)) {
                 const char *tn = et==0?"調べる/寶箱":et==2?"傳送/門":(et==1||et==3)?"條件":"道具/其他";
