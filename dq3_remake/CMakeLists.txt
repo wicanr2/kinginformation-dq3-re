@@ -20,6 +20,8 @@ add_executable(dq3_remake
     src/dq3_font.c
     src/dq3_blk.c
     src/dq3_scene.c
+    src/dq3_npc.c
+    src/dq3_rng.c
     src/dq3_field.c
     src/dq3_town.c
     src/dq3_stats.c
@@ -46,7 +48,7 @@ add_executable(dq3_battle_test src/dq3_battle.c src/test_battle.c)
 target_include_directories(dq3_battle_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_inventory_test src/dq3_inventory.c src/test_inventory.c)
 target_include_directories(dq3_inventory_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-add_executable(dq3_door_test src/dq3_scene.c src/test_door.c)
+add_executable(dq3_door_test src/dq3_scene.c src/dq3_npc.c src/dq3_rng.c src/test_door.c)
 target_include_directories(dq3_door_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_npc_test src/dq3_npc.c src/dq3_rng.c src/test_npc.c)
 target_include_directories(dq3_npc_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

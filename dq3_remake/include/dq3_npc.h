@@ -12,8 +12,9 @@
 #define DQ3_NPC_H
 
 #include <stdint.h>
-#include "dq3_scene.h"
 #include "dq3_rng.h"
+
+typedef struct dq3_scene dq3_scene;   /* 前向宣告(避免與 dq3_scene.h 循環 include)*/
 
 #define DQ3_NPC_MOVE   0x04
 #define DQ3_NPC_FROZEN 0x80

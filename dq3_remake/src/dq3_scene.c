@@ -96,6 +96,40 @@ int dq3_scene_try_open_facing_door(dq3_scene *s, int key_tier)
     return dq3_scene_open_door(s, tx, ty);
 }
 
+int dq3_scene_load_npcs(dq3_scene *s, const uint8_t *cty, size_t cty_len, size_t so)
+{
+    size_t base; int cnt, i;
+    uint16_t np;
+    s->n_npcs = 0;
+    dq3_rng_seed(&s->npc_rng, (uint16_t)(so * 2654 + 1));   /* 確定性種子(依 section)*/
+    if (so + 4 > cty_len) return 0;
+    np = (uint16_t)(cty[so] | (cty[so + 1] << 8));          /* +0 NPC 清單 */
+    if (np == 0xffff) np = (uint16_t)(cty[so + 2] | (cty[so + 3] << 8));  /* 退 +2 */
+    if (np == 0xffff || so + np >= cty_len) return 0;
+    base = so + np;
+    cnt = cty[base];                                        /* {count, records*7} */
+    for (i = 0; i < cnt && s->n_npcs < DQ3_SCENE_MAX_NPC; i++) {
+        const uint8_t *r = cty + base + 1 + (size_t)i * 7;
+        dq3_npc *n;
+        if (base + 1 + (size_t)i * 7 + 7 > cty_len) break;
+        if (r[0] >= s->map_w || r[1] >= s->map_h) continue; /* 座標越界跳過 */
+        n = &s->npcs[s->n_npcs];
+        n->x = r[0]; n->y = r[1]; n->b2 = r[2]; n->ctrl = r[3];
+        n->b4 = r[4]; n->flags = r[5]; n->b7 = r[6]; n->base_hi = 0;
+        dq3_npc_stamp(s, s->npcs, s->n_npcs);               /* 蓋上 hi_map(0x20|slot)*/
+        s->n_npcs++;
+    }
+    return s->n_npcs;
+}
+
+int dq3_scene_npc_tick(dq3_scene *s)
+{
+    int i, moved = 0;
+    for (i = 0; i < s->n_npcs; i++)
+        moved += dq3_npc_step(s, s->npcs, i, s->n_npcs, &s->npc_rng) ? 1 : 0;
+    return moved;
+}
+
 int dq3_scene_input(dq3_scene *s, uint8_t sc)
 {
     int dx = 0, dy = 0, tx, ty;

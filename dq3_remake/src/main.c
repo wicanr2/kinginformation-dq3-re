@@ -82,7 +82,7 @@ static int run_scene(dq3_scene *s, const char *dump)
 
     if (dump) {
         const char *walk = getenv("DQ3_WALK");
-        fprintf(stderr, "scene %dx%d start player=(%d,%d)\n", s->map_w, s->map_h, s->px, s->py);
+        fprintf(stderr, "scene %dx%d start player=(%d,%d) NPC=%d\n", s->map_w, s->map_h, s->px, s->py, s->n_npcs);
         if (walk) {
             int moved = 0, blocked = 0; const char *p;
             for (p = walk; *p; p++) {
@@ -229,6 +229,8 @@ static int run_game(const char *assets, const char *dump)
     /* 互動:方向走動 + 隨機遭遇;SPACE 進/出城鎮;Enter 對話(前方有事件時)。 */
     while (!dq3_should_quit()) {
         uint8_t sc;
+        /* NPC 隨機走動(docs/35 §九):城鎮每幀步進;對話中凍結不動。 */
+        if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         if (dlg_ok && dq3_dialogue_is_open(&dlg))
             dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);

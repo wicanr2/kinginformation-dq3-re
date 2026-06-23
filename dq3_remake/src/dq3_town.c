@@ -124,6 +124,9 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
         }
     }
 
+    /* NPC(docs/34/35 §九):section +0/+2 清單 → scene 槽 + stamp hi_map(走動見 dq3_npc)。 */
+    dq3_scene_load_npcs(s, cty, cty_len, so);
+
     s->tile_count = blk.count;
     s->tiles = malloc((size_t)blk.count * sizeof(*s->tiles));
     if (!s->tiles) FAIL("OOM tiles");

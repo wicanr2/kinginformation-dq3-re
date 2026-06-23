@@ -1,6 +1,7 @@
 /* test_npc.c — NPC 隨機走動步進器 + EXE RNG 驗證(docs/35 §九)。
  * 步進器只讀 dq3_scene 結構欄位,不呼叫 scene 函式 → 測試自建 scene、免連 SDL。 */
 #include "dq3_npc.h"
+#include "dq3_scene.h"   /* 完整 dq3_scene 定義(建 scene 物件用)*/
 #include "dq3_rng.h"
 #include <stdio.h>
 #include <string.h>

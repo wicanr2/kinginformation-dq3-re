@@ -1,5 +1,6 @@
 /* dq3_npc.c — NPC 隨機走動步進器(鏡射 DQ3.EXE mover L02025 / file 0x3395)。 */
 #include "dq3_npc.h"
+#include "dq3_scene.h"   /* 完整 dq3_scene 定義(npc.h 只前向宣告)*/
 
 /* 方向位移(EXE [0xb35]/[0xb37] 表,stride-4 {dx,dy};0下 1左 2上 3右)。 */
 static const int DDX[4] = { 0, -1, 0, 1 };

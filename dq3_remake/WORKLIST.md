@@ -114,8 +114,12 @@
     (8-byte 槽 + `dq3_npc_step` 鏡射 mover L02025:節流/bit2 開關/bit7 凍結/朝向走+1/20 轉向/
     碰撞:界內·不踏玩家(反向)·不疊 NPC(0x20)·不撞牆(attr bit0)·stamp/unstamp hi_map)。
     單測 `dq3_npc_test` 全綠(RNG 手算值對上、軌跡合法、靜止/凍結不動、全牆不動、兩 NPC 不互疊)。
-    剩:① 從 CTY section +0/+2 載真實 NPC 進槽 + town tick 每幀跑步進 + sprite 繪製;
-    ② EXE「離玩家 ≥3 格」近距閘語意待再追(已註記,尚未鏡射)。
+  - [x] **接線 ✅**:`dq3_scene_load_npcs`(CTY section +0/+2 → scene 槽 + stamp hi_map)、
+    `dq3_scene_npc_tick`(每幀步進)、`dq3_town_load` 載 NPC、main.c town 迴圈每幀 tick(對話中凍結)。
+    實測:CTY00 載 24 隻、CTY93 載 1 隻(祭司),與原始資料一致。scene 加 NPC 槽 + npc_rng
+    (dq3_npc.h 前向宣告 scene 解循環 include)。
+    剩:① **NPC sprite 繪製**(目前只 stamp hi_map 0x20,未畫圖 → 尚不可見);
+    ② EXE「離玩家 ≥3 格」近距閘待再追(已註記)。
 - [ ] **CTY→地名 對照收尾**(untracked WIP):`docs/maps/cty_name_fill.md` 只填到 CTY2;
   配套 `tools/_big.py`(cty_loc 疊圖)、`tools/dosbox_walk_test.sh`、`new_map_dq3/` 待決定納版控或 gitignore。
 

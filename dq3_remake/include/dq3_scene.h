@@ -14,13 +14,16 @@
 #define DQ3_SCENE_H
 
 #include <stdint.h>
+#include <stddef.h>        /* size_t */
 #include "dq3_runtime.h"   /* dq3_color */
 #include "dq3_sprite.h"    /* dq3_charsprite */
+#include "dq3_npc.h"       /* dq3_npc(前向宣告 dq3_scene,不循環)*/
 
 #define DQ3_TILE_W 32
 #define DQ3_TILE_H 24
+#define DQ3_SCENE_MAX_NPC 32
 
-typedef struct {
+typedef struct dq3_scene {
     int       map_w, map_h;
     uint8_t  *index_map;          /* w*h,每格 BLK tile index(owned) */
     uint8_t (*tiles)[DQ3_TILE_H][DQ3_TILE_W];  /* 解碼 tile(owned) */
@@ -45,6 +48,12 @@ typedef struct {
      * destSec==0xff → 出城回地表;destCTY!=當前 → 跨 CTY。 */
     struct { uint8_t dest_cty, dest_sec, x, y; } transitions[32];
     int       n_transitions;      /* 0 = 此 section 無轉場表 */
+
+    /* NPC(docs/34/35 §九):CTY section +0/+2 載入的 8-byte 槽;走動見 dq3_npc。
+     * 載入時 stamp 到 hi_map(0x20|slot);每幀 dq3_scene_npc_tick 跑步進。 */
+    dq3_npc   npcs[DQ3_SCENE_MAX_NPC];
+    int       n_npcs;
+    dq3_rng   npc_rng;
 
     /* 主角 sprite(DQ3MAN.BLS);has_hero=0 時退回佔位方框 */
     dq3_charsprite hero;
@@ -79,6 +88,13 @@ int  dq3_scene_open_door(dq3_scene *s, int tx, int ty);
 /* 試開「面向 tile」的鎖門:若為門且 key_tier >= 所需等級 → 開門回 1;否則 0。
  * 面向格 = (px,py) + facing 位移(同 dq3_scene_input 慣例)。城鎮專用(EXE 0x4906 gate)。 */
 int  dq3_scene_try_open_facing_door(dq3_scene *s, int key_tier);
+
+/* 從 CTY section NPC 清單(+0/+2,7-byte 記錄)載 NPC 進 scene 槽並 stamp 到 hi_map。
+ * cty=CTY 檔內容,so=section base offset。回載入隻數。 */
+int  dq3_scene_load_npcs(dq3_scene *s, const uint8_t *cty, size_t cty_len, size_t so);
+
+/* 每幀對所有 NPC 跑一次步進(隨機走動;靜止/凍結者不動)。回本幀移動隻數。 */
+int  dq3_scene_npc_tick(dq3_scene *s);
 
 /* 處理一個方向 scancode(0x48/0x50/0x4b/0x4d),含碰撞。回傳 1=有移動。 */
 int  dq3_scene_input(dq3_scene *s, uint8_t scancode);
