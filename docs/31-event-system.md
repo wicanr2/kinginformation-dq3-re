@@ -148,14 +148,33 @@ type = [si];  param = [si+1](u16);  p2 = [si+3]   ; ★ 4-byte 事件項
 remake:`dq3_synth_shrine_examine`(`dq3_inventory.c`)鏡射條件與副作用 —
 未設旗標 0x139 才觸發、持兩材料 → 合成(修正產 0x75)+ 設旗標 0x139。
 
-**呼叫者待 RE**:`0x77ce` 既非同段 near-call(全檔 E8 掃 0 命中)、亦不在指標表
-(word `0x77ce` 全檔 0 出現)→ 由**另一程式碼段 far-call** 進入(祠堂寫死座標事件,
-類 0x9f7f 的 `[0x4f2f]/[0x4f31]` 分支)。精確城鎮/座標未定位;remake 暫以
-「城鎮中調べる且持兩材料」觸發。
+#### 呼叫鏈(已解出:scripted-event 派發)
+
+`0x77ce` 既非同段 near-call(全檔 E8 掃 0 命中)、亦無 far-call(全檔 9A 掃 0)、
+指標表也查無(word `0x77ce` / far 指標 0 命中)。原因:**0x77ce 是 handler `file 0x776c`
+的成功尾段(fall-through)**,而 0x776c 由 **scripted-event 跳表** 間接派發:
+
+```
+runner  file 0xabb2:
+  mov bx, [0x722]        ; event id(資料驅動)
+  dec bx ; shl bx,1
+  call word ptr [bx+0x3baa]   ; → handler 跳表(DGROUP DS 0x3baa)
+跳表 DS 0x3baa:  idx0=phys0x988d … idx82=phys0x63fc(=file 0x776c 合成)…
+∴ 彩虹水滴合成 = scripted-event id 83(0x53)  [index 82 = id-1]
+```
+
+- **event id 為資料驅動**:`[0x722]` 由 `[0x631]`(地圖事件 id)等載入(`mov ax,[0x631];
+  mov [0x722],ax`,file 0x846b/0x8a81/0x8f6b),非碼中寫死(全檔無 `mov [0x722],0x53`)。
+- runner 0xabb2 亦無直接呼叫者 → 上層尚有 control-code/命令直譯器一層。
+- **精確祠堂 CTY/座標**:編在 **CTY 地圖資料 + 劇本 control-code**(非 EXE 碼),經直譯器
+  下 event 83。要 100% 定位需解 CTY 事件資料 + control-code 表(下一步)。
+
+remake:`dq3_scripted_event_run(id, …)`(`dq3_inventory.c`)鏡射 runner 的 id→handler
+跳表(目前僅 id 83 → 合成);main.c 城鎮調べる發 event 83(暫代真實地圖資料來源)。
 
 ### 待 RE(收尾)
 
-- **0x77ce 的 far-call 呼叫者**(祠堂城鎮 + 寫死座標),替換 remake 暫時觸發條件。
+- **發 event 83 的 CTY 地圖事件 / control-code**(祠堂城鎮 + 座標),替換 remake 暫時觸發。
 - section 事件表的**完整 entry 格式**(type0 給道具的 item id 欄、type2 warp 表 0x4ea0 逐欄)。
 - 寫死座標劇情事件清單(0x9f7f 內的多個座標分支)。
 - 把上述抽成內建資料(像 dq3_exedata)供 remake,不依賴 DQ3.EXE。

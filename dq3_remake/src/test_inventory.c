@@ -56,6 +56,18 @@ int main(void)
         CHECK(dq3_synth_shrine_examine(&inv, &fl, 1) == -2, "已合成 → 不重複觸發");
     }
 
+    /* scripted-event 派發(runner 0xabb2 → id 跳表 DS 0x3baa)*/
+    printf("== scripted-event 派發(id 83 = 祠堂合成)==\n");
+    {
+        dq3_storyflags fl; dq3_flags_init(&fl);
+        dq3_inv_init(&inv);
+        dq3_inv_add(&inv, ITEM_SUN_STONE);
+        dq3_inv_add(&inv, ITEM_RAINCLOUD_ROD);
+        CHECK(dq3_scripted_event_run(DQ3_SEVENT_RAINBOW_SYNTH, &inv, &fl, 1) == ITEM_RAINBOW_DROP,
+              "event 83 → 合成彩虹水滴");
+        CHECK(dq3_scripted_event_run(0x01, &inv, &fl, 1) == -3, "未實作 event → -3");
+    }
+
     printf("\n%s (%d failures)\n", g_fail?"== 有測試未通過 ==":"== 全部通過 ==", g_fail);
     return g_fail?1:0;
 }

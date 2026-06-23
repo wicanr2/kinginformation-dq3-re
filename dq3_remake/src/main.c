@@ -199,10 +199,10 @@ static int run_game(const char *assets, const char *dump)
         town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
         if (town) { load_field_hero(town, assets); cur = town; dq3_scene_apply_palette(cur);
             fprintf(stderr, "城鎮 sect%d 事件數=%d\n", tsect, town->n_events); }
-        /* demo #2:城鎮中調べる祠堂 → 合成彩虹水滴(對齊 0x77ce,修正版產 0x75)*/
+        /* demo #2:發 scripted-event 83(祠堂)→ 合成彩虹水滴(對齊 runner→0x776c→0x77ce)*/
         {
-            int sr = dq3_synth_shrine_examine(&inv, &flags, 1);
-            fprintf(stderr, "=== #2 祠堂合成:result=0x%02x flag0x139=%d ===\n",
+            int sr = dq3_scripted_event_run(DQ3_SEVENT_RAINBOW_SYNTH, &inv, &flags, 1);
+            fprintf(stderr, "=== #2 scripted-event 83 祠堂:result=0x%02x flag0x139=%d ===\n",
                     sr, dq3_flags_get(&flags, DQ3_FLAG_RAINBOW_SYNTHED));
         }
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
@@ -231,10 +231,11 @@ static int run_game(const char *assets, const char *dump)
             if (sc == 0x1c || sc == 0x39) dq3_dialogue_advance(&dlg);  /* Enter/Space 翻頁/關閉 */
         } else if (sc == 0x1c) {            /* Enter:調べる本格 tile 事件(docs/31 真事件系統)*/
             int et, ep;
-            /* #2 祠堂:在城鎮調べる且持有兩材料 → 合成彩虹水滴(對齊 file 0x77ce + 旗標 0x139)。
-             * 注:精確祠堂座標/城鎮(0x77ce 之 far-call 呼叫者)待 RE,暫以城鎮調べる觸發。 */
+            /* #2 祠堂:scripted-event 83(runner 0xabb2 → handler 0x776c → 0x77ce 尾段)。
+             * 原版 event id 由地圖/劇本資料下到 [0x722];精確祠堂 CTY/座標(在 CTY 資料 +
+             * control-code 直譯器)待 RE,remake 暫以城鎮調べる發 event 83。 */
             if (in_town) {
-                int sr = dq3_synth_shrine_examine(&inv, &flags, 1);
+                int sr = dq3_scripted_event_run(DQ3_SEVENT_RAINBOW_SYNTH, &inv, &flags, 1);
                 if (sr >= 0) {
                     fprintf(stderr, "祠堂:雨和太陽合而為一 → 彩虹水滴 0x%02x(旗標0x139 已設)\n", sr);
                     if (dlg_ok) dq3_dialogue_open(&dlg, 1);

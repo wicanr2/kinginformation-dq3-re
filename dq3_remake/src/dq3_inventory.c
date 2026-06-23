@@ -49,6 +49,17 @@ int dq3_synth_shrine_examine(dq3_inventory *inv, dq3_storyflags *flags, int fixe
     return r;
 }
 
+int dq3_scripted_event_run(int event_id, dq3_inventory *inv, dq3_storyflags *flags, int fixed)
+{
+    /* 對齊 runner(file 0xabb2)的 id→handler 跳表(DS 0x3baa)。目前僅實作合成。 */
+    switch (event_id) {
+    case DQ3_SEVENT_RAINBOW_SYNTH:                 /* id 83 → handler 0x776c(0x77ce 尾段)*/
+        return dq3_synth_shrine_examine(inv, flags, fixed);
+    default:
+        return -3;                                 /* 其餘 scripted-event 未實作 */
+    }
+}
+
 int dq3_synth_rainbow_drop(dq3_inventory *inv, int fixed)
 {
     int s_sun, s_rod, result;

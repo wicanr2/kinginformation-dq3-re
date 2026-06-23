@@ -45,4 +45,11 @@ int  dq3_synth_rainbow_drop(dq3_inventory *inv, int fixed);
  * (fixed 同上)+ 設旗標 0x139,回成品 code;材料不足 → 回 -1。 */
 int  dq3_synth_shrine_examine(dq3_inventory *inv, dq3_storyflags *flags, int fixed);
 
+/* scripted-event 派發(鏡射 DQ3.EXE runner file 0xabb2:event id 在 [0x722],
+ * `dec bx; shl bx,1; call [bx+0x3baa]` → handler 跳表)。原版 event id 為資料驅動
+ * (地圖/劇本 → [0x631] → [0x722]);彩虹水滴合成 = scripted-event 83。
+ * 目前僅實作 id 0x53;其餘回 -3(未實作)。 */
+#define DQ3_SEVENT_RAINBOW_SYNTH 0x53   /* 祠堂「雨和太陽合而為一」合成事件 id(handler 0x776c)*/
+int  dq3_scripted_event_run(int event_id, dq3_inventory *inv, dq3_storyflags *flags, int fixed);
+
 #endif /* DQ3_INVENTORY_H */
