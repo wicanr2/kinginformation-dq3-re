@@ -39,14 +39,31 @@ docs/31),不必硬解事件 VM。
 
 ## #2 合成祠堂定位
 
-- 合成祠堂在**下層、利姆達爾南方小島**。下層南區水域標記(idx 84/85/92/93 偏南、79/80・90/91
-  中南重複對)為候選;此比例小島難辨,精確指名待下一步。
-- **決定性下一步**:DOSBox 在 handler `file 0x776c` / runner phys `0x9842` 下中斷點 → 觸發
-  合成 → 讀 `[0x256c]`(CTY 號)+ `[0x4f2f]/[0x4f31]`(座標)。CTY 號回查 cty_loc 即得本表
-  對應標記,與本圖一次對上 = 完整指名。
+- 合成祠堂在**下層、利姆達爾南方小島**。下層南區標記為候選(idx 84/85/92/93、79/80・90/91 重複對)。
+
+### A′:EXE patch 傳送 + DOSBox 截圖(已驗證)
+
+無 debugger build 也能定位 —— **patch 新遊戲起始 CTY 即可開機直接進入任一 CTY 內裝**:
+
+- 新遊戲 init(file 0x13a0):設座標 → `[0x4f2d]=1`(城鎮)→ `[0x256c]=0`(CTY0)→ load town。
+- **patch file `0x1400`**(`mov word [0x256c],0` 的立即值)→ 候選 CTY 號 → 開機進該 CTY。
+- 工具:`tools/dosbox_warp_cty.sh <idx>`(dq3-dosbox 容器內,走名字輸入 oracle → 截圖)。
+- 截圖存 `docs/maps/warp_shots/`。已辨識:
+  - **CTY79/80**(同座標,村莊,護城河+綠籬)= **利姆達爾**候選。
+  - **CTY84** = 旅館型(床+寶箱+NPC)。**CTY92/93** = 城鎮/城堡型。
+  - 合成祠堂(小型祠堂內裝)尚未在已成功載入的候選中現身。
+- **限制**:DOSBox 按鍵自動化(XTEST)在負載下偶發卡名字輸入(~半數),逐顆需重試;城鎮內裝
+  視覺相近,祠堂/城鎮之分需更穩的逐顆載入或「給材料 → 觸發合成」確認。
+
+### 收尾下一步(擇一)
+
+1. **給材料 + 觸發確認**(決定性):patch 同時注入 太陽之石+雲雨之杖到隊伍道具欄,進候選 CTY
+   走到 NPC 調べる;**只有真祠堂會觸發合成**(太陽之石消失 → 銀寶珠),截道具欄前後比對。
+2. **靜態 CTY-NPC 格式**:解 CTY 檔的 NPC→event-id 綁定,掃下層 CTY 找 action=83(scripted-event)。
 
 ## 再生
 
 ```
 tools/overlay_cty_map.py     # PIL(docker uv venv);輸出 docs/maps/world_{con,und}_cty.png
+tools/dosbox_warp_cty.sh <i> # 容器內:patch [0x256c]=i → 開機進 CTYi 內裝,截圖比對
 ```
