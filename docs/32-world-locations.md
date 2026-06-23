@@ -67,3 +67,33 @@ docs/31),不必硬解事件 VM。
 tools/overlay_cty_map.py     # PIL(docker uv venv);輸出 docs/maps/world_{con,und}_cty.png
 tools/dosbox_warp_cty.sh <i> # 容器內:patch [0x256c]=i → 開機進 CTYi 內裝,截圖比對
 ```
+
+## 下層(アレフガルド)城鎮對照 — 建築 sprite 驗證 + mikesrpgcenter 標籤
+
+> 修正:下層 `local_y = raw_Y − 300`(原誤用 −269,下層整體偏 31 格)。以**地圖建築 tile
+> sprite** 為 ground truth 驗證:16 個下層 cty_loc 全部精準落在建築 sprite 上(towns=tile
+> 0x76/0x77、其他建築 0x08/0x0c/0x11/0x1b/0x78/0x7c/0x9c…),非隨意圈點。
+
+疊到 NES Alefgard 標籤圖(`docs/maps/alefgard_cty_overlay.png`),逐點對上:
+
+| CTY | local 座標 | Alefgard 標籤 | 精訊名/備註 |
+|---|---|---|---|
+| 78 | (64,26) | Cave NW of Brecconaly | |
+| 82/81 | (142,25)/(166,34) | Tower W of Kol / Kol | 東北 |
+| 87 | (89,36) | Brecconaly 北 | |
+| 77 | (84,67) | Brecconaly | |
+| 79/80 | (106,66) | Castle of Zoma 一帶 | town sprite |
+| 91/90 | (110,73) | Castle of Zoma | |
+| 88 | (91,81) | Cave SW of Brecconaly | |
+| **86** | (163,96) | **Rimuldar** | **利姆達爾**(marker 落在標籤上)|
+| 89 | (166,68) | Rimuldar 北/Rainbow Bridge | |
+| 84 | (87,113) | Haukness | town sprite |
+| 85/92 | (135,126)/(139,136) | Cantlin / Staff of Rain | 雲雨之杖一帶 |
+| **93** | (170,133) | **Rainbow Drop** | **#2 合成祠堂(彩虹水滴)**;利姆達爾南方,建築 0x7c |
+
+**結論:利姆達爾 = CTY86,#2 合成祠堂(Rainbow Drop)= CTY93**(下層 SE,利姆達爾南方),
+與攻略「利姆達爾往南航行到小島神聖祠堂」一致。座標 = cty_loc CTY93 = 地表 raw(170, 0x01B1)
+→ 下層 local(170,133)。
+
+> A′(DOSBox 傳送)對 CTY80/85/93 渲染同畫面 → A′ 視覺對部分 CTY 不可靠(檔 md5 各異,
+> 確為不同城);改以**地圖建築比對**為準。
