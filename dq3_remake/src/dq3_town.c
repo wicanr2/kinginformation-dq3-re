@@ -52,14 +52,16 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
     so = u16le(cty, 2 + 2 * (size_t)section);
     if (so == 0xffff || so + 0x10 > cty_len) FAIL("section empty/oob");
 
+    /* 對齊 RE(file 0x443f 解析):layout = {w(2), h(2), tiles…},tiles 緊接 w,h 之後(+4);
+     * spawn 在 section header(section_base+0x13/0x14),不在 layout 內。 */
     lp  = u16le(cty, so + 0x0e);          /* layout_ptr(相對 section_off) */
     lay = so + lp;
-    if (lay + 8 > cty_len) FAIL("layout oob");
+    if (lay + 4 > cty_len) FAIL("layout oob");
     w  = u16le(cty, lay);
     h  = u16le(cty, lay + 2);
-    sx = cty[lay + 4];                     /* spawn_x */
-    sy = cty[lay + 6];                     /* spawn_y */
-    tbase = lay + 8;                       /* tile 陣列(spawn 4B 後) */
+    sx = cty[so + 0x13];                   /* spawn_x(section header)*/
+    sy = cty[so + 0x14];                   /* spawn_y(section header)*/
+    tbase = lay + 4;                       /* tile 陣列(w,h 之後)*/
     if (w <= 0 || h <= 0 || tbase >= cty_len) FAIL("tile array oob");
     /* 容忍 tile 陣列略超檔尾(部分 section 末尾差幾 byte):逐 tile bounds-safe 讀。 */
 
