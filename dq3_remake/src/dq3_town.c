@@ -60,7 +60,8 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
     sx = cty[lay + 4];                     /* spawn_x */
     sy = cty[lay + 6];                     /* spawn_y */
     tbase = lay + 8;                       /* tile 陣列(spawn 4B 後) */
-    if (w <= 0 || h <= 0 || tbase + (size_t)w * h * 2 > cty_len) FAIL("tile array oob");
+    if (w <= 0 || h <= 0 || tbase >= cty_len) FAIL("tile array oob");
+    /* 容忍 tile 陣列略超檔尾(部分 section 末尾差幾 byte):逐 tile bounds-safe 讀。 */
 
     if (dq3_blk_open(blk_raw, blk_len, &blk) != 0) FAIL("DQ3N.BLK open");
 
@@ -68,9 +69,33 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
     if (!s) FAIL("OOM scene");
     s->map_w = w; s->map_h = h;
     s->index_map = (uint8_t *)malloc((size_t)w * h);
-    if (!s->index_map) FAIL("OOM index_map");
-    for (i = 0; i < w * h; i++)
-        s->index_map[i] = (uint8_t)u16le(cty, tbase + 2 * (size_t)i);  /* 低 byte */
+    s->hi_map    = (uint8_t *)malloc((size_t)w * h);   /* 高 byte = 事件 subid 來源 */
+    if (!s->index_map || !s->hi_map) FAIL("OOM map");
+    for (i = 0; i < w * h; i++) {
+        size_t o = tbase + 2 * (size_t)i;
+        uint16_t tw = (o + 1 < cty_len) ? u16le(cty, o) : 0;   /* bounds-safe */
+        s->index_map[i] = (uint8_t)tw;          /* 低 byte = BLK index */
+        s->hi_map[i]    = (uint8_t)(tw >> 8);    /* 高 byte = 屬性/事件 subid */
+    }
+
+    /* section 事件表(docs/31):指標在 section+8;0xffff=無。
+     * 表 = count byte + 4-byte 項[type, param u16, p2],項 subid 在 +1+subid*4。 */
+    {
+        uint16_t evptr = u16le(cty, so + 8);
+        if (evptr != 0xffff && so + evptr < cty_len) {
+            size_t et = so + evptr;
+            int cnt = cty[et], k;
+            if (cnt > 32) cnt = 32;
+            for (k = 0; k < cnt; k++) {
+                size_t o = et + 1 + (size_t)k * 4;
+                if (o + 4 > cty_len) break;
+                s->events[k].type  = cty[o];
+                s->events[k].param = u16le(cty, o + 1);
+                s->events[k].p2    = cty[o + 3];
+                s->n_events = k + 1;
+            }
+        }
+    }
 
     s->tile_count = blk.count;
     s->tiles = malloc((size_t)blk.count * sizeof(*s->tiles));

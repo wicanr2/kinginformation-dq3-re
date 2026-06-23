@@ -17,6 +17,22 @@ int dq3_scene_walkable(const dq3_scene *s, int tx, int ty)
     return (a & 0x0001) ? 0 : 1;
 }
 
+int dq3_scene_tile_event(const dq3_scene *s, int tx, int ty, int *type, int *param)
+{
+    int i, idx, subid;
+    if (!s->hi_map || s->n_events <= 0) return 0;
+    if (tx < 0 || ty < 0 || tx >= s->map_w || ty >= s->map_h) return 0;
+    i = ty * s->map_w + tx;
+    idx = s->index_map[i];
+    /* 屬性 attr&8 = 事件格(docs/31) */
+    if (!s->attr || idx >= s->attr_count || !(s->attr[idx] & 0x0008)) return 0;
+    subid = s->hi_map[i] & 0x1f;          /* 高 byte 低 5 bit = 事件 subid */
+    if (subid >= s->n_events) return 0;
+    if (type)  *type  = s->events[subid].type;
+    if (param) *param = s->events[subid].param;
+    return 1;
+}
+
 int dq3_scene_input(dq3_scene *s, uint8_t sc)
 {
     int dx = 0, dy = 0, tx, ty;
@@ -137,6 +153,7 @@ void dq3_scene_free(dq3_scene *s)
     int i;
     if (!s) return;
     free(s->index_map);
+    free(s->hi_map);
     free(s->tiles);
     for (i = 0; i < s->nowned; i++) free(s->owned[i]);
     free(s);

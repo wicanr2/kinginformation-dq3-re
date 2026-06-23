@@ -11,5 +11,7 @@
 extern const uint8_t  dq3x_growth[DQ3X_NUM_CLASS][DQ3X_GROWTH_ROW];
 extern const uint32_t dq3x_thresh[DQ3X_NUM_CLASS][DQ3X_MAX_LEVEL+1];
 extern const uint8_t  dq3x_terrain[256];   /* tile→地形類別 */
-extern const uint8_t  dq3x_event[256][3];  /* tile→物件事件(3B) */
+extern const uint8_t  dq3x_event[256][3];  /* tile→怪物/戰鬥事件(3B,docs/31)*/
+#define DQ3X_WARP_N 128
+extern const uint8_t  dq3x_warp[DQ3X_WARP_N][3];  /* 傳送目的地:地圖+座標 */
 #endif

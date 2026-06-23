@@ -33,6 +33,12 @@ typedef struct {
     int px, py;                   /* 玩家 tile 座標 */
     int facing;                   /* 0下 1左 2上 3右 */
 
+    /* 事件層(docs/31):tile 高 byte = 事件 subid(屬性 attr&8 為事件格);
+     * section 事件表(4-byte 項 type/param/p2,by subid)。城鎮/迷宮才有。 */
+    uint8_t  *hi_map;             /* w*h,每格 tile 高 byte(owned);NULL=無事件層 */
+    struct { uint8_t type; uint16_t param; uint8_t p2; } events[32];
+    int       n_events;           /* 0 = 此 section 無事件表 */
+
     /* 主角 sprite(DQ3MAN.BLS);has_hero=0 時退回佔位方框 */
     dq3_charsprite hero;
     int has_hero;
@@ -45,6 +51,10 @@ typedef struct {
 
 /* tile 可走:界外不可走;屬性 bit0=阻擋。 */
 int  dq3_scene_walkable(const dq3_scene *s, int tx, int ty);
+
+/* 查 (tx,ty) 的 tile 事件(docs/31:屬性 attr&8 + 高 byte subid → section 事件表)。
+ * 有事件回 1 並填 *type/*param;無回 0。 */
+int  dq3_scene_tile_event(const dq3_scene *s, int tx, int ty, int *type, int *param);
 
 /* 處理一個方向 scancode(0x48/0x50/0x4b/0x4d),含碰撞。回傳 1=有移動。 */
 int  dq3_scene_input(dq3_scene *s, uint8_t scancode);

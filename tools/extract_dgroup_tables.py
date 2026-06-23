@@ -22,7 +22,9 @@ def u32(o): return struct.unpack_from("<I", d, o)[0]
 GROWTH_DS = 0x4366          # 8 職業 × 14 byte 成長表
 THR_PTR_DS = 0x43d6         # 8 × u16 指標 → 各 44 entry u32 升級門檻
 TERRAIN_DS = 0x4df6         # 256 byte tile→地形類別(戰鬥背景選頁)
-EVENT_DS = 0x37c4           # tile→物件事件(3 byte/entry;確認/對話用)
+EVENT_DS = 0x37c4           # tile→怪物/戰鬥事件(3 byte/entry;docs/31 註:此為戰鬥路徑)
+WARP_DS = 0x4ea0           # 傳送/門目的地表(3 byte/entry:地圖號 + 2 座標);type2 事件用
+WARP_N = 128
 
 NUM_CLASS = 8
 GROWTH_ROW = 14
@@ -37,9 +39,10 @@ def extract():
     thresh = [[u32(fo(p)+lv*4) for lv in range(MAX_LEVEL+1)] for p in ptrs]
     terrain = list(d[fo(TERRAIN_DS): fo(TERRAIN_DS)+TERRAIN_N])
     event = [list(d[fo(EVENT_DS)+t*3: fo(EVENT_DS)+t*3+3]) for t in range(EVENT_N)]
-    return growth, ptrs, thresh, terrain, event
+    warp = [list(d[fo(WARP_DS)+t*3: fo(WARP_DS)+t*3+3]) for t in range(WARP_N)]
+    return growth, ptrs, thresh, terrain, event, warp
 
-def gen_c(growth, thresh, terrain, event):
+def gen_c(growth, thresh, terrain, event, warp):
     os.makedirs("dq3_remake/src", exist_ok=True)
     h = []
     h.append("/* dq3_exedata.h — 自 DQ3.EXE DGROUP 抽出的靜態資料表(生成檔,勿手改)。")
@@ -52,7 +55,9 @@ def gen_c(growth, thresh, terrain, event):
     h.append("extern const uint8_t  dq3x_growth[DQ3X_NUM_CLASS][DQ3X_GROWTH_ROW];")
     h.append("extern const uint32_t dq3x_thresh[DQ3X_NUM_CLASS][DQ3X_MAX_LEVEL+1];")
     h.append("extern const uint8_t  dq3x_terrain[256];   /* tile→地形類別 */")
-    h.append("extern const uint8_t  dq3x_event[256][3];  /* tile→物件事件(3B) */")
+    h.append("extern const uint8_t  dq3x_event[256][3];  /* tile→怪物/戰鬥事件(3B,docs/31)*/")
+    h.append("#define DQ3X_WARP_N %d"%WARP_N)
+    h.append("extern const uint8_t  dq3x_warp[DQ3X_WARP_N][3];  /* 傳送目的地:地圖+座標 */")
     h.append("#endif")
     open("dq3_remake/include/dq3_exedata.h","w").write("\n".join(h)+"\n")
 
@@ -73,6 +78,10 @@ def gen_c(growth, thresh, terrain, event):
     c.append("};\n")
     c.append("const uint8_t dq3x_event[256][3] = {")
     for e in event:
+        c.append("  {0x%02x,0x%02x,0x%02x},"%(e[0],e[1],e[2]))
+    c.append("};\n")
+    c.append("const uint8_t dq3x_warp[DQ3X_WARP_N][3] = {")
+    for e in warp:
         c.append("  {0x%02x,0x%02x,0x%02x},"%(e[0],e[1],e[2]))
     c.append("};")
     open("dq3_remake/src/dq3_exedata.c","w").write("\n".join(c)+"\n")
@@ -117,9 +126,10 @@ def gen_doc(growth, ptrs, thresh, terrain, event):
     open("docs/data/dgroup-tables.md","w").write("\n".join(L))
 
 def main():
-    growth, ptrs, thresh, terrain, event = extract()
-    gen_c(growth, thresh, terrain, event)
+    growth, ptrs, thresh, terrain, event, warp = extract()
+    gen_c(growth, thresh, terrain, event, warp)
     gen_doc(growth, ptrs, thresh, terrain, event)
+    print('warp 表 0..2:', warp[0], warp[1], warp[2])
     print("生成 dq3_remake/src/dq3_exedata.c + include/dq3_exedata.h + docs/data/dgroup-tables.md")
     print("成長表 勇者列:", " ".join("%02x"%b for b in growth[0]))
     print("地形表 tile0..7:", terrain[:8])
