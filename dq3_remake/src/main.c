@@ -222,11 +222,23 @@ static int run_game(const char *assets, const char *dump)
             }
         } else if (sc == 0x48 || sc == 0x50 || sc == 0x4b || sc == 0x4d) {
             int moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
-            if (moved && !in_town && --enc <= 0) {
-                int mon = over_pool[grnd() % 4];
-                dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), NULL, NULL, grnd());
-                dq3_scene_apply_palette(cur);   /* bug #8:戰後還原地表色盤 */
-                enc = 6 + (int)(grnd() % 8);
+            if (moved) {
+                int et, ep;
+                /* 踩到 type-2 傳送/門/階梯 → 查 warp 表 0x4ea0 目的地(docs/31)*/
+                if (in_town && dq3_scene_tile_event(cur, cur->px, cur->py, &et, &ep) && et == 2
+                    && ep < DQ3X_WARP_N) {
+                    int dmap = dq3x_warp[ep][0], dx = dq3x_warp[ep][1], dy = dq3x_warp[ep][2];
+                    fprintf(stderr, "傳送門:warp[%d] → map=%d (%d,%d)\n", ep, dmap, dx, dy);
+                    /* demo:離開城鎮回地表(精確 map→場景對映待 RE load_cty/世界表)*/
+                    if (town) { dq3_scene_free(town); town = NULL; }
+                    cur = field; in_town = 0; dq3_scene_apply_palette(cur);
+                }
+                if (moved && !in_town && --enc <= 0) {
+                    int mon = over_pool[grnd() % 4];
+                    dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), NULL, NULL, grnd());
+                    dq3_scene_apply_palette(cur);   /* bug #8:戰後還原地表色盤 */
+                    enc = 6 + (int)(grnd() % 8);
+                }
             }
         }
         dq3_delay_ms(16);
