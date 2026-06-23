@@ -266,14 +266,31 @@ static int run_game(const char *assets, const char *dump)
             int moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
             if (moved) {
                 int et, ep;
-                /* 踩到 type-2 傳送/門/階梯 → 查 warp 表 0x4ea0 目的地(docs/31)*/
+                /* 踩到 type-2 門/階梯 → warp[param]={dest section, spawn X, Y}(docs/34)。
+                 * 同 CTY 換 section(進建築/上下樓)→ 重載該 section + 置 spawn;
+                 * dest 非本 CTY section(載入失敗,跨 CTY/出口)→ 回地表(跨 CTY 待補)。 */
                 if (in_town && dq3_scene_tile_event(cur, cur->px, cur->py, &et, &ep) && et == 2
                     && ep < DQ3X_WARP_N) {
-                    int dmap = dq3x_warp[ep][0], dx = dq3x_warp[ep][1], dy = dq3x_warp[ep][2];
-                    fprintf(stderr, "傳送門:warp[%d] → map=%d (%d,%d)\n", ep, dmap, dx, dy);
-                    /* demo:離開城鎮回地表(精確 map→場景對映待 RE load_cty/世界表)*/
-                    if (town) { dq3_scene_free(town); town = NULL; }
-                    cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
+                    int dsec = dq3x_warp[ep][0], dx = dq3x_warp[ep][1], dy = dq3x_warp[ep][2];
+                    dq3_scene *ns = NULL;
+                    if (cur_cty >= 0) {
+                        char cty[16]; int bn = dq3x_map_blknum[cur_cty];
+                        sprintf(cty, "CTY%02d.DAT", cur_cty);
+                        ns = dq3_town_load(assets, cty, dsec, bn, err, sizeof err);
+                    }
+                    if (ns) {                         /* 同 CTY 換 section */
+                        if (town) dq3_scene_free(town);
+                        town = ns; cur = town; load_field_hero(town, assets);
+                        if (dx < cur->map_w) cur->px = dx;
+                        if (dy < cur->map_h) cur->py = dy;
+                        dq3_scene_apply_palette(cur);
+                        fprintf(stderr, "門/階梯:warp[%d] → CTY%d section%d spawn(%d,%d)\n",
+                                ep, cur_cty, dsec, dx, dy);
+                    } else {                          /* 跨 CTY/出口 → 回地表 */
+                        if (town) { dq3_scene_free(town); town = NULL; }
+                        cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
+                        fprintf(stderr, "出口:warp[%d] dest=%d → 回地表\n", ep, dsec);
+                    }
                 }
                 /* 地表走到城鎮入口座標 → 進該 CTY(load_cty 查表 0x748)*/
                 if (!in_town) {
