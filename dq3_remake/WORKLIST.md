@@ -14,7 +14,7 @@
 - **remake 階段② 進行中**:
   - `dq3_scene` 場景核心(攝影機/tile 貼圖/bit0 碰撞/走動)+ `dq3_field`(地表)/`dq3_town`(城鎮 CTY)薄載入器。headless 驗證走動+碰撞+捲動正確。
   - **真主角 sprite ✅**:DQ3MAN.BLS 完整破解(masked 32×24、stride960、4 方向,docs/27);`dq3_sprite` 解碼 + scene 透明 blit,entry16 金髮勇者顯示於地表/城鎮、朝向正確。DOSBox oracle 自動進遊戲打通(docs/29)。
-- **remake 階段④ C 層 bug 修正 ✅(可單測者)**:`dq3_stats`(#4/#5/#6)+ `dq3_combat`(#7a/#7b),各附決定性單元測試(`dq3_stats_test`/`dq3_combat_test`,build.sh 整合全通過)。#1/#2/#3 屬戰鬥/事件邏輯,根因+修正值已記錄,移植該系統時依正確值寫入即修復。
+- **remake 階段④ C 層 bug 修正(誠實狀態,見階段④ claim 校正)**:**已整合進可玩系統** = #1 結算、#3 blit guard、#8 palette、真傷害公式;**邏輯實作+單測但未整合**(remake 升級/能力值/咒文系統未建)= #4/#5/#6/#7a/#7b;**未實作** = #2(事件系統剛落地,合成事件待做)。#6 另:原版確切 wrap 點未定位、clamp 9999 為佔位。不再籠統掛「全修好」。
 
 ## dq3_remake 剩餘 worklist
 
@@ -47,17 +47,31 @@
   - [ ] 潤飾:packbg 戰鬥背景解碼;遭遇生成 sub_a7d5;復原 Ortega/Hydra 填 #3 空槽;傷害公式對 DOSBox 校準。
   - [ ] 用復原的 Ortega(128)/Hydra(129)sprite(tools/make_sprites.py)填空槽。
 
-### 階段④ 7 bug 全修進 C(根因見 docs/18,20,22,23)
-- [x] **#1 巴拉摩斯打不死**:`dq3_battle_resolve` 正確結算(先判我方全滅含被吹飛→敗,再判敵全滅→勝)。單測:全隊被巴西魯拉吹飛+巴拉摩斯HP500 → 修正判敗、原版誤判勝(重現 #1)。
-- [~] #2 彩虹水滴卡關(合成成品 item code 0x6b→0x75):根因/修正值已記錄(docs/18),屬合成事件 handler,移植事件系統時產出 0x75 即修復。
-- [x] **#3 九頭龍/歐里狄加當機(缺 sprite)**:`dq3_monster_sprite_decode` 對空 sprite(id128/129)回 <0 = blit guard(不當機);單測坐實 id128/129 為空。復原 sprite(make_sprites.py)填槽待整合進戰鬥繪製。
-- [x] **#4 勇者 MaxMP 成長偏低**:`dq3_stats` 從 DQ3.EXE 讀成長表,勇者 MP base 3→8/slope 5→10。單測:Lv43 MaxMP 110→223。
-- [x] **#5 高等級升級錯亂**:`dq3_stats_level_for_exp(fixed)` clamp level≤43。單測:原版越界連升到 99、修正版夾 43。(binary patch 因 code cave≤8B 做不到,C 層單行 if)
-- [x] **#6 數值 255 溢位**:`dq3_stats_add_clamped` 用 uint16 + 顯式 clamp(9999)。單測:200+100 原版 byte wrap=44、修正=300。
-- [x] 三者以 `dq3_stats_test` 決定性單元測試驗證(build.sh 整合,全通過);資料從使用者 DQ3.EXE 讀,不入 git。
-- [x] **#7a 隼劍雙擊**:`dq3_combat_num_attacks` 依武器 +5 bit7 決定 2 次(通用,非寫死 0x6e)。單測:飛鷹劍 2 次、普通劍 1 次。
-- [x] **#7b 魔法鎧甲抗魔**:`dq3_combat_spell_damage` 掃 8 格裝備 +6 bit2,命中減半。單測:魔甲 80→40、無魔甲 80。(binary patch 因需掃描迴圈+無 cave 做不到,C 層完成)
-- [x] #7a/#7b 以 `dq3_combat_test` 決定性單測驗證;ITEM.DAT(128×7)從使用者 DQ3.EXE 旁讀,不入 git。
+### 階段④ 7 bug C 層修正(誠實狀態:邏輯實作+單測 vs 整合進可玩系統)
+
+> **誠實校正(claim 整頓)**:多數 bug 的修法是「正確邏輯 + 決定性單測」,但**只有部分已整合
+> 進實際可玩的遊戲系統**(因戰鬥/升級/能力值系統尚未完整)。標記:
+> **[整合]** = 已接進可跑的系統;**[單測]** = 邏輯實作+單測過、尚未整合;**[~]** = 根因記錄、未實作。
+> 不再籠統掛「已修」。
+
+- [整合] **#1 巴拉摩斯打不死**:`dq3_battle_resolve` 正確結算(先判我方全滅含被吹飛→敗)。
+  **已接進** `dq3_battlescene::do_turn`(同款結算)。單測:全隊被吹飛+巴拉摩斯HP500 → 修正判敗 vs 原版誤判勝。
+- [~] #2 彩虹水滴卡關(合成成品 0x6b→0x75):屬合成事件 handler(file 0x77ce);事件系統剛落地(docs/31),
+  **尚未實作該合成事件**;實作時 type=給道具、param 產出 0x75 即修復。
+- [整合(部分)] **#3 九頭龍/歐里狄加當機(缺 sprite)**:`dq3_monster_sprite_decode` 對空 sprite 回 <0 = blit guard,
+  **已整合**(battlescene 不畫空 sprite 不當機)。**但復原的 Ortega/Hydra sprite 尚未填入**(仍只是 guard,非顯示)。
+- [單測] **#4 勇者 MaxMP 成長偏低**:`dq3_stats` 內建成長表,勇者 MP base 3→8/slope 5→10。單測 Lv43 110→223。
+  **未整合**:remake 還沒有升級/能力值系統會用到成長表。
+- [單測] **#5 高等級升級錯亂**:`dq3_stats_level_for_exp(fixed)` clamp level≤43。單測:原版連升到 99 vs 夾 43。
+  **未整合**:無升級流程呼叫它。
+- [單測] **#6 數值 255 溢位**:`dq3_stats_add_clamped`(uint16+clamp 9999)。單測:200+100 wrap44 vs 300。
+  **未整合且原版確切 wrap 點未定位**(docs/23 自承需 DOSBox 實機觀察);真正修法 = 能力值系統全程用 uint16(設計上免疫),那系統還沒建。clamp 9999 為佔位值,非原版行為。
+- [單測] **#7a 隼劍雙擊**:`dq3_combat_num_attacks`(武器 +5 bit7)。單測:飛鷹劍 2 次。
+  **未整合**:`dq3_battlescene` 目前每員只打 1 次,**沒呼叫 dq3_combat**。
+- [單測] **#7b 魔法鎧甲抗魔**:`dq3_combat_spell_damage`(裝備 +6 bit2 減半)。單測:魔甲 80→40。
+  **未整合**:battlescene 無咒文傷害路徑、未呼叫 dq3_combat。
+- [整合] **物理傷害公式**:`dq3_battle_phys_damage` = 反組譯真公式 `(atk−def)/2+rng((atk−def)/4)`(file 0xc03e,docs/13;
+  非先前湊的 atk/2−def/4)。**已接進** battlescene。單測對齊。
 - [ ] #7c 祈禱之戒:原版本就會壞(~25%),保持即可(不需修)
 - [x] **#8 戰鬥後畫面變黃/綠不恢復**(玩家實機回報;docs/28):根因=戰鬥切 MNSBK.PAL 進 DAC、離場只重載 tile 不還原 DQ3.PAL。remake 從設計免疫:`dq3_scene_apply_palette` 契約,場景切換/戰鬥返回必重套目的 palette(已在 run_scene 落地)。原版 byte-level 修點留 DOSBox oracle 回合。
 
