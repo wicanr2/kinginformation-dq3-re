@@ -108,8 +108,14 @@
 - [x] **NPC 移動步進規則 ✅ 靜態全解**(docs/35 §九):真 mover=`L02025`(file 0x3395),非舊標
   `0x6240`/`0x62e9`/`0x6355`/`0x839f`(全是 init/劇情碼,誤標)。slot[3] bit2=移動開關(動 vs 不動)、
   bits0-1=朝向、bit7=凍結;每幀 RNG(4)==1 才評估(節流)、多沿朝向走、1/20 轉向、不貼玩家 3 格/不疊
-  NPC/不撞牆。remake 待接:NPC 槽加 byte3 + town tick 跑步進。
+  NPC/不撞牆。
   > 由使用者「有會動有不會動 NPC」現象 + 回 EXE RNG 反查定位,又一個舊位址糾正案例。
+  - [x] **remake 落地 ✅**:`dq3_rng`(EXE 0xfa39 精確 RNG:+0x9018/rol3/mod)、`dq3_npc`
+    (8-byte 槽 + `dq3_npc_step` 鏡射 mover L02025:節流/bit2 開關/bit7 凍結/朝向走+1/20 轉向/
+    碰撞:界內·不踏玩家(反向)·不疊 NPC(0x20)·不撞牆(attr bit0)·stamp/unstamp hi_map)。
+    單測 `dq3_npc_test` 全綠(RNG 手算值對上、軌跡合法、靜止/凍結不動、全牆不動、兩 NPC 不互疊)。
+    剩:① 從 CTY section +0/+2 載真實 NPC 進槽 + town tick 每幀跑步進 + sprite 繪製;
+    ② EXE「離玩家 ≥3 格」近距閘語意待再追(已註記,尚未鏡射)。
 - [ ] **CTY→地名 對照收尾**(untracked WIP):`docs/maps/cty_name_fill.md` 只填到 CTY2;
   配套 `tools/_big.py`(cty_loc 疊圖)、`tools/dosbox_walk_test.sh`、`new_map_dq3/` 待決定納版控或 gitignore。
 
