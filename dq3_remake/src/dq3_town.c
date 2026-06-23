@@ -45,12 +45,15 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
     blk_raw = load(dir, blk_name,  &blk_len); if (!blk_raw) FAIL("load DQ3N.BLK");
     att_raw = load(dir, att_name,  &att_len); if (!att_raw) FAIL("load BLKBMN.DAT");
 
-    /* section 偏移表 */
+    /* section 偏移表(對齊 RE file 0x443f:section_base = CTY[[0x256a]*2])。
+     * ★ 無 count 前綴:word[i] = section i 的 base offset(word[0]=section0=地表入口那層;
+     * 0xffff=空)。地表入城 [0x256a]=0 → section 0。先前誤把 word[0] 當 count、從 word[1]
+     * 起算(2+2*section),導致漏掉 section0(城鎮外圍)、整個差一格(城鎮渲染成室內房間)。*/
     if (cty_len < 2) FAIL("CTY too small");
-    n = u16le(cty, 0);
-    if (section < 0 || section >= n) FAIL("section out of range");
-    so = u16le(cty, 2 + 2 * (size_t)section);
-    if (so == 0xffff || so + 0x10 > cty_len) FAIL("section empty/oob");
+    (void)n;
+    if (section < 0) FAIL("section out of range");
+    so = u16le(cty, 2 * (size_t)section);
+    if (so == 0xffff || so + 0x16 > cty_len) FAIL("section empty/oob");
 
     /* 對齊 RE(file 0x443f 解析):layout = {w(2), h(2), tiles…},tiles 緊接 w,h 之後(+4);
      * spawn 在 section header(section_base+0x13/0x14),不在 layout 內。 */

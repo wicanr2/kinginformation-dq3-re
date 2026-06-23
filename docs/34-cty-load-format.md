@@ -20,25 +20,29 @@
    ```
    tile = u16:低 byte=BLK index、高 byte=屬性/事件 subid(docs/31)。
 
-## CTY 檔結構
+## CTY 檔結構(★ 無 count 前綴)
 
-- `word[0]` = section 數;`word[1..]` = 各 section 偏移(`0xffff`=空)。
-- section 分兩類:
-  - **地圖 section**:大 offset,header 的 `+0x0e` 是有效 layout_ptr(如 CTY00 section0=0xf50→layout)。
-  - **資料 section**:小 offset,直接是 NPC/事件記錄,`+0x0e` 非 layout_ptr。
-- 城鎮的入口 section 指向地圖 section;`[0x256a]` 決定哪個。
+- **`word[i]` = section i 的 base offset**(`word[0]`=section 0,`0xffff`=空)。**沒有** count 欄位。
+- `section_base = CTY[ [0x256a]*2 ]`(= `word[[0x256a]]`)。
+- **地表入城 `[0x256a]=0` → section 0 = 從地表進入看到的那層**(城鎮外圍 / 洞窟入口室)。
+  其餘 section(1,2…)= 室內房間 / 子區。
+- 每個 section 自帶地圖 header(`+0x0e`=layout_ptr、`+0x13/0x14`=spawn);**城鎮與洞窟同格式**,
+  差別只在大小與 section 數(城鎮多房間、洞窟常 1-2 section)。
+- 例:CTY00 section0=word[0]=0xc→42×43(阿里阿罕全鎮);CTY93 section0=word[0]=2→17×17(合成祠堂)。
 
-## remake 校正(dq3_town.c)
+## remake 校正(dq3_town.c)— 三個錯,修正後 89/89 全載入
 
-修正三處對齊 RE:
-1. **tiles = layout + 4**(原誤 +8 → 整張圖位移 2 格)。
-2. **spawn = section_base + 0x13/0x14**(原誤讀 layout+4/+6)。
-3. layout oob 檢查改 `lay+4`。
-CTY00 修正後渲染為乾淨房間(紅毯+黃磚牆+床+寶箱),驗證 tile base 正確。
+1. **section i = `word[i]`**(原誤把 `word[0]` 當 count、從 `word[1]` 起算 `2+2*section` →
+   **漏掉 section 0(地表入口層)、整個差一格**,城鎮被渲成室內房間、洞窟/祠堂全 oob)。← 主因
+2. **tiles = layout + 4**(原誤 +8 → 圖位移 2 格)。
+3. **spawn = section_base + 0x13/0x14**(原誤讀 layout+4/+6)。
 
-## 待續:洞窟/迷宮格式
+修正後實測:**89 個 CTY 全部正確載入**(原 50)。CTY00=阿里阿罕全鎮、CTY93=17×17 合成祠堂
+(紅地板+柱列邊框+中央祭壇,正確渲染);headless game 進 CTY93 → #2 合成 result=0x75。
 
-89 個 CTY 中 ~50 個(城鎮)以上述格式正確載入;**~31 個(洞窟/小祠堂/迷宮,如 CTY03/40/89/93)
-所有 section 皆小 offset、無地圖 section header → 用不同的地圖格式**(非城鎮 section/layout)。
-需另解洞窟/迷宮的 map 編碼(下一步 RE)。`[0x256a]` 入口 section 來源:地表入城在 file 0x39cf
-(=0 重置)、warp/門進入在 0x4916/0xdbc7(由進入資料設)。
+## `[0x256a]` 入口 section 來源
+
+- 地表入城(0x2c37)→ `[0x256a]=0`(section 0)。
+- 新遊戲阿里阿罕(0x13be)→ `[0x256a]=4`。
+- warp/門(0x4916/0xdbc7)→ 由進入資料設(門/階梯指定目的 section)。
+- 旗標分支地點(0x396e)→ 依劇情旗標選不同 CTY(隨進度變的地點)。

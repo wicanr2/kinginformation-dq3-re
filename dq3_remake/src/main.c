@@ -197,17 +197,19 @@ static int run_game(const char *assets, const char *dump)
                 }
             }
         }
-        /* demo:進城鎮 CTY00 當可見場景(合成祠堂 CTY93 為 629B 小檔,section 格式異於一般
-         * 城鎮,town loader 尚未支援 → 見 WORKLIST TODO)。 */
-        fprintf(stderr, "=== 進城鎮 CTY00(換場 + 重套 palette)===\n");
-        town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
-        if (town) { load_field_hero(town, assets); cur = town; cur_cty = 0;
-            dq3_scene_apply_palette(cur);
-            fprintf(stderr, "城鎮 sect%d 事件數=%d\n", tsect, town->n_events); }
-        /* demo #2:scripted-event 83 合成邏輯(in-game gate 在 CTY%d=合成祠堂才觸發,docs/32)*/
-        {
+        /* demo:進真正的合成祠堂 CTY93(section 格式已修正,17×17 祠堂房間可正確載入)。 */
+        { int bn = dq3x_map_blknum[DQ3_SHRINE_CTY]; char cty[16];
+          sprintf(cty, "CTY%02d.DAT", DQ3_SHRINE_CTY);
+          fprintf(stderr, "=== 進合成祠堂 %s(BLK%d,換場 + 重套 palette)===\n", cty, bn);
+          town = dq3_town_load(assets, cty, 0, bn, err, sizeof err);
+          if (town) { load_field_hero(town, assets); cur = town; cur_cty = DQ3_SHRINE_CTY;
+              dq3_scene_apply_palette(cur);
+              fprintf(stderr, "祠堂 %dx%d 事件數=%d\n", cur->map_w, cur->map_h, town->n_events); }
+          else fprintf(stderr, "載入祠堂失敗: %s\n", err); }
+        /* demo #2:在祠堂(CTY93)發 scripted-event 83 → 合成(gate 命中,runner→0x776c→0x77ce)*/
+        if (cur_cty == DQ3_SHRINE_CTY) {
             int sr = dq3_scripted_event_run(DQ3_SEVENT_RAINBOW_SYNTH, &inv, &flags, 1);
-            fprintf(stderr, "=== #2 合成(gate=CTY%d 祠堂)scripted-event 83:result=0x%02x flag0x139=%d ===\n",
+            fprintf(stderr, "=== #2 祠堂(CTY%d)scripted-event 83:result=0x%02x flag0x139=%d ===\n",
                     DQ3_SHRINE_CTY, sr, dq3_flags_get(&flags, DQ3_FLAG_RAINBOW_SYNTHED));
         }
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
