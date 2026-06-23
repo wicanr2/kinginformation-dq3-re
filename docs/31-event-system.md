@@ -135,15 +135,21 @@ type = [si];  param = [si+1](u16);  p2 = [si+3]   ; ★ 4-byte 事件項
 
 ```
 0x77ce: call 0x6380
-0x77d1: mov word [0x2593], 0x72   ; 訊息 param = 太陽之石
-0x77d7: call 0x7c0c               ; seq_msg
-0x77de: mov word [0x2593], 0x73   ; param = 雲雨之杖
-0x77e4: call 0x7c0c               ; seq_msg
+0x77d1: mov word [0x2593], 0x72   ; 找太陽之石
+0x77d7: call 0x7c0c               ; party_has_item([0x2593]) → si 指向該格(非 seq_msg)
+0x77da: mov word [si], 0xff       ; 消耗太陽之石(該格清空)
+0x77de: mov word [0x2593], 0x73   ; 找雲雨之杖
+0x77e4: call 0x7c0c               ; party_has_item → si 指向雲雨之杖格
 0x77e7: mov word [si], 0x6b       ; ★ 寫合成品 0x6b(BUG;應為 0x75 彩虹水滴)
 0x77eb: mov bx, 0x139             ; 旗標 id
 0x77ee: call 0x8264               ; set_flag(0x139)「已合成」
 0x77f1: ret
 ```
+
+> 註(file/logical 陷阱):此處 `call 0x7c0c` 是 **file 0x7c0c** =
+> **`party_has_item([0x2593]) → si`**(掃隊伍 8 格道具,docs/18 已正解)。先前 docs/31
+> 把它標成 seq_msg 是錯的(已更正)。⚠ 與 `re/commands` 的 **logical** `sub_7c0c`(= file
+> 0x8f9c,另一個函式)不同位址,勿混。
 
 remake:`dq3_synth_shrine_examine`(`dq3_inventory.c`)鏡射條件與副作用 —
 未設旗標 0x139 才觸發、持兩材料 → 合成(修正產 0x75)+ 設旗標 0x139。
@@ -163,18 +169,52 @@ runner  file 0xabb2:
 ∴ 彩虹水滴合成 = scripted-event id 83(0x53)  [index 82 = id-1]
 ```
 
-- **event id 為資料驅動**:`[0x722]` 由 `[0x631]`(地圖事件 id)等載入(`mov ax,[0x631];
-  mov [0x722],ax`,file 0x846b/0x8a81/0x8f6b),非碼中寫死(全檔無 `mov [0x722],0x53`)。
-- runner 0xabb2 亦無直接呼叫者 → 上層尚有 control-code/命令直譯器一層。
-- **精確祠堂 CTY/座標**:編在 **CTY 地圖資料 + 劇本 control-code**(非 EXE 碼),經直譯器
-  下 event 83。要 100% 定位需解 CTY 事件資料 + control-code 表(下一步)。
+- **event id 為資料驅動**:`[0x722]` 由 `[0x631]` 等載入,且 `[0x631]↔[0x722]` 互為
+  save/restore(事件巢狀,file 0x841d/0x846b…),非源頭;全檔無 `mov [0x722],0x53`。
+
+#### 派發鏈邊界(靜態追蹤止於此 — 已窮舉)
+
+runner `0xabb2` 與跳表 `DS 0x3baa` 是 scripted-event 系統的核心,但:
+
+- runner 0xabb2 **零靜態呼叫者**:near `E8`、far `9A`、near/far `jmp`、far 指標 data
+  **全 0 命中**。掃描器以滿地的 `lcall 0x10b6,0x166`(56 個 far call)反查驗證無誤。
+- 跳表 `DS 0x3baa` **只在 0xabe1(runner 內)被 `call [bx+0x3baa]` 用一次**;表 base 無
+  其他 immediate / lea / disp 參照。
+- 整個 handler 群(`0x72ab…0x776c…`)+ 表 + runner **無任何可靜態解析的進入點**。
+
+→ 結論:runner 由**執行期計算的指標 / 事件腳本 VM**(段基相對偏移)進入,**純靜態追不到
+祠堂座標**。已排除的觸發路徑:**訊息 control-code**(純文字,見下)、**section 事件表**
+(只有 寶箱/條件/傳送/給道具 四型,無 run-event)、**直接呼叫**(無)。
+
+**下一步(動態分析,非靜態硬猜)**:DOSBox debugger 在 runner phys `0x9842`(或 handler
+`file 0x776c`)下中斷點 → 觸發祠堂 → 讀當下地圖 id `[0x256c]` + 座標 `[0x4f2f]/[0x4f31]`
++ 呼叫堆疊,一次定位 CTY/座標。
+
+### 訊息 control-code 格式(字串印表器 `0x111b:0x264` = file 0x12784)
+
+訊息字串 = **16-bit word 陣列**;非負 = 字元字模碼,負值 = control code(分派表 0x127ba+):
+
+| word | 語意 | handler |
+|---|---|---|
+| `0xffff` (-1) | 字串結束 | — |
+| `0xfffe`/`0xfffd` (-2/-3) | 換行 / 進下一行 | 0x1280a |
+| `0xfffc` (-4) | 捲動 + 等待按鍵 | 0x12a33(poll [5]) |
+| `0xfffb` (-5) | 插入變數子字串(依 [0x259c]) +1字參數 | 0x129c1 |
+| `0xfffa` (-6) | lcall 0x111b:0x6f0(插入) +1字 | — |
+| `0xfff9` (-7) | 插入索引字串(依 [0x2591]) +1字 | 0x12a97 |
+| `0xfff6` (-10) | 插入變數子字串 variant 7 +1字 | 0x129c1 |
+| `0xfff5` (-11) | 插入變數子字串 variant 0 +1字 | 0x129c1 |
+| `0xffed` (-19) | 插入索引字串(依 [0x249d]/[0x249f]) +1字 | 0x12ad6 |
+
+全為**文字格式 / 變數插入**,**無「run scripted-event」碼** → 確認祠堂事件不經訊息系統。
 
 remake:`dq3_scripted_event_run(id, …)`(`dq3_inventory.c`)鏡射 runner 的 id→handler
 跳表(目前僅 id 83 → 合成);main.c 城鎮調べる發 event 83(暫代真實地圖資料來源)。
 
 ### 待 RE(收尾)
 
-- **發 event 83 的 CTY 地圖事件 / control-code**(祠堂城鎮 + 座標),替換 remake 暫時觸發。
+- **發 event 83 的 CTY 地圖事件 / 觸發點**(祠堂城鎮 + 座標)→ **改用動態分析**(上述
+  DOSBox 中斷點),靜態已窮舉。
 - section 事件表的**完整 entry 格式**(type0 給道具的 item id 欄、type2 warp 表 0x4ea0 逐欄)。
 - 寫死座標劇情事件清單(0x9f7f 內的多個座標分支)。
 - 把上述抽成內建資料(像 dq3_exedata)供 remake,不依賴 DQ3.EXE。
