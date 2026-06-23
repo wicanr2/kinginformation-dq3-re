@@ -264,6 +264,14 @@ static int run_game(const char *assets, const char *dump)
             }
         } else if (sc == 0x48 || sc == 0x50 || sc == 0x4b || sc == 0x4d) {
             int moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
+            if (!moved && in_town) {
+                /* 被擋:若面向鎖門且隊伍持足夠等級鑰匙 → 開門後重試(docs/35 §八)。*/
+                int kt = dq3_inv_key_tier(&inv);
+                if (dq3_scene_try_open_facing_door(cur, kt)) {
+                    fprintf(stderr, "開鎖:鑰匙等級%d 開門\n", kt);
+                    moved = dq3_scene_input(cur, sc);
+                }
+            }
             if (moved) {
                 int dcty, dsec, dx, dy;
                 /* 踩到轉場 tile(門/階梯/出城)→ section+0xc 轉場表 {destCTY,destSec,X,Y}

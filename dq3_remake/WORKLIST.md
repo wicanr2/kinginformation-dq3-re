@@ -96,9 +96,12 @@
 - [x] **鑰匙門機制 ✅ 靜態全解**(docs/35 §八):鑰匙 id=0x55/0x56/0x57(盜賊/魔法/最終,等級=id−0x54);
   內嵌城鎮轉場 handler `0x488f`:`0x48c3` 掃全隊 8 道具格取最高鑰匙級 `[0x2593]`;`0x4906` 讀面向 tile,
   attr **低 byte bits6-7**=門所需級,隊伍級≥需求 → 改 tile `[di]=low&0x1f` + 清 attr `[di+1]&=0xe0` + 開門動畫。
-  糾正舊標(player.c 誤把低 byte 0xc0 標角落,實為鑰匙級;角落用的是高 byte 0xc000)。remake 待接:
-  `dq3_member` 鑰匙掃描 + 面向 tile 開鎖。
+  糾正舊標(player.c 誤把低 byte 0xc0 標角落,實為鑰匙級;角落用的是高 byte 0xc000)。
   > 用「鑰匙道具 id 反查 + 回 EXE 重驗」破解,正是 session 走死胡同時回 dq3.exe/腳本重新檢視的成果。
+  - [x] **remake 落地 ✅**:`dq3_inv_key_tier`(掃道具取最高鑰匙級,鏡射 0x48c3)、
+    `dq3_scene_door_tier`/`_open_door`/`_try_open_facing_door`(鏡射 0x4906/0x4977)、
+    main.c 城鎮被擋時試開門重試;單測 `dq3_door_test` + inventory 鑰匙級測試全綠,full build OK。
+    剩:接真實隊伍道具來源(目前單一 `dq3_inventory`)、開門音效/動畫。
 - [ ] **NPC 移動步進規則**:handler `0x62e9`/`0x6355`/`0x839f`(隨機/巡邏/靜止)的步進條件。
 - [ ] **CTY→地名 對照收尾**(untracked WIP):`docs/maps/cty_name_fill.md` 只填到 CTY2;
   配套 `tools/_big.py`(cty_loc 疊圖)、`tools/dosbox_walk_test.sh`、`new_map_dq3/` 待決定納版控或 gitignore。

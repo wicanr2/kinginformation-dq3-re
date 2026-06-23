@@ -52,6 +52,50 @@ int dq3_scene_tile_transition(const dq3_scene *s, int tx, int ty,
     return 1;
 }
 
+int dq3_scene_door_tier(const dq3_scene *s, int tx, int ty)
+{
+    int idx; uint16_t a;
+    if (tx < 0 || ty < 0 || tx >= s->map_w || ty >= s->map_h) return 0;
+    idx = s->index_map[ty * s->map_w + tx];
+    if (!s->attr || idx >= s->attr_count) return 0;
+    a = s->attr[idx];
+    if (!(a & 0x00c0)) return 0;          /* 0x4906: test attr,0xc0 → bits6-7=0 非鎖門 */
+    return (a >> 6) & 3;                   /* rol bl,1 ×2; and 3 → 所需鑰匙等級 1/2/3 */
+}
+
+int dq3_scene_open_door(dq3_scene *s, int tx, int ty)
+{
+    int i; uint8_t hi;
+    if (!dq3_scene_door_tier(s, tx, ty)) return 0;
+    i = ty * s->map_w + tx;
+    hi = s->hi_map ? s->hi_map[i] : 0;
+    s->index_map[i] = (uint8_t)(hi & 0x1f);   /* 0x4981: [di] = high & 0x1f(門→通行 tile)*/
+    if (s->hi_map) s->hi_map[i] = (uint8_t)(hi & 0xe0); /* 0x4985: [di+1] &= 0xe0(清事件位、留轉場位)*/
+    return 1;
+}
+
+/* 面向位移(同 dq3_scene_input:0下 1左 2上 3右)。 */
+static void facing_delta(int facing, int *dx, int *dy)
+{
+    *dx = 0; *dy = 0;
+    switch (facing & 3) {
+        case 0: *dy =  1; break;   /* 下 */
+        case 1: *dx = -1; break;   /* 左 */
+        case 2: *dy = -1; break;   /* 上 */
+        case 3: *dx =  1; break;   /* 右 */
+    }
+}
+
+int dq3_scene_try_open_facing_door(dq3_scene *s, int key_tier)
+{
+    int dx, dy, tx, ty, need;
+    facing_delta(s->facing, &dx, &dy);
+    tx = s->px + dx; ty = s->py + dy;
+    need = dq3_scene_door_tier(s, tx, ty);
+    if (need == 0 || key_tier < need) return 0;   /* 非門 / 鑰匙不夠 */
+    return dq3_scene_open_door(s, tx, ty);
+}
+
 int dq3_scene_input(dq3_scene *s, uint8_t sc)
 {
     int dx = 0, dy = 0, tx, ty;

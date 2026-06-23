@@ -68,6 +68,23 @@ int main(void)
         CHECK(dq3_scripted_event_run(0x01, &inv, &fl, 1) == -3, "未實作 event → -3");
     }
 
+    /* 鑰匙等級掃描(鎖門 docs/35 §八;鏡射 0x48c3)*/
+    printf("== 鑰匙等級掃描(0x48c3)==\n");
+    {
+        dq3_inv_init(&inv);
+        CHECK(dq3_inv_key_tier(&inv) == 0, "無鑰匙 → 等級 0");
+        dq3_inv_add(&inv, ITEM_KEY_THIEF);
+        CHECK(dq3_inv_key_tier(&inv) == 1, "盜賊鑰匙 → 等級 1");
+        dq3_inv_add(&inv, ITEM_KEY_FINAL);
+        CHECK(dq3_inv_key_tier(&inv) == 3, "另持最終鑰匙 → 取最大等級 3");
+        dq3_inv_remove(&inv, ITEM_KEY_FINAL);
+        dq3_inv_add(&inv, ITEM_KEY_MAGIC);
+        CHECK(dq3_inv_key_tier(&inv) == 2, "盜賊+魔法 → 等級 2");
+        dq3_inv_init(&inv);
+        dq3_inv_add(&inv, ITEM_SUN_STONE);   /* 非鑰匙 */
+        CHECK(dq3_inv_key_tier(&inv) == 0, "非鑰匙道具不計");
+    }
+
     printf("\n%s (%d failures)\n", g_fail?"== 有測試未通過 ==":"== 全部通過 ==", g_fail);
     return g_fail?1:0;
 }

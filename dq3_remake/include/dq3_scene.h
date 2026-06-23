@@ -68,6 +68,18 @@ int  dq3_scene_tile_event(const dq3_scene *s, int tx, int ty, int *type, int *pa
 int  dq3_scene_tile_transition(const dq3_scene *s, int tx, int ty,
                                int *dest_cty, int *dest_sec, int *dx, int *dy);
 
+/* 鎖門(docs/35 §八):門 tile 的 attr 低 byte bits6-7 = 所需鑰匙等級(1/2/3)。
+ * 回傳 (tx,ty) 門所需鑰匙等級;0 = 非鎖門。鏡射 DQ3.EXE 0x4906 `test attr,0xc0`。 */
+int  dq3_scene_door_tier(const dq3_scene *s, int tx, int ty);
+
+/* 就地開門(鏡射 0x4977:新 index = 高 byte subid、高 byte &= 0xe0 保留轉場位)。
+ * 不檢查鑰匙,呼叫端先用 dq3_scene_door_tier + key_tier 判定。回 1=已開、0=非門。 */
+int  dq3_scene_open_door(dq3_scene *s, int tx, int ty);
+
+/* 試開「面向 tile」的鎖門:若為門且 key_tier >= 所需等級 → 開門回 1;否則 0。
+ * 面向格 = (px,py) + facing 位移(同 dq3_scene_input 慣例)。城鎮專用(EXE 0x4906 gate)。 */
+int  dq3_scene_try_open_facing_door(dq3_scene *s, int key_tier);
+
 /* 處理一個方向 scancode(0x48/0x50/0x4b/0x4d),含碰撞。回傳 1=有移動。 */
 int  dq3_scene_input(dq3_scene *s, uint8_t scancode);
 

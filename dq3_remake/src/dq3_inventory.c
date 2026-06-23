@@ -23,6 +23,19 @@ int dq3_inv_remove(dq3_inventory *inv, int item)
     int s = dq3_inv_find(inv, item); if (s >= 0) inv->slot[s] = DQ3_ITEM_NONE; return s;
 }
 
+int dq3_inv_key_tier(const dq3_inventory *inv)
+{
+    int i, best = 0;
+    for (i = 0; i < DQ3_INV_SLOTS; i++) {            /* 0x48c3:逐格掃 */
+        int it = inv->slot[i];
+        if (it >= ITEM_KEY_THIEF && it <= ITEM_KEY_FINAL) {  /* dl∈[0x55,0x57] */
+            int tier = it - 0x54;                    /* sub dl,0x54 → 1/2/3 */
+            if (tier > best) best = tier;            /* 取最大(=最高階鑰匙)*/
+        }
+    }
+    return best;
+}
+
 void dq3_flags_init(dq3_storyflags *f)
 {
     int i; for (i = 0; i < DQ3_FLAGS_BYTES; i++) f->bit[i] = 0;

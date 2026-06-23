@@ -20,6 +20,11 @@
 #define ITEM_SILVER_ORB    0x6b   /* 銀寶珠(原版 bug 誤產)*/
 #define ITEM_RAINBOW_DROP  0x75   /* 彩虹水滴(正確合成品)*/
 
+/* 鑰匙(鎖門 docs/35 §八;等級 = code − 0x54,愈高開愈多門)。 */
+#define ITEM_KEY_THIEF     0x55   /* 盜賊的鑰匙(等級 1)*/
+#define ITEM_KEY_MAGIC     0x56   /* 魔法鑰匙(等級 2)*/
+#define ITEM_KEY_FINAL     0x57   /* 最終鑰匙(等級 3)*/
+
 typedef struct { uint8_t slot[DQ3_INV_SLOTS]; } dq3_inventory;
 
 /* 劇情旗標位元集(對 DQ3.EXE flag store;set_flag/sub_8264)。0x139=「彩虹水滴已合成」。 */
@@ -36,6 +41,11 @@ int  dq3_inv_find(const dq3_inventory *inv, int item); /* 回 slot index,無回 
 int  dq3_inv_has(const dq3_inventory *inv, int item);
 int  dq3_inv_add(dq3_inventory *inv, int item);        /* 放第一個空格;滿回 -1 */
 int  dq3_inv_remove(dq3_inventory *inv, int item);     /* 移除一個;回 slot,無回 -1 */
+
+/* 持有的最高鑰匙等級(0=無、1=盜賊、2=魔法、3=最終)。
+ * 鏡射 DQ3.EXE 0x48c3:掃道具格,item∈[0x55,0x57] → tier=item−0x54,取最大。
+ * 註:EXE 逐隊員各 8 格;remake 用單一道具欄,語意等同「隊伍是否持某級鑰匙」。 */
+int  dq3_inv_key_tier(const dq3_inventory *inv);
 
 /* #2 合成事件:太陽之石 + 雲雨之杖 → 彩虹水滴(消耗兩者,在雲雨之杖格寫入成品)。
  * fixed!=0:產出 0x75(彩虹水滴,修正);fixed==0:重現原版 bug 產出 0x6b(銀寶珠)。
