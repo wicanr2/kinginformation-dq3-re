@@ -1,6 +1,11 @@
 # CTY → 城市名 填寫清單
 
-格式:`CTY編號 (X,Y) | 線索 | = 你填的名稱`。地面看 world_con_named.png、下層看 world_und_named.png。
+格式:`CTY編號 (X,Y) | 線索 | = 名稱`。地面看 world_con_named.png、下層看 world_und_named.png。
+
+> **填寫方法(三證據)**:① cty_loc 地理位置(docs/32);② 劇本自報地名(docs/32「從劇本反推」節:
+> 每城 NPC 對話「歡迎到XX/這裡是XX」+ D3TXT 檔按地區分組);③ DOSBox warp 截圖(warp_shots)。
+> **兩證據齊才定案**(標「確認」),僅一方時標候選不亂填(正確性優先)。下層 = DQ1 愛列夫加特,
+> 用 DQ1↔精訊 標準對照 + 劇本交叉(如 txt09「瑪依拉村·露天溫泉」= マイラ 溫泉鎮 = Kol)。
 
 ## 參考:20 城鎮名(精訊 rec 495-514)
 阿里阿罕 雷貝 羅馬利亞 卡薩布 諾阿尼魯 阿莎拉慕 伊席斯 波魯多加 巴哈拉達 達瑪神殿
@@ -32,7 +37,7 @@
 - CTY22 (142, 79) |                              | = 
 - CTY23 ( 78,166) |                              | = 
 - CTY24 (201,135) |                              | = 
-- CTY25 (153,174) |                              | = 
+- CTY25 (153,174) | 同 CTY0 座標(CTY00 門→CTY25)        | = 阿里阿罕(建築內,門 dispatch docs/35)
 - CTY26 (182, 80) |                              | = 
 - CTY27 (197,164) |                              | = 
 - CTY28 (148,156) |                              | = 
@@ -85,19 +90,19 @@
 - CTY83 (210, 64) |                              | = 
 
 ## 下層アレフガルド(world_und,16 個)
-- CTY77 ( 84, 67) | Brecconaly                   | = 
-- CTY78 ( 64, 26) | Cave NW of Brecconaly        | = 
-- CTY79 (106, 66) | Castle of Zoma 一帶            | = 
-- CTY80 (106, 66) | Castle of Zoma 一帶            | = 
-- CTY81 (166, 34) | Kol                          | = 
-- CTY82 (142, 25) | Kol/Tower W of Kol           | = 
-- CTY84 ( 87,113) | Haukness                     | = 
-- CTY85 (135,126) | Cantlin                      | = 
-- CTY86 (163, 96) | 利姆達爾 Rimuldar(確認)            | = 
+- CTY77 ( 84, 67) | Brecconaly(ラダトーム一帶)          | = 拉達多姆?(候選:txt08 拉達多姆城)
+- CTY78 ( 64, 26) | Cave NW of Brecconaly        | = (洞窟)
+- CTY79 (106, 66) | Castle of Zoma 一帶            | = (ゾーマ城,非城鎮)
+- CTY80 (106, 66) | Castle of Zoma 一帶            | = (ゾーマ城,非城鎮)
+- CTY81 (166, 34) | Kol(マイラ=溫泉鎮)               | = 瑪依拉(劇本 txt09 露天溫泉確認)
+- CTY82 (142, 25) | Kol/Tower W of Kol           | = 瑪依拉一帶/塔
+- CTY84 ( 87,113) | Haukness(ドムドーラ廢墟)           | = 達姆杜拉(DQ1 對照)
+- CTY85 (135,126) | Cantlin(メルキド)               | = 美爾吉特(DQ1 對照)
+- CTY86 (163, 96) | 利姆達爾 Rimuldar(確認)            | = 利姆達爾(地理+劇本 txt09 確認)
 - CTY87 ( 89, 36) | Brecconaly 北                 | = 
 - CTY88 ( 91, 81) |                              | = 
-- CTY89 (166, 68) | 利姆達爾北/Rainbow Bridge         | = 
-- CTY90 (110, 73) | Castle of Zoma 一帶            | = 
-- CTY91 (110, 73) | Castle of Zoma 一帶            | = 
-- CTY92 (139,136) | Staff of Rain(雲雨之杖一帶)        | = 
-- CTY93 (170,133) | 彩虹水滴祠堂 Rainbow Drop(確認)      | = 
+- CTY89 (166, 68) | 利姆達爾北/Rainbow Bridge         | = (彩虹橋一帶)
+- CTY90 (110, 73) | Castle of Zoma 一帶            | = (ゾーマ城)
+- CTY91 (110, 73) | Castle of Zoma 一帶            | = (ゾーマ城)
+- CTY92 (139,136) | Staff of Rain(雲雨之杖一帶)        | = (雲雨之杖點)
+- CTY93 (170,133) | 彩虹水滴祠堂 Rainbow Drop(確認)      | = 神聖的祠堂(地理+劇本 txt08「這裡是神聖的祠堂」確認)
