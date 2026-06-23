@@ -39,6 +39,13 @@ typedef struct {
     struct { uint8_t type; uint16_t param; uint8_t p2; } events[32];
     int       n_events;           /* 0 = 此 section 無事件表 */
 
+    /* 轉場層(docs/35):section header +0xc 轉場表(門/階梯/出城)。
+     * 4-byte 項 {destCTY, destSec, X, Y},由轉場 tile 的 subid 索引;
+     * 轉場 tile 判定 = 屬性 attr&0xe000(非 attr&8 的 examine 事件)。
+     * destSec==0xff → 出城回地表;destCTY!=當前 → 跨 CTY。 */
+    struct { uint8_t dest_cty, dest_sec, x, y; } transitions[32];
+    int       n_transitions;      /* 0 = 此 section 無轉場表 */
+
     /* 主角 sprite(DQ3MAN.BLS);has_hero=0 時退回佔位方框 */
     dq3_charsprite hero;
     int has_hero;
@@ -55,6 +62,11 @@ int  dq3_scene_walkable(const dq3_scene *s, int tx, int ty);
 /* 查 (tx,ty) 的 tile 事件(docs/31:屬性 attr&8 + 高 byte subid → section 事件表)。
  * 有事件回 1 並填 *type/*param;無回 0。 */
 int  dq3_scene_tile_event(const dq3_scene *s, int tx, int ty, int *type, int *param);
+
+/* 查 (tx,ty) 是否為轉場 tile(docs/35:屬性 attr&0xe000 + 高 byte subid → +0xc 轉場表)。
+ * 是 → 回 1 並填目的 *dest_cty/*dest_sec/*dx/*dy(任一可為 NULL);否則回 0。 */
+int  dq3_scene_tile_transition(const dq3_scene *s, int tx, int ty,
+                               int *dest_cty, int *dest_sec, int *dx, int *dy);
 
 /* 處理一個方向 scancode(0x48/0x50/0x4b/0x4d),含碰撞。回傳 1=有移動。 */
 int  dq3_scene_input(dq3_scene *s, uint8_t scancode);

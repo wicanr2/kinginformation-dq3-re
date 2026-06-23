@@ -102,6 +102,28 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
         }
     }
 
+    /* 轉場表(docs/35):指標在 section+0xc;0xffff=無。
+     * 表 = 4-byte 項 {destCTY, destSec, X, Y},by subid(無 count 前綴)。 */
+    {
+        uint16_t tptr = u16le(cty, so + 0x0c);
+        if (tptr != 0xffff && so + tptr < cty_len) {
+            size_t tt = so + tptr;
+            /* 無 count 前綴:讀到檔尾,或讀到後續結構(layout 等)前為止。 */
+            size_t lim = cty_len;
+            if (lay > tt && lay < lim) lim = lay;          /* layout 緊跟在表後時 */
+            int k;
+            for (k = 0; k < 32; k++) {
+                size_t o = tt + (size_t)k * 4;
+                if (o + 4 > lim) break;
+                s->transitions[k].dest_cty = cty[o];
+                s->transitions[k].dest_sec = cty[o + 1];
+                s->transitions[k].x        = cty[o + 2];
+                s->transitions[k].y        = cty[o + 3];
+                s->n_transitions = k + 1;
+            }
+        }
+    }
+
     s->tile_count = blk.count;
     s->tiles = malloc((size_t)blk.count * sizeof(*s->tiles));
     if (!s->tiles) FAIL("OOM tiles");

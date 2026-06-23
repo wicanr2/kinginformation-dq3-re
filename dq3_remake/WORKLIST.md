@@ -31,7 +31,14 @@
 
 ### 階段②.5 串接狀態機(game 模式)✅
 - [x] **地表↔城鎮↔戰鬥串接**(`main.c` run_game):地表走動 + 步數隨機遭遇 → 互動戰鬥 → 回地表;SPACE 進/出城鎮。每次戰鬥/換場後 `dq3_scene_apply_palette` 重套目的場景色盤(**實際運用 bug #8 修正**)。headless 實測:走 8 步→遭遇 id1×2→腳本戰勝→回地表→進城鎮 CTY00(主角顯示)。
-- [整合(部分)] **section/CTY 轉場(門/階梯)**:type-2 → warp[param]={dest section,spawn}(0x4ea0,docs/34)→ 同 CTY 換 section(進建築/上下樓)重載+置 spawn,已接 game 模式並驗證(CTY13 sec0↔sec2 不同房間)。跨 CTY(大 dest)+ 城鎮外圍 tile-based 建築入口待補。原:**城鎮出入口(warp)**:type-2 傳送事件 → 查內建 warp 表 dq3x_warp(0x4ea0,map+座標)→ 踩到門/階梯傳送(game 模式 demo:回地表)。精確 map→場景對映 + 地表城鎮入口→CTY(load_cty 查表)待續 RE。
+- [整合] **section/CTY 轉場(門/階梯/出城)— 改用 +0xc 轉場表(docs/35,主機制)**:
+  逐 handler 重新 RE 後確認,**所有城鎮建築門/室內外/上下樓/出城都在 section header `+0xc` 的轉場表**
+  (4-byte 項 `{destCTY,destSec,X,Y}`,by 轉場 tile 的 subid;轉場 tile = 屬性 attr&0xe000)。
+  先前以為「68 個多 section 大城無 type-2、門追不到、需 debugger」是**誤判**——門就是 +0xc 純靜態資料。
+  落地:`dq3_town_load` 解析 +0xc → `scene.transitions[]`;`dq3_scene_tile_transition()` 查詢;
+  main.c 踩轉場 tile → 同 CTY 換 section / 跨 CTY 載入 / destSec==0xff 出城回地表。
+  實測 CTY00 section0:7 門解析正確,(21,8)/(22,8)→CTY25、(8,14)→sec2、(19,36)→sec1… 端到端通。
+  舊 type-2 warp(0x4ea0)路徑為較罕見的另一種門,保留 dq3x_warp 資料。
 
 ### 階段③ 對話/野外指令/戰鬥
 - [x] **文字/對話系統**(`dq3_text`):載 D3TXT00.FON(16×16 字模)+ D3TXTNN.TXT(指標表+2-byte glyph index 記錄),渲染對話視窗,處理控制碼(0xfffe 換行/0xfffc 換頁/0xffed+ 變數占位)。實測渲染阿里阿罕 NPC 真繁中對話(「鎮上的人所說的魔王要消滅世界是胡說的吧」)。→ 解鎖對話/NPC/選單/敵名/道具名/系統訊息。

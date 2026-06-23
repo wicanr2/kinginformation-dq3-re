@@ -33,6 +33,25 @@ int dq3_scene_tile_event(const dq3_scene *s, int tx, int ty, int *type, int *par
     return 1;
 }
 
+int dq3_scene_tile_transition(const dq3_scene *s, int tx, int ty,
+                              int *dest_cty, int *dest_sec, int *dx, int *dy)
+{
+    int i, idx, subid;
+    if (!s->hi_map || s->n_transitions <= 0) return 0;
+    if (tx < 0 || ty < 0 || tx >= s->map_w || ty >= s->map_h) return 0;
+    i = ty * s->map_w + tx;
+    idx = s->index_map[i];
+    /* 屬性 attr 高 3 bit(0xe000)= 轉場 tile(docs/35;move handler 0x2e8c)。 */
+    if (!s->attr || idx >= s->attr_count || !(s->attr[idx] & 0xe000)) return 0;
+    subid = s->hi_map[i] & 0x1f;          /* 高 byte 低 5 bit = 轉場 subid */
+    if (subid >= s->n_transitions) return 0;
+    if (dest_cty) *dest_cty = s->transitions[subid].dest_cty;
+    if (dest_sec) *dest_sec = s->transitions[subid].dest_sec;
+    if (dx)       *dx       = s->transitions[subid].x;
+    if (dy)       *dy       = s->transitions[subid].y;
+    return 1;
+}
+
 int dq3_scene_input(dq3_scene *s, uint8_t sc)
 {
     int dx = 0, dy = 0, tx, ty;
