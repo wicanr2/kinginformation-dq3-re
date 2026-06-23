@@ -4,6 +4,7 @@
 #include "dq3_assets.h"
 #include "dq3_monster.h"
 #include "dq3_battle.h"
+#include "dq3_combat.h"
 #include "dq3_text.h"
 #include "dq3_packbg.h"
 #include <stdio.h>
@@ -23,10 +24,13 @@ typedef struct {
     const char *dbg;           /* stderr 用 */
     uint16_t name[4]; int name_len; uint16_t cls;   /* 職業名 glyph + 單字職業 glyph */
     int hp, maxhp, mp, maxmp, level, atk, def, agi, defending;
+    int weapon;                /* 武器 item code(#7a 雙擊判定)*/
+    uint8_t equip[8];          /* 8 格裝備(#7b 抗魔掃描)*/
 } member;
 
 static int sky_idx, ground_idx, white_idx, red_idx, green_idx, black_idx;
 static dq3_text g_txt; static int g_txt_ok;
+static dq3_items g_items; static int g_items_ok;   /* ITEM.DAT 旗標(#7a/#7b)*/
 static uint8_t g_sky[DQ3_PACKBG_H][DQ3_PACKBG_W]; static int g_sky_ok;  /* packbg 天空 */
 
 /* 指令標籤(glyph index 對照 docs/03 + glyph_unicode_map):戰鬥/逃跑/防禦/道具 */
@@ -158,30 +162,45 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
         int t=pick_alive_party(party);
         if(t>=0){ int heal=30; party[t].hp+=heal; if(party[t].hp>party[t].maxhp)party[t].hp=party[t].maxhp;
             fprintf(stderr,"  %s 使用藥草,回復 %d。\n", party[t].dbg, heal); }
-    } else { /* 戰:每位存活成員打一隻敵人 */
+    } else { /* 戰:每位存活成員攻擊;武器雙擊則打 2 次(#7a,dq3_combat)*/
         for(i=0;i<PARTY;i++){
-            int e,crit,dmg;
+            int hits, h;
             if(party[i].hp<=0) continue;
-            e=pick_alive_enemy(ehp,en); if(e<0) break;
-            crit=(roll255()<8);  /* ~1/32 會心 */
-            dmg=dq3_battle_phys_damage(party[i].atk, edef, roll255(), crit);
-            ehp[e]-= dmg; if(ehp[e]<0)ehp[e]=0;
-            fprintf(stderr,"  %s 攻擊敵%d%s,造成 %d 傷害%s\n", party[i].dbg, e,
-                    crit?"(會心一擊!)":"", dmg, ehp[e]==0?" — 擊倒!":"");
+            hits = g_items_ok ? dq3_combat_num_attacks(&g_items, party[i].weapon) : 1;
+            for(h=0; h<hits; h++){
+                int e,crit,dmg;
+                e=pick_alive_enemy(ehp,en); if(e<0) break;
+                crit=(roll255()<8);
+                dmg=dq3_battle_phys_damage(party[i].atk, edef, roll255(), crit);
+                ehp[e]-= dmg; if(ehp[e]<0)ehp[e]=0;
+                fprintf(stderr,"  %s 攻擊敵%d%s%s,造成 %d 傷害%s\n", party[i].dbg, e,
+                        (hits>1)?(h==0?"(第1擊)":"(第2擊·飛鷹劍!)"):"",
+                        crit?"(會心一擊!)":"", dmg, ehp[e]==0?" — 擊倒!":"");
+            }
         }
     }
     if(alive_enemy(ehp,en)==0) return 1;   /* 勝 */
 
-    /* 敵方反擊:每隻存活敵人打一位存活我方 */
+    /* 敵方反擊:每隻存活敵人攻擊;偶爾改放咒文(魔甲抗魔 #7b,dq3_combat)*/
     for(i=0;i<en;i++){
         int t,dmg;
         if(ehp[i]<=0) continue;
         t=pick_alive_party(party); if(t<0) break;
-        dmg=dq3_battle_phys_damage(eatk, party[t].def, roll255(), roll255()<8);
-        if(party[t].defending) dmg/=2;
-        party[t].hp = (int)dq3_battle_apply_damage((uint16_t)party[t].hp, dmg);
-        fprintf(stderr,"  敵%d 攻擊 %s,造成 %d 傷害%s\n", i, party[t].dbg, dmg,
-                party[t].hp==0?" — 倒下!":"");
+        if((roll255() & 3) == 0){           /* 1/4 機率放咒文(示範 #7b)*/
+            int base = 24 + (int)(roll255() & 7);   /* 咒文基礎傷害 */
+            dmg = g_items_ok ? dq3_combat_spell_damage(&g_items, party[t].equip, base) : base;
+            if(party[t].defending) dmg/=2;
+            party[t].hp = (int)dq3_battle_apply_damage((uint16_t)party[t].hp, dmg);
+            fprintf(stderr,"  敵%d 詠唱咒文 → %s%s 受 %d 傷害%s\n", i, party[t].dbg,
+                    (g_items_ok && dq3_combat_has_magic_resist(&g_items, party[t].equip))?"(魔法鎧甲抗魔·減半!)":"",
+                    dmg, party[t].hp==0?" — 倒下!":"");
+        } else {
+            dmg=dq3_battle_phys_damage(eatk, party[t].def, roll255(), roll255()<8);
+            if(party[t].defending) dmg/=2;
+            party[t].hp = (int)dq3_battle_apply_damage((uint16_t)party[t].hp, dmg);
+            fprintf(stderr,"  敵%d 攻擊 %s,造成 %d 傷害%s\n", i, party[t].dbg, dmg,
+                    party[t].hp==0?" — 倒下!":"");
+        }
     }
     /* #1 正確結算:我方全滅(含倒下)→ 敗 */
     if(alive_party(party)==0) return 2;
@@ -201,11 +220,11 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     char err[256]={0};
     int cursor=0, outcome=0, turn=0;
     member party[PARTY] = {
-        /* dbg, name[],len,cls,  hp,maxhp,mp,maxmp,level,atk,def,agi,def */
-        { "勇者",   {106,187},    2, 106, 35,35,  9, 9,1, 22,10,12, 0 },
-        { "武鬥家", {108,207,657},3, 108, 40,40,  0, 0,1, 26,14, 8, 0 },
-        { "僧侶",   {109,704},    2, 109, 28,28, 10,10,1, 15,10,10, 0 },
-        { "魔法師", {110,208,822},3, 110, 22,22, 11,11,1, 11, 6,11, 0 },
+        /* dbg,name,len,cls, hp,maxhp,mp,maxmp,lv,atk,def,agi,def, weapon, equip[8] */
+        { "勇者",   {106,187},    2, 106, 35,35,  9, 9,1, 22,10,12, 0, 0x6e, {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff} }, /* 飛鷹劍=雙擊(#7a) */
+        { "武鬥家", {108,207,657},3, 108, 40,40,  0, 0,1, 26,14, 8, 0, 0x60, {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff} },
+        { "僧侶",   {109,704},    2, 109, 28,28, 10,10,1, 15,10,10, 0, 0x60, {0xff,0xff,0x2b,0xff,0xff,0xff,0xff,0xff} }, /* 魔法鎧甲=抗魔(#7b) */
+        { "魔法師", {110,208,822},3, 110, 22,22, 11,11,1, 11, 6,11, 0, 0x60, {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff} },
     };
 
     g_rng = seed ? seed : 0x1234567u;
@@ -221,6 +240,8 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
 
     /* 文字(敵名/指令/HP):D3TXT00.FON + D3TXT00.TXT */
     g_txt_ok = (dq3_text_load(&g_txt, assets, "D3TXT00.TXT", err, sizeof err) == 0);
+    /* ITEM.DAT 旗標(#7a 雙擊 / #7b 抗魔) */
+    g_items_ok = (dq3_items_load(&g_items, assets, err, sizeof err) == 0);
 
     /* 戰鬥背景:packbg page(隨地形;預設草原 terrain0 → page 0)。
      * DQ3_BG_PAGE 可指定其他地形頁(terrain*8,terrain3→0x19)。 */

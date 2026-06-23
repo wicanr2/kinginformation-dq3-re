@@ -66,10 +66,10 @@
   **未整合**:無升級流程呼叫它。
 - [單測] **#6 數值 255 溢位**:`dq3_stats_add_clamped`(uint16+clamp 9999)。單測:200+100 wrap44 vs 300。
   **未整合且原版確切 wrap 點未定位**(docs/23 自承需 DOSBox 實機觀察);真正修法 = 能力值系統全程用 uint16(設計上免疫),那系統還沒建。clamp 9999 為佔位值,非原版行為。
-- [單測] **#7a 隼劍雙擊**:`dq3_combat_num_attacks`(武器 +5 bit7)。單測:飛鷹劍 2 次。
-  **未整合**:`dq3_battlescene` 目前每員只打 1 次,**沒呼叫 dq3_combat**。
-- [單測] **#7b 魔法鎧甲抗魔**:`dq3_combat_spell_damage`(裝備 +6 bit2 減半)。單測:魔甲 80→40。
-  **未整合**:battlescene 無咒文傷害路徑、未呼叫 dq3_combat。
+- [整合] **#7a 隼劍雙擊**:`dq3_combat_num_attacks`(武器 +5 bit7;機制對齊 RE file 0xc1fa 二擊重入)。
+  **已接進** `dq3_battlescene::do_turn`(飛鷹劍員打 2 次)。實測:勇者(飛鷹劍)第1擊+第2擊、武鬥家普通武器 1 次。單測:飛鷹劍 2 次。
+- [整合] **#7b 魔法鎧甲抗魔**:`dq3_combat_spell_damage`(裝備 +6 bit2 減半)。**已接進** battlescene 敵方咒文路徑。
+  實測:僧侶(魔法鎧甲)受咒文減半(7 vs 別人 12-15)。單測:魔甲 80→40。
 - [整合] **物理傷害公式**:`dq3_battle_phys_damage` = 反組譯真公式 `(atk−def)/2+rng((atk−def)/4)`(file 0xc03e,docs/13;
   非先前湊的 atk/2−def/4)。**已接進** battlescene。單測對齊。
 - [ ] #7c 祈禱之戒:原版本就會壞(~25%),保持即可(不需修)
