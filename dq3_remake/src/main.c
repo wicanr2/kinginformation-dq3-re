@@ -163,7 +163,7 @@ static int run_game(const char *assets, const char *dump)
 {
     char err[256] = {0};
     dq3_scene *field, *town = NULL, *cur;
-    int in_town = 0, enc, fx = 0, fy = 0;
+    int in_town = 0, enc, fx = 0, fy = 0, cur_cty = -1;   /* cur_cty:目前所在 CTY 號(#2 gate)*/
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1;
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
@@ -197,15 +197,18 @@ static int run_game(const char *assets, const char *dump)
                 }
             }
         }
+        /* demo:進城鎮 CTY00 當可見場景(合成祠堂 CTY93 為 629B 小檔,section 格式異於一般
+         * 城鎮,town loader 尚未支援 → 見 WORKLIST TODO)。 */
         fprintf(stderr, "=== 進城鎮 CTY00(換場 + 重套 palette)===\n");
         town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
-        if (town) { load_field_hero(town, assets); cur = town; dq3_scene_apply_palette(cur);
+        if (town) { load_field_hero(town, assets); cur = town; cur_cty = 0;
+            dq3_scene_apply_palette(cur);
             fprintf(stderr, "城鎮 sect%d 事件數=%d\n", tsect, town->n_events); }
-        /* demo #2:發 scripted-event 83(祠堂)→ 合成彩虹水滴(對齊 runner→0x776c→0x77ce)*/
+        /* demo #2:scripted-event 83 合成邏輯(in-game gate 在 CTY%d=合成祠堂才觸發,docs/32)*/
         {
             int sr = dq3_scripted_event_run(DQ3_SEVENT_RAINBOW_SYNTH, &inv, &flags, 1);
-            fprintf(stderr, "=== #2 scripted-event 83 祠堂:result=0x%02x flag0x139=%d ===\n",
-                    sr, dq3_flags_get(&flags, DQ3_FLAG_RAINBOW_SYNTHED));
+            fprintf(stderr, "=== #2 合成(gate=CTY%d 祠堂)scripted-event 83:result=0x%02x flag0x139=%d ===\n",
+                    DQ3_SHRINE_CTY, sr, dq3_flags_get(&flags, DQ3_FLAG_RAINBOW_SYNTHED));
         }
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         /* demo:在城鎮開一段對話(D3TXT01 rec 1)疊在場景上 */
@@ -233,10 +236,9 @@ static int run_game(const char *assets, const char *dump)
             if (sc == 0x1c || sc == 0x39) dq3_dialogue_advance(&dlg);  /* Enter/Space 翻頁/關閉 */
         } else if (sc == 0x1c) {            /* Enter:調べる本格 tile 事件(docs/31 真事件系統)*/
             int et, ep;
-            /* #2 祠堂:scripted-event 83(runner 0xabb2 → handler 0x776c → 0x77ce 尾段)。
-             * 原版 event id 由地圖/劇本資料下到 [0x722];精確祠堂 CTY/座標(在 CTY 資料 +
-             * control-code 直譯器)待 RE,remake 暫以城鎮調べる發 event 83。 */
-            if (in_town) {
+            /* #2 祠堂:只在合成祠堂 CTY93 調べる才觸發 scripted-event 83
+             * (runner 0xabb2 → handler 0x776c → 0x77ce 尾段;祠堂定位見 docs/32 地圖比對)。 */
+            if (in_town && cur_cty == DQ3_SHRINE_CTY) {
                 int sr = dq3_scripted_event_run(DQ3_SEVENT_RAINBOW_SYNTH, &inv, &flags, 1);
                 if (sr >= 0) {
                     fprintf(stderr, "祠堂:雨和太陽合而為一 → 彩虹水滴 0x%02x(旗標0x139 已設)\n", sr);
@@ -251,11 +253,12 @@ static int run_game(const char *assets, const char *dump)
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
                 town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
-                if (town) { load_field_hero(town, assets); cur = town; in_town = 1; dq3_scene_apply_palette(cur);
+                if (town) { load_field_hero(town, assets); cur = town; in_town = 1; cur_cty = 0;
+                    dq3_scene_apply_palette(cur);
                     fprintf(stderr, "城鎮 sect%d 事件數=%d\n", tsect, town->n_events); }
             } else {
                 if (town) { dq3_scene_free(town); town = NULL; }
-                cur = field; in_town = 0; dq3_scene_apply_palette(cur);
+                cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
             }
         } else if (sc == 0x48 || sc == 0x50 || sc == 0x4b || sc == 0x4d) {
             int moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
@@ -268,7 +271,7 @@ static int run_game(const char *assets, const char *dump)
                     fprintf(stderr, "傳送門:warp[%d] → map=%d (%d,%d)\n", ep, dmap, dx, dy);
                     /* demo:離開城鎮回地表(精確 map→場景對映待 RE load_cty/世界表)*/
                     if (town) { dq3_scene_free(town); town = NULL; }
-                    cur = field; in_town = 0; dq3_scene_apply_palette(cur);
+                    cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
                 }
                 /* 地表走到城鎮入口座標 → 進該 CTY(load_cty 查表 0x748)*/
                 if (!in_town) {
@@ -277,10 +280,11 @@ static int run_game(const char *assets, const char *dump)
                         char cty[16]; int bn = dq3x_map_blknum[cidx];   /* 每CTY BLK號(0x0a04)*/
                         sprintf(cty, "CTY%02d.DAT", cidx);
                         town = dq3_town_load(assets, cty, 0, bn, err, sizeof err);
-                        if (town) { load_field_hero(town, assets); cur = town; in_town = 1;
+                        if (town) { load_field_hero(town, assets); cur = town; in_town = 1; cur_cty = cidx;
                             dq3_scene_apply_palette(cur);
-                            fprintf(stderr, "入城:地表(%d,%d) → %s(BLK%d)事件數=%d\n",
-                                    cur->px, cur->py, cty, bn, town->n_events); }
+                            fprintf(stderr, "入城:地表(%d,%d) → %s(BLK%d)事件數=%d%s\n",
+                                    cur->px, cur->py, cty, bn, town->n_events,
+                                    cidx==DQ3_SHRINE_CTY ? "  [合成祠堂]" : ""); }
                         else fprintf(stderr, "入城失敗 %s: %s\n", cty, err);
                     }
                 }
