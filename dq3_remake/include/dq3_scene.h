@@ -54,6 +54,10 @@ typedef struct dq3_scene {
     dq3_npc   npcs[DQ3_SCENE_MAX_NPC];
     int       n_npcs;
     dq3_rng   npc_rng;
+    /* NPC sprite 快取(by b2 去重;entry_base = b2*4,主角 entry16↔b2=4 自洽,待 oracle 校)。 */
+    dq3_charsprite npc_spr[8];
+    int       npc_spr_b2[8];
+    int       n_npc_spr;
 
     /* 主角 sprite(DQ3MAN.BLS);has_hero=0 時退回佔位方框 */
     dq3_charsprite hero;
@@ -95,6 +99,9 @@ int  dq3_scene_load_npcs(dq3_scene *s, const uint8_t *cty, size_t cty_len, size_
 
 /* 每幀對所有 NPC 跑一次步進(隨機走動;靜止/凍結者不動)。回本幀移動隻數。 */
 int  dq3_scene_npc_tick(dq3_scene *s);
+
+/* 載入 NPC sprite(by b2 去重,DQ3MAN.BLS entry_base=b2*4)。回快取到的 sprite 種類數。 */
+int  dq3_scene_load_npc_sprites(dq3_scene *s, const char *assets_dir);
 
 /* 處理一個方向 scancode(0x48/0x50/0x4b/0x4d),含碰撞。回傳 1=有移動。 */
 int  dq3_scene_input(dq3_scene *s, uint8_t scancode);

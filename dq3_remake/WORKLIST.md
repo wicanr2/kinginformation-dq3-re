@@ -118,7 +118,10 @@
     `dq3_scene_npc_tick`(每幀步進)、`dq3_town_load` 載 NPC、main.c town 迴圈每幀 tick(對話中凍結)。
     實測:CTY00 載 24 隻、CTY93 載 1 隻(祭司),與原始資料一致。scene 加 NPC 槽 + npc_rng
     (dq3_npc.h 前向宣告 scene 解循環 include)。
-    剩:① **NPC sprite 繪製**(目前只 stamp hi_map 0x20,未畫圖 → 尚不可見);
+  - [x] **NPC sprite 繪製 ✅**:scene 加 NPC sprite 快取(by b2 去重)、`dq3_scene_load_npc_sprites`
+    (DQ3MAN.BLS entry_base=b2*4;主角 entry16↔b2=4 自洽)、render 透明 blit(frame=朝向)。
+    CTY00 dump 實測:24 隻 NPC 畫成正確 DQ3 村民 sprite(髮型/衣服/透明底),散布城鎮、會走動。
+    剩:① b2→entry 對 oracle 精校(目前 b2*4 假設,村民正確但未逐隻核);
     ② EXE「離玩家 ≥3 格」近距閘待再追(已註記)。
 - [ ] **CTY→地名 對照收尾**(untracked WIP):`docs/maps/cty_name_fill.md` 只填到 CTY2;
   配套 `tools/_big.py`(cty_loc 疊圖)、`tools/dosbox_walk_test.sh`、`new_map_dq3/` 待決定納版控或 gitignore。

@@ -131,6 +131,7 @@ static unsigned grnd(void){ g_seed^=g_seed<<13; g_seed^=g_seed>>17; g_seed^=g_se
 static void load_field_hero(dq3_scene *s, const char *assets)
 {
     dq3_scene_load_hero(s, assets, 16, NULL);   /* 金髮勇者 */
+    dq3_scene_load_npc_sprites(s, assets);      /* NPC sprite(城鎮才有 NPC;地表 no-op)*/
 }
 
 /* 地形 → 戰鬥背景頁(packbg index)。terrain 取自內建 dq3x_terrain(DGROUP 抽出),
@@ -425,6 +426,7 @@ int main(int argc, char **argv)
             if (fo && sscanf(fo, "%d,%d,%d,%d", &order[0],&order[1],&order[2],&order[3]) == 4) op = order;
             if (dq3_scene_load_hero(s, assets, entry, op) != 0)
                 fprintf(stderr, "hero sprite load failed (entry %d) — 用佔位框\n", entry);
+            dq3_scene_load_npc_sprites(s, assets);   /* NPC sprite(town 模式)*/
             rc = run_scene(s, dump);
             dq3_scene_free(s);
         }

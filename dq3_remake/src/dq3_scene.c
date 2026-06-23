@@ -130,6 +130,30 @@ int dq3_scene_npc_tick(dq3_scene *s)
     return moved;
 }
 
+/* 找 b2 在快取的索引;無則回 -1。 */
+static int npc_spr_find(const dq3_scene *s, int b2)
+{
+    int i;
+    for (i = 0; i < s->n_npc_spr; i++) if (s->npc_spr_b2[i] == b2) return i;
+    return -1;
+}
+
+int dq3_scene_load_npc_sprites(dq3_scene *s, const char *assets_dir)
+{
+    int i; char err[128];
+    s->n_npc_spr = 0;
+    for (i = 0; i < s->n_npcs && s->n_npc_spr < 8; i++) {
+        int b2 = s->npcs[i].b2;
+        if (npc_spr_find(s, b2) >= 0) continue;                 /* 已快取 */
+        if (dq3_charsprite_load(&s->npc_spr[s->n_npc_spr], assets_dir,
+                                b2 * 4, err, sizeof err) == 0) { /* entry_base=b2*4 */
+            s->npc_spr_b2[s->n_npc_spr] = b2;
+            s->n_npc_spr++;
+        }
+    }
+    return s->n_npc_spr;
+}
+
 int dq3_scene_input(dq3_scene *s, uint8_t sc)
 {
     int dx = 0, dy = 0, tx, ty;
@@ -206,6 +230,38 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
                     if ((edge || cross) && yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
                         fb[yy * fb_w + xx] = 15;
                 }
+        }
+    }
+
+    /* NPC:有 sprite 快取則透明 blit(frame=朝向),否則小佔位點。 */
+    {
+        int n;
+        for (n = 0; n < s->n_npcs; n++) {
+            const dq3_npc *npc = &s->npcs[n];
+            int nx = npc->x - cam_x, ny = npc->y - cam_y;
+            int nsx, nsy, ci, r2, c2;
+            if (nx < 0 || nx >= VIEW_COLS || ny < 0 || ny >= VIEW_ROWS) continue;  /* 視窗外 */
+            nsx = nx * DQ3_TILE_W; nsy = ny * DQ3_TILE_H;
+            ci = npc_spr_find(s, npc->b2);
+            if (ci >= 0) {
+                int fr = s->frame_for_facing[npc->ctrl & 3];
+                const dq3_charsprite *cs = &s->npc_spr[ci];
+                if (fr < 0 || fr >= DQ3_CHAR_FRAMES) fr = 0;
+                for (r2 = 0; r2 < DQ3_CHAR_H; r2++)
+                    for (c2 = 0; c2 < DQ3_CHAR_W; c2++) {
+                        int yy = nsy + r2, xx = nsx + c2;
+                        if (!cs->opaque[fr][r2][c2]) continue;
+                        if (yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
+                            fb[yy * fb_w + xx] = cs->px[fr][r2][c2];
+                    }
+            } else {
+                for (r2 = 8; r2 < DQ3_TILE_H - 8; r2++)
+                    for (c2 = 12; c2 < DQ3_TILE_W - 12; c2++) {
+                        int yy = nsy + r2, xx = nsx + c2;
+                        if (yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
+                            fb[yy * fb_w + xx] = 14;
+                    }
+            }
         }
     }
 }
