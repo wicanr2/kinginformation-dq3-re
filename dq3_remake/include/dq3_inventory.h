@@ -20,6 +20,15 @@
 
 typedef struct { uint8_t slot[DQ3_INV_SLOTS]; } dq3_inventory;
 
+/* 劇情旗標位元集(對 DQ3.EXE flag store;set_flag/sub_8264)。0x139=「彩虹水滴已合成」。 */
+#define DQ3_FLAG_RAINBOW_SYNTHED 0x139
+#define DQ3_FLAGS_BYTES 64                 /* 覆蓋旗標 id 0..511 */
+typedef struct { uint8_t bit[DQ3_FLAGS_BYTES]; } dq3_storyflags;
+
+void dq3_flags_init(dq3_storyflags *f);
+int  dq3_flags_get(const dq3_storyflags *f, int id);
+void dq3_flags_set(dq3_storyflags *f, int id, int v);
+
 void dq3_inv_init(dq3_inventory *inv);                 /* 全清空(0xff) */
 int  dq3_inv_find(const dq3_inventory *inv, int item); /* 回 slot index,無回 -1 */
 int  dq3_inv_has(const dq3_inventory *inv, int item);
@@ -30,5 +39,10 @@ int  dq3_inv_remove(dq3_inventory *inv, int item);     /* 移除一個;回 slot,
  * fixed!=0:產出 0x75(彩虹水滴,修正);fixed==0:重現原版 bug 產出 0x6b(銀寶珠)。
  * 回傳產出的 item code;材料不足回 -1。 */
 int  dq3_synth_rainbow_drop(dq3_inventory *inv, int fixed);
+
+/* #2 祠堂合成事件(in-game 觸發,對齊 file 0x77ce 的條件與副作用)。
+ * 在祠堂「調べる」時呼叫:已合成過(flag 0x139)→ 回 -2 不重複;持有兩材料 → 合成
+ * (fixed 同上)+ 設旗標 0x139,回成品 code;材料不足 → 回 -1。 */
+int  dq3_synth_shrine_examine(dq3_inventory *inv, dq3_storyflags *flags, int fixed);
 
 #endif /* DQ3_INVENTORY_H */

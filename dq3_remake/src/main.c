@@ -22,6 +22,7 @@
 #include "dq3_text.h"
 #include "dq3_dialogue.h"
 #include "dq3_exedata.h"
+#include "dq3_inventory.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -164,6 +165,7 @@ static int run_game(const char *assets, const char *dump)
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1;
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
+    dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
 
     field = dq3_field_load(assets, err, sizeof err);
     if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
@@ -172,6 +174,9 @@ static int run_game(const char *assets, const char *dump)
     /* 對話文字(阿里阿罕 = D3TXT01) */
     dlg_ok = (dq3_dialogue_load(&dlg, assets, "D3TXT01.TXT", err, sizeof err) == 0);
     enc = 6 + (int)(grnd() % 8);
+    /* demo:身上帶兩材料,進祠堂「調べる」即可觸發 #2 合成(產彩虹水滴) */
+    dq3_inv_init(&inv); dq3_flags_init(&flags);
+    dq3_inv_add(&inv, ITEM_SUN_STONE); dq3_inv_add(&inv, ITEM_RAINCLOUD_ROD);
 
     if (dump) {
         /* headless demo:走到觸發戰鬥 → 進城鎮,沿途 log,dump 末幀 */
@@ -194,6 +199,12 @@ static int run_game(const char *assets, const char *dump)
         town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
         if (town) { load_field_hero(town, assets); cur = town; dq3_scene_apply_palette(cur);
             fprintf(stderr, "城鎮 sect%d 事件數=%d\n", tsect, town->n_events); }
+        /* demo #2:城鎮中調べる祠堂 → 合成彩虹水滴(對齊 0x77ce,修正版產 0x75)*/
+        {
+            int sr = dq3_synth_shrine_examine(&inv, &flags, 1);
+            fprintf(stderr, "=== #2 祠堂合成:result=0x%02x flag0x139=%d ===\n",
+                    sr, dq3_flags_get(&flags, DQ3_FLAG_RAINBOW_SYNTHED));
+        }
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         /* demo:在城鎮開一段對話(D3TXT01 rec 1)疊在場景上 */
         if (dlg_ok && dq3_dialogue_open(&dlg, 1) == 0) {
@@ -220,6 +231,15 @@ static int run_game(const char *assets, const char *dump)
             if (sc == 0x1c || sc == 0x39) dq3_dialogue_advance(&dlg);  /* Enter/Space 翻頁/關閉 */
         } else if (sc == 0x1c) {            /* Enter:調べる本格 tile 事件(docs/31 真事件系統)*/
             int et, ep;
+            /* #2 祠堂:在城鎮調べる且持有兩材料 → 合成彩虹水滴(對齊 file 0x77ce + 旗標 0x139)。
+             * 注:精確祠堂座標/城鎮(0x77ce 之 far-call 呼叫者)待 RE,暫以城鎮調べる觸發。 */
+            if (in_town) {
+                int sr = dq3_synth_shrine_examine(&inv, &flags, 1);
+                if (sr >= 0) {
+                    fprintf(stderr, "祠堂:雨和太陽合而為一 → 彩虹水滴 0x%02x(旗標0x139 已設)\n", sr);
+                    if (dlg_ok) dq3_dialogue_open(&dlg, 1);
+                }
+            }
             if (dq3_scene_tile_event(cur, cur->px, cur->py, &et, &ep)) {
                 const char *tn = et==0?"調べる/寶箱":et==2?"傳送/門":(et==1||et==3)?"條件":"道具/其他";
                 fprintf(stderr, "事件: type=%d(%s) param=0x%x\n", et, tn, ep);

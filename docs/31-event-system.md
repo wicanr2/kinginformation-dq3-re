@@ -129,8 +129,33 @@ type = [si];  param = [si+1](u16);  p2 = [si+3]   ; ★ 4-byte 事件項
 - **CTY section header**:`+8` = 事件表指標;另 `[di+1]` = 安全旗標 `[0xd77]`(docs/13)。
   → docs/04/11 未定名的 section header 欄位,逐一補上。
 
+### #2 彩虹水滴合成(file 0x77ce,已確認本體)
+
+祠堂劇情事件本體反組譯確認:
+
+```
+0x77ce: call 0x6380
+0x77d1: mov word [0x2593], 0x72   ; 訊息 param = 太陽之石
+0x77d7: call 0x7c0c               ; seq_msg
+0x77de: mov word [0x2593], 0x73   ; param = 雲雨之杖
+0x77e4: call 0x7c0c               ; seq_msg
+0x77e7: mov word [si], 0x6b       ; ★ 寫合成品 0x6b(BUG;應為 0x75 彩虹水滴)
+0x77eb: mov bx, 0x139             ; 旗標 id
+0x77ee: call 0x8264               ; set_flag(0x139)「已合成」
+0x77f1: ret
+```
+
+remake:`dq3_synth_shrine_examine`(`dq3_inventory.c`)鏡射條件與副作用 —
+未設旗標 0x139 才觸發、持兩材料 → 合成(修正產 0x75)+ 設旗標 0x139。
+
+**呼叫者待 RE**:`0x77ce` 既非同段 near-call(全檔 E8 掃 0 命中)、亦不在指標表
+(word `0x77ce` 全檔 0 出現)→ 由**另一程式碼段 far-call** 進入(祠堂寫死座標事件,
+類 0x9f7f 的 `[0x4f2f]/[0x4f31]` 分支)。精確城鎮/座標未定位;remake 暫以
+「城鎮中調べる且持兩材料」觸發。
+
 ### 待 RE(收尾)
 
+- **0x77ce 的 far-call 呼叫者**(祠堂城鎮 + 寫死座標),替換 remake 暫時觸發條件。
 - section 事件表的**完整 entry 格式**(type0 給道具的 item id 欄、type2 warp 表 0x4ea0 逐欄)。
 - 寫死座標劇情事件清單(0x9f7f 內的多個座標分支)。
 - 把上述抽成內建資料(像 dq3_exedata)供 remake,不依賴 DQ3.EXE。

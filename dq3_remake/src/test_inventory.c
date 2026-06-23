@@ -40,6 +40,22 @@ int main(void)
     dq3_inv_add(&inv, ITEM_SUN_STONE);
     CHECK(dq3_synth_rainbow_drop(&inv, 1) == -1, "缺雲雨之杖 → 不合成");
 
+    /* 祠堂 in-game 觸發(0x77ce 條件 + 旗標 0x139)*/
+    printf("== 祠堂觸發 + 旗標 0x139 ==\n");
+    {
+        dq3_storyflags fl; dq3_flags_init(&fl);
+        dq3_inv_init(&inv);
+        dq3_inv_add(&inv, ITEM_SUN_STONE);
+        dq3_inv_add(&inv, ITEM_RAINCLOUD_ROD);
+        CHECK(!dq3_flags_get(&fl, DQ3_FLAG_RAINBOW_SYNTHED), "合成前 旗標0x139=0");
+        CHECK(dq3_synth_shrine_examine(&inv, &fl, 1) == ITEM_RAINBOW_DROP, "祠堂合成 → 彩虹水滴");
+        CHECK(dq3_flags_get(&fl, DQ3_FLAG_RAINBOW_SYNTHED), "合成後 旗標0x139=1");
+        /* 再次調べる:已合成不重複(回 -2) */
+        dq3_inv_add(&inv, ITEM_SUN_STONE);
+        dq3_inv_add(&inv, ITEM_RAINCLOUD_ROD);
+        CHECK(dq3_synth_shrine_examine(&inv, &fl, 1) == -2, "已合成 → 不重複觸發");
+    }
+
     printf("\n%s (%d failures)\n", g_fail?"== 有測試未通過 ==":"== 全部通過 ==", g_fail);
     return g_fail?1:0;
 }

@@ -23,6 +23,32 @@ int dq3_inv_remove(dq3_inventory *inv, int item)
     int s = dq3_inv_find(inv, item); if (s >= 0) inv->slot[s] = DQ3_ITEM_NONE; return s;
 }
 
+void dq3_flags_init(dq3_storyflags *f)
+{
+    int i; for (i = 0; i < DQ3_FLAGS_BYTES; i++) f->bit[i] = 0;
+}
+int dq3_flags_get(const dq3_storyflags *f, int id)
+{
+    if (id < 0 || id >= DQ3_FLAGS_BYTES * 8) return 0;
+    return (f->bit[id >> 3] >> (id & 7)) & 1;
+}
+void dq3_flags_set(dq3_storyflags *f, int id, int v)
+{
+    if (id < 0 || id >= DQ3_FLAGS_BYTES * 8) return;
+    if (v) f->bit[id >> 3] |=  (uint8_t)(1 << (id & 7));
+    else   f->bit[id >> 3] &= (uint8_t)~(1 << (id & 7));
+}
+
+int dq3_synth_shrine_examine(dq3_inventory *inv, dq3_storyflags *flags, int fixed)
+{
+    int r;
+    /* 對齊 file 0x77ce 派發前提:旗標 0x139 已設則不再合成(避免重複)。 */
+    if (dq3_flags_get(flags, DQ3_FLAG_RAINBOW_SYNTHED)) return -2;
+    r = dq3_synth_rainbow_drop(inv, fixed);
+    if (r >= 0) dq3_flags_set(flags, DQ3_FLAG_RAINBOW_SYNTHED, 1);  /* 0x77eb: set_flag(0x139) */
+    return r;
+}
+
 int dq3_synth_rainbow_drop(dq3_inventory *inv, int fixed)
 {
     int s_sun, s_rod, result;
