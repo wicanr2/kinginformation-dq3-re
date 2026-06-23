@@ -39,14 +39,16 @@ int main(void)
     CHECK(dq3_battle_apply_damage(100,30)==70, "HP100 受30傷 → 70");
 
     printf("== 物理傷害公式 ==\n");
-    {
-        int dmin = dq3_battle_phys_damage(40,20,0,0);    /* base=20-5=15,[7,15] */
-        int dmax = dq3_battle_phys_damage(40,20,255,0);
-        int dcrit= dq3_battle_phys_damage(40,20,0,1);    /* atk/2=20 */
+    {   /* 反組譯真公式(file 0xc03e):dmg=(atk−def)/2 + rng(0..(atk−def)/4);會心×2 */
+        int dmin = dq3_battle_phys_damage(40,20,0,0);    /* (40-20)/2=10 + 0 */
+        int dmax = dq3_battle_phys_damage(40,20,255,0);  /* 10 + (5*255/256)=14 */
+        int dcrit= dq3_battle_phys_damage(40,20,0,1);    /* 10 ×2 = 20 */
         printf("  atk40 def20: roll0=%d roll255=%d crit=%d\n", dmin, dmax, dcrit);
-        CHECK(dmin>=7 && dmin<=dmax && dmax<=15, "一般傷害落在 [base/2,base]=[7,15]");
-        CHECK(dcrit==20, "會心一擊=atk/2=20(無視防禦)");
-        CHECK(dq3_battle_phys_damage(10,80,255,0) <= 3, "高防禦→弱攻(小傷害)");
+        CHECK(dmin==10, "一般 roll0 = (atk−def)/2 = 10");
+        CHECK(dmax==14 && dmax>dmin, "一般 roll255 = 10 + (atk−def)/4 變異 = 14");
+        CHECK(dcrit==20, "會心一擊 = 一般 ×2 = 20");
+        CHECK(dq3_battle_phys_damage(10,80,0,0)==1 && dq3_battle_phys_damage(10,80,255,0)==0,
+              "弱攻(atk≤def):roll0→1 點、roll255→miss(0)");
     }
     printf("== 逃跑判定 ==\n");
     CHECK(dq3_battle_flee_ok(50,0,0)==1, "高敏捷低抗性 roll0 → 逃成功");

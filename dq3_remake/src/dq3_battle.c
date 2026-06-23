@@ -42,16 +42,19 @@ uint16_t dq3_battle_apply_damage(uint16_t hp, int dmg)
 
 int dq3_battle_phys_damage(int atk, int def, int roll, int crit)
 {
-    int base, lo, span, hi;
+    /* 反組譯真公式(file 0xc03e,docs/13):
+     *   atk > def:dmg = (atk−def)/2 + rng(0..(atk−def)/4);會心 → ×2。
+     *   atk ≤ def(弱攻):rng;<0x80(50%)→ 1 點,否則 miss(0)。 */
+    int diff, base, quarter, var, dmg;
     if (roll < 0) roll = 0; if (roll > 255) roll = 255;
-    if (crit) { int d = atk / 2; return d > 0 ? d : 1; }
-    base = atk / 2 - def / 4;
-    if (base < 1) {                       /* 弱攻:0..(atk+4)/6 */
-        hi = (atk + 4) / 6; if (hi < 1) hi = 1;
-        return (hi * roll) / 255;
-    }
-    lo = base / 2; span = base - lo;      /* [base/2, base] */
-    return lo + (span * roll) / 255;
+    diff = atk - def;
+    if (diff <= 0) return (roll < 0x80) ? 1 : 0;   /* 弱攻:50% 打 1、50% miss */
+    base = diff / 2;                                /* (atk−def)/2 */
+    quarter = diff / 4;                             /* (atk−def)/4 變異上限 */
+    var = (quarter > 0) ? (quarter * roll) / 256 : 0;  /* rng(0..(atk−def)/4) */
+    dmg = base + var;
+    if (crit) dmg *= 2;                             /* [0x24b7]&0x10 會心 → ×2 */
+    return dmg;
 }
 
 int dq3_battle_flee_ok(int party_agi, int enemy_flee_resist, int roll)

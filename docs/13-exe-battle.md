@@ -271,3 +271,24 @@ C 風格同專案慣例:求結構正確、可審閱,非位元精準;逐函式對
   呪文、道具效果)尚未逐一反編譯;目前到「指令選單 + 勝 / 逃 / 全滅結算」層。
 - **連戰 / 多輪回合**:sub_bddf 後段重複回合段的迴圈條件(何時換下一回合)語意待補。
 - 戰鬥背景音樂 mbg.mcx / ebg.mcx 的播放觸發點(Sound Blaster 段 0x129c)未在本任務範圍。
+
+## 物理傷害公式(反組譯 file 0xc03e,真公式)
+
+玩家攻擊傷害計算 `sub @file 0xc03e`(logical 0xacce)。攻方攻擊力 `[si+0x2339]`、
+受方防禦 `[di+0x20]`、HP `[di+0x16]`:
+
+```
+diff = atk − def
+if diff <= 0:                      ; 弱攻(攻擊不破防)
+    rng → al;  al < 0x80(50%) → 傷害 1;  否則 miss(0)
+else:                              ; 一般
+    base    = diff / 2             ; (atk−def)/2
+    var     = rng( 0 .. diff/4 )   ; rng((atk−def)/4)
+    dmg     = base + var           ; ★ dmg = (atk−def)/2 + rng(0..(atk−def)/4)
+修飾:攻方狀態 [bx+0xd4f]==3 → dmg >>= 1(減半);[0x24b7]&0x10(會心)→ dmg <<= 1(×2)
+```
+
+> 更正先前 remake 用的湊公式(`atk/2 − def/4`):**真公式是 `(atk−def)/2 + rng((atk−def)/4)`**。
+> 已重寫 `dq3_battle_phys_damage`(dq3_battlescene 直接呼叫),單測對齊
+> (atk40/def20:roll0=10、roll255=14、會心=20;弱攻 roll0→1、roll255→miss)。
+> D3MNS 怪物 `+0x08`(攻)/`+0x09`(防)欄即代入此式(docs/16 推定欄由此坐實用途)。
