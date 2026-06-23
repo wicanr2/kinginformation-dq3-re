@@ -15,6 +15,7 @@
   - `dq3_scene` 場景核心(攝影機/tile 貼圖/bit0 碰撞/走動)+ `dq3_field`(地表)/`dq3_town`(城鎮 CTY)薄載入器。headless 驗證走動+碰撞+捲動正確。
   - **真主角 sprite ✅**:DQ3MAN.BLS 完整破解(masked 32×24、stride960、4 方向,docs/27);`dq3_sprite` 解碼 + scene 透明 blit,entry16 金髮勇者顯示於地表/城鎮、朝向正確。DOSBox oracle 自動進遊戲打通(docs/29)。
 - **remake 階段④ C 層 bug 修正(誠實狀態,見階段④ claim 校正)**:**已整合進可玩系統** = #1 結算、#2 合成(gate CTY93)、#3 blit guard、#8 palette、真傷害公式、**#4/#5/#6 升級系統**(`dq3_member` + 戰鬥勝利結算)、#7a/#7b(battlescene)。**邏輯實作+單測** 已大致收斂。#6 註:原版確切 wrap 點未定位、核心修法為 uint16 全程(非 clamp 數值)。
+- **知識庫(repo 級)✅**(2026-06-23,接續 session 8db027c4 斷三次的請求):`CONTEXT.md`(canonical 術語表 + `docs/00–35` 主題索引 + 待釐清詞,即「避免重複採坑」入口)、`docs/00-re-methodology.md`(4 條可重用 RE 技巧:羅塞塔範本 / 跳表派發 / file⇄logical 位址基準陷阱 / 用資料內容反證標註)、`~/.claude` 跨 session 記憶 ×4。已 commit+push(`ecd4f5c`)。
 
 ## dq3_remake 剩餘 worklist
 
@@ -90,6 +91,17 @@
 - [ ] retro-cjk-hires-canvas:內部畫布原生解析、nearest 放大;CJK 16×16 正常。
 - [ ] 海面 palette cycling(DQ3.PAL idx2/10 DAC 動畫)。
 - [ ] 跨平台打包(Linux/Windows;AppImage/exe)。
+
+### 接續中(session 8db027c4 收尾時點名、未動工的靜態 RE)
+- [x] **鑰匙門機制 ✅ 靜態全解**(docs/35 §八):鑰匙 id=0x55/0x56/0x57(盜賊/魔法/最終,等級=id−0x54);
+  內嵌城鎮轉場 handler `0x488f`:`0x48c3` 掃全隊 8 道具格取最高鑰匙級 `[0x2593]`;`0x4906` 讀面向 tile,
+  attr **低 byte bits6-7**=門所需級,隊伍級≥需求 → 改 tile `[di]=low&0x1f` + 清 attr `[di+1]&=0xe0` + 開門動畫。
+  糾正舊標(player.c 誤把低 byte 0xc0 標角落,實為鑰匙級;角落用的是高 byte 0xc000)。remake 待接:
+  `dq3_member` 鑰匙掃描 + 面向 tile 開鎖。
+  > 用「鑰匙道具 id 反查 + 回 EXE 重驗」破解,正是 session 走死胡同時回 dq3.exe/腳本重新檢視的成果。
+- [ ] **NPC 移動步進規則**:handler `0x62e9`/`0x6355`/`0x839f`(隨機/巡邏/靜止)的步進條件。
+- [ ] **CTY→地名 對照收尾**(untracked WIP):`docs/maps/cty_name_fill.md` 只填到 CTY2;
+  配套 `tools/_big.py`(cty_loc 疊圖)、`tools/dosbox_walk_test.sh`、`new_map_dq3/` 待決定納版控或 gitignore。
 
 ## 關鍵參考 / 工具 / 紀律
 

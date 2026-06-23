@@ -175,9 +175,44 @@ section1 (16×12 室內):
 | **門/階梯/出城** | section **`+0xc`** 表,4-byte `{destCTY,destSec,X,Y}` | **`dq3_town_load` 解析 `+0xc` → `scene.transitions[subid]`;主迴圈踩轉場 tile → 依表 dispatch** |
 | 跨 CTY 落點 | `0x748` cty_loc(已 extract)| 出城/跨 CTY 用 cty_loc 地表座標 + 地下 Y+300 |
 
+## 八、鑰匙門(locked door)★ 已靜態全解 — 內嵌在轉場 handler,非獨立機制
+
+> 用「鑰匙道具 id 反查」破解(方法論 docs/00 §1/§4):先解出鑰匙 id,再全檔找對它的比較,
+> 一步命中,不必沿舊位址盲掃。**糾正舊標**:`re/player.c` 行註把 attr **低 byte** bits6-7
+> (`0x00c0`)籠統標為「角落/出口 warp 類別」;door handler 證實**低 byte bits6-7 = 門所需鑰匙等級**。
+> (player.c 移動碰撞實際讀的是 attr **高 byte** bits6-7 = word `0xc000` 做角落/warp_pending 判定,
+> 是**不同欄位**,兩者勿混——這也是位址/欄位混標導致誤判的一例,見 docs/00 §3。)
+
+**鑰匙道具**(D3TXT00 道具名解出):`0x55` 盜賊的鑰匙、`0x56` 魔法鑰匙、`0x57` 最終鑰匙。
+**等級** = `id − 0x54` → 1 / 2 / 3(盜賊 < 魔法 < 最終)。
+
+開門在城鎮轉場 handler `0x488f` 內,兩段(全靜態,純資料判定):
+
+1. **算全隊最高鑰匙等級 → `[0x2593]`**(`0x48c3`,file 0x5c33;由 `0x4816` 呼叫):
+   ```
+   外圈 [0x5077] 名隊員:si = [memberidx*2 + 0x4f15];si += 0x3a   ; 隊員道具陣列(8 格 u16)
+   內圈 cx=8:  dx=[si];  if 0x55<=dl<=0x57:  tier = dl-0x54
+              if tier > [0x2593]: [0x2593] = tier              ; 取最大(=最高階鑰匙)
+   ```
+2. **讀面向 tile,夠級就開門**(`0x4906`,file 0x5c76;由 `0x3f7d`/`0x4862`/`0x4890` 呼叫):
+   ```
+   if [0x4f2d]!=1: skip                       ; 僅城鎮
+   面向格 = 玩家(X,Y) + dir 位移([dir*2+0xb35] / +0xb37);di = layout offset
+   attr = [ tile_low*2 + 0x308e ]
+   if (attr & 0x00c0)==0: skip                 ; ★ bits6-7=0 → 非鎖門
+   need = (attr_low >> 6) & 3                   ; ★ 門所需鑰匙等級(rol bl,1 ×2; and 3)→ [0x2515]
+   if [0x2593] < need: skip(維持鎖住)          ; 隊伍最高鑰匙 < 門需求 → 開不了
+   ── 開門:[di] = tile_low & 0x1f(清事件高位)   ; 改 tile 為通行
+            [di+1] &= 0xe0(清屬性低位)
+            [0x2591] = 0x3744 + [0x4f09] + [dir*2+0xb4d](開門訊息);lcall 0x10b6,0x19c 播動畫/音效
+   ```
+
+> 語意:門 tile 的 attr 低 byte bits6-7 編入**所需鑰匙等級**(1/2/3);隊伍持有 ≥ 該級的鑰匙即可開
+> (最終鑰匙開所有門)。開門 = 就地把 tile 改成通行並清事件/屬性位元(`seg_cty` 寫回),非走 +0xc 表。
+> remake:`dq3_town_load` 已解 attr;另加 `dq3_member` 鑰匙等級掃描 + 面向 tile 開鎖(改 tile + 清 attr)。
+
 ## 待 RE(縮小後)
 
-- **鑰匙門**:轉場是無條件套用,locked door 推測為「**attr 阻擋 tile + 鑰匙檢查改 tile**」的獨立小機制
-  (尚未在移動碰撞 `0x2eb0` 撞牆路徑找到 key-item 閘)。需再追:面向鎖門時掃隊伍鑰匙 id → 改 tile 為通行/轉場。
 - **NPC 移動 handler** `0x62e9`/`0x6355`/`0x839f` 的步進規則(隨機/巡邏/靜止)細節。
 - scripted-event 觸發點(祠堂座標)——資料驅動,靜態僅剩此處未定位。
+- ~~鑰匙門~~ **已解(見上 §八)**。
