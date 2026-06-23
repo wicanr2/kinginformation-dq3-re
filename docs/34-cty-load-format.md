@@ -70,3 +70,27 @@
   城鎮外圍 section0 的建築入口(sb+8 事件表=0xffff → 推測 tile-based,踩建築 tile 進對應 section)。
 - remake 務實路徑:先支援「section 事件表 type-2 → warp[param] → 載入 dest section/CTY + spawn」
   (顯式門),再補城鎮外圍的 tile-based 建築入口。屬 階段③ 互動完整化的一塊。
+
+## section header 完整欄位(0x443f 解析,已解碼)
+
+`section_base = CTY[[0x256a]*2]`,header 欄位(相對 section_base):
+
+| off | 內容 |
+|---|---|
+| +0 / +2 | **NPC/物件清單指標**(由 `[0x526c]` 選:Y<0x12c 用 +0,否則 +2)→ `{count, records}` |
+| +8 | **事件表指標**(type-2 門/調べる;0xffff=無。僅 21 CTY 有)|
+| +0xe | **layout 指標** → `{w(2), h(2), tiles…}`,tiles 在 +4 |
+| +0x10/+0x11 | 地圖旗標 / `[0xd77]` **遭遇安全旗標**(0=可遇敵、非0=安全;A-4 洞窟遇敵 gate)|
+| +0x13/+0x14 | 玩家 spawn X / Y |
+| +0x15..0x18 | 地圖參數;`[0xd71]` = 地圖 id |
+
+NPC/物件記錄 = **7 byte**:`{X, Y, b2, b3, b4, flags, b6}`(位置 = Y*寬+X;flags bit→[0x4f70] 屬性表決定顯示);
+複製到 `[0xb66]` 8-byte 槽。
+
+## 門 dispatch:type-2(21 CTY)已解,其餘 68 CTY 待動態
+
+- **21 CTY**:建築門/階梯 = section 事件表 type-2 → warp[param]={dest section,spawn} → 已實作(A-2 核心)。
+- **68 多 section CTY**(含 CTY00/02 等大城):**事件表=0xffff**,門不走 type-2;subid tile(1-4)存在但無事件表 dispatch。
+  靜態追不出建築門→section 的對映(section 0 header 又與 offset 表重疊)。
+  **建議動態**:DOSBox 在轉場執行器 `0xd1f9`(或 `lcall 0x1053:0xdc` 載入點)下中斷點,於城鎮中走進
+  一棟建築,讀當下 `[0x256a]`(目標 section)+ 觸發 tile 座標,即可反推門→section 對映規則。
