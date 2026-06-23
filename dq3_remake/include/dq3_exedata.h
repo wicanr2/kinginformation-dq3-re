@@ -14,4 +14,6 @@ extern const uint8_t  dq3x_terrain[256];   /* tile→地形類別 */
 extern const uint8_t  dq3x_event[256][3];  /* tile→怪物/戰鬥事件(3B,docs/31)*/
 #define DQ3X_WARP_N 128
 extern const uint8_t  dq3x_warp[DQ3X_WARP_N][3];  /* 傳送目的地:地圖+座標 */
+#define DQ3X_CTYLOC_N 100
+extern const uint8_t  dq3x_cty_loc[DQ3X_CTYLOC_N][2];  /* 地表(X,Y)→CTY號(index) */
 #endif

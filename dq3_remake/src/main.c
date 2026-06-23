@@ -121,7 +121,8 @@ static int run_battle(const char *assets, const char *dump)
 }
 
 /* ---- game 模式:地表↔城鎮↔戰鬥 串接狀態機 ----
- * 地表走動 → 步數遭遇隨機戰鬥;SPACE 進/出城鎮(demo 觸發,精確 tile→CTY 待 load_cty 表 RE)。
+ * 地表走動 → 步數遭遇隨機戰鬥;走到城鎮入口座標 → 進對應 CTY(load_cty 查表 0x748);
+ * SPACE 亦可手動進/出城鎮(demo)。
  * 每次戰鬥/換場後重套目的場景 palette —— 實際運用 bug #8 修正(docs/28)。 */
 static unsigned g_seed = 0x2468ace0u;
 static unsigned grnd(void){ g_seed^=g_seed<<13; g_seed^=g_seed>>17; g_seed^=g_seed<<5; return g_seed; }
@@ -140,6 +141,19 @@ static int field_bg_page(const dq3_scene *s)
     int tile = s->index_map[s->py * s->map_w + s->px];
     int terr = dq3x_terrain[tile & 0xff];
     return T2BG[terr & 7];
+}
+
+/* load_cty 查表(DGROUP 0x748):地表 (px,py) → CTY 號,無則 -1。
+ * 對齊 RE(file 0x43b7):Y==loc.Y 且 (X==loc.X 或 X==loc.X+1)→ entry index = CTY。 */
+static int find_cty_at(int px, int py)
+{
+    int i;
+    for (i = 0; i < DQ3X_CTYLOC_N; i++) {
+        int lx = dq3x_cty_loc[i][0], ly = dq3x_cty_loc[i][1];
+        if (lx == 0 && ly == 0) continue;            /* 空槽 */
+        if (py == ly && (px == lx || px == lx + 1)) return i;
+    }
+    return -1;
 }
 
 static int run_game(const char *assets, const char *dump)
@@ -232,6 +246,19 @@ static int run_game(const char *assets, const char *dump)
                     /* demo:離開城鎮回地表(精確 map→場景對映待 RE load_cty/世界表)*/
                     if (town) { dq3_scene_free(town); town = NULL; }
                     cur = field; in_town = 0; dq3_scene_apply_palette(cur);
+                }
+                /* 地表走到城鎮入口座標 → 進該 CTY(load_cty 查表 0x748)*/
+                if (!in_town) {
+                    int cidx = find_cty_at(cur->px, cur->py);
+                    if (cidx >= 0) {
+                        char cty[16]; sprintf(cty, "CTY%02d.DAT", cidx);
+                        town = dq3_town_load(assets, cty, 0, 1, err, sizeof err);
+                        if (town) { load_field_hero(town, assets); cur = town; in_town = 1;
+                            dq3_scene_apply_palette(cur);
+                            fprintf(stderr, "入城:地表(%d,%d) → %s 事件數=%d\n",
+                                    cur->px, cur->py, cty, town->n_events); }
+                        else fprintf(stderr, "入城失敗 %s: %s\n", cty, err);
+                    }
                 }
                 if (moved && !in_town && --enc <= 0) {
                     int mon = over_pool[grnd() % 4];
