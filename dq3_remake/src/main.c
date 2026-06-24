@@ -25,6 +25,7 @@
 #include "dq3_inventory.h"
 #include "dq3_roster.h"
 #include "dq3_menu.h"
+#include "dq3_nameinput.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -470,7 +471,12 @@ static int run_tavern(const char *assets, const char *dump)
     {
         int screen = getenv("DQ3_TAVERN_SCREEN") ? atoi(getenv("DQ3_TAVERN_SCREEN")) : 0;
         uint8_t yellow = (uint8_t)pal_near2(pal,pn,255,255,0);
-        if (screen == 1) {                 /* 名冊畫面:預建幾名同伴 + 顯示 */
+        if (screen == 2) {                 /* 姓名輸入畫面(英數)*/
+            dq3_nameinput ni; dq3_nameinput_init(&ni);
+            ni.cursor = (cur >= 0 && cur < DQ3_NI_CELLS) ? cur : 0;
+            { uint16_t pre[2] = {15, 16}; ni.buf[0]=pre[0]; ni.buf[1]=pre[1]; ni.len=2; }  /* 預填 "AB" 示意 */
+            dq3_nameinput_render(&ni, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx + 12, wy + 12, (uint8_t)white, yellow);
+        } else if (screen == 1) {          /* 名冊畫面:預建幾名同伴 + 顯示 */
             int c; uint16_t nm[2] = {1, 2};
             for (c = 1; c <= 4; c++) { int idx = dq3_roster_create(&roster, &st, c, DQ3_GENDER_MALE, nm, 2);
                 if (idx >= 0 && c <= 3) dq3_party_add(&party, &roster, idx); }   /* 前 3 名入隊 */
