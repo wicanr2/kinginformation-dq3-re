@@ -114,3 +114,26 @@ void dq3_status_render_spells(const dq3_recruit *rc, const dq3_text *t,
         dq3_text_draw_record(t, fb, fb_w, fb_h, sx, sy, 5, 1, recs[i], fg);
     }
 }
+
+void dq3_status_render_items(const dq3_inventory *inv, const dq3_text *t,
+                             uint8_t *fb, int fb_w, int fb_h, int x, int y, uint8_t fg)
+{
+    static const uint16_t L_ITEM[2] = {402, 237};   /* 道具 */
+    int yy = y, i, shown = 0;
+
+    draw_glyphs(t, fb, fb_w, fb_h, x, yy, L_ITEM, 2, fg);
+    yy += 20;
+    for (i = 0; i < DQ3_INV_SLOTS; i++) {
+        int code = inv->slot[i];
+        int col, rowi, sx, sy;
+        if (code == DQ3_ITEM_NONE) continue;
+        col = shown & 1; rowi = shown >> 1;
+        sx = x + col * (8 * DQ3_GLYPH_PX);
+        sy = yy + rowi * 17;
+        if (sy + 16 > fb_h) break;
+        dq3_text_draw_record(t, fb, fb_w, fb_h, sx, sy, 8, 1, code + 1, fg);  /* 道具名 rec=code+1 */
+        shown++;
+    }
+    if (shown == 0)
+        dq3_text_draw_glyph(t, fb, fb_w, fb_h, x, yy, 495, fg);   /* 無 */
+}

@@ -74,7 +74,9 @@
       dq3_spells_table.c,勇者18/僧侶24/魔法31 咒);`dq3_spell` 依職業+等級查已學咒;
       `dq3_status_render_spells` 渲染,status_modal Space/Enter 切換 能力↔咒文。dump 驗證
       魔法使 Lv20 咒文名全對(美拉/史卡拉/伊歐/魯拉/烈米特…)。docs/16。
-    - [ ] **道具(どうぐ)**:需 per-member 道具欄模型(BBS 存檔每角色 8 格 {碼,屬性});道具名已 dump。
+    - [x] **道具(どうぐ)✅**:`dq3_status_render_items` 列出共享道具欄(dq3_inventory 16 格)的
+      道具名(rec=item_code+1,docs/33);野外指令窗「道具」開 item_modal。dump 驗證:
+      最終鑰匙/彩虹水滴/太陽之石/藥草/飛鷹劍 名稱全對。(per-member 8 格道具欄 + 裝備系統待後續。)
 - [~] **露依達酒場創角 + 名冊 + 隊伍編成**(DQ3 開場核心):
   - [x] **邏輯核心 ✅**(`dq3_roster`):創角(職業+性別+名字+Lv1 數值,用成長表)、名冊(建/除名,
     除名自動修正隊伍參照)、隊伍編成(主角+最多 3、in_party 旗標、滿/重複防呆)。單測 `dq3_roster_test`

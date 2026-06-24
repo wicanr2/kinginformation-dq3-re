@@ -192,7 +192,8 @@ static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *part
                          const dq3_stats *st, const dq3_text *text);
 static void status_modal_page(const dq3_roster *roster, const dq3_party *party, const dq3_text *text, int start_page);
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
-                      dq3_dialogue *dlg, int dlg_ok);
+                      dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok);
+static void item_modal(const dq3_inventory *inv, const dq3_text *text);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
 
@@ -383,7 +384,7 @@ static int run_game(const char *assets, const char *dump)
             dq3_scene_apply_palette(cur);
             fprintf(stderr, "離開酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
         } else if (sc == 0x2e) {            /* C:野外指令窗(命令)— 對話/咒文/狀況/道具/裝備/調查 */
-            cmd_modal(cur, &roster, &party, &dlg, dlg_ok);
+            cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok);
             dq3_scene_apply_palette(cur);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
@@ -595,6 +596,18 @@ static int run_tavern(const char *assets, const char *dump)
         if (dq3_dump_ppm(dump)==0) fprintf(stderr, "cmdmenu(cur=%d) -> %s OK\n", cm.cursor, dump);
         dq3_text_free(&t); return 0;
     }
+    if (getenv("DQ3_ITEM_SCREEN") && dump) {
+        /* 道具欄畫面 視覺驗證(填數個範例道具)*/
+        dq3_inventory iv; dq3_inv_init(&iv);
+        dq3_inv_add(&iv, ITEM_KEY_FINAL); dq3_inv_add(&iv, ITEM_RAINBOW_DROP);
+        dq3_inv_add(&iv, ITEM_SUN_STONE); dq3_inv_add(&iv, 0x41 /*藥草*/);
+        dq3_inv_add(&iv, 0x6e /*飛鷹劍*/);
+        tav_window(fb, 30, 50, 290, 200, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_status_render_items(&iv, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, 30+14, 50+12, (uint8_t)white);
+        dq3_present();
+        if (dq3_dump_ppm(dump)==0) fprintf(stderr, "items -> %s OK\n", dump);
+        dq3_text_free(&t); return 0;
+    }
     if (getenv("DQ3_STATUS_SCREEN") && dump) {
         /* つよさ 能力值畫面驗證:建一名範例隊員(職業/等級可由 env 指定)*/
         dq3_recruit demo; int cls = getenv("DQ3_ST_CLASS") ? atoi(getenv("DQ3_ST_CLASS")) : 0;
@@ -700,8 +713,27 @@ static void status_modal_page(const dq3_roster *roster, const dq3_party *party, 
 
 /* 野外指令窗(命令):rec400 的 6 指令 對話/咒文/狀況/道具/裝備/調查;選定即派發。
  * 對話/調查 = 面向格事件→對話(祠堂/酒場特例仍在 Enter);道具/裝備 尚未實作。回傳選定指令或 -1。 */
+/* 道具欄 modal:列出持有道具(名稱 = D3TXT00 rec=code+1),ESC 離開。 */
+static void item_modal(const dq3_inventory *inv, const dq3_text *text)
+{
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg; uint8_t *fb = dq3_fb();
+    int wx = 30, wy = 50, ww = 290, wh = 200;
+    raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = white; bg = pal_near2(pal,pn,16,16,32);
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (sc == 0x01 || sc == DQ3_SC_F10) break;
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_status_render_items(inv, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+        dq3_present(); dq3_delay_ms(16);
+    }
+}
+
 static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
-                     dq3_dialogue *dlg, int dlg_ok)
+                     dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok)
 {
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t yellow; uint8_t *fb = dq3_fb();
@@ -734,7 +766,7 @@ static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
             if (dlg_ok) { int rec = (ep && ep < dlg->txt.n_records) ? ep : 1; dq3_dialogue_open(dlg, rec); }
         } else fprintf(stderr, "%s:前方無人 / 無物\n", sel==DQ3_CMD_TALK?"對話":"調查");
         break; }
-    case DQ3_CMD_ITEM:  fprintf(stderr, "道具:per-member 道具欄尚未實作\n"); break;
+    case DQ3_CMD_ITEM:  item_modal(inv, &dlg->txt); break;   /* 共享道具欄(鑰匙/合成品…)*/
     case DQ3_CMD_EQUIP: fprintf(stderr, "裝備:裝備系統尚未實作\n"); break;
     }
     return sel;
