@@ -60,6 +60,21 @@ int main(void)
     CHECK(r.count == 2 && r.list[1].m.cls == 2 && r.list[1].gender == DQ3_GENDER_FEMALE,
           "第二名 = 武鬥家 女");
 
+    printf("== 第三名:注音輸入(Tab 切注音 → ㄕˋ → 是)==\n");
+    dq3_tavern_input(&tv, 0x1c);                                /* 名冊 Enter(無妨)*/
+    /* 用 Space 從名冊回職業選 */
+    { int s; for (s = 0; s < 5 && tv.state != DQ3_TAV_CLASS; s++) dq3_tavern_input(&tv, 0x39); }
+    dq3_tavern_input(&tv, 0x1c);                                /* 選職業0 勇者 → NAME */
+    CHECK(tv.state == DQ3_TAV_NAME, "進姓名輸入");
+    dq3_tavern_input(&tv, 0x0f);                                /* Tab → 注音模式 */
+    CHECK(tv.name_mode == 1, "Tab → 注音模式");
+    tv.zh.cursor = 16; dq3_tavern_input(&tv, 0x1c);            /* ㄕ */
+    tv.zh.cursor = 39; dq3_tavern_input(&tv, 0x1c);            /* ˋ → 候選窗 */
+    { int i, idx = -1; for (i = 0; i < tv.zh.ncand; i++) if (tv.zh.cand[i] == 399) idx = i;
+      tv.zh.cand_cur = idx; }
+    dq3_tavern_input(&tv, 0x1c);                                /* 挑「是」(399)→ 入名字 */
+    CHECK(tv.ni.len == 1 && tv.ni.buf[0] == 399, "注音挑「是」→ 名字緩衝 = {399}");
+
     printf("\n%s (%d failures)\n", g_fail?"== 有測試未通過 ==":"== 全部通過 ==", g_fail);
     return g_fail ? 1 : 0;
 }

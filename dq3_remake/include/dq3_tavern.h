@@ -11,6 +11,7 @@
 #include "dq3_roster.h"
 #include "dq3_menu.h"
 #include "dq3_nameinput.h"
+#include "dq3_zhuyin.h"
 
 typedef enum {
     DQ3_TAV_CLASS = 0,   /* 選職業 */
@@ -24,6 +25,8 @@ typedef struct {
     dq3_menu      class_menu;
     dq3_menu      gender_menu;     /* 男性 / 女性 */
     dq3_nameinput ni;
+    dq3_zhuyin    zh;              /* 注音輸入(name_mode=1 時用)*/
+    int           name_mode;       /* 0=英數 / 1=注音(Tab 0x0f 切換)*/
     int           roster_cursor;   /* 名冊畫面選中列 */
     int           pend_class, pend_gender;
     int           last_created;    /* 最近登錄的名冊 index(-1=無)*/

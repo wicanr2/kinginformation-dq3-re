@@ -21,6 +21,8 @@ void dq3_tavern_init(dq3_tavern *tv, dq3_roster *roster, dq3_party *party, const
     dq3_roster_class_menu(&tv->class_menu, 52, 80);    /* 視窗內預設位置 */
     build_gender_menu(&tv->gender_menu, 52, 96);
     dq3_nameinput_init(&tv->ni);
+    dq3_zhuyin_init(&tv->zh);
+    tv->name_mode = 0;
 }
 
 int dq3_tavern_input(dq3_tavern *tv, uint8_t sc)
@@ -28,12 +30,20 @@ int dq3_tavern_input(dq3_tavern *tv, uint8_t sc)
     switch (tv->state) {
     case DQ3_TAV_CLASS: {
         int sel = dq3_menu_input(&tv->class_menu, sc);
-        if (sel >= 0) { tv->pend_class = sel; dq3_nameinput_init(&tv->ni); tv->state = DQ3_TAV_NAME; }
+        if (sel >= 0) { tv->pend_class = sel; dq3_nameinput_init(&tv->ni); dq3_zhuyin_init(&tv->zh);
+                        tv->name_mode = 0; tv->state = DQ3_TAV_NAME; }
         break;
     }
     case DQ3_TAV_NAME:
-        dq3_nameinput_input(&tv->ni, sc);
-        if (tv->ni.done) { tv->gender_menu.cursor = 0; tv->state = DQ3_TAV_GENDER; }
+        if (sc == 0x0f) { tv->name_mode ^= 1; break; }   /* Tab:英數 ↔ 注音 切換 */
+        if (tv->name_mode == 1) {                         /* 注音輸入 */
+            int g = dq3_zhuyin_input(&tv->zh, sc);
+            if (g >= 0 && tv->ni.len < DQ3_NI_NAME_MAX)   /* 挑定一個國字 → 加入名字緩衝 */
+                tv->ni.buf[tv->ni.len++] = (uint16_t)g;
+        } else {
+            dq3_nameinput_input(&tv->ni, sc);            /* 英數輸入 */
+            if (tv->ni.done) { tv->gender_menu.cursor = 0; tv->state = DQ3_TAV_GENDER; }
+        }
         break;
     case DQ3_TAV_GENDER: {
         int sel = dq3_menu_input(&tv->gender_menu, sc);
@@ -108,7 +118,15 @@ void dq3_tavern_render(const dq3_tavern *tv, const dq3_text *t, uint8_t *fb, int
 {
     switch (tv->state) {
     case DQ3_TAV_CLASS:  dq3_menu_render(&tv->class_menu, t, fb, fb_w, fb_h, fg, curfg); break;
-    case DQ3_TAV_NAME:   dq3_nameinput_render(&tv->ni, t, fb, fb_w, fb_h, x, y, fg, curfg); break;
+    case DQ3_TAV_NAME:
+        if (tv->name_mode == 1) {                          /* 注音:名字緩衝列 + 注音盤/候選 */
+            int i; for (i = 0; i < tv->ni.len; i++)
+                dq3_text_draw_glyph(t, fb, fb_w, fb_h, x + i*DQ3_GLYPH_PX, y, tv->ni.buf[i], fg);
+            dq3_zhuyin_render(&tv->zh, t, fb, fb_w, fb_h, x, y + 20, fg, curfg);
+        } else {
+            dq3_nameinput_render(&tv->ni, t, fb, fb_w, fb_h, x, y, fg, curfg);
+        }
+        break;
     case DQ3_TAV_GENDER: dq3_menu_render(&tv->gender_menu, t, fb, fb_w, fb_h, fg, curfg); break;
     case DQ3_TAV_ROSTER: render_roster(tv, t, fb, fb_w, fb_h, x, y, fg, curfg); break;
     }
