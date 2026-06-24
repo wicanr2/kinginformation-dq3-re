@@ -10,8 +10,9 @@
 #include "dq3_roster.h"
 
 /* 指定玩家隊伍(露依達酒場建立的名冊 + 編成):下一場起戰鬥改用此隊(姓名/職業/等級/數值)。
- * 傳 NULL 還原為內建範例隊。閉合「酒場創角 → つよさ → 上場戰鬥」迴圈。 */
-void dq3_battlescene_set_party(const dq3_roster *roster, const dq3_party *party);
+ * roster 非 const:勝利後把升級(經驗/等級/數值)回寫名冊,成長持久。傳 NULL 還原為內建範例隊。
+ * 閉合「酒場創角 → つよさ → 上場戰鬥 → 升級成長」迴圈。 */
+void dq3_battlescene_set_party(dq3_roster *roster, const dq3_party *party);
 
 /* 跑一場戰鬥。
  *   monster_id/count:敵群(count 隻同種)。

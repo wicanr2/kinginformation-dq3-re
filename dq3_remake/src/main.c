@@ -141,6 +141,9 @@ static int run_battle(const char *assets, const char *dump)
         }
     }
     oc = dq3_battlescene_run(assets, mon, count, -1, script, dump, seed);
+    if (getenv("DQ3_BATTLE_PARTY"))   /* 驗證回寫:戰後印名冊隊員 等級/exp */
+        { int i; for (i = 0; i < vr.count; i++)
+            fprintf(stderr, "名冊回寫後:隊員%d Lv%d exp=%u\n", i, vr.list[i].m.level, vr.list[i].m.exp); }
     return oc < 0 ? 6 : 0;
 }
 

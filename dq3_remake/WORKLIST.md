@@ -98,7 +98,11 @@
       速度→agi),不足 4 名缺席槽整欄空白。run_game 兩處遭遇戰前 party.count>0 即設。
       DQ3_BATTLE_PARTY dump 驗證:勇者/戰士 各 Lv12 上場,HUD 顯示真實姓名/職業/等級/HP(戰後當前)。
       簡化:無武器/防具加成(per-member 裝備模型未建)、戰鬥升級未回寫名冊 — 待後續。
-    - [ ] 忠實初始擲值+性格(RE);戰鬥升級回寫名冊;per-member 裝備。
+    - [x] **戰鬥升級回寫名冊 ✅**:`dq3_battlescene_set_party` roster 改非 const、記每槽 roster index
+      `g_pl_ri[]`;pm[] 用真實 member 初始化(保留真 exp);勝利結算後 `writeback_roster(pm)` 把
+      經驗/等級/數值回寫名冊。驗證:Lv5 隊勝史萊姆 → 名冊 exp 499→503 / 264→268(+4 持久)。
+      閉合 創角→戰鬥→**成長持久**。
+    - [ ] 忠實初始擲值+性格(RE);per-member 裝備模型。
   - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值 + 性格(personality)修正(目前用成長表 Lv1 base)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。

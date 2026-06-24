@@ -215,9 +215,10 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
 static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 
 /* 玩家隊伍覆寫(露依達酒場建立的)。NULL = 用內建範例隊。 */
-static const dq3_roster *g_pl_roster = NULL;
-static const dq3_party  *g_pl_party  = NULL;
-void dq3_battlescene_set_party(const dq3_roster *r, const dq3_party *p)
+static dq3_roster      *g_pl_roster = NULL;   /* 非 const:勝利後回寫升級 */
+static const dq3_party *g_pl_party  = NULL;
+static int g_pl_ri[PARTY];                    /* 各戰鬥槽 → 名冊 index(-1=缺席/範例)*/
+void dq3_battlescene_set_party(dq3_roster *r, const dq3_party *p)
 { g_pl_roster = r; g_pl_party = p; }
 
 /* 勝利結算:存活隊員獲經驗 → 升級(#5 夾43)→ 套成長(#4 MP/#6 uint16 不wrap)→ 更新戰鬥屬性。 */
@@ -239,6 +240,16 @@ static void apply_victory_exp(member *party, dq3_member *pm, uint32_t total_exp)
                     party[i].dbg, party[i].level, party[i].maxhp, party[i].maxmp);
         }
     }
+}
+
+/* 把升級後的隊員實體(經驗/等級/數值)回寫名冊,讓成長持久(閉合 創角→戰鬥→成長)。 */
+static void writeback_roster(const dq3_member *pm)
+{
+    int i;
+    if (!g_pl_roster) return;
+    for (i = 0; i < PARTY; i++)
+        if (g_pl_ri[i] >= 0 && g_pl_ri[i] < g_pl_roster->count)
+            g_pl_roster->list[g_pl_ri[i]].m = pm[i];
 }
 
 int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
@@ -283,8 +294,10 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             party[pi].weapon = 0; party[pi].defending = 0;
             for (k = 0; k < 8; k++) party[pi].equip[k] = 0xff;
             g_cls_idx[pi] = rc->m.cls;
+            g_pl_ri[pi] = ri;                  /* 記住回寫目標 */
             pi++;
         }
+        for (k = pi; k < PARTY; k++) g_pl_ri[k] = -1;
         for (; pi < PARTY; pi++) {                                  /* 不足 4 名:缺席(整欄空白)*/
             party[pi].dbg = "(空)"; party[pi].name_len = 0; party[pi].cls = 13;  /* 13=空白 glyph */
             party[pi].hp = party[pi].maxhp = party[pi].mp = party[pi].maxmp = 0;
@@ -310,8 +323,13 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     g_items_ok = (dq3_items_load(&g_items, assets, err, sizeof err) == 0);
     /* 升級系統(成長/門檻表;apply_bug4_fix=1 → 勇者 MP 修正)+ 隊員實體 */
     g_stats_ok = (dq3_stats_load(&g_stats, assets, 1, err, sizeof err) == 0);
-    { int i; for (i = 0; i < PARTY; i++)
-        if (g_stats_ok) dq3_member_init(&pm[i], &g_stats, g_cls_idx[i], party[i].level); }
+    { int i; for (i = 0; i < PARTY; i++) {
+        if (!g_stats_ok) continue;
+        if (g_pl_roster && g_pl_ri[i] >= 0)
+            pm[i] = g_pl_roster->list[g_pl_ri[i]].m;     /* 真實隊員:保留真 exp,升級才正確 */
+        else
+            dq3_member_init(&pm[i], &g_stats, g_cls_idx[i], party[i].level);
+    } }
 
     /* 戰鬥背景:packbg page(隨地形;預設草原 terrain0 → page 0)。
      * DQ3_BG_PAGE 可指定其他地形頁(terrain*8,terrain3→0x19)。 */
@@ -342,7 +360,8 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             p++;
             if(turn>50) break;
         }
-        if(outcome==1) apply_victory_exp(party, pm, (uint32_t)en * ms.exp);   /* 勝利→經驗→升級 */
+        if(outcome==1){ apply_victory_exp(party, pm, (uint32_t)en * ms.exp);   /* 勝利→經驗→升級 */
+            writeback_roster(pm); }                                            /* 回寫名冊(持久)*/
         if(dump){
             render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0,monster_id);
             dq3_present();
@@ -371,7 +390,8 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         }
         dq3_delay_ms(16);
     }
-    if(outcome==1) apply_victory_exp(party, pm, (uint32_t)en * ms.exp);   /* 勝利→經驗→升級 */
+    if(outcome==1){ apply_victory_exp(party, pm, (uint32_t)en * ms.exp);   /* 勝利→經驗→升級 */
+        writeback_roster(pm); }                                            /* 回寫名冊(持久)*/
     /* 結束:顯示末幀片刻 */
     render(dq3_fb(),&spr,ehp,en,party,cursor,0,monster_id);
     dq3_present();
