@@ -264,6 +264,9 @@ static int run_game(const char *assets, const char *dump)
     field = dq3_field_load(assets, err, sizeof err);
     if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
     load_field_hero(field, assets);
+    /* 地表起點 = 阿里阿罕 overworld tile(原版初始 [0x4f2f]=0x99/[0x4f31]=0xae,file 0x13a0)
+     * → region 1(史萊姆/大烏鴉系弱怪,docs/39);取代 pick_open_start 的任意空地。 */
+    if (153 < field->map_w && 174 < field->map_h) { field->px = 153; field->py = 174; }
     cur = field; dq3_scene_apply_palette(cur);
     /* 對話文字(阿里阿罕 = D3TXT01) */
     dlg_ok = (dq3_dialogue_load(&dlg, assets, "D3TXT01.TXT", err, sizeof err) == 0);
