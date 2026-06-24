@@ -69,6 +69,9 @@
 - [地圖連通圖](docs/maps/map_graph.md) — 全 CTY 轉場連接(metadata 自動抽出;89 CTY/50 跨 CTY 連結)
 - [`36`](docs/36-original-tavern-playthrough.md) 原版 DOSBox 實機玩法:開機→姓名輸入→露依達酒場創角(知識庫;姓名輸入按鍵語意實機校正)
 
+### 歷史 / 一手史料
+- [BBS 1994–1995 討論串](docs/history/dq3-bbs-1994.md) — 當年 BBS 攻略 / bug 修改 / 存檔佈局 / 道具咒文表;精訊官方公告(1993 開發、ENIX 拒、離職員工外流);**RE 一手交叉佐證**(魔王打不死 / 彩虹水滴 / 五頭龍當機修改法對上 bug #1/#2/#3、存檔屬性欄位佈局對上成長表)
+
 ### 正確性驗證
 - [`14`](docs/14-dosbox-validation.md) DOSBox 黃金對照(素材) ·
   [`17`](docs/17-build-toolchain.md) byte-identical 重組
