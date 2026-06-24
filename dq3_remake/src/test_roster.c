@@ -2,6 +2,11 @@
 #include "dq3_roster.h"
 #include <stdio.h>
 
+/* stub:roster 測試不繪製(dq3_menu.c 連結需要)*/
+void dq3_text_draw_glyph(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
+                         int x, int y, int idx, uint8_t fg)
+{ (void)t;(void)fb;(void)fb_w;(void)fb_h;(void)x;(void)y;(void)idx;(void)fg; }
+
 static int g_fail = 0;
 #define CHECK(c,msg) do{ if(c)printf("  [PASS] %s\n",msg); else {printf("  [FAIL] %s\n",msg); g_fail++;} }while(0)
 

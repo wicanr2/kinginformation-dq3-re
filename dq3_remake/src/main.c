@@ -23,6 +23,8 @@
 #include "dq3_dialogue.h"
 #include "dq3_exedata.h"
 #include "dq3_inventory.h"
+#include "dq3_roster.h"
+#include "dq3_menu.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -393,6 +395,66 @@ static int run_text(const char *assets, const char *dump)
     dq3_text_free(&t); return 0;
 }
 
+/* 露依達酒場:職業選單 demo(渲染驗證 + 互動建一名同伴登錄名冊)。
+ * DQ3_MENU_SEL=N 設游標(headless 驗證);互動模式 上下選、Enter 建角(預設名)。 */
+static int run_tavern(const char *assets, const char *dump)
+{
+    char err[256] = {0};
+    dq3_color pal[256]; int pn;
+    uint8_t *raw; size_t rl;
+    dq3_text t; dq3_menu menu; dq3_stats st; dq3_roster roster; dq3_party party;
+    uint8_t *fb = dq3_fb();
+    int white, black, frame, bg, cur;
+    int wx = 40, wy = 60, ww = 200, wh = 200;
+
+    raw = dq3_load_file("DQ3.PAL", &rl);
+    if (!raw) { fprintf(stderr, "DQ3.PAL\n"); return 7; }
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal, pn, 255,255,255); black = pal_near2(pal, pn, 0,0,0);
+    frame = pal_near2(pal, pn, 255,255,255); bg = pal_near2(pal, pn, 16,16,32);
+
+    if (dq3_text_load(&t, assets, "D3TXT00.TXT", err, sizeof err) != 0) {
+        fprintf(stderr, "text: %s\n", err); return 7; }
+    dq3_stats_load(&st, assets, 1, NULL, 0);
+    dq3_roster_init(&roster); dq3_party_init(&party);
+    dq3_roster_class_menu(&menu, wx + 12, wy + 36);
+
+    cur = getenv("DQ3_MENU_SEL") ? atoi(getenv("DQ3_MENU_SEL")) : 0;
+    if (cur >= 0 && cur < menu.n_items) menu.cursor = cur;
+
+    memset(fb, (uint8_t)black, (size_t)DQ3_SCREEN_W * DQ3_SCREEN_H);
+    { int r,c; for (r=0;r<wh;r++) for (c=0;c<ww;c++){ int yy=wy+r,xx=wx+c;
+        if (yy>=0&&yy<DQ3_SCREEN_H&&xx>=0&&xx<DQ3_SCREEN_W) fb[yy*DQ3_SCREEN_W+xx]=(uint8_t)bg; } }
+    { int c; for (c=0;c<ww;c++){ fb[wy*DQ3_SCREEN_W+wx+c]=(uint8_t)frame; fb[(wy+wh-1)*DQ3_SCREEN_W+wx+c]=(uint8_t)frame; }
+      int r; for (r=0;r<wh;r++){ fb[(wy+r)*DQ3_SCREEN_W+wx]=(uint8_t)frame; fb[(wy+r)*DQ3_SCREEN_W+wx+ww-1]=(uint8_t)frame; } }
+
+    /* 標題:「要當哪一種職業」用 rec? 暫用職業選單即可;畫選單 */
+    dq3_menu_render(&menu, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, (uint8_t)pal_near2(pal,pn,255,255,0));
+
+    if (dump) {
+        dq3_present();
+        if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "tavern(職業選單 sel=%d) -> %s OK\n", menu.cursor, dump);
+        dq3_text_free(&t); return 0;
+    }
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (sc) {
+            int sel = dq3_menu_input(&menu, sc);
+            if (sel >= 0) {                         /* Enter:建一名該職業同伴(預設名)*/
+                uint16_t nm[2] = {1, 2};
+                int idx = dq3_roster_create(&roster, &st, sel, DQ3_GENDER_MALE, nm, 2);
+                if (idx >= 0) { dq3_party_add(&party, &roster, idx);
+                    fprintf(stderr, "登錄:職業%d → 名冊%d Lv%d HP%u(隊伍%d人)\n",
+                        sel, idx, roster.list[idx].m.level, roster.list[idx].m.stat[0], party.count); }
+            }
+        }
+        memset(fb,(uint8_t)black,(size_t)DQ3_SCREEN_W*DQ3_SCREEN_H);
+        dq3_menu_render(&menu, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, (uint8_t)pal_near2(pal,pn,255,255,0));
+        dq3_present(); dq3_delay_ms(16);
+    }
+    dq3_text_free(&t); return 0;
+}
+
 int main(int argc, char **argv)
 {
     const char *assets = (argc > 1) ? argv[1] : ".";
@@ -436,6 +498,8 @@ int main(int argc, char **argv)
         rc = run_game(assets, dump);
     } else if (strcmp(mode, "text") == 0) {
         rc = run_text(assets, dump);
+    } else if (strcmp(mode, "tavern") == 0) {
+        rc = run_tavern(assets, dump);
     } else {
         const char *title = (argc > 3) ? argv[3]
                           : (strcmp(mode, "title") == 0 ? "TITG.P" : mode);

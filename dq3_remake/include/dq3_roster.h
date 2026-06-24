@@ -15,6 +15,7 @@
 
 #include <stdint.h>
 #include "dq3_stats.h"   /* dq3_member / dq3_stats */
+#include "dq3_menu.h"    /* dq3_menu(職業選單)*/
 
 #define DQ3_NAME_MAX    4    /* DQ3 名字最多 4 字(glyph index;0=空)*/
 #define DQ3_ROSTER_MAX  16   /* 名冊容量 */
@@ -39,6 +40,12 @@ typedef struct {
     int slot[DQ3_PARTY_MAX];       /* 名冊 index;-1=空 */
     int count;
 } dq3_party;
+
+/* 職業名(D3TXT00.FON glyph index)。供職業選單 / 名冊顯示。 */
+extern const struct dq3_class_name { int len; uint16_t g[4]; } dq3_class_names[DQ3_NUM_CLASS];
+
+/* 建立 8 職業選單(用 dq3_class_names 的 glyph 標籤)。 */
+void dq3_roster_class_menu(dq3_menu *m, int x, int y);
 
 void dq3_roster_init(dq3_roster *r);
 

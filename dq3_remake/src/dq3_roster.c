@@ -2,6 +2,26 @@
 #include "dq3_roster.h"
 #include <string.h>
 
+/* 職業名 glyph 索引(D3TXT00.FON;反查 glyph_unicode_map)。 */
+const struct dq3_class_name dq3_class_names[DQ3_NUM_CLASS] = {
+    {2, {106, 187, 0, 0}},      /* 勇者 */
+    {2, {107, 144, 0, 0}},      /* 戰士 */
+    {3, {108, 207, 657, 0}},    /* 武鬥家 */
+    {2, {109, 704, 0, 0}},      /* 僧侶 */
+    {4, {110, 208, 210, 187}},  /* 魔法使者 */
+    {2, {111, 187, 0, 0}},      /* 賢者 */
+    {2, {112, 194, 0, 0}},      /* 商人 */
+    {3, {113, 705, 187, 0}},    /* 遊玩者 */
+};
+
+void dq3_roster_class_menu(dq3_menu *m, int x, int y)
+{
+    int c;
+    dq3_menu_init(m, x, y);
+    for (c = 0; c < DQ3_NUM_CLASS; c++)
+        dq3_menu_add(m, dq3_class_names[c].g, dq3_class_names[c].len);
+}
+
 void dq3_roster_init(dq3_roster *r) { memset(r, 0, sizeof *r); }
 void dq3_party_init(dq3_party *p)
 {
