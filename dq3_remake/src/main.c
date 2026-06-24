@@ -125,7 +125,22 @@ static int run_battle(const char *assets, const char *dump)
     int count = getenv("DQ3_MON_N") ? atoi(getenv("DQ3_MON_N")) : 3;
     const char *script = getenv("DQ3_BATTLE_SCRIPT");                  /* headless 指令序列 */
     unsigned seed = getenv("DQ3_SEED") ? (unsigned)strtoul(getenv("DQ3_SEED"),0,0) : 0x1234567u;
-    int oc = dq3_battlescene_run(assets, mon, count, -1, script, dump, seed);
+    int oc;
+    /* DQ3_BATTLE_PARTY=1:驗證「酒場建的隊伍接進戰鬥」— 建 2 名範例隊員(勇者/戰士)設為玩家隊。 */
+    static dq3_roster vr; static dq3_party vp; static dq3_stats vs;
+    if (getenv("DQ3_BATTLE_PARTY")) {
+        uint16_t n1[2] = {106,187}, n2[2] = {107,144};   /* 「勇者」「戰士」當名 */
+        int lv = getenv("DQ3_ST_LEVEL") ? atoi(getenv("DQ3_ST_LEVEL")) : 12;
+        if (dq3_stats_load(&vs, assets, 1, NULL, 0) == 0) {
+            dq3_roster_init(&vr); dq3_party_init(&vp);
+            dq3_roster_create(&vr, &vs, 0, 0, n1, 2);   /* 勇者 */
+            dq3_roster_create(&vr, &vs, 1, 0, n2, 2);   /* 戰士 */
+            { int i; for (i = 0; i < vr.count; i++) { dq3_member_init(&vr.list[i].m, &vs, vr.list[i].m.cls, lv);
+                dq3_party_add(&vp, &vr, i); } }
+            dq3_battlescene_set_party(&vr, &vp);
+        }
+    }
+    oc = dq3_battlescene_run(assets, mon, count, -1, script, dump, seed);
     return oc < 0 ? 6 : 0;
 }
 
@@ -265,6 +280,7 @@ static int run_game(const char *assets, const char *dump)
                 if (--enc <= 0) {
                     mon = over_pool[grnd() % 4];
                     fprintf(stderr, "--- 第 %d 步:遭遇怪 id%d(背景頁 %d)! ---\n", steps+1, mon, field_bg_page(cur));
+                    dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
                     oc = dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), "FFFFFFFF", NULL, grnd());
                     fprintf(stderr, "    戰鬥結束 outcome=%d,回地表(重套 palette)\n", oc);
                     dq3_scene_apply_palette(cur);   /* bug #8:回地表還原色盤 */
@@ -435,6 +451,7 @@ static int run_game(const char *assets, const char *dump)
                 }
                 if (moved && !in_town && --enc <= 0) {
                     int mon = over_pool[grnd() % 4];
+                    dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
                     dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), NULL, NULL, grnd());
                     dq3_scene_apply_palette(cur);   /* bug #8:戰後還原地表色盤 */
                     enc = 6 + (int)(grnd() % 8);

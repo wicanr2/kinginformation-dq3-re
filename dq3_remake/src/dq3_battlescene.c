@@ -6,6 +6,7 @@
 #include "dq3_battle.h"
 #include "dq3_combat.h"
 #include "dq3_stats.h"
+#include "dq3_roster.h"
 #include "dq3_text.h"
 #include "dq3_packbg.h"
 #include <stdio.h>
@@ -105,6 +106,7 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
         rect_border(fb,sx,sy,sw,sh,(uint8_t)white_idx);
         for(i=0;i<PARTY;i++){
             int cx=tx0+i*colpx, fg = party[i].hp>0?white_idx:red_idx;
+            if(party[i].maxhp==0 && party[i].name_len==0) continue;   /* 缺席槽:整欄空白 */
             draw_glyphs(fb,cx,ty0,    party[i].name, party[i].name_len, (uint8_t)white_idx);
             dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,ty0+16,22,(uint8_t)fg);      /* H,行高16 */
             draw_number(fb,cx+18,ty0+16, party[i].hp, (uint8_t)fg);
@@ -210,7 +212,13 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
 }
 
 /* 隊伍職業索引(對 dq3_stats 成長表):勇者0 / 武鬥家2 / 僧侶3 / 魔法師4 */
-static const int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
+static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
+
+/* 玩家隊伍覆寫(露依達酒場建立的)。NULL = 用內建範例隊。 */
+static const dq3_roster *g_pl_roster = NULL;
+static const dq3_party  *g_pl_party  = NULL;
+void dq3_battlescene_set_party(const dq3_roster *r, const dq3_party *p)
+{ g_pl_roster = r; g_pl_party = p; }
 
 /* 勝利結算:存活隊員獲經驗 → 升級(#5 夾43)→ 套成長(#4 MP/#6 uint16 不wrap)→ 更新戰鬥屬性。 */
 static void apply_victory_exp(member *party, dq3_member *pm, uint32_t total_exp)
@@ -253,6 +261,37 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         { "僧侶",   {109,704},    2, 109, 28,28, 10,10,1, 15,10,10, 0, 0x60, {0xff,0xff,0x2b,0xff,0xff,0xff,0xff,0xff} }, /* 魔法鎧甲=抗魔(#7b) */
         { "魔法師", {110,208,822},3, 110, 22,22, 11,11,1, 11, 6,11, 0, 0x60, {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff} },
     };
+
+    /* 玩家隊伍覆寫:若酒場已建隊,改用真實名冊成員(姓名/職業/等級/數值)。 */
+    if (g_pl_roster && g_pl_party) {
+        int si, pi = 0, j, k;
+        for (si = 0; si < DQ3_PARTY_MAX && pi < PARTY; si++) {
+            int ri = g_pl_party->slot[si];
+            const dq3_recruit *rc;
+            if (ri < 0 || ri >= g_pl_roster->count) continue;
+            rc = &g_pl_roster->list[ri];
+            party[pi].dbg = "隊員";
+            party[pi].name_len = rc->name_len < 4 ? rc->name_len : 4;
+            for (j = 0; j < party[pi].name_len; j++) party[pi].name[j] = rc->name[j];
+            party[pi].cls   = dq3_class_names[rc->m.cls].g[0];      /* HUD 單字職業 glyph */
+            party[pi].level = rc->m.level;
+            party[pi].maxhp = party[pi].hp = (int)rc->m.stat[DQ3_STAT_HP];
+            party[pi].maxmp = party[pi].mp = (int)rc->m.stat[DQ3_STAT_MP];
+            party[pi].atk   = (int)rc->m.stat[DQ3_STAT_STR];        /* 力量(無武器加成,簡化)*/
+            party[pi].def   = (int)rc->m.stat[DQ3_STAT_VIT] / 2;    /* 體力衍生(無防具)*/
+            party[pi].agi   = (int)rc->m.stat[DQ3_STAT_AGI];
+            party[pi].weapon = 0; party[pi].defending = 0;
+            for (k = 0; k < 8; k++) party[pi].equip[k] = 0xff;
+            g_cls_idx[pi] = rc->m.cls;
+            pi++;
+        }
+        for (; pi < PARTY; pi++) {                                  /* 不足 4 名:缺席(整欄空白)*/
+            party[pi].dbg = "(空)"; party[pi].name_len = 0; party[pi].cls = 13;  /* 13=空白 glyph */
+            party[pi].hp = party[pi].maxhp = party[pi].mp = party[pi].maxmp = 0;
+            party[pi].level = 0; party[pi].atk = party[pi].def = party[pi].agi = 0;
+            party[pi].weapon = 0; g_cls_idx[pi] = 0;
+        }
+    }
 
     g_rng = seed ? seed : 0x1234567u;
     if(en<1)en=1; if(en>MAXE)en=MAXE;

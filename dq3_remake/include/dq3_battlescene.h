@@ -7,6 +7,12 @@
 #ifndef DQ3_BATTLESCENE_H
 #define DQ3_BATTLESCENE_H
 
+#include "dq3_roster.h"
+
+/* 指定玩家隊伍(露依達酒場建立的名冊 + 編成):下一場起戰鬥改用此隊(姓名/職業/等級/數值)。
+ * 傳 NULL 還原為內建範例隊。閉合「酒場創角 → つよさ → 上場戰鬥」迴圈。 */
+void dq3_battlescene_set_party(const dq3_roster *roster, const dq3_party *party);
+
 /* 跑一場戰鬥。
  *   monster_id/count:敵群(count 隻同種)。
  *   bg_page:戰鬥背景索引(隨地形;<0 = 讀 DQ3_BG_PAGE 環境變數,預設 0 草原)。
