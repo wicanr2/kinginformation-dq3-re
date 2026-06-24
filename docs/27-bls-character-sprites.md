@@ -104,5 +104,21 @@ bx = si + 0x180           ; ★ 遮罩在資料 +0x180(384)
 - remake 修正:`dq3_charsprite_load` 加 `bls_name` 參數;`dq3_scene_load_hero` 載 `DQ3MST.BLS` entry0、
   NPC 仍載 `DQ3MAN.BLS` entry `(b2-4)*4`。
 - 同格式(32×24 masked、stride 960、DQ3.PAL 低 16 色),只是**檔不同**。
-- **待 RE**:職業(0..7)+ 性別 → DQ3MST entry 的對映(隊員 sprite key = `[member+1]*2+[member+2]-1`、
-  entry=`(key-4)*4`,L0ec19/0xff89;欄位語意待逐一確認)。c0=勇者♂ 已確認,其餘待對。
+### DQ3MST.BLS 職業 + 性別 → entry 對映(✅ 實機/charsheet/使用者確認)
+
+**規則**:`entry_base = (職業×2 + 性別)×4`(職業 0..7、性別 0♂/1♀;char = 職業×2+性別)。
+標籤摘要圖:`docs/sprites/dq3_class_sprites.png`(每職業男女 + 標籤)。
+
+| char | entry | 職業·性別 | char | entry | 職業·性別 |
+|---|---|---|---|---|---|
+| c0 | 0 | 勇者 ♂ | c8 | 32 | 魔法使者 ♂ |
+| c1 | 4 | 勇者 ♀ | c9 | 36 | 魔法使者 ♀ |
+| c2 | 8 | 戰士 ♂ | c10 | 40 | 賢者 ♂ |
+| c3 | 12 | 戰士 ♀ | c11 | 44 | 賢者 ♀ |
+| c4 | 16 | 武鬥家 ♂ | c12 | 48 | 商人 ♂ |
+| c5 | 20 | 武鬥家 ♀ | c13 | 52 | 商人 ♀ |
+| c6 | 24 | 僧侶 ♂ | c14 | 56 | 遊玩者 ♂ |
+| c7 | 28 | 僧侶 ♀ | c15 | 60 | 遊玩者 ♀ |
+
+remake:`dq3_class_sprite_entry(cls, gender)`(`dq3_roster`);主角 = 勇者♂ = entry0。
+對應 RE 公式:隊員 sprite key=`[member+1]*2+[member+2]-1`、entry=`(key-4)*4`(L0ec19),此表為實機確認結果。

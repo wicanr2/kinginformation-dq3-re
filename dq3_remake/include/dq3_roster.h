@@ -47,6 +47,10 @@ extern const struct dq3_class_name { int len; uint16_t g[4]; } dq3_class_names[D
 /* 建立 8 職業選單(用 dq3_class_names 的 glyph 標籤)。 */
 void dq3_roster_class_menu(dq3_menu *m, int x, int y);
 
+/* 職業(0..7)+ 性別(0♂/1♀)→ DQ3MST.BLS sprite entry_base = (cls*2+gender)*4。
+ * 對映經實機/charsheet 確認:c0=勇者♂、c1=勇者♀、c2=戰士♂…c15=遊玩者♀(docs/27)。 */
+int dq3_class_sprite_entry(int cls, int gender);
+
 void dq3_roster_init(dq3_roster *r);
 
 /* 建立新冒險者並登錄名冊:職業 cls(0..7)、gender、name(glyph 陣列,len≤DQ3_NAME_MAX)。

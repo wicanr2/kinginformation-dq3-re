@@ -66,6 +66,14 @@ int main(void)
         }
     }
 
+    printf("== 職業+性別 → DQ3MST entry 對映 ==\n");
+    CHECK(dq3_class_sprite_entry(0, DQ3_GENDER_MALE) == 0,   "勇者♂ → entry0");
+    CHECK(dq3_class_sprite_entry(0, DQ3_GENDER_FEMALE) == 4, "勇者♀ → entry4");
+    CHECK(dq3_class_sprite_entry(1, DQ3_GENDER_MALE) == 8,   "戰士♂(class1) → entry8");
+    CHECK(dq3_class_sprite_entry(2, DQ3_GENDER_MALE) == 16,  "武鬥家♂(class2) → entry16");
+    CHECK(dq3_class_sprite_entry(4, DQ3_GENDER_MALE) == 32,  "魔法使者♂ → entry32");
+    CHECK(dq3_class_sprite_entry(7, DQ3_GENDER_FEMALE) == 60,"遊玩者♀ → entry60");
+
     printf("\n%s (%d failures)\n", g_fail?"== 有測試未通過 ==":"== 全部通過 ==", g_fail);
     return g_fail ? 1 : 0;
 }

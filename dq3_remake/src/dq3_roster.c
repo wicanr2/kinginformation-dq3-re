@@ -22,6 +22,13 @@ void dq3_roster_class_menu(dq3_menu *m, int x, int y)
         dq3_menu_add(m, dq3_class_names[c].g, dq3_class_names[c].len);
 }
 
+int dq3_class_sprite_entry(int cls, int gender)
+{
+    if (cls < 0 || cls >= DQ3_NUM_CLASS) cls = 0;
+    if (gender != DQ3_GENDER_FEMALE) gender = DQ3_GENDER_MALE;
+    return (cls * 2 + gender) * 4;   /* DQ3MST.BLS char = cls*2+gender,entry=char*4 */
+}
+
 void dq3_roster_init(dq3_roster *r) { memset(r, 0, sizeof *r); }
 void dq3_party_init(dq3_party *p)
 {
