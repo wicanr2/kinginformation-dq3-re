@@ -76,6 +76,7 @@
 - [地圖連通圖](docs/maps/map_graph.md) — 全 CTY 轉場連接(metadata 自動抽出;89 CTY/50 跨 CTY 連結)
 - [`36`](docs/36-original-tavern-playthrough.md) 原版 DOSBox 實機玩法:開機→姓名輸入→露依達酒場創角(知識庫;姓名輸入按鍵語意實機校正)
 - [`37`](docs/37-monster-ai.md) 怪物 AI(敵方行動邏輯)反組譯:狀態→逃跑→物理/咒文決策樹;D3MNS AI 欄位(+0x0d 施咒率/+0x0e..13 咒文 bitmask/+0x17 逃閾/+0x18 逃率),資料驅動驗證
+- [`38`](docs/38-monster-stats.md) 完整怪物屬性表(130 隻):HP/攻/防/速/經驗/金錢 + AI(施咒%/逃跑)+ 會用的法術(bitmask→真咒名)
 
 ### 歷史 / 一手史料
 - [BBS 1994–1995 討論串](docs/history/dq3-bbs-1994.md) — 當年 BBS 攻略 / bug 修改 / 存檔佈局 / 道具咒文表;精訊官方公告(1993 開發、ENIX 拒、離職員工外流);**RE 一手交叉佐證**(魔王打不死 / 彩虹水滴 / 五頭龍當機修改法對上 bug #1/#2/#3、存檔屬性欄位佈局對上成長表)
