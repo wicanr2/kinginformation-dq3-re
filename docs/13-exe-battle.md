@@ -292,3 +292,21 @@ else:                              ; 一般
 > 已重寫 `dq3_battle_phys_damage`(dq3_battlescene 直接呼叫),單測對齊
 > (atk40/def20:roll0=10、roll255=14、會心=20;弱攻 roll0→1、roll255→miss)。
 > D3MNS 怪物 `+0x08`(攻)/`+0x09`(防)欄即代入此式(docs/16 推定欄由此坐實用途)。
+
+## 咒文系統 RE(部分:機制已定位,靜態 descriptor 表待續)
+
+追傷害套用路徑(由 codecave note「咒文扣血路徑 file 0xc22e」起手),已定位咒文系統骨架:
+
+| 位址(file) | 作用 |
+|---|---|
+| `0xbfd0` | **效果分類 dispatcher**:依 `dl`(效果型別 0/1/2…)分流到不同處理(單體傷害 / 群體 / 回復 / 狀態 / 訊息);各分支設 `[0x2511]`(spell_id)+ 印對應訊息(`text_draw` di=0x157/0x166)|
+| `0xc03e–0xc06a` | 傷害 base 取得:`si=[0x24a5]`、`bx=[si+0x2339]`(**runtime buffer**,非靜態表;此路徑為敵方攻擊 / 共用傷害)|
+| `0xc22e` | **傷害套用**:`shr bx,1`(base)→ `rng(0xfa39)` 加變異 → `[bx+0xd4f]==3`(魔甲)時 `shr bx,1`(#7b 抗魔減半)→ `sub bp,bx`(`bp`=目標 HP `[di+0x16]`)|
+| `[0xd75]&2` | 側別旗標(0=受方為我方);區分玩家 / 敵方傷害路徑 |
+| `[0x2511]` / `[0x24a5]` | spell_id / 咒文 index(runtime)|
+
+**已確認**:咒文傷害 = `base/2 + rng(base/2)`,魔甲(裝備碼 0x2b)再減半(對齊 #7b);傷害寫回目標 HP `[di+0x16]`。咒文名 rec = `spell_id + 0x79`(同 docs/16)。
+
+**未定位(待續)**:玩家施法的**靜態 per-spell descriptor 表**(effect_type / base power / MP cost / target by spell_id)。傷害 base 在追到的路徑是 runtime 值(`[si+0x2339]`),玩家咒文的固定威力來源(美拉≈小、美拉米≈中…)與 MP 消耗表尚未定位——玩家施法路徑與此處的敵方攻擊路徑不同;`[0x2339]` 在 EXE 為 0(runtime),`0x2511` 多處被設成特定 spell_id 供訊息,非威力索引。需再追玩家「咒文」指令 → 選咒 → 扣 MP → 設 base 的那段。
+
+> 為何 remake 暫不接戰鬥施法:靜態威力 / MP 表未定位,**不憑 BBS 值湊**(BBS 作者自承 MP 數「最易出錯」、用 IV 代資料;EXE 內無 `[2,6,10,…]` 簡單 MP 表)。じゅもん 畫面只列「已學會的咒文名」(習得表 docs/18 已坐實),施法效果留待 descriptor 表 RE 完成。
