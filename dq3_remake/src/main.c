@@ -770,11 +770,15 @@ static void draw_number_at(uint8_t *fb, const dq3_text *t, int x, int y, int v, 
 /* per-town 商店商品清單(remake 定義;每鎮固定商品、無庫存數量問題,使用者授權自訂;
  * 用 DQ3 進度 + BBS 攻略佐證。索引 = CTY 號;0xff 終止;未定義者用 DEFAULT)。 */
 static const unsigned char SHOP_ALIAHAN[] = {0x01,0x03,0x1e,0x21,0x29,0x41,0x42,0x43,0xff};
-    /* 木棒/銅劍/布衣/皮甲冑/魔法法衣/藥草/驅毒草/蓋美拉翅膀 */
+    /* CTY0 阿里阿罕:木棒/銅劍/布衣/皮甲冑/魔法法衣/藥草/驅毒草/蓋美拉翅膀 */
+static const unsigned char SHOP_REBE[]    = {0x03,0x07,0x09,0x21,0x22,0x27,0x41,0x42,0x44,0xff};
+    /* CTY1 雷貝:銅劍/鎖鍊刀/鐵爪/皮甲冑/龜殼甲冑/鐵甲/藥草/驅毒草/聖水(略強;CTY1=雷貝確認 docs/32)*/
 static const unsigned char SHOP_DEFAULT[] = {0x03,0x0b,0x21,0x27,0x29,0x41,0x42,0x43,0x44,0xff};
 static const unsigned char *shop_stock_for(int cty, int *n)
 {
-    const unsigned char *s = (cty == 0) ? SHOP_ALIAHAN : SHOP_DEFAULT;
+    const unsigned char *s = (cty == 0) ? SHOP_ALIAHAN
+                           : (cty == 1) ? SHOP_REBE
+                           : SHOP_DEFAULT;
     int k = 0; while (s[k] != 0xff) k++; *n = k; return s;
 }
 
