@@ -227,3 +227,9 @@ remake:`dq3_item_attack/defense/price/category/can_equip`(dq3_combat);`dq3_recru
   貨架表仍待深 RE(shop overlay + CTY NPC 庫存欄)。remake 暫用合理早期選品(真實 ITEM.DAT 價/限制)。
 - **主角開場初始**(file 0x1c33):新遊戲主角 `[si+0x15]=1`(等級1)、`call 0xeecf`(學咒文 sub_db5f)、
   **`[si+0x3a]=0x1e` = 起始裝備「布的衣服」(0x1e)**。⇒ remake 主角創角後預設帶布衣。
+
+### per-town 貨架表(界限)
+
+CTY NPC 記錄僅 **7 byte**(`{X,Y,b2,b3,b4,flags,b6}`,docs/34),裝不下 8 格商店庫存 →
+**商店貨架不在 CTY NPC**,而是 EXE 全域表(由 shop id 索引,經 overlay 買單 0x9bcf / `[0x408a]`
+選單系統顯示)。該表追蹤需深入 overlay 選單資料流,**待續**。remake 暫用 curated 早期貨架。
