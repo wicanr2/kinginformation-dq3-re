@@ -54,7 +54,8 @@
   - [~] **UI**:
     - [x] **通用選單 widget**(`dq3_menu`:glyph 標籤 + 游標導航繞回 + ► 渲染);單測 `dq3_menu_test`。
     - [x] **職業選單**(`dq3_roster_class_menu` + 8 職業 glyph 名);`tavern` dump 模式渲染驗證(8 職業繁中正確、游標高亮)。
-    - [ ] 注音姓名輸入移植、名冊顯示、隊伍編成畫面、露依達的店觸發(CTY00 內接 main.c game)。
+    - [x] **名冊顯示 + 隊伍狀態畫面**(`tav_render_roster`:名字+職業+Lv+入隊方塊、► 三角游標;DQ3_TAVERN_SCREEN=1 dump 驗證 4 名成員、前 3 入隊)。
+    - [ ] 注音姓名輸入移植(真實名字)、隊伍 add/remove 互動接線、露依達的店觸發(CTY00 內接 main.c game)。
   - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值 + 性格(personality)修正(目前用成長表 Lv1 base)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。

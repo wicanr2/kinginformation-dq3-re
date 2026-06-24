@@ -395,8 +395,47 @@ static int run_text(const char *assets, const char *dump)
     dq3_text_free(&t); return 0;
 }
 
-/* 露依達酒場:職業選單 demo(渲染驗證 + 互動建一名同伴登錄名冊)。
- * DQ3_MENU_SEL=N 設游標(headless 驗證);互動模式 上下選、Enter 建角(預設名)。 */
+/* 畫數字(glyph index = 數位 0-9)。 */
+static void tav_draw_num(const dq3_text *t, uint8_t *fb, int x, int y, int val, uint8_t fg)
+{
+    uint16_t d[6]; int k = 0, i;
+    if (val < 0) val = 0;
+    if (val == 0) d[k++] = 0;
+    else { int v = val; uint16_t tmp[6]; int tn = 0;
+        while (v > 0 && tn < 6) { tmp[tn++] = (uint16_t)(v % 10); v /= 10; }
+        for (i = tn - 1; i >= 0; i--) d[k++] = tmp[i]; }
+    for (i = 0; i < k; i++) dq3_text_draw_glyph(t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, x + i*DQ3_GLYPH_PX, y, d[i], fg);
+}
+
+/* 名冊顯示:每名 ►名字 職業 Lv# (★=在隊伍)。cursor=選中列。 */
+static void tav_render_roster(const dq3_roster *r, const dq3_party *p, const dq3_text *t,
+                              uint8_t *fb, int x, int y, int cursor, uint8_t fg, uint8_t curfg)
+{
+    int i, j;
+    (void)p;
+    for (i = 0; i < r->count; i++) {
+        const dq3_recruit *rc = &r->list[i];
+        int ly = y + i * 18, cx = x + 16;
+        uint8_t col = (i == cursor) ? curfg : fg;
+        if (i == cursor) {                              /* ► 三角游標(畫,不猜 glyph)*/
+            int r, c2; for (r = 4; r < 12; r++) for (c2 = 0; c2 < (r < 8 ? r-3 : 12-r); c2++) {
+                int xx = x+2+c2, yy = ly+r; if (xx>=0&&xx<DQ3_SCREEN_W&&yy>=0&&yy<DQ3_SCREEN_H) fb[yy*DQ3_SCREEN_W+xx]=curfg; }
+        }
+        for (j = 0; j < rc->name_len; j++) { dq3_text_draw_glyph(t,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,ly,rc->name[j],col); cx += DQ3_GLYPH_PX; }
+        cx += 8;
+        { const struct dq3_class_name *cn = &dq3_class_names[rc->m.cls]; int g;
+          for (g = 0; g < cn->len; g++) { dq3_text_draw_glyph(t,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,ly,cn->g[g],col); cx += DQ3_GLYPH_PX; } }
+        cx += 8;
+        tav_draw_num(t, fb, cx, ly, rc->m.level, col); cx += 2*DQ3_GLYPH_PX + 6;
+        if (rc->in_party) {                             /* 入隊:小實心方塊 */
+            int r, c2; for (r = 4; r < 12; r++) for (c2 = 0; c2 < 8; c2++) {
+                int xx = cx+c2, yy = ly+r; if (xx>=0&&xx<DQ3_SCREEN_W&&yy>=0&&yy<DQ3_SCREEN_H) fb[yy*DQ3_SCREEN_W+xx]=curfg; }
+        }
+    }
+}
+
+/* 露依達酒場:職業選單 + 名冊顯示 demo(渲染驗證 + 互動建角/編隊)。
+ * DQ3_MENU_SEL=N 設游標;DQ3_TAVERN_SCREEN=0 職業選單 / 1 名冊;互動 Enter 建角/編隊。 */
 static int run_tavern(const char *assets, const char *dump)
 {
     char err[256] = {0};
@@ -428,13 +467,23 @@ static int run_tavern(const char *assets, const char *dump)
     { int c; for (c=0;c<ww;c++){ fb[wy*DQ3_SCREEN_W+wx+c]=(uint8_t)frame; fb[(wy+wh-1)*DQ3_SCREEN_W+wx+c]=(uint8_t)frame; }
       int r; for (r=0;r<wh;r++){ fb[(wy+r)*DQ3_SCREEN_W+wx]=(uint8_t)frame; fb[(wy+r)*DQ3_SCREEN_W+wx+ww-1]=(uint8_t)frame; } }
 
-    /* 標題:「要當哪一種職業」用 rec? 暫用職業選單即可;畫選單 */
-    dq3_menu_render(&menu, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, (uint8_t)pal_near2(pal,pn,255,255,0));
-
-    if (dump) {
-        dq3_present();
-        if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "tavern(職業選單 sel=%d) -> %s OK\n", menu.cursor, dump);
-        dq3_text_free(&t); return 0;
+    {
+        int screen = getenv("DQ3_TAVERN_SCREEN") ? atoi(getenv("DQ3_TAVERN_SCREEN")) : 0;
+        uint8_t yellow = (uint8_t)pal_near2(pal,pn,255,255,0);
+        if (screen == 1) {                 /* 名冊畫面:預建幾名同伴 + 顯示 */
+            int c; uint16_t nm[2] = {1, 2};
+            for (c = 1; c <= 4; c++) { int idx = dq3_roster_create(&roster, &st, c, DQ3_GENDER_MALE, nm, 2);
+                if (idx >= 0 && c <= 3) dq3_party_add(&party, &roster, idx); }   /* 前 3 名入隊 */
+            tav_render_roster(&roster, &party, &t, fb, wx + 12, wy + 16, menu.cursor, (uint8_t)white, yellow);
+        } else {
+            dq3_menu_render(&menu, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, yellow);
+        }
+        if (dump) {
+            dq3_present();
+            if (dq3_dump_ppm(dump) == 0)
+                fprintf(stderr, "tavern(screen=%d sel=%d roster=%d) -> %s OK\n", screen, menu.cursor, roster.count, dump);
+            dq3_text_free(&t); return 0;
+        }
     }
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
