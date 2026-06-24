@@ -37,6 +37,7 @@
 
 ### 角色 / 數值
 - **7 屬性序** — 成長表 14 byte = 7 個 (base,slope) 對,`kind*2`=列內 offset:0 HP、2 MP、4 速度、6 力量、8 聰明、A 耐力、C 運氣。語意三方交叉確認(成長表樣式 + 升級訊息 rec191-197 + BBS 存檔佈局 docs/history)。_Avoid_: 把屬性欄標成 B4/B6/B8/BA 不明名(舊 enum)。
+- **怪物 AI 欄位** — `D3MNS.DAT` 記錄內驅動敵方行動的 4 欄:`+0x0d` 施咒機率(/256)、`+0x0e..+0x13` 已知咒文 bitmask(6 byte/48 bit,放咒時均勻隨機挑)、`+0x17` 逃跑觸發閾值(對我方強度 `[0x5094]`)、`+0x18` 逃跑機率。決策樹 file 0xbcf0;見 [docs/37](docs/37-monster-ai.md)。_Avoid_: 把怪物施咒當「挑最佳咒」(實為隨機)。
 - **咒文習得表** — `sub_db5f`(file 0xeecf)讀 DGROUP `0x36f9` 起 per-系 stride 8 指標表 `{spellA,levelA,spellB,levelB}`;系基底 0/8/0x10=勇者/僧侶/魔法系;`level[i]`/`spell[i]` 平行,清單長度由下一指標界定(越界=#5 亂學咒 bug)。職業→系:勇者→勇者系、僧侶→僧侶系、魔法使→魔法系、賢者→僧侶+魔法、其餘無咒。
 
 > ⚠ 命名硬規則:標位址一律顯式標 `(file)` 或 `(logical)`,不可只寫裸位址。
@@ -74,6 +75,7 @@
 - [`35`](docs/35-script-format.md) 腳本 / 事件 / 轉場格式(靜態 RE 全解)
 - [地圖連通圖](docs/maps/map_graph.md) — 全 CTY 轉場連接(metadata 自動抽出;89 CTY/50 跨 CTY 連結)
 - [`36`](docs/36-original-tavern-playthrough.md) 原版 DOSBox 實機玩法:開機→姓名輸入→露依達酒場創角(知識庫;姓名輸入按鍵語意實機校正)
+- [`37`](docs/37-monster-ai.md) 怪物 AI(敵方行動邏輯)反組譯:狀態→逃跑→物理/咒文決策樹;D3MNS AI 欄位(+0x0d 施咒率/+0x0e..13 咒文 bitmask/+0x17 逃閾/+0x18 逃率),資料驅動驗證
 
 ### 歷史 / 一手史料
 - [BBS 1994–1995 討論串](docs/history/dq3-bbs-1994.md) — 當年 BBS 攻略 / bug 修改 / 存檔佈局 / 道具咒文表;精訊官方公告(1993 開發、ENIX 拒、離職員工外流);**RE 一手交叉佐證**(魔王打不死 / 彩虹水滴 / 五頭龍當機修改法對上 bug #1/#2/#3、存檔屬性欄位佈局對上成長表)
