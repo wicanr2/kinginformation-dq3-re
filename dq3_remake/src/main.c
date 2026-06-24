@@ -27,6 +27,7 @@
 #include "dq3_menu.h"
 #include "dq3_nameinput.h"
 #include "dq3_tavern.h"
+#include "dq3_zhuyin.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -510,6 +511,20 @@ static int run_tavern(const char *assets, const char *dump)
                         case 'R':sc=0x4d;break; case 'E':sc=0x1c;break; case 'S':sc=0x39;break; }
           if (sc) dq3_tavern_input(&tv, sc); } }
 
+    if (getenv("DQ3_TAVERN_SCREEN") && atoi(getenv("DQ3_TAVERN_SCREEN")) == 3 && dump) {
+        /* 注音輸入畫面驗證:組「ㄕ」+「ˋ」→ 候選窗(挑「是」)*/
+        dq3_zhuyin z; const char *keys = getenv("DQ3_ZH_KEYS"); int phase2;
+        dq3_zhuyin_init(&z);
+        z.cursor = 16; dq3_zhuyin_input(&z, 0x1c);   /* ㄕ */
+        z.cursor = 39; dq3_zhuyin_input(&z, 0x1c);   /* ˋ → 候選 */
+        phase2 = (keys && keys[0]=='C');              /* DQ3_ZH_KEYS=C → 看候選窗;否則看注音盤 */
+        if (!phase2) dq3_zhuyin_init(&z);             /* 重置看注音盤全貌 */
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_zhuyin_render(&z, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
+        dq3_present();
+        if (dq3_dump_ppm(dump)==0) fprintf(stderr, "tavern(注音 phase=%d) -> %s OK\n", z.phase, dump);
+        dq3_text_free(&t); return 0;
+    }
     if (getenv("DQ3_TAVERN_SCREEN") && atoi(getenv("DQ3_TAVERN_SCREEN")) == 9 && dump) {
         /* F10 離開確認視窗 視覺驗證 */
         static const uint16_t TT[5] = {502,488,113,689,534}; dq3_menu cm; int i;

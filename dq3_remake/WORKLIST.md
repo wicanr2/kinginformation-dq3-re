@@ -62,7 +62,11 @@
     - [x] **接進 game 模式 ✅**:run_game 持久 roster/party/gst;阿里阿罕(CTY00)按 **T** 開
       `tavern_modal`(用已載入 font 跑 dq3_tavern 流程,ESC 離開、建立的隊員存進 roster/party)。
       full build + game 啟動冒煙過。(觸發鍵暫定 T;**精確露依達 NPC 位置待 RE** — CTY00 門通 sec1-4/CTY25/42。)
-    - [ ] **注音組字 IME**(docs/15 ni_zhuyin/compose:5×9 注音盤 + 組字緩衝 + 國字候選窗)— 中文化技術亮點,較深。
+    - [x] **注音組字 IME ✅**(`dq3_zhuyin`,中文化技術亮點):注音盤(聲母21/韻母13/介音3/聲調5)
+      + 組字緩衝 + 注音→國字查表 + 同音候選窗挑字。原版用 EXE 注音引擎(seg 0x11c4);remake 改用
+      `dq3_zhuyin_table.c`(`tools/gen_zhuyin.py`:1476 字模 unicode 經 pypinyin BOPOMOFO 反建,
+      721 音節桶/1338 字,二分查找)。單測 `dq3_zhuyin_test`(ㄕˋ→是)+ dump 驗證(注音盤 + 候選窗
+      士世是似事勢式侍市室視試釋)。待:接進 nameinput 做 英數↔注音 切換鍵。
     - [ ] 精確露依達 NPC 觸發點(取代 T 鍵)、忠實初始擲值+性格(RE)、隊伍接進戰鬥。
   - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值 + 性格(personality)修正(目前用成長表 Lv1 base)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
