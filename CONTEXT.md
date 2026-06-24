@@ -66,6 +66,7 @@
 - [`32`](docs/32-world-locations.md) 世界地點圖(cty_loc → 標記)
 - [`34`](docs/34-cty-load-format.md) load_cty 載入邏輯與 CTY 格式
 - [`35`](docs/35-script-format.md) 腳本 / 事件 / 轉場格式(靜態 RE 全解)
+- [`36`](docs/36-original-tavern-playthrough.md) 原版 DOSBox 實機玩法:開機→姓名輸入→露依達酒場創角(知識庫;姓名輸入按鍵語意實機校正)
 
 ### 正確性驗證
 - [`14`](docs/14-dosbox-validation.md) DOSBox 黃金對照(素材) ·
