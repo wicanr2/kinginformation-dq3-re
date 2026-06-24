@@ -34,7 +34,7 @@ def get_blk(n):
     return blk_cache[n]
 
 
-def render_section(cty, so, count, tiles):
+def render_section(cty, so, count, tiles, att=None):
     u16 = lambda o: struct.unpack_from('<H', cty, o)[0]
     if so + 0x10 > len(cty):
         return None
@@ -62,7 +62,26 @@ def render_section(cty, so, count, tiles):
             for r in range(TH):
                 for c in range(TW):
                     px[tx * TW + c, ty * TH + r] = td[r][c]
-    return img.convert('RGB')
+    rgb = img.convert('RGB')
+    # 疊門標記 + 目的地標籤(attr&0xe000 轉場 tile → +0xc 轉場表)
+    if att is not None:
+        attr = lambda t: struct.unpack_from('<H', att, t * 2)[0] if t * 2 + 1 < len(att) else 0
+        tp = u16(so + 0x0c)
+        if tp != 0xffff and so + tp < len(cty):
+            tt = so + tp
+            trans = [cty[tt + k * 4:tt + k * 4 + 4] for k in range(16)]
+            dd = ImageDraw.Draw(rgb)
+            for ty in range(h):
+                for tx in range(w):
+                    o = base + 2 * (ty * w + tx)
+                    ti, hi = cty[o], cty[o + 1]
+                    if attr(ti) & 0xe000:
+                        sub = hi & 0x1f
+                        if sub < len(trans) and len(trans[sub]) == 4:
+                            e = trans[sub]
+                            dd.rectangle([tx*TW, ty*TH, tx*TW+TW-1, ty*TH+TH-1], outline=(255, 0, 255), width=2)
+                            dd.text((tx*TW, ty*TH-1), 'C%ds%d' % (e[0], e[1]), fill=(255, 255, 0))
+    return rgb
 
 
 def render_cty(idx):
@@ -75,6 +94,10 @@ def render_cty(idx):
         return None
     bn = MAP_BLKNUM[idx] if idx < len(MAP_BLKNUM) else 1
     count, tiles = get_blk(bn)
+    try:
+        att = open('work/BLKBM%d.DAT' % bn, 'rb').read()
+    except OSError:
+        att = None
     u16 = lambda o: struct.unpack_from('<H', cty, o)[0]
     # 掃 section 偏移表 word[0..]:到第一個 section base 為止
     secs = []
@@ -101,7 +124,7 @@ def render_cty(idx):
     for s, so in enumerate(secs):
         if so is None:
             continue
-        im = render_section(cty, so, count, tiles)
+        im = render_section(cty, so, count, tiles, att)
         if im:
             rendered.append((s, im))
     if not rendered:
