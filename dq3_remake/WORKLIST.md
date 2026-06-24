@@ -59,8 +59,11 @@
     - [x] **完整流程狀態機 ✅**(`dq3_tavern`:職業→姓名→性別→登錄→名冊;名冊 Enter 切換入隊、
       Space 新增另一名)。單測 `dq3_tavern_test`(全流程 + 第二名建立)全綠;run_tavern 端到端 dump
       驗證(DQ3_TAV_KEYS 驅動 → 戰士 Lv1 入隊顯示)。性別 glyph:男性[775,674]/女性[234,674](rec556)。
+    - [x] **接進 game 模式 ✅**:run_game 持久 roster/party/gst;阿里阿罕(CTY00)按 **T** 開
+      `tavern_modal`(用已載入 font 跑 dq3_tavern 流程,ESC 離開、建立的隊員存進 roster/party)。
+      full build + game 啟動冒煙過。(觸發鍵暫定 T;**精確露依達 NPC 位置待 RE** — CTY00 門通 sec1-4/CTY25/42。)
     - [ ] **注音組字 IME**(docs/15 ni_zhuyin/compose:5×9 注音盤 + 組字緩衝 + 國字候選窗)— 中文化技術亮點,較深。
-    - [ ] 露依達的店觸發(CTY00 內接 game 模式)、忠實初始擲值+性格(RE)。
+    - [ ] 精確露依達 NPC 觸發點(取代 T 鍵)、忠實初始擲值+性格(RE)、隊伍接進戰鬥。
   - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值 + 性格(personality)修正(目前用成長表 Lv1 base)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。

@@ -164,6 +164,9 @@ static int find_cty_at_map(int px, int py, int map)
 }
 static int find_cty_at(int px, int py) { return find_cty_at_map(px, py, 0); }  /* 地面 */
 
+static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *party,
+                         const dq3_stats *st, const dq3_text *text);
+
 static int run_game(const char *assets, const char *dump)
 {
     char err[256] = {0};
@@ -173,6 +176,9 @@ static int run_game(const char *assets, const char *dump)
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1;
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
+    dq3_roster roster; dq3_party party; dq3_stats gst;              /* 露依達酒場:名冊 + 隊伍 */
+
+    dq3_roster_init(&roster); dq3_party_init(&party); dq3_stats_load(&gst, assets, 1, NULL, 0);
 
     field = dq3_field_load(assets, err, sizeof err);
     if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
@@ -266,6 +272,11 @@ static int run_game(const char *assets, const char *dump)
                 fprintf(stderr, "事件: type=%d(%s) param=0x%x\n", et, tn, ep);
                 if (dlg_ok) { dlg_rec = (ep && ep < dlg.txt.n_records) ? ep : 1; dq3_dialogue_open(&dlg, dlg_rec); }
             }
+        } else if (sc == 0x14 && in_town && cur_cty == 0) {  /* T:阿里阿罕 → 露依達酒場創角
+                                                              * (暫定觸發鍵;精確露依達 NPC 位置待 RE)*/
+            tavern_modal(assets, &roster, &party, &gst, &dlg.txt);
+            dq3_scene_apply_palette(cur);                    /* modal 改過 DAC,還原場景色盤 */
+            fprintf(stderr, "離開酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
                 town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
@@ -454,6 +465,34 @@ static int run_tavern(const char *assets, const char *dump)
         dq3_present(); dq3_delay_ms(16);
     }
     dq3_text_free(&t); return 0;
+}
+
+/* 遊戲內露依達酒場 modal:用已載入的 font(text)跑 dq3_tavern 流程,ESC 離開。
+ * 建立的隊員存進傳入的 roster/party(持久);會改 DAC palette,呼叫端離開後須重套場景色盤。 */
+static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *party,
+                         const dq3_stats *st, const dq3_text *text)
+{
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg; uint8_t yellow; dq3_tavern tv;
+    uint8_t *fb = dq3_fb();
+    int wx = 40, wy = 60, ww = 220, wh = 200;
+
+    raw = dq3_load_file("DQ3.PAL", &rl);
+    if (!raw) return;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = pal_near2(pal,pn,255,255,255); bg = pal_near2(pal,pn,16,16,32);
+    yellow = (uint8_t)pal_near2(pal,pn,255,255,0);
+
+    dq3_tavern_init(&tv, roster, party, st);
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (sc == 0x01) break;                 /* ESC 離開酒場 */
+        if (sc) dq3_tavern_input(&tv, sc);
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_tavern_render(&tv, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
+        dq3_present(); dq3_delay_ms(16);
+    }
 }
 
 int main(int argc, char **argv)
