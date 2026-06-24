@@ -163,8 +163,8 @@ static int spell_value(int base)
     return half + (int)((roll255() * half) / 256);
 }
 
-/* 找會施法成員 + 最強可負擔的攻擊咒;回傳成員 index、*pdef=咒文。無回 -1。 */
-static int pick_caster_spell(member *party, const dq3_spell_def **pdef)
+/* 找會施法成員 + 最強可負擔的指定種類咒(kind);回傳成員 index、*pdef=咒文。無回 -1。 */
+static int pick_caster_spell_kind(member *party, int kind, const dq3_spell_def **pdef)
 {
     int i, best_i = -1; const dq3_spell_def *best = NULL;
     for (i = 0; i < PARTY; i++) {
@@ -173,13 +173,27 @@ static int pick_caster_spell(member *party, const dq3_spell_def **pdef)
         n = dq3_spells_known(g_cls_idx[i], party[i].level, recs, 64);
         for (k = 0; k < n; k++) {
             const dq3_spell_def *d = dq3_spell_def_get(recs[k]);
-            if (!d || d->kind != DQ3_SK_DMG) continue;        /* 先只自動挑攻擊咒 */
-            if (d->mp > party[i].mp) continue;
+            if (!d || d->kind != kind || d->mp > party[i].mp) continue;
             if (!best || d->base > best->base) { best = d; best_i = i; }
         }
         if (best) break;   /* 取第一個能施法的成員 */
     }
     *pdef = best; return best_i;
+}
+static int pick_caster_spell(member *party, const dq3_spell_def **pdef)
+{ return pick_caster_spell_kind(party, DQ3_SK_DMG, pdef); }
+
+/* 隊伍中 HP 比例最低(且未陣亡)且 < maxhp/4 的成員;無回 -1。 */
+static int lowest_hurt_ally(const member *party)
+{
+    int i, t = -1; long worst = 1000;
+    for (i = 0; i < PARTY; i++) {
+        if (party[i].hp <= 0 || party[i].maxhp <= 0) continue;
+        if (party[i].hp * 4 >= party[i].maxhp) continue;          /* 還夠血 */
+        { long r = (long)party[i].hp * 100 / party[i].maxhp;
+          if (r < worst) { worst = r; t = i; } }
+    }
+    return t;
 }
 
 /* 執行一回合;cmd:0戰 1逃 2防 3道具 4咒文。回傳 0續 1勝 2敗 3逃成功。 */
@@ -199,7 +213,15 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
         int t=pick_alive_party(party);
         if(t>=0){ int heal=30; party[t].hp+=heal; if(party[t].hp>party[t].maxhp)party[t].hp=party[t].maxhp;
             fprintf(stderr,"  %s 使用藥草,回復 %d。\n", party[t].dbg, heal); }
-    } else if(cmd==4){ /* 咒文:施法成員放最強可負擔攻擊咒(公式對齊 EXE 0xc22e)*/
+    } else if(cmd==4){ /* 咒文:有人快倒先治療,否則放最強可負擔攻擊咒(公式對齊 EXE 0xc22e)*/
+        const dq3_spell_def *hd; int hurt = lowest_hurt_ally(party);
+        int hi = (hurt >= 0) ? pick_caster_spell_kind(party, DQ3_SK_HEAL, &hd) : -1;
+        if (hi >= 0 && hd) {                          /* 治療 */
+            int v = (hd->base >= 999) ? party[hurt].maxhp : spell_value(hd->base);
+            party[hi].mp -= hd->mp;
+            party[hurt].hp += v; if(party[hurt].hp>party[hurt].maxhp)party[hurt].hp=party[hurt].maxhp;
+            fprintf(stderr,"  %s 詠唱回復咒文 → %s 回復 %d HP。\n", party[hi].dbg, party[hurt].dbg, v);
+        } else {
         const dq3_spell_def *d; int ci = pick_caster_spell(party, &d);
         if(ci<0 || !d){ fprintf(stderr,"  無人能施放攻擊咒文(MP 不足或非施法職)。\n"); }
         else {
@@ -213,6 +235,7 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
                 for(e=0;e<en;e++){ if(ehp[e]<=0) continue; { int v=spell_value(d->base); ehp[e]-=v; if(ehp[e]<0)ehp[e]=0; hit++; } }
                 fprintf(stderr,"  %s 詠唱範圍咒文 → 波及 %d 隻敵人。\n", party[ci].dbg, hit);
             }
+        }
         }
     } else { /* 戰:每位存活成員攻擊;武器雙擊則打 2 次(#7a,dq3_combat)*/
         for(i=0;i<PARTY;i++){
