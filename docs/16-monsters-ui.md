@@ -10,7 +10,8 @@
 記錄 0x25d = 史萊姆)逐項對上。
 
 成果:
-- `docs/monsters/monster_sheet.png` — 130 隻怪物 sprite 圖鑑(128 隻正常解出,見殘留)。
+- `docs/monsters/monster_sheet.png` — 130 隻怪物 sprite 圖鑑;128/129(歐里狄加 / 五頭龍大王)
+  原為未完成 boss(空 sprite),由復原 sprite 補完(bug #3,見 README + dq3_restored_sprites.c)。
 - `docs/monsters/spr_NNN.png` — 單隻 sprite(spr_005 = 史萊姆,spr_002 = 金屬史萊姆…)。
 - `docs/data/d3mns_stats.json` — 130 筆怪物數值 + 怪名。
 
