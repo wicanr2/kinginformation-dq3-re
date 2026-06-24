@@ -730,7 +730,7 @@ static void draw_number_at(uint8_t *fb, const dq3_text *t, int x, int y, int v, 
 static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold)
 {
     static const unsigned char STOCK[] = {0x01,0x03,0x0b,0x11,0x21,0x27,0x2b,0x41};
-    int n = (int)sizeof STOCK, cur = 0, lead_ri;
+    int n = (int)sizeof STOCK, cur = 0, lead_ri, mode = 0;   /* mode 0=買 1=賣 */
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t yellow, redc; uint8_t *fb = dq3_fb();
     int wx = 24, wy = 40, ww = 300, wh = 220;
@@ -758,28 +758,50 @@ static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *it
         uint8_t sc = dq3_poll_scancode();
         dq3_recruit *rc = &roster->list[lead_ri];
         int i;
+        int sellc[2]; int nsell = 0;
+        sellc[0] = rc->weapon; sellc[1] = rc->armor;        /* 賣出清單 = 已裝武器/防具 */
+        nsell = 2;
         if (sc == 0x01 || sc == DQ3_SC_F10) break;
-        else if (sc == 0x48) cur = (cur + n - 1) % n;
-        else if (sc == 0x50) cur = (cur + 1) % n;
-        else if (sc == 0x1c || sc == 0x39) {                  /* Enter/Space:購買 */
-            int code = STOCK[cur], price = dq3_item_price(items, code);
-            int cat = dq3_item_category(items, code);
-            if (*gold >= price && (code == 0x41 || dq3_item_can_equip(items, code, rc->m.cls))) {
-                *gold -= price;
-                if (cat & 0x40) rc->armor = (unsigned char)code;        /* 防具 */
-                else if (cat & 0x20) rc->weapon = (unsigned char)code;  /* 武器 */
-                fprintf(stderr, "購買並裝備 道具0x%02x(花 %d,餘 %ld)\n", code, price, *gold);
-            } else fprintf(stderr, "金錢不足或無法裝備。\n");
+        else if (sc == 0x0f) { mode ^= 1; cur = 0; }        /* Tab:買 ↔ 賣 */
+        else if (sc == 0x48) cur = (cur + (mode?nsell:n) - 1) % (mode?nsell:n);
+        else if (sc == 0x50) cur = (cur + 1) % (mode?nsell:n);
+        else if (sc == 0x1c || sc == 0x39) {                  /* Enter/Space:買 / 賣 */
+            if (!mode) {                                       /* 買 */
+                int code = STOCK[cur], price = dq3_item_price(items, code), cat = dq3_item_category(items, code);
+                if (*gold >= price && (code == 0x41 || dq3_item_can_equip(items, code, rc->m.cls))) {
+                    *gold -= price;
+                    if (cat & 0x40) rc->armor = (unsigned char)code;
+                    else if (cat & 0x20) rc->weapon = (unsigned char)code;
+                    fprintf(stderr, "購買並裝備 道具0x%02x(花 %d,餘 %ld)\n", code, price, *gold);
+                } else fprintf(stderr, "金錢不足或無法裝備。\n");
+            } else {                                           /* 賣(半價、卸下)*/
+                int code = sellc[cur];
+                if (code != 0xff) {
+                    int got = dq3_item_price(items, code) / 2; *gold += got;
+                    if (cur == 0) rc->weapon = 0xff; else rc->armor = 0xff;
+                    fprintf(stderr, "賣出 道具0x%02x(得 %d,餘 %ld)\n", code, got, *gold);
+                } else fprintf(stderr, "沒有可賣的裝備。\n");
+            }
         }
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         draw_number_at(fb, text, wx+14, wy+10, (int)*gold, (uint8_t)yellow);   /* 金錢 */
-        for (i = 0; i < n; i++) {
+        /* 模式標題:買(道具 0x192) / 賣(賣 rec…)— 簡化以游標色區分,log 已標 */
+        if (!mode) for (i = 0; i < n; i++) {                   /* 買清單 */
             int yy = wy + 34 + i * 18, code = STOCK[i];
             uint8_t fg = (i == cur) ? yellow : (uint8_t)white;
             int ok = (code == 0x41 || dq3_item_can_equip(items, code, rc->m.cls));
             if (i == cur) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+4, yy, 11, yellow);
             dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+22, yy, 8, 1, code+1, ok?fg:redc);
             draw_number_at(fb, text, wx+22+7*DQ3_GLYPH_PX, yy, dq3_item_price(items, code), (uint8_t)white);
+        }
+        else for (i = 0; i < nsell; i++) {                     /* 賣清單(武器/防具,半價)*/
+            int yy = wy + 34 + i * 18, code = sellc[i];
+            uint8_t fg = (i == cur) ? yellow : (uint8_t)white;
+            if (i == cur) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+4, yy, 11, yellow);
+            if (code != 0xff) {
+                dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+22, yy, 8, 1, code+1, fg);
+                draw_number_at(fb, text, wx+22+7*DQ3_GLYPH_PX, yy, dq3_item_price(items, code)/2, (uint8_t)white);
+            } else dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+22, yy, 495, fg);  /* 無 */
         }
         dq3_present(); dq3_delay_ms(16);
     }
