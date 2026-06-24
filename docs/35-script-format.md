@@ -238,12 +238,17 @@ else:
 try_step(dir):                              ; 落步前 5 道閘(任一不過 → 取消 / 反向)
   target = (slot.X,slot.Y) + ([dir*4+0xb35], [dir*4+0xb37])   ; ★ 與玩家同一張方向位移表
   ① target 界內(0..[0xb28]寬 / 0..[0xb2a]高)
-  ② |玩家X − targetX| ≥ 3 且 |玩家Y − targetY| ≥ 3            ; ★ 不走進玩家 3 格內
+  ② 近玩家閘(L020e1/L02111,`test bl,1` 依移動軸分流):**左右(dir 奇)看 X、上下(dir 偶)看 Y**;
+     沿該軸 |玩家 − target| < 3 → 不走(NPC 不擠進玩家 2 格、留空間讓玩家靠近對話)
   ③ target ≠ 玩家所在格;若 == → 朝向反轉(dir+2)、不走
   ④ target tile 高 byte bit `0x20` = 已有別的 NPC → 擋
   ⑤ target tile attr bit0(`[idx*2+0x308e]` low!=0)= 牆 → 擋
   全過 → 更新 slot X/Y + 還原舊格(slot[6])+ 重蓋新格(0x20|slot)
 ```
+
+**NPC sprite**:slot byte2(b2)= sprite key(載入時去重存 `[0x265d]` 快取)。BLS 讀檔
+(`file 0xffc3`)offset = `(key−4) × 0xf00 + 6`(`0xf00`=3840=4×960=4 方向 frame × stride)
+→ **DQ3MAN.BLS entry_base = (b2−4) × 4**;主角 key=8 ↔ entry16 自洽。frame = 朝向(`ctrl & 3`)。
 
 > 語意:NPC 每幀僅 ¼ 機率被評估(走得慢、不規則);移動者多沿當前朝向走、偶爾(1/20)轉向;
 > 不會貼近玩家(≥3 格)、不會疊在另一 NPC 或牆上。**靜態 NPC = bit2 清**(村裡站著不動的人)。

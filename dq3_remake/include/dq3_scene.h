@@ -54,7 +54,7 @@ typedef struct dq3_scene {
     dq3_npc   npcs[DQ3_SCENE_MAX_NPC];
     int       n_npcs;
     dq3_rng   npc_rng;
-    /* NPC sprite 快取(by b2 去重;entry_base = b2*4,主角 entry16↔b2=4 自洽,待 oracle 校)。 */
+    /* NPC sprite 快取(by b2 去重;entry_base=(b2-4)*4,靜態 RE file 0xffc3:BLS off=(key-4)*0xf00+6;主角 key8↔entry16)。 */
     dq3_charsprite npc_spr[8];
     int       npc_spr_b2[8];
     int       n_npc_spr;

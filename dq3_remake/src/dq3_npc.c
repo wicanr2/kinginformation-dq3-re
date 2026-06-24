@@ -31,6 +31,10 @@ static int try_step(dq3_scene *s, dq3_npc *npcs, int idx)
     int cell, ni;
 
     if (tx < 0 || ty < 0 || tx >= s->map_w || ty >= s->map_h) return 0;   /* 界外 */
+    /* 近玩家閘(L020e1/L02111,test bl,1 分軸):沿移動軸與玩家距離 <3 → 不走
+     * (左右看 X、上下看 Y;NPC 不擠進玩家 2 格內,留空間讓玩家靠近對話)。 */
+    if (dir & 1) { int d = s->px - tx; if (d < 3 && d > -3) return 0; }   /* 左/右 → X */
+    else         { int d = s->py - ty; if (d < 3 && d > -3) return 0; }   /* 上/下 → Y */
     if (tx == s->px && ty == s->py) {                     /* 踏到玩家格 → 反向、不走(L02146)*/
         npc->ctrl = (uint8_t)((npc->ctrl & 0xfc) | ((dir + 2) & 3));
         return 0;
@@ -46,7 +50,6 @@ static int try_step(dq3_scene *s, dq3_npc *npcs, int idx)
     npc->x = (uint8_t)tx; npc->y = (uint8_t)ty;
     dq3_npc_stamp(s, npcs, idx);
     return 1;
-    /* 註:EXE 另有「離玩家 ≥3 格」近距閘(L020e1/L02111),語意/軸別待再追,尚未鏡射。 */
 }
 
 int dq3_npc_step(dq3_scene *s, dq3_npc *npcs, int idx, int n_npcs, dq3_rng *rng)

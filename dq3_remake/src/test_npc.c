@@ -87,12 +87,42 @@ int main(void)
         CHECK(npc.x == 4 && npc.y == 4, "四周牆包圍 → NPC 不移動");
     }
 
+    printf("== 近玩家 ≥3 格閘(L020e1/L02111)==\n");
+    {
+        dq3_npc npc; int i;
+        build(&s); s.px = 4; s.py = 4;                 /* 玩家移到中央 */
+        memset(&npc, 0, sizeof npc);
+        npc.x = 5; npc.y = 5; npc.ctrl = DQ3_NPC_MOVE; /* 緊鄰玩家:四向皆落入 2 格內 */
+        dq3_npc_stamp(&s, &npc, 0);
+        dq3_rng_seed(&rng, 321);
+        for (i = 0; i < 3000; i++) dq3_npc_step(&s, &npc, 0, 1, &rng);
+        CHECK(npc.x == 5 && npc.y == 5, "緊鄰玩家 → 各向皆 <3 格 → 不移動");
+
+        build(&s);                                      /* 玩家預設 (0,0) */
+        memset(&npc, 0, sizeof npc);
+        npc.x = 5; npc.y = 5; npc.ctrl = DQ3_NPC_MOVE;  /* 離玩家≥3、空間充足 */
+        dq3_npc_stamp(&s, &npc, 0);
+        dq3_rng_seed(&rng, 88);
+        { int moved = 0, ok = 1, ox = npc.x, oy = npc.y;
+          for (i = 0; i < 6000; i++) {
+              if (dq3_npc_step(&s, &npc, 0, 1, &rng)) {
+                  if (npc.x != ox) { int d = s.px - npc.x; if (d < 3 && d > -3) ok = 0; }  /* 水平移動後 X 須離玩家≥3 */
+                  if (npc.y != oy) { int d = s.py - npc.y; if (d < 3 && d > -3) ok = 0; }  /* 垂直移動後 Y 須離玩家≥3 */
+                  moved++; ox = npc.x; oy = npc.y;
+              }
+          }
+          CHECK(moved > 0, "遠處 NPC 仍會走動");
+          CHECK(ok, "每次移動後沿移動軸與玩家保持 ≥3 格");
+        }
+    }
+
     printf("== 兩 NPC 不互疊 ==\n");
     {
         dq3_npc npc[2]; int i, overlap = 0;
         build(&s);
-        npc[0].x=2; npc[0].y=4; npc[0].ctrl=DQ3_NPC_MOVE; memset(&npc[0].b2,0,5);
-        npc[1].x=6; npc[1].y=4; npc[1].ctrl=DQ3_NPC_MOVE; memset(&npc[1].b2,0,5);
+        memset(npc, 0, sizeof npc);
+        npc[0].x=2; npc[0].y=4; npc[0].ctrl=DQ3_NPC_MOVE;
+        npc[1].x=6; npc[1].y=4; npc[1].ctrl=DQ3_NPC_MOVE;
         dq3_npc_stamp(&s, npc, 0); dq3_npc_stamp(&s, npc, 1);
         dq3_rng_seed(&rng, 55);
         for (i = 0; i < 4000; i++) {

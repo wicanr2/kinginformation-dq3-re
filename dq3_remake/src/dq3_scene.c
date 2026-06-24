@@ -143,10 +143,12 @@ int dq3_scene_load_npc_sprites(dq3_scene *s, const char *assets_dir)
     int i; char err[128];
     s->n_npc_spr = 0;
     for (i = 0; i < s->n_npcs && s->n_npc_spr < 8; i++) {
-        int b2 = s->npcs[i].b2;
+        int b2 = s->npcs[i].b2, entry;
         if (npc_spr_find(s, b2) >= 0) continue;                 /* 已快取 */
+        if (b2 < 4) continue;                                   /* key<4 保留(無對應 BLS 角色)*/
+        entry = (b2 - 4) * 4;   /* BLS offset=(key-4)*0xf00+6 → entry_base=(b2-4)*4(RE file 0xff99/0xffc3)*/
         if (dq3_charsprite_load(&s->npc_spr[s->n_npc_spr], assets_dir,
-                                b2 * 4, err, sizeof err) == 0) { /* entry_base=b2*4 */
+                                entry, err, sizeof err) == 0) {
             s->npc_spr_b2[s->n_npc_spr] = b2;
             s->n_npc_spr++;
         }
