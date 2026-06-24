@@ -25,8 +25,14 @@
   「魔王打不死(39 87 36 23→34)= #1」「彩虹水滴(DRAGON.DAT item 75)= #2」「五頭龍避戰
   (disp 0A/0C→0A)= #3 歐里狄加/五頭龍空 sprite」與我們反組譯結論一致。
 - **存檔記憶體佈局(BBS Paul Shih)**:每角色 base 0x363、stride 0xFF;欄位序 等級/HP/MP/力量/
-  攻擊/耐力/守備/速度/聰明/運氣/MHP/MMP/法術(魔/僧)/道具(8×2)。**確認 dq3_member 缺第 7
-  屬性「運氣」**(成長表 +C 欄);攻擊/守備為派生值。待:補運氣進 member。
+  攻擊/耐力/守備/速度/聰明/運氣/MHP/MMP/法術(魔/僧)/道具(8×2)。攻擊/守備為派生值。
+  - [x] **補運氣進 member ✅**:`dq3_stat_kind` 重命名為語意名(HP/MP/AGI 速度/STR 力量/INT 聰明/
+    VIT 耐力/LUCK 運氣)+ 加第 7 屬性 LUCK(成長表 +C 欄);`stat[6]→stat[DQ3_STAT_COUNT]`。
+    屬性語意三方交叉確認(成長表樣式 + 升級訊息 rec191-197 + BBS 存檔佈局)。
+- **つよさ 能力值畫面 ✅**(`dq3_status`):渲染一名隊員 姓名+Lv/職業/HP/MP/力量/耐力/速度/聰明/
+  運氣,標籤用 D3TXT00.FON 原字型 glyph。接進 run_game(按 **C** 開 status_modal,←/→ 切換隊員、
+  ESC 關)。DQ3_STATUS_SCREEN dump 驗證:勇者 Lv20(聰明 28 低)vs 魔法使者(聰明 165 最高)→
+  屬性語意資料驅動驗證正確。docs/sprites/status_screen.png。
 - **開場插圖膚色修正 ✅**:FIRST.SCR 開場不用 DQ3.PAL(膚色 idx14 在 DQ3.PAL 是灰)。由實機
   截圖反推獨立 16 色 `OPENING_PAL`(tools/title_render.py),膚色釘 fcd89c。first_opening.png 已修。
 - **實機 oracle 截圖入手**(`dq3_org_pic/`,版權不入版控):主角家(town 色盤已驗 DQ3.PAL 一致)、

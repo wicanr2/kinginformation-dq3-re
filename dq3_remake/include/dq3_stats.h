@@ -24,11 +24,20 @@
 #define DQ3_STAT_CAP    9999   /* #6:屬性顯式上限(取代自然 wrap) */
 
 /* 職業:0勇者 1戰士 2武鬥家 3僧侶 4魔法使者 5賢者 6商人 7遊玩者 */
-/* 成長屬性欄(列內 base/slope 對):0 HP, 1 MP, 2 b4, 3 b6, 4 b8, 5 bA */
+/* 成長屬性欄 = 成長表 14 byte 的 7 個 (base,slope) 對,kind*2 = 列內 byte offset。
+ * 屬性語意由三方交叉確認:成長表數值樣式(武鬥力量/速度最高、戰士聰明=0、遊玩運氣最高)
+ * + 升級訊息(D3TXT00 rec191-197:力量/耐力/速度/最大HP/最大MP/聰明度/運氣)
+ * + BBS 存檔記憶體佈局(docs/history/dq3-bbs-1994 §六)。 */
 typedef enum {
-    DQ3_STAT_HP = 0, DQ3_STAT_MP = 1, DQ3_STAT_B4 = 2,
-    DQ3_STAT_B6 = 3, DQ3_STAT_B8 = 4, DQ3_STAT_BA = 5
+    DQ3_STAT_HP   = 0,   /* 生命 */
+    DQ3_STAT_MP   = 1,   /* 魔力 */
+    DQ3_STAT_AGI  = 2,   /* 速度 すばやさ(+4)*/
+    DQ3_STAT_STR  = 3,   /* 力量 ちから(+6)*/
+    DQ3_STAT_INT  = 4,   /* 聰明 かしこさ(+8)*/
+    DQ3_STAT_VIT  = 5,   /* 耐力 たいりょく(+A)*/
+    DQ3_STAT_LUCK = 6    /* 運氣 うんのよさ(+C)*/
 } dq3_stat_kind;
+#define DQ3_STAT_COUNT 7
 
 typedef struct {
     uint8_t  growth[DQ3_NUM_CLASS][14];                 /* 成長表原始列 */
@@ -59,7 +68,7 @@ typedef struct {
     int      cls;          /* 職業 0..7 */
     int      level;        /* 1..43 */
     uint32_t exp;          /* 累積經驗(uint32,不溢位)*/
-    uint16_t stat[6];      /* 6 屬性 uint16,順序同 dq3_stat_kind(HP MP B4 B6 B8 BA)*/
+    uint16_t stat[DQ3_STAT_COUNT];  /* 7 屬性 uint16,順序同 dq3_stat_kind(HP MP 速 力 智 耐 運)*/
 } dq3_member;
 
 /* 以職業+等級初始化隊員:exp=該級門檻、各屬性=成長目標值(growth_target)。 */

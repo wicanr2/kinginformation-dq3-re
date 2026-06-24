@@ -29,6 +29,7 @@
 #include "dq3_tavern.h"
 #include "dq3_zhuyin.h"
 #include "dq3_save.h"
+#include "dq3_status.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,6 +171,7 @@ static int find_cty_at(int px, int py) { return find_cty_at_map(px, py, 0); }  /
 
 static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *party,
                          const dq3_stats *st, const dq3_text *text);
+static void status_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
 
@@ -358,6 +360,9 @@ static int run_game(const char *assets, const char *dump)
             tavern_modal(assets, &roster, &party, &gst, &dlg.txt);
             dq3_scene_apply_palette(cur);
             fprintf(stderr, "離開酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
+        } else if (sc == 0x2e) {            /* C:つよさ 能力值畫面(隊員數值,←/→ 切換)*/
+            status_modal(&roster, &party, &dlg.txt);
+            dq3_scene_apply_palette(cur);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
                 town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
@@ -557,6 +562,23 @@ static int run_tavern(const char *assets, const char *dump)
         if (dq3_dump_ppm(dump)==0) fprintf(stderr,"tavern(F10 離開確認) -> %s OK\n", dump);
         dq3_text_free(&t); return 0;
     }
+    if (getenv("DQ3_STATUS_SCREEN") && dump) {
+        /* つよさ 能力值畫面驗證:建一名範例隊員(職業/等級可由 env 指定)*/
+        dq3_recruit demo; int cls = getenv("DQ3_ST_CLASS") ? atoi(getenv("DQ3_ST_CLASS")) : 0;
+        int lv = getenv("DQ3_ST_LEVEL") ? atoi(getenv("DQ3_ST_LEVEL")) : 20;
+        static const uint16_t nm[3] = {106, 187, 0};   /* 「勇者」當範例名 */
+        if (cls < 0 || cls > 7) cls = 0; if (lv < 1) lv = 1; if (lv > 43) lv = 43;
+        memset(&demo, 0, sizeof demo);
+        demo.name[0] = nm[0]; demo.name[1] = nm[1]; demo.name_len = 2; demo.gender = 0;
+        demo.m.cls = cls; dq3_member_init(&demo.m, &st, cls, lv);
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_status_render(&demo, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+        dq3_present();
+        if (dq3_dump_ppm(dump)==0)
+            fprintf(stderr, "status(cls=%d lv=%d HP=%u MP=%u) -> %s OK\n",
+                    cls, demo.m.level, demo.m.stat[DQ3_STAT_HP], demo.m.stat[DQ3_STAT_MP], dump);
+        dq3_text_free(&t); return 0;
+    }
     if (dump) {
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         dq3_tavern_render(&tv, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
@@ -600,6 +622,36 @@ static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *part
         if (sc) dq3_tavern_input(&tv, sc);
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         dq3_tavern_render(&tv, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
+        dq3_present(); dq3_delay_ms(16);
+    }
+}
+
+/* 遊戲內 つよさ 能力值 modal:顯示在隊伍中的隊員數值,←/→ 切換,ESC 離開。 */
+static void status_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text)
+{
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg; uint8_t *fb = dq3_fb();
+    int wx = 40, wy = 50, ww = 220, wh = 210, cur = 0, n = 0, i;
+    int members[DQ3_PARTY_MAX];
+
+    for (i = 0; i < DQ3_PARTY_MAX; i++)
+        if (party->slot[i] >= 0 && party->slot[i] < roster->count) members[n++] = party->slot[i];
+    if (n == 0) return;   /* 隊伍空,不開 */
+
+    raw = dq3_load_file("DQ3.PAL", &rl);
+    if (!raw) return;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = pal_near2(pal,pn,255,255,255); bg = pal_near2(pal,pn,16,16,32);
+
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (sc == 0x01 || sc == DQ3_SC_F10) break;            /* ESC / F10 離開 */
+        if (sc == 0x4b) cur = (cur + n - 1) % n;              /* ← 上一名 */
+        else if (sc == 0x4d) cur = (cur + 1) % n;             /* → 下一名 */
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_status_render(&roster->list[members[cur]], text, fb,
+                          DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
         dq3_present(); dq3_delay_ms(16);
     }
 }

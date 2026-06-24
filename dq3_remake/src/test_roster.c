@@ -30,7 +30,7 @@ int main(void)
             int idx = dq3_roster_create(&r, &st, c, c & 1, nm, 3);
             dq3_recruit *rc = &r.list[idx];
             printf("  %s: idx=%d Lv%d HP=%u MP=%u 力=%u\n", CLS[c], idx, rc->m.level,
-                   rc->m.stat[DQ3_STAT_HP], rc->m.stat[DQ3_STAT_MP], rc->m.stat[DQ3_STAT_B4]);
+                   rc->m.stat[DQ3_STAT_HP], rc->m.stat[DQ3_STAT_MP], rc->m.stat[DQ3_STAT_AGI]);
             if (idx < 0 || rc->m.cls != c || rc->m.level != 1 || rc->m.stat[DQ3_STAT_HP] == 0) ok = 0;
         }
         CHECK(ok, "7 職業同伴建立成功、Lv1、HP>0");

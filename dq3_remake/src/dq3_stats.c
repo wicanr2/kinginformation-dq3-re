@@ -87,7 +87,7 @@ void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
     if (level > DQ3_MAX_LEVEL) level = DQ3_MAX_LEVEL;
     m->cls = cls; m->level = level;
     m->exp = st->thresh[cls][level];                  /* 該等級的門檻經驗 */
-    for (k = 0; k < 6; k++)
+    for (k = 0; k < DQ3_STAT_COUNT; k++)
         m->stat[k] = dq3_stats_growth_target(st, cls, (dq3_stat_kind)k, level);
 }
 
@@ -98,7 +98,7 @@ int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
     newlv = dq3_stats_level_for_exp(st, m->cls, m->exp, 1);     /* #5:夾在 [1,43] */
     while (m->level < newlv) {
         int lv0 = m->level, lv1 = m->level + 1;
-        for (k = 0; k < 6; k++) {                              /* 逐屬性套成長 delta */
+        for (k = 0; k < DQ3_STAT_COUNT; k++) {                              /* 逐屬性套成長 delta */
             int t0 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv0);
             int t1 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv1);
             int delta = t1 - t0; if (delta < 0) delta = 0;
