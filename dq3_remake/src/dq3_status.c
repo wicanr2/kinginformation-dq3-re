@@ -12,6 +12,10 @@ static const uint16_t L_VIT[2]  = {284, 170};   /* 耐力 */
 static const uint16_t L_AGI[2]  = {282, 283};   /* 速度 */
 static const uint16_t L_INT[2]  = {285, 286};   /* 聰明 */
 static const uint16_t L_LUCK[2] = {276, 426};   /* 運氣 */
+static const uint16_t L_ATK[2]  = {623, 624};   /* 攻擊 */
+static const uint16_t L_DEF[2]  = {340, 409};   /* 守備 */
+static const uint16_t L_EXP[2]  = {525, 526};   /* 經驗 */
+static const uint16_t L_SEX[2]  = {674, 417};   /* 性別 */
 
 static void draw_glyphs(const dq3_text *t, uint8_t *fb, int fw, int fh,
                         int x, int y, const uint16_t *g, int n, uint8_t fg)
@@ -23,12 +27,12 @@ static void draw_glyphs(const dq3_text *t, uint8_t *fb, int fw, int fh,
 
 /* 畫十進位數(右側不補零)。回傳畫了幾位。 */
 static int draw_num(const dq3_text *t, uint8_t *fb, int fw, int fh,
-                    int x, int y, int v, uint8_t fg)
+                    int x, int y, long v, uint8_t fg)
 {
-    uint16_t tmp[6]; int n = 0, i;
+    uint16_t tmp[10]; int n = 0, i;
     if (v < 0) v = 0;
     if (v == 0) tmp[n++] = 0;
-    else { int x2 = v; while (x2 > 0 && n < 6) { tmp[n++] = (uint16_t)(x2 % 10); x2 /= 10; } }
+    else { long x2 = v; while (x2 > 0 && n < 10) { tmp[n++] = (uint16_t)(x2 % 10); x2 /= 10; } }
     for (i = 0; i < n; i++)
         dq3_text_draw_glyph(t, fb, fw, fh, x + i * DQ3_GLYPH_PX, y, tmp[n - 1 - i], fg);
     return n;
@@ -45,33 +49,42 @@ static void row(const dq3_text *t, uint8_t *fb, int fw, int fh, int x, int y,
 void dq3_status_render(const dq3_recruit *rc, const dq3_text *t,
                        uint8_t *fb, int fb_w, int fb_h, int x, int y, uint8_t fg)
 {
+    /* 版面對齊 D3TXT00 rec407(精訊版狀態畫面):上=姓名+職業;
+     * 左欄 性別/等級/HP/MP;右欄 力量/速度/耐力/聰明/運氣/攻擊/守備/經驗。
+     * 攻擊力=力量(無武器)、守備力=耐力/2(無防具),與戰鬥衍生一致。 */
     const dq3_member *m = &rc->m;
-    int yy = y, cx;
-    const int H = 18;
+    const int H = 18, RX = x + 9 * DQ3_GLYPH_PX;   /* 右欄 x */
+    int yy = y, ry;
 
-    /* 第一列:姓名 + 等級 */
+    /* 姓名 + 職業 */
     draw_glyphs(t, fb, fb_w, fb_h, x, yy, rc->name, rc->name_len, fg);
-    cx = x + (rc->name_len + 1) * DQ3_GLYPH_PX;
-    draw_glyphs(t, fb, fb_w, fb_h, cx, yy, L_LV, 2, fg);
-    draw_num(t, fb, fb_w, fb_h, cx + 3 * DQ3_GLYPH_PX, yy, m->level, fg);
-    yy += H;
-
-    /* 職業 */
     {
         const struct dq3_class_name *cn = &dq3_class_names[m->cls];
-        draw_glyphs(t, fb, fb_w, fb_h, x, yy, cn->g, cn->len, fg);
+        draw_glyphs(t, fb, fb_w, fb_h, x + (rc->name_len + 1) * DQ3_GLYPH_PX, yy, cn->g, cn->len, fg);
     }
-    yy += H;
+    yy += H + 4;
 
-    /* HP / MP(member 存的是上限;野外滿血→現值=上限)*/
-    row(t, fb, fb_w, fb_h, x, yy, L_HP, 2, m->stat[DQ3_STAT_HP], fg); yy += H;
-    row(t, fb, fb_w, fb_h, x, yy, L_MP, 2, m->stat[DQ3_STAT_MP], fg); yy += H;
-    /* 五項主屬性 */
-    row(t, fb, fb_w, fb_h, x, yy, L_STR,  2, m->stat[DQ3_STAT_STR],  fg); yy += H;
-    row(t, fb, fb_w, fb_h, x, yy, L_VIT,  2, m->stat[DQ3_STAT_VIT],  fg); yy += H;
-    row(t, fb, fb_w, fb_h, x, yy, L_AGI,  2, m->stat[DQ3_STAT_AGI],  fg); yy += H;
-    row(t, fb, fb_w, fb_h, x, yy, L_INT,  2, m->stat[DQ3_STAT_INT],  fg); yy += H;
-    row(t, fb, fb_w, fb_h, x, yy, L_LUCK, 2, m->stat[DQ3_STAT_LUCK], fg);
+    /* 左欄:性別 / 等級 / HP / MP */
+    {
+        uint16_t sg = (rc->gender == 0) ? 775 : 234;   /* 男 / 女 */
+        draw_glyphs(t, fb, fb_w, fb_h, x, yy, L_SEX, 2, fg);
+        dq3_text_draw_glyph(t, fb, fb_w, fb_h, x + 3 * DQ3_GLYPH_PX, yy, sg, fg);
+    }
+    row(t, fb, fb_w, fb_h, x, yy + H,   L_LV, 2, m->level, fg);
+    row(t, fb, fb_w, fb_h, x, yy + 2*H, L_HP, 2, m->stat[DQ3_STAT_HP], fg);
+    row(t, fb, fb_w, fb_h, x, yy + 3*H, L_MP, 2, m->stat[DQ3_STAT_MP], fg);
+
+    /* 右欄:力量/速度/耐力/聰明/運氣/攻擊/守備/經驗 */
+    ry = yy;
+    row(t, fb, fb_w, fb_h, RX, ry,        L_STR,  2, m->stat[DQ3_STAT_STR],  fg);
+    row(t, fb, fb_w, fb_h, RX, ry + H,    L_AGI,  2, m->stat[DQ3_STAT_AGI],  fg);
+    row(t, fb, fb_w, fb_h, RX, ry + 2*H,  L_VIT,  2, m->stat[DQ3_STAT_VIT],  fg);
+    row(t, fb, fb_w, fb_h, RX, ry + 3*H,  L_INT,  2, m->stat[DQ3_STAT_INT],  fg);
+    row(t, fb, fb_w, fb_h, RX, ry + 4*H,  L_LUCK, 2, m->stat[DQ3_STAT_LUCK], fg);
+    row(t, fb, fb_w, fb_h, RX, ry + 5*H,  L_ATK,  2, m->stat[DQ3_STAT_STR],      fg);  /* 攻擊=力量 */
+    row(t, fb, fb_w, fb_h, RX, ry + 6*H,  L_DEF,  2, m->stat[DQ3_STAT_VIT] / 2,  fg);  /* 守備=耐力/2 */
+    draw_glyphs(t, fb, fb_w, fb_h, RX, ry + 7*H, L_EXP, 2, fg);
+    draw_num(t, fb, fb_w, fb_h, RX + 3 * DQ3_GLYPH_PX, ry + 7*H, (long)m->exp, fg);
 }
 
 void dq3_status_render_spells(const dq3_recruit *rc, const dq3_text *t,

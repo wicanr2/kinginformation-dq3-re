@@ -604,11 +604,11 @@ static int run_tavern(const char *assets, const char *dump)
         memset(&demo, 0, sizeof demo);
         demo.name[0] = nm[0]; demo.name[1] = nm[1]; demo.name_len = 2; demo.gender = 0;
         demo.m.cls = cls; dq3_member_init(&demo.m, &st, cls, lv);
-        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        tav_window(fb, 24, wy, 300, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         if (getenv("DQ3_ST_PAGE") && getenv("DQ3_ST_PAGE")[0]=='s')
-            dq3_status_render_spells(&demo, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+            dq3_status_render_spells(&demo, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, 24+14, wy+12, (uint8_t)white);
         else
-            dq3_status_render(&demo, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+            dq3_status_render(&demo, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, 24+14, wy+12, (uint8_t)white);
         dq3_present();
         if (dq3_dump_ppm(dump)==0)
             fprintf(stderr, "status(cls=%d lv=%d HP=%u MP=%u) -> %s OK\n",
@@ -668,7 +668,7 @@ static void status_modal_page(const dq3_roster *roster, const dq3_party *party, 
 {
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t *fb = dq3_fb();
-    int wx = 40, wy = 50, ww = 220, wh = 210, cur = 0, n = 0, i, page = start_page;
+    int wx = 24, wy = 50, ww = 300, wh = 210, cur = 0, n = 0, i, page = start_page;
     int members[DQ3_PARTY_MAX];
 
     for (i = 0; i < DQ3_PARTY_MAX; i++)
