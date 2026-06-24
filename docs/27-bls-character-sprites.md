@@ -87,3 +87,22 @@ bx = si + 0x180           ; ★ 遮罩在資料 +0x180(384)
 **結論**:DQ3MAN.BLS **就是**地表/城鎮角色(含主角)的 sprite 來源;32×24 masked、每角色
 4 方向 frame、stride 960、DQ3.PAL。先前誤判「帶底大角色圖」是漏了 AND 遮罩 + stride 對不齊。
 → 可直接在 remake 解碼並以透明 blit 取代佔位框(見 `dq3_sprite` 模組)。
+
+## ★ 修正:三個 BLS 的角色分工(主角不在 DQ3MAN.BLS)
+
+實機 oracle(`work/hero_crop_town.png`)的真主角 = **黑髮 + 金冠帶 + 紅袍 + 抱臂**(背向鏡頭)。
+逐檔渲染對照(`tools/bls_charsheet.py`)後確認**主角/隊員根本不在 DQ3MAN.BLS**:
+
+| 檔 | count(entry)| 角色 | charsheet |
+|---|---|---|---|
+| **DQ3MST.BLS** | 120 / 30 角色 | **主角 + 各職業 sprite(勇者/女勇者/各職業男女)** | `docs/sprites/dq3mst_charsheet.png` |
+| **DQ3MAN.BLS** | 232 / 58 角色 | **NPC / 村民 / 國王 / 長老 / 士兵**(城鎮居民)| `docs/sprites/dq3man_charsheet.png` |
+| DQ3LIN.BLS | 96 | (待辨識:可能載具 / 龍 / 大型) | — |
+
+- **勇者(男)= DQ3MST.BLS entry 0(c0)**:黑髮金冠帶紅袍,front/back 與 oracle 完全吻合
+  (`tools/` 對照圖)。先前 remake 誤用 DQ3MAN.BLS entry16(c4:紅蝴蝶結藍裙的女性村民)當主角。
+- remake 修正:`dq3_charsprite_load` 加 `bls_name` 參數;`dq3_scene_load_hero` 載 `DQ3MST.BLS` entry0、
+  NPC 仍載 `DQ3MAN.BLS` entry `(b2-4)*4`。
+- 同格式(32×24 masked、stride 960、DQ3.PAL 低 16 色),只是**檔不同**。
+- **待 RE**:職業(0..7)+ 性別 → DQ3MST entry 的對映(隊員 sprite key = `[member+1]*2+[member+2]-1`、
+  entry=`(key-4)*4`,L0ec19/0xff89;欄位語意待逐一確認)。c0=勇者♂ 已確認,其餘待對。

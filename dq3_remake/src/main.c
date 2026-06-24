@@ -137,7 +137,8 @@ static unsigned grnd(void){ g_seed^=g_seed<<13; g_seed^=g_seed>>17; g_seed^=g_se
 
 static void load_field_hero(dq3_scene *s, const char *assets)
 {
-    dq3_scene_load_hero(s, assets, 16, NULL);   /* 金髮勇者 */
+    dq3_scene_load_hero(s, assets, 0, NULL);    /* 勇者 = DQ3MST.BLS entry0(c0:黑髮金帶紅袍,對 oracle 確認)。
+                                                 * ★ 主角/隊員在 DQ3MST.BLS(各職業 sprite),非 DQ3MAN.BLS(NPC/村民)*/
     dq3_scene_load_npc_sprites(s, assets);      /* NPC sprite(城鎮才有 NPC;地表 no-op)*/
 }
 
@@ -619,7 +620,7 @@ int main(int argc, char **argv)
             /* 主角 sprite:entry 與 facing→frame 對映可由 env 調(對 oracle 鎖定) */
             const char *he = getenv("DQ3_HERO_ENTRY");
             const char *fo = getenv("DQ3_FACING_ORDER");  /* 如 "0,2,1,3" */
-            int entry = he ? atoi(he) : 16;   /* 預設金髮勇者(entry16,對 oracle 室內主角) */
+            int entry = he ? atoi(he) : 0;    /* 預設勇者 = DQ3MST.BLS entry0(c0);見 load_field_hero */
             int order[4] = {0,1,2,3}; const int *op = NULL;
             if (fo && sscanf(fo, "%d,%d,%d,%d", &order[0],&order[1],&order[2],&order[3]) == 4) op = order;
             if (dq3_scene_load_hero(s, assets, entry, op) != 0)

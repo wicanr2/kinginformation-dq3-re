@@ -24,8 +24,8 @@ typedef struct {
     int loaded;
 } dq3_charsprite;
 
-/* 從 DQ3MAN.BLS 載入 entry_base 起連續 4 個 frame(4 方向)。失敗回 <0。 */
-int dq3_charsprite_load(dq3_charsprite *cs, const char *assets_dir,
+/* 從 bls_name(主角=DQ3MST.BLS、NPC=DQ3MAN.BLS)載入 entry_base 起連續 4 個 frame。失敗回 <0。 */
+int dq3_charsprite_load(dq3_charsprite *cs, const char *assets_dir, const char *bls_name,
                         int entry_base, char *err, int errcap);
 
 #endif /* DQ3_SPRITE_H */

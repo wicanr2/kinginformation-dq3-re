@@ -147,7 +147,7 @@ int dq3_scene_load_npc_sprites(dq3_scene *s, const char *assets_dir)
         if (npc_spr_find(s, b2) >= 0) continue;                 /* 已快取 */
         if (b2 < 4) continue;                                   /* key<4 保留(無對應 BLS 角色)*/
         entry = (b2 - 4) * 4;   /* BLS offset=(key-4)*0xf00+6 → entry_base=(b2-4)*4(RE file 0xff99/0xffc3)*/
-        if (dq3_charsprite_load(&s->npc_spr[s->n_npc_spr], assets_dir,
+        if (dq3_charsprite_load(&s->npc_spr[s->n_npc_spr], assets_dir, "DQ3MAN.BLS",
                                 entry, err, sizeof err) == 0) {
             s->npc_spr_b2[s->n_npc_spr] = b2;
             s->n_npc_spr++;
@@ -274,7 +274,7 @@ int dq3_scene_load_hero(dq3_scene *s, const char *assets_dir, int entry_base,
     int i;
     char err[128];
     for (i = 0; i < 4; i++) s->frame_for_facing[i] = facing_order ? facing_order[i] : i;
-    if (dq3_charsprite_load(&s->hero, assets_dir, entry_base, err, sizeof err) != 0) {
+    if (dq3_charsprite_load(&s->hero, assets_dir, "DQ3MST.BLS", entry_base, err, sizeof err) != 0) {
         s->has_hero = 0;
         return -1;
     }

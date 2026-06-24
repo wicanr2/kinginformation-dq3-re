@@ -10,8 +10,8 @@
 
 /* ---- stub:door 測試不會呼叫,僅供連結 ---- */
 void dq3_set_palette(const dq3_color *pal, int count) { (void)pal; (void)count; }
-int  dq3_charsprite_load(dq3_charsprite *cs, const char *a, int e, char *err, int cap)
-{ (void)cs; (void)a; (void)e; (void)err; (void)cap; return -1; }
+int  dq3_charsprite_load(dq3_charsprite *cs, const char *a, const char *b, int e, char *err, int cap)
+{ (void)cs; (void)a; (void)b; (void)e; (void)err; (void)cap; return -1; }
 
 static int g_fail = 0;
 #define CHECK(c,msg) do{ if(c)printf("  [PASS] %s\n",msg); else {printf("  [FAIL] %s\n",msg); g_fail++;} }while(0)

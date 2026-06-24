@@ -43,7 +43,7 @@ static void decode_frame(const uint8_t *d, size_t n, size_t base,
     }
 }
 
-int dq3_charsprite_load(dq3_charsprite *cs, const char *assets_dir,
+int dq3_charsprite_load(dq3_charsprite *cs, const char *assets_dir, const char *bls_name,
                         int entry_base, char *err, int errcap)
 {
     char path[2048]; FILE *f; long sz; uint8_t *d = NULL; size_t n;
@@ -52,13 +52,13 @@ int dq3_charsprite_load(dq3_charsprite *cs, const char *assets_dir,
     #define FAIL(m) do { if (err) snprintf(err, errcap, "%s", m); free(d); return -1; } while (0)
 
     memset(cs, 0, sizeof *cs);
-    snprintf(path, sizeof path, "%s/DQ3MAN.BLS", assets_dir);
+    snprintf(path, sizeof path, "%s/%s", assets_dir, bls_name);   /* 主角=DQ3MST.BLS / NPC=DQ3MAN.BLS */
     f = fopen(path, "rb");
-    if (!f) FAIL("open DQ3MAN.BLS failed");
+    if (!f) FAIL("open BLS failed");
     fseek(f, 0, SEEK_END); sz = ftell(f); fseek(f, 0, SEEK_SET);
-    if (sz <= 0) { fclose(f); FAIL("DQ3MAN.BLS empty"); }
+    if (sz <= 0) { fclose(f); FAIL("BLS empty"); }
     d = (uint8_t *)malloc((size_t)sz);
-    if (!d || fread(d, 1, (size_t)sz, f) != (size_t)sz) { fclose(f); FAIL("read DQ3MAN.BLS"); }
+    if (!d || fread(d, 1, (size_t)sz, f) != (size_t)sz) { fclose(f); FAIL("read BLS"); }
     fclose(f); n = (size_t)sz;
 
     for (fr = 0; fr < DQ3_CHAR_FRAMES; fr++) {
