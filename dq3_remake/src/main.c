@@ -31,6 +31,7 @@
 #include "dq3_save.h"
 #include "dq3_status.h"
 #include "dq3_cmdmenu.h"
+#include "dq3_encounter.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -285,8 +286,10 @@ static int run_game(const char *assets, const char *dump)
         for (steps = 0; steps < 12; steps++) {
             if (dq3_scene_input(cur, 0x4d)) {   /* 往右走 */
                 if (--enc <= 0) {
-                    mon = over_pool[grnd() % 4];
-                    fprintf(stderr, "--- 第 %d 步:遭遇怪 id%d(背景頁 %d)! ---\n", steps+1, mon, field_bg_page(cur));
+                    int reg = dq3_encounter_region(cur->px, cur->py);   /* 位置→region(docs/39)*/
+                    mon = dq3_encounter_pick(reg, grnd());              /* region→候選怪 */
+                    if (mon < 0) mon = over_pool[grnd() % 4];           /* 空 region 後備 */
+                    fprintf(stderr, "--- 第 %d 步:region 0x%x 遭遇怪 id%d(背景頁 %d)! ---\n", steps+1, reg, mon, field_bg_page(cur));
                     dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
                     oc = dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), "FFFFFFFF", NULL, grnd());
                     fprintf(stderr, "    戰鬥結束 outcome=%d,回地表(重套 palette)\n", oc);
@@ -457,7 +460,9 @@ static int run_game(const char *assets, const char *dump)
                     }
                 }
                 if (moved && !in_town && --enc <= 0) {
-                    int mon = over_pool[grnd() % 4];
+                    int reg = dq3_encounter_region(cur->px, cur->py);   /* 位置→region(docs/39)*/
+                    int mon = dq3_encounter_pick(reg, grnd());
+                    if (mon < 0) mon = over_pool[grnd() % 4];
                     dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
                     dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), NULL, NULL, grnd());
                     dq3_scene_apply_palette(cur);   /* bug #8:戰後還原地表色盤 */

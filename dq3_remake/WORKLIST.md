@@ -131,7 +131,11 @@
   - [x] **忠實敵方 AI ✅**(docs/37):battlescene 改讀真實 D3MNS AI 欄(`dq3_monster_get_ai`):
     逃跑(我方平均等級≥+0x17 且 rng≤+0x18,逃走不給經驗)、施咒 vs 物攻(rng<+0x0d 且會咒文)。
     驗證:金屬史萊姆愛逃、邪惡巫師常施咒、史萊姆純物攻——資料驅動,對上實機。
-  - [ ] 潤飾:packbg 戰鬥背景解碼;遭遇生成 sub_a7d5;傷害公式對 DOSBox 校準;怪物咒文 bit→具體效果對映。
+  - [x] **遭遇生成 sub_a7d5 ✅**(docs/39):RE overworld region map(0x4966 16×16)+ 遭遇表
+    (0x4a56,region→4 子表→候選怪);`dq3_encounter` 生成資料 + region/pick;run_game 地表遭遇
+    改用真實 region→候選怪(取代固定池)。位置決定出怪;region 0(阿里阿罕)= 史萊姆系。
+    待:remake 地表起始座標設為阿里阿罕(目前起點落在較強 region)。
+  - [ ] 潤飾:packbg 戰鬥背景解碼;傷害公式對 DOSBox 校準;怪物咒文 bit→具體效果(已部分,攻擊/回復)。
   - [x] **用復原的 Ortega(128)/Hydra(129)sprite 填空槽 ✅**(2026-06-24,使用者補上參考圖):
     `tools/make_sprites.py`(128=FC 風 128-sprite.jpeg、129=現代 render 紫→綠重映對齊實機索瑪戰)
     → `tools/gen_restored_sprites.py` 內嵌成 `dq3_restored_sprites.c`(committed artifact,參考圖
