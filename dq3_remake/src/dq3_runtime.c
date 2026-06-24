@@ -121,8 +121,10 @@ uint8_t dq3_poll_scancode(void)
         if (e.type == SDL_QUIT) g_quit = 1;
         else if (e.type == SDL_KEYDOWN) {
             SDL_Keycode k = e.key.keysym.sym;
-            /* F10 = 離開(本階段標題畫面用;ESC 只送取消 scancode,不離開) */
-            if (k == SDLK_F10) g_quit = 1;
+            /* F10 = 離開請求 → 送 BIOS scancode 0x44 交遊戲層(Yes/No 確認 + 自動存檔);
+             * ESC 只送取消 scancode 0x01(返回 / 退選單),皆不直接離開
+             * (rules/esc-cancel-f10-quit-autosave)。硬離開只有關窗(SDL_QUIT)。 */
+            if (k == SDLK_F10) sc = 0x44;
             else {
                 uint8_t s = sdl_to_bios_scancode(k);
                 if (s) sc = s;
@@ -132,6 +134,7 @@ uint8_t dq3_poll_scancode(void)
     return sc;
 }
 
+void dq3_rt_set_quit(void) { g_quit = 1; }
 int dq3_should_quit(void) { return g_quit; }
 
 void dq3_delay_ms(uint32_t ms) { if (g_have_sdl) SDL_Delay(ms); }

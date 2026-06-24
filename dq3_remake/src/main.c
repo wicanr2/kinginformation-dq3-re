@@ -63,7 +63,7 @@ static int run_title(const char *assets, const char *title, const char *dump)
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "title %s -> %s OK\n", title, dump);
         return 0;
     }
-    while (!dq3_should_quit()) { dq3_poll_scancode(); dq3_present(); dq3_delay_ms(16); }
+    while (!dq3_should_quit()) { if (dq3_poll_scancode()==DQ3_SC_F10) break; dq3_present(); dq3_delay_ms(16); }
     return 0;
 }
 
@@ -106,6 +106,7 @@ static int run_scene(dq3_scene *s, const char *dump)
 
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
+        if (sc == DQ3_SC_F10) break;        /* F10 離開(standalone 場景檢視)*/
         if (sc) dq3_scene_input(s, sc);
         dq3_scene_render(s, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
@@ -166,6 +167,60 @@ static int find_cty_at(int px, int py) { return find_cty_at_map(px, py, 0); }  /
 
 static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *party,
                          const dq3_stats *st, const dq3_text *text);
+static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
+static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
+
+/* 自動存檔:把名冊/隊伍/道具/位置寫成 dq3_save.dat(remake 自有格式)。回 0=成功。
+ * 路徑:DQ3_SAVE 環境變數,預設 "dq3_save.dat"(cwd;唯讀 cwd 時用 env 指可寫路徑)。 */
+static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
+                         int cty, int px, int py)
+{
+    const char *path = getenv("DQ3_SAVE") ? getenv("DQ3_SAVE") : "dq3_save.dat";
+    int hdr[3]; FILE *f = fopen(path, "wb");
+    if (!f) { fprintf(stderr, "autosave 失敗(無法寫 %s)\n", path); return -1; }
+    hdr[0] = cty; hdr[1] = px; hdr[2] = py;
+    fwrite("DQ3SAVE1", 1, 8, f);
+    fwrite(r, sizeof *r, 1, f); fwrite(p, sizeof *p, 1, f);
+    fwrite(inv, sizeof *inv, 1, f); fwrite(hdr, sizeof hdr, 1, f);
+    fclose(f);
+    fprintf(stderr, "自動存檔 → %s(名冊%d 隊伍%d CTY%d)\n", path, r->count, p->count, cty);
+    return 0;
+}
+
+/* F10 離開確認:渲染「離開遊戲嗎」+ 是/否 選單。回 1=是(離開)、0=否(繼續)。
+ * 會改 DAC palette,呼叫端離開後須重套場景色盤。ESC = 否。 */
+static int confirm_quit(const dq3_text *text)
+{
+    static const uint16_t TITLE[5] = {502, 488, 113, 689, 534};  /* 離開遊戲嗎 */
+    static const uint16_t YES[1] = {399}, NO[1] = {678};         /* 是 / 否 */
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg; uint8_t yellow; dq3_menu m;
+    uint8_t *fb = dq3_fb();
+    int wx = 180, wy = 120, ww = 200, wh = 110, i;
+
+    raw = dq3_load_file("DQ3.PAL", &rl);
+    if (!raw) return 0;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = pal_near2(pal,pn,255,255,255); bg = pal_near2(pal,pn,16,16,32);
+    yellow = (uint8_t)pal_near2(pal,pn,255,255,0);
+
+    dq3_menu_init(&m, wx + 24, wy + 50);
+    dq3_menu_add(&m, YES, 1); dq3_menu_add(&m, NO, 1);
+    m.cursor = 1;                                  /* 預設「否」(較安全)*/
+
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (sc == 0x01) return 0;                  /* ESC = 否(取消離開)*/
+        if (sc) { int sel = dq3_menu_input(&m, sc); if (sel >= 0) return (sel == 0); }
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        for (i = 0; i < 5; i++)
+            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+16+i*DQ3_GLYPH_PX, wy+16, TITLE[i], (uint8_t)white);
+        dq3_menu_render(&m, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, yellow);
+        dq3_present(); dq3_delay_ms(16);
+    }
+    return 0;
+}
 
 static int run_game(const char *assets, const char *dump)
 {
@@ -247,7 +302,13 @@ static int run_game(const char *assets, const char *dump)
             dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         sc = dq3_poll_scancode();
-        if (dlg_ok && dq3_dialogue_is_open(&dlg)) {
+        if (sc == DQ3_SC_F10) {             /* F10:離開遊戲確認(Yes/No)+ 自動存檔 */
+            if (confirm_quit(&dlg.txt)) {
+                autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py);
+                dq3_rt_set_quit();
+            }
+            dq3_scene_apply_palette(cur);   /* confirm 改過 DAC,還原場景色盤 */
+        } else if (dlg_ok && dq3_dialogue_is_open(&dlg)) {
             if (sc == 0x1c || sc == 0x39) dq3_dialogue_advance(&dlg);  /* Enter/Space 翻頁/關閉 */
         } else if (sc == 0x1c) {            /* Enter:調べる本格 tile 事件(docs/31 真事件系統)*/
             int et, ep;
@@ -404,7 +465,7 @@ static int run_text(const char *assets, const char *dump)
 
     if(dump){ dq3_present(); if(dq3_dump_ppm(dump)==0) fprintf(stderr,"text -> %s OK\n",dump);
         dq3_text_free(&t); return 0; }
-    while(!dq3_should_quit()){ dq3_poll_scancode(); dq3_present(); dq3_delay_ms(16); }
+    while(!dq3_should_quit()){ if(dq3_poll_scancode()==DQ3_SC_F10) break; dq3_present(); dq3_delay_ms(16); }
     dq3_text_free(&t); return 0;
 }
 
@@ -449,6 +510,19 @@ static int run_tavern(const char *assets, const char *dump)
                         case 'R':sc=0x4d;break; case 'E':sc=0x1c;break; case 'S':sc=0x39;break; }
           if (sc) dq3_tavern_input(&tv, sc); } }
 
+    if (getenv("DQ3_TAVERN_SCREEN") && atoi(getenv("DQ3_TAVERN_SCREEN")) == 9 && dump) {
+        /* F10 離開確認視窗 視覺驗證 */
+        static const uint16_t TT[5] = {502,488,113,689,534}; dq3_menu cm; int i;
+        int cwx=180,cwy=120,cww=200,cwh=110;
+        dq3_menu_init(&cm, cwx+24, cwy+50);
+        { uint16_t y1[1]={399}, n1[1]={678}; dq3_menu_add(&cm,y1,1); dq3_menu_add(&cm,n1,1); cm.cursor=1; }
+        tav_window(fb, cwx, cwy, cww, cwh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        for (i=0;i<5;i++) dq3_text_draw_glyph(&t,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cwx+16+i*DQ3_GLYPH_PX,cwy+16,TT[i],(uint8_t)white);
+        dq3_menu_render(&cm,&t,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,(uint8_t)white,yellow);
+        dq3_present();
+        if (dq3_dump_ppm(dump)==0) fprintf(stderr,"tavern(F10 離開確認) -> %s OK\n", dump);
+        dq3_text_free(&t); return 0;
+    }
     if (dump) {
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         dq3_tavern_render(&tv, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
@@ -459,6 +533,7 @@ static int run_tavern(const char *assets, const char *dump)
     }
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
+        if (sc == DQ3_SC_F10) break;        /* F10 離開(standalone tavern demo)*/
         if (sc) dq3_tavern_input(&tv, sc);
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         dq3_tavern_render(&tv, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
@@ -487,7 +562,7 @@ static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *part
     dq3_tavern_init(&tv, roster, party, st);
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
-        if (sc == 0x01) break;                 /* ESC 離開酒場 */
+        if (sc == 0x01 || sc == DQ3_SC_F10) break;  /* ESC / F10 離開酒場(回遊戲)*/
         if (sc) dq3_tavern_input(&tv, sc);
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         dq3_tavern_render(&tv, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);

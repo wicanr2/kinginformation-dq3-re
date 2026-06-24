@@ -107,6 +107,14 @@
 - [ ] #7c 祈禱之戒:原版本就會壞(~25%),保持即可(不需修)
 - [x] **#8 戰鬥後畫面變黃/綠不恢復**(玩家實機回報;docs/28):根因=戰鬥切 MNSBK.PAL 進 DAC、離場只重載 tile 不還原 DQ3.PAL。remake 從設計免疫:`dq3_scene_apply_palette` 契約,場景切換/戰鬥返回必重套目的 palette(已在 run_scene 落地)。原版 byte-level 修點留 DOSBox oracle 回合。
 
+### 離開 / 存檔慣例(rules/esc-cancel-f10-quit-autosave)✅
+- [x] **ESC = 取消/返回**(退選單,不離開遊戲);runtime ESC→scancode 0x01。
+- [x] **F10 = 離開確認**:跳「離開遊戲嗎」是/否視窗(`confirm_quit`,預設「否」)→ 是 → `autosave_game`
+  (名冊/隊伍/道具/位置 → dq3_save.dat,DQ3_SAVE 可改路徑)+ 離開;否/ESC → 繼續。
+  runtime F10→scancode 0x44 交遊戲層(不直接 quit);硬離開只剩關窗(SDL_QUIT)。
+  各 standalone 模式 F10→離開該模式。dump 驗證確認視窗(離開遊戲嗎 + 是/否 + ►否)。
+- [ ] 存檔讀取(load)+ 真正的多存檔槽 / 教會存檔點(目前只 autosave 單檔)。
+
 ### 階段⑤ oracle 驗證 + 打包
 - [ ] DOSBox 原版 vs remake **逐畫面比對一模一樣**(bug 場景=修正後正確行為);用 `tools/dosbox*` 截原版、remake headless 截圖比對。
 - [ ] retro-cjk-hires-canvas:內部畫布原生解析、nearest 放大;CJK 16×16 正常。
