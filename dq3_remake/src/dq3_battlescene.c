@@ -155,6 +155,9 @@ static int pick_alive_party(const member*p){ int i,t=alive_party(p),k; if(!t)ret
 /* 隊伍職業索引(對 dq3_stats 成長表):勇者0 / 武鬥家2 / 僧侶3 / 魔法師4(玩家隊伍時覆寫)。 */
 static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 
+/* 敵方 AI(docs/37):本場怪的 D3MNS AI 欄位 + 我方平均等級 + 本場逃走數。 */
+static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled;
+
 /* 咒文施放值:DQ3.EXE 公式(file 0xc22e)val = base/2 + rng(base/2)。 */
 static int spell_value(int base)
 {
@@ -271,13 +274,21 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
     }
     if(alive_enemy(ehp,en)==0) return 1;   /* 勝 */
 
-    /* 敵方反擊:每隻存活敵人攻擊;偶爾改放咒文(魔甲抗魔 #7b,dq3_combat)*/
+    /* 敵方回合:逐隻依真實 D3MNS AI(docs/37)— 逃跑 / 施咒 / 物攻。 */
     for(i=0;i<en;i++){
         int t,dmg;
         if(ehp[i]<=0) continue;
+        /* 逃跑判定:我方平均等級 ≥ flee_thresh 且 rng ≤ flee_rate → 怪逃走(不給經驗)*/
+        if(g_eai_ok && g_eai.flee_rate>0 && g_party_avglv >= g_eai.flee_thresh
+           && roll255() <= g_eai.flee_rate){
+            ehp[i]=0; g_fled++;
+            fprintf(stderr,"  敵%d 逃走了!\n", i);
+            continue;
+        }
         t=pick_alive_party(party); if(t<0) break;
-        if((roll255() & 3) == 0){           /* 1/4 機率放咒文(示範 #7b)*/
-            int base = 24 + (int)(roll255() & 7);   /* 咒文基礎傷害 */
+        /* 施咒 vs 物攻:rng(256) < cast_prob 且 會咒文 → 放咒(魔甲抗魔 #7b)*/
+        if(g_eai_ok && g_eai_nspell>0 && roll255() < g_eai.cast_prob){
+            int base = 24 + (int)(roll255() & 7);
             dmg = g_items_ok ? dq3_combat_spell_damage(&g_items, party[t].equip, base) : base;
             if(party[t].defending) dmg/=2;
             party[t].hp = (int)dq3_battle_apply_damage((uint16_t)party[t].hp, dmg);
@@ -484,6 +495,12 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     ehpmax = ms.hp_base + ms.hp_rand; if(ehpmax<1)ehpmax=1;
     eatk = ms.atk>0?ms.atk:8; edef=(ms.def>0&&ms.def<255)?ms.def:4; eagi=ms.agi; efree=ms.flee_resist;
     { int i; for(i=0;i<en;i++) ehp[i]=ehpmax; }
+    /* 敵方 AI(docs/37):讀本場怪 D3MNS AI 欄 + 算我方平均等級;g_fled 計逃走數 */
+    g_eai_ok = (dq3_monster_get_ai(&mons, monster_id, &g_eai) == 0);
+    g_eai_nspell = g_eai_ok ? dq3_monster_spell_count(&g_eai) : 0;
+    g_fled = 0;
+    { int i, s=0, c=0; for(i=0;i<PARTY;i++) if(party[i].maxhp>0||party[i].level>0){ s+=party[i].level; c++; }
+      g_party_avglv = c ? s/c : 1; }
     fprintf(stderr,"=== 遭遇 %s ×%d (HP%d atk%d def%d) ===\n", ms.exp?"怪物":"怪物", en, ehpmax, eatk, edef);
 
     if(getenv("DQ3_SPELLSEL_DUMP")){   /* 選咒選單視覺驗證 */
@@ -501,7 +518,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             p++;
             if(turn>50) break;
         }
-        if(outcome==1){ apply_victory_exp(party, pm, (uint32_t)en * ms.exp);   /* 勝利→經驗→升級 */
+        if(outcome==1){ apply_victory_exp(party, pm, (uint32_t)((en-g_fled)>0?(en-g_fled):0) * ms.exp);   /* 勝利→經驗→升級 */
             writeback_roster(pm); }                                            /* 回寫名冊(持久)*/
         if(dump){
             render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0,monster_id);
@@ -534,7 +551,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         }
         dq3_delay_ms(16);
     }
-    if(outcome==1){ apply_victory_exp(party, pm, (uint32_t)en * ms.exp);   /* 勝利→經驗→升級 */
+    if(outcome==1){ apply_victory_exp(party, pm, (uint32_t)((en-g_fled)>0?(en-g_fled):0) * ms.exp);   /* 勝利→經驗→升級 */
         writeback_roster(pm); }                                            /* 回寫名冊(持久)*/
     /* 結束:顯示末幀片刻 */
     render(dq3_fb(),&spr,ehp,en,party,cursor,0,monster_id);

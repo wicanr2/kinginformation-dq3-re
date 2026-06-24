@@ -31,9 +31,21 @@ typedef struct {
     int loaded;
 } dq3_monsters;
 
+/* 怪物 AI 參數(D3MNS.DAT 欄位;反組譯 docs/37)。 */
+typedef struct {
+    uint8_t cast_prob;     /* +0x0d:rng(256) < 此值 → 放咒,否則物攻 */
+    uint8_t flee_thresh;   /* +0x17:我方平均等級 ≥ 此值 → 考慮逃跑 */
+    uint8_t flee_rate;     /* +0x18:觸發後 rng(256) ≤ 此值就逃(0=不逃)*/
+    uint8_t spell_mask[6]; /* +0x0e..+0x13:已知咒文 bitmask(48 bit)*/
+} dq3_monster_ai;
+
 int  dq3_monsters_load(dq3_monsters *m, const char *assets_dir, char *err, int errcap);
 void dq3_monsters_free(dq3_monsters *m);
 int  dq3_monster_get_stat(const dq3_monsters *m, int id, dq3_monster_stat *out);
+/* 取怪物 AI 參數(docs/37)。回 0 成功。 */
+int  dq3_monster_get_ai(const dq3_monsters *m, int id, dq3_monster_ai *out);
+/* 怪物會幾種咒(spell_mask 的 set bit 數)。 */
+int  dq3_monster_spell_count(const dq3_monster_ai *ai);
 /* 遭遇時的當前 HP = hp_base + rnd(hp_rand)(此處給確定性上限 base+hp_rand)。 */
 uint16_t dq3_monster_hp_max(const dq3_monsters *m, int id);
 

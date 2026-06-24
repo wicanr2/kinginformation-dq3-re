@@ -48,6 +48,25 @@ int dq3_monster_get_stat(const dq3_monsters *m, int id, dq3_monster_stat *o)
     return 0;
 }
 
+int dq3_monster_get_ai(const dq3_monsters *m, int id, dq3_monster_ai *o)
+{
+    const uint8_t *r; int i;
+    if (!m->loaded || id<0 || id>=DQ3_MONSTER_COUNT) return -1;
+    r = m->raw + (size_t)id*DQ3_MONSTER_REC;
+    o->cast_prob = r[0x0d];          /* docs/37 */
+    o->flee_thresh = r[0x17];
+    o->flee_rate = r[0x18];
+    for (i=0;i<6;i++) o->spell_mask[i] = r[0x0e + i];
+    return 0;
+}
+
+int dq3_monster_spell_count(const dq3_monster_ai *ai)
+{
+    int i, b, c=0;
+    for (i=0;i<6;i++) for (b=0;b<8;b++) if (ai->spell_mask[i] & (0x80>>b)) c++;
+    return c;
+}
+
 uint16_t dq3_monster_hp_max(const dq3_monsters *m, int id)
 {
     dq3_monster_stat s;

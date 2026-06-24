@@ -128,7 +128,10 @@
   - [x] **戰鬥場景繪製**:`main.c` battle 模式 — MNSBK.PAL + 怪群 sprite blit(透明)+ 天空/地面背景。實測史萊姆×6 對 references/game3.png 一致(藍天/綠地/6 隻藍史萊姆)。
   - [x] **互動戰鬥迴圈**(`dq3_battlescene`):遭遇怪群 + 指令選單(戰/逃/防/道具,游標)+ 回合執行(物理傷害公式 `dq3_battle_phys_damage`,會心一擊、防禦減半、逃跑判定)+ #1 正確結算 + 隊伍 HP 條 HUD。可互動(方向+Enter)可 headless 腳本(DQ3_BATTLE_SCRIPT)。實測史萊姆×3 FFFF→勝。
   - [x] **戰鬥 CJK 文字**:敵名(D3TXT00 rec 0x258+id)、指令選單(戰鬥/逃跑/防禦/道具)、隊伍 HP 數字,皆以 dq3_text 字模渲染。戰鬥畫面與 game3.png 一致(經典重現)。
-  - [ ] 潤飾:packbg 戰鬥背景解碼;遭遇生成 sub_a7d5;復原 Ortega/Hydra 填 #3 空槽;傷害公式對 DOSBox 校準。
+  - [x] **忠實敵方 AI ✅**(docs/37):battlescene 改讀真實 D3MNS AI 欄(`dq3_monster_get_ai`):
+    逃跑(我方平均等級≥+0x17 且 rng≤+0x18,逃走不給經驗)、施咒 vs 物攻(rng<+0x0d 且會咒文)。
+    驗證:金屬史萊姆愛逃、邪惡巫師常施咒、史萊姆純物攻——資料驅動,對上實機。
+  - [ ] 潤飾:packbg 戰鬥背景解碼;遭遇生成 sub_a7d5;傷害公式對 DOSBox 校準;怪物咒文 bit→具體效果對映。
   - [x] **用復原的 Ortega(128)/Hydra(129)sprite 填空槽 ✅**(2026-06-24,使用者補上參考圖):
     `tools/make_sprites.py`(128=FC 風 128-sprite.jpeg、129=現代 render 紫→綠重映對齊實機索瑪戰)
     → `tools/gen_restored_sprites.py` 內嵌成 `dq3_restored_sprites.c`(committed artifact,參考圖
