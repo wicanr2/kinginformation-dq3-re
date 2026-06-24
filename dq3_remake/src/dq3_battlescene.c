@@ -156,7 +156,7 @@ static int pick_alive_party(const member*p){ int i,t=alive_party(p),k; if(!t)ret
 static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 
 /* 敵方 AI(docs/37):本場怪的 D3MNS AI 欄位 + 我方平均等級 + 本場逃走數。 */
-static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled;
+static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled, g_ehpmax;
 
 /* 咒文施放值:DQ3.EXE 公式(file 0xc22e)val = base/2 + rng(base/2)。 */
 static int spell_value(int base)
@@ -286,15 +286,29 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
             continue;
         }
         t=pick_alive_party(party); if(t<0) break;
-        /* 施咒 vs 物攻:rng(256) < cast_prob 且 會咒文 → 放咒(魔甲抗魔 #7b)*/
+        /* 施咒 vs 物攻:rng(256) < cast_prob 且 會咒文 → 從 bitmask 隨機挑真實咒文施放 */
         if(g_eai_ok && g_eai_nspell>0 && roll255() < g_eai.cast_prob){
-            int base = 24 + (int)(roll255() & 7);
-            dmg = g_items_ok ? dq3_combat_spell_damage(&g_items, party[t].equip, base) : base;
-            if(party[t].defending) dmg/=2;
-            party[t].hp = (int)dq3_battle_apply_damage((uint16_t)party[t].hp, dmg);
-            fprintf(stderr,"  敵%d 詠唱咒文 → %s%s 受 %d 傷害%s\n", i, party[t].dbg,
-                    (g_items_ok && dq3_combat_has_magic_resist(&g_items, party[t].equip))?"(魔法鎧甲抗魔·減半!)":"",
-                    dmg, party[t].hp==0?" — 倒下!":"");
+            int bits[48], nb=0, b, bit; const dq3_spell_def *d;
+            for(b=0;b<48;b++) if(g_eai.spell_mask[b/8] & (0x80>>(b%8))) bits[nb++]=b;
+            bit = bits[(int)(rnd()%(unsigned)nb)];        /* 均勻隨機(docs/37)*/
+            d = dq3_spell_def_get(dq3_monster_spell_rec[bit]);  /* bit→真咒名(0x3930 remap)*/
+            if(d && d->kind==DQ3_SK_HEAL){                /* 治療系怪:補一隻受傷的同伴 */
+                int e, lo=-1, lv=1<<30;
+                for(e=0;e<en;e++) if(ehp[e]>0 && ehp[e]<g_ehpmax && ehp[e]<lv){lv=ehp[e];lo=e;}
+                if(lo<0) lo=i;
+                { int v=(d->base>=255)?g_ehpmax:(d->base/2+(int)((roll255()*(d->base/2))/256));
+                  ehp[lo]+=v; if(ehp[lo]>g_ehpmax)ehp[lo]=g_ehpmax;
+                  fprintf(stderr,"  敵%d 詠唱回復咒文 → 敵%d 回復 %d。\n", i, lo, v); }
+            } else {                                      /* 攻擊咒:打我方(魔甲抗魔 #7b)*/
+                int base = d ? d->base : 24;
+                dmg = g_items_ok ? dq3_combat_spell_damage(&g_items, party[t].equip,
+                          base/2 + (int)((roll255()*(base/2))/256)) : base/2;
+                if(party[t].defending) dmg/=2;
+                party[t].hp = (int)dq3_battle_apply_damage((uint16_t)party[t].hp, dmg);
+                fprintf(stderr,"  敵%d 詠唱咒文 → %s%s 受 %d 傷害%s\n", i, party[t].dbg,
+                        (g_items_ok && dq3_combat_has_magic_resist(&g_items, party[t].equip))?"(魔甲抗魔·減半!)":"",
+                        dmg, party[t].hp==0?" — 倒下!":"");
+            }
         } else {
             dmg=dq3_battle_phys_damage(eatk, party[t].def, roll255(), roll255()<8);
             if(party[t].defending) dmg/=2;
@@ -498,6 +512,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     /* 敵方 AI(docs/37):讀本場怪 D3MNS AI 欄 + 算我方平均等級;g_fled 計逃走數 */
     g_eai_ok = (dq3_monster_get_ai(&mons, monster_id, &g_eai) == 0);
     g_eai_nspell = g_eai_ok ? dq3_monster_spell_count(&g_eai) : 0;
+    g_ehpmax = ehpmax;
     g_fled = 0;
     { int i, s=0, c=0; for(i=0;i<PARTY;i++) if(party[i].maxhp>0||party[i].level>0){ s+=party[i].level; c++; }
       g_party_avglv = c ? s/c : 1; }

@@ -32,4 +32,7 @@ typedef struct {
 /* 查咒文 rec 的施放 descriptor;非可施放(輔助/未實作)回 NULL。 */
 const dq3_spell_def *dq3_spell_def_get(unsigned short rec);
 
+/* 怪物咒文 bit(0..47)→ 咒名 rec(EXE 0x3930 remap,docs/37)。 */
+extern const unsigned short dq3_monster_spell_rec[48];
+
 #endif /* DQ3_SPELL_H */
