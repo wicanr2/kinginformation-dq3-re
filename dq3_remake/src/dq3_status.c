@@ -1,6 +1,7 @@
 /* dq3_status.c — つよさ 能力值畫面實作。 */
 #include "dq3_status.h"
 #include "dq3_stats.h"
+#include "dq3_spell.h"
 
 /* 標籤 glyph(D3TXT00.FON 索引);順序對 dq3_stat_kind。 */
 static const uint16_t L_LV[2]   = {419, 420};   /* 等級 */
@@ -71,4 +72,32 @@ void dq3_status_render(const dq3_recruit *rc, const dq3_text *t,
     row(t, fb, fb_w, fb_h, x, yy, L_AGI,  2, m->stat[DQ3_STAT_AGI],  fg); yy += H;
     row(t, fb, fb_w, fb_h, x, yy, L_INT,  2, m->stat[DQ3_STAT_INT],  fg); yy += H;
     row(t, fb, fb_w, fb_h, x, yy, L_LUCK, 2, m->stat[DQ3_STAT_LUCK], fg);
+}
+
+void dq3_status_render_spells(const dq3_recruit *rc, const dq3_text *t,
+                             uint8_t *fb, int fb_w, int fb_h, int x, int y, uint8_t fg)
+{
+    static const uint16_t L_SPELL[2] = {429, 430};   /* 咒文 */
+    unsigned short recs[64];
+    int n = dq3_spells_known(rc->m.cls, rc->m.level, recs, 64);
+    int yy = y, i;
+
+    /* 標題:姓名 + 咒文 */
+    draw_glyphs(t, fb, fb_w, fb_h, x, yy, rc->name, rc->name_len, fg);
+    draw_glyphs(t, fb, fb_w, fb_h, x + (rc->name_len + 1) * DQ3_GLYPH_PX, yy, L_SPELL, 2, fg);
+    yy += 20;
+
+    if (n == 0) {
+        static const uint16_t L_NONE = 495;   /* 無 */
+        dq3_text_draw_glyph(t, fb, fb_w, fb_h, x, yy, L_NONE, fg);
+        return;
+    }
+    /* 兩欄列出咒文名(每名一筆 D3TXT00 record)*/
+    for (i = 0; i < n; i++) {
+        int col = i & 1, rowi = i >> 1;
+        int sx = x + col * (5 * DQ3_GLYPH_PX);
+        int sy = yy + rowi * 17;
+        if (sy + 16 > fb_h) break;
+        dq3_text_draw_record(t, fb, fb_w, fb_h, sx, sy, 5, 1, recs[i], fg);
+    }
 }

@@ -12,4 +12,9 @@
 void dq3_status_render(const dq3_recruit *rc, const dq3_text *t,
                        uint8_t *fb, int fb_w, int fb_h, int x, int y, uint8_t fg);
 
+/* 在 (x,y) 起繪一名隊員「已學會的咒文」清單(由職業 + 等級算,DQ3.EXE 習得表)。
+ * 無咒職業顯示「無」。 */
+void dq3_status_render_spells(const dq3_recruit *rc, const dq3_text *t,
+                             uint8_t *fb, int fb_w, int fb_h, int x, int y, uint8_t fg);
+
 #endif /* DQ3_STATUS_H */

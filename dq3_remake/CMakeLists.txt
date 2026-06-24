@@ -44,6 +44,8 @@ add_executable(dq3_remake
     src/dq3_zhuyin_table.c
     src/dq3_save.c
     src/dq3_status.c
+    src/dq3_spell.c
+    src/dq3_spells_table.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)

@@ -592,7 +592,10 @@ static int run_tavern(const char *assets, const char *dump)
         demo.name[0] = nm[0]; demo.name[1] = nm[1]; demo.name_len = 2; demo.gender = 0;
         demo.m.cls = cls; dq3_member_init(&demo.m, &st, cls, lv);
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
-        dq3_status_render(&demo, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+        if (getenv("DQ3_ST_PAGE") && getenv("DQ3_ST_PAGE")[0]=='s')
+            dq3_status_render_spells(&demo, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+        else
+            dq3_status_render(&demo, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
         dq3_present();
         if (dq3_dump_ppm(dump)==0)
             fprintf(stderr, "status(cls=%d lv=%d HP=%u MP=%u) -> %s OK\n",
@@ -651,7 +654,7 @@ static void status_modal(const dq3_roster *roster, const dq3_party *party, const
 {
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t *fb = dq3_fb();
-    int wx = 40, wy = 50, ww = 220, wh = 210, cur = 0, n = 0, i;
+    int wx = 40, wy = 50, ww = 220, wh = 210, cur = 0, n = 0, i, page = 0;
     int members[DQ3_PARTY_MAX];
 
     for (i = 0; i < DQ3_PARTY_MAX; i++)
@@ -669,9 +672,14 @@ static void status_modal(const dq3_roster *roster, const dq3_party *party, const
         if (sc == 0x01 || sc == DQ3_SC_F10) break;            /* ESC / F10 離開 */
         if (sc == 0x4b) cur = (cur + n - 1) % n;              /* ← 上一名 */
         else if (sc == 0x4d) cur = (cur + 1) % n;             /* → 下一名 */
+        else if (sc == 0x39 || sc == 0x1c) page ^= 1;         /* Space/Enter:能力↔咒文 切換 */
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
-        dq3_status_render(&roster->list[members[cur]], text, fb,
-                          DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+        if (page == 0)
+            dq3_status_render(&roster->list[members[cur]], text, fb,
+                              DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+        else
+            dq3_status_render_spells(&roster->list[members[cur]], text, fb,
+                              DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
         dq3_present(); dq3_delay_ms(16);
     }
 }
