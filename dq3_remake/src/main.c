@@ -338,6 +338,15 @@ static int run_game(const char *assets, const char *dump)
         return 0;
     }
 
+    /* 互動開場:從阿里阿罕城鎮(CTY00 sec0)起步——玩家先走到西側 LUIDA 櫃台建隊,
+     * 再從門/SPACE 出城到地表(起點 153,174 → region 1 弱怪)。 */
+    {
+        dq3_scene *t0 = dq3_town_load(assets, "CTY00.DAT", 0, 1, err, sizeof err);
+        if (t0) { town = t0; load_field_hero(town, assets); cur = town; in_town = 1; cur_cty = 0;
+                  dq3_scene_apply_palette(cur);
+                  fprintf(stderr, "開場:阿里阿罕城鎮(CTY00)— 西側櫃台建隊、C 開指令窗、B 商店、SPACE 出城\n"); }
+    }
+
     /* 互動:方向走動 + 隨機遭遇;SPACE 進/出城鎮;Enter 對話(前方有事件時)。 */
     while (!dq3_should_quit()) {
         uint8_t sc;
