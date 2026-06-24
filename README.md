@@ -118,7 +118,26 @@
 | 地圖 tile + 世界地圖還原（城鎮佈局待 EXE） | ✅ | [`docs/04-map-format.md`](docs/04-map-format.md)、[`docs/maps/`](docs/maps/) |
 | `DQ3.EXE` 反組譯 → C | 🔄 主結構成 C(啟動/主迴圈/狀態機/野外指令/對話/戰鬥/場景/素材載入/注音輸入) | [`docs/05`](docs/05-exe-recon.md)–[`19`](docs/19-re-correctness.md)、[`re/`](re/) |
 | RE 正確性確認(原版編譯器 = **MSC 5.x**,byte-match 驗證) | 🔄 方法已證、擴展中 | [`docs/19`](docs/19-re-correctness.md)、[`docs/17`](docs/17-build-toolchain.md) |
-| 最終目標:SDL2 現代跨平台重寫(DOSBox 原版當 oracle) | 🔄 骨架 PoC(SDL 顯示標題)| [`docs/17`](docs/17-build-toolchain.md)、[`re/sdl/`](re/sdl/) |
+| **SDL2 現代跨平台重寫**(`dq3_remake/`,C99+SDL2) | ✅ **核心 RPG 迴圈完整可玩**(見下「remake 可玩狀態」)| [`dq3_remake/`](dq3_remake/)、[`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md) |
+
+### remake 可玩狀態（`dq3_remake/` — 核心 RPG 迴圈完整）
+
+`dq3_remake/`（C99 + SDL2，docker 編譯、不污染 host）已是一個**完整、可玩、資料驅動**的精訊版
+DQ3 核心。整條經典迴圈都在，且每個數值 / 邏輯都從 `DQ3.EXE` 或遊戲資料抽出，不是湊的：
+
+```
+阿里阿罕城鎮起步 → 露依達酒場創角（職業 → 注音/英數命名 → 性別 → 登錄）→ 名冊/隊伍
+  → 出城到地表（真實 DQ3CON.MAP + 原版起點 153,174 + 真實遭遇區）
+  → 城鎮（CTY / NPC / 繁中對話 / 門 / 轉場）
+  → 戰鬥：野外指令窗 → 手動/自動選咒（EXE 精確威力）+ 怪物 AI（施咒率/逃跑/真實法術）
+          + 裝備加成 + 升級（255 clamp）+ 回寫名冊 + 戰利金錢
+  → 商店（真實 ITEM.DAT 價格 / 職業裝備限制）→ 裝備變強
+  → つよさ / じゅもん / 道具 畫面 → 存檔
+```
+
+**7 個 bug 全在 C 層修對**。怪物全 RE（[AI](docs/37-monster-ai.md) / [數值+法術](docs/38-monster-stats.md) /
+[遭遇區](docs/39-encounter-zones.md)）、咒文全 RE（descriptor 威力 + 習得表）、道具全 RE
+（[ITEM.DAT](docs/22-item-fix.md) 攻/防/價/職業限制）。中文化亮點**注音組字輸入**已重建。
 
 ### 已解出的重點
 
