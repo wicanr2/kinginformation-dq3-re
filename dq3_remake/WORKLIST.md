@@ -157,7 +157,9 @@
 - [整合] **#6 數值 255 溢位**:`dq3_stats_add_clamped`(uint16+clamp 9999)。
   **已整合**:`dq3_member.stat[6]` 全程 uint16,`gain_exp` 升級套成長一律經 add_clamped 寫回
   → 設計上免疫 255 wrap(=#6 真正修法)。單測:200+100 wrap44 vs 300;整合測:屬性 ≤9999。
-  註:原版確切 wrap 點仍未定位(docs/23);clamp 9999 為上限佔位,核心修正是 uint16 全程。
+  註:原版確切 wrap 點仍未定位(docs/23);**核心修正 = 依屬性別 clamp**:主屬性(力量/速度/耐力/
+  聰明/運氣)byte 上限 255、HP/MP 上限 999(`dq3_stat_cap_for`)。驗證:武鬥家 Lv43 力量 481→clamp 255
+  (原版 byte wrap 會歸 0~225);HP/MP 未誤夾。`dq3_member_init`/`gain_exp` 皆套用。
 - [整合] **#7a 隼劍雙擊**:`dq3_combat_num_attacks`(武器 +5 bit7;機制對齊 RE file 0xc1fa 二擊重入)。
   **已接進** `dq3_battlescene::do_turn`(飛鷹劍員打 2 次)。實測:勇者(飛鷹劍)第1擊+第2擊、武鬥家普通武器 1 次。單測:飛鷹劍 2 次。
 - [整合] **#7b 魔法鎧甲抗魔**:`dq3_combat_spell_damage`(裝備 +6 bit2 減半)。**已接進** battlescene 敵方咒文路徑。

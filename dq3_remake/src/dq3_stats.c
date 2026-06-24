@@ -80,6 +80,20 @@ uint16_t dq3_stats_add_clamped(uint16_t cur, int delta)
     return (uint16_t)v;
 }
 
+/* #6 各屬性上限:主屬性(力量/速度/耐力/聰明/運氣)為 byte → 上限 255(原版超 255 wrap 歸 0 = bug);
+ * HP/MP 為 3 位數值 → 上限 999。clamp(不 wrap)即 #6 修正。 */
+int dq3_stat_cap_for(dq3_stat_kind k)
+{
+    return (k == DQ3_STAT_HP || k == DQ3_STAT_MP) ? DQ3_STAT_HPMP_CAP : DQ3_STAT_PRIMARY_CAP;
+}
+static uint16_t add_clamped_kind(uint16_t cur, int delta, dq3_stat_kind k)
+{
+    int v = (int)cur + delta, cap = dq3_stat_cap_for(k);
+    if (v < 0) v = 0;
+    if (v > cap) v = cap;          /* #6:依屬性別 clamp,不 wrap */
+    return (uint16_t)v;
+}
+
 void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
 {
     int k;
@@ -87,8 +101,10 @@ void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
     if (level > DQ3_MAX_LEVEL) level = DQ3_MAX_LEVEL;
     m->cls = cls; m->level = level;
     m->exp = st->thresh[cls][level];                  /* 該等級的門檻經驗 */
-    for (k = 0; k < DQ3_STAT_COUNT; k++)
-        m->stat[k] = dq3_stats_growth_target(st, cls, (dq3_stat_kind)k, level);
+    for (k = 0; k < DQ3_STAT_COUNT; k++) {
+        int t = dq3_stats_growth_target(st, cls, (dq3_stat_kind)k, level);
+        m->stat[k] = add_clamped_kind(0, t, (dq3_stat_kind)k);   /* #6:初始值也 clamp(高階主屬性 > 255)*/
+    }
 }
 
 int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
@@ -102,7 +118,7 @@ int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
             int t0 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv0);
             int t1 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv1);
             int delta = t1 - t0; if (delta < 0) delta = 0;
-            m->stat[k] = dq3_stats_add_clamped(m->stat[k], delta);   /* #6:uint16+clamp */
+            m->stat[k] = add_clamped_kind(m->stat[k], delta, (dq3_stat_kind)k);  /* #6:依屬性別 clamp 255/999 */
         }
         m->level = lv1; gained++;
     }

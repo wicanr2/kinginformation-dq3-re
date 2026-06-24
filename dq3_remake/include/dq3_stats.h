@@ -21,7 +21,9 @@
 
 #define DQ3_NUM_CLASS   8
 #define DQ3_MAX_LEVEL   43     /* 門檻表 lv0..43,共 44 entry */
-#define DQ3_STAT_CAP    9999   /* #6:屬性顯式上限(取代自然 wrap) */
+#define DQ3_STAT_CAP    9999   /* #6:寬泛上限(dq3_stats_add_clamped 通用)*/
+#define DQ3_STAT_PRIMARY_CAP 255   /* #6:力量/速度/耐力/聰明/運氣 byte 上限(原版超 255 wrap 歸 0)*/
+#define DQ3_STAT_HPMP_CAP    999   /* #6:HP/MP 3 位數上限 */
 
 /* 職業:0勇者 1戰士 2武鬥家 3僧侶 4魔法使者 5賢者 6商人 7遊玩者 */
 /* 成長屬性欄 = 成長表 14 byte 的 7 個 (base,slope) 對,kind*2 = 列內 byte offset。
@@ -62,6 +64,9 @@ int dq3_stats_level_for_exp(const dq3_stats *st, int cls, uint32_t exp, int fixe
 
 /* #6:屬性安全累加(uint16 + 顯式 clamp 到 DQ3_STAT_CAP,不 wrap)。 */
 uint16_t dq3_stats_add_clamped(uint16_t cur, int delta);
+
+/* #6:依屬性別的上限(主屬性 255、HP/MP 999)。member 升級用此 clamp,杜絕 255 wrap。 */
+int dq3_stat_cap_for(dq3_stat_kind k);
 
 /* ---- 隊員實體:把上述零件整合成可玩的升級系統(#4/#5/#6 在此真生效)---- */
 typedef struct {
