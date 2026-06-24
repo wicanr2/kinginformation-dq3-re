@@ -24,11 +24,11 @@
 
 ![字庫](docs/fonts/D3TXT00.FON.atlas.png)
 
-**怪物圖鑑**（`DQ3MNS.SHP` sprite + `mnsbk.pal`，128 隻全彩；id 5 = 史萊姆、id 2 = 金屬史萊姆，數值見 [`docs/data/d3mns_stats.json`](docs/data/d3mns_stats.json)）：
+**怪物圖鑑**（`DQ3MNS.SHP` sprite + `mnsbk.pal`，130 隻全彩；id 5 = 史萊姆、id 2 = 金屬史萊姆，數值見 [`docs/data/d3mns_stats.json`](docs/data/d3mns_stats.json)。最後兩格 128/129 為下方復原的未完成 boss）：
 
 ![怪物圖鑑](docs/monsters/monster_sheet.png)
 
-**復原未完成的 sprite**（未發售版只有 130 隻中 **2 隻沒做完**:id 128 歐里狄加、id 129 五頭龍大王——正是索瑪城「父親 vs 五頭龍」決鬥那場戲的雙方,缺圖導致該戰當機。依參考圖以精訊風格重繪、注入原格式,經遊戲 SHP 解碼器驗證):
+**復原未完成的 sprite**（未發售版 130 隻中 **2 隻沒做完**:id 128 歐里狄加、id 129 五頭龍大王——正是索瑪城「父親 vs 五頭龍」決鬥那場戲的雙方,缺圖導致該戰當機。依參考圖以精訊風格重繪、注入原格式,經遊戲 SHP 解碼器驗證;五頭龍配色對齊實機索瑪最終戰的綠色 King Hydra。remake 戰鬥已接此復原 sprite,bug #3 從「不當機」進到「真顯示」):
 
 ![復原父子決鬥](docs/monsters/restored_128_129.png)
 
