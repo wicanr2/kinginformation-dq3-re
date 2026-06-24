@@ -7,3 +7,7 @@ build/
 build/
 titg*.png
 titg*.ppm
+
+# demo 錄製(渲染版權字模像素,保持本地不入公開 repo)
+*.gif
+demo_frames/
