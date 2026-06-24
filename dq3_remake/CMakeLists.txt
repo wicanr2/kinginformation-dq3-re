@@ -35,6 +35,7 @@ add_executable(dq3_remake
     src/dq3_exedata.c
     src/dq3_dialogue.c
     src/dq3_inventory.c
+    src/dq3_roster.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
@@ -52,6 +53,8 @@ add_executable(dq3_door_test src/dq3_scene.c src/dq3_npc.c src/dq3_rng.c src/tes
 target_include_directories(dq3_door_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_npc_test src/dq3_npc.c src/dq3_rng.c src/test_npc.c)
 target_include_directories(dq3_npc_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_roster_test src/dq3_roster.c src/dq3_stats.c src/dq3_exedata.c src/test_roster.c)
+target_include_directories(dq3_roster_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(MSVC)
     target_compile_options(dq3_stats_test PRIVATE /W3)
     target_compile_options(dq3_combat_test PRIVATE /W3)
@@ -59,6 +62,7 @@ if(MSVC)
     target_compile_options(dq3_battle_test PRIVATE /W3)
     target_compile_options(dq3_door_test PRIVATE /W3)
     target_compile_options(dq3_npc_test PRIVATE /W3)
+    target_compile_options(dq3_roster_test PRIVATE /W3)
 else()
     target_compile_options(dq3_stats_test PRIVATE -Wall -Wextra)
     target_compile_options(dq3_combat_test PRIVATE -Wall -Wextra)
@@ -66,6 +70,7 @@ else()
     target_compile_options(dq3_battle_test PRIVATE -Wall -Wextra)
     target_compile_options(dq3_door_test PRIVATE -Wall -Wextra)
     target_compile_options(dq3_npc_test PRIVATE -Wall -Wextra)
+    target_compile_options(dq3_roster_test PRIVATE -Wall -Wextra)
 endif()
 
 target_include_directories(dq3_remake PRIVATE
