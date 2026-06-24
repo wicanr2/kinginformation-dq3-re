@@ -233,3 +233,10 @@ remake:`dq3_item_attack/defense/price/category/can_equip`(dq3_combat);`dq3_recru
 CTY NPC 記錄僅 **7 byte**(`{X,Y,b2,b3,b4,flags,b6}`,docs/34),裝不下 8 格商店庫存 →
 **商店貨架不在 CTY NPC**,而是 EXE 全域表(由 shop id 索引,經 overlay 買單 0x9bcf / `[0x408a]`
 選單系統顯示)。該表追蹤需深入 overlay 選單資料流,**待續**。remake 暫用 curated 早期貨架。
+
+### per-town 商品清單(remake 自訂方案)
+
+驗證:D3TXT 對話**不含**商品代碼(買單時才用代碼去 D3TXT00 取名),清單本體在 EXE overlay
+全域表(深追未果)。**因本專案為 remake、使用者授權自訂、且 DQ3 商店每鎮固定商品/無庫存數量**,
+改採 remake 方案:per-CTY 商品清單(`shop_stock_for`,DQ3 進度 + BBS 攻略佐證)。
+阿里阿罕(CTY0)= 木棒/銅劍/布衣/皮甲冑/魔法法衣/藥草/驅毒草/蓋美拉翅膀;其餘用 DEFAULT。

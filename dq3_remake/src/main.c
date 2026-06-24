@@ -195,7 +195,7 @@ static int find_cty_at(int px, int py) { return find_cty_at_map(px, py, 0); }  /
 static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *party,
                          const dq3_stats *st, const dq3_text *text);
 static void status_modal_page(const dq3_roster *roster, const dq3_party *party, const dq3_text *text, int start_page);
-static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold);
+static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold, int cty);
 static void equip_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text);
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                       dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok);
@@ -412,7 +412,7 @@ static int run_game(const char *assets, const char *dump)
             cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok);
             dq3_scene_apply_palette(cur);
         } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店(城鎮內;買→裝備領頭隊員)*/
-            if (shop_ok) shop_modal(&roster, &party, &shop_items, &dlg.txt, &gold);
+            if (shop_ok) shop_modal(&roster, &party, &shop_items, &dlg.txt, &gold, cur_cty);
             dq3_scene_apply_palette(cur);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
@@ -624,7 +624,7 @@ static int run_tavern(const char *assets, const char *dump)
         dq3_party_add(&party, &roster, 0);
         if (dq3_items_load(&shi, assets, NULL, 0) == 0) {
             setenv("DQ3_SHOP_DUMP", dump, 1);
-            shop_modal(&roster, &party, &shi, &t, &g);
+            shop_modal(&roster, &party, &shi, &t, &g, 0);
         }
         dq3_text_free(&t); return 0;
     }
@@ -767,12 +767,23 @@ static void draw_number_at(uint8_t *fb, const dq3_text *t, int x, int y, int v, 
     for (i = 0; i < n; i++) dq3_text_draw_glyph(t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, x + i*DQ3_GLYPH_PX, y, d[i], fg);
 }
 
-/* 武器/防具商店 modal:列早期裝備(名+價+能否裝備),Enter 購買→裝給領頭隊員,ESC 離開。
- * 道具名 = D3TXT00 rec=code+1;價/類別/可裝備職業由 ITEM.DAT(docs/22)。 */
-static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold)
+/* per-town 商店商品清單(remake 定義;每鎮固定商品、無庫存數量問題,使用者授權自訂;
+ * 用 DQ3 進度 + BBS 攻略佐證。索引 = CTY 號;0xff 終止;未定義者用 DEFAULT)。 */
+static const unsigned char SHOP_ALIAHAN[] = {0x01,0x03,0x1e,0x21,0x29,0x41,0x42,0x43,0xff};
+    /* 木棒/銅劍/布衣/皮甲冑/魔法法衣/藥草/驅毒草/蓋美拉翅膀 */
+static const unsigned char SHOP_DEFAULT[] = {0x03,0x0b,0x21,0x27,0x29,0x41,0x42,0x43,0x44,0xff};
+static const unsigned char *shop_stock_for(int cty, int *n)
 {
-    static const unsigned char STOCK[] = {0x01,0x03,0x0b,0x11,0x21,0x27,0x2b,0x41};
-    int n = (int)sizeof STOCK, cur = 0, lead_ri, mode = 0;   /* mode 0=買 1=賣 */
+    const unsigned char *s = (cty == 0) ? SHOP_ALIAHAN : SHOP_DEFAULT;
+    int k = 0; while (s[k] != 0xff) k++; *n = k; return s;
+}
+
+/* 武器/防具/道具商店 modal:列該城商品(名+價+能否裝備),Enter 購買→裝給領頭隊員,Tab 切買賣,ESC 離開。
+ * 商品清單 per-town(shop_stock_for);道具名 = D3TXT00 rec=code+1;價/類別/職業由 ITEM.DAT(docs/22)。 */
+static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold, int cty)
+{
+    int n; const unsigned char *STOCK = shop_stock_for(cty, &n);
+    int cur = 0, lead_ri, mode = 0;   /* mode 0=買 1=賣 */
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t yellow, redc; uint8_t *fb = dq3_fb();
     int wx = 24, wy = 40, ww = 300, wh = 220;
