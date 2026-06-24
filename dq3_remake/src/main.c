@@ -336,15 +336,27 @@ static int run_game(const char *assets, const char *dump)
                 }
             }
             }
+            /* 露依達酒場(CTY00 sec0 西側 LUIDA 櫃台):面向/站在櫃台店員調べる → 開創角。
+             * 位置由腳本 rec49 +轉場 metadata 定位(docs/36),取代先前的 T 鍵暫代。 */
+            {
+                int fdx = (cur->facing==3)-(cur->facing==1), fdy = (cur->facing==0)-(cur->facing==2);
+                int fx = cur->px+fdx, fy = cur->py+fdy;
+                int dfx = fx-DQ3_LUIDA_X, dfy = fy-DQ3_LUIDA_Y, dpx = cur->px-DQ3_LUIDA_X, dpy = cur->py-DQ3_LUIDA_Y;
+                int near_ctr = (dfx<0?-dfx:dfx)+(dfy<0?-dfy:dfy) <= 1 || (dpx<0?-dpx:dpx)+(dpy<0?-dpy:dpy) <= 1;
+                if (in_town && cur_cty == DQ3_LUIDA_CTY && near_ctr) {
+                    tavern_modal(assets, &roster, &party, &gst, &dlg.txt);
+                    dq3_scene_apply_palette(cur);
+                    fprintf(stderr, "露依達酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
+                }
+            }
             if (dq3_scene_tile_event(cur, cur->px, cur->py, &et, &ep)) {
                 const char *tn = et==0?"調べる/寶箱":et==2?"傳送/門":(et==1||et==3)?"條件":"道具/其他";
                 fprintf(stderr, "事件: type=%d(%s) param=0x%x\n", et, tn, ep);
                 if (dlg_ok) { dlg_rec = (ep && ep < dlg.txt.n_records) ? ep : 1; dq3_dialogue_open(&dlg, dlg_rec); }
             }
-        } else if (sc == 0x14 && in_town && cur_cty == 0) {  /* T:阿里阿罕 → 露依達酒場創角
-                                                              * (暫定觸發鍵;精確露依達 NPC 位置待 RE)*/
+        } else if (sc == 0x14 && in_town && cur_cty == 0) {  /* T:阿里阿罕酒場捷徑(開發用;正式入口=西側 LUIDA 櫃台)*/
             tavern_modal(assets, &roster, &party, &gst, &dlg.txt);
-            dq3_scene_apply_palette(cur);                    /* modal 改過 DAC,還原場景色盤 */
+            dq3_scene_apply_palette(cur);
             fprintf(stderr, "離開酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {

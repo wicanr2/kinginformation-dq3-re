@@ -67,6 +67,13 @@ int  dq3_synth_shrine_examine(dq3_inventory *inv, dq3_storyflags *flags, int fix
  * 劇本 txt08「神聖的祠堂」+ 地理 docs/32)。調べる此格 → 合成 scripted-event 83。 */
 #define DQ3_SHRINE_NPC_X         8
 #define DQ3_SHRINE_NPC_Y         8
+
+/* 露依達酒場(登記隊員)= 阿里阿罕 CTY00 sec0 西側 LUIDA 建築的櫃台店員。
+ * 定位來源(腳本+地圖 metadata,非人工猜):D3TXT01 rec49「鎮上西方有路依達酒吧」+
+ * sec0 轉場表 門(8,14)→sec2(2F 預存所)+ sec0 NPC 表(西側 (8,17) 櫃台店員)。docs/36。 */
+#define DQ3_LUIDA_CTY            0
+#define DQ3_LUIDA_X              8
+#define DQ3_LUIDA_Y              17
 int  dq3_scripted_event_run(int event_id, dq3_inventory *inv, dq3_storyflags *flags, int fixed);
 
 #endif /* DQ3_INVENTORY_H */

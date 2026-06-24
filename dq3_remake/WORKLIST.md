@@ -67,7 +67,10 @@
       `dq3_zhuyin_table.c`(`tools/gen_zhuyin.py`:1476 字模 unicode 經 pypinyin BOPOMOFO 反建,
       721 音節桶/1338 字,二分查找)。單測 `dq3_zhuyin_test`(ㄕˋ→是)+ dump 驗證(注音盤 + 候選窗
       士世是似事勢式侍市室視試釋)。待:接進 nameinput 做 英數↔注音 切換鍵。
-    - [ ] 精確露依達 NPC 觸發點(取代 T 鍵)、忠實初始擲值+性格(RE)、隊伍接進戰鬥。
+    - [x] **露依達酒場觸發點 ✅**(腳本 rec49「鎮上西方」+ 轉場 metadata 定位,非人工猜):
+      酒場 1F = CTY00 sec0 西側 (8,17) 櫃台店員(調べる開創角)、2F 預存所 = sec2(門 (8,14))。
+      run_game 接 DQ3_LUIDA_X/Y;T 鍵保留為捷徑。docs/36。
+    - [ ] 忠實初始擲值+性格(RE)、隊伍接進戰鬥。
   - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值 + 性格(personality)修正(目前用成長表 Lv1 base)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。
