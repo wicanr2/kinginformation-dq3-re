@@ -32,7 +32,15 @@
 
 ![復原父子決鬥](docs/monsters/restored_128_129.png)
 
-> 城鎮地圖（`CTY*.DAT`）見 [`docs/maps/cty00_town.png`](docs/maps/cty00_town.png)；劇情純文字劇本見 [`docs/script/`](docs/script/)；更多標題 / 過場圖（片尾、年代過場）見 [`docs/title/`](docs/title/)。
+> 城鎮地圖（`CTY*.DAT`）見 [`docs/maps/cty00_town.png`](docs/maps/cty00_town.png)；劇情純文字劇本見 [`docs/script/`](docs/script/)；更多標題 / 過場圖（片尾、年代過場）見 [`docs/title/`](docs/title/)。全 86 個場域地圖（各 section 標號）見 [`docs/maps/cty/`](docs/maps/cty/)。
+
+## 🥚 開發者彩蛋：阿里阿罕左上角的「LIH」
+
+把起始城鎮**阿里阿罕**（`CTY00` section 0）的地圖渲染出來，左上角那片磚牆不是隨便砌的——它排成三個字母 **L · I · H**。三十年前某位精訊的地圖設計師，在玩家永遠不會特別留意的城牆角落，悄悄留了自己的簽名。直到把 `CTY00.DAT` 逐 tile 解碼、整鎮攤平，這個躲在牆裡的彩蛋才重見天日。
+
+![LIH 彩蛋](docs/maps/lih_easter_egg.png)
+
+> 全鎮地圖見 [`docs/maps/cty/CTY00.png`](docs/maps/cty/CTY00.png)，彩蛋在 section 0 左上角（tile 約 `(0–10, 0–4)`）。
 
 ## RE 正確性驗證 + 修正版
 
