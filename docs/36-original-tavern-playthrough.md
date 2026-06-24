@@ -155,3 +155,24 @@ grep -nE '露依達|登錄所|職業|勇者' docs/script/txt00.txt    # rec 527/
 本次新增的探索腳本(過程記錄,非全部成功):`tools/dosbox_tavern_*.sh`、
 `dosbox_name_*.sh`、`dosbox_boot_check.sh`、`dosbox_houseexit.sh`。
 代表性截圖:`docs/36_shots/`。
+
+## CTY00 內裝 section 調查(remake 渲染,定位酒場用)
+
+逐 section 渲染(`DQ3_SECT=1..5`)+ NPC dump:
+
+| sec | 大小 | 內容 | NPC 數 |
+|---|---|---|---|
+| 0 | 42×43 | 阿里阿罕**戶外**(草地+建築門 tile)| 24 |
+| 1 | 16×12 | 室內房間(床+桌)| 4 |
+| 2 | 11×15 | 室內房間(直向)| 4 |
+| 3 | 9×8 | 小室 | 2 |
+| 4 | 13×13 | 室內房間 | 3 |
+| **5** | 31×32 | **阿里阿罕城(金柱+王座,城堡內裝)** | 13 |
+
+**未解(faithful 觸發點)**:哪一間是露依達酒場、酒場主 NPC 座標——**從 tile 佈局無法可靠分辨**
+(室內都是紅地磚房間)。酒場主是**特殊功能 NPC**(踩到/調べる → 開酒場/登錄所選單,非一般對話),
+其派發在城鎮 examine `0x9f7f` 的寫死座標 / 商店 dispatch,需逐一 RE 該分支(或 DOSBox 實機踩門確認)。
+remake 現以 **T 鍵**(阿里阿罕內)開酒場 modal 作可達的暫代;換成真實店門待此 RE。
+
+> 下一步(擇一):① RE `0x9f7f` 內 shop/酒場/登錄所的 NPC 型別或座標 dispatch;
+> ② DOSBox warp patch 直接 spawn 進酒場 section 後讀當下 `[0x256a]`(section)+ 觸發 tile 座標反推。
