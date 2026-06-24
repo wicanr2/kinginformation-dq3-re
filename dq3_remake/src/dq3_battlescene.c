@@ -7,6 +7,7 @@
 #include "dq3_combat.h"
 #include "dq3_stats.h"
 #include "dq3_roster.h"
+#include "dq3_spell.h"
 #include "dq3_text.h"
 #include "dq3_packbg.h"
 #include <stdio.h>
@@ -38,6 +39,8 @@ static uint8_t g_sky[DQ3_PACKBG_H][DQ3_PACKBG_W]; static int g_sky_ok;  /* packb
 
 /* 指令標籤(glyph index 對照 docs/03 + glyph_unicode_map):戰鬥/逃跑/防禦/道具 */
 static const uint16_t CMD_WAR[2]={107,207}, CMD_FLEE[2]={629,630}, CMD_DEF[2]={203,204}, CMD_ITEM[2]={402,1354};
+static const uint16_t CMD_SPELL[2]={429,430};   /* 咒文 */
+#define BCMD_N 5   /* 戰/咒/逃/防/道具 */
 
 static void draw_glyphs(uint8_t*fb,int x,int y,const uint16_t*g,int n,uint8_t fg){
     int i; if(!g_txt_ok)return;
@@ -118,13 +121,13 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
     }
     /* ── 下方左:指令選單(角色名 + 2 欄 戰鬥/逃跑/防禦/道具 + ► 游標)── */
     if(show_menu){
-        int mx=120,my=252,mw=150,mh=92;
-        const uint16_t *col1[4]={CMD_WAR,CMD_FLEE,CMD_DEF,CMD_ITEM};
+        int mx=120,my=236,mw=150,mh=108;
+        const uint16_t *col1[BCMD_N]={CMD_WAR,CMD_FLEE,CMD_DEF,CMD_ITEM,CMD_SPELL};
         int lead=0; while(lead<PARTY && party[lead].hp<=0) lead++;
         fillrect(fb,mx,my,mw,mh,(uint8_t)black_idx);
         rect_border(fb,mx,my,mw,mh,(uint8_t)white_idx);
         if(lead<PARTY) draw_glyphs(fb,mx+44,my+4, party[lead].name, party[lead].name_len, (uint8_t)white_idx);
-        for(i=0;i<4;i++){
+        for(i=0;i<BCMD_N;i++){
             int y=my+24+i*16;
             if(i==cursor) dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,mx+8,y,0x77,(uint8_t)white_idx); /* ★/▶ 游標 */
             dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,mx+28,y,col1[i][0],(uint8_t)white_idx);
@@ -149,7 +152,37 @@ static int pick_alive_enemy(const int*hp,int n){ int i,t=alive_enemy(hp,n),k; if
 static int pick_alive_party(const member*p){ int i,t=alive_party(p),k; if(!t)return -1;
     k=rnd()%t; for(i=0;i<PARTY;i++)if(p[i].hp>0){ if(k==0)return i; k--; } return -1; }
 
-/* 執行一回合;cmd:0戰 1逃 2防 3道具。回傳 0續 1勝 2敗 3逃成功。 */
+/* 隊伍職業索引(對 dq3_stats 成長表):勇者0 / 武鬥家2 / 僧侶3 / 魔法師4(玩家隊伍時覆寫)。 */
+static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
+
+/* 咒文施放值:DQ3.EXE 公式(file 0xc22e)val = base/2 + rng(base/2)。 */
+static int spell_value(int base)
+{
+    int half = base / 2;
+    if (half < 1) half = 1;
+    return half + (int)((roll255() * half) / 256);
+}
+
+/* 找會施法成員 + 最強可負擔的攻擊咒;回傳成員 index、*pdef=咒文。無回 -1。 */
+static int pick_caster_spell(member *party, const dq3_spell_def **pdef)
+{
+    int i, best_i = -1; const dq3_spell_def *best = NULL;
+    for (i = 0; i < PARTY; i++) {
+        unsigned short recs[64]; int n, k;
+        if (party[i].hp <= 0 || party[i].mp <= 0) continue;
+        n = dq3_spells_known(g_cls_idx[i], party[i].level, recs, 64);
+        for (k = 0; k < n; k++) {
+            const dq3_spell_def *d = dq3_spell_def_get(recs[k]);
+            if (!d || d->kind != DQ3_SK_DMG) continue;        /* 先只自動挑攻擊咒 */
+            if (d->mp > party[i].mp) continue;
+            if (!best || d->base > best->base) { best = d; best_i = i; }
+        }
+        if (best) break;   /* 取第一個能施法的成員 */
+    }
+    *pdef = best; return best_i;
+}
+
+/* 執行一回合;cmd:0戰 1逃 2防 3道具 4咒文。回傳 0續 1勝 2敗 3逃成功。 */
 static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, int efree, int cmd)
 {
     int i;
@@ -166,6 +199,21 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
         int t=pick_alive_party(party);
         if(t>=0){ int heal=30; party[t].hp+=heal; if(party[t].hp>party[t].maxhp)party[t].hp=party[t].maxhp;
             fprintf(stderr,"  %s 使用藥草,回復 %d。\n", party[t].dbg, heal); }
+    } else if(cmd==4){ /* 咒文:施法成員放最強可負擔攻擊咒(公式對齊 EXE 0xc22e)*/
+        const dq3_spell_def *d; int ci = pick_caster_spell(party, &d);
+        if(ci<0 || !d){ fprintf(stderr,"  無人能施放攻擊咒文(MP 不足或非施法職)。\n"); }
+        else {
+            party[ci].mp -= d->mp;
+            if(d->target==DQ3_TG_ENEMY1){               /* 單體 */
+                int e=pick_alive_enemy(ehp,en);
+                if(e>=0){ int v=spell_value(d->base); ehp[e]-=v; if(ehp[e]<0)ehp[e]=0;
+                    fprintf(stderr,"  %s 詠唱咒文 → 敵%d 受 %d 傷害%s\n", party[ci].dbg, e, v, ehp[e]==0?" — 擊倒!":""); }
+            } else {                                     /* 一組 / 全體:打所有存活敵 */
+                int e, hit=0;
+                for(e=0;e<en;e++){ if(ehp[e]<=0) continue; { int v=spell_value(d->base); ehp[e]-=v; if(ehp[e]<0)ehp[e]=0; hit++; } }
+                fprintf(stderr,"  %s 詠唱範圍咒文 → 波及 %d 隻敵人。\n", party[ci].dbg, hit);
+            }
+        }
     } else { /* 戰:每位存活成員攻擊;武器雙擊則打 2 次(#7a,dq3_combat)*/
         for(i=0;i<PARTY;i++){
             int hits, h;
@@ -210,9 +258,6 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
     if(alive_party(party)==0) return 2;
     return 0;
 }
-
-/* 隊伍職業索引(對 dq3_stats 成長表):勇者0 / 武鬥家2 / 僧侶3 / 魔法師4 */
-static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 
 /* 玩家隊伍覆寫(露依達酒場建立的)。NULL = 用內建範例隊。 */
 static dq3_roster      *g_pl_roster = NULL;   /* 非 const:勝利後回寫升級 */
@@ -353,7 +398,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     if(script){
         const char *p = script;
         while(p && *p && outcome==0){
-            int cmd = (*p=='R'||*p=='r')?1:(*p=='D'||*p=='d')?2:(*p=='I'||*p=='i')?3:0;
+            int cmd = (*p=='R'||*p=='r')?1:(*p=='D'||*p=='d')?2:(*p=='I'||*p=='i')?3:(*p=='M'||*p=='m')?4:0;
             turn++;
             fprintf(stderr,"-- 回合 %d cmd=%c --\n", turn, *p);
             outcome=do_turn(party,ehp,en,eatk,edef,eagi,efree,cmd);
@@ -382,8 +427,8 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         render(dq3_fb(),&spr,ehp,en,party,cursor,1,monster_id);
         dq3_present();
         sc=dq3_poll_scancode();
-        if(sc==0x48){ cursor=(cursor+3)&3; }       /* 上 */
-        else if(sc==0x50){ cursor=(cursor+1)&3; }  /* 下 */
+        if(sc==0x48){ cursor=(cursor+BCMD_N-1)%BCMD_N; }   /* 上 */
+        else if(sc==0x50){ cursor=(cursor+1)%BCMD_N; }     /* 下 */
         else if(sc==0x1c||sc==0x39){               /* Enter/Space:執行 */
             turn++;
             outcome=do_turn(party,ehp,en,eatk,edef,eagi,efree,cursor);

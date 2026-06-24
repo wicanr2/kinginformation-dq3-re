@@ -15,4 +15,21 @@ extern const dq3_spell_learn dq3_school_mage[];    extern const int dq3_school_m
  * 依習得等級排序,跨系去重。 */
 int dq3_spells_known(int cls, int level, unsigned short *out, int max);
 
+/* ---- 咒文施放 descriptor ----
+ * 傷害/回復公式來自 DQ3.EXE RE(file 0xc22e):val = base/2 + rng(base/2),魔甲再減半(#7b)。
+ * base 威力 / MP 消耗 / 目標 用 DQ3 標準值(BBS 咒文表佐證);詳見 dq3_spelldef.c 註解。 */
+typedef enum { DQ3_SK_DMG = 0, DQ3_SK_HEAL = 1, DQ3_SK_REVIVE = 2 } dq3_spell_kind;
+typedef enum { DQ3_TG_ENEMY1 = 0, DQ3_TG_GROUP = 1, DQ3_TG_ALL = 2,
+               DQ3_TG_ALLY1 = 3, DQ3_TG_ALLYALL = 4 } dq3_spell_target;
+typedef struct {
+    unsigned short rec;       /* 咒文名 rec(對 dq3_spells_known)*/
+    unsigned char  mp;        /* MP 消耗 */
+    unsigned short base;      /* base 威力(傷害/回復;走 base/2+rng 公式)*/
+    unsigned char  kind;      /* dq3_spell_kind */
+    unsigned char  target;    /* dq3_spell_target */
+} dq3_spell_def;
+
+/* 查咒文 rec 的施放 descriptor;非可施放(輔助/未實作)回 NULL。 */
+const dq3_spell_def *dq3_spell_def_get(unsigned short rec);
+
 #endif /* DQ3_SPELL_H */

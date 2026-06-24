@@ -109,7 +109,12 @@
       `g_pl_ri[]`;pm[] 用真實 member 初始化(保留真 exp);勝利結算後 `writeback_roster(pm)` 把
       經驗/等級/數值回寫名冊。驗證:Lv5 隊勝史萊姆 → 名冊 exp 499→503 / 264→268(+4 持久)。
       閉合 創角→戰鬥→**成長持久**。
-    - [ ] 忠實初始擲值+性格(RE);per-member 裝備模型。
+    - [x] **戰鬥施法 ✅**:戰鬥指令加「咒文」(第 5 指令);`dq3_spelldef` 咒文 descriptor(攻擊/回復,
+      base 威力/MP/目標 用 DQ3 標準值 + BBS 佐證,**傷害公式 = EXE RE 真公式** base/2+rng(base/2),
+      file 0xc22e);do_turn cmd==4 施法成員自動放最強可負擔攻擊咒(美拉/吉拉/伊歐…)。驗證:勇者 Lv12
+      施美拉對史萊姆 10-18 傷害擊倒。註:威力/MP 為 DQ3 標準值(EXE 靜態 descriptor 表未定位,docs/13),
+      公式精確;自動選咒(手動選咒選單待後續)。
+    - [ ] 忠實初始擲值(精訊版無性格系統,已確認);per-member 裝備模型;手動選咒選單。
   - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值 + 性格(personality)修正(目前用成長表 Lv1 base)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。

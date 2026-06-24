@@ -46,6 +46,7 @@ add_executable(dq3_remake
     src/dq3_status.c
     src/dq3_spell.c
     src/dq3_spells_table.c
+    src/dq3_spelldef.c
     src/dq3_cmdmenu.c
 )
 
