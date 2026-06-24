@@ -69,7 +69,12 @@
 - [部分] 把文字接進各系統:
   - [x] **戰鬥文字**(`dq3_battlescene`:指令戰/逃/防/道具選單、敵名 rec 0x258+id、隊伍 HP 數字)— 已實作(同階段②.5 [x])。
   - [x] **城鎮 NPC 對話觸發**(`main.c` Enter → `dq3_scene_tile_event` → `dq3_dialogue_open`)— 已接。
-  - [ ] **道具/咒文選單**(尚未做)。
+  - [~] **道具/咒文選單**:
+    - [x] **咒文(じゅもん)✅**:咒文習得表由 DQ3.EXE sub_db5f RE 抽出(tools/gen_spells.py →
+      dq3_spells_table.c,勇者18/僧侶24/魔法31 咒);`dq3_spell` 依職業+等級查已學咒;
+      `dq3_status_render_spells` 渲染,status_modal Space/Enter 切換 能力↔咒文。dump 驗證
+      魔法使 Lv20 咒文名全對(美拉/史卡拉/伊歐/魯拉/烈米特…)。docs/16。
+    - [ ] **道具(どうぐ)**:需 per-member 道具欄模型(BBS 存檔每角色 8 格 {碼,屬性});道具名已 dump。
 - [~] **露依達酒場創角 + 名冊 + 隊伍編成**(DQ3 開場核心):
   - [x] **邏輯核心 ✅**(`dq3_roster`):創角(職業+性別+名字+Lv1 數值,用成長表)、名冊(建/除名,
     除名自動修正隊伍參照)、隊伍編成(主角+最多 3、in_party 旗標、滿/重複防呆)。單測 `dq3_roster_test`
