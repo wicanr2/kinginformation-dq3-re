@@ -34,6 +34,7 @@ docker run --rm -v "$ROOT":/repo dq3-remake bash -lc '
   /build/dq3_nameinput_test || { echo "nameinput test FAILED"; exit 1; }
   /build/dq3_tavern_test || { echo "tavern test FAILED"; exit 1; }
   /build/dq3_zhuyin_test || { echo "zhuyin test FAILED"; exit 1; }
+  /build/dq3_save_test || { echo "save test FAILED"; exit 1; }
   echo "=== unit tests OK ==="
 
   # (1) dummy:解碼驗證 → PPM

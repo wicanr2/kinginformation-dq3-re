@@ -41,6 +41,7 @@ add_executable(dq3_remake
     src/dq3_tavern.c
     src/dq3_zhuyin.c
     src/dq3_zhuyin_table.c
+    src/dq3_save.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
@@ -68,6 +69,8 @@ add_executable(dq3_tavern_test src/dq3_tavern.c src/dq3_roster.c src/dq3_menu.c 
 target_include_directories(dq3_tavern_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_zhuyin_test src/dq3_zhuyin.c src/dq3_zhuyin_table.c src/test_zhuyin.c)
 target_include_directories(dq3_zhuyin_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_save_test src/dq3_save.c src/dq3_roster.c src/dq3_menu.c src/dq3_stats.c src/dq3_exedata.c src/dq3_inventory.c src/test_save.c)
+target_include_directories(dq3_save_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(MSVC)
     target_compile_options(dq3_stats_test PRIVATE /W3)
     target_compile_options(dq3_combat_test PRIVATE /W3)
@@ -80,6 +83,7 @@ if(MSVC)
     target_compile_options(dq3_nameinput_test PRIVATE /W3)
     target_compile_options(dq3_tavern_test PRIVATE /W3)
     target_compile_options(dq3_zhuyin_test PRIVATE /W3)
+    target_compile_options(dq3_save_test PRIVATE /W3)
 else()
     target_compile_options(dq3_stats_test PRIVATE -Wall -Wextra)
     target_compile_options(dq3_combat_test PRIVATE -Wall -Wextra)
@@ -92,6 +96,7 @@ else()
     target_compile_options(dq3_nameinput_test PRIVATE -Wall -Wextra)
     target_compile_options(dq3_tavern_test PRIVATE -Wall -Wextra)
     target_compile_options(dq3_zhuyin_test PRIVATE -Wall -Wextra)
+    target_compile_options(dq3_save_test PRIVATE -Wall -Wextra)
 endif()
 
 target_include_directories(dq3_remake PRIVATE

@@ -28,6 +28,7 @@
 #include "dq3_nameinput.h"
 #include "dq3_tavern.h"
 #include "dq3_zhuyin.h"
+#include "dq3_save.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -173,19 +174,17 @@ static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
 
 /* 自動存檔:把名冊/隊伍/道具/位置寫成 dq3_save.dat(remake 自有格式)。回 0=成功。
  * 路徑:DQ3_SAVE 環境變數,預設 "dq3_save.dat"(cwd;唯讀 cwd 時用 env 指可寫路徑)。 */
+static const char *save_path(void) { return getenv("DQ3_SAVE") ? getenv("DQ3_SAVE") : "dq3_save.dat"; }
+
 static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
                          int cty, int px, int py)
 {
-    const char *path = getenv("DQ3_SAVE") ? getenv("DQ3_SAVE") : "dq3_save.dat";
-    int hdr[3]; FILE *f = fopen(path, "wb");
-    if (!f) { fprintf(stderr, "autosave 失敗(無法寫 %s)\n", path); return -1; }
-    hdr[0] = cty; hdr[1] = px; hdr[2] = py;
-    fwrite("DQ3SAVE1", 1, 8, f);
-    fwrite(r, sizeof *r, 1, f); fwrite(p, sizeof *p, 1, f);
-    fwrite(inv, sizeof *inv, 1, f); fwrite(hdr, sizeof hdr, 1, f);
-    fclose(f);
-    fprintf(stderr, "自動存檔 → %s(名冊%d 隊伍%d CTY%d)\n", path, r->count, p->count, cty);
-    return 0;
+    dq3_save_pos pos; int rc;
+    pos.cty = cty; pos.px = px; pos.py = py;
+    rc = dq3_save_write(save_path(), r, p, inv, pos);
+    if (rc == 0) fprintf(stderr, "自動存檔 → %s(名冊%d 隊伍%d CTY%d)\n", save_path(), r->count, p->count, cty);
+    else fprintf(stderr, "autosave 失敗(無法寫 %s)\n", save_path());
+    return rc;
 }
 
 /* F10 離開確認:渲染「離開遊戲嗎」+ 是/否 選單。回 1=是(離開)、0=否(繼續)。
@@ -246,6 +245,13 @@ static int run_game(const char *assets, const char *dump)
     /* demo:身上帶兩材料,進祠堂「調べる」即可觸發 #2 合成(產彩虹水滴) */
     dq3_inv_init(&inv); dq3_flags_init(&flags);
     dq3_inv_add(&inv, ITEM_SUN_STONE); dq3_inv_add(&inv, ITEM_RAINCLOUD_ROD);
+    /* 續玩:DQ3_LOAD 且存檔存在 → 讀回名冊/隊伍/道具(位置另需載入對應場景,先記錄)。 */
+    if (getenv("DQ3_LOAD") && dq3_save_exists(save_path())) {
+        dq3_save_pos pos;
+        if (dq3_save_read(save_path(), &roster, &party, &inv, &pos) == 0)
+            fprintf(stderr, "讀檔續玩 ← %s(名冊%d 隊伍%d,存檔位置 CTY%d (%d,%d))\n",
+                    save_path(), roster.count, party.count, pos.cty, pos.px, pos.py);
+    }
 
     if (dump) {
         /* headless demo:走到觸發戰鬥 → 進城鎮,沿途 log,dump 末幀 */
