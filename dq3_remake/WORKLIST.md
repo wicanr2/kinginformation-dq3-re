@@ -111,7 +111,11 @@
   - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值 + 性格(personality)修正(目前用成長表 Lv1 base)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。
-- [ ] 野外指令選單(DS:0x3baa 12 指令:話す/移動/調べる…)。
+- [x] **野外指令選單 ✅**(`dq3_cmdmenu`):精訊版指令窗本尊 = D3TXT00 **rec400**(官方字串,非猜):
+  2×3 格 對話/咒文/狀況/道具/裝備/調查 + 命令標題 + ► 游標。run_game 按 C 開 cmd_modal,
+  派發:對話/調查→面向格事件對話、狀況→能力值畫面、咒文→咒文畫面;道具/裝備標未實作。
+  DQ3_CMD_SCREEN dump 驗證版面與 rec400 一致。(另發現 rec407=狀況畫面精確版面、rec441-444=
+  戰鬥指令、rec421=道具使用/給予/丟掉,待精修對齊。)
 - [~] 戰鬥(優先 2,進行中):
   - [x] **怪物資料 + sprite 基礎**:`dq3_monster` 讀 D3MNS.DAT(130×41 數值)+ 解 DQ3MNS.SHP(offset 表 + plane-major,MNSBK.PAL,色0 透明)。單測:史萊姆 HP6/exp4、金屬 exp4140、sprite 48×39。
   - [x] **戰鬥場景繪製**:`main.c` battle 模式 — MNSBK.PAL + 怪群 sprite blit(透明)+ 天空/地面背景。實測史萊姆×6 對 references/game3.png 一致(藍天/綠地/6 隻藍史萊姆)。

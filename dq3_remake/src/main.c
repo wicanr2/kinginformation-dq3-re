@@ -30,6 +30,7 @@
 #include "dq3_zhuyin.h"
 #include "dq3_save.h"
 #include "dq3_status.h"
+#include "dq3_cmdmenu.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -189,7 +190,9 @@ static int find_cty_at(int px, int py) { return find_cty_at_map(px, py, 0); }  /
 
 static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *party,
                          const dq3_stats *st, const dq3_text *text);
-static void status_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text);
+static void status_modal_page(const dq3_roster *roster, const dq3_party *party, const dq3_text *text, int start_page);
+static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
+                      dq3_dialogue *dlg, int dlg_ok);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
 
@@ -379,8 +382,8 @@ static int run_game(const char *assets, const char *dump)
             tavern_modal(assets, &roster, &party, &gst, &dlg.txt);
             dq3_scene_apply_palette(cur);
             fprintf(stderr, "離開酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
-        } else if (sc == 0x2e) {            /* C:つよさ 能力值畫面(隊員數值,←/→ 切換)*/
-            status_modal(&roster, &party, &dlg.txt);
+        } else if (sc == 0x2e) {            /* C:野外指令窗(命令)— 對話/咒文/狀況/道具/裝備/調查 */
+            cmd_modal(cur, &roster, &party, &dlg, dlg_ok);
             dq3_scene_apply_palette(cur);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
@@ -582,6 +585,16 @@ static int run_tavern(const char *assets, const char *dump)
         if (dq3_dump_ppm(dump)==0) fprintf(stderr,"tavern(F10 離開確認) -> %s OK\n", dump);
         dq3_text_free(&t); return 0;
     }
+    if (getenv("DQ3_CMD_SCREEN") && dump) {
+        /* 野外指令窗 視覺驗證(命令 + 6 指令 + ► 游標)*/
+        dq3_cmdmenu cm; dq3_cmdmenu_init(&cm);
+        cm.cursor = getenv("DQ3_CMD_CUR") ? atoi(getenv("DQ3_CMD_CUR")) : 0;
+        tav_window(fb, 40, 60, 200, 96, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_cmdmenu_render(&cm, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, 52, 70, (uint8_t)white, yellow);
+        dq3_present();
+        if (dq3_dump_ppm(dump)==0) fprintf(stderr, "cmdmenu(cur=%d) -> %s OK\n", cm.cursor, dump);
+        dq3_text_free(&t); return 0;
+    }
     if (getenv("DQ3_STATUS_SCREEN") && dump) {
         /* つよさ 能力值畫面驗證:建一名範例隊員(職業/等級可由 env 指定)*/
         dq3_recruit demo; int cls = getenv("DQ3_ST_CLASS") ? atoi(getenv("DQ3_ST_CLASS")) : 0;
@@ -649,12 +662,13 @@ static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *part
     }
 }
 
-/* 遊戲內 つよさ 能力值 modal:顯示在隊伍中的隊員數值,←/→ 切換,ESC 離開。 */
-static void status_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text)
+/* 遊戲內 つよさ 能力值 modal:顯示在隊伍中的隊員數值,←/→ 切換,Space/Enter 能力↔咒文,ESC 離開。
+ * start_page:0=能力 1=咒文。 */
+static void status_modal_page(const dq3_roster *roster, const dq3_party *party, const dq3_text *text, int start_page)
 {
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t *fb = dq3_fb();
-    int wx = 40, wy = 50, ww = 220, wh = 210, cur = 0, n = 0, i, page = 0;
+    int wx = 40, wy = 50, ww = 220, wh = 210, cur = 0, n = 0, i, page = start_page;
     int members[DQ3_PARTY_MAX];
 
     for (i = 0; i < DQ3_PARTY_MAX; i++)
@@ -682,6 +696,48 @@ static void status_modal(const dq3_roster *roster, const dq3_party *party, const
                               DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
         dq3_present(); dq3_delay_ms(16);
     }
+}
+
+/* 野外指令窗(命令):rec400 的 6 指令 對話/咒文/狀況/道具/裝備/調查;選定即派發。
+ * 對話/調查 = 面向格事件→對話(祠堂/酒場特例仍在 Enter);道具/裝備 尚未實作。回傳選定指令或 -1。 */
+static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
+                     dq3_dialogue *dlg, int dlg_ok)
+{
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg; uint8_t yellow; uint8_t *fb = dq3_fb();
+    int wx = 40, wy = 60, ww = 200, wh = 96, sel = -1;
+    dq3_cmdmenu cm; dq3_cmdmenu_init(&cm);
+
+    raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return -1;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = white; bg = pal_near2(pal,pn,16,16,32); yellow = (uint8_t)pal_near2(pal,pn,255,255,0);
+
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        int r = sc ? dq3_cmdmenu_input(&cm, sc) : -1;
+        if (r == -2) return -1;                   /* ESC 取消 */
+        if (r >= 0) { sel = r; break; }
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_cmdmenu_render(&cm, &dlg->txt, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+10, (uint8_t)white, yellow);
+        dq3_present(); dq3_delay_ms(16);
+    }
+    if (sel < 0) return -1;
+    switch (sel) {
+    case DQ3_CMD_STATUS: status_modal_page(roster, party, &dlg->txt, 0); break;
+    case DQ3_CMD_SPELL:  status_modal_page(roster, party, &dlg->txt, 1); break;
+    case DQ3_CMD_TALK: case DQ3_CMD_EXAMINE: {
+        int fdx = (scene->facing==3)-(scene->facing==1), fdy = (scene->facing==0)-(scene->facing==2);
+        int fx = scene->px+fdx, fy = scene->py+fdy, et, ep;
+        if (dq3_scene_tile_event(scene, fx, fy, &et, &ep) ||
+            dq3_scene_tile_event(scene, scene->px, scene->py, &et, &ep)) {
+            if (dlg_ok) { int rec = (ep && ep < dlg->txt.n_records) ? ep : 1; dq3_dialogue_open(dlg, rec); }
+        } else fprintf(stderr, "%s:前方無人 / 無物\n", sel==DQ3_CMD_TALK?"對話":"調查");
+        break; }
+    case DQ3_CMD_ITEM:  fprintf(stderr, "道具:per-member 道具欄尚未實作\n"); break;
+    case DQ3_CMD_EQUIP: fprintf(stderr, "裝備:裝備系統尚未實作\n"); break;
+    }
+    return sel;
 }
 
 int main(int argc, char **argv)
