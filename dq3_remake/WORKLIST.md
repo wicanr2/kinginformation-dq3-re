@@ -56,8 +56,11 @@
     - [x] **職業選單**(`dq3_roster_class_menu` + 8 職業 glyph 名);`tavern` dump 模式渲染驗證(8 職業繁中正確、游標高亮)。
     - [x] **名冊顯示 + 隊伍狀態畫面**(`tav_render_roster`:名字+職業+Lv+入隊方塊、► 三角游標;DQ3_TAVERN_SCREEN=1 dump 驗證 4 名成員、前 3 入隊)。
     - [x] **英數姓名輸入 widget**(`dq3_nameinput`:0-9+A-Z 字盤 row-major + ←/OK、方向導航繞回、名字緩衝上限、glyph 對映 digit→0-9/A-Z→15-40,對齊 rec453)。單測 `dq3_nameinput_test` + DQ3_TAVERN_SCREEN=2 dump 驗證(字盤/緩衝底線/游標/←OK)。
+    - [x] **完整流程狀態機 ✅**(`dq3_tavern`:職業→姓名→性別→登錄→名冊;名冊 Enter 切換入隊、
+      Space 新增另一名)。單測 `dq3_tavern_test`(全流程 + 第二名建立)全綠;run_tavern 端到端 dump
+      驗證(DQ3_TAV_KEYS 驅動 → 戰士 Lv1 入隊顯示)。性別 glyph:男性[775,674]/女性[234,674](rec556)。
     - [ ] **注音組字 IME**(docs/15 ni_zhuyin/compose:5×9 注音盤 + 組字緩衝 + 國字候選窗)— 中文化技術亮點,較深。
-    - [ ] 完整流程接線(職業→姓名→性別→登錄)、隊伍 add/remove 互動、露依達的店觸發(CTY00 內接 game)、忠實初始擲值+性格。
+    - [ ] 露依達的店觸發(CTY00 內接 game 模式)、忠實初始擲值+性格(RE)。
   - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值 + 性格(personality)修正(目前用成長表 Lv1 base)。
 - [ ] 注音姓名輸入(re/nameinput.c,docs/15:5×9 grid=0..44 1-D ring,Up=−9/Down=+9/Left=−1/Right=+1 mod45;組字 lcall 11c4:0x27;完成在功能列第5列)。
 - [ ] 對話流程(re/commands.c,Enter sub_7c43→事件表 `[ft*3+0x37c4]`;文字繪製器 4 行/頁、控制碼換行/換頁/變數)。

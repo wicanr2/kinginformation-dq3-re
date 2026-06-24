@@ -26,6 +26,7 @@
 #include "dq3_roster.h"
 #include "dq3_menu.h"
 #include "dq3_nameinput.h"
+#include "dq3_tavern.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -396,115 +397,60 @@ static int run_text(const char *assets, const char *dump)
     dq3_text_free(&t); return 0;
 }
 
-/* 畫數字(glyph index = 數位 0-9)。 */
-static void tav_draw_num(const dq3_text *t, uint8_t *fb, int x, int y, int val, uint8_t fg)
+/* 露依達酒場創角:完整流程狀態機(dq3_tavern:職業→姓名→性別→登錄→名冊)。
+ * headless:DQ3_TAV_KEYS 餵按鍵(U/D/L/R 方向、E=Enter、S=Space)後 dump。 */
+static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg)
 {
-    uint16_t d[6]; int k = 0, i;
-    if (val < 0) val = 0;
-    if (val == 0) d[k++] = 0;
-    else { int v = val; uint16_t tmp[6]; int tn = 0;
-        while (v > 0 && tn < 6) { tmp[tn++] = (uint16_t)(v % 10); v /= 10; }
-        for (i = tn - 1; i >= 0; i--) d[k++] = tmp[i]; }
-    for (i = 0; i < k; i++) dq3_text_draw_glyph(t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, x + i*DQ3_GLYPH_PX, y, d[i], fg);
+    int r, c;
+    memset(fb, black, (size_t)DQ3_SCREEN_W * DQ3_SCREEN_H);
+    for (r = 0; r < wh; r++) for (c = 0; c < ww; c++) { int yy=wy+r,xx=wx+c;
+        if (yy>=0&&yy<DQ3_SCREEN_H&&xx>=0&&xx<DQ3_SCREEN_W) fb[yy*DQ3_SCREEN_W+xx]=bg; }
+    for (c = 0; c < ww; c++) { fb[wy*DQ3_SCREEN_W+wx+c]=frame; fb[(wy+wh-1)*DQ3_SCREEN_W+wx+c]=frame; }
+    for (r = 0; r < wh; r++) { fb[(wy+r)*DQ3_SCREEN_W+wx]=frame; fb[(wy+r)*DQ3_SCREEN_W+wx+ww-1]=frame; }
 }
 
-/* 名冊顯示:每名 ►名字 職業 Lv# (★=在隊伍)。cursor=選中列。 */
-static void tav_render_roster(const dq3_roster *r, const dq3_party *p, const dq3_text *t,
-                              uint8_t *fb, int x, int y, int cursor, uint8_t fg, uint8_t curfg)
-{
-    int i, j;
-    (void)p;
-    for (i = 0; i < r->count; i++) {
-        const dq3_recruit *rc = &r->list[i];
-        int ly = y + i * 18, cx = x + 16;
-        uint8_t col = (i == cursor) ? curfg : fg;
-        if (i == cursor) {                              /* ► 三角游標(畫,不猜 glyph)*/
-            int r, c2; for (r = 4; r < 12; r++) for (c2 = 0; c2 < (r < 8 ? r-3 : 12-r); c2++) {
-                int xx = x+2+c2, yy = ly+r; if (xx>=0&&xx<DQ3_SCREEN_W&&yy>=0&&yy<DQ3_SCREEN_H) fb[yy*DQ3_SCREEN_W+xx]=curfg; }
-        }
-        for (j = 0; j < rc->name_len; j++) { dq3_text_draw_glyph(t,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,ly,rc->name[j],col); cx += DQ3_GLYPH_PX; }
-        cx += 8;
-        { const struct dq3_class_name *cn = &dq3_class_names[rc->m.cls]; int g;
-          for (g = 0; g < cn->len; g++) { dq3_text_draw_glyph(t,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx,ly,cn->g[g],col); cx += DQ3_GLYPH_PX; } }
-        cx += 8;
-        tav_draw_num(t, fb, cx, ly, rc->m.level, col); cx += 2*DQ3_GLYPH_PX + 6;
-        if (rc->in_party) {                             /* 入隊:小實心方塊 */
-            int r, c2; for (r = 4; r < 12; r++) for (c2 = 0; c2 < 8; c2++) {
-                int xx = cx+c2, yy = ly+r; if (xx>=0&&xx<DQ3_SCREEN_W&&yy>=0&&yy<DQ3_SCREEN_H) fb[yy*DQ3_SCREEN_W+xx]=curfg; }
-        }
-    }
-}
-
-/* 露依達酒場:職業選單 + 名冊顯示 demo(渲染驗證 + 互動建角/編隊)。
- * DQ3_MENU_SEL=N 設游標;DQ3_TAVERN_SCREEN=0 職業選單 / 1 名冊;互動 Enter 建角/編隊。 */
 static int run_tavern(const char *assets, const char *dump)
 {
     char err[256] = {0};
     dq3_color pal[256]; int pn;
     uint8_t *raw; size_t rl;
-    dq3_text t; dq3_menu menu; dq3_stats st; dq3_roster roster; dq3_party party;
+    dq3_text t; dq3_stats st; dq3_roster roster; dq3_party party; dq3_tavern tv;
     uint8_t *fb = dq3_fb();
-    int white, black, frame, bg, cur;
-    int wx = 40, wy = 60, ww = 200, wh = 200;
+    int white, black, frame, bg; uint8_t yellow;
+    int wx = 40, wy = 60, ww = 220, wh = 200;
 
     raw = dq3_load_file("DQ3.PAL", &rl);
     if (!raw) { fprintf(stderr, "DQ3.PAL\n"); return 7; }
     pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
     white = pal_near2(pal, pn, 255,255,255); black = pal_near2(pal, pn, 0,0,0);
     frame = pal_near2(pal, pn, 255,255,255); bg = pal_near2(pal, pn, 16,16,32);
+    yellow = (uint8_t)pal_near2(pal, pn, 255,255,0);
 
     if (dq3_text_load(&t, assets, "D3TXT00.TXT", err, sizeof err) != 0) {
         fprintf(stderr, "text: %s\n", err); return 7; }
     dq3_stats_load(&st, assets, 1, NULL, 0);
     dq3_roster_init(&roster); dq3_party_init(&party);
-    dq3_roster_class_menu(&menu, wx + 12, wy + 36);
+    dq3_tavern_init(&tv, &roster, &party, &st);
 
-    cur = getenv("DQ3_MENU_SEL") ? atoi(getenv("DQ3_MENU_SEL")) : 0;
-    if (cur >= 0 && cur < menu.n_items) menu.cursor = cur;
+    { const char *keys = getenv("DQ3_TAV_KEYS"); const char *p;
+      if (keys) for (p = keys; *p; p++) { uint8_t sc = 0;
+          switch (*p) { case 'U':sc=0x48;break; case 'D':sc=0x50;break; case 'L':sc=0x4b;break;
+                        case 'R':sc=0x4d;break; case 'E':sc=0x1c;break; case 'S':sc=0x39;break; }
+          if (sc) dq3_tavern_input(&tv, sc); } }
 
-    memset(fb, (uint8_t)black, (size_t)DQ3_SCREEN_W * DQ3_SCREEN_H);
-    { int r,c; for (r=0;r<wh;r++) for (c=0;c<ww;c++){ int yy=wy+r,xx=wx+c;
-        if (yy>=0&&yy<DQ3_SCREEN_H&&xx>=0&&xx<DQ3_SCREEN_W) fb[yy*DQ3_SCREEN_W+xx]=(uint8_t)bg; } }
-    { int c; for (c=0;c<ww;c++){ fb[wy*DQ3_SCREEN_W+wx+c]=(uint8_t)frame; fb[(wy+wh-1)*DQ3_SCREEN_W+wx+c]=(uint8_t)frame; }
-      int r; for (r=0;r<wh;r++){ fb[(wy+r)*DQ3_SCREEN_W+wx]=(uint8_t)frame; fb[(wy+r)*DQ3_SCREEN_W+wx+ww-1]=(uint8_t)frame; } }
-
-    {
-        int screen = getenv("DQ3_TAVERN_SCREEN") ? atoi(getenv("DQ3_TAVERN_SCREEN")) : 0;
-        uint8_t yellow = (uint8_t)pal_near2(pal,pn,255,255,0);
-        if (screen == 2) {                 /* 姓名輸入畫面(英數)*/
-            dq3_nameinput ni; dq3_nameinput_init(&ni);
-            ni.cursor = (cur >= 0 && cur < DQ3_NI_CELLS) ? cur : 0;
-            { uint16_t pre[2] = {15, 16}; ni.buf[0]=pre[0]; ni.buf[1]=pre[1]; ni.len=2; }  /* 預填 "AB" 示意 */
-            dq3_nameinput_render(&ni, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx + 12, wy + 12, (uint8_t)white, yellow);
-        } else if (screen == 1) {          /* 名冊畫面:預建幾名同伴 + 顯示 */
-            int c; uint16_t nm[2] = {1, 2};
-            for (c = 1; c <= 4; c++) { int idx = dq3_roster_create(&roster, &st, c, DQ3_GENDER_MALE, nm, 2);
-                if (idx >= 0 && c <= 3) dq3_party_add(&party, &roster, idx); }   /* 前 3 名入隊 */
-            tav_render_roster(&roster, &party, &t, fb, wx + 12, wy + 16, menu.cursor, (uint8_t)white, yellow);
-        } else {
-            dq3_menu_render(&menu, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, yellow);
-        }
-        if (dump) {
-            dq3_present();
-            if (dq3_dump_ppm(dump) == 0)
-                fprintf(stderr, "tavern(screen=%d sel=%d roster=%d) -> %s OK\n", screen, menu.cursor, roster.count, dump);
-            dq3_text_free(&t); return 0;
-        }
+    if (dump) {
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_tavern_render(&tv, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
+        dq3_present();
+        if (dq3_dump_ppm(dump)==0)
+            fprintf(stderr, "tavern(state=%d roster=%d party=%d) -> %s OK\n", tv.state, roster.count, party.count, dump);
+        dq3_text_free(&t); return 0;
     }
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
-        if (sc) {
-            int sel = dq3_menu_input(&menu, sc);
-            if (sel >= 0) {                         /* Enter:建一名該職業同伴(預設名)*/
-                uint16_t nm[2] = {1, 2};
-                int idx = dq3_roster_create(&roster, &st, sel, DQ3_GENDER_MALE, nm, 2);
-                if (idx >= 0) { dq3_party_add(&party, &roster, idx);
-                    fprintf(stderr, "登錄:職業%d → 名冊%d Lv%d HP%u(隊伍%d人)\n",
-                        sel, idx, roster.list[idx].m.level, roster.list[idx].m.stat[0], party.count); }
-            }
-        }
-        memset(fb,(uint8_t)black,(size_t)DQ3_SCREEN_W*DQ3_SCREEN_H);
-        dq3_menu_render(&menu, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, (uint8_t)pal_near2(pal,pn,255,255,0));
+        if (sc) dq3_tavern_input(&tv, sc);
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_tavern_render(&tv, &t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
         dq3_present(); dq3_delay_ms(16);
     }
     dq3_text_free(&t); return 0;
