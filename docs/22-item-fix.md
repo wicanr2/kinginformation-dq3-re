@@ -217,3 +217,13 @@ python tools/re_codecave_patch.py --base work/DQ3_fixed.EXE   # → work/DQ3_ful
 remake:`dq3_item_attack/defense/price/category/can_equip`(dq3_combat);`dq3_recruit` 加
 `weapon`/`armor` 槽;戰鬥 **攻擊力 = 力量 + 武器 b0、守備力 = 耐力/2 + 防具 b1**。實測:
 勇者裝銅劍(攻+10)物理傷害提高。待:商店(買賣)+ 裝備指令 UI(可裝備職業用 b6 防呆)。
+
+## 商店 / 開場 RE(部分)
+
+- **道具店 handler**:file 0x8af3 印歡迎詞(D3TXT00 rec 0x119「歡迎光臨,這裡是道具店」),
+  `[0x408a]=0x1b1` → 買單 overlay。**買到的道具放進玩家 entity 庫存**:0x8ab7 `bx=[0x722];
+  si=[bx+0x4f15]+0x3a;cx=8` 掃 8 格找空(0xff)填入(entity +0x3a = 8 格道具欄)。
+- **商店「貨架」來源**:店主 NPC 的庫存(entity +0x3a),載自 CTY NPC 資料;per-town 精確
+  貨架表仍待深 RE(shop overlay + CTY NPC 庫存欄)。remake 暫用合理早期選品(真實 ITEM.DAT 價/限制)。
+- **主角開場初始**(file 0x1c33):新遊戲主角 `[si+0x15]=1`(等級1)、`call 0xeecf`(學咒文 sub_db5f)、
+  **`[si+0x3a]=0x1e` = 起始裝備「布的衣服」(0x1e)**。⇒ remake 主角創角後預設帶布衣。

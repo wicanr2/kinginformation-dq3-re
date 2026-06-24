@@ -52,6 +52,7 @@ int dq3_roster_create(dq3_roster *r, const dq3_stats *st,
     rc = &r->list[idx];
     memset(rc, 0, sizeof *rc);
     rc->weapon = rc->armor = 0xff;     /* 無裝備(0xff;memset 後 0 = 木棒,須清)*/
+    if (idx == 0) rc->armor = 0x1e;    /* 主角開場帶「布的衣服」(RE file 0x1c33,docs/22)*/
     rc->gender = gender;
     rc->name_len = name_len;
     for (i = 0; i < name_len; i++) rc->name[i] = name ? name[i] : 0;

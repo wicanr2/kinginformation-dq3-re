@@ -344,7 +344,9 @@ static int run_game(const char *assets, const char *dump)
         dq3_scene *t0 = dq3_town_load(assets, "CTY00.DAT", 0, 1, err, sizeof err);
         if (t0) { town = t0; load_field_hero(town, assets); cur = town; in_town = 1; cur_cty = 0;
                   dq3_scene_apply_palette(cur);
-                  fprintf(stderr, "開場:阿里阿罕城鎮(CTY00)— 西側櫃台建隊、C 開指令窗、B 商店、SPACE 出城\n"); }
+                  fprintf(stderr, "開場:阿里阿罕城鎮(CTY00)— 西側櫃台建隊、C 開指令窗、B 商店、SPACE 出城\n");
+                  /* 開場對白:媽媽送你出發(D3TXT01 阿里阿罕 rec21;主角是勇者歐里狄加的後代)*/
+                  if (dlg_ok) dq3_dialogue_open(&dlg, 21); }
     }
 
     /* 互動:方向走動 + 隨機遭遇;SPACE 進/出城鎮;Enter 對話(前方有事件時)。 */
