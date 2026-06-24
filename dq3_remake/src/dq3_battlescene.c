@@ -183,6 +183,10 @@ static int pick_caster_spell_kind(member *party, int kind, const dq3_spell_def *
 static int pick_caster_spell(member *party, const dq3_spell_def **pdef)
 { return pick_caster_spell_kind(party, DQ3_SK_DMG, pdef); }
 
+/* 手動選咒(互動):成員 ci 施放指定咒 d;NULL = 自動。 */
+static int g_manual_cast_ci = -1;
+static const dq3_spell_def *g_manual_cast_def = NULL;
+
 /* 隊伍中 HP 比例最低(且未陣亡)且 < maxhp/4 的成員;無回 -1。 */
 static int lowest_hurt_ally(const member *party)
 {
@@ -194,6 +198,27 @@ static int lowest_hurt_ally(const member *party)
           if (r < worst) { worst = r; t = i; } }
     }
     return t;
+}
+
+/* 套用成員 ci 施放咒文 d 的效果(扣 MP + 傷害/回復;公式對齊 EXE 0xc22e)。 */
+static void cast_spell_effect(member *party, int *ehp, int en, int ci, const dq3_spell_def *d)
+{
+    if (ci < 0 || !d) return;
+    party[ci].mp -= d->mp; if (party[ci].mp < 0) party[ci].mp = 0;
+    if (d->kind == DQ3_SK_HEAL) {
+        int t = lowest_hurt_ally(party); if (t < 0) t = ci;
+        int v = (d->base >= 999) ? party[t].maxhp : spell_value(d->base);
+        party[t].hp += v; if (party[t].hp > party[t].maxhp) party[t].hp = party[t].maxhp;
+        fprintf(stderr, "  %s 詠唱回復咒文 → %s 回復 %d HP。\n", party[ci].dbg, party[t].dbg, v);
+    } else if (d->target == DQ3_TG_ENEMY1) {
+        int e = pick_alive_enemy(ehp, en);
+        if (e >= 0) { int v = spell_value(d->base); ehp[e] -= v; if (ehp[e] < 0) ehp[e] = 0;
+            fprintf(stderr, "  %s 詠唱咒文 → 敵%d 受 %d 傷害%s\n", party[ci].dbg, e, v, ehp[e]==0?" — 擊倒!":""); }
+    } else {
+        int e, hit = 0;
+        for (e = 0; e < en; e++) if (ehp[e] > 0) { int v = spell_value(d->base); ehp[e] -= v; if (ehp[e]<0)ehp[e]=0; hit++; }
+        fprintf(stderr, "  %s 詠唱範圍咒文 → 波及 %d 隻敵人。\n", party[ci].dbg, hit);
+    }
 }
 
 /* 執行一回合;cmd:0戰 1逃 2防 3道具 4咒文。回傳 0續 1勝 2敗 3逃成功。 */
@@ -213,29 +238,19 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
         int t=pick_alive_party(party);
         if(t>=0){ int heal=30; party[t].hp+=heal; if(party[t].hp>party[t].maxhp)party[t].hp=party[t].maxhp;
             fprintf(stderr,"  %s 使用藥草,回復 %d。\n", party[t].dbg, heal); }
-    } else if(cmd==4){ /* 咒文:有人快倒先治療,否則放最強可負擔攻擊咒(公式對齊 EXE 0xc22e)*/
-        const dq3_spell_def *hd; int hurt = lowest_hurt_ally(party);
-        int hi = (hurt >= 0) ? pick_caster_spell_kind(party, DQ3_SK_HEAL, &hd) : -1;
-        if (hi >= 0 && hd) {                          /* 治療 */
-            int v = (hd->base >= 999) ? party[hurt].maxhp : spell_value(hd->base);
-            party[hi].mp -= hd->mp;
-            party[hurt].hp += v; if(party[hurt].hp>party[hurt].maxhp)party[hurt].hp=party[hurt].maxhp;
-            fprintf(stderr,"  %s 詠唱回復咒文 → %s 回復 %d HP。\n", party[hi].dbg, party[hurt].dbg, v);
-        } else {
-        const dq3_spell_def *d; int ci = pick_caster_spell(party, &d);
-        if(ci<0 || !d){ fprintf(stderr,"  無人能施放攻擊咒文(MP 不足或非施法職)。\n"); }
-        else {
-            party[ci].mp -= d->mp;
-            if(d->target==DQ3_TG_ENEMY1){               /* 單體 */
-                int e=pick_alive_enemy(ehp,en);
-                if(e>=0){ int v=spell_value(d->base); ehp[e]-=v; if(ehp[e]<0)ehp[e]=0;
-                    fprintf(stderr,"  %s 詠唱咒文 → 敵%d 受 %d 傷害%s\n", party[ci].dbg, e, v, ehp[e]==0?" — 擊倒!":""); }
-            } else {                                     /* 一組 / 全體:打所有存活敵 */
-                int e, hit=0;
-                for(e=0;e<en;e++){ if(ehp[e]<=0) continue; { int v=spell_value(d->base); ehp[e]-=v; if(ehp[e]<0)ehp[e]=0; hit++; } }
-                fprintf(stderr,"  %s 詠唱範圍咒文 → 波及 %d 隻敵人。\n", party[ci].dbg, hit);
+    } else if(cmd==4){ /* 咒文 */
+        if(g_manual_cast_def){                          /* 手動選咒(互動)*/
+            cast_spell_effect(party, ehp, en, g_manual_cast_ci, g_manual_cast_def);
+            g_manual_cast_def = NULL; g_manual_cast_ci = -1;
+        } else {                                        /* 自動:快倒先治療,否則最強攻擊咒 */
+            const dq3_spell_def *hd; int hurt = lowest_hurt_ally(party);
+            int hi = (hurt >= 0) ? pick_caster_spell_kind(party, DQ3_SK_HEAL, &hd) : -1;
+            if (hi >= 0 && hd) cast_spell_effect(party, ehp, en, hi, hd);
+            else {
+                const dq3_spell_def *d; int ci = pick_caster_spell(party, &d);
+                if(ci<0 || !d) fprintf(stderr,"  無人能施放咒文(MP 不足或非施法職)。\n");
+                else cast_spell_effect(party, ehp, en, ci, d);
             }
-        }
         }
     } else { /* 戰:每位存活成員攻擊;武器雙擊則打 2 次(#7a,dq3_combat)*/
         for(i=0;i<PARTY;i++){
@@ -318,6 +333,60 @@ static void writeback_roster(const dq3_member *pm)
     for (i = 0; i < PARTY; i++)
         if (g_pl_ri[i] >= 0 && g_pl_ri[i] < g_pl_roster->count)
             g_pl_roster->list[g_pl_ri[i]].m = pm[i];
+}
+
+/* 互動選咒子選單:列領頭施法成員已學會的可施放咒文(名+MP),選定 → 設 g_manual_cast_*,回 1;
+ * ESC 取消回 0。 */
+static int spell_menu_select(member *party, const dq3_monster_sprite *spr, int *ehp, int en, int monster_id)
+{
+    int ci = -1, i, nd = 0, cur = 0;
+    const dq3_spell_def *defs[64];
+    for (i = 0; i < PARTY; i++) {
+        unsigned short recs[64]; int n, k;
+        if (party[i].hp <= 0 || party[i].mp <= 0) continue;
+        n = dq3_spells_known(g_cls_idx[i], party[i].level, recs, 64);
+        for (k = 0; k < n; k++) { const dq3_spell_def *d = dq3_spell_def_get(recs[k]);
+            if (d && nd < 64) defs[nd++] = d; }
+        if (nd > 0) { ci = i; break; }
+    }
+    if (ci < 0 || nd == 0) { fprintf(stderr, "  無人能施放咒文。\n"); return 0; }
+
+    { const char *sd = getenv("DQ3_SPELLSEL_DUMP");   /* 視覺驗證:截選咒選單首幀 */
+      if (sd) { int wx=16,wy=120,ww=110,wh=14+nd*16,r; if(wh>200)wh=200;
+        render(dq3_fb(),spr,ehp,en,party,4,1,monster_id);
+        fillrect(dq3_fb(),wx,wy,ww,wh,(uint8_t)black_idx); rect_border(dq3_fb(),wx,wy,ww,wh,(uint8_t)white_idx);
+        for(r=0;r<nd;r++){ int yy=wy+6+r*16; if(yy+14>wy+wh)break;
+            if(r==0)dq3_text_draw_glyph(&g_txt,dq3_fb(),DQ3_SCREEN_W,DQ3_SCREEN_H,wx+4,yy,11,(uint8_t)white_idx);
+            dq3_text_draw_record(&g_txt,dq3_fb(),DQ3_SCREEN_W,DQ3_SCREEN_H,wx+20,yy,5,1,defs[r]->rec,
+                (defs[r]->mp<=party[ci].mp)?(uint8_t)white_idx:(uint8_t)red_idx); }
+        dq3_present(); dq3_dump_ppm(sd); fprintf(stderr,"spellsel(%d 咒) -> %s\n",nd,sd); return 0; } }
+
+    while (!dq3_should_quit()) {
+        uint8_t sc;
+        int wx = 16, wy = 120, ww = 110, wh = 14 + nd * 16, r;
+        if (wh > 200) wh = 200;
+        render(dq3_fb(), spr, ehp, en, party, 4, 1, monster_id);
+        fillrect(dq3_fb(), wx, wy, ww, wh, (uint8_t)black_idx);
+        rect_border(dq3_fb(), wx, wy, ww, wh, (uint8_t)white_idx);
+        for (r = 0; r < nd; r++) {
+            int yy = wy + 6 + r * 16;
+            if (yy + 14 > wy + wh) break;
+            if (r == cur) dq3_text_draw_glyph(&g_txt, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H, wx + 4, yy, 11, (uint8_t)white_idx);
+            dq3_text_draw_record(&g_txt, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H, wx + 20, yy, 5, 1, defs[r]->rec,
+                                 (defs[r]->mp <= party[ci].mp) ? (uint8_t)white_idx : (uint8_t)red_idx);
+        }
+        dq3_present();
+        sc = dq3_poll_scancode();
+        if (sc == 0x01) return 0;                                /* ESC 取消 */
+        else if (sc == 0x48) cur = (cur + nd - 1) % nd;
+        else if (sc == 0x50) cur = (cur + 1) % nd;
+        else if (sc == 0x1c || sc == 0x39) {
+            if (defs[cur]->mp <= party[ci].mp) { g_manual_cast_ci = ci; g_manual_cast_def = defs[cur]; return 1; }
+            fprintf(stderr, "  MP 不足。\n");
+        }
+        dq3_delay_ms(16);
+    }
+    return 0;
 }
 
 int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
@@ -417,6 +486,10 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     { int i; for(i=0;i<en;i++) ehp[i]=ehpmax; }
     fprintf(stderr,"=== 遭遇 %s ×%d (HP%d atk%d def%d) ===\n", ms.exp?"怪物":"怪物", en, ehpmax, eatk, edef);
 
+    if(getenv("DQ3_SPELLSEL_DUMP")){   /* 選咒選單視覺驗證 */
+        spell_menu_select(party, &spr, ehp, en, monster_id);
+        dq3_monsters_free(&mons); if(g_txt_ok)dq3_text_free(&g_txt); return 0;
+    }
     /* ---- headless 腳本(script 驅動;dump 選擇性)---- */
     if(script){
         const char *p = script;
@@ -453,6 +526,9 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         if(sc==0x48){ cursor=(cursor+BCMD_N-1)%BCMD_N; }   /* 上 */
         else if(sc==0x50){ cursor=(cursor+1)%BCMD_N; }     /* 下 */
         else if(sc==0x1c||sc==0x39){               /* Enter/Space:執行 */
+            if(cursor==4){                          /* 咒文:先開手動選咒選單 */
+                if(!spell_menu_select(party, &spr, ehp, en, monster_id)) continue;  /* 取消→回指令 */
+            }
             turn++;
             outcome=do_turn(party,ehp,en,eatk,edef,eagi,efree,cursor);
         }
