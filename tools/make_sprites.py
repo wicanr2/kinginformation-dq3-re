@@ -76,9 +76,19 @@ JOBS = {
     128: ("dq3_org_pic/128-sprite.jpeg", 12, 88, ('black', 50)),
     129: ("dq3_org_pic/九頭蛇.jpg",      16, 96, ('flood', 0.91)),
 }
+# id129 參考圖(九頭蛇.jpg)是現代紫色 render,但實機(索瑪最終戰截圖)的 King Hydra
+# 是綠色 FC 風;故把紫/藍系 MNSBK 索引重映成綠系,對齊實機配色。
+GREEN_REMAP = {12:6, 5:11, 4:6, 13:6, 1:6}   # 紫/藍 → 綠/暗綠
+def remap_grid(grid, m):
+    for row in grid:
+        for x in range(len(row)):
+            if row[x] in m: row[x]=m[row[x]]
+    return grid
+
 sprites={}
 for mid,(ref,Wb,H,bg) in JOBS.items():
     _,_,grid,ink = build_grid(ref,Wb,H,bg)
+    if mid==129: grid=remap_grid(grid, GREEN_REMAP)   # 紫→綠對齊實機
     sprites[mid]=encode(Wb,H,grid)
     print(f"id {mid}: {Wb*8}x{H} ink={ink} bytes={len(sprites[mid])}")
 

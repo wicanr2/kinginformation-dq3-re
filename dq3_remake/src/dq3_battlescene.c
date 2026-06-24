@@ -282,7 +282,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         g_sky_ok = (dq3_packbg_decode(assets, bgpage, g_sky, err, sizeof err) == 0);
     }
 
-    if(dq3_monster_sprite_decode(assets,monster_id,&spr,err,sizeof err)!=0){
+    if(dq3_monster_sprite_get(assets,monster_id,&spr,err,sizeof err)!=0){
         fprintf(stderr,"monster %d sprite: %s\n",monster_id,err); return -1; }
     if(dq3_monsters_load(&mons,assets,err,sizeof err)!=0){
         fprintf(stderr,"D3MNS: %s\n",err); return -1; }

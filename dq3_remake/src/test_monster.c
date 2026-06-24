@@ -41,7 +41,17 @@ int main(int argc, char **argv)
         int r128 = dq3_monster_sprite_decode(assets,128,&spr,err,sizeof err);
         int r129 = dq3_monster_sprite_decode(assets,129,&spr,err,sizeof err);
         printf("  id128 歐里狄加 decode rc=%d, id129 九頭龍 rc=%d\n", r128, r129);
-        CHECK(r128<0 && r129<0, "id128/129 為空 sprite(缺圖,原版 blit 無 guard → 當機)");
+        CHECK(r128<0 && r129<0, "id128/129 原版為空 sprite(缺圖,原版 blit 無 guard → 當機)");
+    }
+
+    printf("== #3 修正:復原 sprite 回退 ==\n");
+    {
+        int g128 = dq3_monster_sprite_get(assets,128,&spr,err,sizeof err);
+        CHECK(g128==0 && spr.w>0 && spr.h>0, "id128 get 回退復原 sprite(歐里狄加)");
+        int g129 = dq3_monster_sprite_get(assets,129,&spr,err,sizeof err);
+        CHECK(g129==0 && spr.w>0 && spr.h>0, "id129 get 回退復原 sprite(五頭龍大王)");
+        int g5 = dq3_monster_sprite_get(assets,5,&spr,err,sizeof err);
+        CHECK(g5==0, "一般怪(史萊姆 id5)get 仍走原版 SHP");
     }
 
     printf("\n%s (%d failures)\n", g_fail?"== 有測試未通過 ==":"== 全部通過 ==", g_fail);

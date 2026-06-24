@@ -38,7 +38,7 @@ int  dq3_monster_get_stat(const dq3_monsters *m, int id, dq3_monster_stat *out);
 uint16_t dq3_monster_hp_max(const dq3_monsters *m, int id);
 
 /* ---- SHP sprite ---- */
-#define DQ3_SHP_MAXW 64
+#define DQ3_SHP_MAXW 160   /* 原版 sprite 寬多達 ~288;160 涵蓋多數含復原 boss(96/128)*/
 #define DQ3_SHP_MAXH 160
 typedef struct {
     int w, h;                                   /* 像素寬高 */
@@ -49,5 +49,9 @@ typedef struct {
 /* 從 DQ3MNS.SHP 解第 id 隻 sprite。失敗回 <0(含尺寸超出 / 空 sprite)。 */
 int dq3_monster_sprite_decode(const char *assets_dir, int id,
                               dq3_monster_sprite *out, char *err, int errcap);
+
+/* 取得 sprite:先試 DQ3MNS.SHP;若為空(未完成 boss 128/129)回退復原資料。成功回 0。 */
+int dq3_monster_sprite_get(const char *assets_dir, int id,
+                           dq3_monster_sprite *out, char *err, int errcap);
 
 #endif /* DQ3_MONSTER_H */

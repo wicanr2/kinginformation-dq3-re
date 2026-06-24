@@ -17,6 +17,23 @@
 - **remake 階段④ C 層 bug 修正(誠實狀態,見階段④ claim 校正)**:**已整合進可玩系統** = #1 結算、#2 合成(gate CTY93)、#3 blit guard、#8 palette、真傷害公式、**#4/#5/#6 升級系統**(`dq3_member` + 戰鬥勝利結算)、#7a/#7b(battlescene)。**邏輯實作+單測** 已大致收斂。#6 註:原版確切 wrap 點未定位、核心修法為 uint16 全程(非 clamp 數值)。
 - **知識庫(repo 級)✅**(2026-06-23,接續 session 8db027c4 斷三次的請求):`CONTEXT.md`(canonical 術語表 + `docs/00–35` 主題索引 + 待釐清詞,即「避免重複採坑」入口)、`docs/00-re-methodology.md`(4 條可重用 RE 技巧:羅塞塔範本 / 跳表派發 / file⇄logical 位址基準陷阱 / 用資料內容反證標註)、`~/.claude` 跨 session 記憶 ×4。已 commit+push(`ecd4f5c`)。
 
+## 2026-06-24 session 新增(一手史料 + 實機 oracle)
+
+- **BBS 1994–95 討論串歷史紀錄 ✅**(`docs/history/dq3-bbs-1994.md`,CONTEXT/README 已索引,
+  原始 `dq3_bbs/DQ3.pdf` 入版控):精訊官方公告(1993 開發 / ENIX 拒 / 離職員工外流 / 董事長
+  李培民)、Dollar Cheng & 青衫詩客攻略、咒文道具表。**RE 一手交叉佐證**:當年 binary patch
+  「魔王打不死(39 87 36 23→34)= #1」「彩虹水滴(DRAGON.DAT item 75)= #2」「五頭龍避戰
+  (disp 0A/0C→0A)= #3 歐里狄加/五頭龍空 sprite」與我們反組譯結論一致。
+- **存檔記憶體佈局(BBS Paul Shih)**:每角色 base 0x363、stride 0xFF;欄位序 等級/HP/MP/力量/
+  攻擊/耐力/守備/速度/聰明/運氣/MHP/MMP/法術(魔/僧)/道具(8×2)。**確認 dq3_member 缺第 7
+  屬性「運氣」**(成長表 +C 欄);攻擊/守備為派生值。待:補運氣進 member。
+- **開場插圖膚色修正 ✅**:FIRST.SCR 開場不用 DQ3.PAL(膚色 idx14 在 DQ3.PAL 是灰)。由實機
+  截圖反推獨立 16 色 `OPENING_PAL`(tools/title_render.py),膚色釘 fcd89c。first_opening.png 已修。
+- **實機 oracle 截圖入手**(`dq3_org_pic/`,版權不入版控):主角家(town 色盤已驗 DQ3.PAL 一致)、
+  索瑪過場、標題/ending、**索瑪最終戰**(戰鬥 HUD H/M/職等 佈局 + 綠色 King Hydra 頭 = id129
+  遊戲內 FC 風 sprite,非現代紫色版)。**Ortega(128) sprite ref = `128-sprite.jpeg`**(FC 風,
+  可供 bug #3 復原);King Hydra ref 以最終戰截圖綠色頭為準。
+
 ## dq3_remake 剩餘 worklist
 
 ### 階段② 移植遊戲邏輯(主迴圈→可走動)
@@ -81,7 +98,11 @@
   - [x] **互動戰鬥迴圈**(`dq3_battlescene`):遭遇怪群 + 指令選單(戰/逃/防/道具,游標)+ 回合執行(物理傷害公式 `dq3_battle_phys_damage`,會心一擊、防禦減半、逃跑判定)+ #1 正確結算 + 隊伍 HP 條 HUD。可互動(方向+Enter)可 headless 腳本(DQ3_BATTLE_SCRIPT)。實測史萊姆×3 FFFF→勝。
   - [x] **戰鬥 CJK 文字**:敵名(D3TXT00 rec 0x258+id)、指令選單(戰鬥/逃跑/防禦/道具)、隊伍 HP 數字,皆以 dq3_text 字模渲染。戰鬥畫面與 game3.png 一致(經典重現)。
   - [ ] 潤飾:packbg 戰鬥背景解碼;遭遇生成 sub_a7d5;復原 Ortega/Hydra 填 #3 空槽;傷害公式對 DOSBox 校準。
-  - [ ] 用復原的 Ortega(128)/Hydra(129)sprite(tools/make_sprites.py)填空槽。
+  - [x] **用復原的 Ortega(128)/Hydra(129)sprite 填空槽 ✅**(2026-06-24,使用者補上參考圖):
+    `tools/make_sprites.py`(128=FC 風 128-sprite.jpeg、129=現代 render 紫→綠重映對齊實機索瑪戰)
+    → `tools/gen_restored_sprites.py` 內嵌成 `dq3_restored_sprites.c`(committed artifact,參考圖
+    gitignore)。`dq3_monster_sprite_get` 先試原版 SHP、空則回退復原。DQ3_SHP_MAXW 64→160(原版
+    sprite 多達 ~288px,64 太小會拒大怪)。`dq3_monster_test` 加回退測全綠。
 
 ### 階段④ 7 bug C 層修正(誠實狀態:邏輯實作+單測 vs 整合進可玩系統)
 
@@ -93,8 +114,9 @@
 - [整合] **#1 巴拉摩斯打不死**:`dq3_battle_resolve` 正確結算(先判我方全滅含被吹飛→敗)。
   **已接進** `dq3_battlescene::do_turn`(同款結算)。單測:全隊被吹飛+巴拉摩斯HP500 → 修正判敗 vs 原版誤判勝。
 - [整合] **#2 彩虹水滴卡關**:`dq3_inventory` + `dq3_synth_rainbow_drop`(對齊 RE file 0x77ce:消耗太陽之石0x72+雲雨之杖0x73→雲雨之杖格寫成品)。修正:產出彩虹水滴 0x75(原版誤產銀寶珠 0x6b)。**已接 in-game**:`dq3_synth_shrine_examine` + 劇情旗標 0x139(未合成過才觸發、成功設旗標),game 模式城鎮調べる持兩材料即合成(headless demo log:`result=0x75 flag0x139=1`)。`dq3_scripted_event_run` 鏡射 runner(0xabb2)的 id→handler 跳表(DS 0x3baa),合成 = scripted-event 83。單測:修正→0x75、原版→0x6b、缺料不合成、祠堂觸發+旗標、不重複、event 派發。**待(改動態)**:精確祠堂座標 — 靜態已窮舉(0x77ce=handler 0x776c 尾段;runner 0xabb2 **零靜態呼叫者**,經事件 VM 進入),需 DOSBox 中斷點 runner phys 0x9842 讀地圖/座標定位(docs/31)。
-- [整合(部分)] **#3 九頭龍/歐里狄加當機(缺 sprite)**:`dq3_monster_sprite_decode` 對空 sprite 回 <0 = blit guard,
-  **已整合**(battlescene 不畫空 sprite 不當機)。**但復原的 Ortega/Hydra sprite 尚未填入**(仍只是 guard,非顯示)。
+- [整合] **#3 九頭龍/歐里狄加當機(缺 sprite)✅**:`dq3_monster_sprite_decode` 對空 sprite 回 <0 = blit guard
+  (不當機);`dq3_monster_sprite_get` 進一步**回退復原 sprite** → 128/129 真顯示(歐里狄加肌肉戰士+斧、
+  綠色五頭龍大王,對齊實機索瑪戰)。battlescene 改用 get。完成「不當機 → 正確顯示」。
 - [整合] **#4 勇者 MaxMP 成長偏低**:`dq3_stats` 內建成長表,勇者 MP base 3→8/slope 5→10。
   **已整合**:`dq3_member`(隊員實體)init/gain_exp 用成長表;`dq3_battlescene` 勝利結算
   套用 → 升級時 MaxMP 依修正表成長。單測 Lv43 110→223、整合測 gain_exp→Lv43 MaxMP=223。

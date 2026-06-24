@@ -1,5 +1,6 @@
 /* dq3_monster.c — 怪物數值 + DQ3MNS.SHP sprite 解碼。 */
 #include "dq3_monster.h"
+#include "dq3_restored_sprites.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,4 +91,13 @@ int dq3_monster_sprite_decode(const char *dir, int id, dq3_monster_sprite *out,
     free(d);
     return 0;
     #undef FAIL
+}
+
+int dq3_monster_sprite_get(const char *dir, int id, dq3_monster_sprite *out,
+                           char *err, int errcap)
+{
+    if (dq3_monster_sprite_decode(dir, id, out, err, errcap) == 0) return 0;
+    /* 原版空 sprite(未完成 boss 128/129)→ 回退復原資料(bug #3 顯示而非當機)*/
+    if (dq3_restored_sprite(id, out) == 0) return 0;
+    return -1;
 }
