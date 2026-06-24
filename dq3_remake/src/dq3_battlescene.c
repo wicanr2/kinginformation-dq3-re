@@ -435,6 +435,9 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         { "魔法師", {110,208,822},3, 110, 22,22, 11,11,1, 11, 6,11, 0, 0x60, {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff} },
     };
 
+    /* ITEM.DAT 先載(裝備加成 #7a/#7b + 攻防加成需要;在玩家隊覆寫前)*/
+    g_items_ok = (dq3_items_load(&g_items, assets, err, sizeof err) == 0);
+
     /* 玩家隊伍覆寫:若酒場已建隊,改用真實名冊成員(姓名/職業/等級/數值)。 */
     if (g_pl_roster && g_pl_party) {
         int si, pi = 0, j, k;
@@ -450,11 +453,16 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             party[pi].level = rc->m.level;
             party[pi].maxhp = party[pi].hp = (int)rc->m.stat[DQ3_STAT_HP];
             party[pi].maxmp = party[pi].mp = (int)rc->m.stat[DQ3_STAT_MP];
-            party[pi].atk   = (int)rc->m.stat[DQ3_STAT_STR];        /* 力量(無武器加成,簡化)*/
-            party[pi].def   = (int)rc->m.stat[DQ3_STAT_VIT] / 2;    /* 體力衍生(無防具)*/
+            /* 攻擊力 = 力量 + 武器 b0;守備力 = 耐力/2 + 防具 b1(ITEM.DAT,docs/22)*/
+            party[pi].atk = (int)rc->m.stat[DQ3_STAT_STR]
+                            + (g_items_ok ? dq3_item_attack(&g_items, rc->weapon) : 0);
+            party[pi].def = (int)rc->m.stat[DQ3_STAT_VIT] / 2
+                            + (g_items_ok ? dq3_item_defense(&g_items, rc->armor) : 0);
             party[pi].agi   = (int)rc->m.stat[DQ3_STAT_AGI];
-            party[pi].weapon = 0; party[pi].defending = 0;
+            party[pi].weapon = (rc->weapon==0xff)?0:rc->weapon;     /* #7a 雙擊判定用 */
+            party[pi].defending = 0;
             for (k = 0; k < 8; k++) party[pi].equip[k] = 0xff;
+            if (rc->armor != 0xff) party[pi].equip[0] = rc->armor;  /* #7b 抗魔掃描 */
             g_cls_idx[pi] = rc->m.cls;
             g_pl_ri[pi] = ri;                  /* 記住回寫目標 */
             pi++;
@@ -482,7 +490,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     /* 文字(敵名/指令/HP):D3TXT00.FON + D3TXT00.TXT */
     g_txt_ok = (dq3_text_load(&g_txt, assets, "D3TXT00.TXT", err, sizeof err) == 0);
     /* ITEM.DAT 旗標(#7a 雙擊 / #7b 抗魔) */
-    g_items_ok = (dq3_items_load(&g_items, assets, err, sizeof err) == 0);
+    /* (ITEM.DAT 已於玩家隊覆寫前載入)*/
     /* 升級系統(成長/門檻表;apply_bug4_fix=1 → 勇者 MP 修正)+ 隊員實體 */
     g_stats_ok = (dq3_stats_load(&g_stats, assets, 1, err, sizeof err) == 0);
     { int i; for (i = 0; i < PARTY; i++) {

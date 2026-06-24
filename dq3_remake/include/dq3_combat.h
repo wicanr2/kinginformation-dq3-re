@@ -29,6 +29,13 @@ typedef struct {
 
 int dq3_items_load(dq3_items *it, const char *assets_dir, char *err, int errcap);
 
+/* ITEM.DAT 數值(RE docs/22):b0 攻 / b1 防 / 價(b2+b3*256)/ 類別 b4 / 可裝備職業 b6(0xff=全/0x80=勇者)。 */
+int dq3_item_attack(const dq3_items *it, int code);
+int dq3_item_defense(const dq3_items *it, int code);
+int dq3_item_price(const dq3_items *it, int code);
+int dq3_item_category(const dq3_items *it, int code);
+int dq3_item_can_equip(const dq3_items *it, int code, int cls);
+
 /* 道具旗標(code 越界回 0) */
 uint8_t dq3_item_flag5(const dq3_items *it, int code);
 uint8_t dq3_item_flag6(const dq3_items *it, int code);

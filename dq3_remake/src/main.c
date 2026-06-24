@@ -137,6 +137,8 @@ static int run_battle(const char *assets, const char *dump)
             dq3_roster_init(&vr); dq3_party_init(&vp);
             dq3_roster_create(&vr, &vs, 0, 0, n1, 2);   /* 勇者 */
             dq3_roster_create(&vr, &vs, 1, 0, n2, 2);   /* 戰士 */
+            vr.list[0].weapon = 0x03; vr.list[0].armor = 0x21;  /* 勇者:銅劍(攻10)+皮甲冑(防8)*/
+            vr.list[1].weapon = 0x0b;                            /* 戰士:鋼劍(攻28)*/
             { int i; for (i = 0; i < vr.count; i++) { dq3_member_init(&vr.list[i].m, &vs, vr.list[i].m.cls, lv);
                 dq3_party_add(&vp, &vr, i); } }
             dq3_battlescene_set_party(&vr, &vp);

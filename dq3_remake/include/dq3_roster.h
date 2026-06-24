@@ -29,6 +29,8 @@ typedef struct {
     int      gender;               /* DQ3_GENDER_* */
     int      in_party;             /* 是否在現役隊伍中 */
     dq3_member m;                  /* 職業 / 等級 / 數值 / 經驗 */
+    uint8_t  weapon;               /* 裝備武器 item code(0xff=無;攻擊力 = 力量 + item b0)*/
+    uint8_t  armor;                /* 裝備防具 item code(0xff=無;守備 = 耐力/2 + item b1)*/
 } dq3_recruit;
 
 typedef struct {

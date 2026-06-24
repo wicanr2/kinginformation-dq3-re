@@ -36,6 +36,21 @@ uint8_t dq3_item_flag6(const dq3_items *it, int code)
     return it->item[code][6];
 }
 
+/* ITEM.DAT 7-byte 結構(RE,docs/22):b0 攻、b1 防、b2+b3*256 價、b4 類別/部位、
+ * b5 武器旗標、b6 可裝備職業 bitmask。 */
+int dq3_item_attack(const dq3_items *it, int code)
+{ return (code<0||code>=DQ3_ITEM_COUNT)?0:it->item[code][0]; }
+int dq3_item_defense(const dq3_items *it, int code)
+{ return (code<0||code>=DQ3_ITEM_COUNT)?0:it->item[code][1]; }
+int dq3_item_price(const dq3_items *it, int code)
+{ return (code<0||code>=DQ3_ITEM_COUNT)?0:(it->item[code][2] | (it->item[code][3]<<8)); }
+int dq3_item_category(const dq3_items *it, int code)
+{ return (code<0||code>=DQ3_ITEM_COUNT)?0:it->item[code][4]; }
+/* 職業 cls(0..7)可否裝備此道具(b6 bitmask;0xff=全職業、0x80=勇者專用)。 */
+int dq3_item_can_equip(const dq3_items *it, int code, int cls)
+{ if(code<0||code>=DQ3_ITEM_COUNT||cls<0||cls>7) return 0;
+  return (it->item[code][6] & (0x80>>cls)) ? 1 : 0; }
+
 int dq3_combat_num_attacks(const dq3_items *it, int weapon_code)
 {
     return (dq3_item_flag5(it, weapon_code) & DQ3_WPN_DOUBLE_HIT) ? 2 : 1;

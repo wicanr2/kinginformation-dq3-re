@@ -51,6 +51,7 @@ int dq3_roster_create(dq3_roster *r, const dq3_stats *st,
     idx = r->count++;
     rc = &r->list[idx];
     memset(rc, 0, sizeof *rc);
+    rc->weapon = rc->armor = 0xff;     /* 無裝備(0xff;memset 後 0 = 木棒,須清)*/
     rc->gender = gender;
     rc->name_len = name_len;
     for (i = 0; i < name_len; i++) rc->name[i] = name ? name[i] : 0;
