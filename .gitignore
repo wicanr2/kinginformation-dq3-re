@@ -33,3 +33,6 @@ dq3_org_pic/
 # DOSBox 實機截圖(含版權畫面)不公開
 dosbox/
 scratch_re/
+dq3_bbs/*.png
+dq3_bbs/*.jpg
+dq3_bbs/*.jpeg
