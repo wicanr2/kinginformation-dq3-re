@@ -32,6 +32,12 @@
 - **FON** — 點陣字型容器(`.FON`);16×16 row-major MSB,字身 16×14、row14/15 留白。
 - **glyph index** — 字模索引(0..1475),OCR → Unicode 才能 dump 純文字。
 - **control-code** — 訊息字串中的負值 word(`0xffff` 結束、`0xfffc` 捲動等);全為文字格式 / 變數插入,**無** run-event 碼。
+- **rec400 指令窗** — D3TXT00 記錄 400 = 精訊版野外指令窗本尊(命令 + 2×3 格 對話/咒文/狀況/道具/裝備/調查);UI 選單以「框線 glyph + 標籤」存成單一 record(同類:rec407 狀態畫面、rec421 道具 使用/給予/丟掉、rec441-444 戰鬥指令)。_Avoid_: 人工猜指令中文名(docs/12 舊標)。
+- **道具名 rec** — D3TXT00 記錄號 = 道具碼 + 1(docs/33);咒文名 rec = `spell_id + 0x79`。
+
+### 角色 / 數值
+- **7 屬性序** — 成長表 14 byte = 7 個 (base,slope) 對,`kind*2`=列內 offset:0 HP、2 MP、4 速度、6 力量、8 聰明、A 耐力、C 運氣。語意三方交叉確認(成長表樣式 + 升級訊息 rec191-197 + BBS 存檔佈局 docs/history)。_Avoid_: 把屬性欄標成 B4/B6/B8/BA 不明名(舊 enum)。
+- **咒文習得表** — `sub_db5f`(file 0xeecf)讀 DGROUP `0x36f9` 起 per-系 stride 8 指標表 `{spellA,levelA,spellB,levelB}`;系基底 0/8/0x10=勇者/僧侶/魔法系;`level[i]`/`spell[i]` 平行,清單長度由下一指標界定(越界=#5 亂學咒 bug)。職業→系:勇者→勇者系、僧侶→僧侶系、魔法使→魔法系、賢者→僧侶+魔法、其餘無咒。
 
 > ⚠ 命名硬規則:標位址一律顯式標 `(file)` 或 `(logical)`,不可只寫裸位址。
 
