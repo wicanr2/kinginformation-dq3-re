@@ -32,6 +32,7 @@
 #include "dq3_status.h"
 #include "dq3_cmdmenu.h"
 #include "dq3_encounter.h"
+#include "dq3_combat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -194,6 +195,7 @@ static int find_cty_at(int px, int py) { return find_cty_at_map(px, py, 0); }  /
 static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *party,
                          const dq3_stats *st, const dq3_text *text);
 static void status_modal_page(const dq3_roster *roster, const dq3_party *party, const dq3_text *text, int start_page);
+static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold);
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                       dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok);
 static void item_modal(const dq3_inventory *inv, const dq3_text *text);
@@ -260,8 +262,11 @@ static int run_game(const char *assets, const char *dump)
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
     dq3_roster roster; dq3_party party; dq3_stats gst;              /* 露依達酒場:名冊 + 隊伍 */
+    long gold = 0;                                                  /* 隊伍金錢(戰利累積)*/
+    dq3_items shop_items; int shop_ok;                             /* ITEM.DAT(商店價/可裝備)*/
 
     dq3_roster_init(&roster); dq3_party_init(&party); dq3_stats_load(&gst, assets, 1, NULL, 0);
+    shop_ok = (dq3_items_load(&shop_items, assets, NULL, 0) == 0);
 
     field = dq3_field_load(assets, err, sizeof err);
     if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
@@ -394,6 +399,9 @@ static int run_game(const char *assets, const char *dump)
         } else if (sc == 0x2e) {            /* C:野外指令窗(命令)— 對話/咒文/狀況/道具/裝備/調查 */
             cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok);
             dq3_scene_apply_palette(cur);
+        } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店(城鎮內;買→裝備領頭隊員)*/
+            if (shop_ok) shop_modal(&roster, &party, &shop_items, &dlg.txt, &gold);
+            dq3_scene_apply_palette(cur);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
                 town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
@@ -470,6 +478,7 @@ static int run_game(const char *assets, const char *dump)
                     if (mon < 0) mon = over_pool[grnd() % 4];
                     dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
                     dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), NULL, NULL, grnd());
+                    gold += dq3_battlescene_last_gold();   /* 戰利金錢入袋 */
                     dq3_scene_apply_palette(cur);   /* bug #8:戰後還原地表色盤 */
                     enc = 6 + (int)(grnd() % 8);
                 }
@@ -596,6 +605,17 @@ static int run_tavern(const char *assets, const char *dump)
         if (dq3_dump_ppm(dump)==0) fprintf(stderr,"tavern(F10 離開確認) -> %s OK\n", dump);
         dq3_text_free(&t); return 0;
     }
+    if (getenv("DQ3_SHOP_SCREEN") && dump) {
+        /* 商店畫面驗證:建一名隊員 + 金錢,渲染武器/防具店首幀(DQ3_SHOP_DUMP)*/
+        static const uint16_t nm[2] = {106,187}; dq3_items shi; long g = 500;
+        dq3_roster_create(&roster, &st, getenv("DQ3_ST_CLASS")?atoi(getenv("DQ3_ST_CLASS")):0, 0, nm, 2);
+        dq3_party_add(&party, &roster, 0);
+        if (dq3_items_load(&shi, assets, NULL, 0) == 0) {
+            setenv("DQ3_SHOP_DUMP", dump, 1);
+            shop_modal(&roster, &party, &shi, &t, &g);
+        }
+        dq3_text_free(&t); return 0;
+    }
     if (getenv("DQ3_CMD_SCREEN") && dump) {
         /* 野外指令窗 視覺驗證(命令 + 6 指令 + ► 游標)*/
         dq3_cmdmenu cm; dq3_cmdmenu_init(&cm);
@@ -681,6 +701,77 @@ static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *part
         if (sc) dq3_tavern_input(&tv, sc);
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         dq3_tavern_render(&tv, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+12, wy+12, (uint8_t)white, yellow);
+        dq3_present(); dq3_delay_ms(16);
+    }
+}
+
+/* 用字模畫十進位數(數字 glyph 0..9 = idx 0..9)。 */
+static void draw_number_at(uint8_t *fb, const dq3_text *t, int x, int y, int v, uint8_t fg)
+{
+    uint16_t d[8]; int n = 0, i; if (v < 0) v = 0;
+    if (v == 0) d[n++] = 0;
+    else { int x2 = v; uint16_t tmp[8]; int tn = 0;
+        while (x2 > 0 && tn < 8) { tmp[tn++] = (uint16_t)(x2 % 10); x2 /= 10; }
+        for (i = tn-1; i >= 0; i--) d[n++] = tmp[i]; }
+    for (i = 0; i < n; i++) dq3_text_draw_glyph(t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, x + i*DQ3_GLYPH_PX, y, d[i], fg);
+}
+
+/* 武器/防具商店 modal:列早期裝備(名+價+能否裝備),Enter 購買→裝給領頭隊員,ESC 離開。
+ * 道具名 = D3TXT00 rec=code+1;價/類別/可裝備職業由 ITEM.DAT(docs/22)。 */
+static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold)
+{
+    static const unsigned char STOCK[] = {0x01,0x03,0x0b,0x11,0x21,0x27,0x2b,0x41};
+    int n = (int)sizeof STOCK, cur = 0, lead_ri;
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg; uint8_t yellow, redc; uint8_t *fb = dq3_fb();
+    int wx = 24, wy = 40, ww = 300, wh = 220;
+
+    lead_ri = (party->count > 0 && party->slot[0] >= 0 && party->slot[0] < roster->count) ? party->slot[0] : -1;
+    if (lead_ri < 0) return;                                  /* 隊伍空 */
+    raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = white; bg = pal_near2(pal,pn,16,16,32);
+    yellow = (uint8_t)pal_near2(pal,pn,255,255,0); redc = (uint8_t)pal_near2(pal,pn,255,80,80);
+
+    { const char *sd = getenv("DQ3_SHOP_DUMP"); int i; dq3_recruit *rc = &roster->list[lead_ri];
+      if (sd) {
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        draw_number_at(fb, text, wx+14, wy+10, (int)*gold, (uint8_t)yellow);
+        for (i = 0; i < n; i++) { int yy = wy+34+i*18, code = STOCK[i];
+            int ok = (code==0x41 || dq3_item_can_equip(items, code, rc->m.cls));
+            if (i==0) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+4, yy, 11, yellow);
+            dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+22, yy, 8, 1, code+1, ok?(uint8_t)white:redc);
+            draw_number_at(fb, text, wx+22+7*DQ3_GLYPH_PX, yy, dq3_item_price(items, code), (uint8_t)white); }
+        dq3_present(); dq3_dump_ppm(sd); fprintf(stderr,"shop(金%ld)-> %s\n",*gold,sd); return; } }
+
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        dq3_recruit *rc = &roster->list[lead_ri];
+        int i;
+        if (sc == 0x01 || sc == DQ3_SC_F10) break;
+        else if (sc == 0x48) cur = (cur + n - 1) % n;
+        else if (sc == 0x50) cur = (cur + 1) % n;
+        else if (sc == 0x1c || sc == 0x39) {                  /* Enter/Space:購買 */
+            int code = STOCK[cur], price = dq3_item_price(items, code);
+            int cat = dq3_item_category(items, code);
+            if (*gold >= price && (code == 0x41 || dq3_item_can_equip(items, code, rc->m.cls))) {
+                *gold -= price;
+                if (cat & 0x40) rc->armor = (unsigned char)code;        /* 防具 */
+                else if (cat & 0x20) rc->weapon = (unsigned char)code;  /* 武器 */
+                fprintf(stderr, "購買並裝備 道具0x%02x(花 %d,餘 %ld)\n", code, price, *gold);
+            } else fprintf(stderr, "金錢不足或無法裝備。\n");
+        }
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        draw_number_at(fb, text, wx+14, wy+10, (int)*gold, (uint8_t)yellow);   /* 金錢 */
+        for (i = 0; i < n; i++) {
+            int yy = wy + 34 + i * 18, code = STOCK[i];
+            uint8_t fg = (i == cur) ? yellow : (uint8_t)white;
+            int ok = (code == 0x41 || dq3_item_can_equip(items, code, rc->m.cls));
+            if (i == cur) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+4, yy, 11, yellow);
+            dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+22, yy, 8, 1, code+1, ok?fg:redc);
+            draw_number_at(fb, text, wx+22+7*DQ3_GLYPH_PX, yy, dq3_item_price(items, code), (uint8_t)white);
+        }
         dq3_present(); dq3_delay_ms(16);
     }
 }

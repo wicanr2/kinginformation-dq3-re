@@ -21,6 +21,7 @@ void dq3_battlescene_set_party(dq3_roster *roster, const dq3_party *party);
  *   dump:非 NULL 時 headless,繪末幀寫 PPM。
  *   seed:RNG 種子(headless 確定性)。
  * 回傳結算(0 續/1 勝/2 敗;逃成功回 3)。 */
+int dq3_battlescene_last_gold(void);  /* 上一場戰利金錢 */
 int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
                         int bg_page, const char *script, const char *dump, unsigned seed);
 

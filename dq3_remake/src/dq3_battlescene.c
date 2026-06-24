@@ -157,6 +157,8 @@ static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 
 /* 敵方 AI(docs/37):本場怪的 D3MNS AI 欄位 + 我方平均等級 + 本場逃走數。 */
 static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled, g_ehpmax;
+static int g_last_gold;                         /* 上一場勝利的戰利金錢 */
+int dq3_battlescene_last_gold(void){ return g_last_gold; }
 
 /* 咒文施放值:DQ3.EXE 公式(file 0xc22e)val = base/2 + rng(base/2)。 */
 static int spell_value(int base)
@@ -517,6 +519,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     ehpmax = ms.hp_base + ms.hp_rand; if(ehpmax<1)ehpmax=1;
     eatk = ms.atk>0?ms.atk:8; edef=(ms.def>0&&ms.def<255)?ms.def:4; eagi=ms.agi; efree=ms.flee_resist;
     { int i; for(i=0;i<en;i++) ehp[i]=ehpmax; }
+    g_last_gold = 0;
     /* 敵方 AI(docs/37):讀本場怪 D3MNS AI 欄 + 算我方平均等級;g_fled 計逃走數 */
     g_eai_ok = (dq3_monster_get_ai(&mons, monster_id, &g_eai) == 0);
     g_eai_nspell = g_eai_ok ? dq3_monster_spell_count(&g_eai) : 0;
@@ -541,7 +544,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             p++;
             if(turn>50) break;
         }
-        if(outcome==1){ apply_victory_exp(party, pm, (uint32_t)((en-g_fled)>0?(en-g_fled):0) * ms.exp);   /* 勝利→經驗→升級 */
+        if(outcome==1){ g_last_gold = ((en-g_fled)>0?(en-g_fled):0) * (int)ms.gold; apply_victory_exp(party, pm, (uint32_t)((en-g_fled)>0?(en-g_fled):0) * ms.exp);   /* 勝利→經驗+金錢→升級 */
             writeback_roster(pm); }                                            /* 回寫名冊(持久)*/
         if(dump){
             render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0,monster_id);
@@ -574,7 +577,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         }
         dq3_delay_ms(16);
     }
-    if(outcome==1){ apply_victory_exp(party, pm, (uint32_t)((en-g_fled)>0?(en-g_fled):0) * ms.exp);   /* 勝利→經驗→升級 */
+    if(outcome==1){ g_last_gold = ((en-g_fled)>0?(en-g_fled):0) * (int)ms.gold; apply_victory_exp(party, pm, (uint32_t)((en-g_fled)>0?(en-g_fled):0) * ms.exp);   /* 勝利→經驗+金錢→升級 */
         writeback_roster(pm); }                                            /* 回寫名冊(持久)*/
     /* 結束:顯示末幀片刻 */
     render(dq3_fb(),&spr,ehp,en,party,cursor,0,monster_id);
