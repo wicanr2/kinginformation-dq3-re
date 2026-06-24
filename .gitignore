@@ -9,17 +9,13 @@ assets_out/
 *.pyc
 __pycache__/
 .venv/
-
 # 第三方完整攻略文件 (青衫先生),版權非本專案所有,本機參考用不公開
 references/*.html
-
 # 第三方攻略截圖 (青衫先生), 版權非本專案, 不公開
 references/*.png
 references/*.jpg
 references/*.gif
-
 # 怪物 sprite 圖(圖鑑總表 + 個別散圖)保留展示
-
 # tools/build:下載的古董編譯器與中間產物(版權/體積,不入公開版控)
 tools/build/tc201.zip
 tools/build/msc51.zip
@@ -32,10 +28,8 @@ re/match/*.obj
 re/match/*.OBJ
 tools/build/*.ppm
 tools/build/*_view.png
-
 # 重繪參考圖(原版/網路素材,版權,本機參考用)
 dq3_org_pic/
-
 # DOSBox 實機截圖(含版權畫面)不公開
 dosbox/
-dq3_bbs/
+scratch_re/
