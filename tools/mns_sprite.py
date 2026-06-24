@@ -84,7 +84,10 @@ def render_one(m, offs, pal, idx, transparent=0, plane_order="hi2lo"):
 
 
 def main():
-    m = open(SHP, 'rb').read()
+    # 若已生成含復原 128/129(歐里狄加/五頭龍大王)的 fixed SHP,優先用它,補完圖鑑空槽。
+    import os.path
+    src = "work/DQ3MNS_fixed.SHP" if os.path.exists("work/DQ3MNS_fixed.SHP") else SHP
+    m = open(src, 'rb').read()
     offs = read_offsets(m)
     pal = load_pal(PAL)
     nspr = len(offs) - 1
