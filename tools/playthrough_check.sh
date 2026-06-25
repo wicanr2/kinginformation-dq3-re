@@ -39,5 +39,6 @@ chk "達瑪神殿:進城達成 DHAMA"     "warp:49:5:5"        "."    "抵達達
 chk "達瑪轉職:隊員換職(Lv1減半)" "party;reclass:1:3"  "."    "達瑪轉職:隊員1 職業 1→3"
 chk "狀態:驅毒草解中毒"           "party;status:0:1;item:0x42;use:0x42" "." "驅毒草:隊員0 解除中毒"
 chk "狀態:滿月草解麻痺"           "party;status:0:2;item:0x45;use:0x45" "." "滿月草:隊員0 解除麻痺"
+chk "野外道具選單:選藥草使用"     "party;hurt:5;item:0x41;warp:0:27:30" "cdrede" "野外つかう:藥草"
 echo "== 結果:PASS=$pass FAIL=$fail =="
 [ "$fail" -eq 0 ]

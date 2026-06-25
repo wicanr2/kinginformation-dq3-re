@@ -259,7 +259,7 @@ static const unsigned char *shop_stock_for(int cty, int *n);
 static void equip_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text);
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                       dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys);
-static void item_modal(const dq3_inventory *inv, const dq3_text *text);
+static void item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
 
@@ -1430,21 +1430,65 @@ static void status_modal_page(const dq3_roster *roster, const dq3_party *party, 
 /* 野外指令窗(命令):rec400 的 6 指令 對話/咒文/狀況/道具/裝備/調查;選定即派發。
  * 對話/調查 = 面向格事件→對話(祠堂/酒場特例仍在 Enter);道具/裝備 尚未實作。回傳選定指令或 -1。 */
 /* 道具欄 modal:列出持有道具(名稱 = D3TXT00 rec=code+1),ESC 離開。 */
-static void item_modal(const dq3_inventory *inv, const dq3_text *text)
+/* 對隊伍套用一個道具(野外つかう):heal=治第一個受傷者;cure=解第一個對應異常者。
+ * 用到 → 消耗並回 1;不可用(滿/無異常/非野外道具)回 0。 */
+static int field_use_item(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int code)
+{
+    int kind = dq3_item_use_kind(code), i;
+    if (kind == DQ3_USE_HEAL_HP) {
+        for (i = 0; i < p->count; i++) {
+            dq3_member *m = &r->list[p->slot[i]].m;
+            if (dq3_item_use_heal(m, code) > 0) {
+                dq3_inv_remove(inv, code);
+                fprintf(stderr, "野外つかう:藥草 → 隊員%d HP %d/%d\n", i, m->cur_hp, m->stat[DQ3_STAT_HP]);
+                return 1;
+            }
+        }
+        return 0;
+    }
+    if (kind == DQ3_USE_CURE_POISON || kind == DQ3_USE_CURE_PARALYSIS) {
+        for (i = 0; i < p->count; i++)
+            if (dq3_item_use_cure(&r->list[p->slot[i]].m, code)) { dq3_inv_remove(inv, code); return 1; }
+        return 0;
+    }
+    return 0;   /* 蓋美拉翅膀/聖水等需世界狀態,野外選單暫不處理 */
+}
+
+/* 野外道具選單:游標選取 + Enter 使用(heal/cure)。inv 非 const(會消耗)。 */
+static void item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party)
 {
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t *fb = dq3_fb();
     int wx = 30, wy = 50, ww = 290, wh = 200;
+    int cursor = 0;
     raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return;
     pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
     white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
     frame = white; bg = pal_near2(pal,pn,16,16,32);
     while (!dq3_should_quit()) {
-        uint8_t sc = dq3_poll_scancode();
-        if (sc == 0x01 || sc == DQ3_SC_F10) break;
+        int codes[DQ3_INV_SLOTS], n = 0, i, sx, sy;
+        uint8_t sc;
+        for (i = 0; i < DQ3_INV_SLOTS; i++) if (inv->slot[i] != DQ3_ITEM_NONE) codes[n++] = inv->slot[i];
+        if (n == 0) cursor = 0; else if (cursor >= n) cursor = n - 1; else if (cursor < 0) cursor = 0;
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         dq3_status_render_items(inv, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+14, wy+12, (uint8_t)white);
+        if (n > 0) {   /* 游標:選中道具左側畫實心方塊(排版同 render_items:2 欄、起 y+20+0、row 17)*/
+            int col = cursor & 1, rowi = cursor >> 1, px, py, dx, dy;
+            sx = (wx+14) + col * (8 * DQ3_GLYPH_PX); sy = (wy+12+20) + rowi * 17;
+            px = sx - 11; py = sy + 2;
+            for (dy = 0; dy < 12; dy++) for (dx = 0; dx < 8; dx++) {
+                int xx = px+dx, yy = py+dy;
+                if (xx>=0 && xx<DQ3_SCREEN_W && yy>=0 && yy<DQ3_SCREEN_H) fb[yy*DQ3_SCREEN_W+xx] = (uint8_t)white;
+            }
+        }
         dq3_present(); dq3_delay_ms(16);
+        sc = dq3_poll_scancode();
+        if (sc == 0x01 || sc == DQ3_SC_F10) break;
+        else if (sc == 0x50 && cursor + 2 < n) cursor += 2;      /* 下 */
+        else if (sc == 0x48 && cursor - 2 >= 0) cursor -= 2;      /* 上 */
+        else if (sc == 0x4d && cursor + 1 < n) cursor += 1;      /* 右 */
+        else if (sc == 0x4b && cursor - 1 >= 0) cursor -= 1;      /* 左 */
+        else if (sc == 0x1c && n > 0) field_use_item(inv, roster, party, codes[cursor]);  /* Enter 使用 */
     }
 }
 
@@ -1482,7 +1526,7 @@ static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
             if (dlg_ok) { int rec = (ep && ep < dlg->txt.n_records) ? ep : 1; dq3_dialogue_open(dlg, rec); }
         } else fprintf(stderr, "%s:前方無人 / 無物\n", sel==DQ3_CMD_TALK?"對話":"調查");
         break; }
-    case DQ3_CMD_ITEM:  item_modal(inv, sys); break;            /* 道具名 = D3TXT00 rec=code+1 */
+    case DQ3_CMD_ITEM:  item_modal(inv, sys, roster, party); break;  /* 游標選取 + Enter 使用(heal/cure)*/
     case DQ3_CMD_EQUIP: equip_modal(roster, party, sys); break; /* 裝備名 = D3TXT00 */
     }
     return sel;
