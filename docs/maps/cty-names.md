@@ -31,3 +31,11 @@
 | 13 | 金字塔 | 魔法鑰匙(0x56)+ 黃金爪;依席斯城東 |
 | 73 | 依席斯城 | |
 | 76 | 貝亞城 | 耶進貝亞 |
+
+## 為何不需要全部命名(結論)
+
+`world_known.png`:綠=已命名、紅=有 overworld 入口但未命名(51 個)。
+**這些紅 CTY 對遊戲功能無影響**——remake `find_cty_at_map` 用 cty_loc 判定入口,走到該格即載入,
+不需名字。且全部 map=0(有 overworld 入口)→ **無孤兒**(沒有「唯一靠 runner warp 才進得去」的城)。
+⇒ 命名/標記紅 CTY 純為 RE 文件完整,非遊戲必須。warp/portal 的 data 已抽(dq3_locwarp),
+wiring 卡 runner 但因無孤兒亦非必要。
