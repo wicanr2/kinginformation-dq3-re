@@ -75,6 +75,8 @@ int  dq3_scene_walkable(const dq3_scene *s, int tx, int ty);
 /* 查 (tx,ty) 的 tile 事件(docs/31:屬性 attr&8 + 高 byte subid → section 事件表)。
  * 有事件回 1 並填 *type/*param;無回 0。 */
 int  dq3_scene_tile_event(const dq3_scene *s, int tx, int ty, int *type, int *param);
+/* 同上,另回傳事件 p2(一次性旗標 id);寶箱開啟用。 */
+int  dq3_scene_tile_event_p2(const dq3_scene *s, int tx, int ty, int *type, int *param, int *p2);
 
 /* 查 (tx,ty) 是否為轉場 tile(docs/35:屬性 attr&0xe000 + 高 byte subid → +0xc 轉場表)。
  * 是 → 回 1 並填目的 *dest_cty/*dest_sec/*dx/*dy(任一可為 NULL);否則回 0。 */

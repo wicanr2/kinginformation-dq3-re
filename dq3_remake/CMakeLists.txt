@@ -50,6 +50,7 @@ add_executable(dq3_remake
     src/dq3_cmdmenu.c
     src/dq3_encounter.c
     src/dq3_shopdata.c
+    src/dq3_treasure.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)

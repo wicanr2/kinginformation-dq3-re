@@ -19,6 +19,11 @@ int dq3_scene_walkable(const dq3_scene *s, int tx, int ty)
 
 int dq3_scene_tile_event(const dq3_scene *s, int tx, int ty, int *type, int *param)
 {
+    return dq3_scene_tile_event_p2(s, tx, ty, type, param, 0);
+}
+
+int dq3_scene_tile_event_p2(const dq3_scene *s, int tx, int ty, int *type, int *param, int *p2)
+{
     int i, idx, subid;
     if (!s->hi_map || s->n_events <= 0) return 0;
     if (tx < 0 || ty < 0 || tx >= s->map_w || ty >= s->map_h) return 0;
@@ -30,6 +35,7 @@ int dq3_scene_tile_event(const dq3_scene *s, int tx, int ty, int *type, int *par
     if (subid >= s->n_events) return 0;
     if (type)  *type  = s->events[subid].type;
     if (param) *param = s->events[subid].param;
+    if (p2)    *p2    = s->events[subid].p2;
     return 1;
 }
 

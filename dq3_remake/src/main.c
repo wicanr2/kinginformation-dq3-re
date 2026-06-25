@@ -400,10 +400,31 @@ static int run_game(const char *assets, const char *dump)
                     fprintf(stderr, "露依達酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
                 }
             }
-            if (dq3_scene_tile_event(cur, cur->px, cur->py, &et, &ep)) {
-                const char *tn = et==0?"調べる/寶箱":et==2?"傳送/門":(et==1||et==3)?"條件":"道具/其他";
-                fprintf(stderr, "事件: type=%d(%s) param=0x%x\n", et, tn, ep);
-                if (dlg_ok) { dlg_rec = (ep && ep < dlg.txt.n_records) ? ep : 1; dq3_dialogue_open(&dlg, dlg_rec); }
+            {
+            int et2, ep2, ef2;
+            /* 面向格優先(站在寶箱前調べる),其次本格 */
+            int fdx2 = (cur->facing==3)-(cur->facing==1), fdy2 = (cur->facing==0)-(cur->facing==2);
+            if (dq3_scene_tile_event_p2(cur, cur->px+fdx2, cur->py+fdy2, &et2, &ep2, &ef2) ||
+                dq3_scene_tile_event_p2(cur, cur->px, cur->py, &et2, &ep2, &ef2)) {
+                /* 寶箱 / 隱藏物品(docs/40):type 0/1/3 + param=道具 id。flag=一次性旗標,
+                 * remake 用 flag bit 當「已取」標記(set=已取);取過再調べる回空。 */
+                int is_item = (et2==0 || et2==1 || et2==3) && ep2 > 0 && ep2 < 0x90;
+                if (is_item) {
+                    if (dq3_flags_get(&flags, ef2)) {           /* 已取過 → 空寶箱 */
+                        if (dlg_ok) dq3_dialogue_open(&dlg, 0xf3);   /* 「可惜是空的。」*/
+                    } else if (dq3_inv_add(&inv, ep2) >= 0) {   /* 入背包 + 標記已取 */
+                        dq3_flags_set(&flags, ef2, 1);
+                        fprintf(stderr, "寶箱: 獲得道具 0x%02x(旗標0x%02x 標記已取)\n", ep2, ef2);
+                        if (dlg_ok) { dlg_rec = ep2 + 1; dq3_dialogue_open(&dlg, dlg_rec); }  /* 道具名 rec=code+1 */
+                    } else if (dlg_ok) {
+                        dq3_dialogue_open(&dlg, 0x13a);          /* 「行李滿了」*/
+                    }
+                } else {
+                    const char *tn = et2==0?"調べる":et2==2?"傳送/門":"其他";
+                    fprintf(stderr, "事件: type=%d(%s) param=0x%x\n", et2, tn, ep2);
+                    if (dlg_ok) { dlg_rec = (ep2 && ep2 < dlg.txt.n_records) ? ep2 : 1; dq3_dialogue_open(&dlg, dlg_rec); }
+                }
+            }
             }
         } else if (sc == 0x14 && in_town && cur_cty == 0) {  /* T:阿里阿罕酒場捷徑(開發用;正式入口=西側 LUIDA 櫃台)*/
             tavern_modal(assets, &roster, &party, &gst, &dlg.txt);
