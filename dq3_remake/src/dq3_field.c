@@ -23,6 +23,11 @@ static uint8_t *load(const char *dir, const char *name, size_t *len)
 
 dq3_scene *dq3_field_load(const char *dir, char *err, int errcap)
 {
+    return dq3_field_load_map(dir, "DQ3CON.MAP", err, errcap);   /* 地表 */
+}
+
+dq3_scene *dq3_field_load_map(const char *dir, const char *map_name, char *err, int errcap)
+{
     uint8_t *pal_raw = NULL, *blk_raw = NULL, *map_raw = NULL, *att_raw = NULL;
     size_t pal_len, blk_len, map_len, att_len;
     dq3_scene *s = NULL;
@@ -34,10 +39,10 @@ dq3_scene *dq3_field_load(const char *dir, char *err, int errcap)
 
     pal_raw = load(dir, "DQ3.PAL",    &pal_len); if (!pal_raw) FAIL("load DQ3.PAL");
     blk_raw = load(dir, "DQ3.BLK",    &blk_len); if (!blk_raw) FAIL("load DQ3.BLK");
-    map_raw = load(dir, "DQ3CON.MAP", &map_len); if (!map_raw) FAIL("load DQ3CON.MAP");
+    map_raw = load(dir, map_name,     &map_len); if (!map_raw) FAIL("load overworld map");
     att_raw = load(dir, "BLKBM.DAT",  &att_len); if (!att_raw) FAIL("load BLKBM.DAT");
 
-    if (map_len < 4) FAIL("DQ3CON.MAP too small");
+    if (map_len < 4) FAIL("overworld map too small");
     map_w = map_raw[0] | (map_raw[1] << 8);
     map_h = map_raw[2] | (map_raw[3] << 8);
     map   = map_raw + 4;

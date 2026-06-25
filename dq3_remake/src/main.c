@@ -307,6 +307,7 @@ static int run_game(const char *assets, const char *dump)
 {
     char err[256] = {0};
     dq3_scene *field, *town = NULL, *cur;
+    dq3_scene *field_under = NULL; int layer = 0;  /* 0=地表 1=下層 overworld(docs/43)*/
     int in_town = 0, enc, fx = 0, fy = 0, cur_cty = -1;   /* cur_cty:目前所在 CTY 號(#2 gate)*/
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1, cur_dlg_bank = 1;  /* 啟動載 D3TXT01(阿里阿罕 bank)*/
@@ -390,6 +391,7 @@ static int run_game(const char *assets, const char *dump)
         if (dlg_ok) dq3_dialogue_free(&dlg);
         if (sys_ok) dq3_text_free(&sys_txt);
         if (town) dq3_scene_free(town);
+        if (field_under) dq3_scene_free(field_under);
         dq3_scene_free(field);
         return 0;
     }
@@ -556,6 +558,11 @@ static int run_game(const char *assets, const char *dump)
             if (shop_ok) { int sn; const unsigned char *sk = shop_stock_for(cur_cty, &sn);
                 shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt, &gold, sk, sn); }
             dq3_scene_apply_palette(cur);
+        } else if (sc == 0x16 && !in_town) {  /* U:地表↔下層 overworld 切換(開發用;正式=下降洞事件待 RE,docs/43)*/
+            if (!field_under) { field_under = dq3_field_load_map(assets, "DQ3UND.MAP", err, sizeof err);
+                if (field_under) load_field_hero(field_under, assets); }
+            if (field_under) { layer = !layer; cur = layer ? field_under : field; dq3_scene_apply_palette(cur);
+                fprintf(stderr, "切換到%s overworld(%dx%d)\n", layer?"下層":"地表", cur->map_w, cur->map_h); }
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
                 town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);
@@ -583,10 +590,20 @@ static int run_game(const char *assets, const char *dump)
                  * 同 CTY → 換 section。一律置玩家於目的 (X,Y)。 */
                 if (in_town && dq3_scene_tile_transition(cur, cur->px, cur->py,
                                                          &dcty, &dsec, &dx, &dy)) {
-                    if (dsec == 0xff) {               /* 出城回地表 */
+                    if (dsec == 0xff || dsec == 0xfe) {  /* 出城:0xff→地表 / 0xfe→下層(docs/43)*/
+                        int to_under = (dsec == 0xfe);
+                        if (to_under && !field_under) {  /* 首次需下層 → 懶載 DQ3UND.MAP */
+                            field_under = dq3_field_load_map(assets, "DQ3UND.MAP", err, sizeof err);
+                            if (field_under) load_field_hero(field_under, assets);
+                            else fprintf(stderr, "下層 overworld 載入失敗: %s\n", err);
+                        }
                         if (town) { dq3_scene_free(town); town = NULL; }
-                        cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
-                        fprintf(stderr, "出城:CTY%d → 回地表\n", cur_cty);
+                        layer = (to_under && field_under) ? 1 : 0;
+                        cur = layer ? field_under : field; in_town = 0; cur_cty = -1;
+                        if (dx && dx < cur->map_w) cur->px = dx;   /* spawn(0,0)=用既有位置 */
+                        if (dy && dy < cur->map_h) cur->py = dy;
+                        dq3_scene_apply_palette(cur);
+                        fprintf(stderr, "出城 → %s overworld spawn(%d,%d)\n", layer ? "下層" : "地表", dx, dy);
                     } else {                          /* 換 section / 跨 CTY */
                         int cross = (dcty != cur_cty && dcty < 100);
                         int ncty = cross ? dcty : cur_cty;
@@ -611,17 +628,17 @@ static int run_game(const char *assets, const char *dump)
                         }
                     }
                 }
-                /* 地表走到城鎮入口座標 → 進該 CTY(load_cty 查表 0x748)*/
+                /* overworld 走到城鎮入口座標 → 進該 CTY(0x748 查表;依當前 layer 地表/下層)*/
                 if (!in_town) {
-                    int cidx = find_cty_at(cur->px, cur->py);
+                    int cidx = find_cty_at_map(cur->px, cur->py, layer);
                     if (cidx >= 0) {
                         char cty[16]; int bn = dq3x_map_blknum[cidx];   /* 每CTY BLK號(0x0a04)*/
                         sprintf(cty, "CTY%02d.DAT", cidx);
                         town = dq3_town_load(assets, cty, 0, bn, err, sizeof err);
                         if (town) { load_field_hero(town, assets); cur = town; in_town = 1; cur_cty = cidx;
                             dq3_scene_apply_palette(cur);
-                            fprintf(stderr, "入城:地表(%d,%d) → %s(BLK%d)事件數=%d%s\n",
-                                    cur->px, cur->py, cty, bn, town->n_events,
+                            fprintf(stderr, "入城:%s(%d,%d) → %s(BLK%d)事件數=%d%s\n",
+                                    layer ? "下層" : "地表", cur->px, cur->py, cty, bn, town->n_events,
                                     cidx==DQ3_SHRINE_CTY ? "  [合成祠堂]" : ""); }
                         else fprintf(stderr, "入城失敗 %s: %s\n", cty, err);
                     }
@@ -644,6 +661,7 @@ static int run_game(const char *assets, const char *dump)
     if (dlg_ok) dq3_dialogue_free(&dlg);
     if (sys_ok) dq3_text_free(&sys_txt);
     if (town) dq3_scene_free(town);
+    if (field_under) dq3_scene_free(field_under);
     dq3_scene_free(field);
     return 0;
 }

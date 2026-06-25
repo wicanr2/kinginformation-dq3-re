@@ -12,5 +12,7 @@
 /* 載入地表場景。失敗回 NULL(err 可帶錯誤訊息,容量 errcap)。
  * 玩家起點以開闊地啟發式挑選。 */
 dq3_scene *dq3_field_load(const char *assets_dir, char *err, int errcap);
+/* 載指定 overworld 地圖檔(DQ3CON.MAP 地表 / DQ3UND.MAP 下層,docs/43)。 */
+dq3_scene *dq3_field_load_map(const char *assets_dir, const char *map_name, char *err, int errcap);
 
 #endif /* DQ3_FIELD_H */
