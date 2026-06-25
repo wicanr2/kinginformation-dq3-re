@@ -310,3 +310,18 @@ else:                              ; 一般
 **未定位(待續)**:玩家施法的**靜態 per-spell descriptor 表**(effect_type / base power / MP cost / target by spell_id)。傷害 base 在追到的路徑是 runtime 值(`[si+0x2339]`),玩家咒文的固定威力來源(美拉≈小、美拉米≈中…)與 MP 消耗表尚未定位——玩家施法路徑與此處的敵方攻擊路徑不同;`[0x2339]` 在 EXE 為 0(runtime),`0x2511` 多處被設成特定 spell_id 供訊息,非威力索引。需再追玩家「咒文」指令 → 選咒 → 扣 MP → 設 base 的那段。
 
 > 為何 remake 暫不接戰鬥施法:靜態威力 / MP 表未定位,**不憑 BBS 值湊**(BBS 作者自承 MP 數「最易出錯」、用 IV 代資料;EXE 內無 `[2,6,10,…]` 簡單 MP 表)。じゅもん 畫面只列「已學會的咒文名」(習得表 docs/18 已坐實),施法效果留待 descriptor 表 RE 完成。
+
+## 咒文效果型別:狀態咒辨識的 RE 現況(monster-status 分析)
+
+為接「怪物施狀態(中毒/麻痺)」分析了咒文 descriptor 表(0x37c4,3 byte/咒):
+- **b0=base、b1=target(bits)、b2 第三 byte**。逐家族驗:b2 在同系咒(美拉0x06/美拉米0x0c/
+  美拉宙瑪0x04)**不同** → **b2 不是效果型別**(可能動畫/音效 id)。
+- **base==255 = 特殊/即死標記**(rec139-142=沙基/沙拉基 ザキ/ザラキ 即死系;rec163/165=
+  比荷瑪 全回復)。**非**狀態咒(睡/麻痺)。
+- ⇒ 「狀態咒(ラリホー睡/マヌーサ幻)的效果型別」**不在這張表** → 在效果 dispatcher
+  `0xbfd0`(docs/13 §效果分類:依 `dl` 分流)的 `dl` 來源。要逐咒解 dl 需更深反組譯。
+- **附帶 latent 議題**:dq3_spelldef.c 把 base=255 即死系標 SK_DMG → 戰鬥若敵放沙基會走
+  傷害公式 ~127-255(非即死語意)。非破關 blocker,待效果型別 RE 後一併修。
+
+⇒ **結論**:monster-status 卡在效果 dispatcher(0xbfd0 dl 來源)RE,非單純 data 抽取可解。
+狀態系統其餘已閉環(overworld 毒傷+戰鬥毒傷/麻痺+道具/教會解,docs/47 #5)。
