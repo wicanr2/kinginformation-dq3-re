@@ -22,10 +22,14 @@
 al=[di+3];  test al,0x38
 == 0  → 子型 0:對話    [0x2597]=[di+4];  call talk(0x62e9)
 否則  → al=(al&0x38)>>3:
-   1 → 對話(同上)
-   2 → 特殊 handler 0x62d9
+   1 → 對話(同上;b4=對話 rec)
+   2 → scripted-event NPC(handler 0x62d9 → 0x6355:b4 = DGROUP 0x3bb4 跳表索引 → call handler)
    3..7 → 設施 dispatcher 0x839f(b4=設施索引,docs/40)
 ```
+
+> **子型 2(scripted-event NPC)**:`0x6355` 以 `b4*2` 索引跳表 `DS 0x3bb4` 呼叫一段 handler ——
+> 國王/劇情/條件互動那類自訂事件,**b4 不是對話 record**,故不可當普通對話開。remake talk 只接子型 0/1;
+> 子型 2 的跳表內容待 RE(同 scripted-event runner 0xabb2 家族,docs/31)。
 
 ## 三、對話文字定位
 
@@ -123,9 +127,10 @@ load_cty 尾段(0x4526):
 
 - `dq3_scene.dlg_bank` = section header +0x17(`dq3_town_load` 解析);主迴圈每幀依當前 section bank
   以 `dq3_dialogue_set_bank`(→ `dq3_text_reload`,只換文字檔保留字型)切換對話檔。
-- 面向 NPC 按 Enter:`dq3_scene_npc_at(faceX,faceY)` 找 NPC,子型 `(ctrl>>3)&7 < 3`(對話型)→
-  `dq3_dialogue_open(byte4)` + `set_dialogue_hero`({V}=主角名);設施型(≥3)略過(另由商店/旅社入口處理)。
-- 驗證:`dq3_dialogue_test` —— CTY00 +0x17==1、talk NPC b4=0x4f → D3TXT01 非空(「{名},怎麼了?…」)、
-  `set_bank` reload D3TXT02、越界拒絕,全通過。
-- 待補:系統訊息(「空的」rec 0xf3、「行李滿」0x13a)與道具名(rec=code+1)語意上屬 D3TXT00,
-  目前共用 section bank 檔(latent;原版 D3TXT00 常駐),不影響 NPC 對話正確性。
+- 面向 NPC 按 Enter:`dq3_scene_npc_at(faceX,faceY)` 找 NPC,**子型 `(ctrl>>3)&7 < 2`(對話型 0/1)**→
+  `dq3_dialogue_open(byte4)` + `set_dialogue_hero`({V}=主角名);子型 2(scripted-event)與設施型(≥3)略過。
+- **D3TXT00 常駐拆分(已修)**:系統訊息(「空的」0xf3、「行李滿」0x13a)與道具名(rec=code+1)走常駐
+  `sys_txt`(D3TXT00),經 `dq3_dialogue_open_text(&dlg, &sys_txt, rec)` 顯示;商店/道具/裝備/狀態 modal
+  的道具・咒文名也改吃 D3TXT00。NPC 對話走 section bank,兩者分離(對齊原版 D3TXT00 常駐 + bank 切換)。
+- 驗證:`dq3_dialogue_test` —— +0x17==1、talk NPC b4 非空、`set_bank` reload、越界拒絕、
+  `open_text` D3TXT00 系統訊息/道具名非空、D3TXT00 記錄數>700,全通過。

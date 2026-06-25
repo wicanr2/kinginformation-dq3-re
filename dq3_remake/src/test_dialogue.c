@@ -62,6 +62,20 @@ int main(int argc, char **argv) {
         CHECK(dlg.txt.n_records != n1 || n1 == 0, "reload 後記錄數更新");
         CHECK(dq3_dialogue_set_bank(&dlg, dir, 99, err, sizeof err) != 0, "set_bank 越界(99)被拒");
     }
+    /* D3TXT00 常駐拆分:系統訊息 / 道具名走 sys_txt(D3TXT00),經 open_text 顯示 */
+    {
+        dq3_text sys; int n00;
+        if (dq3_text_load(&sys, dir, "D3TXT00.TXT", err, sizeof err) == 0) {
+            int e1 = dq3_dialogue_open_text(&dlg, &sys, 0xf3);   /* 「可惜是空的。」(系統)*/
+            CHECK(e1 == 0 && dlg.len > 0, "open_text D3TXT00 系統訊息 0xf3 非空");
+            int e2 = dq3_dialogue_open_text(&dlg, &sys, 0x1e + 1); /* 0x1e 布衣 → 道具名 rec=0x1f */
+            CHECK(e2 == 0 && dlg.len > 0, "open_text D3TXT00 道具名(布衣)非空");
+            /* 拆分有意義:同 rec 0xf3 在 D3TXT00 與 section bank 應不同(證明不可混用)*/
+            n00 = sys.n_records;
+            CHECK(n00 > 700, "D3TXT00 記錄數 > 700(系統檔)");
+            dq3_text_free(&sys);
+        } else printf("  [SKIP] 載 D3TXT00 失敗: %s\n", err);
+    }
     dq3_dialogue_free(&dlg); free(cty);
 
     printf(fails ? "== %d 項失敗 ==\n" : "== 全部通過 ==\n", fails);

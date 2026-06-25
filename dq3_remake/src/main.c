@@ -199,7 +199,7 @@ static void status_modal_page(const dq3_roster *roster, const dq3_party *party, 
 static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold, int cty);
 static void equip_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text);
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
-                      dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok);
+                      dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys);
 static void item_modal(const dq3_inventory *inv, const dq3_text *text);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
@@ -271,6 +271,7 @@ static int run_game(const char *assets, const char *dump)
     int in_town = 0, enc, fx = 0, fy = 0, cur_cty = -1;   /* cur_cty:目前所在 CTY 號(#2 gate)*/
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1, cur_dlg_bank = 1;  /* 啟動載 D3TXT01(阿里阿罕 bank)*/
+    dq3_text sys_txt; int sys_ok = 0;                                  /* 常駐 D3TXT00:系統訊息 + 道具名 */
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
     dq3_roster roster; dq3_party party; dq3_stats gst;              /* 露依達酒場:名冊 + 隊伍 */
@@ -287,8 +288,10 @@ static int run_game(const char *assets, const char *dump)
      * → region 1(史萊姆/大烏鴉系弱怪,docs/39);取代 pick_open_start 的任意空地。 */
     if (153 < field->map_w && 174 < field->map_h) { field->px = 153; field->py = 174; }
     cur = field; dq3_scene_apply_palette(cur);
-    /* 對話文字(阿里阿罕 = D3TXT01) */
+    /* 對話文字(阿里阿罕 = D3TXT01;之後每幀依 section bank 切換,docs/42)*/
     dlg_ok = (dq3_dialogue_load(&dlg, assets, "D3TXT01.TXT", err, sizeof err) == 0);
+    /* 常駐系統/道具文字 = D3TXT00(系統訊息、道具名;與 NPC 對話 bank 分離,docs/42)*/
+    sys_ok = (dq3_text_load(&sys_txt, assets, "D3TXT00.TXT", err, sizeof err) == 0);
     enc = 6 + (int)(grnd() % 8);
     /* demo:身上帶兩材料,進祠堂「調べる」即可觸發 #2 合成(產彩虹水滴) */
     dq3_inv_init(&inv); dq3_flags_init(&flags);
@@ -346,6 +349,7 @@ static int run_game(const char *assets, const char *dump)
         dq3_present();
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "game -> %s OK\n", dump);
         if (dlg_ok) dq3_dialogue_free(&dlg);
+        if (sys_ok) dq3_text_free(&sys_txt);
         if (town) dq3_scene_free(town);
         dq3_scene_free(field);
         return 0;
@@ -428,7 +432,9 @@ static int run_game(const char *assets, const char *dump)
                 int ni = dq3_scene_npc_at(cur, cur->px+fdx3, cur->py+fdy3);
                 if (ni >= 0) {
                     int sub = (cur->npcs[ni].ctrl >> 3) & 7;
-                    if (sub < 3 && dlg_ok) {                 /* 對話型 NPC */
+                    /* 子型 0/1 = 對話(byte4=對話 rec);2 = scripted-event(byte4=0x3bb4 跳表索引,
+                     * 非對話 rec,待 RE);3-7 = 設施(docs/40)。僅 0/1 顯示對話。 */
+                    if (sub < 2 && dlg_ok) {                 /* 對話型 NPC */
                         set_dialogue_hero(&roster, &party);  /* {V} 主角名 */
                         if (dq3_dialogue_open(&dlg, cur->npcs[ni].b4) == 0) {
                             talked = 1;
@@ -449,14 +455,15 @@ static int run_game(const char *assets, const char *dump)
                  * remake 用 flag bit 當「已取」標記(set=已取);取過再調べる回空。 */
                 int is_item = (et2==0 || et2==1 || et2==3) && ep2 > 0 && ep2 < 0x90;
                 if (is_item) {
+                    /* 系統訊息 / 道具名走常駐 D3TXT00(sys_txt),非當前 section 對話 bank(docs/42)。 */
                     if (dq3_flags_get(&flags, ef2)) {           /* 已取過 → 空寶箱 */
-                        if (dlg_ok) dq3_dialogue_open(&dlg, 0xf3);   /* 「可惜是空的。」*/
+                        if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xf3);   /* 「可惜是空的。」*/
                     } else if (dq3_inv_add(&inv, ep2) >= 0) {   /* 入背包 + 標記已取 */
                         dq3_flags_set(&flags, ef2, 1);
                         fprintf(stderr, "寶箱: 獲得道具 0x%02x(旗標0x%02x 標記已取)\n", ep2, ef2);
-                        if (dlg_ok) { dlg_rec = ep2 + 1; dq3_dialogue_open(&dlg, dlg_rec); }  /* 道具名 rec=code+1 */
-                    } else if (dlg_ok) {
-                        dq3_dialogue_open(&dlg, 0x13a);          /* 「行李滿了」*/
+                        if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, ep2 + 1);  /* 道具名 rec=code+1 */
+                    } else if (sys_ok) {
+                        dq3_dialogue_open_text(&dlg, &sys_txt, 0x13a);          /* 「行李滿了」*/
                     }
                 } else {
                     const char *tn = et2==0?"調べる":et2==2?"傳送/門":"其他";
@@ -471,10 +478,10 @@ static int run_game(const char *assets, const char *dump)
             dq3_scene_apply_palette(cur);
             fprintf(stderr, "離開酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
         } else if (sc == 0x2e) {            /* C:野外指令窗(命令)— 對話/咒文/狀況/道具/裝備/調查 */
-            cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok);
+            cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok, sys_ok ? &sys_txt : &dlg.txt);
             dq3_scene_apply_palette(cur);
         } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店(城鎮內;買→裝備領頭隊員)*/
-            if (shop_ok) shop_modal(&roster, &party, &shop_items, &dlg.txt, &gold, cur_cty);
+            if (shop_ok) shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt, &gold, cur_cty);
             dq3_scene_apply_palette(cur);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
@@ -562,6 +569,7 @@ static int run_game(const char *assets, const char *dump)
         (void)fx; (void)fy;
     }
     if (dlg_ok) dq3_dialogue_free(&dlg);
+    if (sys_ok) dq3_text_free(&sys_txt);
     if (town) dq3_scene_free(town);
     dq3_scene_free(field);
     return 0;
@@ -989,7 +997,7 @@ static void item_modal(const dq3_inventory *inv, const dq3_text *text)
 }
 
 static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
-                     dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok)
+                     dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys)
 {
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t yellow; uint8_t *fb = dq3_fb();
@@ -1012,8 +1020,8 @@ static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
     }
     if (sel < 0) return -1;
     switch (sel) {
-    case DQ3_CMD_STATUS: status_modal_page(roster, party, &dlg->txt, 0); break;
-    case DQ3_CMD_SPELL:  status_modal_page(roster, party, &dlg->txt, 1); break;
+    case DQ3_CMD_STATUS: status_modal_page(roster, party, sys, 0); break;   /* 道具/咒文名走 D3TXT00 */
+    case DQ3_CMD_SPELL:  status_modal_page(roster, party, sys, 1); break;
     case DQ3_CMD_TALK: case DQ3_CMD_EXAMINE: {
         int fdx = (scene->facing==3)-(scene->facing==1), fdy = (scene->facing==0)-(scene->facing==2);
         int fx = scene->px+fdx, fy = scene->py+fdy, et, ep;
@@ -1022,8 +1030,8 @@ static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
             if (dlg_ok) { int rec = (ep && ep < dlg->txt.n_records) ? ep : 1; dq3_dialogue_open(dlg, rec); }
         } else fprintf(stderr, "%s:前方無人 / 無物\n", sel==DQ3_CMD_TALK?"對話":"調查");
         break; }
-    case DQ3_CMD_ITEM:  item_modal(inv, &dlg->txt); break;   /* 共享道具欄(鑰匙/合成品…)*/
-    case DQ3_CMD_EQUIP: equip_modal(roster, party, &dlg->txt); break;   /* 裝備一覽 */
+    case DQ3_CMD_ITEM:  item_modal(inv, sys); break;            /* 道具名 = D3TXT00 rec=code+1 */
+    case DQ3_CMD_EQUIP: equip_modal(roster, party, sys); break; /* 裝備名 = D3TXT00 */
     }
     return sel;
 }

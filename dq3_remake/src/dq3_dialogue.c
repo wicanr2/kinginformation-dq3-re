@@ -33,7 +33,14 @@ int dq3_dialogue_set_bank(dq3_dialogue *d, const char *dir, int bank, char *err,
 
 int dq3_dialogue_open(dq3_dialogue *d, int rec)
 {
-    int n = dq3_text_record(&d->txt, rec, d->buf, 2048);
+    return dq3_dialogue_open_text(d, &d->txt, rec);
+}
+
+int dq3_dialogue_open_text(dq3_dialogue *d, const dq3_text *src, int rec)
+{
+    /* 從指定文字檔取記錄到對話窗(字型共用 D3TXT00.FON,渲染不受來源檔影響)。
+     * 供系統訊息 / 道具名走常駐 D3TXT00,而非當前 section 對話 bank。 */
+    int n = dq3_text_record(src, rec, d->buf, 2048);
     if (n < 0) return -1;
     d->len = n; d->rec = rec; d->pos = 0; d->open = 1;
     return 0;

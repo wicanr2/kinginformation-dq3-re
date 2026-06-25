@@ -30,6 +30,8 @@ void dq3_dialogue_free(dq3_dialogue *d);
 
 /* 開始顯示記錄 rec(從頭)。回傳 0 成功。 */
 int  dq3_dialogue_open(dq3_dialogue *d, int rec);
+/* 同上,但記錄取自指定文字檔 src(如常駐 D3TXT00 的系統訊息 / 道具名),不用自身 bank。 */
+int  dq3_dialogue_open_text(dq3_dialogue *d, const dq3_text *src, int rec);
 int  dq3_dialogue_is_open(const dq3_dialogue *d);
 
 /* 推進到下一頁;若已到記錄結尾則關閉並回 1(done),否則回 0(還有)。 */
