@@ -35,6 +35,7 @@
 #include "dq3_combat.h"
 #include "dq3_shopdata.h"
 #include "dq3_sub2.h"
+#include "dq3_warp.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -539,9 +540,23 @@ static int run_game(const char *assets, const char *dump)
                     } else if (sys_ok) {
                         dq3_dialogue_open_text(&dlg, &sys_txt, 0x13a);          /* 「行李滿了」*/
                     }
+                } else if (et2 == 2) {        /* type-2 傳送(旅の扉/洞穴出口)→ warp 表 0x4ea0(docs/31/43)*/
+                    int wc, wx, wy;
+                    if (dq3_warp_get(ep2, &wc, &wx, &wy) == 0 && wc > 0 && wc < 100) {
+                        char ct[16]; int bn = dq3x_map_blknum[wc]; dq3_scene *ns;
+                        sprintf(ct, "CTY%02d.DAT", wc);
+                        ns = dq3_town_load(assets, ct, 0, bn, err, sizeof err);
+                        if (ns) {
+                            if (town) dq3_scene_free(town);
+                            town = ns; cur = town; in_town = 1; cur_cty = wc; load_field_hero(town, assets);
+                            if (wx < cur->map_w) cur->px = wx;
+                            if (wy < cur->map_h) cur->py = wy;
+                            dq3_scene_apply_palette(cur);
+                            fprintf(stderr, "傳送(旅の扉/洞):param=%d → CTY%d (%d,%d)\n", ep2, wc, wx, wy);
+                        } else fprintf(stderr, "傳送載入失敗 CTY%d: %s\n", wc, err);
+                    } else if (dlg_ok) dq3_dialogue_open(&dlg, 1);
                 } else {
-                    const char *tn = et2==0?"調べる":et2==2?"傳送/門":"其他";
-                    fprintf(stderr, "事件: type=%d(%s) param=0x%x\n", et2, tn, ep2);
+                    fprintf(stderr, "事件: type=%d param=0x%x\n", et2, ep2);
                     if (dlg_ok) { dlg_rec = (ep2 && ep2 < dlg.txt.n_records) ? ep2 : 1; dq3_dialogue_open(&dlg, dlg_rec); }
                 }
             }
