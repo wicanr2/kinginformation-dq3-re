@@ -143,13 +143,85 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 > struct 位址(0x4eb5-0x4ee4)落在 warp 表 0x4ea0 區內(0x4ea0+0x15..),與 3-byte 表項資料重疊
 > (緊湊打包);讀法以 5-byte struct 為準(0xd1f9 介面)。
 
-## 6. 阿里阿罕首旅の扉 / 首次下降 — 仍未定位(候選)
+## 5c. 呼叫鏈解出:warp handler = runner 0xabb2 / 子型2 同一張表
 
-- **不是** +0xc 轉場(地表無下層邊)、**不是** type-2 examine warp(CTY0 無)、**不是** 子型2 warp NPC(CTY0 無)。
-- **候選**:runner 0xabb2 scripted-event(docs/31:event id `[0x722]` 資料驅動,無靜態 setter,
-  最難);或 overworld 特定 tile/座標的寫死事件(類似祠堂 0x9f7f 寫死座標)。
-- 下一步:① 精準對齊解 byte4 33-36 warp 目的(CTY21/44 的 warp 先解出,反推格式)→ 推 runner;
-  ② 找 overworld 走動 handler 0x2e0e 有無寫死下降座標。
+> ★ 又一個 **file/logical 混用更正**(rule 62):§5 我「disasm byte4=33 handler @0x5904」用 0x5904
+> 當 **file** offset 是錯的 —— 跳表值是 **logical**,真 handler 在 **file = logical + 0x1370 = 0x6c74**。
+> 所以那些 handler **確實是 warp**(我之前看錯位址才以為是 cutscene;§5 cutscene 更正的是另一段)。
+
+**關鍵結構**:`0x3baa`(runner 0xabb2 event-id 跳表)與 `0x3bb4`(子型2 NPC 0x6355 byte4 跳表)是
+**同一張 handler 表、偏移 5 項**(0x3bb4 = 0x3baa + 10 byte)。⇒ **子型2 byte4 = runner event_id − 5**。
+
+8 個 scripted warp handler(§5b)的入口(logical)= `0x4312, 0x5482, 0x5904, 0x5cc1, 0x5e45,
+0x5ee0, 0x6004, 0x622a`。其中 5 個落在 runner 表:
+
+| handler(logical)| runner event id | 子型2 byte4 | warp 目的(§5b)|
+|---|---|---|---|
+| 0x5904 | 39(? 近 38)| 33 | dest 5/6(CTY44 byte4=33)|
+| 0x5e45 | 58 | 53 | dest 5 |
+| 0x5ee0 | 63 | 58 | dest 5 |
+| 0x6004 | 66 | 61 | dest 1 雷貝 |
+| 0x622a | 75 | 70 | dest 6 |
+
+**結論**:scripted warp 由 ① **子型2 NPC**(byte4∈{33,53,58,61,70})或 ② **runner 0xabb2**(event_id 觸發)
+派發。「event_id 從哪來」對 NPC 路徑 = **NPC byte4**(已解);對純 runner 路徑 = `[0x722]`(docs/31:
+仍資料驅動、無靜態 setter,最難)。⇒ **NPC 觸發的 scripted warp 現在完全靜態可解**(byte4 → handler →
+固定 struct 目的)。剩純 runner 觸發(無 NPC)的事件待動態。
+
+## 7. overworld 寫死座標 → 旗標條件 CTY 進入(0x39f2 區,dispatcher 0x39cb)
+
+掃 overworld 位置 `[0x4f2f]`(X)/`[0x4f31]`(Y)與常數比較,找到一組**寫死座標事件**(地表走到特定格
+觸發),dispatcher **0x39cb**:
+
+```
+039cb  mov [0x256c], bp   ; ★ [0x256c] = 目的 CTY 號 = bp
+039cf  mov [0x256a], 0    ; section 0
+039d5  call 0x4378        ; 載入該 CTY(load_cty 路徑)
+```
+
+⇒ **地表特定座標 → 載入 bp 指定的 CTY**(進城/迷宮),且 **bp 由故事旗標選**(同位置依進度載不同 CTY)。
+逐段讀出的事件(owX,owY,旗標,→CTY):
+
+| owX | owY | 旗標(test_flag)| → 目的 CTY | 層 |
+|---|---|---|---|---|
+| 82 | 165 | 0x13 | CTY75 / CTY47 | 地表 |
+| =[0x5053] | =[0x5055] | — | CTY36 | **下層** |
+| 76 | 54 | 0x35 | (劇情:`[0x2593]=0x64` 物品事件 + rec 0x255/0x256,非進城)| — |
+| 54 | 129 | 0x4d | CTY71 | 地表 |
+| (flag 0x42)| | 0x42 | CTY60 | 地表 |
+| (flag 0x48)| | 0x48 | CTY61 | 地表 |
+| (else) | | — | **CTY83** | **下層** |
+
+**觀察**:這組事件含**進下層 CTY**(36、83)的旗標條件入口 —— 從地表座標進下層 dungeon,
+再由該 CTY 的 `0xfe` 出口到下層 overworld(§1/2)。**這是地表↔下層的一條真實連接**(非 +0xc、非 type-2、
+非 §5b scripted warp,而是 overworld 寫死座標 + 旗標 + load_cty)。
+另:`0x055ba` 有下層座標(127, 373=Y≥300)的寫死事件(下層 overworld 內的劇情點)。
+
+> remake 落地:`find_cty_at` 目前只用 cty_loc 表(0x748)。要完整需另加「overworld 寫死座標 → 旗標條件
+> CTY」這層(0x39f2 區的事件表 + 旗標閘)。屬待補。
+
+## 8. 世界連接機制總表(收斂後)— 已找齊大部分
+
+逐段 RE 後,把世界串起來的機制已大致找齊:
+
+| 機制 | RE 段 | 觸發 | remake |
+|---|---|---|---|
+| `+0xc` 門/階梯/跨CTY/出城 | §1/2 | 走到轉場 tile | ✓ |
+| `0xfe` 下降(Y+300)| §1/2 | 下層 CTY 的 0xfe 出口 | ✓ dual-layer |
+| type-2 examine warp(0x4ea0)| §4 | Enter 事件 tile | ✓ |
+| scripted warp(call 0xd1f9 + struct)| §5b/5c | 子型2 NPC byte4∈{33,53,58,61,70} / runner | ✗ 待接 |
+| **overworld 座標 → 旗標條件 CTY** | §7 | 走到地表特定格 | ✗ 待接(含進下層 36/83)|
+
+**地表↔下層連接**已找到 = §7(overworld 座標 + 旗標 → 進下層 CTY 36/83)+ §1/2(下層 CTY 0xfe 出口)。
+
+**阿里阿罕首旅の扉 / 首次下降的「具體那一個」**:仍未逐一比對到 CTY0 的精確觸發(CTY0 無 type-2、
+無 warp NPC),最可能在 **§7 的 overworld 座標事件**(阿里阿罕洲某格 + 旗標 → 載目的 CTY)或純 runner
+`[0x722]`。但**機制已全部解出**,剩「把 §5b/§5c/§7 三層接進 remake + 逐 CTY 比對阿里阿罕那格」的工。
+
+### 待接進 remake(具體)
+1. **§5b scripted warp**:抽「子型2 byte4 → warp struct 目的(dest,X,Y)」表 → 子型2 warp NPC 載 dest CTY。
+2. **§7 overworld 座標事件**:抽 (owX,owY,旗標,destCTY) 表 → field 走到該格(旗標通過)→ load_cty。
+   ← **這層含地表→下層(CTY36/83),接上即解鎖下層世界結構**。
 
 ## remake 落地對照
 
