@@ -41,5 +41,6 @@ chk "狀態:驅毒草解中毒"           "party;status:0:1;item:0x42;use:0x42" 
 chk "狀態:滿月草解麻痺"           "party;status:0:2;item:0x45;use:0x45" "." "滿月草:隊員0 解除麻痺"
 chk "野外道具選單:選藥草使用"     "party;hurt:5;item:0x41;warp:0:27:30" "cdrede" "野外つかう:藥草"
 chk "達瑪轉職選單:選隊員+職業"    "party;dhama"        "dededdde" "達瑪轉職:隊員"
+chk "戰鬥毒傷(中毒進戰鬥)"        "party;status:0:1;zoma" "FFFF" "中毒,受 3 毒傷"
 echo "== 結果:PASS=$pass FAIL=$fail =="
 [ "$fail" -eq 0 ]

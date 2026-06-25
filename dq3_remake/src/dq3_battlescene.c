@@ -27,6 +27,7 @@ typedef struct {
     const char *dbg;           /* stderr 用 */
     uint16_t name[4]; int name_len; uint16_t cls;   /* 職業名 glyph + 單字職業 glyph */
     int hp, maxhp, mp, maxmp, level, atk, def, agi, defending;
+    int status;                /* 異常狀態(DQ3_STATUS_*):中毒/麻痺,進出戰鬥同步 pm */
     int weapon;                /* 武器 item code(#7a 雙擊判定)*/
     uint8_t equip[8];          /* 8 格裝備(#7b 抗魔掃描)*/
 } member;
@@ -261,6 +262,8 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
         for(i=0;i<PARTY;i++){
             int hits, h;
             if(party[i].hp<=0) continue;
+            if(party[i].status & DQ3_STATUS_PARALYSIS){       /* 麻痺:本回合不能行動 */
+                fprintf(stderr,"  %s 麻痺,無法行動。\n", party[i].dbg); continue; }
             hits = g_items_ok ? dq3_combat_num_attacks(&g_items, party[i].weapon) : 1;
             for(h=0; h<hits; h++){
                 int e,crit,dmg;
@@ -319,6 +322,11 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
                     party[t].hp==0?" — 倒下!":"");
         }
     }
+    /* 中毒:回合末各中毒成員扣 HP(戰鬥內不致死,留 1;量為 remake 值)*/
+    for(i=0;i<PARTY;i++) if(party[i].hp>0 && (party[i].status & DQ3_STATUS_POISON)){
+        party[i].hp -= 3; if(party[i].hp<1) party[i].hp=1;
+        fprintf(stderr,"  %s 中毒,受 3 毒傷。\n", party[i].dbg);
+    }
     /* #1 正確結算:我方全滅(含倒下)→ 敗 */
     if(alive_party(party)==0) return 2;
     return 0;
@@ -371,6 +379,7 @@ static void sync_cur_to_pm(const member *party, dq3_member *pm)
         if (hp > pm[i].stat[DQ3_STAT_HP]) hp = pm[i].stat[DQ3_STAT_HP];
         if (mp > pm[i].stat[DQ3_STAT_MP]) mp = pm[i].stat[DQ3_STAT_MP];
         pm[i].cur_hp = (uint16_t)hp; pm[i].cur_mp = (uint16_t)mp;
+        pm[i].status = (uint8_t)party[i].status;        /* 戰鬥施加的異常帶回 */
     }
 }
 
@@ -516,6 +525,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             pm[i] = g_pl_roster->list[g_pl_ri[i]].m;     /* 真實隊員:保留真 exp,升級才正確 */
         else
             dq3_member_init(&pm[i], &g_stats, g_cls_idx[i], party[i].level);
+        party[i].status = pm[i].status;                 /* 進戰鬥帶入異常(overworld 中毒延續)*/
     } }
 
     /* 戰鬥背景:packbg page(隨地形;預設草原 terrain0 → page 0)。
