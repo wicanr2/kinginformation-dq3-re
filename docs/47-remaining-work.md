@@ -81,4 +81,7 @@
 
 - 單元測試:stats/combat/battle/dialogue/npc/door/inventory/roster/menu/save(全綠)。
 - DEBUG 口 + DQ3_DUMP:任意狀態 headless 截圖(docs/46)。全 89 城 load 掃描零崩潰。
-- 待補:headless **腳本化 playthrough**(連續輸入注入)驗證主線串接。
+- **`tools/playthrough_check.sh`(14 項)**:各系統孤立斷言(載入/對話/設施/隊伍/scripted event/
+  傳送/進度旗標流/船/道具)全綠。
+- **`tools/mainline_check.sh`(#4)**:單一進程依攻略順序走 START→…→下降,驗進度階段**單調推進
+  1→8** + 三真實 gate(取船/彩虹合成/下降)依序生效 → **主線一條龍串得起來**,距索瑪終戰一步。
