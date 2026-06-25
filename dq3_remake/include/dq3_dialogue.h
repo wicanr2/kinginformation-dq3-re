@@ -24,6 +24,8 @@ typedef struct {
 /* 載入該場景文字檔(如 "D3TXT01.TXT")。失敗回 <0。 */
 int  dq3_dialogue_load(dq3_dialogue *d, const char *assets_dir, const char *txt_name,
                        char *err, int errcap);
+/* 切換對話文字檔到 D3TXT0<bank>(bank=section header +0x17,docs/42)。保留字型。失敗回 <0。 */
+int  dq3_dialogue_set_bank(dq3_dialogue *d, const char *assets_dir, int bank, char *err, int errcap);
 void dq3_dialogue_free(dq3_dialogue *d);
 
 /* 開始顯示記錄 rec(從頭)。回傳 0 成功。 */

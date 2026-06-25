@@ -35,6 +35,8 @@ typedef struct {
 
 /* 載入字型(固定 D3TXT00.FON)+ 指定 txt_name(如 "D3TXT01.TXT")。失敗回 <0。 */
 int  dq3_text_load(dq3_text *t, const char *assets_dir, const char *txt_name, char *err, int errcap);
+/* 只換文字檔(保留已載入的字型);供切換 D3TXT bank(對話分檔)。須先 load 過。失敗回 <0。 */
+int  dq3_text_reload(dq3_text *t, const char *assets_dir, const char *txt_name, char *err, int errcap);
 void dq3_text_free(dq3_text *t);
 
 /* 取記錄 rec 的 2-byte 值序列(不含 0xffff 終止)到 out(最多 max);回傳值數,<0 失敗。 */

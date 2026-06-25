@@ -72,6 +72,8 @@ add_executable(dq3_roster_test src/dq3_roster.c src/dq3_menu.c src/dq3_stats.c s
 target_include_directories(dq3_roster_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_menu_test src/dq3_menu.c src/test_menu.c)
 target_include_directories(dq3_menu_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_dialogue_test src/dq3_dialogue.c src/dq3_text.c src/dq3_font.c src/test_dialogue.c)
+target_include_directories(dq3_dialogue_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_nameinput_test src/dq3_nameinput.c src/test_nameinput.c)
 target_include_directories(dq3_nameinput_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_tavern_test src/dq3_tavern.c src/dq3_roster.c src/dq3_menu.c src/dq3_nameinput.c src/dq3_zhuyin.c src/dq3_zhuyin_table.c src/dq3_stats.c src/dq3_exedata.c src/test_tavern.c)

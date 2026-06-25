@@ -34,6 +34,21 @@ int dq3_text_load(dq3_text *t, const char *dir, const char *txt_name, char *err,
 
 void dq3_text_free(dq3_text *t){ if(t){ free(t->fon); free(t->txt); t->fon=NULL; t->txt=NULL; t->loaded=0; } }
 
+int dq3_text_reload(dq3_text *t, const char *dir, const char *txt_name, char *err, int errcap)
+{
+    uint8_t *nt; size_t nlen;
+    if (!t->fon) { if(err)snprintf(err,errcap,"no font loaded"); return -1; }  /* 須先 load 過 */
+    nt = slurp(dir, txt_name, &nlen);
+    if (!nt){ if(err)snprintf(err,errcap,"open %s",txt_name); return -1; }
+    if (nlen < 2){ free(nt); if(err)snprintf(err,errcap,"txt too small"); return -1; }
+    free(t->txt);                          /* 只換 txt,保留 fon */
+    t->txt = nt; t->txt_len = nlen;
+    t->n_records = rd16(t->txt,0)/2 - 1;
+    if (t->n_records < 0) t->n_records = 0;
+    t->loaded = 1;
+    return 0;
+}
+
 int dq3_text_record(const dq3_text *t, int rec, uint16_t *out, int max)
 {
     size_t start, end, o; int k=0;

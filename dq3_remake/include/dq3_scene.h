@@ -35,6 +35,7 @@ typedef struct dq3_scene {
 
     int px, py;                   /* 玩家 tile 座標 */
     int facing;                   /* 0下 1左 2上 3右 */
+    int dlg_bank;                 /* 對話檔 bank = section header +0x17(→ D3TXT0<bank>;0=未設,docs/42)*/
 
     /* 事件層(docs/31):tile 高 byte = 事件 subid(屬性 attr&8 為事件格);
      * section 事件表(4-byte 項 type/param/p2,by subid)。城鎮/迷宮才有。 */
@@ -71,6 +72,9 @@ typedef struct dq3_scene {
 
 /* tile 可走:界外不可走;屬性 bit0=阻擋。 */
 int  dq3_scene_walkable(const dq3_scene *s, int tx, int ty);
+
+/* 找 (tx,ty) 上的 NPC 槽 index;無回 -1。供「話す」面向 NPC 偵測。 */
+int  dq3_scene_npc_at(const dq3_scene *s, int tx, int ty);
 
 /* 查 (tx,ty) 的 tile 事件(docs/31:屬性 attr&8 + 高 byte subid → section 事件表)。
  * 有事件回 1 並填 *type/*param;無回 0。 */

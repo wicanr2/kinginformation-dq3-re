@@ -116,6 +116,16 @@ load_cty 尾段(0x4526):
 ## 待 RE / 待補
 
 - ~~CTY→D3TXTnn 表~~ **已解(section header +0x17,見上)**。
-- remake 城鎮「話す/調べる NPC」接 byte4 → 對話記錄:依當前 section 的 +0x17 bank 載對應 D3TXTnn,
-  顯示 rec=byte4(全城資料已在 `docs/data/npc_dialogue.json`)。
+- ~~remake 城鎮「話す」接 byte4 → 對話記錄~~ **已接(見下)**。
 - 特殊子型 2(handler 0x62d9)語意待解。
+
+## remake 落地(話す NPC 互動)
+
+- `dq3_scene.dlg_bank` = section header +0x17(`dq3_town_load` 解析);主迴圈每幀依當前 section bank
+  以 `dq3_dialogue_set_bank`(→ `dq3_text_reload`,只換文字檔保留字型)切換對話檔。
+- 面向 NPC 按 Enter:`dq3_scene_npc_at(faceX,faceY)` 找 NPC,子型 `(ctrl>>3)&7 < 3`(對話型)→
+  `dq3_dialogue_open(byte4)` + `set_dialogue_hero`({V}=主角名);設施型(≥3)略過(另由商店/旅社入口處理)。
+- 驗證:`dq3_dialogue_test` —— CTY00 +0x17==1、talk NPC b4=0x4f → D3TXT01 非空(「{名},怎麼了?…」)、
+  `set_bank` reload D3TXT02、越界拒絕,全通過。
+- 待補:系統訊息(「空的」rec 0xf3、「行李滿」0x13a)與道具名(rec=code+1)語意上屬 D3TXT00,
+  目前共用 section bank 檔(latent;原版 D3TXT00 常駐),不影響 NPC 對話正確性。

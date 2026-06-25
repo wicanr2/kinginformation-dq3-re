@@ -270,7 +270,7 @@ static int run_game(const char *assets, const char *dump)
     dq3_scene *field, *town = NULL, *cur;
     int in_town = 0, enc, fx = 0, fy = 0, cur_cty = -1;   /* cur_cty:目前所在 CTY 號(#2 gate)*/
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
-    dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1;
+    dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1, cur_dlg_bank = 1;  /* 啟動載 D3TXT01(阿里阿罕 bank)*/
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
     dq3_roster roster; dq3_party party; dq3_stats gst;              /* 露依達酒場:名冊 + 隊伍 */
@@ -365,6 +365,14 @@ static int run_game(const char *assets, const char *dump)
     /* 互動:方向走動 + 隨機遭遇;SPACE 進/出城鎮;Enter 對話(前方有事件時)。 */
     while (!dq3_should_quit()) {
         uint8_t sc;
+        /* 對話檔跟著 section bank 切換(docs/42:bank=section header +0x17 → D3TXT0<bank>);
+         * 進不同城/section 時 reload,讓 NPC 對話取對檔。不在對話顯示中才切(避免中途換檔)。*/
+        if (in_town && dlg_ok && cur->dlg_bank >= 1 && cur->dlg_bank <= 9
+            && cur->dlg_bank != cur_dlg_bank && !dq3_dialogue_is_open(&dlg)) {
+            char be[128];
+            if (dq3_dialogue_set_bank(&dlg, assets, cur->dlg_bank, be, sizeof be) == 0)
+                cur_dlg_bank = cur->dlg_bank;
+        }
         /* NPC 隨機走動(docs/35 §九):城鎮每幀步進;對話中凍結不動。 */
         if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
@@ -412,6 +420,25 @@ static int run_game(const char *assets, const char *dump)
                     fprintf(stderr, "露依達酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
                 }
             }
+            /* 話す:面向格上的 NPC → 顯示其對話(docs/42:dlg id=byte4,對話檔=section bank;{V}=主角名)。
+             * 互動子型 (ctrl>>3)&7:0/1=對話、2=特殊 → 都顯示對話;3-7=設施(商店/旅社,另由 B 鍵等處理)。*/
+            int talked = 0;
+            {
+                int fdx3 = (cur->facing==3)-(cur->facing==1), fdy3 = (cur->facing==0)-(cur->facing==2);
+                int ni = dq3_scene_npc_at(cur, cur->px+fdx3, cur->py+fdy3);
+                if (ni >= 0) {
+                    int sub = (cur->npcs[ni].ctrl >> 3) & 7;
+                    if (sub < 3 && dlg_ok) {                 /* 對話型 NPC */
+                        set_dialogue_hero(&roster, &party);  /* {V} 主角名 */
+                        if (dq3_dialogue_open(&dlg, cur->npcs[ni].b4) == 0) {
+                            talked = 1;
+                            fprintf(stderr, "話す NPC@(%d,%d) bank=D3TXT0%d rec=0x%02x\n",
+                                    cur->npcs[ni].x, cur->npcs[ni].y, cur->dlg_bank, cur->npcs[ni].b4);
+                        }
+                    }
+                }
+            }
+            if (!talked)
             {
             int et2, ep2, ef2;
             /* 面向格優先(站在寶箱前調べる),其次本格 */

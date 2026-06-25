@@ -136,6 +136,15 @@ int dq3_scene_npc_tick(dq3_scene *s)
     return moved;
 }
 
+int dq3_scene_npc_at(const dq3_scene *s, int tx, int ty)
+{
+    int i;
+    if (tx < 0 || ty < 0 || tx >= s->map_w || ty >= s->map_h) return -1;
+    for (i = 0; i < s->n_npcs; i++)
+        if (s->npcs[i].x == tx && s->npcs[i].y == ty) return i;
+    return -1;
+}
+
 /* 找 b2 在快取的索引;無則回 -1。 */
 static int npc_spr_find(const dq3_scene *s, int b2)
 {

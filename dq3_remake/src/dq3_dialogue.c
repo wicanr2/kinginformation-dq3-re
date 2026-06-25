@@ -3,6 +3,7 @@
 #include "dq3_runtime.h"
 #include "dq3_assets.h"
 #include <string.h>
+#include <stdio.h>
 
 /* 訊息窗位置(底部,DQ 風格);內文 16×16 字模,4 行。 */
 #define WIN_X 24
@@ -21,6 +22,14 @@ int dq3_dialogue_load(dq3_dialogue *d, const char *dir, const char *txt_name, ch
     return 0;
 }
 void dq3_dialogue_free(dq3_dialogue *d){ if(d){ dq3_text_free(&d->txt); d->open=0; } }
+
+int dq3_dialogue_set_bank(dq3_dialogue *d, const char *dir, int bank, char *err, int errcap)
+{
+    char name[16];
+    if (bank < 1 || bank > 9) { if(err)snprintf(err,errcap,"bank %d 越界",bank); return -1; }
+    snprintf(name, sizeof name, "D3TXT0%d.TXT", bank);   /* 對話檔 = D3TXT0<bank>(docs/42)*/
+    return dq3_text_reload(&d->txt, dir, name, err, errcap);
+}
 
 int dq3_dialogue_open(dq3_dialogue *d, int rec)
 {
