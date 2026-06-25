@@ -97,3 +97,9 @@ main.c:對話拿吉米老人 → 未有鑰匙=給+rec52「給予話」、已有=
 
 ★ **Step 1 結論:條件對話 wiring 路徑完全打通**(handler 反組譯 → flag/region/give/rec 全可抽 →
 di−0xbb8 取 rec → remake 接)。**不需 DOSBox。** → 可進 Step 2(系統化全 wiring)。
+
+## Step 8:Leve 魔法玉老人(byte4=7)條件對話 wiring
+
+handler L0x521f:test_flag(0x2a≈持鑰匙開門)未設→rec65 before「海對岸有勇者」;
+設+給 0x58 魔法玉+rec60 給予話。**更正**:之前 Leve wiring 用「任一 sec1 NPC」不精準,
+真正給予者是 **byte4=7**(3,3)。已改精準 + 條件對話。實測兩態 ✓。

@@ -801,16 +801,21 @@ static int run_game(const char *assets, const char *dump)
                         }
                         dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         talked = 1;
-                    } else if (sub == 2 && cur_cty == DQ3_LEVE_CTY && cur->section == DQ3_LEVE_2F_SEC && dlg_ok &&
-                               dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) >= 0) {
-                        /* 雷貝村 2F 老人:持盜賊鑰匙上樓對話 → 給魔法玉(攻略)。一次性。 */
+                    } else if (sub == 2 && cur_cty == DQ3_LEVE_CTY && cur->section == DQ3_LEVE_2F_SEC
+                               && b4 == 7 && dlg_ok) {
+                        /* 雷貝村 2F 魔法玉老人(byte4=7,handler L0x521f,docs/re-log-722 Step8)。
+                         * test_flag(0x2a≈持盜賊鑰匙開門):未到→rec65 before;到+無魔法玉→給+rec60 給予話。 */
                         set_dialogue_hero(&roster, &party);
-                        if (dq3_inv_find(&inv, DQ3_ITEM_MAGIC_BALL) < 0) {
+                        if (dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) < 0) {
+                            dq3_dialogue_open(&dlg, 65);   /* before:「海對岸有勇者」(無鑰匙開門)*/
+                        } else if (dq3_inv_find(&inv, DQ3_ITEM_MAGIC_BALL) < 0) {
                             dq3_inv_add(&inv, DQ3_ITEM_MAGIC_BALL);
                             dq3_progress_set(&flags, DQ3_MS_MAGIC_BALL);
-                            fprintf(stderr, "★ 雷貝村 2F 老人 → 獲得魔法玉(0x58,MAGIC_BALL 里程碑)\n");
+                            dq3_dialogue_open(&dlg, 60);   /* 給予話 + 魔法玉 */
+                            fprintf(stderr, "★ 雷貝村 2F 老人(byte4=7)→ 獲得魔法玉(0x58,MAGIC_BALL 里程碑;rec60)\n");
+                        } else {
+                            dq3_dialogue_open(&dlg, 60);   /* 已給(此 handler 無獨立後話)*/
                         }
-                        dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         talked = 1;
                     } else if (sub == 2 && cur_cty == DQ3_NAJIMI_CTY && dlg_ok &&
                                cur->npcs[ni].x == DQ3_NAJIMI_OLDMAN_X && cur->npcs[ni].y == DQ3_NAJIMI_OLDMAN_Y) {
