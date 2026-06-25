@@ -39,6 +39,7 @@
 #include "dq3_owportal.h"
 #include "dq3_progress.h"
 #include "dq3_ship.h"
+#include "dq3_item_use.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -292,6 +293,36 @@ static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inve
     return rc;
 }
 
+/* 消耗品使用(#3,docs/49)。對隊伍套效果並消耗道具:HEAL_HP 治第一個受傷隊員;
+ * 其餘(回鎮/驅敵/解毒/解麻痺)回傳種類交呼叫端處理世界層狀態。回效果種類(DQ3_USE_*),
+ * 道具不在背包或不可用回 DQ3_USE_NONE。 */
+static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int item_id)
+{
+    int kind = dq3_item_use_kind(item_id);
+    if (dq3_inv_find(inv, item_id) < 0) return DQ3_USE_NONE;   /* 沒這個道具 */
+    if (kind == DQ3_USE_HEAL_HP) {
+        int i, healed = -1;
+        for (i = 0; i < p->count; i++) {                       /* 第一個未滿且未陣亡的隊員 */
+            dq3_member *m = &r->list[p->slot[i]].m;
+            int h = dq3_item_use_heal(m, item_id);
+            if (h > 0) { healed = h; fprintf(stderr, "藥草:隊員%d 回復 HP %d → %d/%d\n",
+                                              i, h, m->cur_hp, m->stat[DQ3_STAT_HP]); break; }
+        }
+        if (healed <= 0) { fprintf(stderr, "藥草:無人需要治療\n"); return DQ3_USE_NONE; }
+        dq3_inv_remove(inv, item_id);                          /* 消耗 */
+        return DQ3_USE_HEAL_HP;
+    }
+    if (kind == DQ3_USE_CURE_POISON || kind == DQ3_USE_CURE_PARALYSIS) {
+        /* 狀態系統未建(docs/47 #5)→ 無異常可解,不消耗(對齊原版「無人中毒」)。 */
+        fprintf(stderr, "%s:目前無對應異常狀態(狀態系統待建),未消耗\n",
+                kind == DQ3_USE_CURE_POISON ? "驅毒草" : "滿月草");
+        return DQ3_USE_NONE;
+    }
+    /* 回鎮/驅敵:消耗在此,世界層效果由呼叫端依回傳種類處理。 */
+    dq3_inv_remove(inv, item_id);
+    return kind;
+}
+
 /* F10 離開確認:渲染「離開遊戲嗎」+ 是/否 選單。回 1=是(離開)、0=否(繼續)。
  * 會改 DAC palette,呼叫端離開後須重套場景色盤。ESC = 否。 */
 static int confirm_quit(const dq3_text *text)
@@ -333,6 +364,7 @@ static int run_game(const char *assets, const char *dump)
     dq3_scene *field, *town = NULL, *cur;
     dq3_scene *field_under = NULL; int layer = 0;  /* 0=地表 1=下層 overworld(docs/43)*/
     int in_town = 0, enc, fx = 0, fy = 0, cur_cty = -1;   /* cur_cty:目前所在 CTY 號(#2 gate)*/
+    int repel = 0;                                         /* #3 聖水:剩餘驅弱敵步數 */
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1, cur_dlg_bank = 1;  /* 啟動載 D3TXT01(阿里阿罕 bank)*/
     dq3_text sys_txt; int sys_ok = 0;                                  /* 常駐 D3TXT00:系統訊息 + 道具名 */
@@ -427,6 +459,19 @@ static int run_game(const char *assets, const char *dump)
                 ship.owned = 1; ship.aboard = 0; ship.px = a; ship.py = b; ship.layer = layer;
                 dq3_progress_set(&flags, DQ3_MS_SHIP);
                 fprintf(stderr, "[DEBUG] 船停泊 (%d,%d) layer%d\n", a, b, layer);
+            } else if (sscanf(tok, "hurt:%i", &a) == 1) {     /* 設隊長 cur_hp(測藥草用)*/
+                if (party.count > 0) { roster.list[party.slot[0]].m.cur_hp = (uint16_t)a;
+                    fprintf(stderr, "[DEBUG] 隊長 cur_hp=%d\n", a); }
+            } else if (sscanf(tok, "use:%i", &a) == 1) {      /* 使用消耗品(#3)*/
+                int k = apply_item_use(&inv, &roster, &party, a);
+                if (k == DQ3_USE_RETURN_TOWN) {                /* 蓋美拉翅膀:回地表 */
+                    layer = 0; cur = field; in_town = 0; cur_cty = -1; ship.aboard = 0;
+                    dq3_scene_apply_palette(cur); debug_placed = 1;
+                    fprintf(stderr, "蓋美拉翅膀:回到地表 (%d,%d)\n", cur->px, cur->py);
+                } else if (k == DQ3_USE_REPEL) {               /* 聖水:驅弱敵 N 步 */
+                    repel = DQ3_HOLY_STEPS;
+                    fprintf(stderr, "聖水:弱敵迴避 %d 步\n", repel);
+                }
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
             else if (sscanf(tok, "gold:%d", &a) == 1) { gold = a; fprintf(stderr, "[DEBUG] gold=%d\n", a); }
@@ -769,7 +814,8 @@ static int run_game(const char *assets, const char *dump)
                         else fprintf(stderr, "入城失敗 %s: %s\n", cty, err);
                     }
                 }
-                if (moved && !in_town && !ship.aboard && --enc <= 0) {  /* 船上不遇敵 */
+                if (moved && !in_town && repel > 0) repel--;   /* #3 聖水驅敵期間每步遞減 */
+                if (moved && !in_town && !ship.aboard && repel <= 0 && --enc <= 0) {  /* 船上/聖水期間不遇敵 */
                     int reg = dq3_encounter_region(cur->px, cur->py);   /* 位置→region(docs/39)*/
                     int mon = dq3_encounter_pick(reg, grnd());
                     if (mon < 0) mon = over_pool[grnd() % 4];

@@ -56,6 +56,7 @@ add_executable(dq3_remake
     src/dq3_owportal.c
     src/dq3_progress.c
     src/dq3_ship.c
+    src/dq3_item_use.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
@@ -89,6 +90,8 @@ add_executable(dq3_save_test src/dq3_save.c src/dq3_roster.c src/dq3_menu.c src/
 target_include_directories(dq3_save_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_ship_test src/dq3_ship.c src/dq3_scene.c src/dq3_npc.c src/dq3_rng.c src/test_ship.c)
 target_include_directories(dq3_ship_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_item_use_test src/dq3_item_use.c src/test_item_use.c)
+target_include_directories(dq3_item_use_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(MSVC)
     target_compile_options(dq3_stats_test PRIVATE /W3)
     target_compile_options(dq3_combat_test PRIVATE /W3)
