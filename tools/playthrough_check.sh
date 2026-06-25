@@ -31,5 +31,6 @@ chk "蓋美拉翅膀回鎮"              "warp:2:20:10;item:0x43;use:0x43" "." "
 chk "索瑪終戰破關(結局)"        "prog:6;descent;finale;prog" "." "進度階段 9/9"
 chk "取船:無胡椒對國王(等胡椒)"  "warp:37:9:7"        "ue"   "波魯多加國王:等黑胡椒"
 chk "取船:獻黑胡椒換船"          "item:0x5c;warp:37:9:7" "ue" "獻黑胡椒給波魯多加國王 → 得船"
+chk "胡椒補洞:CTY15 道具店進貨"   "gold:5000;warp:15:11:16" "ue" "本城道具店補進黑胡椒"
 echo "== 結果:PASS=$pass FAIL=$fail =="
 [ "$fail" -eq 0 ]

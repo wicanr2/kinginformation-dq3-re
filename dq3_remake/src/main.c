@@ -51,6 +51,8 @@
 #define DQ3_PORTOGA_HARBOR_X 25
 #define DQ3_PORTOGA_HARBOR_Y 73
 #define DQ3_ITEM_PEPPER    0x5c   /* 黑胡椒(獻國王換船的劇情物)*/
+#define DQ3_PEPPER_CTY     15     /* 胡椒販售城:提示 NPC(4,15)「下方的店裡有賣黑胡椒」。
+                                   * 但資料裡無一店進此貨(早期 build 斷鏈,docs/50)→ remake 補進該城道具店。 */
 #define DQ3_PORTOGA_REC_WAIT 26   /* 「我在等黑胡椒」*/
 #define DQ3_PORTOGA_REC_GOT  28   /* 「胡椒太好吃了…好想睡」(已收胡椒)*/
 #include <stdio.h>
@@ -710,12 +712,20 @@ static int run_game(const char *assets, const char *dump)
                         if (fac) {
                             talked = 1;
                             if ((fac->type == DQ3_FAC_WEAPON || fac->type == DQ3_FAC_ITEM) && shop_ok) {
+                                const unsigned char *stock = &dq3_shop_itempool[fac->item_off];
+                                int sn = fac->count;
+                                unsigned char buf[16];     /* CTY15 道具店補進黑胡椒(早期 build 斷鏈補洞,docs/50)*/
+                                if (cur_cty == DQ3_PEPPER_CTY && fac->type == DQ3_FAC_ITEM && sn < 15) {
+                                    int z; for (z = 0; z < sn; z++) buf[z] = stock[z];
+                                    buf[sn++] = DQ3_ITEM_PEPPER; stock = buf;
+                                    fprintf(stderr, "(remake 補洞:本城道具店補進黑胡椒,docs/50)\n");
+                                }
                                 shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt,
-                                           &gold, &dq3_shop_itempool[fac->item_off], fac->count);
+                                           &gold, stock, sn);
                                 dq3_scene_apply_palette(cur);
                                 fprintf(stderr, "設施:%s(CTY%d sec%d k%d,%d 品項)\n",
                                         fac->type==DQ3_FAC_WEAPON?"武器/防具店":"道具店",
-                                        cur_cty, cur->section, b4, fac->count);
+                                        cur_cty, cur->section, b4, sn);
                             } else if (fac->type == DQ3_FAC_INN) {
                                 inn_rest(&roster, &party, &gold, fac->inn_cost);   /* 治療 + 扣費(task1)*/
                                 if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0x11a);  /* 旅社歡迎詞 */
