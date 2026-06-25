@@ -228,15 +228,17 @@ remake:`dq3_item_attack/defense/price/category/can_equip`(dq3_combat);`dq3_recru
 - **主角開場初始**(file 0x1c33):新遊戲主角 `[si+0x15]=1`(等級1)、`call 0xeecf`(學咒文 sub_db5f)、
   **`[si+0x3a]=0x1e` = 起始裝備「布的衣服」(0x1e)**。⇒ remake 主角創角後預設帶布衣。
 
-### per-town 貨架表(界限)
+### per-town 貨架表 ★ 已解(docs/40)— 不在 NPC 記錄,在 CTY「設施表」
 
-CTY NPC 記錄僅 **7 byte**(`{X,Y,b2,b3,b4,flags,b6}`,docs/34),裝不下 8 格商店庫存 →
-**商店貨架不在 CTY NPC**,而是 EXE 全域表(由 shop id 索引,經 overlay 買單 0x9bcf / `[0x408a]`
-選單系統顯示)。該表追蹤需深入 overlay 選單資料流,**待續**。remake 暫用 curated 早期貨架。
+先前以為「貨架是 EXE overlay 全域表、追蹤未果」。**更正**:商店貨架**就在 CTY 地圖資料裡**。
+路徑(設施 dispatcher file 0x839f):NPC `byte4` → section header **`+6`** 設施指標表 →
+設施 block。block 格式 `[type][count][item_id...]`(type 1=武防店、2=道具店;item_id = ITEM.DAT index)。
+ITEM.DAT 載到 DGROUP `0x1f9`(7 byte/筆),價格 = `[item*7+0x1f9+2]`。完整反組譯與 5 種設施
+(旅社/武防/道具/教會/記錄)見 **docs/40-facility-shops.md**。
 
-### per-town 商品清單(remake 自訂方案)
+### per-town 商品清單(資料驅動,已取代手工方案)
 
-驗證:D3TXT 對話**不含**商品代碼(買單時才用代碼去 D3TXT00 取名),清單本體在 EXE overlay
-全域表(深追未果)。**因本專案為 remake、使用者授權自訂、且 DQ3 商店每鎮固定商品/無庫存數量**,
-改採 remake 方案:per-CTY 商品清單(`shop_stock_for`,DQ3 進度 + BBS 攻略佐證)。
-阿里阿罕(CTY0)= 木棒/銅劍/布衣/皮甲冑/魔法法衣/藥草/驅毒草/蓋美拉翅膀;其餘用 DEFAULT。
+`tools/gen_shop_data.py` 直接從 `assets_raw/CTY*.DAT` 萃取全 89 城 91 設施、46 商店 →
+`dq3_remake/src/dq3_shopdata.{c,h}`。`main.c` `shop_stock_for` 改用 `dq3_shop_items()`
+取真實品項(原 curated SHOP_ALIAHAN/REBE/DEFAULT 移除)。佐證:CTY00 最弱且含 `0x1e 布衣`、
+CTY38 道具店含 `5d 隱身草`(對上杜勝利攻略朗錫爾)、王者之劍不在任何商店(寶物非商品)。

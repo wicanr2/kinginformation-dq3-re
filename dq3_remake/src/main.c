@@ -33,6 +33,7 @@
 #include "dq3_cmdmenu.h"
 #include "dq3_encounter.h"
 #include "dq3_combat.h"
+#include "dq3_shopdata.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -767,19 +768,24 @@ static void draw_number_at(uint8_t *fb, const dq3_text *t, int x, int y, int v, 
     for (i = 0; i < n; i++) dq3_text_draw_glyph(t, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, x + i*DQ3_GLYPH_PX, y, d[i], fg);
 }
 
-/* per-town 商店商品清單(remake 定義;每鎮固定商品、無庫存數量問題,使用者授權自訂;
- * 用 DQ3 進度 + BBS 攻略佐證。索引 = CTY 號;0xff 終止;未定義者用 DEFAULT)。 */
-static const unsigned char SHOP_ALIAHAN[] = {0x01,0x03,0x1e,0x21,0x29,0x41,0x42,0x43,0xff};
-    /* CTY0 阿里阿罕:木棒/銅劍/布衣/皮甲冑/魔法法衣/藥草/驅毒草/蓋美拉翅膀 */
-static const unsigned char SHOP_REBE[]    = {0x03,0x07,0x09,0x21,0x22,0x27,0x41,0x42,0x44,0xff};
-    /* CTY1 雷貝:銅劍/鎖鍊刀/鐵爪/皮甲冑/龜殼甲冑/鐵甲/藥草/驅毒草/聖水(略強;CTY1=雷貝確認 docs/32)*/
-static const unsigned char SHOP_DEFAULT[] = {0x03,0x0b,0x21,0x27,0x29,0x41,0x42,0x43,0x44,0xff};
+/* per-town 商店商品:直接取自 CTY*.DAT 設施表(dq3_shopdata,tools/gen_shop_data.py 自動產生)。
+ * RE:NPC byte4 → section header +6 設施表 → block[type][count][item...](docs/40)。
+ * remake 單一商店入口 → 合併該城「武器/防具店 + 道具店」品項;該城無商店時退回阿里阿罕(CTY0)。 */
 static const unsigned char *shop_stock_for(int cty, int *n)
 {
-    const unsigned char *s = (cty == 0) ? SHOP_ALIAHAN
-                           : (cty == 1) ? SHOP_REBE
-                           : SHOP_DEFAULT;
-    int k = 0; while (s[k] != 0xff) k++; *n = k; return s;
+    static unsigned char buf[48];
+    const unsigned char *w, *it; int nw, ni, k = 0, i;
+    nw = dq3_shop_items(cty, DQ3_FAC_WEAPON, &w);
+    ni = dq3_shop_items(cty, DQ3_FAC_ITEM, &it);
+    for (i = 0; i < nw && k < 46; i++) buf[k++] = w[i];
+    for (i = 0; i < ni && k < 46; i++) buf[k++] = it[i];
+    if (k == 0) {                                   /* 該城無商店 → 退回阿里阿罕 */
+        nw = dq3_shop_items(0, DQ3_FAC_WEAPON, &w);
+        for (i = 0; i < nw && k < 46; i++) buf[k++] = w[i];
+        ni = dq3_shop_items(0, DQ3_FAC_ITEM, &it);
+        for (i = 0; i < ni && k < 46; i++) buf[k++] = it[i];
+    }
+    *n = k; return buf;
 }
 
 /* 武器/防具/道具商店 modal:列該城商品(名+價+能否裝備),Enter 購買→裝給領頭隊員,Tab 切買賣,ESC 離開。
