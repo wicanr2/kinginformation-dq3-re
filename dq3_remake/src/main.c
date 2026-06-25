@@ -399,15 +399,19 @@ static void draw_ship_overlay(const dq3_scene *cur, const dq3_ship *ship, int in
                                ship->px, ship->py, DQ3_SHIP_TILE_DOWN);
 }
 
-/* 結局序列(索瑪戰勝後):設 ZOMA 里程碑(進度 → 9/9 = 破關)+ 開 ENDTXT 結局首段。 */
+/* 結局序列(索瑪戰勝後):設 ZOMA 里程碑(進度 → 9/9 = 破關)+ 啟動 ENDTXT 結局捲動。
+ * *end_seq 設為 0 並開首段;主迴圈在對話翻完一段、玩家按 Enter 時逐段推進(見 advance 處)。 */
 static void run_finale(dq3_storyflags *flags, dq3_dialogue *dlg, int dlg_ok,
-                       const dq3_text *end_txt, int end_ok)
+                       const dq3_text *end_txt, int end_ok, int *end_seq)
 {
     dq3_progress_set(flags, DQ3_MS_ZOMA);
     fprintf(stderr, "★ 打倒大魔王索瑪 —— 破關!(進度 %d/%d = 全主線完成)\n",
             DQ3_MS_COUNT, DQ3_MS_COUNT);
-    if (end_ok && dlg_ok && end_txt->n_records > 0)
+    if (end_ok && dlg_ok && end_txt->n_records > 0) {
+        *end_seq = 0;
         dq3_dialogue_open_text(dlg, end_txt, 0);
+        fprintf(stderr, "結局捲動:啟動(共 %d 段 ENDTXT)\n", end_txt->n_records);
+    }
 }
 
 /* F10 離開確認:渲染「離開遊戲嗎」+ 是/否 選單。回 1=是(離開)、0=否(繼續)。
@@ -456,6 +460,7 @@ static int run_game(const char *assets, const char *dump)
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1, cur_dlg_bank = 1;  /* 啟動載 D3TXT01(阿里阿罕 bank)*/
     dq3_text sys_txt; int sys_ok = 0;                                  /* 常駐 D3TXT00:系統訊息 + 道具名 */
     dq3_text end_txt; int end_ok = 0;                                  /* ENDTXT:結局序列(索瑪戰後)*/
+    int end_seq = -1;                                                  /* 結局捲動段號(-1=未進行;0..n=當前 ENDTXT 段)*/
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
     dq3_ship ship; dq3_ship_init(&ship);                            /* #2 船:取船後跨海(docs/48)*/
@@ -556,9 +561,9 @@ static int run_game(const char *assets, const char *dump)
                 oc = dq3_battlescene_run(assets, 0x7c, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
                 dq3_scene_apply_palette(cur);
                 fprintf(stderr, "[DEBUG] 索瑪戰 outcome=%d(1=勝 2=敗 3=逃)\n", oc);
-                if (oc == 1) run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok);
+                if (oc == 1) run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok, &end_seq);
             } else if (strcmp(tok, "finale") == 0) {          /* 直接驗破關→結局路徑(主線推到 9/9)*/
-                run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok);
+                run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok, &end_seq);
             } else if (sscanf(tok, "dlg:%d:%d", &a, &b) == 2) { /* 渲染任意對話 record(bank a,rec b)*/
                 if (dlg_ok && a >= 0 && a <= 9) {
                     char be[128];
@@ -713,7 +718,19 @@ static int run_game(const char *assets, const char *dump)
             }
             dq3_scene_apply_palette(cur);   /* confirm 改過 DAC,還原場景色盤 */
         } else if (dlg_ok && dq3_dialogue_is_open(&dlg)) {
-            if (sc == 0x1c || sc == 0x39) dq3_dialogue_advance(&dlg);  /* Enter/Space 翻頁/關閉 */
+            if (sc == 0x1c || sc == 0x39) {
+                dq3_dialogue_advance(&dlg);  /* Enter/Space 翻頁/關閉 */
+                /* 結局捲動:一段 ENDTXT 翻完關閉後,自動接下一段,直到全部播完。 */
+                if (end_seq >= 0 && !dq3_dialogue_is_open(&dlg)) {
+                    end_seq++;
+                    if (end_ok && end_seq < end_txt.n_records)
+                        dq3_dialogue_open_text(&dlg, &end_txt, end_seq);
+                    else {
+                        end_seq = -1;
+                        fprintf(stderr, "結局捲動:全部播畢 —— THE END\n");
+                    }
+                }
+            }
         } else if (sc == 0x1c) {            /* Enter:調べる本格 tile 事件(docs/31 真事件系統)*/
             int et, ep;
             /* #2 祠堂:站在祭壇 NPC(CTY93 (8,8))旁、面向它調べる才觸發 scripted-event 83
