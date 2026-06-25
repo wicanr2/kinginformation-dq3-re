@@ -183,6 +183,7 @@ int dq3_scene_input(dq3_scene *s, uint8_t sc)
     }
     tx = s->px + dx; ty = s->py + dy;
     if (!dq3_scene_walkable(s, tx, ty)) return 0;
+    if (dq3_scene_npc_at(s, tx, ty) >= 0) return 0;   /* NPC 擋路(facing 已更新 → 撞即面向,可 Enter 對話/開店)*/
     s->px = tx; s->py = ty;
     return 1;
 }
