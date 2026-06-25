@@ -14,6 +14,10 @@
  * 閉合「酒場創角 → つよさ → 上場戰鬥 → 升級成長」迴圈。 */
 void dq3_battlescene_set_party(dq3_roster *roster, const dq3_party *party);
 
+/* 光之珠(0x65)持有旗標:索瑪戰(怪 0x7c)開始時若為 1,自動使用光之珠 → 弱化索瑪(二階段)。
+ * main.c 開索瑪戰前依背包設定。非索瑪戰無作用。用畢自動清 0。 */
+void dq3_battlescene_set_light_orb(int has);
+
 /* 跑一場戰鬥。
  *   monster_id/count:敵群(count 隻同種)。
  *   bg_page:戰鬥背景索引(隨地形;<0 = 讀 DQ3_BG_PAGE 環境變數,預設 0 草原)。

@@ -558,6 +558,7 @@ static int run_game(const char *assets, const char *dump)
             } else if (strcmp(tok, "zoma") == 0) {            /* 索瑪終戰(怪 0x7c)→ 勝則破關 */
                 int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
                 dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
+                dq3_battlescene_set_light_orb(dq3_inv_find(&inv, 0x65) >= 0);  /* 持光之珠 → 索瑪二階段弱化 */
                 oc = dq3_battlescene_run(assets, 0x7c, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
                 dq3_scene_apply_palette(cur);
                 fprintf(stderr, "[DEBUG] 索瑪戰 outcome=%d(1=勝 2=敗 3=逃)\n", oc);

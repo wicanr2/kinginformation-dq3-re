@@ -349,6 +349,11 @@ static int g_pl_ri[PARTY];                    /* 各戰鬥槽 → 名冊 index(-
 void dq3_battlescene_set_party(dq3_roster *r, const dq3_party *p)
 { g_pl_roster = r; g_pl_party = p; }
 
+/* 光之珠(0x65):索瑪戰持有時,第一回合自動使用 → 驅散黑暗結界(二階段)。
+ * 設於 main.c 開索瑪戰前(inv 有 0x65 → 1)。非索瑪戰無效。 */
+static int g_light_orb = 0;
+void dq3_battlescene_set_light_orb(int has) { g_light_orb = has ? 1 : 0; }
+
 /* 勝利結算:存活隊員獲經驗 → 升級(#5 夾43)→ 套成長(#4 MP/#6 uint16 不wrap)→ 更新戰鬥屬性。 */
 static void apply_victory_exp(member *party, dq3_member *pm, uint32_t total_exp)
 {
@@ -563,6 +568,18 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     { int i, s=0, c=0; for(i=0;i<PARTY;i++) if(party[i].maxhp>0||party[i].level>0){ s+=party[i].level; c++; }
       g_party_avglv = c ? s/c : 1; }
     fprintf(stderr,"=== 遭遇 %s ×%d (HP%d atk%d def%d) ===\n", ms.exp?"怪物":"怪物", en, ehpmax, eatk, edef);
+
+    /* 索瑪(0x7c)二階段:持有光之珠 0x65 → 戰鬥開始自動使用,驅散黑暗結界。
+     * 原版語意:光之珠解除索瑪的黑暗保護 → 攻防大降、露出本體弱化形態。
+     * 無光之珠 → 索瑪全力(atk 180)幾乎必殺隊伍(= 原版「需先取光之珠」的教學)。 */
+    if (monster_id == 0x7c && g_light_orb) {
+        int oatk = eatk, odef = edef;
+        eatk = eatk / 3;                       /* 攻擊力大降(隊伍可承受)*/
+        if (edef > 8) edef = edef / 2;         /* 防禦下降 */
+        fprintf(stderr, "★ 使用光之珠!驅散索瑪的黑暗結界 —— 索瑪弱化(二階段):"
+                "攻 %d→%d 防 %d→%d\n", oatk, eatk, odef, edef);
+        g_light_orb = 0;                       /* 用畢清旗標 */
+    }
 
     if(getenv("DQ3_SPELLSEL_DUMP")){   /* 選咒選單視覺驗證 */
         spell_menu_select(party, &spr, ehp, en, monster_id);
