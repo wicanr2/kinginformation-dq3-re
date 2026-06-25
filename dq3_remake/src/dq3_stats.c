@@ -94,6 +94,21 @@ static uint16_t add_clamped_kind(uint16_t cur, int delta, dq3_stat_kind k)
     return (uint16_t)v;
 }
 
+int dq3_member_change_class(dq3_member *m, const dq3_stats *st, int new_cls)
+{
+    int k;
+    if (!m || new_cls <= 0 || new_cls >= DQ3_NUM_CLASS) return -1;  /* 0=勇者,不可轉成勇者 */
+    if (m->cls == 0) return -1;                                     /* 勇者不可轉職 */
+    m->cls = new_cls;
+    m->level = 1;
+    m->exp = st->thresh[new_cls][1];                /* level1 門檻 */
+    for (k = 0; k < DQ3_STAT_COUNT; k++)
+        m->stat[k] = (uint16_t)(m->stat[k] / 2);    /* DQ3 換職:保留一半屬性 */
+    m->cur_hp = m->stat[DQ3_STAT_HP];               /* 重置滿 */
+    m->cur_mp = m->stat[DQ3_STAT_MP];
+    return 0;
+}
+
 void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
 {
     int k;

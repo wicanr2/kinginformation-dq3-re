@@ -540,6 +540,14 @@ static int run_game(const char *assets, const char *dump)
                         else fprintf(stderr, "[DEBUG] rec %d 開啟失敗\n", b);
                     } else fprintf(stderr, "[DEBUG] bank %d 載入失敗: %s\n", a, be);
                 }
+            } else if (sscanf(tok, "reclass:%d:%d", &a, &b) == 2) {  /* 達瑪轉職:隊伍 slot a → 職業 b */
+                if (a >= 0 && a < party.count) {
+                    dq3_member *m = &roster.list[party.slot[a]].m;
+                    int oc = m->cls;
+                    if (dq3_member_change_class(m, &gst, b) == 0)
+                        fprintf(stderr, "★ 達瑪轉職:隊員%d 職業 %d→%d(Lv1,屬性減半)\n", a, oc, b);
+                    else fprintf(stderr, "[DEBUG] 轉職失敗(勇者/不合法職業)\n");
+                }
             } else if (sscanf(tok, "hurt:%i", &a) == 1) {     /* 設隊長 cur_hp(測藥草用)*/
                 if (party.count > 0) { roster.list[party.slot[0]].m.cur_hp = (uint16_t)a;
                     fprintf(stderr, "[DEBUG] 隊長 cur_hp=%d\n", a); }

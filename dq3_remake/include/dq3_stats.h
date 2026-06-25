@@ -84,4 +84,8 @@ void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level);
  * 回傳本次升的等級數(0=未升)。#4 勇者 MP 由 st 載入時的成長表修正自動生效。 */
 int  dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add);
 
+/* 達瑪轉職:換成 new_cls → 等級歸 1、各屬性減半(DQ3 換職慣例:保留一半)、cur 重置滿。
+ * 勇者(cls 0)不可轉職、不可轉成勇者;回 0=成功、-1=不合法。 */
+int  dq3_member_change_class(dq3_member *m, const dq3_stats *st, int new_cls);
+
 #endif /* DQ3_STATS_H */

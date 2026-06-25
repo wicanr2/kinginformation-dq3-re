@@ -88,6 +88,23 @@ int main(int argc, char **argv)
         CHECK(m.cur_hp <= m.stat[DQ3_STAT_HP], "cur_hp 不超過 MaxHP");
     }
 
+    printf("== 達瑪轉職(change_class)==\n");
+    {
+        dq3_member m; uint16_t before[DQ3_STAT_COUNT]; int k, ok = 1;
+        dq3_member_init(&m, &fix, 1, 20);               /* 戰士 Lv20 */
+        for (k = 0; k < DQ3_STAT_COUNT; k++) before[k] = m.stat[k];
+        CHECK(dq3_member_change_class(&m, &fix, 4) == 0, "戰士→魔法使者:成功");
+        CHECK(m.cls == 4 && m.level == 1, "轉職後:新職業 + 等級歸 1");
+        for (k = 0; k < DQ3_STAT_COUNT; k++) if (m.stat[k] != before[k] / 2) ok = 0;
+        CHECK(ok, "各屬性減半(保留一半)");
+        CHECK(m.cur_hp == m.stat[DQ3_STAT_HP], "cur_hp 重置滿");
+        CHECK(dq3_member_change_class(&m, &fix, 0) == -1, "不可轉成勇者 → -1");
+        {
+            dq3_member h; dq3_member_init(&h, &fix, 0, 10);
+            CHECK(dq3_member_change_class(&h, &fix, 1) == -1, "勇者不可轉職 → -1");
+        }
+    }
+
     printf("\n%s (%d failures)\n", g_fail ? "== 有測試未通過 ==" : "== 全部通過 ==", g_fail);
     return g_fail ? 1 : 0;
 }
