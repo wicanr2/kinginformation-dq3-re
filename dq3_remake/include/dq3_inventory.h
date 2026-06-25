@@ -30,7 +30,7 @@ typedef struct { uint8_t slot[DQ3_INV_SLOTS]; } dq3_inventory;
 /* 劇情旗標位元集(對 DQ3.EXE flag store;set_flag/sub_8264)。0x139=「彩虹水滴已合成」。 */
 #define DQ3_FLAG_RAINBOW_SYNTHED 0x139
 #define DQ3_FLAG_DESCENDED       0x13a     /* 已下降至下層世界(アレフガルド;對 EXE [0x5051] 語意)*/
-#define DQ3_FLAGS_BYTES 64                 /* 覆蓋旗標 id 0..511 */
+#define DQ3_FLAGS_BYTES 96                 /* 覆蓋旗標 id 0..767(含 remake 里程碑 0x200..0x208)*/
 typedef struct { uint8_t bit[DQ3_FLAGS_BYTES]; } dq3_storyflags;
 
 void dq3_flags_init(dq3_storyflags *f);

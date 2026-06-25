@@ -38,8 +38,12 @@
    下降觸發、取船、各 boss 後事件)由劇情旗標驅動的 runner 事件觸發。**event id `[0x722]` 資料驅動、
    無靜態 setter**(docs/31/44)→ 純靜態追不到,需動態(DOSBox debugger,本環境無)或逐 event 反推。
    handler 多數已 RE(0x3baa 表),缺的是「何時/由什麼旗標觸發哪個 event」。
-2. **劇情旗標推進**:remake 目前不靠 gameplay 推進故事旗標 → 多數 flag-gated 事件不會自然發生。
-   需設計「事件 → set_flag → 解鎖下一步」的旗標流(部分已有:#2 合成設 0x139)。
+2. ~~**劇情旗標推進**~~ **(#1 已落地)**:remake 自有的主線旗標流已建——`dq3_progress`
+   (include/src,里程碑 0x200..0x208,順序取自杜勝利攻略 START→THIEF_KEY→MAGIC_BALL→
+   ROMALY→DHAMA→SHIP→RAINBOW→DESCEND→ZOMA)。RAINBOW/DESCEND 鏡射既有 EXE 旗標
+   (0x139/0x13a),故**合成/下降事件直接推進進度,不需另一套狀態**。debug 口 `prog`/`prog:N`
+   查/設;playthrough_check 第 8/9 項驗證。剩餘里程碑(盜賊鑰匙/魔法球/羅馬利亞/達瑪/取船)的
+   「事件設旗標」接點待各系統(船=#3)落地時補上。
 3. **船**:取船劇情(波魯多加胡椒換船)+ 船移動(跨海 tile)+ 船狀態存檔。地表 gate 2 的核心。
 4. **終盤**:大魔王索瑪戰 + 結局序列(對話 bank D3TXT07 已有索瑪台詞)。
 

@@ -37,6 +37,7 @@
 #include "dq3_sub2.h"
 #include "dq3_warp.h"
 #include "dq3_owportal.h"
+#include "dq3_progress.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -399,6 +400,14 @@ static int run_game(const char *assets, const char *dump)
                     do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);
                 else { int r = dq3_scripted_event_run(a, &inv, &flags, 1);
                     fprintf(stderr, "[DEBUG] event %d → result=%d\n", a, r); }
+            } else if (strcmp(tok, "prog") == 0) {           /* 顯示主線進度階段(旗標流,#1)*/
+                int st = dq3_progress_stage(&flags);
+                fprintf(stderr, "[DEBUG] 進度階段 %d/%d = %s\n", st, DQ3_MS_COUNT, dq3_progress_name(st));
+            } else if (sscanf(tok, "prog:%d", &a) == 1) {     /* 設里程碑 0..N 完成 */
+                static const int seq[DQ3_MS_COUNT] = {DQ3_MS_START,DQ3_MS_THIEF_KEY,DQ3_MS_MAGIC_BALL,
+                    DQ3_MS_ROMALY,DQ3_MS_DHAMA,DQ3_MS_SHIP,DQ3_MS_RAINBOW,DQ3_MS_DESCEND,DQ3_MS_ZOMA};
+                int k; for (k = 0; k < DQ3_MS_COUNT && k <= a; k++) dq3_progress_set(&flags, seq[k]);
+                fprintf(stderr, "[DEBUG] 進度設到里程碑 %d → 階段 %s\n", a, dq3_progress_name(dq3_progress_stage(&flags)));
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
             else if (sscanf(tok, "gold:%d", &a) == 1) { gold = a; fprintf(stderr, "[DEBUG] gold=%d\n", a); }
