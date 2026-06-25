@@ -156,3 +156,19 @@ GIVE/TAKE/tflag/sflag/region/warp/recs。這份才是 wiring 權威清單(取代
 - 條件 flag-gated give:byte4=84(CTY16 GIVE 0x10,flag 0xe5)、33/34(CTY44 GIVE 0x66 + warp)。
 - barter(TAKE+GIVE,需通用 handler 加 TAKE):25(CTY15)、48(CTY83)、49(CTY64)。
 - 純 TAKE/收物(非給予,另特例):8/9(皇冠)、16(CTY5)、44(CTY54)、50(CTY62/63)、26(Portoga 已特例)。
+
+## Step 13:★ 區塊邊界修正 → barter「批」其實是 flag 鏈子任務,非簡單 barter
+
+加 block 邊界(jmp 0x6380/ret 截斷)後重掃,推翻先前「25/48/49 是 barter」的判讀 ——
+那是 sweep 掃過 handler 邊界把**下一個** handler 的 give/take 算進來的假象。真實單區塊下:
+
+- 真正單區塊 give/take 只有 **byte4=26**(Portoga 胡椒→船,已特例)與 **52**(龍女王給光之珠,已接)。
+- 其餘給予型(7/12/31/49/...)都是 `test_flag(prereq); je GIVE` 結構:**給予分支在 je 目標之後**
+  (另一塊),給予**閘在 flag**。`tools/decode_sub2_struct.py` 解出完整雙區塊 →`docs/data/sub2-struct.md`:
+  每個 {always_rec, prereq_flag(je極性), before/give_rec, give/take item, set_flag}。
+- 道具經 inventory.h/main.c 定錨:0x5b 船、0x5c 黑胡椒、0x6b 銀寶珠、0x65 光之珠、0x73 雲雨之杖…。
+  48-50/63-68 是「船/銀寶珠/0x66」的多 NPC flag 鏈(0x4a→0x4b→0x4c)子任務。
+
+**決策**:完整 flag 機器(誰設各 prereq flag = [0x722] region machine + examine 事件圖)是另一條
+大型 RE 線;4 個主要給予 NPC 觀感行為已驗證。依目標優先序(可破關>polish>驗證>打包),
+忠實結構**存資料**(sub2-struct.md)供後續精修,接線維持已驗證觀感給予,時間投入完成度+polish+打包。

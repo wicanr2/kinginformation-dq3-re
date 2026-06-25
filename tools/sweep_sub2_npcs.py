@@ -40,7 +40,12 @@ def decode_handler(n):
         elif m == "cmp" and "[0x722]" in o:
             rv = o.split(",")[-1].strip()
             if rv.startswith("0x") or rv.isdigit(): out["region"].append(int(rv, 0))
+        # 單區塊邊界:ret 或 jmp 0x6380(返回派發 trampoline)。掃過界會混入下個 handler。
         if m in ("ret", "retf"): break
+        if m == "jmp":
+            try:
+                if int(o, 0) == 0x6380: break
+            except: pass
     return out
 
 
