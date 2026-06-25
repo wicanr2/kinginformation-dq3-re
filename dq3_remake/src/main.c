@@ -39,6 +39,7 @@
 #include "dq3_owportal.h"
 #include "dq3_progress.h"
 #include "dq3_ship.h"
+#include "dq3_rng.h"
 #include "dq3_item_use.h"
 
 /* 取船劇情(#2 真實 NPC 觸發,docs/50)。波魯多加 = CTY37(throne room,overworld (26,72));
@@ -1589,7 +1590,13 @@ int main(int argc, char **argv)
     const char *assets = (argc > 1) ? argv[1] : ".";
     const char *mode   = (argc > 2) ? argv[2] : "title";
     const char *dump   = getenv("DQ3_DUMP");
+    const char *rngmode = getenv("DQ3_RNG");   /* "real"=高品質 xorshift32;預設 DOS 忠實 */
     int rc;
+
+    if (rngmode && (rngmode[0]=='r' || rngmode[0]=='R')) {
+        dq3_rng_set_mode(DQ3_RNG_REAL);
+        fprintf(stderr, "[RNG] 真實亂數模式(xorshift32,週期 2^32)\n");
+    }   /* 否則 DOS 忠實(預設,16-bit 週期 ≤65536)*/
 
     if (dq3_rt_init("DQ3 (精訊) — 重製 Remake") != 0) return 1;
     dq3_set_assets_dir(assets);

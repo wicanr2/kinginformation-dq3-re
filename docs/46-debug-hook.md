@@ -87,3 +87,9 @@ tools/playthrough_check.sh <assets_dir> <dq3_remake_bin>   # PASS=7 FAIL=0
 
 - `party`(快速建測試隊伍,驗戰鬥/商店/裝備)、`event:N`(直接跑 scripted_event N)、`battle:monster`。
 - 真實劇情觸發(如 event 86 的旗標條件)仍需 runner RE;debug 口提供「跳過劇情直接到該狀態」的捷徑。
+
+## 亂數模式(DQ3_RNG)
+
+`DQ3_RNG=real` → 真實亂數(xorshift32,週期 2³²,分布佳);未設 / 其他 = DOS 忠實
+(鏡射 EXE 0xfa39,16-bit state 週期 ≤65536,重現原版亂數規律)。影響 NPC 走動 +
+戰鬥隨機(damage/逃跑/挑目標/敵咒)。預設 DOS 以保持與原版一致。

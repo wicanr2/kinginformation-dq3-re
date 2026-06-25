@@ -31,13 +31,31 @@ int main(void)
     dq3_rng rng;
 
     printf("== EXE RNG(0xfa39:+0x9018 / rol3 / mod)==\n");
+    CHECK(dq3_rng_get_mode() == DQ3_RNG_DOS, "預設 = DOS 忠實模式");
     dq3_rng_seed(&rng, 0);
-    CHECK(dq3_rng_next(&rng, 100) == 64, "seed0 → next(100)=64(手算 0x80c4%100)");
+    CHECK(dq3_rng_next(&rng, 100) == 64, "DOS:seed0 → next(100)=64(手算 0x80c4%100)");
     CHECK(dq3_rng_next(&rng, 0) == 0, "n=0 → 0");
     {
         int i, inrange = 1; dq3_rng_seed(&rng, 12345);
         for (i = 0; i < 1000; i++) { int v = dq3_rng_next(&rng, 4); if (v < 0 || v >= 4) inrange = 0; }
         CHECK(inrange, "next(4) 永遠 ∈ [0,4)");
+    }
+
+    printf("== 雙模式:REAL(xorshift32)vs DOS ==\n");
+    {
+        int i, inrange = 1, hist[10] = {0}, empty = 0;
+        dq3_rng_set_mode(DQ3_RNG_REAL);
+        CHECK(dq3_rng_get_mode() == DQ3_RNG_REAL, "切到 REAL 模式");
+        dq3_rng_seed(&rng, 0);
+        for (i = 0; i < 10000; i++) { int v = dq3_rng_next(&rng, 10); if (v<0||v>=10) inrange=0; else hist[v]++; }
+        CHECK(inrange, "REAL:next(10) 永遠 ∈ [0,10)");
+        for (i = 0; i < 10; i++) if (hist[i] == 0) empty = 1;
+        CHECK(!empty, "REAL:10000 抽樣 10 桶都有(分布廣,維度大)");
+        {   /* DOS 16-bit:同 n 下不同 seed 的序列會較快重複(維度小)— 僅示意切回不崩 */
+            dq3_rng_set_mode(DQ3_RNG_DOS);
+            dq3_rng_seed(&rng, 0);
+            CHECK(dq3_rng_next(&rng, 100) == 64, "切回 DOS:序列與原版一致(seed0→64)");
+        }
     }
 
     printf("== 靜止 / 凍結 NPC 不動 ==\n");
