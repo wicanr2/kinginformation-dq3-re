@@ -42,8 +42,10 @@
    (include/src,里程碑 0x200..0x208,順序取自杜勝利攻略 START→THIEF_KEY→MAGIC_BALL→
    ROMALY→DHAMA→SHIP→RAINBOW→DESCEND→ZOMA)。RAINBOW/DESCEND 鏡射既有 EXE 旗標
    (0x139/0x13a),故**合成/下降事件直接推進進度,不需另一套狀態**。debug 口 `prog`/`prog:N`。
-   **真實 NPC 觸發已接**:盜賊鑰匙(拿吉米之塔CTY8 4F老人)、魔法玉(雷貝CTY1 2F老人,需鑰匙)、
-   取船(波魯多加CTY37國王獻胡椒)。羅馬利亞(CTY2國王持皇冠歸還,皇冠在香巴尼塔CTY10 examine取)。**剩** DHAMA 達瑪轉職(prog:N 代)。
+   **真實 NPC 觸發已全接**(8/8 里程碑不再靠 prog:N):盜賊鑰匙(拿吉米之塔CTY8 4F老人)、
+   魔法玉(雷貝CTY1 2F老人,需鑰匙)、羅馬利亞(CTY2國王持皇冠歸還,皇冠在香巴尼塔CTY10)、
+   達瑪(CTY49神殿進城)、取船(波魯多加CTY37國王獻胡椒)、彩虹(合成)、下降、索瑪(終戰)。
+   CTY↔城名對照見 docs/maps/cty-names.md。
    > CTY 對照(world_con_cty.png):0=阿里阿罕 1=雷貝 2=羅馬利亞 3=卡薩布 4=諾阿尼魯村
    > 5=精靈之村 7=岬之洞窟 8=拿吉米之塔 10=香巴尼塔(甘達特/金皇冠)11=精靈村西南洞窟
    > 15=賣胡椒城 37=波魯多加(取船)。

@@ -68,6 +68,8 @@
 #define DQ3_ROMALY_KING_X   7
 #define DQ3_ROMALY_KING_Y   2
 #define DQ3_ITEM_CROWN      0x33
+/* 達瑪神殿=CTY49(取船後跨海到)。進神殿 → DHAMA 里程碑(轉職實際換職另為系統,docs/47 C11)。 */
+#define DQ3_DHAMA_CTY       49
 #define DQ3_PEPPER_CTY     15     /* 胡椒販售城:提示 NPC(4,15)「下方的店裡有賣黑胡椒」。
                                    * 但資料裡無一店進此貨(早期 build 斷鏈,docs/50)→ remake 補進該城道具店。 */
 #define DQ3_PORTOGA_REC_WAIT 26   /* 「我在等黑胡椒」*/
@@ -637,6 +639,11 @@ static int run_game(const char *assets, const char *dump)
     /* 互動:方向走動 + 隨機遭遇;SPACE 進/出城鎮;Enter 對話(前方有事件時)。 */
     while (!dq3_should_quit()) {
         uint8_t sc;
+        /* 達瑪神殿:進城即達成 DHAMA 里程碑(轉職開放;實際換職另為系統)。 */
+        if (in_town && cur_cty == DQ3_DHAMA_CTY && !dq3_progress_done(&flags, DQ3_MS_DHAMA)) {
+            dq3_progress_set(&flags, DQ3_MS_DHAMA);
+            fprintf(stderr, "★ 抵達達瑪神殿 → 轉職開放(DHAMA 里程碑)\n");
+        }
         /* 對話檔跟著 section bank 切換(docs/42:bank=section header +0x17 → D3TXT0<bank>);
          * 進不同城/section 時 reload,讓 NPC 對話取對檔。不在對話顯示中才切(避免中途換檔)。*/
         if (in_town && dlg_ok && cur->dlg_bank >= 1 && cur->dlg_bank <= 9
