@@ -219,6 +219,23 @@ static void set_dialogue_hero(const dq3_roster *r, const dq3_party *p)
     else dq3_text_clear_vars();
 }
 
+/* 旅社住宿:治活著的隊員 cur_hp/cur_mp 到滿(不復活陣亡者),扣住宿費(inn_cost × 人數,對齊
+ * RE 0x86f5 的 mul)。金錢不足則不住。回實際治療人數。 */
+static int inn_rest(dq3_roster *r, const dq3_party *p, long *gold, int inn_cost)
+{
+    int s, healed = 0, members = p->count, cost = inn_cost * (members > 0 ? members : 1);
+    if (*gold < cost) { fprintf(stderr, "旅社:金錢不足(需 %d,有 %ld)\n", cost, *gold); return -1; }
+    for (s = 0; s < DQ3_PARTY_MAX; s++) {
+        int ri = p->slot[s]; dq3_member *m;
+        if (ri < 0 || ri >= r->count) continue;
+        m = &r->list[ri].m;
+        if (m->cur_hp > 0) { m->cur_hp = m->stat[DQ3_STAT_HP]; m->cur_mp = m->stat[DQ3_STAT_MP]; healed++; }
+    }
+    *gold -= cost;
+    fprintf(stderr, "旅社:住宿(費 %d,治療 %d 人)→ 金錢 %ld\n", cost, healed, *gold);
+    return healed;
+}
+
 static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
                          int cty, int px, int py)
 {
@@ -454,8 +471,8 @@ static int run_game(const char *assets, const char *dump)
                                         fac->type==DQ3_FAC_WEAPON?"武器/防具店":"道具店",
                                         cur_cty, cur->section, b4, fac->count);
                             } else if (fac->type == DQ3_FAC_INN) {
+                                inn_rest(&roster, &party, &gold, fac->inn_cost);   /* 治療 + 扣費(task1)*/
                                 if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0x11a);  /* 旅社歡迎詞 */
-                                fprintf(stderr, "設施:旅社(住宿費 raw=%d;持久 HP 未實作,暫不扣血)\n", fac->inn_cost);
                             } else if (fac->type == DQ3_FAC_CHURCH) {
                                 if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0x129);  /* 教會「主持正義之人」*/
                             } else if (fac->type == DQ3_FAC_RECORD) {

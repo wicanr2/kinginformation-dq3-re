@@ -71,8 +71,8 @@ void dq3_status_render(const dq3_recruit *rc, const dq3_text *t,
         dq3_text_draw_glyph(t, fb, fb_w, fb_h, x + 3 * DQ3_GLYPH_PX, yy, sg, fg);
     }
     row(t, fb, fb_w, fb_h, x, yy + H,   L_LV, 2, m->level, fg);
-    row(t, fb, fb_w, fb_h, x, yy + 2*H, L_HP, 2, m->stat[DQ3_STAT_HP], fg);
-    row(t, fb, fb_w, fb_h, x, yy + 3*H, L_MP, 2, m->stat[DQ3_STAT_MP], fg);
+    row(t, fb, fb_w, fb_h, x, yy + 2*H, L_HP, 2, m->cur_hp, fg);   /* 目前 HP(持久;旅社/戰鬥變動)*/
+    row(t, fb, fb_w, fb_h, x, yy + 3*H, L_MP, 2, m->cur_mp, fg);
 
     /* 右欄:力量/速度/耐力/聰明/運氣/攻擊/守備/經驗 */
     ry = yy;

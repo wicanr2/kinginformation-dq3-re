@@ -362,6 +362,18 @@ static void writeback_roster(const dq3_member *pm)
             g_pl_roster->list[g_pl_ri[i]].m = pm[i];
 }
 
+/* 戰後把存活 HP/MP 同步進 pm.cur_hp/cur_mp(隨後 writeback_roster 持久化;陣亡=0)。 */
+static void sync_cur_to_pm(const member *party, dq3_member *pm)
+{
+    int i;
+    for (i = 0; i < PARTY; i++) {
+        int hp = party[i].hp < 0 ? 0 : party[i].hp, mp = party[i].mp < 0 ? 0 : party[i].mp;
+        if (hp > pm[i].stat[DQ3_STAT_HP]) hp = pm[i].stat[DQ3_STAT_HP];
+        if (mp > pm[i].stat[DQ3_STAT_MP]) mp = pm[i].stat[DQ3_STAT_MP];
+        pm[i].cur_hp = (uint16_t)hp; pm[i].cur_mp = (uint16_t)mp;
+    }
+}
+
 /* 互動選咒子選單:列領頭施法成員已學會的可施放咒文(名+MP),選定 → 設 g_manual_cast_*,回 1;
  * ESC 取消回 0。 */
 static int spell_menu_select(member *party, const dq3_monster_sprite *spr, int *ehp, int en, int monster_id)
@@ -453,8 +465,11 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             for (j = 0; j < party[pi].name_len; j++) party[pi].name[j] = rc->name[j];
             party[pi].cls   = dq3_class_names[rc->m.cls].g[0];      /* HUD 單字職業 glyph */
             party[pi].level = rc->m.level;
-            party[pi].maxhp = party[pi].hp = (int)rc->m.stat[DQ3_STAT_HP];
-            party[pi].maxmp = party[pi].mp = (int)rc->m.stat[DQ3_STAT_MP];
+            party[pi].maxhp = (int)rc->m.stat[DQ3_STAT_HP];
+            party[pi].maxmp = (int)rc->m.stat[DQ3_STAT_MP];
+            /* 起始用持久 cur_hp/cur_mp(戰鬥傷害保留;clamp 防 stale)*/
+            party[pi].hp = (int)rc->m.cur_hp > party[pi].maxhp ? party[pi].maxhp : (int)rc->m.cur_hp;
+            party[pi].mp = (int)rc->m.cur_mp > party[pi].maxmp ? party[pi].maxmp : (int)rc->m.cur_mp;
             /* 攻擊力 = 力量 + 武器 b0;守備力 = 耐力/2 + 防具 b1(ITEM.DAT,docs/22)*/
             party[pi].atk = (int)rc->m.stat[DQ3_STAT_STR]
                             + (g_items_ok ? dq3_item_attack(&g_items, rc->weapon) : 0);
@@ -545,7 +560,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             if(turn>50) break;
         }
         if(outcome==1){ g_last_gold = ((en-g_fled)>0?(en-g_fled):0) * (int)ms.gold; apply_victory_exp(party, pm, (uint32_t)((en-g_fled)>0?(en-g_fled):0) * ms.exp);   /* 勝利→經驗+金錢→升級 */
-            writeback_roster(pm); }                                            /* 回寫名冊(持久)*/
+            sync_cur_to_pm(party, pm); writeback_roster(pm); }                 /* 回寫名冊(含持久 HP)*/
         if(dump){
             render(dq3_fb(),&spr,ehp,en,party,cursor,outcome==0,monster_id);
             dq3_present();
@@ -578,7 +593,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         dq3_delay_ms(16);
     }
     if(outcome==1){ g_last_gold = ((en-g_fled)>0?(en-g_fled):0) * (int)ms.gold; apply_victory_exp(party, pm, (uint32_t)((en-g_fled)>0?(en-g_fled):0) * ms.exp);   /* 勝利→經驗+金錢→升級 */
-        writeback_roster(pm); }                                            /* 回寫名冊(持久)*/
+        sync_cur_to_pm(party, pm); writeback_roster(pm); }                 /* 回寫名冊(含持久 HP)*/
     /* 結束:顯示末幀片刻 */
     render(dq3_fb(),&spr,ehp,en,party,cursor,0,monster_id);
     dq3_present();

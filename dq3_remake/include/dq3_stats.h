@@ -73,7 +73,8 @@ typedef struct {
     int      cls;          /* 職業 0..7 */
     int      level;        /* 1..43 */
     uint32_t exp;          /* 累積經驗(uint32,不溢位)*/
-    uint16_t stat[DQ3_STAT_COUNT];  /* 7 屬性 uint16,順序同 dq3_stat_kind(HP MP 速 力 智 耐 運)*/
+    uint16_t stat[DQ3_STAT_COUNT];  /* 7 屬性 uint16,順序同 dq3_stat_kind(HP MP 速 力 智 耐 運)= 上限值 */
+    uint16_t cur_hp, cur_mp;        /* 目前 HP/MP(持久:戰鬥傷害保留、旅社/教會回復;cur_hp==0=陣亡)*/
 } dq3_member;
 
 /* 以職業+等級初始化隊員:exp=該級門檻、各屬性=成長目標值(growth_target)。 */

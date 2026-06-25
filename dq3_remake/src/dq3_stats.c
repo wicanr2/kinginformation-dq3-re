@@ -105,6 +105,8 @@ void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
         int t = dq3_stats_growth_target(st, cls, (dq3_stat_kind)k, level);
         m->stat[k] = add_clamped_kind(0, t, (dq3_stat_kind)k);   /* #6:初始值也 clamp(高階主屬性 > 255)*/
     }
+    m->cur_hp = m->stat[DQ3_STAT_HP];   /* 起始滿血/滿魔 */
+    m->cur_mp = m->stat[DQ3_STAT_MP];
 }
 
 int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
@@ -119,6 +121,8 @@ int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
             int t1 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv1);
             int delta = t1 - t0; if (delta < 0) delta = 0;
             m->stat[k] = add_clamped_kind(m->stat[k], delta, (dq3_stat_kind)k);  /* #6:依屬性別 clamp 255/999 */
+            if (k == DQ3_STAT_HP) m->cur_hp = add_clamped_kind(m->cur_hp, delta, DQ3_STAT_HP);  /* 升級加血到 cur */
+            if (k == DQ3_STAT_MP) m->cur_mp = add_clamped_kind(m->cur_mp, delta, DQ3_STAT_MP);
         }
         m->level = lv1; gained++;
     }

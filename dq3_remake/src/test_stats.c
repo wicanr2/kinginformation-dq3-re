@@ -75,6 +75,19 @@ int main(int argc, char **argv)
         CHECK(hero_fix.stat[DQ3_STAT_MP] > hero_orig.stat[DQ3_STAT_MP], "整合後修正版 MaxMP 高於原版資料");
     }
 
+    printf("== 持久 current HP/MP(task1)==\n");
+    {
+        dq3_member m; int gained; uint16_t hp1;
+        dq3_member_init(&m, &fix, 0, 1);
+        CHECK(m.cur_hp == m.stat[DQ3_STAT_HP] && m.cur_mp == m.stat[DQ3_STAT_MP], "init:cur_hp/mp = 滿值");
+        hp1 = m.stat[DQ3_STAT_HP];
+        m.cur_hp = 1;                                    /* 模擬戰鬥受傷 */
+        gained = dq3_member_gain_exp(&m, &fix, fix.thresh[0][10]);  /* 升到約 Lv10 */
+        CHECK(gained > 0 && m.stat[DQ3_STAT_HP] > hp1, "升級:MaxHP 增加");
+        CHECK(m.cur_hp == 1 + (m.stat[DQ3_STAT_HP] - hp1), "升級:增量加到 cur_hp(受傷後升級加血)");
+        CHECK(m.cur_hp <= m.stat[DQ3_STAT_HP], "cur_hp 不超過 MaxHP");
+    }
+
     printf("\n%s (%d failures)\n", g_fail ? "== 有測試未通過 ==" : "== 全部通過 ==", g_fail);
     return g_fail ? 1 : 0;
 }
