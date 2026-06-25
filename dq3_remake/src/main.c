@@ -40,6 +40,7 @@
 #include "dq3_progress.h"
 #include "dq3_ship.h"
 #include "dq3_rng.h"
+#include "dq3_config.h"
 #include "dq3_item_use.h"
 
 /* 取船劇情(#2 真實 NPC 觸發,docs/50)。波魯多加 = CTY37(throne room,overworld (26,72));
@@ -1590,13 +1591,16 @@ int main(int argc, char **argv)
     const char *assets = (argc > 1) ? argv[1] : ".";
     const char *mode   = (argc > 2) ? argv[2] : "title";
     const char *dump   = getenv("DQ3_DUMP");
-    const char *rngmode = getenv("DQ3_RNG");   /* "real"=高品質 xorshift32;預設 DOS 忠實 */
-    int rc;
+    const char *rngmode = getenv("DQ3_RNG");   /* dev/CI override(正式設定走設定檔)*/
+    dq3_config cfg; int rc;
 
-    if (rngmode && (rngmode[0]=='r' || rngmode[0]=='R')) {
-        dq3_rng_set_mode(DQ3_RNG_REAL);
+    /* 設定套用順序:預設 → 設定檔(跨平台,取代 env)→ env(僅 dev/CI override)。 */
+    dq3_config_default(&cfg);
+    dq3_config_load(&cfg, dq3_config_path());
+    if (rngmode) cfg.rng_mode = (rngmode[0]=='r'||rngmode[0]=='R') ? DQ3_RNG_REAL : DQ3_RNG_DOS;
+    dq3_rng_set_mode(cfg.rng_mode);
+    if (cfg.rng_mode == DQ3_RNG_REAL)
         fprintf(stderr, "[RNG] 真實亂數模式(xorshift32,週期 2^32)\n");
-    }   /* 否則 DOS 忠實(預設,16-bit 週期 ≤65536)*/
 
     if (dq3_rt_init("DQ3 (精訊) — 重製 Remake") != 0) return 1;
     dq3_set_assets_dir(assets);

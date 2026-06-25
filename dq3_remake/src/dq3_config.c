@@ -1,0 +1,57 @@
+/* dq3_config.c — 可攜設定檔(key=value)。見 dq3_config.h。 */
+#include "dq3_config.h"
+#include "dq3_rng.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void dq3_config_default(dq3_config *c)
+{
+    c->rng_mode = DQ3_RNG_DOS;   /* 預設忠實 */
+}
+
+const char *dq3_config_path(void)
+{
+    const char *p = getenv("DQ3_CONFIG");
+    return (p && *p) ? p : "dq3.cfg";
+}
+
+/* 去頭尾空白(就地)。 */
+static char *trim(char *s)
+{
+    char *e;
+    while (*s == ' ' || *s == '\t') s++;
+    e = s + strlen(s);
+    while (e > s && (e[-1]=='\n' || e[-1]=='\r' || e[-1]==' ' || e[-1]=='\t')) *--e = 0;
+    return s;
+}
+
+int dq3_config_load(dq3_config *c, const char *path)
+{
+    FILE *f = fopen(path, "r");
+    char line[256]; int got = 0;
+    if (!f) return 0;
+    while (fgets(line, sizeof line, f)) {
+        char *s = trim(line), *eq, *key, *val;
+        if (*s == '#' || *s == 0) continue;
+        eq = strchr(s, '=');
+        if (!eq) continue;
+        *eq = 0; key = trim(s); val = trim(eq + 1);
+        if (strcmp(key, "rng") == 0) {
+            c->rng_mode = (val[0]=='r' || val[0]=='R') ? DQ3_RNG_REAL : DQ3_RNG_DOS;
+            got++;
+        }
+    }
+    fclose(f);
+    return got;
+}
+
+int dq3_config_save(const dq3_config *c, const char *path)
+{
+    FILE *f = fopen(path, "w");
+    if (!f) return -1;
+    fputs("# DQ3 remake 設定(可攜;取代 env)\n", f);
+    fprintf(f, "rng=%s\n", c->rng_mode == DQ3_RNG_REAL ? "real" : "dos");
+    fclose(f);
+    return 0;
+}

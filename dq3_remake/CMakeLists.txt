@@ -57,6 +57,7 @@ add_executable(dq3_remake
     src/dq3_progress.c
     src/dq3_ship.c
     src/dq3_item_use.c
+    src/dq3_config.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
@@ -88,6 +89,8 @@ add_executable(dq3_zhuyin_test src/dq3_zhuyin.c src/dq3_zhuyin_table.c src/test_
 target_include_directories(dq3_zhuyin_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_save_test src/dq3_save.c src/dq3_roster.c src/dq3_menu.c src/dq3_stats.c src/dq3_exedata.c src/dq3_inventory.c src/test_save.c)
 target_include_directories(dq3_save_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(dq3_config_test src/dq3_config.c src/dq3_rng.c src/test_config.c)
+target_include_directories(dq3_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_ship_test src/dq3_ship.c src/dq3_scene.c src/dq3_npc.c src/dq3_rng.c src/test_ship.c)
 target_include_directories(dq3_ship_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_executable(dq3_item_use_test src/dq3_item_use.c src/test_item_use.c)
