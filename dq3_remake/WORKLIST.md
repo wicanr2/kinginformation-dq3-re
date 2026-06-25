@@ -254,10 +254,28 @@
       效果碼給 main 迴圈處理(目前野外選單只做 heal/cure)。
 - [ ] **怪物施加狀態**(中毒/麻痺):需 RE D3MNS 哪些咒/攻擊施狀態 + 擴咒文 kind(SK_STATUS)。
       狀態系統其餘已閉環(overworld 毒傷 + 戰鬥毒傷/麻痺 + 道具/教會解)。
-- [ ] **sub2 條件對話分支**:給物 NPC 取得後應顯示「後話」(如波魯多加 rec26/28 那樣)。
-      需逐 NPC RE flag→rec 映射。
+- [部分] **sub2 條件對話分支 / 給物**:給物 NPC before/give/after 三態已接(7 魔法玉 / 12 盜賊鑰匙 /
+      31 水槍 / 52 光之珠,逐一遊戲內驗證)。完整 flag 機器(誰設各 prereq flag = runner [0x722] 圖)
+      存資料 `docs/data/sub2-struct.md` 供後續精修(忠實雙區塊結構,decode_sub2_struct.py)。
 - [ ] **scripted warp 全接**(§5b 8 個 0xd1f9):缺「源觸發 tile」位置(struct 只給落點)→
       需從各 call site disasm 抽 `[0x4f33/35]==XY` 比較值。
 - [ ] **overworld 旗標 portal 全表**:dq3_owportal 目前 3 條;完整需抽 0x396e 全分支。
 - [ ] **甘達特 / 八頭大蛇 boss 接成劇情事件**(目前皇冠走 examine、boss 戰可單獨跑)。
-- [ ] **Polish**:寶箱開過 tile 翻面、旅社/教會精確收費、索瑪兩階段(光之玉)、完整結局捲動。
+- [x] **Polish — 索瑪兩階段(光之玉)**:持光之珠 0x65 → 索瑪戰開戰自動驅散黑暗結界、弱化(攻 180→60)。
+- [x] **Polish — 完整結局捲動**:run_finale → ENDTXT 逐段 → THE END(查出未發售版結局文字未定稿,
+      `docs/data/endtxt-incomplete.md`;機制完整,完成版 assets 可直接替換)。
+- [~] **Polish — 寶箱「翻面」= 原版無此行為**:docs/31 確認原版寶箱為 examine 事件(handler 0x9ec1),
+      取後設旗標、再調查顯示「可惜是空的。」(rec 0xf3),**不翻面 tile**。remake 現行已忠實(main.c)。
+      ⇒ 不加 tile 翻面(會偏離原版,Chesterton's Fence)。
+- [ ] **Polish — 旅社/教會精確收費公式**:現有 inn_cost×人數 / Lv×10 為合理近似;精確公式需 DOSBox oracle。
+
+## 2026-06-25 session(barter 分析 → polish → 驗證 → 打包)
+
+- **sub2 給物全接 + RE 糾錯**:byte4 31(水槍)/52(光之珠)接齊並逐一遊戲內驗證。過程糾出兩錯:
+  (a) section 偏移表 off-by-one(臨時 parser 誤加 count 前綴)→ 座標整批錯位;
+  (b) sweep 掃過 handler 邊界 → 誤判「barter 批」(實為 flag 鏈子任務)。忠實結構存 `docs/data/sub2-struct.md`。
+- **polish**:索瑪二階段(光之珠)+ 結局捲動(見上)。
+- **完整 game-tester 套件**(`tools/game_tester.sh`):15 單元 + playthrough 35 + mainline 9/9 +
+  **全 89 城載入零崩潰** + 新內容 → **22/22 全綠**。
+- **打包**(`tools/package.sh` → `work/dq3_remake_dist.tar.gz`):binary + 驗證套件 + DIST_README +
+  run.sh;打包前跑全綠驗證,解壓包自包含驗證通過,run.sh 正確啟動開場。不含版權素材(自備)。
