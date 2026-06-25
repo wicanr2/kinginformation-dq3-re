@@ -34,6 +34,14 @@ int main(void)
     m.cur_hp = 10;
     CHECK(dq3_item_use_heal(&m, DQ3_ITEM_HOLY_WATER) == -1, "對非治療道具 → -1");
 
+    printf("== 解狀態(驅毒草/滿月草)==\n");
+    m.status = DQ3_STATUS_POISON;
+    CHECK(dq3_item_use_cure(&m, DQ3_ITEM_ANTIDOTE) == 1 && m.status == 0, "驅毒草解中毒");
+    CHECK(dq3_item_use_cure(&m, DQ3_ITEM_ANTIDOTE) == 0, "無中毒再用驅毒草 → 0(不消耗)");
+    m.status = DQ3_STATUS_POISON | DQ3_STATUS_PARALYSIS;
+    CHECK(dq3_item_use_cure(&m, DQ3_ITEM_FULLMOON) == 1 && m.status == DQ3_STATUS_POISON, "滿月草只解麻痺(留中毒)");
+    CHECK(dq3_item_use_cure(&m, DQ3_ITEM_HERB) == 0, "藥草非解狀態 → 0");
+
     printf("\n%s (fail=%d)\n", g_fail ? "== FAIL ==" : "== ALL PASS ==", g_fail);
     return g_fail ? 1 : 0;
 }

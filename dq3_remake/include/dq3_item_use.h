@@ -38,4 +38,8 @@ int dq3_item_use_kind(int item_id);
  * 回實際回復量;不可治(已滿/陣亡)回 0;非治療道具回 -1。 */
 int dq3_item_use_heal(dq3_member *m, int item_id);
 
+/* 解狀態道具:驅毒草→清 POISON、滿月草→清 PARALYSIS。清掉回 1;該道具非解狀態 / 無對應
+ * 異常回 0。對隊員 m 套用。 */
+int dq3_item_use_cure(dq3_member *m, int item_id);
+
 #endif

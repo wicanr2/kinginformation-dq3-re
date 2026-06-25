@@ -304,6 +304,10 @@ static int church_revive(dq3_roster *r, const dq3_party *p, long *gold)
         int ri = p->slot[s]; dq3_member *m; int cost;
         if (ri < 0 || ri >= r->count) continue;
         m = &r->list[ri].m;
+        if (m->status) {                               /* 教會解毒/解麻痺(免費,對齊原版小額)*/
+            m->status = 0;
+            fprintf(stderr, "教會:解除 Lv%d 隊員的異常狀態\n", m->level);
+        }
         if (m->cur_hp != 0) continue;                  /* 只復活陣亡者 */
         cost = m->level * 10;
         if (*gold < cost) { fprintf(stderr, "教會:金錢不足,無法復活 Lv%d 隊員(需 %d)\n", m->level, cost); continue; }
@@ -347,10 +351,18 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
         return DQ3_USE_HEAL_HP;
     }
     if (kind == DQ3_USE_CURE_POISON || kind == DQ3_USE_CURE_PARALYSIS) {
-        /* 狀態系統未建(docs/47 #5)→ 無異常可解,不消耗(對齊原版「無人中毒」)。 */
-        fprintf(stderr, "%s:目前無對應異常狀態(狀態系統待建),未消耗\n",
-                kind == DQ3_USE_CURE_POISON ? "驅毒草" : "滿月草");
-        return DQ3_USE_NONE;
+        int i, cured = -1;
+        for (i = 0; i < p->count; i++)                /* 第一個有對應異常的隊員 */
+            if (dq3_item_use_cure(&r->list[p->slot[i]].m, item_id)) { cured = i; break; }
+        if (cured < 0) {                              /* 無人對應異常 → 不消耗(對齊原版)*/
+            fprintf(stderr, "%s:目前無人需要解(無對應異常),未消耗\n",
+                    kind == DQ3_USE_CURE_POISON ? "驅毒草" : "滿月草");
+            return DQ3_USE_NONE;
+        }
+        dq3_inv_remove(inv, item_id);                 /* 消耗 */
+        fprintf(stderr, "%s:隊員%d 解除%s\n", kind == DQ3_USE_CURE_POISON ? "驅毒草" : "滿月草",
+                cured, kind == DQ3_USE_CURE_POISON ? "中毒" : "麻痺");
+        return kind;
     }
     /* 回鎮/驅敵:消耗在此,世界層效果由呼叫端依回傳種類處理。 */
     dq3_inv_remove(inv, item_id);
@@ -547,6 +559,11 @@ static int run_game(const char *assets, const char *dump)
                     if (dq3_member_change_class(m, &gst, b) == 0)
                         fprintf(stderr, "★ 達瑪轉職:隊員%d 職業 %d→%d(Lv1,屬性減半)\n", a, oc, b);
                     else fprintf(stderr, "[DEBUG] 轉職失敗(勇者/不合法職業)\n");
+                }
+            } else if (sscanf(tok, "status:%d:%d", &a, &b) == 2) { /* 施加異常狀態:slot a,bit b(1毒2麻)*/
+                if (a >= 0 && a < party.count) {
+                    roster.list[party.slot[a]].m.status |= (uint8_t)b;
+                    fprintf(stderr, "[DEBUG] 隊員%d status |= 0x%x(1=毒 2=麻)\n", a, b);
                 }
             } else if (sscanf(tok, "hurt:%i", &a) == 1) {     /* 設隊長 cur_hp(測藥草用)*/
                 if (party.count > 0) { roster.list[party.slot[0]].m.cur_hp = (uint16_t)a;
@@ -972,6 +989,12 @@ static int run_game(const char *assets, const char *dump)
                     }
                 }
                 if (moved && !in_town && repel > 0) repel--;   /* #3 聖水驅敵期間每步遞減 */
+                if (moved) {                                   /* 中毒:每步扣 HP(不致死,留 1)*/
+                    int pi2; for (pi2 = 0; pi2 < party.count; pi2++) {
+                        dq3_member *pm2 = &roster.list[party.slot[pi2]].m;
+                        if ((pm2->status & DQ3_STATUS_POISON) && pm2->cur_hp > 1) pm2->cur_hp--;
+                    }
+                }
                 if (moved && !in_town && !ship.aboard && repel <= 0 && --enc <= 0) {  /* 船上/聖水期間不遇敵 */
                     int reg = dq3_encounter_region(cur->px, cur->py);   /* 位置→region(docs/39)*/
                     int mon = dq3_encounter_pick(reg, grnd());

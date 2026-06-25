@@ -25,3 +25,15 @@ int dq3_item_use_heal(dq3_member *m, int item_id)
     m->cur_hp = (uint16_t)(m->cur_hp + healed);
     return healed;
 }
+
+int dq3_item_use_cure(dq3_member *m, int item_id)
+{
+    int kind = dq3_item_use_kind(item_id), bit = 0;
+    if (!m) return 0;
+    if (kind == DQ3_USE_CURE_POISON)         bit = DQ3_STATUS_POISON;
+    else if (kind == DQ3_USE_CURE_PARALYSIS) bit = DQ3_STATUS_PARALYSIS;
+    else return 0;
+    if (!(m->status & bit)) return 0;        /* 無對應異常 → 不消耗 */
+    m->status &= (uint8_t)~bit;
+    return 1;
+}

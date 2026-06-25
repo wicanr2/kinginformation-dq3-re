@@ -75,7 +75,12 @@ typedef struct {
     uint32_t exp;          /* 累積經驗(uint32,不溢位)*/
     uint16_t stat[DQ3_STAT_COUNT];  /* 7 屬性 uint16,順序同 dq3_stat_kind(HP MP 速 力 智 耐 運)= 上限值 */
     uint16_t cur_hp, cur_mp;        /* 目前 HP/MP(持久:戰鬥傷害保留、旅社/教會回復;cur_hp==0=陣亡)*/
+    uint8_t  status;                /* 異常狀態 bitfield(DQ3_STATUS_*):中毒/麻痺 */
 } dq3_member;
+
+/* 異常狀態(member.status bit)。中毒=走路/戰鬥扣 HP;麻痺=戰鬥不能行動。 */
+#define DQ3_STATUS_POISON    0x01   /* どく:驅毒草/教會/旅社解 */
+#define DQ3_STATUS_PARALYSIS 0x02   /* まひ:滿月草/教會解 */
 
 /* 以職業+等級初始化隊員:exp=該級門檻、各屬性=成長目標值(growth_target)。 */
 void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level);

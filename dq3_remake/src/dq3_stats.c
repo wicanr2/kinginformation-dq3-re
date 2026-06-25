@@ -106,6 +106,7 @@ int dq3_member_change_class(dq3_member *m, const dq3_stats *st, int new_cls)
         m->stat[k] = (uint16_t)(m->stat[k] / 2);    /* DQ3 換職:保留一半屬性 */
     m->cur_hp = m->stat[DQ3_STAT_HP];               /* 重置滿 */
     m->cur_mp = m->stat[DQ3_STAT_MP];
+    m->status = 0;                                  /* 轉職清異常 */
     return 0;
 }
 
@@ -122,6 +123,7 @@ void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
     }
     m->cur_hp = m->stat[DQ3_STAT_HP];   /* 起始滿血/滿魔 */
     m->cur_mp = m->stat[DQ3_STAT_MP];
+    m->status = 0;                       /* 無異常狀態 */
 }
 
 int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
