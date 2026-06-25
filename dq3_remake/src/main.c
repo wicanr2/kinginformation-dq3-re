@@ -814,13 +814,19 @@ static int run_game(const char *assets, const char *dump)
                         talked = 1;
                     } else if (sub == 2 && cur_cty == DQ3_NAJIMI_CTY && dlg_ok &&
                                cur->npcs[ni].x == DQ3_NAJIMI_OLDMAN_X && cur->npcs[ni].y == DQ3_NAJIMI_OLDMAN_Y) {
-                        /* 拿吉米之塔 4F 老人:對話 → 給盜賊鑰匙(攻略確認;原版 yes/no,此處直接給)。 */
+                        /* 拿吉米之塔 4F 老人:條件對話(handler L0x537f 反組譯,docs/re-log-722 Step6)。
+                         * di→rec=di−0xbb8:未有鑰匙→給+rec52(給予話);已有→rec53(後話)。 */
                         set_dialogue_hero(&roster, &party);
-                        if (dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) < 0) dq3_inv_add(&inv, DQ3_ITEM_THIEF_KEY);
-                        dq3_progress_set(&flags, DQ3_MS_THIEF_KEY);
-                        dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
+                        if (dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) < 0) {
+                            dq3_inv_add(&inv, DQ3_ITEM_THIEF_KEY);
+                            dq3_progress_set(&flags, DQ3_MS_THIEF_KEY);
+                            dq3_dialogue_open(&dlg, 52);   /* 給予話「…拿去吧」*/
+                            fprintf(stderr, "★ 拿吉米之塔老人 → 獲得盜賊的鑰匙(0x55,THIEF_KEY 里程碑;rec52)\n");
+                        } else {
+                            dq3_dialogue_open(&dlg, 53);   /* 後話「我的夢想和靈魂…」*/
+                            fprintf(stderr, "拿吉米之塔老人:已給過鑰匙 → 後話 rec53\n");
+                        }
                         talked = 1;
-                        fprintf(stderr, "★ 拿吉米之塔老人 → 獲得盜賊的鑰匙(0x55,THIEF_KEY 里程碑)\n");
                     } else if (sub == 2 && dlg_ok) {         /* scripted-event NPC:主對話 rec(旗標條件略)*/
                         int srec = dq3_sub2_dialogue(b4);
                         if (srec >= 0) {

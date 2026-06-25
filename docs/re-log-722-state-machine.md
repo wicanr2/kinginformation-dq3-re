@@ -72,3 +72,28 @@ L09871: call [bx + 0x3baa]                     ; 派發 [0x722] 號 handler
 **同一張跳表**。sub2 NPC byte4=N → 派發 runner event(N+5)的同一 handler。
 ⇒ **sub2 對話分支 = runner 事件的一部分**(user 推測正確)。warp/portal/sub2 三者**同源**,
 都由 [0x722] / event 索引驅動,而 [0x722] 全靜態可決定(Step 4)。
+
+## Step 6:✓ 樣本完整解 — sub2 條件對話 handler(拿吉米老人 byte4=12)
+
+handler L0x537f 逐行:
+```
+test_flag(0x2d):                      ; 0x8279=test_flag, 0x8264=set_flag
+  未設 → di=0xbee → rec54「我的夢想快實現」→ 結束
+  已設 → di=0xbeb(rec51 intro); cmp [0x722],1(region):
+           ==1 → [0x2593]=0x55(給盜賊鑰匙)+ 0x7bbe(give)+ di=0xbec(rec52 給予話)+ set_flag(0x2d)
+           !=1 → di=0xbed(rec53)
+```
+**di→rec 公式**:`rec = di − 0xbb8`(gen_sub2 已有;驗:波魯多加 di=0xbd4→rec28 ✓;
+波魯多加 handler test_flag(0x37/0x38) + [0x2593]=0x5c 胡椒,同模式)。
+
+⇒ **樣本驗證成功**:sub2 條件對話 = `test_flag(X) [+ cmp [0x722],region] → 選 rec(di−0xbb8)[+ 給物 [0x2593]]`。
+**全可靜態抽**。每個 handler 都這結構 → Step 2(全 wiring)可系統化:逐 handler 抽
+{flag, before_rec, after_rec, give_item, region_cond}。
+
+## Step 7:✓ 樣本 wiring 完成(拿吉米老人條件對話)
+
+main.c:對話拿吉米老人 → 未有鑰匙=給+rec52「給予話」、已有=rec53「後話(我的夢想和靈魂…)」。
+實測兩態 + in-game 渲染(najimi_after.png)都對。**穿幫(拿到鑰匙仍講 before 話)修復。**
+
+★ **Step 1 結論:條件對話 wiring 路徑完全打通**(handler 反組譯 → flag/region/give/rec 全可抽 →
+di−0xbb8 取 rec → remake 接)。**不需 DOSBox。** → 可進 Step 2(系統化全 wiring)。
