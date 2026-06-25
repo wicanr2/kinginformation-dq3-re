@@ -6,6 +6,7 @@
  * assets dir 由 argv[1] 指定(預設 "assets_raw")。 */
 #include "dq3_dialogue.h"
 #include "dq3_shopdata.h"
+#include "dq3_warp.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,6 +96,14 @@ int main(int argc, char **argv) {
             const dq3_facility *w = dq3_facility_at(0, 0, 1);   /* k1 = 武防店(docs/40)*/
             CHECK(w && w->type == DQ3_FAC_WEAPON && w->count == 7, "CTY00 k1 = 武防店(7 品項)");
         }
+    }
+
+    /* scripted warp 表 0x4ea0(type-2 examine 傳送目的;docs/43)*/
+    {
+        int wc=-1, wx=-1, wy=-1;
+        CHECK(dq3_warp_get(0, &wc, &wx, &wy)==0 && wc==2 && wx==40 && wy==1,
+              "warp[0] = CTY2(羅馬利亞)(40,1)");
+        CHECK(dq3_warp_get(99999, 0,0,0) < 0, "warp 越界回 -1");
     }
 
     dq3_dialogue_free(&dlg); free(cty);
