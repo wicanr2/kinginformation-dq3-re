@@ -82,6 +82,7 @@
 
 ### 歷史 / 一手史料
 - [BBS 1994–1995 討論串](docs/history/dq3-bbs-1994.md) — 當年 BBS 攻略 / bug 修改 / 存檔佈局 / 道具咒文表;精訊官方公告(1993 開發、ENIX 拒、離職員工外流);**RE 一手交叉佐證**(魔王打不死 / 彩虹水滴 / 五頭龍當機修改法對上 bug #1/#2/#3、存檔屬性欄位佈局對上成長表)
+- [攻略來源致敬 + 地名對照](docs/history/dq3-walkthrough-credits.md) — 杜勝利 DQ3 攻略 + Mike's RPG Center 世界地圖致敬;FC 英文↔精訊中文↔CTY 地名對照 + 進度順序(供 CTY→地名 收尾)
 
 ### 正確性驗證
 - [`14`](docs/14-dosbox-validation.md) DOSBox 黃金對照(素材) ·
