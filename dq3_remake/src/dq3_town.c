@@ -64,8 +64,6 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
     h  = u16le(cty, lay + 2);
     sx = cty[so + 0x13];                   /* spawn_x(section header)*/
     sy = cty[so + 0x14];                   /* spawn_y(section header)*/
-    s->dlg_bank = (so + 0x17 < cty_len) ? cty[so + 0x17] : 0;  /* 對話 bank(docs/42)*/
-    s->section  = section;                                     /* 設施查表用(docs/40)*/
     tbase = lay + 4;                       /* tile 陣列(w,h 之後)*/
     if (w <= 0 || h <= 0 || tbase >= cty_len) FAIL("tile array oob");
     /* 容忍 tile 陣列略超檔尾(部分 section 末尾差幾 byte):逐 tile bounds-safe 讀。 */
@@ -75,6 +73,8 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
     s = (dq3_scene *)calloc(1, sizeof *s);
     if (!s) FAIL("OOM scene");
     s->map_w = w; s->map_h = h;
+    s->dlg_bank = (so + 0x17 < cty_len) ? cty[so + 0x17] : 0;  /* 對話 bank(docs/42)— 須在 calloc 後 */
+    s->section  = section;                                     /* 設施查表用(docs/40)*/
     s->index_map = (uint8_t *)malloc((size_t)w * h);
     s->hi_map    = (uint8_t *)malloc((size_t)w * h);   /* 高 byte = 事件 subid 來源 */
     if (!s->index_map || !s->hi_map) FAIL("OOM map");
