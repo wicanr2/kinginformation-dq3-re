@@ -143,6 +143,25 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 > struct 位址(0x4eb5-0x4ee4)落在 warp 表 0x4ea0 區內(0x4ea0+0x15..),與 3-byte 表項資料重疊
 > (緊湊打包);讀法以 5-byte struct 為準(0xd1f9 介面)。
 
+## ───
+
+### 5b-2. 完整表 + gate(tools/gen_locwarp.py 重抽,2024 補)
+
+| call@ | 源CTY | dest | 落點 | gate |
+|---|---|---|---|---|
+| 0x56ea | 31 | 6 阿莎拉慕 | (89,1) | 未明 |
+| 0x680b | 24 | 1 雷貝 | (26,1) | **flag 0x2e** |
+| 0x6d27 | 26 | 5 精靈村 | (75,1) | **runner [0x722]==1** |
+| 0x7035 | 35 | 5 精靈村 | (75,1) | **flag 0x44** |
+| 0x71bf | 12 | 5 精靈村 | (67,1) | 未明 |
+| 0x7285 | 24 | 1 雷貝 | (57,4) | **runner [0x722]==1** |
+| 0x737e | 24 | 1 雷貝 | (56,1) | 未明 |
+| 0x75a7 | 39 | 6 阿莎拉慕 | (121,1) | 未明 |
+
+**結論**:gate 混合 test_flag 與 runner `[0x722]==event id` → 這 8 個是 **runner-driven scripted 事件**,
+觸發在 runner(`[0x722]` 資料驅動、無靜態 setter,docs/47 A1)。**data 全解(dest/落點/gate)**,
+存 `dq3_remake/{include,src}/dq3_locwarp.{h,c}`,待 runner 觸發系統解出即可 wiring。
+
 ## 5c. 呼叫鏈解出:warp handler = runner 0xabb2 / 子型2 同一張表
 
 > ★ 又一個 **file/logical 混用更正**(rule 62):§5 我「disasm byte4=33 handler @0x5904」用 0x5904
