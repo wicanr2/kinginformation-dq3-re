@@ -47,8 +47,8 @@
 3. ~~**船**~~ **(#2 已落地)**:`dq3_ship`(include/src + test_ship 17 斷言)。海 tile 辨識 RE 完成
    ——overworld attr 指紋 `(attr&1)&&(attr&0x20)`(海 0x25,山 0x07 無 0x20),docs/48。
    登船/航行/上岸狀態機 + 船上不遇敵 + 船狀態併入 dq3_save(v3)。debug 口 `ship`/`ship:X:Y`/`opos:X:Y`;
-   playthrough_check 第 10/11 項驗證跨海航行與上岸。**剩**:取船劇情實際接點(波魯多加胡椒換船的
-   NPC 對話 → `dq3_progress_set(SHIP)` + 放船)待該城 NPC 事件落地時補。
+   playthrough_check 驗證跨海航行與上岸。**取船劇情已接**(docs/50):波魯多加=CTY37,國王(9,6)
+   sub2 NPC,獻黑胡椒(0x5c)→ 授船 + SHIP 里程碑 + 停泊 (25,73)。**剩**:黑胡椒的取得 NPC(商人)待接。
 4. ~~**終盤**~~ **(已落地)**:大魔王索瑪戰(怪 0x7c)+ 結局序列。`zoma` debug 跑真實索瑪戰
    (修了 boss 大圖 sprite:MAXW 160→384,讓索瑪 384×144 / 0x7d·0x7f 大圖可繪,仍擋 0x80/0x81 垃圾 header);
    勝利 → `run_finale` 設 ZOMA 里程碑(進度 9/9)+ ENDTXT 結局首段。`finale` debug 直接驗破關路徑。
