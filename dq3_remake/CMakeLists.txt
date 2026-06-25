@@ -59,6 +59,7 @@ add_executable(dq3_remake
     src/dq3_item_use.c
     src/dq3_config.c
     src/dq3_locwarp.c
+    src/dq3_scripted.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)

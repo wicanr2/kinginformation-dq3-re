@@ -41,6 +41,7 @@
 #include "dq3_ship.h"
 #include "dq3_rng.h"
 #include "dq3_config.h"
+#include "dq3_scripted.h"
 #include "dq3_item_use.h"
 
 /* 取船劇情(#2 真實 NPC 觸發,docs/50)。波魯多加 = CTY37(throne room,overworld (26,72));
@@ -801,35 +802,22 @@ static int run_game(const char *assets, const char *dump)
                         }
                         dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         talked = 1;
-                    } else if (sub == 2 && cur_cty == DQ3_LEVE_CTY && cur->section == DQ3_LEVE_2F_SEC
-                               && b4 == 7 && dlg_ok) {
-                        /* 雷貝村 2F 魔法玉老人(byte4=7,handler L0x521f,docs/re-log-722 Step8)。
-                         * test_flag(0x2a≈持盜賊鑰匙開門):未到→rec65 before;到+無魔法玉→給+rec60 給予話。 */
+                    } else if (sub == 2 && dlg_ok && dq3_scripted_get(b4, cur_cty)) {
+                        /* data-driven scripted 給物 NPC(dq3_scripted 表,Step 2,docs/re-log-722)。
+                         * 前置道具未滿足→before_rec;持前置且未給→給物+里程碑+give_rec;已給→after_rec。 */
+                        const dq3_scripted *sc = dq3_scripted_get(b4, cur_cty);
                         set_dialogue_hero(&roster, &party);
-                        if (dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) < 0) {
-                            dq3_dialogue_open(&dlg, 65);   /* before:「海對岸有勇者」(無鑰匙開門)*/
-                        } else if (dq3_inv_find(&inv, DQ3_ITEM_MAGIC_BALL) < 0) {
-                            dq3_inv_add(&inv, DQ3_ITEM_MAGIC_BALL);
-                            dq3_progress_set(&flags, DQ3_MS_MAGIC_BALL);
-                            dq3_dialogue_open(&dlg, 60);   /* 給予話 + 魔法玉 */
-                            fprintf(stderr, "★ 雷貝村 2F 老人(byte4=7)→ 獲得魔法玉(0x58,MAGIC_BALL 里程碑;rec60)\n");
+                        if (sc->prereq_item != DQ3_SC_NOITEM && dq3_inv_find(&inv, sc->prereq_item) < 0) {
+                            dq3_dialogue_open(&dlg, sc->before_rec);
+                        } else if (dq3_inv_find(&inv, sc->give_item) < 0) {
+                            dq3_inv_add(&inv, sc->give_item);
+                            if (sc->milestone) dq3_progress_set(&flags, sc->milestone);
+                            dq3_dialogue_open(&dlg, sc->give_rec);
+                            fprintf(stderr, "★ scripted NPC byte4=%d:獲得道具 0x%02x(rec%d,里程碑)\n",
+                                    b4, sc->give_item, sc->give_rec);
                         } else {
-                            dq3_dialogue_open(&dlg, 60);   /* 已給(此 handler 無獨立後話)*/
-                        }
-                        talked = 1;
-                    } else if (sub == 2 && cur_cty == DQ3_NAJIMI_CTY && dlg_ok &&
-                               cur->npcs[ni].x == DQ3_NAJIMI_OLDMAN_X && cur->npcs[ni].y == DQ3_NAJIMI_OLDMAN_Y) {
-                        /* 拿吉米之塔 4F 老人:條件對話(handler L0x537f 反組譯,docs/re-log-722 Step6)。
-                         * di→rec=di−0xbb8:未有鑰匙→給+rec52(給予話);已有→rec53(後話)。 */
-                        set_dialogue_hero(&roster, &party);
-                        if (dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) < 0) {
-                            dq3_inv_add(&inv, DQ3_ITEM_THIEF_KEY);
-                            dq3_progress_set(&flags, DQ3_MS_THIEF_KEY);
-                            dq3_dialogue_open(&dlg, 52);   /* 給予話「…拿去吧」*/
-                            fprintf(stderr, "★ 拿吉米之塔老人 → 獲得盜賊的鑰匙(0x55,THIEF_KEY 里程碑;rec52)\n");
-                        } else {
-                            dq3_dialogue_open(&dlg, 53);   /* 後話「我的夢想和靈魂…」*/
-                            fprintf(stderr, "拿吉米之塔老人:已給過鑰匙 → 後話 rec53\n");
+                            dq3_dialogue_open(&dlg, sc->after_rec);
+                            fprintf(stderr, "scripted NPC byte4=%d:已給過 → 後話 rec%d\n", b4, sc->after_rec);
                         }
                         talked = 1;
                     } else if (sub == 2 && dlg_ok) {         /* scripted-event NPC:主對話 rec(旗標條件略)*/

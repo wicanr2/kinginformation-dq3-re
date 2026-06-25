@@ -1,0 +1,23 @@
+/* dq3_scripted.c — scripted NPC 給物/對話表(Step 2)。資料源 docs/data/sub2-handlers.md
+ * (gen_sub2_full)+ 逐 handler 反組譯(docs/re-log-722)。recs = di−0xbb8。 */
+#include "dq3_scripted.h"
+#include "dq3_inventory.h"   /* 道具 id */
+#include "dq3_progress.h"    /* 里程碑 */
+
+/* {byte4, cty, give_item, prereq_item, milestone, before_rec, give_rec, after_rec} */
+static const dq3_scripted TABLE[] = {
+  /* 拿吉米之塔 4F 老人:給盜賊鑰匙(handler L0x537f)。無前置;before 不觸發。 */
+  {  12,  8, 0x55, DQ3_SC_NOITEM, DQ3_MS_THIEF_KEY, 54, 52, 53 },
+  /* 雷貝 2F 老人:持盜賊鑰匙(開門)→ 給魔法玉(handler L0x521f)。 */
+  {   7,  1, 0x58, 0x55,          DQ3_MS_MAGIC_BALL, 65, 60, 60 },
+};
+static const int N = (int)(sizeof TABLE / sizeof TABLE[0]);
+
+const dq3_scripted *dq3_scripted_get(int byte4, int cty)
+{
+    int i;
+    for (i = 0; i < N; i++)
+        if (TABLE[i].byte4 == byte4 && (TABLE[i].cty == 0xff || TABLE[i].cty == cty))
+            return &TABLE[i];
+    return 0;
+}
