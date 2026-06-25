@@ -682,6 +682,9 @@ static int run_game(const char *assets, const char *dump)
                 int ni = dq3_scene_npc_at(cur, cur->px+fdx3, cur->py+fdy3);
                 if (ni >= 0) {
                     int sub = (cur->npcs[ni].ctrl >> 3) & 7, b4 = cur->npcs[ni].b4;
+                    /* 對話時 NPC 轉向面對勇者(原版行為):NPC 朝向 = 玩家朝向 ^ 2
+                     * (上↔下、左↔右)。對話中 npc_tick 凍結 → 持續面向玩家。 */
+                    cur->npcs[ni].ctrl = (uint8_t)((cur->npcs[ni].ctrl & ~3) | ((cur->facing ^ 2) & 3));
                     /* 子型 0/1 = 對話(byte4=對話 rec);2 = scripted-event NPC(byte4 索引 0x3bb4 跳表,
                      * 旗標條件對話 → 取主對話 rec,docs/42);3-7 = 設施(docs/40,byte4=設施索引)。 */
                     if (sub < 2 && dlg_ok) {                 /* 對話型 NPC */

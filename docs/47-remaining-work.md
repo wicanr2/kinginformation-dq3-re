@@ -74,6 +74,20 @@
 10. 寶箱開過 tile 翻面(取後外觀變空)· 旅社/教會精確收費公式 · 同城多攤逐攤化(資料已備)。
 11. 戰鬥逃跑/道具指令完整 · 咒文全效果 · 轉職(達瑪)實際換職。
 
+## 早期 build 的「道具來源斷鏈」(已查證 pattern)
+
+精訊版多個劇情物**有用途/有反應 NPC,但資料裡沒接上取得管道**——逐一靜態查證:
+
+| 道具 | 用途 | 反應 NPC | 取得來源 | 結論 |
+|---|---|---|---|---|
+| 黑胡椒 0x5c | 獻波魯多加國王換船 | CTY15「店裡有賣」+ 國王「等胡椒」 | 無店進貨/無寶箱 | 斷鏈 → remake 補進 CTY15 道具店(docs/50)|
+| 盜賊鑰匙 0x55 | 開 tier1 鎖門 | CTY1 rec58「拿到了嗎?太好」 | 無店/無寶箱/無 add-item 碼 | 斷鏈,待補(同上模式)|
+
+> 查證法(rule 62 靜態反追溯):寶箱表(dq3_treasures item 欄)、真實 facility 抽取
+> (dq3_shop_itempool,**非**粗糙 byte 掃描)、EXE immediate add-item 反組譯、對話 glyph 錨點。
+> 「店家有沒有賣 X」一律查 dq3_shop_itempool / dq3_facility,粗掃 [type][count] 會假陽性。
+> 唯一未排除:data-driven scripted-event 給(runner 未全 RE);但無 give-text 佐證。
+
 ## 單一最大 blocker
 
 **劇情旗標驅動的 scripted-event 觸發系統(A1/A2)**——它是「把已做好的各系統串成一條可破關主線」
