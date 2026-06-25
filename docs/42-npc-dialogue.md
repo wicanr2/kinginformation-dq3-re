@@ -37,8 +37,11 @@ handler = **旗標條件對話 NPC**:依故事旗標(`test_flag` 0x8279,如 flag
 | 特殊 call | 語意 | byte4(例) |
 |---|---|---|
 | `0x2719` | 記錄點(存檔)| 5, 6, 19 |
-| `0xd1f9` | 傳送/換場 | 33, 34, 35, 36 |
 | `0x16dd` | 話す對象列表 | 0, 1 |
+
+> ★ 更正:先前列「byte4 33-36 = 0xd1f9 warp」是 window-scan 假陽性 —— 逐段對齊後那是**畫面效果
+> cutscene**(不呼叫 0xd1f9),見 docs/44 §5b。真正的 scripted warp(call 0xd1f9 + 固定 struct)
+> 已在 docs/44 §5b 解出 8 處目的地(洞穴→城,dest=1/5/6;非旅の扉/下降)。
 
 `tools/gen_sub2_data.py` 萃取 byte4 → **主對話 rec**(40 handler:27 有單純對話、9 帶特殊事件)→
 `dq3_sub2.{c,h}`。佐證(CTY00 = D3TXT01):**byte4=2 → rec 0x19「你的父親歐里狄加…不愧是我的兒子啊!」
