@@ -260,6 +260,7 @@ static void equip_modal(const dq3_roster *roster, const dq3_party *party, const 
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                       dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys);
 static void item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party);
+static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
 
@@ -560,6 +561,9 @@ static int run_game(const char *assets, const char *dump)
                         fprintf(stderr, "★ 達瑪轉職:隊員%d 職業 %d→%d(Lv1,屬性減半)\n", a, oc, b);
                     else fprintf(stderr, "[DEBUG] 轉職失敗(勇者/不合法職業)\n");
                 }
+            } else if (strcmp(tok, "dhama") == 0) {           /* 開達瑪轉職選單(神官)*/
+                dhama_modal(&roster, &party, &gst, sys_ok ? &sys_txt : &dlg.txt);
+                dq3_scene_apply_palette(cur);
             } else if (sscanf(tok, "status:%d:%d", &a, &b) == 2) { /* 施加異常狀態:slot a,bit b(1毒2麻)*/
                 if (a >= 0 && a < party.count) {
                     roster.list[party.slot[a]].m.status |= (uint8_t)b;
@@ -738,7 +742,12 @@ static int run_game(const char *assets, const char *dump)
                     cur->npcs[ni].ctrl = (uint8_t)((cur->npcs[ni].ctrl & ~3) | ((cur->facing ^ 2) & 3));
                     /* 子型 0/1 = 對話(byte4=對話 rec);2 = scripted-event NPC(byte4 索引 0x3bb4 跳表,
                      * 旗標條件對話 → 取主對話 rec,docs/42);3-7 = 設施(docs/40,byte4=設施索引)。 */
-                    if (sub < 2 && dlg_ok) {                 /* 對話型 NPC */
+                    if (sub < 2 && cur_cty == DQ3_DHAMA_CTY &&
+                        cur->npcs[ni].x == 6 && cur->npcs[ni].y == 4) {   /* 達瑪神官 → 轉職選單 */
+                        dhama_modal(&roster, &party, &gst, sys_ok ? &sys_txt : &dlg.txt);
+                        dq3_scene_apply_palette(cur);
+                        talked = 1;
+                    } else if (sub < 2 && dlg_ok) {          /* 對話型 NPC */
                         set_dialogue_hero(&roster, &party);  /* {V} 主角名 */
                         if (dq3_dialogue_open(&dlg, b4) == 0) {
                             talked = 1;
@@ -1489,6 +1498,49 @@ static void item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *ros
         else if (sc == 0x4d && cursor + 1 < n) cursor += 1;      /* 右 */
         else if (sc == 0x4b && cursor - 1 >= 0) cursor -= 1;      /* 左 */
         else if (sc == 0x1c && n > 0) field_use_item(inv, roster, party, codes[cursor]);  /* Enter 使用 */
+    }
+}
+
+/* 達瑪神官轉職選單:選隊員 → 選新職業 → dq3_member_change_class(勇者不可轉/不可轉成勇者)。 */
+static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text)
+{
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg; uint8_t yellow; uint8_t *fb = dq3_fb();
+    int wx = 40, wy = 50, ww = 220, wh = 180, i;
+    dq3_menu mem_menu, cls_menu;
+    int state = 0, chosen = -1;
+    if (party->count <= 0) return;
+    raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = white; bg = pal_near2(pal,pn,16,16,32); yellow = (uint8_t)pal_near2(pal,pn,255,255,0);
+    dq3_menu_init(&mem_menu, wx+24, wy+28);
+    for (i = 0; i < party->count; i++) {
+        dq3_recruit *rc = &roster->list[party->slot[i]];
+        dq3_menu_add(&mem_menu, rc->name, rc->name_len);
+    }
+    dq3_roster_class_menu(&cls_menu, wx+24, wy+28);
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (state == 0) {                                  /* 選隊員 */
+            int r = sc ? dq3_menu_input(&mem_menu, sc) : -1;
+            if (r == -2) break;
+            if (r >= 0) { chosen = r; state = 1; cls_menu.cursor = 0; }
+        } else {                                           /* 選職業 */
+            int r = sc ? dq3_menu_input(&cls_menu, sc) : -1;
+            if (r == -2) { state = 0; }
+            else if (r >= 0) {
+                dq3_member *m = &roster->list[party->slot[chosen]].m;
+                if (dq3_member_change_class(m, gst, r) == 0)
+                    fprintf(stderr, "★ 達瑪轉職:隊員%d → 職業%d(Lv1,屬性減半)\n", chosen, r);
+                else fprintf(stderr, "達瑪:勇者不可轉職 / 不可轉成勇者\n");
+                break;
+            }
+        }
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        dq3_menu_render(state ? &cls_menu : &mem_menu, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H,
+                        (uint8_t)white, yellow);
+        dq3_present(); dq3_delay_ms(16);
     }
 }
 
