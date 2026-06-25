@@ -196,7 +196,8 @@ static int find_cty_at(int px, int py) { return find_cty_at_map(px, py, 0); }  /
 static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *party,
                          const dq3_stats *st, const dq3_text *text);
 static void status_modal_page(const dq3_roster *roster, const dq3_party *party, const dq3_text *text, int start_page);
-static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold, int cty);
+static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold, const unsigned char *STOCK, int n);
+static const unsigned char *shop_stock_for(int cty, int *n);
 static void equip_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text);
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                       dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys);
@@ -431,15 +432,36 @@ static int run_game(const char *assets, const char *dump)
                 int fdx3 = (cur->facing==3)-(cur->facing==1), fdy3 = (cur->facing==0)-(cur->facing==2);
                 int ni = dq3_scene_npc_at(cur, cur->px+fdx3, cur->py+fdy3);
                 if (ni >= 0) {
-                    int sub = (cur->npcs[ni].ctrl >> 3) & 7;
+                    int sub = (cur->npcs[ni].ctrl >> 3) & 7, b4 = cur->npcs[ni].b4;
                     /* 子型 0/1 = 對話(byte4=對話 rec);2 = scripted-event(byte4=0x3bb4 跳表索引,
-                     * 非對話 rec,待 RE);3-7 = 設施(docs/40)。僅 0/1 顯示對話。 */
+                     * 非對話 rec,待 RE);3-7 = 設施(docs/40,byte4=設施索引)。 */
                     if (sub < 2 && dlg_ok) {                 /* 對話型 NPC */
                         set_dialogue_hero(&roster, &party);  /* {V} 主角名 */
-                        if (dq3_dialogue_open(&dlg, cur->npcs[ni].b4) == 0) {
+                        if (dq3_dialogue_open(&dlg, b4) == 0) {
                             talked = 1;
                             fprintf(stderr, "話す NPC@(%d,%d) bank=D3TXT0%d rec=0x%02x\n",
-                                    cur->npcs[ni].x, cur->npcs[ni].y, cur->dlg_bank, cur->npcs[ni].b4);
+                                    cur->npcs[ni].x, cur->npcs[ni].y, cur->dlg_bank, b4);
+                        }
+                    } else if (sub >= 3) {                   /* 設施 NPC:走到店員 → 開該攤(docs/40)*/
+                        const dq3_facility *fac = dq3_facility_at(cur_cty, cur->section, b4);
+                        if (fac) {
+                            talked = 1;
+                            if ((fac->type == DQ3_FAC_WEAPON || fac->type == DQ3_FAC_ITEM) && shop_ok) {
+                                shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt,
+                                           &gold, &dq3_shop_itempool[fac->item_off], fac->count);
+                                dq3_scene_apply_palette(cur);
+                                fprintf(stderr, "設施:%s(CTY%d sec%d k%d,%d 品項)\n",
+                                        fac->type==DQ3_FAC_WEAPON?"武器/防具店":"道具店",
+                                        cur_cty, cur->section, b4, fac->count);
+                            } else if (fac->type == DQ3_FAC_INN) {
+                                if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0x11a);  /* 旅社歡迎詞 */
+                                fprintf(stderr, "設施:旅社(住宿費 raw=%d;持久 HP 未實作,暫不扣血)\n", fac->inn_cost);
+                            } else if (fac->type == DQ3_FAC_CHURCH) {
+                                if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0x129);  /* 教會「主持正義之人」*/
+                            } else if (fac->type == DQ3_FAC_RECORD) {
+                                autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py);
+                                if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xfd);   /* 記錄「旅行的經驗」*/
+                            }
                         }
                     }
                 }
@@ -480,8 +502,9 @@ static int run_game(const char *assets, const char *dump)
         } else if (sc == 0x2e) {            /* C:野外指令窗(命令)— 對話/咒文/狀況/道具/裝備/調查 */
             cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok, sys_ok ? &sys_txt : &dlg.txt);
             dq3_scene_apply_palette(cur);
-        } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店(城鎮內;買→裝備領頭隊員)*/
-            if (shop_ok) shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt, &gold, cur_cty);
+        } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店捷徑(開發用;正式入口=走到店員 NPC)*/
+            if (shop_ok) { int sn; const unsigned char *sk = shop_stock_for(cur_cty, &sn);
+                shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt, &gold, sk, sn); }
             dq3_scene_apply_palette(cur);
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
@@ -694,7 +717,8 @@ static int run_tavern(const char *assets, const char *dump)
         dq3_party_add(&party, &roster, 0);
         if (dq3_items_load(&shi, assets, NULL, 0) == 0) {
             setenv("DQ3_SHOP_DUMP", dump, 1);
-            shop_modal(&roster, &party, &shi, &t, &g, 0);
+            { int sn; const unsigned char *sk = shop_stock_for(0, &sn);
+              shop_modal(&roster, &party, &shi, &t, &g, sk, sn); }
         }
         dq3_text_free(&t); return 0;
     }
@@ -859,9 +883,8 @@ static const unsigned char *shop_stock_for(int cty, int *n)
 
 /* 武器/防具/道具商店 modal:列該城商品(名+價+能否裝備),Enter 購買→裝給領頭隊員,Tab 切買賣,ESC 離開。
  * 商品清單 per-town(shop_stock_for);道具名 = D3TXT00 rec=code+1;價/類別/職業由 ITEM.DAT(docs/22)。 */
-static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold, int cty)
+static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold, const unsigned char *STOCK, int n)
 {
-    int n; const unsigned char *STOCK = shop_stock_for(cty, &n);
     int cur = 0, lead_ri, mode = 0;   /* mode 0=買 1=賣 */
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t yellow, redc; uint8_t *fb = dq3_fb();

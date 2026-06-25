@@ -65,6 +65,7 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
     sx = cty[so + 0x13];                   /* spawn_x(section header)*/
     sy = cty[so + 0x14];                   /* spawn_y(section header)*/
     s->dlg_bank = (so + 0x17 < cty_len) ? cty[so + 0x17] : 0;  /* 對話 bank(docs/42)*/
+    s->section  = section;                                     /* 設施查表用(docs/40)*/
     tbase = lay + 4;                       /* tile 陣列(w,h 之後)*/
     if (w <= 0 || h <= 0 || tbase >= cty_len) FAIL("tile array oob");
     /* 容忍 tile 陣列略超檔尾(部分 section 末尾差幾 byte):逐 tile bounds-safe 讀。 */

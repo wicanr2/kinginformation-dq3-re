@@ -128,3 +128,13 @@ int dq3_shop_items(int cty, int type, const unsigned char **items)
     if (items) *items = 0;
     return 0;
 }
+
+const dq3_facility *dq3_facility_at(int cty, int sec, int k)
+{
+    int i;
+    for (i = 0; i < dq3_facilities_len; i++) {
+        const dq3_facility *f = &dq3_facilities[i];
+        if (f->cty == cty && f->sec == sec && f->k == k) return f;
+    }
+    return 0;
+}

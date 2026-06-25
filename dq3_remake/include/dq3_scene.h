@@ -36,6 +36,7 @@ typedef struct dq3_scene {
     int px, py;                   /* 玩家 tile 座標 */
     int facing;                   /* 0下 1左 2上 3右 */
     int dlg_bank;                 /* 對話檔 bank = section header +0x17(→ D3TXT0<bank>;0=未設,docs/42)*/
+    int section;                  /* 目前 section 號(設施查表 by cty/sec/k 用,docs/40)*/
 
     /* 事件層(docs/31):tile 高 byte = 事件 subid(屬性 attr&8 為事件格);
      * section 事件表(4-byte 項 type/param/p2,by subid)。城鎮/迷宮才有。 */

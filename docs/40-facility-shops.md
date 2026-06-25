@@ -100,13 +100,15 @@ DGROUP 0x1f9**,7 byte/筆,+2/+3 = 價格,對上 docs/22)。買單渲染 file 0x8
 
 - `dq3_shopdata.{c,h}`:`dq3_facility` 陣列(cty/sec/k/type/count/item_off/inn_cost)+
   品項池 `dq3_shop_itempool`;`dq3_shop_items(cty, type, &items)` 取某城某類商店品項。
-- `main.c` `shop_stock_for` 改為**合併該城武防店 + 道具店**真實品項(該城無店退回阿里阿罕);
-  原手工 curated 清單(SHOP_ALIAHAN/REBE/DEFAULT)移除。
-- 旅社住宿費、教會服務、記錄點存檔的互動 handler(0x86f5 / 0x83d8 / 0x2719)細節待後續(屬服務型,
-  與商品清單獨立);本次解到**設施→資料**的對映與**商店品項**為止。
+- `dq3_facility_at(cty, sec, k)`:依 (CTY, section, NPC byte4=設施索引) 精確查設施。
+- **走到店員 NPC → 開該攤(已接,docs/42)**:Enter 面向設施型 NPC(子型 `(ctrl>>3)&7 >= 3`)→
+  `dq3_facility_at(cur_cty, cur->section, byte4)` → 依 type:武器/道具店開 `shop_modal`(該攤精確品項
+  `&dq3_shop_itempool[item_off]`,非合併)、旅社/教會/記錄點開對應 D3TXT00 歡迎詞、記錄點另 autosave。
+  `dq3_scene.section` 新增(town_load 設)供查表。B 鍵商店捷徑保留為合併版 fallback。
+- `dq3_dialogue_test` 驗:CTY00 sec0 設施 NPC byte4 → `dq3_facility_at` 全命中、k1=武防店(7 品項)。
 
-## 待 RE(縮小後)
+## 待 RE / 待補(縮小後)
 
-- NPC byte4 → 設施索引的反向對映(哪個 NPC 站位是哪攤);目前 remake 以「城」為單位合併商店,
-  若要逐攤(同城多攤如 CTY6/22),需把 NPC 記錄的 byte4 與設施 `k` 對起來(資料已在 CTY,屬展開工)。
+- 旅社治療:remake 戰鬥外無持久 HP → 旅社目前只顯示歡迎詞、未扣血(待持久 HP 系統)。
 - 旅社費用公式(0x86f5 的 `× 人數`)、教會各服務價(復活/解毒/解咒)、記錄點存檔欄位。
+- 同城多攤(CTY6/22 多家武防店):`dq3_facility_at` 已能逐攤(by k),走到不同店員開不同攤。

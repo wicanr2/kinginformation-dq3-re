@@ -94,6 +94,15 @@ lines+=['',
  '    }',
  '    if (items) *items = 0;',
  '    return 0;',
+ '}','',
+ 'const dq3_facility *dq3_facility_at(int cty, int sec, int k)',
+ '{',
+ '    int i;',
+ '    for (i = 0; i < dq3_facilities_len; i++) {',
+ '        const dq3_facility *f = &dq3_facilities[i];',
+ '        if (f->cty == cty && f->sec == sec && f->k == k) return f;',
+ '    }',
+ '    return 0;',
  '}']
 open(os.path.join(ROOT,'dq3_remake/src/dq3_shopdata.c'),'w').write('\n'.join(lines)+'\n')
 
@@ -118,6 +127,9 @@ extern const int dq3_shop_itempool_len;
 
 /* 取某 CTY 第一個指定類型商店的品項;回品項數,*items 指向 pool。找不到回 0。 */
 int dq3_shop_items(int cty, int type, const unsigned char **items);
+
+/* 依 (cty, sec, k=NPC byte4) 精確查設施;找不到回 NULL。供「面向店員 → 開該攤」。 */
+const dq3_facility *dq3_facility_at(int cty, int sec, int k);
 
 #endif
 '''

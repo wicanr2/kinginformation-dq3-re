@@ -5,6 +5,7 @@
  *   4. dq3_dialogue_set_bank 切換 bank(reload 文字檔)。
  * assets dir 由 argv[1] 指定(預設 "assets_raw")。 */
 #include "dq3_dialogue.h"
+#include "dq3_shopdata.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,6 +77,26 @@ int main(int argc, char **argv) {
             dq3_text_free(&sys);
         } else printf("  [SKIP] 載 D3TXT00 失敗: %s\n", err);
     }
+    /* 設施 NPC:byte4 = 設施索引 k → dq3_facility_at(cty,sec,k) 命中(docs/40)*/
+    {
+        int found_fac = 0, ok_fac = 1;
+        for (i = 0; i < cnt; i++) {
+            const unsigned char *r = cty + base + 1 + i * 7;
+            if (((r[3] >> 3) & 7) >= 3) {                       /* 設施型 NPC */
+                const dq3_facility *f = dq3_facility_at(0, 0, r[4]);
+                found_fac = 1;
+                if (!f) { ok_fac = 0; break; }
+                if ((f->type == DQ3_FAC_WEAPON || f->type == DQ3_FAC_ITEM) && f->count == 0) ok_fac = 0;
+            }
+        }
+        CHECK(found_fac, "CTY00 sec0 有設施型 NPC");
+        CHECK(ok_fac, "設施 NPC byte4 → dq3_facility_at 全命中且商店有品項");
+        {
+            const dq3_facility *w = dq3_facility_at(0, 0, 1);   /* k1 = 武防店(docs/40)*/
+            CHECK(w && w->type == DQ3_FAC_WEAPON && w->count == 7, "CTY00 k1 = 武防店(7 品項)");
+        }
+    }
+
     dq3_dialogue_free(&dlg); free(cty);
 
     printf(fails ? "== %d 項失敗 ==\n" : "== 全部通過 ==\n", fails);
