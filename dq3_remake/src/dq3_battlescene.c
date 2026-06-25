@@ -296,6 +296,16 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
             int bits[48], nb=0, b, bit; const dq3_spell_def *d;
             for(b=0;b<48;b++) if(g_eai.spell_mask[b/8] & (0x80>>(b%8))) bits[nb++]=b;
             bit = bits[dq3_rng_next(&g_brng,nb)];        /* 均勻隨機(docs/37)*/
+            { int srec = dq3_monster_spell_rec[bit];      /* bit→真咒名 rec(0x3930 remap)*/
+              /* 異常咒(RE docs/re-log:base==0 + 名辨識):144 ラリホー睡 / 152 メダパニ混亂
+               * → 玩家不能行動 → 映射麻痺。對活著的目標施加並帶回 pm(docs/47 #5)。 */
+              if(srec==144 || srec==152){
+                  party[t].status |= DQ3_STATUS_PARALYSIS;
+                  fprintf(stderr,"  敵%d 詠唱%s → %s 陷入%s(麻痺)\n", i, srec==144?"拉里荷":"美達巴尼",
+                          party[t].dbg, srec==144?"睡眠":"混亂");
+                  continue;                               /* 本敵行動結束 */
+              }
+            }
             d = dq3_spell_def_get(dq3_monster_spell_rec[bit]);  /* bit→真咒名(0x3930 remap)*/
             if(d && d->kind==DQ3_SK_HEAL){                /* 治療系怪:補一隻受傷的同伴 */
                 int e, lo=-1, lv=1<<30;
