@@ -34,6 +34,7 @@
 #include "dq3_encounter.h"
 #include "dq3_combat.h"
 #include "dq3_shopdata.h"
+#include "dq3_sub2.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -450,14 +451,24 @@ static int run_game(const char *assets, const char *dump)
                 int ni = dq3_scene_npc_at(cur, cur->px+fdx3, cur->py+fdy3);
                 if (ni >= 0) {
                     int sub = (cur->npcs[ni].ctrl >> 3) & 7, b4 = cur->npcs[ni].b4;
-                    /* 子型 0/1 = 對話(byte4=對話 rec);2 = scripted-event(byte4=0x3bb4 跳表索引,
-                     * 非對話 rec,待 RE);3-7 = 設施(docs/40,byte4=設施索引)。 */
+                    /* 子型 0/1 = 對話(byte4=對話 rec);2 = scripted-event NPC(byte4 索引 0x3bb4 跳表,
+                     * 旗標條件對話 → 取主對話 rec,docs/42);3-7 = 設施(docs/40,byte4=設施索引)。 */
                     if (sub < 2 && dlg_ok) {                 /* 對話型 NPC */
                         set_dialogue_hero(&roster, &party);  /* {V} 主角名 */
                         if (dq3_dialogue_open(&dlg, b4) == 0) {
                             talked = 1;
                             fprintf(stderr, "話す NPC@(%d,%d) bank=D3TXT0%d rec=0x%02x\n",
                                     cur->npcs[ni].x, cur->npcs[ni].y, cur->dlg_bank, b4);
+                        }
+                    } else if (sub == 2 && dlg_ok) {         /* scripted-event NPC:主對話 rec(旗標條件略)*/
+                        int srec = dq3_sub2_dialogue(b4);
+                        if (srec >= 0) {
+                            set_dialogue_hero(&roster, &party);
+                            if (dq3_dialogue_open(&dlg, srec) == 0) {
+                                talked = 1;
+                                fprintf(stderr, "scripted NPC@(%d,%d) byte4=%d → rec=0x%02x(旗標條件未模擬)\n",
+                                        cur->npcs[ni].x, cur->npcs[ni].y, b4, srec);
+                            }
                         }
                     } else if (sub >= 3) {                   /* 設施 NPC:走到店員 → 開該攤(docs/40)*/
                         const dq3_facility *fac = dq3_facility_at(cur_cty, cur->section, b4);

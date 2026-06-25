@@ -27,9 +27,28 @@ al=[di+3];  test al,0x38
    3..7 → 設施 dispatcher 0x839f(b4=設施索引,docs/40)
 ```
 
-> **子型 2(scripted-event NPC)**:`0x6355` 以 `b4*2` 索引跳表 `DS 0x3bb4` 呼叫一段 handler ——
-> 國王/劇情/條件互動那類自訂事件,**b4 不是對話 record**,故不可當普通對話開。remake talk 只接子型 0/1;
-> 子型 2 的跳表內容待 RE(同 scripted-event runner 0xabb2 家族,docs/31)。
+> **子型 2(scripted-event NPC)**:`0x6355` 以 `b4*2` 索引跳表 `DS 0x3bb4`(file 0x19cf4)呼叫 handler。
+
+### 子型 2 跳表(DGROUP 0x3bb4)— 40 handler,已 RE(docs 表)
+
+handler = **旗標條件對話 NPC**:依故事旗標(`test_flag` 0x8279,如 flag 41/42/44/45/70)選不同
+**section-bank 對話 rec**(`di=0xbb8+offset` → 本地 rec = offset);部分另觸發特殊事件:
+
+| 特殊 call | 語意 | byte4(例) |
+|---|---|---|
+| `0x2719` | 記錄點(存檔)| 5, 6, 19 |
+| `0xd1f9` | 傳送/換場 | 33, 34, 35, 36 |
+| `0x16dd` | 話す對象列表 | 0, 1 |
+
+`tools/gen_sub2_data.py` 萃取 byte4 → **主對話 rec**(40 handler:27 有單純對話、9 帶特殊事件)→
+`dq3_sub2.{c,h}`。佐證(CTY00 = D3TXT01):**byte4=2 → rec 0x19「你的父親歐里狄加…不愧是我的兒子啊!」
+= 國王見駕**;byte4=0 → rec 0x12「啊{名}怎麼死了呢?」(陣亡條件對話)。
+
+### remake 落地(子型 2)
+
+talk Enter 面向子型 2 NPC → `dq3_sub2_dialogue(byte4)` 取主對話 rec → 從 section bank 顯示
+(`set_dialogue_hero` 補 {V})。**旗標條件分支與特殊事件(記錄/傳送)目前未模擬**,只顯示主對話;
+完整旗標狀態機(同 scripted-event runner 0xabb2 家族,docs/31)待後續。
 
 ## 三、對話文字定位
 
