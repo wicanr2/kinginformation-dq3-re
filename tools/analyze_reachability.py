@@ -1,65 +1,40 @@
 #!/usr/bin/env python3
-"""世界可達性 / 可破關結構分析(資料驅動)。
-組合:① map_graph.json(各 CTY section +0xc 轉場 {dest_cty})② cty_loc(地表進城表:
-map 0=地表/1=下層/0xff=純迷宮)③ 現存 CTY*.DAT 清單。
-從 CTY0 起算可達 CTY,找:不可達 CTY、壞掉的轉場目標(指向不存在的 CTY)、地表↔下層連接點。
-注意:未模型化地形/船 gate(地表內非全可走;早期被海阻隔),屬下一層分析。"""
-import json,glob,os,re,sys
+"""世界可達性 / 可破關結構分析。
+★ 用 docs/maps/map_graph.json(extract_map_graph.py 以**轉場 tile subid 正確界定**抽出的轉場圖)
+為權威來源 —— 不可盲讀固定 N 個 entry(會溢出表尾讀到 garbage 假邊,踩過雷,見 docs/43 教訓)。
+組合 cty_loc(地表/下層進城)算從 CTY0 經轉場可達的 CTY。未模型化地形/船 gate。"""
+import json,glob,os,re
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+exist=set(int(os.path.basename(p)[3:5]) for p in glob.glob(os.path.join(ROOT,'assets_raw/CTY*.DAT')))
 graph=json.load(open(os.path.join(ROOT,'docs/maps/map_graph.json')))
-# 現存 CTY 檔
-exist=set()
-for p in glob.glob(os.path.join(ROOT,'assets_raw/CTY*.DAT')):
-    exist.add(int(os.path.basename(p)[3:5]))
-# cty_loc:從 dq3_exedata.c 解析
 src=open(os.path.join(ROOT,'dq3_remake/src/dq3_exedata.c')).read()
 m=re.search(r'dq3x_cty_loc\[DQ3X_CTYLOC_N\]\[3\] = \{(.*?)\};',src,re.S)
 rows=re.findall(r'\{(\d+),(\d+),0x([0-9a-fA-F]+)\}',m.group(1))
-cty_loc={i:(int(x),int(y),int(mp,16)) for i,(x,y,mp) in enumerate(rows)}
-SURF=[i for i,(x,y,mp) in cty_loc.items() if mp==0 and i in exist]
-UNDER=[i for i,(x,y,mp) in cty_loc.items() if mp==1 and i in exist]
-DUNGEON=[i for i in exist if i<len(cty_loc) and cty_loc[i][2]==0xff]  # 無地表進城=純迷宮
-
-# 轉場邊:CTY a → dest_cty
+loc={i:(int(x),int(y),int(mp,16)) for i,(x,y,mp) in enumerate(rows)}
+SURF=set(i for i in exist if i<len(loc) and loc[i][2]==0)
+UNDER=set(i for i in exist if i<len(loc) and loc[i][2]==1)
+DUNG=set(i for i in exist if i<len(loc) and loc[i][2]==0xff)
 edges={}
-broken=[]
 for cty,secs in graph.items():
-    cty=int(cty); dests=set()
+    cty=int(cty); ds=set()
     for sec,doors in secs.items():
         for dr in doors:
             dc=dr['dest_cty']
-            if dc==cty or dc>=100: continue       # 同城/特殊(出城 0xff 等已在 dest_sec)
-            dests.add(dc)
-            if dc not in exist: broken.append((cty,dc))
-    edges[cty]=dests
-
-# 可達性 BFS:CTY0 + 地表 hub(假設地表互通,標註限制)
-reach=set([0]); 
-def add_hub(hub): 
-    for c in hub: reach.add(c)
-add_hub(SURF)                 # 地表 hub(樂觀:未扣地形/船)
-changed=True
-while changed:
-    changed=False
+            if dc!=cty and dc<100 and dc in exist: ds.add(dc)
+    edges[cty]=ds
+# 地表 hub(出城回地表 = 地表城互通,樂觀未扣地形/船);BFS 轉場邊
+reach=set([0])|SURF
+ch=True
+while ch:
+    ch=False
     for c in list(reach):
-        for d in edges.get(c,()):
-            if d not in reach and d in exist: reach.add(d); changed=True
-    # 若已達任一下層 CTY → 開放下層 hub
-    if any(c in reach for c in UNDER) and not all(c in reach for c in UNDER):
-        add_hub(UNDER); changed=True
-# 下層連接點:哪些(地表/迷宮)CTY 轉場到下層 CTY
-down_links=[(c,d) for c in reach for d in edges.get(c,()) if d in UNDER]
-
-unreach=sorted(c for c in exist if c not in reach)
-print('# 世界可達性 / 可破關結構分析\n')
-print('現存 CTY 檔:%d(地表進城 %d、下層進城 %d、純迷宮 %d)'%(len(exist),len(SURF),len(UNDER),len(DUNGEON)))
-print('從 CTY0 可達:%d / %d'%(len(reach&exist),len(exist)))
-print()
-print('## 不可達 CTY(%d)'%len(unreach))
-print(' ', unreach if unreach else '(無 — 全可達)')
-print('\n## 壞掉的轉場(目標 CTY 無檔案,%d)'%len(broken))
-for c,d in broken[:20]: print('  CTY%d → CTY%d(不存在)'%(c,d))
-if not broken: print('  (無)')
-print('\n## 地表 → 下層 連接點(%d)'%len(down_links))
-for c,d in down_links[:20]: print('  CTY%d → CTY%d(下層)'%(c,d))
-if not down_links: print('  ⚠ 無 — 下層世界從地表無轉場入口(可能靠特殊 destSec/地形洞)')
+        for dd in edges.get(c,()):
+            if dd not in reach: reach.add(dd); ch=True
+unreach=sorted(exist-reach)
+downlinks=[(c,dd) for c in (reach&SURF) for dd in edges.get(c,()) if dd in UNDER]
+print('# 世界可達性(權威:map_graph.json,正確界定)\n')
+print('現存 CTY %d(地表 %d / 下層 %d / 純迷宮 %d)'%(len(exist),len(SURF),len(UNDER),len(DUNG)))
+print('從 CTY0 經轉場可達:%d / %d'%(len(reach&exist),len(exist)))
+print('不可達(%d):%s'%(len(unreach),unreach))
+print('\n地表→下層 跨 CTY 轉場邊:%s'%(downlinks if downlinks else '(無 → 下層需「下降事件」進入,非轉場圖)'))
+print('下層內部跨 CTY 邊:%s'%([(c,dd) for c in (reach|UNDER) for dd in edges.get(c,()) if dd in UNDER and c in UNDER]))
