@@ -51,6 +51,11 @@
 #define DQ3_PORTOGA_HARBOR_X 25
 #define DQ3_PORTOGA_HARBOR_Y 73
 #define DQ3_ITEM_PEPPER    0x5c   /* 黑胡椒(獻國王換船的劇情物)*/
+/* 盜賊鑰匙:拿吉米之塔(精訊中文名;ナジミの塔)=CTY8,4F(sec3)老人 (9,9) sub2 對話 → 給盜賊鑰匙。 */
+#define DQ3_NAJIMI_CTY      8
+#define DQ3_NAJIMI_OLDMAN_X 9
+#define DQ3_NAJIMI_OLDMAN_Y 9
+#define DQ3_ITEM_THIEF_KEY  0x55
 #define DQ3_PEPPER_CTY     15     /* 胡椒販售城:提示 NPC(4,15)「下方的店裡有賣黑胡椒」。
                                    * 但資料裡無一店進此貨(早期 build 斷鏈,docs/50)→ remake 補進該城道具店。 */
 #define DQ3_PORTOGA_REC_WAIT 26   /* 「我在等黑胡椒」*/
@@ -454,15 +459,17 @@ static int run_game(const char *assets, const char *dump)
     { const char *dbg = getenv("DQ3_DEBUG");
       if (dbg && *dbg) { char buf[256]; char *tok; strncpy(buf, dbg, sizeof buf - 1); buf[sizeof buf - 1] = 0;
         for (tok = strtok(buf, ";"); tok; tok = strtok(NULL, ";")) {
-            int a, b, c;
+            int a, b, c, dsec_dbg = 0;
             if (strcmp(tok, "descent") == 0) {
                 do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags); debug_placed=1;  /* scripted_event 86 */
             } else if (strcmp(tok, "ascend") == 0) {
                 layer = 0; cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
                 debug_placed=1; fprintf(stderr, "[DEBUG] ascend → 地表\n");
-            } else if (sscanf(tok, "warp:%d:%d:%d", &a, &b, &c) == 3) {
+            } else if (sscanf(tok, "warp:%d:%d:%d:%d", &a, &b, &c, &dsec_dbg) == 4 ||
+                       sscanf(tok, "warp:%d:%d:%d", &a, &b, &c) == 3) {
                 char ct[16]; int bn = (a >= 0 && a < 100) ? dq3x_map_blknum[a] : 1; dq3_scene *ns;
-                sprintf(ct, "CTY%02d.DAT", a); ns = dq3_town_load(assets, ct, 0, bn, err, sizeof err);
+                int wsec = (sscanf(tok, "warp:%d:%d:%d:%d", &a, &b, &c, &dsec_dbg) == 4) ? dsec_dbg : 0;
+                sprintf(ct, "CTY%02d.DAT", a); ns = dq3_town_load(assets, ct, wsec, bn, err, sizeof err);
                 if (ns) { if (town) dq3_scene_free(town); town = ns; cur = town; in_town = 1; cur_cty = a;
                     load_field_hero(town, assets);
                     if (b < cur->map_w) cur->px = b; if (c < cur->map_h) cur->py = c;
@@ -714,6 +721,15 @@ static int run_game(const char *assets, const char *dump)
                             fprintf(stderr, "波魯多加國王:等黑胡椒(無胡椒,未授船)\n");
                         }
                         talked = 1;
+                    } else if (sub == 2 && cur_cty == DQ3_NAJIMI_CTY && dlg_ok &&
+                               cur->npcs[ni].x == DQ3_NAJIMI_OLDMAN_X && cur->npcs[ni].y == DQ3_NAJIMI_OLDMAN_Y) {
+                        /* 拿吉米之塔 4F 老人:對話 → 給盜賊鑰匙(攻略確認;原版 yes/no,此處直接給)。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) < 0) dq3_inv_add(&inv, DQ3_ITEM_THIEF_KEY);
+                        dq3_progress_set(&flags, DQ3_MS_THIEF_KEY);
+                        dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
+                        talked = 1;
+                        fprintf(stderr, "★ 拿吉米之塔老人 → 獲得盜賊的鑰匙(0x55,THIEF_KEY 里程碑)\n");
                     } else if (sub == 2 && dlg_ok) {         /* scripted-event NPC:主對話 rec(旗標條件略)*/
                         int srec = dq3_sub2_dialogue(b4);
                         if (srec >= 0) {

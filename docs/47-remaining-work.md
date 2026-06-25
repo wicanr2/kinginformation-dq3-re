@@ -81,12 +81,14 @@
 | 道具 | 用途 | 反應 NPC | 取得來源 | 結論 |
 |---|---|---|---|---|
 | 黑胡椒 0x5c | 獻波魯多加國王換船 | CTY15「店裡有賣」+ 國王「等胡椒」 | 無店進貨/無寶箱 | 斷鏈 → remake 補進 CTY15 道具店(docs/50)|
-| 盜賊鑰匙 0x55 | 開 tier1 鎖門 | CTY1 rec58「拿到了嗎?太好」 | 無店/無寶箱/無 add-item 碼 | 斷鏈,待補(同上模式)|
+| ~~盜賊鑰匙 0x55~~ **(更正:非斷鏈)** | 開 tier1 鎖門 | CTY1 rec58「拿到了嗎」| **拿吉米之塔(CTY8)4F 老人給** | 已接 NPC 觸發 |
 
-> 查證法(rule 62 靜態反追溯):寶箱表(dq3_treasures item 欄)、真實 facility 抽取
-> (dq3_shop_itempool,**非**粗糙 byte 掃描)、EXE immediate add-item 反組譯、對話 glyph 錨點。
-> 「店家有沒有賣 X」一律查 dq3_shop_itempool / dq3_facility,粗掃 [type][count] 會假陽性。
-> 唯一未排除:data-driven scripted-event 給(runner 未全 RE);但無 give-text 佐證。
+> 查證法(rule 62 靜態反追溯):寶箱表、真實 facility 抽取、EXE immediate、對話 glyph 錨點。
+> **教訓(盜賊鑰匙)**:我一度誤判鑰匙「斷鏈」,因為(a)信了不完整的 `dq3_treasures` 抽取表
+> 而非遊戲即時讀的 CTY 事件;(b)沒查攻略就下結論。**正解靠攻略**:盜賊鑰匙在**拿吉米之塔
+> (CTY8)4F 老人** sub2 對話給(scripted-event,非 examine、非寶箱)。⇒ 查道具來源時:
+> **先查攻略**(references/dq3_bbs)、dungeon 找 world map 結構(別在城裡找塔)、sub2 scripted NPC
+> 也是給道具的合法管道(treasure 抽取涵蓋不到)。
 
 ## 單一最大 blocker
 
