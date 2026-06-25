@@ -61,6 +61,13 @@
 #define DQ3_LEVE_CTY        1
 #define DQ3_LEVE_2F_SEC     1
 #define DQ3_ITEM_MAGIC_BALL 0x58
+/* 羅馬利亞皇冠線:CTY2 sec1 王座廳國王 (7,2) sub2。香巴尼塔(CTY10)打甘達特取金皇冠(0x33,
+ * examine 既有系統可拿)→ 持皇冠對羅馬利亞國王 → 觸發讓位(攻略建議婉拒,保留皇冠)→ ROMALY 里程碑。 */
+#define DQ3_ROMALY_CTY      2
+#define DQ3_ROMALY_KING_SEC 1
+#define DQ3_ROMALY_KING_X   7
+#define DQ3_ROMALY_KING_Y   2
+#define DQ3_ITEM_CROWN      0x33
 #define DQ3_PEPPER_CTY     15     /* 胡椒販售城:提示 NPC(4,15)「下方的店裡有賣黑胡椒」。
                                    * 但資料裡無一店進此貨(早期 build 斷鏈,docs/50)→ remake 補進該城道具店。 */
 #define DQ3_PORTOGA_REC_WAIT 26   /* 「我在等黑胡椒」*/
@@ -725,6 +732,17 @@ static int run_game(const char *assets, const char *dump)
                             dq3_dialogue_open(&dlg, DQ3_PORTOGA_REC_WAIT);   /* 等胡椒 */
                             fprintf(stderr, "波魯多加國王:等黑胡椒(無胡椒,未授船)\n");
                         }
+                        talked = 1;
+                    } else if (sub == 2 && cur_cty == DQ3_ROMALY_CTY && cur->section == DQ3_ROMALY_KING_SEC && dlg_ok &&
+                               cur->npcs[ni].x == DQ3_ROMALY_KING_X && cur->npcs[ni].y == DQ3_ROMALY_KING_Y &&
+                               dq3_inv_find(&inv, DQ3_ITEM_CROWN) >= 0) {
+                        /* 羅馬利亞國王:持金皇冠 → 婉拒王位繼續(攻略建議保留皇冠不消耗)→ ROMALY 里程碑。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (!dq3_progress_done(&flags, DQ3_MS_ROMALY)) {
+                            dq3_progress_set(&flags, DQ3_MS_ROMALY);
+                            fprintf(stderr, "★ 羅馬利亞國王:歸還金皇冠 → 婉拒王位,繼續冒險(ROMALY 里程碑)\n");
+                        }
+                        dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         talked = 1;
                     } else if (sub == 2 && cur_cty == DQ3_LEVE_CTY && cur->section == DQ3_LEVE_2F_SEC && dlg_ok &&
                                dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) >= 0) {
