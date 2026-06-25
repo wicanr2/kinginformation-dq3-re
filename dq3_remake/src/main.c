@@ -40,6 +40,19 @@
 #include "dq3_progress.h"
 #include "dq3_ship.h"
 #include "dq3_item_use.h"
+
+/* 取船劇情(#2 真實 NPC 觸發,docs/50)。波魯多加 = CTY37(throne room,overworld (26,72));
+ * 國王 = section0 (9,6) sub2 scripted-event NPC,byte4=26。對話分支(資料驅動,RE 確鑿):
+ *   無胡椒 → rec26「怎麼了?我在等黑胡椒。」 / 給胡椒 → rec28「胡椒太好吃了…好想睡。」+ 授船。
+ * 黑胡椒 = item 0x5c(rec93,glyph 比對確認);港口海格 = overworld (25,73)(城南鄰)。 */
+#define DQ3_PORTOGA_CTY     37
+#define DQ3_PORTOGA_KING_X   9
+#define DQ3_PORTOGA_KING_Y   6
+#define DQ3_PORTOGA_HARBOR_X 25
+#define DQ3_PORTOGA_HARBOR_Y 73
+#define DQ3_ITEM_PEPPER    0x5c   /* 黑胡椒(獻國王換船的劇情物)*/
+#define DQ3_PORTOGA_REC_WAIT 26   /* 「我在等黑胡椒」*/
+#define DQ3_PORTOGA_REC_GOT  28   /* 「胡椒太好吃了…好想睡」(已收胡椒)*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -481,6 +494,16 @@ static int run_game(const char *assets, const char *dump)
                 if (oc == 1) run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok);
             } else if (strcmp(tok, "finale") == 0) {          /* 直接驗破關→結局路徑(主線推到 9/9)*/
                 run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok);
+            } else if (sscanf(tok, "dlg:%d:%d", &a, &b) == 2) { /* 渲染任意對話 record(bank a,rec b)*/
+                if (dlg_ok && a >= 0 && a <= 9) {
+                    char be[128];
+                    if (dq3_dialogue_set_bank(&dlg, assets, a, be, sizeof be) == 0) {
+                        cur_dlg_bank = a; debug_placed = 1;   /* 跳過開場 CTY00 載入,否則迴圈把 bank 切回 1 */
+                        if (dq3_dialogue_open(&dlg, b) == 0)
+                            fprintf(stderr, "[DEBUG] 渲染 D3TXT0%d rec=0x%02x(%d)\n", a, b, b);
+                        else fprintf(stderr, "[DEBUG] rec %d 開啟失敗\n", b);
+                    } else fprintf(stderr, "[DEBUG] bank %d 載入失敗: %s\n", a, be);
+                }
             } else if (sscanf(tok, "hurt:%i", &a) == 1) {     /* 設隊長 cur_hp(測藥草用)*/
                 if (party.count > 0) { roster.list[party.slot[0]].m.cur_hp = (uint16_t)a;
                     fprintf(stderr, "[DEBUG] 隊長 cur_hp=%d\n", a); }
@@ -652,6 +675,26 @@ static int run_game(const char *assets, const char *dump)
                             fprintf(stderr, "話す NPC@(%d,%d) bank=D3TXT0%d rec=0x%02x\n",
                                     cur->npcs[ni].x, cur->npcs[ni].y, cur->dlg_bank, b4);
                         }
+                    } else if (sub == 2 && cur_cty == DQ3_PORTOGA_CTY && dlg_ok &&
+                               cur->npcs[ni].x == DQ3_PORTOGA_KING_X && cur->npcs[ni].y == DQ3_PORTOGA_KING_Y) {
+                        /* 取船劇情:波魯多加國王(sub2 scripted NPC)。胡椒換船(docs/50)。
+                         * 對話分支對齊資料:無胡椒→rec26(等胡椒);獻胡椒→rec28(吃胡椒)+ 授船。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (ship.owned) {                        /* 已取船 → 仍顯示「吃胡椒」後話 */
+                            dq3_dialogue_open(&dlg, DQ3_PORTOGA_REC_GOT);
+                        } else if (dq3_inv_find(&inv, DQ3_ITEM_PEPPER) >= 0) {
+                            dq3_inv_remove(&inv, DQ3_ITEM_PEPPER);   /* 獻上黑胡椒 */
+                            ship.owned = 1; ship.aboard = 0;
+                            ship.px = DQ3_PORTOGA_HARBOR_X; ship.py = DQ3_PORTOGA_HARBOR_Y; ship.layer = 0;
+                            dq3_progress_set(&flags, DQ3_MS_SHIP);
+                            dq3_dialogue_open(&dlg, DQ3_PORTOGA_REC_GOT);
+                            fprintf(stderr, "★ 取船:獻黑胡椒給波魯多加國王 → 得船,停泊港口 (%d,%d)(SHIP 里程碑)\n",
+                                    ship.px, ship.py);
+                        } else {
+                            dq3_dialogue_open(&dlg, DQ3_PORTOGA_REC_WAIT);   /* 等胡椒 */
+                            fprintf(stderr, "波魯多加國王:等黑胡椒(無胡椒,未授船)\n");
+                        }
+                        talked = 1;
                     } else if (sub == 2 && dlg_ok) {         /* scripted-event NPC:主對話 rec(旗標條件略)*/
                         int srec = dq3_sub2_dialogue(b4);
                         if (srec >= 0) {

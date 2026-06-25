@@ -33,6 +33,7 @@ DQ3_DEBUG="<指令>;<指令>;…" DQ3_DUMP=out.ppm  dq3_remake <assets_dir> game
 | `hurt:N` | 設隊長 cur_hp=N(測藥草治療封頂用)|
 | `zoma` | 大魔王索瑪終戰(怪 0x7c);勝利 → 破關 + 結局(ENDTXT)。`DQ3_BATTLE_SCRIPT` 控回合 |
 | `finale` | 直接觸發破關→結局(設 ZOMA 里程碑 → 進度 9/9)。驗主線終局,不必真打贏索瑪 |
+| `dlg:bank:rec` | 渲染任意對話 record(D3TXT0<bank> 第 rec 筆)。配 `DQ3_INPUT="."` 讓對話框畫進末幀 |
 
 scripted_event 86(下降)已正式化:`DQ3_SEVENT_DESCENT`(0x56)+ `DQ3_FLAG_DESCENDED`(0x13a)+
 `do_descent()`(場景效果在 main.c,因需 field/layer);原版 runner 劇情觸發待 RE,debug/U 鍵代觸發。
