@@ -9,7 +9,11 @@
 #include "dq3_roster.h"
 #include "dq3_inventory.h"
 
-typedef struct { int cty, px, py; } dq3_save_pos;
+/* 世界位置 + 船狀態(#2,docs/48)。ship_* 折入此結構以維持 write/read 窄介面。 */
+typedef struct {
+    int cty, px, py;
+    int ship_owned, ship_aboard, ship_px, ship_py, ship_layer;
+} dq3_save_pos;
 
 /* 寫存檔。回 0=成功、<0=失敗。 */
 int dq3_save_write(const char *path, const dq3_roster *r, const dq3_party *p,

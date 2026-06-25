@@ -23,5 +23,7 @@ chk "彩虹水滴合成事件(83)"        "event:0x53"         "."    "event 83 
 chk "進羅馬利亞 + 金錢"            "gold:5000;warp:2:20:10" "." "warp → CTY2"
 chk "進度旗標流(取船里程碑)"      "prog:5;prog"        "."    "進度階段 6/9 = 取船"
 chk "事件自動推進進度(下降→8)"   "prog:6;descent;prog" "."   "進度階段 8/9 = 下降"
+chk "登船 + 跨海航行"             "opos:149:179;ship:150:179" "rrr" "登船 → 可跨海"
+chk "船上岸(船停原水格)"         "opos:150:179;ship"  "l"    "上岸 → 船停泊 \(150,179\)"
 echo "== 結果:PASS=$pass FAIL=$fail =="
 [ "$fail" -eq 0 ]

@@ -44,7 +44,11 @@
    (0x139/0x13a),故**合成/下降事件直接推進進度,不需另一套狀態**。debug 口 `prog`/`prog:N`
    查/設;playthrough_check 第 8/9 項驗證。剩餘里程碑(盜賊鑰匙/魔法球/羅馬利亞/達瑪/取船)的
    「事件設旗標」接點待各系統(船=#3)落地時補上。
-3. **船**:取船劇情(波魯多加胡椒換船)+ 船移動(跨海 tile)+ 船狀態存檔。地表 gate 2 的核心。
+3. ~~**船**~~ **(#2 已落地)**:`dq3_ship`(include/src + test_ship 17 斷言)。海 tile 辨識 RE 完成
+   ——overworld attr 指紋 `(attr&1)&&(attr&0x20)`(海 0x25,山 0x07 無 0x20),docs/48。
+   登船/航行/上岸狀態機 + 船上不遇敵 + 船狀態併入 dq3_save(v3)。debug 口 `ship`/`ship:X:Y`/`opos:X:Y`;
+   playthrough_check 第 10/11 項驗證跨海航行與上岸。**剩**:取船劇情實際接點(波魯多加胡椒換船的
+   NPC 對話 → `dq3_progress_set(SHIP)` + 放船)待該城 NPC 事件落地時補。
 4. **終盤**:大魔王索瑪戰 + 結局序列(對話 bank D3TXT07 已有索瑪台詞)。
 
 > 現實路徑:A1/A2 是同一塊(旗標驅動的 scripted-event VM)。**最高槓桿但最難純靜態**;

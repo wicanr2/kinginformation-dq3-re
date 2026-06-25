@@ -38,6 +38,7 @@
 #include "dq3_warp.h"
 #include "dq3_owportal.h"
 #include "dq3_progress.h"
+#include "dq3_ship.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -279,10 +280,12 @@ static int church_revive(dq3_roster *r, const dq3_party *p, long *gold)
 }
 
 static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
-                         int cty, int px, int py)
+                         int cty, int px, int py, const dq3_ship *ship)
 {
     dq3_save_pos pos; int rc;
     pos.cty = cty; pos.px = px; pos.py = py;
+    pos.ship_owned = ship->owned; pos.ship_aboard = ship->aboard;       /* #2 船狀態 */
+    pos.ship_px = ship->px; pos.ship_py = ship->py; pos.ship_layer = ship->layer;
     rc = dq3_save_write(save_path(), r, p, inv, pos);
     if (rc == 0) fprintf(stderr, "自動存檔 → %s(名冊%d 隊伍%d CTY%d)\n", save_path(), r->count, p->count, cty);
     else fprintf(stderr, "autosave 失敗(無法寫 %s)\n", save_path());
@@ -335,6 +338,7 @@ static int run_game(const char *assets, const char *dump)
     dq3_text sys_txt; int sys_ok = 0;                                  /* 常駐 D3TXT00:系統訊息 + 道具名 */
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
+    dq3_ship ship; dq3_ship_init(&ship);                            /* #2 船:取船後跨海(docs/48)*/
     dq3_roster roster; dq3_party party; dq3_stats gst;              /* 露依達酒場:名冊 + 隊伍 */
     long gold = 0;                                                  /* 隊伍金錢(戰利累積)*/
     dq3_items shop_items; int shop_ok;                             /* ITEM.DAT(商店價/可裝備)*/
@@ -360,9 +364,13 @@ static int run_game(const char *assets, const char *dump)
     /* 續玩:DQ3_LOAD 且存檔存在 → 讀回名冊/隊伍/道具(位置另需載入對應場景,先記錄)。 */
     if (getenv("DQ3_LOAD") && dq3_save_exists(save_path())) {
         dq3_save_pos pos;
-        if (dq3_save_read(save_path(), &roster, &party, &inv, &pos) == 0)
-            fprintf(stderr, "讀檔續玩 ← %s(名冊%d 隊伍%d,存檔位置 CTY%d (%d,%d))\n",
-                    save_path(), roster.count, party.count, pos.cty, pos.px, pos.py);
+        if (dq3_save_read(save_path(), &roster, &party, &inv, &pos) == 0) {
+            ship.owned = pos.ship_owned; ship.aboard = pos.ship_aboard;   /* #2 還原船狀態 */
+            ship.px = pos.ship_px; ship.py = pos.ship_py; ship.layer = pos.ship_layer;
+            fprintf(stderr, "讀檔續玩 ← %s(名冊%d 隊伍%d,存檔位置 CTY%d (%d,%d)%s)\n",
+                    save_path(), roster.count, party.count, pos.cty, pos.px, pos.py,
+                    ship.owned ? (ship.aboard ? " 船上" : " 有船") : "");
+        }
     }
     set_dialogue_hero(&roster, &party);   /* 對話 {V} 主角名初值(讀檔/新局後)*/
 
@@ -408,6 +416,17 @@ static int run_game(const char *assets, const char *dump)
                     DQ3_MS_ROMALY,DQ3_MS_DHAMA,DQ3_MS_SHIP,DQ3_MS_RAINBOW,DQ3_MS_DESCEND,DQ3_MS_ZOMA};
                 int k; for (k = 0; k < DQ3_MS_COUNT && k <= a; k++) dq3_progress_set(&flags, seq[k]);
                 fprintf(stderr, "[DEBUG] 進度設到里程碑 %d → 階段 %s\n", a, dq3_progress_name(dq3_progress_stage(&flags)));
+            } else if (sscanf(tok, "opos:%d:%d", &a, &b) == 2) { /* overworld 定位玩家(當前層)*/
+                if (!in_town && a < cur->map_w && b < cur->map_h) { cur->px = a; cur->py = b; debug_placed = 1;
+                    fprintf(stderr, "[DEBUG] overworld 定位 (%d,%d) layer%d\n", a, b, layer); }
+            } else if (strcmp(tok, "ship") == 0) {            /* 取船 + 登船於玩家當前格(#2)*/
+                ship.owned = 1; ship.aboard = 1; ship.px = cur->px; ship.py = cur->py; ship.layer = layer;
+                dq3_progress_set(&flags, DQ3_MS_SHIP);
+                fprintf(stderr, "[DEBUG] 取得船 + 登船於 (%d,%d) layer%d\n", ship.px, ship.py, layer);
+            } else if (sscanf(tok, "ship:%d:%d", &a, &b) == 2) { /* 船停泊於 (a,b),不登船 */
+                ship.owned = 1; ship.aboard = 0; ship.px = a; ship.py = b; ship.layer = layer;
+                dq3_progress_set(&flags, DQ3_MS_SHIP);
+                fprintf(stderr, "[DEBUG] 船停泊 (%d,%d) layer%d\n", a, b, layer);
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
             else if (sscanf(tok, "gold:%d", &a) == 1) { gold = a; fprintf(stderr, "[DEBUG] gold=%d\n", a); }
@@ -511,7 +530,7 @@ static int run_game(const char *assets, const char *dump)
         sc = dq3_poll_scancode();
         if (sc == DQ3_SC_F10) {             /* F10:離開遊戲確認(Yes/No)+ 自動存檔 */
             if (confirm_quit(&dlg.txt)) {
-                autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py);
+                autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py, &ship);
                 dq3_rt_set_quit();
             }
             dq3_scene_apply_palette(cur);   /* confirm 改過 DAC,還原場景色盤 */
@@ -595,7 +614,7 @@ static int run_game(const char *assets, const char *dump)
                                 /* 有復活 → 「誰需要復活」(rec 0x138);否則 → 「主持正義之人」(0x129)*/
                                 if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, rev > 0 ? 0x138 : 0x129);
                             } else if (fac->type == DQ3_FAC_RECORD) {
-                                autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py);
+                                autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py, &ship);
                                 if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xfd);   /* 記錄「旅行的經驗」*/
                             }
                         }
@@ -670,7 +689,15 @@ static int run_game(const char *assets, const char *dump)
                 cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
             }
         } else if (sc == 0x48 || sc == 0x50 || sc == 0x4b || sc == 0x4d) {
-            int moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
+            int moved;
+            if (!in_town) {                          /* overworld:走船規則(航行/登船/上岸,docs/48)*/
+                int r = dq3_ship_input(cur, &ship, sc, layer);
+                moved = (r != DQ3_SHIP_BLOCKED);
+                if (r == DQ3_SHIP_BOARD)          fprintf(stderr, "登船 → 可跨海\n");
+                else if (r == DQ3_SHIP_DISEMBARK) fprintf(stderr, "上岸 → 船停泊 (%d,%d) layer%d\n", ship.px, ship.py, ship.layer);
+            } else {
+                moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
+            }
             if (!moved && in_town) {
                 /* 被擋:若面向鎖門且隊伍持足夠等級鑰匙 → 開門後重試(docs/35 §八)。*/
                 int kt = dq3_inv_key_tier(&inv);
@@ -742,7 +769,7 @@ static int run_game(const char *assets, const char *dump)
                         else fprintf(stderr, "入城失敗 %s: %s\n", cty, err);
                     }
                 }
-                if (moved && !in_town && --enc <= 0) {
+                if (moved && !in_town && !ship.aboard && --enc <= 0) {  /* 船上不遇敵 */
                     int reg = dq3_encounter_region(cur->px, cur->py);   /* 位置→region(docs/39)*/
                     int mon = dq3_encounter_pick(reg, grnd());
                     if (mon < 0) mon = over_pool[grnd() % 4];

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DQ3_SAVE_MAGIC "DQ3SAVE2"
+#define DQ3_SAVE_MAGIC "DQ3SAVE3"   /* v3:dq3_save_pos 併入船狀態(#2)*/
 #define MAGIC_LEN 8
 
 /* 各結構大小寫進檔頭,讀檔時比對 → 防跨版本誤讀。 */

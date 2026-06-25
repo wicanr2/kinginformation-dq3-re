@@ -26,6 +26,9 @@ DQ3_DEBUG="<指令>;<指令>;…" DQ3_DUMP=out.ppm  dq3_remake <assets_dir> game
 | `gold:N` | 金錢設為 N |
 | `prog` | 顯示主線進度階段(旗標流 #1):`進度階段 k/9 = <里程碑名>`|
 | `prog:N` | 設里程碑 0..N 完成(START→THIEF_KEY→…→ZOMA)。RAINBOW/DESCEND 鏡射既有 EXE 旗標,故合成/下降事件會自動推進 |
+| `opos:X:Y` | overworld 定位玩家於當前層 (X,Y)(測海岸/航行用)|
+| `ship` | 取得船 + 登船於玩家當前格(設 SHIP 里程碑)|
+| `ship:X:Y` | 船停泊於 (X,Y)(owned,不登船);走到該格踏上即登船 |
 
 scripted_event 86(下降)已正式化:`DQ3_SEVENT_DESCENT`(0x56)+ `DQ3_FLAG_DESCENDED`(0x13a)+
 `do_descent()`(場景效果在 main.c,因需 field/layer);原版 runner 劇情觸發待 RE,debug/U 鍵代觸發。
