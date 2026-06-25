@@ -65,3 +65,10 @@ L09871: call [bx + 0x3baa]                     ; 派發 [0x722] 號 handler
 - (A) 抽**座標→region 命中測試的 region 清單**([0x71c]/[0x72c]/region structs)→ 重建「玩家在哪區」。
 - (B) 對每個 warp/portal handler,讀它 `cmp [0x722],N` 的 N → 對應到 region/事件。
 - (C) sub2 對話分支:同樣 handler 內 `cmp [0x722]/旗標` → 選 rec(用戶推測 sub2 也吃 state machine,待驗)。
+
+## Step 5:✓ 確認 user 推測 — sub2 = runner 同一張跳表
+
+`0x3bb4 - 0x3baa = 10 byte = 5 entries`。⇒ **sub2 表(0x3bb4)= runner 表(0x3baa)偏移 5 格**,
+**同一張跳表**。sub2 NPC byte4=N → 派發 runner event(N+5)的同一 handler。
+⇒ **sub2 對話分支 = runner 事件的一部分**(user 推測正確)。warp/portal/sub2 三者**同源**,
+都由 [0x722] / event 索引驅動,而 [0x722] 全靜態可決定(Step 4)。
