@@ -24,7 +24,9 @@ header 欄位(相對 `section_base`,皆為 2-byte 指標,相對 section_base):
 | +0xe | **layout** 指標 → `{w(2), h(2), tiles…}`,tiles 在 +4 | 0x443f |
 | +0x10/+0x11 | 地圖旗標 / `[0xd77]` 遭遇安全旗標(0=可遇敵)| docs/13 |
 | +0x13/+0x14 | 玩家 spawn X / Y | 0x9d51 |
-| +0x15.. | 地圖參數;`[0xd71]`=地圖 id | |
+| +0x15.. | 地圖參數 | |
+| **+0x17** | **對話 bank**(`[0xb58]`→載 d3txt0\<bank\>.txt;1-9)★ docs/42 | 0x44d2 |
+| +0x18 | `[0xd71]` = 地圖 id | 0x44d2 |
 
 > ★ `+8`(examine 事件)與 `+0xc`(轉場)是**兩張獨立的表**,別混。大城常 `+8=0xffff`(無 examine
 > 事件)但 `+0xc` 有一整排門。

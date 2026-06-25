@@ -36,25 +36,39 @@ al=[di+3];  test al,0x38
   是胡說的吧」)vs 打倒巴拉摩斯後(flag 0x03,「歡迎回到阿里阿罕!你們打倒巴拉摩斯…」),同格不同人。
 - **多城共用一個 D3TXTnn**,各佔不同 b4 區段不撞號:D3TXT01 內 阿里阿罕=b4 0-9/79/86-92、雷貝=b4 55-64。
 
-### CTY → 對話檔(D3TXTnn)
+### CTY → 對話檔(D3TXTnn)★ 已靜態全解 — bank 寫在 section header +0x17
 
-精確 CTY→bank 表在 **overlay**(執行期載入,本 EXE dump 無明文,靜態封死)。改以 **file→地名 區域指紋**
-佐證(掃各檔出現的地名 rec 495-514):
+對話檔 = **D3TXT0\<bank\>**,`bank` = **每個 section 的 header 偏移 `+0x17` 那個 byte**(就在 CTY 檔裡)。
+**純靜態、資料驅動,不需 overlay/DOSBox。** 反組譯鏈(全 file offset):
 
-| 檔 | 提到的地名(區域)|
-|---|---|
-| D3TXT01 | 阿里阿罕、雷貝鎮、波魯多加 |
-| D3TXT02 | 阿里阿罕、羅馬利亞、卡薩布、諾阿尼魯 |
-| D3TXT03 | 羅馬利亞、諾阿尼魯、阿莎拉慕、伊席斯、波魯多加、巴哈拉達、達瑪神殿 |
-| D3TXT04 | 波魯多加、巴哈拉達、朗錫爾、日邦格 |
-| D3TXT05 | 羅馬利亞、耶進貝亞、沙曼歐莎 |
-| D3TXT06 | 達瑪神殿、朗錫爾、日邦格、耶進貝亞、沙曼歐莎 |
-| D3TXT07 | 巴哈拉達、朗錫爾、日邦格、利姆達爾 |
-| D3TXT08 | 拉達多姆、瑪依拉 |
-| D3TXT09 | 日邦格、拉達多姆、瑪依拉、達姆杜拉、美爾吉特、利姆達爾 |
+```
+sub_4428(section header 解析,0x44d2):
+   di = section_base + 0x15;  bx = [di+2]            ; 讀 section_base + 0x17 起的 word
+   [0xb58] = bl                                      ; ★ bank = section_base + 0x17 的 byte
+   [0xd71] = bh                                      ; = 地圖 id(section_base + 0x18)
+load_cty 尾段(0x4526):
+   ax = [0xb58]                                      ; bank
+   call 0x2bd5                                        ; 對話文字載入器
+0x2bd5:  if [0x2528]==bank: return                    ; 同 bank 不重載
+         [0x2528]=bank;  div 10 → 數字;  poke 進 DGROUP "d3txt00.txt" 模板的數字位 [0x79]/[0x7a]
+         int 21 開 d3txtNN.txt → 載入對話文字段
+```
 
-早期區 **D3TXT01 = 阿里阿罕(CTY00)+ 雷貝(CTY01)** 已逐句驗證(見下)。其餘城的精確 bank
-需動態確認(DOSBox 在 overlay 文字載入點下中斷讀檔名),或以區域指紋 + b4 區段比對推定。
+> 檔名模板是**小寫**存在 DGROUP(`cty00.dat`、`d3txt00.fon`、`d3txt00.txt`@0x74);先前搜大寫 "D3TXT"
+> 沒命中,誤判「在 overlay 封死」。實際 bank 就在 CTY section header,直接讀。
+
+**每 section 各自有 bank**(多 section 大城可跨檔:CTY12 sec=2/3/3/2、CTY43=5/5/2)。
+全 89 城讀出 bank 皆落 **1-9**。驗證(逐句內容對上):
+
+| CTY | bank → 檔 | 內容佐證 |
+|---|---|---|
+| 0 阿里阿罕 | 1 → D3TXT01 | 「被海包圍的大陸」「歐里狄加的後代」「北去雷貝鎮」 |
+| 1 雷貝 | 1 → D3TXT01 | 「歡迎到雷貝鎮」「盜賊的鑰匙…拿吉米之塔」 |
+| 2 羅馬利亞 | 2 → D3TXT02 | 「拯救遙遠北方的諾阿尼魯」「新的國王誕生了!{名}王萬歲」 |
+| 17 達瑪神殿 | 6 → D3TXT06 | 「我想轉成武鬥家」「職業經驗不夠是無法轉職的」(轉職神殿)|
+
+> 補充:**file→地名 區域指紋**(掃各檔出現的地名 rec 495-514)可交叉佐證 bank 分組,但 bank 本身
+> 已由 section header +0x17 直接定出,不需推定。
 
 ## 四、對話變數 {V}(控制碼)
 
@@ -101,6 +115,7 @@ al=[di+3];  test al,0x38
 
 ## 待 RE / 待補
 
-- **CTY→D3TXTnn 精確表**:overlay 內,靜態封死;需動態(DOSBox 中斷文字載入點讀檔名)或區域指紋推定。
-- remake 城鎮「話す/調べる NPC」接 byte4 → 對話記錄(目前 demo 用固定 rec;早期區可直接用 D3TXT01)。
+- ~~CTY→D3TXTnn 表~~ **已解(section header +0x17,見上)**。
+- remake 城鎮「話す/調べる NPC」接 byte4 → 對話記錄:依當前 section 的 +0x17 bank 載對應 D3TXTnn,
+  顯示 rec=byte4(全城資料已在 `docs/data/npc_dialogue.json`)。
 - 特殊子型 2(handler 0x62d9)語意待解。
