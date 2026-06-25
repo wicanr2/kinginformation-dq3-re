@@ -170,6 +170,24 @@ static void load_field_hero(dq3_scene *s, const char *assets)
     dq3_scene_load_npc_sprites(s, assets);      /* NPC sprite(城鎮才有 NPC;地表 no-op)*/
 }
 
+/* scripted_event 86 下降(ギアガの大穴;RE handler 0x783d / [0x5051]=3,docs/44):
+ * 切到下層 overworld(field_under,懶載),置玩家於下層城 CTY77 入口附近,設 DQ3_FLAG_DESCENDED。
+ * 原版觸發是 runner 劇情事件;remake 由 debug 口 / U 鍵代觸發。回 0 成功。 */
+static int do_descent(const char *assets, dq3_scene **field_under, dq3_scene **cur,
+                      int *layer, int *in_town, int *cur_cty, dq3_storyflags *flags)
+{
+    char err[256] = {0};
+    if (!*field_under) { *field_under = dq3_field_load_map(assets, "DQ3UND.MAP", err, sizeof err);
+        if (*field_under) load_field_hero(*field_under, assets); }
+    if (!*field_under) { fprintf(stderr, "下降:下層 overworld 載入失敗: %s\n", err); return -1; }
+    *layer = 1; *cur = *field_under; *in_town = 0; *cur_cty = -1;
+    (*cur)->px = 84; (*cur)->py = 68;                 /* 下層城 CTY77 入口附近(可走,driven）*/
+    if (flags) dq3_flags_set(flags, DQ3_FLAG_DESCENDED, 1);
+    dq3_scene_apply_palette(*cur);
+    fprintf(stderr, "scripted_event 86 下降 → 下層 overworld (%d,%d)\n", (*cur)->px, (*cur)->py);
+    return 0;
+}
+
 /* 地形 → 戰鬥背景頁(packbg index)。terrain 取自內建 dq3x_terrain(DGROUP 抽出),
  * 對映到 packbg 陣列中視覺相符的背景(草原/丘陵/洞窟…)。remake 不依賴 DQ3.EXE。 */
 static int field_bg_page(const dq3_scene *s)
@@ -354,13 +372,8 @@ static int run_game(const char *assets, const char *dump)
       if (dbg && *dbg) { char buf[256]; char *tok; strncpy(buf, dbg, sizeof buf - 1); buf[sizeof buf - 1] = 0;
         for (tok = strtok(buf, ";"); tok; tok = strtok(NULL, ";")) {
             int a, b, c;
-            if (strcmp(tok, "descent") == 0 || (sscanf(tok, "uncty:%d", &a) == 1)) {
-                /* scripted_event 86 下降:切下層 overworld(置玩家於下層城 CTY77 入口附近 (84,68))*/
-                if (!field_under) { field_under = dq3_field_load_map(assets, "DQ3UND.MAP", err, sizeof err);
-                    if (field_under) load_field_hero(field_under, assets); }
-                if (field_under) { layer = 1; cur = field_under; in_town = 0; cur_cty = -1;
-                    cur->px = 84; cur->py = 68; dq3_scene_apply_palette(cur);
-                    fprintf(stderr, "[DEBUG] descent → 下層 overworld (%d,%d)\n", cur->px, cur->py); }
+            if (strcmp(tok, "descent") == 0) {
+                do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);  /* scripted_event 86 */
             } else if (strcmp(tok, "ascend") == 0) {
                 layer = 0; cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
                 fprintf(stderr, "[DEBUG] ascend → 地表\n");
@@ -368,9 +381,23 @@ static int run_game(const char *assets, const char *dump)
                 char ct[16]; int bn = (a >= 0 && a < 100) ? dq3x_map_blknum[a] : 1; dq3_scene *ns;
                 sprintf(ct, "CTY%02d.DAT", a); ns = dq3_town_load(assets, ct, 0, bn, err, sizeof err);
                 if (ns) { if (town) dq3_scene_free(town); town = ns; cur = town; in_town = 1; cur_cty = a;
+                    load_field_hero(town, assets);
                     if (b < cur->map_w) cur->px = b; if (c < cur->map_h) cur->py = c;
                     dq3_scene_apply_palette(cur); fprintf(stderr, "[DEBUG] warp → CTY%d (%d,%d)\n", a, b, c); }
                 else fprintf(stderr, "[DEBUG] warp CTY%d 失敗: %s\n", a, err);
+            } else if (strcmp(tok, "party") == 0) {          /* 建測試隊伍(勇者/戰士/僧侶/魔法使者)*/
+                static const int dcls[4] = {0, 1, 3, 4}; int pi;
+                for (pi = 0; pi < 4 && roster.count < DQ3_ROSTER_MAX; pi++) {
+                    uint16_t nm[1]; int ri; nm[0] = (uint16_t)(pi + 1);   /* 名 = glyph 數字 1-4 */
+                    ri = dq3_roster_create(&roster, &gst, dcls[pi], DQ3_GENDER_MALE, nm, 1);
+                    if (ri >= 0) dq3_party_add(&party, &roster, ri);
+                }
+                fprintf(stderr, "[DEBUG] party → 名冊%d 隊伍%d\n", roster.count, party.count);
+            } else if (sscanf(tok, "event:%i", &a) == 1) {   /* 直接跑 scripted_event */
+                if (a == DQ3_SEVENT_DESCENT)
+                    do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);
+                else { int r = dq3_scripted_event_run(a, &inv, &flags, 1);
+                    fprintf(stderr, "[DEBUG] event %d → result=%d\n", a, r); }
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
             else if (sscanf(tok, "gold:%d", &a) == 1) { gold = a; fprintf(stderr, "[DEBUG] gold=%d\n", a); }
@@ -620,11 +647,9 @@ static int run_game(const char *assets, const char *dump)
             if (shop_ok) { int sn; const unsigned char *sk = shop_stock_for(cur_cty, &sn);
                 shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt, &gold, sk, sn); }
             dq3_scene_apply_palette(cur);
-        } else if (sc == 0x16 && !in_town) {  /* U:地表↔下層 overworld 切換(開發用;正式=下降洞事件待 RE,docs/43)*/
-            if (!field_under) { field_under = dq3_field_load_map(assets, "DQ3UND.MAP", err, sizeof err);
-                if (field_under) load_field_hero(field_under, assets); }
-            if (field_under) { layer = !layer; cur = layer ? field_under : field; dq3_scene_apply_palette(cur);
-                fprintf(stderr, "切換到%s overworld(%dx%d)\n", layer?"下層":"地表", cur->map_w, cur->map_h); }
+        } else if (sc == 0x16 && !in_town) {  /* U:下降/上升(開發捷徑;正式下降=runner event 86,docs/44)*/
+            if (layer == 0) do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);  /* scripted_event 86 */
+            else { layer = 0; cur = field; dq3_scene_apply_palette(cur); fprintf(stderr, "上升 → 地表\n"); }
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {
                 town = dq3_town_load(assets, "CTY00.DAT", tsect, 1, err, sizeof err);

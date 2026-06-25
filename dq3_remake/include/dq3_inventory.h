@@ -29,6 +29,7 @@ typedef struct { uint8_t slot[DQ3_INV_SLOTS]; } dq3_inventory;
 
 /* 劇情旗標位元集(對 DQ3.EXE flag store;set_flag/sub_8264)。0x139=「彩虹水滴已合成」。 */
 #define DQ3_FLAG_RAINBOW_SYNTHED 0x139
+#define DQ3_FLAG_DESCENDED       0x13a     /* 已下降至下層世界(アレフガルド;對 EXE [0x5051] 語意)*/
 #define DQ3_FLAGS_BYTES 64                 /* 覆蓋旗標 id 0..511 */
 typedef struct { uint8_t bit[DQ3_FLAGS_BYTES]; } dq3_storyflags;
 
@@ -62,6 +63,8 @@ int  dq3_synth_shrine_examine(dq3_inventory *inv, dq3_storyflags *flags, int fix
  * (地圖/劇本 → [0x631] → [0x722]);彩虹水滴合成 = scripted-event 83。
  * 目前僅實作 id 0x53;其餘回 -3(未實作)。 */
 #define DQ3_SEVENT_RAINBOW_SYNTH 0x53   /* 祠堂「雨和太陽合而為一」合成事件 id(handler 0x776c)*/
+#define DQ3_SEVENT_DESCENT       0x56   /* 下降至下層世界(ギアガの大穴;handler 0x783d,docs/44)。
+                                         * 場景效果(切下層 overworld + 設旗標)在 main.c do_descent。*/
 #define DQ3_SHRINE_CTY           93     /* 合成祠堂 = CTY93(下層,利姆達爾CTY86南方;cty_loc+alefgard 比對,docs/32)*/
 /* 祠堂祭司 NPC 座標(CTY93 section0 NPC 清單唯一一隻,17×17;靜態解,三證據:CTY 資料 +
  * 劇本 txt08「神聖的祠堂」+ 地理 docs/32)。調べる此格 → 合成 scripted-event 83。 */
