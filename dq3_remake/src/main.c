@@ -237,6 +237,26 @@ static int inn_rest(dq3_roster *r, const dq3_party *p, long *gold, int inn_cost)
     return healed;
 }
 
+/* 教會復活(蘇生,對齊 RE 0x85ff「誰需要復活」):陣亡隊員(cur_hp==0)→ 復原 cur_hp/cur_mp,
+ * 收費(等級×10,簡化)。金錢不足者跳過。回實際復活人數。
+ * 註:原版另有解毒(0x849b)/解詛咒(0x853c),remake 無狀態效果故暫不實作。 */
+static int church_revive(dq3_roster *r, const dq3_party *p, long *gold)
+{
+    int s, revived = 0;
+    for (s = 0; s < DQ3_PARTY_MAX; s++) {
+        int ri = p->slot[s]; dq3_member *m; int cost;
+        if (ri < 0 || ri >= r->count) continue;
+        m = &r->list[ri].m;
+        if (m->cur_hp != 0) continue;                  /* 只復活陣亡者 */
+        cost = m->level * 10;
+        if (*gold < cost) { fprintf(stderr, "教會:金錢不足,無法復活 Lv%d 隊員(需 %d)\n", m->level, cost); continue; }
+        *gold -= cost; m->cur_hp = m->stat[DQ3_STAT_HP]; m->cur_mp = m->stat[DQ3_STAT_MP];
+        revived++;
+        fprintf(stderr, "教會:復活 Lv%d 隊員(費 %d)→ 金錢 %ld\n", m->level, cost, *gold);
+    }
+    return revived;
+}
+
 static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
                          int cty, int px, int py)
 {
@@ -485,7 +505,9 @@ static int run_game(const char *assets, const char *dump)
                                 inn_rest(&roster, &party, &gold, fac->inn_cost);   /* 治療 + 扣費(task1)*/
                                 if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0x11a);  /* 旅社歡迎詞 */
                             } else if (fac->type == DQ3_FAC_CHURCH) {
-                                if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0x129);  /* 教會「主持正義之人」*/
+                                int rev = church_revive(&roster, &party, &gold);   /* 蘇生陣亡隊員(task3)*/
+                                /* 有復活 → 「誰需要復活」(rec 0x138);否則 → 「主持正義之人」(0x129)*/
+                                if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, rev > 0 ? 0x138 : 0x129);
                             } else if (fac->type == DQ3_FAC_RECORD) {
                                 autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py);
                                 if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xfd);   /* 記錄「旅行的經驗」*/

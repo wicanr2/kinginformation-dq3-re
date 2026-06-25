@@ -107,8 +107,17 @@ DGROUP 0x1f9**,7 byte/筆,+2/+3 = 價格,對上 docs/22)。買單渲染 file 0x8
   `dq3_scene.section` 新增(town_load 設)供查表。B 鍵商店捷徑保留為合併版 fallback。
 - `dq3_dialogue_test` 驗:CTY00 sec0 設施 NPC byte4 → `dq3_facility_at` 全命中、k1=武防店(7 品項)。
 
+## 教會服務(handler 0x83d8,3 選單)
+
+- option1 `0x849b` = **解毒**(rec 0x136「誰要解毒」)
+- option2 `0x853c` = **解詛咒**(rec 0x137「誰要解詛咒」)
+- option3 `0x85ff` = **復活**(rec 0x138「誰需要復活」;測實體 `[+0x38]&0x80` 死亡旗標)
+- remake:`church_revive` 蘇生陣亡隊員(`cur_hp==0` → 復原 cur_hp/cur_mp,費=等級×10);
+  解毒/解詛咒因 remake 尚無狀態效果,暫不實作。
+
 ## 待 RE / 待補(縮小後)
 
-- 旅社治療:remake 戰鬥外無持久 HP → 旅社目前只顯示歡迎詞、未扣血(待持久 HP 系統)。
-- 旅社費用公式(0x86f5 的 `× 人數`)、教會各服務價(復活/解毒/解咒)、記錄點存檔欄位。
+- ~~旅社治療~~ **已做(task1 持久 HP + inn_rest)**;~~教會復活~~ **已做(task3 church_revive)**。
+- 旅社費用公式(0x86f5 `× 人數`,remake 已用)、教會復活/解毒/解咒精確價(remake 用等級×10 簡化)。
+- 狀態效果(中毒/詛咒)系統 → 才能接解毒/解詛咒。
 - 同城多攤(CTY6/22 多家武防店):`dq3_facility_at` 已能逐攤(by k),走到不同店員開不同攤。
