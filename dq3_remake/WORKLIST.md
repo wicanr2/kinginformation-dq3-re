@@ -242,3 +242,22 @@
 - **原始素材**:`assets_raw/`(版權,gitignore;remake 執行期指向它)。
 - **不公開**:整套可玩遊戲(`work/dq3_fixed_v1.zip`)、原始檔、第三方攻略/截圖、render 的版權畫面像素(`*.ppm`/`titg*.png` 等)——見各 `.gitignore`。
 - **紀律**:不用 subagent;docker first;每階段 commit+push;commit message 繁中 + `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`。
+
+## Backlog(延後項,記錄供後續)
+
+> 主線 8 里程碑真實觸發、轉職、狀態系統、野外道具選單、亂數雙模式、可攜設定檔皆已落地
+> (見 docs/47 / docs/50-51 / git log)。以下為剩餘 polish / 需 RE 資料的項目:
+
+- [ ] **遊戲內設定選單**(優先記著):title 畫面加「設定」→ 切 RNG 模式(DOS/REAL)→
+      `dq3_config_save` 存 dq3.cfg。基礎(dq3_config)已備,只差 UI。未來音量/解析度/語言同此。
+- [ ] **野外道具選單補完**:蓋美拉翅膀(回鎮)/聖水(驅敵)需世界狀態 → 從 item_modal 回傳
+      效果碼給 main 迴圈處理(目前野外選單只做 heal/cure)。
+- [ ] **怪物施加狀態**(中毒/麻痺):需 RE D3MNS 哪些咒/攻擊施狀態 + 擴咒文 kind(SK_STATUS)。
+      狀態系統其餘已閉環(overworld 毒傷 + 戰鬥毒傷/麻痺 + 道具/教會解)。
+- [ ] **sub2 條件對話分支**:給物 NPC 取得後應顯示「後話」(如波魯多加 rec26/28 那樣)。
+      需逐 NPC RE flag→rec 映射。
+- [ ] **scripted warp 全接**(§5b 8 個 0xd1f9):缺「源觸發 tile」位置(struct 只給落點)→
+      需從各 call site disasm 抽 `[0x4f33/35]==XY` 比較值。
+- [ ] **overworld 旗標 portal 全表**:dq3_owportal 目前 3 條;完整需抽 0x396e 全分支。
+- [ ] **甘達特 / 八頭大蛇 boss 接成劇情事件**(目前皇冠走 examine、boss 戰可單獨跑)。
+- [ ] **Polish**:寶箱開過 tile 翻面、旅社/教會精確收費、索瑪兩階段(光之玉)、完整結局捲動。
