@@ -198,7 +198,7 @@
 ### 階段⑤ oracle 驗證 + 打包
 - [ ] DOSBox 原版 vs remake **逐畫面比對一模一樣**(bug 場景=修正後正確行為);用 `tools/dosbox*` 截原版、remake headless 截圖比對。
 - [ ] retro-cjk-hires-canvas:內部畫布原生解析、nearest 放大;CJK 16×16 正常。
-- [ ] 海面 palette cycling(DQ3.PAL idx2/10 DAC 動畫)。
+- [x] 海面 palette cycling(DAC 動畫):overworld slot2/10 在藍波間循環(animate_sea),sprite bank 不受影響。
 - [ ] 跨平台打包(Linux/Windows;AppImage/exe)。
 
 ### 接續中(session 8db027c4 收尾時點名、未動工的靜態 RE)

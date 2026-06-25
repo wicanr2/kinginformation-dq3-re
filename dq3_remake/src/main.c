@@ -263,6 +263,7 @@ static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                       dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys);
 static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party);
 static int g_item_world_eff = 0;   /* 野外道具選單選了蓋美拉翅膀/聖水 → 交 main 迴圈處理世界狀態 */
+static unsigned g_sea_frame = 0;   /* 海面 palette cycling 幀計數 */
 static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
@@ -371,6 +372,17 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
     /* 回鎮/驅敵:消耗在此,世界層效果由呼叫端依回傳種類處理。 */
     dq3_inv_remove(inv, item_id);
     return kind;
+}
+
+/* 海面 palette cycling(原版 DAC 動畫,docs/04/51):overworld slot2/10 在藍波間慢速循環。
+ * sprite bank(slot16+)不動 → 主角膚色不受影響。城鎮不呼叫(無海動畫色)。 */
+static void animate_sea(dq3_scene *s, unsigned frame)
+{
+    static const dq3_color WAVE[4] = { {0,85,223}, {0,105,240}, {24,130,255}, {0,70,205} };
+    int p2 = (int)((frame >> 3) & 3), p10 = (p2 + 2) & 3;   /* 每 8 幀換格;slot10 相位差 2 */
+    if (s->pal_count <= 10) return;
+    s->pal[2] = WAVE[p2]; s->pal[10] = WAVE[p10];
+    dq3_scene_apply_palette(s);
 }
 
 /* overworld 船 sprite overlay(docs/51):登船 → 玩家格畫船(依 facing);未登船 → 停泊格畫船。
@@ -686,6 +698,7 @@ static int run_game(const char *assets, const char *dump)
         }
         /* NPC 隨機走動(docs/35 §九):城鎮每幀步進;對話中凍結不動。 */
         if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
+        if (!in_town) animate_sea(cur, g_sea_frame++);   /* 海面 palette cycling(地表/下層)*/
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
         if (dlg_ok && dq3_dialogue_is_open(&dlg))
