@@ -215,9 +215,34 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 **地表↔下層連接仍未定位**(§7 是地表城變體,非下降;更正見上)。下層(map=1 的 15 城)要到下層 overworld
 才進得去,而首次下降(地表→下層 overworld)仍未找到具體觸發。
 
-**首次下降 / 阿里阿罕旅の扉**:不在 +0xc、type-2、§5b scripted warp、§7 portal。**仍未定位** ——
-最可能在純 runner `[0x722]`(docs/31:資料驅動無靜態 setter,最難)。機制(Y+300/0xfe/雙圖檔)已全解,
-缺的是**那個把玩家 Y 設到 ≥300 或載入第一個下層 CTY 的觸發點**。
+### ★★ 首次下降 = runner event 86 / handler file 0x783d(已定位)
+
+逐 `[0x5051]` setter 追:`[0x5051]=3` 在 **file 0x78ef**,在函式 **0x783d(logical 0x64cd)** 內。
+該函式 = **runner 0xabb2 跳表 idx 85(event id 86)= 子型2 0x3bb4 idx 80(byte4 80)**。內容(劇情 cutscene):
+
+```
+0783d  di=0xc00; 印對話 rec 0x48        ; (D3TXT07 bank rec0x48 = 索瑪台詞 → 終盤)
+0784e  [0x2518]|=0x42
+07853  lea si,[0x4ef0]; call 0xd1f9      ; warp struct@0x4ef0 = {cur_map45 → CTY8 (124,1)}
+07882  call 0x481b / 0x452d              ; 重載 section
+0789d  清 [0x506a] 隊伍...
+078d7  縮放畫面效果迴圈([0x251d])        ; ギアガの大穴 掉落動畫
+078e3  [0x526c]=1
+078ef  [0x5051]=3                        ; ★ 啟用下層(下次出場 Y+=300)
+```
+
+⇒ **首次下降是劇情 scripted 事件(runner event 86)**:顯示對話 → warp → 掉落動畫 → 設下層旗標。
+**無 NPC 放置 byte4=80**(掃全 CTY 0 個)→ 純 runner 觸發(`[0x722]=86` 由劇情進度設,docs/31:
+無靜態 setter)。rec 0x48 在終盤 bank = 索瑪 → 對應 **post-バラモス / アレフガルド 入口**(ギアガの大穴)。
+
+> 使用者直覺(「有 NPC 說跳進坑」)方向對:此事件確實**先顯示對話再 warp**;只是觸發是 runner
+> 而非可走 NPC。「跳進坑」的提示對白可能是另一條 hint NPC(子型0/1 對話)。
+
+### remake 落地路徑
+
+機制全解 ⇒ 可比照 #2 彩虹水滴(scripted_event 83)做:加 **scripted_event 86 = 下降**
+(切 `layer=1` + 置玩家於下層 spawn),由劇情旗標或 debug 觸發 —— 把 dev 鍵 U 換成真實事件。
+剩「event 86 的劇情觸發旗標」需 runner/動態(本環境做不到),但**事件本體已可在 remake 重現**。
 
 ### 待接進 remake(具體)
 1. **§5b scripted warp**:抽「子型2 byte4 → warp struct 目的(dest,X,Y)」表 → 子型2 warp NPC 載 dest CTY。
