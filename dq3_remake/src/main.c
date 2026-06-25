@@ -338,6 +338,19 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
     return kind;
 }
 
+/* overworld 船 sprite overlay(docs/51):登船 → 玩家格畫船(依 facing);未登船 → 停泊格畫船。
+ * 城鎮不畫(船只在 overworld);停泊船僅在同層才畫。在 dq3_scene_render 之後呼叫。 */
+static void draw_ship_overlay(const dq3_scene *cur, const dq3_ship *ship, int in_town, int layer)
+{
+    if (in_town) return;
+    if (ship->aboard)
+        dq3_scene_draw_tile_at(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H,
+                               cur->px, cur->py, dq3_ship_tile_for_facing(cur->facing));
+    else if (ship->owned && ship->layer == layer)
+        dq3_scene_draw_tile_at(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H,
+                               ship->px, ship->py, DQ3_SHIP_TILE_DOWN);
+}
+
 /* 結局序列(索瑪戰勝後):設 ZOMA 里程碑(進度 → 9/9 = 破關)+ 開 ENDTXT 結局首段。 */
 static void run_finale(dq3_storyflags *flags, dq3_dialogue *dlg, int dlg_ok,
                        const dq3_text *end_txt, int end_ok)
@@ -616,6 +629,7 @@ static int run_game(const char *assets, const char *dump)
         /* NPC 隨機走動(docs/35 §九):城鎮每幀步進;對話中凍結不動。 */
         if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
         if (dlg_ok && dq3_dialogue_is_open(&dlg))
             dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
@@ -908,6 +922,7 @@ static int run_game(const char *assets, const char *dump)
     /* 腳本輸入 playthrough 結束 → dump 末幀(headless 驗證,docs/46)*/
     if (dump && getenv("DQ3_INPUT")) {
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
         if (dlg_ok && dq3_dialogue_is_open(&dlg)) dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "playthrough 末幀 -> %s(in_town=%d cty=%d (%d,%d))\n",

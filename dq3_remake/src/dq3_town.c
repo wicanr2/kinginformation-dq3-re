@@ -139,6 +139,8 @@ dq3_scene *dq3_town_load(const char *dir, const char *cty_name,
     s->owned[s->nowned++] = att_raw; att_raw = NULL;
 
     s->pal_count = dq3_pal_decode(pal_raw, pal_len, s->pal, 16);
+    /* 城鎮無海面動畫覆蓋 → sprite bank = tile 色盤(NPC/主角同色,docs/51)*/
+    { int i; for (i = 0; i < s->pal_count; i++) s->spal[i] = s->pal[i]; s->spal_count = s->pal_count; }
 
     /* 起點:版面 spawn;不可走則挑開闊地 */
     s->px = sx; s->py = sy; s->facing = 0;

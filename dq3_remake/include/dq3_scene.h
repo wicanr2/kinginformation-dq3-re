@@ -30,8 +30,10 @@ typedef struct dq3_scene {
     int       tile_count;
     const uint16_t *attr;         /* 屬性表 u16/tile;指向 owned buffer */
     int       attr_count;
-    dq3_color pal[16];
+    dq3_color pal[16];            /* 背景 tile 色盤(地表含海面動畫覆蓋 idx2/10→藍)*/
     int       pal_count;
+    dq3_color spal[16];           /* sprite 色盤 bank(無海面覆蓋;主角/NPC 用,docs/51)*/
+    int       spal_count;         /* 對齊原版 BG/sprite 分盤:render 時 sprite 像素 +DQ3_SPRITE_PAL_BASE */
 
     int px, py;                   /* 玩家 tile 座標 */
     int facing;                   /* 0下 1左 2上 3右 */
@@ -114,7 +116,14 @@ int  dq3_scene_load_npc_sprites(dq3_scene *s, const char *assets_dir);
 int  dq3_scene_input(dq3_scene *s, uint8_t scancode);
 
 /* 把以玩家為中心的視窗繪進 indexed framebuffer。 */
+/* sprite 像素的色盤 bank 基底:render 時 sprite px += 此值,落在 spal(slot 16-31),
+ * 與背景 tile(slot 0-15,含海面動畫覆蓋)分離,杜絕海藍染到主角膚色(docs/51)。 */
+#define DQ3_SPRITE_PAL_BASE 16
+
 void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h);
+/* 在地圖格 (mx,my) 疊一個 BLK tile(船 sprite overlay,docs/51)。 */
+void dq3_scene_draw_tile_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
+                            int mx, int my, int tile_idx);
 
 /* 把本場景 palette 套進 runtime DAC。
  * 契約(修 bug #8,docs/28):任何場景切換 / 戰鬥返回後都必須呼叫一次,

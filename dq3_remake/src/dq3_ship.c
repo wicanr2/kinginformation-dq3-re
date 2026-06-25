@@ -1,6 +1,16 @@
 /* dq3_ship.c — 船系統實作(#2)。海 tile attr 指紋見 docs/48。 */
 #include "dq3_ship.h"
 
+int dq3_ship_tile_for_facing(int facing)
+{
+    switch (facing & 3) {
+        case 1:  return DQ3_SHIP_TILE_LEFT;
+        case 2:  return DQ3_SHIP_TILE_UP;
+        case 3:  return DQ3_SHIP_TILE_RIGHT;
+        default: return DQ3_SHIP_TILE_DOWN;   /* 0 下 */
+    }
+}
+
 void dq3_ship_init(dq3_ship *sh)
 {
     sh->owned = 0; sh->aboard = 0; sh->px = -1; sh->py = -1; sh->layer = 0;

@@ -25,6 +25,15 @@ enum {
     DQ3_SHIP_BOARD     = 4    /* 登船 */
 };
 
+/* overworld 船 sprite = DQ3.BLK tile(每方向 2 動畫格,docs/51);取第 1 格。 */
+#define DQ3_SHIP_TILE_DOWN  51
+#define DQ3_SHIP_TILE_LEFT  53
+#define DQ3_SHIP_TILE_UP    55
+#define DQ3_SHIP_TILE_RIGHT 57
+
+/* facing(0下1左2上3右)→ 船 tile index。 */
+int dq3_ship_tile_for_facing(int facing);
+
 void dq3_ship_init(dq3_ship *sh);
 
 /* (tx,ty) 是否為可航行水域(海 attr 指紋;OOB→0)。 */

@@ -70,9 +70,12 @@ dq3_scene *dq3_field_load_map(const char *dir, const char *map_name, char *err, 
 
     /* palette(海面 idx2/10 沙色→藍,等價 runtime DAC) */
     s->pal_count = dq3_pal_decode(pal_raw, pal_len, s->pal, 16);
+    /* sprite 色盤 bank = 海面動畫覆蓋「之前」的靜態色盤(idx2=膚色,docs/51)。
+     * 主角/NPC 用此 bank,海藍不會染到膚色。 */
+    { int i; for (i = 0; i < s->pal_count; i++) s->spal[i] = s->pal[i]; s->spal_count = s->pal_count; }
     if (s->pal_count >= 11) {
         dq3_color blue = { 0, 85, 223 };
-        s->pal[2] = blue; s->pal[10] = blue;
+        s->pal[2] = blue; s->pal[10] = blue;   /* 只覆蓋背景 tile 色盤(slot 2/10),不動 spal */
     }
 
     dq3_scene_pick_open_start(s);

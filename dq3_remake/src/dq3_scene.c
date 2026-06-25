@@ -188,6 +188,31 @@ int dq3_scene_input(dq3_scene *s, uint8_t sc)
     return 1;
 }
 
+/* 在地圖格 (mx,my) 疊一個 BLK tile(用與 render 相同攝影機)。船 sprite overlay 用(docs/51)。
+ * 整格不透明 blit;船 tile 自帶海背景,疊在海格上無縫。 */
+void dq3_scene_draw_tile_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
+                            int mx, int my, int tile_idx)
+{
+    int cam_x = s->px - VIEW_COLS / 2;
+    int cam_y = s->py - VIEW_ROWS / 2;
+    int sx, sy, r, c;
+    const uint8_t (*t)[DQ3_TILE_W];
+    if (cam_x > s->map_w - VIEW_COLS) cam_x = s->map_w - VIEW_COLS;
+    if (cam_y > s->map_h - VIEW_ROWS) cam_y = s->map_h - VIEW_ROWS;
+    if (cam_x < 0) cam_x = 0;
+    if (cam_y < 0) cam_y = 0;
+    if (tile_idx < 0 || tile_idx >= s->tile_count) return;
+    sx = (mx - cam_x) * DQ3_TILE_W;
+    sy = (my - cam_y) * DQ3_TILE_H;
+    t = s->tiles[tile_idx];
+    for (r = 0; r < DQ3_TILE_H; r++)
+        for (c = 0; c < DQ3_TILE_W; c++) {
+            int yy = sy + r, xx = sx + c;
+            if (yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
+                fb[yy * fb_w + xx] = t[r][c];
+        }
+}
+
 void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
 {
     int cam_x = s->px - VIEW_COLS / 2;
@@ -237,7 +262,7 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
                     int yy = psy + r2, xx = psx + c2;
                     if (!s->hero.opaque[fr][r2][c2]) continue;   /* 透明像素跳過 */
                     if (yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
-                        fb[yy * fb_w + xx] = s->hero.px[fr][r2][c2];
+                        fb[yy * fb_w + xx] = (uint8_t)(DQ3_SPRITE_PAL_BASE + s->hero.px[fr][r2][c2]);
                 }
         } else {
             for (r2 = 4; r2 < DQ3_TILE_H - 4; r2++)
@@ -270,7 +295,7 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
                         int yy = nsy + r2, xx = nsx + c2;
                         if (!cs->opaque[fr][r2][c2]) continue;
                         if (yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
-                            fb[yy * fb_w + xx] = cs->px[fr][r2][c2];
+                            fb[yy * fb_w + xx] = (uint8_t)(DQ3_SPRITE_PAL_BASE + cs->px[fr][r2][c2]);
                     }
             } else {
                 for (r2 = 8; r2 < DQ3_TILE_H - 8; r2++)
@@ -300,8 +325,16 @@ int dq3_scene_load_hero(dq3_scene *s, const char *assets_dir, int entry_base,
 
 void dq3_scene_apply_palette(const dq3_scene *s)
 {
-    /* 修 bug #8(docs/28):場景進場/戰鬥返回必重套,DAC 不殘留前場景色盤。 */
-    dq3_set_palette(s->pal, s->pal_count);
+    /* 修 bug #8(docs/28):場景進場/戰鬥返回必重套,DAC 不殘留前場景色盤。
+     * slot 0-15 = 背景 tile 色盤;slot 16-31 = sprite 色盤 bank(無海面覆蓋,docs/51)。 */
+    dq3_color combined[32];
+    int i;
+    for (i = 0; i < 16; i++) {
+        combined[i] = (i < s->pal_count) ? s->pal[i] : (dq3_color){0,0,0};
+        combined[16 + i] = (i < s->spal_count) ? s->spal[i]
+                         : ((i < s->pal_count) ? s->pal[i] : (dq3_color){0,0,0});  /* spal 未設則退回 pal */
+    }
+    dq3_set_palette(combined, 32);
 }
 
 void dq3_scene_pick_open_start(dq3_scene *s)
