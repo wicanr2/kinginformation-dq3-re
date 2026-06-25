@@ -208,6 +208,16 @@ static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
  * 路徑:DQ3_SAVE 環境變數,預設 "dq3_save.dat"(cwd;唯讀 cwd 時用 env 指可寫路徑)。 */
 static const char *save_path(void) { return getenv("DQ3_SAVE") ? getenv("DQ3_SAVE") : "dq3_save.dat"; }
 
+/* 把對話變數 {V} 的「主角/受話者名」設成隊長(無隊伍時用名冊首位=主角)。
+ * 對話渲染遇 VAR0/VAR_ENT 等插值碼時即替換成此名(dq3_text_set_var_name)。 */
+static void set_dialogue_hero(const dq3_roster *r, const dq3_party *p)
+{
+    int ri = (p->count > 0 && p->slot[0] >= 0 && p->slot[0] < r->count) ? p->slot[0]
+           : (r->count > 0 ? 0 : -1);
+    if (ri >= 0) dq3_text_set_var_name(r->list[ri].name, r->list[ri].name_len);
+    else dq3_text_clear_vars();
+}
+
 static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
                          int cty, int px, int py)
 {
@@ -290,6 +300,7 @@ static int run_game(const char *assets, const char *dump)
             fprintf(stderr, "讀檔續玩 ← %s(名冊%d 隊伍%d,存檔位置 CTY%d (%d,%d))\n",
                     save_path(), roster.count, party.count, pos.cty, pos.px, pos.py);
     }
+    set_dialogue_hero(&roster, &party);   /* 對話 {V} 主角名初值(讀檔/新局後)*/
 
     if (dump) {
         /* headless demo:走到觸發戰鬥 → 進城鎮,沿途 log,dump 末幀 */
@@ -396,6 +407,7 @@ static int run_game(const char *assets, const char *dump)
                 int near_ctr = (dfx<0?-dfx:dfx)+(dfy<0?-dfy:dfy) <= 1 || (dpx<0?-dpx:dpx)+(dpy<0?-dpy:dpy) <= 1;
                 if (in_town && cur_cty == DQ3_LUIDA_CTY && near_ctr) {
                     tavern_modal(assets, &roster, &party, &gst, &dlg.txt);
+                    set_dialogue_hero(&roster, &party);   /* 主角名可能改變 → 更新 {V} */
                     dq3_scene_apply_palette(cur);
                     fprintf(stderr, "露依達酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
                 }
@@ -428,6 +440,7 @@ static int run_game(const char *assets, const char *dump)
             }
         } else if (sc == 0x14 && in_town && cur_cty == 0) {  /* T:阿里阿罕酒場捷徑(開發用;正式入口=西側 LUIDA 櫃台)*/
             tavern_modal(assets, &roster, &party, &gst, &dlg.txt);
+            set_dialogue_hero(&roster, &party);   /* 主角名可能改變 → 更新 {V} */
             dq3_scene_apply_palette(cur);
             fprintf(stderr, "離開酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
         } else if (sc == 0x2e) {            /* C:野外指令窗(命令)— 對話/咒文/狀況/道具/裝備/調查 */

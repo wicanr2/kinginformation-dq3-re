@@ -17,6 +17,15 @@
 #define DQ3_TXT_PAGE  0xfffc
 #define DQ3_TXT_END   0xffff
 
+/* 動態插值控制碼(docs/12/31;每個後接 +1 word 參數,須一併消耗)。
+ * 渲染時依目前變數 context 替換為實字(主角名 / 數值 / 道具名);未設則略過。 */
+#define DQ3_TXT_VAR_ENT  0xfffb   /* 實體/隊員名(依 [0x259c])*/
+#define DQ3_TXT_VAR_ITEM 0xfffa   /* 道具名 */
+#define DQ3_TXT_VAR_NUM  0xfff9   /* 數值(金額等,依 [0x2593])*/
+#define DQ3_TXT_VAR7     0xfff6   /* 變數子字串 variant 7 */
+#define DQ3_TXT_VAR0     0xfff5   /* 變數子字串 variant 0(城鎮對話最常見=主角名)*/
+#define DQ3_TXT_VAR_IDX  0xffed   /* 索引字串(依 [0x249d]/[0x249f])*/
+
 typedef struct {
     uint8_t *fon; size_t fon_len;     /* D3TXT00.FON(owned) */
     uint8_t *txt; size_t txt_len;     /* D3TXTNN.TXT(owned) */
@@ -40,5 +49,12 @@ int  dq3_text_draw_record(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
 /* 畫一個字模(idx)到 (x,y),set bit → fg。供其他模組(選單/HUD)用。 */
 void dq3_text_draw_glyph(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
                          int x, int y, int idx, uint8_t fg);
+
+/* ── 對話變數 {V} 替換 context(module-level;draw_record 渲染時取用)──
+ * 渲染遇到插值控制碼時,消耗其 +1 參數並插入對應實字。未設者插值處留空(但仍正確消耗參數,
+ * 不會把參數誤畫成字模)。name = glyph 索引序列(姓名輸入產出),供 VAR0/VAR_ENT/VAR7/VAR_IDX。 */
+void dq3_text_set_var_name(const uint16_t *name_glyphs, int len);  /* 主角/受話者名 */
+void dq3_text_set_var_num(long n);                                 /* VAR_NUM 數值 */
+void dq3_text_clear_vars(void);
 
 #endif /* DQ3_TEXT_H */
