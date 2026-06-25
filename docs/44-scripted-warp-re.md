@@ -192,10 +192,10 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 | (flag 0x48)| | 0x48 | CTY61 | 地表 |
 | (else) | | — | **CTY83** | **下層** |
 
-**觀察**:這組事件含**進下層 CTY**(36、83)的旗標條件入口 —— 從地表座標進下層 dungeon,
-再由該 CTY 的 `0xfe` 出口到下層 overworld(§1/2)。**這是地表↔下層的一條真實連接**(非 +0xc、非 type-2、
-非 §5b scripted warp,而是 overworld 寫死座標 + 旗標 + load_cty)。
-另:`0x055ba` 有下層座標(127, 373=Y≥300)的寫死事件(下層 overworld 內的劇情點)。
+> ★ **更正**:先前說「含進下層 CTY 36/83」**有誤** —— 查 cty_loc:**CTY83=(210,64) map=0 是地表**
+> (與 CTY58 同位置)、CTY36 map=0xff 是純迷宮。所以這機制是**同一 overworld 點依進度載不同城**
+> 的**城鎮變體**(經典 DQ:城被毀/重建),**不是下降**(目的多為地表城)。完整 portal 表見 docs/45 §3.2。
+> 另:`0x055ba` 有下層座標(127, 373=Y≥300)的寫死事件(下層 overworld 內的劇情點)。
 
 > remake 落地:`find_cty_at` 目前只用 cty_loc 表(0x748)。要完整需另加「overworld 寫死座標 → 旗標條件
 > CTY」這層(0x39f2 區的事件表 + 旗標閘)。屬待補。
@@ -212,11 +212,12 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 | scripted warp(call 0xd1f9 + struct)| §5b/5c | 子型2 NPC byte4∈{33,53,58,61,70} / runner | ✗ 待接 |
 | **overworld 座標 → 旗標條件 CTY** | §7 | 走到地表特定格 | ✗ 待接(含進下層 36/83)|
 
-**地表↔下層連接**已找到 = §7(overworld 座標 + 旗標 → 進下層 CTY 36/83)+ §1/2(下層 CTY 0xfe 出口)。
+**地表↔下層連接仍未定位**(§7 是地表城變體,非下降;更正見上)。下層(map=1 的 15 城)要到下層 overworld
+才進得去,而首次下降(地表→下層 overworld)仍未找到具體觸發。
 
-**阿里阿罕首旅の扉 / 首次下降的「具體那一個」**:仍未逐一比對到 CTY0 的精確觸發(CTY0 無 type-2、
-無 warp NPC),最可能在 **§7 的 overworld 座標事件**(阿里阿罕洲某格 + 旗標 → 載目的 CTY)或純 runner
-`[0x722]`。但**機制已全部解出**,剩「把 §5b/§5c/§7 三層接進 remake + 逐 CTY 比對阿里阿罕那格」的工。
+**首次下降 / 阿里阿罕旅の扉**:不在 +0xc、type-2、§5b scripted warp、§7 portal。**仍未定位** ——
+最可能在純 runner `[0x722]`(docs/31:資料驅動無靜態 setter,最難)。機制(Y+300/0xfe/雙圖檔)已全解,
+缺的是**那個把玩家 Y 設到 ≥300 或載入第一個下層 CTY 的觸發點**。
 
 ### 待接進 remake(具體)
 1. **§5b scripted warp**:抽「子型2 byte4 → warp struct 目的(dest,X,Y)」表 → 子型2 warp NPC 載 dest CTY。

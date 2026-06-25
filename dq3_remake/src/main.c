@@ -36,6 +36,7 @@
 #include "dq3_shopdata.h"
 #include "dq3_sub2.h"
 #include "dq3_warp.h"
+#include "dq3_owportal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -646,6 +647,9 @@ static int run_game(const char *assets, const char *dump)
                 /* overworld 走到城鎮入口座標 → 進該 CTY(0x748 查表;依當前 layer 地表/下層)*/
                 if (!in_town) {
                     int cidx = find_cty_at_map(cur->px, cur->py, layer);
+                    /* 旗標條件 portal:同一 overworld 點依進度載不同城(docs/44 §7);override find_cty */
+                    { int pc = dq3_owportal_resolve(cur->px, cur->py, &flags);
+                      if (pc >= 0) { if (cidx != pc) fprintf(stderr, "portal:(%d,%d) 旗標條件 → CTY%d(原 %d)\n", cur->px, cur->py, pc, cidx); cidx = pc; } }
                     if (cidx >= 0) {
                         char cty[16]; int bn = dq3x_map_blknum[cidx];   /* 每CTY BLK號(0x0a04)*/
                         sprintf(cty, "CTY%02d.DAT", cidx);
