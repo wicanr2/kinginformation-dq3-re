@@ -23,7 +23,7 @@ def main():
         h = handler(n)
         if h == 0 or h == 0xffff: continue
         fl = h + HDR
-        flags_t=[]; flags_s=[]; items=[]; recs=[]; regions=[]; warp=False
+        flags_t=[]; flags_s=[]; items=[]; recs=[]; regions=[]; warp=False; pending_item=None
         last_bx=None
         for ins in md.disasm(d[fl:fl+0x140], fl):
             m, o = ins.mnemonic, ins.op_str
@@ -34,18 +34,21 @@ def main():
                 if "0x8279" in o and last_bx is not None: flags_t.append(last_bx)
                 elif "0x8264" in o and last_bx is not None: flags_s.append(last_bx)
                 elif "0xd1f9" in o: warp=True
+                elif "0x7bbe" in o and pending_item is not None: items.append(("GIVE",pending_item)); pending_item=None
+                elif "0x7c0c" in o and pending_item is not None: items.append(("TAKE",pending_item)); pending_item=None
             elif m=="mov" and o.startswith("di, 0x"):
                 v=int(o.split(",")[1],0)
                 if 0xbb8<=v<0xd00: recs.append(v-0xbb8)
             elif m=="mov" and "[0x2593]" in o.split(",")[0]:
-                try: items.append(int(o.split(",")[1],0))
-                except: pass
+                try: pending_item=int(o.split(",")[1],0)
+                except: pending_item=None
             elif m=="cmp" and "[0x722]" in o:
                 rv=o.split(",")[-1].strip()
                 if rv.startswith("0x") or rv.isdigit(): regions.append(int(rv,0))
             if m in ("ret","retf"): break
         def fmt(l): return ",".join("0x%02x"%x for x in l) if l else "-"
-        print(f"| {n} | L0x{h:04x} | {fmt(flags_t)} | {fmt(flags_s)} | {fmt(items)} | {','.join(map(str,recs)) or '-'} | {fmt(regions)} | {'Y' if warp else '-'} |")
+        itemstr = ",".join("%s0x%02x"%(t,v) for t,v in items) if items else "-"
+        print(f"| {n} | L0x{h:04x} | {fmt(flags_t)} | {fmt(flags_s)} | {itemstr} | {','.join(map(str,recs)) or '-'} | {fmt(regions)} | {'Y' if warp else '-'} |")
 
 if __name__ == "__main__":
     main()

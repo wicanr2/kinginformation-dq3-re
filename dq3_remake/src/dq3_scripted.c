@@ -10,6 +10,13 @@ static const dq3_scripted TABLE[] = {
   {  12,  8, 0x55, DQ3_SC_NOITEM, DQ3_MS_THIEF_KEY, 54, 52, 53 },
   /* 雷貝 2F 老人:持盜賊鑰匙(開門)→ 給魔法玉(handler L0x521f)。 */
   {   7,  1, 0x58, 0x55,          DQ3_MS_MAGIC_BALL, 65, 60, 60 },
+  /* CTY22 sect1 (3,4) sub2 NPC:給水槍 0x4b(handler L0x589f,flag 0x3c)。
+   * rec45 招呼(已給/未給都先顯示)→ test_flag(0x3c) → 給 0x4b + rec46。 */
+  {  31, 22, 0x4b, DQ3_SC_NOITEM, 0,                 45, 46, 45 },
+  /* 龍女王城 CTY67 sect0 (14,24) 龍之女王:給光之珠 0x65(handler L0x5e02,sflag 0x4e)。
+   * 對抗索瑪關鍵道具;無 tflag 條件(無前置)。rec71 統一(招呼=給予=後話)。
+   * (sweep_sub2_npcs 權威清單確認 b4=52 為真 sub2 GIVE NPC;早期 count-prefix 解析 bug 曾誤判不存在。)*/
+  {  52, 67, 0x65, DQ3_SC_NOITEM, 0,                 71, 71, 71 },
 };
 static const int N = (int)(sizeof TABLE / sizeof TABLE[0]);
 
