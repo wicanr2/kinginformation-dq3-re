@@ -557,7 +557,9 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         fprintf(stderr,"D3MNS: %s\n",err); return -1; }
     dq3_monster_get_stat(&mons,monster_id,&ms);
     ehpmax = ms.hp_base + ms.hp_rand; if(ehpmax<1)ehpmax=1;
-    eatk = ms.atk>0?ms.atk:8; edef=(ms.def>0&&ms.def<255)?ms.def:4; eagi=ms.agi; efree=ms.flee_resist;
+    /* edef:採真實怪物防禦。上限放寬到 <1000 讓合法高防(索瑪 300)通過;只把 0 / garbage
+     * (空記錄 0xffff 等)退回 4。先前 <255 會誤把最終 boss 索瑪(def 300)clamp 成 4。 */
+    eatk = ms.atk>0?ms.atk:8; edef=(ms.def>0&&ms.def<1000)?ms.def:4; eagi=ms.agi; efree=ms.flee_resist;
     { int i; for(i=0;i<en;i++) ehp[i]=ehpmax; }
     g_last_gold = 0;
     /* 敵方 AI(docs/37):讀本場怪 D3MNS AI 欄 + 算我方平均等級;g_fled 計逃走數 */
@@ -574,9 +576,9 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
      * 無光之珠 → 索瑪全力(atk 180)幾乎必殺隊伍(= 原版「需先取光之珠」的教學)。 */
     if (monster_id == 0x7c && g_light_orb) {
         int oatk = eatk, odef = edef;
-        eatk = eatk / 3;                       /* 攻擊力大降(隊伍可承受)*/
-        if (edef > 8) edef = edef / 2;         /* 防禦下降 */
-        fprintf(stderr, "★ 使用光之珠!驅散索瑪的黑暗結界 —— 索瑪弱化(二階段):"
+        eatk = eatk / 3;                       /* 攻擊力大降:180→60(隊伍可承受)*/
+        edef = edef / 4;                        /* 防禦大降:300→75(露出本體可受傷)*/
+        fprintf(stderr, "★ 使用光之珠!驅散索瑪的黑暗結界 —— 索瑪由黑暗形態轉為弱化本體(二階段):"
                 "攻 %d→%d 防 %d→%d\n", oatk, eatk, odef, edef);
         g_light_orb = 0;                       /* 用畢清旗標 */
     }
