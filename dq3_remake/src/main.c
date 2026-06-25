@@ -261,7 +261,8 @@ static const unsigned char *shop_stock_for(int cty, int *n);
 static void equip_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text);
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                       dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys);
-static void item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party);
+static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party);
+static int g_item_world_eff = 0;   /* 野外道具選單選了蓋美拉翅膀/聖水 → 交 main 迴圈處理世界狀態 */
 static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
@@ -899,8 +900,18 @@ static int run_game(const char *assets, const char *dump)
             dq3_scene_apply_palette(cur);
             fprintf(stderr, "離開酒場:名冊%d 人、隊伍%d 人\n", roster.count, party.count);
         } else if (sc == 0x2e) {            /* C:野外指令窗(命令)— 對話/咒文/狀況/道具/裝備/調查 */
+            g_item_world_eff = 0;
             cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok, sys_ok ? &sys_txt : &dlg.txt);
             dq3_scene_apply_palette(cur);
+            if (g_item_world_eff == DQ3_USE_RETURN_TOWN) {       /* 蓋美拉翅膀:回地表 */
+                layer = 0; cur = field; in_town = 0; cur_cty = -1; ship.aboard = 0;
+                dq3_scene_apply_palette(cur);
+                fprintf(stderr, "蓋美拉翅膀:回到地表 (%d,%d)\n", cur->px, cur->py);
+            } else if (g_item_world_eff == DQ3_USE_REPEL) {      /* 聖水:驅弱敵 */
+                repel = DQ3_HOLY_STEPS;
+                fprintf(stderr, "聖水:弱敵迴避 %d 步\n", repel);
+            }
+            g_item_world_eff = 0;
         } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店捷徑(開發用;正式入口=走到店員 NPC)*/
             if (shop_ok) { int sn; const unsigned char *sk = shop_stock_for(cur_cty, &sn);
                 shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt, &gold, sk, sn); }
@@ -1462,17 +1473,23 @@ static int field_use_item(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int c
             if (dq3_item_use_cure(&r->list[p->slot[i]].m, code)) { dq3_inv_remove(inv, code); return 1; }
         return 0;
     }
-    return 0;   /* 蓋美拉翅膀/聖水等需世界狀態,野外選單暫不處理 */
+    if (kind == DQ3_USE_RETURN_TOWN || kind == DQ3_USE_REPEL) {   /* 需世界狀態 → 回傳碼交 main */
+        dq3_inv_remove(inv, code);
+        fprintf(stderr, "野外つかう:%s\n", kind == DQ3_USE_RETURN_TOWN ? "蓋美拉翅膀(回地表)" : "聖水(驅弱敵)");
+        return kind;
+    }
+    return 0;
 }
 
-/* 野外道具選單:游標選取 + Enter 使用(heal/cure)。inv 非 const(會消耗)。 */
-static void item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party)
+/* 野外道具選單:游標選取 + Enter 使用。heal/cure 就地套用;蓋美拉翅膀/聖水回傳效果碼
+ * (DQ3_USE_RETURN_TOWN/REPEL)交 main 處理世界狀態。回 0=無世界效果。inv 非 const(會消耗)。 */
+static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party)
 {
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t *fb = dq3_fb();
     int wx = 30, wy = 50, ww = 290, wh = 200;
-    int cursor = 0;
-    raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return;
+    int cursor = 0, world_eff = 0;
+    raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return 0;
     pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
     white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
     frame = white; bg = pal_near2(pal,pn,16,16,32);
@@ -1499,8 +1516,12 @@ static void item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *ros
         else if (sc == 0x48 && cursor - 2 >= 0) cursor -= 2;      /* 上 */
         else if (sc == 0x4d && cursor + 1 < n) cursor += 1;      /* 右 */
         else if (sc == 0x4b && cursor - 1 >= 0) cursor -= 1;      /* 左 */
-        else if (sc == 0x1c && n > 0) field_use_item(inv, roster, party, codes[cursor]);  /* Enter 使用 */
+        else if (sc == 0x1c && n > 0) {                          /* Enter 使用 */
+            int k = field_use_item(inv, roster, party, codes[cursor]);
+            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL) { world_eff = k; break; }  /* 交 main */
+        }
     }
+    return world_eff;
 }
 
 /* 達瑪神官轉職選單:選隊員 → 選新職業 → dq3_member_change_class(勇者不可轉/不可轉成勇者)。 */
@@ -1580,7 +1601,7 @@ static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
             if (dlg_ok) { int rec = (ep && ep < dlg->txt.n_records) ? ep : 1; dq3_dialogue_open(dlg, rec); }
         } else fprintf(stderr, "%s:前方無人 / 無物\n", sel==DQ3_CMD_TALK?"對話":"調查");
         break; }
-    case DQ3_CMD_ITEM:  item_modal(inv, sys, roster, party); break;  /* 游標選取 + Enter 使用(heal/cure)*/
+    case DQ3_CMD_ITEM:  g_item_world_eff = item_modal(inv, sys, roster, party); break;  /* 世界效果碼存全域 */
     case DQ3_CMD_EQUIP: equip_modal(roster, party, sys); break; /* 裝備名 = D3TXT00 */
     }
     return sel;
