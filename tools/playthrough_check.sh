@@ -28,5 +28,6 @@ chk "船上岸(船停原水格)"         "opos:150:179;ship"  "l"    "上岸 →
 chk "藥草治療(封頂於 maxHP)"     "party;hurt:5;item:0x41;use:0x41" "." "藥草:隊員0 回復 HP"
 chk "聖水驅弱敵"                   "party;item:0x44;use:0x44" "."  "聖水:弱敵迴避 64 步"
 chk "蓋美拉翅膀回鎮"              "warp:2:20:10;item:0x43;use:0x43" "." "蓋美拉翅膀:回到地表"
+chk "索瑪終戰破關(結局)"        "prog:6;descent;finale;prog" "." "進度階段 9/9"
 echo "== 結果:PASS=$pass FAIL=$fail =="
 [ "$fail" -eq 0 ]

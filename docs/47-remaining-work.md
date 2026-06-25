@@ -49,7 +49,10 @@
    登船/航行/上岸狀態機 + 船上不遇敵 + 船狀態併入 dq3_save(v3)。debug 口 `ship`/`ship:X:Y`/`opos:X:Y`;
    playthrough_check 第 10/11 項驗證跨海航行與上岸。**剩**:取船劇情實際接點(波魯多加胡椒換船的
    NPC 對話 → `dq3_progress_set(SHIP)` + 放船)待該城 NPC 事件落地時補。
-4. **終盤**:大魔王索瑪戰 + 結局序列(對話 bank D3TXT07 已有索瑪台詞)。
+4. ~~**終盤**~~ **(已落地)**:大魔王索瑪戰(怪 0x7c)+ 結局序列。`zoma` debug 跑真實索瑪戰
+   (修了 boss 大圖 sprite:MAXW 160→384,讓索瑪 384×144 / 0x7d·0x7f 大圖可繪,仍擋 0x80/0x81 垃圾 header);
+   勝利 → `run_finale` 設 ZOMA 里程碑(進度 9/9)+ ENDTXT 結局首段。`finale` debug 直接驗破關路徑。
+   mainline_check 已一條龍推到 **9/9 = 全主線完成**。剩:索瑪兩階段(光之玉)+ 完整結局捲動。
 
 > 現實路徑:A1/A2 是同一塊(旗標驅動的 scripted-event VM)。**最高槓桿但最難純靜態**;
 > debug 口已能「跳過劇情直接到任一狀態」驗證 —— 可先用 debug 口把各段接成可玩,再補真實觸發。
@@ -83,5 +86,5 @@
 - DEBUG 口 + DQ3_DUMP:任意狀態 headless 截圖(docs/46)。全 89 城 load 掃描零崩潰。
 - **`tools/playthrough_check.sh`(14 項)**:各系統孤立斷言(載入/對話/設施/隊伍/scripted event/
   傳送/進度旗標流/船/道具)全綠。
-- **`tools/mainline_check.sh`(#4)**:單一進程依攻略順序走 START→…→下降,驗進度階段**單調推進
-  1→8** + 三真實 gate(取船/彩虹合成/下降)依序生效 → **主線一條龍串得起來**,距索瑪終戰一步。
+- **`tools/mainline_check.sh`(#4)**:單一進程依攻略順序走 START→…→索瑪,驗進度階段**單調推進
+  1→9** + 四真實 gate(取船/彩虹合成/下降/索瑪破關)依序生效 → **主線一條龍推到 9/9 = 能破關**。

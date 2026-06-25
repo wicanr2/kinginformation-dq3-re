@@ -11,18 +11,18 @@ BIN="${2:-/work/build/dq3_remake}"
 #   建隊 → 開場/前四里程碑(prog:0..4,代表盜賊鑰匙/魔法球/羅馬利亞/達瑪線)
 #   → 取船(ship,真 gate)→ 彩虹水滴合成(event 0x53,真 gate)→ 下降(descent,真 gate)
 # 每步後 prog 印出當前階段,據此驗證單調推進。
-CHAIN="party;prog:0;prog;prog:1;prog;prog:2;prog;prog:3;prog;prog:4;prog;ship;prog;event:0x53;prog;descent;prog"
+CHAIN="party;prog:0;prog;prog:1;prog;prog:2;prog;prog:3;prog;prog:4;prog;ship;prog;event:0x53;prog;descent;prog;finale;prog"
 
 OUT=$(DQ3_DEBUG="$CHAIN" DQ3_DUMP=/tmp/mainline.ppm timeout 30 "$BIN" "$ASSETS" game 2>&1)
 
 echo "== DQ3 主線串接驗證(START→DESCEND 一條龍)=="
 
 # 1) 進度階段序列單調遞增 1→8
-STAGES=$(echo "$OUT" | grep -oE "進度階段 [0-9]+/9" | sed 's#.* ##; s#/9##' | head -8 | tr '\n' ' ')
+STAGES=$(echo "$OUT" | grep -oE "進度階段 [0-9]+/9" | sed 's#.* ##; s#/9##' | head -9 | tr '\n' ' ')
 echo "  進度階段序列: $STAGES"
-EXPECT="1 2 3 4 5 6 7 8 "
+EXPECT="1 2 3 4 5 6 7 8 9 "
 fail=0
-if [ "$STAGES" = "$EXPECT" ]; then echo "  [PASS] 階段單調推進 1→8(START→下降)"; else
+if [ "$STAGES" = "$EXPECT" ]; then echo "  [PASS] 階段單調推進 1→9(START→索瑪破關)"; else
     echo "  [FAIL] 階段序列非預期(want: $EXPECT)"; fail=$((fail+1)); fi
 
 # 2) 三個真實 gate 依序在 log 出現
@@ -30,11 +30,12 @@ gate() { if echo "$OUT" | grep -qE "$2"; then echo "  [PASS] 真 gate:$1"; else 
 gate "取船(登船)"        "登船 → 可跨海|取得船"
 gate "彩虹水滴合成(83)"   "event 83 → result=|彩虹水滴"
 gate "下降アレフガルド"    "scripted_event 86 下降"
+gate "索瑪終戰破關"        "打倒大魔王索瑪 —— 破關"
 
-# 3) 終局階段 = 下降(8/9),距 ZOMA(終盤)一步
-if echo "$OUT" | tail -5 | grep -qE "進度階段 8/9 = 下降"; then
-    echo "  [PASS] 主線推進到下降アレフガルド(8/9,剩索瑪終戰)"; else
-    echo "  [FAIL] 未推進到下降階段"; fail=$((fail+1)); fi
+# 3) 終局階段 = 9/9(全主線完成 = 破關)
+if echo "$OUT" | tail -3 | grep -qE "進度階段 9/9"; then
+    echo "  [PASS] 主線推進到 9/9 = 全主線完成(能破關)"; else
+    echo "  [FAIL] 未推進到 9/9 破關"; fail=$((fail+1)); fi
 
 echo "== 結果:$([ $fail -eq 0 ] && echo 主線串接成立 || echo "FAIL=$fail") =="
 [ "$fail" -eq 0 ]

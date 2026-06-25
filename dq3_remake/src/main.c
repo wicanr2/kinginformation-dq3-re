@@ -323,6 +323,17 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
     return kind;
 }
 
+/* 結局序列(索瑪戰勝後):設 ZOMA 里程碑(進度 → 9/9 = 破關)+ 開 ENDTXT 結局首段。 */
+static void run_finale(dq3_storyflags *flags, dq3_dialogue *dlg, int dlg_ok,
+                       const dq3_text *end_txt, int end_ok)
+{
+    dq3_progress_set(flags, DQ3_MS_ZOMA);
+    fprintf(stderr, "★ 打倒大魔王索瑪 —— 破關!(進度 %d/%d = 全主線完成)\n",
+            DQ3_MS_COUNT, DQ3_MS_COUNT);
+    if (end_ok && dlg_ok && end_txt->n_records > 0)
+        dq3_dialogue_open_text(dlg, end_txt, 0);
+}
+
 /* F10 離開確認:渲染「離開遊戲嗎」+ 是/否 選單。回 1=是(離開)、0=否(繼續)。
  * 會改 DAC palette,呼叫端離開後須重套場景色盤。ESC = 否。 */
 static int confirm_quit(const dq3_text *text)
@@ -368,6 +379,7 @@ static int run_game(const char *assets, const char *dump)
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1, cur_dlg_bank = 1;  /* 啟動載 D3TXT01(阿里阿罕 bank)*/
     dq3_text sys_txt; int sys_ok = 0;                                  /* 常駐 D3TXT00:系統訊息 + 道具名 */
+    dq3_text end_txt; int end_ok = 0;                                  /* ENDTXT:結局序列(索瑪戰後)*/
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
     dq3_ship ship; dq3_ship_init(&ship);                            /* #2 船:取船後跨海(docs/48)*/
@@ -389,6 +401,7 @@ static int run_game(const char *assets, const char *dump)
     dlg_ok = (dq3_dialogue_load(&dlg, assets, "D3TXT01.TXT", err, sizeof err) == 0);
     /* 常駐系統/道具文字 = D3TXT00(系統訊息、道具名;與 NPC 對話 bank 分離,docs/42)*/
     sys_ok = (dq3_text_load(&sys_txt, assets, "D3TXT00.TXT", err, sizeof err) == 0);
+    end_ok = (dq3_text_load(&end_txt, assets, "ENDTXT.TXT", err, sizeof err) == 0);  /* 結局文本 */
     enc = 6 + (int)(grnd() % 8);
     /* demo:身上帶兩材料,進祠堂「調べる」即可觸發 #2 合成(產彩虹水滴) */
     dq3_inv_init(&inv); dq3_flags_init(&flags);
@@ -459,6 +472,15 @@ static int run_game(const char *assets, const char *dump)
                 ship.owned = 1; ship.aboard = 0; ship.px = a; ship.py = b; ship.layer = layer;
                 dq3_progress_set(&flags, DQ3_MS_SHIP);
                 fprintf(stderr, "[DEBUG] 船停泊 (%d,%d) layer%d\n", a, b, layer);
+            } else if (strcmp(tok, "zoma") == 0) {            /* 索瑪終戰(怪 0x7c)→ 勝則破關 */
+                int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
+                dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
+                oc = dq3_battlescene_run(assets, 0x7c, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                dq3_scene_apply_palette(cur);
+                fprintf(stderr, "[DEBUG] 索瑪戰 outcome=%d(1=勝 2=敗 3=逃)\n", oc);
+                if (oc == 1) run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok);
+            } else if (strcmp(tok, "finale") == 0) {          /* 直接驗破關→結局路徑(主線推到 9/9)*/
+                run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok);
             } else if (sscanf(tok, "hurt:%i", &a) == 1) {     /* 設隊長 cur_hp(測藥草用)*/
                 if (party.count > 0) { roster.list[party.slot[0]].m.cur_hp = (uint16_t)a;
                     fprintf(stderr, "[DEBUG] 隊長 cur_hp=%d\n", a); }
