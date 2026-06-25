@@ -56,6 +56,11 @@
 #define DQ3_NAJIMI_OLDMAN_X 9
 #define DQ3_NAJIMI_OLDMAN_Y 9
 #define DQ3_ITEM_THIEF_KEY  0x55
+/* 魔法玉(攻略亦稱魔法球,item 0x58):雷貝村(CTY1)2F(sec1)老人,持盜賊鑰匙開門上樓對話給。
+ * 用來炸誘人洞窟的牆。原版 runner flag 分支;remake 接:雷貝 2F sub2 老人 + 持鑰匙 → 給。 */
+#define DQ3_LEVE_CTY        1
+#define DQ3_LEVE_2F_SEC     1
+#define DQ3_ITEM_MAGIC_BALL 0x58
 #define DQ3_PEPPER_CTY     15     /* 胡椒販售城:提示 NPC(4,15)「下方的店裡有賣黑胡椒」。
                                    * 但資料裡無一店進此貨(早期 build 斷鏈,docs/50)→ remake 補進該城道具店。 */
 #define DQ3_PORTOGA_REC_WAIT 26   /* 「我在等黑胡椒」*/
@@ -720,6 +725,17 @@ static int run_game(const char *assets, const char *dump)
                             dq3_dialogue_open(&dlg, DQ3_PORTOGA_REC_WAIT);   /* 等胡椒 */
                             fprintf(stderr, "波魯多加國王:等黑胡椒(無胡椒,未授船)\n");
                         }
+                        talked = 1;
+                    } else if (sub == 2 && cur_cty == DQ3_LEVE_CTY && cur->section == DQ3_LEVE_2F_SEC && dlg_ok &&
+                               dq3_inv_find(&inv, DQ3_ITEM_THIEF_KEY) >= 0) {
+                        /* 雷貝村 2F 老人:持盜賊鑰匙上樓對話 → 給魔法玉(攻略)。一次性。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_inv_find(&inv, DQ3_ITEM_MAGIC_BALL) < 0) {
+                            dq3_inv_add(&inv, DQ3_ITEM_MAGIC_BALL);
+                            dq3_progress_set(&flags, DQ3_MS_MAGIC_BALL);
+                            fprintf(stderr, "★ 雷貝村 2F 老人 → 獲得魔法玉(0x58,MAGIC_BALL 里程碑)\n");
+                        }
+                        dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         talked = 1;
                     } else if (sub == 2 && cur_cty == DQ3_NAJIMI_CTY && dlg_ok &&
                                cur->npcs[ni].x == DQ3_NAJIMI_OLDMAN_X && cur->npcs[ni].y == DQ3_NAJIMI_OLDMAN_Y) {

@@ -41,9 +41,9 @@
 2. ~~**劇情旗標推進**~~ **(#1 已落地)**:remake 自有的主線旗標流已建——`dq3_progress`
    (include/src,里程碑 0x200..0x208,順序取自杜勝利攻略 START→THIEF_KEY→MAGIC_BALL→
    ROMALY→DHAMA→SHIP→RAINBOW→DESCEND→ZOMA)。RAINBOW/DESCEND 鏡射既有 EXE 旗標
-   (0x139/0x13a),故**合成/下降事件直接推進進度,不需另一套狀態**。debug 口 `prog`/`prog:N`
-   查/設;playthrough_check 第 8/9 項驗證。剩餘里程碑(盜賊鑰匙/魔法球/羅馬利亞/達瑪/取船)的
-   「事件設旗標」接點待各系統(船=#3)落地時補上。
+   (0x139/0x13a),故**合成/下降事件直接推進進度,不需另一套狀態**。debug 口 `prog`/`prog:N`。
+   **真實 NPC 觸發已接**:盜賊鑰匙(拿吉米之塔CTY8 4F老人)、魔法玉(雷貝CTY1 2F老人,需鑰匙)、
+   取船(波魯多加CTY37國王獻胡椒)。**剩** ROMALY/DHAMA 真實觸發(目前 prog:N 代)。
 3. ~~**船**~~ **(#2 已落地)**:`dq3_ship`(include/src + test_ship 17 斷言)。海 tile 辨識 RE 完成
    ——overworld attr 指紋 `(attr&1)&&(attr&0x20)`(海 0x25,山 0x07 無 0x20),docs/48。
    登船/航行/上岸狀態機 + 船上不遇敵 + 船狀態併入 dq3_save(v3)。debug 口 `ship`/`ship:X:Y`/`opos:X:Y`;
