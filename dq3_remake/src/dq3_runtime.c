@@ -113,9 +113,29 @@ static uint8_t sdl_to_bios_scancode(SDL_Keycode k)
     }
 }
 
+/* 腳本輸入(DQ3_INPUT 環境變數;headless 驗證):每次 poll 消耗一字 →
+ * u/d/l/r=方向、e=Enter、s=Space、c/b/t/y=C/B/T/U 鍵、.=閒置(0)、q=F10 離開。
+ * 字串耗盡 → 送一次 F10(自動收尾)。 */
+static uint8_t scripted_scancode(void)
+{
+    static const char *seq = NULL; static size_t i = 0; static int init = 0, done = 0;
+    if (!init) { seq = getenv("DQ3_INPUT"); init = 1; }
+    if (!seq || !*seq) return 0;
+    if (!seq[i]) { if (!done) { done = 1; g_quit = 1; } return 0; }  /* 耗盡 → 直接結束(headless)*/
+    switch (seq[i++]) {
+        case 'u': case 'U': return 0x48;  case 'd': case 'D': return 0x50;
+        case 'l': case 'L': return 0x4b;  case 'r': case 'R': return 0x4d;
+        case 'e': case 'E': return 0x1c;  case 's': case 'S': return 0x39;
+        case 'c': case 'C': return 0x2e;  case 'b': case 'B': return 0x30;
+        case 't': case 'T': return 0x14;  case 'y': case 'Y': return 0x16;  /* y=U 鍵(下降)*/
+        case 'q': case 'Q': return 0x44;  default: return 0;               /* . 等 = 閒置 */
+    }
+}
+
 uint8_t dq3_poll_scancode(void)
 {
     SDL_Event e; uint8_t sc = 0;
+    if (getenv("DQ3_INPUT")) return scripted_scancode();   /* 腳本輸入優先(headless 驗證)*/
     if (!g_have_sdl) return 0;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) g_quit = 1;

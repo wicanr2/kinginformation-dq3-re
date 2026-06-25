@@ -50,6 +50,29 @@ DQ3_DEBUG="flag:0x139;item:0x75" DQ3_DUMP=/tmp/x.ppm dq3_remake assets_raw game
 
 > 教訓:headless 驗證口要能打到「真實載入路徑」,不能只測手搭的替身(呼應 verification-fidelity)。
 
+## 腳本輸入 DQ3_INPUT(驅動互動迴圈)
+
+`DQ3_INPUT="<keys>"` 讓互動迴圈由腳本驅動(headless playthrough),每字 = 一次 poll:
+`u/d/l/r`=方向、`e`=Enter、`s`=Space、`c/b/t`=C/B/T 鍵、`y`=U 鍵(下降)、`.`=閒置、`q`=結束。
+字串耗盡 → 自動結束(`g_quit`);設 `DQ3_DUMP` 則 dump 末幀。`DQ3_DEBUG` 先定位再 `DQ3_INPUT` 驅動。
+
+```bash
+# 走到店員開店(debug 擺玩家在店員正上方 → Enter)
+DQ3_DEBUG="warp:0:27:32" DQ3_INPUT="e" DQ3_DUMP=/tmp/shop.ppm dq3_remake assets_raw game
+# → stderr: 設施:武器/防具店(CTY0 sec0 k1,7 品項)
+```
+
+> 注意:debug 定位(warp/descent/ascend)會跳過開場 CTY00 載入(`debug_placed` 旗標),否則被覆蓋。
+> NPC 目前**不擋移動** → 互動測試把玩家擺在 NPC 正上方(預設面向下)直接 Enter,不靠走過去。
+
+## 主線里程碑驗證:`tools/playthrough_check.sh`
+
+一批 debug+input 里程碑 pass/fail(全城載入/話す/開店/建隊/下降/合成事件/跨城):
+```bash
+tools/playthrough_check.sh <assets_dir> <dq3_remake_bin>   # PASS=7 FAIL=0
+```
+當前 7/7 通過 —— 證明各系統(載入/對話/設施/隊伍/scripted event/傳送)串接無誤。
+
 ## 待擴充
 
 - `party`(快速建測試隊伍,驗戰鬥/商店/裝備)、`event:N`(直接跑 scripted_event N)、`battle:monster`。

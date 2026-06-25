@@ -368,22 +368,23 @@ static int run_game(const char *assets, const char *dump)
     /* ── DEBUG 口(DQ3_DEBUG 環境變數;腳本/headless 驗證用,免真的玩到那段)──
      * 指令以 ';' 分隔:descent(切下層 overworld)/ ascend / warp:CTY:X:Y(進城)/
      * flag:N(設旗標)/ item:N / gold:N。docs/46。例:DQ3_DEBUG="gold:1000;warp:2:20:10" */
+    int debug_placed = 0;   /* debug 已定位玩家(warp/descent/ascend)→ 跳過開場 CTY00 載入 */
     { const char *dbg = getenv("DQ3_DEBUG");
       if (dbg && *dbg) { char buf[256]; char *tok; strncpy(buf, dbg, sizeof buf - 1); buf[sizeof buf - 1] = 0;
         for (tok = strtok(buf, ";"); tok; tok = strtok(NULL, ";")) {
             int a, b, c;
             if (strcmp(tok, "descent") == 0) {
-                do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);  /* scripted_event 86 */
+                do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags); debug_placed=1;  /* scripted_event 86 */
             } else if (strcmp(tok, "ascend") == 0) {
                 layer = 0; cur = field; in_town = 0; cur_cty = -1; dq3_scene_apply_palette(cur);
-                fprintf(stderr, "[DEBUG] ascend → 地表\n");
+                debug_placed=1; fprintf(stderr, "[DEBUG] ascend → 地表\n");
             } else if (sscanf(tok, "warp:%d:%d:%d", &a, &b, &c) == 3) {
                 char ct[16]; int bn = (a >= 0 && a < 100) ? dq3x_map_blknum[a] : 1; dq3_scene *ns;
                 sprintf(ct, "CTY%02d.DAT", a); ns = dq3_town_load(assets, ct, 0, bn, err, sizeof err);
                 if (ns) { if (town) dq3_scene_free(town); town = ns; cur = town; in_town = 1; cur_cty = a;
                     load_field_hero(town, assets);
                     if (b < cur->map_w) cur->px = b; if (c < cur->map_h) cur->py = c;
-                    dq3_scene_apply_palette(cur); fprintf(stderr, "[DEBUG] warp → CTY%d (%d,%d)\n", a, b, c); }
+                    dq3_scene_apply_palette(cur); debug_placed=1; fprintf(stderr, "[DEBUG] warp → CTY%d (%d,%d)\n", a, b, c); }
                 else fprintf(stderr, "[DEBUG] warp CTY%d 失敗: %s\n", a, err);
             } else if (strcmp(tok, "party") == 0) {          /* 建測試隊伍(勇者/戰士/僧侶/魔法使者)*/
                 static const int dcls[4] = {0, 1, 3, 4}; int pi;
@@ -406,8 +407,8 @@ static int run_game(const char *assets, const char *dump)
       }
     }
 
-    if (dump && getenv("DQ3_DEBUG")) {
-        /* DEBUG 口 + dump:直接渲染 debug 套用後的當前場景並 dump(headless 驗證,跳過 demo walk)*/
+    if (dump && getenv("DQ3_DEBUG") && !getenv("DQ3_INPUT")) {
+        /* DEBUG 口 + dump(無腳本輸入):直接渲染 debug 狀態並 dump;有 DQ3_INPUT 則走互動迴圈 */
         if (in_town) dq3_scene_npc_tick(cur);
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
@@ -420,8 +421,8 @@ static int run_game(const char *assets, const char *dump)
         dq3_scene_free(field);
         return 0;
     }
-    if (dump) {
-        /* headless demo:走到觸發戰鬥 → 進城鎮,沿途 log,dump 末幀 */
+    if (dump && !getenv("DQ3_INPUT")) {
+        /* headless demo:走到觸發戰鬥 → 進城鎮,沿途 log,dump 末幀(有 DQ3_INPUT 則走互動迴圈)*/
         int steps, mon, oc;
         fprintf(stderr, "=== game: 地表起點 ===\n");
         for (steps = 0; steps < 12; steps++) {
@@ -471,9 +472,8 @@ static int run_game(const char *assets, const char *dump)
         return 0;
     }
 
-    /* 互動開場:從阿里阿罕城鎮(CTY00 sec0)起步——玩家先走到西側 LUIDA 櫃台建隊,
-     * 再從門/SPACE 出城到地表(起點 153,174 → region 1 弱怪)。 */
-    {
+    /* 互動開場:從阿里阿罕城鎮(CTY00 sec0)起步。debug 已定位(warp/descent)則跳過,用 debug 狀態。 */
+    if (!debug_placed) {
         dq3_scene *t0 = dq3_town_load(assets, "CTY00.DAT", 0, 1, err, sizeof err);
         if (t0) { town = t0; load_field_hero(town, assets); cur = town; in_town = 1; cur_cty = 0;
                   dq3_scene_apply_palette(cur);
@@ -747,6 +747,14 @@ static int run_game(const char *assets, const char *dump)
         }
         dq3_delay_ms(16);
         (void)fx; (void)fy;
+    }
+    /* 腳本輸入 playthrough 結束 → dump 末幀(headless 驗證,docs/46)*/
+    if (dump && getenv("DQ3_INPUT")) {
+        dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        if (dlg_ok && dq3_dialogue_is_open(&dlg)) dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        dq3_present();
+        if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "playthrough 末幀 -> %s(in_town=%d cty=%d (%d,%d))\n",
+                                              dump, in_town, cur_cty, cur->px, cur->py);
     }
     if (dlg_ok) dq3_dialogue_free(&dlg);
     if (sys_ok) dq3_text_free(&sys_txt);
