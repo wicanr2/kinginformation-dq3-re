@@ -283,3 +283,21 @@ game_tester **35/35**(+不死鳥復活/飛行/降落)。**待**:祠堂集六珠 
 
 ⇒ **不死鳥 questline 完整可玩**:六珠(綠藍紅紫黃銀 0x66-0x6b)各來源可取 → 集滿自動復活拉米亞
 (Step 17)→ overworld 按 y 乘鳥飛越山海。game_tester 40/40。
+
+## Step 19:B-1 夢幻紅寶石鏈完整(杜勝利 Ch9-11)2026-06-26
+
+從 B(道具取得鏈)開始,照杜勝利攻略逐段 RE。第一條三環全接:
+
+- **環1 紅寶石取得**:夢幻紅寶石 0x59 在 **CTY11(精靈之村西南洞窟=地底湖洞窟)sect3 (21,20)** type3 hidden,
+  既有寶箱系統(ep2<0x90)給(`DQ3_ORBSCAN` 通用 item-scan 定位)。
+- **環2 精靈女王 transform**:byte4=16(CTY5 (17,7))**完整解出 je 分支**:持 0x59 → `mov [si],0x5a`
+  **就地把紅寶石替換成覺醒粉 0x5a** + rec96。→ remake 加 `consume_prereq` 欄(消耗 prereq 換 give_item),
+  byte4=16 由「檢查型」改「transform 型」:持紅寶石→消耗換覺醒粉。0x5a=覺醒粉(font 確認)。
+- **環3 諾阿尼魯解催眠**:覺醒粉 0x5a 加 `DQ3_USE_AWAKEN` 效果——在**諾阿尼魯村 CTY4** 用 → 消耗 +
+  set flag 0x31(村甦醒)+ 解催眠訊息;別處用不上不消耗。item_modal/use:N 兩路徑都接。
+
+機制新增:`consume_prereq`(transform 通用,之後變身杖等換物可複用)、`DQ3_USE_AWAKEN`(位置相關 item-use)。
+game_tester **41/41**。
+
+> 觀念更正(使用者 2026-06-26):精訊**中文化做完了**(有 bug+缺圖),核心內容全是原版 ENIX DQ3,
+> 缺口=「還沒徹底反組譯 assembly」非「build 沒接」。杜勝利攻略當 ground truth 逐段 RE。

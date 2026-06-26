@@ -17,6 +17,8 @@ typedef struct {
     unsigned char  prereq_item; /* 給之前需持有的道具(DQ3_SC_NOITEM=無前置)*/
     unsigned char  require_item;/* 檢查型 NPC 需持有的道具(0x7c0c 檢查,不消耗;DQ3_SC_NOITEM=非檢查型)。
                                  * 持有→give_rec(成功反應)、未持→before_rec(需該物)。 */
+    unsigned char  consume_prereq;/* 1=給物時消耗 prereq_item(transform:消耗 X 換 give_item;
+                                 * 如精靈女王消耗夢幻紅寶石 0x59 換覺醒粉 0x5a)。0=保留 prereq(如鑰匙)。 */
     unsigned short milestone;   /* 給/成功時設的進度里程碑(0=無)*/
     unsigned short before_rec;  /* 前置未滿足 / 缺 require 物時的對白 rec */
     unsigned short give_rec;    /* 給予 / require 成功時的對白 rec */

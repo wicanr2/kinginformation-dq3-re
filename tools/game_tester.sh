@@ -61,11 +61,7 @@ o=$(DQ3_DEBUG="warp:15:5:25:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2
 echo "$o" | grep -q "byte4=25:獲得道具 0x5c" && ok "sub2 給物 25(黑胡椒)" || ng "sub2 給物 25"
 o=$(DQ3_DEBUG="warp:64:16:11:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=49:獲得道具 0x6b" && ok "sub2 給物 49(銀寶珠)" || ng "sub2 給物 49"
-# 檢查型 NPC(require_item):缺物 vs 持物兩態
-o=$(DQ3_DEBUG="warp:5:17:8:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
-echo "$o" | grep -q "byte4=16:缺 0x59" && ok "sub2 檢查 16(缺夢幻紅寶石)" || ng "sub2 檢查 16 缺物"
-o=$(DQ3_DEBUG="item:0x59;warp:5:17:8:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
-echo "$o" | grep -q "byte4=16:持有 0x59" && ok "sub2 檢查 16(持夢幻紅寶石→反應)" || ng "sub2 檢查 16 持物"
+# 檢查型 NPC(require_item):持船渡海反應(byte4=16 精靈女王已改 transform,見第 9 段)
 o=$(DQ3_DEBUG="item:0x5b;warp:62:38:6:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=50:持有 0x5b" && ok "sub2 檢查 50(持船→渡海反應)" || ng "sub2 檢查 50 持物"
 # 提頓村牢房犯人給綠寶珠(青衫攻略 runner 事件,remake 簡化 talk 即給)
@@ -90,6 +86,14 @@ o=$(DQ3_DEBUG="warp:27:1:12:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>
 echo "$o" | grep -q "獲得道具 0x68" && ok "紅寶珠寶箱 CTY27(海盜村)" || ng "紅寶珠"
 o=$(DQ3_DEBUG="warp:83:4:2:0" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "獲得道具 0x6a" && ok "黃寶珠寶箱 CTY83(新城鎮)" || ng "黃寶珠"
+
+echo "######## 9. 夢幻紅寶石鏈(杜勝利 Ch9-11)########"
+o=$(DQ3_DEBUG="warp:11:21:20:3" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x59" && ok "地底湖洞窟 CTY11 夢幻紅寶石寶箱" || ng "夢幻紅寶石"
+o=$(DQ3_DEBUG="item:0x59;warp:5:17:8:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "byte4=16:換得道具 0x5a" && ok "精靈女王:紅寶石→換覺醒粉(transform)" || ng "精靈女王 transform"
+o=$(DQ3_DEBUG="party;item:0x5a;warp:4:5:5:0;use:0x5a" DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "諾阿尼魯村.*催眠詛咒解除" && ok "諾阿尼魯:用覺醒粉解全村催眠" || ng "諾阿尼魯解催眠"
 
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)

@@ -9,6 +9,7 @@ int dq3_item_use_kind(int item_id)
         case DQ3_ITEM_CHIMERA_WING: return DQ3_USE_RETURN_TOWN;
         case DQ3_ITEM_HOLY_WATER:   return DQ3_USE_REPEL;
         case DQ3_ITEM_FULLMOON:     return DQ3_USE_CURE_PARALYSIS;
+        case 0x5a:                  return DQ3_USE_AWAKEN;   /* 覺醒粉:諾阿尼魯解催眠(杜勝利 Ch11)*/
         default:                    return DQ3_USE_NONE;
     }
 }

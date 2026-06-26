@@ -370,6 +370,8 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
                 cured, kind == DQ3_USE_CURE_POISON ? "中毒" : "麻痺");
         return kind;
     }
+    if (kind == DQ3_USE_AWAKEN) return kind;   /* 覺醒粉:位置相關,消耗延到 main(確認在諾阿尼魯)*/
+    if (kind == DQ3_USE_NONE) return DQ3_USE_NONE;
     /* 回鎮/驅敵:消耗在此,世界層效果由呼叫端依回傳種類處理。 */
     dq3_inv_remove(inv, item_id);
     return kind;
@@ -528,11 +530,11 @@ static int run_game(const char *assets, const char *dump)
                     load_field_hero(town, assets);
                     if (b < cur->map_w) cur->px = b; if (c < cur->map_h) cur->py = c;
                     dq3_scene_apply_palette(cur); debug_placed=1; fprintf(stderr, "[DEBUG] warp → CTY%d (%d,%d)\n", a, b, c);
-                    if (getenv("DQ3_ORBSCAN")) {   /* 臨時:掃 event tile 給寶珠 0x66-0x6b 的位置 */
+                    if (getenv("DQ3_ORBSCAN")) {   /* 臨時:掃 event tile 給道具(0x40-0x8f)的位置 */
                         int tx, ty, et, ep;
                         for (ty = 0; ty < cur->map_h; ty++) for (tx = 0; tx < cur->map_w; tx++)
-                            if (dq3_scene_tile_event_p2(cur, tx, ty, &et, &ep, 0) && ep >= 0x66 && ep <= 0x6b)
-                                fprintf(stderr, "  [orbscan] (%d,%d) type%d → 寶珠 0x%02x\n", tx, ty, et, ep);
+                            if (dq3_scene_tile_event_p2(cur, tx, ty, &et, &ep, 0) && ep >= 0x40 && ep < 0x90)
+                                fprintf(stderr, "  [itemscan] (%d,%d) type%d → 道具 0x%02x\n", tx, ty, et, ep);
                     } }
                 else fprintf(stderr, "[DEBUG] warp CTY%d 失敗: %s\n", a, err);
             } else if (strcmp(tok, "party") == 0) {          /* 建測試隊伍(勇者/戰士/僧侶/魔法使者)*/
@@ -632,6 +634,10 @@ static int run_game(const char *assets, const char *dump)
                 } else if (k == DQ3_USE_REPEL) {               /* 聖水:驅弱敵 N 步 */
                     repel = DQ3_HOLY_STEPS;
                     fprintf(stderr, "聖水:弱敵迴避 %d 步\n", repel);
+                } else if (k == DQ3_USE_AWAKEN) {              /* 覺醒粉:諾阿尼魯(CTY4)解催眠 */
+                    if (in_town && cur_cty == 4) { dq3_inv_remove(&inv, 0x5a); dq3_flags_set(&flags, 0x31, 1);
+                        fprintf(stderr, "★ 諾阿尼魯村:使用覺醒粉 → 全村催眠詛咒解除!(杜勝利 Ch11)\n"); }
+                    else fprintf(stderr, "覺醒粉:此處用不上(需在諾阿尼魯村 CTY4),未消耗\n");
                 }
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
@@ -928,11 +934,13 @@ static int run_game(const char *assets, const char *dump)
                         } else if (sc->prereq_item != DQ3_SC_NOITEM && dq3_inv_find(&inv, sc->prereq_item) < 0) {
                             dq3_dialogue_open(&dlg, sc->before_rec);
                         } else if (dq3_inv_find(&inv, sc->give_item) < 0) {
+                            if (sc->consume_prereq && sc->prereq_item != DQ3_SC_NOITEM)
+                                dq3_inv_remove(&inv, sc->prereq_item);   /* transform:消耗 prereq 換 give_item */
                             dq3_inv_add(&inv, sc->give_item);
                             if (sc->milestone) dq3_progress_set(&flags, sc->milestone);
                             dq3_dialogue_open(&dlg, sc->give_rec);
-                            fprintf(stderr, "★ scripted NPC byte4=%d:獲得道具 0x%02x(rec%d,里程碑)\n",
-                                    b4, sc->give_item, sc->give_rec);
+                            fprintf(stderr, "★ scripted NPC byte4=%d:%s道具 0x%02x(rec%d)\n",
+                                    b4, sc->consume_prereq ? "換得" : "獲得", sc->give_item, sc->give_rec);
                         } else {
                             dq3_dialogue_open(&dlg, sc->after_rec);
                             fprintf(stderr, "scripted NPC byte4=%d:已給過 → 後話 rec%d\n", b4, sc->after_rec);
@@ -1040,6 +1048,14 @@ static int run_game(const char *assets, const char *dump)
             } else if (g_item_world_eff == DQ3_USE_REPEL) {      /* 聖水:驅弱敵 */
                 repel = DQ3_HOLY_STEPS;
                 fprintf(stderr, "聖水:弱敵迴避 %d 步\n", repel);
+            } else if (g_item_world_eff == DQ3_USE_AWAKEN) {     /* 覺醒粉:諾阿尼魯村(CTY4)解全村催眠 */
+                if (in_town && cur_cty == 4) {
+                    dq3_inv_remove(&inv, 0x5a);                  /* 消耗覺醒粉 */
+                    dq3_flags_set(&flags, 0x31, 1);              /* 諾阿尼魯村已甦醒(原版催眠 flag 附近)*/
+                    fprintf(stderr, "★ 諾阿尼魯村:使用覺醒粉 → 全村催眠詛咒解除!(杜勝利 Ch11)\n");
+                } else {
+                    fprintf(stderr, "覺醒粉:此處用不上(需在諾阿尼魯村 CTY4 使用),未消耗\n");
+                }
             }
             g_item_world_eff = 0;
         } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店捷徑(開發用;正式入口=走到店員 NPC)*/
@@ -1669,7 +1685,7 @@ static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *rost
         else if (sc == 0x4b && cursor - 1 >= 0) cursor -= 1;      /* 左 */
         else if (sc == 0x1c && n > 0) {                          /* Enter 使用 */
             int k = field_use_item(inv, roster, party, codes[cursor]);
-            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL) { world_eff = k; break; }  /* 交 main */
+            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN) { world_eff = k; break; }  /* 交 main */
         }
     }
     return world_eff;

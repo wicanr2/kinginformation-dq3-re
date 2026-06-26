@@ -23,7 +23,9 @@ enum {
     DQ3_USE_CURE_POISON,     /* 解毒(驅毒草)— 待狀態系統(docs/47 #5)*/
     DQ3_USE_CURE_PARALYSIS,  /* 解麻痺(滿月草)— 待狀態系統 */
     DQ3_USE_RETURN_TOWN,     /* 回最後城鎮(蓋美拉翅膀)*/
-    DQ3_USE_REPEL            /* 暫時驅弱敵(聖水)*/
+    DQ3_USE_REPEL,           /* 暫時驅弱敵(聖水)*/
+    DQ3_USE_AWAKEN           /* 覺醒粉 0x5a:在諾阿尼魯村(CTY4)用 → 解全村催眠(杜勝利 Ch11)。
+                              * 位置相關:消耗延到 main 確認在 CTY4 才執行。 */
 };
 
 /* 道具 id → 效果種類。 */
