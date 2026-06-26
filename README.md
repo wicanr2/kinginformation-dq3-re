@@ -149,7 +149,7 @@ DQ3 核心。整條經典迴圈都在，且每個數值 / 邏輯都從 `DQ3.EXE`
 **甘達特盜賊巢穴**（CTY14 走過去按空白 → 甘達特手下怪27 → 甘達特怪26，與古布達黑胡椒鏈閉環）/
 **巴拉摩斯本體 + 索瑪前序列**（怨靈122 → 殭屍123 → 索瑪124）/ 不死鳥拉米亞坐騎。boss/事件「正式觸發點」
 用 `kind=special` 事件格定位（[`docs/data/boss-trigger-points.md`](docs/data/boss-trigger-points.md)、
-`special-events-audit.md`，53 事件全分類，可玩性無缺口）。
+`special-events-audit.md`，`kind=special` 事件全分類、**0 個 review 待辦**，可玩性無缺口）。
 
 **離開 / 存讀檔**：F10 = 離開遊戲（「離開遊戲嗎」Yes/No 確認 + 自動存檔），ESC = 取消當前選單（非離開）；
 自動存檔 `dq3_save.dat`（名冊 / 隊伍 / 道具 / 位置），DQ3_LOAD 讀檔續玩，game_tester 含存讀檔 roundtrip 斷言。

@@ -7,7 +7,7 @@
 > **狀態更新(2026-06-26 最末段)**:本盤點的「❌ 沒串起來」清單**多已接成**。最新真實狀態見
 > `dq3_remake/WORKLIST.md` 最末段 + `docs/data/special-events-audit.md`(53 special 全分類)+
 > `docs/data/boss-trigger-points.md`。摘要:A boss(巴拉摩斯本體 + 索瑪前序列 + 甘達特巢穴正式觸發點)、
-> B 道具鏈(B-1~B-9 含王者之劍)均已接;game_tester 73/73。下表保留作歷史盤點依據。
+> B 道具鏈(B-1~B-9 含王者之劍)均已接;game_tester 79/79。下表保留作歷史盤點依據。
 
 ## 前提:remake 用「自有簡化里程碑流」非 1:1 攻略
 

@@ -66,9 +66,9 @@ event index 沒有對應的觸發 setter**;搜尋「跳進坑」之類提示 NPC
    playthrough_check 驗證跨海航行與上岸。**取船劇情已接**(docs/50):波魯多加=CTY37,國王(9,6)
    sub2 NPC,獻黑胡椒(0x5c)→ 授船 + SHIP 里程碑 + 停泊 (25,73)。**剩**:黑胡椒的取得 NPC(商人)待接。
 4. ~~**終盤**~~ **(已落地)**:大魔王索瑪戰(怪 0x7c)+ 結局序列。`zoma` debug 跑真實索瑪戰
-   (修了 boss 大圖 sprite:MAXW 160→384,讓索瑪 384×144 / 0x7d·0x7f 大圖可繪,仍擋 0x80/0x81 垃圾 header);
-   勝利 → `run_finale` 設 ZOMA 里程碑(進度 9/9)+ ENDTXT 結局首段。`finale` debug 直接驗破關路徑。
-   mainline_check 已一條龍推到 **9/9 = 全主線完成**。剩:索瑪兩階段(光之玉)+ 完整結局捲動。
+   (修了 boss 大圖 sprite:MAXW 160→384→**416**[八頭大蛇 W=416],讓索瑪 384×144 等大圖可繪,仍擋垃圾 header);
+   勝利 → `run_finale` 設 ZOMA 里程碑(進度 9/9)+ ENDTXT 結局逐段。`finale` debug 直接驗破關路徑。
+   mainline_check 已一條龍推到 **9/9 = 全主線完成**。索瑪兩階段(光之珠驅黑暗結界+弱化)+ 完整結局捲動**已落地**。
 
 > 現實路徑:A1/A2 是同一塊(旗標驅動的 scripted-event VM)。**最高槓桿但最難純靜態**;
 > debug 口已能「跳過劇情直接到任一狀態」驗證 —— 可先用 debug 口把各段接成可玩,再補真實觸發。
@@ -123,7 +123,7 @@ remake 以自有旗標流串成可破關主線(不必 1:1 還原半成品 runner
 - 單元測試 ×15:stats/combat/monster/battle/inventory/door/npc/roster/menu/dialogue/
   nameinput/tavern/zhuyin/save/config(全綠)。
 - DEBUG 口 + DQ3_DUMP:任意狀態 headless 截圖(docs/46)。全 89 城 load 掃描零崩潰。
-- **`tools/game_tester.sh`(統一交付 gate,27/27 全綠)**:15 單元 + playthrough(37)+
+- **`tools/game_tester.sh`(統一交付 gate,79/79 全綠)**:15 單元 + playthrough(37)+
   mainline(9/9 破關)+ 89 城零崩潰 + 新內容(索瑪二階段/結局捲動/sub2 給物×3/boss 事件)+
   存讀檔 roundtrip。
 - **`tools/playthrough_check.sh`(37 項)**:各系統孤立斷言全綠。

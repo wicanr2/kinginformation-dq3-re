@@ -44,7 +44,7 @@
 
 ## 交付前自動化驗證(game_tester)
 
-`tools/game_tester.sh` 一鍵全綠(**27/27**):
+`tools/game_tester.sh` 一鍵全綠(**79/79**):
 - 15 單元測試(數值/戰鬥/道具/存檔…)
 - playthrough_check 37 項(各系統孤立斷言)
 - mainline_check(主線一條龍 → 進度 9/9 破關)
@@ -54,4 +54,4 @@
 - 存檔→讀檔 roundtrip(狀態回復)
 
 ⇒ 多畫面 oracle 一致(標題像素 / 注音 IME 字序 / boss sprite)+ RE byte-identical +
-27/27 自動驗證 + 89 城零崩潰 = 忠實度與穩定性交付基準。
+79/79 自動驗證 + 89 城零崩潰 = 忠實度與穩定性交付基準。
