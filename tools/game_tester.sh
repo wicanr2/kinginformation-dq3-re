@@ -57,8 +57,11 @@ o=$(DQ3_DEBUG="warp:67:14:25:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 
 echo "$o" | grep -q "byte4=52:獲得道具 0x65" && ok "sub2 給物 52(光之珠)" || ng "sub2 給物 52"
 o=$(DQ3_DEBUG="warp:16:33:25:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=84:獲得道具 0x10" && ok "sub2 給物 84(誘惑之劍)" || ng "sub2 給物 84"
+# 古布達黑胡椒(byte4=25 CTY15):救人前(無 flag 0x211)→ gate 不給;救人後 → 給黑胡椒
 o=$(DQ3_DEBUG="warp:15:5:25:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
-echo "$o" | grep -q "byte4=25:獲得道具 0x5c" && ok "sub2 給物 25(黑胡椒)" || ng "sub2 給物 25"
+echo "$o" | grep -q "還在巴哈拉達洞窟救達妮亞" && ok "sub2 給物 25 gate(未救達妮亞→黑胡椒未給)" || ng "sub2 給物 25 gate"
+o=$(DQ3_DEBUG="flag:0x211;warp:15:5:25:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "byte4=25:獲得道具 0x5c" && ok "sub2 給物 25(救達妮亞後→黑胡椒)" || ng "sub2 給物 25"
 o=$(DQ3_DEBUG="warp:64:16:11:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=49:獲得道具 0x6b" && ok "sub2 給物 49(銀寶珠)" || ng "sub2 給物 49"
 # 檢查型 NPC(require_item):持船渡海反應(byte4=16 精靈女王已改 transform,見第 9 段)
@@ -146,6 +149,18 @@ o=$(DQ3_DEBUG="party;warp:10:4:4:5" DQ3_INPUT="e" DQ3_BATTLE_SCRIPT="FF" timeout
 echo "$o" | grep -q "盜賊甘達特擋路" && echo "$o" | grep -q "遭遇.*HP551" && ok "香巴尼之塔:取皇冠前甘達特(怪26)boss gate" || ng "甘達特 gate"
 o=$(DQ3_DEBUG="flag:0x210;warp:10:4:4:5" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "獲得道具 0x33" && ok "甘達特已敗→取金皇冠(連 Romaly 線)" || ng "甘達特後皇冠"
+
+echo "######## 16. B-9 收尾(歐里空金屬/古布達救人/隱身草)########"
+# 歐里空金屬 0x6d:CTY84 養羊圍欄寶箱,站(23,36)朝上 examine(杜勝利 Ch50)
+o=$(DQ3_DEBUG="warp:84:23:36:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x6d" && ok "達姆杜拉 CTY84 歐里空金屬寶箱(站 23,36 朝上)" || ng "歐里空金屬"
+# 古布達黑胡椒救人 gate(杜勝利 Ch19-20):未救達妮亞(flag 0x211)→ byte4=25 古布達不給黑胡椒。
+# gate 邏輯靜態驗證(古布達 NPC 在 CTY15,救人前 before_rec);救人 = boss:27;boss:26;flag:0x211。
+SRC="${GT_SRC:-/repo/dq3_remake/src/main.c}"; [ -f "$SRC" ] || SRC="dq3_remake/src/main.c"
+grep -q '還在巴哈拉達洞窟救達妮亞' "$SRC" 2>/dev/null && ok "古布達黑胡椒救人 gate(flag 0x211 前不給)" || ng "古布達救人 gate"
+# 隱身草 0x5d:已在多家商店貨架(shopdata),購買系統可得
+SHOP="${GT_SHOP:-/repo/dq3_remake/src/dq3_shopdata.c}"; [ -f "$SHOP" ] || SHOP="dq3_remake/src/dq3_shopdata.c"
+grep -q "0x5d" "$SHOP" 2>/dev/null && ok "隱身草 0x5d 在商店貨架(可購)" || ng "隱身草貨架"
 
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)

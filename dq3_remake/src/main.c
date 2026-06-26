@@ -954,7 +954,13 @@ static int run_game(const char *assets, const char *dump)
                          * 前置道具未滿足→before_rec;持前置且未給→給物+里程碑+give_rec;已給→after_rec。 */
                         const dq3_scripted *sc = dq3_scripted_get(b4, cur_cty);
                         set_dialogue_hero(&roster, &party);
-                        if (sc->require_item != DQ3_SC_NOITEM) {
+                        if (b4 == 25 && cur_cty == 15 && !dq3_flags_get(&flags, 0x211)) {
+                            /* 古布達黑胡椒救人 gate(杜勝利 Ch19-20):需先到巴哈拉達洞窟打倒
+                             * 甘達特手下(怪27)救出達妮亞(flag 0x211),古布達才回胡椒店免費給黑胡椒。
+                             * 救人事件 = boss:27;boss:26;flag:0x211(洞窟雙 boss → 設 0x211)。 */
+                            dq3_dialogue_open(&dlg, sc->before_rec);
+                            fprintf(stderr, "古布達:還在巴哈拉達洞窟救達妮亞(打甘達特手下怪27)→ 黑胡椒未給\n");
+                        } else if (sc->require_item != DQ3_SC_NOITEM) {
                             /* 檢查型 NPC(0x7c0c 檢查,不消耗):持物→success rec、否則→need rec。 */
                             if (dq3_inv_find(&inv, sc->require_item) >= 0) {
                                 if (sc->milestone) dq3_progress_set(&flags, sc->milestone);
