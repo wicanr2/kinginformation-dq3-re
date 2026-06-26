@@ -205,3 +205,20 @@ give/take handler 全部接齊:
 ⇒ **所有「有真實 NPC 的 sub2 give/take handler」接齊**:給予 7/12/25/31/49/52/84 +
 特例 9(Romaly 收皇冠)/26(Portoga 胡椒換船)+ 檢查型 16/44/50。game_tester **32/32** 全綠。
 道具經濟與條件對話的 sub2 子系統至此完成靜態還原 + remake 落地。
+
+## Step 15:綠寶珠 questline — 提頓村牢房犯人(runner 給予)+ 祭壇 stub(2026-06-26)
+
+青衫攻略線索:**提頓村(CTY20)牢房犯人給綠寶珠 0x66**,送往遙遠南方雷亞姆蘭特祭壇。
+這解開了 byte4=64「require 0x66 但無對白」之謎 —— 0x66 的**給予端不是 sub2 talk-NPC**:
+
+- **給予端**:byte4=35 handler(L0x593a,give 0x66,rec38「把這個寶珠拿去吧」/rec39,flag 0x3e)
+  **無 sub2 NPC 引用** → 是 runner/region 事件,原版閘在「**夜晚進村 + 開牢門**」(黑暗神燈變夜)。
+  CTY20 的實體 NPC 是 **b4=29 sub=0** @ (16,2):平時是**屍體 + 牆上留書**(rec29「帶的寶珠留給有緣人」)。
+  ⇒ remake 無日夜系統 → 簡化:talk 提頓村 (16,2) 犯人 → 給綠寶珠 0x66 + rec29 留書(main.c 特例)。
+- **祭壇端**:byte4 **63-68** handler(L0x60b5-0x60d3,6 個近乎相同)只 `[0x2593]=0x66; call 0x7c0c`
+  檢查綠寶珠,**無對白 rec、無 give、無 flag** → **stub handler**(未發售版祭壇事件未做完,
+  同 ENDTXT/結局未定稿模式)。⇒ 不接(無觀感反應)。
+
+**道具來源教訓再驗證**(memory `re-item-source-check-walkthrough-first`):0x66 一度被當「無給予 NPC」,
+實際給予在 runner 事件 + 攻略才講得清(夜晚/牢房條件)。**sub2 清單掃不到 ≠ 道具無來源** —— runner/region
+事件、examine、sub=0 特殊 NPC 都是合法給予管道。game_tester 33/33。

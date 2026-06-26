@@ -795,6 +795,20 @@ static int run_game(const char *assets, const char *dump)
                         dhama_modal(&roster, &party, &gst, sys_ok ? &sys_txt : &dlg.txt);
                         dq3_scene_apply_palette(cur);
                         talked = 1;
+                    } else if (sub < 2 && cur_cty == 20 && cur->npcs[ni].x == 16 && cur->npcs[ni].y == 2 && dlg_ok) {
+                        /* 提頓村(CTY20)牢房犯人:給綠寶珠 0x66(青衫攻略;runner handler byte4=35,rec38/39)。
+                         * 原版閘在「夜晚進村 + 開牢門」(runner/region 事件);remake 無日夜系統 → 簡化為
+                         * talk 即給(留書「帶的寶珠留給有緣人」rec29)。綠寶珠 → 帶去雷亞姆蘭特祭壇(byte4=63-68 收)。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_inv_find(&inv, 0x66) < 0) {
+                            dq3_inv_add(&inv, 0x66);
+                            dq3_dialogue_open(&dlg, b4);   /* rec29:屍體留書「寶珠留給有緣人」 */
+                            fprintf(stderr, "★ 提頓村牢房犯人:獲得綠寶珠 0x66(留給有緣人 → 雷亞姆蘭特祭壇)\n");
+                        } else {
+                            dq3_dialogue_open(&dlg, b4);
+                            fprintf(stderr, "提頓村牢房:已取綠寶珠(rec%d)\n", b4);
+                        }
+                        talked = 1;
                     } else if (sub < 2 && dlg_ok) {          /* 對話型 NPC */
                         set_dialogue_hero(&roster, &party);  /* {V} 主角名 */
                         if (dq3_dialogue_open(&dlg, b4) == 0) {

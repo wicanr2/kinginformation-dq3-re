@@ -68,6 +68,9 @@ o=$(DQ3_DEBUG="item:0x59;warp:5:17:8:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSET
 echo "$o" | grep -q "byte4=16:持有 0x59" && ok "sub2 檢查 16(持夢幻紅寶石→反應)" || ng "sub2 檢查 16 持物"
 o=$(DQ3_DEBUG="item:0x5b;warp:62:38:6:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=50:持有 0x5b" && ok "sub2 檢查 50(持船→渡海反應)" || ng "sub2 檢查 50 持物"
+# 提頓村牢房犯人給綠寶珠(青衫攻略 runner 事件,remake 簡化 talk 即給)
+o=$(DQ3_DEBUG="warp:20:16:3:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得綠寶珠 0x66" && ok "提頓村牢房給綠寶珠(0x66)" || ng "提頓村綠寶珠"
 
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
