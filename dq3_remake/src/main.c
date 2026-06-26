@@ -265,7 +265,7 @@ static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
 static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party);
 static int g_item_world_eff = 0;   /* 野外道具選單選了蓋美拉翅膀/聖水 → 交 main 迴圈處理世界狀態 */
 static unsigned g_sea_frame = 0;   /* 海面 palette cycling 幀計數 */
-static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text);
+static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text, dq3_inventory *inv);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
 
@@ -619,7 +619,7 @@ static int run_game(const char *assets, const char *dump)
                     else fprintf(stderr, "[DEBUG] 轉職失敗(勇者/不合法職業)\n");
                 }
             } else if (strcmp(tok, "dhama") == 0) {           /* 開達瑪轉職選單(神官)*/
-                dhama_modal(&roster, &party, &gst, sys_ok ? &sys_txt : &dlg.txt);
+                dhama_modal(&roster, &party, &gst, sys_ok ? &sys_txt : &dlg.txt, &inv);
                 dq3_scene_apply_palette(cur);
             } else if (sscanf(tok, "status:%d:%d", &a, &b) == 2) { /* 施加異常狀態:slot a,bit b(1毒2麻)*/
                 if (a >= 0 && a < party.count) {
@@ -842,7 +842,7 @@ static int run_game(const char *assets, const char *dump)
                      * 旗標條件對話 → 取主對話 rec,docs/42);3-7 = 設施(docs/40,byte4=設施索引)。 */
                     if (sub < 2 && cur_cty == DQ3_DHAMA_CTY &&
                         cur->npcs[ni].x == 6 && cur->npcs[ni].y == 4) {   /* 達瑪神官 → 轉職選單 */
-                        dhama_modal(&roster, &party, &gst, sys_ok ? &sys_txt : &dlg.txt);
+                        dhama_modal(&roster, &party, &gst, sys_ok ? &sys_txt : &dlg.txt, &inv);
                         dq3_scene_apply_palette(cur);
                         talked = 1;
                     } else if (sub < 2 && cur_cty == 20 && cur->npcs[ni].x == 16 && cur->npcs[ni].y == 2 && dlg_ok) {
@@ -1741,7 +1741,7 @@ static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *rost
 }
 
 /* 達瑪神官轉職選單:選隊員 → 選新職業 → dq3_member_change_class(勇者不可轉/不可轉成勇者)。 */
-static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text)
+static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text, dq3_inventory *inv)
 {
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg; uint8_t yellow; uint8_t *fb = dq3_fb();
@@ -1770,9 +1770,20 @@ static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *g
             if (r == -2) { state = 0; }
             else if (r >= 0) {
                 dq3_member *m = &roster->list[party->slot[chosen]].m;
-                if (dq3_member_change_class(m, gst, r) == 0)
-                    fprintf(stderr, "★ 達瑪轉職:隊員%d → 職業%d(Lv1,屬性減半)\n", chosen, r);
-                else fprintf(stderr, "達瑪:勇者不可轉職 / 不可轉成勇者\n");
+                int was_yusha = (m->cls == 7);   /* 遊人免領悟之書 */
+                /* 賢者(class 5)需領悟之書 0x40,或本身是遊人(免書;杜勝利 Ch21)。 */
+                if (r == 5 && !was_yusha && dq3_inv_find(inv, 0x40) < 0) {
+                    fprintf(stderr, "達瑪:轉賢者需《領悟之書》(或遊人免書)— 加爾那之塔 CTY87 取得\n");
+                    break;
+                }
+                if (dq3_member_change_class(m, gst, r) == 0) {
+                    fprintf(stderr, "★ 達瑪轉職:隊員%d → 職業%d%s(Lv1,屬性減半)\n", chosen, r,
+                            r == 5 ? "(賢者)" : "");
+                    if (r == 5 && !was_yusha && dq3_inv_find(inv, 0x40) >= 0) {
+                        dq3_inv_remove(inv, 0x40);   /* 領悟之書轉一次賢者後消耗(原版語意)*/
+                        fprintf(stderr, "  《領悟之書》已用(消耗)\n");
+                    }
+                } else fprintf(stderr, "達瑪:勇者不可轉職 / 不可轉成勇者\n");
                 break;
             }
         }
