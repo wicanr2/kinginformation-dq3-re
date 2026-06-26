@@ -577,6 +577,25 @@ static int run_game(const char *assets, const char *dump)
                 phoenix_revived = 1;
                 if (!in_town) phoenix_aboard = 1;
                 fprintf(stderr, "[DEBUG] 不死鳥拉米亞復活%s\n", phoenix_aboard ? " + 搭乘(飛行)" : "");
+            } else if (strcmp(tok, "zomaseq") == 0) {         /* 索瑪前完整序列:巴拉摩斯怨靈122 → 殭屍123 → 索瑪124 */
+                int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
+                dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
+                fprintf(stderr, "★ 索瑪神殿前序列：巴拉摩斯怨靈(怪122)\n");
+                oc = dq3_battlescene_run(assets, 122, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                dq3_scene_apply_palette(cur);
+                if (oc == 1) {
+                    fprintf(stderr, "★ 巴拉摩斯僵尸(怪123)\n");
+                    oc = dq3_battlescene_run(assets, 123, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                    dq3_scene_apply_palette(cur);
+                }
+                if (oc == 1) {
+                    dq3_battlescene_set_light_orb(dq3_inv_find(&inv, 0x65) >= 0);
+                    fprintf(stderr, "★ 大魔王索瑪(怪124)\n");
+                    oc = dq3_battlescene_run(assets, 0x7c, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                    dq3_scene_apply_palette(cur);
+                }
+                fprintf(stderr, "[DEBUG] 索瑪序列 outcome=%d\n", oc);
+                if (oc == 1) run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok, &end_seq);
             } else if (strcmp(tok, "zoma") == 0) {            /* 索瑪終戰(怪 0x7c)→ 勝則破關 */
                 int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
                 dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);

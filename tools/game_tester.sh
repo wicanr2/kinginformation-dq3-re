@@ -173,6 +173,18 @@ echo "######## 17. 巴拉摩斯 boss(下降前主線大 boss)########"
 # 巴拉摩斯本體:baramos token → 怪121 開戰(HP1201);勝利設 flag 0x213(杜勝利 Ch44)
 o=$(DQ3_DEBUG="party;baramos" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "巴拉摩斯戰(怪121 HP1201)" && ok "巴拉摩斯本體 boss(怪121 HP1201 開戰)" || ng "巴拉摩斯 boss"
+# 索瑪前完整序列:zomaseq token → 巴拉摩斯怨靈 122 → 殭屍 123 → 索瑪 124(逐戰勝才推進)
+# 怨靈/殭屍數值 ground truth = docs/38(怨靈 HP1201、殭屍 HP2880);序列首戰怨靈必觸發
+o=$(DQ3_DEBUG="party;item:0x65;zomaseq" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FFFF" timeout 30 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "巴拉摩斯怨靈(怪122)" && ok "索瑪前序列:巴拉摩斯怨靈(怪122)首戰觸發" || ng "索瑪前序列怨靈"
+# id 正確性:docs/38 怨靈 122 HP1201、殭屍 123 HP2880(ground truth,非記憶)
+D38="${GT_DOCS:-/repo/docs/38-monster-stats.md}"; [ -f "$D38" ] || D38="docs/38-monster-stats.md"
+GR=$(python3 -c "
+for ln in open('$D38',encoding='utf-8'):
+    if '| 122 ' in ln or '| 123 ' in ln:
+        c=[x.strip() for x in ln.split('|')]; print(c[1]+'_'+c[3])
+" 2>/dev/null | tr '\n' ' ')
+echo "$GR" | grep -q "122_1201" && echo "$GR" | grep -q "123_2880" && ok "怨靈122/殭屍123 數值 ground truth(docs/38)" || ng "怨靈/殭屍數值 ($GR)"
 
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
