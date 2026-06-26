@@ -273,6 +273,27 @@ static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
  * 路徑:DQ3_SAVE 環境變數,預設 "dq3_save.dat"(cwd;唯讀 cwd 時用 env 指可寫路徑)。 */
 static const char *save_path(void) { return getenv("DQ3_SAVE") ? getenv("DQ3_SAVE") : "dq3_save.dat"; }
 
+/* 多存檔 slot(至少 6 格,使用者需求)。slot 0 = F10 自動存檔(=save_path(),相容舊存檔);
+ * slot 1..DQ3_SAVE_SLOTS = 手動存檔 dq3_saveN.dat(記錄點/F10 選格)。
+ * 路徑基底沿用 save_path() 的目錄概念:slot0 直接用 save_path();slotN 用 "dq3_saveN.dat"
+ * (若 DQ3_SAVE 指定了非預設路徑,slotN 以該路徑加序號後綴,維持可寫目錄一致)。 */
+#define DQ3_SAVE_SLOTS 6
+static const char *slot_path(int slot)
+{
+    static char buf[8][512];
+    const char *base = save_path();
+    if (slot <= 0) return base;                       /* slot 0 = 自動存檔(相容)*/
+    if (slot > DQ3_SAVE_SLOTS) slot = DQ3_SAVE_SLOTS;
+    {   /* base 去掉 ".dat" 後接 "N.dat";base 無 ".dat" 則直接接 "N.dat" */
+        const char *dot = strrchr(base, '.');
+        size_t stem = dot ? (size_t)(dot - base) : strlen(base);
+        if (stem > 500) stem = 500;
+        memcpy(buf[slot], base, stem);
+        snprintf(buf[slot] + stem, sizeof buf[slot] - stem, "%d.dat", slot);
+    }
+    return buf[slot];
+}
+
 /* 把對話變數 {V} 的「主角/受話者名」設成隊長(無隊伍時用名冊首位=主角)。
  * 對話渲染遇 VAR0/VAR_ENT 等插值碼時即替換成此名(dq3_text_set_var_name)。 */
 static void set_dialogue_hero(const dq3_roster *r, const dq3_party *p)
@@ -324,17 +345,25 @@ static int church_revive(dq3_roster *r, const dq3_party *p, long *gold)
     return revived;
 }
 
-static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
-                         int cty, int px, int py, const dq3_ship *ship)
+/* 存檔到指定 path(slot)。slot 0=自動存檔路徑、1..6=手動 slot。 */
+static int save_game_to(const char *path, const dq3_roster *r, const dq3_party *p,
+                        const dq3_inventory *inv, int cty, int px, int py, const dq3_ship *ship)
 {
     dq3_save_pos pos; int rc;
     pos.cty = cty; pos.px = px; pos.py = py;
     pos.ship_owned = ship->owned; pos.ship_aboard = ship->aboard;       /* #2 船狀態 */
     pos.ship_px = ship->px; pos.ship_py = ship->py; pos.ship_layer = ship->layer;
-    rc = dq3_save_write(save_path(), r, p, inv, pos);
-    if (rc == 0) fprintf(stderr, "自動存檔 → %s(名冊%d 隊伍%d CTY%d)\n", save_path(), r->count, p->count, cty);
-    else fprintf(stderr, "autosave 失敗(無法寫 %s)\n", save_path());
+    rc = dq3_save_write(path, r, p, inv, pos);
+    if (rc == 0) fprintf(stderr, "存檔 → %s(名冊%d 隊伍%d CTY%d)\n", path, r->count, p->count, cty);
+    else fprintf(stderr, "存檔失敗(無法寫 %s)\n", path);
     return rc;
+}
+
+/* F10 自動存檔(slot 0,相容舊路徑)。 */
+static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
+                         int cty, int px, int py, const dq3_ship *ship)
+{
+    return save_game_to(slot_path(0), r, p, inv, cty, px, py, ship);
 }
 
 /* 消耗品使用(#3,docs/49)。對隊伍套效果並消耗道具:HEAL_HP 治第一個受傷隊員;
@@ -454,6 +483,60 @@ static int confirm_quit(const dq3_text *text)
     return 0;
 }
 
+/* 存檔/讀檔 slot 選擇器(6 格,使用者需求)。for_load=1 時只有「有資料」的 slot 可選
+ * (空 slot 仍顯示但不可選)。回選中 slot(1..DQ3_SAVE_SLOTS);ESC 取消回 -1。
+ * 標籤 = 「冒險之書 N」概念,以數字 glyph N 顯示 + 有資料時附 ● 標記(glyph 復用)。 */
+static int slot_select(const dq3_text *text, int for_load)
+{
+    /* 「冒險之書」glyph(沿用既有字串若有;此處用數字 + 標題列)。標題:存=記錄/讀=繼續。 */
+    static const uint16_t T_SAVE[5] = {502, 488, 113, 689, 534};  /* 借「離開遊戲嗎」框(暫;標題列另繪數字)*/
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg, gray; uint8_t yellow; dq3_menu m;
+    uint8_t *fb = dq3_fb();
+    int wx = 150, wy = 70, ww = 260, wh = 200, i;
+    int has[DQ3_SAVE_SLOTS + 1];
+
+    raw = dq3_load_file("DQ3.PAL", &rl);
+    if (!raw) return -1;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = pal_near2(pal,pn,255,255,255); bg = pal_near2(pal,pn,16,16,32);
+    gray = pal_near2(pal,pn,110,110,110); yellow = (uint8_t)pal_near2(pal,pn,255,255,0);
+
+    for (i = 1; i <= DQ3_SAVE_SLOTS; i++) has[i] = dq3_save_exists(slot_path(i));
+
+    dq3_menu_init(&m, wx + 40, wy + 40);
+    for (i = 1; i <= DQ3_SAVE_SLOTS; i++) {
+        uint16_t lab[1]; lab[0] = (uint16_t)i;     /* 數字 glyph = slot 號 */
+        dq3_menu_add(&m, lab, 1);
+    }
+    m.cursor = 0;
+
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (sc == 0x01) return -1;                 /* ESC 取消 */
+        if (sc) {
+            int sel = dq3_menu_input(&m, sc);
+            if (sel >= 0) {
+                int slot = sel + 1;
+                if (for_load && !has[slot]) { /* 讀檔:空格不可選,忽略 */ }
+                else return slot;
+            }
+        }
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        for (i = 0; i < 5; i++)                     /* 標題列(暫借框,可日後換專屬字串)*/
+            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+16+i*DQ3_GLYPH_PX, wy+12, T_SAVE[i], (uint8_t)white);
+        dq3_menu_render(&m, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, yellow);
+        /* 每 slot 右側標「有資料/空」:有=黃點概念,用「●」無 glyph 則以數字色區分 —— 簡化:
+         * 空 slot 標籤畫灰(覆蓋一次),提示不可載入。 */
+        for (i = 1; i <= DQ3_SAVE_SLOTS; i++)
+            if (!has[i])
+                dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+40, wy+40+(i-1)*m.line_h, (uint16_t)i, (uint8_t)gray);
+        dq3_present(); dq3_delay_ms(16);
+    }
+    return -1;
+}
+
 static int run_game(const char *assets, const char *dump)
 {
     char err[256] = {0};
@@ -499,14 +582,18 @@ static int run_game(const char *assets, const char *dump)
     dq3_inv_init(&inv); dq3_flags_init(&flags);
     /* (移除早期 #2 合成測試的預塞太陽之石+雲雨之杖;現走真實取得鏈:
      *  太陽之石 CTY80 寶箱、雲雨之杖 精靈祠堂 CTY92。debug 仍可 item:0x72/0x73 補。) */
-    /* 續玩:DQ3_LOAD 且存檔存在 → 讀回名冊/隊伍/道具(位置另需載入對應場景,先記錄)。 */
-    if (getenv("DQ3_LOAD") && dq3_save_exists(save_path())) {
+    /* 續玩:DQ3_LOAD 指定 slot(DQ3_LOAD=N 讀冒險之書 N,1..6;空/0/1 維持相容讀 slot 0 autosave)。
+     * 互動式標題「繼續冒險」選 slot 另在標題流程(load_slot_choice);此處為 env 直載入口(headless 測試/續玩)。
+     * 位置另需載入對應場景,先記錄。 */
+    if (getenv("DQ3_LOAD")) {
+        int lslot = atoi(getenv("DQ3_LOAD"));        /* DQ3_LOAD=N → slot N(2..6);0/1/非數字 → slot 0(相容舊語意)*/
+        const char *lpath = (lslot >= 2 && lslot <= DQ3_SAVE_SLOTS) ? slot_path(lslot) : slot_path(0);
         dq3_save_pos pos;
-        if (dq3_save_read(save_path(), &roster, &party, &inv, &pos) == 0) {
+        if (dq3_save_exists(lpath) && dq3_save_read(lpath, &roster, &party, &inv, &pos) == 0) {
             ship.owned = pos.ship_owned; ship.aboard = pos.ship_aboard;   /* #2 還原船狀態 */
             ship.px = pos.ship_px; ship.py = pos.ship_py; ship.layer = pos.ship_layer;
             fprintf(stderr, "讀檔續玩 ← %s(名冊%d 隊伍%d,存檔位置 CTY%d (%d,%d)%s)\n",
-                    save_path(), roster.count, party.count, pos.cty, pos.px, pos.py,
+                    lpath, roster.count, party.count, pos.cty, pos.px, pos.py,
                     ship.owned ? (ship.aboard ? " 船上" : " 有船") : "");
         }
     }
@@ -803,9 +890,12 @@ static int run_game(const char *assets, const char *dump)
             dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         sc = dq3_poll_scancode();
-        if (sc == DQ3_SC_F10) {             /* F10:離開遊戲確認(Yes/No)+ 自動存檔 */
+        if (sc == DQ3_SC_F10) {             /* F10:離開遊戲確認(Yes/No)→ 選 slot 存檔(使用者需求)*/
             if (confirm_quit(&dlg.txt)) {
-                autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py, &ship);
+                int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 0);   /* 選格;ESC → 存 slot 0 autosave */
+                save_game_to(slot >= 1 ? slot_path(slot) : slot_path(0),
+                             &roster, &party, &inv, cur_cty, cur->px, cur->py, &ship);
+                fprintf(stderr, "F10 離開:存入%s\n", slot >= 1 ? "選定 slot" : "自動存檔(slot 0)");
                 dq3_rt_set_quit();
             }
             dq3_scene_apply_palette(cur);   /* confirm 改過 DAC,還原場景色盤 */
@@ -1101,8 +1191,16 @@ static int run_game(const char *assets, const char *dump)
                                 /* 有復活 → 「誰需要復活」(rec 0x138);否則 → 「主持正義之人」(0x129)*/
                                 if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, rev > 0 ? 0x138 : 0x129);
                             } else if (fac->type == DQ3_FAC_RECORD) {
-                                autosave_game(&roster, &party, &inv, cur_cty, cur->px, cur->py, &ship);
-                                if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xfd);   /* 記錄「旅行的經驗」*/
+                                /* 記錄點:開 6-slot 選單讓玩家選格存檔(使用者需求:至少 6 slot)。
+                                 * ESC 取消 → 不存。選定 slot → 存檔 + 記錄對話。 */
+                                int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 0);
+                                if (slot >= 1) {
+                                    save_game_to(slot_path(slot), &roster, &party, &inv,
+                                                 cur_cty, cur->px, cur->py, &ship);
+                                    fprintf(stderr, "記錄點:存入冒險之書 %d\n", slot);
+                                    if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xfd);   /* 記錄「旅行的經驗」*/
+                                } else fprintf(stderr, "記錄點:取消存檔\n");
+                                dq3_scene_apply_palette(cur);
                             }
                         }
                     }

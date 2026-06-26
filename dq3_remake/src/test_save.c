@@ -46,6 +46,29 @@ int main(void)
         CHECK(memcmp(&r, &r2, sizeof r) == 0, "名冊整塊 byte 一致");
     }
 
+    printf("== 多存檔 slot 隔離(6 slot,使用者需求)==\n");
+    {
+        /* slot 路徑規則(對齊 main.c slot_path):base="/tmp/dq3_slot.dat" → slotN="/tmp/dq3_slotN.dat"。
+         * 寫 6 個 slot 各帶不同 CTY,逐一讀回確認互不覆蓋。 */
+        char sp[7][64]; int s, ok_iso = 1, ok_cnt = 0;
+        for (s = 1; s <= 6; s++) {
+            dq3_save_pos sps = { 0 };
+            snprintf(sp[s], sizeof sp[s], "/tmp/dq3_slot%d.dat", s);
+            sps.cty = 10 + s;                       /* 每 slot 不同 CTY 當指紋 */
+            sps.px = s; sps.py = s * 2;
+            if (dq3_save_write(sp[s], &r, &p, &inv, sps) == 0) ok_cnt++;
+        }
+        CHECK(ok_cnt == 6, "6 個 slot 全部寫檔成功");
+        for (s = 1; s <= 6; s++) {
+            dq3_roster rr; dq3_party pp; dq3_inventory ii; dq3_save_pos rp;
+            if (dq3_save_read(sp[s], &rr, &pp, &ii, &rp) != 0 || rp.cty != 10 + s
+                || rp.px != s || rp.py != s * 2) ok_iso = 0;
+        }
+        CHECK(ok_iso, "6 個 slot 各自獨立(讀回 CTY/座標指紋一致,互不覆蓋)");
+        CHECK(dq3_save_exists(sp[3]) && dq3_save_exists(sp[6]), "slot 3 / slot 6 存檔皆存在");
+        for (s = 1; s <= 6; s++) remove(sp[s]);
+    }
+
     printf("== 防呆:壞檔 / 缺檔 ==\n");
     CHECK(dq3_save_read("/tmp/dq3_nonexistent_xyz.dat", &r, &p, &inv, &pos) == -1, "缺檔 → -1");
     { FILE *f = fopen(path, "wb"); fwrite("GARBAGE!", 1, 8, f); fclose(f); }

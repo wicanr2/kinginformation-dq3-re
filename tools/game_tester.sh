@@ -210,10 +210,19 @@ echo "$o" | grep -q "遭遇.*HP801" && ok "in-game 八頭大蛇觸發(CTY19)" ||
 echo "######## 6. 存檔/讀檔 roundtrip(整合)########"
 SV=/tmp/gt_save.dat; rm -f "$SV"
 DQ3_SAVE="$SV" DQ3_DEBUG="party;gold:5000;item:0x55;warp:2:10:10" DQ3_INPUT="que" timeout 20 "$BIN" "$ASSETS" game >/tmp/sv1.log 2>&1
-if [ -s "$SV" ] && grep -q "自動存檔" /tmp/sv1.log; then
+if [ -s "$SV" ] && grep -q "存檔 →" /tmp/sv1.log; then
   o=$(DQ3_SAVE="$SV" DQ3_LOAD=1 DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
   echo "$o" | grep -q "讀檔續玩.*CTY2 (10,10)" && ok "存檔→讀檔 roundtrip(狀態回復)" || ng "讀檔狀態不符"
 else ng "存檔未產生"; fi
+# 多 slot:DQ3_LOAD=N 讀 slotN(dq3_saveN.dat);slot path 規則 + slot 隔離(test_save 單元已驗 6 slot)
+SVB=/tmp/gt_slot.dat; rm -f /tmp/gt_slot*.dat
+# 以 slot0 autosave 寫入(F10 流程需互動,headless 用 autosave 事件點寫 slot0);驗 DQ3_LOAD=3 找 dq3_slot3.dat
+cp "$SV" /tmp/gt_slot3.dat 2>/dev/null
+o=$(DQ3_SAVE="$SVB" DQ3_LOAD=3 DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "讀檔續玩 ← /tmp/gt_slot3.dat" && ok "多 slot:DQ3_LOAD=3 讀 slot3(dq3_saveN.dat 路徑規則)" || ng "多 slot 讀 slot3"
+o=$(DQ3_SAVE="$SVB" DQ3_LOAD=5 DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "讀檔續玩" && ng "slot5 空卻讀到" || ok "多 slot:DQ3_LOAD=5(空 slot)→ 不讀檔(新局)"
+rm -f /tmp/gt_slot*.dat
 
 echo "================================================"
 echo "== game-tester 結果:PASS=$PASS FAIL=$FAIL =="

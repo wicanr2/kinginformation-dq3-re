@@ -558,3 +558,29 @@ pattern 同八頭大蛇 byte4=45(已接範本)。
 - docs/data/special-events-audit.md:方法論 + 判讀結論。
 
 ### 結論:可玩性無缺口(主線可破關),剩 2 個長尾精緻化候選(非急迫)
+
+
+## Step 39:多存檔 slot(6 格,使用者需求)2026-06-26
+
+存檔機制從單一 dq3_save.dat 擴成 6 個 slot(冒險之書概念)。dq3_save.c API 本就 path-based,免改;
+main.c 加 slot→path 映射 + slot 選單 UI + 三入口接線。
+
+### slot path 規則(slot_path)
+- slot 0 = 自動存檔(=save_path(),相容舊存檔);slot 1..6 = base 去 .dat 接 Ndat:
+  dq3_save.dat → dq3_save1.dat .. dq3_save6.dat。DQ3_SAVE 指定路徑時同規則加序號。
+
+### slot 選單(slot_select,複用 confirm_quit 的 menu+window pattern)
+- 6 格,數字 glyph(glyph index N = 字元 N)顯示 slot 號;for_load=1 時空 slot 畫灰不可選。
+- ESC 取消回 -1。
+
+### 三入口接線
+1. **記錄點設施**(FAC_RECORD):開 slot 選單選格存檔(原只 autosave 單檔)。
+2. **F10 離開**:confirm_quit Yes → slot 選單選格存(ESC 跳過 → 存 slot 0 autosave)。
+3. **讀檔**:DQ3_LOAD=N 讀冒險之書 N(2..6);0/1/非數字 → slot 0(相容舊語意)。
+   互動式標題「繼續冒險」選 slot 的 UI(slot_select for_load=1)已備,待標題選單流程串接
+   (run_title 目前純顯示,無新遊戲/繼續選單流程,屬獨立後續)。
+
+### 驗證
+- test_save.c 加 6 slot 隔離單元測試(6 slot 各帶不同 CTY 指紋,讀回互不覆蓋)。
+- game_tester:DQ3_LOAD=3 讀 slot3 路徑規則 + DQ3_LOAD=5 空 slot 不讀檔。
+- game_tester 73 → 75(全 PASS);roundtrip autosave 訊息「自動存檔」→「存檔 →」同步更新。
