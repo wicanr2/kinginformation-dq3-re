@@ -1035,9 +1035,25 @@ static int run_game(const char *assets, const char *dump)
                 /* 寶箱 / 隱藏物品(docs/40):type 0/1/3 + param=道具 id。flag=一次性旗標,
                  * remake 用 flag bit 當「已取」標記(set=已取);取過再調べる回空。 */
                 int is_item = (et2==0 || et2==1 || et2==3) && ep2 > 0 && ep2 < 0x90;
+                /* 香巴尼之塔(CTY10)金皇冠正源(杜勝利 Ch6):原版要先打盜賊甘達特(怪26,6F)
+                 * 才能取金皇冠。remake gate:取皇冠寶箱前,甘達特未敗(flag 0x210)→ 先 boss 戰;
+                 * 勝利才放行寶箱。皇冠 → 還羅馬利亞國王(byte4=9/特例)→ ROMALY 里程碑。 */
+                int gandata_gate = (is_item && ep2 == 0x33 && cur_cty == 10 && !dq3_flags_get(&flags, ef2));
+                if (gandata_gate && !dq3_flags_get(&flags, 0x210)) {
+                    int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
+                    fprintf(stderr, "★ 香巴尼之塔:盜賊甘達特擋路!(杜勝利 Ch6)\n");
+                    dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
+                    oc = dq3_battlescene_run(assets, 26, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                    dq3_scene_apply_palette(cur);
+                    if (oc == 1) { dq3_flags_set(&flags, 0x210, 1);
+                        fprintf(stderr, "★ 擊敗甘達特(怪26)→ 可取金皇冠\n"); }
+                    else fprintf(stderr, "甘達特戰 outcome=%d(未勝)→ 金皇冠未取\n", oc);
+                }
                 if (is_item) {
                     /* 系統訊息 / 道具名走常駐 D3TXT00(sys_txt),非當前 section 對話 bank(docs/42)。 */
-                    if (dq3_flags_get(&flags, ef2)) {           /* 已取過 → 空寶箱 */
+                    if (gandata_gate && !dq3_flags_get(&flags, 0x210)) {   /* 甘達特未敗 → 皇冠不可取 */
+                        if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xf3);
+                    } else if (dq3_flags_get(&flags, ef2)) {    /* 已取過 → 空寶箱 */
                         if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xf3);   /* 「可惜是空的。」*/
                     } else if (dq3_inv_add(&inv, ep2) >= 0) {   /* 入背包 + 標記已取 */
                         dq3_flags_set(&flags, ef2, 1);

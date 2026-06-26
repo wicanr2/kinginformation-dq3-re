@@ -141,6 +141,12 @@ echo "$o" | grep -q "獲得道具 0x60" && ok "亞布之塔 CTY26 回音之笛" 
 o=$(DQ3_DEBUG="warp:78:2:4:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "獲得道具 0x71" && ok "加萊祠堂 CTY78 銀豎琴" || ng "銀豎琴"
 
+echo "######## 15. 甘達特金皇冠正源(杜勝利 Ch6)########"
+o=$(DQ3_DEBUG="party;warp:10:4:4:5" DQ3_INPUT="e" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "盜賊甘達特擋路" && echo "$o" | grep -q "遭遇.*HP551" && ok "香巴尼之塔:取皇冠前甘達特(怪26)boss gate" || ng "甘達特 gate"
+o=$(DQ3_DEBUG="flag:0x210;warp:10:4:4:5" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x33" && ok "甘達特已敗→取金皇冠(連 Romaly 線)" || ng "甘達特後皇冠"
+
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
 o=$(DQ3_DEBUG="party;boss:26:0x33" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)
