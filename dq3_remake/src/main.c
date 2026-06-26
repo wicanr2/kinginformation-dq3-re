@@ -574,7 +574,10 @@ static int slot_select(const dq3_text *text, int for_load)
  * 「繼續冒險」→ slot_select(for_load=1) 選有資料的 slot;無任何存檔則「繼續冒險」灰化提示後回新遊戲。 */
 static int title_menu(const char *assets, const dq3_text *text)
 {
-    static const uint16_t NEW[3]  = {671, 113, 689};            /* 新遊戲(glyph:新=671 遊=113 戲=689)*/
+    /* glyph 全用原版真實 record 驗證過的(避免 unicode_map 反查錯,如「女」誤標「文」):
+     * 「開始」=488,711(txt02 rec48「從現在開始」)、「繼續冒險」=1079,1094,533,218
+     * (繼續 txt02 rec68、冒險之書 txt01 rec43 驗證)。 */
+    static const uint16_t NEW[2]  = {488, 711};                 /* 開始(開488 始711)*/
     static const uint16_t CONT[4] = {1079, 1094, 533, 218};     /* 繼續冒險(繼1079 續1094 冒533 險218)*/
     dq3_color pal16[16]; dq3_menu m; uint8_t *fb = dq3_fb();
     int has_any = 0, i, wx = 110, wy = 150;
@@ -584,7 +587,7 @@ static int title_menu(const char *assets, const dq3_text *text)
     if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
 
     dq3_menu_init(&m, wx, wy);
-    dq3_menu_add(&m, NEW, 3); dq3_menu_add(&m, CONT, 4);
+    dq3_menu_add(&m, NEW, 2); dq3_menu_add(&m, CONT, 4);
     m.cursor = has_any ? 1 : 0;                       /* 有存檔 → 預設「繼續冒險」*/
 
     while (!dq3_should_quit()) {
