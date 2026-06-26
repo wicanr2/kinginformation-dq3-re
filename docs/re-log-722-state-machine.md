@@ -331,3 +331,14 @@ game_tester **43/43**。
   歐里比雅女幽靈(CTY55 無 sub2 NPC = runner/region 事件)。
 
 機制:`DQ3_USE_GAIA`(位置 item-use 不消耗,武器型 key-item)。game_tester **46/46**。
+
+## Step 22:B-4 鑰匙鏈連通(杜勝利 Ch14/27)2026-06-26
+
+- 魔法鑰匙 0x56:**CTY13(金字塔)sect2 (13,5) 寶箱**(既有系統);門系統 tier2。
+- 最終鑰匙 0x57:**CTY40(四島礁祠堂)sect0 (18,17) 寶箱**(既有系統);門系統 tier3(身上只帶這把全開)。
+- 乾渴壺 0x5e use → 吸海顯現四島礁祠堂:新增 `DQ3_USE_DRAIN`(不消耗可重用;地表用 set flag 0x33)。
+- 兩鑰匙接既有 `dq3_inv_key_tier`(0x55/0x56/0x57=tier1/2/3),連通鎖門進度。
+- **待 RE**:金字塔按鈕機關(G→H 開石門,Ch14)為 access 事件,非道具 gate(鑰匙已可取)。
+  ⚠ 原版金字塔內施咒當機(`docs/data/original-known-bugs.md`);remake 不復刻。
+
+機制:`DQ3_USE_DRAIN`(第 3 個位置 item-use:覺醒粉/蓋亞之劍/乾渴壺)。game_tester **49/49**。

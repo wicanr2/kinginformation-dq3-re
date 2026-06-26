@@ -11,6 +11,7 @@ int dq3_item_use_kind(int item_id)
         case DQ3_ITEM_FULLMOON:     return DQ3_USE_CURE_PARALYSIS;
         case 0x5a:                  return DQ3_USE_AWAKEN;   /* 覺醒粉:諾阿尼魯解催眠(杜勝利 Ch11)*/
         case 0x0f:                  return DQ3_USE_GAIA;     /* 蓋亞之劍:阿莎拉慕火山開通(杜勝利 Ch40)*/
+        case 0x5e:                  return DQ3_USE_DRAIN;    /* 乾渴壺:四島礁吸海顯現祠堂(杜勝利 Ch27)*/
         default:                    return DQ3_USE_NONE;
     }
 }
