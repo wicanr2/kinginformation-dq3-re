@@ -726,6 +726,13 @@ static int run_game(const char *assets, const char *dump)
             if (dq3_dialogue_set_bank(&dlg, assets, cur->dlg_bank, be, sizeof be) == 0)
                 cur_dlg_bank = cur->dlg_bank;
         }
+        /* 不死鳥拉米亞:集滿六珠(綠藍紅紫黃銀 0x66-0x6b)→ 復活(六珠之力;原版不死鳥祠堂
+         * 守護者觸發在此未發售 build 不完整 → remake 以「集齊六珠」當可靠復活條件)。overworld 按 y 起飛。 */
+        if (!phoenix_revived) {
+            int orbs = 0, oi; for (oi = 0x66; oi <= 0x6b; oi++) if (dq3_inv_find(&inv, oi) >= 0) orbs++;
+            if (orbs >= 6) { phoenix_revived = 1;
+                fprintf(stderr, "★ 六珠齊備(綠藍紅紫黃銀)→ 不死鳥拉米亞復活!(出城至 overworld 按 y 起飛)\n"); }
+        }
         /* NPC 隨機走動(docs/35 §九):城鎮每幀步進;對話中凍結不動。 */
         if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
         if (!in_town) animate_sea(cur, g_sea_frame++);   /* 海面 palette cycling(地表/下層)*/
@@ -876,6 +883,23 @@ static int run_game(const char *assets, const char *dump)
                             else fprintf(stderr, "八頭大蛇戰 outcome=%d(未勝)\n", oc);
                             dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         }
+                        talked = 1;
+                    } else if (sub == 2 && cur_cty == 82 && b4 == 64 && dlg_ok) {
+                        /* 不死鳥祠堂守護者(CTY82 sect17,byte4=64 祭壇 NPC):集六珠 0x66-0x6b(綠藍紅紫黃銀)
+                         * → 復活不死鳥拉米亞(青衫攻略)。原版六祭壇位 byte4=63-68 僅 64 實際放置(build 不完整),
+                         * remake 以此 NPC 當守護者統一判定。復活後按 y 在 overworld 起飛。 */
+                        int orbs = 0, oi;
+                        for (oi = 0x66; oi <= 0x6b; oi++) if (dq3_inv_find(&inv, oi) >= 0) orbs++;
+                        set_dialogue_hero(&roster, &party);
+                        if (phoenix_revived) {
+                            fprintf(stderr, "不死鳥祠堂:拉米亞已復活(按 y 於 overworld 起飛)\n");
+                        } else if (orbs >= 6) {
+                            phoenix_revived = 1;
+                            fprintf(stderr, "★ 不死鳥祠堂:六珠齊備(綠藍紅紫黃銀)→ 拉米亞復活!(出城至 overworld 按 y 起飛)\n");
+                        } else {
+                            fprintf(stderr, "不死鳥祠堂守護者:還缺寶珠(%d/6,需綠藍紅紫黃銀 0x66-0x6b)\n", orbs);
+                        }
+                        dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         talked = 1;
                     } else if (sub == 2 && dlg_ok && dq3_scripted_get(b4, cur_cty)) {
                         /* data-driven scripted 給物 NPC(dq3_scripted 表,Step 2,docs/re-log-722)。

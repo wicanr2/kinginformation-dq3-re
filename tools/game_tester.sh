@@ -78,6 +78,11 @@ echo "$o" | grep -q "不死鳥.*復活" && echo "$o" | grep -q "末幀.*in_town=
   && ok "不死鳥復活+飛行(飛越地形/不進城,留 overworld)" || ng "不死鳥飛行"
 o=$(DQ3_DEBUG="phoenix" DQ3_INPUT="eesy" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "不死鳥降落於" && ok "不死鳥降落於可走格" || ng "不死鳥降落"
+# 集六珠(0x66-0x6b 綠藍紅紫黃銀)→ 拉米亞自動復活 → 起飛
+o=$(DQ3_DEBUG="item:0x66;item:0x67;item:0x68;item:0x69;item:0x6a;item:0x6b" DQ3_INPUT="eesy" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "六珠齊備.*拉米亞復活" && echo "$o" | grep -q "起飛" && ok "六珠齊備→拉米亞復活→起飛" || ng "六珠復活"
+o=$(DQ3_DEBUG="item:0x66;item:0x67;item:0x68;item:0x69;item:0x6a" DQ3_INPUT="ee" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "拉米亞復活" && ng "五珠不應復活" || ok "五珠未集齊(不復活)"
 
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
