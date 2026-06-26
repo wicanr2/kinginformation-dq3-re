@@ -342,3 +342,14 @@ game_tester **43/43**。
   ⚠ 原版金字塔內施咒當機(`docs/data/original-known-bugs.md`);remake 不復刻。
 
 機制:`DQ3_USE_DRAIN`(第 3 個位置 item-use:覺醒粉/蓋亞之劍/乾渴壺)。game_tester **49/49**。
+
+## Step 23:B-5 彩虹水滴材料鏈(部分)+ 合成 in-game 驗證(杜勝利 Ch47/55)2026-06-26
+
+- **太陽之石 0x72**:下層 **CTY80 sect2 (1,2) 寶箱**(既有系統)✓。
+- **彩虹合成 in-game 驗證**:持太陽之石 0x72 + 雲雨之杖 0x73 → **CTY93 神聖祠堂祭司 examine →
+  彩虹水滴 0x75**(dq3_synth_shrine_examine,需兩材料在背包,缺一回 -1)✓。架彩虹橋通終盤。
+- **雲雨之杖 0x73 待 RE(深鏈)**:byte4=75 give(runner,無 sub2 NPC)在下層精靈祠堂(拉達多姆
+  東南,docs/32),**prereq flag 0x137 = 精靈的守護**;上游 妖精之笛(瑪依拉)→ 魯比斯之塔
+  (魯比斯解詛咒)→ 精靈的守護 → 精靈祠堂 → 雲雨之杖(杜勝利 Ch52-54)。多層 runner 鏈,後續逐層 RE。
+
+⇒ 合成 climax + 太陽之石可玩;雲雨之杖深鏈為下個 RE 目標。game_tester 含合成 in-game 斷言。
