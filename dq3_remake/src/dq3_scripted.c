@@ -21,6 +21,13 @@ static const dq3_scripted TABLE[] = {
    * 給誘惑之劍 0x10(女性專用武器)。rec98 招呼 / rec99 給予(D3TXT04 bank)。flag-gate 觀感給予近似。
    * (byte4=35 give 0x66 handler 存在但無任何 NPC 引用 → 開發殘留,不接。)*/
   {  84, 16, 0x10, DQ3_SC_NOITEM, 0,                 98, 99, 98 },
+  /* 巴哈拉達 CTY15 sect0 (5,24) 胡椒商古布達(handler L0x5719,flag 0x36):獲救後給黑胡椒 0x5c
+   * (取船劇情材料)。rec118 給予/rec119 招呼/rec120 後話(D3TXT03 bank)。
+   * (註:CTY15 道具店亦補進黑胡椒[docs/50 remake 補洞];此 NPC 為原版忠實取得管道。)*/
+  {  25, 15, 0x5c, DQ3_SC_NOITEM, 0,                 119, 118, 120 },
+  /* CTY64 sect0 (16,10) NPC(handler L0x5d70,flag 0x4b):「你們一定能粉碎大魔王陰謀」→
+   * 給銀寶珠 0x6b(rec84 給予/rec85 招呼,D3TXT01 bank)。*/
+  {  49, 64, 0x6b, DQ3_SC_NOITEM, 0,                 85, 84, 85 },
 };
 static const int N = (int)(sizeof TABLE / sizeof TABLE[0]);
 
