@@ -58,6 +58,17 @@ echo "$o" | grep -q "byte4=52:獲得道具 0x65" && ok "sub2 給物 52(光之珠
 o=$(DQ3_DEBUG="warp:16:33:25:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=84:獲得道具 0x10" && ok "sub2 給物 84(誘惑之劍)" || ng "sub2 給物 84"
 
+echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
+# 甘達特(26)boss token:開戰(HP551)
+o=$(DQ3_DEBUG="party;boss:26:0x33" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "遭遇.*HP551" && ok "boss token 甘達特(26 HP551)" || ng "boss token 甘達特"
+# 八頭大蛇(75)sprite 解碼 + 開戰(HP801,曾因 sprite W=416>384 被擋)
+o=$(DQ3_DEBUG="party;boss:75" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "遭遇.*HP801" && ok "boss 八頭大蛇(75 HP801,sprite W416 可繪)" || ng "八頭大蛇 sprite/戰"
+# in-game 八頭大蛇觸發(CTY19 byte4=45 NPC)
+o=$(DQ3_DEBUG="party;warp:19:35:13:1" DQ3_INPUT="ue" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "遭遇.*HP801" && ok "in-game 八頭大蛇觸發(CTY19)" || ng "in-game 八頭大蛇觸發"
+
 echo "######## 6. 存檔/讀檔 roundtrip(整合)########"
 SV=/tmp/gt_save.dat; rm -f "$SV"
 DQ3_SAVE="$SV" DQ3_DEBUG="party;gold:5000;item:0x55;warp:2:10:10" DQ3_INPUT="que" timeout 20 "$BIN" "$ASSETS" game >/tmp/sv1.log 2>&1

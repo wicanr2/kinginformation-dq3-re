@@ -50,8 +50,9 @@ int  dq3_monster_spell_count(const dq3_monster_ai *ai);
 uint16_t dq3_monster_hp_max(const dq3_monsters *m, int id);
 
 /* ---- SHP sprite ---- */
-#define DQ3_SHP_MAXW 384   /* 大魔王 boss 大圖:索瑪 0x7c=384×144、魔王系 0x7d/0x7f=208/216 寬;
-                            * 提到 384 讓終盤 boss 可繪,仍擋掉 0x80/0x81 垃圾 header(W>9000,docs/18)*/
+#define DQ3_SHP_MAXW 416   /* 大魔王 boss 大圖:八頭大蛇 0x4b=416×143(全怪最大合法寬)、索瑪 0x7c=384×144、
+                            * 魔王系 0x7d/0x7f=208/216 寬;提到 416 讓全部 boss 可繪,仍擋掉 0x80/0x81
+                            * 垃圾 header(W>9000,docs/18)。全 130 怪掃描:合法最大 W=416(僅怪75)、h=144。*/
 #define DQ3_SHP_MAXH 160
 typedef struct {
     int w, h;                                   /* 像素寬高 */

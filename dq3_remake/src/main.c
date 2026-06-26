@@ -563,6 +563,19 @@ static int run_game(const char *assets, const char *dump)
                 dq3_scene_apply_palette(cur);
                 fprintf(stderr, "[DEBUG] 索瑪戰 outcome=%d(1=勝 2=敗 3=逃)\n", oc);
                 if (oc == 1) run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok, &end_seq);
+            } else if (sscanf(tok, "boss:%i:%i", &a, &b) == 2 || sscanf(tok, "boss:%i", &a) == 1) {
+                /* 通用 boss 戰:boss:<怪id>[:<勝利獎勵道具>]。真隊伍上場,勝利給獎勵 + log。
+                 * (甘達特 26→皇冠 0x33、八頭大蛇 75 等 boss 劇情事件的可驗證機制。)*/
+                int oc, reward = (sscanf(tok, "boss:%i:%i", &a, &b) == 2) ? b : -1;
+                const char *bs = getenv("DQ3_BATTLE_SCRIPT");
+                dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
+                oc = dq3_battlescene_run(assets, a, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                dq3_scene_apply_palette(cur);
+                fprintf(stderr, "[DEBUG] boss 戰 怪0x%02x outcome=%d(1=勝 2=敗 3=逃)\n", a, oc);
+                if (oc == 1 && reward >= 0) {
+                    dq3_inv_add(&inv, reward);
+                    fprintf(stderr, "★ 擊敗 boss 怪0x%02x → 獲得獎勵道具 0x%02x\n", a, reward);
+                }
             } else if (strcmp(tok, "finale") == 0) {          /* 直接驗破關→結局路徑(主線推到 9/9)*/
                 run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok, &end_seq);
             } else if (sscanf(tok, "dlg:%d:%d", &a, &b) == 2) { /* 渲染任意對話 record(bank a,rec b)*/
@@ -819,6 +832,23 @@ static int run_game(const char *assets, const char *dump)
                             fprintf(stderr, "★ 羅馬利亞國王:歸還金皇冠 → 婉拒王位,繼續冒險(ROMALY 里程碑)\n");
                         }
                         dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
+                        talked = 1;
+                    } else if (sub == 2 && cur_cty == 19 && b4 == 45 && dlg_ok) {
+                        /* 八頭大蛇 boss 劇情(CTY19 洞穴,byte4=45,原版 flag 0x44 閘)。怪 75(0x4b)。
+                         * remake:未討伐 → 開 boss 戰;勝利 → 設 flag 0x44 + 後話;已討伐 → 直接後話。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_flags_get(&flags, 0x44)) {
+                            dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
+                        } else {
+                            int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
+                            dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
+                            oc = dq3_battlescene_run(assets, 75, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                            dq3_scene_apply_palette(cur);
+                            if (oc == 1) { dq3_flags_set(&flags, 0x44, 1);
+                                fprintf(stderr, "★ 擊敗八頭大蛇(CTY19,怪75)→ flag 0x44(劇情推進)\n"); }
+                            else fprintf(stderr, "八頭大蛇戰 outcome=%d(未勝)\n", oc);
+                            dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
+                        }
                         talked = 1;
                     } else if (sub == 2 && dlg_ok && dq3_scripted_get(b4, cur_cty)) {
                         /* data-driven scripted 給物 NPC(dq3_scripted 表,Step 2,docs/re-log-722)。
