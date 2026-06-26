@@ -334,3 +334,37 @@
 ### 驗證/打包
 - `tools/game_tester.sh`(40/40)為交付 gate;`tools/package.sh` → `work/dq3_remake_dist.tar.gz`。
 - 攻略原文 `work/walkthrough/`(gitignore,版權)。
+
+
+## 2026-06-26 session 最末段(B 收尾 + A boss + 觸發點定位 + 文件對齊)
+
+> 接續「剩餘工作」A/B/C —— 大部分已完成,真實狀態如下(game_tester 40/40 → **73/73**)。
+
+### A. 主線大 boss(已大幅接成)
+- ✅ **巴拉摩斯本體**(怪121 HP1201,baramos token,flag 0x213)+ **索瑪前序列**(zomaseq:怨靈122→殭屍123→索瑪124,逐戰)。
+- ✅ 甘達特金皇冠正源(香巴尼之塔 CTY10 寶箱 boss gate)。✅ 五頭龍/歐里狄加(怪129 boss token)。
+- ✅ **甘達特盜賊巢穴正式觸發點**(CTY14 sec1,走過去按空白 → 甘達特手下怪27 → 甘達特怪26 → flag 0x211,
+  與 CTY15 古布達黑胡椒鏈閉環)。怪力魔/六大魔人:攻略/怪表未明確,不臆造。
+
+### B. 道具取得鏈(B-1~B-9 收官)
+- ✅ 夢幻紅寶石 / 變身杖 / 蓋亞之劍 / 鑰匙鏈 / **彩虹水滴鏈 100% 可玩** / 領悟之書賢者轉職 /
+  歐里空金屬(座標校正)/ 古布達黑胡椒救人 gate / 隱身草貨架 / **王者之劍**(瑪依拉換歐里空金屬,id=0x1c)。
+
+### special 事件全盤點(可玩性無缺口)
+- 53 個 kind=special 全分類(`docs/data/special-events-classified.json`、`special-events-audit.md`):
+  12 wired + 提示/居民/設施對話 39 + 2 review(CTY6 折扣 / CTY65 換蛋,長尾精緻化)。
+- 工具三件組:`list_special_events.py`(定位格 + `--todo` 過濾已分類)、對話文字判讀、`dis_handler_full.py`。
+- 發現:sub2 handler 是過場腳本(對話/動畫/flag/warp),不含 `[0x2321]` 敵群表 / `sub_bfd1` / GIVE。
+
+### 既有功能確認(非缺口,文件補齊)
+- **F10 = 離開遊戲**(`confirm_quit`:「離開遊戲嗎」Yes/No + 自動存檔),**ESC = 取消當前選單**(非離開),
+  預設游標「否」較安全。**存讀檔已實作**:自動存檔 `dq3_save.dat`(名冊/隊伍/道具/位置)+ DQ3_LOAD 讀檔續玩,
+  game_tester 有 roundtrip 斷言。這些早已可用,先前文件未反映。
+
+### 工具紀律(memory `re-verify-via-git-not-tool-echo`)
+- 工具回顯可能幻覺(假 PASS / 假 commit)。可靠序:git log/diff/status > python 寫檔讀數字 > grep -c > bash 回顯。
+  宣告完成前 git diff 看真實改動 + 檔案中介抓 PASS=N。
+
+### 真實交付狀態
+- `tools/game_tester.sh` **73/73 全綠**(git 驗證);journal `docs/re-log-722-state-machine.md` Step 14-38。
+- 主線可破關 + B 道具鏈 + A boss + 觸發點定位完成。剩 2 個 special 長尾(非可玩性缺口)。
