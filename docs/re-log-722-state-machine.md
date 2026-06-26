@@ -172,3 +172,36 @@ GIVE/TAKE/tflag/sflag/region/warp/recs。這份才是 wiring 權威清單(取代
 **決策**:完整 flag 機器(誰設各 prereq flag = [0x722] region machine + examine 事件圖)是另一條
 大型 RE 線;4 個主要給予 NPC 觀感行為已驗證。依目標優先序(可破關>polish>驗證>打包),
 忠實結構**存資料**(sub2-struct.md)供後續精修,接線維持已驗證觀感給予,時間投入完成度+polish+打包。
+
+## Step 14:剩餘 sub2 handler 接線完成(2026-06-26)
+
+`tools/sub2_worklist.py`(行為 × 真實 NPC × 已接 交叉比對)產出權威清單,把剩餘有真實 NPC 的
+give/take handler 全部接齊:
+
+### 給予型(give_item)— 觀感給予,逐一遊戲內驗證
+| byte4 | CTY/位置 | 給物 | 對白(D3TXT bank)|
+|---|---|---|---|
+| 25 | CTY15 巴哈拉達 (5,24) | 0x5c 黑胡椒 | 胡椒商古布達獲救後給(rec118/119/120,bank3)|
+| 49 | CTY64 (16,10) | 0x6b 銀寶珠 | 「粉碎大魔王陰謀」→ 給(rec84/85,bank1)|
+| 84 | CTY16 (33,24) | 0x10 誘惑之劍 | 與卡爾洛斯重逢答謝(rec98/99,bank4)|
+
+### 檢查型(require_item)— 新增 handler 分支(0x7c0c 檢查、**不消耗**)
+`dq3_scripted` 加 `require_item` 欄;持物→success rec、缺物→need rec。判定 0x7c0c 為「檢查」非
+「消耗」的關鍵證據:**byte4=50 require 船 0x5b**(不可能消耗玩家的船 → 必為 gate 檢查)。
+
+| byte4 | CTY/位置 | 需求物 | 缺物 rec / 持物 rec |
+|---|---|---|---|
+| 16 | CTY5 精靈之村 (17,7) | 0x59 夢幻紅寶石 | rec47 / rec90 |
+| 44 | CTY54 (8,2) | 0x62 變身杖 | rec61 / rec56 |
+| 50 | CTY62/63 (cty=0xff) | 0x5b 船 | rec89 / rec87(渡海 gate)|
+
+### 不接(查證後排除)
+- **byte4=35**(give 0x66):handler 存在但**無任何 NPC 引用** → 開發殘留。
+- **byte4=64**(require 0x66 綠寶珠):handler 無對白 rec → 非乾淨對話 NPC(byte4 63-68 同檢查 0x66,
+  疑為非對話 gate 或 decoder 未涵蓋),暫不接。
+- 道具語意定錨:0x59 夢幻紅寶石 / 0x62 變身杖 / 0x66 綠寶珠 / 0x5c 黑胡椒 / 0x6b 銀寶珠
+  (font 渲染 D3TXT00 rec=code+1)。
+
+⇒ **所有「有真實 NPC 的 sub2 give/take handler」接齊**:給予 7/12/25/31/49/52/84 +
+特例 9(Romaly 收皇冠)/26(Portoga 胡椒換船)+ 檢查型 16/44/50。game_tester **32/32** 全綠。
+道具經濟與條件對話的 sub2 子系統至此完成靜態還原 + remake 落地。

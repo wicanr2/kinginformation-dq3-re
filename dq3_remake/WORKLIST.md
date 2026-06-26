@@ -254,9 +254,11 @@
       效果碼給 main 迴圈處理(目前野外選單只做 heal/cure)。
 - [ ] **怪物施加狀態**(中毒/麻痺):需 RE D3MNS 哪些咒/攻擊施狀態 + 擴咒文 kind(SK_STATUS)。
       狀態系統其餘已閉環(overworld 毒傷 + 戰鬥毒傷/麻痺 + 道具/教會解)。
-- [部分] **sub2 條件對話分支 / 給物**:給物 NPC before/give/after 三態已接(7 魔法玉 / 12 盜賊鑰匙 /
-      31 水槍 / 52 光之珠,逐一遊戲內驗證)。完整 flag 機器(誰設各 prereq flag = runner [0x722] 圖)
-      存資料 `docs/data/sub2-struct.md` 供後續精修(忠實雙區塊結構,decode_sub2_struct.py)。
+- [x] **sub2 條件對話分支 / 給物 ✅**(2026-06-26,全接):**所有「有真實 NPC 的 sub2 give/take handler」
+      接齊**。給予型 7/12/25/31/49/52/84(觀感給予)+ 特例 9(Romaly 收皇冠)/26(Portoga 胡椒換船)
+      + 檢查型 16/44/50(新增 `require_item` 欄,0x7c0c 檢查不消耗,持物/缺物兩態對白)。
+      不接:byte4=35(無 NPC 引用)/64(無對白 rec)。`tools/sub2_worklist.py` 權威清單、
+      `docs/data/sub2-struct.md` 忠實結構、`docs/re-log-722-state-machine.md` Step 14 紀錄。game_tester 32/32。
 - [ ] **scripted warp 全接**(§5b 8 個 0xd1f9):缺「源觸發 tile」位置(struct 只給落點)→
       需從各 call site disasm 抽 `[0x4f33/35]==XY` 比較值。
 - [ ] **overworld 旗標 portal 全表**:dq3_owportal 目前 3 條;完整需抽 0x396e 全分支。

@@ -855,7 +855,19 @@ static int run_game(const char *assets, const char *dump)
                          * 前置道具未滿足→before_rec;持前置且未給→給物+里程碑+give_rec;已給→after_rec。 */
                         const dq3_scripted *sc = dq3_scripted_get(b4, cur_cty);
                         set_dialogue_hero(&roster, &party);
-                        if (sc->prereq_item != DQ3_SC_NOITEM && dq3_inv_find(&inv, sc->prereq_item) < 0) {
+                        if (sc->require_item != DQ3_SC_NOITEM) {
+                            /* 檢查型 NPC(0x7c0c 檢查,不消耗):持物→success rec、否則→need rec。 */
+                            if (dq3_inv_find(&inv, sc->require_item) >= 0) {
+                                if (sc->milestone) dq3_progress_set(&flags, sc->milestone);
+                                dq3_dialogue_open(&dlg, sc->give_rec);
+                                fprintf(stderr, "scripted 檢查 NPC byte4=%d:持有 0x%02x → 反應 rec%d\n",
+                                        b4, sc->require_item, sc->give_rec);
+                            } else {
+                                dq3_dialogue_open(&dlg, sc->before_rec);
+                                fprintf(stderr, "scripted 檢查 NPC byte4=%d:缺 0x%02x → 需求 rec%d\n",
+                                        b4, sc->require_item, sc->before_rec);
+                            }
+                        } else if (sc->prereq_item != DQ3_SC_NOITEM && dq3_inv_find(&inv, sc->prereq_item) < 0) {
                             dq3_dialogue_open(&dlg, sc->before_rec);
                         } else if (dq3_inv_find(&inv, sc->give_item) < 0) {
                             dq3_inv_add(&inv, sc->give_item);

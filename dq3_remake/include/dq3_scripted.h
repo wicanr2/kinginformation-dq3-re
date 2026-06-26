@@ -13,12 +13,14 @@
 typedef struct {
     unsigned char  byte4;       /* sub2 跳表鍵 */
     unsigned char  cty;         /* 所在 CTY(0xff=不限,僅憑 byte4)*/
-    unsigned char  give_item;   /* 給的道具 id */
+    unsigned char  give_item;   /* 給的道具 id(DQ3_SC_NOITEM=不給,純 require/檢查型 NPC)*/
     unsigned char  prereq_item; /* 給之前需持有的道具(DQ3_SC_NOITEM=無前置)*/
-    unsigned short milestone;   /* 給時設的進度里程碑(0=無)*/
-    unsigned short before_rec;  /* 前置未滿足時的對白 rec */
-    unsigned short give_rec;    /* 給予時的對白 rec */
-    unsigned short after_rec;   /* 已給過的後話 rec */
+    unsigned char  require_item;/* 檢查型 NPC 需持有的道具(0x7c0c 檢查,不消耗;DQ3_SC_NOITEM=非檢查型)。
+                                 * 持有→give_rec(成功反應)、未持→before_rec(需該物)。 */
+    unsigned short milestone;   /* 給/成功時設的進度里程碑(0=無)*/
+    unsigned short before_rec;  /* 前置未滿足 / 缺 require 物時的對白 rec */
+    unsigned short give_rec;    /* 給予 / require 成功時的對白 rec */
+    unsigned short after_rec;   /* 已給過的後話 rec(require 型不用)*/
 } dq3_scripted;
 
 /* 依 byte4(+cty)查表;無則回 NULL。 */
