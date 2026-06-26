@@ -17,6 +17,10 @@ static const dq3_scripted TABLE[] = {
    * 對抗索瑪關鍵道具;無 tflag 條件(無前置)。rec71 統一(招呼=給予=後話)。
    * (sweep_sub2_npcs 權威清單確認 b4=52 為真 sub2 GIVE NPC;早期 count-prefix 解析 bug 曾誤判不存在。)*/
   {  52, 67, 0x65, DQ3_SC_NOITEM, 0,                 71, 71, 71 },
+  /* CTY16 sect0 (33,24) 獲救劇情 NPC(handler L0x6646,flag 0xe5):與心愛的卡爾洛斯重逢答謝,
+   * 給誘惑之劍 0x10(女性專用武器)。rec98 招呼 / rec99 給予(D3TXT04 bank)。flag-gate 觀感給予近似。
+   * (byte4=35 give 0x66 handler 存在但無任何 NPC 引用 → 開發殘留,不接。)*/
+  {  84, 16, 0x10, DQ3_SC_NOITEM, 0,                 98, 99, 98 },
 };
 static const int N = (int)(sizeof TABLE / sizeof TABLE[0]);
 

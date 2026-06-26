@@ -40,6 +40,7 @@ chk "水槍:CTY22 sect1 NPC(給+rec46)" "warp:22:4:4:1"  "le"   "byte4=31:獲得
 chk "水槍:已持有後話 rec45"        "item:0x4b;warp:22:4:4:1" "le" "byte4=31:已給過 → 後話 rec45"
 chk "光之珠:龍女王城 CTY67(給+rec71)" "warp:67:14:25:0" "ue"  "byte4=52:獲得道具 0x65"
 chk "光之珠:已持有後話 rec71"      "item:0x65;warp:67:14:25:0" "ue" "byte4=52:已給過 → 後話 rec71"
+chk "誘惑之劍:CTY16 答謝 NPC(給+rec99)" "warp:16:33:25:0" "ue" "byte4=84:獲得道具 0x10"
 chk "達瑪神殿:進城達成 DHAMA"     "warp:49:5:5"        "."    "抵達達瑪神殿 → 轉職開放"
 chk "達瑪轉職:隊員換職(Lv1減半)" "party;reclass:1:3"  "."    "達瑪轉職:隊員1 職業 1→3"
 chk "狀態:驅毒草解中毒"           "party;status:0:1;item:0x42;use:0x42" "." "驅毒草:隊員0 解除中毒"

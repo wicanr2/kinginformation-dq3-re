@@ -55,6 +55,8 @@ o=$(DQ3_DEBUG="warp:22:4:4:1" DQ3_INPUT="le" timeout 20 "$BIN" "$ASSETS" game 2>
 echo "$o" | grep -q "byte4=31:獲得道具 0x4b" && ok "sub2 給物 31(水槍)" || ng "sub2 給物 31"
 o=$(DQ3_DEBUG="warp:67:14:25:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=52:獲得道具 0x65" && ok "sub2 給物 52(光之珠)" || ng "sub2 給物 52"
+o=$(DQ3_DEBUG="warp:16:33:25:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "byte4=84:獲得道具 0x10" && ok "sub2 給物 84(誘惑之劍)" || ng "sub2 給物 84"
 
 echo "######## 6. 存檔/讀檔 roundtrip(整合)########"
 SV=/tmp/gt_save.dat; rm -f "$SV"
