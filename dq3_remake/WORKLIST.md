@@ -33,10 +33,10 @@
 ## 真正剩餘工作(已對 ground truth 核實,非 stale)
 
 ### 內容 / 接線
-- [ ] **scripted warp 全接**(8 個 0xd1f9):struct 只給落點,缺「源觸發 tile」位置 → 需各 call site disasm 抽 `[0x4f33/35]==XY` 比較值。
-- [ ] **overworld 旗標 portal 全表**:`dq3_owportal` 目前 3 條;完整需抽 0x396e 全分支。
-- [ ] **怪物施加狀態**(中毒/麻痺):需 RE D3MNS 哪些咒/攻擊施狀態 + 擴咒文 kind(SK_STATUS)。狀態系統其餘已閉環(overworld/戰鬥毒傷+麻痺+道具/教會解)。
-- [ ] **CTY→地名 對照收尾**:`docs/maps/cty_name_fill.md` 只填到 CTY2;配套 `tools/_big.py`(cty_loc 疊圖)。
+- [ ] **scripted warp 全接**(8 個 0xd1f9):`dq3_locwarp` 有落點,缺「源觸發 tile」位置 → 需各 call site disasm 抽 `[0x4f33/35]==XY` 比較值。(忠實完整性,非可玩性阻塞)
+- [ ] **overworld 旗標 portal 全表**:`dq3_owportal` 目前數條;完整需抽 0x396e 全分支。(忠實完整性)
+- [x] **怪物施加狀態 ✅**(已確認 + 修 phantom-damage):第一性原理 RE(`docs/re-log-spell-effect-dispatch.md`)定論——精訊引擎效果由 base 值分類、**無「咒→狀態」表**;base==0 中只有 144 睡/152 混亂=玩家不能行動 → 映射麻痺(已接),其餘 base==0(buff/debuff/封咒/幻/傳走)未模型化。本次修掉「base==0 咒 fall through 成 base=24 假傷害」bug → 詠唱不致傷。中毒(overworld/戰鬥毒傷+解)亦閉環。
+- (移除)~~CTY→地名對照收尾~~:使用者確認不影響遊戲,不列待辦。
 
 ### 系統 / UI
 - [ ] **遊戲內設定選單 UI**:title 加「設定」→ 切 RNG 模式(DOS/REAL)存 dq3.cfg。後端 `dq3_config` 已備,只差 UI(未來音量/解析度/語言同此)。
@@ -45,18 +45,34 @@
 - [ ] **注音↔英數 切換鍵**:nameinput 兩種輸入盤已各自完成,缺切換鍵串接。
 - [ ] **忠實初始擲值**:RE 原版創角 rng 擲值(精訊版無性格系統,已確認);目前用成長表 Lv1 base。
 
-### 校準 / oracle(需 DOSBox)
-- [ ] **DOSBox 逐畫面 oracle 擴展**:標題逐像素/注音 IME 字序/boss sprite 已驗一致(oracle-validation.md);其餘畫面待補。
-- [ ] **旅社/教會精確收費公式**:現為合理近似(inn_cost×人數 / Lv×10),精確公式需 oracle。
-- [ ] **packbg 戰鬥背景解碼 + 傷害公式對 DOSBox 校準**(物理公式已 RE,微調對齊)。
+### 校準(已靜態 RE 攻克;原列「需 DOSBox」已不成立)
+- [x] **旅社/教會收費公式 ✅**(靜態 RE,2026-06-27):**旅社**已精確(`fac->inn_cost × 人數` = RE
+  handler 0x86f5 `mov ax,es:[di+1]; mul cl`,設施 block +1 per-town);**教會復活**改成 RE level 表
+  (handler 0x85ff,表 @ DGROUP 0x3c6c / file 0x19dac,index=min(lv,40)−1;`DQ3_REVIVE_COST[40]`),
+  取代「level×10」近似(Lv1-3 應同 10、Lv40 應 1610)。解毒(0x849b 5 固定)未驗證確為解毒,保守未改。
+- [x] **傷害公式 ✅ 驗證 RE 精確**(2026-06-27,無需校準):物理 `(atk-def)/2+rng(0..(atk-def)/4)`、
+  弱攻 `rng<0x80→1 else miss`、會心 ×2(`[0x24b7]&0x10`)、咒文 `base/2+rng(base/2)` —— 逐一對
+  反組譯(file 0xc03e/0xc07a/0xc0cd/0xc22e)確認 remake **完全一致**。會心率 1/32 為 DQ3 標準值
+  (×2 機制已驗;精確 roll 指令在攻擊指令 handler,未定位但屬單一標準常數)。
+- [ ] **DOSBox 逐畫面 oracle 擴展**:標題逐像素/注音 IME 字序/boss sprite 已驗一致;其餘畫面待補。
+- [ ] **packbg 戰鬥背景解碼**:戰鬥背景目前用通用天空/地面,packbg 壓縮背景未解碼。
+
+### 系統(新發現缺口)
+- [ ] **野外咒文效果**(ルーラ 移動 / リレミト 出迷宮 / トラマナ 等):remake 野外「咒文」目前只顯示
+  已學咒清單,未實作場景效果(#5 RE 金字塔當機時發現;與該 crash 無關)。
 
 ### 打包
 - [ ] **Windows / AppImage 跨平台打包**:目前 `tools/package.sh` 只產 Linux tar(`work/dq3_remake_dist.tar.gz`)。
 
-### 不做(Chesterton's Fence — 刻意保留原版行為)
-- #7c 祈禱之戒:原版本就 ~25% 失效,保持。
-- 寶箱「翻面」:原版為 examine 事件(handler 0x9ec1),取後顯「可惜是空的」**不翻 tile** → 不加(docs/31)。
-- 金字塔內施咒當機:原版已知 bug,不復刻(`docs/data/original-known-bugs.md`)。
+### Chesterton's Fence 三項 → 已執行(使用者要求,2026-06-27)
+- [x] **#7c 祈禱之戒 ✅**:RE file 0x5ad0/0x5af4 → 回 MP + 每次使用 ~25.4%(al≤0x40)損壞消失,
+  接進 `dq3_item_use`(野外/debug 兩路徑)+ 單測。青衫「永不壞」前提經 RE 推翻(損壞邏輯本就存在)。
+- [x] **寶箱開過回饋 ✅**(remake 增強,非還原):原版取後不翻 tile(docs/31);使用者選「疊變暗/開蓋標記」
+  → `dq3_scene_mark_opened_tile` 程式疊繪(不動 BLK),`overlay_opened_chests` 對已取格套用。dump 驗證。
+- [x] **金字塔施咒當機 ✅**(RE + 驗證免疫):原版逐圖資源型 crash;remake 咒文與地圖資源解耦
+  (戰鬥 map-independent、野外咒文不跑 overlay)→ 結構免疫,headless 驗 CTY13 進場+施咒 exit=0
+  不 crash(`docs/data/original-known-bugs.md` 詳記)。
+- 仍保留不復刻:原版金字塔 crash 本身、#7c 的「永不壞」誤傳。
 
 ## 關鍵參考 / 工具 / 紀律
 

@@ -42,6 +42,17 @@ int main(void)
     CHECK(dq3_item_use_cure(&m, DQ3_ITEM_FULLMOON) == 1 && m.status == DQ3_STATUS_POISON, "滿月草只解麻痺(留中毒)");
     CHECK(dq3_item_use_cure(&m, DQ3_ITEM_HERB) == 0, "藥草非解狀態 → 0");
 
+    printf("== 祈禱之戒(#7c:回 MP + ~25%% 損壞)==\n");
+    CHECK(dq3_item_use_kind(DQ3_ITEM_PRAYER_RING) == DQ3_USE_PRAYER_RING, "祈禱之戒 0x48 → PRAYER_RING");
+    m.stat[DQ3_STAT_MP] = 50; m.cur_mp = 10;
+    CHECK(dq3_item_use_prayer_mp(&m) == 30 && m.cur_mp == 40, "MP 10→40(回 30)");
+    m.cur_mp = 40;   /* 40+30=70>50 → 封頂回 10 */
+    CHECK(dq3_item_use_prayer_mp(&m) == 10 && m.cur_mp == 50, "封頂:40→50(只回 10)");
+    m.cur_mp = 50;   /* 已滿 */
+    CHECK(dq3_item_use_prayer_mp(&m) == 0 && m.cur_mp == 50, "MP 滿 → 回 0");
+    /* 損壞門檻 = RNG(256)≤0x40,機率 = 0x41/0x100 ≈ 25.4%(忠實 RE,不需修正)*/
+    CHECK(DQ3_PRAYER_BREAK_LE == 0x40, "損壞門檻 0x40(RE file 0x5af9 cmp al,0x40)");
+
     printf("\n%s (fail=%d)\n", g_fail ? "== FAIL ==" : "== ALL PASS ==", g_fail);
     return g_fail ? 1 : 0;
 }

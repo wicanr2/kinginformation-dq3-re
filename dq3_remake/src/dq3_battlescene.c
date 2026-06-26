@@ -305,6 +305,14 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
                           party[t].dbg, srec==144?"睡眠":"混亂");
                   continue;                               /* 本敵行動結束 */
               }
+              /* 其餘 base==0 輔助/狀態咒(RE re-log-spell-effect-dispatch Step10:rec 143-160 =
+               * 驅逐/buff/debuff/封咒/幻/傳走;精訊引擎無「咒→狀態」表,效果程序式)。remake
+               * 未模型化 buff/debuff/封咒/幻 → 詠唱但**不致傷**(忠實:這些非傷害咒,前版 fall
+               * through 成 base=24 假傷害是 bug)。睡/混亂(144/152)已上面映射麻痺。 */
+              if(srec>=143 && srec<=160){
+                  fprintf(stderr,"  敵%d 詠唱輔助/狀態咒(rec%d;remake 未模型化其效果,不致傷)\n", i, srec);
+                  continue;
+              }
             }
             d = dq3_spell_def_get(dq3_monster_spell_rec[bit]);  /* bit→真咒名(0x3930 remap)*/
             if(d && d->kind==DQ3_SK_HEAL){                /* 治療系怪:補一隻受傷的同伴 */

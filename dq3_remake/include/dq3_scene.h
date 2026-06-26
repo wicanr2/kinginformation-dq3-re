@@ -125,6 +125,10 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h);
 void dq3_scene_draw_tile_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
                             int mx, int my, int tile_idx);
 
+/* 在地圖格 (mx,my) 疊「已開啟寶箱」標記(開蓋暗線 + dither 變暗)。remake 增強(原版不翻 tile);
+ * 由呼叫端對「有寶箱事件且一次性旗標已設(取過)」的可見格呼叫。 */
+void dq3_scene_mark_opened_tile(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h, int mx, int my);
+
 /* 在地圖格 (mx,my) 透明疊一個 charsprite frame(不死鳥坐騎 overlay)。 */
 void dq3_scene_draw_charsprite_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
                                   int mx, int my, const dq3_charsprite *cs, int frame);

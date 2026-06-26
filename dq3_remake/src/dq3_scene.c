@@ -213,6 +213,36 @@ void dq3_scene_draw_tile_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
         }
 }
 
+/* 在地圖格 (mx,my) 疊「已開啟寶箱」標記:上 1/4 開蓋暗線 + 其餘棋盤 dither 變暗。
+ * ★ remake 增強(非還原):原版寶箱取後不翻 tile(docs/31 handler 0x9ec1,re-examine 顯
+ * 「可惜是空的」);使用者要求加開過回饋。程式疊繪、不動 BLK tile,變暗色取 bg 色盤最暗 index。 */
+void dq3_scene_mark_opened_tile(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h, int mx, int my)
+{
+    int cam_x = s->px - VIEW_COLS / 2;
+    int cam_y = s->py - VIEW_ROWS / 2;
+    int sx, sy, r, c, di = 0, i, best = 1 << 30;
+    if (cam_x > s->map_w - VIEW_COLS) cam_x = s->map_w - VIEW_COLS;
+    if (cam_y > s->map_h - VIEW_ROWS) cam_y = s->map_h - VIEW_ROWS;
+    if (cam_x < 0) cam_x = 0;
+    if (cam_y < 0) cam_y = 0;
+    for (i = 0; i < s->pal_count && i < 16; i++) {        /* 最暗 bg 色 index(luminance 最小)*/
+        int lum = s->pal[i].r + s->pal[i].g + s->pal[i].b;
+        if (lum < best) { best = lum; di = i; }
+    }
+    sx = (mx - cam_x) * DQ3_TILE_W;
+    sy = (my - cam_y) * DQ3_TILE_H;
+    for (r = 0; r < DQ3_TILE_H; r++)
+        for (c = 0; c < DQ3_TILE_W; c++) {
+            int yy = sy + r, xx = sx + c;
+            if (yy < 0 || yy >= fb_h || xx < 0 || xx >= fb_w) continue;
+            if (r < DQ3_TILE_H / 4) {                      /* 上 1/4:開蓋暗線(較密)*/
+                if (((r ^ c) & 1) == 0) fb[yy * fb_w + xx] = (uint8_t)di;
+            } else if (((r + c) & 1) == 0) {               /* 其餘:棋盤 dither 變暗 */
+                fb[yy * fb_w + xx] = (uint8_t)di;
+            }
+        }
+}
+
 void dq3_scene_draw_charsprite_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
                                   int mx, int my, const dq3_charsprite *cs, int frame)
 {

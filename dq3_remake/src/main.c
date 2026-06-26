@@ -356,9 +356,24 @@ static int inn_rest(dq3_roster *r, const dq3_party *p, long *gold, int inn_cost)
     return healed;
 }
 
+/* 教會復活費 = level 表(★ 靜態 RE:handler 0x85ff,表 @ DGROUP 0x3c6c / file 0x19dac;
+ * index = min(level,40)−1,word LE)。前版「level×10」是近似——Lv1-3 應同為 10(非 10/20/30)、
+ * 高等差很大(Lv40 RE=1610 vs ×10=400)。表 = Lv1..Lv40 收費。 */
+static const unsigned short DQ3_REVIVE_COST[40] = {
+     10,  10,  10,  20,  30,  40,  50,  70,  90, 110,
+    130, 150, 170, 200, 230, 260, 290, 330, 370, 410,
+    450, 490, 530, 580, 630, 680, 730, 790, 850, 910,
+    970,1030,1090,1160,1230,1300,1370,1450,1530,1610,
+};
+static int dq3_revive_cost(int level)              /* 對齊 0x8650:cmp lv,0x28; 上限 40;index=lv−1 */
+{
+    int lv = level < 1 ? 1 : (level > 40 ? 40 : level);
+    return DQ3_REVIVE_COST[lv - 1];
+}
+
 /* 教會復活(蘇生,對齊 RE 0x85ff「誰需要復活」):陣亡隊員(cur_hp==0)→ 復原 cur_hp/cur_mp,
- * 收費(等級×10,簡化)。金錢不足者跳過。回實際復活人數。
- * 註:原版另有解毒(0x849b)/解詛咒(0x853c),remake 無狀態效果故暫不實作。 */
+ * 收費 = dq3_revive_cost(level)(RE level 表)。金錢不足者跳過。回實際復活人數。
+ * 註:原版另有解毒(0x849b,5 固定)/解詛咒(0x853c),remake 解狀態仍沿用免費小額處理。 */
 static int church_revive(dq3_roster *r, const dq3_party *p, long *gold)
 {
     int s, revived = 0;
@@ -371,7 +386,7 @@ static int church_revive(dq3_roster *r, const dq3_party *p, long *gold)
             fprintf(stderr, "教會:解除 Lv%d 隊員的異常狀態\n", m->level);
         }
         if (m->cur_hp != 0) continue;                  /* 只復活陣亡者 */
-        cost = m->level * 10;
+        cost = dq3_revive_cost(m->level);              /* ★ RE level 表(取代 level×10)*/
         if (*gold < cost) { fprintf(stderr, "教會:金錢不足,無法復活 Lv%d 隊員(需 %d)\n", m->level, cost); continue; }
         *gold -= cost; m->cur_hp = m->stat[DQ3_STAT_HP]; m->cur_mp = m->stat[DQ3_STAT_MP];
         revived++;
@@ -430,6 +445,23 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
         fprintf(stderr, "%s:隊員%d 解除%s\n", kind == DQ3_USE_CURE_POISON ? "驅毒草" : "滿月草",
                 cured, kind == DQ3_USE_CURE_POISON ? "中毒" : "麻痺");
         return kind;
+    }
+    if (kind == DQ3_USE_PRAYER_RING) {         /* 祈禱之戒:回 MP + 每次使用 ~25.4% 損壞(#7c,RE file 0x5ad0/0x5af4)*/
+        static dq3_rng prng; static int seeded = 0;
+        int i, restored = -1, broke;
+        if (!seeded) { dq3_rng_seed(&prng, 0x1357); seeded = 1; }
+        for (i = 0; i < p->count; i++) {                       /* 回復第一個 MP 未滿的隊員 */
+            int r2 = dq3_item_use_prayer_mp(&r->list[p->slot[i]].m);
+            if (r2 > 0) { restored = r2;
+                fprintf(stderr, "祈禱之戒:隊員%d 回復 MP %d → %d/%d\n", i,
+                        r2, r->list[p->slot[i]].m.cur_mp, r->list[p->slot[i]].m.stat[DQ3_STAT_MP]); break; }
+        }
+        if (restored < 0) fprintf(stderr, "祈禱之戒:無人 MP 不足(仍會擲損壞判定,對齊原版)\n");
+        /* 損壞判定(忠實 RE):RNG(256) ≤ 0x40 → ~25.4% 損壞消失。原版無「MP 滿則不用」閘。 */
+        broke = (dq3_rng_next(&prng, 256) <= DQ3_PRAYER_BREAK_LE);
+        if (broke) { dq3_inv_remove(inv, item_id);
+            fprintf(stderr, "祈禱之戒:啊,戒指壞了。(損壞消失,~25.4%%)\n"); }
+        return DQ3_USE_PRAYER_RING;
     }
     if (kind == DQ3_USE_AWAKEN) return kind;   /* 覺醒粉:位置相關,消耗延到 main(確認在諾阿尼魯)*/
     if (kind == DQ3_USE_RAINBOW) return kind;  /* 彩虹水滴:位置相關,消耗延到 main(確認在下層利姆達爾西北)*/
@@ -611,6 +643,26 @@ static int title_menu(const char *assets, const dq3_text *text)
         dq3_present(); dq3_delay_ms(16);
     }
     return 0;
+}
+
+/* #4 remake 增強:對場景可見格中「有寶箱事件且一次性旗標已設(=取過)」者疊開過標記。
+ * 原版寶箱取後不翻 tile(docs/31);此為使用者要求的「看得出開過」回饋,程式疊繪不動 BLK。
+ * 只掃 20×15 可見窗(town/dungeon 才有事件層;overworld n_events=0 → 無事件即略過)。 */
+static void overlay_opened_chests(const dq3_scene *s, const dq3_storyflags *fl)
+{
+    int cam_x = s->px - 10, cam_y = s->py - 7, x, y;     /* VIEW 20×15,half=10/7,同 scene 攝影機 */
+    if (cam_x > s->map_w - 20) cam_x = s->map_w - 20;
+    if (cam_y > s->map_h - 15) cam_y = s->map_h - 15;
+    if (cam_x < 0) cam_x = 0;
+    if (cam_y < 0) cam_y = 0;
+    for (y = cam_y; y < cam_y + 15 && y < s->map_h; y++)
+        for (x = cam_x; x < cam_x + 20 && x < s->map_w; x++) {
+            int et, ep, ef;
+            if (dq3_scene_tile_event_p2(s, x, y, &et, &ep, &ef)
+                && (et == 0 || et == 1 || et == 3) && ep > 0 && ep < 0x90
+                && dq3_flags_get(fl, ef))                /* 旗標已設 = 已取過 → 標記開過 */
+                dq3_scene_mark_opened_tile(s, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H, x, y);
+        }
 }
 
 static int run_game(const char *assets, const char *dump)
@@ -880,6 +932,7 @@ static int run_game(const char *assets, const char *dump)
         /* DEBUG 口 + dump(無腳本輸入):直接渲染 debug 狀態並 dump;有 DQ3_INPUT 則走互動迴圈 */
         if (in_town) dq3_scene_npc_tick(cur);
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        overlay_opened_chests(cur, &flags);    /* #4:已取寶箱疊開過標記(remake 增強)*/
         dq3_present();
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "debug 場景 -> %s OK(layer=%d cty=%d (%d,%d))\n",
                                               dump, layer, cur_cty, cur->px, cur->py);
@@ -926,6 +979,7 @@ static int run_game(const char *assets, const char *dump)
                     DQ3_SHRINE_CTY, sr, dq3_flags_get(&flags, DQ3_FLAG_RAINBOW_SYNTHED));
         }
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        overlay_opened_chests(cur, &flags);    /* #4:已取寶箱疊開過標記(remake 增強)*/
         /* demo:在城鎮開一段對話(D3TXT01 rec 1)疊在場景上 */
         if (dlg_ok && dq3_dialogue_open(&dlg, 1) == 0) {
             fprintf(stderr, "=== 對話 D3TXT01 rec1(疊在城鎮)===\n");
@@ -978,6 +1032,7 @@ static int run_game(const char *assets, const char *dump)
         if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
         if (!in_town) animate_sea(cur, g_sea_frame++);   /* 海面 palette cycling(地表/下層)*/
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        overlay_opened_chests(cur, &flags);    /* #4:已取寶箱疊開過標記(remake 增強)*/
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
         if (!in_town && phoenix_aboard && phoenix_ok)    /* 不死鳥坐騎 sprite 疊在玩家格(飛行中)*/
             dq3_scene_draw_charsprite_at(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H,
@@ -1572,6 +1627,7 @@ static int run_game(const char *assets, const char *dump)
     /* 腳本輸入 playthrough 結束 → dump 末幀(headless 驗證,docs/46)*/
     if (dump && getenv("DQ3_INPUT")) {
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
+        overlay_opened_chests(cur, &flags);    /* #4:已取寶箱疊開過標記(remake 增強)*/
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
         if (!in_town && phoenix_aboard && phoenix_ok)    /* 不死鳥坐騎 sprite(末幀渲染)*/
             dq3_scene_draw_charsprite_at(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H,
@@ -2012,6 +2068,21 @@ static int field_use_item(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int c
         for (i = 0; i < p->count; i++)
             if (dq3_item_use_cure(&r->list[p->slot[i]].m, code)) { dq3_inv_remove(inv, code); return 1; }
         return 0;
+    }
+    if (kind == DQ3_USE_PRAYER_RING) {            /* 祈禱之戒:回 MP + 每次使用 ~25.4% 損壞(#7c)*/
+        static dq3_rng prng; static int seeded = 0;
+        int restored = -1, broke;
+        if (!seeded) { dq3_rng_seed(&prng, 0x1357); seeded = 1; }
+        for (i = 0; i < p->count; i++) {
+            int r2 = dq3_item_use_prayer_mp(&r->list[p->slot[i]].m);
+            if (r2 > 0) { restored = r2;
+                fprintf(stderr, "野外つかう:祈禱之戒 → 隊員%d MP %d/%d\n", i,
+                        r->list[p->slot[i]].m.cur_mp, r->list[p->slot[i]].m.stat[DQ3_STAT_MP]); break; }
+        }
+        if (restored < 0) fprintf(stderr, "野外つかう:祈禱之戒(無人 MP 不足,仍擲損壞)\n");
+        broke = (dq3_rng_next(&prng, 256) <= DQ3_PRAYER_BREAK_LE);   /* RE 0x5af9 cmp al,0x40 → ~25.4% */
+        if (broke) { dq3_inv_remove(inv, code); fprintf(stderr, "野外つかう:啊,祈禱之戒壞了。\n"); }
+        return 0;                                  /* 無世界層效果(回復/損壞已就地處理)*/
     }
     if (kind == DQ3_USE_RETURN_TOWN || kind == DQ3_USE_REPEL) {   /* 需世界狀態 → 回傳碼交 main */
         dq3_inv_remove(inv, code);
