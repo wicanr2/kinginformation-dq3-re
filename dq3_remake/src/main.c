@@ -1184,7 +1184,8 @@ static int run_game(const char *assets, const char *dump)
                             dq3_scene_apply_palette(cur);
                             if (oc == 1) { dq3_flags_set(&flags, 0x44, 1);
                                 if (dq3_inv_find(&inv, 0x69) < 0) dq3_inv_add(&inv, 0x69);  /* 戰勝得紫寶珠(青衫攻略:無姬大人=八頭大蛇)*/
-                                fprintf(stderr, "★ 擊敗八頭大蛇(怪75)→ 獲得紫寶珠 0x69 + flag 0x44(劇情推進)\n"); }
+                                if (dq3_inv_find(&inv, 0x14) < 0) dq3_inv_add(&inv, 0x14);  /* 草薙之劍 0x14(BBS:日邦格洞窟打八頭大蛇取草薙之劍)*/
+                                fprintf(stderr, "★ 擊敗八頭大蛇(怪75)→ 獲得紫寶珠 0x69 + 草薙之劍 0x14 + flag 0x44\n"); }
                             else fprintf(stderr, "八頭大蛇戰 outcome=%d(未勝)\n", oc);
                             dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         }
