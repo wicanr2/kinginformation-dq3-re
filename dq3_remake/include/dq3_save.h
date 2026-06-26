@@ -9,10 +9,13 @@
 #include "dq3_roster.h"
 #include "dq3_inventory.h"
 
-/* 世界位置 + 船狀態(#2,docs/48)。ship_* 折入此結構以維持 write/read 窄介面。 */
+/* 世界位置 + 船狀態(#2,docs/48)。ship_* 折入此結構以維持 write/read 窄介面。
+ * in_town/layer/sec:讀檔後完整還原玩家所在場景(隨時存讀檔回原位置,使用者需求)。
+ *   in_town=1 → 城鎮 CTY=cty 的 section=sec、(px,py);in_town=0 → overworld,layer(0=地表 1=下層)+ (px,py)。 */
 typedef struct {
     int cty, px, py;
     int ship_owned, ship_aboard, ship_px, ship_py, ship_layer;
+    int in_town, layer, sec;
 } dq3_save_pos;
 
 /* 寫存檔。回 0=成功、<0=失敗。 */

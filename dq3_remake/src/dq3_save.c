@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DQ3_SAVE_MAGIC "DQ3SAVE4"   /* v4:member 加 status 欄位(中毒/麻痺)*/
+#define DQ3_SAVE_MAGIC "DQ3SAVE5"   /* v5:save_pos 加 in_town/layer/sec(讀檔還原場景)*/
 #define MAGIC_LEN 8
 
 /* 各結構大小寫進檔頭,讀檔時比對 → 防跨版本誤讀。 */

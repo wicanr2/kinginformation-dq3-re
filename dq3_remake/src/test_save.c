@@ -14,7 +14,8 @@ int main(void)
 {
     const char *path = "/tmp/dq3_test_save.dat";
     dq3_stats st; dq3_roster r; dq3_party p; dq3_inventory inv;
-    dq3_save_pos pos = { 5, 12, 8, 1, 0, 150, 179, 0 };  /* +船:owned,泊(150,179)地表 */
+    dq3_save_pos pos = { 5, 12, 8, 1, 0, 150, 179, 0,    /* +船:owned,泊(150,179)地表 */
+                         1, 0, 2 };                       /* in_town=1,layer=0,sec=2(場景還原欄)*/
     uint16_t nm[2] = {15, 16};
 
     if (dq3_stats_load(&st, NULL, 1, NULL, 0) < 0) { printf("stats FAIL\n"); return 1; }
@@ -43,6 +44,7 @@ int main(void)
         CHECK(dq3_inv_has(&inv2, ITEM_SUN_STONE) && dq3_inv_has(&inv2, ITEM_KEY_MAGIC), "道具一致");
         CHECK(pos2.cty == 5 && pos2.px == 12 && pos2.py == 8, "位置一致");
         CHECK(pos2.ship_owned == 1 && pos2.ship_px == 150 && pos2.ship_py == 179, "船狀態一致");
+        CHECK(pos2.in_town == 1 && pos2.layer == 0 && pos2.sec == 2, "場景還原欄一致(in_town/layer/sec)");
         CHECK(memcmp(&r, &r2, sizeof r) == 0, "名冊整塊 byte 一致");
     }
 

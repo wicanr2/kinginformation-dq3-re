@@ -228,6 +228,41 @@ static int do_descent(const char *assets, dq3_scene **field_under, dq3_scene **c
     return 0;
 }
 
+/* 讀檔後還原玩家所在場景到原位置(隨時存讀檔 + 標題續玩共用,使用者需求)。
+ * pos.in_town → 載入城鎮 CTY=cty section=sec;否則 overworld(layer 0=地表 / 1=下層,懶載下層)。
+ * 還原後設玩家 (px,py)。回 0=成功。仿 do_descent 的指標傳遞。 */
+static int restore_position(const char *assets, const dq3_save_pos *pos,
+                            dq3_scene *field, dq3_scene **field_under, dq3_scene **town,
+                            dq3_scene **cur, int *layer, int *in_town, int *cur_cty,
+                            dq3_storyflags *flags)
+{
+    char err[256] = {0};
+    if (pos->in_town && pos->cty >= 0) {                 /* 城鎮 */
+        char ct[16]; int bn = (pos->cty >= 0 && pos->cty < 100) ? dq3x_map_blknum[pos->cty] : 1;
+        dq3_scene *ns;
+        sprintf(ct, "CTY%02d.DAT", pos->cty);
+        ns = dq3_town_load(assets, ct, pos->sec, bn, err, sizeof err);
+        if (!ns) { fprintf(stderr, "讀檔場景:CTY%d sec%d 載入失敗: %s\n", pos->cty, pos->sec, err); return -1; }
+        if (*town) dq3_scene_free(*town);
+        *town = ns; *cur = ns; *in_town = 1; *cur_cty = pos->cty; *layer = 0;
+        load_field_hero(ns, assets);
+    } else if (pos->layer == 1) {                        /* 下層 overworld(懶載)*/
+        if (!*field_under) { *field_under = dq3_field_load_map(assets, "DQ3UND.MAP", err, sizeof err);
+            if (*field_under) load_field_hero(*field_under, assets); }
+        if (!*field_under) { fprintf(stderr, "讀檔場景:下層載入失敗: %s\n", err); return -1; }
+        *cur = *field_under; *layer = 1; *in_town = 0; *cur_cty = -1;
+        if (flags) dq3_flags_set(flags, DQ3_FLAG_DESCENDED, 1);
+    } else {                                             /* 地表 */
+        *cur = field; *layer = 0; *in_town = 0; *cur_cty = -1;
+    }
+    if (pos->px >= 0 && pos->px < (*cur)->map_w) (*cur)->px = pos->px;
+    if (pos->py >= 0 && pos->py < (*cur)->map_h) (*cur)->py = pos->py;
+    dq3_scene_apply_palette(*cur);
+    fprintf(stderr, "讀檔場景還原:%s CTY%d sec%d (%d,%d)\n",
+            pos->in_town ? "城" : (pos->layer ? "下層" : "地表"), pos->cty, pos->sec, (*cur)->px, (*cur)->py);
+    return 0;
+}
+
 /* 地形 → 戰鬥背景頁(packbg index)。terrain 取自內建 dq3x_terrain(DGROUP 抽出),
  * 對映到 packbg 陣列中視覺相符的背景(草原/丘陵/洞窟…)。remake 不依賴 DQ3.EXE。 */
 static int field_bg_page(const dq3_scene *s)
@@ -345,25 +380,29 @@ static int church_revive(dq3_roster *r, const dq3_party *p, long *gold)
     return revived;
 }
 
-/* 存檔到指定 path(slot)。slot 0=自動存檔路徑、1..6=手動 slot。 */
+/* 存檔到指定 path(slot)。slot 0=自動存檔路徑、1..6=手動 slot。
+ * in_town/layer/sec 記玩家所在場景,讀檔可完整還原回原位置(使用者需求)。 */
 static int save_game_to(const char *path, const dq3_roster *r, const dq3_party *p,
-                        const dq3_inventory *inv, int cty, int px, int py, const dq3_ship *ship)
+                        const dq3_inventory *inv, int cty, int px, int py, const dq3_ship *ship,
+                        int in_town, int layer, int sec)
 {
     dq3_save_pos pos; int rc;
     pos.cty = cty; pos.px = px; pos.py = py;
     pos.ship_owned = ship->owned; pos.ship_aboard = ship->aboard;       /* #2 船狀態 */
     pos.ship_px = ship->px; pos.ship_py = ship->py; pos.ship_layer = ship->layer;
+    pos.in_town = in_town; pos.layer = layer; pos.sec = sec;            /* 場景還原 */
     rc = dq3_save_write(path, r, p, inv, pos);
-    if (rc == 0) fprintf(stderr, "存檔 → %s(名冊%d 隊伍%d CTY%d)\n", path, r->count, p->count, cty);
+    if (rc == 0) fprintf(stderr, "存檔 → %s(名冊%d 隊伍%d %s CTY%d sec%d (%d,%d))\n",
+                         path, r->count, p->count, in_town ? "城" : (layer ? "下層" : "地表"), cty, sec, px, py);
     else fprintf(stderr, "存檔失敗(無法寫 %s)\n", path);
     return rc;
 }
 
 /* F10 自動存檔(slot 0,相容舊路徑)。 */
 static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
-                         int cty, int px, int py, const dq3_ship *ship)
+                         int cty, int px, int py, const dq3_ship *ship, int in_town, int layer, int sec)
 {
-    return save_game_to(slot_path(0), r, p, inv, cty, px, py, ship);
+    return save_game_to(slot_path(0), r, p, inv, cty, px, py, ship, in_town, layer, sec);
 }
 
 /* 消耗品使用(#3,docs/49)。對隊伍套效果並消耗道具:HEAL_HP 治第一個受傷隊員;
@@ -582,9 +621,10 @@ static int run_game(const char *assets, const char *dump)
     dq3_inv_init(&inv); dq3_flags_init(&flags);
     /* (移除早期 #2 合成測試的預塞太陽之石+雲雨之杖;現走真實取得鏈:
      *  太陽之石 CTY80 寶箱、雲雨之杖 精靈祠堂 CTY92。debug 仍可 item:0x72/0x73 補。) */
-    /* 續玩:DQ3_LOAD 指定 slot(DQ3_LOAD=N 讀冒險之書 N,1..6;空/0/1 維持相容讀 slot 0 autosave)。
-     * 互動式標題「繼續冒險」選 slot 另在標題流程(load_slot_choice);此處為 env 直載入口(headless 測試/續玩)。
-     * 位置另需載入對應場景,先記錄。 */
+    /* 續玩:DQ3_LOAD 指定 slot(DQ3_LOAD=N 讀冒險之書 N,2..6;空/0/1 維持相容讀 slot 0 autosave)。
+     * 讀檔後 restore_position 載入對應場景到原位置(隨時存讀檔回原位置,使用者需求)。
+     * 互動式標題「繼續冒險」選 slot 走 run_game 前的 title_menu(下方)。 */
+    int loaded_from_save = 0;
     if (getenv("DQ3_LOAD")) {
         int lslot = atoi(getenv("DQ3_LOAD"));        /* DQ3_LOAD=N → slot N(2..6);0/1/非數字 → slot 0(相容舊語意)*/
         const char *lpath = (lslot >= 2 && lslot <= DQ3_SAVE_SLOTS) ? slot_path(lslot) : slot_path(0);
@@ -595,6 +635,10 @@ static int run_game(const char *assets, const char *dump)
             fprintf(stderr, "讀檔續玩 ← %s(名冊%d 隊伍%d,存檔位置 CTY%d (%d,%d)%s)\n",
                     lpath, roster.count, party.count, pos.cty, pos.px, pos.py,
                     ship.owned ? (ship.aboard ? " 船上" : " 有船") : "");
+            /* 還原場景到存檔位置(field 已於上方載入)。 */
+            if (restore_position(assets, &pos, field, &field_under, &town, &cur,
+                                 &layer, &in_town, &cur_cty, &flags) == 0)
+                loaded_from_save = 1;
         }
     }
     set_dialogue_hero(&roster, &party);   /* 對話 {V} 主角名初值(讀檔/新局後)*/
@@ -845,8 +889,8 @@ static int run_game(const char *assets, const char *dump)
         return 0;
     }
 
-    /* 互動開場:從阿里阿罕城鎮(CTY00 sec0)起步。debug 已定位(warp/descent)則跳過,用 debug 狀態。 */
-    if (!debug_placed) {
+    /* 互動開場:從阿里阿罕城鎮(CTY00 sec0)起步。debug 已定位 / 讀檔已還原場景則跳過。 */
+    if (!debug_placed && !loaded_from_save) {
         dq3_scene *t0 = dq3_town_load(assets, "CTY00.DAT", 0, 1, err, sizeof err);
         if (t0) { town = t0; load_field_hero(town, assets); cur = town; in_town = 1; cur_cty = 0;
                   dq3_scene_apply_palette(cur);
@@ -890,11 +934,33 @@ static int run_game(const char *assets, const char *dump)
             dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         sc = dq3_poll_scancode();
-        if (sc == DQ3_SC_F10) {             /* F10:離開遊戲確認(Yes/No)→ 選 slot 存檔(使用者需求)*/
+        if (sc == DQ3_SC_F5) {              /* F5:隨時存檔 → 選 slot(使用者需求:隨時存讀)*/
+            int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 0);
+            if (slot >= 1) {
+                save_game_to(slot_path(slot), &roster, &party, &inv,
+                             cur_cty, cur->px, cur->py, &ship, in_town, layer, in_town ? cur->section : 0);
+                fprintf(stderr, "F5 隨時存檔:存入冒險之書 %d\n", slot);
+            } else fprintf(stderr, "F5 存檔:取消\n");
+            dq3_scene_apply_palette(cur);
+        } else if (sc == DQ3_SC_F9) {       /* F9:隨時讀檔 → 選 slot → restore 回原位置 */
+            int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 1);   /* for_load=1:空格不可選 */
+            if (slot >= 1 && dq3_save_exists(slot_path(slot))) {
+                dq3_save_pos pos;
+                if (dq3_save_read(slot_path(slot), &roster, &party, &inv, &pos) == 0) {
+                    ship.owned = pos.ship_owned; ship.aboard = pos.ship_aboard;
+                    ship.px = pos.ship_px; ship.py = pos.ship_py; ship.layer = pos.ship_layer;
+                    restore_position(assets, &pos, field, &field_under, &town, &cur,
+                                     &layer, &in_town, &cur_cty, &flags);
+                    set_dialogue_hero(&roster, &party);
+                    fprintf(stderr, "F9 隨時讀檔:載入冒險之書 %d → 回原位置\n", slot);
+                }
+            } else { fprintf(stderr, "F9 讀檔:取消 / 空 slot\n"); dq3_scene_apply_palette(cur); }
+        } else if (sc == DQ3_SC_F10) {      /* F10:離開遊戲確認(Yes/No)→ 選 slot 存檔(使用者需求)*/
             if (confirm_quit(&dlg.txt)) {
                 int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 0);   /* 選格;ESC → 存 slot 0 autosave */
                 save_game_to(slot >= 1 ? slot_path(slot) : slot_path(0),
-                             &roster, &party, &inv, cur_cty, cur->px, cur->py, &ship);
+                             &roster, &party, &inv, cur_cty, cur->px, cur->py, &ship,
+                             in_town, layer, in_town ? cur->section : 0);
                 fprintf(stderr, "F10 離開:存入%s\n", slot >= 1 ? "選定 slot" : "自動存檔(slot 0)");
                 dq3_rt_set_quit();
             }
@@ -1196,7 +1262,8 @@ static int run_game(const char *assets, const char *dump)
                                 int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 0);
                                 if (slot >= 1) {
                                     save_game_to(slot_path(slot), &roster, &party, &inv,
-                                                 cur_cty, cur->px, cur->py, &ship);
+                                                 cur_cty, cur->px, cur->py, &ship,
+                                                 in_town, layer, in_town ? cur->section : 0);
                                     fprintf(stderr, "記錄點:存入冒險之書 %d\n", slot);
                                     if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xfd);   /* 記錄「旅行的經驗」*/
                                 } else fprintf(stderr, "記錄點:取消存檔\n");

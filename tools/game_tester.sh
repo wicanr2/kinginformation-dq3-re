@@ -213,6 +213,8 @@ DQ3_SAVE="$SV" DQ3_DEBUG="party;gold:5000;item:0x55;warp:2:10:10" DQ3_INPUT="que
 if [ -s "$SV" ] && grep -q "存檔 →" /tmp/sv1.log; then
   o=$(DQ3_SAVE="$SV" DQ3_LOAD=1 DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
   echo "$o" | grep -q "讀檔續玩.*CTY2 (10,10)" && ok "存檔→讀檔 roundtrip(狀態回復)" || ng "讀檔狀態不符"
+  # 讀檔回原位置(使用者需求:取檔回來在原位置):場景還原到存檔的城 CTY2
+  echo "$o" | grep -q "讀檔場景還原:城 CTY2" && ok "讀檔回原位置(場景還原到存檔的城 CTY2)" || ng "讀檔場景未還原"
 else ng "存檔未產生"; fi
 # 多 slot:DQ3_LOAD=N 讀 slotN(dq3_saveN.dat);slot path 規則 + slot 隔離(test_save 單元已驗 6 slot)
 SVB=/tmp/gt_slot.dat; rm -f /tmp/gt_slot*.dat

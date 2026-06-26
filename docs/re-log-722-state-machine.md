@@ -584,3 +584,25 @@ main.c 加 slot→path 映射 + slot 選單 UI + 三入口接線。
 - test_save.c 加 6 slot 隔離單元測試(6 slot 各帶不同 CTY 指紋,讀回互不覆蓋)。
 - game_tester:DQ3_LOAD=3 讀 slot3 路徑規則 + DQ3_LOAD=5 空 slot 不讀檔。
 - game_tester 73 → 75(全 PASS);roundtrip autosave 訊息「自動存檔」→「存檔 →」同步更新。
+
+
+## Step 40:隨時存讀檔(F5/F9)+ 讀檔回原位置 2026-06-26
+
+使用者需求:隨時存檔讀檔(方便)+ 取檔回來在原位置。
+
+### 讀檔回原位置(核心)
+- dq3_save_pos 加 in_town/layer/sec(magic v4→v5);存檔記玩家所在場景。
+- restore_position(仿 do_descent 指標傳遞):in_town→載入城鎮 CTY/sec、layer=1→下層 overworld(懶載)、
+  否則地表;還原 (px,py)。DQ3_LOAD env 讀檔 + 標題續玩 + F9 共用。
+- 之前讀檔只還原資料(名冊/隊伍/道具/船),位置「先記錄」未載入場景 → 現完整還原。
+
+### 隨時存讀檔快捷鍵
+- F5(scancode 0x3f)= 隨時存檔 → slot 選單選格。
+- F9(0x43)= 隨時讀檔 → slot 選單(for_load,空格不可選)→ restore_position 回原位置。
+
+### 驗證
+- test_save:in_town/layer/sec round-trip 一致。
+- game_tester:讀檔回原位置(場景還原到存檔的城 CTY2);save_pos magic v5。
+- game_tester 75 → 76(全 PASS)。
+
+### 待:標題主選單(新遊戲/繼續冒險)串 slot_select for_load — 下一步。

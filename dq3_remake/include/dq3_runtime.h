@@ -52,6 +52,8 @@ uint8_t dq3_poll_scancode(void);
 int     dq3_should_quit(void);                  /* 視窗關閉 / 要求離開 */
 void    dq3_rt_set_quit(void);                  /* 遊戲層確認離開後呼叫(F10 → Yes 流程)*/
 #define DQ3_SC_F10  0x44                         /* F10 = 離開請求 scancode(遊戲層 Yes/No + autosave)*/
+#define DQ3_SC_F5   0x3f                          /* F5 = 隨時存檔(選 slot)*/
+#define DQ3_SC_F9   0x43                          /* F9 = 隨時讀檔(選 slot,回原位置)*/
 
 /* ---- 計時:取代 BIOS tick / frame_wait(sub_ee23)---- */
 void     dq3_delay_ms(uint32_t ms);
