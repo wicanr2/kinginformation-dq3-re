@@ -27,9 +27,11 @@ static const dq3_scripted TABLE[] = {
    * 消耗換覺醒粉 0x5a(原版 `mov [si],0x5a` 就地替換)+ rec96;無紅寶石 → rec90(杜勝利 Ch10)。 */
   {  16,  5, 0x5a, 0x59,          DQ3_SC_NOITEM, 1, 0,                 90, 96, 90 },
 
+  /* 雪地草原 CTY54 sect0 (8,2) 老人(L0x5c20 je 分支,flag 0x43):持變身杖 0x62 →
+   * 消耗換船員之骨 0x63(原版 `mov[si],0x63` 就地替換)+ rec59(杜勝利 Ch37)。無變身杖 → rec56。 */
+  {  44, 54, 0x63, 0x62,          DQ3_SC_NOITEM, 1, 0,                 56, 59, 60 },
+
   /* ── 檢查型(give_item==NONE,require_item != NONE;持物→success rec、否則→need rec,不消耗)── */
-  /* CTY54 sect0 (8,2)(L0x5c20,flag 0x43):需持變身杖 0x62 → 反應 rec56,否則 rec61。 */
-  {  44, 54, DQ3_SC_NOITEM, DQ3_SC_NOITEM, 0x62, 0, 0,                 61, 56, 56 },
   /* CTY62/63 sect0(L0x5daf,flag 0x4c):需持船 0x5b → 反應 rec87,否則 rec89(渡海 gate)。
    * cty=0xff:byte4=50 在 CTY62(×2)/CTY63 皆同義(全 CTY 僅此處用 b4=50)。 */
   {  50, 0xff, DQ3_SC_NOITEM, DQ3_SC_NOITEM, 0x5b, 0, 0,               89, 87, 87 },

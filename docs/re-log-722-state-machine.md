@@ -301,3 +301,18 @@ game_tester **41/41**。
 
 > 觀念更正(使用者 2026-06-26):精訊**中文化做完了**(有 bug+缺圖),核心內容全是原版 ENIX DQ3,
 > 缺口=「還沒徹底反組譯 assembly」非「build 沒接」。杜勝利攻略當 ground truth 逐段 RE。
+
+## Step 20:B-2 變身杖鏈 + 全 quest 道具 id 定錨(杜勝利 Ch35/37)2026-06-26
+
+- **quest 道具連續 id 全解出**(font 渲染 D3TXT00):0x59 夢幻紅寶石 / 0x5a 覺醒粉 / 0x5b 船 /
+  0x5c 黑胡椒 / 0x5d 隱身草 / 0x5e 乾渴壺 / 0x5f 黑暗之燈 / 0x60 回音之笛 / 0x61 拉之鏡 /
+  0x62 變身杖 / 0x63 船員之骨 / 0x65 光之珠 / 0x66-0x6b 六寶珠。**一張連續道具表,後續鏈可直接查。**
+- **byte4=44 變身杖 transform**:完整解出 je 分支——持變身杖 0x62 → `mov[si],0x63` 換船員之骨
+  + 設座標 [0x5053]=0x96/[0x5055]=0x5a(幽靈船位?)+ flag 0x43。remake 用 consume_prereq 接成
+  變身杖→船員之骨(雪地草原 CTY54)。驗證 ✓。
+- **變身杖來源 = 怪力魔(怪89,HP400)@ 沙曼歐莎**:無 sub2 handler 給 0x62 → boss 掉落。
+  `boss:89:0x62` token 可戰可給(debug 可完成鏈:boss→變身杖→byte4=44→船員之骨)。
+- **待**:沙曼歐莎 CTY in-game 觸發(未命名 CTY,需 RE welcome rec 60/71 定位 + 假國王 NPC +
+  拉之鏡 0x61 現形 reveal)→ 接成正式 in-game。船員之骨→幽靈船→愛的回憶→蓋亞之劍(下游)續接。
+
+game_tester **43/43**。
