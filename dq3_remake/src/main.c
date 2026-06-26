@@ -464,6 +464,9 @@ static int run_game(const char *assets, const char *dump)
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
     dq3_ship ship; dq3_ship_init(&ship);                            /* #2 船:取船後跨海(docs/48)*/
+    /* 不死鳥拉米亞(六珠 → 祠堂復活 → 飛行坐騎,青衫攻略;sprite=DQ3MAN.BLS entry 176)。
+     * 飛行無視地形(山/海皆可越),落在可走格。 */
+    dq3_charsprite phoenix_spr; int phoenix_ok = 0, phoenix_revived = 0, phoenix_aboard = 0;
     dq3_roster roster; dq3_party party; dq3_stats gst;              /* 露依達酒場:名冊 + 隊伍 */
     long gold = 0;                                                  /* 隊伍金錢(戰利累積)*/
     dq3_items shop_items; int shop_ok;                             /* ITEM.DAT(商店價/可裝備)*/
@@ -478,6 +481,9 @@ static int run_game(const char *assets, const char *dump)
      * → region 1(史萊姆/大烏鴉系弱怪,docs/39);取代 pick_open_start 的任意空地。 */
     if (153 < field->map_w && 174 < field->map_h) { field->px = 153; field->py = 174; }
     cur = field; dq3_scene_apply_palette(cur);
+    /* 不死鳥 sprite(DQ3MAN.BLS entry 176 = char44 拉米亞飛行 4 frame)*/
+    phoenix_ok = (dq3_charsprite_load(&phoenix_spr, assets, "DQ3MAN.BLS", 176, err, sizeof err) == 0);
+    fprintf(stderr, "[init] 不死鳥 sprite(DQ3MAN.BLS e176)載入 %s\n", phoenix_ok ? "OK" : err);
     /* 對話文字(阿里阿罕 = D3TXT01;之後每幀依 section bank 切換,docs/42)*/
     dlg_ok = (dq3_dialogue_load(&dlg, assets, "D3TXT01.TXT", err, sizeof err) == 0);
     /* 常駐系統/道具文字 = D3TXT00(系統訊息、道具名;與 NPC 對話 bank 分離,docs/42)*/
@@ -555,6 +561,10 @@ static int run_game(const char *assets, const char *dump)
                 ship.owned = 1; ship.aboard = 0; ship.px = a; ship.py = b; ship.layer = layer;
                 dq3_progress_set(&flags, DQ3_MS_SHIP);
                 fprintf(stderr, "[DEBUG] 船停泊 (%d,%d) layer%d\n", a, b, layer);
+            } else if (strcmp(tok, "phoenix") == 0) {         /* 不死鳥拉米亞復活 + 搭乘(飛行坐騎)*/
+                phoenix_revived = 1;
+                if (!in_town) phoenix_aboard = 1;
+                fprintf(stderr, "[DEBUG] 不死鳥拉米亞復活%s\n", phoenix_aboard ? " + 搭乘(飛行)" : "");
             } else if (strcmp(tok, "zoma") == 0) {            /* 索瑪終戰(怪 0x7c)→ 勝則破關 */
                 int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
                 dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
@@ -721,6 +731,9 @@ static int run_game(const char *assets, const char *dump)
         if (!in_town) animate_sea(cur, g_sea_frame++);   /* 海面 palette cycling(地表/下層)*/
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
+        if (!in_town && phoenix_aboard && phoenix_ok)    /* 不死鳥坐騎 sprite 疊在玩家格(飛行中)*/
+            dq3_scene_draw_charsprite_at(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H,
+                                         cur->px, cur->py, &phoenix_spr, cur->facing & 3);
         if (dlg_ok && dq3_dialogue_is_open(&dlg))
             dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
@@ -1002,6 +1015,14 @@ static int run_game(const char *assets, const char *dump)
             if (shop_ok) { int sn; const unsigned char *sk = shop_stock_for(cur_cty, &sn);
                 shop_modal(&roster, &party, &shop_items, sys_ok ? &sys_txt : &dlg.txt, &gold, sk, sn); }
             dq3_scene_apply_palette(cur);
+        } else if (sc == 0x16 && !in_town && phoenix_aboard) {  /* 不死鳥:降落於可走格 */
+            if (dq3_scene_walkable(cur, cur->px, cur->py)) {
+                phoenix_aboard = 0;
+                fprintf(stderr, "不死鳥降落於 (%d,%d)\n", cur->px, cur->py);
+            } else fprintf(stderr, "此處無法降落(非可走格,繼續飛行)\n");
+        } else if (sc == 0x16 && !in_town && phoenix_revived) {  /* 不死鳥:起飛 */
+            phoenix_aboard = 1;
+            fprintf(stderr, "搭乘不死鳥拉米亞起飛(飛越山海)\n");
         } else if (sc == 0x16 && !in_town) {  /* U:下降/上升(開發捷徑;正式下降=runner event 86,docs/44)*/
             if (layer == 0) do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);  /* scripted_event 86 */
             else { layer = 0; cur = field; dq3_scene_apply_palette(cur); fprintf(stderr, "上升 → 地表\n"); }
@@ -1017,7 +1038,16 @@ static int run_game(const char *assets, const char *dump)
             }
         } else if (sc == 0x48 || sc == 0x50 || sc == 0x4b || sc == 0x4d) {
             int moved;
-            if (!in_town) {                          /* overworld:走船規則(航行/登船/上岸,docs/48)*/
+            if (!in_town && phoenix_aboard) {        /* 不死鳥飛行:無視地形,飛越山海,只夾邊界 */
+                int dx = (sc==0x4d)-(sc==0x4b), dy = (sc==0x50)-(sc==0x48);
+                int nx = cur->px + dx, ny = cur->py + dy;
+                cur->facing = (sc==0x48)?2:(sc==0x50)?0:(sc==0x4b)?1:3;
+                moved = 0;
+                if (nx >= 0 && nx < cur->map_w && ny >= 0 && ny < cur->map_h) {
+                    cur->px = nx; cur->py = ny; moved = 1;
+                    /* 飛到可走格上空按 Space 降落(見下);移動本身不落地 */
+                }
+            } else if (!in_town) {                   /* overworld:走船規則(航行/登船/上岸,docs/48)*/
                 int r = dq3_ship_input(cur, &ship, sc, layer);
                 moved = (r != DQ3_SHIP_BLOCKED);
                 if (r == DQ3_SHIP_BOARD)          fprintf(stderr, "登船 → 可跨海\n");
@@ -1078,8 +1108,9 @@ static int run_game(const char *assets, const char *dump)
                         }
                     }
                 }
-                /* overworld 走到城鎮入口座標 → 進該 CTY(0x748 查表;依當前 layer 地表/下層)*/
-                if (!in_town) {
+                /* overworld 走到城鎮入口座標 → 進該 CTY(0x748 查表;依當前 layer 地表/下層)。
+                 * 不死鳥飛行中飛越城鎮不進城(需先降落 y 再走入)。 */
+                if (!in_town && !phoenix_aboard) {
                     int cidx = find_cty_at_map(cur->px, cur->py, layer);
                     /* 旗標條件 portal:同一 overworld 點依進度載不同城(docs/44 §7);override find_cty */
                     { int pc = dq3_owportal_resolve(cur->px, cur->py, &flags);
@@ -1122,6 +1153,9 @@ static int run_game(const char *assets, const char *dump)
     if (dump && getenv("DQ3_INPUT")) {
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
+        if (!in_town && phoenix_aboard && phoenix_ok)    /* 不死鳥坐騎 sprite(末幀渲染)*/
+            dq3_scene_draw_charsprite_at(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H,
+                                         cur->px, cur->py, &phoenix_spr, cur->facing & 3);
         if (dlg_ok && dq3_dialogue_is_open(&dlg)) dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "playthrough 末幀 -> %s(in_town=%d cty=%d (%d,%d))\n",

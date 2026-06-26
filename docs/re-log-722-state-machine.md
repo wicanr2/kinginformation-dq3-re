@@ -245,3 +245,21 @@ give/take handler 全部接齊:
 **結論(有確認嗎 → 有,且更精確)**:攻略描述的**設計**被資料完整佐證(六珠 id 連續、祭壇全檢、
 6 位置旗標),但這個**早期 build 沒把放珠/復活觸發接完**。remake 已可取得其中 2 珠
 (綠 0x66 提頓村、銀 0x6b CTY64);另 4 珠(藍/紅/紫/黃)給予端同屬 runner 事件,本 build 未必接齊。
+
+## Step 17:★ 不死鳥拉米亞飛行坐騎 MVP(2026-06-26)
+
+使用者證實 DOS 精訊版可乘不死鳥 + 親見 sprite。查證落地:
+
+- **不死鳥 sprite 確認**:DQ3MAN.BLS **entry 176(char44)= 黃色展翅的拉米亞**(4 方向 frame,
+  charsheet 渲染確認)。巨蛋 sprite 在 char36/48/57。
+- **坐騎 MVP**(`dq3_remake`,鏡射船系統):
+  - `phoenix_revived/aboard` 狀態 + `phoenix` debug token(復活+搭乘)。
+  - **飛行移動**:aboard 時 overworld 移動**無視地形碰撞**(飛越山/海),只夾地圖邊界;
+    飛行中**飛越城鎮不進城**(gate `find_cty` 進城於 `!phoenix_aboard`)。
+  - **sprite overlay**:`dq3_scene_draw_charsprite_at`(新增,透明 blit charsprite frame)在玩家格疊
+    不死鳥 sprite(主迴圈 + 末幀渲染兩路徑都加)。視覺確認:黃鳥載主角飛越地表。
+  - **降落**:'y' 鍵在可走格降落(非可走格續飛)。
+- **教訓**:dump 用「末幀渲染」獨立路徑,overlay 要兩路徑都加(初版只加主迴圈 → dump 看不到 sprite)。
+
+game_tester **35/35**(+不死鳥復活/飛行/降落)。**待**:祠堂集六珠 → 守護者 → 復活(接 debug 外的正式觸發);
+六珠來源補藍(勇氣洞窟寶箱)/紅(海盜村密道)/黃(新城鎮椅後),紫(無姬大人=八頭大蛇)/綠/銀已連。

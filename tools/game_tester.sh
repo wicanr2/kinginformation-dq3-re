@@ -72,6 +72,13 @@ echo "$o" | grep -q "byte4=50:持有 0x5b" && ok "sub2 檢查 50(持船→渡海
 o=$(DQ3_DEBUG="warp:20:16:3:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "獲得綠寶珠 0x66" && ok "提頓村牢房給綠寶珠(0x66)" || ng "提頓村綠寶珠"
 
+echo "######## 8. 不死鳥拉米亞飛行坐騎 ########"
+o=$(DQ3_DEBUG="phoenix" DQ3_INPUT="eesrrrrdddd" DQ3_DUMP=/tmp/ph.ppm timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "不死鳥.*復活" && echo "$o" | grep -q "末幀.*in_town=0" \
+  && ok "不死鳥復活+飛行(飛越地形/不進城,留 overworld)" || ng "不死鳥飛行"
+o=$(DQ3_DEBUG="phoenix" DQ3_INPUT="eesy" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "不死鳥降落於" && ok "不死鳥降落於可走格" || ng "不死鳥降落"
+
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
 o=$(DQ3_DEBUG="party;boss:26:0x33" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)

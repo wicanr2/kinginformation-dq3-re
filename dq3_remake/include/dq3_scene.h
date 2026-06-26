@@ -125,6 +125,10 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h);
 void dq3_scene_draw_tile_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
                             int mx, int my, int tile_idx);
 
+/* 在地圖格 (mx,my) 透明疊一個 charsprite frame(不死鳥坐騎 overlay)。 */
+void dq3_scene_draw_charsprite_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
+                                  int mx, int my, const dq3_charsprite *cs, int frame);
+
 /* 把本場景 palette 套進 runtime DAC。
  * 契約(修 bug #8,docs/28):任何場景切換 / 戰鬥返回後都必須呼叫一次,
  * 確保 DAC 還原成目的場景的 palette,不殘留前一場景(如戰鬥 MNSBK)的色盤。 */

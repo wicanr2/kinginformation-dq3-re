@@ -213,6 +213,28 @@ void dq3_scene_draw_tile_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
         }
 }
 
+void dq3_scene_draw_charsprite_at(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h,
+                                  int mx, int my, const dq3_charsprite *cs, int frame)
+{
+    int cam_x = s->px - VIEW_COLS / 2;
+    int cam_y = s->py - VIEW_ROWS / 2;
+    int sx, sy, r, c;
+    if (cam_x > s->map_w - VIEW_COLS) cam_x = s->map_w - VIEW_COLS;
+    if (cam_y > s->map_h - VIEW_ROWS) cam_y = s->map_h - VIEW_ROWS;
+    if (cam_x < 0) cam_x = 0;
+    if (cam_y < 0) cam_y = 0;
+    if (frame < 0 || frame >= DQ3_CHAR_FRAMES) frame = 0;
+    sx = (mx - cam_x) * DQ3_TILE_W;
+    sy = (my - cam_y) * DQ3_TILE_H;
+    for (r = 0; r < DQ3_CHAR_H; r++)
+        for (c = 0; c < DQ3_CHAR_W; c++) {
+            int yy = sy + r, xx = sx + c;
+            if (!cs->opaque[frame][r][c]) continue;
+            if (yy >= 0 && yy < fb_h && xx >= 0 && xx < fb_w)
+                fb[yy * fb_w + xx] = (uint8_t)(DQ3_SPRITE_PAL_BASE + cs->px[frame][r][c]);
+        }
+}
+
 void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
 {
     int cam_x = s->px - VIEW_COLS / 2;
