@@ -366,5 +366,9 @@
   宣告完成前 git diff 看真實改動 + 檔案中介抓 PASS=N。
 
 ### 真實交付狀態
-- `tools/game_tester.sh` **73/73 全綠**(git 驗證);journal `docs/re-log-722-state-machine.md` Step 14-38。
+- `tools/game_tester.sh` **79/79 全綠**(git 驗證;草薙之劍 + 八頭大蛇 boss + 多 slot 存讀檔後 73→79);
+  journal `docs/re-log-722-state-machine.md` Step 14-42。
 - 主線可破關 + B 道具鏈 + A boss + 觸發點定位完成。剩 2 個 special 長尾(非可玩性缺口)。
+- **quest-items.md 全列 ✅**(2026-06-26):7 個 stale「待」已對 ground truth 訂正 —
+  0x14 草薙之劍走八頭大蛇勝利分支;0x5f/0x60/0x61/0x70/0x71/0x72 早已由通用寶箱 examine handler
+  (main.c:1338 type0/1/3 + param<0x90)取得,寶箱表座標已註明;0x72 重複條已合併。
