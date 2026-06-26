@@ -118,7 +118,7 @@
 | 地圖 tile + 世界地圖還原（城鎮佈局待 EXE） | ✅ | [`docs/04-map-format.md`](docs/04-map-format.md)、[`docs/maps/`](docs/maps/) |
 | `DQ3.EXE` 反組譯 → C | 🔄 主結構成 C(啟動/主迴圈/狀態機/野外指令/對話/戰鬥/場景/素材載入/注音輸入) | [`docs/05`](docs/05-exe-recon.md)–[`19`](docs/19-re-correctness.md)、[`re/`](re/) |
 | RE 正確性確認(原版編譯器 = **MSC 5.x**,byte-match 驗證) | 🔄 方法已證、擴展中 | [`docs/19`](docs/19-re-correctness.md)、[`docs/17`](docs/17-build-toolchain.md) |
-| **SDL2 現代跨平台重寫**(`dq3_remake/`,C99+SDL2) | ✅ **核心 RPG 迴圈完整可玩**(見下「remake 可玩狀態」)| [`dq3_remake/`](dq3_remake/)、[`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md) |
+| **SDL2 現代跨平台重寫**(`dq3_remake/`,C99+SDL2) | ✅ **完整可玩 + 主線可破關 + 27/27 驗證 + 打包**(見下「remake 可玩狀態」)| [`dq3_remake/`](dq3_remake/)、[`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md) |
 
 ### remake 可玩狀態（`dq3_remake/` — 核心 RPG 迴圈完整）
 
@@ -139,6 +139,15 @@ DQ3 核心。整條經典迴圈都在，且每個數值 / 邏輯都從 `DQ3.EXE`
 [遭遇區](docs/39-encounter-zones.md)）、咒文全 RE（descriptor 威力 + 習得表）、道具全 RE
 （[ITEM.DAT](docs/22-item-fix.md) 攻/防/價/職業限制）。中文化亮點**注音組字輸入**已重建。
 
+**主線可破關**:8 里程碑真實 NPC 觸發（盜賊鑰匙 / 魔法玉 / 羅馬利亞皇冠 / 達瑪轉職 / 取船 /
+彩虹合成 / 下降 / 索瑪終戰）一條龍推進到 9/9；索瑪二階段（光之珠）+ 結局捲動。先前判定
+「需 DOSBox debugger」的 `[0x722]` runner/region scripted-event 觸發系統**已靜態攻克**
+（[`docs/re-log-722-state-machine.md`](docs/re-log-722-state-machine.md)，57 個 setter 推翻「無 setter」結論）。
+**交付驗證**:`tools/game_tester.sh` **27/27 全綠**（15 單元 + 主線一條龍 + 全 89 城零崩潰 +
+boss 事件 + 存讀檔 roundtrip）+ DOSBox oracle（標題逐像素一致、注音 IME 字序一致，
+[`docs/data/oracle-validation.md`](docs/data/oracle-validation.md)）;`tools/package.sh` 打包跨平台
+distributable（[`dq3_remake/DIST_README.md`](dq3_remake/DIST_README.md),不含版權素材）。
+
 ### 已解出的重點
 
 - **字模格式**：三個 `.FON` 共用 16×16 row-major MSB 點陣（字身 16×14，row14/15 為行距留白）。
@@ -148,7 +157,11 @@ DQ3 核心。整條經典迴圈都在，且每個數值 / 邏輯都從 `DQ3.EXE`
 
 ### 待續
 
+已完成:地圖（`DQ3*.BLK` / `CTY*.DAT`）格式與還原 ✅、`DQ3.EXE`（MSC 5.x）反組譯 + byte-match
+確認 ✅、SDL2 跨平台重寫（完整可玩 + 可破關 + 27/27 驗證 + 打包）✅、`[0x722]` runner/region
+scripted-event 系統靜態攻克 ✅。剩餘:
+
 - glyph index → Unicode 對照表（OCR 1,476 字模）→ 把劇情 dump 成純 UTF-8。
 - `CHINA.FON` 殘留 ~7% 對齊、段內索引表精確語意。
-- 地圖（`DQ3*.BLK` / `CTY*.DAT`）格式與還原。
-- `DQ3.EXE`（Microsoft C 5.x）反組譯為 C、byte-match 確認後用 SDL2 重寫。
+- remake 內容完整度延伸（更多已解出的 sub2 handler 接線、未發售版未接好的劇情補洞);
+  細項見 [`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md)、[`docs/47-remaining-work.md`](docs/47-remaining-work.md)。

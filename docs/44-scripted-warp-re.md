@@ -159,8 +159,11 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 | 0x75a7 | 39 | 6 阿莎拉慕 | (121,1) | 未明 |
 
 **結論**:gate 混合 test_flag 與 runner `[0x722]==event id` → 這 8 個是 **runner-driven scripted 事件**,
-觸發在 runner(`[0x722]` 資料驅動、無靜態 setter,docs/47 A1)。**data 全解(dest/落點/gate)**,
-存 `dq3_remake/{include,src}/dq3_locwarp.{h,c}`,待 runner 觸發系統解出即可 wiring。
+觸發在 runner。**data 全解(dest/落點/gate)**,存 `dq3_remake/{include,src}/dq3_locwarp.{h,c}`。
+
+> **★ 更正(2026-06)**:此處原寫「`[0x722]` 無靜態 setter,待解」已過時——`[0x722]` runner 機器
+> **已靜態攻克**(57 個 `mov word [0x722],N` setter + region hit-test + 跳表完整解出,
+> 見 `docs/re-log-722-state-machine.md`)。這 8 個 scripted warp 的觸發已可靜態 wiring,非待解的硬骨頭。
 
 ## 5c. 呼叫鏈解出:warp handler = runner 0xabb2 / 子型2 同一張表
 

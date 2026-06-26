@@ -182,13 +182,20 @@ runner `0xabb2` 與跳表 `DS 0x3baa` 是 scripted-event 系統的核心,但:
   其他 immediate / lea / disp 參照。
 - 整個 handler 群(`0x72ab…0x776c…`)+ 表 + runner **無任何可靜態解析的進入點**。
 
-→ 結論:runner 由**執行期計算的指標 / 事件腳本 VM**(段基相對偏移)進入,**純靜態追不到
-祠堂座標**。已排除的觸發路徑:**訊息 control-code**(純文字,見下)、**section 事件表**
-(只有 寶箱/條件/傳送/給道具 四型,無 run-event)、**直接呼叫**(無)。
+→ (當時)結論:runner 由執行期計算的指標 / 事件腳本 VM 進入,純靜態追不到祠堂座標。
 
-**下一步(動態分析,非靜態硬猜)**:DOSBox debugger 在 runner phys `0x9842`(或 handler
+> **★ 後續更正(2026-06,純靜態解決,未用 DOSBox)**:上述「純靜態追不到 / 需動態」結論**已被推翻**。
+> - 祠堂座標:CTY93 section0 NPC 清單唯一一隻祭司 @ **(8,8)**,三證據(CTY 資料 + 劇本「神聖的祠堂」+
+>   地理 docs/32)靜態定位(見 `dq3_remake/include/dq3_inventory.h` DQ3_SHRINE_NPC_X/Y)。
+> - runner `[0x722]` 進入點:靜態重新分析找到 **57 個 explicit setter**(`mov word [0x722],N`)+ 座標→region
+>   hit-test,完整解出派發(`mov bx,[0x722]; dec bx; shl bx,1; call [bx+0x3baa]`),sub2 跳表 = runner 表
+>   偏移 5 格。整套劇情觸發機器全靜態解完 —— 見 `docs/re-log-722-state-machine.md`、`tools/decode_sub2_struct.py`。
+>
+> 下方「動態分析」段保留為當時的死路推理紀錄(教訓:撞牆別退回 DOSBox,先換 query 把 setter 掃出來)。
+
+**(當時擬的)下一步(動態分析)**:DOSBox debugger 在 runner phys `0x9842`(或 handler
 `file 0x776c`)下中斷點 → 觸發祠堂 → 讀當下地圖 id `[0x256c]` + 座標 `[0x4f2f]/[0x4f31]`
-+ 呼叫堆疊,一次定位 CTY/座標。
++ 呼叫堆疊。**(實際未走此路:靜態已解,見上更正。)**
 
 ### 訊息 control-code 格式(字串印表器 `0x111b:0x264` = file 0x12784)
 

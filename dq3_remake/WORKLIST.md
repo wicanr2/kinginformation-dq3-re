@@ -260,7 +260,9 @@
 - [ ] **scripted warp 全接**(§5b 8 個 0xd1f9):缺「源觸發 tile」位置(struct 只給落點)→
       需從各 call site disasm 抽 `[0x4f33/35]==XY` 比較值。
 - [ ] **overworld 旗標 portal 全表**:dq3_owportal 目前 3 條;完整需抽 0x396e 全分支。
-- [ ] **甘達特 / 八頭大蛇 boss 接成劇情事件**(目前皇冠走 examine、boss 戰可單獨跑)。
+- [x] **甘達特 / 八頭大蛇 boss 接成劇情事件 ✅**(2026-06-26):通用 `boss:<id>[:獎勵]` debug token +
+      in-game 八頭大蛇(CTY19 byte4=45)觸發。修真 bug:八頭大蛇 sprite W=416 超出 MAXW=384 被擋
+      → MAXW 提到 416(全怪掃描合法最大),boss 大圖正確繪製。甘達特(26)經 boss token 可驗。
 - [x] **Polish — 索瑪兩階段(光之玉)**:持光之珠 0x65 → 索瑪戰開戰自動驅散黑暗結界、弱化(攻 180→60)。
 - [x] **Polish — 完整結局捲動**:run_finale → ENDTXT 逐段 → THE END(查出未發售版結局文字未定稿,
       `docs/data/endtxt-incomplete.md`;機制完整,完成版 assets 可直接替換)。
@@ -279,3 +281,16 @@
   **全 89 城載入零崩潰** + 新內容 → **22/22 全綠**。
 - **打包**(`tools/package.sh` → `work/dq3_remake_dist.tar.gz`):binary + 驗證套件 + DIST_README +
   run.sh;打包前跑全綠驗證,解壓包自包含驗證通過,run.sh 正確啟動開場。不含版權素材(自備)。
+
+## 2026-06-26 session(B 次要給物 → C boss 事件 → A oracle 對照)
+
+- **B 次要 sub2 給物**:byte4=84(CTY16 給誘惑之劍 0x10,女性專用武器)接線 + 驗證。
+  byte4=35(give 0x66)handler 存在但無 NPC 引用 → 開發殘留,不接。
+- **C boss 劇情事件**:通用 `boss:<id>[:獎勵]` token + in-game 八頭大蛇(CTY19)。
+  **★ 修真 bug**:八頭大蛇 sprite W=416>MAXW 384 被擋 → MAXW 416,多頭紅龍 boss 大圖正確繪製。
+  最終 boss 索瑪防禦也忠實化(def 300,原誤 clamp 成 4)。
+- **A DOSBox oracle**:標題逐像素一致、注音 IME 字序一致、英數盤一致、boss sprite 正確繪製
+  → `docs/data/oracle-validation.md`。
+- **驗證**:`game_tester.sh` **27/27 全綠**(+誘惑之劍/boss 事件/存讀檔 roundtrip)。
+- **★ 文件更正**:`[0x722]` runner scripted-event 系統「需 DOSBox debugger」框架已過時——
+  **靜態攻克**(57 setter 推翻「無 setter」),docs/47「單一最大 blocker」段更正,README 同步。

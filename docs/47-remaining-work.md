@@ -5,9 +5,13 @@
 ## ★ 前提:這是「未發售的早期 build」
 
 精訊版 DQ3 是**未上市的早期版本**。實證觀察:部分劇情對話/事件**內容不全或未接好**——
-例如下降事件(event 86,ギアガの大穴)的 **handler 本體存在**(0x783d 反組譯到),但**觸發那塊
-追不到靜態 setter**(`[0x722]` 無 `mov imm`);搜尋「跳進坑」之類提示 NPC 對白也找不到乾淨的一句。
+例如下降事件(event 86,ギアガの大穴)的 **handler 本體存在**(0x783d 反組譯到),但**那個特定
+event index 沒有對應的觸發 setter**;搜尋「跳進坑」之類提示 NPC 對白也找不到乾淨的一句。
 合理推斷:**這個 build 可能根本還沒把部分劇情觸發/文本串上去**(非我沒找到)。
+
+> **★ 注(2026-06)**:這不代表 `[0x722]` 機器「無 setter / 追不到」——靜態分析找到 **57 個
+> explicit setter**,機器本身完整可解(見 A1 / `docs/re-log-722-state-machine.md`)。是**特定幾個
+> 劇情 event 的觸發在這個早期 build 就沒接上**(未發售版內容缺口),而非靜態追蹤能力的極限。
 
 ⇒ 對「完整還原」的意義:**不必硬復刻一個原版可能都還沒做完的觸發**。務實做法 = 用 debug 口
 (docs/46)把各段串成可玩可驗 + 設計 remake 自有的旗標流補上缺口,而非 1:1 還原半成品 runner VM。
@@ -34,10 +38,17 @@
 
 ### A. 能破關的硬 blocker(劇情進度系統)
 
-1. **scripted-event 觸發系統(runner 0xabb2 / `[0x722]`)**:多數劇情 gate(阿里阿罕首旅の扉、
-   下降觸發、取船、各 boss 後事件)由劇情旗標驅動的 runner 事件觸發。**event id `[0x722]` 資料驅動、
-   無靜態 setter**(docs/31/44)→ 純靜態追不到,需動態(DOSBox debugger,本環境無)或逐 event 反推。
-   handler 多數已 RE(0x3baa 表),缺的是「何時/由什麼旗標觸發哪個 event」。
+1. ~~**scripted-event 觸發系統(runner 0xabb2 / `[0x722]`)**~~ **★ 已靜態攻克(2026-06)**:
+   先前判定「`[0x722]` 資料驅動、無靜態 setter → 純靜態追不到,需 DOSBox debugger」**已被推翻**。
+   靜態重新分析 `[0x722]` state machine(`docs/re-log-722-state-machine.md`)發現:
+   - `[0x722]` 有 **57 個 explicit setter**(多為 `mov word [0x722],N`)+ 座標→region hit-test,
+     是**可靜態決定的 region/event index**,非不可追的動態值。
+   - runner 派發 `mov bx,[0x722]; dec bx; shl bx,1; call [bx+0x3baa]` 完整解出;
+     **sub2 跳表 = runner 表偏移 5 格**(同一機器)→ sub2 條件對話/給物全部可靜態解。
+   - `tools/decode_sub2_struct.py` 解出**每個 handler 的雙區塊結構**(prereq_flag/give/take/set_flag/recs)
+     → `docs/data/sub2-struct.md`。
+   ⇒ 不再有「需 DOSBox debugger」的硬骨頭;剩下純粹是「要不要把已解出的 handler 一條條接進 remake」
+   的機械工作(多為未發售版本身就沒接好的內容)。handler 已全 RE(0x3baa/0x3bb4 表)。
 2. ~~**劇情旗標推進**~~ **(#1 已落地)**:remake 自有的主線旗標流已建——`dq3_progress`
    (include/src,里程碑 0x200..0x208,順序取自杜勝利攻略 START→THIEF_KEY→MAGIC_BALL→
    ROMALY→DHAMA→SHIP→RAINBOW→DESCEND→ZOMA)。RAINBOW/DESCEND 鏡射既有 EXE 旗標
@@ -100,17 +111,24 @@
 > **先查攻略**(references/dq3_bbs)、dungeon 找 world map 結構(別在城裡找塔)、sub2 scripted NPC
 > 也是給道具的合法管道(treasure 抽取涵蓋不到)。
 
-## 單一最大 blocker
+## ~~單一最大 blocker~~ → 已解除(2026-06)
 
-**劇情旗標驅動的 scripted-event 觸發系統(A1/A2)**——它是「把已做好的各系統串成一條可破關主線」
-的連接組織。handler 都在,缺觸發。純靜態已到極限(`[0x722]` 無 setter);**務實做法**:
-用 debug 口逐段驗證 + 設計 remake 自有的旗標流(不必 1:1 還原 runner VM),讓主線跑得通。
+**先前判定的單一最大 blocker(scripted-event 觸發系統 A1)已靜態攻克**(見上 A1)。
+`[0x722]` runner/region 機器完整靜態解出(57 setter + hit-test + 跳表 + sub2 雙區塊結構),
+**不再有需 DOSBox debugger 的硬骨頭**。剩餘為機械性接線 + 未發售版本身未接好的內容,
+remake 以自有旗標流串成可破關主線(不必 1:1 還原半成品 runner VM)。
 
 ## 驗證方法(已就緒)
 
-- 單元測試:stats/combat/battle/dialogue/npc/door/inventory/roster/menu/save(全綠)。
+- 單元測試 ×15:stats/combat/monster/battle/inventory/door/npc/roster/menu/dialogue/
+  nameinput/tavern/zhuyin/save/config(全綠)。
 - DEBUG 口 + DQ3_DUMP:任意狀態 headless 截圖(docs/46)。全 89 城 load 掃描零崩潰。
-- **`tools/playthrough_check.sh`(14 項)**:各系統孤立斷言(載入/對話/設施/隊伍/scripted event/
-  傳送/進度旗標流/船/道具)全綠。
-- **`tools/mainline_check.sh`(#4)**:單一進程依攻略順序走 START→…→索瑪,驗進度階段**單調推進
-  1→9** + 四真實 gate(取船/彩虹合成/下降/索瑪破關)依序生效 → **主線一條龍推到 9/9 = 能破關**。
+- **`tools/game_tester.sh`(統一交付 gate,27/27 全綠)**:15 單元 + playthrough(37)+
+  mainline(9/9 破關)+ 89 城零崩潰 + 新內容(索瑪二階段/結局捲動/sub2 給物×3/boss 事件)+
+  存讀檔 roundtrip。
+- **`tools/playthrough_check.sh`(37 項)**:各系統孤立斷言全綠。
+- **`tools/mainline_check.sh`**:單一進程依攻略順序 START→…→索瑪,進度階段**單調 1→9** +
+  四真實 gate(取船/彩虹合成/下降/索瑪破關)→ **主線一條龍 9/9 = 能破關**。
+- **DOSBox oracle**(`docs/data/oracle-validation.md`):標題逐像素一致、注音 IME 字序一致、
+  boss sprite 正確繪製;配 RE byte-identical(docs/17)。
+- **打包**(`tools/package.sh`)→ `work/dq3_remake_dist.tar.gz`,打包前自動全綠驗證。
