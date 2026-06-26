@@ -598,6 +598,15 @@ static int run_game(const char *assets, const char *dump)
                     dq3_inv_add(&inv, reward);
                     fprintf(stderr, "★ 擊敗 boss 怪0x%02x → 獲得獎勵道具 0x%02x\n", a, reward);
                 }
+            } else if (strcmp(tok, "baramos") == 0) {  /* 巴拉摩斯本體 boss(怪121 HP1201,杜勝利 Ch44;下降前假最終王)*/
+                const char *bs = getenv("DQ3_BATTLE_SCRIPT");
+                int oc;
+                dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
+                fprintf(stderr, "★ 巴拉摩斯戰(怪121 HP1201)— 下降前主線大 boss\n");
+                oc = dq3_battlescene_run(assets, 121, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                dq3_scene_apply_palette(cur);
+                if (oc == 1) { dq3_flags_set(&flags, 0x213, 1); fprintf(stderr, "★ 擊敗巴拉摩斯 → 設旗標 0x213，可下降(索瑪現身)\n"); }
+                else fprintf(stderr, "巴拉摩斯戰 outcome=%d(未勝)\n", oc);
             } else if (strcmp(tok, "finale") == 0) {          /* 直接驗破關→結局路徑(主線推到 9/9)*/
                 run_finale(&flags, &dlg, dlg_ok, &end_txt, end_ok, &end_seq);
             } else if (sscanf(tok, "dlg:%d:%d", &a, &b) == 2) { /* 渲染任意對話 record(bank a,rec b)*/
@@ -874,6 +883,27 @@ static int run_game(const char *assets, const char *dump)
                         } else {
                             dq3_dialogue_open(&dlg, b4);
                             fprintf(stderr, "精靈祠堂:需先持精靈的守護(魯比斯之塔)\n");
+                        }
+                        talked = 1;
+                    } else if (sub < 2 && cur_cty == 81 && cur->section == 1
+                               && cur->npcs[ni].x == 4 && cur->npcs[ni].y == 3 && dlg_ok) {
+                        /* 瑪依拉(CTY81)二樓道具店主:賣歐里空金屬 0x6d 換王者之劍 0x1c(杜勝利 Ch50)。
+                         * 原版=賣金屬 22500G + 買王者之劍 35000G;合為「淨支出 12500G + 金屬 → 王者之劍」。
+                         * (瑪依拉道具店 facility 正式店員入口 k!=b4 接線未定位,先掛此二樓對話 NPC。) */
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_inv_find(&inv, 0x1c) >= 0) {
+                            dq3_dialogue_open(&dlg, b4);
+                            fprintf(stderr, "瑪依拉道具店:已換得王者之劍\n");
+                        } else if (dq3_inv_find(&inv, 0x6d) >= 0 && gold >= 12500) {
+                            dq3_inv_remove(&inv, 0x6d); gold -= 12500; dq3_inv_add(&inv, 0x1c);
+                            dq3_dialogue_open(&dlg, b4);
+                            fprintf(stderr, "\u2605 \u746a\u4f9d\u62c9\u9053\u5177\u5e97:\u6b50\u91cc\u7a7a\u91d1\u5c6c 0x6d +12500G \u2192 \u738b\u8005\u4e4b\u528d 0x1c(\u8ce022500\u8cb735000)\n");
+                        } else if (dq3_inv_find(&inv, 0x6d) >= 0) {
+                            dq3_dialogue_open(&dlg, b4);
+                            fprintf(stderr, "瑪依拉道具店:需 12500G 才能換王者之劍(金屬賣價已折抵)\n");
+                        } else {
+                            dq3_dialogue_open(&dlg, b4);
+                            fprintf(stderr, "瑪依拉道具店:帶歐里空金屬(達姆杜拉)來換王者之劍\n");
                         }
                         talked = 1;
                     } else if (sub < 2 && dlg_ok) {          /* 對話型 NPC */

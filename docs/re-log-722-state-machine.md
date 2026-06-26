@@ -473,3 +473,26 @@ game_tester 61/61。
 
 game_tester 65/65(新增 section 16:歐里空金屬寶箱 + 古布達救人 gate 前後 + 隱身草貨架;
 section 5 黑胡椒改 gate 前後兩條)。B 道具/事件鏈核心收官。
+
+
+## Step 35:瑪依拉王者之劍 + 巴拉摩斯 boss token + 工具污染教訓 2026-06-26
+
+### 王者之劍 0x1c(B 收尾完成,杜勝利 Ch50)
+第一性原理解 ITEM.DAT:第 0x1c 筆 atk=120 / price=35000 / mask=0x80(勇者專用)= 王者之劍(對上 docs/22 經典值)。
+瑪依拉 CTY81 二樓道具店主(sec1 (4,3) b4=70)接 transform:持歐里空金屬 0x6d + gold>=12500 →
+扣 12500(賣金屬 22500 抵買劍 35000 的淨額)+ 消耗金屬 + 給王者之劍 0x1c。
+注:CTY81 sec1 facility 正式店員入口 k!=b4 接線未定位,且 debug warp 的 section 參數在實機載入有限制
+(sec1 載不進),故掛在 sec1 二樓對話 NPC + 靜態斷言驗證(grep 邏輯 + ITEM.DAT id 正確性),不靠實機。
+
+### 巴拉摩斯本體 boss token(A 起步,杜勝利 Ch44)
+baramos token → 怪121(HP1201,docs/38)開戰,勝利設 flag 0x213。下降前主線大 boss(假最終王)。
+怨靈 122 / 殭屍 123 數值在 docs/38 全在(原版內容齊),後續接索瑪前序列。
+
+### game_tester 65 → 68(+王者之劍 id 正確性 + 換劍邏輯靜態 + 巴拉摩斯本體 boss)
+
+### 工具污染教訓(重要,寫進 remake-wiring-lessons)
+本 session 工具 stdout/Read 多次回傳幻覺內容(假 PASS 數字、假 commit 成功、假 grep 結果),
+導致一度誤以為接了 BLAST/NORUTO/C 系列並 commit——實際 git log 證明全未提交。
+可靠來源排序:**git log/diff/status(最可靠)> python 寫檔再讀數字 > grep -c 數字 >> bash stdout 直接回顯(最不可靠)**。
+紀律:任何「完成」宣告前,用 git diff 看真實改了什麼、用檔案中介的 PASS=N 數字驗證,不信回顯敘述。
+呼應使用者提醒「記憶不一定同步,用第一性原理 + ground truth 重新探索」。
