@@ -101,6 +101,14 @@ echo "$o" | grep -q "遭遇.*HP400" && ok "怪力魔 boss(怪89,沙曼歐莎)→
 o=$(DQ3_DEBUG="item:0x62;warp:54:8:3:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=44:換得道具 0x63" && ok "雪地草原:變身杖→換船員之骨(transform)" || ng "變身杖 transform"
 
+echo "######## 11. 蓋亞之劍鏈(杜勝利 Ch38-40)########"
+o=$(DQ3_DEBUG="warp:36:18:55:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x64" && ok "幽靈船 CTY36 愛的回憶寶箱" || ng "愛的回憶"
+o=$(DQ3_DEBUG="warp:55:14:22:0" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x0f" && ok "牢獄祠堂 CTY55 蓋亞之劍寶箱" || ng "蓋亞之劍"
+o=$(DQ3_DEBUG="item:0x0f;opos:153:174;use:0x0f" DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "小火山熔流而出" && ok "蓋亞之劍:地表開火山(往尼羅肯特)" || ng "蓋亞之劍開火山"
+
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
 o=$(DQ3_DEBUG="party;boss:26:0x33" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)

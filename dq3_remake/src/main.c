@@ -371,6 +371,7 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
         return kind;
     }
     if (kind == DQ3_USE_AWAKEN) return kind;   /* 覺醒粉:位置相關,消耗延到 main(確認在諾阿尼魯)*/
+    if (kind == DQ3_USE_GAIA)   return kind;   /* 蓋亞之劍:武器不消耗,開火山交 main */
     if (kind == DQ3_USE_NONE) return DQ3_USE_NONE;
     /* 回鎮/驅敵:消耗在此,世界層效果由呼叫端依回傳種類處理。 */
     dq3_inv_remove(inv, item_id);
@@ -533,7 +534,7 @@ static int run_game(const char *assets, const char *dump)
                     if (getenv("DQ3_ORBSCAN")) {   /* 臨時:掃 event tile 給道具(0x40-0x8f)的位置 */
                         int tx, ty, et, ep;
                         for (ty = 0; ty < cur->map_h; ty++) for (tx = 0; tx < cur->map_w; tx++)
-                            if (dq3_scene_tile_event_p2(cur, tx, ty, &et, &ep, 0) && ep >= 0x40 && ep < 0x90)
+                            if (dq3_scene_tile_event_p2(cur, tx, ty, &et, &ep, 0) && ep > 0 && ep < 0x90)
                                 fprintf(stderr, "  [itemscan] (%d,%d) type%d → 道具 0x%02x\n", tx, ty, et, ep);
                     } }
                 else fprintf(stderr, "[DEBUG] warp CTY%d 失敗: %s\n", a, err);
@@ -638,6 +639,10 @@ static int run_game(const char *assets, const char *dump)
                     if (in_town && cur_cty == 4) { dq3_inv_remove(&inv, 0x5a); dq3_flags_set(&flags, 0x31, 1);
                         fprintf(stderr, "★ 諾阿尼魯村:使用覺醒粉 → 全村催眠詛咒解除!(杜勝利 Ch11)\n"); }
                     else fprintf(stderr, "覺醒粉:此處用不上(需在諾阿尼魯村 CTY4),未消耗\n");
+                } else if (k == DQ3_USE_GAIA) {                /* 蓋亞之劍:地表火山開通 */
+                    if (!in_town) { dq3_flags_set(&flags, 0x32, 1);
+                        fprintf(stderr, "★ 蓋亞之劍:小火山熔流而出,開通往尼羅肯特洞窟之路!(杜勝利 Ch40)\n"); }
+                    else fprintf(stderr, "蓋亞之劍:需在地表小火山旁使用\n");
                 }
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
@@ -1056,6 +1061,10 @@ static int run_game(const char *assets, const char *dump)
                 } else {
                     fprintf(stderr, "覺醒粉:此處用不上(需在諾阿尼魯村 CTY4 使用),未消耗\n");
                 }
+            } else if (g_item_world_eff == DQ3_USE_GAIA) {       /* 蓋亞之劍:地表小火山旁 → 開通往尼羅肯特 */
+                if (!in_town) { dq3_flags_set(&flags, 0x32, 1);
+                    fprintf(stderr, "★ 蓋亞之劍:小火山熔流而出,開通往尼羅肯特洞窟之路!(杜勝利 Ch40)\n"); }
+                else fprintf(stderr, "蓋亞之劍:需在地表小火山旁使用\n");
             }
             g_item_world_eff = 0;
         } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店捷徑(開發用;正式入口=走到店員 NPC)*/
@@ -1685,7 +1694,7 @@ static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *rost
         else if (sc == 0x4b && cursor - 1 >= 0) cursor -= 1;      /* 左 */
         else if (sc == 0x1c && n > 0) {                          /* Enter 使用 */
             int k = field_use_item(inv, roster, party, codes[cursor]);
-            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN) { world_eff = k; break; }  /* 交 main */
+            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN || k == DQ3_USE_GAIA) { world_eff = k; break; }  /* 交 main */
         }
     }
     return world_eff;

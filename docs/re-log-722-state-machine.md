@@ -316,3 +316,18 @@ game_tester **41/41**。
   拉之鏡 0x61 現形 reveal)→ 接成正式 in-game。船員之骨→幽靈船→愛的回憶→蓋亞之劍(下游)續接。
 
 game_tester **43/43**。
+
+## Step 21:B-3 蓋亞之劍鏈連通(杜勝利 Ch38-40)2026-06-26
+
+- **道具定錨**:0x64 愛的回憶 / 0x0f 蓋亞之劍 / 0x14 草雉之劍(font 渲染)。
+- **鏈各環**(道具全可取):
+  - 船員之骨 0x63(byte4=44 transform,B-2)→
+  - 愛的回憶 0x64:**CTY36(幽靈船)sect1 (18,55) 寶箱**(既有系統)→
+  - 蓋亞之劍 0x0f:**CTY55(牢獄祠堂)sect0 (14,22) 寶箱**(既有系統)→
+  - **蓋亞之劍 use → 火山開通**:新增 `DQ3_USE_GAIA`(武器不消耗;地表用 → set flag 0x32 +
+    開通往尼羅肯特訊息)→
+  - 銀寶珠 0x6b(byte4=49 尼羅肯特/CTY64,B-2 區)。
+- **敘事 reveal 事件待 RE**(非道具 gate,items 已可取):幽靈船 byte4=53 warp NPC(船員之骨找船)、
+  歐里比雅女幽靈(CTY55 無 sub2 NPC = runner/region 事件)。
+
+機制:`DQ3_USE_GAIA`(位置 item-use 不消耗,武器型 key-item)。game_tester **46/46**。
