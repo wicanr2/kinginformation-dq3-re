@@ -49,9 +49,17 @@
 - [ ] **遊戲內設定選單 UI**:title 加「設定」→ 切 RNG 模式(DOS/REAL)存 dq3.cfg。後端 `dq3_config` 已備,只差 UI(未來音量/解析度/語言同此)。
 - [x] **手動選咒選單 ✅**(已實作,WORKLIST 此項 stale):`dq3_battlescene` 戰鬥指令「咒文」開
   互動選咒子選單(列領頭施法成員已學可施放咒 + MP,選定設 `g_manual_cast_*`);無選則自動放最強攻擊咒。
-- [ ] **per-member 裝備模型**:目前戰鬥用簡化加成(力量→atk/體力→def),無逐人武器/防具欄。
-- [ ] **注音↔英數 切換鍵**:nameinput 兩種輸入盤已各自完成,缺切換鍵串接。
-- [ ] **忠實初始擲值**:RE 原版創角 rng 擲值(精訊版無性格系統,已確認);目前用成長表 Lv1 base。
+- [x] **注音↔英數 切換鍵 ✅**(已實作,此項 stale):`dq3_tavern.c` 創角姓名輸入 **Tab 鍵**
+  (sc 0x0f)`name_mode ^= 1` 切換英數盤(`dq3_nameinput`)↔注音盤(`dq3_zhuyin`),各自渲染/輸入。
+- [ ] **設定選單 UI**:title 加「設定」→ RNG 模式(DOS/REAL)存 dq3.cfg。後端 `dq3_config` 已備;
+  blocker = 「設定」非原版詞、無 D3TXT00 record 可取 glyph(需 unicode_map glyph + dump 視覺驗證)。
+- [ ] **per-member 裝備模型**(較大 feature):逐人武器/防具欄 + 買賣/裝備 UI + 戰鬥加成接線;
+  目前戰鬥用簡化加成(力量→atk/體力→def)。
+- [ ] **忠實初始擲值 / RNG 成長**(需 RE + 動升級系統):★RE 已定位(2026-06-27)——成長 handler
+  sub_d9cc(file 0xed3c)算 `base+slope×level` 後 **`call 0xfa57`(= EXE RNG `[0xb5a]+0x9018;rol×3`)
+  套 rng 變異**;docs「確定性上限」= target 是上限、實際值 = rng 到上限。remake 升級(#4/#5/#6)現用
+  **確定性上限**(已測試簡化)。要忠實 = 把創角 + 每次升級改成 rng(0..target),需重做並重驗升級單測
+  (回歸風險)。非可玩性阻塞。精訊版無性格系統(已確認)。
 
 ### 校準(已靜態 RE 攻克;原列「需 DOSBox」已不成立)
 - [x] **旅社/教會收費公式 ✅**(靜態 RE,2026-06-27):**旅社**已精確(`fac->inn_cost × 人數` = RE
