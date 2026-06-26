@@ -527,7 +527,13 @@ static int run_game(const char *assets, const char *dump)
                 if (ns) { if (town) dq3_scene_free(town); town = ns; cur = town; in_town = 1; cur_cty = a;
                     load_field_hero(town, assets);
                     if (b < cur->map_w) cur->px = b; if (c < cur->map_h) cur->py = c;
-                    dq3_scene_apply_palette(cur); debug_placed=1; fprintf(stderr, "[DEBUG] warp → CTY%d (%d,%d)\n", a, b, c); }
+                    dq3_scene_apply_palette(cur); debug_placed=1; fprintf(stderr, "[DEBUG] warp → CTY%d (%d,%d)\n", a, b, c);
+                    if (getenv("DQ3_ORBSCAN")) {   /* 臨時:掃 event tile 給寶珠 0x66-0x6b 的位置 */
+                        int tx, ty, et, ep;
+                        for (ty = 0; ty < cur->map_h; ty++) for (tx = 0; tx < cur->map_w; tx++)
+                            if (dq3_scene_tile_event_p2(cur, tx, ty, &et, &ep, 0) && ep >= 0x66 && ep <= 0x6b)
+                                fprintf(stderr, "  [orbscan] (%d,%d) type%d → 寶珠 0x%02x\n", tx, ty, et, ep);
+                    } }
                 else fprintf(stderr, "[DEBUG] warp CTY%d 失敗: %s\n", a, err);
             } else if (strcmp(tok, "party") == 0) {          /* 建測試隊伍(勇者/戰士/僧侶/魔法使者)*/
                 static const int dcls[4] = {0, 1, 3, 4}; int pi;
@@ -879,7 +885,8 @@ static int run_game(const char *assets, const char *dump)
                             oc = dq3_battlescene_run(assets, 75, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
                             dq3_scene_apply_palette(cur);
                             if (oc == 1) { dq3_flags_set(&flags, 0x44, 1);
-                                fprintf(stderr, "★ 擊敗八頭大蛇(CTY19,怪75)→ flag 0x44(劇情推進)\n"); }
+                                if (dq3_inv_find(&inv, 0x69) < 0) dq3_inv_add(&inv, 0x69);  /* 戰勝得紫寶珠(青衫攻略:無姬大人=八頭大蛇)*/
+                                fprintf(stderr, "★ 擊敗八頭大蛇(怪75)→ 獲得紫寶珠 0x69 + flag 0x44(劇情推進)\n"); }
                             else fprintf(stderr, "八頭大蛇戰 outcome=%d(未勝)\n", oc);
                             dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         }

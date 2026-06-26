@@ -83,6 +83,13 @@ o=$(DQ3_DEBUG="item:0x66;item:0x67;item:0x68;item:0x69;item:0x6a;item:0x6b" DQ3_
 echo "$o" | grep -q "六珠齊備.*拉米亞復活" && echo "$o" | grep -q "起飛" && ok "六珠齊備→拉米亞復活→起飛" || ng "六珠復活"
 o=$(DQ3_DEBUG="item:0x66;item:0x67;item:0x68;item:0x69;item:0x6a" DQ3_INPUT="ee" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "拉米亞復活" && ng "五珠不應復活" || ok "五珠未集齊(不復活)"
+# 六珠來源:藍/紅/黃寶箱(既有寶箱系統)
+o=$(DQ3_DEBUG="warp:23:24:14:2" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x67" && ok "藍寶珠寶箱 CTY23(勇氣洞窟)" || ng "藍寶珠"
+o=$(DQ3_DEBUG="warp:27:1:12:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x68" && ok "紅寶珠寶箱 CTY27(海盜村)" || ng "紅寶珠"
+o=$(DQ3_DEBUG="warp:83:4:2:0" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x6a" && ok "黃寶珠寶箱 CTY83(新城鎮)" || ng "黃寶珠"
 
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
