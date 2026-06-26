@@ -606,3 +606,24 @@ main.c 加 slot→path 映射 + slot 選單 UI + 三入口接線。
 - game_tester 75 → 76(全 PASS)。
 
 ### 待:標題主選單(新遊戲/繼續冒險)串 slot_select for_load — 下一步。
+
+
+## Step 41:標題主選單(新遊戲 / 繼續冒險)2026-06-26
+
+使用者需求:建立標題主選單。
+
+### title_menu(run_game 開頭,互動模式)
+- 顯示標題圖 TITG.P + 2 項選單:新遊戲 / 繼續冒險(glyph 第一性原理查證:
+  新遊戲=671/113/689、繼續冒險=1079/1094/533/218,冒險之書=533/218/145/268)。
+- 有存檔 → 預設游標「繼續冒險」;繼續冒險 → slot_select(for_load=1)選有資料 slot → 讀檔 + restore_position。
+- 新遊戲 → 正常開場(阿里阿罕)。取消回標題。
+- 觸發條件:!dump && !DQ3_DEBUG && !DQ3_LOAD && sys_ok(互動模式);headless/dump 跳過走 env。
+
+### 整合
+- 讀檔路徑統一 load_path:title_menu 選的 slot 或 DQ3_LOAD env → restore_position 回原位置。
+- 移除冗餘 autosave_game(改用 save_game_to,消 unused warning)。
+- slot_select 標題列改「冒險之書」(原借「離開遊戲嗎」glyph)。
+
+### game_tester 76/76(標題選單只互動觸發,headless 跳過,零回歸)。
+
+### 任務 1 完成:多 slot(6格)+ 隨時存讀檔(F5/F9)+ 讀檔回原位置 + 標題主選單。

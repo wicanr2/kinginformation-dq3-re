@@ -398,13 +398,6 @@ static int save_game_to(const char *path, const dq3_roster *r, const dq3_party *
     return rc;
 }
 
-/* F10 自動存檔(slot 0,相容舊路徑)。 */
-static int autosave_game(const dq3_roster *r, const dq3_party *p, const dq3_inventory *inv,
-                         int cty, int px, int py, const dq3_ship *ship, int in_town, int layer, int sec)
-{
-    return save_game_to(slot_path(0), r, p, inv, cty, px, py, ship, in_town, layer, sec);
-}
-
 /* 消耗品使用(#3,docs/49)。對隊伍套效果並消耗道具:HEAL_HP 治第一個受傷隊員;
  * 其餘(回鎮/驅敵/解毒/解麻痺)回傳種類交呼叫端處理世界層狀態。回效果種類(DQ3_USE_*),
  * 道具不在背包或不可用回 DQ3_USE_NONE。 */
@@ -528,7 +521,7 @@ static int confirm_quit(const dq3_text *text)
 static int slot_select(const dq3_text *text, int for_load)
 {
     /* 「冒險之書」glyph(沿用既有字串若有;此處用數字 + 標題列)。標題:存=記錄/讀=繼續。 */
-    static const uint16_t T_SAVE[5] = {502, 488, 113, 689, 534};  /* 借「離開遊戲嗎」框(暫;標題列另繪數字)*/
+    static const uint16_t T_SAVE[4] = {533, 218, 145, 268};       /* 「冒險之書」(冒533 險218 之145 書268)*/
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
     int white, black, frame, bg, gray; uint8_t yellow; dq3_menu m;
     uint8_t *fb = dq3_fb();
@@ -563,7 +556,7 @@ static int slot_select(const dq3_text *text, int for_load)
             }
         }
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
-        for (i = 0; i < 5; i++)                     /* 標題列(暫借框,可日後換專屬字串)*/
+        for (i = 0; i < 4; i++)                     /* 標題列:「冒險之書」*/
             dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+16+i*DQ3_GLYPH_PX, wy+12, T_SAVE[i], (uint8_t)white);
         dq3_menu_render(&m, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, (uint8_t)white, yellow);
         /* 每 slot 右側標「有資料/空」:有=黃點概念,用「●」無 glyph 則以數字色區分 —— 簡化:
@@ -574,6 +567,46 @@ static int slot_select(const dq3_text *text, int for_load)
         dq3_present(); dq3_delay_ms(16);
     }
     return -1;
+}
+
+/* 標題主選單(新遊戲 / 繼續冒險)。顯示標題圖 + 2 項選單。
+ * 回 0 = 新遊戲;1..6 = 繼續冒險選定的 slot(該 slot 有存檔)。
+ * 「繼續冒險」→ slot_select(for_load=1) 選有資料的 slot;無任何存檔則「繼續冒險」灰化提示後回新遊戲。 */
+static int title_menu(const char *assets, const dq3_text *text)
+{
+    static const uint16_t NEW[3]  = {671, 113, 689};            /* 新遊戲(glyph:新=671 遊=113 戲=689)*/
+    static const uint16_t CONT[4] = {1079, 1094, 533, 218};     /* 繼續冒險(繼1079 續1094 冒533 險218)*/
+    dq3_color pal16[16]; dq3_menu m; uint8_t *fb = dq3_fb();
+    int has_any = 0, i, wx = 110, wy = 150;
+    uint8_t white = 15, yellow = 14;
+
+    for (i = 1; i <= DQ3_SAVE_SLOTS; i++) if (dq3_save_exists(slot_path(i))) has_any = 1;
+    if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
+
+    dq3_menu_init(&m, wx, wy);
+    dq3_menu_add(&m, NEW, 3); dq3_menu_add(&m, CONT, 4);
+    m.cursor = has_any ? 1 : 0;                       /* 有存檔 → 預設「繼續冒險」*/
+
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (sc) {
+            int sel = dq3_menu_input(&m, sc);
+            if (sel == 0) return 0;                   /* 新遊戲 */
+            if (sel == 1) {                            /* 繼續冒險 → 選 slot */
+                if (!has_any) { /* 無存檔,忽略 */ }
+                else {
+                    int slot = slot_select(text, 1);
+                    if (slot >= 1 && dq3_save_exists(slot_path(slot))) return slot;
+                    /* 取消 → 回標題選單 */
+                    if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
+                }
+            }
+        }
+        if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) { /* 標題底圖每幀重繪 */ }
+        dq3_menu_render(&m, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, white, yellow);
+        dq3_present(); dq3_delay_ms(16);
+    }
+    return 0;
 }
 
 static int run_game(const char *assets, const char *dump)
@@ -625,9 +658,18 @@ static int run_game(const char *assets, const char *dump)
      * 讀檔後 restore_position 載入對應場景到原位置(隨時存讀檔回原位置,使用者需求)。
      * 互動式標題「繼續冒險」選 slot 走 run_game 前的 title_menu(下方)。 */
     int loaded_from_save = 0;
-    if (getenv("DQ3_LOAD")) {
+    const char *load_path = NULL;
+    /* 互動標題主選單(非 dump、非 DQ3_DEBUG headless):新遊戲 / 繼續冒險選 slot。
+     * 選「繼續冒險」slot → load_path;新遊戲 → 不讀檔。headless/dump 跳過,走 DQ3_LOAD env。 */
+    if (!dump && !getenv("DQ3_DEBUG") && !getenv("DQ3_LOAD") && sys_ok) {
+        int tslot = title_menu(assets, &sys_txt);
+        if (tslot >= 1) load_path = slot_path(tslot);
+    } else if (getenv("DQ3_LOAD")) {
         int lslot = atoi(getenv("DQ3_LOAD"));        /* DQ3_LOAD=N → slot N(2..6);0/1/非數字 → slot 0(相容舊語意)*/
-        const char *lpath = (lslot >= 2 && lslot <= DQ3_SAVE_SLOTS) ? slot_path(lslot) : slot_path(0);
+        load_path = (lslot >= 2 && lslot <= DQ3_SAVE_SLOTS) ? slot_path(lslot) : slot_path(0);
+    }
+    if (load_path) {
+        const char *lpath = load_path;
         dq3_save_pos pos;
         if (dq3_save_exists(lpath) && dq3_save_read(lpath, &roster, &party, &inv, &pos) == 0) {
             ship.owned = pos.ship_owned; ship.aboard = pos.ship_aboard;   /* #2 還原船狀態 */
