@@ -1,0 +1,35 @@
+{
+  "_doc": "special 事件分類狀態(持久化,避免重複盤點)。key=CTY<n>:dlg<byte4>。見 special-events-audit.md。",
+  "_categories": {
+    "wired": "已接成可玩(scripted 表或 main.c 特例)",
+    "hint": "提示/傳聞居民,純對話,顯示即可無需接",
+    "facility_talk": "設施附屬條件對話(轉職/商店說明)",
+    "town_resident": "城導覽/居民閒聊",
+    "story_followup": "劇情後續條件對話(主事件已接)",
+    "review": "值得後續考證(可能有互動,非急迫)"
+  },
+  "events": {
+    "CTY14:58": "wired", "CTY15:25": "wired", "CTY19:45": "wired", "CTY82:64": "wired",
+    "CTY0:7": "wired", "CTY8:12": "wired", "CTY5:16": "wired", "CTY22:31": "wired",
+    "CTY54:44": "wired", "CTY64:49": "wired", "CTY62:50": "wired", "CTY63:50": "wired",
+    "CTY67:52": "wired", "CTY16:84": "wired",
+
+    "CTY1:7": "hint", "CTY12:11": "town_resident",
+
+    "CTY0:0": "hint", "CTY0:1": "hint", "CTY0:2": "hint", "CTY0:3": "hint", "CTY0:4": "hint",
+    "CTY1:8": "hint", "CTY25:5": "hint", "CTY25:6": "hint", "CTY39:27": "hint",
+    "CTY17:39": "hint", "CTY21:36": "hint", "CTY43:32": "hint", "CTY58:40": "hint",
+    "CTY59:41": "hint", "CTY83:48": "hint", "CTY30:78": "hint", "CTY80:74": "hint", "CTY75:62": "hint",
+
+    "CTY2:9": "town_resident", "CTY2:10": "town_resident", "CTY2:11": "town_resident", "CTY2:13": "town_resident",
+    "CTY12:10": "town_resident", "CTY43:10": "town_resident", "CTY43:11": "town_resident",
+    "CTY44:33": "town_resident", "CTY44:34": "town_resident", "CTY44:42": "town_resident", "CTY14:61": "town_resident",
+
+    "CTY17:38": "facility_talk", "CTY36:53": "facility_talk", "CTY47:37": "facility_talk",
+    "CTY32:19": "facility_talk", "CTY15:24": "facility_talk", "CTY37:26": "facility_talk",
+
+    "CTY70:69": "story_followup", "CTY6:17": "story_followup",
+
+    "CTY6:18": "review", "CTY65:70": "review"
+  }
+}

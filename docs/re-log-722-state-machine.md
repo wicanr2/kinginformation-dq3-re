@@ -537,3 +537,24 @@ pattern 同八頭大蛇 byte4=45(已接範本)。
 
 ### game_tester 70 → 73(+CTY14 examine 觸發 +怪27 HP81 +已救出後話閉環)
 ### 新工具:tools/dis_handler_full.py(跟進分支的完整 handler 反組譯,補 dis_sub2_handler 單區塊不足)
+
+
+## Step 38:special 事件全盤點 + 分類持久化(避免重複)2026-06-26
+
+用三件組(list_special_events.py 定位格 + 對話文字判讀性質 + dis_handler_full.py 確認 handler)
+盤全 53 個 kind=special 事件,對照已接清單找缺口。
+
+### 關鍵發現
+- 40 個未接 special 逐個查對話後:**絕大多數是條件對話 NPC / 提示居民 / 設施說明,非 boss/給道具缺口**。
+- sub2 handler 反組譯(byte4=45/58)證實:handler 是過場腳本(對話/NPC動畫/flag/warp),
+  不含 [0x2321] 敵群表 / sub_bfd1 / 0x7bbe GIVE → 戰鬥與給道具是劇情強制或其他機制,非 handler 內。
+- 真正的事件鏈缺口(道具鏈/boss/過場)已在 B-1~B-9 + A + 救人 session 接完。
+
+### 分類持久化(回應「邊做邊分類免得重複」)
+- docs/data/special-events-classified.json:53 事件全分類(wired/hint/facility_talk/
+  town_resident/story_followup/review)。
+- list_special_events.py 加 --todo:只列未分類/review,從 53 收斂到剩 2 個 review
+  (CTY6 詛咒解除折扣商店、CTY65 換蛋救文王),避免重複掃已定性的。
+- docs/data/special-events-audit.md:方法論 + 判讀結論。
+
+### 結論:可玩性無缺口(主線可破關),剩 2 個長尾精緻化候選(非急迫)
