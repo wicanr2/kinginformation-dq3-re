@@ -296,3 +296,41 @@
 - **驗證**:`game_tester.sh` **27/27 全綠**(+誘惑之劍/boss 事件/存讀檔 roundtrip)。
 - **★ 文件更正**:`[0x722]` runner scripted-event 系統「需 DOSBox debugger」框架已過時——
   **靜態攻克**(57 setter 推翻「無 setter」),docs/47「單一最大 blocker」段更正,README 同步。
+
+## 2026-06-26 session 後段(sub2 全接 + 不死鳥 questline + 攻略盤點)
+
+> **compact 銜接重點**:本段是當前權威狀態,接續工作從這裡看。
+
+### 已完成(本 session 後段)
+- **sub2 give/take 全接**:給予 7/12/25/31/49/52/84 + 特例 9(Romaly)/26(Portoga)+ 檢查型 16/44/50
+  (新增 `require_item` 欄,0x7c0c=檢查不消耗)+ 提頓村綠寶珠(sub=0 特例)。
+  權威清單 `tools/sub2_worklist.py`、結構 `docs/data/sub2-struct.md`。
+- **★ 不死鳥拉米亞 questline 完整**(青衫/杜勝利攻略 + 使用者證實可乘):
+  - 六珠 0x66-0x6b(綠藍紅紫黃銀):綠=提頓村牢房、藍=CTY23寶箱、紅=CTY27寶箱、黃=CTY83寶箱
+    (藍/紅/黃在 event 表,既有寶箱系統 ep2<0x90 自動給)、紫=八頭大蛇戰勝、銀=CTY64 byte4=49。
+  - 集滿六珠 → 拉米亞自動復活(主迴圈檢查)→ overworld 按 y 乘不死鳥飛越山海(sprite=DQ3MAN.BLS e176)。
+  - `dq3_scene_draw_charsprite_at` 新增;`DQ3_ORBSCAN` debug 掃寶珠 event tile。
+- **boss / sprite 修**:八頭大蛇 boss(怪75,sprite MAXW 384→416 修被擋)、索瑪 def 300 忠實化、
+  通用 `boss:<id>[:獎勵]` token。
+- **game_tester 40/40**;已推送。journal `docs/re-log-722-state-machine.md` Step 14-18。
+
+### ★ 觀念更正(重要,memory `re-content-exists-not-build-incomplete`)
+**原版(底層 ENIX DQ3)劇情/道具/boss 全都有**(使用者玩過 DOS 版破關)。精訊「半成品」=中文化沒做完,
+非核心內容缺。盤點用「remake 尚未 RE 接線」,**別寫「build 沒接」**。杜勝利攻略**很準**=ground truth。
+
+### 剩餘工作(照杜勝利攻略盤點,`docs/data/walkthrough-flow-audit.md`)
+> 全部原版都有,待逐段 RE + 接線。優先序:
+
+- **A. 主線大 boss(最大忠實缺口)**:
+  - 🔴 **巴拉摩斯(怪121→122怨靈→123殭屍)**:下降前主線大 boss,remake 主線完全跳過。**最該補**。
+  - 甘達特(怪26)→ 金皇冠正源(香巴尼之塔 6F);怪力魔(沙曼歐莎,變身杖);五頭龍/歐里狄加過場;
+    六大魔人(索瑪神殿);索瑪前的巴拉摩斯怨靈/殭屍兩戰。
+- **B. 道具取得鏈(進行中,從這開始)**:夢幻紅寶石鏈(地底湖→精靈女王→覺醒粉→解諾阿尼魯催眠)、
+  變身杖(怪力魔)、蓋亞之劍(牢獄祠堂→開火山→尼羅肯特)、魔法鑰匙(金字塔)/最終鑰匙(四島礁)、
+  太陽之石/雲雨之杖(彩虹材料)、領悟之書(賢者轉職)+ 散件。
+- **C. 過場/解謎**:誘人洞窟炸牆、覺醒粉解催眠、諾魯特密道、耶進貝亞推石、新城鎮建城、幽靈船、蓋亞那跳坑。
+- **原版已知 bug**(`docs/data/original-known-bugs.md`):金字塔內施咒當機(remake 不復刻)。
+
+### 驗證/打包
+- `tools/game_tester.sh`(40/40)為交付 gate;`tools/package.sh` → `work/dq3_remake_dist.tar.gz`。
+- 攻略原文 `work/walkthrough/`(gitignore,版權)。
