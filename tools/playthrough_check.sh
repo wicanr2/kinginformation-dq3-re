@@ -19,7 +19,7 @@ chk "話す NPC(阿里阿罕對話)"      "warp:0:37:15"       "e"    "話す NP
 chk "武器/防具店(走到店員開店)"   "warp:0:27:32"       "e"    "設施:武器/防具店.*品項"
 chk "建測試隊"                     "party"              "."    "party → 名冊4 隊伍4"
 chk "下降至下層 overworld"         "descent"            "dd"   "scripted_event 86 下降.*下層"
-chk "彩虹水滴合成事件(83)"        "event:0x53"         "."    "event 83 → result=117"
+chk "彩虹水滴合成事件(83)"        "item:0x72;item:0x73;event:0x53"         "."    "event 83 → result=117"
 chk "進羅馬利亞 + 金錢"            "gold:5000;warp:2:20:10" "." "warp → CTY2"
 chk "進度旗標流(取船里程碑)"      "prog:5;prog"        "."    "進度階段 6/9 = 取船"
 chk "事件自動推進進度(下降→8)"   "prog:6;descent;prog" "."   "進度階段 8/9 = 下降"

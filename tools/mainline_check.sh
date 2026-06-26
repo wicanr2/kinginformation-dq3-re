@@ -11,7 +11,7 @@ BIN="${2:-/work/build/dq3_remake}"
 #   建隊 → 開場/前四里程碑(prog:0..4,代表盜賊鑰匙/魔法球/羅馬利亞/達瑪線)
 #   → 取船(ship,真 gate)→ 彩虹水滴合成(event 0x53,真 gate)→ 下降(descent,真 gate)
 # 每步後 prog 印出當前階段,據此驗證單調推進。
-CHAIN="party;prog:0;prog;prog:1;prog;prog:2;prog;prog:3;prog;prog:4;prog;ship;prog;event:0x53;prog;descent;prog;finale;prog"
+CHAIN="party;prog:0;prog;prog:1;prog;prog:2;prog;prog:3;prog;prog:4;prog;ship;prog;item:0x72;item:0x73;event:0x53;prog;descent;prog;finale;prog"
 
 OUT=$(DQ3_DEBUG="$CHAIN" DQ3_DUMP=/tmp/mainline.ppm timeout 30 "$BIN" "$ASSETS" game 2>&1)
 

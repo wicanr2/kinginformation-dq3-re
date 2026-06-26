@@ -496,7 +496,8 @@ static int run_game(const char *assets, const char *dump)
     enc = 6 + (int)(grnd() % 8);
     /* demo:身上帶兩材料,進祠堂「調べる」即可觸發 #2 合成(產彩虹水滴) */
     dq3_inv_init(&inv); dq3_flags_init(&flags);
-    dq3_inv_add(&inv, ITEM_SUN_STONE); dq3_inv_add(&inv, ITEM_RAINCLOUD_ROD);
+    /* (移除早期 #2 合成測試的預塞太陽之石+雲雨之杖;現走真實取得鏈:
+     *  太陽之石 CTY80 寶箱、雲雨之杖 精靈祠堂 CTY92。debug 仍可 item:0x72/0x73 補。) */
     /* 續玩:DQ3_LOAD 且存檔存在 → 讀回名冊/隊伍/道具(位置另需載入對應場景,先記錄)。 */
     if (getenv("DQ3_LOAD") && dq3_save_exists(save_path())) {
         dq3_save_pos pos;
@@ -849,6 +850,23 @@ static int run_game(const char *assets, const char *dump)
                         } else {
                             dq3_dialogue_open(&dlg, b4);
                             fprintf(stderr, "提頓村牢房:已取綠寶珠(rec%d)\n", b4);
+                        }
+                        talked = 1;
+                    } else if (sub < 2 && cur_cty == 92 && cur->npcs[ni].x == 9 && cur->npcs[ni].y == 8 && dlg_ok) {
+                        /* 精靈祠堂(CTY92)精靈:「服侍魯比斯的精靈」,持精靈的守護 0x74 → 換雲雨之杖 0x73
+                         * (杜勝利 Ch54;原版 byte4=75 runner,[0x722]=81 region 觸發,bank9 rec28)。
+                         * 雲雨之杖 → 神聖祠堂合成彩虹水滴(架彩虹橋通終盤)。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_inv_find(&inv, 0x73) >= 0) {
+                            dq3_dialogue_open(&dlg, b4);
+                            fprintf(stderr, "精靈祠堂:已得雲雨之杖\n");
+                        } else if (dq3_inv_find(&inv, 0x74) >= 0) {
+                            dq3_inv_remove(&inv, 0x74); dq3_inv_add(&inv, 0x73);   /* 精靈的守護 → 雲雨之杖 */
+                            dq3_dialogue_open(&dlg, b4);
+                            fprintf(stderr, "★ 精靈祠堂:服侍魯比斯的精靈 → 換得雲雨之杖 0x73(彩虹材料)\n");
+                        } else {
+                            dq3_dialogue_open(&dlg, b4);
+                            fprintf(stderr, "精靈祠堂:需先持精靈的守護(魯比斯之塔)\n");
                         }
                         talked = 1;
                     } else if (sub < 2 && dlg_ok) {          /* 對話型 NPC */

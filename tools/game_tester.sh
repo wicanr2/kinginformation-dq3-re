@@ -122,6 +122,10 @@ o=$(DQ3_DEBUG="warp:80:1:2:2" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&
 echo "$o" | grep -q "獲得道具 0x72" && ok "下層 CTY80 太陽之石寶箱" || ng "太陽之石"
 o=$(DQ3_DEBUG="item:0x72;item:0x73;warp:93:8:9:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "彩虹水滴 0x75" && ok "神聖祠堂:太陽之石+雲雨之杖→彩虹水滴(in-game 合成)" || ng "彩虹合成"
+o=$(DQ3_DEBUG="item:0x74;warp:92:9:9:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "換得雲雨之杖 0x73" && ok "精靈祠堂 CTY92:精靈的守護→換雲雨之杖(transform)" || ng "精靈祠堂雲雨之杖"
+o=$(DQ3_DEBUG="warp:92:9:9:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "需先持精靈的守護" && ok "精靈祠堂:無守護→需守護" || ng "精靈祠堂 gate"
 
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
