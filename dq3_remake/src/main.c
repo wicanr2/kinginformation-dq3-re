@@ -24,6 +24,7 @@
 #include "dq3_exedata.h"
 #include "dq3_inventory.h"
 #include "dq3_roster.h"
+#include "dq3_spell.h"      /* 野外咒文施放:dq3_spells_known(列已學咒)*/
 #include "dq3_menu.h"
 #include "dq3_nameinput.h"
 #include "dq3_tavern.h"
@@ -1448,10 +1449,10 @@ static int run_game(const char *assets, const char *dump)
             g_item_world_eff = 0;
             cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok, sys_ok ? &sys_txt : &dlg.txt);
             dq3_scene_apply_palette(cur);
-            if (g_item_world_eff == DQ3_USE_RETURN_TOWN) {       /* 蓋美拉翅膀:回地表 */
+            if (g_item_world_eff == DQ3_USE_RETURN_TOWN) {       /* 蓋美拉翅膀 / 魯拉 / 烈米特:回地表 */
                 layer = 0; cur = field; in_town = 0; cur_cty = -1; ship.aboard = 0;
                 dq3_scene_apply_palette(cur);
-                fprintf(stderr, "蓋美拉翅膀:回到地表 (%d,%d)\n", cur->px, cur->py);
+                fprintf(stderr, "回到地表 (%d,%d)\n", cur->px, cur->py);
             } else if (g_item_world_eff == DQ3_USE_REPEL) {      /* 聖水:驅弱敵 */
                 repel = DQ3_HOLY_STEPS;
                 fprintf(stderr, "聖水:弱敵迴避 %d 步\n", repel);
@@ -2189,6 +2190,79 @@ static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *g
     }
 }
 
+/* 野外可施放的咒文(base==0 工具咒,docs/data/spell-effects-research.md)。
+ * eff = 回給主迴圈的世界效果碼;mp = 消耗(classic 值,FC/SFC 標準,精確未逐一 RE)。 */
+static const struct { unsigned short rec; int mp; int eff; } FIELD_SPELLS[] = {
+    { 172, 8, DQ3_USE_RETURN_TOWN },   /* 魯拉 ルーラ:飛行回城(remake → 回地表)*/
+    { 173, 6, DQ3_USE_RETURN_TOWN },   /* 烈米特 リレミト:出迷宮/塔 → 回地表 */
+    { 176, 2, DQ3_USE_REPEL },         /* 特黑洛斯 トヘロス:暫時驅弱敵 */
+};
+#define N_FIELD_SPELLS ((int)(sizeof FIELD_SPELLS / sizeof FIELD_SPELLS[0]))
+
+/* 隊伍中是否有人會 rec 這個咒(且回該人 index;無回 -1)。 */
+static int party_knows_spell(const dq3_roster *r, const dq3_party *p, unsigned short rec)
+{
+    int i, j; unsigned short recs[64];
+    for (i = 0; i < p->count; i++) {
+        const dq3_member *m = &r->list[p->slot[i]].m;
+        int n = dq3_spells_known(m->cls, m->level, recs, 64);
+        for (j = 0; j < n; j++) if (recs[j] == rec) return i;
+    }
+    return -1;
+}
+
+/* 野外咒文施放 modal:列隊伍會的工具咒(魯拉/烈米特/特黑洛斯)→ 游標選 → 扣 MP → 回世界效果碼。
+ * 回 DQ3_USE_RETURN_TOWN / DQ3_USE_REPEL / 0(取消或無可施放 / MP 不足)。 */
+static int field_cast_modal(dq3_roster *roster, dq3_party *party, const dq3_text *sys)
+{
+    dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
+    int white, black, frame, bg; uint8_t *fb = dq3_fb();
+    int wx = 60, wy = 60, ww = 200, wh = 120, cursor = 0;
+    int avail[N_FIELD_SPELLS], navail = 0, k;
+    for (k = 0; k < N_FIELD_SPELLS; k++)
+        if (party_knows_spell(roster, party, FIELD_SPELLS[k].rec) >= 0) avail[navail++] = k;
+    if (navail == 0) { fprintf(stderr, "咒文:目前無人會野外咒文\n"); return 0; }
+    raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return 0;
+    pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
+    white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
+    frame = white; bg = pal_near2(pal,pn,16,16,32);
+    while (!dq3_should_quit()) {
+        uint8_t sc; int i;
+        tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+        for (i = 0; i < navail; i++) {
+            int yy = wy + 14 + i * 20;
+            if (sys) dq3_text_draw_record(sys, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30, yy, 6, 1,
+                                          FIELD_SPELLS[avail[i]].rec, (uint8_t)white);
+            if (i == cursor) {     /* ► 游標 */
+                int dx, dy, px = wx + 14, py = yy + 2;
+                for (dy = 0; dy < 12; dy++) for (dx = 0; dx < 8; dx++) {
+                    int xx = px+dx, ry = py+dy;
+                    if (xx>=0 && xx<DQ3_SCREEN_W && ry>=0 && ry<DQ3_SCREEN_H) fb[ry*DQ3_SCREEN_W+xx] = (uint8_t)white;
+                }
+            }
+        }
+        dq3_present(); dq3_delay_ms(16);
+        sc = dq3_poll_scancode();
+        if (sc == 0x01 || sc == DQ3_SC_F10) return 0;            /* ESC/F10 取消 */
+        else if (sc == 0x50 && cursor + 1 < navail) cursor++;     /* 下 */
+        else if (sc == 0x48 && cursor - 1 >= 0) cursor--;          /* 上 */
+        else if (sc == 0x1c) {                                     /* Enter 施放 */
+            int fk = avail[cursor], mi = party_knows_spell(roster, party, FIELD_SPELLS[fk].rec);
+            dq3_member *m = (mi >= 0) ? &roster->list[party->slot[mi]].m : NULL;
+            if (!m) return 0;
+            if (m->cur_mp < FIELD_SPELLS[fk].mp) {
+                fprintf(stderr, "咒文:MP 不足(需 %d,隊員%d 有 %d)\n", FIELD_SPELLS[fk].mp, mi, m->cur_mp);
+                continue;                                          /* 留在選單 */
+            }
+            m->cur_mp = (uint16_t)(m->cur_mp - FIELD_SPELLS[fk].mp);
+            fprintf(stderr, "野外施咒:rec%d(隊員%d 扣 MP %d → %d)→ 效果碼 %d\n",
+                    FIELD_SPELLS[fk].rec, mi, FIELD_SPELLS[fk].mp, m->cur_mp, FIELD_SPELLS[fk].eff);
+            return FIELD_SPELLS[fk].eff;
+        }
+    }
+    return 0;
+}
+
 static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                      dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys)
 {
@@ -2214,7 +2288,7 @@ static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
     if (sel < 0) return -1;
     switch (sel) {
     case DQ3_CMD_STATUS: status_modal_page(roster, party, sys, 0); break;   /* 道具/咒文名走 D3TXT00 */
-    case DQ3_CMD_SPELL:  status_modal_page(roster, party, sys, 1); break;
+    case DQ3_CMD_SPELL:  g_item_world_eff = field_cast_modal(roster, party, sys); break;  /* 野外咒文施放(魯拉/烈米特/特黑洛斯)→ 世界效果碼;清單檢視走「狀況」Space */
     case DQ3_CMD_TALK: case DQ3_CMD_EXAMINE: {
         int fdx = (scene->facing==3)-(scene->facing==1), fdy = (scene->facing==0)-(scene->facing==2);
         int fx = scene->px+fdx, fy = scene->py+fdy, et, ep;

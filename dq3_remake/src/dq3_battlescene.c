@@ -159,6 +159,12 @@ static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 /* 敵方 AI(docs/37):本場怪的 D3MNS AI 欄位 + 我方平均等級 + 本場逃走數。 */
 static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled, g_ehpmax;
 static int g_last_gold;                         /* 上一場勝利的戰利金錢 */
+
+/* 戰鬥狀態修正(怪施 base==0 輔助/狀態咒效果;每場 reset;倍率用百分比整數)。
+ * 依 docs/data/spell-effects-research.md:拜基魯多→敵攻↑、史卡拉/史克魯多→敵守↑、
+ * 魯卡尼/魯加南→我守↓、瑪努莎→我方幻惑(物攻易失手)、瑪荷頓→我方封咒。倍率採 DQ 經典值。 */
+static int g_eatk_pct=100, g_edef_pct=100, g_pdef_pct=100, g_party_blind=0, g_party_sealed=0;
+static void reset_battle_mods(void){ g_eatk_pct=100; g_edef_pct=100; g_pdef_pct=100; g_party_blind=0; g_party_sealed=0; }
 int dq3_battlescene_last_gold(void){ return g_last_gold; }
 
 /* 咒文施放值:DQ3.EXE 公式(file 0xc22e)val = base/2 + rng(base/2)。 */
@@ -231,6 +237,8 @@ static void cast_spell_effect(member *party, int *ehp, int en, int ci, const dq3
 static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, int efree, int cmd)
 {
     int i;
+    eatk = eatk * g_eatk_pct / 100;          /* 敵攻倍率(拜基魯多)*/
+    edef = edef * g_edef_pct / 100;          /* 敵守倍率(史卡拉/史克魯多)*/
     for(i=0;i<PARTY;i++) party[i].defending=0;
 
     if(cmd==1){ /* 逃 */
@@ -245,7 +253,10 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
         if(t>=0){ int heal=30; party[t].hp+=heal; if(party[t].hp>party[t].maxhp)party[t].hp=party[t].maxhp;
             fprintf(stderr,"  %s 使用藥草,回復 %d。\n", party[t].dbg, heal); }
     } else if(cmd==4){ /* 咒文 */
-        if(g_manual_cast_def){                          /* 手動選咒(互動)*/
+        if(g_party_sealed){                             /* 瑪荷頓 封咒:我方無法施咒 */
+            fprintf(stderr,"  我方咒文被封(瑪荷頓),無法施放。\n");
+            g_manual_cast_def = NULL; g_manual_cast_ci = -1;
+        } else if(g_manual_cast_def){                   /* 手動選咒(互動)*/
             cast_spell_effect(party, ehp, en, g_manual_cast_ci, g_manual_cast_def);
             g_manual_cast_def = NULL; g_manual_cast_ci = -1;
         } else {                                        /* 自動:快倒先治療,否則最強攻擊咒 */
@@ -268,6 +279,8 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
             for(h=0; h<hits; h++){
                 int e,crit,dmg;
                 e=pick_alive_enemy(ehp,en); if(e<0) break;
+                if(g_party_blind && roll255()<128){            /* 瑪努莎 幻惑:~50% 失手 */
+                    fprintf(stderr,"  %s 揮空了(幻惑)。\n", party[i].dbg); continue; }
                 crit=(roll255()<8);
                 dmg=dq3_battle_phys_damage(party[i].atk, edef, roll255(), crit);
                 ehp[e]-= dmg; if(ehp[e]<0)ehp[e]=0;
@@ -305,12 +318,19 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
                           party[t].dbg, srec==144?"睡眠":"混亂");
                   continue;                               /* 本敵行動結束 */
               }
-              /* 其餘 base==0 輔助/狀態咒(RE re-log-spell-effect-dispatch Step10:rec 143-160 =
-               * 驅逐/buff/debuff/封咒/幻/傳走;精訊引擎無「咒→狀態」表,效果程序式)。remake
-               * 未模型化 buff/debuff/封咒/幻 → 詠唱但**不致傷**(忠實:這些非傷害咒,前版 fall
-               * through 成 base=24 假傷害是 bug)。睡/混亂(144/152)已上面映射麻痺。 */
+              /* 其餘 base==0 輔助/狀態咒(rec 143-160,docs/data/spell-effects-research.md):
+               * 套對應戰鬥修正(取代 no-op);未模型化者詠唱不致傷。睡/混亂(144/152)已上面映射麻痺。 */
               if(srec>=143 && srec<=160){
-                  fprintf(stderr,"  敵%d 詠唱輔助/狀態咒(rec%d;remake 未模型化其效果,不致傷)\n", i, srec);
+                  const char *nm=0;
+                  if(srec==151){ g_eatk_pct = g_eatk_pct*2>400?400:g_eatk_pct*2; nm="拜基魯多(敵攻擊上升)"; }
+                  else if(srec==154||srec==155){ g_edef_pct+=50; if(g_edef_pct>300)g_edef_pct=300;
+                          nm=(srec==154)?"史卡拉(敵守備上升)":"史克魯多(敵守備上升)"; }
+                  else if(srec==146||srec==147){ g_pdef_pct-=25; if(g_pdef_pct<25)g_pdef_pct=25;
+                          nm=(srec==146)?"魯卡尼(我方守備下降)":"魯加南(我方守備下降)"; }
+                  else if(srec==158){ g_party_blind=1; nm="瑪努莎(我方陷入幻惑·物攻易失手)"; }
+                  else if(srec==156){ g_party_sealed=1; nm="瑪荷頓(我方咒文被封)"; }
+                  if(nm) fprintf(stderr,"  敵%d 詠唱%s\n", i, nm);
+                  else   fprintf(stderr,"  敵%d 詠唱輔助/狀態咒(rec%d;效果未模型化,不致傷)\n", i, srec);
                   continue;
               }
             }
@@ -333,7 +353,7 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
                         dmg, party[t].hp==0?" — 倒下!":"");
             }
         } else {
-            dmg=dq3_battle_phys_damage(eatk, party[t].def, roll255(), roll255()<8);
+            dmg=dq3_battle_phys_damage(eatk, party[t].def * g_pdef_pct / 100, roll255(), roll255()<8);
             if(party[t].defending) dmg/=2;
             party[t].hp = (int)dq3_battle_apply_damage((uint16_t)party[t].hp, dmg);
             fprintf(stderr,"  敵%d 攻擊 %s,造成 %d 傷害%s\n", i, party[t].dbg, dmg,
@@ -575,6 +595,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     g_eai_nspell = g_eai_ok ? dq3_monster_spell_count(&g_eai) : 0;
     g_ehpmax = ehpmax;
     g_fled = 0;
+    reset_battle_mods();                 /* 每場戰鬥重置 buff/debuff/幻惑/封咒 */
     { int i, s=0, c=0; for(i=0;i<PARTY;i++) if(party[i].maxhp>0||party[i].level>0){ s+=party[i].level; c++; }
       g_party_avglv = c ? s/c : 1; }
     fprintf(stderr,"=== 遭遇 %s ×%d (HP%d atk%d def%d) ===\n", ms.exp?"怪物":"怪物", en, ehpmax, eatk, edef);
