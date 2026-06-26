@@ -13,6 +13,7 @@ int dq3_item_use_kind(int item_id)
         case 0x0f:                  return DQ3_USE_GAIA;     /* 蓋亞之劍:阿莎拉慕火山開通(杜勝利 Ch40)*/
         case 0x5e:                  return DQ3_USE_DRAIN;    /* 乾渴壺:四島礁吸海顯現祠堂(杜勝利 Ch27)*/
         case 0x77:                  return DQ3_USE_FAIRYFLUTE; /* 妖精之笛:魯比斯之塔解詛咒得精靈的守護(Ch53)*/
+        case 0x75:                  return DQ3_USE_RAINBOW;  /* 彩虹水滴:下層利姆達爾西北架彩虹橋通終盤(Ch55)*/
         default:                    return DQ3_USE_NONE;
     }
 }

@@ -125,6 +125,14 @@ o=$(DQ3_DEBUG="warp:80:1:2:2" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&
 echo "$o" | grep -q "獲得道具 0x72" && ok "下層 CTY80 太陽之石寶箱" || ng "太陽之石"
 o=$(DQ3_DEBUG="item:0x72;item:0x73;warp:93:8:9:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "彩虹水滴 0x75" && ok "神聖祠堂:太陽之石+雲雨之杖→彩虹水滴(in-game 合成)" || ng "彩虹合成"
+# bug #2:合成產彩虹水滴 0x75(非銀寶珠 0x6b);event 83 result 應 =117(=0x75)
+o=$(DQ3_DEBUG="item:0x72;item:0x73;event:0x53" DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "result=117" && ok "bug#2 修正:合成品=彩虹水滴 0x75(117,非銀寶珠 0x6b=107)" || ng "bug#2 合成品碼"
+# 彩虹水滴用途:下層用 → 架彩虹橋通終盤(bug 修正後才拿得到彩虹水滴去架橋)
+o=$(DQ3_DEBUG="party;item:0x75;descent;use:0x75" DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "彩虹橋出現" && ok "彩虹水滴用途:下層架彩虹橋通終盤(杜勝利 Ch55)" || ng "彩虹橋架橋"
+o=$(DQ3_DEBUG="party;item:0x75;use:0x75" DQ3_INPUT="q" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "需在下層利姆達爾" && ok "彩虹水滴:地表用→拒絕(需在下層西北)" || ng "彩虹橋位置 gate"
 o=$(DQ3_DEBUG="item:0x74;warp:92:9:9:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "換得雲雨之杖 0x73" && ok "精靈祠堂 CTY92:精靈的守護→換雲雨之杖(transform)" || ng "精靈祠堂雲雨之杖"
 o=$(DQ3_DEBUG="warp:92:9:9:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)

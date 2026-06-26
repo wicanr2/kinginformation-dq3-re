@@ -432,6 +432,7 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
         return kind;
     }
     if (kind == DQ3_USE_AWAKEN) return kind;   /* 覺醒粉:位置相關,消耗延到 main(確認在諾阿尼魯)*/
+    if (kind == DQ3_USE_RAINBOW) return kind;  /* 彩虹水滴:位置相關,消耗延到 main(確認在下層利姆達爾西北)*/
     if (kind == DQ3_USE_GAIA)   return kind;   /* 蓋亞之劍:武器不消耗,開火山交 main */
     if (kind == DQ3_USE_DRAIN)  return kind;   /* 乾渴壺:不消耗(可重用),吸海交 main */
     if (kind == DQ3_USE_FAIRYFLUTE) return kind; /* 妖精之笛:不消耗,魯比斯解詛咒交 main */
@@ -860,6 +861,12 @@ static int run_game(const char *assets, const char *dump)
                         dq3_flags_set(&flags, 0x34, 1);
                         fprintf(stderr, "★ 魯比斯之塔:妖精之笛解魯比斯詛咒 → 得精靈的守護 0x74\n");
                     } else fprintf(stderr, "妖精之笛:需在魯比斯之塔(CTY82)使用\n");
+                } else if (k == DQ3_USE_RAINBOW) {             /* 彩虹水滴:下層利姆達爾西北架彩虹橋 */
+                    if (!in_town && layer == 1) {
+                        dq3_inv_remove(&inv, 0x75); dq3_flags_set(&flags, 0x35, 1);
+                        dq3_progress_set(&flags, DQ3_MS_RAINBOW);
+                        fprintf(stderr, "★ 彩虹水滴:雨和太陽合而為一,彩虹橋出現!通往終盤(杜勝利 Ch55)\n");
+                    } else fprintf(stderr, "彩虹水滴:需在下層利姆達爾西北盡頭地表使用\n");
                 }
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
@@ -1414,6 +1421,13 @@ static int run_game(const char *assets, const char *dump)
                     dq3_flags_set(&flags, 0x34, 1);
                     fprintf(stderr, "★ 魯比斯之塔:妖精之笛解魯比斯詛咒 → 得精靈的守護 0x74(→精靈祠堂換雲雨之杖)\n");
                 } else fprintf(stderr, "妖精之笛:需在魯比斯之塔(CTY82)對魯比斯使用\n");
+            } else if (g_item_world_eff == DQ3_USE_RAINBOW) {    /* 彩虹水滴:下層利姆達爾西北地表 → 架彩虹橋通終盤 */
+                if (!in_town && layer == 1) {                    /* 下層 overworld */
+                    dq3_inv_remove(&inv, 0x75);                  /* 消耗彩虹水滴 */
+                    dq3_flags_set(&flags, 0x35, 1);              /* 彩虹橋已架旗標 */
+                    dq3_progress_set(&flags, DQ3_MS_RAINBOW);    /* 推進 RAINBOW 里程碑 */
+                    fprintf(stderr, "★ 彩虹水滴:雨和太陽合而為一,彩虹橋出現!通往終盤(杜勝利 Ch55)\n");
+                } else fprintf(stderr, "彩虹水滴:需在下層利姆達爾西北盡頭地表使用\n");
             }
             g_item_world_eff = 0;
         } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店捷徑(開發用;正式入口=走到店員 NPC)*/
@@ -2043,7 +2057,7 @@ static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *rost
         else if (sc == 0x4b && cursor - 1 >= 0) cursor -= 1;      /* 左 */
         else if (sc == 0x1c && n > 0) {                          /* Enter 使用 */
             int k = field_use_item(inv, roster, party, codes[cursor]);
-            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN || k == DQ3_USE_GAIA || k == DQ3_USE_DRAIN || k == DQ3_USE_FAIRYFLUTE) { world_eff = k; break; }  /* 交 main */
+            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN || k == DQ3_USE_GAIA || k == DQ3_USE_DRAIN || k == DQ3_USE_FAIRYFLUTE || k == DQ3_USE_RAINBOW) { world_eff = k; break; }  /* 交 main */
         }
     }
     return world_eff;

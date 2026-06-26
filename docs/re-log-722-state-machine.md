@@ -554,7 +554,7 @@ pattern 同八頭大蛇 byte4=45(已接範本)。
 - docs/data/special-events-classified.json:53 事件全分類(wired/hint/facility_talk/
   town_resident/story_followup/review)。
 - list_special_events.py 加 --todo:只列未分類/review,從 53 收斂到剩 2 個 review
-  (CTY6 詛咒解除折扣商店、CTY65 換蛋救文王),避免重複掃已定性的。
+  (CTY6 詛咒解除折扣商店、CTY65 換蛋救女王),避免重複掃已定性的。
 - docs/data/special-events-audit.md:方法論 + 判讀結論。
 
 ### 結論:可玩性無缺口(主線可破關),剩 2 個長尾精緻化候選(非急迫)
@@ -627,3 +627,26 @@ main.c 加 slot→path 映射 + slot 選單 UI + 三入口接線。
 ### game_tester 76/76(標題選單只互動觸發,headless 跳過,零回歸)。
 
 ### 任務 1 完成:多 slot(6格)+ 隨時存讀檔(F5/F9)+ 讀檔回原位置 + 標題主選單。
+
+
+## Step 42:彩虹水滴 bug#2 修正確認 + 架彩虹橋用途接線(使用者要求)2026-06-26
+
+使用者:再看青衫攻略,remake 修正彩虹水滴舊 bug。
+
+### bug#2(青衫/BBS 史料 + docs/18)
+原版彩虹水滴合成事件(file 0x77e9)把成品 item code 寫死成 0x6b(銀寶珠),正確應 0x75(彩虹水滴)
+→ 拿不到彩虹水滴架不了橋,一定卡關。青衫憑記憶寫「黃寶珠」,程式真值 0x6b 銀寶珠。
+
+### remake 狀態(第一性原理實機驗證)
+- 合成 bug **已修**:dq3_synth_rainbow_drop(fixed=1)產 0x75;main.c 兩處呼叫均 fixed=1。
+  實機 event 83 → result=117(0x75)確認。
+- **但發現真缺口:彩虹水滴「用途」未接** — 合成出來卻沒有「用它架彩虹橋」的事件,拿了沒用。
+
+### 補接:彩虹水滴架橋(DQ3_USE_RAINBOW)
+- 仿 GAIA/DRAIN 位置型 item-use:彩虹水滴 0x75 在下層(layer==1)利姆達爾西北地表用 →
+  消耗 + 設 flag 0x35 + 推進 RAINBOW 里程碑(「雨和太陽合而為一,彩虹橋出現」杜勝利 Ch55)。
+- 地表/城內用 → 拒絕(需在下層西北盡頭)。item_modal 交 main 清單 + use:N token 都接。
+- 彩虹水滴從「合成出來沒用」→「合成→架橋通終盤」完整鏈。
+
+### game_tester 76 → 79(+bug#2 合成品碼 +下層架橋 +地表拒絕)。
+### 另:文王→女王全面更正(txt01/03/06 + npc_dialogue.json 共 25 處;glyph 234 已修)。
