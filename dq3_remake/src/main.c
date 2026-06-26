@@ -373,6 +373,7 @@ static int apply_item_use(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int i
     if (kind == DQ3_USE_AWAKEN) return kind;   /* 覺醒粉:位置相關,消耗延到 main(確認在諾阿尼魯)*/
     if (kind == DQ3_USE_GAIA)   return kind;   /* 蓋亞之劍:武器不消耗,開火山交 main */
     if (kind == DQ3_USE_DRAIN)  return kind;   /* 乾渴壺:不消耗(可重用),吸海交 main */
+    if (kind == DQ3_USE_FAIRYFLUTE) return kind; /* 妖精之笛:不消耗,魯比斯解詛咒交 main */
     if (kind == DQ3_USE_NONE) return DQ3_USE_NONE;
     /* 回鎮/驅敵:消耗在此,世界層效果由呼叫端依回傳種類處理。 */
     dq3_inv_remove(inv, item_id);
@@ -649,6 +650,12 @@ static int run_game(const char *assets, const char *dump)
                     if (!in_town) { dq3_flags_set(&flags, 0x33, 1);
                         fprintf(stderr, "★ 乾渴壺:吸乾海水,最終鑰匙祠堂顯現!(杜勝利 Ch27)\n"); }
                     else fprintf(stderr, "乾渴壺:需在地表四島礁附近使用\n");
+                } else if (k == DQ3_USE_FAIRYFLUTE) {          /* 妖精之笛:魯比斯之塔 CTY82 解詛咒 */
+                    if (in_town && cur_cty == 82) {
+                        if (dq3_inv_find(&inv, 0x74) < 0) dq3_inv_add(&inv, 0x74);
+                        dq3_flags_set(&flags, 0x34, 1);
+                        fprintf(stderr, "★ 魯比斯之塔:妖精之笛解魯比斯詛咒 → 得精靈的守護 0x74\n");
+                    } else fprintf(stderr, "妖精之笛:需在魯比斯之塔(CTY82)使用\n");
                 }
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
@@ -1092,6 +1099,12 @@ static int run_game(const char *assets, const char *dump)
                 if (!in_town) { dq3_flags_set(&flags, 0x33, 1);
                     fprintf(stderr, "★ 乾渴壺:吸乾海水,最終鑰匙祠堂顯現!(杜勝利 Ch27)\n"); }
                 else fprintf(stderr, "乾渴壺:需在地表四島礁附近使用\n");
+            } else if (g_item_world_eff == DQ3_USE_FAIRYFLUTE) { /* 妖精之笛:魯比斯之塔 CTY82 → 解詛咒得精靈的守護 */
+                if (in_town && cur_cty == 82) {
+                    if (dq3_inv_find(&inv, 0x74) < 0) dq3_inv_add(&inv, 0x74);
+                    dq3_flags_set(&flags, 0x34, 1);
+                    fprintf(stderr, "★ 魯比斯之塔:妖精之笛解魯比斯詛咒 → 得精靈的守護 0x74(→精靈祠堂換雲雨之杖)\n");
+                } else fprintf(stderr, "妖精之笛:需在魯比斯之塔(CTY82)對魯比斯使用\n");
             }
             g_item_world_eff = 0;
         } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店捷徑(開發用;正式入口=走到店員 NPC)*/
@@ -1721,7 +1734,7 @@ static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *rost
         else if (sc == 0x4b && cursor - 1 >= 0) cursor -= 1;      /* 左 */
         else if (sc == 0x1c && n > 0) {                          /* Enter 使用 */
             int k = field_use_item(inv, roster, party, codes[cursor]);
-            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN || k == DQ3_USE_GAIA || k == DQ3_USE_DRAIN) { world_eff = k; break; }  /* 交 main */
+            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN || k == DQ3_USE_GAIA || k == DQ3_USE_DRAIN || k == DQ3_USE_FAIRYFLUTE) { world_eff = k; break; }  /* 交 main */
         }
     }
     return world_eff;
