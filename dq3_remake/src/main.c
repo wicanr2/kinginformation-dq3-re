@@ -981,6 +981,34 @@ static int run_game(const char *assets, const char *dump)
                             dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         }
                         talked = 1;
+                    } else if (sub == 2 && cur_cty == 14 && b4 == 58 && dlg_ok) {
+                        /* 甘達特盜賊巢穴(CTY14 sec1,巴哈拉達洞窟 boss 房,byte4=58)。原版=救人劇情過場:
+                         * 守衛擋路「不能讓你們通過,看招吧」(D3TXT03 rec106-108)→ 打甘達特手下(怪27)→
+                         * 牆上開關救出古布達/達妮亞 → 返回的甘達特(怪26)→ 結局(rec113-124)。
+                         * EXE handler L0x5ee0 全程過場(對話+NPC動畫+warp),戰鬥為劇情強制戰。
+                         * remake:flag 0x211=達妮亞救出(與 CTY15 古布達黑胡椒鏈 0x211 閉環,docs/boss-trigger-points)。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_flags_get(&flags, 0x211)) {
+                            dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));   /* 已救出 → 後話 */
+                            fprintf(stderr, "甘達特巢穴:已救出達妮亞(flag 0x211)\n");
+                        } else {
+                            int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
+                            dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
+                            fprintf(stderr, "★ 甘達特巢穴守衛:看招吧！→ 甘達特手下(怪27)\n");
+                            oc = dq3_battlescene_run(assets, 27, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                            dq3_scene_apply_palette(cur);
+                            if (oc == 1) {
+                                fprintf(stderr, "★ 救出古布達/達妮亞 → 返回的甘達特(怪26)\n");
+                                oc = dq3_battlescene_run(assets, 26, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                                dq3_scene_apply_palette(cur);
+                            }
+                            if (oc == 1) {
+                                dq3_flags_set(&flags, 0x211, 1);
+                                fprintf(stderr, "★ 擊敗甘達特 → 达妮亚获救(flag 0x211)，可回胡椒店找古布達\n");
+                            } else fprintf(stderr, "甘達特巢穴戰 outcome=%d(未勝)\n", oc);
+                            dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
+                        }
+                        talked = 1;
                     } else if (sub == 2 && cur_cty == 82 && b4 == 64 && dlg_ok) {
                         /* 不死鳥祠堂守護者(CTY82 sect17,byte4=64 祭壇 NPC):集六珠 0x66-0x6b(綠藍紅紫黃銀)
                          * → 復活不死鳥拉米亞(青衫攻略)。原版六祭壇位 byte4=63-68 僅 64 實際放置(build 不完整),

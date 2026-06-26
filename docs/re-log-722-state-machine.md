@@ -511,3 +511,29 @@ zomaseq token → 巴拉摩斯怨靈(怪122 HP1201)→ 巴拉摩斯殭屍(怪123
 ### 工具紀律實踐:GR 斷言一度 FAIL(game_tester cwd=/build 相對路徑找不到 docs/38)→
    用 docker 內 standalone 測 python 片段定位(cwd 問題)→ 改 /repo 絕對路徑修正。
    全程檔案中介抓 PASS=N + git 驗證,不信回顯敘述(lesson 8)。
+
+
+## Step 37:CTY14 甘達特巢穴正式觸發點接成可玩(追 [0x722]/byte4=58 handler)2026-06-26
+
+延續 Step 36 CTY14 boss 身分調查,追 byte4=58 handler 並接成可玩。
+
+### 反組譯結論(dis_handler_full.py,新工具)
+byte4=58 handler L0x5ee0 完整反組譯(跟進分支):全程是**救人劇情過場**——
+對話 D3TXT03 rec106-124(加入嗎/大王不在/不能通過看招吧 → 古布達救命 → 開關救人 →
+甘達特「還是你們比較強」)+ NPC 動畫(call 0x67c5/0x21ef NPC 移動腳本)+ warp(0xbe89=0xd1f9)+
+flag 0x80/81/82 階段 + flag 0x14(救人完成,對應 remake flag 0x211)。
+**handler 內無 [0x2321] 敵群表寫入、無 sub_bfd1 battle_enter** → 甘達特戰是劇情強制戰,
+不在 byte4 handler 的 [0x2321] 機制裡(原版用過場腳本觸發)。
+
+### [0x722] 的真正語意(更正)
+[0x722] = region/page 索引(座標 hit-test 算出,docs Step 1),非 runner event id;
+byte4=58 handler 裡 cmp [0x722],1 是「檢查玩家在 region 1」的分支,非戰鬥觸發。
+
+### 接成可玩(remake)
+CTY14 sec1 (14,13) byte4=58 examine → 甘達特手下(怪27 HP81)→ 勝 → 甘達特(怪26 HP551)→
+設 flag 0x211(達妮亞救出)。與 CTY15 古布達黑胡椒鏈(flag 0x211)**完全閉環**。
+怪27/26 數值經 docs/38 ground truth 驗證(實機顯示 HP81 對上甘達特的手下)。
+pattern 同八頭大蛇 byte4=45(已接範本)。
+
+### game_tester 70 → 73(+CTY14 examine 觸發 +怪27 HP81 +已救出後話閉環)
+### 新工具:tools/dis_handler_full.py(跟進分支的完整 handler 反組譯,補 dis_sub2_handler 單區塊不足)

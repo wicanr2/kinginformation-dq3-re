@@ -186,6 +186,16 @@ for ln in open('$D38',encoding='utf-8'):
 " 2>/dev/null | tr '\n' ' ')
 echo "$GR" | grep -q "122_1201" && echo "$GR" | grep -q "123_2880" && ok "怨靈122/殭屍123 數值 ground truth(docs/38)" || ng "怨靈/殭屍數值 ($GR)"
 
+echo "######## 18. 甘達特巢穴正式觸發點(CTY14 sec1,巴哈拉達洞窟)########"
+# 玩家走到 CTY14 sec1 (14,13) byte4=58 examine → 救人劇情:甘達特手下(怪27 HP81)→ 甘達特(怪26)
+# 正式觸發點 = npc_dialogue.json kind=special dlg=58(docs/boss-trigger-points.md);與古布達黑胡椒鏈 flag 0x211 閉環
+o=$(DQ3_DEBUG="party;warp:14:14:14:1" DQ3_INPUT="ue" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "甘達特巢穴守衛" && echo "$o" | grep -q "甘達特手下(怪27)" && ok "CTY14 巢穴 examine → 甘達特手下(怪27)觸發" || ng "CTY14 巢穴觸發"
+echo "$o" | grep -q "遭遇.*HP81" && ok "甘達特手下怪27 HP81(docs/38 ground truth 對上)" || ng "怪27 HP81"
+# 已救出(flag 0x211)→ 後話分支(不重複開戰),與 CTY15 古布達黑胡椒鏈閉環
+o=$(DQ3_DEBUG="party;flag:0x211;warp:14:14:14:1" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "已救出達妮亞" && ok "CTY14 已救出(flag 0x211)→ 後話(與古布達黑胡椒鏈閉環)" || ng "CTY14 後話分支"
+
 echo "######## 7. boss 劇情事件(甘達特 / 八頭大蛇)########"
 # 甘達特(26)boss token:開戰(HP551)
 o=$(DQ3_DEBUG="party;boss:26:0x33" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$BIN" "$ASSETS" game 2>&1)
