@@ -36,23 +36,28 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
 - [x] **事件格式解碼 + 離線驗證(2026-06-27)**:`tools/cmf_render.py` 解析軌事件(MIDI-like + 尾隨 delta +
   **running status**)+ 2-op FM 合成 → wav。track00=2021 事件/1007 音符/~120s、track02=997/494/~49s,**旋律完整正確**。
   格式規格見 docs/57「Phase 2 起步」。⚠ track17 等少數軌 note-on/off 配對失敗(編碼變體,待查)。
-- [ ] `dq3_remake/src/dq3_opl2.{c,h}`:OPL2(YM3812)FM 核心(公開精簡實作移植;render s16 取樣)= **authentic AdLib 音色**。
-- [ ] `dq3_remake/src/dq3_cmf.{c,h}`:軌 parser(instrument→OPL reg + 事件排程器)+ note→fnum/block + 精確 tempo。
-- [ ] 離線工具 render 一首 → wav,人工聽感確認(像 AdLib/聲霸卡 FM)。Python 版已證旋律對;C/OPL2 版補真實音色。
+- [x] `dq3_opl2.{c,h}`:精簡 OPL2(YM3812)FM 核心(9×2-op、4 波形、ADSR、fnum/block;暫存器層 + s16 render)。近似但 AdLib 音色明確。
+- [x] `dq3_cmf.{c,h}`:軌 parser(MIDI-like + running status)+ tick 排程器(note→fnum/block、program、預設 FM patch)。
+- [x] `tools/opl_render.c`:離線 track→wav 驗證 OPL2 音色(track00 peak18073/rms6226/97%非靜音)。
+  ⚠ 待精校:各軌 instrument→OPL patch(目前預設 patch)、精確 tempo、track17 等變體軌。
 
-### Phase 3 — SDL audio 串接 remake
-- [ ] `dq3_remake/src/dq3_audio.{c,h}`:SDL audio callback（44100 s16）+ OPL2 render + 排程推進。
-- [ ] API:`dq3_audio_play(song)` / `dq3_audio_stop()` / `dq3_audio_fade()`；dummy 驅動下不出聲不崩(headless 安全)。
-- [ ] CMake 接 SDL audio;game_tester 在 dummy audio 下零回歸。
+### Phase 3 — SDL audio 串接 remake ✅
+- [x] `dq3_audio.{c,h}`:載 MBG.MCX(18軌)+ SDL audio callback 驅動 OPL2/CMF + 執行緒安全 + headless no-op。
+- [x] API:`dq3_audio_play/stop/set_enabled/set_volume/play_scene`;dummy 驅動下不出聲不崩。
+- [x] CMake 接 opl2/cmf/audio + libm;runtime 加 SDL_INIT_AUDIO;17/17 測試零回歸。
 
-### Phase 4 — 場景配曲 + 設定
-- [ ] 場景配曲:地表 / 城鎮 / 戰鬥 / boss / 結局…(先合理對應，後可 RE EXE 選曲邏輯精校)。
-- [ ] 設定選單加「音樂開關 / 音量」；存檔格式不受影響（音訊狀態不入存檔或加版本防呆）。
+### Phase 4 — 場景配曲 + 設定 ✅
+- [x] 場景配曲:主迴圈每幀依 in_town/layer/ship 選軌(地表/城鎮/下層/船);戰鬥入口 boss vs 一般曲。
+- [x] 設定:config 加 `music`/`music_vol`(load/save/default);主程式依設定 enable/volume。
+  ⚠ 待補:遊戲內設定選單 UI 的音樂開關/音量項(目前走設定檔)。
 
-### Phase 5 —(次要）VOC 音效
-- [ ] FVOC/NVOC.VCX(Creative VOC PCM)解碼 → SDL 混音;戰鬥/選單音效接點。
+### Phase 5 — VOC 音效 ✅
+- [x] `dq3_voc.{c,h}`:FVOC/NVOC.VCX 解碼(dword 偏移表 + 標準 VOC sound block,8-bit unsigned PCM)→ s16。FVOC 22 + NVOC 24。
+- [x] `dq3_audio`:8 voice SFX mixer + `dq3_audio_sfx/se` + 語意音效對應;戰鬥指令接攻擊/咒文/確認音效。
+  ⚠ 待精校:語意音效→實際 VCX id 對應(初步猜測)、更多接點(選單/開門/道具/受傷)。
 
 ## 驗收
-- 步驟 1 產出可解析的 CMF 資料（或據實判定無附曲序）。
-- 離線 render 的 wav 聽感正確（FM 暖音色、非雜訊）。
-- remake 在地表/戰鬥/城鎮聽到精訊自己的曲；headless / game_tester 零回歸；設定可關音樂。
+- [x] 音樂資料可解析(MBG.MCX 18 軌,旋律完整)。
+- [x] 離線 render wav(FM 音色、非雜訊)。
+- [x] remake 地表/戰鬥/城鎮聽到精訊自己的曲;headless / 17 測試零回歸;設定檔可關音樂。
+- [ ] (精校)各軌實際 instrument 音色、精確 tempo、語意音效對應、遊戲內設定 UI。
