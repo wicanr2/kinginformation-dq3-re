@@ -161,6 +161,11 @@ o=$(DQ3_DEBUG="party" DQ3_INPUT="ssyyy" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "尚未開啟" && ok "D-10 下降閘:未敗巴拉摩斯 → 擋" || ng "D-10 下降閘(未敗擋)"
 o=$(DQ3_DEBUG="party;flag:0x213" DQ3_INPUT="ssyyy" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "scripted_event 86 下降" && ok "D-10 下降閘:敗巴拉摩斯(0x213)→ 下降" || ng "D-10 下降閘(敗後可下降)"
+# B-5 諾魯特密道(杜 Ch16-17):波魯多加王首訪授國王的信 0x5b → 諾魯特(CTY62)持信開東方通道
+o=$(DQ3_DEBUG="party;warp:37:9:7:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "授《國王的信》0x5b" && ok "B-5 波魯多加王授國王的信 0x5b(首訪)" || ng "波魯多加授國王的信"
+o=$(DQ3_DEBUG="party;item:0x5b;warp:62:38:6:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "byte4=50:持有 0x5b" && ok "B-5 諾魯特持國王的信 0x5b → 反應(開東方通道)" || ng "諾魯特國王的信"
 o=$(DQ3_DEBUG="warp:20:4:9:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "獲得道具 0x5f" && ok "提頓村 CTY20 黑暗之燈" || ng "黑暗之燈"
 o=$(DQ3_DEBUG="warp:26:11:12:2" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)

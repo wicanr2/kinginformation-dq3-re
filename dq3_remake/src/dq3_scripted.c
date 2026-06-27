@@ -32,8 +32,9 @@ static const dq3_scripted TABLE[] = {
   {  44, 54, 0x63, 0x62,          DQ3_SC_NOITEM, 1, 0,                 56, 59, 60 },
 
   /* ── 檢查型(give_item==NONE,require_item != NONE;持物→success rec、否則→need rec,不消耗)── */
-  /* CTY62/63 sect0(L0x5daf,flag 0x4c):需持船 0x5b → 反應 rec87,否則 rec89(渡海 gate)。
-   * cty=0xff:byte4=50 在 CTY62(×2)/CTY63 皆同義(全 CTY 僅此處用 b4=50)。 */
+  /* 諾魯特(阿莎拉慕東洞 CTY62/63 sect0,L0x5daf,flag 0x4c):持《國王的信》0x5b → rec87「你們有什麼事?」
+   * 開往東方通道(rec89「這就是往東方去」);否則無反應(杜 Ch17)。★碼勘誤:0x5b 真名=**國王的信**(非船;
+   * D3TXT00 名表 offset+1 解碼)。信由波魯多加王首訪授予(main.c flag 0x215)。byte4=50 全 CTY 僅此處用。 */
   {  50, 0xff, DQ3_SC_NOITEM, DQ3_SC_NOITEM, 0x5b, 0, 0,               89, 87, 87 },
 };
 static const int N = (int)(sizeof TABLE / sizeof TABLE[0]);

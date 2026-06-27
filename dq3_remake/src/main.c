@@ -1299,6 +1299,12 @@ static int run_game(const char *assets, const char *dump)
                             fprintf(stderr, "★ 取船:獻黑胡椒給波魯多加國王 → 得船,停泊港口 (%d,%d)(SHIP 里程碑)\n",
                                     ship.px, ship.py);
                         } else {
+                            /* 首訪授《國王的信》0x5b(杜 Ch16:拿給諾魯特→阿莎拉慕東洞 CTY62 開往東方通道→巴哈拉達)。
+                             * flag 0x215 防重複;諾魯特 gate(dq3_scripted byte4=50)消耗此信。0x5b 真名=國王的信(非船,碼勘誤)。*/
+                            if (!dq3_flags_get(&flags, 0x215)) {
+                                dq3_inv_add(&inv, 0x5b); dq3_flags_set(&flags, 0x215, 1);
+                                fprintf(stderr, "★ 波魯多加國王:授《國王的信》0x5b → 交諾魯特(阿莎拉慕東洞)開東方通道(杜 Ch16-17)\n");
+                            }
                             dq3_dialogue_open(&dlg, DQ3_PORTOGA_REC_WAIT);   /* 等胡椒 */
                             fprintf(stderr, "波魯多加國王:等黑胡椒(無胡椒,未授船)\n");
                         }
