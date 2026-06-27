@@ -81,6 +81,8 @@ RE 也獨立佐證音樂播放器**實際運作**:
 - ❌ **掃 `out dx,al`(0xEE)分群**:全檔 392 處、172 群,散在 VGA/CRTC/DSP 各處,雜訊太高不收斂。OPL 寫入埋在其中但無法靠數量挑出。
 - ❌ **遊戲 `DQ3CON.MAP` / `DQ3UND.MAP` 當 linker map**:這兩個**不是 link map**,是二進位遊戲資料(N/X tile 填充樣式),副檔名誤導。真 link map 只有 `SBCM.MAP`(驅動自身,符號為 unresolved externals,無遊戲端絕對位址)。
 - ⇒ **沒有遊戲端 .MAP 可給符號絕對位址**;得靠反組譯定位驅動碼。
+- ❌ **搜 OPL F-number 半音表**(連續 ≥6 word、每個 ×1.0595、落 0x130–0x340):0 命中。驅動沒以「整octave 連續 fnum 表」存(可能 block+fnum 分散、或計算式產生、或值域不同)。
+- △ **SBCM.LIB OMF 解析取 LEDATA**:lib 分頁對齊使簡易 walk 只取到 1 筆;要正確 byte-match 驅動碼需寫完整 OMF library parser(THEADR/LIBHDR 分頁 + FIXUPP 略過 segment 重定位 byte)。**= 下一步要投入的工**。
 
 ## 下一步(最有價值)— 用 SBCM.LIB 在 EXE 裡定位 CMFDRV 驅動
 
