@@ -41,9 +41,13 @@
   夜 gated 事件接 g_dn_phase(提頓村牢房)待補。原版確切步數計數器多輪 RE 未定位(在多層 handler 鏈)。
 - [ ] **per-member 裝備擴 5 槽**:目前 2 槽(武器/防具);擴盾/頭/飾。
 
-### 驗證 / 打包(需外部環境)
-- [ ] **DOSBox 逐畫面 oracle 擴展**:標題逐像素/注音 IME/boss sprite 已驗一致;其餘畫面待補(需 DOSBox runtime)。
+### 打包
 - [ ] **Windows / AppImage 跨平台打包**:目前只產 Linux tar(`tools/package.sh`);需 mingw + SDL2-mingw toolchain。
+
+### 不在此環境做 / 不依賴 DOSBox(記憶 `dq3-no-dosbox-debugger`)
+- **DOSBox 逐畫面 oracle**:此環境**無 DOSBox runtime**,不掛在它上面當待辦。已能靜態驗的都驗了
+  (整檔反組譯 byte-identical docs/17、標題/注音 IME/boss sprite 對使用者提供截圖一致)。其餘逐畫面
+  比對屬「此環境不驗」,**不是** pending dev task,也不作為任何卡關項的下一步。靜態 RE 能解的一律靜態解。
 
 ## 關鍵參考 / 工具 / 紀律
 

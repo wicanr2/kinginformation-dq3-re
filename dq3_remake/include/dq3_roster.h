@@ -7,8 +7,8 @@
  * 對應 RE:角色建立 modal sub_0854(docs/15;設角色結構 [0x5082]、隊伍人數 [0x5077]);
  * 登錄所對話 D3TXT00 rec 550+;隊員實體表 [bx+0x4f15](stride;名字 / 數值 / 職業 / 性別)。
  *
- * 初始數值:目前用成長表 Lv1 確定性 base(dq3_member_init(cls,1))。
- * ⚠ 待 RE:原版創角的 rng 擲值與性格(personality)修正 — 屬精校,先以 base 落地。
+ * 初始數值:**忠實 rng 擲值已實作**(dq3_member_init_rng,RE sub_d9cc:Lv1 = base + rng(0..slope/2);
+ * roster_create 走 create_rng() seed 0x4321,DOS/REAL 模式)。精訊版無性格系統(已確認)。
  */
 #ifndef DQ3_ROSTER_H
 #define DQ3_ROSTER_H
