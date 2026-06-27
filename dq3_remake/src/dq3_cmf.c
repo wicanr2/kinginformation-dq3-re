@@ -24,7 +24,10 @@ static int parse_events(const unsigned char *t, int len, ev_t **out)
 {
     int base, p, cap, n; ev_t *ev; int status = -1;
     if (len < 8) { *out = NULL; return 0; }
-    base = t[6] | (t[7] << 8);                 /* header word[3],恆 0x60 */
+    /* 事件流起點 = header w1(track[2])。RE 自 play wrapper:body 載入 ds:6,[ds:8]=track word@2=events。
+     * (先前誤用 word@6,對 track05 等變體軌只剩 16 事件;w1 修正並 catch 開頭 program change。) */
+    base = t[2] | (t[3] << 8);
+    if (base <= 0 || base >= len) base = t[6] | (t[7] << 8);  /* 退回舊欄位 */
     if (base <= 0 || base >= len) base = 0x60;
     p = base;
     while (p < len && t[p] < 0x80) p++;        /* 跳到第一個 status */
@@ -97,9 +100,21 @@ dq3_cmf *dq3_cmf_load(const unsigned char *track, int len, dq3_opl2 *opl,
                       int sample_rate, double tick_ms)
 {
     dq3_cmf *p = (dq3_cmf *)calloc(1, sizeof *p);
+    int tempo_div;
+    double tms;
     if (!p) return NULL;
     p->opl = opl; p->sr = sample_rate;
-    p->samp_per_tick = (tick_ms > 0 ? tick_ms : 13.0) * 0.001 * sample_rate;
+    /* tempo:RE 自 play wrapper `reload = 0x1234DC / [ds:0xc]`,[ds:0xc]=track word@6(=tempo div)。
+     * 8253 base 1193182Hz;tick 中斷率 = base/reload;tick_ms = 1000*reload/base。 */
+    tempo_div = (len >= 8) ? (track[6] | (track[7] << 8)) : 0;
+    if (tempo_div > 0) {
+        double reload = 1193180.0 / tempo_div;          /* 0x1234DC ≈ 1193180 */
+        tms = 1000.0 * reload / 1193182.0;
+    } else {
+        tms = (tick_ms > 0 ? tick_ms : 10.4);
+    }
+    if (tms < 2.0 || tms > 50.0) tms = (tick_ms > 0 ? tick_ms : 10.4);  /* 防呆 */
+    p->samp_per_tick = tms * 0.001 * sample_rate;
     p->nev = parse_events(track, len, &p->ev);
     if (p->nev <= 0) { free(p->ev); free(p); return NULL; }
     load_default_instrument(opl);
