@@ -8,6 +8,8 @@
 void dq3_config_default(dq3_config *c)
 {
     c->rng_mode = DQ3_RNG_DOS;   /* 預設忠實 */
+    c->music_enabled = 1;
+    c->music_volume = 70;
 }
 
 const char *dq3_config_path(void)
@@ -40,6 +42,12 @@ int dq3_config_load(dq3_config *c, const char *path)
         if (strcmp(key, "rng") == 0) {
             c->rng_mode = (val[0]=='r' || val[0]=='R') ? DQ3_RNG_REAL : DQ3_RNG_DOS;
             got++;
+        } else if (strcmp(key, "music") == 0) {
+            c->music_enabled = (val[0]=='1' || val[0]=='o' || val[0]=='O' || val[0]=='y') ? 1 : 0;
+            got++;
+        } else if (strcmp(key, "music_vol") == 0) {
+            int v = atoi(val); c->music_volume = v < 0 ? 0 : (v > 100 ? 100 : v);
+            got++;
         }
     }
     fclose(f);
@@ -52,6 +60,8 @@ int dq3_config_save(const dq3_config *c, const char *path)
     if (!f) return -1;
     fputs("# DQ3 remake 設定(可攜;取代 env)\n", f);
     fprintf(f, "rng=%s\n", c->rng_mode == DQ3_RNG_REAL ? "real" : "dos");
+    fprintf(f, "music=%d\n", c->music_enabled ? 1 : 0);
+    fprintf(f, "music_vol=%d\n", c->music_volume);
     fclose(f);
     return 0;
 }

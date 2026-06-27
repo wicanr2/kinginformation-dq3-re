@@ -61,6 +61,9 @@ add_executable(dq3_remake
     src/dq3_config.c
     src/dq3_locwarp.c
     src/dq3_scripted.c
+    src/dq3_opl2.c
+    src/dq3_cmf.c
+    src/dq3_audio.c
 )
 
 # 純邏輯單元測試(不依賴 SDL2;示範 bug 修正)
@@ -139,6 +142,11 @@ else()
     set(_sdl2_libs ${SDL2_LIBRARIES})
     list(FILTER _sdl2_libs EXCLUDE REGEX "[Ss][Dd][Ll]2[Mm]ain")
     target_link_libraries(dq3_remake PRIVATE ${_sdl2_libs})
+endif()
+
+# 數學庫(dq3_opl2 的 sin/pow/floor);Windows MSVC 內建於 CRT 不需顯式連。
+if(NOT WIN32)
+    target_link_libraries(dq3_remake PRIVATE m)
 endif()
 
 if(MSVC)

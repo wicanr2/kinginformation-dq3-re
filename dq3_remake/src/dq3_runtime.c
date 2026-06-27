@@ -25,6 +25,9 @@ int dq3_rt_init(const char *title)
         fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
         return -1;
     }
+    /* 音訊子系統(非致命:headless / 無音效卡時音樂自動停用,不影響畫面)*/
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
+        fprintf(stderr, "SDL_INIT_AUDIO 失敗(%s),音樂停用\n", SDL_GetError());
     g_have_sdl = 1;
     g_win = SDL_CreateWindow(title ? title : "DQ3",
                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,

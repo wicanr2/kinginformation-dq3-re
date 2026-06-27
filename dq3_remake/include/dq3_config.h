@@ -11,7 +11,9 @@
 #define DQ3_CONFIG_H
 
 typedef struct {
-    int rng_mode;   /* DQ3_RNG_DOS / DQ3_RNG_REAL */
+    int rng_mode;        /* DQ3_RNG_DOS / DQ3_RNG_REAL */
+    int music_enabled;   /* 0/1:精訊 SB FM 音樂(MBG.MCX)開關 */
+    int music_volume;    /* 0..100 */
 } dq3_config;
 
 /* 預設值(rng=DOS 忠實)。 */

@@ -45,6 +45,7 @@
 #include "dq3_customglyph.h"   /* 自建字形(設/版)— 設定選單標籤 */
 #include "dq3_scripted.h"
 #include "dq3_item_use.h"
+#include "dq3_audio.h"     /* 精訊 SB FM 音樂(MBG.MCX)+ 場景配曲 */
 
 /* 可攜 setenv:Windows CRT 無 POSIX setenv,改 _putenv_s。只用於 debug dump 路徑。 */
 #ifdef _WIN32
@@ -2634,6 +2635,16 @@ int main(int argc, char **argv)
 
     if (dq3_rt_init("DQ3 (精訊) — 重製 Remake") != 0) return 1;
     dq3_set_assets_dir(assets);
+    dq3_audio_init(assets);                    /* 載 MBG.MCX + 開 SDL audio(headless 安全 no-op)*/
+    dq3_audio_set_enabled(cfg.music_enabled);
+    dq3_audio_set_volume(cfg.music_volume);
+
+    /* 場景配曲:各模式進場放對應軌(主迴圈背景持續播放)。 */
+    if (strcmp(mode, "field") == 0)      dq3_audio_play_scene(DQ3_MUS_FIELD, 1);
+    else if (strcmp(mode, "town") == 0)  dq3_audio_play_scene(DQ3_MUS_TOWN, 1);
+    else if (strcmp(mode, "game") == 0)  dq3_audio_play_scene(DQ3_MUS_FIELD, 1);
+    else if (strcmp(mode, "battle") == 0) dq3_audio_play_scene(DQ3_MUS_BATTLE, 1);
+    else                                  dq3_audio_play_scene(DQ3_MUS_TITLE, 1);
 
     if (strcmp(mode, "field") == 0 || strcmp(mode, "town") == 0) {
         char err[256] = {0};
@@ -2679,6 +2690,7 @@ int main(int argc, char **argv)
         rc = run_title(assets, title, dump);
     }
 
+    dq3_audio_shutdown();
     dq3_rt_quit();
     return rc;
 }

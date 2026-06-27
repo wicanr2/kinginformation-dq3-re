@@ -61,7 +61,7 @@ static int off2chop(int off, int *ch, int *opi)
 dq3_opl2 *dq3_opl2_new(int sample_rate)
 {
     dq3_opl2 *o = (dq3_opl2 *)calloc(1, sizeof *o);
-    int w, i;
+    int i;
     if (!o) return NULL;
     o->sr = sample_rate > 0 ? sample_rate : 44100;
     for (i = 0; i < SINLEN; i++) {
