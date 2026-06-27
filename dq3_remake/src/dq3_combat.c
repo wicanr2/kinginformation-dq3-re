@@ -46,6 +46,9 @@ int dq3_item_price(const dq3_items *it, int code)
 { return (code<0||code>=DQ3_ITEM_COUNT)?0:(it->item[code][2] | (it->item[code][3]<<8)); }
 int dq3_item_category(const dq3_items *it, int code)
 { return (code<0||code>=DQ3_ITEM_COUNT)?0:it->item[code][4]; }
+int dq3_item_equip_slot(const dq3_items *it, int code)
+{ int b4 = dq3_item_category(it, code);
+  return (b4 < 0x20) ? -1 : ((b4 >> 5) - 1); }   /* 0x2_武器/0x4_鎧/0x6_盾/0x8_兜;非裝備 -1 */
 /* 職業 cls(0..7)可否裝備此道具(b6 bitmask;0xff=全職業、0x80=勇者專用)。 */
 int dq3_item_can_equip(const dq3_items *it, int code, int cls)
 { if(code<0||code>=DQ3_ITEM_COUNT||cls<0||cls>7) return 0;

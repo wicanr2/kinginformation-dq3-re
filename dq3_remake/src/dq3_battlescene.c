@@ -522,16 +522,21 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             /* 起始用持久 cur_hp/cur_mp(戰鬥傷害保留;clamp 防 stale)*/
             party[pi].hp = (int)rc->m.cur_hp > party[pi].maxhp ? party[pi].maxhp : (int)rc->m.cur_hp;
             party[pi].mp = (int)rc->m.cur_mp > party[pi].maxmp ? party[pi].maxmp : (int)rc->m.cur_mp;
-            /* 攻擊力 = 力量 + 武器 b0;守備力 = 耐力/2 + 防具 b1(ITEM.DAT,docs/22)*/
+            /* 攻擊力 = 力量 + 武器 b0;守備力 = 耐力/2 + (鎧+盾+兜 b1 總和)(ITEM.DAT,docs/22;4 槽)*/
             party[pi].atk = (int)rc->m.stat[DQ3_STAT_STR]
                             + (g_items_ok ? dq3_item_attack(&g_items, rc->weapon) : 0);
-            party[pi].def = (int)rc->m.stat[DQ3_STAT_VIT] / 2
-                            + (g_items_ok ? dq3_item_defense(&g_items, rc->armor) : 0);
+            party[pi].def = (int)rc->m.stat[DQ3_STAT_VIT] / 2;
+            if (g_items_ok) party[pi].def += dq3_item_defense(&g_items, rc->armor)
+                            + dq3_item_defense(&g_items, rc->shield) + dq3_item_defense(&g_items, rc->head);
             party[pi].agi   = (int)rc->m.stat[DQ3_STAT_AGI];
             party[pi].weapon = (rc->weapon==0xff)?0:rc->weapon;     /* #7a 雙擊判定用 */
             party[pi].defending = 0;
             for (k = 0; k < 8; k++) party[pi].equip[k] = 0xff;
-            if (rc->armor != 0xff) party[pi].equip[0] = rc->armor;  /* #7b 抗魔掃描 */
+            { int es=0;                                              /* #7b 抗魔掃描:4 槽都進 equip[] */
+              if (rc->armor !=0xff) party[pi].equip[es++]=rc->armor;
+              if (rc->shield!=0xff) party[pi].equip[es++]=rc->shield;
+              if (rc->head  !=0xff) party[pi].equip[es++]=rc->head;
+              if (rc->weapon!=0xff) party[pi].equip[es++]=rc->weapon; }
             g_cls_idx[pi] = rc->m.cls;
             g_pl_ri[pi] = ri;                  /* 記住回寫目標 */
             pi++;

@@ -36,6 +36,12 @@ int dq3_item_price(const dq3_items *it, int code);
 int dq3_item_category(const dq3_items *it, int code);
 int dq3_item_can_equip(const dq3_items *it, int code, int cls);
 
+/* 裝備部位(RE:ITEM.DAT b4 高位,精訊版 4 槽)。回 0=武器 1=鎧 2=盾 3=兜;非裝備回 -1。
+ * 公式:b4<0x20 → 非裝備;否則 (b4>>5)−1(0x2_武器/0x4_鎧/0x6_盾/0x8_兜,def 遞增佐證)。
+ * 飾品(戒指/手環)在精訊版無乾淨部位編碼(b4=0x00 或同道具 0x18),不列裝備槽。 */
+enum { DQ3_EQ_WEAPON = 0, DQ3_EQ_BODY = 1, DQ3_EQ_SHIELD = 2, DQ3_EQ_HEAD = 3, DQ3_EQ_SLOTS = 4 };
+int dq3_item_equip_slot(const dq3_items *it, int code);
+
 /* 道具旗標(code 越界回 0) */
 uint8_t dq3_item_flag5(const dq3_items *it, int code);
 uint8_t dq3_item_flag6(const dq3_items *it, int code);

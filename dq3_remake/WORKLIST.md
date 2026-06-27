@@ -39,7 +39,11 @@
 ### Polish(非阻塞)
 - [ ] **晝夜精校**:步數已設使用者指定值(白天→黑夜 120 步,每相位 60);各相位 palette 為近似;
   夜 gated 事件接 g_dn_phase(提頓村牢房)待補。原版確切步數計數器多輪 RE 未定位(在多層 handler 鏈)。
-- [ ] **per-member 裝備擴 5 槽**:目前 2 槽(武器/防具);擴盾/頭/飾。
+- [x] **per-member 裝備 4 槽 ✅**(2026-06-27,★RE 更正 5→4 槽):第一性原理從 ITEM.DAT b4 高位反推
+  ——精訊版實為 **4 裝備槽**(武器 0x2_/鎧 0x4_/盾 0x6_/兜 0x8_,def 遞增佐證),**非 5 槽**;飾品(戒指/
+  手環)無乾淨 b4 部位編碼(0x00 或同道具 0x18),不設槽。`dq3_item_equip_slot`=`(b4>>5)−1`;
+  `dq3_recruit` 加 shield/head;戰鬥 def=耐力/2+(鎧+盾+兜 b1 總和);`equip_modal` 4 槽 2×2 管理
+  (修舊 `cat&0x40` 把盾 0x60 誤判成鎧的 bug);save v7。dump 驗證 4 槽畫面、game_tester 79/79。
 
 ### 打包
 - [ ] **Windows / AppImage 跨平台打包**:目前只產 Linux tar(`tools/package.sh`);需 mingw + SDL2-mingw toolchain。

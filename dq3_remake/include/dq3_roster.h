@@ -29,8 +29,12 @@ typedef struct {
     int      gender;               /* DQ3_GENDER_* */
     int      in_party;             /* 是否在現役隊伍中 */
     dq3_member m;                  /* 職業 / 等級 / 數值 / 經驗 */
-    uint8_t  weapon;               /* 裝備武器 item code(0xff=無;攻擊力 = 力量 + item b0)*/
-    uint8_t  armor;                /* 裝備防具 item code(0xff=無;守備 = 耐力/2 + item b1)*/
+    /* 裝備 4 槽(RE:ITEM.DAT b4 高位,精訊版 武器/鎧/盾/兜;0xff=無)。dq3_item_equip_slot 判部位。
+     * 攻擊力 = 力量 + 武器 b0;守備 = 耐力/2 + (鎧+盾+兜 b1 總和)。飾品無乾淨部位編碼,不設槽。 */
+    uint8_t  weapon;               /* 武器 item code */
+    uint8_t  armor;                /* 鎧(身)item code */
+    uint8_t  shield;               /* 盾 item code */
+    uint8_t  head;                 /* 兜(頭)item code */
 } dq3_recruit;
 
 typedef struct {
