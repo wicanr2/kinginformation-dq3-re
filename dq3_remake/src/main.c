@@ -2576,6 +2576,42 @@ static int cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
     return sel;
 }
 
+/* ── 版權保護閘 ────────────────────────────────────────────────────────────
+ * 本重製版受版權保護:須搭配使用者**合法持有的精訊原版 DQ3.EXE** 才能執行。
+ * remake 執行期本身**不讀** DQ3.EXE(資料已反組譯編入 dq3_exedata)——此檢查純為確認
+ * 「原版在手」:沒有正版執行檔就不給跑。檢查 <assets>/DQ3.EXE(或 DQ3_ORIGINAL_EXE 指定路徑)
+ * 的檔案大小 + FNV-1a 全檔指紋是否為精訊原版未改檔。 */
+#define DQ3_ORIG_SIZE 115282u
+#define DQ3_ORIG_FNV  0x7d64946eu
+static int verify_original_exe(const char *assets)
+{
+    char path[1024]; const char *env = getenv("DQ3_ORIGINAL_EXE");
+    FILE *f; long sz; uint32_t h = 0x811c9dc5u; int c;
+    if (env && *env) snprintf(path, sizeof path, "%s", env);
+    else snprintf(path, sizeof path, "%s/DQ3.EXE", assets);
+    f = fopen(path, "rb");
+    if (!f) {
+        fprintf(stderr,
+            "\n✗ 找不到精訊原版 DQ3.EXE(%s)。\n"
+            "  本重製版受版權保護,須搭配您【合法持有】的精訊原版執行檔才能啟動。\n"
+            "  請把原版 DQ3.EXE 放進素材夾,或以環境變數 DQ3_ORIGINAL_EXE=/path/DQ3.EXE 指定。\n\n",
+            path);
+        return -1;
+    }
+    fseek(f, 0, SEEK_END); sz = ftell(f); fseek(f, 0, SEEK_SET);
+    while ((c = fgetc(f)) != EOF) h = (h ^ (uint32_t)(unsigned char)c) * 0x01000193u;
+    fclose(f);
+    if ((uint32_t)sz != DQ3_ORIG_SIZE || h != DQ3_ORIG_FNV) {
+        fprintf(stderr,
+            "\n✗ DQ3.EXE 指紋不符(size=%ld fnv=0x%08x;精訊原版應為 size=%u fnv=0x%08x)。\n"
+            "  須為精訊原版未經改檔的執行檔。\n\n",
+            sz, (unsigned)h, DQ3_ORIG_SIZE, (unsigned)DQ3_ORIG_FNV);
+        return -1;
+    }
+    fprintf(stderr, "✓ 精訊原版 DQ3.EXE 驗證通過(版權保護:確認正版在手)。\n");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     const char *assets = (argc > 1) ? argv[1] : ".";
@@ -2592,6 +2628,9 @@ int main(int argc, char **argv)
     dq3_rng_set_mode(cfg.rng_mode);
     if (cfg.rng_mode == DQ3_RNG_REAL)
         fprintf(stderr, "[RNG] 真實亂數模式(xorshift32,週期 2^32)\n");
+
+    /* 版權保護:確認使用者合法持有的精訊原版 DQ3.EXE 在手,否則不啟動。 */
+    if (verify_original_exe(assets) != 0) return 3;
 
     if (dq3_rt_init("DQ3 (精訊) — 重製 Remake") != 0) return 1;
     dq3_set_assets_dir(assets);
