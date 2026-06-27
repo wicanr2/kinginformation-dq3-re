@@ -22,8 +22,11 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
   目標:定位 ① 音樂事件流(序列)base、② instrument(OPL2 樂器)表 base、③ 曲目索引表(多首)。
   具體步驟(逐步做,別跳;每步 commit 進度到 docs/57):
   - [x] 1a. timer init 位置:file 0x13fc3 / 0x155c0;`set_timer_count(ax)` = logical 0x2c52。
-  - [ ] 1b. **找音樂 ISR 本體**:反組譯 0x2c52 上下文 + 找誰呼叫它;ISR 應為較大函式(讀事件→寫 OPL→重排 timer→EOI iret)。
-  - [ ] 1c. **找 ISR 安裝點**:搜 INT8 vector(0:0x20)寫入 / DOS INT21 AH=0x25 設向量 / SB IRQ 安裝;反推 ISR 位址。
+  - [x] 1b/1c. 追了 INT8/timer hook(install file 0x13f1c → ISR file 0x1160f)→ **此線追錯**:
+    該 ISR `mov es,0xa000`(VGA)、far target 讀 '$' 結尾字串 + 84-stride VGA 位址計算 = **螢幕/文字子系統,非音樂**。
+    副產:★解出 **段→file 換算 `file=seg×16+off+0x1370`**(已驗證,見 docs/57)→ 跨段 trace 解鎖。
+  - [ ] 1b'. **改從 CMFDRV/OPL 線重追**:找寫 OPL data 埠(`_ct_io_addx` base+1)的播放迴圈、
+    `ct_play_music`/`_ct_music_status` 對應 code、誰餵音樂資料指標(= 內嵌資料 base)。用段→file 公式跟 CMFDRV 段 far call。
   - [ ] 1d. **ISR 內 OPL 寫入**:找 `out dx,al`(dx=[_ct_io_addx])寫 reg 0xA0-0xB8(note fnum/keyon)→ 確認是音樂非音效。
   - [ ] 1e. **事件指標變數**:ISR 從哪個記憶體變數(DGROUP word)讀下一事件 byte;該變數初值 / 被誰設 = 指向音樂資料 base。
   - [ ] 1f. **反追資料 base**:該指標的 setter(選曲函式)用哪個 base + index;base = 內嵌音樂資料起點(file = base + 0x1370 或 DGROUP 0x16140+off)。

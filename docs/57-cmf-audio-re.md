@@ -57,7 +57,31 @@ RE 也獨立佐證音樂播放器**實際運作**:
   **不是主碼段**。直接反組譯主段 file 0x160f(=主段邏輯 0x29f)得到的是遊戲碼(give-item/memory alloc),錯段。
   → 須先解出**驅動段的 file base**(查 EXE relocation / segment 配置 / `mov ax,seg; mov ds/es,ax` 載入驅動段的常數),才能正確反組譯 ISR。
 
-## 下一步(Phase 1 續)— 定位內嵌音樂資料(續 step 1c→)
+## ★ 解鎖:load-relative 段位址 → file offset 換算(已驗證,2026-06-27)
+
+多段 large-model EXE 反組譯的關鍵換算 —— **`file = seg×16 + off + 0x1370`**(0x1370 = EXE header 結束 / 載入映像在檔內起點):
+- 驗證:INT8 ISR 裝成 `cs:0x29f`,install 碼在 file 0x13f1c;反推 install 段 = load-relative **seg 0x1000**
+  (0x1000×16+0x29f+0x1370 = file 0x1160f,disasm 落在連貫 ISR、`sti;iret` 結尾 ✓)。
+- 再驗:`lcall 0x1104:0xac` → file 0x1245c、`lcall 0x1032:0xb2` → file 0x11742,兩者都 disasm 出連貫程式碼 ✓。
+- 用途:`9a lo hi seglo seghi` = far call seg:off;拿 seg/off 套公式即得 file,**跨段 trace 不再卡**。
+- ⚠ 64K wrap:`re_codecave_scan.py` 的 `sXXXX` label = (file−0x1370)&0xffff(段內 offset,wrap at 64K);
+  同一 label 可能對應多個 window(±0x10000),要用所在函式的 window 對齊(別像先前反到差 0x10000 的錯段)。
+
+## ★ 修正:追到的 timer/INT8 ISR 是**螢幕/文字**子系統,非音樂(2026-06-27)
+
+跟進 ISR(file 0x1160f,seg 0x1000:0x29f)+ 其 far call 後確認:
+- ISR `mov es,0xa000`(VGA 記憶體);far target B(file 0x11742)`mov al,[si]; cmp al,0x24('$') 終止; … mul 84(stride); shr bx,1 ×3; add bx,[0x4f09]` = **VGA 位址計算 + '$' 結尾字串描繪**。
+- ⇒ 這 timer 重排 + INT8 hook 是**定時把字串畫到 VGA 的螢幕子系統**,不是 FM 音樂驅動。
+- **修正前一節**:「8253 timer reprogram = 音樂節拍」的佐證**追錯 ISR**(此 timer 服務螢幕,非音樂)。
+  音樂**仍存在**(CMFDRV 已連入 + 使用者親證 + YouTube 錄影),但要從**另一條**重追:
+  CMFDRV 的 OPL 寫入(0x228/0x229 via `_ct_io_addx`)+ SB 自己的中斷,**不是這個 0xa000 螢幕 timer**。
+
+## 下一步(Phase 1 續)— 從 CMFDRV/OPL 那條重追音樂(取代上面追錯的 timer 線)
+- 從 `_ct_io_addx`(SB IO base 變數)被寫的位置 → 找寫 OPL data 埠(base+1,值 = reg/value)的迴圈 = CMF 播放器。
+- 找 CMFDRV 的 `ct_play_music` / `_ct_music_status` 對應 code:誰把音樂資料指標餵給它 → 指標 base = 內嵌音樂資料。
+- 用上面的段→file 公式跟 CMFDRV 段的 far call(SBCM.LIB 連入的獨立段)。
+
+## (作廢)舊下一步 — 續 step 1c→(基於追錯的 timer 線,保留供對照)
 - 解驅動段 file base:找載入驅動段選擇子的 `mov ax,<seg>`(如前段見 `mov ax,0x14dd; mov ds,ax`、`mov ax,0x1ade`)→
   對映 EXE segment 表 → 算驅動段 file 起點 → 反組譯 ISR(driver_seg:0x29f)。
 - 找**非阻塞 BGM 安裝**(連續播放):另一處 `setvect(8,…)` 不接 busy-wait、直接 return。
