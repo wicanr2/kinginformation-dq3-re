@@ -63,6 +63,7 @@ add_executable(dq3_remake
     src/dq3_scripted.c
     src/dq3_opl2.c
     src/dq3_cmf.c
+    src/dq3_voc.c
     src/dq3_audio.c
 )
 

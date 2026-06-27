@@ -2,6 +2,7 @@
 #include "dq3_audio.h"
 #include "dq3_opl2.h"
 #include "dq3_cmf.h"
+#include "dq3_voc.h"
 #include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +11,7 @@
 #define AUD_SR    44100
 #define AUD_BUF   1024
 #define MAX_TRACK 64
+#define SFX_VOICES 8
 
 static struct {
     int            inited;
@@ -28,6 +30,10 @@ static struct {
     int            loop;
     int            volume;       /* 0..100 */
     double         tick_ms;
+    /* 音效 */
+    int            sfx_enabled;
+    dq3_voc_bank   bankF, bankN;
+    struct { const short *pcm; int len, pos; } voice[SFX_VOICES];
 } A;
 
 /* 場景 → 軌號(初步合理對應;MBG.MCX 18 軌,日後依 RE 選曲精校)。 */
@@ -57,11 +63,30 @@ static void SDLCALL audio_cb(void *ud, Uint8 *stream, int len)
     short *out = (short *)stream;
     int n = len / (int)sizeof(short);
     (void)ud;
-    if (!A.enabled || !A.cmf || !A.opl) { memset(stream, 0, len); return; }
-    dq3_cmf_render(A.cmf, out, n, A.loop);
-    if (A.volume < 100) {                       /* 音量縮放 */
-        int i; int v = A.volume;
-        for (i = 0; i < n; i++) out[i] = (short)((int)out[i] * v / 100);
+    /* 音樂 */
+    if (A.enabled && A.cmf && A.opl) {
+        dq3_cmf_render(A.cmf, out, n, A.loop);
+        if (A.volume < 100) {
+            int i, v = A.volume;
+            for (i = 0; i < n; i++) out[i] = (short)((int)out[i] * v / 100);
+        }
+    } else {
+        memset(stream, 0, len);
+    }
+    /* 音效:混在音樂之上(加總 + 飽和)。 */
+    if (A.sfx_enabled) {
+        int vi;
+        for (vi = 0; vi < SFX_VOICES; vi++) {
+            const short *pcm = A.voice[vi].pcm;
+            int pos = A.voice[vi].pos, vl = A.voice[vi].len, i;
+            if (!pcm) continue;
+            for (i = 0; i < n && pos < vl; i++, pos++) {
+                int m = (int)out[i] + pcm[pos];
+                out[i] = (short)(m > 32767 ? 32767 : (m < -32768 ? -32768 : m));
+            }
+            A.voice[vi].pos = pos;
+            if (pos >= vl) A.voice[vi].pcm = NULL;  /* 播完釋放 voice */
+        }
     }
 }
 
@@ -87,6 +112,13 @@ int dq3_audio_init(const char *assets_dir)
 
     A.opl = dq3_opl2_new(AUD_SR);
 
+    /* 音效 bank(FVOC/NVOC.VCX)*/
+    A.sfx_enabled = 1;
+    snprintf(path, sizeof path, "%s/FVOC.VCX", assets_dir);
+    dq3_voc_load(&A.bankF, path, AUD_SR);
+    snprintf(path, sizeof path, "%s/NVOC.VCX", assets_dir);
+    dq3_voc_load(&A.bankN, path, AUD_SR);
+
     SDL_zero(want);
     want.freq = AUD_SR; want.format = AUDIO_S16SYS; want.channels = 1;
     want.samples = AUD_BUF; want.callback = audio_cb;
@@ -99,8 +131,8 @@ int dq3_audio_init(const char *assets_dir)
         SDL_PauseAudioDevice(A.dev, 0);     /* 開始播放 callback */
     }
     A.inited = 1;
-    fprintf(stderr, "dq3_audio: init OK(軌數=%d, device=%s)\n",
-            A.ntrack, A.have_device ? "on" : "off/headless");
+    fprintf(stderr, "dq3_audio: init OK(軌數=%d, 音效 F=%d N=%d, device=%s)\n",
+            A.ntrack, A.bankF.count, A.bankN.count, A.have_device ? "on" : "off/headless");
     return 0;
 }
 
@@ -111,6 +143,7 @@ void dq3_audio_shutdown(void)
     if (A.cmf) { dq3_cmf_free(A.cmf); A.cmf = NULL; }
     if (A.have_device) { SDL_UnlockAudioDevice(A.dev); SDL_CloseAudioDevice(A.dev); }
     if (A.opl) { dq3_opl2_free(A.opl); A.opl = NULL; }
+    dq3_voc_free(&A.bankF); dq3_voc_free(&A.bankN);
     free(A.mcx); A.mcx = NULL;
     memset(&A, 0, sizeof A);
 }
@@ -167,4 +200,41 @@ void dq3_audio_play_scene(int scene_kind, int loop)
 {
     int t = dq3_audio_scene_track(scene_kind);
     if (t >= 0) dq3_audio_play(t, loop);
+}
+
+/* ── 數位音效 ── */
+void dq3_audio_sfx(int bank, int sfx_id)
+{
+    dq3_voc_bank *b = (bank == DQ3_SFX_BANK_N) ? &A.bankN : &A.bankF;
+    int vi;
+    if (!A.inited || !A.sfx_enabled) return;
+    if (sfx_id < 0 || sfx_id >= b->count || !b->sfx[sfx_id].pcm) return;
+    if (A.have_device) SDL_LockAudioDevice(A.dev);
+    for (vi = 0; vi < SFX_VOICES; vi++) if (!A.voice[vi].pcm) break;
+    if (vi >= SFX_VOICES) vi = 0;             /* 全滿 → 搶占 voice 0 */
+    A.voice[vi].pcm = b->sfx[sfx_id].pcm;
+    A.voice[vi].len = b->sfx[sfx_id].len;
+    A.voice[vi].pos = 0;
+    if (A.have_device) SDL_UnlockAudioDevice(A.dev);
+}
+
+void dq3_audio_set_sfx_enabled(int on) { if (A.inited) A.sfx_enabled = on ? 1 : 0; }
+int  dq3_audio_sfx_enabled(void) { return A.inited ? A.sfx_enabled : 0; }
+int  dq3_audio_sfx_count(int bank)
+{
+    if (!A.inited) return 0;
+    return (bank == DQ3_SFX_BANK_N) ? A.bankN.count : A.bankF.count;
+}
+
+/* 語意音效 → (bank,id)。對應為初步(FVOC 為主),日後依 RE 選音/聽感精校。 */
+static const struct { int bank, id; } g_se[DQ3_SE__COUNT] = {
+    /* CONFIRM */ {DQ3_SFX_BANK_F, 0}, /* CANCEL */ {DQ3_SFX_BANK_F, 1},
+    /* ATTACK  */ {DQ3_SFX_BANK_F, 2}, /* HIT    */ {DQ3_SFX_BANK_F, 3},
+    /* SPELL   */ {DQ3_SFX_BANK_F, 7}, /* DAMAGE */ {DQ3_SFX_BANK_F, 4},
+    /* DOOR    */ {DQ3_SFX_BANK_F, 5}, /* ITEM   */ {DQ3_SFX_BANK_F, 6}
+};
+void dq3_audio_se(int se_kind)
+{
+    if (se_kind < 0 || se_kind >= DQ3_SE__COUNT) return;
+    dq3_audio_sfx(g_se[se_kind].bank, g_se[se_kind].id);
 }

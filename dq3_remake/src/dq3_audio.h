@@ -32,4 +32,16 @@ enum {
 int  dq3_audio_scene_track(int scene_kind);   /* scene_kind ∈ DQ3_MUS_* → MBG.MCX 軌號 */
 void dq3_audio_play_scene(int scene_kind, int loop);  /* 便捷:查表 + play */
 
+/* ── 數位音效(VOC,FVOC/NVOC.VCX),混在音樂之上 ── */
+enum { DQ3_SFX_BANK_F = 0, DQ3_SFX_BANK_N = 1 };  /* FVOC / NVOC */
+void dq3_audio_sfx(int bank, int sfx_id);         /* 觸發一個 one-shot 音效 */
+void dq3_audio_set_sfx_enabled(int on);
+int  dq3_audio_sfx_enabled(void);
+int  dq3_audio_sfx_count(int bank);
+
+/* 語意化音效(集中對應,id 待依 RE/聽感精校)。 */
+enum { DQ3_SE_CONFIRM = 0, DQ3_SE_CANCEL, DQ3_SE_ATTACK, DQ3_SE_HIT,
+       DQ3_SE_SPELL, DQ3_SE_DAMAGE, DQ3_SE_DOOR, DQ3_SE_ITEM, DQ3_SE__COUNT };
+void dq3_audio_se(int se_kind);                   /* 便捷:語意 → (bank,id) → sfx */
+
 #endif

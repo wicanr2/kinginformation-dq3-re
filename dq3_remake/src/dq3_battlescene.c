@@ -673,6 +673,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             if(cursor==4){                          /* 咒文:先開手動選咒選單 */
                 if(!spell_menu_select(party, &spr, ehp, en, monster_id)) continue;  /* 取消→回指令 */
             }
+            dq3_audio_se(cursor==0 ? DQ3_SE_ATTACK : (cursor==4 ? DQ3_SE_SPELL : DQ3_SE_CONFIRM));
             turn++;
             outcome=do_turn(party,ehp,en,eatk,edef,eagi,efree,cursor);
         }
