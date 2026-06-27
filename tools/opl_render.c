@@ -38,16 +38,20 @@ int main(int argc, char **argv){
     opl = dq3_opl2_new(SR);
     cmf = dq3_cmf_load(buf, (int)len, opl, SR, tick);
     if(!cmf){ fprintf(stderr,"cmf load fail (no events?)\n"); return 2; }
-    printf("events=%d est_len=%.1fs  tick=%.1fms\n",
-           dq3_cmf_event_count(cmf), dq3_cmf_length_sec(cmf), tick);
-
-    total = (int)(secs*SR);
-    pcm = calloc(total, sizeof(short));
-    done = 0;
-    while(done < total){
-        int chunk = 4096; if(chunk>total-done) chunk=total-done;
-        dq3_cmf_render(cmf, pcm+done, chunk, 1 /*loop*/);
-        done += chunk;
+    {
+        double est = dq3_cmf_length_sec(cmf);
+        int loop = 1;
+        if (secs <= 0) { secs = est + 1.5; loop = 0; }  /* secs<=0:完整一遍、不循環(+尾音)*/
+        printf("events=%d est_len=%.1fs  tick=%.1fms  render=%.1fs loop=%d\n",
+               dq3_cmf_event_count(cmf), est, tick, secs, loop);
+        total = (int)(secs*SR);
+        pcm = calloc(total, sizeof(short));
+        done = 0;
+        while(done < total){
+            int chunk = 4096; if(chunk>total-done) chunk=total-done;
+            dq3_cmf_render(cmf, pcm+done, chunk, loop);
+            done += chunk;
+        }
     }
     write_wav(out, pcm, total);
     printf("wrote %s (%.1fs)\n", out, secs);
