@@ -14,10 +14,10 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
 ### Phase 1 — 定位 + 抽出 CMF 音樂資料(de-risk,先做)
 - [x] **RE 偵察完成**(2026-06-27,過程見 [`../docs/57-cmf-audio-re.md`](../docs/57-cmf-audio-re.md)):
   音訊系統 = Creative CT-VOICE + CT-MUSIC(`CMFDRV`)驅動(`SBCM.LIB`)+ VOC 音效(`FVOC/NVOC.VCX`);
-  音樂格式 = CMF(OPL2 FM)。**EXE 載入清單只有 VOC,無音樂檔;全檔無 `CTMF` magic;0x228 多屬資料表非埠。**
-- [x] **(A) 已排除、(B) 確認**(使用者親證 + YouTube 精訊版錄影有 BGM + RE 獨立佐證):音樂**真的在、運作中**——
-  EXE 重設 8253 timer(`mov al,0x36;out 0x43` ×2)+ `set_timer_count(ax)` 函式(logical 0x2c52)+ 計時 ISR。
-  資料**內嵌 EXE**(非 CMF 檔、無 CTMF magic、非 overlay)。
+  音樂格式 = CMF 變體(OPL2 FM)。
+  > ⚠ 偵察期兩個推測**事後證實是錯的**(已修正):①「EXE 載入清單無音樂檔」→ 音樂在 `MBG.MCX`(只是沒以明文檔名靜態字串出現,動態組名/封包 seek);②「全檔無 CTMF magic ⇒ 內嵌 EXE」→ 是精訊自訂 CMF 變體(本來就沒 CTMF magic),且在**外部 MBG.MCX**。
+- [x] **(B) 確認:音樂真的在**(使用者親證 + YouTube 精訊版錄影 + RE 定位)。
+  > ⚠ 先前拿來佐證的「EXE 重設 8253 timer + 計時 ISR = 音樂節拍」**追錯 ISR**(那是 VGA 螢幕/文字子系統,與音樂無關)。音樂為真的正解見下方 Phase 1 完成(MBG.MCX）。
 - [~] **Phase 1 續(進行中,deep trace)**:從 timer ISR / 音樂事件處理器反追到內嵌音樂資料 base。
   目標:定位 ① 音樂事件流(序列)base、② instrument(OPL2 樂器)表 base、③ 曲目索引表(多首)。
   具體步驟(逐步做,別跳;每步 commit 進度到 docs/57):

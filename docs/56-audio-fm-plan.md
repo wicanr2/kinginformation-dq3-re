@@ -12,7 +12,7 @@
 | 精訊有自編 SB FM 音樂 | `DQ3.EXE` 寫 **0x228 / 0x229**(Sound Blaster 的 OPL FM 暫存器埠;reg 7 處 / data 5 處)→ 跑起來用 OPL2 發聲 |
 | 音樂驅動 = CMF | `SBCM.LIB`(linker map `SBCM.MAP`)= **`SBFM_CMF_DRV`**(Creative SB FM CMF 驅動);符號 `_ct_music_status`、`_ct_io_addx`、`_sbfm_status_addx`、`_sbfm_fade…` |
 | 音效 = VOC | `FVOC.VCX` / `NVOC.VCX`(Creative VOC 數位音;EXE 字串 `fvoc.vcx`/`nvoc.vcx`、`Creative Sound Blaster Card`)|
-| 音樂資料位置 | ★**未定**:素材夾無 CTMF 檔頭(標準 CMF magic);`PLAYER.DAT`(200B)為玩家初始狀態非音樂 → CMF 曲序疑**內嵌 DQ3.EXE**(linker `MUSIC_TEXT` 段連入),待 RE 定位 |
+| 音樂資料位置 | ✅**已定(2026-06-27)**:在外部封包檔 **`MBG.MCX`**(127504B)—— 76-byte 前導 dword 偏移表 + **18 條 CMF 變體音軌(OPL2 FM)**,遊戲 `int21 lseek+read` 載入、CMFDRV 解譯。**不是內嵌 EXE**(先前「疑內嵌」推測已修正)。定位過程見 [`57-cmf-audio-re.md`](57-cmf-audio-re.md);拆軌 `tools/extract_cmf.py` |
 
 ## 2. 背景:CMF 與 OPL2(公開規格)
 
@@ -49,8 +49,8 @@ SDL audio callback(44100, s16)         ▼
 
 ## 5. 風險 / 未決
 
-- 音樂資料 offset 未定(可能內嵌 EXE);若**精訊未完成 build 根本沒附曲序**(如同缺 128/129 sprite),
-  則「無精訊音樂可抽」—— 步驟 1 會先確認這點。
+- ~~音樂資料 offset 未定 / 可能沒附曲序~~ **已解(2026-06-27)**:音樂在 `MBG.MCX`、18 軌、CMF/OPL2,
+  完整存在(非半成品缺口)。Phase 1 達成,見 docs/57。
 - OPL2 cycle-accurate 模擬非必要;聽感正確即可(用成熟精簡 core)。
 - 配曲對應(哪首曲配哪場景)需另 RE EXE 的選曲邏輯,或先以合理對應暫接。
 

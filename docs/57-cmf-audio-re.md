@@ -23,7 +23,10 @@
    - 多數 `0x228` 落在**遞增資料表**(`0x0223,0x0224,…,0x0228,0x0229,…`,被 disasm 誤判成 `add` 指令)→ 非埠引用。
 8. **全檔(含 EXE)搜 CMF magic `CTMF`** → **0 命中**;EXE 無 `music`/`CMF`/`song`/`BGM` 字串。
 
-## Phase 1 判定(誠實)
+## Phase 1 判定(誠實)— ⚠ 本節結論已被推翻,見上方「Phase 1 完成」
+
+> ⚠ **2026-06-27 修正**:下列 (A)/(B) 二選一的判定**已過時**。正解:音樂在外部 `MBG.MCX`(18 軌 CMF 變體),
+> 既非 (A)「沒做完」也非 (B)「內嵌 EXE」。保留本節僅為呈現當時推理過程,**勿當現況真相**。
 
 **在 shipped 檔案裡找不到標準 CMF(`CTMF` magic）音樂資料。** 兩種可能,尚未分清:
 
@@ -34,18 +37,18 @@
 
 > rule 62:搜尋落空 ≠ 絕不存在。判定 (A) 前須跑完 (B) 的 driver-trace。
 
-## ★ 更正:音樂**確實存在且運作中**(使用者親證 + YouTube 精訊版錄影 + RE 獨立佐證,2026-06-27)
+## ★ 音樂確實存在(使用者親證 + YouTube 精訊版錄影)— 結論對,佐證追錯
 
-使用者親耳聽過、且 YouTube 有精訊版遊戲錄影有 BGM → **排除 (A)「沒做完」,確認 (B):音樂真的在、內嵌 EXE**。
-RE 也獨立佐證音樂播放器**實際運作**:
+**對的部分**:音樂真的在、運作中 →(A)「沒做完」排除,正確。
 
-- EXE **重設 8253 timer**:`mov al,0x36; out 0x43`(2 處:file 0x13fc3 / 0x155c0)→ 設定音樂節拍中斷率。
-- **`set_timer_count(ax)` 函式**(logical **0x2c52**):`push ax; mov al,0x36; out 0x43; pop ax; out 0x40; mov al,ah; out 0x40; ret`
-  —— 把節拍值寫進 8253 channel 0(改 timer 頻率 = 音樂 tempo,典型 FM 音樂驅動作法)。
-- 其後一個 ISR(`not ax; mov al,0x20; out 0x20; iret` = 發 EOI 給 PIC)。
+> ⚠ **2026-06-27 修正**:下面拿 8253 timer / 計時 ISR 當「音樂節拍」的佐證**追錯 ISR** —— 那個 INT8 timer hook
+> 服務的是 **VGA 螢幕/文字子系統**(ISR `mov es,0xa000` + 讀 '$' 結尾字串 + 84-stride VGA 位址計算),
+> **與音樂無關**。音樂為真的正解是 MBG.MCX(見上方「Phase 1 完成」),不是這個 timer。
+> 另:「音樂資料內嵌 EXE」也錯 —— 在外部 `MBG.MCX`。下列保留供對照。
 
-⇒ EXE 內**有完整的計時音樂播放機制**,音樂資料內嵌(非 standalone CMF 檔、無 CTMF magic、非 overlay)。
-**(A) 已排除。** 缺的只是「資料 base 在哪」——需從 timer ISR / 音樂事件處理器反追資料指標(deep trace)。
+- EXE **重設 8253 timer**:`mov al,0x36; out 0x43`(2 處:file 0x13fc3 / 0x155c0)。
+- **`set_timer_count(ax)` 函式**(logical **0x2c52**):寫節拍值進 8253 channel 0。
+- ~~⇒ 音樂資料內嵌 EXE~~(此推論作廢:該 timer 服務螢幕,音樂在 MBG.MCX)。
 
 ## Trace 進度(2026-06-27,step 1b-1c)
 
