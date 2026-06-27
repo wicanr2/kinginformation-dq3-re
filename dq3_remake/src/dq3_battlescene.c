@@ -69,6 +69,11 @@ static void rect_border(uint8_t*fb,int x,int y,int w,int h,uint8_t c){
     fillrect(fb,x,y,1,h,c); fillrect(fb,x+w-1,y,1,h,c);
 }
 
+/* 龍王城/索瑪神殿(下層最終地城)決戰 = **純黑背景**(原版 DQ3):索瑪 124、其前序列怨靈122/殭屍123、
+ * 以及父親歐里狄加128 vs 五頭龍大王129 的決鬥,皆在黑暗中進行,不套天空/綠地 packbg。 */
+static int dark_bg_monster(int id)
+{ return id==122 || id==123 || id==124 || id==128 || id==129; }
+
 static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int en,
                    const member*party, int cursor, int show_menu, int monster_id)
 {
@@ -79,8 +84,11 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
     const int FIELD_Y0 = 80, FIELD_Y1 = 246, GROUND_Y = 232;
     int i;
     memset(fb, (uint8_t)black_idx, (size_t)DQ3_SCREEN_W*DQ3_SCREEN_H);
-    /* packbg 場景(含天空+綠地):88 row 映射到 y80..246 */
-    if(g_sky_ok){
+    /* 背景三態:索瑪/最終地城 = **純黑**(line 86 已填黑,不畫天空綠地);否則 packbg(天空+綠地);
+     * packbg 解碼失敗才退回純色天空/綠地 fallback。 */
+    if(dark_bg_monster(monster_id)){
+        /* 黑底:不疊任何天空/綠地(原版 DQ3 索瑪/龍王城決戰)。 */
+    } else if(g_sky_ok){
         int y,x;
         for(y=FIELD_Y0;y<FIELD_Y1;y++){
             int sr = (y-FIELD_Y0)*DQ3_PACKBG_H/(FIELD_Y1-FIELD_Y0); if(sr>=DQ3_PACKBG_H)sr=DQ3_PACKBG_H-1;
