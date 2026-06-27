@@ -18,10 +18,18 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
 - [x] **(A) 已排除、(B) 確認**(使用者親證 + YouTube 精訊版錄影有 BGM + RE 獨立佐證):音樂**真的在、運作中**——
   EXE 重設 8253 timer(`mov al,0x36;out 0x43` ×2)+ `set_timer_count(ax)` 函式(logical 0x2c52)+ 計時 ISR。
   資料**內嵌 EXE**(非 CMF 檔、無 CTMF magic、非 overlay)。
-- [ ] **Phase 1 續(進行中,deep trace)**:從 timer ISR / 音樂事件處理器反追 → 音樂事件流 + instrument base。
-  - 已找:timer init(file 0x13fc3 / 0x155c0)、`set_timer_count`(logical 0x2c52)。
-  - 待找:ISR 安裝點(INT8 或 SB-IRQ)→ ISR 內 OPL reg 寫入 → 事件指標變數 → 音樂資料 base。
-- [ ] `tools/extract_cmf.py`:定位後 dump 音樂資料 → `work/music/`(gitignore)+ 解析驗證。
+- [~] **Phase 1 續(進行中,deep trace)**:從 timer ISR / 音樂事件處理器反追到內嵌音樂資料 base。
+  目標:定位 ① 音樂事件流(序列)base、② instrument(OPL2 樂器)表 base、③ 曲目索引表(多首)。
+  具體步驟(逐步做,別跳;每步 commit 進度到 docs/57):
+  - [x] 1a. timer init 位置:file 0x13fc3 / 0x155c0;`set_timer_count(ax)` = logical 0x2c52。
+  - [ ] 1b. **找音樂 ISR 本體**:反組譯 0x2c52 上下文 + 找誰呼叫它;ISR 應為較大函式(讀事件→寫 OPL→重排 timer→EOI iret)。
+  - [ ] 1c. **找 ISR 安裝點**:搜 INT8 vector(0:0x20)寫入 / DOS INT21 AH=0x25 設向量 / SB IRQ 安裝;反推 ISR 位址。
+  - [ ] 1d. **ISR 內 OPL 寫入**:找 `out dx,al`(dx=[_ct_io_addx])寫 reg 0xA0-0xB8(note fnum/keyon)→ 確認是音樂非音效。
+  - [ ] 1e. **事件指標變數**:ISR 從哪個記憶體變數(DGROUP word)讀下一事件 byte;該變數初值 / 被誰設 = 指向音樂資料 base。
+  - [ ] 1f. **反追資料 base**:該指標的 setter(選曲函式)用哪個 base + index;base = 內嵌音樂資料起點(file = base + 0x1370 或 DGROUP 0x16140+off)。
+  - [ ] 1g. **判定格式**:dump base 區 → 看是 CMF-body(instrument 16B 區 + MIDI-like 事件)/ IMF(reg,val,delay)/ 精訊自訂;對照 docs/57 §參考。
+  - [ ] 1h. **曲目表**:選曲函式的 index→offset 表 = 各曲位置;列出曲數 + 各 base/len。
+- [ ] `tools/extract_cmf.py`:依 1f/1h 定位 dump 各曲 → `work/music/song_NN.bin`(gitignore)+ 印 instrument 數/事件數驗證。
 
 ### Phase 2 — OPL2 core + CMF parser(離線驗聽感)
 - [ ] `dq3_remake/src/dq3_opl2.{c,h}`:OPL2(YM3812)FM 核心(公開精簡實作移植;render s16 取樣)。
