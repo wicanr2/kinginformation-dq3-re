@@ -53,29 +53,44 @@ static int parse_events(const unsigned char *t, int len, ev_t **out)
     *out = ev; return n;
 }
 
-/* 預設 FM patch:一個 channel 的兩 operator + FB/CNT,寫進 OPL 各 channel。
- * 暖音色(organ/brass 風),供旋律先發聲;之後可換成各軌 instrument 區的實際 patch。 */
+static const int g_mod_off[9] = {0x00,0x01,0x02,0x08,0x09,0x0A,0x10,0x11,0x12};
+
+/* 一組各異的 OPL 2-op FM 音色 patch(register 值:mod/car 各 0x20/0x40/0x60/0x80/0xE0 + 0xC0 fb/cnt)。
+ * 精訊原版各軌 instrument 區的精確對應需深層 RE 驅動(0x1563d 鏈,見 docs/57);此處用音樂上合理、
+ * 聲部分明的多音色,依 program-change 分配 channel,讓 bass/旋律/和聲音色不同(比單一 patch 大幅改善)。
+ * 欄位:{m20,m40,m60,m80,mE0, c20,c40,c60,c80,cE0, C0} */
+#define NPATCH 8
+static const unsigned char g_patch[NPATCH][11] = {
+ /* 0 brass lead  */ {0x21,0x1a,0xd5,0x53,0x00, 0x21,0x07,0xd5,0x53,0x00, 0x0a},
+ /* 1 bass        */ {0x21,0x10,0xf2,0x74,0x00, 0x21,0x00,0xf2,0x76,0x00, 0x08},
+ /* 2 organ(add) */ {0x31,0x00,0xf0,0x90,0x00, 0x31,0x00,0xf0,0x90,0x00, 0x0f},
+ /* 3 string pad  */ {0x61,0x1c,0x52,0x24,0x01, 0x61,0x08,0x42,0x16,0x01, 0x0c},
+ /* 4 flute/soft  */ {0x21,0x2a,0xf0,0x53,0x00, 0x21,0x12,0xf0,0x53,0x00, 0x0e},
+ /* 5 pluck/harp  */ {0x01,0x16,0xf8,0x77,0x00, 0x11,0x06,0xf8,0x88,0x00, 0x0a},
+ /* 6 reed/clar   */ {0x31,0x1f,0xd2,0x53,0x02, 0x21,0x09,0xd2,0x55,0x02, 0x0a},
+ /* 7 bell/chime  */ {0x01,0x1a,0xf5,0x42,0x01, 0x12,0x05,0xf5,0x52,0x01, 0x0a},
+};
+
+/* 把第 idx 個 patch 寫進 OPL channel c。 */
+static void apply_patch(dq3_opl2 *opl, int c, int idx)
+{
+    const unsigned char *p = g_patch[idx % NPATCH];
+    int m = g_mod_off[c], car = g_mod_off[c] + 3;
+    dq3_opl2_write(opl, 0x20 + m,   p[0]); dq3_opl2_write(opl, 0x40 + m,   p[1]);
+    dq3_opl2_write(opl, 0x60 + m,   p[2]); dq3_opl2_write(opl, 0x80 + m,   p[3]);
+    dq3_opl2_write(opl, 0xe0 + m,   p[4]);
+    dq3_opl2_write(opl, 0x20 + car, p[5]); dq3_opl2_write(opl, 0x40 + car, p[6]);
+    dq3_opl2_write(opl, 0x60 + car, p[7]); dq3_opl2_write(opl, 0x80 + car, p[8]);
+    dq3_opl2_write(opl, 0xe0 + car, p[9]);
+    dq3_opl2_write(opl, 0xc0 + c,   p[10]);
+}
+
+/* 初始:啟用 waveform select,各 channel 先給 patch 0(program-change 會覆寫成各聲部音色)。 */
 static void load_default_instrument(dq3_opl2 *opl)
 {
-    static const int mod_off[9] = {0x00,0x01,0x02,0x08,0x09,0x0A,0x10,0x11,0x12};
     int c;
-    dq3_opl2_write(opl, 0x01, 0x20);             /* 啟用 waveform select */
-    for (c = 0; c < 9; c++) {
-        int m = mod_off[c], car = mod_off[c] + 3;
-        /* modulator */
-        dq3_opl2_write(opl, 0x20 + m, 0x21);     /* mult=1, sustain on */
-        dq3_opl2_write(opl, 0x40 + m, 0x1a);     /* TL 衰減一些 */
-        dq3_opl2_write(opl, 0x60 + m, 0xd5);     /* AR=13 DR=5 */
-        dq3_opl2_write(opl, 0x80 + m, 0x53);     /* SL=5 RR=3 */
-        dq3_opl2_write(opl, 0xe0 + m, 0x00);     /* sine */
-        /* carrier */
-        dq3_opl2_write(opl, 0x20 + car, 0x21);
-        dq3_opl2_write(opl, 0x40 + car, 0x07);   /* 較大音量 */
-        dq3_opl2_write(opl, 0x60 + car, 0xd5);
-        dq3_opl2_write(opl, 0x80 + car, 0x53);
-        dq3_opl2_write(opl, 0xe0 + car, 0x00);
-        dq3_opl2_write(opl, 0xc0 + c, 0x0a);     /* FB=5, CNT=0(FM) */
-    }
+    dq3_opl2_write(opl, 0x01, 0x20);
+    for (c = 0; c < 9; c++) apply_patch(opl, c, 0);
 }
 
 dq3_cmf *dq3_cmf_load(const unsigned char *track, int len, dq3_opl2 *opl,
@@ -118,8 +133,9 @@ static void apply_event(dq3_cmf *p, const ev_t *e)
     } else if (hi == 0x80 || (hi == 0x90 && e->d2 == 0)) {  /* note-off:清 keyon bit、保留 fnum/block */
         int fnum = p->cur_fnum[ch], block = p->cur_block[ch];
         dq3_opl2_write(p->opl, 0xb0 + ch, ((block & 7) << 2) | ((fnum >> 8) & 3)); /* keyon=0 */
-    } else if (hi == 0xc0) {
-        p->prog[ch] = e->d1;                      /* program change:暫存(predefined patch) */
+    } else if (hi == 0xc0) {                      /* program change → 換該 channel 音色 */
+        p->prog[ch] = e->d1;
+        apply_patch(p->opl, ch, e->d1);
     }
     /* bx control / ex pitch:目前忽略 */
 }

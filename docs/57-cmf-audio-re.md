@@ -104,6 +104,20 @@ track00 = 2021 事件 / 1007 音符 / ~120 秒;track02 = 997 / 494 / ~49 秒。
 > ② note→fnum/block(標準 AdLib 公式或驅動表);③ tick→秒(精確 tempo);④ track17 等用 9643 事件但 note-on/off
 > 配對失敗的軌(編碼變體,待查)。但旋律序列已正確,Phase 2 主結構成立。
 
+## Instrument(音色)RE 進度 + 多 patch 折衷(2026-06-27)
+
+追 instrument 格式到驅動內部:
+- `_sbfm_instrument`(cmfasm)= 薄包裝 → `lcall 0x1392:0` 帶 **bx=2**(命令碼;0=init/2=instrument/8=play…)。
+- 驅動真入口 file 0x15d9f:`shl bx,1; call [bx+0x261]`(跳表)。cmd-2 handler = file 0x15e14:
+  存 instrument 指標(dx:ax→[0x18:0x16])+ count(cl→[0x1e0])→ `call 0x1587e`(reset:9ch+reg0xBD)+ `call 0x1563d`(寫 operator 暫存器)。
+- 精確 byte→register 對應在 **0x1563d → 155bd/155ce 經間接埠寫 OPL**(再下 2 層),未完整展開。
+- 軌內 instrument 區:header word2(file off 4)= 起點、word3(off 6,=0x60)= event 起點;區大小 ~48 bytes
+  **與 program 數無關**(固定結構,非 count×record)→ 經驗法切 record 不一致(16/11.67/12/9.6),不可靠。
+
+**折衷(已實作)**:`dq3_cmf.c` 用 8 個各異 FM patch(brass/bass/organ/string/flute/pluck/reed/bell),
+依 program-change 分配 channel → 聲部音色分明(bass≠旋律≠和聲),比單一 patch 大幅改善。
+**待精校**:展開 0x1563d 鏈得精確原版音色;目前折衷非原版逐音色還原但音樂性正確。
+
 ## ★ 解鎖:load-relative 段位址 → file offset 換算(已驗證,2026-06-27)
 
 多段 large-model EXE 反組譯的關鍵換算 —— **`file = seg×16 + off + 0x1370`**(0x1370 = EXE header 結束 / 載入映像在檔內起點):
