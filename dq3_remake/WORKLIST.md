@@ -57,8 +57,10 @@
   (原版 DOS / 真實 REAL)存 dq3.cfg。★解 glyph blocker:**自建字形 pipeline**
   (`tools/gen_custom_glyphs.py` 用 NotoSansCJK rasterize CJK → 16×16 font 格式;`dq3_customglyph.c/h`;
   `dq3_text_draw_glyph` 對 idx≥0xf000 fallback)補原版字庫缺的「設/版」。dump 驗證畫面清楚可讀。
-- [ ] **per-member 裝備模型**(較大 feature):逐人武器/防具欄 + 買賣/裝備 UI + 戰鬥加成接線;
-  目前戰鬥用簡化加成(力量→atk/體力→def)。
+- [x] **per-member 裝備管理 UI ✅**(2026-06-27):cmd「裝備」開互動管理 `equip_modal`:選隊員→選槽
+  (武器/防具)→ 從背包換裝(可裝備性 `dq3_item_can_equip` + category 過濾)/ 卸下(舊品回背包)。
+  戰鬥加成沿用既有(武器 b0→atk、防具 b1→def、#7a 雙擊/#7b 抗魔)。debug:DQ3_EQUIP_DUMP+equip token。
+  待:擴 5 槽(盾/頭/飾)— 目前 2 槽(武器/防具)。
 - [ ] **忠實初始擲值 / RNG 成長**(需 RE + 動升級系統):★RE 已定位(2026-06-27)——成長 handler
   sub_d9cc(file 0xed3c)算 `base+slope×level` 後 **`call 0xfa57`(= EXE RNG `[0xb5a]+0x9018;rol×3`)
   套 rng 變異**;docs「確定性上限」= target 是上限、實際值 = rng 到上限。remake 升級(#4/#5/#6)現用

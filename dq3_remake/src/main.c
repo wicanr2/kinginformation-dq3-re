@@ -296,7 +296,9 @@ static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *part
 static void status_modal_page(const dq3_roster *roster, const dq3_party *party, const dq3_text *text, int start_page);
 static void shop_modal(dq3_roster *roster, dq3_party *party, const dq3_items *items, const dq3_text *text, long *gold, const unsigned char *STOCK, int n);
 static const unsigned char *shop_stock_for(int cty, int *n);
-static void equip_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text);
+static void equip_modal(dq3_roster *roster, dq3_party *party, const dq3_text *text);
+static dq3_inventory *g_equip_inv = NULL;   /* 裝備管理:背包來源 */
+static dq3_items *g_equip_items = NULL; static int g_equip_items_ok = 0;  /* ITEM.DAT(category/can_equip)*/
 static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
                       dq3_inventory *inv, dq3_dialogue *dlg, int dlg_ok, const dq3_text *sys);
 static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party);
@@ -760,6 +762,7 @@ static int run_game(const char *assets, const char *dump)
     enc = 6 + (int)(grnd() % 8);
     /* demo:身上帶兩材料,進祠堂「調べる」即可觸發 #2 合成(產彩虹水滴) */
     dq3_inv_init(&inv); dq3_flags_init(&flags);
+    g_equip_inv = &inv; g_equip_items = &shop_items; g_equip_items_ok = shop_ok;   /* 裝備管理來源 */
     /* (移除早期 #2 合成測試的預塞太陽之石+雲雨之杖;現走真實取得鏈:
      *  太陽之石 CTY80 寶箱、雲雨之杖 精靈祠堂 CTY92。debug 仍可 item:0x72/0x73 補。) */
     /* 續玩:DQ3_LOAD 指定 slot(DQ3_LOAD=N 讀冒險之書 N,2..6;空/0/1 維持相容讀 slot 0 autosave)。
@@ -830,6 +833,9 @@ static int run_game(const char *assets, const char *dump)
                     if (ri >= 0) dq3_party_add(&party, &roster, ri);
                 }
                 fprintf(stderr, "[DEBUG] party → 名冊%d 隊伍%d\n", roster.count, party.count);
+            } else if (strcmp(tok, "equip") == 0) {          /* 直接開裝備管理(驗證)*/
+                equip_modal(&roster, &party, sys_ok ? &sys_txt : &dlg.txt);
+                if (getenv("DQ3_EQUIP_DUMP")) return 0;       /* dump 模式:equip_modal 已 dump,直接結束不被主 dump 覆寫 */
             } else if (sscanf(tok, "event:%i", &a) == 1) {   /* 直接跑 scripted_event */
                 if (a == DQ3_SEVENT_DESCENT)
                     do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);
@@ -1925,41 +1931,96 @@ static void tavern_modal(const char *assets, dq3_roster *roster, dq3_party *part
 }
 
 /* 裝備一覽 modal:列隊伍各成員的 武器 / 防具(道具名 rec=code+1),ESC 離開。 */
-static void equip_modal(const dq3_roster *roster, const dq3_party *party, const dq3_text *text)
+/* slot(0=武器 cat&0x20 / 1=防具 cat&0x40)→ 背包中可裝備清單(首項 -1=卸下)。回 count。 */
+static int equip_build_list(const dq3_inventory *inv, int cls, int slot, int *codes, int maxn)
+{
+    int n = 0, k, catmask = (slot == 0) ? 0x20 : 0x40;
+    codes[n++] = -1;   /* 卸下 */
+    if (!g_equip_items_ok) return n;
+    for (k = 0; k < DQ3_INV_SLOTS && n < maxn; k++) {
+        int c = inv->slot[k];
+        if (c == DQ3_ITEM_NONE) continue;
+        if ((dq3_item_category(g_equip_items, c) & catmask) && dq3_item_can_equip(g_equip_items, c, cls))
+            codes[n++] = c;
+    }
+    return n;
+}
+
+/* 裝備管理 modal:選隊員 → 選槽(武器/防具)→ 從背包換裝 / 卸下。
+ * 裝備與背包分離(同商店模型);換裝時舊品回背包、新品出背包。inv/items 走 g_equip_*。 */
+static void equip_modal(dq3_roster *roster, dq3_party *party, const dq3_text *text)
 {
     static const uint16_t L_W[2] = {108,403}, L_A[2] = {203,237};   /* 武器 / 防具 */
+    static const uint16_t UNEQUIP[2] = {683,237};                   /* 卸(683 借「關」近義?)— 用「卸下」見下 */
     dq3_color pal[256]; int pn; uint8_t *raw; size_t rl;
-    int white, black, frame, bg; uint8_t *fb = dq3_fb();
-    int wx = 24, wy = 40, ww = 300, wh = 210, i, j;
+    int white, black, frame, bg, yellow; uint8_t *fb = dq3_fb();
+    int wx = 24, wy = 30, ww = 320, wh = 230, i, j;
     int members[DQ3_PARTY_MAX], n = 0;
+    int state = 0, msel = 0, ssel = 0, isel = 0;   /* 0=選人 1=選槽 2=選品 */
+    int codes[32], ncodes = 0;
+    (void)UNEQUIP;
     for (i = 0; i < DQ3_PARTY_MAX; i++)
         if (party->slot[i] >= 0 && party->slot[i] < roster->count) members[n++] = party->slot[i];
     if (n == 0) return;
     raw = dq3_load_file("DQ3.PAL", &rl); if (!raw) return;
     pn = dq3_pal_decode(raw, rl, pal, 256); free(raw); dq3_set_palette(pal, pn);
     white = pal_near2(pal,pn,255,255,255); black = pal_near2(pal,pn,0,0,0);
-    frame = white; bg = pal_near2(pal,pn,16,16,32);
+    frame = white; bg = pal_near2(pal,pn,16,16,32); yellow = pal_near2(pal,pn,255,255,0);
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
-        if (sc == 0x01 || sc == DQ3_SC_F10) break;
+        dq3_recruit *rc = &roster->list[members[msel < n ? msel : 0]];
+        if (sc == 0x01 || sc == DQ3_SC_F10) { if (state == 0) break; state--; }
+        else if (sc == 0x50) { if (state==0) msel=(msel+1)%n; else if (state==1) ssel^=1; else if (ncodes>0) isel=(isel+1)%ncodes; }
+        else if (sc == 0x48) { if (state==0) msel=(msel+n-1)%n; else if (state==1) ssel^=1; else if (ncodes>0) isel=(isel+ncodes-1)%ncodes; }
+        else if (sc == 0x1c) {                       /* Enter */
+            if (state == 0) { state = 1; ssel = 0; }
+            else if (state == 1) { ncodes = equip_build_list(g_equip_inv, rc->m.cls, ssel, codes, 32); isel = 0; state = 2; }
+            else if (state == 2 && g_equip_inv) {    /* 換裝 / 卸下 */
+                unsigned char *slotp = (ssel == 0) ? &rc->weapon : &rc->armor;
+                int newc = codes[isel];
+                if (newc < 0) { if (*slotp != 0xff) { dq3_inv_add(g_equip_inv, *slotp); *slotp = 0xff; fprintf(stderr, "裝備:卸下\n"); } }
+                else { if (*slotp != 0xff) dq3_inv_add(g_equip_inv, *slotp);   /* 舊品回背包 */
+                       dq3_inv_remove(g_equip_inv, newc); *slotp = (unsigned char)newc;
+                       fprintf(stderr, "裝備:隊員%d %s ← 道具0x%02x\n", msel, ssel==0?"武器":"防具", newc); }
+                state = 1;
+            }
+        }
+        /* 渲染 */
         tav_window(fb, wx, wy, ww, wh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
         for (i = 0; i < n; i++) {
-            const dq3_recruit *rc = &roster->list[members[i]];
-            int yy = wy + 10 + i * 46, cx = wx + 14;
-            for (j = 0; j < rc->name_len; j++)
-                dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, cx + j*DQ3_GLYPH_PX, yy, rc->name[j], (uint8_t)white);
-            /* 武器 */
-            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30, yy+16, L_W[0], (uint8_t)white);
-            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30+DQ3_GLYPH_PX, yy+16, L_W[1], (uint8_t)white);
-            if (rc->weapon != 0xff) dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30+3*DQ3_GLYPH_PX, yy+16, 8, 1, rc->weapon+1, (uint8_t)white);
-            else dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30+3*DQ3_GLYPH_PX, yy+16, 495, (uint8_t)white);
-            /* 防具 */
-            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30, yy+32, L_A[0], (uint8_t)white);
-            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30+DQ3_GLYPH_PX, yy+32, L_A[1], (uint8_t)white);
-            if (rc->armor != 0xff) dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30+3*DQ3_GLYPH_PX, yy+32, 8, 1, rc->armor+1, (uint8_t)white);
-            else dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+30+3*DQ3_GLYPH_PX, yy+32, 495, (uint8_t)white);
+            dq3_recruit *r2 = &roster->list[members[i]];
+            int yy = wy + 8 + i * 40, cx = wx + 26;
+            uint8_t nc = (i == msel) ? (uint8_t)yellow : (uint8_t)white;
+            if (i == msel && state == 0)   /* ► 選人游標 */
+                dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+8, yy, 0x29, (uint8_t)yellow);
+            for (j = 0; j < r2->name_len; j++)
+                dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, cx + j*DQ3_GLYPH_PX, yy, r2->name[j], nc);
+            /* 武器列 */
+            { uint8_t wc = (i==msel && state>=1 && ssel==0) ? (uint8_t)yellow : (uint8_t)white;
+              dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+40, yy+14, L_W[0], wc);
+              dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+40+DQ3_GLYPH_PX, yy+14, L_W[1], wc);
+              if (r2->weapon != 0xff) dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+40+3*DQ3_GLYPH_PX, yy+14, 8, 1, r2->weapon+1, wc);
+              else dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+40+3*DQ3_GLYPH_PX, yy+14, 495, wc); }
+            /* 防具列 */
+            { uint8_t ac = (i==msel && state>=1 && ssel==1) ? (uint8_t)yellow : (uint8_t)white;
+              dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+150, yy+14, L_A[0], ac);
+              dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+150+DQ3_GLYPH_PX, yy+14, L_A[1], ac);
+              if (r2->armor != 0xff) dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+150+3*DQ3_GLYPH_PX, yy+14, 8, 1, r2->armor+1, ac);
+              else dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, wx+150+3*DQ3_GLYPH_PX, yy+14, 495, ac); }
+        }
+        if (state == 2) {   /* 換裝子清單(右下疊窗)*/
+            int lx = wx+150, ly = wy+wh-90, lw = 150, lh = 84;
+            tav_window(fb, lx, ly, lw, lh, (uint8_t)black, (uint8_t)frame, (uint8_t)bg);
+            for (i = 0; i < ncodes && i < 4; i++) {
+                int yy = ly + 8 + i*18;
+                uint8_t cc = (i==isel) ? (uint8_t)yellow : (uint8_t)white;
+                if (i==isel) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, lx+6, yy, 0x29, (uint8_t)yellow);
+                if (codes[i] < 0) { dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, lx+22, yy, 495, cc); }  /* 卸下=「無」glyph 495 */
+                else dq3_text_draw_record(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, lx+22, yy, 7, 1, codes[i]+1, cc);
+            }
         }
         dq3_present(); dq3_delay_ms(16);
+        if (getenv("DQ3_DUMP") && getenv("DQ3_EQUIP_DUMP")) { dq3_dump_ppm(getenv("DQ3_DUMP")); break; }   /* 一幀 dump 驗證 */
     }
 }
 
