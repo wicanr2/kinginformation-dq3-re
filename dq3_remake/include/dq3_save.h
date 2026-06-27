@@ -16,15 +16,16 @@ typedef struct {
     int cty, px, py;
     int ship_owned, ship_aboard, ship_px, ship_py, ship_layer;
     int in_town, layer, sec;
+    int daynight;   /* v6:晝夜相位 0白天 1黃昏 2黑夜 3黎明 */
 } dq3_save_pos;
 
-/* 寫存檔。回 0=成功、<0=失敗。 */
+/* 寫存檔(v6 加 storyflags 劇情進度)。回 0=成功、<0=失敗。 */
 int dq3_save_write(const char *path, const dq3_roster *r, const dq3_party *p,
-                   const dq3_inventory *inv, dq3_save_pos pos);
+                   const dq3_inventory *inv, const dq3_storyflags *flags, dq3_save_pos pos);
 
 /* 讀存檔到傳入結構。回 0=成功、<0=檔不存在 / 格式不符。 */
 int dq3_save_read(const char *path, dq3_roster *r, dq3_party *p,
-                  dq3_inventory *inv, dq3_save_pos *pos);
+                  dq3_inventory *inv, dq3_storyflags *flags, dq3_save_pos *pos);
 
 /* 存檔是否存在且 magic 正確。 */
 int dq3_save_exists(const char *path);

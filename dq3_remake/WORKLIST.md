@@ -44,11 +44,12 @@
   (夜暗偏藍/黃昏暗偏暖/黎明微暗;sprite 較淺保持可見);`main.c` 地表每 28 步(近似)推進相位;
   ラナルータ(rec177 咒)toggle + 黑暗之燈(0x5f 道具)變夜;debug `dn:N`。驗證:phase0 vs phase2
   dump diff 494437、夜景調暗、game_tester 79/79。
-- [ ] 晝夜精校/補完:確切原版步數閾值 + 各相位 palette(目前近似)、存檔持久化(載入回白天)、
-  夜 gated 事件接 g_dn_phase(提頓村牢房)。
+- [x] **晝夜存檔持久化 ✅**(2026-06-27,save v6):`dq3_save_pos.daynight` 存讀檔還原晝夜相位。
+  ★同批修更大的 bug:**storyflags 劇情進度原本沒存檔**(save v5 只存名冊/隊伍/道具/位置)→ v6 加存
+  `dq3_storyflags`(96 byte),劇情進度/里程碑/寶箱旗標現在存讀檔持久。test_save +2 斷言(旗標/晝夜)。
+- [ ] 晝夜精校(非阻塞):確切原版步數閾值 + 各相位 palette(目前近似)、夜 gated 事件接 g_dn_phase(提頓村牢房)。
 
 ### 系統 / UI
-- [ ] **遊戲內設定選單 UI**:title 加「設定」→ 切 RNG 模式(DOS/REAL)存 dq3.cfg。後端 `dq3_config` 已備,只差 UI(未來音量/解析度/語言同此)。
 - [x] **手動選咒選單 ✅**(已實作,WORKLIST 此項 stale):`dq3_battlescene` 戰鬥指令「咒文」開
   互動選咒子選單(列領頭施法成員已學可施放咒 + MP,選定設 `g_manual_cast_*`);無選則自動放最強攻擊咒。
 - [x] **注音↔英數 切換鍵 ✅**(已實作,此項 stale):`dq3_tavern.c` 創角姓名輸入 **Tab 鍵**
@@ -78,7 +79,8 @@
   反組譯(file 0xc03e/0xc07a/0xc0cd/0xc22e)確認 remake **完全一致**。會心率 1/32 為 DQ3 標準值
   (×2 機制已驗;精確 roll 指令在攻擊指令 handler,未定位但屬單一標準常數)。
 - [ ] **DOSBox 逐畫面 oracle 擴展**:標題逐像素/注音 IME 字序/boss sprite 已驗一致;其餘畫面待補。
-- [ ] **packbg 戰鬥背景解碼**:戰鬥背景目前用通用天空/地面,packbg 壓縮背景未解碼。
+- [x] **packbg 戰鬥背景解碼 ✅**(已實作,此項 stale):`dq3_packbg_decode` 解 PACKBG.SCR(平面壓縮)→
+  `battlescene` g_sky 當戰鬥背景(隨地形 page,預設草原 22);dump 驗證雲朵+草原真實背景(對 game3.png)。
 
 ### 咒文效果(2026-06-27,研究驅動實作;研究+實作對照 `docs/data/spell-effects-research.md`)
 - [x] **戰鬥狀態/輔助咒 ✅**:base==0 咒(拜基魯多→敵攻×2、史卡拉/史克魯多→敵守↑、魯卡尼/魯加南→
