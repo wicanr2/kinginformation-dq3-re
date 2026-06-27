@@ -2,6 +2,7 @@
  * 把原版 far-call runtime 的語意換成 SDL2;內部複雜度藏在此檔。
  */
 #include "dq3_runtime.h"
+#define SDL_MAIN_HANDLED   /* 自管 main():不讓 SDL2main 接管 WinMain(跨平台 entry 一致)*/
 #include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +20,7 @@ static char          g_assets[1024] = ".";
 
 int dq3_rt_init(const char *title)
 {
+    SDL_SetMainReady();   /* 配合 SDL_MAIN_HANDLED:告知 SDL main 已就緒 */
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
         fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
         return -1;

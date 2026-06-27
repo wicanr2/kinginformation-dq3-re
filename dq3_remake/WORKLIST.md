@@ -9,7 +9,7 @@
 
 `dq3_remake/`(C99 + SDL2)= **完整、可玩、資料驅動**的精訊版 DQ3 核心,**主線可破關**。
 每個數值/邏輯都從 `DQ3.EXE` 或遊戲資料抽出。`tools/game_tester.sh` **79/79 全綠**(交付 gate)。
-已打包 Linux distributable;Windows/AppImage 未做。
+已打包 Linux tar + **Windows x64 zip**(交叉編譯,wine 驗證);AppImage 選配未做。
 
 ```
 阿里阿罕起步 → 露依達酒場創角(職業→注音/英數命名→性別)→ 名冊/隊伍
@@ -46,7 +46,12 @@
   (修舊 `cat&0x40` 把盾 0x60 誤判成鎧的 bug);save v7。dump 驗證 4 槽畫面、game_tester 79/79。
 
 ### 打包
-- [ ] **Windows / AppImage 跨平台打包**:目前只產 Linux tar(`tools/package.sh`);需 mingw + SDL2-mingw toolchain。
+- [x] **Windows x64 跨平台打包 ✅**(2026-06-27):mingw-w64 + SDL2 2.30.9 mingw dev,docker 內交叉編譯
+  (`scripts/Dockerfile.mingw` + `cmake/mingw-w64-x86_64.cmake` + `tools/package_win.sh`)→ `work/dq3_remake_win64.zip`
+  (dq3_remake.exe 647KB + SDL2.dll + run.bat)。entry 用 `SDL_MAIN_HANDLED` 自管 main(免 SDL2main/WinMain);
+  `-static-libgcc`(僅依賴 KERNEL32/SDL2/msvcrt);setenv→`_putenv_s` 可攜化。**wine ABI 實機驗證**:載真實
+  素材、繪地表一幀正確;Linux build 79/79 無回歸。
+- [ ] **AppImage**(選配,低優先):Linux 已有 tar(`tools/package.sh`);AppImage 僅省去使用者裝 SDL2,價值邊際。
 
 ### 不在此環境做 / 不依賴 DOSBox(記憶 `dq3-no-dosbox-debugger`)
 - **DOSBox 逐畫面 oracle**:此環境**無 DOSBox runtime**,不掛在它上面當待辦。已能靜態驗的都驗了
@@ -62,7 +67,9 @@
   docker run --rm -v "$PWD":/repo -v dq3build:/build dq3-remake bash -lc 'bash /repo/tools/game_tester.sh /repo/assets_raw /build/dq3_remake'
   ```
   > 坑:`game_tester.sh` 硬編 `/repo`/`/build`,host 直跑→全假失敗(環境非回歸)。
-- **其他工具**:`scripts/build.sh`、`tools/package.sh`(打包)、`tools/dockrun.sh`(docker uv python)、`tools/gen_custom_glyphs.py`(自建字形)、`tools/dosbox_run.sh`+`dq3-dosbox`(原版 oracle)。
+- **其他工具**:`scripts/build.sh`、`tools/package.sh`(Linux 打包)、`tools/package_win.sh`(Windows x64 交叉編譯打包,
+  用 `scripts/Dockerfile.mingw` + `cmake/mingw-w64-x86_64.cmake`)、`tools/dockrun.sh`(docker uv python)、
+  `tools/gen_custom_glyphs.py`(自建字形)、`tools/dosbox_run.sh`+`dq3-dosbox`(原版 oracle)。
 - **原始素材**:`assets_raw/`(版權,gitignore;remake 執行期指向它)。
 - **不公開**:可玩遊戲包(`work/`)、原始檔、第三方攻略/截圖、render 的版權畫面像素 —— 見各 `.gitignore`。
 - **紀律**:不用 subagent;docker first;每階段 commit+push;斷言完成前 git diff/檔案中介數字驗證(memory `re-verify-via-git-not-tool-echo`);commit message 繁中 + `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`。

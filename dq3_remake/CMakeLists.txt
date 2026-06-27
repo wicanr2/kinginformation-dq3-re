@@ -130,14 +130,15 @@ target_include_directories(dq3_remake PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${SDL2_INCLUDE_DIRS}
 )
-target_link_libraries(dq3_remake PRIVATE ${SDL2_LIBRARIES})
-
-# 部分平台 SDL2 用 imported target 而非變數
+# SDL2 連結:優先用 imported target SDL2::SDL2(現代 SDL2 config 都有);它不含 SDL2main。
+# 我們用 SDL_MAIN_HANDLED 自管 main(),刻意不連 SDL2main(否則 Windows WinMain 會找不到 SDL_main)。
+# 退而用變數時,過濾掉 SDL2main 條目。
 if(TARGET SDL2::SDL2)
     target_link_libraries(dq3_remake PRIVATE SDL2::SDL2)
-endif()
-if(TARGET SDL2::SDL2main)
-    target_link_libraries(dq3_remake PRIVATE SDL2::SDL2main)
+else()
+    set(_sdl2_libs ${SDL2_LIBRARIES})
+    list(FILTER _sdl2_libs EXCLUDE REGEX "[Ss][Dd][Ll]2[Mm]ain")
+    target_link_libraries(dq3_remake PRIVATE ${_sdl2_libs})
 endif()
 
 if(MSVC)

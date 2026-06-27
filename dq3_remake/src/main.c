@@ -46,6 +46,13 @@
 #include "dq3_scripted.h"
 #include "dq3_item_use.h"
 
+/* 可攜 setenv:Windows CRT 無 POSIX setenv,改 _putenv_s。只用於 debug dump 路徑。 */
+#ifdef _WIN32
+static int dq3_setenv(const char *k, const char *v) { return _putenv_s(k, v); }
+#else
+static int dq3_setenv(const char *k, const char *v) { return setenv(k, v, 1); }
+#endif
+
 /* 取船劇情(#2 真實 NPC 觸發,docs/50)。波魯多加 = CTY37(throne room,overworld (26,72));
  * 國王 = section0 (9,6) sub2 scripted-event NPC,byte4=26。對話分支(資料驅動,RE 確鑿):
  *   無胡椒 → rec26「怎麼了?我在等黑胡椒。」 / 給胡椒 → rec28「胡椒太好吃了…好想睡。」+ 授船。
@@ -1839,7 +1846,7 @@ static int run_tavern(const char *assets, const char *dump)
         dq3_roster_create(&roster, &st, getenv("DQ3_ST_CLASS")?atoi(getenv("DQ3_ST_CLASS")):0, 0, nm, 2);
         dq3_party_add(&party, &roster, 0);
         if (dq3_items_load(&shi, assets, NULL, 0) == 0) {
-            setenv("DQ3_SHOP_DUMP", dump, 1);
+            dq3_setenv("DQ3_SHOP_DUMP", dump);
             { int sn; const unsigned char *sk = shop_stock_for(0, &sn);
               shop_modal(&roster, &party, &shi, &t, &g, sk, sn); }
         }

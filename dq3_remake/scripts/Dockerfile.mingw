@@ -1,0 +1,19 @@
+# dq3_remake Windows 交叉編譯環境(mingw-w64 + SDL2 mingw dev)。不污染 host。
+#   docker build -t dq3-remake-mingw -f dq3_remake/scripts/Dockerfile.mingw dq3_remake/scripts
+# 產 win64 .exe;SDL2.dll 一併打包(見 tools/package_win.sh)。
+FROM debian:bookworm-slim
+
+ARG SDL2_VERSION=2.30.9
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        mingw-w64 cmake make ca-certificates wget xz-utils zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# SDL2 mingw 開發庫:解進 x86_64 mingw sysroot,讓 find_package(SDL2) 自然找到。
+RUN wget -q --timeout=60 -O /tmp/sdl.tar.gz \
+        "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-devel-${SDL2_VERSION}-mingw.tar.gz" \
+    && tar xzf /tmp/sdl.tar.gz -C /tmp \
+    && cp -a "/tmp/SDL2-${SDL2_VERSION}/x86_64-w64-mingw32/." /usr/x86_64-w64-mingw32/ \
+    && rm -rf /tmp/sdl.tar.gz "/tmp/SDL2-${SDL2_VERSION}"
+
+WORKDIR /src
+CMD ["bash"]
