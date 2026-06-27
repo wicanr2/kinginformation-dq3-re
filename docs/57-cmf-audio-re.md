@@ -47,7 +47,21 @@ RE 也獨立佐證音樂播放器**實際運作**:
 ⇒ EXE 內**有完整的計時音樂播放機制**,音樂資料內嵌(非 standalone CMF 檔、無 CTMF magic、非 overlay)。
 **(A) 已排除。** 缺的只是「資料 base 在哪」——需從 timer ISR / 音樂事件處理器反追資料指標(deep trace)。
 
-## 下一步(Phase 1 續)— 定位內嵌音樂資料
+## Trace 進度(2026-06-27,step 1b-1c)
+
+- **timed-playback 函式**(file 0x13f1c):`getvect(8)` 存舊 → `cli; in 0x21; mask=0xfe`(只留 IRQ0 timer)→
+  `set_timer_count(0x1b58)`(≈170Hz)→ `setvect(8, cs:0x29f)`(裝 ISR)→ **busy-wait**(`or ax,ax; je/jne` 等 ISR 改 ax)→
+  還原 mask + timer。⇒ 這是**同步阻塞播放**(短 jingle/音效跑完才返回);連續 BGM 應另有非阻塞安裝點。
+- 呼叫 `set_timer_count`(0x2c52)者:logical 0x12bcb / 0x12bf5(即此函式內)。
+- ★**多段陷阱**:ISR = `cs:0x29f`,此 `cs` 是**音樂驅動自己的段**(CMFDRV 從 SBCM.LIB 連入,獨立 segment),
+  **不是主碼段**。直接反組譯主段 file 0x160f(=主段邏輯 0x29f)得到的是遊戲碼(give-item/memory alloc),錯段。
+  → 須先解出**驅動段的 file base**(查 EXE relocation / segment 配置 / `mov ax,seg; mov ds/es,ax` 載入驅動段的常數),才能正確反組譯 ISR。
+
+## 下一步(Phase 1 續)— 定位內嵌音樂資料(續 step 1c→)
+- 解驅動段 file base:找載入驅動段選擇子的 `mov ax,<seg>`(如前段見 `mov ax,0x14dd; mov ds,ax`、`mov ax,0x1ade`)→
+  對映 EXE segment 表 → 算驅動段 file 起點 → 反組譯 ISR(driver_seg:0x29f)。
+- 找**非阻塞 BGM 安裝**(連續播放):另一處 `setvect(8,…)` 不接 busy-wait、直接 return。
+- 自 ISR 找 OPL 寫入(reg 0xA0-0xB8 note)+ 事件指標變數 → 反追音樂資料 base + 曲目表。
 
 - 反組譯 EXE 內 **CT-MUSIC 初始化**(`ct_scan_card`/OPL reset)與 **play 呼叫**:
   - 若遊戲**從未呼叫** play(只 init 驅動)→ 確認 (A):音樂未完成,據實回報、Phase 2+ 暫緩或改原創 BGM。
