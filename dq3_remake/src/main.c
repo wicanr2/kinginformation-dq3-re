@@ -644,6 +644,8 @@ static dq3_config *g_cfg = NULL;   /* main 設定;設定選單讀寫 + 存檔 */
 
 /* 設定選單(title「設定」進入):切 RNG 模式(原版 DOS / 真實 REAL)→ 存 dq3.cfg。
  * 標籤 glyph 用原版字庫 + 自建「設/版」(dq3_customglyph)。←/→/Enter/Space 切換,ESC 存檔離開。 */
+static void draw_number_at(uint8_t *fb, const dq3_text *t, int x, int y, int v, uint8_t fg);  /* 前置宣告 */
+
 static void config_modal(const char *assets, const dq3_text *text)
 {
     uint8_t *fb = dq3_fb(); dq3_color pal16[16];
@@ -651,32 +653,66 @@ static void config_modal(const char *assets, const dq3_text *text)
     static const uint16_t L_RNG[4]  = { 482, 427, 1397, 1157 };  /* 亂數模式 */
     static const uint16_t V_DOS[2]  = { 555, DQ3_GLYPH_BAN };    /* 原版 */
     static const uint16_t V_REAL[2] = { 577, 279 };              /* 真實 */
+    static const uint16_t L_MUS[2]  = { 313, 682 };              /* 音樂 */
+    static const uint16_t L_VOL[2]  = { 313, 280 };              /* 音量 */
+    static const uint16_t V_ON      = 488;                       /* 開 */
+    static const uint16_t V_OFF     = 683;                       /* 關 */
     static const uint16_t HINT[2]   = { 750, 312 };              /* 返回 */
-    uint8_t white = 15, yellow = 14; int i, dirty = 0;
+    uint8_t white = 15, yellow = 14; int i, dirty = 0, row = 0;
+    const int NROW = 3;                                          /* 0=RNG 1=音樂 2=音量 */
     if (!g_cfg) return;
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
         if (sc == 0x01 || sc == DQ3_SC_F10) break;               /* ESC/F10 → 存檔離開 */
-        if (sc == 0x4b || sc == 0x4d || sc == 0x1c || sc == 0x39) {  /* ←/→/Enter/Space 切換 */
-            g_cfg->rng_mode = (g_cfg->rng_mode == DQ3_RNG_DOS) ? DQ3_RNG_REAL : DQ3_RNG_DOS;
-            dq3_rng_set_mode(g_cfg->rng_mode); dirty = 1;
+        if (sc == 0x48) row = (row + NROW - 1) % NROW;           /* ↑ */
+        else if (sc == 0x50) row = (row + 1) % NROW;             /* ↓ */
+        else if (sc == 0x4b || sc == 0x4d || sc == 0x1c || sc == 0x39) {  /* ←/→/Enter:改值 */
+            int dir = (sc == 0x4b) ? -1 : 1;
+            if (row == 0) {
+                g_cfg->rng_mode = (g_cfg->rng_mode == DQ3_RNG_DOS) ? DQ3_RNG_REAL : DQ3_RNG_DOS;
+                dq3_rng_set_mode(g_cfg->rng_mode);
+            } else if (row == 1) {
+                g_cfg->music_enabled = !g_cfg->music_enabled;
+                dq3_audio_set_enabled(g_cfg->music_enabled);
+                if (g_cfg->music_enabled) dq3_audio_play_scene(DQ3_MUS_TITLE, 1);
+            } else {
+                int v = g_cfg->music_volume + dir * 10;
+                if (sc == 0x1c || sc == 0x39) v = g_cfg->music_volume + 10;   /* Enter:+10 循環 */
+                if (v > 100) v = 0; if (v < 0) v = 100;
+                g_cfg->music_volume = v;
+                dq3_audio_set_volume(v);
+            }
+            dirty = 1;
         }
         if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
         {   /* 深色框背景(疊在標題上,讓設定文字可讀)*/
             int blk = pal_near2(pal16,16,0,0,0), frm = pal_near2(pal16,16,255,255,255), bgc = pal_near2(pal16,16,16,16,48);
-            int bx = 150, by = 70, bw = 340, bh = 180;
+            int bx = 150, by = 60, bw = 340, bh = 200;
+            int rowy[3]; int r;
             tav_window(fb, bx, by, bw, bh, (uint8_t)blk, (uint8_t)frm, (uint8_t)bgc);
-            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+150+i*16, by+22, T_SET[i], yellow);
-            for (i = 0; i < 4; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, by+80, L_RNG[i], white);
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+150+i*16, by+16, T_SET[i], yellow);
+            rowy[0] = by+62; rowy[1] = by+96; rowy[2] = by+130;
+            for (r = 0; r < NROW; r++)                            /* 游標 ▶ 標目前列 */
+                dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+18, rowy[r], (uint16_t)(r==row?11:12), yellow);
+            /* row0 亂數模式 */
+            for (i = 0; i < 4; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, rowy[0], L_RNG[i], white);
             { const uint16_t *v = (g_cfg->rng_mode == DQ3_RNG_REAL) ? V_REAL : V_DOS;
-              for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+(5+i)*16, by+80, v[i], yellow); }
-            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+140+i*16, by+140, HINT[i], white);
+              for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+(6+i)*16, rowy[0], v[i], yellow); }
+            /* row1 音樂 開/關 */
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, rowy[1], L_MUS[i], white);
+            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+6*16, rowy[1], g_cfg->music_enabled ? V_ON : V_OFF, yellow);
+            /* row2 音量 數字 */
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, rowy[2], L_VOL[i], white);
+            draw_number_at(fb, text, bx+40+6*16, rowy[2], g_cfg->music_volume, yellow);
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+140+i*16, by+168, HINT[i], white);
         }
         dq3_present(); dq3_delay_ms(16);
         if (getenv("DQ3_DUMP")) { dq3_dump_ppm(getenv("DQ3_DUMP")); break; }   /* 一幀 dump 驗證 */
     }
     if (dirty) { dq3_config_save(g_cfg, dq3_config_path());
-        fprintf(stderr, "設定:亂數模式 = %s,已存 dq3.cfg\n", g_cfg->rng_mode == DQ3_RNG_REAL ? "真實" : "原版"); }
+        fprintf(stderr, "設定:亂數=%s 音樂=%s 音量=%d,已存 dq3.cfg\n",
+                g_cfg->rng_mode == DQ3_RNG_REAL ? "真實" : "原版",
+                g_cfg->music_enabled ? "開" : "關", g_cfg->music_volume); }
 }
 
 static int title_menu(const char *assets, const dq3_text *text)
