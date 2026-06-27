@@ -100,6 +100,33 @@
   [`22`](docs/22-item-fix.md) 道具特效修正 ·
   [`23`](docs/23-stat-fixes.md) 數值類 bug 修正 ·
   [`28`](docs/28-battle-palette-bug.md) 戰鬥後調色盤未還原
+- [`bugs.md`](docs/bugs.md) 青衫 bug 清單原文(7 個 bug 的一手描述,docs/18 的來源)
+
+### 設施 / 道具 / 船 / 傳送 / 接線(40+)
+- [`40`](docs/40-facility-shops.md) 設施/商店系統 · [`41`](docs/41-treasures.md) 寶箱 ·
+  [`49`](docs/49-item-use.md) 道具使用效果 · [`22`](docs/22-item-fix.md) 裝備/ITEM.DAT
+- [`43`](docs/43-reachability.md) 可達性/傳送 · [`44`](docs/44-scripted-warp-re.md) scripted warp ·
+  [`45`](docs/45-binary-structures.md) 二進位結構彙整 · [`42`](docs/42-npc-dialogue.md) NPC 對話
+- [`48`](docs/48-ship-navigation.md) 船航行 · [`50`](docs/50-ship-acquisition.md) 取船 ·
+  [`51`](docs/51-palette-and-overworld-sprites.md) palette/地表 sprite · [`46`](docs/46-debug-hook.md) DEBUG 口 ·
+  [`47`](docs/47-remaining-work.md) 剩餘工作盤點
+
+### 資料 / 研究(`docs/data/`)
+- [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·
+  [晝夜系統](docs/data/day-night-system.md) · [special 事件盤點](docs/data/special-events-audit.md) ·
+  [boss 觸發點](docs/data/boss-trigger-points.md) · [攻略接線盤點](docs/data/walkthrough-flow-audit.md)
+- [sub2 結構](docs/data/sub2-struct.md) · [sub2 handlers](docs/data/sub2-handlers.md) ·
+  [sub2 live NPC](docs/data/sub2-npcs-live.md) · [DGROUP 表](docs/data/dgroup-tables.md) ·
+  [oracle 驗證](docs/data/oracle-validation.md) · [原版已知 bug](docs/data/original-known-bugs.md) ·
+  [結局未完成](docs/data/endtxt-incomplete.md)
+
+### RE 攻關日誌 / 教訓
+- [`[0x722]` runner 狀態機](docs/re-log-722-state-machine.md) ·
+  [咒文效果 dispatcher](docs/re-log-spell-effect-dispatch.md) ·
+  [remake 接線教訓](docs/remake-wiring-lessons.md)
+
+### 雜項工具筆記
+- [js-dos bundle 下載技巧](docs/js-dos-bundle.md)(dos.zczc.cz 線上模擬器抽 bundle zip)
 
 ## Flagged ambiguities(待釐清)
 

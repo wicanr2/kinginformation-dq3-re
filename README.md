@@ -99,12 +99,38 @@
 
 | 目錄 | 內容 |
 |---|---|
+| `dq3_remake/` | **SDL2 現代重製**（C99，可玩 + 可破關）；[`WORKLIST.md`](dq3_remake/WORKLIST.md) 進度、[`DIST_README.md`](dq3_remake/DIST_README.md) 打包說明 |
 | `re/` | 反組譯重建的 C 原始碼 + SDL2 移植（`re/sdl/`）|
-| `docs/` | 格式分析、結構地圖、技術筆記 |
+| `docs/` | **全部技術文件**（格式分析、EXE 反組譯、事件/地圖、bug、驗證、資料/研究、RE 日誌）|
 | `tools/` | 解析 / 抽取 / 渲染素材的腳本（Python，於 docker uv venv 執行） |
-| `references/` | 外部參考資料（青衫先生攻略等） |
-| `assets_raw/` | （git 排除）原版素材，使用者自備 |
-| `assets_out/` | （git 排除）抽出的素材產物 |
+| `references/` | 外部參考資料（青衫先生攻略等，版權不入庫）|
+| `assets_raw/` `assets_out/` | （git 排除）原版素材 / 抽出產物 |
+
+## 📚 文件索引（可點擊）
+
+> 完整術語表 + 知識庫入口見 [`CONTEXT.md`](CONTEXT.md)。以下依主題索引重要文件。
+
+**核心 / 進度**
+- [`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md) — remake 現況 + 真正剩餘工作（唯一真相）
+- [`docs/47`](docs/47-remaining-work.md) 剩餘工作盤點 · [`docs/46`](docs/46-debug-hook.md) DEBUG 口 · [`docs/00`](docs/00-re-methodology.md) 逆向方法論
+
+**素材格式與還原** — [`01`](docs/01-asset-inventory.md) inventory · [`02`](docs/02-font-format.md) 字型 · [`03`](docs/03-text-format.md) 文字腳本 · [`04`](docs/04-map-format.md) 地圖 tile · [`27`](docs/27-bls-character-sprites.md) 角色 sprite · [`33`](docs/33-name-tables.md) 名稱表 · [`51`](docs/51-palette-and-overworld-sprites.md) palette/地表 sprite
+
+**DQ3.EXE 反組譯（RE → C）** — [`05`](docs/05-exe-recon.md) 偵察 · [`06`](docs/06-exe-callmap.md) callmap · [`08`](docs/08-exe-functions.md) 函式圖 · [`09`](docs/09-exe-loaders.md) loaders · [`10`](docs/10-exe-states.md) 狀態機 · [`11`](docs/11-exe-gameplay.md) 場景/移動 · [`12`](docs/12-exe-commands.md) 野外指令/對話 · [`13`](docs/13-exe-battle.md) 戰鬥 · [`15`](docs/15-exe-nameinput.md) 注音輸入 · [`16`](docs/16-monsters-ui.md) 怪物/UI
+
+**事件 / 地圖 / 腳本 / 傳送** — [`31`](docs/31-event-system.md) 事件系統 · [`32`](docs/32-world-locations.md) 世界地點 · [`34`](docs/34-cty-load-format.md) CTY 載入 · [`35`](docs/35-script-format.md) 腳本/轉場格式 · [`42`](docs/42-npc-dialogue.md) NPC 對話 · [`43`](docs/43-reachability.md) 可達性/傳送 · [`44`](docs/44-scripted-warp-re.md) scripted warp · [`45`](docs/45-binary-structures.md) 二進位結構 · [地圖連通圖](docs/maps/map_graph.md) · [CTY↔地名](docs/maps/cty-names.md)
+
+**戰鬥 / 怪物 / 數值 / 咒文** — [`13`](docs/13-exe-battle.md) 戰鬥 · [`37`](docs/37-monster-ai.md) 怪物 AI · [`38`](docs/38-monster-stats.md) 怪物屬性表 · [`39`](docs/39-encounter-zones.md) 遭遇區 · [`23`](docs/23-stat-fixes.md) 數值修正 · [咒文效果研究](docs/data/spell-effects-research.md) · [晝夜系統](docs/data/day-night-system.md)
+
+**道具 / 設施 / 船 / 取得鏈** — [`22`](docs/22-item-fix.md) 道具特效修正 · [`40`](docs/40-facility-shops.md) 設施/商店 · [`41`](docs/41-treasures.md) 寶箱 · [`48`](docs/48-ship-navigation.md) 船航行 · [`49`](docs/49-item-use.md) 道具使用 · [`50`](docs/50-ship-acquisition.md) 取船 · [道具取得鏈](docs/data/quest-items.md)
+
+**Bug 分析 / 修正 / 正確性驗證** — [`18`](docs/18-bug-analysis.md) bug 反組譯定位 · [`20`](docs/20-fixed-version.md) 修正版 · [`21`](docs/21-official-patches.md) 青衫 patch 表 · [`28`](docs/28-battle-palette-bug.md) 調色盤 bug · [`14`](docs/14-dosbox-validation.md) 素材黃金對照 · [`17`](docs/17-build-toolchain.md) byte-identical 重組 · [`19`](docs/19-re-correctness.md) MSC 5.x 確認 · [`29`](docs/29-dosbox-oracle.md)/[`30`](docs/30-phase5-comparison.md) oracle 比對 · [oracle 驗證](docs/data/oracle-validation.md) · [原版已知 bug](docs/data/original-known-bugs.md) · [bugs.md](docs/bugs.md)（青衫 bug 清單原文）
+
+**資料 / 研究（`docs/data/`）** — [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) · [晝夜系統](docs/data/day-night-system.md) · [special 事件盤點](docs/data/special-events-audit.md) · [boss 觸發點](docs/data/boss-trigger-points.md) · [sub2 結構](docs/data/sub2-struct.md)/[handlers](docs/data/sub2-handlers.md)/[live NPC](docs/data/sub2-npcs-live.md) · [攻略接線盤點](docs/data/walkthrough-flow-audit.md) · [DGROUP 表](docs/data/dgroup-tables.md)
+
+**RE 攻關日誌 / 教訓** — [`[0x722]` runner 狀態機](docs/re-log-722-state-machine.md) · [咒文效果 dispatcher](docs/re-log-spell-effect-dispatch.md) · [remake 接線教訓](docs/remake-wiring-lessons.md)
+
+**歷史 / 一手史料** — [BBS 1994–95 討論串](docs/history/dq3-bbs-1994.md) · [攻略致敬 + 地名對照](docs/history/dq3-walkthrough-credits.md)
 
 ## 進度
 
