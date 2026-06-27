@@ -2317,16 +2317,18 @@ static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *g
             else if (r >= 0) {
                 dq3_member *m = &roster->list[party->slot[chosen]].m;
                 int was_yusha = (m->cls == 7);   /* 遊人免領悟之書 */
-                /* 賢者(class 5)需領悟之書 0x40,或本身是遊人(免書;杜勝利 Ch21)。 */
-                if (r == 5 && !was_yusha && dq3_inv_find(inv, 0x40) < 0) {
-                    fprintf(stderr, "達瑪:轉賢者需《領悟之書》(或遊人免書)— 加爾那之塔 CTY87 取得\n");
+                /* 賢者(class 5)需領悟之書,或本身是遊人(免書;杜勝利 Ch21)。
+                 * 領悟之書真碼 = 0x4a(★2026-06-27 碼勘誤:原寫 0x40 實為勇者之盾,認錯道具)。
+                 * 取得 = 加爾那之塔 CTY18 sec1 寶箱(攻略反證:CTY18 = 力量種子+鐵頭盔+領悟之書)。 */
+                if (r == 5 && !was_yusha && dq3_inv_find(inv, 0x4a) < 0) {
+                    fprintf(stderr, "達瑪:轉賢者需《領悟之書》(或遊人免書)— 加爾那之塔 CTY18 取得\n");
                     break;
                 }
                 if (dq3_member_change_class(m, gst, r) == 0) {
                     fprintf(stderr, "★ 達瑪轉職:隊員%d → 職業%d%s(Lv1,屬性減半)\n", chosen, r,
                             r == 5 ? "(賢者)" : "");
-                    if (r == 5 && !was_yusha && dq3_inv_find(inv, 0x40) >= 0) {
-                        dq3_inv_remove(inv, 0x40);   /* 領悟之書轉一次賢者後消耗(原版語意)*/
+                    if (r == 5 && !was_yusha && dq3_inv_find(inv, 0x4a) >= 0) {
+                        dq3_inv_remove(inv, 0x4a);   /* 領悟之書 0x4a 轉一次賢者後消耗(原版語意)*/
                         fprintf(stderr, "  《領悟之書》已用(消耗)\n");
                     }
                 } else fprintf(stderr, "達瑪:勇者不可轉職 / 不可轉成勇者\n");

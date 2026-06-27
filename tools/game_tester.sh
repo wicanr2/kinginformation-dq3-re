@@ -145,8 +145,12 @@ o=$(DQ3_DEBUG="item:0x77;warp:82:5:5:4;use:0x77" DQ3_INPUT="q" timeout 20 "$BIN"
 echo "$o" | grep -q "妖精之笛解魯比斯詛咒 → 得精靈的守護" && ok "魯比斯之塔 CTY82:妖精之笛→精靈的守護(全鏈通)" || ng "魯比斯精靈的守護"
 
 echo "######## 14. B-7 散件寶箱(杜勝利各章)########"
+# 領悟之書真碼 0x4a @ CTY18(加爾那之塔;攻略反證 CTY18=力量種子+鐵頭盔+領悟之書)
+o=$(DQ3_DEBUG="warp:18:21:18:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x4a" && ok "加爾那之塔 CTY18 領悟之書 0x4a(賢者轉職)" || ng "領悟之書 0x4a"
+# CTY87 = 洛特洞窟:勇者之盾 0x40(原被誤標領悟之書/加爾那)
 o=$(DQ3_DEBUG="warp:87:8:9:2" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
-echo "$o" | grep -q "獲得道具 0x40" && ok "加爾那之塔 CTY87 領悟之書(賢者轉職)" || ng "領悟之書"
+echo "$o" | grep -q "獲得道具 0x40" && ok "洛特洞窟 CTY87 勇者之盾 0x40" || ng "勇者之盾 0x40"
 o=$(DQ3_DEBUG="warp:20:4:9:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "獲得道具 0x5f" && ok "提頓村 CTY20 黑暗之燈" || ng "黑暗之燈"
 o=$(DQ3_DEBUG="warp:26:11:12:2" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
