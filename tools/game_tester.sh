@@ -199,8 +199,12 @@ o=$(DQ3_DEBUG="party;baramos" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FF" timeout 25 "$
 echo "$o" | grep -q "巴拉摩斯戰(怪121 HP1201)" && ok "巴拉摩斯本體 boss(怪121 HP1201 開戰)" || ng "巴拉摩斯 boss"
 # 索瑪前完整序列:zomaseq token → 巴拉摩斯怨靈 122 → 殭屍 123 → 索瑪 124(逐戰勝才推進)
 # 怨靈/殭屍數值 ground truth = docs/38(怨靈 HP1201、殭屍 HP2880);序列首戰怨靈必觸發
+# C-9 六大魔人守衛(怪106,杜 Ch56):未破(無 flag 0x214)→ zomaseq 先打六大魔人
 o=$(DQ3_DEBUG="party;item:0x65;zomaseq" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FFFF" timeout 30 "$BIN" "$ASSETS" game 2>&1)
-echo "$o" | grep -q "巴拉摩斯怨靈(怪122)" && ok "索瑪前序列:巴拉摩斯怨靈(怪122)首戰觸發" || ng "索瑪前序列怨靈"
+echo "$o" | grep -q "六大魔人守衛(怪106" && ok "C-9 索瑪神殿六大魔人守衛(怪106 ×6)觸發" || ng "六大魔人守衛"
+# 六大魔人已破(flag 0x214)→ 跳過 → 怨靈122 首戰觸發(原斷言;弱隊驗觸發非勝)
+o=$(DQ3_DEBUG="party;item:0x65;flag:0x214;zomaseq" DQ3_INPUT="q" DQ3_BATTLE_SCRIPT="FFFF" timeout 30 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "巴拉摩斯怨靈(怪122)" && ok "索瑪前序列:六大魔人破後→巴拉摩斯怨靈(怪122)觸發" || ng "索瑪前序列怨靈"
 # id 正確性:docs/38 怨靈 122 HP1201、殭屍 123 HP2880(ground truth,非記憶)
 D38="${GT_DOCS:-/repo/docs/38-monster-stats.md}"; [ -f "$D38" ] || D38="docs/38-monster-stats.md"
 GR=$(python3 -c "

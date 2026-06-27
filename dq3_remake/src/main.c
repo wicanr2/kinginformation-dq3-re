@@ -874,12 +874,25 @@ static int run_game(const char *assets, const char *dump)
                 phoenix_revived = 1;
                 if (!in_town) phoenix_aboard = 1;
                 fprintf(stderr, "[DEBUG] 不死鳥拉米亞復活%s\n", phoenix_aboard ? " + 搭乘(飛行)" : "");
-            } else if (strcmp(tok, "zomaseq") == 0) {         /* 索瑪前完整序列:巴拉摩斯怨靈122 → 殭屍123 → 索瑪124 */
-                int oc; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
+            } else if (strcmp(tok, "zomaseq") == 0) {         /* 索瑪前完整序列:六大魔人 → 怨靈122 → 殭屍123 → 索瑪124(杜 Ch56)*/
+                int oc = 1, dm; const char *bs = getenv("DQ3_BATTLE_SCRIPT");
                 dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
-                fprintf(stderr, "★ 索瑪神殿前序列：巴拉摩斯怨靈(怪122)\n");
-                oc = dq3_battlescene_run(assets, 122, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
-                dq3_scene_apply_palette(cur);
+                /* 六大魔人守衛(怪106 ×6;杜勝利 Ch56:龍王城六座石像=索瑪神殿大魔人守衛,盡破→現隱藏樓梯通索瑪)。
+                 * 怪名 rec=id+600 反推:大魔人=rec706→id106。gate=flag 0x214:已破則跳過(不重打,隱藏樓梯已現)。 */
+                if (!dq3_flags_get(&flags, 0x214)) {
+                    fprintf(stderr, "★ 索瑪神殿:六大魔人守衛(怪106 ×6)\n");
+                    for (dm = 1; dm <= 6 && oc == 1; dm++) {
+                        fprintf(stderr, "  大魔人 %d/6\n", dm);
+                        oc = dq3_battlescene_run(assets, 106, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                        dq3_scene_apply_palette(cur);
+                    }
+                    if (oc == 1) { dq3_flags_set(&flags, 0x214, 1); fprintf(stderr, "★ 六大魔人盡破 → 隱藏樓梯現,通索瑪\n"); }
+                }
+                if (oc == 1) {
+                    fprintf(stderr, "★ 索瑪神殿前序列：巴拉摩斯怨靈(怪122)\n");
+                    oc = dq3_battlescene_run(assets, 122, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
+                    dq3_scene_apply_palette(cur);
+                }
                 if (oc == 1) {
                     fprintf(stderr, "★ 巴拉摩斯僵尸(怪123)\n");
                     oc = dq3_battlescene_run(assets, 123, 1, -1, bs ? bs : "FFFFFFFFFFFFFFFF", NULL, 1);
