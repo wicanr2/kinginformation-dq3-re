@@ -38,12 +38,14 @@
 - [x] **怪物施加狀態 ✅**(已確認 + 修 phantom-damage):第一性原理 RE(`docs/re-log-spell-effect-dispatch.md`)定論——精訊引擎效果由 base 值分類、**無「咒→狀態」表**;base==0 中只有 144 睡/152 混亂=玩家不能行動 → 映射麻痺(已接),其餘 base==0(buff/debuff/封咒/幻/傳走)未模型化。本次修掉「base==0 咒 fall through 成 base=24 假傷害」bug → 詠唱不致傷。中毒(overworld/戰鬥毒傷+解)亦閉環。
 - (移除)~~CTY→地名對照收尾~~:使用者確認不影響遊戲,不列待辦。
 
-### 晝夜系統(RE 確認完成,2026-06-27;`docs/data/day-night-system.md`)
-- 第一性原理確認:原版**有晝夜兩態**(影響事件),但**走動不會自動循環時間**(非步數驅動;
-  每步 handler `[0x4f46]` 無時間計數器)。切換靠 **ラナルータ(rec177 咒)+ 黑暗之燈(0x5f 道具變夜)**。
-  論證:黑暗之燈唯一用途=強制變夜 → 若自動入夜則此道具無意義(柵欄原則)。
-- [ ] **remake 補晝夜**(忠實度,非可玩性阻塞):g_is_night 狀態 + 存檔欄、ラナルータ toggle、
-  黑暗之燈→夜、夜晚暗 palette、夜 gated 事件(提頓村牢房)。
+### 晝夜系統 ✅(2026-06-27 實作;`docs/data/day-night-system.md`)
+- [x] **步數驅動晝夜 ✅**(★更正:原版**走路就會自動循環**白天/黃昏/黑夜/黎明,**步數計數**非時間;
+  先前誤判「不自動」已撤回,使用者 ground truth 指正)。實作:`dq3_scene` 4 相位 + palette 調暗
+  (夜暗偏藍/黃昏暗偏暖/黎明微暗;sprite 較淺保持可見);`main.c` 地表每 28 步(近似)推進相位;
+  ラナルータ(rec177 咒)toggle + 黑暗之燈(0x5f 道具)變夜;debug `dn:N`。驗證:phase0 vs phase2
+  dump diff 494437、夜景調暗、game_tester 79/79。
+- [ ] 晝夜精校/補完:確切原版步數閾值 + 各相位 palette(目前近似)、存檔持久化(載入回白天)、
+  夜 gated 事件接 g_dn_phase(提頓村牢房)。
 
 ### 系統 / UI
 - [ ] **遊戲內設定選單 UI**:title 加「設定」→ 切 RNG 模式(DOS/REAL)存 dq3.cfg。後端 `dq3_config` 已備,只差 UI(未來音量/解析度/語言同此)。

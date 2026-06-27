@@ -375,16 +375,40 @@ int dq3_scene_load_hero(dq3_scene *s, const char *assets_dir, int entry_base,
     return 0;
 }
 
+/* 晝夜相位(0=白天 1=黃昏 2=黑夜 3=黎明)。overworld 步數驅動(main.c);set 後下次 apply 生效。 */
+static int g_dn_phase = 0;
+void dq3_scene_set_daynight(int phase) { g_dn_phase = phase & 3; }
+int  dq3_scene_get_daynight(void) { return g_dn_phase; }
+/* 相位 → RGB 縮放%(bg 用;sprite 用較淺版以保持角色可見)。夜暗偏藍、黃昏暗偏暖、黎明微暗偏冷。 */
+static void dn_scale(int phase, int *r, int *g, int *b) {
+    switch (phase) {
+        case 2: *r=42; *g=44; *b=70; break;    /* 黑夜 */
+        case 1: *r=82; *g=62; *b=58; break;    /* 黃昏 */
+        case 3: *r=72; *g=74; *b=92; break;    /* 黎明 */
+        default:*r=100;*g=100;*b=100; break;   /* 白天:原色 */
+    }
+}
+static dq3_color dn_tint(dq3_color c, int rs, int gs, int bs) {
+    dq3_color o;
+    o.r = (uint8_t)(c.r * rs / 100); o.g = (uint8_t)(c.g * gs / 100); o.b = (uint8_t)(c.b * bs / 100);
+    return o;
+}
+
 void dq3_scene_apply_palette(const dq3_scene *s)
 {
     /* 修 bug #8(docs/28):場景進場/戰鬥返回必重套,DAC 不殘留前場景色盤。
-     * slot 0-15 = 背景 tile 色盤;slot 16-31 = sprite 色盤 bank(無海面覆蓋,docs/51)。 */
+     * slot 0-15 = 背景 tile 色盤;slot 16-31 = sprite 色盤 bank(無海面覆蓋,docs/51)。
+     * 晝夜:bg 依相位調暗;sprite 用「淺一半」的暗化(角色夜間仍看得見)。 */
     dq3_color combined[32];
-    int i;
+    int i, rs, gs, bs, srs, sgs, sbs;
+    dn_scale(g_dn_phase, &rs, &gs, &bs);
+    srs = (rs + 100) / 2; sgs = (gs + 100) / 2; sbs = (bs + 100) / 2;   /* sprite 較淺暗化 */
     for (i = 0; i < 16; i++) {
-        combined[i] = (i < s->pal_count) ? s->pal[i] : (dq3_color){0,0,0};
-        combined[16 + i] = (i < s->spal_count) ? s->spal[i]
-                         : ((i < s->pal_count) ? s->pal[i] : (dq3_color){0,0,0});  /* spal 未設則退回 pal */
+        dq3_color bg = (i < s->pal_count) ? s->pal[i] : (dq3_color){0,0,0};
+        dq3_color sp = (i < s->spal_count) ? s->spal[i]
+                     : ((i < s->pal_count) ? s->pal[i] : (dq3_color){0,0,0});
+        combined[i]      = dn_tint(bg, rs, gs, bs);
+        combined[16 + i] = dn_tint(sp, srs, sgs, sbs);
     }
     dq3_set_palette(combined, 32);
 }

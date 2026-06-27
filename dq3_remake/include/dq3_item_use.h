@@ -16,6 +16,7 @@
 #define DQ3_ITEM_HOLY_WATER  0x44   /* 聖水:暫時驅弱敵 */
 #define DQ3_ITEM_FULLMOON    0x45   /* 滿月草:解麻痺 */
 #define DQ3_ITEM_PRAYER_RING 0x48   /* 祈禱之戒:回 MP,每次使用 ~25.4% 機率損壞(#7c)*/
+#define DQ3_ITEM_DARK_LAMP   0x5f   /* 黑暗之燈:野外用 → 變夜(晝夜系統)*/
 
 /* 效果種類。 */
 enum {
@@ -39,6 +40,8 @@ enum {
                               * → rec0x188「戒指壞了」+ remove。bp(回復力)由 dispatcher 傳,ITEM.DAT 無
                               * 使用威力欄、bp 未靜態釘死 → 回復量採 classic 值(同藥草 DQ3_HERB_HEAL 處置);
                               * 破壞機率為 RE 精確值。青衫「永不壞」前提經 RE 推翻(損壞邏輯本就存在)。 */
+    DQ3_USE_RANARUTA,        /* 拉那魯達 ラナルータ(咒 rec177):切換晝夜(toggle 白天↔黑夜)*/
+    DQ3_USE_DARK_LAMP,       /* 黑暗之燈 0x5f:強制變夜(set 黑夜);不消耗(可重用)*/
     DQ3_USE_RAINBOW          /* 彩虹水滴 0x75:在下層利姆達爾(CTY86)西北盡頭地表用 → 架彩虹橋通終盤
                               * (杜勝利 Ch55「雨和太陽合而為一出現彩虹橋」)。消耗;設「彩虹橋已架」旗標。
                               * 註:合成 bug #2 已修(產 0x75 非銀寶珠 0x6b);此為彩虹水滴的「用途」接線。 */

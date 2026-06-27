@@ -301,6 +301,12 @@ static int  cmd_modal(dq3_scene *scene, dq3_roster *roster, dq3_party *party,
 static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *roster, dq3_party *party);
 static int g_item_world_eff = 0;   /* 野外道具選單選了蓋美拉翅膀/聖水 → 交 main 迴圈處理世界狀態 */
 static unsigned g_sea_frame = 0;   /* 海面 palette cycling 幀計數 */
+/* 晝夜系統(使用者確認原版機制 = 地表步數驅動,非時間):每 DN_PHASE_STEPS 步推進一相位
+ * 白天→黃昏→黑夜→黎明→(循環)。相位 → palette 調暗(dq3_scene 內)。確切步數閾值/夜 palette
+ * 為近似(原版步數計數器在多層 handler 鏈,逐指令未完全定位;機制忠實、數值可後續 RE 精校)。 */
+static int g_dn_step = 0;
+#define DN_PHASE_STEPS 28                      /* 每相位步數(近似)*/
+static const char *DN_NAME[4] = { "白天", "黃昏", "黑夜", "黎明" };
 static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text, dq3_inventory *inv);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
@@ -924,6 +930,7 @@ static int run_game(const char *assets, const char *dump)
             } else if (sscanf(tok, "flag:%i", &a) == 1) { dq3_flags_set(&flags, a, 1); fprintf(stderr, "[DEBUG] flag 0x%x set\n", a); }
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
             else if (sscanf(tok, "gold:%d", &a) == 1) { gold = a; fprintf(stderr, "[DEBUG] gold=%d\n", a); }
+            else if (sscanf(tok, "dn:%d", &a) == 1) { dq3_scene_set_daynight(a); if (cur) dq3_scene_apply_palette(cur); fprintf(stderr, "[DEBUG] 晝夜相位=%s\n", DN_NAME[a&3]); }
             else fprintf(stderr, "[DEBUG] 未知指令: %s\n", tok);
         }
       }
@@ -1485,6 +1492,13 @@ static int run_game(const char *assets, const char *dump)
                     dq3_progress_set(&flags, DQ3_MS_RAINBOW);    /* 推進 RAINBOW 里程碑 */
                     fprintf(stderr, "★ 彩虹水滴:雨和太陽合而為一,彩虹橋出現!通往終盤(杜勝利 Ch55)\n");
                 } else fprintf(stderr, "彩虹水滴:需在下層利姆達爾西北盡頭地表使用\n");
+            } else if (g_item_world_eff == DQ3_USE_RANARUTA) {   /* 拉那魯達:切換晝夜(白天↔黑夜)*/
+                dq3_scene_set_daynight(dq3_scene_get_daynight() == 2 ? 0 : 2);
+                g_dn_step = 0; dq3_scene_apply_palette(cur);
+                fprintf(stderr, "★ 拉那魯達:晝夜切換 → %s\n", DN_NAME[dq3_scene_get_daynight()]);
+            } else if (g_item_world_eff == DQ3_USE_DARK_LAMP) {  /* 黑暗之燈:變夜 */
+                dq3_scene_set_daynight(2); g_dn_step = 0; dq3_scene_apply_palette(cur);
+                fprintf(stderr, "★ 黑暗之燈:四周頓時暗了下來(變夜)\n");
             }
             g_item_world_eff = 0;
         } else if (sc == 0x30 && in_town) {  /* B:武器/防具商店捷徑(開發用;正式入口=走到店員 NPC)*/
@@ -1604,6 +1618,12 @@ static int run_game(const char *assets, const char *dump)
                     }
                 }
                 if (moved && !in_town && repel > 0) repel--;   /* #3 聖水驅敵期間每步遞減 */
+                if (moved && !in_town && ++g_dn_step >= DN_PHASE_STEPS) {  /* 晝夜:地表步數推進相位(原版機制=步數驅動)*/
+                    g_dn_step = 0;
+                    dq3_scene_set_daynight((dq3_scene_get_daynight() + 1) & 3);
+                    dq3_scene_apply_palette(cur);              /* 立即重套(城鎮無 animate_sea 也生效)*/
+                    fprintf(stderr, "晝夜:天色轉為%s\n", DN_NAME[dq3_scene_get_daynight()]);
+                }
                 if (moved) {                                   /* 中毒:每步扣 HP(不致死,留 1)*/
                     int pi2; for (pi2 = 0; pi2 < party.count; pi2++) {
                         dq3_member *pm2 = &roster.list[party.slot[pi2]].m;
@@ -2085,6 +2105,10 @@ static int field_use_item(dq3_inventory *inv, dq3_roster *r, dq3_party *p, int c
         if (broke) { dq3_inv_remove(inv, code); fprintf(stderr, "野外つかう:啊,祈禱之戒壞了。\n"); }
         return 0;                                  /* 無世界層效果(回復/損壞已就地處理)*/
     }
+    if (kind == DQ3_USE_DARK_LAMP) {              /* 黑暗之燈:變夜(不消耗,可重用)*/
+        fprintf(stderr, "野外つかう:黑暗之燈 → 變夜\n");
+        return kind;
+    }
     if (kind == DQ3_USE_RETURN_TOWN || kind == DQ3_USE_REPEL) {   /* 需世界狀態 → 回傳碼交 main */
         dq3_inv_remove(inv, code);
         fprintf(stderr, "野外つかう:%s\n", kind == DQ3_USE_RETURN_TOWN ? "蓋美拉翅膀(回地表)" : "聖水(驅弱敵)");
@@ -2130,7 +2154,7 @@ static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *rost
         else if (sc == 0x4b && cursor - 1 >= 0) cursor -= 1;      /* 左 */
         else if (sc == 0x1c && n > 0) {                          /* Enter 使用 */
             int k = field_use_item(inv, roster, party, codes[cursor]);
-            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN || k == DQ3_USE_GAIA || k == DQ3_USE_DRAIN || k == DQ3_USE_FAIRYFLUTE || k == DQ3_USE_RAINBOW) { world_eff = k; break; }  /* 交 main */
+            if (k == DQ3_USE_RETURN_TOWN || k == DQ3_USE_REPEL || k == DQ3_USE_AWAKEN || k == DQ3_USE_GAIA || k == DQ3_USE_DRAIN || k == DQ3_USE_FAIRYFLUTE || k == DQ3_USE_RAINBOW || k == DQ3_USE_DARK_LAMP) { world_eff = k; break; }  /* 交 main */
         }
     }
     return world_eff;
@@ -2196,6 +2220,7 @@ static const struct { unsigned short rec; int mp; int eff; } FIELD_SPELLS[] = {
     { 172, 8, DQ3_USE_RETURN_TOWN },   /* 魯拉 ルーラ:飛行回城(remake → 回地表)*/
     { 173, 6, DQ3_USE_RETURN_TOWN },   /* 烈米特 リレミト:出迷宮/塔 → 回地表 */
     { 176, 2, DQ3_USE_REPEL },         /* 特黑洛斯 トヘロス:暫時驅弱敵 */
+    { 177, 8, DQ3_USE_RANARUTA },      /* 拉那魯達 ラナルータ:切換晝夜 */
 };
 #define N_FIELD_SPELLS ((int)(sizeof FIELD_SPELLS / sizeof FIELD_SPELLS[0]))
 

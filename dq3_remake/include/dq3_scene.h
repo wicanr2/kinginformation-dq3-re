@@ -138,6 +138,11 @@ void dq3_scene_draw_charsprite_at(const dq3_scene *s, uint8_t *fb, int fb_w, int
  * 確保 DAC 還原成目的場景的 palette,不殘留前一場景(如戰鬥 MNSBK)的色盤。 */
 void dq3_scene_apply_palette(const dq3_scene *s);
 
+/* 晝夜相位(0=白天 1=黃昏 2=黑夜 3=黎明):set 後場景 palette 套用會依相位調暗(bg 暗、sprite 較淺)。
+ * overworld 步數驅動(main.c);ラナルータ 咒 / 黑暗之燈 道具亦可改。 */
+void dq3_scene_set_daynight(int phase);
+int  dq3_scene_get_daynight(void);
+
 /* 起點啟發式:挑 9×9 視窗內可走鄰居最多的可走 tile(用於地表開闊地)。 */
 void dq3_scene_pick_open_start(dq3_scene *s);
 
