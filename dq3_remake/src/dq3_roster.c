@@ -1,6 +1,15 @@
 /* dq3_roster.c — 露依達酒場創角 + 名冊 + 隊伍編成。 */
 #include "dq3_roster.h"
+#include "dq3_rng.h"     /* 忠實創角初始擲值(rng 成長)*/
 #include <string.h>
+
+/* 創角用 rng(忠實初始擲值);首次用時播種(DOS 模式確定性序列,對齊原版 RNG 風格)。 */
+static dq3_rng g_create_rng; static int g_create_seeded = 0;
+static dq3_rng *create_rng(void)
+{
+    if (!g_create_seeded) { dq3_rng_seed(&g_create_rng, 0x4321); g_create_seeded = 1; }
+    return &g_create_rng;
+}
 
 /* 職業名 glyph 索引(D3TXT00.FON;反查 glyph_unicode_map)。 */
 const struct dq3_class_name dq3_class_names[DQ3_NUM_CLASS] = {
@@ -57,7 +66,7 @@ int dq3_roster_create(dq3_roster *r, const dq3_stats *st,
     rc->name_len = name_len;
     for (i = 0; i < name_len; i++) rc->name[i] = name ? name[i] : 0;
     rc->in_party = 0;
-    dq3_member_init(&rc->m, st, cls, 1);   /* Lv1 初始(成長表 base;rng 擲值待 RE 精校)*/
+    dq3_member_init_rng(&rc->m, st, cls, 1, create_rng());   /* Lv1 忠實初始擲值(base + rng(0..slope/2),RE sub_d9cc)*/
     return idx;
 }
 

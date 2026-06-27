@@ -391,7 +391,7 @@ static void apply_victory_exp(member *party, dq3_member *pm, uint32_t total_exp)
     for (i = 0; i < PARTY; i++) {
         int gained;
         if (party[i].hp <= 0) continue;                       /* 陣亡者不獲經驗 */
-        gained = dq3_member_gain_exp(&pm[i], &g_stats, total_exp);
+        gained = dq3_member_gain_exp_rng(&pm[i], &g_stats, total_exp, &g_brng);  /* 忠實 rng 成長 */
         if (gained > 0) {
             party[i].level = pm[i].level;                     /* #5 */
             party[i].maxhp = (int)pm[i].stat[DQ3_STAT_HP];    /* #6 */

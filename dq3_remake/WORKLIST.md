@@ -61,11 +61,12 @@
   (武器/防具)→ 從背包換裝(可裝備性 `dq3_item_can_equip` + category 過濾)/ 卸下(舊品回背包)。
   戰鬥加成沿用既有(武器 b0→atk、防具 b1→def、#7a 雙擊/#7b 抗魔)。debug:DQ3_EQUIP_DUMP+equip token。
   待:擴 5 槽(盾/頭/飾)— 目前 2 槽(武器/防具)。
-- [ ] **忠實初始擲值 / RNG 成長**(需 RE + 動升級系統):★RE 已定位(2026-06-27)——成長 handler
-  sub_d9cc(file 0xed3c)算 `base+slope×level` 後 **`call 0xfa57`(= EXE RNG `[0xb5a]+0x9018;rol×3`)
-  套 rng 變異**;docs「確定性上限」= target 是上限、實際值 = rng 到上限。remake 升級(#4/#5/#6)現用
-  **確定性上限**(已測試簡化)。要忠實 = 把創角 + 每次升級改成 rng(0..target),需重做並重驗升級單測
-  (回歸風險)。非可玩性阻塞。精訊版無性格系統(已確認)。
+- [x] **忠實 rng 成長/初始擲值 ✅**(2026-06-27):RE sub_d9cc(file 0xed3c)成長模型 =
+  `delta = target − 當前值;當前值 += rng(0..delta)`(rng 套朝上限爬升的增量,target 為上限;
+  Lv1 = base + rng(0..slope/2);rng = `call 0xfa57` EXE RNG)。新增 `dq3_member_init_rng/gain_exp_rng`
+  (rng==NULL → 完全等同確定性版 = 現行,既有升級測試零回歸)。接遊戲:創角(roster,seed 0x4321)
+  + 升級 writeback(battlescene 用 g_brng)走 rng;debug fallback 保持確定性。rng 走全域 DOS/REAL 模式。
+  單測 ×4:rng ≤ target 上限 / 同 seed 可重現 / 確有隨機落差 / NULL=確定性。精訊版無性格系統(已確認)。
 
 ### 校準(已靜態 RE 攻克;原列「需 DOSBox」已不成立)
 - [x] **旅社/教會收費公式 ✅**(靜態 RE,2026-06-27):**旅社**已精確(`fac->inn_cost × 人數` = RE

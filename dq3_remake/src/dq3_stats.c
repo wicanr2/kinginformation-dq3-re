@@ -2,6 +2,7 @@
  * 資料改用 dq3_exedata(自 DQ3.EXE DGROUP 抽出編入,生成檔),不再執行期讀 DQ3.EXE。 */
 #include "dq3_stats.h"
 #include "dq3_exedata.h"
+#include "dq3_rng.h"   /* 忠實 rng 成長(RE sub_d9cc)*/
 #include <stdio.h>
 #include <string.h>
 
@@ -110,38 +111,57 @@ int dq3_member_change_class(dq3_member *m, const dq3_stats *st, int new_cls)
     return 0;
 }
 
-void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
+/* 朝上限爬升的增量(RE sub_d9cc:rng(0..delta)),rng==NULL → 取滿 delta(確定性=現行)。 */
+static int grow_amt(int delta, dq3_rng *rng)
 {
-    int k;
+    if (delta <= 0) return 0;
+    return rng ? dq3_rng_next(rng, delta + 1) : delta;
+}
+
+void dq3_member_init_rng(dq3_member *m, const dq3_stats *st, int cls, int level, dq3_rng *rng)
+{
+    int k, lv;
     if (level < 1) level = 1;
     if (level > DQ3_MAX_LEVEL) level = DQ3_MAX_LEVEL;
     m->cls = cls; m->level = level;
     m->exp = st->thresh[cls][level];                  /* 該等級的門檻經驗 */
     for (k = 0; k < DQ3_STAT_COUNT; k++) {
-        int t = dq3_stats_growth_target(st, cls, (dq3_stat_kind)k, level);
-        m->stat[k] = add_clamped_kind(0, t, (dq3_stat_kind)k);   /* #6:初始值也 clamp(高階主屬性 > 255)*/
+        /* 從 base(=target Lv0)逐級朝 target(lv) 爬升 rng(0..delta);rng==NULL → 直達 target(level)。 */
+        int cur = dq3_stats_growth_target(st, cls, (dq3_stat_kind)k, 0);   /* target(0) = base */
+        for (lv = 1; lv <= level; lv++) {
+            int t = dq3_stats_growth_target(st, cls, (dq3_stat_kind)k, lv);
+            int delta = t - cur; if (delta < 0) delta = 0;
+            cur = add_clamped_kind(cur, grow_amt(delta, rng), (dq3_stat_kind)k);   /* #6 clamp */
+        }
+        m->stat[k] = (uint16_t)cur;
     }
     m->cur_hp = m->stat[DQ3_STAT_HP];   /* 起始滿血/滿魔 */
     m->cur_mp = m->stat[DQ3_STAT_MP];
     m->status = 0;                       /* 無異常狀態 */
 }
 
-int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
+void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level)
+{ dq3_member_init_rng(m, st, cls, level, NULL); }   /* 確定性(現行行為,測試用)*/
+
+int dq3_member_gain_exp_rng(dq3_member *m, const dq3_stats *st, uint32_t add, dq3_rng *rng)
 {
     int newlv, gained = 0, k;
     m->exp += add;                                              /* uint32,不溢位 */
     newlv = dq3_stats_level_for_exp(st, m->cls, m->exp, 1);     /* #5:夾在 [1,43] */
     while (m->level < newlv) {
-        int lv0 = m->level, lv1 = m->level + 1;
-        for (k = 0; k < DQ3_STAT_COUNT; k++) {                              /* 逐屬性套成長 delta */
-            int t0 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv0);
+        int lv1 = m->level + 1;
+        for (k = 0; k < DQ3_STAT_COUNT; k++) {                  /* 逐屬性:delta = target(lv1) − 當前值,+= rng(0..delta) */
             int t1 = dq3_stats_growth_target(st, m->cls, (dq3_stat_kind)k, lv1);
-            int delta = t1 - t0; if (delta < 0) delta = 0;
-            m->stat[k] = add_clamped_kind(m->stat[k], delta, (dq3_stat_kind)k);  /* #6:依屬性別 clamp 255/999 */
-            if (k == DQ3_STAT_HP) m->cur_hp = add_clamped_kind(m->cur_hp, delta, DQ3_STAT_HP);  /* 升級加血到 cur */
-            if (k == DQ3_STAT_MP) m->cur_mp = add_clamped_kind(m->cur_mp, delta, DQ3_STAT_MP);
+            int delta = t1 - m->stat[k]; if (delta < 0) delta = 0;
+            int g = grow_amt(delta, rng);
+            m->stat[k] = add_clamped_kind(m->stat[k], g, (dq3_stat_kind)k);        /* #6:依屬性別 clamp 255/999 */
+            if (k == DQ3_STAT_HP) m->cur_hp = add_clamped_kind(m->cur_hp, g, DQ3_STAT_HP);
+            if (k == DQ3_STAT_MP) m->cur_mp = add_clamped_kind(m->cur_mp, g, DQ3_STAT_MP);
         }
         m->level = lv1; gained++;
     }
     return gained;
 }
+
+int dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add)
+{ return dq3_member_gain_exp_rng(m, st, add, NULL); }   /* 確定性(現行行為,測試用)*/

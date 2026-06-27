@@ -105,6 +105,25 @@ int main(int argc, char **argv)
         }
     }
 
+    printf("== 忠實 rng 成長(RE sub_d9cc / file 0xed3c)==\n");
+    {
+        dq3_member det, r1, r2, nul; dq3_rng rng; int k, all_le = 1, repro = 1, below = 0, eq = 1;
+        dq3_member_init(&det, &fix, 0, 20);                              /* 勇者 Lv20 確定性=target 上限 */
+        dq3_rng_seed(&rng, 0x4321); dq3_member_init_rng(&r1, &fix, 0, 20, &rng);
+        dq3_rng_seed(&rng, 0x4321); dq3_member_init_rng(&r2, &fix, 0, 20, &rng);
+        dq3_member_init_rng(&nul, &fix, 0, 20, NULL);
+        for (k = 0; k < DQ3_STAT_COUNT; k++) {
+            if (r1.stat[k] > det.stat[k]) all_le = 0;                   /* rng ≤ 上限 */
+            if (r1.stat[k] != r2.stat[k]) repro = 0;                    /* 同 seed 可重現 */
+            if (r1.stat[k] < det.stat[k]) below = 1;                    /* 確有隨機落差 */
+            if (nul.stat[k] != det.stat[k]) eq = 0;                     /* NULL=確定性 */
+        }
+        CHECK(all_le, "rng 成長各屬性 <= 確定性上限(target)");
+        CHECK(repro, "同 seed -> 同數值(可重現/可測)");
+        CHECK(below,  "rng 成長確有隨機落差(非恆等上限)");
+        CHECK(eq,     "rng==NULL 完全等同確定性版(回歸保證)");
+    }
+
     printf("\n%s (%d failures)\n", g_fail ? "== 有測試未通過 ==" : "== 全部通過 ==", g_fail);
     return g_fail ? 1 : 0;
 }

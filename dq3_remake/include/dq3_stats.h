@@ -82,12 +82,21 @@ typedef struct {
 #define DQ3_STATUS_POISON    0x01   /* どく:驅毒草/教會/旅社解 */
 #define DQ3_STATUS_PARALYSIS 0x02   /* まひ:滿月草/教會解 */
 
-/* 以職業+等級初始化隊員:exp=該級門檻、各屬性=成長目標值(growth_target)。 */
+#include "dq3_rng.h"   /* 忠實 rng 成長(dq3_rng 為匿名 struct typedef,需完整定義)*/
+
+/* 以職業+等級初始化隊員。確定性版:各屬性=成長目標值上限(growth_target)。 */
 void dq3_member_init(dq3_member *m, const dq3_stats *st, int cls, int level);
 
-/* 獲得經驗 → 跨門檻則升級,逐級套成長 delta(以 add_clamped #6 寫回,等級用 #5 修正版)。
- * 回傳本次升的等級數(0=未升)。#4 勇者 MP 由 st 載入時的成長表修正自動生效。 */
+/* 獲得經驗 → 跨門檻則升級。確定性版:逐級套成長 delta(stat 恆等於 target 上限)。
+ * 回傳本次升的等級數(0=未升)。 */
 int  dq3_member_gain_exp(dq3_member *m, const dq3_stats *st, uint32_t add);
+
+/* ★ 忠實 rng 版(RE sub_d9cc / file 0xed3c):每級 delta = target − 當前值,當前值 += rng(0..delta)
+ * (rng 套在朝上限爬升的增量,非絕對值;target 為上限)。Lv1 = base + rng(0..slope/2)。
+ * rng==NULL → 等同確定性版(grow=full delta,完全重現 target);非 NULL → 忠實隨機成長(≤ target)。
+ * rng 走全域模式(DOS/REAL,dq3_rng_set_mode);呼叫端提供 rng 串流。 */
+void dq3_member_init_rng(dq3_member *m, const dq3_stats *st, int cls, int level, dq3_rng *rng);
+int  dq3_member_gain_exp_rng(dq3_member *m, const dq3_stats *st, uint32_t add, dq3_rng *rng);
 
 /* 達瑪轉職:換成 new_cls → 等級歸 1、各屬性減半(DQ3 換職慣例:保留一半)、cur 重置滿。
  * 勇者(cls 0)不可轉職、不可轉成勇者;回 0=成功、-1=不合法。 */
