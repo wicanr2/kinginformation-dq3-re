@@ -42,6 +42,7 @@
 #include "dq3_ship.h"
 #include "dq3_rng.h"
 #include "dq3_config.h"
+#include "dq3_customglyph.h"   /* 自建字形(設/版)— 設定選單標籤 */
 #include "dq3_scripted.h"
 #include "dq3_item_use.h"
 
@@ -612,6 +613,45 @@ static int slot_select(const dq3_text *text, int for_load)
 /* 標題主選單(新遊戲 / 繼續冒險)。顯示標題圖 + 2 項選單。
  * 回 0 = 新遊戲;1..6 = 繼續冒險選定的 slot(該 slot 有存檔)。
  * 「繼續冒險」→ slot_select(for_load=1) 選有資料的 slot;無任何存檔則「繼續冒險」灰化提示後回新遊戲。 */
+static dq3_config *g_cfg = NULL;   /* main 設定;設定選單讀寫 + 存檔 */
+
+/* 設定選單(title「設定」進入):切 RNG 模式(原版 DOS / 真實 REAL)→ 存 dq3.cfg。
+ * 標籤 glyph 用原版字庫 + 自建「設/版」(dq3_customglyph)。←/→/Enter/Space 切換,ESC 存檔離開。 */
+static void config_modal(const char *assets, const dq3_text *text)
+{
+    uint8_t *fb = dq3_fb(); dq3_color pal16[16];
+    static const uint16_t T_SET[2]  = { DQ3_GLYPH_SHE, 1022 };   /* 設定 */
+    static const uint16_t L_RNG[4]  = { 482, 427, 1397, 1157 };  /* 亂數模式 */
+    static const uint16_t V_DOS[2]  = { 555, DQ3_GLYPH_BAN };    /* 原版 */
+    static const uint16_t V_REAL[2] = { 577, 279 };              /* 真實 */
+    static const uint16_t HINT[2]   = { 750, 312 };              /* 返回 */
+    uint8_t white = 15, yellow = 14; int i, dirty = 0;
+    if (!g_cfg) return;
+    while (!dq3_should_quit()) {
+        uint8_t sc = dq3_poll_scancode();
+        if (sc == 0x01 || sc == DQ3_SC_F10) break;               /* ESC/F10 → 存檔離開 */
+        if (sc == 0x4b || sc == 0x4d || sc == 0x1c || sc == 0x39) {  /* ←/→/Enter/Space 切換 */
+            g_cfg->rng_mode = (g_cfg->rng_mode == DQ3_RNG_DOS) ? DQ3_RNG_REAL : DQ3_RNG_DOS;
+            dq3_rng_set_mode(g_cfg->rng_mode); dirty = 1;
+        }
+        if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
+        {   /* 深色框背景(疊在標題上,讓設定文字可讀)*/
+            int blk = pal_near2(pal16,16,0,0,0), frm = pal_near2(pal16,16,255,255,255), bgc = pal_near2(pal16,16,16,16,48);
+            int bx = 150, by = 70, bw = 340, bh = 180;
+            tav_window(fb, bx, by, bw, bh, (uint8_t)blk, (uint8_t)frm, (uint8_t)bgc);
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+150+i*16, by+22, T_SET[i], yellow);
+            for (i = 0; i < 4; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, by+80, L_RNG[i], white);
+            { const uint16_t *v = (g_cfg->rng_mode == DQ3_RNG_REAL) ? V_REAL : V_DOS;
+              for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+(5+i)*16, by+80, v[i], yellow); }
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+140+i*16, by+140, HINT[i], white);
+        }
+        dq3_present(); dq3_delay_ms(16);
+        if (getenv("DQ3_DUMP")) { dq3_dump_ppm(getenv("DQ3_DUMP")); break; }   /* 一幀 dump 驗證 */
+    }
+    if (dirty) { dq3_config_save(g_cfg, dq3_config_path());
+        fprintf(stderr, "設定:亂數模式 = %s,已存 dq3.cfg\n", g_cfg->rng_mode == DQ3_RNG_REAL ? "真實" : "原版"); }
+}
+
 static int title_menu(const char *assets, const dq3_text *text)
 {
     /* glyph 全用原版真實 record 驗證過的(避免 unicode_map 反查錯,如「女」誤標「文」):
@@ -619,6 +659,7 @@ static int title_menu(const char *assets, const dq3_text *text)
      * (繼續 txt02 rec68、冒險之書 txt01 rec43 驗證)。 */
     static const uint16_t NEW[2]  = {488, 711};                 /* 開始(開488 始711)*/
     static const uint16_t CONT[4] = {1079, 1094, 533, 218};     /* 繼續冒險(繼1079 續1094 冒533 險218)*/
+    static const uint16_t SET[2]  = {DQ3_GLYPH_SHE, 1022};      /* 設定(設=自建字形 / 定=1022)*/
     dq3_color pal16[16]; dq3_menu m; uint8_t *fb = dq3_fb();
     int has_any = 0, i, wx = 110, wy = 150;
     uint8_t white = 15, yellow = 14;
@@ -627,7 +668,7 @@ static int title_menu(const char *assets, const dq3_text *text)
     if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
 
     dq3_menu_init(&m, wx, wy);
-    dq3_menu_add(&m, NEW, 2); dq3_menu_add(&m, CONT, 4);
+    dq3_menu_add(&m, NEW, 2); dq3_menu_add(&m, CONT, 4); dq3_menu_add(&m, SET, 2);
     m.cursor = has_any ? 1 : 0;                       /* 有存檔 → 預設「繼續冒險」*/
 
     while (!dq3_should_quit()) {
@@ -643,6 +684,10 @@ static int title_menu(const char *assets, const dq3_text *text)
                     /* 取消 → 回標題選單 */
                     if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
                 }
+            }
+            if (sel == 2) {                            /* 設定 → 設定選單 */
+                config_modal(assets, text);
+                if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
             }
         }
         if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) { /* 標題底圖每幀重繪 */ }
@@ -2339,6 +2384,7 @@ int main(int argc, char **argv)
     /* 設定套用順序:預設 → 設定檔(跨平台,取代 env)→ env(僅 dev/CI override)。 */
     dq3_config_default(&cfg);
     dq3_config_load(&cfg, dq3_config_path());
+    g_cfg = &cfg;                              /* 設定選單讀寫 */
     if (rngmode) cfg.rng_mode = (rngmode[0]=='r'||rngmode[0]=='R') ? DQ3_RNG_REAL : DQ3_RNG_DOS;
     dq3_rng_set_mode(cfg.rng_mode);
     if (cfg.rng_mode == DQ3_RNG_REAL)
@@ -2382,6 +2428,9 @@ int main(int argc, char **argv)
         rc = run_text(assets, dump);
     } else if (strcmp(mode, "tavern") == 0) {
         rc = run_tavern(assets, dump);
+    } else if (strcmp(mode, "config") == 0) {       /* 設定畫面驗證(DQ3_DUMP 一幀)*/
+        dq3_text t; char cerr[256];
+        if (dq3_text_load(&t, assets, "D3TXT00.TXT", cerr, sizeof cerr) == 0) { config_modal(assets, &t); dq3_text_free(&t); }
     } else {
         const char *title = (argc > 3) ? argv[3]
                           : (strcmp(mode, "title") == 0 ? "TITG.P" : mode);

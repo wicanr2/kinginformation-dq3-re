@@ -1,6 +1,7 @@
 /* dq3_text.c — 遊戲文字/對話渲染實作。 */
 #include "dq3_text.h"
 #include "dq3_assets.h"   /* dq3_font_glyph */
+#include "dq3_customglyph.h"   /* 自建字形 fallback(idx >= DQ3_CG_BASE)*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,6 +69,10 @@ void dq3_text_draw_glyph(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
                          int x, int y, int idx, uint8_t fg)
 {
     uint8_t g[16][16]; int r,c;
+    if (idx >= DQ3_CG_BASE) {     /* 自建字形(原版字庫沒有的 UI 詞,如「設」)*/
+        dq3_customglyph_draw(idx - DQ3_CG_BASE, fb, fb_w, fb_h, x, y, fg);
+        return;
+    }
     if (dq3_font_glyph(t->fon, t->fon_len, idx, g) != 0) return;
     for (r=0;r<16;r++) for(c=0;c<16;c++){
         int yy=y+r, xx=x+c;

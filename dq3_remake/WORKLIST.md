@@ -53,8 +53,10 @@
   互動選咒子選單(列領頭施法成員已學可施放咒 + MP,選定設 `g_manual_cast_*`);無選則自動放最強攻擊咒。
 - [x] **注音↔英數 切換鍵 ✅**(已實作,此項 stale):`dq3_tavern.c` 創角姓名輸入 **Tab 鍵**
   (sc 0x0f)`name_mode ^= 1` 切換英數盤(`dq3_nameinput`)↔注音盤(`dq3_zhuyin`),各自渲染/輸入。
-- [ ] **設定選單 UI**:title 加「設定」→ RNG 模式(DOS/REAL)存 dq3.cfg。後端 `dq3_config` 已備;
-  blocker = 「設定」非原版詞、無 D3TXT00 record 可取 glyph(需 unicode_map glyph + dump 視覺驗證)。
+- [x] **設定選單 UI ✅**(2026-06-27):title 加「設定」第三項 → `config_modal` 切 RNG 模式
+  (原版 DOS / 真實 REAL)存 dq3.cfg。★解 glyph blocker:**自建字形 pipeline**
+  (`tools/gen_custom_glyphs.py` 用 NotoSansCJK rasterize CJK → 16×16 font 格式;`dq3_customglyph.c/h`;
+  `dq3_text_draw_glyph` 對 idx≥0xf000 fallback)補原版字庫缺的「設/版」。dump 驗證畫面清楚可讀。
 - [ ] **per-member 裝備模型**(較大 feature):逐人武器/防具欄 + 買賣/裝備 UI + 戰鬥加成接線;
   目前戰鬥用簡化加成(力量→atk/體力→def)。
 - [ ] **忠實初始擲值 / RNG 成長**(需 RE + 動升級系統):★RE 已定位(2026-06-27)——成長 handler
