@@ -136,10 +136,11 @@ void dq3_opl2_write(dq3_opl2 *o, int reg, int val)
         o->ch[c].block = (val >> 2) & 0x07;
         newkey = (val >> 5) & 1;
         update_phinc(o, c, 0); update_phinc(o, c, 1);
-        if (newkey && !o->ch[c].keyon) {            /* key-on:觸發兩 op attack */
+        if (newkey && !o->ch[c].keyon) {            /* key-on:觸發兩 op attack(env 歸零→乾淨淡入,無 click) */
             for (k = 0; k < 2; k++) {
                 o->ch[c].op[k].state = ENV_ATK;
                 o->ch[c].op[k].phase = 0.0;
+                o->ch[c].op[k].env = 0.0;
             }
         } else if (!newkey && o->ch[c].keyon) {     /* key-off:進入 release */
             for (k = 0; k < 2; k++) o->ch[c].op[k].state = ENV_REL;
@@ -151,12 +152,14 @@ void dq3_opl2_write(dq3_opl2 *o, int reg, int val)
     }
 }
 
-/* envelope 速率 0..15 → 每樣本變化量(近似:速率越大越快;以時間常數換算) */
+/* envelope 速率 0..15 → 每樣本變化量(近似:速率越大越快;以時間常數換算)。
+ * 關鍵:夾最短 ramp 時間,避免高 AR/RR 算出「一個 sample 跳到底」造成爆音 click。 */
 static double atk_step(dq3_opl2 *o, int r)
 {
     double ms;
     if (r == 0) return 0.0;
     ms = 8.0 * pow(0.5, (double)r);          /* r 大 → attack 短 */
+    if (ms < 3.0) ms = 3.0;                  /* 最短 attack 3ms(無瞬跳 click) */
     return 1.0 / (ms * 0.001 * o->sr + 1.0);
 }
 static double dec_step(dq3_opl2 *o, int r)
@@ -164,6 +167,7 @@ static double dec_step(dq3_opl2 *o, int r)
     double ms;
     if (r == 0) return 0.0;
     ms = 80.0 * pow(0.5, (double)r);
+    if (ms < 6.0) ms = 6.0;                  /* 最短 decay/release 6ms(無瞬切 click) */
     return 1.0 / (ms * 0.001 * o->sr + 1.0);
 }
 
@@ -178,13 +182,13 @@ static double op_eval(dq3_opl2 *o, op_t *op, double pmod)
         break;
     case ENV_DEC: {
         double tgt = sl_to_amp(op->sl);
-        op->env += (tgt - op->env) * dec_step(o, op->dr) * 4.0;
+        op->env += (tgt - op->env) * dec_step(o, op->dr) * 2.0;
         if (op->env <= tgt + 0.001) { op->env = tgt; op->state = ENV_SUS; }
         break; }
     case ENV_SUS: break;
     case ENV_REL:
-        op->env -= op->env * dec_step(o, op->rr) * 4.0;
-        if (op->env < 0.0005) { op->env = 0.0; op->state = ENV_OFF; }
+        op->env -= op->env * dec_step(o, op->rr);     /* 不再 ×4:平滑 release,不爆音 */
+        if (op->env < 0.0003) { op->env = 0.0; op->state = ENV_OFF; }
         break;
     default: return 0.0;
     }
@@ -221,8 +225,8 @@ void dq3_opl2_render(dq3_opl2 *o, short *out, int nsamples)
                 mix += carout;
             }
         }
-        mix *= 0.22;                       /* 9 channel 混音衰減 */
-        if (mix > 1.0) mix = 1.0; else if (mix < -1.0) mix = -1.0;
-        out[n] = (short)(mix * 30000.0);
+        mix *= 0.16;                       /* 降增益、留 headroom(避免多聲部相加爆掉) */
+        mix = tanh(mix);                   /* 軟性飽和取代硬切峰 → 杜絕刺耳失真 */
+        out[n] = (short)(mix * 28000.0);
     }
 }
