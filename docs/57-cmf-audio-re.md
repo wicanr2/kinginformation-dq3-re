@@ -57,6 +57,28 @@ RE 也獨立佐證音樂播放器**實際運作**:
   **不是主碼段**。直接反組譯主段 file 0x160f(=主段邏輯 0x29f)得到的是遊戲碼(give-item/memory alloc),錯段。
   → 須先解出**驅動段的 file base**(查 EXE relocation / segment 配置 / `mov ax,seg; mov ds/es,ax` 載入驅動段的常數),才能正確反組譯 ISR。
 
+## ★★ Phase 1 完成:精訊音樂 = MBG.MCX 的 18 條 OPL2 FM 音軌(2026-06-27)
+
+**音樂資料找到了**,且**不是內嵌 EXE**(修正先前假設)—— 是外部封包檔 `MBG.MCX`(127504 bytes)。
+
+定位鏈(全靜態 RE,工具 `tools/omf_lib.py` + `tools/extract_cmf.py`):
+1. **OMF parser 解 SBCM.LIB**(26 模組)→ 音樂相關:`cmfasm`(CMF API:`_sbfm_play_music` 等)、
+   `CMFDRV`(`SBFM_CMF_DRV`,0x14b0 解譯器)、`midirtn`(`SBFM_MIDI_SERVICE` 事件 ISR + `SBFM_MIDI_DATA` 0x260 FAR_DATA)。
+2. **byte-match 驅動進 EXE**(k=8 視窗投票,用段→file 公式):
+   `cmfasm` CT_TEXT @ file **0x1409c**(`_sbfm_init`=0x1409c、**`_sbfm_play_music`=0x140ee**、`_sbfm_instrument`=0x14101);
+   `CMFDRV` @ ~0x14d3e(2269 視窗命中);`midirtn` @ 0x142f5–0x16021。
+3. **找 `_sbfm_play_music` 呼叫者**(掃 0x9A far call,目標解到 0x140ee):2 處,file **0x11aaf / 0x11d2f**,
+   都是 `lcall 0x129c:0x3be`(=0x129c×16+0x3be+0x1370=0x140ee ✓)。
+4. **解呼叫慣例**:play-song wrapper(file 0x11a6e)`mov ax,[DGROUP:0x253c]; mov ds,ax` → DS = 載入歌曲的配置段;
+   軌結構 `{[ds:6]=樂器, [ds:8]=事件, [ds:0xc]=tempo 除數}`;tempo = 0x1234dc / [ds:0xc]。
+   wrapper 內先 `int21 AH=0x42 lseek + AH=0x3f read` → **音樂從檔案 seek+read 載入**(非 EXE 內嵌)。
+5. **MBG.MCX 結構**:開頭 **76-byte 前導 dword 偏移表**(18 筆遞增 file offset,首筆 0x4c = 表大小);
+   → **18 條音軌**,各為 CMF 變體(header `28 00 / instr_ptr / event_ptr / 60 00 … 01 01`,18 軌格式一致);
+   由 EXE 連入的 CMFDRV(OPL2 FM)解譯。`tools/extract_cmf.py` 已可拆成 `work/music/track_00..17.bin`(gitignore)。
+
+> ⚠ **修正前面所有「內嵌 EXE / 無附曲序 / timer reprogram=節拍」的推測**:音樂在 `MBG.MCX`、18 軌、CMF/OPL2、
+> 經 seek 載入。先前追的 INT8 timer ISR 是 VGA 螢幕子系統(無關)。曲目對應場景另需 RE 選曲呼叫端(Phase 4)。
+
 ## ★ 解鎖:load-relative 段位址 → file offset 換算(已驗證,2026-06-27)
 
 多段 large-model EXE 反組譯的關鍵換算 —— **`file = seg×16 + off + 0x1370`**(0x1370 = EXE header 結束 / 載入映像在檔內起點):
