@@ -39,6 +39,12 @@ void dq3_audio_set_sfx_enabled(int on);
 int  dq3_audio_sfx_enabled(void);
 int  dq3_audio_sfx_count(int bank);
 
+/* ── 音源後端切換:SB FM 即時合成 / MT-32 預錄 WAV(從使用者 MT-32 ROM render)── */
+enum { DQ3_AUDIO_SB = 0, DQ3_AUDIO_MT32 = 1 };
+void dq3_audio_set_backend(int backend);   /* 切換;MT-32 需 <assets>/mt32/track_NN.wav 存在 */
+int  dq3_audio_backend(void);
+int  dq3_audio_mt32_available(void);       /* MT-32 WAV 資產是否就緒(否則設定不提供此選項)*/
+
 /* 語意化音效(集中對應,id 待依 RE/聽感精校)。 */
 enum { DQ3_SE_CONFIRM = 0, DQ3_SE_CANCEL, DQ3_SE_ATTACK, DQ3_SE_HIT,
        DQ3_SE_SPELL, DQ3_SE_DAMAGE, DQ3_SE_DOOR, DQ3_SE_ITEM, DQ3_SE__COUNT };

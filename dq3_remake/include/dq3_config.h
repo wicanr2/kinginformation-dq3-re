@@ -14,6 +14,7 @@ typedef struct {
     int rng_mode;        /* DQ3_RNG_DOS / DQ3_RNG_REAL */
     int music_enabled;   /* 0/1:精訊 SB FM 音樂(MBG.MCX)開關 */
     int music_volume;    /* 0..100 */
+    int audio_backend;   /* 0=SB FM 即時合成、1=MT-32 預錄 WAV */
 } dq3_config;
 
 /* 預設值(rng=DOS 忠實)。 */

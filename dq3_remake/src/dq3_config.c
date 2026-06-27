@@ -10,6 +10,7 @@ void dq3_config_default(dq3_config *c)
     c->rng_mode = DQ3_RNG_DOS;   /* 預設忠實 */
     c->music_enabled = 1;
     c->music_volume = 70;
+    c->audio_backend = 0;   /* SB FM */
 }
 
 const char *dq3_config_path(void)
@@ -48,6 +49,9 @@ int dq3_config_load(dq3_config *c, const char *path)
         } else if (strcmp(key, "music_vol") == 0) {
             int v = atoi(val); c->music_volume = v < 0 ? 0 : (v > 100 ? 100 : v);
             got++;
+        } else if (strcmp(key, "audio") == 0) {
+            c->audio_backend = (val[0]=='m' || val[0]=='M') ? 1 : 0;   /* mt32 / sb */
+            got++;
         }
     }
     fclose(f);
@@ -62,6 +66,7 @@ int dq3_config_save(const dq3_config *c, const char *path)
     fprintf(f, "rng=%s\n", c->rng_mode == DQ3_RNG_REAL ? "real" : "dos");
     fprintf(f, "music=%d\n", c->music_enabled ? 1 : 0);
     fprintf(f, "music_vol=%d\n", c->music_volume);
+    fprintf(f, "audio=%s\n", c->audio_backend ? "mt32" : "sb");
     fclose(f);
     return 0;
 }

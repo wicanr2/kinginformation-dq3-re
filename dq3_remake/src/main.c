@@ -657,9 +657,13 @@ static void config_modal(const char *assets, const dq3_text *text)
     static const uint16_t L_VOL[2]  = { 313, 280 };              /* 音量 */
     static const uint16_t V_ON      = 488;                       /* 開 */
     static const uint16_t V_OFF     = 683;                       /* 關 */
+    static const uint16_t L_AUD[2]  = { 313, 1428 };             /* 音源 */
+    static const uint16_t V_FM[2]   = { 20, 27 };                /* FM(SB FM)*/
+    static const uint16_t V_MT[4]   = { 27, 34, 3, 2 };          /* MT32 */
     static const uint16_t HINT[2]   = { 750, 312 };              /* 返回 */
     uint8_t white = 15, yellow = 14; int i, dirty = 0, row = 0;
-    const int NROW = 3;                                          /* 0=RNG 1=音樂 2=音量 */
+    int has_mt32 = dq3_audio_mt32_available();
+    const int NROW = has_mt32 ? 4 : 3;                           /* 0=RNG 1=音樂 2=音量 3=音源(有 MT-32 才出現)*/
     if (!g_cfg) return;
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
@@ -675,23 +679,28 @@ static void config_modal(const char *assets, const dq3_text *text)
                 g_cfg->music_enabled = !g_cfg->music_enabled;
                 dq3_audio_set_enabled(g_cfg->music_enabled);
                 if (g_cfg->music_enabled) dq3_audio_play_scene(DQ3_MUS_TITLE, 1);
-            } else {
+            } else if (row == 2) {
                 int v = g_cfg->music_volume + dir * 10;
                 if (sc == 0x1c || sc == 0x39) v = g_cfg->music_volume + 10;   /* Enter:+10 循環 */
                 if (v > 100) v = 0; if (v < 0) v = 100;
                 g_cfg->music_volume = v;
                 dq3_audio_set_volume(v);
+            } else {                                              /* row3 音源 SB FM ↔ MT-32 */
+                g_cfg->audio_backend = !g_cfg->audio_backend;
+                dq3_audio_set_backend(g_cfg->audio_backend ? DQ3_AUDIO_MT32 : DQ3_AUDIO_SB);
+                g_cfg->audio_backend = dq3_audio_backend();       /* 同步實際(切失敗則退回)*/
+                if (g_cfg->music_enabled) dq3_audio_play_scene(DQ3_MUS_TITLE, 1);
             }
             dirty = 1;
         }
         if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
         {   /* 深色框背景(疊在標題上,讓設定文字可讀)*/
             int blk = pal_near2(pal16,16,0,0,0), frm = pal_near2(pal16,16,255,255,255), bgc = pal_near2(pal16,16,16,16,48);
-            int bx = 150, by = 60, bw = 340, bh = 200;
-            int rowy[3]; int r;
+            int bx = 150, by = 56, bw = 340, bh = 216;
+            int rowy[4]; int r;
             tav_window(fb, bx, by, bw, bh, (uint8_t)blk, (uint8_t)frm, (uint8_t)bgc);
-            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+150+i*16, by+16, T_SET[i], yellow);
-            rowy[0] = by+62; rowy[1] = by+96; rowy[2] = by+130;
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+150+i*16, by+14, T_SET[i], yellow);
+            rowy[0] = by+54; rowy[1] = by+86; rowy[2] = by+118; rowy[3] = by+150;
             for (r = 0; r < NROW; r++)                            /* 游標 ▶ 標目前列 */
                 dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+18, rowy[r], (uint16_t)(r==row?11:12), yellow);
             /* row0 亂數模式 */
@@ -704,15 +713,24 @@ static void config_modal(const char *assets, const dq3_text *text)
             /* row2 音量 數字 */
             for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, rowy[2], L_VOL[i], white);
             draw_number_at(fb, text, bx+40+6*16, rowy[2], g_cfg->music_volume, yellow);
-            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+140+i*16, by+168, HINT[i], white);
+            /* row3 音源(有 MT-32 才畫)*/
+            if (has_mt32) {
+                for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, rowy[3], L_AUD[i], white);
+                if (g_cfg->audio_backend)
+                    for (i = 0; i < 4; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+(6+i)*16, rowy[3], V_MT[i], yellow);
+                else
+                    for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+(6+i)*16, rowy[3], V_FM[i], yellow);
+            }
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+140+i*16, by+188, HINT[i], white);
         }
         dq3_present(); dq3_delay_ms(16);
         if (getenv("DQ3_DUMP")) { dq3_dump_ppm(getenv("DQ3_DUMP")); break; }   /* 一幀 dump 驗證 */
     }
     if (dirty) { dq3_config_save(g_cfg, dq3_config_path());
-        fprintf(stderr, "設定:亂數=%s 音樂=%s 音量=%d,已存 dq3.cfg\n",
+        fprintf(stderr, "設定:亂數=%s 音樂=%s 音量=%d 音源=%s,已存 dq3.cfg\n",
                 g_cfg->rng_mode == DQ3_RNG_REAL ? "真實" : "原版",
-                g_cfg->music_enabled ? "開" : "關", g_cfg->music_volume); }
+                g_cfg->music_enabled ? "開" : "關", g_cfg->music_volume,
+                g_cfg->audio_backend ? "MT-32" : "SB FM"); }
 }
 
 static int title_menu(const char *assets, const dq3_text *text)
@@ -2683,6 +2701,7 @@ int main(int argc, char **argv)
     dq3_audio_init(assets);                    /* 載 MBG.MCX + 開 SDL audio(headless 安全 no-op)*/
     dq3_audio_set_enabled(cfg.music_enabled);
     dq3_audio_set_volume(cfg.music_volume);
+    if (cfg.audio_backend == 1) dq3_audio_set_backend(DQ3_AUDIO_MT32);  /* MT-32(若資產就緒)*/
 
     /* 場景配曲:各模式進場放對應軌(主迴圈背景持續播放)。 */
     if (strcmp(mode, "field") == 0)      dq3_audio_play_scene(DQ3_MUS_FIELD, 1);

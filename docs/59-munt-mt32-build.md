@@ -54,6 +54,19 @@ docker run --rm -v "$PWD/work/music":/m munt-smf2wav -m /m/mt32rom -s /m/out.wav
 DQ3 全 18 軌的自動轉換(MIDI → MT-32 wav → OGG)整合在
 [`../tools/export_music_mt32.sh`](../tools/export_music_mt32.sh)。
 
+## 遊戲內音源切換(remake 設定選單)
+
+remake 設定選單加了「**音源:SB FM / MT-32**」一列(僅當 MT-32 音檔就緒才出現):
+- **SB FM** = 現有 OPL2 即時合成(`dq3_opl2`),無額外資產。
+- **MT-32** = 播放預先 render 的音檔(從你的 MT-32 ROM 出來的),由 SDL audio callback 串流 + 重取樣。
+
+**音檔格式:優先 OGG,退回 WAV。**
+- build 時 CMake 偵測 `libvorbisfile`(裝 `libvorbis-dev`)→ 定義 `DQ3_HAVE_VORBIS`,remake 直接解碼播放 `.ogg`(~15MB / 18 軌,小)。
+- 沒有 libvorbis 的平台 → 用 `.wav`(`tools/export_mt32_wav.sh` 產 22050Hz mono,~37MB,零解碼依賴)。
+- 放置:把音檔放到 `<assets>/mt32/track_NN.ogg`(或 `.wav`),或設 env `DQ3_MT32_DIR`。設定值存 `dq3.cfg` 的 `audio=sb|mt32`。
+
+> 匯出 18 軌 OGG:`tools/export_music_mt32.sh`(已含,輸出 `work/music/export/mt32/`,複製到 `<assets>/mt32/` 即用)。
+
 ## 版權立場
 
 MT-32 ROM 與遊戲音樂資料皆來自使用者合法持有的硬體與遊戲檔,僅作個人保存與技術研究,不隨原始碼散布。
