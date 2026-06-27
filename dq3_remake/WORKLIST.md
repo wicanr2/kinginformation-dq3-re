@@ -8,7 +8,7 @@
 ## 現況快照(2026-06-27)
 
 `dq3_remake/`(C99 + SDL2)= **完整、可玩、資料驅動**的精訊版 DQ3 核心,**主線可破關**。
-每個數值/邏輯都從 `DQ3.EXE` 或遊戲資料抽出。`tools/game_tester.sh` **80/80 全綠**(交付 gate)。
+每個數值/邏輯都從 `DQ3.EXE` 或遊戲資料抽出。`tools/game_tester.sh` **86/86 全綠**(交付 gate)。
 已打包 Linux tar + **Linux AppImage** + **Windows x64 zip**(交叉編譯,wine 驗證);macOS/Android 待移植(規劃見 docs/55)。
 
 ```
@@ -25,7 +25,7 @@
 - **remake 引擎**:scene(攝影機/tile/碰撞/走動)、field/town、主角+NPC sprite(27)、text/dialogue、battle(指令/AI/施法/升級)、roster/tavern、注音 IME(英數↔注音 Tab 切換)、status/spell/item 畫面、鑰匙門(35§八)、NPC mover(35§九)、retro-cjk hires 畫布、**步數晝夜系統**(4 相位+palette 調暗+ラナルータ/黑暗之燈)、**自建字形 pipeline**(`gen_custom_glyphs.py`,補原版缺字)。
 - **7 bug C 層全修**:#1 結算 / #2 合成(產 0x75)/ #3 blit guard+復原 sprite / #4-6 rng 升級系統 / #7a 隼劍雙擊 / #7b 魔甲抗魔 / #8 palette 還原。#7c 祈禱之戒(回 MP+~25% 損壞)依 RE 忠實實作。
 - **主線可破關**:8 里程碑真實 NPC 觸發;`[0x722]` runner/region scripted-event 靜態攻克(re-log-722,57 setter)。
-- **杜勝利攻略接線**:B 道具鏈(夢幻紅寶石/變身杖/蓋亞之劍/鑰匙鏈/彩虹水滴/領悟之書/王者之劍)、A boss(巴拉摩斯+怨靈122/殭屍123/索瑪124、甘達特金皇冠、甘達特巢穴 CTY14、八頭大蛇 CTY19)、不死鳥拉米亞坐騎(六珠)。道具取得鏈全列(`quest-items.md`,無 stale)。
+- **杜勝利 + 青衫攻略接線**:B 道具鏈(夢幻紅寶石/變身杖/蓋亞之劍/鑰匙鏈/彩虹水滴/領悟之書/王者之劍)、A boss(巴拉摩斯+怨靈122/殭屍123/索瑪124、甘達特金皇冠、甘達特巢穴 CTY14、八頭大蛇 CTY19、**六大魔人怪106**)、不死鳥拉米亞坐騎(六珠)、**勇氣神殿神父 gate(flag0x13)**、**蓋亞那跳坑下降閘(flag0x213)**。全流程缺口盤點見 `docs/data/walkthrough-flow-audit.md`(11 缺口→8 已解,剩 B-5/B-6/B-7/E-11 不阻塞)。**賢者 gate 道具碼 bug 已修(領悟之書 0x4a)**。道具取得鏈全列(`quest-items.md`,無 stale)。
 - **戰鬥系統忠實化**:傷害公式逐一對反組譯確認精確(物理/弱攻/會心×2/咒文)、怪物 AI/數值/遭遇全 RE、**狀態咒**(拜基魯多/史卡拉/魯卡尼/瑪努莎/瑪荷頓 等 base==0 套修正,research+impl 對照 `spell-effects-research.md`)、**rng 升級成長**(RE sub_d9cc:`+= rng(0..(target−當前))`,創角+升級,NULL=確定性零回歸)、手動選咒選單、教會復活費 RE level 表。
 - **野外/系統**:野外咒文施放(魯拉/烈米特/特黑洛斯)、per-member 裝備管理 UI、設定選單(RNG 模式 DOS/REAL 存 dq3.cfg)、寶箱開過回饋。
 - **存讀檔 v6**:多 slot(6)+ F5/F9 + 標題選單;存名冊/隊伍/道具/位置/船/**劇情進度 storyflags**/晝夜相位。
