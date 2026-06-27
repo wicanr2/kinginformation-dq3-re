@@ -33,9 +33,12 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
 - [ ] `tools/extract_cmf.py`:依 1f/1h 定位 dump 各曲 → `work/music/song_NN.bin`(gitignore)+ 印 instrument 數/事件數驗證。
 
 ### Phase 2 — OPL2 core + CMF parser(離線驗聽感)
-- [ ] `dq3_remake/src/dq3_opl2.{c,h}`:OPL2(YM3812)FM 核心(公開精簡實作移植;render s16 取樣)。
-- [ ] `dq3_remake/src/dq3_cmf.{c,h}`:CMF parser(header/instruments/events)+ tick 排程器(→ OPL reg 寫入)。
-- [ ] 離線工具 render 一首 → wav,人工聽感確認(像 AdLib/聲霸卡 FM)。
+- [x] **事件格式解碼 + 離線驗證(2026-06-27)**:`tools/cmf_render.py` 解析軌事件(MIDI-like + 尾隨 delta +
+  **running status**)+ 2-op FM 合成 → wav。track00=2021 事件/1007 音符/~120s、track02=997/494/~49s,**旋律完整正確**。
+  格式規格見 docs/57「Phase 2 起步」。⚠ track17 等少數軌 note-on/off 配對失敗(編碼變體,待查)。
+- [ ] `dq3_remake/src/dq3_opl2.{c,h}`:OPL2(YM3812)FM 核心(公開精簡實作移植;render s16 取樣)= **authentic AdLib 音色**。
+- [ ] `dq3_remake/src/dq3_cmf.{c,h}`:軌 parser(instrument→OPL reg + 事件排程器)+ note→fnum/block + 精確 tempo。
+- [ ] 離線工具 render 一首 → wav,人工聽感確認(像 AdLib/聲霸卡 FM)。Python 版已證旋律對;C/OPL2 版補真實音色。
 
 ### Phase 3 — SDL audio 串接 remake
 - [ ] `dq3_remake/src/dq3_audio.{c,h}`:SDL audio callback（44100 s16）+ OPL2 render + 排程推進。

@@ -82,6 +82,28 @@
 > ⚠ **修正前面所有「內嵌 EXE / 無附曲序 / timer reprogram=節拍」的推測**:音樂在 `MBG.MCX`、18 軌、CMF/OPL2、
 > 經 seek 載入。先前追的 INT8 timer ISR 是 VGA 螢幕子系統(無關)。曲目對應場景另需 RE 選曲呼叫端(Phase 4)。
 
+## ★ Phase 2 起步:音軌事件格式解碼(已用離線 render 驗證,2026-06-27)
+
+`tools/cmf_render.py` 解析 MBG.MCX 拆出的軌、用 2-op FM 合成 → wav,**證實精訊旋律完整**:
+track00 = 2021 事件 / 1007 音符 / ~120 秒;track02 = 997 / 494 / ~49 秒。
+
+**軌結構**(header 後接 instrument 區 + event 區):
+- header word[3](file offset 6,值恆 0x0060)= event block 起點;event 區從該處第一個 status byte(≥0x80)開始
+  (有些軌 0x60 前有幾個 `00` preamble)。instrument 區在 header 與 event 之間(0x28–0x60 附近,佈局待 C 版精校)。
+
+**事件格式 = MIDI-like channel-voice + 尾隨 delta + running status**(關鍵!):
+- 每事件:`[status?][data...][delta]`。status byte ≥0x80,低 nibble = MIDI channel。
+  - `9x note vel delta` = note-on(`vel==0` 視為 note-off);`8x note vel delta` = note-off。
+  - `bx ctrl val delta` = control change;`cx prog delta` = program change(選樂器);`ex lo hi delta` = pitch。
+- **running status**:若該位置 byte <0x80,代表沿用上一個 status(省略 status byte)→ note-on/off 交替時常見
+  (`90 39 00 00`(off)接 `39 6b 00`(running,沿用 90,note-on))。**沒處理 running status 會在第 ~14 事件 desync**。
+- `delta` = 到下個事件等待的 tick 數(單 byte;實測 ≤0x7f)。tempo:wrapper `tempo=0x1234dc/[ds:0xc]`,8253 base 1193182Hz。
+- 終止:status `0xff`/`0xf0` 或讀到軌尾。
+
+> 待精校(C 版 Phase 2):① instrument 區 → OPL2 暫存器對應(用 cmfasm `_sbfm_instrument` + CMFDRV 佈局);
+> ② note→fnum/block(標準 AdLib 公式或驅動表);③ tick→秒(精確 tempo);④ track17 等用 9643 事件但 note-on/off
+> 配對失敗的軌(編碼變體,待查)。但旋律序列已正確,Phase 2 主結構成立。
+
 ## ★ 解鎖:load-relative 段位址 → file offset 換算(已驗證,2026-06-27)
 
 多段 large-model EXE 反組譯的關鍵換算 —— **`file = seg×16 + off + 0x1370`**(0x1370 = EXE header 結束 / 載入映像在檔內起點):
