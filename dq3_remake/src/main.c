@@ -1603,8 +1603,16 @@ static int run_game(const char *assets, const char *dump)
         } else if (sc == 0x16 && !in_town && phoenix_revived) {  /* 不死鳥:起飛 */
             phoenix_aboard = 1;
             fprintf(stderr, "搭乘不死鳥拉米亞起飛(飛越山海)\n");
-        } else if (sc == 0x16 && !in_town) {  /* U:下降/上升(開發捷徑;正式下降=runner event 86,docs/44)*/
-            if (layer == 0) do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);  /* scripted_event 86 */
+        } else if (sc == 0x16 && !in_town) {  /* U:下降(ギアガの大穴)/上升 */
+            if (layer == 0) {
+                /* 正式下降 = runner event 86(ギアガの大穴掉落,handler 0x783d)。原版觸發旗標為劇情動態、
+                 * 無靜態 setter(docs/44 §RE 結論)→ 自製忠實 gate:需**巴拉摩斯已敗(flag 0x213)**,
+                 * 對齊杜勝利 Ch44→46(打倒巴拉摩斯→索瑪現身→才下降アレフガルド)。debug `descent` token 不受此閘(測試用)。*/
+                if (dq3_flags_get(&flags, 0x213))
+                    do_descent(assets, &field_under, &cur, &layer, &in_town, &cur_cty, &flags);  /* scripted_event 86 */
+                else
+                    fprintf(stderr, "下降:ギアガの大穴尚未開啟 — 需先擊敗巴拉摩斯(索瑪現身,flag 0x213)\n");
+            }
             else { layer = 0; cur = field; dq3_scene_apply_palette(cur); fprintf(stderr, "上升 → 地表\n"); }
         } else if (sc == 0x39) {            /* SPACE:進/出城鎮 */
             if (!in_town) {

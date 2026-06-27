@@ -156,6 +156,11 @@ o=$(DQ3_DEBUG="party;warp:47:25:17:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS"
 echo "$o" | grep -q "接受單獨戰鬥挑戰" && ok "勇氣神殿神父 CTY47:接受挑戰(flag 0x13)" || ng "勇氣神殿神父挑戰"
 o=$(DQ3_DEBUG="party;warp:75:26:8:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "回來了嗎" && ok "勇氣神殿神父 CTY75:神殿開放返回對話" || ng "勇氣神殿神父返回"
+# D-10 下降閘(ギアガの大穴 runner ev86):自製忠實 gate=需巴拉摩斯敗(flag 0x213,杜 Ch44→46);debug descent token 不受閘
+o=$(DQ3_DEBUG="party" DQ3_INPUT="ssyyy" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "尚未開啟" && ok "D-10 下降閘:未敗巴拉摩斯 → 擋" || ng "D-10 下降閘(未敗擋)"
+o=$(DQ3_DEBUG="party;flag:0x213" DQ3_INPUT="ssyyy" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "scripted_event 86 下降" && ok "D-10 下降閘:敗巴拉摩斯(0x213)→ 下降" || ng "D-10 下降閘(敗後可下降)"
 o=$(DQ3_DEBUG="warp:20:4:9:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "獲得道具 0x5f" && ok "提頓村 CTY20 黑暗之燈" || ng "黑暗之燈"
 o=$(DQ3_DEBUG="warp:26:11:12:2" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
