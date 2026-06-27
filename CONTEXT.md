@@ -46,7 +46,8 @@
 ## 知識庫索引(`docs/`)
 
 ### 方法論(先讀)
-- [`00`](docs/00-re-methodology.md) 逆向方法論:羅塞塔範本、跳表派發、位址基準陷阱、資料反證標註(可重用)
+- [`00`](docs/00-re-methodology.md) 逆向方法論:羅塞塔範本、跳表派發、位址基準陷阱、資料反證標註(可重用 RE *技術*)
+- ⭐ [經驗教訓 Lessons Learned](docs/lessons-learned.md) 多輪協作教訓:別鬼打牆(已完成別當未完成重查)、ground truth=code+使用者、靜態 RE 優先不依賴 DOSBox、柵欄原則用對、斷言前驗證、NULL=現行零回歸、記憶只存教訓(*怎麼工作不繞遠路*)
 
 ### 素材格式與還原
 - [`01`](docs/01-asset-inventory.md) 資產 inventory 與格式偵察(194 檔)

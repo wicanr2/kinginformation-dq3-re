@@ -110,9 +110,10 @@
 
 > 完整術語表 + 知識庫入口見 [`CONTEXT.md`](CONTEXT.md)。以下依主題索引重要文件。
 
-**核心 / 進度**
+**核心 / 進度 / 方法論**
 - [`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md) — remake 現況 + 真正剩餘工作（唯一真相）
-- [`docs/47`](docs/47-remaining-work.md) 剩餘工作盤點 · [`docs/46`](docs/46-debug-hook.md) DEBUG 口 · [`docs/00`](docs/00-re-methodology.md) 逆向方法論
+- ⭐ [**經驗教訓 Lessons Learned**](docs/lessons-learned.md) — 多輪協作踩雷 → 根因 → 紀律（別鬼打牆 / 靜態 RE 優先 / 斷言前驗證 / 零回歸改法…）
+- [`docs/00`](docs/00-re-methodology.md) 逆向方法論（可重用 RE 技術）· [`docs/47`](docs/47-remaining-work.md) 剩餘工作盤點 · [`docs/46`](docs/46-debug-hook.md) DEBUG 口
 
 **素材格式與還原** — [`01`](docs/01-asset-inventory.md) inventory · [`02`](docs/02-font-format.md) 字型 · [`03`](docs/03-text-format.md) 文字腳本 · [`04`](docs/04-map-format.md) 地圖 tile · [`27`](docs/27-bls-character-sprites.md) 角色 sprite · [`33`](docs/33-name-tables.md) 名稱表 · [`51`](docs/51-palette-and-overworld-sprites.md) palette/地表 sprite
 
