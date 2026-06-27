@@ -10,7 +10,7 @@ void dq3_config_default(dq3_config *c)
     c->rng_mode = DQ3_RNG_DOS;   /* 預設忠實 */
     c->music_enabled = 1;
     c->music_volume = 70;
-    c->audio_backend = 0;   /* SB FM */
+    c->audio_backend = 1;   /* 預設 MT-32(無 MT-32 音檔時自動退回 SB FM)*/
 }
 
 const char *dq3_config_path(void)

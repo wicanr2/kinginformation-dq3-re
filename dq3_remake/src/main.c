@@ -646,6 +646,43 @@ static dq3_config *g_cfg = NULL;   /* main 設定;設定選單讀寫 + 存檔 */
  * 標籤 glyph 用原版字庫 + 自建「設/版」(dq3_customglyph)。←/→/Enter/Space 切換,ESC 存檔離開。 */
 static void draw_number_at(uint8_t *fb, const dq3_text *t, int x, int y, int v, uint8_t fg);  /* 前置宣告 */
 
+/* F1 按鍵說明視窗:列出按鍵 → 功能,疊在目前畫面上,按任意鍵關閉。 */
+static void help_modal(const dq3_text *text)
+{
+    /* 每列:key glyph(ASCII/F-key)+ 功能(CJK record)。ASCII:A-Z=15..40、0-9=0..9。 */
+    static const uint16_t K_DIR[] = {547,548,1167};      static const uint16_t D_DIR[] = {612,619};       /* 方向鍵→走動 */
+    static const uint16_t K_ENT[] = {19,28,34,19,32};    static const uint16_t D_ENT[] = {1318,1127};      /* ENTER→確認 */
+    static const uint16_t K_ESC[] = {19,33,17};          static const uint16_t D_ESC[] = {614,514};        /* ESC→取消 */
+    static const uint16_t K_F1[]  = {20,1};              static const uint16_t D_F1[]  = {909,286};        /* F1→說明 */
+    static const uint16_t K_F5[]  = {20,5};              static const uint16_t D_F5[]  = {603,713};        /* F5→存檔 */
+    static const uint16_t K_F9[]  = {20,9};              static const uint16_t D_F9[]  = {721,713};        /* F9→讀檔 */
+    static const uint16_t K_F10[] = {20,1,0};            static const uint16_t D_F10[] = {502,488};        /* F10→離開 */
+    static const uint16_t K_M[]   = {27};                static const uint16_t D_M[]   = {313,1428,1301,794}; /* M→音源切換 */
+    static const uint16_t TITLE[] = {1166,1167,909,286}; /* 按鍵說明 */
+    struct { const uint16_t *k; int nk; const uint16_t *d; int nd; } rows[] = {
+        {K_DIR,3,D_DIR,2},{K_ENT,5,D_ENT,2},{K_ESC,3,D_ESC,2},{K_F1,2,D_F1,2},
+        {K_F5,2,D_F5,2},{K_F9,2,D_F9,2},{K_F10,3,D_F10,2},{K_M,1,D_M,4},
+    };
+    int NR = (int)(sizeof rows / sizeof rows[0]);
+    uint8_t *fb = dq3_fb();
+    int bx = 180, by = 50, bw = 280, bh = 290, i, r;
+    while (!dq3_should_quit()) {
+        uint8_t sc;
+        tav_window(fb, bx, by, bw, bh, 0, 15, 0);
+        for (i = 0; i < 4; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+bw/2-32+i*16, by+14, TITLE[i], 14);
+        for (r = 0; r < NR; r++) {
+            int y = by + 50 + r*28, kx = bx + 24, dx = bx + 130;
+            for (i = 0; i < rows[r].nk; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, kx+i*13, y, rows[r].k[i], 14);
+            for (i = 0; i < rows[r].nd; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, dx+i*16, y, rows[r].d[i], 15);
+        }
+        dq3_present();
+        sc = dq3_poll_scancode();
+        if (sc) break;                       /* 任意鍵關閉 */
+        dq3_delay_ms(16);
+        if (getenv("DQ3_DUMP")) { dq3_dump_ppm(getenv("DQ3_DUMP")); break; }
+    }
+}
+
 static void config_modal(const char *assets, const dq3_text *text)
 {
     uint8_t *fb = dq3_fb(); dq3_color pal16[16];
@@ -741,8 +778,13 @@ static int title_menu(const char *assets, const dq3_text *text)
     static const uint16_t NEW[2]  = {488, 711};                 /* 開始(開488 始711)*/
     static const uint16_t CONT[4] = {1079, 1094, 533, 218};     /* 繼續冒險(繼1079 續1094 冒533 險218)*/
     static const uint16_t SET[2]  = {DQ3_GLYPH_SHE, 1022};      /* 設定(設=自建字形 / 定=1022)*/
+    static const uint16_t L_AUD[2] = {313, 1428};               /* 音源 */
+    static const uint16_t V_FM[2]  = {20, 27};                  /* FM */
+    static const uint16_t V_MT[4]  = {27, 34, 3, 2};            /* MT32 */
+    static const uint16_t HINT_M[3] = {1166, 27, 1167};         /* 按 M 鍵 */
     dq3_color pal16[16]; dq3_menu m; uint8_t *fb = dq3_fb();
     int has_any = 0, i, wx = 110, wy = 150;
+    int has_mt32 = dq3_audio_mt32_available();
     uint8_t white = 15, yellow = 14;
 
     for (i = 1; i <= DQ3_SAVE_SLOTS; i++) if (dq3_save_exists(slot_path(i))) has_any = 1;
@@ -754,6 +796,18 @@ static int title_menu(const char *assets, const dq3_text *text)
 
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
+        if (sc == DQ3_SC_F1) {                        /* F1:按鍵說明 */
+            help_modal(text);
+            if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
+            sc = 0;
+        }
+        if (sc == 0x32 && has_mt32) {                 /* M 鍵:切換音源 SB FM ↔ MT-32 */
+            dq3_audio_set_backend(dq3_audio_backend() == DQ3_AUDIO_MT32 ? DQ3_AUDIO_SB : DQ3_AUDIO_MT32);
+            if (g_cfg) { g_cfg->audio_backend = dq3_audio_backend(); dq3_config_save(g_cfg, dq3_config_path()); }
+            dq3_audio_play_scene(DQ3_MUS_TITLE, 1);
+            fprintf(stderr, "音源 → %s\n", dq3_audio_backend() == DQ3_AUDIO_MT32 ? "MT-32" : "SB FM");
+            sc = 0;                                   /* 不傳給選單 */
+        }
         if (sc) {
             int sel = dq3_menu_input(&m, sc);
             if (sel == 0) return 0;                   /* 新遊戲 */
@@ -773,6 +827,14 @@ static int title_menu(const char *assets, const dq3_text *text)
         }
         if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) { /* 標題底圖每幀重繪 */ }
         dq3_menu_render(&m, text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, white, yellow);
+        if (has_mt32) {                               /* 音源指示 + M 鍵提示(右下)*/
+            int ax = DQ3_SCREEN_W - 150, ay = DQ3_SCREEN_H - 28;
+            int mt = (dq3_audio_backend() == DQ3_AUDIO_MT32);
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, ax+i*14, ay, L_AUD[i], white);
+            if (mt) for (i = 0; i < 4; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, ax+30+i*12, ay, V_MT[i], yellow);
+            else    for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, ax+30+i*12, ay, V_FM[i], yellow);
+            for (i = 0; i < 3; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, ax+84+i*14, ay, HINT_M[i], white);
+        }
         dq3_present(); dq3_delay_ms(16);
     }
     return 0;
@@ -1209,7 +1271,9 @@ static int run_game(const char *assets, const char *dump)
             dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         sc = dq3_poll_scancode();
-        if (sc == DQ3_SC_F5) {              /* F5:隨時存檔 → 選 slot(使用者需求:隨時存讀)*/
+        if (sc == DQ3_SC_F1) {              /* F1:按鍵說明視窗 */
+            help_modal(sys_ok ? &sys_txt : &dlg.txt);
+        } else if (sc == DQ3_SC_F5) {       /* F5:隨時存檔 → 選 slot(使用者需求:隨時存讀)*/
             int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 0);
             if (slot >= 1) {
                 save_game_to(slot_path(slot), &roster, &party, &inv, &flags,
@@ -2702,7 +2766,8 @@ int main(int argc, char **argv)
     dq3_audio_init(assets);                    /* 載 MBG.MCX + 開 SDL audio(headless 安全 no-op)*/
     dq3_audio_set_enabled(cfg.music_enabled);
     dq3_audio_set_volume(cfg.music_volume);
-    if (cfg.audio_backend == 1) dq3_audio_set_backend(DQ3_AUDIO_MT32);  /* MT-32(若資產就緒)*/
+    dq3_audio_set_backend(cfg.audio_backend ? DQ3_AUDIO_MT32 : DQ3_AUDIO_SB);  /* 預設 MT-32 */
+    cfg.audio_backend = dq3_audio_backend();   /* 同步實際(無 MT-32 音檔→退回 SB)*/
 
     /* 場景配曲:各模式進場放對應軌(主迴圈背景持續播放)。 */
     if (strcmp(mode, "field") == 0)      dq3_audio_play_scene(DQ3_MUS_FIELD, 1);
