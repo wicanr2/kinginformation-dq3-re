@@ -116,7 +116,15 @@ track00 = 2021 事件 / 1007 音符 / ~120 秒;track02 = 997 / 494 / ~49 秒。
 
 **折衷(已實作)**:`dq3_cmf.c` 用 8 個各異 FM patch(brass/bass/organ/string/flute/pluck/reed/bell),
 依 program-change 分配 channel → 聲部音色分明(bass≠旋律≠和聲),比單一 patch 大幅改善。
-**待精校**:展開 0x1563d 鏈得精確原版音色;目前折衷非原版逐音色還原但音樂性正確。
+
+### ★ instrument 格式已確認(11-byte AdLib),但軌內索引仍需 loader RE(2026-06-27)
+反組譯 `0x1563d`(寫 operator 暫存器)確認 instrument = **標準 11-byte AdLib**,寫入順序:
+`mod0x20, car0x20, mod0x40, car0x40, mod0x60, car0x60, mod0x80, car0x80, mod0xE0, car0xE0, fb0xC0`
+(source si=0x1c6 = 驅動內部 9-channel buffer,99 bytes)。
+但「軌內 instrument 表 → 該 buffer」的填充/索引**不是 `base+prog×11`**:在 header w0(0x28)/w2(0x30) 兩候選起點,
+按 11-byte stride 解各 program,carrier AR 多為 0(會靜音)→ 索引方式錯。真索引需追填 0x1c6 buffer 的 loader
+(同 tempo `[ds:0xc]` 的 in-memory 結構 indirection;track 載入非 1:1 對映 ds:0)。**精確逐曲音色待此 loader trace;**
+目前 8-patch 折衷音樂性正確、穩定,為交付狀態。
 
 ## ★ 解鎖:load-relative 段位址 → file offset 換算(已驗證,2026-06-27)
 
