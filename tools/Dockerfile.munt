@@ -1,0 +1,15 @@
+# munt(MT-32 模擬器)的 mt32emu-smf2wav:把 MIDI 經真 MT-32 ROM 離線 render 成 wav。
+# 用途:精訊 DQ3 音樂的 MT-32/Roland 版(使用者自有 MT-32 ROM)。
+FROM debian:bookworm-slim
+RUN apt-get update -qq && \
+    apt-get install -y -qq --no-install-recommends \
+        git cmake build-essential ca-certificates \
+        pkg-config libglib2.0-dev && \
+    rm -rf /var/lib/apt/lists/*
+RUN git clone --depth 1 https://github.com/munt/munt.git /munt && \
+    cmake -S /munt/mt32emu -B /b-lib -DCMAKE_BUILD_TYPE=Release -Dlibmt32emu_SHARED=TRUE && \
+    cmake --build /b-lib -j4 && cmake --install /b-lib && ldconfig && \
+    cmake -S /munt/mt32emu_smf2wav -B /b-smf -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /b-smf -j4 && cmake --install /b-smf && \
+    rm -rf /munt /b-lib /b-smf
+ENTRYPOINT ["mt32emu-smf2wav"]
