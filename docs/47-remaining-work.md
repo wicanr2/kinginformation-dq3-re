@@ -75,14 +75,16 @@ event index 沒有對應的觸發 setter**;搜尋「跳進坑」之類提示 NPC
 
 ### B. 完整還原(faithful,非破關必須)
 
-5. ~~**狀態效果**~~ **(部分落地)**:member.status bitfield(中毒/麻痺)。中毒 overworld 走路扣 HP
-   (不致死留 1);驅毒草(0x42)解毒、滿月草(0x45)解麻痺、教會解異常;debug 口 `status:slot:bit`。
-   存檔 v4。**戰鬥整合已接**:status 進出戰鬥同步(overworld 中毒延續)、回合末毒傷(3 HP 留 1)、
-   麻痺不能行動。**剩**:怪物施加狀態(需 D3MNS 狀態攻擊資料,follow-up)。
-6. **NPC 互動完整化**:cmd-menu「話す」走 byte4 對話(目前部分路徑用舊 demo);子型2 條件對話的
-   旗標分支(目前只顯示主對話)。
-7. **overworld 旗標 portal 全表**:目前接 3 個寫死座標(docs/45 §3.2),完整需抽 0x396e 全部分支。
-8. **scripted warp 全接**:§5b 的 8 個 0xd1f9 warp(洞穴→城)NPC 觸發 + dest≥100 overworld 回程。
+5. ~~**狀態效果**~~ **✅(已落地,2026-06-27 更新)**:member.status bitfield(中毒/麻痺)。中毒 overworld
+   走路扣 HP、驅毒草/滿月草/教會解;戰鬥整合(進出同步、回合末毒傷、麻痺不能行動)。
+   **怪物施加狀態已接**:第一性原理 RE(`docs/re-log-spell-effect-dispatch.md`)——base==0 咒中 144 睡/152 混亂
+   →麻痺;其餘 base==0 輔助/狀態咒(拜基魯多/史卡拉/魯卡尼/瑪努莎/瑪荷頓)套戰鬥修正狀態(`spell-effects-research.md`)。
+6. ~~**NPC 互動完整化**~~ **✅(已落地)**:cmd-menu「話す」走 byte4 對話;**子型2 條件對話的旗標分支已接**
+   (sub2 give/take 全接 + 檢查型 16/44/50 的 `require_item` 持物/缺物兩態對白,0x7c0c 不消耗檢查)。
+7. ~~**overworld 旗標 portal 全表**~~ **✅(2026-06-27 RE 確認完備)**:RE 0x396e 全分支抽完——3 條靜態城變體
+   portal 即全部;其餘分支非靜態 portal(存位置→CTY36 動態幽靈船 / (76,54) flag0x35 scripted 事件)。
+8. ~~**scripted warp 全接**~~ **✅(連接已可走)**:8 個 0xd1f9(洞穴→城)的連接在遊戲內由 type-2 examine
+   warp(0x4ea0)+ section +0xc 轉場表覆蓋;`dq3_locwarp` 是同連接的冗餘資料表,不需單獨 wiring。
 9. ~~**道具效果**~~ **(#3 已落地)**:`dq3_item_use`(+test 12 斷言)。消耗品 id 由商店價
    交叉驗證鎖定(docs/49);藥草治 HP(持久 HP,封頂/陣亡保護)、聖水驅弱敵、蓋美拉翅膀回地表
    已生效;解毒/解麻痺待狀態系統(#5)。debug 口 `use:N`/`hurt:N`;playthrough +3 斷言。
@@ -91,9 +93,16 @@ event index 沒有對應的觸發 setter**;搜尋「跳進坑」之類提示 NPC
 
 ### C. Polish
 
-10. 寶箱開過 tile 翻面(取後外觀變空)· 旅社/教會精確收費公式 · 同城多攤逐攤化(資料已備)。
-11. 戰鬥逃跑/道具指令完整 · 咒文全效果。~~轉職(達瑪)實際換職~~ **已落地**(dq3_member_change_class
-    + 達瑪神官選單 dhama_modal:選隊員→選職業;CTY49 (6,4) NPC 觸發 / debug `dhama`)。
+10. ~~寶箱開過 tile 翻面~~ **✅ 已落地**(使用者選「疊變暗/開蓋標記」,`dq3_scene_mark_opened_tile`;
+    原版本不翻 tile,此為 remake 增強)· ~~旅社/教會精確收費公式~~ **✅ 靜態 RE**(旅社 = 設施 block +1 ×
+    人數;教會復活 = RE level 表 0x3c6c)· 同城多攤逐攤化(資料已備,未做)。
+11. ~~轉職(達瑪)實際換職~~ **✅ 已落地**(dq3_member_change_class + dhama_modal;CTY49 NPC / debug `dhama`)。
+    ~~咒文全效果~~ **✅ 大幅落地**(戰鬥狀態咒 + 野外咒文 魯拉/烈米特/特黑洛斯,`spell-effects-research.md`)。
+    戰鬥逃跑/道具指令完整(基本已有)。
+
+> **★ 全檔狀態(2026-06-27)**:A 段(破關 blocker)全解;B 段(faithful)§5-§9 全落地;C 段大致落地。
+> 真正剩餘見 `dq3_remake/WORKLIST.md`(裝備擴5槽 / 晝夜各相位 palette 精校 / Windows 打包);
+> **無「需 DOSBox debugger」的硬骨頭**(此環境無 DOSBox,靜態 RE 已解多數)。
 
 ## 早期 build 的「道具來源斷鏈」(已查證 pattern)
 
