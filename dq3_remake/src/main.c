@@ -318,6 +318,12 @@ static unsigned g_sea_frame = 0;   /* 海面 palette cycling 幀計數 */
 static int g_dn_step = 0;
 #define DN_PHASE_STEPS 60                      /* 每相位步數(白天→黑夜 120 步,使用者指定)*/
 static const char *DN_NAME[4] = { "白天", "黃昏", "黑夜", "黎明" };
+
+/* B-7 耶進貝亞倉庫番(CTY76):3 石頭 NPC(b2==40)推到藍白地面目標 → 開密道取乾渴壺。
+ * scene-scoped:離城重入(scene reload)→ 石頭 + 此旗標自動重置(使用者要求)。 */
+static int g_sokoban_solved = 0;
+#define SOKOBAN_CTY 76
+static const int SOKOBAN_TGT[3][2] = { {4,5}, {5,5}, {6,5} };   /* 藍白地面 tile 91 位置 */
 static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text, dq3_inventory *inv);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
 static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
@@ -1014,6 +1020,7 @@ static int run_game(const char *assets, const char *dump)
             else if (sscanf(tok, "item:%i", &a) == 1) { dq3_inv_add(&inv, a); fprintf(stderr, "[DEBUG] item 0x%x\n", a); }
             else if (sscanf(tok, "gold:%d", &a) == 1) { gold = a; fprintf(stderr, "[DEBUG] gold=%d\n", a); }
             else if (sscanf(tok, "dn:%d", &a) == 1) { dq3_scene_set_daynight(a); if (cur) dq3_scene_apply_palette(cur); fprintf(stderr, "[DEBUG] 晝夜相位=%s\n", DN_NAME[a&3]); }
+            else if (strcmp(tok, "sokoban") == 0) { g_sokoban_solved = 1; fprintf(stderr, "[DEBUG] 倉庫番強制解謎(密道開啟,測試用)\n"); }
             else fprintf(stderr, "[DEBUG] 未知指令: %s\n", tok);
         }
       }
@@ -1119,6 +1126,8 @@ static int run_game(const char *assets, const char *dump)
             if (orbs >= 6) { phoenix_revived = 1;
                 fprintf(stderr, "★ 六珠齊備(綠藍紅紫黃銀)→ 不死鳥拉米亞復活!(出城至 overworld 按 y 起飛)\n"); }
         }
+        /* B-7 倉庫番:離開 CTY76 → 解謎旗標重置(石頭由 scene reload 自動回原位;使用者要求重入重置)。 */
+        if (cur_cty != SOKOBAN_CTY) g_sokoban_solved = 0;
         /* NPC 隨機走動(docs/35 §九):城鎮每幀步進;對話中凍結不動。 */
         if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
         if (!in_town) animate_sea(cur, g_sea_frame++);   /* 海面 palette cycling(地表/下層)*/
@@ -1553,7 +1562,11 @@ static int run_game(const char *assets, const char *dump)
                         fprintf(stderr, "★ 擊敗甘達特(怪26)→ 可取金皇冠\n"); }
                     else fprintf(stderr, "甘達特戰 outcome=%d(未勝)→ 金皇冠未取\n", oc);
                 }
-                if (is_item) {
+                /* B-7 倉庫番 gate:CTY76 的乾渴壺 0x5e 在密道開啟前(三石未歸位)不可取。 */
+                if (is_item && cur_cty == SOKOBAN_CTY && ep2 == 0x5e && !g_sokoban_solved) {
+                    fprintf(stderr, "耶進貝亞倉庫番:密道未開 — 需先把三顆大石推到上方藍白地面(杜 Ch26)\n");
+                    if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xf3);   /* 暫借「空的」訊息 */
+                } else if (is_item) {
                     /* 系統訊息 / 道具名走常駐 D3TXT00(sys_txt),非當前 section 對話 bank(docs/42)。 */
                     if (gandata_gate && !dq3_flags_get(&flags, 0x210)) {   /* 甘達特未敗 → 皇冠不可取 */
                         if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xf3);
@@ -1691,7 +1704,29 @@ static int run_game(const char *assets, const char *dump)
                 if (r == DQ3_SHIP_BOARD)          fprintf(stderr, "登船 → 可跨海\n");
                 else if (r == DQ3_SHIP_DISEMBARK) fprintf(stderr, "上岸 → 船停泊 (%d,%d) layer%d\n", ship.px, ship.py, ship.layer);
             } else {
-                moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
+                /* B-7 倉庫番推石(CTY76):面向石頭 NPC(b2==40)→ 推到下一格(可走+無 NPC)+ 玩家跟進。
+                 * 三石歸藍白地面 → g_sokoban_solved 開密道(乾渴壺 examine 才放行)。 */
+                int sdx = (sc==0x4d)-(sc==0x4b), sdy = (sc==0x50)-(sc==0x48);
+                int stx = cur->px+sdx, sty = cur->py+sdy;
+                int sni = (cur_cty == SOKOBAN_CTY) ? dq3_scene_npc_at(cur, stx, sty) : -1;
+                if (sni >= 0 && cur->npcs[sni].b2 == 40) {
+                    int psx = stx+sdx, psy = sty+sdy;
+                    cur->facing = (sc==0x48)?2:(sc==0x50)?0:(sc==0x4b)?1:3;
+                    if (dq3_scene_walkable(cur, psx, psy) && dq3_scene_npc_at(cur, psx, psy) < 0) {
+                        dq3_npc_move(cur, cur->npcs, sni, psx, psy);   /* 推石頭 */
+                        cur->px = stx; cur->py = sty; moved = 1;
+                        if (!g_sokoban_solved) {                       /* 三石歸位判定 */
+                            int on = 0, k, ti;
+                            for (k = 0; k < cur->n_npcs; k++) if (cur->npcs[k].b2 == 40)
+                                for (ti = 0; ti < 3; ti++)
+                                    if (cur->npcs[k].x == SOKOBAN_TGT[ti][0] && cur->npcs[k].y == SOKOBAN_TGT[ti][1]) on++;
+                            if (on >= 3) { g_sokoban_solved = 1;
+                                fprintf(stderr, "★ 耶進貝亞倉庫番:三石歸藍白地面 → 密道開啟!可取乾渴壺(杜 Ch26)\n"); }
+                        }
+                    } else moved = 0;   /* 石頭被牆/石擋,推不動 */
+                } else {
+                    moved = dq3_scene_input(cur, sc);   /* 對話中不在此分支(上面已攔)*/
+                }
             }
             if (!moved && in_town) {
                 /* 被擋:若面向鎖門且隊伍持足夠等級鑰匙 → 開門後重試(docs/35 §八)。*/

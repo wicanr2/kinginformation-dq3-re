@@ -32,6 +32,8 @@ typedef struct {
 
 /* 把 NPC 蓋上場景 hi_map(存底 tile 到 base_hi;tile 高 byte = 底&0xc0 | 0x20|slot)。 */
 void dq3_npc_stamp(dq3_scene *s, dq3_npc *npcs, int idx);
+/* 移動 NPC 到 (nx,ny)(unstamp+移動+stamp);倉庫番推石 B-7 用。 */
+void dq3_npc_move(dq3_scene *s, dq3_npc *npcs, int idx, int nx, int ny);
 
 /* 走一步(鏡射 mover L02025):每幀 1/4 機率評估、靜止/凍結直接 return;
  * 多沿當前朝向走、1/20 轉向;落步閘:界內 / 不踏玩家格(否則反向)/ 不疊 NPC(0x20)/ 不撞牆(attr bit0)。

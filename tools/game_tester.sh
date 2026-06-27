@@ -52,6 +52,11 @@ o=$(DQ3_DEBUG="party;finale" DQ3_INPUT="$EE" timeout 30 "$BIN" "$ASSETS" game 2>
 echo "$o" | grep -q "THE END" && ok "結局捲動(ENDTXT 全段 → THE END)" || ng "結局捲動"
 # E-11 時代結尾:破索瑪→洛特裝備昇華(そして伝説へ;精訊原無洛特道具,remake 補)
 echo "$o" | grep -q "そして伝説へ" && ok "E-11 時代結尾:勇者受冊封為洛特+三裝備昇華(王者→洛特之劍 攻150)" || ng "E-11 洛特結尾"
+# B-7 耶進貝亞倉庫番 sokoban:乾渴壺 0x5e 在密道開啟前(三石未歸位)不可取;解謎後可取
+o=$(DQ3_DEBUG="warp:76:7:6:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "密道未開" && ok "B-7 倉庫番:三石未歸位→乾渴壺密道未開(擋)" || ng "B-7 倉庫番閘"
+o=$(DQ3_DEBUG="warp:76:7:6:0;sokoban" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得道具 0x5e" && ok "B-7 倉庫番:三石歸位(密道開)→ 取乾渴壺 0x5e" || ng "B-7 乾渴壺取得"
 # sub2 給物 NPC:水槍 / 光之珠
 o=$(DQ3_DEBUG="warp:22:4:4:1" DQ3_INPUT="le" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=31:獲得道具 0x4b" && ok "sub2 給物 31(水槍)" || ng "sub2 給物 31"

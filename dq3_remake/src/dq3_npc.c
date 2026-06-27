@@ -22,6 +22,14 @@ static void unstamp(dq3_scene *s, dq3_npc *npc)
     if (s->hi_map) s->hi_map[npc->y * s->map_w + npc->x] = npc->base_hi;  /* 還原底 tile */
 }
 
+/* 把 NPC idx 移到 (nx,ny):unstamp 舊格 → 移動 → stamp 新格(供倉庫番推石 B-7)。 */
+void dq3_npc_move(dq3_scene *s, dq3_npc *npcs, int idx, int nx, int ny)
+{
+    unstamp(s, &npcs[idx]);
+    npcs[idx].x = (uint8_t)nx; npcs[idx].y = (uint8_t)ny;
+    dq3_npc_stamp(s, npcs, idx);
+}
+
 /* 嘗試沿當前朝向走一步;成功回 1。 */
 static int try_step(dq3_scene *s, dq3_npc *npcs, int idx)
 {

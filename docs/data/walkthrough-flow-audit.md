@@ -64,10 +64,13 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
    - **接線**:CTY83 (16,2) 老人 NPC 位:掃隊伍 class6 商人 → `dq3_roster_remove`(寄存,裝備回阿里阿罕預存所,杜)
      + flag 0x216 建城完成 + rec5「謝謝你」;無商人→rec1。黃寶珠 0x6a(Ch41 革命後)已在 treasure 表 CTY83。
    - **殘留(視覺)**:建城後 NPC 視覺增生(草原→19 NPC 建好態)未做 ── questline 機制(寄存+旗標)已完整,屬 polish。game_tester 90/90。
-7. **耶進貝亞倉庫番推三石 puzzle**(杜 Ch26)— ⬜ **評估後不實作(冗餘 gate)**:乾渴壺 0x5e **已在 CTY76 sec0
-   3 個 examine tile((19,2)/(7,5)/(7,6))可直接取得**(treasure 表 flag 0x3a/0x3b),puzzle 在 remake 不 gate 任何東西。
-   原版 sokoban(推三石到藍白地面開密道)在 remake 需新增整套推塊機制(碰撞/3 目標/開門),**只為一個已能直接拿的道具
-   = 零 gameplay 價值**。依比例原則不實作;若日後要 puzzle 體驗再議。**乾渴壺取得無缺口**。
+7. **耶進貝亞倉庫番推三石 sokoban** — ✅ **已實作(2026-06-27,懷舊還原)**(杜 Ch26):使用者指正「這是懷舊還原、致敬解謎設計」。
+   - **RE 布局**:3 顆大石 = NPC(b2==40,ctrl=0xc0 靜止)@ CTY76 (3,10)/(5,10)/(7,10);藍白地面目標 = tile 91 @ (4,5)/(5,5)/(6,5);
+     瓶頸 (5,8) 為唯一上下通道(真 sokoban)。乾渴壺 0x5e examine tile 在密道後。
+   - **接線**:`dq3_npc_move`(unstamp+移動+stamp)+ main.c 推塊(面向石頭→推下一格,可走+無 NPC)+ 玩家跟進;
+     三石歸目標 → `g_sokoban_solved` 開密道;**乾渴壺 examine gate 在 g_sokoban_solved**(未解→「密道未開」)。
+   - **重置**:離 CTY76 → g_sokoban_solved 清 + 石頭由 scene reload 回原位(使用者要求重入重置);寶箱開過→空(treasure flag 持久)。
+   - 驗證:推塊 dump 確認石頭移動、閘門前擋/後取(`sokoban` debug token)、game_tester 93/93。布局是忠實原版可解 puzzle。
 8. **勇氣神殿「單獨戰鬥」gate** — ✅ **已接(2026-06-27)**(杜 Ch29-30):
    - 神父 CTY47 (25,16) byte4=37 挑戰 → 接受 set **flag 0x13**(原版 test_flag(0x13))→ 此 flag 同時驅動
      既有 owportal({82,165}→flag0x13→CTY75)把朗錫爾轉「神殿開放態」CTY75 → 通勇氣洞窟 CTY23(藍寶珠 0x67 已在 treasure 表)。
