@@ -9,7 +9,7 @@
 
 `dq3_remake/`(C99 + SDL2)= **完整、可玩、資料驅動**的精訊版 DQ3 核心,**主線可破關**。
 每個數值/邏輯都從 `DQ3.EXE` 或遊戲資料抽出。`tools/game_tester.sh` **80/80 全綠**(交付 gate)。
-已打包 Linux tar + **Windows x64 zip**(交叉編譯,wine 驗證);AppImage 選配未做。
+已打包 Linux tar + **Linux AppImage** + **Windows x64 zip**(交叉編譯,wine 驗證);macOS/Android 待移植(規劃見 docs/55)。
 
 ```
 阿里阿罕起步 → 露依達酒場創角(職業→注音/英數命名→性別)→ 名冊/隊伍
@@ -55,7 +55,21 @@
   (dq3_remake.exe 647KB + SDL2.dll + run.bat)。entry 用 `SDL_MAIN_HANDLED` 自管 main(免 SDL2main/WinMain);
   `-static-libgcc`(僅依賴 KERNEL32/SDL2/msvcrt);setenv→`_putenv_s` 可攜化。**wine ABI 實機驗證**:載真實
   素材、繪地表一幀正確;Linux build 80/80 無回歸。
-- [ ] **AppImage**(選配,低優先):Linux 已有 tar(`tools/package.sh`);AppImage 僅省去使用者裝 SDL2,價值邊際。
+- [x] **Linux AppImage ✅**(2026-06-27):`tools/package_appimage.sh` —— 容器內手工 AppDir + ldd 打包 SDL2 及
+  46 個相依 .so + AppRun(LD_LIBRARY_PATH + 自動定位 assets_raw)+ 自製圖示(不嵌版權標題畫面);appimagetool
+  `--appimage-extract-and-run`(免 FUSE)+ type2-runtime。產 `dist/linux/dq3_remake-x86_64.AppImage`(7.3MB,slim)。
+  **實測執行**:bundled SDL2 載真實素材繪地表一幀正確。注:較新 glibc 建置,極舊發行版請改自編。
+
+### 實機展示
+- [x] **demo MP4 錄製 ✅**(2026-06-27):引擎加 `DQ3_RECDIR` 逐幀錄製 hook(`dq3_present` 內,headless 也可錄);
+  `tools/record_demo.sh` 兩階段(docker 錄 title/地表晝夜/指令窗/裝備 4 槽/戰鬥 → host ffmpeg 組片)。風格對齊作者
+  IJ 專案:深藍金字成果說明卡 + 實機片段 + 淡入淡出,1280×720/25fps,~49s。產 `work/video/dq3_remake_demo.mp4`。
+  **mp4/截圖含版權渲染像素,依 .gitignore 政策不入版控**(腳本可重生,可掛 GitHub Release)。
+
+### 跨平台延伸(規劃)
+- [ ] **macOS / Android 移植**:規劃見 `docs/55-android-macos-port-plan.md`。macOS 工作量小(SDL2 原生 + .app 打包 +
+  CI),Android 中–大(SDLActivity/NDK + 素材解壓 + 觸控 UI)。可先做零回歸前置:進入點 `#ifndef __ANDROID__` 守衛、
+  素材/存檔路徑 base-dir 抽象。
 
 ### 不在此環境做 / 不依賴 DOSBox(記憶 `dq3-no-dosbox-debugger`)
 - **DOSBox 逐畫面 oracle**:此環境**無 DOSBox runtime**,不掛在它上面當待辦。已能靜態驗的都驗了

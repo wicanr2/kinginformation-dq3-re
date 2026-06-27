@@ -70,10 +70,22 @@ void dq3_set_palette(const dq3_color *pal, int count)
     }
 }
 
+/* 序列錄製(DQ3_RECDIR):每次 present 把當前畫面 dump 成 fNNNNNN.ppm → 供 ffmpeg 組 mp4。
+ * headless(dummy 驅動)也可用,因 dq3_dump_ppm 直接讀 g_fb。上限防失控。 */
+static void dq3_rec_frame(void)
+{
+    static const char *dir = NULL; static int init = 0; static long n = 0;
+    char path[1024];
+    if (!init) { dir = getenv("DQ3_RECDIR"); init = 1; }
+    if (!dir || n >= 200000) return;
+    snprintf(path, sizeof path, "%s/f%06ld.ppm", dir, n++);
+    dq3_dump_ppm(path);
+}
+
 void dq3_present(void)
 {
     void *pixels; int pitch, row, i;
-    if (!g_tex || !g_ren) return;
+    if (!g_tex || !g_ren) { dq3_rec_frame(); return; }   /* 無視窗(dummy)仍錄 g_fb */
     if (SDL_LockTexture(g_tex, NULL, &pixels, &pitch) != 0) return;
     for (row = 0; row < DQ3_SCREEN_H; row++) {
         uint32_t *d = (uint32_t *)((uint8_t *)pixels + row * pitch);
@@ -84,6 +96,7 @@ void dq3_present(void)
     SDL_RenderClear(g_ren);
     SDL_RenderCopy(g_ren, g_tex, NULL, NULL);   /* nearest 放大到視窗 */
     SDL_RenderPresent(g_ren);
+    dq3_rec_frame();   /* 序列錄製 */
 }
 
 int dq3_dump_ppm(const char *path)

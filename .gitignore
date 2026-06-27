@@ -2,6 +2,7 @@
 # RE 工作需自行提供原版 dq3.zip 解壓到 assets_raw/
 dq3.zip
 work/
+dist/
 assets_raw/
 assets_out/
 
