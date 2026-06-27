@@ -1136,6 +1136,15 @@ static int run_game(const char *assets, const char *dump)
         /* NPC 隨機走動(docs/35 §九):城鎮每幀步進;對話中凍結不動。 */
         if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
         if (!in_town) animate_sea(cur, g_sea_frame++);   /* 海面 palette cycling(地表/下層)*/
+        /* 場景配曲:依目前場景每幀選軌(dq3_audio_play 同軌不重啟 → 廉價 idempotent)。 */
+        {
+            int mk;
+            if (in_town)              mk = DQ3_MUS_TOWN;
+            else if (ship.aboard)     mk = DQ3_MUS_SHIP;
+            else if (layer == 1)      mk = DQ3_MUS_DUNGEON;
+            else                      mk = DQ3_MUS_FIELD;
+            dq3_audio_play_scene(mk, 1);
+        }
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         overlay_opened_chests(cur, &flags);    /* #4:已取寶箱疊開過標記(remake 增強)*/
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/

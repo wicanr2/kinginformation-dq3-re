@@ -11,6 +11,7 @@
 #include "dq3_spell.h"
 #include "dq3_text.h"
 #include "dq3_packbg.h"
+#include "dq3_audio.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -508,6 +509,10 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         { "僧侶",   {109,704},    2, 109, 28,28, 10,10,1, 15,10,10, 0, 0x60, {0xff,0xff,0x2b,0xff,0xff,0xff,0xff,0xff} }, /* 魔法鎧甲=抗魔(#7b) */
         { "魔法師", {110,208,822},3, 110, 22,22, 11,11,1, 11, 6,11, 0, 0x60, {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff} },
     };
+
+    /* 戰鬥配曲:大型 boss(id≥106:大魔人/巴拉摩斯/索瑪/父親/九頭龍…)用 boss 曲,一般遇敵用戰鬥曲。
+     * 返回主場景後由主迴圈每幀自動切回地表/城鎮曲。 */
+    dq3_audio_play_scene(monster_id >= 106 ? DQ3_MUS_BOSS : DQ3_MUS_BATTLE, 1);
 
     /* ITEM.DAT 先載(裝備加成 #7a/#7b + 攻防加成需要;在玩家隊覆寫前)*/
     g_items_ok = (dq3_items_load(&g_items, assets, err, sizeof err) == 0);
