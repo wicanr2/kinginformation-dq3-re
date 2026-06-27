@@ -34,13 +34,14 @@
 - **palette 調暗**:`dq3_scene_apply_palette` 依相位縮放 bg RGB(夜 42/44/70%、黃昏 82/62/58%、
   黎明 72/74/92%);sprite slot 用「淺一半」暗化 → 角色夜間仍看得見。海面 cycling(`animate_sea`)
   尾呼 apply_palette → 自動跟著變暗。
-- **步數驅動**(`main.c`):地表每走一步 `g_dn_step++`,每 `DN_PHASE_STEPS=28`(近似)步推進一相位
+- **步數驅動**(`main.c`):地表每走一步 `g_dn_step++`,每 `DN_PHASE_STEPS=60` 步推進一相位
+  (使用者指定:白天→黑夜 120 步、中間黃昏;全 4 相位循環 240 步)
   並重套 palette。接在與聖水倒數/中毒同一每步點。
 - **手動切換**:野外「咒文」**拉那魯達(rec177)** → toggle 白天↔黑夜;**黑暗之燈(0x5f)** 道具
   野外用 → 強制變夜(不消耗,可重用)。debug:`dn:N` 設相位。
 - **驗證**:headless dump 地表 phase0 vs phase2 pixel diff 494437、夜景明顯調暗;game_tester 79/79。
 
 ### 待精校 / 補完
-- 確切原版步數閾值 + 各相位 palette(目前近似值)。
+- 各相位 palette 為近似值。步數已設使用者指定(白天→黑夜 120 步);原版確切步數計數器多輪 RE 未定位。
 - 晝夜存檔持久化(目前載入回白天;需 bump save 格式)。
 - 夜 gated 事件接 `g_dn_phase`(提頓村牢房等)。

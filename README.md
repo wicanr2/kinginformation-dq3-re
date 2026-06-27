@@ -151,8 +151,14 @@ DQ3 核心。整條經典迴圈都在，且每個數值 / 邏輯都從 `DQ3.EXE`
 用 `kind=special` 事件格定位（[`docs/data/boss-trigger-points.md`](docs/data/boss-trigger-points.md)、
 `special-events-audit.md`，`kind=special` 事件全分類、**0 個 review 待辦**，可玩性無缺口）。
 
+**步數晝夜系統**：地表走路自動循環白天 → 黃昏 → 黑夜 → 黎明（步數驅動,各相位 palette 調暗）；
+ラナルータ 咒切換、黑暗之燈道具變夜。**設定選單**（title「設定」→ RNG 模式 DOS/真實,自建字形補原版缺字）。
+**per-member 裝備管理**（選隊員 → 換裝/卸下）。**忠實 rng 成長**（創角/升級 `rng(0..(target−當前))`,RE sub_d9cc）。
+**戰鬥狀態咒**（拜基魯多/史卡拉/魯卡尼/瑪努莎/瑪荷頓 等 base==0 套修正）+ **野外咒文**（魯拉/烈米特/特黑洛斯）。
+
 **離開 / 存讀檔**：F10 = 離開遊戲（「離開遊戲嗎」Yes/No 確認 + 自動存檔），ESC = 取消當前選單（非離開）；
-自動存檔 `dq3_save.dat`（名冊 / 隊伍 / 道具 / 位置），DQ3_LOAD 讀檔續玩，game_tester 含存讀檔 roundtrip 斷言。
+存檔 v6（多 slot）存名冊 / 隊伍 / 道具 / 位置 / 船 / **劇情進度 storyflags** / 晝夜相位,DQ3_LOAD 讀檔續玩,
+game_tester 含存讀檔 roundtrip 斷言。
 **交付驗證**:`tools/game_tester.sh` **79/79 全綠**（15 單元 + 主線一條龍 + 全 89 城零崩潰 +
 boss 事件 + B 道具鏈 + 巴拉摩斯序列 + 甘達特巢穴 + 草薙之劍 + 存讀檔多 slot roundtrip）+ DOSBox oracle（標題逐像素一致、注音 IME 字序一致，
 [`docs/data/oracle-validation.md`](docs/data/oracle-validation.md)）;`tools/package.sh` 打包跨平台

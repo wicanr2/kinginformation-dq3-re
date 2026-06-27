@@ -305,10 +305,11 @@ static int item_modal(dq3_inventory *inv, const dq3_text *text, dq3_roster *rost
 static int g_item_world_eff = 0;   /* 野外道具選單選了蓋美拉翅膀/聖水 → 交 main 迴圈處理世界狀態 */
 static unsigned g_sea_frame = 0;   /* 海面 palette cycling 幀計數 */
 /* 晝夜系統(使用者確認原版機制 = 地表步數驅動,非時間):每 DN_PHASE_STEPS 步推進一相位
- * 白天→黃昏→黑夜→黎明→(循環)。相位 → palette 調暗(dq3_scene 內)。確切步數閾值/夜 palette
- * 為近似(原版步數計數器在多層 handler 鏈,逐指令未完全定位;機制忠實、數值可後續 RE 精校)。 */
+ * 白天→黃昏→黑夜→黎明→(循環)。相位 → palette 調暗(dq3_scene 內)。
+ * 步數:使用者指定「白天→黑夜 = 120 步,中間有黃昏」→ 每相位 60 步(白天→黃昏→黑夜 = 2×60 = 120;
+ * 全 4 相位循環 = 240 步)。原版確切步數計數器在多層 handler 鏈未逐指令定位,此為使用者指定值。 */
 static int g_dn_step = 0;
-#define DN_PHASE_STEPS 28                      /* 每相位步數(近似)*/
+#define DN_PHASE_STEPS 60                      /* 每相位步數(白天→黑夜 120 步,使用者指定)*/
 static const char *DN_NAME[4] = { "白天", "黃昏", "黑夜", "黎明" };
 static void dhama_modal(dq3_roster *roster, dq3_party *party, const dq3_stats *gst, const dq3_text *text, dq3_inventory *inv);
 static void tav_window(uint8_t *fb, int wx, int wy, int ww, int wh, uint8_t black, uint8_t frame, uint8_t bg);
