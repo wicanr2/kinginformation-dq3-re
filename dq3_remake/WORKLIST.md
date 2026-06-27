@@ -33,8 +33,15 @@
 ## 真正剩餘工作(已對 ground truth 核實,非 stale)
 
 ### 內容 / 接線
-- [ ] **scripted warp 全接**(8 個 0xd1f9):`dq3_locwarp` 有落點,缺「源觸發 tile」位置 → 需各 call site disasm 抽 `[0x4f33/35]==XY` 比較值。(忠實完整性,非可玩性阻塞)
-- [ ] **overworld 旗標 portal 全表**:`dq3_owportal` 目前數條;完整需抽 0x396e 全分支。(忠實完整性)
+- [ ] **scripted warp 全接**(8 個 0xd1f9,niche):現況查證(2026-06-27)——`dq3_locwarp` 8 落點資料在,
+  但 ① **未接線**(remake 無消費端,grep 零命中)② 源觸發 tile 的 gate **不在 call 緊鄰處**
+  (0x56ea 等 call 前無 `cmp [0x4f33/35]`),需逐 call site 往上深追。屬「資料在、需接線 + 逐站 RE 源 tile」
+  的真實但 niche 缺口;這 8 個是較罕見的另一種門,主要城/迷宮連接已由 +0xc 轉場 / type-2 warp(0x4ea0)/
+  owportal 覆蓋。非可玩性阻塞。
+- [x] **overworld 旗標 portal 全表 ✅**(2026-06-27,RE 0x396e 全分支抽完確認完備):3 條靜態城變體 portal
+  (210,64)/(82,165)/(54,129)即全部。其餘 0x396e 分支**非靜態城 portal**:存位置→CTY36 = 動態幽靈船
+  位置([0x5053/0x5055],非固定座標);(76,54) flag0x35 = scripted 事件(對話 rec0x255/6 + 道具檢查,
+  非 `mov bp,cty;jmp 0x39cb` portal 模式)。⇒ dq3_owportal 已完整,無缺漏。
 - [x] **怪物施加狀態 ✅**(已確認 + 修 phantom-damage):第一性原理 RE(`docs/re-log-spell-effect-dispatch.md`)定論——精訊引擎效果由 base 值分類、**無「咒→狀態」表**;base==0 中只有 144 睡/152 混亂=玩家不能行動 → 映射麻痺(已接),其餘 base==0(buff/debuff/封咒/幻/傳走)未模型化。本次修掉「base==0 咒 fall through 成 base=24 假傷害」bug → 詠唱不致傷。中毒(overworld/戰鬥毒傷+解)亦閉環。
 - (移除)~~CTY→地名對照收尾~~:使用者確認不影響遊戲,不列待辦。
 
