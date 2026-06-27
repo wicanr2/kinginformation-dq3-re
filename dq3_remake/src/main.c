@@ -525,6 +525,15 @@ static void run_finale(dq3_storyflags *flags, dq3_dialogue *dlg, int dlg_ok,
     dq3_progress_set(flags, DQ3_MS_ZOMA);
     fprintf(stderr, "★ 打倒大魔王索瑪 —— 破關!(進度 %d/%d = 全主線完成)\n",
             DQ3_MS_COUNT, DQ3_MS_COUNT);
+    /* E-11 時代結尾(そして伝説へ…):勇者受冊封為「洛特」,三件勇者專用裝備昇華為傳說的洛特裝備。
+     * 精訊版 ITEM.DAT 本無洛特道具(已查證)→ remake 補上,圓「傳說的終章」副標、接通 DQ1/DQ2 洛特血脈。 */
+    dq3_set_loto_blessed(1);
+    dq3_flags_set(flags, 0x217, 1);
+    fprintf(stderr,
+        "★ そして伝説へ… 世界重歸光明。アレフガルド 的人們冊封勇者為『洛特』——\n"
+        "  王者之劍化為【洛特之劍】(攻150)、光之鎧甲化為【洛特之鎧】(守95)、勇者之盾化為【洛特之盾】(守55),\n"
+        "  將在這片大地代代相傳。多年以後黑暗再臨時,繼承洛特之血的勇者會再次握起它們……\n"
+        "  ——獻給未發售的精訊《傳說的終章》:傳說,於此展開。\n");
     if (end_ok && dlg_ok && end_txt->n_records > 0) {
         *end_seq = 0;
         dq3_dialogue_open_text(dlg, end_txt, 0);

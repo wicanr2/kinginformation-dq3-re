@@ -32,6 +32,9 @@ int dq3_items_load(dq3_items *it, const char *assets_dir, char *err, int errcap)
 /* ITEM.DAT 數值(RE docs/22):b0 攻 / b1 防 / 價(b2+b3*256)/ 類別 b4 / 可裝備職業 b6(0xff=全/0x80=勇者)。 */
 int dq3_item_attack(const dq3_items *it, int code);
 int dq3_item_defense(const dq3_items *it, int code);
+/* 洛特裝備昇華(E-11 時代結尾):破索瑪後 set →王者之劍/光之鎧甲/勇者之盾 數值昇華為洛特裝備。 */
+void dq3_set_loto_blessed(int v);
+int  dq3_loto_blessed(void);
 int dq3_item_price(const dq3_items *it, int code);
 int dq3_item_category(const dq3_items *it, int code);
 int dq3_item_can_equip(const dq3_items *it, int code, int cls);
