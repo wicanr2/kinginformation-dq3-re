@@ -57,20 +57,26 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
    (想建城/只要有商人就好/如何/是嗎/真的嗎/道謝)。**待 RE**:老人 NPC 的 CTY/coords/byte4 + 商人寄存(移出隊伍)
    + 建城狀態(草原 CTY → 建好的 CTY83?需確認是否雙 CTY)。
 7. **耶進貝亞倉庫番推三石 puzzle**(杜 Ch26):0 命中(連帶 #3 乾渴壺取得)。
-8. **勇氣神殿「單獨戰鬥」gate**(杜 Ch29:朗錫爾神殿問單獨戰鬥勇氣 → 勇氣洞窟 solo):gate 敘事未接
-   (藍寶珠 0x67@CTY23 寶箱已在表,可直接拿)。
-   **B-8 RE 進度(2026-06-27,部分;尚未接,留待專門一輪)**:
+8. **勇氣神殿「單獨戰鬥」gate** — ✅ **已接(2026-06-27)**(杜 Ch29-30):
+   - 神父 CTY47 (25,16) byte4=37 挑戰 → 接受 set **flag 0x13**(原版 test_flag(0x13))→ 此 flag 同時驅動
+     既有 owportal({82,165}→flag0x13→CTY75)把朗錫爾轉「神殿開放態」CTY75 → 通勇氣洞窟 CTY23(藍寶珠 0x67 已在 treasure 表)。
+   - 神父 CTY75 (26,7) byte4=62「回來了嗎?」返回對話。
+   - **solo 機制 moot 不偽造**:原版進洞強制單人([0x5077] 減員),但 remake 隨機遭遇僅地表、洞窟無戰 → 無施力點。
+   - 驗證:神父對話渲染正確(rec10「那麼去吧」)、game_tester 83/83。
+   - **B-8 RE 全程(2026-06-27)**:
    - ✅ 對話 record 錨定:神父 = **D3TXT06 rec128「這裡是聚集勇氣的神殿」**、rec409「個人獨自戰鬥」;
      勇氣洞窟回頭訊息 = D3TXT07 rec66-67「回去吧/這裡沒有你要的東西」(杜 Ch30「不要理它」)。
    - ✅ 地圖:朗錫爾 = **CTY47**(spawn 南=村)/ **CTY75**(spawn 北 (11,7)=神殿側),皆 bank6,各 2 section。
      CTY47 sub2 NPC (25,16) b4=37、CTY75 sub2 NPC (26,7) b4=62。
-   - ⚠ **未解(dispatch/bank 待釐清)**:依 re-log「sub2 byte4=N → ptr [0x3bb4+(N-1)*2]」推得 handler
-     0x5979(b4=37)/0x6004(b4=62),但反組譯其 `di` 文字(用 rec=di−0xbb8)解出「重病女王/地球之臍洞窟」
-     等**非朗錫爾**內容 → **索引或 bank-base 推導有誤,反到錯 handler**(rec=di−0xbb8 是別的 bank 專用,非通用)。
-     `mov di,0xc38`(rec128)在 EXE 0 命中 → 神父 intro 用 computed di / 另一 bank base。
-   - **待做**:正確 RE sub2 dispatch 索引 + 該 handler 的 bank base → 定位顯示 rec128 的神父 handler → 抽 yes/no gate flag
-     → 接神父對話 + 單獨戰鬥機制(進 CTY23 強制單人隊)。**勿在 dispatch 未釐清前猜接**(避免重蹈賢者 gate 錯碼)。
-   - ⚠ D3TXT06 rec84「你們的勇氣」屬龍之女王/索瑪序列、rec68「索瑪神殿守衛」屬六大魔人(C-9),**勿誤當神父**。
+   - ✅ **dispatch 解出(2026-06-27,反組譯 0x96fe caller)**:`al=NPC.byte4; bx=al; shl bx,1; call [0x3bb4+bx]`
+     → handler ptr = **[0x3bb4 + byte4×2]**(無 dec;我先前用 (N-1)×2 **差一格**反到錯 handler)。
+     正確:byte4=37 → logical **0x59e4**、byte4=62 → logical **0x608a**。di→rec 公式 `rec=di−0xbb8` 確為通用。
+   - ✅ **神父 handler 解出**:
+     - **byte4=37(CTY47 (25,16))= 神父挑戰**:`test_flag(0x13)` 已證勇氣→rec84「你們的勇氣」;否則 [0xb34]=1
+       + rec9「來的好」→ region gate [0x726]/[0x722]==1 → rec10「那麼去吧」(接受)/ rec11「這麼弱懦的傢伙!」(膽怯)。
+     - **byte4=62(CTY75 (26,7))= 單獨戰鬥設定/返回**:rec12「回來了嗎?」+ **`al=[0x5057]; [0x5077]=al`
+       改隊伍人數**([0x5077]=隊伍人數,dq3_roster.h 確認)= **solo 機制** + 場景轉換(0x48a4)。
+   - ⚠ rec84「你們的勇氣」確在 byte4=37 神父流程內(我先前誤判為龍之女王是因差一格反到別的 handler)。
 
 > **B-6/B-8 範圍校正(2026-06-27)**:原列為「玩家感受明顯的快速接線」**低估了**——兩者 NPC 尚未 RE 識別、
 > 且需新機制(商人寄存+建城狀態 / 神父 gate+單獨戰鬥),屬需各自一輪 RE 的中型工項,非 quick win。

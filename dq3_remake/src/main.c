@@ -1348,6 +1348,29 @@ static int run_game(const char *assets, const char *dump)
                             dq3_dialogue_open(&dlg, dq3_sub2_dialogue(b4));
                         }
                         talked = 1;
+                    } else if (sub == 2 && cur_cty == 47 && b4 == 37 && dlg_ok) {
+                        /* 勇氣神殿神父(RE handler logical 0x59e4,byte4=37;杜勝利 Ch29-30)。
+                         * 原版:test_flag(0x13) 已證勇氣 → rec84「你們的勇氣」;否則 set [0xb34] + rec9「來的好」
+                         * → region gate → rec10「那麼去吧」(接受)/ rec11「弱懦」。
+                         * remake:接受 = set flag 0x13 —— **此 flag 同時驅動 owportal(dq3_owportal {82,165}→flag0x13→CTY75)**
+                         * 把朗錫爾 overworld 入口轉到「神殿開放態」CTY75 → 通勇氣洞窟 CTY23(藍寶珠 0x67 已在 treasure 表)。
+                         * 註:原版進洞強制單人([0x5077] 減員);remake 隨機遭遇僅地表、洞窟無戰 → solo 機制 moot,不偽造。 */
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_flags_get(&flags, 0x13)) {
+                            dq3_dialogue_open(&dlg, 84);   /* 「你們的勇氣,…」(已接受)*/
+                        } else {
+                            dq3_flags_set(&flags, 0x13, 1);
+                            dq3_dialogue_open(&dlg, 10);   /* 「那麼去吧,」→ 獨自進勇氣洞窟 */
+                            fprintf(stderr, "★ 勇氣神殿神父:接受單獨戰鬥挑戰(flag 0x13)→ 朗錫爾 overworld portal 轉 CTY75 神殿開放 → 勇氣洞窟 CTY23(藍寶珠 0x67)\n");
+                        }
+                        talked = 1;
+                    } else if (sub == 2 && cur_cty == 75 && b4 == 62 && dlg_ok) {
+                        /* 勇氣神殿神父(神殿開放態,RE handler 0x608a,byte4=62):rec12「回來了嗎?」返回對話。
+                         * 原版此處改隊伍人數 [0x5077](單獨戰鬥進/出);remake 洞窟無遭遇 → 純對話。 */
+                        set_dialogue_hero(&roster, &party);
+                        dq3_dialogue_open(&dlg, 12);       /* 「回來了嗎?」*/
+                        fprintf(stderr, "勇氣神殿神父(CTY75 神殿開放):回來了嗎?\n");
+                        talked = 1;
                     } else if (sub == 2 && cur_cty == 82 && b4 == 64 && dlg_ok) {
                         /* 不死鳥祠堂守護者(CTY82 sect17,byte4=64 祭壇 NPC):集六珠 0x66-0x6b(綠藍紅紫黃銀)
                          * → 復活不死鳥拉米亞(青衫攻略)。原版六祭壇位 byte4=63-68 僅 64 實際放置(build 不完整),
