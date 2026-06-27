@@ -1869,7 +1869,8 @@ static int run_game(const char *assets, const char *dump)
                     }
                 }
                 if (moved && !in_town && repel > 0) repel--;   /* #3 聖水驅敵期間每步遞減 */
-                if (moved && !in_town && ++g_dn_step >= DN_PHASE_STEPS) {  /* 晝夜:地表步數推進相位(原版機制=步數驅動)*/
+                /* 晝夜:原版機制 = 世界地圖步數驅動;城內走動不影響晝夜(使用者確認)→ 故 gate 在 !in_town */
+                if (moved && !in_town && ++g_dn_step >= DN_PHASE_STEPS) {
                     g_dn_step = 0;
                     dq3_scene_set_daynight((dq3_scene_get_daynight() + 1) & 3);
                     dq3_scene_apply_palette(cur);              /* 立即重套(城鎮無 animate_sea 也生效)*/
