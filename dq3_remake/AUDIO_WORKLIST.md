@@ -12,9 +12,14 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
 ## 階段
 
 ### Phase 1 — 定位 + 抽出 CMF 音樂資料(de-risk,先做)
-- [ ] RE DQ3.EXE 找音樂資料引用:從 0x228/0x229 寫入的驅動碼反推 → 音樂序列 base 指標 / 載入路徑。
-- [ ] `tools/extract_cmf.py`:定位 + dump CMF/OPL 音樂資料 → `work/music/*.cmf`(gitignore)。
-- [ ] 驗證:解析出 instrument 數 + event stream 合理(或判定「此未完成 build 無附曲序」→ 據實回報、止步)。
+- [x] **RE 偵察完成**(2026-06-27,過程見 [`../docs/57-cmf-audio-re.md`](../docs/57-cmf-audio-re.md)):
+  音訊系統 = Creative CT-VOICE + CT-MUSIC(`CMFDRV`)驅動(`SBCM.LIB`)+ VOC 音效(`FVOC/NVOC.VCX`);
+  音樂格式 = CMF(OPL2 FM)。**EXE 載入清單只有 VOC,無音樂檔;全檔無 `CTMF` magic;0x228 多屬資料表非埠。**
+- [~] **判定:shipped 檔找不到標準 CMF 音樂資料** → 疑 (A) 未完成 build 沒做音樂(如缺 sprite)/ (B) 內嵌 EXE 非標準。
+- [ ] **Phase 1 續(決定性)**:反組譯 CMFDRV `ct_play_music` 呼叫端 —— 遊戲是否曾餵音樂資料指標?
+  - 無 → 確認 (A):音樂未做完,據實回報;Phase 2+ 暫緩(或維持原創 FM BGM)。
+  - 有 → 跟指標抽出音樂資料 → 進 Phase 2。
+- [ ] `tools/extract_cmf.py`:(若 (B))定位 + dump → `work/music/*.cmf`(gitignore)。
 
 ### Phase 2 — OPL2 core + CMF parser(離線驗聽感)
 - [ ] `dq3_remake/src/dq3_opl2.{c,h}`:OPL2(YM3812)FM 核心(公開精簡實作移植;render s16 取樣)。

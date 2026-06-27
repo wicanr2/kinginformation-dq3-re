@@ -128,7 +128,7 @@
 
 **核心 / 進度 / 方法論**
 - [`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md) — remake 現況 + 真正剩餘工作（唯一真相）
-- 🔊 [音樂還原計畫 `docs/56`](docs/56-audio-fm-plan.md) + [音訊 WORKLIST](dq3_remake/AUDIO_WORKLIST.md) — 精訊 SB FM(OPL2 CMF）音樂從正版資料 RE 抽出 + 合成器播放（進行中）
+- 🔊 [音樂還原計畫 `docs/56`](docs/56-audio-fm-plan.md) + [CMF/SB FM 反組譯經驗 `docs/57`](docs/57-cmf-audio-re.md) + [音訊 WORKLIST](dq3_remake/AUDIO_WORKLIST.md) — 精訊 SB FM(OPL2 CMF）音樂從正版資料 RE 抽出 + 合成器播放（Phase 1 RE 偵察完成）
 - ⭐ [**經驗教訓 Lessons Learned**](docs/lessons-learned.md) — 多輪協作踩雷 → 根因 → 紀律（別鬼打牆 / 靜態 RE 優先 / 斷言前驗證 / 零回歸改法…）
 - [`docs/00`](docs/00-re-methodology.md) 逆向方法論（可重用 RE 技術）· [`docs/47`](docs/47-remaining-work.md) 剩餘工作盤點 · [`docs/46`](docs/46-debug-hook.md) DEBUG 口
 
