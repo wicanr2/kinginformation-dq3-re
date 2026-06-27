@@ -1276,6 +1276,28 @@ static int run_game(const char *assets, const char *dump)
                             fprintf(stderr, "瑪依拉道具店:帶歐里空金屬(達姆杜拉)來換王者之劍\n");
                         }
                         talked = 1;
+                    } else if (sub < 2 && cur_cty == 83 && cur->npcs[ni].x == 16 && cur->npcs[ni].y == 2 && dlg_ok) {
+                        /* 新城鎮老人(RE handler 0x5aba:掃隊伍 [si+1]==6 找商人 → 寄存 + clear_flag 0x23 建城;
+                         * 對話 rec0-5 我在這裡想/只要有商人/如何/是嗎/真的嗎/謝謝。杜勝利 Ch33-36)。
+                         * 原版老人是 runner/region 事件(byte4 跳表無對應、無放置 NPC)→ remake 掛 CTY83 (16,2) NPC 位。
+                         * 商人寄存 = 移出隊伍+名冊(裝備物品回阿里阿罕預存所,杜 Ch33);flag 0x216=建城完成。 */
+                        int mi = -1, pi;
+                        for (pi = 0; pi < party.count; pi++)
+                            if (roster.list[party.slot[pi]].m.cls == 6) { mi = pi; break; }
+                        set_dialogue_hero(&roster, &party);
+                        if (dq3_flags_get(&flags, 0x216)) {
+                            dq3_dialogue_open(&dlg, 5);       /* rec5「喔喔,非常謝謝你!」(已建城)*/
+                            fprintf(stderr, "新城鎮老人:城鎮已建成(感謝商人同伴)\n");
+                        } else if (mi >= 0) {
+                            dq3_roster_remove(&roster, &party, party.slot[mi]);   /* 商人寄存:移出隊伍+名冊 */
+                            dq3_flags_set(&flags, 0x216, 1);                       /* 建城完成 */
+                            dq3_dialogue_open(&dlg, 5);                            /* rec5「喔喔,非常謝謝你!」*/
+                            fprintf(stderr, "★ 新城鎮老人:商人同伴留下建城 → 寄存(回阿里阿罕預存所)+ 新城鎮建成(杜 Ch33-36)\n");
+                        } else {
+                            dq3_dialogue_open(&dlg, 1);       /* rec1「只要有商人的就好,」*/
+                            fprintf(stderr, "新城鎮老人:想建城但缺商人(回阿里阿罕創商人同伴帶來,杜 Ch33)\n");
+                        }
+                        talked = 1;
                     } else if (sub < 2 && dlg_ok) {          /* 對話型 NPC */
                         set_dialogue_hero(&roster, &party);  /* {V} 主角名 */
                         if (dq3_dialogue_open(&dlg, b4) == 0) {

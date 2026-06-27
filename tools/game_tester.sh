@@ -166,6 +166,11 @@ o=$(DQ3_DEBUG="party;warp:37:9:7:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" g
 echo "$o" | grep -q "授《國王的信》0x5b" && ok "B-5 波魯多加王授國王的信 0x5b(首訪)" || ng "波魯多加授國王的信"
 o=$(DQ3_DEBUG="party;item:0x5b;warp:62:38:6:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=50:持有 0x5b" && ok "B-5 諾魯特持國王的信 0x5b → 反應(開東方通道)" || ng "諾魯特國王的信"
+# B-6 帶商人建城(杜 Ch33-36):新城鎮 CTY83 老人(RE handler 0x5aba:掃隊伍 class6 商人→寄存+建城 flag 0x216)
+o=$(DQ3_DEBUG="party;warp:83:16:3:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "缺商人" && ok "B-6 新城鎮老人:無商人→需商人(rec1)" || ng "新城鎮老人缺商人"
+o=$(DQ3_DEBUG="party;reclass:1:6;warp:83:16:3:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "新城鎮建成" && ok "B-6 帶商人(class6)→ 寄存+新城鎮建成(flag 0x216)" || ng "新城鎮建城"
 o=$(DQ3_DEBUG="warp:20:4:9:1" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "獲得道具 0x5f" && ok "提頓村 CTY20 黑暗之燈" || ng "黑暗之燈"
 o=$(DQ3_DEBUG="warp:26:11:12:2" DQ3_INPUT="e" timeout 20 "$BIN" "$ASSETS" game 2>&1)
