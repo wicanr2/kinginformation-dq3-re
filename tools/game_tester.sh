@@ -67,9 +67,11 @@ echo "$o" | grep -q "byte4=49:獲得道具 0x6b" && ok "sub2 給物 49(銀寶珠
 # 檢查型 NPC(require_item):持船渡海反應(byte4=16 精靈女王已改 transform,見第 9 段)
 o=$(DQ3_DEBUG="item:0x5b;warp:62:38:6:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
 echo "$o" | grep -q "byte4=50:持有 0x5b" && ok "sub2 檢查 50(持船→渡海反應)" || ng "sub2 檢查 50 持物"
-# 提頓村牢房犯人給綠寶珠(青衫攻略 runner 事件,remake 簡化 talk 即給)
-o=$(DQ3_DEBUG="warp:20:16:3:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
-echo "$o" | grep -q "獲得綠寶珠 0x66" && ok "提頓村牢房給綠寶珠(0x66)" || ng "提頓村綠寶珠"
+# 提頓村=テドン(白天廢墟/夜晚亡靈):夜 gated 綠寶珠(忠實還原,day-night doc §9)
+o=$(DQ3_DEBUG="warp:20:16:3:0;dn:0" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "牢門深鎖" && ok "提頓村白天牢門深鎖(夜 gated)" || ng "提頓村白天 gate"
+o=$(DQ3_DEBUG="warp:20:16:3:0;dn:2" DQ3_INPUT="ue" timeout 20 "$BIN" "$ASSETS" game 2>&1)
+echo "$o" | grep -q "獲得綠寶珠 0x66" && ok "提頓村夜晚開牢門給綠寶珠(0x66)" || ng "提頓村綠寶珠"
 
 echo "######## 8. 不死鳥拉米亞飛行坐騎 ########"
 o=$(DQ3_DEBUG="phoenix" DQ3_INPUT="eesrrrrdddd" DQ3_DUMP=/tmp/ph.ppm timeout 20 "$BIN" "$ASSETS" game 2>&1)

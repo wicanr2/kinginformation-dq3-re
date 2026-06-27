@@ -8,7 +8,7 @@
 ## 現況快照(2026-06-27)
 
 `dq3_remake/`(C99 + SDL2)= **完整、可玩、資料驅動**的精訊版 DQ3 核心,**主線可破關**。
-每個數值/邏輯都從 `DQ3.EXE` 或遊戲資料抽出。`tools/game_tester.sh` **79/79 全綠**(交付 gate)。
+每個數值/邏輯都從 `DQ3.EXE` 或遊戲資料抽出。`tools/game_tester.sh` **80/80 全綠**(交付 gate)。
 已打包 Linux tar + **Windows x64 zip**(交叉編譯,wine 驗證);AppImage 選配未做。
 
 ```
@@ -37,20 +37,24 @@
 ## 真正剩餘工作(已對 ground truth 核實)
 
 ### Polish(非阻塞)
-- [ ] **晝夜精校**:步數已設使用者指定值(白天→黑夜 120 步,每相位 60);各相位 palette 為近似;
-  夜 gated 事件接 g_dn_phase(提頓村牢房)待補。原版確切步數計數器多輪 RE 未定位(在多層 handler 鏈)。
+- [~] **晝夜精校**(夜 gated 事件 ✅ 2026-06-27;palette 為必要近似):
+  - ✅ **提頓村=テドン 夜 gated 還原**:綠寶珠改夜限定(`g_dn_phase==黑夜` 才開牢門給珠;白天牢門深鎖只見留書),
+    忠實 day-night doc §9「夜晚進村開牢門」。game_tester 加白天/夜晚兩斷言(80/80)。
+  - 步數已設使用者指定值(白天→黑夜 120 步,每相位 60);原版確切步數計數器多輪 RE 未定位(多層 handler 鏈)。
+  - 各相位 palette 為近似:**此環境無 DOSBox oracle 可逐格比色**(記憶 `dq3-no-dosbox-debugger`),
+    屬「靜態不可驗」殘留,非 pending dev task;現值(夜 42/44/70%、黃昏 82/62/58%、黎明 72/74/92%)為合理近似。
 - [x] **per-member 裝備 4 槽 ✅**(2026-06-27,★RE 更正 5→4 槽):第一性原理從 ITEM.DAT b4 高位反推
   ——精訊版實為 **4 裝備槽**(武器 0x2_/鎧 0x4_/盾 0x6_/兜 0x8_,def 遞增佐證),**非 5 槽**;飾品(戒指/
   手環)無乾淨 b4 部位編碼(0x00 或同道具 0x18),不設槽。`dq3_item_equip_slot`=`(b4>>5)−1`;
   `dq3_recruit` 加 shield/head;戰鬥 def=耐力/2+(鎧+盾+兜 b1 總和);`equip_modal` 4 槽 2×2 管理
-  (修舊 `cat&0x40` 把盾 0x60 誤判成鎧的 bug);save v7。dump 驗證 4 槽畫面、game_tester 79/79。
+  (修舊 `cat&0x40` 把盾 0x60 誤判成鎧的 bug);save v7。dump 驗證 4 槽畫面、game_tester 80/80。
 
 ### 打包
 - [x] **Windows x64 跨平台打包 ✅**(2026-06-27):mingw-w64 + SDL2 2.30.9 mingw dev,docker 內交叉編譯
   (`scripts/Dockerfile.mingw` + `cmake/mingw-w64-x86_64.cmake` + `tools/package_win.sh`)→ `work/dq3_remake_win64.zip`
   (dq3_remake.exe 647KB + SDL2.dll + run.bat)。entry 用 `SDL_MAIN_HANDLED` 自管 main(免 SDL2main/WinMain);
   `-static-libgcc`(僅依賴 KERNEL32/SDL2/msvcrt);setenv→`_putenv_s` 可攜化。**wine ABI 實機驗證**:載真實
-  素材、繪地表一幀正確;Linux build 79/79 無回歸。
+  素材、繪地表一幀正確;Linux build 80/80 無回歸。
 - [ ] **AppImage**(選配,低優先):Linux 已有 tar(`tools/package.sh`);AppImage 僅省去使用者裝 SDL2,價值邊際。
 
 ### 不在此環境做 / 不依賴 DOSBox(記憶 `dq3-no-dosbox-debugger`)

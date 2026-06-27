@@ -39,9 +39,11 @@
   並重套 palette。接在與聖水倒數/中毒同一每步點。
 - **手動切換**:野外「咒文」**拉那魯達(rec177)** → toggle 白天↔黑夜;**黑暗之燈(0x5f)** 道具
   野外用 → 強制變夜(不消耗,可重用)。debug:`dn:N` 設相位。
-- **驗證**:headless dump 地表 phase0 vs phase2 pixel diff 494437、夜景明顯調暗;game_tester 79/79。
+- **驗證**:headless dump 地表 phase0 vs phase2 pixel diff 494437、夜景明顯調暗;game_tester 80/80。
 
-### 待精校 / 補完
-- 各相位 palette 為近似值。步數已設使用者指定(白天→黑夜 120 步);原版確切步數計數器多輪 RE 未定位。
-- 晝夜存檔持久化(目前載入回白天;需 bump save 格式)。
-- 夜 gated 事件接 `g_dn_phase`(提頓村牢房等)。
+### 已完成 / 待精校
+- ✅ **晝夜存檔持久化**:save v6 起 `dq3_save_pos.daynight` 持久;讀檔還原相位(main.c 797/1128)。
+- ✅ **夜 gated 事件**:提頓村=テドン 綠寶珠夜限定(`g_dn_phase==黑夜` 才開牢門給珠,白天牢門深鎖只見留書);
+  忠實 §9「夜晚進村開牢門」。game_tester 白天/夜晚兩斷言全綠。
+- 步數已設使用者指定(白天→黑夜 120 步);原版確切步數計數器多輪 RE 未定位(多層 handler 鏈)。
+- 各相位 palette 為**必要近似**:此環境無 DOSBox oracle 可逐格比色(記憶 `dq3-no-dosbox-debugger`),屬靜態不可驗殘留。

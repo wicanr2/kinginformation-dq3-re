@@ -1208,13 +1208,18 @@ static int run_game(const char *assets, const char *dump)
                         talked = 1;
                     } else if (sub < 2 && cur_cty == 20 && cur->npcs[ni].x == 16 && cur->npcs[ni].y == 2 && dlg_ok) {
                         /* 提頓村(CTY20)牢房犯人:給綠寶珠 0x66(青衫攻略;runner handler byte4=35,rec38/39)。
-                         * 原版閘在「夜晚進村 + 開牢門」(runner/region 事件);remake 無日夜系統 → 簡化為
-                         * talk 即給(留書「帶的寶珠留給有緣人」rec29)。綠寶珠 → 帶去雷亞姆蘭特祭壇(byte4=63-68 收)。 */
+                         * 提頓 = テドン(バラモス 手下滅村;白天廢墟、夜晚亡靈現身):原版閘在「夜晚進村 + 開牢門」
+                         * (runner/region 事件,day-night doc §9 RE 結論)。日夜系統已實作 → 忠實還原夜 gated:
+                         * **綠寶珠夜限定**(g_dn_phase==黑夜 才開牢門給珠);白天仍可讀屍體留書(物理遺書,rec29
+                         * 「寶珠留給有緣人」)當提示,但不給珠。綠寶珠 → 雷亞姆蘭特祭壇(byte4=63-68 收)。 */
                         set_dialogue_hero(&roster, &party);
-                        if (dq3_inv_find(&inv, 0x66) < 0) {
+                        if (dq3_scene_get_daynight() != 2) {
+                            dq3_dialogue_open(&dlg, b4);   /* 白天:只見留書,牢門深鎖(夜訪才開)*/
+                            fprintf(stderr, "提頓村牢房(白天):牢門深鎖,只餘屍上留書;夜裡亡靈現身才開牢門\n");
+                        } else if (dq3_inv_find(&inv, 0x66) < 0) {
                             dq3_inv_add(&inv, 0x66);
-                            dq3_dialogue_open(&dlg, b4);   /* rec29:屍體留書「寶珠留給有緣人」 */
-                            fprintf(stderr, "★ 提頓村牢房犯人:獲得綠寶珠 0x66(留給有緣人 → 雷亞姆蘭特祭壇)\n");
+                            dq3_dialogue_open(&dlg, b4);   /* 夜:rec29 留書 + 開牢門取珠 */
+                            fprintf(stderr, "★ 提頓村牢房(夜):亡靈現身開牢門,獲得綠寶珠 0x66 → 雷亞姆蘭特祭壇\n");
                         } else {
                             dq3_dialogue_open(&dlg, b4);
                             fprintf(stderr, "提頓村牢房:已取綠寶珠(rec%d)\n", b4);
