@@ -15,11 +15,13 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
 - [x] **RE 偵察完成**(2026-06-27,過程見 [`../docs/57-cmf-audio-re.md`](../docs/57-cmf-audio-re.md)):
   音訊系統 = Creative CT-VOICE + CT-MUSIC(`CMFDRV`)驅動(`SBCM.LIB`)+ VOC 音效(`FVOC/NVOC.VCX`);
   音樂格式 = CMF(OPL2 FM)。**EXE 載入清單只有 VOC,無音樂檔;全檔無 `CTMF` magic;0x228 多屬資料表非埠。**
-- [~] **判定:shipped 檔找不到標準 CMF 音樂資料** → 疑 (A) 未完成 build 沒做音樂(如缺 sprite)/ (B) 內嵌 EXE 非標準。
-- [ ] **Phase 1 續(決定性)**:反組譯 CMFDRV `ct_play_music` 呼叫端 —— 遊戲是否曾餵音樂資料指標?
-  - 無 → 確認 (A):音樂未做完,據實回報;Phase 2+ 暫緩(或維持原創 FM BGM)。
-  - 有 → 跟指標抽出音樂資料 → 進 Phase 2。
-- [ ] `tools/extract_cmf.py`:(若 (B))定位 + dump → `work/music/*.cmf`(gitignore)。
+- [x] **(A) 已排除、(B) 確認**(使用者親證 + YouTube 精訊版錄影有 BGM + RE 獨立佐證):音樂**真的在、運作中**——
+  EXE 重設 8253 timer(`mov al,0x36;out 0x43` ×2)+ `set_timer_count(ax)` 函式(logical 0x2c52)+ 計時 ISR。
+  資料**內嵌 EXE**(非 CMF 檔、無 CTMF magic、非 overlay)。
+- [ ] **Phase 1 續(進行中,deep trace)**:從 timer ISR / 音樂事件處理器反追 → 音樂事件流 + instrument base。
+  - 已找:timer init(file 0x13fc3 / 0x155c0)、`set_timer_count`(logical 0x2c52)。
+  - 待找:ISR 安裝點(INT8 或 SB-IRQ)→ ISR 內 OPL reg 寫入 → 事件指標變數 → 音樂資料 base。
+- [ ] `tools/extract_cmf.py`:定位後 dump 音樂資料 → `work/music/`(gitignore)+ 解析驗證。
 
 ### Phase 2 — OPL2 core + CMF parser(離線驗聽感)
 - [ ] `dq3_remake/src/dq3_opl2.{c,h}`:OPL2(YM3812)FM 核心(公開精簡實作移植;render s16 取樣)。

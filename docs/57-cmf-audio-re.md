@@ -34,7 +34,20 @@
 
 > rule 62:搜尋落空 ≠ 絕不存在。判定 (A) 前須跑完 (B) 的 driver-trace。
 
-## 下一步(Phase 1 續)
+## ★ 更正:音樂**確實存在且運作中**(使用者親證 + YouTube 精訊版錄影 + RE 獨立佐證,2026-06-27)
+
+使用者親耳聽過、且 YouTube 有精訊版遊戲錄影有 BGM → **排除 (A)「沒做完」,確認 (B):音樂真的在、內嵌 EXE**。
+RE 也獨立佐證音樂播放器**實際運作**:
+
+- EXE **重設 8253 timer**:`mov al,0x36; out 0x43`(2 處:file 0x13fc3 / 0x155c0)→ 設定音樂節拍中斷率。
+- **`set_timer_count(ax)` 函式**(logical **0x2c52**):`push ax; mov al,0x36; out 0x43; pop ax; out 0x40; mov al,ah; out 0x40; ret`
+  —— 把節拍值寫進 8253 channel 0(改 timer 頻率 = 音樂 tempo,典型 FM 音樂驅動作法)。
+- 其後一個 ISR(`not ax; mov al,0x20; out 0x20; iret` = 發 EOI 給 PIC)。
+
+⇒ EXE 內**有完整的計時音樂播放機制**,音樂資料內嵌(非 standalone CMF 檔、無 CTMF magic、非 overlay)。
+**(A) 已排除。** 缺的只是「資料 base 在哪」——需從 timer ISR / 音樂事件處理器反追資料指標(deep trace)。
+
+## 下一步(Phase 1 續)— 定位內嵌音樂資料
 
 - 反組譯 EXE 內 **CT-MUSIC 初始化**(`ct_scan_card`/OPL reset)與 **play 呼叫**:
   - 若遊戲**從未呼叫** play(只 init 驅動)→ 確認 (A):音樂未完成,據實回報、Phase 2+ 暫緩或改原創 BGM。
