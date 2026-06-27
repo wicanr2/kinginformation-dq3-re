@@ -30,6 +30,23 @@ void dq3_npc_move(dq3_scene *s, dq3_npc *npcs, int idx, int nx, int ny)
     dq3_npc_stamp(s, npcs, idx);
 }
 
+/* B-6 新城鎮視覺:移除可見性 flag == visflag 的 NPC(原版「建城後才顯示」的商店/居民),
+ * 但保留 (keep_x,keep_y) 位的(老人)。unstamp + 陣列壓縮;保留者位置不動,hi_map OCCUPIED 仍正確。 */
+void dq3_scene_hide_unbuilt(dq3_scene *s, int visflag, int keep_x, int keep_y)
+{
+    int i, j = 0;
+    for (i = 0; i < s->n_npcs; i++) {
+        if ((s->npcs[i].flags >> 3) == visflag &&
+            !(s->npcs[i].x == keep_x && s->npcs[i].y == keep_y)) {
+            unstamp(s, &s->npcs[i]);          /* 還原 hi_map(消失)*/
+            continue;
+        }
+        if (j != i) s->npcs[j] = s->npcs[i];  /* 壓縮(位置不變,cell stamp 仍有效)*/
+        j++;
+    }
+    s->n_npcs = j;
+}
+
 /* 嘗試沿當前朝向走一步;成功回 1。 */
 static int try_step(dq3_scene *s, dq3_npc *npcs, int idx)
 {

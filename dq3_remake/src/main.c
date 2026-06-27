@@ -1128,6 +1128,10 @@ static int run_game(const char *assets, const char *dump)
         }
         /* B-7 倉庫番:離開 CTY76 → 解謎旗標重置(石頭由 scene reload 自動回原位;使用者要求重入重置)。 */
         if (cur_cty != SOKOBAN_CTY) g_sokoban_solved = 0;
+        /* B-6 新城鎮視覺:未建城(flag 0x216)→ 隱藏商店/居民(vis_flag 0x05),留老人 (16,2)空草原;
+         * 帶商人來建城後重入 → 全顯(可買更多東西=成就感)。 */
+        if (in_town && cur_cty == 83 && !dq3_flags_get(&flags, 0x216))
+            dq3_scene_hide_unbuilt(cur, 0x05, 16, 2);
         /* NPC 隨機走動(docs/35 §九):城鎮每幀步進;對話中凍結不動。 */
         if (in_town && !(dlg_ok && dq3_dialogue_is_open(&dlg))) dq3_scene_npc_tick(cur);
         if (!in_town) animate_sea(cur, g_sea_frame++);   /* 海面 palette cycling(地表/下層)*/
