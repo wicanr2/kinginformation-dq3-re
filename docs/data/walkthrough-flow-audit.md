@@ -1,6 +1,6 @@
 # 攻略全流程 × remake 接線盤點(code 核實)
 
-> 來源:**杜勝利** DOS 版 DQ3 攻略(56 步詳細流程,`work/walkthrough/dusheng_dq3.txt`[gitignore])+
+> 來源:**杜勝利** DOS 版 DQ3 攻略(56 步詳細流程,`references/walkthroughs/dusheng_dq3.txt`(已收錄,註明出處))+
 > **青衫詩客(小邱)/ 孔方兄** 1994–95 BBS 條列攻略(`docs/history/dq3-bbs-1994.md`,聚焦當機點 + 改檔)。
 > 著作權歸原作者,此處僅摘要對照。**現況一律以 code 為準**(rulebook 63:marker 不可信,grep code 核實;
 > 本檔 2026-06-27 全面對 `dq3_remake/src/` 重驗)。

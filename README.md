@@ -103,7 +103,7 @@
 | `re/` | 反組譯重建的 C 原始碼 + SDL2 移植（`re/sdl/`）|
 | `docs/` | **全部技術文件**（格式分析、EXE 反組譯、事件/地圖、bug、驗證、資料/研究、RE 日誌）|
 | `tools/` | 解析 / 抽取 / 渲染素材的腳本（Python，於 docker uv venv 執行） |
-| `references/` | 外部參考資料（青衫先生攻略等，版權不入庫）|
+| `references/` | 外部參考資料；[`walkthroughs/`](references/walkthroughs/) **收錄台灣本土攻略原文**（杜勝利 / 青衫 / 孔方兄，註明出處,歷史保存）|
 | `assets_raw/` `assets_out/` | （git 排除）原版素材 / 抽出產物 |
 
 ## 📚 文件索引（可點擊）
