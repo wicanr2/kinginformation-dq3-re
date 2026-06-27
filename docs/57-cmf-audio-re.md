@@ -76,7 +76,20 @@ RE 也獨立佐證音樂播放器**實際運作**:
   音樂**仍存在**(CMFDRV 已連入 + 使用者親證 + YouTube 錄影),但要從**另一條**重追:
   CMFDRV 的 OPL 寫入(0x228/0x229 via `_ct_io_addx`)+ SB 自己的中斷,**不是這個 0xa000 螢幕 timer**。
 
-## 下一步(Phase 1 續)— 從 CMFDRV/OPL 那條重追音樂(取代上面追錯的 timer 線)
+## 已排除的路徑(別重試,2026-06-27)
+
+- ❌ **掃 `out dx,al`(0xEE)分群**:全檔 392 處、172 群,散在 VGA/CRTC/DSP 各處,雜訊太高不收斂。OPL 寫入埋在其中但無法靠數量挑出。
+- ❌ **遊戲 `DQ3CON.MAP` / `DQ3UND.MAP` 當 linker map**:這兩個**不是 link map**,是二進位遊戲資料(N/X tile 填充樣式),副檔名誤導。真 link map 只有 `SBCM.MAP`(驅動自身,符號為 unresolved externals,無遊戲端絕對位址)。
+- ⇒ **沒有遊戲端 .MAP 可給符號絕對位址**;得靠反組譯定位驅動碼。
+
+## 下一步(最有價值)— 用 SBCM.LIB 在 EXE 裡定位 CMFDRV 驅動
+
+- `SBCM.LIB`(OMF 物件庫)含 `_SBFM_PLAY_MUSIC` / `_SBFM_INSTRUMENT` / `CMFB` / `_SBC_SCAN_CARD` 等驅動碼。
+  linker 把它整段連進 DQ3.EXE → **驅動的機器碼在 LIB 與 EXE 內 byte-identical**。
+- 作法:從 LIB 取 `_SBFM_PLAY_MUSIC`(或 `_SBC_SCAN_CARD` 的 SB 偵測 `out reg4,0x60/0x80; in status`)的一段獨特 byte signature → 在 DQ3.EXE 搜 → 命中 = 驅動在 EXE 的位置。
+- 定位驅動後:① 反組譯 `_SBFM_PLAY_MUSIC` 看它怎麼收音樂資料指標(CMF 解析);② 用段→file 公式找**誰呼叫它**(遊戲選曲處)+ 傳入的指標 = 內嵌音樂資料 base;③ 找指標表 = 曲目表。
+
+## (參考)CMFDRV/OPL 線通用指引(取代追錯的 timer 線)
 - 從 `_ct_io_addx`(SB IO base 變數)被寫的位置 → 找寫 OPL data 埠(base+1,值 = reg/value)的迴圈 = CMF 播放器。
 - 找 CMFDRV 的 `ct_play_music` / `_ct_music_status` 對應 code:誰把音樂資料指標餵給它 → 指標 base = 內嵌音樂資料。
 - 用上面的段→file 公式跟 CMFDRV 段的 far call(SBCM.LIB 連入的獨立段)。
