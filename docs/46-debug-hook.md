@@ -73,15 +73,15 @@ DQ3_DEBUG="warp:0:27:32" DQ3_INPUT="e" DQ3_DUMP=/tmp/shop.ppm dq3_remake assets_
 ```
 
 > 注意:debug 定位(warp/descent/ascend)會跳過開場 CTY00 載入(`debug_placed` 旗標),否則被覆蓋。
-> NPC 目前**不擋移動** → 互動測試把玩家擺在 NPC 正上方(預設面向下)直接 Enter,不靠走過去。
+> NPC **會擋移動**(`dq3_scene_input`:`dq3_scene_npc_at(tx,ty)>=0 → return 0`);互動測試走到 NPC 旁、面向它按 Enter。
 
 ## 主線里程碑驗證:`tools/playthrough_check.sh`
 
 一批 debug+input 里程碑 pass/fail(全城載入/話す/開店/建隊/下降/合成事件/跨城):
 ```bash
-tools/playthrough_check.sh <assets_dir> <dq3_remake_bin>   # PASS=7 FAIL=0
+tools/playthrough_check.sh <assets_dir> <dq3_remake_bin>   # PASS=N FAIL=0(項數動態成長)
 ```
-當前 7/7 通過 —— 證明各系統(載入/對話/設施/隊伍/scripted event/傳送)串接無誤。
+全綠 —— 證明各系統(載入/對話/設施/隊伍/scripted event/傳送…)串接無誤。整合於 `game_tester.sh`(現 93/93)。
 
 ## 待擴充
 

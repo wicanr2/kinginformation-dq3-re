@@ -16,8 +16,9 @@
   僅在 `official_patches.json` 標 `source="青衫官方"` 留底備查。
 - **關鍵負面發現:青衫官方 patch 與存檔修改法都沒有任何一段在修 bug#4(勇者MP+1)、bug#5(高等級升級錯亂)、
   bug#6(255 溢位)。** 換言之,當年社群也沒給這三個「樂趣型」bug 任何 byte patch —— 這與 docs/18 的判定
-  (#4 是 dragon0.dat 表值、#5/#6 需 C 層 clamp/改型別,組語層無同長度單點可翻轉)互相印證:不是我們漏找,
-  而是這三個 bug 本來就不存在 1~3 byte 的官方修法。
+  (#4 在 EXE DGROUP 成長表、#5/#6 需 C 層 clamp/改型別)互相印證:當年社群沒給這三個「樂趣型」bug 官方 byte patch。
+  (更正:#4 後來已做成 **2-byte EXE-data patch**(`file 0x1a4a8/9`,docs/23/stat_patches.json),並非「無 EXE 單點」;
+  只是當年官方未提供。)
 - 其餘 6 段:2 段是真實的**當機防護但屬硬體/環境相容**(聲霸卡、特定機器),4 段是**純金手指作弊**
   (敵人消失、穿牆、致命一擊、生命不減)。都不對映青衫列的 7 個遊戲性 bug,**不補進修正版**。
 
@@ -86,8 +87,9 @@ clamp 基準從錯誤欄 +0x2336 改回 +0x2334(累積值本身)。file 0xbe04 /
 (彩虹水滴製作、五頭龍避戰存檔改 monster_id)+ 128 道具表後,**確認當年社群並未對這三個 bug 提供
 任何 byte patch 或存檔修改**:
 
-- **bug#4 勇者 MaxMP 成長+1**:無官方 patch。docs/18 判定根因在 `dragon0.dat` 成長表勇者列 MP slope
-  偏低(公式碼本身正確、所有職業共用),屬資料層;官方沒提供 dragon0.dat 修改,佐證「不是 EXE 單點」。
+- **bug#4 勇者 MaxMP 成長+1**:無官方 patch。根因 = 成長表勇者列 MP base/slope 偏低(公式碼本身正確);
+  成長表**在 EXE DGROUP**(DS:0x4366→`file 0x1a4a6`,非 dragon0.dat),已做成 **2-byte EXE-data patch**(file 0x1a4a8/9,docs/23)。
+  當年官方未提供此修改,純因屬「樂趣型」非卡關 bug。
 - **bug#5 高等級升級錯亂**:無官方 patch。根因是等級 byte 當索引越界查門檻/咒文表,需 clamp(code cave),
   real-mode 原碼無空檔塞同長度修正 —— 與「官方也沒給」一致。
 - **bug#6 數值 255 溢位**:無官方 patch。根因是成長中間值 8-bit `mul`+`adc` wrap(C 型別),

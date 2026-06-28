@@ -89,5 +89,5 @@ type 1/3(0x9de9)→ 掃隊伍背包 8 格存入 param(滿了印「行李滿」);
 ## 待 RE / 待補
 
 - type 0 `param==0` 的純調査點(踩著有訊息、無道具),目前歸入一般事件;可另列「劇情調査點」。
-- 寶箱外觀隨旗標翻面(docs/35 §三:取後 tile index+1 = 開過外觀),remake 尚未做 tile 重繪。
+- 寶箱外觀隨旗標翻面(docs/35 §三:取後 tile index+1 = 開過外觀),remake **已落地**(`dq3_scene_mark_opened_tile` 疊開過標記;用疊繪非 BLK+1)。
 - 旗標初值:原版新遊戲由存檔載入 armed 狀態;remake 以「全未取」起算(flag bit 0=未取),語意對等但反相。

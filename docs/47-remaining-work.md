@@ -64,7 +64,7 @@ event index 沒有對應的觸發 setter**;搜尋「跳進坑」之類提示 NPC
    ——overworld attr 指紋 `(attr&1)&&(attr&0x20)`(海 0x25,山 0x07 無 0x20),docs/48。
    登船/航行/上岸狀態機 + 船上不遇敵 + 船狀態併入 dq3_save(v3)。debug 口 `ship`/`ship:X:Y`/`opos:X:Y`;
    playthrough_check 驗證跨海航行與上岸。**取船劇情已接**(docs/50):波魯多加=CTY37,國王(9,6)
-   sub2 NPC,獻黑胡椒(0x5c)→ 授船 + SHIP 里程碑 + 停泊 (25,73)。**剩**:黑胡椒的取得 NPC(商人)待接。
+   sub2 NPC,獻黑胡椒(0x5c)→ 授船 + SHIP 里程碑 + 停泊 (25,73)。黑胡椒取得 NPC **已接**(`dq3_scripted.c`:CTY15 巴哈拉達 (5,24) 胡椒商古布達獲救後給 0x5c)。
 4. ~~**終盤**~~ **(已落地)**:大魔王索瑪戰(怪 0x7c)+ 結局序列。`zoma` debug 跑真實索瑪戰
    (修了 boss 大圖 sprite:MAXW 160→384→**416**[八頭大蛇 W=416],讓索瑪 384×144 等大圖可繪,仍擋垃圾 header);
    勝利 → `run_finale` 設 ZOMA 里程碑(進度 9/9)+ ENDTXT 結局逐段。`finale` debug 直接驗破關路徑。
@@ -95,7 +95,7 @@ event index 沒有對應的觸發 setter**;搜尋「跳進坑」之類提示 NPC
 
 10. ~~寶箱開過 tile 翻面~~ **✅ 已落地**(使用者選「疊變暗/開蓋標記」,`dq3_scene_mark_opened_tile`;
     原版本不翻 tile,此為 remake 增強)· ~~旅社/教會精確收費公式~~ **✅ 靜態 RE**(旅社 = 設施 block +1 ×
-    人數;教會復活 = RE level 表 0x3c6c)· 同城多攤逐攤化(資料已備,未做)。
+    人數;教會復活 = RE level 表 0x3c6c)· 同城多攤逐攤化 **已做**(`main.c` 設施 NPC:走到店員 → `dq3_facility_at` → 開該攤精確品項)。
 11. ~~轉職(達瑪)實際換職~~ **✅ 已落地**(dq3_member_change_class + dhama_modal;CTY49 NPC / debug `dhama`)。
     ~~咒文全效果~~ **✅ 大幅落地**(戰鬥狀態咒 + 野外咒文 魯拉/烈米特/特黑洛斯,`spell-effects-research.md`)。
     戰鬥逃跑/道具指令完整(基本已有)。

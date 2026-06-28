@@ -8,7 +8,7 @@
 ## 現況快照(2026-06-27)
 
 `dq3_remake/`(C99 + SDL2)= **完整、可玩、資料驅動**的精訊版 DQ3 核心,**主線可破關**。
-每個數值/邏輯都從 `DQ3.EXE` 或遊戲資料抽出。`tools/game_tester.sh` **86/86 全綠**(交付 gate)。
+每個數值/邏輯都從 `DQ3.EXE` 或遊戲資料抽出。`tools/game_tester.sh` **93/93 全綠**(交付 gate)。
 已打包 Linux tar + **Linux AppImage** + **Windows x64 zip**(交叉編譯,wine 驗證);macOS/Android 待移植(規劃見 docs/55)。
 
 ```
@@ -28,7 +28,7 @@
 - **杜勝利 + 青衫攻略接線**:B 道具鏈(夢幻紅寶石/變身杖/蓋亞之劍/鑰匙鏈/彩虹水滴/領悟之書/王者之劍)、A boss(巴拉摩斯+怨靈122/殭屍123/索瑪124、甘達特金皇冠、甘達特巢穴 CTY14、八頭大蛇 CTY19、**六大魔人怪106**)、不死鳥拉米亞坐騎(六珠)、**勇氣神殿神父 gate(flag0x13)**、**蓋亞那跳坑下降閘(flag0x213)**。全流程缺口盤點見 `docs/data/walkthrough-flow-audit.md`(11 缺口→8 已解,剩 B-5/B-6/B-7/E-11 不阻塞)。**賢者 gate 道具碼 bug 已修(領悟之書 0x4a)**。道具取得鏈全列(`quest-items.md`,無 stale)。
 - **戰鬥系統忠實化**:傷害公式逐一對反組譯確認精確(物理/弱攻/會心×2/咒文)、怪物 AI/數值/遭遇全 RE、**狀態咒**(拜基魯多/史卡拉/魯卡尼/瑪努莎/瑪荷頓 等 base==0 套修正,research+impl 對照 `spell-effects-research.md`)、**rng 升級成長**(RE sub_d9cc:`+= rng(0..(target−當前))`,創角+升級,NULL=確定性零回歸)、手動選咒選單、教會復活費 RE level 表。
 - **野外/系統**:野外咒文施放(魯拉/烈米特/特黑洛斯)、per-member 裝備管理 UI、設定選單(RNG 模式 DOS/REAL 存 dq3.cfg)、寶箱開過回饋。
-- **存讀檔 v6**:多 slot(6)+ F5/F9 + 標題選單;存名冊/隊伍/道具/位置/船/**劇情進度 storyflags**/晝夜相位。
+- **存讀檔 v8**:多 slot(6)+ F5/F9 + 標題選單;存名冊/隊伍/道具/位置/船/**劇情進度 storyflags**/晝夜相位/魯拉去過城鎮(magic DQ3SAVE8)。
 - **special 事件**:全分類,0 review 待辦。**overworld 旗標 portal**:RE 0x396e 全分支確認 3 條靜態 portal 完備。
 - **場景轉場/傳送全接**:門/階梯/出城/下降(section +0xc 轉場表)、type-2 examine warp(0x4ea0,旅の扉/洞穴出口→城)、overworld 旗標 portal。洞窟/迷宮↔城連接在遊戲內可走;`dq3_locwarp`(0xd1f9 codepath 的同連接冗餘資料表)未單獨接,連接由上述機制覆蓋。
 - **金字塔施咒當機**:RE 確認 remake 結構免疫(咒文與地圖資源解耦),不復刻原版 crash(`original-known-bugs.md`)。
@@ -37,6 +37,13 @@
 ## 真正剩餘工作(已對 ground truth 核實)
 
 ### 收尾打磨(非阻塞)
+- [x] **全專案 markdown 過期審查 ✅**(2026-06-28,第一性原理對 code 核實):掃 102 篇 .md,修正 ~24 項過期/錯誤斷言
+  —— 含 ① 順帶揪出**功能回歸**:`playthrough_check.sh` 蓋美拉翅膀回地表測試輸入未跟上新增的傳送選單(改 `cdredde`→`cdreddee`,
+  game_tester 回 93/93);② 存檔版本(README/WORKLIST v6→v8)、測試數(86/86→93/93、79/79→動態)、
+  日夜 NPC 雙清單(docs/34/35 的 +0/+2 由「Y<0x12c 座標」更正為晝夜選擇)、docs/18 bug 索引(#4/#7a 早已 binary 修好、
+  成長表在 EXE DGROUP、255-wrap 非 8-bit 公式)、多處「已實作卻標未實作」(戰鬥施法/狀態系統解毒/商店/音訊引擎/寶箱翻面/
+  NPC 擋路/對話派發)、docs/43 撤回的 byte4 假陽性。**殘留 minor**(不誤導,自校或需另跑):docs/19/24 byte-match 確切通過數待 `match_check.py`、
+  docs/28/36/27/29 開頭框架語(同文後段已自校)。
 - [x] **魯拉/蓋美拉 傳送目的地存讀檔持久 ✅**(2026-06-28):visited 城鎮清單(cty+最後位置+section)寫進
   `dq3_save_pos`(save v8,magic DQ3SAVE8;pos size 變自動擋舊檔);存/讀檔雙向接好;test_save 加 round-trip 斷言。
 - [x] **城鎮日夜 NPC 行為還原**(使用者觀察,2026-06-28;**完成**):原版城鎮白天(含黃昏)NPC 走動、

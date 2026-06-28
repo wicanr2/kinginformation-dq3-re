@@ -49,8 +49,8 @@ remake 戰鬥 HUD 依 `references/game3.png` 重排,結構一致:
 
 殘留差異:**天空雲層背景**(原版 `PACKBG.SCR` page 0x13)。偵察(`tools/packbg_probe*.py`):
 每 page 讀 0x6e00=28160 bytes = 320×176×4bit;row-interleaved 解碼在 640×88 時右半出現
-清楚雲層,320×176 則有掃描線交錯雜訊 —— 確切寬度/交錯方式待進一步實驗。目前 remake
-戰鬥天空為純藍(非雲),屬已知待補的視覺差異,不影響版面結構與互動。
+清楚雲層,320×176 則有掃描線交錯雜訊 —— 確切寬度/交錯方式待進一步實驗。remake **已繪 PACKBG.SCR 背景**
+(`dq3_packbg.c` 解碼 + `dq3_battlescene.c` 繪 `g_sky` 草原天空綠地);索瑪/最終地城刻意純黑。
 
 ## packbg 戰鬥背景格式(結構已解,完整像素待底層模擬)
 

@@ -60,4 +60,16 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
 - [x] 音樂資料可解析(MBG.MCX 18 軌,旋律完整)。
 - [x] 離線 render wav(FM 音色、非雜訊)。
 - [x] remake 地表/戰鬥/城鎮聽到精訊自己的曲;headless / 17 測試零回歸;設定檔可關音樂。
-- [ ] (精校)各軌實際 instrument 音色、精確 tempo、語意音效對應、遊戲內設定 UI。
+- [x] 遊戲內設定 UI:config_modal 已加音樂開關/音量/音源(MT-32↔SB)項(2026-06,Phase4 ⚠ 已補)。
+- [ ] (精校)各軌實際 instrument 音色、精確 tempo、語意音效對應。
+
+## 場景配曲對應 — 機制可動但**選曲未對原版確認**(2026-06-28 第一性原理核實)
+> 機制本身運作:`g_scene_track[]`(`dq3_audio.c`)+ `dq3_audio_play_scene` + 主迴圈每幀 idempotent 選軌。
+> 但**哪一軌是哪首曲、哪個場景該播哪軌,是初步猜測**(`g_scene_track[]` 上方註解自承「初步合理對應;
+> 日後依 RE 選曲精校」)。下列為 code 層可證的缺口:
+- [ ] **track→曲目對應未 RE**:`g_scene_track[]` 的 18 軌指派(TITLE=17/FIELD=0/TOWN=2/…)未對原版驗證。
+  精確選曲屬 runtime 行為,本環境無 DOSBox debugger(記憶 `dq3-no-dosbox-debugger`)難完全驗;
+  可改用「MBG.MCX 各軌 render 試聽 + 對青衫攻略/原版錄影辨識曲目」反推。
+- [ ] **`DQ3_MUS_CASTLE`(軌3)0 處觸發**:城堡也是 CTY → `in_town` 一律播 TOWN 曲,城堡曲從不播。需城堡 CTY 清單 → 切 CASTLE。
+- [ ] **`DQ3_MUS_ENDING`(軌16)0 處觸發**:結局序列(`end_seq`)無音樂呼叫。
+- [ ] **DUNGEON 曲只在下層 overworld**(`layer==1`):真正洞窟/塔以 CTY 載入(`in_town=1`)會播 TOWN 曲,非 DUNGEON。需辨識 dungeon 類 vs 城鎮類 CTY 分流。

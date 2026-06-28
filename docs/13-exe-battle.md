@@ -309,7 +309,8 @@ else:                              ; 一般
 
 **未定位(待續)**:玩家施法的**靜態 per-spell descriptor 表**(effect_type / base power / MP cost / target by spell_id)。傷害 base 在追到的路徑是 runtime 值(`[si+0x2339]`),玩家咒文的固定威力來源(美拉≈小、美拉米≈中…)與 MP 消耗表尚未定位——玩家施法路徑與此處的敵方攻擊路徑不同;`[0x2339]` 在 EXE 為 0(runtime),`0x2511` 多處被設成特定 spell_id 供訊息,非威力索引。需再追玩家「咒文」指令 → 選咒 → 扣 MP → 設 base 的那段。
 
-> 為何 remake 暫不接戰鬥施法:靜態威力 / MP 表未定位,**不憑 BBS 值湊**(BBS 作者自承 MP 數「最易出錯」、用 IV 代資料;EXE 內無 `[2,6,10,…]` 簡單 MP 表)。じゅもん 畫面只列「已學會的咒文名」(習得表 docs/18 已坐實),施法效果留待 descriptor 表 RE 完成。
+> 戰鬥施法 **已接**(2026-06,更正下方舊註):remake 自建咒文 descriptor 表(`dq3_spelldef.c` / `tools/gen_spells.py`、`include/dq3_spell.h` `dq3_spell_def`),戰鬥實際施法(`dq3_battlescene.c` `pick_caster_spell_kind` + 傷害/MP)。
+> (歷史脈絡:當初因「靜態威力 / MP 表未在 EXE 定位、不憑 BBS 值湊」而暫緩;後改以自建 descriptor 表落地,非從 EXE 抽威力表。)
 
 ## 咒文效果型別:狀態咒辨識的 RE 現況(monster-status 分析)
 

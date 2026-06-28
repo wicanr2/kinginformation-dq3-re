@@ -67,8 +67,9 @@ L0x5ee0: call 0x6372; [0xb34]=1; di=0xc22(rec106); lcall 渲染;
 深處 boss = **甘達特(怪26)**。與既接的古布達救人鏈(flag 0x211,boss:27;boss:26)**完全閉環**——
 這正是該救人事件的「城內正式觸發點」所在(byte4=58 對話 → region [0x722]=1 觸發戰鬥)。
 
-**仍待補**:戰鬥的精確 region 觸發(handler 只到對話 + region 分支,實際 battle 呼叫在 [0x722]=1 的
-region handler,非 byte4=58 本身);接上後即可讓玩家走進 CTY14 巢穴照原版觸發甘達特手下戰。
+**戰鬥已接**(2026-06-27,與上表行 30 一致):`main.c` CTY14 sec1 examine `byte4=58` → 未救出(flag 0x211)則
+打甘達特手下(怪27)、救出後給後話。原版精確 region 觸發(`[0x722]=1` region handler)雖未逐指令重現,
+但 remake 以 byte4=58 examine 達成等效劇情強制戰,玩家走進 CTY14 巢穴即觸發。
 
 ## 巴拉摩斯城 CTY 定位(未決)
 

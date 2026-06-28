@@ -48,7 +48,7 @@ chk "狀態:滿月草解麻痺"           "party;status:0:2;item:0x45;use:0x45" 
 chk "野外道具選單:選藥草使用"     "party;hurt:5;item:0x41;warp:0:27:30" "cdrede" "野外つかう:藥草"
 chk "達瑪轉職選單:選隊員+職業"    "party;dhama"        "dededdde" "達瑪轉職:隊員"
 chk "戰鬥毒傷(中毒進戰鬥)"        "party;status:0:1;zoma" "FFFF" "中毒,受 3 毒傷"
-chk "野外選單:蓋美拉翅膀回地表"   "party;warp:2:10:10;item:0x43" "cdredde" "回到地表"
+chk "野外選單:蓋美拉翅膀→傳送選單→回地表"   "party;warp:2:10:10;item:0x43" "cdreddee" "回到地表"
 chk "迷宮樓梯層間轉場(拿吉米塔)"  "warp:8:15:38"       "u"    "門/階梯:→ CTY8 section5"
 echo "== 結果:PASS=$pass FAIL=$fail =="
 [ "$fail" -eq 0 ]

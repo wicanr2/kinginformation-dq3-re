@@ -44,9 +44,9 @@
 
 ## 交付前自動化驗證(game_tester)
 
-`tools/game_tester.sh` 一鍵全綠(**79/79**):
+`tools/game_tester.sh` 一鍵全綠(**現 93/93**;此數隨新增斷言動態成長,以實跑為準,別當固定值):
 - 15 單元測試(數值/戰鬥/道具/存檔…)
-- playthrough_check 37 項(各系統孤立斷言)
+- playthrough_check(各系統孤立斷言,項數動態)
 - mainline_check(主線一條龍 → 進度 9/9 破關)
 - **全 89 城載入零崩潰**
 - 新內容:索瑪二階段(光之珠)/ 結局捲動 / sub2 給物 NPC(水槍·光之珠·誘惑之劍)
@@ -54,4 +54,4 @@
 - 存檔→讀檔 roundtrip(狀態回復)
 
 ⇒ 多畫面 oracle 一致(標題像素 / 注音 IME 字序 / boss sprite)+ RE byte-identical +
-79/79 自動驗證 + 89 城零崩潰 = 忠實度與穩定性交付基準。
+game_tester 全綠(現 93/93)+ 89 城零崩潰 = 忠實度與穩定性交付基準。

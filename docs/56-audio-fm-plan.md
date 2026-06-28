@@ -22,7 +22,7 @@
   ticks/tempo + 樂器數;instrument = 16-byte OPL2 operator 參數;music block = MIDI-like delta-time 事件流。
   規格公開,parser 不難。
 
-## 3. 架構(remake 目前**無音訊引擎**,全新子系統)
+## 3. 架構(★ 本節為原始計畫;音訊引擎**現已落地**:`dq3_audio`/`dq3_opl2`/`dq3_cmf`/`dq3_voc` 全在 `src/`,SDL callback + 場景配曲 + 設定 UI 皆已完成,現況以 AUDIO_WORKLIST 為準)
 
 ```
 PLAYER/EXE 內 CMF 資料 ──parse──▶ {instruments[], events[]}

@@ -217,7 +217,7 @@ python tools/re_codecave_patch.py --base work/DQ3_fixed.EXE   # → work/DQ3_ful
 remake:`dq3_item_attack/defense/price/category/can_equip/equip_slot`(dq3_combat);`dq3_recruit` 加
 `weapon`/`armor`/`shield`/`head` **4 槽**;戰鬥 **攻擊力 = 力量 + 武器 b0、守備力 = 耐力/2 +(鎧+盾+兜 b1 總和)**。
 裝備指令 UI 已實作(`equip_modal`,4 槽 2×2,部位用 `equip_slot` 過濾候選清單)。實測:勇者裝銅劍(攻+10)物理傷害提高。
-待:商店(買賣)。
+商店(買賣)**已實作**(`main.c` `shop_modal` + `dq3_shopdata`,資料驅動,全城設施 NPC 開店)。
 
 ## 商店 / 開場 RE(部分)
 

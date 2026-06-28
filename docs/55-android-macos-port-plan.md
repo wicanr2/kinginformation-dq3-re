@@ -93,7 +93,7 @@ SDL2 Android 範本:Java `SDLActivity` 啟動 → JNI 載入原生 `libmain.so` 
 ### 2.4 生命週期 / 其他
 - Android 會暫停/恢復 app(`SDL_APP_WILLENTERBACKGROUND` 等):需在事件中存檔/釋放 texture、恢復時重建。
 - 視窗大小由系統決定:沿用現有 renderer 縮放(letterbox)。
-- 觸覺/音訊:目前無音訊(SDL audio 未用),Android 不額外處理。
+- 觸覺/音訊:**音訊已落地**(`dq3_audio` 用 SDL_OpenAudioDevice 播 MBG.MCX OPL2/CMF + MT-32 預錄;預設 MT-32 可切 SB)。Android 移植需處理 SDL audio 在 Android 的初始化與生命週期暫停(背景靜音/恢復)。
 
 ### 2.5 工作量 / 風險
 - 工作量:**中–大**(1–2 週)。拆解:進入點守衛(0.5d)、素材解壓/路徑抽象(2–3d)、觸控 UI(3–4d)、

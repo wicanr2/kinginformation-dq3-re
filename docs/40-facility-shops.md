@@ -113,7 +113,7 @@ DGROUP 0x1f9**,7 byte/筆,+2/+3 = 價格,對上 docs/22)。買單渲染 file 0x8
 - option2 `0x853c` = **解詛咒**(rec 0x137「誰要解詛咒」)
 - option3 `0x85ff` = **復活**(rec 0x138「誰需要復活」;測實體 `[+0x38]&0x80` 死亡旗標)
 - remake:`church_revive` 蘇生陣亡隊員(`cur_hp==0` → 復原 cur_hp/cur_mp,費=等級×10);
-  解毒/解詛咒因 remake 尚無狀態效果,暫不實作。
+  解毒/解麻痺 **已實作**(狀態系統已建:`dq3_status.h`;`main.c:431` 教會 `if(m->status)` 解毒/解麻痺、道具走 `dq3_item_use_cure`)。
 
 ## 待 RE / 待補(縮小後)
 
