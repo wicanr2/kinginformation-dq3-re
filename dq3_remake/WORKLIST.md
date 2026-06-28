@@ -51,7 +51,7 @@
   戰鬥曲在 MBG。EBG 現載著無場景 slot(日後可接旅館/祠堂/復活事件)。
 - [x] **track→曲目對應 ✅ 完成**(9/9,使用者聽感確認 2026-06-28):
   `TITLE=0 · FIELD=6 · TOWN=2 · CASTLE=1 · DUNGEON=3 · SHIP=6 · BATTLE=14 · BOSS=14(精訊版同戰鬥曲) · ENDING=17`。
-  build + game_tester 93/93。迷宮變體 7塔/9鬼船/16最後迷宮、CASTLE=FIELD=1(王城與地表同曲,使用者稱)記於 docs/61。
+  build + game_tester 93/93。迷宮變體 7塔/9鬼船/16最後迷宮、EBG 事件 cue(教堂/神宮/旅館)記於 docs/61。
   - 過程:結構時長分析(只能粗分 loop/jingle 不能定曲)+ RE recon(`_sbfm_play_music`→`[ds:0x08]`→偏移表)+
     **試影片音訊指紋比對證實不可靠**(SFX+tempo+跨場景)→ 最終靠玩過破關的使用者逐軌認曲(可靠)。
 
