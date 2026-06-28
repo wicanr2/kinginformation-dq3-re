@@ -668,6 +668,41 @@ static dq3_config *g_cfg = NULL;   /* main 設定;設定選單讀寫 + 存檔 */
  * 標籤 glyph 用原版字庫 + 自建「設/版」(dq3_customglyph)。←/→/Enter/Space 切換,ESC 存檔離開。 */
 static void draw_number_at(uint8_t *fb, const dq3_text *t, int x, int y, int v, uint8_t fg);  /* 前置宣告 */
 
+/* 傳送選單(魯拉/蓋美拉):列「回地表」+ 去過的城鎮 → 選目的地。疊在目前畫面上。
+ * 回 -2=取消、-1=回地表、>=0=visited 城鎮 index。 */
+static int teleport_menu(const dq3_text *text, const int *visited_cty, int n)
+{
+    static const uint16_t L_FIELD[3] = { 312, 214, 1402 };   /* 回地表 */
+    static const uint16_t L_CITY[2]  = { 474, 475 };         /* 城鎮 */
+    uint8_t *fb = dq3_fb(); int sel = 0, i, r, nrow = n + 1;
+    int bx = 200, by = 40, bw = 240, bh = 40 + nrow*22 + 16;
+    if (bh > DQ3_SCREEN_H - 20) bh = DQ3_SCREEN_H - 20;
+    while (!dq3_should_quit()) {
+        uint8_t sc;
+        tav_window(fb, bx, by, bw, bh, 0, 15, 0);
+        /* 標題「魯拉」(咒名 rec 172 → glyph;簡化用「傳送」617? 用地名感 →「回地表」列已含;此處標 ▶ 選單)*/
+        for (r = 0; r < nrow; r++) {
+            int y = by + 16 + r*22, lx = bx + 40;
+            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+16, y, (uint16_t)(r==sel?11:12), 14);  /* ▶ */
+            if (r == 0)
+                for (i = 0; i < 3; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, lx+i*16, y, L_FIELD[i], 15);
+            else {
+                for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, lx+i*16, y, L_CITY[i], 15);
+                draw_number_at(fb, text, lx+2*16+8, y, visited_cty[r-1], 14);   /* 城鎮 CTY 號 */
+            }
+        }
+        dq3_present();
+        sc = dq3_poll_scancode();
+        if (sc == 0x01) return -2;                 /* ESC 取消 */
+        else if (sc == 0x48) sel = (sel + nrow - 1) % nrow;
+        else if (sc == 0x50) sel = (sel + 1) % nrow;
+        else if (sc == 0x1c || sc == 0x39) return sel == 0 ? -1 : (sel - 1);
+        dq3_delay_ms(16);
+        if (getenv("DQ3_DUMP")) { dq3_dump_ppm(getenv("DQ3_DUMP")); return -2; }
+    }
+    return -2;
+}
+
 /* F1 按鍵說明視窗:列出按鍵 → 功能,疊在目前畫面上,按任意鍵關閉。 */
 static void help_modal(const dq3_text *text)
 {
@@ -899,6 +934,7 @@ static int run_game(const char *assets, const char *dump)
     dq3_scene *field_under = NULL; int layer = 0;  /* 0=地表 1=下層 overworld(docs/43)*/
     int in_town = 0, enc, fx = 0, fy = 0, cur_cty = -1;   /* cur_cty:目前所在 CTY 號(#2 gate)*/
     int repel = 0;                                         /* #3 聖水:剩餘驅弱敵步數 */
+    struct { int cty, x, y, sec; } visited[16]; int n_visited = 0;  /* 魯拉/蓋美拉:去過的城鎮(傳送目的)*/
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1, cur_dlg_bank = 1;  /* 啟動載 D3TXT01(阿里阿罕 bank)*/
     dq3_text sys_txt; int sys_ok = 0;                                  /* 常駐 D3TXT00:系統訊息 + 道具名 */
@@ -1301,6 +1337,11 @@ static int run_game(const char *assets, const char *dump)
             dq3_audio_play_scene(mk, 1);
         }
         apply_followers(cur, &roster, &party, assets);   /* 隊列:隊員跟隨 + 陣亡棺材(變化才重設)*/
+        if (in_town && cur_cty >= 0) {                    /* 魯拉/蓋美拉:記錄去過的城鎮 + 最後位置(傳送目的)*/
+            int vi; for (vi = 0; vi < n_visited; vi++) if (visited[vi].cty == cur_cty) break;
+            if (vi == n_visited && n_visited < 16) { visited[n_visited].cty = cur_cty; n_visited++; }
+            if (vi < 16) { visited[vi].x = cur->px; visited[vi].y = cur->py; visited[vi].sec = cur->section; }
+        }
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         overlay_opened_chests(cur, &flags);    /* #4:已取寶箱疊開過標記(remake 增強)*/
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
@@ -1781,10 +1822,31 @@ static int run_game(const char *assets, const char *dump)
             g_item_world_eff = 0;
             cmd_modal(cur, &roster, &party, &inv, &dlg, dlg_ok, sys_ok ? &sys_txt : &dlg.txt);
             dq3_scene_apply_palette(cur);
-            if (g_item_world_eff == DQ3_USE_RETURN_TOWN) {       /* 蓋美拉翅膀 / 魯拉 / 烈米特:回地表 */
-                layer = 0; cur = field; in_town = 0; cur_cty = -1; ship.aboard = 0;
-                dq3_scene_apply_palette(cur);
-                fprintf(stderr, "回到地表 (%d,%d)\n", cur->px, cur->py);
+            if (g_item_world_eff == DQ3_USE_RETURN_TOWN) {       /* 魯拉/蓋美拉:選單 → 回地表 / 去過的城鎮 */
+                int ctys[16], k, dest;
+                for (k = 0; k < n_visited; k++) ctys[k] = visited[k].cty;   /* 取 cty 陣列給選單顯示 */
+                dest = teleport_menu(sys_ok ? &sys_txt : &dlg.txt, ctys, n_visited);
+                if (dest == -2) { /* 取消 */ }
+                else if (dest == -1) {                           /* 回地表 */
+                    layer = 0; cur = field; in_town = 0; cur_cty = -1; ship.aboard = 0;
+                    dq3_scene_apply_palette(cur); dq3_scene_reset_trail(cur);
+                    fprintf(stderr, "魯拉:回到地表 (%d,%d)\n", cur->px, cur->py);
+                } else if (dest >= 0 && dest < n_visited) {       /* 傳送到去過的城鎮 */
+                    char ct[16]; int vc = visited[dest].cty;
+                    int bn = (vc >= 0 && vc < 100) ? dq3x_map_blknum[vc] : 1;
+                    dq3_scene *ns;
+                    sprintf(ct, "CTY%02d.DAT", vc);
+                    ns = dq3_town_load(assets, ct, visited[dest].sec, bn, err, sizeof err);
+                    if (ns) {
+                        if (town) dq3_scene_free(town);
+                        town = ns; cur = town; in_town = 1; cur_cty = vc; layer = 0; ship.aboard = 0;
+                        load_field_hero(town, assets);
+                        if (visited[dest].x < cur->map_w) cur->px = visited[dest].x;
+                        if (visited[dest].y < cur->map_h) cur->py = visited[dest].y;
+                        dq3_scene_apply_palette(cur); dq3_scene_reset_trail(cur);
+                        fprintf(stderr, "★ 魯拉:傳送到 CTY%d (%d,%d)\n", vc, cur->px, cur->py);
+                    } else fprintf(stderr, "魯拉傳送載入失敗 CTY%d: %s\n", vc, err);
+                }
             } else if (g_item_world_eff == DQ3_USE_REPEL) {      /* 聖水:驅弱敵 */
                 repel = DQ3_HOLY_STEPS;
                 fprintf(stderr, "聖水:弱敵迴避 %d 步\n", repel);
