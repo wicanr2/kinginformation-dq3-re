@@ -39,9 +39,13 @@
 ### 收尾打磨(非阻塞)
 - [x] **魯拉/蓋美拉 傳送目的地存讀檔持久 ✅**(2026-06-28):visited 城鎮清單(cty+最後位置+section)寫進
   `dq3_save_pos`(save v8,magic DQ3SAVE8;pos size 變自動擋舊檔);存/讀檔雙向接好;test_save 加 round-trip 斷言。
-- [ ] **城鎮日夜 NPC 行為還原**(使用者觀察,2026-06-28):原版城鎮白天(含黃昏)NPC 走動、黑夜部分睡覺/隱藏、
-  有的白天隱藏夜間才現。remake 目前日夜**只改 palette**,NPC 行為日夜相同。NPC 7-byte 槽無日夜欄位
-  → 機制未 RE(疑夜間載入不同 NPC 表 / 可見性旗標與日夜交互)。待做:反組譯城鎮載入的日夜分支再實作。
+- [~] **城鎮日夜 NPC 行為還原**(使用者觀察,2026-06-28;RE 進度中):原版城鎮白天(含黃昏)NPC 走動、
+  黑夜部分睡覺/隱藏、有的白天隱藏夜間才現。remake 目前日夜**只改 palette**,NPC 行為日夜相同。
+  - ✅ **RE 出 NPC 可見性機制**(file 0x4560,docs/35 位址=file offset 非 logical+0x1370):
+    NPC 載入時 `bl=slot[5]`(旗標 id 整 byte)→ `test [bx*+0x4f70], (0x80 ror (id&7))` → 旗標**清則跳過**(NPC 不載入)。
+    即 NPC 可見性 = slot[5] 旗標 id 在 `[0x4f70]`(=remake `dq3_flags`)是否 set。**日夜 NPC 即用「日/夜旗標」當此 id**。
+  - [ ] **待解**:① 哪些旗標 id 是日/夜旗標(找原版日夜推進設哪些 flag);② remake 日夜相位改變時 set/clear 對應 flag + **重載當前城鎮 NPC**(re-eval 可見性)→ 日 NPC 夜隱、夜 NPC 日隱。
+  - [ ] 「睡覺」是另一種(NPC 有載入但靜止+睡眠 sprite,非隱藏);需另查睡眠狀態欄位。
 - [~] **晝夜精校**(夜 gated 事件 ✅ 2026-06-27;palette 為必要近似):
   - ✅ **提頓村=テドン 夜 gated 還原**:綠寶珠改夜限定(`g_dn_phase==黑夜` 才開牢門給珠;白天牢門深鎖只見留書),
     忠實 day-night doc §9「夜晚進村開牢門」。game_tester 加白天/夜晚兩斷言(80/80)。
