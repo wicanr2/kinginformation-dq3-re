@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DQ3_SAVE_MAGIC "DQ3SAVE7"   /* v7:dq3_recruit 加 shield/head(4 裝備槽);roster size 變,自動擋舊檔 */
+#define DQ3_SAVE_MAGIC "DQ3SAVE8"   /* v8:dq3_save_pos 加魯拉/蓋美拉去過城鎮清單(visited);pos size 變,自動擋舊檔 */
 #define MAGIC_LEN 8
 
 /* 各結構大小寫進檔頭,讀檔時比對 → 防跨版本誤讀。 */

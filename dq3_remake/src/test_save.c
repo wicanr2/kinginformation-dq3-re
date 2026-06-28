@@ -15,7 +15,8 @@ int main(void)
     const char *path = "/tmp/dq3_test_save.dat";
     dq3_stats st; dq3_roster r; dq3_party p; dq3_inventory inv; dq3_storyflags fl;
     dq3_save_pos pos = { 5, 12, 8, 1, 0, 150, 179, 0,    /* +船:owned,泊(150,179)地表 */
-                         1, 0, 2, 2 };                    /* in_town=1,layer=0,sec=2,daynight=2(黑夜)*/
+                         1, 0, 2, 2,                      /* in_town=1,layer=0,sec=2,daynight=2(黑夜)*/
+                         2, {{3,10,5,0},{7,20,8,1}} };    /* v8:魯拉去過2城(CTY3@(10,5)、CTY7@(20,8))*/
     uint16_t nm[2] = {15, 16};
 
     if (dq3_stats_load(&st, NULL, 1, NULL, 0) < 0) { printf("stats FAIL\n"); return 1; }
@@ -47,6 +48,9 @@ int main(void)
         CHECK(pos2.ship_owned == 1 && pos2.ship_px == 150 && pos2.ship_py == 179, "船狀態一致");
         CHECK(pos2.in_town == 1 && pos2.layer == 0 && pos2.sec == 2, "場景還原欄一致(in_town/layer/sec)");
         CHECK(pos2.daynight == 2, "v6:晝夜相位一致(黑夜)");
+        CHECK(pos2.n_visited == 2 && pos2.visited[0].cty == 3 && pos2.visited[0].x == 10
+              && pos2.visited[1].cty == 7 && pos2.visited[1].sec == 1,
+              "v8:魯拉去過城鎮一致(存讀檔持久)");
         CHECK(dq3_flags_get(&fl2, 0x213) && dq3_flags_get(&fl2, 0x39), "v6:劇情旗標一致(0x213/0x39 持久)");
         CHECK(memcmp(&r, &r2, sizeof r) == 0, "名冊整塊 byte 一致");
     }

@@ -446,14 +446,18 @@ static int church_revive(dq3_roster *r, const dq3_party *p, long *gold)
  * in_town/layer/sec 記玩家所在場景,讀檔可完整還原回原位置(使用者需求)。 */
 static int save_game_to(const char *path, const dq3_roster *r, const dq3_party *p,
                         const dq3_inventory *inv, const dq3_storyflags *flags, int cty, int px, int py, const dq3_ship *ship,
-                        int in_town, int layer, int sec)
+                        int in_town, int layer, int sec, const void *visited, int n_visited)
 {
     dq3_save_pos pos; int rc;
+    memset(&pos, 0, sizeof pos);
     pos.cty = cty; pos.px = px; pos.py = py;
     pos.ship_owned = ship->owned; pos.ship_aboard = ship->aboard;       /* #2 船狀態 */
     pos.ship_px = ship->px; pos.ship_py = ship->py; pos.ship_layer = ship->layer;
     pos.in_town = in_town; pos.layer = layer; pos.sec = sec;            /* 場景還原 */
     pos.daynight = dq3_scene_get_daynight();                            /* v6:晝夜相位 */
+    if (n_visited < 0) n_visited = 0; if (n_visited > 16) n_visited = 16;  /* v8:魯拉去過城鎮 */
+    pos.n_visited = n_visited;
+    if (visited && n_visited > 0) memcpy(pos.visited, visited, (size_t)n_visited * sizeof pos.visited[0]);
     rc = dq3_save_write(path, r, p, inv, flags, pos);
     if (rc == 0) fprintf(stderr, "存檔 → %s(名冊%d 隊伍%d %s CTY%d sec%d (%d,%d))\n",
                          path, r->count, p->count, in_town ? "城" : (layer ? "下層" : "地表"), cty, sec, px, py);
@@ -995,6 +999,8 @@ static int run_game(const char *assets, const char *dump)
             ship.owned = pos.ship_owned; ship.aboard = pos.ship_aboard;   /* #2 還原船狀態 */
             ship.px = pos.ship_px; ship.py = pos.ship_py; ship.layer = pos.ship_layer;
             dq3_scene_set_daynight(pos.daynight);                         /* v6:還原晝夜相位 */
+            n_visited = pos.n_visited < 0 ? 0 : (pos.n_visited > 16 ? 16 : pos.n_visited);  /* v8:還原魯拉去過城鎮 */
+            memcpy(visited, pos.visited, (size_t)n_visited * sizeof visited[0]);
             fprintf(stderr, "讀檔續玩 ← %s(名冊%d 隊伍%d,存檔位置 CTY%d (%d,%d)%s)\n",
                     lpath, roster.count, party.count, pos.cty, pos.px, pos.py,
                     ship.owned ? (ship.aboard ? " 船上" : " 有船") : "");
@@ -1358,7 +1364,7 @@ static int run_game(const char *assets, const char *dump)
             int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 0);
             if (slot >= 1) {
                 save_game_to(slot_path(slot), &roster, &party, &inv, &flags,
-                             cur_cty, cur->px, cur->py, &ship, in_town, layer, in_town ? cur->section : 0);
+                             cur_cty, cur->px, cur->py, &ship, in_town, layer, in_town ? cur->section : 0, &visited[0], n_visited);
                 fprintf(stderr, "F5 隨時存檔:存入冒險之書 %d\n", slot);
             } else fprintf(stderr, "F5 存檔:取消\n");
             dq3_scene_apply_palette(cur);
@@ -1370,6 +1376,8 @@ static int run_game(const char *assets, const char *dump)
                     ship.owned = pos.ship_owned; ship.aboard = pos.ship_aboard;
                     ship.px = pos.ship_px; ship.py = pos.ship_py; ship.layer = pos.ship_layer;
                     dq3_scene_set_daynight(pos.daynight);                 /* v6:還原晝夜相位 */
+                    n_visited = pos.n_visited < 0 ? 0 : (pos.n_visited > 16 ? 16 : pos.n_visited);  /* v8:還原魯拉去過城鎮 */
+                    memcpy(visited, pos.visited, (size_t)n_visited * sizeof visited[0]);
                     restore_position(assets, &pos, field, &field_under, &town, &cur,
                                      &layer, &in_town, &cur_cty, &flags);
                     set_dialogue_hero(&roster, &party);
@@ -1381,7 +1389,7 @@ static int run_game(const char *assets, const char *dump)
                 int slot = slot_select(sys_ok ? &sys_txt : &dlg.txt, 0);   /* 選格;ESC → 存 slot 0 autosave */
                 save_game_to(slot >= 1 ? slot_path(slot) : slot_path(0),
                              &roster, &party, &inv, &flags, cur_cty, cur->px, cur->py, &ship,
-                             in_town, layer, in_town ? cur->section : 0);
+                             in_town, layer, in_town ? cur->section : 0, &visited[0], n_visited);
                 fprintf(stderr, "F10 離開:存入%s\n", slot >= 1 ? "選定 slot" : "自動存檔(slot 0)");
                 dq3_rt_set_quit();
             }
@@ -1741,7 +1749,7 @@ static int run_game(const char *assets, const char *dump)
                                 if (slot >= 1) {
                                     save_game_to(slot_path(slot), &roster, &party, &inv, &flags,
                                                  cur_cty, cur->px, cur->py, &ship,
-                                                 in_town, layer, in_town ? cur->section : 0);
+                                                 in_town, layer, in_town ? cur->section : 0, &visited[0], n_visited);
                                     fprintf(stderr, "記錄點:存入冒險之書 %d\n", slot);
                                     if (sys_ok) dq3_dialogue_open_text(&dlg, &sys_txt, 0xfd);   /* 記錄「旅行的經驗」*/
                                 } else fprintf(stderr, "記錄點:取消存檔\n");

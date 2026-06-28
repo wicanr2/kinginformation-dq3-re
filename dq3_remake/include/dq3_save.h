@@ -17,6 +17,9 @@ typedef struct {
     int ship_owned, ship_aboard, ship_px, ship_py, ship_layer;
     int in_town, layer, sec;
     int daynight;   /* v6:晝夜相位 0白天 1黃昏 2黑夜 3黎明 */
+    /* v8:魯拉/蓋美拉去過的城鎮(傳送目的)。存讀檔持久。 */
+    int n_visited;
+    struct { int cty, x, y, sec; } visited[16];
 } dq3_save_pos;
 
 /* 寫存檔(v6 加 storyflags 劇情進度)。回 0=成功、<0=失敗。 */
