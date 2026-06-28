@@ -43,13 +43,15 @@ static struct {
     double         wav_pos;          /* 小數播放位置(重取樣用)*/
 } A;
 
-/* 場景 → 軌號。MBG.MCX 18 軌(0-17)+ EBG.MCX 6 軌(18-23,串接;戰鬥音樂獨立檔,RE docs/61)。
- * BATTLE/BOSS 改指 EBG 軌(原版戰鬥曲在 EBG 非 MBG);其餘待 track→曲目精校(WORKLIST T1 #2)。
- * EBG 內 battle vs boss 的確切軌(18=battle/19=boss)為合理推測,聽感可調。 */
+/* 場景 → 軌號。MBG.MCX 18 軌(0-17)= 主音樂;EBG.MCX 6 軌(18-23)= 事件/場所短曲
+ * (使用者聽感 2026-06-28:18=旅館/教堂復活、19=神宮…**非戰鬥曲**;先前「EBG=戰鬥」假設已更正)。
+ * 使用者(玩過破關)聽感確認:TITLE=0(開頭)、FIELD=1(地圖走路)、TOWN=2、DUNGEON=3、SHIP=9(鬼船)、ENDING=17(結局返宮)。
+ * 待確認(? 標,結構推測,戰鬥曲在 MBG 某軌):BATTLE=6、BOSS=16、CASTLE=8 —— 待使用者再聽更正。
+ * EBG 18/19(旅館/神宮)目前無對應場景 slot,先載著(日後可接旅館/祠堂/復活事件)。 */
 static int g_scene_track[DQ3_MUS__COUNT] = {
-    /* TITLE */ 17, /* FIELD */ 0,  /* TOWN */ 2,   /* DUNGEON */ 5,
-    /* BATTLE*/ 18, /* BOSS */ 19,  /* CASTLE */ 3, /* SHIP */ 9,
-    /* ENDING*/ 16
+    /* TITLE */ 0,  /* FIELD */ 1,  /* TOWN */ 2,   /* DUNGEON */ 3,
+    /* BATTLE*/ 6,  /* BOSS */ 16,  /* CASTLE */ 8, /* SHIP */ 9,
+    /* ENDING*/ 17
 };
 
 static int parse_mcx_table(void)
