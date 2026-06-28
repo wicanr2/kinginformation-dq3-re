@@ -28,12 +28,12 @@ docker run --rm -v "$ROOT":/repo -v dq3build:/build dq3-remake bash -lc '
   mk night    && env $E DQ3_RECDIR=$R/night    DQ3_DEBUG="party;warp:1:88:88;dn:2" DQ3_INPUT="rrrrrrrruuuuuuuuddddddddllllllll" $B $A game >/dev/null 2>&1 || true
   mk battle   && env $E DQ3_RECDIR=$R/battle   DQ3_BATTLE_PARTY=1 DQ3_MON=5 DQ3_MON_N=3 DQ3_INPUT="..s..s..s..s..s..s..s..s..s..s" $B $A battle >/dev/null 2>&1 || true
   mk sokoban  && env $E DQ3_RECDIR=$R/sokoban  DQ3_DEBUG="warp:76:5:11:0"          DQ3_INPUT="u.u.l.l.u.u.r.r" $B $A game >/dev/null 2>&1 || true
-  mk townpre  && env $E DQ3_RECDIR=$R/townpre  DQ3_DEBUG="party;warp:83:16:5:0"          DQ3_INPUT="d.d.r.r.l.l.u.u" $B $A game >/dev/null 2>&1 || true
-  mk townpost && env $E DQ3_RECDIR=$R/townpost DQ3_DEBUG="party;flag:0x216;warp:83:16:5:0" DQ3_INPUT="d.d.r.r.l.l.u.u" $B $A game >/dev/null 2>&1 || true
+  mk townbuild && env $E DQ3_RECDIR=$R/townbuild DQ3_DEBUG="party;merchant;warp:83:16:4:0" DQ3_INPUT=".u.u.e.e.e.e." $B $A game >/dev/null 2>&1 || true
+  mk townbuilt && env $E DQ3_RECDIR=$R/townbuilt DQ3_DEBUG="party;flag:0x216;warp:83:16:5:0" DQ3_INPUT="d.d.r.r.l.l.u.u" $B $A game >/dev/null 2>&1 || true
   mk hydra    && env $E DQ3_RECDIR=$R/hydra    DQ3_BATTLE_PARTY=1 DQ3_ST_LEVEL=45 DQ3_MON=129 DQ3_MON_N=1 DQ3_INPUT="..s..s..s..s..s..s..s..s" $B $A battle >/dev/null 2>&1 || true
   mk father   && env $E DQ3_RECDIR=$R/father   DQ3_BATTLE_PARTY=1 DQ3_ST_LEVEL=45 DQ3_MON=128 DQ3_MON_N=1 DQ3_INPUT="..s..s..s..s..s..s" $B $A battle >/dev/null 2>&1 || true
   mk zoma     && env $E DQ3_RECDIR=$R/zoma DQ3_DUMP=/tmp/z.ppm DQ3_BATTLE_PARTY=1 DQ3_ST_LEVEL=50 DQ3_MON=124 DQ3_MON_N=1 DQ3_INPUT="..s..s..s..s..s..s..s..s..s..s" $B $A battle >/dev/null 2>&1 || true
-  for d in title field night battle sokoban townpre townpost hydra father zoma; do echo "   $d: $(ls $R/$d/*.ppm 2>/dev/null|wc -l) 幀"; done
+  for d in title field night battle sokoban townbuild townbuilt hydra father zoma; do echo "   $d: $(ls $R/$d/*.ppm 2>/dev/null|wc -l) 幀"; done
 '
 fi
 
@@ -66,9 +66,9 @@ card "$TMP/c03.mp4" 3.0 "戰鬥" "傷害公式 · 怪物 AI/數值全 RE";      
 clip "$REC/battle"   "$TMP/s03.mp4" 4.0 "指令戰鬥"                          && add "$TMP/s03.mp4"
 card "$TMP/c04.mp4" 3.4 "倉庫番解謎" "推三顆大石開密道(當年解謎還原)";     add "$TMP/c04.mp4"
 clip "$REC/sokoban"  "$TMP/s04.mp4" 4.0 "sokoban 推石"                      && add "$TMP/s04.mp4"
-card "$TMP/c05.mp4" 3.4 "帶商人建城" "空草原 → 城鎮繁榮";                   add "$TMP/c05.mp4"
-clip "$REC/townpre"  "$TMP/s05.mp4" 3.0 "建城前:空蕩草原"                  && add "$TMP/s05.mp4"
-clip "$REC/townpost" "$TMP/s06.mp4" 3.0 "建城後:商店與居民"               && add "$TMP/s06.mp4"
+card "$TMP/c05.mp4" 3.4 "帶商人建城" "帶商人同伴 → 見老人 → 留下建城 → 繁榮"; add "$TMP/c05.mp4"
+clip "$REC/townbuild" "$TMP/s05.mp4" 3.4 "帶商人見老人·觸發建城"           && add "$TMP/s05.mp4"
+clip "$REC/townbuilt" "$TMP/s06.mp4" 3.0 "新城鎮建成:商店與居民"          && add "$TMP/s06.mp4"
 card "$TMP/c07.mp4" 4.2 "當年缺 sprite 的決戰" "歐里狄加(父親)· 五頭龍大王 —— 缺圖曾使原版當機,今復原"; add "$TMP/c07.mp4"
 clip "$REC/father"   "$TMP/s07.mp4" 3.4 "勇者之父 歐里狄加(怪128)"        && add "$TMP/s07.mp4"
 clip "$REC/hydra"    "$TMP/s08.mp4" 4.0 "五頭龍大王(怪129)"               && add "$TMP/s08.mp4"
@@ -98,6 +98,5 @@ bed(){ local ver=$1 dir="work/music/export/$1"
   ls -lh "$OUT/dq3_memento_${ver}.mp4" | awk -v d="$D2" -v v="$ver" '{print "   ✅",v,"版 ->",$9,"("$5", "d"s)"}'
 }
 echo "== Phase 3:鋪配樂(兩版本)=="
-bed sb
-bed mt32
-echo "完成 → $OUT/dq3_memento_sb.mp4 + dq3_memento_mt32.mp4"
+bed mt32          # 只做 MT-32(SB 版已棄)
+echo "完成 → $OUT/dq3_memento_mt32.mp4"
