@@ -49,11 +49,13 @@
   先前 RE 漏看、整條 pipeline 只處理 MBG。已補:① 抽 EBG 6 軌 + munt MT-32 render → `work/mt32/track_18..23.ogg`
   (`export_music_mt32.sh` 已含 EBG);② `dq3_audio` init 串接 EBG 進 buffer(軌 18-23);③ `g_scene_track` BATTLE→18/BOSS→19。
   軌數 18→24,93/93 無回歸。**EBG 內 battle/boss 確切軌 18/19 為推測,聽感可調(併入下方 #2)**。
-- [ ] **track→曲目對應 RE**(MBG 0-17 + EBG 18-23 的確切場景指派):`g_scene_track[]` 多數是初步猜測,未對原版逐曲驗證。
-  - **RE 進度(2026-06-28)**:`_sbfm_play_music`(file 0x140ee)2 個呼叫端(file 0x11aaf/0x11d2f)是**集中式播放包裝**,
-    播全域結構 `[ds:0x08]` 的 track 資料指標(tempo 在 `[ds:0x0c]`)。真正「場景→軌」選擇在**更上層設 `[0x08]`**
-    (從 MBG.MCX 前導 dword 偏移表 `base+table[idx]` 取),需再往上追 1-2 跳定位各場景的 idx。
-  - 替代:render 各軌試聽 + 對青衫攻略/原版錄影辨識曲目反推;或結構特徵(長度/事件數:track00 ~120s 長→疑地表、track02 ~49s→疑城鎮)輔助。
+- [~] **track→曲目對應**(MBG 0-17 + EBG 18-23 確切場景指派):`g_scene_track[]` 多數仍初步猜測,未對原版逐曲驗證。
+  - ✅ **結構特徵分析(2026-06-28,docs/61)**:24 軌 MT-32 時長 → 角色判讀。**EBG battle=18/boss=19 結構支持**
+    (loop 11-15s vs jingle 5-8s 分界清楚);FIELD=00(82s 長循環)、ENDING=16(61s)合理。
+  - ✅ **RE recon**:`_sbfm_play_music`(file 0x140ee)2 呼叫端=集中播放包裝,播 `[ds:0x08]` track 指標;
+    場景選曲在更上層設 `[0x08]`(MBG/EBG 偏移表 `base+table[idx]`),需再追 1-2 跳定位各場景 idx。
+  - [ ] **剩:聽感確認**(此環境無 DOSBox 不能逐曲試聽;**最快路徑=玩過原版的使用者聽 `work/mt32/track_NN.ogg` 認曲回填**),
+    最該確認 TITLE=17(141s 偏長)+ TOWN/CASTLE/DUNGEON/SHIP 確切軌;或續追上層 idx 的靜態 trace。
 
 ### 🟠 Tier 2 — 讓已完成的 MT-32 音樂在發行包能播(完整包 delta)
 > 基礎包已交付但 SDL2-only(MT-32 退 SB);此 tier 補成可播 MT-32。個人/研究包(素材=使用者合法持有,gitignore;需原版 `DQ3.EXE` 啟動)。
