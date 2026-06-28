@@ -12,11 +12,11 @@
 | 場景 | 音樂類型 | 軌(MBG) | 觸發條件(code) |
 |---|---|---|---|
 | 標題/開頭 | TITLE | **0** | 標題畫面 |
-| 地表 | FIELD | **1** | overworld，`layer==0` |
+| 地表 | FIELD | **6** | overworld，`layer==0`(地圖上音樂)|
 | 城鎮 | TOWN | **2** | `in_town` 且非城堡/迷宮 |
-| 城堡/皇宮 | CASTLE | **1** | `in_town` 且 CTY ∈ 城堡清單(使用者:王城與地表同 track_1)|
+| 城堡/皇宮 | CASTLE | **1** | `in_town` 且 CTY ∈ 城堡清單(皇宮/王城,獨立曲)|
 | 迷宮 | DUNGEON | **3** | `in_town` BLK 2/4/5/覆蓋,或下層 overworld |
-| 船 | SHIP | **6** | 乘船中(搭船曲;鬼船=軌9 屬地點)|
+| 船 | SHIP | **6** | 乘船中(在地圖上=同地圖音樂 track_6;鬼船=軌9 屬地點)|
 | 一般戰鬥 | BATTLE | **14** | 遇敵且怪 id < 106 |
 | boss 戰 | BOSS | **14** | 遇敵且怪 id ≥ 106 —— **精訊版 boss 與一般戰鬥同曲** |
 | 結局 | ENDING | **17** | 結局序列 `end_seq >= 0`(破關返宮)|
@@ -109,13 +109,13 @@ MT-32 render 一輪時長:
 
 ## 驗證狀態(誠實標註)
 
-- ✅ **場景 → 軌號已由使用者聽感確認**(9/9,2026-06-28):TITLE=0/FIELD=1/TOWN=2/CASTLE=1/DUNGEON=3/SHIP=6/BATTLE=14/BOSS=14/ENDING=17。
+- ✅ **場景 → 軌號已由使用者聽感確認**(9/9,2026-06-28):TITLE=0/FIELD=6/TOWN=2/CASTLE=1/DUNGEON=3/SHIP=6/BATTLE=14/BOSS=14/ENDING=17。
   game_tester 93/93 無回歸。配曲缺口(CASTLE/ENDING/DUNGEON 0 觸發)已修。
 - **取得 ground truth 的路徑(留給後人)**:① 玩過原版者聽 `work/mt32/track_NN.ogg` 認曲(最快最準);
   ② 試過用原版破關影片做音訊指紋比對(chroma,MT-32 與 SB-FM 都試)——**不可靠**(SFX 疊 music + tempo/音高差 +
   clip 跨場景),影片的「畫面」可用來定位場景但「聲音」對不出軌號。本環境無 DOSBox 不可逐曲試聽。
 - ⚠ **城堡清單 best-effort**:BLK tileset 不分城堡 vs 城鎮,城堡靠「名含『城』+ 有國王」清單;
-  (註:使用者稱王城與地表同 track_1,故 CASTLE 與 FIELD 目前同軌)。
+  (使用者:王城=track_1 獨立曲、地表=track_6,兩者不同軌)。
 
 ## 靜態 RE 分析過程(留給後人:我們怎麼推出來的)
 
