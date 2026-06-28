@@ -39,13 +39,16 @@
 ### 收尾打磨(非阻塞)
 - [x] **魯拉/蓋美拉 傳送目的地存讀檔持久 ✅**(2026-06-28):visited 城鎮清單(cty+最後位置+section)寫進
   `dq3_save_pos`(save v8,magic DQ3SAVE8;pos size 變自動擋舊檔);存/讀檔雙向接好;test_save 加 round-trip 斷言。
-- [~] **城鎮日夜 NPC 行為還原**(使用者觀察,2026-06-28;RE 進度中):原版城鎮白天(含黃昏)NPC 走動、
-  黑夜部分睡覺/隱藏、有的白天隱藏夜間才現。remake 目前日夜**只改 palette**,NPC 行為日夜相同。
-  - ✅ **RE 出 NPC 可見性機制**(file 0x4560,docs/35 位址=file offset 非 logical+0x1370):
-    NPC 載入時 `bl=slot[5]`(旗標 id 整 byte)→ `test [bx*+0x4f70], (0x80 ror (id&7))` → 旗標**清則跳過**(NPC 不載入)。
-    即 NPC 可見性 = slot[5] 旗標 id 在 `[0x4f70]`(=remake `dq3_flags`)是否 set。**日夜 NPC 即用「日/夜旗標」當此 id**。
-  - [ ] **待解**:① 哪些旗標 id 是日/夜旗標(找原版日夜推進設哪些 flag);② remake 日夜相位改變時 set/clear 對應 flag + **重載當前城鎮 NPC**(re-eval 可見性)→ 日 NPC 夜隱、夜 NPC 日隱。
-  - [ ] 「睡覺」是另一種(NPC 有載入但靜止+睡眠 sprite,非隱藏);需另查睡眠狀態欄位。
+- [x] **城鎮日夜 NPC 行為還原**(使用者觀察,2026-06-28;**完成**):原版城鎮白天(含黃昏)NPC 走動、
+  黑夜部分睡覺/隱藏、有的白天隱藏夜間才現。
+  - ✅ **RE 出真實機制**(原版 file 0x452d):**每個 section 開頭兩個 word 是兩份 NPC 表指標**(相對 base)——
+    `word[0]`=白天表(人多)、`word[1]`=黑夜表(少數)。原版 `[0x526c]`(日=0/夜=1,由時刻 `[0x251d]` 衍生,
+    僅 overworld 前進)選表載入。docs/35 的 0x4f70 旗標只是 NPC **個別劇情可見性**,日夜是**另一層雙清單切換**。
+  - ✅ **實作**(`dq3_scene.c` `dq3_scene_load_npcs`):依當前相位(`get_daynight()==2`=黑夜→word1;否則 word0)選表,
+    主表無效(0xffff/越界)退另一份(部分 section 日夜共用)。時間僅 overworld 前進 → 進城選一次即還原,與原版一致。
+  - ✅ **城內即時切換**(`main.c` `reload_town_daynight()`):拉那魯達/黑暗之燈在城內切日夜 → 重載當前 section NPC(保留座標)。
+  - ✅ **驗證**:CTY00 24→6、CTY02 31→10、CTY01 11→4、CTY03 12→4(白天→黑夜),runtime 與資料表一致。
+  - 「睡覺」NPC = 室內 section 夜間清單裡帶睡姿 sprite id 的記錄,由同一雙清單切換**資料驅動**載入(slot[2]=sprite id),無需額外碼。
 - [~] **晝夜精校**(夜 gated 事件 ✅ 2026-06-27;palette 為必要近似):
   - ✅ **提頓村=テドン 夜 gated 還原**:綠寶珠改夜限定(`g_dn_phase==黑夜` 才開牢門給珠;白天牢門深鎖只見留書),
     忠實 day-night doc §9「夜晚進村開牢門」。game_tester 加白天/夜晚兩斷言(80/80)。

@@ -104,14 +104,24 @@ int dq3_scene_try_open_facing_door(dq3_scene *s, int key_tier)
 
 int dq3_scene_load_npcs(dq3_scene *s, const uint8_t *cty, size_t cty_len, size_t so)
 {
-    size_t base; int cnt, i;
-    uint16_t np;
+    size_t base; int cnt, i, night, k;
+    uint16_t np = 0xffff;
     s->n_npcs = 0;
     dq3_rng_seed(&s->npc_rng, (uint16_t)(so * 2654 + 1));   /* 確定性種子(依 section)*/
     if (so + 4 > cty_len) return 0;
-    np = (uint16_t)(cty[so] | (cty[so + 1] << 8));          /* +0 NPC 清單 */
-    if (np == 0xffff) np = (uint16_t)(cty[so + 2] | (cty[so + 3] << 8));  /* 退 +2 */
-    if (np == 0xffff || so + np >= cty_len) return 0;
+    /* RE(原版 file 0x452d):section base 開頭兩個 word 是兩份 NPC 表指標(相對 base)——
+     *   word[0]=白天表(人多)、word[1]=黑夜表(多數睡覺/隱藏,只剩少數)。原版以 [0x526c]
+     *   日(→word0)/夜(→word1)切換載入。依當前晝夜相位選主表,主表無效(0xffff/越界)
+     *   才退另一份(部分 section word[1]=none,日夜共用同一表)。時間只在 overworld 前進
+     *   ([0x4f2d] gate),城內相位固定 → 進城時選一次即還原日夜 NPC。 */
+    night = (dq3_scene_get_daynight() == 2);                /* 2=黑夜;白天/黃昏/黎明皆當白天 */
+    for (k = 0; k < 2; k++) {
+        size_t off = ((night ^ k) ? 2u : 0u);              /* k=0 主表;k=1 退另一份 */
+        uint16_t w = (uint16_t)(cty[so + off] | (cty[so + off + 1] << 8));
+        if (w == 0xffff || so + w >= cty_len) continue;
+        np = w; break;
+    }
+    if (np == 0xffff) return 0;
     base = so + np;
     cnt = cty[base];                                        /* {count, records*7} */
     for (i = 0; i < cnt && s->n_npcs < DQ3_SCENE_MAX_NPC; i++) {

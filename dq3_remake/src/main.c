@@ -939,6 +939,19 @@ static int run_game(const char *assets, const char *dump)
     int in_town = 0, enc, fx = 0, fy = 0, cur_cty = -1;   /* cur_cty:目前所在 CTY 號(#2 gate)*/
     int repel = 0;                                         /* #3 聖水:剩餘驅弱敵步數 */
     struct { int cty, x, y, sec; } visited[16]; int n_visited = 0;  /* 魯拉/蓋美拉:去過的城鎮(傳送目的)*/
+    /* 拉那魯達/黑暗之燈在城內切晝夜時,重載當前 section 的 NPC(白天/黑夜兩份 NPC 表不同,
+     * RE 原版 file 0x452d:[0x526c] 日→word[0]/夜→word[1])。保留座標;overworld 無城鎮 NPC → 跳過;
+     * 載入失敗則維持原 scene。follower 由每幀 apply_followers 偵測新 scene 指標自動重設。 */
+    #define reload_town_daynight() do { \
+        if (in_town && cur_cty >= 0 && cur) { \
+            int _px = cur->px, _py = cur->py, _sec = cur->section; char _ct[16]; \
+            dq3_scene *_ns; sprintf(_ct, "CTY%02d.DAT", cur_cty); \
+            _ns = dq3_town_load(assets, _ct, _sec, dq3x_map_blknum[cur_cty], err, sizeof err); \
+            if (_ns) { if (town) dq3_scene_free(town); town = _ns; cur = town; \
+                       load_field_hero(town, assets); \
+                       if (_px < cur->map_w) cur->px = _px; if (_py < cur->map_h) cur->py = _py; } \
+        } \
+    } while (0)
     const int over_pool[4] = { 5, 6, 1, 0 };   /* 地表遭遇怪池(史萊姆系) */
     dq3_dialogue dlg; int dlg_ok = 0, dlg_rec = 1, cur_dlg_bank = 1;  /* 啟動載 D3TXT01(阿里阿罕 bank)*/
     dq3_text sys_txt; int sys_ok = 0;                                  /* 常駐 D3TXT00:系統訊息 + 道具名 */
@@ -1889,10 +1902,10 @@ static int run_game(const char *assets, const char *dump)
                 } else fprintf(stderr, "彩虹水滴:需在下層利姆達爾西北盡頭地表使用\n");
             } else if (g_item_world_eff == DQ3_USE_RANARUTA) {   /* 拉那魯達:切換晝夜(白天↔黑夜)*/
                 dq3_scene_set_daynight(dq3_scene_get_daynight() == 2 ? 0 : 2);
-                g_dn_step = 0; dq3_scene_apply_palette(cur);
+                g_dn_step = 0; reload_town_daynight(); dq3_scene_apply_palette(cur);
                 fprintf(stderr, "★ 拉那魯達:晝夜切換 → %s\n", DN_NAME[dq3_scene_get_daynight()]);
             } else if (g_item_world_eff == DQ3_USE_DARK_LAMP) {  /* 黑暗之燈:變夜 */
-                dq3_scene_set_daynight(2); g_dn_step = 0; dq3_scene_apply_palette(cur);
+                dq3_scene_set_daynight(2); g_dn_step = 0; reload_town_daynight(); dq3_scene_apply_palette(cur);
                 fprintf(stderr, "★ 黑暗之燈:四周頓時暗了下來(變夜)\n");
             }
             g_item_world_eff = 0;
@@ -2896,9 +2909,11 @@ int main(int argc, char **argv)
             const char *cty = getenv("DQ3_CTY");
             const char *sect = getenv("DQ3_SECT");
             const char *blkn = getenv("DQ3_BLKN");
+            if (getenv("DQ3_DN")) dq3_scene_set_daynight(atoi(getenv("DQ3_DN")));  /* 測試:強制晝夜相位(NPC 表 by 相位)*/
             s = dq3_town_load(assets, cty ? cty : "CTY00.DAT",
                               sect ? atoi(sect) : 0,
                               blkn ? atoi(blkn) : 1, err, sizeof err);
+            if (s) fprintf(stderr, "[DN] 相位=%s → 載入 NPC %d 隻\n", DN_NAME[dq3_scene_get_daynight()&3], s->n_npcs);
         }
         if (!s) { fprintf(stderr, "%s load failed: %s\n", mode, err); rc = 3; }
         else {
