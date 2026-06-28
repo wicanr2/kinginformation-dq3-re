@@ -337,7 +337,8 @@ static unsigned g_sea_frame = 0;   /* 海面 palette cycling 幀計數 */
 /* 晝夜系統(使用者確認原版機制 = 地表步數驅動,非時間):每 DN_PHASE_STEPS 步推進一相位
  * 白天→黃昏→黑夜→黎明→(循環)。相位 → palette 調暗(dq3_scene 內)。
  * 步數:使用者指定「白天→黑夜 = 120 步,中間有黃昏」→ 每相位 60 步(白天→黃昏→黑夜 = 2×60 = 120;
- * 全 4 相位循環 = 240 步)。原版確切步數計數器在多層 handler 鏈未逐指令定位,此為使用者指定值。 */
+ * 全 4 相位循環 = 240 步)。原版步數計數器 = `[0x251d]` 時刻(每 overworld 步 inc、0x78→日、0xf0 循環,
+ * RE 見 docs/60);remake 240 步循環已對上原版 clock 範圍(0..0xf0=240)。DN_PHASE_STEPS 為對齊用值。 */
 static int g_dn_step = 0;
 #define DN_PHASE_STEPS 60                      /* 每相位步數(白天→黑夜 120 步,使用者指定)*/
 static const char *DN_NAME[4] = { "白天", "黃昏", "黑夜", "黎明" };

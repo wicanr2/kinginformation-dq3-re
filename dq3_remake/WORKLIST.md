@@ -56,20 +56,23 @@
   - ✅ **城內即時切換**(`main.c` `reload_town_daynight()`):拉那魯達/黑暗之燈在城內切日夜 → 重載當前 section NPC(保留座標)。
   - ✅ **驗證**:CTY00 24→6、CTY02 31→10、CTY01 11→4、CTY03 12→4(白天→黑夜),runtime 與資料表一致。
   - 「睡覺」NPC = 室內 section 夜間清單裡帶睡姿 sprite id 的記錄,由同一雙清單切換**資料驅動**載入(slot[2]=sprite id),無需額外碼。
-- [~] **晝夜精校**(夜 gated 事件 ✅ 2026-06-27;palette 為必要近似):
+- [x] **晝夜精校 ✅**(可做的部分完成;唯一殘留為不可驗的 palette 逐格比色):
   - ✅ **提頓村=テドン 夜 gated 還原**:綠寶珠改夜限定(`g_dn_phase==黑夜` 才開牢門給珠;白天牢門深鎖只見留書),
-    忠實 day-night doc §9「夜晚進村開牢門」。game_tester 加白天/夜晚兩斷言(80/80)。
-  - 步數已設使用者指定值(白天→黑夜 120 步,每相位 60);原版確切步數計數器多輪 RE 未定位(多層 handler 鏈)。
-  - 各相位 palette 為近似:**此環境無 DOSBox oracle 可逐格比色**(記憶 `dq3-no-dosbox-debugger`),
-    屬「靜態不可驗」殘留,非 pending dev task;現值(夜 42/44/70%、黃昏 82/62/58%、黎明 72/74/92%)為合理近似。
+    忠實 day-night doc §9「夜晚進村開牢門」。game_tester 加白天/夜晚兩斷言。
+  - ✅ **原版步數計數器已定位**(2026-06-28,docs/60):`[0x251d]` 時刻計數器、`[0x101b8]` 每步 `inc`、
+    0x78 閾值(→日)、0xf0 循環、`[0x4f2d]` gate(僅 overworld 前進)。remake 240 步全循環已對上原版
+    clock 範圍(0..0xf0=240),120 步日→夜分界相符。(舊註「步數計數器多輪 RE 未定位」已過期。)
+  - 殘留(非待辦):各相位 palette 逐格比色 **此環境無 DOSBox oracle 不可驗**(記憶 `dq3-no-dosbox-debugger`);
+    現值(夜 42/44/70%、黃昏 82/62/58%、黎明 72/74/92%)為合理近似。原版本質為日/夜二態(`[0x526c]`),
+    remake 4 相位(含黃昏/黎明)是 palette 用的補插,NPC 仍只分日/夜。
 - [x] **per-member 裝備 4 槽 ✅**(2026-06-27,★RE 更正 5→4 槽):第一性原理從 ITEM.DAT b4 高位反推
   ——精訊版實為 **4 裝備槽**(武器 0x2_/鎧 0x4_/盾 0x6_/兜 0x8_,def 遞增佐證),**非 5 槽**;飾品(戒指/
   手環)無乾淨 b4 部位編碼(0x00 或同道具 0x18),不設槽。`dq3_item_equip_slot`=`(b4>>5)−1`;
   `dq3_recruit` 加 shield/head;戰鬥 def=耐力/2+(鎧+盾+兜 b1 總和);`equip_modal` 4 槽 2×2 管理
   (修舊 `cat&0x40` 把盾 0x60 誤判成鎧的 bug);save v7。dump 驗證 4 槽畫面、game_tester 80/80。
 
-### 打包
-- [x] **Windows x64 跨平台打包 ✅**(2026-06-27):mingw-w64 + SDL2 2.30.9 mingw dev,docker 內交叉編譯
+### 發行打包(基礎包已交付;完整 MT-32 包 + macOS/Android 為剩餘 delta。2026-06-28 併入原 PACKAGING_WORKLIST → 單一真相)
+- [x] **Windows x64 跨平台打包 ✅**(2026-06-27;基礎包 SDL2-only,MT-32 OGG 未含→退 SB):mingw-w64 + SDL2 2.30.9 mingw dev,docker 內交叉編譯
   (`scripts/Dockerfile.mingw` + `cmake/mingw-w64-x86_64.cmake` + `tools/package_win.sh`)→ `work/dq3_remake_win64.zip`
   (dq3_remake.exe 647KB + SDL2.dll + run.bat)。entry 用 `SDL_MAIN_HANDLED` 自管 main(免 SDL2main/WinMain);
   `-static-libgcc`(僅依賴 KERNEL32/SDL2/msvcrt);setenv→`_putenv_s` 可攜化。**wine ABI 實機驗證**:載真實
@@ -78,6 +81,38 @@
   46 個相依 .so + AppRun(LD_LIBRARY_PATH + 自動定位 assets_raw)+ 自製圖示(不嵌版權標題畫面);appimagetool
   `--appimage-extract-and-run`(免 FUSE)+ type2-runtime。產 `dist/linux/dq3_remake-x86_64.AppImage`(7.3MB,slim)。
   **實測執行**:bundled SDL2 載真實素材繪地表一幀正確。注:較新 glibc 建置,極舊發行版請改自編。
+- [x] **docker images 三件齊 ✅**:`dq3-remake`(Linux/SDL)、`dq3-remake-mingw`(Windows 交叉)、`munt-smf2wav`(MT-32 render)皆在。
+- [x] **MT-32 OGG 已產生 ✅**:`tools/export_music_mt32.sh` + `Dockerfile.munt` → `work/mt32/track_00..17.ogg`(18 軌);remake 載它(`dq3_audio.c`)。打包只需複製,**非重做匯出**。
+
+> ── 以下為「升級成完整 MT-32 發行包 + macOS/Android」的剩餘 delta(2026-06-28 併入原 PACKAGING_WORKLIST,單一真相)──
+> 個人/研究用完整包(素材=使用者合法持有,gitignore);版權閘=需原版 `DQ3.EXE` 啟動。移植第一性原理見 [`../docs/55`](../docs/55-android-macos-port-plan.md)。
+
+**共通前置(完整包對齊)**
+- [ ] 素材清單固定:`assets/` 原版檔 + `assets/mt32/track_NN.ogg`(已產生,複製即可)→ 列「完整包必備檔」清單。
+- [ ] 音訊相依分平台:SB FM=純 C 零依賴;**MT-32=播 OGG 需 libvorbis**(各平台打包對應動態庫,否則退 SB)。
+- [ ] 資產讀取路徑:`dq3_load_file()` choke point 各平台素材夾路徑一致(或 `DQ3_ASSETS`)。
+- [ ] 存檔/設定可寫路徑:`dq3.cfg`/`dq3_save*.dat` 導各平台使用者資料夾(唯讀 bundle 不能寫)。
+
+**Windows 完整包 delta**(基礎包 SDL2-only 已交付 → 補成可播 MT-32)
+- [ ] 補 vorbis/ogg DLL(`libvorbisfile-3`/`libvorbis-0`/`libogg-0`,MinGW build 才有);更新 `package_win.sh` 複製 + `objdump -p` 檢查相依。
+- [ ] mt32/ 素材入包 + 可寫路徑 `%APPDATA%\dq3_remake\`;驗收:乾淨 Windows 切 MT-32 OK。
+
+**AppImage 完整包 delta**(基礎包已交付 → 補成可播 MT-32)
+- [ ] AppDir 收 libvorbis/vorbisfile/ogg `.so` + mt32/ 素材 + 可寫路徑 `$XDG_DATA_HOME`;驗收:MT-32 OK。
+
+**macOS**(未做;工作量小)
+- [ ] GH Action `macos.yml`(macos runner,brew sdl2 libvorbis,cmake)→ artifact 抓回組 `.app`(dylib bundle + `install_name_tool`)→ `.dmg`;可寫路徑 `~/Library/Application Support/`;驗收另一台 Mac 跑。
+
+**Android**(未做;中–大)
+- [ ] SDLActivity/NDK 骨架 + 素材入 APK(`fopen` 讀改 `SDL_RWFromFile`、寫導 internal storage)+ 觸控 UI(虛擬方向鍵/A/B/選單)+ 三 ABI libvorbis 交叉編譯(或改 `stb_vorbis` 單檔)+ 版權閘 + `assembleRelease` APK/AAB + 實機驗收。
+
+**dev-setup / CI**
+- [ ] `dq3_remake/DEV-SETUP.md`:各 target build 指令(Linux/Windows/macOS/Android/AppImage)。
+- [ ] 烤 `libvorbis-dev` 進 `dq3-remake` image(目前每次 build 臨時 apt,flaky)。
+- [ ] CI:GitHub Actions matrix(Linux/Windows/macOS)build + test + 上傳 artifact;`ctest`(17 單測)+ headless 煙霧測試。
+
+**跨項決策(先定再動手)**
+- [ ] 素材/`DQ3.EXE` 是否內含(個人包含;對外改自備)· MT-32 OGG 解碼策略統一(桌面 libvorbis / Android `stb_vorbis`)· 抽 `dq3_user_dir()` 統一可寫路徑取代散落 `fopen`。
 
 ### 實機展示
 - [x] **demo MP4 錄製 ✅**(2026-06-27):引擎加 `DQ3_RECDIR` 逐幀錄製 hook(`dq3_present` 內,headless 也可錄);
@@ -85,10 +120,7 @@
   IJ 專案:深藍金字成果說明卡 + 實機片段 + 淡入淡出,1280×720/25fps,~49s。產 `work/video/dq3_remake_demo.mp4`。
   **mp4/截圖含版權渲染像素,依 .gitignore 政策不入版控**(腳本可重生,可掛 GitHub Release)。
 
-### 跨平台延伸(規劃)
-- [ ] **macOS / Android 移植**:規劃見 `docs/55-android-macos-port-plan.md`。macOS 工作量小(SDL2 原生 + .app 打包 +
-  CI),Android 中–大(SDLActivity/NDK + 素材解壓 + 觸控 UI)。可先做零回歸前置:進入點 `#ifndef __ANDROID__` 守衛、
-  素材/存檔路徑 base-dir 抽象。
+> 零回歸前置(macOS/Android 共用,可先做):進入點 `#ifndef __ANDROID__` 守衛、素材/存檔路徑 base-dir 抽象(`dq3_user_dir()`)。
 
 ### 不在此環境做 / 不依賴 DOSBox(記憶 `dq3-no-dosbox-debugger`)
 - **DOSBox 逐畫面 oracle**:此環境**無 DOSBox runtime**,不掛在它上面當待辦。已能靜態驗的都驗了
