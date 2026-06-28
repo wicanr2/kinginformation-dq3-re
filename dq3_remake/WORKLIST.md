@@ -41,9 +41,10 @@
 > 音訊 RE 細節見 `docs/56-59`;打包移植第一性原理見 `docs/55`。
 
 ### 🔴 Tier 1 — 音樂忠實度(純 code,此環境可驗,投報最高)
-- [ ] **配曲缺口修補**:① `DQ3_MUS_CASTLE`(軌3)0 處觸發 → 城堡(CTY)現播城鎮曲;② `DQ3_MUS_ENDING`(軌16)
-  0 觸發 → 結局(`end_seq`)無音樂;③ DUNGEON 曲只在下層 overworld(`layer==1`)→ 真正洞窟/塔以 CTY 載入(`in_town=1`)播 TOWN 曲。
-  做法:辨識「城堡類 / dungeon 類 CTY」清單 → 場景 dispatch 分流(`main.c` 配曲段 + `dq3_audio_play_scene`)。
+- [x] **配曲缺口修補 ✅**(2026-06-28):`main.c` `cty_music_kind(cty)` 依 BLK tileset 分流 + dispatch 加 ENDING gate ——
+  ① CASTLE:城堡清單 {0,2,6,37,73,76}(阿里阿罕/羅馬利亞/阿莎拉慕/波魯多加/依席斯/貝亞城)→ 城堡曲;
+  ② ENDING:`end_seq>=0` → 結局曲(軌16);③ DUNGEON:BLK 2/4/5(洞窟/塔/金字塔/索瑪城)+ 覆蓋清單{33 沙漠之洞}→ 迷宮曲。
+  分類表 89 CTY 核實(6 城堡/31 迷宮/63 城鎮);93/93 無回歸。**城堡清單為名含「城」+ 有國王 best-effort,聽感可增刪**。
 - [ ] **track→曲目對應 RE**:`g_scene_track[]` 18 軌指派(TITLE=17/FIELD=0/TOWN=2/…)是初步猜測,未對原版驗證。
   做法:render 各軌試聽 + 對青衫攻略/原版錄影辨識曲目反推(不需 DOSBox)。
 

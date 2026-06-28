@@ -932,6 +932,23 @@ static void overlay_opened_chests(const dq3_scene *s, const dq3_storyflags *fl)
         }
 }
 
+/* 城鎮 CTY → 配曲類型(T1 配曲缺口修補,2026-06-28)。原版按地圖 tileset 分音樂:
+ *   迷宮(洞窟/塔/金字塔/索瑪城)= BLK 2/4/5 → DUNGEON 曲(CTY7/11/19 洞窟、8/10/18/82 塔、13 金字塔、90/91 索瑪城…);
+ *   城堡(王城,DQ3 整城播城堡曲)= 明確清單 → CASTLE 曲;其餘城鎮/村 → TOWN 曲。
+ * BLK tileset 不分城堡 vs 城鎮(同 town tileset),故城堡靠「名含『城』+ 有國王」清單(可依聽感增刪)。 */
+static int cty_music_kind(int cty)
+{
+    static const unsigned char CASTLE[] = { 0, 2, 6, 37, 73, 76 };  /* 阿里阿罕/羅馬利亞/阿莎拉慕/波魯多加/依席斯/貝亞城 */
+    static const unsigned char DUNGEON_EXTRA[] = { 33 };            /* BLK1/3 的洞窟(沙漠之洞;BLK 規則漏網,可依攻略增補)*/
+    size_t i; int blk;
+    if (cty < 0 || cty >= 100) return DQ3_MUS_TOWN;
+    blk = dq3x_map_blknum[cty];
+    if (blk == 2 || blk == 4 || blk == 5) return DQ3_MUS_DUNGEON;   /* 洞窟/塔/金字塔 tileset */
+    for (i = 0; i < sizeof DUNGEON_EXTRA; i++) if (cty == (int)DUNGEON_EXTRA[i]) return DQ3_MUS_DUNGEON;
+    for (i = 0; i < sizeof CASTLE; i++) if (cty == (int)CASTLE[i]) return DQ3_MUS_CASTLE;
+    return DQ3_MUS_TOWN;
+}
+
 static int run_game(const char *assets, const char *dump)
 {
     char err[256] = {0};
@@ -1350,7 +1367,8 @@ static int run_game(const char *assets, const char *dump)
         /* 場景配曲:依目前場景每幀選軌(dq3_audio_play 同軌不重啟 → 廉價 idempotent)。 */
         {
             int mk;
-            if (in_town)              mk = DQ3_MUS_TOWN;
+            if (end_seq >= 0)         mk = DQ3_MUS_ENDING;          /* 結局序列進行中 → 結局曲(T1)*/
+            else if (in_town)         mk = cty_music_kind(cur_cty); /* 城鎮/城堡/迷宮分流(T1 配曲缺口)*/
             else if (ship.aboard)     mk = DQ3_MUS_SHIP;
             else if (layer == 1)      mk = DQ3_MUS_DUNGEON;
             else                      mk = DQ3_MUS_FIELD;
