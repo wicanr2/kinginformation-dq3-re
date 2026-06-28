@@ -11,6 +11,8 @@
 
 - [ ] **素材清單固定**:`assets/`(原版檔:DQ3.EXE、MBG.MCX、FVOC/NVOC.VCX、D3TXT*、BLK、地圖…)
       + `assets/mt32/track_NN.ogg`(MT-32 音源,18 軌)。列一份「完整包必備檔」清單。
+      > ★ **MT-32 OGG 已產生**(2026-06,`tools/export_music_mt32.sh` + `Dockerfile.munt` → `work/mt32/track_00..17.ogg` 18 軌);
+      > 此項只是「把現成 OGG 複製進各平台包」,**不是重做匯出**。
 - [ ] **音訊相依分平台處理**:
       - SB FM(OPL2)= 純 C,自包含,零依賴。
       - **MT-32 = 播 OGG → 需 libvorbis**(`vorbisfile`/`vorbis`/`ogg`)。各平台要**打包對應動態庫**,
@@ -37,6 +39,9 @@
 ## 2. Windows(含全部 DLL)
 
 > 已有 `tools/package_win.sh` + `dq3-remake-mingw` image,延伸即可。
+> ★ **狀態(對齊 WORKLIST,避免狀態分裂)**:**基礎包已交付**(WORKLIST `[x]`:`work/dq3_remake_win64.zip`
+> = exe + SDL2.dll + run.bat,wine ABI 驗過)。但基礎包 **SDL2-only → MT-32 OGG 不播、退 SB**。
+> 本節 `[ ]` = 把基礎包**升級成完整 MT-32 包**的剩餘 delta(補 vorbis/ogg DLL + mt32/ 素材 + 可寫路徑),非從零開始。
 
 - [ ] **交叉編譯**:用 `dq3-remake-mingw`(MinGW-w64)build;`SDL_MAIN_HANDLED` 已處理 WinMain。
 - [ ] **打包全部 DLL**(關鍵:不可漏):
@@ -66,6 +71,8 @@
 
 ## 4. AppImage(完整遊戲,Linux)
 
+> ★ **狀態(對齊 WORKLIST)**:**基礎包已交付**(WORKLIST `[x]`:`tools/package_appimage.sh` → `dist/linux/dq3_remake-x86_64.AppImage`
+> 7.3MB,bundled SDL2 + 46 .so,實測跑)。基礎包**未含 vorbis → MT-32 退 SB**。本節 `[ ]` = 升級成完整 MT-32 包的剩餘 delta。
 - [ ] **AppDir**:`linuxdeploy` 收 binary + SDL2 + libvorbis/vorbisfile/ogg `.so` 進 `AppDir/usr/`。
 - [ ] **素材打包**:`assets/`(+ mt32/ + 個人包 DQ3.EXE)放 `AppDir/usr/share/dq3_remake/`;
       AppRun 設 `DQ3_ASSETS` 指向它;存檔/設定導 `$XDG_DATA_HOME/dq3_remake`。
