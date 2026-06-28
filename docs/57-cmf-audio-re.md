@@ -1,6 +1,6 @@
 # 精訊 DQ3 音樂(SB FM / CMF)反組譯經驗
 
-> 計畫見 [`56-audio-fm-plan.md`](56-audio-fm-plan.md);工作清單 [`../dq3_remake/AUDIO_WORKLIST.md`](../dq3_remake/AUDIO_WORKLIST.md)。
+> 計畫見 [`56-audio-fm-plan.md`](56-audio-fm-plan.md);工作清單 [`../dq3_remake/WORKLIST.md`](../dq3_remake/WORKLIST.md)(音訊系統段)。
 > 本檔記錄 **Phase 1(定位 + 抽出 CMF 音樂資料)** 的 RE 過程、findings 與判定 —— 成功失敗都留。
 > **IP**:全程只反組譯遊戲**自身**二進位格式(使用者正版檔),非重現受版權樂曲。
 

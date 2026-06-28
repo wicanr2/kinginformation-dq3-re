@@ -34,9 +34,42 @@
 - **金字塔施咒當機**:RE 確認 remake 結構免疫(咒文與地圖資源解耦),不復刻原版 crash(`original-known-bugs.md`)。
 - **知識庫**:`CONTEXT.md`、`docs/00-re-methodology.md`、`docs/data/*`(oracle-validation / spell-effects-research / day-night-system 等)、`~/.claude` 跨 session 記憶。
 
-## 真正剩餘工作(已對 ground truth 核實)
+## 剩餘工作 — 依優先序(2026-06-28 重排;原 AUDIO_WORKLIST 已併入此檔)
 
-### 收尾打磨(非阻塞)
+> 核心遊戲已完工(93/93、可玩可破關、Linux/Win/AppImage 基礎包已交付、精訊自有音樂可播)。以下為剩餘,依
+> 專案最高原則「**忠實度 > 可落地交付 > 平台覆蓋 > 美觀**」+「**此環境可做(不依賴 DOSBox)優先**」排序。
+> 音訊 RE 細節見 `docs/56-59`;打包移植第一性原理見 `docs/55`。
+
+### 🔴 Tier 1 — 音樂忠實度(純 code,此環境可驗,投報最高)
+- [ ] **配曲缺口修補**:① `DQ3_MUS_CASTLE`(軌3)0 處觸發 → 城堡(CTY)現播城鎮曲;② `DQ3_MUS_ENDING`(軌16)
+  0 觸發 → 結局(`end_seq`)無音樂;③ DUNGEON 曲只在下層 overworld(`layer==1`)→ 真正洞窟/塔以 CTY 載入(`in_town=1`)播 TOWN 曲。
+  做法:辨識「城堡類 / dungeon 類 CTY」清單 → 場景 dispatch 分流(`main.c` 配曲段 + `dq3_audio_play_scene`)。
+- [ ] **track→曲目對應 RE**:`g_scene_track[]` 18 軌指派(TITLE=17/FIELD=0/TOWN=2/…)是初步猜測,未對原版驗證。
+  做法:render 各軌試聽 + 對青衫攻略/原版錄影辨識曲目反推(不需 DOSBox)。
+
+### 🟠 Tier 2 — 讓已完成的 MT-32 音樂在發行包能播(完整包 delta)
+> 基礎包已交付但 SDL2-only(MT-32 退 SB);此 tier 補成可播 MT-32。個人/研究包(素材=使用者合法持有,gitignore;需原版 `DQ3.EXE` 啟動)。
+- [ ] **可寫路徑統一 `dq3_user_dir()`**(跨平台前置,先做解鎖下面全部):抽函式回各平台 config/save 夾,取代散落 `fopen`;存檔/設定不寫進唯讀 bundle。
+- [ ] **Windows 完整包**:補 vorbis/ogg DLL(`libvorbisfile-3`/`libvorbis-0`/`libogg-0`)+ mt32/ 素材;更新 `package_win.sh` 複製 DLL + `objdump -p` 檢查;可寫路徑 `%APPDATA%`;驗收乾淨 Windows 切 MT-32 OK。
+- [ ] **AppImage 完整包**:AppDir 收 libvorbis/vorbisfile/ogg `.so` + mt32/ 素材;可寫路徑 `$XDG_DATA_HOME`;驗收 MT-32 OK。
+- [ ] **共通前置**:素材清單固定(原版檔 + mt32 OGG 已產生,複製即可)· 音訊相依分平台(MT-32=播 OGG 需 libvorbis,否則退 SB)· `dq3_load_file()` 路徑 choke point 各平台一致。
+
+### 🟡 Tier 3 — 平台覆蓋
+- [ ] **macOS 包**(工作量小):GH Action `macos.yml`(macos runner,brew sdl2 libvorbis,cmake)→ artifact 抓回組 `.app`(dylib bundle + `install_name_tool`)→ `.dmg`;可寫路徑 `~/Library/Application Support/`;驗收另一台 Mac 跑。
+- [ ] **dev-setup / CI**:`DEV-SETUP.md`(各 target build 指令)· GitHub Actions matrix(Linux/Win/macOS)build+test+artifact · 烤 `libvorbis-dev` 進 `dq3-remake` image(修每次 build 臨時 apt 的 flaky)。
+
+### 🟢 Tier 4 — 低(美觀 / 最大工作量)
+- [ ] **音色精校**:各軌 instrument→OPL patch(目前預設 patch)· 精確 tempo · 語意音效→實際 VCX id(初步猜測)+ 更多接點(選單/開門/道具/受傷)· track17 等變體軌 note 配對(編碼變體)。
+- [ ] **Android 移植**(最大工作量):SDLActivity/NDK 骨架 + 素材入 APK(`fopen` 讀改 `SDL_RWFromFile`、寫導 internal storage)+ 觸控 UI(虛擬方向鍵/A/B/選單)+ 三 ABI libvorbis(或 `stb_vorbis` 單檔)+ 版權閘 + `assembleRelease` APK/AAB + 實機驗收。
+
+### 跨項決策(動工前定)
+- [ ] 素材/`DQ3.EXE` 是否內含(個人包含;對外改自備)· MT-32 OGG 解碼策略統一(桌面 libvorbis / Android `stb_vorbis`)。
+
+---
+
+## 已完成記錄(細節見 docs/)
+
+### 收尾打磨
 - [x] **全專案 markdown 過期審查 ✅**(2026-06-28,第一性原理對 code 核實):掃 102 篇 .md,修正 ~24 項過期/錯誤斷言
   —— 含 ① 順帶揪出**功能回歸**:`playthrough_check.sh` 蓋美拉翅膀回地表測試輸入未跟上新增的傳送選單(改 `cdredde`→`cdreddee`,
   game_tester 回 93/93);② 存檔版本(README/WORKLIST v6→v8)、測試數(86/86→93/93、79/79→動態)、
@@ -71,7 +104,7 @@
   `dq3_recruit` 加 shield/head;戰鬥 def=耐力/2+(鎧+盾+兜 b1 總和);`equip_modal` 4 槽 2×2 管理
   (修舊 `cat&0x40` 把盾 0x60 誤判成鎧的 bug);save v7。dump 驗證 4 槽畫面、game_tester 80/80。
 
-### 發行打包(基礎包已交付;完整 MT-32 包 + macOS/Android 為剩餘 delta。2026-06-28 併入原 PACKAGING_WORKLIST → 單一真相)
+### 發行打包(基礎包,已交付;完整 MT-32 包 / macOS / Android 的 delta 見上方 Tier 2-4)
 - [x] **Windows x64 跨平台打包 ✅**(2026-06-27;基礎包 SDL2-only,MT-32 OGG 未含→退 SB):mingw-w64 + SDL2 2.30.9 mingw dev,docker 內交叉編譯
   (`scripts/Dockerfile.mingw` + `cmake/mingw-w64-x86_64.cmake` + `tools/package_win.sh`)→ `work/dq3_remake_win64.zip`
   (dq3_remake.exe 647KB + SDL2.dll + run.bat)。entry 用 `SDL_MAIN_HANDLED` 自管 main(免 SDL2main/WinMain);
@@ -84,35 +117,13 @@
 - [x] **docker images 三件齊 ✅**:`dq3-remake`(Linux/SDL)、`dq3-remake-mingw`(Windows 交叉)、`munt-smf2wav`(MT-32 render)皆在。
 - [x] **MT-32 OGG 已產生 ✅**:`tools/export_music_mt32.sh` + `Dockerfile.munt` → `work/mt32/track_00..17.ogg`(18 軌);remake 載它(`dq3_audio.c`)。打包只需複製,**非重做匯出**。
 
-> ── 以下為「升級成完整 MT-32 發行包 + macOS/Android」的剩餘 delta(2026-06-28 併入原 PACKAGING_WORKLIST,單一真相)──
-> 個人/研究用完整包(素材=使用者合法持有,gitignore);版權閘=需原版 `DQ3.EXE` 啟動。移植第一性原理見 [`../docs/55`](../docs/55-android-macos-port-plan.md)。
-
-**共通前置(完整包對齊)**
-- [ ] 素材清單固定:`assets/` 原版檔 + `assets/mt32/track_NN.ogg`(已產生,複製即可)→ 列「完整包必備檔」清單。
-- [ ] 音訊相依分平台:SB FM=純 C 零依賴;**MT-32=播 OGG 需 libvorbis**(各平台打包對應動態庫,否則退 SB)。
-- [ ] 資產讀取路徑:`dq3_load_file()` choke point 各平台素材夾路徑一致(或 `DQ3_ASSETS`)。
-- [ ] 存檔/設定可寫路徑:`dq3.cfg`/`dq3_save*.dat` 導各平台使用者資料夾(唯讀 bundle 不能寫)。
-
-**Windows 完整包 delta**(基礎包 SDL2-only 已交付 → 補成可播 MT-32)
-- [ ] 補 vorbis/ogg DLL(`libvorbisfile-3`/`libvorbis-0`/`libogg-0`,MinGW build 才有);更新 `package_win.sh` 複製 + `objdump -p` 檢查相依。
-- [ ] mt32/ 素材入包 + 可寫路徑 `%APPDATA%\dq3_remake\`;驗收:乾淨 Windows 切 MT-32 OK。
-
-**AppImage 完整包 delta**(基礎包已交付 → 補成可播 MT-32)
-- [ ] AppDir 收 libvorbis/vorbisfile/ogg `.so` + mt32/ 素材 + 可寫路徑 `$XDG_DATA_HOME`;驗收:MT-32 OK。
-
-**macOS**(未做;工作量小)
-- [ ] GH Action `macos.yml`(macos runner,brew sdl2 libvorbis,cmake)→ artifact 抓回組 `.app`(dylib bundle + `install_name_tool`)→ `.dmg`;可寫路徑 `~/Library/Application Support/`;驗收另一台 Mac 跑。
-
-**Android**(未做;中–大)
-- [ ] SDLActivity/NDK 骨架 + 素材入 APK(`fopen` 讀改 `SDL_RWFromFile`、寫導 internal storage)+ 觸控 UI(虛擬方向鍵/A/B/選單)+ 三 ABI libvorbis 交叉編譯(或改 `stb_vorbis` 單檔)+ 版權閘 + `assembleRelease` APK/AAB + 實機驗收。
-
-**dev-setup / CI**
-- [ ] `dq3_remake/DEV-SETUP.md`:各 target build 指令(Linux/Windows/macOS/Android/AppImage)。
-- [ ] 烤 `libvorbis-dev` 進 `dq3-remake` image(目前每次 build 臨時 apt,flaky)。
-- [ ] CI:GitHub Actions matrix(Linux/Windows/macOS)build + test + 上傳 artifact;`ctest`(17 單測)+ headless 煙霧測試。
-
-**跨項決策(先定再動手)**
-- [ ] 素材/`DQ3.EXE` 是否內含(個人包含;對外改自備)· MT-32 OGG 解碼策略統一(桌面 libvorbis / Android `stb_vorbis`)· 抽 `dq3_user_dir()` 統一可寫路徑取代散落 `fopen`。
+### 音訊系統 ✅(原 AUDIO_WORKLIST 併入;RE 細節見 docs/56-59)
+- [x] **Phase 1 定位+抽出**:OMF byte-match 把 CMFDRV/cmfasm 定位進 EXE → 音樂從**外部 `MBG.MCX`**(76-byte dword 表 + 18 軌 CMF 變體 OPL2 FM)seek+read 載入(非內嵌 EXE);`extract_cmf.py` 拆 18 軌。
+- [x] **Phase 2 OPL2 core + CMF parser**:`dq3_opl2`(YM3812 9×2-op FM)+ `dq3_cmf`(MIDI-like + running status + tick 排程);離線 render wav 旋律完整。
+- [x] **Phase 3 SDL 串接**:`dq3_audio` 載 18 軌 + SDL callback 驅動 OPL2/CMF;17/17 測試零回歸。
+- [x] **Phase 4 場景配曲 + 設定**:每幀依場景選軌(地表/城鎮/下層/船、戰鬥 boss vs 一般);config_modal 音樂開關/音量/音源(MT-32↔SB)。
+- [x] **Phase 5 VOC 音效**:`dq3_voc` 解 FVOC/NVOC.VCX(8-bit PCM)+ 8-voice SFX mixer;戰鬥音效接點。
+- [x] **MT-32 真音源**:munt + 真 Roland ROM render 18 軌 → OGG(`work/mt32/`,gitignore);remake 預設 MT-32、無檔退 SB。
 
 ### 實機展示
 - [x] **demo MP4 錄製 ✅**(2026-06-27):引擎加 `DQ3_RECDIR` 逐幀錄製 hook(`dq3_present` 內,headless 也可錄);

@@ -22,7 +22,7 @@
   ticks/tempo + 樂器數;instrument = 16-byte OPL2 operator 參數;music block = MIDI-like delta-time 事件流。
   規格公開,parser 不難。
 
-## 3. 架構(★ 本節為原始計畫;音訊引擎**現已落地**:`dq3_audio`/`dq3_opl2`/`dq3_cmf`/`dq3_voc` 全在 `src/`,SDL callback + 場景配曲 + 設定 UI 皆已完成,現況以 AUDIO_WORKLIST 為準)
+## 3. 架構(★ 本節為原始計畫;音訊引擎**現已落地**:`dq3_audio`/`dq3_opl2`/`dq3_cmf`/`dq3_voc` 全在 `src/`,SDL callback + 場景配曲 + 設定 UI 皆已完成,現況以 `dq3_remake/WORKLIST.md` 音訊系統段為準)
 
 ```
 PLAYER/EXE 內 CMF 資料 ──parse──▶ {instruments[], events[]}
@@ -54,7 +54,7 @@ SDL audio callback(44100, s16)         ▼
 - OPL2 cycle-accurate 模擬非必要;聽感正確即可(用成熟精簡 core)。
 - 配曲對應(哪首曲配哪場景)需另 RE EXE 的選曲邏輯,或先以合理對應暫接。
 
-## 6. 分步(詳見 `dq3_remake/AUDIO_WORKLIST.md`)
+## 6. 分步(詳見 `dq3_remake/WORKLIST.md` 音訊系統段 + 剩餘 Tier 1/4)
 
 1. **定位 + 抽出** EXE 內 CMF 音樂資料(`tools/extract_cmf.py`)→ 確認資料存在 + 可解析。**先做這步 de-risk。**
 2. OPL2 core + CMF parser → 離線 render 一首成 wav 驗聽感。
