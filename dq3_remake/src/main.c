@@ -1266,7 +1266,7 @@ static int run_game(const char *assets, const char *dump)
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
         if (!in_town && phoenix_aboard && phoenix_ok)    /* 不死鳥坐騎 sprite 疊在玩家格(飛行中)*/
             dq3_scene_draw_charsprite_at(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H,
-                                         cur->px, cur->py, &phoenix_spr, cur->facing & 3);
+                                         cur->px, cur->py, &phoenix_spr, (cur->facing & 3) * DQ3_CHAR_WALK);
         if (dlg_ok && dq3_dialogue_is_open(&dlg))
             dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
@@ -1968,7 +1968,7 @@ static int run_game(const char *assets, const char *dump)
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/
         if (!in_town && phoenix_aboard && phoenix_ok)    /* 不死鳥坐騎 sprite(末幀渲染)*/
             dq3_scene_draw_charsprite_at(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H,
-                                         cur->px, cur->py, &phoenix_spr, cur->facing & 3);
+                                         cur->px, cur->py, &phoenix_spr, (cur->facing & 3) * DQ3_CHAR_WALK);
         if (dlg_ok && dq3_dialogue_is_open(&dlg)) dq3_dialogue_render(&dlg, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         dq3_present();
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "playthrough 末幀 -> %s(in_town=%d cty=%d (%d,%d))\n",

@@ -61,10 +61,16 @@ int dq3_charsprite_load(dq3_charsprite *cs, const char *assets_dir, const char *
     if (!d || fread(d, 1, (size_t)sz, f) != (size_t)sz) { fclose(f); FAIL("read BLS"); }
     fclose(f); n = (size_t)sz;
 
-    for (fr = 0; fr < DQ3_CHAR_FRAMES; fr++) {
-        size_t base = body0 + (size_t)(entry_base + fr) * DQ3_BLS_STRIDE;
-        if (base + DQ3_BLS_MASKOFF + 96 > n) FAIL("entry out of range");
-        decode_frame(d, n, base, cs->px[fr], cs->opaque[fr]);
+    /* 每方向 slot(960B)= 2 個 walk sub-frame(各 480B);frame 索引 = 方向×2 + walk。 */
+    for (fr = 0; fr < DQ3_CHAR_DIRS; fr++) {
+        size_t slot = body0 + (size_t)(entry_base + fr) * DQ3_BLS_STRIDE;
+        int w;
+        for (w = 0; w < DQ3_CHAR_WALK; w++) {
+            size_t base = slot + (size_t)w * DQ3_BLS_SUBFRAME;
+            int idx = fr * DQ3_CHAR_WALK + w;
+            if (base + DQ3_BLS_MASKOFF + 96 > n) FAIL("entry out of range");
+            decode_frame(d, n, base, cs->px[idx], cs->opaque[idx]);
+        }
     }
     cs->loaded = 1;
     free(d);

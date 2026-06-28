@@ -265,11 +265,17 @@ void dq3_scene_draw_charsprite_at(const dq3_scene *s, uint8_t *fb, int fb_w, int
         }
 }
 
+/* 待機/行走動畫:全域計時器,每 DQ3_ANIM_PERIOD 次 render 切一次 walk 相位(0/1)。
+ * DQ3 角色(主角 + NPC)即使站著手腳也持續左右擺動 → 連續交替兩個 walk sub-frame。 */
+#define DQ3_ANIM_PERIOD 9
+static unsigned g_anim_tick = 0;
+
 void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
 {
     int cam_x = s->px - VIEW_COLS / 2;
     int cam_y = s->py - VIEW_ROWS / 2;
     int row, col, r, c;
+    int walk = (++g_anim_tick / DQ3_ANIM_PERIOD) & 1;   /* 0/1 交替的 walk 相位 */
 
     if (cam_x > s->map_w - VIEW_COLS) cam_x = s->map_w - VIEW_COLS;
     if (cam_y > s->map_h - VIEW_ROWS) cam_y = s->map_h - VIEW_ROWS;
@@ -307,7 +313,8 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
         int psy = (s->py - cam_y) * DQ3_TILE_H;
         int r2, c2;
         if (s->has_hero) {
-            int fr = s->frame_for_facing[s->facing & 3];
+            int dir = s->frame_for_facing[s->facing & 3] & 3;
+            int fr = dir * DQ3_CHAR_WALK + walk;          /* 方向×2 + walk 相位 → 手腳擺動 */
             if (fr < 0 || fr >= DQ3_CHAR_FRAMES) fr = 0;
             for (r2 = 0; r2 < DQ3_CHAR_H; r2++)
                 for (c2 = 0; c2 < DQ3_CHAR_W; c2++) {
@@ -339,7 +346,8 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
             nsx = nx * DQ3_TILE_W; nsy = ny * DQ3_TILE_H;
             ci = npc_spr_find(s, npc->b2);
             if (ci >= 0) {
-                int fr = s->frame_for_facing[npc->ctrl & 3];
+                int dir = s->frame_for_facing[npc->ctrl & 3] & 3;
+                int fr = dir * DQ3_CHAR_WALK + walk;       /* 方向×2 + walk 相位 → 站著也擺手 */
                 const dq3_charsprite *cs = &s->npc_spr[ci];
                 if (fr < 0 || fr >= DQ3_CHAR_FRAMES) fr = 0;
                 for (r2 = 0; r2 < DQ3_CHAR_H; r2++)

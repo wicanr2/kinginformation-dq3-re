@@ -14,8 +14,13 @@
 
 #define DQ3_CHAR_W       32
 #define DQ3_CHAR_H       24
-#define DQ3_CHAR_FRAMES  4
+/* 每方向 slot(STRIDE 960)裝 2 個 walk sub-frame(各 480B):待機/行走時交替 → 手腳擺動動畫。
+ * frame 索引 = 方向×2 + walk(0/1);共 4 方向 ×2 = 8。 */
+#define DQ3_CHAR_DIRS    4
+#define DQ3_CHAR_WALK    2
+#define DQ3_CHAR_FRAMES  (DQ3_CHAR_DIRS * DQ3_CHAR_WALK)   /* 8 */
 #define DQ3_BLS_STRIDE   960
+#define DQ3_BLS_SUBFRAME 480                               /* 一個 sub-frame(像素384 + mask96)*/
 #define DQ3_BLS_MASKOFF  0x180
 
 typedef struct {
