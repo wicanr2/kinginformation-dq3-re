@@ -220,6 +220,28 @@ static void load_field_hero(dq3_scene *s, const char *assets)
     dq3_scene_load_npc_sprites(s, assets);      /* NPC sprite(城鎮才有 NPC;地表 no-op)*/
 }
 
+/* 隊列:依目前隊伍(成員 0=主角/lead,1..=followers)設定 scene 跟隨同伴 sprite/死活。
+ * 變化簽章快取:同場景 + 同隊伍狀態時不重設(避免每幀重設 trail → 同伴瞬移)。每幀呼叫即可。 */
+static void apply_followers(dq3_scene *s, const dq3_roster *roster, const dq3_party *party, const char *assets)
+{
+    static const dq3_scene *last_s = NULL; static unsigned last_sig = 0;
+    int entries[3], dead[3], n = 0, pi; unsigned sig;
+    if (!s) return;
+    sig = (unsigned)party->count;
+    for (pi = 1; pi < party->count && n < 3; pi++) {        /* 成員 1.. = 跟隨者 */
+        int ri = party->slot[pi]; const dq3_recruit *rc;
+        if (ri < 0 || ri >= roster->count) continue;
+        rc = &roster->list[ri];
+        entries[n] = dq3_class_sprite_entry(rc->m.cls, rc->gender);
+        dead[n] = (rc->m.cur_hp == 0) ? 1 : 0;
+        sig = sig * 131u + (unsigned)(rc->m.cls * 4 + rc->gender * 2 + dead[n] + 1);
+        n++;
+    }
+    if (s == last_s && sig == last_sig) return;             /* 無變化 → 不重設(trail 保留)*/
+    last_s = s; last_sig = sig;
+    dq3_scene_set_followers(s, assets, entries, dead, n);
+}
+
 /* scripted_event 86 下降(ギアガの大穴;RE handler 0x783d / [0x5051]=3,docs/44):
  * 切到下層 overworld(field_under,懶載),置玩家於下層城 CTY77 入口附近,設 DQ3_FLAG_DESCENDED。
  * 原版觸發是 runner 劇情事件;remake 由 debug 口 / U 鍵代觸發。回 0 成功。 */
@@ -1278,6 +1300,7 @@ static int run_game(const char *assets, const char *dump)
             else                      mk = DQ3_MUS_FIELD;
             dq3_audio_play_scene(mk, 1);
         }
+        apply_followers(cur, &roster, &party, assets);   /* 隊列:隊員跟隨 + 陣亡棺材(變化才重設)*/
         dq3_scene_render(cur, dq3_fb(), DQ3_SCREEN_W, DQ3_SCREEN_H);
         overlay_opened_chests(cur, &flags);    /* #4:已取寶箱疊開過標記(remake 增強)*/
         draw_ship_overlay(cur, &ship, in_town, layer);   /* 船 sprite(docs/51)*/

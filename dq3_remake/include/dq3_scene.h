@@ -68,6 +68,13 @@ typedef struct dq3_scene {
     int has_hero;
     int frame_for_facing[4];      /* facing→BLS frame 對映(可調,對齊 oracle) */
 
+    /* 隊列 follower train(DQ3 經典):隊員跟在主角後面排成一列,死者顯示棺材移到隊尾。 */
+    dq3_charsprite follower_spr[3];   /* 同伴 sprite(隊員 1..3 的職業 sprite)*/
+    int follower_dead[3];             /* 0=活/1=死(棺材)*/
+    int n_followers;                  /* 跟隨人數(0..3)*/
+    int trail_x[8], trail_y[8], trail_f[8];  /* 主角近 8 步位置/朝向(follower i 站 trail[i])*/
+    int trail_len;                    /* 已記錄步數 */
+
     /* 釋放用:scene 接管的原始 buffer(loader 配置,scene_free 釋放) */
     void *owned[6];
     int   nowned;
@@ -151,6 +158,13 @@ void dq3_scene_pick_open_start(dq3_scene *s);
  * 失敗時 has_hero 維持 0(退回佔位方框),回傳 <0。 */
 int dq3_scene_load_hero(dq3_scene *s, const char *assets_dir, int entry_base,
                         const int facing_order[4]);
+
+/* 隊列:設定跟隨的同伴(隊員 1..n)。entries[i]=該員 DQ3MST.BLS sprite entry_base、dead[i]=是否陣亡。
+ * n=0 清空(獨行)。死者以棺材繪、排到隊尾。每次 scene 載入後由主程式依目前隊伍呼叫。 */
+void dq3_scene_set_followers(dq3_scene *s, const char *assets_dir,
+                             const int *entries, const int *dead, int n);
+/* 重置隊列 trail(玩家位置歷史)為目前主角格 —— 進新場景/傳送後呼叫,避免同伴瞬移殘留。 */
+void dq3_scene_reset_trail(dq3_scene *s);
 
 /* 釋放 scene 與其接管的 buffer。 */
 void dq3_scene_free(dq3_scene *s);

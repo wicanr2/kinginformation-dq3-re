@@ -184,6 +184,12 @@ int dq3_scene_input(dq3_scene *s, uint8_t sc)
     tx = s->px + dx; ty = s->py + dy;
     if (!dq3_scene_walkable(s, tx, ty)) return 0;
     if (dq3_scene_npc_at(s, tx, ty) >= 0) return 0;   /* NPC 擋路(facing 已更新 → 撞即面向,可 Enter 對話/開店)*/
+    {   /* 隊列 trail:把主角「移動前」的格 unshift 進歷史 → follower i 站 trail[i] */
+        int k;
+        for (k = 7; k > 0; k--) { s->trail_x[k]=s->trail_x[k-1]; s->trail_y[k]=s->trail_y[k-1]; s->trail_f[k]=s->trail_f[k-1]; }
+        s->trail_x[0]=s->px; s->trail_y[0]=s->py; s->trail_f[0]=s->facing & 3;
+        if (s->trail_len < 8) s->trail_len++;
+    }
     s->px = tx; s->py = ty;
     return 1;
 }
@@ -335,6 +341,43 @@ void dq3_scene_render(const dq3_scene *s, uint8_t *fb, int fb_w, int fb_h)
         }
     }
 
+    /* 隊列 follower train:隊員跟在主角後面排成一列(follower j 站 trail[j]=主角 j+1 步前的格);
+     * 陣亡者以棺材繪、排到隊尾(活的先佔近位)。 */
+    if (s->n_followers > 0) {
+        int order[3], no = 0, j, k2;
+        for (k2 = 0; k2 < s->n_followers; k2++) if (!s->follower_dead[k2]) order[no++] = k2;  /* 活的先 */
+        for (k2 = 0; k2 < s->n_followers; k2++) if ( s->follower_dead[k2]) order[no++] = k2;  /* 死的後 */
+        for (j = 0; j < no; j++) {
+            int fi = order[j];
+            int tx = (s->trail_len > j) ? s->trail_x[j] : s->px;
+            int ty = (s->trail_len > j) ? s->trail_y[j] : s->py;
+            int tf = (s->trail_len > j) ? (s->trail_f[j] & 3) : (s->facing & 3);
+            int fsx = (tx - cam_x) * DQ3_TILE_W, fsy = (ty - cam_y) * DQ3_TILE_H, r2, c2;
+            if (s->follower_dead[fi]) {                       /* 棺材:暗箱 + 亮邊 + 十字 */
+                for (r2 = 5; r2 < DQ3_CHAR_H - 2; r2++)
+                    for (c2 = 9; c2 < DQ3_CHAR_W - 9; c2++) {
+                        int yy = fsy + r2, xx = fsx + c2;
+                        int edge   = (r2==5 || r2==DQ3_CHAR_H-3 || c2==9 || c2==DQ3_CHAR_W-10);
+                        int crossv = (c2==DQ3_CHAR_W/2 && r2>=8 && r2<16);
+                        int crossh = (r2==10 && c2>=DQ3_CHAR_W/2-3 && c2<=DQ3_CHAR_W/2+3);
+                        if (yy>=0 && yy<fb_h && xx>=0 && xx<fb_w)
+                            fb[yy*fb_w+xx] = (uint8_t)((edge||crossv||crossh) ? 15 : 0);
+                    }
+            } else if (s->follower_spr[fi].loaded) {          /* 活的:職業 sprite + 走路動畫 */
+                int dir = s->frame_for_facing[tf] & 3;
+                int fr = dir * DQ3_CHAR_WALK + walk;
+                if (fr < 0 || fr >= DQ3_CHAR_FRAMES) fr = 0;
+                for (r2 = 0; r2 < DQ3_CHAR_H; r2++)
+                    for (c2 = 0; c2 < DQ3_CHAR_W; c2++) {
+                        int yy = fsy + r2, xx = fsx + c2;
+                        if (!s->follower_spr[fi].opaque[fr][r2][c2]) continue;
+                        if (yy>=0 && yy<fb_h && xx>=0 && xx<fb_w)
+                            fb[yy*fb_w+xx] = (uint8_t)(DQ3_SPRITE_PAL_BASE + s->follower_spr[fi].px[fr][r2][c2]);
+                    }
+            }
+        }
+    }
+
     /* NPC:有 sprite 快取則透明 blit(frame=朝向),否則小佔位點。 */
     {
         int n;
@@ -381,6 +424,27 @@ int dq3_scene_load_hero(dq3_scene *s, const char *assets_dir, int entry_base,
     }
     s->has_hero = 1;
     return 0;
+}
+
+void dq3_scene_reset_trail(dq3_scene *s)
+{
+    int i;
+    for (i = 0; i < 8; i++) { s->trail_x[i] = s->px; s->trail_y[i] = s->py; s->trail_f[i] = s->facing & 3; }
+    s->trail_len = 0;
+}
+
+void dq3_scene_set_followers(dq3_scene *s, const char *assets_dir,
+                             const int *entries, const int *dead, int n)
+{
+    int i; char err[256];
+    if (n < 0) n = 0; if (n > 3) n = 3;
+    s->n_followers = n;
+    for (i = 0; i < n; i++) {
+        s->follower_dead[i] = dead ? dead[i] : 0;
+        if (dq3_charsprite_load(&s->follower_spr[i], assets_dir, "DQ3MST.BLS", entries[i], err, sizeof err) != 0)
+            s->follower_spr[i].loaded = 0;
+    }
+    dq3_scene_reset_trail(s);
 }
 
 /* 晝夜相位(0=白天 1=黃昏 2=黑夜 3=黎明)。overworld 步數驅動(main.c);set 後下次 apply 生效。 */
