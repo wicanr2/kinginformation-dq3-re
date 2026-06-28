@@ -45,12 +45,13 @@ static struct {
 
 /* 場景 → 軌號。MBG.MCX 18 軌(0-17)= 主音樂;EBG.MCX 6 軌(18-23)= 事件/場所短曲
  * (使用者聽感 2026-06-28:18=旅館/教堂復活、19=神宮…**非戰鬥曲**;先前「EBG=戰鬥」假設已更正)。
- * 使用者(玩過破關)聽感確認:TITLE=0(開頭)、FIELD=1(地圖走路)、TOWN=2、DUNGEON=3、SHIP=9(鬼船)、ENDING=17(結局返宮)。
- * 待確認(? 標,結構推測,戰鬥曲在 MBG 某軌):BATTLE=6、BOSS=16、CASTLE=8 —— 待使用者再聽更正。
- * EBG 18/19(旅館/神宮)目前無對應場景 slot,先載著(日後可接旅館/祠堂/復活事件)。 */
+ * 使用者(玩過破關)聽感確認:TITLE=0(開頭)、FIELD=1(地圖走路)、TOWN=2、DUNGEON=3、SHIP=6(搭船)、ENDING=17(結局返宮)。
+ * 迷宮變體(用同一 DUNGEON slot=3):7=塔、9=鬼船地點、16=最後迷宮——日後可按 CTY 接專屬軌。
+ * 待確認(? 標,結構推測,戰鬥曲在 MBG 某軌):BATTLE=14、BOSS=12、CASTLE=8 —— 待使用者再聽更正。
+ * EBG 事件 cue(無場景 slot,先載著):18=教堂復活、19=神宮、20=旅館睡覺;日後可接旅館/祠堂/復活事件。 */
 static int g_scene_track[DQ3_MUS__COUNT] = {
     /* TITLE */ 0,  /* FIELD */ 1,  /* TOWN */ 2,   /* DUNGEON */ 3,
-    /* BATTLE*/ 6,  /* BOSS */ 16,  /* CASTLE */ 8, /* SHIP */ 9,
+    /* BATTLE*/ 14, /* BOSS */ 12,  /* CASTLE */ 8, /* SHIP */ 6,
     /* ENDING*/ 17
 };
 
