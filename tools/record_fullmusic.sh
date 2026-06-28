@@ -16,8 +16,34 @@ mkdir -p "$OUT"; TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 esc(){ printf '%s' "$1" | sed "s/:/\\\\:/g; s/'/\\\\'/g"; }
 
 # 場景片段池(各 ~3.5s,循環穿插用);依序:標題/地表/夜/戰鬥/倉庫番/建城前/建城後/父親/九頭龍/索瑪
-SCENES=(title field night battle sokoban townpre townpost hydra father zoma)
-TAGS=("原版標題" "地表(白天)" "走入黑夜" "指令戰鬥" "倉庫番推石" "建城前·空草原" "建城後·繁榮" "勇者之父 歐里狄加" "五頭龍大王" "大魔王 索瑪")
+SCENES=(title field night battle sokoban townbuild townbuilt hydra father zoma)
+TAGS=("原版標題" "地表(白天)" "走入黑夜" "指令戰鬥" "倉庫番推石" "帶商人見老人·建城" "新城鎮建成·繁榮" "勇者之父 歐里狄加" "五頭龍大王" "大魔王 索瑪")
+# ---------- Phase 0:擷取場景幀(SKIP_CAPTURE=1 跳過、重用 work/rec)----------
+if [ "${SKIP_CAPTURE:-0}" != "1" ]; then
+echo "== Phase 0:擷取場景幀(docker / SDL dummy;NPC 待機動畫 + 真實建城)=="
+docker run --rm -v "$ROOT":/repo -v dq3build:/build dq3-remake bash -lc '
+  set -e
+  cmake -S /repo/dq3_remake -B /build -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1
+  cmake --build /build -j >/dev/null 2>&1
+  R=/repo/work/rec; rm -rf $R
+  E="SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy"
+  B=/build/dq3_remake; A=/repo/assets_raw
+  mk(){ mkdir -p $R/$1; }
+  mk title     && env $E DQ3_RECDIR=$R/title    DQ3_INPUT="............" $B $A title TITG.P >/dev/null 2>&1 || true
+  mk field     && env $E DQ3_RECDIR=$R/field    DQ3_DEBUG="party;warp:1:88:88"      DQ3_INPUT="rrrrrrrrrruuuuuuuuuulllllllllldddddddddd" $B $A game >/dev/null 2>&1 || true
+  mk night     && env $E DQ3_RECDIR=$R/night    DQ3_DEBUG="party;warp:1:88:88;dn:2" DQ3_INPUT="rrrrrrrruuuuuuuuddddddddllllllll" $B $A game >/dev/null 2>&1 || true
+  mk battle    && env $E DQ3_RECDIR=$R/battle   DQ3_BATTLE_PARTY=1 DQ3_MON=5 DQ3_MON_N=3 DQ3_INPUT="..s..s..s..s..s..s..s..s..s..s" $B $A battle >/dev/null 2>&1 || true
+  mk sokoban   && env $E DQ3_RECDIR=$R/sokoban  DQ3_DEBUG="warp:76:5:11:0" DQ3_INPUT="u.u.l.l.u.u.r.r" $B $A game >/dev/null 2>&1 || true
+  # 真實建城:帶商人(職業6)到新城鎮 CTY83,走到老人(16,2)對話 → 觸發建城
+  mk townbuild && env $E DQ3_RECDIR=$R/townbuild DQ3_DEBUG="party;merchant;warp:83:16:4:0" DQ3_INPUT=".u.u.e.e.e.e." $B $A game >/dev/null 2>&1 || true
+  mk townbuilt && env $E DQ3_RECDIR=$R/townbuilt DQ3_DEBUG="party;flag:0x216;warp:83:16:5:0" DQ3_INPUT="d.d.r.r.l.l.u.u" $B $A game >/dev/null 2>&1 || true
+  mk hydra     && env $E DQ3_RECDIR=$R/hydra    DQ3_BATTLE_PARTY=1 DQ3_ST_LEVEL=45 DQ3_MON=129 DQ3_MON_N=1 DQ3_INPUT="..s..s..s..s..s..s..s..s" $B $A battle >/dev/null 2>&1 || true
+  mk father    && env $E DQ3_RECDIR=$R/father   DQ3_BATTLE_PARTY=1 DQ3_ST_LEVEL=45 DQ3_MON=128 DQ3_MON_N=1 DQ3_INPUT="..s..s..s..s..s..s" $B $A battle >/dev/null 2>&1 || true
+  mk zoma      && env $E DQ3_RECDIR=$R/zoma DQ3_DUMP=/tmp/z.ppm DQ3_BATTLE_PARTY=1 DQ3_ST_LEVEL=50 DQ3_MON=124 DQ3_MON_N=1 DQ3_INPUT="..s..s..s..s..s..s..s..s..s..s" $B $A battle >/dev/null 2>&1 || true
+  for d in title field night battle sokoban townbuild townbuilt hydra father zoma; do echo "   $d: $(ls $R/$d/*.ppm 2>/dev/null|wc -l) 幀"; done
+'
+fi
+
 echo "== 建場景片段池 =="
 : > "$TMP/pool.txt"
 for idx in "${!SCENES[@]}"; do

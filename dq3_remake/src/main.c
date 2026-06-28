@@ -975,6 +975,13 @@ static int run_game(const char *assets, const char *dump)
                     if (ri >= 0) dq3_party_add(&party, &roster, ri);
                 }
                 fprintf(stderr, "[DEBUG] party → 名冊%d 隊伍%d\n", roster.count, party.count);
+            } else if (strcmp(tok, "merchant") == 0) {       /* 加一名商人(職業6)進隊伍 → 可在新城鎮建城 */
+                uint16_t nm[1]; int ri; nm[0] = 5;            /* 名 = glyph 數字 5 */
+                if (party.count >= DQ3_PARTY_MAX)             /* 隊伍滿 → 換掉最後一個塞商人 */
+                    dq3_roster_remove(&roster, &party, party.slot[party.count - 1]);
+                ri = dq3_roster_create(&roster, &gst, 6, DQ3_GENDER_MALE, nm, 1);
+                if (ri >= 0) { dq3_party_add(&party, &roster, ri);
+                    fprintf(stderr, "[DEBUG] 加商人同伴(職業6)→ 隊伍%d(可帶去新城鎮建城)\n", party.count); }
             } else if (strcmp(tok, "equip") == 0) {          /* 直接開裝備管理(驗證)*/
                 equip_modal(&roster, &party, sys_ok ? &sys_txt : &dlg.txt);
                 if (getenv("DQ3_EQUIP_DUMP")) return 0;       /* dump 模式:equip_modal 已 dump,直接結束不被主 dump 覆寫 */
