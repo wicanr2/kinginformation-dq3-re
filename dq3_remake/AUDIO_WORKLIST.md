@@ -18,8 +18,8 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
   > ⚠ 偵察期兩個推測**事後證實是錯的**(已修正):①「EXE 載入清單無音樂檔」→ 音樂在 `MBG.MCX`(只是沒以明文檔名靜態字串出現,動態組名/封包 seek);②「全檔無 CTMF magic ⇒ 內嵌 EXE」→ 是精訊自訂 CMF 變體(本來就沒 CTMF magic),且在**外部 MBG.MCX**。
 - [x] **(B) 確認:音樂真的在**(使用者親證 + YouTube 精訊版錄影 + RE 定位)。
   > ⚠ 先前拿來佐證的「EXE 重設 8253 timer + 計時 ISR = 音樂節拍」**追錯 ISR**(那是 VGA 螢幕/文字子系統,與音樂無關)。音樂為真的正解見下方 Phase 1 完成(MBG.MCX）。
-- [~] **Phase 1 續(進行中,deep trace)**:從 timer ISR / 音樂事件處理器反追到內嵌音樂資料 base。
-  目標:定位 ① 音樂事件流(序列)base、② instrument(OPL2 樂器)表 base、③ 曲目索引表(多首)。
+- [x] **Phase 1 完成(deep trace)**:原目標(定位音樂事件流 / OPL2 樂器表 / 曲目索引表 base)已達成
+  —— 由 OMF byte-match + MBG.MCX 偏移表解決(見下 1 完成);早期「內嵌 EXE」前提已證錯(改為外部 MBG.MCX)。
   具體步驟(逐步做,別跳;每步 commit 進度到 docs/57):
   - [x] 1a. timer init 位置:file 0x13fc3 / 0x155c0;`set_timer_count(ax)` = logical 0x2c52。
   - [x] 1b/1c. 追了 INT8/timer hook → **此線追錯**(該 ISR 是 VGA 螢幕/文字子系統)。
@@ -30,7 +30,6 @@ remake **目前無音訊引擎**。已 RE 偵察確認:精訊用 OPL2 FM(EXE 寫
 - [x] `tools/extract_cmf.py`:拆 MBG.MCX → `work/music/track_00..17.bin`(gitignore);印各軌 offset/len/header。18 軌 OK。
   - ~~1d–1h(原計畫:從 ISR 反追內嵌 EXE 的事件/樂器/曲目表)~~ **作廢**:基於「內嵌 EXE」錯誤前提;
     Phase 1 已由 OMF byte-match + MBG.MCX 偏移表直接解決(曲目表 = MBG.MCX 前導 dword 表,18 軌)。
-- [ ] `tools/extract_cmf.py`:依 1f/1h 定位 dump 各曲 → `work/music/song_NN.bin`(gitignore)+ 印 instrument 數/事件數驗證。
 
 ### Phase 2 — OPL2 core + CMF parser(離線驗聽感)
 - [x] **事件格式解碼 + 離線驗證(2026-06-27)**:`tools/cmf_render.py` 解析軌事件(MIDI-like + 尾隨 delta +
