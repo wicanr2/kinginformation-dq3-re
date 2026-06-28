@@ -45,17 +45,15 @@
   ① CASTLE:城堡清單 {0,2,6,37,73,76}(阿里阿罕/羅馬利亞/阿莎拉慕/波魯多加/依席斯/貝亞城)→ 城堡曲;
   ② ENDING:`end_seq>=0` → 結局曲(軌16);③ DUNGEON:BLK 2/4/5(洞窟/塔/金字塔/索瑪城)+ 覆蓋清單{33 沙漠之洞}→ 迷宮曲。
   分類表 89 CTY 核實(6 城堡/31 迷宮/63 城鎮);93/93 無回歸。**城堡清單為名含「城」+ 有國王 best-effort,聽感可增刪**。
-- [x] **戰鬥音樂在獨立檔 EBG.MCX ✅**(2026-06-28 發現+修正,docs/61):原版戰鬥曲在 `EBG.MCX`(6 軌,非 MBG)——
-  先前 RE 漏看、整條 pipeline 只處理 MBG。已補:① 抽 EBG 6 軌 + munt MT-32 render → `work/mt32/track_18..23.ogg`
-  (`export_music_mt32.sh` 已含 EBG);② `dq3_audio` init 串接 EBG 進 buffer(軌 18-23);③ `g_scene_track` BATTLE→18/BOSS→19。
-  軌數 18→24,93/93 無回歸。**EBG 內 battle/boss 確切軌 18/19 為推測,聽感可調(併入下方 #2)**。
-- [~] **track→曲目對應**(MBG 0-17 + EBG 18-23 確切場景指派):`g_scene_track[]` 多數仍初步猜測,未對原版逐曲驗證。
-  - ✅ **結構特徵分析(2026-06-28,docs/61)**:24 軌 MT-32 時長 → 角色判讀。**EBG battle=18/boss=19 結構支持**
-    (loop 11-15s vs jingle 5-8s 分界清楚);FIELD=00(82s 長循環)、ENDING=16(61s)合理。
-  - ✅ **RE recon**:`_sbfm_play_music`(file 0x140ee)2 呼叫端=集中播放包裝,播 `[ds:0x08]` track 指標;
-    場景選曲在更上層設 `[0x08]`(MBG/EBG 偏移表 `base+table[idx]`),需再追 1-2 跳定位各場景 idx。
-  - [ ] **剩:聽感確認**(此環境無 DOSBox 不能逐曲試聽;**最快路徑=玩過原版的使用者聽 `work/mt32/track_NN.ogg` 認曲回填**),
-    最該確認 TITLE=17(141s 偏長)+ TOWN/CASTLE/DUNGEON/SHIP 確切軌;或續追上層 idx 的靜態 trace。
+- [x] **第二音樂封包 EBG.MCX ✅**(2026-06-28 發現+修正,docs/61):MBG.MCX 外還有獨立檔 `EBG.MCX`(6 軌)——
+  先前 RE 漏看(整條 pipeline 只處理 MBG)。已補:抽 6 軌 + munt MT-32 render → `track_18..23.ogg`、`dq3_audio` 串接(軌 18-23)。
+  ★ **內容更正**:一度憑檔名臆測「EBG=戰鬥音樂」,使用者聽感推翻 —— EBG 是**事件 cue**(18=教堂復活/旅館、19=神宮、20=旅館睡覺),
+  戰鬥曲在 MBG。EBG 現載著無場景 slot(日後可接旅館/祠堂/復活事件)。
+- [x] **track→曲目對應 ✅ 完成**(9/9,使用者聽感確認 2026-06-28):
+  `TITLE=0 · FIELD=1 · TOWN=2 · CASTLE=1 · DUNGEON=3 · SHIP=6 · BATTLE=14 · BOSS=14(精訊版同戰鬥曲) · ENDING=17`。
+  build + game_tester 93/93。迷宮變體 7塔/9鬼船/16最後迷宮、CASTLE=FIELD=1(王城與地表同曲,使用者稱)記於 docs/61。
+  - 過程:結構時長分析(只能粗分 loop/jingle 不能定曲)+ RE recon(`_sbfm_play_music`→`[ds:0x08]`→偏移表)+
+    **試影片音訊指紋比對證實不可靠**(SFX+tempo+跨場景)→ 最終靠玩過破關的使用者逐軌認曲(可靠)。
 
 ### 🟠 Tier 2 — 讓已完成的 MT-32 音樂在發行包能播(完整包 delta)
 > 基礎包已交付但 SDL2-only(MT-32 退 SB);此 tier 補成可播 MT-32。個人/研究包(素材=使用者合法持有,gitignore;需原版 `DQ3.EXE` 啟動)。

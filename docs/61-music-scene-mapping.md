@@ -6,38 +6,41 @@
 
 ## 場景 → 音樂類型 → 軌號
 
-| 場景 | 音樂類型 | MBG.MCX 軌 | 觸發條件(code) |
+> ★ **軌號為使用者(玩過破關)逐軌聽感確認**(2026-06-28,9/9)。先前的軌號是猜測 + 一度誤把 EBG 當戰鬥曲,
+> 皆已更正。試過拿原版破關影片做音訊指紋比對,因 SFX 疊music + tempo/音高差 + 跨場景而**不可靠**,改採使用者聽感。
+
+| 場景 | 音樂類型 | 軌(MBG) | 觸發條件(code) |
 |---|---|---|---|
-| 標題 | TITLE | 17 | 標題畫面 |
-| 地表(上層) | FIELD | 0 | overworld，`layer==0` |
-| 地下層(アレフガルド) | DUNGEON | 5 | overworld，`layer==1` |
-| 城鎮 | TOWN | 2 | `in_town` 且非城堡/迷宮 |
-| **城堡** | **CASTLE** | **3** | `in_town` 且 CTY ∈ 城堡清單 |
-| **迷宮(洞窟/塔/金字塔)** | **DUNGEON** | **5** | `in_town` 且 BLK 2/4/5 或覆蓋清單 |
-| 船 | SHIP | 9 | 乘船中 |
-| **一般戰鬥** | **BATTLE** | **18(EBG)** | 遇敵且怪 id < 106 |
-| **boss 戰** | **BOSS** | **19(EBG)** | 遇敵且怪 id ≥ 106(大魔人/巴拉摩斯/索瑪/父親/九頭龍…) |
-| 結局 | ENDING | 16 | 結局序列 `end_seq >= 0` |
+| 標題/開頭 | TITLE | **0** | 標題畫面 |
+| 地表 | FIELD | **1** | overworld，`layer==0` |
+| 城鎮 | TOWN | **2** | `in_town` 且非城堡/迷宮 |
+| 城堡/皇宮 | CASTLE | **1** | `in_town` 且 CTY ∈ 城堡清單(使用者:王城與地表同 track_1)|
+| 迷宮 | DUNGEON | **3** | `in_town` BLK 2/4/5/覆蓋,或下層 overworld |
+| 船 | SHIP | **6** | 乘船中(搭船曲;鬼船=軌9 屬地點)|
+| 一般戰鬥 | BATTLE | **14** | 遇敵且怪 id < 106 |
+| boss 戰 | BOSS | **14** | 遇敵且怪 id ≥ 106 —— **精訊版 boss 與一般戰鬥同曲** |
+| 結局 | ENDING | **17** | 結局序列 `end_seq >= 0`(破關返宮)|
 
-- **戰鬥音樂在獨立檔 `EBG.MCX`**(非 MBG.MCX!見下節)。軌 0-17=MBG、18-23=EBG(串接成單一軌號空間)。
-- **戰鬥有專屬音樂**:`dq3_battlescene.c` 進戰鬥時 `id≥106 ? BOSS : BATTLE`——一般遇敵與 boss 戰各一首,來源都是 EBG。
-- 對應實作:overworld/城鎮在 `main.c` 主迴圈每幀 dispatch(`cty_music_kind()` + ENDING gate);軌號表 `g_scene_track[]`(`dq3_audio.c`)。
+- 軌號表 `g_scene_track[]`(`dq3_audio.c`);overworld/城鎮在 `main.c` 主迴圈每幀 dispatch(`cty_music_kind()` + ENDING gate)。
+- **迷宮變體**(同 DUNGEON slot=3,日後可按 CTY 接專屬軌):7=塔、9=鬼船地點、16=最後迷宮。
+- 未對應場景 slot 的曲(MBG 4/5/8/10-13/15 等)= 特定地點/變體;EBG 6 軌 = 事件 cue(見下節)。
 
-## ★ 戰鬥音樂在獨立檔 EBG.MCX(2026-06-28 發現)
+## ★ 兩個音樂封包 MBG + EBG(2026-06-28)
 
 精訊 DQ3 有**兩個音樂封包**,EXE 都引用(`mbg.mcx` / `ebg.mcx` 字串):
 
 | 檔 | 大小 | 軌數 | 內容 |
 |---|---|---|---|
-| `MBG.MCX` | 127 KB | 18 | 主音樂(標題/地表/城鎮/城堡/迷宮/船/結局) |
-| `EBG.MCX` | 3.3 KB | 6 | **戰鬥音樂**(戰鬥/boss/勝利/升級… 短曲) |
+| `MBG.MCX` | 127 KB | 18 | 主音樂(標題/地表/城鎮/迷宮/船/**戰鬥/boss**/結局…)|
+| `EBG.MCX` | 3.3 KB | 6 | **事件/場所短 cue**:旅館睡覺·教堂復活·神宮… **非戰鬥曲** |
 
-- **格式相同**(CMF 變體,header `28 00 .. 60 00 .. 01 01`),同一 parser 可解。
-- **先前 RE 漏看**:之前把 `MBG.MCX` 當「音樂」全部,沒意識到戰鬥曲在 `EBG.MCX` → 整條 pipeline
-  (extract / SB / MT-32 render)只處理 MBG 18 軌,**EBG 從未抽取/render**。2026-06-28 補上。
-- **remake 接法**:`dq3_audio` init 把 EBG.MCX 串接進 MBG buffer 之後(軌 18-23);
-  MT-32 側 `work/mt32/track_18..23.ogg`(munt render,`export_music_mt32.sh` 已含 EBG)。
-- **EBG 內 battle vs boss 確切軌**(18=battle / 19=boss)為合理推測,聽感可調(同 MBG track→曲目 未逐曲驗證問題)。
+- **格式相同**(CMF 變體,header `28 00 .. 60 00 .. 01 01`),同一 parser 可解;串接成軌 18-23。
+- **兩層更正(2026-06-28)**:① 先前把 `MBG.MCX` 當音樂全部,**漏看 EBG**(整條 pipeline 只處理 MBG 18 軌)→ 補上;
+  ② 補上後又**憑檔名臆測「EBG=戰鬥曲」**(E=enemy?),把 BATTLE/BOSS 路由到 EBG 18/19 →
+  **使用者聽感推翻**:18=教堂復活/旅館、19=神宮、20=旅館睡覺,是事件 cue,**戰鬥曲其實在 MBG 軌14**。
+- **教訓**:列出檔後別再憑檔名臆測內容,軌→用途要 ground truth(見 [docs/lessons-learned](lessons-learned.md) #11)。
+- **EBG 現況**:6 軌已抽取 + MT-32 render(`work/mt32/track_18..23.ogg`,`export_music_mt32.sh` 已含),
+  串接載入但**無對應場景 slot**(先載著);日後可接旅館睡覺(20)/教堂復活(18)/祠堂神宮(19)等事件。
 
 ## 城鎮地圖逐 CTY 配樂分類
 
@@ -100,19 +103,19 @@ MT-32 render 一輪時長:
 | 22 | 5.4s | —(EBG)| 極短 = **jingle**(疑勝利/升級)|
 | 23 | 8.6s | —(EBG)| 短 = jingle(疑全滅/升級)|
 
-- **結構支持的**:EBG battle=18 / boss=19(loop vs jingle 分界清楚)、FIELD=00、ENDING=16。
-- **最需聽感確認的**:TITLE=17(141s 偏長)、TOWN/CASTLE/DUNGEON/SHIP 的確切軌。
-- **取得確認最快路徑**:render 各軌試聽(`work/mt32/track_NN.ogg`),玩過原版者一聽即可認曲、回填正確軌號。
+> ★ **此結構分析的猜測已被使用者聽感全面取代**(2026-06-28,見上方場景表):當時的「EBG battle=18/boss=19」
+> **是錯的**(18=旅館/教堂、19=神宮);TITLE 也不是 17(=結局)。時長/事件數只能粗分 loop vs jingle,
+> **無法定曲目** —— 真正對應靠玩過破關的使用者逐軌認曲。下表保留為「結構訊號有其極限」的歷史紀錄。
 
 ## 驗證狀態(誠實標註)
 
-- ✅ **場景 → 音樂類型 dispatch 正確**:每個場景播對「類別」(城堡/迷宮/城鎮/戰鬥/boss/結局各有曲),
+- ✅ **場景 → 軌號已由使用者聽感確認**(9/9,2026-06-28):TITLE=0/FIELD=1/TOWN=2/CASTLE=1/DUNGEON=3/SHIP=6/BATTLE=14/BOSS=14/ENDING=17。
   game_tester 93/93 無回歸。配曲缺口(CASTLE/ENDING/DUNGEON 0 觸發)已修。
-- ⚠ **軌號(`g_scene_track[]`)未對原版逐曲驗證**:18 軌指派(TITLE=17/FIELD=0/…)是初步合理對應;
-  「哪一軌是哪首曲」的精確對應仍是 **T1 #2** 待辦(RE 線索:`_sbfm_play_music` 呼叫端 → 全域 `[ds:0x08]` track 指標
-  → MBG.MCX 偏移表;見 WORKLIST Tier 1)。本環境無 DOSBox 不可逐曲試聽,需靜態 trace 或聽感辨識。
+- **取得 ground truth 的路徑(留給後人)**:① 玩過原版者聽 `work/mt32/track_NN.ogg` 認曲(最快最準);
+  ② 試過用原版破關影片做音訊指紋比對(chroma,MT-32 與 SB-FM 都試)——**不可靠**(SFX 疊 music + tempo/音高差 +
+  clip 跨場景),影片的「畫面」可用來定位場景但「聲音」對不出軌號。本環境無 DOSBox 不可逐曲試聽。
 - ⚠ **城堡清單 best-effort**:BLK tileset 不分城堡 vs 城鎮,城堡靠「名含『城』+ 有國王」清單;
-  玩過原版者可按聽感增刪 `cty_music_kind()` 的 `CASTLE[]` / `DUNGEON_EXTRA[]`。
+  (註:使用者稱王城與地表同 track_1,故 CASTLE 與 FIELD 目前同軌)。
 
 ## 靜態 RE 分析過程(留給後人:我們怎麼推出來的)
 
