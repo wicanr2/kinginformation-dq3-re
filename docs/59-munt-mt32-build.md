@@ -44,6 +44,22 @@ ENTRYPOINT ["mt32emu-smf2wav"]
 
 build:`docker build -f tools/Dockerfile.munt -t munt-smf2wav tools/`
 
+## ROM 需求(retro CHT MT-32 技巧)
+
+munt 要靠**真正的 Roland 韌體 ROM** 發聲。一套完整 ROM = **CONTROL ROM + PCM ROM**:
+
+| 機種 | CONTROL ROM | PCM ROM | 備註 |
+|---|---|---|---|
+| **MT-32(經典)** | 64 KB(`MT32_CONTROL.ROM`) | 512 KB(`MT32_PCM.ROM`) | v1.07(1987)最常見;另有 v1.04 / patched |
+| **CM-32L / LAPC-I** | 64 KB(`CM32L_CONTROL.ROM`) | **1 MB**(`CM32L_PCM.ROM`) | MT-32 超集,多 33 個音色;1989 v1.02 |
+
+- **檔名**:munt 以**內容/大小自動偵測**(不靠檔名),放同一目錄即可;MAME-versioned 命名如
+  `mt32_ctrl_1_07.rom`、`cm32l_pcm.rom` 也可。`-i mt32` / `-i cm32l` 指定機種。
+- **版本差異影響音色**:v1.07 vs CM-32L 的低音/打擊不同;遊戲若針對特定機種混音,選對版本較還原。
+- ⚠ **版權與取得**:MT-32/CM-32L ROM 是 **Roland 版權韌體**,非自由散布。
+  正規取得 = **從自己擁有的實機 dump**(retro 保存圈合法途徑);**本專案不內含、不散布 ROM**,
+  使用者自備放 `work/music/mt32rom/`(gitignore)。下載連結不在此記錄(避免協助散布版權檔)。
+
 ## 使用
 
 ```bash
