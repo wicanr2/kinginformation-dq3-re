@@ -43,10 +43,12 @@ static struct {
     double         wav_pos;          /* 小數播放位置(重取樣用)*/
 } A;
 
-/* 場景 → 軌號(初步合理對應;MBG.MCX 18 軌,日後依 RE 選曲精校)。 */
+/* 場景 → 軌號。MBG.MCX 18 軌(0-17)+ EBG.MCX 6 軌(18-23,串接;戰鬥音樂獨立檔,RE docs/61)。
+ * BATTLE/BOSS 改指 EBG 軌(原版戰鬥曲在 EBG 非 MBG);其餘待 track→曲目精校(WORKLIST T1 #2)。
+ * EBG 內 battle vs boss 的確切軌(18=battle/19=boss)為合理推測,聽感可調。 */
 static int g_scene_track[DQ3_MUS__COUNT] = {
     /* TITLE */ 17, /* FIELD */ 0,  /* TOWN */ 2,   /* DUNGEON */ 5,
-    /* BATTLE*/ 6,  /* BOSS */ 14,  /* CASTLE */ 3, /* SHIP */ 9,
+    /* BATTLE*/ 18, /* BOSS */ 19,  /* CASTLE */ 3, /* SHIP */ 9,
     /* ENDING*/ 16
 };
 
@@ -218,6 +220,37 @@ int dq3_audio_init(const char *assets_dir)
     if (A.ntrack <= 0) {
         fprintf(stderr, "dq3_audio: 找不到/解析不了 MBG.MCX(%s),音樂停用\n", path);
         /* 不致命:降級成無音樂 */
+    }
+
+    /* EBG.MCX = 戰鬥音樂(6 軌)獨立檔(RE docs/61):原版戰鬥/boss 曲在此檔,非 MBG。
+     * 串接進同一 buffer,軌號接在 MBG 之後(18..23);g_scene_track[BATTLE/BOSS] 指向這些軌。
+     * MT-32 側對應 work/mt32/track_18..23.ogg(munt render,export_music_mt32.sh)。 */
+    if (A.ntrack > 0) {
+        char ep[1024]; FILE *ef;
+        snprintf(ep, sizeof ep, "%s/EBG.MCX", assets_dir);
+        ef = fopen(ep, "rb");
+        if (ef) {
+            long elen; unsigned char *ebuf;
+            fseek(ef, 0, SEEK_END); elen = ftell(ef); fseek(ef, 0, SEEK_SET);
+            ebuf = (unsigned char *)malloc(elen > 0 ? elen : 1);
+            if (ebuf && elen > 8 && fread(ebuf, 1, elen, ef) == (size_t)elen) {
+                unsigned char *nb = (unsigned char *)realloc(A.mcx, A.mcx_len + elen);
+                if (nb) {
+                    long base = A.mcx_len, j = 0; int e0 = A.ntrack;
+                    A.mcx = nb; memcpy(A.mcx + base, ebuf, elen); A.mcx_len += elen;
+                    while (j + 4 <= elen && A.ntrack < MAX_TRACK) {   /* 解 EBG 偏移表(同 MBG 格式) */
+                        unsigned long v = (unsigned long)ebuf[j] | ((unsigned long)ebuf[j+1] << 8)
+                                        | ((unsigned long)ebuf[j+2] << 16) | ((unsigned long)ebuf[j+3] << 24);
+                        if (A.ntrack > e0 && (long)v <= A.off[A.ntrack-1] - base) break;
+                        if ((long)v >= elen || (long)v < (long)((A.ntrack - e0 + 1) * 4)) break;
+                        A.off[A.ntrack++] = base + (long)v; j += 4;
+                    }
+                    for (j = e0; j < A.ntrack; j++)
+                        A.tlen[j] = (j + 1 < A.ntrack ? A.off[j+1] : A.mcx_len) - A.off[j];
+                }
+            }
+            free(ebuf); fclose(ef);
+        }
     }
 
     A.opl = dq3_opl2_new(AUD_SR);

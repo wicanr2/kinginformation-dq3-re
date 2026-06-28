@@ -270,7 +270,8 @@ C 風格同專案慣例:求結構正確、可審閱,非位元精準;逐函式對
 - **回合行動 / 傷害計算**:`sub_c08b` 二級指令派發的各動作子函式(攻擊傷害公式、
   呪文、道具效果)尚未逐一反編譯;目前到「指令選單 + 勝 / 逃 / 全滅結算」層。
 - **連戰 / 多輪回合**:sub_bddf 後段重複回合段的迴圈條件(何時換下一回合)語意待補。
-- 戰鬥背景音樂 mbg.mcx / ebg.mcx 的播放觸發點(Sound Blaster 段 0x129c)未在本任務範圍。
+- 戰鬥背景音樂(Sound Blaster 段 0x129c)**已落地**:**戰鬥曲在 `EBG.MCX`**(6 軌,獨立於主音樂 `MBG.MCX`),
+  remake 進戰鬥 `id≥106 ? BOSS : BATTLE` → EBG 軌(`dq3_battlescene.c` + `dq3_audio`,SB + MT-32);配樂全表見 [docs/61](61-music-scene-mapping.md)。
 
 ## 物理傷害公式(反組譯 file 0xc03e,真公式)
 

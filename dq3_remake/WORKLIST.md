@@ -45,7 +45,11 @@
   ① CASTLE:城堡清單 {0,2,6,37,73,76}(阿里阿罕/羅馬利亞/阿莎拉慕/波魯多加/依席斯/貝亞城)→ 城堡曲;
   ② ENDING:`end_seq>=0` → 結局曲(軌16);③ DUNGEON:BLK 2/4/5(洞窟/塔/金字塔/索瑪城)+ 覆蓋清單{33 沙漠之洞}→ 迷宮曲。
   分類表 89 CTY 核實(6 城堡/31 迷宮/63 城鎮);93/93 無回歸。**城堡清單為名含「城」+ 有國王 best-effort,聽感可增刪**。
-- [ ] **track→曲目對應 RE**:`g_scene_track[]` 18 軌指派(TITLE=17/FIELD=0/TOWN=2/…)是初步猜測,未對原版驗證。
+- [x] **戰鬥音樂在獨立檔 EBG.MCX ✅**(2026-06-28 發現+修正,docs/61):原版戰鬥曲在 `EBG.MCX`(6 軌,非 MBG)——
+  先前 RE 漏看、整條 pipeline 只處理 MBG。已補:① 抽 EBG 6 軌 + munt MT-32 render → `work/mt32/track_18..23.ogg`
+  (`export_music_mt32.sh` 已含 EBG);② `dq3_audio` init 串接 EBG 進 buffer(軌 18-23);③ `g_scene_track` BATTLE→18/BOSS→19。
+  軌數 18→24,93/93 無回歸。**EBG 內 battle/boss 確切軌 18/19 為推測,聽感可調(併入下方 #2)**。
+- [ ] **track→曲目對應 RE**(MBG 0-17 + EBG 18-23 的確切場景指派):`g_scene_track[]` 多數是初步猜測,未對原版逐曲驗證。
   - **RE 進度(2026-06-28)**:`_sbfm_play_music`(file 0x140ee)2 個呼叫端(file 0x11aaf/0x11d2f)是**集中式播放包裝**,
     播全域結構 `[ds:0x08]` 的 track 資料指標(tempo 在 `[ds:0x0c]`)。真正「場景→軌」選擇在**更上層設 `[0x08]`**
     (從 MBG.MCX 前導 dword 偏移表 `base+table[idx]` 取),需再往上追 1-2 跳定位各場景的 idx。

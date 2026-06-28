@@ -14,15 +14,24 @@ if ! docker image inspect munt-smf2wav >/dev/null 2>&1; then
   echo "缺 image munt-smf2wav,請先:docker build -f tools/Dockerfile.munt -t munt-smf2wav tools/"; exit 1
 fi
 
-echo "[1/2] MT-32 ROM render(munt)18 軌 → wav…"
-for i in $(seq -w 0 17); do
+# EBG.MCX = 戰鬥音樂獨立檔(6 軌),接成 18-23(docs/61)。EBG midi 缺則自動抽取+轉。
+if [ ! -f "$M/export/midi/18.mid" ] && [ -f "$PWD/assets_raw/EBG.MCX" ]; then
+  echo "[0/3] 抽 EBG.MCX 6 軌 + 轉 MIDI(18-23)…"
+  docker run --rm -v "$PWD":/w -w /w ghcr.io/astral-sh/uv:python3.12-bookworm-slim bash -c '
+    mkdir -p work/music/_ebg
+    python tools/extract_cmf.py assets_raw/EBG.MCX work/music/_ebg >/dev/null 2>&1
+    for i in 0 1 2 3 4 5; do python tools/cmf_to_midi.py work/music/_ebg/track_0$i.bin work/music/export/midi/$((18+i)).mid >/dev/null 2>&1; done' >/dev/null 2>&1
+fi
+
+echo "[1/2] MT-32 ROM render(munt)MBG 18 + EBG 6 = 24 軌 → wav…"
+for i in $(seq -w 0 23); do
   mid="$M/export/midi/$i.mid"
   [ -f "$mid" ] || continue
   docker run --rm -v "$M":/m munt-smf2wav -m /m/mt32rom -i mt32 -f -o "/m/_tmp/mt32_$i.wav" "/m/export/midi/$i.mid" >/dev/null 2>&1 || echo "  軌 $i render 失敗"
 done
 
 echo "[2/2] 轉 OGG(q5 VBR)…"
-for i in $(seq -w 0 17); do
+for i in $(seq -w 0 23); do
   w="$M/_tmp/mt32_$i.wav"
   [ -f "$w" ] && ffmpeg -y -loglevel error -i "$w" -c:a libvorbis -q:a 5 "$OUT/track_$i.ogg"
 done

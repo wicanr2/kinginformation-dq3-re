@@ -129,7 +129,8 @@
 **核心 / 進度 / 方法論**
 - [`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md) — remake 現況 + 真正剩餘工作（唯一真相）
 - 🔊 **音訊還原** — [計畫 `docs/56`](docs/56-audio-fm-plan.md) · [CMF/SB FM 反組譯經驗 `docs/57`](docs/57-cmf-audio-re.md) · [WORKLIST 音訊段](dq3_remake/WORKLIST.md)：精訊 SB FM(OPL2 CMF)音樂從 `MBG.MCX` RE 抽出（18 軌）+ 重建 OPL2 合成器在遊戲內播放 + VOC 音效（46 個）+ MT-32 真音源 OGG
-- 🎼 **音樂保存 / MT-32** — [台灣電玩史保存紀錄 `docs/58`](docs/58-taiwan-jingxun-music-preservation.md) · [munt MT-32 build 經驗 `docs/59`](docs/59-munt-mt32-build.md)：18 軌離線匯出兩版本（SB OPL2 FM + 真 MT-32 ROM 經 munt render），供個人保存
+- 🎼 **音樂保存 / MT-32** — [台灣電玩史保存紀錄 `docs/58`](docs/58-taiwan-jingxun-music-preservation.md) · [munt MT-32 build 經驗 `docs/59`](docs/59-munt-mt32-build.md)：24 軌離線匯出兩版本（SB OPL2 FM + 真 MT-32 ROM 經 munt render），供個人保存
+- 🎵 **配樂對應 + 靜態 RE** — [`docs/61`](docs/61-music-scene-mapping.md)：哪個場景/地圖播哪首曲(含逐 CTY 城堡/迷宮/城鎮分類)；**戰鬥音樂在獨立檔 `EBG.MCX`**(非 MBG);track→曲目的靜態 RE 過程
 - 📦 **打包 / 發行** — 已併入 [`dq3_remake/WORKLIST.md`](dq3_remake/WORKLIST.md) 的「發行打包」段：Linux/Windows/AppImage 基礎包已交付,完整 MT-32 包 / macOS / Android / dev-setup 為剩餘 delta(移植分析見 [`docs/55`](docs/55-android-macos-port-plan.md))
 - ⭐ [**經驗教訓 Lessons Learned**](docs/lessons-learned.md) — 多輪協作踩雷 → 根因 → 紀律（別鬼打牆 / 靜態 RE 優先 / 斷言前驗證 / 零回歸改法…）
 - [`docs/00`](docs/00-re-methodology.md) 逆向方法論（可重用 RE 技術）· [`docs/47`](docs/47-remaining-work.md) 剩餘工作盤點 · [`docs/46`](docs/46-debug-hook.md) DEBUG 口
