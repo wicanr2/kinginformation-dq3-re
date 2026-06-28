@@ -35,6 +35,17 @@ typedef struct {
 
 static int sky_idx, ground_idx, white_idx, red_idx, green_idx, black_idx;
 static dq3_text g_txt; static int g_txt_ok;
+
+/* ★ remake 增強(原版無):戰鬥顯示敵人 HP + 下一輪預計動作(可開關)。
+ * 預測:回合開始為每隻敵人「預先決定」下回合動作存進 g_eplan_*,敵方回合執行存好的決定 → 預測 100% 準。 */
+static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled, g_ehpmax;
+static int g_show_enemy_info = 1;             /* 開關(主程式依設定設)*/
+enum { EPLAN_ATTACK = 0, EPLAN_FLEE, EPLAN_SPELL };
+static int      g_eplan_act[8];               /* 動作類型(MAXE=8)*/
+static int      g_eplan_bit[8];               /* EPLAN_SPELL:咒文 bit */
+static uint16_t g_eplan_lbl[8][6];            /* 顯示用 glyph(攻擊/逃走/咒文)*/
+static int      g_eplan_len[8], g_eplan_w[8];
+static int      g_eplan_ok = 0;               /* plan 是否已算出 */
 static dq3_items g_items; static int g_items_ok;   /* ITEM.DAT 旗標(#7a/#7b)*/
 static dq3_stats g_stats; static int g_stats_ok;   /* 成長/門檻表(#4/#5/#6 升級系統)*/
 static uint8_t g_sky[DQ3_PACKBG_H][DQ3_PACKBG_W]; static int g_sky_ok;  /* packbg 天空 */
@@ -109,6 +120,17 @@ static void render(uint8_t*fb, const dq3_monster_sprite*spr, const int*ehp,int e
             if(spr->opaque[r][c]&&yy>=0&&yy<DQ3_SCREEN_H&&xx>=0&&xx<DQ3_SCREEN_W)
                 fb[yy*DQ3_SCREEN_W+xx]=spr->px[r][c];
         }
+        /* ★ remake 增強(原版無):敵人 HP + 下一輪預計動作(g_show_enemy_info 開關)。 */
+        if(g_show_enemy_info && g_txt_ok){
+            int cx=gx+spr->w/2, hy=gy-32;
+            if(hy<FIELD_Y0) hy=FIELD_Y0;
+            /* HP:H 字 + 數字(置中於怪上方)*/
+            dq3_text_draw_glyph(&g_txt,fb,DQ3_SCREEN_W,DQ3_SCREEN_H,cx-26,hy,22,(uint8_t)white_idx);  /* H */
+            draw_number(fb,cx-8,hy, ehp[i], (uint8_t)(ehp[i]*4<g_ehpmax?red_idx:white_idx));
+            /* 下一輪預計動作(g_eplan[i] 的動作標籤)*/
+            if(g_eplan_ok && i<MAXE)
+                draw_glyphs(fb,cx-g_eplan_w[i]/2,hy+16, g_eplan_lbl[i], g_eplan_len[i], (uint8_t)13);  /* 青色 */
+        }
     }
     /* ── 上方隊伍狀態列(RE 座標系,docs/13):文字原點 X=0x13 byte=152px、Y=8px;
      *    4 欄,欄距 0xa byte=80px;字/行 16px。每欄:名 / H+HP / M+MP / 職業+等級。 */
@@ -166,7 +188,7 @@ static int pick_alive_party(const member*p){ int i,t=alive_party(p),k; if(!t)ret
 static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 
 /* 敵方 AI(docs/37):本場怪的 D3MNS AI 欄位 + 我方平均等級 + 本場逃走數。 */
-static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled, g_ehpmax;
+void dq3_battlescene_set_show_info(int on) { g_show_enemy_info = on ? 1 : 0; }
 static int g_last_gold;                         /* 上一場勝利的戰利金錢 */
 
 /* 戰鬥狀態修正(怪施 base==0 輔助/狀態咒效果;每場 reset;倍率用百分比整數)。
@@ -243,6 +265,37 @@ static void cast_spell_effect(member *party, int *ehp, int en, int ci, const dq3
 }
 
 /* 執行一回合;cmd:0戰 1逃 2防 3道具 4咒文。回傳 0續 1勝 2敗 3逃成功。 */
+/* 為每隻活著的敵人預先決定下回合動作(逃跑/施咒/物攻),存進 g_eplan_*(供顯示 + 敵方回合執行)。
+ * 決定邏輯與下方敵方回合一致(flee → cast → attack)。呼叫端負責 g_brng 快照/還原(peek 不污染主 RNG)。 */
+static void decide_enemy_plans(const int *ehp, int en)
+{
+    static const uint16_t L_ATK[2]={623,624}, L_FLEE[2]={629,612}, L_SPELL[2]={429,430};  /* 攻擊/逃走/咒文 */
+    int i;
+    for(i=0;i<en && i<8;i++){
+        const uint16_t *lbl;
+        if(ehp[i]<=0){ g_eplan_act[i]=-1; g_eplan_len[i]=0; continue; }
+        if(g_eai_ok && g_eai.flee_rate>0 && g_party_avglv >= g_eai.flee_thresh && roll255() <= g_eai.flee_rate){
+            g_eplan_act[i]=EPLAN_FLEE; lbl=L_FLEE;
+        } else if(g_eai_ok && g_eai_nspell>0 && roll255() < g_eai.cast_prob){
+            int bits[48], nb=0, b;
+            for(b=0;b<48;b++) if(g_eai.spell_mask[b/8] & (0x80>>(b%8))) bits[nb++]=b;
+            g_eplan_bit[i] = nb>0 ? bits[dq3_rng_next(&g_brng,nb)] : 0;
+            g_eplan_act[i]=EPLAN_SPELL; lbl=L_SPELL;
+        } else { g_eplan_act[i]=EPLAN_ATTACK; lbl=L_ATK; }
+        g_eplan_lbl[i][0]=lbl[0]; g_eplan_lbl[i][1]=lbl[1];
+        g_eplan_len[i]=2; g_eplan_w[i]=2*16;
+    }
+    g_eplan_ok=1;
+}
+
+/* peek:快照 g_brng → 決定下回合 plan → 還原(玩家相位 RNG 不受 peek 影響)。 */
+static void peek_enemy_plans(const int *ehp, int en)
+{
+    dq3_rng saved = g_brng;
+    decide_enemy_plans(ehp, en);
+    g_brng = saved;
+}
+
 static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, int efree, int cmd)
 {
     int i;
@@ -305,19 +358,19 @@ static int do_turn(member*party, int*ehp, int en, int eatk, int edef, int eagi, 
     for(i=0;i<en;i++){
         int t,dmg;
         if(ehp[i]<=0) continue;
-        /* 逃跑判定:我方平均等級 ≥ flee_thresh 且 rng ≤ flee_rate → 怪逃走(不給經驗)*/
-        if(g_eai_ok && g_eai.flee_rate>0 && g_party_avglv >= g_eai.flee_thresh
-           && roll255() <= g_eai.flee_rate){
+        /* 動作 = 回合開始預先決定的 g_eplan(顯示=執行,預測 100% 準);未決定則退回即時擲。 */
+        if(!g_eplan_ok) peek_enemy_plans(ehp, en);       /* 防呆:沒先決定就現決(不還原也無妨)*/
+        /* 逃跑:依 plan(原版機制:平均等級夠 + rng → 逃走,不給經驗)*/
+        if(g_eplan_act[i]==EPLAN_FLEE){
             ehp[i]=0; g_fled++;
             fprintf(stderr,"  敵%d 逃走了!\n", i);
             continue;
         }
         t=pick_alive_party(party); if(t<0) break;
-        /* 施咒 vs 物攻:rng(256) < cast_prob 且 會咒文 → 從 bitmask 隨機挑真實咒文施放 */
-        if(g_eai_ok && g_eai_nspell>0 && roll255() < g_eai.cast_prob){
-            int bits[48], nb=0, b, bit; const dq3_spell_def *d;
-            for(b=0;b<48;b++) if(g_eai.spell_mask[b/8] & (0x80>>(b%8))) bits[nb++]=b;
-            bit = bits[dq3_rng_next(&g_brng,nb)];        /* 均勻隨機(docs/37)*/
+        /* 施咒 vs 物攻:依 plan;施咒用預先挑好的 bit */
+        if(g_eplan_act[i]==EPLAN_SPELL){
+            int bit; const dq3_spell_def *d;
+            bit = g_eplan_bit[i];                         /* 回合開始挑好的咒文 bit */
             { int srec = dq3_monster_spell_rec[bit];      /* bit→真咒名 rec(0x3930 remap)*/
               /* 異常咒(RE docs/re-log:base==0 + 名辨識):144 ラリホー睡 / 152 メダパニ混亂
                * → 玩家不能行動 → 映射麻痺。對活著的目標施加並帶回 pm(docs/47 #5)。 */
@@ -634,6 +687,9 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
         spell_menu_select(party, &spr, ehp, en, monster_id);
         dq3_monsters_free(&mons); if(g_txt_ok)dq3_text_free(&g_txt); return 0;
     }
+    g_eplan_ok = 0;
+    peek_enemy_plans(ehp, en);          /* 第一回合的敵人動作預測 */
+
     /* ---- headless 腳本(script 驅動;dump 選擇性)---- */
     if(script){
         const char *p = script;
@@ -642,6 +698,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             turn++;
             fprintf(stderr,"-- 回合 %d cmd=%c --\n", turn, *p);
             outcome=do_turn(party,ehp,en,eatk,edef,eagi,efree,cmd);
+            peek_enemy_plans(ehp, en);
             p++;
             if(turn>50) break;
         }
@@ -676,6 +733,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             dq3_audio_se(cursor==0 ? DQ3_SE_ATTACK : (cursor==4 ? DQ3_SE_SPELL : DQ3_SE_CONFIRM));
             turn++;
             outcome=do_turn(party,ehp,en,eatk,edef,eagi,efree,cursor);
+            peek_enemy_plans(ehp, en);                 /* 決定下回合敵人動作(供顯示)*/
         }
         dq3_delay_ms(16);
     }

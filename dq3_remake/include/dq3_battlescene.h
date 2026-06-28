@@ -18,6 +18,9 @@ void dq3_battlescene_set_party(dq3_roster *roster, const dq3_party *party);
  * main.c 開索瑪戰前依背包設定。非索瑪戰無作用。用畢自動清 0。 */
 void dq3_battlescene_set_light_orb(int has);
 
+/* ★ remake 增強:戰鬥顯示敵人 HP + 下一輪預計動作(可開關;原版無此資訊)。 */
+void dq3_battlescene_set_show_info(int on);
+
 /* 跑一場戰鬥。
  *   monster_id/count:敵群(count 隻同種)。
  *   bg_page:戰鬥背景索引(隨地形;<0 = 讀 DQ3_BG_PAGE 環境變數,預設 0 草原)。

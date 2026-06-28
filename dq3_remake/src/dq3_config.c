@@ -11,6 +11,7 @@ void dq3_config_default(dq3_config *c)
     c->music_enabled = 1;
     c->music_volume = 70;
     c->audio_backend = 1;   /* 預設 MT-32(無 MT-32 音檔時自動退回 SB FM)*/
+    c->combat_info = 1;     /* 預設開:戰鬥顯示敵人 HP + 預計動作 */
 }
 
 const char *dq3_config_path(void)
@@ -52,6 +53,9 @@ int dq3_config_load(dq3_config *c, const char *path)
         } else if (strcmp(key, "audio") == 0) {
             c->audio_backend = (val[0]=='m' || val[0]=='M') ? 1 : 0;   /* mt32 / sb */
             got++;
+        } else if (strcmp(key, "combat_info") == 0) {
+            c->combat_info = (val[0]=='1' || val[0]=='o' || val[0]=='O' || val[0]=='y') ? 1 : 0;
+            got++;
         }
     }
     fclose(f);
@@ -67,6 +71,7 @@ int dq3_config_save(const dq3_config *c, const char *path)
     fprintf(f, "music=%d\n", c->music_enabled ? 1 : 0);
     fprintf(f, "music_vol=%d\n", c->music_volume);
     fprintf(f, "audio=%s\n", c->audio_backend ? "mt32" : "sb");
+    fprintf(f, "combat_info=%d\n", c->combat_info ? 1 : 0);
     fclose(f);
     return 0;
 }

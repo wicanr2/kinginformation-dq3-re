@@ -15,6 +15,7 @@ typedef struct {
     int music_enabled;   /* 0/1:精訊 SB FM 音樂(MBG.MCX)開關 */
     int music_volume;    /* 0..100 */
     int audio_backend;   /* 0=SB FM 即時合成、1=MT-32 預錄 WAV */
+    int combat_info;     /* 0/1:戰鬥顯示敵人 HP + 下一輪預計動作(remake 增強)*/
 } dq3_config;
 
 /* 預設值(rng=DOS 忠實)。 */
