@@ -138,7 +138,7 @@
 
 **DQ3.EXE 反組譯（RE → C）** — [`05`](docs/05-exe-recon.md) 偵察 · [`06`](docs/06-exe-callmap.md) callmap · [`08`](docs/08-exe-functions.md) 函式圖 · [`09`](docs/09-exe-loaders.md) loaders · [`10`](docs/10-exe-states.md) 狀態機 · [`11`](docs/11-exe-gameplay.md) 場景/移動 · [`12`](docs/12-exe-commands.md) 野外指令/對話 · [`13`](docs/13-exe-battle.md) 戰鬥 · [`15`](docs/15-exe-nameinput.md) 注音輸入 · [`16`](docs/16-monsters-ui.md) 怪物/UI
 
-**事件 / 地圖 / 腳本 / 傳送** — [`31`](docs/31-event-system.md) 事件系統 · [`32`](docs/32-world-locations.md) 世界地點 · [`34`](docs/34-cty-load-format.md) CTY 載入 · [`35`](docs/35-script-format.md) 腳本/轉場格式 · [`42`](docs/42-npc-dialogue.md) NPC 對話 · [`43`](docs/43-reachability.md) 可達性/傳送 · [`44`](docs/44-scripted-warp-re.md) scripted warp · [`45`](docs/45-binary-structures.md) 二進位結構 · [地圖連通圖](docs/maps/map_graph.md) · [CTY↔地名](docs/maps/cty-names.md)
+**事件 / 地圖 / 腳本 / 傳送** — [`31`](docs/31-event-system.md) 事件系統 · [`32`](docs/32-world-locations.md) 世界地點 · [`34`](docs/34-cty-load-format.md) CTY 載入 · [`35`](docs/35-script-format.md) 腳本/轉場格式 · [`42`](docs/42-npc-dialogue.md) NPC 對話 · [`43`](docs/43-reachability.md) 可達性/傳送 · [`44`](docs/44-scripted-warp-re.md) scripted warp · [`45`](docs/45-binary-structures.md) 二進位結構 · [`60`](docs/60-daynight-npc-mechanism.md) **日夜 NPC 機制**(section 兩份清單,RE + 還原) · [地圖連通圖](docs/maps/map_graph.md) · [CTY↔地名](docs/maps/cty-names.md)
 
 **戰鬥 / 怪物 / 數值 / 咒文** — [`13`](docs/13-exe-battle.md) 戰鬥 · [`37`](docs/37-monster-ai.md) 怪物 AI · [`38`](docs/38-monster-stats.md) 怪物屬性表 · [`39`](docs/39-encounter-zones.md) 遭遇區 · [`23`](docs/23-stat-fixes.md) 數值修正 · [咒文效果研究](docs/data/spell-effects-research.md) · [晝夜系統](docs/data/day-night-system.md)
 
