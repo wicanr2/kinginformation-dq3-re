@@ -11,6 +11,7 @@ import (
 type saveState struct {
 	HeroExp   uint32 `json:"exp"`
 	HeroHP    int    `json:"hp"`
+	HeroMP    int    `json:"mp"`
 	HeroGold  int    `json:"gold"`
 	Inventory []int  `json:"inv"`
 	Equip     [4]int `json:"eq"`
@@ -29,7 +30,7 @@ func decodeSave(b []byte) (saveState, error) {
 
 func (g *Game) snapshot() saveState {
 	return saveState{
-		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroGold: g.heroGold,
+		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroGold: g.heroGold,
 		Inventory: append([]int(nil), g.inventory...),
 		Equip:     g.equip,
 		PX:        g.px, PY: g.py, InTown: g.inTown,
@@ -37,7 +38,7 @@ func (g *Game) snapshot() saveState {
 }
 
 func (g *Game) restore(s saveState) {
-	g.heroExp, g.heroHP, g.heroGold = s.HeroExp, s.HeroHP, s.HeroGold
+	g.heroExp, g.heroHP, g.heroMP, g.heroGold = s.HeroExp, s.HeroHP, s.HeroMP, s.HeroGold
 	g.heroInit = true
 	g.inventory = append([]int(nil), s.Inventory...)
 	g.equip = s.Equip

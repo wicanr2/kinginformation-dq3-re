@@ -14,6 +14,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gaudio"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
@@ -99,6 +100,7 @@ type Game struct {
 	heroExp     uint32
 	heroGold    int
 	heroHP      int
+	heroMP      int
 	heroInit    bool
 	equip       [4]int // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
 	frame       *ebiten.Image
@@ -368,13 +370,21 @@ func (g *Game) heroStats() (level, maxHP, atk, def, agi int) {
 	return
 }
 
+// heroMaxMP / heroSpells:由等級推導最大 MP 與已學可施放咒文(勇者系)。
+func (g *Game) heroMaxMP() int {
+	return int(stats.GrowthTarget(0, stats.MP, stats.LevelForExp(0, g.heroExp)))
+}
+func (g *Game) heroSpells() []int { return spell.HeroKnown(stats.LevelForExp(0, g.heroExp)) }
+
 // startEncounter:從阿里阿罕周邊弱怪池挑一隻有 sprite 的,開戰 + 切戰鬥音樂。
 func (g *Game) startEncounter() {
 	level, maxHP, atk, def, agi := g.heroStats()
+	maxMP := g.heroMaxMP()
 	if !g.heroInit {
-		g.heroHP, g.heroInit = maxHP, true
+		g.heroHP, g.heroMP, g.heroInit = maxHP, maxMP, true
 	}
-	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi, herbs: g.countItem(herbCode)}
+	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
+		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
 	pool := []int{5, 0, 1, 3, 4, 6, 7, 8} // 低階怪(id5=史萊姆…);start 會跳過空 sprite
 	for _, i := range rand.Perm(len(pool)) {
 		if g.battle.start(pool[i], int64(g.anim)*2654+1, hp) {
@@ -410,7 +420,7 @@ func (g *Game) removeItems(code, n int) {
 
 // onBattleEnd:戰鬥結束後把結果寫回主角(HP 持久、藥草扣除、勝利加 exp/gold、升級全補、敗北回城復活)。
 func (g *Game) onBattleEnd() {
-	g.heroHP = g.battle.heroHP
+	g.heroHP, g.heroMP = g.battle.heroHP, g.battle.heroMP
 	if g.battle.usedHerbs > 0 { // 扣掉戰鬥中用掉的藥草
 		g.removeItems(herbCode, g.battle.usedHerbs)
 	}
@@ -418,14 +428,14 @@ func (g *Game) onBattleEnd() {
 		oldLv := stats.LevelForExp(0, g.heroExp)
 		g.heroExp += uint32(g.battle.gotExp)
 		g.heroGold += g.battle.gotGold
-		if stats.LevelForExp(0, g.heroExp) > oldLv { // 升級 → 全回復
+		if stats.LevelForExp(0, g.heroExp) > oldLv { // 升級 → 全回復 HP/MP
 			_, maxHP, _, _, _ := g.heroStats()
-			g.heroHP = maxHP
+			g.heroHP, g.heroMP = maxHP, g.heroMaxMP()
 		}
 	}
 	if g.heroHP <= 0 { // 敗:回阿里阿罕、滿血復活(教會復活之簡化)
 		_, maxHP, _, _, _ := g.heroStats()
-		g.heroHP = maxHP
+		g.heroHP, g.heroMP = maxHP, g.heroMaxMP()
 		g.cur, g.inTown = g.town, true
 		g.px, g.py = g.town.spawnX, g.town.spawnY
 	}
@@ -608,6 +618,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
 	g.cmd.tx = g.dlg.tx                                       // 命令窗標籤 glyph 也走同一字型
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
+	g.battle.nameText = g.shop.nameText                             // 咒文名同名表
 	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)
 
 	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)
@@ -667,6 +678,12 @@ func applyDebugEnv(g *Game) {
 	if os.Getenv("DQ3_TOUCH") != "" {
 		g.input.touch.everTouched = true
 	}
+	if r := os.Getenv("DQ3_EXP"); r != "" { // debug:設起始經驗(截圖驗證等級/咒文)
+		var e int
+		if _, err := fmt.Sscanf(r, "%d", &e); err == nil {
+			g.heroExp = uint32(e)
+		}
+	}
 	if r := os.Getenv("DQ3_ENTER"); r != "" { // debug:起手進指定 CTY 城(截圖驗證通用載入)
 		var cty int
 		if _, e := fmt.Sscanf(r, "%d", &cty); e == nil {
@@ -680,8 +697,13 @@ func applyDebugEnv(g *Game) {
 		var id int
 		if _, e := fmt.Sscanf(r, "%d", &id); e == nil {
 			level, maxHP, atk, def, agi := g.heroStats()
-			g.heroHP = maxHP
-			g.battle.start(id, 1, heroParams{level: level, curHP: maxHP, maxHP: maxHP, atk: atk, def: def, agi: agi})
+			mp := g.heroMaxMP()
+			g.heroHP, g.heroMP = maxHP, mp
+			g.battle.start(id, 1, heroParams{level: level, curHP: maxHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
+				mp: mp, maxMP: mp, spells: g.heroSpells()})
+			if os.Getenv("DQ3_SPELLMENU") != "" && len(g.battle.spells) > 0 {
+				g.battle.cursor, g.battle.phase = bcSpell, phSpell // 開咒文子選單
+			}
 		}
 	}
 }

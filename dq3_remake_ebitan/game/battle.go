@@ -6,20 +6,22 @@ import (
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/battle"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 )
 
 // 戰鬥場景(功能核心版):怪物 sprite + 敵/我 HP + 戰う/逃げる 指令 + 回合結算(用 internal/battle 公式)。
 // 移植 dq3_battlescene 的核心迴圈;咒文/道具/防禦/AI 預測/升級為後續增量。
 const (
-	bcWar  = 0 // 戰う
-	bcDef  = 1 // 防御
-	bcItem = 2 // 道具(藥草)
-	bcFlee = 3 // 逃げる
-	bcN    = 4
+	bcWar   = 0 // 戰う
+	bcSpell = 1 // 咒文
+	bcDef   = 2 // 防御
+	bcItem  = 3 // 道具(藥草)
+	bcFlee  = 4 // 逃げる
+	bcN     = 5
 )
 
 // 戰鬥指令 glyph 標籤(對齊 C dq3_battlescene CMD_*)。
-var battleCmdLabels = [bcN][2]int{{107, 207}, {203, 204}, {402, 1354}, {629, 630}} // 戰/防/道具/逃
+var battleCmdLabels = [bcN][2]int{{107, 207}, {429, 430}, {203, 204}, {402, 1354}, {629, 630}} // 戰/咒/防/道具/逃
 
 const herbCode = 0x41   // 藥草 item id
 const herbHeal = 30     // DQ3_HERB_HEAL
@@ -28,6 +30,7 @@ type battlePhase int
 
 const (
 	phCommand battlePhase = iota // 等玩家下指令
+	phSpell                      // 選咒文
 	phMessage                    // 顯示訊息(A 推進)
 	phEnd                        // 勝/敗/逃(A 關閉戰鬥)
 )
@@ -36,8 +39,9 @@ const (
 type Battle struct {
 	mons *dq3data.Monsters
 	shp  []byte
-	mpal []dq3data.Color // MNSBK.PAL(怪物色盤)
-	tx   *dq3data.Text
+	mpal     []dq3data.Color // MNSBK.PAL(怪物色盤)
+	tx       *dq3data.Text
+	nameText *dq3data.Text // D3TXT00 名表(咒文名 rec)
 
 	active   bool
 	monID    int
@@ -57,9 +61,13 @@ type Battle struct {
 	rng       *rand.Rand
 	flashCol  int // >0:受擊閃光殘餘幀
 	defending bool
-	heroHerbs int // 開戰時持有藥草數
-	usedHerbs int // 本戰用掉藥草數(戰後從背包扣)
-	heroLevel int // 我方等級(敵 AI 逃跑門檻用)
+	heroHerbs   int   // 開戰時持有藥草數
+	usedHerbs   int   // 本戰用掉藥草數(戰後從背包扣)
+	heroLevel   int   // 我方等級(敵 AI 逃跑門檻用)
+	heroMP      int   // 目前 MP(施咒消耗)
+	heroMaxMP   int   //
+	spells      []int // 已學可施放咒文 rec
+	spellCursor int
 }
 
 func (b *Battle) roll() int { return b.rng.Intn(256) }
@@ -67,7 +75,9 @@ func (b *Battle) roll() int { return b.rng.Intn(256) }
 // heroParams 是開戰時由 Game 傳入的主角當前數值(等級推導,見 game.heroStats)。
 type heroParams struct {
 	level, curHP, maxHP, atk, def, agi int
-	herbs                              int // 持有藥草數(戰鬥中可用)
+	herbs                              int   // 持有藥草數(戰鬥中可用)
+	mp, maxMP                          int   // 目前/最大 MP
+	spells                             []int // 已學可施放咒文 rec
 }
 
 // start 開一場戰鬥(monID + 主角數值)。跳過空 sprite 的怪。
@@ -86,6 +96,8 @@ func (b *Battle) start(monID int, seed int64, hp heroParams) bool {
 	b.heroMax, b.heroHP = hp.maxHP, hp.curHP
 	b.heroAtk, b.heroDef, b.heroAgi, b.heroLevel = hp.atk, hp.def, hp.agi, hp.level
 	b.heroHerbs, b.usedHerbs, b.defending = hp.herbs, 0, false
+	b.heroMP, b.heroMaxMP, b.spells = hp.mp, hp.maxMP, hp.spells
+	b.spellCursor = 0
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.gotExp, b.gotGold = "", 0, 0
 	b.active = true
@@ -98,11 +110,30 @@ func (b *Battle) input(in InputState) (closed bool) {
 	case phCommand:
 		switch {
 		case in.Confirm:
-			b.execTurn()
+			if b.cursor == bcSpell { // 咒文 → 選咒子選單
+				if len(b.spells) > 0 {
+					b.spellCursor, b.phase = 0, phSpell
+				} else {
+					b.msg, b.phase = "還沒學會咒文", phMessage
+				}
+			} else {
+				b.execTurn()
+			}
 		case in.DirEdge == 0: // 下
 			b.cursor = (b.cursor + 1) % bcN
 		case in.DirEdge == 1: // 上
 			b.cursor = (b.cursor + bcN - 1) % bcN
+		}
+	case phSpell:
+		switch {
+		case in.Cancel:
+			b.phase = phCommand
+		case in.Confirm:
+			b.execSpell(b.spells[b.spellCursor])
+		case in.DirEdge == 0:
+			b.spellCursor = (b.spellCursor + 1) % len(b.spells)
+		case in.DirEdge == 1:
+			b.spellCursor = (b.spellCursor + len(b.spells) - 1) % len(b.spells)
 		}
 	case phMessage:
 		if in.Confirm {
@@ -165,13 +196,54 @@ func (b *Battle) execTurn() {
 			return
 		}
 	}
-	// 敵方 AI:逃跑判定(我方等級 ≥ 門檻 且 roll ≤ flee_rate → 逃走,金屬史萊姆經典)。移植 dq3_monster AI。
+	b.enemyTurn()
+}
+
+// execSpell 施放咒文 rec(DMG 傷敵 / HEAL 補己),消耗 MP,再敵方回合。
+func (b *Battle) execSpell(rec int) {
+	def, ok := spell.GetDef(rec)
+	if !ok {
+		b.phase = phCommand
+		return
+	}
+	if b.heroMP < def.MP {
+		b.msg, b.phase = "MP 不足", phMessage
+		return
+	}
+	b.heroMP -= def.MP
+	b.defending = false
+	val := spell.CastValue(def.Base, b.roll())
+	if def.Kind == spell.Heal {
+		if b.heroHP+val > b.heroMax {
+			val = b.heroMax - b.heroHP
+		}
+		b.heroHP += val
+		b.msg = fmt.Sprintf("回復 %d", val)
+	} else { // Dmg
+		b.enemyHP -= val
+		if b.enemyHP < 0 {
+			b.enemyHP = 0
+		}
+		b.flashCol = 4
+		b.msg = fmt.Sprintf("咒文 %d 傷害", val)
+		if b.enemyHP == 0 {
+			st, _ := b.mons.Stat(b.monID)
+			b.gotExp, b.gotGold = int(st.Exp), int(st.Gold)
+			b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
+			return
+		}
+	}
+	b.enemyTurn()
+}
+
+// enemyTurn:敵方回合(AI 逃跑判定 → 否則物理反擊,防御減半)。玩家行動後呼叫。
+func (b *Battle) enemyTurn() {
+	st, _ := b.mons.Stat(b.monID)
 	if ai, ok := b.mons.AI(b.monID); ok && ai.FleeRate > 0 &&
 		b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
 		b.msg, b.result, b.phase = "敵人逃走了", 3, phMessage
 		return
 	}
-	// 敵方反擊(防御則減半)
 	edmg := battle.PhysDamage(int(st.Atk), b.heroDef, b.roll(), 0)
 	if b.defending {
 		edmg /= 2
@@ -235,16 +307,42 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	}
 	// 下方框:左指令(戰う/逃げる)、右我方 HP
 	fillBox(rgba, 16, 244, ScreenW-32, 96, white)
-	if b.phase == phCommand {
+	yellow := dq3data.Color{R: 255, G: 224, B: 32}
+	switch b.phase {
+	case phCommand:
 		for i := 0; i < bcN; i++ {
-			y := 258 + i*22
+			y := 252 + i*17
 			if i == b.cursor {
-				drawGlyph(rgba, b.tx, 32, y, 11, dq3data.Color{R: 255, G: 224, B: 32}) // ► 游標
+				drawGlyph(rgba, b.tx, 32, y, 11, yellow) // ► 游標
 			}
 			drawGlyph(rgba, b.tx, 52, y, battleCmdLabels[i][0], white)
 			drawGlyph(rgba, b.tx, 68, y, battleCmdLabels[i][1], white)
 		}
+	case phSpell: // 咒文子選單:咒名(D3TXT00 rec)+ MP
+		for i, rec := range b.spells {
+			if i >= 4 {
+				break
+			}
+			y := 252 + i*17
+			if i == b.spellCursor {
+				drawGlyph(rgba, b.tx, 32, y, 11, yellow)
+			}
+			if b.nameText != nil {
+				col := 0
+				for _, v := range b.nameText.Record(rec) {
+					if v < dq3data.GlyphMax {
+						drawGlyph(rgba, b.nameText, 52+col*dq3data.GlyphPx, y, int(v), white)
+						col++
+					}
+				}
+			}
+			if def, ok := spell.GetDef(rec); ok {
+				drawNumber(rgba, b.tx, 200, y, def.MP, white)
+			}
+		}
 	}
+	// MP(我方 HP 下方)
+	drawNumber(rgba, b.tx, ScreenW-140, 280, b.heroMP, dq3data.Color{R: 120, G: 180, B: 255})
 	// 我方 HP(右下):H<現>（滿血白、瀕死紅）
 	hpCol := white
 	if b.heroHP*4 < b.heroMax {
