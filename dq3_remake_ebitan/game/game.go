@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"math/rand"
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -80,11 +81,15 @@ type Game struct {
 	cd, anim       int
 	dlg            Dialogue // 對話視窗
 	cmd            CmdMenu  // 野外命令窗
+	battle         Battle   // 戰鬥場景
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
 	frame          *ebiten.Image
 	rgba           []byte
 }
+
+// 場景配樂軌:BATTLE=14(地圖遇敵,對齊 C g_scene_track)。
+const trackBattle = 14
 
 // dpadEdge:方向鍵「剛按下」→ facing 碼(0下 1上 2左 3右);無則 -1。選單導覽用。
 func dpadEdge() int {
@@ -119,6 +124,14 @@ func (g *Game) Update() error {
 	in := g.input.Poll() // 抽象輸入(鍵盤 + 觸控合流)
 	moved := false
 
+	// 戰鬥 modal:結束時回地表音樂
+	if g.battle.active {
+		if g.battle.input(in) {
+			g.music.Play(trackField)
+		}
+		g.renderFrame()
+		return nil
+	}
 	// 對話 modal:只吃 A(推進/關閉),不移動
 	if g.dlg.open {
 		if in.Confirm {
@@ -173,6 +186,9 @@ func (g *Game) Update() error {
 		}
 		g.cd = moveCooldown
 	}
+	if moved && !g.inTown && rand.Intn(16) == 0 { // 地表隨機遇敵(~1/16 步)
+		g.startEncounter()
+	}
 	g.anim++
 	if moved || g.anim%18 == 0 { // 走動 / 待機都擺手腳
 		if g.anim%9 == 0 {
@@ -210,8 +226,24 @@ func clampi(v, lo, hi int) int {
 	return v
 }
 
-// renderFrame:把 cur 的 viewport(攝影機 clamp 在地圖內,對齊 C)+ NPC + 主角渲成 640×350 → g.frame。
+// startEncounter:從阿里阿罕周邊弱怪池挑一隻有 sprite 的,開戰 + 切戰鬥音樂。
+func (g *Game) startEncounter() {
+	pool := []int{5, 0, 1, 3, 4, 6, 7, 8} // 低階怪(id5=史萊姆…);start 會跳過空 sprite
+	for _, i := range rand.Perm(len(pool)) {
+		if g.battle.start(pool[i], int64(g.anim)*2654+1) {
+			g.music.Play(trackBattle)
+			return
+		}
+	}
+}
+
+// renderFrame:戰鬥時畫戰鬥場景;否則畫地圖 viewport(攝影機 clamp)+ NPC + 主角 → g.frame。
 func (g *Game) renderFrame() {
+	if g.battle.active {
+		g.battle.draw(g.rgba, g.cur.pal)
+		g.frame.WritePixels(g.rgba)
+		return
+	}
 	sc := g.cur
 	// 攝影機:主角置中,但夾在地圖邊界內(移植 dq3_scene 的 cam clamp)→ 邊緣不露黑
 	camX := clampi(g.px-ViewCols/2, 0, max0(sc.w-ViewCols))
@@ -385,6 +417,16 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.dlg.tx = dq3data.LoadText(ld.read("D3TXT00.FON"), ld.read("D3TXT01.TXT"))
 	g.cmd.tx = g.dlg.tx // 命令窗標籤 glyph 也走同一字型
 	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)
+
+	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)
+	mons, merr := dq3data.OpenMonsters(ld.read("D3MNS.DAT"))
+	if merr != nil && ld.err == nil {
+		return nil, fmt.Errorf("OpenMonsters: %w", merr)
+	}
+	g.battle.mons = mons
+	g.battle.shp = ld.read("DQ3MNS.SHP")
+	g.battle.mpal = dq3data.DecodePalette(ld.read("MNSBK.PAL"), 256)
+	g.battle.tx = g.dlg.tx
 	if ld.err != nil {
 		return nil, ld.err
 	}
@@ -424,5 +466,11 @@ func applyDebugEnv(g *Game) {
 	}
 	if os.Getenv("DQ3_TOUCH") != "" {
 		g.input.touch.everTouched = true
+	}
+	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證)
+		var id int
+		if _, e := fmt.Sscanf(r, "%d", &id); e == nil {
+			g.battle.start(id, 1)
+		}
 	}
 }
