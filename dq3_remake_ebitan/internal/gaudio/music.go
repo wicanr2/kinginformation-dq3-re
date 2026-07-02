@@ -22,6 +22,7 @@ type Music struct {
 	fsys    fs.FS // 放 track_NN.ogg 的檔案系統(桌面=os.DirFS、行動=embed.FS)
 	enabled bool
 	vol     float64
+	sfx     [][]byte // 預轉的音效(16-bit LE stereo)
 }
 
 // NewMusic:fsys = 放 track_NN.ogg 的檔案系統(nil → 停用音樂)。桌面傳 os.DirFS(dir),行動傳 embed 子樹。
@@ -82,6 +83,33 @@ func (m *Music) Stop() {
 	if m.player != nil {
 		m.player.Pause()
 	}
+}
+
+// SetSFX 預轉 VOC 音效(mono s16 @ sampleRate)為 Ebiten 位元組(16-bit LE stereo)。
+func (m *Music) SetSFX(banks [][]int16) {
+	if !m.enabled {
+		return
+	}
+	m.sfx = make([][]byte, len(banks))
+	for i, pcm := range banks {
+		b := make([]byte, len(pcm)*4) // mono → stereo,每 sample 4 byte
+		for j, s := range pcm {
+			lo, hi := byte(uint16(s)), byte(uint16(s)>>8)
+			o := j * 4
+			b[o], b[o+1], b[o+2], b[o+3] = lo, hi, lo, hi // L, R
+		}
+		m.sfx[i] = b
+	}
+}
+
+// PlaySFX 一次性播放第 i 個音效(fire-and-forget;非致命)。
+func (m *Music) PlaySFX(i int) {
+	if !m.enabled || i < 0 || i >= len(m.sfx) {
+		return
+	}
+	defer func() { recover() }()
+	p := m.ctx.NewPlayerFromBytes(m.sfx[i])
+	p.Play() // Ebiten 保活至播完
 }
 
 // Enabled 回音樂是否可用(有目錄 + 音訊後端 OK)。

@@ -234,6 +234,7 @@ func (g *Game) Update() error {
 		case in.Cancel:
 			g.cmd.open = false
 		case in.Confirm:
+			g.music.PlaySFX(0) // 選單確定音效(VOC)
 			g.selectCommand(g.cmd.cursor)
 		default:
 			if in.DirEdge >= 0 {
@@ -645,7 +646,15 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.px, g.py = g.over.w/2, g.over.h/2 // 地表起點(暫用中心)
 	g.heroGold = 120                    // 初始金(新遊戲勇者)
 	g.equip = [4]int{3, 0x21}           // 初始裝備:銅劍 + 皮甲冑
-	g.music = gaudio.NewMusic(music)    // MT-32 音樂(music fs 為 nil → 靜音降級)
+	g.music = gaudio.NewMusic(music) // MT-32 音樂(music fs 為 nil → 靜音降級)
+	if sfxRaw := ld.read("FVOC.VCX"); len(sfxRaw) > 0 { // 數位音效(VOC)
+		bank := dq3data.DecodeVOCBank(sfxRaw, 44100)
+		pcm := make([][]int16, len(bank))
+		for i, s := range bank {
+			pcm[i] = s.PCM
+		}
+		g.music.SetSFX(pcm)
+	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	_ = g.Load()     // 有存檔則續玩(冒險之書)
 	applyDebugEnv(g) // debug 環境變數可覆蓋(此時 music/frame 已就緒)

@@ -114,7 +114,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **咒文系統**（`internal/spell`，移植 dq3_spell 學習表+施放 descriptor+公式 base/2+rng）：勇者系按等級習得（美拉lv2/荷依米lv4/吉拉lv10…）、戰鬥 咒文→選咒（真中文名+MP）→施放（傷敵/補己）耗 MP；MP 持久+升級補滿+存檔 + 對拍測試（HeroKnown/CastValue）
   - [x] **敵方施咒**：敵回合 逃跑→施咒（cast_prob + spell_mask → 怪物咒表 → 傷我/補己）→物攻,對齊 C 敵回合;戰鬥背景 packbg 草原 + 版面 1:1 對齊 C
   - [x] **全城設施表**（`game/shopdata.go`，91 設施 + 208 品項池自 dq3_shopdata baked）：facilityForCty(cty,k) → 各城武防/道具店/宿屋/教會皆正確
-  - [ ] 事件劇本、VOC 音效、SB-FM OPL2 合成（最硬）
+  - [x] **VOC 音效**（`voc.go` 解碼 FVOC.VCX 22 音效 + `gaudio` 播放）：VCX bank→type-1 8-bit PCM 重取樣 s16、選單確定觸發（device-gated，同音樂）+ 對拍測試
+  - [ ] 事件劇本、SB-FM OPL2 即時合成（最硬,MT-32 OGG 已覆蓋音樂）
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;
