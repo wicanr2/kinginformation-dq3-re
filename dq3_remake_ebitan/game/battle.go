@@ -11,17 +11,18 @@ import (
 
 // 戰鬥場景(功能核心版):怪物 sprite + 敵/我 HP + 戰う/逃げる 指令 + 回合結算(用 internal/battle 公式)。
 // 移植 dq3_battlescene 的核心迴圈;咒文/道具/防禦/AI 預測/升級為後續增量。
+// 指令順序對齊 C dq3_battlescene col1[]:戰鬥/逃跑/防禦/道具/咒文。
 const (
 	bcWar   = 0 // 戰う
-	bcSpell = 1 // 咒文
+	bcFlee  = 1 // 逃げる
 	bcDef   = 2 // 防御
 	bcItem  = 3 // 道具(藥草)
-	bcFlee  = 4 // 逃げる
+	bcSpell = 4 // 咒文
 	bcN     = 5
 )
 
-// 戰鬥指令 glyph 標籤(對齊 C dq3_battlescene CMD_*)。
-var battleCmdLabels = [bcN][2]int{{107, 207}, {429, 430}, {203, 204}, {402, 1354}, {629, 630}} // 戰/咒/防/道具/逃
+// 戰鬥指令 glyph 標籤(對齊 C CMD_WAR/FLEE/DEF/ITEM/SPELL)。
+var battleCmdLabels = [bcN][2]int{{107, 207}, {629, 630}, {203, 204}, {402, 1354}, {429, 430}}
 
 const herbCode = 0x41   // 藥草 item id
 const herbHeal = 30     // DQ3_HERB_HEAL
@@ -47,6 +48,7 @@ type Battle struct {
 	monID    int
 	spr      *dq3data.MonsterSprite
 	enemyHP  int
+	enemyMax int
 	heroHP   int
 	heroMax  int
 	heroAtk  int
@@ -93,6 +95,7 @@ func (b *Battle) start(monID int, seed int64, hp heroParams) bool {
 	b.rng = rand.New(rand.NewSource(seed))
 	b.monID, b.spr = monID, spr
 	b.enemyHP = int(st.HPBase) + b.rng.Intn(int(st.HPRand)+1)
+	b.enemyMax = b.enemyHP
 	b.heroMax, b.heroHP = hp.maxHP, hp.curHP
 	b.heroAtk, b.heroDef, b.heroAgi, b.heroLevel = hp.atk, hp.def, hp.agi, hp.level
 	b.heroHerbs, b.usedHerbs, b.defending = hp.herbs, 0, false
@@ -257,102 +260,141 @@ func (b *Battle) enemyTurn() {
 	b.phase = phMessage
 }
 
-// draw 畫整個戰鬥畫面到 rgba。scenePal = 場景色盤(文字/框);怪物用 b.mpal。
+// 版面常數(1:1 對齊 C dq3_battlescene render,references/game3.png)。
+const (
+	fieldY0, fieldY1, groundY = 80, 246, 232 // 場景帶(天空+綠地)/ 綠地平線
+	curGlyph                  = 0x77         // ►/★ 游標 glyph(對齊 C)
+)
+
+// drawName:畫 D3TXT00 記錄 rec 的 glyph 序列(咒名/敵名;非 code+1)。
+func (b *Battle) drawName(rgba []byte, x, y, rec int, fg dq3data.Color) {
+	if b.nameText == nil {
+		return
+	}
+	col := 0
+	for _, v := range b.nameText.Record(rec) {
+		if v < dq3data.GlyphMax {
+			drawGlyph(rgba, b.nameText, x+col*dq3data.GlyphPx, y, int(v), fg)
+			col++
+		}
+	}
+}
+
+// draw 畫整個戰鬥畫面到 rgba,1:1 對齊 C render():上狀態列 / 中怪群站綠地 / 下左指令 + 下右敵名。
 func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	white := dq3data.Color{R: 248, G: 248, B: 248}
 	if len(scenePal) > 15 {
 		white = scenePal[15]
 	}
 	red := dq3data.Color{R: 224, G: 48, B: 48}
-	green := dq3data.Color{R: 40, G: 120, B: 40}
-	sky := dq3data.Color{R: 32, G: 40, B: 96}
+	cyan := dq3data.Color{R: 64, G: 208, B: 208}
+	black := dq3data.Color{}
+	sky := dq3data.Color{R: 56, G: 120, B: 216}
+	ground := dq3data.Color{R: 40, G: 128, B: 40}
 
-	// 背景:上天空、下綠地(地平線 y~200)
+	// 背景:全黑 → 場景帶(天空 y80..232 / 綠地 232..246);其餘黑(對齊 C FIELD_Y0/Y1/GROUND_Y)
 	for y := 0; y < ScreenH; y++ {
-		c := sky
-		if y >= 200 {
-			c = green
+		c := black
+		if y >= fieldY0 && y < fieldY1 {
+			if y < groundY {
+				c = sky
+			} else {
+				c = ground
+			}
 		}
 		for x := 0; x < ScreenW; x++ {
 			putPx(rgba, x, y, c)
 		}
 	}
-	// 怪物 sprite(置中,站綠地上;受擊閃紅)
-	if b.spr != nil && b.result != 1 { // 打倒後不畫
-		ox := (ScreenW - b.spr.W) / 2
-		oy := 200 - b.spr.H
+	// 怪物:站綠地平線(gy=groundY+8-h,置中);受擊閃紅;死不畫
+	if b.spr != nil && b.enemyHP > 0 {
+		gx := ScreenW/2 - b.spr.W/2
+		gy := groundY + 8 - b.spr.H
 		flash := b.flashCol > 0
 		for r := 0; r < b.spr.H; r++ {
 			for x := 0; x < b.spr.W; x++ {
 				if !b.spr.Opaque[r][x] {
 					continue
 				}
-				idx := int(b.spr.Px[r][x])
 				c := dq3data.Color{R: 200, G: 200, B: 200}
-				if idx < len(b.mpal) {
+				if idx := int(b.spr.Px[r][x]); idx < len(b.mpal) {
 					c = b.mpal[idx]
 				}
 				if flash {
 					c = red
 				}
-				putPx(rgba, ox+x, oy+r, c)
+				putPx(rgba, gx+x, gy+r, c)
 			}
 		}
 		if b.flashCol > 0 {
 			b.flashCol--
 		}
-		// 敵 HP:H + 數字(怪上方)
-		drawGlyph(rgba, b.tx, ScreenW/2-24, oy-20, 22, white) // glyph 22 = 'H'
-		drawNumber(rgba, b.tx, ScreenW/2-4, oy-20, b.enemyHP, white)
-	}
-	// 下方框:左指令(戰う/逃げる)、右我方 HP
-	fillBox(rgba, 16, 244, ScreenW-32, 96, white)
-	yellow := dq3data.Color{R: 255, G: 224, B: 32}
-	switch b.phase {
-	case phCommand:
-		for i := 0; i < bcN; i++ {
-			y := 252 + i*17
-			if i == b.cursor {
-				drawGlyph(rgba, b.tx, 32, y, 11, yellow) // ► 游標
-			}
-			drawGlyph(rgba, b.tx, 52, y, battleCmdLabels[i][0], white)
-			drawGlyph(rgba, b.tx, 68, y, battleCmdLabels[i][1], white)
+		// 敵 HP(remake 增強):H + 數字,置中於怪上方
+		cx := gx + b.spr.W/2
+		hy := gy - 32
+		if hy < fieldY0 {
+			hy = fieldY0
 		}
-	case phSpell: // 咒文子選單:咒名(D3TXT00 rec)+ MP
-		for i, rec := range b.spells {
-			if i >= 4 {
-				break
-			}
-			y := 252 + i*17
-			if i == b.spellCursor {
-				drawGlyph(rgba, b.tx, 32, y, 11, yellow)
-			}
-			if b.nameText != nil {
-				col := 0
-				for _, v := range b.nameText.Record(rec) {
-					if v < dq3data.GlyphMax {
-						drawGlyph(rgba, b.nameText, 52+col*dq3data.GlyphPx, y, int(v), white)
-						col++
-					}
+		hc := white
+		if b.enemyMax > 0 && b.enemyHP*4 < b.enemyMax {
+			hc = red
+		}
+		drawGlyph(rgba, b.tx, cx-26, hy, 22, white) // H
+		drawNumber(rgba, b.tx, cx-8, hy, b.enemyHP, hc)
+	}
+	// 上方隊伍狀態列(X=0x13*8=152、Y=8;單勇者一欄:H+HP / M+MP / 等級)
+	{
+		tx0, ty0 := 0x13*8, 8
+		fillBox(rgba, tx0-8, ty0-6, 88, 4*16+12, white)
+		hc := white
+		if b.heroHP <= 0 {
+			hc = red
+		}
+		drawGlyph(rgba, b.tx, tx0, ty0+16, 22, hc) // H
+		drawNumber(rgba, b.tx, tx0+18, ty0+16, b.heroHP, hc)
+		drawGlyph(rgba, b.tx, tx0, ty0+32, 27, white) // M
+		drawNumber(rgba, b.tx, tx0+18, ty0+32, b.heroMP, white)
+		drawNumber(rgba, b.tx, tx0+18, ty0+48, b.heroLevel, white) // 等級
+	}
+	// 下方左:指令窗(120,236,150×108)—— 指令 或 咒文子選單
+	{
+		mx, my, mw, mh := 120, 236, 150, 108
+		fillBox(rgba, mx, my, mw, mh, white)
+		if b.phase == phSpell {
+			for i, rec := range b.spells {
+				if i >= 5 {
+					break
+				}
+				y := my + 24 + i*16
+				if i == b.spellCursor {
+					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+				}
+				b.drawName(rgba, mx+28, y, rec, white)
+				if def, ok := spell.GetDef(rec); ok {
+					drawNumber(rgba, b.tx, mx+110, y, def.MP, cyan)
 				}
 			}
-			if def, ok := spell.GetDef(rec); ok {
-				drawNumber(rgba, b.tx, 200, y, def.MP, white)
+		} else {
+			for i := 0; i < bcN; i++ {
+				y := my + 24 + i*16
+				if i == b.cursor {
+					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+				}
+				drawGlyph(rgba, b.tx, mx+28, y, battleCmdLabels[i][0], white)
+				drawGlyph(rgba, b.tx, mx+72, y, battleCmdLabels[i][1], white)
 			}
 		}
 	}
-	// MP(我方 HP 下方)
-	drawNumber(rgba, b.tx, ScreenW-140, 280, b.heroMP, dq3data.Color{R: 120, G: 180, B: 255})
-	// 我方 HP(右下):H<現>（滿血白、瀕死紅）
-	hpCol := white
-	if b.heroHP*4 < b.heroMax {
-		hpCol = red
-	}
-	drawGlyph(rgba, b.tx, ScreenW-140, 258, 22, white) // H
-	drawNumber(rgba, b.tx, ScreenW-118, 258, b.heroHP, hpCol)
-	// 訊息(ASCII/數字用 drawText;中文訊息用 glyph 需另查,這裡以數字+H 為主,文字訊息暫存 b.msg 供 log)
-	if b.msg != "" {
-		drawASCII(rgba, b.tx, 32, 300, b.msg, white)
+	// 下方右:敵名框(290,262,250×36)—— 敵名 = D3TXT00 record 0x258+monID + 數量
+	{
+		ex, ey, ew, eh := 290, 262, 250, 36
+		fillBox(rgba, ex, ey, ew, eh, white)
+		b.drawName(rgba, ex+12, ey+8, 0x258+b.monID, white)
+		alive := 0
+		if b.enemyHP > 0 {
+			alive = 1
+		}
+		drawNumber(rgba, b.tx, ex+ew-40, ey+8, alive, white)
 	}
 }
 
