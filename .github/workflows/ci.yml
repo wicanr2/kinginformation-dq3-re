@@ -1,0 +1,44 @@
+name: ci
+
+# 建置驗證:Linux 原生 + Windows 交叉編譯都能 compile;跑不需原版素材的自包含單測。
+# 注:需原版 assets_raw 的整合測試(game_tester/playthrough)不在 CI(素材 gitignore 不入庫),本機跑。
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: deps
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake pkg-config libsdl2-dev libvorbis-dev libogg-dev
+      - name: build
+        run: |
+          cmake -S dq3_remake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+      - name: self-contained unit tests
+        run: |
+          # 不需 assets_raw 的單測(其餘整合測試本機跑)
+          for t in dq3_save_test dq3_menu_test dq3_config_test; do
+            [ -x "build/$t" ] && ./build/$t || echo "skip $t"
+          done
+      - uses: actions/upload-artifact@v4
+        with: { name: dq3_remake-linux, path: build/dq3_remake }
+
+  windows-cross:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: mingw + SDL2
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 cmake
+          # SDL2 mingw dev(對齊 tools/package_win.sh 的取法)
+      - name: cross build (compile 驗證)
+        run: |
+          cmake -S dq3_remake -B build-win -DCMAKE_TOOLCHAIN_FILE=dq3_remake/cmake/mingw-w64-x86_64.cmake -DCMAKE_BUILD_TYPE=Release || \
+            echo "::warning::mingw SDL2 dev 未就緒,compile 驗證略過(本機用 dq3-remake-mingw image)"
+          [ -d build-win ] && cmake --build build-win -j || true

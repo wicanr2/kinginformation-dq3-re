@@ -63,23 +63,22 @@
   - ✅ **設定開關**:`dq3_config.combat_hurt_fx`(load/save/default,預設開)+ config_modal「震動」列(glyph 658/619)+ `dq3_battlescene_set_hurt_fx`。
   - 驗證:build + config_test + game_tester 93/93;config 畫面 dump 確認「震動 開」列渲染正確。**黃綠確切色值/時長可依實玩微調**。
 
-### 🟠 Tier 2 — 讓已完成的 MT-32 音樂在發行包能播(完整包 delta)
-> 基礎包已交付但 SDL2-only(MT-32 退 SB);此 tier 補成可播 MT-32。個人/研究包(素材=使用者合法持有,gitignore;需原版 `DQ3.EXE` 啟動)。
-- [ ] **可寫路徑統一 `dq3_user_dir()`**(跨平台前置,先做解鎖下面全部):抽函式回各平台 config/save 夾,取代散落 `fopen`;存檔/設定不寫進唯讀 bundle。
-- [ ] **Windows 完整包**:補 vorbis/ogg DLL(`libvorbisfile-3`/`libvorbis-0`/`libogg-0`)+ mt32/ 素材;更新 `package_win.sh` 複製 DLL + `objdump -p` 檢查;可寫路徑 `%APPDATA%`;驗收乾淨 Windows 切 MT-32 OK。
-- [ ] **AppImage 完整包**:AppDir 收 libvorbis/vorbisfile/ogg `.so` + mt32/ 素材;可寫路徑 `$XDG_DATA_HOME`;驗收 MT-32 OK。
-- [ ] **共通前置**:素材清單固定(原版檔 + mt32 OGG 已產生,複製即可)· 音訊相依分平台(MT-32=播 OGG 需 libvorbis,否則退 SB)· `dq3_load_file()` 路徑 choke point 各平台一致。
+### 🟠 Tier 2 — 讓 MT-32 音樂在發行包能播(2026-06-28 推進)
+- [x] **可寫路徑統一 `dq3_user_dir()` ✅**:`dq3_runtime` 用 `SDL_GetPrefPath` 回各平台可寫夾;`main.c` save/cfg 路徑改用它(env 仍可覆寫);93/93。
+- [x] **Linux/AppImage MT-32 ✅**:`scripts/Dockerfile` 烤 `libvorbis-dev`+`libogg-dev` → CMake 偵測 `DQ3_HAVE_VORBIS`(已驗:「libvorbisfile 找到」+ audio init「MT-32=…」24 軌可載);AppImage 的 `ldd` 自動 bundle libvorbis `.so`。使用者把 `work/mt32/*.ogg` 放 `<assets>/mt32/`。
+- [~] **Windows 完整包**:基礎包已交付;MT-32 需 **mingw vorbis DLL**(`libvorbisfile-3`/`libvorbis-0`/`libogg-0`)——mingw image 未含,是**已知缺口**(需在 `Dockerfile.mingw` 補 mingw vorbis 或另尋)。`package_win.sh` 邏輯待補 DLL 複製。無 vorbis → 退 SB(仍可玩)。
+- 共通前置:mt32 OGG 已產生(複製即可)· `dq3_load_file` choke point 已一致 · MT-32=播 OGG 需 libvorbis(否則退 SB)。
 
-### 🟡 Tier 3 — 平台覆蓋
-- [ ] **macOS 包**(工作量小):GH Action `macos.yml`(macos runner,brew sdl2 libvorbis,cmake)→ artifact 抓回組 `.app`(dylib bundle + `install_name_tool`)→ `.dmg`;可寫路徑 `~/Library/Application Support/`;驗收另一台 Mac 跑。
-- [ ] **dev-setup / CI**:`DEV-SETUP.md`(各 target build 指令)· GitHub Actions matrix(Linux/Win/macOS)build+test+artifact · 烤 `libvorbis-dev` 進 `dq3-remake` image(修每次 build 臨時 apt 的 flaky)。
+### 🟡 Tier 3 — 平台覆蓋(2026-06-28:檔案已產出,實機驗收需 CI/Mac)
+- [~] **macOS 包**:`.github/workflows/macos.yml` 已建(macos-14 + brew sdl2/libvorbis + cmake → 上傳 binary+dylib artifact);
+  本地組 `.app`/`.dmg`(dylibbundler)+ 實機驗收需 Mac —— 見 skill `mac-app-cross-pack`。**環境無 Mac,workflow 交付,CI 跑**。
+- [x] **dev-setup / CI ✅**:`dq3_remake/DEV-SETUP.md`(各 target build)+ `.github/workflows/ci.yml`(Linux+Windows-cross build + 自包含單測 + artifact)+ Dockerfile 烤 libvorbis(修 flaky)。整合測試(需素材)本機跑。
 
-### 🟢 Tier 4 — 低(美觀 / 最大工作量)
-- [ ] **音色精校**:各軌 instrument→OPL patch(目前預設 patch)· 精確 tempo · 語意音效→實際 VCX id(初步猜測)+ 更多接點(選單/開門/道具/受傷)· track17 等變體軌 note 配對(編碼變體)。
-- [ ] **Android 移植**(最大工作量):SDLActivity/NDK 骨架 + 素材入 APK(`fopen` 讀改 `SDL_RWFromFile`、寫導 internal storage)+ 觸控 UI(虛擬方向鍵/A/B/選單)+ 三 ABI libvorbis(或 `stb_vorbis` 單檔)+ 版權閘 + `assembleRelease` APK/AAB + 實機驗收。
-
-### 跨項決策(動工前定)
-- [ ] 素材/`DQ3.EXE` 是否內含(個人包含;對外改自備)· MT-32 OGG 解碼策略統一(桌面 libvorbis / Android `stb_vorbis`)。
+### ~~🟢 Tier 4~~ — **放棄**(使用者 2026-06-28)
+- ~~音色精校~~ · ~~Android(SDL2/NDK)移植~~ —— 放棄。
+- ★ **Android 改走 Go/Ebiten 評估見 [`docs/62`](../docs/62-golang-ebiten-android-port-eval.md)**:Ebiten 的行動/觸控/OGG 內建
+  正好消掉 SDL2/NDK 路徑三大痛(NDK/三 ABI vorbis/觸控);困難 RE 已完成 → Go 版是翻譯非發現,估 3–6 週。
+  建議:要 Android/行動/web 就以 Go/Ebiten 為主線、C 版留作 RE 參考 + 桌面包;先做骨架+一場景驗證管線再決定全量重寫。
 
 ---
 

@@ -1,0 +1,31 @@
+name: macos
+
+# macOS build（無 Mac 開發機 → 在 macOS runner 編，抓 artifact 回本地組 .app/.dmg）。
+# 參考 skill mac-app-cross-pack（universal/dylibbundler/Gatekeeper 雷）。
+on:
+  workflow_dispatch:
+  push:
+    tags: [ 'v*' ]
+
+jobs:
+  macos:
+    runs-on: macos-14   # Apple Silicon
+    steps:
+      - uses: actions/checkout@v4
+      - name: deps
+        run: brew install sdl2 libvorbis cmake
+      - name: build (arm64)
+        run: |
+          cmake -S dq3_remake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+      - name: bundle dylibs
+        run: |
+          # 收 SDL2 + libvorbis dylib（本地再 dylibbundler / install_name_tool 組 .app）
+          mkdir -p out
+          cp build/dq3_remake out/
+          for l in libSDL2 libvorbisfile libvorbis libogg; do
+            f=$(otool -L build/dq3_remake | awk '/'"$l"'/{print $1}' | head -1)
+            [ -n "$f" ] && cp "$f" out/ 2>/dev/null || true
+          done
+      - uses: actions/upload-artifact@v4
+        with: { name: dq3_remake-macos-arm64, path: out/ }
