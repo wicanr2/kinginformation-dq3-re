@@ -124,7 +124,7 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **劇情事件腳本**（`scripted.go`,移植 dq3_scripted）：sub2 NPC→scriptedFor(byte4,cty)→檢查型（持物→give_rec）/給予型（前置道具→給物+里程碑旗標+對白 before/give/after）;給予型表子集（多行註解未全抽）
   - [x] **船系統**（`dq3_ship` 移植）：海格辨識 attr&1&&attr&0x20、走到船格上船、海上航行、上可走陸地下船、船 tile 渲染（DOWN51/LEFT53/UP55/RIGHT57）、存檔。DQ3_SHIP debug 給船
   - [x] **注音命名 IME**（`internal/zhuyin`,移植 dq3_zhuyin + 表）：注音→字模候選表（key二分查,721 bucket/1338 pool）、注音盤 9 欄×5 列（聲母/韻母/介音/聲調,對齊 C DQ3_ZH_COLS=9）、組字列（邊選邊顯聲母/介音/韻母）、一聲橫線、候選窗（上限32）;酒館 Tab 切 英數↔注音 + 對拍測試
-  - [ ] SB-FM OPL2（最硬 DSP,MT-32 OGG 已代替音樂,冗餘;intentionally skipped）
+  - [x] **SB-FM OPL2 合成**（`internal/opl2`,移植 dq3_opl2 + dq3_cmf）：YM3812 FM 核心（9ch 2-op FM/additive、4 波形正弦表、線性 ADSR、相位累積、暫存器→參數）+ CMF/MBG 播放器（MBG.MCX 18 軌 offset 表、MIDI-like 事件、8 FM 音色 patch、note→fnum/block、tempo）;gaudio SB-FM 路徑（DQ3_FM 啟用,OPL2 渲染 MBG 軌→PCM→循環,取代 MT-32 OGG）+ 對拍測試（18 軌、合成非靜音峰值）
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;

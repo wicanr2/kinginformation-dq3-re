@@ -10,6 +10,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/opl2"
 )
 
 const sampleRate = 44100
@@ -22,7 +23,28 @@ type Music struct {
 	fsys    fs.FS // 放 track_NN.ogg 的檔案系統(桌面=os.DirFS、行動=embed.FS)
 	enabled bool
 	vol     float64
-	sfx     [][]byte // 預轉的音效(16-bit LE stereo)
+	sfx     [][]byte       // 預轉的音效(16-bit LE stereo)
+	mbg     []byte         // SB-FM 音樂源(MBG.MCX;非 nil → 用 OPL2 FM 取代 MT-32 OGG)
+	fmCache map[int][]byte // 已渲染的 FM 軌(stereo bytes)
+}
+
+// SetMBG 啟用 SB-FM 音樂(OPL2 合成 MBG.MCX,取代 MT-32 OGG)。
+func (m *Music) SetMBG(mbg []byte) {
+	if !m.enabled || len(mbg) == 0 {
+		return
+	}
+	m.mbg = mbg
+	m.fmCache = map[int][]byte{}
+}
+
+func monoToStereo(pcm []int16) []byte {
+	b := make([]byte, len(pcm)*4)
+	for j, s := range pcm {
+		lo, hi := byte(uint16(s)), byte(uint16(s)>>8)
+		o := j * 4
+		b[o], b[o+1], b[o+2], b[o+3] = lo, hi, lo, hi
+	}
+	return b
 }
 
 // NewMusic:fsys = 放 track_NN.ogg 的檔案系統(nil → 停用音樂)。桌面傳 os.DirFS(dir),行動傳 embed 子樹。
@@ -49,15 +71,28 @@ func (m *Music) Play(track int) {
 	if m.cur == track && m.player != nil && m.player.IsPlaying() {
 		return
 	}
-	data, err := fs.ReadFile(m.fsys, fmt.Sprintf("track_%02d.ogg", track))
-	if err != nil {
-		return
+	var loop *audio.InfiniteLoop
+	if m.mbg != nil { // SB-FM:OPL2 合成 MBG 軌(快取)
+		b, ok := m.fmCache[track]
+		if !ok {
+			b = monoToStereo(opl2.RenderMBGTrack(m.mbg, track, sampleRate, 90))
+			m.fmCache[track] = b
+		}
+		if len(b) == 0 {
+			return
+		}
+		loop = audio.NewInfiniteLoop(bytes.NewReader(b), int64(len(b)))
+	} else { // MT-32 預錄 OGG
+		data, err := fs.ReadFile(m.fsys, fmt.Sprintf("track_%02d.ogg", track))
+		if err != nil {
+			return
+		}
+		s, err := vorbis.DecodeWithSampleRate(sampleRate, bytes.NewReader(data))
+		if err != nil {
+			return
+		}
+		loop = audio.NewInfiniteLoop(s, s.Length())
 	}
-	s, err := vorbis.DecodeWithSampleRate(sampleRate, bytes.NewReader(data))
-	if err != nil {
-		return
-	}
-	loop := audio.NewInfiniteLoop(s, s.Length())
 	p, err := m.ctx.NewPlayer(loop)
 	if err != nil {
 		return

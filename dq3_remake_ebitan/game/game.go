@@ -893,6 +893,11 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 		}
 		g.music.SetSFX(pcm)
 	}
+	if os.Getenv("DQ3_FM") != "" { // SB-FM 音樂(OPL2 合成 MBG.MCX,取代 MT-32 OGG)
+		if mbg := ld.read("MBG.MCX"); len(mbg) > 0 {
+			g.music.SetMBG(mbg)
+		}
+	}
 	if tit := ld.read("TITG.P"); len(tit) > 0 { // 標題畫面(PCX)
 		if pix, pal, w, h, e := dq3data.DecodePCX(tit); e == nil && w == ScreenW && h == ScreenH {
 			g.titlePix, g.titlePal, g.showTitle = pix, pal, true
