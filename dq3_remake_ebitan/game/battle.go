@@ -59,6 +59,7 @@ type Battle struct {
 	defending bool
 	heroHerbs int // 開戰時持有藥草數
 	usedHerbs int // 本戰用掉藥草數(戰後從背包扣)
+	heroLevel int // 我方等級(敵 AI 逃跑門檻用)
 }
 
 func (b *Battle) roll() int { return b.rng.Intn(256) }
@@ -83,7 +84,7 @@ func (b *Battle) start(monID int, seed int64, hp heroParams) bool {
 	b.monID, b.spr = monID, spr
 	b.enemyHP = int(st.HPBase) + b.rng.Intn(int(st.HPRand)+1)
 	b.heroMax, b.heroHP = hp.maxHP, hp.curHP
-	b.heroAtk, b.heroDef, b.heroAgi = hp.atk, hp.def, hp.agi
+	b.heroAtk, b.heroDef, b.heroAgi, b.heroLevel = hp.atk, hp.def, hp.agi, hp.level
 	b.heroHerbs, b.usedHerbs, b.defending = hp.herbs, 0, false
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.gotExp, b.gotGold = "", 0, 0
@@ -163,6 +164,12 @@ func (b *Battle) execTurn() {
 			b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
 			return
 		}
+	}
+	// 敵方 AI:逃跑判定(我方等級 ≥ 門檻 且 roll ≤ flee_rate → 逃走,金屬史萊姆經典)。移植 dq3_monster AI。
+	if ai, ok := b.mons.AI(b.monID); ok && ai.FleeRate > 0 &&
+		b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
+		b.msg, b.result, b.phase = "敵人逃走了", 3, phMessage
+		return
 	}
 	// 敵方反擊(防御則減半)
 	edmg := battle.PhysDamage(int(st.Atk), b.heroDef, b.roll(), 0)
