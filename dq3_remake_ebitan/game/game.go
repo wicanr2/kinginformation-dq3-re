@@ -500,8 +500,10 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	}
 
 	// 對話 + 命令窗:字型 D3TXT00.FON(常駐)+ 阿里阿罕 bank 1(D3TXT01.TXT,section dlg_bank=1)
-	g.dlg.tx = dq3data.LoadText(ld.read("D3TXT00.FON"), ld.read("D3TXT01.TXT"))
-	g.cmd.tx = g.dlg.tx // 命令窗標籤 glyph 也走同一字型
+	fon := ld.read("D3TXT00.FON")
+	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
+	g.cmd.tx = g.dlg.tx                                       // 命令窗標籤 glyph 也走同一字型
+	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
 	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)
 
 	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)

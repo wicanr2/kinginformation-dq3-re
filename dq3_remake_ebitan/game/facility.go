@@ -38,12 +38,28 @@ func facilityFor(k int) *facility {
 
 // Shop 是開啟中的商店狀態(武防/道具店)。
 type Shop struct {
-	items  *dq3data.Items
-	tx     *dq3data.Text
-	active bool
-	codes  []int // 貨架品項 id
-	cursor int
-	msg    string
+	items    *dq3data.Items
+	tx       *dq3data.Text
+	nameText *dq3data.Text // 品名:D3TXT00.TXT record = code+1
+	active   bool
+	codes    []int // 貨架品項 id
+	cursor   int
+	msg      string
+}
+
+// drawItemName 畫道具名(D3TXT00 rec=code+1 的 glyph 序列)到 (x,y)。
+func (s *Shop) drawItemName(rgba []byte, x, y, code int, fg dq3data.Color) {
+	if s.nameText == nil {
+		return
+	}
+	col := 0
+	for _, v := range s.nameText.Record(code + 1) {
+		if v >= dq3data.GlyphMax { // 控制/插值碼跳過
+			continue
+		}
+		drawGlyph(rgba, s.nameText, x+col*dq3data.GlyphPx, y, int(v), fg)
+		col++
+	}
 }
 
 func (s *Shop) open(codes []int) {
@@ -78,10 +94,10 @@ func (s *Shop) draw(rgba []byte, gold int, white dq3data.Color) {
 		if i == s.cursor {
 			drawGlyph(rgba, s.tx, 40, y, 11, yellow) // ► 游標
 		}
-		// 品項 #id
-		drawNumber(rgba, s.tx, 64, y, code, white)
+		// 品名(D3TXT00 rec=code+1)
+		s.drawItemName(rgba, 64, y, code, white)
 		// 價(右欄)
-		drawNumber(rgba, s.tx, 260, y, s.items.Price(code), white)
+		drawNumber(rgba, s.tx, 380, y, s.items.Price(code), white)
 	}
 	// 持有金(底部)
 	drawNumber(rgba, s.tx, 64, ScreenH-84, gold, yellow)

@@ -79,7 +79,7 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **文字 + 字型**(D3TXTnn.TXT + D3TXT00.FON,移植 `dq3_text`/`dq3_font`:指標表記錄、2B glyph 碼串、16×16 字模 2B/列 MSB)+ 對拍測試(D3TXT01=100 記錄、FON 1476 字模、461 相異字有墨)
   - [x] **怪物數值/AI**(D3MNS.DAT,130 隻×41B,移植 `dq3_monster`:HP/atk/def/agi/exp/gold/逃跑抗性 + AI 咒文機率/逃跑/咒文 mask)+ 對拍測試(史萊姆 HP6/exp4/gold2/max9、金屬 HP3/exp4140 對齊 C)
   - [x] **怪物 sprite**（DQ3MNS.SHP，131×u32 offset 表 + 4-plane，移植 dq3_monster_sprite_decode）+ 對拍測試（史萊姆 48×39 有墨、id128 空圖回 error）
-  - [ ] item / save … 逐一移植 + Go 測對拍 C
+  - [x] **道具/裝備 DB**(ITEM.DAT,見階段 4 設施)
 - [x] **階段 3 渲染 + 互動(可走動地表 + 進城)**:`Scene` 抽象統一地表/城鎮的 render + 碰撞;
   fieldmap/town tile → BLK tile(32×24 indexed)→ palette → 640×350 RGBA → `ebiten.Image`;
   **主角 sprite masked blit(透明背景疊地形)**、**攝影機 clamp 隨主角捲動(邊緣不露黑,對齊 C VIEW 20×15)**、
@@ -103,7 +103,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
     屬性由等級推導、戰鬥勝利加 exp/gold + 升級全補、敗北回城復活 + 對拍測試(MP43=223/HP1=9/STR1=16、exp4364→lv10)。
   - [x] **道具/裝備 DB**（ITEM.DAT，128×7，移植 dq3_combat：攻/防/價/類別/裝備部位）+ 對拍（銅劍攻10價100G/皮甲防8）
   - [x] **設施（宿屋/商店）**（`game/facility.go`，阿里阿罕設施表 baked）：面向設施 NPC → 宿屋扣費治滿、武防/道具店貨架（品項+價+購買扣金入庫）。Xvfb 驗證武防店 7 品項/價正確。
-  - [ ] 戰鬥深化（咒文/道具/防禦/敵 AI）、品名（D3TXT）、教會/存檔、場景轉場、事件/傳送
+  - [x] **品名（D3TXT00 rec=code+1）**：商店/道具顯真實中文名（檜木棒/木棒/銅劍/布的衣服/皮甲宵/皮盾…，Xvfb 驗證）
+  - [ ] 戰鬥深化（咒文/道具/防禦/敵 AI）、教會/存檔、場景轉場、事件/傳送
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;
