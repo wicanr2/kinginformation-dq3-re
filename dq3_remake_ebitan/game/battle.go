@@ -40,9 +40,11 @@ const (
 type Battle struct {
 	mons *dq3data.Monsters
 	shp  []byte
-	mpal     []dq3data.Color // MNSBK.PAL(怪物色盤)
+	mpal     []dq3data.Color // MNSBK.PAL(怪物色盤 + packbg 色盤)
 	tx       *dq3data.Text
 	nameText *dq3data.Text // D3TXT00 名表(咒文名 rec)
+	scr      []byte        // PACKBG.SCR(戰鬥背景)
+	bg       *[dq3data.PackBGH][dq3data.PackBGW]uint8 // 解碼後背景(草原 page22)
 
 	active   bool
 	monID    int
@@ -96,6 +98,9 @@ func (b *Battle) start(monID int, seed int64, hp heroParams) bool {
 	b.monID, b.spr = monID, spr
 	b.enemyHP = int(st.HPBase) + b.rng.Intn(int(st.HPRand)+1)
 	b.enemyMax = b.enemyHP
+	if b.bg == nil && b.scr != nil { // 首戰解碼草原背景(page22,對 game3.png)
+		b.bg, _ = dq3data.DecodePackBG(b.scr, 22)
+	}
 	b.heroMax, b.heroHP = hp.maxHP, hp.curHP
 	b.heroAtk, b.heroDef, b.heroAgi, b.heroLevel = hp.atk, hp.def, hp.agi, hp.level
 	b.heroHerbs, b.usedHerbs, b.defending = hp.herbs, 0, false
@@ -292,18 +297,35 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	sky := dq3data.Color{R: 56, G: 120, B: 216}
 	ground := dq3data.Color{R: 40, G: 128, B: 40}
 
-	// 背景:全黑 → 場景帶(天空 y80..232 / 綠地 232..246);其餘黑(對齊 C FIELD_Y0/Y1/GROUND_Y)
+	// 背景:全黑 → 場景帶。有 packbg(草原 page22)→ 縮放進 80..246;否則純色 fallback。
 	for y := 0; y < ScreenH; y++ {
-		c := black
-		if y >= fieldY0 && y < fieldY1 {
-			if y < groundY {
-				c = sky
-			} else {
-				c = ground
+		for x := 0; x < ScreenW; x++ {
+			putPx(rgba, x, y, black)
+		}
+	}
+	if b.bg != nil { // packbg:88 row 縮放進 fieldY0..fieldY1(對齊 C g_sky 渲染)
+		for y := fieldY0; y < fieldY1; y++ {
+			sr := (y - fieldY0) * dq3data.PackBGH / (fieldY1 - fieldY0)
+			if sr >= dq3data.PackBGH {
+				sr = dq3data.PackBGH - 1
+			}
+			for x := 0; x < ScreenW && x < dq3data.PackBGW; x++ {
+				c := black
+				if idx := int(b.bg[sr][x]); idx < len(b.mpal) {
+					c = b.mpal[idx]
+				}
+				putPx(rgba, x, y, c)
 			}
 		}
-		for x := 0; x < ScreenW; x++ {
-			putPx(rgba, x, y, c)
+	} else { // 純色 fallback(天空 80..232 / 綠地 232..246)
+		for y := fieldY0; y < fieldY1; y++ {
+			c := sky
+			if y >= groundY {
+				c = ground
+			}
+			for x := 0; x < ScreenW; x++ {
+				putPx(rgba, x, y, c)
+			}
 		}
 	}
 	// 怪物:站綠地平線(gy=groundY+8-h,置中);受擊閃紅;死不畫

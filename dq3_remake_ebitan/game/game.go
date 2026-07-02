@@ -628,6 +628,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	}
 	g.battle.mons = mons
 	g.battle.shp = ld.read("DQ3MNS.SHP")
+	g.battle.scr = ld.read("PACKBG.SCR") // 戰鬥背景
 	g.battle.mpal = dq3data.DecodePalette(ld.read("MNSBK.PAL"), 256)
 	g.battle.tx = g.dlg.tx
 
