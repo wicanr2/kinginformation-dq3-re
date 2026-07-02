@@ -60,7 +60,7 @@ func (tv *Tavern) input(in InputState) (*Member, bool) {
 			tv.cursor = (tv.cursor + 7) % 8
 		}
 	case tavName:
-		if in.Toggle { // Tab:英數 ↔ 注音
+		if in.Toggle || in.CtxTap { // Tab:英數 ↔ 注音(觸控:情境鍵)
 			tv.nameZhu = !tv.nameZhu
 			if tv.nameZhu {
 				tv.zh.Init()

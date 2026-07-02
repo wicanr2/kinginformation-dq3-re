@@ -15,6 +15,7 @@ type InputState struct {
 	Enter    bool // 進城(鍵盤 Enter,debug;edge)
 	Toggle   bool // Tab:英數 ↔ 注音 切換(酒館命名;edge)
 	Settings bool // S:開設定選單(標題畫面;edge)
+	CtxTap   bool // 觸控情境鍵剛點(edge);意義隨情境由呼叫端解讀(設定/切換…)
 }
 
 // Input 合流鍵盤 + 觸控兩個來源。
@@ -50,8 +51,16 @@ func (ip *Input) Poll() InputState {
 	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
 		s.Settings = true
 	}
-	// 觸控(蓋過/補上鍵盤)
+	// 觸控(蓋過/補上鍵盤):先偵測(poll,吃真實裝置),再映射進 InputState(applyTouch)。
 	ip.touch.poll()
+	ip.applyTouch(&s)
+	return s
+}
+
+// applyTouch:把這一幀觸控偵測結果(dpadDir/aTap/bTap/ctxTap)映射進 InputState。
+// 拆出 Poll() 是為了讓映射邏輯本身可測——poll() 依賴 ebiten 真實觸控裝置 API,
+// headless 測試環境模擬不了 just-pressed 事件,但映射規則(欄位 → InputState)可以。
+func (ip *Input) applyTouch(s *InputState) {
 	if ip.touch.dpadDir >= 0 {
 		s.DirHeld = ip.touch.dpadDir
 		if ip.touch.dpadDir != ip.prevTouchDir { // 觸控方向變化 = 選單導覽 edge
@@ -65,7 +74,9 @@ func (ip *Input) Poll() InputState {
 	if ip.touch.bTap {
 		s.Cancel = true
 	}
-	return s
+	if ip.touch.ctxTap {
+		s.CtxTap = true
+	}
 }
 
 func keyDirHeld() int {

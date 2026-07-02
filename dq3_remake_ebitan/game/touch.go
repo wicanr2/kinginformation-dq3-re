@@ -15,7 +15,10 @@ const (
 	aCX, aCY      = ScreenW - 70, ScreenH - 100
 	bCX, bCY      = ScreenW - 148, ScreenH - 64
 	btnR          = 32
-	btnHit        = 44 // 按鈕觸控判定半徑(略大於視覺)
+	btnHit        = 44               // 按鈕觸控判定半徑(略大於視覺)
+	ctxCX, ctxCY  = ScreenW - 56, 44 // 情境鍵中心(右上,與左下十字鍵/右下 A・B 不重疊)
+	ctxR          = 28
+	ctxHit        = 40
 )
 
 type touchZone int
@@ -25,19 +28,28 @@ const (
 	zoneDpad
 	zoneA
 	zoneB
+	zoneCtx
 )
 
 // TouchUI 是一幀的觸控輸入結果 + 繪製狀態。
 type TouchUI struct {
 	dpadDir     int // 這幀十字鍵方向(-1 無,0下 1上 2左 3右)
 	aTap, bTap  bool
+	ctxLabel    string                    // 情境鍵標籤;空字串=隱藏(由 Game 每幀依情境設)
+	ctxTap      bool                      // 這幀情境鍵剛點(edge)
 	origin      map[ebiten.TouchID][2]int // 每個十字鍵觸點的浮動中心
 	everTouched bool                      // 有過觸控才畫控制(桌面預設不擾)
 }
 
+// SetContext:Game 每幀依當前狀態設情境鍵標籤;空字串 = 隱藏(不吃觸點)。
+func (t *TouchUI) SetContext(label string) { t.ctxLabel = label }
+
 func newTouchUI() *TouchUI { return &TouchUI{dpadDir: -1, origin: map[ebiten.TouchID][2]int{}} }
 
 func (t *TouchUI) zoneOf(x, y int) touchZone {
+	if t.ctxLabel != "" && (x-ctxCX)*(x-ctxCX)+(y-ctxCY)*(y-ctxCY) <= ctxHit*ctxHit {
+		return zoneCtx
+	}
 	if (x-aCX)*(x-aCX)+(y-aCY)*(y-aCY) <= btnHit*btnHit {
 		return zoneA
 	}
@@ -52,7 +64,7 @@ func (t *TouchUI) zoneOf(x, y int) touchZone {
 
 // poll:掃所有觸點,分區,產生這幀的方向(held)+ A/B(edge)。多點觸控。
 func (t *TouchUI) poll() {
-	t.dpadDir, t.aTap, t.bTap = -1, false, false
+	t.dpadDir, t.aTap, t.bTap, t.ctxTap = -1, false, false, false
 	ids := ebiten.AppendTouchIDs(nil)
 	if len(ids) > 0 {
 		t.everTouched = true
@@ -89,6 +101,10 @@ func (t *TouchUI) poll() {
 		case zoneB:
 			if just[id] {
 				t.bTap = true
+			}
+		case zoneCtx:
+			if just[id] {
+				t.ctxTap = true
 			}
 		}
 	}
@@ -138,6 +154,11 @@ func (t *TouchUI) draw(rgba []byte) {
 	// A / B
 	fillCircle(rgba, aCX, aCY, btnR, base, 0.4)
 	fillCircle(rgba, bCX, bCY, btnR-6, base, 0.32)
+	// 情境鍵(右上,標籤隨情境變義;MVP 不畫字,琥珀色圓明顯區別 A/B)
+	if t.ctxLabel != "" {
+		amber := dq3data.Color{R: 239, G: 154, B: 60}
+		fillCircle(rgba, ctxCX, ctxCY, ctxR, amber, 0.55)
+	}
 }
 
 // fillCircle:以 alpha 混合畫實心圓。

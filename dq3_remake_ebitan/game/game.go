@@ -423,8 +423,22 @@ func (g *Game) openFacility(k int) {
 	}
 }
 
+// updateTouchContext:依當前狀態設觸控情境鍵標籤(空=隱藏)。拆成獨立方法方便單元測試
+// (不必跑完整 Update()/RunGame,只驗證「狀態 → 標籤」這條轉移邏輯本身)。
+func (g *Game) updateTouchContext() {
+	switch {
+	case g.showTitle:
+		g.input.touch.SetContext("設定")
+	case g.tavern.active && g.tavern.stage == tavName:
+		g.input.touch.SetContext("注")
+	default:
+		g.input.touch.SetContext("")
+	}
+}
+
 func (g *Game) Update() error {
-	in := g.input.Poll() // 抽象輸入(鍵盤 + 觸控合流)
+	g.updateTouchContext() // 必須在 Poll() 之前,讓這幀 poll 用得到新標籤
+	in := g.input.Poll()   // 抽象輸入(鍵盤 + 觸控合流)
 	moved := false
 
 	// 標題畫面:A/Enter 開始;S 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)
@@ -434,7 +448,7 @@ func (g *Game) Update() error {
 			g.renderFrame()
 			return nil
 		}
-		if in.Settings {
+		if in.Settings || in.CtxTap {
 			g.settings.Open()
 		} else if in.Confirm || in.Enter {
 			g.showTitle = false
