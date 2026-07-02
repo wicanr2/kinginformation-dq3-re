@@ -16,7 +16,8 @@ type Town struct {
 type NPC struct {
 	X, Y  int
 	B2    int // sprite key
-	Ctrl  int // 行為/朝向控制
+	Ctrl  int // 行為/朝向控制;(Ctrl>>3)&7 = 互動子型(0/1=對話、2=劇本、3-7=設施)
+	B4    int // 子型 0/1 時 = 對話記錄號;設施時 = 設施索引
 	Flags int // bit3+ = 晝夜可見旗標等
 }
 
@@ -94,7 +95,7 @@ func parseNPCs(cty []byte, so, w, h int) []NPC {
 		if x >= w || y >= h { // 座標越界跳過(對齊 C)
 			continue
 		}
-		out = append(out, NPC{X: x, Y: y, B2: int(cty[r+2]), Ctrl: int(cty[r+3]), Flags: int(cty[r+5])})
+		out = append(out, NPC{X: x, Y: y, B2: int(cty[r+2]), Ctrl: int(cty[r+3]), B4: int(cty[r+4]), Flags: int(cty[r+5])})
 	}
 	return out
 }

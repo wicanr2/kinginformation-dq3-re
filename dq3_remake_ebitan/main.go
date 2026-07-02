@@ -4,11 +4,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
@@ -22,8 +24,9 @@ const (
 
 // npcInst 是場景裡一個已定位、已載入 sprite 的 NPC。
 type npcInst struct {
-	x, y int
-	spr  *dq3data.CharSprite
+	x, y     int
+	ctrl, b4 int // 互動:(ctrl>>3)&7=子型;b4=對話 rec / 設施索引
+	spr      *dq3data.CharSprite
 }
 
 // Scene 是一張可走動的地圖(地表或城鎮),統一 render + 碰撞邏輯。
@@ -45,12 +48,17 @@ func (sc *Scene) Blocked(x, y int) bool {
 	if sc.attr.Blocked(sc.tileAt(x, y)) {
 		return true
 	}
-	for i := range sc.npcs { // NPC 擋路(對齊 dq3_scene_npc_at)
+	return sc.npcAt(x, y) >= 0 // NPC 擋路(對齊 dq3_scene_npc_at)
+}
+
+// npcAt 回 (x,y) 上的 NPC 索引;無則 -1。移植 dq3_scene_npc_at。
+func (sc *Scene) npcAt(x, y int) int {
+	for i := range sc.npcs {
 		if sc.npcs[i].x == x && sc.npcs[i].y == y {
-			return true
+			return i
 		}
 	}
-	return false
+	return -1
 }
 
 type Game struct {
@@ -63,12 +71,35 @@ type Game struct {
 	facing         int // 0..3
 	walk           int // 0/1 走路動畫相位
 	cd, anim       int
+	dlg            Dialogue // 對話視窗
 	frame          *ebiten.Image
 	rgba           []byte
 }
 
 func (g *Game) Update() error {
 	moved := false
+	confirm := inpututil.IsKeyJustPressed(ebiten.KeySpace) // A 鍵:確定 / 對話 / 推進
+
+	// 對話開啟時為 modal:只吃 A(推進/關閉),不移動
+	if g.dlg.open {
+		if confirm {
+			g.dlg.Advance()
+		}
+		g.renderFrame()
+		return nil
+	}
+	// A 對著 NPC → 開對話(子型 0/1;設施/劇本之後接)
+	if confirm && g.inTown {
+		fx, fy := frontTile(g.px, g.py, g.facing)
+		if idx := g.cur.npcAt(fx, fy); idx >= 0 {
+			n := &g.cur.npcs[idx]
+			if sub := (n.ctrl >> 3) & 7; sub <= 1 {
+				g.dlg.Open(n.b4)
+			}
+			g.renderFrame()
+			return nil
+		}
+	}
 	// 進城 / 回地表(邊緣觸發:上一幀沒按、這幀按下)
 	if g.cd == 0 {
 		if !g.inTown && ebiten.IsKeyPressed(ebiten.KeyEnter) {
@@ -160,6 +191,13 @@ func (g *Game) renderFrame() {
 	}
 	blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
 		g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+	if g.dlg.open { // 對話框疊在最上層
+		white := dq3data.Color{R: 255, G: 255, B: 255}
+		if len(sc.pal) > 15 {
+			white = sc.pal[15]
+		}
+		g.dlg.draw(g.rgba, white)
+	}
 	g.frame.WritePixels(g.rgba)
 }
 
@@ -282,19 +320,28 @@ func main() {
 			spr = dq3data.LoadCharSprite(manBLS, (n.B2-4)*4)
 			sprCache[n.B2] = spr
 		}
-		g.town.npcs = append(g.town.npcs, npcInst{x: n.X, y: n.Y, spr: spr})
+		g.town.npcs = append(g.town.npcs, npcInst{x: n.X, y: n.Y, ctrl: n.Ctrl, b4: n.B4, spr: spr})
 	}
+
+	// 對話:字型 D3TXT00.FON(常駐)+ 阿里阿罕 bank 1(D3TXT01.TXT,section dlg_bank=1)
+	g.dlg.tx = dq3data.LoadText(mustRead("D3TXT00.FON"), mustRead("D3TXT01.TXT"))
 
 	g.hero = dq3data.LoadCharSprite(mustRead("DQ3MST.BLS"), 0)
 	g.cur = g.over
 	g.px, g.py = g.over.w/2, g.over.h/2 // 地表起點(暫用中心)
-	if os.Getenv("DQ3_START") == "town" {  // debug:直接起在城內(headless 截圖驗證用)
+	if os.Getenv("DQ3_START") == "town" { // debug:直接起在城內(headless 截圖驗證用)
 		g.cur, g.inTown = g.town, true
 		g.px, g.py = g.town.spawnX, g.town.spawnY
 	}
+	if r := os.Getenv("DQ3_DLG"); r != "" { // debug:起手開一段對話(截圖驗證)
+		var rec int
+		if _, e := fmt.Sscanf(r, "%d", &rec); e == nil {
+			g.dlg.Open(rec)
+		}
+	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	g.renderFrame() // 首幀
-	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d、NPC %d)— 方向鍵走、Enter 進城、Esc 回地表",
+	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d、NPC %d)— 方向鍵走、空白鍵對話、Enter 進城、Esc 回地表",
 		g.over.w, g.over.h, g.town.w, g.town.h, tw.SpawnX, tw.SpawnY, len(g.town.npcs))
 
 	ebiten.SetWindowSize(ScreenW*2, ScreenH*2)
