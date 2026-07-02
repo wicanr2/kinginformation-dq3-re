@@ -61,13 +61,17 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw go run .
   - [x] **BLK tile**(DQ3.BLK,移植 `dq3_blk_open`/`dq3_blk_tile`)+ 對拍測試(162 tiles、32×24 4-bit planar、header 4/24 對 C)
   - [x] **地表 tilemap**(DQ3CON.MAP,移植 `dq3_field_load_map` header)+ 對拍測試(244×205=50020 格、tile 索引全在 BLK 範圍)
   - [x] **角色 sprite BLS**(DQ3MST.BLS 主角,移植 `dq3_charsprite_load`:stride 960 / 2 walk sub-frame / 4-plane + mask)+ 對拍測試(8 frame、有不透明像素、決定性)
-  - [ ] text(D3TXT)/ CTY 城鎮載入 / monster / item / save … 逐一移植 + Go 測對拍 C
-- [x] **階段 3 渲染 + 互動(可走動地表)**:`main.go` 把 fieldmap tile → BLK tile(32×24 indexed)→ palette → 640×350 RGBA → `ebiten.Image`;
-  **主角 sprite masked blit(透明背景疊地形)**、**viewport 隨主角捲動**、**方向鍵移動 + 走路動畫**。本機 Xvfb 驗證:
-  主角站在真實 DQ3 地表(綠地/森林/山脈/水域/沙漠)上、可走動。**朝「可玩」一大步。**
-  > ★ 地表/主角畫面 = 遊戲版權美術 → 依專案政策**不截圖入庫**;公開證明用 palette 截圖(上方,純色塊)。
+  - [x] **tile 碰撞屬性**(BLKBM.DAT,移植 `dq3_scene_walkable`:每 tile u16、`attr&1`=不可走)+ 對拍測試(400B→200 屬性、49 阻擋/151 可走)
+  - [x] **CTY 城鎮載入**(CTY00.DAT 阿里阿罕,移植 `dq3_town_load`:section 偏移表無 count 前綴、layout `{w,h,tiles}`@+0x0e、spawn@+0x13/+0x14)+ 對拍測試(42×43、spawn 0,28、tiles 全在 DQ31.BLK)
+  - [ ] text(D3TXT)/ monster / item / save … 逐一移植 + Go 測對拍 C
+- [x] **階段 3 渲染 + 互動(可走動地表 + 進城)**:`Scene` 抽象統一地表/城鎮的 render + 碰撞;
+  fieldmap/town tile → BLK tile(32×24 indexed)→ palette → 640×350 RGBA → `ebiten.Image`;
+  **主角 sprite masked blit(透明背景疊地形)**、**viewport 隨主角捲動**、**方向鍵移動 + 走路動畫**、
+  **BLKBM 碰撞(不可穿山/海/牆)**、**Enter 進阿里阿罕城 / Esc 回地表**。本機 Xvfb 驗證:
+  主角走在真實 DQ3 地表(綠地/森林/山脈/水域)上、進城後見阿里阿罕(ルイーダの酒場「PUNCH LUIDA」招牌、磚房、道路)。**朝「可玩」一大步。**
+  > ★ 地表/城鎮/主角畫面 = 遊戲版權美術 → 依專案政策**不截圖入庫**;公開證明用 palette 截圖(上方,純色塊)。
   > 踩雷紀錄:Ebiten `WritePixels` 下一幀才生效 → 渲染要在 `Update()` 做、`Draw()` 只 `DrawImage`(否則同幀畫到舊的黑圖)。
-- [ ] **階段 4 遊戲邏輯**:場景移動/碰撞/NPC、對話、選單、戰鬥(公式/AI/升級)、事件/傳送(對 game_tester 斷言移 Go 測)
+- [ ] **階段 4 遊戲邏輯**:NPC/對話、選單、戰鬥(公式/AI/升級)、事件/傳送(對 game_tester 斷言移 Go 測)
 - [ ] **階段 5 音訊**:MT-32 OGG(Ebiten `audio/vorbis` 內建,先)+ VOC 音效;SB-FM OPL2 之後補
 - [ ] **階段 6 輸入 + 觸控 UI**:鍵盤(桌面/web)+ 虛擬方向鍵/A/B/選單(行動)
 - [ ] **階段 7 Android**:`ebitenmobile bind` → `.aar` → Android Studio + 素材入 APK + 版權閘 → APK/AAB
