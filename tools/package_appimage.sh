@@ -22,7 +22,8 @@ if [ ! -f "$TOOLDIR/runtime-x86_64" ]; then
 fi
 
 HOST_UID="$(id -u)"; HOST_GID="$(id -g)"
-docker run --rm -e HOST_UID="$HOST_UID" -e HOST_GID="$HOST_GID" \
+FULL="${DQ3_PACK_FULL:-0}"   # 1 = full 包(內嵌原版 assets_raw + mt32,個人本機驗證用,gitignore 不散布)
+docker run --rm -e HOST_UID="$HOST_UID" -e HOST_GID="$HOST_GID" -e FULL="$FULL" \
   -v "$ROOT":/repo -v dq3build:/build dq3-remake bash -lc '
   set -e
   (apt-get update && apt-get install -y --no-install-recommends file) >/dev/null 2>&1 || true
@@ -41,13 +42,26 @@ docker run --rm -e HOST_UID="$HOST_UID" -e HOST_GID="$HOST_GID" \
     | while read -r so; do [ -f "$so" ] && cp -Ln "$so" "$APP/usr/lib/" 2>/dev/null || true; done
   echo "   打包 .so:$(ls "$APP/usr/lib" | wc -l) 個"
 
-  # AppRun:設 LD_LIBRARY_PATH + 定位 assets_raw(參數 / .AppImage 旁 / CWD)
+  # FULL 包:內嵌原版素材 + MT-32 OGG(個人本機驗證,gitignore 不散布)
+  if [ "$FULL" = "1" ]; then
+    mkdir -p "$APP/usr/share/dq3_remake/assets/mt32"
+    cp -a /repo/assets_raw/. "$APP/usr/share/dq3_remake/assets/" 2>/dev/null || true
+    [ -d /repo/work/mt32 ] && cp /repo/work/mt32/*.ogg "$APP/usr/share/dq3_remake/assets/mt32/" 2>/dev/null || true
+    echo "   FULL:內嵌素材 $(ls "$APP/usr/share/dq3_remake/assets" | wc -l) 檔 + MT-32 $(ls "$APP/usr/share/dq3_remake/assets/mt32"/*.ogg 2>/dev/null | wc -l) 軌"
+  fi
+
+  # AppRun:設 LD_LIBRARY_PATH + 定位 assets_raw(內嵌 / 參數 / .AppImage 旁 / CWD)
   cat > "$APP/AppRun" <<"RUN"
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "$0")")"
 export LD_LIBRARY_PATH="$HERE/usr/lib:${LD_LIBRARY_PATH:-}"
 BIN="$HERE/usr/bin/dq3_remake"
 has_assets(){ [ -f "$1/DQ3CON.MAP" ] && [ -f "$1/ITEM.DAT" ]; }
+# 0) FULL 包內嵌素材(最優先;無參數時直接開)
+if [ $# -eq 0 ] && has_assets "$HERE/usr/share/dq3_remake/assets"; then
+  export DQ3_MT32_DIR="$HERE/usr/share/dq3_remake/assets/mt32"
+  exec "$BIN" "$HERE/usr/share/dq3_remake/assets" game
+fi
 # 1) 明確指定素材夾
 if [ $# -ge 1 ] && [ -d "$1" ]; then exec "$BIN" "$@"; fi
 # 2) .AppImage 旁 / 當前目錄的 assets_raw
