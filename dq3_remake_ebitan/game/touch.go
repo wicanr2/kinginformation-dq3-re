@@ -37,6 +37,8 @@ type TouchUI struct {
 	aTap, bTap  bool
 	ctxLabel    string                    // 情境鍵標籤;空字串=隱藏(由 Game 每幀依情境設)
 	ctxTap      bool                      // 這幀情境鍵剛點(edge)
+	tapX, tapY  int                       // 落在 zoneNone 的 just-pressed 觸點座標(選單直接點選,P2)
+	tapEdge     bool                      // 這幀有 zoneNone 剛點(edge);每幀 reset
 	origin      map[ebiten.TouchID][2]int // 每個十字鍵觸點的浮動中心
 	everTouched bool                      // 有過觸控才畫控制(桌面預設不擾)
 }
@@ -64,7 +66,7 @@ func (t *TouchUI) zoneOf(x, y int) touchZone {
 
 // poll:掃所有觸點,分區,產生這幀的方向(held)+ A/B(edge)。多點觸控。
 func (t *TouchUI) poll() {
-	t.dpadDir, t.aTap, t.bTap, t.ctxTap = -1, false, false, false
+	t.dpadDir, t.aTap, t.bTap, t.ctxTap, t.tapEdge = -1, false, false, false, false
 	ids := ebiten.AppendTouchIDs(nil)
 	if len(ids) > 0 {
 		t.everTouched = true
@@ -105,6 +107,10 @@ func (t *TouchUI) poll() {
 		case zoneCtx:
 			if just[id] {
 				t.ctxTap = true
+			}
+		case zoneNone: // 選單直接點選(P2):非控制區的 just-pressed 觸點 → 記座標,交上層對 hitList
+			if just[id] {
+				t.tapX, t.tapY, t.tapEdge = x, y, true
 			}
 		}
 	}

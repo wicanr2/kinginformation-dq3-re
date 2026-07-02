@@ -16,6 +16,9 @@ type InputState struct {
 	Toggle   bool // Tab:英數 ↔ 注音 切換(酒館命名;edge)
 	Settings bool // S:開設定選單(標題畫面;edge)
 	CtxTap   bool // 觸控情境鍵剛點(edge);意義隨情境由呼叫端解讀(設定/切換…)
+	Tapped   bool // 觸控選單直接點選剛點(edge,P2);TapX/TapY 為該次觸點座標
+	TapX     int
+	TapY     int
 }
 
 // Input 合流鍵盤 + 觸控兩個來源。
@@ -76,6 +79,9 @@ func (ip *Input) applyTouch(s *InputState) {
 	}
 	if ip.touch.ctxTap {
 		s.CtxTap = true
+	}
+	if ip.touch.tapEdge {
+		s.Tapped, s.TapX, s.TapY = true, ip.touch.tapX, ip.touch.tapY
 	}
 }
 

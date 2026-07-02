@@ -40,19 +40,29 @@ type Tavern struct {
 	nameBuf []int
 	nameZhu bool // true=注音模式(Tab 切換)
 	zh      zhuyin.Composer
+	hits    hitList // 目前畫面(職業/英數格/注音盤/候選/性別)的可點區塊,draw() 重建
 }
 
 func (tv *Tavern) open() { tv.active, tv.stage, tv.cursor, tv.nameBuf = true, tavClass, 0, nil }
 
-// input:回 (recruited *Member, closed)。
+// input:回 (recruited *Member, closed)。觸控直接點選(P2):tapIdx 命中 tv.hits(上一幀 draw()
+// 建的、對齊當前畫面的格子)→ 游標移過去 + 等同 A 確定,十字鍵 + A 保底並存。
 func (tv *Tavern) input(in InputState) (*Member, bool) {
+	tapIdx := -1
+	if in.Tapped {
+		tapIdx = tv.hits.at(in.TapX, in.TapY)
+	}
 	switch tv.stage {
 	case tavClass:
+		confirm := in.Confirm
+		if tapIdx >= 0 {
+			tv.cursor, confirm = tapIdx, true
+		}
 		switch {
 		case in.Cancel:
 			tv.active = false
 			return nil, true
-		case in.Confirm:
+		case confirm:
 			tv.pendCls, tv.stage, tv.cursor, tv.nameBuf = tv.cursor, tavName, 0, nil
 		case in.DirEdge == 0:
 			tv.cursor = (tv.cursor + 1) % 8
@@ -69,13 +79,17 @@ func (tv *Tavern) input(in InputState) (*Member, bool) {
 			}
 			return nil, false
 		}
-		if tv.nameZhu { // 注音組字
+		if tv.nameZhu { // 注音組字(盤格 或 候選格,視 tv.zh.Pick 而定;hits 對齊 draw() 當前那組)
+			confirm := in.Confirm
+			if tapIdx >= 0 {
+				tv.zh.Cursor, confirm = tapIdx, true
+			}
 			switch {
 			case in.Cancel:
 				if !tv.zh.Cancel() { // 非候選階段 → 退英數
 					tv.nameZhu, tv.cursor = false, 0
 				}
-			case in.Confirm:
+			case confirm:
 				if g, picked := tv.zh.Confirm(); picked && len(tv.nameBuf) < niNameMax {
 					tv.nameBuf = append(tv.nameBuf, g)
 				}
@@ -84,10 +98,14 @@ func (tv *Tavern) input(in InputState) (*Member, bool) {
 			}
 			return nil, false
 		}
+		confirm := in.Confirm
+		if tapIdx >= 0 {
+			tv.cursor, confirm = tapIdx, true
+		}
 		switch { // 英數格盤
 		case in.Cancel:
 			tv.stage, tv.cursor = tavClass, tv.pendCls
-		case in.Confirm:
+		case confirm:
 			switch tv.cursor {
 			case niCellBS: // 退格
 				if len(tv.nameBuf) > 0 {
@@ -110,10 +128,14 @@ func (tv *Tavern) input(in InputState) (*Member, bool) {
 			tv.cursor = (tv.cursor + niCells - niCols) % niCells
 		}
 	case tavGender:
+		confirm := in.Confirm
+		if tapIdx >= 0 {
+			tv.cursor, confirm = tapIdx, true
+		}
 		switch {
 		case in.Cancel:
 			tv.stage, tv.cursor = tavName, niCellOK
-		case in.Confirm:
+		case confirm:
 			name := tv.nameBuf
 			if len(name) == 0 { // 未命名 → 用職業名
 				name = classNames[tv.pendCls]
@@ -141,11 +163,14 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 	}
 	switch tv.stage {
 	case tavClass:
+		tv.hits.reset()
 		for i := 0; i < 8; i++ {
-			cur(80, 56+i*22, i == tv.cursor)
+			y := 56 + i*22
+			cur(80, y, i == tv.cursor)
 			for j, g := range classNames[i] {
-				drawGlyph(rgba, tv.tx, 80+j*16, 56+i*22, g, white)
+				drawGlyph(rgba, tv.tx, 80+j*16, y, g, white)
 			}
+			tv.hits.add(62, y-3, 200, 18, i)
 		}
 	case tavName:
 		// 已輸入名
@@ -166,11 +191,13 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 			if tv.zh.Yu != 0 {
 				drawGlyph(rgba, tv.tx, cx, 56, 85+tv.zh.Yu, yellow)
 			}
+			tv.hits.reset()
 			if tv.zh.Pick { // 候選窗(9 欄)
 				for i, g := range tv.zh.Cand {
 					x, y := 64+(i%zhuyin.Cols)*24, 96+(i/zhuyin.Cols)*22
 					cur(x, y, i == tv.zh.Cursor)
 					drawGlyph(rgba, tv.tx, x, y, g, white)
+					tv.hits.add(x-4, y-3, 22, 18, i)
 				}
 			} else { // 注音盤(9 欄,對齊 C)
 				for c := 0; c < zhuyin.Cells; c++ {
@@ -183,11 +210,13 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 							putPx(rgba, x+px, y+8, white)
 						}
 					}
+					tv.hits.add(x-4, y-3, 22, 18, c)
 				}
 			}
 			return
 		}
 		// 英數格盤(9 欄)+ ← / OK
+		tv.hits.reset()
 		for c := 0; c < niCells; c++ {
 			col, row := c%niCols, c/niCols
 			x, y := 64+col*40, 96+row*22
@@ -201,17 +230,21 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 			} else {
 				drawGlyph(rgba, tv.tx, x, y, 665, white) // OK≈「狀」借字(近似)
 			}
+			tv.hits.add(x-4, y-3, 36, 18, c)
 		}
 	case tavGender:
 		for i, g := range classNames[tv.pendCls] { // 顯已選職業
 			drawGlyph(rgba, tv.tx, 80+i*16, 56, g, white)
 		}
 		labels := [2][]int{{272}, {234}} // 男 / 女
+		tv.hits.reset()
 		for i := 0; i < 2; i++ {
-			cur(80, 100+i*22, i == tv.cursor)
+			y := 100 + i*22
+			cur(80, y, i == tv.cursor)
 			for j, g := range labels[i] {
-				drawGlyph(rgba, tv.tx, 80+j*16, 100+i*22, g, white)
+				drawGlyph(rgba, tv.tx, 80+j*16, y, g, white)
 			}
+			tv.hits.add(62, y-3, 120, 18, i)
 		}
 	}
 }

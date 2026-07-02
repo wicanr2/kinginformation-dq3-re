@@ -179,6 +179,7 @@ type Game struct {
 	tavern         Tavern    // 露易達酒館(招募)
 	panel          panelKind // 資訊面板(狀況/道具/裝備)
 	panelCursor    int       // 裝備面板游標
+	panelHits      hitList   // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
 	inventory      []int     // 持有道具 id
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
@@ -501,13 +502,22 @@ func (g *Game) Update() error {
 		return nil
 	}
 	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
+	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
+		tapIdx := -1
+		if in.Tapped {
+			tapIdx = g.panelHits.at(in.TapX, in.TapY)
+		}
 		switch {
 		case in.Cancel:
 			g.panel = panelNone
 		case g.panel == panelEquip:
+			confirm := in.Confirm
+			if tapIdx >= 0 && len(g.inventory) > 0 {
+				g.panelCursor, confirm = tapIdx, true
+			}
 			switch {
-			case in.Confirm:
+			case confirm:
 				g.equipSelected()
 			case in.DirEdge == 0 && len(g.inventory) > 0: // 下
 				g.panelCursor = (g.panelCursor + 1) % len(g.inventory)
@@ -515,8 +525,12 @@ func (g *Game) Update() error {
 				g.panelCursor = (g.panelCursor + len(g.inventory) - 1) % len(g.inventory)
 			}
 		case g.panel == panelItem: // 道具:方向選 + A 使用(藥草/翼/聖水/祈禱之戒)
+			confirm := in.Confirm
+			if tapIdx >= 0 && len(g.inventory) > 0 {
+				g.panelCursor, confirm = tapIdx, true
+			}
 			switch {
-			case in.Confirm:
+			case confirm:
 				g.useSelectedItem()
 			case in.DirEdge == 0 && len(g.inventory) > 0: // 下
 				g.panelCursor = (g.panelCursor + 1) % len(g.inventory)
@@ -559,12 +573,18 @@ func (g *Game) Update() error {
 		g.renderFrame()
 		return nil
 	}
-	// 命令窗 modal:方向移游標、A 選定、B 關窗
+	// 命令窗 modal:方向移游標、A 選定、B 關窗;點格(P2)= 游標移過去 + 等同 A 選定
 	if g.cmd.open {
+		confirm := in.Confirm
+		if in.Tapped {
+			if idx := g.cmd.hits.at(in.TapX, in.TapY); idx >= 0 {
+				g.cmd.cursor, confirm = idx, true
+			}
+		}
 		switch {
 		case in.Cancel:
 			g.cmd.open = false
-		case in.Confirm:
+		case confirm:
 			g.music.PlaySFX(0) // 選單確定音效(VOC)
 			g.selectCommand(g.cmd.cursor)
 		default:

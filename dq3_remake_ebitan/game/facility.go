@@ -25,6 +25,7 @@ type Shop struct {
 	codes    []int // 貨架品項 id
 	cursor   int
 	msg      string
+	hits     hitList // 貨架列可點區塊,draw() 重建(P2 直接點選)
 }
 
 // drawItemName 畫道具名(D3TXT00 rec=code+1 的 glyph 序列)到 (x,y)。
@@ -47,13 +48,20 @@ func (s *Shop) open(codes []int) {
 }
 
 // input 處理商店輸入;回傳 (buyCode, closed):buyCode>=0 表要買該 id。
+// 點貨架列(P2)= 游標移過去 + 等同 A 購買。
 func (s *Shop) input(in InputState) (buyCode int, closed bool) {
 	buyCode = -1
+	confirm := in.Confirm
+	if in.Tapped {
+		if idx := s.hits.at(in.TapX, in.TapY); idx >= 0 && idx < len(s.codes) {
+			s.cursor, confirm = idx, true
+		}
+	}
 	switch {
 	case in.Cancel:
 		s.active = false
 		return -1, true
-	case in.Confirm:
+	case confirm:
 		if s.cursor >= 0 && s.cursor < len(s.codes) {
 			buyCode = s.codes[s.cursor]
 		}
@@ -69,6 +77,7 @@ func (s *Shop) input(in InputState) (buyCode int, closed bool) {
 func (s *Shop) draw(rgba []byte, gold int, white dq3data.Color) {
 	fillBox(rgba, 24, 24, ScreenW-48, ScreenH-96, white)
 	yellow := dq3data.Color{R: 255, G: 224, B: 32}
+	s.hits.reset()
 	for i, code := range s.codes {
 		y := 40 + i*22
 		if i == s.cursor {
@@ -78,6 +87,7 @@ func (s *Shop) draw(rgba []byte, gold int, white dq3data.Color) {
 		s.drawItemName(rgba, 64, y, code, white)
 		// 價(右欄)
 		drawNumber(rgba, s.tx, 380, y, s.items.Price(code), white)
+		s.hits.add(24, y-3, ScreenW-48, 20, i)
 	}
 	// 持有金(底部)
 	drawNumber(rgba, s.tx, 64, ScreenH-84, gold, yellow)

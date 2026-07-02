@@ -81,6 +81,8 @@ type Battle struct {
 	// start() 不重置 —— 與既有 lightOrb 同一套「呼叫端先設欄位」慣例)。
 	showInfo     bool // false:不畫敵 HP 數字(remake 增強項,C 版無此顯示)
 	hurtFxFrames int  // 受擊閃光殘餘幀數(取代硬寫 4;0=不閃,對齊 config.CombatHurtFx 換算)
+
+	hits hitList // 指令窗/咒文子選單可點區塊(draw() 重建,phCommand/phSpell 互斥共用一份)
 }
 
 // hurtFxFrames:受傷特效時長 ms → 動畫幀數(~16ms/幀,對齊 60fps 迴圈)。0 或負值 = 不閃。
@@ -151,12 +153,21 @@ func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActo
 	return true
 }
 
-// input 處理一幀輸入,回傳戰鬥是否結束(關閉)。
+// input 處理一幀輸入,回傳戰鬥是否結束(關閉)。點格(P2)= 游標移過去 + 等同 A 選定;
+// tapIdx 對照 b.hits(上一幀 draw() 依當前 phase 建的那組:指令 5 格 或 咒文清單)。
 func (b *Battle) input(in InputState) (closed bool) {
+	tapIdx := -1
+	if in.Tapped {
+		tapIdx = b.hits.at(in.TapX, in.TapY)
+	}
 	switch b.phase {
 	case phCommand:
+		confirm := in.Confirm
+		if tapIdx >= 0 {
+			b.cursor, confirm = tapIdx, true
+		}
 		switch {
-		case in.Confirm:
+		case confirm:
 			if b.cursor == bcSpell { // 咒文 → 選咒子選單
 				if len(b.spells) > 0 {
 					b.spellCursor, b.phase = 0, phSpell
@@ -172,10 +183,14 @@ func (b *Battle) input(in InputState) (closed bool) {
 			b.cursor = (b.cursor + bcN - 1) % bcN
 		}
 	case phSpell:
+		confirm := in.Confirm
+		if tapIdx >= 0 && tapIdx < len(b.spells) {
+			b.spellCursor, confirm = tapIdx, true
+		}
 		switch {
 		case in.Cancel:
 			b.phase = phCommand
-		case in.Confirm:
+		case confirm:
 			b.execSpell(b.spells[b.spellCursor])
 		case in.DirEdge == 0:
 			b.spellCursor = (b.spellCursor + 1) % len(b.spells)
@@ -530,6 +545,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	{
 		mx, my, mw, mh := 120, 236, 150, 108
 		fillBox(rgba, mx, my, mw, mh, white)
+		b.hits.reset()
 		if b.phase == phSpell {
 			for i, rec := range b.spells {
 				if i >= 5 {
@@ -543,6 +559,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				if def, ok := spell.GetDef(rec); ok {
 					drawNumber(rgba, b.tx, mx+110, y, def.MP, cyan)
 				}
+				b.hits.add(mx, y-4, mw, 16, i)
 			}
 		} else {
 			for i := 0; i < bcN; i++ {
@@ -552,6 +569,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				}
 				drawGlyph(rgba, b.tx, mx+28, y, battleCmdLabels[i][0], white)
 				drawGlyph(rgba, b.tx, mx+72, y, battleCmdLabels[i][1], white)
+				b.hits.add(mx, y-4, mw, 16, i)
 			}
 		}
 	}

@@ -36,6 +36,7 @@ func (g *Game) drawStatus(rgba []byte, white dq3data.Color) {
 func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
 	yellow := dq3data.Color{R: 255, G: 224, B: 32}
+	g.panelHits.reset()
 	for i, code := range g.inventory {
 		if i >= 10 {
 			break
@@ -45,6 +46,7 @@ func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 			drawGlyph(rgba, g.dlg.tx, 44, y, 11, yellow) // ► 游標
 		}
 		g.shop.drawItemName(rgba, 64, y, code, white)
+		g.panelHits.add(44, y-3, ScreenW-80-8, 20, i)
 	}
 }
 
@@ -59,6 +61,7 @@ func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 		}
 	}
 	// 持有可裝備品(游標)
+	g.panelHits.reset()
 	for i, code := range g.inventory {
 		if i >= 8 {
 			break
@@ -68,6 +71,7 @@ func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 			drawGlyph(rgba, g.dlg.tx, 44, y, 11, yellow) // ►
 		}
 		g.shop.drawItemName(rgba, 64, y, code, white)
+		g.panelHits.add(44, y-3, ScreenW-80-8, 20, i)
 	}
 }
 

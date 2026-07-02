@@ -24,6 +24,7 @@ type CmdMenu struct {
 	tx     *dq3data.Text
 	cursor int
 	open   bool
+	hits   hitList // 6 格可點區塊,draw() 重建(P2 直接點選)
 }
 
 func (m *CmdMenu) Open() { m.cursor, m.open = 0, true }
@@ -53,6 +54,7 @@ func (m *CmdMenu) draw(rgba []byte, fg, curfg dq3data.Color, x, y int) {
 	fillBox(rgba, x-gpx, y-gpx/2, 2*cw+gpx, rh*4+gpx, fg) // 視窗底 + 白框
 	drawGlyph(rgba, m.tx, x+gpx, y, 274, fg)              // 命
 	drawGlyph(rgba, m.tx, x+2*gpx, y, 664, fg)            // 令
+	m.hits.reset()
 	for i := 0; i < cmdCount; i++ {
 		r, c := i>>1, i&1
 		cx, cy := x+c*cw, y+rh+r*rh
@@ -61,5 +63,6 @@ func (m *CmdMenu) draw(rgba []byte, fg, curfg dq3data.Color, x, y int) {
 		}
 		drawGlyph(rgba, m.tx, cx+gpx, cy, cmdLabels[i][0], fg)
 		drawGlyph(rgba, m.tx, cx+2*gpx, cy, cmdLabels[i][1], fg)
+		m.hits.add(cx, cy, cw, rh, i)
 	}
 }

@@ -27,6 +27,7 @@ type Settings struct {
 	tx     *dq3data.Text // 標籤字型(共用 g.dlg.tx;Glyph() 只依賴 FON,與哪個 txt bank 無關)
 	open   bool
 	cursor int
+	hits   hitList // 6 列可點區塊,draw() 重建(P2 直接點選)
 }
 
 // Open 開啟設定選單,游標歸零。
@@ -34,8 +35,15 @@ func (s *Settings) Open() { s.open, s.cursor = true, 0 }
 
 // settingsInput 處理一幀輸入:↑/↓ 移列、←/→/Enter 切值、ESC(Cancel)關閉。
 // 值變更即時套用(音樂開關/音量 → g.music;其餘寫回 g.cfg,下場戰鬥開戰時讀取)。
+// 點列(P2)= 游標移過去 + 等同「右/Enter」切該列值(對齊「點=選定」語意)。
 func (g *Game) settingsInput(in InputState) {
 	s := &g.settings
+	confirm := in.Confirm
+	if in.Tapped {
+		if idx := s.hits.at(in.TapX, in.TapY); idx >= 0 {
+			s.cursor, confirm = idx, true
+		}
+	}
 	switch {
 	case in.Cancel:
 		s.open = false
@@ -45,7 +53,7 @@ func (g *Game) settingsInput(in InputState) {
 		s.cursor = (s.cursor + 1) % setRowCount
 	case in.DirEdge == 2: // 左
 		g.applySettingChange(s.cursor, -1)
-	case in.DirEdge == 3 || in.Confirm: // 右 / Enter
+	case in.DirEdge == 3 || confirm: // 右 / Enter / 點列
 		g.applySettingChange(s.cursor, 1)
 	}
 }
@@ -134,10 +142,12 @@ func (s *Settings) draw(rgba []byte, cfg config.Config) {
 
 	rowy := [setRowCount]int{by + 50, by + 82, by + 114, by + 146, by + 178, by + 210}
 	labelX, valueX := bx+40, bx+40+6*gpx
+	s.hits.reset()
 	for r := 0; r < setRowCount; r++ {
 		if r == s.cursor { // ► 游標
 			drawGlyph(rgba, s.tx, bx+18, rowy[r], 11, yellow)
 		}
+		s.hits.add(bx, rowy[r]-4, bw, 20, r)
 	}
 	// row0 亂數模式:標籤 4 字 + 值(DOS=原+自建「版」/ REAL=真實)
 	for i, gl := range setLRng {
