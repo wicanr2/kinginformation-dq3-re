@@ -150,6 +150,12 @@ func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn i
 		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: pal,
 		w: tw.W, h: tw.H, tileAt: tw.Tile, spawnX: tw.SpawnX, spawnY: tw.SpawnY,
 	}
+	// 該城對話 bank(D3TXT0<bank>.TXT,section +0x17;共用 D3TXT00.FON)
+	bank := tw.DlgBank
+	if bank < 1 || bank > 9 {
+		bank = 1
+	}
+	sc.dlgText = dq3data.LoadText(rd("D3TXT00.FON"), rd("D3TXT0"+string(rune('0'+bank))+".TXT"))
 	sprCache := map[int]*dq3data.CharSprite{}
 	for _, n := range tw.NPCs {
 		if n.B2 < 4 {

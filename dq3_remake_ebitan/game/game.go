@@ -46,6 +46,7 @@ type Scene struct {
 	w, h           int
 	tileAt         func(x, y int) int // (x,y) → BLK tile 索引
 	spawnX, spawnY int                // 城鎮進入 spawn(地表不用)
+	dlgText        *dq3data.Text      // 該城對話 bank(D3TXT0<bank>.TXT;地表 nil)
 	npcs           []npcInst
 }
 
@@ -306,6 +307,9 @@ func (g *Game) enterTownCty(cty int) {
 	g.overPx, g.overPy = g.px, g.py
 	g.town, g.cur, g.inTown, g.curCty = sc, sc, true, cty
 	g.px, g.py = sc.spawnX, sc.spawnY
+	if sc.dlgText != nil { // 切到該城對話 bank(NPC 對話用正確 bank)
+		g.dlg.tx = sc.dlgText
+	}
 	g.cd = moveCooldown
 	g.music.Play(ctyMusicTrack(cty))
 	g.renderFrame()

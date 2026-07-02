@@ -8,6 +8,7 @@ type Town struct {
 	W, H           int
 	Cells          []byte // 每格 tile 索引(u16 低 byte;高 byte=事件 subid,渲染不用)
 	SpawnX, SpawnY int    // 版面 spawn(section header +0x13/+0x14)
+	DlgBank        int    // 對話 bank(section header +0x17 → D3TXT0<bank>.TXT)
 	NPCs           []NPC
 }
 
@@ -52,11 +53,16 @@ func OpenTown(cty []byte, section int) (*Town, error) {
 	if w <= 0 || h <= 0 || tbase >= len(cty) {
 		return nil, fmt.Errorf("tile array oob (w=%d h=%d)", w, h)
 	}
+	dlgBank := 1
+	if so+0x17 < len(cty) {
+		dlgBank = int(cty[so+0x17]) // 對話 bank(section header +0x17,docs/42)
+	}
 	t := &Town{
 		W: w, H: h,
-		Cells:  make([]byte, w*h),
-		SpawnX: int(cty[so+0x13]), // spawn_x(section header)
-		SpawnY: int(cty[so+0x14]), // spawn_y
+		Cells:   make([]byte, w*h),
+		SpawnX:  int(cty[so+0x13]), // spawn_x(section header)
+		SpawnY:  int(cty[so+0x14]), // spawn_y
+		DlgBank: dlgBank,
 	}
 	for i := 0; i < w*h; i++ {
 		t.Cells[i] = byte(townU16(cty, tbase+2*i)) // 低 byte = BLK index(容忍末尾略超檔尾 → 0)

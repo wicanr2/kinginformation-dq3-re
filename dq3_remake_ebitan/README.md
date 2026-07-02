@@ -108,7 +108,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **狀況/道具面板**（`game/panel.go`）：命令窗 狀況→主角等級/HP/攻防敏/EXP/G、道具→持有品名清單（B 關）
   - [x] **裝備系統**（`game/panel.go`）：裝備槽（武器/鎧/盾/兜，item DB EquipSlot/CanEquip）→ heroStats 攻=力量+武器攻、防=耐力/2+鎧盾兜防；命令窗 裝備→選持有品裝上；串起 商店→背包→裝備→戰鬥；存檔含裝備
   - [x] **場景轉場（多城通用載入）**（`game/worldmap.go`）：dq3x_cty_loc/map_blknum 表（100 筆）→ overworld 位置踩城鎮入口自動進城；loadTownScene 通用載任一 CTY（對應 BLK tileset + NPC）+ 城鎮快取 + 配樂 kind（城堡/迷宮/城鎮）。Xvfb 驗證進 CTY13（BLK5 不同 tileset）成功
-  - [ ] 戰鬥深化（咒文/道具/防禦/敵 AI）、逐城 dlg bank/設施表、事件劇本
+  - [x] **逐城對話 bank**（Town.DlgBank=section+0x17 → D3TXT0<bank>.TXT）：各城 NPC 對話用正確 bank（進城時切換 g.dlg.tx）
+  - [ ] 戰鬥深化（咒文/道具/防禦/敵 AI）、逐城設施表、事件劇本、VOC/OPL2 音效
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;
