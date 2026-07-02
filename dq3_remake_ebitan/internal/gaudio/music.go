@@ -42,7 +42,7 @@ func NewMusic(fsys fs.FS) (m *Music) {
 
 // Play 播放第 track 軌(track_NN.ogg,無限循環)。同軌播放中則不重啟。
 func (m *Music) Play(track int) {
-	if !m.enabled || track < 0 {
+	if m == nil || !m.enabled || track < 0 {
 		return
 	}
 	if m.cur == track && m.player != nil && m.player.IsPlaying() {

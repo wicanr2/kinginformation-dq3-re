@@ -71,9 +71,14 @@ func (sc *Scene) npcAt(x, y int) int {
 }
 
 type Game struct {
-	over, town     *Scene // 地表 / 阿里阿罕城
+	over, town     *Scene // 地表 / 目前城鎮
 	cur            *Scene
 	inTown         bool
+	curCty         int            // 目前所在 CTY 號(-1=地表)
+	assets         fs.FS          // 素材(懶載其他城鎮)
+	worldPal       []dq3data.Color
+	manBLS         []byte         // NPC sprite 來源
+	towns          map[int]*Scene // 已載入城鎮快取(cty→Scene)
 	overPx, overPy int // 記住進城前的地表座標(Esc 回來用)
 	hero           *dq3data.CharSprite
 	px, py         int // 主角在 cur 內的 tile 座標
@@ -99,8 +104,12 @@ type Game struct {
 	rgba        []byte
 }
 
-// 場景配樂軌:BATTLE=14(地圖遇敵,對齊 C g_scene_track)。
-const trackBattle = 14
+// 場景配樂軌(對齊 C g_scene_track):BATTLE=14、TOWN=2、DUNGEON=3。
+const (
+	trackBattle  = 14
+	trackTown    = 2
+	trackDungeon = 3
+)
 
 // dpadEdge:方向鍵「剛按下」→ facing 碼(0下 1上 2左 3右);無則 -1。選單導覽用。
 func dpadEdge() int {
@@ -233,17 +242,13 @@ func (g *Game) Update() error {
 		g.renderFrame()
 		return nil
 	}
-	// A:城內開命令窗;地表 → 進阿里阿罕城(觸控/鍵盤共用)
+	// A:開命令窗(地表/城內皆可,DQ 風格)
 	if in.Confirm {
-		if g.inTown {
-			g.cmd.Open()
-		} else {
-			g.enterTown()
-		}
+		g.cmd.Open()
 		g.renderFrame()
 		return nil
 	}
-	if in.Enter && !g.inTown { // 鍵盤 Enter 也進城
+	if in.Enter && !g.inTown { // 鍵盤 Enter:debug 直接進阿里阿罕
 		g.enterTown()
 		return nil
 	}
@@ -264,8 +269,14 @@ func (g *Game) Update() error {
 		}
 		g.cd = moveCooldown
 	}
-	if moved && !g.inTown && rand.Intn(16) == 0 { // 地表隨機遇敵(~1/16 步)
-		g.startEncounter()
+	if moved && !g.inTown { // 地表:踩到城鎮入口 → 進城;否則隨機遇敵(~1/16 步)
+		if cty := findCtyAt(g.px, g.py); cty >= 0 {
+			g.enterTownCty(cty)
+			return nil
+		}
+		if rand.Intn(16) == 0 {
+			g.startEncounter()
+		}
 	}
 	g.anim++
 	if moved || g.anim%18 == 0 { // 走動 / 待機都擺手腳
@@ -277,21 +288,53 @@ func (g *Game) Update() error {
 	return nil
 }
 
-func (g *Game) enterTown() {
+// enterTownCty:進 CTY 城鎮(懶載 + 快取)。移植 apply_scene 的城鎮載入。
+func (g *Game) enterTownCty(cty int) {
+	sc := g.towns[cty]
+	if sc == nil {
+		blkn := 1
+		if cty >= 0 && cty < len(mapBlkNum) {
+			blkn = mapBlkNum[cty]
+		}
+		s, err := loadTownScene(g.assets, g.worldPal, g.manBLS, cty, blkn)
+		if err != nil {
+			return // 載入失敗 → 留在地表
+		}
+		g.towns[cty] = s
+		sc = s
+	}
 	g.overPx, g.overPy = g.px, g.py
-	g.cur, g.inTown = g.town, true
-	g.px, g.py = g.town.spawnX, g.town.spawnY
+	g.town, g.cur, g.inTown, g.curCty = sc, sc, true, cty
+	g.px, g.py = sc.spawnX, sc.spawnY
 	g.cd = moveCooldown
-	g.music.Play(trackCastle) // 阿里阿罕(CASTLE 曲)
+	g.music.Play(ctyMusicTrack(cty))
 	g.renderFrame()
 }
 
+// enterTown:進阿里阿罕(CTY0;debug/後備)。
+func (g *Game) enterTown() { g.enterTownCty(0) }
+
 func (g *Game) exitTown() {
-	g.cur, g.inTown = g.over, false
+	g.cur, g.inTown, g.curCty = g.over, false, -1
 	g.px, g.py = g.overPx, g.overPy
 	g.cd = moveCooldown
 	g.music.Play(trackField) // 地表(FIELD 曲)
 	g.renderFrame()
+}
+
+// ctyMusicTrack:CTY → 配樂軌(移植 cty_music_kind:CASTLE 清單→1、BLK2/4/5 迷宮→3、其餘城鎮→2)。
+func ctyMusicTrack(cty int) int {
+	for _, c := range []int{0, 2, 6, 37, 73, 76} { // 城堡(王城)
+		if cty == c {
+			return trackCastle
+		}
+	}
+	if cty >= 0 && cty < len(mapBlkNum) {
+		if b := mapBlkNum[cty]; b == 2 || b == 4 || b == 5 {
+			return trackDungeon
+		}
+	}
+	return trackTown
 }
 
 func clampi(v, lo, hi int) int {
@@ -359,6 +402,9 @@ func (g *Game) onBattleEnd() {
 
 // renderFrame:戰鬥時畫戰鬥場景;否則畫地圖 viewport(攝影機 clamp)+ NPC + 主角 → g.frame。
 func (g *Game) renderFrame() {
+	if g.frame == nil { // 尚未初始化(如 NewGame 中途 debug 呼叫)→ 略過
+		return
+	}
 	if g.battle.active {
 		g.battle.draw(g.rgba, g.cur.pal)
 		g.frame.WritePixels(g.rgba)
@@ -512,37 +558,19 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 		w: fm.W, h: fm.H, tileAt: fm.Tile,
 	}
 
-	// 阿里阿罕城 scene(CTY00.DAT section 0 / DQ31.BLK + BLKBM1.DAT)
-	townBLK, err := dq3data.OpenBLK(ld.read("DQ31.BLK"))
-	if err != nil && ld.err == nil {
-		return nil, fmt.Errorf("OpenBLK 城鎮: %w", err)
-	}
-	tw, err := dq3data.OpenTown(ld.read("CTY00.DAT"), 0)
-	if err != nil && ld.err == nil {
-		return nil, fmt.Errorf("OpenTown 阿里阿罕: %w", err)
-	}
+	// 城鎮:懶載素材(NPC sprite 來源 + fs);阿里阿罕(CTY0)預載並快取。通用載入見 loadTownScene。
+	manBLS := ld.read("DQ3MAN.BLS")
 	if ld.err != nil {
 		return nil, ld.err
 	}
-	g.town = &Scene{
-		blk: townBLK, attr: dq3data.OpenBlockAttr(ld.read("BLKBM1.DAT")), pal: pal,
-		w: tw.W, h: tw.H, tileAt: tw.Tile,
-		spawnX: tw.SpawnX, spawnY: tw.SpawnY,
+	g.assets, g.worldPal, g.manBLS = assets, pal, manBLS
+	g.towns = map[int]*Scene{}
+	g.curCty = -1
+	town0, terr := loadTownScene(assets, pal, manBLS, 0, 1) // 阿里阿罕
+	if terr != nil {
+		return nil, fmt.Errorf("loadTown 阿里阿罕: %w", terr)
 	}
-	// NPC sprite:DQ3MAN.BLS,entry_base=(b2-4)*4;同 b2 共用一份(移植 dq3_scene_load_npc_sprites)
-	manBLS := ld.read("DQ3MAN.BLS")
-	sprCache := map[int]*dq3data.CharSprite{}
-	for _, n := range tw.NPCs {
-		if n.B2 < 4 { // key<4 無對應 BLS 角色
-			continue
-		}
-		spr, ok := sprCache[n.B2]
-		if !ok {
-			spr = dq3data.LoadCharSprite(manBLS, (n.B2-4)*4)
-			sprCache[n.B2] = spr
-		}
-		g.town.npcs = append(g.town.npcs, npcInst{x: n.X, y: n.Y, ctrl: n.Ctrl, b4: n.B4, spr: spr})
-	}
+	g.town, g.towns[0] = town0, town0
 
 	// 對話 + 命令窗:字型 D3TXT00.FON(常駐)+ 阿里阿罕 bank 1(D3TXT01.TXT,section dlg_bank=1)
 	fon := ld.read("D3TXT00.FON")
@@ -574,22 +602,19 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 
 	g.cur = g.over
 	g.px, g.py = g.over.w/2, g.over.h/2 // 地表起點(暫用中心)
-	g.heroGold = 120           // 初始金(新遊戲勇者)
-	g.equip = [4]int{3, 0x21}  // 初始裝備:銅劍 + 皮甲冑
-	_ = g.Load()               // 有存檔則續玩(冒險之書)
-	applyDebugEnv(g)  // debug 環境變數可覆蓋(截圖用)
-
-	// MT-32 音樂(music fs 為 nil → 靜音降級)
-	g.music = gaudio.NewMusic(music)
-	if g.inTown {
-		g.music.Play(trackCastle)
-	} else {
+	g.heroGold = 120                    // 初始金(新遊戲勇者)
+	g.equip = [4]int{3, 0x21}           // 初始裝備:銅劍 + 皮甲冑
+	g.music = gaudio.NewMusic(music)    // MT-32 音樂(music fs 為 nil → 靜音降級)
+	g.frame = ebiten.NewImage(ScreenW, ScreenH)
+	_ = g.Load()     // 有存檔則續玩(冒險之書)
+	applyDebugEnv(g) // debug 環境變數可覆蓋(此時 music/frame 已就緒)
+	// 起始配樂(依最終場景;debug 進城已自行換軌)
+	if !g.inTown {
 		g.music.Play(trackField)
 	}
-	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	g.renderFrame() // 首幀
-	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d、NPC %d)— 方向鍵走、Space 對話/選定、Esc 取消/出城、Enter 進城",
-		g.over.w, g.over.h, g.town.w, g.town.h, tw.SpawnX, tw.SpawnY, len(g.town.npcs))
+	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d、NPC %d)— 走到城鎮入口進城、Space 命令窗、Esc 出城",
+		g.over.w, g.over.h, g.town.w, g.town.h, g.town.spawnX, g.town.spawnY, len(g.town.npcs))
 	return g, nil
 }
 
@@ -610,6 +635,12 @@ func applyDebugEnv(g *Game) {
 	}
 	if os.Getenv("DQ3_TOUCH") != "" {
 		g.input.touch.everTouched = true
+	}
+	if r := os.Getenv("DQ3_ENTER"); r != "" { // debug:起手進指定 CTY 城(截圖驗證通用載入)
+		var cty int
+		if _, e := fmt.Sscanf(r, "%d", &cty); e == nil {
+			g.enterTownCty(cty)
+		}
 	}
 	if os.Getenv("DQ3_SHOP") != "" { // debug:起手開武防店(截圖驗證)
 		g.openFacility(1)
