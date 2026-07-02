@@ -52,7 +52,8 @@ bash dq3_remake_ebitan/build.sh          # docker：純 Go 單測(對拍真實�
 > headless 測試需先起 `Xvfb`(見 `build.sh`)。
 本機實跑(需顯示器):
 ```bash
-cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw go run .
+cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt32 go run .
+# 操作:方向鍵走動、Space=A(對話/命令窗選定)、Esc=B(取消/出城)、Enter=進阿里阿罕城
 ```
 > 素材(原版 `assets_raw/`)使用者合法持有、gitignore 不散布;需原版 `DQ3.EXE` 啟動(版權閘)。
 
@@ -82,7 +83,13 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw go run .
   - [x] **命令窗**(對話/咒文/狀況/道具/裝備/調查,2 欄×3 列,標籤 glyph 取自 D3TXT00 rec400):A 開窗、方向移游標、
     A 選定、B 關窗(移植 `dq3_cmdmenu`,游標繞回對拍測試)。**對話**指令已通;咒文/狀況/道具/裝備/調查待接對應系統。
   - [ ] 設施(店/宿)、場景轉場、戰鬥(公式/AI/升級)、事件/傳送
-- [ ] **階段 5 音訊**:MT-32 OGG(Ebiten `audio/vorbis` 內建,先)+ VOC 音效;SB-FM OPL2 之後補
+- [~] **階段 5 音訊(進行中)**:
+  - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
+    場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;
+    全非致命(無檔/無音訊裝置 → 靜音降級)。headless 解碼對拍測試(track_06/01 解出 7M/8.8M samples)。
+    執行需 `DQ3_MT32=<track_NN.ogg 目錄>`(未設 → 靜音)。
+  - [ ] VOC 音效;SB-FM OPL2 即時合成(最硬,之後補)
+  > ⚠ headless/CI 無 ALSA 裝置時,設了 `DQ3_MT32` 會讓 oto 開裝置失敗 → 請留空 `DQ3_MT32`(靜音)或給 dummy ALSA;真機/桌面有音效卡則正常播放。
 - [ ] **階段 6 輸入 + 觸控 UI**:鍵盤(桌面/web)+ 虛擬方向鍵/A/B/選單(行動)。
   **設計規劃已備**:[docs/63 Android 觸控 UI 規劃](../docs/63-ebiten-android-touch-ui-plan.md)
   (控制集=十字鍵+A+B、先抽象輸入層再綁來源、浮動十字鍵、多點觸控、分階段)

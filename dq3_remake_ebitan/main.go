@@ -12,6 +12,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gaudio"
+)
+
+// 場景配樂軌號(對齊 C dq3_audio g_scene_track):地表 FIELD=6、阿里阿罕城 CASTLE=1。
+const (
+	trackField  = 6
+	trackCastle = 1
 )
 
 const (
@@ -73,6 +80,7 @@ type Game struct {
 	cd, anim       int
 	dlg            Dialogue // 對話視窗
 	cmd            CmdMenu  // 野外命令窗
+	music          *gaudio.Music
 	frame          *ebiten.Image
 	rgba           []byte
 }
@@ -188,6 +196,7 @@ func (g *Game) enterTown() {
 	g.cur, g.inTown = g.town, true
 	g.px, g.py = g.town.spawnX, g.town.spawnY
 	g.cd = moveCooldown
+	g.music.Play(trackCastle) // 阿里阿罕(CASTLE 曲)
 	g.renderFrame()
 }
 
@@ -195,6 +204,7 @@ func (g *Game) exitTown() {
 	g.cur, g.inTown = g.over, false
 	g.px, g.py = g.overPx, g.overPy
 	g.cd = moveCooldown
+	g.music.Play(trackField) // 地表(FIELD 曲)
 	g.renderFrame()
 }
 
@@ -384,6 +394,13 @@ func main() {
 	}
 	if os.Getenv("DQ3_CMD") != "" { // debug:起手開命令窗(截圖驗證)
 		g.cmd.Open()
+	}
+	// MT-32 音樂(DQ3_MT32 指向 track_NN.ogg 目錄;無則靜音降級)
+	g.music = gaudio.NewMusic(os.Getenv("DQ3_MT32"))
+	if g.inTown {
+		g.music.Play(trackCastle)
+	} else {
+		g.music.Play(trackField)
 	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	g.renderFrame() // 首幀
