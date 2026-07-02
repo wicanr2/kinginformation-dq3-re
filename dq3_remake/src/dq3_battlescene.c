@@ -40,7 +40,7 @@ static dq3_text g_txt; static int g_txt_ok;
  * 預測:回合開始為每隻敵人「預先決定」下回合動作存進 g_eplan_*,敵方回合執行存好的決定 → 預測 100% 準。 */
 static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled, g_ehpmax;
 static int g_show_enemy_info = 1;             /* 開關(主程式依設定設)*/
-static int g_hurt_fx = 1;                     /* 受傷視覺特效(震動+黃綠閃)開關(主程式依設定設)*/
+static int g_hurt_fx_ms = 500;                /* 受傷視覺特效時長 ms(0=關;100~2000,預設 500,主程式依設定設)*/
 static dq3_color g_pal_save[256]; static int g_pal_n = 0;  /* 戰鬥 palette 備份(閃光後還原,別殘留)*/
 enum { EPLAN_ATTACK = 0, EPLAN_FLEE, EPLAN_SPELL };
 static int      g_eplan_act[8];               /* 動作類型(MAXE=8)*/
@@ -191,7 +191,7 @@ static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 
 /* 敵方 AI(docs/37):本場怪的 D3MNS AI 欄位 + 我方平均等級 + 本場逃走數。 */
 void dq3_battlescene_set_show_info(int on) { g_show_enemy_info = on ? 1 : 0; }
-void dq3_battlescene_set_hurt_fx(int on) { g_hurt_fx = on ? 1 : 0; }
+void dq3_battlescene_set_hurt_fx(int ms) { g_hurt_fx_ms = ms < 0 ? 0 : (ms > 2000 ? 2000 : ms); }
 
 /* 受傷震動:整個 framebuffer 水平位移 dx(空出的邊填黑),對齊原版「切 VGA 起始位址造成畫面跳」(RE file 0x13846)。 */
 static void shift_fb_x(uint8_t *fb, int dx)
@@ -210,8 +210,10 @@ static void shift_fb_x(uint8_t *fb, int dx)
 static void play_hurt_fx(const dq3_monster_sprite *spr, const int *ehp, int en,
                          const member *party, int cursor, int monster_id)
 {
-    int f, c, FR = 12;
-    if (!g_hurt_fx || g_pal_n <= 0) return;
+    int f, c, FR;
+    if (g_hurt_fx_ms <= 0 || g_pal_n <= 0) return;   /* 0=關 */
+    FR = g_hurt_fx_ms / 22;                           /* 時長 ms → 幀數(每幀 ~22ms)*/
+    if (FR < 3) FR = 3; if (FR > 100) FR = 100;
     for (f = 0; f < FR; f++) {
         int inten = FR - f;                          /* 12..1 漸弱 */
         int k  = (inten * 150) / FR;                 /* 閃光強度 */

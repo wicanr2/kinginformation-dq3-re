@@ -16,7 +16,7 @@ typedef struct {
     int music_volume;    /* 0..100 */
     int audio_backend;   /* 0=SB FM 即時合成、1=MT-32 預錄 WAV */
     int combat_info;     /* 0/1:戰鬥顯示敵人 HP + 下一輪預計動作(remake 增強)*/
-    int combat_hurt_fx;  /* 0/1:我方受傷時畫面震動+黃綠閃光(原版特效,RE file 0x13846)*/
+    int combat_hurt_fx;  /* 受傷特效時長 ms(0=關;100~2000,預設 500;原版特效 RE file 0x13846)*/
 } dq3_config;
 
 /* 預設值(rng=DOS 忠實)。 */

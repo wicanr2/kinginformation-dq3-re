@@ -20,7 +20,7 @@ void dq3_battlescene_set_light_orb(int has);
 
 /* ★ remake 增強:戰鬥顯示敵人 HP + 下一輪預計動作(可開關;原版無此資訊)。 */
 void dq3_battlescene_set_show_info(int on);
-void dq3_battlescene_set_hurt_fx(int on);   /* 受傷視覺特效(震動+黃綠閃)開關 */
+void dq3_battlescene_set_hurt_fx(int ms);   /* 受傷視覺特效時長 ms(0=關;100~2000)*/
 
 /* 跑一場戰鬥。
  *   monster_id/count:敵群(count 隻同種)。
