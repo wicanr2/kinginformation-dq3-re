@@ -1,0 +1,11 @@
+綁定 Android/iOS 前,把原版精訊 DQ3 素材放進這個目錄(與本檔同層):
+
+  DQ3.PAL  DQ3.BLK  DQ3CON.MAP  BLKBM.DAT
+  DQ31.BLK  BLKBM1.DAT  CTY00.DAT
+  DQ3MST.BLS  DQ3MAN.BLS
+  D3TXT00.FON  D3TXT01.TXT
+  mt32/track_01.ogg  mt32/track_06.ogg  ...(MT-32 預錄 OGG)
+
+這些是版權素材,gitignore 不入庫(見 ../../.gitignore)。
+綁定時由 mobile.go 的 //go:embed assets 打包進 .aar → APK。
+本 .txt 是佔位檔,讓 //go:embed assets 在素材尚未放入時仍能編譯(僅嵌入此檔)。

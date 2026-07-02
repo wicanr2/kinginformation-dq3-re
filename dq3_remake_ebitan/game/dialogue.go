@@ -1,4 +1,4 @@
-package main
+package game
 
 import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 

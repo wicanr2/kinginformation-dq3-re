@@ -6,8 +6,7 @@ package gaudio
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"path/filepath"
+	"io/fs"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
@@ -20,15 +19,15 @@ type Music struct {
 	ctx     *audio.Context
 	player  *audio.Player
 	cur     int
-	dir     string
+	fsys    fs.FS // 放 track_NN.ogg 的檔案系統(桌面=os.DirFS、行動=embed.FS)
 	enabled bool
 	vol     float64
 }
 
-// NewMusic:dir = 放 track_NN.ogg 的目錄(空字串 → 停用音樂)。
-func NewMusic(dir string) (m *Music) {
-	m = &Music{dir: dir, cur: -1, vol: 0.5}
-	if dir == "" {
+// NewMusic:fsys = 放 track_NN.ogg 的檔案系統(nil → 停用音樂)。桌面傳 os.DirFS(dir),行動傳 embed 子樹。
+func NewMusic(fsys fs.FS) (m *Music) {
+	m = &Music{fsys: fsys, cur: -1, vol: 0.5}
+	if fsys == nil {
 		return m
 	}
 	defer func() {
@@ -49,7 +48,7 @@ func (m *Music) Play(track int) {
 	if m.cur == track && m.player != nil && m.player.IsPlaying() {
 		return
 	}
-	data, err := os.ReadFile(filepath.Join(m.dir, fmt.Sprintf("track_%02d.ogg", track)))
+	data, err := fs.ReadFile(m.fsys, fmt.Sprintf("track_%02d.ogg", track))
 	if err != nil {
 		return
 	}

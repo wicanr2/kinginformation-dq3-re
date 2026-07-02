@@ -1,0 +1,12 @@
+# Android/iOS 綁定用的版權素材(綁定前放入,不入庫);保留佔位說明檔
+mobile/assets/*
+!mobile/assets/PLACE_ASSETS_HERE.txt
+
+# 綁定產物
+*.aar
+*.xcframework
+dq3-android/
+
+# 本機素材/暫存
+assets_raw/
+scratch_*.png

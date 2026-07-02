@@ -33,13 +33,22 @@ Go parser(`internal/dq3data`)解碼、Ebiten 畫成 palette swatches。這張是
 
 ```
 dq3_remake_ebitan/
-├── go.mod / go.sum        # module(Ebiten v2.9.9)
-├── main.go                # Ebiten Game shell(開窗/主迴圈/Layout 640×350)
-├── internal/dq3data/      # ★ 純 Go 資料解析器(移植自 C;無引擎相依,可 headless 測)
-│   ├── palette.go         #   DQ3.PAL 解碼(移植 dq3_pal_decode)
-│   └── palette_test.go    #   對拍真實 DQ3.PAL(逐色驗證與 C 公式一致)
-├── docs/phase1-palette.png# 上方成果截圖
-└── build.sh               # docker golang 建置(不污染 host):test + Ebiten compile-check
+├── go.mod / go.sum        # module(Ebiten v2.9.9 + audio/vorbis + mobile)
+├── main.go                # 桌面進入點(薄:os.DirFS 組資產 → game.NewGame → RunGame)
+├── game/                  # ★ 遊戲邏輯套件(桌面 + Android 共用)
+│   ├── game.go            #   Scene/Game/NewGame、Update/renderFrame、攝影機、碰撞
+│   ├── dialogue.go        #   對話框(移植 dq3_dialogue)+ glyph/框繪製
+│   ├── cmdmenu.go         #   野外命令窗(移植 dq3_cmdmenu)
+│   ├── input.go           #   抽象輸入層 InputState(鍵盤+觸控合流,deep module)
+│   └── touch.go           #   虛擬觸控(浮動十字鍵 + A/B,多點觸控)
+├── internal/dq3data/      # ★ 純 Go 資料解析器(移植自 C;無引擎相依,headless 對拍)
+│   ├── palette/blk/fieldmap/bls/attr/townmap/text.go  # 各格式解析 + _test 對拍
+├── internal/gaudio/       # MT-32 OGG 音樂(Ebiten audio/vorbis;fs.FS 來源)
+├── mobile/                # Android/iOS 綁定(ebitenmobile;//go:embed assets）
+│   ├── mobile.go          #   mobile.SetGame(game.NewGame(embedFS))(android||ios tag)
+│   └── assets/            #   綁定前放原版素材(版權 gitignore)
+├── build.sh               # docker golang 建置 + 測試
+└── build-android.sh       # ebitenmobile bind → .aar（需本機 Android SDK/NDK）
 ```
 
 ## 建置 / 執行
@@ -96,7 +105,12 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **虛擬觸控**(`touch.go`):左下浮動十字鍵(4 向量化 + 死區)+ 右下 A/B,半透明疊層、**多點觸控**
     (十字鍵 + 按鈕同時)、有觸控過才顯示(免擾桌面)。`quantize4`/`zoneOf` 單元測試。Xvfb 截圖驗證疊層。
   - [ ] 情境化 A/B 標籤、安全區 inset、DeviceScaleFactor 尺寸(打磨,之後)
-- [ ] **階段 7 Android**:`ebitenmobile bind` → `.aar` → Android Studio + 素材入 APK + 版權閘 → APK/AAB
+- [~] **階段 7 Android(結構就緒)**:
+  - [x] **可綁定架構**:遊戲邏輯抽進 `game/` 套件(桌面 `main.go` 與行動 `mobile/` 共用);
+    資產改走 `fs.FS`(`NewGame(assets, music fs.FS)`)→ 桌面 `os.DirFS`、行動 `embed.FS`。
+  - [x] **mobile 綁定套件**(`mobile/mobile.go`,`//go:embed assets` + `mobile.SetGame`)+ `build-android.sh`
+    (`ebitenmobile bind -target android` → `.aar`)。桌面 `go build ./...` 不受影響(build tag 隔離)。
+  - [ ] 實跑 `ebitenmobile bind` → APK/AAB:**需本機 Android SDK + NDK**(不在 docker 內做);素材放 `mobile/assets/`(版權,gitignore)。
 - [ ] **階段 8 紅利**:同碼編 WASM(瀏覽器 demo)+ 桌面
 
 ## 原則
