@@ -333,9 +333,12 @@ func (g *Game) examine() {
 		g.flags = map[int]bool{}
 	}
 	check := func(x, y int) bool {
-		_, subid, ok := g.cur.tileEvent(x, y)
+		ev, subid, ok := g.cur.tileEvent(x, y)
 		if !ok {
 			return false
+		}
+		if ev[0] == 2 { // 事件 type-2 → scripted 傳送(warps[param])
+			return g.warpTo(ev[1])
 		}
 		t := treasureFor(g.curCty, g.cur.sec, subid)
 		if t == nil {
@@ -540,7 +543,11 @@ func (g *Game) Update() error {
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
 	} else if moved && !g.inTown { // 地表:踩到城鎮入口 → 進城;否則隨機遇敵(~1/16 步)
-		if cty := findCtyAt(g.px, g.py); cty >= 0 {
+		cty := findCtyAt(g.px, g.py)
+		if pc := owPortalResolve(g.px, g.py, g.flags); pc >= 0 { // 旗標條件 portal 覆蓋(同點依進度變城)
+			cty = pc
+		}
+		if cty >= 0 {
 			g.enterTownCty(cty)
 			return nil
 		}
@@ -641,6 +648,39 @@ func (g *Game) tryTransition() {
 	}
 	g.cd = moveCooldown
 	g.renderFrame()
+}
+
+// warpTo:event type-2 觸發 → warps[param]={destCty,X,Y} 切場景。移植 dq3_warp_get + main.c 消費。
+// 目的 CTY 無效(≥100 或載入失敗)→ 不傳送(對齊 C town_load 失敗保底)。
+func (g *Game) warpTo(param int) bool {
+	dcty, dx, dy, ok := warpGet(param)
+	if !ok || dcty < 0 || dcty >= 100 {
+		return false
+	}
+	blkn := 1
+	if dcty < len(mapBlkNum) {
+		blkn = mapBlkNum[dcty]
+	}
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, dcty, blkn, 0)
+	if err != nil {
+		return false
+	}
+	if !g.inTown {
+		g.overPx, g.overPy = g.px, g.py
+	}
+	g.town, g.cur, g.inTown, g.curCty = ns, ns, true, dcty
+	if dx < ns.w {
+		g.px = dx
+	}
+	if dy < ns.h {
+		g.py = dy
+	}
+	if ns.dlgText != nil {
+		g.dlg.tx = ns.dlgText
+	}
+	g.music.Play(ctyMusicTrack(dcty))
+	g.renderFrame()
+	return true
 }
 
 // enterTown:進阿里阿罕(CTY0;debug/後備)。
