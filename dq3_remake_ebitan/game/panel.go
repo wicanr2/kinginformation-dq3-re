@@ -23,9 +23,9 @@ func (g *Game) drawStatus(rgba []byte, white dq3data.Color) {
 	drawGlyph(rgba, g.dlg.tx, x, 90, 22, white)      // H
 	drawNumber(rgba, g.dlg.tx, x+24, 90, g.heroHP, white)
 	drawNumber(rgba, g.dlg.tx, x+120, 90, maxHP, white)
-	drawNumber(rgba, g.dlg.tx, x, 120, atk, white)      // 攻
-	drawNumber(rgba, g.dlg.tx, x+120, 120, def, white)  // 防
-	drawNumber(rgba, g.dlg.tx, x+240, 120, agi, white)  // 敏
+	drawNumber(rgba, g.dlg.tx, x, 120, atk, white)     // 攻
+	drawNumber(rgba, g.dlg.tx, x+120, 120, def, white) // 防
+	drawNumber(rgba, g.dlg.tx, x+240, 120, agi, white) // 敏
 	drawNumber(rgba, g.dlg.tx, x, 150, int(g.heroExp), white)
 	drawNumber(rgba, g.dlg.tx, x, 180, g.heroGold, yellow)
 }

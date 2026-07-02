@@ -1,0 +1,19 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.wicanr2.dq3'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.wicanr2.dq3'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.aar'])  // ebitenmobile bind 產出 dq3.aar
+}

@@ -16,8 +16,8 @@ func (r *RNG) Next(n int) int {
 	if n <= 0 {
 		return 0
 	}
-	s := r.state + 0x9018       // add ax,0x9018
-	s = (s << 3) | (s >> 13)    // rol ax,1 ×3
-	r.state = s                 // mov [0xb5a],ax
-	return int(s % uint16(n))   // div bx → 餘數
+	s := r.state + 0x9018     // add ax,0x9018
+	s = (s << 3) | (s >> 13)  // rol ax,1 ×3
+	r.state = s               // mov [0xb5a],ax
+	return int(s % uint16(n)) // div bx → 餘數
 }

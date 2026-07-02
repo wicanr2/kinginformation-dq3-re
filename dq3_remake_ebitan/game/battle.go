@@ -24,8 +24,8 @@ const (
 // 戰鬥指令 glyph 標籤(對齊 C CMD_WAR/FLEE/DEF/ITEM/SPELL)。
 var battleCmdLabels = [bcN][2]int{{107, 207}, {629, 630}, {203, 204}, {402, 1354}, {429, 430}}
 
-const herbCode = 0x41   // 藥草 item id
-const herbHeal = 30     // DQ3_HERB_HEAL
+const herbCode = 0x41 // 藥草 item id
+const herbHeal = 30   // DQ3_HERB_HEAL
 
 type battlePhase int
 
@@ -38,33 +38,33 @@ const (
 
 // Battle 是一場戰鬥的狀態。
 type Battle struct {
-	mons *dq3data.Monsters
-	shp  []byte
+	mons     *dq3data.Monsters
+	shp      []byte
 	mpal     []dq3data.Color // MNSBK.PAL(怪物色盤 + packbg 色盤)
 	tx       *dq3data.Text
-	nameText *dq3data.Text // D3TXT00 名表(咒文名 rec)
-	scr      []byte        // PACKBG.SCR(戰鬥背景)
+	nameText *dq3data.Text                            // D3TXT00 名表(咒文名 rec)
+	scr      []byte                                   // PACKBG.SCR(戰鬥背景)
 	bg       *[dq3data.PackBGH][dq3data.PackBGW]uint8 // 解碼後背景(草原 page22)
 
-	active   bool
-	monID    int
-	spr      *dq3data.MonsterSprite
-	enemyHP  int
-	enemyMax int
-	heroHP   int
-	heroMax  int
-	heroAtk  int
-	heroDef  int
-	heroAgi  int
-	cursor    int
-	msg       string
-	phase     battlePhase
-	result    int // 0 進行中、1 勝、2 敗、3 逃
-	gotExp    int
-	gotGold   int
-	rng       *dosrng.RNG
-	flashCol  int // >0:受擊閃光殘餘幀
-	defending bool
+	active      bool
+	monID       int
+	spr         *dq3data.MonsterSprite
+	enemyHP     int
+	enemyMax    int
+	heroHP      int
+	heroMax     int
+	heroAtk     int
+	heroDef     int
+	heroAgi     int
+	cursor      int
+	msg         string
+	phase       battlePhase
+	result      int // 0 進行中、1 勝、2 敗、3 逃
+	gotExp      int
+	gotGold     int
+	rng         *dosrng.RNG
+	flashCol    int // >0:受擊閃光殘餘幀
+	defending   bool
 	heroHerbs   int   // 開戰時持有藥草數
 	usedHerbs   int   // 本戰用掉藥草數(戰後從背包扣)
 	heroLevel   int   // 我方等級(敵 AI 逃跑門檻用)

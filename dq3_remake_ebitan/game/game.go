@@ -27,7 +27,7 @@ const (
 const (
 	ScreenW, ScreenH = 640, 350
 	TileW, TileH     = 32, 24
-	ViewCols         = ScreenW / TileW              // 20(對齊 C VIEW_COLS)
+	ViewCols         = ScreenW / TileW               // 20(對齊 C VIEW_COLS)
 	ViewRows         = (ScreenH + TileH - 1) / TileH // 15(ceil,對齊 C VIEW_ROWS)
 	moveCooldown     = 6                             // 每幾幀走一格(grid walk)
 )
@@ -95,19 +95,19 @@ type Game struct {
 	over, town     *Scene // 地表 / 目前城鎮
 	cur            *Scene
 	inTown         bool
-	curCty         int            // 目前所在 CTY 號(-1=地表)
-	assets         fs.FS          // 素材(懶載其他城鎮)
+	curCty         int   // 目前所在 CTY 號(-1=地表)
+	assets         fs.FS // 素材(懶載其他城鎮)
 	worldPal       []dq3data.Color
 	manBLS         []byte         // NPC sprite 來源
 	towns          map[int]*Scene // 已載入城鎮快取(cty→Scene)
-	overPx, overPy int // 記住進城前的地表座標(Esc 回來用)
+	overPx, overPy int            // 記住進城前的地表座標(Esc 回來用)
 	hero           *dq3data.CharSprite
 	px, py         int // 主角在 cur 內的 tile 座標
 	facing         int // 0..3
 	walk           int // 0/1 走路動畫相位
 	cd, anim       int
-	dlg            Dialogue // 對話視窗
-	cmd            CmdMenu  // 野外命令窗
+	dlg            Dialogue  // 對話視窗
+	cmd            CmdMenu   // 野外命令窗
 	battle         Battle    // 戰鬥場景
 	shop           Shop      // 商店(武防/道具店)
 	tavern         Tavern    // 露易達酒館(招募)
@@ -120,21 +120,21 @@ type Game struct {
 	titlePix       []uint8
 	titlePal       []dq3data.Color
 	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
-	heroExp     uint32
-	heroGold    int
-	heroHP      int
-	heroMP      int
-	heroInit    bool
-	equip       [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
-	companions  []*Member    // 同伴(隊長=hero*;酒館招募,現為預建示範)
-	flags       map[int]bool // 一次性旗標(寶箱/事件已取)
-	noticeCode  int          // 取得道具通知(item code;-1=無)
-	noticeTimer int
-	shipOwned   bool // 已取得船(波魯多加胡椒換船,milestone SHIP)
-	shipAboard  bool // 目前在船上
-	shipX, shipY int // 船停泊位置(地表)
-	frame       *ebiten.Image
-	rgba        []byte
+	heroExp      uint32
+	heroGold     int
+	heroHP       int
+	heroMP       int
+	heroInit     bool
+	equip        [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	companions   []*Member    // 同伴(隊長=hero*;酒館招募,現為預建示範)
+	flags        map[int]bool // 一次性旗標(寶箱/事件已取)
+	noticeCode   int          // 取得道具通知(item code;-1=無)
+	noticeTimer  int
+	shipOwned    bool // 已取得船(波魯多加胡椒換船,milestone SHIP)
+	shipAboard   bool // 目前在船上
+	shipX, shipY int  // 船停泊位置(地表)
+	frame        *ebiten.Image
+	rgba         []byte
 }
 
 // 場景配樂軌(對齊 C g_scene_track):BATTLE=14、TOWN=2、DUNGEON=3。
@@ -849,7 +849,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	// 對話 + 命令窗:字型 D3TXT00.FON(常駐)+ 阿里阿罕 bank 1(D3TXT01.TXT,section dlg_bank=1)
 	fon := ld.read("D3TXT00.FON")
 	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
-	g.cmd.tx = g.dlg.tx                                       // 命令窗標籤 glyph 也走同一字型
+	g.cmd.tx = g.dlg.tx                                             // 命令窗標籤 glyph 也走同一字型
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
 	g.battle.nameText = g.shop.nameText                             // 咒文名同名表
 	g.tavern.tx = g.dlg.tx                                          // 酒館 glyph
@@ -878,13 +878,13 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	}
 
 	g.cur = g.over
-	g.px, g.py = g.over.w/2, g.over.h/2 // 地表起點(暫用中心)
+	g.px, g.py = g.over.w/2, g.over.h/2  // 地表起點(暫用中心)
 	g.heroGold = 120                     // 初始金(新遊戲勇者)
 	g.equip = [4]int{3, 0x21}            // 初始裝備:銅劍 + 皮甲冑
 	g.companions = startingCompanions(0) // 示範隊伍(戰士/僧侶/魔法使);酒館招募之後接
 	g.flags = map[int]bool{}
 	g.noticeCode = -1
-	g.music = gaudio.NewMusic(music)     // MT-32 音樂(music fs 為 nil → 靜音降級)
+	g.music = gaudio.NewMusic(music)                    // MT-32 音樂(music fs 為 nil → 靜音降級)
 	if sfxRaw := ld.read("FVOC.VCX"); len(sfxRaw) > 0 { // 數位音效(VOC)
 		bank := dq3data.DecodeVOCBank(sfxRaw, 44100)
 		pcm := make([][]int16, len(bank))

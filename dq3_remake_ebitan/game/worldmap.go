@@ -173,9 +173,9 @@ func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn i
 }
 
 // CTYnn.DAT / DQ3n.BLK / BLKBMn.DAT 檔名(避免 fmt 依賴,手拼兩位數)。
-func ctyFile(cty int) string  { return "CTY" + two(cty) + ".DAT" }
-func blkFile(n int) string    { return "DQ3" + string(rune('0'+n)) + ".BLK" }
-func blkbmFile(n int) string  { return "BLKBM" + string(rune('0'+n)) + ".DAT" }
+func ctyFile(cty int) string { return "CTY" + two(cty) + ".DAT" }
+func blkFile(n int) string   { return "DQ3" + string(rune('0'+n)) + ".BLK" }
+func blkbmFile(n int) string { return "BLKBM" + string(rune('0'+n)) + ".DAT" }
 func two(n int) string {
 	if n < 10 {
 		return "0" + string(rune('0'+n))

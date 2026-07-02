@@ -5,12 +5,12 @@ import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 // 野外命令窗(命令):2 欄 × 3 列指令格。1:1 移植 C dq3_cmdmenu.c。
 // 標籤 glyph 取自 D3TXT00 rec400(官方字串,非猜)。
 const (
-	cmdTalk = iota // 對話
-	cmdSpell       // 咒文
-	cmdStatus      // 狀況
-	cmdItem        // 道具
-	cmdEquip       // 裝備
-	cmdExamine     // 調查
+	cmdTalk    = iota // 對話
+	cmdSpell          // 咒文
+	cmdStatus         // 狀況
+	cmdItem           // 道具
+	cmdEquip          // 裝備
+	cmdExamine        // 調查
 	cmdCount
 )
 

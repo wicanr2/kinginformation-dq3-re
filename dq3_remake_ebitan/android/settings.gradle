@@ -1,0 +1,2 @@
+rootProject.name = "DQ3Remake"
+include ':app'

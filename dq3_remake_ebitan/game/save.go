@@ -9,11 +9,11 @@ import (
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
 type saveState struct {
-	HeroExp   uint32 `json:"exp"`
-	HeroHP    int    `json:"hp"`
-	HeroMP    int    `json:"mp"`
-	HeroGold  int    `json:"gold"`
-	Inventory []int  `json:"inv"`
+	HeroExp   uint32    `json:"exp"`
+	HeroHP    int       `json:"hp"`
+	HeroMP    int       `json:"mp"`
+	HeroGold  int       `json:"gold"`
+	Inventory []int     `json:"inv"`
 	Equip     [4]int    `json:"eq"`
 	Comps     []compSav `json:"comps"`
 	Flags     []int     `json:"flags"`
@@ -27,9 +27,9 @@ type saveState struct {
 
 // compSav 是一名同伴的存檔資料。
 type compSav struct {
-	Class, Gender          int
-	Exp                    uint32
-	CurHP, CurMP           int
+	Class, Gender               int
+	Exp                         uint32
+	CurHP, CurMP                int
 	Weapon, Armor, Shield, Head int
 }
 
@@ -49,7 +49,7 @@ func (g *Game) snapshot() saveState {
 		Comps:     compsToSav(g.companions),
 		Flags:     flagsToSav(g.flags),
 		ShipOwned: g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
-		PX:        g.px, PY: g.py, InTown: g.inTown,
+		PX: g.px, PY: g.py, InTown: g.inTown,
 	}
 }
 

@@ -1,0 +1,72 @@
+name: android
+
+# Ebiten port → Android APK(ebitenmobile bind → .aar → gradle assembleDebug)。
+# 版權素材 gitignore 不入庫:
+#   - 不帶素材 → 仍會編出 .aar + APK(引擎可裝,但無遊戲資料 → 黑畫面),證明工具鏈通。
+#   - 要能玩:設 repo secret DQ3_ASSETS_ZIP_B64 =(assets_raw + mt32/ 打包成 zip 再 base64)。
+#     workflow 會解壓進 mobile/assets/ 再綁定 → 完整 APK。
+on:
+  workflow_dispatch:
+  push:
+    tags: [ 'v*' ]
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Android NDK
+        run: |
+          yes 2>/dev/null | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "ndk;26.1.10909125" "platforms;android-34" "build-tools;34.0.0" >/dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.1.10909125" >> "$GITHUB_ENV"
+
+      - name: Install ebitenmobile
+        run: go install github.com/hajimehoshi/ebiten/v2/cmd/ebitenmobile@v2.9.9
+
+      - name: Inject assets (optional, private secret)
+        env:
+          ASSETS_B64: ${{ secrets.DQ3_ASSETS_ZIP_B64 }}
+        run: |
+          cd dq3_remake_ebitan
+          if [ -n "$ASSETS_B64" ]; then
+            echo "$ASSETS_B64" | base64 -d > /tmp/assets.zip
+            unzip -o -q /tmp/assets.zip -d mobile/assets/
+            echo "帶入素材:$(ls mobile/assets | wc -l) 檔"
+          else
+            echo "未設 DQ3_ASSETS_ZIP_B64 secret → 引擎-only APK(可裝,黑畫面)"
+          fi
+
+      - name: ebitenmobile bind → .aar
+        run: |
+          cd dq3_remake_ebitan
+          mkdir -p android/app/libs
+          "$(go env GOPATH)/bin/ebitenmobile" bind \
+            -target android -androidapi 21 \
+            -javapkg com.wicanr2.dq3 \
+            -o android/app/libs/dq3.aar ./mobile
+          ls -la android/app/libs/dq3.aar
+
+      - name: Build APK (gradle assembleDebug)
+        run: |
+          cd dq3_remake_ebitan/android
+          gradle wrapper --gradle-version 8.7 --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dq3-android
+          path: |
+            dq3_remake_ebitan/android/app/build/outputs/apk/debug/*.apk
+            dq3_remake_ebitan/android/app/libs/dq3.aar
+          if-no-files-found: warn

@@ -3,6 +3,7 @@
 dq3.zip
 work/
 dist/
+dist-all/
 assets_raw/
 assets_out/
 
@@ -41,3 +42,4 @@ dq3_bbs/*.jpeg
 new_map_dq3/
 # 孤兒暫存截圖(未被 docs 引用的 RE 探查圖)
 docs/img/
+dq3_real_video/

@@ -25,14 +25,14 @@ var multX2 = [16]int{1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 20, 24, 24, 30, 30}
 var modOff = [nch]int{0x00, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x10, 0x11, 0x12}
 
 type op struct {
-	mult          int
-	tlAmp         float64
+	mult           int
+	tlAmp          float64
 	ar, dr, sl, rr int
-	wave          int
-	ksr, egt      int
-	phase, phinc  float64
-	state         int
-	env, last     float64
+	wave           int
+	ksr, egt       int
+	phase, phinc   float64
+	state          int
+	env, last      float64
 }
 
 type ch struct {

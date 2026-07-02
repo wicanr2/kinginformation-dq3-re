@@ -20,13 +20,15 @@ var assetsFS embed.FS
 func init() {
 	assets, err := fs.Sub(assetsFS, "assets")
 	if err != nil {
-		log.Fatalf("mobile assets: %v", err)
+		log.Printf("mobile assets: %v", err)
+		return
 	}
 	music, _ := fs.Sub(assetsFS, "assets/mt32") // 無 mt32 → 靜音降級(gaudio 容忍)
 
 	g, err := game.NewGame(assets, music)
-	if err != nil {
-		log.Fatalf("mobile NewGame: %v", err)
+	if err != nil { // 無素材(如 CI 未帶版權素材)→ 非致命,不 SetGame(黑畫面,不崩)
+		log.Printf("mobile NewGame(需把原版素材放進 mobile/assets):%v", err)
+		return
 	}
 	mobile.SetGame(g)
 }

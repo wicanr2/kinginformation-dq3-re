@@ -12,11 +12,11 @@ const (
 	tavName   = 1 // 命名(英數格盤)
 	tavGender = 2 // 選性別
 
-	niChars  = 36 // 0-9 + A-Z
-	niCols   = 9
-	niCells  = niChars + 2 // + ← + OK
-	niCellBS = niChars     // 退格
-	niCellOK = niChars + 1 // 完成
+	niChars   = 36 // 0-9 + A-Z
+	niCols    = 9
+	niCells   = niChars + 2 // + ← + OK
+	niCellBS  = niChars     // 退格
+	niCellOK  = niChars + 1 // 完成
 	niNameMax = 4
 )
 
@@ -32,14 +32,14 @@ func niCellGlyph(cell int) int {
 }
 
 type Tavern struct {
-	tx       *dq3data.Text
-	active   bool
-	stage    int
-	cursor   int
-	pendCls  int
-	nameBuf  []int
-	nameZhu  bool           // true=注音模式(Tab 切換)
-	zh       zhuyin.Composer
+	tx      *dq3data.Text
+	active  bool
+	stage   int
+	cursor  int
+	pendCls int
+	nameBuf []int
+	nameZhu bool // true=注音模式(Tab 切換)
+	zh      zhuyin.Composer
 }
 
 func (tv *Tavern) open() { tv.active, tv.stage, tv.cursor, tv.nameBuf = true, tavClass, 0, nil }
