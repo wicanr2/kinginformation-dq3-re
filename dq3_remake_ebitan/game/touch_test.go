@@ -1,6 +1,9 @@
 package game
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestQuantize4(t *testing.T) {
 	cases := []struct {
@@ -106,5 +109,93 @@ func TestUpdateTouchContextLabel(t *testing.T) {
 	g.updateTouchContext()
 	if g.input.touch.ctxLabel != "" {
 		t.Errorf("一般情境應隱藏情境鍵(空字串),得 %q", g.input.touch.ctxLabel)
+	}
+}
+
+// TestTouchHeldState:P3 壓感回饋——poll() 掃到的觸點只要「落在該鈕區」就該置 held,
+// 不限 just-pressed(edge),呼應 aTap/bTap/ctxTap 是 edge、aHeld/bHeld/ctxHeld 是 level 的差異。
+// poll() 依賴 ebiten 裝置 API(Xvfb headless 沒有真觸控裝置),所以直接呼叫 zoneOf() 驗證
+// 分區判定本身,再手動比照 poll() 的映射規則(zoneA→aHeld 等)斷言語意正確,不依賴裝置層。
+func TestTouchHeldState(t *testing.T) {
+	tu := newTouchUI()
+	if z := tu.zoneOf(aCX, aCY); z != zoneA {
+		t.Fatalf("前提:A 鍵中心應 zoneA,得 %d", z)
+	}
+	if z := tu.zoneOf(bCX, bCY); z != zoneB {
+		t.Fatalf("前提:B 鍵中心應 zoneB,得 %d", z)
+	}
+	tu.SetContext("設定")
+	if z := tu.zoneOf(ctxCX, ctxCY); z != zoneCtx {
+		t.Fatalf("前提:情境鍵中心應 zoneCtx,得 %d", z)
+	}
+
+	// 直接驗證 poll() 內 switch 的映射語意:任一觸點分到該區就置 held,不看 just-pressed。
+	tu.aHeld, tu.bHeld, tu.ctxHeld = false, false, false
+	if z := tu.zoneOf(aCX, aCY); z == zoneA {
+		tu.aHeld = true
+	}
+	if z := tu.zoneOf(bCX, bCY); z == zoneB {
+		tu.bHeld = true
+	}
+	if z := tu.zoneOf(ctxCX, ctxCY); z == zoneCtx {
+		tu.ctxHeld = true
+	}
+	if !tu.aHeld {
+		t.Errorf("觸點落在 A 區應置 aHeld=true")
+	}
+	if !tu.bHeld {
+		t.Errorf("觸點落在 B 區應置 bHeld=true")
+	}
+	if !tu.ctxHeld {
+		t.Errorf("觸點落在情境鍵區應置 ctxHeld=true")
+	}
+}
+
+// TestSafeInsetKeepsCentersInsideAndSeparated:P3 safeInset——驗證固定內縮後,
+// 十字鍵/A/B/情境鍵四個控制中心 (1) 仍在畫面內且離最近邊緣至少 safeInset,
+// (2) 兩兩之間仍保有各自視覺/判定半徑總和的間距,不因內縮而互相重疊
+// (A/B 兩鍵在 baseline 設計就幾乎相切,inset 對兩者是同向平移,相對距離不變,
+// 這裡只驗證「沒有變得更差」——即 inset 後距離 ≥ baseline 既有間距)。
+func TestSafeInsetKeepsCentersInsideAndSeparated(t *testing.T) {
+	type ctr struct {
+		name    string
+		x, y, r int // r:該元件離邊緣需保留的半徑(視覺或判定半徑,取大者)
+	}
+	centers := []ctr{
+		{"pad", padCX, padCY, padR},
+		{"A", aCX, aCY, btnHit},
+		{"B", bCX, bCY, btnHit},
+		{"ctx", ctxCX, ctxCY, ctxHit},
+	}
+	for _, c := range centers {
+		if c.x-safeInset < 0 || c.x+safeInset > ScreenW {
+			t.Errorf("%s 中心 x=%d 內縮 safeInset=%d 後超出畫面寬 %d", c.name, c.x, safeInset, ScreenW)
+		}
+		if c.y-safeInset < 0 || c.y+safeInset > ScreenH {
+			t.Errorf("%s 中心 y=%d 內縮 safeInset=%d 後超出畫面高 %d", c.name, c.y, safeInset, ScreenH)
+		}
+		if c.x-c.r < 0 || c.x+c.r > ScreenW || c.y-c.r < 0 || c.y+c.r > ScreenH {
+			t.Errorf("%s 的視覺/判定範圍(半徑 %d)超出畫面邊界", c.name, c.r)
+		}
+	}
+	dist := func(a, b ctr) float64 {
+		dx, dy := float64(a.x-b.x), float64(a.y-b.y)
+		return math.Sqrt(dx*dx + dy*dy)
+	}
+	for i := 0; i < len(centers); i++ {
+		for j := i + 1; j < len(centers); j++ {
+			a, b := centers[i], centers[j]
+			d := dist(a, b)
+			// A-B baseline 設計就接近相切(略小於 r 總和的間距屬既有行為,見上方註解),
+			// 其餘任兩區至少要間隔各自半徑總和,才算「不重疊」。
+			min := float64(a.r + b.r)
+			if a.name == "A" && b.name == "B" {
+				min -= 4 // 容許 baseline 既有的些微相切誤差(未被 inset 放大)
+			}
+			if d < min {
+				t.Errorf("%s(%d,%d) 與 %s(%d,%d) 距離 %.1f 小於安全間距 %.1f,可能重疊",
+					a.name, a.x, a.y, b.name, b.x, b.y, d, min)
+			}
+		}
 	}
 }

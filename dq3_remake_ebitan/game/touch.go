@@ -8,17 +8,36 @@ import (
 
 // 虛擬觸控控制(Android/行動):左下浮動十字鍵 + 右下 A/B。實作 docs/63 規劃。
 // 半透明疊在畫面上;多點觸控(十字鍵 + 按鈕同時)。座標用 Ebiten 邏輯座標(640×350)。
+//
+// P3 打磨(docs/64 §4):
+//  1. 壓感回饋 —— aHeld/bHeld/ctxHeld(見 TouchUI 欄位 + poll())驅動 draw() 提高 alpha/放大。
+//  2. safeInset —— 下面用「原始邊距 + safeInset」重算各元件中心,固定內縮避開瀏海/手勢列/圓角。
+//     真正的 per-device 安全區(瀏海實際挖孔座標)要靠 mobile binding 餵 insets,屬 P4 真機。
+//  3. DeviceScaleFactor —— 特意不接。在「固定 640×350 邏輯畫布 + Ebiten letterbox」模型下,
+//     Ebiten 已把整個邏輯畫布依視窗大小等比縮放到實體螢幕,遊戲端看不到「這台裝置實際多少
+//     物理 px/mm」;ebiten.Monitor().DeviceScaleFactor() 只反映 backing-store 像素密度
+//     (points→physical px 的比例),不等於「這個邏輯半徑在這支手機上有幾 mm」——沒有實體螢幕
+//     尺寸/PPI 就算讀到 scale factor 也無法推回「按鈕是否 ≥ 9mm」,硬套只會是猜的常數,不算
+//     有意義的 best-effort。P4 真機驗證時直接量測/回報實體按鈕尺寸比空談 scale factor 準確。
 const (
-	padCX, padCY  = 92, ScreenH - 84 // 十字鍵閒置中心(左下)
-	padR          = 58               // 十字鍵作用半徑
-	touchDeadzone = 14               // 死區(內回無方向)
-	aCX, aCY      = ScreenW - 70, ScreenH - 100
-	bCX, bCY      = ScreenW - 148, ScreenH - 64
-	btnR          = 32
-	btnHit        = 44               // 按鈕觸控判定半徑(略大於視覺)
-	ctxCX, ctxCY  = ScreenW - 56, 44 // 情境鍵中心(右上,與左下十字鍵/右下 A・B 不重疊)
-	ctxR          = 28
-	ctxHit        = 40
+	safeInset = 12 // 邊緣安全內縮(粗略保護;真實安全區見上方 P3-2 說明)
+
+	padMarginX, padMarginY = 92, 84 // 十字鍵閒置中心:原始(未 inset)左邊距 / 下邊距
+	padCX, padCY           = padMarginX + safeInset, ScreenH - padMarginY - safeInset
+	padR                   = 58 // 十字鍵作用半徑
+	touchDeadzone          = 14 // 死區(內回無方向)
+
+	aMarginX, aMarginY = 70, 100
+	aCX, aCY           = ScreenW - aMarginX - safeInset, ScreenH - aMarginY - safeInset
+	bMarginX, bMarginY = 148, 64
+	bCX, bCY           = ScreenW - bMarginX - safeInset, ScreenH - bMarginY - safeInset
+	btnR               = 32
+	btnHit             = 44 // 按鈕觸控判定半徑(略大於視覺;P1/P2 已驗證,不動)
+
+	ctxMarginX, ctxMarginY = 56, 44 // 情境鍵中心(右上,與左下十字鍵/右下 A・B 不重疊)
+	ctxCX, ctxCY           = ScreenW - ctxMarginX - safeInset, ctxMarginY + safeInset
+	ctxR                   = 28
+	ctxHit                 = 40
 )
 
 type touchZone int
@@ -33,14 +52,15 @@ const (
 
 // TouchUI 是一幀的觸控輸入結果 + 繪製狀態。
 type TouchUI struct {
-	dpadDir     int // 這幀十字鍵方向(-1 無,0下 1上 2左 3右)
-	aTap, bTap  bool
-	ctxLabel    string                    // 情境鍵標籤;空字串=隱藏(由 Game 每幀依情境設)
-	ctxTap      bool                      // 這幀情境鍵剛點(edge)
-	tapX, tapY  int                       // 落在 zoneNone 的 just-pressed 觸點座標(選單直接點選,P2)
-	tapEdge     bool                      // 這幀有 zoneNone 剛點(edge);每幀 reset
-	origin      map[ebiten.TouchID][2]int // 每個十字鍵觸點的浮動中心
-	everTouched bool                      // 有過觸控才畫控制(桌面預設不擾)
+	dpadDir               int // 這幀十字鍵方向(-1 無,0下 1上 2左 3右)
+	aTap, bTap            bool
+	aHeld, bHeld, ctxHeld bool                      // 這幀是否有觸點壓在該鈕區(不限 just-pressed;P3 壓感回饋用)
+	ctxLabel              string                    // 情境鍵標籤;空字串=隱藏(由 Game 每幀依情境設)
+	ctxTap                bool                      // 這幀情境鍵剛點(edge)
+	tapX, tapY            int                       // 落在 zoneNone 的 just-pressed 觸點座標(選單直接點選,P2)
+	tapEdge               bool                      // 這幀有 zoneNone 剛點(edge);每幀 reset
+	origin                map[ebiten.TouchID][2]int // 每個十字鍵觸點的浮動中心
+	everTouched           bool                      // 有過觸控才畫控制(桌面預設不擾)
 }
 
 // SetContext:Game 每幀依當前狀態設情境鍵標籤;空字串 = 隱藏(不吃觸點)。
@@ -67,6 +87,7 @@ func (t *TouchUI) zoneOf(x, y int) touchZone {
 // poll:掃所有觸點,分區,產生這幀的方向(held)+ A/B(edge)。多點觸控。
 func (t *TouchUI) poll() {
 	t.dpadDir, t.aTap, t.bTap, t.ctxTap, t.tapEdge = -1, false, false, false, false
+	t.aHeld, t.bHeld, t.ctxHeld = false, false, false
 	ids := ebiten.AppendTouchIDs(nil)
 	if len(ids) > 0 {
 		t.everTouched = true
@@ -97,14 +118,17 @@ func (t *TouchUI) poll() {
 				t.dpadDir = d
 			}
 		case zoneA:
+			t.aHeld = true
 			if just[id] {
 				t.aTap = true
 			}
 		case zoneB:
+			t.bHeld = true
 			if just[id] {
 				t.bTap = true
 			}
 		case zoneCtx:
+			t.ctxHeld = true
 			if just[id] {
 				t.ctxTap = true
 			}
@@ -157,13 +181,25 @@ func (t *TouchUI) draw(rgba []byte) {
 		}
 		fillCircle(rgba, dirPt[d][0], dirPt[d][1], 13, col, a)
 	}
-	// A / B
-	fillCircle(rgba, aCX, aCY, btnR, base, 0.4)
-	fillCircle(rgba, bCX, bCY, btnR-6, base, 0.32)
+	// A / B(壓感回饋:held 時提高 alpha + 微放大,呼應十字鍵方向高亮風格)
+	aAlpha, aRad := 0.4, btnR
+	if t.aHeld {
+		aAlpha, aRad = 0.8, btnR+4
+	}
+	fillCircle(rgba, aCX, aCY, aRad, base, aAlpha)
+	bAlpha, bRad := 0.32, btnR-6
+	if t.bHeld {
+		bAlpha, bRad = 0.8, btnR-6+4
+	}
+	fillCircle(rgba, bCX, bCY, bRad, base, bAlpha)
 	// 情境鍵(右上,標籤隨情境變義;MVP 不畫字,琥珀色圓明顯區別 A/B)
 	if t.ctxLabel != "" {
 		amber := dq3data.Color{R: 239, G: 154, B: 60}
-		fillCircle(rgba, ctxCX, ctxCY, ctxR, amber, 0.55)
+		ctxAlpha, ctxRad := 0.55, ctxR
+		if t.ctxHeld {
+			ctxAlpha, ctxRad = 0.85, ctxR+4
+		}
+		fillCircle(rgba, ctxCX, ctxCY, ctxRad, amber, ctxAlpha)
 	}
 }
 
