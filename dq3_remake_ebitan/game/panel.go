@@ -9,6 +9,7 @@ const (
 	panelNone panelKind = iota
 	panelStatus
 	panelItem
+	panelEquip
 )
 
 // drawStatus:主角狀況(等級/HP/EXP/G)。glyph 22='H'、標籤用數字為主(中文標籤 glyph 之後補)。
@@ -37,5 +38,43 @@ func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 			break
 		}
 		g.shop.drawItemName(rgba, 64, 56+i*22, code, white)
+	}
+}
+
+// drawEquip:上方現裝備(武器/鎧),下方持有可裝備品(游標選 → A 裝上)。
+func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
+	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
+	yellow := dq3data.Color{R: 255, G: 224, B: 32}
+	// 現裝備(武器 + 鎧;空槽不畫名)
+	for s := 0; s < 2; s++ {
+		if g.equip[s] != 0 || s == 0 {
+			g.shop.drawItemName(rgba, 64, 56+s*22, g.equip[s], yellow)
+		}
+	}
+	// 持有可裝備品(游標)
+	for i, code := range g.inventory {
+		if i >= 8 {
+			break
+		}
+		y := 120 + i*22
+		if i == g.panelCursor {
+			drawGlyph(rgba, g.dlg.tx, 44, y, 11, yellow) // ►
+		}
+		g.shop.drawItemName(rgba, 64, y, code, white)
+	}
+}
+
+// equipSelected:把游標指的持有品裝上其部位(武器/鎧/盾/兜)。
+func (g *Game) equipSelected() {
+	if g.panelCursor < 0 || g.panelCursor >= len(g.inventory) {
+		return
+	}
+	code := g.inventory[g.panelCursor]
+	if g.shop.items == nil {
+		return
+	}
+	slot := g.shop.items.EquipSlot(code)
+	if slot >= 0 && slot < 4 && g.shop.items.CanEquip(code, 0) {
+		g.equip[slot] = code
 	}
 }

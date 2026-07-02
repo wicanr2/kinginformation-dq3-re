@@ -84,7 +84,8 @@ type Game struct {
 	cmd            CmdMenu  // 野外命令窗
 	battle         Battle    // 戰鬥場景
 	shop           Shop      // 商店(武防/道具店)
-	panel          panelKind // 資訊面板(狀況/道具)
+	panel          panelKind // 資訊面板(狀況/道具/裝備)
+	panelCursor    int       // 裝備面板游標
 	inventory      []int     // 持有道具 id
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
@@ -93,6 +94,7 @@ type Game struct {
 	heroGold    int
 	heroHP      int
 	heroInit    bool
+	equip       [4]int // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
 	frame       *ebiten.Image
 	rgba        []byte
 }
@@ -134,6 +136,8 @@ func (g *Game) selectCommand(cmd int) {
 		g.panel = panelStatus
 	case cmdItem: // 道具
 		g.panel = panelItem
+	case cmdEquip: // 裝備
+		g.panel, g.panelCursor = panelEquip, 0
 	}
 }
 
@@ -175,9 +179,21 @@ func (g *Game) Update() error {
 		g.renderFrame()
 		return nil
 	}
-	// 資訊面板 modal(狀況/道具):B 關
+	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
 	if g.panel != panelNone {
-		if in.Cancel || in.Confirm {
+		switch {
+		case in.Cancel:
+			g.panel = panelNone
+		case g.panel == panelEquip:
+			switch {
+			case in.Confirm:
+				g.equipSelected()
+			case in.DirEdge == 0 && len(g.inventory) > 0: // 下
+				g.panelCursor = (g.panelCursor + 1) % len(g.inventory)
+			case in.DirEdge == 1 && len(g.inventory) > 0: // 上
+				g.panelCursor = (g.panelCursor + len(g.inventory) - 1) % len(g.inventory)
+			}
+		case in.Confirm:
 			g.panel = panelNone
 		}
 		g.renderFrame()
@@ -289,13 +305,19 @@ func clampi(v, lo, hi int) int {
 }
 
 // heroStats 由累積經驗推導主角(勇者 class0)當前等級與戰鬥數值(移植 dq3_stats 成長表)。
-// 裝備:銅劍攻 +10、皮甲冑防 +8(示範固定裝備;裝備系統之後接)。
+// 攻 = 力量 + 武器攻;防 = 耐力/2 + 鎧/盾/兜防(裝備槽,item DB)。
 func (g *Game) heroStats() (level, maxHP, atk, def, agi int) {
 	level = stats.LevelForExp(0, g.heroExp)
 	maxHP = int(stats.GrowthTarget(0, stats.HP, level))
-	atk = int(stats.GrowthTarget(0, stats.STR, level)) + 10
-	def = int(stats.GrowthTarget(0, stats.VIT, level))/2 + 8
+	atk = int(stats.GrowthTarget(0, stats.STR, level))
+	def = int(stats.GrowthTarget(0, stats.VIT, level)) / 2
 	agi = int(stats.GrowthTarget(0, stats.AGI, level))
+	if g.shop.items != nil { // 加裝備加成
+		atk += g.shop.items.Attack(g.equip[0])
+		for s := 1; s < 4; s++ {
+			def += g.shop.items.Defense(g.equip[s])
+		}
+	}
 	return
 }
 
@@ -380,6 +402,8 @@ func (g *Game) renderFrame() {
 		g.drawStatus(g.rgba, white)
 	case panelItem:
 		g.drawItems(g.rgba, white)
+	case panelEquip:
+		g.drawEquip(g.rgba, white)
 	}
 	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
@@ -550,8 +574,9 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 
 	g.cur = g.over
 	g.px, g.py = g.over.w/2, g.over.h/2 // 地表起點(暫用中心)
-	g.heroGold = 120  // 初始金(新遊戲勇者)
-	_ = g.Load()      // 有存檔則續玩(冒險之書)
+	g.heroGold = 120           // 初始金(新遊戲勇者)
+	g.equip = [4]int{3, 0x21}  // 初始裝備:銅劍 + 皮甲冑
+	_ = g.Load()               // 有存檔則續玩(冒險之書)
 	applyDebugEnv(g)  // debug 環境變數可覆蓋(截圖用)
 
 	// MT-32 音樂(music fs 為 nil → 靜音降級)

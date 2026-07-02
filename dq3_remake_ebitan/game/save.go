@@ -13,6 +13,7 @@ type saveState struct {
 	HeroHP    int    `json:"hp"`
 	HeroGold  int    `json:"gold"`
 	Inventory []int  `json:"inv"`
+	Equip     [4]int `json:"eq"`
 	PX        int    `json:"px"`
 	PY        int    `json:"py"`
 	InTown    bool   `json:"town"`
@@ -30,6 +31,7 @@ func (g *Game) snapshot() saveState {
 	return saveState{
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroGold: g.heroGold,
 		Inventory: append([]int(nil), g.inventory...),
+		Equip:     g.equip,
 		PX:        g.px, PY: g.py, InTown: g.inTown,
 	}
 }
@@ -38,6 +40,7 @@ func (g *Game) restore(s saveState) {
 	g.heroExp, g.heroHP, g.heroGold = s.HeroExp, s.HeroHP, s.HeroGold
 	g.heroInit = true
 	g.inventory = append([]int(nil), s.Inventory...)
+	g.equip = s.Equip
 	g.px, g.py, g.inTown = s.PX, s.PY, s.InTown
 	if s.InTown {
 		g.cur = g.town
