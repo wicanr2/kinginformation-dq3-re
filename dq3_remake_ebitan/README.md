@@ -57,8 +57,9 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw go run .
 
 - [x] **階段 1 骨架**:Go module + Ebiten 開窗/主迴圈/Layout(640×350);**管線驗證 + 截圖**(見上)。
 - [~] **階段 2 資料解析移植**(進行中):
-  - [x] palette(DQ3.PAL)+ 對拍測試
-  - [ ] BLK tile / sprite(BLS/SHP)/ text(D3TXT)/ CTY / monster / item / save … 逐一移植 + Go 測對拍 C
+  - [x] **palette**(DQ3.PAL,移植 `dq3_pal_decode`)+ 對拍測試(逐色一致)
+  - [x] **BLK tile**(DQ3.BLK,移植 `dq3_blk_open`/`dq3_blk_tile`)+ 對拍測試(162 tiles、32×24 4-bit planar、header 4/24 對 C)
+  - [ ] sprite(BLS/SHP)/ text(D3TXT)/ CTY 載入 / monster / item / save … 逐一移植 + Go 測對拍 C
 - [ ] **階段 3 渲染**:indexed fb → RGBA `*ebiten.Image`;tile/sprite/字型 blit;地表+城鎮畫對
 - [ ] **階段 4 遊戲邏輯**:場景移動/碰撞/NPC、對話、選單、戰鬥(公式/AI/升級)、事件/傳送(對 game_tester 斷言移 Go 測)
 - [ ] **階段 5 音訊**:MT-32 OGG(Ebiten `audio/vorbis` 內建,先)+ VOC 音效;SB-FM OPL2 之後補
