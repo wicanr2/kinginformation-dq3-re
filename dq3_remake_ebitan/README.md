@@ -47,6 +47,9 @@ dq3_remake_ebitan/
 ```bash
 bash dq3_remake_ebitan/build.sh          # docker：純 Go 單測(對拍真實素材)+ Ebiten shell compile-check
 ```
+> 測試分兩層:`internal/dq3data`(資料解析對拍)**無引擎相依,可完全 headless 跑**;
+> `package main`(對話/命令窗等 UI 邏輯)因 import Ebiten,其 `init()` 需要 display →
+> headless 測試需先起 `Xvfb`(見 `build.sh`)。
 本機實跑(需顯示器):
 ```bash
 cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw go run .
@@ -76,7 +79,9 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw go run .
 - [~] **階段 4 遊戲邏輯(進行中)**:
   - [x] **對話**:空白鍵(A)面向 NPC → 依 `(ctrl>>3)&7` 子型開對話(rec=b4),對話框逐頁 A 推進 / 結尾關閉
     (移植 `dq3_dialogue`:底部 4 行視窗、分頁 scan_page、換行/換頁/插值占位控制碼)。Xvfb 驗證顯示真實中文對話。
-  - [ ] 命令窗(對話/咒文/狀況/道具/裝備/調查)、設施(店/宿)、場景轉場、戰鬥(公式/AI/升級)、事件/傳送
+  - [x] **命令窗**(對話/咒文/狀況/道具/裝備/調查,2 欄×3 列,標籤 glyph 取自 D3TXT00 rec400):A 開窗、方向移游標、
+    A 選定、B 關窗(移植 `dq3_cmdmenu`,游標繞回對拍測試)。**對話**指令已通;咒文/狀況/道具/裝備/調查待接對應系統。
+  - [ ] 設施(店/宿)、場景轉場、戰鬥(公式/AI/升級)、事件/傳送
 - [ ] **階段 5 音訊**:MT-32 OGG(Ebiten `audio/vorbis` 內建,先)+ VOC 音效;SB-FM OPL2 之後補
 - [ ] **階段 6 輸入 + 觸控 UI**:鍵盤(桌面/web)+ 虛擬方向鍵/A/B/選單(行動)。
   **設計規劃已備**:[docs/63 Android 觸控 UI 規劃](../docs/63-ebiten-android-touch-ui-plan.md)

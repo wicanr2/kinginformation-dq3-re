@@ -72,13 +72,44 @@ type Game struct {
 	walk           int // 0/1 走路動畫相位
 	cd, anim       int
 	dlg            Dialogue // 對話視窗
+	cmd            CmdMenu  // 野外命令窗
 	frame          *ebiten.Image
 	rgba           []byte
 }
 
+// dpadEdge:方向鍵「剛按下」→ facing 碼(0下 1上 2左 3右);無則 -1。選單導覽用。
+func dpadEdge() int {
+	switch {
+	case inpututil.IsKeyJustPressed(ebiten.KeyArrowDown):
+		return 0
+	case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
+		return 1
+	case inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft):
+		return 2
+	case inpututil.IsKeyJustPressed(ebiten.KeyArrowRight):
+		return 3
+	}
+	return -1
+}
+
+// selectCommand:命令窗選定一項後的動作。對話可用;其餘指令需隊伍/道具/事件系統(尚未移植)→ 暫關窗。
+func (g *Game) selectCommand(cmd int) {
+	g.cmd.open = false
+	if cmd == cmdTalk {
+		fx, fy := frontTile(g.px, g.py, g.facing)
+		if idx := g.cur.npcAt(fx, fy); idx >= 0 {
+			n := &g.cur.npcs[idx]
+			if sub := (n.ctrl >> 3) & 7; sub <= 1 {
+				g.dlg.Open(n.b4)
+			}
+		}
+	}
+}
+
 func (g *Game) Update() error {
 	moved := false
-	confirm := inpututil.IsKeyJustPressed(ebiten.KeySpace) // A 鍵:確定 / 對話 / 推進
+	confirm := inpututil.IsKeyJustPressed(ebiten.KeySpace)  // A:確定 / 對話 / 選定
+	cancel := inpututil.IsKeyJustPressed(ebiten.KeyEscape)  // B:取消 / 關窗
 
 	// 對話開啟時為 modal:只吃 A(推進/關閉),不移動
 	if g.dlg.open {
@@ -88,28 +119,35 @@ func (g *Game) Update() error {
 		g.renderFrame()
 		return nil
 	}
-	// A 對著 NPC → 開對話(子型 0/1;設施/劇本之後接)
-	if confirm && g.inTown {
-		fx, fy := frontTile(g.px, g.py, g.facing)
-		if idx := g.cur.npcAt(fx, fy); idx >= 0 {
-			n := &g.cur.npcs[idx]
-			if sub := (n.ctrl >> 3) & 7; sub <= 1 {
-				g.dlg.Open(n.b4)
+	// 命令窗開啟時為 modal:方向移游標、A 選定、B 關窗
+	if g.cmd.open {
+		switch {
+		case cancel:
+			g.cmd.open = false
+		case confirm:
+			g.selectCommand(g.cmd.cursor)
+		default:
+			if d := dpadEdge(); d >= 0 {
+				g.cmd.move(d)
 			}
-			g.renderFrame()
-			return nil
 		}
+		g.renderFrame()
+		return nil
 	}
-	// 進城 / 回地表(邊緣觸發:上一幀沒按、這幀按下)
-	if g.cd == 0 {
-		if !g.inTown && ebiten.IsKeyPressed(ebiten.KeyEnter) {
-			g.enterTown()
-			return nil
-		}
-		if g.inTown && ebiten.IsKeyPressed(ebiten.KeyEscape) {
-			g.exitTown()
-			return nil
-		}
+	// A(城內)→ 開命令窗
+	if confirm && g.inTown {
+		g.cmd.Open()
+		g.renderFrame()
+		return nil
+	}
+	// 進城 / 回地表(邊緣觸發)
+	if !g.inTown && inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		g.enterTown()
+		return nil
+	}
+	if g.inTown && cancel {
+		g.exitTown()
+		return nil
 	}
 	if g.cd > 0 {
 		g.cd--
@@ -191,11 +229,15 @@ func (g *Game) renderFrame() {
 	}
 	blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
 		g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+	white := dq3data.Color{R: 255, G: 255, B: 255}
+	if len(sc.pal) > 15 {
+		white = sc.pal[15]
+	}
+	if g.cmd.open { // 命令窗(左上)
+		yellow := dq3data.Color{R: 255, G: 224, B: 32}
+		g.cmd.draw(g.rgba, white, yellow, 48, 32)
+	}
 	if g.dlg.open { // 對話框疊在最上層
-		white := dq3data.Color{R: 255, G: 255, B: 255}
-		if len(sc.pal) > 15 {
-			white = sc.pal[15]
-		}
 		g.dlg.draw(g.rgba, white)
 	}
 	g.frame.WritePixels(g.rgba)
@@ -323,8 +365,9 @@ func main() {
 		g.town.npcs = append(g.town.npcs, npcInst{x: n.X, y: n.Y, ctrl: n.Ctrl, b4: n.B4, spr: spr})
 	}
 
-	// 對話:字型 D3TXT00.FON(常駐)+ 阿里阿罕 bank 1(D3TXT01.TXT,section dlg_bank=1)
+	// 對話 + 命令窗:字型 D3TXT00.FON(常駐)+ 阿里阿罕 bank 1(D3TXT01.TXT,section dlg_bank=1)
 	g.dlg.tx = dq3data.LoadText(mustRead("D3TXT00.FON"), mustRead("D3TXT01.TXT"))
+	g.cmd.tx = g.dlg.tx // 命令窗標籤 glyph 也走同一字型
 
 	g.hero = dq3data.LoadCharSprite(mustRead("DQ3MST.BLS"), 0)
 	g.cur = g.over
@@ -338,6 +381,9 @@ func main() {
 		if _, e := fmt.Sscanf(r, "%d", &rec); e == nil {
 			g.dlg.Open(rec)
 		}
+	}
+	if os.Getenv("DQ3_CMD") != "" { // debug:起手開命令窗(截圖驗證)
+		g.cmd.Open()
 	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	g.renderFrame() // 首幀

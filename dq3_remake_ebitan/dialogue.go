@@ -126,7 +126,12 @@ loop:
 }
 
 func (d *Dialogue) drawGlyph(rgba []byte, px, py, idx int, fg dq3data.Color) {
-	g, ok := d.tx.Glyph(idx)
+	drawGlyph(rgba, d.tx, px, py, idx, fg)
+}
+
+// drawGlyph:把 FON 第 idx 個 16×16 字模畫到 (px,py),set bit → fg。選單/HUD 共用。
+func drawGlyph(rgba []byte, tx *dq3data.Text, px, py, idx int, fg dq3data.Color) {
+	g, ok := tx.Glyph(idx)
 	if !ok {
 		return
 	}
@@ -135,6 +140,20 @@ func (d *Dialogue) drawGlyph(rgba []byte, px, py, idx int, fg dq3data.Color) {
 			if g[r][c] != 0 {
 				putPx(rgba, px+c, py+r, fg)
 			}
+		}
+	}
+}
+
+// fillBox:黑底 + 白框(選單/視窗共用)。
+func fillBox(rgba []byte, x, y, w, h int, border dq3data.Color) {
+	dark := dq3data.Color{R: 0, G: 0, B: 0}
+	for r := 0; r < h; r++ {
+		for c := 0; c < w; c++ {
+			col := dark
+			if r == 0 || r == h-1 || c == 0 || c == w-1 {
+				col = border
+			}
+			putPx(rgba, x+c, y+r, col)
 		}
 	}
 }
