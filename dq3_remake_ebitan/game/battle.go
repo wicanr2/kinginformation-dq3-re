@@ -2,7 +2,7 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
+	dosrng "github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/battle"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
@@ -62,7 +62,7 @@ type Battle struct {
 	result    int // 0 進行中、1 勝、2 敗、3 逃
 	gotExp    int
 	gotGold   int
-	rng       *rand.Rand
+	rng       *dosrng.RNG
 	flashCol  int // >0:受擊閃光殘餘幀
 	defending bool
 	heroHerbs   int   // 開戰時持有藥草數
@@ -84,7 +84,7 @@ type battleActor struct {
 	atk, def     int
 }
 
-func (b *Battle) roll() int { return b.rng.Intn(256) }
+func (b *Battle) roll() int { return b.rng.Next(256) }
 
 // heroParams 是開戰時由 Game 傳入的主角當前數值(等級推導,見 game.heroStats)。
 type heroParams struct {
@@ -104,9 +104,9 @@ func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActo
 	if !ok {
 		return false
 	}
-	b.rng = rand.New(rand.NewSource(seed))
+	b.rng = dosrng.New(uint16(seed))
 	b.monID, b.spr = monID, spr
-	b.enemyHP = int(st.HPBase) + b.rng.Intn(int(st.HPRand)+1)
+	b.enemyHP = int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
 	b.enemyMax = b.enemyHP
 	if b.bg == nil && b.scr != nil { // 首戰解碼草原背景(page22,對 game3.png)
 		b.bg, _ = dq3data.DecodePackBG(b.scr, 22)
@@ -327,11 +327,11 @@ func (b *Battle) enemyTurn() {
 		b.msg, b.result, b.phase = "敵人逃走了", 3, phMessage
 		return
 	}
-	tgt := targets[b.rng.Intn(len(targets))] // 鎖定隨機存活隊員
+	tgt := targets[b.rng.Next(len(targets))] // 鎖定隨機存活隊員
 	// 2) 施咒(傷害咒傷目標、回復咒補己)
 	if aiOK && ai.CastProb > 0 && b.roll() < int(ai.CastProb) {
 		if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
-			rec := spell.MonsterSpellRec(bits[b.rng.Intn(len(bits))])
+			rec := spell.MonsterSpellRec(bits[b.rng.Next(len(bits))])
 			if def, ok := spell.GetDef(rec); ok {
 				val := spell.CastValue(def.Base, b.roll())
 				if def.Kind == spell.Heal {
