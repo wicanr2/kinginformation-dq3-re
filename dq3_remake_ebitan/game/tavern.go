@@ -1,6 +1,9 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/zhuyin"
+)
 
 // 露易達酒館招募(移植 dq3_tavern + dq3_nameinput 英數命名):職業 → 命名(英數格盤)→ 性別 → 建隊員。
 // 注音(zhuyin)輸入為後續;此處只做英數(0-9 / A-Z)。DQ3_PARTY_MAX=4(隊長+3)。
@@ -29,12 +32,14 @@ func niCellGlyph(cell int) int {
 }
 
 type Tavern struct {
-	tx      *dq3data.Text
-	active  bool
-	stage   int
-	cursor  int
-	pendCls int
-	nameBuf []int
+	tx       *dq3data.Text
+	active   bool
+	stage    int
+	cursor   int
+	pendCls  int
+	nameBuf  []int
+	nameZhu  bool           // true=注音模式(Tab 切換)
+	zh       zhuyin.Composer
 }
 
 func (tv *Tavern) open() { tv.active, tv.stage, tv.cursor, tv.nameBuf = true, tavClass, 0, nil }
@@ -55,7 +60,31 @@ func (tv *Tavern) input(in InputState) (*Member, bool) {
 			tv.cursor = (tv.cursor + 7) % 8
 		}
 	case tavName:
-		switch {
+		if in.Toggle { // Tab:英數 ↔ 注音
+			tv.nameZhu = !tv.nameZhu
+			if tv.nameZhu {
+				tv.zh.Init()
+			} else {
+				tv.cursor = 0
+			}
+			return nil, false
+		}
+		if tv.nameZhu { // 注音組字
+			switch {
+			case in.Cancel:
+				if !tv.zh.Cancel() { // 非候選階段 → 退英數
+					tv.nameZhu, tv.cursor = false, 0
+				}
+			case in.Confirm:
+				if g, picked := tv.zh.Confirm(); picked && len(tv.nameBuf) < niNameMax {
+					tv.nameBuf = append(tv.nameBuf, g)
+				}
+			case in.DirEdge >= 0:
+				tv.zh.Move(in.DirEdge)
+			}
+			return nil, false
+		}
+		switch { // 英數格盤
 		case in.Cancel:
 			tv.stage, tv.cursor = tavClass, tv.pendCls
 		case in.Confirm:
@@ -122,6 +151,41 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 		// 已輸入名
 		for i, g := range tv.nameBuf {
 			drawGlyph(rgba, tv.tx, 80+i*16, 56, g, yellow)
+		}
+		if tv.nameZhu { // 注音模式:組字列 + (候選 或 注音盤)
+			// 組字列:已選 聲母(64+Sh)/ 介音(98+Ji)/ 韻母(85+Yu)
+			cx := 200
+			if tv.zh.Sh != 0 {
+				drawGlyph(rgba, tv.tx, cx, 56, 64+tv.zh.Sh, yellow)
+				cx += 16
+			}
+			if tv.zh.Ji != 0 {
+				drawGlyph(rgba, tv.tx, cx, 56, 98+tv.zh.Ji, yellow)
+				cx += 16
+			}
+			if tv.zh.Yu != 0 {
+				drawGlyph(rgba, tv.tx, cx, 56, 85+tv.zh.Yu, yellow)
+			}
+			if tv.zh.Pick { // 候選窗(9 欄)
+				for i, g := range tv.zh.Cand {
+					x, y := 64+(i%zhuyin.Cols)*24, 96+(i/zhuyin.Cols)*22
+					cur(x, y, i == tv.zh.Cursor)
+					drawGlyph(rgba, tv.tx, x, y, g, white)
+				}
+			} else { // 注音盤(9 欄,對齊 C)
+				for c := 0; c < zhuyin.Cells; c++ {
+					x, y := 64+(c%zhuyin.Cols)*24, 96+(c/zhuyin.Cols)*22
+					cur(x, y, c == tv.zh.Cursor)
+					if g := zhuyin.CellGlyph(c); g >= 0 {
+						drawGlyph(rgba, tv.tx, x, y, g, white)
+					} else { // 一聲:橫線(對齊 C)
+						for px := 2; px < 12; px++ {
+							putPx(rgba, x+px, y+8, white)
+						}
+					}
+				}
+			}
+			return
 		}
 		// 英數格盤(9 欄)+ ← / OK
 		for c := 0; c < niCells; c++ {

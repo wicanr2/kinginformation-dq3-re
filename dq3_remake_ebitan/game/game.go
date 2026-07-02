@@ -959,6 +959,10 @@ func applyDebugEnv(g *Game) {
 		if v == "name" { // 直接跳命名格盤
 			g.tavern.stage, g.tavern.cursor, g.tavern.nameBuf = tavName, 0, []int{15, 16, 17}
 		}
+		if v == "zhu" { // 直接跳注音盤
+			g.tavern.stage, g.tavern.nameZhu = tavName, true
+			g.tavern.zh.Init()
+		}
 	}
 	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證)
 		var id int

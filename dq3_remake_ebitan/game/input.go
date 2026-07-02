@@ -13,6 +13,7 @@ type InputState struct {
 	Confirm bool // A:確定 / 對話 / 選定(edge)
 	Cancel  bool // B:取消 / 出城(edge)
 	Enter   bool // 進城(鍵盤 Enter,debug;edge)
+	Toggle  bool // Tab:英數 ↔ 注音 切換(酒館命名;edge)
 }
 
 // Input 合流鍵盤 + 觸控兩個來源。
@@ -41,6 +42,9 @@ func (ip *Input) Poll() InputState {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
 		s.Enter = true
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+		s.Toggle = true
 	}
 	// 觸控(蓋過/補上鍵盤)
 	ip.touch.poll()
