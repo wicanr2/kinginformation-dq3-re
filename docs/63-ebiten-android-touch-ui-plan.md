@@ -1,5 +1,9 @@
 # Ebiten Android 版操作界面規劃(觸控 UI,2026-07-02)
 
+> ⚠ **動作集結論已被 [docs/64](64-android-touch-ui-plan-v2.md) 取代**(本檔寫在移植前,假設「只需 dpad+A+B」;
+> 遊戲完成後多出 `Toggle`/`Settings` 兩個觸控缺口)。本檔保留作架構背景(§2 輸入抽象、§3 版面、§4 元件仍有效);
+> 動作集與缺口以 docs/64 為準。
+
 > 承 [docs/62](62-golang-ebiten-android-port-eval.md) 階段 6。目標:把桌面鍵盤操作的 DQ3 Ebiten port,
 > 補上一套**手機可單手玩**的觸控界面,且不動到既有遊戲邏輯。
 > 前提:移動/命令/戰鬥的控制模型已從 C remake 讀出(見下),觸控只是「另一個輸入來源」。
