@@ -761,8 +761,11 @@ func applyDebugEnv(g *Game) {
 	if os.Getenv("DQ3_SHOP") != "" { // debug:起手開武防店(截圖驗證)
 		g.openFacility(1)
 	}
-	if os.Getenv("DQ3_TAVERN") != "" { // debug:起手開酒館(截圖驗證)
+	if v := os.Getenv("DQ3_TAVERN"); v != "" { // debug:起手開酒館(截圖驗證)
 		g.tavern.open()
+		if v == "name" { // 直接跳命名格盤
+			g.tavern.stage, g.tavern.cursor, g.tavern.nameBuf = tavName, 0, []int{15, 16, 17}
+		}
 	}
 	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證)
 		var id int
