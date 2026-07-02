@@ -91,6 +91,7 @@ type Game struct {
 	cmd            CmdMenu  // 野外命令窗
 	battle         Battle    // 戰鬥場景
 	shop           Shop      // 商店(武防/道具店)
+	tavern         Tavern    // 露易達酒館(招募)
 	panel          panelKind // 資訊面板(狀況/道具/裝備)
 	panelCursor    int       // 裝備面板游標
 	inventory      []int     // 持有道具 id
@@ -187,6 +188,24 @@ func (g *Game) Update() error {
 			g.onBattleEnd()
 			g.music.Play(trackField)
 		}
+		g.renderFrame()
+		return nil
+	}
+	// 酒館 modal:職業→性別→招募加入隊伍(最多 3 同伴,滿則替換最舊)
+	if g.tavern.active {
+		if m, _ := g.tavern.input(in); m != nil {
+			if len(g.companions) < 3 {
+				g.companions = append(g.companions, m)
+			} else {
+				g.companions = append(g.companions[1:], m)
+			}
+		}
+		g.renderFrame()
+		return nil
+	}
+	// T 鍵:阿里阿罕酒館招募(對齊 C dev 捷徑;正式入口=LUIDA 櫃台)
+	if g.inTown && inpututil.IsKeyJustPressed(ebiten.KeyT) {
+		g.tavern.open()
 		g.renderFrame()
 		return nil
 	}
@@ -527,6 +546,9 @@ func (g *Game) renderFrame() {
 	case panelEquip:
 		g.drawEquip(g.rgba, white)
 	}
+	if g.tavern.active { // 酒館招募
+		g.tavern.draw(g.rgba, white)
+	}
 	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
 }
@@ -654,6 +676,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.cmd.tx = g.dlg.tx                                       // 命令窗標籤 glyph 也走同一字型
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
 	g.battle.nameText = g.shop.nameText                             // 咒文名同名表
+	g.tavern.tx = g.dlg.tx                                          // 酒館 glyph
 	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)
 
 	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)
@@ -737,6 +760,9 @@ func applyDebugEnv(g *Game) {
 	}
 	if os.Getenv("DQ3_SHOP") != "" { // debug:起手開武防店(截圖驗證)
 		g.openFacility(1)
+	}
+	if os.Getenv("DQ3_TAVERN") != "" { // debug:起手開酒館(截圖驗證)
+		g.tavern.open()
 	}
 	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證)
 		var id int
