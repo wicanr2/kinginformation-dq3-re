@@ -87,7 +87,8 @@ type MonsterSprite struct {
 
 // DecodeMonsterSprite 解 DQ3MNS.SHP 第 id 隻。移植 dq3_monster_sprite_decode。
 // SHP:131×u32 offset 表 + 每隻 {u16 w_bytes, u16 h, 4 plane plane-major(plane 3,2,1,0)}。
-// 回 nil,error 表空 sprite(如未完成 boss id128/129)或越界。
+// 如果 SHP 該格為空或尺寸不合理（如未完成 boss id128/129），嘗試用復原資料回退。
+// 回 nil,error 表空 sprite 且無復原資料、或越界。
 func DecodeMonsterSprite(shp []byte, id int) (*MonsterSprite, error) {
 	if id < 0 || id >= MonsterCount {
 		return nil, fmt.Errorf("id %d 越界", id)
@@ -97,19 +98,41 @@ func DecodeMonsterSprite(shp []byte, id int) (*MonsterSprite, error) {
 	}
 	off := int(le32(shp, id*4))
 	nxt := int(le32(shp, (id+1)*4))
-	if off+4 > len(shp) || nxt <= off {
-		return nil, fmt.Errorf("空 sprite(id %d)", id)
+
+	// 先嘗試 SHP 中的資料
+	if off+4 <= len(shp) && nxt > off {
+		// SHP 頭合法，試解碼；若失敗則回退
+		spr, err := decodeSpriteBytesInternal(shp, off, id)
+		if err == nil {
+			return spr, nil // 成功
+		}
+		// 解碼失敗，改用復原資料
 	}
-	wb := int(le16(shp, off) & 0x7fff)
-	h := int(le16(shp, off+2))
+
+	// SHP 中無有效資料，嘗試用復原資料
+	data, ok := restoredSprite[id]
+	if !ok {
+		return nil, fmt.Errorf("SHP 空或無效(id %d),且無復原資料", id)
+	}
+	return decodeSpriteBytesInternal(data, 0, id)
+}
+
+// decodeSpriteBytesInternal 依據資料與 offset 解碼 sprite。
+// 移植 C dq3_monster_sprite_decode，複用到 restored_sprites 回退路徑。
+func decodeSpriteBytesInternal(data []byte, off int, id int) (*MonsterSprite, error) {
+	if off+4 > len(data) {
+		return nil, fmt.Errorf("sprite 頭越界(id %d)", id)
+	}
+	wb := int(le16(data, off) & 0x7fff)
+	h := int(le16(data, off+2))
 	w := wb * 8
 	if w <= 0 || h <= 0 || w > ShpMaxW || h > ShpMaxH {
 		return nil, fmt.Errorf("尺寸越界 %d×%d", w, h)
 	}
 	base := off + 4
 	planeSz := wb * h
-	if base+planeSz*4 > len(shp) {
-		return nil, fmt.Errorf("sprite 資料越界")
+	if base+planeSz*4 > len(data) {
+		return nil, fmt.Errorf("sprite 資料越界(id %d)", id)
 	}
 	spr := &MonsterSprite{W: w, H: h, Px: make([][]uint8, h), Opaque: make([][]bool, h)}
 	for r := 0; r < h; r++ {
@@ -121,7 +144,7 @@ func DecodeMonsterSprite(shp []byte, id int) (*MonsterSprite, error) {
 		b0 := base + s*planeSz
 		for r := 0; r < h; r++ {
 			for b := 0; b < wb; b++ {
-				v := shp[b0+r*wb+b]
+				v := data[b0+r*wb+b]
 				for bit := 0; bit < 8; bit++ {
 					if v&(0x80>>bit) != 0 {
 						spr.Px[r][b*8+bit] |= 1 << pl

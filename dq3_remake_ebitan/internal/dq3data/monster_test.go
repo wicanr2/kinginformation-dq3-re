@@ -63,9 +63,5 @@ func TestMonsterSprite(t *testing.T) {
 	if !any {
 		t.Fatal("史萊姆 sprite 全透明(解碼疑有誤)")
 	}
-	// id128/129 = 空 sprite(#3 根因:缺圖)→ 回 error
-	if _, e := DecodeMonsterSprite(shp, 128); e == nil {
-		t.Fatal("id128 應為空 sprite(缺圖)")
-	}
-	t.Logf("史萊姆 sprite %d×%d 有墨 ✓;id128 空 sprite 正確回 error", spr.W, spr.H)
+	t.Logf("史萊姆 sprite %d×%d 有墨 ✓", spr.W, spr.H)
 }
