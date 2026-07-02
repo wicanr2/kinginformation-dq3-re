@@ -8,6 +8,16 @@ type Town struct {
 	W, H           int
 	Cells          []byte // 每格 tile 索引(u16 低 byte;高 byte=事件 subid,渲染不用)
 	SpawnX, SpawnY int    // 版面 spawn(section header +0x13/+0x14)
+	NPCs           []NPC
+}
+
+// NPC 是城鎮裡的一個角色。移植自 dq3_scene_load_npcs 的 7-byte record。
+// B2 = sprite key(DQ3MAN.BLS entry_base=(B2-4)*4;B2<4 無對應 BLS 角色)。
+type NPC struct {
+	X, Y  int
+	B2    int // sprite key
+	Ctrl  int // 行為/朝向控制
+	Flags int // bit3+ = 晝夜可見旗標等
 }
 
 func townU16(d []byte, o int) uint16 {
@@ -50,7 +60,43 @@ func OpenTown(cty []byte, section int) (*Town, error) {
 	for i := 0; i < w*h; i++ {
 		t.Cells[i] = byte(townU16(cty, tbase+2*i)) // 低 byte = BLK index(容忍末尾略超檔尾 → 0)
 	}
+	t.NPCs = parseNPCs(cty, so, w, h)
 	return t, nil
+}
+
+// parseNPCs 解 section 的 NPC 表(移植 dq3_scene_load_npcs)。
+// section 開頭 word[0]=日表、word[1]=夜表(相對 so);首 byte=count,後接 count×7-byte record。
+// 城內晝夜相位固定 → 這裡預設用日表,無效才退夜表(靜態載入,不跑晝夜切換)。
+func parseNPCs(cty []byte, so, w, h int) []NPC {
+	np := -1
+	for _, off := range []int{0, 2} { // 日表優先、夜表 fallback
+		wv := int(townU16(cty, so+off))
+		if wv != 0xffff && so+wv < len(cty) {
+			np = wv
+			break
+		}
+	}
+	if np < 0 {
+		return nil
+	}
+	base := so + np
+	if base >= len(cty) {
+		return nil
+	}
+	cnt := int(cty[base])
+	var out []NPC
+	for i := 0; i < cnt; i++ {
+		r := base + 1 + i*7
+		if r+7 > len(cty) {
+			break
+		}
+		x, y := int(cty[r]), int(cty[r+1])
+		if x >= w || y >= h { // 座標越界跳過(對齊 C)
+			continue
+		}
+		out = append(out, NPC{X: x, Y: y, B2: int(cty[r+2]), Ctrl: int(cty[r+3]), Flags: int(cty[r+5])})
+	}
+	return out
 }
 
 // Tile 回 (x,y) 的 tile 索引;越界回 0(對齊 C bounds-safe 讀)。

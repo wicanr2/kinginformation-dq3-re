@@ -45,4 +45,19 @@ func TestOpenTownAliahan(t *testing.T) {
 		t.Fatal("版面全同一 tile(疑 layout 解析錯)")
 	}
 	t.Logf("cells 全在 DQ31.BLK(%d tiles)範圍、tile 多樣 ✓", blk.Count)
+
+	// NPC:阿里阿罕(起始城)應有一批 NPC(C 版 boot 驗過 24 隻)。
+	if len(town.NPCs) == 0 {
+		t.Fatal("阿里阿罕 section0 解出 0 NPC(疑 NPC 表解析錯)")
+	}
+	spr := 0
+	for _, n := range town.NPCs {
+		if n.X < 0 || n.X >= town.W || n.Y < 0 || n.Y >= town.H {
+			t.Fatalf("NPC 座標 (%d,%d) 出界", n.X, n.Y)
+		}
+		if n.B2 >= 4 { // 有對應 DQ3MAN.BLS sprite
+			spr++
+		}
+	}
+	t.Logf("阿里阿罕 NPC=%d(其中 %d 有 sprite key b2>=4)✓", len(town.NPCs), spr)
 }

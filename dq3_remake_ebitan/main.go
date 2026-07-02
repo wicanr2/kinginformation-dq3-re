@@ -15,9 +15,16 @@ import (
 const (
 	ScreenW, ScreenH = 640, 350
 	TileW, TileH     = 32, 24
-	Cols, Rows       = ScreenW/TileW + 2, ScreenH/TileH + 2 // viewport tile 數(多一圈)
-	moveCooldown     = 6                                    // 每幾幀走一格(grid walk)
+	ViewCols         = ScreenW / TileW              // 20(對齊 C VIEW_COLS)
+	ViewRows         = (ScreenH + TileH - 1) / TileH // 15(ceil,對齊 C VIEW_ROWS)
+	moveCooldown     = 6                             // 每幾幀走一格(grid walk)
 )
+
+// npcInst 是場景裡一個已定位、已載入 sprite 的 NPC。
+type npcInst struct {
+	x, y int
+	spr  *dq3data.CharSprite
+}
 
 // Scene 是一張可走動的地圖(地表或城鎮),統一 render + 碰撞邏輯。
 type Scene struct {
@@ -27,14 +34,23 @@ type Scene struct {
 	w, h           int
 	tileAt         func(x, y int) int // (x,y) → BLK tile 索引
 	spawnX, spawnY int                // 城鎮進入 spawn(地表不用)
+	npcs           []npcInst
 }
 
-// Blocked:出界或該格 BLKBM 屬性 bit0=1 → 不可走(移植 dq3_scene_walkable)。
+// Blocked:出界 / BLKBM 屬性 bit0=1 / 有 NPC 佔格 → 不可走(移植 dq3_scene_walkable + npc_at)。
 func (sc *Scene) Blocked(x, y int) bool {
 	if x < 0 || y < 0 || x >= sc.w || y >= sc.h {
 		return true
 	}
-	return sc.attr.Blocked(sc.tileAt(x, y))
+	if sc.attr.Blocked(sc.tileAt(x, y)) {
+		return true
+	}
+	for i := range sc.npcs { // NPC 擋路(對齊 dq3_scene_npc_at)
+		if sc.npcs[i].x == x && sc.npcs[i].y == y {
+			return true
+		}
+	}
+	return false
 }
 
 type Game struct {
@@ -113,18 +129,45 @@ func (g *Game) exitTown() {
 	g.renderFrame()
 }
 
-// renderFrame:把 cur 的 viewport(隨主角捲動)+ 主角 sprite 渲成 640×350 → g.frame。
+func clampi(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+// renderFrame:把 cur 的 viewport(攝影機 clamp 在地圖內,對齊 C)+ NPC + 主角渲成 640×350 → g.frame。
 func (g *Game) renderFrame() {
 	sc := g.cur
-	ox, oy := g.px-Cols/2, g.py-Rows/2 // viewport 左上 tile(主角置中)
-	for cy := 0; cy < Rows; cy++ {
-		for cx := 0; cx < Cols; cx++ {
-			tile := sc.blk.Tile(sc.tileAt(ox+cx, oy+cy))
+	// 攝影機:主角置中,但夾在地圖邊界內(移植 dq3_scene 的 cam clamp)→ 邊緣不露黑
+	camX := clampi(g.px-ViewCols/2, 0, max0(sc.w-ViewCols))
+	camY := clampi(g.py-ViewRows/2, 0, max0(sc.h-ViewRows))
+	for cy := 0; cy < ViewRows; cy++ {
+		for cx := 0; cx < ViewCols; cx++ {
+			tile := sc.blk.Tile(sc.tileAt(camX+cx, camY+cy))
 			blitTile(g.rgba, cx*TileW, cy*TileH, tile, sc.pal)
 		}
 	}
-	blitSprite(g.rgba, (Cols/2)*TileW, (Rows/2)*TileH, g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+	for i := range sc.npcs { // NPC(在視窗內才畫;靜態朝下 frame)
+		n := &sc.npcs[i]
+		if n.spr == nil || n.x < camX || n.x >= camX+ViewCols || n.y < camY || n.y >= camY+ViewRows {
+			continue
+		}
+		blitSprite(g.rgba, (n.x-camX)*TileW, (n.y-camY)*TileH, n.spr.Frames[0], sc.pal)
+	}
+	blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
+		g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
 	g.frame.WritePixels(g.rgba)
+}
+
+func max0(v int) int {
+	if v < 0 {
+		return 0
+	}
+	return v
 }
 
 func blitTile(rgba []byte, dx, dy int, px [24][32]uint8, pal []dq3data.Color) {
@@ -227,6 +270,20 @@ func main() {
 		w: tw.W, h: tw.H, tileAt: tw.Tile,
 		spawnX: tw.SpawnX, spawnY: tw.SpawnY,
 	}
+	// NPC sprite:DQ3MAN.BLS,entry_base=(b2-4)*4;同 b2 共用一份(移植 dq3_scene_load_npc_sprites)
+	manBLS := mustRead("DQ3MAN.BLS")
+	sprCache := map[int]*dq3data.CharSprite{}
+	for _, n := range tw.NPCs {
+		if n.B2 < 4 { // key<4 無對應 BLS 角色
+			continue
+		}
+		spr, ok := sprCache[n.B2]
+		if !ok {
+			spr = dq3data.LoadCharSprite(manBLS, (n.B2-4)*4)
+			sprCache[n.B2] = spr
+		}
+		g.town.npcs = append(g.town.npcs, npcInst{x: n.X, y: n.Y, spr: spr})
+	}
 
 	g.hero = dq3data.LoadCharSprite(mustRead("DQ3MST.BLS"), 0)
 	g.cur = g.over
@@ -237,8 +294,8 @@ func main() {
 	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	g.renderFrame() // 首幀
-	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d)— 方向鍵走、Enter 進城、Esc 回地表",
-		g.over.w, g.over.h, g.town.w, g.town.h, tw.SpawnX, tw.SpawnY)
+	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d、NPC %d)— 方向鍵走、Enter 進城、Esc 回地表",
+		g.over.w, g.over.h, g.town.w, g.town.h, tw.SpawnX, tw.SpawnY, len(g.town.npcs))
 
 	ebiten.SetWindowSize(ScreenW*2, ScreenH*2)
 	ebiten.SetWindowTitle("Dragon Fighter III — Ebiten port (overworld + アリアハン)")
