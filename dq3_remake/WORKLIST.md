@@ -54,14 +54,14 @@
   build + game_tester 93/93。迷宮變體 7塔/9鬼船/16最後迷宮、EBG 事件 cue(教堂/神宮/旅館)記於 docs/61。
   - 過程:結構時長分析(只能粗分 loop/jingle 不能定曲)+ RE recon(`_sbfm_play_music`→`[ds:0x08]`→偏移表)+
     **試影片音訊指紋比對證實不可靠**(SFX+tempo+跨場景)→ 最終靠玩過破關的使用者逐軌認曲(可靠)。
-- [ ] **戰鬥受傷視覺特效:震動 + 黃/綠閃光**(使用者觀察 2026-06-28;**週末繼續**):原版我方受傷時畫面抖動 + 閃黃/綠光,remake 沒做。
-  - ✅ **RE 已定位「抖動」**(file **0x13846**):32 次迴圈,每幀 `xor [0x5b07], 0x6d60` 切換 VGA 顯示起始位址
-    (CRTC reg 0x0C/0x0D,setter routine 0x13834)→ 畫面來回跳;0x1395b 用 VGA write-mode-1 latch 每幀重繪 `bl` 列刷新。
-  - ⚠ **閃光顏色**:跟同特效綁一起,但**非直接寫 DAC port**(全檔 0 處 0x3c8/0x3c9)→ palette 改色走 BIOS/記憶體,黃綠確切值待再追。
-  - **實作(SDL,不需還原 VGA latch)**:① 抖動=render 時 framebuffer 位移幾 px、每幀切換、持續 ~32 幀(對齊原版迴圈次數);
-    ② 閃光=受傷瞬間 palette 短暫染黃/綠(或疊半透明色層);③ **閃光後畫面要恢復**(palette restore 回原值,別殘留);
-    ④ **設定選項開關**(`dq3_config` 加 `battle_hurt_fx`,config_modal 一列,預設開)。接在 `dq3_battlescene` 我方 HP 扣血點。
-  - 動手時把這個 RE 發現(0x13846)補進 docs(新一篇或併 docs/13/16)。
+- [x] **戰鬥受傷視覺特效:震動 + 黃/綠閃光 ✅ 完成**(使用者觀察 2026-06-28):原版我方受傷畫面抖動+閃黃/綠光,已實作。
+  - ✅ **RE 定位「抖動」機制**(file **0x13846**,補進 docs/13):32 次迴圈 `xor [0x5b07],0x6d60` 切 VGA 顯示起始位址
+    (CRTC 0x0C/0x0D via 0x13834)→ 畫面跳;0x1395b latch write-mode 每幀重繪列。閃光非直接寫 DAC port(走 BIOS/記憶體,確切黃綠值未逐一追)。
+  - ✅ **實作**(`dq3_battlescene.c`):`play_hurt_fx()` — ① 震動 `shift_fb_x` framebuffer 水平位移、左右跳 12 幀漸小;
+    ② 閃光 palette 交替染黃/綠、漸弱(對齊原版兩色 toggle);③ **結束 `dq3_set_palette(g_pal_save)` 還原不殘留**;
+    ④ 觸發=主迴圈 do_turn 前後我方 HP 總和下降。
+  - ✅ **設定開關**:`dq3_config.combat_hurt_fx`(load/save/default,預設開)+ config_modal「震動」列(glyph 658/619)+ `dq3_battlescene_set_hurt_fx`。
+  - 驗證:build + config_test + game_tester 93/93;config 畫面 dump 確認「震動 開」列渲染正確。**黃綠確切色值/時長可依實玩微調**。
 
 ### 🟠 Tier 2 — 讓已完成的 MT-32 音樂在發行包能播(完整包 delta)
 > 基礎包已交付但 SDL2-only(MT-32 退 SB);此 tier 補成可播 MT-32。個人/研究包(素材=使用者合法持有,gitignore;需原版 `DQ3.EXE` 啟動)。

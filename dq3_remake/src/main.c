@@ -760,12 +760,14 @@ static void config_modal(const char *assets, const dq3_text *text)
     static const uint16_t V_FM[2]   = { 20, 27 };                /* FM(SB FM)*/
     static const uint16_t V_MT[4]   = { 27, 34, 3, 2 };          /* MT32 */
     static const uint16_t L_INFO[2] = { 478, 670 };              /* 敵情 */
+    static const uint16_t L_FX[2]   = { 658, 619 };              /* 震動(受傷特效)*/
     static const uint16_t HINT[2]   = { 750, 312 };              /* 返回 */
     uint8_t white = 15, yellow = 14; int i, dirty = 0, row = 0;
     int has_mt32 = dq3_audio_mt32_available();
     int ROW_AUD  = has_mt32 ? 3 : -1;                            /* 音源列(有 MT-32 才有)*/
-    int ROW_INFO = has_mt32 ? 4 : 3;                             /* 敵情列(永遠最後)*/
-    const int NROW = has_mt32 ? 5 : 4;                           /* RNG/音樂/音量/[音源]/敵情 */
+    int ROW_INFO = has_mt32 ? 4 : 3;                             /* 敵情列 */
+    int ROW_FX   = ROW_INFO + 1;                                 /* 受傷特效列(最後)*/
+    const int NROW = has_mt32 ? 6 : 5;                           /* RNG/音樂/音量/[音源]/敵情/受傷特效 */
     if (!g_cfg) return;
     while (!dq3_should_quit()) {
         uint8_t sc = dq3_poll_scancode();
@@ -795,17 +797,20 @@ static void config_modal(const char *assets, const dq3_text *text)
             } else if (row == ROW_INFO) {                         /* 敵情:戰鬥 HP+預計動作開關 */
                 g_cfg->combat_info = !g_cfg->combat_info;
                 dq3_battlescene_set_show_info(g_cfg->combat_info);
+            } else if (row == ROW_FX) {                           /* 受傷特效:震動+黃綠閃 開關 */
+                g_cfg->combat_hurt_fx = !g_cfg->combat_hurt_fx;
+                dq3_battlescene_set_hurt_fx(g_cfg->combat_hurt_fx);
             }
             dirty = 1;
         }
         if (load_and_decode_title(assets, "TITG.P", fb, pal16) == 0) dq3_set_palette(pal16, 16);
         {   /* 深色框背景(疊在標題上,讓設定文字可讀)*/
             int blk = pal_near2(pal16,16,0,0,0), frm = pal_near2(pal16,16,255,255,255), bgc = pal_near2(pal16,16,16,16,48);
-            int bx = 150, by = 48, bw = 340, bh = 244;
-            int rowy[5]; int r;
+            int bx = 150, by = 48, bw = 340, bh = 276;
+            int rowy[6]; int r;
             tav_window(fb, bx, by, bw, bh, (uint8_t)blk, (uint8_t)frm, (uint8_t)bgc);
             for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+150+i*16, by+14, T_SET[i], yellow);
-            rowy[0] = by+50; rowy[1] = by+82; rowy[2] = by+114; rowy[3] = by+146; rowy[4] = by+178;
+            rowy[0] = by+50; rowy[1] = by+82; rowy[2] = by+114; rowy[3] = by+146; rowy[4] = by+178; rowy[5] = by+210;
             for (r = 0; r < NROW; r++)                            /* 游標 ▶ 標目前列 */
                 dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+18, rowy[r], (uint16_t)(r==row?11:12), yellow);
             /* row0 亂數模式 */
@@ -829,17 +834,21 @@ static void config_modal(const char *assets, const dq3_text *text)
             /* 敵情:戰鬥 HP+預計動作 開/關(rowy[ROW_INFO])*/
             for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, rowy[ROW_INFO], L_INFO[i], white);
             dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+6*16, rowy[ROW_INFO], g_cfg->combat_info ? V_ON : V_OFF, yellow);
-            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+140+i*16, by+216, HINT[i], white);
+            /* 受傷特效:震動 開/關(rowy[ROW_FX])*/
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+i*16, rowy[ROW_FX], L_FX[i], white);
+            dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+40+6*16, rowy[ROW_FX], g_cfg->combat_hurt_fx ? V_ON : V_OFF, yellow);
+            for (i = 0; i < 2; i++) dq3_text_draw_glyph(text, fb, DQ3_SCREEN_W, DQ3_SCREEN_H, bx+140+i*16, by+248, HINT[i], white);
         }
         dq3_present(); dq3_delay_ms(16);
         if (getenv("DQ3_DUMP")) { dq3_dump_ppm(getenv("DQ3_DUMP")); break; }   /* 一幀 dump 驗證 */
     }
     if (dirty) { dq3_config_save(g_cfg, dq3_config_path());
-        fprintf(stderr, "設定:亂數=%s 音樂=%s 音量=%d 音源=%s 敵情=%s,已存 dq3.cfg\n",
+        fprintf(stderr, "設定:亂數=%s 音樂=%s 音量=%d 音源=%s 敵情=%s 震動=%s,已存 dq3.cfg\n",
                 g_cfg->rng_mode == DQ3_RNG_REAL ? "真實" : "原版",
                 g_cfg->music_enabled ? "開" : "關", g_cfg->music_volume,
                 g_cfg->audio_backend ? "MT-32" : "SB FM",
-                g_cfg->combat_info ? "開" : "關"); }
+                g_cfg->combat_info ? "開" : "關",
+                g_cfg->combat_hurt_fx ? "開" : "關"); }
 }
 
 static int title_menu(const char *assets, const dq3_text *text)
@@ -2911,6 +2920,7 @@ int main(int argc, char **argv)
     dq3_audio_set_backend(cfg.audio_backend ? DQ3_AUDIO_MT32 : DQ3_AUDIO_SB);  /* 預設 MT-32 */
     cfg.audio_backend = dq3_audio_backend();   /* 同步實際(無 MT-32 音檔→退回 SB)*/
     dq3_battlescene_set_show_info(cfg.combat_info);   /* 戰鬥敵情顯示(HP+預計動作)*/
+    dq3_battlescene_set_hurt_fx(cfg.combat_hurt_fx);  /* 戰鬥受傷特效(震動+黃綠閃)*/
 
     /* 場景配曲:各模式進場放對應軌(主迴圈背景持續播放)。 */
     if (strcmp(mode, "field") == 0)      dq3_audio_play_scene(DQ3_MUS_FIELD, 1);

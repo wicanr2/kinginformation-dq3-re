@@ -272,6 +272,14 @@ C 風格同專案慣例:求結構正確、可審閱,非位元精準;逐函式對
 - **連戰 / 多輪回合**:sub_bddf 後段重複回合段的迴圈條件(何時換下一回合)語意待補。
 - 戰鬥背景音樂(Sound Blaster 段 0x129c)**已落地**:**戰鬥曲在 `EBG.MCX`**(6 軌,獨立於主音樂 `MBG.MCX`),
   remake 進戰鬥 `id≥106 ? BOSS : BATTLE` → EBG 軌(`dq3_battlescene.c` + `dq3_audio`,SB + MT-32);配樂全表見 [docs/61](61-music-scene-mapping.md)。
+- **我方受傷視覺特效:畫面震動 + 黃/綠閃光**(使用者觀察,2026-06-28 RE + remake 已實作):
+  - **抖動機制 = file 0x13846**:32 次迴圈,每幀 `xor [0x5b07], 0x6d60` 切換 VGA **顯示起始位址**
+    (setter 0x13834:`out 0x3d4` 寫 CRTC reg 0x0C/0x0D)→ 整個畫面左右跳;`0x1395b` 用 VGA write-mode-1 latch
+    每幀重繪 `bl` 列(0x23/0x46 列)刷新顯示。
+  - **閃光**:與同特效綁在一起,但**全檔 0 處直寫 DAC port**(`0x3c8`/`0x3c9`)→ palette 改色走 BIOS int10h/記憶體,
+    黃綠確切值未逐一靜態追(runtime 行為,無 DOSBox 不逐幀驗;記憶 `dq3-no-dosbox-debugger`)。
+  - **remake 實作**(`dq3_battlescene.c` `play_hurt_fx`):SDL 等效 —— `shift_fb_x` framebuffer 水平位移做震動、
+    palette 交替染黃/綠漸弱,結束 `dq3_set_palette` 還原(不殘留);設定 `combat_hurt_fx` 開關(config_modal「震動」列,預設開)。
 
 ## 物理傷害公式(反組譯 file 0xc03e,真公式)
 

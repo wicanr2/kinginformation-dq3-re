@@ -40,6 +40,8 @@ static dq3_text g_txt; static int g_txt_ok;
  * 預測:回合開始為每隻敵人「預先決定」下回合動作存進 g_eplan_*,敵方回合執行存好的決定 → 預測 100% 準。 */
 static dq3_monster_ai g_eai; static int g_eai_ok, g_eai_nspell, g_party_avglv, g_fled, g_ehpmax;
 static int g_show_enemy_info = 1;             /* 開關(主程式依設定設)*/
+static int g_hurt_fx = 1;                     /* 受傷視覺特效(震動+黃綠閃)開關(主程式依設定設)*/
+static dq3_color g_pal_save[256]; static int g_pal_n = 0;  /* 戰鬥 palette 備份(閃光後還原,別殘留)*/
 enum { EPLAN_ATTACK = 0, EPLAN_FLEE, EPLAN_SPELL };
 static int      g_eplan_act[8];               /* 動作類型(MAXE=8)*/
 static int      g_eplan_bit[8];               /* EPLAN_SPELL:咒文 bit */
@@ -189,6 +191,51 @@ static int g_cls_idx[PARTY] = { 0, 2, 3, 4 };
 
 /* 敵方 AI(docs/37):本場怪的 D3MNS AI 欄位 + 我方平均等級 + 本場逃走數。 */
 void dq3_battlescene_set_show_info(int on) { g_show_enemy_info = on ? 1 : 0; }
+void dq3_battlescene_set_hurt_fx(int on) { g_hurt_fx = on ? 1 : 0; }
+
+/* 受傷震動:整個 framebuffer 水平位移 dx(空出的邊填黑),對齊原版「切 VGA 起始位址造成畫面跳」(RE file 0x13846)。 */
+static void shift_fb_x(uint8_t *fb, int dx)
+{
+    int y, W = DQ3_SCREEN_W, H = DQ3_SCREEN_H;
+    if (dx == 0) return;
+    for (y = 0; y < H; y++) {
+        uint8_t *row = fb + (size_t)y * W;
+        if (dx > 0)      { memmove(row + dx, row, (size_t)(W - dx)); memset(row, 0, (size_t)dx); }
+        else { int a = -dx; memmove(row, row + a, (size_t)(W - a)); memset(row + (W - a), 0, (size_t)a); }
+    }
+}
+
+/* 我方受傷視覺特效:畫面震動 + 黃/綠交替閃光,~12 幀漸弱,結束還原 palette(別殘留)。
+ * 原版機制 RE 見 file 0x13846(VGA 起始位址 toggle 32 幀 + latch 重繪);此為 SDL 等效實作。 */
+static void play_hurt_fx(const dq3_monster_sprite *spr, const int *ehp, int en,
+                         const member *party, int cursor, int monster_id)
+{
+    int f, c, FR = 12;
+    if (!g_hurt_fx || g_pal_n <= 0) return;
+    for (f = 0; f < FR; f++) {
+        int inten = FR - f;                          /* 12..1 漸弱 */
+        int k  = (inten * 150) / FR;                 /* 閃光強度 */
+        int dx = ((f & 1) ? -1 : 1) * (inten > 3 ? 6 : 3);  /* 震動:左右跳、漸小 */
+        int yellow = ((f & 1) == 0);                 /* 交替 黃/綠(對齊原版兩色 toggle)*/
+        dq3_color fp[256];
+        for (c = 0; c < g_pal_n; c++) {
+            int r = g_pal_save[c].r, g = g_pal_save[c].g, b = g_pal_save[c].b;
+            if (yellow) { r += k;     g += k; b -= k; }   /* 黃:R+G 高、B 低 */
+            else        { r -= k / 3; g += k; b -= k; }   /* 綠:G 高 */
+            fp[c].r = (uint8_t)(r < 0 ? 0 : r > 255 ? 255 : r);
+            fp[c].g = (uint8_t)(g < 0 ? 0 : g > 255 ? 255 : g);
+            fp[c].b = (uint8_t)(b < 0 ? 0 : b > 255 ? 255 : b);
+        }
+        dq3_set_palette(fp, g_pal_n);
+        render(dq3_fb(), spr, ehp, en, party, cursor, 0, monster_id);
+        shift_fb_x(dq3_fb(), dx);
+        dq3_present();
+        dq3_delay_ms(22);
+    }
+    dq3_set_palette(g_pal_save, g_pal_n);            /* ★ 還原 palette,別殘留 */
+    render(dq3_fb(), spr, ehp, en, party, cursor, 1, monster_id);
+    dq3_present();
+}
 static int g_last_gold;                         /* 上一場勝利的戰利金錢 */
 
 /* 戰鬥狀態修正(怪施 base==0 輔助/狀態咒效果;每場 reset;倍率用百分比整數)。
@@ -623,6 +670,7 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
     if(!raw){ fprintf(stderr,"load MNSBK.PAL failed\n"); return -1; }
     pn=dq3_pal_decode(raw,rlen,pal,256); free(raw);
     dq3_set_palette(pal,pn);
+    { int _i; for(_i=0;_i<pn&&_i<256;_i++) g_pal_save[_i]=pal[_i]; g_pal_n=pn; }  /* 備份供受傷閃光後還原 */
     sky_idx=pal_near(pal,pn,60,140,240); ground_idx=pal_near(pal,pn,40,150,40);
     white_idx=pal_near(pal,pn,255,255,255); red_idx=pal_near(pal,pn,230,40,40);
     green_idx=pal_near(pal,pn,40,220,40); black_idx=pal_near(pal,pn,0,0,0);
@@ -732,7 +780,10 @@ int dq3_battlescene_run(const char *assets, int monster_id, int monster_count,
             }
             dq3_audio_se(cursor==0 ? DQ3_SE_ATTACK : (cursor==4 ? DQ3_SE_SPELL : DQ3_SE_CONFIRM));
             turn++;
-            outcome=do_turn(party,ehp,en,eatk,edef,eagi,efree,cursor);
+            { int _i,_hp0=0,_hp1=0; for(_i=0;_i<PARTY;_i++)_hp0+=party[_i].hp;
+              outcome=do_turn(party,ehp,en,eatk,edef,eagi,efree,cursor);
+              for(_i=0;_i<PARTY;_i++)_hp1+=party[_i].hp;
+              if(_hp1<_hp0) play_hurt_fx(&spr,ehp,en,party,cursor,monster_id); }  /* 我方受傷 → 震動+黃綠閃光 */
             peek_enemy_plans(ehp, en);                 /* 決定下回合敵人動作(供顯示)*/
         }
         dq3_delay_ms(16);
