@@ -90,9 +90,12 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
     執行需 `DQ3_MT32=<track_NN.ogg 目錄>`(未設 → 靜音)。
   - [ ] VOC 音效;SB-FM OPL2 即時合成(最硬,之後補)
   > ⚠ headless/CI 無 ALSA 裝置時,設了 `DQ3_MT32` 會讓 oto 開裝置失敗 → 請留空 `DQ3_MT32`(靜音)或給 dummy ALSA;真機/桌面有音效卡則正常播放。
-- [ ] **階段 6 輸入 + 觸控 UI**:鍵盤(桌面/web)+ 虛擬方向鍵/A/B/選單(行動)。
-  **設計規劃已備**:[docs/63 Android 觸控 UI 規劃](../docs/63-ebiten-android-touch-ui-plan.md)
-  (控制集=十字鍵+A+B、先抽象輸入層再綁來源、浮動十字鍵、多點觸控、分階段)
+- [x] **階段 6 輸入 + 觸控 UI**(依 [docs/63 規劃](../docs/63-ebiten-android-touch-ui-plan.md)實作):
+  - [x] **抽象輸入層**(`input.go` `InputState`):遊戲邏輯只依賴抽象動作(DirHeld/DirEdge/Confirm/Cancel),
+    鍵盤 + 觸控兩個來源 OR 合流,邏輯不知來源(deep module)。`Update()` 已全改讀 `InputState`。
+  - [x] **虛擬觸控**(`touch.go`):左下浮動十字鍵(4 向量化 + 死區)+ 右下 A/B,半透明疊層、**多點觸控**
+    (十字鍵 + 按鈕同時)、有觸控過才顯示(免擾桌面)。`quantize4`/`zoneOf` 單元測試。Xvfb 截圖驗證疊層。
+  - [ ] 情境化 A/B 標籤、安全區 inset、DeviceScaleFactor 尺寸(打磨,之後)
 - [ ] **階段 7 Android**:`ebitenmobile bind` → `.aar` → Android Studio + 素材入 APK + 版權閘 → APK/AAB
 - [ ] **階段 8 紅利**:同碼編 WASM(瀏覽器 demo)+ 桌面
 

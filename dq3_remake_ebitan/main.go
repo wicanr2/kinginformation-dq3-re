@@ -81,6 +81,7 @@ type Game struct {
 	dlg            Dialogue // 對話視窗
 	cmd            CmdMenu  // 野外命令窗
 	music          *gaudio.Music
+	input          *Input // 抽象輸入(鍵盤 + 觸控)
 	frame          *ebiten.Image
 	rgba           []byte
 }
@@ -115,71 +116,62 @@ func (g *Game) selectCommand(cmd int) {
 }
 
 func (g *Game) Update() error {
+	in := g.input.Poll() // 抽象輸入(鍵盤 + 觸控合流)
 	moved := false
-	confirm := inpututil.IsKeyJustPressed(ebiten.KeySpace)  // A:確定 / 對話 / 選定
-	cancel := inpututil.IsKeyJustPressed(ebiten.KeyEscape)  // B:取消 / 關窗
 
-	// 對話開啟時為 modal:只吃 A(推進/關閉),不移動
+	// 對話 modal:只吃 A(推進/關閉),不移動
 	if g.dlg.open {
-		if confirm {
+		if in.Confirm {
 			g.dlg.Advance()
 		}
 		g.renderFrame()
 		return nil
 	}
-	// 命令窗開啟時為 modal:方向移游標、A 選定、B 關窗
+	// 命令窗 modal:方向移游標、A 選定、B 關窗
 	if g.cmd.open {
 		switch {
-		case cancel:
+		case in.Cancel:
 			g.cmd.open = false
-		case confirm:
+		case in.Confirm:
 			g.selectCommand(g.cmd.cursor)
 		default:
-			if d := dpadEdge(); d >= 0 {
-				g.cmd.move(d)
+			if in.DirEdge >= 0 {
+				g.cmd.move(in.DirEdge)
 			}
 		}
 		g.renderFrame()
 		return nil
 	}
-	// A(城內)→ 開命令窗
-	if confirm && g.inTown {
-		g.cmd.Open()
+	// A:城內開命令窗;地表 → 進阿里阿罕城(觸控/鍵盤共用)
+	if in.Confirm {
+		if g.inTown {
+			g.cmd.Open()
+		} else {
+			g.enterTown()
+		}
 		g.renderFrame()
 		return nil
 	}
-	// 進城 / 回地表(邊緣觸發)
-	if !g.inTown && inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+	if in.Enter && !g.inTown { // 鍵盤 Enter 也進城
 		g.enterTown()
 		return nil
 	}
-	if g.inTown && cancel {
+	if in.Cancel && g.inTown {
 		g.exitTown()
 		return nil
 	}
+	// 移動(方向 held + grid cooldown)
 	if g.cd > 0 {
 		g.cd--
-	} else {
-		dx, dy, face := 0, 0, g.facing
-		switch {
-		case ebiten.IsKeyPressed(ebiten.KeyArrowDown):
-			dy, face = 1, 0
-		case ebiten.IsKeyPressed(ebiten.KeyArrowUp):
-			dy, face = -1, 1
-		case ebiten.IsKeyPressed(ebiten.KeyArrowLeft):
-			dx, face = -1, 2
-		case ebiten.IsKeyPressed(ebiten.KeyArrowRight):
-			dx, face = 1, 3
+	} else if in.DirHeld >= 0 {
+		g.facing = in.DirHeld // 撞牆也轉向(對齊原版:面向先變,可走才移動)
+		dx, dy := dirDelta(in.DirHeld)
+		nx, ny := g.px+dx, g.py+dy
+		if !g.cur.Blocked(nx, ny) { // 碰撞:BLKBM attr&1 + NPC 佔格
+			g.px, g.py = nx, ny
+			moved = true
 		}
-		if dx != 0 || dy != 0 {
-			g.facing = face // 撞牆也轉向(對齊原版:面向先變,可走才移動)
-			nx, ny := g.px+dx, g.py+dy
-			if !g.cur.Blocked(nx, ny) { // 碰撞:BLKBM attr&1 = 不可走(山/海/牆)
-				g.px, g.py = nx, ny
-				moved = true
-			}
-			g.cd = moveCooldown
-		}
+		g.cd = moveCooldown
 	}
 	g.anim++
 	if moved || g.anim%18 == 0 { // 走動 / 待機都擺手腳
@@ -187,7 +179,7 @@ func (g *Game) Update() error {
 			g.walk ^= 1
 		}
 	}
-	g.renderFrame() // ★ 在 Update 渲染 → WritePixels 於 Draw 前生效(Ebiten:WritePixels 下一幀才顯示)
+	g.renderFrame() // ★ 在 Update 渲染 → WritePixels 於 Draw 前生效
 	return nil
 }
 
@@ -247,9 +239,10 @@ func (g *Game) renderFrame() {
 		yellow := dq3data.Color{R: 255, G: 224, B: 32}
 		g.cmd.draw(g.rgba, white, yellow, 48, 32)
 	}
-	if g.dlg.open { // 對話框疊在最上層
+	if g.dlg.open { // 對話框
 		g.dlg.draw(g.rgba, white)
 	}
+	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
 }
 
@@ -330,7 +323,7 @@ func mustRead(name string) []byte {
 
 func main() {
 	pal := dq3data.DecodePalette(mustRead("DQ3.PAL"), 256) // 城鎮/地表共用(tile 只用色 0..15)
-	g := &Game{rgba: make([]byte, ScreenW*ScreenH*4)}
+	g := &Game{rgba: make([]byte, ScreenW*ScreenH*4), input: newInput()}
 
 	// 地表 scene
 	overBLK, err := dq3data.OpenBLK(mustRead("DQ3.BLK"))
@@ -394,6 +387,9 @@ func main() {
 	}
 	if os.Getenv("DQ3_CMD") != "" { // debug:起手開命令窗(截圖驗證)
 		g.cmd.Open()
+	}
+	if os.Getenv("DQ3_TOUCH") != "" { // debug:強制顯示觸控疊層(截圖驗證)
+		g.input.touch.everTouched = true
 	}
 	// MT-32 音樂(DQ3_MT32 指向 track_NN.ogg 目錄;無則靜音降級)
 	g.music = gaudio.NewMusic(os.Getenv("DQ3_MT32"))
