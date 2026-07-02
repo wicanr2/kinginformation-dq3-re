@@ -55,6 +55,7 @@ type Scene struct {
 	sec            int                // section 號
 	npcs           []npcInst
 	override       map[int]int        // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
+	npcRng         rng.RNG            // NPC 遊走用確定性 RNG(依 section 種子)
 }
 
 // tileIdx:回 (x,y) 的 BLK tile 索引,先查執行期覆蓋(開門)再退靜態 tileAt。
@@ -560,6 +561,7 @@ func (g *Game) Update() error {
 	if g.noticeTimer > 0 {
 		g.noticeTimer--
 	}
+	g.npcTick() // 城鎮 NPC 每幀遊走(地表/戰鬥/對話 modal 已提早 return,不會跑到這)
 	g.anim++
 	if moved || g.anim%18 == 0 { // 走動 / 待機都擺手腳
 		if g.anim%9 == 0 {
