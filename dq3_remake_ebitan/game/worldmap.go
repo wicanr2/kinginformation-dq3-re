@@ -112,11 +112,14 @@ var ctyLoc = [100][3]int{
 
 var mapBlkNum = [100]int{1, 1, 1, 1, 1, 1, 1, 2, 4, 1, 4, 2, 1, 5, 5, 1, 1, 4, 4, 2, 1, 3, 1, 4, 2, 1, 4, 3, 1, 1, 5, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 5, 5, 1, 4, 1, 1, 1, 1, 3, 5, 5, 3, 1, 1, 3, 3, 1, 1, 1, 1, 4, 1, 1, 1, 1, 2, 2, 2, 4, 4, 1, 1, 2, 2, 1, 2, 2, 2}
 
-// findCtyAt:地面 (px,py) → CTY 號(移植 find_cty_at_map,map=0);無回 -1。
-// 對齊 RE:py==loc.Y 且 (px==loc.X 或 loc.X+1)。
-func findCtyAt(px, py int) int {
+// findCtyAt:地面 (px,py) → CTY 號;無回 -1(向後相容,= layer 0)。
+func findCtyAt(px, py int) int { return findCtyAtLayer(px, py, 0) }
+
+// findCtyAtLayer:某地表層 (px,py) → CTY 號(移植 find_cty_at_map);無回 -1。
+// 對齊 RE:只配對同層(ctyLoc[i][2]==layer,255=空槽)、py==loc.Y 且 (px==loc.X 或 loc.X+1)。
+func findCtyAtLayer(px, py, layer int) int {
 	for i := 0; i < len(ctyLoc); i++ {
-		if ctyLoc[i][2] != 0 { // 只配對地面層 + 跳過空槽(0xff)
+		if ctyLoc[i][2] != layer { // 只配對同層 + 跳過空槽(0xff)
 			continue
 		}
 		lx, ly := ctyLoc[i][0], ctyLoc[i][1]

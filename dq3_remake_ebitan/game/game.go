@@ -156,6 +156,8 @@ func (sc *Scene) npcAt(x, y int) int {
 
 type Game struct {
 	over, town     *Scene // 地表 / 目前城鎮
+	under          *Scene // 下層地表(DQ3UND.MAP,懶載;共用地表 BLK/attr/pal)
+	layer          int    // 目前地表層:0=地面 1=下層(城鎮進出以此決定回哪層)
 	cur            *Scene
 	inTown         bool
 	curCty         int   // 目前所在 CTY 號(-1=地表)
@@ -450,6 +452,11 @@ func (g *Game) Update() error {
 		g.renderFrame()
 		return nil
 	}
+	// U 鍵:降到下層地表(對齊 C dev 捷徑;正式觸發=劇情事件 86)。在地表時可用
+	if !g.inTown && g.layer == 0 && inpututil.IsKeyJustPressed(ebiten.KeyU) {
+		g.descend()
+		return nil
+	}
 	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
 	if g.panel != panelNone {
 		switch {
@@ -544,7 +551,7 @@ func (g *Game) Update() error {
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
 	} else if moved && !g.inTown { // 地表:踩到城鎮入口 → 進城;否則隨機遇敵(~1/16 步)
-		cty := findCtyAt(g.px, g.py)
+		cty := findCtyAtLayer(g.px, g.py, g.layer) // 依目前地表層找入城
 		if pc := owPortalResolve(g.px, g.py, g.flags); pc >= 0 { // 旗標條件 portal 覆蓋(同點依進度變城)
 			cty = pc
 		}
@@ -609,12 +616,16 @@ func (g *Game) tryTransition() {
 	if !ok {
 		return
 	}
-	if dsec == 0xff || dsec == 0xfe { // 出城 → 地表
+	if dsec == 0xff || dsec == 0xfe { // 出城 → 地表(0xff=地面、0xfe=下層 DQ3UND)
+		g.layer = 0
+		if dsec == 0xfe && g.loadUnder() != nil {
+			g.layer = 1
+		}
 		g.exitTown()
-		if dx != 0 && dx < g.over.w {
+		if dx != 0 && dx < g.cur.w {
 			g.px = dx
 		}
-		if dy != 0 && dy < g.over.h {
+		if dy != 0 && dy < g.cur.h {
 			g.py = dy
 		}
 		g.overPx, g.overPy = g.px, g.py
@@ -685,11 +696,49 @@ func (g *Game) warpTo(param int) bool {
 	return true
 }
 
+// loadUnder:懶載下層地表(DQ3UND.MAP;共用地面 DQ3.BLK/BLKBM/pal)。失敗回 nil。移植 dq3_field_load_map。
+func (g *Game) loadUnder() *Scene {
+	if g.under != nil {
+		return g.under
+	}
+	raw, _ := fs.ReadFile(g.assets, "DQ3UND.MAP")
+	fm, err := dq3data.OpenFieldMap(raw)
+	if err != nil {
+		return nil
+	}
+	g.under = &Scene{blk: g.over.blk, attr: g.over.attr, pal: g.over.pal, w: fm.W, h: fm.H, tileAt: fm.Tile}
+	return g.under
+}
+
+// overworldScene:目前地表層對應的 Scene(下層載入失敗則退地面)。
+func (g *Game) overworldScene() *Scene {
+	if g.layer == 1 {
+		if u := g.loadUnder(); u != nil {
+			return u
+		}
+		g.layer = 0
+	}
+	return g.over
+}
+
+// descend:降到下層地表(移植 do_descent;原版由劇情事件 86 觸發,此處供 debug/U 鍵)。
+// 置玩家於下層城 CTY77 入口附近(84,68)。
+func (g *Game) descend() {
+	u := g.loadUnder()
+	if u == nil {
+		return
+	}
+	g.layer, g.cur, g.inTown, g.curCty = 1, u, false, -1
+	g.px, g.py = 84, 68
+	g.music.Play(trackField)
+	g.renderFrame()
+}
+
 // enterTown:進阿里阿罕(CTY0;debug/後備)。
 func (g *Game) enterTown() { g.enterTownCty(0) }
 
 func (g *Game) exitTown() {
-	g.cur, g.inTown, g.curCty = g.over, false, -1
+	g.cur, g.inTown, g.curCty = g.overworldScene(), false, -1 // 回目前地表層(地面/下層)
 	g.px, g.py = g.overPx, g.overPy
 	g.cd = moveCooldown
 	g.music.Play(trackField) // 地表(FIELD 曲)
