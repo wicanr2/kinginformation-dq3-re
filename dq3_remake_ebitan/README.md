@@ -1,35 +1,61 @@
 # dq3_remake_ebitan — 精訊 DQ3 的 Go / Ebiten port
 
-> 目標:把 [`../dq3_remake`](../dq3_remake)(C99 + SDL2)的精訊 DQ3 remake 用 **Go + Ebiten(Ebitengine)** 重寫,
-> 主要為了**乾淨的 Android/iOS/WASM 移植**(Ebiten 行動/觸控/OGG 內建,消掉 SDL2/NDK 路徑三大痛)。
-> 評估與分階段 plan:[`../docs/62`](../docs/62-golang-ebiten-android-port-eval.md)。
->
-> **原則**:困難的 RE 已在 C 版完成 —— 這裡是**翻譯已知邏輯**,不是重新發現。
-> C 版 `dq3_remake/` 的原始碼 + `docs/` + `game_tester` 斷言 = 本 port 的**規格與對拍 oracle**。
-> 素材(原版 `assets_raw/`)使用者合法持有、gitignore 不散布;需原版 `DQ3.EXE` 啟動(版權閘)。
+> 把 [`../dq3_remake`](../dq3_remake)(C99 + SDL2)的精訊 DQ3 remake 用 **Go + Ebiten(Ebitengine)** 重寫,
+> 主要為了**乾淨的 Android / iOS / WASM 移植**。評估與分階段 plan:[`../docs/62`](../docs/62-golang-ebiten-android-port-eval.md)。
+
+## 目錄
+
+- [為什麼 Go/Ebiten](#為什麼-goebiten)
+- [✅ 成果證明:Ebiten 已跑起來](#-成果證明ebiten-已跑起來)
+- [結構](#結構)
+- [建置 / 執行](#建置--執行)
+- [進度(對照 docs/62 八階段)](#進度對照-docs62-八階段)
+- [原則](#原則)
+
+## 為什麼 Go/Ebiten
+
+Ebiten 的**行動裝置 / 觸控 / OGG 音訊是一等公民**,正好消掉 C/SDL2 移 Android 最痛的三塊
+(NDK/SDLActivity、三 ABI libvorbis 交叉編譯、觸控 UI)。同一份碼還能編 **桌面(Win/Mac/Linux)+ WASM(瀏覽器)**。
+困難的反組譯已在 C 版完成 → 這裡是**翻譯已知邏輯**,不是重新發現(詳見 [docs/62](../docs/62-golang-ebiten-android-port-eval.md))。
+
+## ✅ 成果證明:Ebiten 已跑起來
+
+**階段 1 里程碑達成**:Ebiten 在 Xvfb + Mesa 軟體 GL 下實際渲染 —— 載入**真實 `DQ3.PAL`**、用移植的
+Go parser(`internal/dq3data`)解碼、Ebiten 畫成 palette swatches。這張是實際截到的畫面像素:
+
+![Ebiten phase 1:真實 DQ3.PAL → Go parser → Ebiten 渲染](docs/phase1-palette.png)
+
+- 深藍底 = Ebiten `screen.Fill(RGBA{16,24,48})`;80 個色塊 = `DQ3.PAL`(240 bytes)經 `DecodePalette` 解出的 80 色。
+- 證明**端到端管線通**:真實資產 → Go 解析(對拍 C 版逐色一致)→ Ebiten 渲染 → 螢幕像素。
+- toolchain:**Ebiten v2.9.9 / Go 1.24 compile + run OK**(全在 docker,不污染 host)。
 
 ## 結構
 
 ```
 dq3_remake_ebitan/
-├── go.mod / go.sum        # module(Ebiten v2)
+├── go.mod / go.sum        # module(Ebiten v2.9.9)
 ├── main.go                # Ebiten Game shell(開窗/主迴圈/Layout 640×350)
 ├── internal/dq3data/      # ★ 純 Go 資料解析器(移植自 C;無引擎相依,可 headless 測)
 │   ├── palette.go         #   DQ3.PAL 解碼(移植 dq3_pal_decode)
 │   └── palette_test.go    #   對拍真實 DQ3.PAL(逐色驗證與 C 公式一致)
+├── docs/phase1-palette.png# 上方成果截圖
 └── build.sh               # docker golang 建置(不污染 host):test + Ebiten compile-check
 ```
 
-## 建置(docker,不污染 host)
+## 建置 / 執行
+
 ```bash
-bash dq3_remake_ebitan/build.sh   # 純 Go 單測 + Ebiten shell compile-check(Go 1.24 + GL/X11/ALSA)
+bash dq3_remake_ebitan/build.sh          # docker：純 Go 單測(對拍真實素材)+ Ebiten shell compile-check
 ```
-桌面實際跑要有顯示器(`DQ3_ASSETS=/path/to/assets_raw go run .`)。
+本機實跑(需顯示器):
+```bash
+cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw go run .
+```
+> 素材(原版 `assets_raw/`)使用者合法持有、gitignore 不散布;需原版 `DQ3.EXE` 啟動(版權閘)。
 
-## 進度(對照 docs/62 分階段 plan)
+## 進度(對照 docs/62 八階段)
 
-- [x] **階段 1 骨架**:Go module + Ebiten 開窗/主迴圈/Layout(640×350);**管線驗證** —— 載入真實 `DQ3.PAL`
-  用移植的 `dq3data.DecodePalette` 解碼、Ebiten 畫成 palette swatches。Ebiten v2.9.9 compile OK。
+- [x] **階段 1 骨架**:Go module + Ebiten 開窗/主迴圈/Layout(640×350);**管線驗證 + 截圖**(見上)。
 - [~] **階段 2 資料解析移植**(進行中):
   - [x] palette(DQ3.PAL)+ 對拍測試
   - [ ] BLK tile / sprite(BLS/SHP)/ text(D3TXT)/ CTY / monster / item / save … 逐一移植 + Go 測對拍 C
@@ -39,3 +65,8 @@ bash dq3_remake_ebitan/build.sh   # 純 Go 單測 + Ebiten shell compile-check(G
 - [ ] **階段 6 輸入 + 觸控 UI**:鍵盤(桌面/web)+ 虛擬方向鍵/A/B/選單(行動)
 - [ ] **階段 7 Android**:`ebitenmobile bind` → `.aar` → Android Studio + 素材入 APK + 版權閘 → APK/AAB
 - [ ] **階段 8 紅利**:同碼編 WASM(瀏覽器 demo)+ 桌面
+
+## 原則
+
+C 版 `dq3_remake/` 的原始碼 + `docs/` + `game_tester` 斷言 = 本 port 的**規格與對拍 oracle**。
+每移植一個 parser / 邏輯,就寫 Go 測**對拍 C 版**,確保翻譯正確、不引入回歸。
