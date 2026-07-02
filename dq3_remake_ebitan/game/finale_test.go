@@ -63,6 +63,53 @@ func TestRunFinale(t *testing.T) {
 	}
 }
 
+// 索瑪連戰:startZomaSeq → 逐場勝出推進(六大魔人→怨靈→殭屍→索瑪),最終破索瑪 + 設守衛旗標。
+func TestZomaSeq(t *testing.T) {
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{flags: map[int]bool{}, endSeq: -1}
+	g.battle.mons = mons
+	g.battle.shp = asset(t, "DQ3MNS.SHP")
+
+	g.startZomaSeq()
+	if !g.battle.active {
+		t.Fatal("zomaseq 應開第一場 boss")
+	}
+	// 驅動連戰:每場模擬勝出 → 推進佇列,直到佇列空。
+	seen := []int{g.battle.monID}
+	for i := 0; i < 30 && g.battle.active; i++ {
+		if g.battle.monID == 0x7c { // 索瑪 → 破關結局
+			g.runFinale()
+		}
+		g.battle.active = false
+		if len(g.bossQueue) > 0 {
+			g.advanceBossQueue()
+			if g.battle.active {
+				seen = append(seen, g.battle.monID)
+			}
+		}
+	}
+	if !g.cleared {
+		t.Errorf("連戰未打到破索瑪,序列=%v", seen)
+	}
+	if !g.flags[0x214] {
+		t.Error("六大魔人破後應設守衛旗標 0x214")
+	}
+	if seen[len(seen)-1] != 0x7c {
+		t.Errorf("連戰最後一場應為索瑪 0x7c,實 %v", seen)
+	}
+
+	// flag 0x214 已設時再跑 → 不含六大魔人守衛
+	g2 := &Game{flags: map[int]bool{0x214: true}, endSeq: -1}
+	g2.battle.mons, g2.battle.shp = mons, g.battle.shp
+	g2.startZomaSeq()
+	if g2.battle.active && g2.battle.monID == 106 {
+		t.Error("守衛旗標已設,不應再打六大魔人")
+	}
+}
+
 // 結局捲動:破索瑪 → 開 ENDTXT 首段;逐段推進(模擬 Update 的 end_seq 邏輯)直到播完。
 func TestEndingScroll(t *testing.T) {
 	fon := asset(t, "D3TXT00.FON")

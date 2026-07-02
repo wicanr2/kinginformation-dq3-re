@@ -204,6 +204,7 @@ type Game struct {
 	cleared      bool          // 已破關(索瑪擊破)
 	endText      *dq3data.Text // ENDTXT.TXT 結局文本
 	endSeq       int           // 結局捲動段號(-1=未進行;0..n=當前段)
+	bossQueue    []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪);勝一場接下一場
 	frame        *ebiten.Image
 	rgba         []byte
 }
@@ -435,8 +436,13 @@ func (g *Game) Update() error {
 	// 戰鬥 modal:結束時寫回主角結果 + 回地表音樂
 	if g.battle.active {
 		if g.battle.input(in) {
+			won := g.battle.result == 1
 			g.onBattleEnd()
-			g.music.Play(trackField)
+			if won && len(g.bossQueue) > 0 { // boss 連戰:勝 → 接下一場
+				g.advanceBossQueue()
+			} else if g.endSeq < 0 { // 一般戰後回地表曲(結局進行中則不覆蓋)
+				g.music.Play(trackField)
+			}
 		}
 		g.renderFrame()
 		return nil
@@ -464,11 +470,10 @@ func (g *Game) Update() error {
 		g.descend()
 		return nil
 	}
-	// Z 鍵:大魔王索瑪終戰(對齊 C dev 捷徑 zoma;正式觸發=索瑪神殿頂)。持光之珠自動弱化
+	// Z 鍵:索瑪神殿最終連戰(六大魔人→怨靈→殭屍→索瑪;對齊 C dev 捷徑 zomaseq)。持光之珠弱化索瑪
 	if !g.battle.active && inpututil.IsKeyJustPressed(ebiten.KeyZ) {
-		if g.startBossBattle(0x7c) {
-			g.renderFrame()
-		}
+		g.startZomaSeq()
+		g.renderFrame()
 		return nil
 	}
 	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
@@ -860,6 +865,40 @@ func (g *Game) startBossBattle(monID int) bool {
 		return true
 	}
 	return false
+}
+
+// startZomaSeq:索瑪神殿最終連戰序列(移植 main.c zomaseq)。
+// 六大魔人守衛(怪106 ×6,gate flag 0x214 已破則跳過)→ 巴拉摩斯怨靈122 → 殭屍123 → 索瑪124。
+// 勝一場自動接下一場(advanceBossQueue);敗/逃則中斷。
+func (g *Game) startZomaSeq() {
+	q := []int{}
+	if g.flags == nil {
+		g.flags = map[int]bool{}
+	}
+	if !g.flags[0x214] { // 六大魔人守衛未破 → 六連戰
+		for i := 0; i < 6; i++ {
+			q = append(q, 106)
+		}
+	}
+	q = append(q, 122, 123, 124) // 怨靈 → 殭屍 → 索瑪
+	g.bossQueue = q
+	g.advanceBossQueue()
+}
+
+// advanceBossQueue:取佇列下一個 boss 開戰;sprite 缺失(start 失敗)則跳過續取。佇列空則不動作。
+// 六大魔人全破(pop 到第一個非106)→ 設 flag 0x214(隱藏樓梯現,重來不再打守衛)。
+func (g *Game) advanceBossQueue() {
+	for len(g.bossQueue) > 0 {
+		id := g.bossQueue[0]
+		g.bossQueue = g.bossQueue[1:]
+		if id != 106 && !g.flags[0x214] { // 離開守衛段 → 標記守衛已破
+			g.flags[0x214] = true
+		}
+		if g.startBossBattle(id) {
+			return
+		}
+		// start 失敗(無 sprite)→ 跳過此 boss,續取下一個
+	}
 }
 
 // runFinale:打倒索瑪 → 破關。設 ZOMA 里程碑 + 洛特冊封(勇者裝備昇華)。移植 run_finale。
