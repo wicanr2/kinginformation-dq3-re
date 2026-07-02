@@ -55,8 +55,13 @@ type Battle struct {
 
 func (b *Battle) roll() int { return b.rng.Intn(256) }
 
-// start 開一場戰鬥(monID)。跳過空 sprite 的怪。
-func (b *Battle) start(monID int, seed int64) bool {
+// heroParams 是開戰時由 Game 傳入的主角當前數值(等級推導,見 game.heroStats)。
+type heroParams struct {
+	level, curHP, maxHP, atk, def, agi int
+}
+
+// start 開一場戰鬥(monID + 主角數值)。跳過空 sprite 的怪。
+func (b *Battle) start(monID int, seed int64, hp heroParams) bool {
 	spr, err := dq3data.DecodeMonsterSprite(b.shp, monID)
 	if err != nil {
 		return false
@@ -68,8 +73,8 @@ func (b *Battle) start(monID int, seed int64) bool {
 	b.rng = rand.New(rand.NewSource(seed))
 	b.monID, b.spr = monID, spr
 	b.enemyHP = int(st.HPBase) + b.rng.Intn(int(st.HPRand)+1)
-	// 勇者 lv1(銅劍攻10 + 皮甲防8;示範值,升級系統之後接)
-	b.heroMax, b.heroHP, b.heroAtk, b.heroDef, b.heroAgi = 25, 25, 12, 10, 9
+	b.heroMax, b.heroHP = hp.maxHP, hp.curHP
+	b.heroAtk, b.heroDef, b.heroAgi = hp.atk, hp.def, hp.agi
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.gotExp, b.gotGold = "", 0, 0
 	b.active = true

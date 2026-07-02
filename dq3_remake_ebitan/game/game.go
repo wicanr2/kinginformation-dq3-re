@@ -14,6 +14,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gaudio"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
 // 場景配樂軌號(對齊 C dq3_audio g_scene_track):地表 FIELD=6、阿里阿罕城 CASTLE=1。
@@ -84,8 +85,13 @@ type Game struct {
 	battle         Battle   // 戰鬥場景
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
-	frame          *ebiten.Image
-	rgba           []byte
+	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
+	heroExp     uint32
+	heroGold    int
+	heroHP      int
+	heroInit    bool
+	frame       *ebiten.Image
+	rgba        []byte
 }
 
 // 場景配樂軌:BATTLE=14(地圖遇敵,對齊 C g_scene_track)。
@@ -124,9 +130,10 @@ func (g *Game) Update() error {
 	in := g.input.Poll() // 抽象輸入(鍵盤 + 觸控合流)
 	moved := false
 
-	// 戰鬥 modal:結束時回地表音樂
+	// 戰鬥 modal:結束時寫回主角結果 + 回地表音樂
 	if g.battle.active {
 		if g.battle.input(in) {
+			g.onBattleEnd()
 			g.music.Play(trackField)
 		}
 		g.renderFrame()
@@ -226,14 +233,50 @@ func clampi(v, lo, hi int) int {
 	return v
 }
 
+// heroStats 由累積經驗推導主角(勇者 class0)當前等級與戰鬥數值(移植 dq3_stats 成長表)。
+// 裝備:銅劍攻 +10、皮甲冑防 +8(示範固定裝備;裝備系統之後接)。
+func (g *Game) heroStats() (level, maxHP, atk, def, agi int) {
+	level = stats.LevelForExp(0, g.heroExp)
+	maxHP = int(stats.GrowthTarget(0, stats.HP, level))
+	atk = int(stats.GrowthTarget(0, stats.STR, level)) + 10
+	def = int(stats.GrowthTarget(0, stats.VIT, level))/2 + 8
+	agi = int(stats.GrowthTarget(0, stats.AGI, level))
+	return
+}
+
 // startEncounter:從阿里阿罕周邊弱怪池挑一隻有 sprite 的,開戰 + 切戰鬥音樂。
 func (g *Game) startEncounter() {
+	level, maxHP, atk, def, agi := g.heroStats()
+	if !g.heroInit {
+		g.heroHP, g.heroInit = maxHP, true
+	}
+	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi}
 	pool := []int{5, 0, 1, 3, 4, 6, 7, 8} // 低階怪(id5=史萊姆…);start 會跳過空 sprite
 	for _, i := range rand.Perm(len(pool)) {
-		if g.battle.start(pool[i], int64(g.anim)*2654+1) {
+		if g.battle.start(pool[i], int64(g.anim)*2654+1, hp) {
 			g.music.Play(trackBattle)
 			return
 		}
+	}
+}
+
+// onBattleEnd:戰鬥結束後把結果寫回主角(HP 持久、勝利加 exp/gold、升級全補、敗北回城復活)。
+func (g *Game) onBattleEnd() {
+	g.heroHP = g.battle.heroHP
+	if g.battle.result == 1 { // 勝
+		oldLv := stats.LevelForExp(0, g.heroExp)
+		g.heroExp += uint32(g.battle.gotExp)
+		g.heroGold += g.battle.gotGold
+		if stats.LevelForExp(0, g.heroExp) > oldLv { // 升級 → 全回復
+			_, maxHP, _, _, _ := g.heroStats()
+			g.heroHP = maxHP
+		}
+	}
+	if g.heroHP <= 0 { // 敗:回阿里阿罕、滿血復活(教會復活之簡化)
+		_, maxHP, _, _, _ := g.heroStats()
+		g.heroHP = maxHP
+		g.cur, g.inTown = g.town, true
+		g.px, g.py = g.town.spawnX, g.town.spawnY
 	}
 }
 
@@ -470,7 +513,9 @@ func applyDebugEnv(g *Game) {
 	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證)
 		var id int
 		if _, e := fmt.Sscanf(r, "%d", &id); e == nil {
-			g.battle.start(id, 1)
+			level, maxHP, atk, def, agi := g.heroStats()
+			g.heroHP = maxHP
+			g.battle.start(id, 1, heroParams{level: level, curHP: maxHP, maxHP: maxHP, atk: atk, def: def, agi: agi})
 		}
 	}
 }
