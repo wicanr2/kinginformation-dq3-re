@@ -198,3 +198,14 @@ uint8_t *dq3_load_file(const char *name, size_t *len)
     if (len) *len = buf ? (size_t)sz : 0;
     return buf;
 }
+
+const char *dq3_user_dir(void)
+{
+    static char dir[1024] = {0};
+    if (!dir[0]) {
+        char *p = SDL_GetPrefPath("DQ3Remake", "save");  /* 各平台可寫夾(自動建立,末端含斜線)*/
+        if (p) { snprintf(dir, sizeof dir, "%s", p); SDL_free(p); }
+        else   { snprintf(dir, sizeof dir, "./"); }       /* 退回 cwd(不致命)*/
+    }
+    return dir;
+}

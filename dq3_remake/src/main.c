@@ -354,7 +354,20 @@ static int  pal_near2(const dq3_color *p, int n, int r, int g, int b);
 
 /* 自動存檔:把名冊/隊伍/道具/位置寫成 dq3_save.dat(remake 自有格式)。回 0=成功。
  * 路徑:DQ3_SAVE 環境變數,預設 "dq3_save.dat"(cwd;唯讀 cwd 時用 env 指可寫路徑)。 */
-static const char *save_path(void) { return getenv("DQ3_SAVE") ? getenv("DQ3_SAVE") : "dq3_save.dat"; }
+/* 存檔/設定路徑:預設放各平台可寫使用者夾(dq3_user_dir,末端含斜線);env 可覆寫。
+ * 取代舊「cwd 相對路徑」——唯讀 app bundle / AppImage 不能寫 cwd(Tier 2:可寫路徑統一)。 */
+static const char *save_path(void) {
+    static char p[1200];
+    if (getenv("DQ3_SAVE")) return getenv("DQ3_SAVE");
+    snprintf(p, sizeof p, "%sdq3_save.dat", dq3_user_dir());
+    return p;
+}
+static const char *cfg_path(void) {
+    static char p[1200];
+    if (getenv("DQ3_CONFIG")) return getenv("DQ3_CONFIG");
+    snprintf(p, sizeof p, "%sdq3.cfg", dq3_user_dir());
+    return p;
+}
 
 /* 多存檔 slot(至少 6 格,使用者需求)。slot 0 = F10 自動存檔(=save_path(),相容舊存檔);
  * slot 1..DQ3_SAVE_SLOTS = 手動存檔 dq3_saveN.dat(記錄點/F10 選格)。
@@ -848,7 +861,7 @@ static void config_modal(const char *assets, const dq3_text *text)
         dq3_present(); dq3_delay_ms(16);
         if (getenv("DQ3_DUMP")) { dq3_dump_ppm(getenv("DQ3_DUMP")); break; }   /* 一幀 dump 驗證 */
     }
-    if (dirty) { dq3_config_save(g_cfg, dq3_config_path());
+    if (dirty) { dq3_config_save(g_cfg, cfg_path());
         fprintf(stderr, "設定:亂數=%s 音樂=%s 音量=%d 音源=%s 敵情=%s 震動=%dms,已存 dq3.cfg\n",
                 g_cfg->rng_mode == DQ3_RNG_REAL ? "真實" : "原版",
                 g_cfg->music_enabled ? "開" : "關", g_cfg->music_volume,
@@ -890,7 +903,7 @@ static int title_menu(const char *assets, const dq3_text *text)
         }
         if (sc == 0x32 && has_mt32) {                 /* M 鍵:切換音源 SB FM ↔ MT-32 */
             dq3_audio_set_backend(dq3_audio_backend() == DQ3_AUDIO_MT32 ? DQ3_AUDIO_SB : DQ3_AUDIO_MT32);
-            if (g_cfg) { g_cfg->audio_backend = dq3_audio_backend(); dq3_config_save(g_cfg, dq3_config_path()); }
+            if (g_cfg) { g_cfg->audio_backend = dq3_audio_backend(); dq3_config_save(g_cfg, cfg_path()); }
             dq3_audio_play_scene(DQ3_MUS_TITLE, 1);
             fprintf(stderr, "音源 → %s\n", dq3_audio_backend() == DQ3_AUDIO_MT32 ? "MT-32" : "SB FM");
             sc = 0;                                   /* 不傳給選單 */
@@ -2908,7 +2921,7 @@ int main(int argc, char **argv)
 
     /* 設定套用順序:預設 → 設定檔(跨平台,取代 env)→ env(僅 dev/CI override)。 */
     dq3_config_default(&cfg);
-    dq3_config_load(&cfg, dq3_config_path());
+    dq3_config_load(&cfg, cfg_path());
     g_cfg = &cfg;                              /* 設定選單讀寫 */
     if (rngmode) cfg.rng_mode = (rngmode[0]=='r'||rngmode[0]=='R') ? DQ3_RNG_REAL : DQ3_RNG_DOS;
     dq3_rng_set_mode(cfg.rng_mode);

@@ -65,4 +65,10 @@ uint32_t dq3_ticks_ms(void);
 uint8_t *dq3_load_file(const char *name, size_t *len);
 void     dq3_set_assets_dir(const char *dir);
 
+/* 各平台的「可寫使用者資料夾」(存檔/設定),末端含斜線。
+ * Win=%APPDATA%\DQ3Remake\、macOS=~/Library/Application Support/DQ3Remake/、
+ * Linux=$XDG_DATA_HOME/DQ3Remake/、Android=internal storage —— 由 SDL_GetPrefPath 處理。
+ * 取代散落的相對 `fopen`(唯讀 app bundle / AppImage 不能寫 cwd)。回靜態字串,勿 free。 */
+const char *dq3_user_dir(void);
+
 #endif /* DQ3_RUNTIME_H */
