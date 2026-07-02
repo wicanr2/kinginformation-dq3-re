@@ -244,14 +244,43 @@ func (b *Battle) execSpell(rec int) {
 	b.enemyTurn()
 }
 
-// enemyTurn:敵方回合(AI 逃跑判定 → 否則物理反擊,防御減半)。玩家行動後呼叫。
+// enemyTurn:敵方回合(移植 C dq3_battlescene 敵方回合:逃跑 → 施咒 → 物理反擊)。
 func (b *Battle) enemyTurn() {
 	st, _ := b.mons.Stat(b.monID)
-	if ai, ok := b.mons.AI(b.monID); ok && ai.FleeRate > 0 &&
-		b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
+	ai, aiOK := b.mons.AI(b.monID)
+	// 1) 逃跑
+	if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
 		b.msg, b.result, b.phase = "敵人逃走了", 3, phMessage
 		return
 	}
+	// 2) 施咒(cast_prob;傷害咒傷我方、回復咒補己;輔助咒無效果則落物攻)
+	if aiOK && ai.CastProb > 0 && b.roll() < int(ai.CastProb) {
+		if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
+			rec := spell.MonsterSpellRec(bits[b.rng.Intn(len(bits))])
+			if def, ok := spell.GetDef(rec); ok {
+				val := spell.CastValue(def.Base, b.roll())
+				if def.Kind == spell.Heal { // 敵補己
+					b.enemyHP += val
+					if b.enemyHP > b.enemyMax {
+						b.enemyHP = b.enemyMax
+					}
+					b.msg, b.phase = fmt.Sprintf("敵詠唱咒文回復 %d", val), phMessage
+					return
+				}
+				// 傷害咒 → 傷我方(咒文不受防御減半)
+				b.heroHP -= val
+				b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
+				if b.heroHP <= 0 {
+					b.heroHP, b.result, b.phase = 0, 2, phMessage
+					return
+				}
+				b.phase = phMessage
+				return
+			}
+			// 輔助咒(無 def)→ 落物理攻擊
+		}
+	}
+	// 3) 物理反擊(防御減半)
 	edmg := battle.PhysDamage(int(st.Atk), b.heroDef, b.roll(), 0)
 	if b.defending {
 		edmg /= 2

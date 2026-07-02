@@ -73,3 +73,30 @@ func CastValue(base, roll int) int {
 	half := base / 2
 	return half + half*roll/256
 }
+
+// 怪物咒文 bit(0..47)→ 咒名 rec(移植 dq3_monster_spell_rec,EXE 0x3930 remap,docs/37)。
+var monsterSpellRec = [48]int{
+	121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132,
+	133, 134, 135, 136, 139, 140, 141, 144, 145, 146, 147, 148,
+	149, 150, 152, 154, 155, 156, 157, 158, 161, 162, 163, 164,
+	169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180,
+}
+
+// MonsterSpellRec:怪物咒文 bit → 咒名 rec;越界回 0。
+func MonsterSpellRec(bit int) int {
+	if bit < 0 || bit >= 48 {
+		return 0
+	}
+	return monsterSpellRec[bit]
+}
+
+// MonsterSpellBits:自 spell_mask[6] 取出所有已知咒文 bit(0..47)。
+func MonsterSpellBits(mask [6]uint8) []int {
+	var out []int
+	for b := 0; b < 48; b++ {
+		if mask[b/8]&(0x80>>(b%8)) != 0 {
+			out = append(out, b)
+		}
+	}
+	return out
+}

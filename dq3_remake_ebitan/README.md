@@ -112,7 +112,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **戰鬥指令 防禦/道具**：防禦（本回合受傷減半）、道具（用藥草 0x41 回 30HP，戰後扣背包）；戰鬥指令 戰鬥/防禦/道具/逃跑 4 項真中文
   - [x] **敵方 AI（逃跑）**：用解析的 MonsterAI（flee_thresh/flee_rate）→ 我方等級高時敵人逃走（金屬史萊姆經典）
   - [x] **咒文系統**（`internal/spell`，移植 dq3_spell 學習表+施放 descriptor+公式 base/2+rng）：勇者系按等級習得（美拉lv2/荷依米lv4/吉拉lv10…）、戰鬥 咒文→選咒（真中文名+MP）→施放（傷敵/補己）耗 MP；MP 持久+升級補滿+存檔 + 對拍測試（HeroKnown/CastValue）
-  - [ ] 敵施咒、逐城設施表、事件劇本、VOC/OPL2 音效
+  - [x] **敵方施咒**：敵回合 逃跑→施咒（cast_prob + spell_mask → 怪物咒表 → 傷我/補己）→物攻,對齊 C 敵回合;戰鬥背景 packbg 草原 + 版面 1:1 對齊 C
+  - [ ] 逐城設施表、事件劇本、VOC 音效、SB-FM OPL2 合成（最硬）
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;
