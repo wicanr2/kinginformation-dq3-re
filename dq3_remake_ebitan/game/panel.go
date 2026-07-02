@@ -30,14 +30,19 @@ func (g *Game) drawStatus(rgba []byte, white dq3data.Color) {
 	drawNumber(rgba, g.dlg.tx, x, 180, g.heroGold, yellow)
 }
 
-// drawItems:持有道具清單(品名 = D3TXT00 rec=code+1)。空 → 不列。
+// drawItems:持有道具清單(品名 = D3TXT00 rec=code+1),游標可選 → A 使用。空 → 不列。
 func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
+	yellow := dq3data.Color{R: 255, G: 224, B: 32}
 	for i, code := range g.inventory {
 		if i >= 10 {
 			break
 		}
-		g.shop.drawItemName(rgba, 64, 56+i*22, code, white)
+		y := 56 + i*22
+		if i == g.panelCursor {
+			drawGlyph(rgba, g.dlg.tx, 44, y, 11, yellow) // ► 游標
+		}
+		g.shop.drawItemName(rgba, 64, y, code, white)
 	}
 }
 

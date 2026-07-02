@@ -14,6 +14,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gaudio"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
@@ -194,6 +195,8 @@ type Game struct {
 	shipOwned    bool // 已取得船(波魯多加胡椒換船,milestone SHIP)
 	shipAboard   bool // 目前在船上
 	shipX, shipY int  // 船停泊位置(地表)
+	repel        int  // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	prng         rng.RNG // 祈禱之戒損壞判定用 RNG
 	frame        *ebiten.Image
 	rgba         []byte
 }
@@ -240,7 +243,7 @@ func (g *Game) selectCommand(cmd int) {
 	case cmdStatus: // 狀況
 		g.panel = panelStatus
 	case cmdItem: // 道具
-		g.panel = panelItem
+		g.panel, g.panelCursor = panelItem, 0
 	case cmdEquip: // 裝備
 		g.panel, g.panelCursor = panelEquip, 0
 	case cmdExamine: // 調査:檢查面向格 → 寶箱/隱藏物(一次性旗標)
@@ -457,6 +460,15 @@ func (g *Game) Update() error {
 			case in.DirEdge == 1 && len(g.inventory) > 0: // 上
 				g.panelCursor = (g.panelCursor + len(g.inventory) - 1) % len(g.inventory)
 			}
+		case g.panel == panelItem: // 道具:方向選 + A 使用(藥草/翼/聖水/祈禱之戒)
+			switch {
+			case in.Confirm:
+				g.useSelectedItem()
+			case in.DirEdge == 0 && len(g.inventory) > 0: // 下
+				g.panelCursor = (g.panelCursor + 1) % len(g.inventory)
+			case in.DirEdge == 1 && len(g.inventory) > 0: // 上
+				g.panelCursor = (g.panelCursor + len(g.inventory) - 1) % len(g.inventory)
+			}
 		case in.Confirm:
 			g.panel = panelNone
 		}
@@ -532,7 +544,9 @@ func (g *Game) Update() error {
 			g.enterTownCty(cty)
 			return nil
 		}
-		if rand.Intn(16) == 0 {
+		if g.repel > 0 { // 聖水驅敵期間每步遞減、不遇弱敵(移植 #3 repel)
+			g.repel--
+		} else if rand.Intn(16) == 0 {
 			g.startEncounter()
 		}
 	}
@@ -1026,6 +1040,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.companions = startingCompanions(0) // 示範隊伍(戰士/僧侶/魔法使);酒館招募之後接
 	g.flags = map[int]bool{}
 	g.noticeCode = -1
+	g.prng.Seed(0x1357)                                 // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)
 	g.music = gaudio.NewMusic(music)                    // MT-32 音樂(music fs 為 nil → 靜音降級)
 	if sfxRaw := ld.read("FVOC.VCX"); len(sfxRaw) > 0 { // 數位音效(VOC)
 		bank := dq3data.DecodeVOCBank(sfxRaw, 44100)
