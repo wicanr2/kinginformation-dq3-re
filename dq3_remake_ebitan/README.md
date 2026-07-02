@@ -78,7 +78,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **CTY 城鎮載入 + NPC**(CTY00.DAT 阿里阿罕,移植 `dq3_town_load` + `dq3_scene_load_npcs`:section 偏移表無 count 前綴、layout `{w,h,tiles}`@+0x0e、spawn@+0x13/+0x14、NPC 表日/夜 word[0/1]→count+7B record)+ 對拍測試(42×43、spawn 0,28、**NPC=24 對齊 C boot**、tiles 全在 DQ31.BLK)
   - [x] **文字 + 字型**(D3TXTnn.TXT + D3TXT00.FON,移植 `dq3_text`/`dq3_font`:指標表記錄、2B glyph 碼串、16×16 字模 2B/列 MSB)+ 對拍測試(D3TXT01=100 記錄、FON 1476 字模、461 相異字有墨)
   - [x] **怪物數值/AI**(D3MNS.DAT,130 隻×41B,移植 `dq3_monster`:HP/atk/def/agi/exp/gold/逃跑抗性 + AI 咒文機率/逃跑/咒文 mask)+ 對拍測試(史萊姆 HP6/exp4/gold2/max9、金屬 HP3/exp4140 對齊 C)
-  - [ ] 怪物 sprite / item / save … 逐一移植 + Go 測對拍 C
+  - [x] **怪物 sprite**（DQ3MNS.SHP，131×u32 offset 表 + 4-plane，移植 dq3_monster_sprite_decode）+ 對拍測試（史萊姆 48×39 有墨、id128 空圖回 error）
+  - [ ] item / save … 逐一移植 + Go 測對拍 C
 - [x] **階段 3 渲染 + 互動(可走動地表 + 進城)**:`Scene` 抽象統一地表/城鎮的 render + 碰撞;
   fieldmap/town tile → BLK tile(32×24 indexed)→ palette → 640×350 RGBA → `ebiten.Image`;
   **主角 sprite masked blit(透明背景疊地形)**、**攝影機 clamp 隨主角捲動(邊緣不露黑,對齊 C VIEW 20×15)**、

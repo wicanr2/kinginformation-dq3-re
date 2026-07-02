@@ -28,6 +28,13 @@ func le16(d []byte, o int) uint16 {
 	return uint16(d[o]) | uint16(d[o+1])<<8
 }
 
+func le32(d []byte, o int) uint32 {
+	if o < 0 || o+3 >= len(d) {
+		return 0
+	}
+	return uint32(d[o]) | uint32(d[o+1])<<8 | uint32(d[o+2])<<16 | uint32(d[o+3])<<24
+}
+
 // LoadText:fon = D3TXT00.FON、txt = D3TXTnn.TXT。移植 dq3_text_load。
 func LoadText(fon, txt []byte) *Text {
 	nr := int(le16(txt, 0))/2 - 1 // 指標表項數 -1(末項=結尾哨兵)

@@ -71,3 +71,69 @@ func (m *Monsters) HPMax(id int) uint16 {
 	}
 	return s.HPBase + s.HPRand
 }
+
+// 怪物 sprite 尺寸上限(對齊 C DQ3_SHP_MAX*)。八頭大蛇 416×143、索瑪 384×144。
+const (
+	ShpMaxW = 416
+	ShpMaxH = 160
+)
+
+// MonsterSprite 是一隻怪的圖(palette 索引對 MNSBK.PAL;色 0 = 透明)。
+type MonsterSprite struct {
+	W, H   int
+	Px     [][]uint8 // [H][W] palette 索引
+	Opaque [][]bool  // [H][W] true=畫
+}
+
+// DecodeMonsterSprite 解 DQ3MNS.SHP 第 id 隻。移植 dq3_monster_sprite_decode。
+// SHP:131×u32 offset 表 + 每隻 {u16 w_bytes, u16 h, 4 plane plane-major(plane 3,2,1,0)}。
+// 回 nil,error 表空 sprite(如未完成 boss id128/129)或越界。
+func DecodeMonsterSprite(shp []byte, id int) (*MonsterSprite, error) {
+	if id < 0 || id >= MonsterCount {
+		return nil, fmt.Errorf("id %d 越界", id)
+	}
+	if (id+1)*4+4 > len(shp) {
+		return nil, fmt.Errorf("offset 表越界")
+	}
+	off := int(le32(shp, id*4))
+	nxt := int(le32(shp, (id+1)*4))
+	if off+4 > len(shp) || nxt <= off {
+		return nil, fmt.Errorf("空 sprite(id %d)", id)
+	}
+	wb := int(le16(shp, off) & 0x7fff)
+	h := int(le16(shp, off+2))
+	w := wb * 8
+	if w <= 0 || h <= 0 || w > ShpMaxW || h > ShpMaxH {
+		return nil, fmt.Errorf("尺寸越界 %d×%d", w, h)
+	}
+	base := off + 4
+	planeSz := wb * h
+	if base+planeSz*4 > len(shp) {
+		return nil, fmt.Errorf("sprite 資料越界")
+	}
+	spr := &MonsterSprite{W: w, H: h, Px: make([][]uint8, h), Opaque: make([][]bool, h)}
+	for r := 0; r < h; r++ {
+		spr.Px[r] = make([]uint8, w)
+		spr.Opaque[r] = make([]bool, w)
+	}
+	for s := 0; s < 4; s++ {
+		pl := uint(3 - s) // plane 3 先(Map Mask 0x08→0x01)
+		b0 := base + s*planeSz
+		for r := 0; r < h; r++ {
+			for b := 0; b < wb; b++ {
+				v := shp[b0+r*wb+b]
+				for bit := 0; bit < 8; bit++ {
+					if v&(0x80>>bit) != 0 {
+						spr.Px[r][b*8+bit] |= 1 << pl
+					}
+				}
+			}
+		}
+	}
+	for r := 0; r < h; r++ {
+		for b := 0; b < w; b++ {
+			spr.Opaque[r][b] = spr.Px[r][b] != 0 // 色0=透明
+		}
+	}
+	return spr, nil
+}

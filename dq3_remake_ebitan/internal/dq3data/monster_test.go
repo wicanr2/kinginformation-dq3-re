@@ -40,3 +40,32 @@ func TestMonsters(t *testing.T) {
 	}
 	t.Logf("130 隻怪解析 ✓;史萊姆 HP6/exp4/gold2/max9、金屬 HP3/exp4140 對拍 C")
 }
+
+func TestMonsterSprite(t *testing.T) {
+	shp := findAsset(t, "DQ3MNS.SHP")
+	// id5 史萊姆:尺寸合理且有不透明像素(對拍 test_monster)
+	spr, err := DecodeMonsterSprite(shp, 5)
+	if err != nil {
+		t.Fatalf("史萊姆 sprite 解碼失敗: %v", err)
+	}
+	if spr.W <= 0 || spr.H <= 0 {
+		t.Fatalf("史萊姆 sprite 尺寸 %d×%d", spr.W, spr.H)
+	}
+	any := false
+	for r := 0; r < spr.H && !any; r++ {
+		for b := 0; b < spr.W; b++ {
+			if spr.Opaque[r][b] {
+				any = true
+				break
+			}
+		}
+	}
+	if !any {
+		t.Fatal("史萊姆 sprite 全透明(解碼疑有誤)")
+	}
+	// id128/129 = 空 sprite(#3 根因:缺圖)→ 回 error
+	if _, e := DecodeMonsterSprite(shp, 128); e == nil {
+		t.Fatal("id128 應為空 sprite(缺圖)")
+	}
+	t.Logf("史萊姆 sprite %d×%d 有墨 ✓;id128 空 sprite 正確回 error", spr.W, spr.H)
+}
