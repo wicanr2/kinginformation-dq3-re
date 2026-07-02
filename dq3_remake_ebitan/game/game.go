@@ -97,6 +97,9 @@ type Game struct {
 	inventory      []int     // 持有道具 id
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
+	showTitle      bool   // 標題畫面(A/Enter 開始)
+	titlePix       []uint8
+	titlePal       []dq3data.Color
 	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
 	heroExp     uint32
 	heroGold    int
@@ -181,6 +184,15 @@ func (g *Game) openFacility(k int) {
 func (g *Game) Update() error {
 	in := g.input.Poll() // 抽象輸入(鍵盤 + 觸控合流)
 	moved := false
+
+	// 標題畫面:A/Enter 開始
+	if g.showTitle {
+		if in.Confirm || in.Enter {
+			g.showTitle = false
+		}
+		g.renderFrame()
+		return nil
+	}
 
 	// 戰鬥 modal:結束時寫回主角結果 + 回地表音樂
 	if g.battle.active {
@@ -500,6 +512,18 @@ func (g *Game) renderFrame() {
 	if g.frame == nil { // 尚未初始化(如 NewGame 中途 debug 呼叫)→ 略過
 		return
 	}
+	if g.showTitle && g.titlePix != nil { // 標題畫面(PCX indexed → palette)
+		for i, idx := range g.titlePix {
+			var c dq3data.Color
+			if int(idx) < len(g.titlePal) {
+				c = g.titlePal[idx]
+			}
+			o := i * 4
+			g.rgba[o], g.rgba[o+1], g.rgba[o+2], g.rgba[o+3] = c.R, c.G, c.B, 255
+		}
+		g.frame.WritePixels(g.rgba)
+		return
+	}
 	if g.battle.active {
 		g.battle.draw(g.rgba, g.cur.pal)
 		g.frame.WritePixels(g.rgba)
@@ -715,6 +739,11 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 		}
 		g.music.SetSFX(pcm)
 	}
+	if tit := ld.read("TITG.P"); len(tit) > 0 { // 標題畫面(PCX)
+		if pix, pal, w, h, e := dq3data.DecodePCX(tit); e == nil && w == ScreenW && h == ScreenH {
+			g.titlePix, g.titlePal, g.showTitle = pix, pal, true
+		}
+	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	_ = g.Load()     // 有存檔則續玩(冒險之書)
 	applyDebugEnv(g) // debug 環境變數可覆蓋(此時 music/frame 已就緒)
@@ -730,6 +759,12 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 
 // applyDebugEnv:headless 截圖用的除錯環境變數(真機/正常執行無設 → 全 no-op)。
 func applyDebugEnv(g *Game) {
+	// 任何場景/戰鬥 debug hook → 略過標題(截圖直接到目標畫面)
+	for _, k := range []string{"DQ3_START", "DQ3_BATTLE", "DQ3_SHOP", "DQ3_TAVERN", "DQ3_ENTER", "DQ3_DLG", "DQ3_CMD"} {
+		if os.Getenv(k) != "" {
+			g.showTitle = false
+		}
+	}
 	if os.Getenv("DQ3_START") == "town" {
 		g.cur, g.inTown, g.curCty = g.town, true, 0 // 阿里阿罕
 		g.px, g.py = g.town.spawnX, g.town.spawnY
