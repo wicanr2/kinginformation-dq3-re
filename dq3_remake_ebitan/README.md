@@ -104,7 +104,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **道具/裝備 DB**（ITEM.DAT，128×7，移植 dq3_combat：攻/防/價/類別/裝備部位）+ 對拍（銅劍攻10價100G/皮甲防8）
   - [x] **設施（宿屋/商店）**（`game/facility.go`，阿里阿罕設施表 baked）：面向設施 NPC → 宿屋扣費治滿、武防/道具店貨架（品項+價+購買扣金入庫）。Xvfb 驗證武防店 7 品項/價正確。
   - [x] **品名（D3TXT00 rec=code+1）**：商店/道具顯真實中文名（檜木棒/木棒/銅劍/布的衣服/皮甲宵/皮盾…，Xvfb 驗證）
-  - [ ] 戰鬥深化（咒文/道具/防禦/敵 AI）、教會/存檔、場景轉場、事件/傳送
+  - [x] **存檔/讀檔**（`game/save.go`）：教會/記錄點存檔（JSON 冒險之書:exp/HP/gold/道具/位置）、開機自動續玩 + round-trip 對拍測試
+  - [ ] 戰鬥深化（咒文/道具/防禦/敵 AI）、場景轉場/傳送、事件劇本
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;

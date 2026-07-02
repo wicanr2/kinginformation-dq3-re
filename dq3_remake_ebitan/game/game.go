@@ -151,8 +151,9 @@ func (g *Game) openFacility(k int) {
 		if hi <= len(aliahanItemPool) {
 			g.shop.open(append([]int(nil), aliahanItemPool[lo:hi]...))
 		}
+	case facChurch, facRecord: // 教會/記錄點:存檔(冒險之書)
+		_ = g.Save()
 	}
-	// facChurch/facRecord(復活/存檔)之後接
 }
 
 func (g *Game) Update() error {
@@ -529,8 +530,9 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 
 	g.cur = g.over
 	g.px, g.py = g.over.w/2, g.over.h/2 // 地表起點(暫用中心)
-	g.heroGold = 120                    // 初始金(新遊戲勇者)
-	applyDebugEnv(g)
+	g.heroGold = 120  // 初始金(新遊戲勇者)
+	_ = g.Load()      // 有存檔則續玩(冒險之書)
+	applyDebugEnv(g)  // debug 環境變數可覆蓋(截圖用)
 
 	// MT-32 音樂(music fs 為 nil → 靜音降級)
 	g.music = gaudio.NewMusic(music)
