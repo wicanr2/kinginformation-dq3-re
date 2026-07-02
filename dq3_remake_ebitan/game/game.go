@@ -167,6 +167,8 @@ func (g *Game) selectCommand(cmd int) {
 			switch sub := (n.ctrl >> 3) & 7; {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
+			case sub == 2: // scripted NPC(給物/劇情)
+				g.scriptedTalk(n.b4)
 			case sub >= 3: // 設施(店/宿/教會)
 				g.openFacility(n.b4)
 			}
@@ -180,6 +182,45 @@ func (g *Game) selectCommand(cmd int) {
 	case cmdExamine: // 調査:檢查面向格 → 寶箱/隱藏物(一次性旗標)
 		g.examine()
 	}
+}
+
+func (g *Game) hasItem(code int) bool { return g.countItem(code) > 0 }
+
+// scriptedTalk:對 scripted NPC(sub2)—— 檢查型/給予型(前置道具→給物+旗標+對白)。移植 dq3_scripted。
+func (g *Game) scriptedTalk(byte4 int) {
+	s := scriptedFor(byte4, g.curCty)
+	if s == nil {
+		return
+	}
+	give, prereq, require, consume, milestone := s[2], s[3], s[4], s[5], s[6]
+	beforeRec, giveRec, afterRec := s[7], s[8], s[9]
+	if require != 255 { // 檢查型:持物→give_rec、否則→before_rec(不消耗)
+		if g.hasItem(require) {
+			g.dlg.Open(giveRec)
+		} else {
+			g.dlg.Open(beforeRec)
+		}
+		return
+	}
+	if milestone != 0 && g.flags[milestone] { // 已給過 → 後話
+		g.dlg.Open(afterRec)
+		return
+	}
+	if prereq != 255 && !g.hasItem(prereq) { // 缺前置道具
+		g.dlg.Open(beforeRec)
+		return
+	}
+	if give != 255 { // 給物 + 通知
+		g.inventory = append(g.inventory, give)
+		g.noticeCode, g.noticeTimer = give, 120
+	}
+	if consume == 1 && prereq != 255 {
+		g.removeItems(prereq, 1)
+	}
+	if milestone != 0 {
+		g.flags[milestone] = true
+	}
+	g.dlg.Open(giveRec)
 }
 
 // examine:調查面向格(或腳下)的事件 → 若為寶箱且旗標未取 → 給道具 + 設旗標 + 通知。移植 dq3_treasure。
