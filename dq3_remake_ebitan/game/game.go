@@ -596,6 +596,12 @@ func (g *Game) enterTownCty(cty int) {
 	}
 	g.overPx, g.overPy = g.px, g.py
 	g.town, g.cur, g.inTown, g.curCty = sc, sc, true, cty
+	switch cty { // 進城推進主線里程碑(移植 main.c cur_cty 判定)
+	case 2: // 羅馬利亞
+		g.progressSet(msRomaly)
+	case 49: // 達瑪神殿
+		g.progressSet(msDhama)
+	}
 	g.px, g.py = sc.spawnX, sc.spawnY
 	if sc.dlgText != nil { // 切到該城對話 bank(NPC 對話用正確 bank)
 		g.dlg.tx = sc.dlgText
@@ -730,6 +736,7 @@ func (g *Game) descend() {
 	}
 	g.layer, g.cur, g.inTown, g.curCty = 1, u, false, -1
 	g.px, g.py = 84, 68
+	g.progressSet(msDescend) // 下降里程碑(對 flagDescended)
 	g.music.Play(trackField)
 	g.renderFrame()
 }
@@ -1130,6 +1137,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.equip = [4]int{3, 0x21}            // 初始裝備:銅劍 + 皮甲冑
 	g.companions = startingCompanions(0) // 示範隊伍(戰士/僧侶/魔法使);酒館招募之後接
 	g.flags = map[int]bool{}
+	g.progressSet(msStart) // 開場里程碑(阿里阿罕:見國王、酒場建隊)
 	g.noticeCode = -1
 	g.prng.Seed(0x1357)                                 // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)
 	g.music = gaudio.NewMusic(music)                    // MT-32 音樂(music fs 為 nil → 靜音降級)
@@ -1191,6 +1199,7 @@ func applyDebugEnv(g *Game) {
 	if os.Getenv("DQ3_SHIP") != "" { // debug:給船,停在主角旁(驗證船系統)
 		g.shipOwned = true
 		g.shipX, g.shipY = g.px+1, g.py
+		g.progressSet(msShip) // 取船里程碑
 	}
 	if r := os.Getenv("DQ3_EXP"); r != "" { // debug:設起始經驗(截圖驗證等級/咒文)
 		var e int

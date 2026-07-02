@@ -28,6 +28,8 @@ func (g *Game) drawStatus(rgba []byte, white dq3data.Color) {
 	drawNumber(rgba, g.dlg.tx, x+240, 120, agi, white) // 敏
 	drawNumber(rgba, g.dlg.tx, x, 150, int(g.heroExp), white)
 	drawNumber(rgba, g.dlg.tx, x, 180, g.heroGold, yellow)
+	// 主線進度階段(0..9;第一個未完成里程碑處停)—— 可見的破關進度指標
+	drawNumber(rgba, g.dlg.tx, x, 210, g.progressStage(), yellow)
 }
 
 // drawItems:持有道具清單(品名 = D3TXT00 rec=code+1),游標可選 → A 使用。空 → 不列。
