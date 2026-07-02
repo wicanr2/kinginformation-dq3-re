@@ -358,6 +358,9 @@ func (g *Game) examine() {
 		}
 		return true
 	}
+	if g.inTown && g.curCty == shrineCty && g.synthRainbowAtShrine() { // 合成祠堂:太陽之石+雲雨之杖→彩虹水滴
+		return
+	}
 	fx, fy := frontTile(g.px, g.py, g.facing)
 	if g.tryOpenFacingDoor(fx, fy) { // 面向鎖門 + 鑰匙足夠 → 開門(移植 dq3_scene_try_open_facing_door)
 		return
