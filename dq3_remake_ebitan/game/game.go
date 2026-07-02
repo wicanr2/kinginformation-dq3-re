@@ -82,9 +82,10 @@ type Game struct {
 	cd, anim       int
 	dlg            Dialogue // 對話視窗
 	cmd            CmdMenu  // 野外命令窗
-	battle         Battle   // 戰鬥場景
-	shop           Shop     // 商店(武防/道具店)
-	inventory      []int    // 持有道具 id
+	battle         Battle    // 戰鬥場景
+	shop           Shop      // 商店(武防/道具店)
+	panel          panelKind // 資訊面板(狀況/道具)
+	inventory      []int     // 持有道具 id
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
 	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
@@ -117,7 +118,8 @@ func dpadEdge() int {
 // selectCommand:命令窗選定一項後的動作。對話可用;其餘指令需隊伍/道具/事件系統(尚未移植)→ 暫關窗。
 func (g *Game) selectCommand(cmd int) {
 	g.cmd.open = false
-	if cmd == cmdTalk {
+	switch cmd {
+	case cmdTalk:
 		fx, fy := frontTile(g.px, g.py, g.facing)
 		if idx := g.cur.npcAt(fx, fy); idx >= 0 {
 			n := &g.cur.npcs[idx]
@@ -128,6 +130,10 @@ func (g *Game) selectCommand(cmd int) {
 				g.openFacility(n.b4)
 			}
 		}
+	case cmdStatus: // 狀況
+		g.panel = panelStatus
+	case cmdItem: // 道具
+		g.panel = panelItem
 	}
 }
 
@@ -165,6 +171,14 @@ func (g *Game) Update() error {
 		if g.battle.input(in) {
 			g.onBattleEnd()
 			g.music.Play(trackField)
+		}
+		g.renderFrame()
+		return nil
+	}
+	// 資訊面板 modal(狀況/道具):B 關
+	if g.panel != panelNone {
+		if in.Cancel || in.Confirm {
+			g.panel = panelNone
 		}
 		g.renderFrame()
 		return nil
@@ -360,6 +374,12 @@ func (g *Game) renderFrame() {
 	}
 	if g.shop.active { // 商店
 		g.shop.draw(g.rgba, g.heroGold, white)
+	}
+	switch g.panel { // 資訊面板
+	case panelStatus:
+		g.drawStatus(g.rgba, white)
+	case panelItem:
+		g.drawItems(g.rgba, white)
 	}
 	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
