@@ -3,7 +3,7 @@ package game
 import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 
 // 城鎮設施(移植 dq3_shopdata:type 0=旅社 1=武防店 2=道具店 3=教會 4=記錄點)。
-// NPC 子型 (ctrl>>3)&7 >= 3 → 設施;byte4 = 設施索引 k。這裡內建阿里阿罕(cty0 sec0)設施表。
+// NPC 子型 (ctrl>>3)&7 >= 3 → 設施;byte4 = 設施索引 k。全城設施表在 shopdata.go(baked)。
 const (
 	facInn = iota
 	facWeapon
@@ -14,26 +14,6 @@ const (
 
 type facility struct {
 	k, typ, count, itemOff, innCost int
-}
-
-// 阿里阿罕(cty0 sec0)設施表 + 商店品項池(自 dq3_shopdata baked)。
-var aliahanFacilities = []facility{
-	{k: 0, typ: facInn, innCost: 2},
-	{k: 1, typ: facWeapon, count: 7, itemOff: 0},
-	{k: 2, typ: facItem, count: 3, itemOff: 7},
-	{k: 3, typ: facChurch},
-}
-
-// 阿里阿罕武防店(off0,7 品)+ 道具店(off7,3 品)用到的品項 id(dq3_shop_itempool 前 10)。
-var aliahanItemPool = []int{0x00, 0x01, 0x03, 0x1e, 0x1f, 0x21, 0x39, 0x41, 0x42, 0x43}
-
-func facilityFor(k int) *facility {
-	for i := range aliahanFacilities {
-		if aliahanFacilities[i].k == k {
-			return &aliahanFacilities[i]
-		}
-	}
-	return nil
 }
 
 // Shop 是開啟中的商店狀態(武防/道具店)。

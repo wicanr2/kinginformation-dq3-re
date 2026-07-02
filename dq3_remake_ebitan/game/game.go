@@ -153,25 +153,23 @@ func (g *Game) selectCommand(cmd int) {
 	}
 }
 
-// openFacility:面向設施 NPC(byte4=設施索引 k)→ 開對應設施。
+// openFacility:面向設施 NPC(byte4=設施索引 k)→ 依當前 CTY 開對應設施(全城設施表)。
 func (g *Game) openFacility(k int) {
-	f := facilityFor(k)
+	f := facilityForCty(g.curCty, k)
 	if f == nil {
 		return
 	}
 	switch f.typ {
-	case facInn: // 旅社:扣費(inn_cost×人數,單人)+ 治滿
+	case facInn: // 旅社:扣費(inn_cost×人數,單人)+ 治滿 HP/MP
 		_, maxHP, _, _, _ := g.heroStats()
-		cost := f.innCost
-		if g.heroGold >= cost {
-			g.heroGold -= cost
-			g.heroHP, g.heroInit = maxHP, true
+		if g.heroGold >= f.innCost {
+			g.heroGold -= f.innCost
+			g.heroHP, g.heroMP, g.heroInit = maxHP, g.heroMaxMP(), true
 		}
-	case facWeapon, facItem: // 商店:開貨架
-		lo := f.itemOff
-		hi := lo + f.count
-		if hi <= len(aliahanItemPool) {
-			g.shop.open(append([]int(nil), aliahanItemPool[lo:hi]...))
+	case facWeapon, facItem: // 商店:開貨架(品項自全城品項池 itemOff..+count)
+		lo, hi := f.itemOff, f.itemOff+f.count
+		if lo >= 0 && hi <= len(shopItemPool) {
+			g.shop.open(append([]int(nil), shopItemPool[lo:hi]...))
 		}
 	case facChurch, facRecord: // 教會/記錄點:存檔(冒險之書)
 		_ = g.Save()
@@ -664,7 +662,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 // applyDebugEnv:headless 截圖用的除錯環境變數(真機/正常執行無設 → 全 no-op)。
 func applyDebugEnv(g *Game) {
 	if os.Getenv("DQ3_START") == "town" {
-		g.cur, g.inTown = g.town, true
+		g.cur, g.inTown, g.curCty = g.town, true, 0 // 阿里阿罕
 		g.px, g.py = g.town.spawnX, g.town.spawnY
 	}
 	if r := os.Getenv("DQ3_DLG"); r != "" {
