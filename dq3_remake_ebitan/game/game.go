@@ -12,6 +12,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/config"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gaudio"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
@@ -184,6 +185,8 @@ type Game struct {
 	showTitle      bool   // 標題畫面(A/Enter 開始)
 	titlePix       []uint8
 	titlePal       []dq3data.Color
+	cfg            config.Config // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
+	settings       Settings      // 設定選單 modal(標題畫面按 S 開)
 	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
 	heroExp      uint32
 	heroGold     int
@@ -424,9 +427,16 @@ func (g *Game) Update() error {
 	in := g.input.Poll() // 抽象輸入(鍵盤 + 觸控合流)
 	moved := false
 
-	// 標題畫面:A/Enter 開始
+	// 標題畫面:A/Enter 開始;S 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)
 	if g.showTitle {
-		if in.Confirm || in.Enter {
+		if g.settings.open {
+			g.settingsInput(in)
+			g.renderFrame()
+			return nil
+		}
+		if in.Settings {
+			g.settings.Open()
+		} else if in.Confirm || in.Enter {
 			g.showTitle = false
 		}
 		g.renderFrame()
@@ -841,6 +851,8 @@ func (g *Game) startEncounter() {
 		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
 	comps := g.buildCompanionActors()
 	pool := []int{5, 0, 1, 3, 4, 6, 7, 8} // 低階怪(id5=史萊姆…);start 會跳過空 sprite
+	g.battle.showInfo = g.cfg.CombatInfo
+	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
 	for _, i := range rand.Perm(len(pool)) {
 		if g.battle.start(pool[i], int64(g.anim)*2654+1, hp, comps) {
 			g.music.Play(trackBattle)
@@ -860,6 +872,8 @@ func (g *Game) startBossBattle(monID int) bool {
 	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
 	g.battle.lightOrb = monID == 0x7c && g.hasItem(0x65) // 持光之珠 → 索瑪二階段弱化
+	g.battle.showInfo = g.cfg.CombatInfo
+	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
 	if g.battle.start(monID, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
 		g.music.Play(trackBattle)
 		return true
@@ -1016,6 +1030,7 @@ func (g *Game) renderFrame() {
 			o := i * 4
 			g.rgba[o], g.rgba[o+1], g.rgba[o+2], g.rgba[o+3] = c.R, c.G, c.B, 255
 		}
+		g.settings.draw(g.rgba, g.cfg) // 設定選單(疊在標題上;未開時 no-op)
 		g.frame.WritePixels(g.rgba)
 		return
 	}
@@ -1169,7 +1184,7 @@ func (l *loader) read(name string) []byte {
 func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	ld := &loader{fsys: assets}
 	pal := dq3data.DecodePalette(ld.read("DQ3.PAL"), 256) // 城鎮/地表共用(tile 只用色 0..15)
-	g := &Game{rgba: make([]byte, ScreenW*ScreenH*4), input: newInput()}
+	g := &Game{rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default()}
 
 	// 地表 scene
 	overBLK, err := dq3data.OpenBLK(ld.read("DQ3.BLK"))
@@ -1206,6 +1221,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	fon := ld.read("D3TXT00.FON")
 	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
 	g.cmd.tx = g.dlg.tx                                             // 命令窗標籤 glyph 也走同一字型
+	g.settings.tx = g.dlg.tx                                        // 設定選單標籤 glyph 也走同一字型
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
 	g.endText = dq3data.LoadText(fon, ld.read("ENDTXT.TXT"))        // 結局文本(破索瑪後捲動)
 	g.endSeq = -1                                                   // 結局未進行
@@ -1336,6 +1352,8 @@ func applyDebugEnv(g *Game) {
 			level, maxHP, atk, def, agi := g.heroStats()
 			mp := g.heroMaxMP()
 			g.heroHP, g.heroMP = maxHP, mp
+			g.battle.showInfo = g.cfg.CombatInfo
+			g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
 			g.battle.start(id, 1, heroParams{level: level, curHP: maxHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 				mp: mp, maxMP: mp, spells: g.heroSpells()}, g.buildCompanionActors())
 			if os.Getenv("DQ3_SPELLMENU") != "" && len(g.battle.spells) > 0 {

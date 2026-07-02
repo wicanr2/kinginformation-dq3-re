@@ -17,15 +17,16 @@ const sampleRate = 44100
 
 // Music 管理當前播放的單軌(場景切換時換軌)。
 type Music struct {
-	ctx     *audio.Context
-	player  *audio.Player
-	cur     int
-	fsys    fs.FS // 放 track_NN.ogg 的檔案系統(桌面=os.DirFS、行動=embed.FS)
-	enabled bool
-	vol     float64
-	sfx     [][]byte       // 預轉的音效(16-bit LE stereo)
-	mbg     []byte         // SB-FM 音樂源(MBG.MCX;非 nil → 用 OPL2 FM 取代 MT-32 OGG)
-	fmCache map[int][]byte // 已渲染的 FM 軌(stereo bytes)
+	ctx      *audio.Context
+	player   *audio.Player
+	cur      int
+	fsys     fs.FS // 放 track_NN.ogg 的檔案系統(桌面=os.DirFS、行動=embed.FS)
+	enabled  bool  // 音訊後端是否可用(初始化成功;非使用者開關)
+	musicOff bool  // 使用者音樂開關(SetEnabled 設;零值 false=預設開,對齊 config.Default().MusicEnabled=true)
+	vol      float64
+	sfx      [][]byte       // 預轉的音效(16-bit LE stereo)
+	mbg      []byte         // SB-FM 音樂源(MBG.MCX;非 nil → 用 OPL2 FM 取代 MT-32 OGG)
+	fmCache  map[int][]byte // 已渲染的 FM 軌(stereo bytes)
 }
 
 // SetMBG 啟用 SB-FM 音樂(OPL2 合成 MBG.MCX,取代 MT-32 OGG)。
@@ -65,7 +66,7 @@ func NewMusic(fsys fs.FS) (m *Music) {
 
 // Play 播放第 track 軌(track_NN.ogg,無限循環)。同軌播放中則不重啟。
 func (m *Music) Play(track int) {
-	if m == nil || !m.enabled || track < 0 {
+	if m == nil || !m.enabled || m.musicOff || track < 0 {
 		return
 	}
 	if m.cur == track && m.player != nil && m.player.IsPlaying() {
@@ -137,9 +138,9 @@ func (m *Music) SetSFX(banks [][]int16) {
 	}
 }
 
-// PlaySFX 一次性播放第 i 個音效(fire-and-forget;非致命)。
+// PlaySFX 一次性播放第 i 個音效(fire-and-forget;非致命)。nil-safe。
 func (m *Music) PlaySFX(i int) {
-	if !m.enabled || i < 0 || i >= len(m.sfx) {
+	if m == nil || !m.enabled || i < 0 || i >= len(m.sfx) {
 		return
 	}
 	defer func() { recover() }()
@@ -149,6 +150,37 @@ func (m *Music) PlaySFX(i int) {
 
 // Enabled 回音樂是否可用(有目錄 + 音訊後端 OK)。
 func (m *Music) Enabled() bool { return m.enabled }
+
+// SetEnabled 開/關「音樂」播放(設定選單/config.MusicEnabled 用)。nil-safe。
+// 只影響音樂軌,不影響數位音效(SetSFX/PlaySFX 走獨立的 enabled 欄位,對齊 C
+// dq3_audio_set_enabled 只切 A.enabled、SFX 走另一個 A.sfx_enabled 的分離設計——
+// 不能共用同一個旗標,否則關音樂會連確認音效都關掉)。關閉時立即停止目前播放。
+func (m *Music) SetEnabled(on bool) {
+	if m == nil {
+		return
+	}
+	m.musicOff = !on
+	if !on {
+		m.Stop()
+	}
+}
+
+// SetVolume 設音樂音量(0..100,夾範圍;對映內部 0.0..1.0)。nil-safe。
+// 即時套用到目前播放中的軌(下一次 Play 也會用新音量)。
+func (m *Music) SetVolume(v int) {
+	if m == nil {
+		return
+	}
+	if v < 0 {
+		v = 0
+	} else if v > 100 {
+		v = 100
+	}
+	m.vol = float64(v) / 100
+	if m.player != nil {
+		m.player.SetVolume(m.vol)
+	}
+}
 
 // DecodeOgg 只解碼一段 OGG(供 headless 測試驗有效性);回 (sample 長度, err)。不需 audio context。
 func DecodeOgg(data []byte) (int64, error) {

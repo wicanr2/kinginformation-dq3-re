@@ -8,12 +8,13 @@ import (
 // InputState 是「一幀的抽象動作」——遊戲邏輯只依賴這個,不知也不管來源(鍵盤 / 觸控)。
 // 對齊 docs/63:先抽象再綁定,讓桌面/WASM/手機共用同一套邏輯。
 type InputState struct {
-	DirHeld int  // 按住的方向(走動),-1 無;0下 1上 2左 3右
-	DirEdge int  // 剛按下的方向(選單導覽),-1 無
-	Confirm bool // A:確定 / 對話 / 選定(edge)
-	Cancel  bool // B:取消 / 出城(edge)
-	Enter   bool // 進城(鍵盤 Enter,debug;edge)
-	Toggle  bool // Tab:英數 ↔ 注音 切換(酒館命名;edge)
+	DirHeld  int  // 按住的方向(走動),-1 無;0下 1上 2左 3右
+	DirEdge  int  // 剛按下的方向(選單導覽),-1 無
+	Confirm  bool // A:確定 / 對話 / 選定(edge)
+	Cancel   bool // B:取消 / 出城(edge)
+	Enter    bool // 進城(鍵盤 Enter,debug;edge)
+	Toggle   bool // Tab:英數 ↔ 注音 切換(酒館命名;edge)
+	Settings bool // S:開設定選單(標題畫面;edge)
 }
 
 // Input 合流鍵盤 + 觸控兩個來源。
@@ -45,6 +46,9 @@ func (ip *Input) Poll() InputState {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		s.Toggle = true
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
+		s.Settings = true
 	}
 	// 觸控(蓋過/補上鍵盤)
 	ip.touch.poll()

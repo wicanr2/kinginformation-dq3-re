@@ -76,6 +76,24 @@ type Battle struct {
 	spells      []int // 已學可施放咒文 rec
 	spellCursor int
 	companions  []*battleActor // 同伴(狀態列顯示 + 自動攻擊 + 可被鎖定)
+
+	// 設定選單驅動(config.CombatInfo / CombatHurtFx;由 Game 在 start() 前設好,
+	// start() 不重置 —— 與既有 lightOrb 同一套「呼叫端先設欄位」慣例)。
+	showInfo     bool // false:不畫敵 HP 數字(remake 增強項,C 版無此顯示)
+	hurtFxFrames int  // 受擊閃光殘餘幀數(取代硬寫 4;0=不閃,對齊 config.CombatHurtFx 換算)
+}
+
+// hurtFxFrames:受傷特效時長 ms → 動畫幀數(~16ms/幀,對齊 60fps 迴圈)。0 或負值 = 不閃。
+// 移植自 config.CombatHurtFx 語意(0=關;上限 2000ms)。
+func hurtFxFrames(ms int) int {
+	if ms <= 0 {
+		return 0
+	}
+	f := ms / 16
+	if f < 1 {
+		f = 1
+	}
+	return f
 }
 
 // battleActor 是戰鬥中一名同伴的即時數值(隊長為 hero* 欄位,同伴用此)。
@@ -218,7 +236,7 @@ func (b *Battle) execTurn() {
 			b.enemyHP = 0
 		}
 		b.msg = fmt.Sprintf("給予 %d 傷害", dmg)
-		b.flashCol = 4
+		b.flashCol = b.hurtFxFrames
 		if b.enemyHP == 0 { // 勝
 			b.gotExp, b.gotGold = int(st.Exp), int(st.Gold)
 			b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
@@ -253,7 +271,7 @@ func (b *Battle) execSpell(rec int) {
 		if b.enemyHP < 0 {
 			b.enemyHP = 0
 		}
-		b.flashCol = 4
+		b.flashCol = b.hurtFxFrames
 		b.msg = fmt.Sprintf("咒文 %d 傷害", val)
 		if b.enemyHP == 0 {
 			st, _ := b.mons.Stat(b.monID)
@@ -463,18 +481,20 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 		if b.flashCol > 0 {
 			b.flashCol--
 		}
-		// 敵 HP(remake 增強):H + 數字,置中於怪上方
-		cx := gx + b.spr.W/2
-		hy := gy - 32
-		if hy < fieldY0 {
-			hy = fieldY0
+		// 敵 HP(remake 增強):H + 數字,置中於怪上方。受設定選單「戰鬥資訊」開關(showInfo)控制。
+		if b.showInfo {
+			cx := gx + b.spr.W/2
+			hy := gy - 32
+			if hy < fieldY0 {
+				hy = fieldY0
+			}
+			hc := white
+			if b.enemyMax > 0 && b.enemyHP*4 < b.enemyMax {
+				hc = red
+			}
+			drawGlyph(rgba, b.tx, cx-26, hy, 22, white) // H
+			drawNumber(rgba, b.tx, cx-8, hy, b.enemyHP, hc)
 		}
-		hc := white
-		if b.enemyMax > 0 && b.enemyHP*4 < b.enemyMax {
-			hc = red
-		}
-		drawGlyph(rgba, b.tx, cx-26, hy, 22, white) // H
-		drawNumber(rgba, b.tx, cx-8, hy, b.enemyHP, hc)
 	}
 	// 上方隊伍狀態列(X=0x13*8=152、Y=8;每欄 80px:名 / H+HP / M+MP / 等級;隊長 + 同伴)
 	{
