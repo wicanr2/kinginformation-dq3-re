@@ -130,6 +130,11 @@ func findCtyAt(px, py int) int {
 // loadTownScene:載入任一 CTY 城鎮(section 0)為 Scene(通用,移植 dq3_town_load 用法)。
 // blkn 由 mapBlkNum[cty] 決定 → DQ3<blkn>.BLK + BLKBM<blkn>.DAT。含 NPC(sprite 自 DQ3MAN.BLS)。
 func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn int) (*Scene, error) {
+	return loadTownSceneSec(assets, pal, manBLS, cty, blkn, 0)
+}
+
+// loadTownSceneSec 載入某城的指定 section(轉場用)。section 0 = 城鎮外圍入口層。
+func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, section int) (*Scene, error) {
 	if blkn < 1 || blkn > 5 {
 		blkn = 1
 	}
@@ -138,7 +143,7 @@ func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn i
 	blkName := blkFile(blkn)
 	attrName := blkbmFile(blkn)
 
-	tw, err := dq3data.OpenTown(rd(ctyName), 0)
+	tw, err := dq3data.OpenTown(rd(ctyName), section)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +154,7 @@ func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn i
 	sc := &Scene{
 		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: pal,
 		w: tw.W, h: tw.H, tileAt: tw.Tile, spawnX: tw.SpawnX, spawnY: tw.SpawnY,
-		hiMap: tw.HiMap, events: tw.Events, sec: 0,
+		hiMap: tw.HiMap, events: tw.Events, transitions: tw.Transitions, sec: section,
 	}
 	// 該城對話 bank(D3TXT0<bank>.TXT,section +0x17;共用 D3TXT00.FON)
 	bank := tw.DlgBank

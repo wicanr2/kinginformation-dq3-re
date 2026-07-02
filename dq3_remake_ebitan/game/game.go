@@ -50,8 +50,26 @@ type Scene struct {
 	dlgText        *dq3data.Text      // 該城對話 bank(D3TXT0<bank>.TXT;地表 nil)
 	hiMap          []byte             // 每格高 byte(事件 subid)
 	events         [][3]int           // section 事件表 {type,param,p2}
+	transitions    [][4]int           // section 轉場表 {destCty,destSec,x,y}
 	sec            int                // section 號
 	npcs           []npcInst
+}
+
+// tileTransition:回 (tx,ty) 的轉場(attr&0xe000 轉場格 → hiMap 低5bit subid → transitions[subid])。
+// 回 (destCty, destSec, dx, dy, ok)。移植 dq3_scene_tile_transition。
+func (sc *Scene) tileTransition(tx, ty int) (int, int, int, int, bool) {
+	if sc.hiMap == nil || len(sc.transitions) == 0 || tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h {
+		return 0, 0, 0, 0, false
+	}
+	if sc.attr.Raw(sc.tileAt(tx, ty))&0xe000 == 0 { // 非轉場格
+		return 0, 0, 0, 0, false
+	}
+	subid := int(sc.hiMap[ty*sc.w+tx] & 0x1f)
+	if subid >= len(sc.transitions) {
+		return 0, 0, 0, 0, false
+	}
+	t := sc.transitions[subid]
+	return t[0], t[1], t[2], t[3], true
 }
 
 // tileEvent:回 (tx,ty) 的事件(attr&8 事件格 → hiMap 低5bit subid → events[subid])。回 (event, subid, ok)。
@@ -439,7 +457,9 @@ func (g *Game) Update() error {
 		}
 		g.cd = moveCooldown
 	}
-	if moved && !g.inTown { // 地表:踩到城鎮入口 → 進城;否則隨機遇敵(~1/16 步)
+	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
+		g.tryTransition()
+	} else if moved && !g.inTown { // 地表:踩到城鎮入口 → 進城;否則隨機遇敵(~1/16 步)
 		if cty := findCtyAt(g.px, g.py); cty >= 0 {
 			g.enterTownCty(cty)
 			return nil
@@ -484,6 +504,60 @@ func (g *Game) enterTownCty(cty int) {
 	}
 	g.cd = moveCooldown
 	g.music.Play(ctyMusicTrack(cty))
+	g.renderFrame()
+}
+
+// tryTransition:城內踩到轉場格(門/階梯/出城)→ 依 section+0xc 轉場表切換。移植 main.c 轉場消費。
+// destSec 0xff/0xfe → 出城回地表(下層 DQ3UND 本 port 未載,退地表);其餘 → 換 section(同城)或跨 CTY。
+// 玩家一律置於目的 (dx,dy);dx/dy=0 表沿用既有位置。
+func (g *Game) tryTransition() {
+	if !g.inTown {
+		return
+	}
+	dcty, dsec, dx, dy, ok := g.cur.tileTransition(g.px, g.py)
+	if !ok {
+		return
+	}
+	if dsec == 0xff || dsec == 0xfe { // 出城 → 地表
+		g.exitTown()
+		if dx != 0 && dx < g.over.w {
+			g.px = dx
+		}
+		if dy != 0 && dy < g.over.h {
+			g.py = dy
+		}
+		g.overPx, g.overPy = g.px, g.py
+		g.renderFrame()
+		return
+	}
+	cross := dcty != g.curCty && dcty < 100 // 跨 CTY vs 同城換 section
+	ncty := g.curCty
+	if cross {
+		ncty = dcty
+	}
+	blkn := 1
+	if ncty >= 0 && ncty < len(mapBlkNum) {
+		blkn = mapBlkNum[ncty]
+	}
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ncty, blkn, dsec)
+	if err != nil {
+		g.exitTown() // 載入失敗 → 回地表保底(對齊 C)
+		return
+	}
+	g.town, g.cur, g.curCty = ns, ns, ncty
+	if dx < ns.w {
+		g.px = dx
+	}
+	if dy < ns.h {
+		g.py = dy
+	}
+	if ns.dlgText != nil { // 切到目的城對話 bank
+		g.dlg.tx = ns.dlgText
+	}
+	if cross { // 跨 CTY → 換配樂
+		g.music.Play(ctyMusicTrack(ncty))
+	}
+	g.cd = moveCooldown
 	g.renderFrame()
 }
 

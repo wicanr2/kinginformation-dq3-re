@@ -11,6 +11,7 @@ type Town struct {
 	DlgBank        int      // 對話 bank(section header +0x17 → D3TXT0<bank>.TXT)
 	HiMap          []byte   // 每格高 byte(低 5 bit = 事件/轉場 subid)
 	Events         [][3]int // section 事件表(section+8):{type, param, p2}
+	Transitions    [][4]int // section 轉場表(section+0xc):{destCty, destSec, x, y},by subid
 	NPCs           []NPC
 }
 
@@ -85,6 +86,22 @@ func OpenTown(cty []byte, section int) (*Town, error) {
 				break
 			}
 			t.Events = append(t.Events, [3]int{int(cty[o]), int(townU16(cty, o+1)), int(cty[o+3])})
+		}
+	}
+	// section 轉場表(section+0xc:4-byte 項{destCty, destSec, x, y},by subid,無 count 前綴)。
+	// 讀到檔尾,或讀到 layout 前為止(layout 緊跟表後時)。移植 dq3_town.c。
+	if tptr := int(townU16(cty, so+0x0c)); tptr != 0xffff && so+tptr < len(cty) {
+		tt := so + tptr
+		lim := len(cty)
+		if lay > tt && lay < lim { // layout 緊跟在表後 → 表止於 layout
+			lim = lay
+		}
+		for k := 0; k < 32; k++ {
+			o := tt + k*4
+			if o+4 > lim {
+				break
+			}
+			t.Transitions = append(t.Transitions, [4]int{int(cty[o]), int(cty[o+1]), int(cty[o+2]), int(cty[o+3])})
 		}
 	}
 	t.NPCs = parseNPCs(cty, so, w, h)

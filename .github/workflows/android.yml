@@ -36,17 +36,25 @@ jobs:
       - name: Install ebitenmobile
         run: go install github.com/hajimehoshi/ebiten/v2/cmd/ebitenmobile@v2.9.9
 
-      - name: Inject assets (optional, private secret)
+      - name: Inject assets (private source)
         env:
-          ASSETS_B64: ${{ secrets.DQ3_ASSETS_ZIP_B64 }}
+          ASSETS_PAT: ${{ secrets.ASSETS_PAT }}      # 私有素材 repo 的 read PAT
+          ASSETS_REPO: ${{ vars.ASSETS_REPO }}       # 例:wicanr2/dq3-assets(私有)
+          ASSETS_B64: ${{ secrets.DQ3_ASSETS_ZIP_B64 }} # 後備:小素材集 base64(<48KB)
         run: |
           cd dq3_remake_ebitan
-          if [ -n "$ASSETS_B64" ]; then
+          if [ -n "$ASSETS_PAT" ] && [ -n "$ASSETS_REPO" ]; then
+            # 私有 repo 拉素材(不進公開 repo,符合版權硬規則)。素材含 assets_raw + mt32/(可選)
+            git clone --depth 1 "https://x-access-token:${ASSETS_PAT}@github.com/${ASSETS_REPO}.git" /tmp/assets
+            rm -rf /tmp/assets/.git
+            cp -a /tmp/assets/. mobile/assets/
+            echo "私有 repo 帶入素材:$(ls mobile/assets | wc -l) 檔、MT-32 $(ls mobile/assets/mt32/*.ogg 2>/dev/null | wc -l) 軌"
+          elif [ -n "$ASSETS_B64" ]; then
             echo "$ASSETS_B64" | base64 -d > /tmp/assets.zip
             unzip -o -q /tmp/assets.zip -d mobile/assets/
-            echo "帶入素材:$(ls mobile/assets | wc -l) 檔"
+            echo "base64 帶入素材:$(ls mobile/assets | wc -l) 檔"
           else
-            echo "未設 DQ3_ASSETS_ZIP_B64 secret → 引擎-only APK(可裝,黑畫面)"
+            echo "未設素材來源 → 引擎-only APK(可裝,黑畫面)。設 ASSETS_PAT+ASSETS_REPO(私有)→ 完整 APK"
           fi
 
       - name: ebitenmobile bind → .aar

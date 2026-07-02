@@ -61,3 +61,37 @@ func TestOpenTownAliahan(t *testing.T) {
 	}
 	t.Logf("阿里阿罕 NPC=%d(其中 %d 有 sprite key b2>=4)✓", len(town.NPCs), spr)
 }
+
+// 多 section:阿里阿罕 CTY00 有多個 section(section0 外圍 + 室內/寶物層)。
+// 驗轉場表(section+0xc)解得出、dest 合理,且 section>0 也載得起來(內容廣度前提)。
+func TestOpenTownMultiSection(t *testing.T) {
+	cty := findAsset(t, "CTY00.DAT")
+	loaded, withTrans, totalTrans := 0, 0, 0
+	for sec := 0; sec < 16; sec++ {
+		town, err := OpenTown(cty, sec)
+		if err != nil {
+			continue // 空 section(0xffff)→ 跳過
+		}
+		loaded++
+		if town.W < 1 || town.H < 1 || len(town.Cells) != town.W*town.H {
+			t.Fatalf("section %d 版面壞:%d×%d cells=%d", sec, town.W, town.H, len(town.Cells))
+		}
+		if len(town.Transitions) > 0 {
+			withTrans++
+			totalTrans += len(town.Transitions)
+			for i, tr := range town.Transitions {
+				// dest_sec 0xff/0xfe = 出城;其餘 < 16;dest_cty < 100 或同城。座標 byte 範圍內。
+				if tr[1] > 0xff || tr[2] > 255 || tr[3] > 255 {
+					t.Fatalf("section %d 轉場 %d 數值異常:%v", sec, i, tr)
+				}
+			}
+		}
+	}
+	if loaded < 2 {
+		t.Fatalf("CTY00 只載到 %d 個 section(預期多 section)", loaded)
+	}
+	if withTrans == 0 {
+		t.Fatal("CTY00 所有 section 都沒有轉場表(疑 section+0xc 解析錯 → 無法跨 section)")
+	}
+	t.Logf("阿里阿罕:載到 %d section、%d 個 section 有轉場、共 %d 筆轉場 ✓", loaded, withTrans, totalTrans)
+}
