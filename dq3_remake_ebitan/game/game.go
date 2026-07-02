@@ -374,7 +374,7 @@ func (g *Game) startEncounter() {
 	if !g.heroInit {
 		g.heroHP, g.heroInit = maxHP, true
 	}
-	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi}
+	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi, herbs: g.countItem(herbCode)}
 	pool := []int{5, 0, 1, 3, 4, 6, 7, 8} // 低階怪(id5=史萊姆…);start 會跳過空 sprite
 	for _, i := range rand.Perm(len(pool)) {
 		if g.battle.start(pool[i], int64(g.anim)*2654+1, hp) {
@@ -384,9 +384,36 @@ func (g *Game) startEncounter() {
 	}
 }
 
-// onBattleEnd:戰鬥結束後把結果寫回主角(HP 持久、勝利加 exp/gold、升級全補、敗北回城復活)。
+// countItem:背包內某 item id 的數量。
+func (g *Game) countItem(code int) int {
+	n := 0
+	for _, c := range g.inventory {
+		if c == code {
+			n++
+		}
+	}
+	return n
+}
+
+// removeItems:從背包移除最多 n 個某 item id。
+func (g *Game) removeItems(code, n int) {
+	out := g.inventory[:0]
+	for _, c := range g.inventory {
+		if c == code && n > 0 {
+			n--
+			continue
+		}
+		out = append(out, c)
+	}
+	g.inventory = out
+}
+
+// onBattleEnd:戰鬥結束後把結果寫回主角(HP 持久、藥草扣除、勝利加 exp/gold、升級全補、敗北回城復活)。
 func (g *Game) onBattleEnd() {
 	g.heroHP = g.battle.heroHP
+	if g.battle.usedHerbs > 0 { // 扣掉戰鬥中用掉的藥草
+		g.removeItems(herbCode, g.battle.usedHerbs)
+	}
 	if g.battle.result == 1 { // 勝
 		oldLv := stats.LevelForExp(0, g.heroExp)
 		g.heroExp += uint32(g.battle.gotExp)
