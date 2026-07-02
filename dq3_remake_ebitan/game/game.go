@@ -54,8 +54,8 @@ type Scene struct {
 	transitions    [][4]int           // section 轉場表 {destCty,destSec,x,y}
 	sec            int                // section 號
 	npcs           []npcInst
-	override       map[int]int        // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
-	npcRng         rng.RNG            // NPC 遊走用確定性 RNG(依 section 種子)
+	override       map[int]int // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
+	npcRng         rng.RNG     // NPC 遊走用確定性 RNG(依 section 種子)
 }
 
 // tileIdx:回 (x,y) 的 BLK tile 索引,先查執行期覆蓋(開門)再退靜態 tileAt。
@@ -195,11 +195,13 @@ type Game struct {
 	flags        map[int]bool // 一次性旗標(寶箱/事件已取)
 	noticeCode   int          // 取得道具通知(item code;-1=無)
 	noticeTimer  int
-	shipOwned    bool // 已取得船(波魯多加胡椒換船,milestone SHIP)
-	shipAboard   bool // 目前在船上
-	shipX, shipY int  // 船停泊位置(地表)
-	repel        int  // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	shipOwned    bool    // 已取得船(波魯多加胡椒換船,milestone SHIP)
+	shipAboard   bool    // 目前在船上
+	shipX, shipY int     // 船停泊位置(地表)
+	repel        int     // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
 	prng         rng.RNG // 祈禱之戒損壞判定用 RNG
+	lotoBlessed  bool    // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
+	cleared      bool    // 已破關(索瑪擊破)
 	frame        *ebiten.Image
 	rgba         []byte
 }
@@ -460,6 +462,13 @@ func (g *Game) Update() error {
 		g.descend()
 		return nil
 	}
+	// Z 鍵:大魔王索瑪終戰(對齊 C dev 捷徑 zoma;正式觸發=索瑪神殿頂)。持光之珠自動弱化
+	if !g.battle.active && inpututil.IsKeyJustPressed(ebiten.KeyZ) {
+		if g.startBossBattle(0x7c) {
+			g.renderFrame()
+		}
+		return nil
+	}
 	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
 	if g.panel != panelNone {
 		switch {
@@ -554,7 +563,7 @@ func (g *Game) Update() error {
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
 	} else if moved && !g.inTown { // 地表:踩到城鎮入口 → 進城;否則隨機遇敵(~1/16 步)
-		cty := findCtyAtLayer(g.px, g.py, g.layer) // 依目前地表層找入城
+		cty := findCtyAtLayer(g.px, g.py, g.layer)               // 依目前地表層找入城
 		if pc := owPortalResolve(g.px, g.py, g.flags); pc >= 0 { // 旗標條件 portal 覆蓋(同點依進度變城)
 			cty = pc
 		}
@@ -822,6 +831,35 @@ func (g *Game) startEncounter() {
 	}
 }
 
+// startBossBattle:對指定怪 monID 開一場戰鬥(索瑪等 boss)。索瑪(0x7c)依背包光之珠設弱化旗標。
+// 移植 main.c zoma 觸發 + dq3_battlescene_set_light_orb。
+func (g *Game) startBossBattle(monID int) bool {
+	level, maxHP, atk, def, agi := g.heroStats()
+	maxMP := g.heroMaxMP()
+	if !g.heroInit {
+		g.heroHP, g.heroMP, g.heroInit = maxHP, maxMP, true
+	}
+	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
+		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
+	g.battle.lightOrb = monID == 0x7c && g.hasItem(0x65) // 持光之珠 → 索瑪二階段弱化
+	if g.battle.start(monID, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
+		g.music.Play(trackBattle)
+		return true
+	}
+	return false
+}
+
+// runFinale:打倒索瑪 → 破關。設 ZOMA 里程碑 + 洛特冊封(勇者裝備昇華)。移植 run_finale。
+func (g *Game) runFinale() {
+	g.progressSet(msZoma)
+	g.cleared = true
+	g.lotoBlessed = true // そして伝説へ…:王者之劍/光之鎧甲/勇者之盾 → 洛特之劍/鎧/盾
+	if g.flags == nil {
+		g.flags = map[int]bool{}
+	}
+	g.flags[0x217] = true // 洛特冊封旗標(對齊 C)
+}
+
 // countItem:背包內某 item id 的數量。
 func (g *Game) countItem(code int) int {
 	n := 0
@@ -884,6 +922,9 @@ func (g *Game) onBattleEnd() {
 			if m.Level() > oc {
 				m.fullHeal()
 			}
+		}
+		if g.battle.monID == 0x7c { // 打倒大魔王索瑪 → 破關結局
+			g.runFinale()
 		}
 	}
 	partyAllDown := g.heroHP <= 0

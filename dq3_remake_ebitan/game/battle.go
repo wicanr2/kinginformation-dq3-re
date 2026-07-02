@@ -51,6 +51,9 @@ type Battle struct {
 	spr         *dq3data.MonsterSprite
 	enemyHP     int
 	enemyMax    int
+	enemyAtk    int  // 敵有效攻(索瑪+光之珠時弱化)
+	enemyDef    int  // 敵有效防(同上)
+	lightOrb    bool // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
 	heroHP      int
 	heroMax     int
 	heroAtk     int
@@ -108,6 +111,13 @@ func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActo
 	b.monID, b.spr = monID, spr
 	b.enemyHP = int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
 	b.enemyMax = b.enemyHP
+	// 敵有效攻防;索瑪(0x7c)+光之珠 → 驅散黑暗結界:攻/3、防/4(移植 battlescene 二階段)。
+	b.enemyAtk, b.enemyDef = int(st.Atk), int(st.Def)
+	if monID == 0x7c && b.lightOrb {
+		b.enemyAtk /= 3
+		b.enemyDef /= 4
+		b.lightOrb = false // 用畢清旗標
+	}
 	if b.bg == nil && b.scr != nil { // 首戰解碼草原背景(page22,對 game3.png)
 		b.bg, _ = dq3data.DecodePackBG(b.scr, 22)
 	}
@@ -202,7 +212,7 @@ func (b *Battle) execTurn() {
 		if b.roll() < 8 { // ~1/32 會心
 			crit = 1
 		}
-		dmg := battle.PhysDamage(b.heroAtk, int(st.Def), b.roll(), crit)
+		dmg := battle.PhysDamage(b.heroAtk, b.enemyDef, b.roll(), crit)
 		b.enemyHP -= dmg
 		if b.enemyHP < 0 {
 			b.enemyHP = 0
@@ -262,7 +272,7 @@ func (b *Battle) afterLeaderAction() {
 		if c.hp <= 0 || b.enemyHP <= 0 {
 			continue
 		}
-		dmg := battle.PhysDamage(c.atk, int(st.Def), b.roll(), 0)
+		dmg := battle.PhysDamage(c.atk, b.enemyDef, b.roll(), 0)
 		b.enemyHP -= dmg
 		if b.enemyHP < 0 {
 			b.enemyHP = 0
@@ -314,7 +324,6 @@ func (b *Battle) targetDef(target int) int {
 
 // enemyTurn:敵方回合(移植 C:逃跑 → 施咒 → 物攻;鎖定隨機存活隊員;全滅才敗)。
 func (b *Battle) enemyTurn() {
-	st, _ := b.mons.Stat(b.monID)
 	ai, aiOK := b.mons.AI(b.monID)
 	targets := b.aliveTargets()
 	if len(targets) == 0 { // 全滅
@@ -350,7 +359,7 @@ func (b *Battle) enemyTurn() {
 		}
 	}
 	// 3) 物理反擊(打隊長且防御 → 減半)
-	edmg := battle.PhysDamage(int(st.Atk), b.targetDef(tgt), b.roll(), 0)
+	edmg := battle.PhysDamage(b.enemyAtk, b.targetDef(tgt), b.roll(), 0)
 	if tgt < 0 && b.defending {
 		edmg /= 2
 	}

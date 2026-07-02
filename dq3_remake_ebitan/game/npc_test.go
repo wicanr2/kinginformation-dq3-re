@@ -63,4 +63,3 @@ func TestNpcNearPlayerGate(t *testing.T) {
 		}
 	}
 }
-
