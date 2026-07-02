@@ -200,8 +200,10 @@ type Game struct {
 	shipX, shipY int     // 船停泊位置(地表)
 	repel        int     // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
 	prng         rng.RNG // 祈禱之戒損壞判定用 RNG
-	lotoBlessed  bool    // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
-	cleared      bool    // 已破關(索瑪擊破)
+	lotoBlessed  bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
+	cleared      bool          // 已破關(索瑪擊破)
+	endText      *dq3data.Text // ENDTXT.TXT 結局文本
+	endSeq       int           // 結局捲動段號(-1=未進行;0..n=當前段)
 	frame        *ebiten.Image
 	rgba         []byte
 }
@@ -513,6 +515,17 @@ func (g *Game) Update() error {
 	if g.dlg.open {
 		if in.Confirm {
 			g.dlg.Advance()
+		}
+		g.renderFrame()
+		return nil
+	}
+	// 結局捲動:一段 ENDTXT 翻完關閉後,自動接下一段,直到全部播完(移植 main.c end_seq 推進)。
+	if g.endSeq >= 0 {
+		g.endSeq++
+		if g.endText != nil && g.endSeq < g.endText.NRecords {
+			g.dlg.Open(g.endSeq)
+		} else {
+			g.endSeq = -1 // 結局播完
 		}
 		g.renderFrame()
 		return nil
@@ -858,6 +871,12 @@ func (g *Game) runFinale() {
 		g.flags = map[int]bool{}
 	}
 	g.flags[0x217] = true // 洛特冊封旗標(對齊 C)
+	// 啟動 ENDTXT 結局捲動(首段;逐段推進見 Update)。
+	if g.endText != nil && g.endText.NRecords > 0 {
+		g.endSeq = 0
+		g.dlg.tx = g.endText
+		g.dlg.Open(0)
+	}
 }
 
 // countItem:背包內某 item id 的數量。
@@ -1149,6 +1168,8 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
 	g.cmd.tx = g.dlg.tx                                             // 命令窗標籤 glyph 也走同一字型
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
+	g.endText = dq3data.LoadText(fon, ld.read("ENDTXT.TXT"))        // 結局文本(破索瑪後捲動)
+	g.endSeq = -1                                                   // 結局未進行
 	g.battle.nameText = g.shop.nameText                             // 咒文名同名表
 	g.tavern.tx = g.dlg.tx                                          // 酒館 glyph
 	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)

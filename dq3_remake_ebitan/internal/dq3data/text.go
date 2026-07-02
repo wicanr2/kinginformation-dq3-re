@@ -54,7 +54,7 @@ func (t *Text) Record(rec int) []uint16 {
 	if start > len(t.txt) || end > len(t.txt) || end < start {
 		return nil
 	}
-	var out []uint16
+	out := []uint16{} // 合法記錄即使空(首字即 0xffff,如結局空白頁)也回非-nil,與「越界=nil」區分
 	for o := start; o+1 < end; o += 2 {
 		v := le16(t.txt, o)
 		if v == TxtEnd {

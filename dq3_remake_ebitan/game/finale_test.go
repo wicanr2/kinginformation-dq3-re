@@ -62,3 +62,35 @@ func TestRunFinale(t *testing.T) {
 		t.Error("應設洛特冊封旗標 0x217")
 	}
 }
+
+// 結局捲動:破索瑪 → 開 ENDTXT 首段;逐段推進(模擬 Update 的 end_seq 邏輯)直到播完。
+func TestEndingScroll(t *testing.T) {
+	fon := asset(t, "D3TXT00.FON")
+	end := dq3data.LoadText(fon, asset(t, "ENDTXT.TXT"))
+	if end == nil || end.NRecords == 0 {
+		t.Skip("無 ENDTXT")
+	}
+	g := &Game{flags: map[int]bool{}, endText: end, endSeq: -1}
+	g.runFinale()
+	if g.endSeq != 0 || !g.dlg.open || g.dlg.tx != end {
+		t.Fatalf("破索瑪應開結局首段:endSeq=%d open=%v", g.endSeq, g.dlg.open)
+	}
+	// 模擬逐段推進:每段翻完關閉 → 下一段,直到 endSeq 回 -1(播完)。
+	steps := 0
+	for g.endSeq >= 0 && steps < end.NRecords+2 {
+		g.dlg.open = false // 該段翻完關閉
+		g.endSeq++         // = Update 的自動推進
+		if g.endSeq < end.NRecords {
+			g.dlg.Open(g.endSeq)
+		} else {
+			g.endSeq = -1
+		}
+		steps++
+	}
+	if g.endSeq != -1 {
+		t.Errorf("結局應播完(endSeq=-1),實 %d", g.endSeq)
+	}
+	if steps != end.NRecords {
+		t.Errorf("推進步數 %d != ENDTXT 段數 %d", steps, end.NRecords)
+	}
+}
