@@ -53,6 +53,49 @@ type Scene struct {
 	transitions    [][4]int           // section 轉場表 {destCty,destSec,x,y}
 	sec            int                // section 號
 	npcs           []npcInst
+	override       map[int]int        // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
+}
+
+// tileIdx:回 (x,y) 的 BLK tile 索引,先查執行期覆蓋(開門)再退靜態 tileAt。
+func (sc *Scene) tileIdx(x, y int) int {
+	if sc.override != nil {
+		if v, ok := sc.override[y*sc.w+x]; ok {
+			return v
+		}
+	}
+	return sc.tileAt(x, y)
+}
+
+// doorTier:回 (tx,ty) 門所需鑰匙等級(attr&0xc0 → (a>>6)&3);非門回 0。移植 dq3_scene_door_tier。
+func (sc *Scene) doorTier(tx, ty int) int {
+	if tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h {
+		return 0
+	}
+	a := sc.attr.Raw(sc.tileIdx(tx, ty))
+	if a&0x00c0 == 0 {
+		return 0
+	}
+	return int(a>>6) & 3
+}
+
+// openDoor:開 (tx,ty) 門 → tile 覆蓋成 hiMap&0x1f(通行 tile),清事件位留轉場位。移植 dq3_scene_open_door。
+func (sc *Scene) openDoor(tx, ty int) bool {
+	if sc.doorTier(tx, ty) == 0 {
+		return false
+	}
+	i := ty*sc.w + tx
+	var hi byte
+	if sc.hiMap != nil {
+		hi = sc.hiMap[i]
+	}
+	if sc.override == nil {
+		sc.override = map[int]int{}
+	}
+	sc.override[i] = int(hi & 0x1f) // door → 通行 tile
+	if sc.hiMap != nil {
+		sc.hiMap[i] = hi & 0xe0 // 清事件位、留轉場位(0x4985)
+	}
+	return true
 }
 
 // tileTransition:回 (tx,ty) 的轉場(attr&0xe000 轉場格 → hiMap 低5bit subid → transitions[subid])。
@@ -61,7 +104,7 @@ func (sc *Scene) tileTransition(tx, ty int) (int, int, int, int, bool) {
 	if sc.hiMap == nil || len(sc.transitions) == 0 || tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h {
 		return 0, 0, 0, 0, false
 	}
-	if sc.attr.Raw(sc.tileAt(tx, ty))&0xe000 == 0 { // 非轉場格
+	if sc.attr.Raw(sc.tileIdx(tx, ty))&0xe000 == 0 { // 非轉場格
 		return 0, 0, 0, 0, false
 	}
 	subid := int(sc.hiMap[ty*sc.w+tx] & 0x1f)
@@ -78,7 +121,7 @@ func (sc *Scene) tileEvent(tx, ty int) ([3]int, int, bool) {
 		return [3]int{}, 0, false
 	}
 	i := ty*sc.w + tx
-	if sc.attr.Raw(sc.tileAt(tx, ty))&0x0008 == 0 { // 非事件格
+	if sc.attr.Raw(sc.tileIdx(tx, ty))&0x0008 == 0 { // 非事件格
 		return [3]int{}, 0, false
 	}
 	subid := int(sc.hiMap[i] & 0x1f)
@@ -93,7 +136,7 @@ func (sc *Scene) Blocked(x, y int) bool {
 	if x < 0 || y < 0 || x >= sc.w || y >= sc.h {
 		return true
 	}
-	if sc.attr.Blocked(sc.tileAt(x, y)) {
+	if sc.attr.Blocked(sc.tileIdx(x, y)) {
 		return true
 	}
 	return sc.npcAt(x, y) >= 0 // NPC 擋路(對齊 dq3_scene_npc_at)
@@ -226,7 +269,7 @@ func (g *Game) tryMove(nx, ny int) bool {
 		return false
 	}
 	if g.shipAboard { // 在船上:海(attr&0x20)可航;走上可走陸地 → 下船
-		if g.cur.attr.Raw(g.cur.tileAt(nx, ny))&0x20 != 0 {
+		if g.cur.attr.Raw(g.cur.tileIdx(nx, ny))&0x20 != 0 {
 			return true // 航行至水格
 		}
 		if !g.cur.Blocked(nx, ny) { // 上岸下船(船留在原水格)
@@ -307,9 +350,34 @@ func (g *Game) examine() {
 		return true
 	}
 	fx, fy := frontTile(g.px, g.py, g.facing)
+	if g.tryOpenFacingDoor(fx, fy) { // 面向鎖門 + 鑰匙足夠 → 開門(移植 dq3_scene_try_open_facing_door)
+		return
+	}
 	if !check(fx, fy) {
 		check(g.px, g.py) // 也試腳下
 	}
+}
+
+// keyTier:背包最高階鑰匙等級(道具碼 0x55/0x56/0x57 → 1/2/3;tier=code-0x54)。移植 dq3_inv_key_tier。
+func (g *Game) keyTier() int {
+	best := 0
+	for _, code := range g.inventory {
+		if code >= 0x55 && code <= 0x57 {
+			if t := code - 0x54; t > best {
+				best = t
+			}
+		}
+	}
+	return best
+}
+
+// tryOpenFacingDoor:面向格是鎖門且鑰匙等級足夠 → 開門。移植 dq3_scene_try_open_facing_door。
+func (g *Game) tryOpenFacingDoor(fx, fy int) bool {
+	need := g.cur.doorTier(fx, fy)
+	if need == 0 || g.keyTier() < need {
+		return false
+	}
+	return g.cur.openDoor(fx, fy)
 }
 
 // openFacility:面向設施 NPC(byte4=設施索引 k)→ 依當前 CTY 開對應設施(全城設施表)。
@@ -748,7 +816,7 @@ func (g *Game) renderFrame() {
 	camY := clampi(g.py-ViewRows/2, 0, max0(sc.h-ViewRows))
 	for cy := 0; cy < ViewRows; cy++ {
 		for cx := 0; cx < ViewCols; cx++ {
-			tile := sc.blk.Tile(sc.tileAt(camX+cx, camY+cy))
+			tile := sc.blk.Tile(sc.tileIdx(camX+cx, camY+cy))
 			blitTile(g.rgba, cx*TileW, cy*TileH, tile, sc.pal)
 		}
 	}

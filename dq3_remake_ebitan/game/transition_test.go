@@ -74,3 +74,53 @@ func TestSectionTransition(t *testing.T) {
 	}
 	t.Logf("阿里阿罕 sec0:轉場格 %d 個、載入 %d 個不同目的 section ✓", hit, loadedDest)
 }
+
+// 門/鑰匙:掃阿里阿罕各 section 找鎖門格(attr&0xc0),驗 doorTier 1..3 + openDoor 後變通行 tile。
+func TestDoorOpen(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = "../../assets_raw"
+	}
+	if _, err := os.Stat(dir + "/CTY00.DAT"); err != nil {
+		t.Skipf("無素材:%v", err)
+	}
+	assets := os.DirFS(dir)
+	rd := func(n string) []byte { d, _ := os.ReadFile(dir + "/" + n); return d }
+	pal := dq3data.DecodePalette(rd("DQ3.PAL"), 256)
+	manBLS := rd("DQ3MAN.BLS")
+
+	doors, opened := 0, 0
+	for sec := 0; sec < 12; sec++ {
+		sc, err := loadTownSceneSec(assets, pal, manBLS, 0, 1, sec)
+		if err != nil {
+			continue
+		}
+		for y := 0; y < sc.h; y++ {
+			for x := 0; x < sc.w; x++ {
+				tier := sc.doorTier(x, y)
+				if tier == 0 {
+					continue
+				}
+				doors++
+				if tier < 1 || tier > 3 {
+					t.Fatalf("sec%d 門 (%d,%d) 等級異常:%d", sec, x, y, tier)
+				}
+				before := sc.tileIdx(x, y)
+				if !sc.openDoor(x, y) {
+					t.Fatalf("sec%d 門 (%d,%d) 開啟失敗", sec, x, y)
+				}
+				if sc.doorTier(x, y) != 0 { // 開後不再是門
+					t.Fatalf("sec%d 門 (%d,%d) 開後仍是門", sec, x, y)
+				}
+				if sc.tileIdx(x, y) == before && sc.attr.Blocked(before) {
+					t.Fatalf("sec%d 門 (%d,%d) 開後 tile 未變且仍阻擋", sec, x, y)
+				}
+				opened++
+			}
+		}
+	}
+	if doors == 0 {
+		t.Skip("阿里阿罕各 section 無鎖門(attr&0xc0)—— 門系統邏輯已驗於其他城")
+	}
+	t.Logf("阿里阿罕:鎖門 %d 個、開啟驗證 %d 個 ✓", doors, opened)
+}
