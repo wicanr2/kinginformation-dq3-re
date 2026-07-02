@@ -130,6 +130,9 @@ type Game struct {
 	flags       map[int]bool // 一次性旗標(寶箱/事件已取)
 	noticeCode  int          // 取得道具通知(item code;-1=無)
 	noticeTimer int
+	shipOwned   bool // 已取得船(波魯多加胡椒換船,milestone SHIP)
+	shipAboard  bool // 目前在船上
+	shipX, shipY int // 船停泊位置(地表)
 	frame       *ebiten.Image
 	rgba        []byte
 }
@@ -185,6 +188,43 @@ func (g *Game) selectCommand(cmd int) {
 }
 
 func (g *Game) hasItem(code int) bool { return g.countItem(code) > 0 }
+
+// shipTileFor:我方 facing(0下1上2左3右)→ 船 BLK tile(移植 dq3_ship_tile_for_facing)。
+func shipTileFor(facing int) int {
+	switch facing {
+	case 1:
+		return 55 // 上 UP
+	case 2:
+		return 53 // 左 LEFT
+	case 3:
+		return 57 // 右 RIGHT
+	}
+	return 51 // 下 DOWN
+}
+
+// tryMove:判定能否移動到 (nx,ny)(含船系統)。移植 dq3_ship_input + 碰撞。
+func (g *Game) tryMove(nx, ny int) bool {
+	if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h {
+		return false
+	}
+	if g.shipAboard { // 在船上:海(attr&0x20)可航;走上可走陸地 → 下船
+		if g.cur.attr.Raw(g.cur.tileAt(nx, ny))&0x20 != 0 {
+			return true // 航行至水格
+		}
+		if !g.cur.Blocked(nx, ny) { // 上岸下船(船留在原水格)
+			g.shipAboard = false
+			g.shipX, g.shipY = g.px, g.py
+			return true
+		}
+		return false
+	}
+	// 步行:走到船格 → 上船
+	if g.shipOwned && !g.inTown && nx == g.shipX && ny == g.shipY {
+		g.shipAboard = true
+		return true
+	}
+	return !g.cur.Blocked(nx, ny)
+}
 
 // scriptedTalk:對 scripted NPC(sub2)—— 檢查型/給予型(前置道具→給物+旗標+對白)。移植 dq3_scripted。
 func (g *Game) scriptedTalk(byte4 int) {
@@ -393,7 +433,7 @@ func (g *Game) Update() error {
 		g.facing = in.DirHeld // 撞牆也轉向(對齊原版:面向先變,可走才移動)
 		dx, dy := dirDelta(in.DirHeld)
 		nx, ny := g.px+dx, g.py+dy
-		if !g.cur.Blocked(nx, ny) { // 碰撞:BLKBM attr&1 + NPC 佔格
+		if g.tryMove(nx, ny) { // 碰撞/航行:陸走 BLKBM+NPC、船走海、上/下船
 			g.px, g.py = nx, ny
 			moved = true
 		}
@@ -645,8 +685,17 @@ func (g *Game) renderFrame() {
 		}
 		blitSprite(g.rgba, (n.x-camX)*TileW, (n.y-camY)*TileH, n.spr.Frames[0], sc.pal)
 	}
-	blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
-		g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+	// 船(地表):停泊船 tile;主角在船上 → 畫船 tile 取代主角
+	if !g.inTown && g.shipOwned && !g.shipAboard &&
+		g.shipX >= camX && g.shipX < camX+ViewCols && g.shipY >= camY && g.shipY < camY+ViewRows {
+		blitTile(g.rgba, (g.shipX-camX)*TileW, (g.shipY-camY)*TileH, sc.blk.Tile(shipTileFor(0)), sc.pal)
+	}
+	if !g.inTown && g.shipAboard { // 在船上 → 船 tile 取代主角 sprite
+		blitTile(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH, sc.blk.Tile(shipTileFor(g.facing)), sc.pal)
+	} else {
+		blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
+			g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+	}
 	white := dq3data.Color{R: 255, G: 255, B: 255}
 	if len(sc.pal) > 15 {
 		white = sc.pal[15]
@@ -885,6 +934,10 @@ func applyDebugEnv(g *Game) {
 	}
 	if os.Getenv("DQ3_TOUCH") != "" {
 		g.input.touch.everTouched = true
+	}
+	if os.Getenv("DQ3_SHIP") != "" { // debug:給船,停在主角旁(驗證船系統)
+		g.shipOwned = true
+		g.shipX, g.shipY = g.px+1, g.py
 	}
 	if r := os.Getenv("DQ3_EXP"); r != "" { // debug:設起始經驗(截圖驗證等級/咒文)
 		var e int

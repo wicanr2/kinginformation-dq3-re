@@ -122,7 +122,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **標題畫面**（`pcx.go`,移植 dq3_pcx）：TITG.P（ZSoft PCX 640×350 4-plane RLE + 檔內16色）解碼→開機顯「DRAGON FIGHTER III 傳說的終章 ©1993 精訊」,A/Enter 開始 + 對拍測試
   - [x] **事件/旗標/寶箱系統**（`treasure.go` + town 事件解析）：section 事件表 + hiMap subid + attr&8 事件格 → 調査（cmdExamine）→ treasureFor(cty,sec,sub) 給道具 + 一次性旗標 + 取得通知 + 存檔;寶箱表 121 筆對拍
   - [x] **劇情事件腳本**（`scripted.go`,移植 dq3_scripted）：sub2 NPC→scriptedFor(byte4,cty)→檢查型（持物→give_rec）/給予型（前置道具→給物+里程碑旗標+對白 before/give/after）;給予型表子集（多行註解未全抽）
-  - [ ] 注音命名（IME）、ship、SB-FM OPL2（最硬,MT-32 已代替）
+  - [x] **船系統**（`dq3_ship` 移植）：海格辨識 attr&1&&attr&0x20、走到船格上船、海上航行、上可走陸地下船、船 tile 渲染（DOWN51/LEFT53/UP55/RIGHT57）、存檔。DQ3_SHIP debug 給船
+  - [ ] 注音命名 IME（英數已可）、SB-FM OPL2（最硬,MT-32 OGG 已代替音樂,冗餘）
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;

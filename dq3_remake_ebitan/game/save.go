@@ -17,6 +17,9 @@ type saveState struct {
 	Equip     [4]int    `json:"eq"`
 	Comps     []compSav `json:"comps"`
 	Flags     []int     `json:"flags"`
+	ShipOwned bool      `json:"shipowned"`
+	ShipX     int       `json:"shipx"`
+	ShipY     int       `json:"shipy"`
 	PX        int       `json:"px"`
 	PY        int       `json:"py"`
 	InTown    bool      `json:"town"`
@@ -45,6 +48,7 @@ func (g *Game) snapshot() saveState {
 		Equip:     g.equip,
 		Comps:     compsToSav(g.companions),
 		Flags:     flagsToSav(g.flags),
+		ShipOwned: g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PX:        g.px, PY: g.py, InTown: g.inTown,
 	}
 }
@@ -88,6 +92,7 @@ func (g *Game) restore(s saveState) {
 			g.companions[i] = m
 		}
 	}
+	g.shipOwned, g.shipX, g.shipY = s.ShipOwned, s.ShipX, s.ShipY
 	g.px, g.py, g.inTown = s.PX, s.PY, s.InTown
 	if s.InTown {
 		g.cur = g.town
