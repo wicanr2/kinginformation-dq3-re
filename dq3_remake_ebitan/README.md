@@ -73,7 +73,9 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw go run .
   > 踩雷紀錄:Ebiten `WritePixels` 下一幀才生效 → 渲染要在 `Update()` 做、`Draw()` 只 `DrawImage`(否則同幀畫到舊的黑圖)。
 - [ ] **階段 4 遊戲邏輯**:NPC/對話、選單、戰鬥(公式/AI/升級)、事件/傳送(對 game_tester 斷言移 Go 測)
 - [ ] **階段 5 音訊**:MT-32 OGG(Ebiten `audio/vorbis` 內建,先)+ VOC 音效;SB-FM OPL2 之後補
-- [ ] **階段 6 輸入 + 觸控 UI**:鍵盤(桌面/web)+ 虛擬方向鍵/A/B/選單(行動)
+- [ ] **階段 6 輸入 + 觸控 UI**:鍵盤(桌面/web)+ 虛擬方向鍵/A/B/選單(行動)。
+  **設計規劃已備**:[docs/63 Android 觸控 UI 規劃](../docs/63-ebiten-android-touch-ui-plan.md)
+  (控制集=十字鍵+A+B、先抽象輸入層再綁來源、浮動十字鍵、多點觸控、分階段)
 - [ ] **階段 7 Android**:`ebitenmobile bind` → `.aar` → Android Studio + 素材入 APK + 版權閘 → APK/AAB
 - [ ] **階段 8 紅利**:同碼編 WASM(瀏覽器 demo)+ 桌面
 
