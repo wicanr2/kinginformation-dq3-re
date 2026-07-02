@@ -68,3 +68,174 @@ func TestUsePrayerRingMP(t *testing.T) {
 		t.Errorf("祈禱之戒後 MP=%d, want %d", g.heroMP, itemuse.PrayerMPAmount(0, max))
 	}
 }
+
+// 覺醒粉(0x5a):在諾阿尼魯(CTY4)使用 → 消耗、設 flag 0x31。
+func TestUseAwakenInNoahnil(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown, g.curCty = true, 4
+	g.inventory = []int{0x5a}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if !g.flags[0x31] {
+		t.Errorf("覺醒粉在諾阿尼魯應設 flag 0x31")
+	}
+	if len(g.inventory) != 0 {
+		t.Errorf("覺醒粉在諾阿尼魯應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+// 覺醒粉:位置不符(不在諾阿尼魯)→ 不消耗、不設 flag。
+func TestUseAwakenWrongPlaceNoConsume(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown, g.curCty = true, 5 // 別的城鎮
+	g.inventory = []int{0x5a}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if g.flags[0x31] {
+		t.Errorf("覺醒粉位置不符不應設 flag 0x31")
+	}
+	if len(g.inventory) != 1 {
+		t.Errorf("覺醒粉位置不符不應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+// 蓋亞之劍(0x0f):在地表使用 → 設 flag 0x32,不消耗(武器)。
+func TestUseGaiaOnField(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown = false
+	g.inventory = []int{0x0f}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if !g.flags[0x32] {
+		t.Errorf("蓋亞之劍在地表應設 flag 0x32")
+	}
+	if len(g.inventory) != 1 {
+		t.Errorf("蓋亞之劍不應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+// 蓋亞之劍:在城鎮內使用 → 無效果、不設 flag。
+func TestUseGaiaInTownNoEffect(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown = true
+	g.inventory = []int{0x0f}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if g.flags[0x32] {
+		t.Errorf("蓋亞之劍在城鎮內不應設 flag 0x32")
+	}
+	if len(g.inventory) != 1 {
+		t.Errorf("蓋亞之劍不應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+// 乾渴壺(0x5e):在地表使用 → 設 flag 0x33,不消耗(可重用)。
+func TestUseDrainOnField(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown = false
+	g.inventory = []int{0x5e}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if !g.flags[0x33] {
+		t.Errorf("乾渴壺在地表應設 flag 0x33")
+	}
+	if len(g.inventory) != 1 {
+		t.Errorf("乾渴壺不應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+// 乾渴壺:在城鎮內使用 → 無效果、不設 flag。
+func TestUseDrainInTownNoEffect(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown = true
+	g.inventory = []int{0x5e}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if g.flags[0x33] {
+		t.Errorf("乾渴壺在城鎮內不應設 flag 0x33")
+	}
+}
+
+// 妖精之笛(0x77):在魯比斯之塔(CTY82)使用 → 設 flag 0x34、給 0x74,不消耗。
+func TestUseFairyFluteInRubissTower(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown, g.curCty = true, 82
+	g.inventory = []int{0x77}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if !g.flags[0x34] {
+		t.Errorf("妖精之笛在魯比斯之塔應設 flag 0x34")
+	}
+	if !g.hasItem(0x74) {
+		t.Errorf("妖精之笛應給精靈的守護 0x74")
+	}
+	if len(g.inventory) != 2 { // 原道具 + 新給的 0x74
+		t.Errorf("妖精之笛不應消耗,應共 2 個道具,剩 %d", len(g.inventory))
+	}
+}
+
+// 妖精之笛:已持有 0x74 時再使用 → 不重複給。
+func TestUseFairyFluteAlreadyHasSpiritGuard(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown, g.curCty = true, 82
+	g.inventory = []int{0x77, 0x74}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if !g.flags[0x34] {
+		t.Errorf("妖精之笛在魯比斯之塔應設 flag 0x34")
+	}
+	if len(g.inventory) != 2 {
+		t.Errorf("已持有 0x74 不應重複給,應仍 2 個道具,剩 %d", len(g.inventory))
+	}
+}
+
+// 妖精之笛:位置不符 → 無效果、不設 flag。
+func TestUseFairyFluteWrongPlaceNoEffect(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown, g.curCty = true, 4
+	g.inventory = []int{0x77}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if g.flags[0x34] {
+		t.Errorf("妖精之笛位置不符不應設 flag 0x34")
+	}
+	if len(g.inventory) != 1 {
+		t.Errorf("妖精之笛位置不符不應給道具,剩 %d", len(g.inventory))
+	}
+}
+
+// 彩虹水滴(0x75):下層地表使用 → 消耗、設 flag 0x35、推進 msRainbow 里程碑。
+func TestUseRainbowOnLowerField(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown, g.layer = false, 1
+	g.inventory = []int{0x75}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if !g.flags[0x35] {
+		t.Errorf("彩虹水滴在下層地表應設 flag 0x35")
+	}
+	if !g.progressDone(msRainbow) {
+		t.Errorf("彩虹水滴在下層地表應推進 msRainbow 里程碑")
+	}
+	if len(g.inventory) != 0 {
+		t.Errorf("彩虹水滴在下層地表應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+// 彩虹水滴:地面層(非下層)使用 → 不消耗、不設 flag。
+func TestUseRainbowWrongLayerNoConsume(t *testing.T) {
+	g := &Game{flags: map[int]bool{}}
+	g.inTown, g.layer = false, 0
+	g.inventory = []int{0x75}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if g.flags[0x35] {
+		t.Errorf("彩虹水滴在地面層不應設 flag 0x35")
+	}
+	if g.progressDone(msRainbow) {
+		t.Errorf("彩虹水滴在地面層不應推進 msRainbow 里程碑")
+	}
+	if len(g.inventory) != 1 {
+		t.Errorf("彩虹水滴在地面層不應消耗,剩 %d", len(g.inventory))
+	}
+}

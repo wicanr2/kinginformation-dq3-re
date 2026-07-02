@@ -3,8 +3,9 @@ package game
 import "github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 
 // useSelectedItem:對道具面板游標指的道具套用使用效果(移植 main.c apply_item_use)。
-// Go 版狀態範圍:藥草(HP)、蓋美拉翅膀(回鎮)、聖水(驅敵)、祈禱之戒(MP+損壞)已接;
-// 解狀態(無狀態系統)、晝夜/劇情道具(無對應系統/需特定地點)→ 不消耗(對齊原版「無對應→不消耗」)。
+// Go 版狀態範圍:藥草(HP)、蓋美拉翅膀(回鎮)、聖水(驅敵)、祈禱之戒(MP+損壞)、
+// 覺醒粉/蓋亞之劍/乾渴壺/妖精之笛/彩虹水滴(位置相關劇情道具)已接;
+// 解狀態(無狀態系統)、晝夜 → 不消耗(對齊原版「無對應→不消耗」)。
 func (g *Game) useSelectedItem() {
 	if g.panelCursor < 0 || g.panelCursor >= len(g.inventory) {
 		return
@@ -35,8 +36,44 @@ func (g *Game) useSelectedItem() {
 			g.removeItems(code, 1)
 			g.clampPanelCursor()
 		}
+	case itemuse.Awaken: // 覺醒粉:諾阿尼魯村(CTY4)解全村催眠
+		if g.inTown && g.curCty == 4 {
+			g.removeItems(code, 1)
+			g.flags[0x31] = true
+			g.noticeCode, g.noticeTimer = code, 90
+			g.clampPanelCursor()
+		}
+		// 否則此處用不上,不消耗(對齊原版)
+	case itemuse.Gaia: // 蓋亞之劍:地表小火山旁 → 開通往尼羅肯特(武器,不消耗)
+		if !g.inTown {
+			g.flags[0x32] = true
+			g.noticeCode, g.noticeTimer = code, 90
+		}
+	case itemuse.Drain: // 乾渴壺:地表四島礁 → 吸乾海水顯現祠堂(不消耗,可重用)
+		if !g.inTown {
+			g.flags[0x33] = true
+			g.noticeCode, g.noticeTimer = code, 90
+		}
+	case itemuse.FairyFlute: // 妖精之笛:魯比斯之塔(CTY82)解詛咒 → 得精靈的守護 0x74(不消耗)
+		if g.inTown && g.curCty == 82 {
+			const itemSpiritGuard = 0x74
+			if !g.hasItem(itemSpiritGuard) {
+				g.inventory = append(g.inventory, itemSpiritGuard)
+			}
+			g.flags[0x34] = true
+			g.noticeCode, g.noticeTimer = itemSpiritGuard, 90
+		}
+	case itemuse.Rainbow: // 彩虹水滴:下層利姆達爾西北地表 → 架彩虹橋通終盤
+		if !g.inTown && g.layer == 1 {
+			g.removeItems(code, 1)
+			g.flags[0x35] = true
+			g.progressSet(msRainbow)
+			g.noticeCode, g.noticeTimer = code, 90
+			g.clampPanelCursor()
+		}
+		// 否則需在下層利姆達爾西北盡頭地表使用,不消耗
 	default:
-		// 解狀態(無狀態系統)/ 晝夜 / 劇情道具(需特定地點)→ 不消耗,對齊原版
+		// 解狀態(無狀態系統)/ 晝夜 → 不消耗,對齊原版
 	}
 }
 

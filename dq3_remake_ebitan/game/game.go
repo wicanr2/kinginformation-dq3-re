@@ -195,11 +195,11 @@ type Game struct {
 	flags        map[int]bool // 一次性旗標(寶箱/事件已取)
 	noticeCode   int          // 取得道具通知(item code;-1=無)
 	noticeTimer  int
-	shipOwned    bool    // 已取得船(波魯多加胡椒換船,milestone SHIP)
-	shipAboard   bool    // 目前在船上
-	shipX, shipY int     // 船停泊位置(地表)
-	repel        int     // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
-	prng         rng.RNG // 祈禱之戒損壞判定用 RNG
+	shipOwned    bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
+	shipAboard   bool          // 目前在船上
+	shipX, shipY int           // 船停泊位置(地表)
+	repel        int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	prng         rng.RNG       // 祈禱之戒損壞判定用 RNG
 	lotoBlessed  bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
 	cleared      bool          // 已破關(索瑪擊破)
 	endText      *dq3data.Text // ENDTXT.TXT 結局文本
