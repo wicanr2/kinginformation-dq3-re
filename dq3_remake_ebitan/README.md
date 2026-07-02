@@ -115,7 +115,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **敵方施咒**：敵回合 逃跑→施咒（cast_prob + spell_mask → 怪物咒表 → 傷我/補己）→物攻,對齊 C 敵回合;戰鬥背景 packbg 草原 + 版面 1:1 對齊 C
   - [x] **全城設施表**（`game/shopdata.go`，91 設施 + 208 品項池自 dq3_shopdata baked）：facilityForCty(cty,k) → 各城武防/道具店/宿屋/教會皆正確
   - [x] **VOC 音效**（`voc.go` 解碼 FVOC.VCX 22 音效 + `gaudio` 播放）：VCX bank→type-1 8-bit PCM 重取樣 s16、選單確定觸發（device-gated，同音樂）+ 對拍測試
-  - [ ] 事件劇本、SB-FM OPL2 即時合成（最硬,MT-32 OGG 已覆蓋音樂）
+  - [x] **多人隊伍**（`member.go`,移植 dq3_recruit/roster）：Member（職業/等級/裝備→數值推導,class-aware 咒文系）+ 隊長+同伴（戰士/僧侶/魔法使）;戰鬥 4 欄狀態列（名/HP/MP/等級,對齊 C）、同伴自動攻擊、敵鎖定隨機存活隊員、全滅才敗、全隊共享 exp/升級/復活、存檔含隊伍。Xvfb 驗證 4 職業隊伍
+  - [ ] 露易達酒館招募 UI（注音命名）、事件劇本、ship/title/寶箱、SB-FM OPL2（最硬,MT-32 已代替）
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;

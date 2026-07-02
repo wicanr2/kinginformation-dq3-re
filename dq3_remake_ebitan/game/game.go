@@ -102,7 +102,8 @@ type Game struct {
 	heroHP      int
 	heroMP      int
 	heroInit    bool
-	equip       [4]int // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	equip       [4]int    // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	companions  []*Member // 同伴(隊長=hero*;酒館招募,現為預建示範)
 	frame       *ebiten.Image
 	rgba        []byte
 }
@@ -384,9 +385,10 @@ func (g *Game) startEncounter() {
 	}
 	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
+	comps := g.buildCompanionActors()
 	pool := []int{5, 0, 1, 3, 4, 6, 7, 8} // 低階怪(id5=史萊姆…);start 會跳過空 sprite
 	for _, i := range rand.Perm(len(pool)) {
-		if g.battle.start(pool[i], int64(g.anim)*2654+1, hp) {
+		if g.battle.start(pool[i], int64(g.anim)*2654+1, hp, comps) {
 			g.music.Play(trackBattle)
 			return
 		}
@@ -417,24 +419,58 @@ func (g *Game) removeItems(code, n int) {
 	g.inventory = out
 }
 
-// onBattleEnd:戰鬥結束後把結果寫回主角(HP 持久、藥草扣除、勝利加 exp/gold、升級全補、敗北回城復活)。
+// buildCompanionActors:把同伴 Member 轉成戰鬥即時 actor(數值由職業成長表 + 裝備推導)。
+func (g *Game) buildCompanionActors() []*battleActor {
+	var out []*battleActor
+	for _, m := range g.companions {
+		out = append(out, &battleActor{
+			name: classNames[m.Class], class: m.Class, level: m.Level(),
+			hp: m.CurHP, maxHP: m.MaxHP(), mp: m.CurMP, maxMP: m.MaxMP(),
+			atk: m.Atk(g.shop.items), def: m.Def(g.shop.items),
+		})
+	}
+	return out
+}
+
+// onBattleEnd:戰鬥結束後把結果寫回全隊(HP/MP 持久、藥草扣除、勝利全隊加 exp/gold、升級全補、敗北回城復活)。
 func (g *Game) onBattleEnd() {
 	g.heroHP, g.heroMP = g.battle.heroHP, g.battle.heroMP
+	for i, c := range g.battle.companions { // 同步同伴 HP/MP
+		if i < len(g.companions) {
+			g.companions[i].CurHP, g.companions[i].CurMP = c.hp, c.mp
+		}
+	}
 	if g.battle.usedHerbs > 0 { // 扣掉戰鬥中用掉的藥草
 		g.removeItems(herbCode, g.battle.usedHerbs)
 	}
-	if g.battle.result == 1 { // 勝
+	if g.battle.result == 1 { // 勝:全隊加 exp/gold
 		oldLv := stats.LevelForExp(0, g.heroExp)
 		g.heroExp += uint32(g.battle.gotExp)
 		g.heroGold += g.battle.gotGold
-		if stats.LevelForExp(0, g.heroExp) > oldLv { // 升級 → 全回復 HP/MP
+		if stats.LevelForExp(0, g.heroExp) > oldLv { // 隊長升級 → 全回復
 			_, maxHP, _, _, _ := g.heroStats()
 			g.heroHP, g.heroMP = maxHP, g.heroMaxMP()
 		}
+		for _, m := range g.companions { // 同伴同得 exp,升級全補
+			oc := m.Level()
+			m.Exp += uint32(g.battle.gotExp)
+			if m.Level() > oc {
+				m.fullHeal()
+			}
+		}
 	}
-	if g.heroHP <= 0 { // 敗:回阿里阿罕、滿血復活(教會復活之簡化)
+	partyAllDown := g.heroHP <= 0
+	for _, m := range g.companions {
+		if m.CurHP > 0 {
+			partyAllDown = false
+		}
+	}
+	if partyAllDown { // 全滅:回阿里阿罕、全隊滿血復活(教會復活之簡化)
 		_, maxHP, _, _, _ := g.heroStats()
 		g.heroHP, g.heroMP = maxHP, g.heroMaxMP()
+		for _, m := range g.companions {
+			m.fullHeal()
+		}
 		g.cur, g.inTown = g.town, true
 		g.px, g.py = g.town.spawnX, g.town.spawnY
 	}
@@ -644,9 +680,10 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 
 	g.cur = g.over
 	g.px, g.py = g.over.w/2, g.over.h/2 // 地表起點(暫用中心)
-	g.heroGold = 120                    // 初始金(新遊戲勇者)
-	g.equip = [4]int{3, 0x21}           // 初始裝備:銅劍 + 皮甲冑
-	g.music = gaudio.NewMusic(music) // MT-32 音樂(music fs 為 nil → 靜音降級)
+	g.heroGold = 120                     // 初始金(新遊戲勇者)
+	g.equip = [4]int{3, 0x21}            // 初始裝備:銅劍 + 皮甲冑
+	g.companions = startingCompanions(0) // 示範隊伍(戰士/僧侶/魔法使);酒館招募之後接
+	g.music = gaudio.NewMusic(music)     // MT-32 音樂(music fs 為 nil → 靜音降級)
 	if sfxRaw := ld.read("FVOC.VCX"); len(sfxRaw) > 0 { // 數位音效(VOC)
 		bank := dq3data.DecodeVOCBank(sfxRaw, 44100)
 		pcm := make([][]int16, len(bank))
@@ -708,7 +745,7 @@ func applyDebugEnv(g *Game) {
 			mp := g.heroMaxMP()
 			g.heroHP, g.heroMP = maxHP, mp
 			g.battle.start(id, 1, heroParams{level: level, curHP: maxHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
-				mp: mp, maxMP: mp, spells: g.heroSpells()})
+				mp: mp, maxMP: mp, spells: g.heroSpells()}, g.buildCompanionActors())
 			if os.Getenv("DQ3_SPELLMENU") != "" && len(g.battle.spells) > 0 {
 				g.battle.cursor, g.battle.phase = bcSpell, phSpell // 開咒文子選單
 			}

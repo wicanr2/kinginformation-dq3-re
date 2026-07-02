@@ -72,6 +72,16 @@ type Battle struct {
 	heroMaxMP   int   //
 	spells      []int // 已學可施放咒文 rec
 	spellCursor int
+	companions  []*battleActor // 同伴(狀態列顯示 + 自動攻擊 + 可被鎖定)
+}
+
+// battleActor 是戰鬥中一名同伴的即時數值(隊長為 hero* 欄位,同伴用此)。
+type battleActor struct {
+	name         []int
+	class, level int
+	hp, maxHP    int
+	mp, maxMP    int
+	atk, def     int
 }
 
 func (b *Battle) roll() int { return b.rng.Intn(256) }
@@ -84,8 +94,8 @@ type heroParams struct {
 	spells                             []int // 已學可施放咒文 rec
 }
 
-// start 開一場戰鬥(monID + 主角數值)。跳過空 sprite 的怪。
-func (b *Battle) start(monID int, seed int64, hp heroParams) bool {
+// start 開一場戰鬥(monID + 主角數值 + 同伴)。跳過空 sprite 的怪。
+func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActor) bool {
 	spr, err := dq3data.DecodeMonsterSprite(b.shp, monID)
 	if err != nil {
 		return false
@@ -105,6 +115,7 @@ func (b *Battle) start(monID int, seed int64, hp heroParams) bool {
 	b.heroAtk, b.heroDef, b.heroAgi, b.heroLevel = hp.atk, hp.def, hp.agi, hp.level
 	b.heroHerbs, b.usedHerbs, b.defending = hp.herbs, 0, false
 	b.heroMP, b.heroMaxMP, b.spells = hp.mp, hp.maxMP, hp.spells
+	b.companions = comps
 	b.spellCursor = 0
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.gotExp, b.gotGold = "", 0, 0
@@ -204,7 +215,7 @@ func (b *Battle) execTurn() {
 			return
 		}
 	}
-	b.enemyTurn()
+	b.afterLeaderAction()
 }
 
 // execSpell 施放咒文 rec(DMG 傷敵 / HEAL 補己),消耗 MP,再敵方回合。
@@ -241,25 +252,89 @@ func (b *Battle) execSpell(rec int) {
 			return
 		}
 	}
+	b.afterLeaderAction()
+}
+
+// afterLeaderAction:隊長行動後 → 同伴自動攻擊(可能擊倒)→ 敵方回合。
+func (b *Battle) afterLeaderAction() {
+	st, _ := b.mons.Stat(b.monID)
+	for _, c := range b.companions { // 同伴自動物攻
+		if c.hp <= 0 || b.enemyHP <= 0 {
+			continue
+		}
+		dmg := battle.PhysDamage(c.atk, int(st.Def), b.roll(), 0)
+		b.enemyHP -= dmg
+		if b.enemyHP < 0 {
+			b.enemyHP = 0
+		}
+	}
+	if b.enemyHP == 0 { // 同伴擊倒 → 勝
+		b.gotExp, b.gotGold = int(st.Exp), int(st.Gold)
+		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
+		return
+	}
 	b.enemyTurn()
 }
 
-// enemyTurn:敵方回合(移植 C dq3_battlescene 敵方回合:逃跑 → 施咒 → 物理反擊)。
+// aliveTargets:存活隊員索引(-1=隊長,0..n=同伴)。
+func (b *Battle) aliveTargets() []int {
+	var t []int
+	if b.heroHP > 0 {
+		t = append(t, -1)
+	}
+	for i, c := range b.companions {
+		if c.hp > 0 {
+			t = append(t, i)
+		}
+	}
+	return t
+}
+
+// damageMember:對目標(-1=隊長,i=同伴)扣血;回是否為隊長被打(供防御減半)。
+func (b *Battle) damageMember(target, dmg int) {
+	if target < 0 {
+		b.heroHP -= dmg
+		if b.heroHP < 0 {
+			b.heroHP = 0
+		}
+		return
+	}
+	b.companions[target].hp -= dmg
+	if b.companions[target].hp < 0 {
+		b.companions[target].hp = 0
+	}
+}
+
+func (b *Battle) targetDef(target int) int {
+	if target < 0 {
+		return b.heroDef
+	}
+	return b.companions[target].def
+}
+
+// enemyTurn:敵方回合(移植 C:逃跑 → 施咒 → 物攻;鎖定隨機存活隊員;全滅才敗)。
 func (b *Battle) enemyTurn() {
 	st, _ := b.mons.Stat(b.monID)
 	ai, aiOK := b.mons.AI(b.monID)
+	targets := b.aliveTargets()
+	if len(targets) == 0 { // 全滅
+		b.result, b.phase = 2, phMessage
+		b.msg = "全滅…"
+		return
+	}
 	// 1) 逃跑
 	if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
 		b.msg, b.result, b.phase = "敵人逃走了", 3, phMessage
 		return
 	}
-	// 2) 施咒(cast_prob;傷害咒傷我方、回復咒補己;輔助咒無效果則落物攻)
+	tgt := targets[b.rng.Intn(len(targets))] // 鎖定隨機存活隊員
+	// 2) 施咒(傷害咒傷目標、回復咒補己)
 	if aiOK && ai.CastProb > 0 && b.roll() < int(ai.CastProb) {
 		if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
 			rec := spell.MonsterSpellRec(bits[b.rng.Intn(len(bits))])
 			if def, ok := spell.GetDef(rec); ok {
 				val := spell.CastValue(def.Base, b.roll())
-				if def.Kind == spell.Heal { // 敵補己
+				if def.Kind == spell.Heal {
 					b.enemyHP += val
 					if b.enemyHP > b.enemyMax {
 						b.enemyHP = b.enemyMax
@@ -267,27 +342,26 @@ func (b *Battle) enemyTurn() {
 					b.msg, b.phase = fmt.Sprintf("敵詠唱咒文回復 %d", val), phMessage
 					return
 				}
-				// 傷害咒 → 傷我方(咒文不受防御減半)
-				b.heroHP -= val
+				b.damageMember(tgt, val) // 傷害咒(不受防御減半)
 				b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
-				if b.heroHP <= 0 {
-					b.heroHP, b.result, b.phase = 0, 2, phMessage
-					return
-				}
-				b.phase = phMessage
+				b.checkWipe()
 				return
 			}
-			// 輔助咒(無 def)→ 落物理攻擊
 		}
 	}
-	// 3) 物理反擊(防御減半)
-	edmg := battle.PhysDamage(int(st.Atk), b.heroDef, b.roll(), 0)
-	if b.defending {
+	// 3) 物理反擊(打隊長且防御 → 減半)
+	edmg := battle.PhysDamage(int(st.Atk), b.targetDef(tgt), b.roll(), 0)
+	if tgt < 0 && b.defending {
 		edmg /= 2
 	}
-	b.heroHP -= edmg
-	if b.heroHP <= 0 {
-		b.heroHP = 0
+	b.damageMember(tgt, edmg)
+	b.msg = fmt.Sprintf("敵攻擊 %d 傷害", edmg)
+	b.checkWipe()
+}
+
+// checkWipe:全隊 HP 0 → 敗;否則進訊息。
+func (b *Battle) checkWipe() {
+	if len(b.aliveTargets()) == 0 {
 		b.msg, b.result, b.phase = "全滅…", 2, phMessage
 		return
 	}
@@ -393,19 +467,35 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 		drawGlyph(rgba, b.tx, cx-26, hy, 22, white) // H
 		drawNumber(rgba, b.tx, cx-8, hy, b.enemyHP, hc)
 	}
-	// 上方隊伍狀態列(X=0x13*8=152、Y=8;單勇者一欄:H+HP / M+MP / 等級)
+	// 上方隊伍狀態列(X=0x13*8=152、Y=8;每欄 80px:名 / H+HP / M+MP / 等級;隊長 + 同伴)
 	{
-		tx0, ty0 := 0x13*8, 8
-		fillBox(rgba, tx0-8, ty0-6, 88, 4*16+12, white)
-		hc := white
-		if b.heroHP <= 0 {
-			hc = red
+		tx0, ty0, colpx := 0x13*8, 8, 0xa*8
+		cols := 1 + len(b.companions)
+		fillBox(rgba, tx0-8, ty0-6, cols*colpx+8, 4*16+12, white)
+		drawCol := func(cx int, name []int, hp, mp, level int, alive bool) {
+			hc := white
+			if !alive {
+				hc = red
+			}
+			col := 0 // 名(class glyph)
+			for _, g := range name {
+				drawGlyph(rgba, b.tx, cx+col*16, ty0, g, white)
+				col++
+			}
+			drawGlyph(rgba, b.tx, cx, ty0+16, 22, hc) // H
+			drawNumber(rgba, b.tx, cx+18, ty0+16, hp, hc)
+			drawGlyph(rgba, b.tx, cx, ty0+32, 27, white) // M
+			drawNumber(rgba, b.tx, cx+18, ty0+32, mp, white)
+			drawNumber(rgba, b.tx, cx+18, ty0+48, level, white)
 		}
-		drawGlyph(rgba, b.tx, tx0, ty0+16, 22, hc) // H
-		drawNumber(rgba, b.tx, tx0+18, ty0+16, b.heroHP, hc)
-		drawGlyph(rgba, b.tx, tx0, ty0+32, 27, white) // M
-		drawNumber(rgba, b.tx, tx0+18, ty0+32, b.heroMP, white)
-		drawNumber(rgba, b.tx, tx0+18, ty0+48, b.heroLevel, white) // 等級
+		var leaderName []int
+		if b.heroLevel > 0 { // 隊長名用勇者職業 glyph
+			leaderName = classNames[0]
+		}
+		drawCol(tx0, leaderName, b.heroHP, b.heroMP, b.heroLevel, b.heroHP > 0)
+		for i, c := range b.companions {
+			drawCol(tx0+(i+1)*colpx, classNames[c.class], c.hp, c.mp, c.level, c.hp > 0)
+		}
 	}
 	// 下方左:指令窗(120,236,150×108)—— 指令 或 咒文子選單
 	{

@@ -14,10 +14,19 @@ type saveState struct {
 	HeroMP    int    `json:"mp"`
 	HeroGold  int    `json:"gold"`
 	Inventory []int  `json:"inv"`
-	Equip     [4]int `json:"eq"`
-	PX        int    `json:"px"`
-	PY        int    `json:"py"`
-	InTown    bool   `json:"town"`
+	Equip     [4]int    `json:"eq"`
+	Comps     []compSav `json:"comps"`
+	PX        int       `json:"px"`
+	PY        int       `json:"py"`
+	InTown    bool      `json:"town"`
+}
+
+// compSav 是一名同伴的存檔資料。
+type compSav struct {
+	Class, Gender          int
+	Exp                    uint32
+	CurHP, CurMP           int
+	Weapon, Armor, Shield, Head int
 }
 
 func encodeSave(s saveState) ([]byte, error) { return json.Marshal(s) }
@@ -33,8 +42,18 @@ func (g *Game) snapshot() saveState {
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroGold: g.heroGold,
 		Inventory: append([]int(nil), g.inventory...),
 		Equip:     g.equip,
+		Comps:     compsToSav(g.companions),
 		PX:        g.px, PY: g.py, InTown: g.inTown,
 	}
+}
+
+func compsToSav(ms []*Member) []compSav {
+	out := make([]compSav, len(ms))
+	for i, m := range ms {
+		out[i] = compSav{Class: m.Class, Gender: m.Gender, Exp: m.Exp, CurHP: m.CurHP, CurMP: m.CurMP,
+			Weapon: m.Weapon, Armor: m.Armor, Shield: m.Shield, Head: m.Head}
+	}
+	return out
 }
 
 func (g *Game) restore(s saveState) {
@@ -42,6 +61,17 @@ func (g *Game) restore(s saveState) {
 	g.heroInit = true
 	g.inventory = append([]int(nil), s.Inventory...)
 	g.equip = s.Equip
+	if len(s.Comps) > 0 { // 還原同伴
+		g.companions = make([]*Member, len(s.Comps))
+		for i, c := range s.Comps {
+			m := &Member{Class: c.Class, Gender: c.Gender, Exp: c.Exp, CurHP: c.CurHP, CurMP: c.CurMP,
+				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head}
+			if c.Class >= 0 && c.Class < 8 {
+				m.Name = classNames[c.Class]
+			}
+			g.companions[i] = m
+		}
+	}
 	g.px, g.py, g.inTown = s.PX, s.PY, s.InTown
 	if s.InTown {
 		g.cur = g.town

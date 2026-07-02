@@ -49,18 +49,43 @@ var defs = map[int]Def{
 	165: {165, 36, 255, Heal}, // 比荷瑪順
 }
 
-// HeroKnown 回勇者在 level 級已學會、且可在戰鬥施放(有 def)的咒名 rec(按習得等級)。
-func HeroKnown(level int) []int {
+// 僧侶系(24)/ 魔法系(31)習得表(自 dq3_school_priest/mage)。
+var priestSchool = []Learn{{1, 161}, {2, 143}, {5, 145}, {7, 158}, {8, 146}, {9, 144}, {11, 166}, {12, 134}, {13, 156}, {14, 162}, {15, 167}, {16, 168}, {18, 147}, {20, 148}, {22, 139}, {24, 169}, {26, 135}, {28, 140}, {30, 163}, {32, 159}, {34, 164}, {36, 136}, {38, 170}, {41, 141}}
+var mageSchool = []Learn{{1, 121}, {4, 154}, {5, 130}, {7, 124}, {8, 173}, {9, 155}, {11, 127}, {12, 172}, {13, 149}, {14, 125}, {15, 150}, {17, 122}, {18, 174}, {19, 175}, {20, 131}, {21, 151}, {23, 128}, {24, 157}, {25, 177}, {26, 132}, {27, 152}, {29, 126}, {30, 171}, {32, 133}, {33, 178}, {34, 142}, {35, 179}, {36, 123}, {37, 153}, {38, 129}, {40, 180}}
+
+// Known 回職業 cls 在 level 級已學會、且可在戰鬥施放(有 def)的咒名 rec。移植 dq3_spells_known。
+// 職業→系:勇者0→勇者系、僧侶3→僧侶、魔法4→魔法、賢者5→僧侶+魔法;其餘無咒。
+func Known(cls, level int) []int {
+	var schools [][]Learn
+	switch cls {
+	case 0:
+		schools = [][]Learn{heroSchool}
+	case 3:
+		schools = [][]Learn{priestSchool}
+	case 4:
+		schools = [][]Learn{mageSchool}
+	case 5:
+		schools = [][]Learn{priestSchool, mageSchool}
+	default:
+		return nil
+	}
+	seen := map[int]bool{}
 	var out []int
-	for _, l := range heroSchool {
-		if l.Level <= level {
-			if _, ok := defs[l.Rec]; ok {
-				out = append(out, l.Rec)
+	for _, s := range schools {
+		for _, l := range s {
+			if l.Level <= level && !seen[l.Rec] {
+				if _, ok := defs[l.Rec]; ok {
+					out = append(out, l.Rec)
+					seen[l.Rec] = true
+				}
 			}
 		}
 	}
 	return out
 }
+
+// HeroKnown 回勇者(class0)已學可施放咒(向後相容)。
+func HeroKnown(level int) []int { return Known(0, level) }
 
 // GetDef 查咒文 rec 的施放 descriptor。
 func GetDef(rec int) (Def, bool) {

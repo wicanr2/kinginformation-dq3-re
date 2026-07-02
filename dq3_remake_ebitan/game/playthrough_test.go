@@ -32,7 +32,7 @@ func TestPlaythroughBattle(t *testing.T) {
 
 	// 強勇者 vs 史萊姆(id5):應必勝、取得 EXP4/G2
 	hero := heroParams{level: 20, curHP: 200, maxHP: 200, atk: 80, def: 40, agi: 30}
-	if !b.start(5, 12345, hero) {
+	if !b.start(5, 12345, hero, nil) {
 		t.Fatal("開戰失敗(史萊姆)")
 	}
 	turns := 0
@@ -51,7 +51,7 @@ func TestPlaythroughBattle(t *testing.T) {
 
 	// 弱勇者 vs 史萊姆:HP 應被扣(敵有反擊)
 	weak := heroParams{level: 1, curHP: 9, maxHP: 9, atk: 4, def: 3, agi: 2}
-	b.start(5, 999, weak)
+	b.start(5, 999, weak, nil)
 	b.cursor = bcWar
 	b.execTurn() // 一回合:我方攻 + 敵反擊
 	if b.heroHP == 9 && b.enemyHP > 0 {
