@@ -83,6 +83,8 @@ type Game struct {
 	dlg            Dialogue // 對話視窗
 	cmd            CmdMenu  // 野外命令窗
 	battle         Battle   // 戰鬥場景
+	shop           Shop     // 商店(武防/道具店)
+	inventory      []int    // 持有道具 id
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
 	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
@@ -119,11 +121,38 @@ func (g *Game) selectCommand(cmd int) {
 		fx, fy := frontTile(g.px, g.py, g.facing)
 		if idx := g.cur.npcAt(fx, fy); idx >= 0 {
 			n := &g.cur.npcs[idx]
-			if sub := (n.ctrl >> 3) & 7; sub <= 1 {
+			switch sub := (n.ctrl >> 3) & 7; {
+			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
+			case sub >= 3: // 設施(店/宿/教會)
+				g.openFacility(n.b4)
 			}
 		}
 	}
+}
+
+// openFacility:面向設施 NPC(byte4=設施索引 k)→ 開對應設施。
+func (g *Game) openFacility(k int) {
+	f := facilityFor(k)
+	if f == nil {
+		return
+	}
+	switch f.typ {
+	case facInn: // 旅社:扣費(inn_cost×人數,單人)+ 治滿
+		_, maxHP, _, _, _ := g.heroStats()
+		cost := f.innCost
+		if g.heroGold >= cost {
+			g.heroGold -= cost
+			g.heroHP, g.heroInit = maxHP, true
+		}
+	case facWeapon, facItem: // 商店:開貨架
+		lo := f.itemOff
+		hi := lo + f.count
+		if hi <= len(aliahanItemPool) {
+			g.shop.open(append([]int(nil), aliahanItemPool[lo:hi]...))
+		}
+	}
+	// facChurch/facRecord(復活/存檔)之後接
 }
 
 func (g *Game) Update() error {
@@ -135,6 +164,17 @@ func (g *Game) Update() error {
 		if g.battle.input(in) {
 			g.onBattleEnd()
 			g.music.Play(trackField)
+		}
+		g.renderFrame()
+		return nil
+	}
+	// 商店 modal:方向選、A 買、B 關
+	if g.shop.active {
+		if buy, _ := g.shop.input(in); buy >= 0 {
+			if price := g.shop.items.Price(buy); g.heroGold >= price {
+				g.heroGold -= price
+				g.inventory = append(g.inventory, buy)
+			}
 		}
 		g.renderFrame()
 		return nil
@@ -317,6 +357,9 @@ func (g *Game) renderFrame() {
 	if g.dlg.open { // 對話框
 		g.dlg.draw(g.rgba, white)
 	}
+	if g.shop.active { // 商店
+		g.shop.draw(g.rgba, g.heroGold, white)
+	}
 	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
 }
@@ -470,12 +513,21 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.battle.shp = ld.read("DQ3MNS.SHP")
 	g.battle.mpal = dq3data.DecodePalette(ld.read("MNSBK.PAL"), 256)
 	g.battle.tx = g.dlg.tx
+
+	// 設施:道具/裝備資料(ITEM.DAT)供商店價格
+	items, ierr := dq3data.OpenItems(ld.read("ITEM.DAT"))
+	if ierr != nil && ld.err == nil {
+		return nil, fmt.Errorf("OpenItems: %w", ierr)
+	}
+	g.shop.items = items
+	g.shop.tx = g.dlg.tx
 	if ld.err != nil {
 		return nil, ld.err
 	}
 
 	g.cur = g.over
 	g.px, g.py = g.over.w/2, g.over.h/2 // 地表起點(暫用中心)
+	g.heroGold = 120                    // 初始金(新遊戲勇者)
 	applyDebugEnv(g)
 
 	// MT-32 音樂(music fs 為 nil → 靜音降級)
@@ -509,6 +561,9 @@ func applyDebugEnv(g *Game) {
 	}
 	if os.Getenv("DQ3_TOUCH") != "" {
 		g.input.touch.everTouched = true
+	}
+	if os.Getenv("DQ3_SHOP") != "" { // debug:起手開武防店(截圖驗證)
+		g.openFacility(1)
 	}
 	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證)
 		var id int

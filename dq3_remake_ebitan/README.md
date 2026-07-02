@@ -99,7 +99,11 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **戰鬥場景(功能核心)**(`game/battle.go`):地表 ~1/16 步隨機遇敵 → 怪物 sprite(DQ3MNS.SHP+MNSBK.PAL)
     站綠地、敵/我 HP、戰鬥/逃跑 指令窗、回合結算(用 `internal/battle` 的 PhysDamage/FleeOK)、勝(EXP/G)/敗/逃、
     受擊閃紅、戰鬥音樂(track14)。Xvfb 驗證:史萊姆戰鬥畫面完整。
-  - [ ] 戰鬥深化(咒文/道具/防禦/敵 AI/升級`dq3_stats`)、設施(店/宿)、場景轉場、事件/傳送
+  - [x] **升級系統**(`internal/stats`,移植 dq3_stats 成長/門檻表 + #4 勇者 MP 修正):主角持久 exp/HP、
+    屬性由等級推導、戰鬥勝利加 exp/gold + 升級全補、敗北回城復活 + 對拍測試(MP43=223/HP1=9/STR1=16、exp4364→lv10)。
+  - [x] **道具/裝備 DB**（ITEM.DAT，128×7，移植 dq3_combat：攻/防/價/類別/裝備部位）+ 對拍（銅劍攻10價100G/皮甲防8）
+  - [x] **設施（宿屋/商店）**（`game/facility.go`，阿里阿罕設施表 baked）：面向設施 NPC → 宿屋扣費治滿、武防/道具店貨架（品項+價+購買扣金入庫）。Xvfb 驗證武防店 7 品項/價正確。
+  - [ ] 戰鬥深化（咒文/道具/防禦/敵 AI）、品名（D3TXT）、教會/存檔、場景轉場、事件/傳送
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;
