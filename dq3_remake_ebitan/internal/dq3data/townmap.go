@@ -9,6 +9,8 @@ type Town struct {
 	Cells          []byte // 每格 tile 索引(u16 低 byte;高 byte=事件 subid,渲染不用)
 	SpawnX, SpawnY int    // 版面 spawn(section header +0x13/+0x14)
 	DlgBank        int    // 對話 bank(section header +0x17 → D3TXT0<bank>.TXT)
+	HiMap          []byte // 每格高 byte(低 5 bit = 事件/轉場 subid)
+	Events         [][3]int // section 事件表(section+8):{type, param, p2}
 	NPCs           []NPC
 }
 
@@ -64,8 +66,26 @@ func OpenTown(cty []byte, section int) (*Town, error) {
 		SpawnY:  int(cty[so+0x14]), // spawn_y
 		DlgBank: dlgBank,
 	}
+	t.HiMap = make([]byte, w*h)
 	for i := 0; i < w*h; i++ {
-		t.Cells[i] = byte(townU16(cty, tbase+2*i)) // 低 byte = BLK index(容忍末尾略超檔尾 → 0)
+		v := townU16(cty, tbase+2*i)
+		t.Cells[i] = byte(v)       // 低 byte = BLK index
+		t.HiMap[i] = byte(v >> 8)  // 高 byte = 事件/轉場 subid
+	}
+	// section 事件表(section+8:count byte + 4-byte 項{type, param u16, p2})
+	if evptr := int(townU16(cty, so+8)); evptr != 0xffff && so+evptr < len(cty) {
+		et := so + evptr
+		cnt := int(cty[et])
+		if cnt > 32 {
+			cnt = 32
+		}
+		for k := 0; k < cnt; k++ {
+			o := et + 1 + k*4
+			if o+4 > len(cty) {
+				break
+			}
+			t.Events = append(t.Events, [3]int{int(cty[o]), int(townU16(cty, o+1)), int(cty[o+3])})
+		}
 	}
 	t.NPCs = parseNPCs(cty, so, w, h)
 	return t, nil

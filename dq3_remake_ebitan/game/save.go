@@ -16,6 +16,7 @@ type saveState struct {
 	Inventory []int  `json:"inv"`
 	Equip     [4]int    `json:"eq"`
 	Comps     []compSav `json:"comps"`
+	Flags     []int     `json:"flags"`
 	PX        int       `json:"px"`
 	PY        int       `json:"py"`
 	InTown    bool      `json:"town"`
@@ -43,8 +44,19 @@ func (g *Game) snapshot() saveState {
 		Inventory: append([]int(nil), g.inventory...),
 		Equip:     g.equip,
 		Comps:     compsToSav(g.companions),
+		Flags:     flagsToSav(g.flags),
 		PX:        g.px, PY: g.py, InTown: g.inTown,
 	}
+}
+
+func flagsToSav(f map[int]bool) []int {
+	var out []int
+	for k, v := range f {
+		if v {
+			out = append(out, k)
+		}
+	}
+	return out
 }
 
 func compsToSav(ms []*Member) []compSav {
@@ -61,6 +73,10 @@ func (g *Game) restore(s saveState) {
 	g.heroInit = true
 	g.inventory = append([]int(nil), s.Inventory...)
 	g.equip = s.Equip
+	g.flags = map[int]bool{}
+	for _, k := range s.Flags {
+		g.flags[k] = true
+	}
 	if len(s.Comps) > 0 { // 還原同伴
 		g.companions = make([]*Member, len(s.Comps))
 		for i, c := range s.Comps {

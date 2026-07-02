@@ -120,3 +120,20 @@ func TestPlaythroughEconomy(t *testing.T) {
 	}
 	t.Logf("經濟 ✓:阿里阿罕武防店 7 品(銅劍100G)、宿屋 2G;全城設施表 %d 筆", len(allFacilities))
 }
+
+// 整合 game test:寶箱表查詢(阿里阿罕 cty0 sec5 有 6 寶箱)+ 事件系統資料。
+func TestPlaythroughTreasure(t *testing.T) {
+	if len(treasures) != 121 {
+		t.Fatalf("寶箱表應 121 筆,得 %d", len(treasures))
+	}
+	// 阿里阿罕(cty0 sec5)sub0 寶箱:item98、flag41
+	tr := treasureFor(0, 5, 0)
+	if tr == nil || tr[4] != 98 || tr[5] != 41 {
+		t.Fatalf("阿里阿罕 sec5 sub0 應 item98/flag41,得 %v", tr)
+	}
+	// 越界查詢 → nil
+	if treasureFor(99, 0, 0) != nil {
+		t.Fatal("不存在的寶箱應回 nil")
+	}
+	t.Logf("寶箱表 ✓:121 筆、阿里阿罕 sec5 sub0=item98/flag41")
+}

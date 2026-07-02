@@ -48,7 +48,26 @@ type Scene struct {
 	tileAt         func(x, y int) int // (x,y) → BLK tile 索引
 	spawnX, spawnY int                // 城鎮進入 spawn(地表不用)
 	dlgText        *dq3data.Text      // 該城對話 bank(D3TXT0<bank>.TXT;地表 nil)
+	hiMap          []byte             // 每格高 byte(事件 subid)
+	events         [][3]int           // section 事件表 {type,param,p2}
+	sec            int                // section 號
 	npcs           []npcInst
+}
+
+// tileEvent:回 (tx,ty) 的事件(attr&8 事件格 → hiMap 低5bit subid → events[subid])。回 (event, subid, ok)。
+func (sc *Scene) tileEvent(tx, ty int) ([3]int, int, bool) {
+	if sc.hiMap == nil || len(sc.events) == 0 || tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h {
+		return [3]int{}, 0, false
+	}
+	i := ty*sc.w + tx
+	if sc.attr.Raw(sc.tileAt(tx, ty))&0x0008 == 0 { // 非事件格
+		return [3]int{}, 0, false
+	}
+	subid := int(sc.hiMap[i] & 0x1f)
+	if subid >= len(sc.events) {
+		return [3]int{}, 0, false
+	}
+	return sc.events[subid], subid, true
 }
 
 // Blocked:出界 / BLKBM 屬性 bit0=1 / 有 NPC 佔格 → 不可走(移植 dq3_scene_walkable + npc_at)。
@@ -106,8 +125,11 @@ type Game struct {
 	heroHP      int
 	heroMP      int
 	heroInit    bool
-	equip       [4]int    // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
-	companions  []*Member // 同伴(隊長=hero*;酒館招募,現為預建示範)
+	equip       [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	companions  []*Member    // 同伴(隊長=hero*;酒館招募,現為預建示範)
+	flags       map[int]bool // 一次性旗標(寶箱/事件已取)
+	noticeCode  int          // 取得道具通知(item code;-1=無)
+	noticeTimer int
 	frame       *ebiten.Image
 	rgba        []byte
 }
@@ -155,6 +177,39 @@ func (g *Game) selectCommand(cmd int) {
 		g.panel = panelItem
 	case cmdEquip: // 裝備
 		g.panel, g.panelCursor = panelEquip, 0
+	case cmdExamine: // 調査:檢查面向格 → 寶箱/隱藏物(一次性旗標)
+		g.examine()
+	}
+}
+
+// examine:調查面向格(或腳下)的事件 → 若為寶箱且旗標未取 → 給道具 + 設旗標 + 通知。移植 dq3_treasure。
+func (g *Game) examine() {
+	if g.flags == nil {
+		g.flags = map[int]bool{}
+	}
+	check := func(x, y int) bool {
+		_, subid, ok := g.cur.tileEvent(x, y)
+		if !ok {
+			return false
+		}
+		t := treasureFor(g.curCty, g.cur.sec, subid)
+		if t == nil {
+			return false
+		}
+		flag := t[5]
+		if g.flags[flag] { // 已取
+			return true
+		}
+		g.flags[flag] = true
+		if t[3] == 1 || t[3] == 3 { // 寶箱給道具
+			g.inventory = append(g.inventory, t[4])
+			g.noticeCode, g.noticeTimer = t[4], 120
+		}
+		return true
+	}
+	fx, fy := frontTile(g.px, g.py, g.facing)
+	if !check(fx, fy) {
+		check(g.px, g.py) // 也試腳下
 	}
 }
 
@@ -311,6 +366,9 @@ func (g *Game) Update() error {
 		if rand.Intn(16) == 0 {
 			g.startEncounter()
 		}
+	}
+	if g.noticeTimer > 0 {
+		g.noticeTimer--
 	}
 	g.anim++
 	if moved || g.anim%18 == 0 { // 走動 / 待機都擺手腳
@@ -562,6 +620,10 @@ func (g *Game) renderFrame() {
 	if g.shop.active { // 商店
 		g.shop.draw(g.rgba, g.heroGold, white)
 	}
+	if g.noticeTimer > 0 && g.noticeCode >= 0 { // 取得道具通知(品名)
+		fillBox(g.rgba, 24, 244, ScreenW-48, 40, white)
+		g.shop.drawItemName(g.rgba, 40, 256, g.noticeCode, white)
+	}
 	switch g.panel { // 資訊面板
 	case panelStatus:
 		g.drawStatus(g.rgba, white)
@@ -730,6 +792,8 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.heroGold = 120                     // 初始金(新遊戲勇者)
 	g.equip = [4]int{3, 0x21}            // 初始裝備:銅劍 + 皮甲冑
 	g.companions = startingCompanions(0) // 示範隊伍(戰士/僧侶/魔法使);酒館招募之後接
+	g.flags = map[int]bool{}
+	g.noticeCode = -1
 	g.music = gaudio.NewMusic(music)     // MT-32 音樂(music fs 為 nil → 靜音降級)
 	if sfxRaw := ld.read("FVOC.VCX"); len(sfxRaw) > 0 { // 數位音效(VOC)
 		bank := dq3data.DecodeVOCBank(sfxRaw, 44100)

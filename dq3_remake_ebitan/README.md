@@ -120,7 +120,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **忠實 DOS 亂數**（`internal/rng`,移植 dq3_rng DOS 模式:add 0x9018+rol3+mod）:戰鬥擲值 roll 序列位元一致對齊原版/C（取代 math/rand）+ 對拍測試
   - [x] **英數命名輸入**（`tavern.go`,移植 dq3_nameinput）：酒館 職業→命名（0-9/A-Z 格盤+←/OK）→性別→建已命名隊員（名字用 FON glyph:數字0-9/字母15..40）。注音（zhuyin IME）為後續
   - [x] **標題畫面**（`pcx.go`,移植 dq3_pcx）：TITG.P（ZSoft PCX 640×350 4-plane RLE + 檔內16色）解碼→開機顯「DRAGON FIGHTER III 傳說的終章 ©1993 精訊」,A/Enter 開始 + 對拍測試
-  - [ ] 注音命名（IME）、事件劇本、ship/寶箱、SB-FM OPL2（最硬,MT-32 已代替）
+  - [x] **事件/旗標/寶箱系統**（`treasure.go` + town 事件解析）：section 事件表 + hiMap subid + attr&8 事件格 → 調査（cmdExamine）→ treasureFor(cty,sec,sub) 給道具 + 一次性旗標 + 取得通知 + 存檔;寶箱表 121 筆對拍
+  - [ ] 注音命名（IME）、劇情事件腳本、ship、SB-FM OPL2（最硬,MT-32 已代替）
 - [~] **階段 5 音訊(進行中)**:
   - [x] **MT-32 音樂**(`internal/gaudio`,Ebiten `audio/vorbis` 純 Go 解碼 + `InfiniteLoop`):
     場景→軌對齊 C `dq3_audio`(地表 FIELD=6、阿里阿罕 CASTLE=1),進城/回地表自動換軌;

@@ -15,6 +15,14 @@ func OpenBlockAttr(d []byte) *BlockAttr {
 	return &BlockAttr{A: a}
 }
 
+// Raw 回某 tile 索引的原始屬性 u16(bit3=0x8 事件格、高3bit=0xe000 轉場)。越界回 0。
+func (b *BlockAttr) Raw(tileIdx int) uint16 {
+	if b == nil || tileIdx < 0 || tileIdx >= len(b.A) {
+		return 0
+	}
+	return b.A[tileIdx]
+}
+
 // Blocked 回某 tile 索引是否阻擋(不可走)。移植 dq3_scene_walkable 的 `attr[idx] & 1`。
 // tile 索引越界視為可走(對齊 C:無屬性 → 可走)。
 func (b *BlockAttr) Blocked(tileIdx int) bool {

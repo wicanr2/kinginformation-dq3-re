@@ -149,6 +149,7 @@ func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn i
 	sc := &Scene{
 		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: pal,
 		w: tw.W, h: tw.H, tileAt: tw.Tile, spawnX: tw.SpawnX, spawnY: tw.SpawnY,
+		hiMap: tw.HiMap, events: tw.Events, sec: 0,
 	}
 	// 該城對話 bank(D3TXT0<bank>.TXT,section +0x17;共用 D3TXT00.FON)
 	bank := tw.DlgBank
