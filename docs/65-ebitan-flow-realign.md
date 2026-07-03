@@ -54,7 +54,7 @@
 
 ### B — 差異盤點 ⏳
 - [ ] B1 ebitan 實際流程 vs oracle 逐步比對(code 為準)→ FLOW-GAP 清單(本檔附表,嚴重度排序)
-- [ ] B2 C remake 宣稱抽驗:重跑 game_tester(93/93?)+ 抽 grep 3–5 個 audit 宣稱 → 決定 C 當 spec 的可信度
+- [x] B2 C remake 宣稱抽驗 ✅:game_tester 實跑 **93/93 全綠**(2026-07-03);5 項流程宣稱 grep 屬實(里程碑綁 scripted NPC 檢查 main.c:1745、諾魯特 0x5b/0x215 @1623、sokoban gate @1847、王者之劍 transform @1559、酒場創角 @1496)→ **C remake 可當移植 spec**(Fable 抽驗 2 條逐字吻合)
 
 ### C — 逐 GAP 修 ebitan(C 為 spec;C 也缺的回頭 RE)
 - 順序 = 玩家遭遇順序:開場/創角 → 出生點/初期場景 → 遭遇區/晝夜 → runner region 事件/真實里程碑觸發
