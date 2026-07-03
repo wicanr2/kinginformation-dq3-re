@@ -30,7 +30,7 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 |---|---|---|---|
 | U1 | 開場不是房間、母親沒帶去見國王 | C `main.c:1353`「互動開場:從阿里阿罕城鎮(CTY00 sec0)起步」;grep 母親/16歲/謁見 **0 命中** —— 開場劇情(docs/36 §1-6/7:旁白+家室內)**C 也沒做**;ebitan 更糟(地表中心) | **兩版** |
 | U2 | 城內任何地方按 Space 被傳出城 | C `main.c:1982` demo 殘留鍵。**已仲裁(DOSBox 實測)**:原版 Space=開命令窗(2×3 六指令)+ 左下 HP/MP 小窗 → C 修法=Space 改開命令窗;ebitan 命令窗語意正確,補 HP/MP 小窗、出城方式仍待第二輪實測 | C(ebitan 小補) |
-| U3 | 城鎮 NPC 沒原版多 | ebitan `worldmap.go:171` `if n.B2 < 4 { continue }` **丟棄無 BLS sprite 的 NPC**;C `dq3_scene.c` sprite cache 上限 8 種(`n_npc_spr < 8`),溢出者處理待查;原版實際 NPC 數待 DOSBox 實測 | **兩版**(機制不同) |
+| U3 | 城鎮 NPC 沒原版多 | **RE 定案(docs/68)**:原版掃 NPC 無 `b2<4` 判斷=**顯示全部**;兩版 remake 都誤加 `b2<4 continue` 丟棄(全 CTY 共 **1661 個** b2<4 村民);C cache 上限又誤設 8(原版 13)。修法=移除丟棄+b2<4 載 DQ3LIN.BLS(C-3) | **兩版**(移植 bug) |
 
 ## Ground truth 資產
 
