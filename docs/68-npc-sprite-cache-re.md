@@ -60,7 +60,10 @@ fallback」(見下)。
 
 ## 兩版 remake 的 bug(code 核實)
 
-| | 原版 | C remake | ebitan(修復前) |
+> **狀態(2026-07-03 更新)**:下表「C remake / ebitan(修復前)」是**發現當時**的狀態;**兩版現皆已修**
+> ——ebitan commit(C-3/8b76ac1 一帶)、**C remake W5 commit f27b51d**(見底部)。表保留當時證據供追溯。
+
+| | 原版 | C remake(修復前) | ebitan(修復前) |
 |---|---|---|---|
 | b2<4 NPC | **顯示**,sprite = undefined(頁緩衝殘留) | `dq3_scene.c:172` `if(b2<4)continue` **丟棄** | `worldmap.go:171` `if n.B2<4 continue` **丟棄** |
 | cache 容量 | 13 slot | `n_npc_spr<8`(**上限 8,少 5**) | 用 Go map 無上限(不受此限) |
@@ -83,7 +86,7 @@ sec0 剛好 0 個 b2<4(24 NPC 全 b2≥4),所以起始城感覺還好;但多數�
 
 - ebitan `worldmap.go`:**移除 `b2<4 continue`**;b2<4 一律 fallback 成 `b2=4`(DQ3MAN.BLS entry 0,
   第一個角色)—— 原版該值 undefined,不硬猜 DQ3LIN(已證偽),取「顯示但誠實非原始」優先於「丟棄」。
-- C remake 待同步:`b2<4 continue` 移除(改用同一 fallback)+ cache 上限 8→13。
+- **C remake ✅ 已同步(W5,commit f27b51d)**:`dq3_scene.c` b2<4→entry0 fallback(不丟棄)+ cache 上限 8→13(`npc_spr[13]`)+ 逐筆 story-flag 過濾(見 docs/71/72)。
 - 驗收:CTY03 sec15 / CTY90 sec13(NPC 密度熱點,OpenTown + tile 陣列邊界雙重校正後)ebitan
   dump PNG,NPC **數量**(非 sprite 圖像本身,因原版該值本就 undefined)應對上 DOSBox 原版截圖。
 

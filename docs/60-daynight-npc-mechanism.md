@@ -113,6 +113,10 @@ section base+2 (黑夜 NPC 清單)  ┘ → {count, 7-byte 記錄×count}
 
 ## 4. remake 實作
 
+> ⚠ **第三層(§3 的「byte5 story-flag 逐筆過濾」)當時未在本批實作** —— 只做了 §4.1 日夜選表 + §4.2 城內重載。
+> 那層(原版 file 0x4568 `test [byte5→0x4f70]; je skip`)後來才補:**ebitan** commit 8b76ac1、**C remake** W5
+> commit f27b51d,詳見 `docs/71`。本節僅記日夜選表那兩層。
+
 ### 4.1 依相位選清單(`dq3_scene.c` `dq3_scene_load_npcs`)
 
 原本永遠先用 word0(白天表),word2 只當 word0==0xffff 的 fallback —— 等於**一直顯示白天 NPC**。

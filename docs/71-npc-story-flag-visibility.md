@@ -62,7 +62,10 @@ DGROUP 檔基準用資料錨點定出:`lea dx,[0xd0]; int21 open` 開 `dq3man.bl
 - `game/worldmap.go` `loadTownSceneSec`:加 `flagSet func(int) bool` 參數,NPC loop 內
   `if flagSet != nil && !flagSet(n.Flags) { continue }`(對齊原版 je skip);玩家路徑傳 `g.storyFlag`,
   測試傳 `nil`(不過濾)。
-- C remake 待同步(`dq3_scene.c` 同缺此層;`dq3_flags_init` 目前全清零,需改為此初值才能接 NPC 過濾)。
+- **C remake ✅ 已同步(W5,commit f27b51d)**:`dq3_scene.c` 加獨立 `g_npc_vis[32]` + `dq3_npc_vis_init`
+  (flag0-39清/40-255設,不共用 `dq3_storyflags` 避免誤設 boss doneFlag)+ `dq3_scene_load_npcs` 過濾;
+  `test_npcvis` 驗 CTY00 24→15。**注意**:C 的 `dq3_flags_init` 仍全清零(那是里程碑陣列,與 NPC 可見性
+  是**不同 id 空間**,不可混用——見 W5 commit 說明)。
 
 ### 驗證(數量,對 ground truth)
 

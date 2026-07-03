@@ -1,5 +1,19 @@
 # 72 — RE 做了、兩版 remake 都沒實作的缺口盤點(2026-07-03)
 
+> **修正進度(2026-07-03 當天,見 `docs/73` worklist)**:本盤點的高信心缺口多數當天已修,狀態如下標。
+> 讀本檔前先看此表,別把已修項當「還缺」:
+>
+> | 缺口 | 修正批 | 狀態 |
+> |---|---|---|
+> | A1 玩家狀態/buff 咒文 | W3 | **進行中**(ebitan)|
+> | A2 文字插值 | W1 | ✅ ebitan(commit 52ce817)|
+> | A3 怪物群隻數 | W2 | ✅ ebitan(commit 0269012)|
+> | A4 酒場兩段式招募 | W4 | ✅ ebitan(commit 5507a0a)|
+> | D. C oracle NPC 三 bug | W5 | ✅ C(commit f27b51d)|
+> | B1 沙曼歐莎怪力魔 / C1 EBG / C2 0xd4f | — | 延後(需 RE / 低信心)|
+>
+> 註:A1-A4 的修正目前只在 **ebitan**(可玩主目標);C 版同缺項除 D 段(W5)外未回補,若要拿 C 對拍需另補。
+
 > 3 個 subagent 分區(戰鬥/怪物、地圖/事件/NPC、文字/UI/音訊)交叉盤點 RE docs vs 兩版 code
 > (C `dq3_remake/`、ebitan `dq3_remake_ebitan/`),協調者逐項獨立 grep 核實。只收「**兩版都沒做**」。
 > 校準原型 = NPC story-flag 過濾(docs/71,原版 RE 了、兩版都漏)。方法:truth-in-code,不信 docs marker,
@@ -52,15 +66,15 @@
 - **C1 EBG 事件音效 cue**(旅館睡眠/教堂復活/神宮):`docs/61` 已自標「先載著日後接」。C 載入無觸發、ebitan **連載入都沒有**(`grep EBG` 零命中)。中低。
 - **C2 攻方狀態傷害減半**(`[bx+0xd4f]==3 → dmg>>=1`,docs/13):兩版 `0xd4f` 零命中;但**原版觸發條件 RE 本身未定**,implement 前需再 RE。低。
 
-## D. 反向發現:C oracle 對 NPC 不忠實(ebitan 今天已修、C 還沒跟上)
+## D. 反向發現:C oracle 曾對 NPC 不忠實 → **已由 W5 修正(commit f27b51d)**
 
-盤點時發現「已驗證的 C port」在 NPC 上有三處不忠實,**與校準範例同源但方向相反**(通常 C 是 oracle,這裡 C 落後):
+盤點時發現「已驗證的 C port」在 NPC 上有三處不忠實(**與校準範例同源但方向相反**:通常 C 是 oracle,這裡 C 落後 ebitan)。**W5 已全部回補**,C 恢復為可靠 NPC oracle:
 
-| 項 | C 現況 | ebitan |
-|---|---|---|
-| b2<4 NPC 丟棄 | `dq3_scene.c:173 if(b2<4)continue` **仍丟**(約 1661 NPC) | 已修(fallback entry0)|
-| sprite cache 上限 | `dq3_scene.c:170 n_npc_spr<8`(應 13) | Go map 無上限 |
-| story-flag 可見性過濾 | 零實作(scene.c/town.c grep 0) | 已修(commit 8b76ac1)|
+| 項 | C 發現時 | C 現況(W5 後)| ebitan |
+|---|---|---|---|
+| b2<4 NPC 丟棄 | `dq3_scene.c:173 if(b2<4)continue` 丟(約 1661 NPC) | ✅ b2<4→entry0 fallback | 已修(fallback entry0)|
+| sprite cache 上限 | `n_npc_spr<8`(應 13) | ✅ `npc_spr[13]` | Go map 無上限 |
+| story-flag 可見性過濾 | 零實作 | ✅ 獨立 `g_npc_vis[32]` + 過濾(test_npcvis 24→15)| 已修(commit 8b76ac1)|
 
 → **C 不是可靠的 NPC oracle**;若要拿 C 對拍 NPC,需先回補這三項(否則 C「少 sprite + 過多/過少 NPC」的錯會被當基準)。
 
