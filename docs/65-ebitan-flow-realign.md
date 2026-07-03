@@ -81,7 +81,8 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 | **C-2 ✅(部分)** | 創角完成→進 sec4 家+開場旁白 rec82→83(視覺核驗對齊原版)→母親帶出門到 sec0 城鎮。**節約做法:Opus 自己做、無大 agent**。TODO:能力值確認畫面、對母親對話才護送(現簡化為旁白後自動)、謁見金裝數字 | 核心完成 |
 | C-3 | 酒場正式入口(露依達櫃台 NPC)+ 移除預建示範隊;U2/U3 修:出城方式(待 DOSBox 仲裁)、Space 行為、NPC B2<4 不丟 | C-1 |
 | C-4 | examine→boss 觸發 dispatch + NPC 給物/交換鏈(port-C:boss-trigger-points + scripted 擴充 + 里程碑真實 gate) | — |
-| C-5 | 取船、晝夜系統、遭遇區分區、商店賣出 | C-4 部分 |
+| **C-5a ✅** 取船鏈 | 救人(0x211,C-4a)→古布達 gate 給黑胡椒→波魯多加王(CTY37,座標吻合C)授船+msShip;dump 確認船地表可用 | 完成 |
+| C-5b | 晝夜系統、遭遇區分區、商店賣出 | 待 |
 | C-6 | 六珠/不死鳥坐騎、下降自然觸發、終盤入口 wire(拔 Z/U) | C-4 |
 | C-7 | attract 演出(TIT*.P 輪播,docs/67)+ 四人縱列 caterpillar + THE END 畫面 | 影格節奏對位 |
 > C remake 端的 U2(Space demo 殘留 main.c:1982)另修一刀(等 DOSBox 確認原版 Space 行為後)。
@@ -99,3 +100,7 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 ## FLOW-GAP 清單
 
 → `docs/data/flow-gap-ebitan.md`(78 GAP 全表,單一真相;本檔只留批次進度)。
+
+## 待修既有 bug(subagent 揪出,牽動多 NPC 未當場修)
+- **scripted 給物無「已持有不重給」guard**:`scriptedTalk` 對 `milestone==0` 的列(古布達/cty22/67/16/64…)
+  無 C 的 `dq3_inv_find(give_item)<0` 檢查 → 重複對話無限複製道具。修法=通用加 guard(一律:已有 give_item 就開後話不重給)。取船鏈本身不受影響(王一次只消耗一份)。排 C-4b 一併修。

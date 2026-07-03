@@ -284,7 +284,12 @@ func (g *Game) selectCommand(cmd int) {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
 			case sub == 2: // scripted NPC(給物/劇情)
-				g.scriptedTalk(n.b4)
+				if g.curCty == ctyPortoga && n.x == portogaKingX && n.y == portogaKingY {
+					// 波魯多加國王(main.c:1607 位置特例,先於 scripted 表判定)
+					g.talkPortogaKing()
+				} else {
+					g.scriptedTalk(n.b4)
+				}
 			case sub >= 3: // 設施(店/宿/教會)
 				g.openFacility(n.b4)
 			}
@@ -347,6 +352,12 @@ func (g *Game) scriptedTalk(byte4 int) {
 	}
 	give, prereq, require, consume, milestone := s[2], s[3], s[4], s[5], s[6]
 	beforeRec, giveRec, afterRec := s[7], s[8], s[9]
+	if byte4 == 25 && g.curCty == 15 && !g.flags[0x211] {
+		// 古布達黑胡椒救人 gate(main.c:1736):CTY15 byte4=25 需先救出達妮亞
+		// (flag 0x211,甘達特巢穴 boss 鏈勝利設,bosstrigger.go)才給黑胡椒。
+		g.dlg.Open(beforeRec)
+		return
+	}
 	if require != 255 { // 檢查型:持物→give_rec、否則→before_rec(不消耗)
 		if g.hasItem(require) {
 			g.dlg.Open(giveRec)
@@ -374,6 +385,36 @@ func (g *Game) scriptedTalk(byte4 int) {
 		g.flags[milestone] = true
 	}
 	g.dlg.Open(giveRec)
+}
+
+// 取船劇情常數(main.c:57-90 DQ3_PORTOGA_*/DQ3_ITEM_PEPPER/DQ3_PORTOGA_REC_*,座標/rec/碼原封對齊)。
+const (
+	ctyPortoga     = 37   // DQ3_PORTOGA_CTY
+	portogaKingX   = 9    // DQ3_PORTOGA_KING_X
+	portogaKingY   = 6    // DQ3_PORTOGA_KING_Y
+	portogaHarborX = 25   // DQ3_PORTOGA_HARBOR_X(港口海格,城南鄰)
+	portogaHarborY = 73   // DQ3_PORTOGA_HARBOR_Y
+	itemPepper     = 0x5c // DQ3_ITEM_PEPPER(黑胡椒,獻國王換船)
+	recPortogaWait = 26   // DQ3_PORTOGA_REC_WAIT「怎麼了?我在等黑胡椒。」
+	recPortogaGot  = 28   // DQ3_PORTOGA_REC_GOT「胡椒太好吃了…好想睡。」
+)
+
+// talkPortogaKing:波魯多加國王(CTY37 (9,6))授船特例,移植 main.c:1607-1631。
+// 已取船 → 仍顯示「吃胡椒」後話;持黑胡椒 → 獻上換船(消耗胡椒、停泊港口、設 msShip);
+// 否則 → 「等胡椒」對白。國王的信(0x5b/flag 0x215)支線不在取船鏈範圍內,未移植。
+func (g *Game) talkPortogaKing() {
+	switch {
+	case g.shipOwned:
+		g.dlg.Open(recPortogaGot)
+	case g.hasItem(itemPepper):
+		g.removeItems(itemPepper, 1)
+		g.shipOwned, g.shipAboard = true, false
+		g.shipX, g.shipY = portogaHarborX, portogaHarborY
+		g.progressSet(msShip)
+		g.dlg.Open(recPortogaGot)
+	default:
+		g.dlg.Open(recPortogaWait)
+	}
 }
 
 // examine:調查面向格(或腳下)的事件 → 座標 boss 觸發點 → 開戰;否則寶箱/warp。
