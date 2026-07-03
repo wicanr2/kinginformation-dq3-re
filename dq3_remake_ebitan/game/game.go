@@ -211,6 +211,7 @@ type Game struct {
 	cleared      bool          // 已破關(索瑪擊破)
 	endText      *dq3data.Text // ENDTXT.TXT 結局文本
 	endSeq       int           // 結局捲動段號(-1=未進行;0..n=當前段)
+	openingIdx   int           // 開場旁白序號(-1=未進行;0..n=當前句)
 	bossQueue    []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪);勝一場接下一場
 	frame        *ebiten.Image
 	rgba         []byte
@@ -575,6 +576,18 @@ func (g *Game) Update() error {
 		g.renderFrame()
 		return nil
 	}
+	// 開場旁白:一句翻完 → 下一句(rec82→83,母親帶去見國王,docs/66 §1d)→ 播完母親帶出門到城鎮。
+	if g.openingIdx >= 0 {
+		g.openingIdx++
+		if g.openingIdx < len(openingSeq) {
+			g.dlg.Open(openingSeq[g.openingIdx])
+		} else {
+			g.openingIdx = -1
+			g.motherEscort() // 母親帶你去見國王 → 出家門到阿里阿罕城鎮(sec0)
+		}
+		g.renderFrame()
+		return nil
+	}
 	// 命令窗 modal:方向移游標、A 選定、B 關窗;點格(P2)= 游標移過去 + 等同 A 選定
 	if g.cmd.open {
 		confirm := in.Confirm
@@ -814,6 +827,48 @@ func (g *Game) descend() {
 	g.px, g.py = 84, 68
 	g.progressSet(msDescend) // 下降里程碑(對 flagDescended)
 	g.music.Play(trackField)
+	g.renderFrame()
+}
+
+// openingSeq:開場旁白 rec(D3TXT01,阿里阿罕 bank):16歲生日引子 → 帶你去見國王(docs/66 §1d,DOSBox 實測逐字吻合)。
+var openingSeq = []int{82, 83}
+
+// startOpening:新遊戲創角完成 → 進主角家(CTY00 sec4 室內)+ 播開場旁白。移植原版開場(FLOW-GAP A5/A6)。
+// 對齊 U1:原版開場是家室內 + 母親旁白,非地表中心。
+func (g *Game) startOpening() {
+	home, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 4)
+	if err != nil { // 載入失敗 → 退回地表中心(不卡死)
+		g.px, g.py = g.over.w/2, g.over.h/2
+		return
+	}
+	g.town, g.cur, g.inTown, g.curCty = home, home, true, 0
+	g.px, g.py = home.spawnX, home.spawnY
+	if g.px >= home.w || g.py >= home.h { // sec4 header spawn 越界 → 放中央可走格
+		g.px, g.py = home.w/2, home.h/2
+	}
+	// dlg.tx 維持 NewGame 初始的 D3TXT01(開場旁白 rec82/83 在此 bank)
+	g.openingIdx = 0
+	g.dlg.Open(openingSeq[0])
+	g.music.Play(ctyMusicTrack(0))
+	g.renderFrame()
+}
+
+// motherEscort:開場旁白播完 → 母親帶你出家門到阿里阿罕城鎮外圍(sec0)。
+// sec4 transition[0] 目的地 = sec0 家門 (8,38)。原版是對母親對話護送,此處簡化為旁白後自動出門
+// (語意=母親帶去見國王;TODO 精修:改對母親 NPC 對話才護送,見 docs/66 §1c 實測)。
+func (g *Game) motherEscort() {
+	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0)
+	if err != nil {
+		return
+	}
+	g.town, g.cur, g.curCty, g.inTown = sec0, sec0, 0, true
+	g.px, g.py = 8, 38 // sec4 transition[0] dest(家門→城鎮外圍)
+	if g.px >= sec0.w || g.py >= sec0.h {
+		g.px, g.py = sec0.spawnX, sec0.spawnY
+	}
+	if sec0.dlgText != nil {
+		g.dlg.tx = sec0.dlgText // 切到城鎮對話 bank
+	}
 	g.renderFrame()
 }
 
@@ -1268,6 +1323,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
 	g.endText = dq3data.LoadText(fon, ld.read("ENDTXT.TXT"))        // 結局文本(破索瑪後捲動)
 	g.endSeq = -1                                                   // 結局未進行
+	g.openingIdx = -1                                               // 開場旁白未進行
 	g.battle.nameText = g.shop.nameText                             // 咒文名同名表
 	g.tavern.tx = g.dlg.tx                                          // 酒館 glyph
 	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)

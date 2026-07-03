@@ -103,7 +103,8 @@ func (g *Game) newGameInput(in InputState) {
 		case confirmed:
 			g.heroName = append([]int(nil), nf.ni.nameBuf...)
 			g.heroGender = gender
-			g.showTitle = false // 收尾:交還一般 Update()/renderFrame() 流程
+			g.showTitle = false
+			g.startOpening() // 進主角家(sec4)+ 開場旁白(C-2)
 		}
 	}
 }

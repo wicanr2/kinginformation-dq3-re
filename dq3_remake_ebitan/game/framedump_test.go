@@ -54,4 +54,21 @@ func TestDumpNewGameScreens(t *testing.T) {
 	dump("ng_name")
 	g.newGame.stage = ngGender
 	dump("ng_gender")
+
+	// C-2:模擬創角完成 → 進主角家(sec4)+ 開場旁白
+	g.showTitle = false
+	g.startOpening()
+	dump("opening_home_rec82") // 家室內 + 旁白第一句(rec82)
+	if g.openingIdx >= 0 {     // 推進到 rec83
+		g.dlg.open = false
+		g.openingIdx++
+		if g.openingIdx < len(openingSeq) {
+			g.dlg.Open(openingSeq[g.openingIdx])
+		}
+		dump("opening_home_rec83")
+	}
+	// 母親帶出門 → sec0 城鎮
+	g.motherEscort()
+	dump("opening_town_sec0")
+	t.Logf("開場:出生 inTown=%v cty=%d @(%d,%d)", g.inTown, g.curCty, g.px, g.py)
 }
