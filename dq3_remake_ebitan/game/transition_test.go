@@ -22,7 +22,7 @@ func TestSectionTransition(t *testing.T) {
 	pal := dq3data.DecodePalette(rd("DQ3.PAL"), 256)
 	manBLS := rd("DQ3MAN.BLS")
 
-	sc0, err := loadTownScene(assets, pal, manBLS, 0, 1, 0)
+	sc0, err := loadTownScene(assets, pal, manBLS, 0, 1, 0, nil)
 	if err != nil {
 		t.Fatalf("載阿里阿罕 sec0:%v", err)
 	}
@@ -59,7 +59,7 @@ func TestSectionTransition(t *testing.T) {
 			if ncty < len(mapBlkNum) {
 				blkn = mapBlkNum[ncty]
 			}
-			ns, err := loadTownSceneSec(assets, pal, manBLS, ncty, blkn, dsec, 0)
+			ns, err := loadTownSceneSec(assets, pal, manBLS, ncty, blkn, dsec, 0, nil)
 			if err != nil {
 				t.Fatalf("轉場目的 CTY%d sec%d 載入失敗:%v", ncty, dsec, err)
 			}
@@ -91,7 +91,7 @@ func TestDoorOpen(t *testing.T) {
 
 	doors, opened := 0, 0
 	for sec := 0; sec < 12; sec++ {
-		sc, err := loadTownSceneSec(assets, pal, manBLS, 0, 1, sec, 0)
+		sc, err := loadTownSceneSec(assets, pal, manBLS, 0, 1, sec, 0, nil)
 		if err != nil {
 			continue
 		}

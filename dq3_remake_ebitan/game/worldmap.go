@@ -133,13 +133,15 @@ func findCtyAtLayer(px, py, layer int) int {
 // loadTownScene:載入任一 CTY 城鎮(section 0)為 Scene(通用,移植 dq3_town_load 用法)。
 // blkn 由 mapBlkNum[cty] 決定 → DQ3<blkn>.BLK + BLKBM<blkn>.DAT。含 NPC(sprite 自 DQ3MAN.BLS)。
 // phase = 進城當下晝夜相位(0白天/1黃昏/2黑夜/3黎明):決定 NPC 日/夜表 + palette 調暗。
-func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, phase int) (*Scene, error) {
-	return loadTownSceneSec(assets, pal, manBLS, cty, blkn, 0, phase)
+func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, phase int, flagSet func(int) bool) (*Scene, error) {
+	return loadTownSceneSec(assets, pal, manBLS, cty, blkn, 0, phase, flagSet)
 }
 
 // loadTownSceneSec 載入某城的指定 section(轉場用)。section 0 = 城鎮外圍入口層。
 // pal 須為日中 base 色盤;函式內依 phase 調暗(不動輸入),NPC 依 phase==2 選日/夜表。
-func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, section, phase int) (*Scene, error) {
+// flagSet(id)=某 story-flag 是否已設(通常 g.flags 查詢);nil = 不過濾(測試用)。
+// 條件 NPC(NPCStoryGate)其 byte5 旗標未設時不載入(對齊原版 file 0x4560 的 je skip,docs/71)。
+func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, section, phase int, flagSet func(int) bool) (*Scene, error) {
 	if blkn < 1 || blkn > 5 {
 		blkn = 1
 	}
@@ -171,6 +173,12 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 	sc.dlgText = dq3data.LoadText(rd("D3TXT00.FON"), rd("D3TXT0"+string(rune('0'+bank))+".TXT"))
 	sprCache := map[int]*dq3data.CharSprite{}
 	for _, n := range tw.NPCs {
+		// NPC 可見性過濾(對齊原版 file 0x4560:test [byte5→0x4f70]; je skip):byte5=story-flag id,
+		// 該旗標未設就不載入。新遊戲初值 flag 0-39 清、40-255 設(dq3data.NPCStoryInitFlags),
+		// 故 byte5<40 的條件 NPC 起始隱藏、≥40 的基礎人口顯示。flagSet==nil 時不過濾(測試)。
+		if flagSet != nil && !flagSet(n.Flags) {
+			continue
+		}
 		// b2<4:原版 sub_0xffc3(file 0xffc3)對 NPC 一律走 bp=2 分支、無條件 `ax-=4`
 		// 再 seek (ax)*0xf00+6 到 DQ3MAN.BLS——b2<4 時 ax-4 對 u16 underflow,
 		// seek 落在檔案(222726B)外 240MB+,INT21h/AH=3Fh 讀 0 byte,頁緩衝維持

@@ -57,7 +57,7 @@ func TestDumpPortogaShipChain(t *testing.T) {
 
 	// 找古布達(CTY15 byte4=25 scripted NPC)所在 section。
 	pepperSec, pepperNi := findScriptedNpc(t, g, 15, 25)
-	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 15, mapBlkNum[15], pepperSec, 0)
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 15, mapBlkNum[15], pepperSec, 0, nil)
 	if err != nil {
 		t.Fatalf("載入 CTY15 sec%d: %v", pepperSec, err)
 	}
@@ -77,7 +77,7 @@ func TestDumpPortogaShipChain(t *testing.T) {
 
 	// 找波魯多加國王(CTY37 位置特例 (9,6))所在 section。
 	kingSec, kingNi := findScriptedNpc(t, g, ctyPortoga, -1) // -1=改用座標比對(國王非 scriptedTable 項)
-	sc2, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ctyPortoga, mapBlkNum[ctyPortoga], kingSec, 0)
+	sc2, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ctyPortoga, mapBlkNum[ctyPortoga], kingSec, 0, nil)
 	if err != nil {
 		t.Fatalf("載入 CTY%d sec%d: %v", ctyPortoga, kingSec, err)
 	}
@@ -114,7 +114,7 @@ func findScriptedNpc(t *testing.T, g *Game, cty, wantB4 int) (int, int) {
 		blkn = mapBlkNum[cty]
 	}
 	for sec := 0; sec < 30; sec++ {
-		sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, cty, blkn, sec, 0)
+		sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, cty, blkn, sec, 0, nil)
 		if err != nil {
 			continue
 		}

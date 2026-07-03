@@ -234,7 +234,8 @@ type Game struct {
 	heroInit       bool
 	equip          [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
 	companions     []*Member    // 同伴(隊長=hero*;酒館招募,現為預建示範)
-	flags          map[int]bool // 一次性旗標(寶箱/事件已取)
+	flags          map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
+	storyBits      [32]byte     // 原版 [0x4f70] 256-flag story-flag 陣列(NPC 可見性;初值見 initStoryBits)
 	noticeCode     int          // 取得道具通知(item code;-1=無)
 	noticeTimer    int
 	shipOwned      bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
@@ -775,7 +776,7 @@ func (g *Game) enterTownCty(cty int) {
 		if cty >= 0 && cty < len(mapBlkNum) {
 			blkn = mapBlkNum[cty]
 		}
-		s, err := loadTownScene(g.assets, g.worldPal, g.manBLS, cty, blkn, g.dnPhase)
+		s, err := loadTownScene(g.assets, g.worldPal, g.manBLS, cty, blkn, g.dnPhase, g.storyFlag)
 		if err != nil {
 			return // 載入失敗 → 留在地表
 		}
@@ -807,6 +808,31 @@ const dnPhaseSteps = 60
 
 // isNight:目前是否黑夜(相位 2)。供夜 gate 事件查詢(提頓夜綠寶珠等)。對齊 dq3_scene.c night 判定。
 func (g *Game) isNight() bool { return g.dnPhase == 2 }
+
+// storyFlag / setStoryFlag:原版 [0x4f70] 256-flag story-flag 陣列(NPC 可見性等;SET=file 0x824f、
+// CLR=0x8264、GET=0x8279)。新遊戲初值見 dq3data.NPCStoryInitFlags(flag 0-39 清、40-255 設)。
+// 供 loadTownSceneSec 的 NPC 可見性過濾;獨立於 g.flags(remake 里程碑),不互相污染。
+func (g *Game) storyFlag(id int) bool {
+	if id < 0 || id >= 256 {
+		return false
+	}
+	return g.storyBits[id>>3]&(0x80>>(uint(id)&7)) != 0
+}
+
+func (g *Game) setStoryFlag(id int, v bool) {
+	if id < 0 || id >= 256 {
+		return
+	}
+	m := byte(0x80 >> (uint(id) & 7))
+	if v {
+		g.storyBits[id>>3] |= m
+	} else {
+		g.storyBits[id>>3] &^= m
+	}
+}
+
+// initStoryBits:新遊戲重置 [0x4f70] 旗標陣列為原版靜態映像初值(docs/71)。
+func (g *Game) initStoryBits() { g.storyBits = dq3data.NPCStoryInitFlags }
 
 // advanceDaynight:地表走一步 → 步數計數;每 dnPhaseSteps 步推進一相位並重套地表 palette。
 // 只在地表(overworld)呼叫;城內相位固定(使用者確認)。
@@ -862,7 +888,7 @@ func (g *Game) reloadTownDaynight() {
 	if g.curCty < len(mapBlkNum) {
 		blkn = mapBlkNum[g.curCty]
 	}
-	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, g.curCty, blkn, g.town.sec, g.dnPhase)
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, g.curCty, blkn, g.town.sec, g.dnPhase, g.storyFlag)
 	if err != nil {
 		return
 	}
@@ -916,7 +942,7 @@ func (g *Game) tryTransition() {
 	if ncty >= 0 && ncty < len(mapBlkNum) {
 		blkn = mapBlkNum[ncty]
 	}
-	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ncty, blkn, dsec, g.dnPhase)
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ncty, blkn, dsec, g.dnPhase, g.storyFlag)
 	if err != nil {
 		g.exitTown() // 載入失敗 → 回地表保底(對齊 C)
 		return
@@ -949,7 +975,7 @@ func (g *Game) warpTo(param int) bool {
 	if dcty < len(mapBlkNum) {
 		blkn = mapBlkNum[dcty]
 	}
-	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, dcty, blkn, 0, g.dnPhase)
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, dcty, blkn, 0, g.dnPhase, g.storyFlag)
 	if err != nil {
 		return false
 	}
@@ -1019,7 +1045,7 @@ func (g *Game) startOpening() {
 	if g.assets == nil { // 無素材的裸 Game(單元測試純狀態驗證)→ 只走狀態轉移,不載場景
 		return
 	}
-	home, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 4, g.dnPhase)
+	home, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 4, g.dnPhase, g.storyFlag)
 	if err != nil { // 載入失敗 → 退回地表中心(不卡死;g.over 可能 nil,防護)
 		if g.over != nil {
 			g.px, g.py = g.over.w/2, g.over.h/2
@@ -1042,7 +1068,7 @@ func (g *Game) startOpening() {
 // sec4 transition[0] 目的地 = sec0 家門 (8,38)。原版是對母親對話護送,此處簡化為旁白後自動出門
 // (語意=母親帶去見國王;TODO 精修:改對母親 NPC 對話才護送,見 docs/66 §1c 實測)。
 func (g *Game) motherEscort() {
-	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0, g.dnPhase)
+	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0, g.dnPhase, g.storyFlag)
 	if err != nil {
 		return
 	}
@@ -1486,6 +1512,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	ld := &loader{fsys: assets}
 	pal := dq3data.DecodePalette(ld.read("DQ3.PAL"), 256) // 城鎮/地表共用(tile 只用色 0..15)
 	g := &Game{rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default()}
+	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 
 	// 地表 scene
 	overBLK, err := dq3data.OpenBLK(ld.read("DQ3.BLK"))
@@ -1512,7 +1539,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.assets, g.worldPal, g.manBLS = assets, pal, manBLS
 	g.towns = map[int]*Scene{}
 	g.curCty = -1
-	town0, terr := loadTownScene(assets, pal, manBLS, 0, 1, 0) // 阿里阿罕(開局白天)
+	town0, terr := loadTownScene(assets, pal, manBLS, 0, 1, 0, g.storyFlag) // 阿里阿罕(開局白天)
 	if terr != nil {
 		return nil, fmt.Errorf("loadTown 阿里阿罕: %w", terr)
 	}
@@ -1559,6 +1586,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.equip = [4]int{3, 0x21}            // 初始裝備:銅劍 + 皮甲冑
 	g.companions = startingCompanions(0) // 示範隊伍(戰士/僧侶/魔法使);酒館招募之後接
 	g.flags = map[int]bool{}
+	g.initStoryBits()      // 新遊戲重置 [0x4f70] NPC 可見性旗標
 	g.progressSet(msStart) // 開場里程碑(阿里阿罕:見國王、酒場建隊)
 	g.noticeCode = -1
 	g.prng.Seed(0x1357)                                 // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)

@@ -113,6 +113,21 @@ func OpenTown(cty []byte, section int, night bool) (*Town, error) {
 
 // parseNPCs 解 section 的 NPC 表(移植 dq3_scene_load_npcs, dq3_scene.c:105-146)。
 // section 開頭 word[0]=白天表(人多)、word[1]=黑夜表(多睡覺/隱藏,只剩少數)(相對 so);
+// NPCStoryInitFlags:新遊戲時 [0x4f70] story-flag 陣列的初值(取自 DQ3.EXE 靜態資料映像
+// file 0x1b0b0 = DGROUP base 0x16140 + 0x4f70,見 docs/71)。32 byte / 256 flag:
+//
+//	00 00 00 00 00 ff ff … ff   → flag 0-39 清、flag 40-255 設
+//
+// 原版 NPC 載入(file 0x4560)對每個 NPC 做 `test [byte5>>3 +0x4f70],mask; je skip`——旗標清
+// 就不載入。故新遊戲時 byte5<40 的 NPC 隱藏(劇情事件才設起→出現)、byte5≥40 顯示(基礎人口/
+// 初始在場)。兩版 remake 先前漏了這層過濾 → 整表全顯示 = 城鎮 NPC 過多(docs/71)。
+// 這是**遊戲通用旗標陣列的初值**,獨立於 remake 里程碑(g.flags),不互相污染。
+var NPCStoryInitFlags = [32]byte{
+	0, 0, 0, 0, 0, // flag 0-39 清
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // flag 40-255 設
+}
+
 // 首 byte=count,後接 count×7-byte record。night 選主表:白天→word0、黑夜→word1;
 // 主表無效(0xffff/越界)才退另一份(部分 section word[1]=none,日夜共用同一表)。
 func parseNPCs(cty []byte, so, w, h int, night bool) []NPC {
