@@ -74,10 +74,17 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
   1993 卡(TITE)、紋章(TITP)、無 logo 底(TITF)、THE END(TIT3);FIRST.SCR=plane-major raw。
   → attract 實作無素材障礙,剩輪播節奏影格對位。殘:TIT1/TIT2/TITA/TITC 鑑定。
 
-### C — 逐 GAP 修 ebitan(C 為 spec;C 也缺的回頭 RE)
-- 順序 = 玩家遭遇順序:開場/創角 → 出生點/初期場景 → 遭遇區/晝夜 → runner region 事件/真實里程碑觸發
-  → boss/道具 gate → 終盤自然觸發(移除 Z/U 依賴)
-- 每 GAP:sonnet 移植(C spec 指路)→ Fable 獨立核實(diff/測試/headless 截圖)→ commit;分段請使用者實測
+### C — 修復批次(玩家遭遇順序 × B1 分析;每批 sonnet 實作、Fable 核實、分段請使用者實測)
+| 批 | 內容 | 依賴 |
+|---|---|---|
+| C-1 | 新遊戲主角創建:主選單→注音命名→性別(docs/36 04-07 + docs/15 spec;元件現成=wire) | 無,可先行 |
+| C-2 | 開場劇情文字 + 家室內出生 + 王城謁見(初始金/裝) | DOSBox 實測(進行中)給文本/數字 |
+| C-3 | 酒場正式入口(露依達櫃台 NPC)+ 移除預建示範隊;U2/U3 修:出城方式(待 DOSBox 仲裁)、Space 行為、NPC B2<4 不丟 | C-1 |
+| C-4 | examine→boss 觸發 dispatch + NPC 給物/交換鏈(port-C:boss-trigger-points + scripted 擴充 + 里程碑真實 gate) | — |
+| C-5 | 取船、晝夜系統、遭遇區分區、商店賣出 | C-4 部分 |
+| C-6 | 六珠/不死鳥坐騎、下降自然觸發、終盤入口 wire(拔 Z/U) | C-4 |
+| C-7 | attract 演出(TIT*.P 輪播,docs/67)+ 四人縱列 caterpillar + THE END 畫面 | 影格節奏對位 |
+> C remake 端的 U2(Space demo 殘留 main.c:1982)另修一刀(等 DOSBox 確認原版 Space 行為後)。
 
 ### D — 驗收
 - [ ] 無 debug 鍵全程可破關(照 docs/66 走)+ 使用者實測確認
