@@ -46,3 +46,65 @@ func TestSpellDefAndCast(t *testing.T) {
 		t.Fatalf("CastValue(10,*) 應 5..9,得 %d..%d", CastValue(10, 0), CastValue(10, 255))
 	}
 }
+
+// TestW3StatusSpellDefs:W3(docs/72 A1)新增的輔助/狀態咒 descriptor(Kind/MP)。
+func TestW3StatusSpellDefs(t *testing.T) {
+	cases := []struct {
+		rec  int
+		kind Kind
+	}{
+		{144, Sleep}, {152, Sleep},
+		{151, BuffAtk},
+		{154, BuffDef}, {155, BuffDef},
+		{156, Seal},
+		{158, Blind},
+		{166, CurePoison},
+		{167, CureStatus}, {168, CureStatus},
+	}
+	for _, c := range cases {
+		d, ok := GetDef(c.rec)
+		if !ok {
+			t.Errorf("rec%d 應有 descriptor,得 not found", c.rec)
+			continue
+		}
+		if d.Kind != c.kind {
+			t.Errorf("rec%d Kind 應為 %d,得 %d", c.rec, c.kind, d.Kind)
+		}
+		if d.MP <= 0 {
+			t.Errorf("rec%d MP 應 >0,得 %d", c.rec, d.MP)
+		}
+	}
+}
+
+// TestKnownIncludesW3StatusSpells:玩家咒文選單應能選到 W3 新增的狀態咒(依習得表等級門檻)。
+// 修正前 defs 無這些 rec → Known() 過濾掉,選單看不到;修正後應出現。
+func TestKnownIncludesW3StatusSpells(t *testing.T) {
+	// 僧侶系(class3):158@7、144@9、166@11、156@13、167@15、168@16(priestSchool)。
+	priest := Known(3, 20)
+	for _, rec := range []int{144, 156, 158, 166, 167, 168} {
+		found := false
+		for _, r := range priest {
+			if r == rec {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("僧侶 lv20 應能選到 rec%d,得清單 %v", rec, priest)
+		}
+	}
+	// 魔法系(class4):154@4、155@9、151@21(mageSchool)。
+	mage := Known(4, 25)
+	for _, rec := range []int{154, 155, 151} {
+		found := false
+		for _, r := range mage {
+			if r == rec {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("魔法使 lv25 應能選到 rec%d,得清單 %v", rec, mage)
+		}
+	}
+}

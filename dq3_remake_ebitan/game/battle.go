@@ -38,10 +38,23 @@ type enemyUnit struct {
 	hp, max  int
 	atk, def int  // 有效攻/防(索瑪+光之珠弱化後之值)
 	fled     bool // 本場已逃走(不計入擊殺數→經驗/金錢排除,對齊 C g_fled)
-	status   int  // 保留給 W3(狀態/buff);本批不實作效果
+	status   int  // W3:異常狀態位元(statusParalysis/statusSealed/statusBlind,見下方 const)
 }
 
 func (e *enemyUnit) alive() bool { return e.hp > 0 && !e.fled }
+
+// 異常狀態位元(docs/data/spell-effects-research.md;W3)。共用於 enemyUnit.status、
+// battleActor.status、Battle.heroStatus。對齊 C DQ3_STATUS_*:睡眠(拉里荷144)與混亂(美達巴尼152)
+// remake 映射同一位元(統稱 statusParalysis,即 C DQ3_STATUS_PARALYSIS)——本回合起不能行動,
+// 且對齊 C 行為(dq3_battlescene.c 全檔搜尋無中途自動清除):持續整場戰鬥,需靠解咒/道具清除
+// (166/167/168)或戰鬥結束(reset)。statusSealed/statusBlind 為 W3 新增(C 版對應的是「敵方
+// 全域」g_party_sealed/g_party_blind,W3 額外做「玩家對單一敵單位」的鏡像,故落在 per-unit 欄位)。
+const (
+	statusPoison    = 1 << iota // 中毒(既有位元,占位保留;W3 未接毒傷結算)
+	statusParalysis             // 睡眠/混亂(拉里荷144、美達巴尼152;敵方鏡像同)
+	statusSealed                // 瑪荷頓156:不能施咒
+	statusBlind                 // 瑪努莎158:物攻 ~50% 失手
+)
 
 type battlePhase int
 
@@ -89,6 +102,18 @@ type Battle struct {
 	spells      []int // 已學可施放咒文 rec
 	spellCursor int
 	companions  []*battleActor // 同伴(狀態列顯示 + 自動攻擊 + 可被鎖定)
+	heroStatus  int            // 主角異常狀態位元(statusParalysis 等;166-168 解咒清此欄)
+
+	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
+	// 對齊 C reset_battle_mods()/g_eatk_pct 等——百分比整數,基準 100)。玩家自施 151/154/155
+	// 影響 party*、敵自施影響 enemy*;partyBlind/partySealed 對齊 C g_party_blind/g_party_sealed,
+	// 由敵施 158/156 設下,C 版全檔無中途清除 → 持續整場戰鬥(非單回合)。
+	partyAtkPct int  // 我方物攻%(拜基魯多151 我方自施,上限400)
+	partyDefPct int  // 我方守備%(154/155 我方自施升 / 敵鏡像146/147降,25..300;W3 只做前者,後者留 TODO)
+	partyBlind  bool // 我方陷入幻惑(敵施158)→ 我方物攻 ~50% 失手
+	partySealed bool // 我方咒文被封(敵施156)→ 我方無法施咒
+	enemyAtkPct int  // 敵方物攻%(敵自施151,上限400)
+	enemyDefPct int  // 敵方守備%(敵自施154/155,上限300)
 
 	// 設定選單驅動(config.CombatInfo / CombatHurtFx;由 Game 在 start() 前設好,
 	// start() 不重置 —— 與既有 lightOrb 同一套「呼叫端先設欄位」慣例)。
@@ -118,7 +143,11 @@ type battleActor struct {
 	hp, maxHP    int
 	mp, maxMP    int
 	atk, def     int
+	status       int // W3:異常狀態位元(statusParalysis 等,見 enemyUnit 旁 const)
 }
+
+// pct:val 套用百分比修正(基準 100)。共用於物攻/守備 buff/debuff(拜基魯多/史卡拉等)。
+func pct(val, p int) int { return val * p / 100 }
 
 func (b *Battle) roll() int { return b.rng.Next(256) }
 
@@ -176,6 +205,10 @@ func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps [
 	b.heroMP, b.heroMaxMP, b.spells = hp.mp, hp.maxMP, hp.spells
 	b.companions = comps
 	b.spellCursor = 0
+	b.heroStatus = 0
+	// W3 per-battle 修正狀態歸零(對齊 C reset_battle_mods();百分比基準 100)。
+	b.partyAtkPct, b.partyDefPct, b.enemyAtkPct, b.enemyDefPct = 100, 100, 100, 100
+	b.partyBlind, b.partySealed = false, false
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.gotExp, b.gotGold = "", 0, 0
 	b.active = true
@@ -281,6 +314,11 @@ func (b *Battle) input(in InputState) (closed bool) {
 func (b *Battle) execTurn() {
 	st, _ := b.mons.Stat(b.monID)
 	b.defending = false
+	if b.heroStatus&statusParalysis != 0 { // 睡眠/混亂(敵施144/152):本回合任何指令皆無法行動
+		b.msg = "陷入異常狀態,無法行動!"
+		b.afterLeaderAction()
+		return
+	}
 	switch b.cursor {
 	case bcFlee: // 逃げる
 		if battle.FleeOK(b.heroAgi, int(st.FleeResist), b.roll()) {
@@ -308,11 +346,17 @@ func (b *Battle) execTurn() {
 		if tgt < 0 {
 			break // 組內已無存活敵(全數逃走中)→ 揮空,直接進勝負判定
 		}
+		if b.partyBlind && b.roll() < 128 { // 我方幻惑(敵施158瑪努莎)→ ~50% 揮空(對齊 C g_party_blind)
+			b.msg = "揮空了(幻惑)"
+			break
+		}
 		crit := 0
 		if b.roll() < 8 { // ~1/32 會心
 			crit = 1
 		}
-		dmg := battle.PhysDamage(b.heroAtk, b.enemies[tgt].def, b.roll(), crit)
+		atk := pct(b.heroAtk, b.partyAtkPct)          // 拜基魯多151(我方自施)
+		def := pct(b.enemies[tgt].def, b.enemyDefPct) // 敵154/155自施升守備
+		dmg := battle.PhysDamage(atk, def, b.roll(), crit)
 		b.enemies[tgt].hp -= dmg
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
@@ -329,11 +373,18 @@ func (b *Battle) execTurn() {
 	b.afterLeaderAction()
 }
 
-// execSpell 施放咒文 rec(DMG 傷敵 / HEAL 補己),消耗 MP,再敵方回合。
+// execSpell 施放咒文 rec:DMG 傷敵 / HEAL 補己 / W3 新增輔助狀態咒(睡眠/buff/封咒/幻惑/解咒)。
+// 消耗 MP,再敵方回合。瑪荷頓 sealed(敵施封我方咒)在此擋下——對齊 C do_turn cmd==4 分支:
+// 被封仍算「用掉這回合」(不像 MP不足/未學會是選單前置擋,選了就吃回合),故仍走 afterLeaderAction。
 func (b *Battle) execSpell(rec int) {
 	def, ok := spell.GetDef(rec)
 	if !ok {
 		b.phase = phCommand
+		return
+	}
+	if b.partySealed { // 瑪荷頓(敵施156)→ 我方無法施咒,但仍耗費本回合(對齊 C)
+		b.msg = "咒文被封印,無法施放!"
+		b.afterLeaderAction()
 		return
 	}
 	if b.heroMP < def.MP {
@@ -342,39 +393,75 @@ func (b *Battle) execSpell(rec int) {
 	}
 	b.heroMP -= def.MP
 	b.defending = false
-	if def.Kind == spell.Heal {
+	switch def.Kind {
+	case spell.Heal:
 		val := spell.CastValue(def.Base, b.roll())
 		if b.heroHP+val > b.heroMax {
 			val = b.heroMax - b.heroHP
 		}
 		b.heroHP += val
 		b.msg = fmt.Sprintf("回復 %d", val)
-	} else if def.Target == spell.TargetGroup { // 群體咒:命中每隻存活敵,各自獨立擲值(對齊 C cast_spell_effect)
-		hit := 0
-		for i := range b.enemies {
-			if !b.enemies[i].alive() {
-				continue
-			}
-			v := spell.CastValue(def.Base, b.roll())
-			b.enemies[i].hp -= v
-			if b.enemies[i].hp < 0 {
-				b.enemies[i].hp = 0
-			}
-			hit++
+	case spell.Sleep: // 拉里荷144/美達巴尼152:敵單體(第一個存活敵)陷入睡眠/混亂
+		if tgt := b.firstAliveEnemy(); tgt >= 0 {
+			b.enemies[tgt].status |= statusParalysis
+			b.msg = "敵人陷入睡眠!"
 		}
-		b.flashCol = b.hurtFxFrames
-		b.msg = fmt.Sprintf("咒文波及 %d 隻敵人", hit)
-	} else { // 單體咒:目標=第一個存活敵(簡化,見 firstAliveEnemy 說明)
-		tgt := b.firstAliveEnemy()
-		if tgt >= 0 {
-			val := spell.CastValue(def.Base, b.roll())
-			b.enemies[tgt].hp -= val
-			if b.enemies[tgt].hp < 0 {
-				b.enemies[tgt].hp = 0
-			}
-			b.msg = fmt.Sprintf("咒文 %d 傷害", val)
+	case spell.BuffAtk: // 拜基魯多151:我方物攻 ×2(上限400%,對齊 C g_eatk_pct 鏡像)
+		b.partyAtkPct += 100
+		if b.partyAtkPct > 400 {
+			b.partyAtkPct = 400
 		}
-		b.flashCol = b.hurtFxFrames
+		b.msg = "我方攻擊力提升了!"
+	case spell.BuffDef: // 史卡拉154/史克魯多155:我方守備 +50%(上限300%,對齊 C g_edef_pct 鏡像)
+		b.partyDefPct += 50
+		if b.partyDefPct > 300 {
+			b.partyDefPct = 300
+		}
+		b.msg = "我方守備力提升了!"
+	case spell.Seal: // 瑪荷頓156:敵單體被封咒
+		if tgt := b.firstAliveEnemy(); tgt >= 0 {
+			b.enemies[tgt].status |= statusSealed
+			b.msg = "敵人的咒文被封印!"
+		}
+	case spell.Blind: // 瑪努莎158:敵單體陷入幻惑(物攻易失手)
+		if tgt := b.firstAliveEnemy(); tgt >= 0 {
+			b.enemies[tgt].status |= statusBlind
+			b.msg = "敵人陷入幻惑!"
+		}
+	case spell.CurePoison: // 基阿里166
+		b.heroStatus &^= statusPoison
+		b.msg = "解毒了!"
+	case spell.CureStatus: // 基阿里克167/薩梅哈168(remake 簡化:麻痺/混亂/睡眠共用一位元)
+		b.heroStatus &^= statusParalysis
+		b.msg = "狀態解除了!"
+	default: // Dmg
+		if def.Target == spell.TargetGroup { // 群體咒:命中每隻存活敵,各自獨立擲值(對齊 C cast_spell_effect)
+			hit := 0
+			for i := range b.enemies {
+				if !b.enemies[i].alive() {
+					continue
+				}
+				v := spell.CastValue(def.Base, b.roll())
+				b.enemies[i].hp -= v
+				if b.enemies[i].hp < 0 {
+					b.enemies[i].hp = 0
+				}
+				hit++
+			}
+			b.flashCol = b.hurtFxFrames
+			b.msg = fmt.Sprintf("咒文波及 %d 隻敵人", hit)
+		} else { // 單體咒:目標=第一個存活敵(簡化,見 firstAliveEnemy 說明)
+			tgt := b.firstAliveEnemy()
+			if tgt >= 0 {
+				val := spell.CastValue(def.Base, b.roll())
+				b.enemies[tgt].hp -= val
+				if b.enemies[tgt].hp < 0 {
+					b.enemies[tgt].hp = 0
+				}
+				b.msg = fmt.Sprintf("咒文 %d 傷害", val)
+			}
+			b.flashCol = b.hurtFxFrames
+		}
 	}
 	if b.allEnemiesDead() {
 		st, _ := b.mons.Stat(b.monID)
@@ -393,11 +480,20 @@ func (b *Battle) afterLeaderAction() {
 		if c.hp <= 0 {
 			continue
 		}
+		if c.status&statusParalysis != 0 { // 睡眠/混亂(敵鏡像144/152)→ 本回合不行動
+			b.msg = "同伴陷入異常狀態,無法行動!"
+			continue
+		}
 		tgt := b.firstAliveEnemy()
 		if tgt < 0 {
 			break
 		}
-		dmg := battle.PhysDamage(c.atk, b.enemies[tgt].def, b.roll(), 0)
+		if b.partyBlind && b.roll() < 128 { // 我方幻惑(敵施158)→ ~50% 揮空
+			continue
+		}
+		atk := pct(c.atk, b.partyAtkPct)
+		def := pct(b.enemies[tgt].def, b.enemyDefPct)
+		dmg := battle.PhysDamage(atk, def, b.roll(), 0)
 		b.enemies[tgt].hp -= dmg
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
@@ -448,6 +544,15 @@ func (b *Battle) targetDef(target int) int {
 	return b.companions[target].def
 }
 
+// setTargetStatus:對目標(-1=隊長,i=同伴)加異常狀態位元(敵鏡像144/152 睡眠/混亂用)。
+func (b *Battle) setTargetStatus(target, bit int) {
+	if target < 0 {
+		b.heroStatus |= bit
+		return
+	}
+	b.companions[target].status |= bit
+}
+
 // enemyTurn:敵方回合(移植 C do_turn 敵方段:逐隻存活敵各行動一次——逃跑 → 施咒 → 物攻;
 // 逃跑/施咒/物攻皆鎖定隨機存活隊員;任一隻行動後我方全滅即中斷,結算敗;全體行動完畢才收尾訊息)。
 // AI(咒文機率/逃跑閾值)為同種共用欄位(對齊 C g_eai 單載),故迴圈外只查一次。
@@ -455,6 +560,10 @@ func (b *Battle) enemyTurn() {
 	ai, aiOK := b.mons.AI(b.monID)
 	for i := range b.enemies {
 		if !b.enemies[i].alive() {
+			continue
+		}
+		if b.enemies[i].status&statusParalysis != 0 { // 睡眠/混亂(玩家施144/152)→ 本回合不行動
+			b.msg = "敵人昏睡中,無法行動"
 			continue
 		}
 		// 1) 逃跑(逐隻獨立擲;離隊不算擊殺,經驗/金錢結算排除,見 killedCount)
@@ -469,31 +578,66 @@ func (b *Battle) enemyTurn() {
 			return
 		}
 		tgt := targets[b.rng.Next(len(targets))] // 鎖定隨機存活隊員
-		// 2) 施咒(傷害咒傷目標、回復咒補己)
-		if aiOK && ai.CastProb > 0 && b.roll() < int(ai.CastProb) {
+		// 2) 施咒(封咒 sealed 擋下 → 落到物攻;其餘依 Kind 分派)
+		if aiOK && ai.CastProb > 0 && b.enemies[i].status&statusSealed == 0 && b.roll() < int(ai.CastProb) {
 			if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
 				rec := spell.MonsterSpellRec(bits[b.rng.Next(len(bits))])
 				if def, ok := spell.GetDef(rec); ok {
-					val := spell.CastValue(def.Base, b.roll())
-					if def.Kind == spell.Heal {
+					switch def.Kind {
+					case spell.Heal:
+						val := spell.CastValue(def.Base, b.roll())
 						b.enemies[i].hp += val
 						if b.enemies[i].hp > b.enemies[i].max {
 							b.enemies[i].hp = b.enemies[i].max
 						}
 						b.msg = fmt.Sprintf("敵詠唱咒文回復 %d", val)
 						continue
+					case spell.Sleep: // 敵鏡像144/152:目標隊員陷入睡眠/混亂
+						b.setTargetStatus(tgt, statusParalysis)
+						b.msg = "敵詠唱咒文,我方陷入異常狀態!"
+						continue
+					case spell.BuffAtk: // 敵鏡像151:敵方自身物攻上升(上限400%)
+						b.enemyAtkPct += 100
+						if b.enemyAtkPct > 400 {
+							b.enemyAtkPct = 400
+						}
+						b.msg = "敵方攻擊力上升了!"
+						continue
+					case spell.BuffDef: // 敵鏡像154/155:敵方自身守備上升(上限300%)
+						b.enemyDefPct += 50
+						if b.enemyDefPct > 300 {
+							b.enemyDefPct = 300
+						}
+						b.msg = "敵方守備力上升了!"
+						continue
+					case spell.Seal: // 敵鏡像156:我方咒文被封(全體,對齊 C g_party_sealed)
+						b.partySealed = true
+						b.msg = "我方咒文被封印了!"
+						continue
+					case spell.Blind: // 敵鏡像158:我方陷入幻惑(全體,對齊 C g_party_blind)
+						b.partyBlind = true
+						b.msg = "我方陷入幻惑!"
+						continue
+					default: // Dmg(傷害咒,不受防御減半)
+						val := spell.CastValue(def.Base, b.roll())
+						b.damageMember(tgt, val)
+						b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
+						if b.wipedOut() {
+							return
+						}
+						continue
 					}
-					b.damageMember(tgt, val) // 傷害咒(不受防御減半)
-					b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
-					if b.wipedOut() {
-						return
-					}
-					continue
 				}
 			}
 		}
-		// 3) 物理反擊(打隊長且防御 → 減半)
-		edmg := battle.PhysDamage(b.enemies[i].atk, b.targetDef(tgt), b.roll(), 0)
+		// 3) 物理反擊(幻惑 ~50% 揮空;敵攻%/我方守備%套修正;打隊長且防御 → 減半)
+		if b.enemies[i].status&statusBlind != 0 && b.roll() < 128 {
+			b.msg = "敵人陷入幻惑,攻擊落空"
+			continue
+		}
+		eatk := pct(b.enemies[i].atk, b.enemyAtkPct)
+		edef := pct(b.targetDef(tgt), b.partyDefPct)
+		edmg := battle.PhysDamage(eatk, edef, b.roll(), 0)
 		if tgt < 0 && b.defending {
 			edmg /= 2
 		}

@@ -9,6 +9,13 @@ const (
 	Dmg Kind = iota
 	Heal
 	Revive
+	Sleep      // 拉里荷144/美達巴尼152:施法方對敵對側單體下睡眠/混亂(remake 映射同一狀態,不能行動)
+	BuffAtk    // 拜基魯多151:施法方全體物攻上升(caster 自施,W3 新增)
+	BuffDef    // 史卡拉154/史克魯多155:施法方全體守備上升(caster 自施,W3 新增)
+	Seal       // 瑪荷頓156:封敵對側單體咒文(不能施咒)
+	Blind      // 瑪努莎158:敵對側單體陷入幻惑(物攻易失手)
+	CurePoison // 基阿里166:解毒
+	CureStatus // 基阿里克167/薩梅哈168:解麻痺/混亂/睡眠(remake 簡化:三者共用同一狀態位元,對齊 C DQ3_STATUS_PARALYSIS)
 )
 
 // Target:傷害咒的目標範圍(移植 dq3_spelldef.c DQ3_TG_*)。Heal 不用此欄(固定治己方,見
@@ -60,6 +67,21 @@ var defs = map[int]Def{
 	162: {162, 5, 85, Heal, TargetSingle},   // 比荷依米
 	163: {163, 7, 255, Heal, TargetSingle},  // 比荷瑪
 	165: {165, 36, 255, Heal, TargetSingle}, // 比荷瑪順
+
+	// 輔助/狀態咒(base==0,dq3_spelldef.c 生成表未收錄——該表只列 DMG/HEAL 有威力值的咒;
+	// docs/data/spell-effects-research.md 為 remake 定義的效果模型,W3 補上玩家可施放的 descriptor。
+	// MP 沿用 DQ3(FC)經典值(EXE 未列 base==0 咒的 MP 位置,未逐一 RE→標「近似」);Base 恆 0,
+	// 不進 CastValue(這些 Kind 不算傷害/回復量,見 game/battle.go execSpell)。
+	144: {144, 2, 0, Sleep, TargetSingle},      // 拉里荷(近似 MP)
+	151: {151, 8, 0, BuffAtk, TargetSingle},    // 拜基魯多(近似 MP)
+	152: {152, 4, 0, Sleep, TargetSingle},      // 美達巴尼(近似 MP)
+	154: {154, 3, 0, BuffDef, TargetSingle},    // 史卡拉(近似 MP)
+	155: {155, 4, 0, BuffDef, TargetSingle},    // 史克魯多(近似 MP;remake 簡化全體我方共用同一 partyDefPct,見 battle.go)
+	156: {156, 3, 0, Seal, TargetSingle},       // 瑪荷頓(近似 MP)
+	158: {158, 4, 0, Blind, TargetSingle},      // 瑪努莎(近似 MP)
+	166: {166, 2, 0, CurePoison, TargetSingle}, // 基阿里(近似 MP)
+	167: {167, 4, 0, CureStatus, TargetSingle}, // 基阿里克(近似 MP)
+	168: {168, 3, 0, CureStatus, TargetSingle}, // 薩梅哈(近似 MP)
 }
 
 // 僧侶系(24)/ 魔法系(31)習得表(自 dq3_school_priest/mage)。
