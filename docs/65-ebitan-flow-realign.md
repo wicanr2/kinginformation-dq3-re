@@ -62,11 +62,11 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 | ~5:00 | 進遊戲:**室內場景**(家/旅店;藍框視窗) | ebitan 從地表中心開始 ✗;C 待核 |
 | ~8:00 | **四人縱列隊伍**(caterpillar)行走於神殿/城內 | **ebitan 只畫主角一人** ✗;C 待核 |
 
-> 待釘:職業英文名對應(WORTHY=? PLAYER=遊人?)、創角序列是 attract demo 還是互動創角、
-> 命名/性別畫面在哪秒、謁見國王時間點。等 A2 文件 + 更密影格。
+> 已解:WORTHY=賢者、PLAYER=遊玩者(docs/67 全鑑定);職業巡禮=attract 演出(docs/36 仲裁)。
+> 殘:命名/性別在影片哪秒、謁見時間點(C-2 需要時再釘)。
 
 ### B — 差異盤點 ⏳
-- [ ] B1(首輪 agent 連線中斷未產出,已重派;要求增量寫檔) ebitan 實際流程 vs oracle 逐步比對(code 為準)→ FLOW-GAP 清單(本檔附表,嚴重度排序)
+- [x] B1 FLOW-GAP 清單 → `docs/data/flow-gap-ebitan.md`(**78 GAP:A=33 B=12 C=14 ok=15**;port-C≈40/new-RE≈10/wire≈8)。分野:寶箱/USE 已對齊;NPC 給物鏈+boss 觸發系統性缺席(runner 0x722 層 0 起點);終盤連戰只缺入口;不死鳥 0 起點;商店不能賣;主角無命名
 - [x] B2 C remake 宣稱抽驗 ✅:game_tester 實跑 **93/93 全綠**(2026-07-03);5 項流程宣稱 grep 屬實(里程碑綁 scripted NPC 檢查 main.c:1745、諾魯特 0x5b/0x215 @1623、sokoban gate @1847、王者之劍 transform @1559、酒場創角 @1496)→ **C remake 可當移植 spec**(Fable 抽驗 2 條逐字吻合)
 
 ### new-RE:attract/開場美術定位 ✅(docs/67)
@@ -96,8 +96,6 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 - **版權**:影格/截圖不入公開版控(dq3_real_video/ 已 gitignore)。
 - **模型分工(rulebook 45)**:haiku=抽格/機械盤點;sonnet=文件合成/移植/code 盤點;Fable=協調/RE/oracle 判讀/獨立核實。
 
-## FLOW-GAP 清單(B1 產出後填)
+## FLOW-GAP 清單
 
-| # | 流程步驟 | 原版行為(出處) | ebitan 現況 | 嚴重度 | 狀態 |
-|---|---|---|---|---|---|
-| — | (待 B1) | | | | |
+→ `docs/data/flow-gap-ebitan.md`(78 GAP 全表,單一真相;本檔只留批次進度)。
