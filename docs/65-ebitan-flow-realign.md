@@ -53,8 +53,13 @@
 > 命名/性別畫面在哪秒、謁見國王時間點。等 A2 文件 + 更密影格。
 
 ### B — 差異盤點 ⏳
-- [ ] B1 ebitan 實際流程 vs oracle 逐步比對(code 為準)→ FLOW-GAP 清單(本檔附表,嚴重度排序)
+- [ ] B1(首輪 agent 連線中斷未產出,已重派;要求增量寫檔) ebitan 實際流程 vs oracle 逐步比對(code 為準)→ FLOW-GAP 清單(本檔附表,嚴重度排序)
 - [x] B2 C remake 宣稱抽驗 ✅:game_tester 實跑 **93/93 全綠**(2026-07-03);5 項流程宣稱 grep 屬實(里程碑綁 scripted NPC 檢查 main.c:1745、諾魯特 0x5b/0x215 @1623、sokoban gate @1847、王者之劍 transform @1559、酒場創角 @1496)→ **C remake 可當移植 spec**(Fable 抽驗 2 條逐字吻合)
+
+### new-RE:attract/開場美術定位 ✅(docs/67)
+- TIT*.P 20 檔全解:8 職業立繪(TITH-O,WORTHY=賢者)、巨龍 cutscene(TITB)、三人組(TITD)、
+  1993 卡(TITE)、紋章(TITP)、無 logo 底(TITF)、THE END(TIT3);FIRST.SCR=plane-major raw。
+  → attract 實作無素材障礙,剩輪播節奏影格對位。殘:TIT1/TIT2/TITA/TITC 鑑定。
 
 ### C — 逐 GAP 修 ebitan(C 為 spec;C 也缺的回頭 RE)
 - 順序 = 玩家遭遇順序:開場/創角 → 出生點/初期場景 → 遭遇區/晝夜 → runner region 事件/真實里程碑觸發
