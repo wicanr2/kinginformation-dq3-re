@@ -211,7 +211,8 @@ type Game struct {
 	cmd            CmdMenu   // 野外命令窗
 	battle         Battle    // 戰鬥場景
 	shop           Shop      // 商店(武防/道具店)
-	tavern         Tavern    // 露易達酒館(招募)
+	tavern         Tavern    // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
+	recruit        Recruit   // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
 	panel          panelKind // 資訊面板(狀況/道具/裝備)
 	panelCursor    int       // 裝備面板游標
 	panelHits      hitList   // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
@@ -233,7 +234,8 @@ type Game struct {
 	heroMP         int
 	heroInit       bool
 	equip          [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
-	companions     []*Member    // 同伴(隊長=hero*;酒館招募,現為預建示範)
+	companions     []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
+	roster         []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
 	flags          map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
 	storyBits      [32]byte     // 原版 [0x4f70] 256-flag story-flag 陣列(NPC 可見性;初值見 initStoryBits)
 	noticeCode     int          // 取得道具通知(item code;-1=無)
@@ -574,21 +576,29 @@ func (g *Game) Update() error {
 		g.renderFrame()
 		return nil
 	}
-	// 酒館 modal:職業→性別→招募加入隊伍(最多 3 同伴,滿則替換最舊)
+	// 酒館 2F 登錄所 modal:職業→姓名→性別→建角。**只登錄到 roster,不自動入隊**
+	// (docs/36 rec527-550:登錄所與 1F 酒場「找同伴參加」是兩段式;C dq3_tavern.c 建完角色
+	// 自動 dq3_party_add 是該 demo 的簡化,這裡刻意不照抄,避免滿隊時頂替丟隊友)。
 	if g.tavern.active {
-		if m, _ := g.tavern.input(in); m != nil {
-			if len(g.companions) < 3 {
-				g.companions = append(g.companions, m)
-			} else {
-				g.companions = append(g.companions[1:], m)
-			}
-		}
+		g.tavernCreate(in)
 		g.renderFrame()
 		return nil
 	}
-	// T 鍵:阿里阿罕酒館招募(對齊 C dev 捷徑;正式入口=LUIDA 櫃台)
+	// 酒場 1F 招募 modal:找同伴參加/與同伴分離/觀看名單(roster↔companions,見 recruit.go)
+	if g.recruit.active {
+		g.recruitInput(in)
+		g.renderFrame()
+		return nil
+	}
+	// T 鍵:阿里阿罕冒險者登錄所創角(對齊 C dev 捷徑;正式入口=LUIDA 2F 櫃台)
 	if g.inTown && inpututil.IsKeyJustPressed(ebiten.KeyT) {
 		g.tavern.open()
+		g.renderFrame()
+		return nil
+	}
+	// R 鍵:阿里阿罕酒場招募(找同伴參加/分離/名單;對齊 C dev 捷徑;正式入口=LUIDA 1F 櫃台)
+	if g.inTown && inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		g.recruit.open()
 		g.renderFrame()
 		return nil
 	}
@@ -1423,8 +1433,11 @@ func (g *Game) renderFrame() {
 	case panelEquip:
 		g.drawEquip(g.rgba, white)
 	}
-	if g.tavern.active { // 酒館招募
+	if g.tavern.active { // 酒館 2F 登錄所(創角)
 		g.tavern.draw(g.rgba, white)
+	}
+	if g.recruit.active { // 酒場 1F 招募(roster↔companions)
+		g.drawRecruit(g.rgba, white)
 	}
 	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
@@ -1561,6 +1574,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.openingIdx = -1                                               // 開場旁白未進行
 	g.battle.nameText = g.shop.nameText                             // 咒文名同名表
 	g.tavern.tx = g.dlg.tx                                          // 酒館 glyph
+	g.recruit.tx = g.dlg.tx                                         // 酒場招募 glyph
 	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)
 
 	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)

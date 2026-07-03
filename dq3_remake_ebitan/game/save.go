@@ -18,6 +18,7 @@ type saveState struct {
 	Inventory  []int     `json:"inv"`
 	Equip      [4]int    `json:"eq"`
 	Comps      []compSav `json:"comps"`
+	Roster     []compSav `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
 	Flags      []int     `json:"flags"`
 	ShipOwned  bool      `json:"shipowned"`
 	ShipX      int       `json:"shipx"`
@@ -50,6 +51,7 @@ func (g *Game) snapshot() saveState {
 		Inventory: append([]int(nil), g.inventory...),
 		Equip:     g.equip,
 		Comps:     compsToSav(g.companions),
+		Roster:    compsToSav(g.roster),
 		Flags:     flagsToSav(g.flags),
 		ShipOwned: g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PX: g.px, PY: g.py, InTown: g.inTown,
@@ -94,6 +96,17 @@ func (g *Game) restore(s saveState) {
 				m.Name = classNames[c.Class]
 			}
 			g.companions[i] = m
+		}
+	}
+	if len(s.Roster) > 0 { // 還原名冊(未入隊角色;姓名如同 companions 一樣不隨存檔保留,見下方註)
+		g.roster = make([]*Member, len(s.Roster))
+		for i, c := range s.Roster {
+			m := &Member{Class: c.Class, Gender: c.Gender, Exp: c.Exp, CurHP: c.CurHP, CurMP: c.CurMP,
+				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head}
+			if c.Class >= 0 && c.Class < 8 {
+				m.Name = classNames[c.Class] // compSav 未存自訂姓名 glyph(同 companions 既有限制),回退職業名
+			}
+			g.roster[i] = m
 		}
 	}
 	g.shipOwned, g.shipX, g.shipY = s.ShipOwned, s.ShipX, s.ShipY
