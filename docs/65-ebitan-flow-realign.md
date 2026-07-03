@@ -29,7 +29,7 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 | # | 症狀 | 根因(code 佐證) | 影響版本 |
 |---|---|---|---|
 | U1 | 開場不是房間、母親沒帶去見國王 | C `main.c:1353`「互動開場:從阿里阿罕城鎮(CTY00 sec0)起步」;grep 母親/16歲/謁見 **0 命中** —— 開場劇情(docs/36 §1-6/7:旁白+家室內)**C 也沒做**;ebitan 更糟(地表中心) | **兩版** |
-| U2 | 城內任何地方按 Space 被傳出城 | C `main.c:1982` `sc==0x39 /* SPACE:進/出城鎮 */` + line 211 註解「(demo)」—— **demo 殘留鍵**從未拆除;ebitan 無此 bug 但「Esc=出城」同樣非原版(原版出城=走出口/邊緣,待 DOSBox 實測確認) | C(ebitan 另有 Esc 問題) |
+| U2 | 城內任何地方按 Space 被傳出城 | C `main.c:1982` demo 殘留鍵。**已仲裁(DOSBox 實測)**:原版 Space=開命令窗(2×3 六指令)+ 左下 HP/MP 小窗 → C 修法=Space 改開命令窗;ebitan 命令窗語意正確,補 HP/MP 小窗、出城方式仍待第二輪實測 | C(ebitan 小補) |
 | U3 | 城鎮 NPC 沒原版多 | ebitan `worldmap.go:171` `if n.B2 < 4 { continue }` **丟棄無 BLS sprite 的 NPC**;C `dq3_scene.c` sprite cache 上限 8 種(`n_npc_spr < 8`),溢出者處理待查;原版實際 NPC 數待 DOSBox 實測 | **兩版**(機制不同) |
 
 ## Ground truth 資產
@@ -77,8 +77,8 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 ### C — 修復批次(玩家遭遇順序 × B1 分析;每批 sonnet 實作、Fable 核實、分段請使用者實測)
 | 批 | 內容 | 依賴 |
 |---|---|---|
-| C-1 | 新遊戲主角創建:主選單→注音命名→性別(docs/36 04-07 + docs/15 spec;元件現成=wire) | 無,可先行 |
-| C-2 | 開場劇情文字 + 家室內出生 + 王城謁見(初始金/裝) | DOSBox 實測(進行中)給文本/數字 |
+| **C-1 ✅** | 主選單→注音命名(預設注音,必填)→性別;共用元件;載入進度明確化;Fable 視覺核驗修 3 glyph 缺陷(commit a6d2de7) | 完成 |
+| C-2 | 能力值確認畫面 + 開場旁白 + **CTY00 sec4 家出生** + 媽媽對話護送出門 + 王城謁見(金/裝) | 實測①已給 spec 大半;金/裝數字等實測② |
 | C-3 | 酒場正式入口(露依達櫃台 NPC)+ 移除預建示範隊;U2/U3 修:出城方式(待 DOSBox 仲裁)、Space 行為、NPC B2<4 不丟 | C-1 |
 | C-4 | examine→boss 觸發 dispatch + NPC 給物/交換鏈(port-C:boss-trigger-points + scripted 擴充 + 里程碑真實 gate) | — |
 | C-5 | 取船、晝夜系統、遭遇區分區、商店賣出 | C-4 部分 |
