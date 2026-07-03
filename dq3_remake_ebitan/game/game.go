@@ -145,6 +145,38 @@ func (sc *Scene) Blocked(x, y int) bool {
 	return sc.npcAt(x, y) >= 0 // NPC 擋路(對齊 dq3_scene_npc_at)
 }
 
+// startPos:城鎮進入位置。header spawn 越界或不可走時,退回 pick_open_start
+// (掃 9×9 窗可走鄰格最多的格),移植 dq3_scene_pick_open_start——修 6 個城 sec0 spawn 出界
+// (CTY30/37/49達瑪/65/73/76)導致進城掉地圖外的 bug(docs/data/map-parse-audit.md #1)。
+func (sc *Scene) startPos() (int, int) {
+	walk := func(x, y int) bool {
+		return x >= 0 && y >= 0 && x < sc.w && y < sc.h && !sc.attr.Blocked(sc.tileIdx(x, y))
+	}
+	if walk(sc.spawnX, sc.spawnY) { // header spawn 有效 → 直接用
+		return sc.spawnX, sc.spawnY
+	}
+	bx, by, best := sc.w/2, sc.h/2, -1
+	for y := 4; y < sc.h-4; y++ {
+		for x := 4; x < sc.w-4; x++ {
+			if !walk(x, y) {
+				continue
+			}
+			open := 0
+			for wy := -4; wy <= 4; wy++ {
+				for wx := -4; wx <= 4; wx++ {
+					if walk(x+wx, y+wy) {
+						open++
+					}
+				}
+			}
+			if open > best {
+				best, bx, by = open, x, y
+			}
+		}
+	}
+	return bx, by
+}
+
 // npcAt 回 (x,y) 上的 NPC 索引;無則 -1。移植 dq3_scene_npc_at。
 func (sc *Scene) npcAt(x, y int) int {
 	for i := range sc.npcs {
@@ -192,29 +224,30 @@ type Game struct {
 	heroName       []int         // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
 	heroGender     int           // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
-	heroExp      uint32
-	heroGold     int
-	heroHP       int
-	heroMP       int
-	heroInit     bool
-	equip        [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
-	companions   []*Member    // 同伴(隊長=hero*;酒館招募,現為預建示範)
-	flags        map[int]bool // 一次性旗標(寶箱/事件已取)
-	noticeCode   int          // 取得道具通知(item code;-1=無)
-	noticeTimer  int
-	shipOwned    bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
-	shipAboard   bool          // 目前在船上
-	shipX, shipY int           // 船停泊位置(地表)
-	repel        int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
-	prng         rng.RNG       // 祈禱之戒損壞判定用 RNG
-	lotoBlessed  bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
-	cleared      bool          // 已破關(索瑪擊破)
-	endText      *dq3data.Text // ENDTXT.TXT 結局文本
-	endSeq       int           // 結局捲動段號(-1=未進行;0..n=當前段)
-	openingIdx   int           // 開場旁白序號(-1=未進行;0..n=當前句)
-	bossQueue    []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪);勝一場接下一場
-	frame        *ebiten.Image
-	rgba         []byte
+	heroExp        uint32
+	heroGold       int
+	heroHP         int
+	heroMP         int
+	heroInit       bool
+	equip          [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	companions     []*Member    // 同伴(隊長=hero*;酒館招募,現為預建示範)
+	flags          map[int]bool // 一次性旗標(寶箱/事件已取)
+	noticeCode     int          // 取得道具通知(item code;-1=無)
+	noticeTimer    int
+	shipOwned      bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
+	shipAboard     bool          // 目前在船上
+	shipX, shipY   int           // 船停泊位置(地表)
+	repel          int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	prng           rng.RNG       // 祈禱之戒損壞判定用 RNG
+	lotoBlessed    bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
+	cleared        bool          // 已破關(索瑪擊破)
+	endText        *dq3data.Text // ENDTXT.TXT 結局文本
+	endSeq         int           // 結局捲動段號(-1=未進行;0..n=當前段)
+	openingIdx     int           // 開場旁白序號(-1=未進行;0..n=當前句)
+	bossQueue      []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪;或 examine 觸發的座標 boss 鏈)
+	pendingTrigger *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
+	frame          *ebiten.Image
+	rgba           []byte
 }
 
 // 場景配樂軌(對齊 C g_scene_track):BATTLE=14、TOWN=2、DUNGEON=3。
@@ -343,10 +376,21 @@ func (g *Game) scriptedTalk(byte4 int) {
 	g.dlg.Open(giveRec)
 }
 
-// examine:調查面向格(或腳下)的事件 → 若為寶箱且旗標未取 → 給道具 + 設旗標 + 通知。移植 dq3_treasure。
+// examine:調查面向格(或腳下)的事件 → 座標 boss 觸發點 → 開戰;否則寶箱/warp。
+// 移植 dq3_treasure + main.c 座標 boss 特例(八頭大蛇/甘達特巢穴,bosstrigger.go)。
 func (g *Game) examine() {
 	if g.flags == nil {
 		g.flags = map[int]bool{}
+	}
+	checkBoss := func(x, y int) bool {
+		t := bossTriggerAt(g.curCty, g.cur.sec, x, y)
+		if t == nil || g.flags[t.doneFlag] { // 未收錄 / 已擊敗過 → 不再開戰
+			return false
+		}
+		g.pendingTrigger = t
+		g.bossQueue = append([]int(nil), t.monsters...)
+		g.advanceBossQueue()
+		return true
 	}
 	check := func(x, y int) bool {
 		ev, subid, ok := g.cur.tileEvent(x, y)
@@ -376,6 +420,9 @@ func (g *Game) examine() {
 	}
 	fx, fy := frontTile(g.px, g.py, g.facing)
 	if g.tryOpenFacingDoor(fx, fy) { // 面向鎖門 + 鑰匙足夠 → 開門(移植 dq3_scene_try_open_facing_door)
+		return
+	}
+	if checkBoss(fx, fy) || checkBoss(g.px, g.py) { // 座標 boss 觸發點優先於一般寶箱/warp
 		return
 	}
 	if !check(fx, fy) {
@@ -691,8 +738,8 @@ func (g *Game) enterTownCty(cty int) {
 	case 49: // 達瑪神殿
 		g.progressSet(msDhama)
 	}
-	g.px, g.py = sc.spawnX, sc.spawnY
-	if sc.dlgText != nil { // 切到該城對話 bank(NPC 對話用正確 bank)
+	g.px, g.py = sc.startPos() // spawn 出界/不可走 → pick_open_start(修 6 城進城掉圖外)
+	if sc.dlgText != nil {     // 切到該城對話 bank(NPC 對話用正確 bank)
 		g.dlg.tx = sc.dlgText
 	}
 	g.cd = moveCooldown
@@ -836,9 +883,14 @@ var openingSeq = []int{82, 83}
 // startOpening:新遊戲創角完成 → 進主角家(CTY00 sec4 室內)+ 播開場旁白。移植原版開場(FLOW-GAP A5/A6)。
 // 對齊 U1:原版開場是家室內 + 母親旁白,非地表中心。
 func (g *Game) startOpening() {
+	if g.assets == nil { // 無素材的裸 Game(單元測試純狀態驗證)→ 只走狀態轉移,不載場景
+		return
+	}
 	home, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 4)
-	if err != nil { // 載入失敗 → 退回地表中心(不卡死)
-		g.px, g.py = g.over.w/2, g.over.h/2
+	if err != nil { // 載入失敗 → 退回地表中心(不卡死;g.over 可能 nil,防護)
+		if g.over != nil {
+			g.px, g.py = g.over.w/2, g.over.h/2
+		}
 		return
 	}
 	g.town, g.cur, g.inTown, g.curCty = home, home, true, 0
@@ -1089,6 +1141,24 @@ func (g *Game) onBattleEnd() {
 		if g.battle.monID == 0x7c { // 打倒大魔王索瑪 → 破關結局
 			g.runFinale()
 		}
+	}
+	if g.pendingTrigger != nil { // examine 觸發的座標 boss 鏈結算(bosstrigger.go)
+		switch {
+		case g.battle.result == 1 && len(g.bossQueue) == 0: // 鏈全勝(最後一場也贏)→ 給獎勵 + 設旗標
+			t := g.pendingTrigger
+			if len(t.rewardItems) > 0 {
+				g.inventory = append(g.inventory, t.rewardItems...)
+				g.noticeCode, g.noticeTimer = t.rewardItems[len(t.rewardItems)-1], 120
+			}
+			if g.flags == nil {
+				g.flags = map[int]bool{}
+			}
+			g.flags[t.doneFlag] = true
+			g.pendingTrigger = nil
+		case g.battle.result != 1 && len(g.bossQueue) == 0: // 鏈中斷(敗/逃)→ 清空,允許重新 examine 觸發
+			g.pendingTrigger = nil
+		}
+		// 鏈中段勝出(bossQueue 仍非空)→ 不動作,交給 Update() 的 advanceBossQueue 續打下一場
 	}
 	partyAllDown := g.heroHP <= 0
 	for _, m := range g.companions {
