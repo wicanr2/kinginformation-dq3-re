@@ -58,9 +58,10 @@ typedef struct dq3_scene {
     dq3_npc   npcs[DQ3_SCENE_MAX_NPC];
     int       n_npcs;
     dq3_rng   npc_rng;
-    /* NPC sprite 快取(by b2 去重;entry_base=(b2-4)*4,靜態 RE file 0xffc3:BLS off=(key-4)*0xf00+6;主角 key8↔entry16)。 */
-    dq3_charsprite npc_spr[8];
-    int       npc_spr_b2[8];
+    /* NPC sprite 快取(by b2 去重;entry_base=(b2-4)*4,靜態 RE file 0xffc3:BLS off=(key-4)*0xf00+6;主角 key8↔entry16)。
+     * 容量 13 slot(原版反組譯 file 0x4613:mov cx,0xd;非 8,docs/68)。 */
+    dq3_charsprite npc_spr[13];
+    int       npc_spr_b2[13];
     int       n_npc_spr;
 
     /* 主角 sprite(DQ3MAN.BLS);has_hero=0 時退回佔位方框 */
@@ -110,8 +111,22 @@ int  dq3_scene_open_door(dq3_scene *s, int tx, int ty);
 int  dq3_scene_try_open_facing_door(dq3_scene *s, int key_tier);
 
 /* 從 CTY section NPC 清單(+0/+2,7-byte 記錄)載 NPC 進 scene 槽並 stamp 到 hi_map。
- * cty=CTY 檔內容,so=section base offset。回載入隻數。 */
+ * cty=CTY 檔內容,so=section base offset。回載入隻數。
+ * 逐筆套用 dq3_scene_set_npc_vis 設定的 story-flag 可見性過濾(docs/71:記錄 byte5 = flag id
+ * 0-255,查 [0x4f70] 對應 bit,清則跳過,鏡射原版 file 0x4568 `test …; je skip`)。 */
 int  dq3_scene_load_npcs(dq3_scene *s, const uint8_t *cty, size_t cty_len, size_t so);
+
+/* NPC 逐筆 story-flag 可見性過濾(docs/71)。全域 setter,比照 dq3_scene_set_daynight 慣例。
+ * vis32:32-byte 陣列(256 bit,bit(id&7) of byte(id>>3)=1 才顯示該 NPC);傳 NULL = 不過濾
+ * (預設值,單元測試 / 尚未初始化時維持舊行為,不影響既有測試)。
+ * ★★ 呼叫端務必傳「獨立」陣列,不可傳 main.c 用於里程碑/boss-gate 的 dq3_storyflags——
+ * 該陣列有 id 19/49-53/68 等 < 256 的 gate 旗標(main.c grep 可證),若共用同一份記憶體,
+ * dq3_npc_vis_init 的「40-255 全設」初值會把這些 boss/劇情 doneFlag 一併誤設成已完成。 */
+void dq3_scene_set_npc_vis(const uint8_t *vis32);
+
+/* 算出 NPC 可見性陣列的「新遊戲初值」(docs/71,EXE 靜態資料映像 file 0x1b0b0):
+ * flag id 0-39 清(0)、40-255 設(1)。out 須為 32-byte 緩衝(呼叫端配置、獨立於其他旗標陣列)。 */
+void dq3_npc_vis_init(uint8_t out32[32]);
 
 /* 每幀對所有 NPC 跑一次步進(隨機走動;靜止/凍結者不動)。回本幀移動隻數。 */
 int  dq3_scene_npc_tick(dq3_scene *s);

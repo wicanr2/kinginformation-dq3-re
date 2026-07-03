@@ -1005,6 +1005,11 @@ static int run_game(const char *assets, const char *dump)
     int end_seq = -1;                                                  /* 結局捲動段號(-1=未進行;0..n=當前 ENDTXT 段)*/
     int tsect = getenv("DQ3_SECT") ? atoi(getenv("DQ3_SECT")) : 0;  /* 城鎮 section(有事件者測試)*/
     dq3_inventory inv; dq3_storyflags flags;                        /* #2 合成:道具欄 + 劇情旗標 */
+    /* NPC story-flag 可見性(docs/71):獨立於上面的 flags——flags 存里程碑(0x200+)也存
+     * 低 id boss/劇情 gate(0x13/0x31-0x35/0x44 等,main.c 內多處 dq3_flags_get/set 可證),
+     * 與原版 [0x4f70] NPC 可見性 id 空間(0-255)重疊;共用同一份記憶體會被下面的「40-255
+     * 全設」初值誤設成已完成,絕不可傳 &flags 給 dq3_scene_set_npc_vis。 */
+    uint8_t npc_vis[32];
     dq3_ship ship; dq3_ship_init(&ship);                            /* #2 船:取船後跨海(docs/48)*/
     /* 不死鳥拉米亞(六珠 → 祠堂復活 → 飛行坐騎,青衫攻略;sprite=DQ3MAN.BLS entry 176)。
      * 飛行無視地形(山/海皆可越),落在可走格。 */
@@ -1034,6 +1039,7 @@ static int run_game(const char *assets, const char *dump)
     enc = 6 + (int)(grnd() % 8);
     /* demo:身上帶兩材料,進祠堂「調べる」即可觸發 #2 合成(產彩虹水滴) */
     dq3_inv_init(&inv); dq3_flags_init(&flags);
+    dq3_npc_vis_init(npc_vis); dq3_scene_set_npc_vis(npc_vis);      /* NPC 可見性(docs/71,獨立陣列)*/
     g_equip_inv = &inv; g_equip_items = &shop_items; g_equip_items_ok = shop_ok;   /* 裝備管理來源 */
     /* (移除早期 #2 合成測試的預塞太陽之石+雲雨之杖;現走真實取得鏈:
      *  太陽之石 CTY80 寶箱、雲雨之杖 精靈祠堂 CTY92。debug 仍可 item:0x72/0x73 補。) */

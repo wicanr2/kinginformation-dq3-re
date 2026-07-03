@@ -102,6 +102,32 @@ int dq3_scene_try_open_facing_door(dq3_scene *s, int key_tier)
     return dq3_scene_open_door(s, tx, ty);
 }
 
+/* NPC 可見性 story-flag 陣列(docs/71):全域 setter,預設 NULL(不過濾)。
+ * ★ 必須是獨立於 main.c 里程碑/boss-gate dq3_storyflags 的陣列,見 dq3_scene.h 註解與
+ * docs/71(main.c 用同一 id 空間存 flag 19/49-53/68 等 boss/劇情狀態,共用會被本模組
+ * 「40-255 全設」的初值誤設成已完成)。 */
+static const uint8_t *g_npc_vis = NULL;
+
+void dq3_scene_set_npc_vis(const uint8_t *vis32) { g_npc_vis = vis32; }
+
+void dq3_npc_vis_init(uint8_t out32[32])
+{
+    int i;
+    for (i = 0; i < 5; i++)  out32[i] = 0x00;   /* id 0-39 清(5 byte = 40 bit) */
+    for (i = 5; i < 32; i++) out32[i] = 0xff;   /* id 40-255 設 */
+}
+
+/* 查 id 對應 bit(0=隱藏/1=顯示);g_npc_vis 未設(NULL)一律顯示(不過濾,維持舊行為)。 */
+static int npc_vis_get(int id)
+{
+    if (!g_npc_vis) return 1;
+    if (id < 0 || id > 255) return 1;
+    /* MSB-first bit 序,對齊原版 file 0x4568 `mov ah,0x80; ror ah,id&7`(=0x80>>(id&7))
+     * 與 ebitan storyFlag;新遊戲初值位元組對齊(0-39清/40-255設)故計數不受序影響,
+     * 但未來事件設個別旗標須與原版同序,故統一 MSB-first。 */
+    return (g_npc_vis[id >> 3] & (0x80 >> (id & 7))) != 0;
+}
+
 int dq3_scene_load_npcs(dq3_scene *s, const uint8_t *cty, size_t cty_len, size_t so)
 {
     size_t base; int cnt, i, night, k;
@@ -129,6 +155,7 @@ int dq3_scene_load_npcs(dq3_scene *s, const uint8_t *cty, size_t cty_len, size_t
         dq3_npc *n;
         if (base + 1 + (size_t)i * 7 + 7 > cty_len) break;
         if (r[0] >= s->map_w || r[1] >= s->map_h) continue; /* 座標越界跳過 */
+        if (!npc_vis_get(r[5])) continue;   /* story-flag 可見性(docs/71:byte5=flag id,清則跳過)*/
         n = &s->npcs[s->n_npcs];
         n->x = r[0]; n->y = r[1]; n->b2 = r[2]; n->ctrl = r[3];
         n->b4 = r[4]; n->flags = r[5]; n->b7 = r[6]; n->base_hi = 0;
@@ -167,14 +194,18 @@ int dq3_scene_load_npc_sprites(dq3_scene *s, const char *assets_dir)
 {
     int i; char err[128];
     s->n_npc_spr = 0;
-    for (i = 0; i < s->n_npcs && s->n_npc_spr < 8; i++) {
-        int b2 = s->npcs[i].b2, entry;
-        if (npc_spr_find(s, b2) >= 0) continue;                 /* 已快取 */
-        if (b2 < 4) continue;                                   /* key<4 保留(無對應 BLS 角色)*/
+    /* 容量 13(docs/68:原版 file 0x4613 `mov cx,0xd` 清 13 個 cache slot,非 8)。 */
+    for (i = 0; i < s->n_npcs && s->n_npc_spr < 13; i++) {
+        int key = s->npcs[i].b2, b2 = key, entry;
+        if (npc_spr_find(s, key) >= 0) continue;                /* 已快取(去重仍用原始 b2 當 key)*/
+        /* b2<4:原版 undefined behavior(sub ax,4 對 u16 underflow → seek 超 EOF → 讀 0 byte →
+         * 頁緩衝殘留前一 NPC 圖,docs/68 C-3 定錨)。原版不丟這些 NPC,remake 誠實 fallback:
+         * 不硬猜 DQ3LIN(已證偽),改用 DQ3MAN.BLS entry0(b2=4)當顯示但非原始的替代圖。 */
+        if (b2 < 4) b2 = 4;
         entry = (b2 - 4) * 4;   /* BLS offset=(key-4)*0xf00+6 → entry_base=(b2-4)*4(RE file 0xff99/0xffc3)*/
         if (dq3_charsprite_load(&s->npc_spr[s->n_npc_spr], assets_dir, "DQ3MAN.BLS",
                                 entry, err, sizeof err) == 0) {
-            s->npc_spr_b2[s->n_npc_spr] = b2;
+            s->npc_spr_b2[s->n_npc_spr] = key;
             s->n_npc_spr++;
         }
     }
