@@ -42,7 +42,7 @@ func TestDumpNpcDensity(t *testing.T) {
 		if cty >= 0 && cty < len(mapBlkNum) {
 			blkn = mapBlkNum[cty]
 		}
-		sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, cty, blkn, section)
+		sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, cty, blkn, section, 0)
 		if err != nil {
 			t.Fatalf("%s: load CTY%02d sec%d: %v", name, cty, section, err)
 		}

@@ -5,7 +5,7 @@ import "github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 // useSelectedItem:對道具面板游標指的道具套用使用效果(移植 main.c apply_item_use)。
 // Go 版狀態範圍:藥草(HP)、蓋美拉翅膀(回鎮)、聖水(驅敵)、祈禱之戒(MP+損壞)、
 // 覺醒粉/蓋亞之劍/乾渴壺/妖精之笛/彩虹水滴(位置相關劇情道具)已接;
-// 解狀態(無狀態系統)、晝夜 → 不消耗(對齊原版「無對應→不消耗」)。
+// 拉那魯達/黑暗之燈(切晝夜,不消耗)已接;解狀態(無狀態系統)→ 不消耗(對齊原版「無對應→不消耗」)。
 func (g *Game) useSelectedItem() {
 	if g.panelCursor < 0 || g.panelCursor >= len(g.inventory) {
 		return
@@ -72,8 +72,14 @@ func (g *Game) useSelectedItem() {
 			g.clampPanelCursor()
 		}
 		// 否則需在下層利姆達爾西北盡頭地表使用,不消耗
+	case itemuse.Ranaruta: // 拉那魯達:白天↔黑夜切換(不消耗;城內用時重載當前 section NPC)
+		g.toggleDaynight()
+		g.noticeCode, g.noticeTimer = code, 90
+	case itemuse.DarkLamp: // 黑暗之燈:強制黑夜(不消耗;城內用時重載當前 section NPC)
+		g.setDaynight(2)
+		g.noticeCode, g.noticeTimer = code, 90
 	default:
-		// 解狀態(無狀態系統)/ 晝夜 → 不消耗,對齊原版
+		// 解狀態(無狀態系統)→ 不消耗,對齊原版
 	}
 }
 

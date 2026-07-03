@@ -37,7 +37,8 @@ func townU16(d []byte, o int) uint16 {
 // OpenTown 解 CTY 檔的某 section → 城鎮版面。移植 dq3_town_load:
 // section 偏移表無 count 前綴,word[i]=section i 的 base(0xffff=空);
 // layout 指標在 section+0x0e,layout={w:u16, h:u16, tiles…(緊接 +4,stride 2)}。
-func OpenTown(cty []byte, section int) (*Town, error) {
+// night=true 時 NPC 用黑夜表(section word[1]),對齊 C dq3_scene_load_npcs 的晝夜切換。
+func OpenTown(cty []byte, section int, night bool) (*Town, error) {
 	if len(cty) < 2 {
 		return nil, fmt.Errorf("CTY too small")
 	}
@@ -106,16 +107,21 @@ func OpenTown(cty []byte, section int) (*Town, error) {
 			t.Transitions = append(t.Transitions, [4]int{int(cty[o]), int(cty[o+1]), int(cty[o+2]), int(cty[o+3])})
 		}
 	}
-	t.NPCs = parseNPCs(cty, so, w, h)
+	t.NPCs = parseNPCs(cty, so, w, h, night)
 	return t, nil
 }
 
-// parseNPCs 解 section 的 NPC 表(移植 dq3_scene_load_npcs)。
-// section 開頭 word[0]=日表、word[1]=夜表(相對 so);首 byte=count,後接 count×7-byte record。
-// 城內晝夜相位固定 → 這裡預設用日表,無效才退夜表(靜態載入,不跑晝夜切換)。
-func parseNPCs(cty []byte, so, w, h int) []NPC {
+// parseNPCs 解 section 的 NPC 表(移植 dq3_scene_load_npcs, dq3_scene.c:105-146)。
+// section 開頭 word[0]=白天表(人多)、word[1]=黑夜表(多睡覺/隱藏,只剩少數)(相對 so);
+// 首 byte=count,後接 count×7-byte record。night 選主表:白天→word0、黑夜→word1;
+// 主表無效(0xffff/越界)才退另一份(部分 section word[1]=none,日夜共用同一表)。
+func parseNPCs(cty []byte, so, w, h int, night bool) []NPC {
 	np := -1
-	for _, off := range []int{0, 2} { // 日表優先、夜表 fallback
+	for k := 0; k < 2; k++ { // k=0 主表(依 night 選);k=1 退另一份
+		off := 0               // word0=白天
+		if night != (k == 1) { // night XOR k:夜間主表=word1、fallback=word0
+			off = 2
+		}
 		wv := int(townU16(cty, so+off))
 		if wv != 0xffff && so+wv < len(cty) {
 			np = wv

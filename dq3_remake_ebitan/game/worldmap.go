@@ -132,12 +132,14 @@ func findCtyAtLayer(px, py, layer int) int {
 
 // loadTownScene:載入任一 CTY 城鎮(section 0)為 Scene(通用,移植 dq3_town_load 用法)。
 // blkn 由 mapBlkNum[cty] 決定 → DQ3<blkn>.BLK + BLKBM<blkn>.DAT。含 NPC(sprite 自 DQ3MAN.BLS)。
-func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn int) (*Scene, error) {
-	return loadTownSceneSec(assets, pal, manBLS, cty, blkn, 0)
+// phase = 進城當下晝夜相位(0白天/1黃昏/2黑夜/3黎明):決定 NPC 日/夜表 + palette 調暗。
+func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, phase int) (*Scene, error) {
+	return loadTownSceneSec(assets, pal, manBLS, cty, blkn, 0, phase)
 }
 
 // loadTownSceneSec 載入某城的指定 section(轉場用)。section 0 = 城鎮外圍入口層。
-func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, section int) (*Scene, error) {
+// pal 須為日中 base 色盤;函式內依 phase 調暗(不動輸入),NPC 依 phase==2 選日/夜表。
+func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, section, phase int) (*Scene, error) {
 	if blkn < 1 || blkn > 5 {
 		blkn = 1
 	}
@@ -146,7 +148,8 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 	blkName := blkFile(blkn)
 	attrName := blkbmFile(blkn)
 
-	tw, err := dq3data.OpenTown(rd(ctyName), section)
+	night := (phase & 3) == 2 // 2=黑夜 → NPC 用夜表;白天/黃昏/黎明皆當白天(對齊 dq3_scene.c:117)
+	tw, err := dq3data.OpenTown(rd(ctyName), section, night)
 	if err != nil {
 		return nil, err
 	}
@@ -155,9 +158,9 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 		return nil, err
 	}
 	sc := &Scene{
-		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: pal,
+		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: dq3data.DarkenPalette(pal, phase),
 		w: tw.W, h: tw.H, tileAt: tw.Tile, spawnX: tw.SpawnX, spawnY: tw.SpawnY,
-		hiMap: tw.HiMap, events: tw.Events, transitions: tw.Transitions, sec: section,
+		hiMap: tw.HiMap, events: tw.Events, transitions: tw.Transitions, sec: section, night: night,
 	}
 	sc.npcRng.Seed(uint16(section*2654 + 1)) // 確定性種子(依 section;對齊 C dq3_scene.c npc_rng)
 	// 該城對話 bank(D3TXT0<bank>.TXT,section +0x17;共用 D3TXT00.FON)

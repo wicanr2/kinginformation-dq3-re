@@ -57,6 +57,7 @@ type Scene struct {
 	npcs           []npcInst
 	override       map[int]int // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
 	npcRng         rng.RNG     // NPC 遊走用確定性 RNG(依 section 種子)
+	night          bool        // 此 scene 用黑夜 NPC 表載入(晝夜 cache 判斷用;overworld 恆 false)
 }
 
 // tileIdx:回 (x,y) 的 BLK tile 索引,先查執行期覆蓋(開門)再退靜態 tileAt。
@@ -194,6 +195,8 @@ type Game struct {
 	cur            *Scene
 	inTown         bool
 	curCty         int   // 目前所在 CTY 號(-1=地表)
+	dnPhase        int   // 晝夜相位:0白天 1黃昏 2黑夜 3黎明(僅地表走動推進;城內固定)
+	dnStep         int   // 地表步數計數器(每 dnPhaseSteps 步推進一相位)
 	assets         fs.FS // 素材(懶載其他城鎮)
 	worldPal       []dq3data.Color
 	manBLS         []byte         // NPC sprite 來源
@@ -740,7 +743,8 @@ func (g *Game) Update() error {
 			g.enterTownCty(cty)
 			return nil
 		}
-		if g.repel > 0 { // 聖水驅敵期間每步遞減、不遇弱敵(移植 #3 repel)
+		g.advanceDaynight() // 地表走一步 → 推進晝夜(每 60 步一相位;城內不推進)
+		if g.repel > 0 {    // 聖水驅敵期間每步遞減、不遇弱敵(移植 #3 repel)
 			g.repel--
 		} else if rand.Intn(16) == 0 {
 			g.startEncounter()
@@ -763,17 +767,22 @@ func (g *Game) Update() error {
 // enterTownCty:進 CTY 城鎮(懶載 + 快取)。移植 apply_scene 的城鎮載入。
 func (g *Game) enterTownCty(cty int) {
 	sc := g.towns[cty]
+	if sc != nil && sc.night != g.isNight() {
+		sc = nil // 進城相位與 cache 不同(日/夜 NPC 表不同)→ 重載對齊當下相位
+	}
 	if sc == nil {
 		blkn := 1
 		if cty >= 0 && cty < len(mapBlkNum) {
 			blkn = mapBlkNum[cty]
 		}
-		s, err := loadTownScene(g.assets, g.worldPal, g.manBLS, cty, blkn)
+		s, err := loadTownScene(g.assets, g.worldPal, g.manBLS, cty, blkn, g.dnPhase)
 		if err != nil {
 			return // 載入失敗 → 留在地表
 		}
 		g.towns[cty] = s
 		sc = s
+	} else {
+		sc.pal = dq3data.DarkenPalette(g.worldPal, g.dnPhase) // cache 命中(同 night):重套相位色(黃昏/黎明差異)
 	}
 	g.overPx, g.overPy = g.px, g.py
 	g.town, g.cur, g.inTown, g.curCty = sc, sc, true, cty
@@ -789,6 +798,85 @@ func (g *Game) enterTownCty(cty int) {
 	}
 	g.cd = moveCooldown
 	g.music.Play(ctyMusicTrack(cty))
+	g.renderFrame()
+}
+
+// dnPhaseSteps:每晝夜相位的地表步數。使用者指定「白天→黑夜=120 步、中間有黃昏」→ 每相位 60 步
+// (白天→黃昏→黑夜=2×60;全 4 相位循環=240 步,對齊原版 clock 0..0xf0)。移植 main.c DN_PHASE_STEPS。
+const dnPhaseSteps = 60
+
+// isNight:目前是否黑夜(相位 2)。供夜 gate 事件查詢(提頓夜綠寶珠等)。對齊 dq3_scene.c night 判定。
+func (g *Game) isNight() bool { return g.dnPhase == 2 }
+
+// advanceDaynight:地表走一步 → 步數計數;每 dnPhaseSteps 步推進一相位並重套地表 palette。
+// 只在地表(overworld)呼叫;城內相位固定(使用者確認)。
+func (g *Game) advanceDaynight() {
+	g.dnStep++
+	if g.dnStep >= dnPhaseSteps {
+		g.dnStep = 0
+		g.dnPhase = (g.dnPhase + 1) & 3
+		g.applyDaynightPalette()
+	}
+}
+
+// setDaynight:強制設相位(拉那魯達/黑暗之燈用)。重套 palette;若在城內,重載當前 section
+// 的 NPC(日/夜表不同,對齊 main.c:988 reload_town_daynight)。
+func (g *Game) setDaynight(phase int) {
+	g.dnPhase = phase & 3
+	g.dnStep = 0
+	g.applyDaynightPalette()
+	g.reloadTownDaynight()
+}
+
+// toggleDaynight:白天↔黑夜切換(拉那魯達語意)。非黑夜 → 黑夜;黑夜 → 白天。
+func (g *Game) toggleDaynight() {
+	if g.isNight() {
+		g.setDaynight(0)
+	} else {
+		g.setDaynight(2)
+	}
+}
+
+// applyDaynightPalette:依當前相位由日中 base 色盤(worldPal,不變)重算調暗色盤,套到現行地表/
+// 城鎮 scene。base 恆為日色 → 可反覆套用不累積。
+func (g *Game) applyDaynightPalette() {
+	dp := dq3data.DarkenPalette(g.worldPal, g.dnPhase)
+	if g.over != nil {
+		g.over.pal = dp
+	}
+	if g.under != nil {
+		g.under.pal = dp
+	}
+	if g.inTown && g.town != nil {
+		g.town.pal = dp
+	}
+}
+
+// reloadTownDaynight:城內切晝夜時重載當前 section 的 NPC(日/夜表不同),保留座標。
+// 對齊 main.c:988。不在城內 / 無效 CTY → 跳過。載入失敗 → 維持原 scene。
+func (g *Game) reloadTownDaynight() {
+	if !g.inTown || g.curCty < 0 || g.town == nil {
+		return
+	}
+	blkn := 1
+	if g.curCty < len(mapBlkNum) {
+		blkn = mapBlkNum[g.curCty]
+	}
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, g.curCty, blkn, g.town.sec, g.dnPhase)
+	if err != nil {
+		return
+	}
+	g.town, g.cur = ns, ns
+	g.towns[g.curCty] = ns
+	if g.px >= ns.w { // 座標保留;越界夾回(section 尺寸理應相同,防護)
+		g.px = ns.w - 1
+	}
+	if g.py >= ns.h {
+		g.py = ns.h - 1
+	}
+	if ns.dlgText != nil {
+		g.dlg.tx = ns.dlgText
+	}
 	g.renderFrame()
 }
 
@@ -828,7 +916,7 @@ func (g *Game) tryTransition() {
 	if ncty >= 0 && ncty < len(mapBlkNum) {
 		blkn = mapBlkNum[ncty]
 	}
-	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ncty, blkn, dsec)
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ncty, blkn, dsec, g.dnPhase)
 	if err != nil {
 		g.exitTown() // 載入失敗 → 回地表保底(對齊 C)
 		return
@@ -861,7 +949,7 @@ func (g *Game) warpTo(param int) bool {
 	if dcty < len(mapBlkNum) {
 		blkn = mapBlkNum[dcty]
 	}
-	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, dcty, blkn, 0)
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, dcty, blkn, 0, g.dnPhase)
 	if err != nil {
 		return false
 	}
@@ -931,7 +1019,7 @@ func (g *Game) startOpening() {
 	if g.assets == nil { // 無素材的裸 Game(單元測試純狀態驗證)→ 只走狀態轉移,不載場景
 		return
 	}
-	home, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 4)
+	home, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 4, g.dnPhase)
 	if err != nil { // 載入失敗 → 退回地表中心(不卡死;g.over 可能 nil,防護)
 		if g.over != nil {
 			g.px, g.py = g.over.w/2, g.over.h/2
@@ -954,7 +1042,7 @@ func (g *Game) startOpening() {
 // sec4 transition[0] 目的地 = sec0 家門 (8,38)。原版是對母親對話護送,此處簡化為旁白後自動出門
 // (語意=母親帶去見國王;TODO 精修:改對母親 NPC 對話才護送,見 docs/66 §1c 實測)。
 func (g *Game) motherEscort() {
-	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0)
+	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0, g.dnPhase)
 	if err != nil {
 		return
 	}
@@ -1424,7 +1512,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.assets, g.worldPal, g.manBLS = assets, pal, manBLS
 	g.towns = map[int]*Scene{}
 	g.curCty = -1
-	town0, terr := loadTownScene(assets, pal, manBLS, 0, 1) // 阿里阿罕
+	town0, terr := loadTownScene(assets, pal, manBLS, 0, 1, 0) // 阿里阿罕(開局白天)
 	if terr != nil {
 		return nil, fmt.Errorf("loadTown 阿里阿罕: %w", terr)
 	}

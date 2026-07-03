@@ -5,7 +5,7 @@ import "testing"
 // 阿里阿罕(起始城)= CTY00.DAT / section 0 / DQ31.BLK。對拍 C dq3_town_load。
 func TestOpenTownAliahan(t *testing.T) {
 	cty := findAsset(t, "CTY00.DAT")
-	town, err := OpenTown(cty, 0)
+	town, err := OpenTown(cty, 0, false)
 	if err != nil {
 		t.Fatalf("OpenTown CTY00 sec0: %v", err)
 	}
@@ -68,7 +68,7 @@ func TestOpenTownMultiSection(t *testing.T) {
 	cty := findAsset(t, "CTY00.DAT")
 	loaded, withTrans, totalTrans := 0, 0, 0
 	for sec := 0; sec < 16; sec++ {
-		town, err := OpenTown(cty, sec)
+		town, err := OpenTown(cty, sec, false)
 		if err != nil {
 			continue // 空 section(0xffff)→ 跳過
 		}

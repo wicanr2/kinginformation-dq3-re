@@ -203,7 +203,7 @@ func TestDumpBossTrigger(t *testing.T) {
 	if 19 < len(mapBlkNum) {
 		blkn = mapBlkNum[19]
 	}
-	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 19, blkn, 1)
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 19, blkn, 1, 0)
 	if err != nil {
 		t.Fatalf("載入 CTY19 sec1: %v", err)
 	}

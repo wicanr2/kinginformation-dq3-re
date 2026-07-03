@@ -10,6 +10,7 @@ dq3-android/
 # 本機素材/暫存
 assets_raw/
 scratch_*.png
+_daynight_dump/
 
 # gradle 產物(Android APK 建置;CI 產出,不入庫)
 android/.gradle/
