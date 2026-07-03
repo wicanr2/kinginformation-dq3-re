@@ -7,6 +7,7 @@
 #include "dq3_dialogue.h"
 #include "dq3_shopdata.h"
 #include "dq3_warp.h"
+#include "dq3_runtime.h"   /* DQ3_SCREEN_W/H:僅取常數,不引入額外連結需求(dq3_dialogue.c 已含)*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,6 +105,48 @@ int main(int argc, char **argv) {
         CHECK(dq3_warp_get(0, &wc, &wx, &wy)==0 && wc==2 && wx==40 && wy==1,
               "warp[0] = CTY2(羅馬利亞)(40,1)");
         CHECK(dq3_warp_get(99999, 0,0,0) < 0, "warp 越界回 -1");
+    }
+
+    /* A2 文字插值(docs/72,對齊 ebitan W1):VAR_ITEM(rec191)/VAR_NUM(rec181,實測 D3TXT00 含這兩碼的
+     * 記錄)設值後應多畫出實字,不再留白。用「設值前後非空像素數」當訊號,不綁死字型內容。 */
+    {
+        dq3_text sys; char e2[128];
+        if (dq3_text_load(&sys, dir, "D3TXT00.TXT", e2, sizeof e2) == 0) {
+            static uint8_t fb1[DQ3_SCREEN_W * DQ3_SCREEN_H], fb2[DQ3_SCREEN_W * DQ3_SCREEN_H];
+            uint16_t item_g[3] = { 10, 20, 30 };   /* 任取合法字模索引,只驗證「有無畫出」*/
+            long px1, px2, pi;
+
+            dq3_text_clear_vars();
+            CHECK(dq3_dialogue_open_text(&dlg, &sys, 191) == 0, "open_text D3TXT00 rec191(含 VAR_ITEM)成功");
+            memset(fb1, 0, sizeof fb1);
+            dq3_dialogue_render(&dlg, fb1, DQ3_SCREEN_W, DQ3_SCREEN_H);
+            for (px1 = 0, pi = 0; pi < (long)sizeof fb1; pi++) if (fb1[pi]) px1++;
+
+            dq3_dialogue_open_text(&dlg, &sys, 191);         /* 重開:reset var_item(對齊 ebitan Open) */
+            dq3_text_set_var_item(item_g, 3);
+            memset(fb2, 0, sizeof fb2);
+            dq3_dialogue_render(&dlg, fb2, DQ3_SCREEN_W, DQ3_SCREEN_H);
+            for (px2 = 0, pi = 0; pi < (long)sizeof fb2; pi++) if (fb2[pi]) px2++;
+            printf("  VAR_ITEM rec191:未設非空像素=%ld,設值後=%ld\n", px1, px2);
+            CHECK(px2 > px1, "VAR_ITEM 設值後多畫出道具名字模(非空白)");
+
+            dq3_text_clear_vars();
+            CHECK(dq3_dialogue_open_text(&dlg, &sys, 181) == 0, "open_text D3TXT00 rec181(含 VAR_NUM)成功");
+            memset(fb1, 0, sizeof fb1);
+            dq3_dialogue_render(&dlg, fb1, DQ3_SCREEN_W, DQ3_SCREEN_H);
+            for (px1 = 0, pi = 0; pi < (long)sizeof fb1; pi++) if (fb1[pi]) px1++;
+
+            dq3_dialogue_open_text(&dlg, &sys, 181);
+            dq3_text_set_var_num(12345);
+            memset(fb2, 0, sizeof fb2);
+            dq3_dialogue_render(&dlg, fb2, DQ3_SCREEN_W, DQ3_SCREEN_H);
+            for (px2 = 0, pi = 0; pi < (long)sizeof fb2; pi++) if (fb2[pi]) px2++;
+            printf("  VAR_NUM rec181:未設非空像素=%ld,設值後=%ld\n", px1, px2);
+            CHECK(px2 > px1, "VAR_NUM 設值後多畫出數字字模(非空白)");
+
+            dq3_text_clear_vars();
+            dq3_text_free(&sys);
+        } else printf("  [SKIP] VAR_ITEM/VAR_NUM 插值測試:載 D3TXT00 失敗: %s\n", e2);
     }
 
     dq3_dialogue_free(&dlg); free(cty);

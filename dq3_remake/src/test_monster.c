@@ -54,6 +54,26 @@ int main(int argc, char **argv)
         CHECK(g5==0, "一般怪(史萊姆 id5)get 仍走原版 SHP");
     }
 
+    printf("== A3 遭遇群量上限(docs/72,對齊 ebitan spawnGroupMax:floor(38/weight)夾[1,8])==\n");
+    {
+        struct { int weight, want; } cases[] = {
+            {8,   4},   /* floor(38/8)=4 */
+            {4,   8},   /* floor(38/4)=9 → clip 群上限8 */
+            {1,   8},   /* floor(38/1)=38 → clip 8 */
+            {100, 1},   /* floor(38/100)=0 → 保底 1 */
+            {0,   1},   /* 非群戰候選 → 1 */
+            {-5,  1},   /* 異常負值 → 1 */
+        };
+        size_t ci;
+        for (ci = 0; ci < sizeof(cases)/sizeof(cases[0]); ci++) {
+            int got = dq3_monster_spawn_group_max(cases[ci].weight);
+            char msg[64];
+            snprintf(msg, sizeof msg, "spawn_group_max(%d)==%d", cases[ci].weight, cases[ci].want);
+            printf("  weight=%d got=%d want=%d\n", cases[ci].weight, got, cases[ci].want);
+            CHECK(got == cases[ci].want, msg);
+        }
+    }
+
     printf("\n%s (%d failures)\n", g_fail?"== 有測試未通過 ==":"== 全部通過 ==", g_fail);
     dq3_monsters_free(&m);
     return g_fail?1:0;

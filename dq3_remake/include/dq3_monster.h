@@ -42,6 +42,12 @@ typedef struct {
 int  dq3_monsters_load(dq3_monsters *m, const char *assets_dir, char *err, int errcap);
 void dq3_monsters_free(dq3_monsters *m);
 int  dq3_monster_get_stat(const dq3_monsters *m, int id, dq3_monster_stat *out);
+/* 遭遇群量上限(docs/13 encounter_build_group,W2/docs/72 A3):戰鬥點數預算 38 / spawn_weight,
+ * 夾在 [1, 群上限8];weight<=0(非群戰候選/無資料)→ 1。對齊 ebitan spawnGroupMax。
+ * 實際隻數由呼叫端擲 1..maxN 均勻亂數(main.c dq3_encounter_group_count)。 */
+#define DQ3_ENCOUNTER_BUDGET   38
+#define DQ3_ENCOUNTER_GROUPCAP 8
+int  dq3_monster_spawn_group_max(int spawn_weight);
 /* 取怪物 AI 參數(docs/37)。回 0 成功。 */
 int  dq3_monster_get_ai(const dq3_monsters *m, int id, dq3_monster_ai *out);
 /* 怪物會幾種咒(spell_mask 的 set bit 數)。 */

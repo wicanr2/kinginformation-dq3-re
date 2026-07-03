@@ -33,6 +33,7 @@
 #include "dq3_status.h"
 #include "dq3_cmdmenu.h"
 #include "dq3_encounter.h"
+#include "dq3_monster.h"   /* 遭遇群量(A3):spawn_weight → dq3_monster_spawn_group_max */
 #include "dq3_combat.h"
 #include "dq3_shopdata.h"
 #include "dq3_sub2.h"
@@ -212,6 +213,18 @@ static int run_battle(const char *assets, const char *dump)
  * 每次戰鬥/換場後重套目的場景 palette —— 實際運用 bug #8 修正(docs/28)。 */
 static unsigned g_seed = 0x2468ace0u;
 static unsigned grnd(void){ g_seed^=g_seed<<13; g_seed^=g_seed>>17; g_seed^=g_seed<<5; return g_seed; }
+
+/* 遭遇群隻數(A3,docs/72/W2 對齊 ebitan spawnGroupMax):依怪 mon_id 的 spawn_weight(D3MNS+0x28)
+ * 算群量上限 maxN=dq3_monster_spawn_group_max(weight),實際隻數 1..maxN 均勻擲 grnd()。
+ * 無怪物資料/怪表未載入 → 單隻(對齊 ebitan 無資料時 fallback)。 */
+static int dq3_encounter_group_count(const dq3_monsters *m, int mon_id)
+{
+    dq3_monster_stat st;
+    int maxN;
+    if (!m || !m->loaded || dq3_monster_get_stat(m, mon_id, &st) != 0) return 1;
+    maxN = dq3_monster_spawn_group_max(st.spawn_weight);
+    return 1 + (int)(grnd() % (unsigned)maxN);
+}
 
 static void load_field_hero(dq3_scene *s, const char *assets)
 {
@@ -1017,9 +1030,12 @@ static int run_game(const char *assets, const char *dump)
     dq3_roster roster; dq3_party party; dq3_stats gst;              /* 露依達酒場:名冊 + 隊伍 */
     long gold = 0;                                                  /* 隊伍金錢(戰利累積)*/
     dq3_items shop_items; int shop_ok;                             /* ITEM.DAT(商店價/可裝備)*/
+    dq3_monsters mons; int mons_ok;                                /* D3MNS.DAT(A3:spawn_weight 群量)*/
 
     dq3_roster_init(&roster); dq3_party_init(&party); dq3_stats_load(&gst, assets, 1, NULL, 0);
     shop_ok = (dq3_items_load(&shop_items, assets, NULL, 0) == 0);
+    mons_ok = (dq3_monsters_load(&mons, assets, err, sizeof err) == 0);
+    if (!mons_ok) fprintf(stderr, "D3MNS.DAT 載入失敗(遭遇群量退回單隻): %s\n", err);
 
     field = dq3_field_load(assets, err, sizeof err);
     if (!field) { fprintf(stderr, "field: %s\n", err); return 3; }
@@ -1299,6 +1315,7 @@ static int run_game(const char *assets, const char *dump)
                                               dump, layer, cur_cty, cur->px, cur->py);
         if (dlg_ok) dq3_dialogue_free(&dlg);
         if (sys_ok) dq3_text_free(&sys_txt);
+        if (mons_ok) dq3_monsters_free(&mons);
         if (town) dq3_scene_free(town);
         if (field_under) dq3_scene_free(field_under);
         dq3_scene_free(field);
@@ -1316,7 +1333,7 @@ static int run_game(const char *assets, const char *dump)
                     if (mon < 0) mon = over_pool[grnd() % 4];           /* 空 region 後備 */
                     fprintf(stderr, "--- 第 %d 步:region 0x%x 遭遇怪 id%d(背景頁 %d)! ---\n", steps+1, reg, mon, field_bg_page(cur));
                     dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
-                    oc = dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), "FFFFFFFF", NULL, grnd());
+                    oc = dq3_battlescene_run(assets, mon, dq3_encounter_group_count(&mons, mon), field_bg_page(cur), "FFFFFFFF", NULL, grnd());
                     fprintf(stderr, "    戰鬥結束 outcome=%d,回地表(重套 palette)\n", oc);
                     dq3_scene_apply_palette(cur);   /* bug #8:回地表還原色盤 */
                     enc = 6 + (int)(grnd() % 8);
@@ -1350,6 +1367,7 @@ static int run_game(const char *assets, const char *dump)
         if (dq3_dump_ppm(dump) == 0) fprintf(stderr, "game -> %s OK\n", dump);
         if (dlg_ok) dq3_dialogue_free(&dlg);
         if (sys_ok) dq3_text_free(&sys_txt);
+        if (mons_ok) dq3_monsters_free(&mons);
         if (town) dq3_scene_free(town);
         if (field_under) dq3_scene_free(field_under);
         dq3_scene_free(field);
@@ -1765,6 +1783,11 @@ static int run_game(const char *assets, const char *dump)
                             dq3_inv_add(&inv, sc->give_item);
                             if (sc->milestone) dq3_progress_set(&flags, sc->milestone);
                             dq3_dialogue_open(&dlg, sc->give_rec);
+                            if (sys_ok) {   /* give_rec 若含 VAR_ITEM(0xfffa)→ 填實際道具名(docs/72 A2,對齊 ebitan W1)*/
+                                uint16_t ig[12];
+                                int ni = dq3_text_item_name_glyphs(&sys_txt, sc->give_item, ig, 12);
+                                dq3_text_set_var_item(ig, ni);
+                            }
                             fprintf(stderr, "★ scripted NPC byte4=%d:%s道具 0x%02x(rec%d)\n",
                                     b4, sc->consume_prereq ? "換得" : "獲得", sc->give_item, sc->give_rec);
                         } else {
@@ -2127,7 +2150,7 @@ static int run_game(const char *assets, const char *dump)
                     int mon = dq3_encounter_pick(reg, grnd());
                     if (mon < 0) mon = over_pool[grnd() % 4];
                     dq3_battlescene_set_party(party.count > 0 ? &roster : NULL, party.count > 0 ? &party : NULL);
-                    dq3_battlescene_run(assets, mon, 1 + (int)(grnd()%3), field_bg_page(cur), NULL, NULL, grnd());
+                    dq3_battlescene_run(assets, mon, dq3_encounter_group_count(&mons, mon), field_bg_page(cur), NULL, NULL, grnd());
                     gold += dq3_battlescene_last_gold();   /* 戰利金錢入袋 */
                     dq3_scene_apply_palette(cur);   /* bug #8:戰後還原地表色盤 */
                     enc = 6 + (int)(grnd() % 8);
@@ -2152,6 +2175,7 @@ static int run_game(const char *assets, const char *dump)
     }
     if (dlg_ok) dq3_dialogue_free(&dlg);
     if (sys_ok) dq3_text_free(&sys_txt);
+    if (mons_ok) dq3_monsters_free(&mons);
     if (town) dq3_scene_free(town);
     if (field_under) dq3_scene_free(field_under);
     dq3_scene_free(field);

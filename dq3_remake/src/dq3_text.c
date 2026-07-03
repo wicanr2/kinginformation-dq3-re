@@ -83,6 +83,7 @@ void dq3_text_draw_glyph(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
 /* ── 對話變數 {V} context ── */
 static uint16_t g_var_name[12]; static int g_var_name_len = 0;
 static long g_var_num = 0; static int g_var_num_set = 0;
+static uint16_t g_var_item[12]; static int g_var_item_len = 0;
 void dq3_text_set_var_name(const uint16_t *g, int len)
 {
     int i; if (len < 0) len = 0; if (len > 12) len = 12;
@@ -90,7 +91,25 @@ void dq3_text_set_var_name(const uint16_t *g, int len)
     g_var_name_len = len;
 }
 void dq3_text_set_var_num(long n){ g_var_num = n; g_var_num_set = 1; }
-void dq3_text_clear_vars(void){ g_var_name_len = 0; g_var_num_set = 0; }
+void dq3_text_set_var_item(const uint16_t *g, int len)
+{
+    int i; if (len < 0) len = 0; if (len > 12) len = 12;
+    for (i=0;i<len;i++) g_var_item[i]=g[i];
+    g_var_item_len = len;
+}
+void dq3_text_clear_vars(void){ g_var_name_len = 0; g_var_num_set = 0; g_var_item_len = 0; }
+void dq3_text_clear_transient_vars(void){ g_var_num_set = 0; g_var_item_len = 0; }
+
+int dq3_text_item_name_glyphs(const dq3_text *item_bank, int item_code, uint16_t *out, int max)
+{
+    uint16_t buf[64]; int n, k, cnt = 0;
+    if (!item_bank || !item_bank->loaded) return 0;
+    n = dq3_text_record(item_bank, item_code + 1, buf, 64);
+    if (n < 0) return 0;
+    for (k = 0; k < n && cnt < max; k++)
+        if (buf[k] < 1476) out[cnt++] = buf[k];   /* 略過控制/插值碼,只留字模 */
+    return cnt;
+}
 
 static int txt_is_insert(uint16_t v)   /* 帶 +1 參數的插值控制碼 */
 {
@@ -112,6 +131,29 @@ static void txt_emit_glyphs(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
     }
 }
 
+int dq3_text_var_glyphs(uint16_t v, uint16_t *out, int max)
+{
+    int i, n;
+    if (!txt_is_insert(v)) return -1;
+    if (v == DQ3_TXT_VAR_NUM) {          /* 數值 → 十進位字模(glyph 0..9 = '0'..'9')*/
+        long x = g_var_num; char tmp[12]; int tl = 0;
+        if (!g_var_num_set) return 0;
+        if (x < 0) x = 0;
+        do { tmp[tl++] = (char)(x % 10); x /= 10; } while (x && tl < 11);
+        n = 0; while (tl > 0 && n < max) out[n++] = (uint16_t)tmp[--tl];
+        return n;
+    }
+    if (v == DQ3_TXT_VAR_ITEM) {          /* 道具名(docs/72 A2/W1) */
+        n = g_var_item_len; if (n > max) n = max;
+        for (i = 0; i < n; i++) out[i] = g_var_item[i];
+        return n;
+    }
+    /* VAR_ENT/VAR7/VAR0/VAR_IDX → 主角/受話者名 */
+    n = g_var_name_len; if (n > max) n = max;
+    for (i = 0; i < n; i++) out[i] = g_var_name[i];
+    return n;
+}
+
 int dq3_text_draw_record(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
                          int x0, int y0, int cols, int maxlines, int rec, uint8_t fg)
 {
@@ -124,16 +166,10 @@ int dq3_text_draw_record(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
         if (v==DQ3_TXT_NL || v==DQ3_TXT_NL2){ col=0; line++; if(maxlines&&line>=maxlines)break; continue; }
         if (v==DQ3_TXT_PAGE){ if(maxlines && line+1>=maxlines) break; col=0; line++; continue; }
         if (txt_is_insert(v)){                       /* 插值控制碼:消耗 +1 參數 + 替換實字 */
+            uint16_t vg[12]; int vn;
             if (i+1 < n) i++;                         /* ★ 消耗參數 word(否則被誤畫成字模)*/
-            if (v==DQ3_TXT_VAR_NUM && g_var_num_set){ /* 數值 → 十進位字模(glyph 0..9 = '0'..'9')*/
-                uint16_t ds[12]; int dl=0; long x=g_var_num; char tmp[12]; int tl=0;
-                if (x<0) x=0;
-                do { tmp[tl++]=(char)(x%10); x/=10; } while (x && tl<11);
-                while (tl>0) ds[dl++]=(uint16_t)tmp[--tl];
-                txt_emit_glyphs(t,fb,fb_w,fb_h,x0,y0,cols,maxlines,ds,dl,fg,&col,&line);
-            } else if (v!=DQ3_TXT_VAR_ITEM && g_var_name_len>0){  /* 其餘變數 → 主角/受話者名 */
-                txt_emit_glyphs(t,fb,fb_w,fb_h,x0,y0,cols,maxlines,g_var_name,g_var_name_len,fg,&col,&line);
-            }
+            vn = dq3_text_var_glyphs(v, vg, 12);
+            if (vn > 0) txt_emit_glyphs(t,fb,fb_w,fb_h,x0,y0,cols,maxlines,vg,vn,fg,&col,&line);
             if (maxlines && line>=maxlines) break;
             continue;
         }

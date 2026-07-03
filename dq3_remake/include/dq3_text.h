@@ -57,6 +57,19 @@ void dq3_text_draw_glyph(const dq3_text *t, uint8_t *fb, int fb_w, int fb_h,
  * 不會把參數誤畫成字模)。name = glyph 索引序列(姓名輸入產出),供 VAR0/VAR_ENT/VAR7/VAR_IDX。 */
 void dq3_text_set_var_name(const uint16_t *name_glyphs, int len);  /* 主角/受話者名 */
 void dq3_text_set_var_num(long n);                                 /* VAR_NUM 數值 */
+void dq3_text_set_var_item(const uint16_t *item_glyphs, int len);  /* VAR_ITEM 道具名(docs/72 A2/W1)*/
 void dq3_text_clear_vars(void);
+/* 只清「每則訊息各自獨立」的 VAR_ITEM/VAR_NUM(對齊 ebitan Dialogue.Open 重置 varItem/varNum;
+ * VAR_NAME 是持久身分,不隨對話開啟重置)。呼叫時機:每次開新訊息(dq3_dialogue_open/open_text)。 */
+void dq3_text_clear_transient_vars(void);
+
+/* 取插值控制碼 v 目前應替換的字模序列到 out(至多 max 個);回傳字數(可為 0=未設/無資料,
+ * 呼叫端應留白一格維持版面,不可 0 寬);非插值碼(txt_is_insert 判否)回 -1。
+ * draw_record 與其他渲染路徑(如 dq3_dialogue.c 對話視窗)共用同一套替換邏輯,別各自重寫。 */
+int  dq3_text_var_glyphs(uint16_t v, uint16_t *out, int max);
+
+/* 依道具碼取 D3TXT00 rec=code+1 的品名 glyph 序列(略過控制/插值碼),供 dq3_text_set_var_item 用。
+ * item_bank 須為已載入 D3TXT00 的 dq3_text(main.c: sys_txt)。回傳字數(0=查無/未載入)。 */
+int  dq3_text_item_name_glyphs(const dq3_text *item_bank, int item_code, uint16_t *out, int max);
 
 #endif /* DQ3_TEXT_H */

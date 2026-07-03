@@ -42,10 +42,37 @@ int dq3_dialogue_open_text(dq3_dialogue *d, const dq3_text *src, int rec)
      * 供系統訊息 / 道具名走常駐 D3TXT00,而非當前 section 對話 bank。 */
     int n = dq3_text_record(src, rec, d->buf, 2048);
     if (n < 0) return -1;
+    dq3_text_clear_transient_vars();  /* 每則新訊息重置 VAR_ITEM/VAR_NUM(對齊 ebitan Dialogue.Open
+                                        * 重置 varItem/varNum;VAR_NAME 是持久身分不在此清)。呼叫端
+                                        * 如需插值,於本次 open 後、下一次 render 前呼叫
+                                        * dq3_text_set_var_item/_num(docs/72 A2)。 */
     d->len = n; d->rec = rec; d->pos = 0; d->open = 1;
     return 0;
 }
 int dq3_dialogue_is_open(const dq3_dialogue *d){ return d->open; }
+
+/* 插值控制碼(VAR_ENT/VAR_ITEM/VAR_NUM/VAR7/VAR0/VAR_IDX,docs/72 A2):消耗控制碼本身 +1 參數
+ * word(否則被誤畫成字模,見 memory re-retro-text-inline-var-codes),依 dq3_text_var_glyphs 取代表
+ * 字模逐格推進 col/line(未設/無資料 → 1 格空白維持版面,不可 0 寬,對齊 ebitan scanPage)。
+ * draw!=0 時同步畫進 fb(dq3_dialogue_render 用;scan_page 只算位置故 draw=0)。回傳下一個 buf index。 */
+static int emit_insert(const dq3_dialogue *d, int i, int *col, int *line,
+                       uint8_t *fb, int fb_w, int fb_h, int x0, int y0, uint8_t fg, int draw)
+{
+    uint16_t v = d->buf[i];
+    uint16_t g[12];
+    int n = dq3_text_var_glyphs(v, g, 12);
+    int spaces = (n > 0) ? n : 1;
+    int k;
+    i++;                              /* 控制碼本身 */
+    if (i < d->len) i++;              /* 消耗 +1 參數 word */
+    for (k = 0; k < spaces; k++) {
+        if (draw && n > 0)
+            dq3_text_draw_glyph(&d->txt, fb, fb_w, fb_h, x0 + (*col)*DQ3_GLYPH_PX, y0 + (*line)*DQ3_GLYPH_PX, (int)g[k], fg);
+        (*col)++;
+        if (*col >= COLS) { *col = 0; (*line)++; if (*line >= DQ3_DLG_LINES) break; }
+    }
+    return i;
+}
 
 /* 從 pos 掃一頁(最多 DQ3_DLG_LINES 行 / 到 0xfffc 換頁 / 結尾),回傳「下一頁起點」。 */
 static int scan_page(const dq3_dialogue *d, int pos, int *out_end_is_eof)
@@ -56,7 +83,11 @@ static int scan_page(const dq3_dialogue *d, int pos, int *out_end_is_eof)
         uint16_t v = d->buf[i];
         if (v == DQ3_TXT_PAGE) { i++; return i; }           /* 換頁:下一頁從此後 */
         if (v == DQ3_TXT_NL || v == DQ3_TXT_NL2) { col=0; line++; i++; if(line>=DQ3_DLG_LINES) return i; continue; }
-        if (v >= 0xffed) { i++; col++; if(col>=COLS){col=0;line++;} if(line>=DQ3_DLG_LINES) return i; continue; }
+        if (v >= 0xffed) {
+            i = emit_insert(d, i, &col, &line, NULL, 0, 0, 0, 0, 0, 0);
+            if (line>=DQ3_DLG_LINES) return i;
+            continue;
+        }
         i++; col++;
         if (col >= COLS) { col = 0; line++; if (line >= DQ3_DLG_LINES) return i; }
     }
@@ -85,14 +116,18 @@ void dq3_dialogue_render(dq3_dialogue *d, uint8_t *fb, int fb_w, int fb_h)
     { int c; for(c=0;c<WIN_W;c++){ fb[WIN_Y*fb_w+WIN_X+c]=(uint8_t)g_white; fb[(WIN_Y+WIN_H-1)*fb_w+WIN_X+c]=(uint8_t)g_white; }
       int r; for(r=0;r<WIN_H;r++){ fb[(WIN_Y+r)*fb_w+WIN_X]=(uint8_t)g_white; fb[(WIN_Y+r)*fb_w+WIN_X+WIN_W-1]=(uint8_t)g_white; } }
     /* 本頁文字 */
-    for (i=d->pos; i<end && i<d->len; i++) {
+    for (i=d->pos; i<end && i<d->len; ) {
         uint16_t v = d->buf[i];
         if (v==DQ3_TXT_PAGE) break;
-        if (v==DQ3_TXT_NL || v==DQ3_TXT_NL2){ col=0; line++; if(line>=DQ3_DLG_LINES)break; continue; }
-        if (v>=0xffed){ col++; if(col>=COLS){col=0;line++;} continue; }   /* 變數占位空白 */
+        if (v==DQ3_TXT_NL || v==DQ3_TXT_NL2){ col=0; line++; i++; if(line>=DQ3_DLG_LINES)break; continue; }
+        if (v>=0xffed){                       /* 插值控制碼:消耗參數 + 展開實字(docs/72 A2)*/
+            i = emit_insert(d, i, &col, &line, fb, fb_w, fb_h, x0, y0, (uint8_t)g_white, 1);
+            if (line>=DQ3_DLG_LINES) break;
+            continue;
+        }
         if (v<1476)
             dq3_text_draw_glyph(&d->txt, fb, fb_w, fb_h, x0+col*DQ3_GLYPH_PX, y0+line*DQ3_GLYPH_PX, (int)v, (uint8_t)g_white);
-        col++;
+        col++; i++;
         if (col>=COLS){ col=0; line++; if(line>=DQ3_DLG_LINES)break; }
     }
 }

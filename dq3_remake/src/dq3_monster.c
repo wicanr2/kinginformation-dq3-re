@@ -48,6 +48,16 @@ int dq3_monster_get_stat(const dq3_monsters *m, int id, dq3_monster_stat *o)
     return 0;
 }
 
+int dq3_monster_spawn_group_max(int spawn_weight)
+{
+    int maxN;
+    if (spawn_weight <= 0) return 1;              /* 非群戰候選/無資料 → 1 */
+    maxN = DQ3_ENCOUNTER_BUDGET / spawn_weight;   /* floor(38/weight) */
+    if (maxN < 1) maxN = 1;                       /* floor 為 0 需保底 1 */
+    if (maxN > DQ3_ENCOUNTER_GROUPCAP) maxN = DQ3_ENCOUNTER_GROUPCAP;  /* 夾群上限 8 */
+    return maxN;
+}
+
 int dq3_monster_get_ai(const dq3_monsters *m, int id, dq3_monster_ai *o)
 {
     const uint8_t *r; int i;
