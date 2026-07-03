@@ -7,11 +7,11 @@
 
 | 批 | 缺口 | 範圍 | model | 狀態 |
 |---|---|---|---|---|
-| **W1** | A2 文字插值(道具名 VAR_ITEM/數值 VAR_NUM/名字 VAR_NAME) | ebitan dialogue.go + 事件填 var;道具名沿用既有 drawItemName(D3TXT00 rec=code+1)、數值→十進位字模、名字→g.heroName | sonnet | 進行中 |
-| W2 | A3 怪物群隻數權重預算(spawn_weight→同種多隻) | ebitan startEncounter + 戰鬥場;點數預算 0x26 依 weight 定隻數 | sonnet | 待 |
+| **W1 ✅** | A2 文字插值(道具名/數值/名字) | ebitan dialogue.go 插值 + 事件填 var(commit 52ce817;record191『力量增加銅劍。』視覺驗證) | sonnet+協調者接完 | 完成 |
+| W2 | A3 怪物群隻數權重預算(spawn_weight→同種多隻) | ⚠ ebitan 戰鬥現為**單敵**,需先重構 battle.go 成 N 敵 + weight 隻數 | sonnet | 待(需 battle 重構,與 W3 序列)|
 | W3 | A1 玩家狀態/buff/debuff 咒文(拉里荷/拜基魯多/史卡拉…rec143-160) | ebitan 狀態效果基礎設施(battle) + spell defs 擴充 + 玩家施放 + 敵對玩家下狀態 | sonnet | 待(最大)|
-| W4 | A4 酒場兩段式招募(登錄名冊≠入隊) | ebitan roster 名冊 vs party 分離,不再即建即入隊/頂替 | sonnet | 待 |
-| W5 | D. C oracle NPC 三 bug 回補(b2<4丟棄/8-slot/story-flag過濾) | **C 端** dq3_scene.c;把 ebitan 已修的移植回 C,恢復 oracle 忠實 | sonnet | 待 |
+| **W4** | A4 酒場兩段式招募(登錄名冊≠入隊) | ebitan roster 名冊 vs party 分離,不再即建即入隊/頂替 | sonnet | 進行中(與W5平行)|
+| **W5** | D. C oracle NPC 三 bug 回補(b2<4丟棄/8-slot/story-flag過濾) | **C 端** dq3_scene.c;移植 ebitan 已修的三項,恢復 oracle 忠實 | sonnet | 進行中(與W4平行)|
 | — | B1 沙曼歐莎怪力魔→變身杖 | 需先 R-2 RE(座標)| — | 延後(R 系列)|
 | — | C1 EBG 音效 cue / C2 攻方狀態減半 0xd4f | 低信心/RE 未定 | — | 延後 |
 
