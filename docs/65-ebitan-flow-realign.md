@@ -111,7 +111,11 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 
 **已澄清=非缺口(truth-in-code)**:
 - U2「Space→出城」**已修**:`game.go:709 in.Confirm→g.cmd.Open()`(命令窗 2×3 已 1:1 移植 C,cmdmenu.go/panel.go),Space 城內/地表皆開命令窗不出城;examine 由命令窗「調查」分派。使用者當初 U2 應為舊 build。
-- U3「NPC 太少」**已修**:C-5b b2<4 修 + 日/夜表(日24/夜6 對齊)。
+- U3「NPC 數量」**已修(完整)**:三層都補齊 ——(1)b2<4 不丟棄(docs/68)、(2)日/夜兩份表(docs/60)、
+  (3)**byte5 story-flag 可見性過濾(docs/71,commit 8b76ac1)**。使用者後續實測「第一張地圖 NPC **過多**」
+  = 缺第三層(整表全顯示);補上後 CTY00 24→15、全89城無空城,對齊 EXE 靜態映像 ground truth。
+  ⚠ 教訓:先前把 NPC 機制當「做完」其實只做 ①②,第三層雖 RE 出來(docs/60)卻沒移植 —— 又一次
+  「機制沒搞懂就當完成」,靠使用者實測戳破(rulebook 65)。待辦:條件 NPC(byte5<40)的事件 setStoryFlag 隨事件批 wire。
 - 附帶待拔後門:`game.go:718 Cancel(Esc)在城內即出城`(非原版機制,驗收前拔)。
 
 **下一步 = 使用者定 budget**(2026-07-03 問過,使用者離線未答):
