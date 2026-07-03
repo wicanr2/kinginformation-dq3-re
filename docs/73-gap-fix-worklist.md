@@ -24,3 +24,18 @@
 ## 收尾(2026-07-04)
 
 W1-W5 全數完成、獨立核實、commit(52ce817/0269012/5507a0a/f27b51d/13be592)。docs/72 高信心「兩版都缺」缺口(A1-A4)ebitan 全補;C oracle NPC(D 段)W5 回補。**延後項**:B1 沙曼歐莎怪力魔(需 R-2 RE 座標)、C1 EBG 音效、C2 攻方減半 0xd4f(RE 未定)。A1-A4 的 C 版對等(除 D)未回補,若要 C 對拍需另補。
+
+## ⏸ 暫停點(2026-07-04,下週續)
+
+**已完成並 push**:W1-W5 全數(見上表)。過期 markdown 斷言已校正(docs/60/68/71/72)。
+
+**暫停時有 2 個 subagent 在背景跑**(結果留待下週驗收,未 commit):
+- **R-2 RE 調查**(a1107e729cf7c9fc8):產沙曼歐莎怪力魔 spec —— 假國王 CTY44 座標 + 拉之鏡 0x61 USE reveal 機制。**不改碼**,回報是 spec 文字;下週我判讀後寫進 docs/70 + 派實作。
+- **C-parity A2+A3**(accf33a1197859355):C 版回補文字插值 + 怪物群權重隻數。**寫 C 版未 commit**;下週我獨立核實(dq3-remake docker build+test)後 commit。
+
+**下週 resume 步驟**:
+1. 讀兩個 subagent 回報(task 通知 / output 檔)。
+2. C-parity → 核實 C build+測試綠 → commit。
+3. R-2 spec → 判讀「已知 vs 待定」→ spec 齊則派 ebitan 實作 subagent(reveal 邏輯 + 怪89 boss + 變身杖 0x62;isNight() 已備)。
+4. 續 R 系列:R-3 不死鳥+六珠+飛行坐騎(最大)、R-4 巴拉摩斯城、R-5 龍王城+終盤 wire(拔 Z/U/Enter)。
+5. 其餘延後項:C1 EBG 音效、C2 攻方減半 0xd4f、戰鬥訊息列渲染(需字型策略)。
