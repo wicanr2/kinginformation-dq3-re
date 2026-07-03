@@ -76,9 +76,39 @@ DGROUP 檔基準用資料錨點定出:`lea dx,[0xd0]; int21 open` 開 `dq3man.bl
 全 89 城掃描:**0 個城起始顯示掉到 ≤2**(無空城);阿里阿罕視覺 dump 確認仍有人但不再擠滿。
 完整套件 game+internal 全綠、vet clean。
 
-## 待辦(誠實揭露)
+## 條件 NPC 事件 wiring spec(給 R 系列逐事件接)
 
-- **條件 NPC 的事件設旗標(byte5<40)尚未逐一 wire**:這些 NPC 起始隱藏是**對的**(對齊原版),
-  但它們在原版某劇情事件後會出現;ebitan 需在對應事件呼叫 `setStoryFlag(id, true)` 才會現出。
-  屬「隨事件批次補」的後續工作(與 R 系列事件實作一起做),非本次範圍。當前狀態:**起始/基礎人口已對齊**。
-- 部分 byte5≥40 的旗標原版會被事件 **CLEAR**(NPC 離開,如 file 0x1568 clear flag 80);同屬事件 wire 範圍。
+條件旗標(byte5 0-39,起始清)由**遍布全遊戲的 21 個獨立劇情事件**各自 SET(反組譯 `call 0x824f`
+的 `mov bx/bl,imm` 前綴掃出)。這些 NPC 起始隱藏是**對的**(對齊原版);ebitan 在實作對應事件時,
+於該點呼叫 `g.setStoryFlag(id, true)`(離開/消失型呼 `false`)即現出/隱藏對應 NPC。**沒有捷徑:
+旗標由事件設,事件不存在就無從接**(硬接=猜時機=編造機制,不做)。基礎設施 `setStoryFlag` 已就緒。
+
+| flag id | 原版 SET 位址(file) | 掛的 NPC 數(全城) | 備註/區域線索 |
+|---|---|---|---|
+| 23 (0x17) | 0x156b | 少 | 開場區(near new-game init);同段 clear flag 80 |
+| 24 (0x18) | 0x162a | — | 開場區 |
+| 38 (0x26) | 0x5336 | — | UI di=0xc9 |
+| 34 (0x22) | 0x5735 | — | — |
+| 25 (0x19) | 0x5622 / 0x5673 / 0x719c | 多 | — |
+| 16 (0x10) | 0x56c8 | — | di=0xc19 |
+| 39 (0x27) | 0x6688 | — | di=0xbeb/0xbe8 |
+| 36 (0x24) | 0x6c88 | — | di=0xbff |
+| 33 (0x21) | 0x6c8e | — | di=0xbff |
+| 31 (0x1f) | 0x6d4a | — | si=[0x4ed5] |
+| 35 (0x23) | 0x6ea3 / 0x6f1d | **371** | di=0xbbd(大量基礎-ish 人口,需確認事件很早)|
+| 32 (0x20) | 0x7053 | — | si=[0x4ed0/0x3cee] |
+| 22 (0x16) | 0x716a | — | di=0xc10 si=[0x3d03] |
+| 28 (0x1c) | 0x7232 | — | — |
+| 20 (0x14) | 0x736a | — | di=0xc28 |
+| 37 (0x25) | 0x73f0 | — | di=0xc2c |
+| 17 (0x11) | 0x7563 | — | di=[0xb26] |
+| 26 (0x1a) | 0x760a | — | — |
+| 27 (0x1b) | 0x7610 | 8(阿里阿罕 sec0) | — |
+| 14 (0x0e) | 0x7830 | — | di=0xbfd si=[0x4ee9] |
+| 13 (0x0d) | 0xfab0 | — | 後期(高位址)|
+
+> wiring 流程(每個 R 系列事件批):實作事件 X → 反組譯確認 X 對應的原版 [0x4f70] flag id
+> (上表)→ 在 ebitan 事件點呼 `g.setStoryFlag(id, true)` → 對應條件 NPC 現出 → dump 核。
+> ⚠ ebitan 的 `g.flags`(里程碑 0x211 等)與原版 [0x4f70] 0-39 是**不同 id 空間**,別混用;
+> storyBits 專供 NPC 可見性,別把里程碑 id 塞進去。
+> 部分 byte5≥40 旗標原版會被事件 **CLEAR**(NPC 離開,如 file 0x1568 clear flag 80);同理接 `false`。

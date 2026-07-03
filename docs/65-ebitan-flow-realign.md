@@ -115,7 +115,9 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
   (3)**byte5 story-flag 可見性過濾(docs/71,commit 8b76ac1)**。使用者後續實測「第一張地圖 NPC **過多**」
   = 缺第三層(整表全顯示);補上後 CTY00 24→15、全89城無空城,對齊 EXE 靜態映像 ground truth。
   ⚠ 教訓:先前把 NPC 機制當「做完」其實只做 ①②,第三層雖 RE 出來(docs/60)卻沒移植 —— 又一次
-  「機制沒搞懂就當完成」,靠使用者實測戳破(rulebook 65)。待辦:條件 NPC(byte5<40)的事件 setStoryFlag 隨事件批 wire。
+  「機制沒搞懂就當完成」,靠使用者實測戳破(rulebook 65)。條件 NPC(byte5<40)的事件 setStoryFlag
+  wiring spec 已建(docs/71 表:21 個旗標→原版 SET 位址),但那 21 個事件散落全遊戲、大多 ebitan 未實作
+  → **併入 R 系列逐事件接**(實作事件 X 時呼 setStoryFlag(對應id)),非可獨立提前完成的項。基礎設施已就緒。
 - 附帶待拔後門:`game.go:718 Cancel(Esc)在城內即出城`(非原版機制,驗收前拔)。
 
 **下一步 = 使用者定 budget**(2026-07-03 問過,使用者離線未答):
