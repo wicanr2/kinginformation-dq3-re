@@ -16,8 +16,21 @@
 ## 驗收定義
 
 **一個玩家從新遊戲開始、不按任何 debug 鍵,能按原版流程(oracle)走到破關。**
-每個流程步驟三重來源對齊:(1) 原版實機錄影(`dq3_real_video/`) (2) 杜勝利/青衫攻略
-(3) RE 證據(re-log-722 / disasm)。最終仲裁 = 使用者實測(玩過原版破關)。
+oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高)** >
+(1) 原版實機錄影(`dq3_real_video/`) > (2) 杜勝利/青衫攻略 > (3) RE docs/宣稱。
+最終仲裁 = 使用者實測(玩過原版破關)。
+
+> ⚠ **RE 宣稱不可信任為完備**(使用者判定,已被證實):flow-audit 只審了任務/道具/boss 層,
+> 開場層、按鍵行為、NPC 密度等「玩起來的感覺」從未被 audit。每個機制修復前,
+> 先用 DOSBox 原版實測該機制(工具鏈現成:`dq3-dosbox` image + `tools/dosbox_*.sh`,docs/36/14)。
+
+## 使用者實測回報(2026-07-03,玩桌面 C remake)— 根因已定位
+
+| # | 症狀 | 根因(code 佐證) | 影響版本 |
+|---|---|---|---|
+| U1 | 開場不是房間、母親沒帶去見國王 | C `main.c:1353`「互動開場:從阿里阿罕城鎮(CTY00 sec0)起步」;grep 母親/16歲/謁見 **0 命中** —— 開場劇情(docs/36 §1-6/7:旁白+家室內)**C 也沒做**;ebitan 更糟(地表中心) | **兩版** |
+| U2 | 城內任何地方按 Space 被傳出城 | C `main.c:1982` `sc==0x39 /* SPACE:進/出城鎮 */` + line 211 註解「(demo)」—— **demo 殘留鍵**從未拆除;ebitan 無此 bug 但「Esc=出城」同樣非原版(原版出城=走出口/邊緣,待 DOSBox 實測確認) | C(ebitan 另有 Esc 問題) |
+| U3 | 城鎮 NPC 沒原版多 | ebitan `worldmap.go:171` `if n.B2 < 4 { continue }` **丟棄無 BLS sprite 的 NPC**;C `dq3_scene.c` sprite cache 上限 8 種(`n_npc_spr < 8`),溢出者處理待查;原版實際 NPC 數待 DOSBox 實測 | **兩版**(機制不同) |
 
 ## Ground truth 資產
 
