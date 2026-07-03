@@ -36,13 +36,25 @@ R-3 不死鳥祠堂+六珠+飛行坐騎 ──(基礎;gate 終盤)
 - **驗收**:新遊戲→進酒場門→招募→隊伍成形;無示範隊殘留。
 - 模型:RE 定位=Opus+haiku(warp 截圖);實作=sonnet。
 
-### R-2 沙曼歐莎怪力魔 boss〔獨立中盤〕
-- **RE 定位**:沙曼歐莎城 CTY 號(txt05 自報 + cty_loc + warp 截圖);假國王 NPC 在頂層寢室 section/座標;
-  觸發機制=**夜晚 + 持拉之鏡0x61 + examine/USE 假國王**(釐清 byte4=44 是否即此，或為拉之鏡 USE 事件；
-  注意 CTY54 (8,2) byte4=44 已證=雪地草原 transform 老人，**非**此)。
-- **實作**:isNight() gate(✅ 已備)+ 持0x61 gate → 怪89(HP400)boss → 勝得變身杖0x62 + 真國王復位。
-- **驗收**:夜晚持鏡 examine 假國王 → 開戰 → 勝取變身杖;非夜/無鏡不觸發。
-- 模型:RE=Opus;實作=sonnet。
+### R-2 沙曼歐莎怪力魔 boss〔獨立中盤;RE spec 已定,2026-07-04〕
+
+**沙曼歐莎城 = CTY44**(rec71 自報 + `docs/maps/cty/CTY44.png`);**只有 5 個 section sec0-4**
+(先前誤寫 13 = ad-hoc parser 掃過界的垃圾;正確口徑=OpenTown/dq3_scene section 邊界檢查)。
+
+**已定案(可實作)**:
+- **假國王**:CTY44 **sec1 (14,6)** sprite=15 sub=0 **夜晚限定**(day 表 word0=0xffff 白天無人、night 表 word2 才有;
+  同格三筆記錄由 byte5 故事旗標 fl 決定載哪筆:fl=0x42 rec96「憤怒」/ fl=0x22 rec116「打呼」)。對上攻略「夜晚廚房後門→頂層寢室」。
+- **真國王**:CTY44 **sec4 (17,31)** sprite=15 sub=0 dlg=92(rec92「怪物奪走變身杖變成我的形體」)。sec3=牢獄(rec90 提示「拉之鏡在南方洞窟」)。
+- **文字序列**(txt05 逐字核對):rec96 未持鏡預設 / rec97「鏡中床上躺的是怪物」reveal / rec98「受死吧」→戰鬥 / rec99 戰後「假王消失、救真王、白天來臨」/ rec116 解決後打呼。
+- **Boss**:怪89 怪力魔 HP400 攻80 防180 速60 EXP2500 G105 不施咒。**獎勵 0x62 變身杖** + 假王消失 + 真王還原 + **強制切白天**(對齊 [0x526c],rec99 敘事線索)。
+
+**待定/待實測(誠實)**:
+- **reveal 觸發的確切 EXE 分支位址未反組譯到**:sub=0 NPC 的 talk dispatcher(0x6291→0x62e9)是純靜態印表機、無條件分支/戰鬥呼叫 → reveal 必是**另一條路徑**,最可能=「持拉之鏡從道具選單『使用』」的**位置相關 item-use**(比照既有 `DQ3_USE_AWAKEN/DRAIN/GAIA/FAIRYFLUTE` 家族)。⚠ 但那家族本身也是「經典機制+攻略驗證落地」非逐位址證實(docs/49 已反證 id 直接 cmp 分支不存在)。→ 實作比照此工程慣例(`DQ3_USE_MIRROR`:CTY44+sec1+面向(14,6)+夜晚+持0x61 → boss89 → 0x62+設後旗標),誠實度同既有家族;要逐位址證實需另撥一輪反組譯 item-use 選單分派。
+- **「後」旗標精確 bit index**:fl=0x22 是 flag id,需按 docs/60 公式(byte=id>>3, mask=0x80 ror(id&7))換算 [0x4f70] 的 byte/bit。
+- DOSBox 不可靠 → 以上靜態 RE + 資料交叉,未動態驗;實作後用 game_tester 或 host DOSBox 行為驗證。
+
+**實作(下週派 sonnet)**:`DQ3_USE_MIRROR` 位置 item-use(CTY44 sec1 面向(14,6)+isNight✅+持0x61)→ 怪89 boss → 勝給0x62+設後旗標+切白天+真王對話切換。isNight() 已備。
+- 模型:RE=Opus(已定 spec);實作=sonnet;行為驗證=game_tester/dump。
 
 ### R-3 不死鳥祠堂 + 六珠 gate + 飛行坐騎〔基礎大批,gate 終盤〕
 - **RE 定位**:不死鳥祠堂 CTY(諾阿尼魯北雪白陸地,txt03 + cty_loc 上層 + warp);祭壇 NPC 座標;
@@ -82,7 +94,7 @@ R-3 不死鳥祠堂+六珠+飛行坐騎 ──(基礎;gate 終盤)
 | 批 | RE 定位 | 實作 | 狀態 |
 |---|---|---|---|
 | R-1 露依達酒場 | ⬜ | ⬜ | 待 |
-| R-2 沙曼歐莎怪力魔 | 🔶 沙曼歐莎城=**CTY44**(rec71自報+13sec城堡)已定;假國王座標+拉之鏡USE reveal RE中 | ⬜ | RE 進行 |
+| R-2 沙曼歐莎怪力魔 | ✅ **spec 已定**:CTY44(5 sec)/假王 sec1(14,6)夜/真王 sec4(17,31)/怪89→0x62;reveal=位置item-use待實作 | ⬜ 下週派 | RE 完成 |
 | R-3 不死鳥+六珠+飛行 | ⬜ | ⬜ | 待 |
 | R-4 巴拉摩斯城+descend | ⬜ | ⬜ | 待(需 R-3)|
 | R-5 龍王城+終盤 wire+拔後門 | ⬜ | ⬜ | 待(需 R-4)|
