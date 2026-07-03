@@ -586,14 +586,24 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	}
 }
 
-// drawNumber 畫十進位數(digit glyph 0..9)。
-func drawNumber(rgba []byte, tx *dq3data.Text, x, y, val int, fg dq3data.Color) {
+// digitGlyphs 把整數轉十進位 glyph 序列(glyph 0..9 = 字元 '0'..'9',docs/03:64;val<0 視為 0)。
+// drawNumber 與對話插值 VAR_NUM(dialogue.go varGlyphs)共用同一套轉換,別各自重寫。
+func digitGlyphs(val int) []int {
 	if val < 0 {
 		val = 0
 	}
 	s := fmt.Sprintf("%d", val)
+	out := make([]int, len(s))
 	for i := 0; i < len(s); i++ {
-		drawGlyph(rgba, tx, x+i*dq3data.GlyphPx, y, int(s[i]-'0'), fg)
+		out[i] = int(s[i] - '0')
+	}
+	return out
+}
+
+// drawNumber 畫十進位數(digit glyph 0..9)。
+func drawNumber(rgba []byte, tx *dq3data.Text, x, y, val int, fg dq3data.Color) {
+	for i, gi := range digitGlyphs(val) {
+		drawGlyph(rgba, tx, x+i*dq3data.GlyphPx, y, gi, fg)
 	}
 }
 

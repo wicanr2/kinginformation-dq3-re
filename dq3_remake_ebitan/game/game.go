@@ -393,6 +393,9 @@ func (g *Game) scriptedTalk(byte4 int) {
 		g.flags[milestone] = true
 	}
 	g.dlg.Open(giveRec)
+	if give != 255 { // giveRec 若含 VAR_ITEM(0xfffa)→ 填實際道具名(Open 已重置 var,須在其後設)
+		g.setDlgVarItem(give)
+	}
 }
 
 // 取船劇情常數(main.c:57-90 DQ3_PORTOGA_*/DQ3_ITEM_PEPPER/DQ3_PORTOGA_REC_*,座標/rec/碼原封對齊)。
@@ -1551,6 +1554,8 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.cmd.tx = g.dlg.tx                                             // 命令窗標籤 glyph 也走同一字型
 	g.settings.tx = g.dlg.tx                                        // 設定選單標籤 glyph 也走同一字型
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
+	g.dlg.itemNames = g.shop.nameText                               // 對話插值 VAR_ITEM 用同一品名表(W1)
+	g.dlg.heroName = g.heroName                                     // 對話插值 VAR_NAME 用主角名(創角/讀檔後另行同步)
 	g.endText = dq3data.LoadText(fon, ld.read("ENDTXT.TXT"))        // 結局文本(破索瑪後捲動)
 	g.endSeq = -1                                                   // 結局未進行
 	g.openingIdx = -1                                               // 開場旁白未進行

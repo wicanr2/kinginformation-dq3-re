@@ -102,6 +102,7 @@ func (g *Game) newGameInput(in InputState) {
 			nf.stage, nf.ni.cursor = ngName, niCellOK
 		case confirmed:
 			g.heroName = append([]int(nil), nf.ni.nameBuf...)
+			g.dlg.heroName = g.heroName // 對話插值 VAR_NAME 同步(創角後 heroName 重新 assign,須重同步)
 			g.heroGender = gender
 			g.showTitle = false
 			g.startOpening() // 進主角家(sec4)+ 開場旁白(C-2)

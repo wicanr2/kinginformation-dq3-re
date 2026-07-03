@@ -13,7 +13,25 @@ const (
 	TxtEnd   = 0xffff // 記錄結束
 	txtVarLo = 0xffed // >= 此值 = 控制/插值占位(渲染為空白)
 	GlyphMax = 1476   // >= 此值不畫(非字模)
+
+	// 動態插值控制碼(docs/12/31/42;每個後接 +1 word 參數,須一併消耗)。
+	// 渲染時依目前變數 context 替換為實字(主角/受話者名 / 數值 / 道具名);未設則略過。
+	TxtVarIdx  = 0xffed // VAR_IDX:索引字串(依 [0x249d]/[0x249f])→ remake:名字後備
+	TxtVar0    = 0xfff5 // VAR0:變數子字串 variant 0(城鎮對話最常見)→ 名字
+	TxtVar7    = 0xfff6 // VAR7:變數子字串 variant 7 → 名字
+	TxtVarNum  = 0xfff9 // VAR_NUM:數值(金額等)→ 十進位字模(glyph 0..9)
+	TxtVarItem = 0xfffa // VAR_ITEM:道具名 → 道具名字模序列
+	TxtVarEnt  = 0xfffb // VAR_ENT:實體/隊員名 → 名字
 )
+
+// IsVarInsert:v 是否為六個已知動態插值控制碼之一(非換行/換頁/結束)。
+func IsVarInsert(v uint16) bool {
+	switch v {
+	case TxtVarIdx, TxtVar0, TxtVar7, TxtVarNum, TxtVarItem, TxtVarEnt:
+		return true
+	}
+	return false
+}
 
 // Text 是一個文字檔(共用 fon 字型)。
 type Text struct {

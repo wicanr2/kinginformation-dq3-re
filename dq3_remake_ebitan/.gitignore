@@ -21,3 +21,4 @@ android/gradlew.bat
 android/gradle/wrapper/
 android/local.properties
 _npc_dump/
+_var_dump/

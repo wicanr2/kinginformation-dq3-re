@@ -28,18 +28,33 @@ type Shop struct {
 	hits     hitList // 貨架列可點區塊,draw() 重建(P2 直接點選)
 }
 
+// itemNameGlyphs 取道具 code 的品名 glyph 序列(D3TXT00 rec=code+1;跳過控制/插值碼)。
+// drawItemName 與對話插值 VAR_ITEM(dialogue.go varGlyphs)共用同一套查表,別各自重寫。
+func itemNameGlyphs(t *dq3data.Text, code int) []int {
+	if t == nil {
+		return nil
+	}
+	rec := t.Record(code + 1)
+	if rec == nil {
+		return nil
+	}
+	out := make([]int, 0, len(rec))
+	for _, v := range rec {
+		if v >= dq3data.GlyphMax { // 控制/插值碼跳過
+			continue
+		}
+		out = append(out, int(v))
+	}
+	return out
+}
+
 // drawItemName 畫道具名(D3TXT00 rec=code+1 的 glyph 序列)到 (x,y)。
 func (s *Shop) drawItemName(rgba []byte, x, y, code int, fg dq3data.Color) {
 	if s.nameText == nil {
 		return
 	}
-	col := 0
-	for _, v := range s.nameText.Record(code + 1) {
-		if v >= dq3data.GlyphMax { // 控制/插值碼跳過
-			continue
-		}
-		drawGlyph(rgba, s.nameText, x+col*dq3data.GlyphPx, y, int(v), fg)
-		col++
+	for i, v := range itemNameGlyphs(s.nameText, code) {
+		drawGlyph(rgba, s.nameText, x+i*dq3data.GlyphPx, y, v, fg)
 	}
 }
 
