@@ -168,13 +168,21 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 	sc.dlgText = dq3data.LoadText(rd("D3TXT00.FON"), rd("D3TXT0"+string(rune('0'+bank))+".TXT"))
 	sprCache := map[int]*dq3data.CharSprite{}
 	for _, n := range tw.NPCs {
-		if n.B2 < 4 {
-			continue
+		// b2<4:原版 sub_0xffc3(file 0xffc3)對 NPC 一律走 bp=2 分支、無條件 `ax-=4`
+		// 再 seek (ax)*0xf00+6 到 DQ3MAN.BLS——b2<4 時 ax-4 對 u16 underflow,
+		// seek 落在檔案(222726B)外 240MB+,INT21h/AH=3Fh 讀 0 byte,頁緩衝維持
+		// stale 內容(未定義)。反組譯已證實**不是**走 DQ3LIN.BLS(該檔另有專用
+		// loader,file 0x13387,固定 18-subframe 表,與這條 NPC path 無關,見
+		// docs/68)。原版行為 = undefined,remake 不硬猜、不丟棄:同 b2<4 NPC
+		// 共用 entry 0(DQ3MAN.BLS 第一個角色)當忠實但誠實標示的 fallback。
+		b2 := n.B2
+		if b2 < 4 {
+			b2 = 4 // fallback → entry 0
 		}
-		spr, ok := sprCache[n.B2]
+		spr, ok := sprCache[b2]
 		if !ok {
-			spr = dq3data.LoadCharSprite(manBLS, (n.B2-4)*4)
-			sprCache[n.B2] = spr
+			spr = dq3data.LoadCharSprite(manBLS, (b2-4)*4)
+			sprCache[b2] = spr
 		}
 		sc.npcs = append(sc.npcs, npcInst{x: n.X, y: n.Y, ctrl: n.Ctrl, b4: n.B4, spr: spr})
 	}

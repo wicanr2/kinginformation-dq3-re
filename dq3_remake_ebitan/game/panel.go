@@ -32,6 +32,24 @@ func (g *Game) drawStatus(rgba []byte, white dq3data.Color) {
 	drawNumber(rgba, g.dlg.tx, x, 210, g.progressStage(), yellow)
 }
 
+// drawCmdStatus:命令窗開啟時左下同時顯示的 HP/MP/等級小狀態窗(DOSBox oracle:
+// dosbox/verify_open_21_after_space.png,黑底白框 3 列 H/M/勇+數值)。glyph 22='H'、
+// 27='M'、106='勇'(對齊 classNames[0][0] 勇者職業首字,借代等級列標籤)。
+func (g *Game) drawCmdStatus(rgba []byte, white dq3data.Color) {
+	const gpx = dq3data.GlyphPx
+	const rh = 18
+	x, y := 48, ScreenH-3*rh-gpx-16
+	w, h := 5*gpx, 3*rh+gpx
+	fillBox(rgba, x-gpx/2, y-gpx/2, w, h, white)
+	level, _, _, _, _ := g.heroStats()
+	drawGlyph(rgba, g.dlg.tx, x, y, 22, white) // H
+	drawNumber(rgba, g.dlg.tx, x+2*gpx, y, g.heroHP, white)
+	drawGlyph(rgba, g.dlg.tx, x, y+rh, 27, white) // M
+	drawNumber(rgba, g.dlg.tx, x+2*gpx, y+rh, g.heroMP, white)
+	drawGlyph(rgba, g.dlg.tx, x, y+2*rh, 106, white) // 勇(等級列)
+	drawNumber(rgba, g.dlg.tx, x+2*gpx, y+2*rh, level, white)
+}
+
 // drawItems:持有道具清單(品名 = D3TXT00 rec=code+1),游標可選 → A 使用。空 → 不列。
 func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)

@@ -97,7 +97,7 @@ bx = si + 0x180           ; ★ 遮罩在資料 +0x180(384)
 |---|---|---|---|
 | **DQ3MST.BLS** | 120 / 30 角色 | **主角 + 各職業 sprite(勇者/女勇者/各職業男女)** | `docs/sprites/dq3mst_charsheet.png` |
 | **DQ3MAN.BLS** | 232 / 58 角色 | **NPC / 村民 / 國王 / 長老 / 士兵**(城鎮居民)| `docs/sprites/dq3man_charsheet.png` |
-| DQ3LIN.BLS | 96 | (待辨識:可能載具 / 龍 / 大型) | — |
+| DQ3LIN.BLS | 96 | 12 隻小人(dump 已確認,`scratch_re/lindump/lin_ch00..11.png`);由**專用固定 18-subframe loader**(file 0x13387,handle [0x2604],查表 index 陣列 @ 0x9f1)載入,**非**城鎮 NPC 一般 `b2` key 路徑,見 docs/68 C-3 定錨結論 | `scratch_re/lindump/`(gitignored,未入庫) |
 
 - **勇者(男)= DQ3MST.BLS entry 0(c0)**:黑髮金冠帶紅袍,front/back 與 oracle 完全吻合
   (`tools/` 對照圖)。先前 remake 誤用 DQ3MAN.BLS entry16(c4:紅蝴蝶結藍裙的女性村民)當主角。

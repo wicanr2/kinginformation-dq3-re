@@ -16,7 +16,9 @@ type Town struct {
 }
 
 // NPC 是城鎮裡的一個角色。移植自 dq3_scene_load_npcs 的 7-byte record。
-// B2 = sprite key(DQ3MAN.BLS entry_base=(B2-4)*4;B2<4 無對應 BLS 角色)。
+// B2 = sprite key(DQ3MAN.BLS entry_base=(B2-4)*4)。B2<4:原版 sub_0xffc3 對 NPC 一律
+// (key-4)*0xf00+6 seek DQ3MAN.BLS,B2<4 時 u16 underflow → seek 超出檔案 240MB+ →
+// 讀 0 byte → 頁緩衝殘留舊資料(undefined,非 DQ3LIN.BLS,詳見 docs/68)。
 type NPC struct {
 	X, Y  int
 	B2    int // sprite key

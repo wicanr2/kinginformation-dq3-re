@@ -1113,9 +1113,10 @@ func (g *Game) renderFrame() {
 	if len(sc.pal) > 15 {
 		white = sc.pal[15]
 	}
-	if g.cmd.open { // 命令窗(左上)
+	if g.cmd.open { // 命令窗(左上)+ 左下 HP/MP/等級小窗(oracle:verify_open_21_after_space.png)
 		yellow := dq3data.Color{R: 255, G: 224, B: 32}
 		g.cmd.draw(g.rgba, white, yellow, 48, 32)
+		g.drawCmdStatus(g.rgba, white)
 	}
 	if g.dlg.open { // 對話框
 		g.dlg.draw(g.rgba, white)
