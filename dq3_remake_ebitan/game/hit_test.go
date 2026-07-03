@@ -1,6 +1,7 @@
 package game
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/config"
@@ -93,44 +94,77 @@ func TestTavernAlnumGridHits(t *testing.T) {
 	white := dq3data.Color{R: 248, G: 248, B: 248}
 	tv.draw(rgba, white)
 
-	if len(tv.hits) != niCells {
-		t.Fatalf("英數格盤 draw 後 hits 應有 %d 筆,得 %d", niCells, len(tv.hits))
+	if len(tv.ni.hits) != niCells {
+		t.Fatalf("英數格盤 draw 後 hits 應有 %d 筆,得 %d", niCells, len(tv.ni.hits))
 	}
 	// cell 10('A',col1,row1):x=64+1*40=104,y=96+1*22=118
-	if idx := tv.hits.at(106, 120); idx != 10 {
+	if idx := tv.ni.hits.at(106, 120); idx != 10 {
 		t.Errorf("點 (106,120) 應命中 cell10('A'),得 %d", idx)
 	}
 	// 點格後應可直接經 input() 附加該字元
 	if _, closed := tv.input(InputState{DirEdge: -1, Tapped: true, TapX: 106, TapY: 120}); closed {
 		t.Fatal("點英數格不應關閉酒館")
 	}
-	if len(tv.nameBuf) != 1 || tv.nameBuf[0] != niCellGlyph(10) {
-		t.Errorf("點 cell10 應附加對應字元到 nameBuf,得 %v", tv.nameBuf)
+	if len(tv.ni.nameBuf) != 1 || tv.ni.nameBuf[0] != niCellGlyph(10) {
+		t.Errorf("點 cell10 應附加對應字元到 nameBuf,得 %v", tv.ni.nameBuf)
 	}
-	if tv.cursor != 10 {
-		t.Errorf("點格應把游標移到該格,得 cursor=%d", tv.cursor)
+	if tv.ni.cursor != 10 {
+		t.Errorf("點格應把游標移到該格,得 cursor=%d", tv.ni.cursor)
 	}
 }
 
 // TestZhuyinBoardTapMovesAndSelects:注音盤(42 格)點格應移游標到該格並等同確定(選一個聲/介/韻/調)。
 func TestZhuyinBoardTapMovesAndSelects(t *testing.T) {
-	tv := &Tavern{tx: &dq3data.Text{}, active: true, stage: tavName, nameZhu: true}
-	tv.zh.Init()
+	tv := &Tavern{tx: &dq3data.Text{}, active: true, stage: tavName}
+	tv.ni.nameZhu = true
+	tv.ni.zh.Init()
 	rgba := newHitTestRGBA()
 	white := dq3data.Color{R: 248, G: 248, B: 248}
 	tv.draw(rgba, white)
 
-	if len(tv.hits) == 0 {
+	if len(tv.ni.hits) == 0 {
 		t.Fatal("注音盤 draw 後應有 hits")
 	}
 	// cell0(聲母 ㄅ):x=64,y=96
-	idx := tv.hits.at(66, 98)
+	idx := tv.ni.hits.at(66, 98)
 	if idx != 0 {
 		t.Fatalf("點 (66,98) 應命中 cell0,得 %d", idx)
 	}
 	tv.input(InputState{DirEdge: -1, Tapped: true, TapX: 66, TapY: 98})
-	if tv.zh.Sh != 1 {
-		t.Errorf("點注音盤 cell0(聲母)應選定 Sh=1,得 %d", tv.zh.Sh)
+	if tv.ni.zh.Sh != 1 {
+		t.Errorf("點注音盤 cell0(聲母)應選定 Sh=1,得 %d", tv.ni.zh.Sh)
+	}
+}
+
+// TestNewGameMenuDrawHits:標題主選單(遊戲開始/載入進度)draw 後 hits 對齊幾何;點「載入進度」
+// 應移游標並等同確定(經 newGameInput 觸發 g.Load(),FLOW-GAP A2 的 P2 直接點選路徑)。
+// 幾何取自 newgame.go draw():bx=190,by=140,bw=200;row i 的 x=bx+60=250,y=by+40+i*22;
+// hits.add(x-18,y-3,120,18,i)。
+func TestNewGameMenuDrawHits(t *testing.T) {
+	g := &Game{input: newInput()}
+	g.dlg.tx = &dq3data.Text{}
+	g.showTitle = true
+	g.newGame.stage = ngMenu
+	rgba := newHitTestRGBA()
+	white := dq3data.Color{R: 248, G: 248, B: 248}
+	yellow := dq3data.Color{R: 255, G: 224, B: 32}
+	g.newGame.draw(rgba, g.dlg.tx, white, yellow)
+
+	if len(g.newGame.hits) != ngOptCount {
+		t.Fatalf("主選單 draw 後 hits 應有 %d 筆,得 %d", ngOptCount, len(g.newGame.hits))
+	}
+	// index1(載入進度):x=190+60=250,y=140+40+22=202 → box (232,199,120,18)
+	idx := g.newGame.hits.at(240, 205)
+	if idx != ngOptLoad {
+		t.Fatalf("點 (240,205) 應命中 index%d(載入進度),得 %d", ngOptLoad, idx)
+	}
+	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "menu-tap.json")) // 無存檔,Load() 靜默略過
+	g.newGameInput(InputState{DirEdge: -1, Tapped: true, TapX: 240, TapY: 205})
+	if g.newGame.cursor != ngOptLoad {
+		t.Errorf("點列應移游標到 ngOptLoad,得 %d", g.newGame.cursor)
+	}
+	if g.showTitle {
+		t.Error("點「載入進度」應等同確定,離開標題流程")
 	}
 }
 

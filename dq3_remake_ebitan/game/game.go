@@ -183,11 +183,14 @@ type Game struct {
 	inventory      []int     // 持有道具 id
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
-	showTitle      bool   // 標題畫面(A/Enter 開始)
+	showTitle      bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
 	titlePix       []uint8
 	titlePal       []dq3data.Color
 	cfg            config.Config // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
 	settings       Settings      // 設定選單 modal(標題畫面按 S 開)
+	newGame        NewGameFlow   // 標題主選單 + 主角命名/性別創建 modal(FLOW-GAP A2/A3/A4)
+	heroName       []int         // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
+	heroGender     int           // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
 	heroExp      uint32
 	heroGold     int
@@ -428,6 +431,8 @@ func (g *Game) openFacility(k int) {
 // (不必跑完整 Update()/RunGame,只驗證「狀態 → 標籤」這條轉移邏輯本身)。
 func (g *Game) updateTouchContext() {
 	switch {
+	case g.showTitle && g.newGame.stage == ngName:
+		g.input.touch.SetContext("注") // 主角命名(英數↔注音切換,同酒館命名)
 	case g.showTitle:
 		g.input.touch.SetContext("設定")
 	case g.tavern.active && g.tavern.stage == tavName:
@@ -442,18 +447,15 @@ func (g *Game) Update() error {
 	in := g.input.Poll()   // 抽象輸入(鍵盤 + 觸控合流)
 	moved := false
 
-	// 標題畫面:A/Enter 開始;S 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)
+	// 標題畫面:主選單(遊戲開始/載入進度)→ 主角命名(必填)→ 性別 → 開始新遊戲(newgame.go)。
+	// S/CtxTap 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)。
 	if g.showTitle {
 		if g.settings.open {
 			g.settingsInput(in)
 			g.renderFrame()
 			return nil
 		}
-		if in.Settings || in.CtxTap {
-			g.settings.Open()
-		} else if in.Confirm || in.Enter {
-			g.showTitle = false
-		}
+		g.newGameInput(in)
 		g.renderFrame()
 		return nil
 	}
@@ -1064,7 +1066,13 @@ func (g *Game) renderFrame() {
 			o := i * 4
 			g.rgba[o], g.rgba[o+1], g.rgba[o+2], g.rgba[o+3] = c.R, c.G, c.B, 255
 		}
-		g.settings.draw(g.rgba, g.cfg) // 設定選單(疊在標題上;未開時 no-op)
+		white := dq3data.Color{R: 255, G: 255, B: 255}
+		if len(g.titlePal) > 15 {
+			white = g.titlePal[15]
+		}
+		yellow := dq3data.Color{R: 255, G: 224, B: 32}
+		g.newGame.draw(g.rgba, g.dlg.tx, white, yellow) // 主選單/命名/性別(ngSplash 無疊繪)
+		g.settings.draw(g.rgba, g.cfg)                  // 設定選單(可疊其上;未開時 no-op)
 		g.frame.WritePixels(g.rgba)
 		return
 	}
@@ -1314,7 +1322,8 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 		}
 	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
-	_ = g.Load()     // 有存檔則續玩(冒險之書)
+	// 注意:不再於此自動續玩——存檔改由標題主選單「載入進度」明確觸發(newgame.go newGameInput
+	// ngOptLoad 分支),對齊 docs/36 開場流程(遊戲開始 = 全新主角,不會被舊存檔悄悄蓋掉)。
 	applyDebugEnv(g) // debug 環境變數可覆蓋(此時 music/frame 已就緒)
 	// 起始配樂(依最終場景;debug 進城已自行換軌)
 	if !g.inTown {
@@ -1373,11 +1382,11 @@ func applyDebugEnv(g *Game) {
 	if v := os.Getenv("DQ3_TAVERN"); v != "" { // debug:起手開酒館(截圖驗證)
 		g.tavern.open()
 		if v == "name" { // 直接跳命名格盤
-			g.tavern.stage, g.tavern.cursor, g.tavern.nameBuf = tavName, 0, []int{15, 16, 17}
+			g.tavern.stage, g.tavern.ni.cursor, g.tavern.ni.nameBuf = tavName, 0, []int{15, 16, 17}
 		}
 		if v == "zhu" { // 直接跳注音盤
-			g.tavern.stage, g.tavern.nameZhu = tavName, true
-			g.tavern.zh.Init()
+			g.tavern.stage, g.tavern.ni.nameZhu = tavName, true
+			g.tavern.ni.zh.Init()
 		}
 	}
 	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證)

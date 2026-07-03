@@ -9,20 +9,22 @@ import (
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
 type saveState struct {
-	HeroExp   uint32    `json:"exp"`
-	HeroHP    int       `json:"hp"`
-	HeroMP    int       `json:"mp"`
-	HeroGold  int       `json:"gold"`
-	Inventory []int     `json:"inv"`
-	Equip     [4]int    `json:"eq"`
-	Comps     []compSav `json:"comps"`
-	Flags     []int     `json:"flags"`
-	ShipOwned bool      `json:"shipowned"`
-	ShipX     int       `json:"shipx"`
-	ShipY     int       `json:"shipy"`
-	PX        int       `json:"px"`
-	PY        int       `json:"py"`
-	InTown    bool      `json:"town"`
+	HeroExp    uint32    `json:"exp"`
+	HeroHP     int       `json:"hp"`
+	HeroMP     int       `json:"mp"`
+	HeroGold   int       `json:"gold"`
+	HeroName   []int     `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
+	HeroGender int       `json:"herogender"`         // 0=男 1=女
+	Inventory  []int     `json:"inv"`
+	Equip      [4]int    `json:"eq"`
+	Comps      []compSav `json:"comps"`
+	Flags      []int     `json:"flags"`
+	ShipOwned  bool      `json:"shipowned"`
+	ShipX      int       `json:"shipx"`
+	ShipY      int       `json:"shipy"`
+	PX         int       `json:"px"`
+	PY         int       `json:"py"`
+	InTown     bool      `json:"town"`
 }
 
 // compSav 是一名同伴的存檔資料。
@@ -44,6 +46,7 @@ func decodeSave(b []byte) (saveState, error) {
 func (g *Game) snapshot() saveState {
 	return saveState{
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroGold: g.heroGold,
+		HeroName: append([]int(nil), g.heroName...), HeroGender: g.heroGender,
 		Inventory: append([]int(nil), g.inventory...),
 		Equip:     g.equip,
 		Comps:     compsToSav(g.companions),
@@ -74,6 +77,7 @@ func compsToSav(ms []*Member) []compSav {
 
 func (g *Game) restore(s saveState) {
 	g.heroExp, g.heroHP, g.heroMP, g.heroGold = s.HeroExp, s.HeroHP, s.HeroMP, s.HeroGold
+	g.heroName, g.heroGender = append([]int(nil), s.HeroName...), s.HeroGender
 	g.heroInit = true
 	g.inventory = append([]int(nil), s.Inventory...)
 	g.equip = s.Equip
