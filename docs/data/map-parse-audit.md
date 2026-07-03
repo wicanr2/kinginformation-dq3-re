@@ -188,3 +188,17 @@ Go `BLK.Tile`(`blk.go:38`:同樣邊界檢查回空白 tile)。兩邊都會把這
 - 時間盒內未覆蓋:逐城反查「合法轉場表 dest_sec 是否曾指到垃圾 section index」(項 1 的殘留風險,
   待人工);5–8 個代表城的完整逐 section NPC/事件座標範圍人工複核(改用全 89 城機器對帳取代,
   覆蓋率更高但省略了逐城人工看圖驗證這一步)。
+
+## NPC 數重查結論(2026-07-03,Opus inline,回應使用者疑慮)
+
+用 raw record count vs 界內 vs ebitan 載入數,逐代表城 + 全 CTY 掃:
+
+- **正常城鎮 section(raw≤31):ebitan 載入數 == 原始 record 數 == 界內數,完全相等** —— C-3 拔 `b2<4`
+  修對了,主城 NPC 數已正確(使用者「NPC 沒那麼多」症狀已解)。
+- **bug #2(NPC 32-cap 分歧)結案:非真 bug**。raw>32 只出現在 14 個 section,幾乎全是無 count 前綴
+  誤讀的「垃圾/不可達 section」(CTY04 sec10 raw=128、CTY90 sec13 raw=129…)。C 砍 32 是防呆,
+  真 section ebitan 不設限更忠實;主城全 ≤31,兩者一致。
+- **真正殘留 = 夜間 NPC**:68 個 section 日表≠夜表,ebitan 恆用日表 → 夜晚 NPC 少一批
+  (CTY00 sec0 日24→夜6)。歸 **C-5b 晝夜系統**,非計數錯誤。
+
+→ 不需額外 subagent;主城 NPC 數已對,夜間差異併入 C-5b。
