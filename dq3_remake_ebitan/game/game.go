@@ -374,6 +374,10 @@ func (g *Game) scriptedTalk(byte4 int) {
 		g.dlg.Open(beforeRec)
 		return
 	}
+	if give != 255 && g.hasItem(give) { // 已持有 give_item → 不重給(對齊 C dq3_inv_find<0;修 milestone==0 列無限複製)
+		g.dlg.Open(afterRec)
+		return
+	}
 	if give != 255 { // 給物 + 通知
 		g.inventory = append(g.inventory, give)
 		g.noticeCode, g.noticeTimer = give, 120
