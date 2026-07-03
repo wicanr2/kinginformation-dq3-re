@@ -11,15 +11,26 @@ const (
 	Revive
 )
 
+// Target:傷害咒的目標範圍(移植 dq3_spelldef.c DQ3_TG_*)。Heal 不用此欄(固定治己方,見
+// battle.go execSpell)。ENEMY1=單體(玩家端簡化為「指向第一個存活敵」,原版隨機選);
+// Group=全體存活敵(原版 TG_GROUP/TG_ALL 在玩家咒文的敵方視角下等價,均全體命中)。
+type Target int
+
+const (
+	TargetSingle Target = iota // DQ3_TG_ENEMY1
+	TargetGroup                // DQ3_TG_GROUP / DQ3_TG_ALL(玩家咒對敵方視角等價,皆全體)
+)
+
 // Learn:某職業系在 level 級習得咒名 rec。
 type Learn struct {
 	Level, Rec int
 }
 
-// Def:咒文施放 descriptor(rec/MP/base 威力/種類)。target 省略(port 單人單敵)。
+// Def:咒文施放 descriptor(rec/MP/base 威力/種類/目標範圍)。移植 dq3_spelldef.c。
 type Def struct {
 	Rec, MP, Base int
 	Kind          Kind
+	Target        Target // 僅 Dmg 咒有意義(對齊 W2 多敵戰鬥:單體咒指定目標、群體咒全部命中)
 }
 
 // 勇者系習得表(dq3_school_hero,18 咒,按等級)。
@@ -30,23 +41,25 @@ var heroSchool = []Learn{
 }
 
 // 可施放咒文 descriptor(dq3_spelldef 的傷害/回復咒;輔助咒無 def → 戰鬥不列)。
+// Target 對齊 src/dq3_spelldef.c(DQ3_TG_ENEMY1→TargetSingle;DQ3_TG_GROUP/DQ3_TG_ALL→TargetGroup,
+// 玩家咒對敵方視角下皆「全體存活敵」等價)。
 var defs = map[int]Def{
-	121: {121, 2, 10, Dmg},    // 美拉
-	122: {122, 6, 80, Dmg},    // 美拉米
-	123: {123, 10, 180, Dmg},  // 美拉宙瑪
-	124: {124, 4, 20, Dmg},    // 吉拉
-	125: {125, 6, 35, Dmg},    // 比吉拉瑪
-	126: {126, 10, 100, Dmg},  // 比吉拉肯
-	127: {127, 5, 20, Dmg},    // 伊歐
-	128: {128, 8, 60, Dmg},    // 伊歐拉
-	129: {129, 15, 140, Dmg},  // 伊歐那順
-	130: {130, 3, 30, Dmg},    // 希亞多
-	131: {131, 5, 50, Dmg},    // 希亞達可
-	132: {132, 8, 70, Dmg},    // 希亞達依恩
-	161: {161, 3, 30, Heal},   // 荷依米
-	162: {162, 5, 85, Heal},   // 比荷依米
-	163: {163, 7, 255, Heal},  // 比荷瑪
-	165: {165, 36, 255, Heal}, // 比荷瑪順
+	121: {121, 2, 10, Dmg, TargetSingle},    // 美拉
+	122: {122, 6, 80, Dmg, TargetSingle},    // 美拉米
+	123: {123, 10, 180, Dmg, TargetSingle},  // 美拉宙瑪
+	124: {124, 4, 20, Dmg, TargetGroup},     // 吉拉
+	125: {125, 6, 35, Dmg, TargetGroup},     // 比吉拉瑪
+	126: {126, 10, 100, Dmg, TargetGroup},   // 比吉拉肯
+	127: {127, 5, 20, Dmg, TargetGroup},     // 伊歐
+	128: {128, 8, 60, Dmg, TargetGroup},     // 伊歐拉
+	129: {129, 15, 140, Dmg, TargetGroup},   // 伊歐那順
+	130: {130, 3, 30, Dmg, TargetSingle},    // 希亞多
+	131: {131, 5, 50, Dmg, TargetGroup},     // 希亞達可
+	132: {132, 8, 70, Dmg, TargetGroup},     // 希亞達依恩
+	161: {161, 3, 30, Heal, TargetSingle},   // 荷依米
+	162: {162, 5, 85, Heal, TargetSingle},   // 比荷依米
+	163: {163, 7, 255, Heal, TargetSingle},  // 比荷瑪
+	165: {165, 36, 255, Heal, TargetSingle}, // 比荷瑪順
 }
 
 // 僧侶系(24)/ 魔法系(31)習得表(自 dq3_school_priest/mage)。

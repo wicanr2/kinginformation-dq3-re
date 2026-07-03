@@ -24,17 +24,17 @@ func TestZomaLightOrbWeaken(t *testing.T) {
 	if !full.start(0x7c, 1, hp, nil) {
 		t.Fatal("索瑪開戰失敗")
 	}
-	if full.enemyAtk != int(st.Atk) || full.enemyDef != int(st.Def) {
-		t.Errorf("無光之珠應全力:atk=%d/%d def=%d/%d", full.enemyAtk, st.Atk, full.enemyDef, st.Def)
+	if full.enemies[0].atk != int(st.Atk) || full.enemies[0].def != int(st.Def) {
+		t.Errorf("無光之珠應全力:atk=%d/%d def=%d/%d", full.enemies[0].atk, st.Atk, full.enemies[0].def, st.Def)
 	}
 
 	// 持光之珠 → 弱化 atk/3 def/4,旗標清
 	weak := &Battle{mons: mons, shp: full.shp}
 	weak.lightOrb = true
 	weak.start(0x7c, 1, hp, nil)
-	if weak.enemyAtk != int(st.Atk)/3 || weak.enemyDef != int(st.Def)/4 {
+	if weak.enemies[0].atk != int(st.Atk)/3 || weak.enemies[0].def != int(st.Def)/4 {
 		t.Errorf("光之珠弱化錯:atk=%d(want %d) def=%d(want %d)",
-			weak.enemyAtk, int(st.Atk)/3, weak.enemyDef, int(st.Def)/4)
+			weak.enemies[0].atk, int(st.Atk)/3, weak.enemies[0].def, int(st.Def)/4)
 	}
 	if weak.lightOrb {
 		t.Error("光之珠用畢應清旗標")

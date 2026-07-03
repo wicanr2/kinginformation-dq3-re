@@ -1155,7 +1155,7 @@ func (g *Game) heroMaxMP() int {
 }
 func (g *Game) heroSpells() []int { return spell.HeroKnown(stats.LevelForExp(0, g.heroExp)) }
 
-// startEncounter:從阿里阿罕周邊弱怪池挑一隻有 sprite 的,開戰 + 切戰鬥音樂。
+// startEncounter:從阿里阿罕周邊弱怪池挑一隻有 sprite 的,依出現權重算群量,開戰 + 切戰鬥音樂。
 func (g *Game) startEncounter() {
 	level, maxHP, atk, def, agi := g.heroStats()
 	maxMP := g.heroMaxMP()
@@ -1169,11 +1169,52 @@ func (g *Game) startEncounter() {
 	g.battle.showInfo = g.cfg.CombatInfo
 	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
 	for _, i := range rand.Perm(len(pool)) {
-		if g.battle.start(pool[i], int64(g.anim)*2654+1, hp, comps) {
+		monID := pool[i]
+		count := g.encounterGroupCount(monID)
+		if g.battle.startGroup(monID, count, int64(g.anim)*2654+1, hp, comps) {
 			g.music.Play(trackBattle)
 			return
 		}
 	}
+}
+
+// 遭遇群量演算法(docs/13 encounter_build_group,sub_a86d):戰鬥點數預算 38、
+// 候選怪 D3MNS +0x28 出現權重,maxN=floor(38/weight)、實際隻數 1..maxN 擲亂數、群上限 8。
+// W2(docs/72 A3)範圍:單種同種群戰;混群(不同種同場)登記待辦,未做。
+const (
+	encounterBudget   = 38 // [0x2513] 戰鬥點數預算
+	encounterGroupCap = 8  // [0x231f] 群隻數上限
+)
+
+// spawnGroupMax 依出現權重算群量上限:floor(budget/weight),夾在 [1, encounterGroupCap];
+// weight<=0(非群戰候選/無資料)→ 1。抽成純函式方便邊界值單元測試(權重極小 clip 到群上限、
+// 權重過大 floor 為 0 需保底 1)。
+func spawnGroupMax(weight int) int {
+	if weight <= 0 {
+		return 1
+	}
+	maxN := encounterBudget / weight
+	if maxN < 1 {
+		maxN = 1
+	}
+	if maxN > encounterGroupCap {
+		maxN = encounterGroupCap
+	}
+	return maxN
+}
+
+// encounterGroupCount 依 monID 的出現權重(D3MNS +0x28)算本場實際隻數(1..maxN 均勻擲值)。
+// 無怪物資料 → 單隻。用 g.prng(已於 NewGame 設種子的通用確定性 RNG,同祈禱之戒判定共用一條狀態)
+// 擲值,不占用戰鬥自身 RNG(那個要等 startGroup 決定隻數後才依 seed 開新序列)。
+func (g *Game) encounterGroupCount(monID int) int {
+	if g.battle.mons == nil {
+		return 1
+	}
+	st, ok := g.battle.mons.Stat(monID)
+	if !ok {
+		return 1
+	}
+	return 1 + g.prng.Next(spawnGroupMax(int(st.SpawnWeight)))
 }
 
 // startBossBattle:對指定怪 monID 開一場戰鬥(索瑪等 boss)。索瑪(0x7c)依背包光之珠設弱化旗標。
@@ -1696,15 +1737,19 @@ func applyDebugEnv(g *Game) {
 			g.tavern.ni.zh.Init()
 		}
 	}
-	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證)
+	if r := os.Getenv("DQ3_BATTLE"); r != "" { // debug:起手開一場戰鬥(截圖驗證);DQ3_BATTLE_N=群量(預設1)
 		var id int
 		if _, e := fmt.Sscanf(r, "%d", &id); e == nil {
+			n := 1
+			if nr := os.Getenv("DQ3_BATTLE_N"); nr != "" {
+				fmt.Sscanf(nr, "%d", &n)
+			}
 			level, maxHP, atk, def, agi := g.heroStats()
 			mp := g.heroMaxMP()
 			g.heroHP, g.heroMP = maxHP, mp
 			g.battle.showInfo = g.cfg.CombatInfo
 			g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
-			g.battle.start(id, 1, heroParams{level: level, curHP: maxHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
+			g.battle.startGroup(id, n, 1, heroParams{level: level, curHP: maxHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 				mp: mp, maxMP: mp, spells: g.heroSpells()}, g.buildCompanionActors())
 			if os.Getenv("DQ3_SPELLMENU") != "" && len(g.battle.spells) > 0 {
 				g.battle.cursor, g.battle.phase = bcSpell, phSpell // 開咒文子選單

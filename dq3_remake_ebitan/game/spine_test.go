@@ -68,7 +68,7 @@ func TestFullSpine(t *testing.T) {
 	}
 	if g.battle.result != 1 {
 		t.Fatalf("lv10 勇者+隊伍對起始弱怪應勝,得 result=%d(%d 回合後敵HP=%d 我方HP=%d)",
-			g.battle.result, turns, g.battle.enemyHP, g.battle.heroHP)
+			g.battle.result, turns, g.battle.enemies[0].hp, g.battle.heroHP)
 	}
 	gotExp, gotGold := g.battle.gotExp, g.battle.gotGold
 	g.onBattleEnd()

@@ -27,6 +27,22 @@ var battleCmdLabels = [bcN][2]int{{107, 207}, {629, 630}, {203, 204}, {402, 1354
 const herbCode = 0x41 // 藥草 item id
 const herbHeal = 30   // DQ3_HERB_HEAL
 
+// MaxEnemies:一場戰鬥敵群上限(對齊 C MAXE=8、docs/13 encounter_build_group 群量上限)。
+const MaxEnemies = 8
+
+// enemyUnit 是群戰中一隻敵的即時狀態。W2(docs/72 A3):同種群戰,故 monID/atk/def 目前組內
+// 皆同值(對齊 C ehp[MAXE] 陣列 + 共用 eatk/edef/spr);逐隻獨立只留 hp/fled,monID/atk/def
+// 保留逐隻欄位是為將來混群(W3+)鋪路,非本批要做。
+type enemyUnit struct {
+	monID    int
+	hp, max  int
+	atk, def int  // 有效攻/防(索瑪+光之珠弱化後之值)
+	fled     bool // 本場已逃走(不計入擊殺數→經驗/金錢排除,對齊 C g_fled)
+	status   int  // 保留給 W3(狀態/buff);本批不實作效果
+}
+
+func (e *enemyUnit) alive() bool { return e.hp > 0 && !e.fled }
+
 type battlePhase int
 
 const (
@@ -47,13 +63,10 @@ type Battle struct {
 	bg       *[dq3data.PackBGH][dq3data.PackBGW]uint8 // 解碼後背景(草原 page22)
 
 	active      bool
-	monID       int
-	spr         *dq3data.MonsterSprite
-	enemyHP     int
-	enemyMax    int
-	enemyAtk    int  // 敵有效攻(索瑪+光之珠時弱化)
-	enemyDef    int  // 敵有效防(同上)
-	lightOrb    bool // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
+	monID       int                    // 群組代表種 id(同種群戰,全組共用;name 查詢/0x7c 判斷用此)
+	spr         *dq3data.MonsterSprite // 群組共用 sprite(同種群戰,W2 範圍)
+	enemies     []enemyUnit            // 敵群(N 隻,docs/72 A3;單敵 = 1 元素陣列)
+	lightOrb    bool                   // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
 	heroHP      int
 	heroMax     int
 	heroAtk     int
@@ -117,8 +130,15 @@ type heroParams struct {
 	spells                             []int // 已學可施放咒文 rec
 }
 
-// start 開一場戰鬥(monID + 主角數值 + 同伴)。跳過空 sprite 的怪。
+// start 開一場單敵戰鬥(monID + 主角數值 + 同伴)。等同 startGroup(monID, 1, …)。
 func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActor) bool {
+	return b.startGroup(monID, 1, seed, hp, comps)
+}
+
+// startGroup 開一場 N 隻同種怪的群戰(docs/72 A3)。count 夾在 [1, MaxEnemies]。跳過空 sprite 的怪。
+// HP 上限對齊 C dq3_battlescene_run:「單一擲值套全組」(同種同 HP 上限,非逐隻各擲),
+// 故 N=1 時的亂數序列與舊版單敵 start() 完全等價(既有測試不受影響)。
+func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps []*battleActor) bool {
 	spr, err := dq3data.DecodeMonsterSprite(b.shp, monID)
 	if err != nil {
 		return false
@@ -127,16 +147,25 @@ func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActo
 	if !ok {
 		return false
 	}
+	if count < 1 {
+		count = 1
+	}
+	if count > MaxEnemies {
+		count = MaxEnemies
+	}
 	b.rng = dosrng.New(uint16(seed))
 	b.monID, b.spr = monID, spr
-	b.enemyHP = int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
-	b.enemyMax = b.enemyHP
+	hpRoll := int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
 	// 敵有效攻防;索瑪(0x7c)+光之珠 → 驅散黑暗結界:攻/3、防/4(移植 battlescene 二階段)。
-	b.enemyAtk, b.enemyDef = int(st.Atk), int(st.Def)
+	eatk, edef := int(st.Atk), int(st.Def)
 	if monID == 0x7c && b.lightOrb {
-		b.enemyAtk /= 3
-		b.enemyDef /= 4
+		eatk /= 3
+		edef /= 4
 		b.lightOrb = false // 用畢清旗標
+	}
+	b.enemies = make([]enemyUnit, count)
+	for i := range b.enemies {
+		b.enemies[i] = enemyUnit{monID: monID, hp: hpRoll, max: hpRoll, atk: eatk, def: edef}
 	}
 	if b.bg == nil && b.scr != nil { // 首戰解碼草原背景(page22,對 game3.png)
 		b.bg, _ = dq3data.DecodePackBG(b.scr, 22)
@@ -151,6 +180,40 @@ func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActo
 	b.msg, b.gotExp, b.gotGold = "", 0, 0
 	b.active = true
 	return true
+}
+
+// firstAliveEnemy:第一個存活敵的 index(remake 簡化目標選擇:玩家物攻/單體咒固定指向組內
+// 第一個存活敵,非原版 C pick_alive_enemy 的隨機選;敵方 AI 選我方目標仍維持隨機,見 enemyTurn)。
+// 無存活敵回 -1。
+func (b *Battle) firstAliveEnemy() int {
+	for i := range b.enemies {
+		if b.enemies[i].alive() {
+			return i
+		}
+	}
+	return -1
+}
+
+// allEnemiesDead:組內全部 HP=0(含逃走)→ true(勝利判定)。
+func (b *Battle) allEnemiesDead() bool {
+	for i := range b.enemies {
+		if b.enemies[i].hp > 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// killedCount:組內「被擊殺」隻數(排除逃走者;對齊 C (en-g_fled) 算經驗/金錢)。
+// 只在 allEnemiesDead()==true 時呼叫才有意義。
+func (b *Battle) killedCount() int {
+	n := 0
+	for i := range b.enemies {
+		if !b.enemies[i].fled {
+			n++
+		}
+	}
+	return n
 }
 
 // input 處理一幀輸入,回傳戰鬥是否結束(關閉)。點格(P2)= 游標移過去 + 等同 A 選定;
@@ -240,23 +303,28 @@ func (b *Battle) execTurn() {
 		} else {
 			b.msg = "沒有藥草"
 		}
-	default: // 戰う:主角攻擊
+	default: // 戰う:主角攻擊(目標=第一個存活敵,見 firstAliveEnemy 簡化說明)
+		tgt := b.firstAliveEnemy()
+		if tgt < 0 {
+			break // 組內已無存活敵(全數逃走中)→ 揮空,直接進勝負判定
+		}
 		crit := 0
 		if b.roll() < 8 { // ~1/32 會心
 			crit = 1
 		}
-		dmg := battle.PhysDamage(b.heroAtk, b.enemyDef, b.roll(), crit)
-		b.enemyHP -= dmg
-		if b.enemyHP < 0 {
-			b.enemyHP = 0
+		dmg := battle.PhysDamage(b.heroAtk, b.enemies[tgt].def, b.roll(), crit)
+		b.enemies[tgt].hp -= dmg
+		if b.enemies[tgt].hp < 0 {
+			b.enemies[tgt].hp = 0
 		}
 		b.msg = fmt.Sprintf("給予 %d 傷害", dmg)
 		b.flashCol = b.hurtFxFrames
-		if b.enemyHP == 0 { // 勝
-			b.gotExp, b.gotGold = int(st.Exp), int(st.Gold)
-			b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
-			return
-		}
+	}
+	if b.allEnemiesDead() { // 勝:擊殺數(排除逃走)× 單隻經驗/金錢(對齊 C apply_victory_exp)
+		killed := b.killedCount()
+		b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
+		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
+		return
 	}
 	b.afterLeaderAction()
 }
@@ -274,45 +342,70 @@ func (b *Battle) execSpell(rec int) {
 	}
 	b.heroMP -= def.MP
 	b.defending = false
-	val := spell.CastValue(def.Base, b.roll())
 	if def.Kind == spell.Heal {
+		val := spell.CastValue(def.Base, b.roll())
 		if b.heroHP+val > b.heroMax {
 			val = b.heroMax - b.heroHP
 		}
 		b.heroHP += val
 		b.msg = fmt.Sprintf("回復 %d", val)
-	} else { // Dmg
-		b.enemyHP -= val
-		if b.enemyHP < 0 {
-			b.enemyHP = 0
+	} else if def.Target == spell.TargetGroup { // 群體咒:命中每隻存活敵,各自獨立擲值(對齊 C cast_spell_effect)
+		hit := 0
+		for i := range b.enemies {
+			if !b.enemies[i].alive() {
+				continue
+			}
+			v := spell.CastValue(def.Base, b.roll())
+			b.enemies[i].hp -= v
+			if b.enemies[i].hp < 0 {
+				b.enemies[i].hp = 0
+			}
+			hit++
 		}
 		b.flashCol = b.hurtFxFrames
-		b.msg = fmt.Sprintf("咒文 %d 傷害", val)
-		if b.enemyHP == 0 {
-			st, _ := b.mons.Stat(b.monID)
-			b.gotExp, b.gotGold = int(st.Exp), int(st.Gold)
-			b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
-			return
+		b.msg = fmt.Sprintf("咒文波及 %d 隻敵人", hit)
+	} else { // 單體咒:目標=第一個存活敵(簡化,見 firstAliveEnemy 說明)
+		tgt := b.firstAliveEnemy()
+		if tgt >= 0 {
+			val := spell.CastValue(def.Base, b.roll())
+			b.enemies[tgt].hp -= val
+			if b.enemies[tgt].hp < 0 {
+				b.enemies[tgt].hp = 0
+			}
+			b.msg = fmt.Sprintf("咒文 %d 傷害", val)
 		}
+		b.flashCol = b.hurtFxFrames
+	}
+	if b.allEnemiesDead() {
+		st, _ := b.mons.Stat(b.monID)
+		killed := b.killedCount()
+		b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
+		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
+		return
 	}
 	b.afterLeaderAction()
 }
 
-// afterLeaderAction:隊長行動後 → 同伴自動攻擊(可能擊倒)→ 敵方回合。
+// afterLeaderAction:隊長行動後 → 同伴自動攻擊(各打第一個存活敵,可能擊倒)→ 敵方回合。
 func (b *Battle) afterLeaderAction() {
 	st, _ := b.mons.Stat(b.monID)
 	for _, c := range b.companions { // 同伴自動物攻
-		if c.hp <= 0 || b.enemyHP <= 0 {
+		if c.hp <= 0 {
 			continue
 		}
-		dmg := battle.PhysDamage(c.atk, b.enemyDef, b.roll(), 0)
-		b.enemyHP -= dmg
-		if b.enemyHP < 0 {
-			b.enemyHP = 0
+		tgt := b.firstAliveEnemy()
+		if tgt < 0 {
+			break
+		}
+		dmg := battle.PhysDamage(c.atk, b.enemies[tgt].def, b.roll(), 0)
+		b.enemies[tgt].hp -= dmg
+		if b.enemies[tgt].hp < 0 {
+			b.enemies[tgt].hp = 0
 		}
 	}
-	if b.enemyHP == 0 { // 同伴擊倒 → 勝
-		b.gotExp, b.gotGold = int(st.Exp), int(st.Gold)
+	if b.allEnemiesDead() { // 同伴擊倒 → 勝
+		killed := b.killedCount()
+		b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
 		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
 		return
 	}
@@ -355,59 +448,71 @@ func (b *Battle) targetDef(target int) int {
 	return b.companions[target].def
 }
 
-// enemyTurn:敵方回合(移植 C:逃跑 → 施咒 → 物攻;鎖定隨機存活隊員;全滅才敗)。
+// enemyTurn:敵方回合(移植 C do_turn 敵方段:逐隻存活敵各行動一次——逃跑 → 施咒 → 物攻;
+// 逃跑/施咒/物攻皆鎖定隨機存活隊員;任一隻行動後我方全滅即中斷,結算敗;全體行動完畢才收尾訊息)。
+// AI(咒文機率/逃跑閾值)為同種共用欄位(對齊 C g_eai 單載),故迴圈外只查一次。
 func (b *Battle) enemyTurn() {
 	ai, aiOK := b.mons.AI(b.monID)
-	targets := b.aliveTargets()
-	if len(targets) == 0 { // 全滅
-		b.result, b.phase = 2, phMessage
-		b.msg = "全滅…"
-		return
-	}
-	// 1) 逃跑
-	if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
-		b.msg, b.result, b.phase = "敵人逃走了", 3, phMessage
-		return
-	}
-	tgt := targets[b.rng.Next(len(targets))] // 鎖定隨機存活隊員
-	// 2) 施咒(傷害咒傷目標、回復咒補己)
-	if aiOK && ai.CastProb > 0 && b.roll() < int(ai.CastProb) {
-		if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
-			rec := spell.MonsterSpellRec(bits[b.rng.Next(len(bits))])
-			if def, ok := spell.GetDef(rec); ok {
-				val := spell.CastValue(def.Base, b.roll())
-				if def.Kind == spell.Heal {
-					b.enemyHP += val
-					if b.enemyHP > b.enemyMax {
-						b.enemyHP = b.enemyMax
+	for i := range b.enemies {
+		if !b.enemies[i].alive() {
+			continue
+		}
+		// 1) 逃跑(逐隻獨立擲;離隊不算擊殺,經驗/金錢結算排除,見 killedCount)
+		if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
+			b.enemies[i].hp, b.enemies[i].fled = 0, true
+			b.msg = "敵人逃走了"
+			continue
+		}
+		targets := b.aliveTargets()
+		if len(targets) == 0 { // 我方已於本回合稍早被打光 → 中斷,判敗
+			b.msg, b.result, b.phase = "全滅…", 2, phMessage
+			return
+		}
+		tgt := targets[b.rng.Next(len(targets))] // 鎖定隨機存活隊員
+		// 2) 施咒(傷害咒傷目標、回復咒補己)
+		if aiOK && ai.CastProb > 0 && b.roll() < int(ai.CastProb) {
+			if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
+				rec := spell.MonsterSpellRec(bits[b.rng.Next(len(bits))])
+				if def, ok := spell.GetDef(rec); ok {
+					val := spell.CastValue(def.Base, b.roll())
+					if def.Kind == spell.Heal {
+						b.enemies[i].hp += val
+						if b.enemies[i].hp > b.enemies[i].max {
+							b.enemies[i].hp = b.enemies[i].max
+						}
+						b.msg = fmt.Sprintf("敵詠唱咒文回復 %d", val)
+						continue
 					}
-					b.msg, b.phase = fmt.Sprintf("敵詠唱咒文回復 %d", val), phMessage
-					return
+					b.damageMember(tgt, val) // 傷害咒(不受防御減半)
+					b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
+					if b.wipedOut() {
+						return
+					}
+					continue
 				}
-				b.damageMember(tgt, val) // 傷害咒(不受防御減半)
-				b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
-				b.checkWipe()
-				return
 			}
 		}
-	}
-	// 3) 物理反擊(打隊長且防御 → 減半)
-	edmg := battle.PhysDamage(b.enemyAtk, b.targetDef(tgt), b.roll(), 0)
-	if tgt < 0 && b.defending {
-		edmg /= 2
-	}
-	b.damageMember(tgt, edmg)
-	b.msg = fmt.Sprintf("敵攻擊 %d 傷害", edmg)
-	b.checkWipe()
-}
-
-// checkWipe:全隊 HP 0 → 敗;否則進訊息。
-func (b *Battle) checkWipe() {
-	if len(b.aliveTargets()) == 0 {
-		b.msg, b.result, b.phase = "全滅…", 2, phMessage
-		return
+		// 3) 物理反擊(打隊長且防御 → 減半)
+		edmg := battle.PhysDamage(b.enemies[i].atk, b.targetDef(tgt), b.roll(), 0)
+		if tgt < 0 && b.defending {
+			edmg /= 2
+		}
+		b.damageMember(tgt, edmg)
+		b.msg = fmt.Sprintf("敵攻擊 %d 傷害", edmg)
+		if b.wipedOut() {
+			return
+		}
 	}
 	b.phase = phMessage
+}
+
+// wipedOut:我方全滅 → 設敗、回 true(呼叫端應立即結束回合,別讓其餘敵繼續行動)。
+func (b *Battle) wipedOut() bool {
+	if len(b.aliveTargets()) == 0 {
+		b.msg, b.result, b.phase = "全滅…", 2, phMessage
+		return true
+	}
+	return false
 }
 
 // 版面常數(1:1 對齊 C dq3_battlescene render,references/game3.png)。
@@ -473,42 +578,49 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 			}
 		}
 	}
-	// 怪物:站綠地平線(gy=groundY+8-h,置中);受擊閃紅;死不畫
-	if b.spr != nil && b.enemyHP > 0 {
-		gx := ScreenW/2 - b.spr.W/2
-		gy := groundY + 8 - b.spr.H
+	// 怪群:橫排站綠地平線(對齊 C render:gx=(SCREEN_W*(i+1))/(en+1)-spr->w/2,en=組總隻數
+	// 含已死/逃走者,位置不因中途減員而重排);受擊閃紅;死/逃不畫。
+	if b.spr != nil && len(b.enemies) > 0 {
+		en := len(b.enemies)
 		flash := b.flashCol > 0
-		for r := 0; r < b.spr.H; r++ {
-			for x := 0; x < b.spr.W; x++ {
-				if !b.spr.Opaque[r][x] {
-					continue
+		for i := range b.enemies {
+			if !b.enemies[i].alive() {
+				continue
+			}
+			gx := ScreenW*(i+1)/(en+1) - b.spr.W/2
+			gy := groundY + 8 - b.spr.H
+			for r := 0; r < b.spr.H; r++ {
+				for x := 0; x < b.spr.W; x++ {
+					if !b.spr.Opaque[r][x] {
+						continue
+					}
+					c := dq3data.Color{R: 200, G: 200, B: 200}
+					if idx := int(b.spr.Px[r][x]); idx < len(b.mpal) {
+						c = b.mpal[idx]
+					}
+					if flash {
+						c = red
+					}
+					putPx(rgba, gx+x, gy+r, c)
 				}
-				c := dq3data.Color{R: 200, G: 200, B: 200}
-				if idx := int(b.spr.Px[r][x]); idx < len(b.mpal) {
-					c = b.mpal[idx]
+			}
+			// 敵 HP(remake 增強):H + 數字,置中於怪上方。受設定選單「戰鬥資訊」開關(showInfo)控制。
+			if b.showInfo {
+				cx := gx + b.spr.W/2
+				hy := gy - 32
+				if hy < fieldY0 {
+					hy = fieldY0
 				}
-				if flash {
-					c = red
+				hc := white
+				if b.enemies[i].max > 0 && b.enemies[i].hp*4 < b.enemies[i].max {
+					hc = red
 				}
-				putPx(rgba, gx+x, gy+r, c)
+				drawGlyph(rgba, b.tx, cx-26, hy, 22, white) // H
+				drawNumber(rgba, b.tx, cx-8, hy, b.enemies[i].hp, hc)
 			}
 		}
-		if b.flashCol > 0 {
+		if b.flashCol > 0 { // 閃光倒數:每畫面一次,不隨隻數重複遞減
 			b.flashCol--
-		}
-		// 敵 HP(remake 增強):H + 數字,置中於怪上方。受設定選單「戰鬥資訊」開關(showInfo)控制。
-		if b.showInfo {
-			cx := gx + b.spr.W/2
-			hy := gy - 32
-			if hy < fieldY0 {
-				hy = fieldY0
-			}
-			hc := white
-			if b.enemyMax > 0 && b.enemyHP*4 < b.enemyMax {
-				hc = red
-			}
-			drawGlyph(rgba, b.tx, cx-26, hy, 22, white) // H
-			drawNumber(rgba, b.tx, cx-8, hy, b.enemyHP, hc)
 		}
 	}
 	// 上方隊伍狀態列(X=0x13*8=152、Y=8;每欄 80px:名 / H+HP / M+MP / 等級;隊長 + 同伴)
@@ -579,8 +691,10 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 		fillBox(rgba, ex, ey, ew, eh, white)
 		b.drawName(rgba, ex+12, ey+8, 0x258+b.monID, white)
 		alive := 0
-		if b.enemyHP > 0 {
-			alive = 1
+		for i := range b.enemies {
+			if b.enemies[i].alive() {
+				alive++
+			}
 		}
 		drawNumber(rgba, b.tx, ex+ew-40, ey+8, alive, white)
 	}

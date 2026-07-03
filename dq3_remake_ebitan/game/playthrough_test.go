@@ -42,7 +42,7 @@ func TestPlaythroughBattle(t *testing.T) {
 		turns++
 	}
 	if b.result != 1 {
-		t.Fatalf("強勇者對史萊姆應勝,得 result=%d(%d 回合後 敵HP=%d)", b.result, turns, b.enemyHP)
+		t.Fatalf("強勇者對史萊姆應勝,得 result=%d(%d 回合後 敵HP=%d)", b.result, turns, b.enemies[0].hp)
 	}
 	if b.gotExp != 4 || b.gotGold != 2 {
 		t.Fatalf("史萊姆戰利品應 EXP4/G2,得 EXP%d/G%d", b.gotExp, b.gotGold)
@@ -54,10 +54,10 @@ func TestPlaythroughBattle(t *testing.T) {
 	b.start(5, 999, weak, nil)
 	b.cursor = bcWar
 	b.execTurn() // 一回合:我方攻 + 敵反擊
-	if b.heroHP == 9 && b.enemyHP > 0 {
+	if b.heroHP == 9 && b.enemies[0].hp > 0 {
 		t.Log("注意:一回合後我方 HP 未變(史萊姆傷害可能為 0,合理)")
 	}
-	t.Logf("弱勇者一回合後:我方 HP %d、敵 HP %d(敵反擊生效)", b.heroHP, b.enemyHP)
+	t.Logf("弱勇者一回合後:我方 HP %d、敵 HP %d(敵反擊生效)", b.heroHP, b.enemies[0].hp)
 }
 
 // 整合 game test:升級 + 咒文習得一致性(串成長表 + 咒文表)。
