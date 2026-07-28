@@ -110,6 +110,7 @@ func (g *Game) restore(s saveState) {
 	// Go 冒險之書不保存暫態場景咒文 timer；restore 必須清掉同一 Game instance
 	// 載入前的透明效果。原版 save 是否序列化這類 timer 仍需獨立 RE。
 	g.remoaru = 0
+	g.toramana, g.hazardGuard = false, false
 	g.heroExp, g.heroHP, g.heroMP, g.heroStat, g.heroGold =
 		s.HeroExp, s.HeroHP, s.HeroMP, s.HeroStat, s.HeroGold
 	g.heroName, g.heroGender = append([]int(nil), s.HeroName...), s.HeroGender

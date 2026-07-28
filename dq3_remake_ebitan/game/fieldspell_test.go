@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
@@ -123,12 +124,146 @@ func TestRemittoOutsideDungeonStillSpends(t *testing.T) {
 	g := fieldSpellGame(t, 14)
 	g.inTown, g.curCty = false, -1
 	g.openFieldSpellMenu()
-	g.fieldSpell.cursor = 1
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRemitto)
 	mp0 := g.heroMP
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.heroMP != mp0-8 || g.fieldSpell.active {
 		t.Fatalf("迷宮外烈米特被 handler 拒絕，但原版 caster 已扣 MP：mp=%d active=%v",
 			g.heroMP, g.fieldSpell.active)
+	}
+}
+
+func fieldSpellChoiceIndex(g *Game, rec int) int {
+	for i, c := range g.fieldSpell.choices {
+		if c.rec == rec {
+			return i
+		}
+	}
+	return -1
+}
+
+func placeFacingEventType(t *testing.T, g *Game, cty, sec, wantType int) {
+	t.Helper()
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		cty, mapBlkNum[cty], sec, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for y := 0; y < sc.h; y++ {
+		for x := 0; x < sc.w; x++ {
+			ev, _, ok := sc.tileEvent(x, y)
+			if !ok || ev[0] != wantType {
+				continue
+			}
+			for d := 0; d < 4; d++ {
+				dx, dy := dirDelta(d)
+				px, py := x-dx, y-dy
+				if px < 0 || py < 0 || px >= sc.w || py >= sc.h || sc.Blocked(px, py) {
+					continue
+				}
+				g.cur, g.town, g.inTown, g.curCty = sc, sc, true, cty
+				g.px, g.py, g.facing = px, py, d
+				return
+			}
+		}
+	}
+	t.Fatalf("CTY%02d sec%d 找不到可面向的 type%d 事件", cty, sec, wantType)
+}
+
+func TestInpasOriginalEventTypeRecordsAndMP(t *testing.T) {
+	tests := []struct {
+		name          string
+		cty, sec, typ int
+		wantRec       int
+	}{
+		{"ordinary treasure", 0, 5, 1, 0xfd},
+		{"type2 warp", 14, 0, 2, 0xfe},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := fieldSpellGame(t, 1)
+			mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 18))
+			mage.CurMP = 99
+			g.companions = []*Member{mage}
+			placeFacingEventType(t, g, tt.cty, tt.sec, tt.typ)
+			g.openFieldSpellMenu()
+			idx := fieldSpellChoiceIndex(g, fieldInpas)
+			if idx < 0 {
+				t.Fatalf("Lv18 魔法使的場景咒文清單缺 rec174：%+v", g.fieldSpell.choices)
+			}
+			g.fieldSpell.cursor = idx
+			g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+			if mage.CurMP != 96 || !g.dlg.open ||
+				!reflect.DeepEqual(g.dlg.buf, g.shop.nameText.Record(tt.wantRec)) {
+				t.Fatalf("因帕斯 type%d 應扣3 MP並顯示 rec%d：mp=%d open=%v",
+					tt.typ, tt.wantRec, mage.CurMP, g.dlg.open)
+			}
+		})
+	}
+}
+
+func TestInpasInvalidSceneStillSpendsAndShowsFailure(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 18))
+	mage.CurMP = 99
+	g.companions = []*Member{mage}
+	g.inTown, g.curCty = false, -1
+	g.openFieldSpellMenu()
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldInpas)
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if mage.CurMP != 96 || !g.dlg.open ||
+		!reflect.DeepEqual(g.dlg.buf, g.shop.nameText.Record(0x15a)) {
+		t.Fatalf("因帕斯無事件仍應先扣3 MP再顯示 rec346：mp=%d open=%v",
+			mage.CurMP, g.dlg.open)
+	}
+}
+
+func TestToramanaOriginalCostAndOneHazardRegionContract(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 19))
+	mage.CurMP, mage.CurHP = 99, 50
+	g.companions = []*Member{mage}
+	g.openFieldSpellMenu()
+	idx := fieldSpellChoiceIndex(g, fieldToramana)
+	if idx < 0 {
+		t.Fatalf("Lv19 魔法使的場景咒文清單缺 rec175：%+v", g.fieldSpell.choices)
+	}
+	g.fieldSpell.cursor = idx
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if mage.CurMP != 97 || !g.toramana || g.hazardGuard || g.fieldSpell.active {
+		t.Fatalf("多拉瑪那應扣2 MP並設原版0x2000：mp=%d toramana=%v guard=%v active=%v",
+			mage.CurMP, g.toramana, g.hazardGuard, g.fieldSpell.active)
+	}
+
+	attr := &dq3data.BlockAttr{A: []uint16{0x0400}} // AH&4 → 原版 10 damage 類
+	g.cur = &Scene{w: 1, h: 1, tileAt: func(_, _ int) int { return 0 }, attr: attr}
+	g.px, g.py, g.heroHP, mage.CurHP = 0, 0, 50, 50
+	g.applyHazardStep()
+	if g.heroHP != 50 || mage.CurHP != 50 || g.toramana || !g.hazardGuard {
+		t.Fatalf("第一次高傷地板應把0x2000轉0x0400且免傷：hp=%d/%d toramana=%v guard=%v",
+			g.heroHP, mage.CurHP, g.toramana, g.hazardGuard)
+	}
+	g.applyHazardStep()
+	if g.heroHP != 50 || mage.CurHP != 50 {
+		t.Fatalf("同一段連續傷害地板應持續免傷：hp=%d/%d", g.heroHP, mage.CurHP)
+	}
+	attr.A[0] = 0
+	g.applyHazardStep()
+	if g.hazardGuard {
+		t.Fatal("離開傷害地板後原版0x0400 guard應清除")
+	}
+	attr.A[0] = 0x0400
+	g.applyHazardStep()
+	if g.heroHP != 40 || mage.CurHP != 40 {
+		t.Fatalf("重新踏入高傷地板應全隊各受10傷：hp=%d/%d", g.heroHP, mage.CurHP)
+	}
+
+	g.heroHP, mage.CurHP, g.toramana = 50, 50, true
+	attr.A[0] = 0x0100 // AH&1 分支早於多拉瑪那檢查
+	g.applyHazardStep()
+	if g.heroHP != 49 || mage.CurHP != 49 || !g.toramana {
+		t.Fatalf("AH&1 類仍應受1傷且不消耗0x2000：hp=%d/%d toramana=%v",
+			g.heroHP, mage.CurHP, g.toramana)
 	}
 }
 
@@ -140,7 +275,7 @@ func TestFieldSpellOriginalMapFlagsAndCosts(t *testing.T) {
 	g.enterTownCty(8) // CTY08 sec0 header+0x10 == 2：烈米特可、魯拉不可
 	g.openFieldSpellMenu()
 	mp0 := g.heroMP
-	g.fieldSpell.cursor = 0
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRura)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.fieldSpell.dest || g.heroMP != mp0-8 || g.fieldSpell.active {
 		t.Fatalf("mapFlags bit0 清時魯拉 handler 拒絕，但 caster 已扣 MP：dest=%v mp=%d active=%v",
@@ -149,14 +284,14 @@ func TestFieldSpellOriginalMapFlagsAndCosts(t *testing.T) {
 
 	g.exitTown()
 	g.openFieldSpellMenu()
-	g.fieldSpell.cursor = 2 // 特黑洛斯
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldToheros)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.repel != 0x28 || g.heroMP != mp0-12 {
 		t.Fatalf("特黑洛斯應依 handler 設 40 步並扣 4 MP：repel=%d mp=%d", g.repel, g.heroMP)
 	}
 
 	g.openFieldSpellMenu()
-	g.fieldSpell.cursor = 3 // 拉那魯達
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRanaruta)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if !g.isNight() || g.heroMP != mp0-12 || mage.CurMP != 87 {
 		t.Fatalf("地表拉那魯達應由魔法使扣 12 MP：night=%v heroMP=%d mageMP=%d",
@@ -171,7 +306,7 @@ func TestRanarutaInTownStillSpends(t *testing.T) {
 	g.companions = []*Member{mage}
 	g.enterTownCty(0)
 	g.openFieldSpellMenu()
-	g.fieldSpell.cursor = 3
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRanaruta)
 	mp0 := g.heroMP
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.heroMP != mp0 || mage.CurMP != 87 || g.fieldSpell.active {

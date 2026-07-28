@@ -32,6 +32,8 @@
 |---|---|---:|---|---|
 | 172 | 魯拉 | 8 | `0xe0da` | 地表可用；CTY 需 section header `+0x10 bit0`，再進共用 20 城選單 |
 | 173 | 烈米特 | 8 | `0xe10c` | 必須在 CTY scene 且 header `+0x10 bit1`，成功後回地表 remembered position |
+| 174 | 因帕斯 | 3 | `0xe13b` | CTY 面向事件：type2→rec254，其餘 type→rec253；非事件→rec346 |
+| 175 | 多拉瑪那 | 2 | `0xe18c` | 設 `0x2000`；保護第一次踏入的同一段 `AH&0x0c` 傷害地板 |
 | 176 | 特黑洛斯 | 4 | `0xe19c` | 設世界 repel flag，`[0x52f6]=0x28`（40 步） |
 | 177 | 拉那魯達 | 12 | `0xe1ab` | CTY scene 內拒絕；地表切換 day/night state 並重載 palette |
 | 178 | 雷姆歐魯 | 15 | `0xe1df` | 設 world flag `0x8000`、`[0x52f7]=0x19`（25 個有效移動步） |
@@ -45,11 +47,25 @@ world flags `0xc000`。目前為靜態資料流與 Go production-input 回歸（
 8 格的連續門片；非 CTY、面向非門或其他失敗會顯示 D3TXT00 rec `0x15a`。Ebiten 已接
 0 MP 全門權限、相鄰門片 mutation 與全域失敗訊息。
 
+因帕斯會把 examine mode `[0x0b5d]` 暫設 2；file `0x9cf6` 因而在讀出事件表
+`{type,param,flag}` 後立即返回 `bp=type`，不開箱、不傳送。精訊版 D3TXT00 的 rec253
+實際是存檔詢問，rec254 只有變數控制碼，並不是可由 FC 版常識代換的「藍／紅」台詞；
+Ebiten 保留這兩筆原始 record。handler 另以 `[0x25d3]=3/1` 呼叫色彩效果
+file `0x10305`，該動畫尚未接，因此目前 D2／V1。
+
+多拉瑪那的 handler 雖同時寫 `[0x52f8]=0x28`，一般 movement timer consumer
+file `0xa91c` 卻檢查 world bit `0x0200`，不是 handler 寫入的 `0x2000`。真正 consumer
+file `0x197a8` 在 tile attr 高 byte符合 `AH&0x0c` 時，將 `0x2000` 清掉並轉成
+guard `0x0400`；離開 hazard 後 guard 即清，因此只保護第一次踏入的同一段連續區域。
+`AH&0x03` 分支在檢查多拉瑪那前就造成全隊 1–3 傷害。Ebiten 依此保留精訊版行為，
+未擅自改成 FC 式持續免疫。
+
 ## 尚未證實／尚未完成（不得標 faithful）
 
 - handler 中 `0xd75`、world flag `0x4f46 bit0x80` 等較少見魯拉禁止狀態，Ebiten 尚無
   一一對應的世界狀態欄位。
-- 因帕斯、托拉瑪那與帕爾普恩特尚未完整接入 Ebiten 選單。
+- 帕爾普恩特尚未接入 Ebiten 選單；16 項 effect table 仍須逐項追通。
+- 因帕斯缺原版 `[0x25d3] → 0x10305` 色彩動畫，不能只因 record 分支已接就標 V3。
 - 原版冒險之書是否保存 `[0x4f46]/[0x52f7]` 這類暫態場景咒文狀態尚未追完；Go save
   目前明確視為 runtime-only，讀檔會清除雷姆歐魯 timer。
 - 拉那魯達的四相位 clock 與原版二值 `[0x526c]` 的逐步映射仍需 DOSBox 對拍。
@@ -59,7 +75,7 @@ world flags `0xc000`。目前為靜態資料流與 Go production-input 回歸（
 1. 保存 IDB，不再每輪只產生孤立的線性 disassembly。
 2. 將 `0x1c9ee/0x1cb3c/0xe0da/0xe10c`、`0x37c3/0x38cc`、`0x0ac0/0x506a`
    命名，建立 caller/xref。
-3. 續追 rec174/175/180 的 field handler 與可見副作用；rec178/179 補 DOSBox 同狀態驗證。
+3. 續追 rec180 的 16 項 field effect；rec174/175/178/179 補 DOSBox 同狀態驗證。
 4. 每個結論記錄 writer → table → consumer → 可見副作用；只有完整鏈才升 D3。
 5. 用 DOSBox 同狀態輸入作最終仲裁，再鎖 production-input 與 save/load 測試。
 

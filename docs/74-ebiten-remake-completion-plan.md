@@ -473,12 +473,13 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 1. [x] 修正共通 caster：MP 足夠後、effect handler 前立即扣除；取消魯拉目的地或場景
    gate 失敗不退款。既有取消／失敗測試已更新。
 2. 為 rec174／175／178／179／180 建逐項 ledger：descriptor、handler、writer、timer／flag
-   consumer、訊息 record、玩家可見結果。
+   consumer、訊息 record、玩家可見結果。rec174／175／178／179 已建立；rec180 待完成。
 3. [x] 先落地證據鏈完整者：
    - rec178／Remoaru：15 MP、25 個成功移動步的隱形狀態與 renderer consumer。
    - 阿巴卡姆：0 MP、面向門的 tier-4 權限、3×3 連續門片 mutation 與失敗 rec `0x15a`。
-4. 因帕斯須先確認寶箱回傳型別與 rec253／254 顏色語意；托拉瑪那須先釐清
-   `0x2000` writer 與傷害地板 consumer；帕爾普恩特須解完 16 項跳表。未追通前不做猜測版。
+4. [x] 因帕斯已確認 `bp=event type` 與原始 rec253／254；多拉瑪那已追通 `0x2000`
+   writer、`0x0400` 連續區 guard 與兩類傷害地板 consumer。因帕斯色彩動畫仍為 V-gap。
+   帕爾普恩特須解完 16 項跳表，未追通前不做猜測版。
 5. [x] 對本批落地咒文加入 production menu、正常輸入、MP／timer／restore 測試，重產並
    目視檢查 `dq3_remake_ebitan/docs/field_spell_menu.png`。原版暫態 timer 的 save 格式仍
    待 RE，不把 Go runtime-only policy 冒充原版契約。

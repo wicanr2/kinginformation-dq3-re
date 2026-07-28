@@ -285,6 +285,8 @@ type Game struct {
 	shipX, shipY    int           // 船停泊位置(地表)
 	repel           int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
 	remoaru         int           // レムオル透明剩餘有效移動步數；原版 [0x52f7]，施放設 25
+	toramana        bool          // 多拉瑪那原版 world flag 0x2000；遇高傷害地板後轉 hazardGuard
+	hazardGuard     bool          // 原版 world flag 0x0400；只在同一段連續高傷害地板維持
 	prng            rng.RNG       // 祈禱之戒損壞判定用 RNG
 	lotoBlessed     bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
 	cleared         bool          // 已破關(索瑪擊破)
@@ -947,6 +949,7 @@ func (g *Game) step(in InputState) error {
 	}
 	if moved {
 		g.advanceFieldSpellStep()
+		g.applyHazardStep()
 	}
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()

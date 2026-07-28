@@ -8,6 +8,8 @@ import (
 const (
 	fieldRura     = 172 // 魯拉
 	fieldRemitto  = 173 // 烈米特
+	fieldInpas    = 174 // 因帕斯
+	fieldToramana = 175 // 多拉瑪那
 	fieldToheros  = 176 // 特黑洛斯
 	fieldRanaruta = 177 // 拉那魯達
 	fieldRemoaru  = 178 // レムオル（透明）
@@ -23,6 +25,8 @@ type fieldSpellDef struct {
 var fieldSpellDefs = [...]fieldSpellDef{
 	{fieldRura, spell.MPCost(fieldRura)},
 	{fieldRemitto, spell.MPCost(fieldRemitto)},
+	{fieldInpas, spell.MPCost(fieldInpas)},
+	{fieldToramana, spell.MPCost(fieldToramana)},
 	{fieldToheros, spell.MPCost(fieldToheros)},
 	{fieldRanaruta, spell.MPCost(fieldRanaruta)},
 	{fieldRemoaru, spell.MPCost(fieldRemoaru)},
@@ -205,6 +209,28 @@ func (g *Game) fieldSpellInput(in InputState) {
 		}
 		g.exitTown()
 		m.active = false
+	case fieldInpas:
+		// handler file 0xe13b 將 examine mode 設 2，使 file 0x9cf6 只回傳
+		// 面向事件表的 type byte而不執行。type2→rec254，其餘合法 type→rec253；
+		// 無事件／非 CTY 則走共通失敗 rec346 (0x15a)。
+		typ, ok := g.inpasFacingType()
+		switch {
+		case !ok:
+			g.dlg.OpenFrom(g.shop.nameText, 0x15a)
+		case typ == 2:
+			g.dlg.OpenFrom(g.shop.nameText, 0xfe)
+		default:
+			g.dlg.OpenFrom(g.shop.nameText, 0xfd)
+		}
+		m.active = false
+	case fieldToramana:
+		// handler file 0xe18c：設 world flag 0x2000、timer 0x28。原版一般
+		// timer consumer 卻檢查 0x0200；真正 consumer 是傷害地板 file
+		// 0x197a8，第一次遇到 AH&0x0c 時把 0x2000 轉成 0x0400，
+		// 離開該段地板後清除。保留這個精訊版一次性連續區行為。
+		g.toramana = true
+		g.hazardGuard = false
+		m.active = false
 	case fieldToheros:
 		g.repel = 0x28 // handler file 0xe19c 寫 [0x52f6]=0x28
 		m.active = false
@@ -236,11 +262,69 @@ func (g *Game) fieldSpellInput(in InputState) {
 	}
 }
 
+func (g *Game) inpasFacingType() (int, bool) {
+	if !g.inTown || g.cur == nil {
+		return 0, false
+	}
+	x, y := frontTile(g.px, g.py, g.facing)
+	ev, subid, ok := g.cur.tileEvent(x, y)
+	if !ok {
+		return 0, false
+	}
+	// 原版正常 examine 會清 tile 的低 5-bit event id。Go 版目前以一次性
+	// treasure flag 保存已取狀態，因此在 Inpas read-only path 補同等 gate。
+	if t := treasureFor(g.curCty, g.cur.sec, subid); t != nil && g.flags[t[5]] {
+		return 0, false
+	}
+	return ev[0], true
+}
+
 // advanceFieldSpellStep 對齊原版成功移動後的暫態效果 consumer。撞牆或 modal frame
 // 不算一步；城鎮與地表都會進入 file 0xa8a0 的 common movement-status routine。
 func (g *Game) advanceFieldSpellStep() {
 	if g.remoaru > 0 {
 		g.remoaru--
+	}
+}
+
+// applyHazardStep 對齊原版 movement-status file 0x195ec..0x1980f。
+// tile attr 高 byte低 nibble：
+//
+//	bits0..1 → 全隊 1..3 傷害，多拉瑪那不保護；
+//	bits2..3 → 全隊 10/20/30 傷害，0x2000 多拉瑪那轉成 0x0400 連續區 guard；
+//	無 hazard → 清 0x0400 guard。
+func (g *Game) applyHazardStep() {
+	if g.cur == nil || g.cur.attr == nil {
+		g.hazardGuard = false
+		return
+	}
+	ah := byte(g.cur.attr.Raw(g.cur.tileIdx(g.px, g.py)) >> 8)
+	damage := 0
+	switch {
+	case ah&0x03 != 0:
+		damage = int(ah & 0x03)
+	case ah&0x0c != 0:
+		if g.hazardGuard {
+			return
+		}
+		if g.toramana {
+			g.toramana = false
+			g.hazardGuard = true
+			return
+		}
+		damage = int(ah>>2) * 10
+	default:
+		g.hazardGuard = false
+		return
+	}
+	if damage <= 0 {
+		return
+	}
+	g.heroHP = max0(g.heroHP - damage)
+	for _, m := range g.companions {
+		if m.CurHP > 0 {
+			m.CurHP = max0(m.CurHP - damage)
+		}
 	}
 }
 
