@@ -1,20 +1,28 @@
-# 精訊版本的 DQ3 反組譯
+# 精訊版 DQ3 專案指引
 
-- 目的還原當年未發售的經典從 exe 檔透過 RE 變成 **C** 的原始碼 (可重編譯), 並且把遊戲素材都拆解出來
-  - 註:`DQ3.EXE` 經反組譯偵察 (docs/05-exe-recon.md) 確認為 **16-bit real-mode、large model 分段 DOS 程式**, 鏈結手寫組語低階驅動;**非 Borland Pascal、非保護模式** (先前依檔頭 `MZP` 的 'P' 判為 Pascal 保護模式有誤, 那只是 e_cblp=80)。經使用者確認, RE 目標訂為還原成可用 DOS C 編譯器重建的 **C 原始碼**, 以 dosbox 比對原版驗證。
+現行交付目標是完成 `dq3_remake_ebitan/` 的 Go／Ebitengine remake。`dq3_remake/`
+的 C／SDL2 程式和 `re/` 的 C 重建是歷史研究與比對材料，不代表原版規格，也不是目前
+要完成的產品。
 
-驗證方式 RE的版本可以重新編譯執行, 與原版一模一樣 使用dosbox驗證
+開始工作前依序讀：
 
-dosbox 可以用 docker 的也可以用 host 的只要不污染host環境都ok
+1. `PROJECT_MEMORY.md`
+2. `CONTEXT.md`
+3. `README.md`
+4. `docs/74-ebiten-remake-completion-plan.md`
+5. 與當前子系統直接相關的 RE 文件
 
-re 工具需要在 docker 內執行
+## 事實與完成度
 
-希望解析出流程與素材, 還有挖掘在中文版未發售的 dq3 中的相關技術
+- 原版是 16-bit real-mode、large-model DOS 程式；不是 Borland Pascal 或保護模式程式。
+- 不可把 C remake、舊 Markdown、測試綠燈或可執行切片當成原版 oracle。
+- 機制存在不代表設定、資料、gate、時序、畫面與副作用已和精訊版一致。
+- 反組譯結論需追通 `writer → table/state → consumer → 玩家可見副作用`，並標明
+  `file offset`、`logical` 或 `DGROUP` 位址口徑。
+- 只有從新遊戲開始、不用 debug shortcut，依正式玩家輸入抵達 THE END，且關鍵存讀檔、
+  畫面與事件對拍通過，才可宣稱 remake 完成。
 
-# 其他資訊
+原版驗證可使用 host 或 Docker DOSBox；RE 可使用 `tools/dis.sh`、Ghidra 與本機
+IDA Pro 9.4。不得把原版素材、IDA 授權或發佈包加入 Git。
 
-青衫先生整理的攻略 @./reference
-
-# 專案的 github repo
-
-https://github.com/wicanr2/kinginformation-dq3-re.git (紀錄整個反組譯）
+專案 repo：<https://github.com/wicanr2/kinginformation-dq3-re>

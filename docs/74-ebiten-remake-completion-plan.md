@@ -463,3 +463,37 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 10. 下一 sprint 依 P3 攻略順序盤點六珠來源，不直接跳到不死鳥祭壇。
 
 這個順序直接處理過去最大失敗模式：先確保玩家真的走得到，再增加更多孤立機制。
+
+## 9. 下一輪 breakdown（2026-07-28）
+
+下一輪先修「機制存在但原版設定未 match」，不新增無證據的近似功能。
+
+### A. 場景咒文交易與剩餘 handlers
+
+1. 修正共通 caster：MP 足夠後、effect handler 前立即扣除；取消魯拉目的地或場景 gate
+   失敗不退款。更新既有取消／失敗測試。
+2. 為 rec174／175／178／179／180 建逐項 ledger：descriptor、handler、writer、timer／flag
+   consumer、訊息 record、玩家可見結果。
+3. 先落地證據鏈完整者：
+   - rec178／Remoaru：15 MP、25 個成功移動步的隱形狀態與 renderer consumer。
+   - 阿巴卡姆：0 MP、面向門的開門交易；先確認門 tier 4 與失敗訊息。
+4. 因帕斯須先確認寶箱回傳型別與 rec253／254 顏色語意；托拉瑪那須先釐清
+   `0x2000` writer 與傷害地板 consumer；帕爾普恩特須解完 16 項跳表。未追通前不做猜測版。
+5. 對每個落地咒文加入 production menu、正常輸入、MP／timer／save-load 測試，重產並目視
+   檢查 `dq3_remake_ebitan/docs/field_spell_menu.png`。
+
+### B. 玩家流程 audit
+
+1. 由目前最早的合法 checkpoint 起跑 production-input trace，記錄第一個不可達、錯誤 gate
+   或錯誤設定，不以 debug key 越過。
+2. 對該 blocker 追 `writer → state/table → consumer → visible effect`，以 DOSBox／影片交叉驗證。
+3. 一批只閉合一個玩家可達的垂直切片，並驗證事件前後 save/load；完成後更新 E／V／D，
+   不寫單一「完成」。
+
+### C. 批次驗收
+
+1. 全部 Go tests 在能讀到 `assets_raw` 的正確工作目錄執行；素材缺失 `SKIP` 不算通過。
+2. 重跑受影響的 DOSBox 同狀態案例，保存輸入與可見結果。
+3. 檢查 runtime 圖是否仍代表現行程式；有重大畫面修改就更新舊圖。
+4. `git diff --check`、確認不納入原版素材／IDA 檔／使用者 scratch files，再做一次重大
+   commit 與 push。

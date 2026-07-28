@@ -76,9 +76,9 @@
 
 ### ~~🟢 Tier 4~~ — **放棄**(使用者 2026-06-28)
 - ~~音色精校~~ · ~~Android(SDL2/NDK)移植~~ —— 放棄。
-- ★ **Android 改走 Go/Ebiten 評估見 [`docs/62`](../docs/62-golang-ebiten-android-port-eval.md)**:Ebiten 的行動/觸控/OGG 內建
-  正好消掉 SDL2/NDK 路徑三大痛(NDK/三 ABI vorbis/觸控);困難 RE 已完成 → Go 版是翻譯非發現,估 3–6 週。
-  建議:要 Android/行動/web 就以 Go/Ebiten 為主線、C 版留作 RE 參考 + 桌面包;先做骨架+一場景驗證管線再決定全量重寫。
+- Android 已改走 Go／Ebitengine；此 C worklist 僅保留歷史狀態。Go 版的現況、證據規則與
+  工作順序見 [`docs/74`](../docs/74-ebiten-remake-completion-plan.md)，不得再沿用早期工期或
+  「RE 已完成、只需翻譯」的估算。
 
 ---
 
