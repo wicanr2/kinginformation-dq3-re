@@ -105,8 +105,8 @@ func TestEnemyTurnEachAliveActs(t *testing.T) {
 	t.Logf("敵方回合逐隻行動 ✓:3 隻合計傷害 %d(區間 42..60)", lost)
 }
 
-// TestSpellTargetSingleVsGroup:單體咒(美拉121,TargetSingle)只傷第一個存活敵;
-// 群體咒(吉拉124,TargetGroup)波及全部存活敵(對齊 C cast_spell_effect 的
+// TestSpellTargetSingleVsGroup:直接呼叫相容入口時，單體咒(美拉121)預設第一個存活敵；
+// 正常輸入的指定目標另由 battle_command_test 覆蓋。群體咒(吉拉124)波及全部存活敵(對齊
 // TG_ENEMY1 vs 其餘 target 分支)。用 id101(實測 castProb=0)避免 execSpell 內建的
 // afterLeaderAction→enemyTurn() 順帶觸發敵方自身咒文(如自我回復)污染觀察窗。
 func TestSpellTargetSingleVsGroup(t *testing.T) {

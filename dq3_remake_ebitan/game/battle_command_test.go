@@ -52,17 +52,24 @@ func TestBattleCollectsEveryMemberCommandBeforeResolving(t *testing.T) {
 	}
 	enemyHP := b.enemies[0].hp
 
-	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 隊長：戰鬥
+	chooseAttack := func() {
+		b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 戰鬥
+		if b.phase != phTargetEnemy {
+			t.Fatalf("戰鬥後應進敵方目標選擇，phase=%d", b.phase)
+		}
+		b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 目標
+	}
+	chooseAttack() // 隊長
 	if b.commandActor != 1 || b.enemies[0].hp != enemyHP {
 		t.Fatalf("隊長下令後只應前進到同伴1，actor=%d enemyHP=%d→%d",
 			b.commandActor, enemyHP, b.enemies[0].hp)
 	}
-	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 同伴1：戰鬥
+	chooseAttack() // 同伴1
 	if b.commandActor != 2 || b.enemies[0].hp != enemyHP {
 		t.Fatalf("同伴1下令後仍不可先執行，actor=%d enemyHP=%d→%d",
 			b.commandActor, enemyHP, b.enemies[0].hp)
 	}
-	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 同伴2：戰鬥，才結算
+	chooseAttack() // 同伴2，才結算
 	if b.enemies[0].hp >= enemyHP {
 		t.Fatalf("收完三人命令後才應執行回合，enemyHP=%d→%d", enemyHP, b.enemies[0].hp)
 	}
@@ -119,5 +126,82 @@ func TestBattleSpeedOrderInterleavesEnemyAndParty(t *testing.T) {
 	if fastHero.result != 1 {
 		t.Fatalf("高速隊長應先擊倒敵人，result=%d heroHP=%d enemyHP=%d",
 			fastHero.result, fastHero.heroHP, fastHero.enemies[0].hp)
+	}
+}
+
+func TestBattleAttackCanSelectSecondEnemy(t *testing.T) {
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
+	hero := heroParams{level: 20, curHP: 999, maxHP: 999, atk: 80, def: 999, agi: 999}
+	if !b.startGroup(101, 3, 7, hero, nil) {
+		t.Fatal("開戰失敗")
+	}
+	for i := range b.enemies {
+		b.enemies[i].hp, b.enemies[i].max = 500, 500
+		b.enemies[i].status = statusParalysis
+	}
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if b.phase != phTargetEnemy {
+		t.Fatalf("戰鬥指令後應選敵，phase=%d", b.phase)
+	}
+	b.input(InputState{DirHeld: -1, DirEdge: 3}) // 右：第二隻
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if b.enemies[0].hp != 500 || b.enemies[1].hp >= 500 || b.enemies[2].hp != 500 {
+		t.Fatalf("應只攻擊第二隻，HP=[%d %d %d]",
+			b.enemies[0].hp, b.enemies[1].hp, b.enemies[2].hp)
+	}
+}
+
+func TestBattleCompanionSpellSelectsAllyAndUsesOwnMP(t *testing.T) {
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
+	hero := heroParams{level: 10, curHP: 100, maxHP: 100, atk: 20, def: 999, agi: 999}
+	priest := &battleActor{
+		class: 3, level: 10, hp: 20, maxHP: 100, mp: 20, maxMP: 20,
+		atk: 10, def: 999, agi: 999, spells: []int{161},
+	}
+	if !b.startGroup(101, 1, 5, hero, []*battleActor{priest}) {
+		t.Fatal("開戰失敗")
+	}
+	b.enemies[0].status = statusParalysis
+
+	b.input(InputState{DirHeld: -1, DirEdge: 0}) // 隊長：逃跑
+	b.input(InputState{DirHeld: -1, DirEdge: 0}) // 隊長：防禦
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if b.commandActor != 1 {
+		t.Fatalf("隊長防禦後應輪到僧侶，actor=%d", b.commandActor)
+	}
+	b.input(InputState{DirHeld: -1, DirEdge: 0}) // 僧侶：咒文
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 荷依米
+	if b.phase != phTargetAlly {
+		t.Fatalf("荷依米應開我方目標選擇，phase=%d", b.phase)
+	}
+	b.input(InputState{DirHeld: -1, DirEdge: 3})                 // 右：僧侶自己
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 結算
+	if b.heroHP != 100 || priest.hp <= 20 {
+		t.Fatalf("荷依米應只回復僧侶，hero=%d priest=%d", b.heroHP, priest.hp)
+	}
+	if priest.mp != 17 || b.heroMP != 0 {
+		t.Fatalf("應扣僧侶自己的3 MP，heroMP=%d priestMP=%d", b.heroMP, priest.mp)
+	}
+}
+
+func TestBattleTargetCancelReturnsToOrigin(t *testing.T) {
+	b := &Battle{
+		heroHP:   10,
+		enemies:  []enemyUnit{{hp: 10}},
+		commands: emptyCommands(1),
+	}
+	b.beginTarget(battleCommand{kind: bcWar, target: -1}, phCommand)
+	b.input(InputState{Cancel: true, DirHeld: -1, DirEdge: -1})
+	if b.phase != phCommand || b.commandActor != 0 {
+		t.Fatalf("取消敵方目標應回同一角色命令，phase=%d actor=%d", b.phase, b.commandActor)
 	}
 }

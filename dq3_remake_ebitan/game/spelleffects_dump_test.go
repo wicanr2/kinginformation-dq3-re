@@ -59,10 +59,10 @@ func TestDumpSpellEffects(t *testing.T) {
 	dump("00_open")
 
 	g.battle.execSpell(151) // 拜基魯多:我方物攻↑
-	if g.battle.partyAtkPct != 200 {
-		t.Fatalf("拜基魯多後 partyAtkPct 應為200,得 %d", g.battle.partyAtkPct)
+	if g.battle.heroAtkPct != 200 {
+		t.Fatalf("拜基魯多後 heroAtkPct 應為200,得 %d", g.battle.heroAtkPct)
 	}
-	dump("01_after_baikiruto_partyAtkPct200")
+	dump("01_after_baikiruto_heroAtkPct200")
 
 	g.battle.execSpell(144) // 拉里荷:敵陷入睡眠
 	if g.battle.enemies[0].status&statusParalysis == 0 {
@@ -74,7 +74,7 @@ func TestDumpSpellEffects(t *testing.T) {
 	before := g.battle.enemies[0].hp
 	g.battle.execTurn()
 	dmg := before - g.battle.enemies[0].hp
-	t.Logf("buff 後物攻傷害 = %d(partyAtkPct=%d)", dmg, g.battle.partyAtkPct)
+	t.Logf("buff 後物攻傷害 = %d(heroAtkPct=%d)", dmg, g.battle.heroAtkPct)
 	dump("03_after_buffed_attack")
 
 	t.Logf("咒文效果 dump ✓:存於 %s(00開場/01拜基魯多後/02拉里荷後/03buff攻擊後)", out)

@@ -97,6 +97,28 @@ func TestSpellDefAndCast(t *testing.T) {
 	}
 }
 
+func TestOriginalDescriptorTargetFlags(t *testing.T) {
+	cases := map[int]Target{
+		121: TargetEnemyOne,   // flags 0x0d
+		124: TargetEnemyGroup, // flags 0x1d
+		144: TargetEnemyGroup, // 拉里荷，不是單體
+		152: TargetEnemyOne,   // 美達巴尼
+		151: TargetAllyOne,    // 拜基魯多
+		154: TargetAllyOne,    // 史卡拉
+		155: TargetAllyGroup,  // 史克魯多
+		161: TargetAllyOne,    // 荷依米
+		165: TargetAllyGroup,  // 比荷瑪順
+		168: TargetAllyGroup,  // 薩梅哈
+		180: TargetNone,
+	}
+	for rec, want := range cases {
+		d, ok := GetDef(rec)
+		if !ok || d.Target != want {
+			t.Errorf("rec%d target=%d ok=%v, want %d", rec, d.Target, ok, want)
+		}
+	}
+}
+
 // TestW3StatusSpellDefs:W3(docs/72 A1)新增的輔助/狀態咒 descriptor(Kind/MP)。
 func TestW3StatusSpellDefs(t *testing.T) {
 	cases := []struct {

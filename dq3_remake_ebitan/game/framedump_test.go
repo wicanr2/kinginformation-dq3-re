@@ -368,7 +368,20 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.battle.commandActor = 1
 	g.battle.phase = phCommand
 	dump("battle_party_command")
+	g.battle.phase = phTargetAlly
+	g.battle.targetCursor = 1
+	dump("battle_ally_target")
 	g.battle.phase = phSpell
 	g.battle.spellCursor = len(mageSpells) - 1
 	dump("battle_palpunte_menu")
+
+	// 三敵單體選擇：游標與觸控 hit-box 對應實際怪物位置，不再固定第一隻。
+	if !g.battle.startGroup(5, 3, 1, heroParams{
+		level: 20, curHP: 150, maxHP: 150, atk: 60, def: 60, agi: 60,
+	}, nil) {
+		t.Fatal("敵方目標選擇截圖開戰失敗")
+	}
+	g.battle.phase = phTargetEnemy
+	g.battle.targetCursor = 1
+	dump("battle_enemy_target")
 }

@@ -19,14 +19,16 @@ const (
 	Palpunte   // 帕魯朋特180:16 格原版亂數表（5 格有效、4 種唯一戰鬥效果）
 )
 
-// Target:傷害咒的目標範圍(移植 dq3_spelldef.c DQ3_TG_*)。Heal 不用此欄(固定治己方,見
-// battle.go execSpell)。ENEMY1=單體(玩家端簡化為「指向第一個存活敵」,原版隨機選);
-// Group=全體存活敵(原版 TG_GROUP/TG_ALL 在玩家咒文的敵方視角下等價,均全體命中)。
+// Target 由 DQ3.EXE DS:0x37c3 的 descriptor flags 直接解出。
+// 0x0d=敵單體、0x15/0x1d=敵群體、0x09/0x0b=我方單體、0x11/0x13=我方全體。
 type Target int
 
 const (
-	TargetSingle Target = iota // DQ3_TG_ENEMY1
-	TargetGroup                // DQ3_TG_GROUP / DQ3_TG_ALL(玩家咒對敵方視角等價,皆全體)
+	TargetEnemyOne Target = iota
+	TargetEnemyGroup
+	TargetAllyOne
+	TargetAllyGroup
+	TargetNone
 )
 
 // Learn:某職業系在 level 級習得咒名 rec。
@@ -38,7 +40,7 @@ type Learn struct {
 type Def struct {
 	Rec, MP, Base int
 	Kind          Kind
-	Target        Target // 僅 Dmg 咒有意義(對齊 W2 多敵戰鬥:單體咒指定目標、群體咒全部命中)
+	Target        Target
 }
 
 // mpCosts 是 DQ3.EXE DGROUP 0x37c3 起、60 筆×3-byte spell descriptor 的第 0 byte。
@@ -67,41 +69,40 @@ var heroSchool = []Learn{
 }
 
 // 可施放咒文 descriptor(dq3_spelldef 的傷害/回復咒;輔助咒無 def → 戰鬥不列)。
-// Target 對齊 src/dq3_spelldef.c(DQ3_TG_ENEMY1→TargetSingle;DQ3_TG_GROUP/DQ3_TG_ALL→TargetGroup,
-// 玩家咒對敵方視角下皆「全體存活敵」等價)。
+// Target 直接對齊原版 descriptor 的敵我側別與單體／群體 flags。
 var defs = map[int]Def{
-	121: {121, 2, 10, Dmg, TargetSingle},    // 美拉
-	122: {122, 6, 80, Dmg, TargetSingle},    // 美拉米
-	123: {123, 12, 180, Dmg, TargetSingle},  // 美拉宙瑪
-	124: {124, 4, 20, Dmg, TargetGroup},     // 吉拉
-	125: {125, 6, 35, Dmg, TargetGroup},     // 比吉拉瑪
-	126: {126, 12, 100, Dmg, TargetGroup},   // 比吉拉肯
-	127: {127, 5, 20, Dmg, TargetGroup},     // 伊歐
-	128: {128, 9, 60, Dmg, TargetGroup},     // 伊歐拉
-	129: {129, 18, 140, Dmg, TargetGroup},   // 伊歐那順
-	130: {130, 3, 30, Dmg, TargetSingle},    // 希亞多
-	131: {131, 6, 50, Dmg, TargetGroup},     // 希亞達可
-	132: {132, 9, 70, Dmg, TargetGroup},     // 希亞達依恩
-	161: {161, 3, 30, Heal, TargetSingle},   // 荷依米
-	162: {162, 5, 85, Heal, TargetSingle},   // 比荷依米
-	163: {163, 7, 255, Heal, TargetSingle},  // 比荷瑪
-	165: {165, 62, 255, Heal, TargetSingle}, // 比荷瑪順
+	121: {121, 2, 10, Dmg, TargetEnemyOne},     // 美拉
+	122: {122, 6, 80, Dmg, TargetEnemyOne},     // 美拉米
+	123: {123, 12, 180, Dmg, TargetEnemyOne},   // 美拉宙瑪
+	124: {124, 4, 20, Dmg, TargetEnemyGroup},   // 吉拉
+	125: {125, 6, 35, Dmg, TargetEnemyGroup},   // 比吉拉瑪
+	126: {126, 12, 100, Dmg, TargetEnemyGroup}, // 比吉拉肯
+	127: {127, 5, 20, Dmg, TargetEnemyGroup},   // 伊歐
+	128: {128, 9, 60, Dmg, TargetEnemyGroup},   // 伊歐拉
+	129: {129, 18, 140, Dmg, TargetEnemyGroup}, // 伊歐那順
+	130: {130, 3, 30, Dmg, TargetEnemyOne},     // 希亞多
+	131: {131, 6, 50, Dmg, TargetEnemyGroup},   // 希亞達可
+	132: {132, 9, 70, Dmg, TargetEnemyGroup},   // 希亞達依恩
+	161: {161, 3, 30, Heal, TargetAllyOne},     // 荷依米
+	162: {162, 5, 85, Heal, TargetAllyOne},     // 比荷依米
+	163: {163, 7, 255, Heal, TargetAllyOne},    // 比荷瑪
+	165: {165, 62, 255, Heal, TargetAllyGroup}, // 比荷瑪順
 
 	// 輔助/狀態咒(base==0,dq3_spelldef.c 生成表未收錄——該表只列 DMG/HEAL 有威力值的咒;
 	// docs/data/spell-effects-research.md 為 remake 定義的效果模型,W3 補上玩家可施放的 descriptor。
 	// MP 由 EXE 0x37c3 descriptor 第 0 byte 證實；Base 恆 0,
 	// 不進 CastValue(這些 Kind 不算傷害/回復量,見 game/battle.go execSpell)。
-	144: {144, 3, 0, Sleep, TargetSingle},      // 拉里荷
-	151: {151, 6, 0, BuffAtk, TargetSingle},    // 拜基魯多
-	152: {152, 5, 0, Sleep, TargetSingle},      // 美達巴尼
-	154: {154, 3, 0, BuffDef, TargetSingle},    // 史卡拉
-	155: {155, 4, 0, BuffDef, TargetSingle},    // 史克魯多(remake 簡化全體我方共用同一 partyDefPct,見 battle.go)
-	156: {156, 3, 0, Seal, TargetSingle},       // 瑪荷頓
-	158: {158, 4, 0, Blind, TargetSingle},      // 瑪努莎
-	166: {166, 3, 0, CurePoison, TargetSingle}, // 基阿里
-	167: {167, 6, 0, CureStatus, TargetSingle}, // 基阿里克
-	168: {168, 3, 0, CureStatus, TargetSingle}, // 薩梅哈
-	180: {180, 20, 0, Palpunte, TargetGroup},   // 帕魯朋特（battle-only，descriptor flags=0x01）
+	144: {144, 3, 0, Sleep, TargetEnemyGroup},     // 拉里荷
+	151: {151, 6, 0, BuffAtk, TargetAllyOne},      // 拜基魯多
+	152: {152, 5, 0, Sleep, TargetEnemyOne},       // 美達巴尼
+	154: {154, 3, 0, BuffDef, TargetAllyOne},      // 史卡拉
+	155: {155, 4, 0, BuffDef, TargetAllyGroup},    // 史克魯多
+	156: {156, 3, 0, Seal, TargetEnemyGroup},      // 瑪荷頓
+	158: {158, 4, 0, Blind, TargetEnemyGroup},     // 瑪努莎
+	166: {166, 3, 0, CurePoison, TargetAllyOne},   // 基阿里
+	167: {167, 6, 0, CureStatus, TargetAllyOne},   // 基阿里克
+	168: {168, 3, 0, CureStatus, TargetAllyGroup}, // 薩梅哈
+	180: {180, 20, 0, Palpunte, TargetNone},       // 帕魯朋特
 }
 
 // 僧侶系(24)/ 魔法系(31)習得表(自 dq3_school_priest/mage)。

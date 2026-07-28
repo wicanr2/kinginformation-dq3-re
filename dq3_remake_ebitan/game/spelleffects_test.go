@@ -10,7 +10,7 @@ import (
 // per-battle 修正狀態 reset + 咒文選單可選到。用 id101(castProb0/fleeRate0,對齊
 // multibattle_test.go 既有慣例)避免敵方 AI 自身施咒/逃跑污染觀察窗,除非該測試就是要測敵方鏡像。
 
-// TestBaikirutoDoublesPartyAtk:拜基魯多(151)施放後 partyAtkPct 應變 200(×2),且套用在物攻傷害上
+// TestBaikirutoDoublesPartyAtk:拜基魯多(151)施放後 heroAtkPct 應變 200(×2),且套用在物攻傷害上
 // (刻意選 atk<2*def,使「未 buff 傷害含會心一擊上限」與「buff 後傷害下限」兩區間不重疊,見注解算式)。
 func TestBaikirutoDoublesPartyAtk(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
@@ -28,8 +28,8 @@ func TestBaikirutoDoublesPartyAtk(t *testing.T) {
 		b.enemies[0].def = 30
 		b.enemies[0].hp, b.enemies[0].max = 9999, 9999 // 避免中途被打死影響觀察
 		b.execSpell(151)                               // 拜基魯多
-		if b.partyAtkPct != 200 {
-			t.Fatalf("partyAtkPct 應變 200(×2),得 %d(seed%d)", b.partyAtkPct, seed)
+		if b.heroAtkPct != 200 {
+			t.Fatalf("heroAtkPct 應變 200(×2),得 %d(seed%d)", b.heroAtkPct, seed)
 		}
 		before := b.enemies[0].hp
 		b.cursor = bcWar
@@ -41,8 +41,8 @@ func TestBaikirutoDoublesPartyAtk(t *testing.T) {
 	}
 }
 
-// TestSukaraBuffsPartyDef:史卡拉(154)施放後 partyDefPct 應變 150(上限300)、扣正確 MP,
-// 且套用後我方統計期望受傷應下降(300 個 seed 平均值比較,partyDefPct 只是 +50% 非乘 2,
+// TestSukaraBuffsPartyDef:史卡拉(154)施放後 heroDefPct 應變 150(上限300)、扣正確 MP,
+// 且套用後我方統計期望受傷應下降(300 個 seed 平均值比較,heroDefPct 只是 +50% 非乘 2,
 // 用統計平均而非固定區間判定,避免變異數重疊導致偽陽性)。
 func TestSukaraBuffsPartyDef(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
@@ -58,7 +58,7 @@ func TestSukaraBuffsPartyDef(t *testing.T) {
 				t.Fatal("開戰失敗")
 			}
 			b.enemies[0].atk = 100 // 固定敵攻,排除素材本身數值差異
-			b.partyDefPct = defPct
+			b.heroDefPct = defPct
 			before := b.heroHP
 			b.enemyTurn()
 			total += before - b.heroHP
@@ -68,11 +68,11 @@ func TestSukaraBuffsPartyDef(t *testing.T) {
 	base := measure(100, 300)
 	buffed := measure(150, 300)
 	if buffed >= base {
-		t.Fatalf("partyDefPct 150%% 應降低受傷期望值,base平均=%.2f buffed平均=%.2f", base, buffed)
+		t.Fatalf("heroDefPct 150%% 應降低受傷期望值,base平均=%.2f buffed平均=%.2f", base, buffed)
 	}
 	t.Logf("史卡拉守備 buff ✓:100%% avg=%.2f → 150%% avg=%.2f", base, buffed)
 
-	// 施放本身:partyDefPct 應變 150，MP 依 EXE DS:0x37c3 扣除。
+	// 施放本身:heroDefPct 應變 150，MP 依 EXE DS:0x37c3 扣除。
 	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
 	hero := heroParams{level: 4, curHP: 999, maxHP: 999, atk: 1, def: 40, agi: 1, mp: 99, maxMP: 99}
 	if !b.startGroup(101, 1, 1, hero, nil) {
@@ -80,8 +80,8 @@ func TestSukaraBuffsPartyDef(t *testing.T) {
 	}
 	mp0 := b.heroMP
 	b.execSpell(154)
-	if b.partyDefPct != 150 {
-		t.Fatalf("史卡拉施放後 partyDefPct 應為150,得 %d", b.partyDefPct)
+	if b.heroDefPct != 150 {
+		t.Fatalf("史卡拉施放後 heroDefPct 應為150,得 %d", b.heroDefPct)
 	}
 	if want := mp0 - 3; b.heroMP != want {
 		t.Fatalf("史卡拉應依 EXE 扣3 MP,得 heroMP=%d(want %d)", b.heroMP, want)
@@ -261,7 +261,7 @@ func TestCureStatusClearsParalysis(t *testing.T) {
 	}
 }
 
-// TestBattleModsResetEachStart:per-battle 修正狀態(partyAtkPct 等)每場 startGroup 都應歸零
+// TestBattleModsResetEachStart:per-battle 修正狀態(heroAtkPct 等)每場 startGroup 都應歸零
 // (對齊 C reset_battle_mods();不可跨戰殘留)。
 func TestBattleModsResetEachStart(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
@@ -273,16 +273,16 @@ func TestBattleModsResetEachStart(t *testing.T) {
 	if !b.startGroup(101, 1, 1, hero, nil) {
 		t.Fatal("開戰失敗")
 	}
-	b.partyAtkPct, b.partyDefPct, b.enemyAtkPct, b.enemyDefPct = 400, 300, 400, 300
+	b.heroAtkPct, b.heroDefPct, b.enemyAtkPct, b.enemyDefPct = 400, 300, 400, 300
 	b.partyBlind, b.partySealed = true, true
 	b.heroStatus = statusParalysis
 
 	if !b.startGroup(101, 1, 2, hero, nil) { // 重開下一場
 		t.Fatal("重開戰失敗")
 	}
-	if b.partyAtkPct != 100 || b.partyDefPct != 100 || b.enemyAtkPct != 100 || b.enemyDefPct != 100 {
+	if b.heroAtkPct != 100 || b.heroDefPct != 100 || b.enemyAtkPct != 100 || b.enemyDefPct != 100 {
 		t.Fatalf("新戰應歸零百分比修正(基準100),得 atk%d def%d eatk%d edef%d",
-			b.partyAtkPct, b.partyDefPct, b.enemyAtkPct, b.enemyDefPct)
+			b.heroAtkPct, b.heroDefPct, b.enemyAtkPct, b.enemyDefPct)
 	}
 	if b.partyBlind || b.partySealed || b.heroStatus != 0 {
 		t.Fatalf("新戰應清除旗標/狀態,得 partyBlind=%v partySealed=%v heroStatus=%d",

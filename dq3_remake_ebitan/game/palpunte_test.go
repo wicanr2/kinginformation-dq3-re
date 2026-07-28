@@ -127,3 +127,18 @@ func TestExecPalpunteCostsTwentyMP(t *testing.T) {
 		t.Fatalf("帕魯朋特應扣20 MP，得 %d", b.heroMP)
 	}
 }
+
+func TestCompanionPalpunteUsesCompanionMP(t *testing.T) {
+	b := palpunteBattle(t, 5, 1)
+	b.heroMP = 77
+	b.companions[0].mp = 100
+	b.enemies[0].mp = 0 // 即使抽到吸 MP，也不改變施法者結果
+	b.actionActor = 1
+	b.resolving = true
+	b.execSpell(180)
+	b.resolving = false
+	if b.heroMP != 77 || b.companions[0].mp != 80 {
+		t.Fatalf("同伴施放巴魯朋特應只扣同伴20 MP，hero=%d companion=%d",
+			b.heroMP, b.companions[0].mp)
+	}
+}

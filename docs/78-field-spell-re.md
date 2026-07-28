@@ -105,6 +105,25 @@ Go battle core 依此使用四種動態命令框，並把隊員與每隻敵人�
 
 ![Ebiten：魔法使同伴的逐人戰鬥命令](../dq3_remake_ebitan/docs/battle_party_command.png)
 
+### descriptor 目標 flags 與正常輸入
+
+原版 `DS:0x37c3` 每筆第三 byte 不只是「單／群」：低位同時決定敵我側別。已由 60 筆
+原始表與 caster consumer 對照出本批使用的值：
+
+| flags | 目標 | 例 |
+|---:|---|---|
+| `0x0d` | 敵單體 | 美拉、美達巴尼 |
+| `0x15`／`0x1d` | 敵群體／全體 | 吉拉、拉里荷、瑪荷頓、瑪努莎 |
+| `0x09`／`0x0b` | 我方單體 | 拜基魯多、史卡拉、荷依米 |
+| `0x11`／`0x13` | 我方群體／全體 | 史克魯多、薩梅哈、比荷瑪順 |
+
+Ebiten 的攻擊、單體咒文與藥草現在先進目標 phase；方向鍵或觸控可指定存活目標，取消會回
+同一名隊員的命令／咒文層。目標在實際出手前已死亡時，才 fallback 到下一個存活敵。
+
+![Ebiten：指定第二隻敵人](../dq3_remake_ebitan/docs/battle_enemy_target.png)
+
+![Ebiten：指定我方魔法使](../dq3_remake_ebitan/docs/battle_ally_target.png)
+
 現行 renderer 的五行捲動咒文窗（游標位於清單尾端的巴魯朋特）：
 
 ![Ebiten：巴魯朋特戰鬥咒文選單](../dq3_remake_ebitan/docs/battle_palpunte_menu.png)

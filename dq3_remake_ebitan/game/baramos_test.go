@@ -69,7 +69,7 @@ func TestBaramosProductionInputTrace(t *testing.T) {
 	g.battle.enemies[0].hp, g.battle.enemies[0].def = 1, 0
 	g.battle.enemies[0].atk, g.battle.enemies[0].agi = 0, 0
 	g.battle.heroAtk, g.battle.heroAgi = 999, 999
-	for g.battle.phase == phCommand { // 原版逐一收完每名可動隊員的命令才結算
+	for n := 0; g.battle.result == 0 && n < 16; n++ { // 命令→目標，逐一收完隊員才結算
 		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	}
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 勝利訊息→end

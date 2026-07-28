@@ -284,6 +284,41 @@ func TestBattleSpellDrawScrollsToLateSpell(t *testing.T) {
 	}
 }
 
+func TestBattleTargetDrawHits(t *testing.T) {
+	emptySprite := &dq3data.MonsterSprite{
+		W: 16, H: 16,
+		Px: make([][]uint8, 16), Opaque: make([][]bool, 16),
+	}
+	for i := 0; i < 16; i++ {
+		emptySprite.Px[i] = make([]uint8, 16)
+		emptySprite.Opaque[i] = make([]bool, 16)
+	}
+	b := &Battle{
+		tx: &dq3data.Text{}, spr: emptySprite, phase: phTargetEnemy,
+		heroHP: 10, enemies: []enemyUnit{{hp: 10}, {hp: 10}, {hp: 10}},
+		targetCursor: 1,
+	}
+	b.draw(newHitTestRGBA(), nil)
+	if len(b.hits) != 3 {
+		t.Fatalf("三敵目標畫面應有3個怪物 hit-box，得 %d", len(b.hits))
+	}
+	// 第二隻中心約 x=320、y=232。
+	if idx := b.hits.at(320, 228); idx != 1 {
+		t.Fatalf("點第二隻怪應命中 target position1，得 %d", idx)
+	}
+
+	b.phase = phTargetAlly
+	b.companions = []*battleActor{{hp: 10}}
+	b.targetCursor = 1
+	b.draw(newHitTestRGBA(), nil)
+	if len(b.hits) != 2 {
+		t.Fatalf("隊長+同伴目標畫面應有2個狀態欄 hit-box，得 %d", len(b.hits))
+	}
+	if idx := b.hits.at(240, 20); idx != 1 {
+		t.Fatalf("點同伴狀態欄應命中 target position1，得 %d", idx)
+	}
+}
+
 // TestPanelItemsDrawHits:道具清單(panel.go drawItems)draw 後 hits 筆數對齊 inventory,點列移 panelCursor。
 func TestPanelItemsDrawHits(t *testing.T) {
 	items, err := dq3data.OpenItems(asset(t, "ITEM.DAT"))
