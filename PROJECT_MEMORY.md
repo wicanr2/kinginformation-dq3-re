@@ -46,7 +46,7 @@
 
 - 原始素材格式、地圖、字型、文字、怪物、NPC、事件、戰鬥等已有大量 RE 與解析器。
 - EXE 重組曾做到 byte-identical；C remake 有廣泛子系統與測試。
-- Ebiten 已有標題／命名／性別、開場家中核心、城鎮與地表、NPC、命令窗、對話、隊伍／酒場元件、
+- Ebiten 已有標題／命名／性別／能力確認、開場家中核心、城鎮與地表、NPC、命令窗、對話、隊伍／酒場元件、
   戰鬥、道具裝備、商店設施、船、晝夜、存檔、觸控與音訊等大量基礎。
 - Ebiten 已修復 NPC 三層載入問題：不丟 `b2<4`、日夜表、story flag visibility。
 - W1–W5 已完成：文字插值、加權怪群、多敵、玩家狀態咒文、酒場名冊／入隊分離、C NPC parity。
@@ -65,7 +65,8 @@
   最終驗收前必須移除或隔離到非 production build。
 - 開場出生資料與事件 transaction 已由 EXE 定錨：sec4 `(5,5)`、單人／布衣、rec82→83→81→
   母親自動帶至 sec0 `(8,38)`／rec80、王座給 50G + `00,01,01,03,1f,1f` 後才完成 `msStart`。
-  仍有 fidelity 缺口：能力值確認、母親逐格移動動畫、正式 input trace、attract 演出、
+  能力值確認與標題→王座 production-input trace 已補；仍有 fidelity 缺口：確認畫面人物立繪、
+  母親逐格移動動畫、attract 演出、
   四人縱列、THE END。
 - 遭遇分區、商店賣出、部分戰鬥呈現／音效與低信心機制仍有缺口。
 
@@ -181,7 +182,10 @@
 
 1. 保留現有 dirty/untracked files。
 2. 跑 Ebiten完整測試建立 baseline（目前開局／元件鏈 targeted tests 已綠；完整 suite 待跑）。
-3. 原版新遊戲初始化與母親／國王 transaction 已追到 file `0x1633` 並落地；下一步建立
-   `title→name→gender→home→mother→castle→king` 的正式 input trace。
+3. 原版新遊戲初始化、能力生成／確認、母親／國王 transaction 已落地；
+   `title→name→gender→stats-confirm→home→mother→castle→king` production-input trace 已通過。
+   2026-07-28 另證實成長表順序為 `STR,VIT,AGI,HP,MP,INT,LUCK`，舊 docs/23 與 C/Go
+   將 pair1 認成 MP 的 patch 已撤銷；真 MP 是 pair4 (`0x1a4ae/f`)。主角七項能力現在持久化，
+   Lv1 與升級使用 `sub_fa57` RNG transaction，守備依 `sub_9521` 為耐力＋防具。
 4. 實作 R-2 前先補一條玩家層測試，從道具選單實際使用拉之鏡，不直接呼叫事件函式。
 5. 完成 R-2 E3 slice 後更新本檔與唯一 worklist，再開始 R-1 或 R-3。

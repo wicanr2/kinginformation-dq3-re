@@ -27,7 +27,7 @@ func (m *Member) MaxMP() int  { return int(stats.GrowthTarget(m.Class, stats.MP,
 func (m *Member) Agi() int    { return int(stats.GrowthTarget(m.Class, stats.AGI, m.Level())) }
 func (m *Member) Alive() bool { return m.CurHP > 0 }
 
-// Atk = 力量 + 武器攻;Def = 耐力/2 + 鎧盾兜防(移植 dq3_recruit 數值公式)。
+// Atk = 力量 + 武器攻;Def = 耐力 + 鎧盾兜防（DQ3.EXE sub_9521）。
 func (m *Member) Atk(items *dq3data.Items) int {
 	a := int(stats.GrowthTarget(m.Class, stats.STR, m.Level()))
 	if items != nil {
@@ -36,7 +36,7 @@ func (m *Member) Atk(items *dq3data.Items) int {
 	return a
 }
 func (m *Member) Def(items *dq3data.Items) int {
-	d := int(stats.GrowthTarget(m.Class, stats.VIT, m.Level())) / 2
+	d := int(stats.GrowthTarget(m.Class, stats.VIT, m.Level()))
 	if items != nil {
 		d += items.Defense(m.Armor) + items.Defense(m.Shield) + items.Defense(m.Head)
 	}

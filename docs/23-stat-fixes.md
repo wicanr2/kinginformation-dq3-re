@@ -1,4 +1,10 @@
-# 精訊 DQ3 數值類 bug 修正(#4 勇者 MP / #5 升級錯亂 / #6 數值 255 溢位)
+# 精訊 DQ3 數值類 bug 追蹤（#4 勇者 MP / #5 升級錯亂 / #6 數值 255 溢位）
+
+> **2026-07-28 重要更正：舊版本文把成長表 pair1 誤認為 MP。**
+> 重新沿 `sub_ed3c` 的 table reader 追到角色 record writer，再以 `sub_96be`
+> 狀態 renderer 與 1994 存檔欄位表交叉確認後，七組正確順序是
+> `STR,VIT,AGI,MaxHP,MaxMP,INT,LUCK`。所以舊 patch `0x1a4a8/9`
+> 修改的是 **VIT**，並沒有修改 MP。該 patch 及由它產生的數值結論一律撤銷。
 
 這三個 bug 青衫攻略沒有官方修正碼(見 docs/21),需自行從反組譯定位後修。
 本文記錄根因核對、安全修法與 DOSBox 驗證,並修正 docs/18 早期分析的兩處誤判。
@@ -9,7 +15,7 @@
 
 | # | bug | 根因 | 修法 | 狀態 |
 |---|---|---|---|---|
-| 4 | 勇者 MaxMP 成長偏低 | EXE 靜態成長表勇者 MP base/slope 偏低 | EXE in-place 資料 patch(2 byte) | 已修,DOSBox 開機驗證通過 |
+| 4 | 勇者 MaxMP 成長偏低 | 真 MP 為 pair4 (`0x1a4ae/f`=`08 02`) | remake 先忠實保留；是否另設 bug-fix 模式待實機長程驗證 | 舊 patch 已撤銷 |
 | 5 | 高等級(Lv44+)升級錯亂 | 門檻表 MAX_LEVEL=43,lv44 越界讀 0 → 連升 | clamp level≤43;需 code cave | 未修(cave 不足,留 C 層) |
 | 6 | 數值 255 溢位 | 非成長公式(已澄清);疑顯示寬度 / 與 #5 互動 | uint16 + 明確 clamp | 未修(無可信靜態截斷點,留 C 層) |
 
@@ -29,39 +35,36 @@ docs/18 對 #4/#6 的定位有兩處與實際不符,經本次反組譯核對更�
    (`add word ptr [si+..]`)。屬性欄 `[si+0x24]`/`[si+0x26]` 全檔只有 word(8b/89)讀寫、
    查無 byte(8a/88)截斷。所以 255-wrap 不在成長公式內。
 
-## Bug 4:勇者 MaxMP 成長偏低(已修)
+## Bug 4:勇者 MaxMP 成長偏低（舊修法無效，已撤銷）
 
-成長公式 `sub_d9cc`(file 0xed3c)對 8 個職業共用一段碼,職業 = `[si+1]`(0 勇者…7 遊玩者),
-查 `bx = 職業×14` 的成長表列。每列 14 byte,MP 對應 `+2 base`、`+3 slope`:
+成長公式 `sub_ed3c`(file `0xed3c`)對 8 個職業共用一段碼。每列 14 byte；逐組 writer 是：
 
 ```
-f00edb0: mov al,[bx+0x4369]   ; MP slope
-         mul dl               ; × level
-         shr ax,1             ; ÷2
-         add al,[bx+0x4368]   ; + MP base   (target = base + slope×level/2)
-         adc ah,0
-         sub ax,[si+0x1e]     ; delta = target − 現值MP
-         ... delta>0 → call sub_fa57(delta) ...
+pair0 DS:4366 → member+1a = STR
+pair1 DS:4368 → member+1e = VIT
+pair2 DS:436a → member+24 = AGI
+pair3 DS:436c → member+2a = MaxHP
+pair4 DS:436e → member+2c = MaxMP
+pair5 DS:4370 → member+26 = INT
+pair6 DS:4372 → member+28 = LUCK
 ```
 
-關鍵:`sub_fa57(delta)` 回傳的不是 delta 本身,而是 **`rng % delta`(下限 1)** —— 實得 MP
-增量是「1 到 delta 之間的亂數」。勇者那列 MP base=3、slope=5(target 每級僅多 ~2.5),delta 小,
-亂數又常落在 1,於是表現成「每級只 +1」。模擬到 Lv43 勇者 MaxMP 僅約 107,放不出費 MP 的
-全體補血咒「比荷瑪拉(ベホマラー)」。
+新遊戲在 `1c3c` 呼叫此函式，之後把 `+2c→+18`（MaxMP→目前 MP）、
+`+2a→+16`（MaxHP→目前 HP），因此 HP/MP 語意無歧義。勇者原始列是：
 
-**修法(EXE in-place 資料 patch)**:把勇者列 MP base/slope 調高,delta 拉大、亂數下限提升。
+`06 06 | 03 05 | 03 05 | 08 10 | 08 02 | 06 06 | 06 06`
 
-| file offset | 欄位 | 原 | 新 |
-|---|---|---|---|
-| 0x1a4a8 | 勇者 MP base | 03 | 08 |
-| 0x1a4a9 | 勇者 MP slope | 05 | 0a |
+真 MP 是 file `0x1a4ae/0x1a4af` 的 `08/02`；舊 patch 修改
+`0x1a4a8/9` 的 `03/05→08/0a`，實際把 VIT 改高。
 
-模擬(忠實重現 8-bit 加 + min-1 亂數):Lv43 勇者 MaxMP 由 ~107 提升到 ~217,且 8-bit 路徑
-與真實 16-bit 結果在 lv1..43 完全一致(無 255 wrap)。屬性以 word 累加,不溢位。
+`sub_fa57(delta)` 的精確結果也不是舊文所寫的 1..delta，而是
+`rng % delta`，若餘數為 0 才改成 1：delta>1 時範圍為 **1..delta-1**。
+Lv1 先寫 base 再擲一次，因此勇者 MP 固定為 9、HP 為 9..15、STR 為 7..8；
+這與本機原版能力確認畫面 HP12/MP9/攻擊8 相容。
 
-**DOSBox 驗證**:`work/dq3_stat_game/`(原素材 + patched DQ3.EXE)在 dq3-dosbox 容器啟動 →
-開機 → 標題「DRAGON FIGHTER III 傳說的終章 ©1993 精訊資訊有限公司」→ 進新遊戲命名畫面
-(輸入姓名 / 輸入注音),全程正常,截圖與未改 baseline 逐張一致,2 byte 資料改動未造成回歸。
+先前 DOSBox 驗證只證明 patched EXE 能開機到命名畫面，沒有進入能力確認畫面逐欄比對，
+所以不能證明 patch 語意正確。Go/Ebiten remake 現在預設使用原始 bytes；若日後提供
+「修 bug」模式，必須修改真正 MP 欄並以完整升級實機 trace 驗證，不能再沿用舊 patch。
 
 ## Bug 5:高等級升級錯亂(未修,留 C 層)
 
@@ -125,7 +128,6 @@ docker run --rm -v "$PWD":/work -v "$PWD/work/dq3_stat_game":/game dq3-dosbox \
 
 ## 殘留 / 待釐清
 
-- #4 的數值選擇(base 8 / slope 10)為求穩健的保守值;真要對齊 FC DQ3 勇者 MP 曲線,
-  可日後實機比對微調(仍 in-place 2 byte)。
+- #4 是否屬資料 bug、以及修正版應採哪條 MP 曲線，仍需完整實機升級 trace；忠實模式不改原始表。
 - #5 / #6 的 clamp 在 SDL2/C 重寫時各為單行,屆時一併補入(level clamp + uint16 屬性)。
 - #6 的實際 255-wrap 觸發點需 DOSBox 把屬性堆過 255 觀察後再定論。

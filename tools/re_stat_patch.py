@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""精訊 DQ3 數值類 bug(#4 勇者 MP / #5 升級錯亂 / #6 數值溢位)修正分析 + patch 產生器。
+"""精訊 DQ3 數值類 bug(#4 勇者 MP / #5 升級錯亂 / #6 數值溢位)分析器。
 
 不污染他人 tools:本檔專供 docs/23 數值修正,只動 stat_patches.json / work/。
 
@@ -7,10 +7,10 @@
 - 成長表「不在 dragon0.dat」:dragon0.dat 是存檔(2172 byte,多為 0xff)。
   成長表是 EXE 靜態初始化資料,在 DGROUP(seg 0x14dd)DS:0x4366,
   → file 0x1a4a6,8 個職業 × 14 byte/列。
-- 每職業 14 byte 列(成長公式 sub_d9cc file 0xed3c 解出):
-    +0 HPbase +1 HPslope  +2 MPbase +3 MPslope
-    +4 b4base +5 b4slope   +6 b6base +7 b6slope
-    +8 b8base +9 b8slope   +0xa bAbase +0xb bAslope  +0xc,+0xd 其他
+- 每職業 14 byte 列(sub_ed3c writer + sub_96be renderer 交叉確認):
+    +0 STRbase/+1 slope, +2 VITbase/+3 slope, +4 AGIbase/+5 slope,
+    +6 HPbase/+7 slope, +8 MPbase/+9 slope, +a INTbase/+b slope,
+    +c LUCKbase/+d slope。
   公式:target = base + (slope*level)>>1(全程 16-bit:mul→ax, shr ax,1, add al/adc ah,0),
         實得增量 = sub_fa57(target-current) = rng%(target-current),下限 1。
 - 職業序(D3TXT00 0x1c9..):0勇者 1戰士 2武鬥家 3僧侶 4魔法使者 5賢者 6商人 7遊玩者。
@@ -25,7 +25,7 @@
 用法:
   re_stat_patch.py table          dump 成長表 8 職業列
   re_stat_patch.py thresholds     dump 各職業升級門檻表長度(證 MAX_LEVEL=43)
-  re_stat_patch.py build          產 work/DQ3_stat_fixed.EXE(只套 #4 安全 in-place patch)
+  re_stat_patch.py build          拒絕執行（舊 #4 patch 誤改 VIT，已撤銷）
 """
 import json, os, struct, sys
 
@@ -36,19 +36,6 @@ GROWTH_DS = 0x4366                       # 成長表 DS off
 GROWTH_FILE = HDR + DGROUP * 16 + GROWTH_DS   # 0x1a4a6
 THR_PTR_DS = 0x43d6
 
-# #4 勇者(class0)MP:base@列+2、slope@列+3。原 base=3 slope=5 → 提到 base=8 slope=10。
-HERO_MP_BASE_OFF = GROWTH_FILE + 0 * 0xe + 2   # 0x1a4a8
-HERO_MP_SLOPE_OFF = GROWTH_FILE + 0 * 0xe + 3  # 0x1a4a9
-STAT_PATCHES = [
-    {"bug": 4, "name": "勇者MaxMP成長偏低", "file_offset": HERO_MP_BASE_OFF,
-     "orig": "03", "new": "08", "kind": "exe-data",
-     "desc": "成長表 勇者(class0)MP base 0x03->0x08;EXE 靜態 DGROUP 表,非 dragon0.dat"},
-    {"bug": 4, "name": "勇者MaxMP成長偏低", "file_offset": HERO_MP_SLOPE_OFF,
-     "orig": "05", "new": "0a", "kind": "exe-data",
-     "desc": "成長表 勇者(class0)MP slope 0x05->0x0a;lv43 MaxMP ~107->~217,8-bit 無 wrap"},
-]
-
-
 def _d():
     return open(EXE, "rb").read()
 
@@ -57,7 +44,7 @@ def table():
     d = _d()
     names = "勇者 戰士 武鬥家 僧侶 魔法使者 賢者 商人 遊玩者".split()
     print("成長表 file 0x%05x (DS:0x%04x, 8 職業 × 14 byte):" % (GROWTH_FILE, GROWTH_DS))
-    print("列格式: HPb HPs MPb MPs b4b b4s b6b b6s b8b b8s bAb bAs c d")
+    print("列格式: STRb STRs VITb VITs AGIb AGIs HPb HPs MPb MPs INTb INTs LUCKb LUCKs")
     for i in range(8):
         rec = d[GROWTH_FILE + i * 0xe: GROWTH_FILE + i * 0xe + 0xe]
         print("  %d %-8s: %s" % (i, names[i], " ".join("%02x" % b for b in rec)))
@@ -76,20 +63,10 @@ def thresholds():
 
 
 def build():
-    exe = bytearray(_d())
-    applied = []
-    for p in STAT_PATCHES:
-        off = p["file_offset"]
-        ob = bytes.fromhex(p["orig"]); nb = bytes.fromhex(p["new"])
-        cur = bytes(exe[off:off + len(ob)])
-        assert cur == ob, "offset %#x 原 byte %s != 預期 %s" % (off, cur.hex(), p["orig"])
-        exe[off:off + len(nb)] = nb
-        applied.append("Bug%s %s @%#x %s->%s" % (p["bug"], p["name"], off, p["orig"], p["new"]))
-    os.makedirs("work", exist_ok=True)
-    open("work/DQ3_stat_fixed.EXE", "wb").write(exe)
-    print("已套用 stat patch -> work/DQ3_stat_fixed.EXE:")
-    for a in applied:
-        print("  ", a)
+    raise SystemExit(
+        "拒絕產生：舊 0x1a4a8/9 patch 改到 VIT，不是 MP。"
+        "忠實 remake 使用原始 bytes；見 docs/23-stat-fixes.md。"
+    )
 
 
 def main():

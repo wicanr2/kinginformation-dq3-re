@@ -1,30 +1,39 @@
-// Package stats 是角色數值/升級系統(移植自 C dq3_stats.c + dq3_exedata 成長/門檻表)。
-// 純邏輯 + 內建 EXE 表(自 DQ3.EXE DGROUP 抽出),無引擎相依。含 #4 勇者 MP 成長修正(預設套用)。
+// Package stats 是角色數值/升級系統。成長表與欄位順序直接依 DQ3.EXE
+// sub_ed3c(file 0xed3c)的 writer→角色 record offset 對應，不再沿用舊 C remake
+// 對表格欄位的推測。
 package stats
+
+import "github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 
 const (
 	NumClass = 8
 	MaxLevel = 43 // 門檻表 lv0..43,共 44 entry
 )
 
-// StatKind:屬性索引(順序同 C dq3_stat_kind)。
+// StatKind 順序就是 DQ3.EXE DS:4366 每列七組 {base,slope} 的順序。
+// sub_ed3c 依序寫到角色 +1a/+1e/+24/+2a/+2c/+26/+28；再由
+// sub_96be 狀態畫面及 1994 存檔欄位表確認語意。
 type StatKind int
 
 const (
-	HP StatKind = iota
-	MP
-	AGI // 速度
-	STR // 力量
-	INT // 聰明
-	VIT // 耐力
+	STR StatKind = iota // 力量 (+1a)
+	VIT                 // 耐力 (+1e)
+	AGI                 // 速度 (+24)
+	HP                  // 最大 HP (+2a)
+	MP                  // 最大 MP (+2c)
+	INT                 // 聰明 (+26)
 	LUCK
 	StatCount
 )
 
-// 成長表 [class][14]:每屬性 2 byte {base, slope}(HP MP AGI STR INT VIT LUCK)。自 dq3x_growth 抽出。
-// class0(勇者)已套用 #4 修正:MP base 3→8、slope 5→10(原版偏低放不出比荷瑪拉)。
+// Values 是角色 record 中七個持久能力欄。HP/MP 指最大值；目前值由 Game 另存。
+type Values [StatCount]uint16
+
+// 成長表 [class][14]:每屬性 2 byte {base,slope}，順序
+// STR,VIT,AGI,HP,MP,INT,LUCK。以下是 DQ3.EXE file 0x1a4a6 的原始 bytes，
+// 不偷偷套用舊 docs/23 的「MP 修正」；該文件把 pair1(VIT)誤認為 MP。
 var growth = [NumClass][14]uint8{
-	{0x06, 0x06, 0x08, 0x0a, 0x03, 0x05, 0x08, 0x10, 0x08, 0x02, 0x06, 0x06, 0x06, 0x06}, // 勇者(MP 已修正)
+	{0x06, 0x06, 0x03, 0x05, 0x03, 0x05, 0x08, 0x10, 0x08, 0x02, 0x06, 0x06, 0x06, 0x06},
 	{0x08, 0x06, 0x04, 0x06, 0x03, 0x03, 0x08, 0x14, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04},
 	{0x0a, 0x08, 0x04, 0x08, 0x03, 0x09, 0x08, 0x16, 0x00, 0x00, 0x06, 0x04, 0x06, 0x06},
 	{0x04, 0x06, 0x02, 0x05, 0x03, 0x04, 0x07, 0x0e, 0x05, 0x0e, 0x05, 0x08, 0x08, 0x08},
@@ -55,6 +64,56 @@ func GrowthTarget(cls int, kind StatKind, level int) uint16 {
 	base := uint16(growth[cls][off])
 	slope := uint16(growth[cls][off+1])
 	return base + uint16((slope*uint16(level))>>1)
+}
+
+// legacyGrowAmt 忠實移植 sub_fa57：以 delta 做除數取餘；餘數為 0 時改成 1。
+// 因此 delta>1 的結果是 [1,delta-1]，delta==1 固定為 1，而不是常見的
+// [1,delta]。這個細節決定原版 Lv1 能力值範圍。
+func legacyGrowAmt(delta int, r *rng.RNG) uint16 {
+	if delta <= 0 {
+		return 0
+	}
+	v := r.Next(delta)
+	if v == 0 {
+		v = 1
+	}
+	return uint16(v)
+}
+
+// InitValues 重現 sub_ed3c 的 Lv1 transaction：先把七欄寫成 base，再各自朝
+// level 1 target 成長一次。呼叫者提供共享 DOS RNG，讓重抽與之後升級延續同一序列。
+func InitValues(cls int, r *rng.RNG) Values {
+	var v Values
+	if cls < 0 || cls >= NumClass || r == nil {
+		return v
+	}
+	for k := StatKind(0); k < StatCount; k++ {
+		v[k] = uint16(growth[cls][int(k)*2])
+		target := GrowthTarget(cls, k, 1)
+		if target > v[k] {
+			v[k] += legacyGrowAmt(int(target-v[k]), r)
+		}
+	}
+	return v
+}
+
+// GrowLevel 就像 sub_ed3c 的非 Lv1 路徑，將現有角色的七欄向指定等級目標
+// 各成長一次，並回傳各欄實際增量（目前 HP/MP 也要加上同一增量）。
+func GrowLevel(cls, level int, v *Values, r *rng.RNG) Values {
+	var gained Values
+	if cls < 0 || cls >= NumClass || level < 1 || v == nil || r == nil {
+		return gained
+	}
+	for k := StatKind(0); k < StatCount; k++ {
+		target := GrowthTarget(cls, k, level)
+		if target <= (*v)[k] {
+			continue
+		}
+		add := legacyGrowAmt(int(target-(*v)[k]), r)
+		(*v)[k] += add
+		gained[k] = add
+	}
+	return gained
 }
 
 // LevelForExp 回某職業在累積經驗 exp 的等級([1,43] 夾住;#5 修正版,不越界)。移植 dq3_stats_level_for_exp(fixed)。

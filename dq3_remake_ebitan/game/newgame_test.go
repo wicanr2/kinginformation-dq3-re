@@ -3,6 +3,8 @@ package game
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
 // newGameTestGame:純狀態 Game(無素材/無 ebiten 主迴圈),只驅動 newGameInput()/newGame 狀態機。
@@ -10,8 +12,7 @@ func newGameTestGame() *Game {
 	return &Game{input: newInput()}
 }
 
-// TestNewGameFlowStageTransitions:標題主選單 → 命名(英數格盤打 1 字)→ 性別 → 收尾,
-// 驗證整條 A2/A3/A4 狀態轉移(ngSplash→ngMenu→ngName→ngGender→done)與 heroName/heroGender 寫回。
+// TestNewGameFlowStageTransitions:標題主選單 → 命名 → 性別 → 能力確認 → 收尾。
 func TestNewGameFlowStageTransitions(t *testing.T) {
 	g := newGameTestGame()
 	if g.newGame.stage != ngSplash {
@@ -54,14 +55,63 @@ func TestNewGameFlowStageTransitions(t *testing.T) {
 
 	g.newGame.gs.cursor = 1 // 女性
 	g.newGameInput(InputState{DirEdge: -1, Confirm: true})
+	if g.newGame.stage != ngConfirm || !g.showTitle {
+		t.Fatalf("性別選定後應先進能力確認，stage=%d title=%v", g.newGame.stage, g.showTitle)
+	}
+	if g.heroStat[stats.MP] != 9 || g.heroStat[stats.HP] < 9 || g.heroStat[stats.HP] > 15 {
+		t.Fatalf("原版 Lv1 能力 transaction 錯：%v", g.heroStat)
+	}
+	g.newGameInput(InputState{DirEdge: -1, Confirm: true}) // 「是」
 	if g.showTitle {
-		t.Fatal("性別選定後應離開標題流程(showTitle=false)")
+		t.Fatal("能力確認選是後應離開標題流程(showTitle=false)")
 	}
 	if g.heroGender != 1 {
 		t.Errorf("heroGender 應=1(女性),得 %d", g.heroGender)
 	}
 	if len(g.heroName) != 1 || g.heroName[0] != niCellGlyph(10) {
 		t.Errorf("heroGender 選定後應把命名結果寫回 heroName,得 %v", g.heroName)
+	}
+}
+
+func TestNewGameStatsRejectRestartsCreation(t *testing.T) {
+	g := newGameTestGame()
+	g.showTitle = true
+	g.prng.Seed(1)
+	g.newGame.stage = ngGender
+	g.newGame.ni.nameBuf = []int{15}
+	g.newGame.gs.Init()
+	g.newGameInput(InputState{DirEdge: -1, Confirm: true})
+	first := g.heroStat
+	g.newGameInput(InputState{DirEdge: 0}) // 移到「否」
+	g.newGameInput(InputState{DirEdge: -1, Confirm: true})
+	if g.newGame.stage != ngName {
+		t.Fatalf("能力確認選否應回整個創角命名，得 stage=%d", g.newGame.stage)
+	}
+	if len(g.newGame.ni.nameBuf) != 0 {
+		t.Fatalf("重開創角應清姓名，得 %v", g.newGame.ni.nameBuf)
+	}
+	if first == (stats.Values{}) {
+		t.Fatal("進能力確認前應已擲出 Lv1 record")
+	}
+}
+
+func TestHeroLevelUpAddsGrowthWithoutFullHeal(t *testing.T) {
+	g := newGameTestGame()
+	g.prng.Seed(0x1357)
+	g.rollHeroLevelOne()
+	oldMax := int(g.heroStat[stats.HP])
+	g.heroHP, g.heroMP = 1, 0 // 受傷且耗盡 MP
+	g.battle.heroHP, g.battle.heroMP = 1, 0
+	g.battle.result = 1
+	g.battle.gotExp = int(stats.ExpForLevel(0, 2))
+	g.onBattleEnd()
+	if stats.LevelForExp(0, g.heroExp) != 2 || int(g.heroStat[stats.HP]) <= oldMax {
+		t.Fatalf("升級未更新持久能力：lv=%d oldHP=%d new=%v",
+			stats.LevelForExp(0, g.heroExp), oldMax, g.heroStat)
+	}
+	if g.heroHP >= int(g.heroStat[stats.HP]) {
+		t.Fatalf("原版升級只加 HP 增量，不應把受傷角色全回復：cur=%d max=%d",
+			g.heroHP, g.heroStat[stats.HP])
 	}
 }
 
@@ -206,7 +256,8 @@ func TestSaveRoundTripHeroNameGender(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("DQ3_SAVE", filepath.Join(dir, "rt.json"))
 
-	src := &Game{heroName: []int{113, 689, 488, 711}, heroGender: 1, heroGold: 7}
+	src := &Game{heroName: []int{113, 689, 488, 711}, heroGender: 1, heroGold: 7,
+		heroStat: stats.Values{8, 4, 4, 12, 9, 7, 7}, heroHP: 5, heroMP: 3}
 	if err := src.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
@@ -224,6 +275,10 @@ func TestSaveRoundTripHeroNameGender(t *testing.T) {
 	}
 	if dst.heroGender != src.heroGender {
 		t.Fatalf("heroGender round-trip 不符:存 %d 讀 %d", src.heroGender, dst.heroGender)
+	}
+	if dst.heroStat != src.heroStat || dst.heroHP != 5 || dst.heroMP != 3 {
+		t.Fatalf("持久能力/目前 HP MP round-trip 不符:存 %v/%d/%d 讀 %v/%d/%d",
+			src.heroStat, src.heroHP, src.heroMP, dst.heroStat, dst.heroHP, dst.heroMP)
 	}
 	t.Logf("heroName/heroGender round-trip ✓:name=%v gender=%d", dst.heroName, dst.heroGender)
 }

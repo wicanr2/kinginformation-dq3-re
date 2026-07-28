@@ -7,10 +7,10 @@
 本文件把青衫記錄在 `bugs.md` 的 7 個 bug,逐一用反組譯定位到 `DQ3.EXE` 的確切位址、
 說清楚為什麼會出現那個現象,並提出修正。
 
-> ★ **更正(2026-06,以 code/JSON 為準)**:後續 RE 已把修正範圍擴大,本文部分舊斷言過期 ——
-> 現有 **4 個 EXE binary patch(#1/#2/#4/#7a)+ #3 sprite 復原 = 5/7**(`tools/build_fixed_version.py`):
-> #4(勇者MP)= EXE DGROUP 成長表 2-byte 資料 patch(`file 0x1a4a8/9`,`docs/data/stat_patches.json`),
-> **非** dragon0.dat、成長表**在** EXE 映像內(DS:0x4366→`file 0x1a4a6`);
+> ★ **更正(2026-07-28,以 code/JSON 為準)**:本文部分舊斷言過期。成長表在 EXE
+> DGROUP(DS:0x4366→file `0x1a4a6`)，但舊 #4 patch `0x1a4a8/9` 實際改的是 VIT，
+> 不是 MP，已撤銷。七組正確順序為 STR,VIT,AGI,MaxHP,MaxMP,INT,LUCK；真正 MP
+> 位於 `0x1a4ae/f`。現有 binary 修正不再把 #4 列為完成。
 > #7a(隼劍雙擊)= 同長度區段改寫(`file 0xc1fa`,`docs/data/codecave_patches.json`),**已修非未實作**;
 > #6 的 255-wrap **不是** 8-bit 成長公式(該公式全程 16-bit 正確,`docs/23`)。下方舊正文凡與此衝突者以本框為準。
 
@@ -36,7 +36,7 @@ seg0 邏輯 off = file − 0x1370。seg0 主碼約 file 0x1370..0x11370;之後�
 | 1 | 巴拉摩斯打不死 | 卡關 | sub_aa69 file 0xbe02 | binary patch(2 byte) | 高 |
 | 2 | 彩虹水滴誤拿黃/銀寶珠 | 卡關 | 合成事件 file 0x77e7 | binary patch(1 byte) | 高 |
 | 3 | 九頭龍/五頭龍戰當機 | 卡關 | boss 遭遇表 file 0x1b02c + 缺 sprite | binary patch(3 byte) | 高 |
-| 4 | 勇者 MaxMP 成長固定 +1 | 樂趣 | 成長表 EXE DGROUP file 0x1a4a6 | **EXE-data binary patch(file 0x1a4a8/9,已修)** | 高 |
+| 4 | 勇者 MaxMP 成長固定 +1 | 樂趣 | 成長表 EXE DGROUP file 0x1a4a6（真 MP pair4） | 舊 patch 誤改 VIT，已撤銷；忠實模式保留原表 | 高(欄位) |
 | 5 | 高等級升級錯亂 | 樂趣 | 門檻查表 sub_ecdb file 0xecdb | C 層(越界,需 clamp) | 高(根因) |
 | 6 | 數值 255 溢位 | 樂趣 | 成長公式 file 0xed3c | C 層(型別/clamp) | 中 |
 | 7a | 隼劍只打一次 | 樂趣 | 攻擊碼/裝備特效 sub_c8c6 | **binary patch(file 0xc1fa 區段改寫,已修)** | 高(根因) |

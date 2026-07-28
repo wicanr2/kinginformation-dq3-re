@@ -63,7 +63,7 @@ func TestPlaythroughBattle(t *testing.T) {
 // 整合 game test:升級 + 咒文習得一致性(串成長表 + 咒文表)。
 func TestPlaythroughProgression(t *testing.T) {
 	// exp 0 → lv1、HP9、無咒;exp 4364 → lv10、學會 美拉/荷依米/吉拉
-	if stats.LevelForExp(0, 0) != 1 || stats.GrowthTarget(0, stats.HP, 1) != 9 {
+	if stats.LevelForExp(0, 0) != 1 || stats.GrowthTarget(0, stats.HP, 1) != 16 {
 		t.Fatal("lv1 應 HP9")
 	}
 	if len(spell.HeroKnown(1)) != 0 {

@@ -4,7 +4,7 @@
   #1 巴拉摩斯打不死        bug_patches.json   (EXE in-place)
   #2 彩虹水滴誤拿黃寶珠     bug_patches.json   (EXE in-place)
   #3 五頭龍/歐里狄加當機    重繪 sprite        (DQ3MNS_fixed.SHP,見 make_sprites.py)
-  #4 勇者 MP+1            stat_patches.json  (EXE 靜態 DGROUP 成長表資料)
+  #4 勇者 MP+1            未修（舊 stat patch 誤改 VIT，已撤銷）
   #7a 隼劍雙擊            codecave_patches.json (EXE 同長度區段改寫,復用既有 re-attack)
 未修(留 C 層 / SDL2,根因見 docs/18,23,22):#5 升級錯亂、#6 255溢位、#7b 魔甲抗魔。
   #7c 祈禱之戒:反組譯確認本就生效,不需修。
@@ -29,7 +29,7 @@ for p in json.load(open("docs/data/bug_patches.json"))["patches"]:
     if p["bug"] in (1, 2):
         apply(p["file_offset"], p["orig"], p["new"], f"Bug{p['bug']} {p['name']}")
 
-# #4  (stat_patches.json:category exe-data)
+# #4 若將來有經完整實機驗證的新 patch，才會重新出現在 patches；目前陣列為空。
 for p in json.load(open("docs/data/stat_patches.json")).get("patches", []):
     if p.get("category") == "exe-data" and p.get("orig"):
         apply(p["file_offset"], p["orig"], p["new"], f"Bug{p['bug']} {p.get('name','勇者MP')}")

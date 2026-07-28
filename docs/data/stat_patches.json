@@ -3,15 +3,15 @@
   "exe_size": 115282,
   "hdr": 4976,
   "dgroup_para": "0x14dd",
-  "note": "精訊版 DQ3 數值類 bug(#4 勇者MP / #5 升級錯亂 / #6 數值255溢位)修正。本 agent 自行反組譯核出根因,修正 docs/18 兩處誤判:(a)成長表在 EXE 靜態 DGROUP(DS:0x4366 -> file 0x1a4a6),非 dragon0.dat(後者是 2172 byte 存檔、多為 0xff);(b)成長公式 target 為 16-bit 正確(mul->ax, shr ax,1, add al/adc ah,0 正確進位),屬性欄位全程 word 讀寫無 byte 截斷,#6 255-wrap 不在此處。code cave 紀律:re_codecave_scan 全檔最大 cave 僅 8 byte(file 0x1169b / 0x11ecf,各 8 byte 零填充;0xa40f 6 byte NOP),放不下 x86-16 clamp+trampoline(需 11~19 byte),依安全優先原則不做 #5/#6 cave。本檔未使用任何 code cave。",
+  "note": "2026-07-28 更正：舊版把 pair1(VIT)誤認為 MP，因而在 0x1a4a8/9 產生錯誤 patch。writer→record→renderer 證實順序為 STR,VIT,AGI,MaxHP,MaxMP,INT,LUCK；真正 MP 在 0x1a4ae/f。錯誤 patch 已從 patches 移除，忠實 remake 使用原始表。",
   "growth_table": {
     "ds_offset": "0x4366",
     "file_offset": "0x1a4a6",
     "classes": 8,
     "stride": 14,
     "class_order": ["0勇者", "1戰士", "2武鬥家", "3僧侶", "4魔法使者", "5賢者", "6商人", "7遊玩者"],
-    "record_layout": "[+0 HPbase, +1 HPslope, +2 MPbase, +3 MPslope, +4 b4base, +5 b4slope, +6 b6base, +7 b6slope, +8 b8base, +9 b8slope, +0xa bAbase, +0xb bAslope, +0xc, +0xd]",
-    "formula": "target = base + ((slope*level)>>1); 實得增量 = sub_fa57(target-current) = rng % (target-current),下限1"
+    "record_layout": "[+0 STRbase,+1 STRslope,+2 VITbase,+3 VITslope,+4 AGIbase,+5 AGIslope,+6 HPbase,+7 HPslope,+8 MPbase,+9 MPslope,+0xa INTbase,+0xb INTslope,+0xc LUCKbase,+0xd LUCKslope]",
+    "formula": "target = base + ((slope*level)>>1); sub_fa57(delta)=rng%delta，餘數0改1（delta>1 時 1..delta-1）"
   },
   "level_threshold_table": {
     "ptr_table_ds": "0x43d6",
@@ -19,9 +19,9 @@
     "entries_per_class": 44,
     "note": "8 職業各 44 entry(lv0..43);lv44 越界讀下一職業 entry[0]=0 → exp 永遠 ≥0 → 連升 + 學錯職業咒(bug#5)"
   },
-  "patches": [
-    {"bug": 4, "name": "勇者MaxMP成長偏低", "category": "exe-data", "code_cave": null, "file_offset": 107688, "file_offset_hex": "0x1a4a8", "orig": "03", "new": "08", "confidence": "high", "desc": "成長表 勇者(class0)MP base 0x03->0x08"},
-    {"bug": 4, "name": "勇者MaxMP成長偏低", "category": "exe-data", "code_cave": null, "file_offset": 107689, "file_offset_hex": "0x1a4a9", "orig": "05", "new": "0a", "confidence": "high", "desc": "成長表 勇者(class0)MP slope 0x05->0x0a;lv43 MaxMP ~107->~217;8-bit 路徑驗證無 wrap;DOSBox 開機->標題->新遊戲命名畫面正常無回歸"}
+  "patches": [],
+  "withdrawn_patches": [
+    {"bug": 4, "file_offset_hex": "0x1a4a8/9", "orig": "03 05", "new": "08 0a", "reason": "實際欄位為 VIT，不是 MP；開機到命名畫面的舊驗證沒有檢查能力欄語意"}
   ],
   "not_patched_need_c_layer": [
     {"bug": 5, "name": "高等級升級錯亂", "confidence": "high-rootcause", "reason": "MAX_LEVEL=43,lv44 越界讀下一職業門檻 entry[0]=0 -> 連升+學錯職業咒。修法=查表前 clamp level<=43;in-place 不可(原碼 9 byte 算 level*4,clamp 需多 ~7 byte);code cave 不可(全檔最大 8 byte,放不下 clamp+trampoline ~14 byte 且 boss/開機路徑風險高)。留 C/SDL 層。", "fix_c": "if (level > 43) level = 43; 於 sub_ecdb 查門檻/咒文表前"},

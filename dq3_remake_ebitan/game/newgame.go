@@ -1,18 +1,23 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
+)
 
 // 標題主選單 + 主角創建(FLOW-GAP A2/A3/A4,docs/36 §開場流程 + docs/15 命名子系統):
 // 標題(壓 A/Enter)→ 主選單「▶遊戲開始 / 載入進度」→ 遊戲開始 → 主角注音/英數命名(必填,
-// 完成放行條件=非空,對齊 docs/15「[0x270a]>=1 才放行」)→ 性別 → 開始新遊戲。
+// 完成放行條件=非空,對齊 docs/15「[0x270a]>=1 才放行」)→ 性別 →
+// Lv1 能力生成/「這個人可以嗎？」→ 開始新遊戲。
 // 命名/性別 widget 與酒館招募共用 NameInput/GenderSelect(nameinput.go),不重複兩份邏輯;
 // 差異只在完成放行 gate:主角創建強制非空(下方 ngName case),酒館允許空名回退職業名。
 // 出生點暫沿用現行地表中心(家室內場景待 C-2)、紅披風勇者立繪暫略(TODO C-7)。
 const (
-	ngSplash = iota // 標題背景(壓任意鍵開主選單)
-	ngMenu          // 主選單:遊戲開始 / 載入進度
-	ngName          // 主角命名
-	ngGender        // 主角性別
+	ngSplash  = iota // 標題背景(壓任意鍵開主選單)
+	ngMenu           // 主選單:遊戲開始 / 載入進度
+	ngName           // 主角命名
+	ngGender         // 主角性別
+	ngConfirm        // 原版 sub_1c01..1c84：能力確認（否→整個創角重來）
 )
 
 const (
@@ -33,11 +38,15 @@ var (
 
 // NewGameFlow 是標題主選單 + 主角創建的 modal 狀態機。
 type NewGameFlow struct {
-	stage  int
-	cursor int // 主選單游標(0/1)
-	hits   hitList
-	ni     NameInput
-	gs     GenderSelect
+	stage         int
+	cursor        int // 主選單游標(0/1)
+	hits          hitList
+	ni            NameInput
+	gs            GenderSelect
+	confirmCursor int // 0=是、1=否
+	preview       stats.Values
+	previewDef    int
+	previewGender int
 }
 
 // openMenu:標題壓鍵後開主選單,游標歸零。
@@ -104,8 +113,28 @@ func (g *Game) newGameInput(in InputState) {
 			g.heroName = append([]int(nil), nf.ni.nameBuf...)
 			g.dlg.heroName = g.heroName // 對話插值 VAR_NAME 同步(創角後 heroName 重新 assign,須重同步)
 			g.heroGender = gender
+			g.rollHeroLevelOne()
+			nf.preview = g.heroStat
+			nf.previewDef = int(g.heroStat[stats.VIT])
+			nf.previewGender = gender
+			if g.shop.items != nil {
+				nf.previewDef += g.shop.items.Defense(g.equip[1])
+			}
+			nf.stage, nf.confirmCursor = ngConfirm, 0
+		}
+	case ngConfirm:
+		if in.DirEdge == 0 || in.DirEdge == 1 {
+			nf.confirmCursor ^= 1
+		}
+		if in.Cancel || (in.Confirm || in.Enter) && nf.confirmCursor == 1 {
+			// DQ3.EXE 1c76..1c84：Cancel 或選否都跳回 1bca，姓名/性別重新輸入。
+			nf.ni.Init()
+			nf.stage = ngName
+			return
+		}
+		if (in.Confirm || in.Enter) && nf.confirmCursor == 0 {
 			g.showTitle = false
-			g.startOpening() // 進主角家(sec4)+ 開場旁白(C-2)
+			g.startOpening()
 		}
 	}
 }
@@ -140,5 +169,85 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 			drawGlyph(rgba, tx, 80+i*16, 56, g, white)
 		}
 		nf.gs.draw(rgba, tx, white, yellow, 80, 100, 22)
+	case ngConfirm:
+		for i := 0; i < ScreenW*ScreenH; i++ {
+			rgba[i*4], rgba[i*4+1], rgba[i*4+2], rgba[i*4+3] = 0, 0, 0, 255
+		}
+		drawNewGameStats(rgba, tx, nf, white, yellow)
+	}
+}
+
+var (
+	ngLabLevel = []int{419, 420}
+	ngLabHP    = []int{22, 30}
+	ngLabMP    = []int{27, 30}
+	ngLabAGI   = []int{282, 283}
+	ngLabATK   = []int{623, 624}
+	ngLabDEF   = []int{340, 409}
+	ngLabEXP   = []int{525, 526}
+	ngLabSex   = []int{674, 417}
+	ngHero     = []int{106, 187}
+	ngCloth    = []int{190, 149, 191, 192}
+	ngPrompt   = []int{398, 546, 194, 229, 456, 534} // 這個人可以嗎
+	ngYesNo    = [2][]int{{399}, {678}}              // 是 / 否
+)
+
+func drawNGRow(rgba []byte, tx *dq3data.Text, x, y int, lab []int, val int, c dq3data.Color) {
+	for i, gl := range lab {
+		drawGlyph(rgba, tx, x+i*dq3data.GlyphPx, y, gl, c)
+	}
+	drawNumber(rgba, tx, x+(len(lab)+1)*dq3data.GlyphPx, y, val, c)
+}
+
+// drawNewGameStats 重現原版 1c54→sub_96be 的能力確認資訊。裝備衍生值依
+// sub_9521：攻=力量、守=耐力+布衣防。
+func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yellow dq3data.Color) {
+	const rowH = 16
+	// 原版 v3_01_afterstats.png 的四個 panel 幾何（640×350 native）。
+	fillBox(rgba, 128, 42, 116, 76, white)
+	fillBox(rgba, 128, 116, 116, 67, white)
+	fillBox(rgba, 243, 42, 181, 141, white)
+	fillBox(rgba, 294, 16, 116, 29, white)
+	fillBox(rgba, 294, 48, 79, 45, white)
+
+	for i, gl := range nf.ni.nameBuf {
+		drawGlyph(rgba, tx, 170+i*dq3data.GlyphPx, 50, gl, white)
+	}
+	for i, gl := range ngHero {
+		drawGlyph(rgba, tx, 170+i*dq3data.GlyphPx, 66, gl, white)
+	}
+	for i, gl := range ngLabSex {
+		drawGlyph(rgba, tx, 145+i*dq3data.GlyphPx, 82, gl, white)
+	}
+	sexGlyph := 775
+	if nf.previewGender == 1 {
+		sexGlyph = 234
+	}
+	drawGlyph(rgba, tx, 196, 82, sexGlyph, white)
+	drawNGRow(rgba, tx, 145, 98, ngLabLevel, 1, white)
+	drawNGRow(rgba, tx, 145, 114, ngLabHP, int(nf.preview[stats.HP]), white)
+	drawNGRow(rgba, tx, 145, 130, ngLabMP, int(nf.preview[stats.MP]), white)
+	for i, gl := range ngCloth {
+		drawGlyph(rgba, tx, 158+i*dq3data.GlyphPx, 142, gl, white)
+	}
+
+	x := 274
+	drawNGRow(rgba, tx, x, 92, ngLabAGI, int(nf.preview[stats.AGI]), white)
+	drawNGRow(rgba, tx, x, 92+rowH, ngLabHP, int(nf.preview[stats.HP]), white)
+	drawNGRow(rgba, tx, x, 92+2*rowH, ngLabMP, int(nf.preview[stats.MP]), white)
+	drawNGRow(rgba, tx, x, 92+3*rowH, ngLabATK, int(nf.preview[stats.STR]), white)
+	drawNGRow(rgba, tx, x, 92+4*rowH, ngLabDEF, nf.previewDef, white)
+	drawNGRow(rgba, tx, x, 92+5*rowH, ngLabEXP, 0, white)
+	for i, gl := range ngPrompt {
+		drawGlyph(rgba, tx, 304+i*dq3data.GlyphPx, 22, gl, white)
+	}
+	for i := range ngYesNo {
+		y := 54 + i*16
+		if i == nf.confirmCursor {
+			drawGlyph(rgba, tx, 304, y, curGlyph, yellow)
+		}
+		for j, gl := range ngYesNo[i] {
+			drawGlyph(rgba, tx, 332+j*dq3data.GlyphPx, y, gl, white)
+		}
 	}
 }

@@ -227,11 +227,13 @@ type Game struct {
 	newGame        NewGameFlow   // 標題主選單 + 主角命名/性別創建 modal(FLOW-GAP A2/A3/A4)
 	heroName       []int         // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
 	heroGender     int           // 主角性別(0=男 1=女)
-	// 主角進度(勇者 class0):累積經驗 → 等級 → 屬性(heroStats);HP 跨戰鬥持久
+	// 主角進度(勇者 class0)。heroStat 是原版角色 record 的七個持久能力欄；
+	// 創角/升級時由 sub_ed3c 相同的 RNG transaction 修改，不再每幀由等級公式重算。
 	heroExp        uint32
 	heroGold       int
 	heroHP         int
 	heroMP         int
+	heroStat       stats.Values
 	heroInit       bool
 	equip          [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
 	companions     []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
@@ -545,11 +547,17 @@ func (g *Game) updateTouchContext() {
 }
 
 func (g *Game) Update() error {
-	g.updateTouchContext() // 必須在 Poll() 之前,讓這幀 poll 用得到新標籤
-	in := g.input.Poll()   // 抽象輸入(鍵盤 + 觸控合流)
+	g.updateTouchContext()        // 必須在 Poll() 之前,讓這幀 poll 用得到新標籤
+	return g.step(g.input.Poll()) // 抽象輸入(鍵盤 + 觸控合流)
+}
+
+// step 是 production Update 在裝置輸入 Poll() 之後的完整遊戲邏輯。
+// 拆出 InputState 注入點，讓玩家流程回歸可重播同一條正式狀態機；
+// 測試不得再用直接呼叫事件函式冒充完整 playthrough。
+func (g *Game) step(in InputState) error {
 	moved := false
 
-	// 標題畫面:主選單(遊戲開始/載入進度)→ 主角命名(必填)→ 性別 → 開始新遊戲(newgame.go)。
+	// 標題畫面:主選單→主角命名→性別→能力確認→開始新遊戲(newgame.go)。
 	// S/CtxTap 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)。
 	if g.showTitle {
 		if g.settings.open {
@@ -1188,14 +1196,15 @@ func clampi(v, lo, hi int) int {
 	return v
 }
 
-// heroStats 由累積經驗推導主角(勇者 class0)當前等級與戰鬥數值(移植 dq3_stats 成長表)。
-// 攻 = 力量 + 武器攻;防 = 耐力/2 + 鎧/盾/兜防(裝備槽,item DB)。
+// heroStats 讀主角持久能力欄並重算裝備衍生值。DQ3.EXE sub_9521 證實：
+// 攻 = 力量 + 武器攻；守 = 耐力 + 防具防（不是舊 remake 猜的耐力/2）。
 func (g *Game) heroStats() (level, maxHP, atk, def, agi int) {
 	level = stats.LevelForExp(0, g.heroExp)
-	maxHP = int(stats.GrowthTarget(0, stats.HP, level))
-	atk = int(stats.GrowthTarget(0, stats.STR, level))
-	def = int(stats.GrowthTarget(0, stats.VIT, level)) / 2
-	agi = int(stats.GrowthTarget(0, stats.AGI, level))
+	g.ensureHeroStats()
+	maxHP = int(g.heroStat[stats.HP])
+	atk = int(g.heroStat[stats.STR])
+	def = int(g.heroStat[stats.VIT])
+	agi = int(g.heroStat[stats.AGI])
 	if g.shop.items != nil { // 加裝備加成
 		atk += g.shop.items.Attack(g.equip[0])
 		for s := 1; s < 4; s++ {
@@ -1207,9 +1216,31 @@ func (g *Game) heroStats() (level, maxHP, atk, def, agi int) {
 
 // heroMaxMP / heroSpells:由等級推導最大 MP 與已學可施放咒文(勇者系)。
 func (g *Game) heroMaxMP() int {
-	return int(stats.GrowthTarget(0, stats.MP, stats.LevelForExp(0, g.heroExp)))
+	g.ensureHeroStats()
+	return int(g.heroStat[stats.MP])
 }
 func (g *Game) heroSpells() []int { return spell.HeroKnown(stats.LevelForExp(0, g.heroExp)) }
+
+// ensureHeroStats 只供舊存檔/debug/精簡單元測試向後相容。正常新遊戲一定在
+// ngConfirm 前由 rollHeroLevelOne 建立隨機 Lv1 record。
+func (g *Game) ensureHeroStats() {
+	if g.heroStat != (stats.Values{}) {
+		return
+	}
+	level := stats.LevelForExp(0, g.heroExp)
+	// 舊存檔沒有持久能力欄；以每級 target 建出安全狀態，之後的升級才走原版 RNG。
+	for k := stats.StatKind(0); k < stats.StatCount; k++ {
+		g.heroStat[k] = stats.GrowthTarget(0, k, level)
+	}
+}
+
+func (g *Game) rollHeroLevelOne() {
+	g.heroExp = 0
+	g.heroStat = stats.InitValues(0, &g.prng)
+	g.heroHP = int(g.heroStat[stats.HP])
+	g.heroMP = int(g.heroStat[stats.MP])
+	g.heroInit = true
+}
 
 // startEncounter:從阿里阿罕周邊弱怪池挑一隻有 sprite 的,依出現權重算群量,開戰 + 切戰鬥音樂。
 func (g *Game) startEncounter() {
@@ -1396,9 +1427,13 @@ func (g *Game) onBattleEnd() {
 		oldLv := stats.LevelForExp(0, g.heroExp)
 		g.heroExp += uint32(g.battle.gotExp)
 		g.heroGold += g.battle.gotGold
-		if stats.LevelForExp(0, g.heroExp) > oldLv { // 隊長升級 → 全回復
-			_, maxHP, _, _, _ := g.heroStats()
-			g.heroHP, g.heroMP = maxHP, g.heroMaxMP()
+		newLv := stats.LevelForExp(0, g.heroExp)
+		for lv := oldLv + 1; lv <= newLv; lv++ {
+			// sub_ed3c：每升一級逐欄擲成長；最大 HP/MP 的增量同時加到目前值，
+			// 並非舊實作的「升級全回復」。
+			add := stats.GrowLevel(0, lv, &g.heroStat, &g.prng)
+			g.heroHP += int(add[stats.HP])
+			g.heroMP += int(add[stats.MP])
 		}
 		for _, m := range g.companions { // 同伴同得 exp,升級全補
 			oc := m.Level()

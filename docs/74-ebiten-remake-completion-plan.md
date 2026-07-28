@@ -197,8 +197,14 @@
 - Ebiten 已按同一 transaction 接線，`TestOriginalOpeningEventTransactions` 從真實 CTY 素材驗證
   母親落點、story flags、王座 region、精確獎勵與一次性。
 
-尚未完成的是能力值確認畫面、母親逐格移動動畫，以及從標題經正式輸入一路走到王座的 E3 trace；
-不能因 transaction 單測通過就把整個開場標成完成。
+2026-07-28 後續已補：
+
+- `sub_ed3c/sub_fa57` 的 Lv1 持久能力生成與「這個人可以嗎？」Yes/No loop；
+- 能力表 writer 證實順序 `STR,VIT,AGI,HP,MP,INT,LUCK`，撤銷誤改 VIT 的舊 MP patch；
+- 從標題經正式 `InputState`、碰撞與 portal 一路走到王座的 E3 trace。
+
+尚未完成的是能力確認畫面人物立繪逐像素對拍與母親逐格移動動畫；不能因 transaction
+與 opening trace 通過就把整個 P1（酒場、四人隊、正常出城）標成完成。
 
 ## 4. 證據與驗收等級
 

@@ -6,9 +6,11 @@ import (
 	"image/png"
 	"os"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
-// TestDumpNewGameScreens:把新遊戲流程各畫面(主選單/命名/性別)dump 成 PNG,
+// TestDumpNewGameScreens:把新遊戲流程各畫面(主選單/命名/性別/能力確認)dump 成 PNG,
 // 供與 docs/36_shots 原版實機截圖肉眼對照(glyph 形近誤標高風險 → 視覺驗證,規則 63)。
 // 平常 skip;設 DQ3_DUMP_NG=1 + NG_OUT=<gitignored 夾> 才跑。
 func TestDumpNewGameScreens(t *testing.T) {
@@ -54,6 +56,13 @@ func TestDumpNewGameScreens(t *testing.T) {
 	dump("ng_name")
 	g.newGame.stage = ngGender
 	dump("ng_gender")
+	g.newGame.ni.nameBuf = []int{15} // 英數「A」
+	g.heroName = append([]int(nil), g.newGame.ni.nameBuf...)
+	g.rollHeroLevelOne()
+	g.newGame.preview = g.heroStat
+	g.newGame.previewDef = int(g.heroStat[stats.VIT]) + g.shop.items.Defense(g.equip[1])
+	g.newGame.stage = ngConfirm
+	dump("ng_confirm")
 
 	// C-2:模擬創角完成 → 進主角家(sec4)+ 原版開場 runner 序列。
 	g.showTitle = false

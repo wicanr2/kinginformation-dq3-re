@@ -1,22 +1,36 @@
 package stats
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
+)
 
 func TestGrowthTarget(t *testing.T) {
-	// #4 修正:勇者 Lv43 MaxMP = base8 + slope10*43/2 = 8+215 = 223(>=200,可放全體補血咒)
-	if got := GrowthTarget(0, MP, 43); got != 223 {
-		t.Fatalf("勇者 Lv43 MaxMP 應 223(#4 修正),得 %d", got)
+	// 原版真正 MP 是 pair4：base8+slope2*43/2=51。
+	if got := GrowthTarget(0, MP, 43); got != 51 {
+		t.Fatalf("勇者原版 Lv43 MP target 應 51,得 %d", got)
 	}
-	// 勇者 Lv1 HP = base6 + slope6*1/2 = 6+3 = 9
-	if got := GrowthTarget(0, HP, 1); got != 9 {
-		t.Fatalf("勇者 Lv1 HP 應 9,得 %d", got)
+	if got := GrowthTarget(0, HP, 1); got != 16 {
+		t.Fatalf("勇者 Lv1 HP target 應 16,得 %d", got)
 	}
-	// 勇者 Lv1 STR = base8 + slope16*1/2 = 8+8 = 16
-	if got := GrowthTarget(0, STR, 1); got != 16 {
-		t.Fatalf("勇者 Lv1 STR 應 16,得 %d", got)
+	if got := GrowthTarget(0, STR, 1); got != 9 {
+		t.Fatalf("勇者 Lv1 STR target 應 9,得 %d", got)
 	}
 	if GrowthTarget(99, HP, 1) != 0 {
 		t.Fatal("越界職業應回 0")
+	}
+}
+
+func TestInitValuesMatchesSubED3C(t *testing.T) {
+	r := rng.New(1)
+	v := InitValues(0, r)
+	if v[MP] != 9 {
+		t.Fatalf("MP delta=1 經 sub_fa57 必為 1，Lv1 MP 應固定 9，得 %d", v[MP])
+	}
+	if v[STR] < 7 || v[STR] > 8 || v[VIT] < 4 || v[VIT] > 4 ||
+		v[AGI] < 4 || v[AGI] > 4 || v[HP] < 9 || v[HP] > 15 {
+		t.Fatalf("Lv1 原版範圍錯：%v", v)
 	}
 }
 

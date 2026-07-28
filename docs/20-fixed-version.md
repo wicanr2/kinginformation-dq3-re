@@ -6,17 +6,17 @@
 > 產生:`python3 tools/build_fixed_version.py` → `work/DQ3_fixed.EXE` + `work/dq3_fixed_game/`(可餵 DOSBox)。
 > 各 bug 完整反組譯分析見 [`docs/18-bug-analysis.md`](18-bug-analysis.md)。
 
-## 已修(binary patch 對照組,5/7;DOSBox 開機+進城+姓名畫面驗證無回歸)
+## 已修(binary patch 對照組,4/7；#4 舊 patch 已撤銷)
 
 | Bug | 修法 | 位置 / 手段 | 信心 |
 |---|---|---|---|
 | **#1 巴拉摩斯打不死** | EXE in-place,clamp 參照欄 `[bx+0x2336]→[bx+0x2334]`(2 處 `36→34`)| file 0xbe04 / 0xbe0a | 高(與青衫官方碼逐 byte 一致)|
 | **#2 彩虹水滴誤拿黃寶珠** | EXE in-place,合成成品 item code `0x6b 銀寶珠→0x75 彩虹水滴` | file 0x77e9 | 高 |
 | **#3 五頭龍/歐里狄加戰當機** | **SHP 補圖**:重繪 id128 歐里狄加 / id129 五頭龍大王 的 sprite(原本未完成填充值→blit 越界)| `tools/make_sprites.py` → `DQ3MNS.SHP` | 高 |
-| **#4 勇者 MaxMP 成長偏低** | EXE 靜態 DGROUP 成長表(file 0x1a4a6):勇者 MP base `03→08`、slope `05→0a`(Lv43 MaxMP ~107→~217,可放比荷瑪拉)| file 0x1a4a8/9 | 高(DOSBox 驗證)|
 | **#7a 隼劍只打一次** | EXE 同長度區段改寫(file 0xc1fa,25B):復用引擎既有但「沒接線」的 re-attack 路徑,把第二擊觸發條件改成「攻擊者武器==飛鷹劍 0x6e」| file 0xc1fa | 高 |
 
-**EXE 共 25 bytes 變動**(同長度、不動 MZ header/reloc,佈局不變);SHP 補上 2 隻有效 sprite。
+> **2026-07-28 更正：**舊 #4 patch 的 `0x1a4a8/9` 是 VIT，不是 MP，已從
+> `docs/data/stat_patches.json` 移除；既有修正版若含這兩 bytes 必須重建。
 
 > #4 / #6 過程中**更正了 docs/18 兩處定位**:#4 成長表在 EXE DGROUP(非 dragon0.dat);#6 成長公式其實 16-bit 正確。
 > #7a 的「第二擊機制本就存在、只是觸發條件接錯位元」是漂亮的反組譯發現。

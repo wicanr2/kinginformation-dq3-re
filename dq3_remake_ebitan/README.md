@@ -23,12 +23,15 @@ Ebiten 的**行動裝置 / 觸控 / OGG 音訊是一等公民**,正好消掉 C/S
 以下畫面由 Ebiten 在 Xvfb + Mesa 軟體 GL 下，以真實原版素材和 production renderer 產生。
 開局座標、對白順序、story flags、國王獎勵均由 `DQ3.EXE` file `0x13a0..0x1633` 反組譯定錨：
 
+![Ebiten remake：原版 Lv1 能力生成與「這個人可以嗎？」確認](docs/ng_confirm.png)
+
 ![Ebiten remake：原版新遊戲開場（CTY00 sec4、rec82）](docs/opening_home_rec82.png)
 
 ![Ebiten remake：母親帶至家門外（CTY00 sec0、rec80）](docs/opening_town_rec80.png)
 
 ![Ebiten remake：首次謁見阿里阿罕國王（rec78、50G 與六件同伴裝備）](docs/opening_king_rec78.png)
 
+- 性別後依 `sub_ed3c/sub_fa57` 生成並保存 Lv1 能力；選「否」會回到整個創角流程。
 - 出生於 CTY00 sec4 `(5,5)`，只裝備布衣、隊伍只有主角。
 - 母親演出後落在 CTY00 sec0 `(8,38)`。
 - 首次走到王座 region 才取得 50G 與六件給同伴的武器／防具。
@@ -111,7 +114,7 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **品名（D3TXT00 rec=code+1）**：商店/道具顯真實中文名（檜木棒/木棒/銅劍/布的衣服/皮甲宵/皮盾…，Xvfb 驗證）
   - [x] **存檔/讀檔**（`game/save.go`）：教會/記錄點存檔（JSON 冒險之書:exp/HP/gold/道具/位置）、開機自動續玩 + round-trip 對拍測試
   - [x] **狀況/道具面板**（`game/panel.go`）：命令窗 狀況→主角等級/HP/攻防敏/EXP/G、道具→持有品名清單（B 關）
-  - [x] **裝備系統**（`game/panel.go`）：裝備槽（武器/鎧/盾/兜，item DB EquipSlot/CanEquip）→ heroStats 攻=力量+武器攻、防=耐力/2+鎧盾兜防；命令窗 裝備→選持有品裝上；串起 商店→背包→裝備→戰鬥；存檔含裝備
+  - [x] **裝備系統**（`game/panel.go`）：裝備槽（武器/鎧/盾/兜，item DB EquipSlot/CanEquip）→ heroStats 攻=力量+武器攻、防=耐力+鎧盾兜防（DQ3.EXE `sub_9521`）；命令窗 裝備→選持有品裝上；串起 商店→背包→裝備→戰鬥；存檔含裝備
   - [x] **場景轉場（多城通用載入）**（`game/worldmap.go`）：dq3x_cty_loc/map_blknum 表（100 筆）→ overworld 位置踩城鎮入口自動進城；loadTownScene 通用載任一 CTY（對應 BLK tileset + NPC）+ 城鎮快取 + 配樂 kind（城堡/迷宮/城鎮）。Xvfb 驗證進 CTY13（BLK5 不同 tileset）成功
   - [x] **逐城對話 bank**（Town.DlgBank=section+0x17 → D3TXT0<bank>.TXT）：各城 NPC 對話用正確 bank（進城時切換 g.dlg.tx）
   - [x] **戰鬥指令 防禦/道具**：防禦（本回合受傷減半）、道具（用藥草 0x41 回 30HP，戰後扣背包）；戰鬥指令 戰鬥/防禦/道具/逃跑 4 項真中文
