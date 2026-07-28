@@ -97,17 +97,16 @@ oracle 優先序(2026-07-03 使用者校正後):**(0) DOSBox 原版實測(最高
 | 剩餘項 | 卡點 | 性質 | 上游依賴 |
 |---|---|---|---|
 | 怪力魔 boss | 沙曼歐莎城+假國王寢室座標未定案(CTY54 (8,2) dlg=44 已查證=雪地草原 transform 老人「持變身杖→換船員之骨」,**非**怪力魔) | RE | — |
-| 巴拉摩斯 boss | 所在城 overworld 位置未決(C 只有 `baramos` debug token + flag 0x213,無 in-map 城座標) | RE | — |
+| 巴拉摩斯 boss | ✅ CTY66 外城→CTY65 房間 `(8,3)` handler70；怪0x79單戰 | 完成(R-4) | — |
 | 露依達酒場正式入口 | 哪道城門→酒場的 section 綁定「待核對」(docs/66:43,196 自陳) | RE | — |
 | 移除預建示範隊 | 需酒場可達才安全 | 實作 | 酒場入口(RE)|
 | 不死鳥/六珠坐騎 | 0 起點 | RE | — |
-| descend 自然觸發 | 原版=巴拉摩斯敗(flag 0x213)→索瑪現身→事件86;現僅 KeyU | wire | 巴拉摩斯 boss(RE)|
+| descend 自然觸發 | ✅ CLR 0x29→阿里阿罕 rec98/99→CLR 0x4d→CTY72→CTY77→0xfe 下層 | 完成(R-4) | 巴拉摩斯 |
 | 終盤 startZomaSeq 入口 | 需經 descend+六珠/不死鳥+彩虹橋走位到索瑪神殿;現僅 KeyZ | wire | 上面整條(RE)|
 
-**為什麼現在不能拔 Z/U(game.go:592 KeyU→descend、597 KeyZ→startZomaSeq、714 Enter→進城)**:
-終盤自然鏈(巴拉摩斯敗→descend→六珠/不死鳥→彩虹橋→索瑪神殿)全卡在 RE 上游,自然路徑尚未 wire 齊。
-**先拔 = 遊戲直接不能破關**。依 rulebook/65「先讓自然路徑可達,再拔後門」→ Z/U/Enter 暫留,標為待移除,
-待對應 RE + wire 完成後,驗收時整批拔掉重跑。
+**R-4 更新(2026-07-28)**:KeyU 已移除；下降不是舊誤判的 runner event86，而是
+CTY72 第二筆 transition→CTY77，再由 CTY77 的 `0xfe` 出口切換 DQ3UND。KeyZ/Enter
+仍屬 R-5 終盤入口工作，不能拿 R-4 的完成狀態代替全遊戲無 debug 驗收。
 
 **已澄清=非缺口(truth-in-code)**:
 - U2「Space→出城」**已修**:`game.go:709 in.Confirm→g.cmd.Open()`(命令窗 2×3 已 1:1 移植 C,cmdmenu.go/panel.go),Space 城內/地表皆開命令窗不出城;examine 由命令窗「調查」分派。使用者當初 U2 應為舊 build。

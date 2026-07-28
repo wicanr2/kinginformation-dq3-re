@@ -157,8 +157,8 @@ func TestComponentSpine(t *testing.T) {
 		t.Fatalf("合成彩虹水滴應設 msRainbow,階段=%d", g.progressStage())
 	}
 
-	// ---- 7. 下降阿雷夫加德:真實 descend()(真的讀 DQ3UND.MAP),原版由劇情事件 86 觸發,
-	// 此 port 事件 86 未移植、僅留 U 鍵/debug 捷徑呼叫同一函式——與 5. 取船同款缺口,一併記錄。
+	// ---- 7. 下降阿雷夫加德底層 helper:descend()(真的讀 DQ3UND.MAP)。
+	// 正式 CTY72→CTY77→0xfe production trace 另由 baramos_test 驗證；此處只保留 loader 單元覆蓋。
 	g.descend()
 	if g.layer != 1 {
 		t.Fatalf("descend 應切到下層地表(layer=1),得 %d(DQ3UND.MAP 載入失敗?)", g.layer)

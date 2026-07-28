@@ -16,7 +16,7 @@ DQ3_DEBUG="<指令>;<指令>;…" DQ3_DUMP=out.ppm  dq3_remake <assets_dir> game
 
 | 指令 | 效果 |
 |---|---|
-| `descent` | scripted_event 86 下降:切下層 overworld(field_under)、置玩家於下層城 CTY77 入口附近 (84,68)、設 `DQ3_FLAG_DESCENDED`。共用 `do_descent()`(U 鍵亦同)|
+| `descent` | C remake 舊 debug token；2026-07-28 已確認不是原版 event86。Ebiten 正式流程已改走 CTY72→CTY77→`0xfe`。|
 | `ascend` | 切回地表 overworld |
 | `warp:CTY:X:Y` | 載入 CTY 的 section0,置玩家於 (X,Y)(進城/迷宮;含 load_field_hero)|
 | `party` | 建測試隊(勇者/戰士/僧侶/魔法使者 4 人,名=glyph 1-4)→ 名冊+隊伍 |
@@ -35,8 +35,9 @@ DQ3_DEBUG="<指令>;<指令>;…" DQ3_DUMP=out.ppm  dq3_remake <assets_dir> game
 | `finale` | 直接觸發破關→結局(設 ZOMA 里程碑 → 進度 9/9)。驗主線終局,不必真打贏索瑪 |
 | `dlg:bank:rec` | 渲染任意對話 record(D3TXT0<bank> 第 rec 筆)。配 `DQ3_INPUT="."` 讓對話框畫進末幀 |
 
-scripted_event 86(下降)已正式化:`DQ3_SEVENT_DESCENT`(0x56)+ `DQ3_FLAG_DESCENDED`(0x13a)+
-`do_descent()`(場景效果在 main.c,因需 field/layer);原版 runner 劇情觸發待 RE,debug/U 鍵代觸發。
+> 更正：C 版 `scripted_event 86` 是早期自製 debug API，不是原版機制。原版自然下降見 docs/76。
+其 C 版實作仍保留 `DQ3_SEVENT_DESCENT`(0x56)+ `DQ3_FLAG_DESCENDED`(0x13a)+`do_descent()`，
+但 Ebiten 已移除 KeyU，正式遊戲不走這條捷徑。
 
 ## 例
 

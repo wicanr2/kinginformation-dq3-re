@@ -53,6 +53,7 @@ type Scene struct {
 	hiMap          []byte             // 每格高 byte(事件 subid)
 	events         [][3]int           // section 事件表 {type,param,p2}
 	transitions    [][4]int           // section 轉場表 {destCty,destSec,x,y}
+	hiTransition   bool               // CTY72 跳坑：普通 tile 以 hiMap subid 選第二筆轉場
 	sec            int                // section 號
 	npcs           []npcInst
 	override       map[int]int // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
@@ -108,10 +109,13 @@ func (sc *Scene) tileTransition(tx, ty int) (int, int, int, int, bool) {
 	if sc.hiMap == nil || len(sc.transitions) == 0 || tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h {
 		return 0, 0, 0, 0, false
 	}
-	if sc.attr.Raw(sc.tileIdx(tx, ty))&0xe000 == 0 { // 非轉場格
+	subid := int(sc.hiMap[ty*sc.w+tx] & 0x1f)
+	// 多數門/階梯由 BLKBM attr&0xe000 標記；但 CTY72 蓋亞大洞窟的跳坑環
+	// 使用「普通可走 tile + hiMap subid=1」指向第二筆 transition，attr 為 0。
+	// 因此只有 attr 無轉場且 subid==0 才能判定為非轉場格。
+	if sc.attr.Raw(sc.tileIdx(tx, ty))&0xe000 == 0 && !(sc.hiTransition && subid > 0) {
 		return 0, 0, 0, 0, false
 	}
-	subid := int(sc.hiMap[ty*sc.w+tx] & 0x1f)
 	if subid >= len(sc.transitions) {
 		return 0, 0, 0, 0, false
 	}
@@ -254,6 +258,8 @@ type Game struct {
 	openingIdx      int           // 開場旁白序號(-1=未進行;0..n=當前句)
 	bossQueue       []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪;或 examine 觸發的座標 boss 鏈)
 	pendingTrigger  *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
+	bossIntro       bool          // 座標 boss 的 preRec 尚在顯示；關閉後才正式開戰
+	baramosReturn   int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
 	mirrorStage     int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	phoenix         *dq3data.CharSprite
 	phoenixOwned    bool
@@ -306,6 +312,8 @@ func (g *Game) selectCommand(cmd int) {
 					g.talkTedonOrb()
 				} else if g.curCty == ctyPhoenixShrine && n.b4 == phoenixGuardianHandler {
 					g.talkPhoenixGuardian()
+				} else if g.talkBossSpecial(n) {
+					// CTY65 巴拉摩斯等 sub2 固定物件型 boss。
 				} else if g.openAliahanSpecialNPC(n) {
 					// CTY00 b4=1/3/4 是 EXE sub2 jump table 的設施 handler，
 					// 不屬於泛用 scriptedTable。
@@ -511,7 +519,11 @@ func (g *Game) examine() {
 		}
 		g.pendingTrigger = t
 		g.bossQueue = append([]int(nil), t.monsters...)
-		g.advanceBossQueue()
+		if t.preRec >= 0 && g.dlg.Open(t.preRec) {
+			g.bossIntro = true
+		} else {
+			g.advanceBossQueue()
+		}
 		return true
 	}
 	check := func(x, y int) bool {
@@ -553,6 +565,34 @@ func (g *Game) examine() {
 	if !check(fx, fy) {
 		check(g.px, g.py) // 也試腳下
 	}
+}
+
+// talkBossSpecial:sub2 固定物件型 boss。巴拉摩斯是 CTY65 (8,3),handler70，
+// 由「話す」觸發；既有地圖固定格 boss 仍可走 examine()。
+func (g *Game) talkBossSpecial(n *npcInst) bool {
+	if g.cur == nil || n == nil {
+		return false
+	}
+	t := bossTriggerAt(g.curCty, g.cur.sec, n.x, n.y)
+	if t == nil || g.flags[t.doneFlag] {
+		return false
+	}
+	g.pendingTrigger = t
+	g.bossQueue = append([]int(nil), t.monsters...)
+	if t.preRec >= 0 && g.dlg.Open(t.preRec) {
+		g.bossIntro = true
+	} else {
+		g.advanceBossQueue()
+	}
+	return true
+}
+
+func (g *Game) advanceBossDialogue() {
+	if !g.bossIntro || g.pendingTrigger == nil {
+		return
+	}
+	g.bossIntro = false
+	g.advanceBossQueue()
 }
 
 // keyTier:背包最高階鑰匙等級(道具碼 0x55/0x56/0x57 → 1/2/3;tier=code-0x54)。移植 dq3_inv_key_tier。
@@ -679,11 +719,6 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
-	// U 鍵:降到下層地表(對齊 C dev 捷徑;正式觸發=劇情事件 86)。在地表時可用
-	if !g.inTown && g.layer == 0 && inpututil.IsKeyJustPressed(ebiten.KeyU) {
-		g.descend()
-		return nil
-	}
 	// Z 鍵:索瑪神殿最終連戰(六大魔人→怨靈→殭屍→索瑪;對齊 C dev 捷徑 zomaseq)。持光之珠弱化索瑪
 	if !g.battle.active && inpututil.IsKeyJustPressed(ebiten.KeyZ) {
 		g.startZomaSeq()
@@ -748,6 +783,8 @@ func (g *Game) step(in InputState) error {
 		if in.Confirm {
 			g.dlg.Advance()
 			if !g.dlg.open {
+				g.advanceBossDialogue()
+				g.advanceBaramosReturn()
 				g.advanceMirrorEvent()
 				g.advancePhoenixEvent()
 			}
@@ -851,8 +888,16 @@ func (g *Game) step(in InputState) error {
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
 		g.tryOpeningRegionEvent()
+		g.tryBaramosReturnEvent()
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
-		cty := findCtyAtLayer(g.px, g.py, g.layer)               // 依目前地表層找入城
+		cty := findCtyAtLayer(g.px, g.py, g.layer) // 依目前地表層找入城
+		if g.layer == 0 && g.px >= 54 && g.px <= 55 && g.py == 129 {
+			if g.storyFlag(0x4d) {
+				cty = 71 // 巴拉摩斯前：封閉中的蓋亞洞窟
+			} else {
+				cty = 72 // 索瑪現身後：地震破壞蓋亞洞窟封印
+			}
+		}
 		if pc := owPortalResolve(g.px, g.py, g.flags); pc >= 0 { // 旗標條件 portal 覆蓋(同點依進度變城)
 			cty = pc
 		}
@@ -1037,6 +1082,7 @@ func (g *Game) tryTransition() {
 		g.layer = 0
 		if dsec == 0xfe && g.loadUnder() != nil {
 			g.layer = 1
+			g.progressSet(msDescend) // CTY77 的原版 0xfe 出口：自然進入愛列夫加特
 		}
 		g.exitTown()
 		if dx != 0 && dx < g.cur.w {
@@ -1138,8 +1184,8 @@ func (g *Game) overworldScene() *Scene {
 	return g.over
 }
 
-// descend:降到下層地表(移植 do_descent;原版由劇情事件 86 觸發,此處供 debug/U 鍵)。
-// 置玩家於下層城 CTY77 入口附近(84,68)。
+// descend:舊 C remake debug helper，直接降到下層地表。
+// 原版正式流程已更正為 CTY72→CTY77→0xfe（tryTransition），production 不呼叫此函式。
 func (g *Game) descend() {
 	u := g.loadUnder()
 	if u == nil {
@@ -1249,6 +1295,36 @@ func (g *Game) tryOpeningRegionEvent() bool {
 	}
 	g.talkAliahanKing()
 	return true
+}
+
+// tryBaramosReturnEvent:巴拉摩斯勝利後回阿里阿罕王座正前方，
+// 原版 sub2 handler5 依 flag0x29 播 rec98→rec99，最後 CLR flag0x4d。
+func (g *Game) tryBaramosReturnEvent() bool {
+	if !g.inTown || g.cur == nil || g.curCty != ctyAliahanCastle ||
+		g.cur.sec != aliahanThroneSection || g.px != aliahanKingX || g.py != aliahanKingY+1 ||
+		g.storyFlag(0x29) || !g.storyFlag(0x4d) || g.baramosReturn != 0 {
+		return false
+	}
+	if !g.dlg.Open(98) {
+		return false
+	}
+	g.baramosReturn = 1
+	return true
+}
+
+func (g *Game) advanceBaramosReturn() {
+	switch g.baramosReturn {
+	case 1:
+		if g.dlg.Open(99) {
+			g.baramosReturn = 2
+		}
+	case 2:
+		g.baramosReturn = 0
+		g.setStoryFlag(0x4d, false)
+		// CTY71/72 同一地表座標、依此旗標選版本；清 cache 避免沿用舊場景。
+		delete(g.towns, 71)
+		delete(g.towns, 72)
+	}
 }
 
 // enterTown:進阿里阿罕(CTY0;debug/後備)。
@@ -1552,6 +1628,12 @@ func (g *Game) onBattleEnd() {
 				g.flags = map[int]bool{}
 			}
 			g.flags[t.doneFlag] = true
+			if t.clearStoryFlag != 0 {
+				g.setStoryFlag(t.clearStoryFlag, false)
+			}
+			if t.postRec >= 0 {
+				g.dlg.Open(t.postRec)
+			}
 			g.pendingTrigger = nil
 		case g.battle.result != 1 && len(g.bossQueue) == 0: // 鏈中斷(敗/逃)→ 清空,允許重新 examine 觸發
 			g.pendingTrigger = nil

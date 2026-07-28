@@ -169,4 +169,53 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.cur, g.inTown, g.curCty = g.overworldScene(), false, -1
 	g.px, g.py, g.phoenixAboard, g.facing = phoenixParkX, phoenixParkY, true, 1
 	dump("phoenix_flight")
+
+	// R-4:CTY65 巴拉摩斯單戰 → 阿里阿罕索瑪現身 → CTY72/77 自然下降。
+	g.phoenixAboard = false
+	baramos, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 65, mapBlkNum[65], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = baramos, baramos, 65, true
+	g.px, g.py, g.facing, g.dlg.tx = 8, 4, 1, baramos.dlgText
+	g.dlg.Open(85)
+	dump("baramos_challenge")
+	g.dlg.open = false
+	if !g.startBossBattle(0x79) {
+		t.Fatal("巴拉摩斯 0x79 戰鬥素材載入失敗")
+	}
+	dump("baramos_battle")
+
+	g.battle.active = false
+	throne, err = loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyAliahanCastle, mapBlkNum[ctyAliahanCastle], aliahanThroneSection, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = throne, throne, ctyAliahanCastle, true
+	g.px, g.py, g.facing, g.dlg.tx = aliahanKingX, aliahanKingY+1, 1, throne.dlgText
+	g.dlg.Open(99)
+	dump("zoma_appears_aliahan")
+
+	g.dlg.open = false
+	gaia, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 72, mapBlkNum[72], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = gaia, gaia, 72, true
+	g.px, g.py, g.facing, g.dlg.tx = 14, 6, 0, gaia.dlgText
+	dump("gaia_pit_open")
+
+	underGate, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 77, mapBlkNum[77], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = underGate, underGate, 77, true
+	g.px, g.py, g.facing, g.dlg.tx = 16, 9, 0, underGate.dlgText
+	dump("alefgard_fall_landing")
+
+	g.cur, g.inTown, g.curCty, g.layer = g.loadUnder(), false, -1, 1
+	g.px, g.py = 85, 67
+	g.dlg.open = false
+	dump("alefgard_overworld")
 }

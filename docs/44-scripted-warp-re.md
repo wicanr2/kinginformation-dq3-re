@@ -234,37 +234,29 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 | scripted warp(call 0xd1f9 + struct)| §5b/5c | 子型2 NPC byte4∈{33,53,58,61,70} / runner | ✗ 待接 |
 | **overworld 座標 → 旗標條件 CTY** | §7 | 走到地表特定格 | ✗ 待接(含進下層 36/83)|
 
-**地表↔下層連接仍未定位**(§7 是地表城變體,非下降;更正見上)。下層(map=1 的 15 城)要到下層 overworld
-才進得去,而首次下降(地表→下層 overworld)仍未找到具體觸發。
+### ★★ 2026-07-28 更正：首次下降是 CTY72→CTY77→`0xfe`
 
-### ★★ 首次下降 = runner event 86 / handler file 0x783d(已定位)
+舊段落把 **logical `0x164cd` / file `0x1783d`** 漏掉最高位的 `1`，誤寫成
+logical `0x64cd` / file `0x783d`。IDA 與原始位元組重新核對後，該函式載入
+`ds:4EF0={1,0x2d,8,0x7c,1}` 並播放 D3TXT07 rec72 的索瑪台詞，實際是
+**索瑪終戰／戰後處理**，不是蓋亞大洞窟，也不是首次下降 event86。
 
-逐 `[0x5051]` setter 追:`[0x5051]=3` 在 **file 0x78ef**,在函式 **0x783d(logical 0x64cd)** 內。
-該函式 = **runner 0xabb2 跳表 idx 85(event id 86)= 子型2 0x3bb4 idx 80(byte4 80)**。內容(劇情 cutscene):
+真正資料鏈完全在 CTY：
 
 ```
-0783d  di=0xc00; 印對話 rec 0x48        ; (D3TXT07 bank rec0x48 = 索瑪台詞 → 終盤)
-0784e  [0x2518]|=0x42
-07853  lea si,[0x4ef0]; call 0xd1f9      ; warp struct@0x4ef0 = {cur_map45 → CTY8 (124,1)}
-07882  call 0x481b / 0x452d              ; 重載 section
-0789d  清 [0x506a] 隊伍...
-078d7  縮放畫面效果迴圈([0x251d])        ; ギアガの大穴 掉落動畫
-078e3  [0x526c]=1
-078ef  [0x5051]=3                        ; ★ 啟用下層(下次出場 Y+=300)
+地表 (54,129)
+  flag0x4d=1 → CTY71（封閉；只有回地表 transition）
+  flag0x4d=0 → CTY72（開放；第二筆 transition = CTY77 sec0 @(16,9)）
+
+CTY72 洞口環：普通可走 tile，hiMap subid=1
+  → CTY77 sec0
+
+CTY77 transition[0] = {CTY77, 0xfe, 85,67}
+  → DQ3UND / layer1 @(85,67)
 ```
 
-⇒ **首次下降是劇情 scripted 事件(runner event 86)**:顯示對話 → warp → 掉落動畫 → 設下層旗標。
-**無 NPC 放置 byte4=80**(掃全 CTY 0 個)→ 純 runner 觸發(`[0x722]=86` 由劇情進度設,docs/31:
-無靜態 setter)。rec 0x48 在終盤 bank = 索瑪 → 對應 **post-バラモス / アレフガルド 入口**(ギアガの大穴)。
-
-> 使用者直覺(「有 NPC 說跳進坑」)方向對:此事件確實**先顯示對話再 warp**;只是觸發是 runner
-> 而非可走 NPC。「跳進坑」的提示對白可能是另一條 hint NPC(子型0/1 對話)。
-
-### remake 落地路徑
-
-機制全解 ⇒ 可比照 #2 彩虹水滴(scripted_event 83)做:加 **scripted_event 86 = 下降**
-(切 `layer=1` + 置玩家於下層 spawn),由劇情旗標或 debug 觸發 —— 把 dev 鍵 U 換成真實事件。
-剩「event 86 的劇情觸發旗標」需 runner/動態(本環境做不到),但**事件本體已可在 remake 重現**。
+旗標極性也一併更正：新遊戲時 `0x29=1、0x4d=1`；巴拉摩斯勝利 CLR `0x29`，
+阿里阿罕 rec98/99 索瑪事件後 CLR `0x4d`。remake 已依此自然轉場鏈移除 KeyU。
 
 ### 待接進 remake(具體)
 1. **§5b scripted warp**:抽「子型2 byte4 → warp struct 目的(dest,X,Y)」表 → 子型2 warp NPC 載 dest CTY。

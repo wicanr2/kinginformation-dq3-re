@@ -91,11 +91,11 @@ R-3 不死鳥祠堂+六珠+飛行坐騎 ──(基礎;gate 終盤)
 - ⚠ 若 C remake 亦未做飛行坐騎,則以原版 EXE RE + 攻略為 spec 自製(登記 spec 缺口)。
 
 ### R-4 巴拉摩斯城 + boss + descend 自然觸發〔需 R-3 坐騎〕
-- **RE 定位**:巴拉摩斯城 CTY(伊席斯南,txt03 + cty_loc + warp);boss trigger 座標;城內寶箱
-  (魔神之斧0x19、祈禱戒指0x48第二枚);蓋亞那洞穴跳坑位置(巴拉摩斯城右側)。
-- **實作**:飛抵巴拉摩斯城 → boss 121(**須打兩次**)→ 勝設 flag 0x213 → 蓋亞那跳坑 examine →
-  `descend()` 自然觸發(**拔 game.go:592 KeyU**)。
-- **驗收**:騎坐騎飛至→打倒巴拉摩斯兩次→跳坑→自動下降アレフガルド,全程無 KeyU。
+- **RE 定位**:✅ CTY66 外城、CTY65 boss 房 `(8,3)` handler70；formation `4EDF`
+  是怪121(`0x79`)一隻。舊「打兩次」是精訊版打不死 bug 的錄影重試，不是規則。
+- **實作**:✅ 單戰勝利→remake flag0x213 + CLR 原版 flag0x29→回阿里阿罕 rec98/99→
+  CLR flag0x4d→同點 CTY71 切 CTY72→跳坑 transition 到 CTY77→`0xfe` 自然下降。
+- **驗收**:✅ production InputState trace 全程無 KeyU；完整實機長流程仍併入 R-5 驗收。
 - 模型:RE=Opus;實作=sonnet。
 
 ### R-5 龍王城 + 終盤自然入口 wire + 拔所有後門〔需 R-4,收尾驗收〕
