@@ -129,6 +129,34 @@ func TestBattleSpeedOrderInterleavesEnemyAndParty(t *testing.T) {
 	}
 }
 
+func TestBattleRoundMessagesPlayInActionThenResultOrder(t *testing.T) {
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
+	hero := heroParams{level: 20, curHP: 200, maxHP: 200, atk: 999, def: 30, agi: 999}
+	if !b.startGroup(5, 1, 9, hero, nil) {
+		t.Fatal("開戰失敗")
+	}
+	b.enemies[0].hp, b.enemies[0].max, b.enemies[0].agi = 1, 1, 1
+	b.commands[0] = battleCommand{kind: bcWar, target: 0}
+	b.resolveRound()
+
+	if b.result != 1 || b.phase != phMessage || b.msg == "" {
+		t.Fatalf("結算後應先顯示行動訊息: result=%d phase=%d msg=%q", b.result, b.phase, b.msg)
+	}
+	first := b.msg
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if b.phase != phMessage || b.msg == first || b.msg == "" {
+		t.Fatalf("第一次確認應前進到勝利訊息: phase=%d first=%q msg=%q", b.phase, first, b.msg)
+	}
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if b.phase != phEnd {
+		t.Fatalf("所有訊息確認完才可進 phEnd，got %d", b.phase)
+	}
+}
+
 func TestBattleAttackCanSelectSecondEnemy(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
 	if err != nil {

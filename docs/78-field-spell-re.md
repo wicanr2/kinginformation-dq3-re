@@ -124,6 +124,12 @@ Ebiten 的攻擊、單體咒文與藥草現在先進目標 phase；方向鍵或�
 
 ![Ebiten：指定我方魔法使](../dq3_remake_ebitan/docs/battle_ally_target.png)
 
+回合結算現在保留依敏捷混排行動產生的訊息順序；玩家逐次確認後才進下一句、勝敗訊息或下一回合，
+不再由最後一次 `b.msg` 寫入覆蓋整回合。這是 remake 的 FIFO 顯示骨架；句型、角色／怪物名稱
+代入、原版 record 與受擊／狀態演出仍需逐項追原版。
+
+![Ebiten：逐筆戰鬥訊息](../dq3_remake_ebitan/docs/battle_message_queue.png)
+
 現行 renderer 的五行捲動咒文窗（游標位於清單尾端的巴魯朋特）：
 
 ![Ebiten：巴魯朋特戰鬥咒文選單](../dq3_remake_ebitan/docs/battle_palpunte_menu.png)
@@ -132,7 +138,8 @@ Ebiten 的攻擊、單體咒文與藥草現在先進目標 phase；方向鍵或�
 
 - handler 中 `0xd75`、world flag `0x4f46 bit0x80` 等較少見魯拉禁止狀態，Ebiten 尚無
   一一對應的世界狀態欄位。
-- 巴魯朋特的四種 handler 與同伴正常輸入已接入 battle core；原版逐筆戰鬥訊息佇列仍待完成。
+- 巴魯朋特的四種 handler、同伴正常輸入與逐筆訊息 FIFO 已接入 battle core；原版精確
+  record、名字代入、逐動作停頓與動畫 cue 尚未追完。
 - 因帕斯缺原版 `[0x25d3] → 0x10305` 色彩動畫，不能只因 record 分支已接就標 V3。
 - 原版冒險之書是否保存 `[0x4f46]/[0x52f7]` 這類暫態場景咒文狀態尚未追完；Go save
   目前明確視為 runtime-only，讀檔會清除雷姆歐魯 timer。

@@ -509,3 +509,27 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 3. 檢查 runtime 圖是否仍代表現行程式；有重大畫面修改就更新舊圖。
 4. `git diff --check`、確認不納入原版素材／IDA 檔／使用者 scratch files，再做一次重大
    commit 與 push。
+
+## 10. 今日收尾與剩餘工作（2026-07-28）
+
+本日已閉合逐隊員戰鬥命令、敵我目標選擇及回合訊息 FIFO。這些是可驗證的 battle vertical
+slice，不代表完整主線或整套戰鬥已完成。下一輪依下列順序接手：
+
+1. **主線最高優先**：從最早合法 checkpoint 以 production input 往後走，逐次修正第一個
+   不可達事件或錯誤設定；P2 前段至自然取船仍未形成單一路徑 E3 trace。
+2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
+   `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
+   C remake、攻略或推測值直接補 production config。
+3. **完整通關證明**：P3 至 P6 雖有多個正式入口事件切片，仍缺
+   `new game → THE END` 不改狀態、不中途呼叫內部函式的連續 campaign trace，以及各關鍵
+   checkpoint 的 save/load round-trip。
+4. **戰鬥長尾**：訊息已能逐筆顯示，但原版 record、角色／怪物名稱代入、逐動作停頓、
+   動畫／音效 cue、抗性與狀態持續時間、敵群 formation、boss 多次行動、掉落及逐項咒文
+   效果仍需 RE 與同狀態驗證。
+5. **玩家可見 parity**：四人縱列與 HUD、能力確認立繪、母親逐格演出、attract、
+   商店／教會／旅社／達瑪、日夜 palette、剩餘 BGM／SFX 及 ending timing 尚未全部 V3。
+6. **Release**：完成正式流程後才做跨桌面平台包裝、Android 真機的觸控／lifecycle／音訊／
+   存檔驗收，以及選配 WASM smoke；公開包不得納入原版資產。
+
+下一輪第一項工作應是執行玩家流程 audit 並記錄「第一個實際 blocker」，不是再挑一個孤立
+機制實作。

@@ -384,4 +384,15 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.battle.phase = phTargetEnemy
 	g.battle.targetCursor = 1
 	dump("battle_enemy_target")
+
+	// 回合結算訊息：逐筆顯示行動結果，確認後才前進到勝利／下一回合訊息。
+	if !g.battle.startGroup(5, 1, 1, heroParams{
+		level: 20, curHP: 150, maxHP: 150, atk: 999, def: 60, agi: 999,
+	}, nil) {
+		t.Fatal("戰鬥訊息截圖開戰失敗")
+	}
+	g.battle.enemies[0].hp, g.battle.enemies[0].max, g.battle.enemies[0].agi = 1, 1, 1
+	g.battle.commands[0] = battleCommand{kind: bcWar, target: 0}
+	g.battle.resolveRound()
+	dump("battle_message_queue")
 }

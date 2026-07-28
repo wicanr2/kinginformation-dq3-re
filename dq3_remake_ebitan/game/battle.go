@@ -93,6 +93,7 @@ type Battle struct {
 	heroAgi       int
 	cursor        int
 	msg           string
+	messageQueue  []string // 已結算回合的後續逐筆訊息；msg 是目前顯示項
 	phase         battlePhase
 	result        int // 0 進行中、1 勝、2 敗、3 逃
 	gotExp        int
@@ -251,6 +252,7 @@ func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps [
 	b.partyBlind, b.partySealed = false, false
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.gotExp, b.gotGold = "", 0, 0
+	b.messageQueue = nil
 	b.active = true
 	b.seekCommandActor(0)
 	return true
@@ -616,14 +618,19 @@ func (b *Battle) input(in InputState) (closed bool) {
 		}
 	case phMessage:
 		if in.Confirm {
-			b.phase = phCommand
-			b.msg = ""
-			if b.result != 0 {
+			if len(b.messageQueue) > 0 {
+				b.msg = b.messageQueue[0]
+				b.messageQueue = b.messageQueue[1:]
+			} else if b.result != 0 {
+				b.msg = ""
 				b.phase = phEnd
 			} else if b.messageResume != phEnd {
+				b.msg = ""
 				b.phase = b.messageResume
 				b.messageResume = phEnd
 			} else {
+				b.msg = ""
+				b.phase = phCommand
 				b.resetCommandRound()
 			}
 		}
@@ -634,6 +641,26 @@ func (b *Battle) input(in InputState) (closed bool) {
 		}
 	}
 	return false
+}
+
+func (b *Battle) emit(msg string) {
+	if msg == "" {
+		return
+	}
+	if b.resolving {
+		b.messageQueue = append(b.messageQueue, msg)
+		return
+	}
+	b.msg = msg
+}
+
+func (b *Battle) beginMessagePlayback() {
+	b.phase = phMessage
+	if len(b.messageQueue) == 0 {
+		return
+	}
+	b.msg = b.messageQueue[0]
+	b.messageQueue = b.messageQueue[1:]
 }
 
 // execTurn 執行玩家指令 + 敵方回合,結算。
@@ -654,19 +681,20 @@ func (b *Battle) execTurn() {
 	st, _ := b.mons.Stat(b.monID)
 	b.defending = false
 	if b.heroStatus&statusParalysis != 0 { // 睡眠/混亂(敵施144/152):本回合任何指令皆無法行動
-		b.msg = "陷入異常狀態,無法行動!"
+		b.emit("陷入異常,無法行動!")
 		return
 	}
 	switch b.cursor {
 	case bcFlee: // 逃げる
 		if battle.FleeOK(b.heroAgi, int(st.FleeResist), b.roll()) {
-			b.msg, b.result, b.phase = "逃走成功", 3, phMessage
+			b.result, b.phase = 3, phMessage
+			b.emit("逃走成功")
 			return
 		}
-		b.msg = "逃走失敗"
+		b.emit("逃走失敗")
 	case bcDef: // 防御(本回合受傷減半)
 		b.defending = true
-		b.msg = "防御"
+		b.emit("防御")
 	case bcItem: // 道具:用藥草回 HP
 		target := b.actionTarget
 		if target < 0 || target >= 1+len(b.companions) || !b.actorAlive(target) {
@@ -680,9 +708,9 @@ func (b *Battle) execTurn() {
 			}
 			b.setActorHP(target, cur+heal)
 			b.usedHerbs++
-			b.msg = fmt.Sprintf("回復 %d", heal)
+			b.emit(fmt.Sprintf("回復 %d", heal))
 		} else {
-			b.msg = "沒有藥草"
+			b.emit("沒有藥草")
 		}
 	default: // 戰う：使用已選敵方目標；若目標先被擊倒則退到下一個存活敵。
 		tgt := b.actionTarget
@@ -693,7 +721,7 @@ func (b *Battle) execTurn() {
 			break // 組內已無存活敵(全數逃走中)→ 揮空,直接進勝負判定
 		}
 		if b.partyBlind && b.roll() < 128 { // 我方幻惑(敵施158瑪努莎)→ ~50% 揮空(對齊 C g_party_blind)
-			b.msg = "揮空了(幻惑)"
+			b.emit("幻惑,揮空了")
 			break
 		}
 		crit := 0
@@ -707,13 +735,14 @@ func (b *Battle) execTurn() {
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
 		}
-		b.msg = fmt.Sprintf("給予 %d 傷害", dmg)
+		b.emit(fmt.Sprintf("給予 %d 傷害", dmg))
 		b.flashCol = b.hurtFxFrames
 	}
 	if b.allEnemiesDead() { // 勝:擊殺數(排除逃走)× 單隻經驗/金錢(對齊 C apply_victory_exp)
 		killed := b.killedCount()
 		b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
-		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
+		b.result, b.phase = 1, phMessage
+		b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 		return
 	}
 }
@@ -740,12 +769,13 @@ func (b *Battle) execSpell(rec int) {
 		return
 	}
 	if b.partySealed { // 瑪荷頓(敵施156)→ 我方無法施咒,但仍耗費本回合(對齊 C)
-		b.msg = "咒文被封印,無法施放!"
+		b.emit("咒文被封印,無法施放!")
 		return
 	}
 	caster := b.actionActor
 	if b.actorMP(caster) < def.MP {
-		b.msg, b.phase = "MP 不足", phMessage
+		b.phase = phMessage
+		b.emit("MP 不足")
 		return
 	}
 	b.setActorMP(caster, b.actorMP(caster)-def.MP)
@@ -769,36 +799,36 @@ func (b *Battle) execSpell(rec int) {
 			b.setActorHP(target, cur+val)
 			total += val
 		}
-		b.msg = fmt.Sprintf("回復 %d", total)
+		b.emit(fmt.Sprintf("回復 %d", total))
 	case spell.Sleep:
 		n := b.applyEnemyStatus(def.Target, b.actionTarget, statusParalysis)
-		b.msg = fmt.Sprintf("%d 隻敵人陷入睡眠!", n)
+		b.emit(fmt.Sprintf("%d 隻敵人陷入睡眠!", n))
 	case spell.BuffAtk:
 		for _, target := range b.allySpellTargets(def.Target, b.actionTarget) {
 			b.addActorAtkPct(target, 100)
 		}
-		b.msg = "同伴的攻擊力提升了!"
+		b.emit("同伴的攻擊力提升了!")
 	case spell.BuffDef:
 		for _, target := range b.allySpellTargets(def.Target, b.actionTarget) {
 			b.addActorDefPct(target, 50)
 		}
-		b.msg = "同伴的守備力提升了!"
+		b.emit("同伴的守備力提升了!")
 	case spell.Seal:
 		n := b.applyEnemyStatus(def.Target, b.actionTarget, statusSealed)
-		b.msg = fmt.Sprintf("%d 隻敵人的咒文被封印!", n)
+		b.emit(fmt.Sprintf("%d 隻敵人的咒文被封印!", n))
 	case spell.Blind:
 		n := b.applyEnemyStatus(def.Target, b.actionTarget, statusBlind)
-		b.msg = fmt.Sprintf("%d 隻敵人陷入幻惑!", n)
+		b.emit(fmt.Sprintf("%d 隻敵人陷入幻惑!", n))
 	case spell.CurePoison: // 基阿里166
 		for _, target := range b.allySpellTargets(def.Target, b.actionTarget) {
 			b.clearActorStatus(target, statusPoison)
 		}
-		b.msg = "解毒了!"
+		b.emit("解毒了!")
 	case spell.CureStatus: // 基阿里克167/薩梅哈168(remake 簡化:麻痺/混亂/睡眠共用一位元)
 		for _, target := range b.allySpellTargets(def.Target, b.actionTarget) {
 			b.clearActorStatus(target, statusParalysis)
 		}
-		b.msg = "狀態解除了!"
+		b.emit("異常解除了!")
 	case spell.Palpunte:
 		b.execPalpunte(b.rng.Next(16))
 	default: // Dmg
@@ -816,7 +846,7 @@ func (b *Battle) execSpell(rec int) {
 				hit++
 			}
 			b.flashCol = b.hurtFxFrames
-			b.msg = fmt.Sprintf("咒文波及 %d 隻敵人", hit)
+			b.emit(fmt.Sprintf("咒文波及 %d 隻敵人", hit))
 		} else {
 			tgt := b.actionTarget
 			if tgt < 0 || tgt >= len(b.enemies) || !b.enemies[tgt].alive() {
@@ -828,7 +858,7 @@ func (b *Battle) execSpell(rec int) {
 				if b.enemies[tgt].hp < 0 {
 					b.enemies[tgt].hp = 0
 				}
-				b.msg = fmt.Sprintf("咒文 %d 傷害", val)
+				b.emit(fmt.Sprintf("咒文 %d 傷害", val))
 			}
 			b.flashCol = b.hurtFxFrames
 		}
@@ -837,7 +867,8 @@ func (b *Battle) execSpell(rec int) {
 		st, _ := b.mons.Stat(b.monID)
 		killed := b.killedCount()
 		b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
-		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
+		b.result, b.phase = 1, phMessage
+		b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 		return
 	}
 }
@@ -901,9 +932,9 @@ func (b *Battle) execPalpunte(effect int) {
 			}
 		}
 		if affected == 0 {
-			b.msg = "但是這個咒文沒有效。"
+			b.emit("但是這個咒文沒有效。")
 		} else {
-			b.msg = "敵我之間瀰漫著睡意‥‥"
+			b.emit("敵我之間有睡意‥‥")
 		}
 	case 2, 8: // BP=0x55 → 每名存活隊員回復 85..94，個別擲值並封頂
 		heal := func(cur, max int) int {
@@ -924,7 +955,7 @@ func (b *Battle) execPalpunte(effect int) {
 		for _, c := range b.companions {
 			c.hp = heal(c.hp, c.maxHP)
 		}
-		b.msg = "全體同伴的傷口復原了。"
+		b.emit("全體同伴的傷口復原了。")
 	case 11: // sub_1D6C7：各敵依 spellID59 抗性判定，被吹走者不給 EXP/Gold
 		affected := 0
 		for i := range b.enemies {
@@ -939,9 +970,9 @@ func (b *Battle) execPalpunte(effect int) {
 			}
 		}
 		if affected == 0 {
-			b.msg = "但是這個咒文沒有效。"
+			b.emit("但是這個咒文沒有效。")
 		} else {
-			b.msg = "怪物被吹走了。"
+			b.emit("怪物被吹走了。")
 		}
 	case 12: // effect type1：隨機一敵，吸取 1..min(10,MP)-1（原版 0 會改成 1）
 		alive := make([]int, 0, len(b.enemies))
@@ -951,7 +982,7 @@ func (b *Battle) execPalpunte(effect int) {
 			}
 		}
 		if len(alive) == 0 {
-			b.msg = "但是這個咒文沒有效。"
+			b.emit("但是這個咒文沒有效。")
 			return
 		}
 		tgt := alive[b.rng.Next(len(alive))]
@@ -959,7 +990,7 @@ func (b *Battle) execPalpunte(effect int) {
 		// effect type1 caller file 0xe69a uses JA failure，與其他效果的 JB
 		// success 不同；因此 roll==chance 仍成功。
 		if b.rng.Next(256) > chance || b.enemies[tgt].mp <= 0 {
-			b.msg = "但是這個咒文沒有效。"
+			b.emit("但是這個咒文沒有效。")
 			return
 		}
 		limit := b.enemies[tgt].mp
@@ -972,9 +1003,9 @@ func (b *Battle) execPalpunte(effect int) {
 		}
 		b.enemies[tgt].mp -= drain
 		b.setActorMP(b.actionActor, b.actorMP(b.actionActor)+drain) // 原版不以 max MP 封頂
-		b.msg = fmt.Sprintf("奪取了 %d 點的MP", drain)
+		b.emit(fmt.Sprintf("奪取了 %d 點的MP", drain))
 	default:
-		b.msg = "但是這個咒文沒有效。"
+		b.emit("但是這個咒文沒有效。")
 	}
 }
 
@@ -988,6 +1019,8 @@ func (b *Battle) turnSpeed(agi int) int {
 
 // resolveRound 對齊原版 sub_d6bf：收完全隊命令後，才把存活隊員與敵人依敏捷擲值混排。
 func (b *Battle) resolveRound() {
+	b.msg = ""
+	b.messageQueue = nil
 	for _, c := range b.companions {
 		c.defending = false
 	}
@@ -1013,7 +1046,7 @@ func (b *Battle) resolveRound() {
 	ai, aiOK := b.mons.AI(b.monID)
 	for _, e := range order {
 		if b.result != 0 {
-			return
+			break
 		}
 		if e.enemy {
 			b.enemyAction(e.index, ai, aiOK)
@@ -1038,17 +1071,19 @@ func (b *Battle) resolveRound() {
 	if b.result == 0 {
 		if b.allEnemiesDead() {
 			b.finishVictory()
-		} else if !b.wipedOut() {
-			b.phase = phMessage
+		} else {
+			b.wipedOut()
 		}
 	}
+	b.beginMessagePlayback()
 }
 
 func (b *Battle) finishVictory() {
 	st, _ := b.mons.Stat(b.monID)
 	killed := b.killedCount()
 	b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
-	b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
+	b.result, b.phase = 1, phMessage
+	b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 }
 
 func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
@@ -1057,13 +1092,14 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 	case bcFlee:
 		st, _ := b.mons.Stat(b.monID)
 		if battle.FleeOK(c.agi, int(st.FleeResist), b.roll()) {
-			b.msg, b.result, b.phase = "逃走成功", 3, phMessage
+			b.result, b.phase = 3, phMessage
+			b.emit("逃走成功")
 		} else {
-			b.msg = "逃走失敗"
+			b.emit("逃走失敗")
 		}
 	case bcDef:
 		c.defending = true
-		b.msg = "防御"
+		b.emit("防御")
 	case bcItem:
 		target := cmd.target
 		if target < 0 || target >= 1+len(b.companions) || !b.actorAlive(target) {
@@ -1077,9 +1113,9 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 			}
 			b.setActorHP(target, cur+heal)
 			b.usedHerbs++
-			b.msg = fmt.Sprintf("回復 %d", heal)
+			b.emit(fmt.Sprintf("回復 %d", heal))
 		} else {
-			b.msg = "沒有藥草"
+			b.emit("沒有藥草")
 		}
 	case bcSpell:
 		b.execSpell(cmd.spell)
@@ -1092,7 +1128,7 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 			return
 		}
 		if b.partyBlind && b.roll() < 128 {
-			b.msg = "揮空了(幻惑)"
+			b.emit("幻惑,揮空了")
 			return
 		}
 		atk := pct(c.atk, b.actorAtkPct(i+1))
@@ -1102,7 +1138,7 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
 		}
-		b.msg = fmt.Sprintf("給予 %d 傷害", dmg)
+		b.emit(fmt.Sprintf("給予 %d 傷害", dmg))
 		b.flashCol = b.hurtFxFrames
 	}
 	if b.allEnemiesDead() {
@@ -1174,17 +1210,18 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 		return
 	}
 	if b.enemies[i].status&statusParalysis != 0 {
-		b.msg = "敵人昏睡中,無法行動"
+		b.emit("敵人睡著了,無法行動")
 		return
 	}
 	if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
 		b.enemies[i].hp, b.enemies[i].fled = 0, true
-		b.msg = "敵人逃走了"
+		b.emit("敵人逃走了")
 		return
 	}
 	targets := b.aliveTargets()
 	if len(targets) == 0 {
-		b.msg, b.result, b.phase = "全滅…", 2, phMessage
+		b.result, b.phase = 2, phMessage
+		b.emit("全滅‥")
 		return
 	}
 	tgt := targets[b.rng.Next(len(targets))]
@@ -1199,38 +1236,38 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 					if b.enemies[i].hp > b.enemies[i].max {
 						b.enemies[i].hp = b.enemies[i].max
 					}
-					b.msg = fmt.Sprintf("敵詠唱咒文回復 %d", val)
+					b.emit(fmt.Sprintf("敵使用咒文回復 %d", val))
 					return
 				case spell.Sleep:
 					b.setTargetStatus(tgt, statusParalysis)
-					b.msg = "敵詠唱咒文,我方陷入異常狀態!"
+					b.emit("敵使用咒文,我方陷入異常!")
 					return
 				case spell.BuffAtk:
 					b.enemyAtkPct += 100
 					if b.enemyAtkPct > 400 {
 						b.enemyAtkPct = 400
 					}
-					b.msg = "敵方攻擊力上升了!"
+					b.emit("敵方攻擊力上升了!")
 					return
 				case spell.BuffDef:
 					b.enemyDefPct += 50
 					if b.enemyDefPct > 300 {
 						b.enemyDefPct = 300
 					}
-					b.msg = "敵方守備力上升了!"
+					b.emit("敵方守備力上升了!")
 					return
 				case spell.Seal:
 					b.partySealed = true
-					b.msg = "我方咒文被封印了!"
+					b.emit("我方咒文被封印了!")
 					return
 				case spell.Blind:
 					b.partyBlind = true
-					b.msg = "我方陷入幻惑!"
+					b.emit("我方陷入幻惑!")
 					return
 				default:
 					val := spell.CastValue(def.Base, b.roll())
 					b.damageMember(tgt, val)
-					b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
+					b.emit(fmt.Sprintf("敵咒文 %d 傷害", val))
 					b.wipedOut()
 					return
 				}
@@ -1238,7 +1275,7 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 		}
 	}
 	if b.enemies[i].status&statusBlind != 0 && b.roll() < 128 {
-		b.msg = "敵人陷入幻惑,攻擊落空"
+		b.emit("敵人陷入幻惑,攻擊落空")
 		return
 	}
 	eatk := pct(b.enemies[i].atk, b.enemyAtkPct)
@@ -1252,14 +1289,15 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 		edmg /= 2
 	}
 	b.damageMember(tgt, edmg)
-	b.msg = fmt.Sprintf("敵攻擊 %d 傷害", edmg)
+	b.emit(fmt.Sprintf("敵攻擊 %d 傷害", edmg))
 	b.wipedOut()
 }
 
 // wipedOut:我方全滅 → 設敗、回 true(呼叫端應立即結束回合,別讓其餘敵繼續行動)。
 func (b *Battle) wipedOut() bool {
 	if len(b.aliveTargets()) == 0 {
-		b.msg, b.result, b.phase = "全滅…", 2, phMessage
+		b.result, b.phase = 2, phMessage
+		b.emit("全滅‥")
 		return true
 	}
 	return false
@@ -1473,6 +1511,8 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 					drawGlyph(rgba, b.tx, mx+28+i*16, y, glyph, white)
 				}
 			}
+		} else if b.phase == phMessage {
+			drawBattleMessage(rgba, b.tx, mx+12, my+16, 8, b.msg, white)
 		} else if b.phase == phCommand {
 			menu := b.commandMenu(b.commandActor)
 			for i, kind := range menu {
@@ -1523,16 +1563,44 @@ func drawNumber(rgba []byte, tx *dq3data.Text, x, y, val int, fg dq3data.Color) 
 	}
 }
 
-// drawASCII 畫數字部分(非數字字元跳過;中文訊息 glyph 對照另補)。
-func drawASCII(rgba []byte, tx *dq3data.Text, x, y int, s string, fg dq3data.Color) {
-	col := 0
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if c >= '0' && c <= '9' {
-			drawGlyph(rgba, tx, x+col*dq3data.GlyphPx, y, int(c-'0'), fg)
-			col++
-		} else if c == ' ' {
-			col++
+// battleMessageGlyph 是本地 battle fallback 訊息會用到的 D3TXT00.FON 字。
+// 原版有對應的 rec330..376；待訊息變數 context 完整接入後可直接改以 record renderer。
+var battleMessageGlyph = map[rune]int{
+	' ': 13, ',': 55, '.': 43, '!': 57, ':': 61, '‥': 123, '。': 56,
+	'M': 27, 'E': 19, 'X': 38, 'P': 30, 'G': 21,
+	'上': 421, '不': 228, '中': 407, '之': 145, '了': 423, '予': 677,
+	'人': 194, '伴': 602, '但': 508, '個': 546, '倒': 627, '備': 409,
+	'傷': 553, '入': 519, '全': 594, '力': 170, '功': 195, '動': 619,
+	'升': 422, '印': 501, '原': 555, '及': 1026, '取': 614, '口': 554,
+	'同': 601, '吹': 180, '咒': 429, '回': 312, '失': 515, '奪': 613,
+	'守': 340, '害': 471, '封': 500, '常': 581, '幻': 295, '御': 204,
+	'復': 463, '怪': 469, '惑': 168, '意': 1076, '成': 610, '我': 493,
+	'打': 487, '提': 1214, '揮': 652, '擊': 624, '攻': 623, '放': 634,
+	'效': 418, '敗': 853, '敵': 478, '文': 430, '方': 547, '施': 1095,
+	'是': 399, '有': 147, '毒': 137, '沒': 410, '法': 208, '波': 659,
+	'滅': 912, '無': 495, '物': 470, '異': 643, '的': 149, '眠': 798,
+	'睡': 628, '空': 328, '給': 559, '草': 174, '落': 1053, '著': 484,
+	'藥': 244, '行': 531, '被': 437, '解': 464, '走': 612, '足': 1377,
+	'逃': 629, '這': 398, '間': 1174, '防': 203, '除': 790, '陷': 1158,
+	'隻': 680, '體': 486, '點': 425, '用': 240,
+}
+
+func drawBattleMessage(rgba []byte, tx *dq3data.Text, x, y, cols int, s string, fg dq3data.Color) {
+	col, line := 0, 0
+	for _, r := range s {
+		glyph, ok := battleMessageGlyph[r]
+		if r >= '0' && r <= '9' {
+			glyph, ok = int(r-'0'), true
+		}
+		if ok && r != ' ' {
+			drawGlyph(rgba, tx, x+col*16, y+line*16, glyph, fg)
+		}
+		col++
+		if col >= cols {
+			col, line = 0, line+1
+			if line >= 4 {
+				return
+			}
 		}
 	}
 }

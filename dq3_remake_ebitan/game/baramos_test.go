@@ -72,6 +72,7 @@ func TestBaramosProductionInputTrace(t *testing.T) {
 	for n := 0; g.battle.result == 0 && n < 16; n++ { // 命令→目標，逐一收完隊員才結算
 		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	}
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 攻擊訊息→勝利訊息
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 勝利訊息→end
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 關戰鬥→onBattleEnd
 	if g.battle.active || !g.flags[0x213] || g.storyFlag(0x29) || !g.dlg.open {
