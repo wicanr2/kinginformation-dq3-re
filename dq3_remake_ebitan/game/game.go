@@ -103,6 +103,24 @@ func (sc *Scene) openDoor(tx, ty int) bool {
 	return true
 }
 
+// revealEventTile:原版 sub_18C01 的「發現隱藏樓梯」地圖變更。
+// 目前格的低 byte tile +1，並清除 hiMap 低 5 bit 的事件 subid；高 3 bit
+// 仍保留。變更只存在於當前 scene，永久狀態由事件的 story flag 負責。
+func (sc *Scene) revealEventTile(tx, ty int) bool {
+	if tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h {
+		return false
+	}
+	i := ty*sc.w + tx
+	if sc.override == nil {
+		sc.override = map[int]int{}
+	}
+	sc.override[i] = (sc.tileIdx(tx, ty) + 1) & 0xff
+	if sc.hiMap != nil {
+		sc.hiMap[i] &= 0xe0
+	}
+	return true
+}
+
 // tileTransition:回 (tx,ty) 的轉場(attr&0xe000 轉場格 → hiMap 低5bit subid → transitions[subid])。
 // 回 (destCty, destSec, dx, dy, ok)。移植 dq3_scene_tile_transition。
 func (sc *Scene) tileTransition(tx, ty int) (int, int, int, int, bool) {
@@ -261,6 +279,8 @@ type Game struct {
 	pendingTrigger  *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
 	bossIntro       bool          // 座標 boss 的 preRec 尚在顯示；關閉後才正式開戰
 	zomaIntro       bool          // 索瑪 rec72 尚在顯示；關閉後才開 monster0x7c
+	ortegaStage     int           // CTY90 sec4 歐魯迪卡事件：1=rec69，2=rec70
+	endingKingStage int           // CTY80 sec1 handler74：1=rec48 冊封對白，關閉後才開始 ending
 	baramosReturn   int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
 	mirrorStage     int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	phoenix         *dq3data.CharSprite
@@ -316,6 +336,8 @@ func (g *Game) selectCommand(cmd int) {
 					g.talkPhoenixGuardian()
 				} else if g.talkZomaFinal(n) {
 					// CTY90 sec5 handler80：自然交談入口。
+				} else if g.talkEndingKing(n) {
+					// CTY80 sec1 handler74：索瑪後回拉達多姆，由國王冊封才進 ending。
 				} else if g.talkBossSpecial(n) {
 					// CTY65 巴拉摩斯等 sub2 固定物件型 boss。
 				} else if g.openAliahanSpecialNPC(n) {
@@ -563,6 +585,15 @@ func (g *Game) examine() {
 		if ev[0] == 2 { // 事件 type-2 → scripted 傳送(warps[param])
 			return g.warpTo(ev[1])
 		}
+		if ev[0] == 4 { // sub_18C01：清事件 flag、tile+1，顯示全域 rec484「發現一座隱藏樓梯」
+			if !g.storyFlag(ev[2]) {
+				return true
+			}
+			g.setStoryFlag(ev[2], false)
+			g.cur.revealEventTile(x, y)
+			g.dlg.OpenFrom(g.shop.nameText, 484)
+			return true
+		}
 		t := treasureFor(g.curCty, g.cur.sec, subid)
 		if t == nil {
 			return false
@@ -796,6 +827,8 @@ func (g *Game) step(in InputState) error {
 			if !g.dlg.open {
 				g.advanceBossDialogue()
 				g.advanceZomaIntro()
+				g.advanceOrtegaEvent()
+				g.advanceEndingKing()
 				g.advanceBaramosReturn()
 				g.advanceMirrorEvent()
 				g.advancePhoenixEvent()
@@ -893,6 +926,7 @@ func (g *Game) step(in InputState) error {
 		g.tryTransition()
 		g.tryOpeningRegionEvent()
 		g.tryBaramosReturnEvent()
+		g.tryOrtegaEvent()
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
 		cty := findCtyAtLayer(g.px, g.py, g.layer) // 依目前地表層找入城
 		if g.layer == 0 && g.px >= 54 && g.px <= 55 && g.py == 129 {
@@ -1498,7 +1532,53 @@ const (
 	zomaFinalSection = 5
 	zomaHandler      = 80
 	zomaDialogueRec  = 72
+	ortegaSection    = 4
+	ortegaTriggerX   = 18
+	ortegaTriggerY   = 29
+	ortegaFightFlag  = 0xe0
+	ortegaDyingFlag  = 0x0e
+	ortegaFightRec   = 69
+	ortegaDyingRec   = 70
 )
+
+// tryOrtegaEvent:CTY90 sec4 橋上由右往左踏入 (18,29) 時自動開始歐魯迪卡事件。
+// handler79(sub_16494) 要求 flag e0，先顯示 D3TXT07 rec69；原版接著播放
+// formation 0x80 的固定演出，並非玩家可下指令的通常戰鬥。
+func (g *Game) tryOrtegaEvent() bool {
+	if !g.inTown || g.curCty != ctyZomaCastle || g.cur == nil || g.cur.sec != ortegaSection ||
+		g.px != ortegaTriggerX || g.py != ortegaTriggerY || g.ortegaStage != 0 ||
+		!g.storyFlag(ortegaFightFlag) {
+		return false
+	}
+	if !g.dlg.Open(ortegaFightRec) {
+		return false
+	}
+	g.ortegaStage = 1
+	return true
+}
+
+// advanceOrtegaEvent:對齊 handler79→handler90 的可見 NPC 旗標交易。
+// rec69 關閉後 CLEAR e0、SET 0e，重載地圖令橋上的戰鬥 sprite 換成垂死歐魯迪卡；
+// rec70 關閉後 CLEAR 0e 並移除最後 sprite。兩段都不開玩家戰鬥 UI。
+func (g *Game) advanceOrtegaEvent() {
+	switch g.ortegaStage {
+	case 1:
+		g.setStoryFlag(ortegaFightFlag, false)
+		g.setStoryFlag(ortegaDyingFlag, true)
+		g.reloadTownDaynight()
+		if g.dlg.Open(ortegaDyingRec) {
+			g.ortegaStage = 2
+		} else {
+			g.setStoryFlag(ortegaDyingFlag, false)
+			g.reloadTownDaynight()
+			g.ortegaStage = 0
+		}
+	case 2:
+		g.setStoryFlag(ortegaDyingFlag, false)
+		g.reloadTownDaynight()
+		g.ortegaStage = 0
+	}
+}
 
 // talkZomaFinal 是 CTY90 section5 的 handler80 正式入口。六個 monster106 是城內
 // 一般隨機遭遇，不屬於此序列；原版 formation 是 0x7a、0x7b、0x7c。
@@ -1541,16 +1621,67 @@ func (g *Game) advanceZomaIntro() {
 	g.startBossBattle(0x7c)
 }
 
-// runFinale:打倒索瑪 → 破關。設 ZOMA 里程碑 + 洛特冊封(勇者裝備昇華)。移植 run_finale。
+// runFinale:打倒索瑪後的原版 aftermath。handler80/sub_164CD 先 CLEAR flag e1，
+// 把玩家送回愛列夫加特地表；此時尚未冊封、也尚未播放 ending。玩家必須自行走回
+// 拉達多姆 CTY79→CTY80 sec1，和 handler74 國王交談。
 func (g *Game) runFinale() {
 	g.progressSet(msZoma)
 	g.cleared = true
-	g.lotoBlessed = true // そして伝説へ…:王者之劍/光之鎧甲/勇者之盾 → 洛特之劍/鎧/盾
+	g.setStoryFlag(0xe1, false)
+	g.lotoBlessed = false
 	if g.flags == nil {
 		g.flags = map[int]bool{}
 	}
-	g.flags[0x217] = true // 洛特冊封旗標(對齊 C)
-	// 啟動 ENDTXT 結局捲動(首段;逐段推進見 Update)。
+	delete(g.flags, 0x217)
+	g.endSeq = -1
+	g.dlg.open = false
+	g.dlg.tx = nil
+	g.layer, g.inTown, g.curCty = 1, false, -1
+	if under := g.loadUnder(); under != nil {
+		g.under, g.cur = under, under
+	}
+	// CTY90 索瑪城位於下層 (110,73)；原版勝利後回到城外入口。下一次玩家
+	// 移動才會跑地表進城判定，因此保留原始入口格，不需人工偏移到鄰接山地。
+	g.px, g.py = ctyLoc[ctyZomaCastle][0], ctyLoc[ctyZomaCastle][1]
+	g.overPx, g.overPy = g.px, g.py
+	if g.music != nil {
+		g.music.Play(trackField)
+	}
+	g.renderFrame()
+}
+
+const (
+	ctyRadatomeCastle  = 80
+	radatomeThroneSec  = 1
+	radatomeKingHandle = 74
+	radatomeEndingRec  = 48
+)
+
+// talkEndingKing:IDA handler74/sub_16346 的 post-Zoma 分支。flag e1 已被索瑪
+// 勝利清除時，國王不走平時 rec22/23，而是進 sub_1E713 的 rec48 冊封序列。
+func (g *Game) talkEndingKing(n *npcInst) bool {
+	if !g.cleared || g.lotoBlessed || g.storyFlag(0xe1) || g.curCty != ctyRadatomeCastle ||
+		g.cur == nil || g.cur.sec != radatomeThroneSec || n == nil || n.b4 != radatomeKingHandle {
+		return false
+	}
+	if !g.dlg.Open(radatomeEndingRec) {
+		return false
+	}
+	g.endingKingStage = 1
+	return true
+}
+
+func (g *Game) advanceEndingKing() {
+	if g.endingKingStage != 1 {
+		return
+	}
+	g.endingKingStage = 0
+	g.lotoBlessed = true // そして伝説へ…：國王在此正式授予「勇者洛特」封號
+	if g.flags == nil {
+		g.flags = map[int]bool{}
+	}
+	g.flags[0x217] = true
+	// sub_1E713 後半是固定 ending 演出；remake 以已解出的 ENDTXT 分段播放。
 	if g.endText != nil && g.endText.NRecords > 0 {
 		g.endSeq = 0
 		g.dlg.tx = g.endText

@@ -18,10 +18,14 @@ func (g *Game) useSelectedItem() {
 			g.noticeCode, g.noticeTimer = code, 90
 			g.clampPanelCursor()
 		}
-	case itemuse.ReturnTown: // 蓋美拉翅膀:回起始城鎮(阿里阿罕)
+	case itemuse.ReturnTown: // 蓋美拉翅膀：地上回阿里阿罕，下層回拉達多姆外城 CTY79
 		g.removeItems(code, 1)
 		g.panel = panelNone
-		g.enterTownCty(0)
+		dest := 0
+		if g.layer == 1 {
+			dest = 79
+		}
+		g.enterTownCty(dest)
 	case itemuse.Repel: // 聖水:驅弱敵 64 步
 		g.repel = itemuse.HolySteps
 		g.removeItems(code, 1)

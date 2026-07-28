@@ -219,8 +219,8 @@ func TestComponentSpine(t *testing.T) {
 	if seen[len(seen)-1] != 0x7c {
 		t.Fatalf("連戰最後一場應為索瑪 0x7c,實際序列=%v", seen)
 	}
-	if !g.cleared || !g.lotoBlessed {
-		t.Error("破索瑪應設 cleared + lotoBlessed(經由 onBattleEnd→runFinale)")
+	if !g.cleared || g.lotoBlessed {
+		t.Error("破索瑪應 cleared，但國王冊封前不可先有 lotoBlessed")
 	}
 	if !g.progressDone(msZoma) {
 		t.Error("破索瑪應設 msZoma 里程碑")
@@ -228,11 +228,41 @@ func TestComponentSpine(t *testing.T) {
 	if s := g.progressStage(); s != msCount {
 		t.Fatalf("破索瑪後進度應 9/9,得 %d(序列=%v)", s, seen)
 	}
-	if g.endSeq != 0 || !g.dlg.open || g.dlg.tx != g.endText {
-		t.Fatalf("破索瑪應由 runFinale 開結局首段:endSeq=%d open=%v", g.endSeq, g.dlg.open)
+	if g.inTown || g.layer != 1 || g.endSeq >= 0 || g.dlg.open {
+		t.Fatalf("索瑪後應回可操作的下層地表、不可立刻 ending：town=%v layer=%d end=%d open=%v",
+			g.inTown, g.layer, g.endSeq, g.dlg.open)
 	}
 
-	// ---- 10. 結局捲動:逐段推進(同 TestEndingScroll)到 endSeq 回 -1(播完)。
+	// ---- 10. 回拉達多姆見國王：handler74 rec48 關閉後才授予洛特封號並開始 ending。
+	throne, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ctyRadatomeCastle,
+		mapBlkNum[ctyRadatomeCastle], radatomeThroneSec, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.inTown, g.curCty = throne, throne, true, ctyRadatomeCastle
+	g.dlg.tx = throne.dlgText
+	var king *npcInst
+	for i := range throne.npcs {
+		if throne.npcs[i].b4 == radatomeKingHandle {
+			king = &throne.npcs[i]
+			break
+		}
+	}
+	if king == nil {
+		t.Fatal("CTY80 sec1 找不到 handler74 國王")
+	}
+	g.px, g.py, g.facing = king.x, king.y+1, 1
+	g.selectCommand(cmdTalk)
+	for g.endingKingStage == 1 {
+		g.dlg.open = false
+		g.advanceEndingKing()
+	}
+	if !g.lotoBlessed || !g.flags[0x217] || g.endSeq != 0 || !g.dlg.open || g.dlg.tx != g.endText {
+		t.Fatalf("國王冊封後才應開始 ending：loto=%v flag=%v end=%d open=%v",
+			g.lotoBlessed, g.flags[0x217], g.endSeq, g.dlg.open)
+	}
+
+	// ---- 11. 結局捲動:逐段推進(同 TestEndingScroll)到 endSeq 回 -1(播完)。
 	if g.endText == nil || g.endText.NRecords == 0 {
 		t.Fatal("應已載入 ENDTXT 結局文本")
 	}

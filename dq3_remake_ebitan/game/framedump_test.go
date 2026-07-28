@@ -246,6 +246,40 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.useSelectedItem()
 	dump("rainbow_bridge_after")
 
+	// R-5b:CTY90 王座 type4/e5 隱藏樓梯，sub_18C01 調查後 tile+1。
+	g.setStoryFlag(0xe5, true)
+	hidden, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyZomaCastle, mapBlkNum[ctyZomaCastle], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = hidden, hidden, ctyZomaCastle, true
+	g.px, g.py, g.facing, g.dlg.tx = 23, 4, 1, hidden.dlgText
+	g.dlg.open, g.noticeTimer = false, 0
+	dump("zoma_hidden_stair_before")
+	g.examine()
+	dump("zoma_hidden_stair_revealed")
+
+	// R-5b:橋上自動觸發 handler79→90；e0 的戰鬥 sprite 換成 flag0e 的垂死歐魯迪卡。
+	g.dlg.open = false
+	g.setStoryFlag(ortegaFightFlag, true)
+	g.setStoryFlag(ortegaDyingFlag, false)
+	ortega, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyZomaCastle, mapBlkNum[ctyZomaCastle], ortegaSection, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = ortega, ortega, ctyZomaCastle, true
+	g.px, g.py, g.facing, g.dlg.tx = ortegaTriggerX, ortegaTriggerY, 2, ortega.dlgText
+	g.noticeTimer = 0
+	if !g.tryOrtegaEvent() {
+		t.Fatal("歐魯迪卡橋上事件未觸發")
+	}
+	dump("ortega_bridge_rec69")
+	g.dlg.open = false
+	g.advanceOrtegaEvent()
+	dump("ortega_dying_rec70")
+
 	// CTY90 sec5 自然「話す」入口與原版三個 formation。
 	zoma, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
 		ctyZomaCastle, mapBlkNum[ctyZomaCastle], zomaFinalSection, 0, g.storyFlag)
@@ -273,4 +307,32 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("索瑪 0x7c 戰鬥素材載入失敗")
 	}
 	dump("zoma_final_battle")
+
+	// handler80 勝利後回索瑪城外；下層傳送到 CTY79，再由 CTY80 handler74 國王冊封。
+	g.battle.active = false
+	g.runFinale()
+	dump("zoma_aftermath_overworld")
+	g.inventory = append(g.inventory, 0x43)
+	g.panel, g.panelCursor = panelItem, len(g.inventory)-1
+	g.useSelectedItem()
+	dump("radatome_return")
+
+	radatome, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyRadatomeCastle, mapBlkNum[ctyRadatomeCastle], radatomeThroneSec, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = radatome, radatome, ctyRadatomeCastle, true
+	g.dlg.tx = radatome.dlgText
+	for i := range radatome.npcs {
+		if radatome.npcs[i].b4 == radatomeKingHandle {
+			g.px, g.py, g.facing = radatome.npcs[i].x, radatome.npcs[i].y+1, 1
+			break
+		}
+	}
+	g.selectCommand(cmdTalk)
+	dump("radatome_king_loto")
+	g.dlg.open = false
+	g.advanceEndingKing()
+	dump("ending_scroll_start")
 }

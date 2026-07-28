@@ -1,6 +1,7 @@
 package game
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
@@ -41,16 +42,17 @@ func TestZomaLightOrbWeaken(t *testing.T) {
 	}
 }
 
-// runFinale:破索瑪 → 設 ZOMA 里程碑(進度 9/9)+ 洛特冊封 + cleared。
+// runFinale:破索瑪 → 設 ZOMA 里程碑並回下層地表；尚未由國王冊封。
 func TestRunFinale(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
+	g := r4Game(t)
 	// 先把前 8 個里程碑設好,驗破索瑪後進度到 9
 	for _, ms := range []int{msStart, msThiefKey, msMagicBal, msRomaly, msDhama, msShip, msRainbow, msDescend} {
 		g.progressSet(ms)
 	}
+	g.setStoryFlag(0xe1, true)
 	g.runFinale()
-	if !g.cleared || !g.lotoBlessed {
-		t.Error("破索瑪應設 cleared + lotoBlessed")
+	if !g.cleared || g.lotoBlessed {
+		t.Error("破索瑪應 cleared，但見國王前不可預先取得洛特封號")
 	}
 	if !g.progressDone(msZoma) {
 		t.Error("破索瑪應設 ZOMA 里程碑")
@@ -58,8 +60,46 @@ func TestRunFinale(t *testing.T) {
 	if s := g.progressStage(); s != msCount {
 		t.Errorf("破關後進度階段 %d, want %d(9/9)", s, msCount)
 	}
-	if !g.flags[0x217] {
-		t.Error("應設洛特冊封旗標 0x217")
+	if g.flags[0x217] || g.storyFlag(0xe1) {
+		t.Error("索瑪勝利應 CLEAR e1，且國王前不可設冊封旗標 0x217")
+	}
+	if g.inTown || g.layer != 1 || g.cur != g.under ||
+		g.px != ctyLoc[ctyZomaCastle][0] || g.py != ctyLoc[ctyZomaCastle][1] {
+		t.Fatalf("應回索瑪城外下層地表：town=%v layer=%d @(%d,%d)",
+			g.inTown, g.layer, g.px, g.py)
+	}
+	if g.endSeq >= 0 || g.dlg.open {
+		t.Fatal("索瑪勝利後不可立刻播放 ending")
+	}
+}
+
+func TestZomaAftermathRadatomeRoute(t *testing.T) {
+	g := r4Game(t)
+	g.runFinale()
+	g.inventory = []int{0x43} // 蓋美拉翅膀；影片同樣由索瑪城外傳送回拉達多姆
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if !g.inTown || g.layer != 1 || g.curCty != 79 {
+		t.Fatalf("下層 ReturnTown 應抵達 CTY79 拉達多姆外城：town=%v layer=%d cty=%d",
+			g.inTown, g.layer, g.curCty)
+	}
+
+	outside, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 79, mapBlkNum[79], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dc, ds, dx, dy, ok := outside.tileTransition(44, 5)
+	if !ok || dc != ctyRadatomeCastle || ds != 0 || dx != 11 || dy != 30 {
+		t.Fatalf("CTY79→CTY80 城門資料錯：ok=%v %d.%d@(%d,%d)", ok, dc, ds, dx, dy)
+	}
+	castle, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyRadatomeCastle, mapBlkNum[ctyRadatomeCastle], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dc, ds, dx, dy, ok = castle.tileTransition(15, 8)
+	if !ok || dc != ctyRadatomeCastle || ds != radatomeThroneSec || dx != 13 || dy != 22 {
+		t.Fatalf("CTY80 sec0→王座 sec1 資料錯：ok=%v %d.%d@(%d,%d)", ok, dc, ds, dx, dy)
 	}
 }
 
@@ -100,17 +140,44 @@ func TestZomaSeq(t *testing.T) {
 	}
 }
 
-// 結局捲動:破索瑪 → 開 ENDTXT 首段;逐段推進(模擬 Update 的 end_seq 邏輯)直到播完。
+// 結局捲動:破索瑪後回 CTY80 sec1 自然與國王交談，才開 ENDTXT。
 func TestEndingScroll(t *testing.T) {
-	fon := asset(t, "D3TXT00.FON")
-	end := dq3data.LoadText(fon, asset(t, "ENDTXT.TXT"))
+	g := r4Game(t)
+	end := g.endText
 	if end == nil || end.NRecords == 0 {
 		t.Skip("無 ENDTXT")
 	}
-	g := &Game{flags: map[int]bool{}, endText: end, endSeq: -1}
 	g.runFinale()
-	if g.endSeq != 0 || !g.dlg.open || g.dlg.tx != end {
-		t.Fatalf("破索瑪應開結局首段:endSeq=%d open=%v", g.endSeq, g.dlg.open)
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ctyRadatomeCastle,
+		mapBlkNum[ctyRadatomeCastle], radatomeThroneSec, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.inTown, g.curCty = sc, sc, true, ctyRadatomeCastle
+	g.dlg.tx = sc.dlgText
+	var king *npcInst
+	for i := range sc.npcs {
+		if sc.npcs[i].b4 == radatomeKingHandle {
+			king = &sc.npcs[i]
+			break
+		}
+	}
+	if king == nil {
+		t.Fatal("CTY80 sec1 找不到原版 handler74 國王")
+	}
+	g.px, g.py, g.facing = king.x, king.y+1, 1
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.endingKingStage != 1 || !g.dlg.open ||
+		!reflect.DeepEqual(g.dlg.buf, sc.dlgText.Record(radatomeEndingRec)) {
+		t.Fatal("索瑪後和國王交談應走 handler74/sub_1E713 rec48")
+	}
+	for g.endingKingStage == 1 {
+		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	}
+	if !g.lotoBlessed || !g.flags[0x217] || g.endSeq != 0 || !g.dlg.open || g.dlg.tx != end {
+		t.Fatalf("國王冊封後才應開結局：loto=%v flag=%v endSeq=%d open=%v",
+			g.lotoBlessed, g.flags[0x217], g.endSeq, g.dlg.open)
 	}
 	// 模擬逐段推進:每段翻完關閉 → 下一段,直到 endSeq 回 -1(播完)。
 	steps := 0
