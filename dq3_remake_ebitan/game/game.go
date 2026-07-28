@@ -229,34 +229,44 @@ type Game struct {
 	heroGender     int           // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0)。heroStat 是原版角色 record 的七個持久能力欄；
 	// 創角/升級時由 sub_ed3c 相同的 RNG transaction 修改，不再每幀由等級公式重算。
-	heroExp        uint32
-	heroGold       int
-	heroHP         int
-	heroMP         int
-	heroStat       stats.Values
-	heroInit       bool
-	equip          [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
-	companions     []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
-	roster         []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
-	flags          map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
-	storyBits      [32]byte     // 原版 [0x4f70] 256-flag story-flag 陣列(NPC 可見性;初值見 initStoryBits)
-	noticeCode     int          // 取得道具通知(item code;-1=無)
-	noticeTimer    int
-	shipOwned      bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
-	shipAboard     bool          // 目前在船上
-	shipX, shipY   int           // 船停泊位置(地表)
-	repel          int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
-	prng           rng.RNG       // 祈禱之戒損壞判定用 RNG
-	lotoBlessed    bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
-	cleared        bool          // 已破關(索瑪擊破)
-	endText        *dq3data.Text // ENDTXT.TXT 結局文本
-	endSeq         int           // 結局捲動段號(-1=未進行;0..n=當前段)
-	openingIdx     int           // 開場旁白序號(-1=未進行;0..n=當前句)
-	bossQueue      []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪;或 examine 觸發的座標 boss 鏈)
-	pendingTrigger *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
-	mirrorStage    int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
-	frame          *ebiten.Image
-	rgba           []byte
+	heroExp         uint32
+	heroGold        int
+	heroHP          int
+	heroMP          int
+	heroStat        stats.Values
+	heroInit        bool
+	equip           [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	companions      []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
+	roster          []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
+	flags           map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
+	storyBits       [64]byte     // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
+	noticeCode      int          // 取得道具通知(item code;-1=無)
+	noticeTimer     int
+	shipOwned       bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
+	shipAboard      bool          // 目前在船上
+	shipX, shipY    int           // 船停泊位置(地表)
+	repel           int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	prng            rng.RNG       // 祈禱之戒損壞判定用 RNG
+	lotoBlessed     bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
+	cleared         bool          // 已破關(索瑪擊破)
+	endText         *dq3data.Text // ENDTXT.TXT 結局文本
+	endSeq          int           // 結局捲動段號(-1=未進行;0..n=當前段)
+	openingIdx      int           // 開場旁白序號(-1=未進行;0..n=當前句)
+	bossQueue       []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪;或 examine 觸發的座標 boss 鏈)
+	pendingTrigger  *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
+	mirrorStage     int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
+	phoenix         *dq3data.CharSprite
+	phoenixOwned    bool
+	phoenixAboard   bool
+	phoenixX        int
+	phoenixY        int
+	phoenixStage    int   // 1=守護神 rec92 後續；2=逐顆 rec93；3=中央蛋六幀復活動畫
+	phoenixList     []int // 已放上祭壇、待 rec93 列出的寶珠
+	phoenixListPos  int
+	phoenixAnim     int // 復活動畫 tile 0x7b..0x80 的目前 frame
+	phoenixAnimTick int
+	frame           *ebiten.Image
+	rgba            []byte
 }
 
 // 場景配樂軌(對齊 C g_scene_track):BATTLE=14、TOWN=2、DUNGEON=3。
@@ -292,7 +302,11 @@ func (g *Game) selectCommand(cmd int) {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
 			case sub == 2: // scripted NPC(給物/劇情)
-				if g.openAliahanSpecialNPC(n) {
+				if g.curCty == ctyTedon && n.x == tedonOrbNPCX && n.y == tedonOrbNPCY && n.b4 == tedonOrbNPCHandler {
+					g.talkTedonOrb()
+				} else if g.curCty == ctyPhoenixShrine && n.b4 == phoenixGuardianHandler {
+					g.talkPhoenixGuardian()
+				} else if g.openAliahanSpecialNPC(n) {
 					// CTY00 b4=1/3/4 是 EXE sub2 jump table 的設施 handler，
 					// 不屬於泛用 scriptedTable。
 				} else if g.curCty == ctyPortoga && n.x == portogaKingX && n.y == portogaKingY {
@@ -376,6 +390,14 @@ func shipTileFor(facing int) int {
 func (g *Game) tryMove(nx, ny int) bool {
 	if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h {
 		return false
+	}
+	if g.phoenixAboard { // 原版 mode2：飛行中無視地形，只受地圖邊界限制
+		return true
+	}
+	if g.phoenixOwned && !g.inTown && nx == g.phoenixX && ny == g.phoenixY {
+		g.phoenixAboard = true // 走上 field tile 0xfd 搭乘，不使用 remake 自造快捷鍵
+		g.shipAboard = false
+		return true
 	}
 	if g.shipAboard { // 在船上:海(attr&0x20)可航;走上可走陸地 → 下船
 		if g.cur.attr.Raw(g.cur.tileIdx(nx, ny))&0x20 != 0 {
@@ -520,6 +542,9 @@ func (g *Game) examine() {
 	}
 	fx, fy := frontTile(g.px, g.py, g.facing)
 	if g.tryOpenFacingDoor(fx, fy) { // 面向鎖門 + 鑰匙足夠 → 開門(移植 dq3_scene_try_open_facing_door)
+		return
+	}
+	if g.tryPhoenixAltar(fx, fy) || g.tryPhoenixAltar(g.px, g.py) {
 		return
 	}
 	if checkBoss(fx, fy) || checkBoss(g.px, g.py) { // 座標 boss 觸發點優先於一般寶箱/warp
@@ -724,8 +749,14 @@ func (g *Game) step(in InputState) error {
 			g.dlg.Advance()
 			if !g.dlg.open {
 				g.advanceMirrorEvent()
+				g.advancePhoenixEvent()
 			}
 		}
+		g.renderFrame()
+		return nil
+	}
+	if g.phoenixStage == 3 {
+		g.advancePhoenixAnimation()
 		g.renderFrame()
 		return nil
 	}
@@ -779,6 +810,11 @@ func (g *Game) step(in InputState) error {
 	}
 	// A:開命令窗(地表/城內皆可,DQ 風格)
 	if in.Confirm {
+		if g.phoenixAboard {
+			g.tryLandPhoenix()
+			g.renderFrame()
+			return nil
+		}
 		g.cmd.Open()
 		g.renderFrame()
 		return nil
@@ -815,7 +851,7 @@ func (g *Game) step(in InputState) error {
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
 		g.tryOpeningRegionEvent()
-	} else if moved && !g.inTown { // 地表:踩到城鎮入口 → 進城;否則隨機遇敵(~1/16 步)
+	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
 		cty := findCtyAtLayer(g.px, g.py, g.layer)               // 依目前地表層找入城
 		if pc := owPortalResolve(g.px, g.py, g.flags); pc >= 0 { // 旗標條件 portal 覆蓋(同點依進度變城)
 			cty = pc
@@ -889,18 +925,18 @@ const dnPhaseSteps = 60
 // isNight:目前是否黑夜(相位 2)。供夜 gate 事件查詢(提頓夜綠寶珠等)。對齊 dq3_scene.c night 判定。
 func (g *Game) isNight() bool { return g.dnPhase == 2 }
 
-// storyFlag / setStoryFlag:原版 [0x4f70] 256-flag story-flag 陣列(NPC 可見性等;SET=file 0x824f、
-// CLR=0x8264、GET=0x8279)。新遊戲初值見 dq3data.NPCStoryInitFlags(flag 0-39 清、40-255 設)。
+// storyFlag / setStoryFlag:原版 [0x4f70] story-flag 陣列(NPC 可見性等;SET=file 0x824f、
+// CLR=0x8264、GET=0x8279)。祭壇會存取 flag 0x12c..0x131，故不能截成舊誤判的 256 flags。
 // 供 loadTownSceneSec 的 NPC 可見性過濾;獨立於 g.flags(remake 里程碑),不互相污染。
 func (g *Game) storyFlag(id int) bool {
-	if id < 0 || id >= 256 {
+	if id < 0 || id >= len(g.storyBits)*8 {
 		return false
 	}
 	return g.storyBits[id>>3]&(0x80>>(uint(id)&7)) != 0
 }
 
 func (g *Game) setStoryFlag(id int, v bool) {
-	if id < 0 || id >= 256 {
+	if id < 0 || id >= len(g.storyBits)*8 {
 		return
 	}
 	m := byte(0x80 >> (uint(id) & 7))
@@ -1578,6 +1614,7 @@ func (g *Game) renderFrame() {
 			blitTile(g.rgba, cx*TileW, cy*TileH, tile, sc.pal)
 		}
 	}
+	g.drawPhoenixAltars(camX, camY)
 	for i := range sc.npcs { // NPC(在視窗內才畫;靜態朝下 frame)
 		n := &sc.npcs[i]
 		if n.spr == nil || n.x < camX || n.x >= camX+ViewCols || n.y < camY || n.y >= camY+ViewRows {
@@ -1590,7 +1627,15 @@ func (g *Game) renderFrame() {
 		g.shipX >= camX && g.shipX < camX+ViewCols && g.shipY >= camY && g.shipY < camY+ViewRows {
 		blitTile(g.rgba, (g.shipX-camX)*TileW, (g.shipY-camY)*TileH, sc.blk.Tile(shipTileFor(0)), sc.pal)
 	}
-	if !g.inTown && g.shipAboard { // 在船上 → 船 tile 取代主角 sprite
+	if !g.inTown && g.phoenixOwned && !g.phoenixAboard &&
+		g.phoenixX >= camX && g.phoenixX < camX+ViewCols && g.phoenixY >= camY && g.phoenixY < camY+ViewRows {
+		blitTile(g.rgba, (g.phoenixX-camX)*TileW, (g.phoenixY-camY)*TileH,
+			sc.blk.Tile(0xfd), sc.pal) // 原版 world renderer 的 vehicle bit2 代換 tile
+	}
+	if !g.inTown && g.phoenixAboard {
+		blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
+			g.phoenix.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+	} else if !g.inTown && g.shipAboard { // 在船上 → 船 tile 取代主角 sprite
 		blitTile(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH, sc.blk.Tile(shipTileFor(g.facing)), sc.pal)
 	} else {
 		blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
@@ -1766,6 +1811,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	g.tavern.tx = g.dlg.tx                                          // 酒館 glyph
 	g.recruit.tx = g.dlg.tx                                         // 酒場招募 glyph
 	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)
+	g.phoenix = dq3data.LoadCharSprite(manBLS, 176) // CTY70 egg b2=48 → (48-4)*4；原版拉米亞 8-frame sprite
 
 	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)
 	mons, merr := dq3data.OpenMonsters(ld.read("D3MNS.DAT"))

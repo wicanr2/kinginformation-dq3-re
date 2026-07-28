@@ -137,4 +137,36 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("拉之鏡揭露後未進怪力魔89戰")
 	}
 	dump("samanosa_boss_troll")
+
+	// R-3:原版 CTY70 六寶珠祭壇 → 守護神復活拉米亞 → 地表搭乘飛行。
+	g.battle.active = false
+	g.dnPhase = 0
+	for i := 0; i < 6; i++ {
+		g.setStoryFlag(phoenixAltarFlagFirst+i, false)
+		g.setStoryFlag(phoenixVisualFlagBase+i, false)
+	}
+	g.setStoryFlag(flagPhoenixUnrevived, true)
+	phoenixShrine, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyPhoenixShrine, mapBlkNum[ctyPhoenixShrine], 0, g.dnPhase, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = phoenixShrine, phoenixShrine, ctyPhoenixShrine, true
+	g.px, g.py, g.dlg.tx, g.dlg.open = 8, 12, phoenixShrine.dlgText, false
+	dump("phoenix_six_orbs")
+
+	g.phoenixList = g.placedPhoenixOrbs()
+	g.revivePhoenix()
+	g.phoenixAnim = 4
+	dump("phoenix_revival_animation")
+	g.phoenixAnim, g.phoenixAnimTick = 5, 7
+	g.advancePhoenixAnimation()
+	g.px, g.py = 8, 12
+	g.dlg.Open(94)
+	dump("phoenix_revived")
+
+	g.dlg.open = false
+	g.cur, g.inTown, g.curCty = g.overworldScene(), false, -1
+	g.px, g.py, g.phoenixAboard, g.facing = phoenixParkX, phoenixParkY, true, 1
+	dump("phoenix_flight")
 }

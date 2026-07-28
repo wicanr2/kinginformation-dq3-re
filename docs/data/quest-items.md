@@ -46,7 +46,10 @@
 
 ## 不死鳥 questline(六寶珠 0x66-0x6b)
 
-集六珠 → 諾阿尼魯北雪白陸地不死鳥祠堂 → 拉米亞復活 → 乘鳥飛(Ch42)。✅ 完整(集滿自動復活)。
+六珠逐顆放上 CTY70 sec0 六座祭壇 → 與守護神交談 → 六幀蛋動畫 → 拉米亞停在
+地表 `(48,189)` → 走上搭乘、Confirm 合法降落。✅ Ebiten R-3 事件切片完成。
+
+> 舊 C remake 的「集滿自動復活」、CTY82 與 `y` 起飛／降落都是推測性簡化，非原版流程。
 
 > remake 接線機制:寶箱(既有 chest handler ep2<0x90)/ sub2 NPC 表(dq3_scripted,含 transform
 > consume_prereq)/ 位置 item-use(DQ3_USE_AWAKEN/GAIA/DRAIN)/ boss 事件(boss:<id>[:獎勵])。

@@ -11,30 +11,34 @@ import (
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
 type saveState struct {
-	HeroExp    uint32       `json:"exp"`
-	HeroHP     int          `json:"hp"`
-	HeroMP     int          `json:"mp"`
-	HeroStat   stats.Values `json:"stats,omitempty"`
-	HeroGold   int          `json:"gold"`
-	HeroName   []int        `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
-	HeroGender int          `json:"herogender"`         // 0=男 1=女
-	Inventory  []int        `json:"inv"`
-	Equip      [4]int       `json:"eq"`
-	Comps      []compSav    `json:"comps"`
-	Roster     []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
-	Flags      []int        `json:"flags"`
-	ShipOwned  bool         `json:"shipowned"`
-	ShipX      int          `json:"shipx"`
-	ShipY      int          `json:"shipy"`
-	PX         int          `json:"px"`
-	PY         int          `json:"py"`
-	InTown     bool         `json:"town"`
-	StoryBits  []byte       `json:"storybits,omitempty"`
-	DNPhase    int          `json:"dnphase,omitempty"`
-	DNStep     int          `json:"dnstep,omitempty"`
-	Cty        int          `json:"cty,omitempty"`
-	Section    int          `json:"section,omitempty"`
-	Layer      int          `json:"layer,omitempty"`
+	HeroExp       uint32       `json:"exp"`
+	HeroHP        int          `json:"hp"`
+	HeroMP        int          `json:"mp"`
+	HeroStat      stats.Values `json:"stats,omitempty"`
+	HeroGold      int          `json:"gold"`
+	HeroName      []int        `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
+	HeroGender    int          `json:"herogender"`         // 0=男 1=女
+	Inventory     []int        `json:"inv"`
+	Equip         [4]int       `json:"eq"`
+	Comps         []compSav    `json:"comps"`
+	Roster        []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
+	Flags         []int        `json:"flags"`
+	ShipOwned     bool         `json:"shipowned"`
+	PhoenixOwned  bool         `json:"phoenixowned,omitempty"`
+	PhoenixAboard bool         `json:"phoenixaboard,omitempty"`
+	PhoenixX      int          `json:"phoenixx,omitempty"`
+	PhoenixY      int          `json:"phoenixy,omitempty"`
+	ShipX         int          `json:"shipx"`
+	ShipY         int          `json:"shipy"`
+	PX            int          `json:"px"`
+	PY            int          `json:"py"`
+	InTown        bool         `json:"town"`
+	StoryBits     []byte       `json:"storybits,omitempty"`
+	DNPhase       int          `json:"dnphase,omitempty"`
+	DNStep        int          `json:"dnstep,omitempty"`
+	Cty           int          `json:"cty,omitempty"`
+	Section       int          `json:"section,omitempty"`
+	Layer         int          `json:"layer,omitempty"`
 }
 
 // compSav 是一名同伴的存檔資料。
@@ -65,6 +69,8 @@ func (g *Game) snapshot() saveState {
 		Roster:    compsToSav(g.roster),
 		Flags:     flagsToSav(g.flags),
 		ShipOwned: g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
+		PhoenixOwned: g.phoenixOwned, PhoenixAboard: g.phoenixAboard,
+		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY,
 		PX: g.px, PY: g.py, InTown: g.inTown,
 		StoryBits: append([]byte(nil), g.storyBits[:]...),
 		DNPhase:   g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
@@ -141,10 +147,11 @@ func (g *Game) restore(s saveState) {
 		}
 	}
 	g.shipOwned, g.shipX, g.shipY = s.ShipOwned, s.ShipX, s.ShipY
-	if len(s.StoryBits) == len(g.storyBits) {
-		copy(g.storyBits[:], s.StoryBits)
-	} else {
-		g.initStoryBits() // 舊存檔未含原版旗標：回到原版新遊戲初值
+	g.phoenixOwned, g.phoenixAboard = s.PhoenixOwned, s.PhoenixAboard
+	g.phoenixX, g.phoenixY = s.PhoenixX, s.PhoenixY
+	g.initStoryBits()
+	if len(s.StoryBits) > 0 {
+		copy(g.storyBits[:], s.StoryBits) // 32-byte 舊檔保留前 256 flags；高位沿用原版初值
 	}
 	g.dnPhase, g.dnStep = s.DNPhase&3, s.DNStep
 	g.layer, g.curCty = s.Layer, s.Cty

@@ -13,6 +13,7 @@
 | **W4 ✅** | A4 酒場兩段式招募(登錄名冊≠入隊) | ebitan roster 名冊 vs party 分離,不再即建即入隊/頂替 | sonnet | 完成(commit 5507a0a)|
 | **W5 ✅** | D. C oracle NPC 三 bug 回補(b2<4丟棄/8-slot/story-flag過濾) | **C 端** dq3_scene.c;移植 ebitan 已修的三項,恢復 oracle 忠實 | sonnet | 完成(commit f27b51d)|
 | ✅ | B1 沙曼歐莎怪力魔→變身杖 | EXE `0x5682..0x5732` + D3MNS | Ebiten 正式 item trace/save-load | 2026-07-28 完成事件切片 |
+| ✅ | R-3 六珠祭壇→拉米亞飛行 | CTY70 + EXE `0x7425..0x7599` + 本機原版影片 | 正式調查／對話／搭乘／降落 trace | 2026-07-28 完成事件切片 |
 | — | C1 EBG 音效 cue / C2 攻方狀態減半 0xd4f | 低信心/RE 未定 | — | 延後 |
 
 ## 共通驗收(每批)
@@ -35,7 +36,7 @@ W1-W5 全數完成、獨立核實、commit(52ce817/0269012/5507a0a/f27b51d/13be5
 - ✅ **C-parity A2+A3**:C 版文字插值 + 權重隻數已獨立核實(18/18 測試綠)+ commit 8391d37。另修到更深 bug(C dq3_dialogue.c 平行渲染器實際遊戲從沒插值,連 VAR_NAME 都死的)。
 
 **下週 resume 步驟**:
-1. **下一批 R-3**：先以反組譯與原始資料盤點六珠正常取得鏈，再定位不死鳥祭壇與飛行坐騎交易。
-2. 續 R 系列:R-3 不死鳥+六珠+飛行坐騎(最大)、R-4 巴拉摩斯城、R-5 龍王城+終盤 wire(拔 Z/U/Enter)。
+1. R-3 已完成；精確更正與驗證見 `docs/75-phoenix-orbs-re.md`。
+2. 續 R 系列:R-4 巴拉摩斯城、R-5 龍王城+終盤 wire(拔 Z/U/Enter)。
 3. 其餘延後項:C1 EBG 音效、C2 攻方減半 0xd4f、戰鬥訊息列渲染(需字型策略)、C-parity A1(玩家狀態咒文回補 C)。
 4. 建議 playtest:C 的 VAR_NAME 主角名對話現形(C-parity 修了原本靜默壞掉的路徑)。

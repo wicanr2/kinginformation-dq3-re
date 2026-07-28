@@ -26,7 +26,7 @@ test byte [bx+0x4f70], ah   ; 測旗標 bit
 je   skip                   ; ★ bit 清 → 跳過(不載入這個 NPC);設 → 載入
 ```
 
-### [0x4f70] = 遊戲通用 256-flag story-flag 系統(flag API,file 0x824f/0x8264/0x8279)
+### [0x4f70] = 遊戲通用 story-flag 系統(flag API,file 0x824f/0x8264/0x8279)
 
 | 位址 | 作用 |
 |---|---|
@@ -40,10 +40,12 @@ je   skip                   ; ★ bit 清 → 跳過(不載入這個 NPC);設 �
 
 DGROUP 檔基準用資料錨點定出:`lea dx,[0xd0]; int21 open` 開 `dq3man.bls`(字串在 file 0x16210)
 → **DGROUP file base = 0x16210 − 0xd0 = 0x16140**(`dq3mst.bls` @0xc5→0x16205 交叉驗證)。
-故 [0x4f70] 陣列在 **file 0x16140 + 0x4f70 = 0x1b0b0**,32 byte:
+故 [0x4f70] 陣列在 **file 0x16140 + 0x4f70 = 0x1b0b0**。舊文只讀 32 byte，
+誤稱上限為 256 flags；R-3 handler 實際用到 `0x12c..0x131`，API 的 BX 也沒有 8-bit 截斷。
+現讀 64 byte：
 
 ```
-00 00 00 00 00 ff ff ff … ff   → flag 0-39【清】、flag 40-255【設】
+00 00 00 00 00 ff ff ff … ff   → flag 0-39【清】、flag 40-511【設】
 ```
 
 **新遊戲時:byte5 < 40 的 NPC 隱藏(旗標清,劇情事件才設起→出現)、byte5 ≥ 40 顯示(基礎人口/初始在場)。**

@@ -23,9 +23,10 @@ type Dialogue struct {
 	open      bool
 
 	// 插值 var context(docs/42 §四;比照 C dq3_text_set_var_*/dq3_text_clear_vars)。
-	varItem  int   // VAR_ITEM 插值:道具 code(noVar=未設 → 空白)
-	varNum   int   // VAR_NUM 插值:數值(noVar=未設 → 空白)
-	heroName []int // VAR_ENT/VAR0/VAR7/VAR_IDX 插值:主角名 glyph 序列(Game 於創角/讀檔後同步;空=空白)
+	varItem    int   // VAR_ITEM 插值:道具 code(noVar=未設 → 空白)
+	varNum     int   // VAR_NUM 插值:數值(noVar=未設 → 空白)
+	varNumItem int   // VAR_NUM 在原版 mode=1 時取 item-name record（祭壇 rec93/96）
+	heroName   []int // VAR_ENT/VAR0/VAR7/VAR_IDX 插值:主角名 glyph 序列(Game 於創角/讀檔後同步;空=空白)
 }
 
 // Open 從當前 bank 取記錄 rec 進視窗。移植 dq3_dialogue_open。
@@ -50,7 +51,7 @@ func (d *Dialogue) openRecord(b []uint16) bool {
 		return false
 	}
 	d.buf, d.pos, d.open = b, 0, true
-	d.varItem, d.varNum = noVar, noVar
+	d.varItem, d.varNum, d.varNumItem = noVar, noVar, noVar
 	return true
 }
 
@@ -58,6 +59,9 @@ func (d *Dialogue) openRecord(b []uint16) bool {
 func (d *Dialogue) varGlyphs(code uint16) []int {
 	switch code {
 	case dq3data.TxtVarNum:
+		if d.varNumItem >= 0 {
+			return itemNameGlyphs(d.itemNames, d.varNumItem)
+		}
 		if d.varNum < 0 {
 			return nil
 		}
@@ -145,6 +149,9 @@ func (d *Dialogue) Advance() {
 // 在開「得到 X」/含金額對話時呼叫,讓該對話記錄若含 0xfffa/0xfff9 能正確展開實字。
 func (g *Game) setDlgVarItem(code int) { g.dlg.varItem = code }
 func (g *Game) setDlgVarNum(n int)     { g.dlg.varNum = n }
+func (g *Game) setDlgVarNumItem(code int) {
+	g.dlg.varNumItem = code
+}
 
 // draw 把當前頁畫進 rgba(黑底 + 白框 + 白字)。移植 dq3_dialogue_render。
 func (d *Dialogue) draw(rgba []byte, white dq3data.Color) {
