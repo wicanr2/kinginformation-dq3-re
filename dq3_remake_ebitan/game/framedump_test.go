@@ -342,6 +342,9 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.layer, g.cur, g.inTown, g.curCty = 0, g.over, false, -1
 	g.px, g.py = ctyLoc[0][0]-1, ctyLoc[0][1]
 	g.heroExp, g.heroMP = stats.ExpForLevel(0, 14), 99
+	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 35))
+	mage.CurMP = 99
+	g.companions = []*Member{mage}
 	g.visitedTowns = []townVisit{{Cty: 0}, {Cty: 1}, {Cty: 2}}
 	g.openFieldSpellMenu()
 	dump("field_spell_menu")

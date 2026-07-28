@@ -10,6 +10,8 @@ const (
 	fieldRemitto  = 173 // 烈米特
 	fieldToheros  = 176 // 特黑洛斯
 	fieldRanaruta = 177 // 拉那魯達
+	fieldRemoaru  = 178 // レムオル（透明）
+	fieldAbakamu  = 179 // 阿巴卡姆
 )
 
 type fieldSpellDef struct {
@@ -23,6 +25,8 @@ var fieldSpellDefs = [...]fieldSpellDef{
 	{fieldRemitto, spell.MPCost(fieldRemitto)},
 	{fieldToheros, spell.MPCost(fieldToheros)},
 	{fieldRanaruta, spell.MPCost(fieldRanaruta)},
+	{fieldRemoaru, spell.MPCost(fieldRemoaru)},
+	{fieldAbakamu, spell.MPCost(fieldAbakamu)},
 }
 
 type fieldSpellChoice struct {
@@ -65,7 +69,7 @@ type FieldSpellMenu struct {
 	dest    bool
 	cursor  int
 	choices []fieldSpellChoice
-	pending fieldSpellChoice // 魯拉進目的地頁後保留施法者／MP；cursor 此時已改作目的地 index
+	pending fieldSpellChoice // 魯拉進目的地頁後保留選擇；MP 已由共通 caster 扣除
 	hits    hitList
 }
 
@@ -138,7 +142,9 @@ func (g *Game) fieldSpellInput(in InputState) {
 	}
 	if in.Cancel {
 		if m.dest {
-			m.dest, m.cursor = false, 0
+			// 原版 caster 在 effect handler 前已扣 MP；目的地選單取消不會回到
+			// 咒文清單或退款，而是結束這次施法。
+			m.active, m.dest = false, false
 		} else {
 			m.active = false
 		}
@@ -172,42 +178,69 @@ func (g *Game) fieldSpellInput(in InputState) {
 		return
 	}
 	c := m.choices[m.cursor]
-	if g.fieldCasterMP(c.caster) < c.mp {
+	// DQ3.EXE field caster file 0x1cbad..0x1cbd4：共通施法流程後先從
+	// [member+0x18] 扣 MP，再由 0x38cc pointer table 派發 effect handler。
+	// handler 的場景 gate、目的地取消或效果失敗沒有一般退款分支。
+	if !g.spendFieldMP(c.caster, c.mp) {
 		return
 	}
 	switch c.rec {
 	case fieldRura:
 		// 原版 field handler file 0xe0da：地表可用；CTY section 僅 mapFlags bit0 可用。
 		if g.inTown && (g.cur == nil || g.cur.mapFlags&1 == 0) {
+			m.active = false
 			return
 		}
 		if len(g.visitedTowns) == 0 {
+			m.active = false
 			return
 		}
 		m.pending = c
-		m.dest, m.cursor = true, 0 // 選定目的地後才扣 MP
+		m.dest, m.cursor = true, 0
 	case fieldRemitto:
 		// 原版 file 0xe10c：scene state 必須為 CTY，且 section header +0x10 bit1。
 		if !g.inTown || g.cur == nil || g.cur.mapFlags&2 == 0 {
+			m.active = false
 			return
 		}
-		if g.spendFieldMP(c.caster, c.mp) {
-			g.exitTown()
-			m.active = false
-		}
+		g.exitTown()
+		m.active = false
 	case fieldToheros:
-		if g.spendFieldMP(c.caster, c.mp) {
-			g.repel = 0x28 // handler file 0xe19c 寫 [0x52f6]=0x28
-			m.active = false
-		}
+		g.repel = 0x28 // handler file 0xe19c 寫 [0x52f6]=0x28
+		m.active = false
 	case fieldRanaruta:
 		if g.inTown { // handler file 0xe1ab：scene state==CTY 時拒絕。
+			m.active = false
 			return
 		}
-		if g.spendFieldMP(c.caster, c.mp) {
-			g.toggleDaynight()
-			m.active = false
+		g.toggleDaynight()
+		m.active = false
+	case fieldRemoaru:
+		// handler file 0xe1df：world flag 0x8000、timer [0x52f7]=0x19。
+		// movement consumer file 0xa902..0xa919 每個有效步遞減，歸零清 0xc000。
+		g.remoaru = 0x19
+		m.active = false
+	case fieldAbakamu:
+		// handler file 0xe1f2 設 door permission 4 後呼叫 file 0x14906。
+		// 該 consumer 只在 CTY scene 檢查面向格；door tier 值域 1..3，
+		// 因此 permission 4 可開全部門，失敗則顯示原版 rec0x15a。
+		opened := false
+		if g.inTown && g.cur != nil {
+			dx, dy := dirDelta(g.facing)
+			opened = g.cur.openDoor(g.px+dx, g.py+dy)
 		}
+		if !opened {
+			g.dlg.OpenFrom(g.shop.nameText, 0x15a)
+		}
+		m.active = false
+	}
+}
+
+// advanceFieldSpellStep 對齊原版成功移動後的暫態效果 consumer。撞牆或 modal frame
+// 不算一步；城鎮與地表都會進入 file 0xa8a0 的 common movement-status routine。
+func (g *Game) advanceFieldSpellStep() {
+	if g.remoaru > 0 {
+		g.remoaru--
 	}
 }
 
@@ -217,10 +250,6 @@ func (g *Game) teleportToVisit(v townVisit) bool {
 	}
 	loc := ctyLoc[v.Cty]
 	if loc[2] != 0 && loc[2] != 1 {
-		return false
-	}
-	choice := g.fieldSpell.pending
-	if !g.spendFieldMP(choice.caster, choice.mp) {
 		return false
 	}
 	g.layer = loc[2]

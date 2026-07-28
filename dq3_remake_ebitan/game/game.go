@@ -84,10 +84,23 @@ func (sc *Scene) doorTier(tx, ty int) int {
 	return int(a>>6) & 3
 }
 
-// openDoor:開 (tx,ty) 門 → tile 覆蓋成 hiMap&0x1f(通行 tile),清事件位留轉場位。移植 dq3_scene_open_door。
+// openDoor:開 (tx,ty) 門及相鄰 8 格的連續門片。原版 file 0x14977 先改中心，
+// 再由 sub_14a49 掃 3×3 其餘格；每格用 hiMap&0x1f 作通行 tile，清事件位留轉場位。
 func (sc *Scene) openDoor(tx, ty int) bool {
 	if sc.doorTier(tx, ty) == 0 {
 		return false
+	}
+	for y := ty - 1; y <= ty+1; y++ {
+		for x := tx - 1; x <= tx+1; x++ {
+			sc.openDoorTile(x, y)
+		}
+	}
+	return true
+}
+
+func (sc *Scene) openDoorTile(tx, ty int) {
+	if sc.doorTier(tx, ty) == 0 {
+		return
 	}
 	i := ty*sc.w + tx
 	var hi byte
@@ -101,7 +114,6 @@ func (sc *Scene) openDoor(tx, ty int) bool {
 	if sc.hiMap != nil {
 		sc.hiMap[i] = hi & 0xe0 // 清事件位、留轉場位(0x4985)
 	}
-	return true
 }
 
 // revealEventTile:原版 sub_18C01 的「發現隱藏樓梯」地圖變更。
@@ -272,6 +284,7 @@ type Game struct {
 	shipAboard      bool          // 目前在船上
 	shipX, shipY    int           // 船停泊位置(地表)
 	repel           int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	remoaru         int           // レムオル透明剩餘有效移動步數；原版 [0x52f7]，施放設 25
 	prng            rng.RNG       // 祈禱之戒損壞判定用 RNG
 	lotoBlessed     bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
 	cleared         bool          // 已破關(索瑪擊破)
@@ -931,6 +944,9 @@ func (g *Game) step(in InputState) error {
 			moved = true
 		}
 		g.cd = moveCooldown
+	}
+	if moved {
+		g.advanceFieldSpellStep()
 	}
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
@@ -1873,14 +1889,16 @@ func (g *Game) renderFrame() {
 		blitTile(g.rgba, (g.phoenixX-camX)*TileW, (g.phoenixY-camY)*TileH,
 			sc.blk.Tile(0xfd), sc.pal) // 原版 world renderer 的 vehicle bit2 代換 tile
 	}
-	if !g.inTown && g.phoenixAboard {
-		blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
-			g.phoenix.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
-	} else if !g.inTown && g.shipAboard { // 在船上 → 船 tile 取代主角 sprite
-		blitTile(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH, sc.blk.Tile(shipTileFor(g.facing)), sc.pal)
-	} else {
-		blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
-			g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+	if g.remoaru == 0 { // 原版 world flag 0xc000 會略過 party／vehicle occupant render paths。
+		if !g.inTown && g.phoenixAboard {
+			blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
+				g.phoenix.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+		} else if !g.inTown && g.shipAboard { // 在船上 → 船 tile 取代主角 sprite
+			blitTile(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH, sc.blk.Tile(shipTileFor(g.facing)), sc.pal)
+		} else {
+			blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
+				g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+		}
 	}
 	white := dq3data.Color{R: 255, G: 255, B: 255}
 	if len(sc.pal) > 15 {

@@ -48,8 +48,8 @@ func TestRuraProductionInputVisitedTownAndMP(t *testing.T) {
 		t.Fatalf("Lv7 野外清單應只有魯拉，得 %+v", g.fieldSpell.choices)
 	}
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 魯拉→目的地
-	if !g.fieldSpell.dest || g.heroMP != mp0 {
-		t.Fatalf("選咒後應先選目的地且尚不扣 MP：dest=%v mp=%d", g.fieldSpell.dest, g.heroMP)
+	if !g.fieldSpell.dest || g.heroMP != mp0-8 {
+		t.Fatalf("原版 caster 應在進目的地 handler 前扣 8 MP：dest=%v mp=%d", g.fieldSpell.dest, g.heroMP)
 	}
 	testStep(t, g, InputState{DirHeld: -1, DirEdge: 0}) // 阿里阿罕→羅馬利亞
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
@@ -99,33 +99,36 @@ func TestVisitedTownsSaveRoundTrip(t *testing.T) {
 	}
 }
 
-func TestRuraCancelAndInsufficientMPDoNotSpend(t *testing.T) {
+func TestRuraCancelKeepsPreHandlerMPSpend(t *testing.T) {
 	g := fieldSpellGame(t, 7)
 	g.visitedTowns = []townVisit{{Cty: 0}}
 	g.openFieldSpellMenu()
 	mp0 := g.heroMP
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	g.fieldSpellInput(InputState{Cancel: true, DirHeld: -1, DirEdge: -1})
-	if g.heroMP != mp0 || g.fieldSpell.dest {
-		t.Fatalf("取消魯拉目的地不可扣 MP：mp=%d dest=%v", g.heroMP, g.fieldSpell.dest)
+	if g.heroMP != mp0-8 || g.fieldSpell.active || g.fieldSpell.dest {
+		t.Fatalf("取消目的地仍應耗 8 MP 並結束施法：mp=%d active=%v dest=%v",
+			g.heroMP, g.fieldSpell.active, g.fieldSpell.dest)
 	}
 
 	g.heroMP = 7
+	g.openFieldSpellMenu()
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.fieldSpell.dest || g.heroMP != 7 {
 		t.Fatalf("MP 不足不可進目的地或扣 MP：mp=%d dest=%v", g.heroMP, g.fieldSpell.dest)
 	}
 }
 
-func TestRemittoOutsideDungeonDoesNotSpend(t *testing.T) {
+func TestRemittoOutsideDungeonStillSpends(t *testing.T) {
 	g := fieldSpellGame(t, 14)
 	g.inTown, g.curCty = false, -1
 	g.openFieldSpellMenu()
 	g.fieldSpell.cursor = 1
 	mp0 := g.heroMP
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
-	if g.heroMP != mp0 || !g.fieldSpell.active {
-		t.Fatalf("迷宮外烈米特不可扣 MP 或關閉選單：mp=%d active=%v", g.heroMP, g.fieldSpell.active)
+	if g.heroMP != mp0-8 || g.fieldSpell.active {
+		t.Fatalf("迷宮外烈米特被 handler 拒絕，但原版 caster 已扣 MP：mp=%d active=%v",
+			g.heroMP, g.fieldSpell.active)
 	}
 }
 
@@ -139,28 +142,29 @@ func TestFieldSpellOriginalMapFlagsAndCosts(t *testing.T) {
 	mp0 := g.heroMP
 	g.fieldSpell.cursor = 0
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
-	if g.fieldSpell.dest || g.heroMP != mp0 {
-		t.Fatalf("mapFlags bit0 清時魯拉應被拒絕：dest=%v mp=%d", g.fieldSpell.dest, g.heroMP)
+	if g.fieldSpell.dest || g.heroMP != mp0-8 || g.fieldSpell.active {
+		t.Fatalf("mapFlags bit0 清時魯拉 handler 拒絕，但 caster 已扣 MP：dest=%v mp=%d active=%v",
+			g.fieldSpell.dest, g.heroMP, g.fieldSpell.active)
 	}
 
 	g.exitTown()
 	g.openFieldSpellMenu()
 	g.fieldSpell.cursor = 2 // 特黑洛斯
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
-	if g.repel != 0x28 || g.heroMP != mp0-4 {
+	if g.repel != 0x28 || g.heroMP != mp0-12 {
 		t.Fatalf("特黑洛斯應依 handler 設 40 步並扣 4 MP：repel=%d mp=%d", g.repel, g.heroMP)
 	}
 
 	g.openFieldSpellMenu()
 	g.fieldSpell.cursor = 3 // 拉那魯達
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
-	if !g.isNight() || g.heroMP != mp0-4 || mage.CurMP != 87 {
+	if !g.isNight() || g.heroMP != mp0-12 || mage.CurMP != 87 {
 		t.Fatalf("地表拉那魯達應由魔法使扣 12 MP：night=%v heroMP=%d mageMP=%d",
 			g.isNight(), g.heroMP, mage.CurMP)
 	}
 }
 
-func TestRanarutaInTownDoesNotSpend(t *testing.T) {
+func TestRanarutaInTownStillSpends(t *testing.T) {
 	g := fieldSpellGame(t, 25)
 	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 25))
 	mage.CurMP = 99
@@ -170,9 +174,160 @@ func TestRanarutaInTownDoesNotSpend(t *testing.T) {
 	g.fieldSpell.cursor = 3
 	mp0 := g.heroMP
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
-	if g.heroMP != mp0 || mage.CurMP != 99 || !g.fieldSpell.active {
-		t.Fatalf("CTY 內拉那魯達應被原版 gate 拒絕：heroMP=%d mageMP=%d active=%v",
+	if g.heroMP != mp0 || mage.CurMP != 87 || g.fieldSpell.active {
+		t.Fatalf("CTY 內拉那魯達被 handler 拒絕，但原版 caster 已扣 MP：heroMP=%d mageMP=%d active=%v",
 			g.heroMP, mage.CurMP, g.fieldSpell.active)
+	}
+}
+
+func TestRemoaruOriginalCostTimerAndExpiry(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 33))
+	mage.CurMP = 99
+	g.companions = []*Member{mage}
+	g.openFieldSpellMenu()
+	idx := -1
+	for i, c := range g.fieldSpell.choices {
+		if c.rec == fieldRemoaru {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		t.Fatalf("Lv33 魔法使的場景咒文清單缺 rec178：%+v", g.fieldSpell.choices)
+	}
+	g.fieldSpell.cursor = idx
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.remoaru != 0x19 || mage.CurMP != 84 || g.fieldSpell.active {
+		t.Fatalf("rec178 應扣 15 MP 並設 25 步透明：timer=%d mp=%d active=%v",
+			g.remoaru, mage.CurMP, g.fieldSpell.active)
+	}
+	for i := 0; i < 24; i++ {
+		g.advanceFieldSpellStep()
+	}
+	if g.remoaru != 1 {
+		t.Fatalf("24 個有效步後 timer 應剩 1，得 %d", g.remoaru)
+	}
+	g.advanceFieldSpellStep()
+	if g.remoaru != 0 {
+		t.Fatalf("第 25 步應解除透明，得 timer=%d", g.remoaru)
+	}
+}
+
+func TestRemoaruSuccessfulMovementAndRendererConsumeState(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	g.renderFrame()
+	visible := append([]byte(nil), g.rgba...)
+	g.remoaru = 25
+	g.renderFrame()
+	if reflect.DeepEqual(visible, g.rgba) {
+		t.Fatal("透明狀態必須改變 production renderer，而非只保存 timer")
+	}
+
+	dir := -1
+	for d := 0; d < 4; d++ {
+		dx, dy := dirDelta(d)
+		if !g.cur.Blocked(g.px+dx, g.py+dy) {
+			dir = d
+			break
+		}
+	}
+	if dir < 0 {
+		t.Fatal("測試起點周圍沒有可走格")
+	}
+	x0, y0 := g.px, g.py
+	g.cd = 0
+	testStep(t, g, InputState{DirHeld: dir, DirEdge: -1})
+	if g.px == x0 && g.py == y0 {
+		t.Fatal("production movement input 沒有移動")
+	}
+	if g.remoaru != 24 {
+		t.Fatalf("一個成功 production movement 應使 timer 25→24，得 %d", g.remoaru)
+	}
+}
+
+func TestRemoaruIsTransientAcrossRestore(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	s := g.snapshot()
+	g.remoaru = 25
+	g.restore(s)
+	if g.remoaru != 0 {
+		t.Fatalf("冒險之書讀檔不可保留 runtime 透明 timer：%d", g.remoaru)
+	}
+}
+
+func TestAbakamuOpensAnyFacingDoorAtZeroMP(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 35))
+	mage.CurMP = 0 // EXE descriptor rec179 的 MP cost 就是 0。
+	g.companions = []*Member{mage}
+
+	found := false
+	for sec := 0; sec < 12 && !found; sec++ {
+		sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], sec, 0, g.storyFlag)
+		if err != nil {
+			continue
+		}
+		for y := 0; y < sc.h && !found; y++ {
+			for x := 0; x < sc.w && !found; x++ {
+				if sc.doorTier(x, y) == 0 {
+					continue
+				}
+				for d := 0; d < 4; d++ {
+					dx, dy := dirDelta(d)
+					px, py := x-dx, y-dy
+					if px < 0 || py < 0 || px >= sc.w || py >= sc.h || sc.Blocked(px, py) {
+						continue
+					}
+					g.cur, g.town, g.inTown, g.curCty = sc, sc, true, 0
+					g.px, g.py, g.facing = px, py, d
+					found = true
+					break
+				}
+			}
+		}
+	}
+	if !found {
+		t.Fatal("CTY00 找不到可由相鄰可走格面向的門")
+	}
+
+	g.openFieldSpellMenu()
+	idx := -1
+	for i, c := range g.fieldSpell.choices {
+		if c.rec == fieldAbakamu {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		t.Fatalf("Lv35 魔法使的場景咒文清單缺 rec179：%+v", g.fieldSpell.choices)
+	}
+	dx, dy := dirDelta(g.facing)
+	doorX, doorY := g.px+dx, g.py+dy
+	g.fieldSpell.cursor = idx
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.cur.doorTier(doorX, doorY) != 0 || mage.CurMP != 0 || g.fieldSpell.active {
+		t.Fatalf("阿巴卡姆應以 0 MP 開啟任意面向門：tier=%d mp=%d active=%v",
+			g.cur.doorTier(doorX, doorY), mage.CurMP, g.fieldSpell.active)
+	}
+}
+
+func TestAbakamuFailureUsesOriginalGlobalMessage(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 35))
+	mage.CurMP = 0
+	g.companions = []*Member{mage}
+	g.inTown, g.curCty = false, -1
+	g.openFieldSpellMenu()
+	for i, c := range g.fieldSpell.choices {
+		if c.rec == fieldAbakamu {
+			g.fieldSpell.cursor = i
+			break
+		}
+	}
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.dlg.open || !reflect.DeepEqual(g.dlg.buf, g.shop.nameText.Record(0x15a)) {
+		t.Fatal("阿巴卡姆非 CTY／非門失敗應顯示 D3TXT00 rec0x15a")
 	}
 }
 
