@@ -56,7 +56,9 @@
 ### 仍不能宣稱完成
 
 - 正常玩家路徑尚不能從新遊戲一路自然破關。
-- 酒場正式入口與移除預建 placeholder 隊伍仍未收尾（R-1/C-3）。
+- 2026-07-28 已完成酒場第一條 E3 slice：EXE sub2 jump table 證實 CTY00 sec0 `b4=1`
+  是露依達酒場、sec2 `b4=3` 是冒險者登錄所、sec0 `b4=4` 是預存所；正常輸入可由國王
+  步行至登錄所，建三名 Lv1 隨機能力同伴、回樓下招募成四人隊，再由 section0 spawn 邊界正常出城。
 - R-2 只有 spec，尚未實作及原版行為驗收。
 - R-3 不死鳥祠堂、六珠 gate、飛行坐騎是最大剩餘子系統。
 - R-4 巴拉摩斯城、boss 與自然下降仍待定位／接線。
@@ -127,13 +129,13 @@
 - 建立主線 60 步 coverage matrix：每步標 `unreachable / component-only / E2 / E3`。
 - 先補最小 input trace harness；不要再用 `spine_test` 直接呼叫內部函式代表可破關。
 
-### Phase 1：閉合新遊戲至出發的第一條 E3 slice
+### Phase 1：閉合新遊戲至出發的第一條 E3 slice（2026-07-28 完成）
 
-- R-1/C-3：定位並接上露依達酒場入口。
-- 移除預建示範隊，完成登錄 → 招募 → 入隊。
-- 核對原版正常出城方式，移除 Cancel/Enter demo 行為的 production 依賴。
-- 收斂母親護送／謁見的最小忠實流程。
-- 驗收 trace：標題 → 命名 → 家 → 母親 → 國王 → 酒場 → 四人隊 → 正常出城。
+- [x] R-1/C-3：定位並接上露依達酒場入口。
+- [x] 移除預建示範隊，完成登錄 → 招募 → 入隊。
+- [x] 核對原版正常出城方式；正式 trace 不依賴 Cancel/Enter。
+- [x] 收斂母親護送／謁見的最小忠實流程。
+- [x] 驗收 trace：標題 → 命名 → 家 → 母親 → 國王 → 酒場 → 四人隊 → 正常出城。
 
 ### Phase 2：按攻略順序逐段閉合中盤
 
@@ -181,11 +183,11 @@
 ## 9. 下一個安全動作
 
 1. 保留現有 dirty/untracked files。
-2. 跑 Ebiten完整測試建立 baseline（目前開局／元件鏈 targeted tests 已綠；完整 suite 待跑）。
+2. Ebiten `internal/...` 與 `game` 完整測試已通過（2026-07-28）。
 3. 原版新遊戲初始化、能力生成／確認、母親／國王 transaction 已落地；
    `title→name→gender→stats-confirm→home→mother→castle→king` production-input trace 已通過。
    2026-07-28 另證實成長表順序為 `STR,VIT,AGI,HP,MP,INT,LUCK`，舊 docs/23 與 C/Go
    將 pair1 認成 MP 的 patch 已撤銷；真 MP 是 pair4 (`0x1a4ae/f`)。主角七項能力現在持久化，
    Lv1 與升級使用 `sub_fa57` RNG transaction，守備依 `sub_9521` 為耐力＋防具。
-4. 實作 R-2 前先補一條玩家層測試，從道具選單實際使用拉之鏡，不直接呼叫事件函式。
-5. 完成 R-2 E3 slice 後更新本檔與唯一 worklist，再開始 R-1 或 R-3。
+4. 下一段實作 R-2 前先補玩家層測試，從道具選單實際使用拉之鏡，不直接呼叫事件函式。
+5. 完成 R-2 E3 slice 後更新本檔與唯一 worklist，再開始 R-3。

@@ -33,8 +33,10 @@ type saveState struct {
 
 // compSav 是一名同伴的存檔資料。
 type compSav struct {
+	Name                        []int `json:"name,omitempty"`
 	Class, Gender               int
 	Exp                         uint32
+	Stats                       stats.Values `json:"stats,omitempty"`
 	CurHP, CurMP                int
 	Weapon, Armor, Shield, Head int
 }
@@ -74,7 +76,9 @@ func flagsToSav(f map[int]bool) []int {
 func compsToSav(ms []*Member) []compSav {
 	out := make([]compSav, len(ms))
 	for i, m := range ms {
-		out[i] = compSav{Class: m.Class, Gender: m.Gender, Exp: m.Exp, CurHP: m.CurHP, CurMP: m.CurMP,
+		m.ensureStats()
+		out[i] = compSav{Name: append([]int(nil), m.Name...), Class: m.Class, Gender: m.Gender,
+			Exp: m.Exp, Stats: m.Stats, CurHP: m.CurHP, CurMP: m.CurMP,
 			Weapon: m.Weapon, Armor: m.Armor, Shield: m.Shield, Head: m.Head}
 	}
 	return out
@@ -101,22 +105,26 @@ func (g *Game) restore(s saveState) {
 	if len(s.Comps) > 0 { // 還原同伴
 		g.companions = make([]*Member, len(s.Comps))
 		for i, c := range s.Comps {
-			m := &Member{Class: c.Class, Gender: c.Gender, Exp: c.Exp, CurHP: c.CurHP, CurMP: c.CurMP,
+			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
+				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
 				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head}
-			if c.Class >= 0 && c.Class < 8 {
+			if len(m.Name) == 0 && c.Class >= 0 && c.Class < 8 {
 				m.Name = classNames[c.Class]
 			}
+			m.ensureStats()
 			g.companions[i] = m
 		}
 	}
-	if len(s.Roster) > 0 { // 還原名冊(未入隊角色;姓名如同 companions 一樣不隨存檔保留,見下方註)
+	if len(s.Roster) > 0 { // 還原名冊(未入隊角色)
 		g.roster = make([]*Member, len(s.Roster))
 		for i, c := range s.Roster {
-			m := &Member{Class: c.Class, Gender: c.Gender, Exp: c.Exp, CurHP: c.CurHP, CurMP: c.CurMP,
+			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
+				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
 				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head}
-			if c.Class >= 0 && c.Class < 8 {
-				m.Name = classNames[c.Class] // compSav 未存自訂姓名 glyph(同 companions 既有限制),回退職業名
+			if len(m.Name) == 0 && c.Class >= 0 && c.Class < 8 {
+				m.Name = classNames[c.Class]
 			}
+			m.ensureStats()
 			g.roster[i] = m
 		}
 	}

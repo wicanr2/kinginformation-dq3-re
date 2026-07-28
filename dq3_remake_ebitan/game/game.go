@@ -285,14 +285,16 @@ func (g *Game) selectCommand(cmd int) {
 	g.cmd.open = false
 	switch cmd {
 	case cmdTalk:
-		fx, fy := frontTile(g.px, g.py, g.facing)
-		if idx := g.cur.npcAt(fx, fy); idx >= 0 {
+		if idx := g.facingNPC(); idx >= 0 {
 			n := &g.cur.npcs[idx]
 			switch sub := (n.ctrl >> 3) & 7; {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
 			case sub == 2: // scripted NPC(給物/劇情)
-				if g.curCty == ctyPortoga && n.x == portogaKingX && n.y == portogaKingY {
+				if g.openAliahanSpecialNPC(n) {
+					// CTY00 b4=1/3/4 是 EXE sub2 jump table 的設施 handler，
+					// 不屬於泛用 scriptedTable。
+				} else if g.curCty == ctyPortoga && n.x == portogaKingX && n.y == portogaKingY {
 					// 波魯多加國王(main.c:1607 位置特例,先於 scripted 表判定)
 					g.talkPortogaKing()
 				} else {
@@ -311,6 +313,47 @@ func (g *Game) selectCommand(cmd int) {
 	case cmdExamine: // 調査:檢查面向格 → 寶箱/隱藏物(一次性旗標)
 		g.examine()
 	}
+}
+
+// facingNPC 找面向的交談對象。通常是前一格；若前一格是不可走櫃台，
+// 再查櫃台後一格。CTY00 sec2 登錄員位於(2,3)，玩家只能站(2,5)
+// 隔著 row4 櫃台交談，故不能把「永遠只查一格」當成原版語意。
+func (g *Game) facingNPC() int {
+	if g.cur == nil {
+		return -1
+	}
+	dx, dy := dirDelta(g.facing)
+	x1, y1 := g.px+dx, g.py+dy
+	if idx := g.cur.npcAt(x1, y1); idx >= 0 {
+		return idx
+	}
+	if x1 >= 0 && y1 >= 0 && x1 < g.cur.w && y1 < g.cur.h &&
+		g.cur.attr.Blocked(g.cur.tileIdx(x1, y1)) {
+		return g.cur.npcAt(x1+dx, y1+dy)
+	}
+	return -1
+}
+
+// openAliahanSpecialNPC 對齊 DQ3.EXE sub2 jump table：
+// b4=1 file0x6482→file0x16dd（露依達酒場 rec527/528）；
+// b4=3 file0x649f→file0x1a4c（冒險者登錄所 rec550）；
+// b4=4 file0x64a3→file0x7c50（預存所 rec561，尚待獨立實作）。
+func (g *Game) openAliahanSpecialNPC(n *npcInst) bool {
+	if g.curCty != 0 || g.cur == nil {
+		return false
+	}
+	switch {
+	case g.cur.sec == 0 && n.b4 == 1:
+		g.recruit.open()
+		return true
+	case g.cur.sec == 2 && n.b4 == 3:
+		g.tavern.open()
+		return true
+	case g.cur.sec == 0 && n.b4 == 4:
+		g.dlg.OpenFrom(g.shop.nameText, 561) // 全域 D3TXT00 rec561「預存所」。
+		return true
+	}
+	return false
 }
 
 func (g *Game) hasItem(code int) bool { return g.countItem(code) > 0 }
@@ -751,6 +794,14 @@ func (g *Game) step(in InputState) error {
 		g.facing = in.DirHeld // 撞牆也轉向(對齊原版:面向先變,可走才移動)
 		dx, dy := dirDelta(in.DirHeld)
 		nx, ny := g.px+dx, g.py+dy
+		// CTY section0 的原始 spawn 可位於版面邊界（阿里阿罕=(0,28)）；
+		// 從該格向版面外走就是正常出城，不是一般不可走越界。
+		if g.inTown && g.cur.sec == 0 && g.px == g.cur.spawnX && g.py == g.cur.spawnY &&
+			(nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h) {
+			g.exitTown()
+			g.renderFrame()
+			return nil
+		}
 		if g.tryMove(nx, ny) { // 碰撞/航行:陸走 BLKBM+NPC、船走海、上/下船
 			g.px, g.py = nx, ny
 			moved = true
@@ -1435,11 +1486,13 @@ func (g *Game) onBattleEnd() {
 			g.heroHP += int(add[stats.HP])
 			g.heroMP += int(add[stats.MP])
 		}
-		for _, m := range g.companions { // 同伴同得 exp,升級全補
+		for _, m := range g.companions { // 同伴同得 exp，逐級擲持久成長欄
 			oc := m.Level()
 			m.Exp += uint32(g.battle.gotExp)
-			if m.Level() > oc {
-				m.fullHeal()
+			for lv := oc + 1; lv <= m.Level(); lv++ {
+				add := stats.GrowLevel(m.Class, lv, &m.Stats, &g.prng)
+				m.CurHP += int(add[stats.HP])
+				m.CurMP += int(add[stats.MP])
 			}
 		}
 		if g.battle.monID == 0x7c { // 打倒大魔王索瑪 → 破關結局

@@ -93,4 +93,25 @@ func TestDumpNewGameScreens(t *testing.T) {
 	dump("opening_king_rec78")
 	t.Logf("開場:謁見後 cty=%d sec=%d @(%d,%d), gold=%d items=%v",
 		g.curCty, g.cur.sec, g.px, g.py, g.heroGold, g.inventory)
+
+	// CTY00 原版 sub2 handler 身分接線後的兩個可達酒場畫面。
+	luida, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0, 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = luida, luida, 0, true
+	g.px, g.py, g.facing = 2, 18, 1 // 隔 row17 櫃台面向 b4=1 露依達
+	g.dlg.open = false
+	g.recruit.open()
+	dump("luida_recruit")
+	g.recruit.active = false
+
+	registry, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 2, 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town = registry, registry
+	g.px, g.py, g.facing = 2, 5, 1 // 隔 row4 櫃台面向 b4=3 登錄員
+	g.tavern.open()
+	dump("adventurer_registry")
 }

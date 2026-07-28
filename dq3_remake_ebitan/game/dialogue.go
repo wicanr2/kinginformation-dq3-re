@@ -33,6 +33,19 @@ type Dialogue struct {
 // 呼叫端若該訊息含 VAR_ITEM/VAR_NUM,須在 Open 後、下一次 renderFrame 前呼叫 setDlgVarItem/setDlgVarNum。
 func (d *Dialogue) Open(rec int) bool {
 	b := d.tx.Record(rec)
+	return d.openRecord(b)
+}
+
+// OpenFrom 從另一個文字 bank 取 record，但維持目前城鎮 bank 作為後續一般對話來源。
+// 字模常駐共用 D3TXT00.FON，因此 buffer 可由全域 D3TXT00.TXT 提供而不必切換 tx。
+func (d *Dialogue) OpenFrom(tx *dq3data.Text, rec int) bool {
+	if tx == nil {
+		return false
+	}
+	return d.openRecord(tx.Record(rec))
+}
+
+func (d *Dialogue) openRecord(b []uint16) bool {
 	if b == nil {
 		return false
 	}

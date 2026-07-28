@@ -79,6 +79,57 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("正式步行到王座後未完成謁見：ms=%v gold=%d items=%v dlg=%v",
 			g.progressDone(msStart), g.heroGold, g.inventory, g.dlg.open)
 	}
+
+	// 謁見後正常步行回城鎮，從西側樓梯進 2F 冒險者登錄所。
+	traceCloseDialogue(t, g)
+	traceWalkThroughPortal(t, g, 9, 22, ctyAliahanCastle, 0)
+	traceWalkThroughPortal(t, g, 15, 31, 0, 0)
+	traceWalkThroughPortal(t, g, 8, 14, 0, 2)
+
+	// 用正式命令窗對 b4=3 NPC 登錄三人；每次完成後 modal 關閉，再重新對話。
+	for i := 0; i < 3; i++ {
+		traceTalkNPC(t, g, 2, 3)
+		if !g.tavern.active {
+			t.Fatalf("第%d次對冒險者登錄所 NPC 應開 tavern modal", i+1)
+		}
+		press(InputState{Confirm: true}) // 職業
+		press(InputState{Toggle: true})  // 英數
+		press(InputState{Confirm: true}) // 輸入「0」
+		send(InputState{DirHeld: -1, DirEdge: 2})
+		press(InputState{Confirm: true}) // OK
+		press(InputState{Confirm: true}) // 男性→完成
+	}
+	if len(g.roster) != 3 || len(g.companions) != 0 {
+		t.Fatalf("登錄三人後應 roster=3/companions=0，得 %d/%d", len(g.roster), len(g.companions))
+	}
+
+	// 回樓下，對 b4=1 露依達，從名冊連續找三名同伴加入。
+	traceWalkThroughPortal(t, g, 8, 2, 0, 0)
+	traceTalkNPC(t, g, 2, 16)
+	if !g.recruit.active {
+		t.Fatal("對露依達 NPC 應開 recruit modal")
+	}
+	press(InputState{Confirm: true}) // 找同伴參加
+	for i := 0; i < 3; i++ {
+		press(InputState{Confirm: true})
+	}
+	if len(g.companions) != 3 || len(g.roster) != 0 {
+		t.Fatalf("招募後應成為主角+3 四人隊，得 companions=%d roster=%d",
+			len(g.companions), len(g.roster))
+	}
+	press(InputState{Cancel: true}) // 清單→主選單
+	press(InputState{Cancel: true}) // 關酒場
+
+	// 走回原始 section0 邊界 spawn，再向外一步正常出城；不可使用 Esc/debug exit。
+	traceWalkTo(t, g, g.cur.spawnX, g.cur.spawnY)
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	send(InputState{DirHeld: 2, DirEdge: -1})
+	if g.inTown || len(g.companions) != 3 {
+		t.Fatalf("四人隊正常出城失敗：town=%v companions=%d @(%d,%d)",
+			g.inTown, len(g.companions), g.px, g.py)
+	}
 }
 
 func traceCloseDialogue(t *testing.T, g *Game) {
@@ -134,6 +185,50 @@ func traceWalkOne(t *testing.T, g *Game, tx, ty int) {
 	if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
 		t.Fatalf("移動 dir%d: %v", path[0], err)
 	}
+}
+
+func traceTalkNPC(t *testing.T, g *Game, nx, ny int) {
+	t.Helper()
+	type facePos struct{ x, y, dir int }
+	var candidates []facePos
+	for dir := 0; dir < 4; dir++ {
+		dx, dy := dirDelta(dir)
+		for dist := 1; dist <= 2; dist++ {
+			x, y := nx-dx*dist, ny-dy*dist
+			if x < 0 || y < 0 || x >= g.cur.w || y >= g.cur.h || g.cur.Blocked(x, y) {
+				continue
+			}
+			if dist == 2 {
+				mx, my := nx-dx, ny-dy
+				if !g.cur.attr.Blocked(g.cur.tileIdx(mx, my)) {
+					continue
+				}
+			}
+			candidates = append(candidates, facePos{x, y, dir})
+		}
+	}
+	for _, p := range candidates {
+		if path := tracePath(g.cur, g.px, g.py, p.x, p.y); len(path) > 0 ||
+			g.px == p.x && g.py == p.y {
+			traceWalkTo(t, g, p.x, p.y)
+			for g.cd > 0 {
+				if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+					t.Fatalf("等待對話前 cooldown: %v", err)
+				}
+			}
+			if err := g.step(InputState{DirHeld: p.dir, DirEdge: -1}); err != nil {
+				t.Fatalf("面向 NPC: %v", err)
+			}
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}); err != nil {
+				t.Fatalf("開命令窗: %v", err)
+			}
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}); err != nil {
+				t.Fatalf("選對話: %v", err)
+			}
+			return
+		}
+	}
+	t.Fatalf("無法抵達 NPC(%d,%d) 的相鄰格", nx, ny)
 }
 
 // tracePath 對目前 production Scene 做 BFS，回方向鍵序列；Blocked 包含地形與當幀 NPC。

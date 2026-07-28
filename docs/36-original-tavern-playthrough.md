@@ -169,26 +169,23 @@ grep -nE '露依達|登錄所|職業|勇者' docs/script/txt00.txt    # rec 527/
 | 4 | 13×13 | 室內房間 | 3 |
 | **5** | 31×32 | **阿里阿罕城(金柱+王座,城堡內裝)** | 13 |
 
-**未解(faithful 觸發點)**:哪一間是露依達酒場、酒場主 NPC 座標——**從 tile 佈局無法可靠分辨**
-(室內都是紅地磚房間)。酒場主是**特殊功能 NPC**(踩到/調べる → 開酒場/登錄所選單,非一般對話),
-其派發在城鎮 examine `0x9f7f` 的寫死座標 / 商店 dispatch,需逐一 RE 該分支(或 DOSBox 實機踩門確認)。
-remake 現以 **T 鍵**(阿里阿罕內)開酒場 modal 作可達的暫代;換成真實店門待此 RE。
-
-> 下一步(擇一):① RE `0x9f7f` 內 shop/酒場/登錄所的 NPC 型別或座標 dispatch;
-> ② DOSBox warp patch 直接 spawn 進酒場 section 後讀當下 `[0x256a]`(section)+ 觸發 tile 座標反推。
-
-## ★ 露依達酒場定位(腳本 + 地圖 metadata,非人工猜)— 已解
+## ★ 露依達酒場定位（EXE handler + CTY NPC identity）— 已解
 
 | 來源 | 結論 |
 |---|---|
 | **腳本** D3TXT01 rec49 | 「鎮上**西方**,有個路依達酒吧,在那裡可以尋找同伴」→ 酒場在 CTY00 sec0 **西側** |
-| **轉場表** sec0 +0xc | **門(8,14)→CTY0.sec2** → 上 2F **預存所**(門在 x=8 西側,符合) |
-| **NPC 表** sec0 +2 | 西側 (8,17) 櫃台店員(2F 門 (8,14) 正下方)= 1F 登記隊員店員 |
+| **sub2 jump table** file `0x6482` | `b4=1` → call file `0x16dd`；該函式顯示 rec527/528 並派發 rec529 三項酒場選單 |
+| **sub2 jump table** file `0x649f` | `b4=3` → call file `0x1a4c`；該函式以 rec550 開始完整冒險者登錄流程 |
+| **sub2 jump table** file `0x64a3` | `b4=4` → call file `0x7c50`；以 rec561「預存所」開始，操作寄存金與物品 |
+| **CTY00 NPC 表** | sec0 `(2,16)`=`b4=1`；sec2 `(2,3)`=`b4=3`；sec0 `(8,21)`=`b4=4` |
+| **轉場表** | sec0 `(8,14)` → sec2 `(8,2)`，可正常步行抵達登錄所 |
 
 **結論**:
-- **酒場 1F(登記隊員)= CTY00 sec0 西側 LUIDA 建築**,跟 (8,17) 櫃台店員調べる開創角。
-- **2F(預存所)= CTY0 sec2**,從 sec0 門 (8,14) 上去。
+- **露依達酒場（找同伴／分離／名單）= CTY00 sec0 `(2,16)` 的 `b4=1` 店員**。
+- **冒險者登錄所 = CTY00 sec2 `(2,3)` 的 `b4=3` 店員**，由 sec0 `(8,14)` 進入。
+- **預存所 = CTY00 sec0 `(8,21)` 的 `b4=4` 店員**，不是登錄所。
 - 地圖左上角磚牆排成 **LIH**(開發者彩蛋,見 repo README)。
 
-remake:`DQ3_LUIDA_CTY/X/Y`(`dq3_inventory.h`);run_game 在 CTY00 對 (8,17) 櫃台調べる →
-`tavern_modal` 創角流程(取代 T 鍵暫代,T 鍵保留為開發捷徑)。全程由腳本 + metadata 推導,未靠肉眼。
+Ebiten remake 已按 `(cty,section,sub2,b4)` 派發正式入口，並有 production input trace 從國王
+走到登錄所、登錄三人、回露依達招募成四人隊、由 sec0 spawn 邊界正常出城。櫃台後 NPC
+距玩家兩格時，交談只允許「第一格是阻擋櫃台、第二格是 NPC」的情形。

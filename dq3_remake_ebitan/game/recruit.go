@@ -11,9 +11,7 @@ import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 // 注意:C 版 dq3_tavern.c 的 DQ3_TAV_GENDER 分支建完角色後立刻呼叫 dq3_party_add
 // 自動入隊——那是 C demo 的簡化,**不照抄**;本檔刻意把「登錄」與「入隊」分成兩個獨立動作。
 //
-// 簡化說明(誠實揭露):主選單三個項目(找同伴參加/與同伴分離/觀看名單,D3TXT00 rec529)
-// 的實際 glyph 尚未 RE 解出正確中文字串,暫用數字 0/1/2 佔位;roster/companions 清單
-// 本身用已解出的 glyph(姓名 + 職業名 classNames + 等級數字),非佔位。
+// 主選單三項直接取 D3TXT00 rec529 解出的原版 glyph，不再使用 0/1/2 佔位。
 const (
 	rcMenu  = 0 // 主選單:0 找同伴參加(→rcJoin)/1 與同伴分離(→rcLeave)/2 觀看名單(→rcView)
 	rcJoin  = 1 // 從 roster(未入隊)選一名 → 入隊(companions,滿則擋掉,不頂替)
@@ -22,7 +20,7 @@ const (
 )
 
 const (
-	rcRosterMax = 16 // 名冊容量(對齊 C dq3_roster.h DQ3_ROSTER_MAX)
+	rcRosterMax = 11 // 原版 sub_1ce4 掃角色槽 1..0x0b（主角固定槽 0）
 	rcPartyMax  = 4  // 隊伍:主角 + 3 同伴(對齊 C DQ3_PARTY_MAX;companions 只存 3 名同伴)
 )
 
@@ -44,7 +42,8 @@ func (rc *Recruit) open() { rc.active, rc.stage, rc.cursor = true, rcMenu, 0 }
 // tavernCreate:酒館 2F 登錄所 modal 的輸入 glue(掛在 g.tavern 上)。建角**只登錄 roster,
 // 不自動入隊**(見檔頭說明)。抽成獨立方法,方便單元測試不必經過完整 Update()/ebiten 輸入輪詢。
 func (g *Game) tavernCreate(in InputState) {
-	if m, _ := g.tavern.input(in); m != nil && len(g.roster) < rcRosterMax {
+	if m, _ := g.tavern.input(in, &g.prng); m != nil &&
+		len(g.roster)+len(g.companions) < rcRosterMax {
 		g.roster = append(g.roster, m)
 	}
 }
@@ -142,12 +141,19 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 	switch rc.stage {
 	case rcMenu:
 		rc.menuHits.reset()
+		labels := [3][]int{
+			{769, 601, 602, 770, 368}, // 找同伴參加
+			{762, 601, 602, 764, 502}, // 與同伴分離
+			{771, 668, 692, 772},      // 觀看名單
+		}
 		for i := 0; i < 3; i++ {
 			y := 56 + i*22
 			if i == rc.cursor {
 				drawGlyph(rgba, rc.tx, 80-18, y, curGlyph, yellow)
 			}
-			drawNumber(rgba, rc.tx, 80, y, i, white) // 佔位數字(0找同伴參加/1分離/2名單,見檔頭簡化說明)
+			for j, gi := range labels[i] {
+				drawGlyph(rgba, rc.tx, 80+j*dq3data.GlyphPx, y, gi, white)
+			}
 			rc.menuHits.add(62, y-3, 200, 18, i)
 		}
 	case rcJoin:

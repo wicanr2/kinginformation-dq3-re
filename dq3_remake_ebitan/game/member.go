@@ -2,15 +2,18 @@ package game
 
 import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
-// Member 是一名隊員(移植 dq3_recruit/dq3_member)。數值由職業成長表 + 裝備推導。
+// Member 是一名隊員(移植 dq3_recruit/dq3_member)。七項能力是原版角色 record 的持久值；
+// 攻防再疊加裝備，不可每幀由職業/等級 target 反推。
 type Member struct {
 	Name                        []int // glyph index(對 D3TXT00.FON)
 	Class, Gender               int
 	Exp                         uint32
+	Stats                       stats.Values // 原版角色 record 的七個持久能力欄
 	CurHP, CurMP                int
 	Weapon, Armor, Shield, Head int // item code(0=無)
 }
@@ -21,22 +24,32 @@ var classNames = [8][]int{
 	{110, 208, 210, 187}, {111, 187}, {112, 194}, {113, 705, 187},
 }
 
-func (m *Member) Level() int  { return stats.LevelForExp(m.Class, m.Exp) }
-func (m *Member) MaxHP() int  { return int(stats.GrowthTarget(m.Class, stats.HP, m.Level())) }
-func (m *Member) MaxMP() int  { return int(stats.GrowthTarget(m.Class, stats.MP, m.Level())) }
-func (m *Member) Agi() int    { return int(stats.GrowthTarget(m.Class, stats.AGI, m.Level())) }
+func (m *Member) Level() int { return stats.LevelForExp(m.Class, m.Exp) }
+func (m *Member) ensureStats() {
+	if m.Stats != (stats.Values{}) {
+		return
+	}
+	for k := stats.StatKind(0); k < stats.StatCount; k++ {
+		m.Stats[k] = stats.GrowthTarget(m.Class, k, m.Level())
+	}
+}
+func (m *Member) MaxHP() int  { m.ensureStats(); return int(m.Stats[stats.HP]) }
+func (m *Member) MaxMP() int  { m.ensureStats(); return int(m.Stats[stats.MP]) }
+func (m *Member) Agi() int    { m.ensureStats(); return int(m.Stats[stats.AGI]) }
 func (m *Member) Alive() bool { return m.CurHP > 0 }
 
 // Atk = 力量 + 武器攻;Def = 耐力 + 鎧盾兜防（DQ3.EXE sub_9521）。
 func (m *Member) Atk(items *dq3data.Items) int {
-	a := int(stats.GrowthTarget(m.Class, stats.STR, m.Level()))
+	m.ensureStats()
+	a := int(m.Stats[stats.STR])
 	if items != nil {
 		a += items.Attack(m.Weapon)
 	}
 	return a
 }
 func (m *Member) Def(items *dq3data.Items) int {
-	d := int(stats.GrowthTarget(m.Class, stats.VIT, m.Level()))
+	m.ensureStats()
+	d := int(m.Stats[stats.VIT])
 	if items != nil {
 		d += items.Defense(m.Armor) + items.Defense(m.Shield) + items.Defense(m.Head)
 	}
@@ -52,6 +65,16 @@ func (m *Member) fullHeal() { m.CurHP, m.CurMP = m.MaxHP(), m.MaxMP() }
 // newMember 建一名 lv(由 exp 決定)的隊員並補滿 HP/MP。
 func newMember(name []int, class, gender int, exp uint32) *Member {
 	m := &Member{Name: name, Class: class, Gender: gender, Exp: exp}
+	m.ensureStats() // 舊測試/debug 建角的相容路徑；正式登錄走 newLevelOneMember。
+	m.fullHeal()
+	return m
+}
+
+// newLevelOneMember 重現 DQ3.EXE sub_1c94 → sub_ed3c 的登錄所 Lv1 建角：
+// 共用全域 DOS RNG 擲七欄，並穿上布衣(item 0x25)。
+func newLevelOneMember(name []int, class, gender int, r *rng.RNG) *Member {
+	m := &Member{Name: append([]int(nil), name...), Class: class, Gender: gender, Armor: 0x25}
+	m.Stats = stats.InitValues(class, r)
 	m.fullHeal()
 	return m
 }

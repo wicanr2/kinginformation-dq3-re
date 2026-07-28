@@ -97,7 +97,7 @@
 | 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件 | 核心已接，需完整 trace |
 | 家中／母親 | DOSBox、影片 | sec4+rec82/83；目前自動護送 | 部分，互動語意不忠實 |
 | 王城謁見 | 攻略、影片、地圖 | 缺完整正式 gate／獎勵核對 | GAP |
-| 酒場／登錄所 | 攻略、D3TXT、地圖 | UI 有，正式入口未閉合 | 主線 GAP |
+| 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | production 主要仍單一主角 sprite | 高可見 GAP |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox | 通用 loader/render 已有 | 需事件與 entrance closure |
 | NPC／日夜 | DOSBox、RE | 三層可見性與晝夜已有 | 機制有，逐事件 flags 待接 |
@@ -284,9 +284,9 @@ Gate：
 4. 家中旁白的 exact dialogue lifecycle。
 5. 反組譯母親 NPC 的 event owner；依原版輸入與 flag 實作護送，不再旁白後自動瞬移。
 6. 王城謁見、父親劇情、國王給金錢與裝備的 exact transaction；獎勵前後分開存檔驗證。
-7. R-1：以 EXE transition/facility/event dispatch 定位 CTY00 酒場／二樓登錄所正式入口。
+7. [x] R-1：以 EXE sub2 jump table + CTY NPC identity 定位 CTY00 酒場／登錄所正式入口。
 8. 登錄角色 → 一樓招募／分離 → 隊伍最多四人。
-9. 移除 placeholder 同伴。
+9. [x] 移除 placeholder 同伴；開局單人，登錄／招募後才成四人隊。
 10. 反組譯 caterpillar owner、歷史座標 buffer 與 draw order；不是只在主角後方手調三個位置。
 11. 核對正常出城／進城操作；移除 Enter/Cancel demo 行為。
 
@@ -455,7 +455,7 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 4. 建 input trace harness。
 5. 建立 `title → name → gender → ability confirmation → home` trace。
 6. `home → mother → king` transaction 已接；下一步補正式 input trace 與逐格演出。
-7. 反組譯 CTY00 酒場入口與原版出城操作。
+7. [x] 反組譯 CTY00 酒場入口與原版出城操作；完整 production input trace 已通過。
 8. 接 `king → tavern → recruit → overworld`。
 9. 再以同一 RE/trace 方法完成 R-2 的 item-use vertical slice。
 

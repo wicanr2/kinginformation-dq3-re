@@ -1,6 +1,9 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
+)
 
 // 露易達酒館招募(移植 dq3_tavern + dq3_nameinput):職業 → 命名(NameInput,共用 widget)→
 // 性別(GenderSelect,共用 widget)→ 建隊員。DQ3_PARTY_MAX=4(隊長+3)。
@@ -32,7 +35,12 @@ func (tv *Tavern) open() {
 
 // input:回 (recruited *Member, closed)。觸控直接點選(P2):tapIdx 命中對應階段的 hits(上一幀
 // draw() 建的、對齊當前畫面的格子)→ 游標移過去 + 等同 A 確定,十字鍵 + A 保底並存。
-func (tv *Tavern) input(in InputState) (*Member, bool) {
+func (tv *Tavern) input(in InputState, rs ...*rng.RNG) (*Member, bool) {
+	// 正式 Game 路徑一定傳共享 RNG；無參數只保留給純 UI 單測。
+	r := rng.New(0x1357)
+	if len(rs) > 0 && rs[0] != nil {
+		r = rs[0]
+	}
 	tapIdx := -1
 	if in.Tapped {
 		switch tv.stage {
@@ -81,7 +89,7 @@ func (tv *Tavern) input(in InputState) (*Member, bool) {
 			if len(name) == 0 { // 未命名 → 用職業名
 				name = classNames[tv.pendCls]
 			}
-			m := newMember(name, tv.pendCls, gender, 0)
+			m := newLevelOneMember(name, tv.pendCls, gender, r)
 			tv.active = false
 			return m, true
 		}

@@ -2,6 +2,7 @@ package game
 
 import (
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
@@ -281,4 +282,34 @@ func TestSaveRoundTripHeroNameGender(t *testing.T) {
 			src.heroStat, src.heroHP, src.heroMP, dst.heroStat, dst.heroHP, dst.heroMP)
 	}
 	t.Logf("heroName/heroGender round-trip ✓:name=%v gender=%d", dst.heroName, dst.heroGender)
+}
+
+func TestSaveRoundTripPreservesMemberNameAndStats(t *testing.T) {
+	src := &Game{
+		companions: []*Member{{
+			Name: []int{101, 202}, Class: 3, Gender: 1, Exp: 42,
+			Stats: stats.Values{8, 7, 6, 20, 17, 9, 10}, CurHP: 13, CurMP: 11, Armor: 0x25,
+		}},
+		roster: []*Member{{
+			Name: []int{303, 404}, Class: 4, Gender: 0,
+			Stats: stats.Values{5, 4, 7, 12, 18, 10, 9}, CurHP: 12, CurMP: 18, Armor: 0x25,
+		}},
+	}
+	b, err := encodeSave(src.snapshot())
+	if err != nil {
+		t.Fatalf("encodeSave: %v", err)
+	}
+	s, err := decodeSave(b)
+	if err != nil {
+		t.Fatalf("decodeSave: %v", err)
+	}
+	dst := &Game{}
+	dst.restore(s)
+	if !reflect.DeepEqual(dst.companions[0].Name, src.companions[0].Name) ||
+		dst.companions[0].Stats != src.companions[0].Stats ||
+		!reflect.DeepEqual(dst.roster[0].Name, src.roster[0].Name) ||
+		dst.roster[0].Stats != src.roster[0].Stats {
+		t.Fatalf("同伴存檔往返遺失自訂姓名/持久能力：src=%+v/%+v dst=%+v/%+v",
+			src.companions[0], src.roster[0], dst.companions[0], dst.roster[0])
+	}
 }

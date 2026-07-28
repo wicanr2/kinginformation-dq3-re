@@ -31,6 +31,10 @@ Ebiten 的**行動裝置 / 觸控 / OGG 音訊是一等公民**,正好消掉 C/S
 
 ![Ebiten remake：首次謁見阿里阿罕國王（rec78、50G 與六件同伴裝備）](docs/opening_king_rec78.png)
 
+![Ebiten remake：露依達酒場原版三項選單（D3TXT00 rec529）](docs/luida_recruit.png)
+
+![Ebiten remake：冒險者登錄所職業選擇](docs/adventurer_registry.png)
+
 - 性別後依 `sub_ed3c/sub_fa57` 生成並保存 Lv1 能力；選「否」會回到整個創角流程。
 - 出生於 CTY00 sec4 `(5,5)`，只裝備布衣、隊伍只有主角。
 - 母親演出後落在 CTY00 sec0 `(8,38)`。
