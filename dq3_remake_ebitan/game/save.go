@@ -40,6 +40,7 @@ type saveState struct {
 	Cty           int          `json:"cty,omitempty"`
 	Section       int          `json:"section,omitempty"`
 	Layer         int          `json:"layer,omitempty"`
+	VisitedTowns  []townVisit  `json:"visited_towns,omitempty"`
 }
 
 // compSav 是一名同伴的存檔資料。
@@ -76,6 +77,7 @@ func (g *Game) snapshot() saveState {
 		StoryBits:  append([]byte(nil), g.storyBits[:]...),
 		WorldState: g.worldState,
 		DNPhase:    g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
+		VisitedTowns: append([]townVisit(nil), g.visitedTowns...),
 	}
 	if g.inTown && g.cur != nil {
 		s.Section = g.cur.sec
@@ -162,12 +164,24 @@ func (g *Game) restore(s saveState) {
 	}
 	g.dnPhase, g.dnStep = s.DNPhase&3, s.DNStep
 	g.layer, g.curCty = s.Layer, s.Cty
+	g.visitedTowns = nil
+	for _, v := range s.VisitedTowns {
+		g.addVisitedTown(v.Cty) // 驗證並按 EXE table 正規化舊存檔順序。
+	}
 	g.px, g.py, g.inTown = s.PX, s.PY, s.InTown
 	if s.InTown {
 		g.restoreTownScene(s.Cty, s.Section)
 	} else {
 		g.cur = g.overworldScene()
 		g.curCty = -1
+	}
+	// 舊版存檔沒有 VisitedTowns。至少依可證明的起點與目前所在城鎮補遷移，
+	// 不猜測玩家曾去過哪些其他城鎮。
+	if len(g.visitedTowns) == 0 {
+		g.addVisitedTown(0)
+		if g.inTown {
+			g.rememberTown()
+		}
 	}
 	g.applyRainbowBridge()
 	g.applyDaynightPalette()

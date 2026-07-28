@@ -229,16 +229,18 @@ type Game struct {
 	facing         int // 0..3
 	walk           int // 0/1 走路動畫相位
 	cd, anim       int
-	dlg            Dialogue  // 對話視窗
-	cmd            CmdMenu   // 野外命令窗
-	battle         Battle    // 戰鬥場景
-	shop           Shop      // 商店(武防/道具店)
-	tavern         Tavern    // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
-	recruit        Recruit   // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
-	panel          panelKind // 資訊面板(狀況/道具/裝備)
-	panelCursor    int       // 裝備面板游標
-	panelHits      hitList   // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
-	inventory      []int     // 持有道具 id
+	dlg            Dialogue       // 對話視窗
+	cmd            CmdMenu        // 野外命令窗
+	battle         Battle         // 戰鬥場景
+	shop           Shop           // 商店(武防/道具店)
+	tavern         Tavern         // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
+	recruit        Recruit        // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
+	panel          panelKind      // 資訊面板(狀況/道具/裝備)
+	panelCursor    int            // 裝備面板游標
+	panelHits      hitList        // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
+	fieldSpell     FieldSpellMenu // 野外咒文／魯拉目的地 modal
+	visitedTowns   []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
+	inventory      []int          // 持有道具 id
 	music          *gaudio.Music
 	input          *Input // 抽象輸入(鍵盤 + 觸控)
 	showTitle      bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
@@ -355,6 +357,8 @@ func (g *Game) selectCommand(cmd int) {
 		}
 	case cmdStatus: // 狀況
 		g.panel = panelStatus
+	case cmdSpell:
+		g.openFieldSpellMenu()
 	case cmdItem: // 道具
 		g.panel, g.panelCursor = panelItem, 0
 	case cmdEquip: // 裝備
@@ -767,6 +771,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.fieldSpell.active {
+		g.fieldSpellInput(in)
+		g.renderFrame()
+		return nil
+	}
 	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
 	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
@@ -998,6 +1007,7 @@ func (g *Game) enterTownCty(cty int) {
 	}
 	g.cd = moveCooldown
 	g.music.Play(ctyMusicTrack(cty))
+	g.rememberTown()
 	g.renderFrame()
 }
 
@@ -1271,6 +1281,7 @@ func (g *Game) startOpening() {
 	if g.px >= home.w || g.py >= home.h { // 資產版本不符時 fail-safe；合法 CTY00 sec4 必為 13×13
 		g.px, g.py = home.startPos()
 	}
+	g.rememberTown() // 原版初始進度已包含阿里阿罕；確保首次習得魯拉時可選。
 	// dlg.tx 維持 NewGame 初始的 D3TXT01(開場旁白 rec82/83 在此 bank)
 	g.openingIdx = 0
 	g.dlg.Open(openingSeq[0])
@@ -1903,6 +1914,7 @@ func (g *Game) renderFrame() {
 	if g.recruit.active { // 酒場 1F 招募(roster↔companions)
 		g.drawRecruit(g.rgba, white)
 	}
+	g.drawFieldSpell(g.rgba, white)
 	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
 }

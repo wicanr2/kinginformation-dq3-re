@@ -32,6 +32,19 @@ func TestHeroKnown(t *testing.T) {
 	}
 }
 
+func TestKnownAllKeepsFieldSpells(t *testing.T) {
+	all := KnownAll(0, 14)
+	for _, want := range []int{172, 173} {
+		found := false
+		for _, rec := range all {
+			found = found || rec == want
+		}
+		if !found {
+			t.Fatalf("勇者 Lv14 全咒文清單應保留野外咒 rec%d，得 %v", want, all)
+		}
+	}
+}
+
 func TestSpellDefAndCast(t *testing.T) {
 	d, ok := GetDef(121)
 	if !ok || d.MP != 2 || d.Base != 10 || d.Kind != Dmg {

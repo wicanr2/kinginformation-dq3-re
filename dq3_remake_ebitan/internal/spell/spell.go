@@ -91,6 +91,19 @@ var mageSchool = []Learn{{1, 121}, {4, 154}, {5, 130}, {7, 124}, {8, 173}, {9, 1
 // Known 回職業 cls 在 level 級已學會、且可在戰鬥施放(有 def)的咒名 rec。移植 dq3_spells_known。
 // 職業→系:勇者0→勇者系、僧侶3→僧侶、魔法4→魔法、賢者5→僧侶+魔法;其餘無咒。
 func Known(cls, level int) []int {
+	all := KnownAll(cls, level)
+	out := all[:0]
+	for _, rec := range all {
+		if _, ok := defs[rec]; ok {
+			out = append(out, rec)
+		}
+	}
+	return out
+}
+
+// KnownAll 回傳職業在 level 已學會的全部咒文，包含沒有戰鬥 descriptor 的野外工具咒。
+// 野外命令窗必須用此 API；Known 只供戰鬥選單，不能再因 defs 過濾掉魯拉／烈米特。
+func KnownAll(cls, level int) []int {
 	var schools [][]Learn
 	switch cls {
 	case 0:
@@ -109,10 +122,8 @@ func Known(cls, level int) []int {
 	for _, s := range schools {
 		for _, l := range s {
 			if l.Level <= level && !seen[l.Rec] {
-				if _, ok := defs[l.Rec]; ok {
-					out = append(out, l.Rec)
-					seen[l.Rec] = true
-				}
+				out = append(out, l.Rec)
+				seen[l.Rec] = true
 			}
 		}
 	}

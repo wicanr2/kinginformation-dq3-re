@@ -103,14 +103,14 @@
 | NPC／日夜 | DOSBox、RE | 三層可見性與晝夜已有 | 機制有，逐事件 flags 待接 |
 | 地表／HUD | 影片、網路圖 | 地圖、主角、panel 已有 | 需四人 HUD／入口／palette |
 | 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
-| 道具／裝備／狀況／咒文 | 影片 | 多數邏輯存在 | 逐窗 lifecycle 尚未全面 E2 |
+| 道具／裝備／狀況／咒文 | 影片、EXE 魯拉 handler | 野外咒文正式選單已接；魯拉 20 城表／名稱／落點為 D2 | 烈米特與 MP 尚待完整 RE；逐窗仍需 E2 |
 | 戰鬥 | DOSBox／影片／原始怪圖 | 公式、多敵、狀態、boss queue 已有 | 呈現／訊息／cue 長尾 |
 | 商店／旅社／教會／達瑪 | 原版資料、部分截圖 | 多數已有 | 賣出及逐服務 parity 缺口 |
 | 船 | 影片、DOSBox 截圖 | 航行系統與取船鏈已有 | 需正常流程 E3 |
-| 不死鳥／飛行 | 攻略、影片 | 無完整系統 | 最大功能 GAP |
-| 下降／下世界 | 影片 | loader 有；只靠 U 正式入口 | 主線 GAP |
-| 終盤連戰 | 影片、RE | queue、光之珠、finale 有 | 只靠 Z 入口 |
-| THE END | 影片、TIT3 | 資產已知 | production 結局呈現待閉合 |
+| 不死鳥／飛行 | 攻略、影片、EXE／CTY70 | 六珠祭壇、復活、搭乘、飛行與降落已有正式 trace | 已完成事件切片；全流程仍待稽核 |
+| 下降／下世界 | 影片、EXE | 巴拉摩斯後王座事件與自然下降入口已接 | 已完成事件切片 |
+| 終盤連戰 | 影片、RE | 光之珠、隱藏樓梯、歐里狄加與三連戰已有正式入口 | 已完成事件切片 |
+| THE END | 影片、TIT3 | 戰後回城、冊封與 ending scroll 已接 | 已有 production trace；逐畫面仍待 V3 |
 | 音樂／音效 | 原版 MCX/VOC、錄音研究 | OPL2/OGG 有相當基礎 | 逐場景 cue matrix 待驗 |
 | 觸控／Android | 無原版對照，屬 port UX | 輸入抽象與觸控已有 | 正式流程完成後驗收 |
 
@@ -128,10 +128,11 @@
 1. 沒有一條 production input 驅動的完整主線 trace。
 2. `spine_test.go` 直接呼叫內部函式，不能證明玩家可達。
 3. ~~production 的 `T/R/U/Z/Enter/Cancel` demo/debug 行為~~（R-4/R-5a 已移除）。
-4. 六珠／不死鳥／飛行坐騎是零到一的大工程。
+4. 六珠／不死鳥／飛行、下降與終盤正式事件切片已完成；尚缺的是從新遊戲開始、不改狀態的
+   單一路徑通關稽核，不能用各切片測試取代。
 5. 畫面證據沒有形成逐界面的 current matrix，raw decode、component dump 和正常流程畫面容易混稱。
-6. `build.sh` 內 `go test | tail` 未啟用內層 `pipefail`，可遮蔽測試失敗；game 測試在本次
-   Xvfb 基準執行時超過兩分鐘無輸出，需拆分定位。
+6. `build.sh` 內 `go test | tail` 未啟用內層 `pipefail`，可遮蔽測試失敗；圖形測試應以
+   明確啟動的 Xvfb 加 `go test -c` 執行，避免 `xvfb-run` wrapper 卡住而誤判程式失敗。
 
 ### 3.1 使用者校正：首要根因是設定資料未 match
 

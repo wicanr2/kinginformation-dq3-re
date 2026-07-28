@@ -57,7 +57,8 @@ func (m *Member) Def(items *dq3data.Items) int {
 }
 
 // Spells = 該職業該等級已學可施放咒(class-aware)。
-func (m *Member) Spells() []int { return spell.Known(m.Class, m.Level()) }
+func (m *Member) Spells() []int    { return spell.Known(m.Class, m.Level()) }
+func (m *Member) AllSpells() []int { return spell.KnownAll(m.Class, m.Level()) }
 
 // heal 補至上限;fullHeal 補滿 HP/MP。
 func (m *Member) fullHeal() { m.CurHP, m.CurMP = m.MaxHP(), m.MaxMP() }

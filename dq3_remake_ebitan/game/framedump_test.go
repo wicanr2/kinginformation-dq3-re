@@ -335,4 +335,16 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.dlg.open = false
 	g.advanceEndingKing()
 	dump("ending_scroll_start")
+
+	// 野外正式「咒文」：已學工具咒清單 → 魯拉已造訪城鎮目的地。
+	// 背景重置到阿里阿罕地表，避免沿用結局 modal／palette 污染新圖。
+	g.endSeq, g.dlg.open, g.panel = -1, false, panelNone
+	g.layer, g.cur, g.inTown, g.curCty = 0, g.over, false, -1
+	g.px, g.py = ctyLoc[0][0]-1, ctyLoc[0][1]
+	g.heroExp, g.heroMP = stats.ExpForLevel(0, 14), 99
+	g.visitedTowns = []townVisit{{Cty: 0}, {Cty: 1}, {Cty: 2}}
+	g.openFieldSpellMenu()
+	dump("field_spell_menu")
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	dump("rura_destinations")
 }
