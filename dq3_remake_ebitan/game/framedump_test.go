@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
@@ -350,4 +351,17 @@ func TestDumpNewGameScreens(t *testing.T) {
 	dump("field_spell_menu")
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	dump("rura_destinations")
+
+	// 戰鬥咒文 5 行捲動窗：Lv40 魔法使清單尾端的巴魯朋特必須可見。
+	g.fieldSpell = FieldSpellMenu{}
+	mageSpells := spell.Known(4, 40)
+	if !g.battle.startGroup(5, 1, 1, heroParams{
+		level: 40, curHP: 200, maxHP: 200, atk: 80, def: 80, agi: 80,
+		mp: 200, maxMP: 200, spells: mageSpells,
+	}, nil) {
+		t.Fatal("巴魯朋特選單截圖開戰失敗")
+	}
+	g.battle.phase = phSpell
+	g.battle.spellCursor = len(mageSpells) - 1
+	dump("battle_palpunte_menu")
 }

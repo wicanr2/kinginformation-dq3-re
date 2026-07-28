@@ -1,4 +1,4 @@
-# 78 — 野外咒文 RE 契約（2026-07-28）
+# 78 — 場景咒文與巴魯朋特 RE 契約（2026-07-28）
 
 本文件只記可重用證據與未決事項。目標是避免後續又從 C remake 的近似值反推原版。
 位址皆為原始 `DQ3.EXE` file offset；分析以 `tools/dis.sh` 與 IDA Pro 9.4 交叉確認。
@@ -60,11 +60,47 @@ guard `0x0400`；離開 hazard 後 guard 即清，因此只保護第一次踏入
 `AH&0x03` 分支在檢查多拉瑪那前就造成全隊 1–3 傷害。Ebiten 依此保留精訊版行為，
 未擅自改成 FC 式持續免疫。
 
-## 尚未證實／尚未完成（不得標 faithful）
+## rec180 巴魯朋特是戰鬥咒文：已證實（D2）
+
+rec180 descriptor 是 DGROUP `0x37c3 + 59*3` 的 `14 00 01`：MP 20、base 0、
+flags `0x01`。場景 caster file `0x1cb3c` 只有在 `flags & 0x02` 時才會呼叫
+field effect table，因此 rec180 不屬於上表，也不應出現在場景咒文選單。它的實際
+handler 是 battle dispatcher 內的 file `0xe5d8`。
+
+handler 以 `rng(16)` 查 DGROUP `0x3908`。原始 16-word table 為：
+
+```text
+0:d284  1:NULL  2:d291  3:NULL  4:NULL  5:NULL  6:NULL  7:NULL
+8:d291  9:NULL 10:NULL 11:d298 12:d2a1 13:NULL 14:NULL 15:NULL
+```
+
+所以原版是 5 個有效 slot、4 個唯一 handler，而不是 16 種已實作效果；11/16 直接走
+rec346「但是這個咒文沒有效。」：
+
+| roll | file handler | 原版資料流與玩家可見結果 |
+|---:|---|---|
+| 0 | `0xe5f4` | effect type3 對各存活敵做 spell resistance 判定並設睡眠；接著每名存活隊員各以 `rng(256)<0x96` 設睡眠，訊息 rec338/339 |
+| 2、8 | `0xe601` | `BP=0x55 → 0xdfec → 0x5a5b`，逐名存活隊員獨立回復 85–94 HP、封頂 max HP，訊息 rec360 |
+| 11 | `0xe608` | `0xea37` 逐敵依 resistance 判定，成功者 HP=0 並從敵群移除，rec317「被吹走了」；不算擊殺報酬 |
+| 12 | `0xe611` | effect type1 隨機選一名存活敵，由敵 struct `+0x10` 吸取最多 10 MP 並直接加到施法者 MP，rec318 |
+
+這條 MP consumer 也把 D3MNS.DAT `+0x04`（生成時複製到敵 struct `+0x10`）從舊文件的
+不明 `f04` 定錨為戰鬥 MP。spell resistance 由 file `0xeb6b` 使用 D3MNS
+`+0x19..+0x1d` 的 packed 2-bit 類別，映射成功門檻 `0/68/180/255`。
+
+Ebiten 已加入 rec180 的 20 MP battle descriptor、原版 16-slot dispatch、怪物 MP 與
+packed resistance consumer。現行 battle UI 仍只讓隊長下指令，而 rec180 是魔法使 Lv40
+習得；同伴逐人 command phase 尚未完成前，這是 D2 機制還原，不標成正常玩家可達 E3。
+
+現行 renderer 的五行捲動咒文窗（游標位於清單尾端的巴魯朋特）：
+
+![Ebiten：巴魯朋特戰鬥咒文選單](../dq3_remake_ebitan/docs/battle_palpunte_menu.png)
+
+## 尚未證實／尚未完成
 
 - handler 中 `0xd75`、world flag `0x4f46 bit0x80` 等較少見魯拉禁止狀態，Ebiten 尚無
   一一對應的世界狀態欄位。
-- 帕爾普恩特尚未接入 Ebiten 選單；16 項 effect table 仍須逐項追通。
+- 巴魯朋特的四種 handler 已接入 battle core；同伴逐人下指令與原版逐筆戰鬥訊息佇列仍待完成。
 - 因帕斯缺原版 `[0x25d3] → 0x10305` 色彩動畫，不能只因 record 分支已接就標 V3。
 - 原版冒險之書是否保存 `[0x4f46]/[0x52f7]` 這類暫態場景咒文狀態尚未追完；Go save
   目前明確視為 runtime-only，讀檔會清除雷姆歐魯 timer。
@@ -75,7 +111,7 @@ guard `0x0400`；離開 hazard 後 guard 即清，因此只保護第一次踏入
 1. 保存 IDB，不再每輪只產生孤立的線性 disassembly。
 2. 將 `0x1c9ee/0x1cb3c/0xe0da/0xe10c`、`0x37c3/0x38cc`、`0x0ac0/0x506a`
    命名，建立 caller/xref。
-3. 續追 rec180 的 16 項 field effect；rec174/175/178/179 補 DOSBox 同狀態驗證。
+3. rec174/175/178/179 補 DOSBox 同狀態驗證；rec180 補 battle message queue 與同伴正式輸入。
 4. 每個結論記錄 writer → table → consumer → 可見副作用；只有完整鏈才升 D3。
 5. 用 DOSBox 同狀態輸入作最終仲裁，再鎖 production-input 與 save/load 測試。
 

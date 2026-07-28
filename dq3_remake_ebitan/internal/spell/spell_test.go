@@ -45,6 +45,23 @@ func TestKnownAllKeepsFieldSpells(t *testing.T) {
 	}
 }
 
+func TestPalpunteIsBattleOnlySpell(t *testing.T) {
+	d, ok := GetDef(180)
+	if !ok || d.Kind != Palpunte || d.MP != 20 {
+		t.Fatalf("rec180 應為 20MP Palpunte battle def，得 %+v ok=%v", d, ok)
+	}
+	known := Known(4, 40)
+	found := false
+	for _, rec := range known {
+		if rec == 180 {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("Lv40 魔法使的戰鬥咒文清單應包含 rec180")
+	}
+}
+
 func TestOriginalMPCostTable(t *testing.T) {
 	cases := map[int]int{
 		123: 12, // 美拉宙瑪：舊 remake 誤用 10

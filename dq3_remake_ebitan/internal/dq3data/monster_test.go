@@ -20,10 +20,17 @@ func TestMonsters(t *testing.T) {
 	if m.HPMax(5) != 9 {
 		t.Fatalf("史萊姆 HP_max 應 9,得 %d", m.HPMax(5))
 	}
+	if s5.MP != 0 {
+		t.Fatalf("史萊姆戰鬥 MP 應為 0,得 %d", s5.MP)
+	}
 	// id2 金屬史萊姆:HP3 / exp4140
 	s2, _ := m.Stat(2)
 	if s2.HPBase != 3 || s2.Exp != 4140 {
 		t.Fatalf("金屬史萊姆 應 HP3/exp4140,得 HP%d/exp%d", s2.HPBase, s2.Exp)
+	}
+	// spellID59(帕魯朋特)會走最後一個 packed resistance 類別。
+	if chance, ok := m.SpellChance(5, 59); !ok || chance != 255 {
+		t.Fatalf("史萊姆 Palpunte 成功門檻應由 packed 抗性解為255,得 %d ok=%v", chance, ok)
 	}
 	// id89 怪力魔:D3MNS +0x26=0x62 變身杖、+0x27=200、+0x28=11。
 	s89, _ := m.Stat(89)

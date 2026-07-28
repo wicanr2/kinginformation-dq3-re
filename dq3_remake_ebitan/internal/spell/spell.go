@@ -16,6 +16,7 @@ const (
 	Blind      // 瑪努莎158:敵對側單體陷入幻惑(物攻易失手)
 	CurePoison // 基阿里166:解毒
 	CureStatus // 基阿里克167/薩梅哈168:解麻痺/混亂/睡眠(remake 簡化:三者共用同一狀態位元,對齊 C DQ3_STATUS_PARALYSIS)
+	Palpunte   // 帕魯朋特180:16 格原版亂數表（5 格有效、4 種唯一戰鬥效果）
 )
 
 // Target:傷害咒的目標範圍(移植 dq3_spelldef.c DQ3_TG_*)。Heal 不用此欄(固定治己方,見
@@ -100,6 +101,7 @@ var defs = map[int]Def{
 	166: {166, 3, 0, CurePoison, TargetSingle}, // 基阿里
 	167: {167, 6, 0, CureStatus, TargetSingle}, // 基阿里克
 	168: {168, 3, 0, CureStatus, TargetSingle}, // 薩梅哈
+	180: {180, 20, 0, Palpunte, TargetGroup},   // 帕魯朋特（battle-only，descriptor flags=0x01）
 }
 
 // 僧侶系(24)/ 魔法系(31)習得表(自 dq3_school_priest/mage)。

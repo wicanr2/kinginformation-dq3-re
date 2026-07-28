@@ -11,6 +11,7 @@ const (
 // MonsterStat 是一隻怪的數值(欄位偏移對齊 C）。
 type MonsterStat struct {
 	HPBase, HPRand uint16 // +0x00 / +0x02
+	MP             uint16 // +0x04:戰鬥 MP；帕魯朋特效果會由敵人吸取此值
 	Atk            uint8  // +0x08
 	Def, Agi       uint16 // +0x09 / +0x0b
 	FleeResist     uint8  // +0x18
@@ -49,10 +50,39 @@ func (m *Monsters) Stat(id int) (MonsterStat, bool) {
 	r := m.rec(id)
 	return MonsterStat{
 		HPBase: le16(r, 0x00), HPRand: le16(r, 0x02),
+		MP:  le16(r, 0x04),
 		Atk: r[0x08], Def: le16(r, 0x09), Agi: le16(r, 0x0b),
 		FleeResist: r[0x18], Exp: le16(r, 0x21), Gold: le16(r, 0x23),
 		DropItem: r[0x26], DropRate: r[0x27], SpawnWeight: r[0x28],
 	}, true
+}
+
+// SpellChance 回原版對指定怪物施 spellID 時的成功門檻(0/68/180/255)。
+//
+// DQ3.EXE file 0xeb6b 以 spellID 分到 19 個抗性類別，再從 D3MNS.DAT
+// +0x19..+0x1d 的 packed 2-bit 欄取代碼。Palpunte 是 spellID 59，
+// 落在類別 18；caller 以 rng(256) < 此門檻判定成功。
+func (m *Monsters) SpellChance(id, spellID int) (int, bool) {
+	if id < 0 || id >= MonsterCount {
+		return 0, false
+	}
+	// DGROUP 0x36e5。原程式線性尋找第一個 >= spellID 的 entry；
+	// index 17 的 0 是原版資料，保留以維持高階咒文的類別編號。
+	bounds := [...]int{0, 3, 6, 9, 13, 16, 18, 22, 23, 25, 27, 28, 29, 31, 35, 37, 38, 0, 68}
+	category := len(bounds) - 1
+	for i, v := range bounds {
+		if spellID <= v {
+			category = i
+			break
+		}
+	}
+	packed := m.rec(id)[0x19+category/4]
+	// sub_eb6b 以 rol 2/4/6/8 後取低 2 bit，故類別依序放在
+	// byte 的 bits 7..6、5..4、3..2、1..0。
+	shift := uint((3 - category%4) * 2)
+	code := (packed >> shift) & 3
+	chances := [...]int{0, 68, 180, 255} // DGROUP 0x36f5
+	return chances[code], true
 }
 
 // AI 取怪 id 的行為。移植 dq3_monster_get_ai。

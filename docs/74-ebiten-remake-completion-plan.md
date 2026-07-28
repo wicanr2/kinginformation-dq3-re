@@ -472,14 +472,16 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 1. [x] 修正共通 caster：MP 足夠後、effect handler 前立即扣除；取消魯拉目的地或場景
    gate 失敗不退款。既有取消／失敗測試已更新。
-2. 為 rec174／175／178／179／180 建逐項 ledger：descriptor、handler、writer、timer／flag
-   consumer、訊息 record、玩家可見結果。rec174／175／178／179 已建立；rec180 待完成。
+2. [x] 為 rec174／175／178／179 建場景咒文 ledger。rec180 descriptor flags=`0x01`，
+   已證實是 battle-only 巴魯朋特，不屬於 field ledger；其 16-slot table 與四個唯一 handler
+   已另記於 `docs/78`。
 3. [x] 先落地證據鏈完整者：
    - rec178／Remoaru：15 MP、25 個成功移動步的隱形狀態與 renderer consumer。
    - 阿巴卡姆：0 MP、面向門的 tier-4 權限、3×3 連續門片 mutation 與失敗 rec `0x15a`。
 4. [x] 因帕斯已確認 `bp=event type` 與原始 rec253／254；多拉瑪那已追通 `0x2000`
    writer、`0x0400` 連續區 guard 與兩類傷害地板 consumer。因帕斯色彩動畫仍為 V-gap。
-   帕爾普恩特須解完 16 項跳表，未追通前不做猜測版。
+   巴魯朋特已確認原版只有 5 個有效 slot（4 種唯一效果），其餘 11 格是無效訊息；
+   battle core 已依 EXE 接入。因魔法使同伴目前沒有逐人 command phase，正常玩家入口仍是 GAP。
 5. [x] 對本批落地咒文加入 production menu、正常輸入、MP／timer／restore 測試，重產並
    目視檢查 `dq3_remake_ebitan/docs/field_spell_menu.png`。原版暫態 timer 的 save 格式仍
    待 RE，不把 Go runtime-only policy 冒充原版契約。

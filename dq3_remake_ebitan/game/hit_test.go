@@ -267,6 +267,23 @@ func TestBattleSpellDrawHits(t *testing.T) {
 	}
 }
 
+func TestBattleSpellDrawScrollsToLateSpell(t *testing.T) {
+	b := &Battle{
+		tx: &dq3data.Text{}, phase: phSpell,
+		spells:      []int{121, 122, 123, 124, 125, 126, 180},
+		spellCursor: 6,
+	}
+	rgba := newHitTestRGBA()
+	b.draw(rgba, nil)
+
+	if len(b.hits) != 5 {
+		t.Fatalf("捲動咒文窗應保持5個可點列，得 %d", len(b.hits))
+	}
+	if got := b.hits[4].idx; got != 6 {
+		t.Fatalf("最後可見列應指向 rec180 的原陣列 index6，得 %d", got)
+	}
+}
+
 // TestPanelItemsDrawHits:道具清單(panel.go drawItems)draw 後 hits 筆數對齊 inventory,點列移 panelCursor。
 func TestPanelItemsDrawHits(t *testing.T) {
 	items, err := dq3data.OpenItems(asset(t, "ITEM.DAT"))

@@ -36,6 +36,7 @@ const MaxEnemies = 8
 type enemyUnit struct {
 	monID    int
 	hp, max  int
+	mp       int  // D3MNS +0x04；帕魯朋特的吸 MP 效果會消耗
 	atk, def int  // 有效攻/防(索瑪+光之珠弱化後之值)
 	fled     bool // 本場已逃走(不計入擊殺數→經驗/金錢排除,對齊 C g_fled)
 	status   int  // W3:異常狀態位元(statusParalysis/statusSealed/statusBlind,見下方 const)
@@ -194,7 +195,9 @@ func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps [
 	}
 	b.enemies = make([]enemyUnit, count)
 	for i := range b.enemies {
-		b.enemies[i] = enemyUnit{monID: monID, hp: hpRoll, max: hpRoll, atk: eatk, def: edef}
+		b.enemies[i] = enemyUnit{
+			monID: monID, hp: hpRoll, max: hpRoll, mp: int(st.MP), atk: eatk, def: edef,
+		}
 	}
 	if b.bg == nil && b.scr != nil { // 首戰解碼草原背景(page22,對 game3.png)
 		b.bg, _ = dq3data.DecodePackBG(b.scr, 22)
@@ -434,6 +437,8 @@ func (b *Battle) execSpell(rec int) {
 	case spell.CureStatus: // 基阿里克167/薩梅哈168(remake 簡化:麻痺/混亂/睡眠共用一位元)
 		b.heroStatus &^= statusParalysis
 		b.msg = "狀態解除了!"
+	case spell.Palpunte:
+		b.execPalpunte(b.rng.Next(16))
 	default: // Dmg
 		if def.Target == spell.TargetGroup { // 群體咒:命中每隻存活敵,各自獨立擲值(對齊 C cast_spell_effect)
 			hit := 0
@@ -471,6 +476,113 @@ func (b *Battle) execSpell(rec int) {
 		return
 	}
 	b.afterLeaderAction()
+}
+
+// execPalpunte 執行 rec180 的原版 16 格亂數表。
+//
+// DQ3.EXE file 0xe5d8、DGROUP 0x3908：只有 index 0/2/8/11/12 非 NULL，
+// 其中 2 與 8 共用 handler；其餘 11 格顯示「沒有有效」。此函式接受已擲出的
+// index，讓資料表契約能以不依賴 RNG seed 的測試鎖定。
+func (b *Battle) execPalpunte(effect int) {
+	switch effect {
+	case 0: // effect type3 → 全敵睡眠；再逐一以 150/256 令存活隊員睡眠
+		affected := 0
+		for i := range b.enemies {
+			if !b.enemies[i].alive() {
+				continue
+			}
+			chance, _ := b.mons.SpellChance(b.enemies[i].monID, 59)
+			if b.rng.Next(256) < chance {
+				b.enemies[i].status |= statusParalysis
+				affected++
+			}
+		}
+		if b.heroHP > 0 && b.heroStatus&statusParalysis == 0 && b.rng.Next(256) < 0x96 {
+			b.heroStatus |= statusParalysis
+			affected++
+		}
+		for _, c := range b.companions {
+			if c.hp > 0 && c.status&statusParalysis == 0 && b.rng.Next(256) < 0x96 {
+				c.status |= statusParalysis
+				affected++
+			}
+		}
+		if affected == 0 {
+			b.msg = "但是這個咒文沒有效。"
+		} else {
+			b.msg = "敵我之間瀰漫著睡意‥‥"
+		}
+	case 2, 8: // BP=0x55 → 每名存活隊員回復 85..94，個別擲值並封頂
+		heal := func(cur, max int) int {
+			if cur <= 0 {
+				return cur
+			}
+			n := b.rng.Next(95)
+			for n < 85 {
+				n = b.rng.Next(95)
+			}
+			cur += n
+			if cur > max {
+				cur = max
+			}
+			return cur
+		}
+		b.heroHP = heal(b.heroHP, b.heroMax)
+		for _, c := range b.companions {
+			c.hp = heal(c.hp, c.maxHP)
+		}
+		b.msg = "全體同伴的傷口復原了。"
+	case 11: // sub_1D6C7：各敵依 spellID59 抗性判定，被吹走者不給 EXP/Gold
+		affected := 0
+		for i := range b.enemies {
+			if !b.enemies[i].alive() {
+				continue
+			}
+			chance, _ := b.mons.SpellChance(b.enemies[i].monID, 59)
+			if b.rng.Next(256) < chance {
+				b.enemies[i].hp = 0
+				b.enemies[i].fled = true
+				affected++
+			}
+		}
+		if affected == 0 {
+			b.msg = "但是這個咒文沒有效。"
+		} else {
+			b.msg = "怪物被吹走了。"
+		}
+	case 12: // effect type1：隨機一敵，吸取 1..min(10,MP)-1（原版 0 會改成 1）
+		alive := make([]int, 0, len(b.enemies))
+		for i := range b.enemies {
+			if b.enemies[i].alive() {
+				alive = append(alive, i)
+			}
+		}
+		if len(alive) == 0 {
+			b.msg = "但是這個咒文沒有效。"
+			return
+		}
+		tgt := alive[b.rng.Next(len(alive))]
+		chance, _ := b.mons.SpellChance(b.enemies[tgt].monID, 59)
+		// effect type1 caller file 0xe69a uses JA failure，與其他效果的 JB
+		// success 不同；因此 roll==chance 仍成功。
+		if b.rng.Next(256) > chance || b.enemies[tgt].mp <= 0 {
+			b.msg = "但是這個咒文沒有效。"
+			return
+		}
+		limit := b.enemies[tgt].mp
+		if limit > 10 {
+			limit = 10
+		}
+		drain := b.rng.Next(limit)
+		if drain == 0 {
+			drain = 1
+		}
+		b.enemies[tgt].mp -= drain
+		b.heroMP += drain // 原版直接 add [caster+0x18]，不以 max MP 封頂
+		b.msg = fmt.Sprintf("奪取了 %d 點的MP", drain)
+	default:
+		b.msg = "但是這個咒文沒有效。"
+	}
 }
 
 // afterLeaderAction:隊長行動後 → 同伴自動攻擊(各打第一個存活敵,可能擊倒)→ 敵方回合。
@@ -803,11 +915,15 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 		fillBox(rgba, mx, my, mw, mh, white)
 		b.hits.reset()
 		if b.phase == phSpell {
-			for i, rec := range b.spells {
-				if i >= 5 {
-					break
-				}
-				y := my + 24 + i*16
+			// 原版視窗只有 5 行；已學咒文超過 5 筆時，讓目前游標保持在可見
+			// 範圍內。舊版只畫前 5 筆，游標移到第 6 筆後會成為不可見選項。
+			start := 0
+			if b.spellCursor >= 5 {
+				start = b.spellCursor - 4
+			}
+			for row, i := 0, start; row < 5 && i < len(b.spells); row, i = row+1, i+1 {
+				rec := b.spells[i]
+				y := my + 24 + row*16
 				if i == b.spellCursor {
 					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
 				}
