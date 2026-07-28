@@ -36,7 +36,30 @@ R-3 不死鳥祠堂+六珠+飛行坐騎 ──(基礎;gate 終盤)
 - **驗收**:新遊戲→進酒場門→招募→隊伍成形;無示範隊殘留。
 - 模型:RE 定位=Opus+haiku(warp 截圖);實作=sonnet。
 
-### R-2 沙曼歐莎怪力魔 boss〔獨立中盤;RE spec 已定,2026-07-04〕
+### R-2 沙曼歐莎怪力魔 boss〔2026-07-28 已實作並驗證事件切片〕
+
+**EXE 精確證據（取代下方 2026-07-04 的推測）**：
+
+- handler：`DQ3.EXE` file `0x5682..0x5732`。
+- 入口逐項判定：story flag `0x42` 已設、原版日夜 byte 為夜、CTY `0x2c`（44）、
+  section 1、**玩家座標恰為 `(14,7)`**。沒有 facing 判定；舊「面向 `(14,6)`」是錯誤推測。
+- 揭露：rec97 → clear42/set10 → 重載 NPC → rec98 → battle config 含 monster `0x59`（89）。
+- 戰敗／逃跑：clear10、restore42，可再次使用鏡。
+- 勝利：rec99、強制白天、clear21/set22。EXE 沒有 clear10，因此 remake 也保留 flag10。
+- `D3MNS.DAT` monster89 `+0x26=0x62`、`+0x27=200`，交叉證實變身杖獎勵；
+  拉之鏡 `0x61` 不消耗。
+
+**remake 驗證**：
+
+- `TestMirrorProductionInputTrace` 從合法 CTY44 checkpoint 起，只經 `Game.step`：
+  命令窗 → 道具 → 拉之鏡 → rec97/98 → 怪力魔戰鬥 → 正式攻擊輸入 → 勝利交易。
+- 另有戰敗回滾、勝利旗標／獎勵、CTY44 sec1／日夜／story bits 存讀檔回歸。
+- runtime 圖：`dq3_remake_ebitan/docs/samanosa_mirror_reveal.png`、
+  `samanosa_boss_troll.png`。
+- 證據等級：事件內操作與跨存檔為 E3；**從前一個主線節點自然走到沙曼歐莎仍屬 campaign
+  reachability 缺口**，不可把這個 checkpoint slice 說成全中盤 E3。
+
+<details><summary>2026-07-04 舊 spec（保留作錯誤推測紀錄，不再作實作依據）</summary>
 
 **沙曼歐莎城 = CTY44**(rec71 自報 + `docs/maps/cty/CTY44.png`);**只有 5 個 section sec0-4**
 (先前誤寫 13 = ad-hoc parser 掃過界的垃圾;正確口徑=OpenTown/dq3_scene section 邊界檢查)。
@@ -55,6 +78,8 @@ R-3 不死鳥祠堂+六珠+飛行坐騎 ──(基礎;gate 終盤)
 
 **實作(下週派 sonnet)**:`DQ3_USE_MIRROR` 位置 item-use(CTY44 sec1 面向(14,6)+isNight✅+持0x61)→ 怪89 boss → 勝給0x62+設後旗標+切白天+真王對話切換。isNight() 已備。
 - 模型:RE=Opus(已定 spec);實作=sonnet;行為驗證=game_tester/dump。
+
+</details>
 
 ### R-3 不死鳥祠堂 + 六珠 gate + 飛行坐騎〔基礎大批,gate 終盤〕
 - **RE 定位**:不死鳥祠堂 CTY(諾阿尼魯北雪白陸地,txt03 + cty_loc 上層 + warp);祭壇 NPC 座標;
@@ -93,8 +118,8 @@ R-3 不死鳥祠堂+六珠+飛行坐騎 ──(基礎;gate 終盤)
 
 | 批 | RE 定位 | 實作 | 狀態 |
 |---|---|---|---|
-| R-1 露依達酒場 | ⬜ | ⬜ | 待 |
-| R-2 沙曼歐莎怪力魔 | ✅ **spec 已定**:CTY44(5 sec)/假王 sec1(14,6)夜/真王 sec4(17,31)/怪89→0x62;reveal=位置item-use待實作 | ⬜ 下週派 | RE 完成 |
+| R-1 露依達酒場 | ✅ | ✅ | 正式入口／登錄／招募／正常出城 trace 完成 |
+| R-2 沙曼歐莎怪力魔 | ✅ EXE `0x5682..0x5732`：玩家 `(14,7)`、flags42/10/21/22、rec97-99、怪89 | ✅ 正式 item UI、勝敗交易、存讀檔、runtime 圖 | 事件切片完成；campaign 自然可達性待中盤串接 |
 | R-3 不死鳥+六珠+飛行 | ⬜ | ⬜ | 待 |
 | R-4 巴拉摩斯城+descend | ⬜ | ⬜ | 待(需 R-3)|
 | R-5 龍王城+終盤 wire+拔後門 | ⬜ | ⬜ | 待(需 R-4)|

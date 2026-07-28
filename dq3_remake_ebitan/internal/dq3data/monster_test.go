@@ -25,6 +25,12 @@ func TestMonsters(t *testing.T) {
 	if s2.HPBase != 3 || s2.Exp != 4140 {
 		t.Fatalf("金屬史萊姆 應 HP3/exp4140,得 HP%d/exp%d", s2.HPBase, s2.Exp)
 	}
+	// id89 怪力魔:D3MNS +0x26=0x62 變身杖、+0x27=200、+0x28=11。
+	s89, _ := m.Stat(89)
+	if s89.DropItem != 0x62 || s89.DropRate != 200 || s89.SpawnWeight != 11 {
+		t.Fatalf("怪力魔掉落欄應 item62/rate200/weight11,得 %02x/%d/%d",
+			s89.DropItem, s89.DropRate, s89.SpawnWeight)
+	}
 	// 越界防護
 	if _, ok := m.Stat(MonsterCount); ok {
 		t.Fatal("越界 id 應回 false")

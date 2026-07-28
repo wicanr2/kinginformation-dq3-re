@@ -11,6 +11,8 @@ func TestSaveRoundTrip(t *testing.T) {
 		HeroExp: 4364, HeroHP: 42, HeroGold: 250,
 		Inventory: []int{3, 0x21, 0x1e},
 		PX:        12, PY: 28, InTown: true,
+		StoryBits: []byte{0x80, 0x40}, DNPhase: 2, DNStep: 17,
+		Cty: 44, Section: 1, Layer: 0,
 	}
 	b, err := encodeSave(s)
 	if err != nil {

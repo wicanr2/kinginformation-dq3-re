@@ -9,7 +9,7 @@ func TestKindOf(t *testing.T) {
 		want Kind
 	}{
 		{0x41, HealHP}, {0x42, CurePoison}, {0x43, ReturnTown}, {0x44, Repel},
-		{0x45, CureParalysis}, {0x48, PrayerRing}, {0x5f, DarkLamp},
+		{0x45, CureParalysis}, {0x48, PrayerRing}, {0x5f, DarkLamp}, {0x61, Mirror},
 		{0x5a, Awaken}, {0x0f, Gaia}, {0x5e, Drain}, {0x77, FairyFlute}, {0x75, Rainbow},
 		{0x01, None}, {0x99, None}, // 裝備/未知 → 不可用
 	}
@@ -56,7 +56,7 @@ func TestConsumable(t *testing.T) {
 			t.Errorf("種類 %d 應消耗", k)
 		}
 	}
-	for _, k := range []Kind{PrayerRing, Gaia, Drain, FairyFlute, None} {
+	for _, k := range []Kind{PrayerRing, Gaia, Drain, FairyFlute, Mirror, None} {
 		if k.Consumable() {
 			t.Errorf("種類 %d 不應在此消耗", k)
 		}

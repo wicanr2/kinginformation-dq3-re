@@ -329,13 +329,13 @@ Gate：不用 `DQ3_SHIP` 可自然取得船並航行。
 - 海盜村紅寶珠。
 - 商人建城／黃寶珠。
 - 沙曼歐莎 R-2：
-  `道具選單使用拉之鏡 → CTY44 sec1 面向(14,6) → 夜晚 → rec97/98 → 怪89 →
-  勝後0x62+story flag+白天+NPC切換；敗北不設完成`。
+  `道具選單使用拉之鏡 → CTY44 sec1 玩家站(14,7) → 夜晚 → rec97/98 → 怪89 →
+  勝後0x62+clear21/set22+白天；敗／逃 clear10/restore42`。
 - 變身杖 → 船員之骨 → 幽靈船 → 愛的回憶 → 蓋亞之劍 → 銀寶珠。
 
-R-2 不可只測事件函式；必須從道具 UI 使用 `0x61`。
-R-2 現有位置 spec 仍須回追 item-use dispatcher 的正式 caller 與 flag writes，不能因畫面／攻略吻合
-就跳過 D3。
+R-2 的 handler 與 flag writes 已由 EXE file `0x5682..0x5732` 定案；2026-07-28 已有正式
+`Game.step` trace 從道具 UI 使用 `0x61`、完成戰鬥與 save/load。它仍是合法 checkpoint 的事件切片；
+從上一個攻略節點自然抵達 CTY44 必須在本 P3 campaign trace 補證。
 
 Gate：六顆寶珠均可由正常玩家取得，且存讀檔保持來源事件完成狀態。
 
@@ -457,6 +457,8 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 6. `home → mother → king` transaction 已接；下一步補正式 input trace 與逐格演出。
 7. [x] 反組譯 CTY00 酒場入口與原版出城操作；完整 production input trace 已通過。
 8. 接 `king → tavern → recruit → overworld`。
-9. 再以同一 RE/trace 方法完成 R-2 的 item-use vertical slice。
+9. [x] 以同一 RE/trace 方法完成 R-2 item-use vertical slice；EXE 精確 gate、正式戰鬥輸入、
+   勝敗交易、存讀檔與 runtime 圖均完成。
+10. 下一 sprint 依 P3 攻略順序盤點六珠來源，不直接跳到不死鳥祭壇。
 
 這個順序直接處理過去最大失敗模式：先確保玩家真的走得到，再增加更多孤立機制。

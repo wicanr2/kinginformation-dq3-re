@@ -254,6 +254,7 @@ type Game struct {
 	openingIdx     int           // 開場旁白序號(-1=未進行;0..n=當前句)
 	bossQueue      []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪;或 examine 觸發的座標 boss 鏈)
 	pendingTrigger *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
+	mirrorStage    int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	frame          *ebiten.Image
 	rgba           []byte
 }
@@ -721,6 +722,9 @@ func (g *Game) step(in InputState) error {
 	if g.dlg.open {
 		if in.Confirm {
 			g.dlg.Advance()
+			if !g.dlg.open {
+				g.advanceMirrorEvent()
+			}
 		}
 		g.renderFrame()
 		return nil
@@ -1499,6 +1503,7 @@ func (g *Game) onBattleEnd() {
 			g.runFinale()
 		}
 	}
+	g.settleMirrorBattle()
 	if g.pendingTrigger != nil { // examine 觸發的座標 boss 鏈結算(bosstrigger.go)
 		switch {
 		case g.battle.result == 1 && len(g.bossQueue) == 0: // 鏈全勝(最後一場也贏)→ 給獎勵 + 設旗標

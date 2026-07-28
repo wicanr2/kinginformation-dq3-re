@@ -29,6 +29,12 @@ type saveState struct {
 	PX         int          `json:"px"`
 	PY         int          `json:"py"`
 	InTown     bool         `json:"town"`
+	StoryBits  []byte       `json:"storybits,omitempty"`
+	DNPhase    int          `json:"dnphase,omitempty"`
+	DNStep     int          `json:"dnstep,omitempty"`
+	Cty        int          `json:"cty,omitempty"`
+	Section    int          `json:"section,omitempty"`
+	Layer      int          `json:"layer,omitempty"`
 }
 
 // compSav 是一名同伴的存檔資料。
@@ -50,7 +56,7 @@ func decodeSave(b []byte) (saveState, error) {
 }
 
 func (g *Game) snapshot() saveState {
-	return saveState{
+	s := saveState{
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroStat: g.heroStat, HeroGold: g.heroGold,
 		HeroName: append([]int(nil), g.heroName...), HeroGender: g.heroGender,
 		Inventory: append([]int(nil), g.inventory...),
@@ -60,7 +66,13 @@ func (g *Game) snapshot() saveState {
 		Flags:     flagsToSav(g.flags),
 		ShipOwned: g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PX: g.px, PY: g.py, InTown: g.inTown,
+		StoryBits: append([]byte(nil), g.storyBits[:]...),
+		DNPhase:   g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
 	}
+	if g.inTown && g.cur != nil {
+		s.Section = g.cur.sec
+	}
+	return s
 }
 
 func flagsToSav(f map[int]bool) []int {
@@ -129,11 +141,47 @@ func (g *Game) restore(s saveState) {
 		}
 	}
 	g.shipOwned, g.shipX, g.shipY = s.ShipOwned, s.ShipX, s.ShipY
+	if len(s.StoryBits) == len(g.storyBits) {
+		copy(g.storyBits[:], s.StoryBits)
+	} else {
+		g.initStoryBits() // 舊存檔未含原版旗標：回到原版新遊戲初值
+	}
+	g.dnPhase, g.dnStep = s.DNPhase&3, s.DNStep
+	g.layer, g.curCty = s.Layer, s.Cty
 	g.px, g.py, g.inTown = s.PX, s.PY, s.InTown
 	if s.InTown {
-		g.cur = g.town
+		g.restoreTownScene(s.Cty, s.Section)
 	} else {
-		g.cur = g.over
+		g.cur = g.overworldScene()
+		g.curCty = -1
+	}
+	g.applyDaynightPalette()
+	g.dlg.heroName = append([]int(nil), g.heroName...)
+}
+
+// restoreTownScene 以存檔的 CTY/section/daynight 重建 NPC 狀態；舊存檔的零值自然落在
+// 阿里阿罕 section0。測試或極早初始化若尚無 assets，才退回既有 town 指標。
+func (g *Game) restoreTownScene(cty, section int) {
+	if cty < 0 || cty >= 100 || g.assets == nil {
+		g.cur = g.town
+		return
+	}
+	blkn := 1
+	if cty < len(mapBlkNum) {
+		blkn = mapBlkNum[cty]
+	}
+	ns, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, cty, blkn, section, g.dnPhase, g.storyFlag)
+	if err != nil {
+		g.cur = g.town
+		return
+	}
+	g.town, g.cur, g.curCty = ns, ns, cty
+	if g.towns == nil {
+		g.towns = map[int]*Scene{}
+	}
+	g.towns[cty] = ns
+	if ns.dlgText != nil {
+		g.dlg.tx = ns.dlgText
 	}
 }
 

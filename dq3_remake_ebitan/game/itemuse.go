@@ -78,9 +78,74 @@ func (g *Game) useSelectedItem() {
 	case itemuse.DarkLamp: // 黑暗之燈:強制黑夜(不消耗;城內用時重載當前 section NPC)
 		g.setDaynight(2)
 		g.noticeCode, g.noticeTimer = code, 90
+	case itemuse.Mirror:
+		g.useMirror()
 	default:
 		// 解狀態(無狀態系統)→ 不消耗,對齊原版
 	}
+}
+
+const (
+	ctySamanosa        = 44
+	mirrorSection      = 1
+	mirrorX, mirrorY   = 14, 7
+	monsterBossTroll   = 89
+	itemModChangeStaff = 0x62
+)
+
+// useMirror 還原 DQ3.EXE file 0x5682 的沙曼歐莎假王事件入口。
+// 原版只檢查 flag42、夜晚、CTY44 sec1、玩家座標(14,7)，沒有 facing gate；
+// 拉之鏡是重要物品，成功或失敗都不消耗。
+func (g *Game) useMirror() {
+	if g.mirrorStage != 0 || !g.storyFlag(0x42) || !g.isNight() ||
+		!g.inTown || g.curCty != ctySamanosa || g.cur == nil ||
+		g.cur.sec != mirrorSection || g.px != mirrorX || g.py != mirrorY {
+		return
+	}
+	g.panel = panelNone
+	g.setStoryFlag(0x42, false)
+	g.setStoryFlag(0x10, true)
+	g.reloadTownDaynight()
+	if g.dlg.Open(97) {
+		g.mirrorStage = 1
+	}
+}
+
+// advanceMirrorEvent 串接原版 rec97 → rec98 → monster89。
+func (g *Game) advanceMirrorEvent() {
+	switch g.mirrorStage {
+	case 1:
+		if g.dlg.Open(98) {
+			g.mirrorStage = 2
+		}
+	case 2:
+		if g.startBossBattle(monsterBossTroll) {
+			g.mirrorStage = 3
+		}
+	}
+}
+
+// settleMirrorBattle 還原 0x56ed..0x5732 的勝敗交易。
+// 敗/逃：clear10、restore42；勝：強制白天、clear21、set22、rec99。
+func (g *Game) settleMirrorBattle() {
+	if g.mirrorStage != 3 || g.battle.monID != monsterBossTroll {
+		return
+	}
+	g.mirrorStage = 0
+	if g.battle.result != 1 {
+		g.setStoryFlag(0x10, false)
+		g.setStoryFlag(0x42, true)
+		g.reloadTownDaynight()
+		return
+	}
+	if !g.hasItem(itemModChangeStaff) {
+		g.inventory = append(g.inventory, itemModChangeStaff)
+	}
+	g.setStoryFlag(0x21, false)
+	g.setStoryFlag(0x22, true)
+	g.setDaynight(0)
+	g.dlg.Open(99)
+	g.noticeCode, g.noticeTimer = itemModChangeStaff, 120
 }
 
 // applyHealHP:對第一個未滿且未陣亡的隊員套藥草治療(勇者優先,再同伴)。回是否有人被治療。

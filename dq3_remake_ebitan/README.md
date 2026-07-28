@@ -35,10 +35,16 @@ Ebiten 的**行動裝置 / 觸控 / OGG 音訊是一等公民**,正好消掉 C/S
 
 ![Ebiten remake：冒險者登錄所職業選擇](docs/adventurer_registry.png)
 
+![Ebiten remake：沙曼歐莎夜間使用拉之鏡揭露假王（CTY44 sec1、rec97）](docs/samanosa_mirror_reveal.png)
+
+![Ebiten remake：拉之鏡事件進入怪力魔 89 戰](docs/samanosa_boss_troll.png)
+
 - 性別後依 `sub_ed3c/sub_fa57` 生成並保存 Lv1 能力；選「否」會回到整個創角流程。
 - 出生於 CTY00 sec4 `(5,5)`，只裝備布衣、隊伍只有主角。
 - 母親演出後落在 CTY00 sec0 `(8,38)`。
 - 首次走到王座 region 才取得 50G 與六件給同伴的武器／防具。
+- 沙曼歐莎事件依 EXE 精確 gate `(CTY44, sec1, night, player 14,7, flag42)`，
+  從正式道具 UI 使用拉之鏡後串接 rec97/98、怪力魔 89；勝利取得變身杖並切白天。
 - toolchain:**Ebiten v2.9.9 / Go 1.24 compile + run OK**(全在 docker,不污染 host)。
 
 ## 結構
@@ -116,7 +122,8 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **道具/裝備 DB**（ITEM.DAT，128×7，移植 dq3_combat：攻/防/價/類別/裝備部位）+ 對拍（銅劍攻10價100G/皮甲防8）
   - [x] **設施（宿屋/商店）**（`game/facility.go`，阿里阿罕設施表 baked）：面向設施 NPC → 宿屋扣費治滿、武防/道具店貨架（品項+價+購買扣金入庫）。Xvfb 驗證武防店 7 品項/價正確。
   - [x] **品名（D3TXT00 rec=code+1）**：商店/道具顯真實中文名（檜木棒/木棒/銅劍/布的衣服/皮甲宵/皮盾…，Xvfb 驗證）
-  - [x] **存檔/讀檔**（`game/save.go`）：教會/記錄點存檔（JSON 冒險之書:exp/HP/gold/道具/位置）、開機自動續玩 + round-trip 對拍測試
+  - [x] **存檔/讀檔**（`game/save.go`）：教會/記錄點存檔（JSON 冒險之書：角色、隊伍、道具、
+    原版 story bits、日夜、世界層、CTY/section/座標），讀檔重建正確城鎮 NPC 狀態 + round-trip 測試
   - [x] **狀況/道具面板**（`game/panel.go`）：命令窗 狀況→主角等級/HP/攻防敏/EXP/G、道具→持有品名清單（B 關）
   - [x] **裝備系統**（`game/panel.go`）：裝備槽（武器/鎧/盾/兜，item DB EquipSlot/CanEquip）→ heroStats 攻=力量+武器攻、防=耐力+鎧盾兜防（DQ3.EXE `sub_9521`）；命令窗 裝備→選持有品裝上；串起 商店→背包→裝備→戰鬥；存檔含裝備
   - [x] **場景轉場（多城通用載入）**（`game/worldmap.go`）：dq3x_cty_loc/map_blknum 表（100 筆）→ overworld 位置踩城鎮入口自動進城；loadTownScene 通用載任一 CTY（對應 BLK tileset + NPC）+ 城鎮快取 + 配樂 kind（城堡/迷宮/城鎮）。Xvfb 驗證進 CTY13（BLK5 不同 tileset）成功

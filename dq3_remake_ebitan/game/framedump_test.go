@@ -114,4 +114,27 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.px, g.py, g.facing = 2, 5, 1 // 隔 row4 櫃台面向 b4=3 登錄員
 	g.tavern.open()
 	dump("adventurer_registry")
+	g.tavern.active = false
+
+	// R-2:沙曼歐莎夜間在原版精確座標使用拉之鏡 → rec97 揭露 → 怪力魔89。
+	g.dnPhase = 2
+	g.setStoryFlag(0x42, true)
+	g.setStoryFlag(0x10, false)
+	samanosa, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctySamanosa, mapBlkNum[ctySamanosa], mirrorSection, g.dnPhase, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = samanosa, samanosa, ctySamanosa, true
+	g.px, g.py, g.inventory = mirrorX, mirrorY, []int{0x61}
+	g.dlg.tx = samanosa.dlgText
+	g.useMirror()
+	dump("samanosa_mirror_reveal")
+
+	g.dlg.open, g.mirrorStage = false, 2
+	g.advanceMirrorEvent()
+	if !g.battle.active || g.battle.monID != monsterBossTroll {
+		t.Fatal("拉之鏡揭露後未進怪力魔89戰")
+	}
+	dump("samanosa_boss_troll")
 }

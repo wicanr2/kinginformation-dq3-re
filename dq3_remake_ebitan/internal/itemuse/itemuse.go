@@ -21,6 +21,7 @@ const (
 	Ranaruta                  // 拉那魯達(切晝夜)
 	DarkLamp                  // 黑暗之燈(強制變夜,不消耗)
 	Rainbow                   // 彩虹水滴(位置相關)
+	Mirror                    // 拉之鏡(沙曼歐莎假王揭露,不消耗)
 )
 
 // 消耗品 id(商店交叉驗證,docs/49)。
@@ -32,6 +33,7 @@ const (
 	ItemFullmoon    = 0x45 // 滿月草
 	ItemPrayerRing  = 0x48 // 祈禱之戒
 	ItemDarkLamp    = 0x5f // 黑暗之燈
+	ItemMirror      = 0x61 // 拉之鏡
 )
 
 // 數值常數(classic DQ3 值 / RE 精確值,見 dq3_item_use.h)。
@@ -59,6 +61,8 @@ func KindOf(itemID int) Kind {
 		return PrayerRing
 	case ItemDarkLamp:
 		return DarkLamp
+	case ItemMirror:
+		return Mirror
 	case 0x5a:
 		return Awaken // 覺醒粉(諾阿尼魯解催眠)
 	case 0x0f:
