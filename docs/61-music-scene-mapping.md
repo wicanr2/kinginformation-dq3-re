@@ -113,14 +113,14 @@ MT-32 render 一輪時長:
   game_tester 93/93 無回歸。配曲缺口(CASTLE/ENDING/DUNGEON 0 觸發)已修。
 - **取得 ground truth 的路徑(留給後人)**:① 玩過原版者聽 `work/mt32/track_NN.ogg` 認曲(最快最準);
   ② 試過用原版破關影片做音訊指紋比對(chroma,MT-32 與 SB-FM 都試)——**不可靠**(SFX 疊 music + tempo/音高差 +
-  clip 跨場景),影片的「畫面」可用來定位場景但「聲音」對不出軌號。本環境無 DOSBox 不可逐曲試聽。
+  clip 跨場景),影片的「畫面」可用來定位場景但「聲音」對不出軌號。此輪當時未做逐曲 DOSBox 試聽。
 - ⚠ **城堡清單 best-effort**:BLK tileset 不分城堡 vs 城鎮,城堡靠「名含『城』+ 有國王」清單;
   (使用者:王城=track_1 獨立曲、地表=track_6,兩者不同軌)。
 
 ## 靜態 RE 分析過程(留給後人:我們怎麼推出來的)
 
-> 環境限制:此環境**無 DOSBox runtime**(記憶 `dq3-no-dosbox-debugger`),不能跑原版逐曲聽/逐場景看。
-> 所以一切走**靜態反組譯 + 資料反推**,不靠動態觀察。方法如下。
+> 歷史限制：本段建立時沒有使用 DOSBox runtime，因此結論來自**靜態反組譯 + 資料反推**。
+> 現在本機已有 DOSBox 與完整影片；若要完成配曲 parity，須再做動態逐場景核對。
 
 ### A. CTY → 音樂類型分類(配曲缺口怎麼修的)
 

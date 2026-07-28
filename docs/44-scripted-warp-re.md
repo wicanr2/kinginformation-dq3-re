@@ -185,10 +185,10 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 | 0x6004 | 66 | 61 | dest 1 雷貝 |
 | 0x622a | 75 | 70 | dest 6 |
 
-**結論**:scripted warp 由 ① **子型2 NPC**(byte4∈{33,53,58,61,70})或 ② **runner 0xabb2**(event_id 觸發)
+**歷史結論**:scripted warp 由 ① **子型2 NPC**(byte4∈{33,53,58,61,70})或 ② **runner 0xabb2**(event_id 觸發)
 派發。「event_id 從哪來」對 NPC 路徑 = **NPC byte4**(已解);對純 runner 路徑 = `[0x722]`(docs/31:
-仍資料驅動、無靜態 setter,最難)。⇒ **NPC 觸發的 scripted warp 現在完全靜態可解**(byte4 → handler →
-固定 struct 目的)。剩純 runner 觸發(無 NPC)的事件待動態。
+舊稱「無靜態 setter」已被後續 57 個 setter 與 region hit-test 證據推翻)。NPC 路徑可由
+byte4 → handler → 固定 struct 靜態解出；runner 現況看 `docs/re-log-722-state-machine.md`。
 
 ## 7. overworld 寫死座標 → 旗標條件 CTY 進入(0x39f2 區,dispatcher 0x39cb)
 
@@ -231,8 +231,8 @@ NPC 互動子型 `(byte3>>3)&7`;子型2 → handler 0x6355 → `byte4*2` 索引 
 | `+0xc` 門/階梯/跨CTY/出城 | §1/2 | 走到轉場 tile | ✓ |
 | `0xfe` 下降(Y+300)| §1/2 | 下層 CTY 的 0xfe 出口 | ✓ dual-layer |
 | type-2 examine warp(0x4ea0)| §4 | Enter 事件 tile | ✓ |
-| scripted warp(call 0xd1f9 + struct)| §5b/5c | 子型2 NPC byte4∈{33,53,58,61,70} / runner | ✗ 待接 |
-| **overworld 座標 → 旗標條件 CTY** | §7 | 走到地表特定格 | ✗ 待接(含進下層 36/83)|
+| scripted warp(call 0xd1f9 + struct)| §5b/5c | 子型2 NPC byte4∈{33,53,58,61,70} / runner | 歷史狀態；查 code/docs 73–77 |
+| **overworld 座標 → 旗標條件 CTY** | §7 | 走到地表特定格 | 歷史狀態；查 code/docs 73–77 |
 
 ### ★★ 2026-07-28 更正：首次下降是 CTY72→CTY77→`0xfe`
 

@@ -39,18 +39,19 @@ ground truth(code)**。dated 盤點文件(`docs/47`、`walkthrough-flow-audit`)�
 
 ---
 
-## 3. 第一性原理:靜態反追溯源優先,不退回動態 / DOSBox
+## 3. 第一性原理：靜態追值與動態 oracle 分工
 
-**踩雷**:撞牆就想下「封死 / 要動態 / 需 DOSBox debugger 看 crash 位址」。**此環境根本沒有 DOSBox**。
+**踩雷**：早期曾在缺乏 runtime 工具時把問題一律推給 DOSBox；後來又反過來只做靜態 RE，
+沒有用現成的本機 DOSBox／影片驗收玩家行為。兩個極端都會失敗。
 
 **根因**:「在 overlay / 是 runner 資料驅動 / 看不出來」是 thought-terminating cliché;多數「值/機制
 從哪來」純靜態就能答,且不深。
 
-**鐵則**:
+**鐵則**：
 - 「這值/設定/行為從哪來」→ 一律**先靜態反追**:錨定已知實例 → 找 sink(open/print/查表/扣血)→
   運算元 register-by-register 反走到一張表/一個 header 欄位/一個常數。搜尋落空 = 換 query,非不存在。
-- **不提議 DOSBox debugger / 逐畫面 oracle 當解法或下一步**;真 runtime-only(crash 在哪條指令 fault)
-  且靜態窮盡仍無解 → 標「此環境不驗 / 用使用者指定值」,不掛在 DOSBox 上等。
+- 用 IDA/xref/raw table 回答「為什麼與精確值」；用 DOSBox/影片回答「玩家實際看見與輸入順序」。
+- 兩者交叉驗證；任一來源不足時標待證，不用合理猜測補 production。
 
 **實例**(本專案**純靜態解出**):物理/咒文傷害公式、教會復活費 level 表(DGROUP 0x3c6c)、旅社費
 (設施 block +1)、祈禱之戒 ~25% 損壞、overworld portal 0x396e 全分支、怪物施狀態 base 分類。
@@ -145,6 +146,6 @@ glyph 234=女、別鬼打牆、別依賴 DOSBox)——這些不會過期。**專
 
 ---
 
-> **一句話總結**:**code 是唯一真相**,使用者(破關)是 ground truth,撞牆先靜態反追(別等 DOSBox),
+> **一句話總結**：code 證明目前實作，原版證據決定應有行為；撞牆先靜態反追並用實機 oracle 驗收，
 > 斷言前先驗證,改測試過的系統用「NULL=現行」零回歸,盤點文件會過期要回頭改,記憶只存教訓,
 > 資產 pipeline 先列舉所有同類檔(別漏 EBG 那種獨立檔)。

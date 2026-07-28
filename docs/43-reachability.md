@@ -82,11 +82,10 @@ map_graph.json 後,結果與最初一致**(下層不可達)。教訓:分析器�
 - **編碼已驗證**(handler 0x9f32):`bx=param*3; 結構@0x2521={?,cur_map=[0xd71],dest=warp[0],X=warp[1],
   Y=warp[2]}; call 0xd1f9`。dest=目的 map/CTY、(X,Y)=落點。dest 為有效 CTY(2,5,8,9)→ 載該城,
   我的 wiring 正確;`dq3_dialogue_test` 驗 `warp[0]=CTY2(40,1)`。
-- 剩:`dest≥100` 的 overworld 回程 warp —— dest 分派在 0xd1f9 的多 sub(0xd2a5 setup / 0xd966 判路徑)
-  內,要更深 RE;remake 暫 guard(`dest<100` 才接,其餘退回對話)。NPC 0xd1f9 warp(子型2 byte4 33-36,
-  handler 入口在指令中段、反組譯需精準對齊)+ 純 runner 0xabb2(阿里阿罕首旅の扉、下降)仍待收尾。
+- 本段是早期 C remake 盤點；`dest≥100` 與 NPC warp 的歷史缺口需查 code 核實。
+  首次下降已由 CTY72→CTY77→`0xfe` 原版資料鏈接通，不再屬 runner 待辦（見 `docs/76`）。
 
-## 可破關路線圖(剩餘 gate)
+## 可破關路線圖（歷史盤點，現況改看 docs/74）
 
 1. **下降事件(gate 1,進行中)**:RE file 0x3804 區的 overworld 下降(設 Y+300 / [0x5051]),
    接成地表特定點 → 下層。remake 暫用 dev 鍵 `U` 代。dual-layer + 0xfe 已就緒,只差觸發。

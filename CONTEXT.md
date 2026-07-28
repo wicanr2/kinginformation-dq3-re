@@ -110,7 +110,8 @@
   [`45`](docs/45-binary-structures.md) 二進位結構彙整 · [`42`](docs/42-npc-dialogue.md) NPC 對話
 - [`48`](docs/48-ship-navigation.md) 船航行 · [`50`](docs/50-ship-acquisition.md) 取船 ·
   [`51`](docs/51-palette-and-overworld-sprites.md) palette/地表 sprite · [`46`](docs/46-debug-hook.md) DEBUG 口 ·
-  [`47`](docs/47-remaining-work.md) 剩餘工作盤點
+  [`69`](docs/69-why-remake-looked-done-but-wasnt.md) 失敗經驗與防再犯方法、
+  [`74`](docs/74-ebiten-remake-completion-plan.md) 現行完成計畫
 
 ### 資料 / 研究(`docs/data/`)
 - [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·
