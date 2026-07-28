@@ -45,6 +45,26 @@ func TestKnownAllKeepsFieldSpells(t *testing.T) {
 	}
 }
 
+func TestOriginalMPCostTable(t *testing.T) {
+	cases := map[int]int{
+		123: 12, // 美拉宙瑪：舊 remake 誤用 10
+		151: 6,  // 拜基魯多：舊 remake 誤用 8
+		165: 62, // 比荷瑪順：精訊版特有高 cost
+		172: 8, 173: 8, 176: 4, 177: 12,
+	}
+	for rec, want := range cases {
+		if got := MPCost(rec); got != want {
+			t.Errorf("rec%d MP=%d want EXE %d", rec, got, want)
+		}
+		if d, ok := GetDef(rec); ok && d.MP != want {
+			t.Errorf("rec%d Def.MP=%d want EXE %d", rec, d.MP, want)
+		}
+	}
+	if MPCost(120) != -1 || MPCost(181) != -1 {
+		t.Fatal("咒文表範圍外應回 -1")
+	}
+}
+
 func TestSpellDefAndCast(t *testing.T) {
 	d, ok := GetDef(121)
 	if !ok || d.MP != 2 || d.Base != 10 || d.Kind != Dmg {

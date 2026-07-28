@@ -68,18 +68,23 @@ for base, nm in SCHOOLS.items():
     lines.append('};')
     lines.append('const int dq3_school_%s_n = %d;' % (nm.lower(), len(lst)))
     lines.append('')
-open('dq3_remake/src/dq3_spells_table.c', 'w').write('\n'.join(lines))
+def write_if_changed(path, text):
+    try:
+        if open(path).read() == text:
+            return
+    except FileNotFoundError:
+        pass
+    open(path, 'w').write(text)
+
+write_if_changed('dq3_remake/src/dq3_spells_table.c', '\n'.join(lines))
 print('wrote dq3_remake/src/dq3_spells_table.c  HERO=%d PRIEST=%d MAGE=%d'
       % (counts['HERO'], counts['PRIEST'], counts['MAGE']))
 
-# ---- 咒文施放 descriptor:DQ3.EXE 0x37c4 表(3 byte/咒,docs/13)----
-# b0=base 威力、b1=目標類別(bits0x18:0x08單/0x18組/0x10全)、b2 未用。
-# 施放公式(0xc22e)= base/2 + rng(base/2)。MP 用 DQ3 標準值(EXE MP 來源未定位)。
-DESC = 0x37c4
+# ---- 咒文施放 descriptor:DQ3.EXE DS:0x37c3 表(3 byte/咒,docs/13/78)----
+# b0=MP、b1=base 威力、b2=目標/field-effect flags。
+# 玩家施法 file 0x1cb61..0x1cb84 直接用 b0 檢查並扣 caster [member+0x18]。
+DESC = 0x37c3
 HEAL_IDS = {40, 41, 42, 43, 44}          # 荷依米系
-# DQ3 標準 MP(BBS 佐證);spell_id→MP
-MP = {0:2,1:6,2:10, 3:4,4:6,5:10, 6:5,7:8,8:15, 9:3,10:5,11:8,12:11,
-      13:4,14:8,15:12, 16:4,17:15, 40:3,41:5,42:7,43:18,44:36}
 def tgt(b1):
     c = b1 & 0x18
     return {0x08:'DQ3_TG_ENEMY1', 0x18:'DQ3_TG_GROUP', 0x10:'DQ3_TG_ALL'}.get(c, 'DQ3_TG_ENEMY1')
@@ -87,21 +92,20 @@ def tgt(b1):
 defs = []
 for sid in range(48):
     o = DG + DESC + sid * 3
-    b0, b1 = d[o], d[o + 1]
-    if b0 == 0:                # 輔助/狀態咒(無傷害威力)— 暫不列為可施放
+    mp, base, flags = d[o], d[o + 1], d[o + 2]
+    if base == 0:              # 輔助/狀態咒(無傷害威力)— 暫不列為可施放
         continue
     rec = sid + 0x79
     if sid in HEAL_IDS:
         kind, target = 'DQ3_SK_HEAL', ('DQ3_TG_ALLYALL' if sid in (43, 44) else 'DQ3_TG_ALLY1')
     else:
-        kind, target = 'DQ3_SK_DMG', tgt(b1)
-    mp = MP.get(sid, 6)
-    defs.append((rec, mp, b0, kind, target, recname(rec)))
+        kind, target = 'DQ3_SK_DMG', tgt(flags)
+    defs.append((rec, mp, base, kind, target, recname(rec)))
 
 dl = ['/* dq3_spelldef.c — 咒文施放 descriptor(生成檔,tools/gen_spells.py)。',
-      ' * base 威力 / 目標 由 DQ3.EXE 0x37c4 表抽出(3 byte/咒:b0=base、b1=目標類別 bits0x18);',
-      ' * 公式 base/2+rng(base/2)(docs/13 file 0xc22e)、魔甲減半 #7b。MP 為 DQ3 標準值',
-      ' * (EXE MP 來源未定位)。spell_id = rec - 0x79。請勿手改,改 tools/gen_spells.py。 */',
+      ' * MP/base/目標由 DQ3.EXE DS:0x37c3 抽出(3 byte/咒:b0=MP、b1=base、b2=flags);',
+      ' * 公式 base/2+rng(base/2)(docs/13 file 0xc22e)、魔甲減半 #7b。',
+      ' * spell_id = rec - 0x79。請勿手改,改 tools/gen_spells.py。 */',
       '#include "dq3_spell.h"', '#include <stddef.h>', '',
       'static const dq3_spell_def DEFS[] = {']
 for rec, mp, base, kind, target, nm in defs:
@@ -127,5 +131,5 @@ for r in range(0, 48, 12):
     dl.append('    ' + ', '.join('%d' % bit2rec[r + j] for j in range(12) if r + j < 48) + ',')
 dl.append('};')
 dl.append('')
-open('dq3_remake/src/dq3_spelldef.c', 'w').write('\n'.join(dl))
+write_if_changed('dq3_remake/src/dq3_spelldef.c', '\n'.join(dl))
 print('wrote dq3_remake/src/dq3_spelldef.c  (%d 可施放咒,EXE base + 怪物 bit remap)' % len(defs))

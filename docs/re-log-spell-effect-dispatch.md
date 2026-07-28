@@ -1,5 +1,10 @@
 # RE 攻關日誌:咒文效果型別 dispatcher(monster-status 解鎖)
 
+> 2026-07-28 更正：本日誌從 `0x37c4` 起讀，漏掉 descriptor 的第一 byte。
+> 完整表其實從 DGROUP `0x37c3` 起：`MP/base/flags`。以下 Step 6–9 保留當時
+> 排除錯誤假設的過程，不再作為欄位位移或 MP 的 oracle；現行結論見
+> `docs/13-exe-battle.md` 與 `docs/78-field-spell-re.md`。
+
 > 目標:找出「每個咒文的效果型別(傷害/回復/睡眠/麻痺/…)從哪來」,以接「怪物施狀態」。
 > 線索:docs/13 提效果分類 dispatcher `0xbfd0`(依 `dl` 分流);docs/37 提 cast handler `0xad4c`
 > (`[0x2511]=spell_id`)。**逐步記錄,成功失敗都留**——位址基準(file vs logical+0x1370)是常見坑。
@@ -88,8 +93,8 @@ L0af79: pop bp ; cmp bp,0 ; je 0xc2f2 ; jne → jmp 0xc1f7  ; ★ base>0 → 套
 ## 結論(9 步 trace 後):效果型別是「程序式」,無乾淨查表
 
 **確立事實**:
-1. cast handler 讀 descriptor `0x37c4`(`bx=spell_id*3`):**只有 b0=base、b1=target**,
-   **無獨立「效果型別」byte**(b2 經 Step6 證實同家族不同,非效果型別)。
+1. 此輪觀察到的 `0x37c4/0x37c5` 是完整 descriptor 的 **b1=base、b2=flags**；
+   b0=MP 位於 `0x37c3`，後續已由 field caster consumer 證實。
 2. 效果由 **base 值分類**(程式 `cmp bp,0` 等):
    - **base==0** → 狀態/輔助咒(走非傷害路徑)
    - **base==255** → 即死/特殊(沙基ザキ系)

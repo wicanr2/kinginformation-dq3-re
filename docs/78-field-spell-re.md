@@ -3,9 +3,16 @@
 本文件只記可重用證據與未決事項。目標是避免後續又從 C remake 的近似值反推原版。
 位址皆為原始 `DQ3.EXE` file offset；分析以 `tools/dis.sh` 與 IDA Pro 9.4 交叉確認。
 
-## 魯拉：已證實（D2）
+## 真正的咒文施放路徑：已證實（D2）
 
-- `0x5dfc`：魯拉入口；`0x5e55` 建立目的地選單；`0x5f9b` 執行傳送。
+- `0x1c9ee`：咒文選單；`0x1cb3c`：field caster。後者以
+  `spellID = rec-0x79`、stride 3 查 DGROUP `0x37c3`：
+  byte0=MP、byte1=base、byte2=target/effect flags，先檢查並扣施法者 `[member+0x18]` MP。
+- field effect pointer table 位於 DGROUP `0x38cc`，以 `spellID-0x28` 索引。
+- 真正魯拉 handler 是 file `0xe0da`；它通過場景 gate 後呼叫
+  `0xe288 → 0x5e66 → 0x5f9b`（16-bit near-call IP 回繞）。
+- `0x5e66` 建立目的地選單；`0x5f9b` 執行傳送。相同目的地效果也會被回城道具共用；
+  舊文件把 `0x5140` 道具派發入口直接稱作魯拉入口，口徑錯誤。
 - DGROUP `0x0ac0` 的目的地 index → CTY：
   `0,1,2,3,4,6,12,16,15,17,47,21,39,43,38,79,81,84,85,86`。
 - `0x5e66` 讀 `[CTY + 0x506a]` 的造訪 bit，只有已解鎖目的地進選單。
@@ -17,20 +24,31 @@
 Ebiten 已接正式命令窗 → 咒文 → 目的地，成功選定後才扣 MP；已造訪城鎮會存檔。
 舊存檔只安全遷移必然起點 CTY0 與讀檔時所在城鎮，不猜測其他旅行紀錄。
 
-## 尚未證實（不得標 faithful）
+## MP 與場景 gate：已證實（D2）
 
-- 魯拉、烈米特、特黑洛斯、拉那魯達的精訊版 MP 值。目前 8/6/2/8 來自舊 C
-  remake／經典資料，屬 D1。
-- 烈米特的完整 handler、允許場景 gate、入口座標來源與副作用。目前 Ebiten 的
-  「迷宮 music 類型內才可用，回 remembered overworld」是可玩近似。
-- 特黑洛斯的原版步數、弱怪判定；目前 `repel=64` 為既有 remake 設定。
-- 拉那魯達的原版時間狀態交易；目前只切換既有 day/night phase。
+| rec | 咒文 | MP | handler | 已證實效果 |
+|---|---|---:|---|---|
+| 172 | 魯拉 | 8 | `0xe0da` | 地表可用；CTY 需 section header `+0x10 bit0`，再進共用 20 城選單 |
+| 173 | 烈米特 | 8 | `0xe10c` | 必須在 CTY scene 且 header `+0x10 bit1`，成功後回地表 remembered position |
+| 176 | 特黑洛斯 | 4 | `0xe19c` | 設世界 repel flag，`[0x52f6]=0x28`（40 步） |
+| 177 | 拉那魯達 | 12 | `0xe1ab` | CTY scene 內拒絕；地表切換 day/night state 並重載 palette |
+
+Ebiten 已新增 CTY `MapFlags` parser，移除「用 dungeon BGM 猜烈米特可用」的舊 gate，
+並將 MP 與特黑洛斯步數改為上表原值。
+
+## 尚未證實／尚未完成（不得標 faithful）
+
+- handler 中 `0xd75`、world flag `0x4f46 bit0x80` 等較少見魯拉禁止狀態，Ebiten 尚無
+  一一對應的世界狀態欄位。
+- 因帕斯、托拉瑪那、阿巴卡姆等其餘 field effect 尚未完整接入 Ebiten 選單。
+- 拉那魯達的四相位 clock 與原版二值 `[0x526c]` 的逐步映射仍需 DOSBox 對拍。
 
 ## 後續 IDA 工作方式
 
 1. 保存 IDB，不再每輪只產生孤立的線性 disassembly。
-2. 將 `0x5dfc/0x5e55/0x5f9b`、`0x0ac0`、`0x506a` 命名，建立 caller/xref。
-3. 從咒文 dispatch table 反查 rec172/173/176/177 的 handler 與 MP consumer。
+2. 將 `0x1c9ee/0x1cb3c/0xe0da/0xe10c`、`0x37c3/0x38cc`、`0x0ac0/0x506a`
+   命名，建立 caller/xref。
+3. 續追 rec174/175/178/179/180 的 field handler 與可見副作用。
 4. 每個結論記錄 writer → table → consumer → 可見副作用；只有完整鏈才升 D3。
 5. 用 DOSBox 同狀態輸入作最終仲裁，再鎖 production-input 與 save/load 測試。
 

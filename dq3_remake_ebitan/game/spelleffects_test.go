@@ -72,7 +72,7 @@ func TestSukaraBuffsPartyDef(t *testing.T) {
 	}
 	t.Logf("史卡拉守備 buff ✓:100%% avg=%.2f → 150%% avg=%.2f", base, buffed)
 
-	// 施放本身:partyDefPct 應變 150,MP 正確扣除(近似值,見 internal/spell/spell.go 註解)。
+	// 施放本身:partyDefPct 應變 150，MP 依 EXE DS:0x37c3 扣除。
 	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
 	hero := heroParams{level: 4, curHP: 999, maxHP: 999, atk: 1, def: 40, agi: 1, mp: 99, maxMP: 99}
 	if !b.startGroup(101, 1, 1, hero, nil) {
@@ -84,7 +84,7 @@ func TestSukaraBuffsPartyDef(t *testing.T) {
 		t.Fatalf("史卡拉施放後 partyDefPct 應為150,得 %d", b.partyDefPct)
 	}
 	if want := mp0 - 3; b.heroMP != want {
-		t.Fatalf("史卡拉應扣3 MP(近似值),得 heroMP=%d(want %d)", b.heroMP, want)
+		t.Fatalf("史卡拉應依 EXE 扣3 MP,得 heroMP=%d(want %d)", b.heroMP, want)
 	}
 }
 

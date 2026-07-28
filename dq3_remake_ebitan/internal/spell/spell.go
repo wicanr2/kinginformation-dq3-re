@@ -40,6 +40,24 @@ type Def struct {
 	Target        Target // 僅 Dmg 咒有意義(對齊 W2 多敵戰鬥:單體咒指定目標、群體咒全部命中)
 }
 
+// mpCosts 是 DQ3.EXE DGROUP 0x37c3 起、60 筆×3-byte spell descriptor 的第 0 byte。
+// 原版 field/battle caster file 0x1cb61..0x1cb84 以 spellID*3 查此 byte並扣 caster MP。
+// rec = spellID + 0x79。這取代舊 C remake 的 FC 推測值。
+var mpCosts = [...]int{
+	2, 6, 12, 4, 6, 12, 5, 9, 18, 3, 6, 9, 12, 4, 6, 9, 8, 30, 7, 7,
+	1, 24, 2, 3, 3, 3, 4, 7, 3, 0, 6, 5, 12, 3, 4, 3, 8, 4, 6, 6,
+	3, 5, 7, 18, 62, 3, 6, 3, 10, 20, 18, 8, 8, 3, 2, 4, 12, 15, 0, 20,
+}
+
+// MPCost 回精訊版 EXE 的原生 MP cost；非咒文 record 回 -1。
+func MPCost(rec int) int {
+	i := rec - 0x79
+	if i < 0 || i >= len(mpCosts) {
+		return -1
+	}
+	return mpCosts[i]
+}
+
 // 勇者系習得表(dq3_school_hero,18 咒,按等級)。
 var heroSchool = []Learn{
 	{2, 121}, {4, 161}, {6, 143}, {7, 172}, {10, 124}, {12, 160}, {14, 173}, {16, 144},
@@ -53,35 +71,35 @@ var heroSchool = []Learn{
 var defs = map[int]Def{
 	121: {121, 2, 10, Dmg, TargetSingle},    // 美拉
 	122: {122, 6, 80, Dmg, TargetSingle},    // 美拉米
-	123: {123, 10, 180, Dmg, TargetSingle},  // 美拉宙瑪
+	123: {123, 12, 180, Dmg, TargetSingle},  // 美拉宙瑪
 	124: {124, 4, 20, Dmg, TargetGroup},     // 吉拉
 	125: {125, 6, 35, Dmg, TargetGroup},     // 比吉拉瑪
-	126: {126, 10, 100, Dmg, TargetGroup},   // 比吉拉肯
+	126: {126, 12, 100, Dmg, TargetGroup},   // 比吉拉肯
 	127: {127, 5, 20, Dmg, TargetGroup},     // 伊歐
-	128: {128, 8, 60, Dmg, TargetGroup},     // 伊歐拉
-	129: {129, 15, 140, Dmg, TargetGroup},   // 伊歐那順
+	128: {128, 9, 60, Dmg, TargetGroup},     // 伊歐拉
+	129: {129, 18, 140, Dmg, TargetGroup},   // 伊歐那順
 	130: {130, 3, 30, Dmg, TargetSingle},    // 希亞多
-	131: {131, 5, 50, Dmg, TargetGroup},     // 希亞達可
-	132: {132, 8, 70, Dmg, TargetGroup},     // 希亞達依恩
+	131: {131, 6, 50, Dmg, TargetGroup},     // 希亞達可
+	132: {132, 9, 70, Dmg, TargetGroup},     // 希亞達依恩
 	161: {161, 3, 30, Heal, TargetSingle},   // 荷依米
 	162: {162, 5, 85, Heal, TargetSingle},   // 比荷依米
 	163: {163, 7, 255, Heal, TargetSingle},  // 比荷瑪
-	165: {165, 36, 255, Heal, TargetSingle}, // 比荷瑪順
+	165: {165, 62, 255, Heal, TargetSingle}, // 比荷瑪順
 
 	// 輔助/狀態咒(base==0,dq3_spelldef.c 生成表未收錄——該表只列 DMG/HEAL 有威力值的咒;
 	// docs/data/spell-effects-research.md 為 remake 定義的效果模型,W3 補上玩家可施放的 descriptor。
-	// MP 沿用 DQ3(FC)經典值(EXE 未列 base==0 咒的 MP 位置,未逐一 RE→標「近似」);Base 恆 0,
+	// MP 由 EXE 0x37c3 descriptor 第 0 byte 證實；Base 恆 0,
 	// 不進 CastValue(這些 Kind 不算傷害/回復量,見 game/battle.go execSpell)。
-	144: {144, 2, 0, Sleep, TargetSingle},      // 拉里荷(近似 MP)
-	151: {151, 8, 0, BuffAtk, TargetSingle},    // 拜基魯多(近似 MP)
-	152: {152, 4, 0, Sleep, TargetSingle},      // 美達巴尼(近似 MP)
-	154: {154, 3, 0, BuffDef, TargetSingle},    // 史卡拉(近似 MP)
-	155: {155, 4, 0, BuffDef, TargetSingle},    // 史克魯多(近似 MP;remake 簡化全體我方共用同一 partyDefPct,見 battle.go)
-	156: {156, 3, 0, Seal, TargetSingle},       // 瑪荷頓(近似 MP)
-	158: {158, 4, 0, Blind, TargetSingle},      // 瑪努莎(近似 MP)
-	166: {166, 2, 0, CurePoison, TargetSingle}, // 基阿里(近似 MP)
-	167: {167, 4, 0, CureStatus, TargetSingle}, // 基阿里克(近似 MP)
-	168: {168, 3, 0, CureStatus, TargetSingle}, // 薩梅哈(近似 MP)
+	144: {144, 3, 0, Sleep, TargetSingle},      // 拉里荷
+	151: {151, 6, 0, BuffAtk, TargetSingle},    // 拜基魯多
+	152: {152, 5, 0, Sleep, TargetSingle},      // 美達巴尼
+	154: {154, 3, 0, BuffDef, TargetSingle},    // 史卡拉
+	155: {155, 4, 0, BuffDef, TargetSingle},    // 史克魯多(remake 簡化全體我方共用同一 partyDefPct,見 battle.go)
+	156: {156, 3, 0, Seal, TargetSingle},       // 瑪荷頓
+	158: {158, 4, 0, Blind, TargetSingle},      // 瑪努莎
+	166: {166, 3, 0, CurePoison, TargetSingle}, // 基阿里
+	167: {167, 6, 0, CureStatus, TargetSingle}, // 基阿里克
+	168: {168, 3, 0, CureStatus, TargetSingle}, // 薩梅哈
 }
 
 // 僧侶系(24)/ 魔法系(31)習得表(自 dq3_school_priest/mage)。

@@ -17,9 +17,12 @@ type fieldSpellDef struct {
 	mp  int
 }
 
-// MP 沿用既有 C remake 的待 RE 值；選單與效果分派不再把魯拉、烈米特合併。
+// MP 來自 DQ3.EXE DGROUP 0x37c3 spell descriptor 第 0 byte。
 var fieldSpellDefs = [...]fieldSpellDef{
-	{fieldRura, 8}, {fieldRemitto, 6}, {fieldToheros, 2}, {fieldRanaruta, 8},
+	{fieldRura, spell.MPCost(fieldRura)},
+	{fieldRemitto, spell.MPCost(fieldRemitto)},
+	{fieldToheros, spell.MPCost(fieldToheros)},
+	{fieldRanaruta, spell.MPCost(fieldRanaruta)},
 }
 
 type fieldSpellChoice struct {
@@ -76,7 +79,7 @@ func containsRec(xs []int, want int) bool {
 }
 
 func (g *Game) fieldSpellCaster(rec int) int {
-	if containsRec(spell.KnownAll(0, g.heroStatsLevel()), rec) {
+	if g.heroHP > 0 && containsRec(spell.KnownAll(0, g.heroStatsLevel()), rec) {
 		return 0
 	}
 	for i, m := range g.companions {
@@ -174,13 +177,18 @@ func (g *Game) fieldSpellInput(in InputState) {
 	}
 	switch c.rec {
 	case fieldRura:
+		// 原版 field handler file 0xe0da：地表可用；CTY section 僅 mapFlags bit0 可用。
+		if g.inTown && (g.cur == nil || g.cur.mapFlags&1 == 0) {
+			return
+		}
 		if len(g.visitedTowns) == 0 {
 			return
 		}
 		m.pending = c
 		m.dest, m.cursor = true, 0 // 選定目的地後才扣 MP
 	case fieldRemitto:
-		if !g.inTown || ctyMusicTrack(g.curCty) != trackDungeon {
+		// 原版 file 0xe10c：scene state 必須為 CTY，且 section header +0x10 bit1。
+		if !g.inTown || g.cur == nil || g.cur.mapFlags&2 == 0 {
 			return
 		}
 		if g.spendFieldMP(c.caster, c.mp) {
@@ -189,10 +197,13 @@ func (g *Game) fieldSpellInput(in InputState) {
 		}
 	case fieldToheros:
 		if g.spendFieldMP(c.caster, c.mp) {
-			g.repel = 64
+			g.repel = 0x28 // handler file 0xe19c 寫 [0x52f6]=0x28
 			m.active = false
 		}
 	case fieldRanaruta:
+		if g.inTown { // handler file 0xe1ab：scene state==CTY 時拒絕。
+			return
+		}
 		if g.spendFieldMP(c.caster, c.mp) {
 			g.toggleDaynight()
 			m.active = false

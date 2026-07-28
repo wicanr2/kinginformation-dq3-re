@@ -9,6 +9,7 @@ type Town struct {
 	Cells          []byte   // 每格 tile 索引(u16 低 byte;高 byte=事件 subid,渲染不用)
 	SpawnX, SpawnY int      // 版面 spawn(section header +0x13/+0x14)
 	DlgBank        int      // 對話 bank(section header +0x17 → D3TXT0<bank>.TXT)
+	MapFlags       byte     // section header +0x10；bit0=魯拉可用、bit1=烈米特可用
 	HiMap          []byte   // 每格高 byte(低 5 bit = 事件/轉場 subid)
 	Events         [][3]int // section 事件表(section+8):{type, param, p2}
 	Transitions    [][4]int // section 轉場表(section+0xc):{destCty, destSec, x, y},by subid
@@ -65,10 +66,11 @@ func OpenTown(cty []byte, section int, night bool) (*Town, error) {
 	}
 	t := &Town{
 		W: w, H: h,
-		Cells:   make([]byte, w*h),
-		SpawnX:  int(cty[so+0x13]), // spawn_x(section header)
-		SpawnY:  int(cty[so+0x14]), // spawn_y
-		DlgBank: dlgBank,
+		Cells:    make([]byte, w*h),
+		SpawnX:   int(cty[so+0x13]), // spawn_x(section header)
+		SpawnY:   int(cty[so+0x14]), // spawn_y
+		DlgBank:  dlgBank,
+		MapFlags: cty[so+0x10],
 	}
 	t.HiMap = make([]byte, w*h)
 	for i := 0; i < w*h; i++ {

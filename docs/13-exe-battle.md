@@ -302,7 +302,7 @@ else:                              ; 一般
 > (atk40/def20:roll0=10、roll255=14、會心=20;弱攻 roll0→1、roll255→miss)。
 > D3MNS 怪物 `+0x08`(攻)/`+0x09`(防)欄即代入此式(docs/16 推定欄由此坐實用途)。
 
-## 咒文系統 RE(部分:機制已定位,靜態 descriptor 表待續)
+## 咒文系統 RE（descriptor 與 MP 已定位）
 
 追傷害套用路徑(由 codecave note「咒文扣血路徑 file 0xc22e」起手),已定位咒文系統骨架:
 
@@ -316,16 +316,18 @@ else:                              ; 一般
 
 **已確認**:咒文傷害 = `base/2 + rng(base/2)`,魔甲(裝備碼 0x2b)再減半(對齊 #7b);傷害寫回目標 HP `[di+0x16]`。咒文名 rec = `spell_id + 0x79`(同 docs/16)。
 
-**未定位(待續)**:玩家施法的**靜態 per-spell descriptor 表**(effect_type / base power / MP cost / target by spell_id)。傷害 base 在追到的路徑是 runtime 值(`[si+0x2339]`),玩家咒文的固定威力來源(美拉≈小、美拉米≈中…)與 MP 消耗表尚未定位——玩家施法路徑與此處的敵方攻擊路徑不同;`[0x2339]` 在 EXE 為 0(runtime),`0x2511` 多處被設成特定 spell_id 供訊息,非威力索引。需再追玩家「咒文」指令 → 選咒 → 扣 MP → 設 base 的那段。
-
-> 戰鬥施法 **已接**(2026-06,更正下方舊註):remake 自建咒文 descriptor 表(`dq3_spelldef.c` / `tools/gen_spells.py`、`include/dq3_spell.h` `dq3_spell_def`),戰鬥實際施法(`dq3_battlescene.c` `pick_caster_spell_kind` + 傷害/MP)。
-> (歷史脈絡:當初因「靜態威力 / MP 表未在 EXE 定位、不憑 BBS 值湊」而暫緩;後改以自建 descriptor 表落地,非從 EXE 抽威力表。)
+**2026-07-28 更正**：玩家施法 `file 0x1cb61..0x1cb84` 已把靜態表定錨為
+DGROUP `0x37c3` 起、60 筆×3 byte：`b0=MP cost、b1=base、b2=target/effect flags`。
+程式以 `spellID*3` 取 `b0`，和施法者 `[member+0x18]` 比較後直接扣除。field effect
+另由 DGROUP `0x38cc` 指標表派發。舊段落把表起點記成 `0x37c4`，因此漏看前一 byte
+而誤稱 MP 未定位；`tools/gen_spells.py` 與兩版 remake 已改用原值。
 
 ## 咒文效果型別:狀態咒辨識的 RE 現況(monster-status 分析)
 
-為接「怪物施狀態(中毒/麻痺)」分析了咒文 descriptor 表(0x37c4,3 byte/咒):
-- **b0=base、b1=target(bits)、b2 第三 byte**。逐家族驗:b2 在同系咒(美拉0x06/美拉米0x0c/
-  美拉宙瑪0x04)**不同** → **b2 不是效果型別**(可能動畫/音效 id)。
+為接「怪物施狀態(中毒/麻痺)」分析了咒文 descriptor 表
+(`0x37c3`,3 byte/咒):
+- **b0=MP、b1=base、b2=target/effect flags**。早期從 `0x37c4` 開始讀，曾將
+  base/flags 誤標為 b0/b1；現以玩家 caster 的 MP consumer 修正表界。
 - **base==255 = 特殊/即死標記**(rec139-142=沙基/沙拉基 ザキ/ザラキ 即死系;rec163/165=
   比荷瑪 全回復)。**非**狀態咒(睡/麻痺)。
 - ⇒ 「狀態咒(ラリホー睡/マヌーサ幻)的效果型別」**不在這張表** → 在效果 dispatcher

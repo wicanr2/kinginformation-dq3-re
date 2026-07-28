@@ -17,6 +17,8 @@ func fieldSpellGame(t *testing.T, level int) *Game {
 	g.showTitle, g.openingIdx = false, -1
 	g.heroExp = stats.ExpForLevel(0, level)
 	g.ensureHeroStats()
+	_, maxHP, _, _, _ := g.heroStats()
+	g.heroHP = maxHP
 	g.heroMP = 99
 	return g
 }
@@ -76,8 +78,8 @@ func TestRemittoProductionInputDungeonOnly(t *testing.T) {
 		t.Fatalf("迷宮內烈米特應回入口地表：town=%v @(%d,%d) modal=%v",
 			g.inTown, g.px, g.py, g.fieldSpell.active)
 	}
-	if g.heroMP != mp0-6 {
-		t.Fatalf("烈米特成功後應扣 6 MP：got %d want %d", g.heroMP, mp0-6)
+	if g.heroMP != mp0-8 {
+		t.Fatalf("烈米特成功後應依 EXE 扣 8 MP：got %d want %d", g.heroMP, mp0-8)
 	}
 }
 
@@ -124,6 +126,53 @@ func TestRemittoOutsideDungeonDoesNotSpend(t *testing.T) {
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.heroMP != mp0 || !g.fieldSpell.active {
 		t.Fatalf("迷宮外烈米特不可扣 MP 或關閉選單：mp=%d active=%v", g.heroMP, g.fieldSpell.active)
+	}
+}
+
+func TestFieldSpellOriginalMapFlagsAndCosts(t *testing.T) {
+	g := fieldSpellGame(t, 25) // 四種野外咒文皆習得
+	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 25))
+	mage.CurMP = 99
+	g.companions = []*Member{mage}
+	g.enterTownCty(8) // CTY08 sec0 header+0x10 == 2：烈米特可、魯拉不可
+	g.openFieldSpellMenu()
+	mp0 := g.heroMP
+	g.fieldSpell.cursor = 0
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.fieldSpell.dest || g.heroMP != mp0 {
+		t.Fatalf("mapFlags bit0 清時魯拉應被拒絕：dest=%v mp=%d", g.fieldSpell.dest, g.heroMP)
+	}
+
+	g.exitTown()
+	g.openFieldSpellMenu()
+	g.fieldSpell.cursor = 2 // 特黑洛斯
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.repel != 0x28 || g.heroMP != mp0-4 {
+		t.Fatalf("特黑洛斯應依 handler 設 40 步並扣 4 MP：repel=%d mp=%d", g.repel, g.heroMP)
+	}
+
+	g.openFieldSpellMenu()
+	g.fieldSpell.cursor = 3 // 拉那魯達
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.isNight() || g.heroMP != mp0-4 || mage.CurMP != 87 {
+		t.Fatalf("地表拉那魯達應由魔法使扣 12 MP：night=%v heroMP=%d mageMP=%d",
+			g.isNight(), g.heroMP, mage.CurMP)
+	}
+}
+
+func TestRanarutaInTownDoesNotSpend(t *testing.T) {
+	g := fieldSpellGame(t, 25)
+	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 25))
+	mage.CurMP = 99
+	g.companions = []*Member{mage}
+	g.enterTownCty(0)
+	g.openFieldSpellMenu()
+	g.fieldSpell.cursor = 3
+	mp0 := g.heroMP
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.heroMP != mp0 || mage.CurMP != 99 || !g.fieldSpell.active {
+		t.Fatalf("CTY 內拉那魯達應被原版 gate 拒絕：heroMP=%d mageMP=%d active=%v",
+			g.heroMP, mage.CurMP, g.fieldSpell.active)
 	}
 }
 

@@ -10,6 +10,9 @@ func TestOpenTownAliahan(t *testing.T) {
 		t.Fatalf("OpenTown CTY00 sec0: %v", err)
 	}
 	t.Logf("阿里阿罕 section0:%d×%d、spawn (%d,%d)", town.W, town.H, town.SpawnX, town.SpawnY)
+	if town.MapFlags != 1 {
+		t.Fatalf("CTY00 sec0 header+0x10 應允許魯拉(bit0)：got %#x", town.MapFlags)
+	}
 
 	// 版面尺寸合理(城鎮小圖,通常數十格見方)
 	if town.W < 4 || town.H < 4 || town.W > 256 || town.H > 256 {

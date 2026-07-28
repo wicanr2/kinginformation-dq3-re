@@ -49,6 +49,7 @@ type Scene struct {
 	w, h            int
 	tileAt          func(x, y int) int // (x,y) → BLK tile 索引
 	spawnX, spawnY  int                // 城鎮進入 spawn(地表不用)
+	mapFlags        byte               // CTY section header +0x10；原版野外咒文場景 gate
 	dlgText         *dq3data.Text      // 該城對話 bank(D3TXT0<bank>.TXT;地表 nil)
 	hiMap           []byte             // 每格高 byte(事件 subid)
 	events          [][3]int           // section 事件表 {type,param,p2}

@@ -162,7 +162,8 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 	sc := &Scene{
 		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: dq3data.DarkenPalette(pal, phase),
 		w: tw.W, h: tw.H, tileAt: tw.Tile, spawnX: tw.SpawnX, spawnY: tw.SpawnY,
-		hiMap: tw.HiMap, events: tw.Events, transitions: tw.Transitions, sec: section, night: night,
+		mapFlags: tw.MapFlags,
+		hiMap:    tw.HiMap, events: tw.Events, transitions: tw.Transitions, sec: section, night: night,
 		plainTransition: (cty == 72 && section == 0) || (cty == 90 && section == 4),
 	}
 	sc.npcRng.Seed(uint16(section*2654 + 1)) // 確定性種子(依 section;對齊 C dq3_scene.c npc_rng)
