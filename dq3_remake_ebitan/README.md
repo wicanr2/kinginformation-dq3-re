@@ -20,13 +20,18 @@ Ebiten 的**行動裝置 / 觸控 / OGG 音訊是一等公民**,正好消掉 C/S
 
 ## ✅ 成果證明:Ebiten 已跑起來
 
-**階段 1 里程碑達成**:Ebiten 在 Xvfb + Mesa 軟體 GL 下實際渲染 —— 載入**真實 `DQ3.PAL`**、用移植的
-Go parser(`internal/dq3data`)解碼、Ebiten 畫成 palette swatches。這張是實際截到的畫面像素:
+以下畫面由 Ebiten 在 Xvfb + Mesa 軟體 GL 下，以真實原版素材和 production renderer 產生。
+開局座標、對白順序、story flags、國王獎勵均由 `DQ3.EXE` file `0x13a0..0x1633` 反組譯定錨：
 
-![Ebiten phase 1:真實 DQ3.PAL → Go parser → Ebiten 渲染](docs/phase1-palette.png)
+![Ebiten remake：原版新遊戲開場（CTY00 sec4、rec82）](docs/opening_home_rec82.png)
 
-- 深藍底 = Ebiten `screen.Fill(RGBA{16,24,48})`;80 個色塊 = `DQ3.PAL`(240 bytes)經 `DecodePalette` 解出的 80 色。
-- 證明**端到端管線通**:真實資產 → Go 解析(對拍 C 版逐色一致)→ Ebiten 渲染 → 螢幕像素。
+![Ebiten remake：母親帶至家門外（CTY00 sec0、rec80）](docs/opening_town_rec80.png)
+
+![Ebiten remake：首次謁見阿里阿罕國王（rec78、50G 與六件同伴裝備）](docs/opening_king_rec78.png)
+
+- 出生於 CTY00 sec4 `(5,5)`，只裝備布衣、隊伍只有主角。
+- 母親演出後落在 CTY00 sec0 `(8,38)`。
+- 首次走到王座 region 才取得 50G 與六件給同伴的武器／防具。
 - toolchain:**Ebiten v2.9.9 / Go 1.24 compile + run OK**(全在 docker,不污染 host)。
 
 ## 結構

@@ -1,0 +1,456 @@
+# 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
+
+> 建立：2026-07-28（Asia/Taipei）
+>
+> 目標：完成 `dq3_remake_ebitan/`，讓玩家不用 debug 鍵或 debug 環境變數，從新遊戲依精訊版正常
+> 流程玩到 THE END。本文是接手後的執行計畫；歷史分析見 `docs/65`、`docs/69`、`docs/70`、
+> `docs/73`，接手摘要見根目錄 `PROJECT_MEMORY.md`。
+
+## 0. 完成定義
+
+「完成 remake」必須同時滿足：
+
+1. **玩家可達**：新遊戲起，全程只使用正式遊戲輸入，能走到結局。
+2. **流程忠實**：主線入口、事件順序、gate、勝敗分支及道具／旗標副作用對齊精訊版。
+3. **玩家可見忠實**：關鍵畫面、UI、NPC 可見性、日夜、隊伍呈現、轉場、音樂及音效有原版證據。
+4. **可保存**：關鍵事件前後存檔／讀檔保持一致，不靠記憶體內暫態才能繼續。
+5. **跨平台**：同一 Go game core 通過桌面與 Android；WASM 是後續 release target，不阻塞玩法完成。
+
+以下不算完成：
+
+- 測試直接呼叫 `descend()`、`startZomaSeq()` 或內部事件函式。
+- 用 `Z`、`U`、`T`、`R`、Enter 等 developer/demo 捷徑抵達場景。
+- 用 `DQ3_SHIP`、`DQ3_ENTER`、`DQ3_BATTLE` 等 debug env 取得正常玩法中拿不到的狀態。
+- parser／公式／handler 單元測試全綠，但玩家入口不存在。
+- raw asset 圖可解碼，但 production runtime 沒有顯示。
+
+## 1. 原版畫面證據 inventory
+
+### 1.1 本機完整實況
+
+| 項目 | 內容 |
+|---|---|
+| 檔案 | `dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4` |
+| 長度／大小 | 3538.37 秒（58:58）、1,097,105,763 bytes |
+| 來源 | YouTube `J_fozjiKTB8` |
+| 標題 | `PC 精訊版 勇者鬥惡龍3 快速通關攻略 Dragon Fighter 3 (Walkthrough)` |
+| 作者 | 懷舊遊戲攻略頻道（`@fedaeltw`） |
+| 已抽格 | `frames/`：每 2 秒一張，共 1,769 張；`frames_opening/`：開場每秒一張，共 600 張 |
+| 覆蓋 | 標題至 THE END；主線場景、城鎮、地表、迷宮、隊伍、選單、船與終盤 |
+
+證據限制：
+
+- 影片有「風林製作」浮水印及後製指引字幕。
+- 角色常見 H999/M999 等修改值，屬快速攻略／修改狀態。
+- 有剪輯與快速通關選路。
+- 因此可作 **場景外觀、UI 結構、隊伍排列、事件順序與路線 oracle**；不可單獨作為
+  傷害、經驗、金錢、難度、隨機率或精確 timing oracle。
+
+抽樣已確認：
+
+| 約略時間 | 畫面證據 |
+|---|---|
+| 0:00 | 精訊 `DRAGON FIGHTER III 傳說的終章` 標題 |
+| 5:00 | 阿里阿罕室內，主角單人起步 |
+| 10:00 | 四人縱列穿越通道 |
+| 15:00 | 水域／橋梁／寶箱場景 |
+| 20:00 | 洞窟／boss NPC 場景 |
+| 25:00 | 日邦格室內與隊伍互動 |
+| 30:00 | 地表六指令選單、道具窗、四人 HUD |
+| 35:00 | 四人縱列地表特殊場景 |
+| 45:00 | 城鎮／城堡地圖與四人縱列 |
+| 50:00 | 深色水域地表與完整指令／道具 UI |
+| 55:00 | 終盤神殿與劇情對話 |
+| 58:58 | `THE END / TO BE CONTINUE DRAGONFIGHTER I` |
+
+### 1.2 本機 DOSBox 第一手 oracle
+
+- `docs/36_shots/`：開場、標題、主選單、注音／英數姓名、功能列、性別、家中、CTY00。
+- `dosbox/`：大量原版啟動畫面、道具、NPC 對話、城鎮、船、導航及事件截圖。
+- `work/dosbox/`：版權截圖，不入版控。
+- 可重現工具：`tools/dosbox_*.sh`、`tools/dosbox.conf`。
+- 已有文件：`docs/14`、`docs/29`、`docs/30`、`docs/36`。
+
+第一手 DOSBox 的權重高於網路影片；影片負責找場景與路線，DOSBox 負責對同一狀態、同一輸入做仲裁。
+
+### 1.3 網路補充來源
+
+1. [快速通關實況](https://www.youtube.com/watch?v=J_fozjiKTB8)：與本機影片同源。
+2. [杜勝利精訊版攻略保存頁](https://vv0817.neocities.org/gametxt/09_dq3/09_dq3)：
+   明載 `Space=遊戲選單`、`Enter=調查／交談`、F5/F6 存讀檔，並描述母親→國王→酒場二樓登錄
+   →一樓招募的正常流程。
+3. [精訊版回顧與四張實機圖](https://home.gamer.com.tw/artwork.php?sn=6041594)：
+   標題、主選單、世界地圖 HUD、王城畫面；可交叉核對外觀。
+4. [精訊開發者時代背景訪談](https://www.sfoxstudio.com/10464/how-did-i-get-into-the-game-8/)：
+   說明精訊版是自行開發且未完成，不應假設 FC 原版每個細節都已存在於精訊版。
+
+網路文章只作外部佐證；玩法的最終仲裁仍是本機原版、原始資料與使用者實測。
+
+## 2. 玩家可見畫面盤點
+
+| 畫面族 | 原版證據 | Ebiten 現況 | 判定 |
+|---|---|---|---|
+| 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | 未完整 production 接線 | GAP |
+| 標題 | DOSBox、影片、網路圖 | 已有 | 有基礎，需 lifecycle 對拍 |
+| attract 職業巡禮 | 影片、`docs/67` TITI–TITN | 素材定位，未播放 | GAP |
+| 主選單 | DOSBox、網路圖 | 已有新遊戲／載入框架 | 需輸入與版面 E2 |
+| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件 | 核心已接，需完整 trace |
+| 家中／母親 | DOSBox、影片 | sec4+rec82/83；目前自動護送 | 部分，互動語意不忠實 |
+| 王城謁見 | 攻略、影片、地圖 | 缺完整正式 gate／獎勵核對 | GAP |
+| 酒場／登錄所 | 攻略、D3TXT、地圖 | UI 有，正式入口未閉合 | 主線 GAP |
+| 四人縱列 | 影片多處 | production 主要仍單一主角 sprite | 高可見 GAP |
+| 城鎮／洞窟 | 影片、全 CTY render、DOSBox | 通用 loader/render 已有 | 需事件與 entrance closure |
+| NPC／日夜 | DOSBox、RE | 三層可見性與晝夜已有 | 機制有，逐事件 flags 待接 |
+| 地表／HUD | 影片、網路圖 | 地圖、主角、panel 已有 | 需四人 HUD／入口／palette |
+| 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
+| 道具／裝備／狀況／咒文 | 影片 | 多數邏輯存在 | 逐窗 lifecycle 尚未全面 E2 |
+| 戰鬥 | DOSBox／影片／原始怪圖 | 公式、多敵、狀態、boss queue 已有 | 呈現／訊息／cue 長尾 |
+| 商店／旅社／教會／達瑪 | 原版資料、部分截圖 | 多數已有 | 賣出及逐服務 parity 缺口 |
+| 船 | 影片、DOSBox 截圖 | 航行系統與取船鏈已有 | 需正常流程 E3 |
+| 不死鳥／飛行 | 攻略、影片 | 無完整系統 | 最大功能 GAP |
+| 下降／下世界 | 影片 | loader 有；只靠 U 正式入口 | 主線 GAP |
+| 終盤連戰 | 影片、RE | queue、光之珠、finale 有 | 只靠 Z 入口 |
+| THE END | 影片、TIT3 | 資產已知 | production 結局呈現待閉合 |
+| 音樂／音效 | 原版 MCX/VOC、錄音研究 | OPL2/OGG 有相當基礎 | 逐場景 cue matrix 待驗 |
+| 觸控／Android | 無原版對照，屬 port UX | 輸入抽象與觸控已有 | 正式流程完成後驗收 |
+
+## 3. 現況判斷
+
+底層並非從零開始：
+
+- 資產 parser、地圖、文字、NPC、道具、戰鬥、音樂、存檔與觸控均有大量成果。
+- 主角命名／性別、開場家中、日夜、NPC 三層可見性、船、取船鏈、boss trigger 基礎、
+  多敵、狀態咒文等已比 `docs/data/flow-gap-ebitan.md` 初版盤點進步。
+- R-2 沙曼歐莎的靜態 spec 已定。
+
+真正問題是：
+
+1. 沒有一條 production input 驅動的完整主線 trace。
+2. `spine_test.go` 直接呼叫內部函式，不能證明玩家可達。
+3. production 仍有 `T/R/U/Z/Enter/Cancel` demo 或 debug 行為。
+4. 六珠／不死鳥／飛行坐騎是零到一的大工程。
+5. 畫面證據沒有形成逐界面的 current matrix，raw decode、component dump 和正常流程畫面容易混稱。
+6. `build.sh` 內 `go test | tail` 未啟用內層 `pipefail`，可遮蔽測試失敗；game 測試在本次
+   Xvfb 基準執行時超過兩分鐘無輸出，需拆分定位。
+
+### 3.1 使用者校正：首要根因是設定資料未 match
+
+2026-07-28 使用者再次指出：遊戲一開始就與原版不同；大量機制其實已還原，但餵給機制的
+初始設定、位置、旗標與事件資料不正確。這比「缺入口」更精確。
+
+因此後續不得再使用以下推理：
+
+- section header 有 spawn，所以新遊戲一定使用該 spawn。
+- C remake 有某個初值，所以它就是原版初值。
+- 攻略說國王給裝備，所以可以在 `NewGame()` 直接預先給裝備。
+- 某 milestone 最終會完成，所以可在初始化時先設完成。
+- 某 event handler 已存在，所以用合理座標接上即可。
+
+正確做法是追原版 EXE **誰在何時寫入**：
+
+- current CTY／section；
+- player X/Y、overworld remembered X/Y；
+- party count／member records；
+- equipment／inventory／gold；
+- story flags／NPC visibility；
+- dialogue bank／record；
+- scene resource variant／palette；
+- input owner／event runner；
+- transition destination；
+- BGM／SFX cue。
+
+### 3.2 開場第一輪 EXE trace 已確認的 mismatch
+
+工具：專案既有 `tools/dis.sh`（Docker + Capstone），直接反組譯原版 `DQ3.EXE` file
+`0x13a0` 起的新遊戲初始化；位址口徑為 file offset。
+
+| 原版 write（file） | 原版語意 | Ebiten 現況 | 判定 |
+|---|---|---|---|
+| `0x13a0 [0x4f2f]=0x99` | remembered overworld X | `NewGame`:`0x99` | match（2026-07-28） |
+| `0x13a6 [0x4f31]=0xae` | remembered overworld Y | `NewGame`:`0xae` | match（2026-07-28） |
+| `0x13ac/0x13b2` | 另一組 current/saved world X/Y 同為 `0x99/0xae` | `overPx/overPy=0x99/0xae` | match（2026-07-28） |
+| `0x13b8 [0x4f50]=4` | current/saved section = 4 | 另有自造 progress 狀態 | 需逐欄對帳 |
+| `0x13be [0x256a]=4` | CTY00 section 4 | `startOpening()` 載 CTY00 sec4 | match |
+| `0x13c4 [0x4f52]=0` | CTY/scene side state | 尚未建立同欄證據 | 待追 |
+| `0x13f6 [0x4f2d]=1` | scene/layer state | Ebiten `inTown=true`，但非逐欄移植 | 待對帳 |
+| `0x13fc [0x256c]=0` | CTY index 0 | `curCty=0` | match |
+| `0x140d [0xb34]=1` | opening/input/render state | 無對應 evidence contract | 待追 |
+| `0x1425 [0x4f33]=5` | 玩家室內 X = 5 | `openingHomeX=5` | match（2026-07-28） |
+| `0x142b [0x4f35]=5` | 玩家室內 Y = 5 | `openingHomeY=5` | match（2026-07-28） |
+
+另外：
+
+- 原版角色初始化 `(file 0x1c01..0x1c4e)` 已再追通：
+  - 清角色 record 狀態區；
+  - 八格 inventory 先全部寫 `0x00ff`；
+  - `[member+0x15]=1`（Lv1）；
+  - 第一格寫 `0x801e`，即 equipped bit `0x8000` + `0x1e` 布衣；
+  - 初始化／學咒文後把 max HP/MP 複製到 current；
+  - 最後 `[0x722]=1`，明確是**單人隊伍**。
+- 以上出生狀態 mismatch 已於 2026-07-28 修正並由 `TestOriginalNewGameInitialState` 鎖定：
+  `heroGold=0`、單人、只裝備布衣 `0x1e`、不提前設 `msStart`。
+- 沿 caller/runner 繼續追到 file `0x140a..0x1633`：
+  - 家中對白順序 `rec82→83→81`；
+  - handler54 自動帶至 CTY00 sec0 `(8,38)`、`set flag17/clear flag50`、播 rec80；
+  - 王座 handler56 播 rec78，GIVE `00,01,01,03,1f,1f`，加 `0x32=50G`，
+    `clear flag17/set flag18`。
+- Ebiten 已按同一 transaction 接線，`TestOriginalOpeningEventTransactions` 從真實 CTY 素材驗證
+  母親落點、story flags、王座 region、精確獎勵與一次性。
+
+尚未完成的是能力值確認畫面、母親逐格移動動畫，以及從標題經正式輸入一路走到王座的 E3 trace；
+不能因 transaction 單測通過就把整個開場標成完成。
+
+## 4. 證據與驗收等級
+
+每個 GAP 使用以下狀態：
+
+- **E0 — 線索**：攻略、影片目視或合理推測。
+- **E1 — 原版證實**：原始資料、EXE RE 或 DOSBox 同操作證實。
+- **E2 — runtime parity**：Ebiten 以正式 renderer/input 在固定狀態重播，畫面／狀態與 oracle 相符。
+- **E3 — 玩家流程閉合**：從上一個正常節點只用正式輸入抵達，事件後可繼續且 save/load round-trip 通過。
+
+主線 GAP 只有 E3 才能標完成。畫面可另標 V0–V3：
+
+- V0 無畫面。
+- V1 raw asset／fixture。
+- V2 Ebiten runtime screenshot。
+- V3 同狀態原版／Ebiten 對照核實。
+
+設定資料另標 D0–D3：
+
+- **D0**：remake hardcode／推測值，無原版來源。
+- **D1**：攻略、影片或 C remake 間接線索。
+- **D2**：原始資料或 EXE 單一 write/read 已證實。
+- **D3**：完整 writer → consumer → scene/event side effect 已追通，且 DOSBox 同狀態驗證。
+
+所有 production 初值與主線 event config 至少 D2；會改變流程的值必須 D3。
+
+### 4.1 每個差異的強制 RE 追蹤鏈
+
+```text
+影片／DOSBox 發現畫面或行為差異
+  → 固定同一個玩家 checkpoint
+  → 找 EXE scene/event owner
+  → 逐指令列出 writes、calls、tables、resource IDs
+  → 回原始 CTY/D3TXT/ITEM/D3MNS/flag image 驗值
+  → 追 consumer，證明值如何影響畫面／流程
+  → 寫成 typed Go config/state
+  → 正式 input trace 抵達
+  → 同狀態 screenshot/state/save 對拍
+```
+
+反編譯規則：
+
+- 使用 Docker 中的 Capstone／Ghidra，不污染 host。
+- `tools/re_disasm.py` 是 file offset；所有文件位址明標 `(file)` 或 `(logical)`。
+- 含 indirect jump／switch 時直接讀原始跳表；Ghidra 需要
+  `JumpTable.writeOverride()`，不可只信自動 decompile。
+- decompiler 行數異常膨脹或大量 unreachable 時視為不可信，回原始指令。
+- 未知設定 fail closed，不以 generic fallback 靜默取代。
+
+## 5. 執行計畫
+
+### P0 — 基建與單一真相
+
+交付：
+
+- 修正 `build.sh` fail masking；拆出快速單測、Xvfb game test、長時間 visual dump。
+- 找出 game test hang／長測試，所有測試需有 timeout 與進度輸出。
+- 建立 `docs/data/ebiten-player-flow-matrix.md`：`docs/66` 每一步對應入口、code owner、E/V 等級。
+- 建立 debug inventory：`T/R/U/Z/Enter/Cancel` 及所有 `DQ3_*` env，分類為 test-only 或 production leak。
+- 建立 deterministic input trace harness：按正式 `InputState` 推進，不直接呼叫劇情函式。
+- 建立 `original-state-ledger`：每個初值／事件值列 EXE write、data source、consumer 與 D 等級。
+- 先完成開場 `0x13a0` scene owner 的 full trace，不再沿用 header spawn fallback。
+
+Gate：
+
+- CI 中任何測試失敗必須非零退出。
+- trace 能從標題走到家中，再保存 screenshot/state checkpoint。
+
+### P1 — 新遊戲至四人隊出發
+
+範圍：
+
+1. 反組譯完整新遊戲 init 與 scene owner，逐欄移植 CTY、section、`(5,5)`、world remembered
+   `(0x99,0xae)`、party、inventory、gold、flags、dialogue/input state。
+2. cutscene／標題／主選單最小正確 lifecycle。
+3. 主角姓名、性別、**能力值確認畫面**與其 Yes/No loop。
+4. 家中旁白的 exact dialogue lifecycle。
+5. 反組譯母親 NPC 的 event owner；依原版輸入與 flag 實作護送，不再旁白後自動瞬移。
+6. 王城謁見、父親劇情、國王給金錢與裝備的 exact transaction；獎勵前後分開存檔驗證。
+7. R-1：以 EXE transition/facility/event dispatch 定位 CTY00 酒場／二樓登錄所正式入口。
+8. 登錄角色 → 一樓招募／分離 → 隊伍最多四人。
+9. 移除 placeholder 同伴。
+10. 反組譯 caterpillar owner、歷史座標 buffer 與 draw order；不是只在主角後方手調三個位置。
+11. 核對正常出城／進城操作；移除 Enter/Cancel demo 行為。
+
+E3 trace：
+
+`boot → title → new game → name → gender → home → mother → king → registration →
+recruit 3 → leave Aliahan → overworld`
+
+### P2 — 前段主線閉合
+
+依 `docs/66` 玩家順序，不以系統類別跳做：
+
+- 盜賊鑰匙、魔法球、誘惑洞窟、羅馬利亞。
+- 甘達特／金皇冠。
+- 諾阿尼魯／紅寶石／覺醒粉。
+- 金字塔按鈕／魔法鑰匙。
+- 波魯多加信件、諾魯特、巴哈拉達救人、黑胡椒、取船。
+
+每段包含：
+
+- EXE writer/consumer trace 與 D2/D3 設定 ledger。
+- 正常入口和地圖可達性。
+- NPC/dialogue/event gate。
+- boss 勝敗。
+- 道具／旗標。
+- NPC visibility。
+- save/load。
+
+Gate：不用 `DQ3_SHIP` 可自然取得船並航行。
+
+### P3 — 中段事件與六珠來源
+
+按攻略閉合：
+
+- 日邦格八頭大蛇兩戰。
+- 隱身草與耶進貝亞石塊解謎。
+- 乾渴壺／最終鑰匙。
+- 提頓夜間綠寶珠。
+- 勇氣神殿單人 gate／藍寶珠。
+- 海盜村紅寶珠。
+- 商人建城／黃寶珠。
+- 沙曼歐莎 R-2：
+  `道具選單使用拉之鏡 → CTY44 sec1 面向(14,6) → 夜晚 → rec97/98 → 怪89 →
+  勝後0x62+story flag+白天+NPC切換；敗北不設完成`。
+- 變身杖 → 船員之骨 → 幽靈船 → 愛的回憶 → 蓋亞之劍 → 銀寶珠。
+
+R-2 不可只測事件函式；必須從道具 UI 使用 `0x61`。
+R-2 現有位置 spec 仍須回追 item-use dispatcher 的正式 caller 與 flag writes，不能因畫面／攻略吻合
+就跳過 D3。
+
+Gate：六顆寶珠均可由正常玩家取得，且存讀檔保持來源事件完成狀態。
+
+### P4 — 不死鳥與飛行坐騎
+
+先 E1 定案：
+
+- 不死鳥祠堂 CTY／section／座標。
+- 六珠放置是逐顆或一次性交付。
+- 祭壇對話、動畫、音樂、旗標。
+- 拉米亞 sprite、移動及起降規則。
+
+Go contracts：
+
+1. `MountState`：未取得／停泊／乘坐。
+2. traversal：飛越陸海與不可降落 tile。
+3. takeoff/landing：正式 input、位置與 facing。
+4. town/portal：飛行時入口判定。
+5. render：拉米亞 sprite、caterpillar 隱藏／恢復。
+6. encounter：飛行中是否遇敵。
+7. save：坐騎取得、位置、乘坐態 round-trip。
+8. touch：與桌面同一抽象 action。
+
+Gate：
+
+- 六珠 → 祭壇 → 拉米亞 → 起飛 → 飛越障礙 → 合法降落 → 進城 → 存讀檔，全程 E3。
+
+### P5 — 巴拉摩斯與自然下降
+
+- 定位巴拉摩斯城 overworld 入口、CTY、boss tile。
+- 飛行抵達。
+- 城內寶箱及 boss 兩戰規則。
+- 勝後阿里阿罕王城事件、索瑪現身、flag。
+- 蓋亞那洞穴跳坑自然觸發下降。
+- 自然路徑完成後移除 `U` production 捷徑。
+
+Gate：從拉米亞起飛至下層世界，不使用 U。
+
+### P6 — 愛列夫加特與終盤
+
+- 龍王城／光之珠。
+- 太陽之石、雲雨之杖、彩虹水滴取得鏈。
+- 王者之劍的商店賣出／交易鏈。
+- 彩虹橋位置與 walkability mutation。
+- 父親／五頭龍場景與復原 sprite。
+- 索瑪神殿正式入口。
+- 六大魔人 → 怨靈 → 殭屍 → 索瑪。
+- 光之珠弱化、勝敗、洛特授勳、ENDTXT、TIT3。
+- 自然入口完成後移除 `Z` production 捷徑。
+
+Gate：由下層世界正常移動至 THE END，不使用 Z 或直接呼叫 boss queue。
+
+### P7 — 視覺、聲音與支線 parity
+
+建立 UI evidence matrix，逐項 V3：
+
+- attract 職業巡禮與能力條 timing。
+- 四人 HUD、狀況／裝備／咒文／道具窗。
+- 戰鬥訊息、受擊／狀態演出。
+- 日夜 palette 與 NPC。
+- 商店賣出、教會、旅社、達瑪。
+- 地表海面動畫、船、拉米亞。
+- 全場景 BGM cue、EBG/VOC SFX。
+- THE END timing。
+
+支線也按正常入口驗收；不得用「不影響破關」永久跳過。
+
+### P8 — Release
+
+- 無 debug full playthrough，分段使用正式 save checkpoint。
+- 使用者實玩驗收。
+- Linux／Windows／macOS desktop packages。
+- Android APK/AAB 真機：安全區、觸控、背景恢復、音訊、存檔。
+- WASM smoke（若資產授權／載入策略允許）。
+- developer hooks 以 build tag 或明確 developer mode 隔離。
+- 公開包不含原版資產，啟動時驗證玩家提供的合法資產。
+
+## 6. 工作順序與依賴
+
+```text
+P0 trace/build
+ └─ P1 新遊戲/酒場/四人隊
+     └─ P2 前段/自然取船
+         └─ P3 中段/六珠/R-2
+             └─ P4 不死鳥/飛行
+                 └─ P5 巴拉摩斯/下降
+                     └─ P6 愛列夫加特/終盤
+                         └─ P7 parity
+                             └─ P8 release
+```
+
+R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就跳過新遊戲到中盤的可達性。
+
+## 7. 每批固定交付物
+
+每一批必須同時交付：
+
+1. Spec：原版來源、位置、輸入、旗標、道具、勝敗及未知點。
+2. RE ledger：writer、consumer、table/resource、file/logical 位址、D 等級。
+3. Code：production route，不只 debug route。
+4. Component tests。
+5. Input trace：從上一個正常節點抵達。
+6. State assertions：事件前後與 save/load。
+7. Runtime screenshots。
+8. Oracle comparison。
+9. Worklist 更新：E/V/D 等級，不寫模糊「完成」。
+
+## 8. 第一個實作 sprint
+
+在開始 R-2 之前先做：
+
+1. 修正 `build.sh` pipefail 與 game test timeout。
+2. ~~完整反組譯 `file 0x13a0` 開場 owner 及其直接 callees，建立 opening state ledger。~~
+   已追至 handler56(file `0x1633`)。
+3. ~~先修正已證實 mismatch：室內 `(5,5)`、remembered world `(0x99,0xae)`、單人隊伍、
+   布衣 `0x1e`、不提前設 `msStart`、不提前給國王獎勵。~~ 已完成並加回歸。
+4. 建 input trace harness。
+5. 建立 `title → name → gender → ability confirmation → home` trace。
+6. `home → mother → king` transaction 已接；下一步補正式 input trace 與逐格演出。
+7. 反組譯 CTY00 酒場入口與原版出城操作。
+8. 接 `king → tavern → recruit → overworld`。
+9. 再以同一 RE/trace 方法完成 R-2 的 item-use vertical slice。
+
+這個順序直接處理過去最大失敗模式：先確保玩家真的走得到，再增加更多孤立機制。

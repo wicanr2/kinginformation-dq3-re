@@ -5,20 +5,19 @@
 # 用法:dq3_remake_ebitan/build.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+IMAGE=dq3-ebiten-test
 
+docker build -q -t "$IMAGE" -f "$ROOT/dq3_remake_ebitan/Dockerfile.test" "$ROOT/dq3_remake_ebitan" >/dev/null
 docker run --rm -v "$ROOT":/repo -w /repo/dq3_remake_ebitan \
-  -e DQ3_ASSETS=/repo/assets_raw golang:1.24-bookworm bash -c '
-  set -e
-  echo "== 資料解析單測(對拍真實素材)=="
-  go test ./internal/... -v 2>&1 | tail -15
+  -e DQ3_ASSETS=/repo/assets_raw "$IMAGE" bash -c '
+  set -euo pipefail
+  go mod download
 
-  echo "== Ebiten 相依(GL/X11/ALSA dev)=="
-  apt-get update >/dev/null 2>&1
-  apt-get install -y --no-install-recommends \
-    libgl1-mesa-dev libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
-    libxinerama-dev libxxf86vm-dev libasound2-dev pkg-config >/dev/null 2>&1
-  go get github.com/hajimehoshi/ebiten/v2 github.com/hajimehoshi/ebiten/v2/vector 2>&1 | tail -3
-  go mod tidy 2>&1 | tail -2
+  echo "== 資料解析單測(對拍真實素材)=="
+  go test ./internal/... -count=1
+
+  echo "== 遊戲邏輯/真實素材回歸 =="
+  xvfb-run -a go test ./game -count=1 -timeout=180s
 
   echo "== Ebiten shell compile-check =="
   go build -buildvcs=false -o /tmp/dq3ebitan . && echo "BUILD OK: $(stat -c %s /tmp/dq3ebitan) bytes"

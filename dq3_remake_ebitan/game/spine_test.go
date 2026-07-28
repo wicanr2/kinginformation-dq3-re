@@ -19,10 +19,11 @@ func spineAssetsDir(t *testing.T) string {
 	return dir
 }
 
-// TestFullSpine:端到端主線劇情串接。用 NewGame() 走一次真正的 production 初始化
+// TestComponentSpine:主線元件串接測試。它用 NewGame() 走 production 初始化，
 // (真實素材,非手搭最小 Game),再依攻略順序用真實 game API 依序驅動九大里程碑,
 // 每步驗前一系統的輸出真的餵進下一系統(道具→事件旗標→progressStage;戰鬥結算→
 // 經驗/金幣→Game 狀態;boss 連戰→onBattleEnd→runFinale→結局捲動)。
+// 注意：本測試直接呼叫事件函式並人工判定終盤戰勝，不是玩家輸入的完整通關證據。
 //
 // 手動驅動(對齊既有 TestZomaSeq 慣例)僅用在:(1) 終盤連戰 —— 用真實成長表等級撞終盤 boss
 // 會需要不確定回合數且有陣亡風險,不影響「系統銜接」本身,故直接判定每場勝出,但透過
@@ -30,7 +31,7 @@ func spineAssetsDir(t *testing.T) string {
 // 內建的 monID==0x7c 判斷觸發,比 TestZomaSeq 更貼近正式 Update() 路徑。
 // (2) 取船里程碑(msShip)——見步驟 6 註解,production code 目前唯一設點在 DQ3_SHIP debug env,
 // 沒有真實店家/事件觸發路徑,此為已知缺口非本測試要繞過的 bug。
-func TestFullSpine(t *testing.T) {
+func TestComponentSpine(t *testing.T) {
 	dir := spineAssetsDir(t)
 	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "spine-save.json")) // 隔離存檔,不寫進 repo/CWD
 
@@ -40,10 +41,13 @@ func TestFullSpine(t *testing.T) {
 	}
 	g.showTitle = false // 略過標題,後續直接呼叫方法驅動(同 debug 捷徑的作法)
 
-	// ---- 1. 開場:NewGame 已在生產路徑內 progressSet(msStart) ----
-	if s := g.progressStage(); s != 1 {
-		t.Fatalf("NewGame 後應完成 msStart(階段1),得 %d", s)
+	// ---- 1. 開場:出生時尚未見國王，不能預先完成 msStart。----
+	if s := g.progressStage(); s != 0 {
+		t.Fatalf("NewGame 後尚未見國王，進度應為 0,得 %d", s)
 	}
+	// 後續只驗元件鏈，因此在這個邊界人工補上尚未移植的國王/酒場事件結果。
+	// 完整通關驗收不得引用這個 synthetic transition。
+	g.progressSet(msStart)
 
 	// ---- 2. 戰鬥 × 經濟銜接:真實遭遇 → execTurn 逐回合 → g.onBattleEnd() 寫回。
 	// 驗 Battle.gotExp/gotGold 真的流回 Game.heroExp/heroGold(playthrough_test 只測 Battle 本身,

@@ -685,14 +685,17 @@ func (g *Game) Update() error {
 		g.renderFrame()
 		return nil
 	}
-	// 開場旁白:一句翻完 → 下一句(rec82→83,母親帶去見國王,docs/66 §1d)→ 播完母親帶出門到城鎮。
+	// 開場演出:rec82→83→81 在家中；母親帶到家門外後播 rec80，才交回操作。
+	// DQ3.EXE file 0x140a..0x147a 與 runner handler54(file 0x147b)。
 	if g.openingIdx >= 0 {
 		g.openingIdx++
 		if g.openingIdx < len(openingSeq) {
+			if openingSeq[g.openingIdx] == openingMotherDirectionsRec {
+				g.motherEscort()
+			}
 			g.dlg.Open(openingSeq[g.openingIdx])
 		} else {
 			g.openingIdx = -1
-			g.motherEscort() // 母親帶你去見國王 → 出家門到阿里阿罕城鎮(sec0)
 		}
 		g.renderFrame()
 		return nil
@@ -748,6 +751,7 @@ func (g *Game) Update() error {
 	}
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
+		g.tryOpeningRegionEvent()
 	} else if moved && !g.inTown { // 地表:踩到城鎮入口 → 進城;否則隨機遇敵(~1/16 步)
 		cty := findCtyAtLayer(g.px, g.py, g.layer)               // 依目前地表層找入城
 		if pc := owPortalResolve(g.px, g.py, g.flags); pc >= 0 { // 旗標條件 portal 覆蓋(同點依進度變城)
@@ -1049,8 +1053,21 @@ func (g *Game) descend() {
 	g.renderFrame()
 }
 
-// openingSeq:開場旁白 rec(D3TXT01,阿里阿罕 bank):16歲生日引子 → 帶你去見國王(docs/66 §1d,DOSBox 實測逐字吻合)。
-var openingSeq = []int{82, 83}
+// openingSeq 由 DQ3.EXE file 0x140a..0x147a 與 handler54(file 0x147b)定錨：
+// 生日旁白 → 母親邀請 → 主角回答 → 到家門外指向王城。
+const openingMotherDirectionsRec = 80
+
+var openingSeq = []int{82, 83, 81, openingMotherDirectionsRec}
+
+// 原版新遊戲初始化常數(DQ3.EXE file 0x13a0..0x1431):
+// remembered overworld=(0x99,0xae)、CTY00 sec4、室內位置=(5,5)。
+// section header 的 spawn(10,10)是門轉場目的地，不是新遊戲出生點。
+const (
+	openingHomeX  = 5
+	openingHomeY  = 5
+	aliahanWorldX = 0x99
+	aliahanWorldY = 0xae
+)
 
 // startOpening:新遊戲創角完成 → 進主角家(CTY00 sec4 室內)+ 播開場旁白。移植原版開場(FLOW-GAP A5/A6)。
 // 對齊 U1:原版開場是家室內 + 母親旁白,非地表中心。
@@ -1066,9 +1083,9 @@ func (g *Game) startOpening() {
 		return
 	}
 	g.town, g.cur, g.inTown, g.curCty = home, home, true, 0
-	g.px, g.py = home.spawnX, home.spawnY
-	if g.px >= home.w || g.py >= home.h { // sec4 header spawn 越界 → 放中央可走格
-		g.px, g.py = home.w/2, home.h/2
+	g.px, g.py = openingHomeX, openingHomeY
+	if g.px >= home.w || g.py >= home.h { // 資產版本不符時 fail-safe；合法 CTY00 sec4 必為 13×13
+		g.px, g.py = home.startPos()
 	}
 	// dlg.tx 維持 NewGame 初始的 D3TXT01(開場旁白 rec82/83 在此 bank)
 	g.openingIdx = 0
@@ -1077,9 +1094,9 @@ func (g *Game) startOpening() {
 	g.renderFrame()
 }
 
-// motherEscort:開場旁白播完 → 母親帶你出家門到阿里阿罕城鎮外圍(sec0)。
-// sec4 transition[0] 目的地 = sec0 家門 (8,38)。原版是對母親對話護送,此處簡化為旁白後自動出門
-// (語意=母親帶去見國王;TODO 精修:改對母親 NPC 對話才護送,見 docs/66 §1c 實測)。
+// motherEscort:開場 rec81 後 → 母親帶到阿里阿罕家門外(sec0 8,38)。
+// 原版 runner handler54(file 0x147b)檢查初始 flag0x50，演出後 set flag0x17、
+// clear flag0x50，再播 rec80；本函式保存相同可見性狀態與落點。
 func (g *Game) motherEscort() {
 	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0, g.dnPhase, g.storyFlag)
 	if err != nil {
@@ -1093,7 +1110,46 @@ func (g *Game) motherEscort() {
 	if sec0.dlgText != nil {
 		g.dlg.tx = sec0.dlgText // 切到城鎮對話 bank
 	}
+	g.setStoryFlag(0x17, true)
+	g.setStoryFlag(0x50, false)
 	g.renderFrame()
+}
+
+const (
+	ctyAliahanCastle     = 25
+	aliahanThroneSection = 1
+	aliahanKingX         = 9
+	aliahanKingY         = 6
+	recAliahanKingStart  = 78
+)
+
+var aliahanKingRewardItems = [...]int{0x00, 0x01, 0x01, 0x03, 0x1f, 0x1f}
+
+// talkAliahanKing 還原首次謁見獎勵。DQ3.EXE handler56(file 0x15bc..0x1633):
+// rec78 → GIVE 00,01,01,03,1f,1f → 加 0x32(50)G → clear flag17/set flag18。
+// 這批是國王明說「給同伴的武器及防具」，不等同主角出生裝備。
+func (g *Game) talkAliahanKing() {
+	if !g.storyFlag(0x17) || g.progressDone(msStart) {
+		return
+	}
+	g.inventory = append(g.inventory, aliahanKingRewardItems[:]...)
+	g.heroGold += 0x32
+	g.setStoryFlag(0x17, false)
+	g.setStoryFlag(0x18, true)
+	g.progressSet(msStart)
+	g.dlg.Open(recAliahanKingStart)
+}
+
+// tryOpeningRegionEvent:阿里阿罕王座不是一般可見 NPC 對話，而是 runner region
+// handler56。玩家走到國王正前方 (9,7) 即觸發首次謁見。
+func (g *Game) tryOpeningRegionEvent() bool {
+	if !g.inTown || g.cur == nil || g.curCty != ctyAliahanCastle ||
+		g.cur.sec != aliahanThroneSection || g.px != aliahanKingX || g.py != aliahanKingY+1 ||
+		!g.storyFlag(0x17) || g.progressDone(msStart) {
+		return false
+	}
+	g.talkAliahanKing()
+	return true
 }
 
 // enterTown:進阿里阿罕(CTY0;debug/後備)。
@@ -1641,13 +1697,16 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 	}
 
 	g.cur = g.over
-	g.px, g.py = g.over.w/2, g.over.h/2  // 地表起點(暫用中心)
-	g.heroGold = 120                     // 初始金(新遊戲勇者)
-	g.equip = [4]int{3, 0x21}            // 初始裝備:銅劍 + 皮甲冑
-	g.companions = startingCompanions(0) // 示範隊伍(戰士/僧侶/魔法使);酒館招募之後接
+	// DQ3.EXE file 0x13a0..0x13b2：新遊戲記住的阿里阿罕地表座標。
+	// 真正畫面會在創角完成後由 startOpening 切到 CTY00 sec4@(5,5)。
+	g.px, g.py = aliahanWorldX, aliahanWorldY
+	g.overPx, g.overPy = aliahanWorldX, aliahanWorldY
+	g.heroGold = 0            // 國王的 50G 屬後續謁見 transaction，不在出生時預給
+	g.equip = [4]int{0, 0x1e} // file 0x1c2d..0x1c33：equipped 0x801e = 布衣
+	g.companions = nil        // file 0x1c4e：[0x722]=1，開局只有主角
 	g.flags = map[int]bool{}
-	g.initStoryBits()      // 新遊戲重置 [0x4f70] NPC 可見性旗標
-	g.progressSet(msStart) // 開場里程碑(阿里阿罕:見國王、酒場建隊)
+	g.initStoryBits() // 新遊戲重置 [0x4f70] NPC 可見性旗標
+	// msStart 代表「已見國王且已能在酒場建隊」，不可在出生時提前完成。
 	g.noticeCode = -1
 	g.prng.Seed(0x1357)                                 // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)
 	g.music = gaudio.NewMusic(music)                    // MT-32 音樂(music fs 為 nil → 靜音降級)

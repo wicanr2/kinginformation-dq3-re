@@ -55,20 +55,33 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.newGame.stage = ngGender
 	dump("ng_gender")
 
-	// C-2:模擬創角完成 → 進主角家(sec4)+ 開場旁白
+	// C-2:模擬創角完成 → 進主角家(sec4)+ 原版開場 runner 序列。
 	g.showTitle = false
 	g.startOpening()
 	dump("opening_home_rec82") // 家室內 + 旁白第一句(rec82)
-	if g.openingIdx >= 0 {     // 推進到 rec83
-		g.dlg.open = false
-		g.openingIdx++
-		if g.openingIdx < len(openingSeq) {
-			g.dlg.Open(openingSeq[g.openingIdx])
-		}
-		dump("opening_home_rec83")
-	}
-	// 母親帶出門 → sec0 城鎮
+	g.dlg.Open(83)
+	dump("opening_home_rec83")
+	g.dlg.Open(81)
+	dump("opening_home_rec81")
+
+	// handler54:母親帶出門 → sec0 (8,38) → rec80。
 	g.motherEscort()
-	dump("opening_town_sec0")
-	t.Logf("開場:出生 inTown=%v cty=%d @(%d,%d)", g.inTown, g.curCty, g.px, g.py)
+	g.dlg.Open(openingMotherDirectionsRec)
+	dump("opening_town_rec80")
+
+	// handler56:走到阿里阿罕王座正前方 → rec78 + 50G/六件裝備。
+	throne, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyAliahanCastle, mapBlkNum[ctyAliahanCastle], aliahanThroneSection,
+		g.dnPhase, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty = throne, throne, ctyAliahanCastle
+	g.px, g.py, g.facing = aliahanKingX, aliahanKingY+1, 1
+	if !g.tryOpeningRegionEvent() {
+		t.Fatal("王座 opening region 未觸發")
+	}
+	dump("opening_king_rec78")
+	t.Logf("開場:謁見後 cty=%d sec=%d @(%d,%d), gold=%d items=%v",
+		g.curCty, g.cur.sec, g.px, g.py, g.heroGold, g.inventory)
 }
