@@ -2,27 +2,29 @@ package game
 
 import (
 	"fmt"
-	dosrng "github.com/wicanr2/dq3_remake_ebitan/internal/rng"
+	"sort"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/battle"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	dosrng "github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 )
 
-// 戰鬥場景(功能核心版):怪物 sprite + 敵/我 HP + 戰う/逃げる 指令 + 回合結算(用 internal/battle 公式)。
-// 移植 dq3_battlescene 的核心迴圈;咒文/道具/防禦/AI 預測/升級為後續增量。
-// 指令順序對齊 C dq3_battlescene col1[]:戰鬥/逃跑/防禦/道具/咒文。
+// 戰鬥指令的內部語意。畫面順序不是固定五項；原版 D3TXT00 rec441..444 依
+// 「首位可行動者可逃跑」與「角色是否會咒文」組成 3 或 4 項選單。
 const (
 	bcWar   = 0 // 戰う
 	bcFlee  = 1 // 逃げる
 	bcDef   = 2 // 防御
 	bcItem  = 3 // 道具(藥草)
 	bcSpell = 4 // 咒文
-	bcN     = 5
 )
 
-// 戰鬥指令 glyph 標籤(對齊 C CMD_WAR/FLEE/DEF/ITEM/SPELL)。
-var battleCmdLabels = [bcN][2]int{{107, 207}, {629, 630}, {203, 204}, {402, 1354}, {429, 430}}
+// 戰鬥指令 glyph 標籤。
+var battleCmdLabels = map[int][2]int{
+	bcWar: {107, 207}, bcFlee: {629, 630}, bcDef: {203, 204},
+	bcItem: {402, 1354}, bcSpell: {429, 430},
+}
 
 const herbCode = 0x41 // 藥草 item id
 const herbHeal = 30   // DQ3_HERB_HEAL
@@ -38,6 +40,7 @@ type enemyUnit struct {
 	hp, max  int
 	mp       int  // D3MNS +0x04；帕魯朋特的吸 MP 效果會消耗
 	atk, def int  // 有效攻/防(索瑪+光之珠弱化後之值)
+	agi      int  // D3MNS +0x0b；敵我混排行動順序
 	fled     bool // 本場已逃走(不計入擊殺數→經驗/金錢排除,對齊 C g_fled)
 	status   int  // W3:異常狀態位元(statusParalysis/statusSealed/statusBlind,見下方 const)
 }
@@ -76,34 +79,37 @@ type Battle struct {
 	scr      []byte                                   // PACKBG.SCR(戰鬥背景)
 	bg       *[dq3data.PackBGH][dq3data.PackBGW]uint8 // 解碼後背景(草原 page22)
 
-	active      bool
-	monID       int                    // 群組代表種 id(同種群戰,全組共用;name 查詢/0x7c 判斷用此)
-	spr         *dq3data.MonsterSprite // 群組共用 sprite(同種群戰,W2 範圍)
-	enemies     []enemyUnit            // 敵群(N 隻,docs/72 A3;單敵 = 1 元素陣列)
-	lightOrb    bool                   // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
-	heroHP      int
-	heroMax     int
-	heroAtk     int
-	heroDef     int
-	heroAgi     int
-	cursor      int
-	msg         string
-	phase       battlePhase
-	result      int // 0 進行中、1 勝、2 敗、3 逃
-	gotExp      int
-	gotGold     int
-	rng         *dosrng.RNG
-	flashCol    int // >0:受擊閃光殘餘幀
-	defending   bool
-	heroHerbs   int   // 開戰時持有藥草數
-	usedHerbs   int   // 本戰用掉藥草數(戰後從背包扣)
-	heroLevel   int   // 我方等級(敵 AI 逃跑門檻用)
-	heroMP      int   // 目前 MP(施咒消耗)
-	heroMaxMP   int   //
-	spells      []int // 已學可施放咒文 rec
-	spellCursor int
-	companions  []*battleActor // 同伴(狀態列顯示 + 自動攻擊 + 可被鎖定)
-	heroStatus  int            // 主角異常狀態位元(statusParalysis 等;166-168 解咒清此欄)
+	active       bool
+	monID        int                    // 群組代表種 id(同種群戰,全組共用;name 查詢/0x7c 判斷用此)
+	spr          *dq3data.MonsterSprite // 群組共用 sprite(同種群戰,W2 範圍)
+	enemies      []enemyUnit            // 敵群(N 隻,docs/72 A3;單敵 = 1 元素陣列)
+	lightOrb     bool                   // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
+	heroHP       int
+	heroMax      int
+	heroAtk      int
+	heroDef      int
+	heroAgi      int
+	cursor       int
+	msg          string
+	phase        battlePhase
+	result       int // 0 進行中、1 勝、2 敗、3 逃
+	gotExp       int
+	gotGold      int
+	rng          *dosrng.RNG
+	flashCol     int // >0:受擊閃光殘餘幀
+	defending    bool
+	heroHerbs    int   // 開戰時持有藥草數
+	usedHerbs    int   // 本戰用掉藥草數(戰後從背包扣)
+	heroLevel    int   // 我方等級(敵 AI 逃跑門檻用)
+	heroMP       int   // 目前 MP(施咒消耗)
+	heroMaxMP    int   //
+	spells       []int // 已學可施放咒文 rec
+	spellCursor  int
+	companions   []*battleActor // 同伴(狀態列顯示 + 可各自下令及被鎖定)
+	heroStatus   int            // 主角異常狀態位元(statusParalysis 等;166-168 解咒清此欄)
+	commandActor int            // 目前下令者：0=隊長，1..=同伴
+	commands     []battleCommand
+	resolving    bool // 正在執行已收集命令；避免舊單步入口重複推進整回合
 
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods()/g_eatk_pct 等——百分比整數,基準 100)。玩家自施 151/154/155
@@ -139,12 +145,25 @@ func hurtFxFrames(ms int) int {
 
 // battleActor 是戰鬥中一名同伴的即時數值(隊長為 hero* 欄位,同伴用此)。
 type battleActor struct {
-	name         []int
-	class, level int
-	hp, maxHP    int
-	mp, maxMP    int
-	atk, def     int
-	status       int // W3:異常狀態位元(statusParalysis 等,見 enemyUnit 旁 const)
+	name          []int
+	class, level  int
+	hp, maxHP     int
+	mp, maxMP     int
+	atk, def, agi int
+	spells        []int
+	defending     bool
+	status        int // W3:異常狀態位元(statusParalysis 等,見 enemyUnit 旁 const)
+}
+
+type battleCommand struct {
+	kind  int
+	spell int
+}
+
+type turnEntry struct {
+	enemy bool
+	index int
+	speed int
 }
 
 // pct:val 套用百分比修正(基準 100)。共用於物攻/守備 buff/debuff(拜基魯多/史卡拉等)。
@@ -196,7 +215,8 @@ func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps [
 	b.enemies = make([]enemyUnit, count)
 	for i := range b.enemies {
 		b.enemies[i] = enemyUnit{
-			monID: monID, hp: hpRoll, max: hpRoll, mp: int(st.MP), atk: eatk, def: edef,
+			monID: monID, hp: hpRoll, max: hpRoll, mp: int(st.MP),
+			atk: eatk, def: edef, agi: int(st.Agi),
 		}
 	}
 	if b.bg == nil && b.scr != nil { // 首戰解碼草原背景(page22,對 game3.png)
@@ -209,13 +229,106 @@ func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps [
 	b.companions = comps
 	b.spellCursor = 0
 	b.heroStatus = 0
+	b.commandActor = 0
+	b.commands = make([]battleCommand, 1+len(comps))
+	b.resolving = false
 	// W3 per-battle 修正狀態歸零(對齊 C reset_battle_mods();百分比基準 100)。
 	b.partyAtkPct, b.partyDefPct, b.enemyAtkPct, b.enemyDefPct = 100, 100, 100, 100
 	b.partyBlind, b.partySealed = false, false
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.gotExp, b.gotGold = "", 0, 0
 	b.active = true
+	b.seekCommandActor(0)
 	return true
+}
+
+func (b *Battle) actorAlive(i int) bool {
+	if i == 0 {
+		return b.heroHP > 0
+	}
+	return i-1 < len(b.companions) && b.companions[i-1].hp > 0
+}
+
+func (b *Battle) actorStatus(i int) int {
+	if i == 0 {
+		return b.heroStatus
+	}
+	return b.companions[i-1].status
+}
+
+func (b *Battle) actorSpells(i int) []int {
+	if i == 0 {
+		return b.spells
+	}
+	return b.companions[i-1].spells
+}
+
+func (b *Battle) actorMP(i int) int {
+	if i == 0 {
+		return b.heroMP
+	}
+	return b.companions[i-1].mp
+}
+
+// commandMenu 對齊 D3TXT00 rec441..444：
+// 有咒/不可逃、無咒/可逃、有咒/可逃、無咒/不可逃。
+func (b *Battle) commandMenu(actor int) []int {
+	hasSpell := len(b.actorSpells(actor)) > 0
+	canFlee := actor == b.firstCommandActor()
+	switch {
+	case hasSpell && canFlee:
+		return []int{bcWar, bcSpell, bcFlee, bcItem} // rec443
+	case hasSpell:
+		return []int{bcWar, bcSpell, bcDef, bcItem} // rec441
+	case canFlee:
+		return []int{bcWar, bcFlee, bcDef, bcItem} // rec442
+	default:
+		return []int{bcWar, bcDef, bcItem} // rec444
+	}
+}
+
+func (b *Battle) firstCommandActor() int {
+	for i := 0; i < 1+len(b.companions); i++ {
+		if b.actorAlive(i) && b.actorStatus(i)&statusParalysis == 0 {
+			return i
+		}
+	}
+	return 0
+}
+
+func (b *Battle) seekCommandActor(from int) bool {
+	for i := from; i < 1+len(b.companions); i++ {
+		if b.actorAlive(i) && b.actorStatus(i)&statusParalysis == 0 {
+			b.commandActor, b.cursor = i, 0
+			return true
+		}
+	}
+	return false
+}
+
+func (b *Battle) previousCommandActor() bool {
+	for i := b.commandActor - 1; i >= 0; i-- {
+		if b.actorAlive(i) && b.actorStatus(i)&statusParalysis == 0 {
+			b.commandActor, b.cursor = i, 0
+			return true
+		}
+	}
+	return false
+}
+
+func (b *Battle) queueCommand(cmd battleCommand) {
+	b.commands[b.commandActor] = cmd
+	if b.seekCommandActor(b.commandActor + 1) {
+		b.phase = phCommand
+		return
+	}
+	b.resolveRound()
+}
+
+func (b *Battle) resetCommandRound() {
+	b.commands = make([]battleCommand, 1+len(b.companions))
+	b.commandActor, b.cursor, b.spellCursor = 0, 0, 0
+	b.seekCommandActor(0)
 }
 
 // firstAliveEnemy:第一個存活敵的 index(remake 簡化目標選擇:玩家物攻/單體咒固定指向組內
@@ -261,40 +374,50 @@ func (b *Battle) input(in InputState) (closed bool) {
 	}
 	switch b.phase {
 	case phCommand:
+		menu := b.commandMenu(b.commandActor)
 		confirm := in.Confirm
-		if tapIdx >= 0 {
+		if tapIdx >= 0 && tapIdx < len(menu) {
 			b.cursor, confirm = tapIdx, true
 		}
 		switch {
 		case confirm:
-			if b.cursor == bcSpell { // 咒文 → 選咒子選單
-				if len(b.spells) > 0 {
+			kind := menu[b.cursor]
+			if kind == bcSpell { // 咒文 → 目前下令者的咒文子選單
+				if len(b.actorSpells(b.commandActor)) > 0 {
 					b.spellCursor, b.phase = 0, phSpell
 				} else {
 					b.msg, b.phase = "還沒學會咒文", phMessage
 				}
 			} else {
-				b.execTurn()
+				b.queueCommand(battleCommand{kind: kind})
 			}
+		case in.Cancel:
+			b.previousCommandActor()
 		case in.DirEdge == 0: // 下
-			b.cursor = (b.cursor + 1) % bcN
+			b.cursor = (b.cursor + 1) % len(menu)
 		case in.DirEdge == 1: // 上
-			b.cursor = (b.cursor + bcN - 1) % bcN
+			b.cursor = (b.cursor + len(menu) - 1) % len(menu)
 		}
 	case phSpell:
+		spells := b.actorSpells(b.commandActor)
 		confirm := in.Confirm
-		if tapIdx >= 0 && tapIdx < len(b.spells) {
+		if tapIdx >= 0 && tapIdx < len(spells) {
 			b.spellCursor, confirm = tapIdx, true
 		}
 		switch {
 		case in.Cancel:
 			b.phase = phCommand
 		case confirm:
-			b.execSpell(b.spells[b.spellCursor])
+			rec := spells[b.spellCursor]
+			if def, ok := spell.GetDef(rec); ok && b.actorMP(b.commandActor) < def.MP {
+				b.msg, b.phase = "MP 不足", phMessage
+			} else {
+				b.queueCommand(battleCommand{kind: bcSpell, spell: rec})
+			}
 		case in.DirEdge == 0:
-			b.spellCursor = (b.spellCursor + 1) % len(b.spells)
+			b.spellCursor = (b.spellCursor + 1) % len(spells)
 		case in.DirEdge == 1:
-			b.spellCursor = (b.spellCursor + len(b.spells) - 1) % len(b.spells)
+			b.spellCursor = (b.spellCursor + len(spells) - 1) % len(spells)
 		}
 	case phMessage:
 		if in.Confirm {
@@ -302,6 +425,8 @@ func (b *Battle) input(in InputState) (closed bool) {
 			b.msg = ""
 			if b.result != 0 {
 				b.phase = phEnd
+			} else {
+				b.resetCommandRound()
 			}
 		}
 	case phEnd:
@@ -315,11 +440,19 @@ func (b *Battle) input(in InputState) (closed bool) {
 
 // execTurn 執行玩家指令 + 敵方回合,結算。
 func (b *Battle) execTurn() {
+	if !b.resolving {
+		b.commands = make([]battleCommand, 1+len(b.companions))
+		b.commands[0] = battleCommand{kind: b.cursor}
+		for i := range b.companions {
+			b.commands[i+1] = battleCommand{kind: bcWar}
+		}
+		b.resolveRound()
+		return
+	}
 	st, _ := b.mons.Stat(b.monID)
 	b.defending = false
 	if b.heroStatus&statusParalysis != 0 { // 睡眠/混亂(敵施144/152):本回合任何指令皆無法行動
 		b.msg = "陷入異常狀態,無法行動!"
-		b.afterLeaderAction()
 		return
 	}
 	switch b.cursor {
@@ -373,13 +506,20 @@ func (b *Battle) execTurn() {
 		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
 		return
 	}
-	b.afterLeaderAction()
 }
 
 // execSpell 施放咒文 rec:DMG 傷敵 / HEAL 補己 / W3 新增輔助狀態咒(睡眠/buff/封咒/幻惑/解咒)。
-// 消耗 MP,再敵方回合。瑪荷頓 sealed(敵施封我方咒)在此擋下——對齊 C do_turn cmd==4 分支:
-// 被封仍算「用掉這回合」(不像 MP不足/未學會是選單前置擋,選了就吃回合),故仍走 afterLeaderAction。
+// 瑪荷頓 sealed(敵施封我方咒)在此擋下；被封仍算用掉這次行動。
 func (b *Battle) execSpell(rec int) {
+	if !b.resolving {
+		b.commands = make([]battleCommand, 1+len(b.companions))
+		b.commands[0] = battleCommand{kind: bcSpell, spell: rec}
+		for i := range b.companions {
+			b.commands[i+1] = battleCommand{kind: bcWar}
+		}
+		b.resolveRound()
+		return
+	}
 	def, ok := spell.GetDef(rec)
 	if !ok {
 		b.phase = phCommand
@@ -387,7 +527,6 @@ func (b *Battle) execSpell(rec int) {
 	}
 	if b.partySealed { // 瑪荷頓(敵施156)→ 我方無法施咒,但仍耗費本回合(對齊 C)
 		b.msg = "咒文被封印,無法施放!"
-		b.afterLeaderAction()
 		return
 	}
 	if b.heroMP < def.MP {
@@ -475,7 +614,6 @@ func (b *Battle) execSpell(rec int) {
 		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
 		return
 	}
-	b.afterLeaderAction()
 }
 
 // execPalpunte 執行 rec180 的原版 16 格亂數表。
@@ -585,23 +723,113 @@ func (b *Battle) execPalpunte(effect int) {
 	}
 }
 
-// afterLeaderAction:隊長行動後 → 同伴自動攻擊(各打第一個存活敵,可能擊倒)→ 敵方回合。
-func (b *Battle) afterLeaderAction() {
+func (b *Battle) turnSpeed(agi int) int {
+	base := agi / 2
+	if base < 1 {
+		base = 1
+	}
+	return base + b.rng.Next(base)
+}
+
+// resolveRound 對齊原版 sub_d6bf：收完全隊命令後，才把存活隊員與敵人依敏捷擲值混排。
+func (b *Battle) resolveRound() {
+	for _, c := range b.companions {
+		c.defending = false
+	}
+	b.defending = false
+	order := make([]turnEntry, 0, 1+len(b.companions)+len(b.enemies))
+	if b.heroHP > 0 {
+		order = append(order, turnEntry{index: 0, speed: b.turnSpeed(b.heroAgi)})
+	}
+	for i, c := range b.companions {
+		if c.hp > 0 {
+			order = append(order, turnEntry{index: i + 1, speed: b.turnSpeed(c.agi)})
+		}
+	}
+	for i := range b.enemies {
+		if b.enemies[i].alive() {
+			order = append(order, turnEntry{enemy: true, index: i, speed: b.turnSpeed(b.enemies[i].agi)})
+		}
+	}
+	sort.SliceStable(order, func(i, j int) bool { return order[i].speed > order[j].speed })
+
+	b.resolving = true
+	defer func() { b.resolving = false }()
+	ai, aiOK := b.mons.AI(b.monID)
+	for _, e := range order {
+		if b.result != 0 {
+			return
+		}
+		if e.enemy {
+			b.enemyAction(e.index, ai, aiOK)
+			continue
+		}
+		if !b.actorAlive(e.index) || b.actorStatus(e.index)&statusParalysis != 0 {
+			continue
+		}
+		cmd := b.commands[e.index]
+		if e.index == 0 {
+			b.cursor = cmd.kind
+			if cmd.kind == bcSpell {
+				b.execSpell(cmd.spell)
+			} else {
+				b.execTurn()
+			}
+		} else {
+			b.execCompanionCommand(e.index-1, cmd)
+		}
+	}
+	if b.result == 0 {
+		if b.allEnemiesDead() {
+			b.finishVictory()
+		} else if !b.wipedOut() {
+			b.phase = phMessage
+		}
+	}
+}
+
+func (b *Battle) finishVictory() {
 	st, _ := b.mons.Stat(b.monID)
-	for _, c := range b.companions { // 同伴自動物攻
-		if c.hp <= 0 {
-			continue
+	killed := b.killedCount()
+	b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
+	b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
+}
+
+func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
+	c := b.companions[i]
+	switch cmd.kind {
+	case bcFlee:
+		st, _ := b.mons.Stat(b.monID)
+		if battle.FleeOK(c.agi, int(st.FleeResist), b.roll()) {
+			b.msg, b.result, b.phase = "逃走成功", 3, phMessage
+		} else {
+			b.msg = "逃走失敗"
 		}
-		if c.status&statusParalysis != 0 { // 睡眠/混亂(敵鏡像144/152)→ 本回合不行動
-			b.msg = "同伴陷入異常狀態,無法行動!"
-			continue
+	case bcDef:
+		c.defending = true
+		b.msg = "防御"
+	case bcItem:
+		if b.usedHerbs < b.heroHerbs && c.hp < c.maxHP {
+			heal := herbHeal
+			if c.hp+heal > c.maxHP {
+				heal = c.maxHP - c.hp
+			}
+			c.hp += heal
+			b.usedHerbs++
+			b.msg = fmt.Sprintf("回復 %d", heal)
+		} else {
+			b.msg = "沒有藥草"
 		}
+	case bcSpell:
+		b.execCompanionSpell(i, cmd.spell)
+	default:
 		tgt := b.firstAliveEnemy()
 		if tgt < 0 {
-			break
+			return
 		}
-		if b.partyBlind && b.roll() < 128 { // 我方幻惑(敵施158)→ ~50% 揮空
-			continue
+		if b.partyBlind && b.roll() < 128 {
+			b.msg = "揮空了(幻惑)"
+			return
 		}
 		atk := pct(c.atk, b.partyAtkPct)
 		def := pct(b.enemies[tgt].def, b.enemyDefPct)
@@ -610,14 +838,25 @@ func (b *Battle) afterLeaderAction() {
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
 		}
+		b.msg = fmt.Sprintf("給予 %d 傷害", dmg)
+		b.flashCol = b.hurtFxFrames
 	}
-	if b.allEnemiesDead() { // 同伴擊倒 → 勝
-		killed := b.killedCount()
-		b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
-		b.msg, b.result, b.phase = fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold), 1, phMessage
-		return
+	if b.allEnemiesDead() {
+		b.finishVictory()
 	}
-	b.enemyTurn()
+}
+
+// execCompanionSpell 暫時把施法同伴放進既有 caster 欄位，並把真正隊長放到該同伴槽位。
+// 如此 Palpunte 的全隊逐人效果仍只處理每人一次，結束後再原位寫回。
+func (b *Battle) execCompanionSpell(i, rec int) {
+	c := b.companions[i]
+	savedHP, savedMax, savedMP, savedMaxMP, savedStatus := b.heroHP, b.heroMax, b.heroMP, b.heroMaxMP, b.heroStatus
+	b.heroHP, b.heroMax, b.heroMP, b.heroMaxMP, b.heroStatus = c.hp, c.maxHP, c.mp, c.maxMP, c.status
+	c.hp, c.maxHP, c.mp, c.maxMP, c.status = savedHP, savedMax, savedMP, savedMaxMP, savedStatus
+	b.execSpell(rec)
+	casterHP, casterMax, casterMP, casterMaxMP, casterStatus := b.heroHP, b.heroMax, b.heroMP, b.heroMaxMP, b.heroStatus
+	b.heroHP, b.heroMax, b.heroMP, b.heroMaxMP, b.heroStatus = c.hp, c.maxHP, c.mp, c.maxMP, c.status
+	c.hp, c.maxHP, c.mp, c.maxMP, c.status = casterHP, casterMax, casterMP, casterMaxMP, casterStatus
 }
 
 // aliveTargets:存活隊員索引(-1=隊長,0..n=同伴)。
@@ -671,95 +910,95 @@ func (b *Battle) setTargetStatus(target, bit int) {
 func (b *Battle) enemyTurn() {
 	ai, aiOK := b.mons.AI(b.monID)
 	for i := range b.enemies {
-		if !b.enemies[i].alive() {
-			continue
-		}
-		if b.enemies[i].status&statusParalysis != 0 { // 睡眠/混亂(玩家施144/152)→ 本回合不行動
-			b.msg = "敵人昏睡中,無法行動"
-			continue
-		}
-		// 1) 逃跑(逐隻獨立擲;離隊不算擊殺,經驗/金錢結算排除,見 killedCount)
-		if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
-			b.enemies[i].hp, b.enemies[i].fled = 0, true
-			b.msg = "敵人逃走了"
-			continue
-		}
-		targets := b.aliveTargets()
-		if len(targets) == 0 { // 我方已於本回合稍早被打光 → 中斷,判敗
-			b.msg, b.result, b.phase = "全滅…", 2, phMessage
-			return
-		}
-		tgt := targets[b.rng.Next(len(targets))] // 鎖定隨機存活隊員
-		// 2) 施咒(封咒 sealed 擋下 → 落到物攻;其餘依 Kind 分派)
-		if aiOK && ai.CastProb > 0 && b.enemies[i].status&statusSealed == 0 && b.roll() < int(ai.CastProb) {
-			if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
-				rec := spell.MonsterSpellRec(bits[b.rng.Next(len(bits))])
-				if def, ok := spell.GetDef(rec); ok {
-					switch def.Kind {
-					case spell.Heal:
-						val := spell.CastValue(def.Base, b.roll())
-						b.enemies[i].hp += val
-						if b.enemies[i].hp > b.enemies[i].max {
-							b.enemies[i].hp = b.enemies[i].max
-						}
-						b.msg = fmt.Sprintf("敵詠唱咒文回復 %d", val)
-						continue
-					case spell.Sleep: // 敵鏡像144/152:目標隊員陷入睡眠/混亂
-						b.setTargetStatus(tgt, statusParalysis)
-						b.msg = "敵詠唱咒文,我方陷入異常狀態!"
-						continue
-					case spell.BuffAtk: // 敵鏡像151:敵方自身物攻上升(上限400%)
-						b.enemyAtkPct += 100
-						if b.enemyAtkPct > 400 {
-							b.enemyAtkPct = 400
-						}
-						b.msg = "敵方攻擊力上升了!"
-						continue
-					case spell.BuffDef: // 敵鏡像154/155:敵方自身守備上升(上限300%)
-						b.enemyDefPct += 50
-						if b.enemyDefPct > 300 {
-							b.enemyDefPct = 300
-						}
-						b.msg = "敵方守備力上升了!"
-						continue
-					case spell.Seal: // 敵鏡像156:我方咒文被封(全體,對齊 C g_party_sealed)
-						b.partySealed = true
-						b.msg = "我方咒文被封印了!"
-						continue
-					case spell.Blind: // 敵鏡像158:我方陷入幻惑(全體,對齊 C g_party_blind)
-						b.partyBlind = true
-						b.msg = "我方陷入幻惑!"
-						continue
-					default: // Dmg(傷害咒,不受防御減半)
-						val := spell.CastValue(def.Base, b.roll())
-						b.damageMember(tgt, val)
-						b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
-						if b.wipedOut() {
-							return
-						}
-						continue
-					}
-				}
-			}
-		}
-		// 3) 物理反擊(幻惑 ~50% 揮空;敵攻%/我方守備%套修正;打隊長且防御 → 減半)
-		if b.enemies[i].status&statusBlind != 0 && b.roll() < 128 {
-			b.msg = "敵人陷入幻惑,攻擊落空"
-			continue
-		}
-		eatk := pct(b.enemies[i].atk, b.enemyAtkPct)
-		edef := pct(b.targetDef(tgt), b.partyDefPct)
-		edmg := battle.PhysDamage(eatk, edef, b.roll(), 0)
-		if tgt < 0 && b.defending {
-			edmg /= 2
-		}
-		b.damageMember(tgt, edmg)
-		b.msg = fmt.Sprintf("敵攻擊 %d 傷害", edmg)
-		if b.wipedOut() {
+		b.enemyAction(i, ai, aiOK)
+		if b.result != 0 {
 			return
 		}
 	}
 	b.phase = phMessage
+}
+
+func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
+	if i < 0 || i >= len(b.enemies) || !b.enemies[i].alive() {
+		return
+	}
+	if b.enemies[i].status&statusParalysis != 0 {
+		b.msg = "敵人昏睡中,無法行動"
+		return
+	}
+	if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
+		b.enemies[i].hp, b.enemies[i].fled = 0, true
+		b.msg = "敵人逃走了"
+		return
+	}
+	targets := b.aliveTargets()
+	if len(targets) == 0 {
+		b.msg, b.result, b.phase = "全滅…", 2, phMessage
+		return
+	}
+	tgt := targets[b.rng.Next(len(targets))]
+	if aiOK && ai.CastProb > 0 && b.enemies[i].status&statusSealed == 0 && b.roll() < int(ai.CastProb) {
+		if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
+			rec := spell.MonsterSpellRec(bits[b.rng.Next(len(bits))])
+			if def, ok := spell.GetDef(rec); ok {
+				switch def.Kind {
+				case spell.Heal:
+					val := spell.CastValue(def.Base, b.roll())
+					b.enemies[i].hp += val
+					if b.enemies[i].hp > b.enemies[i].max {
+						b.enemies[i].hp = b.enemies[i].max
+					}
+					b.msg = fmt.Sprintf("敵詠唱咒文回復 %d", val)
+					return
+				case spell.Sleep:
+					b.setTargetStatus(tgt, statusParalysis)
+					b.msg = "敵詠唱咒文,我方陷入異常狀態!"
+					return
+				case spell.BuffAtk:
+					b.enemyAtkPct += 100
+					if b.enemyAtkPct > 400 {
+						b.enemyAtkPct = 400
+					}
+					b.msg = "敵方攻擊力上升了!"
+					return
+				case spell.BuffDef:
+					b.enemyDefPct += 50
+					if b.enemyDefPct > 300 {
+						b.enemyDefPct = 300
+					}
+					b.msg = "敵方守備力上升了!"
+					return
+				case spell.Seal:
+					b.partySealed = true
+					b.msg = "我方咒文被封印了!"
+					return
+				case spell.Blind:
+					b.partyBlind = true
+					b.msg = "我方陷入幻惑!"
+					return
+				default:
+					val := spell.CastValue(def.Base, b.roll())
+					b.damageMember(tgt, val)
+					b.msg = fmt.Sprintf("敵咒文 %d 傷害", val)
+					b.wipedOut()
+					return
+				}
+			}
+		}
+	}
+	if b.enemies[i].status&statusBlind != 0 && b.roll() < 128 {
+		b.msg = "敵人陷入幻惑,攻擊落空"
+		return
+	}
+	eatk := pct(b.enemies[i].atk, b.enemyAtkPct)
+	edef := pct(b.targetDef(tgt), b.partyDefPct)
+	edmg := battle.PhysDamage(eatk, edef, b.roll(), 0)
+	if tgt < 0 && b.defending || tgt >= 0 && b.companions[tgt].defending {
+		edmg /= 2
+	}
+	b.damageMember(tgt, edmg)
+	b.msg = fmt.Sprintf("敵攻擊 %d 傷害", edmg)
+	b.wipedOut()
 }
 
 // wipedOut:我方全滅 → 設敗、回 true(呼叫端應立即結束回合,別讓其餘敵繼續行動)。
@@ -915,14 +1154,15 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 		fillBox(rgba, mx, my, mw, mh, white)
 		b.hits.reset()
 		if b.phase == phSpell {
+			spells := b.actorSpells(b.commandActor)
 			// 原版視窗只有 5 行；已學咒文超過 5 筆時，讓目前游標保持在可見
 			// 範圍內。舊版只畫前 5 筆，游標移到第 6 筆後會成為不可見選項。
 			start := 0
 			if b.spellCursor >= 5 {
 				start = b.spellCursor - 4
 			}
-			for row, i := 0, start; row < 5 && i < len(b.spells); row, i = row+1, i+1 {
-				rec := b.spells[i]
+			for row, i := 0, start; row < 5 && i < len(spells); row, i = row+1, i+1 {
+				rec := spells[i]
 				y := my + 24 + row*16
 				if i == b.spellCursor {
 					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
@@ -934,13 +1174,15 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				b.hits.add(mx, y-4, mw, 16, i)
 			}
 		} else {
-			for i := 0; i < bcN; i++ {
+			menu := b.commandMenu(b.commandActor)
+			for i, kind := range menu {
 				y := my + 24 + i*16
 				if i == b.cursor {
 					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
 				}
-				drawGlyph(rgba, b.tx, mx+28, y, battleCmdLabels[i][0], white)
-				drawGlyph(rgba, b.tx, mx+72, y, battleCmdLabels[i][1], white)
+				label := battleCmdLabels[kind]
+				drawGlyph(rgba, b.tx, mx+28, y, label[0], white)
+				drawGlyph(rgba, b.tx, mx+72, y, label[1], white)
 				b.hits.add(mx, y-4, mw, 16, i)
 			}
 		}

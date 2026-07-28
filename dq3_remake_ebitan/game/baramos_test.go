@@ -67,13 +67,16 @@ func TestBaramosProductionInputTrace(t *testing.T) {
 	}
 
 	g.battle.enemies[0].hp, g.battle.enemies[0].def = 1, 0
-	g.battle.heroAtk = 999
-	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 戰う
+	g.battle.enemies[0].atk, g.battle.enemies[0].agi = 0, 0
+	g.battle.heroAtk, g.battle.heroAgi = 999, 999
+	for g.battle.phase == phCommand { // 原版逐一收完每名可動隊員的命令才結算
+		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	}
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 勝利訊息→end
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 關戰鬥→onBattleEnd
 	if g.battle.active || !g.flags[0x213] || g.storyFlag(0x29) || !g.dlg.open {
-		t.Fatalf("巴拉摩斯勝利狀態錯:battle=%v f213=%v f29=%v postDlg=%v",
-			g.battle.active, g.flags[0x213], g.storyFlag(0x29), g.dlg.open)
+		t.Fatalf("巴拉摩斯勝利狀態錯:battle=%v result=%d f213=%v f29=%v postDlg=%v",
+			g.battle.active, g.battle.result, g.flags[0x213], g.storyFlag(0x29), g.dlg.open)
 	}
 	closeDialogueByInput(t, g)
 }

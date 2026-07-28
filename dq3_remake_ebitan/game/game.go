@@ -1751,7 +1751,8 @@ func (g *Game) buildCompanionActors() []*battleActor {
 		out = append(out, &battleActor{
 			name: classNames[m.Class], class: m.Class, level: m.Level(),
 			hp: m.CurHP, maxHP: m.MaxHP(), mp: m.CurMP, maxMP: m.MaxMP(),
-			atk: m.Atk(g.shop.items), def: m.Def(g.shop.items),
+			atk: m.Atk(g.shop.items), def: m.Def(g.shop.items), agi: m.Agi(),
+			spells: m.Spells(),
 		})
 	}
 	return out

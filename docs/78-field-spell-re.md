@@ -89,8 +89,21 @@ rec346「但是這個咒文沒有效。」：
 `+0x19..+0x1d` 的 packed 2-bit 類別，映射成功門檻 `0/68/180/255`。
 
 Ebiten 已加入 rec180 的 20 MP battle descriptor、原版 16-slot dispatch、怪物 MP 與
-packed resistance consumer。現行 battle UI 仍只讓隊長下指令，而 rec180 是魔法使 Lv40
-習得；同伴逐人 command phase 尚未完成前，這是 D2 機制還原，不標成正常玩家可達 E3。
+packed resistance consumer。戰鬥 UI 也已改為逐名存活、可行動隊員下令；魔法使同伴會使用
+自己的已學咒文與 MP，因此 rec180 現在可由正常戰鬥輸入選到。
+
+### 戰鬥命令與行動順序
+
+- D3TXT00 rec441：戰鬥／咒文／防禦／道具（會咒、不可逃）。
+- rec442：戰鬥／逃跑／防禦／道具（不會咒、首位可行動者）。
+- rec443：戰鬥／咒文／逃跑／道具（會咒、首位可行動者）。
+- rec444：戰鬥／防禦／道具（不會咒、不可逃）。
+- `file 0xd4d9` 逐名收集命令；`file 0xd548` 以角色 `+0x38 & 0x00b0` 跳過失能者。
+- `file 0xd6bf` 在命令收集完畢後建立存活隊員與敵人的速度紀錄並排序，之後才逐筆執行。
+
+Go battle core 依此使用四種動態命令框，並把隊員與每隻敵人放入同一個速度佇列。
+
+![Ebiten：魔法使同伴的逐人戰鬥命令](../dq3_remake_ebitan/docs/battle_party_command.png)
 
 現行 renderer 的五行捲動咒文窗（游標位於清單尾端的巴魯朋特）：
 
@@ -100,7 +113,7 @@ packed resistance consumer。現行 battle UI 仍只讓隊長下指令，而 rec
 
 - handler 中 `0xd75`、world flag `0x4f46 bit0x80` 等較少見魯拉禁止狀態，Ebiten 尚無
   一一對應的世界狀態欄位。
-- 巴魯朋特的四種 handler 已接入 battle core；同伴逐人下指令與原版逐筆戰鬥訊息佇列仍待完成。
+- 巴魯朋特的四種 handler 與同伴正常輸入已接入 battle core；原版逐筆戰鬥訊息佇列仍待完成。
 - 因帕斯缺原版 `[0x25d3] → 0x10305` 色彩動畫，不能只因 record 分支已接就標 V3。
 - 原版冒險之書是否保存 `[0x4f46]/[0x52f7]` 這類暫態場景咒文狀態尚未追完；Go save
   目前明確視為 runtime-only，讀檔會清除雷姆歐魯 timer。

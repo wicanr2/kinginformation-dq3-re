@@ -98,7 +98,8 @@ func TestRariHoSleepSkipsEnemyTurn(t *testing.T) {
 		t.Fatal(err)
 	}
 	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
-	hero := heroParams{level: 9, curHP: 999, maxHP: 999, atk: 1, def: 1, agi: 1, mp: 99, maxMP: 99}
+	// 明確讓施法者快於敵人；原版已改為敵我敏捷混排，低敏施法者可能在咒文生效前先挨打。
+	hero := heroParams{level: 9, curHP: 999, maxHP: 999, atk: 1, def: 1, agi: 999, mp: 99, maxMP: 99}
 	if !b.startGroup(101, 1, 1, hero, nil) {
 		t.Fatal("開戰失敗")
 	}
@@ -230,8 +231,8 @@ func TestManusaCastSetsEnemyBlind(t *testing.T) {
 	}
 }
 
-// TestCureStatusClearsParalysis:基阿里克/薩梅哈(167/168)施放後應清除 heroStatus 的麻痺/睡眠位元;
-// 基阿里(166)應清除中毒位元。remake 簡化:麻痺/混亂/睡眠共用同一位元(見 spell.go CureStatus 註解)。
+// TestCureStatusAndIncapacitatedCaster:失能者不可能替自己施咒解除失能；基阿里仍可由未失能者
+// 清除自己的中毒。替其他隊員選目標另由 party-target UI 測試覆蓋。
 func TestCureStatusClearsParalysis(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
 	if err != nil {
@@ -245,8 +246,8 @@ func TestCureStatusClearsParalysis(t *testing.T) {
 	}
 	b1.heroStatus |= statusParalysis
 	b1.execSpell(167) // 基阿里克
-	if b1.heroStatus&statusParalysis != 0 {
-		t.Fatal("基阿里克後 heroStatus 應清除麻痺/睡眠位元")
+	if b1.heroStatus&statusParalysis == 0 {
+		t.Fatal("失能者應被行動佇列跳過，不能替自己施咒解除失能")
 	}
 
 	b2 := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}

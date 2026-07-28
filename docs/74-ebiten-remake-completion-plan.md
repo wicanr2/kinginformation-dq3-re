@@ -481,10 +481,14 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 4. [x] 因帕斯已確認 `bp=event type` 與原始 rec253／254；多拉瑪那已追通 `0x2000`
    writer、`0x0400` 連續區 guard 與兩類傷害地板 consumer。因帕斯色彩動畫仍為 V-gap。
    巴魯朋特已確認原版只有 5 個有效 slot（4 種唯一效果），其餘 11 格是無效訊息；
-   battle core 已依 EXE 接入。因魔法使同伴目前沒有逐人 command phase，正常玩家入口仍是 GAP。
+   battle core 已依 EXE 接入。
 5. [x] 對本批落地咒文加入 production menu、正常輸入、MP／timer／restore 測試，重產並
    目視檢查 `dq3_remake_ebitan/docs/field_spell_menu.png`。原版暫態 timer 的 save 格式仍
    待 RE，不把 Go runtime-only policy 冒充原版契約。
+6. [x] 戰鬥命令改為原版逐隊員收集：依 D3TXT00 rec441..444 顯示「會咒／可逃」組合，
+   跳過死亡與失能隊員；每位隊員使用自己的 MP、咒文、敏捷與防禦狀態。收完命令後依
+   `sub_d6bf` 將全隊與每隻敵人以敏捷擲值混排，敵人不再固定等全隊行動完才出手。
+   production-input、四種選單、跳過條件及快慢敵我先後均有回歸測試。
 
 ### B. 玩家流程 audit
 

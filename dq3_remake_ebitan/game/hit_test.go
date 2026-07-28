@@ -227,7 +227,7 @@ func TestShopDrawHitsAndTap(t *testing.T) {
 	}
 }
 
-// TestBattleCommandDrawHits:戰鬥指令窗(bcN=5)draw 後 hits 筆數 + 點格對齊。
+// TestBattleCommandDrawHits:無咒文的首位可行動者使用 rec442 四項指令窗。
 // 只驗 hit-box 幾何與命中 index(不經 b.input() 觸發 execTurn——那需要 b.mons 等完整開戰狀態,
 // 屬 TestPlaythroughBattle 的整合覆蓋範圍,這裡只測 P2 直接點選這條路徑本身)。
 func TestBattleCommandDrawHits(t *testing.T) {
@@ -235,8 +235,8 @@ func TestBattleCommandDrawHits(t *testing.T) {
 	rgba := newHitTestRGBA()
 	b.draw(rgba, nil)
 
-	if len(b.hits) != bcN {
-		t.Fatalf("戰鬥指令窗 draw 後 hits 應有 %d 筆,得 %d", bcN, len(b.hits))
+	if len(b.hits) != 4 {
+		t.Fatalf("無咒文首位角色應有4項指令,得 %d", len(b.hits))
 	}
 	// index bcItem(3):mx=120,my=236 → y=my+24+3*16=308
 	tapIdx := b.hits.at(130, 310)

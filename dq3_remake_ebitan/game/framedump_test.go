@@ -352,15 +352,22 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	dump("rura_destinations")
 
-	// 戰鬥咒文 5 行捲動窗：Lv40 魔法使清單尾端的巴魯朋特必須可見。
+	// 逐隊員戰鬥命令：隊長下令後輪到 Lv40 魔法使同伴；其選單不可出現逃跑。
+	// 再開該同伴的五行捲動咒文窗，清單尾端巴魯朋特必須可見。
 	g.fieldSpell = FieldSpellMenu{}
 	mageSpells := spell.Known(4, 40)
 	if !g.battle.startGroup(5, 1, 1, heroParams{
 		level: 40, curHP: 200, maxHP: 200, atk: 80, def: 80, agi: 80,
-		mp: 200, maxMP: 200, spells: mageSpells,
-	}, nil) {
+		mp: 80, maxMP: 80, spells: spell.Known(0, 40),
+	}, []*battleActor{{
+		class: 4, level: 40, hp: 150, maxHP: 150, mp: 200, maxMP: 200,
+		atk: 40, def: 50, agi: 90, spells: mageSpells,
+	}}) {
 		t.Fatal("巴魯朋特選單截圖開戰失敗")
 	}
+	g.battle.commandActor = 1
+	g.battle.phase = phCommand
+	dump("battle_party_command")
 	g.battle.phase = phSpell
 	g.battle.spellCursor = len(mageSpells) - 1
 	dump("battle_palpunte_menu")
