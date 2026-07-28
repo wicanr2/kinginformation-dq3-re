@@ -204,38 +204,36 @@ func TestUseFairyFluteWrongPlaceNoEffect(t *testing.T) {
 	}
 }
 
-// 彩虹水滴(0x75):下層地表使用 → 消耗、設 flag 0x35、推進 msRainbow 里程碑。
-func TestUseRainbowOnLowerField(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
-	g.inTown, g.layer = false, 1
+// 彩虹水滴(0x75):原版只接受下層 (127,117)，並把西側 (126,117) 改成橋 tile0x53。
+func TestUseRainbowAtOriginalCoordinate(t *testing.T) {
+	g := r4Game(t)
+	g.inTown, g.layer, g.px, g.py = false, 1, rainbowUseX, rainbowUseY
+	g.cur = g.loadUnder()
 	g.inventory = []int{0x75}
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
-	if !g.flags[0x35] {
-		t.Errorf("彩虹水滴在下層地表應設 flag 0x35")
+	if g.worldState&worldStateRainbowBridge == 0 {
+		t.Errorf("彩虹水滴應設原版 world state bit0x40")
 	}
-	if !g.progressDone(msRainbow) {
-		t.Errorf("彩虹水滴在下層地表應推進 msRainbow 里程碑")
+	if got := g.cur.tileIdx(rainbowBridgeX, rainbowBridgeY); got != rainbowBridgeTile {
+		t.Errorf("橋 tile=%02x, want %02x", got, rainbowBridgeTile)
 	}
 	if len(g.inventory) != 0 {
-		t.Errorf("彩虹水滴在下層地表應消耗,剩 %d", len(g.inventory))
+		t.Errorf("正確位置應消耗彩虹水滴,剩 %d", len(g.inventory))
 	}
 }
 
-// 彩虹水滴:地面層(非下層)使用 → 不消耗、不設 flag。
-func TestUseRainbowWrongLayerNoConsume(t *testing.T) {
+// 同在下層但不是原版座標，也不得消耗或改世界狀態。
+func TestUseRainbowWrongCoordinateNoConsume(t *testing.T) {
 	g := &Game{flags: map[int]bool{}}
-	g.inTown, g.layer = false, 0
+	g.inTown, g.layer, g.px, g.py = false, 1, rainbowUseX-1, rainbowUseY
 	g.inventory = []int{0x75}
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
-	if g.flags[0x35] {
-		t.Errorf("彩虹水滴在地面層不應設 flag 0x35")
-	}
-	if g.progressDone(msRainbow) {
-		t.Errorf("彩虹水滴在地面層不應推進 msRainbow 里程碑")
+	if g.worldState != 0 {
+		t.Errorf("錯誤位置不應改 world state: %04x", g.worldState)
 	}
 	if len(g.inventory) != 1 {
-		t.Errorf("彩虹水滴在地面層不應消耗,剩 %d", len(g.inventory))
+		t.Errorf("錯誤位置不應消耗,剩 %d", len(g.inventory))
 	}
 }

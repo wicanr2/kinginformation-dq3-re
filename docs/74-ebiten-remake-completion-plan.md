@@ -127,7 +127,7 @@
 
 1. 沒有一條 production input 驅動的完整主線 trace。
 2. `spine_test.go` 直接呼叫內部函式，不能證明玩家可達。
-3. production 仍有 `T/R/U/Z/Enter/Cancel` demo 或 debug 行為。
+3. ~~production 的 `T/R/U/Z/Enter/Cancel` demo/debug 行為~~（R-4/R-5a 已移除）。
 4. 六珠／不死鳥／飛行坐騎是零到一的大工程。
 5. 畫面證據沒有形成逐界面的 current matrix，raw decode、component dump 和正常流程畫面容易混稱。
 6. `build.sh` 內 `go test | tail` 未啟用內層 `pipefail`，可遮蔽測試失敗；game 測試在本次
@@ -382,7 +382,7 @@ Gate：從拉米亞起飛至下層世界，不使用 U。
 - 彩虹橋位置與 walkability mutation。
 - 父親／五頭龍場景與復原 sprite。
 - 索瑪神殿正式入口。
-- 六大魔人 → 怨靈 → 殭屍 → 索瑪。
+- 城內大魔人維持原版一般隨機遭遇；終盤 formation 為怨靈 → 殭屍 → rec72 → 索瑪。
 - 光之珠弱化、勝敗、洛特授勳、ENDTXT、TIT3。
 - 自然入口完成後移除 `Z` production 捷徑。
 

@@ -218,4 +218,59 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.px, g.py = 85, 67
 	g.dlg.open = false
 	dump("alefgard_overworld")
+
+	// R-5:龍女王原版 handler52 給光之珠並更新 story flags。
+	queen, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyDragonQueen, mapBlkNum[ctyDragonQueen], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = queen, queen, ctyDragonQueen, true
+	g.px, g.py, g.facing, g.dlg.tx = 14, 25, 1, queen.dlgText
+	g.dlg.open = false
+	g.removeItems(itemLightOrb, g.countItem(itemLightOrb))
+	g.scriptedTalk(dragonQueenHandler)
+	dump("dragon_queen_light_orb")
+
+	// 彩虹水滴精確座標：(127,117) 使用前後，西側 (126,117) 變 tile0x53。
+	g.dlg.open = false
+	g.cur, g.inTown, g.curCty, g.layer = g.loadUnder(), false, -1, 1
+	g.px, g.py, g.facing = rainbowUseX, rainbowUseY, 2
+	g.worldState &^= worldStateRainbowBridge
+	if g.cur.override != nil {
+		delete(g.cur.override, rainbowBridgeY*g.cur.w+rainbowBridgeX)
+	}
+	dump("rainbow_bridge_before")
+	g.inventory = append(g.inventory, itemRainbowDrop)
+	g.panelCursor = len(g.inventory) - 1
+	g.useSelectedItem()
+	dump("rainbow_bridge_after")
+
+	// CTY90 sec5 自然「話す」入口與原版三個 formation。
+	zoma, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyZomaCastle, mapBlkNum[ctyZomaCastle], zomaFinalSection, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = zoma, zoma, ctyZomaCastle, true
+	g.px, g.py, g.facing, g.dlg.tx = 11, 6, 1, zoma.dlgText
+	g.dlg.open, g.noticeTimer = false, 0
+	dump("zoma_final_room")
+	if !g.startBossBattle(0x7a) {
+		t.Fatal("巴拉摩斯怨靈 0x7a 戰鬥素材載入失敗")
+	}
+	dump("baramos_ghost_battle")
+	g.battle.active = false
+	if !g.startBossBattle(0x7b) {
+		t.Fatal("巴拉摩斯殭屍 0x7b 戰鬥素材載入失敗")
+	}
+	dump("baramos_zombie_battle")
+	g.battle.active = false
+	g.dlg.Open(zomaDialogueRec)
+	dump("zoma_final_challenge")
+	g.dlg.open = false
+	if !g.startBossBattle(0x7c) {
+		t.Fatal("索瑪 0x7c 戰鬥素材載入失敗")
+	}
+	dump("zoma_final_battle")
 }

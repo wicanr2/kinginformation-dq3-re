@@ -11,8 +11,8 @@ type InputState struct {
 	DirHeld  int  // 按住的方向(走動),-1 無;0下 1上 2左 3右
 	DirEdge  int  // 剛按下的方向(選單導覽),-1 無
 	Confirm  bool // A:確定 / 對話 / 選定(edge)
-	Cancel   bool // B:取消 / 出城(edge)
-	Enter    bool // 進城(鍵盤 Enter,debug;edge)
+	Cancel   bool // B:取消(edge)
+	Enter    bool // 標題／設定選單的鍵盤確認(edge)；遊戲中無 debug 傳送
 	Toggle   bool // Tab:英數 ↔ 注音 切換(酒館命名;edge)
 	Settings bool // S:開設定選單(標題畫面;edge)
 	CtxTap   bool // 觸控情境鍵剛點(edge);意義隨情境由呼叫端解讀(設定/切換…)

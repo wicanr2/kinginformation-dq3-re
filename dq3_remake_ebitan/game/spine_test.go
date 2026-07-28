@@ -167,7 +167,7 @@ func TestComponentSpine(t *testing.T) {
 		t.Fatalf("下降後進度應到 8,得 %d", g.progressStage())
 	}
 
-	// ---- 8. 彩虹水滴位置閘:下層地表(layer==1)useSelectedItem → 架彩虹橋(flag0x35)+ 消耗道具。
+	// ---- 8. 彩虹水滴原版座標閘：(127,117) 使用，(126,117) 改成 tile0x53。
 	// 驗「劇情道具」端到端:合成(步驟6)產出的道具,真的能在正確位置被 useSelectedItem 消費。
 	idx := -1
 	for i, c := range g.inventory {
@@ -179,9 +179,11 @@ func TestComponentSpine(t *testing.T) {
 		t.Fatal("背包應仍持有步驟6合成的彩虹水滴")
 	}
 	g.panelCursor = idx
+	g.px, g.py = rainbowUseX, rainbowUseY
 	g.useSelectedItem()
-	if !g.flags[0x35] {
-		t.Error("下層使用彩虹水滴應架彩虹橋(flag0x35)")
+	if g.worldState&worldStateRainbowBridge == 0 ||
+		g.cur.tileIdx(rainbowBridgeX, rainbowBridgeY) != rainbowBridgeTile {
+		t.Error("正確座標使用彩虹水滴應架起原版 tile0x53")
 	}
 	if g.hasItem(itemRainbowDrop) {
 		t.Error("彩虹水滴架橋後應消耗")
@@ -195,7 +197,15 @@ func TestComponentSpine(t *testing.T) {
 		t.Fatal("startZomaSeq 應開第一場 boss(守衛 106 sprite/數值缺失?)")
 	}
 	seen := []int{g.battle.monID}
-	for i := 0; i < 20 && g.battle.active; i++ {
+	for i := 0; i < 20 && (g.battle.active || g.zomaIntro); i++ {
+		if g.zomaIntro {
+			g.dlg.open = false
+			g.advanceZomaIntro()
+			if g.battle.active {
+				seen = append(seen, g.battle.monID)
+			}
+			continue
+		}
 		g.battle.result, g.battle.gotExp, g.battle.gotGold = 1, 1, 1 // 判定本場勝出(手動驅動,見函式註解)
 		g.onBattleEnd()                                              // 真實寫回:exp/gold/HP +(monID==0x7c → runFinale)
 		g.battle.active = false
@@ -208,9 +218,6 @@ func TestComponentSpine(t *testing.T) {
 	}
 	if seen[len(seen)-1] != 0x7c {
 		t.Fatalf("連戰最後一場應為索瑪 0x7c,實際序列=%v", seen)
-	}
-	if !g.flags[0x214] {
-		t.Error("六大魔人守衛破後應設 flag 0x214")
 	}
 	if !g.cleared || !g.lotoBlessed {
 		t.Error("破索瑪應設 cleared + lotoBlessed(經由 onBattleEnd→runFinale)")

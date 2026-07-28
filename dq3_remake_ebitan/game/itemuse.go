@@ -63,11 +63,11 @@ func (g *Game) useSelectedItem() {
 			g.flags[0x34] = true
 			g.noticeCode, g.noticeTimer = itemSpiritGuard, 90
 		}
-	case itemuse.Rainbow: // 彩虹水滴:下層利姆達爾西北地表 → 架彩虹橋通終盤
-		if !g.inTown && g.layer == 1 {
+	case itemuse.Rainbow: // DQ3.EXE loc_14243：下層世界 (127,117) 使用，改 (126,117)=tile0x53
+		if !g.inTown && g.layer == 1 && g.px == rainbowUseX && g.py == rainbowUseY {
 			g.removeItems(code, 1)
-			g.flags[0x35] = true
-			g.progressSet(msRainbow)
+			g.worldState |= worldStateRainbowBridge
+			g.applyRainbowBridge()
 			g.noticeCode, g.noticeTimer = code, 90
 			g.clampPanelCursor()
 		}
@@ -83,6 +83,27 @@ func (g *Game) useSelectedItem() {
 	default:
 		// 解狀態(無狀態系統)→ 不消耗,對齊原版
 	}
+}
+
+const (
+	rainbowUseX, rainbowUseY              = 0x7f, 0x75
+	rainbowBridgeX, rainbowBridgeY        = 0x7e, 0x75
+	rainbowBridgeTile                     = 0x53
+	worldStateRainbowBridge        uint16 = 0x40
+)
+
+func (g *Game) applyRainbowBridge() {
+	if g.worldState&worldStateRainbowBridge == 0 {
+		return
+	}
+	u := g.loadUnder()
+	if u == nil {
+		return
+	}
+	if u.override == nil {
+		u.override = map[int]int{}
+	}
+	u.override[rainbowBridgeY*u.w+rainbowBridgeX] = rainbowBridgeTile
 }
 
 const (

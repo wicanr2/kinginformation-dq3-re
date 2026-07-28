@@ -102,7 +102,7 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   fieldmap/town tile → BLK tile(32×24 indexed)→ palette → 640×350 RGBA → `ebiten.Image`;
   **主角 sprite masked blit(透明背景疊地形)**、**攝影機 clamp 隨主角捲動(邊緣不露黑,對齊 C VIEW 20×15)**、
   **方向鍵移動 + 走路動畫**、**BLKBM 碰撞 + NPC 擋路(不可穿山/海/牆/人)**、**城內 24 隻 NPC sprite(DQ3MAN.BLS)**、
-  **Enter 進阿里阿罕城 / Esc 回地表**。本機 Xvfb 驗證:進城見阿里阿罕(ルイーダの酒場「PUNCH LUIDA」+「HOTEL」宿屋招牌、
+  城鎮一律從地表入口或 CTY 正式轉場進出，不保留 Enter/Esc 傳送後門。本機 Xvfb 驗證:進城見阿里阿罕(ルイーダの酒場「PUNCH LUIDA」+「HOTEL」宿屋招牌、
   24 隻村民 NPC 散佈、磚房、道路),攝影機貼邊不露黑。**朝「可玩」一大步。**
   > ★ 地表/城鎮/主角畫面 = 遊戲版權美術 → 依專案政策**不截圖入庫**;公開證明用 palette 截圖(上方,純色塊)。
   > 踩雷紀錄:Ebiten `WritePixels` 下一幀才生效 → 渲染要在 `Update()` 做、`Draw()` 只 `DrawImage`(否則同幀畫到舊的黑圖)。
@@ -135,7 +135,7 @@ cd dq3_remake_ebitan && DQ3_ASSETS=/path/to/assets_raw DQ3_MT32=/path/to/work/mt
   - [x] **全城設施表**（`game/shopdata.go`，91 設施 + 208 品項池自 dq3_shopdata baked）：facilityForCty(cty,k) → 各城武防/道具店/宿屋/教會皆正確
   - [x] **VOC 音效**（`voc.go` 解碼 FVOC.VCX 22 音效 + `gaudio` 播放）：VCX bank→type-1 8-bit PCM 重取樣 s16、選單確定觸發（device-gated，同音樂）+ 對拍測試
   - [x] **多人隊伍**（`member.go`,移植 dq3_recruit/roster）：Member（職業/等級/裝備→數值推導,class-aware 咒文系）+ 隊長+同伴（戰士/僧侶/魔法使）;戰鬥 4 欄狀態列（名/HP/MP/等級,對齊 C）、同伴自動攻擊、敵鎖定隨機存活隊員、全滅才敗、全隊共享 exp/升級/復活、存檔含隊伍。Xvfb 驗證 4 職業隊伍
-  - [x] **露易達酒館招募**（`tavern.go`,移植 dq3_tavern）：T 鍵開 → 8 職業選單（真中文名）→ 性別 → 建 lv1 隊員加入隊伍（最多 3 同伴,滿則替換）。注音命名（zhuyin）為後續,暫用職業名
+  - [x] **露易達酒館招募**：由 CTY00 1F/2F 原版櫃台進入；登錄名冊與加入隊伍為兩段式流程。
   - [x] **忠實 DOS 亂數**（`internal/rng`,移植 dq3_rng DOS 模式:add 0x9018+rol3+mod）:戰鬥擲值 roll 序列位元一致對齊原版/C（取代 math/rand）+ 對拍測試
   - [x] **英數命名輸入**（`tavern.go`,移植 dq3_nameinput）：酒館 職業→命名（0-9/A-Z 格盤+←/OK）→性別→建已命名隊員（名字用 FON glyph:數字0-9/字母15..40）。注音（zhuyin IME）為後續
   - [x] **標題畫面**（`pcx.go`,移植 dq3_pcx）：TITG.P（ZSoft PCX 640×350 4-plane RLE + 檔內16色）解碼→開機顯「DRAGON FIGHTER III 傳說的終章 ©1993 精訊」,A/Enter 開始 + 對拍測試

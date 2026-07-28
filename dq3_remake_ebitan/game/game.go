@@ -1,6 +1,6 @@
 // dq3_remake_ebitan — 精訊 DQ3 remake 的 Go/Ebiten port(評估見 ../docs/62)。
 // Phase 3+:載入真實地表(DQ3CON.MAP+DQ3.BLK)+ 阿里阿罕城(CTY00.DAT+DQ31.BLK),全用移植的 Go parser。
-// 方向鍵走動、viewport 捲動、主角 masked sprite + 走路動畫、BLKBM 碰撞(不可穿山/海),Enter 進城 / Esc 回地表。
+// 方向鍵走動、viewport 捲動、主角 masked sprite + 走路動畫、BLKBM 碰撞(不可穿山/海)。
 package game
 
 import (
@@ -43,22 +43,22 @@ type npcInst struct {
 
 // Scene 是一張可走動的地圖(地表或城鎮),統一 render + 碰撞邏輯。
 type Scene struct {
-	blk            *dq3data.BLK
-	attr           *dq3data.BlockAttr
-	pal            []dq3data.Color
-	w, h           int
-	tileAt         func(x, y int) int // (x,y) → BLK tile 索引
-	spawnX, spawnY int                // 城鎮進入 spawn(地表不用)
-	dlgText        *dq3data.Text      // 該城對話 bank(D3TXT0<bank>.TXT;地表 nil)
-	hiMap          []byte             // 每格高 byte(事件 subid)
-	events         [][3]int           // section 事件表 {type,param,p2}
-	transitions    [][4]int           // section 轉場表 {destCty,destSec,x,y}
-	hiTransition   bool               // CTY72 跳坑：普通 tile 以 hiMap subid 選第二筆轉場
-	sec            int                // section 號
-	npcs           []npcInst
-	override       map[int]int // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
-	npcRng         rng.RNG     // NPC 遊走用確定性 RNG(依 section 種子)
-	night          bool        // 此 scene 用黑夜 NPC 表載入(晝夜 cache 判斷用;overworld 恆 false)
+	blk             *dq3data.BLK
+	attr            *dq3data.BlockAttr
+	pal             []dq3data.Color
+	w, h            int
+	tileAt          func(x, y int) int // (x,y) → BLK tile 索引
+	spawnX, spawnY  int                // 城鎮進入 spawn(地表不用)
+	dlgText         *dq3data.Text      // 該城對話 bank(D3TXT0<bank>.TXT;地表 nil)
+	hiMap           []byte             // 每格高 byte(事件 subid)
+	events          [][3]int           // section 事件表 {type,param,p2}
+	transitions     [][4]int           // section 轉場表 {destCty,destSec,x,y}
+	plainTransition bool               // 此 section 允許 attr==0 + 非零 hiMap subid 的隱形轉場
+	sec             int                // section 號
+	npcs            []npcInst
+	override        map[int]int // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
+	npcRng          rng.RNG     // NPC 遊走用確定性 RNG(依 section 種子)
+	night           bool        // 此 scene 用黑夜 NPC 表載入(晝夜 cache 判斷用;overworld 恆 false)
 }
 
 // tileIdx:回 (x,y) 的 BLK tile 索引,先查執行期覆蓋(開門)再退靜態 tileAt。
@@ -110,10 +110,10 @@ func (sc *Scene) tileTransition(tx, ty int) (int, int, int, int, bool) {
 		return 0, 0, 0, 0, false
 	}
 	subid := int(sc.hiMap[ty*sc.w+tx] & 0x1f)
-	// 多數門/階梯由 BLKBM attr&0xe000 標記；但 CTY72 蓋亞大洞窟的跳坑環
-	// 使用「普通可走 tile + hiMap subid=1」指向第二筆 transition，attr 為 0。
-	// 因此只有 attr 無轉場且 subid==0 才能判定為非轉場格。
-	if sc.attr.Raw(sc.tileIdx(tx, ty))&0xe000 == 0 && !(sc.hiTransition && subid > 0) {
+	// 多數門/階梯由 BLKBM attr&0xe000 標記；少數已由原版流程確認的 section
+	// 允許 attr==0 的普通可走 tile 以非零 hiMap subid 選轉場。
+	a := sc.attr.Raw(sc.tileIdx(tx, ty))
+	if a&0xe000 == 0 && !(sc.plainTransition && a == 0 && subid > 0) {
 		return 0, 0, 0, 0, false
 	}
 	if subid >= len(sc.transitions) {
@@ -244,6 +244,7 @@ type Game struct {
 	roster          []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
 	flags           map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
 	storyBits       [64]byte     // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
+	worldState      uint16       // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
 	noticeCode      int          // 取得道具通知(item code;-1=無)
 	noticeTimer     int
 	shipOwned       bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
@@ -256,9 +257,10 @@ type Game struct {
 	endText         *dq3data.Text // ENDTXT.TXT 結局文本
 	endSeq          int           // 結局捲動段號(-1=未進行;0..n=當前段)
 	openingIdx      int           // 開場旁白序號(-1=未進行;0..n=當前句)
-	bossQueue       []int         // boss 連戰佇列(索瑪神殿:六大魔人→怨靈→殭屍→索瑪;或 examine 觸發的座標 boss 鏈)
+	bossQueue       []int         // boss 連戰佇列(索瑪終盤:怨靈→殭屍→索瑪；或 examine 觸發的座標 boss 鏈)
 	pendingTrigger  *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
 	bossIntro       bool          // 座標 boss 的 preRec 尚在顯示；關閉後才正式開戰
+	zomaIntro       bool          // 索瑪 rec72 尚在顯示；關閉後才開 monster0x7c
 	baramosReturn   int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
 	mirrorStage     int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	phoenix         *dq3data.CharSprite
@@ -312,6 +314,8 @@ func (g *Game) selectCommand(cmd int) {
 					g.talkTedonOrb()
 				} else if g.curCty == ctyPhoenixShrine && n.b4 == phoenixGuardianHandler {
 					g.talkPhoenixGuardian()
+				} else if g.talkZomaFinal(n) {
+					// CTY90 sec5 handler80：自然交談入口。
 				} else if g.talkBossSpecial(n) {
 					// CTY65 巴拉摩斯等 sub2 固定物件型 boss。
 				} else if g.openAliahanSpecialNPC(n) {
@@ -440,6 +444,10 @@ func (g *Game) scriptedTalk(byte4 int) {
 		g.dlg.Open(beforeRec)
 		return
 	}
+	if byte4 == dragonQueenHandler && g.curCty == ctyDragonQueen {
+		g.talkDragonQueen(s)
+		return
+	}
 	if require != 255 { // 檢查型:持物→give_rec、否則→before_rec(不消耗)
 		if g.hasItem(require) {
 			g.dlg.Open(giveRec)
@@ -474,6 +482,27 @@ func (g *Game) scriptedTalk(byte4 int) {
 	if give != 255 { // giveRec 若含 VAR_ITEM(0xfffa)→ 填實際道具名(Open 已重置 var,須在其後設)
 		g.setDlgVarItem(give)
 	}
+}
+
+const (
+	ctyDragonQueen     = 67
+	dragonQueenHandler = 52
+	itemLightOrb       = 0x65
+)
+
+// talkDragonQueen 還原 DQ3.EXE sub_15E02：取得光之珠後，
+// CLEAR story flag0x4e 並 SET story flag0x19。舊泛用表只給道具，漏了兩筆設定。
+func (g *Game) talkDragonQueen(s *[10]int) {
+	if g.storyFlag(0x19) || g.hasItem(itemLightOrb) {
+		g.dlg.Open(s[9])
+		return
+	}
+	g.inventory = append(g.inventory, itemLightOrb)
+	g.noticeCode, g.noticeTimer = itemLightOrb, 120
+	g.setStoryFlag(0x4e, false)
+	g.setStoryFlag(0x19, true)
+	g.dlg.Open(s[8])
+	g.setDlgVarItem(itemLightOrb)
 }
 
 // 取船劇情常數(main.c:57-90 DQ3_PORTOGA_*/DQ3_ITEM_PEPPER/DQ3_PORTOGA_REC_*,座標/rec/碼原封對齊)。
@@ -707,24 +736,6 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
-	// T 鍵:阿里阿罕冒險者登錄所創角(對齊 C dev 捷徑;正式入口=LUIDA 2F 櫃台)
-	if g.inTown && inpututil.IsKeyJustPressed(ebiten.KeyT) {
-		g.tavern.open()
-		g.renderFrame()
-		return nil
-	}
-	// R 鍵:阿里阿罕酒場招募(找同伴參加/分離/名單;對齊 C dev 捷徑;正式入口=LUIDA 1F 櫃台)
-	if g.inTown && inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		g.recruit.open()
-		g.renderFrame()
-		return nil
-	}
-	// Z 鍵:索瑪神殿最終連戰(六大魔人→怨靈→殭屍→索瑪;對齊 C dev 捷徑 zomaseq)。持光之珠弱化索瑪
-	if !g.battle.active && inpututil.IsKeyJustPressed(ebiten.KeyZ) {
-		g.startZomaSeq()
-		g.renderFrame()
-		return nil
-	}
 	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
 	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
@@ -784,6 +795,7 @@ func (g *Game) step(in InputState) error {
 			g.dlg.Advance()
 			if !g.dlg.open {
 				g.advanceBossDialogue()
+				g.advanceZomaIntro()
 				g.advanceBaramosReturn()
 				g.advanceMirrorEvent()
 				g.advancePhoenixEvent()
@@ -854,14 +866,6 @@ func (g *Game) step(in InputState) error {
 		}
 		g.cmd.Open()
 		g.renderFrame()
-		return nil
-	}
-	if in.Enter && !g.inTown { // 鍵盤 Enter:debug 直接進阿里阿罕
-		g.enterTown()
-		return nil
-	}
-	if in.Cancel && g.inTown {
-		g.exitTown()
 		return nil
 	}
 	// 移動(方向 held + grid cooldown)
@@ -1170,6 +1174,7 @@ func (g *Game) loadUnder() *Scene {
 		return nil
 	}
 	g.under = &Scene{blk: g.over.blk, attr: g.over.attr, pal: g.over.pal, w: fm.W, h: fm.H, tileAt: fm.Tile}
+	g.applyRainbowBridge()
 	return g.under
 }
 
@@ -1326,9 +1331,6 @@ func (g *Game) advanceBaramosReturn() {
 		delete(g.towns, 72)
 	}
 }
-
-// enterTown:進阿里阿罕(CTY0;debug/後備)。
-func (g *Game) enterTown() { g.enterTownCty(0) }
 
 func (g *Game) exitTown() {
 	g.cur, g.inTown, g.curCty = g.overworldScene(), false, -1 // 回目前地表層(地面/下層)
@@ -1491,38 +1493,52 @@ func (g *Game) startBossBattle(monID int) bool {
 	return false
 }
 
-// startZomaSeq:索瑪神殿最終連戰序列(移植 main.c zomaseq)。
-// 六大魔人守衛(怪106 ×6,gate flag 0x214 已破則跳過)→ 巴拉摩斯怨靈122 → 殭屍123 → 索瑪124。
-// 勝一場自動接下一場(advanceBossQueue);敗/逃則中斷。
+const (
+	ctyZomaCastle    = 90
+	zomaFinalSection = 5
+	zomaHandler      = 80
+	zomaDialogueRec  = 72
+)
+
+// talkZomaFinal 是 CTY90 section5 的 handler80 正式入口。六個 monster106 是城內
+// 一般隨機遭遇，不屬於此序列；原版 formation 是 0x7a、0x7b、0x7c。
+func (g *Game) talkZomaFinal(n *npcInst) bool {
+	if g.curCty != ctyZomaCastle || g.cur == nil || g.cur.sec != zomaFinalSection ||
+		n == nil || n.b4 != zomaHandler || g.cleared {
+		return false
+	}
+	g.startZomaSeq()
+	return true
+}
+
+// startZomaSeq:索瑪終盤 formation 序列：巴拉摩斯怨靈122 → 殭屍123 → 索瑪124。
 func (g *Game) startZomaSeq() {
-	q := []int{}
-	if g.flags == nil {
-		g.flags = map[int]bool{}
-	}
-	if !g.flags[0x214] { // 六大魔人守衛未破 → 六連戰
-		for i := 0; i < 6; i++ {
-			q = append(q, 106)
-		}
-	}
-	q = append(q, 122, 123, 124) // 怨靈 → 殭屍 → 索瑪
-	g.bossQueue = q
+	g.bossQueue = []int{0x7a, 0x7b, 0x7c}
 	g.advanceBossQueue()
 }
 
-// advanceBossQueue:取佇列下一個 boss 開戰;sprite 缺失(start 失敗)則跳過續取。佇列空則不動作。
-// 六大魔人全破(pop 到第一個非106)→ 設 flag 0x214(隱藏樓梯現,重來不再打守衛)。
+// advanceBossQueue:取下一個 formation 開戰；索瑪本體先播放 D3TXT07 rec72。
 func (g *Game) advanceBossQueue() {
 	for len(g.bossQueue) > 0 {
 		id := g.bossQueue[0]
 		g.bossQueue = g.bossQueue[1:]
-		if id != 106 && !g.flags[0x214] { // 離開守衛段 → 標記守衛已破
-			g.flags[0x214] = true
+		if id == 0x7c && g.dlg.Open(zomaDialogueRec) {
+			g.zomaIntro = true
+			return
 		}
 		if g.startBossBattle(id) {
 			return
 		}
 		// start 失敗(無 sprite)→ 跳過此 boss,續取下一個
 	}
+}
+
+func (g *Game) advanceZomaIntro() {
+	if !g.zomaIntro {
+		return
+	}
+	g.zomaIntro = false
+	g.startBossBattle(0x7c)
 }
 
 // runFinale:打倒索瑪 → 破關。設 ZOMA 里程碑 + 洛特冊封(勇者裝備昇華)。移植 run_finale。
@@ -1958,7 +1974,7 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 		g.music.Play(trackField)
 	}
 	g.renderFrame() // 首幀
-	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d、NPC %d)— 走到城鎮入口進城、Space 命令窗、Esc 出城",
+	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d、NPC %d)— 城鎮依正式入口與邊界轉場進出、Space 命令窗",
 		g.over.w, g.over.h, g.town.w, g.town.h, g.town.spawnX, g.town.spawnY, len(g.town.npcs))
 	return g, nil
 }

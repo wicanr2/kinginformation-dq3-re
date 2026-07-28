@@ -34,6 +34,7 @@ type saveState struct {
 	PY            int          `json:"py"`
 	InTown        bool         `json:"town"`
 	StoryBits     []byte       `json:"storybits,omitempty"`
+	WorldState    uint16       `json:"worldstate,omitempty"`
 	DNPhase       int          `json:"dnphase,omitempty"`
 	DNStep        int          `json:"dnstep,omitempty"`
 	Cty           int          `json:"cty,omitempty"`
@@ -72,8 +73,9 @@ func (g *Game) snapshot() saveState {
 		PhoenixOwned: g.phoenixOwned, PhoenixAboard: g.phoenixAboard,
 		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY,
 		PX: g.px, PY: g.py, InTown: g.inTown,
-		StoryBits: append([]byte(nil), g.storyBits[:]...),
-		DNPhase:   g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
+		StoryBits:  append([]byte(nil), g.storyBits[:]...),
+		WorldState: g.worldState,
+		DNPhase:    g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
 	}
 	if g.inTown && g.cur != nil {
 		s.Section = g.cur.sec
@@ -153,6 +155,11 @@ func (g *Game) restore(s saveState) {
 	if len(s.StoryBits) > 0 {
 		copy(g.storyBits[:], s.StoryBits) // 32-byte 舊檔保留前 256 flags；高位沿用原版初值
 	}
+	g.worldState = s.WorldState
+	if g.flags[0x35] { // 舊 remake 存檔：自造 flag0x35 遷移至原版 [0x4f44] bit0x40。
+		g.worldState |= worldStateRainbowBridge
+		delete(g.flags, 0x35)
+	}
 	g.dnPhase, g.dnStep = s.DNPhase&3, s.DNStep
 	g.layer, g.curCty = s.Layer, s.Cty
 	g.px, g.py, g.inTown = s.PX, s.PY, s.InTown
@@ -162,6 +169,7 @@ func (g *Game) restore(s saveState) {
 		g.cur = g.overworldScene()
 		g.curCty = -1
 	}
+	g.applyRainbowBridge()
 	g.applyDaynightPalette()
 	g.dlg.heroName = append([]int(nil), g.heroName...)
 }
