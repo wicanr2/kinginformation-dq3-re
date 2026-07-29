@@ -1,6 +1,6 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與三種事件 primitive；
+> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與四種事件 primitive；
 > 其餘資料表依垂直切片逐批遷移。
 >
 > 適用範圍：Go／Ebitengine 共用核心，以及未來的 `dq1_cht`、`dq2_cht`、`dq3_cht`
@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.1"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.2"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.1",
+  "schema_version": "0.1.2",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -378,7 +378,8 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 | `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
 
 目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
-諾亞尼爾全域 rec599 與「是／否」已遷入 `data/texts.json`；parity test 逐 word
+諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89 與「是／否」已遷入
+`data/texts.json`；parity test 逐 word
 對原始 D3TXT，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
 
 ### 6.9 `events.json`
@@ -495,6 +496,31 @@ flag 與 pack entry 派生，不在存檔複製 transient sprite state。缺文�
 mutation 前失敗即關閉。DQ3 canonical 範例與原版 parity test 見 `events.json`、
 [`docs/86`](86-noaniel-awakening-production-trace.md)。
 
+第四個已實作 primitive 是 `two_step_floor_switch_gates`，供「踩地板開關→Yes/No→第一鍵
+武裝→第二鍵成功或陷阱→解鎖事件格與一次性寶物」的有限流程使用。它不包含金字塔、
+魔法鑰匙或 DQ3 固有名稱；原版沒有相同行為的版本宣告空陣列。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `two_step_floor_switch_gates` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id` | string | 是 | 穩定 namespaced event ID。 |
+| `[].kind` | enum | 是 | 固定為 `two_step_floor_switch_gate`。 |
+| `[].cty_raw`／`[].section` | int | 是 | 原版事件場景 selector。 |
+| `[].switches` | object[] | 是 | 至少兩筆；每筆為 `tile:{x,y}/tile_subid/handler_raw`。座標不得重複；raw handler 只作 parity anchor，引擎不執行它。 |
+| `[].completion_tile_subid` | int | 是 | 已武裝後可完成事件的 subid，必須存在於 `switches`。 |
+| `[].clear_flag_raw` | int | 是 | 成功後清除並交給通用 event-tile rebuild 的原版 story flag。 |
+| `[].trap_transition_subid_raw` | int | 是 | 原始 CTY transition table subid；供 parity test，不作任意跳址。 |
+| `[].trap_destination` | object | 是 | 經原始 transition 驗證的 `{cty_raw,section,x,y}`；引擎只載入此有限目的地。 |
+| `[].unlocked_treasure` | object | 是 | `cty_raw/section/tile_subid/event_type_raw/item_raw_id/present_flag_raw`；場景必須與 gate 相同。 |
+| `[].dialogue_text_ids` | object | 是 | `prompt/pressed/trap/success/choice_yes/choice_no`，所有引用必須存在。 |
+| `[].success_sfx_raw` | int | 是 | 原始成功音效 cue，0–255。 |
+| `[].evidence` | object | 是 | 開關入口、暫存狀態、成功／陷阱 consumer 與可見結果的 D3 證據。 |
+
+transient armed state 不進存檔；成功交易持久化的是原版 story flags 與 treasure present
+flag。選否不武裝，錯誤第二鍵先顯示 trap 再載宣告目的地，正確第二鍵先清旗標並以通用
+event-tile rebuild 更新目前場景。DQ3 canonical 範例與完整證據見 `events.json`、
+[`docs/87`](87-pyramid-switch-magic-key-production-trace.md)。
+
 ### 6.10 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
@@ -514,7 +540,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.1",
+  "schema_version": "0.1.2",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

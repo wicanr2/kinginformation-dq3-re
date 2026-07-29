@@ -29,6 +29,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("quest item chain event count=%d, want 1", len(questEvents))
 	}
 	noanielEvent := questEvents[0]
+	sequenceGates := g.pack.TwoStepFloorSwitchGates()
+	if len(sequenceGates) != 1 {
+		t.Fatalf("two-step floor switch gate count=%d, want 1", len(sequenceGates))
+	}
+	pyramidGate := sequenceGates[0]
 	// 此測試驗證數千次正式 InputState 的連續狀態路線；逐步 WritePixels 會在沒有
 	// ebiten 顯示迴圈的 test binary 累積圖形命令。畫面另由 framedump 測試驗證。
 	g.frame = nil
@@ -733,6 +738,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatal("在諾阿尼魯正式使用覺醒粉後，未完成原版旗標切換、消耗、文字與場景重載")
 	}
 	traceCloseDialogue(t, g)
+	// 長途往沙漠前先在剛甦醒的村莊以正式旅店交易補滿隊伍，
+	// 不以測試狀態注入回復 HP/MP。
+	traceTalkFacility(t, g, facInn)
 	if err := g.Save(); err != nil {
 		t.Fatalf("保存諾亞尼爾甦醒 checkpoint：%v", err)
 	}
@@ -756,6 +764,108 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceExitTownBoundary(t, g)
 	if g.inTown {
 		t.Fatal("甦醒並讀檔後未能由正式邊界離開諾亞尼爾")
+	}
+	// 下一段攻略路線：阿莎拉慕 → 沙漠祠堂 → 依席斯 → 金字塔。
+	for _, cty := range []int{6, 33} {
+		traceAdventureWalkToCty(t, g, cty)
+		if !g.inTown || g.curCty != cty || sceneSection(g.cur) != 0 {
+			t.Fatalf("諾亞尼爾後未能正式抵達 CTY%d：town=%v cty=%d sec=%d",
+				cty, g.inTown, g.curCty, sceneSection(g.cur))
+		}
+		traceExitTownBoundary(t, g)
+	}
+	// CTY12／32／73 的原版 cty_loc 均為 `(36,105)`，但 file 0x43a6
+	// 從 CTY0 向上掃描並在第一筆命中停止，因此地表正式入口是 CTY12。
+	// CTY32／73 是城內王宮區，不是必須依序踩過的重疊地表入口。
+	traceAdventureWalkToCty(t, g, 12)
+	traceExitTownBoundary(t, g)
+	traceAdventureWalkToCty(t, g, 13)
+	if !g.inTown || g.curCty != 13 || sceneSection(g.cur) != 0 {
+		t.Fatalf("依席斯後未能正式抵達金字塔：town=%v cty=%d sec=%d",
+			g.inTown, g.curCty, sceneSection(g.cur))
+	}
+	traceTownSectionTo(t, g, 13, 2)
+	pressSwitch := func(x, y int) {
+		t.Helper()
+		// 先走到開關正上方再向下踏入，避免路徑搜尋沿 y=25 穿過其他開關。
+		traceWalkToNoPortal(t, g, x, y-1)
+		traceWalkToNoPortal(t, g, x, y)
+		if !g.dlg.open || g.sequenceGateStage != sequenceGatePrompt {
+			t.Fatalf("正式踩開關 (%d,%d) 未開 prompt：stage=%d dlg=%v",
+				x, y, g.sequenceGateStage, g.dlg.open)
+		}
+		traceCloseDialogue(t, g)
+		if !g.sequenceGateChoosing() {
+			t.Fatalf("開關 (%d,%d) prompt 後未進 Yes/No", x, y)
+		}
+		press(InputState{Confirm: true})
+		if !g.dlg.open || g.sequenceGateStage != sequenceGatePressed {
+			t.Fatalf("開關 (%d,%d) 選是後未進 pressed：stage=%d dlg=%v",
+				x, y, g.sequenceGateStage, g.dlg.open)
+		}
+		for i := 0; i < 64 && g.sequenceGateStage == sequenceGatePressed && g.dlg.open; i++ {
+			press(InputState{Confirm: true})
+		}
+		if g.sequenceGateStage == sequenceGatePressed {
+			t.Fatalf("開關 (%d,%d) pressed 64 次 Confirm 後仍未推進", x, y)
+		}
+	}
+	pressSwitch(25, 25)
+	if !g.sequenceGateArmed || !g.storyFlag(pyramidGate.ClearFlagRaw) {
+		t.Fatal("金字塔外右開關未只武裝第一階段")
+	}
+	pressSwitch(2, 25)
+	if g.storyFlag(pyramidGate.ClearFlagRaw) || g.cur.Blocked(13, 10) ||
+		g.sequenceGateStage != sequenceGateSuccess || !g.dlg.open {
+		t.Fatalf("金字塔外右→外左未開石門：flag=%v blocked=%v stage=%d dlg=%v",
+			g.storyFlag(pyramidGate.ClearFlagRaw), g.cur.Blocked(13, 10),
+			g.sequenceGateStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+
+	// 經已開石門走到魔法鑰匙下方，使用正式命令窗「調查」面向寶箱。
+	traceWalkTo(t, g, 13, 6)
+	if g.facing != 1 {
+		for g.cd > 0 {
+			send(InputState{DirHeld: -1, DirEdge: -1})
+		}
+		send(InputState{DirHeld: 1, DirEdge: -1}) // 對阻擋寶箱轉向，不會移動
+	}
+	press(InputState{Confirm: true})
+	for _, dir := range []int{3, 0, 0} {
+		if g.cmd.cursor == int(cmdExamine) {
+			break
+		}
+		send(InputState{DirHeld: -1, DirEdge: dir})
+	}
+	if g.cmd.cursor != int(cmdExamine) {
+		t.Fatalf("魔法鑰匙前無法以正式方向輸入選到調查：cursor=%d", g.cmd.cursor)
+	}
+	press(InputState{Confirm: true})
+	magicKey := pyramidGate.UnlockedTreasure
+	if !g.hasItem(magicKey.ItemRawID) || g.storyFlag(magicKey.PresentFlag) {
+		t.Fatalf("正式調查未取得魔法鑰匙：item=%v flag=%v inventory=%v",
+			g.hasItem(magicKey.ItemRawID), g.storyFlag(magicKey.PresentFlag), g.inventory)
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存魔法鑰匙 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建魔法鑰匙讀檔 Game：%v", err)
+	}
+	if err := restored.Load(); err != nil {
+		t.Fatalf("讀取魔法鑰匙 checkpoint：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	if !g.hasItem(magicKey.ItemRawID) || g.storyFlag(magicKey.PresentFlag) ||
+		g.storyFlag(pyramidGate.ClearFlagRaw) || g.curCty != pyramidGate.CTYRaw ||
+		sceneSection(g.cur) != pyramidGate.Section || g.cur.Blocked(13, 10) {
+		t.Fatalf("魔法鑰匙 checkpoint round-trip 錯：key=%v present=%v gate=%v cty=%d sec=%d blocked=%v",
+			g.hasItem(magicKey.ItemRawID), g.storyFlag(magicKey.PresentFlag),
+			g.storyFlag(pyramidGate.ClearFlagRaw), g.curCty, sceneSection(g.cur),
+			g.cur.Blocked(13, 10))
 	}
 }
 
@@ -1154,8 +1264,10 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int) {
 		}
 	}
 	if !g.inTown || g.curCty != wantCty {
-		t.Fatalf("無法由地表抵達 CTY%d；目前 town=%v cty=%d @(%d,%d)",
-			wantCty, g.inTown, g.curCty, g.px, g.py)
+		lx, ly := ctyLoc[wantCty][0], ctyLoc[wantCty][1]
+		t.Fatalf("無法由地表抵達 CTY%d；目前 town=%v cty=%d @(%d,%d)，入口 (%d,%d) blocked=%v / (%d,%d) blocked=%v",
+			wantCty, g.inTown, g.curCty, g.px, g.py,
+			lx, ly, g.cur.Blocked(lx, ly), lx+1, ly, g.cur.Blocked(lx+1, ly))
 	}
 }
 
@@ -1379,11 +1491,17 @@ func traceTownSectionTo(t *testing.T, g *Game, wantCty, wantSec int, wantNPC ...
 				if !ok {
 					continue
 				}
+				pathLen := 0
+				if x == cur.x && y == cur.y {
+					pathLen = -1
+				} else {
+					pathLen = len(tracePortalPath(sc, cur.x, cur.y, x, y, g.keyTier()))
+				}
 				if dsec >= 0xfe && wantCty >= 0 {
 					continue
 				}
 				if (x != cur.x || y != cur.y) &&
-					len(tracePortalPath(sc, cur.x, cur.y, x, y, g.keyTier())) == 0 {
+					pathLen == 0 {
 					continue // transition table 有 edge，但此入口所在的連通區走不到該 portal
 				}
 				next := node{-1, -1, dx, dy}
@@ -1512,7 +1630,37 @@ func traceWalkTo(t *testing.T, g *Game, x, y int) {
 		traceWalkOne(t, g, x, y)
 	}
 	if g.px != x || g.py != y {
-		t.Fatalf("無法走到 (%d,%d)，停在 (%d,%d)", x, y, g.px, g.py)
+		t.Fatalf("無法走到 (%d,%d)，停在 (%d,%d)，dlg=%v gateStage=%d cmd=%v path=%v",
+			x, y, g.px, g.py, g.dlg.open, g.sequenceGateStage, g.cmd.open,
+			tracePath(g.cur, g.px, g.py, x, y))
+	}
+}
+
+func traceWalkToNoPortal(t *testing.T, g *Game, x, y int) {
+	t.Helper()
+	for i := 0; i < 3000 && (g.px != x || g.py != y); i++ {
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待無轉場路徑 cooldown: %v", err)
+			}
+			continue
+		}
+		path := tracePortalPath(g.cur, g.px, g.py, x, y, g.keyTier())
+		if len(path) == 0 {
+			t.Fatalf("無法在不踩 transition 下由 (%d,%d) 走到 (%d,%d)",
+				g.px, g.py, x, y)
+		}
+		dx, dy := dirDelta(path[0])
+		if g.cur.doorTier(g.px+dx, g.py+dy) != 0 {
+			traceOpenReachableDoor(t, g, g.px+dx, g.py+dy)
+			continue
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("無轉場路徑移動 dir%d: %v", path[0], err)
+		}
+	}
+	if g.px != x || g.py != y {
+		t.Fatalf("無轉場路徑無法走到 (%d,%d)，停在 (%d,%d)", x, y, g.px, g.py)
 	}
 }
 

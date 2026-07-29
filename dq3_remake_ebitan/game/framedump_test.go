@@ -679,6 +679,58 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("諾亞尼爾甦醒 runtime 圖未完成 pack flag transaction")
 	}
 	dump("noaniel_awakened")
+
+	// 金字塔雙開關：全部 selector、文字、旗標、音效與魔法鑰匙均取自
+	// two_step_floor_switch_gate pack；畫面使用正式 production renderer。
+	gates := g.pack.TwoStepFloorSwitchGates()
+	if len(gates) != 1 {
+		t.Fatalf("two-step floor switch gate count=%d, want 1", len(gates))
+	}
+	gate := gates[0]
+	g.setStoryFlag(gate.ClearFlagRaw, true)
+	g.setStoryFlag(gate.UnlockedTreasure.PresentFlag, true)
+	pyramid, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		gate.CTYRaw, mapBlkNum[gate.CTYRaw], gate.Section, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.curCty, g.inTown, g.town, g.cur = gate.CTYRaw, true, pyramid, pyramid
+	g.dlg.tx, g.dlg.open = pyramid.dlgText, false
+	first := gate.Switches[0]
+	var completion = gate.Switches[len(gate.Switches)-1]
+	g.px, g.py, g.facing = first.Tile.X, first.Tile.Y, 0
+	if !g.trySequenceGateEvent() || !g.dlg.open {
+		t.Fatal("金字塔開關 runtime 圖未觸發 pack prompt")
+	}
+	dump("pyramid_switch_prompt")
+	g.dlg.open = false
+	g.advanceSequenceGateDialogue()
+	g.sequenceGateChoiceInput(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
+	g.dlg.open = false
+	g.advanceSequenceGateDialogue()
+	g.px, g.py = completion.Tile.X, completion.Tile.Y
+	if !g.trySequenceGateEvent() {
+		t.Fatal("金字塔完成開關未觸發")
+	}
+	g.dlg.open = false
+	g.advanceSequenceGateDialogue()
+	g.sequenceGateChoiceInput(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
+	g.dlg.open = false
+	g.advanceSequenceGateDialogue()
+	if g.storyFlag(gate.ClearFlagRaw) || !g.dlg.open {
+		t.Fatal("金字塔開門 runtime 圖未完成 pack transaction")
+	}
+	g.px, g.py, g.facing = 13, 12, 1
+	dump("pyramid_magic_gate_open")
+	g.dlg.open = false
+	g.advanceSequenceGateDialogue()
+	g.px, g.py, g.facing = 13, 6, 1
+	g.examine()
+	if !g.hasItem(gate.UnlockedTreasure.ItemRawID) ||
+		g.storyFlag(gate.UnlockedTreasure.PresentFlag) {
+		t.Fatal("魔法鑰匙 runtime 圖未由 pack treasure selector 取得")
+	}
+	dump("pyramid_magic_key")
 }
 
 // TestDumpChurchRevive 產出 production renderer 的教會復活確認窗。它不是 raw glyph dump；

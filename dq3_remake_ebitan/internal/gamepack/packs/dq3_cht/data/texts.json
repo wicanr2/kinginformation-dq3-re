@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.1",
+  "schema_version": "0.1.2",
   "definitions": [
     {
       "id": "dq3:text.shanpane_gandart.intro",
@@ -232,6 +232,38 @@
       "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 599},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "599", "consumer": "quest_item_chain location use success", "doc": "docs/86-noaniel-awakening-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.pyramid.switch.prompt",
+      "value": "*「牆上有個按鍵,要按嗎?",
+      "glyph_codes": [59, 60, 961, 421, 147, 546, 1166, 1167, 55, 504, 1166, 534, 58, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 86},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "86", "consumer": "two_step_floor_switch_gate prompt", "doc": "docs/87-pyramid-switch-magic-key-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.pyramid.switch.pressed",
+      "value": "*「{變數}按下了按鍵。",
+      "glyph_codes": [59, 60, 65531, 1166, 517, 423, 1166, 1167, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 87},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "87", "consumer": "two_step_floor_switch_gate accepted switch", "doc": "docs/87-pyramid-switch-magic-key-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.pyramid.switch.trap",
+      "value": "*「啊!是陷阱。",
+      "glyph_codes": [59, 60, 509, 57, 399, 1158, 1159, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 88},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "88", "consumer": "two_step_floor_switch_gate trap", "doc": "docs/87-pyramid-switch-magic-key-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.pyramid.switch.success",
+      "value": "*「前方傳來\n  石塊鬆動的聲音。",
+      "glyph_codes": [59, 60, 535, 547, 513, 461, 65534, 12, 12, 275, 1178, 1179, 619, 149, 632, 313, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 89},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "89", "consumer": "two_step_floor_switch_gate success", "doc": "docs/87-pyramid-switch-magic-key-production-trace.md"}
     }
   ]
 }

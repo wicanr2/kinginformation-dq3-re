@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.1"
+	SchemaVersion = "0.1.2"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -226,11 +226,56 @@ type QuestItemChainEvent struct {
 	Evidence Evidence              `json:"evidence"`
 }
 
+// FloorSwitch identifies one walk-on switch in a scene. HandlerRaw is retained
+// as an original-format parity anchor; the engine selects by the validated
+// scene/coordinate tuple and never interprets the raw handler number.
+type FloorSwitch struct {
+	Tile       TileCoordinate `json:"tile"`
+	TileSubID  int            `json:"tile_subid"`
+	HandlerRaw int            `json:"handler_raw"`
+}
+
+type SceneDestination struct {
+	CTYRaw  int `json:"cty_raw"`
+	Section int `json:"section"`
+	X       int `json:"x"`
+	Y       int `json:"y"`
+}
+
+type SequenceGateTextIDs struct {
+	Prompt    string `json:"prompt"`
+	Pressed   string `json:"pressed"`
+	Trap      string `json:"trap"`
+	Success   string `json:"success"`
+	ChoiceYes string `json:"choice_yes"`
+	ChoiceNo  string `json:"choice_no"`
+}
+
+// TwoStepFloorSwitchGate is a finite engine primitive: the first configured
+// floor switch arms the gate, then one configured completion switch succeeds;
+// another non-completion switch traps the party. It contains data only.
+type TwoStepFloorSwitchGate struct {
+	ID                     string                `json:"id"`
+	Kind                   string                `json:"kind"`
+	CTYRaw                 int                   `json:"cty_raw"`
+	Section                int                   `json:"section"`
+	Switches               []FloorSwitch         `json:"switches"`
+	CompletionTileSubID    int                   `json:"completion_tile_subid"`
+	ClearFlagRaw           int                   `json:"clear_flag_raw"`
+	TrapTransitionSubIDRaw int                   `json:"trap_transition_subid_raw"`
+	TrapDestination        SceneDestination      `json:"trap_destination"`
+	UnlockedTreasure       QuestTreasureSelector `json:"unlocked_treasure"`
+	DialogueTextIDs        SequenceGateTextIDs   `json:"dialogue_text_ids"`
+	SuccessSFXRaw          int                   `json:"success_sfx_raw"`
+	Evidence               Evidence              `json:"evidence"`
+}
+
 type Events struct {
-	SchemaVersion        string                `json:"schema_version"`
-	BossSurrenderEvents  []BossSurrenderEvent  `json:"boss_surrender_events"`
-	TemporaryRoleEvents  []TemporaryRoleEvent  `json:"temporary_role_events"`
-	QuestItemChainEvents []QuestItemChainEvent `json:"quest_item_chain_events"`
+	SchemaVersion           string                   `json:"schema_version"`
+	BossSurrenderEvents     []BossSurrenderEvent     `json:"boss_surrender_events"`
+	TemporaryRoleEvents     []TemporaryRoleEvent     `json:"temporary_role_events"`
+	QuestItemChainEvents    []QuestItemChainEvent    `json:"quest_item_chain_events"`
+	TwoStepFloorSwitchGates []TwoStepFloorSwitchGate `json:"two_step_floor_switch_gates"`
 }
 
 type TextSource struct {
@@ -297,6 +342,7 @@ type Pack struct {
 	bossEvents      map[string]*BossSurrenderEvent
 	roleEvents      map[string]*TemporaryRoleEvent
 	questItemEvents map[string]*QuestItemChainEvent
+	sequenceGates   map[string]*TwoStepFloorSwitchGate
 	charDefaults    map[string]*CharacterDefault
 	texts           map[string]*TextDefinition
 	contentHash     string
@@ -543,6 +589,18 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.TwoStepFloorSwitchGates {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"prompt": refs.Prompt, "pressed": refs.Pressed, "trap": refs.Trap,
+			"success": refs.Success, "choice_yes": refs.ChoiceYes, "choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	return nil
 }
 
@@ -563,6 +621,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.QuestItemChainEvents == nil {
 		return errors.New("quest_item_chain_events must be present")
+	}
+	if p.Events.TwoStepFloorSwitchGates == nil {
+		return errors.New("two_step_floor_switch_gates must be present")
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -700,6 +761,55 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		p.questItemEvents[e.ID] = e
+	}
+	p.sequenceGates = make(map[string]*TwoStepFloorSwitchGate, len(p.Events.TwoStepFloorSwitchGates))
+	for i := range p.Events.TwoStepFloorSwitchGates {
+		e := &p.Events.TwoStepFloorSwitchGates[i]
+		if e.ID == "" || e.Kind != "two_step_floor_switch_gate" {
+			return fmt.Errorf("two_step_floor_switch_gates[%d]: id and kind=two_step_floor_switch_gate are required", i)
+		}
+		if _, exists := p.sequenceGates[e.ID]; exists {
+			return fmt.Errorf("duplicate two-step floor switch gate id %q", e.ID)
+		}
+		if e.CTYRaw < 0 || e.CTYRaw > 255 || e.Section < 0 ||
+			len(e.Switches) < 2 || e.CompletionTileSubID < 0 || e.CompletionTileSubID > 31 ||
+			e.ClearFlagRaw < 0 || e.ClearFlagRaw >= 512 ||
+			e.TrapTransitionSubIDRaw < 0 || e.TrapTransitionSubIDRaw > 31 ||
+			e.SuccessSFXRaw < 0 || e.SuccessSFXRaw > 255 {
+			return fmt.Errorf("%s: invalid gate header", e.ID)
+		}
+		seenTiles, handlersBySubID, hasCompletion := map[TileCoordinate]bool{}, map[int]int{}, false
+		for j, sw := range e.Switches {
+			if sw.Tile.X < 0 || sw.Tile.Y < 0 || sw.TileSubID < 0 || sw.TileSubID > 31 ||
+				sw.HandlerRaw < 0 || sw.HandlerRaw > 255 || seenTiles[sw.Tile] {
+				return fmt.Errorf("%s: invalid or duplicate switch %d", e.ID, j)
+			}
+			if handler, exists := handlersBySubID[sw.TileSubID]; exists && handler != sw.HandlerRaw {
+				return fmt.Errorf("%s: tile_subid %d maps to inconsistent handlers", e.ID, sw.TileSubID)
+			}
+			seenTiles[sw.Tile] = true
+			handlersBySubID[sw.TileSubID] = sw.HandlerRaw
+			hasCompletion = hasCompletion || sw.TileSubID == e.CompletionTileSubID
+		}
+		if !hasCompletion {
+			return fmt.Errorf("%s: completion_tile_subid is not a configured switch", e.ID)
+		}
+		d := e.TrapDestination
+		if d.CTYRaw < 0 || d.CTYRaw > 255 || d.Section < 0 || d.X < 0 || d.Y < 0 {
+			return fmt.Errorf("%s: invalid trap destination", e.ID)
+		}
+		t := e.UnlockedTreasure
+		if t.CTYRaw != e.CTYRaw || t.Section != e.Section ||
+			t.TileSubID < 0 || t.TileSubID > 31 ||
+			(t.EventTypeRaw != 1 && t.EventTypeRaw != 3) ||
+			t.ItemRawID < 0 || t.ItemRawID > 255 ||
+			t.PresentFlag < 0 || t.PresentFlag >= 512 {
+			return fmt.Errorf("%s: invalid or disconnected unlocked treasure", e.ID)
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.sequenceGates[e.ID] = e
 	}
 	return nil
 }
@@ -865,6 +975,15 @@ func (p *Pack) QuestItemChainEvents() []QuestItemChainEvent {
 
 func (p *Pack) QuestItemChainEvent(id string) (*QuestItemChainEvent, bool) {
 	e, ok := p.questItemEvents[id]
+	return e, ok
+}
+
+func (p *Pack) TwoStepFloorSwitchGates() []TwoStepFloorSwitchGate {
+	return append([]TwoStepFloorSwitchGate(nil), p.Events.TwoStepFloorSwitchGates...)
+}
+
+func (p *Pack) TwoStepFloorSwitchGate(id string) (*TwoStepFloorSwitchGate, bool) {
+	e, ok := p.sequenceGates[id]
 	return e, ok
 }
 

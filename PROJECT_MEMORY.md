@@ -29,18 +29,17 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 - 共用 game-pack JSON 契約：
   [`docs/84`](docs/84-game-pack-json-contract.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
-- 最新 production audit：[`docs/86`](docs/86-noaniel-awakening-production-trace.md)
+- 最新 production audit：[`docs/87`](docs/87-pyramid-switch-magic-key-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
 
-boot 起的正式 trace 已閉合到諾亞尼爾甦醒：羅馬利亞辭位後正式步行至 CTY04／05／11，
-取得夢幻紅寶石、由精靈女王在原背包格換成覺醒粉，再回 CTY04 正式使用。原版事件是
-`SET story flag 0x26`（清醒 NPC）、`CLEAR 0x31`（沉睡替身）、rec599 與即時場景重載；
-舊寫法設定 `g.flags[0x31]=true` 是錯誤且曾造成 trace 假陽性，已移除。事件後 save/load
-及讀檔離村已通過 production `InputState` trace。**尚未完成從新遊戲開始的無 debug
-全流程驗收**；下一個 audit 從此合法 checkpoint 前往金字塔。
+boot 起的正式 trace 已由諾亞尼爾甦醒繼續閉合到金字塔魔法鑰匙：正式經阿莎拉慕、
+沙漠祠堂與依席斯抵達 CTY13，踩最右／最左按鍵、清原版 flag `0x46` 開石門，再由命令窗
+「調查」取得 item `0x56` 並清 present flag `0x73`。事件後 save/load 仍保留鑰匙與開門
+狀態。**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從此合法 checkpoint
+穿過魔法鑰匙門。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -51,7 +50,8 @@ Android／Web 嵌入 pack 則仍需重包。
 formation、寶箱 gate、價格與 cue 不得新增成 Go 常數/table。甘達特事件已是第一個完整
 `events.json` + `texts.json` + 通用 `boss_surrender` primitive + EXE/CTY/D3TXT parity
 範例；羅馬利亞 `temporary_role` 是第二個完整範例；諾亞尼爾 `quest_item_chain` 是
-第三個，treasure、NPC selector、兩次道具交易、flags 與三段文字均由 JSON 提供。
+第三個；金字塔 `two_step_floor_switch_gate` 是第四個，開關座標、subid、raw handler、
+旗標、陷阱目的地、文字、音效與解鎖寶箱均由 JSON 提供。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

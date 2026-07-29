@@ -122,14 +122,15 @@ func TestPlaythroughEconomy(t *testing.T) {
 	t.Logf("經濟 ✓:阿里阿罕武防店 7 品(銅劍100G)、宿屋 2G;全城設施表 %d 筆", len(allFacilities))
 }
 
-// 整合 game test:legacy 寶箱表 + 已遷入 pack 的 quest treasure。
+// 整合 game test:legacy 寶箱表 + 已遷入 pack 的 typed-event treasures。
 func TestPlaythroughTreasure(t *testing.T) {
 	const totalOriginalTreasures = 121
 	pack, err := gamepack.BuiltinDQ3()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := len(treasures) + len(pack.QuestItemChainEvents()); got != totalOriginalTreasures {
+	packTreasures := len(pack.QuestItemChainEvents()) + len(pack.TwoStepFloorSwitchGates())
+	if got := len(treasures) + packTreasures; got != totalOriginalTreasures {
 		t.Fatalf("legacy + game-pack 寶箱應共 %d 筆,得 %d", totalOriginalTreasures, got)
 	}
 	// 阿里阿罕(cty0 sec5)sub0 寶箱:item98、flag41
@@ -142,5 +143,5 @@ func TestPlaythroughTreasure(t *testing.T) {
 		t.Fatal("不存在的寶箱應回 nil")
 	}
 	t.Logf("寶箱資料 ✓:%d 筆（legacy %d + game-pack %d）、阿里阿罕 sec5 sub0=item98/flag41",
-		totalOriginalTreasures, len(treasures), len(pack.QuestItemChainEvents()))
+		totalOriginalTreasures, len(treasures), packTreasures)
 }

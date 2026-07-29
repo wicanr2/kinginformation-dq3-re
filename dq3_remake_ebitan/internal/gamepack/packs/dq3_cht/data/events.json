@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.1",
+  "schema_version": "0.1.2",
   "boss_surrender_events": [
     {
       "id": "dq3:event.shanpane_kandar",
@@ -149,6 +149,50 @@
         "address": "0x5320..0x5365, 0x68ef..0x6916",
         "consumer": "CTY11 sec3 subid0 yields item 0x59; CTY05 raw handler16 replaces it with 0x5a; item use in CTY4 consumes, SET 0x26, CLEAR 0x31, displays global rec599, then reloads the scene",
         "doc": "docs/86-noaniel-awakening-production-trace.md"
+      }
+    }
+  ],
+  "two_step_floor_switch_gates": [
+    {
+      "id": "dq3:event.pyramid_magic_key_gate",
+      "kind": "two_step_floor_switch_gate",
+      "cty_raw": 13,
+      "section": 2,
+      "switches": [
+        {"tile": {"x": 25, "y": 25}, "tile_subid": 1, "handler_raw": 21},
+        {"tile": {"x": 4, "y": 25}, "tile_subid": 2, "handler_raw": 22},
+        {"tile": {"x": 23, "y": 25}, "tile_subid": 2, "handler_raw": 22},
+        {"tile": {"x": 2, "y": 25}, "tile_subid": 3, "handler_raw": 23}
+      ],
+      "completion_tile_subid": 3,
+      "clear_flag_raw": 70,
+      "trap_transition_subid_raw": 3,
+      "trap_destination": {"cty_raw": 13, "section": 1, "x": 13, "y": 28},
+      "unlocked_treasure": {
+        "cty_raw": 13,
+        "section": 2,
+        "tile_subid": 1,
+        "event_type_raw": 1,
+        "item_raw_id": 86,
+        "present_flag_raw": 115
+      },
+      "dialogue_text_ids": {
+        "prompt": "dq3:text.pyramid.switch.prompt",
+        "pressed": "dq3:text.pyramid.switch.pressed",
+        "trap": "dq3:text.pyramid.switch.trap",
+        "success": "dq3:text.pyramid.switch.success",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
+      },
+      "success_sfx_raw": 11,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY13.DAT + D3TXT03.TXT",
+        "address_space": "file",
+        "address": "0x6969..0x6a40",
+        "consumer": "handlers 21/22 arm or trap through transition subid3; handler23 clears flag 0x46 and rebuilds event tiles; CTY13 sec2 subid1 yields item 0x56 while flag 0x73 is set",
+        "doc": "docs/87-pyramid-switch-magic-key-production-trace.md"
       }
     }
   ]

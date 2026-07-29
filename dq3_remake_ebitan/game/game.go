@@ -337,6 +337,11 @@ type Game struct {
 	temporaryRoleStage   int           // game-pack temporary_role primitive 的目前階段
 	temporaryRoleCursor  int           // temporary_role Yes/No 游標
 	temporaryRoleEventID string        // active pack event；空字串表示無事件
+	sequenceGateStage    int           // game-pack two_step_floor_switch_gate 的目前階段
+	sequenceGateCursor   int           // 序列開關 Yes/No 游標
+	sequenceGateEventID  string        // active pack event；空字串表示無事件
+	sequenceGateSubID    int           // 本次踩到的 pack-owned switch subid
+	sequenceGateArmed    bool          // 原版暫存 scratch；不進存檔
 	mirrorStage          int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	phoenix              *dq3data.CharSprite
 	phoenixOwned         bool
@@ -878,6 +883,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.sequenceGateChoosing() {
+		g.sequenceGateChoiceInput(in)
+		g.renderFrame()
+		return nil
+	}
 	// 資訊面板 modal:狀況/道具 = B/A 關；裝備先選隊員，再選背包裝備。
 	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
@@ -955,6 +965,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceMirrorEvent()
 				g.advancePhoenixEvent()
 				g.advanceBossSurrenderDialogue()
+				g.advanceSequenceGateDialogue()
 			}
 		}
 		g.renderFrame()
@@ -1052,6 +1063,7 @@ func (g *Game) step(in InputState) error {
 	}
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
+		g.trySequenceGateEvent()
 		g.tryOpeningRegionEvent()
 		g.tryBossSurrenderEvent()
 		g.tryBaramosReturnEvent()
@@ -2039,6 +2051,7 @@ func (g *Game) renderFrame() {
 	g.drawChurch(g.rgba, white)
 	g.drawBossSurrenderChoice(g.rgba, white)
 	g.drawTemporaryRoleChoice(g.rgba, white)
+	g.drawSequenceGateChoice(g.rgba, white)
 	if g.noticeTimer > 0 && g.noticeCode >= 0 { // 取得道具通知(品名)
 		fillBox(g.rgba, 24, 244, ScreenW-48, 40, white)
 		g.shop.drawItemName(g.rgba, 40, 256, g.noticeCode, white)

@@ -538,16 +538,21 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 ## 10. 今日收尾與剩餘工作（更新 2026-07-29）
 
-本輪已依 IDA／Capstone 及原始 EXE／CTY／D3TXT，把 boot 起的正式 trace
-由羅馬利亞金皇冠線繼續延伸至諾亞尼爾甦醒。追蹤揭露舊實作寫入錯誤的 remake flag，
-而且把起始已 set 的 `0x31` 誤當甦醒完成；原版實際是 CTY4 使用 gate 後消耗覺醒粉、
-`SET 0x26`（清醒居民）、`CLEAR 0x31`（沉睡替身）、顯示 rec599 並重載場景。
-整條紅寶石／女王換物／覺醒粉流程已改由 game-pack `quest_item_chain` 提供資料；
-證據 ledger 見 `docs/86`。下一輪依下列順序接手：
+本輪已依 Capstone／raw instruction 與原始 CTY13／D3TXT03，把 boot 起的同一條正式 trace
+由諾亞尼爾甦醒繼續延伸到金字塔魔法鑰匙。原版 handler21／22／23 的兩步暫存、錯誤第二鍵
+陷阱、handler23 清 flag `0x46`、event-tile rebuild、SFX `0x0b` 及寶箱
+`{item=0x56,present flag=0x73}` 均已閉合；證據 ledger 見 `docs/87`。
 
-1. **主線最高優先**：諾亞尼爾甦醒已閉合至 E3（`docs/86`）。下一個玩家流程 audit
-   從讀檔後可正式離村的 checkpoint 出發，依 `docs/66` 前往金字塔，定位按鈕／魔法鑰匙
-   流程的第一個不可達、錯誤 gate 或設定 mismatch；仍先重查原版 writer／consumer。
+事件已改由 game-pack `two_step_floor_switch_gate` 提供場景、座標、subid、raw handler、
+旗標、陷阱目的地、文字、音效與寶箱。舊 Go 寶箱表的魔法鑰匙 entry 已刪除。正式玩家
+路徑可踩最右再最左開關、開石門、由命令窗「調查」取得魔法鑰匙，save/load 後旗標、
+道具與通行狀態一致。三張 runtime 圖已重產、目視並做二次 deterministic 比對。
+
+下一輪依下列順序接手：
+
+1. **主線最高優先**：魔法鑰匙 checkpoint 已閉合至 E3（`docs/87`）。從讀檔後的 CTY13
+   sec2 以正式輸入穿過魔法鑰匙門，沿原版路線推進，記錄第一個玩家實際不可達、
+   gate 錯誤或設定 mismatch；不可挑遠端孤立事件代替連續 audit。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

@@ -21,10 +21,21 @@ func (g *Game) questTreasureFor(cty, section, subid int) (*gamepack.QuestItemCha
 // story flag set = available, clear = already collected.
 func (g *Game) collectQuestTreasure(cty, section, subid int) (handled bool) {
 	event, ok := g.questTreasureFor(cty, section, subid)
-	if !ok {
-		return false
+	if ok {
+		return g.collectPackTreasure(event.Treasure)
 	}
-	t := event.Treasure
+	if g.pack != nil {
+		for _, gate := range g.pack.TwoStepFloorSwitchGates() {
+			t := gate.UnlockedTreasure
+			if t.CTYRaw == cty && t.Section == section && t.TileSubID == subid {
+				return g.collectPackTreasure(t)
+			}
+		}
+	}
+	return false
+}
+
+func (g *Game) collectPackTreasure(t gamepack.QuestTreasureSelector) bool {
 	if !g.storyFlag(t.PresentFlag) {
 		return true
 	}

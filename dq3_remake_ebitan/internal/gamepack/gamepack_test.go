@@ -1,6 +1,7 @@
 package gamepack
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"os"
@@ -309,6 +310,96 @@ func TestDQ3NoanielQuestItemChainMatchesOriginalEXECTYAndText(t *testing.T) {
 	checkText(e.Use.SuccessTextID, txt0, 599)
 }
 
+func TestDQ3PyramidSwitchGateMatchesOriginalEXECTYAndText(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return b
+	}
+	exe, cty, txt := read("DQ3.EXE"), read("CTY13.DAT"), read("D3TXT03.TXT")
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	e, ok := p.TwoStepFloorSwitchGate("dq3:event.pyramid_magic_key_gate")
+	if !ok {
+		t.Fatal("dq3:event.pyramid_magic_key_gate missing")
+	}
+	if e.CTYRaw != 13 || e.Section != 2 || e.CompletionTileSubID != 3 ||
+		e.ClearFlagRaw != 0x46 || e.TrapTransitionSubIDRaw != 3 ||
+		e.TrapDestination != (SceneDestination{CTYRaw: 13, Section: 1, X: 13, Y: 28}) ||
+		e.UnlockedTreasure != (QuestTreasureSelector{
+			CTYRaw: 13, Section: 2, TileSubID: 1, EventTypeRaw: 1,
+			ItemRawID: 0x56, PresentFlag: 0x73,
+		}) || e.SuccessSFXRaw != 0x0b {
+		t.Fatalf("金字塔 gate JSON 設定不符：%+v", e)
+	}
+
+	const sectionBase = 0x1a1d
+	if got := int(binary.LittleEndian.Uint16(cty[sectionBase+4:])); got != 0x19 {
+		t.Fatalf("CTY13 sec2 handler table relative=%#x, want 0x19", got)
+	}
+	handlerTable := sectionBase + 0x19
+	if !reflect.DeepEqual(cty[handlerTable:handlerTable+3], []byte{21, 22, 23}) {
+		t.Fatalf("CTY13 sec2 handlers=%x, want 151617", cty[handlerTable:handlerTable+3])
+	}
+	eventTable := sectionBase + int(binary.LittleEndian.Uint16(cty[sectionBase+8:]))
+	wantEvents := []byte{
+		0, 0x62, 0, 0x46,
+		1, 0x56, 0, 0x73,
+		1, 0x41, 0, 0x74,
+	}
+	if int(cty[eventTable]) < 3 ||
+		!reflect.DeepEqual(cty[eventTable+1:eventTable+1+len(wantEvents)], wantEvents) {
+		t.Fatalf("CTY13 sec2 event table=%x", cty[eventTable:eventTable+1+len(wantEvents)])
+	}
+	transitionTable := sectionBase + int(binary.LittleEndian.Uint16(cty[sectionBase+0x0c:]))
+	if got := cty[transitionTable+3*4 : transitionTable+4*4]; !reflect.DeepEqual(got, []byte{13, 1, 13, 28}) {
+		t.Fatalf("CTY13 sec2 transition subid3=%x, want 0d010d1c", got)
+	}
+
+	// Raw instruction anchors independently pin all three CTY handler entries
+	// and handler23's clear-story-flag consumer.
+	for off, want := range map[int][]byte{
+		0x6969: {0xe8, 0x06, 0xfa, 0xbf, 0x0e, 0x0c},
+		0x69c9: {0xe8, 0xa6, 0xf9, 0xbf, 0x0e, 0x0c},
+		0x69f2: {0x8d, 0x36, 0x6e, 0x3e, 0xe8, 0x07},
+	} {
+		if off+len(want) > len(exe) || !reflect.DeepEqual(exe[off:off+len(want)], want) {
+			t.Fatalf("DQ3.EXE file %#x handler anchor=%x, want %x",
+				off, exe[off:off+len(want)], want)
+		}
+	}
+	if off := bytes.Index(exe[0x69f2:0x6a60], []byte{0xbb, 0x46, 0x00}); off < 0 {
+		t.Fatal("handler23 找不到 clear flag 0x46 的原始指令 anchor")
+	}
+
+	for id, record := range map[string]int{
+		e.DialogueTextIDs.Prompt: 86, e.DialogueTextIDs.Pressed: 87,
+		e.DialogueTextIDs.Trap: 88, e.DialogueTextIDs.Success: 89,
+	} {
+		start := int(binary.LittleEndian.Uint16(txt[record*2:]))
+		end := int(binary.LittleEndian.Uint16(txt[(record+1)*2:]))
+		raw := make([]uint16, 0, (end-start)/2)
+		for off := start; off+2 <= end; off += 2 {
+			raw = append(raw, binary.LittleEndian.Uint16(txt[off:off+2]))
+		}
+		got, found := p.TextGlyphCodes(id)
+		def, defined := p.TextDefinition(id)
+		if !found || !defined || def.Source.Record == nil || *def.Source.Record != record ||
+			!reflect.DeepEqual(got, raw) {
+			t.Fatalf("%s 未與 D3TXT03 rec%d 完整一致", id, record)
+		}
+	}
+}
+
 func TestBuiltinDQ3ReviveCosts(t *testing.T) {
 	p, err := BuiltinDQ3()
 	if err != nil {
@@ -382,14 +473,14 @@ func TestDQ3ReviveCostsMatchOriginalEXE(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.1","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.2","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.1","service_definitions":[{
+	  "schema_version":"0.1.2","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -397,11 +488,11 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.1","boss_surrender_events":[],"temporary_role_events":[],
-	  "quest_item_chain_events":[]
+	  "schema_version":"0.1.2","boss_surrender_events":[],"temporary_role_events":[],
+	  "quest_item_chain_events":[],"two_step_floor_switch_gates":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.1",
+	  "schema_version":"0.1.2",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -411,7 +502,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.1","definitions":[{
+	  "schema_version":"0.1.2","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -425,7 +516,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.1"`, `"schema_version":"0.1.1","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.2"`, `"schema_version":"0.1.2","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"unknown characters field", validManifest, validFacilities, validEvents, strings.Replace(validCharacters, `"defaults":[`, `"typo":1,"defaults":[`, 1), "unknown field"},
 	}
