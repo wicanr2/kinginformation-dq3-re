@@ -33,5 +33,5 @@ rec45 歡迎繼承歐里狄加傳說的勇者；rec15 明說盜賊甘達特偷�
 - Runtime 圖：
   [`romaly_king_crown_quest.png`](../dq3_remake_ebitan/docs/romaly_king_crown_quest.png)。
 
-下一個 campaign audit 從國王任務後正常出城，前往香巴尼塔 CTY10；不得用既有孤立 boss/
-寶箱測試取代沿途可達性。
+後續 campaign audit 已由國王任務正常出城並抵達 CTY10、開門及自然進入 Kandar 戰；
+見 `docs/85`。本文件不再維護下一步狀態。

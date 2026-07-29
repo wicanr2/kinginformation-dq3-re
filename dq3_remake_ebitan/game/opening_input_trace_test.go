@@ -254,7 +254,8 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	for g.shop.cursor != herbIdx {
 		send(InputState{DirHeld: -1, DirEdge: 0})
 	}
-	for i := 0; i < 5 && g.heroGold >= g.shop.items.Price(herbCode); i++ {
+	// 不把前段戰鬥收入全換成藥草；保留羅馬利亞住宿與下一段聖水預算。
+	for i := 0; i < 2 && g.heroGold >= g.shop.items.Price(herbCode); i++ {
 		press(InputState{Confirm: true})
 	}
 	press(InputState{Cancel: true})
@@ -313,6 +314,69 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			restored.hasItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
 			restored.inTown, restored.curCty, sceneSection(restored.cur))
 	}
+
+	// 從合法王座 checkpoint 正常回到羅馬利亞 sec0。死亡者先走教會、存活者再住旅店；
+	// 之後以現有金錢在道具店購買一瓶聖水與可負擔藥草，正式北行 CTY10。
+	traceTownSectionTo(t, g, ctyRomaly, 0)
+	traceReviveDeadAtChurch(t, g)
+	traceTalkFacility(t, g, facInn)
+	traceTalkFacility(t, g, facItem)
+	if !g.shop.active {
+		t.Fatal("羅馬利亞道具店未由正式 facility NPC 開啟")
+	}
+	buyFromOpenShop := func(code, limit int) int {
+		t.Helper()
+		idx := -1
+		for i, candidate := range g.shop.codes {
+			if candidate == code {
+				idx = i
+				break
+			}
+		}
+		if idx < 0 {
+			t.Fatalf("羅馬利亞道具店缺 item %#x：codes=%v", code, g.shop.codes)
+		}
+		for g.shop.cursor != idx {
+			send(InputState{DirHeld: -1, DirEdge: 0})
+		}
+		bought := 0
+		for bought < limit && g.heroGold >= g.shop.items.Price(code) {
+			press(InputState{Confirm: true})
+			bought++
+		}
+		return bought
+	}
+	if bought := buyFromOpenShop(itemuse.ItemHolyWater, 1); bought != 1 {
+		t.Fatalf("羅馬利亞北行前買不到聖水：bought=%d gold=%d", bought, g.heroGold)
+	}
+	buyFromOpenShop(herbCode, 5)
+	press(InputState{Cancel: true})
+	traceExitTownBoundary(t, g)
+
+	traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
+	traceAdventureWalkToCty(t, g, 10)
+	if !g.inTown || g.curCty != 10 {
+		t.Fatalf("Lv4 正式北行未抵達 CTY10：town=%v cty=%d heroHP=%d gold=%d",
+			g.inTown, g.curCty, g.heroHP, g.heroGold)
+	}
+	// 逐層走完香巴尼塔，最後由 CTY10 sec5 原始可走 trigger (6,8) 自動進入
+	// handler14；不可直接呼叫 startFormation，也不可用調查寶箱代替。
+	kandarEvent := g.pack.BossSurrenderEvents()[0]
+	traceTownSectionTo(t, g, kandarEvent.Trigger.CTYRaw, kandarEvent.Trigger.Section)
+	traceWalkTo(t, g, 6, 9)
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	send(InputState{DirHeld: 1, DirEdge: 1})
+	if g.px != 6 || g.py != 8 || g.bossSurrenderStage != bossSurrenderIntro || !g.dlg.open {
+		t.Fatalf("香巴尼塔原始 trigger 未自然啟動：pos=(%d,%d) stage=%d dlg=%v",
+			g.px, g.py, g.bossSurrenderStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	if !g.battle.active || g.bossSurrenderStage != bossSurrenderBattle || len(g.battle.enemies) != 4 {
+		t.Fatalf("香巴尼塔 rec84 後未開原版四敵混合編隊：active=%v stage=%d enemies=%v",
+			g.battle.active, g.bossSurrenderStage, g.battle.enemies)
+	}
 }
 
 // traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
@@ -352,54 +416,7 @@ func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 		t.Helper()
 		traceAdventureWalkToCty(t, g, cty)
 		if !allAlive() {
-			beforeChurch := g.heroGold
-			wantChurchCost := 0
-			traceTalkFacility(t, g, facChurch)
-			if !g.church.active || g.church.stage != churchService {
-				t.Fatalf("練級陣亡後未進入正式教會 modal：active=%v stage=%d",
-					g.church.active, g.church.stage)
-			}
-			for target := 0; target < g.churchPartyLen(); target++ {
-				if g.churchMemberAlive(target) {
-					continue
-				}
-				wantChurchCost += g.pack.ReviveCost(g.churchMemberLevel(target))
-				// 原版服務順序：解毒、解詛咒、復活。第一名死者也必須經完整
-				// service→target→yes/no state machine，不能直接呼叫 churchRevive。
-				for g.church.serviceCursor != 2 {
-					if err := g.step(InputState{DirHeld: -1, DirEdge: 0}); err != nil {
-						t.Fatalf("教會選復活服務：%v", err)
-					}
-				}
-				if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
-					t.Fatalf("教會確認復活服務：%v", err)
-				}
-				for g.church.targetCursor != target {
-					if err := g.step(InputState{DirHeld: -1, DirEdge: 0}); err != nil {
-						t.Fatalf("教會選陣亡角色%d：%v", target, err)
-					}
-				}
-				if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
-					t.Fatalf("教會確認角色%d：%v", target, err)
-				}
-				if g.church.stage != churchConfirm {
-					t.Fatalf("教會角色%d 未進 yes/no：stage=%d msg=%q",
-						target, g.church.stage, g.church.msg)
-				}
-				if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
-					t.Fatalf("教會支付角色%d復活：%v", target, err)
-				}
-				if !g.churchMemberAlive(target) {
-					t.Fatalf("教會交易後角色%d仍陣亡", target)
-				}
-			}
-			if err := g.step(InputState{Cancel: true, DirHeld: -1, DirEdge: -1}); err != nil {
-				t.Fatalf("離開教會：%v", err)
-			}
-			if g.heroGold != beforeChurch-wantChurchCost {
-				t.Fatalf("教會復活扣款錯：before=%d after=%d wantCost=%d",
-					beforeChurch, g.heroGold, wantChurchCost)
-			}
+			traceReviveDeadAtChurch(t, g)
 		}
 		before := g.heroGold
 		traceTalkFacility(t, g, facInn)
@@ -491,6 +508,68 @@ func traceTalkFacility(t *testing.T, g *Game, typ int) {
 	}
 	t.Fatalf("CTY%d sec%d 找不到可達 facility type%d NPC",
 		g.curCty, sceneSection(g.cur), typ)
+}
+
+// traceReviveDeadAtChurch 只在隊伍有死者時，經目前城鎮的正式 facility NPC 與完整
+// service→target→yes/no input state machine 復活。它不注入 HP 或金錢。
+func traceReviveDeadAtChurch(t *testing.T, g *Game) {
+	t.Helper()
+	hasDead := false
+	for target := 0; target < g.churchPartyLen(); target++ {
+		if !g.churchMemberAlive(target) {
+			hasDead = true
+			break
+		}
+	}
+	if !hasDead {
+		return
+	}
+	beforeChurch := g.heroGold
+	wantChurchCost := 0
+	traceTalkFacility(t, g, facChurch)
+	if !g.church.active || g.church.stage != churchService {
+		t.Fatalf("陣亡後未進入正式教會 modal：active=%v stage=%d",
+			g.church.active, g.church.stage)
+	}
+	for target := 0; target < g.churchPartyLen(); target++ {
+		if g.churchMemberAlive(target) {
+			continue
+		}
+		wantChurchCost += g.pack.ReviveCost(g.churchMemberLevel(target))
+		for g.church.serviceCursor != 2 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: 0}); err != nil {
+				t.Fatalf("教會選復活服務：%v", err)
+			}
+		}
+		if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatalf("教會確認復活服務：%v", err)
+		}
+		for g.church.targetCursor != target {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: 0}); err != nil {
+				t.Fatalf("教會選陣亡角色%d：%v", target, err)
+			}
+		}
+		if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatalf("教會確認角色%d：%v", target, err)
+		}
+		if g.church.stage != churchConfirm {
+			t.Fatalf("教會角色%d 未進 yes/no：stage=%d msg=%q",
+				target, g.church.stage, g.church.msg)
+		}
+		if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatalf("教會支付角色%d復活：%v", target, err)
+		}
+		if !g.churchMemberAlive(target) {
+			t.Fatalf("教會交易後角色%d仍陣亡", target)
+		}
+	}
+	if err := g.step(InputState{Cancel: true, DirHeld: -1, DirEdge: -1}); err != nil {
+		t.Fatalf("離開教會：%v", err)
+	}
+	if g.heroGold != beforeChurch-wantChurchCost {
+		t.Fatalf("教會復活扣款錯：before=%d after=%d wantCost=%d",
+			beforeChurch, g.heroGold, wantChurchCost)
+	}
 }
 
 func traceExitTownBoundary(t *testing.T, g *Game) {
@@ -850,7 +929,8 @@ func traceTownSectionTo(t *testing.T, g *Game, wantCty, wantSec int, wantNPC ...
 				if dsec >= 0xfe && wantCty >= 0 {
 					continue
 				}
-				if (x != cur.x || y != cur.y) && len(tracePortalPath(sc, cur.x, cur.y, x, y)) == 0 {
+				if (x != cur.x || y != cur.y) &&
+					len(tracePortalPath(sc, cur.x, cur.y, x, y, g.keyTier())) == 0 {
 					continue // transition table 有 edge，但此入口所在的連通區走不到該 portal
 				}
 				next := node{-1, -1, dx, dy}
@@ -940,10 +1020,15 @@ func traceWalkThroughPortal(t *testing.T, g *Game, x, y, wantCty, wantSec int, w
 			}
 			continue
 		}
-		path := tracePortalPath(g.cur, g.px, g.py, x, y)
+		path := tracePortalPath(g.cur, g.px, g.py, x, y, g.keyTier())
 		if len(path) == 0 {
 			t.Fatalf("無法在不踩其他 transition 下抵達 portal(%d,%d)，目前 @(%d,%d)",
 				x, y, g.px, g.py)
+		}
+		dx, dy := dirDelta(path[0])
+		if g.cur.doorTier(g.px+dx, g.py+dy) != 0 {
+			traceOpenReachableDoor(t, g, g.px+dx, g.py+dy)
+			continue
 		}
 		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
 			t.Fatalf("走向 portal dir%d: %v", path[0], err)
@@ -1030,9 +1115,13 @@ func traceTalkNPC(t *testing.T, g *Game, nx, ny int) {
 
 // tracePortalPath 把目標以外的 transition tile 視為阻擋；否則最短路徑可能先踩到
 // 另一座樓梯，執行時場景已切換，靜態 graph 卻仍誤判可達。
-func tracePortalPath(sc *Scene, sx, sy, tx, ty int) []int {
+func tracePortalPath(sc *Scene, sx, sy, tx, ty int, keyTier ...int) []int {
 	if sc == nil || sx == tx && sy == ty {
 		return nil
+	}
+	allowedDoorTier := 0
+	if len(keyTier) > 0 {
+		allowedDoorTier = keyTier[0]
 	}
 	type node struct{ x, y int }
 	start, goal := node{sx, sy}, node{tx, ty}
@@ -1046,8 +1135,9 @@ func tracePortalPath(sc *Scene, sx, sy, tx, ty int) []int {
 		for dir := 0; dir < 4; dir++ {
 			dx, dy := dirDelta(dir)
 			n := node{p.x + dx, p.y + dy}
+			doorTier := sc.doorTier(n.x, n.y)
 			if seen[n] || n.x < 0 || n.y < 0 || n.x >= sc.w || n.y >= sc.h ||
-				sc.Blocked(n.x, n.y) {
+				sc.Blocked(n.x, n.y) && !(doorTier > 0 && doorTier <= allowedDoorTier) {
 				continue
 			}
 			if n != goal {

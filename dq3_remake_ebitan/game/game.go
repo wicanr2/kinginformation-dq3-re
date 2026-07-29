@@ -295,54 +295,57 @@ type Game struct {
 	heroGender     int            // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0)。heroStat 是原版角色 record 的七個持久能力欄；
 	// 創角/升級時由 sub_ed3c 相同的 RNG transaction 修改，不再每幀由等級公式重算。
-	heroExp         uint32
-	heroGold        int
-	heroHP          int
-	heroMP          int
-	heroStat        stats.Values
-	heroInit        bool
-	equip           [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
-	companions      []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
-	roster          []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
-	flags           map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
-	storyBits       [64]byte     // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
-	worldState      uint16       // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
-	noticeCode      int          // 取得道具通知(item code;-1=無)
-	noticeTimer     int
-	shipOwned       bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
-	shipAboard      bool          // 目前在船上
-	shipX, shipY    int           // 船停泊位置(地表)
-	repel           int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
-	remoaru         int           // レムオル透明剩餘有效移動步數；原版 [0x52f7]，施放設 25
-	toramana        bool          // 多拉瑪那原版 world flag 0x2000；遇高傷害地板後轉 hazardGuard
-	hazardGuard     bool          // 原版 world flag 0x0400；只在同一段連續高傷害地板維持
-	prng            rng.RNG       // 祈禱之戒損壞判定用 RNG
-	lotoBlessed     bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
-	cleared         bool          // 已破關(索瑪擊破)
-	endText         *dq3data.Text // ENDTXT.TXT 結局文本
-	endSeq          int           // 結局捲動段號(-1=未進行;0..n=當前段)
-	openingIdx      int           // 開場旁白序號(-1=未進行;0..n=當前句)
-	bossQueue       []int         // boss 連戰佇列(索瑪終盤:怨靈→殭屍→索瑪；或 examine 觸發的座標 boss 鏈)
-	pendingTrigger  *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
-	bossIntro       bool          // 座標 boss 的 preRec 尚在顯示；關閉後才正式開戰
-	zomaIntro       bool          // 索瑪 rec72 尚在顯示；關閉後才開 monster0x7c
-	ortegaStage     int           // CTY90 sec4 歐魯迪卡事件：1=rec69，2=rec70
-	endingKingStage int           // CTY80 sec1 handler74：1=rec48 冊封對白，關閉後才開始 ending
-	baramosReturn   int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
-	romalyKingStage int           // CTY02 sec1 handler9：1=rec45 後接 rec15（首次交付金皇冠任務）
-	mirrorStage     int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
-	phoenix         *dq3data.CharSprite
-	phoenixOwned    bool
-	phoenixAboard   bool
-	phoenixX        int
-	phoenixY        int
-	phoenixStage    int   // 1=守護神 rec92 後續；2=逐顆 rec93；3=中央蛋六幀復活動畫
-	phoenixList     []int // 已放上祭壇、待 rec93 列出的寶珠
-	phoenixListPos  int
-	phoenixAnim     int // 復活動畫 tile 0x7b..0x80 的目前 frame
-	phoenixAnimTick int
-	frame           *ebiten.Image
-	rgba            []byte
+	heroExp              uint32
+	heroGold             int
+	heroHP               int
+	heroMP               int
+	heroStat             stats.Values
+	heroInit             bool
+	equip                [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	companions           []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
+	roster               []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
+	flags                map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
+	storyBits            [64]byte     // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
+	worldState           uint16       // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
+	noticeCode           int          // 取得道具通知(item code;-1=無)
+	noticeTimer          int
+	shipOwned            bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
+	shipAboard           bool          // 目前在船上
+	shipX, shipY         int           // 船停泊位置(地表)
+	repel                int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	remoaru              int           // レムオル透明剩餘有效移動步數；原版 [0x52f7]，施放設 25
+	toramana             bool          // 多拉瑪那原版 world flag 0x2000；遇高傷害地板後轉 hazardGuard
+	hazardGuard          bool          // 原版 world flag 0x0400；只在同一段連續高傷害地板維持
+	prng                 rng.RNG       // 祈禱之戒損壞判定用 RNG
+	lotoBlessed          bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
+	cleared              bool          // 已破關(索瑪擊破)
+	endText              *dq3data.Text // ENDTXT.TXT 結局文本
+	endSeq               int           // 結局捲動段號(-1=未進行;0..n=當前段)
+	openingIdx           int           // 開場旁白序號(-1=未進行;0..n=當前句)
+	bossQueue            []int         // boss 連戰佇列(索瑪終盤:怨靈→殭屍→索瑪；或 examine 觸發的座標 boss 鏈)
+	pendingTrigger       *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
+	bossIntro            bool          // 座標 boss 的 preRec 尚在顯示；關閉後才正式開戰
+	bossSurrenderStage   int           // game-pack boss_surrender primitive 的目前階段
+	bossSurrenderCursor  int           // 求饒 Yes/No 游標
+	bossSurrenderEventID string        // active pack event；空字串表示無事件
+	zomaIntro            bool          // 索瑪 rec72 尚在顯示；關閉後才開 monster0x7c
+	ortegaStage          int           // CTY90 sec4 歐魯迪卡事件：1=rec69，2=rec70
+	endingKingStage      int           // CTY80 sec1 handler74：1=rec48 冊封對白，關閉後才開始 ending
+	baramosReturn        int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
+	romalyKingStage      int           // CTY02 sec1 handler9：1=rec45 後接 rec15（首次交付金皇冠任務）
+	mirrorStage          int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
+	phoenix              *dq3data.CharSprite
+	phoenixOwned         bool
+	phoenixAboard        bool
+	phoenixX             int
+	phoenixY             int
+	phoenixStage         int   // 1=守護神 rec92 後續；2=逐顆 rec93；3=中央蛋六幀復活動畫
+	phoenixList          []int // 已放上祭壇、待 rec93 列出的寶珠
+	phoenixListPos       int
+	phoenixAnim          int // 復活動畫 tile 0x7b..0x80 的目前 frame
+	phoenixAnimTick      int
+	frame                *ebiten.Image
+	rgba                 []byte
 }
 
 // 場景配樂軌(對齊 C g_scene_track):BATTLE=14、TOWN=2、DUNGEON=3。
@@ -650,6 +653,11 @@ func (g *Game) examine() {
 		if t == nil {
 			return false
 		}
+		// CTY10 sec5 的金皇冠位於坎達爾強制戰後方。原版 handler14 勝利並接受
+		// 求饒後才 clear story flag0x2e；事件尚在時不得直接從寶箱繞過 boss。
+		if g.treasureBlockedByPack(g.curCty, g.cur.sec, x, y, t[4]) {
+			return true
+		}
 		flag := t[5]
 		if g.flags[flag] { // 已取
 			return true
@@ -848,6 +856,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.bossSurrenderStage == bossSurrenderChoice {
+		g.bossSurrenderChoiceInput(in)
+		g.renderFrame()
+		return nil
+	}
 	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
 	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
@@ -914,6 +927,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceRomalyKing()
 				g.advanceMirrorEvent()
 				g.advancePhoenixEvent()
+				g.advanceBossSurrenderDialogue()
 			}
 		}
 		g.renderFrame()
@@ -1012,6 +1026,7 @@ func (g *Game) step(in InputState) error {
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
 		g.tryOpeningRegionEvent()
+		g.tryBossSurrenderEvent()
 		g.tryBaramosReturnEvent()
 		g.tryOrtegaEvent()
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
@@ -1868,6 +1883,7 @@ func (g *Game) onBattleEnd() {
 		}
 	}
 	g.settleMirrorBattle()
+	g.settleBossSurrenderBattle()
 	if g.pendingTrigger != nil { // examine 觸發的座標 boss 鏈結算(bosstrigger.go)
 		switch {
 		case g.battle.result == 1 && len(g.bossQueue) == 0: // 鏈全勝(最後一場也贏)→ 給獎勵 + 設旗標
@@ -1993,6 +2009,7 @@ func (g *Game) renderFrame() {
 		g.shop.draw(g.rgba, g.heroGold, white)
 	}
 	g.drawChurch(g.rgba, white)
+	g.drawBossSurrenderChoice(g.rgba, white)
 	if g.noticeTimer > 0 && g.noticeCode >= 0 { // 取得道具通知(品名)
 		fillBox(g.rgba, 24, 244, ScreenW-48, 40, white)
 		g.shop.drawItemName(g.rgba, 40, 256, g.noticeCode, white)

@@ -39,8 +39,7 @@ Ebiten `openFacility(facInn)` 已按上述語意實作，component tests 鎖定�
 2. 教會 handler 已有三選單／選人／yes-no／扣款／復活交易。40 級費用由
    `DQ3.EXE` file `0x19dac` 證實並存入 `dq3_cht` JSON pack；file
    `0x85ff..0x8696` 的 level clamp、付款、清死亡與 HP/MP 回滿均有 component test。
-3. 下一個 audit 是從合法羅馬利亞 checkpoint 重跑 CTY10；同時核對聖水／特黑洛斯的
-   精訊版實值與弱敵判定。`docs/49` 的 64 步是舊「經典值」假設，
-   `docs/78` 已記錄 EXE `[0x52f6]=0x28`（40 步），須統一 production 常數與 consumer。
+3. 後續 CTY10 audit 已閉合至 E3「自然進入 Kandar 戰」：正式 trace 由此 checkpoint
+   北行、開 sec3 盜賊鑰匙門並踏 sec5 trigger；見 `docs/85`。本文件不再維護下一步。
 
-CTY10 仍未達 E3；不得因阿里阿罕訓練已通過就假定北行戰力、補給與遭遇設定皆正確。
+尚未證明 Lv4 隊伍能合法取勝；戰力、裝備與補給 audit 由 `docs/74`／`docs/85` 接續。

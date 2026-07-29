@@ -2,7 +2,7 @@
 """CTY 城鎮佈局解碼驗證(對照 re/render.c::cty_select_section / docs/11)。
 
 依 DQ3.EXE sub_30cf 的程式路徑解 CTY 城鎮版面並貼成 PNG:
-  檔首 u16 n + n×u16 section 偏移表;
+  檔首直接是 u16 section 偏移表(word[section]，無 count 前綴);
   section_off + 0x0e → layout_ptr;版面起點 = section_off + layout_ptr;
   版面 = <u16 width><u16 height><spawn 4B> + width*height 個 u16(低 byte=BLK index)。
 
@@ -22,9 +22,7 @@ blk_name = sys.argv[3] if len(sys.argv) > 3 else 'DQ31.BLK'
 cty = open('assets_raw/%s' % cty_name, 'rb').read()
 u16 = lambda o: struct.unpack_from('<H', cty, o)[0]
 
-n = u16(0)
-offs = [u16(2 + 2 * i) for i in range(n)]
-so = offs[sect_idx]
+so = u16(2 * sect_idx)
 if so == 0xffff:
     sys.exit('section %d is empty (0xffff)' % sect_idx)
 
@@ -33,8 +31,8 @@ lay = lp + so                 # 版面資料起點
 w = u16(lay)
 h = u16(lay + 2)
 base = lay + 4                # tile 陣列基底(spawn 4B 後)
-print('n=%d sect%d @0x%x layout_ptr=0x%x w=%d h=%d tile_base=0x%x'
-      % (n, sect_idx, so, lp, w, h, base))
+print('sect%d @0x%x layout_ptr=0x%x w=%d h=%d tile_base=0x%x'
+      % (sect_idx, so, lp, w, h, base))
 
 pal = load_pal('assets_raw/DQ3.PAL')
 count, tiles = read_blk('assets_raw/%s' % blk_name)

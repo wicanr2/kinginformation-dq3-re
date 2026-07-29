@@ -119,6 +119,25 @@ func TestDumpNewGameScreens(t *testing.T) {
 	dump("adventurer_registry")
 	g.tavern.active = false
 
+	// CTY10 sec5 原版 handler14：Kandar×1 + 子分×3 的混合編隊。
+	kandarEvent := g.pack.BossSurrenderEvents()[0]
+	kandar, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		kandarEvent.Trigger.CTYRaw, mapBlkNum[kandarEvent.Trigger.CTYRaw],
+		kandarEvent.Trigger.Section,
+		g.dnPhase, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = kandar, kandar, kandarEvent.Trigger.CTYRaw, true
+	g.px, g.py, g.dlg.tx, g.dlg.open = 6, 8, kandar.dlgText, false
+	g.bossSurrenderEventID = kandarEvent.ID
+	g.startBossSurrenderBattle()
+	if !g.battle.active || len(g.battle.enemies) != 4 {
+		t.Fatal("Kandar 原版混合編隊未啟動")
+	}
+	dump("kandar_mixed_battle")
+	g.battle.active = false
+
 	// R-2:沙曼歐莎夜間在原版精確座標使用拉之鏡 → rec97 揭露 → 怪力魔89。
 	g.dnPhase = 2
 	g.setStoryFlag(0x42, true)

@@ -24,12 +24,14 @@
 
 | gate 種類 | 落點 | 範例 |
 |---|---|---|
-| **寶箱 examine gate** | chest handler 的 is_item 分支前判 flag | 甘達特金皇冠(flag 0x210 未設→空寶箱) |
+| **寶箱 examine gate** | chest handler 的 is_item 分支前判原版事件旗標 | Kandar 尚在場(flag 0x2e set)時金皇冠 fail closed |
 | **scripted give gate** | sub2 dispatch 對特定 byte4 判 flag,未滿足→before_rec | 古布達黑胡椒(flag 0x211=達妮亞救出) |
-| **runner region** | `[0x722]` 座標 hit-test / 顯式 setter | boss 區(甘達特=runner boss,無 sub2 NPC) |
+| **CTY 特殊 handler** | `section+4` byte table：tile subid→handler id | CTY10 subid1→handler14 Kandar |
 
 辨識要點:**有 sub2 NPC 的對話事件** → scripted give gate;**寶箱/examine tile** → chest gate;
-**踩進某區觸發**(boss、過場) → runner region(`[0x722]` 狀態機,docs/re-log-722)。
+**踩格觸發**先查 CTY tile high subid 與 `section+4` 特殊 handler table；只有 caller/
+consumer 都閉合時才能歸類為 runner。`logical 0xf6d6` 是滑鼠選單 hit-test，不是玩家
+座標 region，見 `docs/85` 與 `docs/re-log-722-state-machine.md` 更正。
 
 ## 3. 前置劇情用 flag 表達,原子事件用 token 組合演示
 

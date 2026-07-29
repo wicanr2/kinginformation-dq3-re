@@ -49,6 +49,11 @@
 
 - 長期架構是共用 Go／Ebitengine 核心加 `dq1_cht`、`dq2_cht`、`dq3_cht` versioned
   game pack；JSON canonical 欄位契約見 `docs/84-game-pack-json-contract.md`。
+- **禁止把版本專屬設定新增成 Go 常數或 table**：CTY／section／座標、tile subid、story
+  flag、對話 record、怪物／編隊、寶箱 gate、商店價格、掉落與音訊 cue 都必須放在對應
+  game-pack JSON。Go 只保留跨版本的 loader、validator 與具名狀態機／effect primitive。
+  為反組譯診斷暫時硬寫的值不得進 commit；切片收尾前必須遷入 JSON、更新 `docs/84` 欄位
+  說明，並加原始 EXE／DAT parity test。缺欄位或未知引用一律 fail closed，不設 Go fallback。
 - 新增或更改遊戲設定前，先判斷它屬於 engine behavior、game data 或大型 binary asset。
   可調內容不得繼續新增為散落的 Go table；引擎狀態機也不得為了資料化而改成任意 JSON code。
 - production JSON 的初值至少要有 D2 evidence，會改變流程的值需 D3。未知值 fail closed，
@@ -77,6 +82,8 @@
   image、volume 或專案資料。
 - 提交前跑 `git diff --check`、檢查圖片與文件代表現行程式，並確認沒有使用者 scratch、
   Android local libs、原版資產或 RE database。
+- 提交前另跑 `rg` 檢查本批新增 Go 程式是否出現版本專屬 raw ID／座標／record／flag；
+  每個命中都必須是 parser、validator、原始格式 oracle 或測試證據，不能是 production fallback。
 - 有重大修改才 commit + push；commit 訊息描述已閉合的垂直切片，不誇大後續流程。
 
 ## 工作樹保護

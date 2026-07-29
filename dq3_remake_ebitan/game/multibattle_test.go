@@ -78,6 +78,49 @@ func TestGroupBattleAllMustDie(t *testing.T) {
 	t.Logf("群戰全滅 ✓:%d 回合、EXP%d G%d(3×單隻)", turns, b.gotExp, b.gotGold)
 }
 
+// TestShanpaneOriginalMixedFormation 鎖定 DQ3.EXE DGROUP 0x4eb5 的香巴尼塔編隊：
+// 4 groups、背景 0x18、page 1、甘達特26×1 + 手下27×1×3。這同時證明 remake
+// 不再把混合編隊錯畫／錯算成「第一隻怪 ×4」。
+func TestShanpaneOriginalMixedFormation(t *testing.T) {
+	exe := asset(t, "DQ3.EXE")
+	const formationFile = 0x16140 + 0x4eb5
+	wantRaw := []byte{4, 0x18, 1, 26, 1, 27, 1, 27, 1, 27, 1}
+	if got := exe[formationFile : formationFile+len(wantRaw)]; string(got) != string(wantRaw) {
+		t.Fatalf("香巴尼塔 formation bytes=% x, want % x", got, wantRaw)
+	}
+
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
+	hero := heroParams{level: 30, curHP: 999, maxHP: 999, atk: 999, def: 999, agi: 999}
+	groups := []enemyGroup{{monID: 26, count: 1}, {monID: 27, count: 1},
+		{monID: 27, count: 1}, {monID: 27, count: 1}}
+	if !b.startFormation(groups, 1, hero, nil) {
+		t.Fatal("香巴尼塔混合編隊啟動失敗")
+	}
+	wantIDs := []int{26, 27, 27, 27}
+	if len(b.enemies) != len(wantIDs) {
+		t.Fatalf("敵數=%d, want %d", len(b.enemies), len(wantIDs))
+	}
+	for i, id := range wantIDs {
+		if b.enemies[i].monID != id || b.enemies[i].spr == nil {
+			t.Fatalf("敵%d=%+v, want monID%d + sprite", i, b.enemies[i], id)
+		}
+	}
+	if b.enemies[0].atk == b.enemies[1].atk || b.enemies[0].max == b.enemies[1].max {
+		t.Fatalf("甘達特與手下不應共用能力/HP：boss=%+v henchman=%+v", b.enemies[0], b.enemies[1])
+	}
+	for i := range b.enemies {
+		b.enemies[i].hp = 0
+	}
+	b.finishVictory()
+	if b.gotExp != 2200+3*80 || b.gotGold != 0 {
+		t.Fatalf("混合編隊獎勵 EXP%d G%d, want EXP2440 G0", b.gotExp, b.gotGold)
+	}
+}
+
 // TestEnemyTurnEachAliveActs:enemyTurn 逐隻存活敵各行動一次(對齊 C do_turn 敵方段 for 迴圈),
 // 非只有組內第一隻打。用 id101×3(實測 fleeRate=0 不逃、castProb=0 不施咒 → 每隻必物攻)+
 // 高 HP 零防禦隊長(單一目標,無同伴→ 隨機選目標退化為必中隊長),驗一次 enemyTurn() 造成的

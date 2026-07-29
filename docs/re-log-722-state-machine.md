@@ -20,7 +20,7 @@
 **最密集 cluster**:file 0x10a46–0x10e8f(logical 0xf6d6–0xfb1f)有極多 inc/dec/cmp/mov [0x722]
 與 dx/ax/0 互動 → 疑為 **state machine 主體**。下一步逐行反組譯它。
 
-## Step 2:反組譯密集 cluster(0xf6d6)→ 是「座標→region 命中測試」非事件分派
+## Step 2:反組譯密集 cluster(0xf6d6)→ ❌ 舊誤判：其實是滑鼠選單 hit-test
 
 ```
 cmp cx,0xc0 / cmp dx,0x1a       ; 座標界檢
@@ -29,9 +29,11 @@ cmp [0x722], dx                 ; 比對當前 [0x722] 與算出的 region
 [0x71c]==3 分支:讀 [si+0x18/0x1a]=region{x,y}、[0x72c]=寬、[si+0x14]=高
 迴圈掃 region 清單(6 byte/項 {x,y,..}),算命中 index=bp → cmp [0x722],bp; je 命中
 ```
-⇒ **`[0x722]` = 當前 region/page 索引**(座標除算 + region 清單命中比對),**不是 runner event id**。
-docs 把 `[0x722]` 當「event id」八成是**誤判**。下一步:找真正 runner 事件分派 `call [bx+0x3baa]`,
-看 bx(event id)從哪來 —— 確認 [0x722] 與 event id 的關係。
+> **2026-07-29 IDA 更正**：logical `0xf6d6`／file `0x10a46` 的座標、cell 與清單是
+> **滑鼠／選單命中測試**，不是玩家地圖座標或 runner region。上面的逐行觀察保留作失敗
+> 紀錄，但不能用來證明 `[0x722]` 的玩家區域 writer。後續 Step 4 的
+> `mov bx,[0x722] → call [bx+0x3baa]` consumer 與明確 setter 掃描是另一組證據，不受此
+> 更正影響；任何「踩區觸發」仍須逐事件回到 CTY 特殊 handler table 或真正 caller 重查。
 
 ## Step 3:找事件派發 → logical 0x9871 `call [bx+0x3baa]`
 
@@ -51,14 +53,10 @@ L09871: call [bx + 0x3baa]                     ; 派發 [0x722] 號 handler
 
 ## ★★ 核心結論(推翻舊 blocker)
 
-`[0x722]` 同時被兩條路設定,**兩條都是靜態可決定的**:
-1. **座標→region 命中測試**(Step 2,L0f6d6 cluster):玩家座標 → 除算 + region 清單比對 → 算出
-   region index → 寫 [0x722]。region 清單是資料(可抽)。**玩家走到某區 → [0x722] 自動 = 該區號**。
-2. **57 個明確 setter**(Step 1):故事推進直接 `mov [0x722], N`(進城/事件後等)。
-
-⇒ **舊結論「[0x722] 無靜態 setter、純動態、追不到」是錯的**。它有 57 setter + 座標 region 規則,
-**全部靜態**。所以 **warp/portal/sub2 的「何時觸發」是可以靜態 RE 出來並 wiring 的**——
-不需要 DOSBox 動態!之前卡住是因為把 [0x722] 誤判成「不可知的動態 event id」。
+`[0x722]` 有 57 個明確 setter，Step 4 也證實它是 runner dispatch index；但先前宣稱的
+「玩家座標→region writer」並未由 Step 2 證明。結論應收斂為：**runner consumer 與部分
+writer 可靜態追蹤，但每個事件的入口仍須閉合 caller/table 證據**，不可把所有無 sub2 NPC
+事件一律叫 runner region。
 
 ## 決策點(待定)
 要 wiring 的話,路徑:
@@ -457,11 +455,12 @@ CTY82 大圖多 section NPC 解析雜訊多,魯比斯 NPC 難精準定位。務�
 
 ## Step 33:甘達特金皇冠正源(杜勝利 Ch6)2026-06-26
 
-香巴尼之塔 CTY10 sect5 (4,4) 金皇冠 0x33 寶箱接上甘達特 boss gate(原版要先打甘達特 6F 才能取皇冠):
-examine 皇冠寶箱 → 甘達特未敗(flag 0x210)→ 先打甘達特(怪26 HP551)→ 勝利設 flag 0x210 →
-才放行取皇冠;未勝/未打 → 皇冠不可取(空寶箱訊息)。皇冠 → 還羅馬利亞國王(已接)→ ROMALY 里程碑。
-CTY10 無 sub2 NPC(甘達特=runner boss);gate 接在寶箱 examine。連通 boss + 皇冠主線正源。
-game_tester 61/61。
+> **2026-07-29 IDA/CTY 更正**：上述 `flag 0x210` 與「runner boss」是舊 C remake 的
+> 推測性接線，不是原版。CTY10 section 5 `section+4` 特殊 handler table 的 subid 1
+> 直接選 handler14 (`sub_15477`)；玩家踏 `(6,8)`／`(7,8)` 觸發。handler 以原版
+> story flag `0x2e` 控制四名盜賊與事件，戰勝並接受求饒、播放 rec86 後才清 flag。
+> formation 是怪26×1 + 怪27×3，總 EXP2440/gold0。金皇冠 `(4,4)` item0x33 在
+> flag `0x2e` 清除前 fail closed。完整證據與 production trace 見 `docs/85`。
 
 ## Step 34:B-9 收尾(歐里空金屬/古布達救人/隱身草/王者之劍)2026-06-26
 

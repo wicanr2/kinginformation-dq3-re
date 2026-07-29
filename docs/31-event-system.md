@@ -188,9 +188,11 @@ runner `0xabb2` 與跳表 `DS 0x3baa` 是 scripted-event 系統的核心,但:
 > **★ 後續更正(2026-06,純靜態解決,未用 DOSBox)**:上述「純靜態追不到 / 需動態」結論**已被推翻**。
 > - 祠堂座標:CTY93 section0 NPC 清單唯一一隻祭司 @ **(8,8)**,三證據(CTY 資料 + 劇本「神聖的祠堂」+
 >   地理 docs/32)靜態定位(見 `dq3_remake/include/dq3_inventory.h` DQ3_SHRINE_NPC_X/Y)。
-> - runner `[0x722]` 進入點:靜態重新分析找到 **57 個 explicit setter**(`mov word [0x722],N`)+ 座標→region
->   hit-test,完整解出派發(`mov bx,[0x722]; dec bx; shl bx,1; call [bx+0x3baa]`),sub2 跳表 = runner 表
->   偏移 5 格。整套劇情觸發機器全靜態解完 —— 見 `docs/re-log-722-state-machine.md`、`tools/decode_sub2_struct.py`。
+> - runner `[0x722]` 靜態分析找到 **57 個 explicit setter**，consumer 為
+>   `mov bx,[0x722]; dec bx; shl bx,1; call [bx+0x3baa]`，sub2 跳表位於 runner 表後。
+>   **2026-07-29 更正**：先前拿來證明「玩家座標→region」的 logical `0xf6d6` cluster
+>   實為滑鼠選單 hit-test，因此不能宣稱整套入口已全解。每個踩格事件仍須由 CTY
+>   `section+4` 特殊 handler table 或真正 caller 逐案閉合；見 `docs/85`。
 >
 > 下方「動態分析」段保留為當時的死路推理紀錄(教訓:撞牆別退回 DOSBox,先換 query 把 setter 掃出來)。
 

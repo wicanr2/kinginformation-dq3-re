@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -74,10 +75,72 @@ type Facilities struct {
 	ServiceDefinitions []ServiceDefinition `json:"service_definitions"`
 }
 
+type TileCoordinate struct {
+	X int `json:"x"`
+	Y int `json:"y"`
+}
+
+type SceneTileTrigger struct {
+	Kind      string           `json:"kind"`
+	CTYRaw    int              `json:"cty_raw"`
+	Section   int              `json:"section"`
+	TileSubID int              `json:"tile_subid"`
+	Tiles     []TileCoordinate `json:"tiles"`
+}
+
+type DialogueRecords struct {
+	Intro   int `json:"intro"`
+	Apology int `json:"apology"`
+	Accept  int `json:"accept"`
+	Reject  int `json:"reject"`
+}
+
+type FormationGroup struct {
+	MonsterRawID int `json:"monster_raw_id"`
+	Count        int `json:"count"`
+}
+
+type BattleFormation struct {
+	BackgroundRaw int              `json:"background_raw"`
+	PageRaw       int              `json:"page_raw"`
+	Groups        []FormationGroup `json:"groups"`
+	RawBytesHex   string           `json:"raw_bytes_hex"`
+}
+
+type TreasureGate struct {
+	CTYRaw       int            `json:"cty_raw"`
+	Section      int            `json:"section"`
+	Tile         TileCoordinate `json:"tile"`
+	ItemRawID    int            `json:"item_raw_id"`
+	WhileFlagSet int            `json:"while_flag_set"`
+}
+
+// BossSurrenderEvent is a finite engine primitive shared by editions that use
+// intro -> battle -> apology -> repeatable yes/no surrender. It contains data,
+// never Go symbols or executable expressions.
+type BossSurrenderEvent struct {
+	ID              string           `json:"id"`
+	Kind            string           `json:"kind"`
+	Trigger         SceneTileTrigger `json:"trigger"`
+	PresenceFlagRaw int              `json:"presence_flag_raw"`
+	DialogueRecords DialogueRecords  `json:"dialogue_records"`
+	Formation       BattleFormation  `json:"formation"`
+	ClearFlagRaw    int              `json:"clear_flag_raw"`
+	TreasureGates   []TreasureGate   `json:"treasure_gates"`
+	Evidence        Evidence         `json:"evidence"`
+}
+
+type Events struct {
+	SchemaVersion       string               `json:"schema_version"`
+	BossSurrenderEvents []BossSurrenderEvent `json:"boss_surrender_events"`
+}
+
 type Pack struct {
 	Manifest    Manifest
 	Facilities  Facilities
+	Events      Events
 	services    map[string]*ServiceDefinition
+	bossEvents  map[string]*BossSurrenderEvent
 	contentHash string
 }
 
@@ -132,15 +195,94 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateFacilities(); err != nil {
 		return nil, fmt.Errorf("%s: %w", facilitiesPath, err)
 	}
+	eventsPath, ok := p.Manifest.Data["events"]
+	if !ok {
+		return nil, errors.New("manifest.json: data.events is required")
+	}
+	if eventsPath, err = cleanRelative(eventsPath, "data.events"); err != nil {
+		return nil, err
+	}
+	if err := decodeStrict(fsys, eventsPath, &p.Events); err != nil {
+		return nil, err
+	}
+	if err := p.validateEvents(); err != nil {
+		return nil, fmt.Errorf("%s: %w", eventsPath, err)
+	}
 	canonical, err := json.Marshal(struct {
 		Manifest   Manifest   `json:"manifest"`
 		Facilities Facilities `json:"facilities"`
-	}{p.Manifest, p.Facilities})
+		Events     Events     `json:"events"`
+	}{p.Manifest, p.Facilities, p.Events})
 	if err != nil {
 		return nil, fmt.Errorf("canonicalize pack: %w", err)
 	}
 	p.contentHash = fmt.Sprintf("sha256:%x", sha256.Sum256(canonical))
 	return &p, nil
+}
+
+func (p *Pack) validateEvents() error {
+	if p.Events.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported schema_version %q", p.Events.SchemaVersion)
+	}
+	if p.Events.BossSurrenderEvents == nil {
+		return errors.New("boss_surrender_events must be present")
+	}
+	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
+	for i := range p.Events.BossSurrenderEvents {
+		e := &p.Events.BossSurrenderEvents[i]
+		if e.ID == "" || e.Kind != "boss_surrender" {
+			return fmt.Errorf("boss_surrender_events[%d]: id and kind=boss_surrender are required", i)
+		}
+		if _, exists := p.bossEvents[e.ID]; exists {
+			return fmt.Errorf("duplicate boss surrender event id %q", e.ID)
+		}
+		if e.Trigger.Kind != "scene_tile_subid" || e.Trigger.CTYRaw < 0 ||
+			e.Trigger.Section < 0 || e.Trigger.TileSubID < 0 || e.Trigger.TileSubID > 31 ||
+			len(e.Trigger.Tiles) == 0 {
+			return fmt.Errorf("%s: invalid scene_tile_subid trigger", e.ID)
+		}
+		if e.PresenceFlagRaw < 0 || e.PresenceFlagRaw > 255 ||
+			e.ClearFlagRaw != e.PresenceFlagRaw {
+			return fmt.Errorf("%s: invalid or inconsistent presence/clear flag", e.ID)
+		}
+		for _, rec := range []int{e.DialogueRecords.Intro, e.DialogueRecords.Apology,
+			e.DialogueRecords.Accept, e.DialogueRecords.Reject} {
+			if rec < 0 {
+				return fmt.Errorf("%s: dialogue records must not be negative", e.ID)
+			}
+		}
+		if e.Formation.BackgroundRaw < 0 || e.Formation.PageRaw < 0 ||
+			len(e.Formation.Groups) == 0 || e.Formation.RawBytesHex == "" {
+			return fmt.Errorf("%s: incomplete formation", e.ID)
+		}
+		raw, err := hex.DecodeString(e.Formation.RawBytesHex)
+		if err != nil {
+			return fmt.Errorf("%s: invalid formation raw_bytes_hex: %w", e.ID, err)
+		}
+		if len(raw) != 3+len(e.Formation.Groups)*2 || int(raw[0]) != len(e.Formation.Groups) ||
+			int(raw[1]) != e.Formation.BackgroundRaw || int(raw[2]) != e.Formation.PageRaw {
+			return fmt.Errorf("%s: formation fields do not match raw_bytes_hex header", e.ID)
+		}
+		for j, group := range e.Formation.Groups {
+			if group.MonsterRawID < 0 || group.MonsterRawID > 255 || group.Count < 1 {
+				return fmt.Errorf("%s: invalid formation group %d", e.ID, j)
+			}
+			if int(raw[3+j*2]) != group.MonsterRawID || int(raw[4+j*2]) != group.Count {
+				return fmt.Errorf("%s: formation group %d does not match raw_bytes_hex", e.ID, j)
+			}
+		}
+		for j, gate := range e.TreasureGates {
+			if gate.CTYRaw < 0 || gate.Section < 0 || gate.ItemRawID < 0 ||
+				gate.ItemRawID > 255 || gate.WhileFlagSet < 0 || gate.WhileFlagSet > 255 {
+				return fmt.Errorf("%s: invalid treasure gate %d", e.ID, j)
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.bossEvents[e.ID] = e
+	}
+	return nil
 }
 
 // BuiltinDQ3 returns the canonical repository DQ3 pack.
@@ -278,6 +420,15 @@ func (p *Pack) ReviveCost(level int) int {
 		level = s.Pricing.LevelCap
 	}
 	return s.Pricing.CostsGold[level-1]
+}
+
+func (p *Pack) BossSurrenderEvents() []BossSurrenderEvent {
+	return append([]BossSurrenderEvent(nil), p.Events.BossSurrenderEvents...)
+}
+
+func (p *Pack) BossSurrenderEvent(id string) (*BossSurrenderEvent, bool) {
+	e, ok := p.bossEvents[id]
+	return e, ok
 }
 
 func (p *Pack) ID() string             { return p.Manifest.PackID }

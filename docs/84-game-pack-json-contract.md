@@ -378,6 +378,36 @@ section header 的某組座標當所有入口的 fallback。
 primitive 必須由 engine registry 定義 input/output、失敗語意及存檔效果。禁止 `eval`、
 Go symbol、任意跳址或「事件失敗仍部分扣款」。不支援的 opcode 應在載入時失敗。
 
+第一個已實作 primitive 是 `boss_surrender_events`，供「開場對話→指定編隊→勝利道歉→
+Yes/No（No 可重問）→接受後清旗標」的原版事件使用。它不是 Kandar 專用 opcode；
+DQ1／DQ2 若有相同交易可直接使用，沒有則不必宣告。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `schema_version` | string | 是 | 必須等於 manifest schema。 |
+| `boss_surrender_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id` | string | 是 | 穩定 namespaced event ID。 |
+| `[].kind` | enum | 是 | 此表固定為 `boss_surrender`。 |
+| `[].trigger.kind` | enum | 是 | 現行固定 `scene_tile_subid`。 |
+| `[].trigger.cty_raw` | int | 是 | 原版 CTY number；版本專屬，不得硬寫在 Go。 |
+| `[].trigger.section` | int | 是 | CTY section。 |
+| `[].trigger.tile_subid` | int | 是 | tile high byte 低五位，合法 0–31。 |
+| `[].trigger.tiles` | `{x,y}[]` | 是 | 所有可觸發 tile；至少一格，tile 座標、左上原點。 |
+| `[].presence_flag_raw` | int | 是 | 事件/NPC 仍存在時為 set 的原版 story flag。 |
+| `[].dialogue_records` | object | 是 | `intro/apology/accept/reject` 四個原版 record ID。規則表不複製顯示文字。 |
+| `[].formation.background_raw` | int | 是 | 原版 formation background byte。 |
+| `[].formation.page_raw` | int | 是 | 原版 sprite page byte。 |
+| `[].formation.groups` | object[] | 是 | 依原順序列 `{monster_raw_id,count}`；同 monster 的分離 group 不得擅自合併。 |
+| `[].formation.raw_bytes_hex` | string | 是 | 原始 formation bytes，供 parity test；引擎不把它當可執行腳本。 |
+| `[].clear_flag_raw` | int | 是 | 接受求饒後清除的 flag；v0.1 必須等於 `presence_flag_raw`。 |
+| `[].treasure_gates` | object[] | 是 | 可為空；每筆含 `cty_raw/section/tile/item_raw_id/while_flag_set`。 |
+| `[].evidence` | object | 是 | 事件入口、交易與可見 consumer 的 D3 證據。 |
+
+DQ3 精訊版 Kandar 示例的 canonical 值位於
+`internal/gamepack/packs/dq3_cht/data/events.json`，不在本文複製第二份易過期 JSON。
+loader 會拒絕未知欄位、非法 subid／flag／monster/count、不一致 clear flag、空 trigger/
+formation 與缺 D3 consumer；production 不提供 Go fallback。
+
 ### 6.9 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，

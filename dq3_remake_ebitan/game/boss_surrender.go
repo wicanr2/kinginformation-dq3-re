@@ -1,0 +1,172 @@
+package game
+
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+)
+
+const (
+	bossSurrenderIdle = iota
+	bossSurrenderIntro
+	bossSurrenderBattle
+	bossSurrenderApology
+	bossSurrenderChoice
+	bossSurrenderReject
+	bossSurrenderFarewell
+)
+
+func (g *Game) activeBossSurrender() (*gamepack.BossSurrenderEvent, bool) {
+	if g.pack == nil || g.bossSurrenderEventID == "" {
+		return nil, false
+	}
+	return g.pack.BossSurrenderEvent(g.bossSurrenderEventID)
+}
+
+func (g *Game) tryBossSurrenderEvent() bool {
+	if g.pack == nil || !g.inTown || g.cur == nil ||
+		g.bossSurrenderStage != bossSurrenderIdle {
+		return false
+	}
+	for _, event := range g.pack.BossSurrenderEvents() {
+		if event.Trigger.CTYRaw != g.curCty || event.Trigger.Section != g.cur.sec ||
+			!g.storyFlag(event.PresenceFlagRaw) {
+			continue
+		}
+		for _, tile := range event.Trigger.Tiles {
+			if tile.X != g.px || tile.Y != g.py {
+				continue
+			}
+			if g.cur.hiMap == nil ||
+				int(g.cur.hiMap[g.py*g.cur.w+g.px]&0x1f) != event.Trigger.TileSubID {
+				continue
+			}
+			g.bossSurrenderEventID = event.ID
+			g.bossSurrenderStage = bossSurrenderIntro
+			g.dlg.Open(event.DialogueRecords.Intro)
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Game) startBossSurrenderBattle() bool {
+	event, ok := g.activeBossSurrender()
+	if !ok {
+		return false
+	}
+	level, maxHP, atk, def, agi := g.heroStats()
+	maxMP := g.heroMaxMP()
+	if !g.heroInit {
+		g.heroHP, g.heroMP, g.heroInit = maxHP, maxMP, true
+	}
+	hp := heroParams{
+		level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
+		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells(),
+	}
+	groups := make([]enemyGroup, len(event.Formation.Groups))
+	for i, group := range event.Formation.Groups {
+		groups[i] = enemyGroup{monID: group.MonsterRawID, count: group.Count}
+	}
+	g.battle.lightOrb = false
+	g.battle.showInfo = g.cfg.CombatInfo
+	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
+	if !g.battle.startFormation(groups, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
+		return false
+	}
+	g.music.Play(trackBattle)
+	return true
+}
+
+func (g *Game) advanceBossSurrenderDialogue() {
+	event, ok := g.activeBossSurrender()
+	if !ok {
+		g.bossSurrenderStage = bossSurrenderIdle
+		return
+	}
+	switch g.bossSurrenderStage {
+	case bossSurrenderIntro:
+		if g.startBossSurrenderBattle() {
+			g.bossSurrenderStage = bossSurrenderBattle
+		} else {
+			g.bossSurrenderStage = bossSurrenderIdle
+		}
+	case bossSurrenderApology:
+		g.bossSurrenderStage, g.bossSurrenderCursor = bossSurrenderChoice, 0
+	case bossSurrenderReject:
+		g.bossSurrenderStage, g.bossSurrenderCursor = bossSurrenderChoice, 0
+	case bossSurrenderFarewell:
+		g.setStoryFlag(event.ClearFlagRaw, false)
+		g.bossSurrenderStage = bossSurrenderIdle
+		g.bossSurrenderEventID = ""
+		g.reloadTownDaynight()
+	}
+}
+
+func (g *Game) settleBossSurrenderBattle() {
+	if g.bossSurrenderStage != bossSurrenderBattle {
+		return
+	}
+	event, ok := g.activeBossSurrender()
+	if !ok {
+		g.bossSurrenderStage = bossSurrenderIdle
+		return
+	}
+	if g.battle.result == 1 {
+		g.bossSurrenderStage = bossSurrenderApology
+		g.dlg.Open(event.DialogueRecords.Apology)
+		return
+	}
+	g.bossSurrenderStage = bossSurrenderIdle
+	g.bossSurrenderEventID = ""
+}
+
+func (g *Game) bossSurrenderChoiceInput(in InputState) {
+	event, ok := g.activeBossSurrender()
+	if !ok {
+		g.bossSurrenderStage = bossSurrenderIdle
+		return
+	}
+	switch {
+	case in.Confirm && g.bossSurrenderCursor == 0:
+		g.bossSurrenderStage = bossSurrenderFarewell
+		g.dlg.Open(event.DialogueRecords.Accept)
+	case in.Confirm || in.Cancel:
+		g.bossSurrenderStage = bossSurrenderReject
+		g.dlg.Open(event.DialogueRecords.Reject)
+	case in.DirEdge == 0 || in.DirEdge == 1:
+		g.bossSurrenderCursor ^= 1
+	}
+}
+
+func (g *Game) treasureBlockedByPack(cty, section, x, y, itemRawID int) bool {
+	if g.pack == nil {
+		return false
+	}
+	for _, event := range g.pack.BossSurrenderEvents() {
+		for _, gate := range event.TreasureGates {
+			if gate.CTYRaw == cty && gate.Section == section &&
+				gate.Tile.X == x && gate.Tile.Y == y && gate.ItemRawID == itemRawID &&
+				g.storyFlag(gate.WhileFlagSet) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (g *Game) drawBossSurrenderChoice(rgba []byte, white dq3data.Color) {
+	if g.bossSurrenderStage != bossSurrenderChoice {
+		return
+	}
+	x, y, w, h := 430, 220, 120, 68
+	fillBox(rgba, x, y, w, h, white)
+	for i, label := range ngYesNo {
+		yy := y + 12 + i*24
+		if i == g.bossSurrenderCursor {
+			drawGlyph(rgba, g.dlg.tx, x+12, yy, curGlyph, white)
+		}
+		for j, glyph := range label {
+			drawGlyph(rgba, g.dlg.tx, x+40+j*16, yy, glyph, white)
+		}
+	}
+}

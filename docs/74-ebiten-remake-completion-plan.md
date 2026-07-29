@@ -537,10 +537,11 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 消耗；再以盜賊鑰匙正式開啟 CTY30 section 2 的 tier-1 門，經 CTY31 出洞，步行進入
 CTY02 並完成 save/load。證據 ledger 見 `docs/81`。下一輪依下列順序接手：
 
-1. **主線最高優先**：羅馬利亞北行 audit（`docs/83`）的前置 blocker 已閉合。新遊戲
-   production trace 現會在阿里阿罕低危區正式戰鬥、經教會／旅店練至 Lv4，再抵達
-   羅馬利亞；下一步由此合法 checkpoint 重跑 CTY10，記錄新的第一個 blocker。
-   不得削弱怪物或注入等級／金錢。
+1. **主線最高優先**：羅馬利亞→CTY10 的第一段已閉合（`docs/85`）。新遊戲 production
+   trace 會正式北行、開 sec3 `(8,21)` 盜賊鑰匙門、抵達 sec5 `(6,8)` 自然觸發
+   handler14 rec84，進入 Kandar×1+手下×3 原版混合編隊。下一步以合法商店、裝備、
+   練級、旅店與教會完成勝利→求饒→金皇冠→羅馬利亞後續；不得削弱 boss 或注入
+   等級／金錢。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

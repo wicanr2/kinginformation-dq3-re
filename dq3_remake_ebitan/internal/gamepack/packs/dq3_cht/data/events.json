@@ -1,0 +1,56 @@
+{
+  "schema_version": "0.1.0",
+  "boss_surrender_events": [
+    {
+      "id": "dq3:event.shanpane_kandar",
+      "kind": "boss_surrender",
+      "trigger": {
+        "kind": "scene_tile_subid",
+        "cty_raw": 10,
+        "section": 5,
+        "tile_subid": 1,
+        "tiles": [
+          {"x": 6, "y": 8},
+          {"x": 7, "y": 8}
+        ]
+      },
+      "presence_flag_raw": 46,
+      "dialogue_records": {
+        "intro": 84,
+        "apology": 85,
+        "accept": 86,
+        "reject": 87
+      },
+      "formation": {
+        "background_raw": 24,
+        "page_raw": 1,
+        "groups": [
+          {"monster_raw_id": 26, "count": 1},
+          {"monster_raw_id": 27, "count": 1},
+          {"monster_raw_id": 27, "count": 1},
+          {"monster_raw_id": 27, "count": 1}
+        ],
+        "raw_bytes_hex": "0418011a011b011b011b01"
+      },
+      "clear_flag_raw": 46,
+      "treasure_gates": [
+        {
+          "cty_raw": 10,
+          "section": 5,
+          "tile": {"x": 4, "y": 4},
+          "item_raw_id": 51,
+          "while_flag_set": 46
+        }
+      ],
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY10.DAT",
+        "address_space": "file",
+        "address": "0x167e7",
+        "consumer": "sub_15477: rec84, formation DS:0x4eb5, battle, rec85/87/86 loop, clear flag 0x2e; CTY10 sec5 subid1 selects handler14",
+        "doc": "docs/85-shanpane-kandar-production-trace.md"
+      }
+    }
+  ]
+}

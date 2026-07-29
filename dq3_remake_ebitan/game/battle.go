@@ -32,15 +32,22 @@ const herbHeal = 30   // DQ3_HERB_HEAL
 // MaxEnemies:一場戰鬥敵群上限(對齊 C MAXE=8、docs/13 encounter_build_group 群量上限)。
 const MaxEnemies = 8
 
-// enemyUnit 是群戰中一隻敵的即時狀態。W2(docs/72 A3):同種群戰,故 monID/atk/def 目前組內
-// 皆同值(對齊 C ehp[MAXE] 陣列 + 共用 eatk/edef/spr);逐隻獨立只留 hp/fled,monID/atk/def
-// 保留逐隻欄位是為將來混群(W3+)鋪路,非本批要做。
+// enemyGroup 是原版 formation 的一筆 {怪物 id, 數量}。同一筆共用一次 HP 擲值；
+// 不同筆可放不同怪物；版本專屬內容由 game pack 提供。
+type enemyGroup struct {
+	monID int
+	count int
+}
+
+// enemyUnit 是群戰中一隻敵的即時狀態。怪物資料、AI 與 sprite 都逐隻保存，讓原版混合
+// formation 不會退化成「代表怪物 × N」。
 type enemyUnit struct {
 	monID    int
 	hp, max  int
-	mp       int  // D3MNS +0x04；帕魯朋特的吸 MP 效果會消耗
-	atk, def int  // 有效攻/防(索瑪+光之珠弱化後之值)
-	agi      int  // D3MNS +0x0b；敵我混排行動順序
+	mp       int // D3MNS +0x04；帕魯朋特的吸 MP 效果會消耗
+	atk, def int // 有效攻/防(索瑪+光之珠弱化後之值)
+	agi      int // D3MNS +0x0b；敵我混排行動順序
+	spr      *dq3data.MonsterSprite
 	fled     bool // 本場已逃走(不計入擊殺數→經驗/金錢排除,對齊 C g_fled)
 	status   int  // W3:異常狀態位元(statusParalysis/statusSealed/statusBlind,見下方 const)
 }
@@ -82,8 +89,8 @@ type Battle struct {
 	bg       *[dq3data.PackBGH][dq3data.PackBGW]uint8 // 解碼後背景(草原 page22)
 
 	active        bool
-	monID         int                    // 群組代表種 id(同種群戰,全組共用;name 查詢/0x7c 判斷用此)
-	spr           *dq3data.MonsterSprite // 群組共用 sprite(同種群戰,W2 範圍)
+	monID         int                    // formation 第一筆怪物 id；單群相容與索瑪判斷用
+	spr           *dq3data.MonsterSprite // formation 第一筆 sprite；舊測試/單群相容用
 	enemies       []enemyUnit            // 敵群(N 隻,docs/72 A3;單敵 = 1 元素陣列)
 	lightOrb      bool                   // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
 	heroHP        int
@@ -199,36 +206,62 @@ func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActo
 // HP 上限對齊 C dq3_battlescene_run:「單一擲值套全組」(同種同 HP 上限,非逐隻各擲),
 // 故 N=1 時的亂數序列與舊版單敵 start() 完全等價(既有測試不受影響)。
 func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps []*battleActor) bool {
-	spr, err := dq3data.DecodeMonsterSprite(b.shp, monID)
-	if err != nil {
-		return false
-	}
-	st, ok := b.mons.Stat(monID)
-	if !ok {
-		return false
-	}
 	if count < 1 {
 		count = 1
 	}
 	if count > MaxEnemies {
 		count = MaxEnemies
 	}
-	b.rng = dosrng.New(uint16(seed))
-	b.monID, b.spr = monID, spr
-	hpRoll := int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
-	// 敵有效攻防;索瑪(0x7c)+光之珠 → 驅散黑暗結界:攻/3、防/4(移植 battlescene 二階段)。
-	eatk, edef := int(st.Atk), int(st.Def)
-	if monID == 0x7c && b.lightOrb {
-		eatk /= 3
-		edef /= 4
-		b.lightOrb = false // 用畢清旗標
+	return b.startFormation([]enemyGroup{{monID: monID, count: count}}, seed, hp, comps)
+}
+
+// startFormation 開一場原版混合編隊戰。每個 group 依序解碼，且每筆只擲一次 HP，
+// 所以 startGroup 的 RNG 序列與既有同種群戰完全相容。
+func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, comps []*battleActor) bool {
+	if len(groups) == 0 {
+		return false
 	}
-	b.enemies = make([]enemyUnit, count)
-	for i := range b.enemies {
-		b.enemies[i] = enemyUnit{
-			monID: monID, hp: hpRoll, max: hpRoll, mp: int(st.MP),
-			atk: eatk, def: edef, agi: int(st.Agi),
+	b.rng = dosrng.New(uint16(seed))
+	b.enemies = nil
+	b.monID, b.spr = 0, nil
+	for _, group := range groups {
+		if len(b.enemies) >= MaxEnemies {
+			break
 		}
+		count := group.count
+		if count < 1 {
+			continue
+		}
+		if count > MaxEnemies-len(b.enemies) {
+			count = MaxEnemies - len(b.enemies)
+		}
+		spr, err := dq3data.DecodeMonsterSprite(b.shp, group.monID)
+		if err != nil {
+			return false
+		}
+		st, ok := b.mons.Stat(group.monID)
+		if !ok {
+			return false
+		}
+		if len(b.enemies) == 0 {
+			b.monID, b.spr = group.monID, spr
+		}
+		hpRoll := int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
+		eatk, edef := int(st.Atk), int(st.Def)
+		if group.monID == 0x7c && b.lightOrb {
+			eatk /= 3
+			edef /= 4
+			b.lightOrb = false
+		}
+		for i := 0; i < count; i++ {
+			b.enemies = append(b.enemies, enemyUnit{
+				monID: group.monID, hp: hpRoll, max: hpRoll, mp: int(st.MP),
+				atk: eatk, def: edef, agi: int(st.Agi), spr: spr,
+			})
+		}
+	}
+	if len(b.enemies) == 0 {
+		return false
 	}
 	if b.bg == nil && b.scr != nil { // 首戰解碼草原背景(page22,對 game3.png)
 		b.bg, _ = dq3data.DecodePackBG(b.scr, 22)
@@ -510,7 +543,7 @@ func (b *Battle) allEnemiesDead() bool {
 	return true
 }
 
-// killedCount:組內「被擊殺」隻數(排除逃走者;對齊 C (en-g_fled) 算經驗/金錢)。
+// killedCount:組內「被擊殺」隻數(排除逃走者)。
 // 只在 allEnemiesDead()==true 時呼叫才有意義。
 func (b *Battle) killedCount() int {
 	n := 0
@@ -520,6 +553,34 @@ func (b *Battle) killedCount() int {
 		}
 	}
 	return n
+}
+
+func (b *Battle) victoryRewards() (exp, gold int) {
+	for i := range b.enemies {
+		if b.enemies[i].fled {
+			continue
+		}
+		st, ok := b.mons.Stat(b.enemies[i].monID)
+		if !ok {
+			continue
+		}
+		exp += int(st.Exp)
+		gold += int(st.Gold)
+	}
+	return exp, gold
+}
+
+func (b *Battle) fleeResist() int {
+	resist := 0
+	for i := range b.enemies {
+		if !b.enemies[i].alive() {
+			continue
+		}
+		if st, ok := b.mons.Stat(b.enemies[i].monID); ok && int(st.FleeResist) > resist {
+			resist = int(st.FleeResist)
+		}
+	}
+	return resist
 }
 
 // input 處理一幀輸入,回傳戰鬥是否結束(關閉)。點格(P2)= 游標移過去 + 等同 A 選定;
@@ -678,7 +739,6 @@ func (b *Battle) execTurn() {
 		b.resolveRound()
 		return
 	}
-	st, _ := b.mons.Stat(b.monID)
 	b.defending = false
 	if b.heroStatus&statusParalysis != 0 { // 睡眠/混亂(敵施144/152):本回合任何指令皆無法行動
 		b.emit("陷入異常,無法行動!")
@@ -686,7 +746,7 @@ func (b *Battle) execTurn() {
 	}
 	switch b.cursor {
 	case bcFlee: // 逃げる
-		if battle.FleeOK(b.heroAgi, int(st.FleeResist), b.roll()) {
+		if battle.FleeOK(b.heroAgi, b.fleeResist(), b.roll()) {
 			b.result, b.phase = 3, phMessage
 			b.emit("逃走成功")
 			return
@@ -738,9 +798,8 @@ func (b *Battle) execTurn() {
 		b.emit(fmt.Sprintf("給予 %d 傷害", dmg))
 		b.flashCol = b.hurtFxFrames
 	}
-	if b.allEnemiesDead() { // 勝:擊殺數(排除逃走)× 單隻經驗/金錢(對齊 C apply_victory_exp)
-		killed := b.killedCount()
-		b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
+	if b.allEnemiesDead() {
+		b.gotExp, b.gotGold = b.victoryRewards()
 		b.result, b.phase = 1, phMessage
 		b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 		return
@@ -864,9 +923,7 @@ func (b *Battle) execSpell(rec int) {
 		}
 	}
 	if b.allEnemiesDead() {
-		st, _ := b.mons.Stat(b.monID)
-		killed := b.killedCount()
-		b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
+		b.gotExp, b.gotGold = b.victoryRewards()
 		b.result, b.phase = 1, phMessage
 		b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 		return
@@ -1043,12 +1100,12 @@ func (b *Battle) resolveRound() {
 
 	b.resolving = true
 	defer func() { b.resolving = false }()
-	ai, aiOK := b.mons.AI(b.monID)
 	for _, e := range order {
 		if b.result != 0 {
 			break
 		}
 		if e.enemy {
+			ai, aiOK := b.mons.AI(b.enemies[e.index].monID)
 			b.enemyAction(e.index, ai, aiOK)
 			continue
 		}
@@ -1079,9 +1136,7 @@ func (b *Battle) resolveRound() {
 }
 
 func (b *Battle) finishVictory() {
-	st, _ := b.mons.Stat(b.monID)
-	killed := b.killedCount()
-	b.gotExp, b.gotGold = killed*int(st.Exp), killed*int(st.Gold)
+	b.gotExp, b.gotGold = b.victoryRewards()
 	b.result, b.phase = 1, phMessage
 	b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 }
@@ -1090,8 +1145,7 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 	c := b.companions[i]
 	switch cmd.kind {
 	case bcFlee:
-		st, _ := b.mons.Stat(b.monID)
-		if battle.FleeOK(c.agi, int(st.FleeResist), b.roll()) {
+		if battle.FleeOK(c.agi, b.fleeResist(), b.roll()) {
 			b.result, b.phase = 3, phMessage
 			b.emit("逃走成功")
 		} else {
@@ -1193,10 +1247,10 @@ func (b *Battle) setTargetStatus(target, bit int) {
 
 // enemyTurn:敵方回合(移植 C do_turn 敵方段:逐隻存活敵各行動一次——逃跑 → 施咒 → 物攻;
 // 逃跑/施咒/物攻皆鎖定隨機存活隊員;任一隻行動後我方全滅即中斷,結算敗;全體行動完畢才收尾訊息)。
-// AI(咒文機率/逃跑閾值)為同種共用欄位(對齊 C g_eai 單載),故迴圈外只查一次。
+// 混合 formation 必須逐隻依 monID 取 AI；同種群自然得到相同資料。
 func (b *Battle) enemyTurn() {
-	ai, aiOK := b.mons.AI(b.monID)
 	for i := range b.enemies {
+		ai, aiOK := b.mons.AI(b.enemies[i].monID)
 		b.enemyAction(i, ai, aiOK)
 		if b.result != 0 {
 			return
@@ -1369,35 +1423,40 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	}
 	// 怪群:橫排站綠地平線(對齊 C render:gx=(SCREEN_W*(i+1))/(en+1)-spr->w/2,en=組總隻數
 	// 含已死/逃走者,位置不因中途減員而重排);受擊閃紅;死/逃不畫。
-	if b.spr != nil && len(b.enemies) > 0 {
+	if len(b.enemies) > 0 {
 		en := len(b.enemies)
 		flash := b.flashCol > 0
 		targets := b.aliveEnemyIndices()
 		for i := range b.enemies {
-			if !b.enemies[i].alive() {
+			spr := b.enemies[i].spr
+			if spr == nil {
+				// 舊單群／存檔相容狀態只有 Battle.spr；混合編隊則每隻優先使用自己的 sprite。
+				spr = b.spr
+			}
+			if !b.enemies[i].alive() || spr == nil {
 				continue
 			}
-			gx := ScreenW*(i+1)/(en+1) - b.spr.W/2
-			gy := groundY + 8 - b.spr.H
+			gx := ScreenW*(i+1)/(en+1) - spr.W/2
+			gy := groundY + 8 - spr.H
 			if b.phase == phTargetEnemy {
 				for pos, target := range targets {
 					if target != i {
 						continue
 					}
 					if pos == b.targetCursor {
-						drawGlyph(rgba, b.tx, gx+b.spr.W/2-8, gy-18, curGlyph, white)
+						drawGlyph(rgba, b.tx, gx+spr.W/2-8, gy-18, curGlyph, white)
 					}
-					b.hits.add(gx, gy, b.spr.W, b.spr.H, pos)
+					b.hits.add(gx, gy, spr.W, spr.H, pos)
 					break
 				}
 			}
-			for r := 0; r < b.spr.H; r++ {
-				for x := 0; x < b.spr.W; x++ {
-					if !b.spr.Opaque[r][x] {
+			for r := 0; r < spr.H; r++ {
+				for x := 0; x < spr.W; x++ {
+					if !spr.Opaque[r][x] {
 						continue
 					}
 					c := dq3data.Color{R: 200, G: 200, B: 200}
-					if idx := int(b.spr.Px[r][x]); idx < len(b.mpal) {
+					if idx := int(spr.Px[r][x]); idx < len(b.mpal) {
 						c = b.mpal[idx]
 					}
 					if flash {
@@ -1408,7 +1467,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 			}
 			// 敵 HP(remake 增強):H + 數字,置中於怪上方。受設定選單「戰鬥資訊」開關(showInfo)控制。
 			if b.showInfo {
-				cx := gx + b.spr.W/2
+				cx := gx + spr.W/2
 				hy := gy - 32
 				if hy < fieldY0 {
 					hy = fieldY0
@@ -1527,18 +1586,36 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 			}
 		}
 	}
-	// 下方右:敵名框(290,262,250×36)—— 敵名 = D3TXT00 record 0x258+monID + 數量
+	// 下方右:敵名框。混合 formation 逐種列名與存活數；同種群維持單列。
 	{
-		ex, ey, ew, eh := 290, 262, 250, 36
-		fillBox(rgba, ex, ey, ew, eh, white)
-		b.drawName(rgba, ex+12, ey+8, 0x258+b.monID, white)
-		alive := 0
+		type namedCount struct{ monID, count int }
+		var names []namedCount
 		for i := range b.enemies {
-			if b.enemies[i].alive() {
-				alive++
+			if !b.enemies[i].alive() {
+				continue
+			}
+			found := false
+			for j := range names {
+				if names[j].monID == b.enemies[i].monID {
+					names[j].count++
+					found = true
+					break
+				}
+			}
+			if !found {
+				names = append(names, namedCount{monID: b.enemies[i].monID, count: 1})
 			}
 		}
-		drawNumber(rgba, b.tx, ex+ew-40, ey+8, alive, white)
+		ex, ey, ew, eh := 290, 262, 250, 20+16*len(names)
+		if eh < 36 {
+			eh = 36
+		}
+		fillBox(rgba, ex, ey, ew, eh, white)
+		for i, n := range names {
+			y := ey + 8 + i*16
+			b.drawName(rgba, ex+12, y, 0x258+n.monID, white)
+			drawNumber(rgba, b.tx, ex+ew-40, y, n.count, white)
+		}
 	}
 }
 
