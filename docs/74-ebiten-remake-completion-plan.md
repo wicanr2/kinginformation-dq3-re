@@ -522,8 +522,9 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 消耗；再以盜賊鑰匙正式開啟 CTY30 section 2 的 tier-1 門，經 CTY31 出洞，步行進入
 CTY02 並完成 save/load。證據 ledger 見 `docs/81`。下一輪依下列順序接手：
 
-1. **主線最高優先**：由羅馬利亞 checkpoint 繼續 production-input audit，記錄第一個
-   不可達、錯誤 gate 或設定 mismatch；不得預猜 blocker 或以後段孤立切片代替。
+1. **主線最高優先**：羅馬利亞國王 handler9 首次任務 rec45→rec15 已由 production input
+   閉合（`docs/82`）。下一步由王座 checkpoint 正常出城前往香巴尼塔 CTY10，記錄第一個
+   不可達、錯誤 gate 或設定 mismatch；不得以既有孤立甘達特／皇冠測試代替玩家路徑。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

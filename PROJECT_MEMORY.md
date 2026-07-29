@@ -27,16 +27,16 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 
 - 唯一 current plan：[`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
-- 最新 production trace：[`docs/81`](docs/81-magic-ball-production-trace.md)
+- 最新 production trace：[`docs/82`](docs/82-romaly-king-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
 
 目前核心終盤切片已接通，boot 起的正式 trace 已從 CTY01 延伸到 CTY02 羅馬利亞：玩家
 以正式道具選單使用魔法球，原版 flag `0x51`、四格牆重建、道具消耗、CTY30 tier-1 門、
-CTY31 出洞與羅馬利亞存讀檔均已驗證。
+CTY31 出洞、羅馬利亞國王 rec45→rec15 任務與王座存讀檔均已驗證。
 **尚未完成從新遊戲開始的無 debug 全流程驗收**。下一輪由羅馬利亞 checkpoint 繼續，
-以第一個實際玩家 blocker 決定要追的設定／事件，不預猜後續機制。
+正常出城前往香巴尼塔 CTY10，以第一個實際玩家 blocker 決定要追的設定／事件。
 
 ## 固定工程方法
 

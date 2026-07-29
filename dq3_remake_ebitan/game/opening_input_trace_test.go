@@ -3,6 +3,7 @@ package game
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
@@ -281,6 +282,17 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("魔法球後未自然抵達羅馬利亞：town=%v cty=%d sec=%d",
 			g.inTown, g.curCty, sceneSection(g.cur))
 	}
+	traceTownSectionTo(t, g, ctyRomaly, romalyKingSection, 7, 2)
+	traceTalkNPC(t, g, 7, 2)
+	if !g.dlg.open || g.romalyKingStage != 1 ||
+		!reflect.DeepEqual(g.dlg.buf, g.cur.dlgText.Record(romalyKingGreetingRec)) {
+		t.Fatalf("正式晉見羅馬利亞王未開始 rec45：dlg=%v stage=%d", g.dlg.open, g.romalyKingStage)
+	}
+	traceCloseDialogue(t, g)
+	if !g.storyFlag(romalyCrownPendingFlag) || g.hasItem(romalyGoldenCrownItem) {
+		t.Fatalf("金皇冠任務交付後狀態錯：flag2c=%v crown=%v",
+			g.storyFlag(romalyCrownPendingFlag), g.hasItem(romalyGoldenCrownItem))
+	}
 	if err := g.Save(); err != nil {
 		t.Fatalf("保存羅馬利亞 checkpoint: %v", err)
 	}
@@ -288,7 +300,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("讀取羅馬利亞 checkpoint: %v", err)
 	}
 	if restored.hasItem(itemuse.ItemMagicBall) || restored.storyFlag(magicBallIntactFlag) ||
-		!restored.inTown || restored.curCty != 2 || sceneSection(restored.cur) != 0 {
+		!restored.inTown || restored.curCty != ctyRomaly ||
+		sceneSection(restored.cur) != romalyKingSection ||
+		!restored.storyFlag(romalyCrownPendingFlag) {
 		t.Fatalf("羅馬利亞 checkpoint round-trip 錯：ball=%v flag51=%v town=%v cty=%d sec=%d",
 			restored.hasItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
 			restored.inTown, restored.curCty, sceneSection(restored.cur))

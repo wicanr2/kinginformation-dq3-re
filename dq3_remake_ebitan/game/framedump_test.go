@@ -494,4 +494,27 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("羅馬利亞 runtime 圖載入失敗")
 	}
 	dump("romaly_arrival")
+
+	romalyThrone, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyRomaly, mapBlkNum[ctyRomaly], romalyKingSection, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.dlg.tx = romalyThrone, romalyThrone, romalyThrone.dlgText
+	g.setStoryFlag(romalyCrownPendingFlag, true)
+	g.removeItems(romalyGoldenCrownItem, g.countItem(romalyGoldenCrownItem))
+	var romalyKing *npcInst
+	for i := range romalyThrone.npcs {
+		if romalyThrone.npcs[i].b4 == romalyKingHandler &&
+			(romalyThrone.npcs[i].ctrl>>3)&7 == 2 {
+			romalyKing = &romalyThrone.npcs[i]
+			break
+		}
+	}
+	if romalyKing == nil || !g.talkRomalyKing(romalyKing) || !g.dlg.open {
+		t.Fatal("羅馬利亞國王任務 runtime 圖未觸發")
+	}
+	g.px, g.py = 7, 3
+	g.facing = 1
+	dump("romaly_king_crown_quest")
 }

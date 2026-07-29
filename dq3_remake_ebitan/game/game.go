@@ -326,6 +326,7 @@ type Game struct {
 	ortegaStage     int           // CTY90 sec4 歐魯迪卡事件：1=rec69，2=rec70
 	endingKingStage int           // CTY80 sec1 handler74：1=rec48 冊封對白，關閉後才開始 ending
 	baramosReturn   int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
+	romalyKingStage int           // CTY02 sec1 handler9：1=rec45 後接 rec15（首次交付金皇冠任務）
 	mirrorStage     int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	phoenix         *dq3data.CharSprite
 	phoenixOwned    bool
@@ -387,6 +388,8 @@ func (g *Game) selectCommand(cmd int) {
 				} else if g.openAliahanSpecialNPC(n) {
 					// CTY00 b4=1/3/4 是 EXE sub2 jump table 的設施 handler，
 					// 不屬於泛用 scriptedTable。
+				} else if g.talkRomalyKing(n) {
+					// CTY02 sec1 handler9：首次晉見交付金皇冠任務。
 				} else if g.curCty == ctyPortoga && n.x == portogaKingX && n.y == portogaKingY {
 					// 波魯多加國王(main.c:1607 位置特例,先於 scripted 表判定)
 					g.talkPortogaKing()
@@ -881,6 +884,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceOrtegaEvent()
 				g.advanceEndingKing()
 				g.advanceBaramosReturn()
+				g.advanceRomalyKing()
 				g.advanceMirrorEvent()
 				g.advancePhoenixEvent()
 			}
