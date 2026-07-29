@@ -533,28 +533,91 @@ func TestDumpNewGameScreens(t *testing.T) {
 	}
 	dump("romaly_arrival")
 
+	roleEvent := mustTemporaryRoleEvent(t, g)
 	romalyThrone, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
-		ctyRomaly, mapBlkNum[ctyRomaly], romalyKingSection, 0, g.storyFlag)
+		roleEvent.OfferNPC.CTYRaw, mapBlkNum[roleEvent.OfferNPC.CTYRaw],
+		roleEvent.OfferNPC.Section, 0, g.storyFlag)
 	if err != nil {
 		t.Fatal(err)
 	}
 	g.cur, g.town, g.dlg.tx = romalyThrone, romalyThrone, romalyThrone.dlgText
-	g.setStoryFlag(romalyCrownPendingFlag, true)
-	g.removeItems(romalyGoldenCrownItem, g.countItem(romalyGoldenCrownItem))
+	g.setStoryFlag(roleEvent.PendingFlagRaw, true)
+	g.removeItems(roleEvent.RequiredItemRawID, g.countItem(roleEvent.RequiredItemRawID))
 	var romalyKing *npcInst
 	for i := range romalyThrone.npcs {
-		if romalyThrone.npcs[i].b4 == romalyKingHandler &&
+		if romalyThrone.npcs[i].b4 == roleEvent.OfferNPC.HandlerRaw &&
 			(romalyThrone.npcs[i].ctrl>>3)&7 == 2 {
 			romalyKing = &romalyThrone.npcs[i]
 			break
 		}
 	}
-	if romalyKing == nil || !g.talkRomalyKing(romalyKing) || !g.dlg.open {
+	if romalyKing == nil || !g.talkTemporaryRole(romalyKing) || !g.dlg.open {
 		t.Fatal("羅馬利亞國王任務 runtime 圖未觸發")
 	}
 	g.px, g.py = 7, 3
 	g.facing = 1
 	dump("romaly_king_crown_quest")
+
+	// 交還金皇冠後的強制王位選擇，及接受後由 canonical active-role flag
+	// 派生的國王角色圖。對白、選項與角色圖 entry 均來自 game pack。
+	g.dlg.open = false
+	g.finishTemporaryRoleEvent()
+	g.inventory = append(g.inventory, roleEvent.RequiredItemRawID)
+	if !g.talkTemporaryRole(romalyKing) || !g.dlg.open {
+		t.Fatal("羅馬利亞還冠 runtime 圖未觸發")
+	}
+	dump("romaly_crown_return")
+	g.dlg.open = false
+	g.advanceTemporaryRoleDialogue() // return_praise → forced_offer
+	g.dlg.open = false
+	g.advanceTemporaryRoleDialogue() // forced_offer → forced_choice
+	if !g.temporaryRoleChoosing() {
+		t.Fatal("羅馬利亞強制王位選項未開啟")
+	}
+	dump("romaly_kingship_choice")
+	g.temporaryRoleChoiceInput(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
+	g.dlg.open = false
+	g.advanceTemporaryRoleDialogue()
+	if !g.storyFlag(roleEvent.ActiveRoleFlagRaw) || g.heroRole == nil {
+		t.Fatal("接受王位後未切換 game-pack 角色圖")
+	}
+	dump("romaly_temporary_king")
+
+	// 原版影片 12:42–13:14：地下競技場左上前國王的兩階段辭位確認。
+	romalyArena, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		roleEvent.RestoreNPC.CTYRaw, mapBlkNum[roleEvent.RestoreNPC.CTYRaw],
+		roleEvent.RestoreNPC.Section, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.dlg.tx = romalyArena, romalyArena, romalyArena.dlgText
+	g.curCty, g.inTown = roleEvent.RestoreNPC.CTYRaw, true
+	var formerKing *npcInst
+	for i := range romalyArena.npcs {
+		n := &romalyArena.npcs[i]
+		if n.x == roleEvent.RestoreNPC.Tile.X &&
+			n.y == roleEvent.RestoreNPC.Tile.Y &&
+			n.b4 == roleEvent.RestoreNPC.HandlerRaw && (n.ctrl>>3)&7 == 2 {
+			formerKing = &romalyArena.npcs[i]
+			break
+		}
+	}
+	if formerKing == nil || !g.talkTemporaryRole(formerKing) || !g.dlg.open {
+		t.Fatal("地下競技場前國王 runtime 圖未觸發")
+	}
+	g.px, g.py, g.facing = roleEvent.RestoreNPC.Tile.X,
+		roleEvent.RestoreNPC.Tile.Y+1, 1
+	dump("romaly_restore_intro")
+	g.dlg.open = false
+	g.advanceTemporaryRoleDialogue()
+	g.temporaryRoleChoiceInput(InputState{DirHeld: -1, DirEdge: 0})
+	g.temporaryRoleChoiceInput(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
+	g.dlg.open = false
+	g.advanceTemporaryRoleDialogue()
+	if g.temporaryRoleStage != temporaryRoleRestoreConfirm {
+		t.Fatal("地下競技場未進入第二層辭位確認")
+	}
+	dump("romaly_restore_confirm")
 }
 
 // TestDumpChurchRevive 產出 production renderer 的教會復活確認窗。它不是 raw glyph dump；

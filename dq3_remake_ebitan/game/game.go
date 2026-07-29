@@ -265,9 +265,10 @@ type Game struct {
 	towns          map[int]*Scene // 已載入城鎮快取(cty→Scene)
 	overPx, overPy int            // 記住進城前的地表座標(Esc 回來用)
 	hero           *dq3data.CharSprite
-	px, py         int // 主角在 cur 內的 tile 座標
-	facing         int // 0..3
-	walk           int // 0/1 走路動畫相位
+	heroRole       *dq3data.CharSprite // 由 game-pack temporary_role active flag 推導；不另存檔
+	px, py         int                 // 主角在 cur 內的 tile 座標
+	facing         int                 // 0..3
+	walk           int                 // 0/1 走路動畫相位
 	cd, anim       int
 	dlg            Dialogue       // 對話視窗
 	cmd            CmdMenu        // 野外命令窗
@@ -333,7 +334,9 @@ type Game struct {
 	ortegaStage          int           // CTY90 sec4 歐魯迪卡事件：1=rec69，2=rec70
 	endingKingStage      int           // CTY80 sec1 handler74：1=rec48 冊封對白，關閉後才開始 ending
 	baramosReturn        int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
-	romalyKingStage      int           // CTY02 sec1 handler9：1=rec45 後接 rec15（首次交付金皇冠任務）
+	temporaryRoleStage   int           // game-pack temporary_role primitive 的目前階段
+	temporaryRoleCursor  int           // temporary_role Yes/No 游標
+	temporaryRoleEventID string        // active pack event；空字串表示無事件
 	mirrorStage          int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	phoenix              *dq3data.CharSprite
 	phoenixOwned         bool
@@ -395,8 +398,8 @@ func (g *Game) selectCommand(cmd int) {
 				} else if g.openAliahanSpecialNPC(n) {
 					// CTY00 b4=1/3/4 是 EXE sub2 jump table 的設施 handler，
 					// 不屬於泛用 scriptedTable。
-				} else if g.talkRomalyKing(n) {
-					// CTY02 sec1 handler9：首次晉見交付金皇冠任務。
+				} else if g.talkTemporaryRole(n) {
+					// game-pack required-item → temporary-role → restore primitive。
 				} else if g.curCty == ctyPortoga && n.x == portogaKingX && n.y == portogaKingY {
 					// 波魯多加國王(main.c:1607 位置特例,先於 scripted 表判定)
 					g.talkPortogaKing()
@@ -865,6 +868,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.temporaryRoleChoosing() {
+		g.temporaryRoleChoiceInput(in)
+		g.renderFrame()
+		return nil
+	}
 	// 資訊面板 modal:狀況/道具 = B/A 關；裝備先選隊員，再選背包裝備。
 	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
@@ -938,7 +946,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceOrtegaEvent()
 				g.advanceEndingKing()
 				g.advanceBaramosReturn()
-				g.advanceRomalyKing()
+				g.advanceTemporaryRoleDialogue()
 				g.advanceMirrorEvent()
 				g.advancePhoenixEvent()
 				g.advanceBossSurrenderDialogue()
@@ -2003,8 +2011,9 @@ func (g *Game) renderFrame() {
 		} else if !g.inTown && g.shipAboard { // 在船上 → 船 tile 取代主角 sprite
 			blitTile(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH, sc.blk.Tile(shipTileFor(g.facing)), sc.pal)
 		} else {
+			hero := g.heroSceneSprite()
 			blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
-				g.hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+				hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
 		}
 	}
 	white := dq3data.Color{R: 255, G: 255, B: 255}
@@ -2024,6 +2033,7 @@ func (g *Game) renderFrame() {
 	}
 	g.drawChurch(g.rgba, white)
 	g.drawBossSurrenderChoice(g.rgba, white)
+	g.drawTemporaryRoleChoice(g.rgba, white)
 	if g.noticeTimer > 0 && g.noticeCode >= 0 { // 取得道具通知(品名)
 		fillBox(g.rgba, 24, 244, ScreenW-48, 40, white)
 		g.shop.drawItemName(g.rgba, 40, 256, g.noticeCode, white)

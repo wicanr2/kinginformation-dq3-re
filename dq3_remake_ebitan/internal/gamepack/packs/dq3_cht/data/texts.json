@@ -96,6 +96,118 @@
         "consumer": "shared yes/no choice renderer",
         "doc": "docs/84-game-pack-json-contract.md"
       }
+    },
+    {
+      "id": "dq3:text.romaly.king.quest_greeting",
+      "value": "*「來的好,繼承勇者\n歐魯多加之傳說的人啊!",
+      "glyph_codes": [59, 60, 461, 149, 441, 55, 1079, 1080, 106, 187, 65534, 12, 12, 326, 377, 357, 368, 145, 513, 909, 149, 194, 509, 57, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 45},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "45", "consumer": "temporary_role quest greeting", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.king.quest_request",
+      "value": "*「勇者{變數}嗨,\n有一件事要拜託你,\n---\n*「有一個叫甘達特的盜賊,\n從本城盜走了金皇冠,\n請把它找回來吧。",
+      "glyph_codes": [59, 60, 106, 187, 65525, 527, 55, 65534, 12, 12, 147, 401, 791, 492, 504, 382, 753, 528, 55, 65532, 59, 60, 147, 401, 546, 649, 387, 358, 392, 149, 287, 288, 55, 65534, 12, 12, 511, 1044, 474, 287, 612, 423, 173, 223, 224, 55, 65534, 12, 12, 571, 530, 1052, 769, 312, 461, 499, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 15},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "15", "consumer": "temporary_role quest request", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.king.later_intro",
+      "value": "*「我隨時都可以把王位\n讓給你。",
+      "glyph_codes": [59, 60, 493, 1081, 782, 556, 229, 456, 530, 186, 795, 65534, 12, 12, 1037, 559, 528, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 46},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "46", "consumer": "temporary_role later intro", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.king.later_offer",
+      "value": "*「此外,再一次代替我\n成為國王如何?",
+      "glyph_codes": [59, 60, 715, 920, 55, 573, 401, 572, 921, 1082, 493, 65534, 12, 12, 610, 611, 300, 186, 675, 676, 58, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 47},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "47", "consumer": "temporary_role later offer", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.king.accept",
+      "value": "*「太好了,那麼,\n從現在開始,{變數}\n就是這個國家的國王了。",
+      "glyph_codes": [59, 60, 334, 441, 423, 55, 354, 436, 55, 65534, 12, 12, 511, 432, 411, 488, 711, 55, 65525, 65534, 12, 12, 633, 399, 398, 546, 300, 657, 149, 300, 186, 423, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 48},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "48", "consumer": "temporary_role accept", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.king.return_praise",
+      "value": "*「喔喔! {變數}啊!\n幹的好,帶回了金皇冠!\n---\n*「你是真正的勇者啊!",
+      "glyph_codes": [59, 60, 776, 776, 57, 12, 65525, 509, 57, 65534, 12, 12, 929, 149, 441, 55, 540, 312, 423, 173, 223, 224, 57, 65532, 59, 60, 528, 399, 577, 588, 149, 106, 187, 509, 57, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 49},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "49", "consumer": "temporary_role item return praise", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.king.forced_offer",
+      "value": "*「如何? 代替我\n統治這個國家好嗎?",
+      "glyph_codes": [59, 60, 675, 676, 58, 12, 921, 1082, 493, 65534, 12, 12, 1083, 1084, 398, 546, 300, 657, 441, 534, 58, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 50},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "50", "consumer": "temporary_role forced offer", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.king.forced_reject",
+      "value": "*「不要說這種推辭的話。",
+      "glyph_codes": [59, 60, 228, 504, 909, 398, 281, 1085, 1086, 149, 449, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 51},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "51", "consumer": "temporary_role forced rejection loop", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.king.later_reject",
+      "value": "*「這樣啊───。\n那麼,就出發吧!",
+      "glyph_codes": [59, 60, 398, 537, 509, 806, 806, 806, 56, 65534, 12, 12, 354, 436, 55, 633, 440, 431, 499, 57, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 52},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "52", "consumer": "temporary_role optional rejection", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.arena.restore_intro",
+      "value": "*「哇─哈─哈,是我啊。\n從前的國王。\n---\n*「但是當國王可不能\n這樣子玩呢。\n---\n*「你做的不錯,\n繼續領導這個國家好嗎?",
+      "glyph_codes": [59, 60, 433, 806, 390, 806, 390, 55, 399, 493, 509, 56, 65534, 12, 12, 511, 535, 149, 300, 186, 56, 65532, 59, 60, 508, 399, 1030, 300, 186, 229, 228, 408, 65534, 12, 12, 398, 537, 151, 705, 592, 56, 65532, 59, 60, 528, 434, 149, 228, 719, 55, 65534, 12, 12, 1079, 1094, 266, 143, 398, 546, 300, 657, 441, 534, 58, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 68},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "68", "consumer": "temporary_role restore intro", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.arena.continue_role",
+      "value": "*「這樣的話,再加油吧。",
+      "glyph_codes": [59, 60, 398, 537, 149, 449, 55, 573, 368, 498, 499, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 69},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "69", "consumer": "temporary_role continue", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.arena.restore_reconsider",
+      "value": "*「什麼,\n已經討厭當國王了嗎?",
+      "glyph_codes": [59, 60, 435, 436, 55, 65534, 12, 12, 788, 525, 943, 944, 1030, 300, 186, 423, 534, 58, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 70},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "70", "consumer": "temporary_role restore reconsider", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.arena.restore_reject",
+      "value": "*「太好了,\n這樣我就安心了。",
+      "glyph_codes": [59, 60, 334, 441, 423, 55, 65534, 12, 12, 398, 537, 493, 633, 585, 932, 423, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 71},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "71", "consumer": "temporary_role restore rejection", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.romaly.arena.restore_accept",
+      "value": "*「這樣嗎‥‥。討厭的話,\n再繼續下去就不好了。\n---\n*「親愛的{變數}嗨,\n你就再繼續去冒險吧。",
+      "glyph_codes": [59, 60, 398, 537, 534, 123, 123, 56, 943, 944, 149, 449, 55, 65534, 12, 12, 573, 1079, 1094, 517, 448, 633, 228, 441, 423, 56, 65532, 59, 60, 751, 319, 149, 65525, 527, 55, 65534, 12, 12, 528, 633, 573, 1079, 1094, 448, 533, 218, 499, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 72},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "72", "consumer": "temporary_role restore acceptance", "doc": "docs/82-romaly-king-production-trace.md"}
     }
   ]
 }

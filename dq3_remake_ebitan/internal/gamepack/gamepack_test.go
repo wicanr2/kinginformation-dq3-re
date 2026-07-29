@@ -92,6 +92,117 @@ func TestDQ3KandarEventMatchesOriginalEXEAndCTY(t *testing.T) {
 	}
 }
 
+func TestDQ3RomalyTemporaryRoleMatchesOriginalEXECTYAndText(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return b
+	}
+	exe, cty, txt := read("DQ3.EXE"), read("CTY02.DAT"), read("D3TXT02.TXT")
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	e, ok := p.TemporaryRoleEvent("dq3:event.romaly_crown_kingship")
+	if !ok {
+		t.Fatal("dq3:event.romaly_crown_kingship missing")
+	}
+	if e.OfferNPC != (ScriptedNPCSelector{
+		CTYRaw: 2, Section: 1, Tile: TileCoordinate{X: 7, Y: 2}, HandlerRaw: 9,
+	}) || e.RestoreNPC != (ScriptedNPCSelector{
+		CTYRaw: 2, Section: 3, Tile: TileCoordinate{X: 4, Y: 11}, HandlerRaw: 13,
+	}) || e.PendingFlagRaw != 0x2c || e.RequiredItemRawID != 0x33 ||
+		e.NormalRoleFlagRaw != 0x2b || e.ActiveRoleFlagRaw != 0x27 ||
+		e.RoleSpriteEntries != (GenderedSpriteEntryBases{Male: 64, Female: 116}) {
+		t.Fatalf("羅馬利亞 temporary_role JSON 設定不符：%+v", e)
+	}
+
+	// CTY02 原始 7-byte NPC record：王座 handler9 與玩家為王時才顯示的
+	// 地下競技場 handler13。後者不是先前誤記的 jump-table slot 18/handler11。
+	findNPC := func(section int, want []byte) bool {
+		so := int(binary.LittleEndian.Uint16(cty[section*2:]))
+		table := so + int(binary.LittleEndian.Uint16(cty[so:]))
+		for i := 0; i < int(cty[table]); i++ {
+			rec := cty[table+1+i*7 : table+1+(i+1)*7]
+			if reflect.DeepEqual(rec, want) {
+				return true
+			}
+		}
+		return false
+	}
+	if !findNPC(1, []byte{7, 2, 4, 16, 9, 43, 0}) ||
+		!findNPC(3, []byte{4, 11, 31, 16, 13, 39, 0}) {
+		t.Fatal("CTY02 找不到 JSON 指定的王座／地下競技場 scripted NPC raw record")
+	}
+	// CTY02 sec0 的兩份 NPC table 也解釋 production trace 的實際 gate：
+	// 白天守衛站 (13,6)/(16,6)，中央可通；夜間改站 (14,6)/(15,6) 封宮。
+	tableHas := func(table int, want []byte) bool {
+		for i := 0; i < int(cty[table]); i++ {
+			rec := cty[table+1+i*7 : table+1+(i+1)*7]
+			if reflect.DeepEqual(rec, want) {
+				return true
+			}
+		}
+		return false
+	}
+	sec0 := int(binary.LittleEndian.Uint16(cty[0:]))
+	dayTable := sec0 + int(binary.LittleEndian.Uint16(cty[sec0:]))
+	nightTable := sec0 + int(binary.LittleEndian.Uint16(cty[sec0+2:]))
+	if !tableHas(dayTable, []byte{13, 6, 22, 0, 6, 43, 0}) ||
+		!tableHas(dayTable, []byte{16, 6, 22, 0, 6, 43, 0}) ||
+		!tableHas(nightTable, []byte{14, 6, 22, 0, 13, 40, 0}) ||
+		!tableHas(nightTable, []byte{15, 6, 22, 0, 13, 40, 0}) {
+		t.Fatal("CTY02 日／夜守衛 gate raw record 不符")
+	}
+
+	for off, want := range map[int][]byte{
+		0x6623: {0xc7, 0x06, 0x93, 0x25, 0x33, 0x00}, // selected item=0x33
+		0x6649: {0xc7, 0x04, 0xff, 0x00},             // consume matched slot
+		0x664d: {0xbb, 0x2c, 0x00},                   // clear pending flag
+		0x667f: {0xbb, 0x2b, 0x00},                   // clear normal-role flag
+		0x6685: {0xbb, 0x27, 0x00},                   // set active-role flag
+		0x669b: {0xb8, 0x1d, 0x00},                   // female AX before bp=1 sprite load
+		0x66a1: {0xb8, 0x10, 0x00},                   // male AX before bp=1 sprite load
+		0x679e: {0xbb, 0x27, 0x00},                   // restore: clear active-role
+		0x67a4: {0xbb, 0x2b, 0x00},                   // restore: set normal-role
+	} {
+		if off+len(want) > len(exe) || !reflect.DeepEqual(exe[off:off+len(want)], want) {
+			t.Fatalf("DQ3.EXE file %#x 不符：got %x want %x", off, exe[off:off+len(want)], want)
+		}
+	}
+
+	records := map[string]int{
+		e.DialogueTextIDs.QuestGreeting: 45, e.DialogueTextIDs.QuestRequest: 15,
+		e.DialogueTextIDs.ReturnPraise: 49, e.DialogueTextIDs.ForcedOffer: 50,
+		e.DialogueTextIDs.ForcedReject: 51, e.DialogueTextIDs.Accept: 48,
+		e.DialogueTextIDs.LaterIntro: 46, e.DialogueTextIDs.LaterOffer: 47,
+		e.DialogueTextIDs.LaterReject: 52, e.DialogueTextIDs.RestoreIntro: 68,
+		e.DialogueTextIDs.ContinueRole: 69, e.DialogueTextIDs.RestoreReconsider: 70,
+		e.DialogueTextIDs.RestoreReject: 71, e.DialogueTextIDs.RestoreAccept: 72,
+	}
+	for id, record := range records {
+		start := int(binary.LittleEndian.Uint16(txt[record*2:]))
+		end := int(binary.LittleEndian.Uint16(txt[(record+1)*2:]))
+		raw := make([]uint16, 0, (end-start)/2)
+		for off := start; off+2 <= end; off += 2 {
+			raw = append(raw, binary.LittleEndian.Uint16(txt[off:off+2]))
+		}
+		got, found := p.TextGlyphCodes(id)
+		def, defined := p.TextDefinition(id)
+		if !found || !defined || def.Source.Record == nil || *def.Source.Record != record ||
+			!reflect.DeepEqual(got, raw) {
+			t.Fatalf("%s 未與 D3TXT02 rec%d 完整一致", id, record)
+		}
+	}
+}
+
 func TestBuiltinDQ3ReviveCosts(t *testing.T) {
 	p, err := BuiltinDQ3()
 	if err != nil {
@@ -180,7 +291,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.0","boss_surrender_events":[]
+	  "schema_version":"0.1.0","boss_surrender_events":[],"temporary_role_events":[]
 	}`
 	validCharacters := `{
 	  "schema_version":"0.1.0",

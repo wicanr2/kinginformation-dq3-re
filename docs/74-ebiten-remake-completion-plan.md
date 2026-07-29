@@ -320,8 +320,11 @@ recruit 3 → leave Aliahan → overworld`
 - [x] 魔法球：2026-07-29 從 0x55 checkpoint 正常返回 CTY07 地道、步行至 CTY01，
   以正式「調查」開右上屋 door(28,8)，進 sec1 與 handler7 交談取得 0x58；0x55 不消耗，
   checkpoint save/load 通過。
-- 誘惑洞窟、羅馬利亞。
-- 甘達特／金皇冠。
+- [x] 誘惑洞窟、羅馬利亞首次謁見：正式使用魔法球、穿越 CTY30／31、抵達 CTY02，
+  rec45→rec15 與 save/load 已閉合（`docs/81`、`docs/82`）。
+- [x] 甘達特／金皇冠／臨時王位：正式練級北行、擊敗甘達特、求饒、取冠、夜間回城住宿、
+  還冠強制 Yes/No、臨時角色圖、地下競技場兩層辭位、兩端 save/load 與離城均達 E3；
+  事件與文字已由 `temporary_role` game-pack primitive 資料化（`docs/82`、`docs/85`）。
 - 諾阿尼魯／紅寶石／覺醒粉。
 - 金字塔按鈕／魔法鑰匙。
 - 波魯多加信件、諾魯特、巴哈拉達救人、黑胡椒、取船。
@@ -532,16 +535,16 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 ## 10. 今日收尾與剩餘工作（更新 2026-07-29）
 
-本輪已依 IDA/Capstone、本機實況與原始 CTY/BLKBM 閉合魔法球至羅馬利亞：正式 trace
-從新遊戲取得魔法球、走到 CTY30、由道具選單使用，驗證 `flag 0x51`、四格牆 rebuild、
-消耗；再以盜賊鑰匙正式開啟 CTY30 section 2 的 tier-1 門，經 CTY31 出洞，步行進入
-CTY02 並完成 save/load。證據 ledger 見 `docs/81`。下一輪依下列順序接手：
+本輪已依 IDA／Capstone、本機完整實況及原始 EXE／CTY／D3TXT，把 boot 起的正式 trace
+延伸至羅馬利亞金皇冠線結束。玩家正常取得金皇冠後若夜間回城，先使用旅店回到白天；
+接著正式還冠、拒絕一次、接受臨時王位、由存檔重建角色圖，再走到地下競技場完成兩層
+辭位選擇、存讀檔並離城。`temporary_role` 的版本專屬 selector、item、flags、角色圖 entry
+及 14 段對白皆在 game-pack JSON；證據 ledger 見 `docs/82`。下一輪依下列順序接手：
 
-1. **主線最高優先**：羅馬利亞→CTY10→金皇冠已閉合（`docs/85`）。新遊戲 production
-   trace 以原版初始裝備建立四人隊，合法練到 Lv10、購物與住宿，北行開門、擊敗
-   甘達特×1＋手下×3，完成求饒、取冠、標題載入及返回羅馬利亞。下一個 blocker 是
-   handler9 還冠／王位 Yes/No 狀態機（EXE file `0x6649` 起；`docs/82`）；須資料化
-   rec48–52、item/flag 交易及場景重建，不可直接消耗皇冠或替玩家選 Yes。
+1. **主線最高優先**：羅馬利亞／甘達特／臨時王位已閉合至 E3（`docs/82`、`docs/85`）。
+   下一個玩家流程 audit 從辭位後的合法羅馬利亞 checkpoint 出發，依 `docs/66` 前往
+   諾阿尼魯，記錄第一個不可達、錯誤 gate 或設定 mismatch；先重查原版 writer／consumer，
+   不以舊 C remake 或孤立事件測試代替正式路線。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

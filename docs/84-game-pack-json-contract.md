@@ -376,8 +376,9 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 | `source` | object | 是 | `legacy_record` 的檔名／record，或 `glyph_map` 字模來源。 |
 | `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
 
-目前甘達特 rec84–87 與「是／否」已遷入 `data/texts.json`；parity test 逐 word 對
-`D3TXT02.TXT`，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
+目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72 與「是／否」已遷入
+`data/texts.json`；parity test 逐 word 對 `D3TXT02.TXT`，修改 pack 會改 canonical
+content hash，舊存檔不得靜默套用。
 
 ### 6.9 `events.json`
 
@@ -439,6 +440,31 @@ DQ3 精訊版甘達特事件示例的 canonical 值位於
 `internal/gamepack/packs/dq3_cht/data/events.json`，不在本文複製第二份易過期 JSON。
 loader 會拒絕未知欄位、非法 subid／flag／monster/count、不一致 clear flag、空 trigger/
 formation 與缺 D3 consumer；production 不提供 Go fallback。
+
+第二個已實作 primitive 是 `temporary_role_events`，供「任務道具交還→強制／可選身分
+切換→另一 NPC 以兩層選擇恢復原身分」的流程使用。名稱描述跨遊戲行為，不含羅馬利亞、
+金皇冠、國王或 DQ3 固有 ID。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `temporary_role_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id` | string | 是 | 穩定 namespaced event ID。 |
+| `[].kind` | enum | 是 | 此表固定為 `temporary_role`。 |
+| `[].offer_npc` | object | 是 | `{cty_raw,section,tile:{x,y},handler_raw}`；任務／交物／再次接受的 scripted NPC。 |
+| `[].restore_npc` | object | 是 | 同上；active role 時提供恢復流程的 scripted NPC。 |
+| `[].pending_flag_raw` | int | 是 | 任務尚待必要道具時為 set 的原版 story flag。 |
+| `[].required_item_raw_id` | int | 是 | 交還時只消耗一件的原版 item ID。 |
+| `[].normal_role_flag_raw` | int | 是 | 一般身分為 set 的原版 story flag。 |
+| `[].active_role_flag_raw` | int | 是 | 臨時身分為 set 的原版 story flag；不得與其他三個 flag 重複。 |
+| `[].role_sprite_entry_bases` | object | 是 | `{male,female}`；原版角色圖 entry base，皆須為非負整數。 |
+| `[].dialogue_text_ids` | object | 是 | 必須含 `quest_greeting/quest_request/return_praise/forced_offer/forced_reject/accept/later_intro/later_offer/later_reject/restore_intro/continue_role/restore_reconsider/restore_reject/restore_accept/choice_yes/choice_no`，所有引用須存在。 |
+| `[].evidence` | object | 是 | 入口、交易、選擇分支、旗標與玩家可見 consumer 的 D3 證據。 |
+
+引擎交易時序固定：必要道具存在才在 `return_praise` 前消耗一件並清 pending flag；接受
+對白關閉後才交換 normal／active flags；恢復接受對白關閉後才反向交換。角色圖只由 active
+flag 與 pack entry 派生，不在存檔複製 transient sprite state。缺文字、selector 或引用時
+整個事件 fail closed，不部分扣道具。DQ3 canonical 範例見 `events.json`，原版證據見
+[`docs/82`](82-romaly-king-production-trace.md)。
 
 ### 6.10 `ui.json`、`audio.json`
 

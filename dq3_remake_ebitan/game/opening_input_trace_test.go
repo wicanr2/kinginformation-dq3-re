@@ -23,6 +23,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGame: %v", err)
 	}
+	roleEvent := mustTemporaryRoleEvent(t, g)
 	// 此測試驗證數千次正式 InputState 的連續狀態路線；逐步 WritePixels 會在沒有
 	// ebiten 顯示迴圈的 test binary 累積圖形命令。畫面另由 framedump 測試驗證。
 	g.frame = nil
@@ -318,16 +319,19 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("魔法球後未自然抵達羅馬利亞：town=%v cty=%d sec=%d",
 			g.inTown, g.curCty, sceneSection(g.cur))
 	}
-	traceTownSectionTo(t, g, ctyRomaly, romalyKingSection, 7, 2)
-	traceTalkNPC(t, g, 7, 2)
-	if !g.dlg.open || g.romalyKingStage != 1 ||
-		!reflect.DeepEqual(g.dlg.buf, g.cur.dlgText.Record(romalyKingGreetingRec)) {
-		t.Fatalf("正式晉見羅馬利亞王未開始 rec45：dlg=%v stage=%d", g.dlg.open, g.romalyKingStage)
+	traceTownSectionTo(t, g, roleEvent.OfferNPC.CTYRaw, roleEvent.OfferNPC.Section,
+		roleEvent.OfferNPC.Tile.X, roleEvent.OfferNPC.Tile.Y)
+	traceTalkNPC(t, g, roleEvent.OfferNPC.Tile.X, roleEvent.OfferNPC.Tile.Y)
+	if !g.dlg.open || g.temporaryRoleStage != temporaryRoleQuestGreeting ||
+		!reflect.DeepEqual(g.dlg.buf,
+			mustPackTextCodes(t, g, roleEvent.DialogueTextIDs.QuestGreeting)) {
+		t.Fatalf("正式晉見羅馬利亞王未開始 quest_greeting：dlg=%v stage=%d",
+			g.dlg.open, g.temporaryRoleStage)
 	}
 	traceCloseDialogue(t, g)
-	if !g.storyFlag(romalyCrownPendingFlag) || g.hasItem(romalyGoldenCrownItem) {
+	if !g.storyFlag(roleEvent.PendingFlagRaw) || g.hasItem(roleEvent.RequiredItemRawID) {
 		t.Fatalf("金皇冠任務交付後狀態錯：flag2c=%v crown=%v",
-			g.storyFlag(romalyCrownPendingFlag), g.hasItem(romalyGoldenCrownItem))
+			g.storyFlag(roleEvent.PendingFlagRaw), g.hasItem(roleEvent.RequiredItemRawID))
 	}
 	if err := g.Save(); err != nil {
 		t.Fatalf("保存羅馬利亞 checkpoint: %v", err)
@@ -336,9 +340,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("讀取羅馬利亞 checkpoint: %v", err)
 	}
 	if restored.hasItem(itemuse.ItemMagicBall) || restored.storyFlag(magicBallIntactFlag) ||
-		!restored.inTown || restored.curCty != ctyRomaly ||
-		sceneSection(restored.cur) != romalyKingSection ||
-		!restored.storyFlag(romalyCrownPendingFlag) {
+		!restored.inTown || restored.curCty != roleEvent.OfferNPC.CTYRaw ||
+		sceneSection(restored.cur) != roleEvent.OfferNPC.Section ||
+		!restored.storyFlag(roleEvent.PendingFlagRaw) {
 		t.Fatalf("羅馬利亞 checkpoint round-trip 錯：ball=%v flag51=%v town=%v cty=%d sec=%d",
 			restored.hasItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
 			restored.inTown, restored.curCty, sceneSection(restored.cur))
@@ -349,12 +353,12 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 
 	// 從合法王座 checkpoint 正常回到羅馬利亞 sec0。死亡者先走教會、存活者再住旅店；
 	// 之後以現有金錢在道具店購買一瓶聖水與可負擔藥草，正式北行 CTY10。
-	traceTownSectionTo(t, g, ctyRomaly, 0)
+	traceTownSectionTo(t, g, roleEvent.OfferNPC.CTYRaw, 0)
 	traceReviveDeadAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
 	traceExitTownBoundary(t, g)
-	traceTrainNearTown(t, g, ctyRomaly, 10)
-	traceAdventureWalkToCty(t, g, ctyRomaly)
+	traceTrainNearTown(t, g, roleEvent.OfferNPC.CTYRaw, 10)
+	traceAdventureWalkToCty(t, g, roleEvent.OfferNPC.CTYRaw)
 	traceReviveDeadAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
 	traceTalkFacility(t, g, facWeapon)
@@ -516,7 +520,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("命令窗無法以正式方向輸入選到調查：cursor=%d", g.cmd.cursor)
 	}
 	press(InputState{Confirm: true})
-	if !g.hasItem(romalyGoldenCrownItem) {
+	if !g.hasItem(roleEvent.RequiredItemRawID) {
 		t.Fatalf("正式調查甘達特事件寶箱未取得金皇冠：inventory=%v", g.inventory)
 	}
 
@@ -534,22 +538,130 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Confirm: true})          // 標題 splash → 主選單
 	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
 	press(InputState{Confirm: true})          // 正式載入冒險之書
-	if !restored.hasItem(romalyGoldenCrownItem) ||
+	if !restored.hasItem(roleEvent.RequiredItemRawID) ||
 		restored.storyFlag(kandarEvent.ClearFlagRaw) ||
 		restored.showTitle ||
 		!restored.inTown || restored.curCty != kandarEvent.Trigger.CTYRaw ||
 		sceneSection(restored.cur) != kandarEvent.Trigger.Section {
 		t.Fatalf("金皇冠 checkpoint round-trip 錯：crown=%v flag=%v title=%v town=%v cty=%d sec=%d",
-			restored.hasItem(romalyGoldenCrownItem),
+			restored.hasItem(roleEvent.RequiredItemRawID),
 			restored.storyFlag(kandarEvent.ClearFlagRaw), restored.showTitle, restored.inTown,
 			restored.curCty, sceneSection(restored.cur))
 	}
 	traceTownSectionTo(t, g, -1, -1)
-	traceAdventureWalkToCty(t, g, ctyRomaly)
-	if !g.inTown || g.curCty != ctyRomaly || !g.hasItem(romalyGoldenCrownItem) {
+	traceAdventureWalkToCty(t, g, roleEvent.OfferNPC.CTYRaw)
+	if !g.inTown || g.curCty != roleEvent.OfferNPC.CTYRaw ||
+		!g.hasItem(roleEvent.RequiredItemRawID) {
 		t.Fatalf("金皇冠讀檔後未能正式返回羅馬利亞：town=%v cty=%d crown=%v",
-			g.inTown, g.curCty, g.hasItem(romalyGoldenCrownItem))
+			g.inTown, g.curCty, g.hasItem(roleEvent.RequiredItemRawID))
 	}
+	// CTY02 夜表以兩名靜止守衛封住王宮中央通道；原版旅店成功交易會把
+	// [0x526c] 寫回白天並重設時刻。正式路線若夜間抵達，先住宿再晉見。
+	if g.isNight() {
+		traceTalkFacility(t, g, facInn)
+	}
+	traceTownSectionTo(t, g, roleEvent.OfferNPC.CTYRaw, roleEvent.OfferNPC.Section,
+		roleEvent.OfferNPC.Tile.X, roleEvent.OfferNPC.Tile.Y)
+	traceTalkNPC(t, g, roleEvent.OfferNPC.Tile.X, roleEvent.OfferNPC.Tile.Y)
+	if !g.dlg.open || g.temporaryRoleStage != temporaryRoleReturnPraise {
+		t.Fatalf("持皇冠正式晉見未開始 return_praise：dlg=%v stage=%d",
+			g.dlg.open, g.temporaryRoleStage)
+	}
+	if g.hasItem(roleEvent.RequiredItemRawID) || g.storyFlag(roleEvent.PendingFlagRaw) {
+		t.Fatal("return_praise 前未完成原版還冠 transaction")
+	}
+	traceCloseDialogue(t, g)
+	if g.temporaryRoleStage != temporaryRoleForcedChoice {
+		t.Fatalf("還冠對白後未進 forced choice：stage=%d", g.temporaryRoleStage)
+	}
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 選「否」
+	press(InputState{Confirm: true})
+	if g.temporaryRoleStage != temporaryRoleForcedReject || !g.dlg.open {
+		t.Fatal("第一次選否未進 forced_reject")
+	}
+	traceCloseDialogue(t, g)
+	if g.temporaryRoleStage != temporaryRoleForcedChoice {
+		t.Fatal("第一次還冠選否後未被迫回到王位提議")
+	}
+	press(InputState{Confirm: true}) // 選「是」
+	if g.temporaryRoleStage != temporaryRoleAccept || !g.dlg.open {
+		t.Fatal("接受王位未播放 accept")
+	}
+	traceCloseDialogue(t, g)
+	if g.storyFlag(roleEvent.NormalRoleFlagRaw) ||
+		!g.storyFlag(roleEvent.ActiveRoleFlagRaw) || g.heroRole == nil {
+		t.Fatalf("接受王位後狀態錯：normal=%v active=%v sprite=%v",
+			g.storyFlag(roleEvent.NormalRoleFlagRaw),
+			g.storyFlag(roleEvent.ActiveRoleFlagRaw), g.heroRole != nil)
+	}
+
+	// 臨時身分只保存 canonical story flag；從標題正式載入後必須自行重建角色圖。
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存臨時王位 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建臨時王位讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})          // 標題 splash → 主選單
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
+	press(InputState{Confirm: true})          // 正式載入冒險之書
+	if g.showTitle || !g.storyFlag(roleEvent.ActiveRoleFlagRaw) || g.heroRole == nil ||
+		!g.inTown || g.curCty != roleEvent.OfferNPC.CTYRaw {
+		t.Fatalf("臨時王位 checkpoint round-trip 錯：title=%v active=%v sprite=%v town=%v cty=%d",
+			g.showTitle, g.storyFlag(roleEvent.ActiveRoleFlagRaw), g.heroRole != nil,
+			g.inTown, g.curCty)
+	}
+
+	// 依原版影片由正式轉場走到地下競技場左上前國王。第一層選否表示不想
+	// 繼續當王，第二層選是確認恢復冒險者；restore_accept 關閉後才交換旗標。
+	traceTownSectionTo(t, g, roleEvent.RestoreNPC.CTYRaw, roleEvent.RestoreNPC.Section,
+		roleEvent.RestoreNPC.Tile.X, roleEvent.RestoreNPC.Tile.Y)
+	traceTalkNPC(t, g, roleEvent.RestoreNPC.Tile.X, roleEvent.RestoreNPC.Tile.Y)
+	if !g.dlg.open || g.temporaryRoleStage != temporaryRoleRestoreIntro {
+		t.Fatalf("前國王未開始 restore_intro：dlg=%v stage=%d",
+			g.dlg.open, g.temporaryRoleStage)
+	}
+	traceCloseDialogue(t, g)
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 第一層「否」：不繼續當王
+	press(InputState{Confirm: true})
+	if g.temporaryRoleStage != temporaryRoleRestoreReconsider || !g.dlg.open {
+		t.Fatal("恢復第一層選否未進 restore_reconsider")
+	}
+	traceCloseDialogue(t, g)
+	press(InputState{Confirm: true}) // 第二層「是」：確定退出王位
+	if g.temporaryRoleStage != temporaryRoleRestoreAccept || !g.dlg.open {
+		t.Fatal("恢復第二層選是未進 restore_accept")
+	}
+	traceCloseDialogue(t, g)
+	if g.storyFlag(roleEvent.ActiveRoleFlagRaw) ||
+		!g.storyFlag(roleEvent.NormalRoleFlagRaw) || g.heroRole != nil {
+		t.Fatalf("恢復冒險者後狀態錯：active=%v normal=%v sprite=%v",
+			g.storyFlag(roleEvent.ActiveRoleFlagRaw),
+			g.storyFlag(roleEvent.NormalRoleFlagRaw), g.heroRole != nil)
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存恢復冒險者 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := restored.Load(); err != nil {
+		t.Fatalf("讀取恢復冒險者 checkpoint：%v", err)
+	}
+	if restored.storyFlag(roleEvent.ActiveRoleFlagRaw) ||
+		!restored.storyFlag(roleEvent.NormalRoleFlagRaw) || restored.heroRole != nil {
+		t.Fatal("恢復冒險者狀態未通過 save/load round-trip")
+	}
+	traceTownSectionTo(t, g, roleEvent.OfferNPC.CTYRaw, 0)
+	traceExitTownBoundary(t, g)
+	if g.inTown {
+		t.Fatal("恢復冒險者後未能由正式路線離開羅馬利亞")
+	}
+
 }
 
 // traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
@@ -1194,8 +1306,23 @@ func traceTownSectionTo(t *testing.T, g *Game, wantCty, wantSec int, wantNPC ...
 		}
 	}
 	if !found {
-		t.Fatalf("transition graph 無法由 CTY%d sec%d 到 CTY%d sec%d",
-			start.cty, start.sec, wantCty, wantSec)
+		var portals [][7]int
+		for y := 0; y < g.cur.h; y++ {
+			for x := 0; x < g.cur.w; x++ {
+				dcty, dsec, dx, dy, ok := g.cur.tileTransition(x, y)
+				if !ok {
+					continue
+				}
+				portals = append(portals, [7]int{x, y, dcty, dsec, dx, dy,
+					len(tracePortalPath(g.cur, start.x, start.y, x, y, g.keyTier()))})
+			}
+		}
+		npcs := make([][3]int, len(g.cur.npcs))
+		for i, n := range g.cur.npcs {
+			npcs[i] = [3]int{n.x, n.y, n.ctrl}
+		}
+		t.Fatalf("transition graph 無法由 CTY%d sec%d @(%d,%d) 到 CTY%d sec%d；portal[x y cty sec dx dy pathlen]=%v NPC[x y ctrl]=%v",
+			start.cty, start.sec, start.x, start.y, wantCty, wantSec, portals, npcs)
 	}
 	var route []hop
 	for cur := goal; cur != start; cur = prev[cur].from {

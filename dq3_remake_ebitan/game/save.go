@@ -181,6 +181,7 @@ func (g *Game) restore(s saveState) {
 	if len(s.StoryBits) > 0 {
 		copy(g.storyBits[:], s.StoryBits) // 32-byte 舊檔保留前 256 flags；高位沿用原版初值
 	}
+	g.syncTemporaryRoleVisual() // 角色外觀由 pack event 的 active flag 推導，不保存第二份狀態
 	g.worldState = s.WorldState
 	if g.flags[0x35] { // 舊 remake 存檔：自造 flag0x35 遷移至原版 [0x4f44] bit0x40。
 		g.worldState |= worldStateRainbowBridge

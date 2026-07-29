@@ -29,20 +29,19 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 - 共用 game-pack JSON 契約：
   [`docs/84`](docs/84-game-pack-json-contract.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
-- 最新 production audit：[`docs/83`](docs/83-inn-and-romaly-route-audit.md)
+- 最新 production audit：[`docs/82`](docs/82-romaly-king-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
 
-目前核心終盤切片已接通，boot 起的正式 trace 已從 CTY01 延伸到 CTY02 羅馬利亞：玩家
-以正式道具選單使用魔法球，原版 flag `0x51`、四格牆重建、道具消耗、CTY30 tier-1 門、
-CTY31 出洞、羅馬利亞國王 rec45→rec15 任務與王座存讀檔均已驗證。
-**尚未完成從新遊戲開始的無 debug 全流程驗收**。正式 trace 已由標題完成前置主線，
-建立四人隊並以原版初始布衣及國王裝備配置；合法遭遇練至 Lv10、住宿、購物、登上
-CTY10，擊敗甘達特×1＋手下×3，完成求饒、取得金皇冠、冒險之書 round-trip，並從
-標題「載入進度」正式離塔返回羅馬利亞。下一個 blocker 是 handler9 持皇冠後的
-還冠／強制讓位狀態機（EXE file `0x6649` 起）；見 `docs/82`。
+boot 起的正式 trace 已閉合到羅馬利亞金皇冠線結束：玩家以正式道具選單使用魔法球、
+穿越 CTY30／31，建立四人隊並合法練至 Lv10，登上 CTY10 擊敗甘達特×1＋手下×3，
+完成求饒、取冠與標題讀檔。夜間返回羅馬利亞時依原版 CTY02 夜表由守衛封宮，正式使用
+旅店回到白天後才晉見；還冠、先拒絕再接受臨時王位、角色圖由 flag 派生、標題讀檔、
+地下競技場兩層辭位、再次存讀檔與離城均已通過 production `InputState` trace。
+**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從辭位後合法 checkpoint
+前往諾阿尼魯，記錄最早 blocker。原版與 game-pack 證據見 `docs/82`、`docs/85`。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -52,7 +51,9 @@ Android／Web 嵌入 pack 則仍需重包。
 2026-07-29 起的硬規則：版本專屬 CTY/section/座標、subid、story flag、dialogue record、
 formation、寶箱 gate、價格與 cue 不得新增成 Go 常數/table。甘達特事件已是第一個完整
 `events.json` + `texts.json` + 通用 `boss_surrender` primitive + EXE/CTY/D3TXT parity
-範例；人物初始裝備也由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
+範例；羅馬利亞 `temporary_role` 是第二個完整範例，14 段對白、NPC selector、item、
+flags 與角色圖 entry 均由 JSON 提供。人物初始裝備由 `characters.json` 提供。細則見
+`AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法
 

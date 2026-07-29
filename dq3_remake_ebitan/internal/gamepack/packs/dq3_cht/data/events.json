@@ -54,5 +54,58 @@
         "doc": "docs/85-shanpane-kandar-production-trace.md"
       }
     }
+  ],
+  "temporary_role_events": [
+    {
+      "id": "dq3:event.romaly_crown_kingship",
+      "kind": "temporary_role",
+      "offer_npc": {
+        "cty_raw": 2,
+        "section": 1,
+        "tile": {"x": 7, "y": 2},
+        "handler_raw": 9
+      },
+      "restore_npc": {
+        "cty_raw": 2,
+        "section": 3,
+        "tile": {"x": 4, "y": 11},
+        "handler_raw": 13
+      },
+      "pending_flag_raw": 44,
+      "required_item_raw_id": 51,
+      "normal_role_flag_raw": 43,
+      "active_role_flag_raw": 39,
+      "role_sprite_entry_bases": {
+        "male": 64,
+        "female": 116
+      },
+      "dialogue_text_ids": {
+        "quest_greeting": "dq3:text.romaly.king.quest_greeting",
+        "quest_request": "dq3:text.romaly.king.quest_request",
+        "return_praise": "dq3:text.romaly.king.return_praise",
+        "forced_offer": "dq3:text.romaly.king.forced_offer",
+        "forced_reject": "dq3:text.romaly.king.forced_reject",
+        "accept": "dq3:text.romaly.king.accept",
+        "later_intro": "dq3:text.romaly.king.later_intro",
+        "later_offer": "dq3:text.romaly.king.later_offer",
+        "later_reject": "dq3:text.romaly.king.later_reject",
+        "restore_intro": "dq3:text.romaly.arena.restore_intro",
+        "continue_role": "dq3:text.romaly.arena.continue_role",
+        "restore_reconsider": "dq3:text.romaly.arena.restore_reconsider",
+        "restore_reject": "dq3:text.romaly.arena.restore_reject",
+        "restore_accept": "dq3:text.romaly.arena.restore_accept",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY02.DAT + D3TXT02.TXT",
+        "address_space": "file",
+        "address": "0x65ee..0x67e6",
+        "consumer": "handler9 returns item 0x33 and enters forced kingship; CTY raw handler13 restores the former king after the two-stage choice",
+        "doc": "docs/82-romaly-king-production-trace.md"
+      }
+    }
   ]
 }

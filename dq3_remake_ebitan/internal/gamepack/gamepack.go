@@ -132,9 +132,60 @@ type BossSurrenderEvent struct {
 	Evidence        Evidence         `json:"evidence"`
 }
 
+// ScriptedNPCSelector identifies one original scripted-NPC consumer. The
+// selector is pack data; the engine only understands the generic tuple.
+type ScriptedNPCSelector struct {
+	CTYRaw     int            `json:"cty_raw"`
+	Section    int            `json:"section"`
+	Tile       TileCoordinate `json:"tile"`
+	HandlerRaw int            `json:"handler_raw"`
+}
+
+type TemporaryRoleTextIDs struct {
+	QuestGreeting     string `json:"quest_greeting"`
+	QuestRequest      string `json:"quest_request"`
+	ReturnPraise      string `json:"return_praise"`
+	ForcedOffer       string `json:"forced_offer"`
+	ForcedReject      string `json:"forced_reject"`
+	Accept            string `json:"accept"`
+	LaterIntro        string `json:"later_intro"`
+	LaterOffer        string `json:"later_offer"`
+	LaterReject       string `json:"later_reject"`
+	RestoreIntro      string `json:"restore_intro"`
+	ContinueRole      string `json:"continue_role"`
+	RestoreReconsider string `json:"restore_reconsider"`
+	RestoreReject     string `json:"restore_reject"`
+	RestoreAccept     string `json:"restore_accept"`
+	ChoiceYes         string `json:"choice_yes"`
+	ChoiceNo          string `json:"choice_no"`
+}
+
+type GenderedSpriteEntryBases struct {
+	Male   int `json:"male"`
+	Female int `json:"female"`
+}
+
+// TemporaryRoleEvent is the shared finite primitive for a required-item
+// return followed by a temporary player role and a separate restore NPC.
+// It contains original-edition data only, never executable expressions.
+type TemporaryRoleEvent struct {
+	ID                string                   `json:"id"`
+	Kind              string                   `json:"kind"`
+	OfferNPC          ScriptedNPCSelector      `json:"offer_npc"`
+	RestoreNPC        ScriptedNPCSelector      `json:"restore_npc"`
+	PendingFlagRaw    int                      `json:"pending_flag_raw"`
+	RequiredItemRawID int                      `json:"required_item_raw_id"`
+	NormalRoleFlagRaw int                      `json:"normal_role_flag_raw"`
+	ActiveRoleFlagRaw int                      `json:"active_role_flag_raw"`
+	RoleSpriteEntries GenderedSpriteEntryBases `json:"role_sprite_entry_bases"`
+	DialogueTextIDs   TemporaryRoleTextIDs     `json:"dialogue_text_ids"`
+	Evidence          Evidence                 `json:"evidence"`
+}
+
 type Events struct {
 	SchemaVersion       string               `json:"schema_version"`
 	BossSurrenderEvents []BossSurrenderEvent `json:"boss_surrender_events"`
+	TemporaryRoleEvents []TemporaryRoleEvent `json:"temporary_role_events"`
 }
 
 type TextSource struct {
@@ -199,6 +250,7 @@ type Pack struct {
 	Texts        Texts
 	services     map[string]*ServiceDefinition
 	bossEvents   map[string]*BossSurrenderEvent
+	roleEvents   map[string]*TemporaryRoleEvent
 	charDefaults map[string]*CharacterDefault
 	texts        map[string]*TextDefinition
 	contentHash  string
@@ -415,7 +467,30 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.TemporaryRoleEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"quest_greeting": refs.QuestGreeting, "quest_request": refs.QuestRequest,
+			"return_praise": refs.ReturnPraise, "forced_offer": refs.ForcedOffer,
+			"forced_reject": refs.ForcedReject, "accept": refs.Accept,
+			"later_intro": refs.LaterIntro, "later_offer": refs.LaterOffer,
+			"later_reject": refs.LaterReject, "restore_intro": refs.RestoreIntro,
+			"continue_role": refs.ContinueRole, "restore_reconsider": refs.RestoreReconsider,
+			"restore_reject": refs.RestoreReject, "restore_accept": refs.RestoreAccept,
+			"choice_yes": refs.ChoiceYes, "choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	return nil
+}
+
+func validScriptedNPC(s ScriptedNPCSelector) bool {
+	return s.CTYRaw >= 0 && s.CTYRaw <= 255 && s.Section >= 0 &&
+		s.Tile.X >= 0 && s.Tile.Y >= 0 && s.HandlerRaw >= 0 && s.HandlerRaw <= 255
 }
 
 func (p *Pack) validateEvents() error {
@@ -424,6 +499,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.BossSurrenderEvents == nil {
 		return errors.New("boss_surrender_events must be present")
+	}
+	if p.Events.TemporaryRoleEvents == nil {
+		return errors.New("temporary_role_events must be present")
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -473,6 +551,42 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		p.bossEvents[e.ID] = e
+	}
+	p.roleEvents = make(map[string]*TemporaryRoleEvent, len(p.Events.TemporaryRoleEvents))
+	for i := range p.Events.TemporaryRoleEvents {
+		e := &p.Events.TemporaryRoleEvents[i]
+		if e.ID == "" || e.Kind != "temporary_role" {
+			return fmt.Errorf("temporary_role_events[%d]: id and kind=temporary_role are required", i)
+		}
+		if _, exists := p.roleEvents[e.ID]; exists {
+			return fmt.Errorf("duplicate temporary role event id %q", e.ID)
+		}
+		if !validScriptedNPC(e.OfferNPC) || !validScriptedNPC(e.RestoreNPC) ||
+			e.OfferNPC == e.RestoreNPC {
+			return fmt.Errorf("%s: invalid or identical scripted NPC selectors", e.ID)
+		}
+		for name, value := range map[string]int{
+			"pending_flag_raw":     e.PendingFlagRaw,
+			"normal_role_flag_raw": e.NormalRoleFlagRaw,
+			"active_role_flag_raw": e.ActiveRoleFlagRaw,
+		} {
+			if value < 0 || value >= 512 {
+				return fmt.Errorf("%s: %s out of range", e.ID, name)
+			}
+		}
+		if e.PendingFlagRaw == e.NormalRoleFlagRaw ||
+			e.PendingFlagRaw == e.ActiveRoleFlagRaw ||
+			e.NormalRoleFlagRaw == e.ActiveRoleFlagRaw {
+			return fmt.Errorf("%s: role flags must be distinct", e.ID)
+		}
+		if e.RequiredItemRawID < 0 || e.RequiredItemRawID > 255 ||
+			e.RoleSpriteEntries.Male < 0 || e.RoleSpriteEntries.Female < 0 {
+			return fmt.Errorf("%s: invalid item or role sprite entry", e.ID)
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.roleEvents[e.ID] = e
 	}
 	return nil
 }
@@ -620,6 +734,15 @@ func (p *Pack) BossSurrenderEvents() []BossSurrenderEvent {
 
 func (p *Pack) BossSurrenderEvent(id string) (*BossSurrenderEvent, bool) {
 	e, ok := p.bossEvents[id]
+	return e, ok
+}
+
+func (p *Pack) TemporaryRoleEvents() []TemporaryRoleEvent {
+	return append([]TemporaryRoleEvent(nil), p.Events.TemporaryRoleEvents...)
+}
+
+func (p *Pack) TemporaryRoleEvent(id string) (*TemporaryRoleEvent, bool) {
+	e, ok := p.roleEvents[id]
 	return e, ok
 }
 

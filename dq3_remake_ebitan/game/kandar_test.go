@@ -65,10 +65,11 @@ func TestKandarNaturalTileTriggerAndMixedFormation(t *testing.T) {
 func TestKandarCrownGateAndOriginalSurrenderLoop(t *testing.T) {
 	g := kandarTestGame(t)
 	event := g.pack.BossSurrenderEvents()[0]
+	crownItem := event.TreasureGates[0].ItemRawID
 	// 戰前即使直接站到寶箱旁，金皇冠也不得繞過 handler14。
 	g.px, g.py, g.facing = 4, 5, 1
 	g.examine()
-	if g.hasItem(romalyGoldenCrownItem) {
+	if g.hasItem(crownItem) {
 		t.Fatal("甘達特仍在時不得取得金皇冠")
 	}
 
@@ -105,7 +106,7 @@ func TestKandarCrownGateAndOriginalSurrenderLoop(t *testing.T) {
 	}
 	g.px, g.py, g.facing = 4, 5, 1
 	g.examine()
-	if !g.hasItem(romalyGoldenCrownItem) {
+	if !g.hasItem(crownItem) {
 		t.Fatal("接受求饒後應可由 (4,4) 寶箱取得金皇冠")
 	}
 }
