@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
@@ -121,10 +122,15 @@ func TestPlaythroughEconomy(t *testing.T) {
 	t.Logf("經濟 ✓:阿里阿罕武防店 7 品(銅劍100G)、宿屋 2G;全城設施表 %d 筆", len(allFacilities))
 }
 
-// 整合 game test:寶箱表查詢(阿里阿罕 cty0 sec5 有 6 寶箱)+ 事件系統資料。
+// 整合 game test:legacy 寶箱表 + 已遷入 pack 的 quest treasure。
 func TestPlaythroughTreasure(t *testing.T) {
-	if len(treasures) != 121 {
-		t.Fatalf("寶箱表應 121 筆,得 %d", len(treasures))
+	const totalOriginalTreasures = 121
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := len(treasures) + len(pack.QuestItemChainEvents()); got != totalOriginalTreasures {
+		t.Fatalf("legacy + game-pack 寶箱應共 %d 筆,得 %d", totalOriginalTreasures, got)
 	}
 	// 阿里阿罕(cty0 sec5)sub0 寶箱:item98、flag41
 	tr := treasureFor(0, 5, 0)
@@ -135,5 +141,6 @@ func TestPlaythroughTreasure(t *testing.T) {
 	if treasureFor(99, 0, 0) != nil {
 		t.Fatal("不存在的寶箱應回 nil")
 	}
-	t.Logf("寶箱表 ✓:121 筆、阿里阿罕 sec5 sub0=item98/flag41")
+	t.Logf("寶箱資料 ✓:%d 筆（legacy %d + game-pack %d）、阿里阿罕 sec5 sub0=item98/flag41",
+		totalOriginalTreasures, len(treasures), len(pack.QuestItemChainEvents()))
 }

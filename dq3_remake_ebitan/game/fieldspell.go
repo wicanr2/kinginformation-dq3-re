@@ -273,6 +273,10 @@ func (g *Game) inpasFacingType() (int, bool) {
 	}
 	// 原版正常 examine 會清 tile 的低 5-bit event id。Go 版目前以一次性
 	// treasure flag 保存已取狀態，因此在 Inpas read-only path 補同等 gate。
+	if event, ok := g.questTreasureFor(g.curCty, g.cur.sec, subid); ok &&
+		!g.storyFlag(event.Treasure.PresentFlag) {
+		return 0, false
+	}
 	if t := treasureFor(g.curCty, g.cur.sec, subid); t != nil && g.flags[t[5]] {
 		return 0, false
 	}

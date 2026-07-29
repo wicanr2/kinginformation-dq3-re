@@ -203,6 +203,112 @@ func TestDQ3RomalyTemporaryRoleMatchesOriginalEXECTYAndText(t *testing.T) {
 	}
 }
 
+func TestDQ3NoanielQuestItemChainMatchesOriginalEXECTYAndText(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return b
+	}
+	exe := read("DQ3.EXE")
+	cty4, cty5, cty11 := read("CTY04.DAT"), read("CTY05.DAT"), read("CTY11.DAT")
+	txt0, txt2 := read("D3TXT00.TXT"), read("D3TXT02.TXT")
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	e, ok := p.QuestItemChainEvent("dq3:event.noaniel_awakening")
+	if !ok {
+		t.Fatal("dq3:event.noaniel_awakening missing")
+	}
+	if e.Treasure != (QuestTreasureSelector{
+		CTYRaw: 11, Section: 3, TileSubID: 0, EventTypeRaw: 3,
+		ItemRawID: 0x59, PresentFlag: 0x2f,
+	}) || e.Exchange.NPC != (ScriptedNPCSelector{
+		CTYRaw: 5, Section: 0, Tile: TileCoordinate{X: 17, Y: 7}, HandlerRaw: 16,
+	}) || e.Exchange.RequiredItemRawID != 0x59 || e.Exchange.GrantedItemRawID != 0x5a ||
+		e.Use.ItemRawID != 0x5a || e.Use.LocationKind != "town" || e.Use.CTYRaw != 4 ||
+		!reflect.DeepEqual(e.Use.SetFlagsRaw, []int{0x26}) ||
+		!reflect.DeepEqual(e.Use.ClearFlagsRaw, []int{0x31}) || !e.Use.ReloadScene {
+		t.Fatalf("諾亞尼爾 quest_item_chain JSON 設定不符：%+v", e)
+	}
+
+	// CTY11 sec3 examine subid0 = type3, item0x59, armed flag0x2f.
+	sec11 := int(binary.LittleEndian.Uint16(cty11[e.Treasure.Section*2:]))
+	ev11 := sec11 + int(binary.LittleEndian.Uint16(cty11[sec11+8:]))
+	entry11 := cty11[ev11+1 : ev11+5]
+	if !reflect.DeepEqual(entry11, []byte{3, 0x59, 0, 0x2f}) {
+		t.Fatalf("CTY11 sec3 subid0=%x, want 0359002f", entry11)
+	}
+
+	// CTY05 raw NPC record identifies the exchange consumer, not a Go table.
+	sec5 := int(binary.LittleEndian.Uint16(cty5[e.Exchange.NPC.Section*2:]))
+	npc5 := sec5 + int(binary.LittleEndian.Uint16(cty5[sec5:]))
+	foundQueen := false
+	for i := 0; i < int(cty5[npc5]); i++ {
+		rec := cty5[npc5+1+i*7 : npc5+1+(i+1)*7]
+		if int(rec[0]) == e.Exchange.NPC.Tile.X && int(rec[1]) == e.Exchange.NPC.Tile.Y &&
+			(rec[3]>>3)&7 == 2 && int(rec[4]) == e.Exchange.NPC.HandlerRaw {
+			foundQueen = true
+			break
+		}
+	}
+	if !foundQueen {
+		t.Fatal("CTY05 sec0 找不到 JSON 指定的 handler16 精靈女王 raw record")
+	}
+
+	// CTY04 pairs awake flag0x26 records with sleeping flag0x31 records.
+	sec4 := int(binary.LittleEndian.Uint16(cty4[:2]))
+	npc4 := sec4 + int(binary.LittleEndian.Uint16(cty4[sec4:]))
+	countByFlag := map[byte]int{}
+	for i := 0; i < int(cty4[npc4]); i++ {
+		rec := cty4[npc4+1+i*7 : npc4+1+(i+1)*7]
+		countByFlag[rec[5]]++
+	}
+	if countByFlag[0x26] != 11 || countByFlag[0x31] != 11 {
+		t.Fatalf("CTY04 sec0 awake/sleep records=%v, want flag26=11 flag31=11", countByFlag)
+	}
+
+	for off, want := range map[int][]byte{
+		0x5320: {0x83, 0x3e, 0x6c, 0x25, 0x04},       // current CTY == 4
+		0x5330: {0xe8, 0x36, 0x0d},                   // consume selected item
+		0x5333: {0xbb, 0x26, 0x00, 0xe8, 0x16, 0x2f}, // SET 0x26
+		0x5339: {0xbb, 0x31, 0x00, 0xe8, 0x25, 0x2f}, // CLEAR 0x31
+		0x533f: {0xbf, 0x57, 0x02},                   // global text rec0x257 = 599
+		0x68f7: {0xc7, 0x06, 0x93, 0x25, 0x59, 0x00}, // selected item 0x59
+		0x690a: {0xc7, 0x04, 0x5a, 0x00},             // replace slot with 0x5a
+	} {
+		if off+len(want) > len(exe) || !reflect.DeepEqual(exe[off:off+len(want)], want) {
+			t.Fatalf("DQ3.EXE file %#x 不符：got %x want %x", off, exe[off:off+len(want)], want)
+		}
+	}
+
+	checkText := func(id string, file []byte, record int) {
+		t.Helper()
+		start := int(binary.LittleEndian.Uint16(file[record*2:]))
+		end := int(binary.LittleEndian.Uint16(file[(record+1)*2:]))
+		raw := make([]uint16, 0, (end-start)/2)
+		for off := start; off+2 <= end; off += 2 {
+			raw = append(raw, binary.LittleEndian.Uint16(file[off:off+2]))
+		}
+		got, found := p.TextGlyphCodes(id)
+		def, defined := p.TextDefinition(id)
+		if !found || !defined || def.Source.Record == nil || *def.Source.Record != record ||
+			!reflect.DeepEqual(got, raw) {
+			t.Fatalf("%s 未與原始文字 rec%d 完整一致", id, record)
+		}
+	}
+	checkText(e.Exchange.BeforeTextID, txt2, 90)
+	checkText(e.Exchange.SuccessTextID, txt2, 96)
+	checkText(e.Use.SuccessTextID, txt0, 599)
+}
+
 func TestBuiltinDQ3ReviveCosts(t *testing.T) {
 	p, err := BuiltinDQ3()
 	if err != nil {
@@ -276,14 +382,14 @@ func TestDQ3ReviveCostsMatchOriginalEXE(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.0","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.1","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.0","service_definitions":[{
+	  "schema_version":"0.1.1","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -291,10 +397,11 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.0","boss_surrender_events":[],"temporary_role_events":[]
+	  "schema_version":"0.1.1","boss_surrender_events":[],"temporary_role_events":[],
+	  "quest_item_chain_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.0",
+	  "schema_version":"0.1.1",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -304,7 +411,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.0","definitions":[{
+	  "schema_version":"0.1.1","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -318,7 +425,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.0"`, `"schema_version":"0.1.0","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.1"`, `"schema_version":"0.1.1","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"unknown characters field", validManifest, validFacilities, validEvents, strings.Replace(validCharacters, `"defaults":[`, `"typo":1,"defaults":[`, 1), "unknown field"},
 	}

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.0"
+	SchemaVersion = "0.1.1"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -182,10 +182,55 @@ type TemporaryRoleEvent struct {
 	Evidence          Evidence                 `json:"evidence"`
 }
 
+// QuestTreasureSelector identifies one original CTY examine event. The
+// one-shot flag uses the original story-bit convention: set means available,
+// clear means already collected.
+type QuestTreasureSelector struct {
+	CTYRaw       int `json:"cty_raw"`
+	Section      int `json:"section"`
+	TileSubID    int `json:"tile_subid"`
+	EventTypeRaw int `json:"event_type_raw"`
+	ItemRawID    int `json:"item_raw_id"`
+	PresentFlag  int `json:"present_flag_raw"`
+}
+
+type ItemExchange struct {
+	NPC               ScriptedNPCSelector `json:"npc"`
+	RequiredItemRawID int                 `json:"required_item_raw_id"`
+	GrantedItemRawID  int                 `json:"granted_item_raw_id"`
+	BeforeTextID      string              `json:"before_text_id"`
+	SuccessTextID     string              `json:"success_text_id"`
+}
+
+// LocationItemUse is a finite, declarative location gate. It deliberately
+// cannot contain expressions or callbacks.
+type LocationItemUse struct {
+	ItemRawID     int    `json:"item_raw_id"`
+	LocationKind  string `json:"location_kind"`
+	CTYRaw        int    `json:"cty_raw"`
+	SetFlagsRaw   []int  `json:"set_flags_raw"`
+	ClearFlagsRaw []int  `json:"clear_flags_raw"`
+	SuccessTextID string `json:"success_text_id"`
+	ReloadScene   bool   `json:"reload_scene"`
+}
+
+// QuestItemChainEvent is the shared finite primitive for
+// treasure -> NPC item exchange -> location-gated item use. All selectors,
+// item IDs, flags and text references are pack data.
+type QuestItemChainEvent struct {
+	ID       string                `json:"id"`
+	Kind     string                `json:"kind"`
+	Treasure QuestTreasureSelector `json:"treasure"`
+	Exchange ItemExchange          `json:"exchange"`
+	Use      LocationItemUse       `json:"use"`
+	Evidence Evidence              `json:"evidence"`
+}
+
 type Events struct {
-	SchemaVersion       string               `json:"schema_version"`
-	BossSurrenderEvents []BossSurrenderEvent `json:"boss_surrender_events"`
-	TemporaryRoleEvents []TemporaryRoleEvent `json:"temporary_role_events"`
+	SchemaVersion        string                `json:"schema_version"`
+	BossSurrenderEvents  []BossSurrenderEvent  `json:"boss_surrender_events"`
+	TemporaryRoleEvents  []TemporaryRoleEvent  `json:"temporary_role_events"`
+	QuestItemChainEvents []QuestItemChainEvent `json:"quest_item_chain_events"`
 }
 
 type TextSource struct {
@@ -243,17 +288,18 @@ type Characters struct {
 }
 
 type Pack struct {
-	Manifest     Manifest
-	Facilities   Facilities
-	Events       Events
-	Characters   Characters
-	Texts        Texts
-	services     map[string]*ServiceDefinition
-	bossEvents   map[string]*BossSurrenderEvent
-	roleEvents   map[string]*TemporaryRoleEvent
-	charDefaults map[string]*CharacterDefault
-	texts        map[string]*TextDefinition
-	contentHash  string
+	Manifest        Manifest
+	Facilities      Facilities
+	Events          Events
+	Characters      Characters
+	Texts           Texts
+	services        map[string]*ServiceDefinition
+	bossEvents      map[string]*BossSurrenderEvent
+	roleEvents      map[string]*TemporaryRoleEvent
+	questItemEvents map[string]*QuestItemChainEvent
+	charDefaults    map[string]*CharacterDefault
+	texts           map[string]*TextDefinition
+	contentHash     string
 }
 
 func decodeStrict(fsys fs.FS, name string, dst any) error {
@@ -485,6 +531,18 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.QuestItemChainEvents {
+		for field, id := range map[string]string{
+			"exchange.before_text_id":  event.Exchange.BeforeTextID,
+			"exchange.success_text_id": event.Exchange.SuccessTextID,
+			"use.success_text_id":      event.Use.SuccessTextID,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s %s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	return nil
 }
 
@@ -502,6 +560,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.TemporaryRoleEvents == nil {
 		return errors.New("temporary_role_events must be present")
+	}
+	if p.Events.QuestItemChainEvents == nil {
+		return errors.New("quest_item_chain_events must be present")
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -587,6 +648,58 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		p.roleEvents[e.ID] = e
+	}
+	p.questItemEvents = make(map[string]*QuestItemChainEvent, len(p.Events.QuestItemChainEvents))
+	for i := range p.Events.QuestItemChainEvents {
+		e := &p.Events.QuestItemChainEvents[i]
+		if e.ID == "" || e.Kind != "quest_item_chain" {
+			return fmt.Errorf("quest_item_chain_events[%d]: id and kind=quest_item_chain are required", i)
+		}
+		if _, exists := p.questItemEvents[e.ID]; exists {
+			return fmt.Errorf("duplicate quest item chain event id %q", e.ID)
+		}
+		t := e.Treasure
+		if t.CTYRaw < 0 || t.CTYRaw > 255 || t.Section < 0 ||
+			t.TileSubID < 0 || t.TileSubID > 31 ||
+			(t.EventTypeRaw != 1 && t.EventTypeRaw != 3) ||
+			t.ItemRawID < 0 || t.ItemRawID > 255 ||
+			t.PresentFlag < 0 || t.PresentFlag >= 512 {
+			return fmt.Errorf("%s: invalid treasure selector", e.ID)
+		}
+		x := e.Exchange
+		if !validScriptedNPC(x.NPC) ||
+			x.RequiredItemRawID < 0 || x.RequiredItemRawID > 255 ||
+			x.GrantedItemRawID < 0 || x.GrantedItemRawID > 255 ||
+			x.RequiredItemRawID == x.GrantedItemRawID ||
+			x.RequiredItemRawID != t.ItemRawID {
+			return fmt.Errorf("%s: invalid or disconnected item exchange", e.ID)
+		}
+		u := e.Use
+		if u.ItemRawID != x.GrantedItemRawID || u.LocationKind != "town" ||
+			u.CTYRaw < 0 || u.CTYRaw > 255 || u.SuccessTextID == "" ||
+			!u.ReloadScene || u.SetFlagsRaw == nil || u.ClearFlagsRaw == nil ||
+			len(u.SetFlagsRaw) == 0 || len(u.ClearFlagsRaw) == 0 {
+			return fmt.Errorf("%s: invalid or disconnected location item use", e.ID)
+		}
+		seen := map[int]string{}
+		for kind, flags := range map[string][]int{
+			"set_flags_raw": u.SetFlagsRaw, "clear_flags_raw": u.ClearFlagsRaw,
+		} {
+			for _, flag := range flags {
+				if flag < 0 || flag >= 512 {
+					return fmt.Errorf("%s: %s flag %d out of range", e.ID, kind, flag)
+				}
+				if previous := seen[flag]; previous != "" {
+					return fmt.Errorf("%s: flag %d appears in both %s and %s",
+						e.ID, flag, previous, kind)
+				}
+				seen[flag] = kind
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.questItemEvents[e.ID] = e
 	}
 	return nil
 }
@@ -743,6 +856,15 @@ func (p *Pack) TemporaryRoleEvents() []TemporaryRoleEvent {
 
 func (p *Pack) TemporaryRoleEvent(id string) (*TemporaryRoleEvent, bool) {
 	e, ok := p.roleEvents[id]
+	return e, ok
+}
+
+func (p *Pack) QuestItemChainEvents() []QuestItemChainEvent {
+	return append([]QuestItemChainEvent(nil), p.Events.QuestItemChainEvents...)
+}
+
+func (p *Pack) QuestItemChainEvent(id string) (*QuestItemChainEvent, bool) {
+	e, ok := p.questItemEvents[id]
 	return e, ok
 }
 

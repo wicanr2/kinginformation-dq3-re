@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.1.1",
   "boss_surrender_events": [
     {
       "id": "dq3:event.shanpane_kandar",
@@ -105,6 +105,50 @@
         "address": "0x65ee..0x67e6",
         "consumer": "handler9 returns item 0x33 and enters forced kingship; CTY raw handler13 restores the former king after the two-stage choice",
         "doc": "docs/82-romaly-king-production-trace.md"
+      }
+    }
+  ],
+  "quest_item_chain_events": [
+    {
+      "id": "dq3:event.noaniel_awakening",
+      "kind": "quest_item_chain",
+      "treasure": {
+        "cty_raw": 11,
+        "section": 3,
+        "tile_subid": 0,
+        "event_type_raw": 3,
+        "item_raw_id": 89,
+        "present_flag_raw": 47
+      },
+      "exchange": {
+        "npc": {
+          "cty_raw": 5,
+          "section": 0,
+          "tile": {"x": 17, "y": 7},
+          "handler_raw": 16
+        },
+        "required_item_raw_id": 89,
+        "granted_item_raw_id": 90,
+        "before_text_id": "dq3:text.fairy_queen.before_ruby",
+        "success_text_id": "dq3:text.fairy_queen.exchange_ruby"
+      },
+      "use": {
+        "item_raw_id": 90,
+        "location_kind": "town",
+        "cty_raw": 4,
+        "set_flags_raw": [38],
+        "clear_flags_raw": [49],
+        "success_text_id": "dq3:text.noaniel.awakened",
+        "reload_scene": true
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY04.DAT + CTY05.DAT + CTY11.DAT + D3TXT00.TXT + D3TXT02.TXT",
+        "address_space": "file",
+        "address": "0x5320..0x5365, 0x68ef..0x6916",
+        "consumer": "CTY11 sec3 subid0 yields item 0x59; CTY05 raw handler16 replaces it with 0x5a; item use in CTY4 consumes, SET 0x26, CLEAR 0x31, displays global rec599, then reloads the scene",
+        "doc": "docs/86-noaniel-awakening-production-trace.md"
       }
     }
   ]

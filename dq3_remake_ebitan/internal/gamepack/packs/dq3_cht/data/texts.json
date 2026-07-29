@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.1.1",
   "definitions": [
     {
       "id": "dq3:text.shanpane_gandart.intro",
@@ -208,6 +208,30 @@
       "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 72},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "72", "consumer": "temporary_role restore acceptance", "doc": "docs/82-romaly-king-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.fairy_queen.before_ruby",
+      "value": "*「從前,我的女兒,安,\n愛上一個人類的男子,\n---\n*「結果她帶著夢幻紅寶石\n到那男子的地方去了,\n就沒有再回來了。\n---\n*「我不想再看到人類,\n你們快走吧。",
+      "glyph_codes": [59, 60, 511, 535, 55, 493, 149, 234, 949, 55, 585, 55, 65534, 12, 12, 319, 421, 401, 546, 194, 1104, 149, 775, 151, 55, 65532, 59, 60, 687, 278, 1108, 540, 484, 294, 295, 296, 297, 275, 65534, 12, 12, 453, 354, 775, 151, 149, 214, 547, 448, 423, 55, 65534, 12, 12, 633, 410, 147, 573, 312, 461, 423, 56, 65532, 59, 60, 493, 228, 609, 573, 668, 453, 194, 1104, 55, 65534, 12, 12, 528, 529, 969, 612, 499, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 90},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "90", "consumer": "quest_item_chain exchange prerequisite miss", "doc": "docs/86-noaniel-awakening-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.fairy_queen.exchange_ruby",
+      "value": "*「請等一下。\n---\n*「你帶的是夢幻紅寶石嗎?\n---\n*「什麼!\n安和那個男子在地底湖裡\n雙雙殉情了嗎!?\n---\n*「喔喔!\n我還是不原諒他們兩人!\n---\n*「‥‥‥‥‥‥‥‥‥。\n---\n*「我知道了,\n這個覺醒粉請帶回村裏,\n---\n*「把村莊的詛咒解除了吧。\n安也一定希望\n我這樣做的吧‥‥。",
+      "glyph_codes": [59, 60, 571, 419, 401, 517, 56, 65532, 59, 60, 528, 540, 149, 399, 294, 295, 296, 297, 275, 534, 58, 65532, 59, 60, 435, 436, 57, 65534, 12, 12, 585, 564, 354, 546, 775, 151, 411, 214, 1098, 1111, 512, 65534, 12, 12, 184, 184, 1112, 670, 423, 534, 57, 58, 65532, 59, 60, 776, 776, 57, 65534, 12, 12, 493, 524, 399, 228, 555, 1100, 757, 529, 803, 194, 57, 65532, 59, 60, 123, 123, 123, 123, 123, 123, 123, 123, 123, 56, 65532, 59, 60, 493, 510, 402, 423, 55, 65534, 12, 12, 398, 546, 298, 299, 257, 571, 540, 312, 748, 1024, 55, 65532, 59, 60, 530, 748, 807, 149, 454, 429, 464, 790, 423, 499, 56, 65534, 12, 12, 585, 494, 401, 1022, 356, 945, 65534, 12, 12, 493, 398, 537, 434, 149, 499, 123, 123, 56, 65532, 59, 60, 776, 776, 55, 585, 509, 57, 65534, 12, 12, 571, 555, 1100, 930, 930, 499, 123, 123, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 96},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT02.TXT", "address_space": "record", "address": "96", "consumer": "quest_item_chain item replacement", "doc": "docs/86-noaniel-awakening-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.noaniel.awakened",
+      "value": "啊!村莊的人們醒來了!",
+      "glyph_codes": [509, 57, 748, 807, 149, 194, 529, 299, 461, 423, 57, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 599},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "599", "consumer": "quest_item_chain location use success", "doc": "docs/86-noaniel-awakening-production-trace.md"}
     }
   ]
 }

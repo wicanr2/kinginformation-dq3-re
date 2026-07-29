@@ -325,7 +325,10 @@ recruit 3 → leave Aliahan → overworld`
 - [x] 甘達特／金皇冠／臨時王位：正式練級北行、擊敗甘達特、求饒、取冠、夜間回城住宿、
   還冠強制 Yes/No、臨時角色圖、地下競技場兩層辭位、兩端 save/load 與離城均達 E3；
   事件與文字已由 `temporary_role` game-pack primitive 資料化（`docs/82`、`docs/85`）。
-- 諾阿尼魯／紅寶石／覺醒粉。
+- [x] 諾阿尼魯／紅寶石／覺醒粉：2026-07-29 已由羅馬利亞辭位 checkpoint 正式步行至
+  CTY04／05／11；原始 treasure present flag、女王原地換物、CTY-only 使用 gate、
+  `SET 0x26 / CLEAR 0x31`、rec599、即時 NPC 場景重載、save/load 與讀檔後離村均達 E3。
+  版本專屬 selector、item、flags 與文字已遷入 `quest_item_chain_events`（`docs/86`）。
 - 金字塔按鈕／魔法鑰匙。
 - 波魯多加信件、諾魯特、巴哈拉達救人、黑胡椒、取船。
 
@@ -535,16 +538,16 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 ## 10. 今日收尾與剩餘工作（更新 2026-07-29）
 
-本輪已依 IDA／Capstone、本機完整實況及原始 EXE／CTY／D3TXT，把 boot 起的正式 trace
-延伸至羅馬利亞金皇冠線結束。玩家正常取得金皇冠後若夜間回城，先使用旅店回到白天；
-接著正式還冠、拒絕一次、接受臨時王位、由存檔重建角色圖，再走到地下競技場完成兩層
-辭位選擇、存讀檔並離城。`temporary_role` 的版本專屬 selector、item、flags、角色圖 entry
-及 14 段對白皆在 game-pack JSON；證據 ledger 見 `docs/82`。下一輪依下列順序接手：
+本輪已依 IDA／Capstone 及原始 EXE／CTY／D3TXT，把 boot 起的正式 trace
+由羅馬利亞金皇冠線繼續延伸至諾亞尼爾甦醒。追蹤揭露舊實作寫入錯誤的 remake flag，
+而且把起始已 set 的 `0x31` 誤當甦醒完成；原版實際是 CTY4 使用 gate 後消耗覺醒粉、
+`SET 0x26`（清醒居民）、`CLEAR 0x31`（沉睡替身）、顯示 rec599 並重載場景。
+整條紅寶石／女王換物／覺醒粉流程已改由 game-pack `quest_item_chain` 提供資料；
+證據 ledger 見 `docs/86`。下一輪依下列順序接手：
 
-1. **主線最高優先**：羅馬利亞／甘達特／臨時王位已閉合至 E3（`docs/82`、`docs/85`）。
-   下一個玩家流程 audit 從辭位後的合法羅馬利亞 checkpoint 出發，依 `docs/66` 前往
-   諾阿尼魯，記錄第一個不可達、錯誤 gate 或設定 mismatch；先重查原版 writer／consumer，
-   不以舊 C remake 或孤立事件測試代替正式路線。
+1. **主線最高優先**：諾亞尼爾甦醒已閉合至 E3（`docs/86`）。下一個玩家流程 audit
+   從讀檔後可正式離村的 checkpoint 出發，依 `docs/66` 前往金字塔，定位按鈕／魔法鑰匙
+   流程的第一個不可達、錯誤 gate 或設定 mismatch；仍先重查原版 writer／consumer。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

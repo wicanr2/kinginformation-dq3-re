@@ -59,3 +59,34 @@ func TestSaveRecordsAndChecksGamePackIdentity(t *testing.T) {
 		t.Fatalf("Load mismatch error=%v", err)
 	}
 }
+
+func TestSavePreservesRememberedOverworldPosition(t *testing.T) {
+	g := &Game{
+		overPx: 47, overPy: 66,
+		px: 7, py: 3, inTown: true, curCty: 2,
+		equip: [4]int{-1, -1, -1, -1},
+	}
+	s := g.snapshot()
+	if !s.OverworldPosV2 || s.OverPX != 47 || s.OverPY != 66 {
+		t.Fatalf("城內 snapshot 未保存 remembered-world：%+v", s)
+	}
+	var restored Game
+	restored.restore(s)
+	if restored.overPx != 47 || restored.overPy != 66 {
+		t.Fatalf("城內 round-trip 遺失 remembered-world：(%d,%d)",
+			restored.overPx, restored.overPy)
+	}
+
+	// 舊 Go 存檔沒有欄位時，依已保存 CTY/layer 的原版 cty_loc 遷移，
+	// 不可保留 NewGame 的阿里阿罕座標。
+	legacy := saveState{
+		PX: 7, PY: 3, InTown: true, Cty: 4, Layer: 0,
+		EquipmentV2: true, Equip: [4]int{-1, -1, -1, -1},
+	}
+	restored.overPx, restored.overPy = 153, 174
+	restored.restore(legacy)
+	if restored.overPx != ctyLoc[4][0] || restored.overPy != ctyLoc[4][1] {
+		t.Fatalf("舊城內存檔未由 CTY04 遷移 remembered-world：(%d,%d)",
+			restored.overPx, restored.overPy)
+	}
+}

@@ -24,6 +24,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("NewGame: %v", err)
 	}
 	roleEvent := mustTemporaryRoleEvent(t, g)
+	questEvents := g.pack.QuestItemChainEvents()
+	if len(questEvents) != 1 {
+		t.Fatalf("quest item chain event count=%d, want 1", len(questEvents))
+	}
+	noanielEvent := questEvents[0]
 	// 此測試驗證數千次正式 InputState 的連續狀態路線；逐步 WritePixels 會在沒有
 	// ebiten 顯示迴圈的 test binary 累積圖形命令。畫面另由 framedump 測試驗證。
 	g.frame = nil
@@ -661,7 +666,97 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if g.inTown {
 		t.Fatal("恢復冒險者後未能由正式路線離開羅馬利亞")
 	}
-
+	// 攻略下一節點：由羅馬利亞合法 checkpoint 北行，完整閉合
+	// 沉睡村 → 夢幻紅寶石 → 精靈女王換物 → 覺醒粉甦醒。
+	traceAdventureWalkToCty(t, g, noanielEvent.Use.CTYRaw)
+	if !g.inTown || g.curCty != noanielEvent.Use.CTYRaw || sceneSection(g.cur) != 0 {
+		t.Fatalf("辭位後未能正式抵達諾阿尼魯：town=%v cty=%d sec=%d",
+			g.inTown, g.curCty, sceneSection(g.cur))
+	}
+	traceExitTownBoundary(t, g)
+	exchange := noanielEvent.Exchange
+	traceAdventureWalkToCty(t, g, exchange.NPC.CTYRaw)
+	traceTownSectionTo(t, g, exchange.NPC.CTYRaw, exchange.NPC.Section,
+		exchange.NPC.Tile.X, exchange.NPC.Tile.Y)
+	traceTalkNPC(t, g, exchange.NPC.Tile.X, exchange.NPC.Tile.Y)
+	beforeText, _ := g.pack.TextGlyphCodes(exchange.BeforeTextID)
+	if !g.dlg.open || !reflect.DeepEqual(g.dlg.buf, beforeText) {
+		t.Fatal("未持夢幻紅寶石時，精靈女王未由正式話す入口播放 pack before text")
+	}
+	traceCloseDialogue(t, g)
+	traceTownSectionTo(t, g, -1, -1)
+	treasure := noanielEvent.Treasure
+	traceAdventureWalkToCty(t, g, treasure.CTYRaw)
+	if !g.inTown || g.curCty != treasure.CTYRaw {
+		t.Fatalf("精靈村後未能正式抵達地底湖洞窟：town=%v cty=%d",
+			g.inTown, g.curCty)
+	}
+	traceTownSectionTo(t, g, treasure.CTYRaw, treasure.Section, 21, 20)
+	traceWalkTo(t, g, 21, 20)
+	press(InputState{Confirm: true})
+	if !g.cmd.open {
+		t.Fatal("夢幻紅寶石事件格未能開啟正式命令窗")
+	}
+	for _, dir := range []int{3, 0, 0} {
+		if g.cmd.cursor == int(cmdExamine) {
+			break
+		}
+		send(InputState{DirHeld: -1, DirEdge: dir})
+	}
+	if g.cmd.cursor != int(cmdExamine) {
+		t.Fatalf("夢幻紅寶石事件格無法選到調查：cursor=%d", g.cmd.cursor)
+	}
+	press(InputState{Confirm: true})
+	if !g.hasItem(treasure.ItemRawID) || g.storyFlag(treasure.PresentFlag) {
+		t.Fatalf("正式調查 CTY11 sec3 (21,20) 未取得夢幻紅寶石：%v", g.inventory)
+	}
+	traceTownSectionTo(t, g, -1, -1)
+	traceAdventureWalkToCty(t, g, exchange.NPC.CTYRaw)
+	traceTownSectionTo(t, g, exchange.NPC.CTYRaw, exchange.NPC.Section,
+		exchange.NPC.Tile.X, exchange.NPC.Tile.Y)
+	traceTalkNPC(t, g, exchange.NPC.Tile.X, exchange.NPC.Tile.Y)
+	exchangeText, _ := g.pack.TextGlyphCodes(exchange.SuccessTextID)
+	if g.hasItem(exchange.RequiredItemRawID) || !g.hasItem(exchange.GrantedItemRawID) ||
+		!g.dlg.open || !reflect.DeepEqual(g.dlg.buf, exchangeText) {
+		t.Fatalf("精靈女王未正式以夢幻紅寶石換覺醒粉：ruby=%v powder=%v dlg=%v",
+			g.hasItem(exchange.RequiredItemRawID), g.hasItem(exchange.GrantedItemRawID), g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	traceTownSectionTo(t, g, -1, -1)
+	traceAdventureWalkToCty(t, g, noanielEvent.Use.CTYRaw)
+	traceUseInventoryItem(t, g, noanielEvent.Use.ItemRawID)
+	awakenText, _ := g.pack.TextGlyphCodes(noanielEvent.Use.SuccessTextID)
+	if g.hasItem(noanielEvent.Use.ItemRawID) ||
+		!g.storyFlag(noanielEvent.Use.SetFlagsRaw[0]) ||
+		g.storyFlag(noanielEvent.Use.ClearFlagsRaw[0]) ||
+		!g.dlg.open || !reflect.DeepEqual(g.dlg.buf, awakenText) {
+		t.Fatal("在諾阿尼魯正式使用覺醒粉後，未完成原版旗標切換、消耗、文字與場景重載")
+	}
+	traceCloseDialogue(t, g)
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存諾亞尼爾甦醒 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})          // 標題 splash → 主選單
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
+	press(InputState{Confirm: true})          // 正式載入冒險之書
+	if !g.inTown || g.curCty != noanielEvent.Use.CTYRaw ||
+		sceneSection(g.cur) != 0 ||
+		g.hasItem(noanielEvent.Use.ItemRawID) ||
+		!g.storyFlag(noanielEvent.Use.SetFlagsRaw[0]) ||
+		g.storyFlag(noanielEvent.Use.ClearFlagsRaw[0]) {
+		t.Fatalf("諾亞尼爾甦醒狀態未通過 save/load round-trip：town=%v cty=%d sec=%d",
+			g.inTown, g.curCty, sceneSection(g.cur))
+	}
+	traceExitTownBoundary(t, g)
+	if g.inTown {
+		t.Fatal("甦醒並讀檔後未能由正式邊界離開諾亞尼爾")
+	}
 }
 
 // traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
@@ -907,7 +1002,9 @@ func traceExitTownBoundary(t *testing.T, g *Game) {
 		t.Fatalf("走出城鎮邊界: %v", err)
 	}
 	if g.inTown {
-		t.Fatalf("從 CTY%d 邊界 (%d,%d) dir%d 未正常出城", g.curCty, best.x, best.y, best.dir)
+		t.Fatalf("從 CTY%d sec%d 邊界 (%d,%d) dir%d 未正常出城：player=(%d,%d) cd=%d cmd=%v panel=%d dlg=%v title=%v",
+			g.curCty, sceneSection(g.cur), best.x, best.y, best.dir,
+			g.px, g.py, g.cd, g.cmd.open, g.panel, g.dlg.open, g.showTitle)
 	}
 }
 

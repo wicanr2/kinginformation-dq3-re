@@ -29,19 +29,18 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 - 共用 game-pack JSON 契約：
   [`docs/84`](docs/84-game-pack-json-contract.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
-- 最新 production audit：[`docs/82`](docs/82-romaly-king-production-trace.md)
+- 最新 production audit：[`docs/86`](docs/86-noaniel-awakening-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
 
-boot 起的正式 trace 已閉合到羅馬利亞金皇冠線結束：玩家以正式道具選單使用魔法球、
-穿越 CTY30／31，建立四人隊並合法練至 Lv10，登上 CTY10 擊敗甘達特×1＋手下×3，
-完成求饒、取冠與標題讀檔。夜間返回羅馬利亞時依原版 CTY02 夜表由守衛封宮，正式使用
-旅店回到白天後才晉見；還冠、先拒絕再接受臨時王位、角色圖由 flag 派生、標題讀檔、
-地下競技場兩層辭位、再次存讀檔與離城均已通過 production `InputState` trace。
-**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從辭位後合法 checkpoint
-前往諾阿尼魯，記錄最早 blocker。原版與 game-pack 證據見 `docs/82`、`docs/85`。
+boot 起的正式 trace 已閉合到諾亞尼爾甦醒：羅馬利亞辭位後正式步行至 CTY04／05／11，
+取得夢幻紅寶石、由精靈女王在原背包格換成覺醒粉，再回 CTY04 正式使用。原版事件是
+`SET story flag 0x26`（清醒 NPC）、`CLEAR 0x31`（沉睡替身）、rec599 與即時場景重載；
+舊寫法設定 `g.flags[0x31]=true` 是錯誤且曾造成 trace 假陽性，已移除。事件後 save/load
+及讀檔離村已通過 production `InputState` trace。**尚未完成從新遊戲開始的無 debug
+全流程驗收**；下一個 audit 從此合法 checkpoint 前往金字塔。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -51,9 +50,9 @@ Android／Web 嵌入 pack 則仍需重包。
 2026-07-29 起的硬規則：版本專屬 CTY/section/座標、subid、story flag、dialogue record、
 formation、寶箱 gate、價格與 cue 不得新增成 Go 常數/table。甘達特事件已是第一個完整
 `events.json` + `texts.json` + 通用 `boss_surrender` primitive + EXE/CTY/D3TXT parity
-範例；羅馬利亞 `temporary_role` 是第二個完整範例，14 段對白、NPC selector、item、
-flags 與角色圖 entry 均由 JSON 提供。人物初始裝備由 `characters.json` 提供。細則見
-`AGENTS.md` 與 `docs/84`。
+範例；羅馬利亞 `temporary_role` 是第二個完整範例；諾亞尼爾 `quest_item_chain` 是
+第三個，treasure、NPC selector、兩次道具交易、flags 與三段文字均由 JSON 提供。
+人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法
 

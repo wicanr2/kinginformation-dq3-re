@@ -71,21 +71,6 @@ func TestUsePrayerRingMP(t *testing.T) {
 	}
 }
 
-// 覺醒粉(0x5a):在諾阿尼魯(CTY4)使用 → 消耗、設 flag 0x31。
-func TestUseAwakenInNoahnil(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
-	g.inTown, g.curCty = true, 4
-	g.inventory = []int{0x5a}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
-	if !g.flags[0x31] {
-		t.Errorf("覺醒粉在諾阿尼魯應設 flag 0x31")
-	}
-	if len(g.inventory) != 0 {
-		t.Errorf("覺醒粉在諾阿尼魯應消耗,剩 %d", len(g.inventory))
-	}
-}
-
 func TestUseMagicBallBreaksTemptationCaveWall(t *testing.T) {
 	const w, h = 12, 18
 	cells := make([]int, w*h)
@@ -160,21 +145,6 @@ func TestTemptationCaveRealDataRebuildsClearedWall(t *testing.T) {
 		if cleared.hiMap[p[1]*cleared.w+p[0]]&0x1f != 0 {
 			t.Errorf("重建破牆 (%d,%d) 未清 event subid", p[0], p[1])
 		}
-	}
-}
-
-// 覺醒粉:位置不符(不在諾阿尼魯)→ 不消耗、不設 flag。
-func TestUseAwakenWrongPlaceNoConsume(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
-	g.inTown, g.curCty = true, 5 // 別的城鎮
-	g.inventory = []int{0x5a}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
-	if g.flags[0x31] {
-		t.Errorf("覺醒粉位置不符不應設 flag 0x31")
-	}
-	if len(g.inventory) != 1 {
-		t.Errorf("覺醒粉位置不符不應消耗,剩 %d", len(g.inventory))
 	}
 }
 

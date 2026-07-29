@@ -13,7 +13,6 @@ const (
 	CureParalysis             // 解麻痺(滿月草)
 	ReturnTown                // 回最後城鎮(蓋美拉翅膀)
 	Repel                     // 暫時驅弱敵(聖水)
-	Awaken                    // 覺醒粉(位置相關)
 	Gaia                      // 蓋亞之劍(位置相關,不消耗)
 	Drain                     // 乾渴壺(位置相關,不消耗)
 	FairyFlute                // 妖精之笛(位置相關,不消耗)
@@ -67,8 +66,6 @@ func KindOf(itemID int) Kind {
 		return DarkLamp
 	case ItemMirror:
 		return Mirror
-	case 0x5a:
-		return Awaken // 覺醒粉(諾阿尼魯解催眠)
 	case 0x0f:
 		return Gaia // 蓋亞之劍(火山開通)
 	case 0x5e:

@@ -618,6 +618,67 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("地下競技場未進入第二層辭位確認")
 	}
 	dump("romaly_restore_confirm")
+
+	// 下一個正式切片：諾亞尼爾沉睡村、精靈女王以紅寶石換覺醒粉、
+	// 以及原版 SET 0x26 / CLEAR 0x31 後即時重載的清醒村莊。
+	g.finishTemporaryRoleEvent()
+	g.setStoryFlag(roleEvent.ActiveRoleFlagRaw, false)
+	g.setStoryFlag(roleEvent.NormalRoleFlagRaw, true)
+	g.syncTemporaryRoleVisual()
+	questEvents := g.pack.QuestItemChainEvents()
+	if len(questEvents) != 1 {
+		t.Fatalf("quest item chain event count=%d, want 1", len(questEvents))
+	}
+	noaniel := questEvents[0]
+	sleeping, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		noaniel.Use.CTYRaw, mapBlkNum[noaniel.Use.CTYRaw], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.curCty, g.inTown, g.town, g.cur = noaniel.Use.CTYRaw, true, sleeping, sleeping
+	g.dlg.tx, g.dlg.open = sleeping.dlgText, false
+	g.px, g.py, g.facing = 15, 20, 1
+	dump("noaniel_sleeping")
+
+	exchange := noaniel.Exchange
+	fairyVillage, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		exchange.NPC.CTYRaw, mapBlkNum[exchange.NPC.CTYRaw], exchange.NPC.Section, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.curCty, g.town, g.cur = exchange.NPC.CTYRaw, fairyVillage, fairyVillage
+	g.dlg.tx, g.dlg.open = fairyVillage.dlgText, false
+	g.px, g.py, g.facing = exchange.NPC.Tile.X, exchange.NPC.Tile.Y+1, 1
+	g.inventory = append(g.inventory, exchange.RequiredItemRawID)
+	var fairyQueen *npcInst
+	for i := range fairyVillage.npcs {
+		if g.scriptedNPCMatches(&fairyVillage.npcs[i], exchange.NPC) {
+			fairyQueen = &fairyVillage.npcs[i]
+			break
+		}
+	}
+	if fairyQueen == nil || !g.talkQuestItemChain(fairyQueen) ||
+		!g.hasItem(exchange.GrantedItemRawID) || !g.dlg.open {
+		t.Fatal("精靈女王換物 runtime 圖未完成 pack transaction")
+	}
+	dump("fairy_queen_ruby_exchange")
+
+	sleeping, err = loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		noaniel.Use.CTYRaw, mapBlkNum[noaniel.Use.CTYRaw], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.curCty, g.town, g.cur = noaniel.Use.CTYRaw, sleeping, sleeping
+	g.dlg.tx, g.dlg.open = sleeping.dlgText, false
+	g.px, g.py, g.facing = 15, 20, 1
+	g.panel, g.panelCursor = panelItem, 0
+	g.inventory = []int{noaniel.Use.ItemRawID}
+	g.useSelectedItem()
+	if !g.storyFlag(noaniel.Use.SetFlagsRaw[0]) ||
+		g.storyFlag(noaniel.Use.ClearFlagsRaw[0]) || !g.dlg.open {
+		t.Fatal("諾亞尼爾甦醒 runtime 圖未完成 pack flag transaction")
+	}
+	dump("noaniel_awakened")
 }
 
 // TestDumpChurchRevive 產出 production renderer 的教會復活確認窗。它不是 raw glyph dump；

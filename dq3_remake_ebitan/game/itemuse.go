@@ -11,6 +11,9 @@ func (g *Game) useSelectedItem() {
 		return
 	}
 	code := g.inventory[g.panelCursor]
+	if g.useQuestItemChain(code) {
+		return
+	}
 	switch itemuse.KindOf(code) {
 	case itemuse.HealHP: // 藥草:回復第一個未滿且未陣亡的隊員 HP
 		if g.applyHealHP(code) {
@@ -40,14 +43,6 @@ func (g *Game) useSelectedItem() {
 			g.removeItems(code, 1)
 			g.clampPanelCursor()
 		}
-	case itemuse.Awaken: // 覺醒粉:諾阿尼魯村(CTY4)解全村催眠
-		if g.inTown && g.curCty == 4 {
-			g.removeItems(code, 1)
-			g.flags[0x31] = true
-			g.noticeCode, g.noticeTimer = code, 90
-			g.clampPanelCursor()
-		}
-		// 否則此處用不上,不消耗(對齊原版)
 	case itemuse.Gaia: // 蓋亞之劍:地表小火山旁 → 開通往尼羅肯特(武器,不消耗)
 		if !g.inTown {
 			g.flags[0x32] = true

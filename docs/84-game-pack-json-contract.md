@@ -1,6 +1,7 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-> 狀態：架構契約草案 v0.1（尚未代表 loader 已完成）
+> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與三種事件 primitive；
+> 其餘資料表依垂直切片逐批遷移。
 >
 > 適用範圍：Go／Ebitengine 共用核心，以及未來的 `dq1_cht`、`dq2_cht`、`dq3_cht`
 > 資料包。第一個實作者與相容性基準是 `dq3_cht`。
@@ -172,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 資料契約版本，例如 `"0.1.0"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.1"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -189,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.1.1",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -376,9 +377,9 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 | `source` | object | 是 | `legacy_record` 的檔名／record，或 `glyph_map` 字模來源。 |
 | `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
 
-目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72 與「是／否」已遷入
-`data/texts.json`；parity test 逐 word 對 `D3TXT02.TXT`，修改 pack 會改 canonical
-content hash，舊存檔不得靜默套用。
+目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
+諾亞尼爾全域 rec599 與「是／否」已遷入 `data/texts.json`；parity test 逐 word
+對原始 D3TXT，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
 
 ### 6.9 `events.json`
 
@@ -466,6 +467,34 @@ flag 與 pack entry 派生，不在存檔複製 transient sprite state。缺文�
 整個事件 fail closed，不部分扣道具。DQ3 canonical 範例見 `events.json`，原版證據見
 [`docs/82`](82-romaly-king-production-trace.md)。
 
+第三個已實作 primitive 是 `quest_item_chain_events`，供「一次性寶物→指定 NPC 原地換物→
+指定地點使用結果道具→切換場景旗標與重載」的有限流程使用。它不包含諾亞尼爾、精靈女王
+或 DQ3 固有名稱；其他版本有相同交易才能使用。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `quest_item_chain_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id` | string | 是 | 穩定 namespaced event ID。 |
+| `[].kind` | enum | 是 | 此表固定為 `quest_item_chain`。 |
+| `[].treasure` | object | 是 | `cty_raw/section/tile_subid/event_type_raw/item_raw_id/present_flag_raw`；present flag 採原版 set=可取、clear=已取語意。 |
+| `[].exchange.npc` | object | 是 | `{cty_raw,section,tile:{x,y},handler_raw}` 的 scripted NPC selector。 |
+| `[].exchange.required_item_raw_id` | int | 是 | 必須等於 treasure item；存在時才可交易。 |
+| `[].exchange.granted_item_raw_id` | int | 是 | 直接取代原背包格的結果道具，不刪除後 append。 |
+| `[].exchange.before_text_id` | string | 是 | 缺前置道具時的穩定 text ID。 |
+| `[].exchange.success_text_id` | string | 是 | 成功換物時的穩定 text ID。 |
+| `[].use.item_raw_id` | int | 是 | 必須等於交換所得道具。 |
+| `[].use.location_kind` | enum | 是 | v0.1 只支援 `town`，不接受任意條件式。 |
+| `[].use.cty_raw` | int | 是 | 成功使用的原版 CTY number。 |
+| `[].use.set_flags_raw` | int[] | 是 | 成功後依序 SET；至少一筆，與 clear 陣列不得重複。 |
+| `[].use.clear_flags_raw` | int[] | 是 | 成功後依序 CLEAR；至少一筆。 |
+| `[].use.success_text_id` | string | 是 | 使用成功的穩定 text ID。 |
+| `[].use.reload_scene` | boolean | 是 | v0.1 必須為 true，旗標交易後重載目前 section。 |
+| `[].evidence` | object | 是 | treasure、交換、use writer／consumer 與可見結果的 D3 證據。 |
+
+引擎只實作上述固定交易；位置錯誤時不消耗，缺 text/reference 時在任何 inventory／flag
+mutation 前失敗即關閉。DQ3 canonical 範例與原版 parity test 見 `events.json`、
+[`docs/86`](86-noaniel-awakening-production-trace.md)。
+
 ### 6.10 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
@@ -485,7 +514,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.1.1",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

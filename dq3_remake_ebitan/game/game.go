@@ -400,6 +400,8 @@ func (g *Game) selectCommand(cmd int) {
 					// 不屬於泛用 scriptedTable。
 				} else if g.talkTemporaryRole(n) {
 					// game-pack required-item → temporary-role → restore primitive。
+				} else if g.talkQuestItemChain(n) {
+					// game-pack treasure → item exchange → location-use primitive。
 				} else if g.curCty == ctyPortoga && n.x == portogaKingX && n.y == portogaKingY {
 					// 波魯多加國王(main.c:1607 位置特例,先於 scripted 表判定)
 					g.talkPortogaKing()
@@ -651,6 +653,9 @@ func (g *Game) examine() {
 			g.setStoryFlag(ev[2], false)
 			g.cur.revealEventTile(x, y)
 			g.dlg.OpenFrom(g.shop.nameText, 484)
+			return true
+		}
+		if g.collectQuestTreasure(g.curCty, g.cur.sec, subid) {
 			return true
 		}
 		t := treasureFor(g.curCty, g.cur.sec, subid)

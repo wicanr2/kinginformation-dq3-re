@@ -37,6 +37,9 @@ type saveState struct {
 	ShipY           int          `json:"shipy"`
 	PX              int          `json:"px"`
 	PY              int          `json:"py"`
+	OverPX          int          `json:"over_px,omitempty"`
+	OverPY          int          `json:"over_py,omitempty"`
+	OverworldPosV2  bool         `json:"overworld_position_v2,omitempty"`
 	InTown          bool         `json:"town"`
 	StoryBits       []byte       `json:"storybits,omitempty"`
 	WorldState      uint16       `json:"worldstate,omitempty"`
@@ -84,7 +87,8 @@ func (g *Game) snapshot() saveState {
 		ShipOwned:   g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PhoenixOwned: g.phoenixOwned, PhoenixAboard: g.phoenixAboard,
 		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY,
-		PX: g.px, PY: g.py, InTown: g.inTown,
+		PX: g.px, PY: g.py, OverPX: g.overPx, OverPY: g.overPy,
+		OverworldPosV2: true, InTown: g.inTown,
 		StoryBits:  append([]byte(nil), g.storyBits[:]...),
 		WorldState: g.worldState,
 		DNPhase:    g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
@@ -189,6 +193,18 @@ func (g *Game) restore(s saveState) {
 	}
 	g.dnPhase, g.dnStep = s.DNPhase&3, s.DNStep
 	g.layer, g.curCty = s.Layer, s.Cty
+	switch {
+	case s.OverworldPosV2:
+		g.overPx, g.overPy = s.OverPX, s.OverPY
+	case s.InTown && s.Cty >= 0 && s.Cty < len(ctyLoc) &&
+		ctyLoc[s.Cty][2] == s.Layer:
+		// 舊 Go 存檔沒有 remembered-world 欄位。只能由已保存的 CTY/layer
+		// 回推該城原版 cty_loc；不可沿用 NewGame 的阿里阿罕預設。
+		g.overPx, g.overPy = ctyLoc[s.Cty][0], ctyLoc[s.Cty][1]
+	default:
+		// 地表舊檔的玩家座標本身就是 remembered-world 座標。
+		g.overPx, g.overPy = s.PX, s.PY
+	}
 	g.visitedTowns = nil
 	for _, v := range s.VisitedTowns {
 		g.addVisitedTown(v.Cty) // 驗證並按 EXE table 正規化舊存檔順序。
