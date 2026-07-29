@@ -201,6 +201,21 @@ func TestEncounterGroupCount(t *testing.T) {
 	}
 }
 
+func TestEncounterSubtableThresholdForcesSingleEnemy(t *testing.T) {
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{}
+	g.battle.mons = mons
+	g.prng.Seed(1)
+	for i := 0; i < 64; i++ {
+		if got := g.encounterGroupCount(6, 100); got != 1 {
+			t.Fatalf("threshold100 必須強制單隻，got %d", got)
+		}
+	}
+}
+
 // TestDumpMultiEnemyBattle:視覺核驗——多隻同種怪橫排的戰鬥畫面 dump 成 PNG(規則 63/64:
 // 靜態/單元測試之外留一份可肉眼核對的畫面,證明 N 隻 sprite 真的畫出來)。平常 skip;
 // 設 DQ3_DUMP_MULTI=1 + MULTI_OUT=<gitignored 夾> 才跑。用 DQ3_BATTLE/DQ3_BATTLE_N debug hook

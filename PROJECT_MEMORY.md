@@ -1,6 +1,6 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 更新：2026-07-28。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-07-29。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
 
@@ -26,14 +26,15 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 ## 現況入口
 
 - 唯一 current plan：[`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)
-- 近期完成切片與續做點：[`docs/73-gap-fix-worklist.md`](docs/73-gap-fix-worklist.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
+- 最新 production trace：[`docs/79`](docs/79-najimi-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
 
-目前核心終盤切片已接通，但**尚未完成從新遊戲開始的無 debug 全流程驗收**。下一步依 `docs/73`
-續做非戰鬥傳送咒文與完整 playthrough；不得把事件 checkpoint 測試提升成 campaign E3。
+目前核心終盤切片已接通，boot 起的正式 trace 已到 CTY08 盜賊鑰匙並通過存讀檔，但
+**尚未完成從新遊戲開始的無 debug 全流程驗收**。下一步由該 checkpoint 正常走到雷貝鎮老人／
+魔法球；不得跳回孤立 handler 或把後段事件 checkpoint 測試提升成 campaign E3。
 
 ## 固定工程方法
 

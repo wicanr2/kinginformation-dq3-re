@@ -395,4 +395,39 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.battle.commands[0] = battleCommand{kind: bcWar, target: 0}
 	g.battle.resolveRound()
 	dump("battle_message_queue")
+
+	// 第一個主線道具：CTY08 sec3 正式「話す」老人，顯示取得盜賊鑰匙的 runtime 狀態。
+	najimi, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 8, mapBlkNum[8], 3, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.battle.active, g.inTown, g.curCty = false, true, 8
+	g.town, g.cur, g.dlg.tx = najimi, najimi, najimi.dlgText
+	g.inventory = nil
+	delete(g.flags, msThiefKey)
+	g.dlg.open, g.cmd.open = false, false
+	positioned := false
+	for dir := 0; dir < 4 && !positioned; dir++ {
+		dx, dy := dirDelta(dir)
+		for dist := 1; dist <= 2; dist++ {
+			x, y := 9-dx*dist, 9-dy*dist
+			if x < 0 || y < 0 || x >= najimi.w || y >= najimi.h || najimi.Blocked(x, y) {
+				continue
+			}
+			if dist == 2 && !najimi.attr.Blocked(najimi.tileIdx(9-dx, 9-dy)) {
+				continue
+			}
+			g.px, g.py, g.facing, g.cd = x, y, dir, 0
+			positioned = true
+			break
+		}
+	}
+	if !positioned {
+		t.Fatal("拿吉米老人周圍沒有原版可交談位置")
+	}
+	g.selectCommand(cmdTalk)
+	if !g.hasItem(0x55) || !g.dlg.open {
+		t.Fatal("拿吉米老人 runtime 圖未觸發盜賊鑰匙事件")
+	}
+	dump("najimi_thief_key")
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // TestOpeningProductionInputTrace 從標題開始，只送入 production InputState：
-// 標題→開始→英數命名→性別→四段開場→走出城鎮→進王城→上樓→王座。
+// 標題→開始→英數命名→性別→四段開場→王座→酒場四人隊→出城→拿吉米之塔→盜賊鑰匙。
 // 路徑搜尋只負責選下一個方向鍵，不直接修改 Game 狀態；每一步仍經 Game.step、
 // 碰撞、NPC、轉場與 runner region。這是第一條真正的玩家可達 E3 開場 trace。
 func TestOpeningProductionInputTrace(t *testing.T) {
@@ -130,6 +130,138 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("四人隊正常出城失敗：town=%v companions=%d @(%d,%d)",
 			g.inTown, len(g.companions), g.px, g.py)
 	}
+
+	// 從阿里阿罕出口沿真實地表走到拿吉米之塔；途中若發生隨機遭遇，也只送正式戰鬥輸入。
+	traceAdventureWalkToCty(t, g, 7) // 阿里阿罕西側地道入口；塔本體隔海，不能由地表直走
+	traceTownSectionTo(t, g, 8, 3)
+	traceTalkNPC(t, g, 9, 9) // CTY08 sec3 sub2 handler12：巴可達老人
+	if !g.hasItem(0x55) || !g.progressDone(msThiefKey) || !g.dlg.open {
+		t.Fatalf("正式對話後應取得盜賊鑰匙：item=%v milestone=%v dlg=%v",
+			g.hasItem(0x55), g.progressDone(msThiefKey), g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+
+	// 取得任務道具後的 checkpoint 必須可保存；不能只靠當前記憶體內 scripted 狀態。
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存盜賊鑰匙 checkpoint: %v", err)
+	}
+	restored, err := NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建讀檔 Game: %v", err)
+	}
+	if err := restored.Load(); err != nil {
+		t.Fatalf("讀取盜賊鑰匙 checkpoint: %v", err)
+	}
+	if !restored.hasItem(0x55) || !restored.progressDone(msThiefKey) ||
+		!restored.inTown || restored.curCty != 8 || sceneSection(restored.cur) != 3 {
+		t.Fatalf("盜賊鑰匙 checkpoint round-trip 錯：item=%v milestone=%v cty=%d sec=%d",
+			restored.hasItem(0x55), restored.progressDone(msThiefKey),
+			restored.curCty, sceneSection(restored.cur))
+	}
+}
+
+// traceAdventureWalkToCty 在同一層地表尋路到 CTY 入口；隨機遭遇由正式 battle input 解決。
+func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int) {
+	t.Helper()
+	if wantCty < 0 || wantCty >= len(ctyLoc) || ctyLoc[wantCty][2] != g.layer {
+		t.Fatalf("無效 CTY%d / layer%d", wantCty, g.layer)
+	}
+	tx, ty := ctyLoc[wantCty][0]+1, ctyLoc[wantCty][1]
+	for i := 0; i < 12000 && (!g.inTown || g.curCty != wantCty); i++ {
+		if g.battle.active {
+			traceResolveBattle(t, g)
+			continue
+		}
+		traceWalkOne(t, g, tx, ty)
+	}
+	if !g.inTown || g.curCty != wantCty {
+		t.Fatalf("無法由地表抵達 CTY%d；目前 town=%v cty=%d @(%d,%d)",
+			wantCty, g.inTown, g.curCty, g.px, g.py)
+	}
+}
+
+func traceResolveBattle(t *testing.T, g *Game) {
+	t.Helper()
+	for i := 0; i < 512 && g.battle.active; i++ {
+		if g.battle.result == 2 {
+			t.Fatalf("正常前段路線發生全滅：mon=%d heroHP=%d", g.battle.monID, g.battle.heroHP)
+		}
+		in := InputState{DirHeld: -1, DirEdge: -1}
+		switch g.battle.phase {
+		case phCommand, phTargetEnemy, phMessage, phEnd:
+			in.Confirm = true
+		default:
+			t.Fatalf("自動戰鬥遇到未處理 phase=%d", g.battle.phase)
+		}
+		if err := g.step(in); err != nil {
+			t.Fatalf("推進正式戰鬥輸入: %v", err)
+		}
+	}
+	if g.battle.active {
+		t.Fatal("戰鬥 512 次正式輸入後仍未結束")
+	}
+}
+
+// traceTownSectionTo 從目前 section 依真實 transition table 找路，再逐格走過每個 portal。
+func traceTownSectionTo(t *testing.T, g *Game, wantCty, wantSec int) {
+	t.Helper()
+	type node struct{ cty, sec, x, y int }
+	type hop struct {
+		from, to         node
+		portalX, portalY int
+	}
+	start := node{g.curCty, sceneSection(g.cur), g.px, g.py}
+	q := []node{start}
+	seen := map[node]bool{start: true}
+	prev := map[node]hop{}
+	var goal node
+	found := false
+	for len(q) > 0 && !found {
+		cur := q[0]
+		q = q[1:]
+		if cur.cty == wantCty && cur.sec == wantSec {
+			goal, found = cur, true
+			break
+		}
+		sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+			cur.cty, mapBlkNum[cur.cty], cur.sec, g.dnPhase, g.storyFlag)
+		if err != nil {
+			continue
+		}
+		for y := 0; y < sc.h; y++ {
+			for x := 0; x < sc.w; x++ {
+				dcty, dsec, dx, dy, ok := sc.tileTransition(x, y)
+				if !ok || dsec >= 0xfe {
+					continue
+				}
+				if (x != cur.x || y != cur.y) && len(tracePortalPath(sc, cur.x, cur.y, x, y)) == 0 {
+					continue // transition table 有 edge，但此入口所在的連通區走不到該 portal
+				}
+				next := node{cur.cty, dsec, dx, dy}
+				if dcty >= 0 && dcty < 100 && dcty != cur.cty {
+					next.cty = dcty
+				}
+				if next == cur || seen[next] {
+					continue
+				}
+				seen[next] = true
+				prev[next] = hop{from: cur, to: next, portalX: x, portalY: y}
+				q = append(q, next)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("transition graph 無法由 CTY%d sec%d 到 CTY%d sec%d",
+			start.cty, start.sec, wantCty, wantSec)
+	}
+	var route []hop
+	for cur := goal; cur != start; cur = prev[cur].from {
+		route = append(route, prev[cur])
+	}
+	for i := len(route) - 1; i >= 0; i-- {
+		h := route[i]
+		traceWalkThroughPortal(t, g, h.portalX, h.portalY, h.to.cty, h.to.sec, h.to.x, h.to.y)
+	}
 }
 
 func traceCloseDialogue(t *testing.T, g *Game) {
@@ -144,13 +276,32 @@ func traceCloseDialogue(t *testing.T, g *Game) {
 	}
 }
 
-func traceWalkThroughPortal(t *testing.T, g *Game, x, y, wantCty, wantSec int) {
+func traceWalkThroughPortal(t *testing.T, g *Game, x, y, wantCty, wantSec int, wantPos ...int) {
 	t.Helper()
+	arrived := func() bool {
+		if g.curCty != wantCty || g.cur == nil || g.cur.sec != wantSec {
+			return false
+		}
+		return len(wantPos) < 2 || g.px == wantPos[0] && g.py == wantPos[1]
+	}
 	for i := 0; i < 3000; i++ {
-		if g.curCty == wantCty && g.cur != nil && g.cur.sec == wantSec {
+		if arrived() {
 			return
 		}
-		traceWalkOne(t, g, x, y)
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待 portal cooldown: %v", err)
+			}
+			continue
+		}
+		path := tracePortalPath(g.cur, g.px, g.py, x, y)
+		if len(path) == 0 {
+			t.Fatalf("無法在不踩其他 transition 下抵達 portal(%d,%d)，目前 @(%d,%d)",
+				x, y, g.px, g.py)
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("走向 portal dir%d: %v", path[0], err)
+		}
 	}
 	t.Fatalf("走到 portal(%d,%d)後仍未抵達 CTY%d sec%d；目前 CTY%d sec%d @(%d,%d)",
 		x, y, wantCty, wantSec, g.curCty, sceneSection(g.cur), g.px, g.py)
@@ -229,6 +380,50 @@ func traceTalkNPC(t *testing.T, g *Game, nx, ny int) {
 		}
 	}
 	t.Fatalf("無法抵達 NPC(%d,%d) 的相鄰格", nx, ny)
+}
+
+// tracePortalPath 把目標以外的 transition tile 視為阻擋；否則最短路徑可能先踩到
+// 另一座樓梯，執行時場景已切換，靜態 graph 卻仍誤判可達。
+func tracePortalPath(sc *Scene, sx, sy, tx, ty int) []int {
+	if sc == nil || sx == tx && sy == ty {
+		return nil
+	}
+	type node struct{ x, y int }
+	start, goal := node{sx, sy}, node{tx, ty}
+	q := []node{start}
+	seen := map[node]bool{start: true}
+	prev := map[node]node{}
+	prevDir := map[node]int{}
+	for len(q) > 0 {
+		p := q[0]
+		q = q[1:]
+		for dir := 0; dir < 4; dir++ {
+			dx, dy := dirDelta(dir)
+			n := node{p.x + dx, p.y + dy}
+			if seen[n] || n.x < 0 || n.y < 0 || n.x >= sc.w || n.y >= sc.h ||
+				sc.Blocked(n.x, n.y) {
+				continue
+			}
+			if n != goal {
+				if _, _, _, _, ok := sc.tileTransition(n.x, n.y); ok {
+					continue
+				}
+			}
+			seen[n], prev[n], prevDir[n] = true, p, dir
+			if n == goal {
+				var rev []int
+				for cur := goal; cur != start; cur = prev[cur] {
+					rev = append(rev, prevDir[cur])
+				}
+				for i, j := 0, len(rev)-1; i < j; i, j = i+1, j-1 {
+					rev[i], rev[j] = rev[j], rev[i]
+				}
+				return rev
+			}
+			q = append(q, n)
+		}
+	}
+	return nil
 }
 
 // tracePath 對目前 production Scene 做 BFS，回方向鍵序列；Blocked 包含地形與當幀 NPC。
