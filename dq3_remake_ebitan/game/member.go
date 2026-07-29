@@ -15,7 +15,9 @@ type Member struct {
 	Exp                         uint32
 	Stats                       stats.Values // 原版角色 record 的七個持久能力欄
 	CurHP, CurMP                int
-	Weapon, Armor, Shield, Head int // item code；-1=無（0x00 是合法檜木棒）
+	Weapon, Armor, Shield, Head int   // item code；-1=無（0x00 是合法檜木棒）
+	Inventory                   []int // 個人未裝備道具；原版角色 record 最多八格（裝備亦占格）
+	LearnedSpells               []int // 已永久學會的全咒文 record；轉職後不清除
 }
 
 // 職業名 glyph(dq3_class_names):勇者/戰士/武鬥家/僧侶/魔法使者/賢者/商人/遊玩者。
@@ -57,8 +59,54 @@ func (m *Member) Def(items *dq3data.Items) int {
 }
 
 // Spells = 該職業該等級已學可施放咒(class-aware)。
-func (m *Member) Spells() []int    { return spell.Known(m.Class, m.Level()) }
-func (m *Member) AllSpells() []int { return spell.KnownAll(m.Class, m.Level()) }
+func appendUnique(dst []int, src ...int) []int {
+	seen := make(map[int]bool, len(dst)+len(src))
+	for _, value := range dst {
+		seen[value] = true
+	}
+	for _, value := range src {
+		if !seen[value] {
+			dst = append(dst, value)
+			seen[value] = true
+		}
+	}
+	return dst
+}
+
+func (m *Member) syncLearnedSpells() {
+	m.LearnedSpells = appendUnique(m.LearnedSpells, spell.KnownAll(m.Class, m.Level())...)
+}
+
+func (m *Member) AllSpells() []int {
+	m.syncLearnedSpells()
+	return append([]int(nil), m.LearnedSpells...)
+}
+
+func (m *Member) Spells() []int {
+	all := m.AllSpells()
+	out := all[:0]
+	for _, rec := range all {
+		if spell.BattleUsable(rec) {
+			out = append(out, rec)
+		}
+	}
+	return out
+}
+
+func (m *Member) equippedItems() []int {
+	equipment := [4]int{m.Weapon, m.Armor, m.Shield, m.Head}
+	out := make([]int, 0, len(equipment))
+	for _, code := range equipment {
+		if code >= 0 {
+			out = append(out, code)
+		}
+	}
+	return out
+}
+
+func (m *Member) itemCount() int {
+	return len(m.Inventory) + len(m.equippedItems())
+}
 
 // heal 補至上限;fullHeal 補滿 HP/MP。
 func (m *Member) fullHeal() { m.CurHP, m.CurMP = m.MaxHP(), m.MaxMP() }
@@ -68,6 +116,7 @@ func newMember(name []int, class, gender int, exp uint32) *Member {
 	m := &Member{Name: name, Class: class, Gender: gender, Exp: exp,
 		Weapon: -1, Armor: -1, Shield: -1, Head: -1}
 	m.ensureStats() // 舊測試/debug 建角的相容路徑；正式登錄走 newLevelOneMember。
+	m.syncLearnedSpells()
 	m.fullHeal()
 	return m
 }
@@ -78,6 +127,7 @@ func newLevelOneMember(name []int, class, gender int, r *rng.RNG, equipment [4]i
 	m := &Member{Name: append([]int(nil), name...), Class: class, Gender: gender,
 		Weapon: equipment[0], Armor: equipment[1], Shield: equipment[2], Head: equipment[3]}
 	m.Stats = stats.InitValues(class, r)
+	m.syncLearnedSpells()
 	m.fullHeal()
 	return m
 }

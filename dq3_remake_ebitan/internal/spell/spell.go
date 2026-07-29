@@ -61,6 +61,14 @@ func MPCost(rec int) int {
 	return mpCosts[i]
 }
 
+// BattleUsable reports whether rec has a battle-caster descriptor. Learned
+// spell persistence stores both field and battle records; battle menus must
+// filter the retained union through this predicate.
+func BattleUsable(rec int) bool {
+	_, ok := defs[rec]
+	return ok
+}
+
 // 勇者系習得表(dq3_school_hero,18 咒,按等級)。
 var heroSchool = []Learn{
 	{2, 121}, {4, 161}, {6, 143}, {7, 172}, {10, 124}, {12, 160}, {14, 173}, {16, 144},

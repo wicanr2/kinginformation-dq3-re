@@ -23,10 +23,11 @@ type Dialogue struct {
 	open      bool
 
 	// 插值 var context(docs/42 §四;比照 C dq3_text_set_var_*/dq3_text_clear_vars)。
-	varItem    int   // VAR_ITEM 插值:道具 code(noVar=未設 → 空白)
-	varNum     int   // VAR_NUM 插值:數值(noVar=未設 → 空白)
-	varNumItem int   // VAR_NUM 在原版 mode=1 時取 item-name record（祭壇 rec93/96）
-	heroName   []int // VAR_ENT/VAR0/VAR7/VAR_IDX 插值:主角名 glyph 序列(Game 於創角/讀檔後同步;空=空白)
+	varItem    int              // VAR_ITEM 插值:道具 code(noVar=未設 → 空白)
+	varNum     int              // VAR_NUM 插值:數值(noVar=未設 → 空白)
+	varNumItem int              // VAR_NUM 在原版 mode=1 時取 item-name record（祭壇 rec93/96）
+	heroName   []int            // VAR_ENT/VAR0/VAR7/VAR_IDX 插值:主角名 glyph 序列(Game 於創角/讀檔後同步;空=空白)
+	varGlyph   map[uint16][]int // 事件可逐控制碼指定隊員／職業等原版變數；未指定才走既有語意
 }
 
 // Open 從當前 bank 取記錄 rec 進視窗。移植 dq3_dialogue_open。
@@ -52,6 +53,7 @@ func (d *Dialogue) openRecord(b []uint16) bool {
 	}
 	d.buf, d.pos, d.open = b, 0, true
 	d.varItem, d.varNum, d.varNumItem = noVar, noVar, noVar
+	d.varGlyph = nil
 	return true
 }
 
@@ -71,6 +73,9 @@ func (g *Game) openPackText(id string) bool {
 
 // varGlyphs 依插值控制碼種類回目前應插入的字模序列;var 未設或無資料 → nil(渲染空白一格)。
 func (d *Dialogue) varGlyphs(code uint16) []int {
+	if glyphs, ok := d.varGlyph[code]; ok {
+		return glyphs
+	}
 	switch code {
 	case dq3data.TxtVarNum:
 		if d.varNumItem >= 0 {
@@ -165,6 +170,17 @@ func (g *Game) setDlgVarItem(code int) { g.dlg.varItem = code }
 func (g *Game) setDlgVarNum(n int)     { g.dlg.varNum = n }
 func (g *Game) setDlgVarNumItem(code int) {
 	g.dlg.varNumItem = code
+}
+
+// setDlgVarGlyphs binds one original control-code family to an explicit glyph
+// sequence. Reclass records use VAR_ENT for the selected member and VAR_NUM
+// for the class name in the same record, so collapsing all variables to the
+// hero name would render the original text incorrectly.
+func (g *Game) setDlgVarGlyphs(code uint16, glyphs []int) {
+	if g.dlg.varGlyph == nil {
+		g.dlg.varGlyph = make(map[uint16][]int)
+	}
+	g.dlg.varGlyph[code] = append([]int(nil), glyphs...)
 }
 
 // draw 把當前頁畫進 rgba(黑底 + 白框 + 白字)。移植 dq3_dialogue_render。

@@ -41,17 +41,20 @@ func TestEquipSelectedCompanionReturnsOldEquipment(t *testing.T) {
 	g := &Game{
 		panelActor:  1,
 		panelCursor: 0,
-		inventory:   []int{0x03, 0x41},
 		equip:       [4]int{-1, 0x1e, -1, -1},
 		companions:  []*Member{m},
 	}
+	m.Inventory = []int{0x03, 0x41}
 	g.shop.items = loadTestItems(t)
 	g.equipSelected()
 	if m.Weapon != 0x03 {
 		t.Fatalf("戰士應換上銅劍：weapon=%#x", m.Weapon)
 	}
-	if len(g.inventory) != 2 || g.inventory[0] != 0x41 || g.inventory[1] != 0x00 {
-		t.Fatalf("新裝備應移出、舊檜木棒應回背包：%v", g.inventory)
+	if len(m.Inventory) != 2 || m.Inventory[0] != 0x41 || m.Inventory[1] != 0x00 {
+		t.Fatalf("新裝備應移出、舊檜木棒應回該同伴物品欄：%v", m.Inventory)
+	}
+	if len(g.inventory) != 0 {
+		t.Fatalf("同伴換裝不得污染主角物品欄：%v", g.inventory)
 	}
 }
 

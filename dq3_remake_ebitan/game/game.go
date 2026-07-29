@@ -253,51 +253,59 @@ func (sc *Scene) npcAt(x, y int) int {
 }
 
 type Game struct {
-	over, town     *Scene // 地表 / 目前城鎮
-	under          *Scene // 下層地表(DQ3UND.MAP,懶載;共用地表 BLK/attr/pal)
-	layer          int    // 目前地表層:0=地面 1=下層(城鎮進出以此決定回哪層)
-	cur            *Scene
-	inTown         bool
-	curCty         int   // 目前所在 CTY 號(-1=地表)
-	dnPhase        int   // 晝夜相位:0白天 1黃昏 2黑夜 3黎明(僅地表走動推進;城內固定)
-	dnStep         int   // 地表步數計數器(每 dnPhaseSteps 步推進一相位)
-	assets         fs.FS // 素材(懶載其他城鎮)
-	encounters     *dq3data.EncounterTables
-	worldPal       []dq3data.Color
-	manBLS         []byte         // NPC sprite 來源
-	towns          map[int]*Scene // 已載入城鎮快取(cty→Scene)
-	overPx, overPy int            // 記住進城前的地表座標(Esc 回來用)
-	hero           *dq3data.CharSprite
-	heroRole       *dq3data.CharSprite // 由 game-pack temporary_role active flag 推導；不另存檔
-	px, py         int                 // 主角在 cur 內的 tile 座標
-	facing         int                 // 0..3
-	walk           int                 // 0/1 走路動畫相位
-	cd, anim       int
-	dlg            Dialogue       // 對話視窗
-	cmd            CmdMenu        // 野外命令窗
-	battle         Battle         // 戰鬥場景
-	shop           Shop           // 商店(武防/道具店)
-	church         Church         // 教會服務
-	tavern         Tavern         // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
-	recruit        Recruit        // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
-	panel          panelKind      // 資訊面板(狀況/道具/裝備)
-	panelCursor    int            // 裝備面板游標
-	panelActor     int            // 裝備對象：-1=先選隊員、0=主角、1..=companions
-	panelHits      hitList        // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
-	fieldSpell     FieldSpellMenu // 野外咒文／魯拉目的地 modal
-	visitedTowns   []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
-	inventory      []int          // 持有道具 id
-	music          *gaudio.Music
-	input          *Input // 抽象輸入(鍵盤 + 觸控)
-	showTitle      bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
-	titlePix       []uint8
-	titlePal       []dq3data.Color
-	cfg            config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
-	pack           *gamepack.Pack // versioned 精訊版 game pack；遊戲設定不得再散落為 Go table
-	settings       Settings       // 設定選單 modal(標題畫面按 S 開)
-	newGame        NewGameFlow    // 標題主選單 + 主角命名/性別創建 modal(FLOW-GAP A2/A3/A4)
-	heroName       []int          // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
-	heroGender     int            // 主角性別(0=男 1=女)
+	over, town       *Scene // 地表 / 目前城鎮
+	under            *Scene // 下層地表(DQ3UND.MAP,懶載;共用地表 BLK/attr/pal)
+	layer            int    // 目前地表層:0=地面 1=下層(城鎮進出以此決定回哪層)
+	cur              *Scene
+	inTown           bool
+	curCty           int   // 目前所在 CTY 號(-1=地表)
+	dnPhase          int   // 晝夜相位:0白天 1黃昏 2黑夜 3黎明(僅地表走動推進;城內固定)
+	dnStep           int   // 地表步數計數器(每 dnPhaseSteps 步推進一相位)
+	assets           fs.FS // 素材(懶載其他城鎮)
+	encounters       *dq3data.EncounterTables
+	worldPal         []dq3data.Color
+	manBLS           []byte         // NPC sprite 來源
+	towns            map[int]*Scene // 已載入城鎮快取(cty→Scene)
+	overPx, overPy   int            // 記住進城前的地表座標(Esc 回來用)
+	hero             *dq3data.CharSprite
+	heroRole         *dq3data.CharSprite // 由 game-pack temporary_role active flag 推導；不另存檔
+	px, py           int                 // 主角在 cur 內的 tile 座標
+	facing           int                 // 0..3
+	walk             int                 // 0/1 走路動畫相位
+	cd, anim         int
+	dlg              Dialogue       // 對話視窗
+	cmd              CmdMenu        // 野外命令窗
+	battle           Battle         // 戰鬥場景
+	shop             Shop           // 商店(武防/道具店)
+	church           Church         // 教會服務
+	tavern           Tavern         // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
+	recruit          Recruit        // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
+	panel            panelKind      // 資訊面板(狀況/道具/裝備)
+	panelCursor      int            // 裝備面板游標
+	panelActor       int            // 裝備對象：-1=先選隊員、0=主角、1..=companions
+	panelHits        hitList        // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
+	itemActionStage  int            // 0=道具清單、1=使用/給予/丟掉、2=給予對象
+	itemActionCursor int            // 動作或給予對象游標
+	itemSelected     int            // 已選 g.inventory index
+	reclassEventID   string         // game-pack reclass event；空字串=無進行中的轉職
+	reclassStage     int            // 達瑪轉職對話／選擇狀態機
+	reclassCursor    int            // Yes/No、隊員或職業選單游標
+	reclassMember    int            // 0=主角、1..=companions；只有非勇者可交易
+	reclassTarget    int            // pack raw class；未選=-1
+	fieldSpell       FieldSpellMenu // 野外咒文／魯拉目的地 modal
+	visitedTowns     []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
+	inventory        []int          // 持有道具 id
+	music            *gaudio.Music
+	input            *Input // 抽象輸入(鍵盤 + 觸控)
+	showTitle        bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
+	titlePix         []uint8
+	titlePal         []dq3data.Color
+	cfg              config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
+	pack             *gamepack.Pack // versioned 精訊版 game pack；遊戲設定不得再散落為 Go table
+	settings         Settings       // 設定選單 modal(標題畫面按 S 開)
+	newGame          NewGameFlow    // 標題主選單 + 主角命名/性別創建 modal(FLOW-GAP A2/A3/A4)
+	heroName         []int          // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
+	heroGender       int            // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0)。heroStat 是原版角色 record 的七個持久能力欄；
 	// 創角/升級時由 sub_ed3c 相同的 RNG transaction 修改，不再每幀由等級公式重算。
 	heroExp                uint32
@@ -430,6 +438,8 @@ func (g *Game) selectCommand(cmd int) {
 					// game-pack required item → guide walk → scene trigger primitive。
 				} else if g.talkHostageRescue(n) {
 					// game-pack guard → captive switch → boss → reward primitive。
+				} else if g.talkReclass(n) {
+					// game-pack NPC → gate → class-change transaction primitive。
 				} else {
 					g.scriptedTalk(n.b4)
 				}
@@ -443,6 +453,7 @@ func (g *Game) selectCommand(cmd int) {
 		g.openFieldSpellMenu()
 	case cmdItem: // 道具
 		g.panel, g.panelCursor = panelItem, 0
+		g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
 	case cmdEquip: // 裝備
 		g.panel, g.panelCursor, g.panelActor = panelEquip, 0, -1
 	case cmdExamine: // 調査:檢查面向格 → 寶箱/隱藏物(一次性旗標)
@@ -885,6 +896,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.reclassChoosing() {
+		g.reclassChoiceInput(in)
+		g.renderFrame()
+		return nil
+	}
 	// 資訊面板 modal:狀況/道具 = B/A 關；裝備先選隊員，再選背包裝備。
 	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
@@ -895,11 +911,15 @@ func (g *Game) step(in InputState) error {
 		switch {
 		case in.Cancel && g.panel == panelEquip && g.panelActor >= 0:
 			g.panelActor, g.panelCursor = -1, 0
+		case in.Cancel && g.panel == panelItem && g.itemActionStage == itemActionTarget:
+			g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
+		case in.Cancel && g.panel == panelItem && g.itemActionStage == itemActionMenu:
+			g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
 		case in.Cancel:
 			g.panel = panelNone
 		case g.panel == panelEquip:
 			confirm := in.Confirm
-			n := len(g.inventory)
+			n := g.equipCandidateCount(g.panelActor)
 			if g.panelActor < 0 {
 				n = 1 + len(g.companions)
 			}
@@ -918,18 +938,48 @@ func (g *Game) step(in InputState) error {
 			case in.DirEdge == 1 && n > 0: // 上
 				g.panelCursor = (g.panelCursor + n - 1) % n
 			}
-		case g.panel == panelItem: // 道具:方向選 + A 使用(藥草/翼/聖水/祈禱之戒)
+		case g.panel == panelItem:
 			confirm := in.Confirm
-			if tapIdx >= 0 && len(g.inventory) > 0 {
+			if g.itemActionStage == itemActionList && tapIdx >= 0 && len(g.inventory) > 0 {
 				g.panelCursor, confirm = tapIdx, true
 			}
-			switch {
-			case confirm:
-				g.useSelectedItem()
-			case in.DirEdge == 0 && len(g.inventory) > 0: // 下
-				g.panelCursor = (g.panelCursor + 1) % len(g.inventory)
-			case in.DirEdge == 1 && len(g.inventory) > 0: // 上
-				g.panelCursor = (g.panelCursor + len(g.inventory) - 1) % len(g.inventory)
+			switch g.itemActionStage {
+			case itemActionList:
+				switch {
+				case confirm && len(g.inventory) > 0:
+					g.itemSelected = g.panelCursor
+					g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
+				case in.DirEdge == 0 && len(g.inventory) > 0:
+					g.panelCursor = (g.panelCursor + 1) % len(g.inventory)
+				case in.DirEdge == 1 && len(g.inventory) > 0:
+					g.panelCursor = (g.panelCursor + len(g.inventory) - 1) % len(g.inventory)
+				}
+			case itemActionMenu:
+				switch {
+				case confirm && g.itemActionCursor == 0:
+					g.panelCursor = g.itemSelected
+					g.itemActionStage = itemActionList
+					g.useSelectedItem()
+					g.itemSelected = -1
+				case confirm && g.itemActionCursor == 1 && len(g.companions) > 0:
+					g.itemActionStage, g.itemActionCursor = itemActionTarget, 0
+				case in.DirEdge == 0:
+					g.itemActionCursor = (g.itemActionCursor + 1) % 3
+				case in.DirEdge == 1:
+					g.itemActionCursor = (g.itemActionCursor + 2) % 3
+				}
+			case itemActionTarget:
+				switch {
+				case confirm && len(g.companions) > 0:
+					if g.giveSelectedItem(g.itemActionCursor) {
+						g.itemActionStage, g.itemActionCursor, g.itemSelected =
+							itemActionList, 0, -1
+					}
+				case in.DirEdge == 0 && len(g.companions) > 0:
+					g.itemActionCursor = (g.itemActionCursor + 1) % len(g.companions)
+				case in.DirEdge == 1 && len(g.companions) > 0:
+					g.itemActionCursor = (g.itemActionCursor + len(g.companions) - 1) % len(g.companions)
+				}
 			}
 		case in.Confirm:
 			g.panel = panelNone
@@ -966,6 +1016,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceStagedVehicleExchangeDialogue()
 				g.advanceGuidedPassageDialogue()
 				g.advanceHostageRescueDialogue()
+				g.advanceReclassDialogue()
 			}
 		}
 		g.renderFrame()
@@ -1142,7 +1193,7 @@ func (g *Game) enterTownCty(cty int) {
 	switch cty { // 進城推進主線里程碑(移植 main.c cur_cty 判定)
 	case 2: // 羅馬利亞
 		g.progressSet(msRomaly)
-	case 49: // 達瑪神殿
+	case 17: // 達瑪神殿（原版地表 lookup 實際選到 CTY17）
 		g.progressSet(msDhama)
 	}
 	g.px, g.py = sc.startPos() // spawn 出界/不可走 → pick_open_start(修 6 城進城掉圖外)
@@ -2100,6 +2151,7 @@ func (g *Game) renderFrame() {
 	g.drawTemporaryRoleChoice(g.rgba, white)
 	g.drawSequenceGateChoice(g.rgba, white)
 	g.drawHostageRescueChoice(g.rgba, white)
+	g.drawReclass(g.rgba, white)
 	if g.noticeTimer > 0 && g.noticeCode >= 0 { // 取得道具通知(品名)
 		fillBox(g.rgba, 24, 244, ScreenW-48, 40, white)
 		g.shop.drawItemName(g.rgba, 40, 256, g.noticeCode, white)

@@ -51,6 +51,10 @@ RE 文件。
 
 ![Ebiten：波魯多加取船後首次航行](docs/img/ship_first_sailing.png)
 
+![Ebiten：達瑪神殿賢者轉職選單](docs/img/dhama_menu.png)
+
+![Ebiten：達瑪神殿轉職成功](docs/img/dhama_reclass_success.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

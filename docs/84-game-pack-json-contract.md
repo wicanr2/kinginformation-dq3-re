@@ -1,6 +1,6 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與六種事件 primitive；
+> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與八種事件 primitive；
 > 其餘資料表依垂直切片逐批遷移。
 >
 > 適用範圍：Go／Ebitengine 共用核心，以及未來的 `dq1_cht`、`dq2_cht`、`dq3_cht`
@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.6"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.7"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.6",
+  "schema_version": "0.1.7",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -622,6 +622,39 @@ story flag 實際改變時失效，避免跨 CTY NPC 沿用事件前清單。缺
 movement anchor 或 D3 evidence 時在任何 mutation 前失敗即關閉。DQ3 canonical 值、
 IDA／CTY／D3TXT 證據與正式 trace 見 `events.json`、[`docs/89`](89-baharata-rescue-production-trace.md)。
 
+`item_actions` 定義共用道具動作選單與個人物品容量；玩家可見標籤不得寫在 Go：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `item_actions.personal_inventory_slots` | int | 是 | 每名角色總物品格數；DQ3 精訊版為 8，裝備亦占格。 |
+| `item_actions.text_ids` | object | 是 | `use/give/drop` 三個穩定 text ID；DQ3 來源為 D3TXT00 rec421。 |
+| `item_actions.evidence` | object | 是 | 選單 consumer 與個人物品 writer／reader 的 D3 證據。 |
+
+第八個已實作 primitive 是 `reclass_events`，供「NPC 入口→選隊員→來源／等級 gate→
+選目標職業→兩次確認→Lv1 能力與物品交易」使用，不包含達瑪、領悟之書或 DQ3 固有 ID。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `reclass_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 ID；kind 固定為 `reclass`。 |
+| `[].npc` | selector | 是 | `{cty_raw,section,tile,handler_raw}` 的正式 scripted NPC。 |
+| `[].minimum_level` | int | 是 | 所選角色的最低持久等級。 |
+| `[].forbidden_source_classes_raw` | int[] | 是 | 禁止轉職的來源職業；不得與其他 class 清單重複。 |
+| `[].basic_target_classes_raw` | int[] | 是 | 原版順序的基本目標職業。 |
+| `[].advanced_target_class_raw` | int | 是 | 有額外 gate 的目標職業。 |
+| `[].advanced_free_source_class_raw` | int | 是 | 不需 catalyst 即可選 advanced target 的來源職業。 |
+| `[].advanced_required_item_raw_id` | int | 是 | 必須由所選角色親自持有的 catalyst item。 |
+| `[].effect_id` | enum | 是 | 現行固定 `common:effect.reclass_original`。 |
+| `[].personal_inventory_slots` | int | 是 | 交易掃描與卸裝後仍須遵守的個人物品格數。 |
+| `[].class_name_text_ids_raw` | object | 是 | raw class 十進位字串鍵到穩定 text ID；必須涵蓋本事件可能讀寫的來源／目標職業，DQ3 完整提供 0..7。 |
+| `[].dialogue_text_ids` | object | 是 | rec45–55、基本／advanced class menu 與 Yes／No 的穩定引用。 |
+| `[].evidence` | object | 是 | 入口→gate→writer→consumer→玩家可見結果的 D3 證據。 |
+
+共用 effect 固定保留既有咒文、清 EXP／回 Lv1、解除全部裝備，並只對 pack 宣告的欄位
+套用原版減半交易；advanced catalyst 只可從所選角色移除。缺 selector、文字、class map、
+個人物品或 catalyst 時在 mutation 前失敗即關閉。DQ3 canonical 值、IDA 證據與正式 trace
+見 `events.json`、[`docs/92`](92-dhama-reclass-production-trace.md)。
+
 ### 6.10 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
@@ -641,7 +674,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.6",
+  "schema_version": "0.1.7",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

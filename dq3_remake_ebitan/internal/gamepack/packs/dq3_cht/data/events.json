@@ -1,5 +1,22 @@
 {
-  "schema_version": "0.1.6",
+  "schema_version": "0.1.7",
+  "item_actions": {
+    "personal_inventory_slots": 8,
+    "text_ids": {
+      "use": "dq3:text.item_action.use",
+      "give": "dq3:text.item_action.give",
+      "drop": "dq3:text.item_action.drop"
+    },
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + D3TXT00.TXT",
+      "address_space": "record",
+      "address": "D3TXT00 record 421",
+      "consumer": "field item panel dispatches use, give and drop while each original member record owns eight item words",
+      "doc": "docs/92-dhama-reclass-production-trace.md"
+    }
+  },
   "boss_surrender_events": [
     {
       "id": "dq3:event.shanpane_kandar",
@@ -501,6 +518,62 @@
         "address": "0x5ee0..0x60b4",
         "consumer": "handlers58..61 consume formations DS:0x4ec0/0x4ec5, flags 0x80/0x81/0x82/0x14/0x25/0x34; handler25 grants item 0x5c once while flag 0x36 is set",
         "doc": "docs/89-baharata-rescue-production-trace.md"
+      }
+    }
+  ],
+  "reclass_events": [
+    {
+      "id": "dq3:event.dhama_reclass",
+      "kind": "reclass",
+      "npc": {
+        "cty_raw": 17,
+        "section": 0,
+        "tile": {"x": 10, "y": 10},
+        "handler_raw": 39
+      },
+      "minimum_level": 20,
+      "forbidden_source_classes_raw": [0],
+      "basic_target_classes_raw": [1, 2, 3, 4, 6],
+      "advanced_target_class_raw": 5,
+      "advanced_free_source_class_raw": 7,
+      "advanced_required_item_raw_id": 74,
+      "effect_id": "common:effect.reclass_original",
+      "personal_inventory_slots": 8,
+      "class_name_text_ids_raw": {
+        "0": "dq3:text.class.hero",
+        "1": "dq3:text.class.warrior",
+        "2": "dq3:text.class.fighter",
+        "3": "dq3:text.class.priest",
+        "4": "dq3:text.class.mage",
+        "5": "dq3:text.class.sage",
+        "6": "dq3:text.class.merchant",
+        "7": "dq3:text.class.jester"
+      },
+      "dialogue_text_ids": {
+        "introduction": "dq3:text.dhama.reclass.introduction",
+        "decline": "dq3:text.dhama.reclass.decline",
+        "choose_member": "dq3:text.dhama.reclass.choose_member",
+        "hero_forbidden": "dq3:text.dhama.reclass.hero_forbidden",
+        "level_insufficient": "dq3:text.dhama.reclass.level_insufficient",
+        "choose_class": "dq3:text.dhama.reclass.choose_class",
+        "same_class": "dq3:text.dhama.reclass.same_class",
+        "confirm_class": "dq3:text.dhama.reclass.confirm_class",
+        "confirm_level_reset": "dq3:text.dhama.reclass.confirm_level_reset",
+        "success": "dq3:text.dhama.reclass.success",
+        "farewell": "dq3:text.dhama.reclass.farewell",
+        "class_menu_basic": "dq3:text.dhama.reclass.class_menu_basic",
+        "class_menu_sage": "dq3:text.dhama.reclass.class_menu_sage",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY17.DAT + D3TXT06.TXT",
+        "address_space": "logical",
+        "address": "0x5a9e, 0x0abe..0x0c7e",
+        "consumer": "CTY17 section0 handler39 calls the reclass flow; it rejects Hero and levels below 20, offers classes 1,2,3,4,6 plus Sage class5 only to Jester class7 or a member carrying item 0x4a, then performs the original level/stat/inventory transaction",
+        "doc": "docs/92-dhama-reclass-production-trace.md"
       }
     }
   ]

@@ -59,6 +59,8 @@ type compSav struct {
 	Stats                       stats.Values `json:"stats,omitempty"`
 	CurHP, CurMP                int
 	Weapon, Armor, Shield, Head int
+	Inventory                   []int `json:"inventory,omitempty"`
+	LearnedSpells               []int `json:"learned_spells,omitempty"`
 }
 
 func encodeSave(s saveState) ([]byte, error) { return json.Marshal(s) }
@@ -116,7 +118,9 @@ func compsToSav(ms []*Member) []compSav {
 		m.ensureStats()
 		out[i] = compSav{Name: append([]int(nil), m.Name...), Class: m.Class, Gender: m.Gender,
 			Exp: m.Exp, Stats: m.Stats, CurHP: m.CurHP, CurMP: m.CurMP,
-			Weapon: m.Weapon, Armor: m.Armor, Shield: m.Shield, Head: m.Head}
+			Weapon: m.Weapon, Armor: m.Armor, Shield: m.Shield, Head: m.Head,
+			Inventory:     append([]int(nil), m.Inventory...),
+			LearnedSpells: append([]int(nil), m.LearnedSpells...)}
 	}
 	return out
 }
@@ -151,7 +155,9 @@ func (g *Game) restore(s saveState) {
 		for i, c := range s.Comps {
 			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
-				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head}
+				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
+				Inventory:     append([]int(nil), c.Inventory...),
+				LearnedSpells: append([]int(nil), c.LearnedSpells...)}
 			if !s.EquipmentV2 {
 				migrateLegacyMemberEquipment(m)
 			}
@@ -159,6 +165,7 @@ func (g *Game) restore(s saveState) {
 				m.Name = classNames[c.Class]
 			}
 			m.ensureStats()
+			m.syncLearnedSpells()
 			g.companions[i] = m
 		}
 	}
@@ -167,7 +174,9 @@ func (g *Game) restore(s saveState) {
 		for i, c := range s.Roster {
 			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
-				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head}
+				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
+				Inventory:     append([]int(nil), c.Inventory...),
+				LearnedSpells: append([]int(nil), c.LearnedSpells...)}
 			if !s.EquipmentV2 {
 				migrateLegacyMemberEquipment(m)
 			}
@@ -175,6 +184,7 @@ func (g *Game) restore(s saveState) {
 				m.Name = classNames[c.Class]
 			}
 			m.ensureStats()
+			m.syncLearnedSpells()
 			g.roster[i] = m
 		}
 	}

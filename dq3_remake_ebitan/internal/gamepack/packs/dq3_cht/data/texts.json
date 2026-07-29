@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.6",
+  "schema_version": "0.1.7",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -488,6 +488,198 @@
       "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 124},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "124", "consumer": "hostage_rescue battle victory", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.introduction",
+      "value": "*「這裡是轉職神殿,\n想改變職業的人\n來的地方。\n---\n*「想轉職嗎?",
+      "glyph_codes": [59,60,398,512,399,899,773,158,738,55,65534,12,12,609,1075,315,773,774,149,194,65534,12,12,461,149,214,547,56,65532,59,60,609,899,773,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 45},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "45", "consumer": "reclass introduction and first confirmation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.decline",
+      "value": "*「是嗎,不想轉職?\n這樣也好。",
+      "glyph_codes": [59,60,399,534,55,228,609,899,773,58,65534,12,12,398,537,494,441,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 46},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "46", "consumer": "reclass declined branch", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.choose_member",
+      "value": "*「誰想轉職呢?",
+      "glyph_codes": [59,60,505,609,899,773,592,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 47},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "47", "consumer": "reclass party-member selection prompt", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.hero_forbidden",
+      "value": "*「大笨蛋!\n勇者可以轉職嗎?\n不行的。",
+      "glyph_codes": [59,60,163,1352,1186,57,65534,12,12,106,187,229,456,899,773,534,58,65534,12,12,228,531,149,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 48},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "48", "consumer": "reclass forbidden Hero branch", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.level_insufficient",
+      "value": "*「什麼,{變數}\n還不是一個獨當一面\n的{變數}呢‥‥。\n---\n*「乳具未乾就想轉職了嗎?",
+      "glyph_codes": [59,60,435,436,55,65531,65534,12,12,524,228,399,401,546,814,1030,401,236,65534,12,12,149,65529,592,123,123,56,65532,59,60,1353,1354,707,307,633,609,899,773,423,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 49},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "49", "consumer": "reclass minimum-level rejection", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.choose_class",
+      "value": "*「{變數}想轉\n哪一個職業呢?",
+      "glyph_codes": [59,60,65531,609,899,65534,12,12,1128,401,546,773,774,592,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 50},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "50", "consumer": "reclass target-class selection prompt", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.same_class",
+      "value": "*「笨蛋!\n這不是你現在的職業嗎?",
+      "glyph_codes": [59,60,1352,1186,57,65534,12,12,398,228,399,528,432,411,149,773,774,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 51},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "51", "consumer": "reclass same-class rejection", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.confirm_class",
+      "value": "*「{變數}想轉職成\n{變數}嗎?",
+      "glyph_codes": [59,60,65531,609,899,773,610,65534,12,12,65529,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 52},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "52", "consumer": "reclass target-class confirmation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.confirm_level_reset",
+      "value": "*「決定的話,\n會從等級1開始,\n這樣也好嗎?",
+      "glyph_codes": [59,60,1355,1022,149,449,55,65534,12,12,415,511,419,420,1,488,711,55,65534,12,12,398,537,494,441,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 53},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "53", "consumer": "reclass level-one reset confirmation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.success",
+      "value": "*「很好,那麼,\n從現在開始{變數}\n就是{變數}了!",
+      "glyph_codes": [59,60,444,441,55,354,436,55,65534,12,12,511,432,411,488,711,65531,65534,12,12,633,399,65529,423,57,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 54},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "54", "consumer": "reclass successful transaction", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.farewell",
+      "value": "*「那麼,出發吧。",
+      "glyph_codes": [59,60,354,436,55,440,431,499,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 55},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "55", "consumer": "reclass flow farewell", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.class_menu_basic",
+      "value": "戰士／武鬥家／僧侶／魔法使者／商人",
+      "glyph_codes": [47,48,48,48,48,48,48,49,65534,54,12,107,12,144,12,12,54,65534,54,12,108,207,657,12,12,54,65534,54,12,109,12,704,12,12,54,65534,54,12,110,208,210,187,12,54,65534,54,12,112,12,194,12,12,54,65534,50,48,48,48,48,48,48,51,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 8},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 66},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "66", "consumer": "five-choice reclass menu without Sage eligibility", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.dhama.reclass.class_menu_sage",
+      "value": "戰士／武鬥家／僧侶／魔法使者／商人／賢者",
+      "glyph_codes": [47,48,48,48,48,48,48,49,65534,54,12,107,12,144,12,12,54,65534,54,12,108,207,657,12,12,54,65534,54,12,109,12,704,12,12,54,65534,54,12,110,208,210,187,12,54,65534,54,12,112,12,194,12,12,54,65534,54,12,111,12,187,12,12,54,65534,50,48,48,48,48,48,48,51,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 9},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 67},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "67", "consumer": "six-choice reclass menu with Sage eligibility", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.class.hero",
+      "value": "勇者",
+      "glyph_codes": [106,187],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "class table / record 48", "consumer": "reclass class-name interpolation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.class.warrior",
+      "value": "戰士",
+      "glyph_codes": [107,144],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "66/67", "consumer": "reclass class menu and interpolation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.class.fighter",
+      "value": "武鬥家",
+      "glyph_codes": [108,207,657],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "66/67", "consumer": "reclass class menu and interpolation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.class.priest",
+      "value": "僧侶",
+      "glyph_codes": [109,704],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "66/67", "consumer": "reclass class menu and interpolation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.class.mage",
+      "value": "魔法使者",
+      "glyph_codes": [110,208,210,187],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "66/67", "consumer": "reclass class menu and interpolation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.class.sage",
+      "value": "賢者",
+      "glyph_codes": [111,187],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "67", "consumer": "reclass Sage menu and interpolation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.class.merchant",
+      "value": "商人",
+      "glyph_codes": [112,194],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT06.TXT", "address_space": "record", "address": "66/67", "consumer": "reclass class menu and interpolation", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.class.jester",
+      "value": "遊玩者",
+      "glyph_codes": [113,705,187],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3.EXE + D3TXT00.FON", "address_space": "logical", "address": "class-name table", "consumer": "reclass Sage free-source gate and member menu", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.item_action.use",
+      "value": "使用",
+      "glyph_codes": [210,412],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "421 words 10..11", "consumer": "field item action menu", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.item_action.give",
+      "value": "給予",
+      "glyph_codes": [559,677],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "421 words 16..17", "consumer": "field item transfer menu", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.item_action.drop",
+      "value": "丟掉",
+      "glyph_codes": [557,560],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "421 words 22..23", "consumer": "field item action menu", "doc": "docs/92-dhama-reclass-production-trace.md"}
     }
   ]
 }

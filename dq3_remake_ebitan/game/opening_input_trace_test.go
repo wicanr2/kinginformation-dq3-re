@@ -10,6 +10,7 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
 // TestOpeningProductionInputTrace 從標題開始，只送入 production InputState：
@@ -149,15 +150,24 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// 國王給的裝備不會自動穿上；依正式命令窗逐人分配。
 	equipItem := func(actor, code int) {
 		t.Helper()
+		if actor > 0 {
+			traceGiveInventoryItem(t, g, code, actor-1)
+		}
+		var items []int
+		if actor == 0 {
+			items = g.inventory
+		} else {
+			items = g.companions[actor-1].Inventory
+		}
 		idx := -1
-		for i, item := range g.inventory {
+		for i, item := range items {
 			if item == code {
 				idx = i
 				break
 			}
 		}
 		if idx < 0 {
-			t.Fatalf("背包沒有待裝備 item %#x：%v", code, g.inventory)
+			t.Fatalf("隊員%d沒有待裝備 item %#x：%v", actor, code, items)
 		}
 		press(InputState{Confirm: true}) // 開命令
 		for g.cmd.cursor != int(cmdEquip) {
@@ -1352,6 +1362,73 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.hasItem(satori.ItemRawID), g.storyFlag(satori.PresentFlag),
 			g.curCty, sceneSection(g.cur))
 	}
+
+	// 領悟之書 checkpoint → 達瑪神殿。先以正式路徑離塔，於達瑪附近正常
+	// 遭遇練到「實際要轉職的同伴」Lv20；不可只檢查勇者等級。
+	traceTownSectionTo(t, g, satori.CTYRaw, 0)
+	traceExitTownBoundary(t, g)
+	traceAdventureTravelToCty(t, g, 17)
+	traceExitTownBoundary(t, g)
+	for heroTarget := stats.LevelForExp(0, g.heroExp); g.companions[0].Level() < 20; heroTarget++ {
+		if heroTarget >= stats.MaxLevel {
+			t.Fatalf("正式練級到 hero cap 仍未讓同伴達 Lv20：hero%d companion%d",
+				stats.LevelForExp(0, g.heroExp), g.companions[0].Level())
+		}
+		traceTrainNearTown(t, g, 17, heroTarget+1)
+	}
+	traceAdventureWalkToCty(t, g, 17)
+
+	// 原版賢者 gate 查「所選隊員的八格個人物品」，不是全隊共用背包。
+	// 經正式 rec421 道具動作選單，把領悟之書給第一名同伴。
+	traceGiveInventoryItem(t, g, satori.ItemRawID, 0)
+	if g.hasItem(satori.ItemRawID) ||
+		!containsInt(g.companions[0].Inventory, satori.ItemRawID) {
+		t.Fatalf("正式給予領悟之書失敗：hero=%v companion=%v",
+			g.inventory, g.companions[0].Inventory)
+	}
+
+	// CTY17 sec0 handler39：(介紹→隊員→賢者→兩次確認→Lv1 transaction)。
+	traceOpenReachableDoor(t, g)
+	traceTalkNPC(t, g, 10, 10)
+	traceCloseDialogue(t, g)
+	press(InputState{Confirm: true}) // 是否轉職：是
+	traceCloseDialogue(t, g)
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 主角→第一名同伴
+	press(InputState{Confirm: true})
+	traceCloseDialogue(t, g)
+	for i := 0; i < 5; i++ { // 原版 5 基本職業後第 6 項才是賢者
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true})
+	traceCloseDialogue(t, g)
+	press(InputState{Confirm: true}) // 確認目標職業
+	traceCloseDialogue(t, g)
+	press(InputState{Confirm: true}) // 確認從 Lv1 開始
+	traceCloseDialogue(t, g)         // success → transaction → farewell
+	if g.reclassStage != reclassIdle || g.companions[0].Class != 5 ||
+		g.companions[0].Level() != 1 ||
+		containsInt(g.companions[0].Inventory, satori.ItemRawID) {
+		t.Fatalf("正式達瑪轉賢者未閉合：stage=%d class=%d level=%d items=%v",
+			g.reclassStage, g.companions[0].Class, g.companions[0].Level(),
+			g.companions[0].Inventory)
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存達瑪轉職 checkpoint：%v", err)
+	}
+	restored, err = NewGame(g.assets, nil)
+	if err != nil {
+		t.Fatalf("重建達瑪轉職讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if len(g.companions) == 0 || g.companions[0].Class != 5 ||
+		g.companions[0].Level() != 1 ||
+		containsInt(g.companions[0].Inventory, satori.ItemRawID) {
+		t.Fatalf("達瑪轉職 save/load round-trip 錯：companions=%+v", g.companions)
+	}
 }
 
 // traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
@@ -1714,9 +1791,57 @@ func traceUseInventoryItem(t *testing.T, g *Game, code int) {
 		t.Fatalf("正式道具選單未移到 index%d：panel=%d cursor=%d", idx, g.panel, g.panelCursor)
 	}
 	step(InputState{Confirm: true})
-	if g.panel != panelNone { // 聖水等一般消耗品使用後仍留在清單，正式按 B 關閉
+	step(InputState{Confirm: true}) // 原版 rec421「使用／給予／丟掉」預設選使用
+	if g.panel != panelNone {       // 聖水等一般消耗品使用後仍留在清單，正式按 B 關閉
 		step(InputState{Cancel: true})
 	}
+}
+
+// traceGiveInventoryItem 只使用 production 命令窗、rec421 三動作選單與隊員
+// 選單，把主角持有的一件道具移交給 companions[target]。
+func traceGiveInventoryItem(t *testing.T, g *Game, code, target int) {
+	t.Helper()
+	idx := -1
+	for i, got := range g.inventory {
+		if got == code {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 || target < 0 || target >= len(g.companions) {
+		t.Fatalf("給予起點錯：code=%#x idx=%d target=%d party=%d",
+			code, idx, target, len(g.companions))
+	}
+	step := func(in InputState) {
+		t.Helper()
+		if in.DirHeld == 0 {
+			in.DirHeld = -1
+		}
+		if in.DirEdge == 0 && in.Confirm {
+			in.DirEdge = -1
+		}
+		if err := g.step(in); err != nil {
+			t.Fatalf("給予 production input: %v", err)
+		}
+	}
+	step(InputState{Confirm: true})
+	step(InputState{DirEdge: 3})
+	step(InputState{DirEdge: 0})
+	step(InputState{Confirm: true})
+	for i := 0; i < idx; i++ {
+		step(InputState{DirEdge: 0})
+	}
+	step(InputState{Confirm: true}) // 選道具 → rec421 動作
+	step(InputState{DirEdge: 0})    // 使用 → 給予
+	step(InputState{Confirm: true})
+	for i := 0; i < target; i++ {
+		step(InputState{DirEdge: 0})
+	}
+	step(InputState{Confirm: true})
+	if g.itemActionStage != itemActionList {
+		t.Fatalf("給予後未回道具清單：stage=%d", g.itemActionStage)
+	}
+	step(InputState{Cancel: true})
 }
 
 // traceOpenReachableDoor 找目前連通區邊界上可由持有鑰匙開啟的門，並經正式「調查」命令開門。
@@ -1797,6 +1922,33 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int, fleeStrong ...b
 	shouldFleeStrong := len(fleeStrong) == 0 || fleeStrong[0]
 	if wantCty < 0 || wantCty >= len(ctyLoc) || ctyLoc[wantCty][2] != g.layer {
 		t.Fatalf("無效 CTY%d / layer%d", wantCty, g.layer)
+	}
+	// 城鎮邊界出口可能把玩家放回入口判定格本身；production 只在「踏入」
+	// 該格時進城，因此先以正式方向鍵走離入口，再由尋路踏回。
+	if !g.inTown && findCtyAtLayer(g.px, g.py, g.layer) == wantCty {
+		for g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待離開 CTY%d 入口 cooldown：%v", wantCty, err)
+			}
+		}
+		moved := false
+		for dir := 0; dir < 4; dir++ {
+			dx, dy := dirDelta(dir)
+			nx, ny := g.px+dx, g.py+dy
+			if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h ||
+				g.cur.Blocked(nx, ny) || findCtyAtLayer(nx, ny, g.layer) >= 0 {
+				continue
+			}
+			oldX, oldY := g.px, g.py
+			if err := g.step(InputState{DirHeld: dir, DirEdge: -1}); err != nil {
+				t.Fatalf("離開 CTY%d 入口格：%v", wantCty, err)
+			}
+			moved = g.px != oldX || g.py != oldY
+			break
+		}
+		if !moved {
+			t.Fatalf("CTY%d 入口格 (%d,%d) 無法以正式移動走開", wantCty, g.px, g.py)
+		}
 	}
 	tx, ty := ctyLoc[wantCty][0]+1, ctyLoc[wantCty][1]
 	// 原版 findCtyAt 接受 loc.X 與 loc.X+1 兩格；兩格不保證都在同一個可走連通區

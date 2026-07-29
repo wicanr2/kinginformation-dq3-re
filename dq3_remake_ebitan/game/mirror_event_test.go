@@ -58,6 +58,7 @@ func TestMirrorProductionInputTrace(t *testing.T) {
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	send(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	send(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	send(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // rec421 動作選單：使用
 
 	if g.panel != panelNone || g.mirrorStage != 1 || !g.dlg.open ||
 		g.storyFlag(0x42) || !g.storyFlag(0x10) || !g.hasItem(0x61) {

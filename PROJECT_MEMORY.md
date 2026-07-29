@@ -33,6 +33,8 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 - 最新取船／航行 audit：[`docs/90`](docs/90-portoga-ship-production-trace.md)
 - 最新加爾那之塔／睡眠恢復 audit：
   [`docs/91`](docs/91-garuna-satori-book-production-trace.md)
+- 最新達瑪轉職 audit：
+  [`docs/92`](docs/92-dhama-reclass-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
@@ -48,8 +50,10 @@ save/load、正式登船與首次航行；詳見 `docs/90`。schema `0.1.6` 已�
 `{type=1,item=0x4a,flag=0xb7}` 遷入 `treasure_events`；正式 trace 已處理航海遭遇、
 繞完加爾那之塔不同連通區、取得《領悟之書》、立即切換開箱 tile 並通過 save/load。
 同批以 IDA 證明玩家睡眠／混亂每回合 `roll<=100`、怪物側 `roll<100` 可醒，修除怪物
-43 令全隊永久不能行動的死循環；詳見 `docs/91`。**尚未完成從新遊戲開始的無 debug
-全流程驗收**；下一個 audit 從《領悟之書》checkpoint 以正式設施入口閉合達瑪轉職。
+43 令全隊永久不能行動的死循環；詳見 `docs/91`。其後已正常離塔、航行至 CTY17、
+正式練所選同伴至 Lv20、用魔法鑰匙入殿、經 rec421 把領悟之書交給該同伴，並由
+handler39 完成賢者轉職與 save/load；詳見 `docs/92`。**尚未完成從新遊戲開始的無 debug
+全流程驗收**；下一個 audit 從達瑪轉職 checkpoint 前往提頓《黑暗之燈》。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -68,6 +72,9 @@ trigger、兩段 NPC 路徑與最終朝向、旗標、道具及四段文字均�
 formation、完成旗標、古布達交易與全部玩家文字均由 JSON 提供。
 獨立一次性寶箱另使用 `treasure_events`；加爾那之塔《領悟之書》是第一個從舊 Go
 treasure table 遷出的完整 D3／E3 範例。
+達瑪 `reclass` 是第八個有限 primitive；NPC selector、Lv20、職業清單、賢者 gate、
+個人物品八格、文字及 effect ID 均由 JSON 提供。Go 只保留通用狀態機；轉職保留既有
+咒文、VIT 不減半、全卸裝，且領悟之書只從所選角色移除。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

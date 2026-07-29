@@ -12,6 +12,12 @@ const (
 	panelEquip
 )
 
+const (
+	itemActionList = iota
+	itemActionMenu
+	itemActionTarget
+)
+
 // drawStatus:主角狀況(等級/HP/EXP/G)。glyph 22='H'、標籤用數字為主(中文標籤 glyph 之後補)。
 func (g *Game) drawStatus(rgba []byte, white dq3data.Color) {
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
@@ -66,6 +72,71 @@ func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 		g.shop.drawItemName(rgba, 64, y, code, white)
 		g.panelHits.add(44, y-3, ScreenW-80-8, 20, i)
 	}
+	switch g.itemActionStage {
+	case itemActionMenu:
+		g.drawItemActionMenu(rgba, white)
+	case itemActionTarget:
+		g.drawItemGiveTargets(rgba, white)
+	}
+}
+
+func (g *Game) drawItemActionMenu(rgba []byte, white dq3data.Color) {
+	if g.pack == nil {
+		return
+	}
+	actions := g.pack.ItemActions()
+	ids := [3]string{actions.TextIDs.Use, actions.TextIDs.Give, actions.TextIDs.Drop}
+	fillBox(rgba, 400, 48, 160, 92, white)
+	for i, id := range ids {
+		glyphs, ok := g.pack.TextGlyphCodes(id)
+		if !ok {
+			return
+		}
+		y := 62 + i*24
+		if i == g.itemActionCursor {
+			drawGlyph(rgba, g.dlg.tx, 412, y, curGlyph, white)
+		}
+		for j, glyph := range glyphs {
+			if glyph < 0xffed {
+				drawGlyph(rgba, g.dlg.tx, 440+j*16, y, int(glyph), white)
+			}
+		}
+	}
+}
+
+func (g *Game) drawItemGiveTargets(rgba []byte, white dq3data.Color) {
+	fillBox(rgba, 360, 48, 220, 32+len(g.companions)*24, white)
+	for i, m := range g.companions {
+		y := 64 + i*24
+		if i == g.itemActionCursor {
+			drawGlyph(rgba, g.dlg.tx, 372, y, curGlyph, white)
+		}
+		for j, glyph := range m.Name {
+			drawGlyph(rgba, g.dlg.tx, 400+j*16, y, glyph, white)
+		}
+	}
+}
+
+func (g *Game) giveSelectedItem(target int) bool {
+	if g.pack == nil || g.itemSelected < 0 || g.itemSelected >= len(g.inventory) ||
+		target < 0 || target >= len(g.companions) {
+		return false
+	}
+	m := g.companions[target]
+	if m.itemCount() >= g.pack.ItemActions().PersonalInventorySlots {
+		return false
+	}
+	code := g.inventory[g.itemSelected]
+	g.inventory = append(g.inventory[:g.itemSelected], g.inventory[g.itemSelected+1:]...)
+	m.Inventory = append(m.Inventory, code)
+	if len(g.inventory) == 0 {
+		g.panelCursor = 0
+	} else if g.itemSelected >= len(g.inventory) {
+		g.panelCursor = len(g.inventory) - 1
+	} else {
+		g.panelCursor = g.itemSelected
+	}
+	return true
 }
 
 func (g *Game) equipActorName(actor int) []int {
@@ -120,7 +191,25 @@ func (g *Game) setEquipActorSlot(actor, slot, code int) {
 	}
 }
 
-// drawEquip:先選隊員，再顯示其四個裝備槽與共用背包候選。
+func (g *Game) equipActorInventory(actor int) *[]int {
+	if actor == 0 {
+		return &g.inventory
+	}
+	if actor <= 0 || actor > len(g.companions) {
+		return nil
+	}
+	return &g.companions[actor-1].Inventory
+}
+
+func (g *Game) equipCandidateCount(actor int) int {
+	items := g.equipActorInventory(actor)
+	if items == nil {
+		return 0
+	}
+	return len(*items)
+}
+
+// drawEquip:先選隊員，再顯示其四個裝備槽與該角色自己的未裝備物品。
 func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
 	yellow := dq3data.Color{R: 255, G: 224, B: 32}
@@ -153,7 +242,11 @@ func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 			}
 		}
 	}
-	for i, code := range g.inventory {
+	items := g.equipActorInventory(g.panelActor)
+	if items == nil {
+		return
+	}
+	for i, code := range *items {
 		if i >= 8 {
 			break
 		}
@@ -166,12 +259,14 @@ func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 	}
 }
 
-// equipSelected:把背包物品裝給已選隊員。新物從背包移除；舊裝備回背包。
+// equipSelected:把所選角色自己的未裝備物品穿上；舊裝備回到同一角色物品欄。
 func (g *Game) equipSelected() {
-	if g.panelActor < 0 || g.panelCursor < 0 || g.panelCursor >= len(g.inventory) {
+	items := g.equipActorInventory(g.panelActor)
+	if g.panelActor < 0 || items == nil ||
+		g.panelCursor < 0 || g.panelCursor >= len(*items) {
 		return
 	}
-	code := g.inventory[g.panelCursor]
+	code := (*items)[g.panelCursor]
 	if g.shop.items == nil {
 		return
 	}
@@ -185,14 +280,14 @@ func (g *Game) equipSelected() {
 		return
 	}
 	old := slots[slot]
-	g.inventory = append(g.inventory[:g.panelCursor], g.inventory[g.panelCursor+1:]...)
+	*items = append((*items)[:g.panelCursor], (*items)[g.panelCursor+1:]...)
 	g.setEquipActorSlot(g.panelActor, slot, code)
 	if old >= 0 {
-		g.inventory = append(g.inventory, old)
+		*items = append(*items, old)
 	}
-	if len(g.inventory) == 0 {
+	if len(*items) == 0 {
 		g.panelCursor = 0
-	} else if g.panelCursor >= len(g.inventory) {
-		g.panelCursor = len(g.inventory) - 1
+	} else if g.panelCursor >= len(*items) {
+		g.panelCursor = len(*items) - 1
 	}
 }

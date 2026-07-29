@@ -116,7 +116,7 @@ func TestComponentSpine(t *testing.T) {
 		t.Fatalf("魔法球後進度應到 3,得 %d", s)
 	}
 
-	// ---- 4. 羅馬利亞/達瑪:真實 enterTownCty(真的讀 CTY02.DAT/CTY49.DAT 建場景),
+	// ---- 4. 羅馬利亞/達瑪:真實 enterTownCty(真的讀 CTY02.DAT/CTY17.DAT 建場景),
 	// 里程碑判定內嵌在 enterTownCty(main.c cur_cty 判定移植),不是獨立函式。
 	g.enterTownCty(2)
 	if g.curCty != 2 {
@@ -126,9 +126,9 @@ func TestComponentSpine(t *testing.T) {
 		t.Fatalf("進羅馬利亞應設 msRomaly,階段=%d", g.progressStage())
 	}
 
-	g.enterTownCty(49)
-	if g.curCty != 49 {
-		t.Fatalf("進達瑪神殿(CTY49)應成功換場景,curCty=%d(CTY49.DAT 載入失敗?)", g.curCty)
+	g.enterTownCty(17)
+	if g.curCty != 17 {
+		t.Fatalf("進達瑪神殿(CTY17)應成功換場景,curCty=%d(CTY17.DAT 載入失敗?)", g.curCty)
 	}
 	if !g.progressDone(msDhama) || g.progressStage() != 5 {
 		t.Fatalf("進達瑪神殿應設 msDhama,階段=%d", g.progressStage())

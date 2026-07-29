@@ -14,11 +14,12 @@ import (
 	"io"
 	"io/fs"
 	"path"
+	"strconv"
 	"strings"
 )
 
 const (
-	SchemaVersion = "0.1.6"
+	SchemaVersion = "0.1.7"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -409,8 +410,59 @@ type HostageRescueEvent struct {
 	Evidence                Evidence              `json:"evidence"`
 }
 
+type ReclassTextIDs struct {
+	Introduction      string `json:"introduction"`
+	Decline           string `json:"decline"`
+	ChooseMember      string `json:"choose_member"`
+	HeroForbidden     string `json:"hero_forbidden"`
+	LevelInsufficient string `json:"level_insufficient"`
+	ChooseClass       string `json:"choose_class"`
+	SameClass         string `json:"same_class"`
+	ConfirmClass      string `json:"confirm_class"`
+	ConfirmLevelReset string `json:"confirm_level_reset"`
+	Success           string `json:"success"`
+	Farewell          string `json:"farewell"`
+	ClassMenuBasic    string `json:"class_menu_basic"`
+	ClassMenuSage     string `json:"class_menu_sage"`
+	ChoiceYes         string `json:"choice_yes"`
+	ChoiceNo          string `json:"choice_no"`
+}
+
+// ReclassEvent is a finite class-change transaction. The engine owns the
+// named original behavior; edition-specific selectors, raw classes, level,
+// catalyst item and text remain pack data.
+type ReclassEvent struct {
+	ID                      string              `json:"id"`
+	Kind                    string              `json:"kind"`
+	NPC                     ScriptedNPCSelector `json:"npc"`
+	MinimumLevel            int                 `json:"minimum_level"`
+	ForbiddenSourceClasses  []int               `json:"forbidden_source_classes_raw"`
+	BasicTargetClasses      []int               `json:"basic_target_classes_raw"`
+	AdvancedTargetClass     int                 `json:"advanced_target_class_raw"`
+	AdvancedFreeSourceClass int                 `json:"advanced_free_source_class_raw"`
+	AdvancedRequiredItemRaw int                 `json:"advanced_required_item_raw_id"`
+	EffectID                string              `json:"effect_id"`
+	PersonalInventorySlots  int                 `json:"personal_inventory_slots"`
+	ClassNameTextIDsRaw     map[string]string   `json:"class_name_text_ids_raw"`
+	DialogueTextIDs         ReclassTextIDs      `json:"dialogue_text_ids"`
+	Evidence                Evidence            `json:"evidence"`
+}
+
+type ItemActionTextIDs struct {
+	Use  string `json:"use"`
+	Give string `json:"give"`
+	Drop string `json:"drop"`
+}
+
+type ItemActions struct {
+	PersonalInventorySlots int               `json:"personal_inventory_slots"`
+	TextIDs                ItemActionTextIDs `json:"text_ids"`
+	Evidence               Evidence          `json:"evidence"`
+}
+
 type Events struct {
 	SchemaVersion               string                       `json:"schema_version"`
+	ItemActions                 ItemActions                  `json:"item_actions"`
 	BossSurrenderEvents         []BossSurrenderEvent         `json:"boss_surrender_events"`
 	TemporaryRoleEvents         []TemporaryRoleEvent         `json:"temporary_role_events"`
 	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
@@ -419,6 +471,7 @@ type Events struct {
 	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
 	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
 	HostageRescueEvents         []HostageRescueEvent         `json:"hostage_rescue_events"`
+	ReclassEvents               []ReclassEvent               `json:"reclass_events"`
 }
 
 type TextSource struct {
@@ -490,6 +543,7 @@ type Pack struct {
 	vehicleExchanges map[string]*StagedVehicleExchangeEvent
 	guidedPassages   map[string]*GuidedPassageEvent
 	hostageRescues   map[string]*HostageRescueEvent
+	reclassEvents    map[string]*ReclassEvent
 	charDefaults     map[string]*CharacterDefault
 	texts            map[string]*TextDefinition
 	contentHash      string
@@ -698,6 +752,15 @@ func (p *Pack) validateTexts() error {
 }
 
 func (p *Pack) validateEventTextRefs() error {
+	for field, id := range map[string]string{
+		"use":  p.Events.ItemActions.TextIDs.Use,
+		"give": p.Events.ItemActions.TextIDs.Give,
+		"drop": p.Events.ItemActions.TextIDs.Drop,
+	} {
+		if id == "" || p.texts[id] == nil {
+			return fmt.Errorf("item_actions.text_ids.%s references unknown text %q", field, id)
+		}
+	}
 	for _, event := range p.Events.BossSurrenderEvents {
 		refs := event.DialogueTextIDs
 		for field, id := range map[string]string{
@@ -796,6 +859,35 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.ReclassEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"introduction": refs.Introduction, "decline": refs.Decline,
+			"choose_member": refs.ChooseMember, "hero_forbidden": refs.HeroForbidden,
+			"level_insufficient": refs.LevelInsufficient, "choose_class": refs.ChooseClass,
+			"same_class": refs.SameClass, "confirm_class": refs.ConfirmClass,
+			"confirm_level_reset": refs.ConfirmLevelReset, "success": refs.Success,
+			"farewell": refs.Farewell, "class_menu_basic": refs.ClassMenuBasic,
+			"class_menu_sage": refs.ClassMenuSage, "choice_yes": refs.ChoiceYes,
+			"choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+		for key, id := range event.ClassNameTextIDsRaw {
+			class, err := strconv.Atoi(key)
+			if err != nil || class < 0 || class > 255 {
+				return fmt.Errorf("%s class_name_text_ids_raw has invalid raw class key %q",
+					event.ID, key)
+			}
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s class_name_text_ids_raw.%s references unknown text %q",
+					event.ID, key, id)
+			}
+		}
+	}
 	return nil
 }
 
@@ -813,6 +905,13 @@ func validTreasureSelector(t QuestTreasureSelector) bool {
 }
 
 func (p *Pack) validateEvents() error {
+	if p.Events.ItemActions.PersonalInventorySlots < 1 ||
+		p.Events.ItemActions.PersonalInventorySlots > 32 {
+		return errors.New("item_actions.personal_inventory_slots must be 1..32")
+	}
+	if err := validateEvidence(p.Events.ItemActions.Evidence); err != nil {
+		return fmt.Errorf("item_actions evidence: %w", err)
+	}
 	if p.Events.SchemaVersion != SchemaVersion {
 		return fmt.Errorf("unsupported schema_version %q", p.Events.SchemaVersion)
 	}
@@ -839,6 +938,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.HostageRescueEvents == nil {
 		return errors.New("hostage_rescue_events must be present")
+	}
+	if p.Events.ReclassEvents == nil {
+		return errors.New("reclass_events must be present")
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -1341,6 +1443,57 @@ func (p *Pack) validateEvents() error {
 		}
 		p.hostageRescues[e.ID] = e
 	}
+	p.reclassEvents = make(map[string]*ReclassEvent, len(p.Events.ReclassEvents))
+	for i := range p.Events.ReclassEvents {
+		e := &p.Events.ReclassEvents[i]
+		if e.ID == "" || e.Kind != "reclass" {
+			return fmt.Errorf("reclass_events[%d]: id and kind=reclass are required", i)
+		}
+		if _, exists := p.reclassEvents[e.ID]; exists {
+			return fmt.Errorf("duplicate reclass event id %q", e.ID)
+		}
+		if !validScriptedNPC(e.NPC) || e.MinimumLevel < 1 || e.MinimumLevel > 255 ||
+			e.AdvancedTargetClass < 0 || e.AdvancedTargetClass > 255 ||
+			e.AdvancedFreeSourceClass < 0 || e.AdvancedFreeSourceClass > 255 ||
+			e.AdvancedRequiredItemRaw < 0 || e.AdvancedRequiredItemRaw > 255 ||
+			e.EffectID != "common:effect.reclass_original" ||
+			e.PersonalInventorySlots < 1 || e.PersonalInventorySlots > 32 ||
+			len(e.ClassNameTextIDsRaw) == 0 ||
+			len(e.ForbiddenSourceClasses) == 0 || len(e.BasicTargetClasses) == 0 {
+			return fmt.Errorf("%s: invalid selector, gate, effect or inventory size", e.ID)
+		}
+		seenClasses := map[int]string{}
+		for kind, classes := range map[string][]int{
+			"forbidden_source_classes_raw": e.ForbiddenSourceClasses,
+			"basic_target_classes_raw":     e.BasicTargetClasses,
+		} {
+			for _, class := range classes {
+				if class < 0 || class > 255 || seenClasses[class] != "" {
+					return fmt.Errorf("%s: invalid or duplicate class %d in %s",
+						e.ID, class, kind)
+				}
+				seenClasses[class] = kind
+			}
+		}
+		if seenClasses[e.AdvancedTargetClass] != "" ||
+			seenClasses[e.AdvancedFreeSourceClass] != "" {
+			return fmt.Errorf("%s: advanced classes must be distinct from configured basic/forbidden classes", e.ID)
+		}
+		requiredClassNames := append([]int(nil), e.ForbiddenSourceClasses...)
+		requiredClassNames = append(requiredClassNames, e.BasicTargetClasses...)
+		requiredClassNames = append(requiredClassNames,
+			e.AdvancedTargetClass, e.AdvancedFreeSourceClass)
+		for _, class := range requiredClassNames {
+			if e.ClassNameTextIDsRaw[strconv.Itoa(class)] == "" {
+				return fmt.Errorf("%s: class_name_text_ids_raw missing configured class %d",
+					e.ID, class)
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.reclassEvents[e.ID] = e
+	}
 	return nil
 }
 
@@ -1550,6 +1703,19 @@ func (p *Pack) HostageRescueEvents() []HostageRescueEvent {
 
 func (p *Pack) HostageRescueEvent(id string) (*HostageRescueEvent, bool) {
 	e, ok := p.hostageRescues[id]
+	return e, ok
+}
+
+func (p *Pack) ReclassEvents() []ReclassEvent {
+	return append([]ReclassEvent(nil), p.Events.ReclassEvents...)
+}
+
+func (p *Pack) ItemActions() ItemActions {
+	return p.Events.ItemActions
+}
+
+func (p *Pack) ReclassEvent(id string) (*ReclassEvent, bool) {
+	e, ok := p.reclassEvents[id]
 	return e, ok
 }
 
