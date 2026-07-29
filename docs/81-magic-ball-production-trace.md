@@ -32,8 +32,26 @@ CTY30 section 0 的四格牆均指向 event `(type=1, param1=1, flag=0x51)`，�
 - 現行 runtime 圖：
   [`temptation_magic_ball_open.png`](../dq3_remake_ebitan/docs/temptation_magic_ball_open.png)。
 
-## 尚未宣稱完成
+## CTY30 後續路線校正
 
-魔法球 transaction 已達 E3，但尚未因此宣稱抵達羅馬利亞。CTY30 section 2 的入口與出口
-位於不連通區域，表示仍缺原版洞窟機關／落穴等 traversal 語意。下一輪須先追該機制，再把
-production trace 延伸至 CTY31 與羅馬利亞，禁止以 debug 位移或直接改 section 代替。
+先前把 CTY30 section 2 的入口／出口不連通解讀成「可能缺落穴或傳送機制」，這是錯誤假設。
+原始資料直接給出答案：
+
+- CTY30 使用 BLKBM5。
+- section 2 的 `(6,11..12)`、`(14,11..12)`、`(22,11..12)` 是 tile 14–17。
+- BLKBM5 對這些 tile 的 attr 是 `0x0041`：bit0 阻擋、bits6–7 表示 tier-1 鎖門。
+- 每格 hi-map low 5 bits 都是 9；既有原版開門 consumer 會把門片改成 tile 9。
+- 從入口 `(15,2)` 走上方橫廊到左門，使用仍持有的盜賊鑰匙開 `(6,11..12)` 後，
+  出口 `(4,36)` 可由正常碰撞路徑抵達。
+- 跨入 CTY31 section 1 後，入口 `(2,4)` 與通往 section 0 的出口 `(8,4)` 之間另有
+  BLKBM1 attr `0x0041` 的 tier-1 門 `(4,4)`；同樣須以正式「調查」開啟。
+- DQ3.EXE file `0x49d1..0x49f2` 在跨 CTY 時寫新 CTY/section，將 CTY index×4 加到
+  `DGROUP 0x748`，再把該 `cty_loc` 的 X/Y 寫入 `[0x4f2f]/[0x4f31]`。remake 已同步
+  更新 remembered-world 座標，故 CTY31 出洞會落在 `(45,70)`，不再錯回 CTY30
+  `(168,164)`。
+
+production trace 現已用正式「調查」命令開門，經 CTY31 正常出洞，再步行進入 CTY02
+羅馬利亞並完成 save/load。沒有使用 debug 位移或直接切 section。
+
+現行抵達畫面：
+[`romaly_arrival.png`](../dq3_remake_ebitan/docs/romaly_arrival.png)。

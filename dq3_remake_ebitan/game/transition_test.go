@@ -124,3 +124,35 @@ func TestDoorOpen(t *testing.T) {
 	}
 	t.Logf("阿里阿罕:鎖門 %d 個、開啟驗證 %d 個 ✓", doors, opened)
 }
+
+// 原版 file 0x49d1 跨 CTY consumer 會以目的 CTY 查 cty_loc，更新出城所回的地表座標。
+// CTY30 sec2→CTY31 sec1 是前段正常流程的真實跨 CTY transition。
+func TestCrossCTYTransitionUpdatesRememberedWorldPosition(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = "../../assets_raw"
+	}
+	if _, err := os.Stat(dir + "/CTY30.DAT"); err != nil {
+		t.Skipf("無素材:%v", err)
+	}
+	g, err := NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 30, mapBlkNum[30], 2, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.inTown, g.curCty = sc, sc, true, 30
+	g.px, g.py = 4, 36
+	g.overPx, g.overPy = ctyLoc[30][0], ctyLoc[30][1]
+	g.tryTransition()
+	if !g.inTown || g.curCty != 31 || sceneSection(g.cur) != 1 || g.px != 2 || g.py != 4 {
+		t.Fatalf("CTY30→31 transition 錯：town=%v cty=%d sec=%d @(%d,%d)",
+			g.inTown, g.curCty, sceneSection(g.cur), g.px, g.py)
+	}
+	if g.overPx != ctyLoc[31][0] || g.overPy != ctyLoc[31][1] {
+		t.Fatalf("跨 CTY 未依目的 cty_loc 更新 remembered world：got(%d,%d) want(%d,%d)",
+			g.overPx, g.overPy, ctyLoc[31][0], ctyLoc[31][1])
+	}
+}

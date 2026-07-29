@@ -517,13 +517,13 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 ## 10. 今日收尾與剩餘工作（更新 2026-07-29）
 
-本輪已依 IDA/Capstone 與本機實況閉合魔法球破牆：正式 trace 從新遊戲取得魔法球、走到
-CTY30、由道具選單使用，驗證 `flag 0x51`、四格牆 rebuild、消耗與 save/load。證據 ledger
-見 `docs/81`。這個 E3 transaction 不代表誘惑洞窟或前段主線已全通。下一輪依下列順序接手：
+本輪已依 IDA/Capstone、本機實況與原始 CTY/BLKBM 閉合魔法球至羅馬利亞：正式 trace
+從新遊戲取得魔法球、走到 CTY30、由道具選單使用，驗證 `flag 0x51`、四格牆 rebuild、
+消耗；再以盜賊鑰匙正式開啟 CTY30 section 2 的 tier-1 門，經 CTY31 出洞，步行進入
+CTY02 並完成 save/load。證據 ledger 見 `docs/81`。下一輪依下列順序接手：
 
-1. **主線最高優先**：CTY30 section 2 的入口 `(15,2)` 與出口 `(4,36)` 在現行通行規則下
-   不連通。先由 EXE/CTY 資料追落穴、傳送或其他 traversal consumer，再以 production input
-   穿過 CTY31 抵達羅馬利亞；不得用 debug 位移或直接切 section。
+1. **主線最高優先**：由羅馬利亞 checkpoint 繼續 production-input audit，記錄第一個
+   不可達、錯誤 gate 或設定 mismatch；不得預猜 blocker 或以後段孤立切片代替。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

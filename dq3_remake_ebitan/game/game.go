@@ -1194,6 +1194,12 @@ func (g *Game) tryTransition() {
 	ncty := g.curCty
 	if cross {
 		ncty = dcty
+		// DQ3.EXE file 0x49d1..0x49f2：跨 CTY 時先以新 CTY 索引查
+		// DGROUP 0x748 cty_loc，寫回 remembered world X/Y，再載目的 CTY。
+		// 否則 CTY30→31 後由 section0 出洞會錯誤回到 CTY30 的地表入口。
+		if loc := ctyLoc[ncty]; loc[2] == g.layer {
+			g.overPx, g.overPy = loc[0], loc[1]
+		}
 	}
 	blkn := 1
 	if ncty >= 0 && ncty < len(mapBlkNum) {

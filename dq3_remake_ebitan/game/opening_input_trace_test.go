@@ -267,18 +267,29 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		}
 	}
 
-	// 這一輪的 E3 checkpoint 到原版魔法球 transaction 為止。破牆後的 CTY30 sec2
-	// 尚有同 section 不連通的洞窟機關，不能以 transition graph/debug 位移冒充抵達羅馬利亞。
+	// 穿越已打通的誘惑洞窟。CTY30 sec2 的入口與出口被原版 tier-1 門分隔；
+	// 以仍持有的盜賊鑰匙從正式「調查」命令開左側門，再正常走 CTY31 到羅馬利亞。
+	traceWalkThroughPortal(t, g, 9, 19, ctyTemptationCave, 1, 19, 28)
+	traceTownSectionTo(t, g, ctyTemptationCave, 2)
+	traceOpenReachableDoor(t, g, 6, 11)
+	traceWalkThroughPortal(t, g, 4, 36, 31, 1, 2, 4)
+	traceOpenReachableDoor(t, g, 4, 4)
+	traceWalkThroughPortal(t, g, 8, 4, 31, 0, 4, 5)
+	traceExitTownBoundary(t, g)
+	traceAdventureWalkToCty(t, g, 2)
+	if !g.inTown || g.curCty != 2 || sceneSection(g.cur) != 0 {
+		t.Fatalf("魔法球後未自然抵達羅馬利亞：town=%v cty=%d sec=%d",
+			g.inTown, g.curCty, sceneSection(g.cur))
+	}
 	if err := g.Save(); err != nil {
-		t.Fatalf("保存魔法球破牆 checkpoint: %v", err)
+		t.Fatalf("保存羅馬利亞 checkpoint: %v", err)
 	}
 	if err := restored.Load(); err != nil {
-		t.Fatalf("讀取魔法球破牆 checkpoint: %v", err)
+		t.Fatalf("讀取羅馬利亞 checkpoint: %v", err)
 	}
 	if restored.hasItem(itemuse.ItemMagicBall) || restored.storyFlag(magicBallIntactFlag) ||
-		!restored.inTown || restored.curCty != ctyTemptationCave ||
-		sceneSection(restored.cur) != magicBallSection {
-		t.Fatalf("魔法球破牆 checkpoint round-trip 錯：ball=%v flag51=%v town=%v cty=%d sec=%d",
+		!restored.inTown || restored.curCty != 2 || sceneSection(restored.cur) != 0 {
+		t.Fatalf("羅馬利亞 checkpoint round-trip 錯：ball=%v flag51=%v town=%v cty=%d sec=%d",
 			restored.hasItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
 			restored.inTown, restored.curCty, sceneSection(restored.cur))
 	}

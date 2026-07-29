@@ -483,4 +483,15 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("誘惑洞窟 runtime 圖未完成魔法球 transaction")
 	}
 	dump("temptation_magic_ball_open")
+
+	// 魔法球後正常穿越 CTY30/31 所抵達的下一個 campaign checkpoint。
+	// framedump 只固定呈現狀態；production 可達性由 TestOpeningProductionInputTrace 證明。
+	g.cur, g.inTown, g.curCty = g.overworldScene(), false, -1
+	g.px, g.py = ctyLoc[2][0], ctyLoc[2][1]
+	g.noticeTimer = 0 // production 穿越 CTY30/31 的步數早已令魔法球取得通知逾時
+	g.enterTownCty(2)
+	if !g.inTown || g.curCty != 2 || sceneSection(g.cur) != 0 {
+		t.Fatal("羅馬利亞 runtime 圖載入失敗")
+	}
+	dump("romaly_arrival")
 }
