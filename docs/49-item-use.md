@@ -22,7 +22,7 @@ ITEM.DAT 是**裝備資料**(每筆 7 byte:b0 攻、b1 防、+2 價、+4 類別�
 
 ## 效果數值的來源誠實標註
 
-效果「**種類**」是 RE 事實(上表)。需要**數值**的量,落在未定位的 use-effect 路徑:
+效果「**種類**」是 RE 事實(上表)。需要**數值**的量，多數仍落在未定位的 use-effect 路徑：
 - 道具使用**不以 id 直接分支**(EXE 內 `cmp al,0x41` 兩處經反組譯確認為 `[0x41xx]` 位址
   byte 的假陽性,非真比較)。治療量應在 use-effect 派發(疑與 ホイミ 回復共路徑),
   而**咒文威力表本專案已確認未定位、不憑 BBS 湊**(docs/13:312)。
@@ -30,6 +30,11 @@ ITEM.DAT 是**裝備資料**(每筆 7 byte:b0 攻、b1 防、+2 價、+4 類別�
   - `DQ3_HERB_HEAL = 30`(經典藥草固定回復;商店價已證精訊=經典資料,取經典值合理)。
   - `DQ3_HOLY_STEPS = 64`(聖水驅敵步數,經典量級)。
   - 兩者若日後 RE 定位到精訊實際值,於 `dq3_item_use.h` 回填即可。
+
+2026-07-30 補充：黑暗之燈 `0x5f` 已不屬於上述未知範圍。IDA 證實
+`logical 0x3ccf → DGROUP 0x366a[0x1e] → logical 0x4063`；handler 僅允許地表，
+寫入夜晚 state／clock 且不消耗。Go/Ebitengine 已把 raw ID、gate 與參數遷入
+`item_use_effects` JSON；詳見 [`docs/93`](93-teidon-dark-lamp-production-trace.md)。
 
 ## 落地(`dq3_item_use.{h,c}` + main.c)
 

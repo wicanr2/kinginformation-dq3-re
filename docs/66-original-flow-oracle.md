@@ -117,7 +117,7 @@
 | 19 | 巴哈拉達東北洞窟 | CTY14 section1 拒絕加入四守衛後打 `monster57×4`；踩 handler59 呼救格、按 handler60 牆上開關救出古布達與達妮亞；再擊敗返回的甘達特 `monster56×1 + monster57×3` 並接受求饒 | SET `0x25`、CLEAR `0x14/0x34` | 魔法鑰匙；依原始 transition 進 `(26,3)` | EXE/CTY/D3TXT/影片與正式 trace：`docs/89` ✅ |
 | 20 | 巴哈拉達鎮 | 回胡椒店找古布達 | 《黑胡椒》(0x5c，免費致謝) | handler25 且原版 flag `0x36` set | D3TXT03 rec118–120；正式交易與 save/load：`docs/89` ✅ |
 | 21 | 波魯多加城 → 加爾那之塔 | 將黑胡椒交國王，換得**船**；達瑪神殿旁加爾那之塔 2F 取《領悟之書》（轉賢者用） | 船（vehicle，非 item）＋《領悟之書》(0x4a) | 持 0x5c | 取船／首次航行：`docs/90` ✅；CTY18 完整 transition、航海戰鬥、0x4a 開箱及 save/load：`docs/91` ✅ |
-| 22 | 提頓村 | 白天進武器店 2F 寶箱 | 《黑暗之燈》(0x5f)— 大地圖使用可變夜晚 | 白天進村 | 杜Ch22;quest-items 0x5f 寶箱(CTY20 sec1,flag0x39) |
+| 22 | 提頓村 | 白天進武器店 2F 寶箱 | 《黑暗之燈》(0x5f)— 僅地表使用，強制夜晚且不消耗 | 白天進村 | IDA item dispatcher／CTY20 raw entry／正式 boot trace、save/load 與下一節點均閉合：`docs/93` ✅ |
 | 23 | 八頭大蛇洞窟 | B2F 盡頭擊敗八頭大蛇 | 《草薙大劍》(0x14)(另有《女鬼面具》0x38,受詛咒) | 乘船抵日邦格村旁洞窟 | 杜Ch23;quest-items 0x14;boss-trigger-points CTY19 sec1 (35,12) dlg=45 = 八頭大蛇,main.c 已接 |
 | 24 | 日邦格村 | 傳送至「無姬大人」房(即剛戰敗的八頭大蛇);可選擇不戰或開戰 | 《紫寶珠》(0x69,戰勝取得) | 擊敗八頭大蛇後 | 杜Ch24;quest-items 0x69 |
 | 25 | 朗錫爾村 | 道具店 | 《隱身草》(0x5d,可購買) | 由阿里阿罕/日邦格村航行至此 | 杜Ch25;quest-items 0x5d 商店貨架 |

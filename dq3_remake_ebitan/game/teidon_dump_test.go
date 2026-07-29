@@ -9,16 +9,16 @@ import (
 	"testing"
 )
 
-// TestDumpGarunaSatoriBook 產出加爾那之塔領悟之書取得前後的現行 runtime 畫面。
-// 正式玩家可達性由 TestOpeningProductionInputTrace 負責；本測試只固定同一原版場景與
-// event tile，供 deterministic PNG 與目視核對。平常 skip。
-func TestDumpGarunaSatoriBook(t *testing.T) {
-	if os.Getenv("DQ3_DUMP_GARUNA") == "" {
-		t.Skip("設 DQ3_DUMP_GARUNA=1 才執行")
+// TestDumpTeidonDarkLamp fixes the current Ebitengine CTY20 treasure result
+// and the pack-driven overworld night result as runtime PNGs. Natural
+// reachability remains covered by TestOpeningProductionInputTrace.
+func TestDumpTeidonDarkLamp(t *testing.T) {
+	if os.Getenv("DQ3_DUMP_TEIDON") == "" {
+		t.Skip("設 DQ3_DUMP_TEIDON=1 才執行")
 	}
-	out := os.Getenv("GARUNA_OUT")
+	out := os.Getenv("TEIDON_OUT")
 	if out == "" {
-		t.Fatal("需設 GARUNA_OUT")
+		t.Fatal("需設 TEIDON_OUT")
 	}
 	if err := os.MkdirAll(out, 0o755); err != nil {
 		t.Fatal(err)
@@ -32,13 +32,13 @@ func TestDumpGarunaSatoriBook(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.showTitle = false
-	event, ok := g.pack.TreasureEvent("dq3:event.garuna_satori_book")
+	event, ok := g.pack.TreasureEvent("dq3:event.teidon_dark_lamp")
 	if !ok {
-		t.Fatal("缺 dq3:event.garuna_satori_book")
+		t.Fatal("缺 dq3:event.teidon_dark_lamp")
 	}
 	tr := event.Treasure
 	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
-		tr.CTYRaw, mapBlkNum[tr.CTYRaw], tr.Section, g.dnPhase, g.storyFlag)
+		tr.CTYRaw, mapBlkNum[tr.CTYRaw], tr.Section, 0, g.storyFlag)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +48,6 @@ func TestDumpGarunaSatoriBook(t *testing.T) {
 	}
 
 	found := false
-	eventX, eventY := -1, -1
 	for y := 0; y < sc.h && !found; y++ {
 		for x := 0; x < sc.w && !found; x++ {
 			ev, subid, ok := sc.tileEvent(x, y)
@@ -59,18 +58,18 @@ func TestDumpGarunaSatoriBook(t *testing.T) {
 			for face := 0; face < 4; face++ {
 				dx, dy := dirDelta(face)
 				sx, sy := x-dx, y-dy
-				if sx < 0 || sy < 0 || sx >= sc.w || sy >= sc.h || sc.Blocked(sx, sy) {
+				if sx < 0 || sy < 0 || sx >= sc.w || sy >= sc.h ||
+					sc.Blocked(sx, sy) {
 					continue
 				}
 				g.px, g.py, g.facing = sx, sy, face
-				eventX, eventY = x, y
 				found = true
 				break
 			}
 		}
 	}
 	if !found {
-		t.Fatal("找不到領悟之書 event tile 的操作格")
+		t.Fatal("找不到黑暗燈 event tile 的操作格")
 	}
 
 	dump := func(name string) {
@@ -95,18 +94,23 @@ func TestDumpGarunaSatoriBook(t *testing.T) {
 		}
 	}
 
-	dump("garuna_satori_before")
-	beforeTile := g.cur.tileIdx(eventX, eventY)
 	g.selectCommand(cmdExamine)
 	if !g.hasItem(tr.ItemRawID) || g.storyFlag(tr.PresentFlag) {
-		t.Fatalf("取得領悟之書失敗：item=%v flag=%v",
+		t.Fatalf("取得黑暗燈失敗：item=%v flag=%v",
 			g.hasItem(tr.ItemRawID), g.storyFlag(tr.PresentFlag))
 	}
-	if got := g.cur.tileIdx(eventX, eventY); got != (beforeTile+1)&0xff {
-		t.Fatalf("取得後寶箱 tile=%#x，want %#x", got, (beforeTile+1)&0xff)
+	dump("teidon_dark_lamp_obtained")
+
+	g.cur, g.town, g.inTown, g.curCty = g.overworldScene(), nil, false, -1
+	g.px, g.py = ctyLoc[tr.CTYRaw][0]-1, ctyLoc[tr.CTYRaw][1]
+	g.dnPhase, g.dnStep = 0, 47
+	g.panel, g.panelCursor = panelItem, 0
+	g.noticeTimer = 0
+	g.useSelectedItem()
+	if g.dnPhase != 2 || g.dnStep != 0 || !g.hasItem(tr.ItemRawID) {
+		t.Fatalf("黑暗燈夜景 fixture transaction 錯：phase=%d step=%d item=%v",
+			g.dnPhase, g.dnStep, g.hasItem(tr.ItemRawID))
 	}
-	if _, _, ok := g.cur.tileEvent(eventX, eventY); ok {
-		t.Fatal("取得後寶箱 event subid 應立即清除")
-	}
-	dump("garuna_satori_obtained")
+	g.panel = panelNone // 對齊 production trace 使用後按 B 關閉道具清單
+	dump("teidon_dark_lamp_night")
 }

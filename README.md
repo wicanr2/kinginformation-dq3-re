@@ -55,6 +55,10 @@ RE 文件。
 
 ![Ebiten：達瑪神殿轉職成功](docs/img/dhama_reclass_success.png)
 
+![Ebiten：提頓取得黑暗之燈](docs/img/teidon_dark_lamp_obtained.png)
+
+![Ebiten：地表使用黑暗之燈後進入夜晚](docs/img/teidon_dark_lamp_night.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

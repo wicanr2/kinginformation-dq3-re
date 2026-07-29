@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 )
 
@@ -50,6 +51,50 @@ func TestUseHolyWaterRepel(t *testing.T) {
 	}
 	if len(g.inventory) != 0 {
 		t.Errorf("聖水應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+func TestPackDarkLampOriginalGateAndTransaction(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	effects := pack.ItemUseEffects()
+	if len(effects) != 1 {
+		t.Fatalf("item use effects=%d，want 1", len(effects))
+	}
+	effect := effects[0]
+	use := func(g *Game) {
+		t.Helper()
+		g.inventory = []int{effect.ItemRawID}
+		g.panel, g.panelCursor = panelItem, 0
+		g.useSelectedItem()
+	}
+
+	overworld := &Game{pack: pack, dnPhase: 0, dnStep: 47}
+	use(overworld)
+	if overworld.dnPhase != effect.DayNightPhase || overworld.dnStep != 0 ||
+		!overworld.hasItem(effect.ItemRawID) || overworld.noticeCode != effect.ItemRawID {
+		t.Fatalf("地表使用黑暗燈 transaction 錯：phase=%d step=%d item=%v notice=%d",
+			overworld.dnPhase, overworld.dnStep,
+			overworld.hasItem(effect.ItemRawID), overworld.noticeCode)
+	}
+
+	alreadyNight := &Game{pack: pack, dnPhase: effect.DayNightPhase, dnStep: 31}
+	use(alreadyNight)
+	if alreadyNight.dnPhase != effect.DayNightPhase || alreadyNight.dnStep != 31 ||
+		alreadyNight.noticeTimer != 0 || !alreadyNight.hasItem(effect.ItemRawID) {
+		t.Fatalf("已是夜晚不得重置 clock 或消耗：phase=%d step=%d notice=%d item=%v",
+			alreadyNight.dnPhase, alreadyNight.dnStep, alreadyNight.noticeTimer,
+			alreadyNight.hasItem(effect.ItemRawID))
+	}
+
+	town := &Game{pack: pack, inTown: true, dnPhase: 0, dnStep: 47}
+	use(town)
+	if town.dnPhase != 0 || town.dnStep != 47 || town.noticeTimer != 0 ||
+		!town.hasItem(effect.ItemRawID) {
+		t.Fatalf("城內使用不得繞過原版 overworld gate：phase=%d step=%d notice=%d item=%v",
+			town.dnPhase, town.dnStep, town.noticeTimer, town.hasItem(effect.ItemRawID))
 	}
 }
 

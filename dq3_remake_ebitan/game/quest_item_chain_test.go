@@ -47,13 +47,17 @@ func TestStandaloneTreasureUsesPackAndOriginalPresentFlag(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	events := pack.TreasureEvents()
-	if len(events) != 1 {
-		t.Fatalf("treasure events=%d, want 1", len(events))
+	event, ok := pack.TreasureEvent("dq3:event.garuna_satori_book")
+	if !ok {
+		t.Fatal("缺 dq3:event.garuna_satori_book")
 	}
-	tr := events[0].Treasure
-	if legacy := treasureFor(tr.CTYRaw, tr.Section, tr.TileSubID); legacy != nil {
-		t.Fatalf("pack-owned treasure must not remain in Go table: %+v", legacy)
+	tr := event.Treasure
+	for _, event := range pack.TreasureEvents() {
+		packTreasure := event.Treasure
+		if legacy := treasureFor(packTreasure.CTYRaw, packTreasure.Section,
+			packTreasure.TileSubID); legacy != nil {
+			t.Fatalf("pack-owned treasure must not remain in Go table: %+v", legacy)
+		}
 	}
 	g := &Game{pack: pack, flags: map[int]bool{}}
 	g.setStoryFlag(tr.PresentFlag, true)

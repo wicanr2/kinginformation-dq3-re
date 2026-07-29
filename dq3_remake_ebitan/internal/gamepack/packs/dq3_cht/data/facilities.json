@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.7",
+  "schema_version": "0.1.8",
   "service_definitions": [
     {
       "id": "common:service.revive",

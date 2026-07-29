@@ -561,8 +561,8 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 ## 10. 今日收尾與剩餘工作（更新 2026-07-30）
 
-boot 起的同一條正式 trace 已由首次航行繼續至加爾那之塔《領悟之書》`0x4a`，
-再閉合 CTY17 達瑪神殿轉職。
+boot 起的同一條正式 trace 已由首次航行繼續至加爾那之塔《領悟之書》`0x4a`、
+CTY17 達瑪神殿轉職，再閉合 CTY20《黑暗之燈》`0x5f`。
 IDA Pro 9.4 證明原版玩家睡眠／混亂在行動前 `roll<=0x64` 清除、怪物側
 `roll<0x64` 清除，修除怪物 43 令全隊永久不能行動的航海死循環。CTY18 sec1
 `01 4a 00 b7` 已遷入 schema `0.1.6` `treasure_events`，正式路徑繞完塔內不同連通區，
@@ -572,12 +572,17 @@ CTY17 sec0 handler39，而非舊文件的 CTY49；Lv20、勇者禁止、五個�
 個人持有領悟之書才可選賢者，以及成功交易均已閉合。正式 trace 由領悟之書 checkpoint
 正常離塔、航行、練所選同伴至 Lv20、使用魔法鑰匙、rec421 給予、完成賢者轉職並
 save/load；證據與更新圖片見 `docs/92`。
+schema `0.1.8` 再加入有限的 `item_use_effects`。IDA 證明 raw `0x5f` 經
+DGROUP `0x366a` 派發表抵達 `(logical) 0x4063`：只允許地表且當前為白天，成功時設為
+黑夜並重設時鐘步數，不消耗道具。正式 trace 已由達瑪 checkpoint 航行至 CTY20，
+白天調查寶箱、出村後由 rec421 使用、完成 save/load，並繼續航行抵達 CTY19；
+證據與更新圖片見 `docs/93`。
 
 下一輪依下列順序接手：
 
-1. **主線最高優先**：達瑪轉職已由 boot 起的同一條 trace 閉合至 E3（`docs/92`）。
-   從該合法讀檔 checkpoint 前往攻略步驟 22 提頓村，閉合白天 CTY20 sec1
-   《黑暗之燈》寶箱、地表使用變夜，以及可繼續前往八頭大蛇洞窟的下一節點。
+1. **主線最高優先**：提頓《黑暗之燈》已由 boot 起的同一條 trace 閉合至 E3，
+   並抵達 CTY19（`docs/93`）。從該合法 checkpoint 依正式入口閉合八頭大蛇洞窟
+   B2F 第一戰、草薙大劍 `0x14`、日邦格傳送後第二戰及紫寶珠 `0x69`。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

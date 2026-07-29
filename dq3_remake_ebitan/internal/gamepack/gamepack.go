@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.7"
+	SchemaVersion = "0.1.8"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -202,6 +202,20 @@ type TreasureEvent struct {
 	Kind     string                `json:"kind"`
 	Treasure QuestTreasureSelector `json:"treasure"`
 	Evidence Evidence              `json:"evidence"`
+}
+
+// ItemUseEffect 把版本專屬道具 ID 綁定至有限的引擎 primitive。
+// JSON 只提供選擇器與參數，不接受可執行運算式。
+type ItemUseEffect struct {
+	ID                 string   `json:"id"`
+	Kind               string   `json:"kind"`
+	ItemRawID          int      `json:"item_raw_id"`
+	EffectID           string   `json:"effect_id"`
+	LocationKind       string   `json:"location_kind"`
+	DayNightPhase      int      `json:"day_night_phase"`
+	ResetDayNightSteps bool     `json:"reset_day_night_steps"`
+	Consume            bool     `json:"consume"`
+	Evidence           Evidence `json:"evidence"`
 }
 
 type ItemExchange struct {
@@ -467,6 +481,7 @@ type Events struct {
 	TemporaryRoleEvents         []TemporaryRoleEvent         `json:"temporary_role_events"`
 	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
 	TreasureEvents              []TreasureEvent              `json:"treasure_events"`
+	ItemUseEffects              []ItemUseEffect              `json:"item_use_effects"`
 	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate     `json:"two_step_floor_switch_gates"`
 	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
 	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
@@ -539,6 +554,7 @@ type Pack struct {
 	roleEvents       map[string]*TemporaryRoleEvent
 	questItemEvents  map[string]*QuestItemChainEvent
 	treasureEvents   map[string]*TreasureEvent
+	itemUseEffects   map[int]*ItemUseEffect
 	sequenceGates    map[string]*TwoStepFloorSwitchGate
 	vehicleExchanges map[string]*StagedVehicleExchangeEvent
 	guidedPassages   map[string]*GuidedPassageEvent
@@ -927,6 +943,9 @@ func (p *Pack) validateEvents() error {
 	if p.Events.TreasureEvents == nil {
 		return errors.New("treasure_events must be present")
 	}
+	if p.Events.ItemUseEffects == nil {
+		return errors.New("item_use_effects must be present")
+	}
 	if p.Events.TwoStepFloorSwitchGates == nil {
 		return errors.New("two_step_floor_switch_gates must be present")
 	}
@@ -1097,6 +1116,34 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		p.treasureEvents[e.ID] = e
+	}
+	p.itemUseEffects = make(map[int]*ItemUseEffect, len(p.Events.ItemUseEffects))
+	itemUseIDs := make(map[string]bool, len(p.Events.ItemUseEffects))
+	for i := range p.Events.ItemUseEffects {
+		e := &p.Events.ItemUseEffects[i]
+		if e.ID == "" || e.Kind != "item_use" {
+			return fmt.Errorf("item_use_effects[%d]: id and kind=item_use are required", i)
+		}
+		if itemUseIDs[e.ID] {
+			return fmt.Errorf("duplicate item use effect id %q", e.ID)
+		}
+		if e.ItemRawID < 0 || e.ItemRawID > 255 {
+			return fmt.Errorf("%s: item_raw_id out of range", e.ID)
+		}
+		if previous := p.itemUseEffects[e.ItemRawID]; previous != nil {
+			return fmt.Errorf("%s: item_raw_id duplicates %s", e.ID, previous.ID)
+		}
+		if e.EffectID != "force_day_night_phase" ||
+			e.LocationKind != "overworld" ||
+			e.DayNightPhase < 0 || e.DayNightPhase > 3 ||
+			!e.ResetDayNightSteps {
+			return fmt.Errorf("%s: invalid force_day_night_phase configuration", e.ID)
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		itemUseIDs[e.ID] = true
+		p.itemUseEffects[e.ItemRawID] = e
 	}
 	p.sequenceGates = make(map[string]*TwoStepFloorSwitchGate, len(p.Events.TwoStepFloorSwitchGates))
 	for i := range p.Events.TwoStepFloorSwitchGates {
@@ -1667,6 +1714,15 @@ func (p *Pack) TreasureEvents() []TreasureEvent {
 
 func (p *Pack) TreasureEvent(id string) (*TreasureEvent, bool) {
 	e, ok := p.treasureEvents[id]
+	return e, ok
+}
+
+func (p *Pack) ItemUseEffects() []ItemUseEffect {
+	return append([]ItemUseEffect(nil), p.Events.ItemUseEffects...)
+}
+
+func (p *Pack) ItemUseEffectByRawID(itemRawID int) (*ItemUseEffect, bool) {
+	e, ok := p.itemUseEffects[itemRawID]
 	return e, ok
 }
 

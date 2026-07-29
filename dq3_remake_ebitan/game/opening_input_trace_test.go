@@ -1332,11 +1332,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 
 	// 首次航行 → 加爾那之塔。船陸混合尋路只選方向鍵；航行、靠岸、
 	// 地表入口、塔內 transition 與寶箱調查仍全部由 production step 處理。
-	treasureEvents := g.pack.TreasureEvents()
-	if len(treasureEvents) != 1 {
-		t.Fatalf("treasure events=%d, want 1", len(treasureEvents))
+	satoriEvent, ok := g.pack.TreasureEvent("dq3:event.garuna_satori_book")
+	if !ok {
+		t.Fatal("缺 dq3:event.garuna_satori_book")
 	}
-	satori := treasureEvents[0].Treasure
+	satori := satoriEvent.Treasure
 	traceAdventureTravelToCty(t, g, satori.CTYRaw)
 	traceTownSectionTo(t, g, satori.CTYRaw, satori.Section)
 	traceExaminePackTreasure(t, g, satori)
@@ -1428,6 +1428,129 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		g.companions[0].Level() != 1 ||
 		containsInt(g.companions[0].Inventory, satori.ItemRawID) {
 		t.Fatalf("達瑪轉職 save/load round-trip 錯：companions=%+v", g.companions)
+	}
+
+	// 達瑪 checkpoint → 提頓。由 section0 出城、登船、航行與靠岸；
+	// 不直接改晝夜、座標或 vehicle state。
+	traceTownSectionTo(t, g, 17, 0)
+	traceOpenReachableDoor(t, g) // save/load 後原版魔法門回到關閉 tile
+	traceExitTownBoundary(t, g)
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 20)
+	// 航程可能跨過晝夜門檻；先正常出村，在地表走到白天後重新進村，
+	// 再進武器店二樓，不能直接寫 dnPhase。
+	if g.dnPhase != 0 {
+		traceTownSectionTo(t, g, 20, 0)
+		traceExitTownBoundary(t, g)
+		traceWaitForDayNearCty(t, g, 20)
+		traceAdventureWalkToCty(t, g, 20, false)
+	}
+	if g.dnPhase != 0 {
+		t.Fatalf("重新進提頓後不是白天：phase=%d step=%d", g.dnPhase, g.dnStep)
+	}
+
+	darkLampEvent, ok := g.pack.TreasureEvent("dq3:event.teidon_dark_lamp")
+	if !ok {
+		t.Fatal("缺 dq3:event.teidon_dark_lamp")
+	}
+	darkLamp := darkLampEvent.Treasure
+	traceTownSectionTo(t, g, darkLamp.CTYRaw, darkLamp.Section)
+	traceExaminePackTreasure(t, g, darkLamp)
+	if !g.hasItem(darkLamp.ItemRawID) || g.storyFlag(darkLamp.PresentFlag) {
+		t.Fatalf("正式取得黑暗燈 transaction 錯：item=%v flag=%v",
+			g.hasItem(darkLamp.ItemRawID), g.storyFlag(darkLamp.PresentFlag))
+	}
+
+	// 原版 handler logical 0x4063 只允許在地表使用。正常離開提頓後經
+	// rec421 選「使用」，強制夜晚但保留黑暗燈。
+	traceTownSectionTo(t, g, darkLamp.CTYRaw, 0)
+	traceExitTownBoundary(t, g)
+	traceUseInventoryItem(t, g, darkLamp.ItemRawID)
+	if g.dnPhase != 2 || g.dnStep != 0 || !g.hasItem(darkLamp.ItemRawID) {
+		t.Fatalf("正式使用黑暗燈未閉合：phase=%d step=%d item=%v",
+			g.dnPhase, g.dnStep, g.hasItem(darkLamp.ItemRawID))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存提頓黑暗燈 checkpoint：%v", err)
+	}
+	restored, err = NewGame(g.assets, nil)
+	if err != nil {
+		t.Fatalf("重建提頓黑暗燈讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if g.inTown || g.dnPhase != 2 || g.dnStep != 0 ||
+		!g.hasItem(darkLamp.ItemRawID) || g.storyFlag(darkLamp.PresentFlag) {
+		t.Fatalf("提頓黑暗燈 save/load round-trip 錯：town=%v phase=%d step=%d item=%v flag=%v",
+			g.inTown, g.dnPhase, g.dnStep, g.hasItem(darkLamp.ItemRawID),
+			g.storyFlag(darkLamp.PresentFlag))
+	}
+
+	// 同一合法 checkpoint 繼續正常登船並抵達下一個主線節點 CTY19，
+	// 證明黑暗燈交易沒有把 campaign 鎖死。
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 19)
+	if !g.inTown || g.curCty != 19 {
+		t.Fatalf("黑暗燈後無法繼續到八頭大蛇洞窟：town=%v cty=%d", g.inTown, g.curCty)
+	}
+}
+
+// traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，
+// 直到地表步數週期回到白天。它不修改晝夜 counter、座標或 RNG。
+func traceWaitForDayNearCty(t *testing.T, g *Game, cty int) {
+	t.Helper()
+	if g.inTown || cty < 0 || cty >= len(ctyLoc) {
+		t.Fatalf("等待白天起點錯：town=%v cty=%d", g.inTown, cty)
+	}
+	prevX, prevY := -1, -1
+	for steps := 0; steps < 2000 && g.dnPhase != 0; steps++ {
+		if g.battle.active {
+			traceResolveBattle(t, g, false)
+			continue
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待白天 cooldown：%v", err)
+			}
+			continue
+		}
+		chosen := -1
+		fallback := -1
+		for dir := 0; dir < 4; dir++ {
+			dx, dy := dirDelta(dir)
+			nx, ny := g.px+dx, g.py+dy
+			if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h ||
+				g.cur.Blocked(nx, ny) || findCtyAtLayer(nx, ny, g.layer) >= 0 ||
+				nx == g.shipX && ny == g.shipY {
+				continue
+			}
+			if fallback < 0 {
+				fallback = dir
+			}
+			if nx != prevX || ny != prevY {
+				chosen = dir
+				break
+			}
+		}
+		if chosen < 0 {
+			chosen = fallback
+		}
+		if chosen < 0 {
+			t.Fatalf("CTY%d 外 (%d,%d) 找不到可用於等待白天的陸格",
+				cty, g.px, g.py)
+		}
+		oldX, oldY := g.px, g.py
+		if err := g.step(InputState{DirHeld: chosen, DirEdge: -1}); err != nil {
+			t.Fatalf("等待白天移動 dir%d：%v", chosen, err)
+		}
+		prevX, prevY = oldX, oldY
+	}
+	if g.dnPhase != 0 {
+		t.Fatalf("CTY%d 外 2000 個 production step 後仍未回白天：phase=%d step=%d",
+			cty, g.dnPhase, g.dnStep)
 	}
 }
 

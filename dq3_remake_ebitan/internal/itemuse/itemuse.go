@@ -18,7 +18,6 @@ const (
 	FairyFlute                // 妖精之笛(位置相關,不消耗)
 	PrayerRing                // 祈禱之戒(回 MP + ~25.4% 損壞)
 	Ranaruta                  // 拉那魯達(切晝夜)
-	DarkLamp                  // 黑暗之燈(強制變夜,不消耗)
 	Rainbow                   // 彩虹水滴(位置相關)
 	Mirror                    // 拉之鏡(沙曼歐莎假王揭露,不消耗)
 	MagicBall                 // 魔法球(誘惑洞窟指定位置破牆)
@@ -33,7 +32,6 @@ const (
 	ItemFullmoon    = 0x45 // 滿月草
 	ItemPrayerRing  = 0x48 // 祈禱之戒
 	ItemMagicBall   = 0x58 // 魔法球
-	ItemDarkLamp    = 0x5f // 黑暗之燈
 	ItemMirror      = 0x61 // 拉之鏡
 )
 
@@ -62,8 +60,6 @@ func KindOf(itemID int) Kind {
 		return PrayerRing
 	case ItemMagicBall:
 		return MagicBall
-	case ItemDarkLamp:
-		return DarkLamp
 	case ItemMirror:
 		return Mirror
 	case 0x0f:

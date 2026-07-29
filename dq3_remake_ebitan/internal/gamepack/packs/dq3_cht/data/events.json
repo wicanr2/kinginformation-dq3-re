@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.7",
+  "schema_version": "0.1.8",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -189,6 +189,48 @@
         "address": "0x9cf6..0x9e41",
         "consumer": "CTY18 sec1 subid0 raw 01 4a 00 b7 is dispatched by file 0x9d86 to the type1/3 inventory consumer at file 0x9de9; success writes item 0x4a and clears original present flag 0xb7",
         "doc": "docs/91-garuna-satori-book-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:event.teidon_dark_lamp",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 20,
+        "section": 1,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 95,
+        "present_flag_raw": 57
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY20.DAT",
+        "address_space": "file",
+        "address": "0x9cf6..0x9e41",
+        "consumer": "CTY20 sec1 subid0 raw 01 5f 00 39 is dispatched by file 0x9d86 to the type1/3 inventory consumer at file 0x9de9; success writes item 0x5f and clears original present flag 0x39",
+        "doc": "docs/93-teidon-dark-lamp-production-trace.md"
+      }
+    }
+  ],
+  "item_use_effects": [
+    {
+      "id": "dq3:item_use.dark_lamp",
+      "kind": "item_use",
+      "item_raw_id": 95,
+      "effect_id": "force_day_night_phase",
+      "location_kind": "overworld",
+      "day_night_phase": 2,
+      "reset_day_night_steps": true,
+      "consume": false,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0x3ccf..0x3d16, DGROUP 0x366a, handler 0x4063..0x40aa",
+        "consumer": "selected record item+1 maps raw item 0x5f through DGROUP 0x366a entry 30 to handler 0x4063; overworld-only handler changes day byte DGROUP 0x526c from 1 to 0, advances clock 0x251d to 0x008c, refreshes palette, and does not remove the inventory slot",
+        "doc": "docs/93-teidon-dark-lamp-production-trace.md"
       }
     }
   ],

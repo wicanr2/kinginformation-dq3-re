@@ -12,6 +12,75 @@ import (
 	"testing/fstest"
 )
 
+func TestDQ3TeidonDarkLampMatchesOriginalEXEAndCTY(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		raw, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return raw
+	}
+	exe, cty := read("DQ3.EXE"), read("CTY20.DAT")
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	treasure, ok := p.TreasureEvent("dq3:event.teidon_dark_lamp")
+	if !ok {
+		t.Fatal("dq3:event.teidon_dark_lamp missing")
+	}
+	use, ok := p.ItemUseEffectByRawID(treasure.Treasure.ItemRawID)
+	if !ok || use.ID != "dq3:item_use.dark_lamp" {
+		t.Fatalf("黑暗燈寶箱未接到 item-use effect：%+v", use)
+	}
+	if treasure.Treasure != (QuestTreasureSelector{
+		CTYRaw: 20, Section: 1, TileSubID: 0, EventTypeRaw: 1,
+		ItemRawID: 0x5f, PresentFlag: 0x39,
+	}) {
+		t.Fatalf("提頓黑暗燈 treasure JSON 不符：%+v", treasure.Treasure)
+	}
+	if use.ItemRawID != 0x5f || use.EffectID != "force_day_night_phase" ||
+		use.LocationKind != "overworld" || use.DayNightPhase != 2 ||
+		!use.ResetDayNightSteps || use.Consume {
+		t.Fatalf("黑暗燈 item-use JSON 不符：%+v", use)
+	}
+
+	section := int(binary.LittleEndian.Uint16(cty[2:4]))
+	eventTable := section + int(binary.LittleEndian.Uint16(cty[section+8:section+10]))
+	if eventTable+5 > len(cty) || cty[eventTable] < 1 {
+		t.Fatalf("CTY20 sec1 event table 無效：section=%#x table=%#x", section, eventTable)
+	}
+	if raw := cty[eventTable+1 : eventTable+5]; !reflect.DeepEqual(raw,
+		[]byte{0x01, 0x5f, 0x00, 0x39}) {
+		t.Fatalf("CTY20 sec1 subid0=%x，want 01 5f 00 39", raw)
+	}
+
+	for off, want := range map[int][]byte{
+		// selected record is decremented to raw item ID; IDs >=0x41 index the
+		// DGROUP 0x366a near-handler table.
+		0x503f:  {0x4b, 0x83, 0xfb, 0x41, 0x7d, 0x2b},
+		0x506f:  {0x90, 0x83, 0xeb, 0x41, 0xd1, 0xe3, 0x83, 0xbf, 0x6a, 0x36},
+		0x197e6: {0x63, 0x40}, // raw item 0x5f -> logical handler 0x4063
+		// overworld gate, day-byte gate, write night, then clock target 0x008c.
+		0x53d3: {0x83, 0x3e, 0x2d, 0x4f, 0x00, 0x74, 0x03},
+		0x53dd: {0x80, 0x3e, 0x6c, 0x52, 0x01, 0x74, 0x03},
+		0x53e7: {0xc6, 0x06, 0x6c, 0x52, 0x00},
+		0x53ed: {0x81, 0x3e, 0x1d, 0x25, 0x8c, 0x00},
+		0x5413: {0x1d, 0x25, 0x8c, 0x00},
+	} {
+		if off+len(want) > len(exe) ||
+			!reflect.DeepEqual(exe[off:off+len(want)], want) {
+			t.Fatalf("DQ3.EXE file %#x 不符：got %x want %x",
+				off, exe[off:off+len(want)], want)
+		}
+	}
+}
+
 func TestDQ3KandarEventMatchesOriginalEXEAndCTY(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {
@@ -684,14 +753,14 @@ func TestDQ3DhamaReclassMatchesOriginalTextAndConfig(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.7","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.8","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.7","service_definitions":[{
+	  "schema_version":"0.1.8","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -699,18 +768,19 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.7",
+	  "schema_version":"0.1.8",
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"record","address":"421","consumer":"item menu","doc":"docs/x.md"}},
 	  "boss_surrender_events":[],"temporary_role_events":[],
-	  "quest_item_chain_events":[],"treasure_events":[],"two_step_floor_switch_gates":[],
+	    "quest_item_chain_events":[],"treasure_events":[],"item_use_effects":[],
+	    "two_step_floor_switch_gates":[],
 	  "staged_vehicle_exchange_events":[],"guided_passage_events":[],
 	  "hostage_rescue_events":[],"reclass_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.7",
+	  "schema_version":"0.1.8",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -720,7 +790,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.7","definitions":[{
+	  "schema_version":"0.1.8","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -734,7 +804,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.7"`, `"schema_version":"0.1.7","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.8"`, `"schema_version":"0.1.8","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"unknown characters field", validManifest, validFacilities, validEvents, strings.Replace(validCharacters, `"defaults":[`, `"typo":1,"defaults":[`, 1), "unknown field"},
 	}

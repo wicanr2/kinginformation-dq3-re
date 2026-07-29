@@ -22,7 +22,7 @@
 | 0x5c | 黑胡椒 | 巴哈拉達古布達 handler25；完成 CTY14 救援後，flag0x36 set 時一次性取得 | ✅ `hostage_rescue` 原版 parity、正式 InputState trace、runtime 圖與 save/load（docs/89） |
 | 0x5d | 隱身草 | 朗錫爾道具店(Ch25);耶進貝亞隱身 | ✅ 商店貨架 |
 | 0x5e | 乾渴壺 | 耶進貝亞推石密道(Ch26);吸海(Ch27)| ✅ DQ3_USE_DRAIN(取得鏈待)|
-| 0x5f | 黑暗之燈 | 提頓村武器店 2F(Ch22);變夜 | ✅ 寶箱(CTY20 sec1,flag0x39)|
+| 0x5f | 黑暗之燈 | 提頓村武器店 2F(Ch22);只在白天地表變夜且不消耗 | ✅ schema 0.1.8、EXE/CTY parity、正式 InputState trace、runtime 圖與 save/load（docs/93） |
 | 0x60 | 回音之笛 | 亞布之塔 3F(Ch31)| ✅ 寶箱(CTY26 sec2,flag0xb0)|
 | 0x61 | 拉之鏡 | 拉之鏡洞窟(Ch35);沙曼歐莎假國王現形 | ✅ 寶箱(CTY24 sec2,flag0x9f)|
 | 0x62 | 變身杖 | 怪力魔(怪89)掉(Ch35)→ 換船員之骨 | ✅ boss + transform(byte4=44)|

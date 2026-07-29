@@ -11,6 +11,9 @@ func (g *Game) useSelectedItem() {
 		return
 	}
 	code := g.inventory[g.panelCursor]
+	if g.usePackItemEffect(code) {
+		return
+	}
 	if g.useQuestItemChain(code) {
 		return
 	}
@@ -76,14 +79,42 @@ func (g *Game) useSelectedItem() {
 	case itemuse.Ranaruta: // 拉那魯達:白天↔黑夜切換(不消耗;城內用時重載當前 section NPC)
 		g.toggleDaynight()
 		g.noticeCode, g.noticeTimer = code, 90
-	case itemuse.DarkLamp: // 黑暗之燈:強制黑夜(不消耗;城內用時重載當前 section NPC)
-		g.setDaynight(2)
-		g.noticeCode, g.noticeTimer = code, 90
 	case itemuse.Mirror:
 		g.useMirror()
 	default:
 		// 解狀態(無狀態系統)→ 不消耗,對齊原版
 	}
+}
+
+// usePackItemEffect 在舊相容派發器之前接管版本專屬道具選擇器。
+// 引擎只實作有限的具名效果；未知效果或不合法 gate 均失敗即關閉且不改變狀態。
+func (g *Game) usePackItemEffect(code int) bool {
+	if g.pack == nil {
+		return false
+	}
+	effect, ok := g.pack.ItemUseEffectByRawID(code)
+	if !ok {
+		return false
+	}
+	if effect.LocationKind != "overworld" || g.inTown {
+		return true
+	}
+	switch effect.EffectID {
+	case "force_day_night_phase":
+		if g.dnPhase == effect.DayNightPhase {
+			return true
+		}
+		if !effect.ResetDayNightSteps {
+			return true
+		}
+		g.setDaynight(effect.DayNightPhase)
+		if effect.Consume {
+			g.removeItems(code, 1)
+			g.clampPanelCursor()
+		}
+		g.noticeCode, g.noticeTimer = code, 90
+	}
+	return true
 }
 
 const (

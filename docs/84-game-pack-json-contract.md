@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.7"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.8"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.7",
+  "schema_version": "0.1.8",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -510,6 +510,26 @@ mutation 前失敗即關閉。DQ3 canonical 範例與原版 parity test 見 `eve
 | `[].treasure` | object | 是 | `cty_raw/section/tile_subid/event_type_raw/item_raw_id/present_flag_raw`；present flag 採原版 set=可取、clear=已取。 |
 | `[].evidence` | object | 是 | CTY raw entry、EXE dispatcher／inventory consumer 與玩家可見結果的 D3 證據。 |
 
+`item_use_effects` 將版本專屬 raw item ID 接到引擎的有限具名 primitive；不得用 JSON
+放任意條件式、callback 或程式碼：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `item_use_effects` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 namespaced ID；kind 固定為 `item_use`。 |
+| `[].item_raw_id` | int | 是 | game pack 原始道具 ID；同一 pack 不可重複。 |
+| `[].effect_id` | enum | 是 | v0.1.8 支援 `force_day_night_phase`；未知值 fail closed。 |
+| `[].location_kind` | enum | 是 | v0.1.8 支援 `overworld`；不接受任意座標運算式。 |
+| `[].day_night_phase` | int | 是 | pack canonical 晝夜相位 `0..3`；DQ3 黑夜為 2。 |
+| `[].reset_day_night_steps` | boolean | 是 | 是否依原版 transaction 重設現行 phase step；本 primitive 必須為 true。 |
+| `[].consume` | boolean | 是 | 成功後是否消耗；黑暗燈原版 handler 不清 inventory slot，故為 false。 |
+| `[].evidence` | object | 是 | item dispatcher、pointer table、writer、clock/palette consumer 與可見結果的 D3 證據。 |
+
+引擎必須先以 pack selector claim 道具，再進舊相容 dispatcher；否則同一 raw ID 可能被 Go
+fallback 重新解釋。location／目前 phase gate 失敗不消耗、不重設 clock，也不得用 Go 預設值
+補缺欄位。DQ3 canonical 範例見 `events.json` 與
+[`docs/93`](93-teidon-dark-lamp-production-trace.md)。
+
 取得成功必須在同一幀清 present flag、把 low tile 加一並清 event subid；重新載入場景時由
 同一 present flag 重建已開啟外觀。加爾那之塔《領悟之書》canonical 範例與完整正式 trace
 見 `events.json` 與 [`docs/91`](91-garuna-satori-book-production-trace.md)。
@@ -674,7 +694,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.7",
+  "schema_version": "0.1.8",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [
