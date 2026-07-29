@@ -302,7 +302,10 @@ recruit 3 → leave Aliahan → overworld`
 
 - [x] 盜賊鑰匙：2026-07-29 已由既有 boot trace 延伸，經 CTY07 地道、原始 transition
   table 跨至 CTY08 sec3、正式交談取得 0x55，並通過 save/load。
-- 魔法球、誘惑洞窟、羅馬利亞。
+- [x] 魔法球：2026-07-29 從 0x55 checkpoint 正常返回 CTY07 地道、步行至 CTY01，
+  以正式「調查」開右上屋 door(28,8)，進 sec1 與 handler7 交談取得 0x58；0x55 不消耗，
+  checkpoint save/load 通過。
+- 誘惑洞窟、羅馬利亞。
 - 甘達特／金皇冠。
 - 諾阿尼魯／紅寶石／覺醒粉。
 - 金字塔按鈕／魔法鑰匙。
@@ -517,8 +520,8 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 本日已閉合逐隊員戰鬥命令、敵我目標選擇及回合訊息 FIFO。這些是可驗證的 battle vertical
 slice，不代表完整主線或整套戰鬥已完成。下一輪依下列順序接手：
 
-1. **主線最高優先**：從盜賊鑰匙 checkpoint 以 production input 往後走，下一個節點是
-   雷貝鎮老人／魔法球；P2 前段至自然取船仍未形成單一路徑 E3 trace。
+1. **主線最高優先**：從魔法球 checkpoint 以 production input 往後走，下一個節點是
+   誘惑洞窟的魔法球破牆與羅馬利亞入口；P2 前段至自然取船仍未形成單一路徑 E3 trace。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

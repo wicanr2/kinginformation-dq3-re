@@ -430,4 +430,38 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("拿吉米老人 runtime 圖未觸發盜賊鑰匙事件")
 	}
 	dump("najimi_thief_key")
+
+	// 雷貝右上屋二樓：持 0x55 與 handler7 正式交談，取得且顯示魔法球 0x58。
+	leve, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 1, mapBlkNum[1], 1, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.curCty, g.town, g.cur, g.dlg.tx = 1, leve, leve, leve.dlgText
+	g.inventory = []int{0x55}
+	delete(g.flags, msMagicBal)
+	g.dlg.open, g.cmd.open = false, false
+	positioned = false
+	for dir := 0; dir < 4 && !positioned; dir++ {
+		dx, dy := dirDelta(dir)
+		for dist := 1; dist <= 2; dist++ {
+			x, y := 3-dx*dist, 3-dy*dist
+			if x < 0 || y < 0 || x >= leve.w || y >= leve.h || leve.Blocked(x, y) {
+				continue
+			}
+			if dist == 2 && !leve.attr.Blocked(leve.tileIdx(3-dx, 3-dy)) {
+				continue
+			}
+			g.px, g.py, g.facing, g.cd = x, y, dir, 0
+			positioned = true
+			break
+		}
+	}
+	if !positioned {
+		t.Fatal("雷貝老人周圍沒有原版可交談位置")
+	}
+	g.selectCommand(cmdTalk)
+	if !g.hasItem(0x58) || !g.hasItem(0x55) || !g.dlg.open {
+		t.Fatal("雷貝老人 runtime 圖未觸發魔法球事件，或錯誤消耗盜賊鑰匙")
+	}
+	dump("leve_magic_ball")
 }

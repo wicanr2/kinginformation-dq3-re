@@ -32,9 +32,10 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
 
-目前核心終盤切片已接通，boot 起的正式 trace 已到 CTY08 盜賊鑰匙並通過存讀檔，但
-**尚未完成從新遊戲開始的無 debug 全流程驗收**。下一步由該 checkpoint 正常走到雷貝鎮老人／
-魔法球；不得跳回孤立 handler 或把後段事件 checkpoint 測試提升成 campaign E3。
+目前核心終盤切片已接通，boot 起的正式 trace 已到 CTY01 魔法球並通過存讀檔，但
+**尚未完成從新遊戲開始的無 debug 全流程驗收**。下一步由該 checkpoint 正常走到誘惑洞窟，
+以魔法球破牆並抵達羅馬利亞；不得跳回孤立 handler 或把後段事件 checkpoint 測試提升成
+campaign E3。
 
 ## 固定工程方法
 
