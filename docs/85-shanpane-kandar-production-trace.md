@@ -1,4 +1,4 @@
-# 85 — 香巴尼塔 Kandar 原版事件與 production trace
+# 85 — 香巴尼塔甘達特原版事件與 production trace
 
 > 2026-07-29。位址除特別標示外均為 `DQ3.EXE` file offset；CTY offset 為
 > `CTY10.DAT` 檔內偏移。
@@ -10,7 +10,7 @@ runner region。舊文件若用這個 cluster 證明 `[DS:0x722]` 的玩家區�
 `[0x722]` 的其他 setter、runner consumer 與 scripted handler 研究仍可各自作為線索，
 但事件必須重新由 CTY handler table 定位。
 
-香巴尼塔 Kandar 也不是 `[0x722]` runner boss。CTY10 section 5 的特殊事件表直接指定
+香巴尼塔甘達特也不是 `[0x722]` runner boss。CTY10 section 5 的特殊事件表直接指定
 handler 14。
 
 ## CTY10 section 5
@@ -24,7 +24,7 @@ handler 14。
 - 金皇冠寶箱：`(4,4)`、item=`0x33`、treasure flag=`97`
 - 滿月草寶箱：`(9,4)`、item=`0x45`、treasure flag=`98`
 
-因此玩家是踏入 `(6,8)`／`(7,8)` 自動觸發 Kandar，不是調查皇冠寶箱或與盜賊談話。
+因此玩家是踏入 `(6,8)`／`(7,8)` 自動觸發甘達特，不是調查皇冠寶箱或與盜賊談話。
 在 handler 完整結束、flag `0x2e` 清除前，皇冠必須 fail closed。
 
 ## handler 14 與原版編隊
@@ -46,10 +46,10 @@ formation 位於 EXE file `0x1aff5`：
 
 解碼為 background `0x18`、page 1、四個 group：
 
-- monster 26 Kandar ×1
-- monster 27 Kandar 的手下 ×1
-- monster 27 Kandar 的手下 ×1
-- monster 27 Kandar 的手下 ×1
+- monster 26 甘達特 ×1
+- monster 27 甘達特的手下 ×1
+- monster 27 甘達特的手下 ×1
+- monster 27 甘達特的手下 ×1
 
 獎勵依每隻怪物資料加總：EXP `2200 + 80×3 = 2440`、gold `0`。
 
@@ -66,9 +66,10 @@ section 3 `(8,21)`，之後才可抵達 `(9,8)` 上樓。
 
 ## Ebiten 證據
 
-- 精訊版 trigger、flag、四個 dialogue record、formation groups/raw bytes 與皇冠 gate 全部位於
-  `internal/gamepack/packs/dq3_cht/data/events.json`；Go 只實作跨版本
-  `boss_surrender` primitive，沒有 Kandar raw ID／座標 fallback。
+- 精訊版 trigger、flag、formation groups/raw bytes 與皇冠 gate 全部位於
+  `internal/gamepack/packs/dq3_cht/data/events.json`；四段中文版對話、原版 record、
+  glyph/control words 與「是／否」位於 `data/texts.json`。Go 只實作跨版本
+  `boss_surrender` primitive，沒有甘達特專用的 raw ID／座標 fallback。
 - strict loader 會拒絕未知欄位、空 trigger/formation、非法引用與 raw formation 不一致；
   `TestDQ3KandarEventMatchesOriginalEXEAndCTY` 直接對 `DQ3.EXE`／`CTY10.DAT`。
 - `Battle.startFormation` 支援各 group 的 monster id、數量、HP roll、sprite、AI、
@@ -80,13 +81,19 @@ section 3 `(8,21)`，之後才可抵達 `(9,8)` 上樓。
   自然進入四敵編隊。
 - `TestKandarCrownGateAndOriginalSurrenderLoop` 驗證戰前不能取皇冠、No 循環、Yes 後
   flag/NPC 清除及皇冠可取得。
-- `TestOpeningProductionInputTrace` 從標題開始，不用 debug shortcut，完成前置主線、北行、
-  塔內開門、踏入 trigger 並進入原版混合戰。
+- `TestOpeningProductionInputTrace` 從標題開始，不用 debug shortcut：建立勇者、戰士、
+  僧侶、魔法使者四人隊，依 EXE 初始布衣資料分配國王裝備；在阿里阿罕及羅馬利亞以
+  正式遭遇練到 Lv10，住宿回白天，合法買入青銅盾、龜甲、聖水與藥草後登塔。
+- 同一 trace 擊敗原版 551 HP 甘達特及三名手下，拒絕一次求饒後接受，清
+  flag `0x2e`，由命令窗「調查」取得金皇冠；再保存冒險之書、從標題選
+  「載入進度」，正式離塔並返回羅馬利亞。
 
 現行 runtime：
 
-![Kandar 原版混合編隊](../dq3_remake_ebitan/docs/kandar_mixed_battle.png)
+![甘達特原版混合編隊](../dq3_remake_ebitan/docs/kandar_mixed_battle.png)
 
-這個切片只證明「從新遊戲到自然進入 Kandar 戰」E3；Lv4 隊伍尚未被冒充為能合法擊敗
-boss。下一個 audit 必須透過原版商店、裝備、練級、旅店與教會取得足夠戰力，再完成勝利、
-求饒、皇冠與羅馬利亞後續，不得削弱 boss 或注入數值。
+![甘達特求饒選擇（文字由 game-pack JSON 載入）](../dq3_remake_ebitan/docs/kandar_surrender_choice.png)
+
+此切片已達 E3：新遊戲到金皇冠、存讀檔及返回羅馬利亞均由正式輸入閉合；戰鬥沒有削弱
+boss，也沒有注入等級、金錢、HP 或事件旗標。下一個玩家 blocker 是羅馬利亞王
+handler9 的持皇冠分支，見 `docs/82`。

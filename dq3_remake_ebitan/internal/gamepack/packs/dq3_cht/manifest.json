@@ -3,7 +3,7 @@
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
-  "content_version": "0.1.1",
+  "content_version": "0.1.3",
   "engine_api": ">=0.1.0 <0.2.0",
   "title_text_id": "dq3:text.title",
   "entry_event_id": "dq3:event.new_game",
@@ -17,7 +17,9 @@
   ],
   "data": {
     "facilities": "data/facilities.json",
-    "events": "data/events.json"
+    "events": "data/events.json",
+    "characters": "data/characters.json",
+    "texts": "data/texts.json"
   },
   "assets": {}
 }

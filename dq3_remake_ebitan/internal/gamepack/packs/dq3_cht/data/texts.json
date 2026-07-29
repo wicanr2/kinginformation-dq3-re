@@ -1,0 +1,101 @@
+{
+  "schema_version": "0.1.0",
+  "definitions": [
+    {
+      "id": "dq3:text.shanpane_gandart.intro",
+      "value": "*「來的好,但是你們仍然\n拿我沒辦法的。",
+      "glyph_codes": [59, 60, 461, 149, 441, 55, 508, 399, 528, 529, 599, 600, 65534, 12, 12, 558, 493, 410, 981, 208, 149, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 84},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "D3TXT02.TXT",
+        "address_space": "record",
+        "address": "84",
+        "consumer": "boss_surrender intro dialogue",
+        "doc": "docs/85-shanpane-kandar-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:text.shanpane_gandart.apology",
+      "value": "*「拜託金皇冠還給你們,\n原諒我好嗎?",
+      "glyph_codes": [59, 60, 382, 753, 173, 223, 224, 524, 559, 528, 529, 55, 65534, 12, 12, 555, 1100, 493, 441, 534, 58, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 85},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "D3TXT02.TXT",
+        "address_space": "record",
+        "address": "85",
+        "consumer": "boss_surrender apology dialogue",
+        "doc": "docs/85-shanpane-kandar-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:text.shanpane_gandart.accept",
+      "value": "*「謝謝,\n我絕對不會忘記你們的。",
+      "glyph_codes": [59, 60, 582, 582, 55, 65534, 12, 12, 493, 1101, 443, 228, 415, 1102, 523, 528, 529, 149, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 86},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "D3TXT02.TXT",
+        "address_space": "record",
+        "address": "86",
+        "consumer": "boss_surrender accept dialogue",
+        "doc": "docs/85-shanpane-kandar-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:text.shanpane_gandart.reject",
+      "value": "*「不要說這種話,\n原諒我吧,好嗎?",
+      "glyph_codes": [59, 60, 228, 504, 909, 398, 281, 449, 55, 65534, 12, 12, 555, 1100, 493, 499, 55, 441, 534, 58, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT02.TXT", "record": 87},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "D3TXT02.TXT",
+        "address_space": "record",
+        "address": "87",
+        "consumer": "boss_surrender reject dialogue",
+        "doc": "docs/85-shanpane-kandar-production-trace.md"
+      }
+    },
+    {
+      "id": "common:text.choice.yes",
+      "value": "是",
+      "glyph_codes": [399],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON + glyph_unicode_map.json",
+        "address_space": "record",
+        "address": "glyph 399",
+        "consumer": "shared yes/no choice renderer",
+        "doc": "docs/84-game-pack-json-contract.md"
+      }
+    },
+    {
+      "id": "common:text.choice.no",
+      "value": "否",
+      "glyph_codes": [678],
+      "layout": {"kind": "menu_label"},
+      "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON + glyph_unicode_map.json",
+        "address_space": "record",
+        "address": "glyph 678",
+        "consumer": "shared yes/no choice renderer",
+        "doc": "docs/84-game-pack-json-contract.md"
+      }
+    }
+  ]
+}

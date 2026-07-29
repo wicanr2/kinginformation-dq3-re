@@ -41,8 +41,11 @@ func (g *Game) tryBossSurrenderEvent() bool {
 				continue
 			}
 			g.bossSurrenderEventID = event.ID
+			if !g.openPackText(event.DialogueTextIDs.Intro) {
+				g.bossSurrenderEventID = ""
+				return false
+			}
 			g.bossSurrenderStage = bossSurrenderIntro
-			g.dlg.Open(event.DialogueRecords.Intro)
 			return true
 		}
 	}
@@ -112,8 +115,12 @@ func (g *Game) settleBossSurrenderBattle() {
 		return
 	}
 	if g.battle.result == 1 {
+		if !g.openPackText(event.DialogueTextIDs.Apology) {
+			g.bossSurrenderStage = bossSurrenderIdle
+			g.bossSurrenderEventID = ""
+			return
+		}
 		g.bossSurrenderStage = bossSurrenderApology
-		g.dlg.Open(event.DialogueRecords.Apology)
 		return
 	}
 	g.bossSurrenderStage = bossSurrenderIdle
@@ -128,11 +135,13 @@ func (g *Game) bossSurrenderChoiceInput(in InputState) {
 	}
 	switch {
 	case in.Confirm && g.bossSurrenderCursor == 0:
-		g.bossSurrenderStage = bossSurrenderFarewell
-		g.dlg.Open(event.DialogueRecords.Accept)
+		if g.openPackText(event.DialogueTextIDs.Accept) {
+			g.bossSurrenderStage = bossSurrenderFarewell
+		}
 	case in.Confirm || in.Cancel:
-		g.bossSurrenderStage = bossSurrenderReject
-		g.dlg.Open(event.DialogueRecords.Reject)
+		if g.openPackText(event.DialogueTextIDs.Reject) {
+			g.bossSurrenderStage = bossSurrenderReject
+		}
 	case in.DirEdge == 0 || in.DirEdge == 1:
 		g.bossSurrenderCursor ^= 1
 	}
@@ -160,13 +169,22 @@ func (g *Game) drawBossSurrenderChoice(rgba []byte, white dq3data.Color) {
 	}
 	x, y, w, h := 430, 220, 120, 68
 	fillBox(rgba, x, y, w, h, white)
-	for i, label := range ngYesNo {
+	event, ok := g.activeBossSurrender()
+	if !ok {
+		return
+	}
+	ids := [2]string{event.DialogueTextIDs.ChoiceYes, event.DialogueTextIDs.ChoiceNo}
+	for i, id := range ids {
+		label, ok := g.pack.TextGlyphCodes(id)
+		if !ok {
+			return
+		}
 		yy := y + 12 + i*24
 		if i == g.bossSurrenderCursor {
 			drawGlyph(rgba, g.dlg.tx, x+12, yy, curGlyph, white)
 		}
 		for j, glyph := range label {
-			drawGlyph(rgba, g.dlg.tx, x+40+j*16, yy, glyph, white)
+			drawGlyph(rgba, g.dlg.tx, x+40+j*16, yy, int(glyph), white)
 		}
 	}
 }

@@ -39,13 +39,25 @@ func (it *Items) Price(code int) int { return it.b(code, 2) | it.b(code, 3)<<8 }
 // Category 回類別/部位(b4)。移植 dq3_item_category。
 func (it *Items) Category(code int) int { return it.b(code, 4) }
 
-// EquipSlot 回裝備部位(0x2_武器/0x4_鎧/0x6_盾/0x8_兜;非裝備 -1)。移植 dq3_item_equip_slot。
+// EquipSlot 回引擎部位 0武器/1鎧/2盾/3兜。ITEM.DAT 類別群實為
+// 0x2_=武器、0x4_=鎧、0x6_=兜、0x8_/0x9_=盾；最後兩群不可用線性公式。
 func (it *Items) EquipSlot(code int) int {
 	b4 := it.Category(code)
 	if b4 < 0x20 {
 		return -1
 	}
-	return (b4 >> 5) - 1
+	switch b4 >> 5 {
+	case 1:
+		return 0
+	case 2:
+		return 1
+	case 3:
+		return 3
+	case 4:
+		return 2
+	default:
+		return -1
+	}
 }
 
 // CanEquip 回職業 cls(0..7)可否裝備(b6 bitmask;0x80=勇者專用)。移植 dq3_item_can_equip。

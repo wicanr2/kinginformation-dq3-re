@@ -18,6 +18,12 @@ func TestItems(t *testing.T) {
 	if it.EquipSlot(3) != 0 {
 		t.Fatalf("銅劍應武器部位 0,得 %d", it.EquipSlot(3))
 	}
+	if it.EquipSlot(50) != 3 {
+		t.Fatalf("皮帽子 code50/b4=0x60 應為兜部位 3,得 %d", it.EquipSlot(50))
+	}
+	if it.EquipSlot(58) != 2 {
+		t.Fatalf("青銅盾 code58/b4=0x80 應為盾部位 2,得 %d", it.EquipSlot(58))
+	}
 	if it.Price(3) <= 0 {
 		t.Fatalf("銅劍應有價,得 %d", it.Price(3))
 	}

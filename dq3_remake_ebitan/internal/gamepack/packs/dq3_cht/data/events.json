@@ -15,11 +15,13 @@
         ]
       },
       "presence_flag_raw": 46,
-      "dialogue_records": {
-        "intro": 84,
-        "apology": 85,
-        "accept": 86,
-        "reject": 87
+      "dialogue_text_ids": {
+        "intro": "dq3:text.shanpane_gandart.intro",
+        "apology": "dq3:text.shanpane_gandart.apology",
+        "accept": "dq3:text.shanpane_gandart.accept",
+        "reject": "dq3:text.shanpane_gandart.reject",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
       },
       "formation": {
         "background_raw": 24,

@@ -24,6 +24,7 @@ type saveState struct {
 	HeroGender      int          `json:"herogender"`         // 0=男 1=女
 	Inventory       []int        `json:"inv"`
 	Equip           [4]int       `json:"eq"`
+	EquipmentV2     bool         `json:"equipment_v2,omitempty"` // true:-1=空；舊檔以 0=空
 	Comps           []compSav    `json:"comps"`
 	Roster          []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
 	Flags           []int        `json:"flags"`
@@ -74,12 +75,13 @@ func (g *Game) snapshot() saveState {
 		PackID: packID, PackSchema: packSchema, PackContentHash: packHash,
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroStat: g.heroStat, HeroGold: g.heroGold,
 		HeroName: append([]int(nil), g.heroName...), HeroGender: g.heroGender,
-		Inventory: append([]int(nil), g.inventory...),
-		Equip:     g.equip,
-		Comps:     compsToSav(g.companions),
-		Roster:    compsToSav(g.roster),
-		Flags:     flagsToSav(g.flags),
-		ShipOwned: g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
+		Inventory:   append([]int(nil), g.inventory...),
+		Equip:       g.equip,
+		EquipmentV2: true,
+		Comps:       compsToSav(g.companions),
+		Roster:      compsToSav(g.roster),
+		Flags:       flagsToSav(g.flags),
+		ShipOwned:   g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PhoenixOwned: g.phoenixOwned, PhoenixAboard: g.phoenixAboard,
 		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY,
 		PX: g.px, PY: g.py, InTown: g.inTown,
@@ -133,6 +135,9 @@ func (g *Game) restore(s saveState) {
 	}
 	g.inventory = append([]int(nil), s.Inventory...)
 	g.equip = s.Equip
+	if !s.EquipmentV2 {
+		migrateLegacyEmptyEquipment(&g.equip)
+	}
 	g.flags = map[int]bool{}
 	for _, k := range s.Flags {
 		g.flags[k] = true
@@ -143,6 +148,9 @@ func (g *Game) restore(s saveState) {
 			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
 				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head}
+			if !s.EquipmentV2 {
+				migrateLegacyMemberEquipment(m)
+			}
 			if len(m.Name) == 0 && c.Class >= 0 && c.Class < 8 {
 				m.Name = classNames[c.Class]
 			}
@@ -156,6 +164,9 @@ func (g *Game) restore(s saveState) {
 			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
 				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head}
+			if !s.EquipmentV2 {
+				migrateLegacyMemberEquipment(m)
+			}
 			if len(m.Name) == 0 && c.Class >= 0 && c.Class < 8 {
 				m.Name = classNames[c.Class]
 			}
@@ -199,6 +210,20 @@ func (g *Game) restore(s saveState) {
 	g.applyRainbowBridge()
 	g.applyDaynightPalette()
 	g.dlg.heroName = append([]int(nil), g.heroName...)
+}
+
+func migrateLegacyEmptyEquipment(eq *[4]int) {
+	for i, code := range eq {
+		if code == 0 {
+			eq[i] = -1
+		}
+	}
+}
+
+func migrateLegacyMemberEquipment(m *Member) {
+	eq := [4]int{m.Weapon, m.Armor, m.Shield, m.Head}
+	migrateLegacyEmptyEquipment(&eq)
+	m.Weapon, m.Armor, m.Shield, m.Head = eq[0], eq[1], eq[2], eq[3]
 }
 
 // restoreTownScene 以存檔的 CTY/section/daynight 重建 NPC 狀態；舊存檔的零值自然落在

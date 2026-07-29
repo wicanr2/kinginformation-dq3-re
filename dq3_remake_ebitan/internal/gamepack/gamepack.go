@@ -88,11 +88,13 @@ type SceneTileTrigger struct {
 	Tiles     []TileCoordinate `json:"tiles"`
 }
 
-type DialogueRecords struct {
-	Intro   int `json:"intro"`
-	Apology int `json:"apology"`
-	Accept  int `json:"accept"`
-	Reject  int `json:"reject"`
+type DialogueTextIDs struct {
+	Intro     string `json:"intro"`
+	Apology   string `json:"apology"`
+	Accept    string `json:"accept"`
+	Reject    string `json:"reject"`
+	ChoiceYes string `json:"choice_yes"`
+	ChoiceNo  string `json:"choice_no"`
 }
 
 type FormationGroup struct {
@@ -123,7 +125,7 @@ type BossSurrenderEvent struct {
 	Kind            string           `json:"kind"`
 	Trigger         SceneTileTrigger `json:"trigger"`
 	PresenceFlagRaw int              `json:"presence_flag_raw"`
-	DialogueRecords DialogueRecords  `json:"dialogue_records"`
+	DialogueTextIDs DialogueTextIDs  `json:"dialogue_text_ids"`
 	Formation       BattleFormation  `json:"formation"`
 	ClearFlagRaw    int              `json:"clear_flag_raw"`
 	TreasureGates   []TreasureGate   `json:"treasure_gates"`
@@ -135,13 +137,71 @@ type Events struct {
 	BossSurrenderEvents []BossSurrenderEvent `json:"boss_surrender_events"`
 }
 
+type TextSource struct {
+	Kind   string `json:"kind"`
+	File   string `json:"file,omitempty"`
+	Record *int   `json:"record,omitempty"`
+}
+
+type TextLayout struct {
+	Kind         string `json:"kind"`
+	Columns      int    `json:"columns,omitempty"`
+	LinesPerPage int    `json:"lines_per_page,omitempty"`
+}
+
+// TextDefinition keeps both the editable Unicode transcription and canonical
+// glyph/control words used by the original bitmap-font renderer.
+type TextDefinition struct {
+	ID         string     `json:"id"`
+	Value      string     `json:"value"`
+	GlyphCodes []int      `json:"glyph_codes"`
+	Layout     TextLayout `json:"layout"`
+	Source     TextSource `json:"source"`
+	Evidence   Evidence   `json:"evidence"`
+}
+
+type Texts struct {
+	SchemaVersion string           `json:"schema_version"`
+	Definitions   []TextDefinition `json:"definitions"`
+}
+
+type EquipmentSlots struct {
+	Weapon *int `json:"weapon"`
+	Armor  *int `json:"armor"`
+	Shield *int `json:"shield"`
+	Head   *int `json:"head"`
+}
+
+type CharacterDefault struct {
+	ID        string         `json:"id"`
+	Equipment EquipmentSlots `json:"equipment"`
+	Evidence  Evidence       `json:"evidence"`
+}
+
+// CharacterDefaultRefs assigns engine-semantic roles to pack-owned defaults.
+// The referenced IDs remain pack-specific; the engine never hard-codes them.
+type CharacterDefaultRefs struct {
+	NewGamePlayer         string `json:"new_game_player"`
+	RegisteredPartyMember string `json:"registered_party_member,omitempty"`
+}
+
+type Characters struct {
+	SchemaVersion string               `json:"schema_version"`
+	DefaultRefs   CharacterDefaultRefs `json:"default_refs"`
+	Defaults      []CharacterDefault   `json:"defaults"`
+}
+
 type Pack struct {
-	Manifest    Manifest
-	Facilities  Facilities
-	Events      Events
-	services    map[string]*ServiceDefinition
-	bossEvents  map[string]*BossSurrenderEvent
-	contentHash string
+	Manifest     Manifest
+	Facilities   Facilities
+	Events       Events
+	Characters   Characters
+	Texts        Texts
+	services     map[string]*ServiceDefinition
+	bossEvents   map[string]*BossSurrenderEvent
+	charDefaults map[string]*CharacterDefault
+	texts        map[string]*TextDefinition
+	contentHash  string
 }
 
 func decodeStrict(fsys fs.FS, name string, dst any) error {
@@ -208,16 +268,154 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateEvents(); err != nil {
 		return nil, fmt.Errorf("%s: %w", eventsPath, err)
 	}
+	charactersPath, ok := p.Manifest.Data["characters"]
+	if !ok {
+		return nil, errors.New("manifest.json: data.characters is required")
+	}
+	if charactersPath, err = cleanRelative(charactersPath, "data.characters"); err != nil {
+		return nil, err
+	}
+	if err := decodeStrict(fsys, charactersPath, &p.Characters); err != nil {
+		return nil, err
+	}
+	if err := p.validateCharacters(); err != nil {
+		return nil, fmt.Errorf("%s: %w", charactersPath, err)
+	}
+	textsPath, ok := p.Manifest.Data["texts"]
+	if !ok {
+		return nil, errors.New("manifest.json: data.texts is required")
+	}
+	if textsPath, err = cleanRelative(textsPath, "data.texts"); err != nil {
+		return nil, err
+	}
+	if err := decodeStrict(fsys, textsPath, &p.Texts); err != nil {
+		return nil, err
+	}
+	if err := p.validateTexts(); err != nil {
+		return nil, fmt.Errorf("%s: %w", textsPath, err)
+	}
+	if err := p.validateEventTextRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", eventsPath, err)
+	}
 	canonical, err := json.Marshal(struct {
 		Manifest   Manifest   `json:"manifest"`
 		Facilities Facilities `json:"facilities"`
 		Events     Events     `json:"events"`
-	}{p.Manifest, p.Facilities, p.Events})
+		Characters Characters `json:"characters"`
+		Texts      Texts      `json:"texts"`
+	}{p.Manifest, p.Facilities, p.Events, p.Characters, p.Texts})
 	if err != nil {
 		return nil, fmt.Errorf("canonicalize pack: %w", err)
 	}
 	p.contentHash = fmt.Sprintf("sha256:%x", sha256.Sum256(canonical))
 	return &p, nil
+}
+
+func (p *Pack) validateCharacters() error {
+	if p.Characters.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported schema_version %q", p.Characters.SchemaVersion)
+	}
+	if p.Characters.Defaults == nil {
+		return errors.New("defaults must be present")
+	}
+	p.charDefaults = make(map[string]*CharacterDefault, len(p.Characters.Defaults))
+	for i := range p.Characters.Defaults {
+		d := &p.Characters.Defaults[i]
+		if d.ID == "" {
+			return fmt.Errorf("defaults[%d].id is required", i)
+		}
+		if _, exists := p.charDefaults[d.ID]; exists {
+			return fmt.Errorf("duplicate character default id %q", d.ID)
+		}
+		for name, code := range map[string]*int{
+			"weapon": d.Equipment.Weapon, "armor": d.Equipment.Armor,
+			"shield": d.Equipment.Shield, "head": d.Equipment.Head,
+		} {
+			if code != nil && (*code < 0 || *code > 127) {
+				return fmt.Errorf("%s equipment.%s out of range", d.ID, name)
+			}
+		}
+		if err := validateEvidence(d.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", d.ID, err)
+		}
+		p.charDefaults[d.ID] = d
+	}
+	if p.Characters.DefaultRefs.NewGamePlayer == "" {
+		return errors.New("default_refs.new_game_player is required")
+	}
+	if p.charDefaults[p.Characters.DefaultRefs.NewGamePlayer] == nil {
+		return fmt.Errorf("default_refs.new_game_player references unknown default %q",
+			p.Characters.DefaultRefs.NewGamePlayer)
+	}
+	hasParty := false
+	for _, capability := range p.Manifest.Capabilities {
+		hasParty = hasParty || capability == "party"
+	}
+	if hasParty && p.Characters.DefaultRefs.RegisteredPartyMember == "" {
+		return errors.New("party capability requires default_refs.registered_party_member")
+	}
+	if ref := p.Characters.DefaultRefs.RegisteredPartyMember; ref != "" && p.charDefaults[ref] == nil {
+		return fmt.Errorf("default_refs.registered_party_member references unknown default %q", ref)
+	}
+	return nil
+}
+
+func (p *Pack) validateTexts() error {
+	if p.Texts.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported schema_version %q", p.Texts.SchemaVersion)
+	}
+	if p.Texts.Definitions == nil {
+		return errors.New("definitions must be present")
+	}
+	p.texts = make(map[string]*TextDefinition, len(p.Texts.Definitions))
+	for i := range p.Texts.Definitions {
+		d := &p.Texts.Definitions[i]
+		if d.ID == "" || d.Value == "" || len(d.GlyphCodes) == 0 {
+			return fmt.Errorf("definitions[%d]: id, value and glyph_codes are required", i)
+		}
+		if _, exists := p.texts[d.ID]; exists {
+			return fmt.Errorf("duplicate text id %q", d.ID)
+		}
+		for _, code := range d.GlyphCodes {
+			if code < 0 || code > 0xffff {
+				return fmt.Errorf("%s: glyph code %d out of range", d.ID, code)
+			}
+		}
+		switch d.Layout.Kind {
+		case "dialogue":
+			if d.Layout.Columns < 1 || d.Layout.LinesPerPage < 1 ||
+				d.Source.Kind != "legacy_record" || d.Source.File == "" || d.Source.Record == nil {
+				return fmt.Errorf("%s: incomplete dialogue layout/source", d.ID)
+			}
+		case "menu_label":
+			if d.Source.Kind != "glyph_map" {
+				return fmt.Errorf("%s: menu_label requires glyph_map source", d.ID)
+			}
+		default:
+			return fmt.Errorf("%s: unsupported layout kind %q", d.ID, d.Layout.Kind)
+		}
+		if err := validateEvidence(d.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", d.ID, err)
+		}
+		p.texts[d.ID] = d
+	}
+	return nil
+}
+
+func (p *Pack) validateEventTextRefs() error {
+	for _, event := range p.Events.BossSurrenderEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"intro": refs.Intro, "apology": refs.Apology, "accept": refs.Accept,
+			"reject": refs.Reject, "choice_yes": refs.ChoiceYes, "choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
+	return nil
 }
 
 func (p *Pack) validateEvents() error {
@@ -244,12 +442,6 @@ func (p *Pack) validateEvents() error {
 		if e.PresenceFlagRaw < 0 || e.PresenceFlagRaw > 255 ||
 			e.ClearFlagRaw != e.PresenceFlagRaw {
 			return fmt.Errorf("%s: invalid or inconsistent presence/clear flag", e.ID)
-		}
-		for _, rec := range []int{e.DialogueRecords.Intro, e.DialogueRecords.Apology,
-			e.DialogueRecords.Accept, e.DialogueRecords.Reject} {
-			if rec < 0 {
-				return fmt.Errorf("%s: dialogue records must not be negative", e.ID)
-			}
 		}
 		if e.Formation.BackgroundRaw < 0 || e.Formation.PageRaw < 0 ||
 			len(e.Formation.Groups) == 0 || e.Formation.RawBytesHex == "" {
@@ -429,6 +621,53 @@ func (p *Pack) BossSurrenderEvents() []BossSurrenderEvent {
 func (p *Pack) BossSurrenderEvent(id string) (*BossSurrenderEvent, bool) {
 	e, ok := p.bossEvents[id]
 	return e, ok
+}
+
+// CharacterEquipment resolves one pack character default into engine slots.
+// Missing JSON slots become the engine's explicit -1 empty sentinel.
+func (p *Pack) CharacterEquipment(id string) ([4]int, bool) {
+	d, ok := p.charDefaults[id]
+	out := [4]int{-1, -1, -1, -1}
+	if !ok {
+		return out, false
+	}
+	for i, code := range []*int{
+		d.Equipment.Weapon, d.Equipment.Armor, d.Equipment.Shield, d.Equipment.Head,
+	} {
+		if code != nil {
+			out[i] = *code
+		}
+	}
+	return out, true
+}
+
+func (p *Pack) NewGamePlayerEquipment() ([4]int, bool) {
+	return p.CharacterEquipment(p.Characters.DefaultRefs.NewGamePlayer)
+}
+
+func (p *Pack) RegisteredPartyMemberEquipment() ([4]int, bool) {
+	ref := p.Characters.DefaultRefs.RegisteredPartyMember
+	if ref == "" {
+		return [4]int{-1, -1, -1, -1}, false
+	}
+	return p.CharacterEquipment(ref)
+}
+
+func (p *Pack) TextGlyphCodes(id string) ([]uint16, bool) {
+	d, ok := p.texts[id]
+	if !ok {
+		return nil, false
+	}
+	out := make([]uint16, len(d.GlyphCodes))
+	for i, code := range d.GlyphCodes {
+		out[i] = uint16(code)
+	}
+	return out, true
+}
+
+func (p *Pack) TextDefinition(id string) (*TextDefinition, bool) {
+	d, ok := p.texts[id]
+	return d, ok
 }
 
 func (p *Pack) ID() string             { return p.Manifest.PackID }

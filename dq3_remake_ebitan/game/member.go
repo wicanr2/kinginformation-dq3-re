@@ -15,7 +15,7 @@ type Member struct {
 	Exp                         uint32
 	Stats                       stats.Values // 原版角色 record 的七個持久能力欄
 	CurHP, CurMP                int
-	Weapon, Armor, Shield, Head int // item code(0=無)
+	Weapon, Armor, Shield, Head int // item code；-1=無（0x00 是合法檜木棒）
 }
 
 // 職業名 glyph(dq3_class_names):勇者/戰士/武鬥家/僧侶/魔法使者/賢者/商人/遊玩者。
@@ -65,16 +65,18 @@ func (m *Member) fullHeal() { m.CurHP, m.CurMP = m.MaxHP(), m.MaxMP() }
 
 // newMember 建一名 lv(由 exp 決定)的隊員並補滿 HP/MP。
 func newMember(name []int, class, gender int, exp uint32) *Member {
-	m := &Member{Name: name, Class: class, Gender: gender, Exp: exp}
+	m := &Member{Name: name, Class: class, Gender: gender, Exp: exp,
+		Weapon: -1, Armor: -1, Shield: -1, Head: -1}
 	m.ensureStats() // 舊測試/debug 建角的相容路徑；正式登錄走 newLevelOneMember。
 	m.fullHeal()
 	return m
 }
 
 // newLevelOneMember 重現 DQ3.EXE sub_1c94 → sub_ed3c 的登錄所 Lv1 建角：
-// 共用全域 DOS RNG 擲七欄，並穿上布衣(item 0x25)。
-func newLevelOneMember(name []int, class, gender int, r *rng.RNG) *Member {
-	m := &Member{Name: append([]int(nil), name...), Class: class, Gender: gender, Armor: 0x25}
+// 共用全域 DOS RNG 擲七欄，並穿上布衣(item 0x1e)。
+func newLevelOneMember(name []int, class, gender int, r *rng.RNG, equipment [4]int) *Member {
+	m := &Member{Name: append([]int(nil), name...), Class: class, Gender: gender,
+		Weapon: equipment[0], Armor: equipment[1], Shield: equipment[2], Head: equipment[3]}
 	m.Stats = stats.InitValues(class, r)
 	m.fullHeal()
 	return m

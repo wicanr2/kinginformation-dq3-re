@@ -202,7 +202,10 @@ namespace:local_id
   "data": {
     "rules": "data/rules.json",
     "classes": "data/classes.json",
-    "facilities": "data/facilities.json"
+    "facilities": "data/facilities.json",
+    "characters": "data/characters.json",
+    "texts": "data/texts.json",
+    "events": "data/events.json"
   },
   "assets": {}
 }
@@ -347,7 +350,36 @@ palette、文字 bank 及 audio cue。
 evidence note。`spawn` 必須有 `reason`（new_game、town_entry、warp_return 等），不可再把
 section header 的某組座標當所有入口的 fallback。
 
-### 6.8 `events.json`
+### 6.8 `characters.json` 與 `texts.json`
+
+`characters.json` 保存版本專屬的初始人物資料。引擎只認識語意角色，不認識 DQ3 ID：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `default_refs.new_game_player` | string | 是 | 指向本 pack 的新遊戲玩家 default。 |
+| `default_refs.registered_party_member` | string | `party` capability 時必填 | 指向酒場／登錄隊員 default；無隊伍版本可省略。 |
+| `defaults[].id` | string | 是 | pack-owned 穩定 ID。 |
+| `defaults[].equipment` | object | 是 | `weapon/armor/shield/head`；空槽明寫 `null`，item 0 仍是合法道具。 |
+| `defaults[].evidence` | object | 是 | 初值 writer 與 consumer 的 D3 證據。 |
+
+runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validator 只檢查
+`default_refs` 是否指向同 pack 的 default，不硬寫 `dq3:` ID。
+
+`texts.json` 是玩家可見文字的 canonical 資料；事件與畫面只引用 text ID：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `definitions[].id` | string | 是 | 穩定 text ID。 |
+| `value` | string | 是 | 可讀、可修改的原版繁體中文轉寫，保留換行。 |
+| `glyph_codes` | int[] | 是 | 原版字模及控制碼 words；runtime 直接消費，不設 Go 字串 fallback。 |
+| `layout` | object | 是 | `dialogue` 或 `menu_label`；對話另列 columns／lines_per_page。 |
+| `source` | object | 是 | `legacy_record` 的檔名／record，或 `glyph_map` 字模來源。 |
+| `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
+
+目前甘達特 rec84–87 與「是／否」已遷入 `data/texts.json`；parity test 逐 word 對
+`D3TXT02.TXT`，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
+
+### 6.9 `events.json`
 
 事件使用有限、具型別的 primitive：
 
@@ -379,7 +411,7 @@ primitive 必須由 engine registry 定義 input/output、失敗語意及存檔�
 Go symbol、任意跳址或「事件失敗仍部分扣款」。不支援的 opcode 應在載入時失敗。
 
 第一個已實作 primitive 是 `boss_surrender_events`，供「開場對話→指定編隊→勝利道歉→
-Yes/No（No 可重問）→接受後清旗標」的原版事件使用。它不是 Kandar 專用 opcode；
+Yes/No（No 可重問）→接受後清旗標」的原版事件使用。它不是甘達特專用 opcode；
 DQ1／DQ2 若有相同交易可直接使用，沒有則不必宣告。
 
 | 欄位 | 型別 | 必填 | 說明 |
@@ -394,7 +426,7 @@ DQ1／DQ2 若有相同交易可直接使用，沒有則不必宣告。
 | `[].trigger.tile_subid` | int | 是 | tile high byte 低五位，合法 0–31。 |
 | `[].trigger.tiles` | `{x,y}[]` | 是 | 所有可觸發 tile；至少一格，tile 座標、左上原點。 |
 | `[].presence_flag_raw` | int | 是 | 事件/NPC 仍存在時為 set 的原版 story flag。 |
-| `[].dialogue_records` | object | 是 | `intro/apology/accept/reject` 四個原版 record ID。規則表不複製顯示文字。 |
+| `[].dialogue_text_ids` | object | 是 | `intro/apology/accept/reject/choice_yes/choice_no` 六個穩定 text ID；實際字串與原版 record 在 `texts.json`。 |
 | `[].formation.background_raw` | int | 是 | 原版 formation background byte。 |
 | `[].formation.page_raw` | int | 是 | 原版 sprite page byte。 |
 | `[].formation.groups` | object[] | 是 | 依原順序列 `{monster_raw_id,count}`；同 monster 的分離 group 不得擅自合併。 |
@@ -403,12 +435,12 @@ DQ1／DQ2 若有相同交易可直接使用，沒有則不必宣告。
 | `[].treasure_gates` | object[] | 是 | 可為空；每筆含 `cty_raw/section/tile/item_raw_id/while_flag_set`。 |
 | `[].evidence` | object | 是 | 事件入口、交易與可見 consumer 的 D3 證據。 |
 
-DQ3 精訊版 Kandar 示例的 canonical 值位於
+DQ3 精訊版甘達特事件示例的 canonical 值位於
 `internal/gamepack/packs/dq3_cht/data/events.json`，不在本文複製第二份易過期 JSON。
 loader 會拒絕未知欄位、非法 subid／flag／monster/count、不一致 clear flag、空 trigger/
 formation 與缺 D3 consumer；production 不提供 Go fallback。
 
-### 6.9 `ui.json`、`audio.json`
+### 6.10 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
   避免在規則表散落中文字串。

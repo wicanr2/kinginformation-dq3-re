@@ -39,7 +39,7 @@ func TestKandarNaturalTileTriggerAndMixedFormation(t *testing.T) {
 		t.Fatal(err)
 	}
 	if g.px != 6 || g.py != 8 || g.bossSurrenderStage != bossSurrenderIntro || !g.dlg.open ||
-		!reflect.DeepEqual(g.dlg.buf, g.cur.dlgText.Record(event.DialogueRecords.Intro)) {
+		!reflect.DeepEqual(g.dlg.buf, mustPackTextCodes(t, g, event.DialogueTextIDs.Intro)) {
 		t.Fatalf("踏入 (6,8) 未自然觸發 rec84：pos=(%d,%d) stage=%d dlg=%v",
 			g.px, g.py, g.bossSurrenderStage, g.dlg.open)
 	}
@@ -69,7 +69,7 @@ func TestKandarCrownGateAndOriginalSurrenderLoop(t *testing.T) {
 	g.px, g.py, g.facing = 4, 5, 1
 	g.examine()
 	if g.hasItem(romalyGoldenCrownItem) {
-		t.Fatal("坎達爾仍在時不得取得金皇冠")
+		t.Fatal("甘達特仍在時不得取得金皇冠")
 	}
 
 	g.bossSurrenderEventID = event.ID
@@ -87,14 +87,14 @@ func TestKandarCrownGateAndOriginalSurrenderLoop(t *testing.T) {
 	g.bossSurrenderCursor = 1
 	g.bossSurrenderChoiceInput(InputState{Confirm: true})
 	if g.bossSurrenderStage != bossSurrenderReject ||
-		!reflect.DeepEqual(g.dlg.buf, g.cur.dlgText.Record(event.DialogueRecords.Reject)) {
+		!reflect.DeepEqual(g.dlg.buf, mustPackTextCodes(t, g, event.DialogueTextIDs.Reject)) {
 		t.Fatal("選否應播 rec87，再回到選擇")
 	}
 	g.dlg.open = false
 	g.advanceBossSurrenderDialogue()
 	g.bossSurrenderChoiceInput(InputState{Confirm: true})
 	if g.bossSurrenderStage != bossSurrenderFarewell ||
-		!reflect.DeepEqual(g.dlg.buf, g.cur.dlgText.Record(event.DialogueRecords.Accept)) {
+		!reflect.DeepEqual(g.dlg.buf, mustPackTextCodes(t, g, event.DialogueTextIDs.Accept)) {
 		t.Fatal("選是應播 rec86")
 	}
 	g.dlg.open = false
@@ -108,6 +108,15 @@ func TestKandarCrownGateAndOriginalSurrenderLoop(t *testing.T) {
 	if !g.hasItem(romalyGoldenCrownItem) {
 		t.Fatal("接受求饒後應可由 (4,4) 寶箱取得金皇冠")
 	}
+}
+
+func mustPackTextCodes(t *testing.T, g *Game, id string) []uint16 {
+	t.Helper()
+	codes, ok := g.pack.TextGlyphCodes(id)
+	if !ok {
+		t.Fatalf("game pack 缺少文字 %q", id)
+	}
+	return codes
 }
 
 func TestKandarTowerProductionRouteOpensThiefKeyDoor(t *testing.T) {

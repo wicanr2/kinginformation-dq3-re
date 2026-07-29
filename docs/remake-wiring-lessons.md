@@ -24,9 +24,9 @@
 
 | gate 種類 | 落點 | 範例 |
 |---|---|---|
-| **寶箱 examine gate** | chest handler 的 is_item 分支前判原版事件旗標 | Kandar 尚在場(flag 0x2e set)時金皇冠 fail closed |
+| **寶箱 examine gate** | chest handler 的 is_item 分支前判原版事件旗標 | 甘達特尚在場（flag 0x2e set）時金皇冠 fail closed |
 | **scripted give gate** | sub2 dispatch 對特定 byte4 判 flag,未滿足→before_rec | 古布達黑胡椒(flag 0x211=達妮亞救出) |
-| **CTY 特殊 handler** | `section+4` byte table：tile subid→handler id | CTY10 subid1→handler14 Kandar |
+| **CTY 特殊 handler** | `section+4` byte table：tile subid→handler id | CTY10 subid1→handler14 甘達特事件 |
 
 辨識要點:**有 sub2 NPC 的對話事件** → scripted give gate;**寶箱/examine tile** → chest gate;
 **踩格觸發**先查 CTY tile high subid 與 `section+4` 特殊 handler table；只有 caller/

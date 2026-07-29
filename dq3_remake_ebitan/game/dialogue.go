@@ -55,6 +55,20 @@ func (d *Dialogue) openRecord(b []uint16) bool {
 	return true
 }
 
+// openPackText resolves a stable game-pack text ID to canonical glyph/control
+// words. Missing references fail closed; production code never substitutes a
+// Go string or a legacy record number.
+func (g *Game) openPackText(id string) bool {
+	if g.pack == nil {
+		return false
+	}
+	codes, ok := g.pack.TextGlyphCodes(id)
+	if !ok {
+		return false
+	}
+	return g.dlg.openRecord(codes)
+}
+
 // varGlyphs 依插值控制碼種類回目前應插入的字模序列;var 未設或無資料 → nil(渲染空白一格)。
 func (d *Dialogue) varGlyphs(code uint16) []int {
 	switch code {

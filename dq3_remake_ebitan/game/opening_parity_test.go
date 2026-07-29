@@ -26,7 +26,7 @@ func TestOriginalNewGameInitialState(t *testing.T) {
 		t.Errorf("返回地表座標應=(%#x,%#x),得=(%#x,%#x)",
 			aliahanWorldX, aliahanWorldY, g.overPx, g.overPy)
 	}
-	if g.equip != [4]int{0, 0x1e} {
+	if g.equip != [4]int{-1, 0x1e, -1, -1} {
 		t.Errorf("開局應只裝備布衣 0x1e,得 %#v", g.equip)
 	}
 	if len(g.companions) != 0 {

@@ -47,13 +47,25 @@
 
 ### 共用 game pack 與 JSON
 
+- **遊戲引擎與遊戲資料必須分離**。`game/` 與共用 `internal/` 引擎只能知道跨版本的資料
+  契約、載入／驗證、輸入、繪圖、存檔及具名狀態機；不得知道 DQ3 專屬人物、地名、文字、
+  record、座標、旗標或數值。所有版本專屬內容由 versioned game pack 提供；新增 DQ1／DQ2
+  時應只需加入或選擇 pack，不得複製引擎或在共用 Go 程式加入遊戲版本分支。
+- 引擎不得修改 pack 內容，也不得在缺資料時自行推導「合理預設」。pack 只描述資料與引用，
+  不得嵌入任意程式碼或複製引擎流程。兩者的邊界由 schema、reference validation、
+  `content_version` 與 canonical hash 鎖定。
 - 長期架構是共用 Go／Ebitengine 核心加 `dq1_cht`、`dq2_cht`、`dq3_cht` versioned
   game pack；JSON canonical 欄位契約見 `docs/84-game-pack-json-contract.md`。
 - **禁止把版本專屬設定新增成 Go 常數或 table**：CTY／section／座標、tile subid、story
-  flag、對話 record、怪物／編隊、寶箱 gate、商店價格、掉落與音訊 cue 都必須放在對應
-  game-pack JSON。Go 只保留跨版本的 loader、validator 與具名狀態機／effect primitive。
+  flag、對話 record、玩家可見文字、選單標籤、系統訊息、怪物／編隊、寶箱 gate、商店
+  價格、掉落與音訊 cue 都必須放在對應 game-pack JSON。Go 只保留跨版本的 loader、
+  validator 與具名狀態機／effect primitive。
   為反組譯診斷暫時硬寫的值不得進 commit；切片收尾前必須遷入 JSON、更新 `docs/84` 欄位
   說明，並加原始 EXE／DAT parity test。缺欄位或未知引用一律 fail closed，不設 Go fallback。
+- production Go 禁止直接寫玩家會看到的中文、日文或英文句子；畫面流程只能引用穩定的
+  text ID。各 game pack 的文字 JSON 保存實際字串與原版 record/evidence，版面寬度、換頁、
+  選項與插值參數使用具名欄位，不把控制碼或排版邏輯偷塞進字串。開發用 assertion、log 與
+  測試說明不屬於遊戲內容，但不得在 runtime 畫面作為缺字 fallback。
 - 新增或更改遊戲設定前，先判斷它屬於 engine behavior、game data 或大型 binary asset。
   可調內容不得繼續新增為散落的 Go table；引擎狀態機也不得為了資料化而改成任意 JSON code。
 - production JSON 的初值至少要有 D2 evidence，會改變流程的值需 D3。未知值 fail closed，

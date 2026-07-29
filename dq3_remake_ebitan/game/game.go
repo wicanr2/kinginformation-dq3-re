@@ -278,6 +278,7 @@ type Game struct {
 	recruit        Recruit        // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
 	panel          panelKind      // 資訊面板(狀況/道具/裝備)
 	panelCursor    int            // 裝備面板游標
+	panelActor     int            // 裝備對象：-1=先選隊員、0=主角、1..=companions
 	panelHits      hitList        // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
 	fieldSpell     FieldSpellMenu // 野外咒文／魯拉目的地 modal
 	visitedTowns   []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
@@ -413,7 +414,7 @@ func (g *Game) selectCommand(cmd int) {
 	case cmdItem: // 道具
 		g.panel, g.panelCursor = panelItem, 0
 	case cmdEquip: // 裝備
-		g.panel, g.panelCursor = panelEquip, 0
+		g.panel, g.panelCursor, g.panelActor = panelEquip, 0, -1
 	case cmdExamine: // 調査:檢查面向格 → 寶箱/隱藏物(一次性旗標)
 		g.examine()
 	}
@@ -653,7 +654,7 @@ func (g *Game) examine() {
 		if t == nil {
 			return false
 		}
-		// CTY10 sec5 的金皇冠位於坎達爾強制戰後方。原版 handler14 勝利並接受
+		// CTY10 sec5 的金皇冠位於甘達特強制戰後方。原版 handler14 勝利並接受
 		// 求饒後才 clear story flag0x2e；事件尚在時不得直接從寶箱繞過 boss。
 		if g.treasureBlockedByPack(g.curCty, g.cur.sec, x, y, t[4]) {
 			return true
@@ -766,6 +767,9 @@ func (g *Game) openFacility(k int) {
 					m.fullHeal()
 				}
 			}
+			// DQ3.EXE file 0x876a..0x8778：住宿成功後 [0x526c]=1（白天）、
+			// [0x251d]=0（時刻歸零）。付款失敗不得改變日夜。
+			g.setDaynight(0)
 		}
 	case facWeapon, facItem: // 商店:開貨架(品項自全城品項池 itemOff..+count)
 		lo, hi := f.itemOff, f.itemOff+f.count
@@ -861,7 +865,7 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
-	// 資訊面板 modal:狀況/道具 = B/A 關;裝備 = 方向選 + A 裝上 + B 關
+	// 資訊面板 modal:狀況/道具 = B/A 關；裝備先選隊員，再選背包裝備。
 	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
 		tapIdx := -1
@@ -869,20 +873,30 @@ func (g *Game) step(in InputState) error {
 			tapIdx = g.panelHits.at(in.TapX, in.TapY)
 		}
 		switch {
+		case in.Cancel && g.panel == panelEquip && g.panelActor >= 0:
+			g.panelActor, g.panelCursor = -1, 0
 		case in.Cancel:
 			g.panel = panelNone
 		case g.panel == panelEquip:
 			confirm := in.Confirm
-			if tapIdx >= 0 && len(g.inventory) > 0 {
+			n := len(g.inventory)
+			if g.panelActor < 0 {
+				n = 1 + len(g.companions)
+			}
+			if tapIdx >= 0 && n > 0 {
 				g.panelCursor, confirm = tapIdx, true
 			}
 			switch {
 			case confirm:
-				g.equipSelected()
-			case in.DirEdge == 0 && len(g.inventory) > 0: // 下
-				g.panelCursor = (g.panelCursor + 1) % len(g.inventory)
-			case in.DirEdge == 1 && len(g.inventory) > 0: // 上
-				g.panelCursor = (g.panelCursor + len(g.inventory) - 1) % len(g.inventory)
+				if g.panelActor < 0 {
+					g.panelActor, g.panelCursor = g.panelCursor, 0
+				} else {
+					g.equipSelected()
+				}
+			case in.DirEdge == 0 && n > 0: // 下
+				g.panelCursor = (g.panelCursor + 1) % n
+			case in.DirEdge == 1 && n > 0: // 上
+				g.panelCursor = (g.panelCursor + n - 1) % n
 			}
 		case g.panel == panelItem: // 道具:方向選 + A 使用(藥草/翼/聖水/祈禱之戒)
 			confirm := in.Confirm
@@ -2128,11 +2142,20 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if pack == nil {
 		return nil, fmt.Errorf("game pack is nil")
 	}
+	heroEquipment, ok := pack.NewGamePlayerEquipment()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing new-game hero equipment")
+	}
+	memberEquipment, ok := pack.RegisteredPartyMemberEquipment()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing registered-member equipment")
+	}
 	ld := &loader{fsys: assets}
 	pal := dq3data.DecodePalette(ld.read("DQ3.PAL"), 256) // 城鎮/地表共用(tile 只用色 0..15)
 	g := &Game{
 		rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default(), pack: pack,
 	}
+	g.tavern.equipment = memberEquipment
 	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 
 	// 地表 scene
@@ -2215,9 +2238,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	// 真正畫面會在創角完成後由 startOpening 切到 CTY00 sec4@(5,5)。
 	g.px, g.py = aliahanWorldX, aliahanWorldY
 	g.overPx, g.overPy = aliahanWorldX, aliahanWorldY
-	g.heroGold = 0            // 國王的 50G 屬後續謁見 transaction，不在出生時預給
-	g.equip = [4]int{0, 0x1e} // file 0x1c2d..0x1c33：equipped 0x801e = 布衣
-	g.companions = nil        // file 0x1c4e：[0x722]=1，開局只有主角
+	g.heroGold = 0 // 國王的 50G 屬後續謁見 transaction，不在出生時預給
+	g.equip = heroEquipment
+	g.companions = nil // file 0x1c4e：[0x722]=1，開局只有主角
 	g.flags = map[int]bool{}
 	g.initStoryBits() // 新遊戲重置 [0x4f70] NPC 可見性旗標
 	// msStart 代表「已見國王且已能在酒場建隊」，不可在出生時提前完成。

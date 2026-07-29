@@ -25,6 +25,7 @@ type Tavern struct {
 	ni        NameInput
 	gs        GenderSelect
 	classHits hitList // 職業選單(tavClass)可點區塊,draw() 重建
+	equipment [4]int  // game-pack registered_member 初始四槽；-1=空
 }
 
 func (tv *Tavern) open() {
@@ -89,7 +90,7 @@ func (tv *Tavern) input(in InputState, rs ...*rng.RNG) (*Member, bool) {
 			if len(name) == 0 { // 未命名 → 用職業名
 				name = classNames[tv.pendCls]
 			}
-			m := newLevelOneMember(name, tv.pendCls, gender, r)
+			m := newLevelOneMember(name, tv.pendCls, gender, r, tv.equipment)
 			tv.active = false
 			return m, true
 		}

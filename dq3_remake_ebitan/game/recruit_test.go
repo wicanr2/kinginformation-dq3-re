@@ -177,9 +177,10 @@ func TestRecruitCancelFromSubmenuReturnsToMenuWithoutMoving(t *testing.T) {
 
 func TestRegisteredMemberUsesOriginalLevelOneTransaction(t *testing.T) {
 	r := rng.New(0x1357)
-	m := newLevelOneMember([]int{1, 2, 3}, 3, 1, r)
-	if m.Armor != 0x25 {
-		t.Fatalf("原版 sub_1c94 新登錄角色應穿布衣 0x25，得 %#x", m.Armor)
+	m := newLevelOneMember([]int{1, 2, 3}, 3, 1, r, [4]int{-1, 0x1e, -1, -1})
+	if m.Armor != 0x1e || m.Weapon != -1 || m.Shield != -1 || m.Head != -1 {
+		t.Fatalf("原版 sub_1c94 新登錄角色應只穿布衣 0x1e，得 W/A/S/H=%#x/%#x/%#x/%#x",
+			m.Weapon, m.Armor, m.Shield, m.Head)
 	}
 	if m.Stats == (stats.Values{}) || m.CurHP != int(m.Stats[stats.HP]) ||
 		m.CurMP != int(m.Stats[stats.MP]) {

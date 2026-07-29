@@ -11,6 +11,8 @@ DQ3.EXE file `0x86f5` 是旅店 handler：
 - `0x8736..0x8754` 先檢查金幣再扣款；不足時不進恢復交易。
 - `0x87cb` 再逐筆跳過死亡旗標，把目前 HP/MP `+0x16/+0x18` 寫成上限
   `+0x2a/+0x2c`。旅店不復活死亡角色。
+- 成功交易後 file `0x876a..0x8778` 寫 `[0x526c]=1`（白天）及
+  `[0x251d]=0`（時刻歸零）；付款失敗不改日夜。
 
 Ebiten `openFacility(facInn)` 已按上述語意實作，component tests 鎖定：
 
@@ -18,6 +20,7 @@ Ebiten `openFacility(facInn)` 已按上述語意實作，component tests 鎖定�
 2. 勇者與存活同伴全部補滿 HP/MP。
 3. 死亡同伴維持死亡。
 4. 金幣不足時不扣款、不部分恢復。
+5. 成功住宿回到白天並重設時刻，付款失敗維持原日夜。
 
 ## Production route 的 blocker 與閉合結果
 
@@ -39,7 +42,6 @@ Ebiten `openFacility(facInn)` 已按上述語意實作，component tests 鎖定�
 2. 教會 handler 已有三選單／選人／yes-no／扣款／復活交易。40 級費用由
    `DQ3.EXE` file `0x19dac` 證實並存入 `dq3_cht` JSON pack；file
    `0x85ff..0x8696` 的 level clamp、付款、清死亡與 HP/MP 回滿均有 component test。
-3. 後續 CTY10 audit 已閉合至 E3「自然進入 Kandar 戰」：正式 trace 由此 checkpoint
-   北行、開 sec3 盜賊鑰匙門並踏 sec5 trigger；見 `docs/85`。本文件不再維護下一步。
-
-尚未證明 Lv4 隊伍能合法取勝；戰力、裝備與補給 audit 由 `docs/74`／`docs/85` 接續。
+3. 後續 CTY10 audit 已閉合至 E3「擊敗甘達特並取得金皇冠」：正式 trace 在阿里阿罕
+   與羅馬利亞以原版遭遇練至 Lv10，合法住宿、購買及裝備，再北行、開門、完成戰鬥與
+   求饒；見 `docs/85`。本文件不再維護下一步。

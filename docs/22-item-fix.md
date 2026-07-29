@@ -210,13 +210,19 @@ python tools/re_codecave_patch.py --base work/DQ3_fixed.EXE   # → work/DQ3_ful
 | `+0` | **攻擊力**(武器 b0;防具=0)| 木棒7、銅劍10、鋼劍28、理力之杖55、王者之劍120、破壞之劍110(對上 BBS)|
 | `+1` | **防禦力**(防具 b1;武器=0)| 布衣2、皮甲胄8、鐵甲22、鋼甲32、魔法鎧甲40、光之盔甲70 |
 | `+2/+3` | **價格**(u16 = b2 + b3×256)| 王者之劍 136×256+184 = **35000**(對上 BBS「三萬五」);鋼劍 1500、理力之杖 2500 |
-| `+4` | **類別 / 裝備部位**(高位分槽:0x2_=武器、0x4_=鎧身、0x6_=盾、0x8_=兜/頭;0x00/0x18=飾品無乾淨槽、0x24=道具)→ remake `dq3_item_equip_slot`=`(b4>>5)−1` 得 **4 槽**(★精訊版實為 4 槽,非 5;飾品未編槽)| 盾/兜的 b1 防禦遞增佐證部位 |
+| `+4` | **類別／裝備部位**。已由原始 ITEM records 更正：`0x2_`=武器、`0x4_`=鎧身、`0x6_`=兜／頭、`0x8_`／`0x9_`=盾；`0x00/0x18` 為未編入四槽的飾品類，`0x24` 為一般道具。不可再用舊公式 `(b4>>5)-1`，它會把頭與盾互換。 | item `0x32` 皮帽 `b4=0x60`→head slot 3；item `0x3a` 青銅盾 `b4=0x80`→shield slot 2；由原始 `ITEM.DAT` parity test 鎖定。 |
 | `+5` | **武器特殊旗標**(bit7=雙擊 #7a)| 飛鷹劍 0xc0、理力之杖 0x80 |
 | `+6` | **可裝備職業 bitmask**(`0x80>>cls`;0xff=全職業、0x80=勇者專用,#7b bit2=抗魔)| 王者之劍 / 光之盔甲 = 0x80(勇者專用,對上 BBS)、布衣 = 0xff |
 
 remake:`dq3_item_attack/defense/price/category/can_equip/equip_slot`(dq3_combat);`dq3_recruit` 加
 `weapon`/`armor`/`shield`/`head` **4 槽**;戰鬥 **攻擊力 = 力量 + 武器 b0、守備力 = 耐力 +(鎧+盾+兜 b1 總和)**（2026-07-28 由 DQ3.EXE `sub_9521` writer 更正）。
-裝備指令 UI 已實作(`equip_modal`,4 槽 2×2,部位用 `equip_slot` 過濾候選清單)。實測:勇者裝銅劍(攻+10)物理傷害提高。
+裝備指令 UI 已實作四槽與隊員選擇；裝備可在勇者／同伴與共用背包間交易，換下的舊裝備
+回到背包。runtime 以 `-1` 作空槽，item `0x00` 檜木棒因此可正常裝備；舊存檔的
+`0=空` 會經 `equipment_v2` migration 轉換。
+
+![裝備角色選擇](../dq3_remake_ebitan/docs/equipment_actor_select.png)
+
+![隊員四槽與共用背包](../dq3_remake_ebitan/docs/equipment_party_inventory.png)
 商店(買賣)**已實作**(`main.c` `shop_modal` + `dq3_shopdata`,資料驅動,全城設施 NPC 開店)。
 
 ## 商店 / 開場 RE(部分)
@@ -226,8 +232,11 @@ remake:`dq3_item_attack/defense/price/category/can_equip/equip_slot`(dq3_combat)
   si=[bx+0x4f15]+0x3a;cx=8` 掃 8 格找空(0xff)填入(entity +0x3a = 8 格道具欄)。
 - **商店「貨架」來源**:店主 NPC 的庫存(entity +0x3a),載自 CTY NPC 資料;per-town 精確
   貨架表仍待深 RE(shop overlay + CTY NPC 庫存欄)。remake 暫用合理早期選品(真實 ITEM.DAT 價/限制)。
-- **主角開場初始**(file 0x1c33):新遊戲主角 `[si+0x15]=1`(等級1)、`call 0xeecf`(學咒文 sub_db5f)、
-  **`[si+0x3a]=0x1e` = 起始裝備「布的衣服」(0x1e)**。⇒ remake 主角創角後預設帶布衣。
+- **主角開場初始**：file `0x1c2d..0x1c33` 寫 `AX=0x001e`，加 equipped bit
+  成 `0x801e` 後存入 `[si+0x3a]`；即穿著 item `0x1e`「布的衣服」。
+- **酒場登錄隊員初始**：file `0x1c94..0x1cc4` 先把八個 item words 清成
+  `0x00ff`，再同樣寫入 equipped `0x801e`。兩個初值均位於
+  `game-pack/data/characters.json`，Go 不保留版本專屬 fallback。
 
 ### per-town 貨架表 ★ 已解(docs/40)— 不在 NPC 記錄,在 CTY「設施表」
 

@@ -119,7 +119,22 @@ func TestDumpNewGameScreens(t *testing.T) {
 	dump("adventurer_registry")
 	g.tavern.active = false
 
-	// CTY10 sec5 原版 handler14：Kandar×1 + 子分×3 的混合編隊。
+	// 四人隊共用裝備入口：先選角色，再顯示該角色四槽與背包候選。
+	g.heroName = []int{15}
+	g.equip = [4]int{0x03, 0x1e, -1, -1}
+	g.companions = []*Member{
+		newLevelOneMember(classNames[1], 1, 0, &g.prng, g.tavern.equipment),
+		newLevelOneMember(classNames[3], 3, 0, &g.prng, g.tavern.equipment),
+		newLevelOneMember(classNames[4], 4, 0, &g.prng, g.tavern.equipment),
+	}
+	g.inventory = []int{0x01, 0x1f, 0x3a, 0x22}
+	g.panel, g.panelActor, g.panelCursor = panelEquip, -1, 0
+	dump("equipment_actor_select")
+	g.panelActor, g.panelCursor = 1, 0
+	dump("equipment_party_inventory")
+	g.panel = panelNone
+
+	// CTY10 sec5 原版 handler14：甘達特×1 + 手下×3 的混合編隊。
 	kandarEvent := g.pack.BossSurrenderEvents()[0]
 	kandar, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
 		kandarEvent.Trigger.CTYRaw, mapBlkNum[kandarEvent.Trigger.CTYRaw],
@@ -133,10 +148,13 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.bossSurrenderEventID = kandarEvent.ID
 	g.startBossSurrenderBattle()
 	if !g.battle.active || len(g.battle.enemies) != 4 {
-		t.Fatal("Kandar 原版混合編隊未啟動")
+		t.Fatal("甘達特原版混合編隊未啟動")
 	}
 	dump("kandar_mixed_battle")
 	g.battle.active = false
+	g.bossSurrenderStage, g.bossSurrenderCursor = bossSurrenderChoice, 0
+	dump("kandar_surrender_choice")
+	g.bossSurrenderStage, g.bossSurrenderEventID = bossSurrenderIdle, ""
 
 	// R-2:沙曼歐莎夜間在原版精確座標使用拉之鏡 → rec97 揭露 → 怪力魔89。
 	g.dnPhase = 2

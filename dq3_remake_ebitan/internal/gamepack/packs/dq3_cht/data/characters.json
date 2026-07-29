@@ -1,0 +1,45 @@
+{
+  "schema_version": "0.1.0",
+  "default_refs": {
+    "new_game_player": "dq3:character.new_game_hero",
+    "registered_party_member": "dq3:character.registered_member"
+  },
+  "defaults": [
+    {
+      "id": "dq3:character.new_game_hero",
+      "equipment": {
+        "weapon": null,
+        "armor": 30,
+        "shield": null,
+        "head": null
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "file",
+        "address": "0x1c2d..0x1c33",
+        "consumer": "new-game character record writer stores 0x801e in equipment word 0",
+        "doc": "docs/22-item-fix.md#商店--開場-re部分"
+      }
+    },
+    {
+      "id": "dq3:character.registered_member",
+      "equipment": {
+        "weapon": null,
+        "armor": 30,
+        "shield": null,
+        "head": null
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "file",
+        "address": "0x1c94..0x1cc4",
+        "consumer": "registration writer clears eight equipment words to 0x00ff then stores 0x801e in word 0",
+        "doc": "docs/36-original-tavern-playthrough.md#露依達酒場冒險者登錄所從遊戲自身資料解出"
+      }
+    }
+  ]
+}

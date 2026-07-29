@@ -4,9 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 )
 
 // TestOpeningProductionInputTrace 從標題開始，只送入 production InputState：
@@ -21,6 +23,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGame: %v", err)
 	}
+	// 此測試驗證數千次正式 InputState 的連續狀態路線；逐步 WritePixels 會在沒有
+	// ebiten 顯示迴圈的 test binary 累積圖形命令。畫面另由 framedump 測試驗證。
+	g.frame = nil
 	send := func(in InputState) {
 		t.Helper()
 		if in.DirHeld == 0 && in.DirEdge == 0 && !in.Confirm && !in.Cancel &&
@@ -90,10 +95,13 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceWalkThroughPortal(t, g, 8, 14, 0, 2)
 
 	// 用正式命令窗對 b4=3 NPC 登錄三人；每次完成後 modal 關閉，再重新對話。
-	for i := 0; i < 3; i++ {
+	for i, class := range []int{1, 3, 4} { // 戰士、僧侶、魔法使者
 		traceTalkNPC(t, g, 2, 3)
 		if !g.tavern.active {
 			t.Fatalf("第%d次對冒險者登錄所 NPC 應開 tavern modal", i+1)
+		}
+		for j := 0; j < class; j++ {
+			send(InputState{DirHeld: -1, DirEdge: 0})
 		}
 		press(InputState{Confirm: true}) // 職業
 		press(InputState{Toggle: true})  // 英數
@@ -123,32 +131,53 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Cancel: true}) // 清單→主選單
 	press(InputState{Cancel: true}) // 關酒場
 
-	// 正常前段迷宮會連續遇敵；用國王給的 50G 到阿里阿罕道具店買 2 株藥草。
-	// 保留 34G 作 Lv1 教會復活與四人旅店交易；不可把全部初始金錢花完後再注入補給。
-	traceTalkNPC(t, g, 15, 24) // CTY00 sec0 facility k2，道具店第一項是 0x41
-	if !g.shop.active {
-		t.Fatal("對阿里阿罕道具店 NPC 應開商店")
-	}
-	for i := 0; i < 2; i++ {
-		press(InputState{Confirm: true})
-	}
-	press(InputState{Cancel: true})
-	if g.countItem(herbCode) != 2 {
-		t.Fatalf("正式購買後應有 2 株藥草，got %d (gold=%d)", g.countItem(herbCode), g.heroGold)
-	}
+	// 四人旅店每次 8G；國王的 50G 全數保留作練級住宿。先買藥草會在 Lv4 前耗盡
+	// 住宿費，因此這條 deterministic 正式路線以逃離強敵、旅店補滿為前段補給策略。
 
-	// 國王給的裝備不會自動穿上；依正式命令窗選「裝備」，把背包第4格銅劍裝給隊長。
-	press(InputState{Confirm: true})          // 開命令
-	send(InputState{DirHeld: -1, DirEdge: 0}) // 對話→狀況
-	send(InputState{DirHeld: -1, DirEdge: 0}) // 狀況→裝備
-	press(InputState{Confirm: true})          // 開裝備面板
-	for i := 0; i < 3; i++ {
-		send(InputState{DirHeld: -1, DirEdge: 0})
+	// 國王給的裝備不會自動穿上；依正式命令窗逐人分配。
+	equipItem := func(actor, code int) {
+		t.Helper()
+		idx := -1
+		for i, item := range g.inventory {
+			if item == code {
+				idx = i
+				break
+			}
+		}
+		if idx < 0 {
+			t.Fatalf("背包沒有待裝備 item %#x：%v", code, g.inventory)
+		}
+		press(InputState{Confirm: true}) // 開命令
+		for g.cmd.cursor != int(cmdEquip) {
+			send(InputState{DirHeld: -1, DirEdge: 0})
+		}
+		press(InputState{Confirm: true}) // 開裝備面板
+		for i := 0; i < actor; i++ {
+			send(InputState{DirHeld: -1, DirEdge: 0})
+		}
+		press(InputState{Confirm: true}) // 選隊員
+		for i := 0; i < idx; i++ {
+			send(InputState{DirHeld: -1, DirEdge: 0})
+		}
+		press(InputState{Confirm: true}) // 裝上；舊品回背包
+		press(InputState{Cancel: true})  // 回隊員選擇
+		press(InputState{Cancel: true})  // 關裝備面板
 	}
-	press(InputState{Confirm: true}) // 裝備 inventory[3] = 銅劍 0x03
-	press(InputState{Cancel: true})
+	equipItem(0, 0x03) // 勇者：銅劍
+	equipItem(1, 0x01) // 戰士：木棒
+	equipItem(1, 0x1f) // 戰士：旅人的衣服
+	equipItem(2, 0x01) // 僧侶：木棒
+	equipItem(2, 0x1f) // 僧侶：旅人的衣服
+	equipItem(3, 0x00) // 魔法使者：檜木棒
 	if g.equip[0] != 0x03 {
 		t.Fatalf("正式裝備輸入未穿上國王給的銅劍：equip=%v", g.equip)
+	}
+	if got := [3][2]int{
+		{g.companions[0].Weapon, g.companions[0].Armor},
+		{g.companions[1].Weapon, g.companions[1].Armor},
+		{g.companions[2].Weapon, g.companions[2].Armor},
+	}; got != [3][2]int{{0x01, 0x1f}, {0x01, 0x1f}, {0x00, 0x1e}} {
+		t.Fatalf("正式分配國王裝備錯：%v", got)
 	}
 
 	// 走回原始 section0 邊界 spawn，再向外一步正常出城；不可使用 Esc/debug exit。
@@ -314,12 +343,65 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			restored.hasItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
 			restored.inTown, restored.curCty, sceneSection(restored.cur))
 	}
+	// save/load 已驗證；釋放重建出的第二套大型圖形快取，後半沿原本玩家狀態繼續。
+	restored = nil
+	runtime.GC()
 
 	// 從合法王座 checkpoint 正常回到羅馬利亞 sec0。死亡者先走教會、存活者再住旅店；
 	// 之後以現有金錢在道具店購買一瓶聖水與可負擔藥草，正式北行 CTY10。
 	traceTownSectionTo(t, g, ctyRomaly, 0)
 	traceReviveDeadAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
+	traceExitTownBoundary(t, g)
+	traceTrainNearTown(t, g, ctyRomaly, 10)
+	traceAdventureWalkToCty(t, g, ctyRomaly)
+	traceReviveDeadAtChurch(t, g)
+	traceTalkFacility(t, g, facInn)
+	traceTalkFacility(t, g, facWeapon)
+	if !g.shop.active {
+		t.Fatal("羅馬利亞武防店未由正式 facility NPC 開啟")
+	}
+	const bronzeShield = 0x3a
+	shieldIdx := -1
+	for i, code := range g.shop.codes {
+		if code == bronzeShield {
+			shieldIdx = i
+			break
+		}
+	}
+	if shieldIdx < 0 || g.heroGold < g.shop.items.Price(bronzeShield) {
+		t.Fatalf("羅馬利亞武防店買不起青銅盾：idx=%d gold=%d codes=%v",
+			shieldIdx, g.heroGold, g.shop.codes)
+	}
+	for g.shop.cursor != shieldIdx {
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true})
+	const tortoiseArmor = 0x22
+	armorIdx := -1
+	for i, code := range g.shop.codes {
+		if code == tortoiseArmor {
+			armorIdx = i
+			break
+		}
+	}
+	if armorIdx < 0 || g.heroGold < g.shop.items.Price(tortoiseArmor) {
+		t.Fatalf("羅馬利亞武防店買不起龜殼甲胄：idx=%d gold=%d codes=%v",
+			armorIdx, g.heroGold, g.shop.codes)
+	}
+	for g.shop.cursor != armorIdx {
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true})
+	press(InputState{Cancel: true})
+	equipItem(1, bronzeShield) // 戰士正式換上青銅盾
+	equipItem(0, tortoiseArmor)
+	if g.companions[0].Shield != bronzeShield {
+		t.Fatalf("戰士未經正式裝備面板換上青銅盾：%#x", g.companions[0].Shield)
+	}
+	if g.equip[1] != tortoiseArmor {
+		t.Fatalf("勇者未經正式裝備面板換上龜殼甲胄：%#x", g.equip[1])
+	}
 	traceTalkFacility(t, g, facItem)
 	if !g.shop.active {
 		t.Fatal("羅馬利亞道具店未由正式 facility NPC 開啟")
@@ -377,10 +459,101 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("香巴尼塔 rec84 後未開原版四敵混合編隊：active=%v stage=%d enemies=%v",
 			g.battle.active, g.bossSurrenderStage, g.battle.enemies)
 	}
+	traceResolveBattle(t, g, false)
+	if g.bossSurrenderStage != bossSurrenderApology || !g.dlg.open {
+		t.Fatalf("正式擊敗甘達特後未進 rec85：stage=%d dlg=%v hero=%d",
+			g.bossSurrenderStage, g.dlg.open, g.heroHP)
+	}
+	traceCloseDialogue(t, g)
+	if g.bossSurrenderStage != bossSurrenderChoice {
+		t.Fatalf("rec85 後未進求饒選擇：stage=%d", g.bossSurrenderStage)
+	}
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 選「否」
+	press(InputState{Confirm: true})
+	if g.bossSurrenderStage != bossSurrenderReject || !g.dlg.open {
+		t.Fatalf("正式拒絕求饒未進 rec87：stage=%d dlg=%v", g.bossSurrenderStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	if g.bossSurrenderStage != bossSurrenderChoice {
+		t.Fatalf("rec87 後未回求饒選擇：stage=%d", g.bossSurrenderStage)
+	}
+	press(InputState{Confirm: true}) // 預設「是」
+	if g.bossSurrenderStage != bossSurrenderFarewell || !g.dlg.open {
+		t.Fatalf("正式接受求饒未進 rec86：stage=%d dlg=%v", g.bossSurrenderStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	if g.storyFlag(kandarEvent.ClearFlagRaw) || g.bossSurrenderStage != bossSurrenderIdle {
+		t.Fatalf("rec86 後未清除甘達特：flag=%v stage=%d",
+			g.storyFlag(kandarEvent.ClearFlagRaw), g.bossSurrenderStage)
+	}
+
+	// 先走到寶箱下方第二格，再正常向上走到 (4,5)，使角色自然面向 (4,4) 寶箱。
+	traceWalkTo(t, g, 4, 6)
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	send(InputState{DirHeld: 1, DirEdge: 1})
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if g.px != 4 || g.py != 5 || g.facing != 1 {
+		t.Fatalf("未由正式行走抵達金皇冠寶箱下方：pos=(%d,%d) facing=%d",
+			g.px, g.py, g.facing)
+	}
+	press(InputState{Confirm: true}) // 開命令
+	if !g.cmd.open {
+		t.Fatalf("金皇冠寶箱前未正常開啟命令窗：pos=(%d,%d) facing=%d cd=%d dlg=%v",
+			g.px, g.py, g.facing, g.cd, g.dlg.open)
+	}
+	// 命令窗是 2 欄×3 列；先移到右欄，再往下到「調查」。
+	for _, dir := range []int{3, 0, 0} {
+		if g.cmd.cursor == int(cmdExamine) {
+			break
+		}
+		send(InputState{DirHeld: -1, DirEdge: dir})
+	}
+	if g.cmd.cursor != int(cmdExamine) {
+		t.Fatalf("命令窗無法以正式方向輸入選到調查：cursor=%d", g.cmd.cursor)
+	}
+	press(InputState{Confirm: true})
+	if !g.hasItem(romalyGoldenCrownItem) {
+		t.Fatalf("正式調查甘達特事件寶箱未取得金皇冠：inventory=%v", g.inventory)
+	}
+
+	// 金皇冠與甘達特清除旗標必須跨存讀檔；讀檔後再以正式轉場離塔、返回羅馬利亞，
+	// 證明事件不是只能在當前記憶體中成立的孤立 handler。
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存金皇冠 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建金皇冠讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})          // 標題 splash → 主選單
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
+	press(InputState{Confirm: true})          // 正式載入冒險之書
+	if !restored.hasItem(romalyGoldenCrownItem) ||
+		restored.storyFlag(kandarEvent.ClearFlagRaw) ||
+		restored.showTitle ||
+		!restored.inTown || restored.curCty != kandarEvent.Trigger.CTYRaw ||
+		sceneSection(restored.cur) != kandarEvent.Trigger.Section {
+		t.Fatalf("金皇冠 checkpoint round-trip 錯：crown=%v flag=%v title=%v town=%v cty=%d sec=%d",
+			restored.hasItem(romalyGoldenCrownItem),
+			restored.storyFlag(kandarEvent.ClearFlagRaw), restored.showTitle, restored.inTown,
+			restored.curCty, sceneSection(restored.cur))
+	}
+	traceTownSectionTo(t, g, -1, -1)
+	traceAdventureWalkToCty(t, g, ctyRomaly)
+	if !g.inTown || g.curCty != ctyRomaly || !g.hasItem(romalyGoldenCrownItem) {
+		t.Fatalf("金皇冠讀檔後未能正式返回羅馬利亞：town=%v cty=%d crown=%v",
+			g.inTown, g.curCty, g.hasItem(romalyGoldenCrownItem))
+	}
 }
 
 // traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
-// 取得 EXP；隊伍有人低於 3/4 HP 就正常進城找旅店，再由 section0 邊界出城。
+// 取得 EXP；隊伍有人降到 1/2 HP 就正常進城找旅店，再由 section0 邊界出城。
 func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 	t.Helper()
 	if g.inTown || cty < 0 || cty >= len(ctyLoc) || ctyLoc[cty][2] != g.layer {
@@ -391,11 +564,11 @@ func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 
 	needsRest := func() bool {
 		_, heroMax, _, _, _ := g.heroStats()
-		if g.heroHP <= 0 || g.heroHP*4 <= heroMax*3 {
+		if g.heroHP <= 0 || g.heroHP*2 <= heroMax {
 			return true
 		}
 		for _, m := range g.companions {
-			if m.CurHP <= 0 || m.CurHP*4 <= m.MaxHP()*3 {
+			if m.CurHP <= 0 || m.CurHP*2 <= m.MaxHP() {
 				return true
 			}
 		}
@@ -450,7 +623,9 @@ func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 			return
 		}
 		if g.battle.active {
-			traceResolveBattle(t, g, false)
+			// 原版低階隊伍遇到超出目前區域戰力的怪物應使用正式「逃跑」指令；
+			// 阿里阿罕只與弱敵交戰；Lv4 後的羅馬利亞訓練才正式迎戰當地怪物。
+			traceResolveBattle(t, g, cty == 0)
 			continue
 		}
 		if needsRest() {
@@ -821,7 +996,30 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 	t.Helper()
 	shouldFleeStrong := len(fleeStrong) == 0 || fleeStrong[0]
 	healTarget := -1
-	for i := 0; i < 512 && g.battle.active; i++ {
+	wantedSpell := -1
+	blindAttempted := false
+	defenseCasts := 0
+	bestSpell := func(actor int, kind spell.Kind) int {
+		best, bestBase := -1, -1
+		for _, rec := range g.battle.actorSpells(actor) {
+			def, ok := spell.GetDef(rec)
+			if ok && def.Kind == kind && def.MP <= g.battle.actorMP(actor) && def.Base > bestBase {
+				best, bestBase = rec, def.Base
+			}
+		}
+		return best
+	}
+	hasAffordableSpell := func(actor, rec int) bool {
+		for _, known := range g.battle.actorSpells(actor) {
+			if known == rec {
+				def, ok := spell.GetDef(rec)
+				return ok && def.MP <= g.battle.actorMP(actor)
+			}
+		}
+		return false
+	}
+	const maxInputs = 1536
+	for i := 0; i < maxInputs && g.battle.active; i++ {
 		if g.battle.result == 2 {
 			heroLv, _, _, _, _ := g.heroStats()
 			comp := make([][3]int, len(g.battle.companions))
@@ -836,7 +1034,7 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 		switch g.battle.phase {
 		case phCommand:
 			menu := g.battle.commandMenu(g.battle.commandActor)
-			healTarget = -1
+			healTarget, wantedSpell = -1, -1
 			if g.battle.usedHerbs < g.battle.heroHerbs {
 				bestHP, bestMax := 0, 1
 				for _, actor := range g.battle.aliveActorIndices() {
@@ -852,14 +1050,42 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 				shouldFleeStrong && g.battle.monID >= 10
 			wantCommand := bcWar
 			switch {
+			case needHeal && bestSpell(g.battle.commandActor, spell.Heal) >= 0:
+				wantedSpell = bestSpell(g.battle.commandActor, spell.Heal)
+				wantCommand = bcSpell
 			case needHeal:
 				wantCommand = bcItem
 			case needFlee:
 				wantCommand = bcFlee
+			case g.bossSurrenderStage == bossSurrenderBattle &&
+				!blindAttempted && hasAffordableSpell(g.battle.commandActor, 158):
+				wantedSpell, wantCommand = 158, bcSpell
+			case g.bossSurrenderStage == bossSurrenderBattle &&
+				defenseCasts < 2 && hasAffordableSpell(g.battle.commandActor, 154):
+				wantedSpell, wantCommand = 154, bcSpell
+			case bestSpell(g.battle.commandActor, spell.Dmg) >= 0:
+				wantedSpell = bestSpell(g.battle.commandActor, spell.Dmg)
+				wantCommand = bcSpell
 			}
 			if menu[g.battle.cursor] != wantCommand {
 				in.DirEdge = 0
 			} else {
+				in.Confirm = true
+			}
+		case phSpell:
+			spells := g.battle.actorSpells(g.battle.commandActor)
+			if wantedSpell < 0 {
+				t.Fatalf("正式戰鬥進入咒文選單但沒有選定咒文：actor=%d", g.battle.commandActor)
+			}
+			if spells[g.battle.spellCursor] != wantedSpell {
+				in.DirEdge = 0
+			} else {
+				if wantedSpell == 158 {
+					blindAttempted = true
+				}
+				if wantedSpell == 154 {
+					defenseCasts++
+				}
 				in.Confirm = true
 			}
 		case phTargetAlly:
@@ -869,7 +1095,20 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 			} else {
 				in.Confirm = true
 			}
-		case phTargetEnemy, phMessage, phEnd:
+		case phTargetEnemy:
+			targets := g.battle.aliveEnemyIndices()
+			want := 0
+			for i := 1; i < len(targets); i++ {
+				if g.battle.enemies[targets[i]].max < g.battle.enemies[targets[want]].max {
+					want = i
+				}
+			}
+			if g.battle.targetCursor != want {
+				in.DirEdge = 0
+			} else {
+				in.Confirm = true
+			}
+		case phMessage, phEnd:
 			in.Confirm = true
 		default:
 			t.Fatalf("自動戰鬥遇到未處理 phase=%d", g.battle.phase)
@@ -879,9 +1118,14 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 		}
 	}
 	if g.battle.active {
-		t.Fatalf("戰鬥 512 次正式輸入後仍未結束：phase=%d actor=%d cursor=%d target=%d mon=%d result=%d",
+		enemyHP := make([]int, len(g.battle.enemies))
+		for i := range g.battle.enemies {
+			enemyHP[i] = g.battle.enemies[i].hp
+		}
+		t.Fatalf("戰鬥 %d 次正式輸入後仍未結束：phase=%d actor=%d cursor=%d target=%d mon=%d result=%d hero=%d enemyHP=%v",
+			maxInputs,
 			g.battle.phase, g.battle.commandActor, g.battle.cursor, g.battle.targetCursor,
-			g.battle.monID, g.battle.result)
+			g.battle.monID, g.battle.result, g.battle.heroHP, enemyHP)
 	}
 }
 

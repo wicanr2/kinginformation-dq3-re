@@ -68,23 +68,96 @@ func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 	}
 }
 
-// drawEquip:上方現裝備(武器/鎧),下方持有可裝備品(游標選 → A 裝上)。
+func (g *Game) equipActorName(actor int) []int {
+	if actor == 0 {
+		if len(g.heroName) > 0 {
+			return g.heroName
+		}
+		return classNames[0]
+	}
+	if actor > 0 && actor <= len(g.companions) {
+		return g.companions[actor-1].Name
+	}
+	return nil
+}
+
+func (g *Game) equipActorClass(actor int) int {
+	if actor == 0 {
+		return 0
+	}
+	if actor > 0 && actor <= len(g.companions) {
+		return g.companions[actor-1].Class
+	}
+	return -1
+}
+
+func (g *Game) equipActorSlots(actor int) *[4]int {
+	if actor == 0 {
+		return &g.equip
+	}
+	if actor <= 0 || actor > len(g.companions) {
+		return nil
+	}
+	m := g.companions[actor-1]
+	return &[4]int{m.Weapon, m.Armor, m.Shield, m.Head}
+}
+
+func (g *Game) setEquipActorSlot(actor, slot, code int) {
+	if actor == 0 {
+		g.equip[slot] = code
+		return
+	}
+	m := g.companions[actor-1]
+	switch slot {
+	case 0:
+		m.Weapon = code
+	case 1:
+		m.Armor = code
+	case 2:
+		m.Shield = code
+	case 3:
+		m.Head = code
+	}
+}
+
+// drawEquip:先選隊員，再顯示其四個裝備槽與共用背包候選。
 func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
 	yellow := dq3data.Color{R: 255, G: 224, B: 32}
-	// 現裝備(武器 + 鎧;空槽不畫名)
-	for s := 0; s < 2; s++ {
-		if g.equip[s] != 0 || s == 0 {
-			g.shop.drawItemName(rgba, 64, 56+s*22, g.equip[s], yellow)
+	g.panelHits.reset()
+	if g.panelActor < 0 {
+		for actor := 0; actor <= len(g.companions); actor++ {
+			y := 56 + actor*24
+			if actor == g.panelCursor {
+				drawGlyph(rgba, g.dlg.tx, 44, y, curGlyph, yellow)
+			}
+			x := 64
+			for _, gi := range g.equipActorName(actor) {
+				drawGlyph(rgba, g.dlg.tx, x, y, gi, white)
+				x += dq3data.GlyphPx
+			}
+			g.panelHits.add(44, y-3, ScreenW-80-8, 22, actor)
+		}
+		return
+	}
+
+	x := 64
+	for _, gi := range g.equipActorName(g.panelActor) {
+		drawGlyph(rgba, g.dlg.tx, x, 52, gi, yellow)
+		x += dq3data.GlyphPx
+	}
+	if slots := g.equipActorSlots(g.panelActor); slots != nil {
+		for s, code := range slots {
+			if code >= 0 {
+				g.shop.drawItemName(rgba, 64+(s&1)*260, 76+(s>>1)*22, code, yellow)
+			}
 		}
 	}
-	// 持有可裝備品(游標)
-	g.panelHits.reset()
 	for i, code := range g.inventory {
 		if i >= 8 {
 			break
 		}
-		y := 120 + i*22
+		y := 132 + i*22
 		if i == g.panelCursor {
 			drawGlyph(rgba, g.dlg.tx, 44, y, 11, yellow) // ►
 		}
@@ -93,9 +166,9 @@ func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 	}
 }
 
-// equipSelected:把游標指的持有品裝上其部位(武器/鎧/盾/兜)。
+// equipSelected:把背包物品裝給已選隊員。新物從背包移除；舊裝備回背包。
 func (g *Game) equipSelected() {
-	if g.panelCursor < 0 || g.panelCursor >= len(g.inventory) {
+	if g.panelActor < 0 || g.panelCursor < 0 || g.panelCursor >= len(g.inventory) {
 		return
 	}
 	code := g.inventory[g.panelCursor]
@@ -103,7 +176,23 @@ func (g *Game) equipSelected() {
 		return
 	}
 	slot := g.shop.items.EquipSlot(code)
-	if slot >= 0 && slot < 4 && g.shop.items.CanEquip(code, 0) {
-		g.equip[slot] = code
+	cls := g.equipActorClass(g.panelActor)
+	if slot < 0 || slot >= 4 || !g.shop.items.CanEquip(code, cls) {
+		return
+	}
+	slots := g.equipActorSlots(g.panelActor)
+	if slots == nil {
+		return
+	}
+	old := slots[slot]
+	g.inventory = append(g.inventory[:g.panelCursor], g.inventory[g.panelCursor+1:]...)
+	g.setEquipActorSlot(g.panelActor, slot, code)
+	if old >= 0 {
+		g.inventory = append(g.inventory, old)
+	}
+	if len(g.inventory) == 0 {
+		g.panelCursor = 0
+	} else if g.panelCursor >= len(g.inventory) {
+		g.panelCursor = len(g.inventory) - 1
 	}
 }

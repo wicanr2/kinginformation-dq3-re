@@ -30,7 +30,7 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
   [`docs/84`](docs/84-game-pack-json-contract.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
 - 最新 production audit：[`docs/83`](docs/83-inn-and-romaly-route-audit.md)
-- 香巴尼塔 Kandar 原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
+- 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
@@ -38,11 +38,11 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 目前核心終盤切片已接通，boot 起的正式 trace 已從 CTY01 延伸到 CTY02 羅馬利亞：玩家
 以正式道具選單使用魔法球，原版 flag `0x51`、四格牆重建、道具消耗、CTY30 tier-1 門、
 CTY31 出洞、羅馬利亞國王 rec45→rec15 任務與王座存讀檔均已驗證。
-**尚未完成從新遊戲開始的無 debug 全流程驗收**。正式 trace 已由標題完成前置主線、
-自然戰鬥至 Lv4、抵達 CTY10，持盜賊鑰匙以正式「調查」開 sec3 `(8,21)` 門，走到
-sec5 `(6,8)` 自然觸發 handler14，播放 rec84 並進入怪26×1+怪27×3 的原版混合編隊。
-下一個 blocker 是用合法商店、裝備、練級與恢復取得足以擊敗 Kandar 的戰力，再完成
-求饒、金皇冠與羅馬利亞後續；不得削弱 boss 或注入等級／金錢。
+**尚未完成從新遊戲開始的無 debug 全流程驗收**。正式 trace 已由標題完成前置主線，
+建立四人隊並以原版初始布衣及國王裝備配置；合法遭遇練至 Lv10、住宿、購物、登上
+CTY10，擊敗甘達特×1＋手下×3，完成求饒、取得金皇冠、冒險之書 round-trip，並從
+標題「載入進度」正式離塔返回羅馬利亞。下一個 blocker 是 handler9 持皇冠後的
+還冠／強制讓位狀態機（EXE file `0x6649` 起）；見 `docs/82`。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -50,9 +50,9 @@ D2/D3 證據，未知值不得以可調參數名義猜填。Desktop 可讀外部
 Android／Web 嵌入 pack 則仍需重包。
 
 2026-07-29 起的硬規則：版本專屬 CTY/section/座標、subid、story flag、dialogue record、
-formation、寶箱 gate、價格與 cue 不得新增成 Go 常數/table。Kandar 已是第一個完整
-`events.json` + 通用 `boss_surrender` primitive + EXE/CTY parity 範例；細則見 `AGENTS.md`
-與 `docs/84`。
+formation、寶箱 gate、價格與 cue 不得新增成 Go 常數/table。甘達特事件已是第一個完整
+`events.json` + `texts.json` + 通用 `boss_surrender` primitive + EXE/CTY/D3TXT parity
+範例；人物初始裝備也由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法
 
