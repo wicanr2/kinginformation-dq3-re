@@ -45,7 +45,7 @@ facility_block:
   +1  count          ; 品項數
   +2.. item_id[count]; 道具碼(= ITEM.DAT index;名稱 = D3TXT00 rec (id+1))
   ── type 0(旅社)──
-  +1  cost(u16)      ; 住宿費 raw(handler 0x86f5 讀 [di+1] 後 × 人數類)
+  +1  cost(u16)      ; 住宿費 raw；handler 0x86f5 乘「目前仍存活的隊員數」
 ```
 
 賣單 builder(file 0x8848)的對應反組譯:`es=[0x2536]; cl=es:[di]`(count)→ 逐 byte
@@ -115,9 +115,13 @@ DGROUP 0x1f9**,7 byte/筆,+2/+3 = 價格,對上 docs/22)。買單渲染 file 0x8
 - remake:`church_revive` 蘇生陣亡隊員(`cur_hp==0` → 復原 cur_hp/cur_mp,費=等級×10);
   解毒/解麻痺 **已實作**(狀態系統已建:`dq3_status.h`;`main.c:431` 教會 `if(m->status)` 解毒/解麻痺、道具走 `dq3_item_use_cure`)。
 
-## 待 RE / 待補(縮小後)
+## 現行 remake 狀態與待補
 
-- ~~旅社治療~~ **已做(task1 持久 HP + inn_rest)**;~~教會復活~~ **已做(task3 church_revive)**。
-- 旅社費用公式(0x86f5 `× 人數`,remake 已用)、教會復活/解毒/解咒精確價(remake 用等級×10 簡化)。
+- Ebiten 旅店已依原版閉合：file `0x86f5` 呼叫 `0xd966` 計算存活人數，`0x8705`
+  乘 raw 單價，付款後 `0x87cb` 逐員把 `+0x16/+0x18` 寫成 `+0x2a/+0x2c`
+  （HP/MP 上限），並跳過死亡旗標 `+0x38 & 0x80`。金幣不足不扣款也不恢復。
+- 舊 C remake 的 `church_revive` 只能作線索；現行 Ebiten `facChurch` 仍只呼叫 Save，
+  尚沒有原版三選單、選人、精確價格與復活交易，不能標為完成。
+- 教會復活/解毒/解咒精確價格仍待 RE；舊 C 版的「等級×10」是簡化值，不是 oracle。
 - 狀態效果(中毒/詛咒)系統 → 才能接解毒/解詛咒。
 - 同城多攤(CTY6/22 多家武防店):`dq3_facility_at` 已能逐攤(by k),走到不同店員開不同攤。

@@ -27,7 +27,7 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 
 - 唯一 current plan：[`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
-- 最新 production trace：[`docs/82`](docs/82-romaly-king-production-trace.md)
+- 最新 production audit：[`docs/83`](docs/83-inn-and-romaly-route-audit.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
@@ -35,8 +35,10 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 目前核心終盤切片已接通，boot 起的正式 trace 已從 CTY01 延伸到 CTY02 羅馬利亞：玩家
 以正式道具選單使用魔法球，原版 flag `0x51`、四格牆重建、道具消耗、CTY30 tier-1 門、
 CTY31 出洞、羅馬利亞國王 rec45→rec15 任務與王座存讀檔均已驗證。
-**尚未完成從新遊戲開始的無 debug 全流程驗收**。下一輪由羅馬利亞 checkpoint 繼續，
-正常出城前往香巴尼塔 CTY10，以第一個實際玩家 blocker 決定要追的設定／事件。
+**尚未完成從新遊戲開始的無 debug 全流程驗收**。羅馬利亞→CTY10 的首個實際 blocker
+已定位：最短任務 trace 仍是 Lv1，且 Ebiten 教會沒有正式復活服務；旅店現已依原版改為
+「單價×存活人數、恢復全體存活者、不復活死亡者」。下一輪先閉合低危區練級／住宿循環
+與教會交易，再重跑北行路線，不得削弱 monster 17 或注入等級。
 
 ## 固定工程方法
 

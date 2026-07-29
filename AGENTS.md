@@ -59,8 +59,9 @@
 - 圖形測試在具備 `assets_raw` 的正確工作目錄，以 `go test -c` 後配合 Xvfb 執行；
   素材缺失造成的 SKIP 不算驗收。
 - 每次至少跑受影響的 tests；重大切片收尾跑完整 `game`、`internal/...` 與 desktop build。
-- Docker container 只在工作期間啟動；不用時 `docker stop`。使用者要求釋放空間時再
-  `docker rm`，不得連帶刪 image、volume 或專案資料。
+- Docker 驗證預設使用 `docker run --rm` 臨時 container；不用時不得留存。若工具必須
+  建立常駐 container，工作結束要先 `docker stop` 再移除該明確 container。不得連帶刪
+  image、volume 或專案資料。
 - 提交前跑 `git diff --check`、檢查圖片與文件代表現行程式，並確認沒有使用者 scratch、
   Android local libs、原版資產或 RE database。
 - 有重大修改才 commit + push；commit 訊息描述已閉合的垂直切片，不誇大後續流程。

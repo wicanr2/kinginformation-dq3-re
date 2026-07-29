@@ -733,11 +733,28 @@ func (g *Game) openFacility(k int) {
 		return
 	}
 	switch f.typ {
-	case facInn: // 旅社:扣費(inn_cost×人數,單人)+ 治滿 HP/MP
+	case facInn: // 旅社：單價×存活人數；付清後治滿存活成員 HP/MP，死亡者不復活。
 		_, maxHP, _, _, _ := g.heroStats()
-		if g.heroGold >= f.innCost {
-			g.heroGold -= f.innCost
-			g.heroHP, g.heroMP, g.heroInit = maxHP, g.heroMaxMP(), true
+		alive := 0
+		if g.heroHP > 0 {
+			alive++
+		}
+		for _, m := range g.companions {
+			if m.Alive() {
+				alive++
+			}
+		}
+		cost := f.innCost * alive
+		if alive > 0 && g.heroGold >= cost {
+			g.heroGold -= cost
+			if g.heroHP > 0 {
+				g.heroHP, g.heroMP, g.heroInit = maxHP, g.heroMaxMP(), true
+			}
+			for _, m := range g.companions {
+				if m.Alive() {
+					m.fullHeal()
+				}
+			}
 		}
 	case facWeapon, facItem: // 商店:開貨架(品項自全城品項池 itemOff..+count)
 		lo, hi := f.itemOff, f.itemOff+f.count
