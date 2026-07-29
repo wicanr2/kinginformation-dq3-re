@@ -22,6 +22,7 @@ const (
 	DarkLamp                  // 黑暗之燈(強制變夜,不消耗)
 	Rainbow                   // 彩虹水滴(位置相關)
 	Mirror                    // 拉之鏡(沙曼歐莎假王揭露,不消耗)
+	MagicBall                 // 魔法球(誘惑洞窟指定位置破牆)
 )
 
 // 消耗品 id(商店交叉驗證,docs/49)。
@@ -32,6 +33,7 @@ const (
 	ItemHolyWater   = 0x44 // 聖水
 	ItemFullmoon    = 0x45 // 滿月草
 	ItemPrayerRing  = 0x48 // 祈禱之戒
+	ItemMagicBall   = 0x58 // 魔法球
 	ItemDarkLamp    = 0x5f // 黑暗之燈
 	ItemMirror      = 0x61 // 拉之鏡
 )
@@ -59,6 +61,8 @@ func KindOf(itemID int) Kind {
 		return CureParalysis
 	case ItemPrayerRing:
 		return PrayerRing
+	case ItemMagicBall:
+		return MagicBall
 	case ItemDarkLamp:
 		return DarkLamp
 	case ItemMirror:
@@ -105,7 +109,7 @@ func PrayerMPAmount(cur, max int) int {
 // Consumable:此種類使用後是否消耗道具(位置相關/不消耗物件回 false)。
 func (k Kind) Consumable() bool {
 	switch k {
-	case HealHP, CurePoison, CureParalysis, ReturnTown, Repel, Rainbow:
+	case HealHP, CurePoison, CureParalysis, ReturnTown, Repel, Rainbow, MagicBall:
 		return true // 立即效果 → 消耗(彩虹水滴確認位置後消耗)
 	default:
 		return false // 祈禱之戒(損壞才消耗,呼叫端處理)/ 武器道具 / 不可用

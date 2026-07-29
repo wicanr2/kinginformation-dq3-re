@@ -133,6 +133,32 @@ func (sc *Scene) revealEventTile(tx, ty int) bool {
 	return true
 }
 
+// applyClearedEventTiles 還原 DQ3.EXE file 0x46df..0x4747 的載圖後事件掃描：
+// 每個 attr&8 事件格以 hiMap subid 找 section event 的 p2 story flag；flag 已清時，
+// low tile +1 並清 hiMap 低 5 bit。這不是魔法球特例，寶箱／隱藏地形等也共用此規則。
+func (sc *Scene) applyClearedEventTiles(flagSet func(int) bool) {
+	if flagSet == nil || sc.attr == nil || sc.hiMap == nil || len(sc.events) == 0 {
+		return
+	}
+	for y := 0; y < sc.h; y++ {
+		for x := 0; x < sc.w; x++ {
+			i := y*sc.w + x
+			if sc.attr.Raw(sc.tileIdx(x, y))&0x0008 == 0 {
+				continue
+			}
+			subid := int(sc.hiMap[i] & 0x1f)
+			if subid >= len(sc.events) || flagSet(sc.events[subid][2]) {
+				continue
+			}
+			if sc.override == nil {
+				sc.override = map[int]int{}
+			}
+			sc.override[i] = (sc.tileIdx(x, y) + 1) & 0xff
+			sc.hiMap[i] &= 0xe0
+		}
+	}
+}
+
 // tileTransition:回 (tx,ty) 的轉場(attr&0xe000 轉場格 → hiMap 低5bit subid → transitions[subid])。
 // 回 (destCty, destSec, dx, dy, ok)。移植 dq3_scene_tile_transition。
 func (sc *Scene) tileTransition(tx, ty int) (int, int, int, int, bool) {
@@ -933,9 +959,10 @@ func (g *Game) step(in InputState) error {
 		g.facing = in.DirHeld // 撞牆也轉向(對齊原版:面向先變,可走才移動)
 		dx, dy := dirDelta(in.DirHeld)
 		nx, ny := g.px+dx, g.py+dy
-		// CTY section0 的原始 spawn 可位於版面邊界（阿里阿罕=(0,28)）；
-		// 從該格向版面外走就是正常出城，不是一般不可走越界。
-		if g.inTown && g.cur.sec == 0 && g.px == g.cur.spawnX && g.py == g.cur.spawnY &&
+		// CTY section0 的可走邊界開口就是正常出城。部分原始 spawn 在邊界
+		// (阿里阿罕 0,28)，部分在開口內一格(雷貝 1,10)；限制「必須正好等於
+		// spawn」會令後者走到邊界後永遠無法離城。
+		if g.inTown && g.cur.sec == 0 &&
 			(nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h) {
 			g.exitTown()
 			g.renderFrame()

@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
@@ -464,4 +465,22 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("雷貝老人 runtime 圖未觸發魔法球事件，或錯誤消耗盜賊鑰匙")
 	}
 	dump("leve_magic_ball")
+
+	// 誘惑洞窟入口：在原版精確座標使用魔法球後，0x51 清除並由通用 event
+	// rebuild 將 2x2 牆 tile 24/22 改為 25/23。
+	g.setStoryFlag(magicBallIntactFlag, true)
+	cave, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		ctyTemptationCave, mapBlkNum[ctyTemptationCave], magicBallSection, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.curCty, g.town, g.cur, g.dlg.tx = ctyTemptationCave, cave, cave, cave.dlgText
+	g.inventory = []int{itemuse.ItemMagicBall}
+	g.px, g.py = magicBallLeftX, magicBallUseY
+	g.dlg.open, g.cmd.open = false, false
+	g.useMagicBall()
+	if g.hasItem(itemuse.ItemMagicBall) || g.storyFlag(magicBallIntactFlag) {
+		t.Fatal("誘惑洞窟 runtime 圖未完成魔法球 transaction")
+	}
+	dump("temptation_magic_ball_open")
 }

@@ -9,7 +9,7 @@ func TestKindOf(t *testing.T) {
 		want Kind
 	}{
 		{0x41, HealHP}, {0x42, CurePoison}, {0x43, ReturnTown}, {0x44, Repel},
-		{0x45, CureParalysis}, {0x48, PrayerRing}, {0x5f, DarkLamp}, {0x61, Mirror},
+		{0x45, CureParalysis}, {0x48, PrayerRing}, {0x58, MagicBall}, {0x5f, DarkLamp}, {0x61, Mirror},
 		{0x5a, Awaken}, {0x0f, Gaia}, {0x5e, Drain}, {0x77, FairyFlute}, {0x75, Rainbow},
 		{0x01, None}, {0x99, None}, // 裝備/未知 → 不可用
 	}
@@ -51,7 +51,7 @@ func TestPrayerMPAmount(t *testing.T) {
 
 // 消耗語意:立即效果消耗;位置相關/武器道具/祈禱之戒不在此消耗。
 func TestConsumable(t *testing.T) {
-	for _, k := range []Kind{HealHP, ReturnTown, Repel, CurePoison} {
+	for _, k := range []Kind{HealHP, ReturnTown, Repel, CurePoison, MagicBall} {
 		if !k.Consumable() {
 			t.Errorf("種類 %d 應消耗", k)
 		}

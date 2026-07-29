@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 )
 
 // TestOpeningProductionInputTrace 從標題開始，只送入 production InputState：
@@ -210,6 +212,169 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			restored.hasItem(0x58), restored.hasItem(0x55), restored.progressDone(msMagicBal),
 			restored.curCty, sceneSection(restored.cur))
 	}
+
+	// 從雷貝正常出城，經 CTY09 祠堂入口進誘惑洞窟；在 IDA file 0x58cd 指定的
+	// CTY30 sec0 @(8/9,13) 從正式道具面板使用 0x58。
+	traceTownSectionTo(t, g, 1, 0)
+	traceOpenReachableDoor(t, g, 28, 8) // section 重載後門回到原始關閉狀態，持 0x55 再正式開門
+	traceTalkNPC(t, g, 5, 15)           // 雷貝旅社 k1：正式付費補滿長途迷宮前的 HP/MP
+	traceTalkNPC(t, g, 5, 6)            // 雷貝道具店 k0：貨架第二項是藥草
+	if !g.shop.active {
+		t.Fatal("雷貝道具店未由正式 NPC 對話開啟")
+	}
+	// 買一瓶聖水(貨架 0x44)抑制前段已不足以承受的高區遭遇，再用餘款補藥草。
+	holyIdx := -1
+	for i, code := range g.shop.codes {
+		if code == itemuse.ItemHolyWater {
+			holyIdx = i
+			break
+		}
+	}
+	if holyIdx < 0 || g.heroGold < g.shop.items.Price(itemuse.ItemHolyWater) {
+		t.Fatalf("雷貝補給不足以買聖水：idx=%d gold=%d codes=%v", holyIdx, g.heroGold, g.shop.codes)
+	}
+	for g.shop.cursor != holyIdx {
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true})
+	herbIdx := -1
+	for i, code := range g.shop.codes {
+		if code == herbCode {
+			herbIdx = i
+			break
+		}
+	}
+	for g.shop.cursor != herbIdx {
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	for i := 0; i < 5 && g.heroGold >= g.shop.items.Price(herbCode); i++ {
+		press(InputState{Confirm: true})
+	}
+	press(InputState{Cancel: true})
+	traceExitTownBoundary(t, g)
+	traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
+	traceAdventureWalkToCty(t, g, 9)
+	traceTownSectionTo(t, g, ctyTemptationCave, magicBallSection)
+	traceWalkTo(t, g, magicBallLeftX, magicBallUseY)
+	traceUseInventoryItem(t, g, itemuse.ItemMagicBall)
+	if g.hasItem(itemuse.ItemMagicBall) || g.storyFlag(magicBallIntactFlag) {
+		t.Fatalf("production 道具選單破牆後狀態錯：ball=%v flag51=%v",
+			g.hasItem(itemuse.ItemMagicBall), g.storyFlag(magicBallIntactFlag))
+	}
+	for _, p := range [][3]int{{8, 14, 25}, {9, 14, 25}, {8, 15, 23}, {9, 15, 23}} {
+		if got := g.cur.tileIdx(p[0], p[1]); got != p[2] {
+			t.Fatalf("production 破牆 tile(%d,%d)=%d, want %d", p[0], p[1], got, p[2])
+		}
+	}
+
+	// 這一輪的 E3 checkpoint 到原版魔法球 transaction 為止。破牆後的 CTY30 sec2
+	// 尚有同 section 不連通的洞窟機關，不能以 transition graph/debug 位移冒充抵達羅馬利亞。
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存魔法球破牆 checkpoint: %v", err)
+	}
+	if err := restored.Load(); err != nil {
+		t.Fatalf("讀取魔法球破牆 checkpoint: %v", err)
+	}
+	if restored.hasItem(itemuse.ItemMagicBall) || restored.storyFlag(magicBallIntactFlag) ||
+		!restored.inTown || restored.curCty != ctyTemptationCave ||
+		sceneSection(restored.cur) != magicBallSection {
+		t.Fatalf("魔法球破牆 checkpoint round-trip 錯：ball=%v flag51=%v town=%v cty=%d sec=%d",
+			restored.hasItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
+			restored.inTown, restored.curCty, sceneSection(restored.cur))
+	}
+}
+
+func traceExitTownBoundary(t *testing.T, g *Game) {
+	t.Helper()
+	type candidate struct {
+		x, y, dir int
+		path      []int
+	}
+	var best *candidate
+	for y := 0; y < g.cur.h; y++ {
+		for x := 0; x < g.cur.w; x++ {
+			dir := -1
+			switch {
+			case y == g.cur.h-1:
+				dir = 0
+			case y == 0:
+				dir = 1
+			case x == 0:
+				dir = 2
+			case x == g.cur.w-1:
+				dir = 3
+			}
+			if dir < 0 || g.cur.Blocked(x, y) {
+				continue
+			}
+			if _, _, _, _, ok := g.cur.tileTransition(x, y); ok {
+				continue
+			}
+			path := tracePath(g.cur, g.px, g.py, x, y)
+			if (x != g.px || y != g.py) && len(path) == 0 {
+				continue
+			}
+			if best == nil || len(path) < len(best.path) {
+				best = &candidate{x: x, y: y, dir: dir, path: path}
+			}
+		}
+	}
+	if best == nil {
+		t.Fatalf("CTY%d sec%d 找不到可達的 section0 邊界出口", g.curCty, sceneSection(g.cur))
+	}
+	traceWalkTo(t, g, best.x, best.y)
+	for g.cd > 0 {
+		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatalf("等待出城 cooldown: %v", err)
+		}
+	}
+	if err := g.step(InputState{DirHeld: best.dir, DirEdge: -1}); err != nil {
+		t.Fatalf("走出城鎮邊界: %v", err)
+	}
+	if g.inTown {
+		t.Fatalf("從 CTY%d 邊界 (%d,%d) dir%d 未正常出城", g.curCty, best.x, best.y, best.dir)
+	}
+}
+
+// traceUseInventoryItem 只送 production 命令窗／道具面板輸入，從背包中選到指定 id 後使用。
+func traceUseInventoryItem(t *testing.T, g *Game, code int) {
+	t.Helper()
+	idx := -1
+	for i, got := range g.inventory {
+		if got == code {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		t.Fatalf("背包沒有要使用的道具 0x%02x：%v", code, g.inventory)
+	}
+	step := func(in InputState) {
+		t.Helper()
+		if in.DirHeld == 0 {
+			in.DirHeld = -1
+		}
+		if in.DirEdge == 0 && in.Confirm {
+			in.DirEdge = -1
+		}
+		if err := g.step(in); err != nil {
+			t.Fatalf("道具 production input: %v", err)
+		}
+	}
+	step(InputState{Confirm: true}) // 開命令窗，cursor=對話
+	step(InputState{DirEdge: 3})    // 對話→咒文
+	step(InputState{DirEdge: 0})    // 咒文→道具
+	step(InputState{Confirm: true}) // 開道具面板
+	for i := 0; i < idx; i++ {
+		step(InputState{DirEdge: 0})
+	}
+	if g.panel != panelItem || g.panelCursor != idx {
+		t.Fatalf("正式道具選單未移到 index%d：panel=%d cursor=%d", idx, g.panel, g.panelCursor)
+	}
+	step(InputState{Confirm: true})
+	if g.panel != panelNone { // 聖水等一般消耗品使用後仍留在清單，正式按 B 關閉
+		step(InputState{Cancel: true})
+	}
 }
 
 // traceOpenReachableDoor 找目前連通區邊界上可由持有鑰匙開啟的門，並經正式「調查」命令開門。
@@ -289,17 +454,79 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int) {
 		t.Fatalf("無效 CTY%d / layer%d", wantCty, g.layer)
 	}
 	tx, ty := ctyLoc[wantCty][0]+1, ctyLoc[wantCty][1]
+	// 原版 findCtyAt 接受 loc.X 與 loc.X+1 兩格；兩格不保證都在同一個可走連通區
+	// （CTY9 誘惑洞窟入口只有左格能由雷貝方向抵達）。
+	if (g.px != tx || g.py != ty) && len(traceWorldPath(g, tx, ty, wantCty)) == 0 {
+		tx = ctyLoc[wantCty][0]
+	}
 	for i := 0; i < 12000 && (!g.inTown || g.curCty != wantCty); i++ {
 		if g.battle.active {
 			traceResolveBattle(t, g)
 			continue
 		}
-		traceWalkOne(t, g, tx, ty)
+		if g.inTown {
+			t.Fatalf("前往 CTY%d 時誤入 CTY%d；world path 未避開其他入口", wantCty, g.curCty)
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待地表移動 cooldown: %v", err)
+			}
+			continue
+		}
+		path := traceWorldPath(g, tx, ty, wantCty)
+		if len(path) == 0 {
+			break
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("地表移動 dir%d: %v", path[0], err)
+		}
 	}
 	if !g.inTown || g.curCty != wantCty {
 		t.Fatalf("無法由地表抵達 CTY%d；目前 town=%v cty=%d @(%d,%d)",
 			wantCty, g.inTown, g.curCty, g.px, g.py)
 	}
+}
+
+// traceWorldPath 與 tracePath 相同，但把目的以外的 CTY 入口格視為障礙；
+// 否則最短路徑可能先踩中 CTY28 等重疊入口，自動切場景後便不再是同一條地表路徑。
+func traceWorldPath(g *Game, tx, ty, wantCty int) []int {
+	type node struct{ x, y int }
+	start, goal := node{g.px, g.py}, node{tx, ty}
+	if start == goal {
+		return nil
+	}
+	q := []node{start}
+	seen := map[node]bool{start: true}
+	prev := map[node]node{}
+	prevDir := map[node]int{}
+	for len(q) > 0 {
+		p := q[0]
+		q = q[1:]
+		for dir := 0; dir < 4; dir++ {
+			dx, dy := dirDelta(dir)
+			n := node{p.x + dx, p.y + dy}
+			if seen[n] || n.x < 0 || n.y < 0 || n.x >= g.cur.w || n.y >= g.cur.h ||
+				g.cur.Blocked(n.x, n.y) {
+				continue
+			}
+			if cty := findCtyAtLayer(n.x, n.y, g.layer); cty >= 0 && cty != wantCty {
+				continue
+			}
+			seen[n], prev[n], prevDir[n] = true, p, dir
+			if n == goal {
+				var rev []int
+				for cur := goal; cur != start; cur = prev[cur] {
+					rev = append(rev, prevDir[cur])
+				}
+				for i, j := 0, len(rev)-1; i < j; i, j = i+1, j-1 {
+					rev[i], rev[j] = rev[j], rev[i]
+				}
+				return rev
+			}
+			q = append(q, n)
+		}
+	}
+	return nil
 }
 
 func traceResolveBattle(t *testing.T, g *Game) {
@@ -315,7 +542,11 @@ func traceResolveBattle(t *testing.T, g *Game) {
 			needHeal := g.battle.commandActor == 0 &&
 				g.battle.heroHP*2 < g.battle.heroMax &&
 				g.battle.usedHerbs < g.battle.heroHerbs
+			needFlee := g.battle.commandActor == g.battle.firstCommandActor() &&
+				g.battle.monID >= 10
 			if needHeal && menu[g.battle.cursor] != bcItem {
+				in.DirEdge = 0
+			} else if !needHeal && needFlee && menu[g.battle.cursor] != bcFlee {
 				in.DirEdge = 0
 			} else {
 				in.Confirm = true

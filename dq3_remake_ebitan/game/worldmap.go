@@ -166,6 +166,7 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 		hiMap:    tw.HiMap, events: tw.Events, transitions: tw.Transitions, sec: section, night: night,
 		plainTransition: (cty == 72 && section == 0) || (cty == 90 && section == 4),
 	}
+	sc.applyClearedEventTiles(flagSet)
 	sc.npcRng.Seed(uint16(section*2654 + 1)) // 確定性種子(依 section;對齊 C dq3_scene.c npc_rng)
 	// 該城對話 bank(D3TXT0<bank>.TXT,section +0x17;共用 D3TXT00.FON)
 	bank := tw.DlgBank

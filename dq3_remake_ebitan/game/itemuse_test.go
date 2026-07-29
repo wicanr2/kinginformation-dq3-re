@@ -1,8 +1,10 @@
 package game
 
 import (
+	"os"
 	"testing"
 
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 )
 
@@ -81,6 +83,83 @@ func TestUseAwakenInNoahnil(t *testing.T) {
 	}
 	if len(g.inventory) != 0 {
 		t.Errorf("覺醒粉在諾阿尼魯應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+func TestUseMagicBallBreaksTemptationCaveWall(t *testing.T) {
+	const w, h = 12, 18
+	cells := make([]int, w*h)
+	hi := make([]byte, w*h)
+	attr := make([]uint16, 26)
+	attr[22], attr[24] = 0x0009, 0x0009
+	for _, p := range [][3]int{{8, 14, 24}, {9, 14, 24}, {8, 15, 22}, {9, 15, 22}} {
+		cells[p[1]*w+p[0]] = p[2]
+	}
+	sc := &Scene{
+		w: w, h: h, attr: &dq3data.BlockAttr{A: attr},
+		tileAt: func(x, y int) int { return cells[y*w+x] },
+		hiMap:  hi, events: [][3]int{{1, 1, magicBallIntactFlag}}, sec: magicBallSection,
+	}
+	g := &Game{cur: sc, inTown: true, curCty: ctyTemptationCave, px: 8, py: magicBallUseY}
+	g.initStoryBits()
+	g.inventory = []int{itemuse.ItemMagicBall}
+	g.panel = panelItem
+	g.useSelectedItem()
+
+	if g.hasItem(itemuse.ItemMagicBall) || g.storyFlag(magicBallIntactFlag) {
+		t.Fatalf("成功破牆後應消耗魔法球並清 flag0x51")
+	}
+	for _, p := range [][3]int{{8, 14, 25}, {9, 14, 25}, {8, 15, 23}, {9, 15, 23}} {
+		if got := sc.tileIdx(p[0], p[1]); got != p[2] {
+			t.Errorf("破牆 tile (%d,%d)=%d, want %d", p[0], p[1], got, p[2])
+		}
+	}
+}
+
+func TestUseMagicBallWrongPositionDoesNotConsume(t *testing.T) {
+	g := &Game{cur: &Scene{sec: magicBallSection}, inTown: true, curCty: ctyTemptationCave, px: 8, py: 12}
+	g.initStoryBits()
+	g.inventory = []int{itemuse.ItemMagicBall}
+	g.panel = panelItem
+	g.useSelectedItem()
+	if !g.hasItem(itemuse.ItemMagicBall) || !g.storyFlag(magicBallIntactFlag) {
+		t.Fatal("非原版指定座標使用魔法球不應消耗或清 flag0x51")
+	}
+}
+
+func TestTemptationCaveRealDataRebuildsClearedWall(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = "../../assets_raw"
+	}
+	if _, err := os.Stat(dir + "/CTY30.DAT"); err != nil {
+		t.Skipf("無 CTY30 原始素材：%v", err)
+	}
+	assets := os.DirFS(dir)
+	rd := func(n string) []byte { d, _ := os.ReadFile(dir + "/" + n); return d }
+	pal := dq3data.DecodePalette(rd("DQ3.PAL"), 256)
+	manBLS := rd("DQ3MAN.BLS")
+
+	intact, err := loadTownSceneSec(assets, pal, manBLS, ctyTemptationCave, mapBlkNum[ctyTemptationCave],
+		magicBallSection, 0, func(id int) bool { return id == magicBallIntactFlag })
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleared, err := loadTownSceneSec(assets, pal, manBLS, ctyTemptationCave, mapBlkNum[ctyTemptationCave],
+		magicBallSection, 0, func(int) bool { return false })
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range [][4]int{{8, 14, 24, 25}, {9, 14, 24, 25}, {8, 15, 22, 23}, {9, 15, 22, 23}} {
+		if got := intact.tileIdx(p[0], p[1]); got != p[2] {
+			t.Errorf("原始牆 (%d,%d)=%d, want %d", p[0], p[1], got, p[2])
+		}
+		if got := cleared.tileIdx(p[0], p[1]); got != p[3] {
+			t.Errorf("重建破牆 (%d,%d)=%d, want %d", p[0], p[1], got, p[3])
+		}
+		if cleared.hiMap[p[1]*cleared.w+p[0]]&0x1f != 0 {
+			t.Errorf("重建破牆 (%d,%d) 未清 event subid", p[0], p[1])
+		}
 	}
 }
 

@@ -76,6 +76,8 @@ func (g *Game) useSelectedItem() {
 			g.clampPanelCursor()
 		}
 		// 否則需在下層利姆達爾西北盡頭地表使用,不消耗
+	case itemuse.MagicBall:
+		g.useMagicBall()
 	case itemuse.Ranaruta: // 拉那魯達:白天↔黑夜切換(不消耗;城內用時重載當前 section NPC)
 		g.toggleDaynight()
 		g.noticeCode, g.noticeTimer = code, 90
@@ -87,6 +89,32 @@ func (g *Game) useSelectedItem() {
 	default:
 		// 解狀態(無狀態系統)→ 不消耗,對齊原版
 	}
+}
+
+const (
+	ctyTemptationCave   = 30
+	magicBallSection    = 0
+	magicBallUseY       = 13
+	magicBallLeftX      = 8
+	magicBallRightX     = 9
+	magicBallIntactFlag = 0x51
+)
+
+// useMagicBall 還原 DQ3.EXE file 0x58cd..0x5990。
+// 原版只檢查城鎮模式、CTY30 sec0、玩家 Y=13、X=8/9，沒有 facing gate。
+// 成功時 CLR flag0x51；通用 file 0x4703 重建規則會將四格牆 tile+1 並清 event subid。
+func (g *Game) useMagicBall() {
+	if !g.inTown || g.cur == nil || g.curCty != ctyTemptationCave ||
+		g.cur.sec != magicBallSection || g.py != magicBallUseY ||
+		(g.px != magicBallLeftX && g.px != magicBallRightX) ||
+		!g.storyFlag(magicBallIntactFlag) {
+		return
+	}
+	g.panel = panelNone
+	g.setStoryFlag(magicBallIntactFlag, false)
+	g.cur.applyClearedEventTiles(g.storyFlag)
+	g.removeItems(itemuse.ItemMagicBall, 1)
+	g.clampPanelCursor()
 }
 
 const (
