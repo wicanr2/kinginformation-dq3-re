@@ -31,6 +31,8 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
 - 最新 production audit：[`docs/89`](docs/89-baharata-rescue-production-trace.md)
 - 最新取船／航行 audit：[`docs/90`](docs/90-portoga-ship-production-trace.md)
+- 最新加爾那之塔／睡眠恢復 audit：
+  [`docs/91`](docs/91-garuna-satori-book-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
@@ -40,11 +42,14 @@ boot 起的正式 trace 已由諾魯德 checkpoint 繼續閉合巴哈拉達救�
 步行至 CTY14，開原版魔法門，依序完成四守衛、handler59／60 俘虜移動、甘達特
 `monster56×1 + monster57×3`、求饒選項、返回 CTY15 與古布達交談取得黑胡椒 `0x5c`，
 並通過 save/load。事件旗標、編隊、NPC／trigger selector、movement、文字與黑胡椒交易
-均由 schema `0.1.5` game pack 提供；詳見 `docs/89`。其後已由正式標題讀檔、旅店補給、
+均由 game pack 提供；詳見 `docs/89`。其後已由正式標題讀檔、旅店補給、
 魯拉、王城交談完成黑胡椒換船，驗證原版旗標交易、停泊 `(25,73,L0)`、取船後
-save/load、正式登船與首次航行；詳見 `docs/90`。**尚未完成從新遊戲開始的無 debug
-全流程驗收**；下一個 audit 由首次航行 checkpoint 前往達瑪神殿／加爾那之塔取得
-《領悟之書》`0x4a`。
+save/load、正式登船與首次航行；詳見 `docs/90`。schema `0.1.6` 已把 CTY18 sec1
+`{type=1,item=0x4a,flag=0xb7}` 遷入 `treasure_events`；正式 trace 已處理航海遭遇、
+繞完加爾那之塔不同連通區、取得《領悟之書》、立即切換開箱 tile 並通過 save/load。
+同批以 IDA 證明玩家睡眠／混亂每回合 `roll<=100`、怪物側 `roll<100` 可醒，修除怪物
+43 令全隊永久不能行動的死循環；詳見 `docs/91`。**尚未完成從新遊戲開始的無 debug
+全流程驗收**；下一個 audit 從《領悟之書》checkpoint 以正式設施入口閉合達瑪轉職。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -61,6 +66,8 @@ formation、寶箱 gate、價格與 cue 不得新增成 Go 常數/table。甘達
 trigger、兩段 NPC 路徑與最終朝向、旗標、道具及四段文字均由 JSON 提供；巴哈拉達
 `hostage_rescue` 是第七個，四守衛、兩個 scene trigger、三段 NPC movement、兩組
 formation、完成旗標、古布達交易與全部玩家文字均由 JSON 提供。
+獨立一次性寶箱另使用 `treasure_events`；加爾那之塔《領悟之書》是第一個從舊 Go
+treasure table 遷出的完整 D3／E3 範例。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

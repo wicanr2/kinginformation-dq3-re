@@ -96,7 +96,33 @@ handler 對到 `[0x2511]`(spell_id),咒文名 rec ≈ spell_id 區(對映細節�
 次數欄位仍待定位(候選:D3MNS `+0x04` / `+0x1f` / `+0x25` / `+0x26` 等尚未完全定名欄位,
 docs/16 殘留項)。
 
-## 六、remake 對照
+## 六、玩家側睡眠／混亂 consumer（2026-07-30 IDA 補證）
+
+首次航海正式 trace 遭遇怪物 43 後，舊 remake 會在全隊中異常但仍有 HP 時無限空轉。
+IDA Pro 9.4 重新追查後確認，先前「睡眠／混亂持續整場、不會自行解除」的摘要錯誤：
+
+```text
+敵方狀態效果 writer
+  IDA 0x1ae76..0x1ae81（file 0xc9e6..0xc9f1）
+  → 角色 struct +0x38 OR 0x20
+
+角色行動前 consumer
+  IDA 0x1b4f6（file 0xc866）
+  → test +0x38 bit0x20
+  → rng(256)
+  → roll <= 0x64：清 bit0x20，顯示 D3TXT00 rec354，跳過本回合
+  → roll >  0x64：顯示 D3TXT00 rec349，跳過本回合
+```
+
+怪物側則是既有 `IDA 0x1a973`（file `0xbce3`）：bit0x80 命中時
+`roll < 0x64` 清除並顯示 rec355，否則顯示 rec350；兩條分支都跳過當回合。玩家與怪物
+在邊界 `roll==100` 的比較運算不同，不能合併成一個 `<=` 或 `<` helper。
+
+玩家可見副作用已由 `TestBattleStatusWakeThresholdMatchesOriginalBranches` 鎖定
+99／100／101 邊界，`TestBattleActorWakeConsumesCurrentTurn` 鎖定「醒來仍消耗本回合」；
+從新遊戲至加爾那之塔的正式 trace 另證明四人被怪物 43 施放異常後仍能繼續航行。
+
+## 七、remake 對照
 
 `dq3_battlescene` 目前的敵方 AI 是**簡化版**:每隻存活敵人 1/4 機率放「示範咒文」、否則物理
 (`do_turn` 敵方反擊段)。要忠實還原原版,應改成讀復原後的 `D3MNS.DAT` AI 欄位:
@@ -104,7 +130,8 @@ docs/16 殘留項)。
 - 逃跑:`我方平均等級 ≥ D3MNS[+0x17]` 時,`rng(256) ≤ D3MNS[+0x18]` 逃走。
 - 施咒 vs 物攻:`rng(256) < D3MNS[+0x0d]` 放咒,否則物攻。
 - 放咒:從 `D3MNS[+0x0e..+0x13]` bitmask 均勻隨機挑一咒(對映 `dq3_spelldef`)。
-- 睡眠 / 麻痺等狀態:bit7 ~39%/回合醒、bit0 跳過。
+- 怪物睡眠／混亂：bit7 每回合 `roll<100` 醒；玩家側對應 +0x38 bit0x20，
+  每次行動前 `roll<=100` 醒。兩者醒來當回合都不行動。
 
 如此金屬怪會逃、巫師會連放咒、史萊姆只會打、boss 不逃——行為差異全來自資料,不用為每隻
 怪寫程式。對應 `dq3_monster` 解 D3MNS 時可一併讀出這四個 AI 欄位 + bitmask。

@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.5"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.6"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.5",
+  "schema_version": "0.1.6",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -373,13 +373,14 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 | `definitions[].id` | string | 是 | 穩定 text ID。 |
 | `value` | string | 是 | 可讀、可修改的原版繁體中文轉寫，保留換行。 |
 | `glyph_codes` | int[] | 是 | 原版字模及控制碼 words；runtime 直接消費，不設 Go 字串 fallback。 |
-| `layout` | object | 是 | `dialogue` 或 `menu_label`；對話另列 columns／lines_per_page。 |
+| `layout` | object | 是 | `dialogue`、`menu_label` 或 `battle_message`；對話另列 columns／lines_per_page。 |
 | `source` | object | 是 | `legacy_record` 的檔名／record，或 `glyph_map` 字模來源。 |
 | `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
 
 目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
 諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89、波魯多加 D3TXT04 rec24–28、
-諾魯德 D3TXT04 rec87–90、巴哈拉達 D3TXT03 rec86–87／106–120／124
+諾魯德 D3TXT04 rec87–90、巴哈拉達 D3TXT03 rec86–87／106–120／124、
+戰鬥睡眠持續／醒來 D3TXT00 rec349–350／354–355
 與「是／否」已遷入
 `data/texts.json`；parity test 逐 word
 對原始 D3TXT，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
@@ -497,6 +498,21 @@ flag 與 pack entry 派生，不在存檔複製 transient sprite state。缺文�
 引擎只實作上述固定交易；位置錯誤時不消耗，缺 text/reference 時在任何 inventory／flag
 mutation 前失敗即關閉。DQ3 canonical 範例與原版 parity test 見 `events.json`、
 [`docs/86`](86-noaniel-awakening-production-trace.md)。
+
+不屬於多階段任務的原版一次性寶箱放在 `treasure_events`，不得再新增 Go
+`treasures` table 或以「合理值」補欄位：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `treasure_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id` | string | 是 | 穩定 namespaced event ID。 |
+| `[].kind` | enum | 是 | 固定為 `treasure`。 |
+| `[].treasure` | object | 是 | `cty_raw/section/tile_subid/event_type_raw/item_raw_id/present_flag_raw`；present flag 採原版 set=可取、clear=已取。 |
+| `[].evidence` | object | 是 | CTY raw entry、EXE dispatcher／inventory consumer 與玩家可見結果的 D3 證據。 |
+
+取得成功必須在同一幀清 present flag、把 low tile 加一並清 event subid；重新載入場景時由
+同一 present flag 重建已開啟外觀。加爾那之塔《領悟之書》canonical 範例與完整正式 trace
+見 `events.json` 與 [`docs/91`](91-garuna-satori-book-production-trace.md)。
 
 第四個已實作 primitive 是 `two_step_floor_switch_gates`，供「踩地板開關→Yes/No→第一鍵
 武裝→第二鍵成功或陷阱→解鎖事件格與一次性寶物」的有限流程使用。它不包含金字塔、
@@ -625,7 +641,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.5",
+  "schema_version": "0.1.6",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

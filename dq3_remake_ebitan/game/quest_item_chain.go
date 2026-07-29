@@ -20,6 +20,14 @@ func (g *Game) questTreasureFor(cty, section, subid int) (*gamepack.QuestItemCha
 // baked treasure table, this follows the original convention exactly:
 // story flag set = available, clear = already collected.
 func (g *Game) collectQuestTreasure(cty, section, subid int) (handled bool) {
+	if g.pack != nil {
+		for _, event := range g.pack.TreasureEvents() {
+			t := event.Treasure
+			if t.CTYRaw == cty && t.Section == section && t.TileSubID == subid {
+				return g.collectPackTreasure(t)
+			}
+		}
+	}
 	event, ok := g.questTreasureFor(cty, section, subid)
 	if ok {
 		return g.collectPackTreasure(event.Treasure)

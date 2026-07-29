@@ -129,7 +129,8 @@ func TestPlaythroughTreasure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	packTreasures := len(pack.QuestItemChainEvents()) + len(pack.TwoStepFloorSwitchGates())
+	packTreasures := len(pack.TreasureEvents()) +
+		len(pack.QuestItemChainEvents()) + len(pack.TwoStepFloorSwitchGates())
 	if got := len(treasures) + packTreasures; got != totalOriginalTreasures {
 		t.Fatalf("legacy + game-pack 寶箱應共 %d 筆,得 %d", totalOriginalTreasures, got)
 	}

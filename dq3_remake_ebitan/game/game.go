@@ -644,7 +644,13 @@ func (g *Game) examine() {
 			g.dlg.OpenFrom(g.shop.nameText, 484)
 			return true
 		}
+		presentBefore := g.storyFlag(ev[2])
 		if g.collectQuestTreasure(g.curCty, g.cur.sec, subid) {
+			// 原版載圖掃描與當下取得寶箱都以「present flag 清除」將 low tile
+			// 加一並移除 event subid；不能等到重新進場才顯示已開啟外觀。
+			if presentBefore && !g.storyFlag(ev[2]) {
+				g.cur.revealEventTile(x, y)
+			}
 			return true
 		}
 		t := treasureFor(g.curCty, g.cur.sec, subid)
@@ -2212,6 +2218,14 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if pack == nil {
 		return nil, fmt.Errorf("game pack is nil")
 	}
+	sleepingText, ok := pack.TextDefinition("common:text.battle.status.sleeping")
+	if !ok {
+		return nil, fmt.Errorf("game pack missing battle sleeping text")
+	}
+	wokeText, ok := pack.TextDefinition("common:text.battle.status.woke")
+	if !ok {
+		return nil, fmt.Errorf("game pack missing battle woke text")
+	}
 	heroEquipment, ok := pack.NewGamePlayerEquipment()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing new-game hero equipment")
@@ -2225,6 +2239,8 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g := &Game{
 		rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default(), pack: pack,
 	}
+	g.battle.statusSleepingText = sleepingText.Value
+	g.battle.statusWokeText = wokeText.Value
 	g.tavern.equipment = memberEquipment
 	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 

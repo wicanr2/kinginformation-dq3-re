@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.5"
+	SchemaVersion = "0.1.6"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -192,6 +192,15 @@ type QuestTreasureSelector struct {
 	EventTypeRaw int `json:"event_type_raw"`
 	ItemRawID    int `json:"item_raw_id"`
 	PresentFlag  int `json:"present_flag_raw"`
+}
+
+// TreasureEvent describes one standalone original examine-event reward. It is
+// intentionally data-only; collection behavior remains a fixed engine rule.
+type TreasureEvent struct {
+	ID       string                `json:"id"`
+	Kind     string                `json:"kind"`
+	Treasure QuestTreasureSelector `json:"treasure"`
+	Evidence Evidence              `json:"evidence"`
 }
 
 type ItemExchange struct {
@@ -405,6 +414,7 @@ type Events struct {
 	BossSurrenderEvents         []BossSurrenderEvent         `json:"boss_surrender_events"`
 	TemporaryRoleEvents         []TemporaryRoleEvent         `json:"temporary_role_events"`
 	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
+	TreasureEvents              []TreasureEvent              `json:"treasure_events"`
 	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate     `json:"two_step_floor_switch_gates"`
 	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
 	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
@@ -475,6 +485,7 @@ type Pack struct {
 	bossEvents       map[string]*BossSurrenderEvent
 	roleEvents       map[string]*TemporaryRoleEvent
 	questItemEvents  map[string]*QuestItemChainEvent
+	treasureEvents   map[string]*TreasureEvent
 	sequenceGates    map[string]*TwoStepFloorSwitchGate
 	vehicleExchanges map[string]*StagedVehicleExchangeEvent
 	guidedPassages   map[string]*GuidedPassageEvent
@@ -671,6 +682,10 @@ func (p *Pack) validateTexts() error {
 			if d.Source.Kind != "glyph_map" {
 				return fmt.Errorf("%s: menu_label requires glyph_map source", d.ID)
 			}
+		case "battle_message":
+			if d.Source.Kind != "legacy_record" || d.Source.File == "" || d.Source.Record == nil {
+				return fmt.Errorf("%s: battle_message requires legacy_record source", d.ID)
+			}
 		default:
 			return fmt.Errorf("%s: unsupported layout kind %q", d.ID, d.Layout.Kind)
 		}
@@ -789,6 +804,14 @@ func validScriptedNPC(s ScriptedNPCSelector) bool {
 		s.Tile.X >= 0 && s.Tile.Y >= 0 && s.HandlerRaw >= 0 && s.HandlerRaw <= 255
 }
 
+func validTreasureSelector(t QuestTreasureSelector) bool {
+	return t.CTYRaw >= 0 && t.CTYRaw <= 255 && t.Section >= 0 &&
+		t.TileSubID >= 0 && t.TileSubID <= 31 &&
+		(t.EventTypeRaw == 1 || t.EventTypeRaw == 3) &&
+		t.ItemRawID >= 0 && t.ItemRawID <= 255 &&
+		t.PresentFlag >= 0 && t.PresentFlag < 512
+}
+
 func (p *Pack) validateEvents() error {
 	if p.Events.SchemaVersion != SchemaVersion {
 		return fmt.Errorf("unsupported schema_version %q", p.Events.SchemaVersion)
@@ -801,6 +824,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.QuestItemChainEvents == nil {
 		return errors.New("quest_item_chain_events must be present")
+	}
+	if p.Events.TreasureEvents == nil {
+		return errors.New("treasure_events must be present")
 	}
 	if p.Events.TwoStepFloorSwitchGates == nil {
 		return errors.New("two_step_floor_switch_gates must be present")
@@ -909,11 +935,7 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("duplicate quest item chain event id %q", e.ID)
 		}
 		t := e.Treasure
-		if t.CTYRaw < 0 || t.CTYRaw > 255 || t.Section < 0 ||
-			t.TileSubID < 0 || t.TileSubID > 31 ||
-			(t.EventTypeRaw != 1 && t.EventTypeRaw != 3) ||
-			t.ItemRawID < 0 || t.ItemRawID > 255 ||
-			t.PresentFlag < 0 || t.PresentFlag >= 512 {
+		if !validTreasureSelector(t) {
 			return fmt.Errorf("%s: invalid treasure selector", e.ID)
 		}
 		x := e.Exchange
@@ -950,6 +972,29 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		p.questItemEvents[e.ID] = e
+	}
+	p.treasureEvents = make(map[string]*TreasureEvent, len(p.Events.TreasureEvents))
+	treasureSelectors := map[[3]int]string{}
+	for i := range p.Events.TreasureEvents {
+		e := &p.Events.TreasureEvents[i]
+		if e.ID == "" || e.Kind != "treasure" {
+			return fmt.Errorf("treasure_events[%d]: id and kind=treasure are required", i)
+		}
+		if _, exists := p.treasureEvents[e.ID]; exists {
+			return fmt.Errorf("duplicate treasure event id %q", e.ID)
+		}
+		if !validTreasureSelector(e.Treasure) {
+			return fmt.Errorf("%s: invalid treasure selector", e.ID)
+		}
+		key := [3]int{e.Treasure.CTYRaw, e.Treasure.Section, e.Treasure.TileSubID}
+		if previous := treasureSelectors[key]; previous != "" {
+			return fmt.Errorf("%s: treasure selector duplicates %s", e.ID, previous)
+		}
+		treasureSelectors[key] = e.ID
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.treasureEvents[e.ID] = e
 	}
 	p.sequenceGates = make(map[string]*TwoStepFloorSwitchGate, len(p.Events.TwoStepFloorSwitchGates))
 	for i := range p.Events.TwoStepFloorSwitchGates {
@@ -1460,6 +1505,15 @@ func (p *Pack) QuestItemChainEvents() []QuestItemChainEvent {
 
 func (p *Pack) QuestItemChainEvent(id string) (*QuestItemChainEvent, bool) {
 	e, ok := p.questItemEvents[id]
+	return e, ok
+}
+
+func (p *Pack) TreasureEvents() []TreasureEvent {
+	return append([]TreasureEvent(nil), p.Events.TreasureEvents...)
+}
+
+func (p *Pack) TreasureEvent(id string) (*TreasureEvent, bool) {
+	e, ok := p.treasureEvents[id]
 	return e, ok
 }
 

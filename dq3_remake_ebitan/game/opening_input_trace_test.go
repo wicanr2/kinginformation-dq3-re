@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 )
@@ -1318,6 +1319,39 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceTownSectionTo(t, g, 16, 0)
 	traceTownSectionTo(t, g, -1, -1)
 	traceBoardAndSailShip(t, g)
+
+	// 首次航行 → 加爾那之塔。船陸混合尋路只選方向鍵；航行、靠岸、
+	// 地表入口、塔內 transition 與寶箱調查仍全部由 production step 處理。
+	treasureEvents := g.pack.TreasureEvents()
+	if len(treasureEvents) != 1 {
+		t.Fatalf("treasure events=%d, want 1", len(treasureEvents))
+	}
+	satori := treasureEvents[0].Treasure
+	traceAdventureTravelToCty(t, g, satori.CTYRaw)
+	traceTownSectionTo(t, g, satori.CTYRaw, satori.Section)
+	traceExaminePackTreasure(t, g, satori)
+	if !g.hasItem(satori.ItemRawID) || g.storyFlag(satori.PresentFlag) {
+		t.Fatalf("正式調查未取得領悟之書：item=%v flag=%v inventory=%v",
+			g.hasItem(satori.ItemRawID), g.storyFlag(satori.PresentFlag), g.inventory)
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存領悟之書 checkpoint：%v", err)
+	}
+	restored, err = NewGame(g.assets, nil)
+	if err != nil {
+		t.Fatalf("重建領悟之書讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})          // 標題 splash → 主選單
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
+	press(InputState{Confirm: true})          // 正式載入領悟之書 checkpoint
+	if !g.hasItem(satori.ItemRawID) || g.storyFlag(satori.PresentFlag) ||
+		g.curCty != satori.CTYRaw || sceneSection(g.cur) != satori.Section {
+		t.Fatalf("領悟之書 checkpoint round-trip 錯：item=%v flag=%v CTY%d sec%d",
+			g.hasItem(satori.ItemRawID), g.storyFlag(satori.PresentFlag),
+			g.curCty, sceneSection(g.cur))
+	}
 }
 
 // traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
@@ -1810,6 +1844,191 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int, fleeStrong ...b
 			lx, ly, g.cur.Blocked(lx, ly), lx+1, ly, g.cur.Blocked(lx+1, ly),
 			len(rawPath), firstCty, firstX, firstY)
 	}
+}
+
+// traceAdventureTravelToCty 規劃一段最多一次靠岸的船陸混合路徑；只把規劃出的方向送給
+// production Game.step。船的登船、航行、靠岸與 CTY 入口判定皆由 tryMove/step 決定。
+func traceAdventureTravelToCty(t *testing.T, g *Game, wantCty int) {
+	t.Helper()
+	if wantCty < 0 || wantCty >= len(ctyLoc) || ctyLoc[wantCty][2] != g.layer {
+		t.Fatalf("無效船陸目的 CTY%d / layer%d", wantCty, g.layer)
+	}
+	for i := 0; i < 20000 && (!g.inTown || g.curCty != wantCty); i++ {
+		if g.battle.active {
+			traceResolveBattle(t, g, false)
+			continue
+		}
+		if g.inTown {
+			t.Fatalf("前往 CTY%d 時誤入 CTY%d", wantCty, g.curCty)
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待船陸路徑 cooldown：%v", err)
+			}
+			continue
+		}
+		path := traceVehicleWorldPath(g, wantCty)
+		if len(path) == 0 {
+			break
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("船陸移動 dir%d：%v", path[0], err)
+		}
+	}
+	if !g.inTown || g.curCty != wantCty {
+		t.Fatalf("無法以正式航行／靠岸抵達 CTY%d；town=%v cty=%d @(%d,%d) aboard=%v ship=(%d,%d)",
+			wantCty, g.inTown, g.curCty, g.px, g.py, g.shipAboard, g.shipX, g.shipY)
+	}
+}
+
+func traceVehicleWorldPath(g *Game, wantCty int) []int {
+	type node struct {
+		x, y   int
+		aboard bool
+	}
+	start := node{x: g.px, y: g.py, aboard: g.shipAboard}
+	q := []node{start}
+	seen := map[node]bool{start: true}
+	prev := map[node]node{}
+	prevDir := map[node]int{}
+	var goal node
+	found := false
+	for len(q) > 0 && !found {
+		p := q[0]
+		q = q[1:]
+		for dir := 0; dir < 4; dir++ {
+			dx, dy := dirDelta(dir)
+			n := node{x: p.x + dx, y: p.y + dy, aboard: p.aboard}
+			if n.x < 0 || n.y < 0 || n.x >= g.cur.w || n.y >= g.cur.h {
+				continue
+			}
+			if p.aboard {
+				if g.cur.attr.Raw(g.cur.tileIdx(n.x, n.y))&0x20 == 0 {
+					if g.cur.Blocked(n.x, n.y) {
+						continue
+					}
+					n.aboard = false
+				}
+			} else if g.cur.Blocked(n.x, n.y) {
+				continue
+			}
+			if seen[n] {
+				continue
+			}
+			cty := findCtyAtLayer(n.x, n.y, g.layer)
+			if cty >= 0 && cty != wantCty {
+				continue
+			}
+			seen[n] = true
+			prev[n], prevDir[n] = p, dir
+			if cty == wantCty {
+				goal, found = n, true
+				break
+			}
+			q = append(q, n)
+		}
+	}
+	if !found {
+		return nil
+	}
+	var rev []int
+	for cur := goal; cur != start; cur = prev[cur] {
+		rev = append(rev, prevDir[cur])
+	}
+	path := make([]int, len(rev))
+	for i := range rev {
+		path[len(rev)-1-i] = rev[i]
+	}
+	return path
+}
+
+func traceExaminePackTreasure(t *testing.T, g *Game, tr gamepack.QuestTreasureSelector) {
+	t.Helper()
+	if g.cur == nil || g.curCty != tr.CTYRaw || sceneSection(g.cur) != tr.Section {
+		t.Fatalf("寶箱場景錯：CTY%d sec%d，want CTY%d sec%d",
+			g.curCty, sceneSection(g.cur), tr.CTYRaw, tr.Section)
+	}
+	type target struct {
+		x, y, standX, standY, face int
+		onTile                     bool
+	}
+	var found *target
+	var routeTarget *target
+	for y := 0; y < g.cur.h && found == nil; y++ {
+		for x := 0; x < g.cur.w && found == nil; x++ {
+			ev, subid, ok := g.cur.tileEvent(x, y)
+			if !ok || subid != tr.TileSubID || ev[0] != tr.EventTypeRaw ||
+				ev[1] != tr.ItemRawID || ev[2] != tr.PresentFlag {
+				continue
+			}
+			if !g.cur.Blocked(x, y) &&
+				(x == g.px && y == g.py || len(tracePortalPath(g.cur, g.px, g.py, x, y, g.keyTier())) > 0) {
+				found = &target{x: x, y: y, standX: x, standY: y, onTile: true}
+				break
+			}
+			if !g.cur.Blocked(x, y) && routeTarget == nil {
+				routeTarget = &target{x: x, y: y, standX: x, standY: y, onTile: true}
+			}
+			for face := 0; face < 4; face++ {
+				dx, dy := dirDelta(face)
+				sx, sy := x-dx, y-dy
+				if sx < 0 || sy < 0 || sx >= g.cur.w || sy >= g.cur.h ||
+					g.cur.Blocked(sx, sy) {
+					continue
+				}
+				if sx == g.px && sy == g.py ||
+					len(tracePortalPath(g.cur, g.px, g.py, sx, sy, g.keyTier())) > 0 {
+					found = &target{x: x, y: y, standX: sx, standY: sy, face: face}
+					break
+				}
+				if routeTarget == nil {
+					routeTarget = &target{x: x, y: y, standX: sx, standY: sy, face: face}
+				}
+			}
+		}
+	}
+	if found == nil && routeTarget != nil {
+		// 同一 section 可能有多個由不同樓梯進入的連通區（加爾那之塔 sec1
+		// 即需先繞 sec2→sec3→sec4 再回 sec1）。要求 transition graph 尋到
+		// 寶箱操作格所在的精確 component，不能因 section 編號相同就提早停止。
+		traceTownSectionTo(t, g, tr.CTYRaw, tr.Section,
+			routeTarget.standX, routeTarget.standY, 0)
+		found = routeTarget
+	}
+	if found == nil {
+		t.Fatalf("CTY%d sec%d 找不到可達的 pack treasure subid%d",
+			tr.CTYRaw, tr.Section, tr.TileSubID)
+	}
+	traceWalkToNoPortal(t, g, found.standX, found.standY)
+	step := func(in InputState) {
+		t.Helper()
+		if err := g.step(in); err != nil {
+			t.Fatalf("寶箱 production input：%v", err)
+		}
+	}
+	for g.cd > 0 {
+		step(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if !found.onTile && g.facing != found.face {
+		step(InputState{DirHeld: found.face, DirEdge: -1})
+		for g.cd > 0 {
+			step(InputState{DirHeld: -1, DirEdge: -1})
+		}
+	}
+	step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.cmd.open {
+		t.Fatal("寶箱前未能開啟正式命令窗")
+	}
+	for _, dir := range []int{3, 0, 0} {
+		if g.cmd.cursor == int(cmdExamine) {
+			break
+		}
+		step(InputState{DirHeld: -1, DirEdge: dir})
+	}
+	if g.cmd.cursor != int(cmdExamine) {
+		t.Fatalf("寶箱前無法選到調查：cursor=%d", g.cmd.cursor)
+	}
+	step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 }
 
 // traceBoardAndSailShip 從正式地表位置尋路到 game-pack 指定停泊船旁，送一次正常方向

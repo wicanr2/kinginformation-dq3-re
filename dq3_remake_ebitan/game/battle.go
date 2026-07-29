@@ -55,11 +55,11 @@ type enemyUnit struct {
 func (e *enemyUnit) alive() bool { return e.hp > 0 && !e.fled }
 
 // 異常狀態位元(docs/data/spell-effects-research.md;W3)。共用於 enemyUnit.status、
-// battleActor.status、Battle.heroStatus。對齊 C DQ3_STATUS_*:睡眠(拉里荷144)與混亂(美達巴尼152)
-// remake 映射同一位元(統稱 statusParalysis,即 C DQ3_STATUS_PARALYSIS)——本回合起不能行動,
-// 且對齊 C 行為(dq3_battlescene.c 全檔搜尋無中途自動清除):持續整場戰鬥,需靠解咒/道具清除
-// (166/167/168)或戰鬥結束(reset)。statusSealed/statusBlind 為 W3 新增(C 版對應的是「敵方
-// 全域」g_party_sealed/g_party_blind,W3 額外做「玩家對單一敵單位」的鏡像,故落在 per-unit 欄位)。
+// battleActor.status、Battle.heroStatus。睡眠／混亂在 remake 共用 statusParalysis，
+// 但不是永久麻痺：原版角色狀態 +0x38 bit0x20 在每次行動前以 roll<=0x64 清除，
+// 怪物狀態 bit0x80 則以 roll<0x64 清除；醒來當回合仍不行動。statusSealed/statusBlind
+// 為 W3 新增(C 版對應的是「敵方全域」g_party_sealed/g_party_blind，W3 額外做
+// 「玩家對單一敵單位」的鏡像，故落在 per-unit 欄位)。
 const (
 	statusPoison    = 1 << iota // 中毒(既有位元,占位保留;W3 未接毒傷結算)
 	statusParalysis             // 睡眠/混亂(拉里荷144、美達巴尼152;敵方鏡像同)
@@ -88,44 +88,46 @@ type Battle struct {
 	scr      []byte                                   // PACKBG.SCR(戰鬥背景)
 	bg       *[dq3data.PackBGH][dq3data.PackBGW]uint8 // 解碼後背景(草原 page22)
 
-	active        bool
-	monID         int                    // formation 第一筆怪物 id；單群相容與索瑪判斷用
-	spr           *dq3data.MonsterSprite // formation 第一筆 sprite；舊測試/單群相容用
-	enemies       []enemyUnit            // 敵群(N 隻,docs/72 A3;單敵 = 1 元素陣列)
-	lightOrb      bool                   // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
-	heroHP        int
-	heroMax       int
-	heroAtk       int
-	heroDef       int
-	heroAgi       int
-	cursor        int
-	msg           string
-	messageQueue  []string // 已結算回合的後續逐筆訊息；msg 是目前顯示項
-	phase         battlePhase
-	result        int // 0 進行中、1 勝、2 敗、3 逃
-	gotExp        int
-	gotGold       int
-	rng           *dosrng.RNG
-	flashCol      int // >0:受擊閃光殘餘幀
-	defending     bool
-	heroHerbs     int   // 開戰時持有藥草數
-	usedHerbs     int   // 本戰用掉藥草數(戰後從背包扣)
-	heroLevel     int   // 我方等級(敵 AI 逃跑門檻用)
-	heroMP        int   // 目前 MP(施咒消耗)
-	heroMaxMP     int   //
-	spells        []int // 已學可施放咒文 rec
-	spellCursor   int
-	companions    []*battleActor // 同伴(狀態列顯示 + 可各自下令及被鎖定)
-	heroStatus    int            // 主角異常狀態位元(statusParalysis 等;166-168 解咒清此欄)
-	commandActor  int            // 目前下令者：0=隊長，1..=同伴
-	commands      []battleCommand
-	resolving     bool // 正在執行已收集命令；避免舊單步入口重複推進整回合
-	pending       battleCommand
-	targetCursor  int
-	targetFrom    battlePhase // 取消目標選擇時回 phCommand 或 phSpell
-	messageResume battlePhase // 非回合訊息關閉後回到的選單；phEnd 表示正常回合訊息
-	actionActor   int
-	actionTarget  int
+	active             bool
+	monID              int                    // formation 第一筆怪物 id；單群相容與索瑪判斷用
+	spr                *dq3data.MonsterSprite // formation 第一筆 sprite；舊測試/單群相容用
+	enemies            []enemyUnit            // 敵群(N 隻,docs/72 A3;單敵 = 1 元素陣列)
+	lightOrb           bool                   // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
+	heroHP             int
+	heroMax            int
+	heroAtk            int
+	heroDef            int
+	heroAgi            int
+	cursor             int
+	msg                string
+	messageQueue       []string // 已結算回合的後續逐筆訊息；msg 是目前顯示項
+	phase              battlePhase
+	result             int // 0 進行中、1 勝、2 敗、3 逃
+	gotExp             int
+	gotGold            int
+	rng                *dosrng.RNG
+	flashCol           int // >0:受擊閃光殘餘幀
+	defending          bool
+	heroHerbs          int   // 開戰時持有藥草數
+	usedHerbs          int   // 本戰用掉藥草數(戰後從背包扣)
+	heroLevel          int   // 我方等級(敵 AI 逃跑門檻用)
+	heroMP             int   // 目前 MP(施咒消耗)
+	heroMaxMP          int   //
+	spells             []int // 已學可施放咒文 rec
+	spellCursor        int
+	companions         []*battleActor // 同伴(狀態列顯示 + 可各自下令及被鎖定)
+	heroStatus         int            // 主角異常狀態位元(statusParalysis 等;166-168 解咒清此欄)
+	commandActor       int            // 目前下令者：0=隊長，1..=同伴
+	commands           []battleCommand
+	resolving          bool // 正在執行已收集命令；避免舊單步入口重複推進整回合
+	pending            battleCommand
+	targetCursor       int
+	targetFrom         battlePhase // 取消目標選擇時回 phCommand 或 phSpell
+	messageResume      battlePhase // 非回合訊息關閉後回到的選單；phEnd 表示正常回合訊息
+	actionActor        int
+	actionTarget       int
+	statusSleepingText string // game pack common:text.battle.status.sleeping
+	statusWokeText     string // game pack common:text.battle.status.woke
 
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
@@ -188,6 +190,29 @@ type turnEntry struct {
 func pct(val, p int) int { return val * p / 100 }
 
 func (b *Battle) roll() int { return b.rng.Next(256) }
+
+// 原版玩家側 IDA 0x1b518..0x1b521（file 0xc888..0xc891）：
+// cmp al,0x64; ja still-asleep，因此 100 也會醒來。
+func playerStatusWakes(roll int) bool { return roll <= 0x64 }
+
+// 原版怪物側 IDA 0x1a9c9..0x1a9db（file 0xbd39..0xbd4b）：
+// cmp al,0x64; jb wake，因此 100 仍維持睡眠。
+func enemyStatusWakes(roll int) bool { return roll < 0x64 }
+
+// consumeActorSleep 對齊原版角色行動前的睡眠／混亂 consumer。回傳 true 表示本回合
+// 已由異常狀態消耗；即使本次醒來也必須跳過原本指令。
+func (b *Battle) consumeActorSleep(actor int) bool {
+	if b.actorStatus(actor)&statusParalysis == 0 {
+		return false
+	}
+	if playerStatusWakes(b.roll()) {
+		b.clearActorStatus(actor, statusParalysis)
+		b.emit(b.statusWokeText)
+	} else {
+		b.emit(b.statusSleepingText)
+	}
+	return true
+}
 
 // heroParams 是開戰時由 Game 傳入的主角當前數值(等級推導,見 game.heroStats)。
 type heroParams struct {
@@ -1114,7 +1139,7 @@ func (b *Battle) resolveRound() {
 			b.enemyAction(e.index, ai, aiOK)
 			continue
 		}
-		if !b.actorAlive(e.index) || b.actorStatus(e.index)&statusParalysis != 0 {
+		if !b.actorAlive(e.index) || b.consumeActorSleep(e.index) {
 			continue
 		}
 		cmd := b.commands[e.index]
@@ -1269,7 +1294,12 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 		return
 	}
 	if b.enemies[i].status&statusParalysis != 0 {
-		b.emit("敵人睡著了,無法行動")
+		if enemyStatusWakes(b.roll()) {
+			b.enemies[i].status &^= statusParalysis
+			b.emit(b.statusWokeText)
+		} else {
+			b.emit(b.statusSleepingText)
+		}
 		return
 	}
 	if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {

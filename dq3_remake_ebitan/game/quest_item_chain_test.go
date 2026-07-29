@@ -42,6 +42,32 @@ func TestQuestItemChainTreasureUsesOriginalPresentFlag(t *testing.T) {
 	}
 }
 
+func TestStandaloneTreasureUsesPackAndOriginalPresentFlag(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	events := pack.TreasureEvents()
+	if len(events) != 1 {
+		t.Fatalf("treasure events=%d, want 1", len(events))
+	}
+	tr := events[0].Treasure
+	if legacy := treasureFor(tr.CTYRaw, tr.Section, tr.TileSubID); legacy != nil {
+		t.Fatalf("pack-owned treasure must not remain in Go table: %+v", legacy)
+	}
+	g := &Game{pack: pack, flags: map[int]bool{}}
+	g.setStoryFlag(tr.PresentFlag, true)
+	if !g.collectQuestTreasure(tr.CTYRaw, tr.Section, tr.TileSubID) ||
+		!g.hasItem(tr.ItemRawID) || g.storyFlag(tr.PresentFlag) {
+		t.Fatalf("standalone pack treasure transaction failed: inv=%v flag=%v",
+			g.inventory, g.storyFlag(tr.PresentFlag))
+	}
+	if !g.collectQuestTreasure(tr.CTYRaw, tr.Section, tr.TileSubID) ||
+		g.countItem(tr.ItemRawID) != 1 {
+		t.Fatalf("collected treasure must stay handled without duplicate item: %v", g.inventory)
+	}
+}
+
 func TestQuestItemChainExchangeReplacesInventorySlot(t *testing.T) {
 	g, event := questItemChainTestGame(t)
 	x := event.Exchange

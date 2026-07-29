@@ -41,6 +41,10 @@
 ### 角色 / 數值
 - **7 屬性序** — 成長表 14 byte = 7 個 (base,slope) 對,`kind*2`=列內 offset:0 HP、2 MP、4 速度、6 力量、8 聰明、A 耐力、C 運氣。語意三方交叉確認(成長表樣式 + 升級訊息 rec191-197 + BBS 存檔佈局 docs/history)。_Avoid_: 把屬性欄標成 B4/B6/B8/BA 不明名(舊 enum)。
 - **怪物 AI 欄位** — `D3MNS.DAT` 記錄內驅動敵方行動的 4 欄:`+0x0d` 施咒機率(/256)、`+0x0e..+0x13` 已知咒文 bitmask(6 byte/48 bit,放咒時均勻隨機挑)、`+0x17` 逃跑觸發閾值(對我方強度 `[0x5094]`)、`+0x18` 逃跑機率。決策樹 file 0xbcf0;見 [docs/37](docs/37-monster-ai.md)。_Avoid_: 把怪物施咒當「挑最佳咒」(實為隨機)。
+- **戰鬥睡眠／混亂恢復** — 玩家角色 `+0x38 bit0x20` 在行動前
+  `roll<=0x64` 清除；怪物 bit0x80 是 `roll<0x64` 清除，醒來當回合都跳過。見
+  [`docs/37`](docs/37-monster-ai.md)、[`docs/91`](docs/91-garuna-satori-book-production-trace.md)。
+  _Avoid_: 舊 C remake 的「持續整場、不會自行解除」結論。
 - **遭遇區表** — overworld region map `0x4966`(16×16 grid,cell=(X>>4)+(Y&0xf0)→region)+ 遭遇表 `0x4a56`(region×0x20 = 4 子表×8 byte;byte2=背景頁、byte4-7=候選怪 0xff 終止)。CTY 用 `[0xd77]` 存的 region(0=安全)。見 [docs/39](docs/39-encounter-zones.md)。
 - **咒文習得表** — `sub_db5f`(file 0xeecf)讀 DGROUP `0x36f9` 起 per-系 stride 8 指標表 `{spellA,levelA,spellB,levelB}`;系基底 0/8/0x10=勇者/僧侶/魔法系;`level[i]`/`spell[i]` 平行,清單長度由下一指標界定(越界=#5 亂學咒 bug)。職業→系:勇者→勇者系、僧侶→僧侶系、魔法使→魔法系、賢者→僧侶+魔法、其餘無咒。
 
@@ -116,7 +120,9 @@
   [`69`](docs/69-why-remake-looked-done-but-wasnt.md) 失敗經驗與防再犯方法、
   [`74`](docs/74-ebiten-remake-completion-plan.md) 現行完成計畫 ·
   [`88`](docs/88-norud-guided-passage-production-trace.md) 諾魯德密道 handler50/57、
-  NPC 移動腳本與正式玩家輸入追蹤
+  NPC 移動腳本與正式玩家輸入追蹤 ·
+  [`91`](docs/91-garuna-satori-book-production-trace.md) 加爾那之塔領悟之書、睡眠恢復
+  IDA 證據與正式玩家輸入追蹤
 
 ### 資料 / 研究(`docs/data/`)
 - [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·

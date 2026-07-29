@@ -561,29 +561,26 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 ## 10. 今日收尾與剩餘工作（更新 2026-07-30）
 
-本輪已依 Capstone／raw instruction 與原始 CTY13／D3TXT03，把 boot 起的同一條正式 trace
-由諾亞尼爾甦醒繼續延伸到金字塔魔法鑰匙。原版 handler21／22／23 的兩步暫存、錯誤第二鍵
-陷阱、handler23 清 flag `0x46`、event-tile rebuild、SFX `0x0b` 及寶箱
-`{item=0x56,present flag=0x73}` 均已閉合；證據 ledger 見 `docs/87`。
-
-事件已改由 game-pack `two_step_floor_switch_gate` 提供場景、座標、subid、raw handler、
-旗標、陷阱目的地、文字、音效與寶箱。舊 Go 寶箱表的魔法鑰匙 entry 已刪除。正式玩家
-路徑可踩最右再最左開關、開石門、由命令窗「調查」取得魔法鑰匙，save/load 後旗標、
-道具與通行狀態一致。三張 runtime 圖已重產、目視並做二次 deterministic 比對。
+boot 起的同一條正式 trace 已由首次航行繼續至加爾那之塔《領悟之書》`0x4a`。
+IDA Pro 9.4 證明原版玩家睡眠／混亂在行動前 `roll<=0x64` 清除、怪物側
+`roll<0x64` 清除，修除怪物 43 令全隊永久不能行動的航海死循環。CTY18 sec1
+`01 4a 00 b7` 已遷入 schema `0.1.6` `treasure_events`，正式路徑繞完塔內不同連通區，
+命令窗調查後立即切換開箱 tile，並完成 save/load；證據與 runtime 圖見 `docs/91`。
 
 下一輪依下列順序接手：
 
-1. **主線最高優先**：波魯多加取船與首次航行已由 boot 起的同一條 trace 閉合至 E3
-   （`docs/90`）。從首次航行 checkpoint 前往達瑪神殿／加爾那之塔，閉合《領悟之書》
-   `0x4a` 的正常入口、寶箱 gate、save/load 與下一節點；不可挑遠端孤立事件代替連續 audit。
+1. **主線最高優先**：加爾那之塔《領悟之書》已由 boot 起的同一條 trace 閉合至 E3
+   （`docs/91`）。從該合法 checkpoint 前往達瑪神殿，以正式設施入口閉合轉職選單、
+   賢者 gate、成功消耗、能力交易、save/load 與下一節點；不可直接呼叫 reclass handler。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。
 3. **完整通關證明**：P3 至 P6 雖有多個正式入口事件切片，仍缺
    `new game → THE END` 不改狀態、不中途呼叫內部函式的連續 campaign trace，以及各關鍵
    checkpoint 的 save/load round-trip。
-4. **戰鬥長尾**：訊息已能逐筆顯示，但原版 record、角色／怪物名稱代入、逐動作停頓、
-   動畫／音效 cue、抗性與狀態持續時間、敵群 formation、boss 多次行動、掉落及逐項咒文
+4. **戰鬥長尾**：睡眠／混亂恢復時序與 99／100／101 邊界已閉合，但訊息的角色／怪物
+   名稱代入、逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、
+   boss 多次行動、掉落及逐項咒文
    效果仍需 RE 與同狀態驗證。
 5. **玩家可見 parity**：四人縱列與 HUD、能力確認立繪、母親逐格演出、attract、
    商店／教會／旅社／達瑪、日夜 palette、剩餘 BGM／SFX 及 ending timing 尚未全部 V3。

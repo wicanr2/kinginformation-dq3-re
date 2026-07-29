@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.5",
+  "schema_version": "0.1.6",
   "boss_surrender_events": [
     {
       "id": "dq3:event.shanpane_kandar",
@@ -149,6 +149,29 @@
         "address": "0x5320..0x5365, 0x68ef..0x6916",
         "consumer": "CTY11 sec3 subid0 yields item 0x59; CTY05 raw handler16 replaces it with 0x5a; item use in CTY4 consumes, SET 0x26, CLEAR 0x31, displays global rec599, then reloads the scene",
         "doc": "docs/86-noaniel-awakening-production-trace.md"
+      }
+    }
+  ],
+  "treasure_events": [
+    {
+      "id": "dq3:event.garuna_satori_book",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 18,
+        "section": 1,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 74,
+        "present_flag_raw": 183
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY18.DAT",
+        "address_space": "file",
+        "address": "0x9cf6..0x9e41",
+        "consumer": "CTY18 sec1 subid0 raw 01 4a 00 b7 is dispatched by file 0x9d86 to the type1/3 inventory consumer at file 0x9de9; success writes item 0x4a and clears original present flag 0xb7",
+        "doc": "docs/91-garuna-satori-book-production-trace.md"
       }
     }
   ],

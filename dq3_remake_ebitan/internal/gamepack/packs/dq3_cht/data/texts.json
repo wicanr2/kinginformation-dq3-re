@@ -1,6 +1,38 @@
 {
-  "schema_version": "0.1.5",
+  "schema_version": "0.1.6",
   "definitions": [
+    {
+      "id": "common:text.battle.status.sleeping",
+      "value": "還沒醒來!",
+      "glyph_codes": [65525, 524, 410, 299, 461, 57, 65535],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 349},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "DQ3.EXE + D3TXT00.TXT",
+        "address_space": "record",
+        "address": "349/350",
+        "consumer": "player/enemy sleep turn consumer",
+        "doc": "docs/37-monster-ai.md"
+      }
+    },
+    {
+      "id": "common:text.battle.status.woke",
+      "value": "醒來了!",
+      "glyph_codes": [65525, 299, 461, 423, 57, 65535],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 354},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "DQ3.EXE + D3TXT00.TXT",
+        "address_space": "record",
+        "address": "354/355",
+        "consumer": "player/enemy sleep turn consumer",
+        "doc": "docs/37-monster-ai.md"
+      }
+    },
     {
       "id": "dq3:text.shanpane_gandart.intro",
       "value": "*「來的好,但是你們仍然\n拿我沒辦法的。",

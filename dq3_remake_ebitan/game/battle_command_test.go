@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	dosrng "github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 )
 
 func TestBattleCommandMenusMatchTXT441To444(t *testing.T) {
@@ -255,5 +256,51 @@ func TestBattleTargetCancelReturnsToOrigin(t *testing.T) {
 	b.input(InputState{Cancel: true, DirHeld: -1, DirEdge: -1})
 	if b.phase != phCommand || b.commandActor != 0 {
 		t.Fatalf("取消敵方目標應回同一角色命令，phase=%d actor=%d", b.phase, b.commandActor)
+	}
+}
+
+func TestBattleStatusWakeThresholdMatchesOriginalBranches(t *testing.T) {
+	for _, tc := range []struct {
+		roll            int
+		wantPlayerWakes bool
+		wantEnemyWakes  bool
+	}{
+		{99, true, true},
+		{100, true, false},
+		{101, false, false},
+	} {
+		if got := playerStatusWakes(tc.roll); got != tc.wantPlayerWakes {
+			t.Errorf("玩家 roll=%d wake=%v，want %v", tc.roll, got, tc.wantPlayerWakes)
+		}
+		if got := enemyStatusWakes(tc.roll); got != tc.wantEnemyWakes {
+			t.Errorf("怪物 roll=%d wake=%v，want %v", tc.roll, got, tc.wantEnemyWakes)
+		}
+	}
+}
+
+func TestBattleActorWakeConsumesCurrentTurn(t *testing.T) {
+	b := &Battle{
+		rng:            dosrng.New(0),
+		heroHP:         10,
+		heroStatus:     statusParalysis,
+		statusWokeText: "醒來",
+	}
+	// 找到會命中原版玩家醒來分支的 seed；只用 pure threshold 挑測試輸入，
+	// production 仍由同一 DOS RNG 決定。
+	for seed := 0; seed <= 0xffff; seed++ {
+		r := dosrng.New(uint16(seed))
+		if playerStatusWakes(r.Next(256)) {
+			b.rng = dosrng.New(uint16(seed))
+			break
+		}
+	}
+	if !b.consumeActorSleep(0) {
+		t.Fatal("睡眠角色本回合應被狀態 consumer 消耗")
+	}
+	if b.heroStatus&statusParalysis != 0 {
+		t.Fatal("命中醒來分支後應清除玩家睡眠／混亂狀態")
+	}
+	if b.msg != "醒來" {
+		t.Fatalf("醒來訊息=%q", b.msg)
 	}
 }

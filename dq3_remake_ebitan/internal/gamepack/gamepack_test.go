@@ -485,6 +485,54 @@ func TestDQ3PortogaRoyalMissionMatchesOriginalEXECTYAndText(t *testing.T) {
 	}
 }
 
+func TestDQ3GarunaSatoriBookMatchesOriginalEXEAndCTY(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return b
+	}
+	exe, cty := read("DQ3.EXE"), read("CTY18.DAT")
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	e, ok := p.TreasureEvent("dq3:event.garuna_satori_book")
+	if !ok {
+		t.Fatal("dq3:event.garuna_satori_book missing")
+	}
+	want := QuestTreasureSelector{
+		CTYRaw: 18, Section: 1, TileSubID: 0, EventTypeRaw: 1,
+		ItemRawID: 0x4a, PresentFlag: 0xb7,
+	}
+	if e.Treasure != want {
+		t.Fatalf("加爾那領悟之書 JSON selector=%+v, want %+v", e.Treasure, want)
+	}
+
+	sectionBase := int(binary.LittleEndian.Uint16(cty[2:4]))
+	eventTable := sectionBase + int(binary.LittleEndian.Uint16(cty[sectionBase+8:]))
+	if eventTable+5 > len(cty) || cty[eventTable] != 1 ||
+		!reflect.DeepEqual(cty[eventTable+1:eventTable+5], []byte{0x01, 0x4a, 0x00, 0xb7}) {
+		t.Fatalf("CTY18 sec1 subid0 raw event 不符：base=%#x table=%#x raw=%x",
+			sectionBase, eventTable, cty[eventTable:eventTable+5])
+	}
+
+	for off, raw := range map[int][]byte{
+		0x9d86: {0x8b, 0xcd, 0x80, 0xf9, 0x03, 0x74, 0x10, 0x80, 0xf9, 0x00},
+		0x9de9: {0xc6, 0x06, 0x26, 0x07, 0x00, 0x90, 0x80, 0xf9, 0x03},
+	} {
+		if off+len(raw) > len(exe) || !reflect.DeepEqual(exe[off:off+len(raw)], raw) {
+			t.Fatalf("DQ3.EXE treasure consumer file %#x bytes 不符", off)
+		}
+	}
+}
+
 func TestBuiltinDQ3ReviveCosts(t *testing.T) {
 	p, err := BuiltinDQ3()
 	if err != nil {
@@ -558,14 +606,14 @@ func TestDQ3ReviveCostsMatchOriginalEXE(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.5","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.6","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.5","service_definitions":[{
+	  "schema_version":"0.1.6","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -573,13 +621,13 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.5","boss_surrender_events":[],"temporary_role_events":[],
-	  "quest_item_chain_events":[],"two_step_floor_switch_gates":[],
+	  "schema_version":"0.1.6","boss_surrender_events":[],"temporary_role_events":[],
+	  "quest_item_chain_events":[],"treasure_events":[],"two_step_floor_switch_gates":[],
 	  "staged_vehicle_exchange_events":[],"guided_passage_events":[],
 	  "hostage_rescue_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.5",
+	  "schema_version":"0.1.6",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -589,7 +637,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.5","definitions":[{
+	  "schema_version":"0.1.6","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -603,7 +651,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.5"`, `"schema_version":"0.1.5","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.6"`, `"schema_version":"0.1.6","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"unknown characters field", validManifest, validFacilities, validEvents, strings.Replace(validCharacters, `"defaults":[`, `"typo":1,"defaults":[`, 1), "unknown field"},
 	}
