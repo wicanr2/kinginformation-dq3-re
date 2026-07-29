@@ -257,6 +257,21 @@
 
 ## 5. 執行計畫
 
+### P0.5 — 精訊版 DQ 共用 game pack
+
+使用者於 2026-07-29 決定把遊戲設定外部化，讓已證實的參數可改 JSON 而不需重新編譯
+desktop 執行檔，並讓同一 Ebitengine 核心後續承載精訊版 DQ1／DQ2。canonical 欄位與
+邊界規格見 `docs/84-game-pack-json-contract.md`。
+
+執行約束：
+
+- DQ3 是第一個 pack 與 fidelity 基準；不可先為了抽象漂亮而中斷目前的玩家流程閉合。
+- 優先遷移正阻塞流程的教會／旅館／商店，再處理成長、咒文、怪物、遭遇與事件。
+- 原始 DAT／EXE decoder 保留並成為 JSON parity oracle；資料搬家不等於重新猜一次數值。
+- JSON 必須版本化、嚴格拒絕未知欄位、驗證 ID／範圍／資源，並攜帶 evidence provenance。
+- Desktop 支援外部 pack 後才可宣稱修改 JSON 免重編譯；Android／Web 嵌入資料不作此宣稱。
+- DQ1／DQ2 以 capabilities 表達實際差異，不建立假的 DQ3 職業、隊伍或交通工具資料。
+
 ### P0 — 基建與單一真相
 
 交付：
@@ -522,10 +537,10 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 消耗；再以盜賊鑰匙正式開啟 CTY30 section 2 的 tier-1 門，經 CTY31 出洞，步行進入
 CTY02 並完成 save/load。證據 ledger 見 `docs/81`。下一輪依下列順序接手：
 
-1. **主線最高優先**：羅馬利亞北行 audit（`docs/83`）已定位首個 blocker：最短任務
-   trace 到此仍為 Lv1，monster17 單體即可全滅；旅店全隊交易已修正，但教會仍無正式
-   復活服務。下一步先做阿里阿罕低危區 production 練級／住宿循環，再閉合教會
-   handler `0x83d8`，之後重跑 CTY10；不得削弱怪物或注入等級。
+1. **主線最高優先**：羅馬利亞北行 audit（`docs/83`）的前置 blocker 已閉合。新遊戲
+   production trace 現會在阿里阿罕低危區正式戰鬥、經教會／旅店練至 Lv4，再抵達
+   羅馬利亞；下一步由此合法 checkpoint 重跑 CTY10，記錄新的第一個 blocker。
+   不得削弱怪物或注入等級／金錢。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。
@@ -537,6 +552,8 @@ CTY02 並完成 save/load。證據 ledger 見 `docs/81`。下一輪依下列順�
    效果仍需 RE 與同狀態驗證。
 5. **玩家可見 parity**：四人縱列與 HUD、能力確認立繪、母親逐格演出、attract、
    商店／教會／旅社／達瑪、日夜 palette、剩餘 BGM／SFX 及 ending timing 尚未全部 V3。
+   教會復活確認的現行 runtime 證據為 `docs/img/church_revive_confirm.png`，仍待 DOSBox
+   同狀態 V3。
 6. **Release**：完成正式流程後才做跨桌面平台包裝、Android 真機的觸控／lifecycle／音訊／
    存檔驗收，以及選配 WASM smoke；公開包不得納入原版資產。
 

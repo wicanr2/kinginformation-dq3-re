@@ -16,6 +16,28 @@ type facility struct {
 	k, typ, count, itemOff, innCost int
 }
 
+type churchStage int
+
+const (
+	churchService churchStage = iota
+	churchTarget
+	churchConfirm
+)
+
+// Church 是教會三項服務 modal。原版 handler 0x83d8 的服務順序為解毒／解詛咒／復活；
+// 現行 Member 尚未持久化毒／詛咒旗標，前兩項 fail-closed，復活交易已按 0x85ff 實作。
+type Church struct {
+	active        bool
+	stage         churchStage
+	serviceCursor int
+	targetCursor  int
+	confirmCursor int // 0=是、1=否
+	pendingTarget int
+	pendingCost   int
+	msg           string
+	tx            *dq3data.Text
+}
+
 // Shop 是開啟中的商店狀態(武防/道具店)。
 type Shop struct {
 	items    *dq3data.Items

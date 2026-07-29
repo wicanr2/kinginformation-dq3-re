@@ -1,0 +1,27 @@
+{
+  "schema_version": "0.1.0",
+  "service_definitions": [
+    {
+      "id": "common:service.revive",
+      "pricing": {
+        "formula_id": "common:formula.level_table",
+        "level_cap": 40,
+        "costs_gold": [
+          10, 10, 10, 20, 30, 40, 50, 70, 90, 110,
+          130, 150, 170, 200, 230, 260, 290, 330, 370, 410,
+          450, 490, 530, 580, 630, 680, 730, 790, 850, 910,
+          970, 1030, 1090, 1160, 1230, 1300, 1370, 1450, 1530, 1610
+        ]
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "file",
+        "address": "0x19dac",
+        "consumer": "file 0x85ff..0x8696: level clamp/table lookup, payment, clear death and restore HP/MP",
+        "doc": "docs/40-facility-shops.md#教會"
+      }
+    }
+  ]
+}

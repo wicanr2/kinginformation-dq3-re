@@ -45,6 +45,19 @@
 6. 產出或更新受影響的 runtime PNG，與原版同狀態目視核對。
 7. 更新 `docs/74`、`PROJECT_MEMORY.md` 及必要的單一主題 RE 文件。
 
+### 共用 game pack 與 JSON
+
+- 長期架構是共用 Go／Ebitengine 核心加 `dq1_cht`、`dq2_cht`、`dq3_cht` versioned
+  game pack；JSON canonical 欄位契約見 `docs/84-game-pack-json-contract.md`。
+- 新增或更改遊戲設定前，先判斷它屬於 engine behavior、game data 或大型 binary asset。
+  可調內容不得繼續新增為散落的 Go table；引擎狀態機也不得為了資料化而改成任意 JSON code。
+- production JSON 的初值至少要有 D2 evidence，會改變流程的值需 D3。未知值 fail closed，
+  不用 0、合理預設或 C remake 填空。
+- 每批遷移必須有 schema/reference validation、原始 EXE／DAT parity test，以及正式玩家
+  input trace。Go decoder 保留為 oracle，不能因 JSON 化刪除。
+- Desktop 外部 pack 可免重編譯；嵌入 Android／Web 的 pack 仍需重包，除非另有具版本、
+  hash／簽章驗證的外部更新機制。
+
 完成度用：
 
 - E0 線索；E1 原版證實；E2 runtime parity；E3 玩家流程閉合。

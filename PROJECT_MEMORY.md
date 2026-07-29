@@ -26,6 +26,8 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 ## 現況入口
 
 - 唯一 current plan：[`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)
+- 共用 game-pack JSON 契約：
+  [`docs/84`](docs/84-game-pack-json-contract.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
 - 最新 production audit：[`docs/83`](docs/83-inn-and-romaly-route-audit.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
@@ -35,10 +37,15 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 目前核心終盤切片已接通，boot 起的正式 trace 已從 CTY01 延伸到 CTY02 羅馬利亞：玩家
 以正式道具選單使用魔法球，原版 flag `0x51`、四格牆重建、道具消耗、CTY30 tier-1 門、
 CTY31 出洞、羅馬利亞國王 rec45→rec15 任務與王座存讀檔均已驗證。
-**尚未完成從新遊戲開始的無 debug 全流程驗收**。羅馬利亞→CTY10 的首個實際 blocker
-已定位：最短任務 trace 仍是 Lv1，且 Ebiten 教會沒有正式復活服務；旅店現已依原版改為
-「單價×存活人數、恢復全體存活者、不復活死亡者」。下一輪先閉合低危區練級／住宿循環
-與教會交易，再重跑北行路線，不得削弱 monster 17 或注入等級。
+**尚未完成從新遊戲開始的無 debug 全流程驗收**。阿里阿罕低危區訓練、教會復活及旅店
+循環已閉合：正式 trace 由原始 50G 購買補給、自然戰鬥至 Lv4，陣亡時由正式設施 NPC
+選復活、按原版費用扣款，再繼續抵達羅馬利亞。下一個玩家 blocker 是由該合法 checkpoint
+重跑 CTY10，不得削弱 monster 17 或注入等級。
+
+遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
+精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
+D2/D3 證據，未知值不得以可調參數名義猜填。Desktop 可讀外部 pack 免重編譯，
+Android／Web 嵌入 pack 則仍需重包。
 
 ## 固定工程方法
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/dq3_remake_ebitan/game"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 func assetsDir() string {
@@ -25,7 +26,17 @@ func main() {
 		music = os.DirFS(d)
 	}
 
-	g, err := game.NewGame(assets, music)
+	var g *game.Game
+	var err error
+	if dir := os.Getenv("DQ_GAME_PACK"); dir != "" {
+		pack, loadErr := gamepack.Load(os.DirFS(dir))
+		if loadErr != nil {
+			log.Fatalf("載入 DQ_GAME_PACK %q 失敗: %v", dir, loadErr)
+		}
+		g, err = game.NewGameWithPack(assets, music, pack)
+	} else {
+		g, err = game.NewGame(assets, music)
+	}
 	if err != nil {
 		log.Fatalf("NewGame 失敗:%v(設 DQ3_ASSETS 指向原版素材夾)", err)
 	}

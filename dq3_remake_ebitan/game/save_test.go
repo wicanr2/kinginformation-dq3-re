@@ -1,8 +1,12 @@
 package game
 
 import (
+	"os"
 	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 // 存檔 round-trip:encode → decode 應完全一致。
@@ -27,4 +31,31 @@ func TestSaveRoundTrip(t *testing.T) {
 	}
 	t.Logf("存檔 round-trip 一致 ✓(exp%d hp%d gold%d inv%v @%d,%d town%v)",
 		got.HeroExp, got.HeroHP, got.HeroGold, got.Inventory, got.PX, got.PY, got.InTown)
+}
+
+func TestSaveRecordsAndChecksGamePackIdentity(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	g := &Game{pack: pack}
+	s := g.snapshot()
+	if s.PackID != "dq3_cht" || s.PackSchema != gamepack.SchemaVersion ||
+		s.PackContentHash == "" {
+		t.Fatalf("snapshot pack metadata incomplete: %#v", s)
+	}
+
+	s.PackContentHash = "sha256:modified"
+	raw, err := encodeSave(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	name := t.TempDir() + "/save.json"
+	if err := os.WriteFile(name, raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DQ3_SAVE", name)
+	if err := g.Load(); err == nil || !strings.Contains(err.Error(), "game pack mismatch") {
+		t.Fatalf("Load mismatch error=%v", err)
+	}
 }

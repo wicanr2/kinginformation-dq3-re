@@ -112,16 +112,25 @@ DGROUP 0x1f9**,7 byte/筆,+2/+3 = 價格,對上 docs/22)。買單渲染 file 0x8
 - option1 `0x849b` = **解毒**(rec 0x136「誰要解毒」)
 - option2 `0x853c` = **解詛咒**(rec 0x137「誰要解詛咒」)
 - option3 `0x85ff` = **復活**(rec 0x138「誰需要復活」;測實體 `[+0x38]&0x80` 死亡旗標)
-- remake:`church_revive` 蘇生陣亡隊員(`cur_hp==0` → 復原 cur_hp/cur_mp,費=等級×10);
-  解毒/解麻痺 **已實作**(狀態系統已建:`dq3_status.h`;`main.c:431` 教會 `if(m->status)` 解毒/解麻痺、道具走 `dq3_item_use_cure`)。
+- 復活 handler 讀角色 level `+0x15`，夾至 40，再查 DGROUP `0x3c6c`／file
+  `0x19dac` 的 40-word 表；不是舊 C remake 的 `level×10`。
+- Lv1..40 費用：
+  `10,10,10,20,30,40,50,70,90,110,130,150,170,200,230,260,290,330,370,410,`
+  `450,490,530,580,630,680,730,790,850,910,970,1030,1090,1160,1230,1300,`
+  `1370,1450,1530,1610`。
+- file `0x8689..0x8696` 在付款後清死亡 bit，並把 current HP/MP 寫回 max HP/MP。
 
 ## 現行 remake 狀態與待補
 
 - Ebiten 旅店已依原版閉合：file `0x86f5` 呼叫 `0xd966` 計算存活人數，`0x8705`
   乘 raw 單價，付款後 `0x87cb` 逐員把 `+0x16/+0x18` 寫成 `+0x2a/+0x2c`
   （HP/MP 上限），並跳過死亡旗標 `+0x38 & 0x80`。金幣不足不扣款也不恢復。
-- 舊 C remake 的 `church_revive` 只能作線索；現行 Ebiten `facChurch` 仍只呼叫 Save，
-  尚沒有原版三選單、選人、精確價格與復活交易，不能標為完成。
-- 教會復活/解毒/解咒精確價格仍待 RE；舊 C 版的「等級×10」是簡化值，不是 oracle。
-- 狀態效果(中毒/詛咒)系統 → 才能接解毒/解詛咒。
+- Ebiten `facChurch` 已開正式三選單 modal；復活會選隊員、顯示 rec301 確認、按完整
+  40-level 表扣款，成功後 HP/MP 回滿。存活者、取消與金錢不足均不扣款。
+- 復活費已移至 versioned `dq3_cht` JSON game pack；測試直接逐 word 比對
+  `DQ3.EXE` file `0x19dac`。欄位契約見 `docs/84-game-pack-json-contract.md`。
+- 新遊戲 production trace 已在阿里阿罕低危區實際發生陣亡後，經設施 NPC、教會 modal、
+  旅店及正式戰鬥輸入練到 Lv4，再繼續抵達羅馬利亞。
+- 解毒／解詛咒仍 fail closed：Ebiten `Member` 尚未持久化原版 `+0x38` poison/curse
+  flags，不能拿舊 C 狀態系統冒充已接線。
 - 同城多攤(CTY6/22 多家武防店):`dq3_facility_at` 已能逐攤(by k),走到不同店員開不同攤。

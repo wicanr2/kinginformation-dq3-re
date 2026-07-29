@@ -13,6 +13,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/config"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gaudio"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
@@ -272,6 +273,7 @@ type Game struct {
 	cmd            CmdMenu        // 野外命令窗
 	battle         Battle         // 戰鬥場景
 	shop           Shop           // 商店(武防/道具店)
+	church         Church         // 教會服務
 	tavern         Tavern         // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
 	recruit        Recruit        // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
 	panel          panelKind      // 資訊面板(狀況/道具/裝備)
@@ -285,11 +287,12 @@ type Game struct {
 	showTitle      bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
 	titlePix       []uint8
 	titlePal       []dq3data.Color
-	cfg            config.Config // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
-	settings       Settings      // 設定選單 modal(標題畫面按 S 開)
-	newGame        NewGameFlow   // 標題主選單 + 主角命名/性別創建 modal(FLOW-GAP A2/A3/A4)
-	heroName       []int         // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
-	heroGender     int           // 主角性別(0=男 1=女)
+	cfg            config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
+	pack           *gamepack.Pack // versioned 精訊版 game pack；遊戲設定不得再散落為 Go table
+	settings       Settings       // 設定選單 modal(標題畫面按 S 開)
+	newGame        NewGameFlow    // 標題主選單 + 主角命名/性別創建 modal(FLOW-GAP A2/A3/A4)
+	heroName       []int          // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
+	heroGender     int            // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0)。heroStat 是原版角色 record 的七個持久能力欄；
 	// 創角/升級時由 sub_ed3c 相同的 RNG transaction 修改，不再每幀由等級公式重算。
 	heroExp         uint32
@@ -761,7 +764,9 @@ func (g *Game) openFacility(k int) {
 		if lo >= 0 && hi <= len(shopItemPool) {
 			g.shop.open(append([]int(nil), shopItemPool[lo:hi]...))
 		}
-	case facChurch, facRecord: // 教會/記錄點:存檔(冒險之書)
+	case facChurch:
+		g.church.open(g.shop.nameText)
+	case facRecord: // 記錄點:存檔(冒險之書)
 		_ = g.Save()
 	}
 }
@@ -835,6 +840,11 @@ func (g *Game) step(in InputState) error {
 	}
 	if g.fieldSpell.active {
 		g.fieldSpellInput(in)
+		g.renderFrame()
+		return nil
+	}
+	if g.church.active {
+		g.churchInput(in)
 		g.renderFrame()
 		return nil
 	}
@@ -1982,6 +1992,7 @@ func (g *Game) renderFrame() {
 	if g.shop.active { // 商店
 		g.shop.draw(g.rgba, g.heroGold, white)
 	}
+	g.drawChurch(g.rgba, white)
 	if g.noticeTimer > 0 && g.noticeCode >= 0 { // 取得道具通知(品名)
 		fillBox(g.rgba, 24, 244, ScreenW-48, 40, white)
 		g.shop.drawItemName(g.rgba, 40, 256, g.noticeCode, white)
@@ -2087,9 +2098,24 @@ func (l *loader) read(name string) []byte {
 // music:放 track_NN.ogg 的檔案系統(nil → 靜音)。
 // 回傳的 *Game 直接餵 ebiten.RunGame(桌面)或 mobile.SetGame(行動)。
 func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		return nil, fmt.Errorf("load builtin dq3 game pack: %w", err)
+	}
+	return NewGameWithPack(assets, music, pack)
+}
+
+// NewGameWithPack 使用已嚴格驗證的外部 game pack 建立遊戲。桌面入口可藉此修改 JSON
+// 而不重新編譯；測試與 mobile 預設仍走 NewGame 的 canonical embedded dq3_cht pack。
+func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, error) {
+	if pack == nil {
+		return nil, fmt.Errorf("game pack is nil")
+	}
 	ld := &loader{fsys: assets}
 	pal := dq3data.DecodePalette(ld.read("DQ3.PAL"), 256) // 城鎮/地表共用(tile 只用色 0..15)
-	g := &Game{rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default()}
+	g := &Game{
+		rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default(), pack: pack,
+	}
 	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 
 	// 地表 scene

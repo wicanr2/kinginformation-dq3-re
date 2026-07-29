@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -11,36 +12,39 @@ import (
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
 type saveState struct {
-	HeroExp       uint32       `json:"exp"`
-	HeroHP        int          `json:"hp"`
-	HeroMP        int          `json:"mp"`
-	HeroStat      stats.Values `json:"stats,omitempty"`
-	HeroGold      int          `json:"gold"`
-	HeroName      []int        `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
-	HeroGender    int          `json:"herogender"`         // 0=男 1=女
-	Inventory     []int        `json:"inv"`
-	Equip         [4]int       `json:"eq"`
-	Comps         []compSav    `json:"comps"`
-	Roster        []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
-	Flags         []int        `json:"flags"`
-	ShipOwned     bool         `json:"shipowned"`
-	PhoenixOwned  bool         `json:"phoenixowned,omitempty"`
-	PhoenixAboard bool         `json:"phoenixaboard,omitempty"`
-	PhoenixX      int          `json:"phoenixx,omitempty"`
-	PhoenixY      int          `json:"phoenixy,omitempty"`
-	ShipX         int          `json:"shipx"`
-	ShipY         int          `json:"shipy"`
-	PX            int          `json:"px"`
-	PY            int          `json:"py"`
-	InTown        bool         `json:"town"`
-	StoryBits     []byte       `json:"storybits,omitempty"`
-	WorldState    uint16       `json:"worldstate,omitempty"`
-	DNPhase       int          `json:"dnphase,omitempty"`
-	DNStep        int          `json:"dnstep,omitempty"`
-	Cty           int          `json:"cty,omitempty"`
-	Section       int          `json:"section,omitempty"`
-	Layer         int          `json:"layer,omitempty"`
-	VisitedTowns  []townVisit  `json:"visited_towns,omitempty"`
+	PackID          string       `json:"pack_id,omitempty"`
+	PackSchema      string       `json:"pack_schema,omitempty"`
+	PackContentHash string       `json:"pack_content_hash,omitempty"`
+	HeroExp         uint32       `json:"exp"`
+	HeroHP          int          `json:"hp"`
+	HeroMP          int          `json:"mp"`
+	HeroStat        stats.Values `json:"stats,omitempty"`
+	HeroGold        int          `json:"gold"`
+	HeroName        []int        `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
+	HeroGender      int          `json:"herogender"`         // 0=男 1=女
+	Inventory       []int        `json:"inv"`
+	Equip           [4]int       `json:"eq"`
+	Comps           []compSav    `json:"comps"`
+	Roster          []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
+	Flags           []int        `json:"flags"`
+	ShipOwned       bool         `json:"shipowned"`
+	PhoenixOwned    bool         `json:"phoenixowned,omitempty"`
+	PhoenixAboard   bool         `json:"phoenixaboard,omitempty"`
+	PhoenixX        int          `json:"phoenixx,omitempty"`
+	PhoenixY        int          `json:"phoenixy,omitempty"`
+	ShipX           int          `json:"shipx"`
+	ShipY           int          `json:"shipy"`
+	PX              int          `json:"px"`
+	PY              int          `json:"py"`
+	InTown          bool         `json:"town"`
+	StoryBits       []byte       `json:"storybits,omitempty"`
+	WorldState      uint16       `json:"worldstate,omitempty"`
+	DNPhase         int          `json:"dnphase,omitempty"`
+	DNStep          int          `json:"dnstep,omitempty"`
+	Cty             int          `json:"cty,omitempty"`
+	Section         int          `json:"section,omitempty"`
+	Layer           int          `json:"layer,omitempty"`
+	VisitedTowns    []townVisit  `json:"visited_towns,omitempty"`
 }
 
 // compSav 是一名同伴的存檔資料。
@@ -62,7 +66,12 @@ func decodeSave(b []byte) (saveState, error) {
 }
 
 func (g *Game) snapshot() saveState {
+	var packID, packSchema, packHash string
+	if g.pack != nil { // 裸 Game 單元測試／舊 migration fixture 沒有 loader；production 永遠非 nil。
+		packID, packSchema, packHash = g.pack.ID(), g.pack.Schema(), g.pack.ContentHash()
+	}
 	s := saveState{
+		PackID: packID, PackSchema: packSchema, PackContentHash: packHash,
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroStat: g.heroStat, HeroGold: g.heroGold,
 		HeroName: append([]int(nil), g.heroName...), HeroGender: g.heroGender,
 		Inventory: append([]int(nil), g.inventory...),
@@ -248,6 +257,18 @@ func (g *Game) Load() error {
 	s, err := decodeSave(b)
 	if err != nil {
 		return err
+	}
+	// 舊存檔沒有 pack metadata，沿既有 migration 路徑接受；新格式則不得把 DQ1/DQ2、
+	// modified override 或不同 schema 的狀態套進目前 DQ3 pack。
+	if s.PackID != "" && (g.pack == nil || s.PackID != g.pack.ID() || s.PackSchema != g.pack.Schema() ||
+		s.PackContentHash != g.pack.ContentHash()) {
+		if g.pack == nil {
+			return fmt.Errorf("save requires game pack %s/%s/%s but current Game has none",
+				s.PackID, s.PackSchema, s.PackContentHash)
+		}
+		return fmt.Errorf("save game pack mismatch: save=%s/%s/%s current=%s/%s/%s",
+			s.PackID, s.PackSchema, s.PackContentHash,
+			g.pack.ID(), g.pack.Schema(), g.pack.ContentHash())
 	}
 	g.restore(s)
 	return nil

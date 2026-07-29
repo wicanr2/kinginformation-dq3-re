@@ -23,6 +23,19 @@ cd dq3_remake_ebitan
 DQ3_ASSETS=/path/to/assets_raw go run .
 ```
 
+遊戲設定採 versioned game pack。未指定時使用執行檔內建、經測試的 canonical
+`dq3_cht`；開發時可改外部 JSON 而不重新編譯：
+
+```bash
+DQ3_ASSETS=/path/to/assets_raw \
+DQ_GAME_PACK=/path/to/dq3_cht \
+go run .
+```
+
+外部 pack 會嚴格檢查 schema、未知欄位、ID、範圍與 evidence；格式見
+[`docs/84-game-pack-json-contract.md`](../docs/84-game-pack-json-contract.md)。
+套用不同 content hash 的新格式存檔不會被靜默載入。
+
 圖形測試需在 Xvfb 下建立 `game.test`，並從 `dq3_remake_ebitan/game/` 執行，否則
 測試相對路徑不會找到 repo 的 `assets_raw/`。素材缺失造成的 `SKIP` 不算對拍通過。
 

@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"image/png"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
@@ -517,4 +518,59 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.px, g.py = 7, 3
 	g.facing = 1
 	dump("romaly_king_crown_quest")
+}
+
+// TestDumpChurchRevive 產出 production renderer 的教會復活確認窗。它不是 raw glyph dump；
+// modal、原始文字 bank、隊伍狀態與 JSON 費用都由實際 Game 組合。
+func TestDumpChurchRevive(t *testing.T) {
+	if os.Getenv("DQ3_DUMP_CHURCH") == "" {
+		t.Skip("設 DQ3_DUMP_CHURCH=1 才執行")
+	}
+	out := os.Getenv("CHURCH_OUT")
+	if out == "" {
+		t.Fatal("需設 CHURCH_OUT")
+	}
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = "../../assets_raw"
+	}
+	g, err := NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.showTitle, g.inTown, g.curCty = false, true, 0
+	g.cur, g.town = g.towns[0], g.towns[0]
+	g.px, g.py = 15, 25
+	g.heroGold, g.heroHP = 34, 1
+	dead := newMember(classNames[3], 3, 0, 0)
+	dead.CurHP, dead.CurMP = 0, 0
+	g.companions = []*Member{dead}
+	g.church.open(g.shop.nameText)
+	g.churchInput(InputState{DirEdge: 0})
+	g.churchInput(InputState{DirEdge: 0})
+	g.churchInput(InputState{Confirm: true})
+	g.churchInput(InputState{DirEdge: 0})
+	g.churchInput(InputState{Confirm: true})
+	if g.church.stage != churchConfirm || g.church.pendingCost != 10 {
+		t.Fatalf("church fixture not at confirmation: stage=%d cost=%d",
+			g.church.stage, g.church.pendingCost)
+	}
+	g.renderFrame()
+	img := image.NewRGBA(image.Rect(0, 0, ScreenW, ScreenH))
+	copy(img.Pix, g.rgba)
+	if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Create(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		_ = f.Close()
+		t.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("church revive runtime image: %s", out)
 }

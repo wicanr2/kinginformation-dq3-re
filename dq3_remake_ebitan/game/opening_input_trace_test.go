@@ -123,17 +123,18 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Cancel: true}) // 清單→主選單
 	press(InputState{Cancel: true}) // 關酒場
 
-	// 正常前段迷宮會連續遇敵；用國王給的 50G 到阿里阿罕道具店買 5 株藥草。
+	// 正常前段迷宮會連續遇敵；用國王給的 50G 到阿里阿罕道具店買 2 株藥草。
+	// 保留 34G 作 Lv1 教會復活與四人旅店交易；不可把全部初始金錢花完後再注入補給。
 	traceTalkNPC(t, g, 15, 24) // CTY00 sec0 facility k2，道具店第一項是 0x41
 	if !g.shop.active {
 		t.Fatal("對阿里阿罕道具店 NPC 應開商店")
 	}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 2; i++ {
 		press(InputState{Confirm: true})
 	}
 	press(InputState{Cancel: true})
-	if g.countItem(herbCode) != 5 {
-		t.Fatalf("正式購買後應有 5 株藥草，got %d (gold=%d)", g.countItem(herbCode), g.heroGold)
+	if g.countItem(herbCode) != 2 {
+		t.Fatalf("正式購買後應有 2 株藥草，got %d (gold=%d)", g.countItem(herbCode), g.heroGold)
 	}
 
 	// 國王給的裝備不會自動穿上；依正式命令窗選「裝備」，把背包第4格銅劍裝給隊長。
@@ -160,6 +161,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("四人隊正常出城失敗：town=%v companions=%d @(%d,%d)",
 			g.inTown, len(g.companions), g.px, g.py)
 	}
+
+	// 最短任務路線會讓四人一直停在 Lv1，抵達羅馬利亞北方後連單隻中期怪都無法承受。
+	// 在阿里阿罕入口旁的原版低危 region 以正式移動／戰鬥／旅店輸入練到 Lv4；
+	// 不寫入 EXP、HP、金幣或 RNG，所有成長與補給都必須走 production consumer。
+	traceTrainNearTown(t, g, 0, 4)
 
 	// 從阿里阿罕出口沿真實地表走到拿吉米之塔；途中若發生隨機遭遇，也只送正式戰鬥輸入。
 	traceAdventureWalkToCty(t, g, 7) // 阿里阿罕西側地道入口；塔本體隔海，不能由地表直走
@@ -307,6 +313,184 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			restored.hasItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
 			restored.inTown, restored.curCty, sceneSection(restored.cur))
 	}
+}
+
+// traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
+// 取得 EXP；隊伍有人低於 3/4 HP 就正常進城找旅店，再由 section0 邊界出城。
+func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
+	t.Helper()
+	if g.inTown || cty < 0 || cty >= len(ctyLoc) || ctyLoc[cty][2] != g.layer {
+		t.Fatalf("練級起點錯：town=%v cty=%d layer=%d", g.inTown, cty, g.layer)
+	}
+	startRegion := g.encounters.Region(g.px, g.py)
+	prevX, prevY := -1, -1
+
+	needsRest := func() bool {
+		_, heroMax, _, _, _ := g.heroStats()
+		if g.heroHP <= 0 || g.heroHP*4 <= heroMax*3 {
+			return true
+		}
+		for _, m := range g.companions {
+			if m.CurHP <= 0 || m.CurHP*4 <= m.MaxHP()*3 {
+				return true
+			}
+		}
+		return false
+	}
+	allAlive := func() bool {
+		if g.heroHP <= 0 {
+			return false
+		}
+		for _, m := range g.companions {
+			if !m.Alive() {
+				return false
+			}
+		}
+		return true
+	}
+	rest := func() {
+		t.Helper()
+		traceAdventureWalkToCty(t, g, cty)
+		if !allAlive() {
+			beforeChurch := g.heroGold
+			wantChurchCost := 0
+			traceTalkFacility(t, g, facChurch)
+			if !g.church.active || g.church.stage != churchService {
+				t.Fatalf("練級陣亡後未進入正式教會 modal：active=%v stage=%d",
+					g.church.active, g.church.stage)
+			}
+			for target := 0; target < g.churchPartyLen(); target++ {
+				if g.churchMemberAlive(target) {
+					continue
+				}
+				wantChurchCost += g.pack.ReviveCost(g.churchMemberLevel(target))
+				// 原版服務順序：解毒、解詛咒、復活。第一名死者也必須經完整
+				// service→target→yes/no state machine，不能直接呼叫 churchRevive。
+				for g.church.serviceCursor != 2 {
+					if err := g.step(InputState{DirHeld: -1, DirEdge: 0}); err != nil {
+						t.Fatalf("教會選復活服務：%v", err)
+					}
+				}
+				if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+					t.Fatalf("教會確認復活服務：%v", err)
+				}
+				for g.church.targetCursor != target {
+					if err := g.step(InputState{DirHeld: -1, DirEdge: 0}); err != nil {
+						t.Fatalf("教會選陣亡角色%d：%v", target, err)
+					}
+				}
+				if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+					t.Fatalf("教會確認角色%d：%v", target, err)
+				}
+				if g.church.stage != churchConfirm {
+					t.Fatalf("教會角色%d 未進 yes/no：stage=%d msg=%q",
+						target, g.church.stage, g.church.msg)
+				}
+				if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+					t.Fatalf("教會支付角色%d復活：%v", target, err)
+				}
+				if !g.churchMemberAlive(target) {
+					t.Fatalf("教會交易後角色%d仍陣亡", target)
+				}
+			}
+			if err := g.step(InputState{Cancel: true, DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("離開教會：%v", err)
+			}
+			if g.heroGold != beforeChurch-wantChurchCost {
+				t.Fatalf("教會復活扣款錯：before=%d after=%d wantCost=%d",
+					beforeChurch, g.heroGold, wantChurchCost)
+			}
+		}
+		before := g.heroGold
+		traceTalkFacility(t, g, facInn)
+		wantCost := facilityForCty(cty, 0).innCost * (1 + len(g.companions))
+		if g.heroGold != before-wantCost {
+			t.Fatalf("練級住宿扣款錯：before=%d after=%d want=%d",
+				before, g.heroGold, wantCost)
+		}
+		_, heroMax, _, _, _ := g.heroStats()
+		if g.heroHP != heroMax || g.heroMP != g.heroMaxMP() {
+			t.Fatalf("練級住宿後勇者未補滿：HP=%d/%d MP=%d/%d",
+				g.heroHP, heroMax, g.heroMP, g.heroMaxMP())
+		}
+		for i, m := range g.companions {
+			if m.CurHP != m.MaxHP() || m.CurMP != m.MaxMP() {
+				t.Fatalf("練級住宿後同伴%d未補滿：HP=%d/%d MP=%d/%d",
+					i, m.CurHP, m.MaxHP(), m.CurMP, m.MaxMP())
+			}
+		}
+		traceExitTownBoundary(t, g)
+		prevX, prevY = -1, -1
+	}
+
+	for step := 0; step < 50000; step++ {
+		level, _, _, _, _ := g.heroStats()
+		if level >= wantLevel {
+			if needsRest() {
+				rest()
+			}
+			t.Logf("正式低危區練級完成：hero Lv%d exp=%d gold=%d", level, g.heroExp, g.heroGold)
+			return
+		}
+		if g.battle.active {
+			traceResolveBattle(t, g, false)
+			continue
+		}
+		if needsRest() {
+			rest()
+			continue
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待練級移動 cooldown: %v", err)
+			}
+			continue
+		}
+
+		moved := false
+		for dir := 0; dir < 4; dir++ {
+			dx, dy := dirDelta(dir)
+			nx, ny := g.px+dx, g.py+dy
+			if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h ||
+				g.cur.Blocked(nx, ny) || findCtyAtLayer(nx, ny, g.layer) >= 0 ||
+				g.encounters.Region(nx, ny) != startRegion {
+				continue
+			}
+			if nx == prevX && ny == prevY && dir < 3 {
+				continue
+			}
+			prevX, prevY = g.px, g.py
+			if err := g.step(InputState{DirHeld: dir, DirEdge: -1}); err != nil {
+				t.Fatalf("低危區練級移動 dir%d: %v", dir, err)
+			}
+			moved = true
+			break
+		}
+		if !moved {
+			t.Fatalf("CTY%d 入口附近找不到同 region 可走練級格 @(%d,%d)",
+				cty, g.px, g.py)
+		}
+	}
+	t.Fatalf("正式低危區練級 50000 step 仍未達 Lv%d：exp=%d", wantLevel, g.heroExp)
+}
+
+// traceTalkFacility 依當前原始 NPC 表找 facility type，而不是把店員座標寫成 debug shortcut；
+// 找到後仍由 traceTalkNPC 逐步走到櫃台並送正式交談輸入。
+func traceTalkFacility(t *testing.T, g *Game, typ int) {
+	t.Helper()
+	for i := range g.cur.npcs {
+		n := &g.cur.npcs[i]
+		f := facilityForCty(g.curCty, n.b4)
+		if f == nil || f.typ != typ || (n.ctrl>>3)&7 < 3 {
+			continue
+		}
+		if traceNPCReachable(g, g.curCty, sceneSection(g.cur), g.px, g.py, n.x, n.y) {
+			traceTalkNPC(t, g, n.x, n.y)
+			return
+		}
+	}
+	t.Fatalf("CTY%d sec%d 找不到可達 facility type%d NPC",
+		g.curCty, sceneSection(g.cur), typ)
 }
 
 func traceExitTownBoundary(t *testing.T, g *Game) {
@@ -554,29 +738,59 @@ func traceWorldPath(g *Game, tx, ty, wantCty int) []int {
 	return nil
 }
 
-func traceResolveBattle(t *testing.T, g *Game) {
+func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 	t.Helper()
+	shouldFleeStrong := len(fleeStrong) == 0 || fleeStrong[0]
+	healTarget := -1
 	for i := 0; i < 512 && g.battle.active; i++ {
 		if g.battle.result == 2 {
-			t.Fatalf("正常前段路線發生全滅：mon=%d heroHP=%d", g.battle.monID, g.battle.heroHP)
+			heroLv, _, _, _, _ := g.heroStats()
+			comp := make([][3]int, len(g.battle.companions))
+			for i, c := range g.battle.companions {
+				comp[i] = [3]int{c.level, c.hp, c.maxHP}
+			}
+			t.Fatalf("正常前段路線發生全滅：mon=%d enemies=%v heroLv=%d hero=%d/%d atk=%d def=%d companions(lv,hp,max)=%v",
+				g.battle.monID, g.battle.enemies, heroLv, g.battle.heroHP,
+				g.battle.heroMax, g.battle.heroAtk, g.battle.heroDef, comp)
 		}
 		in := InputState{DirHeld: -1, DirEdge: -1}
 		switch g.battle.phase {
 		case phCommand:
 			menu := g.battle.commandMenu(g.battle.commandActor)
-			needHeal := g.battle.commandActor == 0 &&
-				g.battle.heroHP*2 < g.battle.heroMax &&
-				g.battle.usedHerbs < g.battle.heroHerbs
+			healTarget = -1
+			if g.battle.usedHerbs < g.battle.heroHerbs {
+				bestHP, bestMax := 0, 1
+				for _, actor := range g.battle.aliveActorIndices() {
+					hp, maxHP := g.battle.actorHP(actor)
+					if hp*4 <= maxHP*3 &&
+						(healTarget < 0 || hp*bestMax < bestHP*maxHP) {
+						healTarget, bestHP, bestMax = actor, hp, maxHP
+					}
+				}
+			}
+			needHeal := healTarget >= 0
 			needFlee := g.battle.commandActor == g.battle.firstCommandActor() &&
-				g.battle.monID >= 10
-			if needHeal && menu[g.battle.cursor] != bcItem {
-				in.DirEdge = 0
-			} else if !needHeal && needFlee && menu[g.battle.cursor] != bcFlee {
+				shouldFleeStrong && g.battle.monID >= 10
+			wantCommand := bcWar
+			switch {
+			case needHeal:
+				wantCommand = bcItem
+			case needFlee:
+				wantCommand = bcFlee
+			}
+			if menu[g.battle.cursor] != wantCommand {
 				in.DirEdge = 0
 			} else {
 				in.Confirm = true
 			}
-		case phTargetEnemy, phTargetAlly, phMessage, phEnd:
+		case phTargetAlly:
+			targets := g.battle.aliveActorIndices()
+			if healTarget >= 0 && targets[g.battle.targetCursor] != healTarget {
+				in.DirEdge = 0
+			} else {
+				in.Confirm = true
+			}
+		case phTargetEnemy, phMessage, phEnd:
 			in.Confirm = true
 		default:
 			t.Fatalf("自動戰鬥遇到未處理 phase=%d", g.battle.phase)
@@ -586,7 +800,9 @@ func traceResolveBattle(t *testing.T, g *Game) {
 		}
 	}
 	if g.battle.active {
-		t.Fatal("戰鬥 512 次正式輸入後仍未結束")
+		t.Fatalf("戰鬥 512 次正式輸入後仍未結束：phase=%d actor=%d cursor=%d target=%d mon=%d result=%d",
+			g.battle.phase, g.battle.commandActor, g.battle.cursor, g.battle.targetCursor,
+			g.battle.monID, g.battle.result)
 	}
 }
 

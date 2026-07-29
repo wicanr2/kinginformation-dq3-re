@@ -19,7 +19,7 @@ Ebiten `openFacility(facInn)` 已按上述語意實作，component tests 鎖定�
 3. 死亡同伴維持死亡。
 4. 金幣不足時不扣款、不部分恢復。
 
-## Production route 的第一個 blocker
+## Production route 的 blocker 與閉合結果
 
 由羅馬利亞王座 checkpoint 正常回城、出城並步行往 CTY10 的診斷路線顯示：
 
@@ -31,12 +31,16 @@ Ebiten `openFacility(facInn)` 已按上述語意實作，component tests 鎖定�
 - 全滅時勇者仍為 Lv1。現行 trace 走最短任務路徑且對 id≥10 一律嘗試逃跑，沒有重現
   原版 RPG 的前期練級循環。
 
-因此下一步不是削弱 monster 17 或加錢，而是閉合：
+2026-07-29 已完成前兩項，不採用削弱 monster 或注入資源：
 
-1. 阿里阿罕低危區的 production 練級、回城、住宿循環與合理等級 checkpoint。
-2. Ebiten 教會 handler `0x83d8` 的正式三選單／選人／價格／復活交易。
-3. 聖水／特黑洛斯的精訊版實值與弱敵判定；`docs/49` 的 64 步是舊「經典值」假設，
+1. 正式 trace 用國王 50G 買 2 株藥草，保留復活／住宿預算；在阿里阿罕入口同一
+   encounter region 移動、戰鬥、回城，經正式教會與旅店練到 hero Lv4
+   (`EXP=324`)，再繼續跑到羅馬利亞。
+2. 教會 handler 已有三選單／選人／yes-no／扣款／復活交易。40 級費用由
+   `DQ3.EXE` file `0x19dac` 證實並存入 `dq3_cht` JSON pack；file
+   `0x85ff..0x8696` 的 level clamp、付款、清死亡與 HP/MP 回滿均有 component test。
+3. 下一個 audit 是從合法羅馬利亞 checkpoint 重跑 CTY10；同時核對聖水／特黑洛斯的
+   精訊版實值與弱敵判定。`docs/49` 的 64 步是舊「經典值」假設，
    `docs/78` 已記錄 EXE `[0x52f6]=0x28`（40 步），須統一 production 常數與 consumer。
 
-在上述完成前，CTY10 尚未達 E3；不得用 debug 等級、狀態注入或降低遭遇強度關閉此
-blocker。
+CTY10 仍未達 E3；不得因阿里阿罕訓練已通過就假定北行戰力、補給與遭遇設定皆正確。
