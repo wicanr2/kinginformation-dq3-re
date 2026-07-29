@@ -38,6 +38,8 @@ const (
 type npcInst struct {
 	x, y     int
 	ctrl, b4 int // 互動:(ctrl>>3)&7=子型;b4=對話 rec / 設施索引
+	facing   int
+	walk     int
 	spr      *dq3data.CharSprite
 }
 
@@ -52,6 +54,7 @@ type Scene struct {
 	mapFlags        byte               // CTY section header +0x10；原版野外咒文場景 gate
 	dlgText         *dq3data.Text      // 該城對話 bank(D3TXT0<bank>.TXT;地表 nil)
 	hiMap           []byte             // 每格高 byte(事件 subid)
+	specialHandlers []int              // CTY section+4 scripted handler raw IDs
 	events          [][3]int           // section 事件表 {type,param,p2}
 	transitions     [][4]int           // section 轉場表 {destCty,destSec,x,y}
 	plainTransition bool               // 此 section 允許 attr==0 + 非零 hiMap subid 的隱形轉場
@@ -344,6 +347,11 @@ type Game struct {
 	sequenceGateArmed      bool          // 原版暫存 scratch；不進存檔
 	vehicleExchangeStage   int           // game-pack staged_vehicle_exchange 的目前階段
 	vehicleExchangeEventID string        // active pack event；空字串表示無事件
+	guidedPassageStage     int           // game-pack guided_passage primitive 階段
+	guidedPassageEventID   string        // active pack event；空字串表示無事件
+	guidedPassageNPC       int           // 引路 NPC runtime index
+	guidedPassageWaypoint  int           // 目前目標 waypoint
+	guidedPassageTick      int           // waypoint 間的 frame 節流
 	mirrorStage            int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	phoenix                *dq3data.CharSprite
 	phoenixOwned           bool
@@ -411,6 +419,8 @@ func (g *Game) selectCommand(cmd int) {
 					// game-pack treasure → item exchange → location-use primitive。
 				} else if g.talkStagedVehicleExchange(n) {
 					// game-pack quest item → required item → vehicle primitive。
+				} else if g.talkGuidedPassage(n) {
+					// game-pack required item → guide walk → scene trigger primitive。
 				} else {
 					g.scriptedTalk(n.b4)
 				}
@@ -938,6 +948,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceBossSurrenderDialogue()
 				g.advanceSequenceGateDialogue()
 				g.advanceStagedVehicleExchangeDialogue()
+				g.advanceGuidedPassageDialogue()
 			}
 		}
 		g.renderFrame()
@@ -945,6 +956,11 @@ func (g *Game) step(in InputState) error {
 	}
 	if g.phoenixStage == 3 {
 		g.advancePhoenixAnimation()
+		g.renderFrame()
+		return nil
+	}
+	if g.guidedPassageAnimating() {
+		g.advanceGuidedPassageAnimation()
 		g.renderFrame()
 		return nil
 	}
@@ -1038,6 +1054,7 @@ func (g *Game) step(in InputState) error {
 		g.trySequenceGateEvent()
 		g.tryOpeningRegionEvent()
 		g.tryBossSurrenderEvent()
+		g.tryGuidedPassageTrigger()
 		g.tryBaramosReturnEvent()
 		g.tryOrtegaEvent()
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
@@ -1981,7 +1998,11 @@ func (g *Game) renderFrame() {
 		if n.spr == nil || n.x < camX || n.x >= camX+ViewCols || n.y < camY || n.y >= camY+ViewRows {
 			continue
 		}
-		blitSprite(g.rgba, (n.x-camX)*TileW, (n.y-camY)*TileH, n.spr.Frames[0], sc.pal)
+		frame := n.facing*dq3data.CharWalk + n.walk
+		if frame < 0 || frame >= len(n.spr.Frames) {
+			frame = 0
+		}
+		blitSprite(g.rgba, (n.x-camX)*TileW, (n.y-camY)*TileH, n.spr.Frames[frame], sc.pal)
 	}
 	// 船(地表):停泊船 tile;主角在船上 → 畫船 tile 取代主角
 	if !g.inTown && g.shipOwned && !g.shipAboard &&

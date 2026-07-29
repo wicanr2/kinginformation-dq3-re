@@ -43,7 +43,7 @@ RE 文件。
 
 ![Ebiten：場景咒文選單](dq3_remake_ebitan/docs/field_spell_menu.png)
 
-![Ebiten：終盤索瑪戰切片](dq3_remake_ebitan/docs/zoma_final_battle.png)
+![Ebiten：諾魯德密道正式流程](dq3_remake_ebitan/docs/norud_passage_trigger.png)
 
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
@@ -71,9 +71,9 @@ RE 文件。
 
 ## 證據優先序
 
-1. 原版 `DQ3.EXE`、CTY、D3TXT、ITEM、怪物及其他原始資料。
-2. DOSBox 同狀態、同輸入的原版實機結果。
-3. 本機完整通關影片，用於畫面、操作順序與路線；修改過的角色數值不作參數 oracle。
+1. DOSBox 同狀態、同輸入的原版實機結果，以及本機完整通關影片的玩家可見結果。
+2. 原版 `DQ3.EXE`、CTY、D3TXT、ITEM、怪物及其他原始資料。
+3. 完整影片用於畫面、操作順序與路線；修改過的角色數值不作參數 oracle。
 4. 當年 BBS 與攻略，用於找路線及歷史交叉佐證。
 5. C/SDL remake 與較早文件，用於提供實作線索。
 

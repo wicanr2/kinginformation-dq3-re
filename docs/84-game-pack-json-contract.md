@@ -1,6 +1,6 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與五種事件 primitive；
+> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與六種事件 primitive；
 > 其餘資料表依垂直切片逐批遷移。
 >
 > 適用範圍：Go／Ebitengine 共用核心，以及未來的 `dq1_cht`、`dq2_cht`、`dq3_cht`
@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.3"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.4"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.3",
+  "schema_version": "0.1.4",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -378,7 +378,8 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 | `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
 
 目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
-諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89、波魯多加 D3TXT04 rec24–28
+諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89、波魯多加 D3TXT04 rec24–28、
+諾魯德 D3TXT04 rec87–90
 與「是／否」已遷入
 `data/texts.json`；parity test 逐 word
 對原始 D3TXT，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
@@ -548,6 +549,35 @@ event-tile rebuild 更新目前場景。DQ3 canonical 範例與完整證據見 `
 不合法時，loader 在 runtime mutation 前失敗即關閉。DQ3 canonical 值與原版證據見
 `events.json`、[`docs/50`](50-ship-acquisition.md)。
 
+第六個已實作 primitive 是 `guided_passage_events`，供「指定 NPC 檢查必要道具→NPC
+沿固定路徑引路→交回正常玩家輸入→玩家踩 scene tile trigger→對話後 NPC 沿固定路徑
+返回→原子更新旗標」的有限流程使用。它不包含諾魯德、國王信或 DQ3 固有 ID。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `guided_passage_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 ID；kind 固定為 `guided_passage`。 |
+| `[].guide_npc`／`[].completed_npc` | object | 是 | 同 CTY／section／handler 的起始與完成 NPC selector。 |
+| `[].interaction_tile` | `{x,y}` | 是 | 玩家合法交談格，必須與起始 NPC 正交相鄰。 |
+| `[].completion_trigger` | object | 是 | `scene_tile_subid` selector；含 `cty_raw/section/tile_subid/tiles`。引擎只在真實玩家移動後查驗，並以 `special_handlers[tile_subid-1]` 對照 handler。 |
+| `[].scene_handler_raw` | int | 是 | 原始 special-handler table 值，僅作有限 dispatcher 與 parity anchor。 |
+| `[].required_item_raw_id` | int | 是 | 必要道具；是否消耗由下一欄明載。 |
+| `[].consume_required_item` | boolean | 是 | 只在完成交易時依原版決定是否消耗。 |
+| `[].guide_present_flag_raw` | int | 是 | 起始 NPC 可見旗標。 |
+| `[].animation_pending_flag_raw` | int | 是 | NPC 引路完成、等待玩家踩 trigger 的暫態原版旗標。 |
+| `[].completed_flag_raw` | int | 是 | 完成 NPC 可見旗標；三個旗標不得重複。 |
+| `[].guide_path`／`[].guide_return_path` | `{x,y}[]` | 是 | 起點相接的正交 waypoint；只描述路徑，不含任意程式。 |
+| `[].guide_end_facing`／`[].guide_return_end_facing` | enum | 是 | 各段原始 mode=2 轉身結果：`down/up/left/right`。 |
+| `[].step_frames` | int | 是 | 每格固定 simulation frames，合法 1–60。 |
+| `[].guide_movement_raw_hex`／`[].guide_return_raw_hex` | string／string[] | 是 | 原始 movement triplets，供 EXE parity test；引擎不執行 raw bytes。 |
+| `[].dialogue_text_ids` | object | 是 | `introduction/acceptance/guide_ready/after` 四個穩定 text ID。 |
+| `[].evidence` | object | 是 | caller→writer→table/state→consumer 與玩家可見結果的 D3 證據。 |
+
+引擎在第一段 NPC 動畫後必須交回正常輸入，不得自動搬移隊伍；只有玩家實際踩到已驗證
+的 tile/subid/handler 三重 selector 才能開始完成對話。缺道具、文字、selector、raw anchor
+或 final facing 時在任何 mutation 前失敗即關閉。DQ3 canonical 值、IDA 位址與正式 trace
+見 `events.json`、[`docs/88`](88-norud-guided-passage-production-trace.md)。
+
 ### 6.10 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
@@ -567,7 +597,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.3",
+  "schema_version": "0.1.4",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

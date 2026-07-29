@@ -938,6 +938,102 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.hasItem(portoga.GrantedItemRawID), g.storyFlag(portoga.QuestPresentFlagRaw),
 			g.shipOwned, g.curCty, sceneSection(g.cur))
 	}
+
+	// 國王信件 checkpoint → 反向穿過羅馬利亞祠堂。CTY34 出口記住
+	// cty_loc 的左格 (38,53)，往東一格仍屬同一個兩格寬入口，會正常重入
+	// CTY34；因此使用已習得的魯拉，從正式命令窗回到已造訪的羅馬利亞，
+	// 再徒步前往阿莎拉慕東方 CTY62。全程不注入場景或座標。
+	traceTownSectionTo(t, g, 16, 0)
+	traceTownSectionTo(t, g, -1, -1)
+	traceAdventureWalkToCty(t, g, 35, false)
+	traceTownSectionTo(t, g, 34, 0)
+	traceExitTownBoundary(t, g, true)
+	traceRuraToCty(t, g, 2)
+	guidedEvents := g.pack.GuidedPassageEvents()
+	if len(guidedEvents) != 2 {
+		t.Fatalf("guided passage events=%d, want CTY62/63 variants", len(guidedEvents))
+	}
+	// 持信首訪由山脈西側 CTY62 spawn=(3,8) 進入；CTY63
+	// spawn=(94,10) 是通道另一側，從羅馬利亞徒步不可達。
+	norud := guidedEvents[0]
+	traceAdventureWalkToCty(t, g, norud.GuideNPC.CTYRaw, false)
+	start := norud.InteractionTile
+	traceWalkTo(t, g, start.X, start.Y)
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	talkDir := -1
+	for dir := 0; dir < 4; dir++ {
+		dx, dy := dirDelta(dir)
+		if start.X+dx == norud.GuideNPC.Tile.X &&
+			start.Y+dy == norud.GuideNPC.Tile.Y {
+			talkDir = dir
+			break
+		}
+	}
+	if talkDir < 0 {
+		t.Fatalf("諾魯多 interaction_tile 未與 guide_npc 相鄰：start=%+v npc=%+v",
+			start, norud.GuideNPC.Tile)
+	}
+	send(InputState{DirHeld: talkDir, DirEdge: -1}) // 面向 NPC；碰撞不移動。
+	press(InputState{Confirm: true})                // 開命令窗。
+	press(InputState{Confirm: true})                // 選「對話」。
+	if !g.dlg.open || g.guidedPassageStage != guidedPassageIntroduction {
+		t.Fatalf("正式交談未命中諾魯多 rec87：dlg=%v stage=%d",
+			g.dlg.open, g.guidedPassageStage)
+	}
+	traceCloseDialogue(t, g) // rec87 → rec88 → 啟動引路者移動。
+	for frames := 0; frames < 2000 && g.guidedPassageStage != guidedPassageAwaitTrigger; frames++ {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if g.guidedPassageStage != guidedPassageAwaitTrigger || g.dlg.open ||
+		!g.storyFlag(norud.AnimationPendingFlagRaw) {
+		t.Fatalf("諾魯多引路後未交回玩家控制：stage=%d dlg=%v pending=%v",
+			g.guidedPassageStage, g.dlg.open, g.storyFlag(norud.AnimationPendingFlagRaw))
+	}
+	trigger := norud.CompletionTrigger.Tiles[0]
+	traceWalkTo(t, g, trigger.X, trigger.Y)
+	if g.guidedPassageStage != guidedPassageCompletionDialogue || !g.dlg.open {
+		t.Fatalf("走到 handler57 trigger 後未開 rec90：stage=%d dlg=%v pos=(%d,%d)",
+			g.guidedPassageStage, g.dlg.open, g.px, g.py)
+	}
+	traceCloseDialogue(t, g)
+	for frames := 0; frames < 2000 && g.guidedPassageStage != guidedPassageIdle; frames++ {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if g.guidedPassageStage != guidedPassageIdle ||
+		g.storyFlag(norud.GuidePresentFlagRaw) ||
+		g.storyFlag(norud.AnimationPendingFlagRaw) ||
+		!g.storyFlag(norud.CompletedFlagRaw) ||
+		!g.hasItem(norud.RequiredItemRawID) ||
+		g.px != trigger.X || g.py != trigger.Y {
+		t.Fatalf("諾魯特正式引路交易錯：stage=%d flags=%v/%v/%v letter=%v pos=(%d,%d)",
+			g.guidedPassageStage, g.storyFlag(norud.GuidePresentFlagRaw),
+			g.storyFlag(norud.AnimationPendingFlagRaw), g.storyFlag(norud.CompletedFlagRaw),
+			g.hasItem(norud.RequiredItemRawID), g.px, g.py)
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存諾魯特密道 checkpoint：%v", err)
+	}
+	restored, err = NewGame(g.assets, nil)
+	if err != nil {
+		t.Fatalf("重建諾魯特密道讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if g.storyFlag(norud.GuidePresentFlagRaw) ||
+		!g.storyFlag(norud.CompletedFlagRaw) ||
+		!g.hasItem(norud.RequiredItemRawID) ||
+		g.curCty != norud.GuideNPC.CTYRaw ||
+		sceneSection(g.cur) != norud.GuideNPC.Section ||
+		g.px != trigger.X || g.py != trigger.Y {
+		t.Fatalf("諾魯特 checkpoint round-trip 錯：flags=%v/%v letter=%v cty=%d sec=%d pos=(%d,%d)",
+			g.storyFlag(norud.GuidePresentFlagRaw), g.storyFlag(norud.CompletedFlagRaw),
+			g.hasItem(norud.RequiredItemRawID), g.curCty, sceneSection(g.cur), g.px, g.py)
+	}
 }
 
 // traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
@@ -1196,6 +1292,59 @@ func traceExitTownBoundary(t *testing.T, g *Game, avoidPortals ...bool) {
 	}
 }
 
+// traceRuraToCty 只經正式命令窗、咒文清單與魯拉目的地清單操作。
+// 目的城必須已由玩家正常造訪；找不到目的地或施法者 MP 不足時 fail closed。
+func traceRuraToCty(t *testing.T, g *Game, wantCty int) {
+	t.Helper()
+	press := func(in InputState) {
+		if err := g.step(in); err != nil {
+			t.Fatalf("魯拉正式輸入：%v", err)
+		}
+	}
+	press(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 開命令窗
+	press(InputState{DirHeld: -1, DirEdge: 3})                 // 對話→咒文
+	press(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.fieldSpell.active {
+		t.Fatal("正式命令窗未開啟野外咒文")
+	}
+	spellIndex := -1
+	for i, choice := range g.fieldSpell.choices {
+		if choice.rec == fieldRura {
+			spellIndex = i
+			break
+		}
+	}
+	if spellIndex < 0 {
+		t.Fatal("目前隊伍尚未習得魯拉")
+	}
+	for g.fieldSpell.cursor != spellIndex {
+		press(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.fieldSpell.dest {
+		t.Fatal("魯拉未進入已造訪城鎮清單")
+	}
+	destIndex := -1
+	for i, visit := range g.visitedTowns {
+		if visit.Cty == wantCty {
+			destIndex = i
+			break
+		}
+	}
+	if destIndex < 0 {
+		t.Fatalf("魯拉目的地 CTY%d 尚未由玩家造訪：%+v", wantCty, g.visitedTowns)
+	}
+	for g.fieldSpell.cursor != destIndex {
+		press(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.inTown || g.curCty >= 0 || g.layer != ctyLoc[wantCty][2] ||
+		g.px != ctyLoc[wantCty][0]-1 || g.py != ctyLoc[wantCty][1] {
+		t.Fatalf("魯拉未抵達 CTY%d 西側地表：town=%v cty=%d layer=%d @(%d,%d)",
+			wantCty, g.inTown, g.curCty, g.layer, g.px, g.py)
+	}
+}
+
 // traceUseInventoryItem 只送 production 命令窗／道具面板輸入，從背包中選到指定 id 後使用。
 func traceUseInventoryItem(t *testing.T, g *Game, code int) {
 	t.Helper()
@@ -1346,9 +1495,21 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int, fleeStrong ...b
 	}
 	if !g.inTown || g.curCty != wantCty {
 		lx, ly := ctyLoc[wantCty][0], ctyLoc[wantCty][1]
-		t.Fatalf("無法由地表抵達 CTY%d；目前 town=%v cty=%d @(%d,%d)，入口 (%d,%d) blocked=%v / (%d,%d) blocked=%v",
+		rawPath := tracePath(g.cur, g.px, g.py, lx, ly)
+		firstCty, firstX, firstY := -1, -1, -1
+		x, y := g.px, g.py
+		for _, dir := range rawPath {
+			dx, dy := dirDelta(dir)
+			x, y = x+dx, y+dy
+			if cty := findCtyAtLayer(x, y, g.layer); cty >= 0 && cty != wantCty {
+				firstCty, firstX, firstY = cty, x, y
+				break
+			}
+		}
+		t.Fatalf("無法由地表抵達 CTY%d；目前 town=%v cty=%d @(%d,%d)，入口 (%d,%d) blocked=%v / (%d,%d) blocked=%v，不避開其他入口的路徑長度=%d、首個衝突入口=CTY%d@(%d,%d)",
 			wantCty, g.inTown, g.curCty, g.px, g.py,
-			lx, ly, g.cur.Blocked(lx, ly), lx+1, ly, g.cur.Blocked(lx+1, ly))
+			lx, ly, g.cur.Blocked(lx, ly), lx+1, ly, g.cur.Blocked(lx+1, ly),
+			len(rawPath), firstCty, firstX, firstY)
 	}
 }
 

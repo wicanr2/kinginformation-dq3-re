@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.3",
+  "schema_version": "0.1.4",
   "boss_surrender_events": [
     {
       "id": "dq3:event.shanpane_kandar",
@@ -230,6 +230,142 @@
         "address": "0x6ae1..0x6b75",
         "consumer": "handler26 tests flags 0x37/0x38; gives item 0x5b then clears 0x37; checks and consumes item 0x5c, clears 0x2c, writes ship (25,73,layer0), and uses records 24/25/26/27/28",
         "doc": "docs/50-ship-acquisition.md"
+      }
+    }
+  ],
+  "guided_passage_events": [
+    {
+      "id": "dq3:event.norud_eastern_passage",
+      "kind": "guided_passage",
+      "guide_npc": {
+        "cty_raw": 62,
+        "section": 0,
+        "tile": {"x": 38, "y": 5},
+        "handler_raw": 50
+      },
+      "completed_npc": {
+        "cty_raw": 62,
+        "section": 0,
+        "tile": {"x": 51, "y": 21},
+        "handler_raw": 50
+      },
+      "interaction_tile": {"x": 38, "y": 6},
+      "completion_trigger": {
+        "kind": "scene_tile_subid",
+        "cty_raw": 62,
+        "section": 0,
+        "tile_subid": 1,
+        "tiles": [{"x": 50, "y": 15}]
+      },
+      "scene_handler_raw": 57,
+      "required_item_raw_id": 91,
+      "consume_required_item": false,
+      "guide_present_flag_raw": 76,
+      "animation_pending_flag_raw": 22,
+      "completed_flag_raw": 28,
+      "guide_path": [
+        {"x": 38, "y": 5},
+        {"x": 47, "y": 5},
+        {"x": 47, "y": 7},
+        {"x": 49, "y": 7},
+        {"x": 49, "y": 10},
+        {"x": 50, "y": 10},
+        {"x": 50, "y": 21}
+      ],
+      "guide_return_path": [
+        {"x": 50, "y": 21},
+        {"x": 50, "y": 9},
+        {"x": 51, "y": 9}
+      ],
+      "guide_end_facing": "up",
+      "guide_return_end_facing": "up",
+      "step_frames": 7,
+      "guide_movement_raw_hex": "0903000200000203000300000103000b0000010202ff",
+      "guide_return_raw_hex": [
+        "040200040000ff",
+        "010300010202ff"
+      ],
+      "dialogue_text_ids": {
+        "introduction": "dq3:text.norud.introduction",
+        "acceptance": "dq3:text.norud.acceptance",
+        "guide_ready": "dq3:text.norud.guide_ready",
+        "after": "dq3:text.norud.after"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY62.DAT + D3TXT04.TXT + local original video",
+        "address_space": "file",
+        "address": "0x712f..0x7250",
+        "consumer": "sub2 handler50 checks flag 0x4c and item 0x5b without consuming it, moves the guide and sets transient flag 0x16; the player then walks under normal input to CTY scene handler57, which shows rec90, returns the guide, clears 0x16/0x4c and sets 0x1c",
+        "doc": "docs/88-norud-guided-passage-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:event.norud_eastern_passage.return_side",
+      "kind": "guided_passage",
+      "guide_npc": {
+        "cty_raw": 63,
+        "section": 0,
+        "tile": {"x": 38, "y": 5},
+        "handler_raw": 50
+      },
+      "completed_npc": {
+        "cty_raw": 63,
+        "section": 0,
+        "tile": {"x": 51, "y": 21},
+        "handler_raw": 50
+      },
+      "interaction_tile": {"x": 38, "y": 6},
+      "completion_trigger": {
+        "kind": "scene_tile_subid",
+        "cty_raw": 63,
+        "section": 0,
+        "tile_subid": 1,
+        "tiles": [{"x": 50, "y": 15}]
+      },
+      "scene_handler_raw": 57,
+      "required_item_raw_id": 91,
+      "consume_required_item": false,
+      "guide_present_flag_raw": 76,
+      "animation_pending_flag_raw": 22,
+      "completed_flag_raw": 28,
+      "guide_path": [
+        {"x": 38, "y": 5},
+        {"x": 47, "y": 5},
+        {"x": 47, "y": 7},
+        {"x": 49, "y": 7},
+        {"x": 49, "y": 10},
+        {"x": 50, "y": 10},
+        {"x": 50, "y": 21}
+      ],
+      "guide_return_path": [
+        {"x": 50, "y": 21},
+        {"x": 50, "y": 9},
+        {"x": 51, "y": 9}
+      ],
+      "guide_end_facing": "up",
+      "guide_return_end_facing": "up",
+      "step_frames": 7,
+      "guide_movement_raw_hex": "0903000200000203000300000103000b0000010202ff",
+      "guide_return_raw_hex": [
+        "040200040000ff",
+        "010300010202ff"
+      ],
+      "dialogue_text_ids": {
+        "introduction": "dq3:text.norud.introduction",
+        "acceptance": "dq3:text.norud.acceptance",
+        "guide_ready": "dq3:text.norud.guide_ready",
+        "after": "dq3:text.norud.after"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY63.DAT + D3TXT04.TXT",
+        "address_space": "file",
+        "address": "0x712f..0x7250",
+        "consumer": "CTY63 differs from CTY62 only in map flags and side-specific spawn, while retaining the same handler50/57 data and persistent completion flags",
+        "doc": "docs/88-norud-guided-passage-production-trace.md"
       }
     }
   ]

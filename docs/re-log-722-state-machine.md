@@ -164,8 +164,8 @@ GIVE/TAKE/tflag/sflag/region/warp/recs。這份才是 wiring 權威清單(取代
 - 其餘給予型(7/12/31/49/...)都是 `test_flag(prereq); je GIVE` 結構:**給予分支在 je 目標之後**
   (另一塊),給予**閘在 flag**。`tools/decode_sub2_struct.py` 解出完整雙區塊 →`docs/data/sub2-struct.md`:
   每個 {always_rec, prereq_flag(je極性), before/give_rec, give/take item, set_flag}。
-- 道具經 inventory.h/main.c 定錨:0x5b 船、0x5c 黑胡椒、0x6b 銀寶珠、0x65 光之珠、0x73 雲雨之杖…。
-  48-50/63-68 是「船/銀寶珠/0x66」的多 NPC flag 鏈(0x4a→0x4b→0x4c)子任務。
+- **2026-07-29 更正**：本段依舊 C `inventory.h/main.c` 把 `0x5b` 寫成船是錯的。
+  D3TXT00 道具名與原版 handler26/50 已證實 `0x5b` 是國王的信；船是獨立 vehicle state。
 
 **決策**:完整 flag 機器(誰設各 prereq flag = [0x722] region machine + examine 事件圖)是另一條
 大型 RE 線;4 個主要給予 NPC 觀感行為已驗證。依目標優先序(可破關>polish>驗證>打包),
@@ -184,14 +184,15 @@ give/take handler 全部接齊:
 | 84 | CTY16 (33,24) | 0x10 誘惑之劍 | 與卡爾洛斯重逢答謝(rec98/99,bank4)|
 
 ### 檢查型(require_item)— 新增 handler 分支(0x7c0c 檢查、**不消耗**)
-`dq3_scripted` 加 `require_item` 欄;持物→success rec、缺物→need rec。判定 0x7c0c 為「檢查」非
-「消耗」的關鍵證據:**byte4=50 require 船 0x5b**(不可能消耗玩家的船 → 必為 gate 檢查)。
+`dq3_scripted` 加 `require_item` 欄;持物→success rec、缺物→need rec。後續 IDA 已直接
+證實 byte4=50 搜尋的是國王的信 `0x5b` 且不消耗；舊文以「船不可能被消耗」作反推的理由
+已撤回，結論改由 EXE inventory search consumer 定錨（`docs/88`）。
 
 | byte4 | CTY/位置 | 需求物 | 缺物 rec / 持物 rec |
 |---|---|---|---|
 | 16 | CTY5 精靈之村 (17,7) | 0x59 夢幻紅寶石 | rec47 / rec90 |
 | 44 | CTY54 (8,2) | 0x62 變身杖 | rec61 / rec56 |
-| 50 | CTY62/63 (cty=0xff) | 0x5b 船 | rec89 / rec87(渡海 gate)|
+| 50 | CTY62/63 (cty=0xff) | 0x5b 國王的信 | rec89 / rec87；handler50 引路，handler57 完成通道 |
 
 ### 不接(查證後排除)
 - **byte4=35**(give 0x66):handler 存在但**無任何 NPC 引用** → 開發殘留。
@@ -307,7 +308,7 @@ game_tester **41/41**。
 
 ## Step 20:B-2 變身杖鏈 + 全 quest 道具 id 定錨(杜勝利 Ch35/37)2026-06-26
 
-- **quest 道具連續 id 全解出**(font 渲染 D3TXT00):0x59 夢幻紅寶石 / 0x5a 覺醒粉 / 0x5b 船 /
+- **quest 道具連續 id 全解出**(font 渲染 D3TXT00；0x5b 於 2026-07-29 更正):0x59 夢幻紅寶石 / 0x5a 覺醒粉 / 0x5b 國王的信 /
   0x5c 黑胡椒 / 0x5d 隱身草 / 0x5e 乾渴壺 / 0x5f 黑暗之燈 / 0x60 回音之笛 / 0x61 拉之鏡 /
   0x62 變身杖 / 0x63 船員之骨 / 0x65 光之珠 / 0x66-0x6b 六寶珠。**一張連續道具表,後續鏈可直接查。**
 - **byte4=44 變身杖 transform**:完整解出 je 分支——持變身杖 0x62 → `mov[si],0x63` 換船員之骨

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.3"
+	SchemaVersion = "0.1.4"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -307,6 +307,41 @@ type StagedVehicleExchangeEvent struct {
 	Evidence                 Evidence                     `json:"evidence"`
 }
 
+type GuidedPassageTextIDs struct {
+	Introduction string `json:"introduction"`
+	Acceptance   string `json:"acceptance"`
+	GuideReady   string `json:"guide_ready"`
+	After        string `json:"after"`
+}
+
+// GuidedPassageEvent is a finite shared primitive for an NPC who checks a
+// required item, walks a fixed route, lets the player follow under normal
+// input, then completes on a scene-tile trigger. Paths are declarative cardinal
+// waypoints; they cannot contain engine code.
+type GuidedPassageEvent struct {
+	ID                      string               `json:"id"`
+	Kind                    string               `json:"kind"`
+	GuideNPC                ScriptedNPCSelector  `json:"guide_npc"`
+	CompletedNPC            ScriptedNPCSelector  `json:"completed_npc"`
+	InteractionTile         TileCoordinate       `json:"interaction_tile"`
+	CompletionTrigger       SceneTileTrigger     `json:"completion_trigger"`
+	SceneHandlerRaw         int                  `json:"scene_handler_raw"`
+	RequiredItemRawID       int                  `json:"required_item_raw_id"`
+	ConsumeRequiredItem     bool                 `json:"consume_required_item"`
+	GuidePresentFlagRaw     int                  `json:"guide_present_flag_raw"`
+	AnimationPendingFlagRaw int                  `json:"animation_pending_flag_raw"`
+	CompletedFlagRaw        int                  `json:"completed_flag_raw"`
+	GuidePath               []TileCoordinate     `json:"guide_path"`
+	GuideReturnPath         []TileCoordinate     `json:"guide_return_path"`
+	GuideEndFacing          string               `json:"guide_end_facing"`
+	GuideReturnEndFacing    string               `json:"guide_return_end_facing"`
+	StepFrames              int                  `json:"step_frames"`
+	GuideMovementRawHex     string               `json:"guide_movement_raw_hex"`
+	GuideReturnRawHex       []string             `json:"guide_return_raw_hex"`
+	DialogueTextIDs         GuidedPassageTextIDs `json:"dialogue_text_ids"`
+	Evidence                Evidence             `json:"evidence"`
+}
+
 type Events struct {
 	SchemaVersion               string                       `json:"schema_version"`
 	BossSurrenderEvents         []BossSurrenderEvent         `json:"boss_surrender_events"`
@@ -314,6 +349,7 @@ type Events struct {
 	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
 	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate     `json:"two_step_floor_switch_gates"`
 	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
+	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
 }
 
 type TextSource struct {
@@ -382,6 +418,7 @@ type Pack struct {
 	questItemEvents  map[string]*QuestItemChainEvent
 	sequenceGates    map[string]*TwoStepFloorSwitchGate
 	vehicleExchanges map[string]*StagedVehicleExchangeEvent
+	guidedPassages   map[string]*GuidedPassageEvent
 	charDefaults     map[string]*CharacterDefault
 	texts            map[string]*TextDefinition
 	contentHash      string
@@ -652,6 +689,18 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.GuidedPassageEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"introduction": refs.Introduction, "acceptance": refs.Acceptance,
+			"guide_ready": refs.GuideReady, "after": refs.After,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	return nil
 }
 
@@ -678,6 +727,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.StagedVehicleExchangeEvents == nil {
 		return errors.New("staged_vehicle_exchange_events must be present")
+	}
+	if p.Events.GuidedPassageEvents == nil {
+		return errors.New("guided_passage_events must be present")
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -902,6 +954,114 @@ func (p *Pack) validateEvents() error {
 		}
 		p.vehicleExchanges[e.ID] = e
 	}
+	p.guidedPassages = make(map[string]*GuidedPassageEvent,
+		len(p.Events.GuidedPassageEvents))
+	for i := range p.Events.GuidedPassageEvents {
+		e := &p.Events.GuidedPassageEvents[i]
+		if e.ID == "" || e.Kind != "guided_passage" {
+			return fmt.Errorf("guided_passage_events[%d]: id and kind=guided_passage are required", i)
+		}
+		if _, exists := p.guidedPassages[e.ID]; exists {
+			return fmt.Errorf("duplicate guided passage event id %q", e.ID)
+		}
+		if !validScriptedNPC(e.GuideNPC) || !validScriptedNPC(e.CompletedNPC) ||
+			e.GuideNPC.CTYRaw != e.CompletedNPC.CTYRaw ||
+			e.GuideNPC.Section != e.CompletedNPC.Section ||
+			e.GuideNPC.HandlerRaw != e.CompletedNPC.HandlerRaw ||
+			e.GuideNPC == e.CompletedNPC ||
+			e.SceneHandlerRaw < 0 || e.SceneHandlerRaw > 255 ||
+			e.RequiredItemRawID < 0 || e.RequiredItemRawID > 255 ||
+			e.StepFrames < 1 || e.StepFrames > 60 {
+			return fmt.Errorf("%s: invalid selectors, handler, item or step_frames", e.ID)
+		}
+		flags := []int{
+			e.GuidePresentFlagRaw,
+			e.AnimationPendingFlagRaw,
+			e.CompletedFlagRaw,
+		}
+		seenFlags := map[int]bool{}
+		for _, flag := range flags {
+			if flag < 0 || flag >= 512 || seenFlags[flag] {
+				return fmt.Errorf("%s: invalid or duplicate passage flag %d", e.ID, flag)
+			}
+			seenFlags[flag] = true
+		}
+		interactionDX := e.InteractionTile.X - e.GuideNPC.Tile.X
+		if interactionDX < 0 {
+			interactionDX = -interactionDX
+		}
+		interactionDY := e.InteractionTile.Y - e.GuideNPC.Tile.Y
+		if interactionDY < 0 {
+			interactionDY = -interactionDY
+		}
+		if e.InteractionTile.X < 0 || e.InteractionTile.Y < 0 ||
+			interactionDX+interactionDY != 1 ||
+			e.CompletionTrigger.Kind != "scene_tile_subid" ||
+			e.CompletionTrigger.CTYRaw != e.GuideNPC.CTYRaw ||
+			e.CompletionTrigger.Section != e.GuideNPC.Section ||
+			e.CompletionTrigger.TileSubID < 1 || e.CompletionTrigger.TileSubID > 31 ||
+			len(e.CompletionTrigger.Tiles) == 0 ||
+			len(e.GuidePath) < 2 || len(e.GuideReturnPath) < 2 ||
+			e.GuidePath[0] != e.GuideNPC.Tile ||
+			e.GuideReturnPath[0] != e.GuidePath[len(e.GuidePath)-1] {
+			return fmt.Errorf("%s: disconnected interaction, trigger or guide path", e.ID)
+		}
+		validatePath := func(name string, points []TileCoordinate) error {
+			for j, point := range points {
+				if point.X < 0 || point.Y < 0 {
+					return fmt.Errorf("%s: %s waypoint %d out of range", e.ID, name, j)
+				}
+				if j == 0 {
+					continue
+				}
+				prev := points[j-1]
+				if prev == point || prev.X != point.X && prev.Y != point.Y {
+					return fmt.Errorf("%s: %s waypoint %d is not a cardinal segment", e.ID, name, j)
+				}
+			}
+			return nil
+		}
+		if err := validatePath("guide_path", e.GuidePath); err != nil {
+			return err
+		}
+		if err := validatePath("guide_return_path", e.GuideReturnPath); err != nil {
+			return err
+		}
+		validFacing := func(facing string) bool {
+			switch facing {
+			case "down", "up", "left", "right":
+				return true
+			default:
+				return false
+			}
+		}
+		if !validFacing(e.GuideEndFacing) || !validFacing(e.GuideReturnEndFacing) {
+			return fmt.Errorf("%s: guide final facings must be down/up/left/right", e.ID)
+		}
+		for j, tile := range e.CompletionTrigger.Tiles {
+			if tile.X < 0 || tile.Y < 0 {
+				return fmt.Errorf("%s: completion trigger tile %d out of range", e.ID, j)
+			}
+		}
+		if e.GuideMovementRawHex == "" || len(e.GuideReturnRawHex) == 0 {
+			return fmt.Errorf("%s: movement raw anchors are required", e.ID)
+		}
+		if _, err := hex.DecodeString(e.GuideMovementRawHex); err != nil {
+			return fmt.Errorf("%s: invalid guide_movement_raw_hex: %w", e.ID, err)
+		}
+		for j, rawHex := range e.GuideReturnRawHex {
+			if rawHex == "" {
+				return fmt.Errorf("%s: empty guide_return_raw_hex[%d]", e.ID, j)
+			}
+			if _, err := hex.DecodeString(rawHex); err != nil {
+				return fmt.Errorf("%s: invalid guide_return_raw_hex[%d]: %w", e.ID, j, err)
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.guidedPassages[e.ID] = e
+	}
 	return nil
 }
 
@@ -1084,6 +1244,15 @@ func (p *Pack) StagedVehicleExchangeEvents() []StagedVehicleExchangeEvent {
 
 func (p *Pack) StagedVehicleExchangeEvent(id string) (*StagedVehicleExchangeEvent, bool) {
 	e, ok := p.vehicleExchanges[id]
+	return e, ok
+}
+
+func (p *Pack) GuidedPassageEvents() []GuidedPassageEvent {
+	return append([]GuidedPassageEvent(nil), p.Events.GuidedPassageEvents...)
+}
+
+func (p *Pack) GuidedPassageEvent(id string) (*GuidedPassageEvent, bool) {
+	e, ok := p.guidedPassages[id]
 	return e, ok
 }
 

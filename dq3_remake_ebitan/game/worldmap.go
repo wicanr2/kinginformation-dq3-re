@@ -163,7 +163,8 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: dq3data.DarkenPalette(pal, phase),
 		w: tw.W, h: tw.H, tileAt: tw.Tile, spawnX: tw.SpawnX, spawnY: tw.SpawnY,
 		mapFlags: tw.MapFlags,
-		hiMap:    tw.HiMap, events: tw.Events, transitions: tw.Transitions, sec: section, night: night,
+		hiMap:    tw.HiMap, specialHandlers: tw.SpecialHandlers,
+		events: tw.Events, transitions: tw.Transitions, sec: section, night: night,
 		plainTransition: (cty == 72 && section == 0) || (cty == 90 && section == 4),
 	}
 	sc.applyClearedEventTiles(flagSet)

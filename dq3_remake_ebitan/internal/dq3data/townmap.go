@@ -5,15 +5,16 @@ import "fmt"
 // Town 是一張城鎮版面(CTY 檔的一個 section)。移植自 C dq3_town_load 的 layout 解析。
 // CTY 檔用 CTYnn.DAT;阿里阿罕(起始城)= CTY00.DAT / section 0 / blk_n=1(DQ31.BLK+BLKBM1.DAT)。
 type Town struct {
-	W, H           int
-	Cells          []byte   // 每格 tile 索引(u16 低 byte;高 byte=事件 subid,渲染不用)
-	SpawnX, SpawnY int      // 版面 spawn(section header +0x13/+0x14)
-	DlgBank        int      // 對話 bank(section header +0x17 → D3TXT0<bank>.TXT)
-	MapFlags       byte     // section header +0x10；bit0=魯拉可用、bit1=烈米特可用
-	HiMap          []byte   // 每格高 byte(低 5 bit = 事件/轉場 subid)
-	Events         [][3]int // section 事件表(section+8):{type, param, p2}
-	Transitions    [][4]int // section 轉場表(section+0xc):{destCty, destSec, x, y},by subid
-	NPCs           []NPC
+	W, H            int
+	Cells           []byte   // 每格 tile 索引(u16 低 byte;高 byte=事件 subid,渲染不用)
+	SpawnX, SpawnY  int      // 版面 spawn(section header +0x13/+0x14)
+	DlgBank         int      // 對話 bank(section header +0x17 → D3TXT0<bank>.TXT)
+	MapFlags        byte     // section header +0x10；bit0=魯拉可用、bit1=烈米特可用
+	HiMap           []byte   // 每格高 byte(低 5 bit = 事件/轉場 subid)
+	SpecialHandlers []int    // section+4 byte table：tile/scene scripted handler raw IDs
+	Events          [][3]int // section 事件表(section+8):{type, param, p2}
+	Transitions     [][4]int // section 轉場表(section+0xc):{destCty, destSec, x, y},by subid
+	NPCs            []NPC
 }
 
 // NPC 是城鎮裡的一個角色。移植自 dq3_scene_load_npcs 的 7-byte record。
@@ -78,8 +79,18 @@ func OpenTown(cty []byte, section int, night bool) (*Town, error) {
 		t.Cells[i] = byte(v)      // 低 byte = BLK index
 		t.HiMap[i] = byte(v >> 8) // 高 byte = 事件/轉場 subid
 	}
+	// section+4 特殊 handler byte table。它緊接至 section+8 event table；
+	// 例如 CTY13 sec2 是 15 16 17，CTY62 sec0 是 39(handler57)。
+	hptr := int(townU16(cty, so+4))
+	evptr := int(townU16(cty, so+8))
+	if hptr != 0xffff && evptr != 0xffff && hptr <= evptr &&
+		so+hptr >= 0 && so+evptr <= len(cty) {
+		for o := so + hptr; o < so+evptr; o++ {
+			t.SpecialHandlers = append(t.SpecialHandlers, int(cty[o]))
+		}
+	}
 	// section 事件表(section+8:count byte + 4-byte 項{type, param u16, p2})
-	if evptr := int(townU16(cty, so+8)); evptr != 0xffff && so+evptr < len(cty) {
+	if evptr != 0xffff && so+evptr < len(cty) {
 		et := so + evptr
 		cnt := int(cty[et])
 		if cnt > 32 {

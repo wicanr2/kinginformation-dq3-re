@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.3",
+  "schema_version": "0.1.4",
   "definitions": [
     {
       "id": "dq3:text.shanpane_gandart.intro",
@@ -304,6 +304,38 @@
       "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 28},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "28", "consumer": "staged_vehicle_exchange post-completion dialogue", "doc": "docs/50-ship-acquisition.md"}
+    },
+    {
+      "id": "dq3:text.norud.introduction",
+      "value": "*「你們有什麼事?\n  沒有的話,\n  就請離開吧。",
+      "glyph_codes": [59, 60, 528, 529, 147, 435, 436, 492, 58, 65534, 12, 12, 410, 147, 149, 449, 55, 65534, 12, 12, 633, 571, 502, 488, 499, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 87},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "87", "consumer": "guided_passage initial dialogue before item search", "doc": "docs/88-norud-guided-passage-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.norud.acceptance",
+      "value": "*「什麼?\n  波魯多加王的信?\n諾魯多接過王的信。\n---\n*「嗯,我知道了,\n  就帶你們往\n  隱密的通道吧。",
+      "glyph_codes": [59, 60, 435, 436, 58, 65532, 12, 12, 659, 377, 357, 368, 186, 149, 301, 58, 65532, 735, 377, 357, 1025, 473, 186, 149, 301, 56, 65532, 59, 60, 1091, 55, 493, 510, 402, 423, 55, 65534, 12, 12, 633, 540, 528, 529, 754, 65534, 12, 12, 305, 984, 149, 913, 402, 499, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 88},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "88", "consumer": "guided_passage required-item acceptance", "doc": "docs/88-norud-guided-passage-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.norud.after",
+      "value": "*「這就是往東方去\n  的隱密通道。",
+      "glyph_codes": [59, 60, 398, 633, 399, 754, 539, 547, 448, 65534, 12, 12, 149, 305, 984, 913, 402, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 89},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "89", "consumer": "guided_passage completed dialogue", "doc": "docs/88-norud-guided-passage-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.norud.guide_ready",
+      "value": "*「你們等著看吧!",
+      "glyph_codes": [59, 60, 528, 529, 419, 484, 668, 499, 57, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 90},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "90", "consumer": "scene handler57 before the guide return movement", "doc": "docs/88-norud-guided-passage-production-trace.md"}
     }
   ]
 }

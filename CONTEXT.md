@@ -114,7 +114,9 @@
 - [`48`](docs/48-ship-navigation.md) 船航行 · [`50`](docs/50-ship-acquisition.md) 取船 ·
   [`51`](docs/51-palette-and-overworld-sprites.md) palette/地表 sprite · [`46`](docs/46-debug-hook.md) DEBUG 口 ·
   [`69`](docs/69-why-remake-looked-done-but-wasnt.md) 失敗經驗與防再犯方法、
-  [`74`](docs/74-ebiten-remake-completion-plan.md) 現行完成計畫
+  [`74`](docs/74-ebiten-remake-completion-plan.md) 現行完成計畫 ·
+  [`88`](docs/88-norud-guided-passage-production-trace.md) 諾魯德密道 handler50/57、
+  NPC 移動腳本與正式玩家輸入追蹤
 
 ### 資料 / 研究(`docs/data/`)
 - [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·

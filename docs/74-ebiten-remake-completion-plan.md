@@ -336,9 +336,14 @@ recruit 3 → leave Aliahan → overworld`
   item `0x5b`、D3TXT04 rec24／25、對話關閉後交易與 save/load 已達 E3。事件內容由
   `staged_vehicle_exchange` game-pack primitive 提供，舊 remake flag `0x215` 已廢除
   （`docs/50`）。
-- 諾魯特密道、巴哈拉達救人、黑胡椒與回波魯多加取船。`staged_vehicle_exchange`
+- [x] 諾魯德密道：2026-07-29 已由 boot trace 正式施放 Rura 至已訪問城鎮並步行到
+  CTY62；持信從 `(38,6)` 交談，handler50 只讓 NPC 走到 `(50,21)` 後交回控制，
+  玩家再自行走到 `(50,15)` 的 subid1／handler57 格。rec87–90、兩段 NPC raw movement、
+  國王信不消耗、`clear 0x16/0x4c + set 0x1c`、事件後 save/load 均已閉合；事件由
+  `guided_passage` game-pack primitive 提供（`docs/88`）。
+- 巴哈拉達救人、黑胡椒與回波魯多加取船。`staged_vehicle_exchange`
   已具備原版 item `0x5c` 消耗、flag `0x2c` 清除、船停泊 `(25,73)` 的 component 與
-  EXE/CTY/D3TXT parity；仍須由上述信件 checkpoint 以正式玩家路徑閉合到取船與航行，
+  EXE/CTY/D3TXT parity；仍須由上述諾魯德 checkpoint 以正式玩家路徑閉合到取船與航行，
   才能勾選。
 
 每段包含：
