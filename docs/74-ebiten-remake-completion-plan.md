@@ -248,7 +248,10 @@
 
 反編譯規則：
 
-- 使用 Docker 中的 Capstone／Ghidra，不污染 host。
+- 凡有 RE／反組譯需求，優先在一次性 Docker 容器內使用
+  `/home/anr2/ida_94_official/dist` 的 IDA Pro 9.4；不得先用 Ghidra 產生結論後才補查
+  IDA。`tools/dis.sh`／Capstone 用於可重現的批次位址掃描，Ghidra 只在 IDA 無法處理
+  或需要第二套工具交叉驗證時補用；禁止直接在 host 執行任何專案作業。
 - `tools/re_disasm.py` 是 file offset；所有文件位址明標 `(file)` 或 `(logical)`。
 - 含 indirect jump／switch 時直接讀原始跳表；Ghidra 需要
   `JumpTable.writeOverride()`，不可只信自動 decompile。
@@ -341,10 +344,16 @@ recruit 3 → leave Aliahan → overworld`
   玩家再自行走到 `(50,15)` 的 subid1／handler57 格。rec87–90、兩段 NPC raw movement、
   國王信不消耗、`clear 0x16/0x4c + set 0x1c`、事件後 save/load 均已閉合；事件由
   `guided_passage` game-pack primitive 提供（`docs/88`）。
-- 巴哈拉達救人、黑胡椒與回波魯多加取船。`staged_vehicle_exchange`
-  已具備原版 item `0x5c` 消耗、flag `0x2c` 清除、船停泊 `(25,73)` 的 component 與
-  EXE/CTY/D3TXT parity；仍須由上述諾魯德 checkpoint 以正式玩家路徑閉合到取船與航行，
-  才能勾選。
+- [x] 巴哈拉達救人／黑胡椒：2026-07-30 已由諾魯德東口 checkpoint 正式步行至 CTY15
+  與 CTY14，經原始 transition `(26,3)`、tier2 魔法門、四守衛、handler59／60 三段 NPC
+  movement、甘達特 `monster56×1 + monster57×3`、求饒及古布達一次性交易取得 `0x5c`。
+  原版 flags／formation／movement／D3TXT、runtime PNG、事件後 save/load 均已閉合；
+  事件由 schema `0.1.5` `hostage_rescue` game-pack primitive 提供（`docs/89`）。
+- [x] 回波魯多加取船與首次航行：2026-07-30 已由黑胡椒 checkpoint 經正式標題讀檔、
+  巴哈拉塔旅店補給、魯拉、CTY16／37 transition、handler26 交換、取船後 save/load、
+  正式登船與航行閉合。item `0x5c` 消耗、flag `0x38` 保留、flag `0x2c` 清除、船停泊
+  `(25,73,L0)` 及 runtime PNG 均已驗證；事件沿用 `staged_vehicle_exchange` game-pack
+  primitive（`docs/90`）。
 
 每段包含：
 
@@ -550,7 +559,7 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 4. `git diff --check`、確認不納入原版素材／IDA 檔／使用者 scratch files，再做一次重大
    commit 與 push。
 
-## 10. 今日收尾與剩餘工作（更新 2026-07-29）
+## 10. 今日收尾與剩餘工作（更新 2026-07-30）
 
 本輪已依 Capstone／raw instruction 與原始 CTY13／D3TXT03，把 boot 起的同一條正式 trace
 由諾亞尼爾甦醒繼續延伸到金字塔魔法鑰匙。原版 handler21／22／23 的兩步暫存、錯誤第二鍵
@@ -564,9 +573,9 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 下一輪依下列順序接手：
 
-1. **主線最高優先**：魔法鑰匙 checkpoint 已閉合至 E3（`docs/87`）。從讀檔後的 CTY13
-   sec2 以正式輸入穿過魔法鑰匙門，沿原版路線推進，記錄第一個玩家實際不可達、
-   gate 錯誤或設定 mismatch；不可挑遠端孤立事件代替連續 audit。
+1. **主線最高優先**：波魯多加取船與首次航行已由 boot 起的同一條 trace 閉合至 E3
+   （`docs/90`）。從首次航行 checkpoint 前往達瑪神殿／加爾那之塔，閉合《領悟之書》
+   `0x4a` 的正常入口、寶箱 gate、save/load 與下一節點；不可挑遠端孤立事件代替連續 audit。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

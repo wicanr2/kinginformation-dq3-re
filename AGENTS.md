@@ -28,10 +28,11 @@
 ```
 
 - 位址一律標明 `(file)`、`(logical)` 或 `DGROUP`；換算規則見 `CONTEXT.md`。
-- 有反組譯需求時，**優先使用 `/home/anr2/ida_94_official/dist` 的 IDA Pro 9.4**，以其
-  database、交叉引用、型別與反編譯結果作主要分析工具；`tools/dis.sh`／Capstone 適合可
-  重現的批次位址掃描，Ghidra 只在 IDA 無法處理或需第二套工具交叉驗證時補用。IDA 授權、
-  database 與輸出不得加入 Git。
+- 凡有 RE／反組譯需求，**必須優先使用 `/home/anr2/ida_94_official/dist` 的 IDA Pro
+  9.4**，以其 database、交叉引用、型別與反編譯結果作主要分析工具；不得先用 Ghidra
+  產生結論後才補查 IDA。`tools/dis.sh`／Capstone 適合可重現的批次位址掃描，Ghidra
+  只在 IDA 無法處理或需第二套工具交叉驗證時補用。IDA 授權、database 與輸出不得加入
+  Git。
 - 即使使用上述本機 IDA 安裝，也只能把明確需要的唯讀路徑掛入一次性 Docker 容器執行；
   禁止直接在 host 啟動 IDA、反編譯、索引或其他專案作業。容器工作完成後依本檔 Docker
   生命週期規則立即停止並清除。

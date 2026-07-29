@@ -16,9 +16,8 @@ func TestBossTriggerAt(t *testing.T) {
 		t.Fatalf("CTY19 sec1 (35,12) 應命中八頭大蛇(怪75,flag0x44),得 %+v", t19)
 	}
 	for _, c := range [][2]int{{14, 12}, {14, 13}, {15, 12}, {15, 13}} {
-		tt := bossTriggerAt(14, 1, c[0], c[1])
-		if tt == nil || len(tt.monsters) != 2 || tt.monsters[0] != 27 || tt.monsters[1] != 26 || tt.doneFlag != 0x211 {
-			t.Fatalf("CTY14 sec1 %v 應命中甘達特巢穴鏈(27→26,flag0x211),得 %+v", c, tt)
+		if got := bossTriggerAt(14, 1, c[0], c[1]); got != nil {
+			t.Fatalf("CTY14 sec1 %v 是 scripted NPC/scene handler，不得再命中舊座標 boss：%+v", c, got)
 		}
 	}
 	if bossTriggerAt(19, 1, 0, 0) != nil {
@@ -85,46 +84,6 @@ func TestExamineBossTriggerSingle(t *testing.T) {
 	g.examine()
 	if g.battle.active {
 		t.Error("已擊敗的 boss 觸發點不應重複開戰")
-	}
-}
-
-// TestExamineBossTriggerChain:CTY14 2×2 甘達特巢穴——examine 任一格皆命中同一鏈(27→26)。
-// 逐場真實 g.onBattleEnd() 結算(mid-chain 勝出不給獎勵、鏈全勝才給旗標),
-// 對齊 spine_test 步驟9 的 Update() 驅動邏輯(won && bossQueue 非空 → advanceBossQueue)。
-func TestExamineBossTriggerChain(t *testing.T) {
-	g := bossTestGame(t)
-	g.cur, g.curCty, g.inTown = bossTestScene(1), 14, true
-	g.px, g.py, g.facing = 13, 12, 3 // 面向右 → frontTile=(14,12),鏈四格之一
-
-	g.examine()
-	if !g.battle.active || g.battle.monID != 27 {
-		t.Fatalf("鏈第一場應為甘達特手下(怪27),得 active=%v monID=%d", g.battle.active, g.battle.monID)
-	}
-
-	g.battle.result, g.battle.gotExp, g.battle.gotGold = 1, 1, 1
-	g.onBattleEnd()
-	if g.pendingTrigger == nil {
-		t.Fatal("鏈未完(還剩怪26)→ pendingTrigger 不應清")
-	}
-	if g.flags[0x211] {
-		t.Error("鏈中段(僅勝怪27)不應提早設 flag 0x211")
-	}
-	if len(g.bossQueue) != 1 {
-		t.Fatalf("鏈剩怪26 → bossQueue 應剩1筆,得 %v", g.bossQueue)
-	}
-	g.battle.active = false
-	g.advanceBossQueue() // 對齊 Update() 的 won&&len>0 續打下一場
-	if !g.battle.active || g.battle.monID != 26 {
-		t.Fatalf("鏈第二場應為甘達特本體(怪26),得 active=%v monID=%d", g.battle.active, g.battle.monID)
-	}
-
-	g.battle.result, g.battle.gotExp, g.battle.gotGold = 1, 1, 1
-	g.onBattleEnd()
-	if !g.flags[0x211] {
-		t.Error("鏈全勝(27→26)應設 flag 0x211")
-	}
-	if g.pendingTrigger != nil {
-		t.Error("鏈全勝後 pendingTrigger 應清 nil")
 	}
 }
 

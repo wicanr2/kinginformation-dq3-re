@@ -141,24 +141,46 @@ func TestSelectCommandPortogaRoyalMission(t *testing.T) {
 	}
 }
 
-// TestScriptedTalkPepperGate retains the upstream quest precondition: the
-// rescued-person milestone gates the original pepper giver.
+// TestHostageRescuePepperGate locks original handler25 semantics: NPC
+// visibility is controlled by flag0x25, while flag0x36 independently controls
+// the one-time item0x5c grant. No remake-only milestone participates.
 func TestScriptedTalkPepperGate(t *testing.T) {
-	const (
-		pepperGiverCTY = 15
-		pepperHandler  = 25
-		pepperItem     = 0x5c
-		rescuedFlag    = 0x211
-	)
-	g := &Game{flags: map[int]bool{}, curCty: pepperGiverCTY}
-
-	g.scriptedTalk(pepperHandler)
-	if g.hasItem(pepperItem) {
-		t.Error("未救出達妮亞時不應給黑胡椒")
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
 	}
-	g.flags[rescuedFlag] = true
-	g.scriptedTalk(pepperHandler)
-	if !g.hasItem(pepperItem) {
-		t.Error("救人後應給黑胡椒")
+	events := pack.HostageRescueEvents()
+	if len(events) != 1 {
+		t.Fatalf("hostage rescue events=%d, want 1", len(events))
+	}
+	event := events[0]
+	n := npcInst{x: event.RewardNPC.Tile.X, y: event.RewardNPC.Tile.Y,
+		ctrl: 2 << 3, b4: event.RewardNPC.HandlerRaw}
+	newPepperGame := func() *Game {
+		g := &Game{pack: pack, flags: map[int]bool{}, curCty: event.RewardNPC.CTYRaw,
+			cur: &Scene{sec: event.RewardNPC.Section, npcs: []npcInst{n}}, inTown: true,
+			noticeCode: -1}
+		g.setStoryFlag(event.CompletionSetFlagsRaw[0], true)
+		return g
+	}
+
+	g := newPepperGame()
+	if !g.talkHostageRescue(&g.cur.npcs[0]) {
+		t.Fatal("pack pepper selector should claim handler25")
+	}
+	if g.hasItem(event.RewardItemRawID) {
+		t.Error("flag0x36 clear must not grant pepper")
+	}
+
+	g = newPepperGame()
+	g.setStoryFlag(event.RewardAvailableFlagRaw, true)
+	g.talkHostageRescue(&g.cur.npcs[0])
+	g.dlg.open = false
+	g.advanceHostageRescueDialogue()
+	g.hostageRescueChoiceInput(InputState{Confirm: true, DirEdge: -1})
+	if !g.hasItem(event.RewardItemRawID) ||
+		g.storyFlag(event.RewardAvailableFlagRaw) {
+		t.Errorf("accepting handler25 offer must grant item0x5c and clear flag0x36: stage=%d inventory=%v flag=%v",
+			g.hostageRescueStage, g.inventory, g.storyFlag(event.RewardAvailableFlagRaw))
 	}
 }

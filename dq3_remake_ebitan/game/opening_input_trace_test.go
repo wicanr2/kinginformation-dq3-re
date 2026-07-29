@@ -367,7 +367,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceReviveDeadAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
 	traceExitTownBoundary(t, g)
-	traceTrainNearTown(t, g, roleEvent.OfferNPC.CTYRaw, 10)
+	traceTrainNearTown(t, g, roleEvent.OfferNPC.CTYRaw, 15)
 	traceAdventureWalkToCty(t, g, roleEvent.OfferNPC.CTYRaw)
 	traceReviveDeadAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
@@ -775,11 +775,6 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		if cty == 6 {
 			traceReviveDeadAtChurch(t, g)
 			traceTalkFacility(t, g, facInn)
-			traceExitTownBoundary(t, g)
-			traceTrainNearTown(t, g, cty, 13)
-			traceAdventureWalkToCty(t, g, cty)
-			traceReviveDeadAtChurch(t, g)
-			traceTalkFacility(t, g, facInn)
 		}
 		traceExitTownBoundary(t, g)
 	}
@@ -787,6 +782,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// 從 CTY0 向上掃描並在第一筆命中停止，因此地表正式入口是 CTY12。
 	// CTY32／73 是城內王宮區，不是必須依序踩過的重疊地表入口。
 	traceAdventureWalkToCty(t, g, 12)
+	traceTownSectionTo(t, g, 12, 1)
+	traceReviveDeadAtChurch(t, g)
+	traceTalkFacility(t, g, facInn)
+	traceTownSectionTo(t, g, 12, 0)
 	traceExitTownBoundary(t, g)
 	traceAdventureWalkToCty(t, g, 13)
 	if !g.inTown || g.curCty != 13 || sceneSection(g.cur) != 0 {
@@ -890,10 +889,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceTalkFacility(t, g, facInn)
 	traceTownSectionTo(t, g, 12, 0)
 	traceExitTownBoundary(t, g)
-	traceAdventureWalkToCty(t, g, 34, false)
+	traceAdventureWalkToCty(t, g, 34)
 	traceTownSectionTo(t, g, 35, 0)
 	traceExitTownBoundary(t, g, true)
-	traceAdventureWalkToCty(t, g, 16, false)
+	traceAdventureWalkToCty(t, g, 16)
 	traceTalkFacility(t, g, facInn)
 	if g.dnPhase != 0 || g.dnStep != 0 {
 		t.Fatalf("波魯多加住宿後未回到白天：phase=%d step=%d", g.dnPhase, g.dnStep)
@@ -945,7 +944,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// 再徒步前往阿莎拉慕東方 CTY62。全程不注入場景或座標。
 	traceTownSectionTo(t, g, 16, 0)
 	traceTownSectionTo(t, g, -1, -1)
-	traceAdventureWalkToCty(t, g, 35, false)
+	traceAdventureWalkToCty(t, g, 35)
 	traceTownSectionTo(t, g, 34, 0)
 	traceExitTownBoundary(t, g, true)
 	traceRuraToCty(t, g, 2)
@@ -956,7 +955,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// 持信首訪由山脈西側 CTY62 spawn=(3,8) 進入；CTY63
 	// spawn=(94,10) 是通道另一側，從羅馬利亞徒步不可達。
 	norud := guidedEvents[0]
-	traceAdventureWalkToCty(t, g, norud.GuideNPC.CTYRaw, false)
+	traceAdventureWalkToCty(t, g, norud.GuideNPC.CTYRaw)
 	start := norud.InteractionTile
 	traceWalkTo(t, g, start.X, start.Y)
 	for g.cd > 0 {
@@ -1034,6 +1033,291 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.storyFlag(norud.GuidePresentFlagRaw), g.storyFlag(norud.CompletedFlagRaw),
 			g.hasItem(norud.RequiredItemRawID), g.curCty, sceneSection(g.cur), g.px, g.py)
 	}
+
+	// 諾魯德 checkpoint → 明確走 CTY transition table 的東側出口。密道同時有
+	// world (81,81)/(84,81) 兩個合法出入口，不能讓通用 BFS 任選第一個西側出口。
+	eastSideCTY := guidedEvents[1].GuideNPC.CTYRaw
+	eastX, eastY := ctyLoc[eastSideCTY][0], ctyLoc[eastSideCTY][1]
+	exitX, exitY := -1, -1
+	for y := 0; y < g.cur.h && exitX < 0; y++ {
+		for x := 0; x < g.cur.w; x++ {
+			_, dsec, dx, dy, ok := g.cur.tileTransition(x, y)
+			if ok && dsec == 0xff && dx == eastX && dy == eastY {
+				exitX, exitY = x, y
+				break
+			}
+		}
+	}
+	if exitX < 0 {
+		t.Fatalf("CTY%d 找不到原始東側 world transition (%d,%d)",
+			g.curCty, eastX, eastY)
+	}
+	traceWalkThroughPortal(t, g, exitX, exitY, -1, -1)
+	if g.px != eastX+2 || g.py != eastY ||
+		findCtyAtLayer(g.px, g.py, g.layer) >= 0 {
+		t.Fatalf("諾魯德東側離場未走出兩格入口 footprint：got (%d,%d) cty=%d, base=(%d,%d)",
+			g.px, g.py, findCtyAtLayer(g.px, g.py, g.layer), eastX, eastY)
+	}
+	traceAdventureWalkToCty(t, g, 15)
+	if !g.inTown || g.curCty != 15 || sceneSection(g.cur) != 0 {
+		t.Fatalf("諾魯德東口後未能正式抵達巴哈拉達：town=%v cty=%d sec=%d",
+			g.inTown, g.curCty, sceneSection(g.cur))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存巴哈拉達 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建巴哈拉達讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != 15 || sceneSection(g.cur) != 0 ||
+		!g.storyFlag(norud.CompletedFlagRaw) ||
+		!g.hasItem(norud.RequiredItemRawID) {
+		t.Fatalf("巴哈拉達 checkpoint round-trip 錯：town=%v cty=%d sec=%d complete=%v letter=%v",
+			g.inTown, g.curCty, sceneSection(g.cur),
+			g.storyFlag(norud.CompletedFlagRaw), g.hasItem(norud.RequiredItemRawID))
+	}
+
+	rescueEvents := g.pack.HostageRescueEvents()
+	if len(rescueEvents) != 1 {
+		t.Fatalf("hostage rescue events=%d, want 1", len(rescueEvents))
+	}
+	rescue := rescueEvents[0]
+	// 巴哈拉達 checkpoint → 徒步前往東北洞窟 CTY14。所有交談、選項、
+	// 場景 trigger 與戰鬥均經正式 InputState；不直接設定救援旗標。
+	traceExitTownBoundary(t, g)
+	// 巴哈拉達周邊有會連續施放全體不能行動異常的編隊；正常玩家以已習得的魯拉
+	// 回羅馬利亞低危區準備，不靠不穩定的逃跑亂數或測試狀態注入。
+	traceRuraToCty(t, g, roleEvent.OfferNPC.CTYRaw)
+	traceTrainNearTown(t, g, roleEvent.OfferNPC.CTYRaw, 18)
+	traceAdventureWalkToCty(t, g, roleEvent.OfferNPC.CTYRaw)
+	traceReviveDeadAtChurch(t, g)
+	traceTalkFacility(t, g, facInn)
+	traceExitTownBoundary(t, g)
+	traceRuraToCty(t, g, rescue.RewardNPC.CTYRaw)
+	traceAdventureWalkToCty(t, g, rescue.RewardNPC.CTYRaw)
+	traceReviveDeadAtChurch(t, g)
+	traceTalkFacility(t, g, facInn)
+	traceTalkFacility(t, g, facItem)
+	buyFromOpenShop(herbCode, 8)
+	press(InputState{Cancel: true})
+	traceExitTownBoundary(t, g)
+	traceAdventureWalkToCty(t, g, rescue.ApproachTrigger.CTYRaw)
+	traceTownSectionTo(t, g, rescue.ApproachTrigger.CTYRaw,
+		rescue.ApproachTrigger.Section)
+	guard := rescue.GuardNPCs[0]
+	traceWalkToNoPortal(t, g, guard.Tile.X, guard.Tile.Y-1)
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	send(InputState{DirHeld: 0, DirEdge: -1}) // 守衛北側面向下；碰撞不移動。
+	press(InputState{Confirm: true})
+	press(InputState{Confirm: true})
+	if !g.dlg.open || g.hostageRescueStage != hostageRescueGuardQuestion {
+		t.Fatalf("正式交談未命中 handler58：dlg=%v stage=%d",
+			g.dlg.open, g.hostageRescueStage)
+	}
+	traceCloseDialogue(t, g)
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 選「否」並迎戰。
+	if g.hostageRescueStage != hostageRescueGuardChoice || g.hostageRescueCursor != 1 {
+		t.Fatalf("守衛選項無法以正式方向輸入移到「否」：stage=%d cursor=%d",
+			g.hostageRescueStage, g.hostageRescueCursor)
+	}
+	press(InputState{Confirm: true})
+	if !g.dlg.open || g.hostageRescueStage != hostageRescueGuardFight {
+		t.Fatalf("拒絕加入後未播放 rec108：dlg=%v stage=%d cursor=%d buf=%d",
+			g.dlg.open, g.hostageRescueStage, g.hostageRescueCursor, len(g.dlg.buf))
+	}
+	traceCloseDialogue(t, g)
+	if !g.battle.active || len(g.battle.enemies) != 4 {
+		t.Fatalf("handler58 未啟動四名 0x39 守衛：active=%v enemies=%v",
+			g.battle.active, g.battle.enemies)
+	}
+	traceResolveBattle(t, g, false)
+	if g.storyFlag(rescue.GuardPresentFlagRaw) {
+		t.Fatal("正式擊敗守衛後未 clear 原版 flag0x80")
+	}
+
+	approach := rescue.ApproachTrigger.Tiles[0]
+	traceWalkTo(t, g, approach.X, approach.Y)
+	if !g.dlg.open || g.hostageRescueStage != hostageRescueApproachCry {
+		t.Fatalf("正式踏入 handler59 未播放 rec109：dlg=%v stage=%d pos=(%d,%d)",
+			g.dlg.open, g.hostageRescueStage, g.px, g.py)
+	}
+	traceCloseDialogue(t, g)
+	for frames := 0; frames < 2000 && g.hostageRescueAnimating(); frames++ {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if g.hostageRescueStage != hostageRescueIdle ||
+		g.storyFlag(rescue.ApproachPendingFlagRaw) {
+		t.Fatalf("handler59 移動後狀態錯：stage=%d flag81=%v",
+			g.hostageRescueStage, g.storyFlag(rescue.ApproachPendingFlagRaw))
+	}
+
+	sw := rescue.SwitchTrigger.Tiles[0]
+	traceWalkTo(t, g, sw.X, sw.Y)
+	if !g.dlg.open || g.hostageRescueStage != hostageRescueSwitchPrompt {
+		t.Fatalf("正式踏入 handler60 未播放按鍵 prompt：dlg=%v stage=%d",
+			g.dlg.open, g.hostageRescueStage)
+	}
+	traceCloseDialogue(t, g)
+	press(InputState{Confirm: true}) // 按下牆上按鍵。
+	if !g.dlg.open {
+		t.Fatalf("按鍵接受後未開 rec87：stage=%d", g.hostageRescueStage)
+	}
+	// traceCloseDialogue 以正式 A 逐頁，依序關閉 rec87→110→111，
+	// 最後才啟動兩名俘虜的 movement。
+	traceCloseDialogue(t, g)
+	for frames := 0; frames < 3000 && g.hostageRescueAnimating(); frames++ {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if g.hostageRescueStage != hostageRescueBossArrival || !g.dlg.open {
+		t.Fatalf("俘虜移動後未播放 rec112：stage=%d dlg=%v",
+			g.hostageRescueStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	if g.storyFlag(rescue.CaptivePresentFlagRaw) ||
+		!g.storyFlag(rescue.BossPresentFlagRaw) {
+		t.Fatalf("救援後未 clear0x82/set0x14：captive=%v boss=%v",
+			g.storyFlag(rescue.CaptivePresentFlagRaw),
+			g.storyFlag(rescue.BossPresentFlagRaw))
+	}
+
+	boss := rescue.BossNPCs[0]
+	traceTalkNPC(t, g, boss.Tile.X, boss.Tile.Y)
+	if !g.dlg.open || g.hostageRescueStage != hostageRescueBossChallenge {
+		t.Fatalf("正式交談未命中 handler61：dlg=%v stage=%d",
+			g.dlg.open, g.hostageRescueStage)
+	}
+	traceCloseDialogue(t, g)
+	if !g.battle.active || len(g.battle.enemies) != 4 {
+		t.Fatalf("handler61 未啟動 0x38+0x39×3：active=%v enemies=%v",
+			g.battle.active, g.battle.enemies)
+	}
+	traceResolveBattle(t, g, false)
+	if !g.dlg.open || g.hostageRescueStage != hostageRescueBossDefeated {
+		t.Fatalf("正式擊敗甘達特後未播放 rec124：dlg=%v stage=%d heroHP=%d",
+			g.dlg.open, g.hostageRescueStage, g.heroHP)
+	}
+	traceCloseDialogue(t, g)
+	traceCloseDialogue(t, g)
+	if g.hostageRescueStage != hostageRescueBossChoice {
+		t.Fatalf("rec114 後未進求饒選項：stage=%d", g.hostageRescueStage)
+	}
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 先拒絕一次。
+	press(InputState{Confirm: true})
+	traceCloseDialogue(t, g)
+	if g.hostageRescueStage != hostageRescueBossChoice {
+		t.Fatalf("rec115 後未回求饒選項：stage=%d", g.hostageRescueStage)
+	}
+	press(InputState{Confirm: true}) // 再接受。
+	traceCloseDialogue(t, g)
+	if g.storyFlag(rescue.BossPresentFlagRaw) ||
+		g.storyFlag(0x34) || !g.storyFlag(0x25) {
+		t.Fatalf("求饒完成旗標錯：flag14=%v flag34=%v flag25=%v",
+			g.storyFlag(rescue.BossPresentFlagRaw), g.storyFlag(0x34), g.storyFlag(0x25))
+	}
+
+	traceTownSectionTo(t, g, -1, -1)
+	traceAdventureWalkToCty(t, g, rescue.RewardNPC.CTYRaw)
+	traceTownSectionTo(t, g, rescue.RewardNPC.CTYRaw, rescue.RewardNPC.Section)
+	traceTalkNPC(t, g, rescue.RewardNPC.Tile.X, rescue.RewardNPC.Tile.Y)
+	if !g.dlg.open || g.hostageRescueStage != hostageRescueRewardOffer {
+		t.Fatalf("救人後古布達未播放 rec118：dlg=%v stage=%d",
+			g.dlg.open, g.hostageRescueStage)
+	}
+	traceCloseDialogue(t, g)
+	press(InputState{Confirm: true})
+	if !g.dlg.open || g.hostageRescueStage != hostageRescueRewardReceived ||
+		!g.hasItem(rescue.RewardItemRawID) ||
+		g.storyFlag(rescue.RewardAvailableFlagRaw) {
+		t.Fatalf("黑胡椒交易錯：dlg=%v stage=%d item=%v flag36=%v",
+			g.dlg.open, g.hostageRescueStage, g.hasItem(rescue.RewardItemRawID),
+			g.storyFlag(rescue.RewardAvailableFlagRaw))
+	}
+	traceCloseDialogue(t, g)
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存黑胡椒 checkpoint：%v", err)
+	}
+	restored, err = NewGame(g.assets, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})          // 標題 splash → 主選單
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
+	press(InputState{Confirm: true})          // 正式載入黑胡椒 checkpoint
+	if !g.hasItem(rescue.RewardItemRawID) ||
+		!g.storyFlag(0x25) ||
+		g.storyFlag(0x34) ||
+		g.storyFlag(rescue.RewardAvailableFlagRaw) {
+		t.Fatal("巴哈拉塔救援與黑胡椒未通過 save/load round-trip")
+	}
+
+	// 黑胡椒 checkpoint → 波魯多加取船。從實際讀回的存檔繼續，只經正式魯拉、
+	// 地表入口、transition 與 cmdTalk；交換道具、旗標與停泊座標皆取自 game pack。
+	traceTownSectionTo(t, g, rescue.RewardNPC.CTYRaw, 0)
+	traceTalkFacility(t, g, facInn) // 巴哈拉塔迷宮後以正常旅店恢復魯拉所需 MP。
+	traceTownSectionTo(t, g, -1, -1)
+	traceRuraToCty(t, g, 16)
+	traceAdventureWalkToCty(t, g, 16)
+	traceTownSectionTo(t, g, portoga.NPC.CTYRaw, portoga.NPC.Section)
+	traceTalkNPC(t, g, portoga.NPC.Tile.X, portoga.NPC.Tile.Y)
+	if !g.dlg.open || !g.shipOwned || g.shipAboard ||
+		g.hasItem(portoga.RequiredItemRawID) ||
+		!g.storyFlag(portoga.ExchangeAvailableFlagRaw) {
+		t.Fatalf("黑胡椒換船交易錯：dlg=%v owned=%v aboard=%v pepper=%v flag38=%v",
+			g.dlg.open, g.shipOwned, g.shipAboard,
+			g.hasItem(portoga.RequiredItemRawID),
+			g.storyFlag(portoga.ExchangeAvailableFlagRaw))
+	}
+	for _, flag := range portoga.Vehicle.ClearFlagsRaw {
+		if g.storyFlag(flag) {
+			t.Fatalf("正式授船後未清 vehicle flag 0x%02x", flag)
+		}
+	}
+	wantShip := portoga.Vehicle.WorldPosition
+	if g.shipX != wantShip.X || g.shipY != wantShip.Y || g.layer != wantShip.Layer {
+		t.Fatalf("正式取船停泊位置=(%d,%d,L%d)，want (%d,%d,L%d)",
+			g.shipX, g.shipY, g.layer, wantShip.X, wantShip.Y, wantShip.Layer)
+	}
+	traceCloseDialogue(t, g)
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存取船 checkpoint：%v", err)
+	}
+	restored, err = NewGame(g.assets, nil)
+	if err != nil {
+		t.Fatalf("重建取船讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})          // 標題 splash → 主選單
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
+	press(InputState{Confirm: true})          // 正式載入取船 checkpoint
+	if !g.shipOwned || g.shipAboard ||
+		g.shipX != wantShip.X || g.shipY != wantShip.Y ||
+		g.hasItem(portoga.RequiredItemRawID) ||
+		!g.storyFlag(portoga.ExchangeAvailableFlagRaw) {
+		t.Fatalf("取船 checkpoint round-trip 錯：owned=%v aboard=%v ship=(%d,%d) pepper=%v flag38=%v",
+			g.shipOwned, g.shipAboard, g.shipX, g.shipY,
+			g.hasItem(portoga.RequiredItemRawID),
+			g.storyFlag(portoga.ExchangeAvailableFlagRaw))
+	}
+	for _, flag := range portoga.Vehicle.ClearFlagsRaw {
+		if g.storyFlag(flag) {
+			t.Fatalf("取船 checkpoint 讀回後 vehicle flag 0x%02x 復原", flag)
+		}
+	}
+
+	traceTownSectionTo(t, g, 16, 0)
+	traceTownSectionTo(t, g, -1, -1)
+	traceBoardAndSailShip(t, g)
 }
 
 // traceTrainNearTown 在指定城鎮入口附近的同一個低危 region 來回走動，以正式遭遇輸入
@@ -1301,8 +1585,23 @@ func traceRuraToCty(t *testing.T, g *Game, wantCty int) {
 			t.Fatalf("魯拉正式輸入：%v", err)
 		}
 	}
+	if g.battle.active {
+		traceResolveBattle(t, g)
+	}
+	for g.cd > 0 {
+		press(InputState{DirHeld: -1, DirEdge: -1})
+	}
 	press(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 開命令窗
-	press(InputState{DirHeld: -1, DirEdge: 3})                 // 對話→咒文
+	if !g.cmd.open {
+		t.Fatalf("魯拉前未能開啟正式命令窗：town=%v cty=%d battle=%v",
+			g.inTown, g.curCty, g.battle.active)
+	}
+	for moves := 0; moves < 2 && g.cmd.cursor != int(cmdSpell); moves++ {
+		press(InputState{DirHeld: -1, DirEdge: 3})
+	}
+	if g.cmd.cursor != int(cmdSpell) {
+		t.Fatalf("正式命令窗兩次水平輸入後仍未選到咒文：cursor=%d", g.cmd.cursor)
+	}
 	press(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if !g.fieldSpell.active {
 		t.Fatal("正式命令窗未開啟野外咒文")
@@ -1513,6 +1812,108 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int, fleeStrong ...b
 	}
 }
 
+// traceBoardAndSailShip 從正式地表位置尋路到 game-pack 指定停泊船旁，送一次正常方向
+// 輸入上船，再航行一格水域。它不修改船、玩家或地圖狀態。
+func traceBoardAndSailShip(t *testing.T, g *Game) {
+	t.Helper()
+	if g.inTown || !g.shipOwned || g.shipAboard {
+		t.Fatalf("首次上船前狀態錯：town=%v owned=%v aboard=%v",
+			g.inTown, g.shipOwned, g.shipAboard)
+	}
+	type approach struct {
+		x, y int
+		dir  int
+		path []int
+	}
+	var best *approach
+	for dir := 0; dir < 4; dir++ {
+		dx, dy := dirDelta(dir)
+		a := &approach{x: g.shipX - dx, y: g.shipY - dy, dir: dir}
+		if a.x < 0 || a.y < 0 || a.x >= g.cur.w || a.y >= g.cur.h ||
+			g.cur.Blocked(a.x, a.y) {
+			continue
+		}
+		if g.px != a.x || g.py != a.y {
+			a.path = traceWorldPath(g, a.x, a.y, -1)
+			if len(a.path) == 0 {
+				continue
+			}
+		}
+		if best == nil || len(a.path) < len(best.path) {
+			best = a
+		}
+	}
+	if best == nil {
+		t.Fatalf("停泊船 (%d,%d) 沒有可由玩家抵達的相鄰陸格", g.shipX, g.shipY)
+	}
+	for i := 0; i < 3000 && (g.px != best.x || g.py != best.y); i++ {
+		if g.battle.active {
+			traceResolveBattle(t, g, false)
+			continue
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待上船路徑 cooldown：%v", err)
+			}
+			continue
+		}
+		path := traceWorldPath(g, best.x, best.y, -1)
+		if len(path) == 0 {
+			break
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("走向停泊船 dir%d：%v", path[0], err)
+		}
+	}
+	if g.px != best.x || g.py != best.y {
+		t.Fatalf("無法走到停泊船相鄰格 (%d,%d)，目前 (%d,%d)",
+			best.x, best.y, g.px, g.py)
+	}
+	for g.cd > 0 || g.battle.active {
+		if g.battle.active {
+			traceResolveBattle(t, g, false)
+			continue
+		}
+		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatalf("等待正式上船 cooldown：%v", err)
+		}
+	}
+	if err := g.step(InputState{DirHeld: best.dir, DirEdge: -1}); err != nil {
+		t.Fatalf("正式上船 dir%d：%v", best.dir, err)
+	}
+	if !g.shipAboard || g.px != g.shipX || g.py != g.shipY {
+		t.Fatalf("走上船格後未登船：aboard=%v player=(%d,%d) ship=(%d,%d)",
+			g.shipAboard, g.px, g.py, g.shipX, g.shipY)
+	}
+
+	for g.cd > 0 {
+		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatalf("等待航行 cooldown：%v", err)
+		}
+	}
+	startX, startY := g.px, g.py
+	sailDir := -1
+	for dir := 0; dir < 4; dir++ {
+		dx, dy := dirDelta(dir)
+		nx, ny := startX+dx, startY+dy
+		if nx >= 0 && ny >= 0 && nx < g.cur.w && ny < g.cur.h &&
+			g.cur.attr.Raw(g.cur.tileIdx(nx, ny))&0x20 != 0 {
+			sailDir = dir
+			break
+		}
+	}
+	if sailDir < 0 {
+		t.Fatalf("船停泊格 (%d,%d) 周圍沒有可航水格", startX, startY)
+	}
+	if err := g.step(InputState{DirHeld: sailDir, DirEdge: -1}); err != nil {
+		t.Fatalf("首次正式航行 dir%d：%v", sailDir, err)
+	}
+	if !g.shipAboard || g.px == startX && g.py == startY {
+		t.Fatalf("首次航行未移動：aboard=%v from=(%d,%d) to=(%d,%d)",
+			g.shipAboard, startX, startY, g.px, g.py)
+	}
+}
+
 // traceWorldPath 與 tracePath 相同，但把目的以外的 CTY 入口格視為障礙；
 // 否則最短路徑可能先踩中 CTY28 等重疊入口，自動切場景後便不再是同一條地表路徑。
 func traceWorldPath(g *Game, tx, ty, wantCty int) []int {
@@ -1581,7 +1982,9 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 		}
 		return false
 	}
-	const maxInputs = 1536
+	// 四人對四敵的中期戰鬥會包含每位角色選單、單體目標與逐段訊息；
+	// 1536 次可能在雙方仍正常推進時提早截斷。維持有界，但讓完整回合有足夠空間。
+	const maxInputs = 8192
 	for i := 0; i < maxInputs && g.battle.active; i++ {
 		if g.battle.result == 2 {
 			heroLv, _, _, _, _ := g.heroStats()
@@ -1706,12 +2109,13 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 		for i := range g.battle.enemies {
 			enemyHP[i] = g.battle.enemies[i].hp
 		}
-		t.Fatalf("戰鬥 %d 次正式輸入後仍未結束：phase=%d actor=%d cursor=%d target=%d healTarget=%d pending=%+v herbs=%d/%d targets=%v hits=%+v mon=%d result=%d hero=%d enemyHP=%v",
+		t.Fatalf("戰鬥 %d 次正式輸入後仍未結束：phase=%d actor=%d cursor=%d target=%d healTarget=%d pending=%+v herbs=%d/%d targets=%v hits=%+v mon=%d result=%d hero=%d enemyHP=%v msg=%q queue=%d resume=%d",
 			maxInputs,
 			g.battle.phase, g.battle.commandActor, g.battle.cursor, g.battle.targetCursor,
 			healTarget, g.battle.pending, g.battle.usedHerbs, g.battle.heroHerbs,
 			g.battle.aliveActorIndices(), g.battle.hits,
-			g.battle.monID, g.battle.result, g.battle.heroHP, enemyHP)
+			g.battle.monID, g.battle.result, g.battle.heroHP, enemyHP,
+			g.battle.msg, len(g.battle.messageQueue), g.battle.messageResume)
 	}
 }
 

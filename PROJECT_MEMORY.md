@@ -1,6 +1,6 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 更新：2026-07-29。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-07-30。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
 
@@ -29,18 +29,22 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 - 共用 game-pack JSON 契約：
   [`docs/84`](docs/84-game-pack-json-contract.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
-- 最新 production audit：[`docs/88`](docs/88-norud-guided-passage-production-trace.md)
+- 最新 production audit：[`docs/89`](docs/89-baharata-rescue-production-trace.md)
+- 最新取船／航行 audit：[`docs/90`](docs/90-portoga-ship-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
 
-boot 起的正式 trace 已由波魯多加國王信 checkpoint 繼續閉合諾魯德密道：正式施放
-Rura 回已訪問的羅馬利亞、步行至 CTY62，在固定互動格交談，諾魯德先自行走到
-`(50,21)`；玩家再以正常輸入走到 `(50,15)` 的 handler57 格，完成對話、NPC 回程、
-原版旗標交易及 save/load。國王的信 `0x5b` 不消耗。**尚未完成從新遊戲開始的無 debug
-全流程驗收**；下一個 audit 從諾魯德 checkpoint 前往巴哈拉達，閉合救人、取得黑胡椒
-並返回波魯多加取船。
+boot 起的正式 trace 已由諾魯德 checkpoint 繼續閉合巴哈拉達救援：正常補給與練級後
+步行至 CTY14，開原版魔法門，依序完成四守衛、handler59／60 俘虜移動、甘達特
+`monster56×1 + monster57×3`、求饒選項、返回 CTY15 與古布達交談取得黑胡椒 `0x5c`，
+並通過 save/load。事件旗標、編隊、NPC／trigger selector、movement、文字與黑胡椒交易
+均由 schema `0.1.5` game pack 提供；詳見 `docs/89`。其後已由正式標題讀檔、旅店補給、
+魯拉、王城交談完成黑胡椒換船，驗證原版旗標交易、停泊 `(25,73,L0)`、取船後
+save/load、正式登船與首次航行；詳見 `docs/90`。**尚未完成從新遊戲開始的無 debug
+全流程驗收**；下一個 audit 由首次航行 checkpoint 前往達瑪神殿／加爾那之塔取得
+《領悟之書》`0x4a`。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -54,7 +58,9 @@ formation、寶箱 gate、價格與 cue 不得新增成 Go 常數/table。甘達
 第三個；金字塔 `two_step_floor_switch_gate` 是第四個；波魯多加
 `staged_vehicle_exchange` 是第五個，NPC selector、原版旗標、任務／交換道具、船停泊
 座標與五段文字均由 JSON 提供；諾魯德 `guided_passage` 是第六個，互動格、scene
-trigger、兩段 NPC 路徑與最終朝向、旗標、道具及四段文字均由 JSON 提供。
+trigger、兩段 NPC 路徑與最終朝向、旗標、道具及四段文字均由 JSON 提供；巴哈拉達
+`hostage_rescue` 是第七個，四守衛、兩個 scene trigger、三段 NPC movement、兩組
+formation、完成旗標、古布達交易與全部玩家文字均由 JSON 提供。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

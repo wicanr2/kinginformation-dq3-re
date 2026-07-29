@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.4"
+	SchemaVersion = "0.1.5"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -342,6 +342,64 @@ type GuidedPassageEvent struct {
 	Evidence                Evidence             `json:"evidence"`
 }
 
+type HostageRescueTextIDs struct {
+	GuardQuestion  string `json:"guard_question"`
+	GuardJoin      string `json:"guard_join"`
+	GuardFight     string `json:"guard_fight"`
+	RescueCry      string `json:"rescue_cry"`
+	SwitchPrompt   string `json:"switch_prompt"`
+	SwitchPressed  string `json:"switch_pressed"`
+	Reunion        string `json:"reunion"`
+	ReturnHome     string `json:"return_home"`
+	BossArrival    string `json:"boss_arrival"`
+	BossChallenge  string `json:"boss_challenge"`
+	BossDefeated   string `json:"boss_defeated"`
+	BossApology    string `json:"boss_apology"`
+	BossReject     string `json:"boss_reject"`
+	BossFarewell   string `json:"boss_farewell"`
+	RewardOffer    string `json:"reward_offer"`
+	RewardDecline  string `json:"reward_decline"`
+	RewardReceived string `json:"reward_received"`
+	ChoiceYes      string `json:"choice_yes"`
+	ChoiceNo       string `json:"choice_no"`
+}
+
+type ScriptedMovement struct {
+	NPC         ScriptedNPCSelector `json:"npc"`
+	Path        []TileCoordinate    `json:"path"`
+	EndFacing   string              `json:"end_facing"`
+	RawBytesHex string              `json:"raw_bytes_hex"`
+}
+
+// HostageRescueEvent is a deliberately finite primitive for the common
+// guard -> captive switch -> returning boss -> surrender -> reward-NPC flow.
+// Edition-specific selectors, formations, flags, movement and text remain
+// declarative pack data; JSON cannot provide callbacks or executable code.
+type HostageRescueEvent struct {
+	ID                      string                `json:"id"`
+	Kind                    string                `json:"kind"`
+	GuardNPCs               []ScriptedNPCSelector `json:"guard_npcs"`
+	GuardPresentFlagRaw     int                   `json:"guard_present_flag_raw"`
+	GuardFormation          BattleFormation       `json:"guard_formation"`
+	ApproachTrigger         SceneTileTrigger      `json:"approach_trigger"`
+	ApproachPendingFlagRaw  int                   `json:"approach_pending_flag_raw"`
+	ApproachMovement        ScriptedMovement      `json:"approach_movement"`
+	SwitchTrigger           SceneTileTrigger      `json:"switch_trigger"`
+	CaptivePresentFlagRaw   int                   `json:"captive_present_flag_raw"`
+	CaptiveMovements        []ScriptedMovement    `json:"captive_movements"`
+	BossNPCs                []ScriptedNPCSelector `json:"boss_npcs"`
+	BossPresentFlagRaw      int                   `json:"boss_present_flag_raw"`
+	BossFormation           BattleFormation       `json:"boss_formation"`
+	CompletionSetFlagsRaw   []int                 `json:"completion_set_flags_raw"`
+	CompletionClearFlagsRaw []int                 `json:"completion_clear_flags_raw"`
+	RewardNPC               ScriptedNPCSelector   `json:"reward_npc"`
+	RewardAvailableFlagRaw  int                   `json:"reward_available_flag_raw"`
+	RewardItemRawID         int                   `json:"reward_item_raw_id"`
+	StepFrames              int                   `json:"step_frames"`
+	DialogueTextIDs         HostageRescueTextIDs  `json:"dialogue_text_ids"`
+	Evidence                Evidence              `json:"evidence"`
+}
+
 type Events struct {
 	SchemaVersion               string                       `json:"schema_version"`
 	BossSurrenderEvents         []BossSurrenderEvent         `json:"boss_surrender_events"`
@@ -350,6 +408,7 @@ type Events struct {
 	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate     `json:"two_step_floor_switch_gates"`
 	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
 	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
+	HostageRescueEvents         []HostageRescueEvent         `json:"hostage_rescue_events"`
 }
 
 type TextSource struct {
@@ -419,6 +478,7 @@ type Pack struct {
 	sequenceGates    map[string]*TwoStepFloorSwitchGate
 	vehicleExchanges map[string]*StagedVehicleExchangeEvent
 	guidedPassages   map[string]*GuidedPassageEvent
+	hostageRescues   map[string]*HostageRescueEvent
 	charDefaults     map[string]*CharacterDefault
 	texts            map[string]*TextDefinition
 	contentHash      string
@@ -701,6 +761,26 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.HostageRescueEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"guard_question": refs.GuardQuestion, "guard_join": refs.GuardJoin,
+			"guard_fight": refs.GuardFight, "rescue_cry": refs.RescueCry,
+			"switch_prompt": refs.SwitchPrompt, "switch_pressed": refs.SwitchPressed,
+			"reunion": refs.Reunion, "return_home": refs.ReturnHome,
+			"boss_arrival": refs.BossArrival, "boss_challenge": refs.BossChallenge,
+			"boss_defeated": refs.BossDefeated, "boss_apology": refs.BossApology,
+			"boss_reject": refs.BossReject, "boss_farewell": refs.BossFarewell,
+			"reward_offer": refs.RewardOffer, "reward_decline": refs.RewardDecline,
+			"reward_received": refs.RewardReceived, "choice_yes": refs.ChoiceYes,
+			"choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	return nil
 }
 
@@ -730,6 +810,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.GuidedPassageEvents == nil {
 		return errors.New("guided_passage_events must be present")
+	}
+	if p.Events.HostageRescueEvents == nil {
+		return errors.New("hostage_rescue_events must be present")
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -1062,6 +1145,157 @@ func (p *Pack) validateEvents() error {
 		}
 		p.guidedPassages[e.ID] = e
 	}
+	p.hostageRescues = make(map[string]*HostageRescueEvent,
+		len(p.Events.HostageRescueEvents))
+	for i := range p.Events.HostageRescueEvents {
+		e := &p.Events.HostageRescueEvents[i]
+		if e.ID == "" || e.Kind != "hostage_rescue" {
+			return fmt.Errorf("hostage_rescue_events[%d]: id and kind=hostage_rescue are required", i)
+		}
+		if _, exists := p.hostageRescues[e.ID]; exists {
+			return fmt.Errorf("duplicate hostage rescue event id %q", e.ID)
+		}
+		if len(e.GuardNPCs) == 0 || len(e.BossNPCs) == 0 ||
+			!validScriptedNPC(e.RewardNPC) || e.StepFrames < 1 || e.StepFrames > 60 ||
+			e.RewardItemRawID < 0 || e.RewardItemRawID > 255 {
+			return fmt.Errorf("%s: invalid NPC selectors, step_frames or reward item", e.ID)
+		}
+		for _, selectors := range [][]ScriptedNPCSelector{e.GuardNPCs, e.BossNPCs} {
+			for _, selector := range selectors {
+				if !validScriptedNPC(selector) {
+					return fmt.Errorf("%s: invalid scripted NPC selector", e.ID)
+				}
+			}
+		}
+		stageFlags := []int{
+			e.GuardPresentFlagRaw, e.ApproachPendingFlagRaw,
+			e.CaptivePresentFlagRaw, e.BossPresentFlagRaw,
+			e.RewardAvailableFlagRaw,
+		}
+		if len(e.CompletionSetFlagsRaw) == 0 || len(e.CompletionClearFlagsRaw) == 0 {
+			return fmt.Errorf("%s: completion flag transactions must be present", e.ID)
+		}
+		seenFlags := map[int]bool{}
+		for _, flag := range stageFlags {
+			if flag < 0 || flag >= 512 || seenFlags[flag] {
+				return fmt.Errorf("%s: invalid or duplicate hostage rescue flag %d", e.ID, flag)
+			}
+			seenFlags[flag] = true
+		}
+		seenSetFlags := map[int]bool{}
+		for _, flag := range e.CompletionSetFlagsRaw {
+			if flag < 0 || flag >= 512 || seenFlags[flag] || seenSetFlags[flag] {
+				return fmt.Errorf("%s: invalid or duplicate hostage rescue flag %d", e.ID, flag)
+			}
+			seenSetFlags[flag] = true
+		}
+		seenClearFlags := map[int]bool{}
+		for _, flag := range e.CompletionClearFlagsRaw {
+			if flag < 0 || flag >= 512 || seenSetFlags[flag] || seenClearFlags[flag] {
+				return fmt.Errorf("%s: invalid or duplicate hostage rescue flag %d", e.ID, flag)
+			}
+			seenClearFlags[flag] = true
+		}
+		validateTrigger := func(name string, trigger SceneTileTrigger) error {
+			if trigger.Kind != "scene_tile_subid" || trigger.CTYRaw < 0 ||
+				trigger.Section < 0 || trigger.TileSubID < 1 ||
+				trigger.TileSubID > 31 || len(trigger.Tiles) == 0 {
+				return fmt.Errorf("%s: invalid %s", e.ID, name)
+			}
+			seenTiles := map[TileCoordinate]bool{}
+			for j, tile := range trigger.Tiles {
+				if tile.X < 0 || tile.Y < 0 || seenTiles[tile] {
+					return fmt.Errorf("%s: invalid or duplicate %s tile %d", e.ID, name, j)
+				}
+				seenTiles[tile] = true
+			}
+			return nil
+		}
+		if err := validateTrigger("approach_trigger", e.ApproachTrigger); err != nil {
+			return err
+		}
+		if err := validateTrigger("switch_trigger", e.SwitchTrigger); err != nil {
+			return err
+		}
+		if e.ApproachTrigger.CTYRaw != e.SwitchTrigger.CTYRaw ||
+			e.ApproachTrigger.Section != e.SwitchTrigger.Section {
+			return fmt.Errorf("%s: rescue triggers must share one scene", e.ID)
+		}
+		for _, selectors := range [][]ScriptedNPCSelector{e.GuardNPCs, e.BossNPCs} {
+			for _, selector := range selectors {
+				if selector.CTYRaw != e.ApproachTrigger.CTYRaw ||
+					selector.Section != e.ApproachTrigger.Section {
+					return fmt.Errorf("%s: guard and boss selectors must share trigger scene", e.ID)
+				}
+			}
+		}
+		validateFormation := func(name string, formation BattleFormation) error {
+			raw, err := hex.DecodeString(formation.RawBytesHex)
+			if err != nil || len(formation.Groups) == 0 ||
+				len(raw) != 3+len(formation.Groups)*2 ||
+				int(raw[0]) != len(formation.Groups) ||
+				int(raw[1]) != formation.BackgroundRaw ||
+				int(raw[2]) != formation.PageRaw {
+				return fmt.Errorf("%s: invalid %s", e.ID, name)
+			}
+			for j, group := range formation.Groups {
+				if group.MonsterRawID < 0 || group.MonsterRawID > 255 ||
+					group.Count < 1 || int(raw[3+j*2]) != group.MonsterRawID ||
+					int(raw[4+j*2]) != group.Count {
+					return fmt.Errorf("%s: invalid %s group %d", e.ID, name, j)
+				}
+			}
+			return nil
+		}
+		if err := validateFormation("guard_formation", e.GuardFormation); err != nil {
+			return err
+		}
+		if err := validateFormation("boss_formation", e.BossFormation); err != nil {
+			return err
+		}
+		validateMovement := func(name string, movement ScriptedMovement) error {
+			if !validScriptedNPC(movement.NPC) || len(movement.Path) < 2 ||
+				movement.RawBytesHex == "" ||
+				movement.NPC.CTYRaw != e.ApproachTrigger.CTYRaw ||
+				movement.NPC.Section != e.ApproachTrigger.Section {
+				return fmt.Errorf("%s: invalid %s", e.ID, name)
+			}
+			if _, err := hex.DecodeString(movement.RawBytesHex); err != nil {
+				return fmt.Errorf("%s: invalid %s raw bytes", e.ID, name)
+			}
+			for j, point := range movement.Path {
+				if point.X < 0 || point.Y < 0 {
+					return fmt.Errorf("%s: %s waypoint %d out of range", e.ID, name, j)
+				}
+				if j == 0 {
+					continue
+				}
+				prev := movement.Path[j-1]
+				if prev == point || prev.X != point.X && prev.Y != point.Y {
+					return fmt.Errorf("%s: %s waypoint %d is not a cardinal segment", e.ID, name, j)
+				}
+			}
+			if _, ok := map[string]bool{"down": true, "up": true, "left": true, "right": true}[movement.EndFacing]; !ok {
+				return fmt.Errorf("%s: invalid %s end facing", e.ID, name)
+			}
+			return nil
+		}
+		if err := validateMovement("approach_movement", e.ApproachMovement); err != nil {
+			return err
+		}
+		if len(e.CaptiveMovements) == 0 {
+			return fmt.Errorf("%s: captive_movements must be present", e.ID)
+		}
+		for j, movement := range e.CaptiveMovements {
+			if err := validateMovement(fmt.Sprintf("captive_movements[%d]", j), movement); err != nil {
+				return err
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.hostageRescues[e.ID] = e
+	}
 	return nil
 }
 
@@ -1253,6 +1487,15 @@ func (p *Pack) GuidedPassageEvents() []GuidedPassageEvent {
 
 func (p *Pack) GuidedPassageEvent(id string) (*GuidedPassageEvent, bool) {
 	e, ok := p.guidedPassages[id]
+	return e, ok
+}
+
+func (p *Pack) HostageRescueEvents() []HostageRescueEvent {
+	return append([]HostageRescueEvent(nil), p.Events.HostageRescueEvents...)
+}
+
+func (p *Pack) HostageRescueEvent(id string) (*HostageRescueEvent, bool) {
+	e, ok := p.hostageRescues[id]
 	return e, ok
 }
 

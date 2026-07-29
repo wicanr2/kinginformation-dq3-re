@@ -461,7 +461,12 @@ func emptyCommands(n int) []battleCommand {
 func (b *Battle) resetCommandRound() {
 	b.commands = emptyCommands(1 + len(b.companions))
 	b.commandActor, b.cursor, b.spellCursor = 0, 0, 0
-	b.seekCommandActor(0)
+	// 隊長死亡且所有仍存活同伴都處於睡眠／混亂時，沒有人可以下令。
+	// 不可退回已死亡 actor 0 的命令窗；直接以空命令結算敵方回合，待回合
+	// 訊息播放完後再重新判斷是否已有可動隊員。
+	if !b.seekCommandActor(0) {
+		b.resolveRound()
+	}
 }
 
 func (b *Battle) aliveEnemyIndices() []int {

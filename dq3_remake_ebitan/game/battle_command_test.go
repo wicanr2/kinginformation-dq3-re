@@ -96,6 +96,30 @@ func TestBattleSkipsIncapacitatedMemberDuringCommandCollection(t *testing.T) {
 	}
 }
 
+func TestBattleAllIncapacitatedPartyAdvancesEnemyRound(t *testing.T) {
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	companion := &battleActor{
+		hp: 1, maxHP: 10, def: 0, agi: 1, status: statusParalysis,
+	}
+	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
+	hero := heroParams{level: 1, curHP: 1, maxHP: 1, def: 0, agi: 1}
+	if !b.startGroup(101, 1, 9, hero, []*battleActor{companion}) {
+		t.Fatal("開戰失敗")
+	}
+	b.heroHP = 0
+	b.enemies[0].atk, b.enemies[0].agi = 999, 999
+	b.phase, b.msg, b.messageResume = phMessage, "上一回合", phEnd
+
+	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if b.phase != phMessage || b.result != 2 || companion.hp != 0 {
+		t.Fatalf("全員無法下令時應直接結算敵方回合並判全滅：phase=%d result=%d companionHP=%d actor=%d",
+			b.phase, b.result, companion.hp, b.commandActor)
+	}
+}
+
 func TestBattleSpeedOrderInterleavesEnemyAndParty(t *testing.T) {
 	newDuel := func(t *testing.T, heroAgi, enemyAgi int) *Battle {
 		t.Helper()

@@ -214,6 +214,20 @@ func TestNorudGuidedPassageMatchesOriginalEXECTYAndText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	town63, err := dq3data.OpenTown(cty63, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantTransitions := [][4]int{{62, 0xff, 81, 81}, {62, 0xff, 84, 81}}
+	if !reflect.DeepEqual(town.Transitions, wantTransitions) ||
+		!reflect.DeepEqual(town63.Transitions, wantTransitions) ||
+		town.SpawnX != 3 || town.SpawnY != 8 || town.MapFlags != 1 ||
+		town63.SpawnX != 94 || town63.SpawnY != 10 || town63.MapFlags != 0 {
+		t.Fatalf("CTY62/63 雙側入口資料不符：left=%+v right=%+v transitions=%v/%v",
+			[3]int{town.SpawnX, town.SpawnY, int(town.MapFlags)},
+			[3]int{town63.SpawnX, town63.SpawnY, int(town63.MapFlags)},
+			town.Transitions, town63.Transitions)
+	}
 	if !reflect.DeepEqual(town.SpecialHandlers, []int{57}) {
 		t.Fatalf("CTY62 special handlers=%v, want [57]", town.SpecialHandlers)
 	}
@@ -238,6 +252,34 @@ func TestNorudGuidedPassageMatchesOriginalEXECTYAndText(t *testing.T) {
 		if !ok || !reflect.DeepEqual(got, want) {
 			t.Fatalf("D3TXT04 rec%d != pack text %s", rec, id)
 		}
+	}
+}
+
+func TestWorldEntranceEgressClearsBothNorudFootprints(t *testing.T) {
+	dir := spineAssetsDir(t)
+	g, err := NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.inTown, g.layer = g.overworldScene(), false, 0
+
+	// CTY62 的西口 transition 寫 footprint 左格 `(81,81)`；向西一步即離開。
+	g.px, g.py = ctyLoc[62][0], ctyLoc[62][1]
+	g.egressWorldEntrance(2)
+	if g.px != ctyLoc[62][0]-1 || g.py != ctyLoc[62][1] ||
+		findCtyAtLayer(g.px, g.py, g.layer) >= 0 {
+		t.Fatalf("CTY62 西口未離開入口 footprint：got (%d,%d) cty=%d",
+			g.px, g.py, findCtyAtLayer(g.px, g.py, g.layer))
+	}
+
+	// CTY63 的東口 transition 寫 footprint 左格 `(84,81)`；原版畫面交回控制時
+	// 已越過 `(84,81)/(85,81)` 兩格，因此必須向東走到 `(86,81)`。
+	g.px, g.py = ctyLoc[63][0], ctyLoc[63][1]
+	g.egressWorldEntrance(3)
+	if g.px != ctyLoc[63][0]+2 || g.py != ctyLoc[63][1] ||
+		findCtyAtLayer(g.px, g.py, g.layer) >= 0 {
+		t.Fatalf("CTY63 東口未離開入口 footprint：got (%d,%d) cty=%d",
+			g.px, g.py, findCtyAtLayer(g.px, g.py, g.layer))
 	}
 }
 

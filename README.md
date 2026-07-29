@@ -45,6 +45,12 @@ RE 文件。
 
 ![Ebiten：諾魯德密道正式流程](dq3_remake_ebitan/docs/norud_passage_trigger.png)
 
+![Ebiten：巴哈拉達救援的甘達特混合編隊](dq3_remake_ebitan/docs/baharata_boss_formation.png)
+
+![Ebiten：救援後取得黑胡椒](dq3_remake_ebitan/docs/baharata_pepper_received.png)
+
+![Ebiten：波魯多加取船後首次航行](docs/img/ship_first_sailing.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

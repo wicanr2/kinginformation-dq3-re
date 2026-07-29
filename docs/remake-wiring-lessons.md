@@ -25,7 +25,7 @@
 | gate 種類 | 落點 | 範例 |
 |---|---|---|
 | **寶箱 examine gate** | chest handler 的 is_item 分支前判原版事件旗標 | 甘達特尚在場（flag 0x2e set）時金皇冠 fail closed |
-| **scripted give gate** | sub2 dispatch 對特定 byte4 判 flag,未滿足→before_rec | 古布達黑胡椒(flag 0x211=達妮亞救出) |
+| **scripted give gate** | sub2 dispatch 對特定 handler 判原版 story flag，未滿足只顯示 before text | 古布達 handler25：flag `0x36` set 時可領黑胡椒 |
 | **CTY 特殊 handler** | `section+4` byte table：tile subid→handler id | CTY10 subid1→handler14 甘達特事件 |
 
 辨識要點:**有 sub2 NPC 的對話事件** → scripted give gate;**寶箱/examine tile** → chest gate;
@@ -33,16 +33,19 @@
 consumer 都閉合時才能歸類為 runner。`logical 0xf6d6` 是滑鼠選單 hit-test，不是玩家
 座標 region，見 `docs/85` 與 `docs/re-log-722-state-machine.md` 更正。
 
-## 3. 前置劇情用 flag 表達,原子事件用 token 組合演示
+## 3. 前置劇情必須保存原版多階段交易
 
-攻略裡「先做 A 才能做 B」的前置(救人、打 boss、解詛咒),在 remake 統一用一個 flag 表達:
-事件 A 完成 → 設 flag → 事件 B 的 gate 檢查該 flag。
+攻略裡「先做 A 才能做 B」不能任意縮成一個 remake flag。先追原版每個 writer、consumer、
+NPC visibility 與失敗分支，再把有限狀態存進 game-pack JSON。
 
-- 古布達救人:巴哈拉達洞窟雙 boss(甘達特手下怪27 → 甘達特怪26)→ flag 0x211 → 古布達給黑胡椒。
-- 在洞窟地圖 CTY 尚未定位時,該原子事件先用既有 debug token **組合**演示 + game_tester 驗 gate 行為:
-  `boss:27;boss:26;flag:0x211`。地圖內真正觸發點(洞窟 NPC)待定位後補,但 gate 邏輯已可驗、已正確。
+巴哈拉達救援就是反例：原版依序使用 `0x80/0x81/0x82/0x14/0x25/0x34/0x36`，
+兩組 formation、三段 NPC movement 及跨 CTY 的 handler25 交易。舊
+舊的 boss／flag debug token 雖能演示「打完給物」，卻抹掉入口、位置、
+問答、開關、時序、NPC 可見性與求饒副作用，不能進 production 或當 parity 證據。
 
-好處:gate 邏輯與「在哪觸發」解耦——邏輯先對、先可驗,地圖觸發點是獨立的後續定位工作。
+現行做法見 `hostage_rescue_events` 與 `docs/89`：資料保存版本專屬 selector／raw anchor，
+Go 只實作可驗證的有限 primitive；正式 InputState trace 再證明玩家能從上一 checkpoint
+走完整段。
 
 ## 4. game_tester 一定要在 docker 內跑(binary 在 volume)
 

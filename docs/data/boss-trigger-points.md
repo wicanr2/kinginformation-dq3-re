@@ -27,49 +27,27 @@
 | CTY | sec | 座標 | 結構 | 狀態 |
 |---|---|---|---|---|
 | 19 | 1 | (35,12) | 八頭大蛇 dlg=45 sprite=14 | ✅ 已接(main.c cur_cty==19 b4==45)|
-| 14 | 1 | (14,12)(14,13)(15,12)(15,13) | dlg=58 examine 事件 | ✅ 已接 = **甘達特盜賊巢穴**(2026-06-27 確認:main.c CTY14 examine → 甘達特手下怪27 → 甘達特怪26 → flag 0x211,與古布達黑胡椒鏈閉環)。**非巴拉摩斯城**(舊「身分未定」推測已更正)|
+| 14 | 1 | 守衛 `(14,13)(15,13)(13,14)(16,14)`；返回 boss `(14,14)(15,14)` | handler58／61 scripted NPC；handler59／60 scene tile | ✅ 原版兩階段 formation、movement、旗標與正式流程已閉合（`docs/89`） |
 
-### CTY14 調查結論(2026-06-26,誠實修正)
+### CTY14 巴哈拉達救援（2026-07-30 IDA／原始資料更正）
 
-**已確定(靜態 ground truth)**:
-- CTY14 = overworld (106,114),緊鄰 CTY15 巴哈拉達鎮 (101,119);只有 sec1、12 NPC、**0 facility(無店)**。
-- sec1 中央 (14,12)(14,13)(15,12)(15,13) 規整 2×2:talk 對話全「‥‥‥‥」沉默 + sub=2 special dlg=58。
-- 無店 + 全沉默 + 2×2 examine 事件 = **boss 房擺位**(boss 開戰前不說話,examine 進戰鬥)。這是個 boss 觸發點。
+舊文件曾把事件簡化成單格 examine、兩場 boss token 與自造完成旗標；那不是原版流程，
+錯誤數值已刪除。
+原版是四個有限階段：
 
-**未能確定(需追 EXE 事件 dispatch)**:
-- **boss 身分未定**。原推論「sprite=46 = 特定 boss」**已推翻**:sprite=46 在 CTY84(達姆杜拉)是普通 talk 居民,
-  是通用人物 sprite,非怪物專屬。
-- `special` 的 `dlg` 是**事件 id,非 D3TXT record 號**(special 無 text 欄);把 dlg=58 對到 D3TXT03 rec58
-  「流星手環提示」是**錯誤對照**,兩者無關。
-- dlg(事件 id)→ 怪 id 的映射在 EXE 事件處理碼裡(間接跳表 dispatch,見記憶 `re-indirect-jumptable-dispatch`),
-  不在文字/NPC 表。要定身分得靜態追該 dispatch;當前實機/工具環境受限,留待後續。
+1. handler58 四守衛問答；拒絕加入後 formation
+   `01 18 01 39 04`，即 `monster57×4`。
+2. 玩家踩 subid1／handler59 格後播放呼救，NPC 依
+   `020000020300ff` movement 移動。
+3. 玩家踩 subid2／handler60 牆上開關，兩名俘虜依
+   `030300ff`、`020000050100ff` movement 會合。
+4. handler61 返回 boss formation
+   `04 18 01 38 01 39 01 39 01 39 01`，即
+   `monster56×1 + monster57×3`；接受求饒後 SET `0x25`、CLEAR `0x14/0x34`。
 
-> 教訓:`kind=special` 能可靠定位「**哪一格是 examine 觸發事件**」(回答了使用者「boss 在哪一格」),
-> 但「**那格觸發哪隻怪**」需另一層 RE(事件 id → 怪 id dispatch)。前者已解,後者待追。
-> 不靠單一線索(sprite 值)臆斷身分——sprite 是通用的,會誤判。
-
-### CTY14 boss 身分:追 EXE handler + 對話 record 後的結論(2026-06-26)
-
-用 `tools/dis_sub2_handler.py` 反組譯 byte4=58 handler(file 0x07250,跳表 0x3bb4):
-```
-L0x5ee0: call 0x6372; [0xb34]=1; di=0xc22(rec106); lcall 渲染;
-         cmp [0x722],1; jne …; di=0xc23(rec107); jmp 0x6380(dispatcher)
-```
-- **byte4=58 本身不含戰鬥呼叫**,是 boss 房**前置對話 NPC**(沉默 2×2 + examine 觸發對話)。
-- 對話 = D3TXT03 rec106/107/108:**「你們是要來加入的嗎?」「大王現在不在,你們下次再來吧」
-  「那麼就不能讓你們通過,看招吧」** —— 典型**盜賊巢穴守衛 boss 房對話**。
-- D3TXT03 涵蓋區(docs/32:112)= 諾阿尼魯/阿莎拉慕/伊席斯/**巴哈拉達**/劇揚;CTY14 (106,114) 緊鄰
-  巴哈拉達 CTY15 (101,119)。
-- 對照 D3TXT03 救人段尾「**甘達特「呼呼呼,我回來的正是時候!**」+ 攻略古布達/達妮亞救人(巴哈拉達洞窟
-  打甘達特手下 → 遇返回的甘達特)。
-
-**結論(高信度)**:CTY14 sec1 = **甘達特的盜賊巢穴 / 巴哈拉達洞窟 boss 房**;守衛 boss = **甘達特手下(怪27)**,
-深處 boss = **甘達特(怪26)**。與既接的古布達救人鏈(flag 0x211,boss:27;boss:26)**完全閉環**——
-這正是該救人事件的「城內正式觸發點」所在(byte4=58 對話 → region [0x722]=1 觸發戰鬥)。
-
-**戰鬥已接**(2026-06-27,與上表行 30 一致):`main.c` CTY14 sec1 examine `byte4=58` → 未救出(flag 0x211)則
-打甘達特手下(怪27)、救出後給後話。原版精確 region 觸發(`[0x722]=1` region handler)雖未逐指令重現,
-但 remake 以 byte4=58 examine 達成等效劇情強制戰,玩家走進 CTY14 巢穴即觸發。
+守衛、approach、俘虜與 boss 可見性使用原版 story flags `0x80/0x81/0x82/0x14`。
+CTY15 handler25 再以 flag `0x36` 控制黑胡椒 `0x5c` 的一次性交易。完整 caller、
+formation、transition、D3TXT、影片與正式 InputState trace 見 `docs/89`。
 
 ## 巴拉摩斯城 CTY 定位(2026-07-28 已解)
 

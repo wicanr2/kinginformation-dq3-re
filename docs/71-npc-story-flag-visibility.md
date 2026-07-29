@@ -59,7 +59,7 @@ DGROUP 檔基準用資料錨點定出:`lea dx,[0xd0]; int21 open` 開 `dq3man.bl
 
 - `internal/dq3data/townmap.go`:`NPCStoryInitFlags [32]byte` = 上述初值(flag 0-39 清、40-255 設)。
 - `game/game.go`:`Game.storyBits [32]byte` + `storyFlag(id)/setStoryFlag(id,v)/initStoryBits()`;
-  **獨立於 `g.flags`**(remake 里程碑 0x211/0x213 等),避免誤設 boss doneFlag 造成 boss 被跳過。
+  **獨立於 `g.flags`**（舊 remake 的高位里程碑空間），避免誤設 boss doneFlag 造成 boss 被跳過。
   新遊戲 init 與重置點都呼叫 `initStoryBits()`。
 - `game/worldmap.go` `loadTownSceneSec`:加 `flagSet func(int) bool` 參數,NPC loop 內
   `if flagSet != nil && !flagSet(n.Flags) { continue }`(對齊原版 je skip);玩家路徑傳 `g.storyFlag`,
@@ -114,6 +114,7 @@ DGROUP 檔基準用資料錨點定出:`lea dx,[0xd0]; int21 open` 開 `dq3man.bl
 
 > wiring 流程(每個 R 系列事件批):實作事件 X → 反組譯確認 X 對應的原版 [0x4f70] flag id
 > (上表)→ 在 ebitan 事件點呼 `g.setStoryFlag(id, true)` → 對應條件 NPC 現出 → dump 核。
-> ⚠ ebitan 的 `g.flags`(里程碑 0x211 等)與原版 [0x4f70] 0-39 是**不同 id 空間**,別混用;
+> ⚠ ebitan 的 `g.flags`（舊 remake 高位里程碑）與原版 `[0x4f70]` story flags 是
+> **不同 id 空間**，不得混用；
 > storyBits 專供 NPC 可見性,別把里程碑 id 塞進去。
 > 部分 byte5≥40 旗標原版會被事件 **CLEAR**(NPC 離開,如 file 0x1568 clear flag 80);同理接 `false`。

@@ -558,14 +558,14 @@ func TestDQ3ReviveCostsMatchOriginalEXE(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.4","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.5","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.4","service_definitions":[{
+	  "schema_version":"0.1.5","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -573,12 +573,13 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.4","boss_surrender_events":[],"temporary_role_events":[],
+	  "schema_version":"0.1.5","boss_surrender_events":[],"temporary_role_events":[],
 	  "quest_item_chain_events":[],"two_step_floor_switch_gates":[],
-	  "staged_vehicle_exchange_events":[],"guided_passage_events":[]
+	  "staged_vehicle_exchange_events":[],"guided_passage_events":[],
+	  "hostage_rescue_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.4",
+	  "schema_version":"0.1.5",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -588,7 +589,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.4","definitions":[{
+	  "schema_version":"0.1.5","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -602,7 +603,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.4"`, `"schema_version":"0.1.4","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.5"`, `"schema_version":"0.1.5","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"unknown characters field", validManifest, validFacilities, validEvents, strings.Replace(validCharacters, `"defaults":[`, `"typo":1,"defaults":[`, 1), "unknown field"},
 	}
@@ -618,6 +619,51 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 			_, err := Load(fsys)
 			if err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Fatalf("Load error=%v, want substring %q", err, tc.want)
+			}
+		})
+	}
+}
+
+func TestHostageRescueRejectsInvalidTransactionsAndPaths(t *testing.T) {
+	tests := []struct {
+		name string
+		edit func(*HostageRescueEvent)
+		want string
+	}{
+		{
+			name: "duplicate completion flag",
+			edit: func(e *HostageRescueEvent) {
+				e.CompletionSetFlagsRaw[0] = e.GuardPresentFlagRaw
+			},
+			want: "duplicate hostage rescue flag",
+		},
+		{
+			name: "duplicate trigger tile",
+			edit: func(e *HostageRescueEvent) {
+				e.ApproachTrigger.Tiles = append(e.ApproachTrigger.Tiles,
+					e.ApproachTrigger.Tiles[0])
+			},
+			want: "duplicate approach_trigger tile",
+		},
+		{
+			name: "diagonal movement",
+			edit: func(e *HostageRescueEvent) {
+				start := e.ApproachMovement.Path[0]
+				e.ApproachMovement.Path[1] = TileCoordinate{X: start.X + 1, Y: start.Y + 1}
+			},
+			want: "not a cardinal segment",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p, err := BuiltinDQ3()
+			if err != nil {
+				t.Fatal(err)
+			}
+			tc.edit(&p.Events.HostageRescueEvents[0])
+			err = p.validateEvents()
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("validateEvents error=%v, want substring %q", err, tc.want)
 			}
 		})
 	}

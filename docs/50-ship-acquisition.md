@@ -30,7 +30,7 @@
    - 檢查 flag `0x38`；
    - 經 file `0x7c0c` 檢查 item `0x5c`《黑胡椒》；
    - 沒有時顯示 rec26，不消耗任何物品；
-   - 有時把該背包格寫成 `0xff`，清 flag `0x2c`，寫入船座標 `(25,73)`，
+   - 有時把該背包格寫成 `0xff`，清 flag `0x2c`、保留 flag `0x38`，寫入船座標 `(25,73)`，
      交給船隻 consumer，顯示 rec27。
 4. 完成後顯示 rec28。
 
@@ -60,7 +60,8 @@ item `0x5b` 是《國王的信》，船是 vehicle state，不是 item。item `0
 
 - 首次對話關閉後才給信並清任務旗標；
 - 缺黑胡椒時不消耗；
-- 成功時只消耗一件黑胡椒、清宣告旗標、授予停泊中的船；
+- 成功時只消耗一件黑胡椒、清 `vehicle.clear_flags_raw`（DQ3 為 `0x2c`）並保留
+  `exchange_available_flag_raw`（DQ3 為 `0x38`）、授予停泊中的船；
 - 完成後重複交談不會重複授船；
 - 缺欄位、錯誤引用或未知 vehicle kind 於載入時失敗即關閉。
 
@@ -78,6 +79,9 @@ item `0x5b` 是《國王的信》，船是 vehicle state，不是 item。item `0
 | `docs/img/portoga_king_wait.png` | rec26 尚無黑胡椒 |
 | `docs/img/portoga_getship.png` | rec27 收胡椒並授船 |
 | `docs/img/ship_on_overworld.png` | 船停泊在 world `(25,73)` |
+| `docs/img/ship_first_boarded.png` | 經正式方向輸入走上停泊船格 |
+| `docs/img/ship_first_sailing.png` | 登船後以正式方向輸入航行一格 |
 
 這些是 remake runtime 圖；原版同狀態 DOSBox 畫面仍需按 V2／V3 規則並列核對，不可只因
-文字 record 相同便宣稱像素完全一致。
+文字 record 相同便宣稱像素完全一致。正常玩家路徑與 save/load 證據見
+[`docs/90`](90-portoga-ship-production-trace.md)。

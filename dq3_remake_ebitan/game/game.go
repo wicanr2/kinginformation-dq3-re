@@ -309,7 +309,7 @@ type Game struct {
 	equip                  [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
 	companions             []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
 	roster                 []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
-	flags                  map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
+	flags                  map[int]bool // remake 暫存旗標；原版劇情旗標一律使用 storyBits
 	storyBits              [64]byte     // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
 	worldState             uint16       // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
 	noticeCode             int          // 取得道具通知(item code;-1=無)
@@ -352,6 +352,13 @@ type Game struct {
 	guidedPassageNPC       int           // 引路 NPC runtime index
 	guidedPassageWaypoint  int           // 目前目標 waypoint
 	guidedPassageTick      int           // waypoint 間的 frame 節流
+	hostageRescueStage     int           // game-pack hostage_rescue primitive 階段
+	hostageRescueCursor    int           // Yes/No 游標
+	hostageRescueEventID   string        // active pack event；空字串表示無事件
+	hostageRescueMovement  int           // captive_movements 目前索引
+	hostageRescueWaypoint  int           // movement 目前 waypoint
+	hostageRescueTick      int           // movement frame 節流
+	hostageRescueNPC       int           // movement runtime NPC index
 	mirrorStage            int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
 	phoenix                *dq3data.CharSprite
 	phoenixOwned           bool
@@ -421,6 +428,8 @@ func (g *Game) selectCommand(cmd int) {
 					// game-pack quest item → required item → vehicle primitive。
 				} else if g.talkGuidedPassage(n) {
 					// game-pack required item → guide walk → scene trigger primitive。
+				} else if g.talkHostageRescue(n) {
+					// game-pack guard → captive switch → boss → reward primitive。
 				} else {
 					g.scriptedTalk(n.b4)
 				}
@@ -537,12 +546,6 @@ func (g *Game) scriptedTalk(byte4 int) {
 	}
 	give, prereq, require, consume, milestone := s[2], s[3], s[4], s[5], s[6]
 	beforeRec, giveRec, afterRec := s[7], s[8], s[9]
-	if byte4 == 25 && g.curCty == 15 && !g.flags[0x211] {
-		// 古布達黑胡椒救人 gate(main.c:1736):CTY15 byte4=25 需先救出達妮亞
-		// (flag 0x211,甘達特巢穴 boss 鏈勝利設,bosstrigger.go)才給黑胡椒。
-		g.dlg.Open(beforeRec)
-		return
-	}
 	if byte4 == dragonQueenHandler && g.curCty == ctyDragonQueen {
 		g.talkDragonQueen(s)
 		return
@@ -869,6 +872,13 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	switch g.hostageRescueStage {
+	case hostageRescueGuardChoice, hostageRescueSwitchChoice,
+		hostageRescueBossChoice, hostageRescueRewardChoice:
+		g.hostageRescueChoiceInput(in)
+		g.renderFrame()
+		return nil
+	}
 	// 資訊面板 modal:狀況/道具 = B/A 關；裝備先選隊員，再選背包裝備。
 	// 點列(P2,道具/裝備清單)= 游標移過去 + 等同 A 使用/裝上
 	if g.panel != panelNone {
@@ -949,6 +959,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceSequenceGateDialogue()
 				g.advanceStagedVehicleExchangeDialogue()
 				g.advanceGuidedPassageDialogue()
+				g.advanceHostageRescueDialogue()
 			}
 		}
 		g.renderFrame()
@@ -961,6 +972,11 @@ func (g *Game) step(in InputState) error {
 	}
 	if g.guidedPassageAnimating() {
 		g.advanceGuidedPassageAnimation()
+		g.renderFrame()
+		return nil
+	}
+	if g.hostageRescueAnimating() {
+		g.advanceHostageRescueAnimation()
 		g.renderFrame()
 		return nil
 	}
@@ -1055,6 +1071,7 @@ func (g *Game) step(in InputState) error {
 		g.tryOpeningRegionEvent()
 		g.tryBossSurrenderEvent()
 		g.tryGuidedPassageTrigger()
+		g.tryHostageRescueTrigger()
 		g.tryBaramosReturnEvent()
 		g.tryOrtegaEvent()
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
@@ -1154,11 +1171,19 @@ func (g *Game) setStoryFlag(id int, v bool) {
 		return
 	}
 	m := byte(0x80 >> (uint(id) & 7))
+	before := g.storyBits[id>>3]&m != 0
+	if before == v {
+		return
+	}
 	if v {
 		g.storyBits[id>>3] |= m
 	} else {
 		g.storyBits[id>>3] &^= m
 	}
+	// NPC 可見性在 loadTownSceneSec 時依 story flag 過濾；已載入的其他 CTY
+	// 若不失效，離開再回來仍會沿用事件前的 NPC 清單。當前 Scene 指標繼續供
+	// 本幀事件／動畫使用，下次進城或 section 載入才按新旗標重建。
+	clear(g.towns)
 }
 
 // initStoryBits:新遊戲重置 [0x4f70] 旗標陣列為原版靜態映像初值(docs/71)。
@@ -1260,6 +1285,7 @@ func (g *Game) tryTransition() {
 		if dy != 0 && dy < g.cur.h {
 			g.py = dy
 		}
+		g.egressWorldEntrance(g.facing)
 		g.overPx, g.overPy = g.px, g.py
 		g.renderFrame()
 		return
@@ -1501,6 +1527,27 @@ func (g *Game) advanceBaramosReturn() {
 		// CTY71/72 同一地表座標、依此旗標選版本；清 cache 避免沿用舊場景。
 		delete(g.towns, 71)
 		delete(g.towns, 72)
+	}
+}
+
+// egressWorldEntrance 完成 CTY transition 的離場步：原始 transition table 保存的是
+// world entrance footprint 起點，而 findCtyAtLayer 接受 loc.X 與 loc.X+1 兩格。
+// 玩家從洞內朝離場方向走時，原版在交回地表控制前已位於該 footprint 外；若停在其中
+// 任一格，下一步會立刻重新進洞。只沿目前正式輸入方向、在可走地形上最多跨過兩格，
+// 不使用 CTY 專屬座標或猜測目的地。
+func (g *Game) egressWorldEntrance(dir int) {
+	if g.cur == nil || dir < 0 || dir > 3 {
+		return
+	}
+	dx, dy := dirDelta(dir)
+	for steps := 0; steps < 2 &&
+		findCtyAtLayer(g.px, g.py, g.layer) >= 0; steps++ {
+		nx, ny := g.px+dx, g.py+dy
+		if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h ||
+			g.cur.Blocked(nx, ny) {
+			return
+		}
+		g.px, g.py = nx, ny
 	}
 }
 
@@ -1912,6 +1959,7 @@ func (g *Game) onBattleEnd() {
 	}
 	g.settleMirrorBattle()
 	g.settleBossSurrenderBattle()
+	g.settleHostageRescueBattle()
 	if g.pendingTrigger != nil { // examine 觸發的座標 boss 鏈結算(bosstrigger.go)
 		switch {
 		case g.battle.result == 1 && len(g.bossQueue) == 0: // 鏈全勝(最後一場也贏)→ 給獎勵 + 設旗標
@@ -2045,6 +2093,7 @@ func (g *Game) renderFrame() {
 	g.drawBossSurrenderChoice(g.rgba, white)
 	g.drawTemporaryRoleChoice(g.rgba, white)
 	g.drawSequenceGateChoice(g.rgba, white)
+	g.drawHostageRescueChoice(g.rgba, white)
 	if g.noticeTimer > 0 && g.noticeCode >= 0 { // 取得道具通知(品名)
 		fillBox(g.rgba, 24, 244, ScreenW-48, 40, white)
 		g.shop.drawItemName(g.rgba, 40, 256, g.noticeCode, white)

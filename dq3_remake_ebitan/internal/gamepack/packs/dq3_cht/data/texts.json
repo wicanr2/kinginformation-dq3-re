@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.4",
+  "schema_version": "0.1.5",
   "definitions": [
     {
       "id": "dq3:text.shanpane_gandart.intro",
@@ -336,6 +336,126 @@
       "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 90},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "90", "consumer": "scene handler57 before the guide return movement", "doc": "docs/88-norud-guided-passage-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.guard.question",
+      "value": "*「你們是要來加入的嗎?",
+      "glyph_codes": [59,60,528,529,399,504,461,368,519,149,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 106},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "106", "consumer": "hostage_rescue guard question", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.guard.join",
+      "value": "*「大王現在不在,你們下次再來吧。",
+      "glyph_codes": [59,60,163,186,432,411,228,411,55,65534,12,12,528,529,517,572,573,461,499,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 107},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "107", "consumer": "hostage_rescue guard yes branch", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.guard.fight",
+      "value": "*「那麼就不能讓你們通過,看招吧。",
+      "glyph_codes": [59,60,354,436,633,228,408,1037,528,529,913,473,55,65534,12,12,668,727,499,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 108},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "108", "consumer": "hostage_rescue guard no branch before battle", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.rescue.cry",
+      "value": "*「救命啊,\n  我是巴哈拉達的古布達。\n---\n*「開關就在桌邊的牆上。",
+      "glyph_codes": [59,60,597,274,509,55,65534,12,12,493,399,361,390,247,358,149,1188,190,358,56,65532,59,60,488,683,633,411,1192,551,149,961,421,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 109},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "109", "consumer": "hostage_rescue approach trigger", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.rescue.reunion",
+      "value": "達妮亞「古布達!\n古布達「達妮亞。",
+      "glyph_codes": [358,1184,166,60,1188,190,358,57,65534,1188,190,358,60,358,1184,166,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 110},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "110", "consumer": "hostage_rescue switch reunion", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.rescue.return_home",
+      "value": "達妮亞「回去吧!\n古布達「嗯,回去結婚。",
+      "glyph_codes": [358,1184,166,60,312,448,499,57,65534,1188,190,358,60,1091,55,312,448,687,1189,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 111},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "111", "consumer": "hostage_rescue captive departure", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.rescue.boss_arrival",
+      "value": "達妮亞「哎呀──!\n---\n甘達特「呼呼呼,\n  我回來的正是時候!\n---\n達妮亞「救命啊!勇者。",
+      "glyph_codes": [358,1184,166,60,785,786,806,806,57,65532,387,358,392,60,1000,1000,1000,55,65534,12,12,493,312,461,149,588,399,782,796,57,65532,358,1184,166,60,597,274,509,57,106,187,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 112},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "112", "consumer": "hostage_rescue boss arrival", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.boss.challenge",
+      "value": "{變數}「這些傢伙\n  就交給我們!\n  你們快逃吧!\n---\n達妮亞「大恩大德\n  我一輩子記住了。\n---\n甘達特「誰也別想逃!\n  先拿你們開刀!",
+      "glyph_codes": [65525,60,398,955,1071,1072,65534,12,12,633,1193,559,493,529,57,65534,12,12,528,529,969,629,499,57,65532,358,1184,166,60,163,360,163,1194,65534,12,12,493,401,1195,151,523,569,423,56,65532,387,358,392,60,505,494,417,609,629,57,65534,12,12,606,558,528,529,488,142,57,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 113},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "113", "consumer": "hostage_rescue boss challenge", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.boss.apology",
+      "value": "甘達特「拜託,\n  從此我要改過向善,\n  原諒我吧!好嗎?",
+      "glyph_codes": [387,358,392,60,382,753,55,65534,12,12,511,715,493,504,1075,473,548,1196,55,65534,12,12,555,1100,493,499,57,441,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 114},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "114", "consumer": "hostage_rescue surrender question", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.boss.reject",
+      "value": "甘達特「不要說\n  這麼絕情的話。",
+      "glyph_codes": [387,358,392,60,228,504,909,65534,12,12,398,436,1101,670,149,449,56,65532,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 115},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "115", "consumer": "hostage_rescue surrender reject loop", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.boss.farewell",
+      "value": "甘達特「謝謝,有緣再見了。",
+      "glyph_codes": [387,358,392,60,582,582,55,147,1197,573,953,423,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 116},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "116", "consumer": "hostage_rescue surrender accepted", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.pepper.offer",
+      "value": "*「歡迎,\n  這裡是賣胡椒的店。\n---\n*「啊!是你們!\n---\n*「是我啊,古布達!\n  非常謝謝你們救我。\n---\n*「想要胡椒嗎?",
+      "glyph_codes": [59,60,561,562,55,65534,12,12,398,512,399,567,303,304,149,455,56,65532,59,60,509,57,399,528,529,57,65532,59,60,399,493,509,55,1188,190,358,57,65534,12,12,580,581,582,582,528,529,597,493,56,65532,59,60,609,504,303,304,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 118},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "118", "consumer": "hostage_rescue pepper offer", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.pepper.decline",
+      "value": "*「那麼請慢走。",
+      "glyph_codes": [59,60,354,436,571,1009,612,56,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 119},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "119", "consumer": "hostage_rescue pepper unavailable or declined", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.pepper.received",
+      "value": "*「那麼這就是你們要的。\n  錢?\n  我怎麼能向恩人收呢?",
+      "glyph_codes": [59,60,354,436,398,633,399,528,529,504,149,56,65534,12,12,576,58,65534,12,12,493,935,436,408,548,360,194,458,592,58,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 120},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "120", "consumer": "hostage_rescue pepper grant", "doc": "docs/89-baharata-rescue-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.baharata.boss.defeated",
+      "value": "甘達特「還是你們比較強‥‥",
+      "glyph_codes": [387,358,392,60,524,399,528,529,351,965,536,123,123,65532,65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 124},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "124", "consumer": "hostage_rescue battle victory", "doc": "docs/89-baharata-rescue-production-trace.md"}
     }
   ]
 }

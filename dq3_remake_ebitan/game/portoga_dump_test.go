@@ -9,7 +9,7 @@ import (
 )
 
 // TestDumpPortogaShipChain:視覺核驗——取船鏈全流程(古布達給黑胡椒 → 波魯多加國王授船
-// → 主角出海站上停泊的船)。用真實地圖/真實 NPC 資料(非手造 Scene),證明機制在真實素材
+// → 地表停泊船 → 正式登船與航行)。用真實地圖/真實 NPC 資料(非手造 Scene),證明機制在真實素材
 // + 真實 renderFrame 下確實 live(規則 63/64)。平常 skip;DQ3_DUMP_SHIP=1 + SHIP_OUT=
 // <gitignored 夾> 才跑。
 func TestDumpPortogaShipChain(t *testing.T) {
@@ -40,7 +40,15 @@ func TestDumpPortogaShipChain(t *testing.T) {
 		t.Fatalf("staged vehicle exchange events=%d, want 1", len(events))
 	}
 	event := events[0]
-	g.flags[0x211] = true // 前置:已救出達妮亞(C-4a 批次,甘達特巢穴 boss 鏈勝利)
+	rescueEvents := g.pack.HostageRescueEvents()
+	if len(rescueEvents) != 1 {
+		t.Fatalf("hostage rescue events=%d, want 1", len(rescueEvents))
+	}
+	rescue := rescueEvents[0]
+	for _, flag := range rescue.CompletionSetFlagsRaw {
+		g.setStoryFlag(flag, true)
+	}
+	g.setStoryFlag(rescue.RewardAvailableFlagRaw, true)
 
 	dump := func(name string) {
 		g.renderFrame()
@@ -74,8 +82,12 @@ func TestDumpPortogaShipChain(t *testing.T) {
 	g.px, g.py, g.facing = n.x, n.y+1, 1 // 站南邊面向北 → frontTile=(n.x,n.y)
 	g.dlg.open, g.noticeTimer = false, 0 // 清殘留對話/通知(乾淨的 before 截圖)
 	dump("pepper_gubda_before")          // 已救人,對話前
-	g.scriptedTalk(n.b4)
-	dump("pepper_gubda_dialogue") // 給黑胡椒對白
+	g.talkHostageRescue(&sc.npcs[pepperNi])
+	dump("pepper_gubda_dialogue") // 古布達致謝與黑胡椒提議
+	g.dlg.open = false
+	g.advanceHostageRescueDialogue()
+	g.hostageRescueChoiceInput(InputState{Confirm: true, DirEdge: -1})
+	dump("pepper_gubda_received")
 	if !g.hasItem(event.RequiredItemRawID) {
 		t.Fatal("視覺 dump 前置:應已取得黑胡椒(古布達 gate 應已放行)")
 	}
@@ -131,6 +143,49 @@ func TestDumpPortogaShipChain(t *testing.T) {
 	g.px, g.py = g.shipX, g.shipY-2
 	t.Logf("船停泊座標=(%d,%d)", g.shipX, g.shipY)
 	dump("ship_on_overworld") // 地表可見停泊的船
+
+	move := func(dir int) {
+		t.Helper()
+		for g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if g.battle.active {
+			t.Fatal("取船視覺 fixture 的港口兩格路徑不應進入戰鬥")
+		}
+		if err := g.step(InputState{DirHeld: dir, DirEdge: -1}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	move(0) // 港口陸格。
+	move(0) // 走上 pack 宣告的停泊船格。
+	if !g.shipAboard || g.px != g.shipX || g.py != g.shipY {
+		t.Fatalf("視覺 dump 未正式登船：aboard=%v player=(%d,%d) ship=(%d,%d)",
+			g.shipAboard, g.px, g.py, g.shipX, g.shipY)
+	}
+	dump("ship_first_boarded")
+
+	sailDir := -1
+	for dir := 0; dir < 4; dir++ {
+		dx, dy := dirDelta(dir)
+		nx, ny := g.px+dx, g.py+dy
+		if nx >= 0 && ny >= 0 && nx < g.cur.w && ny < g.cur.h &&
+			g.cur.attr.Raw(g.cur.tileIdx(nx, ny))&0x20 != 0 {
+			sailDir = dir
+			break
+		}
+	}
+	if sailDir < 0 {
+		t.Fatal("停泊船周圍沒有可航水格")
+	}
+	beforeX, beforeY := g.px, g.py
+	move(sailDir)
+	if !g.shipAboard || g.px == beforeX && g.py == beforeY {
+		t.Fatalf("視覺 dump 未完成首次航行：aboard=%v from=(%d,%d) to=(%d,%d)",
+			g.shipAboard, beforeX, beforeY, g.px, g.py)
+	}
+	dump("ship_first_sailing")
 }
 
 // findScriptedNpc:掃 cty 的 sections 0..29,找符合條件的 sub2 scripted NPC,回 (section, npc index)。

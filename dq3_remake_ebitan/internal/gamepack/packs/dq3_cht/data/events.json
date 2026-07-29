@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.4",
+  "schema_version": "0.1.5",
   "boss_surrender_events": [
     {
       "id": "dq3:event.shanpane_kandar",
@@ -366,6 +366,118 @@
         "address": "0x712f..0x7250",
         "consumer": "CTY63 differs from CTY62 only in map flags and side-specific spawn, while retaining the same handler50/57 data and persistent completion flags",
         "doc": "docs/88-norud-guided-passage-production-trace.md"
+      }
+    }
+  ],
+  "hostage_rescue_events": [
+    {
+      "id": "dq3:event.baharata_hostage_rescue",
+      "kind": "hostage_rescue",
+      "guard_npcs": [
+        {"cty_raw": 14, "section": 1, "tile": {"x": 14, "y": 13}, "handler_raw": 58},
+        {"cty_raw": 14, "section": 1, "tile": {"x": 15, "y": 13}, "handler_raw": 58},
+        {"cty_raw": 14, "section": 1, "tile": {"x": 13, "y": 14}, "handler_raw": 58},
+        {"cty_raw": 14, "section": 1, "tile": {"x": 16, "y": 14}, "handler_raw": 58}
+      ],
+      "guard_present_flag_raw": 128,
+      "guard_formation": {
+        "background_raw": 24,
+        "page_raw": 1,
+        "groups": [{"monster_raw_id": 57, "count": 4}],
+        "raw_bytes_hex": "0118013904"
+      },
+      "approach_trigger": {
+        "kind": "scene_tile_subid",
+        "cty_raw": 14,
+        "section": 1,
+        "tile_subid": 1,
+        "tiles": [{"x": 14, "y": 25}, {"x": 15, "y": 25}]
+      },
+      "approach_pending_flag_raw": 129,
+      "approach_movement": {
+        "npc": {"cty_raw": 14, "section": 1, "tile": {"x": 9, "y": 23}, "handler_raw": 61},
+        "path": [{"x": 9, "y": 23}, {"x": 9, "y": 25}, {"x": 11, "y": 25}],
+        "end_facing": "right",
+        "raw_bytes_hex": "020000020300ff"
+      },
+      "switch_trigger": {
+        "kind": "scene_tile_subid",
+        "cty_raw": 14,
+        "section": 1,
+        "tile_subid": 2,
+        "tiles": [{"x": 15, "y": 29}]
+      },
+      "captive_present_flag_raw": 130,
+      "captive_movements": [
+        {
+          "npc": {"cty_raw": 14, "section": 1, "tile": {"x": 9, "y": 23}, "handler_raw": 61},
+          "path": [{"x": 11, "y": 25}, {"x": 14, "y": 25}],
+          "end_facing": "right",
+          "raw_bytes_hex": "030300ff"
+        },
+        {
+          "npc": {"cty_raw": 14, "section": 1, "tile": {"x": 20, "y": 23}, "handler_raw": 61},
+          "path": [{"x": 20, "y": 23}, {"x": 20, "y": 25}, {"x": 15, "y": 25}],
+          "end_facing": "left",
+          "raw_bytes_hex": "020000050100ff"
+        }
+      ],
+      "boss_npcs": [
+        {"cty_raw": 14, "section": 1, "tile": {"x": 14, "y": 14}, "handler_raw": 61},
+        {"cty_raw": 14, "section": 1, "tile": {"x": 15, "y": 14}, "handler_raw": 61}
+      ],
+      "boss_present_flag_raw": 20,
+      "boss_formation": {
+        "background_raw": 24,
+        "page_raw": 1,
+        "groups": [
+          {"monster_raw_id": 56, "count": 1},
+          {"monster_raw_id": 57, "count": 1},
+          {"monster_raw_id": 57, "count": 1},
+          {"monster_raw_id": 57, "count": 1}
+        ],
+        "raw_bytes_hex": "0418013801390139013901"
+      },
+      "completion_set_flags_raw": [37],
+      "completion_clear_flags_raw": [20, 52],
+      "reward_npc": {
+        "cty_raw": 15,
+        "section": 0,
+        "tile": {"x": 5, "y": 24},
+        "handler_raw": 25
+      },
+      "reward_available_flag_raw": 54,
+      "reward_item_raw_id": 92,
+      "step_frames": 7,
+      "dialogue_text_ids": {
+        "guard_question": "dq3:text.baharata.guard.question",
+        "guard_join": "dq3:text.baharata.guard.join",
+        "guard_fight": "dq3:text.baharata.guard.fight",
+        "rescue_cry": "dq3:text.baharata.rescue.cry",
+        "switch_prompt": "dq3:text.pyramid.switch.prompt",
+        "switch_pressed": "dq3:text.pyramid.switch.pressed",
+        "reunion": "dq3:text.baharata.rescue.reunion",
+        "return_home": "dq3:text.baharata.rescue.return_home",
+        "boss_arrival": "dq3:text.baharata.rescue.boss_arrival",
+        "boss_challenge": "dq3:text.baharata.boss.challenge",
+        "boss_defeated": "dq3:text.baharata.boss.defeated",
+        "boss_apology": "dq3:text.baharata.boss.apology",
+        "boss_reject": "dq3:text.baharata.boss.reject",
+        "boss_farewell": "dq3:text.baharata.boss.farewell",
+        "reward_offer": "dq3:text.baharata.pepper.offer",
+        "reward_decline": "dq3:text.baharata.pepper.decline",
+        "reward_received": "dq3:text.baharata.pepper.received",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY14.DAT + CTY15.DAT + D3TXT03.TXT + local original video",
+        "address_space": "logical",
+        "address": "0x5ee0..0x60b4",
+        "consumer": "handlers58..61 consume formations DS:0x4ec0/0x4ec5, flags 0x80/0x81/0x82/0x14/0x25/0x34; handler25 grants item 0x5c once while flag 0x36 is set",
+        "doc": "docs/89-baharata-rescue-production-trace.md"
       }
     }
   ]

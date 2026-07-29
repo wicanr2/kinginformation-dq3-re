@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.4"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.5"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.4",
+  "schema_version": "0.1.5",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -379,7 +379,7 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 
 目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
 諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89、波魯多加 D3TXT04 rec24–28、
-諾魯德 D3TXT04 rec87–90
+諾魯德 D3TXT04 rec87–90、巴哈拉達 D3TXT03 rec86–87／106–120／124
 與「是／否」已遷入
 `data/texts.json`；parity test 逐 word
 對原始 D3TXT，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
@@ -578,6 +578,34 @@ event-tile rebuild 更新目前場景。DQ3 canonical 範例與完整證據見 `
 或 final facing 時在任何 mutation 前失敗即關閉。DQ3 canonical 值、IDA 位址與正式 trace
 見 `events.json`、[`docs/88`](88-norud-guided-passage-production-trace.md)。
 
+第七個已實作 primitive 是 `hostage_rescue_events`，供「守衛問答與戰鬥→踩格觸發
+NPC movement→牆上開關與俘虜 movement→返回 boss 與求饒→跨 CTY 獎勵 NPC 一次性交物」
+的有限流程使用。它不包含巴哈拉達、甘達特、黑胡椒或 DQ3 固有 ID。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `hostage_rescue_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 ID；kind 固定為 `hostage_rescue`。 |
+| `[].guard_npcs`／`[].boss_npcs` | selector[] | 是 | `{cty_raw,section,tile,handler_raw}`；各至少一筆。 |
+| `[].guard_present_flag_raw`／`[].boss_present_flag_raw` | int | 是 | 兩階段 NPC 可見性的原版 story flag。 |
+| `[].guard_formation`／`[].boss_formation` | formation | 是 | `background_raw/page_raw/groups/raw_bytes_hex`；groups 依原始順序保留。 |
+| `[].approach_trigger`／`[].switch_trigger` | trigger | 是 | `scene_tile_subid`、CTY、section、subid 與所有觸發格。 |
+| `[].approach_pending_flag_raw`／`[].captive_present_flag_raw` | int | 是 | NPC 動畫階段的原版旗標。 |
+| `[].approach_movement` | movement | 是 | `npc/path/end_facing/raw_bytes_hex`；path 為正交 waypoint。 |
+| `[].captive_movements` | movement[] | 是 | 至少一段；同上。起點可承接上一段 movement 的終點。 |
+| `[].completion_set_flags_raw`／`[].completion_clear_flags_raw` | int[] | 是 | 接受求饒後的原子旗標交易；兩陣列皆不得空或重複。 |
+| `[].reward_npc` | selector | 是 | 跨 CTY 的一次性獎勵 NPC；欄位名稱不得綁定特定遊戲道具。 |
+| `[].reward_available_flag_raw`／`[].reward_item_raw_id` | int | 是 | set 時可領；成功後清 flag 並給一件 item。實際道具與文字由各 game pack 提供。 |
+| `[].step_frames` | int | 是 | 每格 movement simulation frames，合法 1–60。 |
+| `[].dialogue_text_ids` | object | 是 | 守衛、救援、開關、重逢、boss、獎勵與 Yes／No 的全部穩定 text ID。 |
+| `[].evidence` | object | 是 | caller→writer→table/state→consumer 與玩家可見結果的 D3 證據。 |
+
+引擎只接受上述固定階段；選否不消耗、不改旗標，守衛／boss 戰敗不完成交易，接受 boss
+求饒後才原子切換完成旗標。獎勵背包新增成功後才清 availability flag。scene cache 在
+story flag 實際改變時失效，避免跨 CTY NPC 沿用事件前清單。缺 selector、文字、formation、
+movement anchor 或 D3 evidence 時在任何 mutation 前失敗即關閉。DQ3 canonical 值、
+IDA／CTY／D3TXT 證據與正式 trace 見 `events.json`、[`docs/89`](89-baharata-rescue-production-trace.md)。
+
 ### 6.10 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
@@ -597,7 +625,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.4",
+  "schema_version": "0.1.5",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

@@ -38,4 +38,5 @@ for si, so in enumerate(offs):
         x, y, b2, ctrl, b4, fl, b7 = d[r:r+7]
         sub = (ctrl >> 3) & 7
         if target is None or b4 == target:
-            print('  sect%d (%d,%d) sub=%d b4=%d(0x%02x)' % (si, x, y, sub, b4, b4))
+            print('  sect%d (%d,%d) sub=%d b4=%d(0x%02x) flag=%d(0x%02x)' %
+                  (si, x, y, sub, b4, b4, fl, fl))

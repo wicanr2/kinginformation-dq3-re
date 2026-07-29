@@ -460,7 +460,7 @@ CTY82 大圖多 section NPC 解析雜訊多,魯比斯 NPC 難精準定位。務�
 > 推測性接線，不是原版。CTY10 section 5 `section+4` 特殊 handler table 的 subid 1
 > 直接選 handler14 (`sub_15477`)；玩家踏 `(6,8)`／`(7,8)` 觸發。handler 以原版
 > story flag `0x2e` 控制四名盜賊與事件，戰勝並接受求饒、播放 rec86 後才清 flag。
-> formation 是怪26×1 + 怪27×3，總 EXP2440/gold0。金皇冠 `(4,4)` item0x33 在
+> formation 是 monster56×1 + monster57×3，總 EXP2440/gold0。金皇冠 `(4,4)` item0x33 在
 > flag `0x2e` 清除前 fail closed。完整證據與 production trace 見 `docs/85`。
 
 ## Step 34:B-9 收尾(歐里空金屬/古布達救人/隱身草/王者之劍)2026-06-26
@@ -471,11 +471,10 @@ CTY82 大圖多 section NPC 解析雜訊多,魯比斯 NPC 難精準定位。務�
    正確取法 = 站 (23,36) **朝上** examine(寶箱事件需面對它,直接 warp 上寶箱格不觸發)。
    之前驗證用 (23,35) 直 examine 失敗即此因,非資料缺失。game_tester 斷言改 (23,36)ue → PASS。
 
-2. **古布達黑胡椒救人 gate 0x5c**(巴哈拉達 CTY15 byte4=25,Ch19-20):原版要先到巴哈拉達洞窟
-   打倒甘達特手下(怪27)救出達妮亞,古布達才回胡椒店免費給黑胡椒。remake 補 flag 0x211=達妮亞救出:
-   main.c scripted dispatch 對 byte4=25 加 gate,救人前(無 0x211)→ before_rec「還在救達妮亞」不給;
-   救人後 → 原 scripted give 黑胡椒。救人事件 = `boss:27;boss:26;flag:0x211`(洞窟雙 boss → 設旗標)。
-   注:CTY15 店補洞(docs/50)仍可買黑胡椒,取船主線不卡;古布達免費那條才 gate。
+2. **古布達黑胡椒救人 gate 0x5c**：本段 2026-06-26 的自造旗標與 debug token
+   是舊 C remake 近似值，錯誤數值已刪除並由 2026-07-30 IDA／原始資料證據取代。原版 CTY14 使用
+   story flags `0x80/0x81/0x82/0x14/0x25/0x34`、兩組 formation 與三段 movement；
+   CTY15 handler25 在 `0x36` set 時給 item `0x5c`。現行實作與正式 trace 見 `docs/89`。
 
 3. **隱身草 0x5d**(朗錫爾道具店 Ch25):查 dq3_shopdata.c 確認 0x5d 已在多家商店貨架,購買系統可得。
 
@@ -524,30 +523,23 @@ zomaseq token → 巴拉摩斯怨靈(怪122 HP1201)→ 巴拉摩斯殭屍(怪123
    全程檔案中介抓 PASS=N + git 驗證,不信回顯敘述(lesson 8)。
 
 
-## Step 37:CTY14 甘達特巢穴正式觸發點接成可玩(追 [0x722]/byte4=58 handler)2026-06-26
+## Step 37：CTY14 舊近似接線已撤銷（2026-07-30）
 
-延續 Step 36 CTY14 boss 身分調查,追 byte4=58 handler 並接成可玩。
+本段原先把 handler58 縮成單格 examine 與自造 boss／flag token；錯誤數值已刪除。
+該接線沒有閉合原版 formation table、handler59／60、NPC movement、求饒交易及跨 CTY
+handler25 consumer，因而已從 production 與現行文件刪除。
 
-### 反組譯結論(dis_handler_full.py,新工具)
-byte4=58 handler L0x5ee0 完整反組譯(跟進分支):全程是**救人劇情過場**——
-對話 D3TXT03 rec106-124(加入嗎/大王不在/不能通過看招吧 → 古布達救命 → 開關救人 →
-甘達特「還是你們比較強」)+ NPC 動畫(call 0x67c5/0x21ef NPC 移動腳本)+ warp(0xbe89=0xd1f9)+
-flag 0x80/81/82 階段 + flag 0x14(救人完成,對應 remake flag 0x211)。
-**handler 內無 [0x2321] 敵群表寫入、無 sub_bfd1 battle_enter** → 甘達特戰是劇情強制戰,
-不在 byte4 handler 的 [0x2321] 機制裡(原版用過場腳本觸發)。
+IDA Pro 9.4 與原始資料重查後，正式流程為：
 
-### [0x722] 的真正語意(更正)
-[0x722] = region/page 索引(座標 hit-test 算出,docs Step 1),非 runner event id;
-byte4=58 handler 裡 cmp [0x722],1 是「檢查玩家在 region 1」的分支,非戰鬥觸發。
+- handler58 四守衛，formation `monster57×4`；
+- handler59 呼救與第一段 NPC movement；
+- handler60 牆上開關與兩段俘虜 movement；
+- handler61 返回 boss，formation `monster56×1 + monster57×3`；
+- 接受求饒 SET `0x25`、CLEAR `0x14/0x34`；
+- CTY15 handler25 以 `0x36` 控制黑胡椒 `0x5c` 一次性交易。
 
-### 接成可玩(remake)
-CTY14 sec1 (14,13) byte4=58 examine → 甘達特手下(怪27 HP81)→ 勝 → 甘達特(怪26 HP551)→
-設 flag 0x211(達妮亞救出)。與 CTY15 古布達黑胡椒鏈(flag 0x211)**完全閉環**。
-怪27/26 數值經 docs/38 ground truth 驗證(實機顯示 HP81 對上甘達特的手下)。
-pattern 同八頭大蛇 byte4=45(已接範本)。
-
-### game_tester 70 → 73(+CTY14 examine 觸發 +怪27 HP81 +已救出後話閉環)
-### 新工具:tools/dis_handler_full.py(跟進分支的完整 handler 反組譯,補 dis_sub2_handler 單區塊不足)
+完整 raw bytes、transition `(26,3)`、D3TXT rec86–87／106–120／124、影片與
+production InputState trace 集中於 `docs/89`，不再在歷史日誌維護第二份易過期位址表。
 
 
 ## Step 38:special 事件全盤點 + 分類持久化(避免重複)2026-06-26
