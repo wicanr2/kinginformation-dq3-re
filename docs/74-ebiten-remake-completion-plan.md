@@ -329,8 +329,17 @@ recruit 3 → leave Aliahan → overworld`
   CTY04／05／11；原始 treasure present flag、女王原地換物、CTY-only 使用 gate、
   `SET 0x26 / CLEAR 0x31`、rec599、即時 NPC 場景重載、save/load 與讀檔後離村均達 E3。
   版本專屬 selector、item、flags 與文字已遷入 `quest_item_chain_events`（`docs/86`）。
-- 金字塔按鈕／魔法鑰匙。
-- 波魯多加信件、諾魯特、巴哈拉達救人、黑胡椒、取船。
+- [x] 金字塔按鈕／魔法鑰匙：原版右→左開關、陷阱、石門、寶箱、正式輸入與
+  save/load 已閉合（`docs/87`）。
+- [x] 波魯多加首次晉見／國王的信：2026-07-29 已由魔法鑰匙 checkpoint 正式步行，
+  經依席斯、羅馬利亞祠堂、CTY16 旅店切回白天後進 CTY37；handler26 的 flag `0x37`、
+  item `0x5b`、D3TXT04 rec24／25、對話關閉後交易與 save/load 已達 E3。事件內容由
+  `staged_vehicle_exchange` game-pack primitive 提供，舊 remake flag `0x215` 已廢除
+  （`docs/50`）。
+- 諾魯特密道、巴哈拉達救人、黑胡椒與回波魯多加取船。`staged_vehicle_exchange`
+  已具備原版 item `0x5c` 消耗、flag `0x2c` 清除、船停泊 `(25,73)` 的 component 與
+  EXE/CTY/D3TXT parity；仍須由上述信件 checkpoint 以正式玩家路徑閉合到取船與航行，
+  才能勾選。
 
 每段包含：
 

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.2",
+  "schema_version": "0.1.3",
   "definitions": [
     {
       "id": "dq3:text.shanpane_gandart.intro",
@@ -264,6 +264,46 @@
       "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT03.TXT", "record": 89},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT03.TXT", "address_space": "record", "address": "89", "consumer": "two_step_floor_switch_gate success", "doc": "docs/87-pyramid-switch-magic-key-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.portoga.king.quest_intro",
+      "value": "*「在遙遠的東方有黑胡椒。\n---\n*「往東方去旅行,\n並且找到它。\n---\n*「當你帶黑胡椒回來時,\n我會承認你是勇者,\n並給你船。\n---\n*「把這封信拿給諾魯特,\n他就會指引你\n往東方的路。",
+      "glyph_codes": [59, 60, 411, 1060, 1061, 149, 539, 547, 147, 302, 303, 304, 56, 65532, 59, 60, 754, 539, 547, 448, 193, 531, 55, 65534, 12, 12, 1210, 1211, 769, 453, 1052, 56, 65532, 59, 60, 1030, 528, 540, 302, 303, 304, 312, 461, 782, 55, 65534, 12, 12, 493, 415, 1080, 1127, 528, 399, 106, 187, 55, 65534, 12, 12, 1210, 559, 528, 316, 56, 65532, 59, 60, 530, 398, 500, 301, 558, 559, 735, 377, 392, 55, 65534, 12, 12, 757, 633, 415, 261, 660, 528, 65534, 12, 12, 754, 539, 547, 149, 756, 56, 65532, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 24},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "24", "consumer": "staged_vehicle_exchange quest introduction", "doc": "docs/50-ship-acquisition.md"}
+    },
+    {
+      "id": "dq3:text.portoga.king.letter_grant",
+      "value": "{變數}接受國王的信。\n---\n*「那麼,去吧!",
+      "glyph_codes": [65525, 1025, 452, 300, 186, 149, 301, 56, 65532, 59, 60, 354, 436, 55, 448, 499, 57, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 25},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "25", "consumer": "staged_vehicle_exchange quest item grant", "doc": "docs/50-ship-acquisition.md"}
+    },
+    {
+      "id": "dq3:text.portoga.king.need_pepper",
+      "value": "*「怎麼了?我在等黑胡椒。",
+      "glyph_codes": [59, 60, 935, 436, 423, 58, 493, 411, 419, 302, 303, 304, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 26},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "26", "consumer": "staged_vehicle_exchange missing required item", "doc": "docs/50-ship-acquisition.md"}
+    },
+    {
+      "id": "dq3:text.portoga.king.ship_grant",
+      "value": "*「喔喔{變數}!\n成功的把黑胡椒帶來了!\n---\n*「好,照約定給你船!\n到外面去看看吧。",
+      "glyph_codes": [59, 60, 776, 776, 65525, 57, 65534, 12, 12, 610, 195, 149, 530, 302, 303, 304, 540, 461, 423, 57, 65532, 59, 60, 441, 55, 656, 1212, 1022, 559, 528, 316, 57, 65534, 12, 12, 453, 920, 236, 448, 668, 668, 499, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 27},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "27", "consumer": "staged_vehicle_exchange vehicle grant success", "doc": "docs/50-ship-acquisition.md"}
+    },
+    {
+      "id": "dq3:text.portoga.king.after_pepper",
+      "value": "*「胡椒實在太好吃了。\n我吃的太多了,好想睡。",
+      "glyph_codes": [59, 60, 303, 304, 279, 411, 334, 441, 1200, 423, 56, 65534, 12, 12, 493, 1200, 149, 334, 357, 423, 55, 441, 609, 628, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 35, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 28},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "28", "consumer": "staged_vehicle_exchange post-completion dialogue", "doc": "docs/50-ship-acquisition.md"}
     }
   ]
 }

@@ -35,6 +35,11 @@ func TestDumpPortogaShipChain(t *testing.T) {
 	if g.flags == nil {
 		g.flags = map[int]bool{}
 	}
+	events := g.pack.StagedVehicleExchangeEvents()
+	if len(events) != 1 {
+		t.Fatalf("staged vehicle exchange events=%d, want 1", len(events))
+	}
+	event := events[0]
 	g.flags[0x211] = true // 前置:已救出達妮亞(C-4a 批次,甘達特巢穴 boss 鏈勝利)
 
 	dump := func(name string) {
@@ -71,26 +76,50 @@ func TestDumpPortogaShipChain(t *testing.T) {
 	dump("pepper_gubda_before")          // 已救人,對話前
 	g.scriptedTalk(n.b4)
 	dump("pepper_gubda_dialogue") // 給黑胡椒對白
-	if !g.hasItem(itemPepper) {
+	if !g.hasItem(event.RequiredItemRawID) {
 		t.Fatal("視覺 dump 前置:應已取得黑胡椒(古布達 gate 應已放行)")
 	}
 
-	// 找波魯多加國王(CTY37 位置特例 (9,6))所在 section。
-	kingSec, kingNi := findScriptedNpc(t, g, ctyPortoga, -1) // -1=改用座標比對(國王非 scriptedTable 項)
-	sc2, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ctyPortoga, mapBlkNum[ctyPortoga], kingSec, 0, nil)
+	// 國王 selector、CTY、座標、handler 與交易內容全部取自 pack。
+	kingSec, kingNi := findScriptedNpc(t, g, event.NPC.CTYRaw, event.NPC.HandlerRaw)
+	sc2, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, event.NPC.CTYRaw,
+		mapBlkNum[event.NPC.CTYRaw], kingSec, 0, nil)
 	if err != nil {
-		t.Fatalf("載入 CTY%d sec%d: %v", ctyPortoga, kingSec, err)
+		t.Fatalf("載入 CTY%d sec%d: %v", event.NPC.CTYRaw, kingSec, err)
 	}
 	if sc2.dlgText != nil {
 		g.dlg.tx = sc2.dlgText
 	}
-	g.town, g.cur, g.curCty = sc2, sc2, ctyPortoga
+	g.town, g.cur, g.curCty = sc2, sc2, event.NPC.CTYRaw
 	kn := sc2.npcs[kingNi]
 	g.px, g.py, g.facing = kn.x, kn.y+1, 1
 	g.dlg.open, g.noticeTimer = false, 0 // 清上一步殘留對話/通知(乾淨的 before 截圖)
-	dump("king_portoga_before")          // 授船前(持黑胡椒站國王前)
+	dump("king_portoga_before")
+	dump("cty37")
 	g.selectCommand(cmdTalk)
-	dump("king_portoga_ship") // 授船對白(shipOwned 應已 true)
+	dump("portoga_king_letter_intro")
+	g.dlg.open = false
+	g.advanceStagedVehicleExchangeDialogue()
+	dump("portoga_king_letter_item")
+	g.noticeTimer = 0
+	dump("portoga_king_letter_grant")
+	g.dlg.open = false
+	g.advanceStagedVehicleExchangeDialogue()
+
+	// 舊文件引用的 wait 圖改成原版 first-visit 交易完成後、尚無黑胡椒的 rec26。
+	for i, item := range g.inventory {
+		if item == event.RequiredItemRawID {
+			g.inventory = append(g.inventory[:i], g.inventory[i+1:]...)
+			break
+		}
+	}
+	g.selectCommand(cmdTalk)
+	dump("portoga_king_wait")
+	g.dlg.open = false
+	g.inventory = append(g.inventory, event.RequiredItemRawID)
+	g.selectCommand(cmdTalk)
+	dump("portoga_king_ship")
+	dump("portoga_getship")
 	if !g.shipOwned {
 		t.Fatal("視覺 dump:對話後應已取船")
 	}
@@ -105,7 +134,7 @@ func TestDumpPortogaShipChain(t *testing.T) {
 }
 
 // findScriptedNpc:掃 cty 的 sections 0..29,找符合條件的 sub2 scripted NPC,回 (section, npc index)。
-// wantB4>=0 → 依 byte4 匹配(scriptedTable 項);wantB4<0 → 改用波魯多加國王座標特例比對。
+// wantB4 依 pack 或原始資料提供的 byte4 匹配。
 // 找不到直接 Fatal(dump test 用,前置條件不成立就該失敗,不靜默略過)。
 func findScriptedNpc(t *testing.T, g *Game, cty, wantB4 int) (int, int) {
 	t.Helper()
@@ -122,10 +151,7 @@ func findScriptedNpc(t *testing.T, g *Game, cty, wantB4 int) (int, int) {
 			if (n.ctrl>>3)&7 != 2 {
 				continue
 			}
-			if wantB4 >= 0 && n.b4 == wantB4 {
-				return sec, i
-			}
-			if wantB4 < 0 && n.x == portogaKingX && n.y == portogaKingY {
+			if n.b4 == wantB4 {
 				return sec, i
 			}
 		}

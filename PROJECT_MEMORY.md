@@ -29,17 +29,17 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
 - 共用 game-pack JSON 契約：
   [`docs/84`](docs/84-game-pack-json-contract.md)
 - 原版流程 oracle：[`docs/66-original-flow-oracle.md`](docs/66-original-flow-oracle.md)
-- 最新 production audit：[`docs/87`](docs/87-pyramid-switch-magic-key-production-trace.md)
+- 最新 production audit：[`docs/50`](docs/50-ship-acquisition.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
   [`docs/77`](docs/77-r5b-castle-aftermath.md)
 
-boot 起的正式 trace 已由諾亞尼爾甦醒繼續閉合到金字塔魔法鑰匙：正式經阿莎拉慕、
-沙漠祠堂與依席斯抵達 CTY13，踩最右／最左按鍵、清原版 flag `0x46` 開石門，再由命令窗
-「調查」取得 item `0x56` 並清 present flag `0x73`。事件後 save/load 仍保留鑰匙與開門
-狀態。**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從此合法 checkpoint
-穿過魔法鑰匙門。
+boot 起的正式 trace 已由金字塔魔法鑰匙繼續閉合到波魯多加首次晉見：正式穿過依席斯、
+羅馬利亞祠堂，在 CTY16 旅店住宿回白天後由原始入口進 CTY37，與 handler26 國王交談；
+D3TXT04 rec24 關閉後取得 item `0x5b`、清原版 flag `0x37`、顯示 rec25，事件後
+save/load 仍保存信件與旗標。**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個
+audit 從國王信件 checkpoint 前往諾魯特、巴哈拉達救人、取得黑胡椒並返回取船。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -50,8 +50,9 @@ Android／Web 嵌入 pack 則仍需重包。
 formation、寶箱 gate、價格與 cue 不得新增成 Go 常數/table。甘達特事件已是第一個完整
 `events.json` + `texts.json` + 通用 `boss_surrender` primitive + EXE/CTY/D3TXT parity
 範例；羅馬利亞 `temporary_role` 是第二個完整範例；諾亞尼爾 `quest_item_chain` 是
-第三個；金字塔 `two_step_floor_switch_gate` 是第四個，開關座標、subid、raw handler、
-旗標、陷阱目的地、文字、音效與解鎖寶箱均由 JSON 提供。
+第三個；金字塔 `two_step_floor_switch_gate` 是第四個；波魯多加
+`staged_vehicle_exchange` 是第五個，NPC selector、原版旗標、任務／交換道具、船停泊
+座標與五段文字均由 JSON 提供。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

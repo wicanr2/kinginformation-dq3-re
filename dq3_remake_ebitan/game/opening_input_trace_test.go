@@ -772,6 +772,15 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			t.Fatalf("諾亞尼爾後未能正式抵達 CTY%d：town=%v cty=%d sec=%d",
 				cty, g.inTown, g.curCty, sceneSection(g.cur))
 		}
+		if cty == 6 {
+			traceReviveDeadAtChurch(t, g)
+			traceTalkFacility(t, g, facInn)
+			traceExitTownBoundary(t, g)
+			traceTrainNearTown(t, g, cty, 13)
+			traceAdventureWalkToCty(t, g, cty)
+			traceReviveDeadAtChurch(t, g)
+			traceTalkFacility(t, g, facInn)
+		}
 		traceExitTownBoundary(t, g)
 	}
 	// CTY12／32／73 的原版 cty_loc 均為 `(36,105)`，但 file 0x43a6
@@ -854,11 +863,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("重建魔法鑰匙讀檔 Game：%v", err)
 	}
-	if err := restored.Load(); err != nil {
-		t.Fatalf("讀取魔法鑰匙 checkpoint：%v", err)
-	}
 	g = restored
 	g.frame = nil
+	press(InputState{Confirm: true})          // 標題 splash → 主選單
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
+	press(InputState{Confirm: true})          // 正式載入魔法鑰匙 checkpoint
 	if !g.hasItem(magicKey.ItemRawID) || g.storyFlag(magicKey.PresentFlag) ||
 		g.storyFlag(pyramidGate.ClearFlagRaw) || g.curCty != pyramidGate.CTYRaw ||
 		sceneSection(g.cur) != pyramidGate.Section || g.cur.Blocked(13, 10) {
@@ -866,6 +875,68 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.hasItem(magicKey.ItemRawID), g.storyFlag(magicKey.PresentFlag),
 			g.storyFlag(pyramidGate.ClearFlagRaw), g.curCty, sceneSection(g.cur),
 			g.cur.Blocked(13, 10))
+	}
+	// 魔法鑰匙後依正式 transition table 離開金字塔，回依席斯王宮。
+	// CTY32 是與地表 CTY12 共用入口座標的宮殿區，只能由城內轉場抵達。
+	traceTownSectionTo(t, g, pyramidGate.CTYRaw, 0, 1, 41, 1)
+	traceExitTownBoundary(t, g, true)
+	traceAdventureWalkToCty(t, g, 12)
+	traceTownSectionTo(t, g, 32, 4)
+	traceTownSectionTo(t, g, 73, 0)
+
+	// 依席斯王宮 → 羅馬利亞祠堂 → 波魯多加，全部使用正式地表與
+	// transition table；祠堂紅門由背包中的魔法鑰匙開啟。
+	traceTownSectionTo(t, g, 12, 1, 10, 34)
+	traceTalkFacility(t, g, facInn)
+	traceTownSectionTo(t, g, 12, 0)
+	traceExitTownBoundary(t, g)
+	traceAdventureWalkToCty(t, g, 34, false)
+	traceTownSectionTo(t, g, 35, 0)
+	traceExitTownBoundary(t, g, true)
+	traceAdventureWalkToCty(t, g, 16, false)
+	traceTalkFacility(t, g, facInn)
+	if g.dnPhase != 0 || g.dnStep != 0 {
+		t.Fatalf("波魯多加住宿後未回到白天：phase=%d step=%d", g.dnPhase, g.dnStep)
+	}
+
+	vehicleEvents := g.pack.StagedVehicleExchangeEvents()
+	if len(vehicleEvents) != 1 {
+		t.Fatalf("staged vehicle exchange events=%d, want 1", len(vehicleEvents))
+	}
+	portoga := vehicleEvents[0]
+	traceTownSectionTo(t, g, portoga.NPC.CTYRaw, portoga.NPC.Section)
+	traceTalkNPC(t, g, portoga.NPC.Tile.X, portoga.NPC.Tile.Y)
+	if !g.dlg.open || g.vehicleExchangeStage != vehicleExchangeQuestIntro ||
+		g.hasItem(portoga.GrantedItemRawID) {
+		t.Fatalf("波魯多加首訪未停在授信介紹：dlg=%v stage=%d item=%v",
+			g.dlg.open, g.vehicleExchangeStage, g.hasItem(portoga.GrantedItemRawID))
+	}
+	traceCloseDialogue(t, g)
+	if !g.hasItem(portoga.GrantedItemRawID) ||
+		g.storyFlag(portoga.QuestPresentFlagRaw) || g.shipOwned {
+		t.Fatalf("波魯多加首訪交易錯誤：letter=%v questFlag=%v ship=%v",
+			g.hasItem(portoga.GrantedItemRawID),
+			g.storyFlag(portoga.QuestPresentFlagRaw), g.shipOwned)
+	}
+
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存國王信件 checkpoint：%v", err)
+	}
+	restored, err = NewGame(g.assets, nil)
+	if err != nil {
+		t.Fatalf("重建國王信件讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.hasItem(portoga.GrantedItemRawID) ||
+		g.storyFlag(portoga.QuestPresentFlagRaw) || g.shipOwned ||
+		g.curCty != portoga.NPC.CTYRaw || sceneSection(g.cur) != portoga.NPC.Section {
+		t.Fatalf("國王信件 save/load round-trip 錯誤：item=%v flag=%v ship=%v cty=%d sec=%d",
+			g.hasItem(portoga.GrantedItemRawID), g.storyFlag(portoga.QuestPresentFlagRaw),
+			g.shipOwned, g.curCty, sceneSection(g.cur))
 	}
 }
 
@@ -1064,7 +1135,7 @@ func traceReviveDeadAtChurch(t *testing.T, g *Game) {
 	}
 }
 
-func traceExitTownBoundary(t *testing.T, g *Game) {
+func traceExitTownBoundary(t *testing.T, g *Game, avoidPortals ...bool) {
 	t.Helper()
 	type candidate struct {
 		x, y, dir int
@@ -1091,6 +1162,9 @@ func traceExitTownBoundary(t *testing.T, g *Game) {
 				continue
 			}
 			path := tracePath(g.cur, g.px, g.py, x, y)
+			if len(avoidPortals) > 0 && avoidPortals[0] {
+				path = tracePortalPath(g.cur, g.px, g.py, x, y, g.keyTier())
+			}
 			if (x != g.px || y != g.py) && len(path) == 0 {
 				continue
 			}
@@ -1102,7 +1176,11 @@ func traceExitTownBoundary(t *testing.T, g *Game) {
 	if best == nil {
 		t.Fatalf("CTY%d sec%d 找不到可達的 section0 邊界出口", g.curCty, sceneSection(g.cur))
 	}
-	traceWalkTo(t, g, best.x, best.y)
+	if len(avoidPortals) > 0 && avoidPortals[0] {
+		traceWalkToNoPortal(t, g, best.x, best.y)
+	} else {
+		traceWalkTo(t, g, best.x, best.y)
+	}
 	for g.cd > 0 {
 		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
 			t.Fatalf("等待出城 cooldown: %v", err)
@@ -1230,8 +1308,11 @@ func traceOpenReachableDoor(t *testing.T, g *Game, wantDoor ...int) {
 }
 
 // traceAdventureWalkToCty 在同一層地表尋路到 CTY 入口；隨機遭遇由正式 battle input 解決。
-func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int) {
+// fightStrong=false 供已完成該區戰力訓練的路段使用，避免把「反覆逃跑直到成功」誤當成
+// 可重現的玩家流程；省略時保留前段低等級隊伍遇強敵即逃的策略。
+func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int, fleeStrong ...bool) {
 	t.Helper()
+	shouldFleeStrong := len(fleeStrong) == 0 || fleeStrong[0]
 	if wantCty < 0 || wantCty >= len(ctyLoc) || ctyLoc[wantCty][2] != g.layer {
 		t.Fatalf("無效 CTY%d / layer%d", wantCty, g.layer)
 	}
@@ -1243,7 +1324,7 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int) {
 	}
 	for i := 0; i < 12000 && (!g.inTown || g.curCty != wantCty); i++ {
 		if g.battle.active {
-			traceResolveBattle(t, g)
+			traceResolveBattle(t, g, shouldFleeStrong)
 			continue
 		}
 		if g.inTown {
@@ -1411,10 +1492,31 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 			}
 		case phTargetAlly:
 			targets := g.battle.aliveActorIndices()
-			if healTarget >= 0 && targets[g.battle.targetCursor] != healTarget {
-				in.DirEdge = 0
-			} else {
-				in.Confirm = true
+			if len(targets) == 0 {
+				t.Fatal("治療目標選單沒有存活隊員")
+			}
+			wantPos := 0
+			for i, actor := range targets {
+				if actor == healTarget {
+					wantPos = i
+					break
+				}
+			}
+			tapped := false
+			for _, hit := range g.battle.hits {
+				if hit.idx != wantPos {
+					continue
+				}
+				in.Tapped, in.TapX, in.TapY = true, hit.x+hit.w/2, hit.y+hit.h/2
+				tapped = true
+				break
+			}
+			if !tapped {
+				if g.battle.targetCursor == wantPos {
+					in.Confirm = true
+				} else {
+					in.DirEdge = 0
+				}
 			}
 		case phTargetEnemy:
 			targets := g.battle.aliveEnemyIndices()
@@ -1443,9 +1545,11 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 		for i := range g.battle.enemies {
 			enemyHP[i] = g.battle.enemies[i].hp
 		}
-		t.Fatalf("戰鬥 %d 次正式輸入後仍未結束：phase=%d actor=%d cursor=%d target=%d mon=%d result=%d hero=%d enemyHP=%v",
+		t.Fatalf("戰鬥 %d 次正式輸入後仍未結束：phase=%d actor=%d cursor=%d target=%d healTarget=%d pending=%+v herbs=%d/%d targets=%v hits=%+v mon=%d result=%d hero=%d enemyHP=%v",
 			maxInputs,
 			g.battle.phase, g.battle.commandActor, g.battle.cursor, g.battle.targetCursor,
+			healTarget, g.battle.pending, g.battle.usedHerbs, g.battle.heroHerbs,
+			g.battle.aliveActorIndices(), g.battle.hits,
 			g.battle.monID, g.battle.result, g.battle.heroHP, enemyHP)
 	}
 }
@@ -1468,7 +1572,24 @@ func traceTownSectionTo(t *testing.T, g *Game, wantCty, wantSec int, wantNPC ...
 		cur := q[0]
 		q = q[1:]
 		if cur.cty == wantCty && (wantCty < 0 || cur.sec == wantSec) {
-			if len(wantNPC) < 2 || traceNPCReachable(g, cur.cty, cur.sec, cur.x, cur.y, wantNPC[0], wantNPC[1]) {
+			reachable := len(wantNPC) < 2
+			if len(wantNPC) == 2 {
+				reachable = traceNPCReachable(g, cur.cty, cur.sec, cur.x, cur.y,
+					wantNPC[0], wantNPC[1])
+			} else if len(wantNPC) >= 3 {
+				sc := g.cur
+				if cur != start {
+					var err error
+					sc, err = loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+						cur.cty, mapBlkNum[cur.cty], cur.sec, g.dnPhase, g.storyFlag)
+					if err != nil {
+						sc = nil
+					}
+				}
+				reachable = sc != nil && (cur.x == wantNPC[0] && cur.y == wantNPC[1] ||
+					len(tracePortalPath(sc, cur.x, cur.y, wantNPC[0], wantNPC[1], g.keyTier())) > 0)
+			}
+			if reachable {
 				goal, found = cur, true
 				break
 			}
@@ -1606,10 +1727,43 @@ func traceWalkThroughPortal(t *testing.T, g *Game, x, y, wantCty, wantSec int, w
 			}
 			continue
 		}
+		// 轉場目的座標可能正好也是回程 portal。原版只在「移動踏入」時消費
+		// transition；站在該格不會自動連續折返，所以用正式方向輸入先走開，
+		// 下一輪再依路徑踏回。
+		if g.px == x && g.py == y {
+			movedOff := false
+			for dir := 0; dir < 4; dir++ {
+				dx, dy := dirDelta(dir)
+				nx, ny := g.px+dx, g.py+dy
+				if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h ||
+					g.cur.Blocked(nx, ny) {
+					continue
+				}
+				if _, _, _, _, ok := g.cur.tileTransition(nx, ny); ok {
+					continue
+				}
+				if err := g.step(InputState{DirHeld: dir, DirEdge: -1}); err != nil {
+					t.Fatalf("離開回程 portal(%d,%d) dir%d: %v", x, y, dir, err)
+				}
+				movedOff = g.px == nx && g.py == ny
+				if movedOff {
+					break
+				}
+			}
+			if !movedOff {
+				t.Fatalf("站在回程 portal(%d,%d) 但找不到可走開的相鄰格", x, y)
+			}
+			continue
+		}
 		path := tracePortalPath(g.cur, g.px, g.py, x, y, g.keyTier())
 		if len(path) == 0 {
-			t.Fatalf("無法在不踩其他 transition 下抵達 portal(%d,%d)，目前 @(%d,%d)",
-				x, y, g.px, g.py)
+			// 遊走 NPC 可能暫時封住唯一通道；與 traceWalkOne 一樣送空白
+			// frame，讓 production NPC tick 後重新尋路。永久不連通仍會由
+			// 3000 次上限報錯。
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待 portal 路徑 NPC: %v", err)
+			}
+			continue
 		}
 		dx, dy := dirDelta(path[0])
 		if g.cur.doorTier(g.px+dx, g.py+dy) != 0 {
@@ -1620,8 +1774,10 @@ func traceWalkThroughPortal(t *testing.T, g *Game, x, y, wantCty, wantSec int, w
 			t.Fatalf("走向 portal dir%d: %v", path[0], err)
 		}
 	}
-	t.Fatalf("走到 portal(%d,%d)後仍未抵達 CTY%d sec%d；目前 CTY%d sec%d @(%d,%d)",
-		x, y, wantCty, wantSec, g.curCty, sceneSection(g.cur), g.px, g.py)
+	t.Fatalf("走到 portal(%d,%d)後仍未抵達 CTY%d sec%d；目前 CTY%d sec%d @(%d,%d)，title=%v dlg=%v cmd=%v panel=%d gateStage=%d cd=%d path=%v",
+		x, y, wantCty, wantSec, g.curCty, sceneSection(g.cur), g.px, g.py,
+		g.showTitle, g.dlg.open, g.cmd.open, g.panel, g.sequenceGateStage, g.cd,
+		tracePortalPath(g.cur, g.px, g.py, x, y, g.keyTier()))
 }
 
 func traceWalkTo(t *testing.T, g *Game, x, y int) {
@@ -1726,7 +1882,8 @@ func traceTalkNPC(t *testing.T, g *Game, nx, ny int) {
 			return
 		}
 	}
-	t.Fatalf("無法抵達 NPC(%d,%d) 的相鄰格", nx, ny)
+	t.Fatalf("無法由 CTY%d sec%d @(%d,%d) 抵達 NPC(%d,%d) 的相鄰格；候選=%v dn=%d keyTier=%d",
+		g.curCty, sceneSection(g.cur), g.px, g.py, nx, ny, candidates, g.dnPhase, g.keyTier())
 }
 
 // tracePortalPath 把目標以外的 transition tile 視為阻擋；否則最短路徑可能先踩到

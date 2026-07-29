@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.2"
+	SchemaVersion = "0.1.3"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -270,12 +270,50 @@ type TwoStepFloorSwitchGate struct {
 	Evidence               Evidence              `json:"evidence"`
 }
 
+type VehicleWorldPosition struct {
+	X     int `json:"x"`
+	Y     int `json:"y"`
+	Layer int `json:"layer"`
+}
+
+type VehicleGrant struct {
+	Kind          string               `json:"kind"`
+	WorldPosition VehicleWorldPosition `json:"world_position"`
+	ClearFlagsRaw []int                `json:"clear_flags_raw"`
+}
+
+type StagedVehicleExchangeTextIDs struct {
+	QuestIntro string `json:"quest_intro"`
+	ItemGrant  string `json:"item_grant"`
+	NeedItem   string `json:"need_item"`
+	Success    string `json:"success"`
+	After      string `json:"after"`
+}
+
+// StagedVehicleExchangeEvent is a finite shared primitive:
+// first visit grants one quest item, later a required item is exchanged for a
+// vehicle. Edition-specific selectors, flags, item IDs, text and coordinates
+// remain pack data.
+type StagedVehicleExchangeEvent struct {
+	ID                       string                       `json:"id"`
+	Kind                     string                       `json:"kind"`
+	NPC                      ScriptedNPCSelector          `json:"npc"`
+	QuestPresentFlagRaw      int                          `json:"quest_present_flag_raw"`
+	GrantedItemRawID         int                          `json:"granted_item_raw_id"`
+	ExchangeAvailableFlagRaw int                          `json:"exchange_available_flag_raw"`
+	RequiredItemRawID        int                          `json:"required_item_raw_id"`
+	Vehicle                  VehicleGrant                 `json:"vehicle"`
+	DialogueTextIDs          StagedVehicleExchangeTextIDs `json:"dialogue_text_ids"`
+	Evidence                 Evidence                     `json:"evidence"`
+}
+
 type Events struct {
-	SchemaVersion           string                   `json:"schema_version"`
-	BossSurrenderEvents     []BossSurrenderEvent     `json:"boss_surrender_events"`
-	TemporaryRoleEvents     []TemporaryRoleEvent     `json:"temporary_role_events"`
-	QuestItemChainEvents    []QuestItemChainEvent    `json:"quest_item_chain_events"`
-	TwoStepFloorSwitchGates []TwoStepFloorSwitchGate `json:"two_step_floor_switch_gates"`
+	SchemaVersion               string                       `json:"schema_version"`
+	BossSurrenderEvents         []BossSurrenderEvent         `json:"boss_surrender_events"`
+	TemporaryRoleEvents         []TemporaryRoleEvent         `json:"temporary_role_events"`
+	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
+	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate     `json:"two_step_floor_switch_gates"`
+	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
 }
 
 type TextSource struct {
@@ -333,19 +371,20 @@ type Characters struct {
 }
 
 type Pack struct {
-	Manifest        Manifest
-	Facilities      Facilities
-	Events          Events
-	Characters      Characters
-	Texts           Texts
-	services        map[string]*ServiceDefinition
-	bossEvents      map[string]*BossSurrenderEvent
-	roleEvents      map[string]*TemporaryRoleEvent
-	questItemEvents map[string]*QuestItemChainEvent
-	sequenceGates   map[string]*TwoStepFloorSwitchGate
-	charDefaults    map[string]*CharacterDefault
-	texts           map[string]*TextDefinition
-	contentHash     string
+	Manifest         Manifest
+	Facilities       Facilities
+	Events           Events
+	Characters       Characters
+	Texts            Texts
+	services         map[string]*ServiceDefinition
+	bossEvents       map[string]*BossSurrenderEvent
+	roleEvents       map[string]*TemporaryRoleEvent
+	questItemEvents  map[string]*QuestItemChainEvent
+	sequenceGates    map[string]*TwoStepFloorSwitchGate
+	vehicleExchanges map[string]*StagedVehicleExchangeEvent
+	charDefaults     map[string]*CharacterDefault
+	texts            map[string]*TextDefinition
+	contentHash      string
 }
 
 func decodeStrict(fsys fs.FS, name string, dst any) error {
@@ -601,6 +640,18 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.StagedVehicleExchangeEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"quest_intro": refs.QuestIntro, "item_grant": refs.ItemGrant,
+			"need_item": refs.NeedItem, "success": refs.Success, "after": refs.After,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	return nil
 }
 
@@ -624,6 +675,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.TwoStepFloorSwitchGates == nil {
 		return errors.New("two_step_floor_switch_gates must be present")
+	}
+	if p.Events.StagedVehicleExchangeEvents == nil {
+		return errors.New("staged_vehicle_exchange_events must be present")
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -811,6 +865,43 @@ func (p *Pack) validateEvents() error {
 		}
 		p.sequenceGates[e.ID] = e
 	}
+	p.vehicleExchanges = make(map[string]*StagedVehicleExchangeEvent,
+		len(p.Events.StagedVehicleExchangeEvents))
+	for i := range p.Events.StagedVehicleExchangeEvents {
+		e := &p.Events.StagedVehicleExchangeEvents[i]
+		if e.ID == "" || e.Kind != "staged_vehicle_exchange" {
+			return fmt.Errorf("staged_vehicle_exchange_events[%d]: id and kind=staged_vehicle_exchange are required", i)
+		}
+		if _, exists := p.vehicleExchanges[e.ID]; exists {
+			return fmt.Errorf("duplicate staged vehicle exchange event id %q", e.ID)
+		}
+		if !validScriptedNPC(e.NPC) ||
+			e.QuestPresentFlagRaw < 0 || e.QuestPresentFlagRaw >= 512 ||
+			e.ExchangeAvailableFlagRaw < 0 || e.ExchangeAvailableFlagRaw >= 512 ||
+			e.QuestPresentFlagRaw == e.ExchangeAvailableFlagRaw ||
+			e.GrantedItemRawID < 0 || e.GrantedItemRawID > 255 ||
+			e.RequiredItemRawID < 0 || e.RequiredItemRawID > 255 ||
+			e.GrantedItemRawID == e.RequiredItemRawID {
+			return fmt.Errorf("%s: invalid selector, flags or item IDs", e.ID)
+		}
+		v := e.Vehicle
+		if v.Kind != "ship" || v.WorldPosition.X < 0 || v.WorldPosition.Y < 0 ||
+			v.WorldPosition.Layer != 0 ||
+			len(v.ClearFlagsRaw) == 0 {
+			return fmt.Errorf("%s: invalid vehicle grant", e.ID)
+		}
+		seenFlags := map[int]bool{}
+		for _, flag := range v.ClearFlagsRaw {
+			if flag < 0 || flag >= 512 || seenFlags[flag] {
+				return fmt.Errorf("%s: invalid or duplicate vehicle clear flag %d", e.ID, flag)
+			}
+			seenFlags[flag] = true
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.vehicleExchanges[e.ID] = e
+	}
 	return nil
 }
 
@@ -984,6 +1075,15 @@ func (p *Pack) TwoStepFloorSwitchGates() []TwoStepFloorSwitchGate {
 
 func (p *Pack) TwoStepFloorSwitchGate(id string) (*TwoStepFloorSwitchGate, bool) {
 	e, ok := p.sequenceGates[id]
+	return e, ok
+}
+
+func (p *Pack) StagedVehicleExchangeEvents() []StagedVehicleExchangeEvent {
+	return append([]StagedVehicleExchangeEvent(nil), p.Events.StagedVehicleExchangeEvents...)
+}
+
+func (p *Pack) StagedVehicleExchangeEvent(id string) (*StagedVehicleExchangeEvent, bool) {
+	e, ok := p.vehicleExchanges[id]
 	return e, ok
 }
 

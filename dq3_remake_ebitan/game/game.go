@@ -297,64 +297,66 @@ type Game struct {
 	heroGender     int            // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0)。heroStat 是原版角色 record 的七個持久能力欄；
 	// 創角/升級時由 sub_ed3c 相同的 RNG transaction 修改，不再每幀由等級公式重算。
-	heroExp              uint32
-	heroGold             int
-	heroHP               int
-	heroMP               int
-	heroStat             stats.Values
-	heroInit             bool
-	equip                [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
-	companions           []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
-	roster               []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
-	flags                map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
-	storyBits            [64]byte     // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
-	worldState           uint16       // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
-	noticeCode           int          // 取得道具通知(item code;-1=無)
-	noticeTimer          int
-	shipOwned            bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
-	shipAboard           bool          // 目前在船上
-	shipX, shipY         int           // 船停泊位置(地表)
-	repel                int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
-	remoaru              int           // レムオル透明剩餘有效移動步數；原版 [0x52f7]，施放設 25
-	toramana             bool          // 多拉瑪那原版 world flag 0x2000；遇高傷害地板後轉 hazardGuard
-	hazardGuard          bool          // 原版 world flag 0x0400；只在同一段連續高傷害地板維持
-	prng                 rng.RNG       // 祈禱之戒損壞判定用 RNG
-	lotoBlessed          bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
-	cleared              bool          // 已破關(索瑪擊破)
-	endText              *dq3data.Text // ENDTXT.TXT 結局文本
-	endSeq               int           // 結局捲動段號(-1=未進行;0..n=當前段)
-	openingIdx           int           // 開場旁白序號(-1=未進行;0..n=當前句)
-	bossQueue            []int         // boss 連戰佇列(索瑪終盤:怨靈→殭屍→索瑪；或 examine 觸發的座標 boss 鏈)
-	pendingTrigger       *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
-	bossIntro            bool          // 座標 boss 的 preRec 尚在顯示；關閉後才正式開戰
-	bossSurrenderStage   int           // game-pack boss_surrender primitive 的目前階段
-	bossSurrenderCursor  int           // 求饒 Yes/No 游標
-	bossSurrenderEventID string        // active pack event；空字串表示無事件
-	zomaIntro            bool          // 索瑪 rec72 尚在顯示；關閉後才開 monster0x7c
-	ortegaStage          int           // CTY90 sec4 歐魯迪卡事件：1=rec69，2=rec70
-	endingKingStage      int           // CTY80 sec1 handler74：1=rec48 冊封對白，關閉後才開始 ending
-	baramosReturn        int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
-	temporaryRoleStage   int           // game-pack temporary_role primitive 的目前階段
-	temporaryRoleCursor  int           // temporary_role Yes/No 游標
-	temporaryRoleEventID string        // active pack event；空字串表示無事件
-	sequenceGateStage    int           // game-pack two_step_floor_switch_gate 的目前階段
-	sequenceGateCursor   int           // 序列開關 Yes/No 游標
-	sequenceGateEventID  string        // active pack event；空字串表示無事件
-	sequenceGateSubID    int           // 本次踩到的 pack-owned switch subid
-	sequenceGateArmed    bool          // 原版暫存 scratch；不進存檔
-	mirrorStage          int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
-	phoenix              *dq3data.CharSprite
-	phoenixOwned         bool
-	phoenixAboard        bool
-	phoenixX             int
-	phoenixY             int
-	phoenixStage         int   // 1=守護神 rec92 後續；2=逐顆 rec93；3=中央蛋六幀復活動畫
-	phoenixList          []int // 已放上祭壇、待 rec93 列出的寶珠
-	phoenixListPos       int
-	phoenixAnim          int // 復活動畫 tile 0x7b..0x80 的目前 frame
-	phoenixAnimTick      int
-	frame                *ebiten.Image
-	rgba                 []byte
+	heroExp                uint32
+	heroGold               int
+	heroHP                 int
+	heroMP                 int
+	heroStat               stats.Values
+	heroInit               bool
+	equip                  [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	companions             []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
+	roster                 []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
+	flags                  map[int]bool // 一次性旗標(寶箱/事件已取;remake 里程碑,如 0x211/0x213)
+	storyBits              [64]byte     // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
+	worldState             uint16       // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
+	noticeCode             int          // 取得道具通知(item code;-1=無)
+	noticeTimer            int
+	shipOwned              bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
+	shipAboard             bool          // 目前在船上
+	shipX, shipY           int           // 船停泊位置(地表)
+	repel                  int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	remoaru                int           // レムオル透明剩餘有效移動步數；原版 [0x52f7]，施放設 25
+	toramana               bool          // 多拉瑪那原版 world flag 0x2000；遇高傷害地板後轉 hazardGuard
+	hazardGuard            bool          // 原版 world flag 0x0400；只在同一段連續高傷害地板維持
+	prng                   rng.RNG       // 祈禱之戒損壞判定用 RNG
+	lotoBlessed            bool          // 破索瑪後洛特冊封(勇者裝備昇華為傳說的洛特裝備)
+	cleared                bool          // 已破關(索瑪擊破)
+	endText                *dq3data.Text // ENDTXT.TXT 結局文本
+	endSeq                 int           // 結局捲動段號(-1=未進行;0..n=當前段)
+	openingIdx             int           // 開場旁白序號(-1=未進行;0..n=當前句)
+	bossQueue              []int         // boss 連戰佇列(索瑪終盤:怨靈→殭屍→索瑪；或 examine 觸發的座標 boss 鏈)
+	pendingTrigger         *bossTrigger  // 目前由 examine 觸發、正在跑的座標 boss 鏈(非 nil 期間 onBattleEnd 需結算);完成或中斷即清 nil
+	bossIntro              bool          // 座標 boss 的 preRec 尚在顯示；關閉後才正式開戰
+	bossSurrenderStage     int           // game-pack boss_surrender primitive 的目前階段
+	bossSurrenderCursor    int           // 求饒 Yes/No 游標
+	bossSurrenderEventID   string        // active pack event；空字串表示無事件
+	zomaIntro              bool          // 索瑪 rec72 尚在顯示；關閉後才開 monster0x7c
+	ortegaStage            int           // CTY90 sec4 歐魯迪卡事件：1=rec69，2=rec70
+	endingKingStage        int           // CTY80 sec1 handler74：1=rec48 冊封對白，關閉後才開始 ending
+	baramosReturn          int           // 1=阿里阿罕國王 rec98，2=索瑪 rec99；關閉後開放 CTY72
+	temporaryRoleStage     int           // game-pack temporary_role primitive 的目前階段
+	temporaryRoleCursor    int           // temporary_role Yes/No 游標
+	temporaryRoleEventID   string        // active pack event；空字串表示無事件
+	sequenceGateStage      int           // game-pack two_step_floor_switch_gate 的目前階段
+	sequenceGateCursor     int           // 序列開關 Yes/No 游標
+	sequenceGateEventID    string        // active pack event；空字串表示無事件
+	sequenceGateSubID      int           // 本次踩到的 pack-owned switch subid
+	sequenceGateArmed      bool          // 原版暫存 scratch；不進存檔
+	vehicleExchangeStage   int           // game-pack staged_vehicle_exchange 的目前階段
+	vehicleExchangeEventID string        // active pack event；空字串表示無事件
+	mirrorStage            int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
+	phoenix                *dq3data.CharSprite
+	phoenixOwned           bool
+	phoenixAboard          bool
+	phoenixX               int
+	phoenixY               int
+	phoenixStage           int   // 1=守護神 rec92 後續；2=逐顆 rec93；3=中央蛋六幀復活動畫
+	phoenixList            []int // 已放上祭壇、待 rec93 列出的寶珠
+	phoenixListPos         int
+	phoenixAnim            int // 復活動畫 tile 0x7b..0x80 的目前 frame
+	phoenixAnimTick        int
+	frame                  *ebiten.Image
+	rgba                   []byte
 }
 
 // 場景配樂軌(對齊 C g_scene_track):BATTLE=14、TOWN=2、DUNGEON=3。
@@ -407,9 +409,8 @@ func (g *Game) selectCommand(cmd int) {
 					// game-pack required-item → temporary-role → restore primitive。
 				} else if g.talkQuestItemChain(n) {
 					// game-pack treasure → item exchange → location-use primitive。
-				} else if g.curCty == ctyPortoga && n.x == portogaKingX && n.y == portogaKingY {
-					// 波魯多加國王(main.c:1607 位置特例,先於 scripted 表判定)
-					g.talkPortogaKing()
+				} else if g.talkStagedVehicleExchange(n) {
+					// game-pack quest item → required item → vehicle primitive。
 				} else {
 					g.scriptedTalk(n.b4)
 				}
@@ -591,36 +592,6 @@ func (g *Game) talkDragonQueen(s *[10]int) {
 	g.setStoryFlag(0x19, true)
 	g.dlg.Open(s[8])
 	g.setDlgVarItem(itemLightOrb)
-}
-
-// 取船劇情常數(main.c:57-90 DQ3_PORTOGA_*/DQ3_ITEM_PEPPER/DQ3_PORTOGA_REC_*,座標/rec/碼原封對齊)。
-const (
-	ctyPortoga     = 37   // DQ3_PORTOGA_CTY
-	portogaKingX   = 9    // DQ3_PORTOGA_KING_X
-	portogaKingY   = 6    // DQ3_PORTOGA_KING_Y
-	portogaHarborX = 25   // DQ3_PORTOGA_HARBOR_X(港口海格,城南鄰)
-	portogaHarborY = 73   // DQ3_PORTOGA_HARBOR_Y
-	itemPepper     = 0x5c // DQ3_ITEM_PEPPER(黑胡椒,獻國王換船)
-	recPortogaWait = 26   // DQ3_PORTOGA_REC_WAIT「怎麼了?我在等黑胡椒。」
-	recPortogaGot  = 28   // DQ3_PORTOGA_REC_GOT「胡椒太好吃了…好想睡。」
-)
-
-// talkPortogaKing:波魯多加國王(CTY37 (9,6))授船特例,移植 main.c:1607-1631。
-// 已取船 → 仍顯示「吃胡椒」後話;持黑胡椒 → 獻上換船(消耗胡椒、停泊港口、設 msShip);
-// 否則 → 「等胡椒」對白。國王的信(0x5b/flag 0x215)支線不在取船鏈範圍內,未移植。
-func (g *Game) talkPortogaKing() {
-	switch {
-	case g.shipOwned:
-		g.dlg.Open(recPortogaGot)
-	case g.hasItem(itemPepper):
-		g.removeItems(itemPepper, 1)
-		g.shipOwned, g.shipAboard = true, false
-		g.shipX, g.shipY = portogaHarborX, portogaHarborY
-		g.progressSet(msShip)
-		g.dlg.Open(recPortogaGot)
-	default:
-		g.dlg.Open(recPortogaWait)
-	}
 }
 
 // examine:調查面向格(或腳下)的事件 → 座標 boss 觸發點 → 開戰;否則寶箱/warp。
@@ -966,6 +937,7 @@ func (g *Game) step(in InputState) error {
 				g.advancePhoenixEvent()
 				g.advanceBossSurrenderDialogue()
 				g.advanceSequenceGateDialogue()
+				g.advanceStagedVehicleExchangeDialogue()
 			}
 		}
 		g.renderFrame()

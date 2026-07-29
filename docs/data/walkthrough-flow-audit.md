@@ -55,8 +55,10 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
 ### B. 過場 / 解謎事件未接
 5. **諾魯特密道** — ✅ **已接(2026-06-27)**(杜 Ch16-17):★又一碼勘誤 **0x5b = 國王的信(非船;
    item 表無「船」=vehicle ship.owned)**。諾魯特 gate(CTY62/63 byte4=50,handler 0x5daf,檢查 0x5b)早已在
-   dq3_scripted,但**國王的信從未被授予**→ 永遠失敗。修:波魯多加王首訪授《國王的信》0x5b(flag 0x215),
-   諾魯特持信→rec87 開東方通道(rec89「這就是往東方去」)。修 dq3_scripted/quest-items 標籤。game_tester 88/88。
+   dq3_scripted。舊 C remake 曾以自造 flag `0x215` 補授信；2026-07-29 重查原版 handler26
+   已證實真正 gate 是 story flag `0x37`：首次 rec24 關閉後授《國王的信》0x5b、clear
+   `0x37`、顯示 rec25。Go/Ebitengine 已以 game-pack primitive 與正式 production trace
+   閉合授信；諾魯特持信→rec87 開東方通道仍是下一個玩家流程驗收節點（`docs/50`）。
 6. **帶商人建城 questline** — ✅ **核心已接(2026-06-27)**(杜 Ch33-36):
    - **RE 全解**:老人 handler **0x5aba**(非 NPC 跳表 → runner/region 事件,無放置 NPC):`cl=[0x5077]隊伍數`,
      迴圈掃隊員 `cmp [si+1],6`(class==6=**商人**);無商人→rec1「只要有商人」;有商人→rec2-5(如何/是嗎/謝謝)

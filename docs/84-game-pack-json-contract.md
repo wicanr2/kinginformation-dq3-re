@@ -1,6 +1,6 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與四種事件 primitive；
+> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與五種事件 primitive；
 > 其餘資料表依垂直切片逐批遷移。
 >
 > 適用範圍：Go／Ebitengine 共用核心，以及未來的 `dq1_cht`、`dq2_cht`、`dq3_cht`
@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.2"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.3"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.2",
+  "schema_version": "0.1.3",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -378,7 +378,8 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 | `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
 
 目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
-諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89 與「是／否」已遷入
+諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89、波魯多加 D3TXT04 rec24–28
+與「是／否」已遷入
 `data/texts.json`；parity test 逐 word
 對原始 D3TXT，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
 
@@ -521,6 +522,32 @@ flag。選否不武裝，錯誤第二鍵先顯示 trap 再載宣告目的地，�
 event-tile rebuild 更新目前場景。DQ3 canonical 範例與完整證據見 `events.json`、
 [`docs/87`](87-pyramid-switch-magic-key-production-trace.md)。
 
+第五個已實作 primitive 是 `staged_vehicle_exchange_events`，供「首次交談分兩段授予任務
+道具→後續檢查交換道具→消耗後授予停泊交通工具→完成後固定對話」的有限流程使用。
+它不包含波魯多加、國王、黑胡椒或 DQ3 固有名稱；其他版本沒有相同行為時宣告空陣列。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `staged_vehicle_exchange_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id` | string | 是 | 穩定 namespaced event ID。 |
+| `[].kind` | enum | 是 | 固定為 `staged_vehicle_exchange`。 |
+| `[].npc` | object | 是 | `{cty_raw,section,tile:{x,y},handler_raw}`；正式 scripted NPC selector。 |
+| `[].quest_present_flag_raw` | int | 是 | 首次任務仍存在時為 set 的原版 story flag。 |
+| `[].granted_item_raw_id` | int | 是 | 首次任務介紹關閉後授予一件的原版 item ID。 |
+| `[].exchange_available_flag_raw` | int | 是 | 後續交換仍可進行時為 set 的原版 story flag。 |
+| `[].required_item_raw_id` | int | 是 | 成功交換時只消耗一件的原版 item ID。 |
+| `[].vehicle.kind` | enum | 是 | 現行只支援 `ship`；未知種類載入失敗。 |
+| `[].vehicle.world_position` | object | 是 | `{x,y,layer}`；交通工具授予後的原版地表停泊格。 |
+| `[].vehicle.clear_flags_raw` | int[] | 是 | 成功交易後依序清除；至少一筆，不得重複。 |
+| `[].dialogue_text_ids` | object | 是 | `quest_intro/item_grant/need_item/success/after` 五個穩定 text ID。 |
+| `[].evidence` | object | 是 | 入口、writer、table/state、consumer 與玩家可見副作用的 D3 證據。 |
+
+交易時序固定：`quest_intro` 關閉後才給任務道具、清首次旗標並開啟 `item_grant`；缺交換
+道具時只顯示 `need_item`；成功時原地消耗一件、清宣告旗標、建立停泊 vehicle，再顯示
+`success`；完成後只顯示 `after`。任何 reference、vehicle kind、layer 或 D3 evidence
+不合法時，loader 在 runtime mutation 前失敗即關閉。DQ3 canonical 值與原版證據見
+`events.json`、[`docs/50`](50-ship-acquisition.md)。
+
 ### 6.10 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
@@ -540,7 +567,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.2",
+  "schema_version": "0.1.3",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [
