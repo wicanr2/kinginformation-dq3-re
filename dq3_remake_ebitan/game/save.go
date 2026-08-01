@@ -235,6 +235,7 @@ func (g *Game) restore(s saveState) {
 		}
 	}
 	g.applyRainbowBridge()
+	g.applyPackWorldMapPatches()
 	g.applyDaynightPalette()
 	g.dlg.heroName = append([]int(nil), g.heroName...)
 }

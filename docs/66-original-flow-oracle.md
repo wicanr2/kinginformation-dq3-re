@@ -122,7 +122,7 @@
 | 24 | 日邦格村 | 傳送至「無姬大人」房(即剛戰敗的八頭大蛇);可選擇不戰或開戰 | 《紫寶珠》(0x69,戰勝取得) | 擊敗八頭大蛇後 | 杜Ch24;quest-items 0x69 |
 | 25 | 朗錫爾村（攻略稱呼） | 道具店 | 《隱身草》(0x5d,可購買) | 由阿里阿罕/日邦格村航行至此 | 杜Ch25；原始貨架實證為 CTY38，不能把攻略地名直接映射成 CTY47/75；見 docs/40、docs/96 |
 | 26 | 耶進貝亞城 | 隱身草隱身進城;地下室倉庫番:三顆大石推至上方藍白地面 | 《乾渴壺》(0x5e) | 持 0x5d(USE 隱身)+ 解謎；Go/Ebitengine 已由正式輸入閉合推石、passage、調查取得與 save/load | 杜Ch26;quest-items 0x5e;docs/96、docs/97；原版以 ctrl bit0x40 判可推，非舊 C prototype 的 B2==40 |
-| 27 | 最終鑰匙祠堂 | 海中四塊 "丄" 形小島礁,使用乾渴壺吸乾海水現祠堂 | 《最終鑰匙》(0x57)— 門 tier3(以後只需帶這把) | 持 0x5e(USE 吸海) | 杜Ch27;quest-items 0x57 寶箱+乾渴壺吸海 |
+| 27 | 最終鑰匙祠堂 | 船上 `(146,53)` 使用乾渴壺，set world-state bit0x08 並套 EXE `5×4` patch，向上進 CTY40 | 《最終鑰匙》(0x57)— 門 tier3 | 持 0x5e、story flag0x12 clear | IDA/EXE/CTY40、正式 boot trace與 save/load：`docs/98` ✅；palette transition／水色仍未達 V3 |
 | 28 | 提頓村 | 晚上打開北邊牢門,犯人給寶珠並提及要送到「遙遠南方的雷亞姆蘭特祭壇」(★見§4 待核對) | 《綠寶珠》(0x66) | 夜晚+持最終鑰匙 | 杜Ch28;quest-items 0x66 |
 | 29 | 朗錫爾村 | 上方神殿,用最終鑰匙開鐵門見神父,考驗「單獨戰鬥的勇氣」 | 挑戰接受 → flag 0x13 | 持 0x57 | 杜Ch29;walkthrough-flow-audit B-8「勇氣神殿神父 gate」CTY47 (25,16) byte4=37,D3TXT06 rec128/rec9-11,RE 反組譯 dispatch 全解 |
 | 30 | 勇氣洞窟 | 獨自一人進入(需帶最終鑰匙),強行往前忽略「回去吧」訊息,盡頭寶箱 | 《藍寶珠》(0x67) | flag 0x13 已設 | 杜Ch30;quest-items 0x67;walkthrough-flow-audit:回頭訊息 D3TXT07 rec66-67 |

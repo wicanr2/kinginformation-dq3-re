@@ -59,10 +59,6 @@ func TestPackDarkLampOriginalGateAndTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	effects := pack.ItemUseEffects()
-	if len(effects) != 2 {
-		t.Fatalf("item use effects=%d，want 2", len(effects))
-	}
 	effect, ok := pack.ItemUseEffectByRawID(0x5f)
 	if !ok {
 		t.Fatal("黑暗之燈 pack effect missing")
@@ -249,30 +245,63 @@ func TestUseGaiaInTownNoEffect(t *testing.T) {
 	}
 }
 
-// 乾渴壺(0x5e):在地表使用 → 設 flag 0x33,不消耗(可重用)。
-func TestUseDrainOnField(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
-	g.inTown = false
-	g.inventory = []int{0x5e}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
-	if !g.flags[0x33] {
-		t.Errorf("乾渴壺在地表應設 flag 0x33")
+func thirstyPitcherGame(t *testing.T) (*Game, *gamepack.ItemUseEffect) {
+	t.Helper()
+	g, err := NewGame(os.DirFS(spineAssetsDir(t)), nil)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if len(g.inventory) != 1 {
-		t.Errorf("乾渴壺不應消耗,剩 %d", len(g.inventory))
+	effect, ok := g.pack.ItemUseEffectByRawID(0x5e)
+	if !ok || effect.EffectID != "reveal_world_map_patch" || effect.UseTile == nil {
+		t.Fatalf("乾渴壺 pack effect 不完整：%+v", effect)
+	}
+	g.showTitle, g.openingIdx = false, -1
+	g.inTown, g.cur, g.layer = false, g.over, effect.RequiredLayer
+	g.px, g.py = effect.UseTile.X, effect.UseTile.Y
+	g.shipOwned, g.shipAboard = true, true
+	g.inventory = []int{effect.ItemRawID}
+	g.panel, g.panelCursor = panelItem, 0
+	return g, effect
+}
+
+func TestUseThirstyPitcherRequiresOriginalShipTileAndRevealsPatch(t *testing.T) {
+	g, effect := thirstyPitcherGame(t)
+	g.useSelectedItem()
+	if g.worldState&uint16(effect.SetWorldStateMask) == 0 || g.panel != panelNone {
+		t.Fatalf("乾渴壺成功後 state/panel 錯：state=%#x panel=%d", g.worldState, g.panel)
+	}
+	if len(g.inventory) != 1 || g.inventory[0] != effect.ItemRawID {
+		t.Fatalf("原版乾渴壺不消耗：inventory=%v", g.inventory)
+	}
+	patch := effect.MapPatch
+	for y := 0; y < patch.Height; y++ {
+		for x := 0; x < patch.Width; x++ {
+			want := patch.TilesRaw[y*patch.Width+x]
+			if got := g.over.tileIdx(patch.Origin.X+x, patch.Origin.Y+y); got != want {
+				t.Fatalf("world patch (%d,%d)=%#x，want %#x",
+					patch.Origin.X+x, patch.Origin.Y+y, got, want)
+			}
+		}
 	}
 }
 
-// 乾渴壺:在城鎮內使用 → 無效果、不設 flag。
-func TestUseDrainInTownNoEffect(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
-	g.inTown = true
-	g.inventory = []int{0x5e}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
-	if g.flags[0x33] {
-		t.Errorf("乾渴壺在城鎮內不應設 flag 0x33")
+func TestUseThirstyPitcherFailsClosedOffTileOrOffShip(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		edit func(*Game)
+	}{
+		{"off tile", func(g *Game) { g.px++ }},
+		{"off ship", func(g *Game) { g.shipAboard = false }},
+		{"in town", func(g *Game) { g.inTown = true }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g, effect := thirstyPitcherGame(t)
+			tc.edit(g)
+			g.useSelectedItem()
+			if g.worldState&uint16(effect.SetWorldStateMask) != 0 || len(g.inventory) != 1 {
+				t.Fatalf("錯誤 gate 不得改狀態：state=%#x inventory=%v", g.worldState, g.inventory)
+			}
+		})
 	}
 }
 

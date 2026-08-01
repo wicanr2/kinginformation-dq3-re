@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.12"
+	SchemaVersion = "0.1.13"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -227,16 +227,36 @@ type TreasureEvent struct {
 // ItemUseEffect 把版本專屬道具 ID 綁定至有限的引擎 primitive。
 // JSON 只提供選擇器與參數，不接受可執行運算式。
 type ItemUseEffect struct {
-	ID                 string   `json:"id"`
-	Kind               string   `json:"kind"`
-	ItemRawID          int      `json:"item_raw_id"`
-	EffectID           string   `json:"effect_id"`
-	LocationKind       string   `json:"location_kind"`
-	DayNightPhase      int      `json:"day_night_phase"`
-	ResetDayNightSteps bool     `json:"reset_day_night_steps"`
-	StepCount          int      `json:"step_count"`
-	Consume            bool     `json:"consume"`
-	Evidence           Evidence `json:"evidence"`
+	ID                      string          `json:"id"`
+	Kind                    string          `json:"kind"`
+	ItemRawID               int             `json:"item_raw_id"`
+	EffectID                string          `json:"effect_id"`
+	LocationKind            string          `json:"location_kind"`
+	DayNightPhase           int             `json:"day_night_phase"`
+	ResetDayNightSteps      bool            `json:"reset_day_night_steps"`
+	StepCount               int             `json:"step_count"`
+	Consume                 bool            `json:"consume"`
+	RequiredLayer           int             `json:"required_layer,omitempty"`
+	RequiredVehicle         string          `json:"required_vehicle,omitempty"`
+	UseTile                 *TileCoordinate `json:"use_tile,omitempty"`
+	RequiredStoryFlagRaw    int             `json:"required_story_flag_raw,omitempty"`
+	RequiredStoryFlagSet    bool            `json:"required_story_flag_set,omitempty"`
+	SetWorldStateMask       int             `json:"set_world_state_mask,omitempty"`
+	ClearStoryFlagsRaw      []int           `json:"clear_story_flags_raw,omitempty"`
+	MapPatch                *WorldMapPatch  `json:"map_patch,omitempty"`
+	AnimationPaletteModeRaw int             `json:"animation_palette_mode_raw,omitempty"`
+	AnimationCycles         int             `json:"animation_cycles,omitempty"`
+	Evidence                Evidence        `json:"evidence"`
+}
+
+// WorldMapPatch is a finite row-major tile replacement copied from an
+// original executable/data table after a validated item-use transaction.
+type WorldMapPatch struct {
+	Layer    int            `json:"layer"`
+	Origin   TileCoordinate `json:"origin"`
+	Width    int            `json:"width"`
+	Height   int            `json:"height"`
+	TilesRaw []int          `json:"tiles_raw"`
 }
 
 // TrackingGuardEvent describes a guard that mirrors the player's coordinate
@@ -1338,6 +1358,37 @@ func (p *Pack) validateEvents() error {
 			if e.LocationKind != "any" || e.DayNightPhase != 0 ||
 				e.ResetDayNightSteps || e.StepCount <= 0 || !e.Consume {
 				return fmt.Errorf("%s: invalid temporary_invisibility configuration", e.ID)
+			}
+		case "reveal_world_map_patch":
+			patch := e.MapPatch
+			if e.LocationKind != "overworld" || e.RequiredLayer < 0 ||
+				e.RequiredVehicle != "ship" || e.UseTile == nil ||
+				e.UseTile.X < 0 || e.UseTile.Y < 0 ||
+				e.RequiredStoryFlagRaw < 0 || e.RequiredStoryFlagRaw >= 512 ||
+				e.RequiredStoryFlagSet || e.SetWorldStateMask <= 0 ||
+				e.SetWorldStateMask > 0xffff || e.Consume ||
+				patch == nil || patch.Layer != e.RequiredLayer ||
+				patch.Origin.X < 0 || patch.Origin.Y < 0 ||
+				patch.Width <= 0 || patch.Height <= 0 ||
+				len(patch.TilesRaw) != patch.Width*patch.Height ||
+				e.AnimationPaletteModeRaw < 0 || e.AnimationPaletteModeRaw > 255 ||
+				e.AnimationCycles <= 0 {
+				return fmt.Errorf("%s: invalid reveal_world_map_patch configuration", e.ID)
+			}
+			for _, tile := range patch.TilesRaw {
+				if tile < 0 || tile > 255 {
+					return fmt.Errorf("%s: map patch tile out of range", e.ID)
+				}
+			}
+			foundClear := false
+			for _, flag := range e.ClearStoryFlagsRaw {
+				if flag < 0 || flag >= 512 {
+					return fmt.Errorf("%s: clear story flag out of range", e.ID)
+				}
+				foundClear = foundClear || flag == e.RequiredStoryFlagRaw
+			}
+			if !foundClear {
+				return fmt.Errorf("%s: required story flag must be in clear_story_flags_raw", e.ID)
 			}
 		default:
 			return fmt.Errorf("%s: unknown item use effect %q", e.ID, e.EffectID)

@@ -43,6 +43,8 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
   [`docs/96`](docs/96-invisibility-grass-eginbear-production-trace.md)
 - 最新愛丁貝亞推石／乾渴壺 audit：
   [`docs/97`](docs/97-eginbear-push-puzzle-production-trace.md)
+- 最新乾渴壺使用／最終鑰匙 audit：
+  [`docs/98`](docs/98-thirsty-pitcher-final-key-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
@@ -71,8 +73,11 @@ handler29 不再把守衛橫移到玩家同欄，從右欄進入 CTY76 並通過
 `docs/96`。其後已由 119 步正式方向輸入完成 CTY76 三石解謎；原版以 NPC runtime
 `ctrl bit0x40` 判定可推，handler30 固定檢查 slot0–2 的 Y=5，成功 clear flag `0x3b`
 並開 passage。再由命令窗調查 event0 取得乾渴壺 `0x5e` 並通過 save/load；詳見
-`docs/97`。**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從乾渴壺
-checkpoint 追海中淺灘使用與最終鑰匙取得。
+`docs/97`。同一條 trace 已再由正式船路抵達 `(146,53)`，使用乾渴壺套用原版
+world-state bit `0x08`／`5×4` 地表 patch，進 CTY40 調查取得最終鑰匙並完成 save/load；
+詳見 `docs/98`。**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從 CTY40
+checkpoint 追提頓夜間牢門與綠寶珠。地表水面顏色及四輪 palette transition 仍未達 V3，
+不得因流程閉合而略過。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -108,6 +113,10 @@ schema `0.1.11` 新增 `item_use_effects.step_count`、`temporary_invisibility` 
 `tracking_guard_events`；隱形草的 raw ID、消耗、25 步 timer、CTY39 trigger、guard
 selector 與 bypass effect 均由 JSON 提供。CTY parser 也已修正無 event table 時漏讀
 special handler 的錯誤；詳見 `docs/96`。
+schema `0.1.12` 新增全域 `npc_push_rule` 與 `push_puzzle_events`，詳見 `docs/97`。
+schema `0.1.13` 新增 `reveal_world_map_patch`；乾渴壺的船／座標／旗標 gate、world-state、
+完整 `5×4` tile patch 與原始動畫參數均由 JSON 提供，CTY40 最終鑰匙也遷入
+`treasure_events`；詳見 `docs/98`。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

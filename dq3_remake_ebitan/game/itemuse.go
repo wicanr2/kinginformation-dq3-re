@@ -51,11 +51,6 @@ func (g *Game) useSelectedItem() {
 			g.flags[0x32] = true
 			g.noticeCode, g.noticeTimer = code, 90
 		}
-	case itemuse.Drain: // 乾渴壺:地表四島礁 → 吸乾海水顯現祠堂(不消耗,可重用)
-		if !g.inTown {
-			g.flags[0x33] = true
-			g.noticeCode, g.noticeTimer = code, 90
-		}
 	case itemuse.FairyFlute: // 妖精之笛:魯比斯之塔(CTY82)解詛咒 → 得精靈的守護 0x74(不消耗)
 		if g.inTown && g.curCty == 82 {
 			const itemSpiritGuard = 0x74
@@ -123,8 +118,57 @@ func (g *Game) usePackItemEffect(code int) bool {
 			g.clampPanelCursor()
 		}
 		g.noticeCode, g.noticeTimer = code, 90
+	case "reveal_world_map_patch":
+		if g.inTown || g.layer != effect.RequiredLayer ||
+			effect.RequiredVehicle != "ship" || !g.shipAboard || effect.UseTile == nil ||
+			g.px != effect.UseTile.X || g.py != effect.UseTile.Y ||
+			g.storyFlag(effect.RequiredStoryFlagRaw) != effect.RequiredStoryFlagSet {
+			return true
+		}
+		g.worldState |= uint16(effect.SetWorldStateMask)
+		for _, flag := range effect.ClearStoryFlagsRaw {
+			g.setStoryFlag(flag, false)
+		}
+		g.applyPackWorldMapPatches()
+		g.panel = panelNone
 	}
 	return true
+}
+
+// applyPackWorldMapPatches rebuilds persistent original world-state tile
+// replacements from validated pack data. It is called both on item use and
+// after save/load so the map never depends on an in-memory-only mutation.
+func (g *Game) applyPackWorldMapPatches() {
+	if g.pack == nil {
+		return
+	}
+	for _, effect := range g.pack.ItemUseEffects() {
+		if effect.EffectID != "reveal_world_map_patch" || effect.MapPatch == nil ||
+			g.worldState&uint16(effect.SetWorldStateMask) == 0 {
+			continue
+		}
+		patch := effect.MapPatch
+		var scene *Scene
+		switch patch.Layer {
+		case 0:
+			scene = g.over
+		case 1:
+			scene = g.loadUnder()
+		}
+		if scene == nil || patch.Origin.X+patch.Width > scene.w ||
+			patch.Origin.Y+patch.Height > scene.h {
+			continue
+		}
+		if scene.override == nil {
+			scene.override = map[int]int{}
+		}
+		for y := 0; y < patch.Height; y++ {
+			for x := 0; x < patch.Width; x++ {
+				i := y*patch.Width + x
+				scene.override[(patch.Origin.Y+y)*scene.w+patch.Origin.X+x] = patch.TilesRaw[i]
+			}
+		}
+	}
 }
 
 const (

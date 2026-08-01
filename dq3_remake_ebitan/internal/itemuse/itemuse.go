@@ -14,7 +14,6 @@ const (
 	ReturnTown                // 回最後城鎮(蓋美拉翅膀)
 	Repel                     // 暫時驅弱敵(聖水)
 	Gaia                      // 蓋亞之劍(位置相關,不消耗)
-	Drain                     // 乾渴壺(位置相關,不消耗)
 	FairyFlute                // 妖精之笛(位置相關,不消耗)
 	PrayerRing                // 祈禱之戒(回 MP + ~25.4% 損壞)
 	Ranaruta                  // 拉那魯達(切晝夜)
@@ -64,8 +63,6 @@ func KindOf(itemID int) Kind {
 		return Mirror
 	case 0x0f:
 		return Gaia // 蓋亞之劍(火山開通)
-	case 0x5e:
-		return Drain // 乾渴壺(吸海顯祠堂)
 	case 0x77:
 		return FairyFlute // 妖精之笛(魯比斯解詛咒)
 	case 0x75:

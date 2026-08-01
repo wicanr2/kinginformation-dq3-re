@@ -36,6 +36,11 @@ ITEM.DAT 是**裝備資料**(每筆 7 byte:b0 攻、b1 防、+2 價、+4 類別�
 寫入夜晚 state／clock 且不消耗。Go/Ebitengine 已把 raw ID、gate 與參數遷入
 `item_use_effects` JSON；詳見 [`docs/93`](93-teidon-dark-lamp-production-trace.md)。
 
+2026-08-02 補充：乾渴壺 `0x5e` 已由 IDA 閉合。舊 prototype 的「任意地表設自造
+flag `0x33`」已推翻；原版只接受船上 `(146,53)`，成功 set world-state bit `0x08` 並把
+EXE 的 `5×4` tile table 寫入地表，不消耗道具。Go/Ebitengine 已改由 schema `0.1.13`
+`reveal_world_map_patch` 提供全部版本資料；詳見 [`docs/98`](98-thirsty-pitcher-final-key-production-trace.md)。
+
 ## 落地(`dq3_item_use.{h,c}` + main.c)
 
 - `dq3_item_use_kind(id)`:id → 效果種類(上表;裝備/鑰匙/劇情物 → NONE)。

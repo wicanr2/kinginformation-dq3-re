@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.12"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.13"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.12",
+  "schema_version": "0.1.13",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -519,20 +519,29 @@ mutation 前失敗即關閉。DQ3 canonical 範例與原版 parity test 見 `eve
 | `item_use_effects` | object[] | 是 | 可為空陣列；不得省略。 |
 | `[].id`／`[].kind` | string／enum | 是 | 穩定 namespaced ID；kind 固定為 `item_use`。 |
 | `[].item_raw_id` | int | 是 | game pack 原始道具 ID；同一 pack 不可重複。 |
-| `[].effect_id` | enum | 是 | 支援 `force_day_night_phase`、`temporary_invisibility`；未知值 fail closed。 |
-| `[].location_kind` | enum | 是 | `force_day_night_phase` 只允許 `overworld`；`temporary_invisibility` 使用 `any`。不接受任意座標運算式。 |
+| `[].effect_id` | enum | 是 | 支援 `force_day_night_phase`、`temporary_invisibility`、`reveal_world_map_patch`；未知值 fail closed。 |
+| `[].location_kind` | enum | 是 | 日夜與地圖 patch 使用 `overworld`；暫時隱形使用 `any`。不接受任意條件運算式。 |
 | `[].day_night_phase` | int | 是 | pack canonical 晝夜相位 `0..3`；DQ3 黑夜為 2。 |
 | `[].reset_day_night_steps` | boolean | 是 | 是否依原版 transaction 重設現行 phase step；`force_day_night_phase` 必須為 true，暫時隱形必須為 false。 |
 | `[].step_count` | int | 是 | 暫態效果剩餘步數；`temporary_invisibility` 必須大於 0，非步數效果必須為 0。 |
 | `[].consume` | boolean | 是 | 成功後是否消耗；黑暗燈為 false，隱形草原版會清除選中物品槽，故為 true。 |
+| `[].required_layer`／`[].required_vehicle` | int／enum | patch 必填 | 原版地表層與載具 gate；現行 vehicle 只接受 `ship`。 |
+| `[].use_tile` | `{x,y}` | patch 必填 | 唯一成功的原始 world coordinate。 |
+| `[].required_story_flag_raw`／`[].required_story_flag_set` | int／boolean | patch 必填 | 有限 story-bit gate；不接受任意布林式。 |
+| `[].set_world_state_mask` | int | patch 必填 | 原版持久 world-state bit；必須非零。 |
+| `[].clear_story_flags_raw` | int[] | patch 必填 | 成功後依原始 handler clear；必須包含 gate flag。 |
+| `[].map_patch` | object | patch 必填 | `layer/origin/width/height/tiles_raw`；row-major 長度必須等於寬×高，tile 皆為 0–255。 |
+| `[].animation_palette_mode_raw`／`[].animation_cycles` | int／int | patch 必填 | 保存原版 transition 參數；不代表引擎已達逐幀 V3。 |
 | `[].evidence` | object | 是 | item dispatcher、pointer table、writer、clock/palette consumer 與可見結果的 D3 證據。 |
 
 引擎必須先以 pack selector claim 道具，再進舊相容 dispatcher；否則同一 raw ID 可能被 Go
 fallback 重新解釋。location／目前 phase gate 失敗不消耗、不重設 clock，也不得用 Go 預設值
 補缺欄位。`temporary_invisibility` 只設定具名暫態效果與步數；它不得直接內嵌守衛座標、
-NPC 移動或任意碰撞規則。DQ3 canonical 範例見 `events.json`、
+NPC 移動或任意碰撞規則。`reveal_world_map_patch` 只能執行固定 gate、state bit 與有限
+row-major tile replacement；讀檔以同一 mask 重建，不能用 remake flag 取代。DQ3 canonical 範例見 `events.json`、
 [`docs/93`](93-teidon-dark-lamp-production-trace.md) 與
-[`docs/96`](96-invisibility-grass-eginbear-production-trace.md)。
+[`docs/96`](96-invisibility-grass-eginbear-production-trace.md)、
+[`docs/98`](98-thirsty-pitcher-final-key-production-trace.md)。
 
 `tracking_guard_events` 描述「玩家踏入有限 trigger 後，指定 NPC 沿單一軸追蹤；具名暫態
 效果可略過追蹤」的有限 primitive。它不能執行任意腳本，也不能把 DQ3 地圖寫進引擎：
@@ -764,7 +773,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.12",
+  "schema_version": "0.1.13",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

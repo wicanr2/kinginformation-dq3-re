@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.12",
+  "schema_version": "0.1.13",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -246,6 +246,27 @@
         "consumer": "the reachable event0 tile (19,2) dispatches type1 item 0x5e to the inventory consumer and clears present flag 0x3a; event1/flag0x3b belongs to the push-puzzle passage and is not a second collectible",
         "doc": "docs/97-eginbear-push-puzzle-production-trace.md"
       }
+    },
+    {
+      "id": "dq3:event.shoal_final_key",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 40,
+        "section": 0,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 87,
+        "present_flag_raw": 71
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY40.DAT + DQ3.EXE",
+        "address_space": "record",
+        "address": "CTY40 section0 event0 raw 01 57 00 47; tile (18,17); DQ3.EXE file 0x9d86..0x9e41",
+        "consumer": "the shrine chest dispatches type1 item 0x57 to the common inventory consumer and clears present flag 0x47",
+        "doc": "docs/98-thirsty-pitcher-final-key-production-trace.md"
+      }
     }
   ],
   "item_use_effects": [
@@ -287,6 +308,47 @@
         "address": "0x3ccf..0x3d16, DGROUP 0x366a, handler 0x3fff..0x4011",
         "consumer": "selected record item+1 maps raw item 0x5d through DGROUP 0x366a entry 28 to handler 0x3fff; it removes the selected inventory slot, writes DGROUP 0x52f7=0x19 and sets world flags 0xc000, shared with the Remoaru 25-step movement and visibility consumers",
         "doc": "docs/96-invisibility-grass-eginbear-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.thirsty_pitcher",
+      "kind": "item_use",
+      "item_raw_id": 94,
+      "effect_id": "reveal_world_map_patch",
+      "location_kind": "overworld",
+      "day_night_phase": 0,
+      "reset_day_night_steps": false,
+      "step_count": 0,
+      "consume": false,
+      "required_layer": 0,
+      "required_vehicle": "ship",
+      "use_tile": {"x": 146, "y": 53},
+      "required_story_flag_raw": 18,
+      "required_story_flag_set": false,
+      "set_world_state_mask": 8,
+      "clear_story_flags_raw": [18],
+      "map_patch": {
+        "layer": 0,
+        "origin": {"x": 144, "y": 50},
+        "width": 5,
+        "height": 4,
+        "tiles_raw": [
+          88, 88, 96, 88, 88,
+          88, 104, 66, 102, 88,
+          94, 66, 124, 66, 92,
+          88, 90, 90, 90, 88
+        ]
+      },
+      "animation_palette_mode_raw": 4,
+      "animation_cycles": 4,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "item table DGROUP 0x366a entry29; handler 0x4012..0x4062; world-state consumer 0x2c9c; patch table DGROUP 0x3a54",
+        "consumer": "item 0x5e requires story flag0x12 clear, ship state1 and world (0x92,0x35); success sets world-state bit0x08, runs palette mode4 for four cycles, copies the 5x4 tile patch at (0x90,0x32), clears flag0x12 and redraws the field",
+        "doc": "docs/98-thirsty-pitcher-final-key-production-trace.md"
       }
     }
   ],

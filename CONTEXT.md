@@ -154,7 +154,9 @@
   [`88`](docs/88-norud-guided-passage-production-trace.md) 諾魯德密道 handler50/57、
   NPC 移動腳本與正式玩家輸入追蹤 ·
   [`91`](docs/91-garuna-satori-book-production-trace.md) 加爾那之塔領悟之書、睡眠恢復
-  IDA 證據與正式玩家輸入追蹤
+  IDA 證據與正式玩家輸入追蹤 ·
+  [`98`](docs/98-thirsty-pitcher-final-key-production-trace.md) 乾渴壺唯一成功格、world-state
+  `0x08`、`5×4` 地圖 patch、CTY40 最終鑰匙與正式玩家輸入追蹤
 
 ### 資料 / 研究(`docs/data/`)
 - [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·

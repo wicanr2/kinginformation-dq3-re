@@ -1729,6 +1729,59 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.inTown, g.curCty, sceneSection(g.cur), g.hasItem(0x5e),
 			g.storyFlag(0x3a), g.storyFlag(0x3b))
 	}
+
+	// 乾渴壺 checkpoint → 正常離開地下室、登船並航行到原版唯一成功格
+	// (0x92,0x35)。正式道具選單使用後，pack 的 5x4 world patch 顯出
+	// (0x92,0x34) 祠堂入口；向上正常移動進 CTY40，再調查 event0 取得最終鑰匙。
+	traceTownSectionTo(t, g, 39, 0)
+	traceExitTownBoundary(t, g)
+	traceBoardAndSailShip(t, g)
+	drain, ok := g.pack.ItemUseEffectByRawID(0x5e)
+	if !ok || drain.UseTile == nil || drain.MapPatch == nil {
+		t.Fatalf("乾渴壺 pack effect 缺失：%+v", drain)
+	}
+	traceShipToWorldTile(t, g, drain.UseTile.X, drain.UseTile.Y)
+	traceUseInventoryItem(t, g, drain.ItemRawID)
+	if g.worldState&uint16(drain.SetWorldStateMask) == 0 || !g.hasItem(drain.ItemRawID) ||
+		g.over.tileIdx(0x92, 0x34) != 0x7c {
+		t.Fatalf("乾渴壺正式使用 transaction 錯：state=%#x item=%v entrance=%#x",
+			g.worldState, g.hasItem(drain.ItemRawID), g.over.tileIdx(0x92, 0x34))
+	}
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	send(InputState{DirHeld: 1, DirEdge: -1})
+	if !g.inTown || g.curCty != 40 || sceneSection(g.cur) != 0 {
+		t.Fatalf("祠堂 world patch 未由正式上移進 CTY40：town=%v cty=%d sec=%d pos=(%d,%d)",
+			g.inTown, g.curCty, sceneSection(g.cur), g.px, g.py)
+	}
+	finalKey, ok := g.pack.TreasureEvent("dq3:event.shoal_final_key")
+	if !ok {
+		t.Fatal("缺 dq3:event.shoal_final_key")
+	}
+	traceExaminePackTreasure(t, g, finalKey.Treasure)
+	if !g.hasItem(0x57) || g.storyFlag(0x47) {
+		t.Fatalf("正式取得最終鑰匙 transaction 錯：item=%v flag47=%v",
+			g.hasItem(0x57), g.storyFlag(0x47))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存最終鑰匙 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建最終鑰匙讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != 40 || !g.hasItem(0x57) || g.storyFlag(0x47) ||
+		g.worldState&uint16(drain.SetWorldStateMask) == 0 || g.over.tileIdx(0x92, 0x34) != 0x7c {
+		t.Fatalf("最終鑰匙 save/load round-trip 錯：town=%v cty=%d item=%v flag47=%v state=%#x entrance=%#x",
+			g.inTown, g.curCty, g.hasItem(0x57), g.storyFlag(0x47), g.worldState,
+			g.over.tileIdx(0x92, 0x34))
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，
@@ -2650,6 +2703,76 @@ func traceBoardAndSailShip(t *testing.T, g *Game) {
 		t.Fatalf("首次航行未移動：aboard=%v from=(%d,%d) to=(%d,%d)",
 			g.shipAboard, startX, startY, g.px, g.py)
 	}
+}
+
+// traceShipToWorldTile 只在原始水域上規劃船路，並把方向逐步送入 production
+// Game.step。它避開所有 CTY 入口，讓位置式道具一定由玩家在指定格主動使用。
+func traceShipToWorldTile(t *testing.T, g *Game, tx, ty int) {
+	t.Helper()
+	if g.inTown || !g.shipAboard {
+		t.Fatalf("航向位置式道具格起點錯：town=%v aboard=%v", g.inTown, g.shipAboard)
+	}
+	for steps := 0; steps < 12000 && (g.px != tx || g.py != ty); steps++ {
+		if g.battle.active {
+			traceResolveBattle(t, g, g.battle.monID >= 80)
+			continue
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待船路 cooldown：%v", err)
+			}
+			continue
+		}
+		path := traceShipWaterPath(g, tx, ty)
+		if len(path) == 0 {
+			break
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("正式船路 dir%d：%v", path[0], err)
+		}
+	}
+	if g.inTown || !g.shipAboard || g.px != tx || g.py != ty {
+		t.Fatalf("無法正式航行到 (%d,%d)：town=%v aboard=%v pos=(%d,%d)",
+			tx, ty, g.inTown, g.shipAboard, g.px, g.py)
+	}
+}
+
+func traceShipWaterPath(g *Game, tx, ty int) []int {
+	type node struct{ x, y int }
+	start, goal := node{g.px, g.py}, node{tx, ty}
+	if start == goal {
+		return nil
+	}
+	q := []node{start}
+	seen := map[node]bool{start: true}
+	prev := map[node]node{}
+	prevDir := map[node]int{}
+	for len(q) > 0 {
+		p := q[0]
+		q = q[1:]
+		for dir := 0; dir < 4; dir++ {
+			dx, dy := dirDelta(dir)
+			n := node{p.x + dx, p.y + dy}
+			if seen[n] || n.x < 0 || n.y < 0 || n.x >= g.cur.w || n.y >= g.cur.h ||
+				g.cur.attr.Raw(g.cur.tileIdx(n.x, n.y))&0x20 == 0 ||
+				findCtyAtLayer(n.x, n.y, g.layer) >= 0 {
+				continue
+			}
+			seen[n], prev[n], prevDir[n] = true, p, dir
+			if n == goal {
+				var rev []int
+				for cur := goal; cur != start; cur = prev[cur] {
+					rev = append(rev, prevDir[cur])
+				}
+				for i, j := 0, len(rev)-1; i < j; i, j = i+1, j-1 {
+					rev[i], rev[j] = rev[j], rev[i]
+				}
+				return rev
+			}
+			q = append(q, n)
+		}
+	}
+	return nil
 }
 
 // traceWorldPath 與 tracePath 相同，但把目的以外的 CTY 入口格視為障礙；

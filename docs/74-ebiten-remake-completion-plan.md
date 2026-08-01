@@ -607,11 +607,18 @@ schema `0.1.12` 再閉合 CTY76 推石與乾渴壺。IDA Pro 9.4 證明玩家碰
 正式 trace 由 CTY76 checkpoint 只送方向鍵走完 119 步解路，再由命令窗調查 event0
 取得乾渴壺 `0x5e`，完成 save/load。兩張 runtime 圖與證據見 `docs/97`。
 
+schema `0.1.13` 已接續閉合海中淺灘與最終鑰匙。IDA Pro 9.4 證明 item `0x5e` handler
+`(logical) 0x4012` 只接受船上 `(146,53)`，成功 set 原版 world-state bit `0x08`，以
+DGROUP `0x3a54` 的 20-byte 表覆寫 `(144,50)` 起 `5×4` 地表並保留乾渴壺。正式 boot
+trace 已由 CTY76 checkpoint 返回地表、登船航行、用正式道具窗顯出 CTY40 入口、向上進祠堂、
+調查取得最終鑰匙 `0x57`，並驗證地圖與道具 save/load。三張 runtime 圖與證據見 `docs/98`；
+原版 palette transition 與藍色水面仍是 V3 GAP。
+
 下一輪依下列順序接手：
 
-1. **主線最高優先**：boot 起的同一條 trace 已由 CTY76 checkpoint 完成推石並取得
-   乾渴壺 `0x5e`（`docs/97`）。下一個 blocker 是在海中淺灘正式使用乾渴壺、原版地圖
-   變化與最終鑰匙取得；從該 checkpoint 繼續正常玩家路線，不得跳到孤立的後段 handler。
+1. **主線最高優先**：boot 起的同一條 trace 已由 CTY76 checkpoint 正式使用乾渴壺、
+   顯出 CTY40 並取得最終鑰匙 `0x57`（`docs/98`）。下一個 blocker 是提頓夜間以最終鑰匙
+   開牢門並取得綠寶珠；從 CTY40 checkpoint 繼續正常玩家路線，不得跳到孤立後段 handler。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

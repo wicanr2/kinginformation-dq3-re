@@ -139,6 +139,7 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
 table 或可直接呼叫的 handler 都不能代替正常玩家入口。唯一 current plan 是
 [`docs/74`](../74-ebiten-remake-completion-plan.md)。
 
-目前 boot 起的 Go production trace 已閉合隱形草、CTY39 守衛、CTY76 推石與乾渴壺
-取得並通過 save/load；下一個主線 blocker 是海中淺灘使用乾渴壺及取得最終鑰匙。其餘
+目前 boot 起的 Go production trace 已閉合隱形草、CTY39 守衛、CTY76 推石、乾渴壺取得、
+船上唯一座標使用、原版 `5×4` 地圖 patch、CTY40 調查取得最終鑰匙及 save/load；下一個
+主線 blocker 是提頓夜間牢門與綠寶珠。乾渴壺詳見 `docs/98`；其餘
 舊項目也必須以正式 `InputState`、save/load 與原版證據逐項重新驗收。

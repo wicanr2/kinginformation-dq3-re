@@ -75,6 +75,10 @@ RE 文件。
 
 ![Ebiten：三顆石頭推至完成列後 passage 開啟](docs/img/eginbear_push_puzzle_solved.png)
 
+![Ebiten：船上使用乾渴壺後顯現最終鑰匙祠堂](docs/img/thirsty_pitcher_revealed.png)
+
+![Ebiten：祠堂內正式調查取得最終鑰匙](docs/img/final_key_obtained.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有
