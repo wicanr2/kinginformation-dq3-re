@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.13",
+  "schema_version": "0.1.14",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -15,6 +15,39 @@
       "address": "D3TXT00 record 421",
       "consumer": "field item panel dispatches use, give and drop while each original member record owns eight item words",
       "doc": "docs/92-dhama-reclass-production-trace.md"
+    }
+  },
+  "rura_navigation": {
+    "destinations": [
+      {"cty_raw": 0, "name_record_raw": 495, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 146, "y": 175, "layer": 0}},
+      {"cty_raw": 1, "name_record_raw": 496, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 142, "y": 147, "layer": 0}},
+      {"cty_raw": 2, "name_record_raw": 497, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 43, "y": 62, "layer": 0}},
+      {"cty_raw": 3, "name_record_raw": 498, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 56, "y": 18, "layer": 0}},
+      {"cty_raw": 4, "name_record_raw": 499, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 51, "y": 9, "layer": 0}},
+      {"cty_raw": 6, "name_record_raw": 500, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 75, "y": 87, "layer": 0}},
+      {"cty_raw": 12, "name_record_raw": 501, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 25, "y": 73, "layer": 0}},
+      {"cty_raw": 16, "name_record_raw": 502, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 25, "y": 73, "layer": 0}},
+      {"cty_raw": 15, "name_record_raw": 503, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 104, "y": 126, "layer": 0}},
+      {"cty_raw": 17, "name_record_raw": 504, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 109, "y": 103, "layer": 0}},
+      {"cty_raw": 47, "name_record_raw": 505, "arrival_offset": {"x": 1, "y": 0}, "ship_world_position": {"x": 82, "y": 158, "layer": 0}},
+      {"cty_raw": 21, "name_record_raw": 506, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 140, "y": 114, "layer": 0}},
+      {"cty_raw": 39, "name_record_raw": 507, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 22, "y": 34, "layer": 0}},
+      {"cty_raw": 43, "name_record_raw": 508, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 199, "y": 133, "layer": 0}},
+      {"cty_raw": 38, "name_record_raw": 509, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 192, "y": 63, "layer": 0}},
+      {"cty_raw": 79, "name_record_raw": 510, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 89, "y": 65, "layer": 1}},
+      {"cty_raw": 81, "name_record_raw": 511, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 154, "y": 41, "layer": 1}},
+      {"cty_raw": 84, "name_record_raw": 512, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 66, "y": 116, "layer": 1}},
+      {"cty_raw": 85, "name_record_raw": 513, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 125, "y": 126, "layer": 1}},
+      {"cty_raw": 86, "name_record_raw": 514, "arrival_offset": {"x": -1, "y": 0}, "ship_world_position": {"x": 179, "y": 101, "layer": 1}}
+    ],
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE",
+      "address_space": "logical",
+      "address": "0x4c2b..0x4cf8; DGROUP 0x0ac0/0x0ad4/0x4f2f/0x4f31/0x4f3c/0x4f3e",
+      "consumer": "the Rura destination handler indexes the CTY table, writes the player arrival coordinate, then when world-state bit0 is set indexes the parallel 20-entry ship coordinate table and relocates the ship",
+      "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"
     }
   },
   "npc_push_rule": {
@@ -269,7 +302,88 @@
       }
     }
   ],
+  "npc_item_reward_events": [
+    {
+      "id": "dq3:event.teidon_green_orb",
+      "kind": "npc_item_reward",
+      "npc": {
+        "cty_raw": 20,
+        "section": 0,
+        "tile": {"x": 16, "y": 2},
+        "handler_raw": 35
+      },
+      "present_flag_raw": 62,
+      "granted_item_raw": 102,
+      "dialogue_text_ids": {
+        "success": "dq3:text.teidon.green_orb.success",
+        "after": "dq3:text.teidon.green_orb.after"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY20.DAT + D3TXT04.TXT",
+        "address_space": "logical",
+        "address": "dispatcher 0x4fe5..0x5001, DGROUP 0x3bb4 entry35, handler 0x593a..0x5978",
+        "consumer": "the CTY20 night NPC at (16,2) has subtype2/handler35; flag0x3e set opens rec38, gives item0x66 through the party-order eight-slot inventory consumer and clears the flag only on success; a cleared flag opens rec39",
+        "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"
+      }
+    }
+  ],
   "item_use_effects": [
+    {
+      "id": "dq3:item_use.thief_key",
+      "kind": "item_use",
+      "item_raw_id": 85,
+      "effect_id": "open_facing_locked_door",
+      "location_kind": "town",
+      "consume": false,
+      "door_key_tier": 1,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "item table DGROUP 0x366a entry20=0x3f65; common consumer 0x4906..0x4a48",
+        "consumer": "using item0x55 writes tier1, resolves the facing scene tile, compares BLKBM attr bits6-7, opens a door whose required tier is <=1 and does not consume the key",
+        "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.magic_key",
+      "kind": "item_use",
+      "item_raw_id": 86,
+      "effect_id": "open_facing_locked_door",
+      "location_kind": "town",
+      "consume": false,
+      "door_key_tier": 2,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "item table DGROUP 0x366a entry21=0x3f6e; common consumer 0x4906..0x4a48",
+        "consumer": "using item0x56 writes tier2, resolves the facing scene tile, compares BLKBM attr bits6-7, opens a door whose required tier is <=2 and does not consume the key",
+        "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.final_key",
+      "kind": "item_use",
+      "item_raw_id": 87,
+      "effect_id": "open_facing_locked_door",
+      "location_kind": "town",
+      "consume": false,
+      "door_key_tier": 3,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "item table DGROUP 0x366a entry22=0x3f77; common consumer 0x4906..0x4a48",
+        "consumer": "using item0x57 writes tier3, resolves the facing scene tile, compares BLKBM attr bits6-7, opens any locked door and does not consume the key",
+        "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"
+      }
+    },
     {
       "id": "dq3:item_use.dark_lamp",
       "kind": "item_use",

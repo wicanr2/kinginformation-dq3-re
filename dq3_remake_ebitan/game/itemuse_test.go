@@ -386,3 +386,56 @@ func TestUseRainbowWrongCoordinateNoConsume(t *testing.T) {
 		t.Errorf("錯誤位置不應消耗,剩 %d", len(g.inventory))
 	}
 }
+
+func teidonLockedDoorGame(t *testing.T) *Game {
+	t.Helper()
+	g, err := NewGame(os.DirFS(spineAssetsDir(t)), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 20, mapBlkNum[20], 0, 2, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.showTitle, g.openingIdx = false, -1
+	g.cur, g.town, g.inTown, g.curCty, g.dlg.tx = sc, sc, true, 20, sc.dlgText
+	g.px, g.py, g.facing = 17, 5, 1
+	if tier := sc.doorTier(17, 4); tier != 3 {
+		t.Fatalf("CTY20 door tier=%d, want 3", tier)
+	}
+	return g
+}
+
+func TestPackDoorKeyRequiresFormalItemUse(t *testing.T) {
+	g := teidonLockedDoorGame(t)
+	finalKey, ok := g.pack.ItemUseEffectByRawID(0x57)
+	if !ok || finalKey.EffectID != "open_facing_locked_door" || finalKey.DoorKeyTier != 3 {
+		t.Fatalf("final-key pack effect mismatch: %+v", finalKey)
+	}
+	g.inventory = []int{finalKey.ItemRawID}
+	g.examine()
+	if tier := g.cur.doorTier(17, 4); tier != 3 {
+		t.Fatalf("調查不得取代原版鑰匙使用，door tier=%d", tier)
+	}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if tier := g.cur.doorTier(17, 4); tier != 0 || !g.hasItem(finalKey.ItemRawID) || g.panel != panelNone {
+		t.Fatalf("正式使用最終鑰匙 transaction 錯：tier=%d held=%v panel=%d",
+			tier, g.hasItem(finalKey.ItemRawID), g.panel)
+	}
+}
+
+func TestPackDoorKeyFailsClosedBelowRequiredTier(t *testing.T) {
+	g := teidonLockedDoorGame(t)
+	magicKey, ok := g.pack.ItemUseEffectByRawID(0x56)
+	if !ok || magicKey.DoorKeyTier != 2 {
+		t.Fatalf("magic-key pack effect mismatch: %+v", magicKey)
+	}
+	g.inventory = []int{magicKey.ItemRawID}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if tier := g.cur.doorTier(17, 4); tier != 3 || !g.hasItem(magicKey.ItemRawID) {
+		t.Fatalf("tier2 key must not open tier3 door: tier=%d held=%v",
+			tier, g.hasItem(magicKey.ItemRawID))
+	}
+}

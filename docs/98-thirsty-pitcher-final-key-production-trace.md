@@ -98,8 +98,9 @@ Go `treasures` table 遷入 `treasure_events`。
 目前 remake 地表水面仍呈棕色、未重播四輪動畫，因此不得標 V3。這是玩家可見 parity GAP，
 不能用正確 transaction 掩蓋。
 
-## 7. 下一個 blocker
+## 7. 後續狀態
 
-- 從 CTY40 checkpoint 正常返回提頓，夜間以最終鑰匙開牢門並取得綠寶珠。
-- 另追世界水面 tile／palette animation，使本事件由 V2 升至 V3。
-- 本切片不代表全新遊戲至 THE END 已完成。
+- CTY40 後續已由正式魯拉、原版船重定位、航行、黑暗之燈、最終鑰匙與 handler35
+  閉合至提頓綠色寶珠，見 `docs/99`。
+- 世界水面 tile／palette animation 仍需使本事件由 V2 升至 V3。
+- `docs/98` 與 `docs/99` 均不代表全新遊戲至 THE END 已完成。

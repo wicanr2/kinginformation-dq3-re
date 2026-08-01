@@ -215,9 +215,9 @@
 7. **CTY10 與 CTY14 的甘達特編隊已重查**：兩處均由原始 formation table 證實
    `monster56×1 + monster57×3`。CTY10 的 D3 證據見 `docs/85`；
    CTY14 還包含先行的四守衛、俘虜 movement 與不同旗標交易，見 `docs/89`。
-8. **提頓村綠寶珠 gate 的「夜晚」判定精確條件**(步 28):杜攻略明寫需晚上進村,青衫未強調此點;
-   `walkthrough-flow-audit.md` 標「提頓牢房綠寶珠夜 gated(CTY20)」已有 main.c RE 佐證,但「夜晚」在
-   原版是每步數週期性晝夜相位還是特定劇情旗標,建議與 remake 晝夜系統(day-night-system.md)交叉驗證。
+8. **提頓村綠寶珠 gate 已閉合**（步 28）：CTY20 依正常步數相位載入 day/night NPC 表；
+   夜表 `(16,2)` subtype2/handler35 才是獎勵 NPC。玩家在入口外正式使用黑暗之燈載入夜表，
+   以最終鑰匙開牢門後取得綠色寶珠；boot trace 與 save/load 見 `docs/99`。
 9. **金字塔內咒文當機(§3 #8)是使用者實機口述,無錄影/截圖佐證**,且無法確定觸發是野外施法還是
    戰鬥中施法(或兩者皆會)——`original-known-bugs.md` 本身標記為「(待補)其他原版異常」,精確重現條件
    待日後原版錄影核對。

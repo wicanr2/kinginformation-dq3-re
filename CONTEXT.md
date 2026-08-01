@@ -11,7 +11,7 @@
 - **logical (seg0-relative)** — `exe_funcs.json` / `sub_XXXX` 用的位址基準。
 - **file offset** — `tools/re_disasm.py` 輸出的位址基準。換算 `file = logical + 0x1370`。_Avoid_: 兩者混稱「位址」(見 [`docs/00`](docs/00-re-methodology.md) §3 陷阱)。
 - **DGROUP** — 資料段;變數 `[DS_off]` 的檔內位置 `file = 0x16140 + DS_off`。
-- **scripted-event** — 由 runner `0xabb2` 經跳表 `DS 0x3baa`(id→handler)派發的事件;id 資料驅動(如彩虹水滴合成 = id 83)。
+- **scripted-event** — runner `0xabb2` 的 event-id 派發基址是 `DGROUP 0x3baa`；直接 subtype2 NPC dispatcher logical `0x4fe5..0x5001` 則以 `DGROUP 0x3bb4 + byte4×2` 取 handler。兩者是同一張表相差 5 entries，不得互換 index。
 - **oracle** — DOSBox 跑原版 `DQ3.EXE` 的實機畫面 / 記憶體,當還原結果的黃金對照。_Avoid_: 「參考版」。
 
 ### 地圖 / 場景
@@ -156,7 +156,9 @@
   [`91`](docs/91-garuna-satori-book-production-trace.md) 加爾那之塔領悟之書、睡眠恢復
   IDA 證據與正式玩家輸入追蹤 ·
   [`98`](docs/98-thirsty-pitcher-final-key-production-trace.md) 乾渴壺唯一成功格、world-state
-  `0x08`、`5×4` 地圖 patch、CTY40 最終鑰匙與正式玩家輸入追蹤
+  `0x08`、`5×4` 地圖 patch、CTY40 最終鑰匙與正式玩家輸入追蹤 ·
+  [`99`](docs/99-teidon-final-key-green-orb-production-trace.md) 最終鑰匙正式使用、魯拉船重定位、
+  提頓 handler35 綠色寶珠與 boot production trace
 
 ### 資料 / 研究(`docs/data/`)
 - [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·

@@ -14,6 +14,54 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
+func TestDQ3RuraNavigationMatchesOriginalEXE(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	destinations := p.RuraDestinations()
+	if len(destinations) != 20 {
+		t.Fatalf("魯拉目的地數=%d, want 20", len(destinations))
+	}
+	if len(exe) < 0x16c64 {
+		t.Fatalf("DQ3.EXE too small: %d", len(exe))
+	}
+	ctyRaw := exe[0x16c00:0x16c14]  // DGROUP 0x0ac0
+	shipRaw := exe[0x16c14:0x16c64] // DGROUP 0x0ad4
+	for i, d := range destinations {
+		if d.CTYRaw != int(ctyRaw[i]) || d.NameRecordRaw != 0x1ef+i {
+			t.Fatalf("魯拉 index%d CTY/name 不符：%+v rawCTY=%d", i, d, ctyRaw[i])
+		}
+		x := int(binary.LittleEndian.Uint16(shipRaw[i*4:]))
+		rawY := int(binary.LittleEndian.Uint16(shipRaw[i*4+2:]))
+		layer, y := 0, rawY
+		if rawY >= 300 {
+			layer, y = 1, rawY-300
+		}
+		if d.ShipWorldPosition.X != x || d.ShipWorldPosition.Y != y ||
+			d.ShipWorldPosition.Layer != layer {
+			t.Fatalf("魯拉 index%d 船落點不符：got %+v raw=(%d,%d)",
+				i, d.ShipWorldPosition, x, rawY)
+		}
+		wantOffsetX := -1
+		if i == 10 { // logical 0x4c69..0x4c75：index 10 另加 X+2。
+			wantOffsetX = 1
+		}
+		if d.ArrivalOffset.X != wantOffsetX || d.ArrivalOffset.Y != 0 {
+			t.Fatalf("魯拉 index%d arrival offset=%+v want (%d,0)",
+				i, d.ArrivalOffset, wantOffsetX)
+		}
+	}
+}
+
 func TestDQ3JipangOrochiMatchesOriginalEXEAndText(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {
@@ -349,6 +397,109 @@ func TestDQ3ThirstyPitcherAndFinalKeyMatchOriginalEXEAndCTY(t *testing.T) {
 		ItemRawID: 0x57, PresentFlag: 0x47,
 	}) {
 		t.Fatalf("CTY40 最終鑰匙 treasure JSON 不符：%+v", treasure)
+	}
+}
+
+func TestDQ3DoorKeysAndTeidonGreenOrbMatchOriginal(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		raw, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return raw
+	}
+	exe, cty := read("DQ3.EXE"), read("CTY20.DAT")
+	attrRaw, fon, txt := read("BLKBM1.DAT"), read("D3TXT00.FON"), read("D3TXT04.TXT")
+	pack, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i, rawID := range []int{0x55, 0x56, 0x57} {
+		effect, ok := pack.ItemUseEffectByRawID(rawID)
+		if !ok || effect.EffectID != "open_facing_locked_door" ||
+			effect.LocationKind != "town" || effect.DoorKeyTier != i+1 || effect.Consume {
+			t.Fatalf("key %#x pack effect mismatch: %+v", rawID, effect)
+		}
+		wordOff := 0x16140 + 0x366a + (rawID-0x41)*2
+		if got, want := binary.LittleEndian.Uint16(exe[wordOff:wordOff+2]), uint16(0x3f65+i*9); got != want {
+			t.Fatalf("key %#x handler=%#x, want %#x", rawID, got, want)
+		}
+	}
+	wantKeyStubs := []byte{
+		0xc7, 0x06, 0x93, 0x25, 0x01, 0x00, 0xeb, 0x10, 0x90,
+		0xc7, 0x06, 0x93, 0x25, 0x02, 0x00, 0xeb, 0x07, 0x90,
+		0xc7, 0x06, 0x93, 0x25, 0x03, 0x00, 0xe8, 0x86, 0x09, 0xc3,
+	}
+	if got := exe[0x52d5 : 0x52d5+len(wantKeyStubs)]; !bytes.Equal(got, wantKeyStubs) {
+		t.Fatalf("key handler stubs mismatch: %x", got)
+	}
+
+	var reward *NPCItemRewardEvent
+	for _, event := range pack.NPCItemRewardEvents() {
+		if event.ID == "dq3:event.teidon_green_orb" {
+			e := event
+			reward = &e
+			break
+		}
+	}
+	if reward == nil || reward.NPC != (ScriptedNPCSelector{
+		CTYRaw: 20, Section: 0, Tile: TileCoordinate{X: 16, Y: 2}, HandlerRaw: 35,
+	}) || reward.PresentFlagRaw != 0x3e || reward.GrantedItemRaw != 0x66 {
+		t.Fatalf("teidon reward mismatch: %+v", reward)
+	}
+	if got := binary.LittleEndian.Uint16(exe[0x16140+0x3bb4+35*2:]); got != 0x593a {
+		t.Fatalf("scripted handler table entry35=%#x, want 0x593a", got)
+	}
+	if got := exe[0x6cad : 0x6cad+3]; !bytes.Equal(got, []byte{0xbb, 0x3e, 0x00}) {
+		t.Fatalf("handler35 present-flag selector bytes=%x", got)
+	}
+	if got := exe[0x6cca : 0x6cca+6]; !bytes.Equal(got, []byte{0xc7, 0x06, 0x93, 0x25, 0x66, 0x00}) {
+		t.Fatalf("handler35 granted-item writer bytes=%x", got)
+	}
+	if got := exe[0x7be8 : 0x7be8+3]; !bytes.Equal(got, []byte{0x80, 0xfa, 0x08}) {
+		t.Fatalf("party inventory eight-slot consumer bytes=%x", got)
+	}
+
+	day, err := dq3data.OpenTown(cty, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	night, err := dq3data.OpenTown(cty, 0, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hasNPC := func(town *dq3data.Town, x, y, subtype, handler int) bool {
+		for _, npc := range town.NPCs {
+			if npc.X == x && npc.Y == y && int((npc.Ctrl>>3)&7) == subtype && int(npc.B4) == handler {
+				return true
+			}
+		}
+		return false
+	}
+	if !hasNPC(day, 16, 2, 0, 29) || !hasNPC(night, 16, 2, 2, 35) {
+		t.Fatal("CTY20 day corpse/night scripted reward NPC variants mismatch")
+	}
+	i := 4*night.W + 17
+	attr := dq3data.OpenBlockAttr(attrRaw).Raw(int(night.Cells[i]))
+	if tier := (attr >> 6) & 3; tier != 3 {
+		t.Fatalf("CTY20 locked door (17,4) tier=%d attr=%#x", tier, attr)
+	}
+	decoded := dq3data.LoadText(fon, txt)
+	for rec, textID := range map[int]string{
+		38: reward.DialogueTextIDs.Success,
+		39: reward.DialogueTextIDs.After,
+	} {
+		want, ok := pack.TextGlyphCodes(textID)
+		got := append(decoded.Record(rec), 0xffff)
+		if !ok || !reflect.DeepEqual(got, want) {
+			t.Fatalf("D3TXT04 rec%d != %s: got=%v want=%v", rec, textID, got, want)
+		}
 	}
 }
 
@@ -1052,14 +1203,14 @@ func TestDQ3DhamaReclassMatchesOriginalTextAndConfig(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.13","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.14","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.13","service_definitions":[{
+	  "schema_version":"0.1.14","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -1067,23 +1218,26 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.13",
+	  "schema_version":"0.1.14",
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"record","address":"421","consumer":"item menu","doc":"docs/x.md"}},
+	  "rura_navigation":{"destinations":[],
+	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
+	      "address_space":"logical","address":"0x1","consumer":"teleport","doc":"docs/x.md"}},
 	  "npc_push_rule":{"ctrl_mask":64,"ctrl_value":64,"blocked_by_effect_id":"temporary_invisibility",
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"file","address":"0x1","consumer":"collision","doc":"docs/x.md"}},
 	  "boss_surrender_events":[],"temporary_role_events":[],
-	    "quest_item_chain_events":[],"treasure_events":[],"item_use_effects":[],"tracking_guard_events":[],
+	    "quest_item_chain_events":[],"treasure_events":[],"npc_item_reward_events":[],"item_use_effects":[],"tracking_guard_events":[],
 	    "push_puzzle_events":[],
 	    "two_step_floor_switch_gates":[],
 	  "staged_vehicle_exchange_events":[],"guided_passage_events":[],
 	  "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.13",
+	  "schema_version":"0.1.14",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -1093,7 +1247,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.13","definitions":[{
+	  "schema_version":"0.1.14","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -1102,7 +1256,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.13","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.14","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -1114,7 +1268,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.13"`, `"schema_version":"0.1.13","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.14"`, `"schema_version":"0.1.14","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

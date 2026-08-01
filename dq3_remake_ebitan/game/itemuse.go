@@ -131,6 +131,18 @@ func (g *Game) usePackItemEffect(code int) bool {
 		}
 		g.applyPackWorldMapPatches()
 		g.panel = panelNone
+	case "open_facing_locked_door":
+		if !g.inTown || g.cur == nil {
+			return true
+		}
+		fx, fy := frontTile(g.px, g.py, g.facing)
+		need := g.cur.doorTier(fx, fy)
+		if need == 0 || effect.DoorKeyTier < need {
+			return true
+		}
+		if g.cur.openDoor(fx, fy) {
+			g.panel = panelNone
+		}
 	}
 	return true
 }

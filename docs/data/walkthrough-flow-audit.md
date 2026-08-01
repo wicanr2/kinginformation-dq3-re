@@ -140,6 +140,7 @@ table 或可直接呼叫的 handler 都不能代替正常玩家入口。唯一 c
 [`docs/74`](../74-ebiten-remake-completion-plan.md)。
 
 目前 boot 起的 Go production trace 已閉合隱形草、CTY39 守衛、CTY76 推石、乾渴壺取得、
-船上唯一座標使用、原版 `5×4` 地圖 patch、CTY40 調查取得最終鑰匙及 save/load；下一個
-主線 blocker 是提頓夜間牢門與綠寶珠。乾渴壺詳見 `docs/98`；其餘
+船上唯一座標使用、原版 `5×4` 地圖 patch、CTY40 最終鑰匙、魯拉船重定位、提頓夜間牢門、
+綠色寶珠及各 checkpoint save/load。詳見 `docs/98`、`docs/99`；下一個 blocker 必須從
+綠色寶珠合法 checkpoint 繼續重播後才判定。其餘
 舊項目也必須以正式 `InputState`、save/load 與原版證據逐項重新驗收。

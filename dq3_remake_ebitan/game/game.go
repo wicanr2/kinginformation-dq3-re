@@ -421,8 +421,8 @@ func (g *Game) selectCommand(cmd int) {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
 			case sub == 2: // scripted NPC(給物/劇情)
-				if g.curCty == ctyTedon && n.x == tedonOrbNPCX && n.y == tedonOrbNPCY && n.b4 == tedonOrbNPCHandler {
-					g.talkTedonOrb()
+				if g.talkNPCItemReward(n) {
+					// game-pack NPC → party-order finite inventory reward primitive.
 				} else if g.curCty == ctyPhoenixShrine && n.b4 == phoenixGuardianHandler {
 					g.talkPhoenixGuardian()
 				} else if g.talkZomaFinal(n) {
@@ -699,9 +699,6 @@ func (g *Game) examine() {
 		return
 	}
 	fx, fy := frontTile(g.px, g.py, g.facing)
-	if g.tryOpenFacingDoor(fx, fy) { // 面向鎖門 + 鑰匙足夠 → 開門(移植 dq3_scene_try_open_facing_door)
-		return
-	}
 	if g.tryPhoenixAltar(fx, fy) || g.tryPhoenixAltar(g.px, g.py) {
 		return
 	}
@@ -741,26 +738,21 @@ func (g *Game) advanceBossDialogue() {
 	g.advanceBossQueue()
 }
 
-// keyTier:背包最高階鑰匙等級(道具碼 0x55/0x56/0x57 → 1/2/3;tier=code-0x54)。移植 dq3_inv_key_tier。
+// keyTier returns the highest door tier selected by a held pack-owned key.
+// Path planning may use it, but opening still requires formally using the
+// selected item through the item-action menu.
 func (g *Game) keyTier() int {
+	if g.pack == nil {
+		return 0
+	}
 	best := 0
-	for _, code := range g.inventory {
-		if code >= 0x55 && code <= 0x57 {
-			if t := code - 0x54; t > best {
-				best = t
-			}
+	for _, effect := range g.pack.ItemUseEffects() {
+		if effect.EffectID == "open_facing_locked_door" &&
+			g.hasItem(effect.ItemRawID) && effect.DoorKeyTier > best {
+			best = effect.DoorKeyTier
 		}
 	}
 	return best
-}
-
-// tryOpenFacingDoor:面向格是鎖門且鑰匙等級足夠 → 開門。移植 dq3_scene_try_open_facing_door。
-func (g *Game) tryOpenFacingDoor(fx, fy int) bool {
-	need := g.cur.doorTier(fx, fy)
-	if need == 0 || g.keyTier() < need {
-		return false
-	}
-	return g.cur.openDoor(fx, fy)
 }
 
 // openFacility:面向設施 NPC(byte4=設施索引 k)→ 依當前 CTY 開對應設施(全城設施表)。

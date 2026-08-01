@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 )
 
@@ -42,30 +43,26 @@ type townVisit struct {
 	Cty, Section, X, Y int
 }
 
-// DQ3.EXE DGROUP 0x0ac0：魯拉目的地 index → CTY。原版 handler file 0x5f9b
-// 以此值索引 cty_loc，寫入 world X=ctyX-1、Y=ctyY；不是載入城內最後位置。
-var ruraCtyOrder = [...]int{
-	0, 1, 2, 3, 4, 6, 12, 16, 15, 17, 47, 21, 39, 43, 38, 79, 81, 84, 85, 86,
-}
-
-func ruraCtyAllowed(cty int) bool {
-	return ruraCtyIndex(cty) >= 0
-}
-
-func ruraCtyIndex(cty int) int {
-	for i, v := range ruraCtyOrder {
-		if v == cty {
+func (g *Game) ruraCtyIndex(cty int) int {
+	if g.pack == nil {
+		return -1
+	}
+	for i, d := range g.pack.RuraDestinations() {
+		if d.CTYRaw == cty {
 			return i
 		}
 	}
 	return -1
 }
 
-func ruraNameRec(cty int) int {
-	if i := ruraCtyIndex(cty); i >= 0 {
-		return 0x1ef + i // handler file 0x5f29..0x5f32
+func (g *Game) ruraDestination(cty int) (gamepack.RuraDestination, bool) {
+	if g.pack == nil {
+		return gamepack.RuraDestination{}, false
 	}
-	return -1
+	if i := g.ruraCtyIndex(cty); i >= 0 {
+		return g.pack.RuraDestinations()[i], true
+	}
+	return gamepack.RuraDestination{}, false
 }
 
 type FieldSpellMenu struct {
@@ -333,7 +330,8 @@ func (g *Game) applyHazardStep() {
 }
 
 func (g *Game) teleportToVisit(v townVisit) bool {
-	if v.Cty < 0 || v.Cty >= len(ctyLoc) || !ruraCtyAllowed(v.Cty) {
+	destination, ok := g.ruraDestination(v.Cty)
+	if v.Cty < 0 || v.Cty >= len(ctyLoc) || !ok {
 		return false
 	}
 	loc := ctyLoc[v.Cty]
@@ -343,9 +341,13 @@ func (g *Game) teleportToVisit(v townVisit) bool {
 	g.layer = loc[2]
 	g.cur = g.overworldScene()
 	g.inTown, g.curCty = false, -1
-	g.px, g.py = loc[0]-1, loc[1]
-	if v.Cty == 47 { // handler file 0x5fd9：目的 index 10（CTY47）另加 X+2
-		g.px += 2
+	g.px = loc[0] + destination.ArrivalOffset.X
+	g.py = loc[1] + destination.ArrivalOffset.Y
+	if g.shipOwned {
+		// DQ3.EXE logical 0x4c7e..0x4c9c：world-state bit0 設定時，
+		// 以同一魯拉 index 查 DGROUP 0x0ad4 並寫回船座標。
+		g.shipX = destination.ShipWorldPosition.X
+		g.shipY = destination.ShipWorldPosition.Y
 	}
 	g.shipAboard, g.phoenixAboard = false, false
 	if g.layer == 1 {
@@ -357,14 +359,14 @@ func (g *Game) teleportToVisit(v townVisit) bool {
 }
 
 func (g *Game) rememberTown() {
-	if !g.inTown || g.cur == nil || !ruraCtyAllowed(g.curCty) {
+	if !g.inTown || g.cur == nil || g.ruraCtyIndex(g.curCty) < 0 {
 		return
 	}
 	g.addVisitedTown(g.curCty)
 }
 
 func (g *Game) addVisitedTown(cty int) {
-	if !ruraCtyAllowed(cty) {
+	if g.ruraCtyIndex(cty) < 0 {
 		return
 	}
 	for i := range g.visitedTowns {
@@ -372,10 +374,10 @@ func (g *Game) addVisitedTown(cty int) {
 			return
 		}
 	}
-	order := ruraCtyIndex(cty)
+	order := g.ruraCtyIndex(cty)
 	at := len(g.visitedTowns)
 	for i, v := range g.visitedTowns {
-		if ruraCtyIndex(v.Cty) > order {
+		if g.ruraCtyIndex(v.Cty) > order {
 			at = i
 			break
 		}
@@ -422,7 +424,9 @@ func (g *Game) drawFieldSpell(rgba []byte, white dq3data.Color) {
 		}
 		if m.dest {
 			// 原版直接使用 D3TXT00 rec 0x1ef+destination index 的正式地名。
-			drawTextRecord(rgba, g.shop.nameText, x, y, ruraNameRec(g.visitedTowns[i].Cty), white)
+			if destination, ok := g.ruraDestination(g.visitedTowns[i].Cty); ok {
+				drawTextRecord(rgba, g.shop.nameText, x, y, destination.NameRecordRaw, white)
+			}
 		} else {
 			drawTextRecord(rgba, g.shop.nameText, x, y, m.choices[i].rec, white)
 			drawNumber(rgba, g.dlg.tx, ScreenW-116, y, m.choices[i].mp, white)

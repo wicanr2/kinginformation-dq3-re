@@ -190,30 +190,27 @@ section1 (16×12 室內):
 > 是**不同欄位**,兩者勿混——這也是位址/欄位混標導致誤判的一例,見 docs/00 §3。)
 
 **鑰匙道具**(D3TXT00 道具名解出):`0x55` 盜賊的鑰匙、`0x56` 魔法鑰匙、`0x57` 最終鑰匙。
-**等級** = `id − 0x54` → 1 / 2 / 3(盜賊 < 魔法 < 最終)。
+**等級** = 1 / 2 / 3（盜賊 < 魔法 < 最終），但正常玩家輸入 owner 不是調查時掃描全隊。
+舊版把 logical `0x48c3` 的全隊掃描誤當一般開門入口；原版實況與 IDA item-use table 已推翻
+這個結論。玩家必須從 rec421 明確選擇一把鑰匙「使用」：
 
-開門在城鎮轉場 handler `0x488f` 內,兩段(全靜態,純資料判定):
-
-1. **算全隊最高鑰匙等級 → `[0x2593]`**(`0x48c3`,file 0x5c33;由 `0x4816` 呼叫):
-   ```
-   外圈 [0x5077] 名隊員:si = [memberidx*2 + 0x4f15];si += 0x3a   ; 隊員道具陣列(8 格 u16)
-   內圈 cx=8:  dx=[si];  if 0x55<=dl<=0x57:  tier = dl-0x54
-              if tier > [0x2593]: [0x2593] = tier              ; 取最大(=最高階鑰匙)
-   ```
-2. **讀面向 tile,夠級就開門**(`0x4906`,file 0x5c76;由 `0x3f7d`/`0x4862`/`0x4890` 呼叫):
+1. `DGROUP 0x366a` 的 item-use pointer table 將 `0x55/0x56/0x57` 分別派到 logical
+   `0x3f65/0x3f6e/0x3f77`；三個 stub 把 `1/2/3` 寫入 `[0x2593]`，再呼叫共同 consumer。
+2. **共同 consumer 讀面向 tile 並比較所選 tier**（logical `0x4906`，file `0x5c76`）：
    ```
    if [0x4f2d]!=1: skip                       ; 僅城鎮
    面向格 = 玩家(X,Y) + dir 位移([dir*2+0xb35] / +0xb37);di = layout offset
    attr = [ tile_low*2 + 0x308e ]
    if (attr & 0x00c0)==0: skip                 ; ★ bits6-7=0 → 非鎖門
    need = (attr_low >> 6) & 3                   ; ★ 門所需鑰匙等級(rol bl,1 ×2; and 3)→ [0x2515]
-   if [0x2593] < need: skip(維持鎖住)          ; 隊伍最高鑰匙 < 門需求 → 開不了
+   if [0x2593] < need: skip(維持鎖住)          ; 所選鑰匙 tier < 門需求 → 開不了
    ── 開門:[di] = tile_low & 0x1f(清事件高位)   ; 改 tile 為通行
             [di+1] &= 0xe0(清屬性低位)
             [0x2591] = 0x3744 + [0x4f09] + [dir*2+0xb4d](開門訊息);lcall 0x10b6,0x19c 播動畫/音效
    ```
 
-> 語意:門 tile 的 attr 低 byte bits6-7 編入**所需鑰匙等級**(1/2/3);隊伍持有 ≥ 該級的鑰匙即可開
+> 語意：門 tile 的 attr 低 byte bits6-7 編入**所需鑰匙等級**（1/2/3）；玩家所選鑰匙
+> tier 足夠才開，而且 handler 不消耗鑰匙。完整修正與 production trace 見 `docs/99`。
 > (最終鑰匙開所有門)。開門 = 就地把 tile 改成通行並清事件/屬性位元(`seg_cty` 寫回),非走 +0xc 表。
 > remake:`dq3_town_load` 已解 attr;另加 `dq3_member` 鑰匙等級掃描 + 面向 tile 開鎖(改 tile + 清 attr)。
 

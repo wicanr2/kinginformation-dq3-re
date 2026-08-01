@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.13"
+	SchemaVersion = "0.1.14"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -224,6 +224,24 @@ type TreasureEvent struct {
 	Evidence Evidence              `json:"evidence"`
 }
 
+type NPCItemRewardTextIDs struct {
+	Success string `json:"success"`
+	After   string `json:"after"`
+}
+
+// NPCItemRewardEvent describes a finite scripted-NPC transaction. The engine
+// searches the party's personal inventories in party order and only clears
+// PresentFlagRaw after the item was actually stored.
+type NPCItemRewardEvent struct {
+	ID              string               `json:"id"`
+	Kind            string               `json:"kind"`
+	NPC             ScriptedNPCSelector  `json:"npc"`
+	PresentFlagRaw  int                  `json:"present_flag_raw"`
+	GrantedItemRaw  int                  `json:"granted_item_raw"`
+	DialogueTextIDs NPCItemRewardTextIDs `json:"dialogue_text_ids"`
+	Evidence        Evidence             `json:"evidence"`
+}
+
 // ItemUseEffect 把版本專屬道具 ID 綁定至有限的引擎 primitive。
 // JSON 只提供選擇器與參數，不接受可執行運算式。
 type ItemUseEffect struct {
@@ -246,6 +264,7 @@ type ItemUseEffect struct {
 	MapPatch                *WorldMapPatch  `json:"map_patch,omitempty"`
 	AnimationPaletteModeRaw int             `json:"animation_palette_mode_raw,omitempty"`
 	AnimationCycles         int             `json:"animation_cycles,omitempty"`
+	DoorKeyTier             int             `json:"door_key_tier,omitempty"`
 	Evidence                Evidence        `json:"evidence"`
 }
 
@@ -597,14 +616,32 @@ type ItemActions struct {
 	Evidence               Evidence          `json:"evidence"`
 }
 
+// RuraDestination describes one original teleport-table entry. ArrivalOffset
+// is applied to the CTY world location; ShipWorldPosition is the normalized
+// per-layer position written when the party owns the ship. Raw IDs and text
+// records remain pack data rather than engine constants.
+type RuraDestination struct {
+	CTYRaw            int                  `json:"cty_raw"`
+	NameRecordRaw     int                  `json:"name_record_raw"`
+	ArrivalOffset     TileCoordinate       `json:"arrival_offset"`
+	ShipWorldPosition VehicleWorldPosition `json:"ship_world_position"`
+}
+
+type RuraNavigation struct {
+	Destinations []RuraDestination `json:"destinations"`
+	Evidence     Evidence          `json:"evidence"`
+}
+
 type Events struct {
 	SchemaVersion               string                       `json:"schema_version"`
 	ItemActions                 ItemActions                  `json:"item_actions"`
+	RuraNavigation              RuraNavigation               `json:"rura_navigation"`
 	NPCPushRule                 NPCPushRule                  `json:"npc_push_rule"`
 	BossSurrenderEvents         []BossSurrenderEvent         `json:"boss_surrender_events"`
 	TemporaryRoleEvents         []TemporaryRoleEvent         `json:"temporary_role_events"`
 	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
 	TreasureEvents              []TreasureEvent              `json:"treasure_events"`
+	NPCItemRewardEvents         []NPCItemRewardEvent         `json:"npc_item_reward_events"`
 	ItemUseEffects              []ItemUseEffect              `json:"item_use_effects"`
 	TrackingGuardEvents         []TrackingGuardEvent         `json:"tracking_guard_events"`
 	PushPuzzleEvents            []PushPuzzleEvent            `json:"push_puzzle_events"`
@@ -983,6 +1020,17 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.NPCItemRewardEvents {
+		for field, id := range map[string]string{
+			"success": event.DialogueTextIDs.Success,
+			"after":   event.DialogueTextIDs.After,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	for _, event := range p.Events.TwoStepFloorSwitchGates {
 		refs := event.DialogueTextIDs
 		for field, id := range map[string]string{
@@ -1123,6 +1171,24 @@ func (p *Pack) validateEvents() error {
 	if err := validateEvidence(p.Events.ItemActions.Evidence); err != nil {
 		return fmt.Errorf("item_actions evidence: %w", err)
 	}
+	if p.Events.RuraNavigation.Destinations == nil {
+		return errors.New("rura_navigation.destinations must be present")
+	}
+	if err := validateEvidence(p.Events.RuraNavigation.Evidence); err != nil {
+		return fmt.Errorf("rura_navigation evidence: %w", err)
+	}
+	ruraCTYs := map[int]bool{}
+	for i, d := range p.Events.RuraNavigation.Destinations {
+		if d.CTYRaw < 0 || d.CTYRaw > 255 || ruraCTYs[d.CTYRaw] ||
+			d.NameRecordRaw < 0 || d.ArrivalOffset.X < -255 || d.ArrivalOffset.X > 255 ||
+			d.ArrivalOffset.Y < -255 || d.ArrivalOffset.Y > 255 ||
+			d.ShipWorldPosition.X < 0 || d.ShipWorldPosition.X > 1023 ||
+			d.ShipWorldPosition.Y < 0 || d.ShipWorldPosition.Y > 1023 ||
+			d.ShipWorldPosition.Layer < 0 || d.ShipWorldPosition.Layer > 1 {
+			return fmt.Errorf("rura_navigation.destinations[%d]: invalid destination", i)
+		}
+		ruraCTYs[d.CTYRaw] = true
+	}
 	pushRule := p.Events.NPCPushRule
 	if pushRule.CtrlMask <= 0 || pushRule.CtrlMask > 255 ||
 		pushRule.CtrlValue < 0 || pushRule.CtrlValue > 255 ||
@@ -1147,6 +1213,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.TreasureEvents == nil {
 		return errors.New("treasure_events must be present")
+	}
+	if p.Events.NPCItemRewardEvents == nil {
+		return errors.New("npc_item_reward_events must be present")
 	}
 	if p.Events.ItemUseEffects == nil {
 		return errors.New("item_use_effects must be present")
@@ -1331,6 +1400,25 @@ func (p *Pack) validateEvents() error {
 		}
 		p.treasureEvents[e.ID] = e
 	}
+	npcRewardIDs := map[string]bool{}
+	npcRewardSelectors := map[[4]int]string{}
+	for i := range p.Events.NPCItemRewardEvents {
+		e := &p.Events.NPCItemRewardEvents[i]
+		selector := [4]int{e.NPC.CTYRaw, e.NPC.Section, e.NPC.Tile.X, e.NPC.Tile.Y}
+		if e.ID == "" || e.Kind != "npc_item_reward" || npcRewardIDs[e.ID] ||
+			!validScriptedNPC(e.NPC) || e.PresentFlagRaw < 0 || e.PresentFlagRaw >= 512 ||
+			e.GrantedItemRaw < 0 || e.GrantedItemRaw > 255 {
+			return fmt.Errorf("npc_item_reward_events[%d]: invalid event", i)
+		}
+		if previous := npcRewardSelectors[selector]; previous != "" {
+			return fmt.Errorf("%s: NPC selector duplicates %s", e.ID, previous)
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		npcRewardIDs[e.ID] = true
+		npcRewardSelectors[selector] = e.ID
+	}
 	p.itemUseEffects = make(map[int]*ItemUseEffect, len(p.Events.ItemUseEffects))
 	itemUseIDs := make(map[string]bool, len(p.Events.ItemUseEffects))
 	for i := range p.Events.ItemUseEffects {
@@ -1389,6 +1477,13 @@ func (p *Pack) validateEvents() error {
 			}
 			if !foundClear {
 				return fmt.Errorf("%s: required story flag must be in clear_story_flags_raw", e.ID)
+			}
+		case "open_facing_locked_door":
+			if e.LocationKind != "town" || e.DoorKeyTier < 1 || e.DoorKeyTier > 3 ||
+				e.Consume || e.DayNightPhase != 0 || e.ResetDayNightSteps ||
+				e.StepCount != 0 || e.RequiredVehicle != "" || e.UseTile != nil ||
+				e.MapPatch != nil {
+				return fmt.Errorf("%s: invalid open_facing_locked_door configuration", e.ID)
 			}
 		default:
 			return fmt.Errorf("%s: unknown item use effect %q", e.ID, e.EffectID)
@@ -2088,6 +2183,14 @@ func (p *Pack) TreasureEvents() []TreasureEvent {
 func (p *Pack) TreasureEvent(id string) (*TreasureEvent, bool) {
 	e, ok := p.treasureEvents[id]
 	return e, ok
+}
+
+func (p *Pack) NPCItemRewardEvents() []NPCItemRewardEvent {
+	return append([]NPCItemRewardEvent(nil), p.Events.NPCItemRewardEvents...)
+}
+
+func (p *Pack) RuraDestinations() []RuraDestination {
+	return append([]RuraDestination(nil), p.Events.RuraNavigation.Destinations...)
 }
 
 func (p *Pack) ItemUseEffects() []ItemUseEffect {

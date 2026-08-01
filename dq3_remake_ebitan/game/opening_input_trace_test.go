@@ -1657,6 +1657,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			bought, g.heroGold, g.inventory)
 	}
 	press(InputState{Cancel: true})
+	// 乾渴壺後的 CTY40 沒有邊界出口，原版只能靠魯拉離開。
+	// 進耶進貝亞前先在 CTY38 以正式旅店交易補滿 MP，不注入魔力，
+	// 也不把實況影片中修改過的 999 MP 當成原版參數。
+	traceTalkFacility(t, g, facInn)
 
 	// CTY38 → 耶進貝亞：由正式地表／船路抵達 CTY39，在守衛前才從道具選單
 	// 使用隱身草。透明狀態使原始 handler29 不再把 slot0 守衛橫移到玩家同欄；
@@ -1664,7 +1668,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceTownSectionTo(t, g, 38, 0)
 	traceExitTownBoundary(t, g)
 	traceBoardAndSailShip(t, g)
-	traceAdventureTravelToCty(t, g, 39)
+	// 這是進入無步行出口的乾涸淺灘前最後一個旅店；後續陸海路程
+	// 遇故時優先用正式逃跑命令，保留魯拉所需 MP。
+	traceAdventureTravelToCty(t, g, 39, true)
 	traceWalkTo(t, g, 14, 38)
 	traceUseInventoryItem(t, g, 0x5d)
 	if g.hasItem(0x5d) || g.remoaru != 0x19 {
@@ -1740,7 +1746,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if !ok || drain.UseTile == nil || drain.MapPatch == nil {
 		t.Fatalf("乾渴壺 pack effect 缺失：%+v", drain)
 	}
-	traceShipToWorldTile(t, g, drain.UseTile.X, drain.UseTile.Y)
+	// 乾涸淺灘的祠堂沒有步行出口；玩家需預留 8 MP 以魯拉離開。
+	// 這段遠洋以正式戰鬥選單逃跑，不讓 trace 的自動攻擊策略耗盡魔力。
+	traceShipToWorldTile(t, g, drain.UseTile.X, drain.UseTile.Y, true)
 	traceUseInventoryItem(t, g, drain.ItemRawID)
 	if g.worldState&uint16(drain.SetWorldStateMask) == 0 || !g.hasItem(drain.ItemRawID) ||
 		g.over.tileIdx(0x92, 0x34) != 0x7c {
@@ -1781,6 +1789,78 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("最終鑰匙 save/load round-trip 錯：town=%v cty=%d item=%v flag47=%v state=%#x entrance=%#x",
 			g.inTown, g.curCty, g.hasItem(0x57), g.storyFlag(0x47), g.worldState,
 			g.over.tileIdx(0x92, 0x34))
+	}
+
+	// CTY40 checkpoint → 依原版影片由正式咒文選單施放魯拉回巴哈拉達；
+	// 魯拉 handler 同步把船移到 pack 的原版落點 (104,126)。在地表以黑暗之燈
+	// 確保黑夜後，正式走到船、登船與航行進 CTY20。原版牢門不是「調查」自動開啟；必須從 rec421 正式使用
+	// tier3 最終鑰匙。開門後與夜間 subtype2/handler35 NPC 對話取得綠寶珠。
+	traceRuraToCty(t, g, 15)
+	darkLampEffect, found := g.pack.ItemUseEffectByRawID(0x5f)
+	if !found {
+		t.Fatal("缺 dq3:item_use.dark_lamp")
+	}
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 20, true)
+	// 遠洋航行會正常推進日夜；靠岸後先由 section0 正式出村，
+	// 再在提頓入口外使用黑暗之燈並重新進入，不直接寫 day/night state。
+	traceTownSectionTo(t, g, 20, 0)
+	traceExitTownBoundary(t, g)
+	traceUseInventoryItem(t, g, darkLampEffect.ItemRawID)
+	if g.dnPhase != darkLampEffect.DayNightPhase {
+		t.Fatalf("返回提頓前未以正式道具進入黑夜：phase=%d want=%d",
+			g.dnPhase, darkLampEffect.DayNightPhase)
+	}
+	traceAdventureWalkToCty(t, g, 20, false)
+	if !g.inTown || g.curCty != 20 || g.dnPhase != 2 || !g.cur.night {
+		t.Fatalf("未以正式夜間航路進提頓：town=%v cty=%d phase=%d sceneNight=%v",
+			g.inTown, g.curCty, g.dnPhase, g.cur.night)
+	}
+	traceOpenReachableDoor(t, g, 17, 4)
+	var greenOrb *gamepack.NPCItemRewardEvent
+	for _, event := range g.pack.NPCItemRewardEvents() {
+		if event.ID == "dq3:event.teidon_green_orb" {
+			e := event
+			greenOrb = &e
+			break
+		}
+	}
+	if greenOrb == nil {
+		t.Fatal("缺 dq3:event.teidon_green_orb")
+	}
+	partyHasGreenOrb := func(game *Game) bool {
+		if game.hasItem(greenOrb.GrantedItemRaw) {
+			return true
+		}
+		for _, member := range game.companions {
+			if containsInt(member.Inventory, greenOrb.GrantedItemRaw) {
+				return true
+			}
+		}
+		return false
+	}
+	traceTalkNPC(t, g, greenOrb.NPC.Tile.X, greenOrb.NPC.Tile.Y)
+	if !partyHasGreenOrb(g) || g.storyFlag(greenOrb.PresentFlagRaw) {
+		t.Fatalf("提頓夜間綠寶珠 transaction 錯：item=%v flag=%v",
+			partyHasGreenOrb(g), g.storyFlag(greenOrb.PresentFlagRaw))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存提頓綠寶珠 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建提頓綠寶珠讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != 20 || g.dnPhase != 2 || !partyHasGreenOrb(g) ||
+		g.storyFlag(greenOrb.PresentFlagRaw) {
+		t.Fatalf("提頓綠寶珠 save/load round-trip 錯：town=%v cty=%d phase=%d item=%v flag=%v",
+			g.inTown, g.curCty, g.dnPhase, partyHasGreenOrb(g),
+			g.storyFlag(greenOrb.PresentFlagRaw))
 	}
 }
 
@@ -2150,7 +2230,18 @@ func traceRuraToCty(t *testing.T, g *Game, wantCty int) {
 	}
 	press(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if !g.fieldSpell.dest {
-		t.Fatal("魯拉未進入已造訪城鎮清單")
+		caster, mp, cost := -1, -1, -1
+		if spellIndex >= 0 && spellIndex < len(g.fieldSpell.choices) {
+			choice := g.fieldSpell.choices[spellIndex]
+			caster, mp, cost = choice.caster, g.fieldCasterMP(choice.caster), choice.mp
+		}
+		mapFlags := byte(0)
+		if g.cur != nil {
+			mapFlags = g.cur.mapFlags
+		}
+		t.Fatalf("魯拉未進入已造訪城鎮清單：town=%v cty=%d sec=%d mapFlags=%#x caster=%d mp=%d heroMaxMP=%d heroStat=%v cost=%d active=%v visits=%+v",
+			g.inTown, g.curCty, sceneSection(g.cur), mapFlags, caster, mp, g.heroMaxMP(),
+			g.heroStat, cost, g.fieldSpell.active, g.visitedTowns)
 	}
 	destIndex := -1
 	for i, visit := range g.visitedTowns {
@@ -2277,6 +2368,18 @@ func traceOpenReachableDoor(t *testing.T, g *Game, wantDoor ...int) {
 				if need := g.cur.doorTier(x, y); need == 0 || g.keyTier() < need {
 					continue
 				}
+				need := g.cur.doorTier(x, y)
+				keyCode, keyTier := -1, 4
+				for _, effect := range g.pack.ItemUseEffects() {
+					if effect.EffectID == "open_facing_locked_door" &&
+						effect.DoorKeyTier >= need && effect.DoorKeyTier < keyTier &&
+						g.hasItem(effect.ItemRawID) {
+						keyCode, keyTier = effect.ItemRawID, effect.DoorKeyTier
+					}
+				}
+				if keyCode < 0 {
+					continue
+				}
 				for dir := 0; dir < 4; dir++ {
 					dx, dy := dirDelta(dir)
 					sx, sy := x-dx, y-dy
@@ -2295,29 +2398,14 @@ func traceOpenReachableDoor(t *testing.T, g *Game, wantDoor ...int) {
 					if err := g.step(InputState{DirHeld: dir, DirEdge: -1}); err != nil {
 						t.Fatalf("面向門: %v", err)
 					}
-					press := func(in InputState) {
-						t.Helper()
-						if in.DirHeld == 0 {
-							in.DirHeld = -1
-						}
-						if in.DirEdge == 0 && in.Confirm {
-							in.DirEdge = -1
-						}
-						if err := g.step(in); err != nil {
-							t.Fatalf("開門命令輸入: %v", err)
-						}
-					}
-					press(InputState{Confirm: true}) // 開命令
-					press(InputState{DirEdge: 3})    // 對話→咒文
-					press(InputState{DirEdge: 0})    // 咒文→道具
-					press(InputState{DirEdge: 0})    // 道具→調查
-					press(InputState{Confirm: true}) // 調查面向門
-					if g.cur.doorTier(x, y) != 0 || !g.hasItem(0x55) {
-						t.Fatalf("正式調查未開門或錯誤消耗鑰匙：doorTier=%d key=%v",
-							g.cur.doorTier(x, y), g.hasItem(0x55))
+					traceUseInventoryItem(t, g, keyCode)
+					if g.cur.doorTier(x, y) != 0 || !g.hasItem(keyCode) {
+						t.Fatalf("正式使用鑰匙未開門或錯誤消耗：doorTier=%d key=%#x held=%v",
+							g.cur.doorTier(x, y), keyCode, g.hasItem(keyCode))
 					}
 					opened++
-					t.Logf("正式調查開門 CTY%d sec%d door(%d,%d)", g.curCty, sceneSection(g.cur), x, y)
+					t.Logf("正式道具使用開門 CTY%d sec%d door(%d,%d) key=%#x",
+						g.curCty, sceneSection(g.cur), x, y, keyCode)
 					found = true
 					break findDoor
 				}
@@ -2427,7 +2515,8 @@ func traceAdventureTravelToCty(t *testing.T, g *Game, wantCty int, fleeAll ...bo
 		if g.battle.active {
 			// 中後期遠洋可能抽到遠超目前隊伍承受力的高階區域怪；正常玩家會選逃跑，
 			// 不能讓 campaign trace 依賴剛好沒抽到怪87等幸運 RNG。
-			traceResolveBattle(t, g, len(fleeAll) > 0 && fleeAll[0] || g.battle.monID >= 80)
+			preserveMP := len(fleeAll) > 0 && fleeAll[0]
+			traceResolveBattle(t, g, preserveMP || g.battle.monID >= 80, preserveMP)
 			continue
 		}
 		if g.inTown {
@@ -2707,14 +2796,15 @@ func traceBoardAndSailShip(t *testing.T, g *Game) {
 
 // traceShipToWorldTile 只在原始水域上規劃船路，並把方向逐步送入 production
 // Game.step。它避開所有 CTY 入口，讓位置式道具一定由玩家在指定格主動使用。
-func traceShipToWorldTile(t *testing.T, g *Game, tx, ty int) {
+func traceShipToWorldTile(t *testing.T, g *Game, tx, ty int, fleeStrong ...bool) {
 	t.Helper()
 	if g.inTown || !g.shipAboard {
 		t.Fatalf("航向位置式道具格起點錯：town=%v aboard=%v", g.inTown, g.shipAboard)
 	}
 	for steps := 0; steps < 12000 && (g.px != tx || g.py != ty); steps++ {
 		if g.battle.active {
-			traceResolveBattle(t, g, g.battle.monID >= 80)
+			preserveMP := len(fleeStrong) > 0 && fleeStrong[0]
+			traceResolveBattle(t, g, preserveMP || g.battle.monID >= 80, preserveMP)
 			continue
 		}
 		if g.cd > 0 {
@@ -2820,6 +2910,7 @@ func traceWorldPath(g *Game, tx, ty, wantCty int) []int {
 func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 	t.Helper()
 	shouldFleeStrong := len(fleeStrong) == 0 || fleeStrong[0]
+	preserveMP := len(fleeStrong) > 1 && fleeStrong[1]
 	healTarget := -1
 	wantedSpell := -1
 	blindAttempted := false
@@ -2884,6 +2975,10 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 				wantCommand = bcItem
 			case needFlee:
 				wantCommand = bcFlee
+			case preserveMP:
+				// 逃跑指令在全隊命令輸入完後才結算；其他成員只選普攻，
+				// 否則 trace 會在等待逃跑時不必要地耗尽 MP。
+				wantCommand = bcWar
 			case g.bossSurrenderStage == bossSurrenderBattle &&
 				!blindAttempted && hasAffordableSpell(g.battle.commandActor, 158):
 				wantedSpell, wantCommand = 158, bcSpell

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.13",
+  "schema_version": "0.1.14",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -720,6 +720,22 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 70},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "70", "consumer": "handler45 post-battle palace scene", "doc": "docs/95-jipang-orochi-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.teidon.green_orb.success",
+      "value": "*「我一直在等待\n這個時候的來臨。\n---\n*「把這個寶珠拿去吧!",
+      "glyph_codes": [59,60,493,401,946,411,419,1154,65534,12,12,398,546,782,796,149,461,563,56,65532,59,60,530,398,546,297,321,558,448,499,57,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 38},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3.EXE + D3TXT04.TXT", "address_space": "record", "address": "38; handler logical 0x593a", "consumer": "teidon npc_item_reward success dialogue before the party inventory grant", "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.teidon.green_orb.after",
+      "value": "*「把這個寶珠放到\n遙遠南方的雷亞姆蘭特\n的祭壇吧。",
+      "glyph_codes": [59,60,530,398,546,297,321,634,453,65534,12,12,1060,1061,379,547,149,157,166,374,1218,392,65534,12,12,149,1219,1220,499,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 39},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3.EXE + D3TXT04.TXT", "address_space": "record", "address": "39; handler logical 0x593a", "consumer": "teidon npc_item_reward repeat dialogue after present flag0x3e is clear", "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"}
     }
   ]
 }

@@ -477,6 +477,21 @@ func TestRuraSpecialDestination47Coordinate(t *testing.T) {
 	}
 }
 
+func TestRuraRelocatesOwnedShipFromPack(t *testing.T) {
+	g := fieldSpellGame(t, 7)
+	g.shipOwned = true
+	g.shipX, g.shipY = 1, 1
+	g.visitedTowns = []townVisit{{Cty: 15}}
+	g.openFieldSpellMenu()
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.px != ctyLoc[15][0]-1 || g.py != ctyLoc[15][1] ||
+		g.shipX != 104 || g.shipY != 126 {
+		t.Fatalf("巴哈拉達魯拉應同步重定位船：player=(%d,%d) ship=(%d,%d)",
+			g.px, g.py, g.shipX, g.shipY)
+	}
+}
+
 func TestVisitedTownsKeepOriginalRuraOrder(t *testing.T) {
 	g := fieldSpellGame(t, 7)
 	for _, cty := range []int{47, 0, 16, 2} {

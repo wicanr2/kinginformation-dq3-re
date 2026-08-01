@@ -37,7 +37,8 @@ Go 1.24 + Ebitengine 的跨平台實作，是目前主要開發的產品線。�
 這是能力概覽，不作逐項完成度聲明；各功能的玩家入口、設定值與對拍狀態請查現行計畫及相關
 RE 文件。
 
-目前可見成果：
+目前可見成果（以下為現行 Ebitengine runtime 證據；未另標示者是 V2，不代表已完成原版
+同狀態逐像素 V3）：
 
 ![Ebiten：原版新遊戲開場](dq3_remake_ebitan/docs/opening_home_rec82.png)
 
@@ -78,6 +79,12 @@ RE 文件。
 ![Ebiten：船上使用乾渴壺後顯現最終鑰匙祠堂](docs/img/thirsty_pitcher_revealed.png)
 
 ![Ebiten：祠堂內正式調查取得最終鑰匙](docs/img/final_key_obtained.png)
+
+![Ebiten：提頓夜間 tier3 牢門，使用最終鑰匙前](docs/img/teidon_final_key_door_closed.png)
+
+![Ebiten：由正式道具選單使用最終鑰匙後，牢門開啟且鑰匙保留](docs/img/teidon_final_key_door_open.png)
+
+![Ebiten：提頓夜間 handler35 綠色寶珠對話](docs/img/teidon_green_orb_dialogue.png)
 
 ### `dq3_remake/`：C99 + SDL2 參考實作
 

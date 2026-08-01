@@ -3,6 +3,8 @@ package game
 import (
 	"os"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 func phoenixEventGame(t *testing.T) *Game {
@@ -76,22 +78,88 @@ func TestTedonGreenOrbOriginalNightNPC(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.showTitle, g.openingIdx = false, -1
+	var reward *gamepack.NPCItemRewardEvent
+	for _, event := range g.pack.NPCItemRewardEvents() {
+		if event.ID == "dq3:event.teidon_green_orb" {
+			e := event
+			reward = &e
+			break
+		}
+	}
+	if reward == nil {
+		t.Fatal("缺 dq3:event.teidon_green_orb")
+	}
+	selector := reward.NPC
 	g.dnPhase = 2
-	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, ctyTedon, mapBlkNum[ctyTedon], 0, 2, g.storyFlag)
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, selector.CTYRaw,
+		mapBlkNum[selector.CTYRaw], selector.Section, 2, g.storyFlag)
 	if err != nil {
 		t.Fatal(err)
 	}
-	g.cur, g.town, g.inTown, g.curCty, g.dlg.tx = sc, sc, true, ctyTedon, sc.dlgText
-	idx := sc.npcAt(tedonOrbNPCX, tedonOrbNPCY)
-	if idx < 0 || (sc.npcs[idx].ctrl>>3)&7 != 2 || sc.npcs[idx].b4 != tedonOrbNPCHandler {
+	g.cur, g.town, g.inTown, g.curCty, g.dlg.tx = sc, sc, true, selector.CTYRaw, sc.dlgText
+	idx := sc.npcAt(selector.Tile.X, selector.Tile.Y)
+	if idx < 0 || (sc.npcs[idx].ctrl>>3)&7 != 2 || sc.npcs[idx].b4 != selector.HandlerRaw {
 		t.Fatalf("提頓夜間綠寶珠 NPC 錯: idx=%d", idx)
 	}
-	g.px, g.py, g.facing = tedonOrbNPCX, tedonOrbNPCY+1, 1
+	g.px, g.py, g.facing = selector.Tile.X, selector.Tile.Y+1, 1
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
-	if !g.hasItem(itemGreenOrb) || g.storyFlag(flagTedonOrbReady) || !g.dlg.open {
+	if !g.hasItem(reward.GrantedItemRaw) || g.storyFlag(reward.PresentFlagRaw) || !g.dlg.open {
 		t.Fatalf("production 對話未依 handler35 給綠寶珠: inv=%v flag3e=%v dlg=%v",
-			g.inventory, g.storyFlag(flagTedonOrbReady), g.dlg.open)
+			g.inventory, g.storyFlag(reward.PresentFlagRaw), g.dlg.open)
+	}
+}
+
+func TestTedonGreenOrbFullPartyInventoryDoesNotConsumeFlag(t *testing.T) {
+	g, err := NewGame(os.DirFS(spineAssetsDir(t)), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var reward *gamepack.NPCItemRewardEvent
+	for _, event := range g.pack.NPCItemRewardEvents() {
+		if event.ID == "dq3:event.teidon_green_orb" {
+			e := event
+			reward = &e
+		}
+	}
+	if reward == nil {
+		t.Fatal("缺 dq3:event.teidon_green_orb")
+	}
+	s := reward.NPC
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, s.CTYRaw,
+		mapBlkNum[s.CTYRaw], s.Section, 2, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.showTitle, g.openingIdx = false, -1
+	g.cur, g.town, g.inTown, g.curCty, g.dlg.tx = sc, sc, true, s.CTYRaw, sc.dlgText
+	g.inventory = []int{1, 2, 3, 4, 5, 6, 7, 8}
+	g.companions = nil
+	g.px, g.py, g.facing = s.Tile.X, s.Tile.Y+1, 1
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.hasItem(reward.GrantedItemRaw) || !g.storyFlag(reward.PresentFlagRaw) {
+		t.Fatalf("物品欄滿不得給珠或清 present flag：inv=%v flag=%v",
+			g.inventory, g.storyFlag(reward.PresentFlagRaw))
+	}
+}
+
+func TestGrantPartyItemCountsEquipmentSentinelAndRawZero(t *testing.T) {
+	g, err := NewGame(os.DirFS(spineAssetsDir(t)), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.companions = nil
+	g.equip = [4]int{-1, -1, -1, -1}
+	g.inventory = []int{1, 2, 3, 4, 5, 6, 7}
+	if !g.grantPartyItem(0x66) || !g.hasItem(0x66) {
+		t.Fatalf("空裝備哨兵 -1 不得佔八格：equip=%v inv=%v", g.equip, g.inventory)
+	}
+	g.inventory = []int{1, 2, 3, 4, 5, 6, 7}
+	g.equip = [4]int{0, -1, -1, -1}
+	if g.grantPartyItem(0x66) {
+		t.Fatalf("raw item 0 是合法已裝備道具，總數八格時應拒絕：equip=%v inv=%v",
+			g.equip, g.inventory)
 	}
 }
 

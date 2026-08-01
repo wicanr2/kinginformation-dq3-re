@@ -1,6 +1,6 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與八種事件 primitive；
+> 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與逐批擴充的有限事件 primitive；
 > 其餘資料表依垂直切片逐批遷移。
 >
 > 適用範圍：Go／Ebitengine 共用核心，以及未來的 `dq1_cht`、`dq2_cht`、`dq3_cht`
@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.13"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.14"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.13",
+  "schema_version": "0.1.14",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -707,6 +707,38 @@ IDA／CTY／D3TXT 證據與正式 trace 見 `events.json`、[`docs/89`](89-bahar
 | `item_actions.text_ids` | object | 是 | `use/give/drop` 三個穩定 text ID；DQ3 來源為 D3TXT00 rec421。 |
 | `item_actions.evidence` | object | 是 | 選單 consumer 與個人物品 writer／reader 的 D3 證據。 |
 
+`rura_navigation` 保存傳送狀態機使用的版本專屬目的地與載具落點；引擎不得硬寫 CTY
+順序、文字 record、特殊 arrival offset 或船座標：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `rura_navigation.destinations` | object[] | 是 | 可為空陣列；順序就是原版目的地 index，不得依 CTY 排序重建。 |
+| `[].cty_raw` | int | 是 | 原始目的 CTY；同一 pack 不得重複。 |
+| `[].name_record_raw` | int | 是 | 目的地選單的原始文字 record；實際字串仍由文字資源提供。 |
+| `[].arrival_offset` | `{x,y}` | 是 | 套在 CTY world location 的玩家落點差值；保留 CTY47 等原版特例。 |
+| `[].ship_world_position` | `{x,y,layer}` | 是 | 持有船時由同一目的 index 寫入的正規化船落點；原始第二層 Y 值須由 parity test 驗證轉層，不能由 renderer 猜。 |
+| `rura_navigation.evidence` | object | 是 | 目的 index、CTY table、玩家 writer、船 table／writer 與玩家可登船結果的 D3 證據。 |
+
+現行 DQ3 canonical table 來自 EXE file `0x16c00`（DGROUP `0x0ac0`）與 file
+`0x16c14`（DGROUP `0x0ad4`）；handler logical `0x4c2b..0x4cf8`。完整證據與
+production trace 見 [`docs/99`](99-teidon-final-key-green-orb-production-trace.md)。
+
+`npc_item_reward_events` 描述「指定 NPC 依 present flag 顯示成功／事後文字，並把一件
+道具交給第一個有空格的隊員」的有限 primitive：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `npc_item_reward_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 ID；kind 固定 `npc_item_reward`。 |
+| `[].npc` | selector | 是 | `{cty_raw,section,tile,handler_raw}` 的正式 subtype2 NPC。 |
+| `[].present_flag_raw` | int | 是 | set 時可領取；成功存入背包後才清除。 |
+| `[].granted_item_raw` | int | 是 | 原版 item ID；不等同跨遊戲穩定 ID。 |
+| `[].dialogue_text_ids` | object | 是 | `grant/after` 兩個穩定 text ID；實際字串不得進 Go。 |
+| `[].evidence` | object | 是 | NPC selector、flag gate、item writer、全隊背包 consumer 與玩家可見結果的 D3 證據。 |
+
+全隊背包皆滿時必須不給物、不清 flag；不得把成功文字當成 transaction 成功。DQ3
+提頓綠色寶珠範例與完整證據見 `events.json`、`texts.json` 及 [`docs/99`](99-teidon-final-key-green-orb-production-trace.md)。
+
 第八個已實作 primitive 是 `reclass_events`，供「NPC 入口→選隊員→來源／等級 gate→
 選目標職業→兩次確認→Lv1 能力與物品交易」使用，不包含達瑪、領悟之書或 DQ3 固有 ID。
 
@@ -773,7 +805,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.13",
+  "schema_version": "0.1.14",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

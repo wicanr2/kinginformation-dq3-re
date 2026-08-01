@@ -45,9 +45,9 @@
 
 ### 已完成 / 待精校
 - ✅ **晝夜存檔持久化**:save v6 起 `dq3_save_pos.daynight` 持久;讀檔還原相位(main.c 797/1128)。
-- ⚠ **夜 gated 事件**:提頓《黑暗之燈》取得與地表使用已由 Go/Ebitengine 正式 trace
-  閉合；夜間牢門／綠寶珠仍只有舊 C-remake 接線與攻略線索，尚待下一輪從 CTY19／日邦格
-  主線回到提頓時，以原版 handler 和正式輸入重新驗證，不能沿用 `game_tester` 當 E3。
+- ✅ **夜 gated 事件**：提頓《黑暗之燈》、最終鑰匙牢門與 handler35 綠色寶珠均已由
+  Go/Ebitengine boot production trace 閉合；正式航行靠岸後在入口外使用黑暗之燈，重新載入
+  CTY20 夜表，再以 rec421 使用最終鑰匙並交談取得寶珠。見 `docs/93`、`docs/99`。
 - 步數已設使用者指定(白天→黑夜 120 步);原版確切步數計數器多輪 RE 未定位(多層 handler 鏈)。
 - 各相位 palette 目前仍是近似值；本機已有 DOSBox oracle，後續可在同地點／同相位逐格比色，
   不再視為環境不可驗。

@@ -4,12 +4,6 @@ package game
 // 舊 C remake 將神殿誤標 CTY82 並加了召喚快捷鍵；原版是 CTY70 復活後停在地表，
 // 玩家走上 sprite 搭乘、飛行中按一般確認鍵降落。
 const (
-	ctyTedon           = 20
-	tedonOrbNPCX       = 16
-	tedonOrbNPCY       = 2
-	tedonOrbNPCHandler = 35
-	flagTedonOrbReady  = 0x3e
-
 	ctyPhoenixShrine       = 70
 	phoenixGuardianHandler = 69
 	flagPhoenixUnrevived   = 0x8e
@@ -27,19 +21,6 @@ const (
 
 var phoenixAltarTop = [6][2]int{
 	{8, 11}, {4, 9}, {4, 5}, {8, 3}, {12, 5}, {12, 9},
-}
-
-// talkTedonOrb 對齊 EXE file 0x6caa：夜間亡魂 handler35，
-// flag3e 尚設時 rec38 並交付綠寶珠，之後清旗標；否則 rec39。
-func (g *Game) talkTedonOrb() {
-	if !g.storyFlag(flagTedonOrbReady) {
-		g.dlg.Open(39)
-		return
-	}
-	g.inventory = append(g.inventory, itemGreenOrb)
-	g.noticeCode, g.noticeTimer = itemGreenOrb, 120
-	g.setStoryFlag(flagTedonOrbReady, false)
-	g.dlg.Open(38)
 }
 
 // tryPhoenixAltar 對齊 CTY70 type0 event 與 EXE file 0x7425..0x74a8。

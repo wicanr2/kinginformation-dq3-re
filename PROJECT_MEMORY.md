@@ -75,8 +75,11 @@ handler29 不再把守衛橫移到玩家同欄，從右欄進入 CTY76 並通過
 並開 passage。再由命令窗調查 event0 取得乾渴壺 `0x5e` 並通過 save/load；詳見
 `docs/97`。同一條 trace 已再由正式船路抵達 `(146,53)`，使用乾渴壺套用原版
 world-state bit `0x08`／`5×4` 地表 patch，進 CTY40 調查取得最終鑰匙並完成 save/load；
-詳見 `docs/98`。**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從 CTY40
-checkpoint 追提頓夜間牢門與綠寶珠。地表水面顏色及四輪 palette transition 仍未達 V3，
+詳見 `docs/98`。同一條 boot trace 已再由正式魯拉回 CTY15；原版 handler 同步把船移到
+`(104,126)`，玩家登船航行至提頓入口外使用黑暗之燈，再從 rec421 明確使用最終鑰匙開
+tier3 牢門。夜間 handler35 把綠色寶珠交給第一個有空格的隊員並通過 save/load；詳見
+`docs/99`。**尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從
+提頓綠色寶珠合法 checkpoint 繼續。地表水面顏色及四輪 palette transition 仍未達 V3，
 不得因流程閉合而略過。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
@@ -117,6 +120,10 @@ schema `0.1.12` 新增全域 `npc_push_rule` 與 `push_puzzle_events`，詳見 `
 schema `0.1.13` 新增 `reveal_world_map_patch`；乾渴壺的船／座標／旗標 gate、world-state、
 完整 `5×4` tile patch 與原始動畫參數均由 JSON 提供，CTY40 最終鑰匙也遷入
 `treasure_events`；詳見 `docs/98`。
+schema `0.1.14` 新增 `rura_navigation`、鑰匙 `door_key_tier` 與
+`npc_item_reward_events`；魯拉 CTY／文字 record／arrival offset／船落點、三把鑰匙 tier、
+提頓 NPC selector／綠色寶珠 flag／文字均由 JSON 提供，並有 EXE／CTY／D3TXT parity
+與 boot production trace；詳見 `docs/99`。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

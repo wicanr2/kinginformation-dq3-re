@@ -614,11 +614,18 @@ trace 已由 CTY76 checkpoint 返回地表、登船航行、用正式道具窗�
 調查取得最終鑰匙 `0x57`，並驗證地圖與道具 save/load。三張 runtime 圖與證據見 `docs/98`；
 原版 palette transition 與藍色水面仍是 V3 GAP。
 
+schema `0.1.14` 已接續閉合最終鑰匙的原版輸入 owner、魯拉載具副作用與提頓綠色寶珠。
+三把鑰匙不再由「調查」掃描全隊最高 tier；玩家必須由 rec421 道具選單明確使用，成功
+開門且不消耗。IDA Pro 9.4 的 Rura handler `(logical) 0x4c2b..0x4cf8` 證實持有船時會
+以 DGROUP `0x0ad4` 的平行表重定位船；CTY15 的船落點為 `(104,126)`。同一條 boot trace
+已由 CTY40 正式魯拉、登船航行、在提頓入口外使用黑暗之燈、以最終鑰匙開 tier3 牢門，
+再由夜間 handler35 把綠色寶珠交給第一個有空格的隊員並完成 save/load。見 `docs/99`。
+
 下一輪依下列順序接手：
 
-1. **主線最高優先**：boot 起的同一條 trace 已由 CTY76 checkpoint 正式使用乾渴壺、
-   顯出 CTY40 並取得最終鑰匙 `0x57`（`docs/98`）。下一個 blocker 是提頓夜間以最終鑰匙
-   開牢門並取得綠寶珠；從 CTY40 checkpoint 繼續正常玩家路線，不得跳到孤立後段 handler。
+1. **主線最高優先**：boot 起的同一條 trace 已正式取得提頓綠色寶珠並保存合法 checkpoint
+   （`docs/99`）。下一輪從該 checkpoint 依原版順序繼續重播，記錄第一個實際 blocker；
+   不得因 P3 後段已有孤立 component tests，就跳過兩節點之間的玩家路徑、資源與存檔 gate。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。
