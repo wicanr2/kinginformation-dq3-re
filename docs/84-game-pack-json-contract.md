@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.11"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.12"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.11",
+  "schema_version": "0.1.12",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -552,6 +552,32 @@ NPC 移動或任意碰撞規則。DQ3 canonical 範例見 `events.json`、
 引擎不把暫時隱形改寫成全域 NPC 穿透：原版玩家移動 consumer 仍會對 NPC stamp 回滾。
 DQ3 canonical 範例與正式 trace 見 `events.json` 與 [`docs/96`](96-invisibility-grass-eginbear-production-trace.md)。
 
+`npc_push_rule` 描述原版城鎮碰撞 consumer 對所有 NPC 共用的推動 gate；
+`push_puzzle_events` 只描述「玩家踏入有限 trigger 後，原始 handler 以固定 slot／軸值判斷
+完成並清 story flag」的有限 primitive。兩者均為 typed 欄位，不接受任意 JSON 表達式：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `npc_push_rule` | object | 是 | 全 pack 共用的 NPC 推動規則；不得省略。 |
+| `.ctrl_mask`／`.ctrl_value` | int／int | 是 | 對 runtime NPC control byte 套用的 bit gate；value 不得含 mask 外位元。 |
+| `.blocked_by_effect_id` | enum | 是 | 現行只接受 `temporary_invisibility`；對齊原版碰撞 consumer 的提前 return。 |
+| `.evidence` | object | 是 | 碰撞 caller、control-bit consumer、座標 writer 與副作用的 D3 證據。 |
+| `push_puzzle_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 namespaced ID；kind 固定為 `push_puzzle`。 |
+| `[].cty_raw`／`[].section` | int | 是 | 原始場景 selector。 |
+| `[].trigger_tiles` | object[] | 是 | 至少一筆 `{tile,tile_subid,handler_raw}`；座標不得重複。 |
+| `[].npcs` | object[] | 是 | 至少一筆；每筆保存 `slot`、`initial_tile`、`ctrl_raw`。slot 在 NPC 移動後仍是穩定身分，座標與完整 control byte 只作 parity anchor。 |
+| `[].completion_axis` | enum | 是 | 現行只接受 `y`；必須忠實描述原始 handler 的比較方式，不可改成較「合理」的目標配對。 |
+| `[].completion_value` | int | 是 | 所有宣告 slot 必須達到的原始軸值。 |
+| `[].clear_story_flag_raw` | int | 是 | 完成時清除的原始 story flag；範圍 1–511。 |
+| `[].evidence` | object | 是 | NPC runtime record、碰撞 writer、handler consumer、CTY trigger 與正式輸入結果的 D3 證據。 |
+
+引擎可推任何符合全域 `npc_push_rule` 的 runtime NPC；前方出界、地形阻擋、另一 NPC 占格、
+ctrl mask 不符或具名暫態效果仍生效時都必須失敗即關閉。`push_puzzle_events` 宣告的 slot
+只供完成 handler 判定，不限制共用碰撞規則。完成 handler 清 flag 後，沿用通用 event-tile rebuild 更新
+passage；一次性寶物另由 `treasure_events` 宣告。DQ3 canonical 範例與正式 trace 見
+`events.json` 與 [`docs/97`](97-eginbear-push-puzzle-production-trace.md)。
+
 取得成功必須在同一幀清 present flag、把 low tile 加一並清 event subid；重新載入場景時由
 同一 present flag 重建已開啟外觀。加爾那之塔《領悟之書》canonical 範例與完整正式 trace
 見 `events.json` 與 [`docs/91`](91-garuna-satori-book-production-trace.md)。
@@ -738,7 +764,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.11",
+  "schema_version": "0.1.12",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

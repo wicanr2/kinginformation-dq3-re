@@ -39,8 +39,9 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
 1. ~~雷神之杖未接~~ → **修正:雷神之杖 0x0a 已在 treasure 表(CTY38)**。原誤判因搜中文字串「雷神」
    (不在 .c)0 命中 + 用錯碼;data-driven 已放置,**非缺口**。
 2. ~~勇者之盾 0x46 不在表~~ → **修正:勇者之盾真碼 0x40,已在 treasure 表(CTY87)**。**非缺口**。
-3. 乾渴壺 `0x5e` 的 raw treasure 線索位於 CTY76，但「資料表有寶物」不等於 Go production
-   可由正常推石流程取得。現行 Go trace 只閉合至 CTY76 入口；B-7 仍是下一個 blocker。
+3. 乾渴壺 `0x5e` 已由 CTY76 正常推石流程取得；現行 Go trace 以 119 步正式方向輸入
+   完成 handler30、passage、event0 調查與 save/load，見 `docs/97`。下一個 blocker 是
+   海中淺灘使用乾渴壺與最終鑰匙取得。
 4. ~~王者之劍商店解鎖未接~~ → **修正:已接**(main.c:1247 瑪依拉 CTY81 2F 道具店主)。實作為 transform NPC:
    歐里空金屬 0x6d + 淨 12500G(賣22500−買35000)→ 王者之劍 0x1c。實機驗證通過、game_tester 已測。**非缺口**。
 
@@ -71,13 +72,13 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
      remake 原本載入全部 NPC(忽略 vis_flag)→ 城鎮永遠建好態。修:`dq3_scene_hide_unbuilt(cur,0x05,16,2)` per-frame——
      未建城(flag 0x216 未設)隱藏 vis_flag 0x05 NPC(留老人 (16,2)),呈空草原;帶商人建城後重入 → 商店/居民全顯
      (可買更多東西=成就感,使用者要求)。圖驗證:建城前空草原、建城後居民現身。game_tester 93/93。
-7. **耶進貝亞倉庫番推三石 sokoban** — ✅ **已實作(2026-06-27,懷舊還原)**(杜 Ch26):使用者指正「這是懷舊還原、致敬解謎設計」。
-   - **RE 布局**:3 顆大石 = NPC(b2==40,ctrl=0xc0 靜止)@ CTY76 (3,10)/(5,10)/(7,10);藍白地面目標 = tile 91 @ (4,5)/(5,5)/(6,5);
-     瓶頸 (5,8) 為唯一上下通道(真 sokoban)。乾渴壺 0x5e examine tile 在密道後。
-   - **接線**:`dq3_npc_move`(unstamp+移動+stamp)+ main.c 推塊(面向石頭→推下一格,可走+無 NPC)+ 玩家跟進;
-     三石歸目標 → `g_sokoban_solved` 開密道;**乾渴壺 examine gate 在 g_sokoban_solved**(未解→「密道未開」)。
-   - **重置**:離 CTY76 → g_sokoban_solved 清 + 石頭由 scene reload 回原位(使用者要求重入重置);寶箱開過→空(treasure flag 持久)。
-   - 驗證:推塊 dump 確認石頭移動、閘門前擋/後取(`sokoban` debug token)、game_tester 93/93。布局是忠實原版可解 puzzle。
+7. **耶進貝亞倉庫番推三石** — ✅ **Go/Ebitengine 正式流程已閉合（2026-08-02）**。
+   - IDA 證明原版 pushability 是 runtime NPC `ctrl bit0x40`，不是舊 C prototype 的
+     `B2==40`；隱形 `0xc000` 尚在時不得推動。
+   - handler30 固定檢查 NPC slot0–2 的 Y 是否全為 5；成功 clear story flag `0x3b`
+     並刷新 passage。沒有 remake 自造的 `g_sokoban_solved` 或 debug token。
+   - CTY76 event0 `{item=0x5e,flag=0x3a}` 已遷入 game-pack `treasure_events`；event1／
+     flag `0x3b` 是 passage 狀態，不是第二個可取寶物。正式 trace、raw bytes 與圖見 `docs/97`。
 8. **勇氣神殿「單獨戰鬥」gate** — ✅ **已接(2026-06-27)**(杜 Ch29-30):
    - 神父 CTY47 (25,16) byte4=37 挑戰 → 接受 set **flag 0x13**(原版 test_flag(0x13))→ 此 flag 同時驅動
      既有 owportal({82,165}→flag0x13→CTY75)把朗錫爾轉「神殿開放態」CTY75 → 通勇氣洞窟 CTY23(藍寶珠 0x67 已在 treasure 表)。
@@ -138,6 +139,6 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
 table 或可直接呼叫的 handler 都不能代替正常玩家入口。唯一 current plan 是
 [`docs/74`](../74-ebiten-remake-completion-plan.md)。
 
-目前 boot 起的 Go production trace 已閉合隱形草與 CTY39 守衛並保存至 CTY76；B-7
-倉庫番推石、乾渴壺的正常取得與後續可繼續性尚未閉合，屬主線 blocker，不是「低價值」或
-「不阻塞」。其餘舊項目也必須以正式 `InputState`、save/load 與原版證據逐項重新驗收。
+目前 boot 起的 Go production trace 已閉合隱形草、CTY39 守衛、CTY76 推石與乾渴壺
+取得並通過 save/load；下一個主線 blocker 是海中淺灘使用乾渴壺及取得最終鑰匙。其餘
+舊項目也必須以正式 `InputState`、save/load 與原版證據逐項重新驗收。

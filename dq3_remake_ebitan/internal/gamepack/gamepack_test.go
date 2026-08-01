@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
 func TestDQ3JipangOrochiMatchesOriginalEXEAndText(t *testing.T) {
@@ -179,6 +181,90 @@ func TestDQ3InvisibilityGrassMatchesOriginalEXE(t *testing.T) {
 		0x52, 0x19, 0x90, 0x81, 0x0e, 0x46, 0x4f, 0x00, 0xc0, 0xc3}
 	if got := exe[0x536f : 0x536f+len(want)]; !reflect.DeepEqual(got, want) {
 		t.Fatalf("item 0x5d handler bytes=%x，want %x", got, want)
+	}
+}
+
+func TestDQ3EginbearPushPuzzleMatchesOriginalEXEAndCTY(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	cty, err := os.ReadFile(filepath.Join(dir, "CTY76.DAT"))
+	if err != nil {
+		t.Skipf("original CTY76.DAT unavailable: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	events := p.PushPuzzleEvents()
+	if len(events) != 1 {
+		t.Fatalf("push_puzzle_events=%d，want 1", len(events))
+	}
+	e := events[0]
+	pushRule := p.NPCPushRule()
+	if e.CTYRaw != 76 || e.Section != 0 || e.CompletionAxis != "y" ||
+		e.CompletionValue != 5 || e.ClearStoryFlagRaw != 0x3b ||
+		len(e.NPCs) != 3 || len(e.TriggerTiles) != 8 ||
+		pushRule.CtrlMask != 0x40 || pushRule.CtrlValue != 0x40 ||
+		pushRule.BlockedByEffectID != "temporary_invisibility" {
+		t.Fatalf("CTY76 push puzzle JSON 不符：%+v", e)
+	}
+	treasure, ok := p.TreasureEvent("dq3:event.eginbear_thirsty_pitcher")
+	if !ok || treasure.Treasure.CTYRaw != 76 || treasure.Treasure.Section != 0 ||
+		treasure.Treasure.TileSubID != 0 || treasure.Treasure.EventTypeRaw != 1 ||
+		treasure.Treasure.ItemRawID != 0x5e || treasure.Treasure.PresentFlag != 0x3a {
+		t.Fatalf("CTY76 乾渴壺 treasure JSON 不符：%+v", treasure)
+	}
+	town, err := dq3data.OpenTown(cty, 0, false)
+	if err != nil {
+		t.Fatalf("OpenTown CTY76: %v", err)
+	}
+	if !reflect.DeepEqual(town.SpecialHandlers, []int{30}) ||
+		!reflect.DeepEqual(town.Events, [][3]int{{1, 0x5e, 0x3a}, {1, 0x5e, 0x3b}}) ||
+		len(town.NPCs) != 3 {
+		t.Fatalf("CTY76 原始 tables 不符：handlers=%v events=%v npcs=%+v",
+			town.SpecialHandlers, town.Events, town.NPCs)
+	}
+	for i, want := range [][2]int{{3, 10}, {5, 10}, {7, 10}} {
+		npc := town.NPCs[i]
+		selector := e.NPCs[i]
+		if selector.Slot != i || selector.InitialTile.X != want[0] ||
+			selector.InitialTile.Y != want[1] || selector.CtrlRaw != 0xc0 ||
+			npc.X != want[0] || npc.Y != want[1] ||
+			npc.Ctrl != 0xc0 {
+			t.Fatalf("CTY76 slot%d anchor 不符：json=%+v raw=%+v", i, selector, npc)
+		}
+	}
+	for _, trigger := range e.TriggerTiles {
+		i := trigger.Tile.Y*town.W + trigger.Tile.X
+		if trigger.TileSubID != 1 || trigger.HandlerRaw != 30 || town.HiMap[i]&0x1f != 1 {
+			t.Fatalf("CTY76 trigger 不符：%+v hi=%02x", trigger, town.HiMap[i])
+		}
+	}
+
+	// logical 0x586b / file 0x6bdb: test flag0x3b, require the first
+	// three runtime NPC records' Y byte to equal 5, then clear flag0x3b.
+	handler := []byte{0xbb, 0x3b, 0x00, 0xe8, 0x98, 0x16, 0x3c, 0x01, 0x74, 0x01, 0xc3,
+		0xb9, 0x03, 0x00, 0x8d, 0x3e, 0x66, 0x0b, 0x80, 0x7d, 0x01, 0x05, 0x75, 0xf2,
+		0x83, 0xc7, 0x08, 0xe2, 0xf5, 0xbb, 0x3b, 0x00, 0xe8, 0x66, 0x16, 0xe8, 0x47,
+		0xdb, 0xbd, 0x09, 0x00, 0x9a, 0x40, 0x02, 0x53, 0x10, 0x9a, 0xb2, 0x03, 0x53,
+		0x10, 0xc3}
+	if got := exe[0x6bdb : 0x6bdb+len(handler)]; !reflect.DeepEqual(got, handler) {
+		t.Fatalf("handler30 bytes=%x，want %x", got, handler)
+	}
+	// logical 0x1de2a / file 0xf19a: invisibility bits short-circuit,
+	// then the collided runtime NPC must have ctrl bit0x40 before pushing.
+	pushAnchor := []byte{0xf7, 0x06, 0x46, 0x4f, 0x00, 0xc0, 0x74, 0x03, 0xe9, 0x89, 0x00,
+		0x8a, 0xdd, 0x80, 0xe3, 0x1f, 0x32, 0xff, 0x88, 0x2e, 0x7c, 0x06, 0xd1, 0xe3,
+		0xd1, 0xe3, 0xd1, 0xe3, 0x8d, 0x3e, 0x66, 0x0b, 0x03, 0xfb, 0xb0, 0x40,
+		0x84, 0x45, 0x03}
+	if got := exe[0xf19a : 0xf19a+len(pushAnchor)]; !reflect.DeepEqual(got, pushAnchor) {
+		t.Fatalf("push consumer bytes=%x，want %x", got, pushAnchor)
 	}
 }
 
@@ -882,14 +968,14 @@ func TestDQ3DhamaReclassMatchesOriginalTextAndConfig(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.11","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.12","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.11","service_definitions":[{
+	  "schema_version":"0.1.12","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -897,19 +983,23 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.11",
+	  "schema_version":"0.1.12",
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"record","address":"421","consumer":"item menu","doc":"docs/x.md"}},
+	  "npc_push_rule":{"ctrl_mask":64,"ctrl_value":64,"blocked_by_effect_id":"temporary_invisibility",
+	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
+	      "address_space":"file","address":"0x1","consumer":"collision","doc":"docs/x.md"}},
 	  "boss_surrender_events":[],"temporary_role_events":[],
 	    "quest_item_chain_events":[],"treasure_events":[],"item_use_effects":[],"tracking_guard_events":[],
+	    "push_puzzle_events":[],
 	    "two_step_floor_switch_gates":[],
 	  "staged_vehicle_exchange_events":[],"guided_passage_events":[],
 	  "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.11",
+	  "schema_version":"0.1.12",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -919,7 +1009,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.11","definitions":[{
+	  "schema_version":"0.1.12","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -928,7 +1018,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.11","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.12","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -940,8 +1030,11 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.11"`, `"schema_version":"0.1.11","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.12"`, `"schema_version":"0.1.12","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
+		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
+			`"push_puzzle_events":[]`,
+			`"push_puzzle_events":[{"id":"x:push","kind":"push_puzzle","cty_raw":76,"section":0,"trigger_tiles":[],"npcs":[],"completion_axis":"x","completion_value":5,"clear_story_flag_raw":59,"evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE","address_space":"file","address":"0x1","consumer":"reader","doc":"docs/x.md"}}]`, 1), validCharacters, "invalid event"},
 		{"unknown characters field", validManifest, validFacilities, validEvents, strings.Replace(validCharacters, `"defaults":[`, `"typo":1,"defaults":[`, 1), "unknown field"},
 	}
 	for _, tc := range tests {

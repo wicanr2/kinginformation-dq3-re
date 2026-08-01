@@ -70,6 +70,13 @@
   穿越一般 NPC，只能走守衛未占據的右欄。詳見
   [`docs/96`](docs/96-invisibility-grass-eginbear-production-trace.md)。_Avoid_: 把隱形解讀成
   全域 NPC passthrough，或把朗錫爾 CTY47/75 當成 `0x5d` 貨架證據。
+- **愛丁貝亞推石** — CTY76 sec0 的 NPC slot0–2 初始位於 `(3,10)/(5,10)/(7,10)`。
+  玩家碰撞 consumer 以 runtime NPC `ctrl bit0x40` 判定可推，並要求前方地形與 NPC stamp
+  可用；`DGROUP 0x4f46 & 0xc000` 非零時禁止推動。handler30（raw `0x1e`）固定檢查
+  slot0–2 的 Y 是否全為 5，成立才 clear flag `0x3b` 並開 passage；event0／flag `0x3a`
+  才是乾渴壺 `0x5e`。詳見 [`docs/97`](docs/97-eginbear-push-puzzle-production-trace.md)。
+  _Avoid_: 以 sprite `B2==40` 判 pushability、加入 remake 自造 `sokoban_solved`，或把
+  event1／flag `0x3b` 當第二個乾渴壺。
 - **遭遇區表** — overworld region map `0x4966`(16×16 grid,cell=(X>>4)+(Y&0xf0)→region)+ 遭遇表 `0x4a56`(region×0x20 = 4 子表×8 byte;byte2=背景頁、byte4-7=候選怪 0xff 終止)。CTY 用 `[0xd77]` 存的 region(0=安全)。見 [docs/39](docs/39-encounter-zones.md)。
 - **咒文習得表** — `sub_db5f`(file 0xeecf)讀 DGROUP `0x36f9` 起 per-系 stride 8 指標表 `{spellA,levelA,spellB,levelB}`;系基底 0/8/0x10=勇者/僧侶/魔法系;`level[i]`/`spell[i]` 平行,清單長度由下一指標界定(越界=#5 亂學咒 bug)。職業→系:勇者→勇者系、僧侶→僧侶系、魔法使→魔法系、賢者→僧侶+魔法、其餘無咒。
 

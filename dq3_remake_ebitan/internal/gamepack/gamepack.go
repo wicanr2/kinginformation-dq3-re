@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.11"
+	SchemaVersion = "0.1.12"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -251,6 +251,39 @@ type TrackingGuardEvent struct {
 	TrackAxis      string              `json:"track_axis"`
 	BypassEffectID string              `json:"bypass_effect_id"`
 	Evidence       Evidence            `json:"evidence"`
+}
+
+// PushPuzzleNPC identifies one original NPC slot checked by a finite puzzle
+// completion handler. InitialTile and CtrlRaw are parity anchors; Slot keeps
+// the identity stable after the NPC has moved away from its initial tile.
+type PushPuzzleNPC struct {
+	Slot        int            `json:"slot"`
+	InitialTile TileCoordinate `json:"initial_tile"`
+	CtrlRaw     int            `json:"ctrl_raw"`
+}
+
+// NPCPushRule describes the original-format runtime control-bit gate shared by
+// every pushable NPC in this pack. Puzzle events only describe completion.
+type NPCPushRule struct {
+	CtrlMask          int      `json:"ctrl_mask"`
+	CtrlValue         int      `json:"ctrl_value"`
+	BlockedByEffectID string   `json:"blocked_by_effect_id"`
+	Evidence          Evidence `json:"evidence"`
+}
+
+// PushPuzzleEvent describes a finite scene puzzle whose original handler
+// checks selected NPC slots on a named axis and clears one story flag.
+type PushPuzzleEvent struct {
+	ID                string          `json:"id"`
+	Kind              string          `json:"kind"`
+	CTYRaw            int             `json:"cty_raw"`
+	Section           int             `json:"section"`
+	TriggerTiles      []FloorSwitch   `json:"trigger_tiles"`
+	NPCs              []PushPuzzleNPC `json:"npcs"`
+	CompletionAxis    string          `json:"completion_axis"`
+	CompletionValue   int             `json:"completion_value"`
+	ClearStoryFlagRaw int             `json:"clear_story_flag_raw"`
+	Evidence          Evidence        `json:"evidence"`
 }
 
 type ItemExchange struct {
@@ -547,12 +580,14 @@ type ItemActions struct {
 type Events struct {
 	SchemaVersion               string                       `json:"schema_version"`
 	ItemActions                 ItemActions                  `json:"item_actions"`
+	NPCPushRule                 NPCPushRule                  `json:"npc_push_rule"`
 	BossSurrenderEvents         []BossSurrenderEvent         `json:"boss_surrender_events"`
 	TemporaryRoleEvents         []TemporaryRoleEvent         `json:"temporary_role_events"`
 	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
 	TreasureEvents              []TreasureEvent              `json:"treasure_events"`
 	ItemUseEffects              []ItemUseEffect              `json:"item_use_effects"`
 	TrackingGuardEvents         []TrackingGuardEvent         `json:"tracking_guard_events"`
+	PushPuzzleEvents            []PushPuzzleEvent            `json:"push_puzzle_events"`
 	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate     `json:"two_step_floor_switch_gates"`
 	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
 	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
@@ -1068,6 +1103,16 @@ func (p *Pack) validateEvents() error {
 	if err := validateEvidence(p.Events.ItemActions.Evidence); err != nil {
 		return fmt.Errorf("item_actions evidence: %w", err)
 	}
+	pushRule := p.Events.NPCPushRule
+	if pushRule.CtrlMask <= 0 || pushRule.CtrlMask > 255 ||
+		pushRule.CtrlValue < 0 || pushRule.CtrlValue > 255 ||
+		pushRule.CtrlValue & ^pushRule.CtrlMask != 0 ||
+		pushRule.BlockedByEffectID != "temporary_invisibility" {
+		return errors.New("npc_push_rule: invalid rule")
+	}
+	if err := validateEvidence(pushRule.Evidence); err != nil {
+		return fmt.Errorf("npc_push_rule evidence: %w", err)
+	}
 	if p.Events.SchemaVersion != SchemaVersion {
 		return fmt.Errorf("unsupported schema_version %q", p.Events.SchemaVersion)
 	}
@@ -1088,6 +1133,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.TrackingGuardEvents == nil {
 		return errors.New("tracking_guard_events must be present")
+	}
+	if p.Events.PushPuzzleEvents == nil {
+		return errors.New("push_puzzle_events must be present")
 	}
 	if p.Events.TwoStepFloorSwitchGates == nil {
 		return errors.New("two_step_floor_switch_gates must be present")
@@ -1325,6 +1373,40 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		trackingIDs[e.ID] = true
+	}
+	pushPuzzleIDs := make(map[string]bool, len(p.Events.PushPuzzleEvents))
+	for i := range p.Events.PushPuzzleEvents {
+		e := &p.Events.PushPuzzleEvents[i]
+		if e.ID == "" || e.Kind != "push_puzzle" || pushPuzzleIDs[e.ID] ||
+			e.CTYRaw < 0 || e.CTYRaw > 255 || e.Section < 0 ||
+			len(e.TriggerTiles) == 0 || len(e.NPCs) == 0 ||
+			e.CompletionAxis != "y" || e.CompletionValue < 0 ||
+			e.ClearStoryFlagRaw <= 0 || e.ClearStoryFlagRaw > 511 {
+			return fmt.Errorf("push_puzzle_events[%d]: invalid event", i)
+		}
+		seenTiles := map[[2]int]bool{}
+		for _, trigger := range e.TriggerTiles {
+			key := [2]int{trigger.Tile.X, trigger.Tile.Y}
+			if trigger.Tile.X < 0 || trigger.Tile.Y < 0 || trigger.TileSubID < 1 ||
+				trigger.TileSubID > 31 || trigger.HandlerRaw < 0 || trigger.HandlerRaw > 255 ||
+				seenTiles[key] {
+				return fmt.Errorf("%s: invalid or duplicate trigger tile", e.ID)
+			}
+			seenTiles[key] = true
+		}
+		seenSlots := map[int]bool{}
+		for _, npc := range e.NPCs {
+			if npc.Slot < 0 || seenSlots[npc.Slot] || npc.InitialTile.X < 0 || npc.InitialTile.Y < 0 ||
+				npc.CtrlRaw < 0 || npc.CtrlRaw > 255 ||
+				npc.CtrlRaw&pushRule.CtrlMask != pushRule.CtrlValue {
+				return fmt.Errorf("%s: invalid or duplicate puzzle NPC", e.ID)
+			}
+			seenSlots[npc.Slot] = true
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		pushPuzzleIDs[e.ID] = true
 	}
 	p.sequenceGates = make(map[string]*TwoStepFloorSwitchGate, len(p.Events.TwoStepFloorSwitchGates))
 	for i := range p.Events.TwoStepFloorSwitchGates {
@@ -1963,6 +2045,14 @@ func (p *Pack) ItemUseEffects() []ItemUseEffect {
 
 func (p *Pack) TrackingGuardEvents() []TrackingGuardEvent {
 	return append([]TrackingGuardEvent(nil), p.Events.TrackingGuardEvents...)
+}
+
+func (p *Pack) PushPuzzleEvents() []PushPuzzleEvent {
+	return append([]PushPuzzleEvent(nil), p.Events.PushPuzzleEvents...)
+}
+
+func (p *Pack) NPCPushRule() NPCPushRule {
+	return p.Events.NPCPushRule
 }
 
 func (p *Pack) ItemUseEffectByRawID(itemRawID int) (*ItemUseEffect, bool) {

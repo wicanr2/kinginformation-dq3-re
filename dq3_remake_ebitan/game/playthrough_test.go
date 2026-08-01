@@ -122,17 +122,19 @@ func TestPlaythroughEconomy(t *testing.T) {
 	t.Logf("經濟 ✓:阿里阿罕武防店 7 品(銅劍100G)、宿屋 2G;全城設施表 %d 筆", len(allFacilities))
 }
 
-// 整合 game test:legacy 寶箱表 + 已遷入 pack 的 typed-event treasures。
+// 整合 game test:legacy 寶箱表 + 已遷入 pack 的 typed-event 可收集寶物。
+// 原始 section event record 共 121 筆，但 CTY76 subid1 是 passage flag0x3b，
+// 不是第二個乾渴壺；raw record 數另由 gamepack parity test 鎖定。
 func TestPlaythroughTreasure(t *testing.T) {
-	const totalOriginalTreasures = 121
+	const totalCollectibleTreasures = 120
 	pack, err := gamepack.BuiltinDQ3()
 	if err != nil {
 		t.Fatal(err)
 	}
 	packTreasures := len(pack.TreasureEvents()) +
 		len(pack.QuestItemChainEvents()) + len(pack.TwoStepFloorSwitchGates())
-	if got := len(treasures) + packTreasures; got != totalOriginalTreasures {
-		t.Fatalf("legacy + game-pack 寶箱應共 %d 筆,得 %d", totalOriginalTreasures, got)
+	if got := len(treasures) + packTreasures; got != totalCollectibleTreasures {
+		t.Fatalf("legacy + game-pack 可收集寶物應共 %d 筆,得 %d", totalCollectibleTreasures, got)
 	}
 	// 阿里阿罕(cty0 sec5)sub0 寶箱:item98、flag41
 	tr := treasureFor(0, 5, 0)
@@ -143,6 +145,6 @@ func TestPlaythroughTreasure(t *testing.T) {
 	if treasureFor(99, 0, 0) != nil {
 		t.Fatal("不存在的寶箱應回 nil")
 	}
-	t.Logf("寶箱資料 ✓:%d 筆（legacy %d + game-pack %d）、阿里阿罕 sec5 sub0=item98/flag41",
-		totalOriginalTreasures, len(treasures), packTreasures)
+	t.Logf("可收集寶物資料 ✓:%d 筆（legacy %d + game-pack %d）、阿里阿罕 sec5 sub0=item98/flag41",
+		totalCollectibleTreasures, len(treasures), packTreasures)
 }

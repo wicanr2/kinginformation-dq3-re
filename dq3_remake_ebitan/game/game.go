@@ -554,7 +554,10 @@ func (g *Game) tryMove(nx, ny int) bool {
 		g.shipAboard = true
 		return true
 	}
-	return !g.cur.Blocked(nx, ny)
+	if !g.cur.Blocked(nx, ny) {
+		return true
+	}
+	return g.tryPushableNPC(nx, ny)
 }
 
 // scriptedTalk:對 scripted NPC(sub2)—— 檢查型/給予型(前置道具→給物+旗標+對白)。移植 dq3_scripted。
@@ -1144,6 +1147,7 @@ func (g *Game) step(in InputState) error {
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
 		g.tryTrackingGuardEvent()
+		g.tryPushPuzzleCompletionEvent()
 		g.trySequenceGateEvent()
 		g.tryOpeningRegionEvent()
 		g.tryBossSurrenderEvent()

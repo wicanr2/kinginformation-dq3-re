@@ -600,11 +600,18 @@ rec421 使用，從右欄越過守衛進 CTY76，並完成 save/load。兩張新
 證據見 `docs/96`。本輪同時推翻「CTY47/75 就是隱形草貨架」的舊路線假設；CTY47/75
 是朗錫爾／勇氣神殿雙入口，實際含 `0x5d` 的原始商店表是 CTY38。
 
+schema `0.1.12` 再閉合 CTY76 推石與乾渴壺。IDA Pro 9.4 證明玩家碰撞 consumer
+`(logical) 0xde2a`（IDA linear `0x1de2a`）是檢查 runtime NPC `ctrl bit0x40`，不是舊 C prototype 猜的
+`B2==40`；隱形 bits `0xc000` 仍在時反而禁止推動。handler30 `(logical) 0x586b`
+固定檢查 NPC slot0–2 的 Y byte 是否全為 5，成立才 clear flag `0x3b` 並刷新 passage。
+正式 trace 由 CTY76 checkpoint 只送方向鍵走完 119 步解路，再由命令窗調查 event0
+取得乾渴壺 `0x5e`，完成 save/load。兩張 runtime 圖與證據見 `docs/97`。
+
 下一輪依下列順序接手：
 
-1. **主線最高優先**：boot 起的同一條 trace 已經由 CTY21 checkpoint、CTY38 隱形草、
-   CTY39 守衛閉合至 CTY76 合法 save checkpoint（`docs/96`）。下一個 blocker 是 CTY76
-   地下室推石／乾渴之壺流程；從該 checkpoint 繼續正常玩家路線，不得跳到孤立的後段 handler。
+1. **主線最高優先**：boot 起的同一條 trace 已由 CTY76 checkpoint 完成推石並取得
+   乾渴壺 `0x5e`（`docs/97`）。下一個 blocker 是在海中淺灘正式使用乾渴壺、原版地圖
+   變化與最終鑰匙取得；從該 checkpoint 繼續正常玩家路線，不得跳到孤立的後段 handler。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

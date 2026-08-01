@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.11",
+  "schema_version": "0.1.12",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -15,6 +15,20 @@
       "address": "D3TXT00 record 421",
       "consumer": "field item panel dispatches use, give and drop while each original member record owns eight item words",
       "doc": "docs/92-dhama-reclass-production-trace.md"
+    }
+  },
+  "npc_push_rule": {
+    "ctrl_mask": 64,
+    "ctrl_value": 64,
+    "blocked_by_effect_id": "temporary_invisibility",
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE",
+      "address_space": "logical",
+      "address": "0xde2a..0xe056 (IDA linear 0x1de2a..0x1e056); DGROUP 0x0b66/0x4f46",
+      "consumer": "the common player collision path rejects invisibility bits 0xc000, selects the collided runtime NPC slot, tests ctrl bit0x40, validates the cell ahead and writes the NPC coordinates before the player advances",
+      "doc": "docs/97-eginbear-push-puzzle-production-trace.md"
     }
   },
   "boss_surrender_events": [
@@ -211,6 +225,27 @@
         "consumer": "CTY20 sec1 subid0 raw 01 5f 00 39 is dispatched by file 0x9d86 to the type1/3 inventory consumer at file 0x9de9; success writes item 0x5f and clears original present flag 0x39",
         "doc": "docs/93-teidon-dark-lamp-production-trace.md"
       }
+    },
+    {
+      "id": "dq3:event.eginbear_thirsty_pitcher",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 76,
+        "section": 0,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 94,
+        "present_flag_raw": 58
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY76.DAT",
+        "address_space": "record",
+        "address": "CTY76 section0 event0 raw 01 5e 00 3a; DQ3.EXE file 0x9d86..0x9e41",
+        "consumer": "the reachable event0 tile (19,2) dispatches type1 item 0x5e to the inventory consumer and clears present flag 0x3a; event1/flag0x3b belongs to the push-puzzle passage and is not a second collectible",
+        "doc": "docs/97-eginbear-push-puzzle-production-trace.md"
+      }
     }
   ],
   "item_use_effects": [
@@ -276,6 +311,41 @@
         "address": "CTY39 file 0x00b2 raw handler 0x1d; logical 0x582c..0x586a; DGROUP 0x4f46/0x52f7",
         "consumer": "CTY39 sec0 subid1 tiles (13,37)/(14,37) sit below guard NPC (13,36); the guard tracker mirrors player X through the movement interpreter unless invisibility bit 0x8000 is set",
         "doc": "docs/96-invisibility-grass-eginbear-production-trace.md"
+      }
+    }
+  ],
+  "push_puzzle_events": [
+    {
+      "id": "dq3:event.eginbear_thirsty_pitcher_push_puzzle",
+      "kind": "push_puzzle",
+      "cty_raw": 76,
+      "section": 0,
+      "trigger_tiles": [
+        {"tile": {"x": 7, "y": 5}, "tile_subid": 1, "handler_raw": 30},
+        {"tile": {"x": 4, "y": 6}, "tile_subid": 1, "handler_raw": 30},
+        {"tile": {"x": 5, "y": 6}, "tile_subid": 1, "handler_raw": 30},
+        {"tile": {"x": 6, "y": 6}, "tile_subid": 1, "handler_raw": 30},
+        {"tile": {"x": 7, "y": 6}, "tile_subid": 1, "handler_raw": 30},
+        {"tile": {"x": 4, "y": 7}, "tile_subid": 1, "handler_raw": 30},
+        {"tile": {"x": 5, "y": 7}, "tile_subid": 1, "handler_raw": 30},
+        {"tile": {"x": 6, "y": 7}, "tile_subid": 1, "handler_raw": 30}
+      ],
+      "npcs": [
+        {"slot": 0, "initial_tile": {"x": 3, "y": 10}, "ctrl_raw": 192},
+        {"slot": 1, "initial_tile": {"x": 5, "y": 10}, "ctrl_raw": 192},
+        {"slot": 2, "initial_tile": {"x": 7, "y": 10}, "ctrl_raw": 192}
+      ],
+      "completion_axis": "y",
+      "completion_value": 5,
+      "clear_story_flag_raw": 59,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY76.DAT",
+        "address_space": "logical",
+        "address": "CTY76 file section0; logical 0x586b..0x589e and 0xde2a..0xe056 (IDA linear 0x1de2a..0x1e056); DGROUP 0x0b66/0x4f46",
+        "consumer": "player collision pushes a selected NPC only when ctrl bit 0x40 is set, invisibility bits 0xc000 are clear, and the destination tile/NPC stamp is open; handler30 checks NPC slots 0..2 y==5, clears story flag 0x3b, and refreshes the scene",
+        "doc": "docs/97-eginbear-push-puzzle-production-trace.md"
       }
     }
   ],

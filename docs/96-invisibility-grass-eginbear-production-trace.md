@@ -67,8 +67,9 @@ CTY39 原始資料再提供：
 - guard slot 0：起點 `(13,36)`、sprite 22、movement ctrl 0、handler/dialogue raw 15；
 - spawn：`(13,42)`。
 
-玩家移動 `(logical) 0x11a6a..0x11b91` 仍會讀 tile/NPC stamp，呼叫 consumer
-`(logical) 0x1de2a`；NPC 占格時移動會回滾。故**隱形不等於全域穿越 NPC**：它只阻止
+玩家移動 `(logical) 0x1a6a..0x1b91`（IDA linear `0x11a6a..0x11b91`）仍會讀
+tile/NPC stamp，呼叫 consumer `(logical) 0xde2a`（IDA linear `0x1de2a`）；NPC 占格時
+移動會回滾。故**隱形不等於全域穿越 NPC**：它只阻止
 handler29 追蹤，玩家必須從守衛未占據的右欄通過。
 
 ## 3. 推論等級 ledger
@@ -120,6 +121,6 @@ runtime component test 鎖定。尚未取得同狀態 DOSBox 原版截圖，故�
 
 ## 7. 尚未完成
 
-- CTY76 後的地下室推石／乾渴之壺流程尚未閉合；它是下一個 production blocker。
+- CTY76 地下室推石／乾渴之壺已由下一切片閉合，見 [`docs/97`](97-eginbear-push-puzzle-production-trace.md)。
 - CTY38 的 canonical 地名仍應另以原始文字／場景證據校正，不由貨架內容反推。
 - 本切片完成不代表新遊戲至 THE END 全流程完成。

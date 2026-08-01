@@ -1695,6 +1695,40 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("愛丁貝亞地下室 save/load round-trip 錯：town=%v cty=%d sec=%d grass=%v",
 			g.inTown, g.curCty, sceneSection(g.cur), g.hasItem(0x5d))
 	}
+
+	// CTY76 原始 NPC slot0..2 依 ctrl bit0x40 接受推動；走完整 119 步正式解路，
+	// 最後一推令 handler30 清 flag0x3b 並打開 passage，再由命令窗調查 event0
+	// 取得乾渴壺。全程只送正式方向與命令輸入，沒有座標或事件狀態注入。
+	traceEginbearPushPuzzle(t, g)
+	if g.storyFlag(0x3b) || g.remoaru != 0 {
+		t.Fatalf("愛丁貝亞推石完成狀態錯：flag3b=%v timer=%d", g.storyFlag(0x3b), g.remoaru)
+	}
+	traceExaminePackTreasure(t, g, gamepack.QuestTreasureSelector{
+		CTYRaw: 76, Section: 0, TileSubID: 0, EventTypeRaw: 1,
+		ItemRawID: 0x5e, PresentFlag: 0x3a,
+	})
+	if !g.hasItem(0x5e) || g.storyFlag(0x3a) {
+		t.Fatalf("正式取得乾渴壺 transaction 錯：item=%v flag3a=%v",
+			g.hasItem(0x5e), g.storyFlag(0x3a))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存乾渴壺 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建乾渴壺讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != 76 || sceneSection(g.cur) != 0 || !g.hasItem(0x5e) ||
+		g.storyFlag(0x3a) || g.storyFlag(0x3b) {
+		t.Fatalf("乾渴壺 save/load round-trip 錯：town=%v cty=%d sec=%d item=%v flags3a/3b=%v/%v",
+			g.inTown, g.curCty, sceneSection(g.cur), g.hasItem(0x5e),
+			g.storyFlag(0x3a), g.storyFlag(0x3b))
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，
