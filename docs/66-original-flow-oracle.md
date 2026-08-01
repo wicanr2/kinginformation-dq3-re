@@ -127,7 +127,7 @@
 | 29 | 朗錫爾村 | 上方神殿,用最終鑰匙開鐵門見神父,考驗「單獨戰鬥的勇氣」 | 接受後暫存三名同伴、active count=1、world `(82,165)`、mode bit `0x80` | 持 0x57、白天神官可見 | IDA handler37 `(logical) 0x59e4`；CTY47 `(25,16)` handler37；D3TXT06 rec9–11；boot production trace `docs/100` ✅。handler37 只讀 flag `0x13`，不寫它。 |
 | 30 | 勇氣洞窟 | 勇者單人進 CTY23,經原始轉場與最終鑰匙門,盡頭調查寶箱；回 CTY75 神官 | 《藍寶珠》(0x67)，handler62 原樣復隊 | CTY23 sec2 present flag `0xad`；試煉 active mode | CTY23 raw `01 67 00 ad`、D3TXT07 rec66–67、handler62 `(logical) 0x608a`；途中與復隊後 save/load、boot trace `docs/100` ✅。flag `0x13` writer 仍 unknown。 |
 | 31 | 亞布之塔 | 3F | 《回音之笛》(0x60) | 由日邦格村航行至塔 | 杜Ch31;quest-items 0x60 寶箱(CTY26 sec2,flag0xb0) |
-| 32 | 海盜村 | 外圍大石移開現密道,地下藏寶室 | 《紅寶珠》(0x68) | — | 杜Ch32;quest-items 0x68 |
+| 32 | 海盜村 | 外圍可推物件移開現密道,地下藏寶室 | 《紅寶珠》(0x68) | sec0 NPC `ctrl bit0x40`；event0 flag `0x3f` | CTY27 raw：入口 `(26,9)`、hidden transition→sec1 `(5,9)`、event0 `{item=0x68,flag=0x3f}`；IDA push／transition consumers；正式魯拉重定位船、航行、存讀檔 trace `docs/101` ✅。精確 sprite 語意未閉合。 |
 | 33 | 新城鎮(空地) | 樹林中方形草原,老人想建新城鎮但缺商人 | 任務線索(需帶商人職業同伴前來) | — | 杜Ch33;walkthrough-flow-audit B-6:老人 handler 0x5aba RE 全解(掃隊伍 class==6 商人) |
 | 34 | 斯吾村 | 村內中央水井下方調查 | 《雷神之杖》(0x0a,★碼勘誤:原誤標系統性位移,正確為 0x0a) | — | 杜Ch34;quest-items 0x0a(治療自 walkthrough-flow-audit 表頭勘誤說明) |
 | 35 | 沙曼歐莎城 | 廚房後門入王宮見國王被囚;用最終鑰匙開牢門出;找到真國王(在假國王之前石室);南方拉之鏡洞窟 B3F | 《拉之鏡》(0x61) | 持 0x57 | 杜Ch35;quest-items 0x61 寶箱(CTY24 sec2,flag0x9f) |

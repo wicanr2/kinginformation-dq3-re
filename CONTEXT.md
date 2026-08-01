@@ -82,6 +82,11 @@
   handler62 `(26,7)` 還原 count 並清 bit。flag `0x13` 是完成分支 reader，writer 仍
   `unknown`；原版 world reader 為 clear→CTY75、set→CTY47。見 [`docs/100`](docs/100-lancel-courage-blue-orb-production-trace.md)。
   _Avoid_: 接受或取得藍寶珠時自行 set flag `0x13`、反向 `owPortal`、宣稱 solo 機制 moot。
+- **海盜村紅寶珠密道** — CTY27 sec0 `(26,9)` 物件的 runtime control `0xc1` 含
+  `bit0x40`，推開後露出 transition subid1，進 sec1 `(5,9)`；event0 是紅寶珠 `0x68`，
+  flag `0x3f` 同時控制寶箱與入口物件 visibility。`B2=0x28` 的精確 sprite 語意尚未閉合，
+  canonical 名稱只用「可推物件」。見 [`docs/101`](docs/101-pirates-red-orb-production-trace.md)。
+  _Avoid_: 只走普通入口、以攻略名稱取代 sprite 證據，或不經正式魯拉船重定位就注入座標。
 - **遭遇區表** — overworld region map `0x4966`(16×16 grid,cell=(X>>4)+(Y&0xf0)→region)+ 遭遇表 `0x4a56`(region×0x20 = 4 子表×8 byte;byte2=背景頁、byte4-7=候選怪 0xff 終止)。CTY 用 `[0xd77]` 存的 region(0=安全)。見 [docs/39](docs/39-encounter-zones.md)。
 - **咒文習得表** — `sub_db5f`(file 0xeecf)讀 DGROUP `0x36f9` 起 per-系 stride 8 指標表 `{spellA,levelA,spellB,levelB}`;系基底 0/8/0x10=勇者/僧侶/魔法系;`level[i]`/`spell[i]` 平行,清單長度由下一指標界定(越界=#5 亂學咒 bug)。職業→系:勇者→勇者系、僧侶→僧侶系、魔法使→魔法系、賢者→僧侶+魔法、其餘無咒。
 
@@ -165,7 +170,9 @@
   [`99`](docs/99-teidon-final-key-green-orb-production-trace.md) 最終鑰匙正式使用、魯拉船重定位、
   提頓 handler35 綠色寶珠與 boot production trace ·
   [`100`](docs/100-lancel-courage-blue-orb-production-trace.md) 蘭西爾 handler37／62、暫時單人、
-  CTY23 藍寶珠、途中／復隊存讀檔與 boot production trace
+  CTY23 藍寶珠、途中／復隊存讀檔與 boot production trace ·
+  [`101`](docs/101-pirates-red-orb-production-trace.md) CTY27 可推入口、密道 transition、
+  紅寶珠、魯拉船重定位與 boot production trace
 
 ### 資料 / 研究(`docs/data/`)
 - [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·

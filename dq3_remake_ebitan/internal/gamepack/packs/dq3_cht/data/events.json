@@ -368,6 +368,27 @@
         "consumer": "the section2 treasure dispatches type1 item0x67 to the common inventory consumer, clears present flag0xad and is visibly collected by the solo hero in the original walkthrough",
         "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"
       }
+    },
+    {
+      "id": "dq3:event.pirates_den_red_orb",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 27,
+        "section": 1,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 104,
+        "present_flag_raw": 63
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY27.DAT + DQ3.EXE",
+        "address_space": "record",
+        "address": "CTY27 section1 event0 file 0xa5f raw 01 68 00 3f; hidden entrance transition file 0x85 raw 1b 01 05 09; pushable object file 0x25 raw 1a 09 28 c1 0e 3f 00",
+        "consumer": "the CTY27 object ctrl0xc1 reaches the common NPC push branch, exposing transition subid1 to section1 (5,9); event0 gives item0x68 and clears present flag0x3f, which is also the object's visibility flag",
+        "doc": "docs/101-pirates-red-orb-production-trace.md"
+      }
     }
   ],
   "npc_item_reward_events": [

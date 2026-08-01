@@ -52,6 +52,27 @@
 - 即使使用上述本機 IDA 安裝，也只能把明確需要的唯讀路徑掛入一次性 Docker 容器執行；
   禁止直接在 host 啟動 IDA、反編譯、索引或其他專案作業。容器工作完成後依本檔 Docker
   生命週期規則立即停止並清除。
+- **IDA 分析必須非破壞且可追溯**：原始 EXE／DAT 永遠唯讀並保留原位置；每次分析先記錄
+  輸入路徑、檔案大小與 SHA-256，再把工作副本、`.i64`／`.idb`、`.asm`、腳本輸出放在
+  `/tmp` 或 gitignore 的工作目錄。不得原地解包、patch、rename、覆寫或把 IDA database、
+  授權及解包 binary 加入 Git。
+- **語意只能附加，不得取代原始定位**：IDA 的 rename、comment、type、function boundary 與
+  decompiler interpretation 都是 annotation。證據筆記與 sidecar 必須同時保留原始 symbol／
+  位址、raw bytes 或指令，以及新增語意；不得只留下重新命名後的結論。若修正語意，保留舊
+  斷言為「已推翻」並附反證，不移動或改寫原始位址使既有引用失效。
+- 每一項 IDA annotation 與文件結論都必須帶**推論等級**：`confirmed`（原始 bytes／明確
+  writer-consumer／可重現實機閉合）、`strong`（多條獨立靜態證據但尚缺玩家可見閉合）、
+  `hypothesis`（待驗假說）、`unknown`（未知）。不得因 IDA 自動命名、反編譯可讀或攻略吻合
+  就標成 confirmed；production JSON 仍遵守下方 D2／D3 gate。
+- 查資料語意時以 IDA database 的 xref、型別與 caller/callee graph 為主，不以 grep 攤平
+  `.asm` 代替交叉參考。xref 只保證直接參考；若讀取很多但 writer 異常少，必須再追
+  address-taken、指標別名、segment:offset 與間接寫入。讀／寫分類應使用 IDA xref type，
+  不用助憶碼字串或 operand 位置猜測。
+- Headless IDA 腳本必須把結果寫入明確 sidecar 檔並驗證檔案非空、含輸入 hash／位址基準；
+  不得只相信 exit code 或 stdout。優先沿用已驗證可工作的 IDC／IDAPython 路徑；某種腳本
+  介面失效時記錄限制，不得靜默缺資料仍宣稱分析完成。
+- 判讀呼叫參數前先辨識 compiler、memory model、calling convention、segment register 與
+  字串格式；Turbo Pascal 的左至右壓棧／callee cleanup、C 的慣例或 far pointer 不得互套。
 - 不可用 DQ3 慣例、「合理值」、C remake 或攻略猜 production 設定。
 - 機制存在不代表位置、初值、旗標、gate、時序、畫面與消耗已 match。
 - 同一怪物、NPC 或場景在不同階段出現時，不得合併成單一 trigger 或用一次性獎勵近似；

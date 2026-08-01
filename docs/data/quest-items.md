@@ -31,7 +31,7 @@
 | 0x65 | 光之珠 | 龍王城龍之女王(byte4=52)| ✅ |
 | 0x66 | 綠寶珠 | 提頓村牢房(Ch28)| ✅ 夜間 handler35、全隊八格存入、正式 InputState 與 save/load（docs/99） |
 | 0x67 | 藍寶珠 | 勇氣洞窟 CTY23 寶箱(Ch30)| ✅ 勇氣試煉暫時單人模式、CTY23 原始寶箱、隊伍復原、正式 InputState trace 與 save/load（docs/100） |
-| 0x68 | 紅寶珠 | 海盜村 CTY27 密道寶箱(Ch32)| ✅ |
+| 0x68 | 紅寶珠 | 海盜村 CTY27 密道寶箱(Ch32)| ✅ CTY27 `ctrl bit0x40` 可推入口、hidden transition、event0 flag `0x3f`、正式航行／InputState trace 與 save/load（docs/101） |
 | 0x69 | 紫寶珠 | CTY21 第二戰後調查無姬同格寶箱 | ✅ 第二戰掉落抑制、寶箱 gate、正式 InputState trace 與 save/load（docs/95）|
 | 0x6a | 黃寶珠 | 新城鎮 CTY83 椅後(Ch41)| ✅ |
 | 0x6b | 銀寶珠 | 尼羅肯特祠堂(byte4=49,Ch40)| ✅ |

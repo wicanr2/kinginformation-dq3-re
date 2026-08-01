@@ -88,6 +88,14 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
    - CTY23 sec2 藍寶珠 raw event 為 `01 67 00 ad`；D3TXT06 rec9–12／84 與 D3TXT07
      rec66–67 已逐 word parity。單人機制不是 moot：正式 trace 與原版影片都驗證四人→單人→四人。
    - schema `0.1.15`、途中／復隊 save-load、兩張 runtime PNG 與完整證據見 [`docs/100`](../100-lancel-courage-blue-orb-production-trace.md)。
+9. **海盜村密道／紅寶珠** — ✅ **Go/Ebitengine 正式流程閉合（2026-08-02）**。
+   - CTY27 sec0 `(26,9)` 物件由 runtime `ctrl bit0x40` 判定可推；移開後的 subid1
+     transition 進 sec1 `(5,9)`。普通入口 `(6,3)` 不能走到密室寶箱。
+   - sec1 event0 raw `{item=0x68,flag=0x3f}`；同一 flag 也使入口物件在場景重載後消失。
+   - 正式 trace 先魯拉 CTY15 觸發原版船重定位，再登船航行、取得寶珠並完成 save-load；
+     content `0.1.17`、IDA／CTY raw 與 runtime 圖見 [`docs/101`](../101-pirates-red-orb-production-trace.md)。
+   - 本機影片未定位到原版同狀態畫格，現階段畫面只標 V1；`B2=0x28` 的精確 sprite 語意
+     仍未知，不以攻略名稱冒充反組譯結論。
 
 > **B-6/B-8 範圍校正(2026-06-27)**:原列為「玩家感受明顯的快速接線」**低估了**——兩者 NPC 尚未 RE 識別、
 > 且需新機制(商人寄存+建城狀態 / 神父 gate+單獨戰鬥),屬需各自一輪 RE 的中型工項,非 quick win。

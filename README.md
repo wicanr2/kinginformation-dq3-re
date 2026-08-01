@@ -90,6 +90,10 @@ RE 文件。
 
 ![Ebiten：勇氣洞窟正式調查寶箱取得藍寶珠](docs/img/courage_cave_blue_orb_obtained.png)
 
+![Ebiten：推開海盜村入口物件後露出地下密道](docs/img/pirates_red_orb_hidden_entrance.png)
+
+![Ebiten：地下藏寶室正式調查取得紅寶珠](docs/img/pirates_red_orb_obtained.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

@@ -1978,6 +1978,70 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			len(g.companions), g.hasItem(blueOrb.Treasure.ItemRawID),
 			g.storyFlag(blueOrb.Treasure.PresentFlag))
 	}
+
+	// 藍寶珠復隊 checkpoint → 正常離開蘭西爾、回船航行至海盜村。CTY27
+	// 一般入口只通往孤立房間；正式路徑必須把 transition subid1 同格、ctrl bit0x40
+	// 的物件向上推開，玩家踏入原格後才進 sec1 寶箱區。
+	traceRuraToCty(t, g, 15) // 原船不可由 (82,165) 出口區域徒步取回；魯拉同步重定位船。
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 27, true)
+	if !g.inTown || g.curCty != 27 || sceneSection(g.cur) != 0 {
+		t.Fatalf("未由正式航線抵達海盜村：town=%v cty=%d sec=%d",
+			g.inTown, g.curCty, sceneSection(g.cur))
+	}
+	redOrb, ok := g.pack.TreasureEvent("dq3:event.pirates_den_red_orb")
+	if !ok {
+		t.Fatal("缺 dq3:event.pirates_den_red_orb")
+	}
+	entranceX, entranceY := 26, 9
+	objectIndex := g.cur.npcAt(entranceX, entranceY)
+	if objectIndex < 0 || g.cur.npcs[objectIndex].ctrl&g.pack.NPCPushRule().CtrlMask == 0 {
+		t.Fatalf("CTY27 密道入口缺可推物件：index=%d", objectIndex)
+	}
+	dcty, dsec, dx, dy, transitionOK := g.cur.tileTransition(entranceX, entranceY)
+	if !transitionOK || dcty != 27 || dsec != redOrb.Treasure.Section || dx != 5 || dy != 9 {
+		t.Fatalf("CTY27 密道 transition 不符：ok=%v -> CTY%d sec%d (%d,%d)",
+			transitionOK, dcty, dsec, dx, dy)
+	}
+	entranceObject := &g.cur.npcs[objectIndex]
+	traceWalkToNoPortal(t, g, entranceX, entranceY+1)
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	send(InputState{DirHeld: 1, DirEdge: -1}) // 向上推物件並踏入原格
+	if entranceObject.x != entranceX || entranceObject.y != entranceY-1 ||
+		!g.inTown || g.curCty != 27 || sceneSection(g.cur) != redOrb.Treasure.Section ||
+		g.px != dx || g.py != dy {
+		t.Fatalf("推開入口物件後未進紅寶珠區：object=(%d,%d) town=%v cty=%d sec=%d pos=(%d,%d)",
+			entranceObject.x, entranceObject.y, g.inTown, g.curCty, sceneSection(g.cur), g.px, g.py)
+	}
+	traceExaminePackTreasure(t, g, redOrb.Treasure)
+	if !g.hasItem(redOrb.Treasure.ItemRawID) || g.storyFlag(redOrb.Treasure.PresentFlag) {
+		t.Fatalf("紅寶珠 transaction 錯：item=%v flag=%v",
+			g.hasItem(redOrb.Treasure.ItemRawID), g.storyFlag(redOrb.Treasure.PresentFlag))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存紅寶珠 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建紅寶珠讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != 27 || sceneSection(g.cur) != redOrb.Treasure.Section ||
+		!g.hasItem(redOrb.Treasure.ItemRawID) || g.storyFlag(redOrb.Treasure.PresentFlag) {
+		t.Fatalf("紅寶珠 save/load 錯：town=%v cty=%d sec=%d item=%v flag=%v",
+			g.inTown, g.curCty, sceneSection(g.cur), g.hasItem(redOrb.Treasure.ItemRawID),
+			g.storyFlag(redOrb.Treasure.PresentFlag))
+	}
+	traceTownSectionTo(t, g, 27, 0)
+	if g.cur.npcAt(entranceX, entranceY) >= 0 || g.cur.npcAt(entranceX, entranceY-1) >= 0 {
+		t.Fatal("紅寶珠 present flag 清除後，密道物件不應在重載 CTY27 sec0 時重新出現")
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，

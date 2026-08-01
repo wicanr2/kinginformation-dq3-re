@@ -1297,6 +1297,59 @@ func TestDQ3LancelCourageTrialMatchesOriginalEXECTYAndText(t *testing.T) {
 	checkRecord(txt07, event.DialogueTextIDs.CaveEmpty, 67)
 }
 
+func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return b
+	}
+	exe, cty := read("DQ3.EXE"), read("CTY27.DAT")
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	treasure, ok := p.TreasureEvent("dq3:event.pirates_den_red_orb")
+	if !ok || treasure.Treasure != (QuestTreasureSelector{CTYRaw: 27, Section: 1, TileSubID: 0,
+		EventTypeRaw: 1, ItemRawID: 0x68, PresentFlag: 0x3f}) {
+		t.Fatalf("紅寶珠 treasure JSON 不符：%+v", treasure)
+	}
+
+	for off, want := range map[int][]byte{
+		0x25:  {0x1a, 0x09, 0x28, 0xc1, 0x0e, 0x3f, 0x00}, // daytime entrance object
+		0x34:  {0x1a, 0x09, 0x28, 0xc1, 0x0e, 0x3f, 0x00}, // nighttime entrance object
+		0x81:  {0x1b, 0x01, 0x06, 0x03},                   // ordinary isolated entrance
+		0x85:  {0x1b, 0x01, 0x05, 0x09},                   // object-covered treasure entrance
+		0x2ef: {0x21, 0x01},                               // CTY27 sec0 tile (26,9), subid1
+		0xa5e: {0x03, 0x01, 0x68, 0x00, 0x3f, 0x01, 0x50, 0x00, 0x40, 0x01, 0x43, 0x00, 0x41},
+	} {
+		if off+len(want) > len(cty) || !bytes.Equal(cty[off:off+len(want)], want) {
+			t.Fatalf("CTY27 file %#x raw drift: got=%x want=%x", off, cty[off:off+len(want)], want)
+		}
+	}
+	// IDA linear 0x1353a/file 0x48aa: section+0xc transition table and
+	// (tile high byte & 0x1f)*4 selector consumer.
+	for off, want := range map[int][]byte{
+		0x48aa: {0x8b, 0x16, 0x24, 0x0b, 0xbf, 0x0c, 0x00, 0x03, 0xfa,
+			0x26, 0x8b, 0x35, 0x03, 0xf2, 0x8a, 0x1e, 0x55, 0x0b, 0x80, 0xe3, 0x1f,
+			0x32, 0xff, 0xd1, 0xe3, 0xd1, 0xe3, 0x03, 0xf3},
+		// IDA linear 0x1de2a/file 0xf19a and 0x1de4c/file 0xf1bc:
+		// invisibility blocks pushing; otherwise NPC ctrl bit0x40 is required.
+		0xf19a: {0xf7, 0x06, 0x46, 0x4f, 0x00, 0xc0, 0x74, 0x03},
+		0xf1bc: {0xb0, 0x40, 0x84, 0x45, 0x03, 0x74, 0x6b},
+	} {
+		if off+len(want) > len(exe) || !bytes.Equal(exe[off:off+len(want)], want) {
+			t.Fatalf("DQ3.EXE file %#x raw drift", off)
+		}
+	}
+}
+
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
 	  "schema_version":"0.1.15","pack_id":"test","game":"dq3","edition":"cht_jingxun",

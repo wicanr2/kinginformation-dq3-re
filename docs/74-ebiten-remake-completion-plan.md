@@ -377,7 +377,9 @@ Gate：不用 `DQ3_SHIP` 可自然取得船並航行。
 - 提頓夜間綠寶珠。
 - [x] 勇氣神殿單人 gate／藍寶珠：handler37 四人→單人、CTY23 `0x67`、handler62 復隊、
   試煉途中及復隊後 save/load 均由 boot production trace 閉合；見 `docs/100`。
-- 海盜村紅寶珠。
+- [x] 海盜村密道／紅寶珠：CTY27 `ctrl bit0x40` 可推入口、hidden transition、
+  event0 `0x68`／flag `0x3f`、魯拉船重定位、正式航行與 save/load 均由 boot production
+  trace 閉合；見 `docs/101`。畫面尚為 V1。
 - 商人建城／黃寶珠。
 - 沙曼歐莎 R-2：
   `道具選單使用拉之鏡 → CTY44 sec1 玩家站(14,7) → 夜晚 → rec97/98 → 怪89 →
@@ -629,11 +631,18 @@ schema `0.1.15` 已接續閉合蘭西爾勇氣試煉與藍寶珠。IDA Pro 9.4 �
 已經正式航行、住宿切白天、以最終鑰匙開門、接受挑戰、走 CTY23、取得藍寶珠、途中
 save/load、返回 CTY75 復隊及再次 save/load；見 `docs/100`。
 
+schema 維持 `0.1.15`，`dq3_cht` content `0.1.17` 已接續閉合海盜村密道與紅寶珠。
+IDA Pro 9.4 證明 NPC runtime `ctrl bit0x40` 的推動 gate 與 tile subid transition consumer；
+CTY27 raw 證明 `(26,9)` 可推物件、hidden transition→sec1 `(5,9)` 及 event0
+`{item=0x68,flag=0x3f}`。正式 trace 必須先魯拉 CTY15 觸發原版船重定位，才可登船航行至
+CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版同狀態影片畫格尚未定位，
+故畫面只標 V1；見 `docs/101`。
+
 下一輪依下列順序接手：
 
-1. **主線最高優先**：boot 起的同一條 trace 已正式完成勇氣試煉、取得藍寶珠、復隊並保存
-   合法 checkpoint（`docs/100`）。下一輪從該 checkpoint 依原版順序繼續重播，第一候選為
-   海盜村紅寶珠，但仍以玩家實際遇到的第一個 blocker 為準；
+1. **主線最高優先**：boot 起的同一條 trace 已正式完成海盜村密道、取得紅寶珠並保存
+   合法 checkpoint（`docs/101`）。下一輪從該 checkpoint 依原版順序繼續重播，第一候選為
+   商人建城／黃寶珠，但仍以玩家實際遇到的第一個 blocker 為準；
    不得因 P3 後段已有孤立 component tests，就跳過兩節點之間的玩家路徑、資源與存檔 gate。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
