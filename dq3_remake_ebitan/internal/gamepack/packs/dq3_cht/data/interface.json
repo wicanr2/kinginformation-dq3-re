@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.9",
+  "dialogue": {
+    "id": "dq3:window.dialogue",
+    "x": 152,
+    "y": 238,
+    "width": 360,
+    "height": 112,
+    "text_inset_x": 16,
+    "text_inset_y": 16,
+    "columns": 20,
+    "lines_per_page": 4,
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE",
+      "address_space": "file",
+      "address": "0x19fae",
+      "consumer": "sub_15002 opens the shared scripted-dialogue window; sub_f590 and sub_fb36 consume x/y/width/height before text_draw",
+      "doc": "docs/94-dialogue-window-and-monster-mask-re.md",
+      "note": "DGROUP 0x3e6e；caller logical 0x5002/file 0x6372；consumer logical 0xf590/file 0x10900"
+    }
+  }
+}

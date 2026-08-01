@@ -111,7 +111,7 @@ const (
 	ShpMaxH = 160
 )
 
-// MonsterSprite 是一隻怪的圖(palette 索引對 MNSBK.PAL;色 0 = 透明)。
+// MonsterSprite 是一隻怪的圖（palette 索引對 MNSBK.PAL；透明度由獨立 AND-mask 決定）。
 type MonsterSprite struct {
 	W, H   int
 	Px     [][]uint8 // [H][W] palette 索引
@@ -135,7 +135,7 @@ func DecodeMonsterSprite(shp []byte, id int) (*MonsterSprite, error) {
 	// 先嘗試 SHP 中的資料
 	if off+4 <= len(shp) && nxt > off {
 		// SHP 頭合法，試解碼；若失敗則回退
-		spr, err := decodeSpriteBytesInternal(shp, off, id)
+		spr, err := decodeSpriteBytesInternal(shp, off, nxt, id, true)
 		if err == nil {
 			return spr, nil // 成功
 		}
@@ -147,14 +147,17 @@ func DecodeMonsterSprite(shp []byte, id int) (*MonsterSprite, error) {
 	if !ok {
 		return nil, fmt.Errorf("SHP 空或無效(id %d),且無復原資料", id)
 	}
-	return decodeSpriteBytesInternal(data, 0, id)
+	return decodeSpriteBytesInternal(data, 0, len(data), id, false)
 }
 
 // decodeSpriteBytesInternal 依據資料與 offset 解碼 sprite。
 // 移植 C dq3_monster_sprite_decode，複用到 restored_sprites 回退路徑。
-func decodeSpriteBytesInternal(data []byte, off int, id int) (*MonsterSprite, error) {
+func decodeSpriteBytesInternal(data []byte, off, end, id int, requireMask bool) (*MonsterSprite, error) {
 	if off+4 > len(data) {
 		return nil, fmt.Errorf("sprite 頭越界(id %d)", id)
+	}
+	if end > len(data) || end < off+4 {
+		return nil, fmt.Errorf("sprite 尾界越界(id %d)", id)
 	}
 	wb := int(le16(data, off) & 0x7fff)
 	h := int(le16(data, off+2))
@@ -164,7 +167,7 @@ func decodeSpriteBytesInternal(data []byte, off int, id int) (*MonsterSprite, er
 	}
 	base := off + 4
 	planeSz := wb * h
-	if base+planeSz*4 > len(data) {
+	if base+planeSz*4 > end {
 		return nil, fmt.Errorf("sprite 資料越界(id %d)", id)
 	}
 	spr := &MonsterSprite{W: w, H: h, Px: make([][]uint8, h), Opaque: make([][]bool, h)}
@@ -186,10 +189,60 @@ func decodeSpriteBytesInternal(data []byte, off int, id int) (*MonsterSprite, er
 			}
 		}
 	}
-	for r := 0; r < h; r++ {
-		for b := 0; b < w; b++ {
-			spr.Opaque[r][b] = spr.Px[r][b] != 0 // 色0=透明
+	maskStart := base + planeSz*4
+	if maskStart < end {
+		if err := decodeMonsterMask(data, maskStart, end, wb, h, spr.Opaque); err != nil {
+			return nil, fmt.Errorf("sprite mask(id %d): %w", id, err)
+		}
+	} else if requireMask {
+		return nil, fmt.Errorf("sprite mask 缺失(id %d)", id)
+	} else {
+		// remake 補完的 128/129 沒有原版 mask，只能以非零色作遮罩；
+		// 原版 0..127 一律走上面的獨立 RLE AND-mask。
+		for r := 0; r < h; r++ {
+			for x := 0; x < w; x++ {
+				spr.Opaque[r][x] = spr.Px[r][x] != 0
+			}
 		}
 	}
 	return spr, nil
+}
+
+// decodeMonsterMask 解原版 sub_b31a/sub_b37c 使用的逐列 RLE AND-mask。
+// mask bit 1 保留背景（透明），bit 0 清除背景後再由四個色彩 plane 寫入（不透明）。
+func decodeMonsterMask(data []byte, pos, end, rowBytes, rows int, opaque [][]bool) error {
+	for y := 0; y < rows; y++ {
+		written := 0
+		for written < rowBytes {
+			if pos >= end {
+				return fmt.Errorf("第 %d 列提前結束", y)
+			}
+			code := data[pos]
+			pos++
+			count, value := 1, code
+			switch code & 0xc0 {
+			case 0x40:
+				count, value = int(code&0x3f), 0xff
+			case 0x80:
+				count, value = int(code&0x3f), 0x00
+			case 0xc0:
+				count = int(code & 0x3f)
+				if pos >= end {
+					return fmt.Errorf("第 %d 列 literal run 缺值", y)
+				}
+				value = data[pos]
+				pos++
+			}
+			if count <= 0 || written+count > rowBytes {
+				return fmt.Errorf("第 %d 列 run 越界：written=%d count=%d width=%d", y, written, count, rowBytes)
+			}
+			for n := 0; n < count; n++ {
+				for bit := 0; bit < 8; bit++ {
+					opaque[y][(written+n)*8+bit] = value&(0x80>>bit) == 0
+				}
+			}
+			written += count
+		}
+	}
+	return nil
 }

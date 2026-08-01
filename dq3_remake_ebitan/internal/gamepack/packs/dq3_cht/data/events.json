@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.8",
+  "schema_version": "0.1.9",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {

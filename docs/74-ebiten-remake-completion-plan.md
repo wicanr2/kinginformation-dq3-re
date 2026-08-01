@@ -559,7 +559,7 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 4. `git diff --check`、確認不納入原版素材／IDA 檔／使用者 scratch files，再做一次重大
    commit 與 push。
 
-## 10. 今日收尾與剩餘工作（更新 2026-07-30）
+## 10. 今日收尾與剩餘工作（更新 2026-08-01）
 
 boot 起的同一條正式 trace 已由首次航行繼續至加爾那之塔《領悟之書》`0x4a`、
 CTY17 達瑪神殿轉職，再閉合 CTY20《黑暗之燈》`0x5f`。
@@ -577,6 +577,14 @@ DGROUP `0x366a` 派發表抵達 `(logical) 0x4063`：只允許地表且當前為
 黑夜並重設時鐘步數，不消耗道具。正式 trace 已由達瑪 checkpoint 航行至 CTY20，
 白天調查寶箱、出村後由 rec421 使用、完成 save/load，並繼續航行抵達 CTY19；
 證據與更新圖片見 `docs/93`。
+
+本輪插入的玩家可見 parity audit 已修正兩個會污染後續截圖判讀的共用錯誤。IDA Pro 9.4
+閉合 DGROUP `0x3e6e` 的 caller→rect→consumer，確認原版對話外框是
+`(152,238,360,112)`、文字 inset `(16,16)`、20 欄／4 行；schema `0.1.9` 已將其移入
+`interface.json`。另由 `sub_1b1fe → sub_1b31a/sub_1b37c → sub_1b2af` 證實
+`DQ3MNS.SHP` 透明度來自四色 plane 後的獨立 RLE AND-mask，不能把黑色色號 0 當透明。
+component/parity tests 與 README 所引用的受影響 runtime PNG 已重產；逆向證據見 `docs/94`。
+這不改變主線下一個 blocker，仍由 CTY19 合法 checkpoint 接八頭大蛇流程。
 
 下一輪依下列順序接手：
 

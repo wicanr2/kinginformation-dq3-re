@@ -174,8 +174,8 @@ row pitch 0x54、`and es:[di]` 透明遮罩),與 BLK/SHP/packbg 同 4-bit planar
 | `+0` | 框樣式 id(交 sub_10ea6 畫邊框)|
 | `+2` | 文字 X 原點(byte ×8 = px)→ [0x716] |
 | `+4` | 文字 Y 原點(px)→ [0x718] |
-| `+6` | 框高 |
-| `+8` | 框寬(byte)|
+| `+6` | 內容寬(VRAM byte；`sub_1fb36` 備份外框時再加 1 byte)|
+| `+8` | 內容高(pixel；`sub_1fb36` 備份外框時再加 0x10)|
 | `+0xa` | 標題列文字記錄 id |
 | `+0xc` | 內容行數(迴圈次數)|
 | `+0xe` | 內容列文字記錄 id(逐行/逐欄)|
@@ -189,10 +189,12 @@ row pitch 0x54、`and es:[di]` 透明遮罩),與 BLK/SHP/packbg 同 4-bit planar
   框高 = `人數×0xa + 4`;標題/內容/footer 記錄 = `0x191/0x192/0x193`。
 - 即 game3.png 上方「勇者|武鬥家|僧侶|魔法師」4 欄,每欄含名 / H+HP / M+MP / 職業+等級。
 
-### 戰鬥訊息 / 敵名(`lcall 111b:264`,win_rect [0x3e6e])
+### 共用對話／戰鬥訊息(`lcall 111b:264`,win_rect [0x3e6e])
 
 - 以基準游標 `[0x3e70]`/`[0x3e72]`(`battle_enter_screen` 設 0x12/0xf8)起算:
   X = `[0x3e70]+2`、Y = `[0x3e72]+0x10 + 行*0x10`;敵名記錄 = `sprite_id + 0x258`。
+- 原版靜態 rect 位於 DGROUP `0x3e6e`（file `0x19fae`），外框換算為
+  `(152,238,360,112)`；它也由 `sub_15002` 開啟供大量 scripted-event 對話使用，不是戰鬥專用。
 
 > remake `dq3_battlescene` 依此座標系排版(字/行 16px、狀態 4 欄 80px),不再肉眼對圖。
 

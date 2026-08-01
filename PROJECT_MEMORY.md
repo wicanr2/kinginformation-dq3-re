@@ -1,6 +1,6 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 更新：2026-07-30。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-08-01。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
 
@@ -83,6 +83,10 @@ treasure table 遷出的完整 D3／E3 範例。
 schema `0.1.8` 的 `item_use_effects` 是道具效果資料化的第一個有限契約；提頓寶箱與
 黑暗燈 raw ID、旗標、適用場景、目標日夜 phase、步數重設及不消耗語意均由 JSON 提供，
 Go 不知道《黑暗之燈》或 DQ3 專屬 raw ID。
+schema `0.1.9` 新增 `interface.json`；原版共用對話框 `(152,238,360,112)`、文字 inset、
+20 欄／4 行已由 EXE rect 的 caller、writer 與 consumer 證實並移出 Go。怪物透明度也已
+改由 `DQ3MNS.SHP` 四色 plane 後的獨立 RLE AND-mask 解碼，禁止再把黑色色號 0 當透明。
+證據見 `docs/94`；受影響的 production 截圖仍須在本批驗收後全部重產。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

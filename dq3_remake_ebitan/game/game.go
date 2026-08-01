@@ -2291,6 +2291,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g := &Game{
 		rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default(), pack: pack,
 	}
+	g.dlg.layout = pack.DialogueWindowLayout()
 	g.battle.statusSleepingText = sleepingText.Value
 	g.battle.statusWokeText = wokeText.Value
 	g.tavern.equipment = memberEquipment

@@ -69,6 +69,9 @@
   validator 與具名狀態機／effect primitive。
   為反組譯診斷暫時硬寫的值不得進 commit；切片收尾前必須遷入 JSON、更新 `docs/84` 欄位
   說明，並加原始 EXE／DAT parity test。缺欄位或未知引用一律 fail closed，不設 Go fallback。
+- 視窗的外框座標／尺寸、文字 inset、欄數、每頁行數與換頁容量也是版本專屬資料；必須從
+  原版視窗結構及其 consumer 閉合後放進 game-pack JSON。不得用截圖目測、C remake 尺寸或
+  目前螢幕剩餘空間猜值，也不得在共用 Go renderer 留 DQ3 專屬 fallback。
 - production Go 禁止直接寫玩家會看到的中文、日文或英文句子；畫面流程只能引用穩定的
   text ID。各 game pack 的文字 JSON 保存實際字串與原版 record/evidence，版面寬度、換頁、
   選項與插值參數使用具名欄位，不把控制碼或排版邏輯偷塞進字串。開發用 assertion、log 與

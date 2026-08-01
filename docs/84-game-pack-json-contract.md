@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.8"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.9"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.8",
+  "schema_version": "0.1.9",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -206,7 +206,8 @@ namespace:local_id
     "facilities": "data/facilities.json",
     "characters": "data/characters.json",
     "texts": "data/texts.json",
-    "events": "data/events.json"
+    "events": "data/events.json",
+    "interface": "data/interface.json"
   },
   "assets": {}
 }
@@ -373,7 +374,7 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 | `definitions[].id` | string | 是 | 穩定 text ID。 |
 | `value` | string | 是 | 可讀、可修改的原版繁體中文轉寫，保留換行。 |
 | `glyph_codes` | int[] | 是 | 原版字模及控制碼 words；runtime 直接消費，不設 Go 字串 fallback。 |
-| `layout` | object | 是 | `dialogue`、`menu_label` 或 `battle_message`；對話另列 columns／lines_per_page。 |
+| `layout` | object | 是 | `dialogue`、`menu_label`、`menu_record` 或 `battle_message`；對話另列 columns／lines_per_page。`menu_record` 是本身含框線／換行的原版 legacy record，不套用共用對話框容量。 |
 | `source` | object | 是 | `legacy_record` 的檔名／record，或 `glyph_map` 字模來源。 |
 | `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
 
@@ -675,7 +676,16 @@ IDA／CTY／D3TXT 證據與正式 trace 見 `events.json`、[`docs/89`](89-bahar
 個人物品或 catalyst 時在 mutation 前失敗即關閉。DQ3 canonical 值、IDA 證據與正式 trace
 見 `events.json`、[`docs/92`](92-dhama-reclass-production-trace.md)。
 
-### 6.10 `ui.json`、`audio.json`
+### 6.10 `interface.json`
+
+`interface.json` 保存版本專屬固定視窗幾何；引擎只實作通用繪圖契約。目前必填
+`dialogue`，欄位為 `id`、`x`、`y`、`width`、`height`、`text_inset_x`、
+`text_inset_y`、`columns`、`lines_per_page` 與 D3 `evidence`。座標與尺寸皆為 640×350
+邏輯畫布的 pixel；不得以目前縮放後視窗推算。DQ3 canonical 值為
+`(152,238,360,112)`、inset `(16,16)`、20 欄、每頁 4 行；EXE 結構與 consumer 見
+[`docs/94`](94-dialogue-window-and-monster-mask-re.md)。缺欄位或無效幾何一律 fail closed。
+
+### 6.11 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
   避免在規則表散落中文字串。
@@ -694,7 +704,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.8",
+  "schema_version": "0.1.9",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

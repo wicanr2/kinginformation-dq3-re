@@ -78,3 +78,23 @@ func TestMonsterSprite(t *testing.T) {
 	}
 	t.Logf("史萊姆 sprite %d×%d 有墨 ✓", spr.W, spr.H)
 }
+
+func TestMonsterSpriteUsesOriginalANDMask(t *testing.T) {
+	shp := findAsset(t, "DQ3MNS.SHP")
+	// id57 是巴哈拉塔戰鬥的守衛；其黑色像素（palette 0）仍有實體，
+	// 若以顏色 0 當透明，README 戰鬥圖就會出現背景穿洞。
+	spr, err := DecodeMonsterSprite(shp, 57)
+	if err != nil {
+		t.Fatalf("守衛 sprite 解碼失敗: %v", err)
+	}
+	blackOpaque, transparent := false, false
+	for y := 0; y < spr.H; y++ {
+		for x := 0; x < spr.W; x++ {
+			blackOpaque = blackOpaque || spr.Px[y][x] == 0 && spr.Opaque[y][x]
+			transparent = transparent || !spr.Opaque[y][x]
+		}
+	}
+	if !blackOpaque || !transparent {
+		t.Fatalf("獨立 AND-mask 未保留黑色實體與透明背景：blackOpaque=%v transparent=%v", blackOpaque, transparent)
+	}
+}

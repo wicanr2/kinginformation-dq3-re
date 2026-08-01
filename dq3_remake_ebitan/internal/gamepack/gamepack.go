@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.8"
+	SchemaVersion = "0.1.9"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -74,6 +74,26 @@ type ServiceDefinition struct {
 type Facilities struct {
 	SchemaVersion      string              `json:"schema_version"`
 	ServiceDefinitions []ServiceDefinition `json:"service_definitions"`
+}
+
+// WindowLayout 是版本專屬的固定視窗幾何。引擎只依此通用契約繪製，
+// 不保存任何 DQ3 專屬座標或尺寸。
+type WindowLayout struct {
+	ID           string   `json:"id"`
+	X            int      `json:"x"`
+	Y            int      `json:"y"`
+	Width        int      `json:"width"`
+	Height       int      `json:"height"`
+	TextInsetX   int      `json:"text_inset_x"`
+	TextInsetY   int      `json:"text_inset_y"`
+	Columns      int      `json:"columns"`
+	LinesPerPage int      `json:"lines_per_page"`
+	Evidence     Evidence `json:"evidence"`
+}
+
+type Interface struct {
+	SchemaVersion string       `json:"schema_version"`
+	Dialogue      WindowLayout `json:"dialogue"`
 }
 
 type TileCoordinate struct {
@@ -546,6 +566,7 @@ type Characters struct {
 type Pack struct {
 	Manifest         Manifest
 	Facilities       Facilities
+	Interface        Interface
 	Events           Events
 	Characters       Characters
 	Texts            Texts
@@ -616,6 +637,19 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateFacilities(); err != nil {
 		return nil, fmt.Errorf("%s: %w", facilitiesPath, err)
 	}
+	interfacePath, ok := p.Manifest.Data["interface"]
+	if !ok {
+		return nil, errors.New("manifest.json: data.interface is required")
+	}
+	if interfacePath, err = cleanRelative(interfacePath, "data.interface"); err != nil {
+		return nil, err
+	}
+	if err := decodeStrict(fsys, interfacePath, &p.Interface); err != nil {
+		return nil, err
+	}
+	if err := p.validateInterface(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
 	eventsPath, ok := p.Manifest.Data["events"]
 	if !ok {
 		return nil, errors.New("manifest.json: data.events is required")
@@ -661,15 +695,33 @@ func Load(fsys fs.FS) (*Pack, error) {
 	canonical, err := json.Marshal(struct {
 		Manifest   Manifest   `json:"manifest"`
 		Facilities Facilities `json:"facilities"`
+		Interface  Interface  `json:"interface"`
 		Events     Events     `json:"events"`
 		Characters Characters `json:"characters"`
 		Texts      Texts      `json:"texts"`
-	}{p.Manifest, p.Facilities, p.Events, p.Characters, p.Texts})
+	}{p.Manifest, p.Facilities, p.Interface, p.Events, p.Characters, p.Texts})
 	if err != nil {
 		return nil, fmt.Errorf("canonicalize pack: %w", err)
 	}
 	p.contentHash = fmt.Sprintf("sha256:%x", sha256.Sum256(canonical))
 	return &p, nil
+}
+
+func (p *Pack) validateInterface() error {
+	if p.Interface.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported schema_version %q", p.Interface.SchemaVersion)
+	}
+	w := p.Interface.Dialogue
+	if w.ID == "" || w.X < 0 || w.Y < 0 || w.Width <= 0 || w.Height <= 0 ||
+		w.TextInsetX < 0 || w.TextInsetY < 0 ||
+		w.TextInsetX*2 >= w.Width || w.TextInsetY*2 >= w.Height ||
+		w.Columns <= 0 || w.Columns > 100 || w.LinesPerPage <= 0 || w.LinesPerPage > 20 {
+		return errors.New("dialogue window layout is invalid")
+	}
+	if err := validateEvidence(w.Evidence); err != nil {
+		return fmt.Errorf("dialogue evidence: %w", err)
+	}
+	return nil
 }
 
 func (p *Pack) validateCharacters() error {
@@ -751,6 +803,10 @@ func (p *Pack) validateTexts() error {
 		case "menu_label":
 			if d.Source.Kind != "glyph_map" {
 				return fmt.Errorf("%s: menu_label requires glyph_map source", d.ID)
+			}
+		case "menu_record":
+			if d.Source.Kind != "legacy_record" || d.Source.File == "" || d.Source.Record == nil {
+				return fmt.Errorf("%s: menu_record requires legacy_record source", d.ID)
 			}
 		case "battle_message":
 			if d.Source.Kind != "legacy_record" || d.Source.File == "" || d.Source.Record == nil {
@@ -1724,6 +1780,10 @@ func (p *Pack) ItemUseEffects() []ItemUseEffect {
 func (p *Pack) ItemUseEffectByRawID(itemRawID int) (*ItemUseEffect, bool) {
 	e, ok := p.itemUseEffects[itemRawID]
 	return e, ok
+}
+
+func (p *Pack) DialogueWindowLayout() WindowLayout {
+	return p.Interface.Dialogue
 }
 
 func (p *Pack) TwoStepFloorSwitchGates() []TwoStepFloorSwitchGate {

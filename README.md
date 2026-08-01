@@ -45,7 +45,7 @@ RE 文件。
 
 ![Ebiten：諾魯德密道正式流程](dq3_remake_ebitan/docs/norud_passage_trigger.png)
 
-![Ebiten：巴哈拉達救援的甘達特混合編隊](dq3_remake_ebitan/docs/baharata_boss_formation.png)
+![Ebiten：巴哈拉達救援的甘達特混合編隊（使用原版 SHP AND-mask）](dq3_remake_ebitan/docs/baharata_boss_formation.png)
 
 ![Ebiten：救援後取得黑胡椒](dq3_remake_ebitan/docs/baharata_pepper_received.png)
 

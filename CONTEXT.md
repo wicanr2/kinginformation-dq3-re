@@ -36,11 +36,19 @@
 - **glyph index** — 字模索引(0..1475),OCR → Unicode 才能 dump 純文字。
 - **control-code** — 訊息字串中的負值 word(`0xffff` 結束、`0xfffc` 捲動等);全為文字格式 / 變數插入,**無** run-event 碼。
 - **rec400 指令窗** — D3TXT00 記錄 400 = 精訊版野外指令窗本尊(命令 + 2×3 格 對話/咒文/狀況/道具/裝備/調查);UI 選單以「框線 glyph + 標籤」存成單一 record(同類:rec407 狀態畫面、rec421 道具 使用/給予/丟掉、rec441-444 戰鬥指令)。_Avoid_: 人工猜指令中文名(docs/12 舊標)。
+- **共用對話視窗 rect** — DGROUP `0x3e6e`（file `0x19fae`）的原版結構；`+2=0x13`
+  是 X VGA byte、`+4=0xee` 是 Y pixel、`+6=0x2c` 是內容寬 VGA byte、`+8=0x60`
+  是內容高 pixel。`sub_1fb36` 加左右 1 byte／上下 `0x10` 後，外框為
+  `(152,238,360,112)`，文字 inset `(16,16)`、20 欄、每頁 4 行。_Avoid_: 沿用 remake
+  的 `(24,244,592,96)` 或把 `+6/+8` 寬高對調（見 [`docs/94`](docs/94-dialogue-window-and-monster-mask-re.md)）。
 - **道具名 rec** — D3TXT00 記錄號 = 道具碼 + 1(docs/33);咒文名 rec = `spell_id + 0x79`。
 
 ### 角色 / 數值
 - **7 屬性序** — 成長表 14 byte = 7 個 (base,slope) 對,`kind*2`=列內 offset:0 HP、2 MP、4 速度、6 力量、8 聰明、A 耐力、C 運氣。語意三方交叉確認(成長表樣式 + 升級訊息 rec191-197 + BBS 存檔佈局 docs/history)。_Avoid_: 把屬性欄標成 B4/B6/B8/BA 不明名(舊 enum)。
 - **怪物 AI 欄位** — `D3MNS.DAT` 記錄內驅動敵方行動的 4 欄:`+0x0d` 施咒機率(/256)、`+0x0e..+0x13` 已知咒文 bitmask(6 byte/48 bit,放咒時均勻隨機挑)、`+0x17` 逃跑觸發閾值(對我方強度 `[0x5094]`)、`+0x18` 逃跑機率。決策樹 file 0xbcf0;見 [docs/37](docs/37-monster-ai.md)。_Avoid_: 把怪物施咒當「挑最佳咒」(實為隨機)。
+- **SHP AND-mask** — `DQ3MNS.SHP` 每隻怪的四個色彩 plane 後另有逐列 RLE 遮罩；mask bit
+  1 保留背景（透明），bit 0 清背景後寫色彩（不透明）。調色盤索引 0 是黑色且可為實體像素。
+  _Avoid_: `palette index 0 = transparent`（見 [`docs/94`](docs/94-dialogue-window-and-monster-mask-re.md)）。
 - **戰鬥睡眠／混亂恢復** — 玩家角色 `+0x38 bit0x20` 在行動前
   `roll<=0x64` 清除；怪物 bit0x80 是 `roll<0x64` 清除，醒來當回合都跳過。見
   [`docs/37`](docs/37-monster-ai.md)、[`docs/91`](docs/91-garuna-satori-book-production-trace.md)。

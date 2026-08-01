@@ -1,23 +1,18 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+)
 
 // noVar 是插值 var(varItem/varNum)未設時的哨兵值 → 渲染為空白一格。
 const noVar = -1
-
-// 對話視窗(底部,DQ 風格,4 行 16×16 字模)。幾何/分頁 1:1 移植 C dq3_dialogue.c。
-const (
-	dlgLines   = 4
-	winX, winY = 24, 244
-	winW, winH = ScreenW - 48, 96
-	dlgPad     = 12
-	dlgCols    = (winW - 2*dlgPad) / dq3data.GlyphPx // 35
-)
 
 // Dialogue 是一個對話視窗狀態機:Open(rec) → 逐頁 Advance() → 關閉。
 type Dialogue struct {
 	tx        *dq3data.Text
 	itemNames *dq3data.Text // 道具名表(D3TXT00.TXT,rec=code+1)。固定,獨立於 tx 目前切換的城鎮 bank;Game 初始化時同步 = g.shop.nameText。
+	layout    gamepack.WindowLayout
 	buf       []uint16
 	pos       int
 	open      bool
@@ -108,7 +103,7 @@ func (d *Dialogue) scanPage(pos int) (int, bool) {
 			return i + 1, false
 		case v == dq3data.TxtNL || v == dq3data.TxtNL2:
 			col, line, i = 0, line+1, i+1
-			if line >= dlgLines {
+			if line >= d.layout.LinesPerPage {
 				return i, false
 			}
 		case dq3data.IsVarInsert(v):
@@ -122,26 +117,26 @@ func (d *Dialogue) scanPage(pos int) (int, bool) {
 			}
 			for j := 0; j < n; j++ {
 				col++
-				if col >= dlgCols {
+				if col >= d.layout.Columns {
 					col, line = 0, line+1
-					if line >= dlgLines {
+					if line >= d.layout.LinesPerPage {
 						return i, false
 					}
 				}
 			}
 		case v >= 0xffed: // 未知保留控制碼(不在六個已知插值碼內)→ 空白一格,舊行為 fallback
 			i, col = i+1, col+1
-			if col >= dlgCols {
+			if col >= d.layout.Columns {
 				col, line = 0, line+1
 			}
-			if line >= dlgLines {
+			if line >= d.layout.LinesPerPage {
 				return i, false
 			}
 		default:
 			i, col = i+1, col+1
-			if col >= dlgCols {
+			if col >= d.layout.Columns {
 				col, line = 0, line+1
-				if line >= dlgLines {
+				if line >= d.layout.LinesPerPage {
 					return i, false
 				}
 			}
@@ -188,19 +183,20 @@ func (d *Dialogue) draw(rgba []byte, white dq3data.Color) {
 	if !d.open {
 		return
 	}
+	w := d.layout
 	dark := dq3data.Color{R: 0, G: 0, B: 0}
-	for r := 0; r < winH; r++ {
-		for c := 0; c < winW; c++ {
+	for r := 0; r < w.Height; r++ {
+		for c := 0; c < w.Width; c++ {
 			col := dark
-			if r == 0 || r == winH-1 || c == 0 || c == winW-1 { // 白框
+			if r == 0 || r == w.Height-1 || c == 0 || c == w.Width-1 { // 白框
 				col = white
 			}
-			putPx(rgba, winX+c, winY+r, col)
+			putPx(rgba, w.X+c, w.Y+r, col)
 		}
 	}
 	end, _ := d.scanPage(d.pos)
 	col, line := 0, 0
-	x0, y0 := winX+dlgPad, winY+dlgPad
+	x0, y0 := w.X+w.TextInsetX, w.Y+w.TextInsetY
 loop:
 	for i := d.pos; i < end && i < len(d.buf); {
 		v := d.buf[i]
@@ -210,7 +206,7 @@ loop:
 		case v == dq3data.TxtNL || v == dq3data.TxtNL2:
 			col, line = 0, line+1
 			i++
-			if line >= dlgLines {
+			if line >= w.LinesPerPage {
 				break loop
 			}
 		case dq3data.IsVarInsert(v):
@@ -228,9 +224,9 @@ loop:
 					d.drawGlyph(rgba, x0+col*dq3data.GlyphPx, y0+line*dq3data.GlyphPx, glyphs[j], white)
 				}
 				col++
-				if col >= dlgCols {
+				if col >= w.Columns {
 					col, line = 0, line+1
-					if line >= dlgLines {
+					if line >= w.LinesPerPage {
 						break loop
 					}
 				}
@@ -238,7 +234,7 @@ loop:
 		case v >= 0xffed: // 未知保留控制碼 → 空白一格
 			col++
 			i++
-			if col >= dlgCols {
+			if col >= w.Columns {
 				col, line = 0, line+1
 			}
 		default:
@@ -247,9 +243,9 @@ loop:
 			}
 			col++
 			i++
-			if col >= dlgCols {
+			if col >= w.Columns {
 				col, line = 0, line+1
-				if line >= dlgLines {
+				if line >= w.LinesPerPage {
 					break loop
 				}
 			}

@@ -45,8 +45,9 @@
 +4  4 個 plane 連續(plane-major,未壓縮):
         每段 = h 行 × w byte,每 byte = 8 像素的「該 plane bit」(MSB-first)。
         VGA Map Mask 由 ah=0x08 遞減到 0x01 → 第 1 段是 bit-plane 3、末段 bit-plane 0。
-        色號 = Σ (plane_bit << plane)(0..15),對 MNSBK.PAL 取色。
-        色號 0 視為透明(背景)。
++4+4*w*h 逐列 RLE AND-mask：bit 1 保留背景（透明），bit 0 清背景後再寫色彩。
+        色號 = Σ (plane_bit << plane)(0..15),對 MNSBK.PAL 取色；色號 0 是黑色，
+        仍可能是遮罩標為不透明的怪物實體像素。
 ```
 
 > 與 BLK tile(docs/04)同屬 VGA **4-bit planar** 家族,差別:
@@ -63,7 +64,7 @@
 |---|---|
 | `sub_b19e` | 確保 SHP 開檔(int21 AH=3Dh),seek `id*4` 讀 offset table 8 byte,算 `len = next - this`,把資料整段讀進遠段 `[0x2540]` 緩衝 |
 | `sub_b2af` | 色彩 blit:讀 `[si]=w`、`[si+2]=h`,4 plane × h row × w byte,逐 byte `and es:[di]`(透明遮罩),row pitch 0x54,Map Mask `out 0x3c4` 逐 plane(ah 0x08→0x01)|
-| `sub_b31a` / `sub_b37c` | AND-mask(陰影 / 透明)分支:對 mask plane 走 RLE(top 2 bit:0x40=run 0xff、0x80=run 0x00、0x00=literal run、0xc0=單一 literal)。色彩主體不走 RLE |
+| `sub_b31a` / `sub_b37c` | AND-mask(透明)分支：跳過 header 與四個色彩 plane 後逐列解 RLE；top 2 bit `0x40`=重複 `0xff`、`0x80`=重複 `0x00`、`0xc0`=讀下一 byte 並重複、`0x00`=目前 byte 單一 literal。色彩主體不走 RLE |
 
 ### 驗證
 
