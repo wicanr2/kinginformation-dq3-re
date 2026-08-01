@@ -77,6 +77,11 @@
   才是乾渴壺 `0x5e`。詳見 [`docs/97`](docs/97-eginbear-push-puzzle-production-trace.md)。
   _Avoid_: 以 sprite `B2==40` 判 pushability、加入 remake 自造 `sokoban_solved`，或把
   event1／flag `0x3b` 當第二個乾渴壺。
+- **勇氣試煉暫時單人模式** — CTY47 sec0 handler37 `(25,16)` 接受後保存 active party
+  count、強制 count=1、寫 world `(82,165)` 並設 `DGROUP 0x4f46` bit `0x80`；CTY75
+  handler62 `(26,7)` 還原 count 並清 bit。flag `0x13` 是完成分支 reader，writer 仍
+  `unknown`；原版 world reader 為 clear→CTY75、set→CTY47。見 [`docs/100`](docs/100-lancel-courage-blue-orb-production-trace.md)。
+  _Avoid_: 接受或取得藍寶珠時自行 set flag `0x13`、反向 `owPortal`、宣稱 solo 機制 moot。
 - **遭遇區表** — overworld region map `0x4966`(16×16 grid,cell=(X>>4)+(Y&0xf0)→region)+ 遭遇表 `0x4a56`(region×0x20 = 4 子表×8 byte;byte2=背景頁、byte4-7=候選怪 0xff 終止)。CTY 用 `[0xd77]` 存的 region(0=安全)。見 [docs/39](docs/39-encounter-zones.md)。
 - **咒文習得表** — `sub_db5f`(file 0xeecf)讀 DGROUP `0x36f9` 起 per-系 stride 8 指標表 `{spellA,levelA,spellB,levelB}`;系基底 0/8/0x10=勇者/僧侶/魔法系;`level[i]`/`spell[i]` 平行,清單長度由下一指標界定(越界=#5 亂學咒 bug)。職業→系:勇者→勇者系、僧侶→僧侶系、魔法使→魔法系、賢者→僧侶+魔法、其餘無咒。
 
@@ -158,7 +163,9 @@
   [`98`](docs/98-thirsty-pitcher-final-key-production-trace.md) 乾渴壺唯一成功格、world-state
   `0x08`、`5×4` 地圖 patch、CTY40 最終鑰匙與正式玩家輸入追蹤 ·
   [`99`](docs/99-teidon-final-key-green-orb-production-trace.md) 最終鑰匙正式使用、魯拉船重定位、
-  提頓 handler35 綠色寶珠與 boot production trace
+  提頓 handler35 綠色寶珠與 boot production trace ·
+  [`100`](docs/100-lancel-courage-blue-orb-production-trace.md) 蘭西爾 handler37／62、暫時單人、
+  CTY23 藍寶珠、途中／復隊存讀檔與 boot production trace
 
 ### 資料 / 研究(`docs/data/`)
 - [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·

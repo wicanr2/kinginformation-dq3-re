@@ -12,43 +12,46 @@ import (
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
 type saveState struct {
-	PackID          string       `json:"pack_id,omitempty"`
-	PackSchema      string       `json:"pack_schema,omitempty"`
-	PackContentHash string       `json:"pack_content_hash,omitempty"`
-	HeroExp         uint32       `json:"exp"`
-	HeroHP          int          `json:"hp"`
-	HeroMP          int          `json:"mp"`
-	HeroStat        stats.Values `json:"stats,omitempty"`
-	HeroGold        int          `json:"gold"`
-	HeroName        []int        `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
-	HeroGender      int          `json:"herogender"`         // 0=男 1=女
-	Inventory       []int        `json:"inv"`
-	Equip           [4]int       `json:"eq"`
-	EquipmentV2     bool         `json:"equipment_v2,omitempty"` // true:-1=空；舊檔以 0=空
-	Comps           []compSav    `json:"comps"`
-	Roster          []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
-	Flags           []int        `json:"flags"`
-	ShipOwned       bool         `json:"shipowned"`
-	PhoenixOwned    bool         `json:"phoenixowned,omitempty"`
-	PhoenixAboard   bool         `json:"phoenixaboard,omitempty"`
-	PhoenixX        int          `json:"phoenixx,omitempty"`
-	PhoenixY        int          `json:"phoenixy,omitempty"`
-	ShipX           int          `json:"shipx"`
-	ShipY           int          `json:"shipy"`
-	PX              int          `json:"px"`
-	PY              int          `json:"py"`
-	OverPX          int          `json:"over_px,omitempty"`
-	OverPY          int          `json:"over_py,omitempty"`
-	OverworldPosV2  bool         `json:"overworld_position_v2,omitempty"`
-	InTown          bool         `json:"town"`
-	StoryBits       []byte       `json:"storybits,omitempty"`
-	WorldState      uint16       `json:"worldstate,omitempty"`
-	DNPhase         int          `json:"dnphase,omitempty"`
-	DNStep          int          `json:"dnstep,omitempty"`
-	Cty             int          `json:"cty,omitempty"`
-	Section         int          `json:"section,omitempty"`
-	Layer           int          `json:"layer,omitempty"`
-	VisitedTowns    []townVisit  `json:"visited_towns,omitempty"`
+	PackID                  string       `json:"pack_id,omitempty"`
+	PackSchema              string       `json:"pack_schema,omitempty"`
+	PackContentHash         string       `json:"pack_content_hash,omitempty"`
+	HeroExp                 uint32       `json:"exp"`
+	HeroHP                  int          `json:"hp"`
+	HeroMP                  int          `json:"mp"`
+	HeroStat                stats.Values `json:"stats,omitempty"`
+	HeroGold                int          `json:"gold"`
+	HeroName                []int        `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
+	HeroGender              int          `json:"herogender"`         // 0=男 1=女
+	Inventory               []int        `json:"inv"`
+	Equip                   [4]int       `json:"eq"`
+	EquipmentV2             bool         `json:"equipment_v2,omitempty"` // true:-1=空；舊檔以 0=空
+	Comps                   []compSav    `json:"comps"`
+	SoloChallengeActive     bool         `json:"solo_challenge_active,omitempty"`
+	SoloChallengeEventID    string       `json:"solo_challenge_event_id,omitempty"`
+	SoloChallengeCompanions []compSav    `json:"solo_challenge_companions,omitempty"`
+	Roster                  []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
+	Flags                   []int        `json:"flags"`
+	ShipOwned               bool         `json:"shipowned"`
+	PhoenixOwned            bool         `json:"phoenixowned,omitempty"`
+	PhoenixAboard           bool         `json:"phoenixaboard,omitempty"`
+	PhoenixX                int          `json:"phoenixx,omitempty"`
+	PhoenixY                int          `json:"phoenixy,omitempty"`
+	ShipX                   int          `json:"shipx"`
+	ShipY                   int          `json:"shipy"`
+	PX                      int          `json:"px"`
+	PY                      int          `json:"py"`
+	OverPX                  int          `json:"over_px,omitempty"`
+	OverPY                  int          `json:"over_py,omitempty"`
+	OverworldPosV2          bool         `json:"overworld_position_v2,omitempty"`
+	InTown                  bool         `json:"town"`
+	StoryBits               []byte       `json:"storybits,omitempty"`
+	WorldState              uint16       `json:"worldstate,omitempty"`
+	DNPhase                 int          `json:"dnphase,omitempty"`
+	DNStep                  int          `json:"dnstep,omitempty"`
+	Cty                     int          `json:"cty,omitempty"`
+	Section                 int          `json:"section,omitempty"`
+	Layer                   int          `json:"layer,omitempty"`
+	VisitedTowns            []townVisit  `json:"visited_towns,omitempty"`
 }
 
 // compSav 是一名同伴的存檔資料。
@@ -80,13 +83,16 @@ func (g *Game) snapshot() saveState {
 		PackID: packID, PackSchema: packSchema, PackContentHash: packHash,
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroStat: g.heroStat, HeroGold: g.heroGold,
 		HeroName: append([]int(nil), g.heroName...), HeroGender: g.heroGender,
-		Inventory:   append([]int(nil), g.inventory...),
-		Equip:       g.equip,
-		EquipmentV2: true,
-		Comps:       compsToSav(g.companions),
-		Roster:      compsToSav(g.roster),
-		Flags:       flagsToSav(g.flags),
-		ShipOwned:   g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
+		Inventory:               append([]int(nil), g.inventory...),
+		Equip:                   g.equip,
+		EquipmentV2:             true,
+		Comps:                   compsToSav(g.companions),
+		SoloChallengeActive:     g.soloChallengeActive,
+		SoloChallengeEventID:    g.soloChallengeEventID,
+		SoloChallengeCompanions: compsToSav(g.soloChallengeCompanions),
+		Roster:                  compsToSav(g.roster),
+		Flags:                   flagsToSav(g.flags),
+		ShipOwned:               g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PhoenixOwned: g.phoenixOwned, PhoenixAboard: g.phoenixAboard,
 		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY,
 		PX: g.px, PY: g.py, OverPX: g.overPx, OverPY: g.overPy,
@@ -150,6 +156,7 @@ func (g *Game) restore(s saveState) {
 	for _, k := range s.Flags {
 		g.flags[k] = true
 	}
+	g.companions = nil
 	if len(s.Comps) > 0 { // 還原同伴
 		g.companions = make([]*Member, len(s.Comps))
 		for i, c := range s.Comps {
@@ -167,6 +174,32 @@ func (g *Game) restore(s saveState) {
 			m.ensureStats()
 			m.syncLearnedSpells()
 			g.companions[i] = m
+		}
+	}
+	g.soloChallengeActive = s.SoloChallengeActive
+	g.soloChallengeEventID = s.SoloChallengeEventID
+	g.soloChallengeCompanions = nil
+	if len(s.SoloChallengeCompanions) > 0 {
+		g.soloChallengeCompanions = make([]*Member, len(s.SoloChallengeCompanions))
+		for i, c := range s.SoloChallengeCompanions {
+			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
+				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
+				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
+				Inventory: append([]int(nil), c.Inventory...), LearnedSpells: append([]int(nil), c.LearnedSpells...)}
+			if !s.EquipmentV2 {
+				migrateLegacyMemberEquipment(m)
+			}
+			m.ensureStats()
+			m.syncLearnedSpells()
+			g.soloChallengeCompanions[i] = m
+		}
+	}
+	if g.soloChallengeActive {
+		if g.pack == nil {
+			g.soloChallengeActive, g.soloChallengeEventID, g.soloChallengeCompanions = false, "", nil
+		} else if _, ok := g.pack.TemporarySoloChallenge(g.soloChallengeEventID); !ok {
+			// A pack-bound save must never restore an unknown partial transaction.
+			g.soloChallengeActive, g.soloChallengeEventID, g.soloChallengeCompanions = false, "", nil
 		}
 	}
 	if len(s.Roster) > 0 { // 還原名冊(未入隊角色)

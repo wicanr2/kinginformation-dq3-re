@@ -12,8 +12,9 @@
 改由 CTY38 買入，不再讓地名線索取代 SHP.DAT／runtime 貨架 oracle。
 
 這項修正不表示 CTY38 的地名已重新命名；它只證明目前 production 流程使用的貨架與原始
-商店資料一致。CTY47／75 的朗錫爾雙入口與勇氣 gate 仍依
-[`walkthrough-flow-audit`](data/walkthrough-flow-audit.md) 個別處理。
+商店資料一致。CTY47／75 的朗錫爾雙入口與勇氣試煉已由後續切片閉合，見
+[`docs/100`](100-lancel-courage-blue-orb-production-trace.md)；本文件不再以早期 gate 假說
+描述該流程。
 
 ## 2. 非破壞性 IDA 證據
 

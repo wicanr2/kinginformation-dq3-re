@@ -176,20 +176,28 @@ func (g *Game) drawBossSurrenderChoice(rgba []byte, white dq3data.Color) {
 	if g.bossSurrenderStage != bossSurrenderChoice {
 		return
 	}
-	x, y, w, h := 430, 220, 120, 68
-	fillBox(rgba, x, y, w, h, white)
 	event, ok := g.activeBossSurrender()
 	if !ok {
 		return
 	}
-	ids := [2]string{event.DialogueTextIDs.ChoiceYes, event.DialogueTextIDs.ChoiceNo}
+	g.drawBinaryChoice(rgba, white, g.bossSurrenderCursor,
+		event.DialogueTextIDs.ChoiceYes, event.DialogueTextIDs.ChoiceNo)
+}
+
+// drawBinaryChoice is the shared renderer for the existing two-option event UI.
+// Its legacy geometry still requires a separate original-layout RE slice before
+// it may be promoted into the game-pack interface contract.
+func (g *Game) drawBinaryChoice(rgba []byte, white dq3data.Color, cursor int, yesID, noID string) {
+	x, y, w, h := 430, 220, 120, 68
+	fillBox(rgba, x, y, w, h, white)
+	ids := [2]string{yesID, noID}
 	for i, id := range ids {
 		label, ok := g.pack.TextGlyphCodes(id)
 		if !ok {
 			return
 		}
 		yy := y + 12 + i*24
-		if i == g.bossSurrenderCursor {
+		if i == cursor {
 			drawGlyph(rgba, g.dlg.tx, x+12, yy, curGlyph, white)
 		}
 		for j, glyph := range label {

@@ -375,7 +375,8 @@ Gate：不用 `DQ3_SHIP` 可自然取得船並航行。
 - 隱身草與耶進貝亞石塊解謎。
 - 乾渴壺／最終鑰匙。
 - 提頓夜間綠寶珠。
-- 勇氣神殿單人 gate／藍寶珠。
+- [x] 勇氣神殿單人 gate／藍寶珠：handler37 四人→單人、CTY23 `0x67`、handler62 復隊、
+  試煉途中及復隊後 save/load 均由 boot production trace 閉合；見 `docs/100`。
 - 海盜村紅寶珠。
 - 商人建城／黃寶珠。
 - 沙曼歐莎 R-2：
@@ -621,10 +622,18 @@ schema `0.1.14` 已接續閉合最終鑰匙的原版輸入 owner、魯拉載具�
 已由 CTY40 正式魯拉、登船航行、在提頓入口外使用黑暗之燈、以最終鑰匙開 tier3 牢門，
 再由夜間 handler35 把綠色寶珠交給第一個有空格的隊員並完成 save/load。見 `docs/99`。
 
+schema `0.1.15` 已接續閉合蘭西爾勇氣試煉與藍寶珠。IDA Pro 9.4 證明 handler37
+`(logical) 0x59e4` 保存 active party count、強制單人、寫 world `(82,165)` 並設 mode bit
+`0x80`；handler62 `(logical) 0x608a` 原樣復隊並清 mode bit。舊文件「接受即 set flag0x13」
+及反向 `owPortal` 已推翻；flag0x13 writer 仍 unknown，不在 production 合成。同一條 boot trace
+已經正式航行、住宿切白天、以最終鑰匙開門、接受挑戰、走 CTY23、取得藍寶珠、途中
+save/load、返回 CTY75 復隊及再次 save/load；見 `docs/100`。
+
 下一輪依下列順序接手：
 
-1. **主線最高優先**：boot 起的同一條 trace 已正式取得提頓綠色寶珠並保存合法 checkpoint
-   （`docs/99`）。下一輪從該 checkpoint 依原版順序繼續重播，記錄第一個實際 blocker；
+1. **主線最高優先**：boot 起的同一條 trace 已正式完成勇氣試煉、取得藍寶珠、復隊並保存
+   合法 checkpoint（`docs/100`）。下一輪從該 checkpoint 依原版順序繼續重播，第一候選為
+   海盜村紅寶珠，但仍以玩家實際遇到的第一個 blocker 為準；
    不得因 P3 後段已有孤立 component tests，就跳過兩節點之間的玩家路徑、資源與存檔 gate。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
@@ -637,7 +646,9 @@ schema `0.1.14` 已接續閉合最終鑰匙的原版輸入 owner、魯拉載具�
    boss 多次行動、掉落及逐項咒文
    效果仍需 RE 與同狀態驗證。
 5. **玩家可見 parity**：四人縱列與 HUD、能力確認立繪、母親逐格演出、attract、
-   商店／教會／旅社／達瑪、日夜 palette、剩餘 BGM／SFX 及 ending timing 尚未全部 V3。
+   商店／教會／旅社／達瑪、二選一小視窗原版幾何、日夜 palette、剩餘 BGM／SFX 及
+   ending timing 尚未全部 V3。二選一小視窗現行 geometry 只有 legacy renderer，尚無 D3
+   結構證據，不得直接寫入 game-pack canonical JSON。
    教會復活確認的現行 runtime 證據為 `docs/img/church_revive_confirm.png`，仍待 DOSBox
    同狀態 V3。
 6. **Release**：完成正式流程後才做跨桌面平台包裝、Android 真機的觸控／lifecycle／音訊／

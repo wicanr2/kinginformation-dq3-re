@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.14",
+  "schema_version": "0.1.15",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -736,6 +736,62 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 39},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3.EXE + D3TXT04.TXT", "address_space": "record", "address": "39; handler logical 0x593a", "consumer": "teidon npc_item_reward repeat dialogue after present flag0x3e is clear", "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.lancel_courage.prompt",
+      "value": "*「來的好,{變數}嗨!\n這裡是聚集勇氣的神殿。\n---\n*「你有一個人獨自戰鬥\n的勇氣嗎?",
+      "glyph_codes": [59,60,461,149,441,55,65525,527,57,65534,12,12,398,512,399,1107,1260,106,426,149,158,738,56,65532,59,60,528,147,401,546,194,814,541,107,207,65534,12,12,149,106,426,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 9},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "record", "address": "9; handler logical 0x59e4", "consumer": "handler37 prompt before the solo-trial choice", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.lancel_courage.accept",
+      "value": "*「那麼去吧,{變數}嗨!",
+      "glyph_codes": [59,60,354,436,448,499,55,65525,527,57,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 10},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "record", "address": "10; handler logical 0x59e4", "consumer": "handler37 acceptance before party removal and world transfer", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.lancel_courage.reject",
+      "value": "*「這麼弱懦的傢伙!\n離開吧。",
+      "glyph_codes": [59,60,398,436,467,1337,149,1071,1072,57,65534,12,12,502,488,499,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 11},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "record", "address": "11; handler logical 0x59e4", "consumer": "handler37 refusal branch", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.lancel_courage.return",
+      "value": "*「回來了嗎?\n歡迎回來!\n同伴們也在等待著。\n---\n*「你是否勇敢\n只有你最知道吧。\n---\n*「那麼出發吧。",
+      "glyph_codes": [59,60,312,461,423,534,58,65534,12,12,561,562,312,461,57,65534,12,12,601,602,529,494,411,419,1154,484,56,65532,59,60,528,399,678,106,942,65534,12,12,538,147,528,291,510,402,499,56,65532,59,60,354,436,440,431,499,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 12},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "record", "address": "12; handler logical 0x608a", "consumer": "handler62 dialogue before restoring the saved party count", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.lancel_courage.completed",
+      "value": "*「你們的勇氣,\n已經獲得了證實。",
+      "glyph_codes": [59,60,528,529,149,106,426,55,65534,12,12,788,525,1376,372,423,1242,279,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 84},
+      "evidence": {"level": "D2", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler37 0x59e4; record84", "consumer": "handler37 reads story flag0x13 and selects this dialogue; the writer of flag0x13 remains unknown", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md", "note": "read branch proven; completion writer unknown"}
+    },
+    {
+      "id": "dq3:text.courage_cave.back",
+      "value": "*「回去吧!",
+      "glyph_codes": [59,60,312,448,499,57,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 66},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + CTY23.DAT + D3TXT07.TXT", "address_space": "logical", "address": "handler85 0x6685; record66", "consumer": "CTY23 section2 raw handler85 displays record66", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.courage_cave.empty",
+      "value": "*「這裡沒有你要的東西。",
+      "glyph_codes": [59,60,398,512,410,147,528,504,149,539,380,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 67},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + CTY23.DAT + D3TXT07.TXT", "address_space": "logical", "address": "handler86 0x668c; record67", "consumer": "CTY23 section2 raw handler86 displays record67", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"}
     }
   ]
 }

@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.14"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.15"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.14",
+  "schema_version": "0.1.15",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -471,6 +471,27 @@ formation 與缺 D3 consumer；production 不提供 Go fallback。
 flag 與 pack entry 派生，不在存檔複製 transient sprite state。缺文字、selector 或引用時
 整個事件 fail closed，不部分扣道具。DQ3 canonical 範例見 `events.json`，原版證據見
 [`docs/82`](82-romaly-king-production-trace.md)。
+
+`temporary_solo_challenges` 描述「指定 NPC 詢問→Yes/No→暫時只保留隊長→世界入口→另一
+NPC 還原完全相同隊伍」的有限交易。它不允許 JSON 提供任意隊伍程式，也不把完成旗標的
+讀分支誤當 writer：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `temporary_solo_challenges` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 ID；kind 固定為 `temporary_solo_challenge`。 |
+| `[].entry_npc`／`[].return_npc` | object | 是 | `{cty_raw,section,tile:{x,y},handler_raw}`；不得相同。 |
+| `[].completed_flag_raw` | int | 是 | 已完成分支的原版 read flag；本 primitive 不負責寫入。 |
+| `[].mode_mask_raw` | int | 是 | 原版暫時模式 raw bit anchor；必須為 `1..255`，引擎只實作具名狀態。 |
+| `[].solo_world_position` | object | 是 | `{x,y,layer}`；接受對白關閉後的原版世界落點。 |
+| `[].return_town_destination` | object | 是 | `{cty_raw,section,x,y}`；返回對白關閉後的正常場景落點。 |
+| `[].cave_messages` | object[] | 是 | 至少一筆 `{cty_raw,section,handler_raw,text_id}`；只允許顯示文字。 |
+| `[].dialogue_text_ids` | object | 是 | `prompt/accept/reject/completed/return/cave_back/cave_empty/choice_yes/choice_no` 均須存在。 |
+| `[].evidence` | object | 是 | 隊伍 count writer／restore consumer、入口、文字與可見隊伍變化的 D3 證據。 |
+
+存檔必須在試煉途中保存 active event ID 與完整離隊角色 records，不能只保存現役單人隊伍；
+返回時按原順序恢復。缺 selector、文字或 pack event 一律 fail closed。DQ3 canonical 範例、
+完成旗標 writer 的未知狀態及 production trace 見 [`docs/100`](100-lancel-courage-blue-orb-production-trace.md)。
 
 第三個已實作 primitive 是 `quest_item_chain_events`，供「一次性寶物→指定 NPC 原地換物→
 指定地點使用結果道具→切換場景旗標與重載」的有限流程使用。它不包含諾亞尼爾、精靈女王
@@ -805,7 +826,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.14",
+  "schema_version": "0.1.15",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

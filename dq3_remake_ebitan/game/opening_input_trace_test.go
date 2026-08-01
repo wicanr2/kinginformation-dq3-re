@@ -1862,6 +1862,122 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.inTown, g.curCty, g.dnPhase, partyHasGreenOrb(g),
 			g.storyFlag(greenOrb.PresentFlagRaw))
 	}
+
+	// 綠寶珠合法 checkpoint → 正常離開提頓、登船航行到蘭西爾。最終鑰匙
+	// 開門後從正式「對話」選擇接受勇氣試煉；handler37 的原版 transaction
+	// 暫存三名同伴並把勇者送到 (82,165)。再由正常地表移動進 CTY23，穿越
+	// 勇氣洞窟取得藍寶珠，回 CTY75 與 handler62 交談後原樣復隊。
+	traceTownSectionTo(t, g, 20, 0)
+	traceExitTownBoundary(t, g)
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 47, true)
+	if g.dnPhase != 0 {
+		traceTalkFacility(t, g, facInn)
+		if g.dnPhase != 0 {
+			t.Fatalf("蘭西爾正式住宿後未回白天：phase=%d", g.dnPhase)
+		}
+	}
+	challenge, ok := g.pack.TemporarySoloChallenge("dq3:event.lancel_courage_trial")
+	if !ok {
+		t.Fatal("缺 dq3:event.lancel_courage_trial")
+	}
+	traceOpenReachableDoor(t, g)
+	if !g.inTown || g.curCty != challenge.EntryNPC.CTYRaw ||
+		g.cur.npcAt(challenge.EntryNPC.Tile.X, challenge.EntryNPC.Tile.Y) < 0 {
+		t.Fatalf("白天開門後找不到勇氣試煉神官：town=%v cty=%d phase=%d npc=%d",
+			g.inTown, g.curCty, g.dnPhase,
+			g.cur.npcAt(challenge.EntryNPC.Tile.X, challenge.EntryNPC.Tile.Y))
+	}
+	wantParty := compsToSav(g.companions)
+	if len(wantParty) != 3 {
+		t.Fatalf("勇氣試煉前隊伍同伴=%d, want 3", len(wantParty))
+	}
+	traceTalkNPC(t, g, challenge.EntryNPC.Tile.X, challenge.EntryNPC.Tile.Y, true)
+	traceCloseDialogue(t, g)
+	if g.soloChallengeStage != soloChallengeChoice {
+		t.Fatalf("勇氣試煉 prompt 後 stage=%d, want choice", g.soloChallengeStage)
+	}
+	press(InputState{Confirm: true}) // 正式 Yes
+	traceCloseDialogue(t, g)
+	if !g.soloChallengeActive || len(g.companions) != 0 ||
+		!reflect.DeepEqual(compsToSav(g.soloChallengeCompanions), wantParty) ||
+		g.inTown || g.px != challenge.SoloWorldPosition.X || g.py != challenge.SoloWorldPosition.Y {
+		t.Fatalf("正式接受勇氣試煉 transaction 錯：active=%v comps=%d saved=%d town=%v pos=(%d,%d)",
+			g.soloChallengeActive, len(g.companions), len(g.soloChallengeCompanions),
+			g.inTown, g.px, g.py)
+	}
+	if g.storyFlag(challenge.CompletedFlagRaw) {
+		t.Fatal("勇氣試煉入口不得捏造 unknown 的 completed flag writer")
+	}
+
+	traceAdventureWalkToCty(t, g, 23, true)
+	traceTownSectionTo(t, g, 23, 2)
+	blueOrb, ok := g.pack.TreasureEvent("dq3:event.courage_cave_blue_orb")
+	if !ok {
+		t.Fatal("缺 dq3:event.courage_cave_blue_orb")
+	}
+	traceExaminePackTreasure(t, g, blueOrb.Treasure)
+	if !g.hasItem(blueOrb.Treasure.ItemRawID) || g.storyFlag(blueOrb.Treasure.PresentFlag) ||
+		!g.soloChallengeActive || len(g.companions) != 0 {
+		t.Fatalf("單人取得藍寶珠 transaction 錯：item=%v flag=%v active=%v comps=%d",
+			g.hasItem(blueOrb.Treasure.ItemRawID), g.storyFlag(blueOrb.Treasure.PresentFlag),
+			g.soloChallengeActive, len(g.companions))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存單人藍寶珠 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建單人藍寶珠讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != 23 || sceneSection(g.cur) != 2 ||
+		!g.soloChallengeActive || len(g.companions) != 0 || len(g.soloChallengeCompanions) != 3 ||
+		!g.hasItem(blueOrb.Treasure.ItemRawID) || g.storyFlag(blueOrb.Treasure.PresentFlag) {
+		t.Fatalf("單人藍寶珠 save/load 錯：town=%v cty=%d sec=%d active=%v comps=%d saved=%d item=%v flag=%v",
+			g.inTown, g.curCty, sceneSection(g.cur), g.soloChallengeActive,
+			len(g.companions), len(g.soloChallengeCompanions), g.hasItem(blueOrb.Treasure.ItemRawID),
+			g.storyFlag(blueOrb.Treasure.PresentFlag))
+	}
+
+	traceTownSectionTo(t, g, -1, -1)
+	traceAdventureWalkToCty(t, g, 75, true)
+	traceTalkNPC(t, g, challenge.ReturnNPC.Tile.X, challenge.ReturnNPC.Tile.Y, true)
+	traceCloseDialogue(t, g)
+	destination := challenge.ReturnTownDestination
+	if g.soloChallengeActive || len(g.soloChallengeCompanions) != 0 ||
+		!reflect.DeepEqual(compsToSav(g.companions), wantParty) || !g.inTown ||
+		g.curCty != destination.CTYRaw || sceneSection(g.cur) != destination.Section ||
+		g.px != destination.X || g.py != destination.Y {
+		t.Fatalf("勇氣試煉返回復隊錯：active=%v comps=%d saved=%d cty=%d sec=%d pos=(%d,%d)",
+			g.soloChallengeActive, len(g.companions), len(g.soloChallengeCompanions),
+			g.curCty, sceneSection(g.cur), g.px, g.py)
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存勇氣試煉復隊 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建勇氣試煉復隊讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != destination.CTYRaw || sceneSection(g.cur) != destination.Section ||
+		g.soloChallengeActive || len(g.soloChallengeCompanions) != 0 ||
+		!reflect.DeepEqual(compsToSav(g.companions), wantParty) ||
+		!g.hasItem(blueOrb.Treasure.ItemRawID) || g.storyFlag(blueOrb.Treasure.PresentFlag) {
+		t.Fatalf("勇氣試煉復隊 save/load 錯：town=%v cty=%d sec=%d active=%v comps=%d item=%v flag=%v",
+			g.inTown, g.curCty, sceneSection(g.cur), g.soloChallengeActive,
+			len(g.companions), g.hasItem(blueOrb.Treasure.ItemRawID),
+			g.storyFlag(blueOrb.Treasure.PresentFlag))
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，
@@ -3362,7 +3478,7 @@ func traceWalkOne(t *testing.T, g *Game, tx, ty int) {
 	}
 }
 
-func traceTalkNPC(t *testing.T, g *Game, nx, ny int) {
+func traceTalkNPC(t *testing.T, g *Game, nx, ny int, avoidPortals ...bool) {
 	t.Helper()
 	type facePos struct{ x, y, dir int }
 	var candidates []facePos
@@ -3383,9 +3499,17 @@ func traceTalkNPC(t *testing.T, g *Game, nx, ny int) {
 		}
 	}
 	for _, p := range candidates {
-		if path := tracePath(g.cur, g.px, g.py, p.x, p.y); len(path) > 0 ||
+		path := tracePath(g.cur, g.px, g.py, p.x, p.y)
+		if len(avoidPortals) > 0 && avoidPortals[0] {
+			path = tracePortalPath(g.cur, g.px, g.py, p.x, p.y, g.keyTier())
+		}
+		if len(path) > 0 ||
 			g.px == p.x && g.py == p.y {
-			traceWalkTo(t, g, p.x, p.y)
+			if len(avoidPortals) > 0 && avoidPortals[0] {
+				traceWalkToNoPortal(t, g, p.x, p.y)
+			} else {
+				traceWalkTo(t, g, p.x, p.y)
+			}
 			for g.cd > 0 {
 				if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
 					t.Fatalf("等待對話前 cooldown: %v", err)

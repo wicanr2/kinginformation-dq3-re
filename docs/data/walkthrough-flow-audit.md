@@ -79,26 +79,15 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
      並刷新 passage。沒有 remake 自造的 `g_sokoban_solved` 或 debug token。
    - CTY76 event0 `{item=0x5e,flag=0x3a}` 已遷入 game-pack `treasure_events`；event1／
      flag `0x3b` 是 passage 狀態，不是第二個可取寶物。正式 trace、raw bytes 與圖見 `docs/97`。
-8. **勇氣神殿「單獨戰鬥」gate** — ✅ **已接(2026-06-27)**(杜 Ch29-30):
-   - 神父 CTY47 (25,16) byte4=37 挑戰 → 接受 set **flag 0x13**(原版 test_flag(0x13))→ 此 flag 同時驅動
-     既有 owportal({82,165}→flag0x13→CTY75)把朗錫爾轉「神殿開放態」CTY75 → 通勇氣洞窟 CTY23(藍寶珠 0x67 已在 treasure 表)。
-   - 神父 CTY75 (26,7) byte4=62「回來了嗎?」返回對話。
-   - **solo 機制 moot 不偽造**:原版進洞強制單人([0x5077] 減員),但 remake 隨機遭遇僅地表、洞窟無戰 → 無施力點。
-   - 驗證:神父對話渲染正確(rec10「那麼去吧」)、game_tester 83/83。
-   - **B-8 RE 全程(2026-06-27)**:
-   - ✅ 對話 record 錨定:神父 = **D3TXT06 rec128「這裡是聚集勇氣的神殿」**、rec409「個人獨自戰鬥」;
-     勇氣洞窟回頭訊息 = D3TXT07 rec66-67「回去吧/這裡沒有你要的東西」(杜 Ch30「不要理它」)。
-   - ✅ 地圖:朗錫爾 = **CTY47**(spawn 南=村)/ **CTY75**(spawn 北 (11,7)=神殿側),皆 bank6,各 2 section。
-     CTY47 sub2 NPC (25,16) b4=37、CTY75 sub2 NPC (26,7) b4=62。
-   - ✅ **dispatch 解出(2026-06-27,反組譯 0x96fe caller)**:`al=NPC.byte4; bx=al; shl bx,1; call [0x3bb4+bx]`
-     → handler ptr = **[0x3bb4 + byte4×2]**(無 dec;我先前用 (N-1)×2 **差一格**反到錯 handler)。
-     正確:byte4=37 → logical **0x59e4**、byte4=62 → logical **0x608a**。di→rec 公式 `rec=di−0xbb8` 確為通用。
-   - ✅ **神父 handler 解出**:
-     - **byte4=37(CTY47 (25,16))= 神父挑戰**:`test_flag(0x13)` 已證勇氣→rec84「你們的勇氣」;否則 [0xb34]=1
-       + rec9「來的好」→ region gate [0x726]/[0x722]==1 → rec10「那麼去吧」(接受)/ rec11「這麼弱懦的傢伙!」(膽怯)。
-     - **byte4=62(CTY75 (26,7))= 單獨戰鬥設定/返回**:rec12「回來了嗎?」+ **`al=[0x5057]; [0x5077]=al`
-       改隊伍人數**([0x5077]=隊伍人數,dq3_roster.h 確認)= **solo 機制** + 場景轉換(0x48a4)。
-   - ⚠ rec84「你們的勇氣」確在 byte4=37 神父流程內(我先前誤判為龍之女王是因差一格反到別的 handler)。
+8. **勇氣神殿「單獨戰鬥」gate** — ✅ **Go/Ebitengine 正式流程閉合（2026-08-02）**。
+   - 非破壞性 IDA 9.4 重查推翻舊結論：handler37 **不寫** flag `0x13`；接受時保存
+     active party count、強制 count=1、寫 world `(82,165)` 並設 mode bit `0x80`。handler62
+     播 rec12 後還原 count 並清 mode bit。flag `0x13` 只有已完成分支 reader，writer 仍 unknown。
+   - 舊 C remake 的 `{82,165}: flag0x13→CTY75, else→CTY47` 方向也相反；原版 reader 是
+     clear→CTY75、set→CTY47。錯誤 `owPortal` 已從 Ebiten 移除，由 game-pack 有限事件接管。
+   - CTY23 sec2 藍寶珠 raw event 為 `01 67 00 ad`；D3TXT06 rec9–12／84 與 D3TXT07
+     rec66–67 已逐 word parity。單人機制不是 moot：正式 trace 與原版影片都驗證四人→單人→四人。
+   - schema `0.1.15`、途中／復隊 save-load、兩張 runtime PNG 與完整證據見 [`docs/100`](../100-lancel-courage-blue-orb-production-trace.md)。
 
 > **B-6/B-8 範圍校正(2026-06-27)**:原列為「玩家感受明顯的快速接線」**低估了**——兩者 NPC 尚未 RE 識別、
 > 且需新機制(商人寄存+建城狀態 / 神父 gate+單獨戰鬥),屬需各自一輪 RE 的中型工項,非 quick win。

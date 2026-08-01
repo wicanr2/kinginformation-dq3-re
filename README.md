@@ -86,6 +86,10 @@ RE 文件。
 
 ![Ebiten：提頓夜間 handler35 綠色寶珠對話](docs/img/teidon_green_orb_dialogue.png)
 
+![Ebiten：朗錫爾勇氣試煉神父詢問是否單獨挑戰](docs/img/lancel_courage_trial_prompt.png)
+
+![Ebiten：勇氣洞窟正式調查寶箱取得藍寶珠](docs/img/courage_cave_blue_orb_obtained.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

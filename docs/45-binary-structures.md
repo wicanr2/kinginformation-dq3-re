@@ -106,7 +106,7 @@ dest = 目的 CTY/map、X/Y = 落點。執行: call 0xd1f9。
 ```
 玩家在某 overworld 位置(cty_loc[i] 或寫死 X,Y)→ 依 test_flag 鏈選目的 CTY:
   cty_loc[58](210,64): flag 0x23→58, 0x47→59, 0x42→60, 0x48→61, else→83
-  (82,165): flag 0x13→75, else→47
+  (82,165): flag 0x13 set→47, clear→75（2026-08-02 IDA 9.4 重查；writer unknown，見 docs/100）
   存位置: →36
   (54,129): flag 0x4d→71, else→72
 dispatcher 0x39cb: [0x256c]=bp(目的CTY); call 0x4378(load_cty)。

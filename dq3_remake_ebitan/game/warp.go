@@ -50,7 +50,6 @@ type owPortal struct {
 // owPortals:旗標條件 portal(移植 dq3_owportal.c PORTALS)。
 var owPortals = []owPortal{
 	{210, 64, 83, [][2]int{{0x23, 58}, {0x47, 59}, {0x42, 60}, {0x48, 61}}}, // 0x39cb 鏈
-	{82, 165, 47, [][2]int{{0x13, 75}}},
 	{54, 129, 72, [][2]int{{0x4d, 71}}},
 }
 

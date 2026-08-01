@@ -45,6 +45,8 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
   [`docs/97`](docs/97-eginbear-push-puzzle-production-trace.md)
 - 最新乾渴壺使用／最終鑰匙 audit：
   [`docs/98`](docs/98-thirsty-pitcher-final-key-production-trace.md)
+- 最新蘭西爾勇氣試煉／藍寶珠 audit：
+  [`docs/100`](docs/100-lancel-courage-blue-orb-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
@@ -78,8 +80,11 @@ world-state bit `0x08`／`5×4` 地表 patch，進 CTY40 調查取得最終鑰�
 詳見 `docs/98`。同一條 boot trace 已再由正式魯拉回 CTY15；原版 handler 同步把船移到
 `(104,126)`，玩家登船航行至提頓入口外使用黑暗之燈，再從 rec421 明確使用最終鑰匙開
 tier3 牢門。夜間 handler35 把綠色寶珠交給第一個有空格的隊員並通過 save/load；詳見
-`docs/99`。**尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從
-提頓綠色寶珠合法 checkpoint 繼續。地表水面顏色及四輪 palette transition 仍未達 V3，
+`docs/99`。同一條 boot trace 又已航行到蘭西爾、住宿切白天、用最終鑰匙進神殿，經
+handler37 正式接受試煉使四人暫時變單人，走 CTY23 原始轉場取得藍寶珠，在試煉途中
+save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；詳見 `docs/100`。
+**尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從藍寶珠復隊合法
+checkpoint 繼續，第一候選為海盜村紅寶珠。地表水面顏色及四輪 palette transition 仍未達 V3，
 不得因流程閉合而略過。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
@@ -124,6 +129,10 @@ schema `0.1.14` 新增 `rura_navigation`、鑰匙 `door_key_tier` 與
 `npc_item_reward_events`；魯拉 CTY／文字 record／arrival offset／船落點、三把鑰匙 tier、
 提頓 NPC selector／綠色寶珠 flag／文字均由 JSON 提供，並有 EXE／CTY／D3TXT parity
 與 boot production trace；詳見 `docs/99`。
+schema `0.1.15` 新增 `temporary_solo_challenges`；入口／返回 NPC、完成旗標 reader、mode
+mask、世界／場景落點、洞窟訊息與所有文字均由 JSON 提供。原版 handler37 不寫 flag0x13，
+其 writer 維持 unknown；試煉途中完整離隊角色 records 會進存檔，handler62 後按原序復隊。
+CTY23 藍寶珠亦已遷入 `treasure_events`；詳見 `docs/100`。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.14",
+  "schema_version": "0.1.15",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -172,6 +172,53 @@
       }
     }
   ],
+  "temporary_solo_challenges": [
+    {
+      "id": "dq3:event.lancel_courage_trial",
+      "kind": "temporary_solo_challenge",
+      "entry_npc": {
+        "cty_raw": 47,
+        "section": 0,
+        "tile": {"x": 25, "y": 16},
+        "handler_raw": 37
+      },
+      "return_npc": {
+        "cty_raw": 75,
+        "section": 0,
+        "tile": {"x": 26, "y": 7},
+        "handler_raw": 62
+      },
+      "completed_flag_raw": 19,
+      "mode_mask_raw": 128,
+      "solo_world_position": {"x": 82, "y": 165, "layer": 0},
+      "return_town_destination": {"cty_raw": 47, "section": 0, "x": 25, "y": 17},
+      "cave_messages": [
+        {"cty_raw": 23, "section": 2, "handler_raw": 85, "text_id": "dq3:text.courage_cave.back"},
+        {"cty_raw": 23, "section": 2, "handler_raw": 86, "text_id": "dq3:text.courage_cave.empty"}
+      ],
+      "dialogue_text_ids": {
+        "prompt": "dq3:text.lancel_courage.prompt",
+        "accept": "dq3:text.lancel_courage.accept",
+        "reject": "dq3:text.lancel_courage.reject",
+        "completed": "dq3:text.lancel_courage.completed",
+        "return": "dq3:text.lancel_courage.return",
+        "cave_back": "dq3:text.courage_cave.back",
+        "cave_empty": "dq3:text.courage_cave.empty",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY23.DAT + CTY47.DAT + CTY75.DAT + D3TXT06.TXT + D3TXT07.TXT + original walkthrough video",
+        "address_space": "logical",
+        "address": "handler37 0x59e4..0x5a98; handler62 0x608a; handlers85/86 0x6685/0x668c; DGROUP 0x4f46/0x4f48/0x4f4a/0x4f4c/0x4f4e/0x5057/0x5077",
+        "consumer": "handler37 offers the trial, saves the active party count, forces one member, writes world 82,165 and mode bit0x80; handler62 restores the party count and clears bit0x80; the original video shows four members becoming one through the cave and returning as four",
+        "doc": "docs/100-lancel-courage-blue-orb-production-trace.md",
+        "note": "handler37 reads completed flag0x13 but neither handler37, handler62 nor CTY23 handlers85/86 write it; that writer remains unknown and this primitive does not synthesize it"
+      }
+    }
+  ],
   "quest_item_chain_events": [
     {
       "id": "dq3:event.noaniel_awakening",
@@ -299,6 +346,27 @@
         "address": "CTY40 section0 event0 raw 01 57 00 47; tile (18,17); DQ3.EXE file 0x9d86..0x9e41",
         "consumer": "the shrine chest dispatches type1 item 0x57 to the common inventory consumer and clears present flag 0x47",
         "doc": "docs/98-thirsty-pitcher-final-key-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:event.courage_cave_blue_orb",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 23,
+        "section": 2,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 103,
+        "present_flag_raw": 173
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY23.DAT + DQ3.EXE + original walkthrough video",
+        "address_space": "record",
+        "address": "CTY23 section2 event0 raw 01 67 00 ad; DQ3.EXE file 0x9d86..0x9e41",
+        "consumer": "the section2 treasure dispatches type1 item0x67 to the common inventory consumer, clears present flag0xad and is visibly collected by the solo hero in the original walkthrough",
+        "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"
       }
     }
   ],

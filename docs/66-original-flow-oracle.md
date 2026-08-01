@@ -124,8 +124,8 @@
 | 26 | 耶進貝亞城 | 隱身草隱身進城;地下室倉庫番:三顆大石推至上方藍白地面 | 《乾渴壺》(0x5e) | 持 0x5d(USE 隱身)+ 解謎；Go/Ebitengine 已由正式輸入閉合推石、passage、調查取得與 save/load | 杜Ch26;quest-items 0x5e;docs/96、docs/97；原版以 ctrl bit0x40 判可推，非舊 C prototype 的 B2==40 |
 | 27 | 最終鑰匙祠堂 | 船上 `(146,53)` 使用乾渴壺，set world-state bit0x08 並套 EXE `5×4` patch，向上進 CTY40 | 《最終鑰匙》(0x57)— 門 tier3 | 持 0x5e、story flag0x12 clear | IDA/EXE/CTY40、正式 boot trace與 save/load：`docs/98` ✅；palette transition／水色仍未達 V3 |
 | 28 | 提頓村 | 晚上打開北邊牢門,犯人給寶珠並提及要送到「遙遠南方的雷亞姆蘭特祭壇」(★見§4 待核對) | 《綠寶珠》(0x66) | 夜晚+持最終鑰匙 | 杜Ch28;quest-items 0x66 |
-| 29 | 朗錫爾村 | 上方神殿,用最終鑰匙開鐵門見神父,考驗「單獨戰鬥的勇氣」 | 挑戰接受 → flag 0x13 | 持 0x57 | 杜Ch29;walkthrough-flow-audit B-8「勇氣神殿神父 gate」CTY47 (25,16) byte4=37,D3TXT06 rec128/rec9-11,RE 反組譯 dispatch 全解 |
-| 30 | 勇氣洞窟 | 獨自一人進入(需帶最終鑰匙),強行往前忽略「回去吧」訊息,盡頭寶箱 | 《藍寶珠》(0x67) | flag 0x13 已設 | 杜Ch30;quest-items 0x67;walkthrough-flow-audit:回頭訊息 D3TXT07 rec66-67 |
+| 29 | 朗錫爾村 | 上方神殿,用最終鑰匙開鐵門見神父,考驗「單獨戰鬥的勇氣」 | 接受後暫存三名同伴、active count=1、world `(82,165)`、mode bit `0x80` | 持 0x57、白天神官可見 | IDA handler37 `(logical) 0x59e4`；CTY47 `(25,16)` handler37；D3TXT06 rec9–11；boot production trace `docs/100` ✅。handler37 只讀 flag `0x13`，不寫它。 |
+| 30 | 勇氣洞窟 | 勇者單人進 CTY23,經原始轉場與最終鑰匙門,盡頭調查寶箱；回 CTY75 神官 | 《藍寶珠》(0x67)，handler62 原樣復隊 | CTY23 sec2 present flag `0xad`；試煉 active mode | CTY23 raw `01 67 00 ad`、D3TXT07 rec66–67、handler62 `(logical) 0x608a`；途中與復隊後 save/load、boot trace `docs/100` ✅。flag `0x13` writer 仍 unknown。 |
 | 31 | 亞布之塔 | 3F | 《回音之笛》(0x60) | 由日邦格村航行至塔 | 杜Ch31;quest-items 0x60 寶箱(CTY26 sec2,flag0xb0) |
 | 32 | 海盜村 | 外圍大石移開現密道,地下藏寶室 | 《紅寶珠》(0x68) | — | 杜Ch32;quest-items 0x68 |
 | 33 | 新城鎮(空地) | 樹林中方形草原,老人想建新城鎮但缺商人 | 任務線索(需帶商人職業同伴前來) | — | 杜Ch33;walkthrough-flow-audit B-6:老人 handler 0x5aba RE 全解(掃隊伍 class==6 商人) |

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.14"
+	SchemaVersion = "0.1.15"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -201,6 +201,44 @@ type TemporaryRoleEvent struct {
 	RoleSpriteEntries GenderedSpriteEntryBases `json:"role_sprite_entry_bases"`
 	DialogueTextIDs   TemporaryRoleTextIDs     `json:"dialogue_text_ids"`
 	Evidence          Evidence                 `json:"evidence"`
+}
+
+type TemporarySoloChallengeTextIDs struct {
+	Prompt    string `json:"prompt"`
+	Accept    string `json:"accept"`
+	Reject    string `json:"reject"`
+	Completed string `json:"completed"`
+	Return    string `json:"return"`
+	CaveBack  string `json:"cave_back"`
+	CaveEmpty string `json:"cave_empty"`
+	ChoiceYes string `json:"choice_yes"`
+	ChoiceNo  string `json:"choice_no"`
+}
+
+type ScriptedHandlerText struct {
+	CTYRaw     int    `json:"cty_raw"`
+	Section    int    `json:"section"`
+	HandlerRaw int    `json:"handler_raw"`
+	TextID     string `json:"text_id"`
+}
+
+// TemporarySoloChallengeEvent describes an original event that temporarily
+// removes every companion, transfers the hero to a solo world entrance, and
+// restores the exact companions through a distinct return NPC. The mode mask
+// is retained as raw evidence; the engine uses a named finite state rather
+// than exposing arbitrary bit operations from JSON.
+type TemporarySoloChallengeEvent struct {
+	ID                    string                        `json:"id"`
+	Kind                  string                        `json:"kind"`
+	EntryNPC              ScriptedNPCSelector           `json:"entry_npc"`
+	ReturnNPC             ScriptedNPCSelector           `json:"return_npc"`
+	CompletedFlagRaw      int                           `json:"completed_flag_raw"`
+	ModeMaskRaw           int                           `json:"mode_mask_raw"`
+	SoloWorldPosition     VehicleWorldPosition          `json:"solo_world_position"`
+	ReturnTownDestination SceneDestination              `json:"return_town_destination"`
+	CaveMessages          []ScriptedHandlerText         `json:"cave_messages"`
+	DialogueTextIDs       TemporarySoloChallengeTextIDs `json:"dialogue_text_ids"`
+	Evidence              Evidence                      `json:"evidence"`
 }
 
 // QuestTreasureSelector identifies one original CTY examine event. The
@@ -633,24 +671,25 @@ type RuraNavigation struct {
 }
 
 type Events struct {
-	SchemaVersion               string                       `json:"schema_version"`
-	ItemActions                 ItemActions                  `json:"item_actions"`
-	RuraNavigation              RuraNavigation               `json:"rura_navigation"`
-	NPCPushRule                 NPCPushRule                  `json:"npc_push_rule"`
-	BossSurrenderEvents         []BossSurrenderEvent         `json:"boss_surrender_events"`
-	TemporaryRoleEvents         []TemporaryRoleEvent         `json:"temporary_role_events"`
-	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
-	TreasureEvents              []TreasureEvent              `json:"treasure_events"`
-	NPCItemRewardEvents         []NPCItemRewardEvent         `json:"npc_item_reward_events"`
-	ItemUseEffects              []ItemUseEffect              `json:"item_use_effects"`
-	TrackingGuardEvents         []TrackingGuardEvent         `json:"tracking_guard_events"`
-	PushPuzzleEvents            []PushPuzzleEvent            `json:"push_puzzle_events"`
-	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate     `json:"two_step_floor_switch_gates"`
-	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
-	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
-	HostageRescueEvents         []HostageRescueEvent         `json:"hostage_rescue_events"`
-	ReclassEvents               []ReclassEvent               `json:"reclass_events"`
-	StagedBossEvents            []StagedBossEvent            `json:"staged_boss_events"`
+	SchemaVersion               string                        `json:"schema_version"`
+	ItemActions                 ItemActions                   `json:"item_actions"`
+	RuraNavigation              RuraNavigation                `json:"rura_navigation"`
+	NPCPushRule                 NPCPushRule                   `json:"npc_push_rule"`
+	BossSurrenderEvents         []BossSurrenderEvent          `json:"boss_surrender_events"`
+	TemporaryRoleEvents         []TemporaryRoleEvent          `json:"temporary_role_events"`
+	TemporarySoloChallenges     []TemporarySoloChallengeEvent `json:"temporary_solo_challenges"`
+	QuestItemChainEvents        []QuestItemChainEvent         `json:"quest_item_chain_events"`
+	TreasureEvents              []TreasureEvent               `json:"treasure_events"`
+	NPCItemRewardEvents         []NPCItemRewardEvent          `json:"npc_item_reward_events"`
+	ItemUseEffects              []ItemUseEffect               `json:"item_use_effects"`
+	TrackingGuardEvents         []TrackingGuardEvent          `json:"tracking_guard_events"`
+	PushPuzzleEvents            []PushPuzzleEvent             `json:"push_puzzle_events"`
+	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate      `json:"two_step_floor_switch_gates"`
+	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent  `json:"staged_vehicle_exchange_events"`
+	GuidedPassageEvents         []GuidedPassageEvent          `json:"guided_passage_events"`
+	HostageRescueEvents         []HostageRescueEvent          `json:"hostage_rescue_events"`
+	ReclassEvents               []ReclassEvent                `json:"reclass_events"`
+	StagedBossEvents            []StagedBossEvent             `json:"staged_boss_events"`
 }
 
 type TextSource struct {
@@ -717,6 +756,7 @@ type Pack struct {
 	services         map[string]*ServiceDefinition
 	bossEvents       map[string]*BossSurrenderEvent
 	roleEvents       map[string]*TemporaryRoleEvent
+	soloChallenges   map[string]*TemporarySoloChallengeEvent
 	questItemEvents  map[string]*QuestItemChainEvent
 	treasureEvents   map[string]*TreasureEvent
 	itemUseEffects   map[int]*ItemUseEffect
@@ -1008,6 +1048,26 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.TemporarySoloChallenges {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"prompt": refs.Prompt, "accept": refs.Accept, "reject": refs.Reject,
+			"completed": refs.Completed, "return": refs.Return,
+			"cave_back": refs.CaveBack, "cave_empty": refs.CaveEmpty,
+			"choice_yes": refs.ChoiceYes, "choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+		for i, message := range event.CaveMessages {
+			if message.TextID == "" || p.texts[message.TextID] == nil {
+				return fmt.Errorf("%s cave_messages[%d].text_id references unknown text %q",
+					event.ID, i, message.TextID)
+			}
+		}
+	}
 	for _, event := range p.Events.QuestItemChainEvents {
 		for field, id := range map[string]string{
 			"exchange.before_text_id":  event.Exchange.BeforeTextID,
@@ -1208,6 +1268,9 @@ func (p *Pack) validateEvents() error {
 	if p.Events.TemporaryRoleEvents == nil {
 		return errors.New("temporary_role_events must be present")
 	}
+	if p.Events.TemporarySoloChallenges == nil {
+		return errors.New("temporary_solo_challenges must be present")
+	}
 	if p.Events.QuestItemChainEvents == nil {
 		return errors.New("quest_item_chain_events must be present")
 	}
@@ -1328,6 +1391,46 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		p.roleEvents[e.ID] = e
+	}
+	p.soloChallenges = make(map[string]*TemporarySoloChallengeEvent, len(p.Events.TemporarySoloChallenges))
+	for i := range p.Events.TemporarySoloChallenges {
+		e := &p.Events.TemporarySoloChallenges[i]
+		if e.ID == "" || e.Kind != "temporary_solo_challenge" {
+			return fmt.Errorf("temporary_solo_challenges[%d]: id and kind=temporary_solo_challenge are required", i)
+		}
+		if _, exists := p.soloChallenges[e.ID]; exists {
+			return fmt.Errorf("duplicate temporary solo challenge id %q", e.ID)
+		}
+		if !validScriptedNPC(e.EntryNPC) || !validScriptedNPC(e.ReturnNPC) || e.EntryNPC == e.ReturnNPC {
+			return fmt.Errorf("%s: invalid or identical scripted NPC selectors", e.ID)
+		}
+		if e.CompletedFlagRaw < 0 || e.CompletedFlagRaw >= 512 || e.ModeMaskRaw <= 0 || e.ModeMaskRaw > 255 ||
+			e.SoloWorldPosition.X < 0 || e.SoloWorldPosition.Y < 0 || e.SoloWorldPosition.Layer < 0 || e.SoloWorldPosition.Layer > 1 ||
+			e.ReturnTownDestination.CTYRaw < 0 || e.ReturnTownDestination.CTYRaw > 255 ||
+			e.ReturnTownDestination.Section < 0 || e.ReturnTownDestination.X < 0 || e.ReturnTownDestination.Y < 0 {
+			return fmt.Errorf("%s: invalid flag, mode mask or destination", e.ID)
+		}
+		textIDs := []string{e.DialogueTextIDs.Prompt, e.DialogueTextIDs.Accept, e.DialogueTextIDs.Reject,
+			e.DialogueTextIDs.Completed, e.DialogueTextIDs.Return, e.DialogueTextIDs.CaveBack,
+			e.DialogueTextIDs.CaveEmpty, e.DialogueTextIDs.ChoiceYes, e.DialogueTextIDs.ChoiceNo}
+		for _, id := range textIDs {
+			if id == "" {
+				return fmt.Errorf("%s: every dialogue text id is required", e.ID)
+			}
+		}
+		if len(e.CaveMessages) == 0 {
+			return fmt.Errorf("%s: cave_messages must be present", e.ID)
+		}
+		for _, message := range e.CaveMessages {
+			if message.CTYRaw < 0 || message.CTYRaw > 255 || message.Section < 0 ||
+				message.HandlerRaw < 0 || message.HandlerRaw > 255 || message.TextID == "" {
+				return fmt.Errorf("%s: invalid cave message selector", e.ID)
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.soloChallenges[e.ID] = e
 	}
 	p.questItemEvents = make(map[string]*QuestItemChainEvent, len(p.Events.QuestItemChainEvents))
 	for i := range p.Events.QuestItemChainEvents {
@@ -2164,6 +2267,15 @@ func (p *Pack) TemporaryRoleEvents() []TemporaryRoleEvent {
 
 func (p *Pack) TemporaryRoleEvent(id string) (*TemporaryRoleEvent, bool) {
 	e, ok := p.roleEvents[id]
+	return e, ok
+}
+
+func (p *Pack) TemporarySoloChallenges() []TemporarySoloChallengeEvent {
+	return append([]TemporarySoloChallengeEvent(nil), p.Events.TemporarySoloChallenges...)
+}
+
+func (p *Pack) TemporarySoloChallenge(id string) (*TemporarySoloChallengeEvent, bool) {
+	e, ok := p.soloChallenges[id]
 	return e, ok
 }
 

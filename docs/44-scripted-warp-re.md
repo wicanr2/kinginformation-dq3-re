@@ -206,7 +206,7 @@ byte4 → handler → 固定 struct 靜態解出；runner 現況看 `docs/re-log
 
 | owX | owY | 旗標(test_flag)| → 目的 CTY | 層 |
 |---|---|---|---|---|
-| 82 | 165 | 0x13 | CTY75 / CTY47 | 地表 |
+| 82 | 165 | 0x13 | set→CTY47 / clear→CTY75 | 地表；僅 reader 已證，writer unknown（docs/100） |
 | =[0x5053] | =[0x5055] | — | CTY36 | **下層** |
 | 76 | 54 | 0x35 | (劇情:`[0x2593]=0x64` 物品事件 + rec 0x255/0x256,非進城)| — |
 | 54 | 129 | 0x4d | CTY71 | 地表 |

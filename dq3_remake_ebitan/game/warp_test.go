@@ -43,12 +43,9 @@ func TestOwPortalResolve(t *testing.T) {
 	if got := owPortalResolve(210, 64, map[int]bool{0x23: true, 0x47: true}); got != 58 {
 		t.Errorf("(210,64) flag0x23 優先回 %d, want 58", got)
 	}
-	// (82,165) 無旗標 → 47
-	if got := owPortalResolve(82, 165, map[int]bool{}); got != 47 {
-		t.Errorf("(82,165) 無旗標回 %d, want 47", got)
-	}
-	// (82,165) set 0x13 → 75
-	if got := owPortalResolve(82, 165, map[int]bool{0x13: true}); got != 75 {
-		t.Errorf("(82,165) flag0x13 回 %d, want 75", got)
+	// 勇氣試煉由 handler37 的 mode bit0x80 與相鄰 CTY47/75 控制；舊 C remake
+	// 把 story flag0x13 的讀分支方向寫反，不能再由這張 portal 表覆蓋。
+	if got := owPortalResolve(82, 165, map[int]bool{0x13: true}); got != -1 {
+		t.Errorf("(82,165) 不應有猜測 portal，回 %d, want -1", got)
 	}
 }
