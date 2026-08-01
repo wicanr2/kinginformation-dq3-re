@@ -16,8 +16,9 @@ type MonsterStat struct {
 	Def, Agi       uint16 // +0x09 / +0x0b
 	FleeResist     uint8  // +0x18
 	Exp, Gold      uint16 // +0x21 / +0x23
+	DropRate       uint8  // +0x25；勝利結算以 rng(256) <= 此值，0xff 必掉
 	DropItem       uint8  // +0x26
-	DropRate       uint8  // +0x27（原始掉落率欄；機率語意另由戰鬥結算）
+	Unknown27      uint8  // +0x27；尚未閉合，不得誤當掉落率
 	SpawnWeight    uint8  // +0x28
 }
 
@@ -53,7 +54,7 @@ func (m *Monsters) Stat(id int) (MonsterStat, bool) {
 		MP:  le16(r, 0x04),
 		Atk: r[0x08], Def: le16(r, 0x09), Agi: le16(r, 0x0b),
 		FleeResist: r[0x18], Exp: le16(r, 0x21), Gold: le16(r, 0x23),
-		DropItem: r[0x26], DropRate: r[0x27], SpawnWeight: r[0x28],
+		DropRate: r[0x25], DropItem: r[0x26], Unknown27: r[0x27], SpawnWeight: r[0x28],
 	}, true
 }
 

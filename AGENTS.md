@@ -33,11 +33,26 @@
   產生結論後才補查 IDA。`tools/dis.sh`／Capstone 適合可重現的批次位址掃描，Ghidra
   只在 IDA 無法處理或需第二套工具交叉驗證時補用。IDA 授權、database 與輸出不得加入
   Git。
+- **IDA 分析必須非破壞性且語意只可附加**：原始 EXE／DAT 永遠唯讀，以 SHA-256 標識
+  輸入；`.i64` 建在 gitignored 的工作副本，不回寫、改名或搬動原始檔。保留 IDA 原始
+  linear address、自動產生名稱及原始指令作可追溯底稿；人工函式名、型別、註解與結構語意
+  只能另加在工作 database 或可重建的匯出 ledger，不得用新語意覆蓋原始位址／bytes。
+- 每一筆人工 IDA 語意都必須同時記錄推論等級（`proven`／`strong inference`／
+  `hypothesis`／`unknown`）、輸入檔雜湊、IDA database 位址、原始指令或資料範圍及
+  consumer。沒有完整 caller／writer／consumer 的名稱不得升為 `proven`；遇到反證應保留
+  舊說並標為已推翻，不可靜默改名造成假記憶。
+- 查全域資料流時以 `.i64` 的 xref 圖為主，不以 grep 攤平 `.asm` 代替；xref 只證明直接
+  參考，取址後透過 register／far pointer 的間接讀寫必須另追。headless 腳本須把結果寫入
+  明確輸出檔並驗證內容，不能因 exit code 0 就宣稱有結果。
 - 即使使用上述本機 IDA 安裝，也只能把明確需要的唯讀路徑掛入一次性 Docker 容器執行；
   禁止直接在 host 啟動 IDA、反編譯、索引或其他專案作業。容器工作完成後依本檔 Docker
   生命週期規則立即停止並清除。
 - 不可用 DQ3 慣例、「合理值」、C remake 或攻略猜 production 設定。
 - 機制存在不代表位置、初值、旗標、gate、時序、畫面與消耗已 match。
+- 同一怪物、NPC 或場景在不同階段出現時，不得合併成單一 trigger 或用一次性獎勵近似；
+  必須逐階段追入口、選項、編隊、掉落抑制、移動／轉場、旗標交易及事後可互動物件，再以
+  game-pack 的有限狀態事件描述。原始資料欄位在 loader 與 consumer 未閉合前一律保留
+  `unknown_XX`，不可因舊文件或數值看似合理就命名。
 - 原版素材、影片、IDA database／授權與發佈包不得加入 Git。
 
 ## 實作與驗收

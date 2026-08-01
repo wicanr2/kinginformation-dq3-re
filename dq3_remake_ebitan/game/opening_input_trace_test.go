@@ -1496,6 +1496,80 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if !g.inTown || g.curCty != 19 {
 		t.Fatalf("黑暗燈後無法繼續到八頭大蛇洞窟：town=%v cty=%d", g.inTown, g.curCty)
 	}
+
+	// CTY19 合法 checkpoint → handler45 第一戰 → 原版掉落草薙大劍 → 宮殿 rec70
+	// → handler36 No 分支第二戰 → 同格寶箱取得紫寶珠。全程只走 transition、NPC 對話、
+	// 戰鬥及調查命令，不直接呼叫 staged boss handler 或寫旗標／座標／道具。
+	orochi, ok := g.pack.StagedBossEvent("dq3:event.jipang_orochi")
+	if !ok {
+		t.Fatal("缺 dq3:event.jipang_orochi")
+	}
+	traceTownSectionTo(t, g, orochi.FirstNPC.CTYRaw, orochi.FirstNPC.Section,
+		orochi.FirstNPC.Tile.X, orochi.FirstNPC.Tile.Y)
+	traceTalkNPC(t, g, orochi.FirstNPC.Tile.X, orochi.FirstNPC.Tile.Y)
+	if !g.battle.active || g.stagedBossStage != stagedBossFirstBattle || g.battle.monID != 75 {
+		t.Fatalf("handler45 未由正式對話開第一戰：active=%v stage=%d mon=%d",
+			g.battle.active, g.stagedBossStage, g.battle.monID)
+	}
+	traceResolveBattle(t, g, false)
+	for frames := 0; frames < 300 && g.stagedBossStage == stagedBossFirstMoving; frames++ {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if !g.hasItem(0x14) || g.hasItem(0x69) || g.storyFlag(0x44) || !g.storyFlag(0x20) ||
+		g.curCty != 21 || sceneSection(g.cur) != 0 || g.stagedBossStage != stagedBossFirstPost || !g.dlg.open {
+		t.Fatalf("第一戰後 transaction／轉場錯：item14=%v item69=%v flags44/20=%v/%v cty=%d sec=%d stage=%d dlg=%v",
+			g.hasItem(0x14), g.hasItem(0x69), g.storyFlag(0x44), g.storyFlag(0x20),
+			g.curCty, sceneSection(g.cur), g.stagedBossStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	traceTalkNPC(t, g, orochi.SecondNPC.Tile.X, orochi.SecondNPC.Tile.Y)
+	traceCloseDialogue(t, g)
+	if g.stagedBossStage != stagedBossSecondChoice {
+		t.Fatalf("rec66 後未進第二戰選項：stage=%d", g.stagedBossStage)
+	}
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 選「否」
+	press(InputState{Confirm: true})
+	if g.stagedBossStage != stagedBossSecondChallenge || !g.dlg.open {
+		t.Fatalf("No 未顯示 rec68：stage=%d dlg=%v", g.stagedBossStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	if !g.battle.active || g.stagedBossStage != stagedBossSecondBattle || !g.battle.suppressDrop {
+		t.Fatalf("rec68 後未開抑制掉落的第二戰：active=%v stage=%d suppress=%v",
+			g.battle.active, g.stagedBossStage, g.battle.suppressDrop)
+	}
+	traceResolveBattle(t, g, false)
+	if g.hasItem(0x69) || g.storyFlag(0x20) || !g.storyFlag(0x1f) ||
+		g.stagedBossStage != stagedBossSecondVictory || !g.dlg.open {
+		t.Fatalf("第二戰勝利 transaction 錯：item69=%v flags20/1f=%v/%v stage=%d dlg=%v",
+			g.hasItem(0x69), g.storyFlag(0x20), g.storyFlag(0x1f), g.stagedBossStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	traceExaminePackTreasure(t, g, gamepack.QuestTreasureSelector{
+		CTYRaw: 21, Section: 0, TileSubID: 0, EventTypeRaw: 1,
+		ItemRawID: 0x69, PresentFlag: 0x89,
+	})
+	if !g.hasItem(0x69) || g.storyFlag(0x89) {
+		t.Fatalf("正式調查無姬寶箱未取得紫寶珠：item=%v flag89=%v",
+			g.hasItem(0x69), g.storyFlag(0x89))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存日邦格 checkpoint：%v", err)
+	}
+	restored, err = NewGame(g.assets, nil)
+	if err != nil {
+		t.Fatalf("重建日邦格讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != 21 || !g.hasItem(0x14) || !g.hasItem(0x69) ||
+		g.storyFlag(0x20) || !g.storyFlag(0x1f) || g.storyFlag(0x89) {
+		t.Fatalf("日邦格 save/load round-trip 錯：town=%v cty=%d item14/69=%v/%v flags20/1f/89=%v/%v/%v",
+			g.inTown, g.curCty, g.hasItem(0x14), g.hasItem(0x69), g.storyFlag(0x20),
+			g.storyFlag(0x1f), g.storyFlag(0x89))
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，

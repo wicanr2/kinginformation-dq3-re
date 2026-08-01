@@ -59,6 +59,14 @@ RE 文件。
 
 ![Ebiten：地表使用黑暗之燈後進入夜晚](docs/img/teidon_dark_lamp_night.png)
 
+![Ebiten：日邦格八頭大蛇第一戰（原版怪物遮罩與背景）](docs/img/jipang_orochi_first_battle.png)
+
+![Ebiten：第一戰後依原版移動至宮殿並顯示 rec70](docs/img/jipang_orochi_first_post.png)
+
+![Ebiten：拒絕無姬後的第二戰（原版掉落抑制）](docs/img/jipang_orochi_second_battle.png)
+
+![Ebiten：第二戰後正式調查取得紫寶珠](docs/img/jipang_purple_orb_obtained.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

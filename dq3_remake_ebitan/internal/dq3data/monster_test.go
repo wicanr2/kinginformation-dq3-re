@@ -32,11 +32,16 @@ func TestMonsters(t *testing.T) {
 	if chance, ok := m.SpellChance(5, 59); !ok || chance != 255 {
 		t.Fatalf("史萊姆 Palpunte 成功門檻應由 packed 抗性解為255,得 %d ok=%v", chance, ok)
 	}
-	// id89 怪力魔:D3MNS +0x26=0x62 變身杖、+0x27=200、+0x28=11。
+	// id89 怪力魔：+0x25=0（一般隨機率），+0x26=0x62 變身杖；handler 另以
+	// battle flag 強制掉落。+0x27=200 尚未命名，不能再誤標成掉落率。
 	s89, _ := m.Stat(89)
-	if s89.DropItem != 0x62 || s89.DropRate != 200 || s89.SpawnWeight != 11 {
-		t.Fatalf("怪力魔掉落欄應 item62/rate200/weight11,得 %02x/%d/%d",
-			s89.DropItem, s89.DropRate, s89.SpawnWeight)
+	if s89.DropRate != 0 || s89.DropItem != 0x62 || s89.Unknown27 != 200 || s89.SpawnWeight != 11 {
+		t.Fatalf("怪力魔欄應 rate0/item62/unknown27=200/weight11,得 %d/%02x/%d/%d",
+			s89.DropRate, s89.DropItem, s89.Unknown27, s89.SpawnWeight)
+	}
+	s75, _ := m.Stat(75)
+	if s75.DropRate != 0xff || s75.DropItem != 0x14 {
+		t.Fatalf("八頭大蛇第一戰原版掉落應 rate255/item14,得 %d/%02x", s75.DropRate, s75.DropItem)
 	}
 	// 越界防護
 	if _, ok := m.Stat(MonsterCount); ok {

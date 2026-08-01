@@ -46,6 +46,11 @@
 ### 角色 / 數值
 - **7 屬性序** — 成長表 14 byte = 7 個 (base,slope) 對,`kind*2`=列內 offset:0 HP、2 MP、4 速度、6 力量、8 聰明、A 耐力、C 運氣。語意三方交叉確認(成長表樣式 + 升級訊息 rec191-197 + BBS 存檔佈局 docs/history)。_Avoid_: 把屬性欄標成 B4/B6/B8/BA 不明名(舊 enum)。
 - **怪物 AI 欄位** — `D3MNS.DAT` 記錄內驅動敵方行動的 4 欄:`+0x0d` 施咒機率(/256)、`+0x0e..+0x13` 已知咒文 bitmask(6 byte/48 bit,放咒時均勻隨機挑)、`+0x17` 逃跑觸發閾值(對我方強度 `[0x5094]`)、`+0x18` 逃跑機率。決策樹 file 0xbcf0;見 [docs/37](docs/37-monster-ai.md)。_Avoid_: 把怪物施咒當「挑最佳咒」(實為隨機)。
+- **怪物掉落欄位** — `D3MNS.DAT` 記錄 `+0x25` 是掉落判定閾值、`+0x26` 是掉落道具；
+  勝利結算在 logical `0xc425`（file `0xd795`）以 `DGROUP 0x2321` 的 formation 第一組
+  怪物 raw ID 選記錄，依 `roll(256) <= +0x25` 判定，再讀
+  `+0x26`。戰鬥狀態 `DGROUP 0x2518 bit1` 會抑制掉落。`+0x27` 尚未閉合，維持
+  `unknown_27`。_Avoid_: 沿用舊 parser 把 `+0x27` 稱為掉落率。
 - **SHP AND-mask** — `DQ3MNS.SHP` 每隻怪的四個色彩 plane 後另有逐列 RLE 遮罩；mask bit
   1 保留背景（透明），bit 0 清背景後寫色彩（不透明）。調色盤索引 0 是黑色且可為實體像素。
   _Avoid_: `palette index 0 = transparent`（見 [`docs/94`](docs/94-dialogue-window-and-monster-mask-re.md)）。
@@ -53,6 +58,12 @@
   `roll<=0x64` 清除；怪物 bit0x80 是 `roll<0x64` 清除，醒來當回合都跳過。見
   [`docs/37`](docs/37-monster-ai.md)、[`docs/91`](docs/91-garuna-satori-book-production-trace.md)。
   _Avoid_: 舊 C remake 的「持續整場、不會自行解除」結論。
+- **日邦格八頭大蛇兩階段事件** — 第一階段由 CTY19 sec1 handler45、固定 NPC
+  `(35,12)` 進入；怪物75的原始掉落給草薙大劍，勝利後向右移動兩步並轉至 CTY21
+  顯示 D3TXT04 rec70。第二階段由 CTY21 sec0 handler36、NPC `(18,7)` 進入，rec66
+  Yes 分支只顯示 rec67 且可重談，No 分支以 rec68 開第二戰；第二戰設掉落抑制，勝利後
+  rec69 與旗標交易開放同格寶箱取得紫寶珠。詳見 `docs/95`。_Avoid_: 第一戰直接給紫寶珠、
+  省略自動轉場，或把兩戰合併為單一 `bossTrigger`。
 - **遭遇區表** — overworld region map `0x4966`(16×16 grid,cell=(X>>4)+(Y&0xf0)→region)+ 遭遇表 `0x4a56`(region×0x20 = 4 子表×8 byte;byte2=背景頁、byte4-7=候選怪 0xff 終止)。CTY 用 `[0xd77]` 存的 region(0=安全)。見 [docs/39](docs/39-encounter-zones.md)。
 - **咒文習得表** — `sub_db5f`(file 0xeecf)讀 DGROUP `0x36f9` 起 per-系 stride 8 指標表 `{spellA,levelA,spellB,levelB}`;系基底 0/8/0x10=勇者/僧侶/魔法系;`level[i]`/`spell[i]` 平行,清單長度由下一指標界定(越界=#5 亂學咒 bug)。職業→系:勇者→勇者系、僧侶→僧侶系、魔法使→魔法系、賢者→僧侶+魔法、其餘無咒。
 

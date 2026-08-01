@@ -1,8 +1,8 @@
 # Boss / special 事件正式觸發點盤點(第一性原理)
 
-> 使用者洞見(2026-06-26):boss 不是會走動的 NPC,是地圖上**固定一格(或數格)放著 sprite 的物件**,
-> 玩家走過去按**空白鍵(examine)**就觸發開戰。所以「boss 正式觸發點」== 某 CTY/section/座標上
-> 的 `kind=special` 事件格。純靜態可定位,不需實機探索。
+> 歷史盤點。`kind=special` 只能定位候選 handler，不能推論一律由「調查」觸發；正式入口
+> 必須追 command dispatcher 與 handler。八頭大蛇舊結論即因此錯把 NPC 對話事件做成
+> `examine` 座標 boss，現已由 IDA 與正式 trace 推翻。
 
 ## 權威來源
 
@@ -26,7 +26,7 @@
 
 | CTY | sec | 座標 | 結構 | 狀態 |
 |---|---|---|---|---|
-| 19 | 1 | (35,12) | 八頭大蛇 dlg=45 sprite=14 | ✅ 已接(main.c cur_cty==19 b4==45)|
+| 19 | 1 | (35,12) | 八頭大蛇 handler45 固定 NPC | ✅ schema 0.1.10 兩階段事件；正式「對話」入口、兩戰、掉落、轉場與寶箱見 `docs/95` |
 | 14 | 1 | 守衛 `(14,13)(15,13)(13,14)(16,14)`；返回 boss `(14,14)(15,14)` | handler58／61 scripted NPC；handler59／60 scene tile | ✅ 原版兩階段 formation、movement、旗標與正式流程已閉合（`docs/89`） |
 
 ### CTY14 巴哈拉達救援（2026-07-30 IDA／原始資料更正）

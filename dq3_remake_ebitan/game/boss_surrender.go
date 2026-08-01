@@ -160,6 +160,15 @@ func (g *Game) treasureBlockedByPack(cty, section, x, y, itemRawID int) bool {
 			}
 		}
 	}
+	for _, event := range g.pack.StagedBossEvents() {
+		for _, gate := range event.TreasureGates {
+			if gate.CTYRaw == cty && gate.Section == section &&
+				gate.Tile.X == x && gate.Tile.Y == y && gate.ItemRawID == itemRawID &&
+				g.storyFlag(gate.WhileFlagSet) {
+				return true
+			}
+		}
+	}
 	return false
 }
 

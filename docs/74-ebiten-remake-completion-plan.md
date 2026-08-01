@@ -584,13 +584,19 @@ DGROUP `0x366a` 派發表抵達 `(logical) 0x4063`：只允許地表且當前為
 `interface.json`。另由 `sub_1b1fe → sub_1b31a/sub_1b37c → sub_1b2af` 證實
 `DQ3MNS.SHP` 透明度來自四色 plane 後的獨立 RLE AND-mask，不能把黑色色號 0 當透明。
 component/parity tests 與 README 所引用的受影響 runtime PNG 已重產；逆向證據見 `docs/94`。
-這不改變主線下一個 blocker，仍由 CTY19 合法 checkpoint 接八頭大蛇流程。
+這批之後已由 CTY19 合法 checkpoint 閉合日邦格八頭大蛇兩階段事件。IDA Pro 9.4
+證明 handler45 第一戰先消費 DGROUP `0x3cee` 的 NPC slot0 右移兩步，再 clear `0x44`、
+set `0x20` 並讓玩家右移兩步轉至 CTY21 rec70；handler36 的 Yes 分支可重談，No 分支才
+以另一背景開第二戰並由 `DGROUP 0x2518 bit1` 抑制掉落。勝利後 clear `0x20/0x45`、
+set `0x1f`，再由同格寶箱取得紫寶珠。怪75的草薙大劍則由 D3MNS `+0x25/+0x26`
+原始掉落，不是事件直接給予。schema `0.1.10`、正式 InputState trace、save/load 與四張
+runtime 圖均已更新；見 `docs/95`。
 
 下一輪依下列順序接手：
 
-1. **主線最高優先**：提頓《黑暗之燈》已由 boot 起的同一條 trace 閉合至 E3，
-   並抵達 CTY19（`docs/93`）。從該合法 checkpoint 依正式入口閉合八頭大蛇洞窟
-   B2F 第一戰、草薙大劍 `0x14`、日邦格傳送後第二戰及紫寶珠 `0x69`。
+1. **主線最高優先**：boot 起的同一條 trace 已經由 CTY19 第一戰、宮殿第二戰與寶箱
+   閉合至 CTY21 紫寶珠後合法 save checkpoint（`docs/95`）。從該 checkpoint 繼續正常
+   玩家路線，記錄下一個實際 blocker；不得跳到孤立的既有後段 handler。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

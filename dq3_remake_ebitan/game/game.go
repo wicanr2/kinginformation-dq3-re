@@ -341,6 +341,12 @@ type Game struct {
 	bossSurrenderStage     int           // game-pack boss_surrender primitive 的目前階段
 	bossSurrenderCursor    int           // 求饒 Yes/No 游標
 	bossSurrenderEventID   string        // active pack event；空字串表示無事件
+	stagedBossStage        int           // game-pack staged_boss primitive 階段
+	stagedBossCursor       int           // 第二階段 Yes/No 游標
+	stagedBossEventID      string        // active staged boss pack event
+	stagedBossMoveIndex    int           // 第一戰後自動移動方向索引
+	stagedBossMoveTick     int           // 第一戰後自動移動 frame 節流
+	stagedBossMovingNPC    bool          // true 時先重播原版 NPC slot0 路徑，再交易旗標並移動玩家
 	zomaIntro              bool          // 索瑪 rec72 尚在顯示；關閉後才開 monster0x7c
 	ortegaStage            int           // CTY90 sec4 歐魯迪卡事件：1=rec69，2=rec70
 	endingKingStage        int           // CTY80 sec1 handler74：1=rec48 冊封對白，關閉後才開始 ending
@@ -423,6 +429,8 @@ func (g *Game) selectCommand(cmd int) {
 					// CTY90 sec5 handler80：自然交談入口。
 				} else if g.talkEndingKing(n) {
 					// CTY80 sec1 handler74：索瑪後回拉達多姆，由國王冊封才進 ending。
+				} else if g.talkStagedBoss(n) {
+					// game-pack 第一戰→移動→選擇→第二戰→寶箱 primitive。
 				} else if g.talkBossSpecial(n) {
 					// CTY65 巴拉摩斯等 sub2 固定物件型 boss。
 				} else if g.openAliahanSpecialNPC(n) {
@@ -879,6 +887,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.stagedBossStage == stagedBossSecondChoice {
+		g.stagedBossChoiceInput(in)
+		g.renderFrame()
+		return nil
+	}
 	if g.temporaryRoleChoosing() {
 		g.temporaryRoleChoiceInput(in)
 		g.renderFrame()
@@ -1017,8 +1030,14 @@ func (g *Game) step(in InputState) error {
 				g.advanceGuidedPassageDialogue()
 				g.advanceHostageRescueDialogue()
 				g.advanceReclassDialogue()
+				g.advanceStagedBossDialogue()
 			}
 		}
+		g.renderFrame()
+		return nil
+	}
+	if g.stagedBossStage == stagedBossFirstMoving {
+		g.advanceStagedBossMovement()
 		g.renderFrame()
 		return nil
 	}
@@ -2013,10 +2032,15 @@ func (g *Game) onBattleEnd() {
 		if g.battle.monID == 0x7c { // 打倒大魔王索瑪 → 破關結局
 			g.runFinale()
 		}
+		if g.battle.gotDrop >= 0 {
+			g.inventory = append(g.inventory, g.battle.gotDrop)
+			g.noticeCode, g.noticeTimer = g.battle.gotDrop, 120
+		}
 	}
 	g.settleMirrorBattle()
 	g.settleBossSurrenderBattle()
 	g.settleHostageRescueBattle()
+	g.settleStagedBossBattle()
 	if g.pendingTrigger != nil { // examine 觸發的座標 boss 鏈結算(bosstrigger.go)
 		switch {
 		case g.battle.result == 1 && len(g.bossQueue) == 0: // 鏈全勝(最後一場也贏)→ 給獎勵 + 設旗標
@@ -2148,6 +2172,7 @@ func (g *Game) renderFrame() {
 	}
 	g.drawChurch(g.rgba, white)
 	g.drawBossSurrenderChoice(g.rgba, white)
+	g.drawStagedBossChoice(g.rgba, white)
 	g.drawTemporaryRoleChoice(g.rgba, white)
 	g.drawSequenceGateChoice(g.rgba, white)
 	g.drawHostageRescueChoice(g.rgba, white)

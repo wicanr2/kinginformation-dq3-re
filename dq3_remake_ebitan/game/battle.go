@@ -105,6 +105,8 @@ type Battle struct {
 	result             int // 0 進行中、1 勝、2 敗、3 逃
 	gotExp             int
 	gotGold            int
+	gotDrop            int  // 原版 D3MNS +0x26；-1 表示無掉落
+	suppressDrop       bool // 原版 battle state bit1；劇情第二戰等明確禁止掉落
 	rng                *dosrng.RNG
 	flashCol           int // >0:受擊閃光殘餘幀
 	defending          bool
@@ -309,7 +311,7 @@ func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, 
 	}
 	b.partyBlind, b.partySealed = false, false
 	b.cursor, b.phase, b.result = 0, phCommand, 0
-	b.msg, b.gotExp, b.gotGold = "", 0, 0
+	b.msg, b.gotExp, b.gotGold, b.gotDrop, b.suppressDrop = "", 0, 0, -1, false
 	b.messageQueue = nil
 	b.active = true
 	b.seekCommandActor(0)
@@ -600,6 +602,22 @@ func (b *Battle) victoryRewards() (exp, gold int) {
 	return exp, gold
 }
 
+// settleVictoryRewards 對齊 DQ3.EXE logical 0xc509..0xc527：勝利後以 formation 第一隻
+// 怪的 D3MNS +0x25 作 rng(256) <= rate，成功取 +0x26 item。劇情可由原版 battle
+// state 明確 suppress；不能把 +0x27 誤當 rate。
+func (b *Battle) settleVictoryRewards() {
+	b.gotExp, b.gotGold = b.victoryRewards()
+	b.gotDrop = -1
+	if b.suppressDrop || b.mons == nil {
+		return
+	}
+	st, ok := b.mons.Stat(b.monID)
+	if !ok || b.roll() > int(st.DropRate) {
+		return
+	}
+	b.gotDrop = int(st.DropItem)
+}
+
 func (b *Battle) fleeResist() int {
 	resist := 0
 	for i := range b.enemies {
@@ -829,7 +847,7 @@ func (b *Battle) execTurn() {
 		b.flashCol = b.hurtFxFrames
 	}
 	if b.allEnemiesDead() {
-		b.gotExp, b.gotGold = b.victoryRewards()
+		b.settleVictoryRewards()
 		b.result, b.phase = 1, phMessage
 		b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 		return
@@ -953,7 +971,7 @@ func (b *Battle) execSpell(rec int) {
 		}
 	}
 	if b.allEnemiesDead() {
-		b.gotExp, b.gotGold = b.victoryRewards()
+		b.settleVictoryRewards()
 		b.result, b.phase = 1, phMessage
 		b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 		return
@@ -1166,7 +1184,7 @@ func (b *Battle) resolveRound() {
 }
 
 func (b *Battle) finishVictory() {
-	b.gotExp, b.gotGold = b.victoryRewards()
+	b.settleVictoryRewards()
 	b.result, b.phase = 1, phMessage
 	b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.9",
+  "schema_version": "0.1.10",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -680,6 +680,46 @@
       "layout": {"kind": "menu_label"},
       "source": {"kind": "glyph_map", "file": "D3TXT00.FON"},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "421 words 22..23", "consumer": "field item action menu", "doc": "docs/92-dhama-reclass-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.jipang.orochi.offer",
+      "value": "無姬「只要你們保證不說出去\n就不殺你們,\n這樣好嗎?",
+      "glyph_codes": [495,1228,60,668,453,493,555,663,149,55,65534,12,12,538,147,528,529,1018,788,56,65532,495,1228,60,538,504,528,529,604,1242,228,909,440,448,65534,12,12,633,228,831,528,529,55,65534,12,12,398,537,441,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 66},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "66", "consumer": "handler36 second-stage offer", "doc": "docs/95-jipang-orochi-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.jipang.orochi.accept",
+      "value": "無姬「嘿嘿嘿‥‥。\n真是明智的選擇。",
+      "glyph_codes": [495,1228,60,1243,1243,1243,123,123,56,65534,12,12,577,399,286,1244,149,1245,521,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 67},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "67", "consumer": "handler36 promise-accepted branch", "doc": "docs/95-jipang-orochi-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.jipang.orochi.challenge",
+      "value": "無姬「嘿嘿嘿‥‥。\n\n無姬「嘿嘿嘿‥‥。\n\n這樣的話,\n就別想活著回去,\n受死吧!",
+      "glyph_codes": [495,1228,60,1243,1243,1243,123,123,56,65532,495,1228,60,1243,1243,1243,123,123,56,65532,12,12,398,537,149,449,55,65534,12,12,633,417,609,491,484,312,448,55,65534,12,12,452,490,499,57,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 68},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "68", "consumer": "handler36 refusal branch before second battle", "doc": "docs/95-jipang-orochi-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.jipang.orochi.victory",
+      "value": "什麼!無姬是大蛇!\n這個傳說很快的在\n這個國家裡傳開來。\n\n就這樣,夜晚過去了。",
+      "glyph_codes": [435,436,57,495,1228,399,163,874,57,65534,12,12,398,546,513,909,444,969,149,411,65534,12,398,546,300,657,1246,1247,488,461,56,65532,633,398,537,55,964,570,473,448,423,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 69},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "69", "consumer": "handler36 second-victory aftermath", "doc": "docs/95-jipang-orochi-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.jipang.orochi.first_post",
+      "value": "*「怎麼了,無姬大人,\n為什麼傷的這麼重?\n\n*「到底是去什麼地方\n受的傷呢。",
+      "glyph_codes": [59,60,935,436,423,55,495,1228,163,194,55,65534,12,12,611,435,436,553,149,398,436,605,58,65532,59,60,453,1098,399,448,435,436,214,547,65534,12,12,452,149,553,592,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT04.TXT", "record": 70},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT04.TXT", "address_space": "record", "address": "70", "consumer": "handler45 post-battle palace scene", "doc": "docs/95-jipang-orochi-production-trace.md"}
     }
   ]
 }

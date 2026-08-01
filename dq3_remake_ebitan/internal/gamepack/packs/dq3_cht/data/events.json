@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.9",
+  "schema_version": "0.1.10",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -616,6 +616,68 @@
         "address": "0x5a9e, 0x0abe..0x0c7e",
         "consumer": "CTY17 section0 handler39 calls the reclass flow; it rejects Hero and levels below 20, offers classes 1,2,3,4,6 plus Sage class5 only to Jester class7 or a member carrying item 0x4a, then performs the original level/stat/inventory transaction",
         "doc": "docs/92-dhama-reclass-production-trace.md"
+      }
+    }
+  ],
+  "staged_boss_events": [
+    {
+      "id": "dq3:event.jipang_orochi",
+      "kind": "staged_boss",
+      "first_npc": {
+        "cty_raw": 19,
+        "section": 1,
+        "tile": {"x": 35, "y": 12},
+        "handler_raw": 45
+      },
+      "first_presence_flag_raw": 68,
+      "first_formation": {
+        "background_raw": 35,
+        "page_raw": 5,
+        "groups": [{"monster_raw_id": 75, "count": 1}],
+        "raw_bytes_hex": "0123054b01"
+      },
+      "first_drop_policy": "original",
+      "first_npc_post_battle_directions": ["right", "right"],
+      "first_victory_clear_flags_raw": [68],
+      "first_victory_set_flags_raw": [32],
+      "first_post_battle_directions": ["right", "right"],
+      "second_npc": {
+        "cty_raw": 21,
+        "section": 0,
+        "tile": {"x": 18, "y": 7},
+        "handler_raw": 36
+      },
+      "second_required_flag_raw": 32,
+      "second_formation": {
+        "background_raw": 26,
+        "page_raw": 5,
+        "groups": [{"monster_raw_id": 75, "count": 1}],
+        "raw_bytes_hex": "011a054b01"
+      },
+      "second_drop_policy": "suppress",
+      "second_victory_clear_flags_raw": [32, 69],
+      "second_victory_set_flags_raw": [31],
+      "treasure_gates": [
+        {"cty_raw": 21, "section": 0, "tile": {"x": 18, "y": 7}, "item_raw_id": 105, "while_flag_set": 32}
+      ],
+      "step_frames": 7,
+      "dialogue_text_ids": {
+        "first_post": "dq3:text.jipang.orochi.first_post",
+        "second_offer": "dq3:text.jipang.orochi.offer",
+        "second_accept": "dq3:text.jipang.orochi.accept",
+        "second_challenge": "dq3:text.jipang.orochi.challenge",
+        "second_victory": "dq3:text.jipang.orochi.victory",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY19.DAT + CTY21.DAT + D3TXT04.TXT + original walkthrough video",
+        "address_space": "logical",
+        "address": "0x5cb6, 0x5979, 0xc425..0xc562",
+        "consumer": "handler45 runs formation 0x4ed0, original monster drop and flags before two rightward transition steps; handler36 owns the repeatable promise choice, suppresses the second drop, runs formation 0x4ed5 and exposes the CTY21 purple-orb treasure",
+        "doc": "docs/95-jipang-orochi-production-trace.md"
       }
     }
   ]

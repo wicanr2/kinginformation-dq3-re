@@ -37,6 +37,8 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
   [`docs/92`](docs/92-dhama-reclass-production-trace.md)
 - 最新提頓《黑暗之燈》audit：
   [`docs/93`](docs/93-teidon-dark-lamp-production-trace.md)
+- 最新日邦格八頭大蛇兩階段 audit：
+  [`docs/95`](docs/95-jipang-orochi-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
@@ -57,8 +59,10 @@ save/load、正式登船與首次航行；詳見 `docs/90`。schema `0.1.6` 已�
 handler39 完成賢者轉職與 save/load；詳見 `docs/92`。其後已從該合法 checkpoint
 航行至 CTY20，於白天由命令窗調查取得《黑暗之燈》`0x5f`，在地表由 rec421 正式使用，
 依原版 gate 進入黑夜且不消耗道具；save/load 後再航行抵達 CTY19，詳見 `docs/93`。
-**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從 CTY19 正式入口閉合
-八頭大蛇兩戰、草薙大劍與紫寶珠。
+同一條正式 trace 又由 CTY19 正式入口完成 handler45 第一戰、怪75原始掉落草薙大劍、
+NPC slot0 與玩家各自的右移兩步、CTY21 rec70、handler36 No 分支第二戰、掉落抑制及
+同格寶箱取得紫寶珠，並通過 save/load；詳見 `docs/95`。**尚未完成從新遊戲開始的無
+debug 全流程驗收**；下一個 audit 從 CTY21 紫寶珠後合法 checkpoint 繼續尋找第一個 blocker。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -86,7 +90,10 @@ Go 不知道《黑暗之燈》或 DQ3 專屬 raw ID。
 schema `0.1.9` 新增 `interface.json`；原版共用對話框 `(152,238,360,112)`、文字 inset、
 20 欄／4 行已由 EXE rect 的 caller、writer 與 consumer 證實並移出 Go。怪物透明度也已
 改由 `DQ3MNS.SHP` 四色 plane 後的獨立 RLE AND-mask 解碼，禁止再把黑色色號 0 當透明。
-證據見 `docs/94`；受影響的 production 截圖仍須在本批驗收後全部重產。
+證據見 `docs/94`；受影響的 production 截圖已重產並目視核對。
+schema `0.1.10` 新增 `staged_boss_events`；日邦格兩個 NPC selector、兩組編隊、NPC／玩家
+戰間路徑、掉落政策、旗標交易、寶箱 gate 與 rec66–70 均由 JSON 提供。怪物 parser 已校正
+`+0x25` 掉落閾值、`+0x26` 掉落道具，`+0x27` 保持未知；詳見 `docs/95`。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

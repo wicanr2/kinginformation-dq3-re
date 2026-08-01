@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.9"
+	SchemaVersion = "0.1.10"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -482,6 +482,41 @@ type ReclassEvent struct {
 	Evidence                Evidence            `json:"evidence"`
 }
 
+type StagedBossTextIDs struct {
+	FirstPost       string `json:"first_post"`
+	SecondOffer     string `json:"second_offer"`
+	SecondAccept    string `json:"second_accept"`
+	SecondChallenge string `json:"second_challenge"`
+	SecondVictory   string `json:"second_victory"`
+	ChoiceYes       string `json:"choice_yes"`
+	ChoiceNo        string `json:"choice_no"`
+}
+
+// StagedBossEvent 是第一戰、原版旗標／自動移動、第二個 NPC 選擇、第二戰及寶箱的
+// 有限共用 primitive。版本專屬 formation、selector、旗標、路徑與文字都由 pack 提供。
+type StagedBossEvent struct {
+	ID                           string              `json:"id"`
+	Kind                         string              `json:"kind"`
+	FirstNPC                     ScriptedNPCSelector `json:"first_npc"`
+	FirstPresenceFlagRaw         int                 `json:"first_presence_flag_raw"`
+	FirstFormation               BattleFormation     `json:"first_formation"`
+	FirstDropPolicy              string              `json:"first_drop_policy"`
+	FirstNPCPostBattleDirections []string            `json:"first_npc_post_battle_directions"`
+	FirstVictoryClearFlagsRaw    []int               `json:"first_victory_clear_flags_raw"`
+	FirstVictorySetFlagsRaw      []int               `json:"first_victory_set_flags_raw"`
+	FirstPostBattleDirections    []string            `json:"first_post_battle_directions"`
+	SecondNPC                    ScriptedNPCSelector `json:"second_npc"`
+	SecondRequiredFlagRaw        int                 `json:"second_required_flag_raw"`
+	SecondFormation              BattleFormation     `json:"second_formation"`
+	SecondDropPolicy             string              `json:"second_drop_policy"`
+	SecondVictoryClearFlagsRaw   []int               `json:"second_victory_clear_flags_raw"`
+	SecondVictorySetFlagsRaw     []int               `json:"second_victory_set_flags_raw"`
+	TreasureGates                []TreasureGate      `json:"treasure_gates"`
+	StepFrames                   int                 `json:"step_frames"`
+	DialogueTextIDs              StagedBossTextIDs   `json:"dialogue_text_ids"`
+	Evidence                     Evidence            `json:"evidence"`
+}
+
 type ItemActionTextIDs struct {
 	Use  string `json:"use"`
 	Give string `json:"give"`
@@ -507,6 +542,7 @@ type Events struct {
 	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
 	HostageRescueEvents         []HostageRescueEvent         `json:"hostage_rescue_events"`
 	ReclassEvents               []ReclassEvent               `json:"reclass_events"`
+	StagedBossEvents            []StagedBossEvent            `json:"staged_boss_events"`
 }
 
 type TextSource struct {
@@ -581,6 +617,7 @@ type Pack struct {
 	guidedPassages   map[string]*GuidedPassageEvent
 	hostageRescues   map[string]*HostageRescueEvent
 	reclassEvents    map[string]*ReclassEvent
+	stagedBossEvents map[string]*StagedBossEvent
 	charDefaults     map[string]*CharacterDefault
 	texts            map[string]*TextDefinition
 	contentHash      string
@@ -960,6 +997,20 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.StagedBossEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"first_post": refs.FirstPost, "second_offer": refs.SecondOffer,
+			"second_accept": refs.SecondAccept, "second_challenge": refs.SecondChallenge,
+			"second_victory": refs.SecondVictory, "choice_yes": refs.ChoiceYes,
+			"choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	return nil
 }
 
@@ -974,6 +1025,23 @@ func validTreasureSelector(t QuestTreasureSelector) bool {
 		(t.EventTypeRaw == 1 || t.EventTypeRaw == 3) &&
 		t.ItemRawID >= 0 && t.ItemRawID <= 255 &&
 		t.PresentFlag >= 0 && t.PresentFlag < 512
+}
+
+func validatePackFormation(eventID, name string, formation BattleFormation) error {
+	raw, err := hex.DecodeString(formation.RawBytesHex)
+	if err != nil || len(formation.Groups) == 0 ||
+		len(raw) != 3+len(formation.Groups)*2 ||
+		int(raw[0]) != len(formation.Groups) ||
+		int(raw[1]) != formation.BackgroundRaw || int(raw[2]) != formation.PageRaw {
+		return fmt.Errorf("%s: invalid %s", eventID, name)
+	}
+	for i, group := range formation.Groups {
+		if group.MonsterRawID < 0 || group.MonsterRawID > 255 || group.Count < 1 ||
+			int(raw[3+i*2]) != group.MonsterRawID || int(raw[4+i*2]) != group.Count {
+			return fmt.Errorf("%s: invalid %s group %d", eventID, name, i)
+		}
+	}
+	return nil
 }
 
 func (p *Pack) validateEvents() error {
@@ -1016,6 +1084,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.ReclassEvents == nil {
 		return errors.New("reclass_events must be present")
+	}
+	if p.Events.StagedBossEvents == nil {
+		return errors.New("staged_boss_events must be present")
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -1597,6 +1668,65 @@ func (p *Pack) validateEvents() error {
 		}
 		p.reclassEvents[e.ID] = e
 	}
+	p.stagedBossEvents = make(map[string]*StagedBossEvent, len(p.Events.StagedBossEvents))
+	for i := range p.Events.StagedBossEvents {
+		e := &p.Events.StagedBossEvents[i]
+		if e.ID == "" || e.Kind != "staged_boss" {
+			return fmt.Errorf("staged_boss_events[%d]: id and kind=staged_boss are required", i)
+		}
+		if _, exists := p.stagedBossEvents[e.ID]; exists {
+			return fmt.Errorf("duplicate staged boss event id %q", e.ID)
+		}
+		if !validScriptedNPC(e.FirstNPC) || !validScriptedNPC(e.SecondNPC) ||
+			e.FirstPresenceFlagRaw < 0 || e.FirstPresenceFlagRaw >= 512 ||
+			e.SecondRequiredFlagRaw < 0 || e.SecondRequiredFlagRaw >= 512 ||
+			e.StepFrames < 1 || e.StepFrames > 120 || len(e.FirstNPCPostBattleDirections) == 0 ||
+			len(e.FirstPostBattleDirections) == 0 {
+			return fmt.Errorf("%s: invalid trigger, selector, flag or movement timing", e.ID)
+		}
+		if err := validatePackFormation(e.ID, "first_formation", e.FirstFormation); err != nil {
+			return err
+		}
+		if err := validatePackFormation(e.ID, "second_formation", e.SecondFormation); err != nil {
+			return err
+		}
+		if e.FirstDropPolicy != "original" || e.SecondDropPolicy != "suppress" {
+			return fmt.Errorf("%s: unsupported staged drop policy", e.ID)
+		}
+		for j, direction := range append(append([]string(nil), e.FirstNPCPostBattleDirections...), e.FirstPostBattleDirections...) {
+			if _, ok := map[string]bool{"down": true, "up": true, "left": true, "right": true}[direction]; !ok {
+				return fmt.Errorf("%s: invalid post-battle direction %d", e.ID, j)
+			}
+		}
+		for name, flags := range map[string][]int{
+			"first_victory_clear_flags_raw":  e.FirstVictoryClearFlagsRaw,
+			"first_victory_set_flags_raw":    e.FirstVictorySetFlagsRaw,
+			"second_victory_clear_flags_raw": e.SecondVictoryClearFlagsRaw,
+			"second_victory_set_flags_raw":   e.SecondVictorySetFlagsRaw,
+		} {
+			if len(flags) == 0 {
+				return fmt.Errorf("%s: %s must be present", e.ID, name)
+			}
+			seen := map[int]bool{}
+			for _, flag := range flags {
+				if flag < 0 || flag >= 512 || seen[flag] {
+					return fmt.Errorf("%s: invalid or duplicate flag %d in %s", e.ID, flag, name)
+				}
+				seen[flag] = true
+			}
+		}
+		for j, gate := range e.TreasureGates {
+			if gate.CTYRaw < 0 || gate.CTYRaw > 255 || gate.Section < 0 ||
+				gate.Tile.X < 0 || gate.Tile.Y < 0 || gate.ItemRawID < 0 ||
+				gate.ItemRawID > 255 || gate.WhileFlagSet < 0 || gate.WhileFlagSet >= 512 {
+				return fmt.Errorf("%s: invalid treasure gate %d", e.ID, j)
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.stagedBossEvents[e.ID] = e
+	}
 	return nil
 }
 
@@ -1832,6 +1962,15 @@ func (p *Pack) ItemActions() ItemActions {
 
 func (p *Pack) ReclassEvent(id string) (*ReclassEvent, bool) {
 	e, ok := p.reclassEvents[id]
+	return e, ok
+}
+
+func (p *Pack) StagedBossEvents() []StagedBossEvent {
+	return append([]StagedBossEvent(nil), p.Events.StagedBossEvents...)
+}
+
+func (p *Pack) StagedBossEvent(id string) (*StagedBossEvent, bool) {
+	e, ok := p.stagedBossEvents[id]
 	return e, ok
 }
 

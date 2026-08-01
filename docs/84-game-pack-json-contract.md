@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.9"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.10"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.9",
+  "schema_version": "0.1.10",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -685,6 +685,19 @@ IDA／CTY／D3TXT 證據與正式 trace 見 `events.json`、[`docs/89`](89-bahar
 `(152,238,360,112)`、inset `(16,16)`、20 欄、每頁 4 行；EXE 結構與 consumer 見
 [`docs/94`](94-dialogue-window-and-monster-mask-re.md)。缺欄位或無效幾何一律 fail closed。
 
+### 6.10 `staged_boss_events`
+
+`staged_boss_events` 描述具有兩個正式入口、戰間移動／轉場、選項分支與事後寶箱 gate 的
+有限 boss 狀態機。兩戰分別提供 `first_npc`／`second_npc`、原始編隊、掉落政策與勝利旗標
+交易；`first_npc_post_battle_directions` 與 `first_post_battle_directions` 分別保存旗標交易前
+NPC 及交易後玩家的具名方向，`treasure_gates` 明列第二戰前不可取得的
+道具。文字一律使用 `dialogue_text_ids`，不得在 Go 寫版本專屬句子。
+
+掉落政策目前只接受 `original` 與 `suppress`：前者必須走原始怪物資料的掉落欄位，後者對應
+原版戰鬥狀態的掉落抑制，不可改成「戰後直接給道具」。每個 selector、編隊、旗標、路徑與
+寶箱 gate 都需 D3 證據；缺值或未知方向 fail closed。第一個實例是
+`dq3:event.jipang_orochi`，證據見 [`docs/95`](95-jipang-orochi-production-trace.md)。
+
 ### 6.11 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
@@ -704,7 +717,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.9",
+  "schema_version": "0.1.10",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [
