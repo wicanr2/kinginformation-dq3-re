@@ -1,6 +1,6 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 更新：2026-08-01。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-08-02。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
 
@@ -39,6 +39,8 @@ THE END；關鍵事件的入口、設定資料、畫面、聲音、副作用與 
   [`docs/93`](docs/93-teidon-dark-lamp-production-trace.md)
 - 最新日邦格八頭大蛇兩階段 audit：
   [`docs/95`](docs/95-jipang-orochi-production-trace.md)
+- 最新隱形草／愛丁貝亞守衛 audit：
+  [`docs/96`](docs/96-invisibility-grass-eginbear-production-trace.md)
 - 香巴尼塔甘達特原版事件與正常路徑：[`docs/85`](docs/85-shanpane-kandar-production-trace.md)
 - 近期 IDA/影片證據：[`docs/75`](docs/75-phoenix-orbs-re.md)、
   [`docs/76a`](docs/76-baramos-gaia-re.md)、[`docs/76b`](docs/76-r5-endgame-realignment.md)、
@@ -61,8 +63,11 @@ handler39 完成賢者轉職與 save/load；詳見 `docs/92`。其後已從該�
 依原版 gate 進入黑夜且不消耗道具；save/load 後再航行抵達 CTY19，詳見 `docs/93`。
 同一條正式 trace 又由 CTY19 正式入口完成 handler45 第一戰、怪75原始掉落草薙大劍、
 NPC slot0 與玩家各自的右移兩步、CTY21 rec70、handler36 No 分支第二戰、掉落抑制及
-同格寶箱取得紫寶珠，並通過 save/load；詳見 `docs/95`。**尚未完成從新遊戲開始的無
-debug 全流程驗收**；下一個 audit 從 CTY21 紫寶珠後合法 checkpoint 繼續尋找第一個 blocker。
+同格寶箱取得紫寶珠，並通過 save/load；詳見 `docs/95`。同一條 trace 已再由 CTY21
+正常補給、從 CTY38 原始貨架買入隱形草 `0x5d`，在 CTY39 由正式道具選單使用，使
+handler29 不再把守衛橫移到玩家同欄，從右欄進入 CTY76 並通過 save/load；詳見
+`docs/96`。**尚未完成從新遊戲開始的無 debug 全流程驗收**；下一個 audit 從 CTY76
+合法 checkpoint 繼續。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -94,6 +99,10 @@ schema `0.1.9` 新增 `interface.json`；原版共用對話框 `(152,238,360,112
 schema `0.1.10` 新增 `staged_boss_events`；日邦格兩個 NPC selector、兩組編隊、NPC／玩家
 戰間路徑、掉落政策、旗標交易、寶箱 gate 與 rec66–70 均由 JSON 提供。怪物 parser 已校正
 `+0x25` 掉落閾值、`+0x26` 掉落道具，`+0x27` 保持未知；詳見 `docs/95`。
+schema `0.1.11` 新增 `item_use_effects.step_count`、`temporary_invisibility` 與
+`tracking_guard_events`；隱形草的 raw ID、消耗、25 步 timer、CTY39 trigger、guard
+selector 與 bypass effect 均由 JSON 提供。CTY parser 也已修正無 event table 時漏讀
+special handler 的錯誤；詳見 `docs/96`。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

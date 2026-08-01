@@ -144,7 +144,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Cancel: true}) // 清單→主選單
 	press(InputState{Cancel: true}) // 關酒場
 
-	// 四人旅店每次 8G；國王的 50G 全數保留作練級住宿。先買藥草會在 Lv4 前耗盡
+	// 四人旅店每次 8G；國王的 50G 全數保留作練級住宿。先買藥草會在前段練級耗盡
 	// 住宿費，因此這條 deterministic 正式路線以逃離強敵、旅店補滿為前段補給策略。
 
 	// 國王給的裝備不會自動穿上；依正式命令窗逐人分配。
@@ -214,9 +214,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 
 	// 最短任務路線會讓四人一直停在 Lv1，抵達羅馬利亞北方後連單隻中期怪都無法承受。
-	// 在阿里阿罕入口旁的原版低危 region 以正式移動／戰鬥／旅店輸入練到 Lv4；
+	// 在阿里阿罕入口旁的原版低危 region 以正式移動／戰鬥／旅店輸入練到 Lv15；
 	// 不寫入 EXP、HP、金幣或 RNG，所有成長與補給都必須走 production consumer。
-	traceTrainNearTown(t, g, 0, 4)
+	traceTrainNearTown(t, g, 0, 15)
 
 	// 從阿里阿罕出口沿真實地表走到拿吉米之塔；途中若發生隨機遭遇，也只送正式戰鬥輸入。
 	traceAdventureWalkToCty(t, g, 7) // 阿里阿罕西側地道入口；塔本體隔海，不能由地表直走
@@ -378,7 +378,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceReviveDeadAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
 	traceExitTownBoundary(t, g)
-	traceTrainNearTown(t, g, roleEvent.OfferNPC.CTYRaw, 15)
+	// 正式長路線後段會連續經過遠洋、轉職與八頭大蛇；在有教會、旅店及商店的
+	// 羅馬利亞完成主要練級，避免到夜間會撤掉設施 NPC 的提頓才補救。
+	traceTrainNearTown(t, g, roleEvent.OfferNPC.CTYRaw, 25)
 	traceAdventureWalkToCty(t, g, roleEvent.OfferNPC.CTYRaw)
 	traceReviveDeadAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
@@ -452,6 +454,38 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			bought++
 		}
 		return bought
+	}
+	buyBestFromOpenShop := func(slot, class int) int {
+		t.Helper()
+		bestCode, bestValue := -1, -1
+		for _, code := range g.shop.codes {
+			value := g.shop.items.Defense(code)
+			if slot == 0 {
+				value = g.shop.items.Attack(code)
+			}
+			if g.shop.items.EquipSlot(code) == slot && g.shop.items.CanEquip(code, class) &&
+				g.shop.items.Price(code) <= g.heroGold && value > bestValue {
+				bestCode, bestValue = code, value
+			}
+		}
+		if bestCode < 0 {
+			t.Fatalf("商店沒有職業%d可負擔的部位%d裝備：gold=%d codes=%v",
+				class, slot, g.heroGold, g.shop.codes)
+		}
+		for i, code := range g.shop.codes {
+			if code != bestCode {
+				continue
+			}
+			for g.shop.cursor != i {
+				send(InputState{DirHeld: -1, DirEdge: 0})
+			}
+			break
+		}
+		press(InputState{Confirm: true})
+		if !g.hasItem(bestCode) {
+			t.Fatalf("正式購買裝備 %#x 後未進勇者物品欄：inventory=%v", bestCode, g.inventory)
+		}
+		return bestCode
 	}
 	if bought := buyFromOpenShop(itemuse.ItemHolyWater, 1); bought != 1 {
 		t.Fatalf("羅馬利亞北行前買不到聖水：bought=%d gold=%d", bought, g.heroGold)
@@ -796,6 +830,17 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceTownSectionTo(t, g, 12, 1)
 	traceReviveDeadAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
+	// 依席斯武防店是正常主線已經過且日夜穩定的補給點。品項由原始商店表、能力與
+	// 可裝職業欄決定；正式買下並從裝備面板穿上，不把特定裝備 ID 寫成測試捷徑。
+	traceTalkFacility(t, g, facWeapon)
+	isisWeapon := buyBestFromOpenShop(0, 0)
+	isisArmor := buyBestFromOpenShop(1, 0)
+	press(InputState{Cancel: true})
+	equipItem(0, isisWeapon)
+	equipItem(0, isisArmor)
+	traceTalkFacility(t, g, facItem)
+	buyFromOpenShop(herbCode, 5)
+	press(InputState{Cancel: true})
 	traceTownSectionTo(t, g, 12, 0)
 	traceExitTownBoundary(t, g)
 	traceAdventureWalkToCty(t, g, 13)
@@ -1448,7 +1493,6 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if g.dnPhase != 0 {
 		t.Fatalf("重新進提頓後不是白天：phase=%d step=%d", g.dnPhase, g.dnStep)
 	}
-
 	darkLampEvent, ok := g.pack.TreasureEvent("dq3:event.teidon_dark_lamp")
 	if !ok {
 		t.Fatal("缺 dq3:event.teidon_dark_lamp")
@@ -1489,10 +1533,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.storyFlag(darkLamp.PresentFlag))
 	}
 
-	// 同一合法 checkpoint 繼續正常登船並抵達下一個主線節點 CTY19，
-	// 證明黑暗燈交易沒有把 campaign 鎖死。
+	// 同一合法 checkpoint 繼續正常登船並抵達下一個主線節點 CTY19；
+	// 航程遭遇一律由正式戰鬥選單逃跑，保留依席斯的合法補給成果。
 	traceBoardAndSailShip(t, g)
-	traceAdventureTravelToCty(t, g, 19)
+	traceAdventureTravelToCty(t, g, 19, true)
 	if !g.inTown || g.curCty != 19 {
 		t.Fatalf("黑暗燈後無法繼續到八頭大蛇洞窟：town=%v cty=%d", g.inTown, g.curCty)
 	}
@@ -1506,22 +1550,48 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 	traceTownSectionTo(t, g, orochi.FirstNPC.CTYRaw, orochi.FirstNPC.Section,
 		orochi.FirstNPC.Tile.X, orochi.FirstNPC.Tile.Y)
-	traceTalkNPC(t, g, orochi.FirstNPC.Tile.X, orochi.FirstNPC.Tile.Y)
+	// handler45 戰後把玩家向右推兩格進宮殿；原版互動路線必須從 NPC 左側交談，
+	// 若從右側開戰，守衛自身的右移會占住玩家路徑而無法觸發同一轉場。
+	traceWalkTo(t, g, orochi.FirstNPC.Tile.X-1, orochi.FirstNPC.Tile.Y)
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	send(InputState{DirHeld: 3, DirEdge: -1}) // 面向右側 NPC
+	press(InputState{Confirm: true})          // 開命令窗
+	press(InputState{Confirm: true})          // 選對話
 	if !g.battle.active || g.stagedBossStage != stagedBossFirstBattle || g.battle.monID != 75 {
 		t.Fatalf("handler45 未由正式對話開第一戰：active=%v stage=%d mon=%d",
 			g.battle.active, g.stagedBossStage, g.battle.monID)
 	}
 	traceResolveBattle(t, g, false)
-	for frames := 0; frames < 300 && g.stagedBossStage == stagedBossFirstMoving; frames++ {
+	// 原版掉落草薙大劍會留下需要玩家確認的訊息；先以正式確認鍵關閉，
+	// 戰後 NPC／玩家移動腳本才會取得輸入所有權。
+	for frames := 0; frames < 1000 && g.stagedBossStage == stagedBossFirstMoving; frames++ {
+		// 勝利、經驗與掉落訊息可能依序取得 modal；逐一以正式確認鍵推進。
+		if g.dlg.open {
+			traceCloseDialogue(t, g)
+			continue
+		}
 		send(InputState{DirHeld: -1, DirEdge: -1})
 	}
 	if !g.hasItem(0x14) || g.hasItem(0x69) || g.storyFlag(0x44) || !g.storyFlag(0x20) ||
 		g.curCty != 21 || sceneSection(g.cur) != 0 || g.stagedBossStage != stagedBossFirstPost || !g.dlg.open {
-		t.Fatalf("第一戰後 transaction／轉場錯：item14=%v item69=%v flags44/20=%v/%v cty=%d sec=%d stage=%d dlg=%v",
+		t.Fatalf("第一戰後 transaction／轉場錯：item14=%v item69=%v flags44/20=%v/%v cty=%d sec=%d pos=(%d,%d) stage=%d dlg=%v",
 			g.hasItem(0x14), g.hasItem(0x69), g.storyFlag(0x44), g.storyFlag(0x20),
-			g.curCty, sceneSection(g.cur), g.stagedBossStage, g.dlg.open)
+			g.curCty, sceneSection(g.cur), g.px, g.py, g.stagedBossStage, g.dlg.open)
 	}
 	traceCloseDialogue(t, g)
+	// 兩階段事件不強迫玩家連戰。第一戰後先以正式出口、船、教會及旅店到 CTY22
+	// 復原，再由地表正式入口回日邦格拒絕無姬；不直接補 HP／MP 或復活角色。
+	traceTownSectionTo(t, g, 21, 0)
+	traceExitTownBoundary(t, g)
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 22, true)
+	traceReviveDeadAtChurch(t, g)
+	traceTalkFacility(t, g, facInn)
+	traceExitTownBoundary(t, g)
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 21, true)
 	traceTalkNPC(t, g, orochi.SecondNPC.Tile.X, orochi.SecondNPC.Tile.Y)
 	traceCloseDialogue(t, g)
 	if g.stagedBossStage != stagedBossSecondChoice {
@@ -1548,7 +1618,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		CTYRaw: 21, Section: 0, TileSubID: 0, EventTypeRaw: 1,
 		ItemRawID: 0x69, PresentFlag: 0x89,
 	})
-	if !g.hasItem(0x69) || g.storyFlag(0x89) {
+	if !g.hasItem(0x69) || !g.storyFlag(0x89) {
 		t.Fatalf("正式調查無姬寶箱未取得紫寶珠：item=%v flag89=%v",
 			g.hasItem(0x69), g.storyFlag(0x89))
 	}
@@ -1565,10 +1635,65 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	press(InputState{Confirm: true})
 	if !g.inTown || g.curCty != 21 || !g.hasItem(0x14) || !g.hasItem(0x69) ||
-		g.storyFlag(0x20) || !g.storyFlag(0x1f) || g.storyFlag(0x89) {
+		g.storyFlag(0x20) || !g.storyFlag(0x1f) || !g.storyFlag(0x89) {
 		t.Fatalf("日邦格 save/load round-trip 錯：town=%v cty=%d item14/69=%v/%v flags20/1f/89=%v/%v/%v",
 			g.inTown, g.curCty, g.hasItem(0x14), g.hasItem(0x69), g.storyFlag(0x20),
 			g.storyFlag(0x1f), g.storyFlag(0x89))
+	}
+
+	// 日邦格 checkpoint → 原始 CTY38 道具店。docs/40 的 SHP.DAT 貨架盤點證實此店
+	// 含隱身草 0x5d；不把朗錫爾 CTY47／勇氣神殿態 CTY75 的地名線索誤當貨架 oracle。
+	// 全程不直接 grant item 或呼叫 shop transaction。
+	traceTownSectionTo(t, g, 21, 0)
+	traceExitTownBoundary(t, g)
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 38)
+	traceTalkFacility(t, g, facItem)
+	if !g.shop.active {
+		t.Fatal("CTY38 道具店未由正式 facility NPC 開啟")
+	}
+	if bought := buyFromOpenShop(0x5d, 1); bought != 1 || !g.hasItem(0x5d) {
+		t.Fatalf("CTY38 正式購買隱身草失敗：bought=%d gold=%d inventory=%v",
+			bought, g.heroGold, g.inventory)
+	}
+	press(InputState{Cancel: true})
+
+	// CTY38 → 耶進貝亞：由正式地表／船路抵達 CTY39，在守衛前才從道具選單
+	// 使用隱身草。透明狀態使原始 handler29 不再把 slot0 守衛橫移到玩家同欄；
+	// 玩家由右欄越過後，再由原始 transition 進 CTY76 地下室。
+	traceTownSectionTo(t, g, 38, 0)
+	traceExitTownBoundary(t, g)
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 39)
+	traceWalkTo(t, g, 14, 38)
+	traceUseInventoryItem(t, g, 0x5d)
+	if g.hasItem(0x5d) || g.remoaru != 0x19 {
+		t.Fatalf("正式使用隱身草 transaction 錯：item=%v timer=%d", g.hasItem(0x5d), g.remoaru)
+	}
+	traceWalkTo(t, g, 14, 36)
+	if g.cur.npcAt(13, 36) < 0 || g.cur.npcAt(14, 36) >= 0 || g.remoaru != 0x17 {
+		t.Fatalf("隱身越過耶進貝亞守衛失敗：player=(%d,%d) timer=%d npcs=%+v",
+			g.px, g.py, g.remoaru, g.cur.npcs)
+	}
+	traceTownSectionTo(t, g, 76, 0)
+	if g.curCty != 76 || g.cur.sec != 0 {
+		t.Fatalf("守衛 gate 後未由原始 transition 抵達 CTY76：cty=%d sec=%d", g.curCty, g.cur.sec)
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存愛丁貝亞地下室 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建愛丁貝亞讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != 76 || sceneSection(g.cur) != 0 || g.hasItem(0x5d) {
+		t.Fatalf("愛丁貝亞地下室 save/load round-trip 錯：town=%v cty=%d sec=%d grass=%v",
+			g.inTown, g.curCty, sceneSection(g.cur), g.hasItem(0x5d))
 	}
 }
 
@@ -1582,7 +1707,9 @@ func traceWaitForDayNearCty(t *testing.T, g *Game, cty int) {
 	prevX, prevY := -1, -1
 	for steps := 0; steps < 2000 && g.dnPhase != 0; steps++ {
 		if g.battle.active {
-			traceResolveBattle(t, g, false)
+			// 等待晝夜只需要正常走動；遇到目前隊伍不適合硬打的後期怪物時，
+			// 以正式戰鬥選單逃跑，不用測試注入改 HP、RNG 或遭遇表。
+			traceResolveBattle(t, g, g.battle.monID >= 80)
 			continue
 		}
 		if g.cd > 0 {
@@ -1663,6 +1790,11 @@ func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 	}
 	rest := func() {
 		t.Helper()
+		// 有些城鎮（提頓）夜間會換掉旅店 NPC；在城外以正常步行等到白天，
+		// 再走正式入口，不直接寫晝夜 phase。
+		if g.dnPhase != 0 {
+			traceWaitForDayNearCty(t, g, cty)
+		}
 		traceAdventureWalkToCty(t, g, cty)
 		if !allAlive() {
 			traceReviveDeadAtChurch(t, g)
@@ -1689,7 +1821,7 @@ func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 		prevX, prevY = -1, -1
 	}
 
-	for step := 0; step < 50000; step++ {
+	for step := 0; step < 500000; step++ {
 		level, _, _, _, _ := g.heroStats()
 		if level >= wantLevel {
 			if needsRest() {
@@ -1701,7 +1833,9 @@ func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 		if g.battle.active {
 			// 原版低階隊伍遇到超出目前區域戰力的怪物應使用正式「逃跑」指令；
 			// 阿里阿罕只與弱敵交戰；Lv4 後的羅馬利亞訓練才正式迎戰當地怪物。
-			traceResolveBattle(t, g, cty == 0)
+			level, _, _, _, _ := g.heroStats()
+			flee := cty == 0 || level < 10 && g.battle.monID >= 20
+			traceResolveBattle(t, g, flee)
 			continue
 		}
 		if needsRest() {
@@ -1739,7 +1873,7 @@ func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 				cty, g.px, g.py)
 		}
 	}
-	t.Fatalf("正式低危區練級 50000 step 仍未達 Lv%d：exp=%d", wantLevel, g.heroExp)
+	t.Fatalf("正式低危區練級 500000 step 仍未達 Lv%d：exp=%d", wantLevel, g.heroExp)
 }
 
 // traceTalkFacility 依當前原始 NPC 表找 facility type，而不是把店員座標寫成 debug shortcut；
@@ -2197,14 +2331,16 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int, fleeStrong ...b
 
 // traceAdventureTravelToCty 規劃一段最多一次靠岸的船陸混合路徑；只把規劃出的方向送給
 // production Game.step。船的登船、航行、靠岸與 CTY 入口判定皆由 tryMove/step 決定。
-func traceAdventureTravelToCty(t *testing.T, g *Game, wantCty int) {
+func traceAdventureTravelToCty(t *testing.T, g *Game, wantCty int, fleeAll ...bool) {
 	t.Helper()
 	if wantCty < 0 || wantCty >= len(ctyLoc) || ctyLoc[wantCty][2] != g.layer {
 		t.Fatalf("無效船陸目的 CTY%d / layer%d", wantCty, g.layer)
 	}
 	for i := 0; i < 20000 && (!g.inTown || g.curCty != wantCty); i++ {
 		if g.battle.active {
-			traceResolveBattle(t, g, false)
+			// 中後期遠洋可能抽到遠超目前隊伍承受力的高階區域怪；正常玩家會選逃跑，
+			// 不能讓 campaign trace 依賴剛好沒抽到怪87等幸運 RNG。
+			traceResolveBattle(t, g, len(fleeAll) > 0 && fleeAll[0] || g.battle.monID >= 80)
 			continue
 		}
 		if g.inTown {

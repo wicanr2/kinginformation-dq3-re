@@ -64,6 +64,12 @@
   Yes 分支只顯示 rec67 且可重談，No 分支以 rec68 開第二戰；第二戰設掉落抑制，勝利後
   rec69 與旗標交易開放同格寶箱取得紫寶珠。詳見 `docs/95`。_Avoid_: 第一戰直接給紫寶珠、
   省略自動轉場，或把兩戰合併為單一 `bossTrigger`。
+- **愛丁貝亞追蹤守衛** — CTY39 sec0 handler29（raw `0x1d`）在玩家踏入
+  `(13,37)/(14,37)` 時，未隱形會令 slot0 守衛沿 X 追到玩家同欄；`DGROUP 0x4f46`
+  bit `0x8000` set 時直接略過追蹤。隱形草 `0x5d` 會消耗並設定 25 步暫態；玩家仍不能
+  穿越一般 NPC，只能走守衛未占據的右欄。詳見
+  [`docs/96`](docs/96-invisibility-grass-eginbear-production-trace.md)。_Avoid_: 把隱形解讀成
+  全域 NPC passthrough，或把朗錫爾 CTY47/75 當成 `0x5d` 貨架證據。
 - **遭遇區表** — overworld region map `0x4966`(16×16 grid,cell=(X>>4)+(Y&0xf0)→region)+ 遭遇表 `0x4a56`(region×0x20 = 4 子表×8 byte;byte2=背景頁、byte4-7=候選怪 0xff 終止)。CTY 用 `[0xd77]` 存的 region(0=安全)。見 [docs/39](docs/39-encounter-zones.md)。
 - **咒文習得表** — `sub_db5f`(file 0xeecf)讀 DGROUP `0x36f9` 起 per-系 stride 8 指標表 `{spellA,levelA,spellB,levelB}`;系基底 0/8/0x10=勇者/僧侶/魔法系;`level[i]`/`spell[i]` 平行,清單長度由下一指標界定(越界=#5 亂學咒 bug)。職業→系:勇者→勇者系、僧侶→僧侶系、魔法使→魔法系、賢者→僧侶+魔法、其餘無咒。
 

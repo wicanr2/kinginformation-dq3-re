@@ -251,4 +251,5 @@ ITEM.DAT 載到 DGROUP `0x1f9`(7 byte/筆),價格 = `[item*7+0x1f9+2]`。完整�
 `tools/gen_shop_data.py` 直接從 `assets_raw/CTY*.DAT` 萃取全 89 城 91 設施、46 商店 →
 `dq3_remake/src/dq3_shopdata.{c,h}`。`main.c` `shop_stock_for` 改用 `dq3_shop_items()`
 取真實品項(原 curated SHOP_ALIAHAN/REBE/DEFAULT 移除)。佐證:CTY00 最弱且含 `0x1e 布衣`、
-CTY38 道具店含 `5d 隱身草`(對上杜勝利攻略朗錫爾)、王者之劍不在任何商店(寶物非商品)。
+CTY38 道具店含 `5d 隱身草`、王者之劍不在任何商店(寶物非商品)。攻略所稱「朗錫爾」
+只作定位線索，不可拿來把 CTY38 與 CTY47／75 合併。

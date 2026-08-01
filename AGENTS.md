@@ -34,16 +34,21 @@
   只在 IDA 無法處理或需第二套工具交叉驗證時補用。IDA 授權、database 與輸出不得加入
   Git。
 - **IDA 分析必須非破壞性且語意只可附加**：原始 EXE／DAT 永遠唯讀，以 SHA-256 標識
-  輸入；`.i64` 建在 gitignored 的工作副本，不回寫、改名或搬動原始檔。保留 IDA 原始
-  linear address、自動產生名稱及原始指令作可追溯底稿；人工函式名、型別、註解與結構語意
-  只能另加在工作 database 或可重建的匯出 ledger，不得用新語意覆蓋原始位址／bytes。
+  輸入；`.i64` 建在 gitignored 的工作副本，不回寫、改名或搬動原始檔。保留 IDA linear
+  address、自動產生名稱、原始指令與 bytes 作可追溯底稿；不得用 `Rename`、覆寫註解或型別
+  等方式，讓人工語意取代這些原始身分。人工函式名、欄位名、型別、註解與結構語意只能寫入
+  可重建的 sidecar／匯出 ledger，以原始位址或自動名稱作 key；若為方便操作而匯入工作
+  database，也必須同時保留原始身分與 sidecar，且不得把該 database 當成證據本身。
 - 每一筆人工 IDA 語意都必須同時記錄推論等級（`proven`／`strong inference`／
   `hypothesis`／`unknown`）、輸入檔雜湊、IDA database 位址、原始指令或資料範圍及
   consumer。沒有完整 caller／writer／consumer 的名稱不得升為 `proven`；遇到反證應保留
-  舊說並標為已推翻，不可靜默改名造成假記憶。
-- 查全域資料流時以 `.i64` 的 xref 圖為主，不以 grep 攤平 `.asm` 代替；xref 只證明直接
-  參考，取址後透過 register／far pointer 的間接讀寫必須另追。headless 腳本須把結果寫入
-  明確輸出檔並驗證內容，不能因 exit code 0 就宣稱有結果。
+  舊說並標為已推翻，不可靜默改名造成假記憶。程式 parser／game-pack 的正式欄位名也只有
+  在語意穩定並具足證據後才能採用；在此之前維持 `unknown_XX`。
+- 查全域資料流時以 `.i64` 的 xref 圖為主，不以 grep 攤平 `.asm` 代替。讀、寫與取址應依
+  IDA 的 xref type（例如 `dr_R`／`dr_W`／`dr_O`）分類，不以助憶碼字串或 operand 位置猜測；
+  xref 只證明直接參考，取址後透過 register／far pointer 的間接讀寫必須從取址點續追到
+  consumer。headless 腳本須把結果寫入明確輸出檔並驗證內容，不能因 exit code 0 就宣稱
+  有結果。
 - 即使使用上述本機 IDA 安裝，也只能把明確需要的唯讀路徑掛入一次性 Docker 容器執行；
   禁止直接在 host 啟動 IDA、反編譯、索引或其他專案作業。容器工作完成後依本檔 Docker
   生命週期規則立即停止並清除。

@@ -83,9 +83,17 @@ func OpenTown(cty []byte, section int, night bool) (*Town, error) {
 	// 例如 CTY13 sec2 是 15 16 17，CTY62 sec0 是 39(handler57)。
 	hptr := int(townU16(cty, so+4))
 	evptr := int(townU16(cty, so+8))
-	if hptr != 0xffff && evptr != 0xffff && hptr <= evptr &&
-		so+hptr >= 0 && so+evptr <= len(cty) {
-		for o := so + hptr; o < so+evptr; o++ {
+	// 有些 section 沒有 event table（0xffff），但仍有 special handler；此時
+	// handler table 結束於下一個較大的 transition/layout pointer。CTY39 sec0
+	// 唯一 handler byte 是隱身守衛 gate。
+	hend := -1
+	for _, next := range []int{evptr, int(townU16(cty, so+0x0c)), int(townU16(cty, so+0x0e))} {
+		if next != 0xffff && next >= hptr && (hend < 0 || next < hend) {
+			hend = next
+		}
+	}
+	if hptr != 0xffff && hend >= hptr && so+hptr >= 0 && so+hend <= len(cty) {
+		for o := so + hptr; o < so+hend; o++ {
 			t.SpecialHandlers = append(t.SpecialHandlers, int(cty[o]))
 		}
 	}

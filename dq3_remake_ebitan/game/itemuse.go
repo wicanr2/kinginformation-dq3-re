@@ -96,7 +96,7 @@ func (g *Game) usePackItemEffect(code int) bool {
 	if !ok {
 		return false
 	}
-	if effect.LocationKind != "overworld" || g.inTown {
+	if effect.LocationKind == "overworld" && g.inTown {
 		return true
 	}
 	switch effect.EffectID {
@@ -108,6 +108,16 @@ func (g *Game) usePackItemEffect(code int) bool {
 			return true
 		}
 		g.setDaynight(effect.DayNightPhase)
+		if effect.Consume {
+			g.removeItems(code, 1)
+			g.clampPanelCursor()
+		}
+		g.noticeCode, g.noticeTimer = code, 90
+	case "temporary_invisibility":
+		if effect.StepCount <= 0 {
+			return true
+		}
+		g.remoaru = effect.StepCount
 		if effect.Consume {
 			g.removeItems(code, 1)
 			g.clampPanelCursor()

@@ -60,10 +60,13 @@ func TestPackDarkLampOriginalGateAndTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 	effects := pack.ItemUseEffects()
-	if len(effects) != 1 {
-		t.Fatalf("item use effects=%d，want 1", len(effects))
+	if len(effects) != 2 {
+		t.Fatalf("item use effects=%d，want 2", len(effects))
 	}
-	effect := effects[0]
+	effect, ok := pack.ItemUseEffectByRawID(0x5f)
+	if !ok {
+		t.Fatal("黑暗之燈 pack effect missing")
+	}
 	use := func(g *Game) {
 		t.Helper()
 		g.inventory = []int{effect.ItemRawID}
@@ -95,6 +98,29 @@ func TestPackDarkLampOriginalGateAndTransaction(t *testing.T) {
 		!town.hasItem(effect.ItemRawID) {
 		t.Fatalf("城內使用不得繞過原版 overworld gate：phase=%d step=%d notice=%d item=%v",
 			town.dnPhase, town.dnStep, town.noticeTimer, town.hasItem(effect.ItemRawID))
+	}
+}
+
+func TestPackInvisibilityGrassConsumesAndSharesRemoaruTimer(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	effect, ok := pack.ItemUseEffectByRawID(0x5d)
+	if !ok {
+		t.Fatal("隱身草 pack effect missing")
+	}
+	for _, inTown := range []bool{false, true} {
+		g := &Game{pack: pack, inTown: inTown, inventory: []int{0x5d},
+			panel: panelItem, panelCursor: 0}
+		g.useSelectedItem()
+		if g.remoaru != 0x19 || g.hasItem(0x5d) || g.noticeCode != 0x5d {
+			t.Fatalf("inTown=%v 隱身草 transaction 錯：timer=%d item=%v notice=%d",
+				inTown, g.remoaru, g.hasItem(0x5d), g.noticeCode)
+		}
+	}
+	if effect.StepCount != 0x19 || !effect.Consume {
+		t.Fatalf("隱身草 pack effect 錯：%+v", effect)
 	}
 }
 

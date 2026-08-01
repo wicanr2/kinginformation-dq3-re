@@ -2,6 +2,20 @@ package dq3data
 
 import "testing"
 
+func TestCTY39SpecialHandlerWithoutEventTable(t *testing.T) {
+	cty := findAsset(t, "CTY39.DAT")
+	so := int(townU16(cty, 0))
+	handlerFile := so + int(townU16(cty, so+4))
+	t.Logf("CTY39 sec0=%#x handler table file=%#x raw=%#x", so, handlerFile, cty[handlerFile])
+	town, err := OpenTown(cty, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cty[handlerFile] != 0x1d || len(town.SpecialHandlers) != 1 || town.SpecialHandlers[0] != 29 {
+		t.Fatalf("CTY39 sec0 special handlers=%v，want [29]", town.SpecialHandlers)
+	}
+}
+
 // 阿里阿罕(起始城)= CTY00.DAT / section 0 / DQ31.BLK。對拍 C dq3_town_load。
 func TestOpenTownAliahan(t *testing.T) {
 	cty := findAsset(t, "CTY00.DAT")

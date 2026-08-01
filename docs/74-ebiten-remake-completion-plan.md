@@ -559,7 +559,7 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 4. `git diff --check`、確認不納入原版素材／IDA 檔／使用者 scratch files，再做一次重大
    commit 與 push。
 
-## 10. 今日收尾與剩餘工作（更新 2026-08-01）
+## 10. 今日收尾與剩餘工作（更新 2026-08-02）
 
 boot 起的同一條正式 trace 已由首次航行繼續至加爾那之塔《領悟之書》`0x4a`、
 CTY17 達瑪神殿轉職，再閉合 CTY20《黑暗之燈》`0x5f`。
@@ -592,11 +592,19 @@ set `0x1f`，再由同格寶箱取得紫寶珠。怪75的草薙大劍則由 D3MN
 原始掉落，不是事件直接給予。schema `0.1.10`、正式 InputState trace、save/load 與四張
 runtime 圖均已更新；見 `docs/95`。
 
+schema `0.1.11` 已接續閉合隱形草與愛丁貝亞守衛。IDA Pro 9.4 證明 item `0x5d`
+handler `(logical) 0x3fff` 會清所選物品槽、寫 25 步 timer 並 set `DGROUP 0x4f46`
+的隱形 bits；CTY39 sec0 raw handler29 則在可見時把 slot0 守衛沿 X 追到玩家同欄，
+bit `0x8000` set 時略過追蹤。正式 trace 由原始 CTY38 貨架買入，在 `(14,38)` 由
+rec421 使用，從右欄越過守衛進 CTY76，並完成 save/load。兩張新版 runtime 圖與完整
+證據見 `docs/96`。本輪同時推翻「CTY47/75 就是隱形草貨架」的舊路線假設；CTY47/75
+是朗錫爾／勇氣神殿雙入口，實際含 `0x5d` 的原始商店表是 CTY38。
+
 下一輪依下列順序接手：
 
-1. **主線最高優先**：boot 起的同一條 trace 已經由 CTY19 第一戰、宮殿第二戰與寶箱
-   閉合至 CTY21 紫寶珠後合法 save checkpoint（`docs/95`）。從該 checkpoint 繼續正常
-   玩家路線，記錄下一個實際 blocker；不得跳到孤立的既有後段 handler。
+1. **主線最高優先**：boot 起的同一條 trace 已經由 CTY21 checkpoint、CTY38 隱形草、
+   CTY39 守衛閉合至 CTY76 合法 save checkpoint（`docs/96`）。下一個 blocker 是 CTY76
+   地下室推石／乾渴之壺流程；從該 checkpoint 繼續正常玩家路線，不得跳到孤立的後段 handler。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。

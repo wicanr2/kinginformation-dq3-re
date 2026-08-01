@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.10"
+	SchemaVersion = "0.1.11"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -234,8 +234,23 @@ type ItemUseEffect struct {
 	LocationKind       string   `json:"location_kind"`
 	DayNightPhase      int      `json:"day_night_phase"`
 	ResetDayNightSteps bool     `json:"reset_day_night_steps"`
+	StepCount          int      `json:"step_count"`
 	Consume            bool     `json:"consume"`
 	Evidence           Evidence `json:"evidence"`
+}
+
+// TrackingGuardEvent describes a guard that mirrors the player's coordinate
+// on a finite trigger strip unless a named temporary state suppresses it.
+type TrackingGuardEvent struct {
+	ID             string              `json:"id"`
+	Kind           string              `json:"kind"`
+	CTYRaw         int                 `json:"cty_raw"`
+	Section        int                 `json:"section"`
+	TriggerTiles   []FloorSwitch       `json:"trigger_tiles"`
+	Guard          ScriptedNPCSelector `json:"guard"`
+	TrackAxis      string              `json:"track_axis"`
+	BypassEffectID string              `json:"bypass_effect_id"`
+	Evidence       Evidence            `json:"evidence"`
 }
 
 type ItemExchange struct {
@@ -537,6 +552,7 @@ type Events struct {
 	QuestItemChainEvents        []QuestItemChainEvent        `json:"quest_item_chain_events"`
 	TreasureEvents              []TreasureEvent              `json:"treasure_events"`
 	ItemUseEffects              []ItemUseEffect              `json:"item_use_effects"`
+	TrackingGuardEvents         []TrackingGuardEvent         `json:"tracking_guard_events"`
 	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate     `json:"two_step_floor_switch_gates"`
 	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent `json:"staged_vehicle_exchange_events"`
 	GuidedPassageEvents         []GuidedPassageEvent         `json:"guided_passage_events"`
@@ -1070,6 +1086,9 @@ func (p *Pack) validateEvents() error {
 	if p.Events.ItemUseEffects == nil {
 		return errors.New("item_use_effects must be present")
 	}
+	if p.Events.TrackingGuardEvents == nil {
+		return errors.New("tracking_guard_events must be present")
+	}
 	if p.Events.TwoStepFloorSwitchGates == nil {
 		return errors.New("two_step_floor_switch_gates must be present")
 	}
@@ -1260,17 +1279,52 @@ func (p *Pack) validateEvents() error {
 		if previous := p.itemUseEffects[e.ItemRawID]; previous != nil {
 			return fmt.Errorf("%s: item_raw_id duplicates %s", e.ID, previous.ID)
 		}
-		if e.EffectID != "force_day_night_phase" ||
-			e.LocationKind != "overworld" ||
-			e.DayNightPhase < 0 || e.DayNightPhase > 3 ||
-			!e.ResetDayNightSteps {
-			return fmt.Errorf("%s: invalid force_day_night_phase configuration", e.ID)
+		switch e.EffectID {
+		case "force_day_night_phase":
+			if e.LocationKind != "overworld" ||
+				e.DayNightPhase < 0 || e.DayNightPhase > 3 ||
+				!e.ResetDayNightSteps || e.StepCount != 0 {
+				return fmt.Errorf("%s: invalid force_day_night_phase configuration", e.ID)
+			}
+		case "temporary_invisibility":
+			if e.LocationKind != "any" || e.DayNightPhase != 0 ||
+				e.ResetDayNightSteps || e.StepCount <= 0 || !e.Consume {
+				return fmt.Errorf("%s: invalid temporary_invisibility configuration", e.ID)
+			}
+		default:
+			return fmt.Errorf("%s: unknown item use effect %q", e.ID, e.EffectID)
 		}
 		if err := validateEvidence(e.Evidence); err != nil {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		itemUseIDs[e.ID] = true
 		p.itemUseEffects[e.ItemRawID] = e
+	}
+	trackingIDs := make(map[string]bool, len(p.Events.TrackingGuardEvents))
+	for i := range p.Events.TrackingGuardEvents {
+		e := &p.Events.TrackingGuardEvents[i]
+		if e.ID == "" || e.Kind != "tracking_guard" || trackingIDs[e.ID] ||
+			e.CTYRaw < 0 || e.CTYRaw > 255 || e.Section < 0 ||
+			!validScriptedNPC(e.Guard) || e.Guard.CTYRaw != e.CTYRaw ||
+			e.Guard.Section != e.Section || e.TrackAxis != "horizontal" ||
+			e.BypassEffectID != "temporary_invisibility" ||
+			len(e.TriggerTiles) == 0 {
+			return fmt.Errorf("tracking_guard_events[%d]: invalid event", i)
+		}
+		seenTiles := map[[2]int]bool{}
+		for _, trigger := range e.TriggerTiles {
+			key := [2]int{trigger.Tile.X, trigger.Tile.Y}
+			if trigger.Tile.X < 0 || trigger.Tile.Y < 0 || trigger.TileSubID < 1 ||
+				trigger.TileSubID > 31 || trigger.HandlerRaw < 0 || trigger.HandlerRaw > 255 ||
+				seenTiles[key] {
+				return fmt.Errorf("%s: invalid or duplicate trigger tile", e.ID)
+			}
+			seenTiles[key] = true
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		trackingIDs[e.ID] = true
 	}
 	p.sequenceGates = make(map[string]*TwoStepFloorSwitchGate, len(p.Events.TwoStepFloorSwitchGates))
 	for i := range p.Events.TwoStepFloorSwitchGates {
@@ -1905,6 +1959,10 @@ func (p *Pack) TreasureEvent(id string) (*TreasureEvent, bool) {
 
 func (p *Pack) ItemUseEffects() []ItemUseEffect {
 	return append([]ItemUseEffect(nil), p.Events.ItemUseEffects...)
+}
+
+func (p *Pack) TrackingGuardEvents() []TrackingGuardEvent {
+	return append([]TrackingGuardEvent(nil), p.Events.TrackingGuardEvents...)
 }
 
 func (p *Pack) ItemUseEffectByRawID(itemRawID int) (*ItemUseEffect, bool) {

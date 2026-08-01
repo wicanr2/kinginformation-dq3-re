@@ -67,6 +67,10 @@ RE 文件。
 
 ![Ebiten：第二戰後正式調查取得紫寶珠](docs/img/jipang_purple_orb_obtained.png)
 
+![Ebiten：愛丁貝亞可見玩家被守衛追蹤阻擋](docs/img/eginbear_guard_visible_block.png)
+
+![Ebiten：使用隱形草後守衛留在左欄，玩家由右欄通過](docs/img/eginbear_invisibility_pass.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

@@ -1143,6 +1143,7 @@ func (g *Game) step(in InputState) error {
 	}
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
 		g.tryTransition()
+		g.tryTrackingGuardEvent()
 		g.trySequenceGateEvent()
 		g.tryOpeningRegionEvent()
 		g.tryBossSurrenderEvent()

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.10",
+  "schema_version": "0.1.11",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -222,6 +222,7 @@
       "location_kind": "overworld",
       "day_night_phase": 2,
       "reset_day_night_steps": true,
+      "step_count": 0,
       "consume": false,
       "evidence": {
         "level": "D3",
@@ -231,6 +232,50 @@
         "address": "0x3ccf..0x3d16, DGROUP 0x366a, handler 0x4063..0x40aa",
         "consumer": "selected record item+1 maps raw item 0x5f through DGROUP 0x366a entry 30 to handler 0x4063; overworld-only handler changes day byte DGROUP 0x526c from 1 to 0, advances clock 0x251d to 0x008c, refreshes palette, and does not remove the inventory slot",
         "doc": "docs/93-teidon-dark-lamp-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.invisibility_grass",
+      "kind": "item_use",
+      "item_raw_id": 93,
+      "effect_id": "temporary_invisibility",
+      "location_kind": "any",
+      "day_night_phase": 0,
+      "reset_day_night_steps": false,
+      "step_count": 25,
+      "consume": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0x3ccf..0x3d16, DGROUP 0x366a, handler 0x3fff..0x4011",
+        "consumer": "selected record item+1 maps raw item 0x5d through DGROUP 0x366a entry 28 to handler 0x3fff; it removes the selected inventory slot, writes DGROUP 0x52f7=0x19 and sets world flags 0xc000, shared with the Remoaru 25-step movement and visibility consumers",
+        "doc": "docs/96-invisibility-grass-eginbear-production-trace.md"
+      }
+    }
+  ],
+  "tracking_guard_events": [
+    {
+      "id": "dq3:event.eginbear_invisibility_guard",
+      "kind": "tracking_guard",
+      "cty_raw": 39,
+      "section": 0,
+      "trigger_tiles": [
+        {"tile": {"x": 13, "y": 37}, "tile_subid": 1, "handler_raw": 29},
+        {"tile": {"x": 14, "y": 37}, "tile_subid": 1, "handler_raw": 29}
+      ],
+      "guard": {"cty_raw": 39, "section": 0, "tile": {"x": 13, "y": 36}, "handler_raw": 15},
+      "track_axis": "horizontal",
+      "bypass_effect_id": "temporary_invisibility",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY39.DAT",
+        "address_space": "logical",
+        "address": "CTY39 file 0x00b2 raw handler 0x1d; logical 0x582c..0x586a; DGROUP 0x4f46/0x52f7",
+        "consumer": "CTY39 sec0 subid1 tiles (13,37)/(14,37) sit below guard NPC (13,36); the guard tracker mirrors player X through the movement interpreter unless invisibility bit 0x8000 is set",
+        "doc": "docs/96-invisibility-grass-eginbear-production-trace.md"
       }
     }
   ],
