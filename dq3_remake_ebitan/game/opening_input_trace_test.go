@@ -2265,6 +2265,87 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.battle.active, g.mirrorStage, g.hasItem(itemModChangeStaff),
 			g.storyFlag(0x42), g.storyFlag(0x22), g.dnPhase)
 	}
+
+	exchanges := g.pack.ChoiceItemExchangeEvents()
+	if len(exchanges) != 1 {
+		t.Fatalf("choice item exchange event count=%d, want 1", len(exchanges))
+	}
+	staffExchange := exchanges[0]
+	traceTownSectionTo(t, g, 44, 0)
+	traceTownSectionTo(t, g, 43, 0)
+	traceExitTownBoundary(t, g, true)
+	traceAdventureWalkToCty(t, g, 43, false) // 從城堡側出口重進可達旅店的城鎮區塊。
+	traceTalkFacility(t, g, facInn)          // 假王戰後以正式旅店補足魯拉 MP。
+	traceExitTownBoundary(t, g, true)
+	traceRuraToCty(t, g, 39) // 正式重定位船到可航向格陵蘭的已造訪港口。
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, staffExchange.NPC.CTYRaw, true)
+	traceTownSectionTo(t, g, staffExchange.NPC.CTYRaw, staffExchange.NPC.Section)
+	traceTalkNPC(t, g, staffExchange.NPC.Tile.X, staffExchange.NPC.Tile.Y)
+	if g.choiceItemExchangeStage != choiceItemExchangeOffer || !g.dlg.open {
+		t.Fatalf("正式持杖交談未進交換提議：stage=%d dlg=%v",
+			g.choiceItemExchangeStage, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	if g.choiceItemExchangeStage != choiceItemExchangeOfferChoice {
+		t.Fatalf("交換提議關閉後未進 Yes/No：stage=%d", g.choiceItemExchangeStage)
+	}
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if g.choiceItemExchangeStage != choiceItemExchangeReject || !g.dlg.open ||
+		!g.hasItem(staffExchange.RequiredItemRawID) ||
+		!g.storyFlag(staffExchange.AvailableFlagRaw) {
+		t.Fatalf("正式拒絕交換修改狀態：stage=%d dlg=%v staff=%v flag=%v",
+			g.choiceItemExchangeStage, g.dlg.open,
+			g.hasItem(staffExchange.RequiredItemRawID),
+			g.storyFlag(staffExchange.AvailableFlagRaw))
+	}
+	traceCloseDialogue(t, g)
+	traceTalkNPC(t, g, staffExchange.NPC.Tile.X, staffExchange.NPC.Tile.Y)
+	traceCloseDialogue(t, g)
+	press(InputState{Confirm: true})
+	if g.choiceItemExchangeStage != choiceItemExchangeSuccess || !g.dlg.open ||
+		g.hasItem(staffExchange.RequiredItemRawID) ||
+		!g.hasItem(staffExchange.GrantedItemRawID) ||
+		g.storyFlag(staffExchange.AvailableFlagRaw) ||
+		g.worldState&uint16(staffExchange.SetWorldStateMaskRaw) == 0 ||
+		g.overPx != staffExchange.SuccessWorldPosition.X ||
+		g.overPy != staffExchange.SuccessWorldPosition.Y {
+		t.Fatalf("正式接受交換 transaction 錯：stage=%d dlg=%v staff=%v bones=%v flag=%v world=%#x pos=(%d,%d)",
+			g.choiceItemExchangeStage, g.dlg.open,
+			g.hasItem(staffExchange.RequiredItemRawID),
+			g.hasItem(staffExchange.GrantedItemRawID),
+			g.storyFlag(staffExchange.AvailableFlagRaw), g.worldState, g.overPx, g.overPy)
+	}
+	traceCloseDialogue(t, g)
+	traceCloseDialogue(t, g)
+	if g.choiceItemExchangeStage != choiceItemExchangeIdle {
+		t.Fatalf("交換後話未閉合：stage=%d", g.choiceItemExchangeStage)
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存船員骨頭 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建船員骨頭讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != staffExchange.NPC.CTYRaw ||
+		!g.hasItem(staffExchange.GrantedItemRawID) ||
+		g.hasItem(staffExchange.RequiredItemRawID) ||
+		g.storyFlag(staffExchange.AvailableFlagRaw) ||
+		g.worldState&uint16(staffExchange.SetWorldStateMaskRaw) == 0 ||
+		g.overPx != staffExchange.SuccessWorldPosition.X ||
+		g.overPy != staffExchange.SuccessWorldPosition.Y {
+		t.Fatalf("船員骨頭 save/load 錯：town=%v cty=%d bones=%v staff=%v flag=%v world=%#x pos=(%d,%d)",
+			g.inTown, g.curCty, g.hasItem(staffExchange.GrantedItemRawID),
+			g.hasItem(staffExchange.RequiredItemRawID),
+			g.storyFlag(staffExchange.AvailableFlagRaw), g.worldState, g.overPx, g.overPy)
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，

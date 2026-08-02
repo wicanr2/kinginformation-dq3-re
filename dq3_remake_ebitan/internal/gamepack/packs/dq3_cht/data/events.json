@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.18",
+  "schema_version": "0.1.19",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -373,6 +373,44 @@
         "address": "0x5320..0x5365, 0x68ef..0x6916",
         "consumer": "CTY11 sec3 subid0 yields item 0x59; CTY05 raw handler16 replaces it with 0x5a; item use in CTY4 consumes, SET 0x26, CLEAR 0x31, displays global rec599, then reloads the scene",
         "doc": "docs/86-noaniel-awakening-production-trace.md"
+      }
+    }
+  ],
+  "choice_item_exchange_events": [
+    {
+      "id": "dq3:event.greenland_transform_staff_exchange",
+      "kind": "choice_item_exchange",
+      "npc": {
+        "cty_raw": 54,
+        "section": 0,
+        "tile": {"x": 8, "y": 2},
+        "handler_raw": 44
+      },
+      "available_flag_raw": 67,
+      "required_item_raw_id": 98,
+      "granted_item_raw_id": 99,
+      "success_world_position": {"x": 150, "y": 90, "layer": 0},
+      "set_world_state_mask_raw": 4,
+      "clear_story_flags_raw": [67],
+      "dialogue_text_ids": {
+        "introduction": "dq3:text.greenland.transform_staff.introduction",
+        "interested": "dq3:text.greenland.transform_staff.interested",
+        "hint": "dq3:text.greenland.transform_staff.hint",
+        "offer": "dq3:text.greenland.transform_staff.offer",
+        "success": "dq3:text.greenland.transform_staff.success",
+        "after": "dq3:text.greenland.transform_staff.after",
+        "reject": "dq3:text.greenland.transform_staff.reject",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY54.DAT + D3TXT06.TXT",
+        "address_space": "logical",
+        "address": "handler44 logical 0x6f90..0x7026 (IDA linear 0x15c20..0x15cb6; file 0x6f90..0x7026); records56..62",
+        "consumer": "handler44 checks story flag0x43 and item0x62, presents two distinct Yes/No branches, replaces the matched inventory word with 0x63, writes world position 150,90, sets world-state bit0x04, rebuilds that world object and clears flag0x43 before records60 and61",
+        "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"
       }
     }
   ],

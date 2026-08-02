@@ -373,33 +373,38 @@ type Game struct {
 	sequenceGateEventID     string        // active pack event；空字串表示無事件
 	sequenceGateSubID       int           // 本次踩到的 pack-owned switch subid
 	sequenceGateArmed       bool          // 原版暫存 scratch；不進存檔
-	vehicleExchangeStage    int           // game-pack staged_vehicle_exchange 的目前階段
-	vehicleExchangeEventID  string        // active pack event；空字串表示無事件
-	guidedPassageStage      int           // game-pack guided_passage primitive 階段
-	guidedPassageEventID    string        // active pack event；空字串表示無事件
-	guidedPassageNPC        int           // 引路 NPC runtime index
-	guidedPassageWaypoint   int           // 目前目標 waypoint
-	guidedPassageTick       int           // waypoint 間的 frame 節流
-	hostageRescueStage      int           // game-pack hostage_rescue primitive 階段
-	hostageRescueCursor     int           // Yes/No 游標
-	hostageRescueEventID    string        // active pack event；空字串表示無事件
-	hostageRescueMovement   int           // captive_movements 目前索引
-	hostageRescueWaypoint   int           // movement 目前 waypoint
-	hostageRescueTick       int           // movement frame 節流
-	hostageRescueNPC        int           // movement runtime NPC index
-	mirrorStage             int           // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
-	phoenix                 *dq3data.CharSprite
-	phoenixOwned            bool
-	phoenixAboard           bool
-	phoenixX                int
-	phoenixY                int
-	phoenixStage            int   // 1=守護神 rec92 後續；2=逐顆 rec93；3=中央蛋六幀復活動畫
-	phoenixList             []int // 已放上祭壇、待 rec93 列出的寶珠
-	phoenixListPos          int
-	phoenixAnim             int // 復活動畫 tile 0x7b..0x80 的目前 frame
-	phoenixAnimTick         int
-	frame                   *ebiten.Image
-	rgba                    []byte
+
+	choiceItemExchangeStage   int    // game-pack choice_item_exchange 對話／交換階段
+	choiceItemExchangeCursor  int    // 兩組 Yes/No 共用游標
+	choiceItemExchangeEventID string // active choice_item_exchange event
+
+	vehicleExchangeStage   int    // game-pack staged_vehicle_exchange 的目前階段
+	vehicleExchangeEventID string // active pack event；空字串表示無事件
+	guidedPassageStage     int    // game-pack guided_passage primitive 階段
+	guidedPassageEventID   string // active pack event；空字串表示無事件
+	guidedPassageNPC       int    // 引路 NPC runtime index
+	guidedPassageWaypoint  int    // 目前目標 waypoint
+	guidedPassageTick      int    // waypoint 間的 frame 節流
+	hostageRescueStage     int    // game-pack hostage_rescue primitive 階段
+	hostageRescueCursor    int    // Yes/No 游標
+	hostageRescueEventID   string // active pack event；空字串表示無事件
+	hostageRescueMovement  int    // captive_movements 目前索引
+	hostageRescueWaypoint  int    // movement 目前 waypoint
+	hostageRescueTick      int    // movement frame 節流
+	hostageRescueNPC       int    // movement runtime NPC index
+	mirrorStage            int    // 沙曼歐莎拉之鏡事件:1=rec97 2=rec98 3=怪力魔戰鬥
+	phoenix                *dq3data.CharSprite
+	phoenixOwned           bool
+	phoenixAboard          bool
+	phoenixX               int
+	phoenixY               int
+	phoenixStage           int   // 1=守護神 rec92 後續；2=逐顆 rec93；3=中央蛋六幀復活動畫
+	phoenixList            []int // 已放上祭壇、待 rec93 列出的寶珠
+	phoenixListPos         int
+	phoenixAnim            int // 復活動畫 tile 0x7b..0x80 的目前 frame
+	phoenixAnimTick        int
+	frame                  *ebiten.Image
+	rgba                   []byte
 }
 
 // 場景配樂軌(對齊 C g_scene_track):BATTLE=14、TOWN=2、DUNGEON=3。
@@ -456,6 +461,8 @@ func (g *Game) selectCommand(cmd int) {
 					// game-pack party removal → solo entrance → exact-party restore primitive。
 				} else if g.talkQuestItemChain(n) {
 					// game-pack treasure → item exchange → location-use primitive。
+				} else if g.talkChoiceItemExchange(n) {
+					// game-pack 雙分支詢問 → 道具交換 → 世界狀態交易 primitive。
 				} else if g.talkStagedVehicleExchange(n) {
 					// game-pack quest item → required item → vehicle primitive。
 				} else if g.talkGuidedPassage(n) {
@@ -948,6 +955,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.choiceItemExchangeChoosing() {
+		g.choiceItemExchangeChoiceInput(in)
+		g.renderFrame()
+		return nil
+	}
 	switch g.hostageRescueStage {
 	case hostageRescueGuardChoice, hostageRescueSwitchChoice,
 		hostageRescueBossChoice, hostageRescueRewardChoice:
@@ -1078,6 +1090,7 @@ func (g *Game) step(in InputState) error {
 				g.advancePhoenixEvent()
 				g.advanceBossSurrenderDialogue()
 				g.advanceSequenceGateDialogue()
+				g.advanceChoiceItemExchangeDialogue()
 				g.advanceStagedVehicleExchangeDialogue()
 				g.advanceGuidedPassageDialogue()
 				g.advanceHostageRescueDialogue()
@@ -2226,6 +2239,7 @@ func (g *Game) renderFrame() {
 	g.drawTemporaryRoleChoice(g.rgba, white)
 	g.drawSoloChallengeChoice(g.rgba, white)
 	g.drawSequenceGateChoice(g.rgba, white)
+	g.drawChoiceItemExchangeChoice(g.rgba, white)
 	g.drawHostageRescueChoice(g.rgba, white)
 	g.drawReclass(g.rgba, white)
 	g.drawSettlementFounderChoice(g.rgba, white)

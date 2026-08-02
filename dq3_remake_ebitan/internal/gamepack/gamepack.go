@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.18"
+	SchemaVersion = "0.1.19"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -395,6 +395,35 @@ type QuestItemChainEvent struct {
 	Evidence Evidence              `json:"evidence"`
 }
 
+// ChoiceItemExchangeEvent is a finite two-branch conversation followed by an
+// in-place inventory replacement and declarative world-state transaction.
+// It cannot embed callbacks or edition-specific engine logic.
+type ChoiceItemExchangeTextIDs struct {
+	Introduction string `json:"introduction"`
+	Interested   string `json:"interested"`
+	Hint         string `json:"hint"`
+	Offer        string `json:"offer"`
+	Success      string `json:"success"`
+	After        string `json:"after"`
+	Reject       string `json:"reject"`
+	ChoiceYes    string `json:"choice_yes"`
+	ChoiceNo     string `json:"choice_no"`
+}
+
+type ChoiceItemExchangeEvent struct {
+	ID                   string                    `json:"id"`
+	Kind                 string                    `json:"kind"`
+	NPC                  ScriptedNPCSelector       `json:"npc"`
+	AvailableFlagRaw     int                       `json:"available_flag_raw"`
+	RequiredItemRawID    int                       `json:"required_item_raw_id"`
+	GrantedItemRawID     int                       `json:"granted_item_raw_id"`
+	SuccessWorldPosition VehicleWorldPosition      `json:"success_world_position"`
+	SetWorldStateMaskRaw int                       `json:"set_world_state_mask_raw"`
+	ClearStoryFlagsRaw   []int                     `json:"clear_story_flags_raw"`
+	DialogueTextIDs      ChoiceItemExchangeTextIDs `json:"dialogue_text_ids"`
+	Evidence             Evidence                  `json:"evidence"`
+}
+
 // FloorSwitch identifies one walk-on switch in a scene. HandlerRaw is retained
 // as an original-format parity anchor; the engine selects by the validated
 // scene/coordinate tuple and never interprets the raw handler number.
@@ -746,6 +775,7 @@ type Events struct {
 	TemporaryRoleEvents         []TemporaryRoleEvent             `json:"temporary_role_events"`
 	TemporarySoloChallenges     []TemporarySoloChallengeEvent    `json:"temporary_solo_challenges"`
 	QuestItemChainEvents        []QuestItemChainEvent            `json:"quest_item_chain_events"`
+	ChoiceItemExchangeEvents    []ChoiceItemExchangeEvent        `json:"choice_item_exchange_events"`
 	TreasureEvents              []TreasureEvent                  `json:"treasure_events"`
 	NPCItemRewardEvents         []NPCItemRewardEvent             `json:"npc_item_reward_events"`
 	ItemUseEffects              []ItemUseEffect                  `json:"item_use_effects"`
@@ -825,6 +855,7 @@ type Pack struct {
 	roleEvents                 map[string]*TemporaryRoleEvent
 	soloChallenges             map[string]*TemporarySoloChallengeEvent
 	questItemEvents            map[string]*QuestItemChainEvent
+	choiceItemExchangeEvents   map[string]*ChoiceItemExchangeEvent
 	treasureEvents             map[string]*TreasureEvent
 	itemUseEffects             map[int]*ItemUseEffect
 	sequenceGates              map[string]*TwoStepFloorSwitchGate
@@ -1175,6 +1206,20 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.ChoiceItemExchangeEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"introduction": refs.Introduction, "interested": refs.Interested,
+			"hint": refs.Hint, "offer": refs.Offer, "success": refs.Success,
+			"after": refs.After, "reject": refs.Reject,
+			"choice_yes": refs.ChoiceYes, "choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	for _, event := range p.Events.NPCItemRewardEvents {
 		for field, id := range map[string]string{
 			"success": event.DialogueTextIDs.Success,
@@ -1408,6 +1453,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.QuestItemChainEvents == nil {
 		return errors.New("quest_item_chain_events must be present")
+	}
+	if p.Events.ChoiceItemExchangeEvents == nil {
+		return errors.New("choice_item_exchange_events must be present")
 	}
 	if p.Events.TreasureEvents == nil {
 		return errors.New("treasure_events must be present")
@@ -1667,6 +1715,39 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		p.questItemEvents[e.ID] = e
+	}
+	p.choiceItemExchangeEvents = make(map[string]*ChoiceItemExchangeEvent, len(p.Events.ChoiceItemExchangeEvents))
+	choiceExchangeSelectors := map[[4]int]string{}
+	for i := range p.Events.ChoiceItemExchangeEvents {
+		e := &p.Events.ChoiceItemExchangeEvents[i]
+		selector := [4]int{e.NPC.CTYRaw, e.NPC.Section, e.NPC.Tile.X, e.NPC.Tile.Y}
+		if e.ID == "" || e.Kind != "choice_item_exchange" || !validScriptedNPC(e.NPC) ||
+			e.AvailableFlagRaw < 0 || e.AvailableFlagRaw >= 512 ||
+			e.RequiredItemRawID < 0 || e.RequiredItemRawID > 255 ||
+			e.GrantedItemRawID < 0 || e.GrantedItemRawID > 255 ||
+			e.RequiredItemRawID == e.GrantedItemRawID ||
+			e.SuccessWorldPosition.X < 0 || e.SuccessWorldPosition.Y < 0 ||
+			e.SuccessWorldPosition.Layer < 0 || e.SuccessWorldPosition.Layer > 1 ||
+			e.SetWorldStateMaskRaw <= 0 || e.SetWorldStateMaskRaw > 0xffff ||
+			e.ClearStoryFlagsRaw == nil || len(e.ClearStoryFlagsRaw) == 0 {
+			return fmt.Errorf("choice_item_exchange_events[%d]: invalid event", i)
+		}
+		if _, exists := p.choiceItemExchangeEvents[e.ID]; exists {
+			return fmt.Errorf("duplicate choice item exchange event id %q", e.ID)
+		}
+		if previous := choiceExchangeSelectors[selector]; previous != "" {
+			return fmt.Errorf("%s: NPC selector duplicates %s", e.ID, previous)
+		}
+		for _, flag := range e.ClearStoryFlagsRaw {
+			if flag < 0 || flag >= 512 {
+				return fmt.Errorf("%s: clear story flag %d out of range", e.ID, flag)
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.choiceItemExchangeEvents[e.ID] = e
+		choiceExchangeSelectors[selector] = e.ID
 	}
 	p.treasureEvents = make(map[string]*TreasureEvent, len(p.Events.TreasureEvents))
 	treasureSelectors := map[[3]int]string{}
@@ -2473,6 +2554,15 @@ func (p *Pack) QuestItemChainEvents() []QuestItemChainEvent {
 
 func (p *Pack) QuestItemChainEvent(id string) (*QuestItemChainEvent, bool) {
 	e, ok := p.questItemEvents[id]
+	return e, ok
+}
+
+func (p *Pack) ChoiceItemExchangeEvents() []ChoiceItemExchangeEvent {
+	return append([]ChoiceItemExchangeEvent(nil), p.Events.ChoiceItemExchangeEvents...)
+}
+
+func (p *Pack) ChoiceItemExchangeEvent(id string) (*ChoiceItemExchangeEvent, bool) {
+	e, ok := p.choiceItemExchangeEvents[id]
 	return e, ok
 }
 

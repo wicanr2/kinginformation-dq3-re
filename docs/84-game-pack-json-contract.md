@@ -521,6 +521,25 @@ NPC 還原完全相同隊伍」的有限交易。它不允許 JSON 提供任意�
 mutation 前失敗即關閉。DQ3 canonical 範例與原版 parity test 見 `events.json`、
 [`docs/86`](86-noaniel-awakening-production-trace.md)。
 
+`choice_item_exchange_events` 描述「無道具資訊詢問／持有道具交換」兩組 Yes／No，成功後
+原格換物並提交固定世界狀態的有限交易。它不允許任意 callback：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `choice_item_exchange_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 ID；kind 固定為 `choice_item_exchange`。 |
+| `[].npc` | object | 是 | `{cty_raw,section,tile:{x,y},handler_raw}`。 |
+| `[].available_flag_raw` | int | 是 | 原版事件可用旗標；clear 時只顯示 after。 |
+| `[].required_item_raw_id`／`granted_item_raw_id` | int | 是 | 不同的 `0..255` ID；成功時原地取代第一個命中格。 |
+| `[].success_world_position` | object | 是 | `{x,y,layer}`；成功交易寫入的原版世界落點。 |
+| `[].set_world_state_mask_raw` | int | 是 | 成功時 OR 的非零 16-bit 原版 mask。 |
+| `[].clear_story_flags_raw` | int[] | 是 | 成功時清除；至少一筆。 |
+| `[].dialogue_text_ids` | object | 是 | `introduction/interested/hint/offer/success/after/reject/choice_yes/choice_no` 全部必填。 |
+| `[].evidence` | object | 是 | choice、inventory writer、世界副作用與文字 record 的 D3 證據。 |
+
+所有成功文字先解析，才提交換物、位置、world-state 與旗標交易；拒絕與缺道具分支不得修改
+持久狀態。DQ3 canonical 範例與 production trace 見 [`docs/104`](104-transform-staff-ghost-ship-production-trace.md)。
+
 不屬於多階段任務的原版一次性寶箱放在 `treasure_events`，不得再新增 Go
 `treasures` table 或以「合理值」補欄位：
 

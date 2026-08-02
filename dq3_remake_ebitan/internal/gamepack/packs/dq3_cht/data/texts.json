@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.18",
+  "schema_version": "0.1.19",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -872,6 +872,62 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 309},
       "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_16CE2 0x16ce2..0x16d04; record0x135", "consumer": "shared-storage insertion scans 0x78 bytes for 0xff, displays record309 and returns AL=1 when full", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.greenland.transform_staff.introduction",
+      "value": "*「我已經好久沒有\n看到人類了。\n---\n*「喔喔,對了,\n從前海盜們曾帶來\n一根奇怪的骨頭。\n---\n*「那麼,好,\n你們知道變身杖嗎?",
+      "glyph_codes": [59,60,493,788,525,441,805,410,147,65534,12,12,668,453,194,1104,423,56,65532,59,60,776,776,55,443,423,55,65534,12,12,511,535,861,287,529,1356,540,461,65534,12,12,401,1357,642,469,149,318,226,56,65532,59,60,354,436,55,441,55,65534,12,12,528,529,510,402,315,306,146,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 56},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler44 logical 0x6fb8; record56", "consumer": "handler44 displays record56 before the no-item knowledge choice", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.greenland.transform_staff.interested",
+      "value": "*「什麼,真的嗎?\n我好想要那根手杖。\n哇哈哈。",
+      "glyph_codes": [59,60,435,436,55,577,149,534,58,65534,12,12,493,441,609,504,354,1357,264,146,56,65534,12,12,433,390,390,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 57},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler44 logical 0x6fc3..0x6fd5; record57", "consumer": "handler44 selects record57 for the affirmative no-item answer", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.greenland.transform_staff.hint",
+      "value": "*「變身杖\n現在好像在沙曼歐莎。\n---\n*「聽說被國王收在\n自己的身邊‥‥。",
+      "glyph_codes": [59,60,354,399,401,1357,65534,12,12,435,436,556,408,315,625,149,264,146,592,56,65532,59,60,959,909,633,411,369,746,326,389,186,65534,12,12,149,264,512,123,123,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 58},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler44 logical 0x6fc3..0x6fd5; record58", "consumer": "handler44 selects record58 for the negative no-item answer", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.greenland.transform_staff.offer",
+      "value": "*「喔喔!這就是變身杖!\n我老早就想要了。\n---\n*「我用這個船員的骨頭,\n和你交換好嗎?",
+      "glyph_codes": [59,60,776,776,57,398,633,399,315,306,146,57,65534,12,12,493,960,584,633,609,504,423,56,65532,59,60,493,412,398,546,316,317,149,318,226,55,65534,12,12,564,528,1193,794,441,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 59},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler44 logical 0x6fde..0x6fe9; record59", "consumer": "handler44 displays record59 before the item-exchange choice", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.greenland.transform_staff.success",
+      "value": "*「真的嗎?\n這麼好的東西。",
+      "glyph_codes": [59,60,577,149,534,58,65534,12,12,398,436,441,149,539,380,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 60},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler44 logical 0x7019; record60", "consumer": "handler44 displays record60 after the successful state transaction", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.greenland.transform_staff.after",
+      "value": "*「非常謝謝你!\n哇哈哈。",
+      "glyph_codes": [59,60,580,581,582,582,528,57,65534,12,12,433,390,390,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 61},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler44 logical 0x6f9d and 0x7021; record61", "consumer": "handler44 displays record61 after success and on repeat talks once flag0x43 is clear", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.greenland.transform_staff.reject",
+      "value": "*「還是不行嗎?\n真遺憾‥‥。",
+      "glyph_codes": [59,60,524,399,228,531,534,58,65534,12,12,577,578,579,123,123,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 62},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler44 logical 0x6fea..0x6ff9; record62", "consumer": "handler44 selects record62 when the player rejects the item exchange", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
     }
   ]
 }

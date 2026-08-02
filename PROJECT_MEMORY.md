@@ -88,7 +88,7 @@ save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；�
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
 同時控制寶箱與入口物件 visibility；詳見 `docs/101`。game-pack schema 已升至
-`0.1.18`，`dq3_cht` content 已升至 `0.1.22`。IDA Pro 9.4 證明商人聚落 `(210,64)`
+`0.1.19`，`dq3_cht` content 已升至 `0.1.23`。IDA Pro 9.4 證明商人聚落 `(210,64)`
 的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
 `0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
 入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
@@ -103,7 +103,7 @@ boot trace 已由商人交付自然重進 CTY60，並正式航行到 CTY41、走
 同一條 trace 已使用黑暗燈，在 CTY44 sec1 `(14,7)` 由道具選單使用拉之鏡，閉合
 record97／98、monster89、變身杖 `0x62` 與勝利旗標交易，故此段升為 campaign E3／V1。
 IDA 9.4 證實離城 consumer 直接使用 transition X/Y、兩者皆零才回退 remembered
-coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。尚余變身杖至蓋亞之劍、
+coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。尚余幽靈船至蓋亞之劍、
 CTY83 黃寶珠的自然 E3、CTY59 handler41 設施分支及原版 V2 對拍。詳見 `docs/102`、
 `docs/103`。
 **尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從假王勝利後
@@ -160,6 +160,13 @@ schema `0.1.16` 新增 `world_entrance_variants`；同一 world coordinate 的 o
 flag branches、每支極性、layer、目的 CTY 與 default 全由 JSON 提供。商人聚落舊表把
 第一支 clear gate 讀成 set gate，已由 IDA linear `0x125fe..0x12681` 推翻；詳見 `docs/102`。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
+
+schema `0.1.19` 新增 `choice_item_exchange_events`。IDA Pro 9.4 已推翻 CTY54 舊
+`scriptedTable` 的立即交換近似：handler44 有無杖詢問與持杖交換兩組 Yes／No；成功會
+原格把 `0x62` 換成 `0x63`、寫世界位置 `(150,90)`、OR world-state `0x04`、重建世界物件、
+clear flag `0x43`，再依序顯示 records60／61。七段 D3TXT06 文字與全部設定已遷入 JSON；
+boot production trace 已從假王勝利正常住宿、魯拉、登船航行到 CTY54，驗證拒絕、接受與
+save/load。幽靈船物件／入口至愛的回憶仍是下一個 blocker；見 `docs/104`。
 
 ## 固定工程方法
 
