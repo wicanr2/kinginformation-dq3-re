@@ -106,6 +106,10 @@ RE 文件。
 
 ![Ebiten：幽靈船內正式調查取得愛的回憶（V1，待原版同狀態對拍）](docs/img/ghost_ship_loves_memory_chest.png)
 
+![Ebiten：愛的回憶解除奧莉薇亞海岬詛咒（V1，待原版同狀態對拍）](docs/img/olivia_cape_memory_reunion.png)
+
+![Ebiten：牢獄祠堂正式調查取得蓋亞之劍（V1，待原版同狀態對拍）](docs/img/gaia_sword_obtained.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

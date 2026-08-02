@@ -333,6 +333,10 @@ type Game struct {
 	worldObjectBufferX      int                             // 原版 80x80 world buffer 左上角（scratch，不進存檔）
 	worldObjectBufferY      int
 	worldObjectBufferValid  bool
+	coordinateItemGateID    string // 自動地表道具 gate 的進行中事件（scratch）
+	coordinateItemGateStage int
+	coordinateForcedSteps   int
+	coordinateForcedDir     int
 	noticeCode              int // 取得道具通知(item code;-1=無)
 	noticeTimer             int
 	shipOwned               bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
@@ -1098,6 +1102,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceSequenceGateDialogue()
 				g.advanceChoiceItemExchangeDialogue()
 				g.advanceTrackedWorldObjectLocator()
+				g.advanceCoordinateItemGateDialogue()
 				g.advanceStagedVehicleExchangeDialogue()
 				g.advanceGuidedPassageDialogue()
 				g.advanceHostageRescueDialogue()
@@ -1112,6 +1117,11 @@ func (g *Game) step(in InputState) error {
 	}
 	if g.stagedBossStage == stagedBossFirstMoving {
 		g.advanceStagedBossMovement()
+		g.renderFrame()
+		return nil
+	}
+	if g.coordinateForcedSteps > 0 {
+		g.advanceCoordinateItemGateMovement()
 		g.renderFrame()
 		return nil
 	}
@@ -1237,6 +1247,10 @@ func (g *Game) step(in InputState) error {
 		g.tryOrtegaEvent()
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
 		g.updateTrackedWorldObjectWindow(g.facing)
+		if g.tryCoordinateItemGateEvent() {
+			g.renderFrame()
+			return nil
+		}
 		skipEntrance := g.worldEntranceGrace
 		g.worldEntranceGrace = false
 		if !skipEntrance {
@@ -1704,6 +1718,11 @@ func (g *Game) advanceBaramosReturn() {
 func (g *Game) exitTown() {
 	g.cur, g.inTown, g.curCty = g.overworldScene(), false, -1 // 回目前地表層(地面/下層)
 	g.px, g.py = g.overPx, g.overPy
+	// 從船上世界物件回到地表時，出口可能與停泊船是同一座標。此時恢復
+	// vehicle mode1；否則玩家會被放在不可步行的水格且無法重新踏上船。
+	if g.shipOwned && g.layer == 0 && g.px == g.shipX && g.py == g.shipY {
+		g.shipAboard = true
+	}
 	g.cd = moveCooldown
 	g.music.Play(trackField) // 地表(FIELD 曲)
 	g.renderFrame()

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.20",
+  "schema_version": "0.1.21",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -968,6 +968,22 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 744},
       "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x14188..0x14197; record744", "consumer": "when object Y is at or south of player Y, handler stores the absolute delta and displays south record744", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.olivia_cape.sad_song",
+      "value": "不知何處傳來悲傷的歌聲。",
+      "glyph_codes": [228, 510, 676, 631, 513, 461, 241, 553, 149, 804, 632, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 597},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x126e8..0x12707; record597", "consumer": "both branches of the active Olivia cape coordinate event display record597", "doc": "docs/105-olivia-cape-gaia-sword-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.olivia_cape.reunion",
+      "value": "*「啊啊,愛立克!\n我最愛的人啊。\n我已經等你好久了。\n---\n*「歐里比雅,我的歐里比雅,\n在也不會與你分離了!\n---\n*「愛立克──!\n---\n歐里比雅的詛咒解除了。",
+      "glyph_codes": [59, 60, 509, 509, 55, 319, 801, 363, 57, 65534, 12, 12, 493, 291, 319, 149, 194, 509, 56, 65534, 12, 12, 493, 788, 525, 419, 528, 441, 805, 423, 56, 65532, 59, 60, 326, 327, 351, 802, 55, 493, 149, 326, 327, 351, 802, 55, 65534, 12, 12, 411, 494, 228, 415, 762, 528, 764, 502, 423, 57, 65532, 59, 60, 319, 801, 363, 806, 806, 57, 65532, 326, 327, 351, 802, 149, 454, 429, 464, 790, 423, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 598},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x126f0..0x12701; record598", "consumer": "the item0x64 success branch displays record598 before clearing story flag0x35", "doc": "docs/105-olivia-cape-gaia-sword-production-trace.md"}
     }
   ]
 }

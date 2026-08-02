@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.20"
+	SchemaVersion = "0.1.21"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -466,6 +466,29 @@ type TrackedWorldObject struct {
 	Evidence               Evidence                     `json:"evidence"`
 }
 
+type CoordinateItemGateTextIDs struct {
+	Approach string `json:"approach"`
+	Success  string `json:"success"`
+}
+
+// CoordinateItemGateEvent is an automatic overworld event at one original
+// coordinate. It either clears one story flag when the required item exists,
+// or performs a finite forced movement after the approach text.
+type CoordinateItemGateEvent struct {
+	ID                   string                    `json:"id"`
+	Kind                 string                    `json:"kind"`
+	Coordinate           VehicleWorldPosition      `json:"coordinate"`
+	ActiveStoryFlagRaw   int                       `json:"active_story_flag_raw"`
+	RequiredItemRawID    int                       `json:"required_item_raw_id"`
+	ClearStoryFlagRaw    int                       `json:"clear_story_flag_raw"`
+	ConsumeRequiredItem  bool                      `json:"consume_required_item"`
+	FailureDirection     int                       `json:"failure_direction"`
+	FailureSteps         int                       `json:"failure_steps"`
+	FailureDayNightSteps int                       `json:"failure_day_night_steps"`
+	DialogueTextIDs      CoordinateItemGateTextIDs `json:"dialogue_text_ids"`
+	Evidence             Evidence                  `json:"evidence"`
+}
+
 // FloorSwitch identifies one walk-on switch in a scene. HandlerRaw is retained
 // as an original-format parity anchor; the engine selects by the validated
 // scene/coordinate tuple and never interprets the raw handler number.
@@ -819,6 +842,7 @@ type Events struct {
 	QuestItemChainEvents        []QuestItemChainEvent            `json:"quest_item_chain_events"`
 	ChoiceItemExchangeEvents    []ChoiceItemExchangeEvent        `json:"choice_item_exchange_events"`
 	TrackedWorldObjects         []TrackedWorldObject             `json:"tracked_world_objects"`
+	CoordinateItemGateEvents    []CoordinateItemGateEvent        `json:"coordinate_item_gate_events"`
 	TreasureEvents              []TreasureEvent                  `json:"treasure_events"`
 	NPCItemRewardEvents         []NPCItemRewardEvent             `json:"npc_item_reward_events"`
 	ItemUseEffects              []ItemUseEffect                  `json:"item_use_effects"`
@@ -900,6 +924,7 @@ type Pack struct {
 	questItemEvents            map[string]*QuestItemChainEvent
 	choiceItemExchangeEvents   map[string]*ChoiceItemExchangeEvent
 	trackedWorldObjects        map[string]*TrackedWorldObject
+	coordinateItemGateEvents   map[string]*CoordinateItemGateEvent
 	treasureEvents             map[string]*TreasureEvent
 	itemUseEffects             map[int]*ItemUseEffect
 	sequenceGates              map[string]*TwoStepFloorSwitchGate
@@ -1276,6 +1301,17 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.CoordinateItemGateEvents {
+		for field, id := range map[string]string{
+			"approach": event.DialogueTextIDs.Approach,
+			"success":  event.DialogueTextIDs.Success,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	for _, event := range p.Events.NPCItemRewardEvents {
 		for field, id := range map[string]string{
 			"success": event.DialogueTextIDs.Success,
@@ -1515,6 +1551,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.TrackedWorldObjects == nil {
 		return errors.New("tracked_world_objects must be present")
+	}
+	if p.Events.CoordinateItemGateEvents == nil {
+		return errors.New("coordinate_item_gate_events must be present")
 	}
 	if p.Events.TreasureEvents == nil {
 		return errors.New("treasure_events must be present")
@@ -1808,6 +1847,29 @@ func (p *Pack) validateEvents() error {
 		}
 		p.choiceItemExchangeEvents[e.ID] = e
 		choiceExchangeSelectors[selector] = e.ID
+	}
+	p.coordinateItemGateEvents = make(map[string]*CoordinateItemGateEvent, len(p.Events.CoordinateItemGateEvents))
+	coordinateSelectors := map[VehicleWorldPosition]string{}
+	for i := range p.Events.CoordinateItemGateEvents {
+		e := &p.Events.CoordinateItemGateEvents[i]
+		if e.ID == "" || e.Kind != "coordinate_item_gate" ||
+			e.Coordinate.X < 0 || e.Coordinate.Y < 0 || e.Coordinate.Layer < 0 || e.Coordinate.Layer > 1 ||
+			e.ActiveStoryFlagRaw < 0 || e.ActiveStoryFlagRaw >= 512 ||
+			e.RequiredItemRawID < 0 || e.RequiredItemRawID > 255 ||
+			e.ClearStoryFlagRaw != e.ActiveStoryFlagRaw || e.ConsumeRequiredItem ||
+			e.FailureDirection < 0 || e.FailureDirection > 3 || e.FailureSteps <= 0 ||
+			e.FailureDayNightSteps < 0 || e.DialogueTextIDs.Approach == "" ||
+			e.DialogueTextIDs.Success == "" {
+			return fmt.Errorf("coordinate_item_gate_events[%d]: invalid event", i)
+		}
+		if p.coordinateItemGateEvents[e.ID] != nil || coordinateSelectors[e.Coordinate] != "" {
+			return fmt.Errorf("coordinate_item_gate_events[%d]: duplicate id or coordinate", i)
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.coordinateItemGateEvents[e.ID] = e
+		coordinateSelectors[e.Coordinate] = e.ID
 	}
 	p.trackedWorldObjects = make(map[string]*TrackedWorldObject, len(p.Events.TrackedWorldObjects))
 	trackerItems := map[int]string{}
@@ -2687,6 +2749,25 @@ func (p *Pack) TrackedWorldObjectByTrackerItem(rawID int) (*TrackedWorldObject, 
 	for i := range p.Events.TrackedWorldObjects {
 		e := &p.Events.TrackedWorldObjects[i]
 		if e.TrackerItemRawID == rawID {
+			return e, true
+		}
+	}
+	return nil, false
+}
+
+func (p *Pack) CoordinateItemGateEvents() []CoordinateItemGateEvent {
+	return append([]CoordinateItemGateEvent(nil), p.Events.CoordinateItemGateEvents...)
+}
+
+func (p *Pack) CoordinateItemGateEvent(id string) (*CoordinateItemGateEvent, bool) {
+	e, ok := p.coordinateItemGateEvents[id]
+	return e, ok
+}
+
+func (p *Pack) CoordinateItemGateAt(x, y, layer int) (*CoordinateItemGateEvent, bool) {
+	for i := range p.Events.CoordinateItemGateEvents {
+		e := &p.Events.CoordinateItemGateEvents[i]
+		if e.Coordinate == (VehicleWorldPosition{X: x, Y: y, Layer: layer}) {
 			return e, true
 		}
 	}

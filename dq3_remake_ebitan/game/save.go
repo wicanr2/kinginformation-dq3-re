@@ -273,6 +273,10 @@ func (g *Game) restore(s saveState) {
 	g.syncTemporaryRoleVisual() // 角色外觀由 pack event 的 active flag 推導，不保存第二份狀態
 	g.worldState = s.WorldState
 	g.worldObjectBufferValid = false
+	g.coordinateItemGateID = ""
+	g.coordinateItemGateStage = coordinateGateIdle
+	g.coordinateForcedSteps = 0
+	g.coordinateForcedDir = 0
 	g.trackedWorldPositions = map[string]trackedWorldPosition{}
 	for _, saved := range s.TrackedWorldObjects {
 		if g.pack == nil {

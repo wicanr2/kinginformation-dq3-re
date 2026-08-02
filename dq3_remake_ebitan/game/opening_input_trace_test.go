@@ -2403,6 +2403,65 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.inTown, g.curCty, sceneSection(g.cur), g.hasItem(loveMemory.Treasure.ItemRawID),
 			g.storyFlag(loveMemory.Treasure.PresentFlag))
 	}
+
+	// 從愛的回憶 checkpoint 只走原始 CTY36 轉場離船，重新登船後航向
+	// `(76,54)`。座標事件必須自動播放 records597/598、保留道具並 clear flag0x35。
+	traceTransitionToSection(t, g, ghostObject.EntranceCTYRaw, 0)
+	traceTransitionToOverworld(t, g)
+	if !g.shipAboard {
+		traceBoardAndSailShip(t, g)
+	}
+	oliviaGate, ok := g.pack.CoordinateItemGateAt(76, 54, 0)
+	if !ok || !g.storyFlag(oliviaGate.ActiveStoryFlagRaw) {
+		t.Fatalf("奧莉薇亞海岬前置錯：event=%v flag35=%v", ok,
+			ok && g.storyFlag(oliviaGate.ActiveStoryFlagRaw))
+	}
+	traceSailToWorldCoordinate(t, g, oliviaGate.Coordinate.X, oliviaGate.Coordinate.Y)
+	if !g.dlg.open || g.coordinateItemGateStage != coordinateGateSuccessApproach {
+		t.Fatalf("海岬正式入口未顯示 record597：dlg=%v stage=%d pos=(%d,%d)",
+			g.dlg.open, g.coordinateItemGateStage, g.px, g.py)
+	}
+	traceCloseDialogue(t, g)
+	if g.storyFlag(oliviaGate.ClearStoryFlagRaw) || !g.hasItem(oliviaGate.RequiredItemRawID) ||
+		g.coordinateForcedSteps != 0 {
+		t.Fatalf("海岬成功交易錯：flag35=%v memory=%v forced=%d",
+			g.storyFlag(oliviaGate.ClearStoryFlagRaw), g.hasItem(oliviaGate.RequiredItemRawID),
+			g.coordinateForcedSteps)
+	}
+
+	gaiaTreasure, ok := g.pack.TreasureEvent("dq3:event.shrine_jail_gaia_sword")
+	if !ok {
+		t.Fatal("缺 CTY55 蓋亞之劍 treasure event")
+	}
+	traceSailToTown(t, g, gaiaTreasure.Treasure.CTYRaw)
+	traceExaminePackTreasure(t, g, gaiaTreasure.Treasure)
+	if !g.hasItem(gaiaTreasure.Treasure.ItemRawID) ||
+		g.storyFlag(gaiaTreasure.Treasure.PresentFlag) {
+		t.Fatalf("正式取得蓋亞之劍錯：item=%v present=%v",
+			g.hasItem(gaiaTreasure.Treasure.ItemRawID),
+			g.storyFlag(gaiaTreasure.Treasure.PresentFlag))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存蓋亞之劍 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建蓋亞之劍讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != gaiaTreasure.Treasure.CTYRaw ||
+		!g.hasItem(gaiaTreasure.Treasure.ItemRawID) ||
+		g.storyFlag(oliviaGate.ClearStoryFlagRaw) ||
+		g.storyFlag(gaiaTreasure.Treasure.PresentFlag) {
+		t.Fatalf("蓋亞之劍 save/load 錯：town=%v cty=%d sword=%v flag35=%v present=%v",
+			g.inTown, g.curCty, g.hasItem(gaiaTreasure.Treasure.ItemRawID),
+			g.storyFlag(oliviaGate.ClearStoryFlagRaw),
+			g.storyFlag(gaiaTreasure.Treasure.PresentFlag))
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，
@@ -3504,8 +3563,9 @@ func traceShipWaterPath(g *Game, tx, ty int) []int {
 			dx, dy := dirDelta(dir)
 			n := node{p.x + dx, p.y + dy}
 			if seen[n] || n.x < 0 || n.y < 0 || n.x >= g.cur.w || n.y >= g.cur.h ||
-				g.cur.attr.Raw(g.cur.tileIdx(n.x, n.y))&0x0002 != 0 ||
-				findCtyAtLayer(n.x, n.y, g.layer) >= 0 {
+				g.cur.attr.Raw(g.cur.tileIdx(n.x, n.y))&0x0002 != 0 &&
+					(n != goal || g.cur.Blocked(n.x, n.y)) ||
+				findCtyAtLayer(n.x, n.y, g.layer) >= 0 && n != goal {
 				continue
 			}
 			seen[n], prev[n], prevDir[n] = true, p, dir
@@ -3523,6 +3583,119 @@ func traceShipWaterPath(g *Game, tx, ty int) []int {
 		}
 	}
 	return nil
+}
+
+func traceSailToWorldCoordinate(t *testing.T, g *Game, tx, ty int) {
+	t.Helper()
+	for steps := 0; steps < 12000 && !g.inTown && (g.px != tx || g.py != ty); steps++ {
+		if g.dlg.open {
+			return
+		}
+		if g.battle.active {
+			traceResolveBattle(t, g, g.battle.monID >= 80)
+			continue
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待航行 cooldown：%v", err)
+			}
+			continue
+		}
+		path := traceShipWaterPath(g, tx, ty)
+		if len(path) == 0 {
+			break
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("航向 (%d,%d) dir%d：%v", tx, ty, path[0], err)
+		}
+	}
+	if g.px != tx || g.py != ty {
+		t.Fatalf("未由正式船路抵達 (%d,%d)：town=%v aboard=%v pos=(%d,%d)",
+			tx, ty, g.inTown, g.shipAboard, g.px, g.py)
+	}
+}
+
+func traceSailToTown(t *testing.T, g *Game, cty int) {
+	t.Helper()
+	if cty < 0 || cty >= len(ctyLoc) {
+		t.Fatalf("無效航行目的 CTY%d", cty)
+	}
+	tx, ty := ctyLoc[cty][0], ctyLoc[cty][1]
+	for steps := 0; steps < 12000 && !g.inTown; steps++ {
+		if g.battle.active {
+			traceResolveBattle(t, g, g.battle.monID >= 80)
+			continue
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待 CTY%d 航行 cooldown：%v", cty, err)
+			}
+			continue
+		}
+		var path []int
+		if g.shipAboard {
+			path = traceShipWaterPath(g, tx, ty)
+		} else {
+			path = traceWorldPath(g, tx, ty, cty)
+		}
+		if len(path) == 0 {
+			// 海岬航道的事件格帶原版特殊 attr；一般 BFS 會保守拒絕，
+			// 但 production tryMove 仍依 mode1 的 bit1/bit0 規則判斷。
+			dir := -1
+			switch {
+			case tx < g.px:
+				dir = 2
+			case tx > g.px:
+				dir = 3
+			case ty < g.py:
+				dir = 1
+			case ty > g.py:
+				dir = 0
+			}
+			if dir < 0 {
+				break
+			}
+			path = []int{dir}
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("航向 CTY%d dir%d：%v", cty, path[0], err)
+		}
+	}
+	if !g.inTown || g.curCty != cty {
+		t.Fatalf("未由正式海岬路徑進 CTY%d target=(%d,%d)：town=%v cty=%d aboard=%v pos=(%d,%d) attrW=%#x attrHere=%#x attrE=%#x targetAttr=%#x targetCty=%d",
+			cty, tx, ty, g.inTown, g.curCty, g.shipAboard, g.px, g.py,
+			g.cur.attr.Raw(g.cur.tileIdx(g.px-1, g.py)), g.cur.attr.Raw(g.cur.tileIdx(g.px, g.py)),
+			g.cur.attr.Raw(g.cur.tileIdx(g.px+1, g.py)), g.cur.attr.Raw(g.cur.tileIdx(tx, ty)),
+			findCtyAtLayer(tx, ty, g.layer))
+	}
+}
+
+func traceTransitionToSection(t *testing.T, g *Game, cty, section int) {
+	t.Helper()
+	for y := 0; y < g.cur.h; y++ {
+		for x := 0; x < g.cur.w; x++ {
+			destCTY, destSec, _, _, ok := g.cur.tileTransition(x, y)
+			if ok && destCTY == cty && destSec == section {
+				traceWalkThroughPortal(t, g, x, y, cty, section)
+				return
+			}
+		}
+	}
+	t.Fatalf("CTY%d sec%d 找不到通往 sec%d 的原始 transition", g.curCty, sceneSection(g.cur), section)
+}
+
+func traceTransitionToOverworld(t *testing.T, g *Game) {
+	t.Helper()
+	for y := 0; y < g.cur.h; y++ {
+		for x := 0; x < g.cur.w; x++ {
+			_, destSec, _, _, ok := g.cur.tileTransition(x, y)
+			if ok && destSec == 0xff {
+				traceWalkThroughPortal(t, g, x, y, -1, 0)
+				return
+			}
+		}
+	}
+	t.Fatalf("CTY%d sec%d 找不到原始地表出口", g.curCty, sceneSection(g.cur))
 }
 
 // traceWorldPath 與 tracePath 相同，但把目的以外的 CTY 入口格視為障礙；

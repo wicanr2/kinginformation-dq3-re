@@ -170,7 +170,12 @@ boot production trace 已從假王勝利正常住宿、魯拉、登船航行到 
 save/load。幽靈船座標已與玩家座標分離；四個 tile 由 RNG state 低二位選擇，物件離開
 `80×80` 活動視窗時依原版 18 筆候選表重定位。船員之骨 records740–744、同座標動態入口、
 CTY36 轉場、愛的回憶 `0x64` 寶箱及其 save/load 已由正式 InputState trace 閉合為 E3／V1。
-下一個 blocker 是地表 `(76,54)` 的奧莉薇亞海岬事件；見 `docs/104`。
+schema `0.1.21`／content `0.1.25` 已新增 `coordinate_item_gate_events`。boot trace 從
+愛的回憶 checkpoint 依 CTY36 原始轉場離船；同座標停泊船會恢復 mode1，避免玩家困在
+水格。其後正式航行至 `(76,54)`，依 records597／598、item0x64 與 flag0x35 解除詛咒，
+再進 CTY55 調查取得蓋亞之劍0x0f並完成 save/load。CTY55 event0 已從 Go treasure table
+遷入 JSON；見 `docs/105`。下一個 blocker 是蓋亞之劍的火山座標／world patch；現行
+「地表任意位置 set remake flag0x32」仍是待推翻的舊近似。
 
 ## 固定工程方法
 

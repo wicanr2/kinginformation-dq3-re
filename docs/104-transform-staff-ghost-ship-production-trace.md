@@ -40,7 +40,7 @@ CTY54 返回點保持原值。CTY36 愛的回憶也已從 Go `treasures` table �
 | linear `0x126a5..0x126bb` | 玩家 X/Y 等於 `[5053/5055]` 時 `BP=0x24` | 動態座標直接進 CTY36 | confirmed |
 | CTY36 sec1 file `0x13cb` | `01 64 00 8b`；tile `(18,55)` subid0 | type1 寶箱給愛的回憶0x64並 clear present flag0x8b | confirmed |
 | linear `0x14198..0x141a0` | item0x64 只顯示 global record596 | 手動使用不交易詛咒旗標 | confirmed |
-| linear `0x126bd..0x1272b` | `(76,54)`、flag0x35、搜尋0x64、records597/598 | 有回憶時自動 clear0x35；無回憶時播放強制水流動作 | strong；玩家可見移動尚待閉合 |
+| linear `0x126bd..0x1272b` | `(76,54)`、flag0x35、搜尋0x64、records597/598 | 有回憶時自動 clear0x35；無回憶時播放強制水流動作 | 後續已於 `docs/105` 閉合 |
 
 DGROUP `0x3a0c` 的 18 組候選保留重複項，因重複即原版抽樣權重：
 
@@ -67,8 +67,8 @@ DGROUP `0x3a0c` 的 18 組候選保留重複項，因重複即原版抽樣權重
   [`愛的回憶寶箱`](img/ghost_ship_loves_memory_chest.png)。本機完整實況已用於路線定位；
   原版同狀態畫格與 palette 尚未達 V2/V3，故兩圖不能宣稱視覺 parity。
 
-## 下一個 blocker
+## 後續狀態
 
-先閉合 `(76,54)` 缺道具時五次 `sub_194c3` 的方向、位移、畫面與副作用，再以正式船路
-攜愛的回憶進入同座標，驗證 records597/598、flag0x35、物品不消耗、save/load 及事件後
-仍可抵達蓋亞之劍。不得把 item0x64 的 record596 誤當成解詛咒 transaction。
+`(76,54)` 的五次強制移動、records597／598、flag0x35、道具不消耗、CTY55 與蓋亞之劍
+均已由下一條正式切片閉合；見 `docs/105`。手動使用 item0x64 的 record596 仍只是提示，
+不是解除詛咒 transaction。

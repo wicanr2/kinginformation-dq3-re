@@ -657,9 +657,10 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 
 1. **主線最高優先**：boot 起的同一條 trace 已正式完成商人交付、CTY41→42、CTY43
    關卡、拉之鏡、假王／怪力魔、CTY54 變身杖交換、船員之骨定位、幽靈船動態物件／入口，
-   並由 CTY36 原始轉場及寶箱取得愛的回憶後完成 save/load。下一輪從這個合法 checkpoint
-   閉合地表 `(76,54)` 奧莉薇亞海岬、蓋亞之劍與 CTY83 黃寶珠；詳見 `docs/104`，不得直接
-   從後段 component checkpoint 起跑。
+   並由 CTY36 原始轉場取得愛的回憶、離船後恢復同座標停泊船、通過 `(76,54)` 奧莉薇亞
+   海岬，再進 CTY55 取得蓋亞之劍並完成 save/load。下一輪從這個合法 checkpoint 重查
+   蓋亞之劍火山使用座標／world patch，閉合尼羅肯特與銀寶珠，再回 CTY83 黃寶珠；詳見
+   `docs/105`，不得沿用「地表任意位置 set remake flag0x32」的舊近似。
    不得因 P3 後段已有孤立 component tests，就跳過兩節點之間的玩家路徑、資源與存檔 gate。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用

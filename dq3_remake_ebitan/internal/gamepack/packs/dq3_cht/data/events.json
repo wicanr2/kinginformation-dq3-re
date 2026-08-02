@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.20",
+  "schema_version": "0.1.21",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -475,7 +475,55 @@
       }
     }
   ],
+  "coordinate_item_gate_events": [
+    {
+      "id": "dq3:event.olivia_cape_memory_gate",
+      "kind": "coordinate_item_gate",
+      "coordinate": {"x": 76, "y": 54, "layer": 0},
+      "active_story_flag_raw": 53,
+      "required_item_raw_id": 100,
+      "clear_story_flag_raw": 53,
+      "consume_required_item": false,
+      "failure_direction": 3,
+      "failure_steps": 5,
+      "failure_day_night_steps": 20,
+      "dialogue_text_ids": {
+        "approach": "dq3:text.olivia_cape.sad_song",
+        "success": "dq3:text.olivia_cape.reunion"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT00.TXT",
+        "address_space": "logical",
+        "address": "IDA linear 0x126bd..0x1272b (file=linear-0xec90)",
+        "consumer": "at world (76,54), story flag0x35 gates the event; inventory search for item0x64 selects records597/598 and clear flag0x35, while the missing-item branch adds 20 to the day/night step byte and invokes direction3 movement five times",
+        "doc": "docs/105-olivia-cape-gaia-sword-production-trace.md"
+      }
+    }
+  ],
   "treasure_events": [
+    {
+      "id": "dq3:event.shrine_jail_gaia_sword",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 55,
+        "section": 0,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 15,
+        "present_flag_raw": 72
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY55.DAT + DQ3.EXE",
+        "address_space": "record",
+        "address": "CTY55 section0 event0 file0x56 raw 01 0f 00 48; tile (14,22)",
+        "consumer": "section0 subid0 dispatches type1 item0x0f to the common inventory consumer and clears original present flag0x48",
+        "doc": "docs/105-olivia-cape-gaia-sword-production-trace.md"
+      }
+    },
     {
       "id": "dq3:event.ghost_ship_loves_memory",
       "kind": "treasure",

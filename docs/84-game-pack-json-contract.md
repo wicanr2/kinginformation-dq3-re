@@ -561,6 +561,26 @@ mutation 前失敗即關閉。DQ3 canonical 範例與原版 parity test 見 `eve
 DQ3 幽靈船的 18 筆候選座標、四個 tile、船員之骨 records740–744、動態入口與存檔
 round-trip 均有 EXE／CTY／D3TXT parity test；完整證據見 [`docs/104`](104-transform-staff-ghost-ship-production-trace.md)。
 
+`coordinate_item_gate_events` 描述踩入固定世界座標後自動發生的有限道具 gate；不得以 JSON
+表達任意條件式或 callback：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `coordinate_item_gate_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 ID；kind 固定為 `coordinate_item_gate`。 |
+| `[].coordinate` | object | 是 | 唯一 `{x,y,layer}`；重複座標失敗即關閉。 |
+| `[].active_story_flag_raw` | int | 是 | set 時事件才啟用的原版 story flag。 |
+| `[].required_item_raw_id` | int | 是 | 成功分支搜尋的原版道具 ID。 |
+| `[].clear_story_flag_raw` | int | 是 | 成功文字完整關閉後清除；現行有限契約必須等於 active flag。 |
+| `[].consume_required_item` | boolean | 是 | 現行有限契約必須為 false。 |
+| `[].failure_direction`／`failure_steps` | int | 是 | 缺道具時逐 frame 執行的原版方向與正整數步數，不可瞬移。 |
+| `[].failure_day_night_steps` | int | 是 | 失敗分支一次加入的非負原版日夜步數。 |
+| `[].dialogue_text_ids` | object | 是 | `approach/success` 兩個穩定 text ID；失敗只顯示 approach。 |
+| `[].evidence` | object | 是 | 座標入口、flag reader/writer、inventory search、文字與強制移動 consumer 的 D3 證據。 |
+
+DQ3 奧莉薇亞海岬是 canonical 範例；原始 EXE／D3TXT 同值、成功／失敗 branch、正式船路與
+save/load 見 [`docs/105`](105-olivia-cape-gaia-sword-production-trace.md)。
+
 不屬於多階段任務的原版一次性寶箱放在 `treasure_events`，不得再新增 Go
 `treasures` table 或以「合理值」補欄位：
 
