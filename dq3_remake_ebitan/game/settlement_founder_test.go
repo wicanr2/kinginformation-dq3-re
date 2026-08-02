@@ -59,7 +59,8 @@ func TestSettlementFounderOriginalTwoConfirmTransaction(t *testing.T) {
 	g.dlg.open = false
 	g.advanceSettlementFounderDialogue()
 	if len(g.companions) != 1 || g.companions[0] != other || g.settlementFounder == nil ||
-		!reflect.DeepEqual(g.settlementFounder.Name, merchant.Name) || !g.storyFlag(event.CompletionFlagRaw) {
+		!reflect.DeepEqual(g.settlementFounder.Name, merchant.Name) || !g.storyFlag(event.CompletionFlagRaw) ||
+		!g.storyFlag(event.FounderVisibilityFlagsRaw[merchant.Gender]) {
 		t.Fatalf("建城者／隊伍／旗標交易錯誤：companions=%d founder=%v flag=%v",
 			len(g.companions), g.settlementFounder, g.storyFlag(event.CompletionFlagRaw))
 	}
@@ -135,5 +136,59 @@ func TestSettlementFounderSaveRoundTrip(t *testing.T) {
 		!reflect.DeepEqual(restored.sharedStorage, g.sharedStorage) {
 		t.Fatalf("建城者與共用預存所存讀檔失敗：founder=%v storage=%v",
 			restored.settlementFounder, restored.sharedStorage)
+	}
+}
+
+func TestSettlementFounderImprisonedDialogueTracksYellowOrb(t *testing.T) {
+	pack, _ := testSettlementFounder(t)
+	orb, ok := pack.TreasureEvent("dq3:event.merchant_town_yellow_orb")
+	if !ok {
+		t.Fatal("缺商人城黃寶珠事件")
+	}
+	founder := newMember([]int{700, 701}, 6, 1, 0)
+	g := &Game{
+		pack: pack, inTown: true, curCty: 83, cur: &Scene{sec: 0}, flags: map[int]bool{},
+		settlementFounder: founder,
+	}
+	g.setStoryFlag(orb.Treasure.PresentFlag, true)
+	n := &npcInst{x: 2, y: 23, b4: 48}
+	if !g.talkSettlementFounderFollowup(n) || !g.dlg.open ||
+		len(g.settlementFounderFollowup) != 1 {
+		t.Fatalf("黃寶珠仍在時應先顯示牢中對話並排入座位提示：queue=%v",
+			g.settlementFounderFollowup)
+	}
+	for _, code := range []uint16{dq3data.TxtVar0, dq3data.TxtVar7} {
+		if !reflect.DeepEqual(g.dlg.varGlyph[code], founder.Name) {
+			t.Fatalf("控制碼 %#x 未插入建城者姓名：%v", code, g.dlg.varGlyph)
+		}
+	}
+	g.dlg.open = false
+	g.advanceSettlementFounderFollowup()
+	wantHint, _ := pack.TextGlyphCodes("dq3:text.merchant_settlement.seat_hint")
+	if !g.dlg.open || !reflect.DeepEqual(g.dlg.buf, wantHint) ||
+		len(g.settlementFounderFollowup) != 0 {
+		t.Fatal("record42 關閉後未依原版接續座位後方提示")
+	}
+
+	g.dlg.open = false
+	if !g.collectQuestTreasure(orb.Treasure.CTYRaw, orb.Treasure.Section,
+		orb.Treasure.TileSubID) || !g.hasItem(0x6a) || g.storyFlag(0x4a) {
+		t.Fatalf("黃寶珠 transaction 錯：inv=%v flag=%v", g.inventory, g.storyFlag(0x4a))
+	}
+	if !g.talkSettlementFounderFollowup(n) || len(g.settlementFounderFollowup) != 0 {
+		t.Fatal("黃寶珠取得後 handler48 仍不得排入 record43")
+	}
+	wantPrison, _ := pack.TextGlyphCodes("dq3:text.merchant_settlement.imprisoned")
+	if !reflect.DeepEqual(g.dlg.buf, wantPrison) {
+		t.Fatal("黃寶珠取得後 handler48 應只保留牢中 record42")
+	}
+	saved := g.snapshot()
+	restored := &Game{pack: pack}
+	restored.restore(saved)
+	if restored.settlementFounder == nil ||
+		!reflect.DeepEqual(restored.settlementFounder.Name, founder.Name) ||
+		!restored.hasItem(0x6a) || restored.storyFlag(0x4a) {
+		t.Fatalf("革命／黃寶珠 save-load 錯：founder=%v inv=%v flag=%v",
+			restored.settlementFounder, restored.inventory, restored.storyFlag(0x4a))
 	}
 }

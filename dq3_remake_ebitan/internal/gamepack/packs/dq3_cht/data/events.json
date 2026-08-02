@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.17",
+  "schema_version": "0.1.18",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -99,6 +99,7 @@
       "required_class_raw": 6,
       "require_alive": true,
       "completion_flag_raw": 35,
+      "founder_visibility_flags_by_gender_raw": [21, 35],
       "shared_storage_capacity": 120,
       "dialogue_text_ids": {
         "introduction": "dq3:text.merchant_settlement.introduction",
@@ -119,6 +120,45 @@
         "address_space": "file",
         "address": "DQ3.EXE file 0x6e12..0x6f29 (IDA linear 0x15aa2..0x15bb9); CTY58 sec0 handler40",
         "consumer": "handler40 scans the active party for class raw6, rejects a dead match, asks twice, sets flag0x23, moves all eight item slots into the 120-byte shared storage, archives the founder identity and removes that active-party pointer",
+        "doc": "docs/102-merchant-settlement-world-entrance-re.md"
+      }
+    }
+  ],
+  "settlement_founder_followups": [
+    {
+      "id": "dq3:event.merchant_settlement_imprisoned_with_orb",
+      "kind": "settlement_founder_followup",
+      "npc": {"cty_raw": 83, "section": 0, "tile": {"x": 2, "y": 23}, "handler_raw": 48},
+      "required_flags_set_raw": [74],
+      "required_flags_clear_raw": [],
+      "dialogue_text_ids": [
+        "dq3:text.merchant_settlement.imprisoned",
+        "dq3:text.merchant_settlement.seat_hint"
+      ],
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY83.DAT + D3TXT07.TXT",
+        "address_space": "logical",
+        "address": "handler48 logical 0x5d50..0x5d70 (IDA linear 0x15d50..0x15d70); jump-table entry IDA linear 0x289e4",
+        "consumer": "handler48 always displays D3TXT07 record42, reads present flag0x4a, and while it is set appends record43 telling the player to take the object behind the founder's seat",
+        "doc": "docs/102-merchant-settlement-world-entrance-re.md"
+      }
+    },
+    {
+      "id": "dq3:event.merchant_settlement_imprisoned_after_orb",
+      "kind": "settlement_founder_followup",
+      "npc": {"cty_raw": 83, "section": 0, "tile": {"x": 2, "y": 23}, "handler_raw": 48},
+      "required_flags_set_raw": [],
+      "required_flags_clear_raw": [74],
+      "dialogue_text_ids": ["dq3:text.merchant_settlement.imprisoned"],
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY83.DAT + D3TXT07.TXT",
+        "address_space": "logical",
+        "address": "handler48 logical 0x5d50..0x5d70 (IDA linear 0x15d50..0x15d70); jump-table entry IDA linear 0x289e4",
+        "consumer": "after the common treasure consumer clears flag0x4a, handler48 still displays record42 but skips record43",
         "doc": "docs/102-merchant-settlement-world-entrance-re.md"
       }
     }
@@ -461,6 +501,27 @@
         "address": "CTY27 section1 event0 file 0xa5f raw 01 68 00 3f; hidden entrance transition file 0x85 raw 1b 01 05 09; pushable object file 0x25 raw 1a 09 28 c1 0e 3f 00",
         "consumer": "the CTY27 object ctrl0xc1 reaches the common NPC push branch, exposing transition subid1 to section1 (5,9); event0 gives item0x68 and clears present flag0x3f, which is also the object's visibility flag",
         "doc": "docs/101-pirates-red-orb-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:event.merchant_town_yellow_orb",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 83,
+        "section": 0,
+        "tile_subid": 2,
+        "event_type_raw": 1,
+        "item_raw_id": 106,
+        "present_flag_raw": 74
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY83.DAT + DQ3.EXE + D3TXT07.TXT",
+        "address_space": "file",
+        "address": "CTY83 file 0xfd raw 01 6a 00 4a at tile (4,2); DQ3.EXE file 0x9d86..0x9e41; handler48 IDA linear 0x15d50..0x15d70",
+        "consumer": "the revolution-stage chair-back event dispatches type1 item0x6a to the common inventory consumer and clears present flag0x4a; handler48 reads the same flag and only appends D3TXT07 record43 while the orb remains present",
+        "doc": "docs/102-merchant-settlement-world-entrance-re.md"
       }
     }
   ],

@@ -178,6 +178,9 @@ func (g *Game) finishSettlementFounder(event *gamepack.SettlementFounderEvent) {
 	founder.LearnedSpells = append([]int(nil), member.LearnedSpells...)
 	founder.Weapon, founder.Armor, founder.Shield, founder.Head = -1, -1, -1, -1
 	g.settlementFounder = &founder
+	if member.Gender >= 0 && member.Gender < len(event.FounderVisibilityFlagsRaw) {
+		g.setStoryFlag(event.FounderVisibilityFlagsRaw[member.Gender], true)
+	}
 	g.companions = append(g.companions[:i], g.companions[i+1:]...)
 	g.reloadTownDaynight()
 	g.resetSettlementFounder()
@@ -189,6 +192,56 @@ func (g *Game) resetSettlementFounder() {
 	g.settlementFounderEventID = ""
 	g.settlementFounderMember = -1
 	g.settlementFounderOverflow = 0
+}
+
+func (g *Game) talkSettlementFounderFollowup(n *npcInst) bool {
+	if g.pack == nil || g.settlementFounder == nil || len(g.settlementFounderFollowup) != 0 {
+		return false
+	}
+	for _, event := range g.pack.SettlementFounderFollowups() {
+		if !g.scriptedNPCMatches(n, event.NPC) {
+			continue
+		}
+		matched := true
+		for _, flag := range event.RequiredFlagsSetRaw {
+			matched = matched && g.storyFlag(flag)
+		}
+		for _, flag := range event.RequiredFlagsClearRaw {
+			matched = matched && !g.storyFlag(flag)
+		}
+		if !matched {
+			continue
+		}
+		if !g.openSettlementFounderFollowupText(event.DialogueTextIDs[0]) {
+			return true
+		}
+		g.settlementFounderFollowup = append([]string(nil), event.DialogueTextIDs[1:]...)
+		return true
+	}
+	return false
+}
+
+func (g *Game) openSettlementFounderFollowupText(id string) bool {
+	if !g.openPackText(id) || g.settlementFounder == nil {
+		return false
+	}
+	for _, code := range []uint16{
+		dq3data.TxtVarEnt, dq3data.TxtVar0, dq3data.TxtVar7, dq3data.TxtVarIdx,
+	} {
+		g.setDlgVarGlyphs(code, g.settlementFounder.Name)
+	}
+	return true
+}
+
+func (g *Game) advanceSettlementFounderFollowup() {
+	if g.dlg.open || len(g.settlementFounderFollowup) == 0 {
+		return
+	}
+	next := g.settlementFounderFollowup[0]
+	g.settlementFounderFollowup = g.settlementFounderFollowup[1:]
+	if !g.openSettlementFounderFollowupText(next) {
+		g.settlementFounderFollowup = nil
+	}
 }
 
 func (g *Game) drawSettlementFounderChoice(rgba []byte, white dq3data.Color) {

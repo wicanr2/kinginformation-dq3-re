@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.17"
+	SchemaVersion = "0.1.18"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -709,39 +709,54 @@ type SettlementFounderTextIDs struct {
 // the first matching active companion, archives that founder separately and
 // transfers all carried items into shared storage.
 type SettlementFounderEvent struct {
-	ID                    string                   `json:"id"`
-	Kind                  string                   `json:"kind"`
-	NPC                   ScriptedNPCSelector      `json:"npc"`
-	RequiredClassRaw      int                      `json:"required_class_raw"`
-	RequireAlive          bool                     `json:"require_alive"`
-	CompletionFlagRaw     int                      `json:"completion_flag_raw"`
-	SharedStorageCapacity int                      `json:"shared_storage_capacity"`
-	DialogueTextIDs       SettlementFounderTextIDs `json:"dialogue_text_ids"`
-	Evidence              Evidence                 `json:"evidence"`
+	ID                        string                   `json:"id"`
+	Kind                      string                   `json:"kind"`
+	NPC                       ScriptedNPCSelector      `json:"npc"`
+	RequiredClassRaw          int                      `json:"required_class_raw"`
+	RequireAlive              bool                     `json:"require_alive"`
+	CompletionFlagRaw         int                      `json:"completion_flag_raw"`
+	FounderVisibilityFlagsRaw []int                    `json:"founder_visibility_flags_by_gender_raw"`
+	SharedStorageCapacity     int                      `json:"shared_storage_capacity"`
+	DialogueTextIDs           SettlementFounderTextIDs `json:"dialogue_text_ids"`
+	Evidence                  Evidence                 `json:"evidence"`
+}
+
+// SettlementFounderFollowupEvent describes a later NPC conversation that
+// inserts the archived founder name and selects an ordered text sequence from
+// original story-flag state. It cannot mutate flags or inventory.
+type SettlementFounderFollowupEvent struct {
+	ID                    string              `json:"id"`
+	Kind                  string              `json:"kind"`
+	NPC                   ScriptedNPCSelector `json:"npc"`
+	RequiredFlagsSetRaw   []int               `json:"required_flags_set_raw"`
+	RequiredFlagsClearRaw []int               `json:"required_flags_clear_raw"`
+	DialogueTextIDs       []string            `json:"dialogue_text_ids"`
+	Evidence              Evidence            `json:"evidence"`
 }
 
 type Events struct {
-	SchemaVersion               string                        `json:"schema_version"`
-	ItemActions                 ItemActions                   `json:"item_actions"`
-	RuraNavigation              RuraNavigation                `json:"rura_navigation"`
-	WorldEntranceVariants       []WorldEntranceVariant        `json:"world_entrance_variants"`
-	SettlementFounderEvents     []SettlementFounderEvent      `json:"settlement_founder_events"`
-	NPCPushRule                 NPCPushRule                   `json:"npc_push_rule"`
-	BossSurrenderEvents         []BossSurrenderEvent          `json:"boss_surrender_events"`
-	TemporaryRoleEvents         []TemporaryRoleEvent          `json:"temporary_role_events"`
-	TemporarySoloChallenges     []TemporarySoloChallengeEvent `json:"temporary_solo_challenges"`
-	QuestItemChainEvents        []QuestItemChainEvent         `json:"quest_item_chain_events"`
-	TreasureEvents              []TreasureEvent               `json:"treasure_events"`
-	NPCItemRewardEvents         []NPCItemRewardEvent          `json:"npc_item_reward_events"`
-	ItemUseEffects              []ItemUseEffect               `json:"item_use_effects"`
-	TrackingGuardEvents         []TrackingGuardEvent          `json:"tracking_guard_events"`
-	PushPuzzleEvents            []PushPuzzleEvent             `json:"push_puzzle_events"`
-	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate      `json:"two_step_floor_switch_gates"`
-	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent  `json:"staged_vehicle_exchange_events"`
-	GuidedPassageEvents         []GuidedPassageEvent          `json:"guided_passage_events"`
-	HostageRescueEvents         []HostageRescueEvent          `json:"hostage_rescue_events"`
-	ReclassEvents               []ReclassEvent                `json:"reclass_events"`
-	StagedBossEvents            []StagedBossEvent             `json:"staged_boss_events"`
+	SchemaVersion               string                           `json:"schema_version"`
+	ItemActions                 ItemActions                      `json:"item_actions"`
+	RuraNavigation              RuraNavigation                   `json:"rura_navigation"`
+	WorldEntranceVariants       []WorldEntranceVariant           `json:"world_entrance_variants"`
+	SettlementFounderEvents     []SettlementFounderEvent         `json:"settlement_founder_events"`
+	SettlementFounderFollowups  []SettlementFounderFollowupEvent `json:"settlement_founder_followups"`
+	NPCPushRule                 NPCPushRule                      `json:"npc_push_rule"`
+	BossSurrenderEvents         []BossSurrenderEvent             `json:"boss_surrender_events"`
+	TemporaryRoleEvents         []TemporaryRoleEvent             `json:"temporary_role_events"`
+	TemporarySoloChallenges     []TemporarySoloChallengeEvent    `json:"temporary_solo_challenges"`
+	QuestItemChainEvents        []QuestItemChainEvent            `json:"quest_item_chain_events"`
+	TreasureEvents              []TreasureEvent                  `json:"treasure_events"`
+	NPCItemRewardEvents         []NPCItemRewardEvent             `json:"npc_item_reward_events"`
+	ItemUseEffects              []ItemUseEffect                  `json:"item_use_effects"`
+	TrackingGuardEvents         []TrackingGuardEvent             `json:"tracking_guard_events"`
+	PushPuzzleEvents            []PushPuzzleEvent                `json:"push_puzzle_events"`
+	TwoStepFloorSwitchGates     []TwoStepFloorSwitchGate         `json:"two_step_floor_switch_gates"`
+	StagedVehicleExchangeEvents []StagedVehicleExchangeEvent     `json:"staged_vehicle_exchange_events"`
+	GuidedPassageEvents         []GuidedPassageEvent             `json:"guided_passage_events"`
+	HostageRescueEvents         []HostageRescueEvent             `json:"hostage_rescue_events"`
+	ReclassEvents               []ReclassEvent                   `json:"reclass_events"`
+	StagedBossEvents            []StagedBossEvent                `json:"staged_boss_events"`
 }
 
 type TextSource struct {
@@ -799,29 +814,30 @@ type Characters struct {
 }
 
 type Pack struct {
-	Manifest           Manifest
-	Facilities         Facilities
-	Interface          Interface
-	Events             Events
-	Characters         Characters
-	Texts              Texts
-	services           map[string]*ServiceDefinition
-	bossEvents         map[string]*BossSurrenderEvent
-	roleEvents         map[string]*TemporaryRoleEvent
-	soloChallenges     map[string]*TemporarySoloChallengeEvent
-	questItemEvents    map[string]*QuestItemChainEvent
-	treasureEvents     map[string]*TreasureEvent
-	itemUseEffects     map[int]*ItemUseEffect
-	sequenceGates      map[string]*TwoStepFloorSwitchGate
-	vehicleExchanges   map[string]*StagedVehicleExchangeEvent
-	guidedPassages     map[string]*GuidedPassageEvent
-	hostageRescues     map[string]*HostageRescueEvent
-	reclassEvents      map[string]*ReclassEvent
-	settlementFounders map[string]*SettlementFounderEvent
-	stagedBossEvents   map[string]*StagedBossEvent
-	charDefaults       map[string]*CharacterDefault
-	texts              map[string]*TextDefinition
-	contentHash        string
+	Manifest                   Manifest
+	Facilities                 Facilities
+	Interface                  Interface
+	Events                     Events
+	Characters                 Characters
+	Texts                      Texts
+	services                   map[string]*ServiceDefinition
+	bossEvents                 map[string]*BossSurrenderEvent
+	roleEvents                 map[string]*TemporaryRoleEvent
+	soloChallenges             map[string]*TemporarySoloChallengeEvent
+	questItemEvents            map[string]*QuestItemChainEvent
+	treasureEvents             map[string]*TreasureEvent
+	itemUseEffects             map[int]*ItemUseEffect
+	sequenceGates              map[string]*TwoStepFloorSwitchGate
+	vehicleExchanges           map[string]*StagedVehicleExchangeEvent
+	guidedPassages             map[string]*GuidedPassageEvent
+	hostageRescues             map[string]*HostageRescueEvent
+	reclassEvents              map[string]*ReclassEvent
+	settlementFounders         map[string]*SettlementFounderEvent
+	settlementFounderFollowups map[string]*SettlementFounderFollowupEvent
+	stagedBossEvents           map[string]*StagedBossEvent
+	charDefaults               map[string]*CharacterDefault
+	texts                      map[string]*TextDefinition
+	contentHash                string
 }
 
 func decodeStrict(fsys fs.FS, name string, dst any) error {
@@ -1098,6 +1114,17 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.SettlementFounderFollowups {
+		if len(event.DialogueTextIDs) == 0 {
+			return fmt.Errorf("%s dialogue_text_ids must not be empty", event.ID)
+		}
+		for i, id := range event.DialogueTextIDs {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids[%d] references unknown text %q",
+					event.ID, i, id)
+			}
+		}
+	}
 	for _, event := range p.Events.TemporaryRoleEvents {
 		refs := event.DialogueTextIDs
 		for field, id := range map[string]string{
@@ -1323,6 +1350,9 @@ func (p *Pack) validateEvents() error {
 	if p.Events.SettlementFounderEvents == nil {
 		return errors.New("settlement_founder_events must be present")
 	}
+	if p.Events.SettlementFounderFollowups == nil {
+		return errors.New("settlement_founder_followups must be present")
+	}
 	entranceIDs := map[string]bool{}
 	entranceTiles := map[[3]int]string{}
 	for i, entrance := range p.Events.WorldEntranceVariants {
@@ -1419,16 +1449,51 @@ func (p *Pack) validateEvents() error {
 		if e.ID == "" || e.Kind != "settlement_founder" || !validScriptedNPC(e.NPC) ||
 			e.RequiredClassRaw < 0 || e.RequiredClassRaw > 255 || !e.RequireAlive ||
 			e.CompletionFlagRaw < 0 || e.CompletionFlagRaw >= 512 ||
+			len(e.FounderVisibilityFlagsRaw) != 2 ||
 			e.SharedStorageCapacity < 1 || e.SharedStorageCapacity > 255 {
 			return fmt.Errorf("settlement_founder_events[%d]: invalid event", i)
 		}
 		if _, exists := p.settlementFounders[e.ID]; exists {
 			return fmt.Errorf("duplicate settlement founder event id %q", e.ID)
 		}
+		for gender, flag := range e.FounderVisibilityFlagsRaw {
+			if flag < 0 || flag >= 512 {
+				return fmt.Errorf("%s: invalid founder visibility flag for gender%d", e.ID, gender)
+			}
+		}
 		if err := validateEvidence(e.Evidence); err != nil {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
 		p.settlementFounders[e.ID] = e
+	}
+	p.settlementFounderFollowups = make(map[string]*SettlementFounderFollowupEvent,
+		len(p.Events.SettlementFounderFollowups))
+	for i := range p.Events.SettlementFounderFollowups {
+		e := &p.Events.SettlementFounderFollowups[i]
+		if e.ID == "" || e.Kind != "settlement_founder_followup" ||
+			!validScriptedNPC(e.NPC) || len(e.DialogueTextIDs) == 0 {
+			return fmt.Errorf("settlement_founder_followups[%d]: invalid event", i)
+		}
+		if _, exists := p.settlementFounderFollowups[e.ID]; exists {
+			return fmt.Errorf("duplicate settlement founder followup id %q", e.ID)
+		}
+		flags := map[int]bool{}
+		for _, flag := range e.RequiredFlagsSetRaw {
+			if flag < 0 || flag >= 512 || flags[flag] {
+				return fmt.Errorf("%s: invalid required set flag %#x", e.ID, flag)
+			}
+			flags[flag] = true
+		}
+		for _, flag := range e.RequiredFlagsClearRaw {
+			if flag < 0 || flag >= 512 || flags[flag] {
+				return fmt.Errorf("%s: invalid or contradictory required clear flag %#x", e.ID, flag)
+			}
+			flags[flag] = true
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.settlementFounderFollowups[e.ID] = e
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -2437,12 +2502,27 @@ func (p *Pack) WorldEntranceVariants() []WorldEntranceVariant {
 }
 
 func (p *Pack) SettlementFounderEvents() []SettlementFounderEvent {
-	return append([]SettlementFounderEvent(nil), p.Events.SettlementFounderEvents...)
+	result := append([]SettlementFounderEvent(nil), p.Events.SettlementFounderEvents...)
+	for i := range result {
+		result[i].FounderVisibilityFlagsRaw = append([]int(nil),
+			result[i].FounderVisibilityFlagsRaw...)
+	}
+	return result
 }
 
 func (p *Pack) SettlementFounderEvent(id string) (*SettlementFounderEvent, bool) {
 	e, ok := p.settlementFounders[id]
 	return e, ok
+}
+
+func (p *Pack) SettlementFounderFollowups() []SettlementFounderFollowupEvent {
+	result := append([]SettlementFounderFollowupEvent(nil), p.Events.SettlementFounderFollowups...)
+	for i := range result {
+		result[i].RequiredFlagsSetRaw = append([]int(nil), result[i].RequiredFlagsSetRaw...)
+		result[i].RequiredFlagsClearRaw = append([]int(nil), result[i].RequiredFlagsClearRaw...)
+		result[i].DialogueTextIDs = append([]string(nil), result[i].DialogueTextIDs...)
+	}
+	return result
 }
 
 func (p *Pack) ItemUseEffects() []ItemUseEffect {

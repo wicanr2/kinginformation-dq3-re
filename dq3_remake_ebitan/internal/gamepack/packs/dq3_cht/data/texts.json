@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.17",
+  "schema_version": "0.1.18",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -848,6 +848,22 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 6},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT07.TXT", "address_space": "record", "address": "6", "consumer": "merchant-settlement handler40 repeat dialogue after flag0x23", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.imprisoned",
+      "value": "*「啊,{變數}。\n是我啊,{變數}。\n---\n*「我為大家著想,\n卻落到這種地步。\n---\n*「現在只能在這裡祈禱,\n{變數}旅途平安了。",
+      "glyph_codes": [59,60,509,55,65525,56,65534,12,12,399,493,509,55,65526,56,65532,59,60,493,611,163,657,484,609,55,65534,12,12,1143,1053,453,398,281,214,995,56,65532,59,60,432,411,538,408,411,398,512,258,259,55,65534,12,12,65525,193,1336,970,585,423,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 42},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT07.TXT", "address_space": "logical", "address": "handler48 logical 0x5d50..0x5d70 (IDA linear 0x15d50..0x15d70); record42", "consumer": "CTY83 imprisoned-founder handler48 always displays record42 and inserts the archived founder name", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.seat_hint",
+      "value": "*「對了,\n在我座位後面的東西,\n你們就拿去吧。",
+      "glyph_codes": [59,60,443,423,55,65534,12,12,411,493,723,795,698,236,149,539,380,55,65534,12,12,528,529,633,558,448,499,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 43},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT07.TXT", "address_space": "logical", "address": "handler48 logical 0x5d50..0x5d70 (IDA linear 0x15d50..0x15d70); record43", "consumer": "handler48 appends record43 only while the yellow-orb present flag0x4a remains set", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
     },
     {
       "id": "dq3:text.shared_storage.full",

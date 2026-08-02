@@ -51,7 +51,7 @@ D3TXT04 rec93/96 的 `VAR_NUM` 在 mode1 是道具名稱，不是十進位數字
 | `0x67` 藍 | CTY23 sec2 寶箱 `(24,14)` | 已有 |
 | `0x68` 紅 | CTY27 sec1 寶箱 `(1,12)` | 已有 |
 | `0x69` 紫 | CTY19 八頭大蛇 monster75 勝利 | 已有 |
-| `0x6a` 黃 | CTY83 sec0 寶箱 `(4,2)` | 已有 |
+| `0x6a` 黃 | CTY83 sec0 寶箱 `(4,2)` | JSON／元件交易已閉合；自然 production trace 待完成（見 `docs/102`） |
 | `0x6b` 銀 | CTY64 scripted handler49 | 已有 |
 
 ## 飛行

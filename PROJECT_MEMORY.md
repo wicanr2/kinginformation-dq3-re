@@ -88,14 +88,18 @@ save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；�
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
 同時控制寶箱與入口物件 visibility；詳見 `docs/101`。game-pack schema 已升至
-`0.1.17`，`dq3_cht` content 已升至 `0.1.19`。IDA Pro 9.4 證明商人聚落 `(210,64)`
+`0.1.18`，`dq3_cht` content 已升至 `0.1.21`。IDA Pro 9.4 證明商人聚落 `(210,64)`
 的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
 `0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
 入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
 `0x42`、蓋亞之劍 `0x48`。商人交付已從紅寶珠 checkpoint 以正式酒場與船陸輸入
 閉合，含兩次確認、滿載逐件訊息、共用預存所、建城者身份及 save/load。
 IDA 同時訂正地表 seam（X `242/2`、Y `204/2`）與船 mode1 的 attr bit1/bit0 分支。
-目前尚余革命、CTY83 黃寶珠正式 trace，以及 CTY58 同狀態原版 V2 對拍。詳見 `docs/102`。
+CTY83 黃寶珠原始 event `01 6a 00 4a` 已遷入 JSON；舊 Go table 把 present flag set
+誤作「已取得」而會卡死來源，已移除。handler48 的 record42／43、flag0x4a 分支、保存的
+建城者姓名、男性 flag0x15／女性 flag0x23 與 save/load 已達 component E2／V1。尚余從
+合法 checkpoint 自然完成沙曼歐莎／蓋亞之劍 gate 的 CTY83 E3 trace、CTY59 handler41
+設施分支，以及 CTY58／83 同狀態原版 V2 對拍。詳見 `docs/102`。
 **尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從商人交付合法
 checkpoint 繼續，第一候選為建城革命／CTY83 黃寶珠。地表水面顏色及四輪 palette transition 仍未達 V3，
 不得因流程閉合而略過。

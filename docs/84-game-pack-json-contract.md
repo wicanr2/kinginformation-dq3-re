@@ -765,6 +765,30 @@ DQ3 商人聚落 `(210,64)` 的第一個 branch 是 `flag0x23 clear → CTY58`�
 set gate；若寫成統一「set 即取」會在新遊戲直接載入革命後 CTY83。完整 IDA 證據見
 [`docs/102`](102-merchant-settlement-world-entrance-re.md)。
 
+`settlement_founder_events` 與 `settlement_founder_followups` 分別描述建城者交付交易及後續
+場景的唯讀對話。引擎只保存離隊角色身分、共用預存所與有限對話序列，不得知道商人職業、
+城鎮階段、性別 sprite flag 或黃寶珠：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `settlement_founder_events` | object[] | 是 | 可為空陣列；交付事件的穩定集合。 |
+| `[].npc` | selector | 是 | 原版交付 NPC 的 `{cty_raw,section,tile,handler_raw}`。 |
+| `[].required_class_raw` | int | 是 | 由 active party 依原版順序搜尋的職業。 |
+| `[].require_alive` | bool | 是 | 第一個職業命中者是否必須存活；不可跳過死亡者改找後一人。 |
+| `[].completion_flag_raw` | int | 是 | 交易成功後設定的原版完成旗標。 |
+| `[].founder_visibility_flags_by_gender_raw` | int[2] | 是 | index `0/1` 對應男／女建城者在後續 CTY 使用的原版可見旗標；交易完成才設定。 |
+| `[].shared_storage_capacity` | int | 是 | 原版共用預存所容量；滿載不撤銷交付，而是逐件顯示滿載文字。 |
+| `[].dialogue_text_ids` | object | 是 | 兩次確認、拒絕、成功、事後與滿載文字的穩定 text ID。 |
+| `settlement_founder_followups` | object[] | 是 | 可為空陣列；只讀取既有 founder／flags，不得修改劇情或物品。 |
+| `[].npc` | selector | 是 | 後續 subtype2 NPC 的原版 selector。 |
+| `[].required_flags_set_raw`／`required_flags_clear_raw` | int[] | 是 | 兩陣列不得重複或矛盾；依 JSON 順序選第一個完整命中項。 |
+| `[].dialogue_text_ids` | string[] | 是 | 非空的阻塞對話序列；所有姓名控制碼綁定已保存建城者，不得回退成勇者姓名。 |
+| `[].evidence` | object | 是 | handler、旗標 reader、文字 record 與玩家可見結果的 D3 證據。 |
+
+DQ3 handler48 以 `flag0x4a`（黃寶珠 present flag）選擇 `record42→43` 或只顯示
+`record42`。它不直接給道具；黃寶珠仍由 CTY83 event `01 6a 00 4a` 與共同寶箱 consumer
+交易。兩條路徑不得合併成「與建城者交談即得到寶珠」。
+
 `npc_item_reward_events` 描述「指定 NPC 依 present flag 顯示成功／事後文字，並把一件
 道具交給第一個有空格的隊員」的有限 primitive：
 

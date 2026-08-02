@@ -298,6 +298,7 @@ type Game struct {
 	settlementFounderMember   int            // companions index；未選=-1
 	settlementFounderOverflow int            // 預存所滿時原版逐道具訊息的剩餘次數
 	settlementFounder         *Member        // 已離隊、不可由酒館重新招募的建城者
+	settlementFounderFollowup []string       // 後續 NPC 對話尚待顯示的 game-pack text ID
 	sharedStorage             []int          // 原版共用預存所；包含建城者交出的裝備與道具
 	fieldSpell                FieldSpellMenu // 野外咒文／魯拉目的地 modal
 	visitedTowns              []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
@@ -464,6 +465,8 @@ func (g *Game) selectCommand(cmd int) {
 					// game-pack NPC → gate → class-change transaction primitive。
 				} else if g.talkSettlementFounder(n) {
 					// game-pack active companion → founder + shared-storage transaction。
+				} else if g.talkSettlementFounderFollowup(n) {
+					// game-pack founder identity → flag-gated followup dialogue sequence。
 				} else {
 					g.scriptedTalk(n.b4)
 				}
@@ -1079,6 +1082,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceHostageRescueDialogue()
 				g.advanceReclassDialogue()
 				g.advanceSettlementFounderDialogue()
+				g.advanceSettlementFounderFollowup()
 				g.advanceStagedBossDialogue()
 			}
 		}

@@ -63,15 +63,9 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
    handler50 只讓 NPC 引路，玩家自行踩 `(50,15)` 才進 handler57。此段已達 E3，
    信件不消耗（`docs/88`）。
 6. **帶商人建城 questline** — ✅ **核心已接(2026-06-27)**(杜 Ch33-36):
-   - **RE 全解**:老人 handler **0x5aba**(非 NPC 跳表 → runner/region 事件,無放置 NPC):`cl=[0x5077]隊伍數`,
-     迴圈掃隊員 `cmp [si+1],6`(class==6=**商人**);無商人→rec1「只要有商人」;有商人→rec2-5(如何/是嗎/謝謝)
-     + clear_flag 0x23(建城)。對話 D3TXT07 rec0-5。
-   - **接線**:CTY83 (16,2) 老人 NPC 位:掃隊伍 class6 商人 → `dq3_roster_remove`(寄存,裝備回阿里阿罕預存所,杜)
-     + flag 0x216 建城完成 + rec5「謝謝你」;無商人→rec1。黃寶珠 0x6a(Ch41 革命後)已在 treasure 表 CTY83。
-   - ✅ **視覺增生已做(2026-06-27)**:RE 發現 CTY83 的 17 個商店/居民 NPC **vis_flag=0x05**(原版「建城後才顯示」旗標)。
-     remake 原本載入全部 NPC(忽略 vis_flag)→ 城鎮永遠建好態。修:`dq3_scene_hide_unbuilt(cur,0x05,16,2)` per-frame——
-     未建城(flag 0x216 未設)隱藏 vis_flag 0x05 NPC(留老人 (16,2)),呈空草原;帶商人建城後重入 → 商店/居民全顯
-     (可買更多東西=成就感,使用者要求)。圖驗證:建城前空草原、建城後居民現身。game_tester 93/93。
+   - 舊段落曾虛構 `flag0x216`、CTY83 `(16,2)` 交付入口與人工隱藏 NPC，已刪除。現行證據是
+     CTY58 `(7,15)` handler40 設 `flag0x23`；世界入口再依 `0x47／0x42／0x48` ordered
+     chain 選 CTY59／60／61／83。黃寶珠為 CTY83 event `01 6a 00 4a`，見 `docs/102`。
 7. **耶進貝亞倉庫番推三石** — ✅ **Go/Ebitengine 正式流程已閉合（2026-08-02）**。
    - IDA 證明原版 pushability 是 runtime NPC `ctrl bit0x40`，不是舊 C prototype 的
      `B2==40`；隱形 `0xc000` 尚在時不得推動。

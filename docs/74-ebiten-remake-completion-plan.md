@@ -385,7 +385,11 @@ Gate：不用 `DQ3_SHIP` 可自然取得船並航行。
   `flag0x23 clear` 正確進 CTY58。三個 stage gate 已分別閉合到最終鑰匙 `0x47`、
   假王事件 `0x42`、蓋亞之劍 `0x48`，不是自製計時器。商人交付已由酒場登錄商人開始，
   正式航行進 CTY58，閉合兩次確認、共用預存所、身份保存與 save/load；
-  runtime PNG 為 V1。尚余革命、CTY83 黃寶珠及 V2 原版對拍；見 `docs/102`。
+  runtime PNG 為 V1。CTY83 event `01 6a 00 4a`、handler48 record42→依 present
+  flag0x4a 選擇 record43、建城者姓名插值、男女 sprite flag、黃寶珠 JSON transaction
+  與 save/load component 已閉合（D3／E2／V1）；舊 Go treasure row 的反向 flag 語意已
+  刪除。尚缺由本 checkpoint 自然完成沙曼歐莎／蓋亞之劍 gate 後進 CTY83 的 E3 trace、
+  CTY59 handler41 設施分支及原版同狀態 V2；見 `docs/102`。
 - 沙曼歐莎 R-2：
   `道具選單使用拉之鏡 → CTY44 sec1 玩家站(14,7) → 夜晚 → rec97/98 → 怪89 →
   勝後0x62+clear21/set22+白天；敗／逃 clear10/restore42`。
@@ -636,7 +640,8 @@ schema `0.1.15` 已接續閉合蘭西爾勇氣試煉與藍寶珠。IDA Pro 9.4 �
 已經正式航行、住宿切白天、以最終鑰匙開門、接受挑戰、走 CTY23、取得藍寶珠、途中
 save/load、返回 CTY75 復隊及再次 save/load；見 `docs/100`。
 
-schema 維持 `0.1.15`，`dq3_cht` content `0.1.17` 已接續閉合海盜村密道與紅寶珠。
+海盜村密道與紅寶珠切片已在當時閉合；現行 schema／content 版本只以
+`PROJECT_MEMORY.md` 與 pack manifest 為準，不在歷史 checkpoint 重複保存舊版號。
 IDA Pro 9.4 證明 NPC runtime `ctrl bit0x40` 的推動 gate 與 tile subid transition consumer；
 CTY27 raw 證明 `(26,9)` 可推物件、hidden transition→sec1 `(5,9)` 及 event0
 `{item=0x68,flag=0x3f}`。正式 trace 必須先魯拉 CTY15 觸發原版船重定位，才可登船航行至

@@ -1,6 +1,7 @@
 # 商人聚落世界入口分支逆向證據
 
-狀態：入口選擇與商人交付已閉合（D3／E3）；後續革命與黃寶珠尚未閉合。
+狀態：入口選擇與商人交付已閉合（D3／E3）；CTY83 黃寶珠資料、牢中對話與元件交易
+已達 D3／E2／V1，從合法 checkpoint 自然完成中間 gate 的 production trace 尚未閉合。
 
 ## 問題
 
@@ -85,6 +86,40 @@ IDA Pro 9.4 的 `sub_16CE2`（IDA linear `0x16ce2..0x16d04`；file
 `dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4` 已抽樣前 37.5
 分鐘，尚未找到同狀態 CTY58 片段；因此目前誠實標為 V1，不宣稱原版對拍 V2。
 
+### CTY83 handler48 與黃寶珠（confirmed）
+
+- `CTY83.DAT`：2,841 bytes；SHA-256
+  `ae882639131e1be2f62b21f6643edfd0e5b6f497df692314d182a799e0a46934`。
+- section0 的 event table 在 file `0xf4`；tile `(4,2)` 的 subid2 entry 位於 file
+  `0xfd`，原始 bytes 為 `01 6a 00 4a`，即 type1、item `0x6a`、present flag `0x4a`。
+- handler48 為 logical `0x5d50..0x5d70`（IDA linear `0x15d50..0x15d70`，
+  file `0x70c0..0x70e0`）：固定顯示 D3TXT07 record42，讀 flag `0x4a`；flag set 時
+  再顯示 record43「在我座位後面的東西，你們就拿去吧」，clear 時跳過 record43。
+- common examine dispatcher logical `0x8986`（IDA linear `0x18986`）先讀 event 的 p2
+  present flag；type1／3 分支呼叫 `sub_18A79`，成功後共同流程清 flag。handler48 本身
+  不給黃寶珠，兩條路徑不可合併。
+- IDA Pro 9.4 sidecar 位於 `/tmp/dq3-revolution-ida/revolution_ida.txt`；輸入 EXE 雜湊與
+  本文件前述相同，位址基準為 IDA linear。原始 file raw 的 far-call segment relocation
+  word 是 `0x111b`，IDA 載入後顯示 `0x211b`；parity test 鎖 file bytes，不混用兩種基準。
+
+舊 `treasures` Go table 使用「flag set＝已取得」，與原版 present flag 語意相反；因
+`flag0x4a` 初值為 set，會讓黃寶珠一開始就被判定為已取。該列已刪除，改由
+`treasure_events` JSON 使用「set＝存在、成功後 clear」。handler48 的 record42／43、
+旗標分支與建城者姓名插值也由 `settlement_founder_followups` JSON 提供。男性建城者的
+後續 sprite flag `0x15`、女性 `0x23` 已加入交付 transaction；舊實作只設完成 flag
+`0x23`，會漏掉男性建城者的後續可見狀態。
+
+目前 runtime 圖片：
+
+- [CTY83 革命場景](img/merchant_revolution_cty83.png)
+- [牢中建城者 record42](img/merchant_revolution_imprisoned.png)
+- [座位後方提示 record43](img/merchant_revolution_seat_hint.png)
+- [調查取得黃寶珠](img/merchant_revolution_yellow_orb_obtained.png)
+
+圖片使用真正 CTY83、D3TXT07 與 production renderer，已目視確認；但 fixture 由已證實
+狀態載入，尚未從商人交付 checkpoint 自然完成沙曼歐莎與蓋亞之劍鏈，因此只標 V1／
+component E2，不宣稱 E3 或原版同狀態 V2。
+
 ## 建城 stage gate writers（confirmed）
 
 - `0x47` 是 CTY40 section0 最終鑰匙寶箱的 present flag；原始 event
@@ -99,6 +134,7 @@ IDA Pro 9.4 的 `sub_16CE2`（IDA linear `0x16ce2..0x16d04`；file
 
 ## 尚未閉合
 
-- CTY59／60／61 的階段差異與 CTY83 革命事件。
-- CTY83 黃寶珠、革命後商人對話、save/load 及正式玩家 trace。
+- CTY59／60／61 的階段差異，以及 handler41 的 Y=4 設施派發 consumer。
+- 從商人交付合法 checkpoint 自然取得拉之鏡、完成假王事件、取得蓋亞之劍，再正式進入
+  CTY83；目前黃寶珠 transaction 與 save/load 只有 component closure，仍不是 E3。
 - 從原版實況定位 CTY58 同狀態畫面，將上述 runtime PNG 由 V1 升為 V2。
