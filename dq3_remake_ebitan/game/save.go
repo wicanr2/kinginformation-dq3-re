@@ -30,6 +30,8 @@ type saveState struct {
 	SoloChallengeEventID    string       `json:"solo_challenge_event_id,omitempty"`
 	SoloChallengeCompanions []compSav    `json:"solo_challenge_companions,omitempty"`
 	Roster                  []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
+	SharedStorage           []int        `json:"shared_storage,omitempty"`
+	SettlementFounder       *compSav     `json:"settlement_founder,omitempty"`
 	Flags                   []int        `json:"flags"`
 	ShipOwned               bool         `json:"shipowned"`
 	PhoenixOwned            bool         `json:"phoenixowned,omitempty"`
@@ -79,6 +81,11 @@ func (g *Game) snapshot() saveState {
 	if g.pack != nil { // 裸 Game 單元測試／舊 migration fixture 沒有 loader；production 永遠非 nil。
 		packID, packSchema, packHash = g.pack.ID(), g.pack.Schema(), g.pack.ContentHash()
 	}
+	var founder *compSav
+	if g.settlementFounder != nil {
+		saved := compsToSav([]*Member{g.settlementFounder})[0]
+		founder = &saved
+	}
 	s := saveState{
 		PackID: packID, PackSchema: packSchema, PackContentHash: packHash,
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroStat: g.heroStat, HeroGold: g.heroGold,
@@ -91,6 +98,8 @@ func (g *Game) snapshot() saveState {
 		SoloChallengeEventID:    g.soloChallengeEventID,
 		SoloChallengeCompanions: compsToSav(g.soloChallengeCompanions),
 		Roster:                  compsToSav(g.roster),
+		SharedStorage:           append([]int(nil), g.sharedStorage...),
+		SettlementFounder:       founder,
 		Flags:                   flagsToSav(g.flags),
 		ShipOwned:               g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PhoenixOwned: g.phoenixOwned, PhoenixAboard: g.phoenixAboard,
@@ -220,6 +229,20 @@ func (g *Game) restore(s saveState) {
 			m.syncLearnedSpells()
 			g.roster[i] = m
 		}
+	}
+	g.sharedStorage = append([]int(nil), s.SharedStorage...)
+	g.settlementFounder = nil
+	if c := s.SettlementFounder; c != nil {
+		m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
+			Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
+			Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
+			Inventory: append([]int(nil), c.Inventory...), LearnedSpells: append([]int(nil), c.LearnedSpells...)}
+		if !s.EquipmentV2 {
+			migrateLegacyMemberEquipment(m)
+		}
+		m.ensureStats()
+		m.syncLearnedSpells()
+		g.settlementFounder = m
 	}
 	g.shipOwned, g.shipX, g.shipY = s.ShipOwned, s.ShipX, s.ShipY
 	g.phoenixOwned, g.phoenixAboard = s.PhoenixOwned, s.PhoenixAboard

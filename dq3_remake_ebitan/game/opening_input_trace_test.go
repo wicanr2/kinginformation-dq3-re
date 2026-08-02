@@ -2042,6 +2042,113 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if g.cur.npcAt(entranceX, entranceY) >= 0 || g.cur.npcAt(entranceX, entranceY-1) >= 0 {
 		t.Fatal("紅寶珠 present flag 清除後，密道物件不應在重載 CTY27 sec0 時重新出現")
 	}
+
+	// 紅寶珠 checkpoint → 用正式酒場選單寄放一名隊員、登錄商人、
+	// 再指定商人入隊。不直接塞 roster/companions，也不注入建城旗標。
+	traceRuraToCty(t, g, 0)
+	traceAdventureWalkToCty(t, g, 0, false)
+	traceTalkNPC(t, g, 2, 16)
+	if !g.recruit.active || g.recruit.stage != rcMenu || len(g.companions) != 3 {
+		t.Fatalf("商人登錄前露易達酒場狀態錯：active=%v stage=%d companions=%d",
+			g.recruit.active, g.recruit.stage, len(g.companions))
+	}
+	send(InputState{DirHeld: -1, DirEdge: 0}) // 與同伴分離
+	press(InputState{Confirm: true})
+	press(InputState{Confirm: true}) // 寄放 companions[0]
+	press(InputState{Cancel: true})  // 清單→主選單
+	press(InputState{Cancel: true})  // 關閉酒場
+	if len(g.companions) != 2 || len(g.roster) != 1 {
+		t.Fatalf("正式寄放隊員後清單錯：companions=%d roster=%d",
+			len(g.companions), len(g.roster))
+	}
+
+	traceWalkThroughPortal(t, g, 8, 14, 0, 2)
+	traceTalkNPC(t, g, 2, 3)
+	for i := 0; i < 6; i++ { // class raw 6：商人
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true})
+	press(InputState{Toggle: true})
+	press(InputState{Confirm: true}) // 名稱「0」
+	send(InputState{DirHeld: -1, DirEdge: 2})
+	press(InputState{Confirm: true}) // OK
+	press(InputState{Confirm: true}) // 男性
+	if len(g.roster) != 2 || g.roster[1].Class != 6 {
+		t.Fatalf("正式登錄商人失敗：roster=%d lastClass=%d",
+			len(g.roster), g.roster[len(g.roster)-1].Class)
+	}
+	merchantName := append([]int(nil), g.roster[1].Name...)
+	traceWalkThroughPortal(t, g, 8, 2, 0, 0)
+	traceTalkNPC(t, g, 2, 16)
+	press(InputState{Confirm: true}) // 找同伴參加
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true}) // roster[1] 商人
+	press(InputState{Cancel: true})
+	press(InputState{Cancel: true})
+	if len(g.companions) != 3 || g.companions[2].Class != 6 || len(g.roster) != 1 {
+		t.Fatalf("正式招募商人後隊伍錯：companions=%d lastClass=%d roster=%d",
+			len(g.companions), g.companions[len(g.companions)-1].Class, len(g.roster))
+	}
+
+	// 魯拉只回到本 trace 早先已正常訪問的 CTY38，並由 production
+	// 重定位船隻；後續仍以正式走路、登船、航行、靠岸進入商人城。
+	traceRuraToCty(t, g, 38)
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 58, true)
+	founderEvent, ok := g.pack.SettlementFounderEvent("dq3:event.merchant_settlement_founder")
+	if !ok {
+		t.Fatal("缺 dq3:event.merchant_settlement_founder")
+	}
+	if g.curCty != founderEvent.NPC.CTYRaw || sceneSection(g.cur) != founderEvent.NPC.Section {
+		t.Fatalf("未由正式入口進入商人城初階段：cty=%d sec=%d",
+			g.curCty, sceneSection(g.cur))
+	}
+	traceTalkNPC(t, g, founderEvent.NPC.Tile.X, founderEvent.NPC.Tile.Y)
+	traceCloseDialogue(t, g) // 自我介紹、商人候選，停在第一次選擇
+	if g.settlementFounderStage != settlementFounderFirstChoice {
+		t.Fatalf("商人城第一次選擇階段錯：%d", g.settlementFounderStage)
+	}
+	press(InputState{Confirm: true})
+	traceCloseDialogue(t, g) // 最後確認文字，停在第二次選擇
+	if g.settlementFounderStage != settlementFounderFinalChoice {
+		t.Fatalf("商人城第二次選擇階段錯：%d", g.settlementFounderStage)
+	}
+	press(InputState{Confirm: true})
+	traceCloseDialogue(t, g)
+	if !g.storyFlag(founderEvent.CompletionFlagRaw) || len(g.companions) != 2 ||
+		g.settlementFounder == nil || g.settlementFounder.Class != 6 ||
+		!reflect.DeepEqual(g.settlementFounder.Name, merchantName) {
+		t.Fatalf("商人交付 transaction 錯：flag=%v companions=%d founder=%+v",
+			g.storyFlag(founderEvent.CompletionFlagRaw), len(g.companions), g.settlementFounder)
+	}
+	for _, m := range g.roster {
+		if m.Class == 6 && reflect.DeepEqual(m.Name, merchantName) {
+			t.Fatal("已交付的建城商人不得回到酒場名冊")
+		}
+	}
+
+	wantFounder := compsToSav([]*Member{g.settlementFounder})[0]
+	wantStorage := append([]int(nil), g.sharedStorage...)
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存商人城 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建商人城讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != founderEvent.NPC.CTYRaw ||
+		!g.storyFlag(founderEvent.CompletionFlagRaw) || g.settlementFounder == nil ||
+		!reflect.DeepEqual(compsToSav([]*Member{g.settlementFounder})[0], wantFounder) ||
+		!reflect.DeepEqual(g.sharedStorage, wantStorage) {
+		t.Fatalf("商人城 save/load 錯：town=%v cty=%d flag=%v founder=%+v storage=%v",
+			g.inTown, g.curCty, g.storyFlag(founderEvent.CompletionFlagRaw),
+			g.settlementFounder, g.sharedStorage)
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，
@@ -2666,6 +2773,18 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int, fleeStrong ...b
 	}
 	if !g.inTown || g.curCty != wantCty {
 		lx, ly := ctyLoc[wantCty][0], ctyLoc[wantCty][1]
+		oldX, oldY := g.px, g.py
+		var walkableRura []int
+		for _, visit := range g.visitedTowns {
+			if visit.Cty < 0 || visit.Cty >= len(ctyLoc) || ctyLoc[visit.Cty][2] != g.layer {
+				continue
+			}
+			g.px, g.py = ctyLoc[visit.Cty][0]-1, ctyLoc[visit.Cty][1]
+			if len(traceWorldPath(g, lx, ly, wantCty)) > 0 {
+				walkableRura = append(walkableRura, visit.Cty)
+			}
+		}
+		g.px, g.py = oldX, oldY
 		rawPath := tracePath(g.cur, g.px, g.py, lx, ly)
 		firstCty, firstX, firstY := -1, -1, -1
 		x, y := g.px, g.py
@@ -2677,10 +2796,10 @@ func traceAdventureWalkToCty(t *testing.T, g *Game, wantCty int, fleeStrong ...b
 				break
 			}
 		}
-		t.Fatalf("無法由地表抵達 CTY%d；目前 town=%v cty=%d @(%d,%d)，入口 (%d,%d) blocked=%v / (%d,%d) blocked=%v，不避開其他入口的路徑長度=%d、首個衝突入口=CTY%d@(%d,%d)",
+		t.Fatalf("無法由地表抵達 CTY%d；目前 town=%v cty=%d @(%d,%d)，入口 (%d,%d) blocked=%v / (%d,%d) blocked=%v，不避開其他入口的路徑長度=%d、首個衝突入口=CTY%d@(%d,%d)、已造訪且可徒步抵達的魯拉點=%v",
 			wantCty, g.inTown, g.curCty, g.px, g.py,
 			lx, ly, g.cur.Blocked(lx, ly), lx+1, ly, g.cur.Blocked(lx+1, ly),
-			len(rawPath), firstCty, firstX, firstY)
+			len(rawPath), firstCty, firstX, firstY, walkableRura)
 	}
 }
 
@@ -2717,8 +2836,29 @@ func traceAdventureTravelToCty(t *testing.T, g *Game, wantCty int, fleeAll ...bo
 		}
 	}
 	if !g.inTown || g.curCty != wantCty {
-		t.Fatalf("無法以正式航行／靠岸抵達 CTY%d；town=%v cty=%d @(%d,%d) aboard=%v ship=(%d,%d)",
-			wantCty, g.inTown, g.curCty, g.px, g.py, g.shipAboard, g.shipX, g.shipY)
+		lx, ly := ctyLoc[wantCty][0], ctyLoc[wantCty][1]
+		oldX, oldY, oldAboard := g.px, g.py, g.shipAboard
+		var reachableShipRura []int
+		for _, destination := range g.pack.RuraDestinations() {
+			visited := false
+			for _, visit := range g.visitedTowns {
+				visited = visited || visit.Cty == destination.CTYRaw
+			}
+			if !visited || destination.ShipWorldPosition.Layer != g.layer {
+				continue
+			}
+			g.px, g.py, g.shipAboard = destination.ShipWorldPosition.X,
+				destination.ShipWorldPosition.Y, true
+			if len(traceVehicleWorldPath(g, wantCty)) > 0 {
+				reachableShipRura = append(reachableShipRura, destination.CTYRaw)
+			}
+		}
+		g.px, g.py, g.shipAboard = oldX, oldY, oldAboard
+		t.Fatalf("無法以正式航行／靠岸抵達 CTY%d；town=%v cty=%d @(%d,%d) aboard=%v ship=(%d,%d) entrance=(%d,%d) raw=%#x blocked=%v / (%d,%d) raw=%#x blocked=%v；已造訪且船區可達的魯拉點=%v",
+			wantCty, g.inTown, g.curCty, g.px, g.py, g.shipAboard, g.shipX, g.shipY,
+			lx, ly, g.cur.attr.Raw(g.cur.tileIdx(lx, ly)), g.cur.Blocked(lx, ly),
+			lx+1, ly, g.cur.attr.Raw(g.cur.tileIdx(lx+1, ly)), g.cur.Blocked(lx+1, ly),
+			reachableShipRura)
 	}
 }
 
@@ -2739,12 +2879,18 @@ func traceVehicleWorldPath(g *Game, wantCty int) []int {
 		q = q[1:]
 		for dir := 0; dir < 4; dir++ {
 			dx, dy := dirDelta(dir)
-			n := node{x: p.x + dx, y: p.y + dy, aboard: p.aboard}
-			if n.x < 0 || n.y < 0 || n.x >= g.cur.w || n.y >= g.cur.h {
+			nx, ny, valid := p.x+dx, p.y+dy, true
+			if wantCty == 58 {
+				nx, ny, valid = g.normalizeSurfaceTarget(nx, ny)
+			} else {
+				valid = nx >= 0 && ny >= 0 && nx < g.cur.w && ny < g.cur.h
+			}
+			n := node{x: nx, y: ny, aboard: p.aboard}
+			if !valid {
 				continue
 			}
 			if p.aboard {
-				if g.cur.attr.Raw(g.cur.tileIdx(n.x, n.y))&0x20 == 0 {
+				if g.cur.attr.Raw(g.cur.tileIdx(n.x, n.y))&0x0002 != 0 {
 					if g.cur.Blocked(n.x, n.y) {
 						continue
 					}
@@ -2757,6 +2903,10 @@ func traceVehicleWorldPath(g *Game, wantCty int) []int {
 				continue
 			}
 			cty := findCtyAtLayer(n.x, n.y, g.layer)
+			if resolved := worldEntranceResolve(n.x, n.y, g.layer,
+				g.pack.WorldEntranceVariants(), g.storyFlag); resolved >= 0 {
+				cty = resolved
+			}
 			if cty >= 0 && cty != wantCty {
 				continue
 			}
@@ -3024,7 +3174,7 @@ func traceShipWaterPath(g *Game, tx, ty int) []int {
 			dx, dy := dirDelta(dir)
 			n := node{p.x + dx, p.y + dy}
 			if seen[n] || n.x < 0 || n.y < 0 || n.x >= g.cur.w || n.y >= g.cur.h ||
-				g.cur.attr.Raw(g.cur.tileIdx(n.x, n.y))&0x20 == 0 ||
+				g.cur.attr.Raw(g.cur.tileIdx(n.x, n.y))&0x0002 != 0 ||
 				findCtyAtLayer(n.x, n.y, g.layer) >= 0 {
 				continue
 			}

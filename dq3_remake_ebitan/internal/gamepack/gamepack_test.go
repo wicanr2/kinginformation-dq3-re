@@ -62,6 +62,161 @@ func TestDQ3RuraNavigationMatchesOriginalEXE(t *testing.T) {
 	}
 }
 
+func TestDQ3WorldEntranceVariantsMatchOriginalEXE(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	variants := p.WorldEntranceVariants()
+	if len(variants) != 2 {
+		t.Fatalf("world entrance variants=%d, want 2", len(variants))
+	}
+	merchant := variants[0]
+	if merchant.WorldTile != (TileCoordinate{X: 210, Y: 64}) || merchant.Layer != 0 ||
+		merchant.DefaultCTYRaw != 83 {
+		t.Fatalf("merchant entrance header=%+v", merchant)
+	}
+	wantBranches := []WorldEntranceVariantBranch{
+		{FlagRaw: 0x23, WhenFlagSet: false, CTYRaw: 58},
+		{FlagRaw: 0x47, WhenFlagSet: true, CTYRaw: 59},
+		{FlagRaw: 0x42, WhenFlagSet: true, CTYRaw: 60},
+		{FlagRaw: 0x48, WhenFlagSet: true, CTYRaw: 61},
+	}
+	if !reflect.DeepEqual(merchant.Branches, wantBranches) {
+		t.Fatalf("merchant branches=%+v, want %+v", merchant.Branches, wantBranches)
+	}
+	// cty_loc[58] at DGROUP0x748 + 58*4, file DGROUP base0x16140.
+	if len(exe) < 0x16974 || !bytes.Equal(exe[0x16970:0x16974], []byte{0xd2, 0x00, 0x40, 0x00}) {
+		t.Fatal("DQ3.EXE cty_loc[58] is not world tile (210,64)")
+	}
+	// file0x396e function: each mov bx is the tested flag and each mov bp is
+	// the selected CTY. The first jz skips CTY58 when flag0x23 is set, proving
+	// that branch's polarity differs from the three following set branches.
+	for _, anchor := range []struct {
+		off int
+		raw []byte
+	}{
+		{0x3988, []byte{0xbb, 0x23, 0x00}},
+		{0x3990, []byte{0x74, 0x06}},
+		{0x3992, []byte{0xbd, 0x3a, 0x00}},
+		{0x3998, []byte{0xbb, 0x47, 0x00}},
+		{0x39a2, []byte{0xbd, 0x3b, 0x00}},
+		{0x39a8, []byte{0xbb, 0x42, 0x00}},
+		{0x39b2, []byte{0xbd, 0x3c, 0x00}},
+		{0x39b8, []byte{0xbb, 0x48, 0x00}},
+		{0x39c2, []byte{0xbd, 0x3d, 0x00}},
+		{0x39c8, []byte{0xbd, 0x53, 0x00}},
+	} {
+		if len(exe) < anchor.off+len(anchor.raw) ||
+			!bytes.Equal(exe[anchor.off:anchor.off+len(anchor.raw)], anchor.raw) {
+			t.Fatalf("DQ3.EXE world entrance anchor mismatch at file %#x", anchor.off)
+		}
+	}
+}
+
+func TestDQ3MerchantSettlementFounderMatchesOriginalBinaryAndText(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return b
+	}
+	exe, cty, txt := read("DQ3.EXE"), read("CTY58.DAT"), read("D3TXT07.TXT")
+	txt00 := read("D3TXT00.TXT")
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	event, ok := p.SettlementFounderEvent("dq3:event.merchant_settlement_founder")
+	if !ok {
+		t.Fatal("missing merchant settlement founder event")
+	}
+	wantNPC := ScriptedNPCSelector{CTYRaw: 58, Section: 0,
+		Tile: TileCoordinate{X: 7, Y: 15}, HandlerRaw: 40}
+	if event.NPC != wantNPC || event.RequiredClassRaw != 6 || !event.RequireAlive ||
+		event.CompletionFlagRaw != 0x23 || event.SharedStorageCapacity != 0x78 {
+		t.Fatalf("merchant founder pack fields drifted: %+v", event)
+	}
+	sec := int(binary.LittleEndian.Uint16(cty[0:2]))
+	npcTable := sec + int(binary.LittleEndian.Uint16(cty[sec:sec+2]))
+	found := false
+	for i := 0; i < int(cty[npcTable]); i++ {
+		rec := cty[npcTable+1+i*7 : npcTable+1+(i+1)*7]
+		if int(rec[0]) == wantNPC.Tile.X && int(rec[1]) == wantNPC.Tile.Y &&
+			(rec[3]>>3)&7 == 2 && int(rec[4]) == wantNPC.HandlerRaw {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("CTY58 sec0 does not contain scripted NPC (7,15) handler40")
+	}
+
+	// Non-destructive IDA 9.4 trace, file0x6e12..0x6f29: flag0x23
+	// repeat branch, class6 party scan, dead-status gate, two choices, storage
+	// loop, 18-byte founder copy and active-party removal.
+	for _, anchor := range []struct {
+		off int
+		raw []byte
+	}{
+		{0x6e12, []byte{0xe8, 0x5d, 0xf5, 0xbb, 0x23, 0x00, 0xe8, 0x5e, 0x14, 0x3c, 0x01}},
+		{0x6e32, []byte{0x8a, 0x0e, 0x77, 0x50, 0x32, 0xed, 0xbb, 0x00, 0x00, 0x8b, 0xb7, 0x15, 0x4f, 0x80, 0x7c, 0x01, 0x06}},
+		{0x6e52, []byte{0x24, 0xd1, 0xeb, 0x43, 0x89, 0x1e, 0x9c, 0x25, 0xf7, 0x44, 0x38, 0x80, 0x00}},
+		{0x6ea0, []byte{0xbb, 0x23, 0x00, 0xe8, 0xa9, 0x13}},
+		{0x6ec0, []byte{0xc6, 0x87, 0x64, 0x4f, 0x00, 0x56, 0x83, 0xc6, 0x3a, 0xb9, 0x08, 0x00}},
+		{0x6ede, []byte{0x5e, 0x8d, 0x3e, 0x58, 0x50, 0xb9, 0x12, 0x00}},
+	} {
+		if anchor.off+len(anchor.raw) > len(exe) ||
+			!bytes.Equal(exe[anchor.off:anchor.off+len(anchor.raw)], anchor.raw) {
+			t.Fatalf("DQ3.EXE merchant handler raw anchor mismatch at file %#x", anchor.off)
+		}
+	}
+
+	refs := event.DialogueTextIDs
+	for id, record := range map[string]int{
+		refs.Introduction: 0, refs.NoEligible: 1, refs.FirstOffer: 2,
+		refs.Reject: 3, refs.FinalOffer: 4, refs.Accepted: 5, refs.After: 6,
+	} {
+		start := int(binary.LittleEndian.Uint16(txt[record*2:]))
+		end := int(binary.LittleEndian.Uint16(txt[(record+1)*2:]))
+		want := make([]uint16, 0, (end-start)/2)
+		for off := start; off+2 <= end; off += 2 {
+			want = append(want, binary.LittleEndian.Uint16(txt[off:off+2]))
+		}
+		got, exists := p.TextGlyphCodes(id)
+		if !exists || !reflect.DeepEqual(got, want) {
+			t.Fatalf("%s does not exactly match D3TXT07 record%d: got=%v want=%v",
+				id, record, got, want)
+		}
+	}
+	record := 309
+	start := int(binary.LittleEndian.Uint16(txt00[record*2:]))
+	end := int(binary.LittleEndian.Uint16(txt00[(record+1)*2:]))
+	want := make([]uint16, 0, (end-start)/2)
+	for off := start; off+2 <= end; off += 2 {
+		want = append(want, binary.LittleEndian.Uint16(txt00[off:off+2]))
+	}
+	got, exists := p.TextGlyphCodes(event.DialogueTextIDs.StorageFull)
+	if !exists || !reflect.DeepEqual(got, want) {
+		t.Fatalf("%s does not exactly match D3TXT00 record309: got=%v want=%v",
+			event.DialogueTextIDs.StorageFull, got, want)
+	}
+}
+
 func TestDQ3JipangOrochiMatchesOriginalEXEAndText(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {
@@ -1352,14 +1507,14 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.15","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.17","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.15","service_definitions":[{
+	  "schema_version":"0.1.17","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -1367,7 +1522,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.15",
+	  "schema_version":"0.1.17",
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -1379,14 +1534,14 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"file","address":"0x1","consumer":"collision","doc":"docs/x.md"}},
 	  "boss_surrender_events":[],"temporary_role_events":[],"temporary_solo_challenges":[],
-	    "quest_item_chain_events":[],"treasure_events":[],"npc_item_reward_events":[],"item_use_effects":[],"tracking_guard_events":[],
+	    "world_entrance_variants":[],"settlement_founder_events":[],"quest_item_chain_events":[],"treasure_events":[],"npc_item_reward_events":[],"item_use_effects":[],"tracking_guard_events":[],
 	    "push_puzzle_events":[],
 	    "two_step_floor_switch_gates":[],
 	  "staged_vehicle_exchange_events":[],"guided_passage_events":[],
 	  "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.15",
+	  "schema_version":"0.1.17",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -1396,7 +1551,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.15","definitions":[{
+	  "schema_version":"0.1.17","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -1405,7 +1560,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.15","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.17","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -1417,7 +1572,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.15"`, `"schema_version":"0.1.15","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.17"`, `"schema_version":"0.1.17","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

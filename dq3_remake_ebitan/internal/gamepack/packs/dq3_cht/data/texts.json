@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.15",
+  "schema_version": "0.1.17",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -792,6 +792,70 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 67},
       "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + CTY23.DAT + D3TXT07.TXT", "address_space": "logical", "address": "handler86 0x668c; record67", "consumer": "CTY23 section2 raw handler86 displays record67", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.introduction",
+      "value": "*「我在這裡想\n建造一個新城鎮。\n---\n*「城鎮能建起來的話,\n大家就會來了吧!\n---\n*「但是要建城鎮,\n商人是不可欠的。",
+      "glyph_codes": [59,60,493,411,398,512,609,65534,12,12,917,1173,401,546,671,474,475,56,65532,59,60,474,475,408,917,583,461,149,449,55,65534,12,12,163,657,633,415,461,423,499,57,65532,59,60,508,399,504,917,474,475,55,65534,12,12,112,194,399,228,229,1382,149,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 0},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT07.TXT", "address_space": "record", "address": "0", "consumer": "merchant-settlement handler40 introduction", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.no_eligible",
+      "value": "*「只要有商人的就好,\n誰能來呢。",
+      "glyph_codes": [59,60,538,504,147,112,194,149,633,441,55,65534,12,12,505,408,461,592,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 1},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT07.TXT", "address_space": "record", "address": "1", "consumer": "merchant-settlement handler40 missing/dead merchant branch", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.first_offer",
+      "value": "*「如何?{變數}\n能不能留下來呢?",
+      "glyph_codes": [59,60,675,676,58,65531,65534,12,12,408,228,408,646,517,461,592,58,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 2},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT07.TXT", "address_space": "record", "address": "2", "consumer": "merchant-settlement handler40 first confirmation", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.reject",
+      "value": "*「是嗎?\n那真是遺憾‥‥。",
+      "glyph_codes": [59,60,399,534,58,65534,12,12,354,577,399,578,579,123,123,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 3},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT07.TXT", "address_space": "record", "address": "3", "consumer": "merchant-settlement handler40 rejection", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.final_offer",
+      "value": "*「真的嗎?\n{變數}要放棄冒險\n埋骨在這個城鎮裡,\n---\n這樣也可以嗎?",
+      "glyph_codes": [59,60,577,149,534,58,65534,12,12,65531,504,634,635,533,218,65534,12,12,1383,318,411,398,546,474,475,512,55,65532,12,12,398,537,494,229,456,534,58,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 4},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT07.TXT", "address_space": "record", "address": "4", "consumer": "merchant-settlement handler40 final confirmation", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.accepted",
+      "value": "*「喔喔,非常謝謝你!\n---\n從今天起,\n我和{變數}兩人,\n要開始建城鎮了!\n---\n{變數}「那麼,\n我就留在這裡。\n---\n{變數}「我身上的東西,\n就放在阿里阿罕\n的預存所裡。",
+      "glyph_codes": [59,60,776,776,55,580,581,582,582,528,57,65532,12,12,511,926,209,583,55,65534,12,12,493,564,65531,803,194,55,65534,12,12,504,488,711,917,474,475,423,57,65532,65531,60,354,436,55,65534,12,12,493,633,646,411,398,512,56,65532,65531,60,493,306,421,149,539,380,55,65534,12,12,633,634,411,391,327,391,730,65534,12,12,149,496,603,608,512,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 5},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT07.TXT", "address_space": "record", "address": "5", "consumer": "merchant-settlement handler40 accepted transaction dialogue", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.merchant_settlement.after",
+      "value": "*「為了報答你們,\n告訴你們一個消息。\n---\n*「這個大陸的正中央\n有一個叫斯吾的村莊,\n在井的周圍調查看看。",
+      "glyph_codes": [59,60,611,423,972,973,528,529,55,65534,12,12,1063,1144,528,529,401,546,514,784,56,65532,59,60,398,546,163,907,149,588,407,1384,65534,12,12,147,401,546,649,365,747,149,748,807,55,65534,12,12,411,1385,149,799,205,544,545,668,668,56,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 6},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT07.TXT", "address_space": "record", "address": "6", "consumer": "merchant-settlement handler40 repeat dialogue after flag0x23", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
+    },
+    {
+      "id": "dq3:text.shared_storage.full",
+      "value": "*「你存入的道具太多了!",
+      "glyph_codes": [59,60,528,603,519,149,402,237,334,357,423,57,65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 309},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_16CE2 0x16ce2..0x16d04; record0x135", "consumer": "shared-storage insertion scans 0x78 bytes for 0xff, displays record309 and returns AL=1 when full", "doc": "docs/102-merchant-settlement-world-entrance-re.md"}
     }
   ]
 }

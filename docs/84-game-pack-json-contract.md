@@ -744,6 +744,27 @@ IDA／CTY／D3TXT 證據與正式 trace 見 `events.json`、[`docs/89`](89-bahar
 `0x16c14`（DGROUP `0x0ad4`）；handler logical `0x4c2b..0x4cf8`。完整證據與
 production trace 見 [`docs/99`](99-teidon-final-key-green-orb-production-trace.md)。
 
+`world_entrance_variants` 保存「同一 world coordinate 依 ordered story-flag chain 載入
+不同 scene record」的版本專屬資料。這不是一般傳送表，也不能簡化成無順序的
+`flag → CTY` map：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `world_entrance_variants` | object[] | 是 | 可為空陣列；同一 `{world_tile,layer}` 不得重複。 |
+| `[].id` | string | 是 | 穩定入口 ID；同一 pack 不得重複。 |
+| `[].world_tile` | `{x,y}` | 是 | 原版 world coordinate；不得放在 Go 常數表。 |
+| `[].layer` | int | 是 | `0` 地表、`1` 下層；不同 layer 不可互相命中。 |
+| `[].branches` | object[] | 是 | 非空 ordered branches；引擎由 index 0 起取第一個命中項。 |
+| `[].branches[].flag_raw` | int | 是 | 原版 story flag；同一入口不得重複。 |
+| `[].branches[].when_flag_set` | bool | 是 | set／clear 命中極性；不得假設所有 branch 相同。 |
+| `[].branches[].cty_raw` | int | 是 | 命中時載入的原始 scene record；含 default 在內不得重複。 |
+| `[].default_cty_raw` | int | 是 | 所有 branch 都未命中時的 scene record。 |
+| `[].evidence` | object | 是 | 座標 reader、flag tests、目的 writer 與 scene loader consumer 的 D3 證據。 |
+
+DQ3 商人聚落 `(210,64)` 的第一個 branch 是 `flag0x23 clear → CTY58`，後三個則是
+set gate；若寫成統一「set 即取」會在新遊戲直接載入革命後 CTY83。完整 IDA 證據見
+[`docs/102`](102-merchant-settlement-world-entrance-re.md)。
+
 `npc_item_reward_events` 描述「指定 NPC 依 present flag 顯示成功／事後文字，並把一件
 道具交給第一個有空格的隊員」的有限 primitive：
 

@@ -380,7 +380,12 @@ Gate：不用 `DQ3_SHIP` 可自然取得船並航行。
 - [x] 海盜村密道／紅寶珠：CTY27 `ctrl bit0x40` 可推入口、hidden transition、
   event0 `0x68`／flag `0x3f`、魯拉船重定位、正式航行與 save/load 均由 boot production
   trace 閉合；見 `docs/101`。畫面尚為 V1。
-- 商人建城／黃寶珠。
+- [~] 商人建城／黃寶珠：已用 IDA 9.4 推翻舊 C／Go 反向 portal 表；同座標
+  `(210,64)` 的 CTY58→59→60→61→83 ordered gate 已由 game-pack JSON 載入，初始
+  `flag0x23 clear` 正確進 CTY58。三個 stage gate 已分別閉合到最終鑰匙 `0x47`、
+  假王事件 `0x42`、蓋亞之劍 `0x48`，不是自製計時器。商人交付已由酒場登錄商人開始，
+  正式航行進 CTY58，閉合兩次確認、共用預存所、身份保存與 save/load；
+  runtime PNG 為 V1。尚余革命、CTY83 黃寶珠及 V2 原版對拍；見 `docs/102`。
 - 沙曼歐莎 R-2：
   `道具選單使用拉之鏡 → CTY44 sec1 玩家站(14,7) → 夜晚 → rec97/98 → 怪89 →
   勝後0x62+clear21/set22+白天；敗／逃 clear10/restore42`。

@@ -87,10 +87,17 @@ handler37 正式接受試煉使四人暫時變單人，走 CTY23 原始轉場取
 save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；詳見 `docs/100`。
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
-同時控制寶箱與入口物件 visibility；詳見 `docs/101`。game-pack schema 維持 `0.1.15`，
-`dq3_cht` content 已升至 `0.1.17`。
-**尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從紅寶珠合法
-checkpoint 繼續，第一候選為商人建城／黃寶珠。地表水面顏色及四輪 palette transition 仍未達 V3，
+同時控制寶箱與入口物件 visibility；詳見 `docs/101`。game-pack schema 已升至
+`0.1.17`，`dq3_cht` content 已升至 `0.1.19`。IDA Pro 9.4 證明商人聚落 `(210,64)`
+的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
+`0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
+入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
+`0x42`、蓋亞之劍 `0x48`。商人交付已從紅寶珠 checkpoint 以正式酒場與船陸輸入
+閉合，含兩次確認、滿載逐件訊息、共用預存所、建城者身份及 save/load。
+IDA 同時訂正地表 seam（X `242/2`、Y `204/2`）與船 mode1 的 attr bit1/bit0 分支。
+目前尚余革命、CTY83 黃寶珠正式 trace，以及 CTY58 同狀態原版 V2 對拍。詳見 `docs/102`。
+**尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從商人交付合法
+checkpoint 繼續，第一候選為建城革命／CTY83 黃寶珠。地表水面顏色及四輪 palette transition 仍未達 V3，
 不得因流程閉合而略過。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
@@ -139,6 +146,9 @@ schema `0.1.15` 新增 `temporary_solo_challenges`；入口／返回 NPC、完�
 mask、世界／場景落點、洞窟訊息與所有文字均由 JSON 提供。原版 handler37 不寫 flag0x13，
 其 writer 維持 unknown；試煉途中完整離隊角色 records 會進存檔，handler62 後按原序復隊。
 CTY23 藍寶珠亦已遷入 `treasure_events`；詳見 `docs/100`。
+schema `0.1.16` 新增 `world_entrance_variants`；同一 world coordinate 的 ordered
+flag branches、每支極性、layer、目的 CTY 與 default 全由 JSON 提供。商人聚落舊表把
+第一支 clear gate 讀成 set gate，已由 IDA linear `0x125fe..0x12681` 推翻；詳見 `docs/102`。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
 ## 固定工程方法

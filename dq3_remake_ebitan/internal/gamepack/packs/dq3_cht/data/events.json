@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.15",
+  "schema_version": "0.1.17",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -50,6 +50,79 @@
       "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"
     }
   },
+  "world_entrance_variants": [
+    {
+      "id": "dq3:world_entrance.merchant_settlement",
+      "world_tile": {"x": 210, "y": 64},
+      "layer": 0,
+      "branches": [
+        {"flag_raw": 35, "when_flag_set": false, "cty_raw": 58},
+        {"flag_raw": 71, "when_flag_set": true, "cty_raw": 59},
+        {"flag_raw": 66, "when_flag_set": true, "cty_raw": 60},
+        {"flag_raw": 72, "when_flag_set": true, "cty_raw": 61}
+      ],
+      "default_cty_raw": 83,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY58.DAT + CTY59.DAT + CTY60.DAT + CTY61.DAT + CTY83.DAT",
+        "address_space": "file",
+        "address": "DQ3.EXE file 0x396e..0x39f1 (IDA linear 0x125fe..0x12681)",
+        "consumer": "the overworld position is compared with cty_loc[58], then an ordered test of flags 0x23/0x47/0x42/0x48 writes CTY58/59/60/61/83 to DGROUP 0x256c before the common scene loader",
+        "doc": "docs/102-merchant-settlement-world-entrance-re.md"
+      }
+    },
+    {
+      "id": "dq3:world_entrance.gaias_navel",
+      "world_tile": {"x": 54, "y": 129},
+      "layer": 0,
+      "branches": [
+        {"flag_raw": 77, "when_flag_set": true, "cty_raw": 71}
+      ],
+      "default_cty_raw": 72,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "file",
+        "address": "DQ3.EXE file 0x3a9d..0x3ac1 (IDA linear 0x1272d..0x12751)",
+        "consumer": "the overworld coordinate test selects CTY71 when flag0x4d is set and CTY72 otherwise, then joins the common scene loader",
+        "doc": "docs/44-scripted-warp-re.md"
+      }
+    }
+  ],
+  "settlement_founder_events": [
+    {
+      "id": "dq3:event.merchant_settlement_founder",
+      "kind": "settlement_founder",
+      "npc": {"cty_raw": 58, "section": 0, "tile": {"x": 7, "y": 15}, "handler_raw": 40},
+      "required_class_raw": 6,
+      "require_alive": true,
+      "completion_flag_raw": 35,
+      "shared_storage_capacity": 120,
+      "dialogue_text_ids": {
+        "introduction": "dq3:text.merchant_settlement.introduction",
+        "no_eligible": "dq3:text.merchant_settlement.no_eligible",
+        "first_offer": "dq3:text.merchant_settlement.first_offer",
+        "reject": "dq3:text.merchant_settlement.reject",
+        "final_offer": "dq3:text.merchant_settlement.final_offer",
+        "accepted": "dq3:text.merchant_settlement.accepted",
+        "after": "dq3:text.merchant_settlement.after",
+        "storage_full": "dq3:text.shared_storage.full",
+        "choice_yes": "common:text.choice.yes",
+        "choice_no": "common:text.choice.no"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY58.DAT + D3TXT07.TXT",
+        "address_space": "file",
+        "address": "DQ3.EXE file 0x6e12..0x6f29 (IDA linear 0x15aa2..0x15bb9); CTY58 sec0 handler40",
+        "consumer": "handler40 scans the active party for class raw6, rejects a dead match, asks twice, sets flag0x23, moves all eight item slots into the 120-byte shared storage, archives the founder identity and removes that active-party pointer",
+        "doc": "docs/102-merchant-settlement-world-entrance-re.md"
+      }
+    }
+  ],
   "npc_push_rule": {
     "ctrl_mask": 64,
     "ctrl_value": 64,

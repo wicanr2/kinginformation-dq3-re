@@ -1,5 +1,7 @@
 package game
 
+import "github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+
 // 事件傳送與旗標城鎮變體(移植 dq3_warp.c / dq3_owportal.c)。
 // warp:section+8 event type-2 → warps[param]={destCty,X,Y} 切場景(0x4ea0,自 DQ3.EXE 萃取)。
 // owportal:地表某入口點依 story flag 選城變體(0x396e,同點依進度變城)。
@@ -40,31 +42,21 @@ func warpGet(param int) (int, int, int, bool) {
 	return w[0], w[1], w[2], true
 }
 
-// owPortal:地表某入口點依 story flag 鏈選城變體。
-type owPortal struct {
-	x, y   int
-	defCty int
-	br     [][2]int // {flag, cty};set 即取該城
-}
-
-// owPortals:旗標條件 portal(移植 dq3_owportal.c PORTALS)。
-var owPortals = []owPortal{
-	{210, 64, 83, [][2]int{{0x23, 58}, {0x47, 59}, {0x42, 60}, {0x48, 61}}}, // 0x39cb 鏈
-	{54, 129, 72, [][2]int{{0x4d, 71}}},
-}
-
-// owPortalResolve:地表 (x,y) 若為旗標 portal → 依 flags 回目的 CTY;非 portal 回 -1。移植 dq3_owportal_resolve。
-func owPortalResolve(x, y int, flags map[int]bool) int {
-	for _, p := range owPortals {
-		if p.x != x || p.y != y {
+// worldEntranceResolve applies one pack-owned ordered flag chain. The engine
+// knows only the finite contract; coordinates, flags and CTY records are data.
+func worldEntranceResolve(x, y, layer int, variants []gamepack.WorldEntranceVariant,
+	flagSet func(int) bool) int {
+	for _, variant := range variants {
+		if variant.WorldTile.X != x || variant.WorldTile.Y != y || variant.Layer != layer {
 			continue
 		}
-		for _, b := range p.br {
-			if flags != nil && flags[b[0]] {
-				return b[1] // 旗標鏈:set 即取該城
+		for _, branch := range variant.Branches {
+			set := flagSet != nil && flagSet(branch.FlagRaw)
+			if set == branch.WhenFlagSet {
+				return branch.CTYRaw
 			}
 		}
-		return p.defCty // 無旗標 → 預設變體
+		return variant.DefaultCTYRaw
 	}
 	return -1
 }

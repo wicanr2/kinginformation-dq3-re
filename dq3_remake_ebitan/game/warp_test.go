@@ -1,6 +1,10 @@
 package game
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+)
 
 // warpGet:有效項回目的、無效項(全0/越界)回 ok=false。對拍 dq3_warp_get。
 func TestWarpGet(t *testing.T) {
@@ -25,27 +29,66 @@ func TestWarpGet(t *testing.T) {
 	}
 }
 
-// owPortalResolve:非 portal 點回 -1;portal 點無旗標 → 預設變體;set 對應旗標 → 該城。對拍 dq3_owportal_resolve。
-func TestOwPortalResolve(t *testing.T) {
-	// 非 portal 點
-	if got := owPortalResolve(1, 1, nil); got != -1 {
-		t.Errorf("非 portal (1,1) 回 %d, want -1", got)
+// worldEntranceResolve 對拍 DQ3.EXE file 0x396e..0x39f1 的 ordered flag chain。
+func TestWorldEntranceResolve(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("載入內建 game pack: %v", err)
 	}
-	// (210,64) 無旗標 → 預設 83
-	if got := owPortalResolve(210, 64, map[int]bool{}); got != 83 {
-		t.Errorf("(210,64) 無旗標回 %d, want 83", got)
+	variants := pack.WorldEntranceVariants()
+	resolve := func(x, y, layer int, flags map[int]bool) int {
+		return worldEntranceResolve(x, y, layer, variants,
+			func(flag int) bool { return flags[flag] })
 	}
-	// (210,64) set flag 0x47 → 59(鏈中;0x23 未 set)
-	if got := owPortalResolve(210, 64, map[int]bool{0x47: true}); got != 59 {
-		t.Errorf("(210,64) flag0x47 回 %d, want 59", got)
+	if got := resolve(1, 1, 0, nil); got != -1 {
+		t.Errorf("非入口 (1,1) 回 %d, want -1", got)
 	}
-	// (210,64) set 0x23(鏈首)→ 58(優先)
-	if got := owPortalResolve(210, 64, map[int]bool{0x23: true, 0x47: true}); got != 58 {
-		t.Errorf("(210,64) flag0x23 優先回 %d, want 58", got)
+	if got := resolve(210, 64, 0, map[int]bool{}); got != 58 {
+		t.Errorf("(210,64) flag0x23 clear 回 %d, want 58", got)
 	}
-	// 勇氣試煉由 handler37 的 mode bit0x80 與相鄰 CTY47/75 控制；舊 C remake
-	// 把 story flag0x13 的讀分支方向寫反，不能再由這張 portal 表覆蓋。
-	if got := owPortalResolve(82, 165, map[int]bool{0x13: true}); got != -1 {
-		t.Errorf("(82,165) 不應有猜測 portal，回 %d, want -1", got)
+	allGates := map[int]bool{0x23: true, 0x47: true, 0x42: true, 0x48: true}
+	if got := resolve(210, 64, 0, allGates); got != 59 {
+		t.Errorf("(210,64) flag0x47 set 回 %d, want 59", got)
+	}
+	if got := resolve(210, 64, 0, map[int]bool{0x23: true, 0x42: true, 0x48: true}); got != 60 {
+		t.Errorf("(210,64) flag0x47 clear/0x42 set 回 %d, want 60", got)
+	}
+	if got := resolve(210, 64, 0, map[int]bool{0x23: true, 0x48: true}); got != 61 {
+		t.Errorf("(210,64) flag0x42 clear/0x48 set 回 %d, want 61", got)
+	}
+	if got := resolve(210, 64, 0, map[int]bool{0x23: true}); got != 83 {
+		t.Errorf("(210,64) build gates clear 回 %d, want 83", got)
+	}
+	if got := resolve(210, 64, 1, map[int]bool{}); got != -1 {
+		t.Errorf("(210,64) layer1 回 %d, want -1", got)
+	}
+	if got := resolve(54, 129, 0, map[int]bool{0x4d: true}); got != 71 {
+		t.Errorf("(54,129) flag0x4d set 回 %d, want 71", got)
+	}
+	if got := resolve(54, 129, 0, map[int]bool{}); got != 72 {
+		t.Errorf("(54,129) flag0x4d clear 回 %d, want 72", got)
+	}
+	// 勇氣試煉由獨立 mode state 控制，不能混進 story-flag 入口表。
+	if got := resolve(82, 165, 0, map[int]bool{0x13: true}); got != -1 {
+		t.Errorf("(82,165) 不應有入口變體，回 %d, want -1", got)
+	}
+}
+
+func TestMerchantSettlementEntranceUsesOriginalNewGameStoryBits(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("載入內建 game pack: %v", err)
+	}
+	g := &Game{pack: pack}
+	g.initStoryBits()
+	resolve := func() int {
+		return worldEntranceResolve(210, 64, 0, pack.WorldEntranceVariants(), g.storyFlag)
+	}
+	if got := resolve(); got != 58 {
+		t.Fatalf("新遊戲原始 story bits 選 CTY%d, want CTY58", got)
+	}
+	g.setStoryFlag(0x23, true)
+	if got := resolve(); got != 59 {
+		t.Fatalf("交付商人 set flag0x23 後選 CTY%d, want CTY59", got)
 	}
 }

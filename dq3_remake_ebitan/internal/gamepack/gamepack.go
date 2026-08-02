@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.15"
+	SchemaVersion = "0.1.17"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -670,10 +670,62 @@ type RuraNavigation struct {
 	Evidence     Evidence          `json:"evidence"`
 }
 
+// WorldEntranceVariantBranch is one ordered story-flag decision for a world
+// coordinate shared by multiple scene variants.
+type WorldEntranceVariantBranch struct {
+	FlagRaw     int  `json:"flag_raw"`
+	WhenFlagSet bool `json:"when_flag_set"`
+	CTYRaw      int  `json:"cty_raw"`
+}
+
+// WorldEntranceVariant keeps edition-specific coordinates, raw flags and CTY
+// records out of the engine. Branch order mirrors the original executable.
+type WorldEntranceVariant struct {
+	ID            string                       `json:"id"`
+	WorldTile     TileCoordinate               `json:"world_tile"`
+	Layer         int                          `json:"layer"`
+	Branches      []WorldEntranceVariantBranch `json:"branches"`
+	DefaultCTYRaw int                          `json:"default_cty_raw"`
+	Evidence      Evidence                     `json:"evidence"`
+}
+
+// SettlementFounderTextIDs names the original blocking dialogue sequence used
+// by a party-member handoff event. The engine only interprets the sequence;
+// every player-visible glyph remains pack data.
+type SettlementFounderTextIDs struct {
+	Introduction string `json:"introduction"`
+	NoEligible   string `json:"no_eligible"`
+	FirstOffer   string `json:"first_offer"`
+	Reject       string `json:"reject"`
+	FinalOffer   string `json:"final_offer"`
+	Accepted     string `json:"accepted"`
+	After        string `json:"after"`
+	StorageFull  string `json:"storage_full"`
+	ChoiceYes    string `json:"choice_yes"`
+	ChoiceNo     string `json:"choice_no"`
+}
+
+// SettlementFounderEvent describes an original NPC transaction that removes
+// the first matching active companion, archives that founder separately and
+// transfers all carried items into shared storage.
+type SettlementFounderEvent struct {
+	ID                    string                   `json:"id"`
+	Kind                  string                   `json:"kind"`
+	NPC                   ScriptedNPCSelector      `json:"npc"`
+	RequiredClassRaw      int                      `json:"required_class_raw"`
+	RequireAlive          bool                     `json:"require_alive"`
+	CompletionFlagRaw     int                      `json:"completion_flag_raw"`
+	SharedStorageCapacity int                      `json:"shared_storage_capacity"`
+	DialogueTextIDs       SettlementFounderTextIDs `json:"dialogue_text_ids"`
+	Evidence              Evidence                 `json:"evidence"`
+}
+
 type Events struct {
 	SchemaVersion               string                        `json:"schema_version"`
 	ItemActions                 ItemActions                   `json:"item_actions"`
 	RuraNavigation              RuraNavigation                `json:"rura_navigation"`
+	WorldEntranceVariants       []WorldEntranceVariant        `json:"world_entrance_variants"`
+	SettlementFounderEvents     []SettlementFounderEvent      `json:"settlement_founder_events"`
 	NPCPushRule                 NPCPushRule                   `json:"npc_push_rule"`
 	BossSurrenderEvents         []BossSurrenderEvent          `json:"boss_surrender_events"`
 	TemporaryRoleEvents         []TemporaryRoleEvent          `json:"temporary_role_events"`
@@ -747,28 +799,29 @@ type Characters struct {
 }
 
 type Pack struct {
-	Manifest         Manifest
-	Facilities       Facilities
-	Interface        Interface
-	Events           Events
-	Characters       Characters
-	Texts            Texts
-	services         map[string]*ServiceDefinition
-	bossEvents       map[string]*BossSurrenderEvent
-	roleEvents       map[string]*TemporaryRoleEvent
-	soloChallenges   map[string]*TemporarySoloChallengeEvent
-	questItemEvents  map[string]*QuestItemChainEvent
-	treasureEvents   map[string]*TreasureEvent
-	itemUseEffects   map[int]*ItemUseEffect
-	sequenceGates    map[string]*TwoStepFloorSwitchGate
-	vehicleExchanges map[string]*StagedVehicleExchangeEvent
-	guidedPassages   map[string]*GuidedPassageEvent
-	hostageRescues   map[string]*HostageRescueEvent
-	reclassEvents    map[string]*ReclassEvent
-	stagedBossEvents map[string]*StagedBossEvent
-	charDefaults     map[string]*CharacterDefault
-	texts            map[string]*TextDefinition
-	contentHash      string
+	Manifest           Manifest
+	Facilities         Facilities
+	Interface          Interface
+	Events             Events
+	Characters         Characters
+	Texts              Texts
+	services           map[string]*ServiceDefinition
+	bossEvents         map[string]*BossSurrenderEvent
+	roleEvents         map[string]*TemporaryRoleEvent
+	soloChallenges     map[string]*TemporarySoloChallengeEvent
+	questItemEvents    map[string]*QuestItemChainEvent
+	treasureEvents     map[string]*TreasureEvent
+	itemUseEffects     map[int]*ItemUseEffect
+	sequenceGates      map[string]*TwoStepFloorSwitchGate
+	vehicleExchanges   map[string]*StagedVehicleExchangeEvent
+	guidedPassages     map[string]*GuidedPassageEvent
+	hostageRescues     map[string]*HostageRescueEvent
+	reclassEvents      map[string]*ReclassEvent
+	settlementFounders map[string]*SettlementFounderEvent
+	stagedBossEvents   map[string]*StagedBossEvent
+	charDefaults       map[string]*CharacterDefault
+	texts              map[string]*TextDefinition
+	contentHash        string
 }
 
 func decodeStrict(fsys fs.FS, name string, dst any) error {
@@ -1030,6 +1083,21 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.SettlementFounderEvents {
+		refs := event.DialogueTextIDs
+		for field, id := range map[string]string{
+			"introduction": refs.Introduction, "no_eligible": refs.NoEligible,
+			"first_offer": refs.FirstOffer, "reject": refs.Reject,
+			"final_offer": refs.FinalOffer, "accepted": refs.Accepted,
+			"after": refs.After, "storage_full": refs.StorageFull,
+			"choice_yes": refs.ChoiceYes, "choice_no": refs.ChoiceNo,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s dialogue_text_ids.%s references unknown text %q",
+					event.ID, field, id)
+			}
+		}
+	}
 	for _, event := range p.Events.TemporaryRoleEvents {
 		refs := event.DialogueTextIDs
 		for field, id := range map[string]string{
@@ -1249,6 +1317,43 @@ func (p *Pack) validateEvents() error {
 		}
 		ruraCTYs[d.CTYRaw] = true
 	}
+	if p.Events.WorldEntranceVariants == nil {
+		return errors.New("world_entrance_variants must be present")
+	}
+	if p.Events.SettlementFounderEvents == nil {
+		return errors.New("settlement_founder_events must be present")
+	}
+	entranceIDs := map[string]bool{}
+	entranceTiles := map[[3]int]string{}
+	for i, entrance := range p.Events.WorldEntranceVariants {
+		key := [3]int{entrance.WorldTile.X, entrance.WorldTile.Y, entrance.Layer}
+		if entrance.ID == "" || entranceIDs[entrance.ID] ||
+			entrance.WorldTile.X < 0 || entrance.WorldTile.X > 1023 ||
+			entrance.WorldTile.Y < 0 || entrance.WorldTile.Y > 1023 ||
+			entrance.Layer < 0 || entrance.Layer > 1 ||
+			entrance.DefaultCTYRaw < 0 || entrance.DefaultCTYRaw > 255 ||
+			len(entrance.Branches) == 0 {
+			return fmt.Errorf("world_entrance_variants[%d]: invalid entrance", i)
+		}
+		if previous := entranceTiles[key]; previous != "" {
+			return fmt.Errorf("%s: world tile duplicates %s", entrance.ID, previous)
+		}
+		seenFlags := map[int]bool{}
+		seenCTYs := map[int]bool{entrance.DefaultCTYRaw: true}
+		for j, branch := range entrance.Branches {
+			if branch.FlagRaw < 0 || branch.FlagRaw >= 512 || seenFlags[branch.FlagRaw] ||
+				branch.CTYRaw < 0 || branch.CTYRaw > 255 || seenCTYs[branch.CTYRaw] {
+				return fmt.Errorf("%s: invalid or duplicate branch %d", entrance.ID, j)
+			}
+			seenFlags[branch.FlagRaw] = true
+			seenCTYs[branch.CTYRaw] = true
+		}
+		if err := validateEvidence(entrance.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", entrance.ID, err)
+		}
+		entranceIDs[entrance.ID] = true
+		entranceTiles[key] = entrance.ID
+	}
 	pushRule := p.Events.NPCPushRule
 	if pushRule.CtrlMask <= 0 || pushRule.CtrlMask > 255 ||
 		pushRule.CtrlValue < 0 || pushRule.CtrlValue > 255 ||
@@ -1306,6 +1411,24 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.StagedBossEvents == nil {
 		return errors.New("staged_boss_events must be present")
+	}
+	p.settlementFounders = make(map[string]*SettlementFounderEvent,
+		len(p.Events.SettlementFounderEvents))
+	for i := range p.Events.SettlementFounderEvents {
+		e := &p.Events.SettlementFounderEvents[i]
+		if e.ID == "" || e.Kind != "settlement_founder" || !validScriptedNPC(e.NPC) ||
+			e.RequiredClassRaw < 0 || e.RequiredClassRaw > 255 || !e.RequireAlive ||
+			e.CompletionFlagRaw < 0 || e.CompletionFlagRaw >= 512 ||
+			e.SharedStorageCapacity < 1 || e.SharedStorageCapacity > 255 {
+			return fmt.Errorf("settlement_founder_events[%d]: invalid event", i)
+		}
+		if _, exists := p.settlementFounders[e.ID]; exists {
+			return fmt.Errorf("duplicate settlement founder event id %q", e.ID)
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.settlementFounders[e.ID] = e
 	}
 	p.bossEvents = make(map[string]*BossSurrenderEvent, len(p.Events.BossSurrenderEvents))
 	for i := range p.Events.BossSurrenderEvents {
@@ -2303,6 +2426,23 @@ func (p *Pack) NPCItemRewardEvents() []NPCItemRewardEvent {
 
 func (p *Pack) RuraDestinations() []RuraDestination {
 	return append([]RuraDestination(nil), p.Events.RuraNavigation.Destinations...)
+}
+
+func (p *Pack) WorldEntranceVariants() []WorldEntranceVariant {
+	result := append([]WorldEntranceVariant(nil), p.Events.WorldEntranceVariants...)
+	for i := range result {
+		result[i].Branches = append([]WorldEntranceVariantBranch(nil), result[i].Branches...)
+	}
+	return result
+}
+
+func (p *Pack) SettlementFounderEvents() []SettlementFounderEvent {
+	return append([]SettlementFounderEvent(nil), p.Events.SettlementFounderEvents...)
+}
+
+func (p *Pack) SettlementFounderEvent(id string) (*SettlementFounderEvent, bool) {
+	e, ok := p.settlementFounders[id]
+	return e, ok
 }
 
 func (p *Pack) ItemUseEffects() []ItemUseEffect {
