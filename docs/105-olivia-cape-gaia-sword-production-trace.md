@@ -59,5 +59,7 @@ V2／V3。
 ## 下一個 blocker
 
 現行舊碼仍把蓋亞之劍 `0x0f` 寫成「地表任意位置使用即設 remake flag0x32」，這不是原版
-規格。下一批必須由 item jump table 追到火山座標、world patch／旗標 writer、動畫與通往
-尼羅肯特／銀寶珠的 consumer，再移入有限 JSON；本切片不把舊近似升格成完成。
+規格。後續 IDA 已確認特殊 item table 只列 `0x0f`，派發至 `(logical) 0x3d65`；唯一成功
+座標是 `(65,109)`，成功後進入動畫、套用 `DGROUP 0x3b96` 地圖 patch 並 set 原版
+world-state bit `0x20`。patch 尺寸／完整 bytes、重建 consumer 與 DOSBox 可見結果仍待閉合，
+因此尚未修改 production。詳細證據與下一輪順序見 [`docs/106`](106-gaia-sword-volcano-re-worklist.md)。

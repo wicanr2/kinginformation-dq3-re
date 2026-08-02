@@ -659,8 +659,11 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    關卡、拉之鏡、假王／怪力魔、CTY54 變身杖交換、船員之骨定位、幽靈船動態物件／入口，
    並由 CTY36 原始轉場取得愛的回憶、離船後恢復同座標停泊船、通過 `(76,54)` 奧莉薇亞
    海岬，再進 CTY55 取得蓋亞之劍並完成 save/load。下一輪從這個合法 checkpoint 重查
-   蓋亞之劍火山使用座標／world patch，閉合尼羅肯特與銀寶珠，再回 CTY83 黃寶珠；詳見
-   `docs/105`，不得沿用「地表任意位置 set remake flag0x32」的舊近似。
+   蓋亞之劍火山事件。IDA 已確認 raw item0x0f 經特殊 item table 派發至
+   `(logical) 0x3d65`，唯一成功座標 `(65,109)`，成功 set world-state bit0x20 並由
+   `DGROUP 0x3b96` 套用地圖 patch；但 patch 尺寸／完整 bytes、讀檔重建與實機動畫尚未
+   閉合，production 仍保留待刪的錯誤近似。下一輪依 `docs/106` 完成此交易，再閉合尼羅肯特、
+   銀寶珠與 CTY83 黃寶珠 E3；不得只改座標便宣稱完成。
    不得因 P3 後段已有孤立 component tests，就跳過兩節點之間的玩家路徑、資源與存檔 gate。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用

@@ -174,8 +174,11 @@ schema `0.1.21`／content `0.1.25` 已新增 `coordinate_item_gate_events`。boo
 愛的回憶 checkpoint 依 CTY36 原始轉場離船；同座標停泊船會恢復 mode1，避免玩家困在
 水格。其後正式航行至 `(76,54)`，依 records597／598、item0x64 與 flag0x35 解除詛咒，
 再進 CTY55 調查取得蓋亞之劍0x0f並完成 save/load。CTY55 event0 已從 Go treasure table
-遷入 JSON；見 `docs/105`。下一個 blocker 是蓋亞之劍的火山座標／world patch；現行
-「地表任意位置 set remake flag0x32」仍是待推翻的舊近似。
+遷入 JSON；見 `docs/105`。下一個 blocker 是蓋亞之劍火山交易。IDA 已確認特殊 item table
+`DGROUP 0x3666/0x3668` 將 item0x0f 派發至 `(logical) 0x3d65`，只接受 `(65,109)`，成功
+執行動畫、由 `DGROUP 0x3b96` 套地圖 patch 並 set 原版 world-state bit0x20。patch 尺寸／
+完整 bytes、重建 consumer 與 DOSBox 可見閉合仍待完成；現行「任意地表 set remake
+flag0x32」不得沿用。交接 ledger 與工作順序見 `docs/106`。
 
 ## 固定工程方法
 
