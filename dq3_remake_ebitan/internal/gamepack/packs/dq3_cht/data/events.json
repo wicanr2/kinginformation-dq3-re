@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.19",
+  "schema_version": "0.1.20",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -389,7 +389,10 @@
       "available_flag_raw": 67,
       "required_item_raw_id": 98,
       "granted_item_raw_id": 99,
-      "success_world_position": {"x": 150, "y": 90, "layer": 0},
+      "activate_world_object": {
+        "object_id": "dq3:world_object.ghost_ship",
+        "position": {"x": 150, "y": 90, "layer": 0}
+      },
       "set_world_state_mask_raw": 4,
       "clear_story_flags_raw": [67],
       "dialogue_text_ids": {
@@ -409,12 +412,91 @@
         "source": "DQ3.EXE + CTY54.DAT + D3TXT06.TXT",
         "address_space": "logical",
         "address": "handler44 logical 0x6f90..0x7026 (IDA linear 0x15c20..0x15cb6; file 0x6f90..0x7026); records56..62",
-        "consumer": "handler44 checks story flag0x43 and item0x62, presents two distinct Yes/No branches, replaces the matched inventory word with 0x63, writes world position 150,90, sets world-state bit0x04, rebuilds that world object and clears flag0x43 before records60 and61",
+        "consumer": "handler44 checks story flag0x43 and item0x62, presents two distinct Yes/No branches, replaces the matched inventory word with 0x63, writes tracked world-object position 150,90 to DS5053/DS5055, sets world-state bit0x04, rebuilds that object and clears flag0x43 before records60 and61",
+        "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"
+      }
+    }
+  ],
+  "tracked_world_objects": [
+    {
+      "id": "dq3:world_object.ghost_ship",
+      "kind": "tracked_world_entrance",
+      "active_world_state_mask_raw": 4,
+      "layer": 0,
+      "entrance_cty_raw": 36,
+      "entrance_section": 0,
+      "entry_vehicle_mode": "disembark_ship_if_aboard",
+      "tile_raw_by_rng_low2": [51, 53, 55, 57],
+      "tracker_item_raw_id": 99,
+      "tracker_dialogue_text_ids": {
+        "preamble": "dq3:text.sailor_bones.preamble",
+        "west": "dq3:text.sailor_bones.west",
+        "east": "dq3:text.sailor_bones.east",
+        "north": "dq3:text.sailor_bones.north",
+        "south": "dq3:text.sailor_bones.south"
+      },
+      "relocation": {
+        "window_width": 80,
+        "window_height": 80,
+        "origin_offset": 40,
+        "horizontal_keep_min": 10,
+        "horizontal_keep_max": 69,
+        "vertical_keep_min": 8,
+        "vertical_keep_max": 71,
+        "candidates": [
+          {"x": 150, "y": 90, "layer": 0},
+          {"x": 170, "y": 110, "layer": 0},
+          {"x": 163, "y": 100, "layer": 0},
+          {"x": 156, "y": 96, "layer": 0},
+          {"x": 170, "y": 100, "layer": 0},
+          {"x": 169, "y": 90, "layer": 0},
+          {"x": 153, "y": 109, "layer": 0},
+          {"x": 150, "y": 110, "layer": 0},
+          {"x": 165, "y": 98, "layer": 0},
+          {"x": 100, "y": 177, "layer": 0},
+          {"x": 120, "y": 179, "layer": 0},
+          {"x": 110, "y": 180, "layer": 0},
+          {"x": 109, "y": 185, "layer": 0},
+          {"x": 118, "y": 159, "layer": 0},
+          {"x": 120, "y": 173, "layer": 0},
+          {"x": 153, "y": 109, "layer": 0},
+          {"x": 150, "y": 110, "layer": 0},
+          {"x": 130, "y": 188, "layer": 0}
+        ]
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT00.TXT + CTY36.DAT",
+        "address_space": "logical",
+        "address": "0x126a5..0x126bb, 0x12d0b..0x12dde, 0x1413f..0x14197 (file=linear-0xec90); CTY36 section0/1",
+        "consumer": "world-state bit0x04 calls the renderer/rebuild path; tile is (DS0B5A&3)*2+0x33; an out-of-window object selects one of 18 DGROUP3A0C candidates and adopts it only when inside the active 80x80 buffer; matching player coordinates against DS5053/DS5055 enters CTY36; item0x63 displays records740..744 with absolute X/Y distance",
         "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"
       }
     }
   ],
   "treasure_events": [
+    {
+      "id": "dq3:event.ghost_ship_loves_memory",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 36,
+        "section": 1,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 100,
+        "present_flag_raw": 139
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY36.DAT + DQ3.EXE",
+        "address_space": "record",
+        "address": "CTY36 section1 event0 file0x13cb raw 01 64 00 8b; tile (18,55); DQ3.EXE file0x9d86..0x9e41",
+        "consumer": "CTY36 section1 subid0 dispatches type1 item0x64 to the common inventory consumer and clears original present flag0x8b",
+        "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"
+      }
+    },
     {
       "id": "dq3:event.garuna_satori_book",
       "kind": "treasure",

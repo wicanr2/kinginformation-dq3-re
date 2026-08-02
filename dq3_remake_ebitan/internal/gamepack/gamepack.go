@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.19"
+	SchemaVersion = "0.1.20"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -417,11 +417,53 @@ type ChoiceItemExchangeEvent struct {
 	AvailableFlagRaw     int                       `json:"available_flag_raw"`
 	RequiredItemRawID    int                       `json:"required_item_raw_id"`
 	GrantedItemRawID     int                       `json:"granted_item_raw_id"`
-	SuccessWorldPosition VehicleWorldPosition      `json:"success_world_position"`
+	ActivateWorldObject  WorldObjectActivation     `json:"activate_world_object"`
 	SetWorldStateMaskRaw int                       `json:"set_world_state_mask_raw"`
 	ClearStoryFlagsRaw   []int                     `json:"clear_story_flags_raw"`
 	DialogueTextIDs      ChoiceItemExchangeTextIDs `json:"dialogue_text_ids"`
 	Evidence             Evidence                  `json:"evidence"`
+}
+
+type WorldObjectActivation struct {
+	ObjectID string               `json:"object_id"`
+	Position VehicleWorldPosition `json:"position"`
+}
+
+type TrackedWorldObjectTextIDs struct {
+	Preamble string `json:"preamble"`
+	West     string `json:"west"`
+	East     string `json:"east"`
+	North    string `json:"north"`
+	South    string `json:"south"`
+}
+
+type TrackedWorldObjectRelocation struct {
+	WindowWidth       int                    `json:"window_width"`
+	WindowHeight      int                    `json:"window_height"`
+	OriginOffset      int                    `json:"origin_offset"`
+	HorizontalKeepMin int                    `json:"horizontal_keep_min"`
+	HorizontalKeepMax int                    `json:"horizontal_keep_max"`
+	VerticalKeepMin   int                    `json:"vertical_keep_min"`
+	VerticalKeepMax   int                    `json:"vertical_keep_max"`
+	Candidates        []VehicleWorldPosition `json:"candidates"`
+}
+
+// TrackedWorldObject is a finite movable overworld entrance with an original
+// item-based direction/distance locator. Runtime coordinates are save data;
+// all edition-specific selectors, tiles and visible text remain in the pack.
+type TrackedWorldObject struct {
+	ID                     string                       `json:"id"`
+	Kind                   string                       `json:"kind"`
+	ActiveWorldStateMask   int                          `json:"active_world_state_mask_raw"`
+	Layer                  int                          `json:"layer"`
+	EntranceCTYRaw         int                          `json:"entrance_cty_raw"`
+	EntranceSection        int                          `json:"entrance_section"`
+	EntryVehicleMode       string                       `json:"entry_vehicle_mode"`
+	TileRawByRNGLow2       []int                        `json:"tile_raw_by_rng_low2"`
+	TrackerItemRawID       int                          `json:"tracker_item_raw_id"`
+	TrackerDialogueTextIDs TrackedWorldObjectTextIDs    `json:"tracker_dialogue_text_ids"`
+	Relocation             TrackedWorldObjectRelocation `json:"relocation"`
+	Evidence               Evidence                     `json:"evidence"`
 }
 
 // FloorSwitch identifies one walk-on switch in a scene. HandlerRaw is retained
@@ -776,6 +818,7 @@ type Events struct {
 	TemporarySoloChallenges     []TemporarySoloChallengeEvent    `json:"temporary_solo_challenges"`
 	QuestItemChainEvents        []QuestItemChainEvent            `json:"quest_item_chain_events"`
 	ChoiceItemExchangeEvents    []ChoiceItemExchangeEvent        `json:"choice_item_exchange_events"`
+	TrackedWorldObjects         []TrackedWorldObject             `json:"tracked_world_objects"`
 	TreasureEvents              []TreasureEvent                  `json:"treasure_events"`
 	NPCItemRewardEvents         []NPCItemRewardEvent             `json:"npc_item_reward_events"`
 	ItemUseEffects              []ItemUseEffect                  `json:"item_use_effects"`
@@ -856,6 +899,7 @@ type Pack struct {
 	soloChallenges             map[string]*TemporarySoloChallengeEvent
 	questItemEvents            map[string]*QuestItemChainEvent
 	choiceItemExchangeEvents   map[string]*ChoiceItemExchangeEvent
+	trackedWorldObjects        map[string]*TrackedWorldObject
 	treasureEvents             map[string]*TreasureEvent
 	itemUseEffects             map[int]*ItemUseEffect
 	sequenceGates              map[string]*TwoStepFloorSwitchGate
@@ -1220,6 +1264,18 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, object := range p.Events.TrackedWorldObjects {
+		refs := object.TrackerDialogueTextIDs
+		for field, id := range map[string]string{
+			"preamble": refs.Preamble, "west": refs.West, "east": refs.East,
+			"north": refs.North, "south": refs.South,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s tracker_dialogue_text_ids.%s references unknown text %q",
+					object.ID, field, id)
+			}
+		}
+	}
 	for _, event := range p.Events.NPCItemRewardEvents {
 		for field, id := range map[string]string{
 			"success": event.DialogueTextIDs.Success,
@@ -1456,6 +1512,9 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.ChoiceItemExchangeEvents == nil {
 		return errors.New("choice_item_exchange_events must be present")
+	}
+	if p.Events.TrackedWorldObjects == nil {
+		return errors.New("tracked_world_objects must be present")
 	}
 	if p.Events.TreasureEvents == nil {
 		return errors.New("treasure_events must be present")
@@ -1726,8 +1785,9 @@ func (p *Pack) validateEvents() error {
 			e.RequiredItemRawID < 0 || e.RequiredItemRawID > 255 ||
 			e.GrantedItemRawID < 0 || e.GrantedItemRawID > 255 ||
 			e.RequiredItemRawID == e.GrantedItemRawID ||
-			e.SuccessWorldPosition.X < 0 || e.SuccessWorldPosition.Y < 0 ||
-			e.SuccessWorldPosition.Layer < 0 || e.SuccessWorldPosition.Layer > 1 ||
+			e.ActivateWorldObject.ObjectID == "" || e.ActivateWorldObject.Position.X < 0 ||
+			e.ActivateWorldObject.Position.Y < 0 ||
+			e.ActivateWorldObject.Position.Layer < 0 || e.ActivateWorldObject.Position.Layer > 1 ||
 			e.SetWorldStateMaskRaw <= 0 || e.SetWorldStateMaskRaw > 0xffff ||
 			e.ClearStoryFlagsRaw == nil || len(e.ClearStoryFlagsRaw) == 0 {
 			return fmt.Errorf("choice_item_exchange_events[%d]: invalid event", i)
@@ -1748,6 +1808,54 @@ func (p *Pack) validateEvents() error {
 		}
 		p.choiceItemExchangeEvents[e.ID] = e
 		choiceExchangeSelectors[selector] = e.ID
+	}
+	p.trackedWorldObjects = make(map[string]*TrackedWorldObject, len(p.Events.TrackedWorldObjects))
+	trackerItems := map[int]string{}
+	for i := range p.Events.TrackedWorldObjects {
+		e := &p.Events.TrackedWorldObjects[i]
+		texts := e.TrackerDialogueTextIDs
+		if e.ID == "" || e.Kind != "tracked_world_entrance" ||
+			e.ActiveWorldStateMask <= 0 || e.ActiveWorldStateMask > 0xffff ||
+			e.Layer < 0 || e.Layer > 1 || e.EntranceCTYRaw < 0 || e.EntranceCTYRaw > 255 ||
+			e.EntranceSection < 0 || e.EntryVehicleMode != "disembark_ship_if_aboard" ||
+			len(e.TileRawByRNGLow2) != 4 ||
+			e.TrackerItemRawID < 0 || e.TrackerItemRawID > 255 ||
+			texts.Preamble == "" || texts.West == "" || texts.East == "" ||
+			texts.North == "" || texts.South == "" {
+			return fmt.Errorf("tracked_world_objects[%d]: invalid object", i)
+		}
+		r := e.Relocation
+		if r.WindowWidth != 80 || r.WindowHeight != 80 || r.OriginOffset != 40 ||
+			r.HorizontalKeepMin != 10 || r.HorizontalKeepMax != 69 ||
+			r.VerticalKeepMin != 8 || r.VerticalKeepMax != 71 || len(r.Candidates) != 18 {
+			return fmt.Errorf("%s: invalid relocation window or candidate count", e.ID)
+		}
+		for _, candidate := range r.Candidates {
+			if candidate.X < 0 || candidate.Y < 0 || candidate.Layer != e.Layer {
+				return fmt.Errorf("%s: invalid relocation candidate", e.ID)
+			}
+		}
+		if _, exists := p.trackedWorldObjects[e.ID]; exists || trackerItems[e.TrackerItemRawID] != "" {
+			return fmt.Errorf("tracked_world_objects[%d]: duplicate id or tracker item", i)
+		}
+		for _, tile := range e.TileRawByRNGLow2 {
+			if tile < 0 || tile > 255 {
+				return fmt.Errorf("%s: tile_raw_by_rng_low2 out of range", e.ID)
+			}
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", e.ID, err)
+		}
+		p.trackedWorldObjects[e.ID] = e
+		trackerItems[e.TrackerItemRawID] = e.ID
+	}
+	for i := range p.Events.ChoiceItemExchangeEvents {
+		e := &p.Events.ChoiceItemExchangeEvents[i]
+		obj := p.trackedWorldObjects[e.ActivateWorldObject.ObjectID]
+		if obj == nil || obj.Layer != e.ActivateWorldObject.Position.Layer ||
+			obj.ActiveWorldStateMask != e.SetWorldStateMaskRaw {
+			return fmt.Errorf("%s: disconnected tracked world object activation", e.ID)
+		}
 	}
 	p.treasureEvents = make(map[string]*TreasureEvent, len(p.Events.TreasureEvents))
 	treasureSelectors := map[[3]int]string{}
@@ -2564,6 +2672,25 @@ func (p *Pack) ChoiceItemExchangeEvents() []ChoiceItemExchangeEvent {
 func (p *Pack) ChoiceItemExchangeEvent(id string) (*ChoiceItemExchangeEvent, bool) {
 	e, ok := p.choiceItemExchangeEvents[id]
 	return e, ok
+}
+
+func (p *Pack) TrackedWorldObjects() []TrackedWorldObject {
+	return append([]TrackedWorldObject(nil), p.Events.TrackedWorldObjects...)
+}
+
+func (p *Pack) TrackedWorldObject(id string) (*TrackedWorldObject, bool) {
+	e, ok := p.trackedWorldObjects[id]
+	return e, ok
+}
+
+func (p *Pack) TrackedWorldObjectByTrackerItem(rawID int) (*TrackedWorldObject, bool) {
+	for i := range p.Events.TrackedWorldObjects {
+		e := &p.Events.TrackedWorldObjects[i]
+		if e.TrackerItemRawID == rawID {
+			return e, true
+		}
+	}
+	return nil, false
 }
 
 func (p *Pack) TreasureEvents() []TreasureEvent {

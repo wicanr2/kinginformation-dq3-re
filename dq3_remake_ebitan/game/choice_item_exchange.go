@@ -126,10 +126,14 @@ func (g *Game) completeChoiceItemExchange(event *gamepack.ChoiceItemExchangeEven
 		if item != event.RequiredItemRawID {
 			continue
 		}
+		if !g.activateTrackedWorldObject(event.ActivateWorldObject) {
+			g.dlg.open, g.dlg.buf, g.dlg.pos = false, nil, 0
+			g.finishChoiceItemExchange()
+			return
+		}
 		g.inventory[i] = event.GrantedItemRawID
-		g.overPx, g.overPy = event.SuccessWorldPosition.X, event.SuccessWorldPosition.Y
-		g.layer = event.SuccessWorldPosition.Layer
 		g.worldState |= uint16(event.SetWorldStateMaskRaw)
+		g.rebuildTrackedWorldObjects()
 		for _, flag := range event.ClearStoryFlagsRaw {
 			g.setStoryFlag(flag, false)
 		}

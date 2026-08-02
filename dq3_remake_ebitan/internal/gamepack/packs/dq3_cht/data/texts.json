@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.19",
+  "schema_version": "0.1.20",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -928,6 +928,46 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT06.TXT", "record": 62},
       "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT06.TXT", "address_space": "logical", "address": "handler44 logical 0x6fea..0x6ff9; record62", "consumer": "handler44 selects record62 when the player rejects the item exchange", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.sailor_bones.preamble",
+      "value": "*「骨頭咕嚕咕嚕的轉,",
+      "glyph_codes": [59, 60, 318, 226, 897, 898, 897, 898, 149, 899, 55, 65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 740},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x1413f..0x14147; record740", "consumer": "item0x63 handler displays record740 before both coordinate distances", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.sailor_bones.west",
+      "value": "指向西{變數},",
+      "glyph_codes": [12, 12, 261, 548, 380, 65530, 55, 65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 741},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x14147..0x1416e; record741", "consumer": "when player X is greater than object X, handler stores the absolute delta and displays west record741", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.sailor_bones.east",
+      "value": "指向東{變數},",
+      "glyph_codes": [12, 12, 261, 548, 539, 65530, 55, 65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 742},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x14160..0x1416e; record742", "consumer": "when object X is at or east of player X, handler stores the absolute delta and displays east record742", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.sailor_bones.north",
+      "value": "指向北{變數}的地方。",
+      "glyph_codes": [12, 12, 261, 548, 900, 65530, 149, 214, 547, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 743},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x1416f..0x14191; record743", "consumer": "when player Y is greater than object Y, handler stores the absolute delta and displays north record743", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.sailor_bones.south",
+      "value": "指向南{變數}的地方。",
+      "glyph_codes": [12, 12, 261, 548, 379, 65530, 149, 214, 547, 56, 65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 744},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x14188..0x14197; record744", "consumer": "when object Y is at or south of player Y, handler stores the absolute delta and displays south record744", "doc": "docs/104-transform-staff-ghost-ship-production-trace.md"}
     }
   ]
 }

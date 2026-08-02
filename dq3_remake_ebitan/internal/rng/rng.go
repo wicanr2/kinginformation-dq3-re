@@ -8,6 +8,9 @@ type RNG struct{ state uint16 }
 // Seed 設種子。移植 dq3_rng_seed。
 func (r *RNG) Seed(seed uint16) { r.state = seed }
 
+// State 回傳原版 16-bit 狀態，不推進亂數序列。
+func (r *RNG) State() uint16 { return r.state }
+
 // New 回一個已設種子的 RNG。
 func New(seed uint16) *RNG { return &RNG{state: seed} }
 

@@ -2304,18 +2304,19 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceTalkNPC(t, g, staffExchange.NPC.Tile.X, staffExchange.NPC.Tile.Y)
 	traceCloseDialogue(t, g)
 	press(InputState{Confirm: true})
+	ghostPos, ghostActive := g.trackedWorldPositions[staffExchange.ActivateWorldObject.ObjectID]
 	if g.choiceItemExchangeStage != choiceItemExchangeSuccess || !g.dlg.open ||
 		g.hasItem(staffExchange.RequiredItemRawID) ||
 		!g.hasItem(staffExchange.GrantedItemRawID) ||
 		g.storyFlag(staffExchange.AvailableFlagRaw) ||
-		g.worldState&uint16(staffExchange.SetWorldStateMaskRaw) == 0 ||
-		g.overPx != staffExchange.SuccessWorldPosition.X ||
-		g.overPy != staffExchange.SuccessWorldPosition.Y {
-		t.Fatalf("正式接受交換 transaction 錯：stage=%d dlg=%v staff=%v bones=%v flag=%v world=%#x pos=(%d,%d)",
+		g.worldState&uint16(staffExchange.SetWorldStateMaskRaw) == 0 || !ghostActive ||
+		ghostPos != (trackedWorldPosition{X: staffExchange.ActivateWorldObject.Position.X,
+			Y: staffExchange.ActivateWorldObject.Position.Y, Layer: staffExchange.ActivateWorldObject.Position.Layer}) {
+		t.Fatalf("正式接受交換 transaction 錯：stage=%d dlg=%v staff=%v bones=%v flag=%v world=%#x player=(%d,%d) object=%+v",
 			g.choiceItemExchangeStage, g.dlg.open,
 			g.hasItem(staffExchange.RequiredItemRawID),
 			g.hasItem(staffExchange.GrantedItemRawID),
-			g.storyFlag(staffExchange.AvailableFlagRaw), g.worldState, g.overPx, g.overPy)
+			g.storyFlag(staffExchange.AvailableFlagRaw), g.worldState, g.overPx, g.overPy, ghostPos)
 	}
 	traceCloseDialogue(t, g)
 	traceCloseDialogue(t, g)
@@ -2334,17 +2335,73 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Confirm: true})
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	press(InputState{Confirm: true})
+	ghostPos, ghostActive = g.trackedWorldPositions[staffExchange.ActivateWorldObject.ObjectID]
 	if !g.inTown || g.curCty != staffExchange.NPC.CTYRaw ||
 		!g.hasItem(staffExchange.GrantedItemRawID) ||
 		g.hasItem(staffExchange.RequiredItemRawID) ||
 		g.storyFlag(staffExchange.AvailableFlagRaw) ||
-		g.worldState&uint16(staffExchange.SetWorldStateMaskRaw) == 0 ||
-		g.overPx != staffExchange.SuccessWorldPosition.X ||
-		g.overPy != staffExchange.SuccessWorldPosition.Y {
-		t.Fatalf("船員骨頭 save/load 錯：town=%v cty=%d bones=%v staff=%v flag=%v world=%#x pos=(%d,%d)",
+		g.worldState&uint16(staffExchange.SetWorldStateMaskRaw) == 0 || !ghostActive ||
+		ghostPos != (trackedWorldPosition{X: staffExchange.ActivateWorldObject.Position.X,
+			Y: staffExchange.ActivateWorldObject.Position.Y, Layer: staffExchange.ActivateWorldObject.Position.Layer}) {
+		t.Fatalf("船員骨頭 save/load 錯：town=%v cty=%d bones=%v staff=%v flag=%v world=%#x player=(%d,%d) object=%+v",
 			g.inTown, g.curCty, g.hasItem(staffExchange.GrantedItemRawID),
 			g.hasItem(staffExchange.RequiredItemRawID),
-			g.storyFlag(staffExchange.AvailableFlagRaw), g.worldState, g.overPx, g.overPy)
+			g.storyFlag(staffExchange.AvailableFlagRaw), g.worldState, g.overPx, g.overPy, ghostPos)
+	}
+
+	// 船員骨頭由正式道具選單連續播放 rec740、X 距離記錄、Y 距離記錄；
+	// 接著從格陵蘭正常出城、徒步登船、逐格航行至動態座標進入 CTY36。
+	traceUseInventoryItem(t, g, staffExchange.GrantedItemRawID)
+	if !g.dlg.open || g.trackedWorldLocatorStage != 1 {
+		t.Fatalf("船員骨頭前導記錄未開啟：dlg=%v stage=%d",
+			g.dlg.open, g.trackedWorldLocatorStage)
+	}
+	traceCloseDialogue(t, g) // helper 會穿過三個依序開啟的原版記錄
+	if g.trackedWorldLocatorStage != 0 {
+		t.Fatalf("船員骨頭三段記錄未閉合：stage=%d", g.trackedWorldLocatorStage)
+	}
+	if g.panel != panelNone {
+		press(InputState{Cancel: true})
+	}
+	traceExitTownBoundary(t, g, true)
+	if !g.shipAboard {
+		traceBoardAndSailShip(t, g)
+	}
+	ghostObject, ok := g.pack.TrackedWorldObject(staffExchange.ActivateWorldObject.ObjectID)
+	if !ok {
+		t.Fatal("讀檔後缺幽靈船 world object")
+	}
+	traceSailIntoTrackedWorldObject(t, g, ghostObject)
+	traceWalkThroughPortal(t, g, 18, 37, ghostObject.EntranceCTYRaw, 1, 18, 38)
+	loveMemory, ok := g.pack.TreasureEvent("dq3:event.ghost_ship_loves_memory")
+	if !ok {
+		t.Fatal("缺幽靈船愛的回憶 treasure event")
+	}
+	traceExaminePackTreasure(t, g, loveMemory.Treasure)
+	if !g.hasItem(loveMemory.Treasure.ItemRawID) ||
+		g.storyFlag(loveMemory.Treasure.PresentFlag) {
+		t.Fatalf("正式幽靈船寶箱錯：memory=%v present=%v",
+			g.hasItem(loveMemory.Treasure.ItemRawID),
+			g.storyFlag(loveMemory.Treasure.PresentFlag))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存愛的回憶 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建愛的回憶讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != ghostObject.EntranceCTYRaw || sceneSection(g.cur) != 1 ||
+		!g.hasItem(loveMemory.Treasure.ItemRawID) ||
+		g.storyFlag(loveMemory.Treasure.PresentFlag) {
+		t.Fatalf("愛的回憶 save/load 錯：town=%v cty=%d sec=%d memory=%v present=%v",
+			g.inTown, g.curCty, sceneSection(g.cur), g.hasItem(loveMemory.Treasure.ItemRawID),
+			g.storyFlag(loveMemory.Treasure.PresentFlag))
 	}
 }
 
@@ -3387,6 +3444,46 @@ func traceShipToWorldTile(t *testing.T, g *Game, tx, ty int, fleeStrong ...bool)
 	if g.inTown || !g.shipAboard || g.px != tx || g.py != ty {
 		t.Fatalf("無法正式航行到 (%d,%d)：town=%v aboard=%v pos=(%d,%d)",
 			tx, ty, g.inTown, g.shipAboard, g.px, g.py)
+	}
+}
+
+// traceSailIntoTrackedWorldObject 以正式船移動逐格抵達 pack 動態入口；最後一步
+// 必須由 production Update 自動切入目的 CTY，不能直接呼叫事件函式或注入座標。
+func traceSailIntoTrackedWorldObject(t *testing.T, g *Game, obj *gamepack.TrackedWorldObject) {
+	t.Helper()
+	p, active := g.trackedWorldObjectPosition(obj)
+	if !active || g.inTown || !g.shipAboard || p.Layer != g.layer {
+		t.Fatalf("航向動態世界物件起點錯：active=%v town=%v aboard=%v layer=%d/%d",
+			active, g.inTown, g.shipAboard, g.layer, p.Layer)
+	}
+	for steps := 0; steps < 12000 && !g.inTown; steps++ {
+		if g.battle.active {
+			traceResolveBattle(t, g, g.battle.monID >= 80)
+			continue
+		}
+		if g.cd > 0 {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatalf("等待幽靈船航路 cooldown：%v", err)
+			}
+			continue
+		}
+		var stillActive bool
+		p, stillActive = g.trackedWorldObjectPosition(obj)
+		if !stillActive {
+			t.Fatal("航行途中動態世界物件失效")
+		}
+		path := traceShipWaterPath(g, p.X, p.Y)
+		if len(path) == 0 {
+			break
+		}
+		if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
+			t.Fatalf("幽靈船正式航路 dir%d：%v", path[0], err)
+		}
+	}
+	p, _ = g.trackedWorldObjectPosition(obj)
+	if !g.inTown || g.curCty != obj.EntranceCTYRaw || sceneSection(g.cur) != obj.EntranceSection {
+		t.Fatalf("未由動態座標進入 CTY%d：town=%v cty=%d sec=%d player=(%d,%d) object=(%d,%d)",
+			obj.EntranceCTYRaw, g.inTown, g.curCty, sceneSection(g.cur), g.px, g.py, p.X, p.Y)
 	}
 }
 

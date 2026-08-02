@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
@@ -12,48 +13,56 @@ import (
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
 type saveState struct {
-	PackID                  string       `json:"pack_id,omitempty"`
-	PackSchema              string       `json:"pack_schema,omitempty"`
-	PackContentHash         string       `json:"pack_content_hash,omitempty"`
-	HeroExp                 uint32       `json:"exp"`
-	HeroHP                  int          `json:"hp"`
-	HeroMP                  int          `json:"mp"`
-	HeroStat                stats.Values `json:"stats,omitempty"`
-	HeroGold                int          `json:"gold"`
-	HeroName                []int        `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
-	HeroGender              int          `json:"herogender"`         // 0=男 1=女
-	Inventory               []int        `json:"inv"`
-	Equip                   [4]int       `json:"eq"`
-	EquipmentV2             bool         `json:"equipment_v2,omitempty"` // true:-1=空；舊檔以 0=空
-	Comps                   []compSav    `json:"comps"`
-	SoloChallengeActive     bool         `json:"solo_challenge_active,omitempty"`
-	SoloChallengeEventID    string       `json:"solo_challenge_event_id,omitempty"`
-	SoloChallengeCompanions []compSav    `json:"solo_challenge_companions,omitempty"`
-	Roster                  []compSav    `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
-	SharedStorage           []int        `json:"shared_storage,omitempty"`
-	SettlementFounder       *compSav     `json:"settlement_founder,omitempty"`
-	Flags                   []int        `json:"flags"`
-	ShipOwned               bool         `json:"shipowned"`
-	PhoenixOwned            bool         `json:"phoenixowned,omitempty"`
-	PhoenixAboard           bool         `json:"phoenixaboard,omitempty"`
-	PhoenixX                int          `json:"phoenixx,omitempty"`
-	PhoenixY                int          `json:"phoenixy,omitempty"`
-	ShipX                   int          `json:"shipx"`
-	ShipY                   int          `json:"shipy"`
-	PX                      int          `json:"px"`
-	PY                      int          `json:"py"`
-	OverPX                  int          `json:"over_px,omitempty"`
-	OverPY                  int          `json:"over_py,omitempty"`
-	OverworldPosV2          bool         `json:"overworld_position_v2,omitempty"`
-	InTown                  bool         `json:"town"`
-	StoryBits               []byte       `json:"storybits,omitempty"`
-	WorldState              uint16       `json:"worldstate,omitempty"`
-	DNPhase                 int          `json:"dnphase,omitempty"`
-	DNStep                  int          `json:"dnstep,omitempty"`
-	Cty                     int          `json:"cty,omitempty"`
-	Section                 int          `json:"section,omitempty"`
-	Layer                   int          `json:"layer,omitempty"`
-	VisitedTowns            []townVisit  `json:"visited_towns,omitempty"`
+	PackID                  string                   `json:"pack_id,omitempty"`
+	PackSchema              string                   `json:"pack_schema,omitempty"`
+	PackContentHash         string                   `json:"pack_content_hash,omitempty"`
+	HeroExp                 uint32                   `json:"exp"`
+	HeroHP                  int                      `json:"hp"`
+	HeroMP                  int                      `json:"mp"`
+	HeroStat                stats.Values             `json:"stats,omitempty"`
+	HeroGold                int                      `json:"gold"`
+	HeroName                []int                    `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
+	HeroGender              int                      `json:"herogender"`         // 0=男 1=女
+	Inventory               []int                    `json:"inv"`
+	Equip                   [4]int                   `json:"eq"`
+	EquipmentV2             bool                     `json:"equipment_v2,omitempty"` // true:-1=空；舊檔以 0=空
+	Comps                   []compSav                `json:"comps"`
+	SoloChallengeActive     bool                     `json:"solo_challenge_active,omitempty"`
+	SoloChallengeEventID    string                   `json:"solo_challenge_event_id,omitempty"`
+	SoloChallengeCompanions []compSav                `json:"solo_challenge_companions,omitempty"`
+	Roster                  []compSav                `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
+	SharedStorage           []int                    `json:"shared_storage,omitempty"`
+	SettlementFounder       *compSav                 `json:"settlement_founder,omitempty"`
+	Flags                   []int                    `json:"flags"`
+	ShipOwned               bool                     `json:"shipowned"`
+	PhoenixOwned            bool                     `json:"phoenixowned,omitempty"`
+	PhoenixAboard           bool                     `json:"phoenixaboard,omitempty"`
+	PhoenixX                int                      `json:"phoenixx,omitempty"`
+	PhoenixY                int                      `json:"phoenixy,omitempty"`
+	ShipX                   int                      `json:"shipx"`
+	ShipY                   int                      `json:"shipy"`
+	PX                      int                      `json:"px"`
+	PY                      int                      `json:"py"`
+	OverPX                  int                      `json:"over_px,omitempty"`
+	OverPY                  int                      `json:"over_py,omitempty"`
+	OverworldPosV2          bool                     `json:"overworld_position_v2,omitempty"`
+	InTown                  bool                     `json:"town"`
+	StoryBits               []byte                   `json:"storybits,omitempty"`
+	WorldState              uint16                   `json:"worldstate,omitempty"`
+	TrackedWorldObjects     []trackedWorldObjectSave `json:"tracked_world_objects,omitempty"`
+	DNPhase                 int                      `json:"dnphase,omitempty"`
+	DNStep                  int                      `json:"dnstep,omitempty"`
+	Cty                     int                      `json:"cty,omitempty"`
+	Section                 int                      `json:"section,omitempty"`
+	Layer                   int                      `json:"layer,omitempty"`
+	VisitedTowns            []townVisit              `json:"visited_towns,omitempty"`
+}
+
+type trackedWorldObjectSave struct {
+	ID    string `json:"id"`
+	X     int    `json:"x"`
+	Y     int    `json:"y"`
+	Layer int    `json:"layer"`
 }
 
 // compSav 是一名同伴的存檔資料。
@@ -106,15 +115,25 @@ func (g *Game) snapshot() saveState {
 		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY,
 		PX: g.px, PY: g.py, OverPX: g.overPx, OverPY: g.overPy,
 		OverworldPosV2: true, InTown: g.inTown,
-		StoryBits:  append([]byte(nil), g.storyBits[:]...),
-		WorldState: g.worldState,
-		DNPhase:    g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
+		StoryBits:           append([]byte(nil), g.storyBits[:]...),
+		WorldState:          g.worldState,
+		TrackedWorldObjects: trackedWorldObjectsToSave(g.trackedWorldPositions),
+		DNPhase:             g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
 		VisitedTowns: append([]townVisit(nil), g.visitedTowns...),
 	}
 	if g.inTown && g.cur != nil {
 		s.Section = g.cur.sec
 	}
 	return s
+}
+
+func trackedWorldObjectsToSave(in map[string]trackedWorldPosition) []trackedWorldObjectSave {
+	out := make([]trackedWorldObjectSave, 0, len(in))
+	for id, p := range in {
+		out = append(out, trackedWorldObjectSave{ID: id, X: p.X, Y: p.Y, Layer: p.Layer})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
 }
 
 func flagsToSav(f map[int]bool) []int {
@@ -253,6 +272,27 @@ func (g *Game) restore(s saveState) {
 	}
 	g.syncTemporaryRoleVisual() // 角色外觀由 pack event 的 active flag 推導，不保存第二份狀態
 	g.worldState = s.WorldState
+	g.worldObjectBufferValid = false
+	g.trackedWorldPositions = map[string]trackedWorldPosition{}
+	for _, saved := range s.TrackedWorldObjects {
+		if g.pack == nil {
+			continue
+		}
+		obj, ok := g.pack.TrackedWorldObject(saved.ID)
+		if !ok || obj.Layer != saved.Layer || saved.X < 0 || saved.Y < 0 {
+			continue
+		}
+		g.trackedWorldPositions[saved.ID] = trackedWorldPosition{X: saved.X, Y: saved.Y, Layer: saved.Layer}
+	}
+	// 0.1.19 的短暫錯誤實作把動態物件座標寫進 over_px/over_py。若 world-state
+	// 已啟用但新欄位尚不存在，僅由 pack 中明確的 activation 記錄遷移；不猜預設。
+	if len(g.trackedWorldPositions) == 0 && g.pack != nil {
+		for _, event := range g.pack.ChoiceItemExchangeEvents() {
+			if g.worldState&uint16(event.SetWorldStateMaskRaw) != 0 {
+				g.activateTrackedWorldObject(event.ActivateWorldObject)
+			}
+		}
+	}
 	if g.flags[0x35] { // 舊 remake 存檔：自造 flag0x35 遷移至原版 [0x4f44] bit0x40。
 		g.worldState |= worldStateRainbowBridge
 		delete(g.flags, 0x35)

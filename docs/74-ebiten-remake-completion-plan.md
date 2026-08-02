@@ -656,10 +656,10 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 下一輪依下列順序接手：
 
 1. **主線最高優先**：boot 起的同一條 trace 已正式完成商人交付、CTY41→42、CTY43
-   關卡、拉之鏡、假王／怪力魔，以及 CTY54 變身杖拒絕／接受、船員骨頭、world-state
-   bit `0x04` 與 `(150,90)` save/load。下一輪從這個合法 checkpoint 閉合幽靈船可見物件、
-   移動／入口、愛的回憶、蓋亞之劍與 CTY83 黃寶珠；詳見 `docs/104`，不得直接從後段
-   component checkpoint 起跑。
+   關卡、拉之鏡、假王／怪力魔、CTY54 變身杖交換、船員之骨定位、幽靈船動態物件／入口，
+   並由 CTY36 原始轉場及寶箱取得愛的回憶後完成 save/load。下一輪從這個合法 checkpoint
+   閉合地表 `(76,54)` 奧莉薇亞海岬、蓋亞之劍與 CTY83 黃寶珠；詳見 `docs/104`，不得直接
+   從後段 component checkpoint 起跑。
    不得因 P3 後段已有孤立 component tests，就跳過兩節點之間的玩家路徑、資源與存檔 gate。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用

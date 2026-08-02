@@ -14,6 +14,9 @@ func (g *Game) useSelectedItem() {
 	if g.usePackItemEffect(code) {
 		return
 	}
+	if g.useTrackedWorldObjectLocator(code) {
+		return
+	}
 	if g.useQuestItemChain(code) {
 		return
 	}

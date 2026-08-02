@@ -183,8 +183,8 @@
 - sec0: 門(8,0)→CTY34.sec1@(3,2)
 
 ## CTY36
-- sec0:（無轉場）
-- sec1:（無轉場）
+- sec0: 原始 transition 目的為 CTY36.sec1@(18,38) 與 CTY36.sec1@(15,44)；來源 tile 已由正式 trace 通過
+- sec1: 原始 transition 目的為 CTY36.sec0@(18,37) 與 CTY36.sec0@(15,45)；愛的回憶 event0 位於 (18,55)
 
 ## CTY37
 - sec0: 門(0,30)→CTY16.sec0@(3,5)

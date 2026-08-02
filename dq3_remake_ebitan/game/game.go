@@ -323,13 +323,17 @@ type Game struct {
 	heroMP                  int
 	heroStat                stats.Values
 	heroInit                bool
-	equip                   [4]int       // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
-	companions              []*Member    // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
-	roster                  []*Member    // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
-	flags                   map[int]bool // remake 暫存旗標；原版劇情旗標一律使用 storyBits
-	storyBits               [64]byte     // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
-	worldState              uint16       // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
-	noticeCode              int          // 取得道具通知(item code;-1=無)
+	equip                   [4]int                          // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
+	companions              []*Member                       // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
+	roster                  []*Member                       // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
+	flags                   map[int]bool                    // remake 暫存旗標；原版劇情旗標一律使用 storyBits
+	storyBits               [64]byte                        // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
+	worldState              uint16                          // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
+	trackedWorldPositions   map[string]trackedWorldPosition // game-pack 動態世界物件座標；與玩家返回座標分離
+	worldObjectBufferX      int                             // 原版 80x80 world buffer 左上角（scratch，不進存檔）
+	worldObjectBufferY      int
+	worldObjectBufferValid  bool
+	noticeCode              int // 取得道具通知(item code;-1=無)
 	noticeTimer             int
 	shipOwned               bool          // 已取得船(波魯多加胡椒換船,milestone SHIP)
 	shipAboard              bool          // 目前在船上
@@ -377,6 +381,8 @@ type Game struct {
 	choiceItemExchangeStage   int    // game-pack choice_item_exchange 對話／交換階段
 	choiceItemExchangeCursor  int    // 兩組 Yes/No 共用游標
 	choiceItemExchangeEventID string // active choice_item_exchange event
+	trackedWorldLocatorStage  int    // tracker item 的三段原版記錄播放階段
+	trackedWorldLocatorID     string // active tracked_world_object id
 
 	vehicleExchangeStage   int    // game-pack staged_vehicle_exchange 的目前階段
 	vehicleExchangeEventID string // active pack event；空字串表示無事件
@@ -1091,6 +1097,7 @@ func (g *Game) step(in InputState) error {
 				g.advanceBossSurrenderDialogue()
 				g.advanceSequenceGateDialogue()
 				g.advanceChoiceItemExchangeDialogue()
+				g.advanceTrackedWorldObjectLocator()
 				g.advanceStagedVehicleExchangeDialogue()
 				g.advanceGuidedPassageDialogue()
 				g.advanceHostageRescueDialogue()
@@ -1229,6 +1236,7 @@ func (g *Game) step(in InputState) error {
 		g.tryBaramosReturnEvent()
 		g.tryOrtegaEvent()
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
+		g.updateTrackedWorldObjectWindow(g.facing)
 		skipEntrance := g.worldEntranceGrace
 		g.worldEntranceGrace = false
 		if !skipEntrance {
@@ -1247,6 +1255,9 @@ func (g *Game) step(in InputState) error {
 			}
 			if cty >= 0 {
 				g.enterTownCty(cty)
+				return nil
+			}
+			if g.tryEnterTrackedWorldObject() {
 				return nil
 			}
 		}
@@ -2185,6 +2196,7 @@ func (g *Game) renderFrame() {
 		}
 	}
 	g.drawPhoenixAltars(camX, camY)
+	g.drawTrackedWorldObjects(camX, camY)
 	for i := range sc.npcs { // NPC(在視窗內才畫;靜態朝下 frame)
 		n := &sc.npcs[i]
 		if n.spr == nil || n.x < camX || n.x >= camX+ViewCols || n.y < camY || n.y >= camY+ViewRows {

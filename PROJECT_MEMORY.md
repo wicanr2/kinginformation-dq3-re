@@ -88,7 +88,7 @@ save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；�
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
 同時控制寶箱與入口物件 visibility；詳見 `docs/101`。game-pack schema 已升至
-`0.1.19`，`dq3_cht` content 已升至 `0.1.23`。IDA Pro 9.4 證明商人聚落 `(210,64)`
+`0.1.20`，`dq3_cht` content 已升至 `0.1.24`。IDA Pro 9.4 證明商人聚落 `(210,64)`
 的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
 `0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
 入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
@@ -161,12 +161,16 @@ flag branches、每支極性、layer、目的 CTY 與 default 全由 JSON 提供
 第一支 clear gate 讀成 set gate，已由 IDA linear `0x125fe..0x12681` 推翻；詳見 `docs/102`。
 人物初始裝備由 `characters.json` 提供。細則見 `AGENTS.md` 與 `docs/84`。
 
-schema `0.1.19` 新增 `choice_item_exchange_events`。IDA Pro 9.4 已推翻 CTY54 舊
+schema `0.1.20` 延續 `choice_item_exchange_events`，並新增 `tracked_world_objects`。
+IDA Pro 9.4 已推翻 CTY54 舊
 `scriptedTable` 的立即交換近似：handler44 有無杖詢問與持杖交換兩組 Yes／No；成功會
-原格把 `0x62` 換成 `0x63`、寫世界位置 `(150,90)`、OR world-state `0x04`、重建世界物件、
+原格把 `0x62` 換成 `0x63`、啟用座標為 `(150,90)` 的世界物件、OR world-state `0x04`、
 clear flag `0x43`，再依序顯示 records60／61。七段 D3TXT06 文字與全部設定已遷入 JSON；
 boot production trace 已從假王勝利正常住宿、魯拉、登船航行到 CTY54，驗證拒絕、接受與
-save/load。幽靈船物件／入口至愛的回憶仍是下一個 blocker；見 `docs/104`。
+save/load。幽靈船座標已與玩家座標分離；四個 tile 由 RNG state 低二位選擇，物件離開
+`80×80` 活動視窗時依原版 18 筆候選表重定位。船員之骨 records740–744、同座標動態入口、
+CTY36 轉場、愛的回憶 `0x64` 寶箱及其 save/load 已由正式 InputState trace 閉合為 E3／V1。
+下一個 blocker 是地表 `(76,54)` 的奧莉薇亞海岬事件；見 `docs/104`。
 
 ## 固定工程方法
 

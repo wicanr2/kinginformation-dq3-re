@@ -531,14 +531,35 @@ mutation 前失敗即關閉。DQ3 canonical 範例與原版 parity test 見 `eve
 | `[].npc` | object | 是 | `{cty_raw,section,tile:{x,y},handler_raw}`。 |
 | `[].available_flag_raw` | int | 是 | 原版事件可用旗標；clear 時只顯示 after。 |
 | `[].required_item_raw_id`／`granted_item_raw_id` | int | 是 | 不同的 `0..255` ID；成功時原地取代第一個命中格。 |
-| `[].success_world_position` | object | 是 | `{x,y,layer}`；成功交易寫入的原版世界落點。 |
+| `[].activate_world_object` | object | 是 | `{object_id,position:{x,y,layer}}`；成功交易啟用指定追蹤世界物件並寫入其座標，不得改寫玩家座標。 |
 | `[].set_world_state_mask_raw` | int | 是 | 成功時 OR 的非零 16-bit 原版 mask。 |
 | `[].clear_story_flags_raw` | int[] | 是 | 成功時清除；至少一筆。 |
 | `[].dialogue_text_ids` | object | 是 | `introduction/interested/hint/offer/success/after/reject/choice_yes/choice_no` 全部必填。 |
 | `[].evidence` | object | 是 | choice、inventory writer、世界副作用與文字 record 的 D3 證據。 |
 
-所有成功文字先解析，才提交換物、位置、world-state 與旗標交易；拒絕與缺道具分支不得修改
+所有成功文字先解析，才提交換物、物件啟用、world-state 與旗標交易；拒絕與缺道具分支不得修改
 持久狀態。DQ3 canonical 範例與 production trace 見 [`docs/104`](104-transform-staff-ghost-ship-production-trace.md)。
+
+`tracked_world_objects` 描述可移動、可追蹤且可進入的有限地表物件。其座標屬於存檔狀態，
+玩家位置與物件位置必須分離；引擎只提供固定的視窗重建、定位文字與入口 primitive：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `tracked_world_objects` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定物件 ID；kind 固定為 `tracked_world_entrance`。 |
+| `[].active_world_state_mask_raw` | int | 是 | 非零原版 world-state mask；未啟用時不繪製、不追蹤、不接受入口。 |
+| `[].layer` | int | 是 | 原版地表層；現行有限契約為 `0`。 |
+| `[].entrance_cty_raw`／`entrance_section` | int | 是 | 玩家與物件同座標時載入的目的場景。 |
+| `[].entry_vehicle_mode` | enum | 是 | 現行只接受 `disembark_ship_if_aboard`，入口時停泊船並切回徒步。 |
+| `[].tile_raw_by_rng_low2` | int[4] | 是 | 依原版亂數狀態低二位選取的四個 raw tile；不可改成動畫計時器。 |
+| `[].tracker_item_raw_id` | int | 是 | 開啟方向／距離定位流程的原版道具 ID。 |
+| `[].tracker_dialogue_text_ids` | object | 是 | `preamble/west/east/north/south` 五個穩定 text ID；距離由引擎綁定數字變數。 |
+| `[].relocation` | object | 是 | 固定視窗尺寸、原點偏移、水平／垂直保留邊界及候選座標。 |
+| `[].relocation.candidates` | object[] | 是 | 非空 `{x,y,layer}` 陣列；重複項保留原版權重。 |
+| `[].evidence` | object | 是 | 啟用 writer、座標表、視窗 consumer、入口與定位文字的 D3 證據。 |
+
+DQ3 幽靈船的 18 筆候選座標、四個 tile、船員之骨 records740–744、動態入口與存檔
+round-trip 均有 EXE／CTY／D3TXT parity test；完整證據見 [`docs/104`](104-transform-staff-ghost-ship-production-trace.md)。
 
 不屬於多階段任務的原版一次性寶箱放在 `treasure_events`，不得再新增 Go
 `treasures` table 或以「合理值」補欄位：

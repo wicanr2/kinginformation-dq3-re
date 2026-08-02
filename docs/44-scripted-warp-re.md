@@ -207,7 +207,7 @@ byte4 → handler → 固定 struct 靜態解出；runner 現況看 `docs/re-log
 | owX | owY | 旗標(test_flag)| → 目的 CTY | 層 |
 |---|---|---|---|---|
 | 82 | 165 | 0x13 | set→CTY47 / clear→CTY75 | 地表；僅 reader 已證，writer unknown（docs/100） |
-| =[0x5053] | =[0x5055] | — | CTY36 | **下層** |
+| =[0x5053] | =[0x5055] | world-state bit0x04 | CTY36 | 地表動態幽靈船入口；座標由獨立物件狀態持有 |
 | 76 | 54 | 0x35 | (劇情:`[0x2593]=0x64` 物品事件 + rec 0x255/0x256,非進城)| — |
 | 54 | 129 | 0x4d | CTY71 | 地表 |
 | cty_loc[58] | | 0x23 clear | CTY58 | 地表；初始聚落 |
@@ -216,9 +216,9 @@ byte4 → handler → 固定 struct 靜態解出；runner 現況看 `docs/re-log
 | 同上 | | 0x42 clear、0x48 set | CTY61 | 地表 |
 | 同上 | | 0x23 set 且後三個 gate clear | **CTY83** | 地表；革命後 |
 
-> ★ **更正**:先前說「含進下層 CTY 36/83」**有誤** —— 查 cty_loc:**CTY83=(210,64) map=0 是地表**
-> (與 CTY58 同位置)、CTY36 map=0xff 是純迷宮。所以這機制是**同一 overworld 點依進度載不同城**
-> 的**城鎮變體**(經典 DQ:城被毀/重建),**不是下降**(目的多為地表城)。完整 portal 表見 docs/45 §3.2。
+> ★ **更正**:先前說「含進下層 CTY36/83」**有誤**。CTY83=(210,64) 是商人聚落的地表
+> stage variant；CTY36 則是 world-state bit0x04 啟用後，以獨立物件座標觸發的幽靈船迷宮入口。
+> 兩者都不是地表／下層世界切換。完整入口證據分別見 `docs/102`、`docs/104`。
 > 另:`0x055ba` 有下層座標(127, 373=Y≥300)的寫死事件(下層 overworld 內的劇情點)。
 
 > 2026-08-02 IDA 9.4 重查：完整極性與位址見 `docs/102`。現行 Go 已由 game-pack
@@ -262,8 +262,9 @@ CTY77 transition[0] = {CTY77, 0xfe, 85,67}
 
 ### 待接進 remake(具體)
 1. **§5b scripted warp**:抽「子型2 byte4 → warp struct 目的(dest,X,Y)」表 → 子型2 warp NPC 載 dest CTY。
-2. **§7 overworld 座標事件**:抽 (owX,owY,旗標,destCTY) 表 → field 走到該格(旗標通過)→ load_cty。
-   ← **這層含地表→下層(CTY36/83),接上即解鎖下層世界結構**。
+2. **§7 overworld 座標事件**:現行已分成 ordered `world_entrance_variants` 與
+   `tracked_world_objects`；CTY36／83 都不是地表→下層入口。尚未資料化的固定座標事件
+   應逐筆閉合 writer／consumer，不可再沿用此歷史總表批次推導。
 
 ## remake 落地對照
 
