@@ -2149,6 +2149,14 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.inTown, g.curCty, g.storyFlag(founderEvent.CompletionFlagRaw),
 			g.settlementFounder, g.sharedStorage)
 	}
+
+	// 建城商人交付後，離開再由同一世界座標重進，production selector 應依
+	// founder flag 自然載入 CTY60；不得直接指定城鎮階段。
+	traceExitTownBoundary(t, g, true)
+	traceReenterWorldEntrance(t, g, 60)
+	if !g.inTown || g.curCty != 60 {
+		t.Fatalf("商人交付後重進未自然選到 CTY60：town=%v cty=%d", g.inTown, g.curCty)
+	}
 }
 
 // traceWaitForDayNearCty 在城鎮外只送正常方向鍵並處理正式隨機遭遇，
@@ -2860,6 +2868,42 @@ func traceAdventureTravelToCty(t *testing.T, g *Game, wantCty int, fleeAll ...bo
 			lx+1, ly, g.cur.attr.Raw(g.cur.tileIdx(lx+1, ly)), g.cur.Blocked(lx+1, ly),
 			reachableShipRura)
 	}
+}
+
+// traceReenterWorldEntrance 處理多個 CTY 共用同一地表入口的 ordered variant。
+// 出城會回到 remembered entrance tile；production 只在成功踏入地表格時判定進城，
+// 因此先以方向鍵走離整個入口 footprint，再由正式船陸 helper 踏回。
+func traceReenterWorldEntrance(t *testing.T, g *Game, wantCty int) {
+	t.Helper()
+	if g.inTown || wantCty < 0 || wantCty >= len(ctyLoc) {
+		t.Fatalf("重進 CTY%d 起點錯：town=%v cty=%d", wantCty, g.inTown, g.curCty)
+	}
+	for g.cd > 0 {
+		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatalf("等待離開共用入口 cooldown：%v", err)
+		}
+	}
+	moved := false
+	for dir := 0; dir < 4; dir++ {
+		dx, dy := dirDelta(dir)
+		nx, ny := g.px+dx, g.py+dy
+		if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h ||
+			g.cur.Blocked(nx, ny) || findCtyAtLayer(nx, ny, g.layer) >= 0 {
+			continue
+		}
+		oldX, oldY := g.px, g.py
+		if err := g.step(InputState{DirHeld: dir, DirEdge: -1}); err != nil {
+			t.Fatalf("走離共用入口：%v", err)
+		}
+		moved = g.px != oldX || g.py != oldY
+		if moved {
+			break
+		}
+	}
+	if !moved {
+		t.Fatalf("CTY%d 共用入口 (%d,%d) 無法以正式移動走離", wantCty, g.px, g.py)
+	}
+	traceAdventureTravelToCty(t, g, wantCty, true)
 }
 
 func traceVehicleWorldPath(g *Game, wantCty int) []int {

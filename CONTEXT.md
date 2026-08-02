@@ -172,7 +172,11 @@
   [`100`](docs/100-lancel-courage-blue-orb-production-trace.md) 蘭西爾 handler37／62、暫時單人、
   CTY23 藍寶珠、途中／復隊存讀檔與 boot production trace ·
   [`101`](docs/101-pirates-red-orb-production-trace.md) CTY27 可推入口、密道 transition、
-  紅寶珠、魯拉船重定位與 boot production trace
+  紅寶珠、魯拉船重定位與 boot production trace ·
+  [`102`](docs/102-merchant-settlement-world-entrance-re.md) 商人聚落 ordered gate、建城商人
+  transaction、CTY83 黃寶珠 ·
+  [`103`](docs/103-samanoasa-mirror-production-trace.md) CTY24 拉之鏡 JSON、商人城 CTY60
+  自然銜接、沙曼歐莎假王與怪力魔 boot production trace
 
 ### 資料 / 研究(`docs/data/`)
 - [道具取得鏈](docs/data/quest-items.md) · [咒文效果研究](docs/data/spell-effects-research.md) ·

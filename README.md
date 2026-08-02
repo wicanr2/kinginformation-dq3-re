@@ -98,6 +98,10 @@ RE 文件。
 
 ![Ebiten：革命後調查建城者座位後方取得黃寶珠](docs/img/merchant_revolution_yellow_orb_obtained.png)
 
+![Ebiten：沙曼歐莎夜間使用拉之鏡揭露假王](dq3_remake_ebitan/docs/samanosa_mirror_reveal.png)
+
+![Ebiten：拉之鏡事件進入怪力魔戰](dq3_remake_ebitan/docs/samanosa_boss_troll.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有

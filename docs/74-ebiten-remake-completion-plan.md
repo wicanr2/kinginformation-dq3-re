@@ -388,16 +388,21 @@ Gate：不用 `DQ3_SHIP` 可自然取得船並航行。
   runtime PNG 為 V1。CTY83 event `01 6a 00 4a`、handler48 record42→依 present
   flag0x4a 選擇 record43、建城者姓名插值、男女 sprite flag、黃寶珠 JSON transaction
   與 save/load component 已閉合（D3／E2／V1）；舊 Go treasure row 的反向 flag 語意已
-  刪除。尚缺由本 checkpoint 自然完成沙曼歐莎／蓋亞之劍 gate 後進 CTY83 的 E3 trace、
+  刪除。同一條 boot production trace 已由商人交付 checkpoint 自然重進 CTY60；後續
+  CTY41→42 旅人之門出口仍是第一個玩家路徑 blocker。尚缺拉之鏡、沙曼歐莎、蓋亞之劍
+  gate 後進 CTY83 的 E3 trace、
   CTY59 handler41 設施分支及原版同狀態 V2；見 `docs/102`。
-- 沙曼歐莎 R-2：
+- [~] 沙曼歐莎 R-2：
   `道具選單使用拉之鏡 → CTY44 sec1 玩家站(14,7) → 夜晚 → rec97/98 → 怪89 →
   勝後0x62+clear21/set22+白天；敗／逃 clear10/restore42`。
 - 變身杖 → 船員之骨 → 幽靈船 → 愛的回憶 → 蓋亞之劍 → 銀寶珠。
 
-R-2 的 handler 與 flag writes 已由 EXE file `0x5682..0x5732` 定案；2026-07-28 已有正式
-`Game.step` trace 從道具 UI 使用 `0x61`、完成戰鬥與 save/load。它仍是合法 checkpoint 的事件切片；
-從上一個攻略節點自然抵達 CTY44 必須在本 P3 campaign trace 補證。
+R-2 的 handler 與 flag writes 已由 EXE file `0x5682..0x5732` 定案；事件 checkpoint 的
+正式道具 UI、戰鬥與 save/load component 仍有效。CTY24 event `01 61 00 9f` 已由舊 Go
+table 遷入 game-pack JSON，避免 present flag 的反向語意。campaign trace 已自然重進
+CTY60，但按原版攻略走 CTY41→42 旅人之門時，現行 transition graph 無法由 CTY42 出口
+抵達沙曼歐莎側；在 CTY tile／transition consumer 閉合前不得宣稱自然取得拉之鏡，詳見
+`docs/103`。
 
 Gate：六顆寶珠均可由正常玩家取得，且存讀檔保持來源事件完成狀態。
 
@@ -650,9 +655,9 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 
 下一輪依下列順序接手：
 
-1. **主線最高優先**：boot 起的同一條 trace 已正式完成海盜村密道、取得紅寶珠並保存
-   合法 checkpoint（`docs/101`）。下一輪從該 checkpoint 依原版順序繼續重播，第一候選為
-   商人建城／黃寶珠，但仍以玩家實際遇到的第一個 blocker 為準；
+1. **主線最高優先**：boot 起的同一條 trace 已正式完成商人交付並自然重進 CTY60。
+   下一輪先用 IDA／CTY raw 閉合 CTY41→42 旅人之門的可達出口、落點與 facing consumer，
+   再由同一 trace 取得拉之鏡並接假王／怪力魔；不得直接從 component checkpoint 起跑。
    不得因 P3 後段已有孤立 component tests，就跳過兩節點之間的玩家路徑、資源與存檔 gate。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用

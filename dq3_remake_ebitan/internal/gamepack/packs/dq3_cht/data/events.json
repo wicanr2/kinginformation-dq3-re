@@ -483,6 +483,27 @@
       }
     },
     {
+      "id": "dq3:event.shamanoasa_mod_change_mirror",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 24,
+        "section": 2,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 97,
+        "present_flag_raw": 159
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY24.DAT + DQ3.EXE",
+        "address_space": "file",
+        "address": "CTY24 section2 event0 file 0x2c91 raw 01 61 00 9f; DQ3.EXE file 0x9d86..0x9e41",
+        "consumer": "the section2 event dispatches type1 item0x61 to the common inventory consumer and clears present flag0x9f only after inventory insertion succeeds",
+        "doc": "docs/103-samanoasa-mirror-production-trace.md"
+      }
+    },
+    {
       "id": "dq3:event.pirates_den_red_orb",
       "kind": "treasure",
       "treasure": {

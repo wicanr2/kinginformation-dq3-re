@@ -1523,6 +1523,52 @@ func TestDQ3LancelCourageTrialMatchesOriginalEXECTYAndText(t *testing.T) {
 	checkRecord(txt07, event.DialogueTextIDs.CaveEmpty, 67)
 }
 
+func TestDQ3ModChangeMirrorMatchesOriginalEXEAndCTY(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return b
+	}
+	exe, cty := read("DQ3.EXE"), read("CTY24.DAT")
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	treasure, ok := p.TreasureEvent("dq3:event.shamanoasa_mod_change_mirror")
+	if !ok || treasure.Treasure != (QuestTreasureSelector{CTYRaw: 24, Section: 2, TileSubID: 0,
+		EventTypeRaw: 1, ItemRawID: 0x61, PresentFlag: 0x9f}) {
+		t.Fatalf("拉之鏡 treasure JSON 不符：%+v", treasure)
+	}
+
+	section := int(binary.LittleEndian.Uint16(cty[4:6]))
+	eventTable := section + int(binary.LittleEndian.Uint16(cty[section+8:section+10]))
+	off := eventTable + 1 + treasure.Treasure.TileSubID*4
+	if section != 0x2c77 || eventTable != 0x2c90 || off+4 > len(cty) ||
+		cty[eventTable] <= byte(treasure.Treasure.TileSubID) {
+		t.Fatalf("CTY24 sec2 event table 無效：section=%#x table=%#x", section, eventTable)
+	}
+	if raw := cty[off : off+4]; !bytes.Equal(raw, []byte{0x01, 0x61, 0x00, 0x9f}) {
+		t.Fatalf("CTY24 sec2 subid0=%x，want 01 61 00 9f", raw)
+	}
+	// 通用 examine consumer：事件 type1 將 raw item 交給 inventory writer；
+	// writer 成功後才清除 p2 指定的 present flag。
+	if raw := exe[0x9d86:0x9da0]; !bytes.Equal(raw, []byte{
+		0x8b, 0xcd, 0x80, 0xf9, 0x03, 0x74, 0x10, 0x80,
+		0xf9, 0x00, 0x75, 0x06, 0xe8, 0x2c, 0x01, 0xeb,
+		0x1f, 0x90, 0x80, 0xf9, 0x01, 0x75, 0x06, 0xe8,
+		0x49, 0x00,
+	}) {
+		t.Fatalf("DQ3.EXE common examine consumer file0x9d86 raw drifted: %x", raw)
+	}
+}
+
 func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {
