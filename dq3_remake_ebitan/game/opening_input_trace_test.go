@@ -1109,10 +1109,17 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.curCty, eastX, eastY)
 	}
 	traceWalkThroughPortal(t, g, exitX, exitY, -1, -1)
-	if g.px != eastX+2 || g.py != eastY ||
-		findCtyAtLayer(g.px, g.py, g.layer) >= 0 {
-		t.Fatalf("諾魯德東側離場未走出兩格入口 footprint：got (%d,%d) cty=%d, base=(%d,%d)",
-			g.px, g.py, findCtyAtLayer(g.px, g.py, g.layer), eastX, eastY)
+	if g.px != eastX || g.py != eastY {
+		t.Fatalf("諾魯德東側離場未使用原始 world transition 座標：got (%d,%d), want (%d,%d)",
+			g.px, g.py, eastX, eastY)
+	}
+	for g.cd > 0 {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	send(InputState{DirHeld: 3, DirEdge: -1})
+	if g.inTown || g.px != eastX+1 || g.py != eastY || g.worldEntranceGrace {
+		t.Fatalf("諾魯德離場後首步未通過原版入口第二格：town=%v pos=(%d,%d) grace=%v",
+			g.inTown, g.px, g.py, g.worldEntranceGrace)
 	}
 	traceAdventureWalkToCty(t, g, 15)
 	if !g.inTown || g.curCty != 15 || sceneSection(g.cur) != 0 {
@@ -1480,6 +1487,21 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceTownSectionTo(t, g, 17, 0)
 	traceOpenReachableDoor(t, g) // save/load 後原版魔法門回到關閉 tile
 	traceExitTownBoundary(t, g)
+	// 轉職賢者降回 Lv1；先徒步回具備旅店與教會的巴哈拉達，在低危區以
+	// 正式遭遇練回 Lv20，再正常魯拉返達瑪取船，避免後續海路逃跑失敗全滅。
+	traceAdventureTravelToCty(t, g, 15, false)
+	traceExitTownBoundary(t, g)
+	for heroTarget := stats.LevelForExp(0, g.heroExp); g.companions[0].Level() < 20; heroTarget++ {
+		if heroTarget >= stats.MaxLevel {
+			t.Fatalf("正式練級到 hero cap 仍未讓轉職賢者達 Lv20：hero%d sage%d",
+				stats.LevelForExp(0, g.heroExp), g.companions[0].Level())
+		}
+		traceTrainNearTown(t, g, 15, heroTarget+1)
+	}
+	traceAdventureWalkToCty(t, g, 15)
+	traceTalkFacility(t, g, facInn)
+	traceExitTownBoundary(t, g)
+	traceRuraToCty(t, g, 17)
 	traceBoardAndSailShip(t, g)
 	traceAdventureTravelToCty(t, g, 20)
 	// 航程可能跨過晝夜門檻；先正常出村，在地表走到白天後重新進村，
@@ -2156,6 +2178,92 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceReenterWorldEntrance(t, g, 60)
 	if !g.inTown || g.curCty != 60 {
 		t.Fatalf("商人交付後重進未自然選到 CTY60：town=%v cty=%d", g.inTown, g.curCty)
+	}
+
+	// 原版攻略路線：由商人城返回船隻，航行至雪島 CTY41，經右側旅人之門
+	// 抵達 CTY42，再由 transition record 的原始世界座標徒步前往沙曼歐莎。
+	traceExitTownBoundary(t, g, true)
+	traceRuraToCty(t, g, 38)
+	traceBoardAndSailShip(t, g)
+	traceAdventureTravelToCty(t, g, 41, true)
+	traceTownSectionTo(t, g, 42, 0)
+	traceTownSectionTo(t, g, -1, -1)
+	if g.px != 213 || g.py != 123 {
+		t.Fatalf("CTY42 旅人之門原始落點錯：(%d,%d)，want (213,123)", g.px, g.py)
+	}
+	// 地表西行會先踏入 CTY43；原始 transition graph 指定由 sec0 (5,31)
+	// 跨 CTY 到沙曼歐莎 CTY44 sec0，不能把 CTY43 入口當成可穿越地形。
+	traceAdventureWalkToCty(t, g, 43, false)
+	traceTownSectionTo(t, g, ctySamanosa, 0)
+	// 沙曼歐莎本城 sec0 沒有直接 world boundary；離場需反向穿回 CTY43
+	// 關卡，再由關卡邊界回地表。
+	traceTownSectionTo(t, g, 43, 0)
+	traceExitTownBoundary(t, g, true)
+	traceAdventureWalkToCty(t, g, 24, false)
+
+	mirrorTreasure, ok := g.pack.TreasureEvent("dq3:event.shamanoasa_mod_change_mirror")
+	if !ok {
+		t.Fatal("缺 dq3:event.shamanoasa_mod_change_mirror")
+	}
+	traceTownSectionTo(t, g, mirrorTreasure.Treasure.CTYRaw,
+		mirrorTreasure.Treasure.Section)
+	traceExaminePackTreasure(t, g, mirrorTreasure.Treasure)
+	if !g.hasItem(mirrorTreasure.Treasure.ItemRawID) ||
+		g.storyFlag(mirrorTreasure.Treasure.PresentFlag) {
+		t.Fatalf("拉之鏡 transaction 錯：item=%v flag=%v",
+			g.hasItem(mirrorTreasure.Treasure.ItemRawID),
+			g.storyFlag(mirrorTreasure.Treasure.PresentFlag))
+	}
+	if err := g.Save(); err != nil {
+		t.Fatalf("保存拉之鏡 checkpoint：%v", err)
+	}
+	restored, err = NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatalf("重建拉之鏡讀檔 Game：%v", err)
+	}
+	g = restored
+	g.frame = nil
+	press(InputState{Confirm: true})
+	send(InputState{DirHeld: -1, DirEdge: 0})
+	press(InputState{Confirm: true})
+	if !g.inTown || g.curCty != mirrorTreasure.Treasure.CTYRaw ||
+		!g.hasItem(mirrorTreasure.Treasure.ItemRawID) ||
+		g.storyFlag(mirrorTreasure.Treasure.PresentFlag) {
+		t.Fatalf("拉之鏡 save/load 錯：town=%v cty=%d item=%v flag=%v",
+			g.inTown, g.curCty, g.hasItem(mirrorTreasure.Treasure.ItemRawID),
+			g.storyFlag(mirrorTreasure.Treasure.PresentFlag))
+	}
+
+	traceTownSectionTo(t, g, -1, -1)
+	traceUseInventoryItem(t, g, darkLampEffect.ItemRawID)
+	if !g.isNight() {
+		t.Fatalf("前往假王事件前黑暗燈未切到夜晚：phase=%d", g.dnPhase)
+	}
+	traceAdventureWalkToCty(t, g, 43, false)
+	traceTownSectionTo(t, g, ctySamanosa, 0)
+	traceTownSectionTo(t, g, ctySamanosa, mirrorSection, mirrorX, mirrorY)
+	traceWalkTo(t, g, mirrorX, mirrorY)
+	traceUseInventoryItem(t, g, mirrorTreasure.Treasure.ItemRawID)
+	if g.mirrorStage != 1 || !g.dlg.open || g.storyFlag(0x42) ||
+		!g.storyFlag(0x10) {
+		t.Fatalf("正式使用拉之鏡未揭露假王：stage=%d dlg=%v f42=%v f10=%v night=%v cty=%d sec=%d pos=(%d,%d) item=%v",
+			g.mirrorStage, g.dlg.open, g.storyFlag(0x42), g.storyFlag(0x10),
+			g.isNight(), g.curCty, sceneSection(g.cur), g.px, g.py,
+			g.hasItem(mirrorTreasure.Treasure.ItemRawID))
+	}
+	traceCloseDialogue(t, g)
+	traceCloseDialogue(t, g)
+	if g.mirrorStage != 3 || !g.battle.active || g.battle.monID != monsterBossTroll {
+		t.Fatalf("拉之鏡對話後未進怪力魔戰：stage=%d active=%v mon=%d",
+			g.mirrorStage, g.battle.active, g.battle.monID)
+	}
+	traceResolveBattle(t, g, false)
+	traceCloseDialogue(t, g)
+	if g.battle.active || g.mirrorStage != 0 || !g.hasItem(itemModChangeStaff) ||
+		g.storyFlag(0x42) || !g.storyFlag(0x22) || g.dnPhase != 0 {
+		t.Fatalf("怪力魔勝利 transaction 錯：active=%v stage=%d staff=%v f42=%v f22=%v phase=%d",
+			g.battle.active, g.mirrorStage, g.hasItem(itemModChangeStaff),
+			g.storyFlag(0x42), g.storyFlag(0x22), g.dnPhase)
 	}
 }
 

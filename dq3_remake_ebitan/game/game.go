@@ -267,6 +267,7 @@ type Game struct {
 	manBLS                    []byte         // NPC sprite 來源
 	towns                     map[int]*Scene // 已載入城鎮快取(cty→Scene)
 	overPx, overPy            int            // 記住進城前的地表座標(Esc 回來用)
+	worldEntranceGrace        bool           // 城鎮→地表後第一個成功步伐不重新觸發同列兩格入口（strong；見 docs/103）
 	hero                      *dq3data.CharSprite
 	heroRole                  *dq3data.CharSprite // 由 game-pack temporary_role active flag 推導；不另存檔
 	px, py                    int                 // 主角在 cur 內的 tile 座標
@@ -1215,22 +1216,26 @@ func (g *Game) step(in InputState) error {
 		g.tryBaramosReturnEvent()
 		g.tryOrtegaEvent()
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
-		cty := findCtyAtLayer(g.px, g.py, g.layer) // 依目前地表層找入城
-		cty = g.resolveSoloChallengeWorldEntrance(cty)
-		if g.layer == 0 && g.px >= 54 && g.px <= 55 && g.py == 129 {
-			if g.storyFlag(0x4d) {
-				cty = 71 // 巴拉摩斯前：封閉中的蓋亞洞窟
-			} else {
-				cty = 72 // 索瑪現身後：地震破壞蓋亞洞窟封印
+		skipEntrance := g.worldEntranceGrace
+		g.worldEntranceGrace = false
+		if !skipEntrance {
+			cty := findCtyAtLayer(g.px, g.py, g.layer) // 依目前地表層找入城
+			cty = g.resolveSoloChallengeWorldEntrance(cty)
+			if g.layer == 0 && g.px >= 54 && g.px <= 55 && g.py == 129 {
+				if g.storyFlag(0x4d) {
+					cty = 71 // 巴拉摩斯前：封閉中的蓋亞洞窟
+				} else {
+					cty = 72 // 索瑪現身後：地震破壞蓋亞洞窟封印
+				}
 			}
-		}
-		if pc := worldEntranceResolve(g.px, g.py, g.layer,
-			g.pack.WorldEntranceVariants(), g.storyFlag); pc >= 0 {
-			cty = pc
-		}
-		if cty >= 0 {
-			g.enterTownCty(cty)
-			return nil
+			if pc := worldEntranceResolve(g.px, g.py, g.layer,
+				g.pack.WorldEntranceVariants(), g.storyFlag); pc >= 0 {
+				cty = pc
+			}
+			if cty >= 0 {
+				g.enterTownCty(cty)
+				return nil
+			}
 		}
 		g.advanceDaynight() // 地表走一步 → 推進晝夜(每 60 步一相位;城內不推進)
 		if g.repel > 0 {    // 聖水驅敵期間每步遞減、不遇弱敵(移植 #3 repel)
@@ -1421,13 +1426,13 @@ func (g *Game) tryTransition() {
 			g.progressSet(msDescend) // CTY77 的原版 0xfe 出口：自然進入愛列夫加特
 		}
 		g.exitTown()
+		g.worldEntranceGrace = true
 		if dx != 0 && dx < g.cur.w {
 			g.px = dx
 		}
 		if dy != 0 && dy < g.cur.h {
 			g.py = dy
 		}
-		g.egressWorldEntrance(g.facing)
 		g.overPx, g.overPy = g.px, g.py
 		g.renderFrame()
 		return
@@ -1669,27 +1674,6 @@ func (g *Game) advanceBaramosReturn() {
 		// CTY71/72 同一地表座標、依此旗標選版本；清 cache 避免沿用舊場景。
 		delete(g.towns, 71)
 		delete(g.towns, 72)
-	}
-}
-
-// egressWorldEntrance 完成 CTY transition 的離場步：原始 transition table 保存的是
-// world entrance footprint 起點，而 findCtyAtLayer 接受 loc.X 與 loc.X+1 兩格。
-// 玩家從洞內朝離場方向走時，原版在交回地表控制前已位於該 footprint 外；若停在其中
-// 任一格，下一步會立刻重新進洞。只沿目前正式輸入方向、在可走地形上最多跨過兩格，
-// 不使用 CTY 專屬座標或猜測目的地。
-func (g *Game) egressWorldEntrance(dir int) {
-	if g.cur == nil || dir < 0 || dir > 3 {
-		return
-	}
-	dx, dy := dirDelta(dir)
-	for steps := 0; steps < 2 &&
-		findCtyAtLayer(g.px, g.py, g.layer) >= 0; steps++ {
-		nx, ny := g.px+dx, g.py+dy
-		if nx < 0 || ny < 0 || nx >= g.cur.w || ny >= g.cur.h ||
-			g.cur.Blocked(nx, ny) {
-			return
-		}
-		g.px, g.py = nx, ny
 	}
 }
 

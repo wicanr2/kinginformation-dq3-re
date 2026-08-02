@@ -1,7 +1,8 @@
 # 拉之鏡與沙曼歐莎假王正式流程
 
-狀態：拉之鏡原始資料與 common consumer 已達 D3，既有假王事件 component 為 E2／V1；
-boot trace 已自然重進 CTY60，但尚未穿過 CTY41→42 旅人之門抵達沙曼歐莎，故不是 E3。
+狀態：拉之鏡原始資料與 common consumer 已達 D3；同一條 boot production trace 已從
+CTY60 自然走過 CTY41→42、CTY43 關卡、CTY44、CTY24 拉之鏡、save/load 與假王戰，
+此切片現為 E3／V1。
 
 ## 原始輸入與定位
 
@@ -31,22 +32,31 @@ present flag set 解釋成「已取得」，會讓拉之鏡在正常初始旗標
 
 ## 正式玩家輸入現況
 
-`TestOpeningProductionInputTrace` 不使用 debug key、內部事件函式或狀態注入，目前只證實：
+`TestOpeningProductionInputTrace` 不使用 debug key、內部事件函式或狀態注入，目前證實：
 
 1. 從商人交付並 save/load 的 CTY58 checkpoint 正式離城；
 2. 由同一世界座標重進，ordered gate 自然選到 CTY60；
-3. 依原版攻略應再航行至雪島祠堂 CTY41，經三旅人之門到 CTY42，才可徒步至沙曼歐莎。
+3. 航行至雪島 CTY41，以正式最終鑰匙開門，經右側旅人之門到 CTY42；
+4. CTY42 bottom row 的同一 transition subid 使用 raw destination `(213,123)` 離場；
+5. 地表西行先進 CTY43，再走原始跨 CTY portal 到 CTY44，沒有穿越其他入口或直接載入城鎮；
+6. 由 CTY44 關卡正常離場，徒步到 CTY24，取得拉之鏡並通過 save/load；
+7. 使用黑暗燈、再次經 CTY43 入 CTY44，夜間走到 sec1 `(14,7)`，由正式道具選單使用
+   拉之鏡，完成 record97／98、monster89、變身杖 `0x62` 與旗標交易。
 
-目前第一個 blocker 是 CTY42：正式最終鑰匙可開出口前的門，但現行 graph 所列世界出口
-與 runtime 可達格／落點無法閉合，離場後也無法在不重入 CTY42 的情況下走向 CTY44。
-曾測試以邊界外法線取代 facing 的推測性修正，仍未閉合，已撤回且未保留在 production。
-下一輪必須由 CTY41／42 raw tile、transition subid 與 DQ3.EXE transition consumer 重新
-追查；在此之前不得宣稱自然取得拉之鏡或清除商人城 `flag0x42` gate。
+IDA 9.4 證實 `DQ3.EXE` file `0x49f9..0x4a40` 重新讀取 transition X/Y；只有兩者皆零時
+才回退 remembered coordinates，否則直接寫 world X/Y，完全不讀 facing。舊 remake
+依 facing 把玩家額外推出兩格的行為與測試已刪除。原版入口同列兩格判定則由 file
+`0x43a6..0x43d0` 證實；跨 CTY43 關卡是正式路線，不可把入口當成普通地表格穿過。
+
+`worldEntranceGrace` 目前推論等級為 `strong`：精確出口座標、同列兩格入口 matcher、
+諾魯德東口的地表連通性與完整 production trace 共同證明離場後首步不能立刻重進；但原版
+保存／清除此一次性狀態的 writer-consumer 尚未在 IDA 閉合。因此不得把欄位名稱或
+scene-mode 猜想升格成 confirmed；後續仍需用原版同操作畫面或直接狀態 writer 補到 D3。
 
 ## 玩家可見證據
 
 - [使用拉之鏡揭露假王](../dq3_remake_ebitan/docs/samanosa_mirror_reveal.png)
 - [怪力魔戰](../dq3_remake_ebitan/docs/samanosa_boss_troll.png)
 
-兩張圖由現行 Ebitengine renderer 重生，屬 V1 runtime 證據；尚未宣稱與精訊 DOS 同狀態
-逐像素一致。
+兩張圖已由本批現行 Ebitengine renderer 重生（內容與舊檔相同），屬 V1 runtime 證據；尚未宣稱與精訊 DOS
+同狀態逐像素一致。

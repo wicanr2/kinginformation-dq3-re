@@ -1,6 +1,10 @@
 package game
 
 import (
+	"bytes"
+	"encoding/binary"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
@@ -26,6 +30,80 @@ func TestWarpGet(t *testing.T) {
 	}
 	if _, _, _, ok := warpGet(-1); ok {
 		t.Error("warp[-1] 應 ok=false")
+	}
+}
+
+func TestCTY42WorldExitUsesOriginalDestinationWithoutFacingNudge(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "assets_raw")
+	}
+	read := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Skipf("original %s unavailable: %v", name, err)
+		}
+		return b
+	}
+	exe, cty := read("DQ3.EXE"), read("CTY42.DAT")
+	section := int(binary.LittleEndian.Uint16(cty[0:2]))
+	transitionTable := section + int(binary.LittleEndian.Uint16(cty[section+0x0c:section+0x0e]))
+	if section != 0x02 || transitionTable != 0x2b ||
+		!bytes.Equal(cty[transitionTable+8:transitionTable+12], []byte{42, 0xff, 213, 123}) {
+		t.Fatalf("CTY42 世界出口 raw drift：section=%#x table=%#x raw=%x",
+			section, transitionTable, cty[transitionTable+8:transitionTable+12])
+	}
+	// IDA linear 0x13689 / file 0x49f9：重新取 transition X/Y；兩者皆零才回退
+	// remembered coordinates，否則直接寫 DGROUP 0x4f2f/0x4f31。此段不讀 facing。
+	if raw := exe[0x49f9:0x4a41]; !bytes.Equal(raw, []byte{
+		0x06, 0xa1, 0x36, 0x25, 0x8e, 0xc0, 0x8b, 0x16, 0x24, 0x0b,
+		0xbf, 0x0c, 0x00, 0x03, 0xfa, 0x26, 0x8b, 0x35, 0x03, 0xf2,
+		0x8a, 0x1e, 0x55, 0x0b, 0x80, 0xe3, 0x1f, 0x32, 0xff, 0xd1,
+		0xe3, 0xd1, 0xe3, 0x03, 0xf3, 0x26, 0x8a, 0x44, 0x02, 0x26,
+		0x8a, 0x5c, 0x03, 0x07, 0x32, 0xe4, 0x32, 0xff, 0x3d, 0x00,
+		0x00, 0x75, 0x0c, 0x83, 0xfb, 0x00, 0x75, 0x07, 0xa1, 0x53,
+		0x50, 0x8b, 0x1e, 0x55, 0x50, 0xa3, 0x2f, 0x4f, 0x89, 0x1e,
+		0x31, 0x4f,
+	}) {
+		t.Fatalf("DQ3.EXE transition destination consumer file0x49f9 drifted: %x", raw)
+	}
+
+	g, err := NewGame(os.DirFS(dir), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		42, mapBlkNum[42], 0, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.curCty, g.inTown = sc, sc, 42, true
+	g.showTitle = false
+	g.px, g.py, g.facing = 7, 12, 0
+	g.tryTransition()
+	if g.inTown || g.curCty != -1 || g.px != 213 || g.py != 123 ||
+		g.overPx != 213 || g.overPy != 123 {
+		t.Fatalf("CTY42 世界出口 transaction 錯：town=%v cty=%d pos=(%d,%d) remembered=(%d,%d)",
+			g.inTown, g.curCty, g.px, g.py, g.overPx, g.overPy)
+	}
+	if !g.worldEntranceGrace {
+		t.Fatal("CTY42 離場未建立一次性的 world entrance grace")
+	}
+	for frames := 0; g.cd > 0 && frames < 100; frames++ {
+		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if g.cd > 0 {
+		t.Fatalf("CTY42 離場 cooldown 100 frame 後仍為 %d", g.cd)
+	}
+	if err := g.step(InputState{DirHeld: 2, DirEdge: -1}); err != nil {
+		t.Fatal(err)
+	}
+	if g.inTown || g.curCty != -1 || g.px != 212 || g.py != 123 || g.worldEntranceGrace {
+		t.Fatalf("CTY42 離場首步未在不重入的情況下消耗 grace：town=%v cty=%d pos=(%d,%d) grace=%v",
+			g.inTown, g.curCty, g.px, g.py, g.worldEntranceGrace)
 	}
 }
 

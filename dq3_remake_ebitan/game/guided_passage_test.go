@@ -255,34 +255,6 @@ func TestNorudGuidedPassageMatchesOriginalEXECTYAndText(t *testing.T) {
 	}
 }
 
-func TestWorldEntranceEgressClearsBothNorudFootprints(t *testing.T) {
-	dir := spineAssetsDir(t)
-	g, err := NewGame(os.DirFS(dir), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	g.cur, g.inTown, g.layer = g.overworldScene(), false, 0
-
-	// CTY62 的西口 transition 寫 footprint 左格 `(81,81)`；向西一步即離開。
-	g.px, g.py = ctyLoc[62][0], ctyLoc[62][1]
-	g.egressWorldEntrance(2)
-	if g.px != ctyLoc[62][0]-1 || g.py != ctyLoc[62][1] ||
-		findCtyAtLayer(g.px, g.py, g.layer) >= 0 {
-		t.Fatalf("CTY62 西口未離開入口 footprint：got (%d,%d) cty=%d",
-			g.px, g.py, findCtyAtLayer(g.px, g.py, g.layer))
-	}
-
-	// CTY63 的東口 transition 寫 footprint 左格 `(84,81)`；原版畫面交回控制時
-	// 已越過 `(84,81)/(85,81)` 兩格，因此必須向東走到 `(86,81)`。
-	g.px, g.py = ctyLoc[63][0], ctyLoc[63][1]
-	g.egressWorldEntrance(3)
-	if g.px != ctyLoc[63][0]+2 || g.py != ctyLoc[63][1] ||
-		findCtyAtLayer(g.px, g.py, g.layer) >= 0 {
-		t.Fatalf("CTY63 東口未離開入口 footprint：got (%d,%d) cty=%d",
-			g.px, g.py, findCtyAtLayer(g.px, g.py, g.layer))
-	}
-}
-
 func bytesToHex(raw []byte) string {
 	const digits = "0123456789abcdef"
 	out := make([]byte, len(raw)*2)

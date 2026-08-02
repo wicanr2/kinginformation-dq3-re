@@ -98,12 +98,16 @@ IDA 同時訂正地表 seam（X `242/2`、Y `204/2`）與船 mode1 的 attr bit1
 CTY83 黃寶珠原始 event `01 6a 00 4a` 已遷入 JSON；舊 Go table 把 present flag set
 誤作「已取得」而會卡死來源，已移除。handler48 的 record42／43、flag0x4a 分支、保存的
 建城者姓名、男性 flag0x15／女性 flag0x23 與 save/load 已達 component E2／V1。同一條
-boot trace 已由商人交付自然重進 CTY60。CTY24 拉之鏡 event `01 61 00 9f` 已遷入 JSON，
-但自然路徑在 CTY41→42 旅人之門出口受阻；未閉合 tile／transition consumer 前，不把
-component 假王戰升格為 campaign E3。尚余拉之鏡至蓋亞之劍、CTY83 黃寶珠的自然 E3、
-CTY59 handler41 設施分支及原版 V2 對拍。詳見 `docs/102`、`docs/103`。
-**尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從 CTY60
-checkpoint 繼續，第一 blocker 是 CTY41→42 旅人之門出口。地表水面顏色及四輪 palette transition 仍未達 V3，
+boot trace 已由商人交付自然重進 CTY60，並正式航行到 CTY41、走 CTY42 原始出口
+`(213,123)`、穿過 CTY43 關卡進 CTY44，再由 CTY24 取得拉之鏡並完成 save/load。
+同一條 trace 已使用黑暗燈，在 CTY44 sec1 `(14,7)` 由道具選單使用拉之鏡，閉合
+record97／98、monster89、變身杖 `0x62` 與勝利旗標交易，故此段升為 campaign E3／V1。
+IDA 9.4 證實離城 consumer 直接使用 transition X/Y、兩者皆零才回退 remembered
+coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。尚余變身杖至蓋亞之劍、
+CTY83 黃寶珠的自然 E3、CTY59 handler41 設施分支及原版 V2 對拍。詳見 `docs/102`、
+`docs/103`。
+**尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從假王勝利後
+checkpoint 繼續追變身杖／船員之骨。地表水面顏色及四輪 palette transition 仍未達 V3，
 不得因流程閉合而略過。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
