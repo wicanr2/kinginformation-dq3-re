@@ -939,8 +939,8 @@ DQ3 CTY59 handler41 在 IDA linear `0x15bba`（file `0x6f2a`）比較 `DS:4f35==
 `(152,238,352,96)`、inset `(16,16)`、20 欄、每頁 4 行；EXE 結構與 consumer 見
 [`docs/94`](94-dialogue-window-and-monster-mask-re.md)。缺欄位或無效幾何一律 fail closed。
 
-有 `party` capability 的 pack 另須提供 `party_hud`；除通用 window geometry 外，
-`hp_label_glyph`、`mp_label_glyph`、`level_label_glyph` 也必須由 pack 指定。DQ3
+有 `party` capability 的 pack 另須提供 `party_hud`；除通用 window geometry 與 `frame`
+外，`hp_label_glyph`、`mp_label_glyph`、`level_label_glyph` 也必須由 pack 指定。DQ3
 精訊版 canonical 為 `(48,244,448,80)`、四欄、四列，對應原版影片的姓名／H／M／等級
 狀態窗；缺資料時引擎不畫猜測版面。
 
@@ -962,7 +962,9 @@ DQ3 canonical 使用 `FIRST.SCR`（112000 bytes、640×350）與 `docs/title/fir
 
 `interface.json.battle_message` 保存戰鬥行動／結算訊息使用的版本專屬外框與文字網格，欄位
 同 `dialogue`（`id`、`x`、`y`、`width`、`height`、`text_inset_x`、`text_inset_y`、
-`columns`、`lines_per_page`、`evidence`）。DQ3 精訊版由 DQ3.EXE 的 DGROUP `0x3e6e`
+`columns`、`lines_per_page`、`frame`、`evidence`）。`frame` 是 `{id,border_rgb,
+interior_rgb,evidence}`；框線演算法屬於共用 engine，RGB 結果與證據屬於 pack。
+DQ3 精訊版由 DQ3.EXE 的 DGROUP `0x3e6e`
 共用 `win_rect` 證實為可見 `(152,238,352,96)`、inset `(16,16)`、20 欄／4 行；
 `sub_1fb36` 的 `(360,112)` 只是關閉時備份背景範圍，不是玩家看見的框。battle
 renderer 只能讀這個 pack layout，缺少資料時 production 建立失敗，不把訊息塞回指令框或
@@ -973,8 +975,8 @@ renderer 只能讀這個 pack layout，缺少資料時 production 建立失敗�
 由原版 `win_rect` 直接消費的 panel。兩者除共用 window geometry 外，還必須指定
 `height_mode="rows_plus_base"`、`base_rows`、`row_height` 以及各自的
 `cursor_inset_x`、`row_inset_y`、`label_inset_x`、`secondary_label_inset_x`、
-`value_inset_x`、`name_inset_x`、`count_inset_x`；這些是資料欄位，不得在 renderer 以
-DQ3 座標補值。
+`value_inset_x`、`name_inset_x`、`count_inset_x` 與 `frame`；這些是資料欄位，不得在
+renderer 以 DQ3 座標或黑／白色彩補值。
 
 DQ3 canonical（皆為 640×350 邏輯 pixel）為：
 
@@ -983,8 +985,9 @@ DQ3 canonical（皆為 640×350 邏輯 pixel）為：
 | `battle_command` | file `0x1a252`／`DS:0x4112`；`(144,248,128,96)`（四列） | `(menu_rows+2)*16`；三列為 80 高 | cursor `16`、row y `16`、兩欄 x `32`／`80` |
 | `battle_enemy` | file `0x1a270`／`byte_28f00`；`(288,248,256,48)`（一列） | `(active_groups+2)*16` | name x/y `32`／`16`、count x `144` |
 
-writer／consumer、raw bytes、IDA linear／file 位址與尚未閉合的 style／baseline 長尾見
-[`docs/109`](109-battle-hud-rects-re.md)。pack 缺任一 production panel 時
+writer／consumer、raw bytes、IDA linear／file 位址與 raw flags／frame 證據見
+[`docs/109`](109-battle-hud-rects-re.md)。`0x031a`、`0x0b11`、`0x0912` 是 raw
+flags／備份槽，不是可替換 style ID。pack 缺任一 production panel 或 frame 時
 `NewGameWithPack` fail closed；直接 unit fixture 可以不載 pack，但不代表可執行遊戲有
 版本 fallback。
 

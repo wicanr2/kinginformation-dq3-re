@@ -272,18 +272,39 @@ func drawGlyph(rgba []byte, tx *dq3data.Text, px, py, idx int, fg dq3data.Color)
 	}
 }
 
-// fillBox:黑底 + 白框(選單/視窗共用)。
-func fillBox(rgba []byte, x, y, w, h int, border dq3data.Color) {
-	dark := dq3data.Color{R: 0, G: 0, B: 0}
+// fillBoxStyle 以 pack 提供的內部色與框線色繪製視窗。框線演算法是共用
+// engine primitive；顏色與幾何屬於 game pack。
+func fillBoxStyle(rgba []byte, x, y, w, h int, interior, border dq3data.Color) {
 	for r := 0; r < h; r++ {
 		for c := 0; c < w; c++ {
-			col := dark
+			col := interior
 			if r == 0 || r == h-1 || c == 0 || c == w-1 {
 				col = border
 			}
 			putPx(rgba, x+c, y+r, col)
 		}
 	}
+}
+
+// fillBox 保留給沒有安裝 pack 的輕量測試 fixture；正式畫面一律透過
+// fillPackBox 取得 JSON 的 frame 顏色。
+func fillBox(rgba []byte, x, y, w, h int, border dq3data.Color) {
+	fillBoxStyle(rgba, x, y, w, h, dq3data.Color{}, border)
+}
+
+func frameColor(rgb [3]uint8) dq3data.Color {
+	return dq3data.Color{R: rgb[0], G: rgb[1], B: rgb[2]}
+}
+
+// fillPackBox 套用版本專屬 frame。direct unit fixture 若未安裝 frame，
+// 退回既有黑底白框只供測試導覽；NewGameWithPack 會先拒絕此資料缺口。
+func fillPackBox(rgba []byte, layout gamepack.WindowLayout, x, y, w, h int) {
+	if layout.Frame == nil {
+		fillBox(rgba, x, y, w, h, dq3data.Color{R: 255, G: 255, B: 255})
+		return
+	}
+	fillBoxStyle(rgba, x, y, w, h,
+		frameColor(layout.Frame.InteriorRGB), frameColor(layout.Frame.BorderRGB))
 }
 
 func putPx(rgba []byte, x, y int, c dq3data.Color) {

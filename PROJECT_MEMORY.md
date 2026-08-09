@@ -327,3 +327,15 @@ Go 現在由 `Town.EncounterFlag`／`Scene.encounterFlag` 保存 raw，正式地
 `encounter_step`。完整輸入雜湊、IDA linear／logical／file 位址與限制見 [`docs/115`](docs/115-encounter-cty-gate-re.md)。
 本輪只做受影響的針對性測試，沒有重跑長達 311 秒的完整 production trace；強制遭遇、完整
 encounter pack JSON、戰鬥 V3 與音效仍依 `docs/74` 保持未完成。
+
+2026-08-10 戰鬥 frame 契約勘誤與接線：IDA Pro 9.4 追完
+`sub_1f590 → sub_1fd30 → sub_1fdb1`，確認 `0x031a`、`0x0b11`、`0x0912` 是
+`win_rect` 的 raw flags／背景備份槽，不是三種 frame style。`sub_1fd30` 依共用
+EGA writer 畫四邊；與原版 `dosbox/orochi_boss.png` 像素核對後，可見結果保存為
+`interface.json` 各 battle window 的 `frame`（白色 1px border、黑色 interior，D2
+pack evidence；推論說明見 [`docs/109`](docs/109-battle-hud-rects-re.md)）。
+`fillPackBox` 已讓戰鬥訊息、指令、敵名及隊伍狀態框消費 JSON，
+`NewGameWithPack` 缺戰鬥 frame 即 fail closed；直接 fixture 才保留導覽用 fallback。
+`internal/gamepack` 的 EXE/HUD parity、`game` 編譯、`TestBattleCommand`、
+`TestMultiEnemy`／`TestHit` 均在 Docker 通過；本輪未重播 311 秒完整 trace，戰鬥逐動作
+timing／動畫／音效、抗性／formation／掉落仍是 V3 長尾。

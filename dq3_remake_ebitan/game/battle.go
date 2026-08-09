@@ -1759,7 +1759,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	{
 		tx0, ty0, colpx := 0x13*8, 8, 0xa*8
 		cols := 1 + len(b.companions)
-		fillBox(rgba, tx0-8, ty0-6, cols*colpx+8, 4*16+12, white)
+		fillPackBox(rgba, b.messageLayout, tx0-8, ty0-6, cols*colpx+8, 4*16+12)
 		drawCol := func(cx int, name []int, hp, mp, level int, alive bool) {
 			hc := white
 			if !alive {
@@ -1797,7 +1797,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	if b.phase == phMessage {
 		w := b.messageLayout
 		if w.ID != "" {
-			fillBox(rgba, w.X, w.Y, w.Width, w.Height, white)
+			fillPackBox(rgba, w, w.X, w.Y, w.Width, w.Height)
 			drawBattleMessage(rgba, b.tx, w.X+w.TextInsetX, w.Y+w.TextInsetY,
 				w.Columns, b.msgData, white)
 		}
@@ -1826,7 +1826,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				}
 				mh = (rows + w.BaseRows) * rowHeight
 			}
-			fillBox(rgba, mx, my, mw, mh, white)
+			fillPackBox(rgba, b.commandLayout.WindowLayout, mx, my, mw, mh)
 			if b.phase == phSpell {
 				spells := b.actorSpells(b.commandActor)
 				// 原版視窗只有 5 行；已學咒文超過 5 筆時，讓目前游標保持在可見
@@ -1910,7 +1910,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				if w.HeightMode == "rows_plus_base" {
 					eh = (len(names) + w.BaseRows) * w.RowHeight
 				}
-				fillBox(rgba, ex, ey, ew, eh, white)
+				fillPackBox(rgba, b.enemyLayout.WindowLayout, ex, ey, ew, eh)
 				for i, n := range names {
 					y := ey + w.TextInsetY + i*w.RowHeight
 					b.drawName(rgba, ex+w.NameInsetX, y, 0x258+n.monID, white)

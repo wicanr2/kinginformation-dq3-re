@@ -1701,12 +1701,14 @@ func TestDQ3BattleHUDRectsMatchOriginalEXE(t *testing.T) {
 	if !ok || command.X != 144 || command.Y != 248 || command.Width != 128 || command.Height != 96 ||
 		command.BaseRows != 2 || command.RowHeight != 16 || command.CursorInsetX != 16 ||
 		command.RowInsetY != 16 || command.LabelInsetX != 32 || command.SecondaryLabelInsetX != 80 ||
-		command.ValueInsetX != 112 {
+		command.ValueInsetX != 112 || command.Frame == nil || command.Frame.BorderRGB != [3]uint8{255, 255, 255} ||
+		command.Frame.InteriorRGB != [3]uint8{0, 0, 0} {
 		t.Fatalf("battle command layout=%+v", command)
 	}
 	enemy, ok := p.BattleEnemyLayout()
 	if !ok || enemy.X != 288 || enemy.Y != 248 || enemy.Width != 256 || enemy.Height != 48 ||
-		enemy.BaseRows != 2 || enemy.RowHeight != 16 || enemy.NameInsetX != 32 || enemy.CountInsetX != 144 {
+		enemy.BaseRows != 2 || enemy.RowHeight != 16 || enemy.NameInsetX != 32 || enemy.CountInsetX != 144 ||
+		enemy.Frame == nil || enemy.Frame.ID != "dq3:frame.ega_window_white_black" {
 		t.Fatalf("battle enemy layout=%+v", enemy)
 	}
 	labels, ok := p.BattleCommandLabels()
@@ -1889,7 +1891,9 @@ func TestDQ3PartySpriteAndHUDContract(t *testing.T) {
 		layout.Columns != 4 || layout.LinesPerPage != 4 ||
 		layout.HPLabelGlyph == nil || *layout.HPLabelGlyph != 22 ||
 		layout.MPLabelGlyph == nil || *layout.MPLabelGlyph != 27 ||
-		layout.LevelLabelGlyph == nil || *layout.LevelLabelGlyph != 106 {
+		layout.LevelLabelGlyph == nil || *layout.LevelLabelGlyph != 106 ||
+		layout.Frame == nil || layout.Frame.BorderRGB != [3]uint8{255, 255, 255} ||
+		layout.Frame.InteriorRGB != [3]uint8{0, 0, 0} {
 		t.Fatalf("party HUD layout=%+v, want DQ3 four-column contract", layout)
 	}
 	wantEntries := []int{0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60}

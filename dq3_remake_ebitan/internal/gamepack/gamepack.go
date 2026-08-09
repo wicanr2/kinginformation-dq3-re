@@ -91,22 +91,33 @@ type Facilities struct {
 	ServiceDefinitions []ServiceDefinition `json:"service_definitions"`
 }
 
+// FrameStyle 是版本專屬的視窗前景／內部色彩契約。原版 EGA 的框線演算法
+// 仍由引擎提供；pack 只提供玩家可見的 RGB 結果與證據，避免 renderer 偷藏
+// 某一版的黑底／白框預設。
+type FrameStyle struct {
+	ID          string   `json:"id"`
+	BorderRGB   [3]uint8 `json:"border_rgb"`
+	InteriorRGB [3]uint8 `json:"interior_rgb"`
+	Evidence    Evidence `json:"evidence"`
+}
+
 // WindowLayout 是版本專屬的固定視窗幾何。引擎只依此通用契約繪製，
-// 不保存任何 DQ3 專屬座標或尺寸。
+// 不保存任何 DQ3 專屬座標、尺寸或框線色彩。
 type WindowLayout struct {
-	ID              string   `json:"id"`
-	X               int      `json:"x"`
-	Y               int      `json:"y"`
-	Width           int      `json:"width"`
-	Height          int      `json:"height"`
-	TextInsetX      int      `json:"text_inset_x"`
-	TextInsetY      int      `json:"text_inset_y"`
-	Columns         int      `json:"columns"`
-	LinesPerPage    int      `json:"lines_per_page"`
-	HPLabelGlyph    *int     `json:"hp_label_glyph,omitempty"`
-	MPLabelGlyph    *int     `json:"mp_label_glyph,omitempty"`
-	LevelLabelGlyph *int     `json:"level_label_glyph,omitempty"`
-	Evidence        Evidence `json:"evidence"`
+	ID              string      `json:"id"`
+	X               int         `json:"x"`
+	Y               int         `json:"y"`
+	Width           int         `json:"width"`
+	Height          int         `json:"height"`
+	TextInsetX      int         `json:"text_inset_x"`
+	TextInsetY      int         `json:"text_inset_y"`
+	Columns         int         `json:"columns"`
+	LinesPerPage    int         `json:"lines_per_page"`
+	HPLabelGlyph    *int        `json:"hp_label_glyph,omitempty"`
+	MPLabelGlyph    *int        `json:"mp_label_glyph,omitempty"`
+	LevelLabelGlyph *int        `json:"level_label_glyph,omitempty"`
+	Frame           *FrameStyle `json:"frame,omitempty"`
+	Evidence        Evidence    `json:"evidence"`
 }
 
 // BattlePanelLayout extends the common window geometry with the small set of
@@ -1486,6 +1497,9 @@ func (p *Pack) validateInterface() error {
 	if err := validateEvidence(w.Evidence); err != nil {
 		return fmt.Errorf("dialogue evidence: %w", err)
 	}
+	if err := validateFrameStyle("dialogue", w.Frame); err != nil {
+		return err
+	}
 	if m := p.Interface.BattleMessage; m.ID != "" {
 		if m.X < 0 || m.Y < 0 || m.Width <= 0 || m.Height <= 0 ||
 			m.TextInsetX < 0 || m.TextInsetY < 0 ||
@@ -1495,6 +1509,9 @@ func (p *Pack) validateInterface() error {
 		}
 		if err := validateEvidence(m.Evidence); err != nil {
 			return fmt.Errorf("battle message evidence: %w", err)
+		}
+		if err := validateFrameStyle("battle message", m.Frame); err != nil {
+			return err
 		}
 	}
 	if c := p.Interface.BattleCommand; c.ID != "" {
@@ -1602,6 +1619,9 @@ func (p *Pack) validateInterface() error {
 		}
 		if err := validateEvidence(h.Evidence); err != nil {
 			return fmt.Errorf("party HUD evidence: %w", err)
+		}
+		if err := validateFrameStyle("party HUD", h.Frame); err != nil {
+			return err
 		}
 	}
 	if s := p.Interface.NewGameConfirmation; s != nil {
@@ -1746,6 +1766,22 @@ func validateBattlePanelLayout(name string, p BattlePanelLayout) error {
 	}
 	if err := validateEvidence(w.Evidence); err != nil {
 		return fmt.Errorf("%s evidence: %w", name, err)
+	}
+	if err := validateFrameStyle(name, w.Frame); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateFrameStyle(name string, f *FrameStyle) error {
+	if f == nil {
+		return nil
+	}
+	if f.ID == "" {
+		return fmt.Errorf("%s frame id is required", name)
+	}
+	if err := validateEvidence(f.Evidence); err != nil {
+		return fmt.Errorf("%s frame evidence: %w", name, err)
 	}
 	return nil
 }

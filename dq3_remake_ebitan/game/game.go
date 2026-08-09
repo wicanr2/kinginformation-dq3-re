@@ -2654,6 +2654,18 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.battle_enemy")
 	}
+	for name, layout := range map[string]gamepack.WindowLayout{
+		"battle_message": battleMessageLayout,
+		"battle_command": battleCommandLayout.WindowLayout,
+		"battle_enemy":   battleEnemyLayout.WindowLayout,
+	} {
+		if layout.Frame == nil {
+			return nil, fmt.Errorf("game pack missing interface.%s.frame", name)
+		}
+	}
+	if partyHUDLayout, ok := pack.PartyHUDLayout(); ok && partyHUDLayout.Frame == nil {
+		return nil, fmt.Errorf("game pack missing interface.party_hud.frame")
+	}
 	battleSceneLayout, ok := pack.BattleSceneLayout()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.battle_scene")

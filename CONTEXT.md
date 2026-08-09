@@ -164,7 +164,7 @@
   [`74`](docs/74-ebiten-remake-completion-plan.md) 現行完成計畫 ·
   [`84`](docs/84-game-pack-json-contract.md) 共用 engine／versioned game pack JSON 契約 ·
   [`108`](docs/108-battle-text-pack.md) 戰鬥文字 record／glyph 對映 ·
-  [`109`](docs/109-battle-hud-rects-re.md) IDA 戰鬥 HUD rect／consumer 證據 ·
+  [`109`](docs/109-battle-hud-rects-re.md) IDA 戰鬥 HUD rect／raw flags／共用 frame JSON 證據 ·
   [`110`](docs/110-field-command-labels-re.md) 地表命令窗雙字模資料化 ·
   [`111`](docs/111-battle-scene-layout-re.md) 戰鬥場景帶／游標 glyph 資料化與 D2 限制 ·
   [`112`](docs/112-newgame-labels-re.md) 開場／創角 glyph、45 格功能列資料化與 D2 限制 ·

@@ -1,4 +1,4 @@
-# DQ3 戰鬥 HUD 框線與列高：IDA 9.4 非破壞性證據
+# DQ3 戰鬥 HUD 框線、原始旗標與列高：IDA 9.4 非破壞性證據
 
 > 2026-08-09；本文件是 `DQ3.EXE` 的附加證據 ledger，不改寫原始 binary 或 IDA
 > database。語意只附加在原始 linear address／DGROUP／file offset 旁，舊結論若被
@@ -36,6 +36,29 @@ x=0x13*8=152, y=0xee=238, width=0x2c*8=352, height=0x60=96
 
 這推翻了 `docs/94` 舊版 `(360,112)` 的備份區解讀；舊 bytes、舊文件與反證鏈仍可回查，
 新的 JSON／parity test 改用 `(352,96)`。
+
+## 原始第一 word 的正確語意：旗標／備份槽，不是 frame style ID（confirmed）
+
+`win_rect` 的第一個 word 會被 `sub_1f590`／`sub_1f4e3` 分成兩個 byte 使用：
+低位元組傳給 `sub_1fb36`／`sub_1fbda` 作背景備份槽索引，高位元組的 bit 1 控制
+`sub_1fcc6`／`sub_1fce1` 的視窗堆疊與 `sub_1fd30` 邊線清除。它不是三種可替換
+的框線樣式；目前已回查的原始值 `0x031a`、`0x0b11`、`0x0912` 應保留為 raw
+flags／backup slot，不能在 pack 或 Go 中命名成 style。
+
+## 共用可見框線 frame（strong）
+
+`sub_1f590 → sub_1fd30 → sub_1fdb1` 是共用的可見框線 writer。`sub_1fd30` 只
+依 `[si+2]`／`[si+4]`／`[si+6]`／`[si+8]` 及 `DS:727` 的 EGA plane mask
+畫四條邊；沒有依第一 word 選擇另一套 glyph pattern。與原版 DOSBox 戰鬥畫面
+[`dosbox/orochi_boss.png`](../dosbox/orochi_boss.png) 的像素核對顯示，640×350
+邏輯畫布上的玩家可見結果是連續 1px 白框、黑色內部。這項結果以 `strong` 保存：
+原始 writer 與實機畫面一致，但尚未以同一個完整 input trace 對每一個 modal
+逐畫面閉合。
+
+`interface.json` 的 `frame` 物件只保存這個可見 RGB 結果（`border_rgb`、
+`interior_rgb`）與上述證據；框線演算法仍是共用 engine primitive。production
+`NewGameWithPack` 缺少戰鬥三個 frame 物件時 fail closed；直接 unit fixture 才
+允許暫時使用導覽用的黑底白框。
 
 ## 指令／選單框（confirmed + strong）
 
@@ -128,8 +151,9 @@ JSON 的 `height` 以一列 canonical fixture 為 `48px`，實際 production 依
 
 ## 未閉合項目
 
-- `sub_1f590` 的 style id（`0x031a`、`0x0b11`、`0x0912`）控制的是 VGA 框線／備份樣式，
-  目前 renderer 仍以通用白框呈現；這是 V3 視覺長尾，不得把 style 猜成純色設定。
+- `0x031a`、`0x0b11`、`0x0912` 是 raw flags／備份槽，並非三種 frame style；其
+  可見框線已由共用 `sub_1fd30/sub_1fdb1` 與 DOSBox 像素證據閉合，renderer 不應
+  再把它們當成可替換樣式。
 - `sub_21929` 數量 glyph 的 baseline 與三列 command variant 已有 writer／consumer，
   但仍需各自 DOSBox 同狀態截圖再升級為完整 `confirmed`。
 - spell／target 子選單的其他原始 rect 尚未逐一建立 sidecar；本輪只把共用 command panel

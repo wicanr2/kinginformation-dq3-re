@@ -10,6 +10,21 @@
     "text_inset_y": 16,
     "columns": 20,
     "lines_per_page": 4,
+    "frame": {
+      "id": "dq3:frame.ega_window_white_black",
+      "border_rgb": [255, 255, 255],
+      "interior_rgb": [0, 0, 0],
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + dosbox/orochi_boss.png",
+        "address_space": "linear",
+        "address": "0x1fd30..0x1fdf9",
+        "consumer": "sub_1f590 → sub_1fd30/sub_1fdb1 visible window frame",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "共用 EGA frame writer；DOSBox 戰鬥畫面確認連續 1px 白框與黑色內部。原始 flags 另存於 raw window 結構，不是 style ID。"
+      }
+    },
     "evidence": {
       "level": "D3",
       "source_kind": "exe",
@@ -31,6 +46,21 @@
     "text_inset_y": 16,
     "columns": 20,
     "lines_per_page": 4,
+    "frame": {
+      "id": "dq3:frame.ega_window_white_black",
+      "border_rgb": [255, 255, 255],
+      "interior_rgb": [0, 0, 0],
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + dosbox/orochi_boss.png",
+        "address_space": "linear",
+        "address": "0x1fd30..0x1fdf9",
+        "consumer": "sub_1f590 → sub_1fd30/sub_1fdb1 visible window frame",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "共用 win_rect 與戰鬥訊息使用同一個 frame primitive；raw flags 不等於 style ID。"
+      }
+    },
     "evidence": {
       "level": "D3",
       "source_kind": "exe",
@@ -52,6 +82,21 @@
     "text_inset_y": 0,
     "columns": 1,
     "lines_per_page": 4,
+    "frame": {
+      "id": "dq3:frame.ega_window_white_black",
+      "border_rgb": [255, 255, 255],
+      "interior_rgb": [0, 0, 0],
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + dosbox/orochi_boss.png",
+        "address_space": "linear",
+        "address": "0x1fd30..0x1fdf9",
+        "consumer": "sub_1f590 → sub_1fd30/sub_1fdb1 visible window frame",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "指令框 raw 0x031a 是結構旗標／備份槽；框線顏色由共用 frame writer 與畫面證據閉合。"
+      }
+    },
     "height_mode": "rows_plus_base",
     "base_rows": 2,
     "row_height": 16,
@@ -83,6 +128,21 @@
     "text_inset_y": 16,
     "columns": 1,
     "lines_per_page": 6,
+    "frame": {
+      "id": "dq3:frame.ega_window_white_black",
+      "border_rgb": [255, 255, 255],
+      "interior_rgb": [0, 0, 0],
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + dosbox/orochi_boss.png",
+        "address_space": "linear",
+        "address": "0x1fd30..0x1fdf9",
+        "consumer": "sub_1f590 → sub_1fd30/sub_1fdb1 visible window frame",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "敵名框 raw 0x0b11 是結構旗標／備份槽；框線顏色由共用 frame writer 與畫面證據閉合。"
+      }
+    },
     "height_mode": "rows_plus_base",
     "base_rows": 2,
     "row_height": 16,
@@ -118,7 +178,7 @@
       "address": "",
       "consumer": "battle scene band, monster baseline and target cursor renderer",
       "doc": "docs/111-battle-scene-layout-re.md",
-      "note": "DQ3.EXE SHA-256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；D3TXT00.FON SHA-256=c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02；IDA Pro 9.4／file 與 glyph table 的座標交叉核對。場景帶與怪物基線由原版戰鬥 renderer 的 RE 座標系及同狀態畫面交叉閉合；cursor_glyph=0x77 對應 D3TXT00.FON 的 ★。尚未把 frame style pattern 或逐動作 timing 視為已完成。"
+      "note": "DQ3.EXE SHA-256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；D3TXT00.FON SHA-256=c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02；IDA Pro 9.4／file 與 glyph table 的座標交叉核對。場景帶與怪物基線由原版戰鬥 renderer 的 RE 座標系及同狀態畫面交叉閉合；cursor_glyph=0x77 對應 D3TXT00.FON 的 ★。frame 的可見色彩另由 interface.*.frame 保存；逐動作 timing／音效仍未完成。"
     }
   },
   "new_game_labels": {
@@ -226,6 +286,21 @@
     "hp_label_glyph": 22,
     "mp_label_glyph": 27,
     "level_label_glyph": 106,
+    "frame": {
+      "id": "dq3:frame.ega_window_white_black",
+      "border_rgb": [255, 255, 255],
+      "interior_rgb": [0, 0, 0],
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + dosbox/orochi_boss.png",
+        "address_space": "linear",
+        "address": "0x1fd30..0x1fdf9",
+        "consumer": "sub_1f590 → sub_1fd30/sub_1fdb1 visible window frame",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "地表 HUD 仍使用同一個原版 EGA frame primitive；此欄位只保存可見色彩結果。"
+      }
+    },
     "evidence": {
       "level": "D3",
       "source_kind": "video",

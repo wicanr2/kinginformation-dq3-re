@@ -89,10 +89,11 @@ func (g *Game) drawPartyHUD(rgba []byte, white dq3data.Color) {
 	}
 	layout, ok := g.pack.PartyHUDLayout()
 	if !ok || layout.Columns <= 0 || layout.LinesPerPage < 3 ||
-		layout.HPLabelGlyph == nil || layout.MPLabelGlyph == nil || layout.LevelLabelGlyph == nil {
+		layout.HPLabelGlyph == nil || layout.MPLabelGlyph == nil || layout.LevelLabelGlyph == nil ||
+		layout.Frame == nil {
 		return
 	}
-	fillBox(rgba, layout.X, layout.Y, layout.Width, layout.Height, white)
+	fillPackBox(rgba, layout, layout.X, layout.Y, layout.Width, layout.Height)
 	actors := g.partyHUDActors()
 	if len(actors) > layout.Columns {
 		actors = actors[:layout.Columns]

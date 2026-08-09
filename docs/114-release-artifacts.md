@@ -11,10 +11,10 @@ WASM 不列入本輪發佈目標，也沒有把未完成的行動版／瀏覽器
 
 | 平台 | 檔案 | 大小（bytes） | SHA-256 |
 | --- | --- | ---: | --- |
-| Linux x86_64 | `dist/dq3-20260810-linux-amd64/dq3-remake-20260810-x86_64.AppImage` | 4,159,992 | `357f34bfe287327c5f09f9ee4ad13fb708a4c6162478c5268d6dcd0601284caf` |
-| Windows x86_64 | `dist/dq3-20260810-windows-x86_64.zip` | 3,369,464 | `d601b151b4319a9c74bf15a62e6de11bab618febfbeb92bd07683dfeb247fee8` |
-| macOS Intel | `dist/dq3-20260810-macos-x86_64.zip` | 3,177,530 | `eceddd682c02ce5f9475b4b2956f2830d766929daecc3c0fc2082376f4de9014` |
-| macOS Apple Silicon | `dist/dq3-20260810-macos-arm64.zip` | 2,973,372 | `f1f4ca44a670c99c864d39dc86d2f0d1442181b1330782d802c69becd4aa9bda` |
+| Linux x86_64 | `dist/dq3-20260810-linux-amd64/dq3-remake-20260810-x86_64.AppImage` | 4,159,992 | `ceaf0f380d5a02cd998d514a79b08ee443e9d8afeeb77551463569ec67f519a6` |
+| Windows x86_64 | `dist/dq3-20260810-windows-x86_64.zip` | 3,375,981 | `3eb7b68b5993caf208adec626520e9064bd574afc8148c09824cf42bcf6794f7` |
+| macOS Intel | `dist/dq3-20260810-macos-x86_64.zip` | 3,180,415 | `00c0407031bd95eafc7003a4b0fd7a5a467b3e8e57859952e1fdad5cbb62f93b` |
+| macOS Apple Silicon | `dist/dq3-20260810-macos-arm64.zip` | 2,976,041 | `aa5399c0b4b79e5afca32df363334fc29c729c63dd30586e36613db6eea00aa9` |
 
 Linux 檔案是使用專案固定的 `work/.tools/runtime-x86_64` 與 `appimagetool` 產出的
 Type 2 AppImage，已在無 FUSE 的 Docker 內以 `--appimage-extract` 解包驗證；同一目錄
@@ -46,4 +46,6 @@ bytes。片中依序展示開場城鎮、城鎮行走、船、日邦格八頭大
 macOS `.app`／ZIP 由 `tools/package_macos_bundle.sh`（`RELEASE_DATE=20260810`）產生；
 交叉編譯使用 `u5cht/osxcross:latest` 的 MacOSX 15.5 SDK、Go 1.24.13，IDA／原版資料未進
 產物。Linux AppImage 與 Windows ZIP 使用 `pto2-remake-build:latest`、Go 1.26.5 建置；
-所有雜湊均為本輪重建後重新計算，不沿用舊版數值。
+本輪框線資料化後以目前 Go/Ebitengine 原始碼重新編譯四個桌面執行檔；AppImage 內嵌
+執行檔 SHA-256 為 `969a2ea135a8d42a1e8c4180c1e7f828f98b75a5254a6411ddcae7775e738dac`，
+與旁置 Linux ELF 相同。所有發佈包雜湊均為本輪重建後重新計算，不沿用舊版數值。

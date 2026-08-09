@@ -1,8 +1,8 @@
 # 戰鬥場景帶與游標字模：非破壞性資料契約
 
-> 2026-08-09；本文件只附加原版定位與推論等級，不改寫 `DQ3.EXE` 或 IDA
-> database。這一批只把已可回查的場景帶、怪物基線與游標字模移入 game pack；框線
-> pattern、逐動作動畫／停頓／音效仍是未閉合的 V3 工作。
+> 2026-08-10；本文件只附加原版定位與推論等級，不改寫 `DQ3.EXE` 或 IDA
+> database。這一批把已可回查的場景帶、怪物基線、游標字模與共用 frame 色彩契約
+> 移入 game pack；逐動作動畫／停頓／音效仍是未閉合的 V3 工作。
 
 ## 輸入與證據
 
@@ -29,8 +29,9 @@ DQ3 專屬值；直接 `Battle` fixture 若未安裝 layout 只停止繪製，�
 
 ## 未閉合項目
 
-- `sub_1f590` 使用的 frame style id（目前已知 raw `0x031a`、`0x0b11`、`0x0912`）
-  與 EGA pattern 尚未建立可重生 sidecar，不能把目前白色單線框宣稱為逐像素 V3。
+- `0x031a`、`0x0b11`、`0x0912` 是 `win_rect` 第一 word 的 raw flags／備份槽，不是
+  frame style id；共用 `sub_1fd30/sub_1fdb1` 的可見結果已以 `frame` JSON 契約保存
+  為連續 1px 白框／黑色內部（`strong`，完整逐 input trace 仍未逐 modal 閉合）。
 - spell／target 其他文字基線、數字基線、逐動作動畫、停頓與 battle SFX cue 尚未由
   `入口 → writer → consumer → 玩家可見效果` 閉合。
 - 因此本欄位資料化是 engine/data 邊界切片，不等同完整戰鬥 parity 或 release 完成。
