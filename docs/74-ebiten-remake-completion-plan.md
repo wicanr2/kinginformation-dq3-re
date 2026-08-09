@@ -95,7 +95,7 @@
 | 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 已有新遊戲／載入框架 | 需輸入與版面 E2 |
-| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace；`FIRST.SCR` 能力確認背景已由 pack 接入 | E3；背景原始檔尺寸／解碼與配色 D2、runtime V2，stat panel／幾何仍待 V3 |
+| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace；`FIRST.SCR` 能力確認背景、右欄六個原版欄位已由 pack 接入 | E3；背景原始檔尺寸／解碼與配色 D2、runtime V2，EGA 框線 pattern／同狀態 stat panel 仍待 V3 |
 | 家中／母親 | DOSBox、影片 | sec4+rec82/83；handler54 transaction 已接 | E3；逐格護送動畫仍待 V3 |
 | 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
@@ -796,3 +796,11 @@ D3TXT00 record 407 的 22×12 glyph/control stream 已寫入 `interface.json.fie
 `dq3_remake_ebitan/docs/status_detail_runtime.png`，狀態面板達 E2／V2；完整入口、子選單、
 隊員詳情、道具／裝備逐窗與同狀態原版 V3 對拍仍未閉合。raw bytes、位址基準、推論等級與
 限制見 [`docs/116`](116-field-status-panel-re.md)，欄位契約見 [`docs/84`](84-game-pack-json-contract.md)。
+
+2026-08-10 開場能力確認欄位勘誤與資料接線：由 `docs/dosbox/v3_01_afterstats.png` 與
+D3TXT00 record 407 的 glyph code 逐列解碼，確認右欄不是舊 renderer 使用的「速度／HP／MP」，
+而是「運氣點數／最大HP／最大MP／攻擊力／守備力／經驗」。`interface.json.new_game_labels`
+新增 `luck`、`max_hp`、`max_mp`；`NewGameFlow` 依正式 pack 讀取並將 `stats.LUCK`、最大 HP、
+最大 MP 寫入對應列，`agility` 僅保留給詳細狀況窗。這修正設定資料 mismatch，證據仍為 D2、
+runtime 仍為 V2；原版 EGA pattern、藍色選項框與同狀態逐像素對拍另列 V3，不宣稱整個開場
+畫面已完成。

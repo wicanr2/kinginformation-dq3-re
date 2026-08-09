@@ -372,3 +372,11 @@ glyph 與具名欄位 anchor；`panel.go` 只依 pack 填入主角姓名、職�
 AppImage `squashfs-root/usr/bin/dq3-remake` 內嵌執行檔對照，以及 Windows MinGW 工具鏈
 來源均記錄於 `docs/114-release-artifacts.md`。推廣片仍為同一組版控 runtime PNG 剪輯的
 `dist/dq3-promo-20260810.mp4`；不要把未納入本輪的 Android／WASM 產物加入發佈清單。
+
+2026-08-10 開場能力確認欄位勘誤：重新放大 `docs/dosbox/v3_01_afterstats.png`，並以 D3TXT00
+record 407／`docs/data/glyph_unicode_map.json` 逐 glyph 解碼，確認原版右欄六列為「運氣點數、
+最大HP、最大MP、攻擊力、守備力、經驗」。舊的 `agility`／`hp`／`mp` 對映把詳細狀況窗欄位
+錯套到開場 panel，已由 `interface.json.new_game_labels` 的 `luck`、`max_hp`、`max_mp` 修正；
+`NewGameFlow` 正式消費 `stats.LUCK`、最大 HP／MP，缺資料仍由 pack validator fail closed。
+這是 D2 設定資料切片與 runtime V2 修正，並非完整 V3：目前框線仍是簡化白框，原版 EGA
+pattern／藍色選項框／同狀態逐像素對拍未閉合。證據與 role 對映見 [`docs/112`](docs/112-newgame-labels-re.md)。

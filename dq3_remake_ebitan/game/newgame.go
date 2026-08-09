@@ -241,9 +241,12 @@ func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yel
 	}
 
 	x := geo.StatsRightRows.X
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y, nf.labels.Agility, int(nf.preview[stats.AGI]), white)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+geo.StatsRightRows.StepY, nf.labels.HP, int(nf.preview[stats.HP]), white)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+2*geo.StatsRightRows.StepY, nf.labels.MP, int(nf.preview[stats.MP]), white)
+	// 原版能力確認右欄不是「速度／HP／MP」：record 407 的這個面板
+	// 依序顯示「運氣點數／最大HP／最大MP／攻擊力／守備力／經驗」。
+	// `agility` 仍保留給詳細狀況窗的 pack 對映，但不能拿來填此六列。
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y, nf.labels.Luck, int(nf.preview[stats.LUCK]), white)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+geo.StatsRightRows.StepY, nf.labels.MaxHP, int(nf.preview[stats.HP]), white)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+2*geo.StatsRightRows.StepY, nf.labels.MaxMP, int(nf.preview[stats.MP]), white)
 	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+3*geo.StatsRightRows.StepY, nf.labels.Attack, int(nf.preview[stats.STR]), white)
 	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+4*geo.StatsRightRows.StepY, nf.labels.Defense, nf.previewDef, white)
 	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+5*geo.StatsRightRows.StepY, nf.labels.Experience, 0, white)

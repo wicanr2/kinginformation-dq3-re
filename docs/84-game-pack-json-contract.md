@@ -1055,14 +1055,17 @@ fail closed；目前 DQ3 對映維持 D2，後續若要升為 D3 仍需補原版
 
 `interface.json.new_game_labels` 保存開場主選單、創角性別／能力確認，以及 D3TXT00
 records 451–456 的姓名畫面 glyph stream。固定欄位除了既有的 `title`、`start`、`load`、
-`male`、`female`、`level`、`hp`、`mp`、`agility`、`attack`、`defense`、`experience`、
+`male`、`female`、`level`、`hp`、`mp`、`agility`、`luck`、`max_hp`、`max_mp`、`attack`、
+`defense`、`experience`、
 `sex`、`hero`、`cloth`、`prompt`、`yes`、`no`、`backspace`、`ok` 外，還包括
 `name_title`、`name_left_arrow`、`name_right_arrow`、`name_zhuyin_grid`、
 `name_alnum_grid`、`function_zhuyin`、`function_alnum`、`input_mode_zhuyin`。前者是
 非空 `int[]`，兩個 grid 必須各為 45 格，兩個 function list 必須各為五列；
 不接受任意 JSON code 或直接玩家可見句子。整個物件必須有 `evidence`，目前 DQ3 為
 D2、來源 `D3TXT00.TXT records 451-456 + D3TXT00.FON`，完整對映與限制見
-[`docs/112`](112-newgame-labels-re.md)。
+[`docs/112`](112-newgame-labels-re.md)。其中 `agility` 是詳細狀況窗的「速度」role；開場
+能力確認右欄六列固定使用 `luck`、`max_hp`、`max_mp`、`attack`、`defense`、`experience`，
+不得以同義或較短的 `hp`／`mp`／`agility` 欄位代替。
 
 production `NewGameWithPack` 缺少 `new_game_labels` 即拒絕啟動；`NewGameFlow`、
 `NameInput`、`GenderSelect` 與酒館只依此契約繪製。`NameInput` 的畫面 raw index 採

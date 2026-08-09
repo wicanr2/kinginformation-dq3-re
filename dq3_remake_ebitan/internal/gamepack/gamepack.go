@@ -167,6 +167,9 @@ type NewGameLabels struct {
 	HP              []int    `json:"hp"`
 	MP              []int    `json:"mp"`
 	Agility         []int    `json:"agility"`
+	Luck            []int    `json:"luck"`
+	MaxHP           []int    `json:"max_hp"`
+	MaxMP           []int    `json:"max_mp"`
 	Attack          []int    `json:"attack"`
 	Defense         []int    `json:"defense"`
 	Experience      []int    `json:"experience"`
@@ -279,7 +282,9 @@ func (l *NewGameLabels) Entries() map[string][]int {
 		"load": append([]int(nil), l.Load...), "male": append([]int(nil), l.Male...),
 		"female": append([]int(nil), l.Female...), "level": append([]int(nil), l.Level...),
 		"hp": append([]int(nil), l.HP...), "mp": append([]int(nil), l.MP...),
-		"agility": append([]int(nil), l.Agility...), "attack": append([]int(nil), l.Attack...),
+		"agility": append([]int(nil), l.Agility...), "luck": append([]int(nil), l.Luck...),
+		"max_hp": append([]int(nil), l.MaxHP...), "max_mp": append([]int(nil), l.MaxMP...),
+		"attack":  append([]int(nil), l.Attack...),
 		"defense": append([]int(nil), l.Defense...), "experience": append([]int(nil), l.Experience...),
 		"sex": append([]int(nil), l.Sex...), "hero": append([]int(nil), l.Hero...),
 		"cloth": append([]int(nil), l.Cloth...), "prompt": append([]int(nil), l.Prompt...),

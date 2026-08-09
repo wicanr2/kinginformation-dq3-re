@@ -81,5 +81,11 @@ EGA 框線圖樣、逐幀游標／動畫與能力面板逐像素 V3，不能把�
 也尚未閉合 EGA frame pattern。因此 production 可使用這些幾何與字模，但不能宣稱
 創角畫面 V3。
 
+能力確認右欄的欄位語意另經 `dosbox/v3_01_afterstats.png` 與 record 407 逐 glyph
+解碼校正：六列是「運氣點數／最大HP／最大MP／攻擊力／守備力／經驗」，不是早期
+renderer 使用的「速度／HP／MP」。`agility` 只屬詳細狀況窗 role；欄位與 glyph
+對映見 [`docs/112`](112-newgame-labels-re.md)。這項修正仍是 D2／V2，不會把尚未閉合
+的框線 pattern 提升為 V3。
+
 若後續證據推翻任一矩形，應保留本文件與 JSON 的舊斷言，追加勘誤及新 sidecar；不
 得移動 `raw_windows` 位址或只留下改名後的語意。

@@ -20,7 +20,9 @@ EGA 框線 pattern、逐幀游標／閃爍與同狀態演出，不把單張 PNG 
 | `load` | `712,519,696,283` | 載入進度 |
 | `male` / `female` | `775,674` / `234,674` | 性別選項／能力確認性別 |
 | `level` / `hp` / `mp` | `419,420` / `22,30` / `27,30` | 能力確認左欄 |
-| `agility` / `attack` / `defense` / `experience` | `282,283` / `623,624` / `340,409` / `525,526` | 能力確認右欄 |
+| `agility` | `282,283` | 詳細狀況窗的「速度」欄；不是開場確認右欄第一列 |
+| `luck` / `max_hp` / `max_mp` | `276,426,425,427` / `291,163,22,30` / `291,163,27,30` | 開場能力確認右欄的「運氣點數／最大HP／最大MP」 |
+| `attack` / `defense` / `experience` | `623,624` / `340,409` / `525,526` | 開場能力確認右欄的「攻擊力／守備力／經驗」 |
 | `sex` / `hero` / `cloth` | `674,417` / `106,187` / `190,149,191,192` | 能力確認固定標籤 |
 | `prompt` | `398,546,194,229,456,534` | 「這個人可以嗎」 |
 | `yes` / `no` | `399` / `678` | 能力確認選項 |
@@ -42,6 +44,14 @@ EGA 框線 pattern、逐幀游標／閃爍與同狀態演出，不把單張 PNG 
   `TestDQ3NewGameLabelsMatchOriginalGlyphs` 會檢查字型大小、雜湊與完整 role 對映。
 - 目前推論等級為 **D2**：字模資料與玩家可見畫面已對齊，但本批尚未另行匯出每個
   glyph 的 IDA writer→consumer sidecar，因此不宣稱 D3。
+- `docs/dosbox/v3_01_afterstats.png` 的右欄逐 glyph 解碼修正了先前把「運氣點數／最大HP／最大MP」
+  誤標成「速度／HP／MP」的欄位。`agility` 保留為詳細狀況窗的獨立 role；開場確認 renderer
+  現在只使用 `luck`、`max_hp`、`max_mp`、`attack`、`defense`、`experience` 六列。
+- 本次只閉合欄位語意與 JSON→renderer 對映；目前外框仍是簡化 1px 白框，原版 EGA
+  pattern／藍色選項框與同輸入逐像素對拍仍是 V3 缺口。
+- Docker＋Xvfb 重新產出的 `dq3_remake_ebitan/docs/ng_confirm.png` SHA-256 為
+  `da3507180fbc598ce005edbbd386c54a74f70c7dcf00dac6b2fe4a3e302ba7c2`；它只證明目前
+  runtime 可重現，不取代原版同輸入 V3 對拍。
 - 此欄位只描述字模，不描述文字控制碼或任意 JSON 程式碼。姓名輸入的 raw 45 格→欄優先
   cell 換算、功能列焦點與完成 gate 仍由共用狀態機處理；畫面幾何由
   `new_game_geometry` 契約提供。
