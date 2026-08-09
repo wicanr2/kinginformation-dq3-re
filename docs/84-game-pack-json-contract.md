@@ -975,15 +975,19 @@ renderer 只能讀這個 pack layout，缺少資料時 production 建立失敗�
 由原版 `win_rect` 直接消費的 panel。兩者除共用 window geometry 外，還必須指定
 `height_mode="rows_plus_base"`、`base_rows`、`row_height` 以及各自的
 `cursor_inset_x`、`row_inset_y`、`label_inset_x`、`secondary_label_inset_x`、
-`value_inset_x`、`name_inset_x`、`count_inset_x` 與 `frame`；這些是資料欄位，不得在
+`value_inset_x`、`name_inset_x`、`count_inset_x`、`count_inset_y` 與 `frame`；這些是資料欄位，不得在
 renderer 以 DQ3 座標或黑／白色彩補值。
+
+`count_inset_y` 是敵人數量相對名稱列的垂直偏移；`0` 表示同一個 16px row，不是
+另一個相對畫布的 Y 座標。缺欄位會由嚴格 JSON 解碼／validator 拒絕，production 不得
+回退到 renderer 內的 DQ3 預設。
 
 DQ3 canonical（皆為 640×350 邏輯 pixel）為：
 
 | panel | 原始定位／可見幾何 | 動態列規則 | 主要 offset |
 |---|---|---|---|
 | `battle_command` | file `0x1a252`／`DS:0x4112`；`(144,248,128,96)`（四列） | `(menu_rows+2)*16`；三列為 80 高 | cursor `16`、row y `16`、兩欄 x `32`／`80` |
-| `battle_enemy` | file `0x1a270`／`byte_28f00`；`(288,248,256,48)`（一列） | `(active_groups+2)*16` | name x/y `32`／`16`、count x `144` |
+| `battle_enemy` | file `0x1a270`／`byte_28f00`；`(288,248,256,48)`（一列） | `(active_groups+2)*16` | name x/y `32`／`16`、count x `144`、count y `0`（相對名稱列） |
 
 writer／consumer、raw bytes、IDA linear／file 位址與 raw flags／frame 證據見
 [`docs/109`](109-battle-hud-rects-re.md)。`0x031a`、`0x0b11`、`0x0912` 是 raw

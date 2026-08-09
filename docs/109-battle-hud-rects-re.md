@@ -60,6 +60,19 @@ flags／backup slot，不能在 pack 或 Go 中命名成 style。
 `NewGameWithPack` 缺少戰鬥三個 frame 物件時 fail closed；直接 unit fixture 才
 允許暫時使用導覽用的黑底白框。
 
+本輪另外把數量字的可見列基線與原版畫面閉合：輸入
+`dosbox/orochi_boss.png`（640×350，SHA-256
+`746d7a95c2456fa6338438e6b61ff4fe120670304ebb0f98fdb98c36ef0cad55`）在敵名與數量
+兩個區域都顯示相同的 16px 字模列（數字 `1` 的可見像素列同高）。這是畫面 D2
+證據；它只證明玩家可見的 row relation，不把尚未完全解開的 EGA writer 內部座標轉換
+誤升格為 D3。
+
+本輪 Docker＋Xvfb 的 renderer dump [`battle_count_row_runtime.png`](../dq3_remake_ebitan/docs/battle_count_row_runtime.png)
+（`TestDumpMultiEnemyBattle`，SHA-256
+`a9c49e091d25bc28d018cf5363c07f75dac4a8029a91cf78f9da60b179518eb8`）也量得名稱／數量
+可見列同為 `y=264..277`。這是 debug 視覺證據，不取代正式玩家輸入 trace，也不把
+debug hook 當成 production 入口。
+
 ## 指令／選單框（confirmed + strong）
 
 ### 入口到 consumer
@@ -145,6 +158,7 @@ b6 01 | 01 01 | 00 00 | 03 00 | 26 00 | 08 01 | 00 00
 | `sub_1b053/sub_1b0cb`：`word_28f08=(active_groups+2)<<4` | 高 `16*(active_groups+2)` | `confirmed` |
 | `sub_1b101`：`word_28f02+4`、`word_28f04+0x10` | 名稱文字相對框 `(32,16)` | `confirmed` |
 | `sub_1b101`：`bp+=0x0e` 後 `sub_21929` | 數量 X 相對框 `+144px` | `strong`（`sub_21929` 的 glyph baseline 仍需逐像素對拍） |
+| `sub_1b101`：名稱與數量同一可見 16px row | JSON `count_inset_y=0`（相對 `text_inset_y`） | `strong`（IDA caller + `orochi_boss.png` D2 畫面） |
 
 JSON 的 `height` 以一列 canonical fixture 為 `48px`，實際 production 依
 `rows_plus_base` 動態套用 active group rows；未知列數不填 0，validator 會拒絕缺資料。
@@ -154,7 +168,8 @@ JSON 的 `height` 以一列 canonical fixture 為 `48px`，實際 production 依
 - `0x031a`、`0x0b11`、`0x0912` 是 raw flags／備份槽，並非三種 frame style；其
   可見框線已由共用 `sub_1fd30/sub_1fdb1` 與 DOSBox 像素證據閉合，renderer 不應
   再把它們當成可替換樣式。
-- `sub_21929` 數量 glyph 的 baseline 與三列 command variant 已有 writer／consumer，
-  但仍需各自 DOSBox 同狀態截圖再升級為完整 `confirmed`。
+- `sub_21929` 的可見數量 row relation 已由 `count_inset_y=0` 資料欄位與
+  `orochi_boss.png` 同列畫面閉合；數字 writer 內部 raw DX 到顯示像素的轉換仍只保留
+  `strong`，不可把這項局部證據宣稱為整個戰鬥 V3。
 - spell／target 子選單的其他原始 rect 尚未逐一建立 sidecar；本輪只把共用 command panel
   primitive 接到既有 renderer，未宣稱所有 battle phase 的 V3 已完成。

@@ -153,6 +153,7 @@
     "value_inset_x": 0,
     "name_inset_x": 32,
     "count_inset_x": 144,
+    "count_inset_y": 0,
     "evidence": {
       "level": "D3",
       "source_kind": "exe",

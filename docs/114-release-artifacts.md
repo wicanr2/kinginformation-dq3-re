@@ -11,16 +11,23 @@ WASM 不列入本輪發佈目標，也沒有把未完成的行動版／瀏覽器
 
 | 平台 | 檔案 | 大小（bytes） | SHA-256 |
 | --- | --- | ---: | --- |
-| Linux x86_64 | `dist/dq3-20260810-linux-amd64/dq3-remake-20260810-x86_64.AppImage` | 4,159,992 | `ceaf0f380d5a02cd998d514a79b08ee443e9d8afeeb77551463569ec67f519a6` |
-| Windows x86_64 | `dist/dq3-20260810-windows-x86_64.zip` | 3,375,981 | `3eb7b68b5993caf208adec626520e9064bd574afc8148c09824cf42bcf6794f7` |
-| macOS Intel | `dist/dq3-20260810-macos-x86_64.zip` | 3,180,415 | `00c0407031bd95eafc7003a4b0fd7a5a467b3e8e57859952e1fdad5cbb62f93b` |
-| macOS Apple Silicon | `dist/dq3-20260810-macos-arm64.zip` | 2,976,041 | `aa5399c0b4b79e5afca32df363334fc29c729c63dd30586e36613db6eea00aa9` |
+| Linux x86_64 | `dist/dq3-20260810-linux-amd64/dq3-remake-20260810-x86_64.AppImage` | 7,305,720 | `5e5a8af3cf2c41462874d5e564f6af5f6334a0d6dccdc329eb783b16db5902a9` |
+| Windows x86_64 | `dist/dq3-20260810-windows-x86_64.zip` | 6,420,395 | `f02a8c74608dbd199057adf81d419c6f27a68d6f270aa61fd2d4f41aa4690c9c` |
+| macOS Intel | `dist/dq3-20260810-macos-x86_64.zip` | 6,558,546 | `71f8d159a528862f6b6431772ad7fb86236bde7222cddf875b896a7958861476` |
+| macOS Apple Silicon | `dist/dq3-20260810-macos-arm64.zip` | 6,104,807 | `b4cd7247a9f525f755bd3bcb529f5bee2a264b9c8f8b3390eac9d8d1c91f58f0` |
 
 Linux 檔案是使用專案固定的 `work/.tools/runtime-x86_64` 與 `appimagetool` 產出的
 Type 2 AppImage，已在無 FUSE 的 Docker 內以 `--appimage-extract` 解包驗證；同一目錄
-另保留 `dq3-remake-linux-amd64` 直接 ELF 供診斷。macOS ZIP 內含
+另保留 `dq3-remake-linux-amd64` 直接 ELF 供診斷（本次 binary 13,228,568 bytes，SHA-256
+`c7a3dad9d71b3c6dbff3d541f89d121c9d2d3484bb4b771f51df1449dd1b90f1`）。macOS ZIP 內含
 `Dragon Quest III.app/Contents/Info.plist` 與對應架構的可執行檔。桌面外部 game pack 仍可在
 不重新編譯的情況下替換，但需通過 schema、reference、content hash 及資產路徑驗證。
+本次 macOS 內層執行檔為 Mach-O `x86_64`（12,404,648 bytes，SHA-256
+`e764517c54331a8394becd5d3f04540167264232b9a9cccef034123f65767910`）與 `arm64`
+（11,816,114 bytes，SHA-256
+`aac3381571210869e1f63103b1c50b0c64952870725c779c4d67526d0ae3c630`）；Windows PE
+執行檔為 12,638,720 bytes，SHA-256
+`81c908fff9666b7549ec8c71cdfe7b02aae91dd3b6ce88b6678b7723116ad0a2`。
 
 ## 推廣片
 
@@ -46,6 +53,6 @@ bytes。片中依序展示開場城鎮、城鎮行走、船、日邦格八頭大
 macOS `.app`／ZIP 由 `tools/package_macos_bundle.sh`（`RELEASE_DATE=20260810`）產生；
 交叉編譯使用 `u5cht/osxcross:latest` 的 MacOSX 15.5 SDK、Go 1.24.13，IDA／原版資料未進
 產物。Linux AppImage 與 Windows ZIP 使用 `pto2-remake-build:latest`、Go 1.26.5 建置；
-本輪框線資料化後以目前 Go/Ebitengine 原始碼重新編譯四個桌面執行檔；AppImage 內嵌
-執行檔 SHA-256 為 `969a2ea135a8d42a1e8c4180c1e7f828f98b75a5254a6411ddcae7775e738dac`，
+本輪敵人數量列基線資料化後，以目前 Go/Ebitengine 原始碼重新編譯四個桌面執行檔；AppImage 內嵌
+執行檔 SHA-256 為 `c7a3dad9d71b3c6dbff3d541f89d121c9d2d3484bb4b771f51df1449dd1b90f1`，
 與旁置 Linux ELF 相同。所有發佈包雜湊均為本輪重建後重新計算，不沿用舊版數值。

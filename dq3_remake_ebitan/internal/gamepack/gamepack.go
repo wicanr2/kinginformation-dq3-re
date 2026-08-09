@@ -136,6 +136,10 @@ type BattlePanelLayout struct {
 	ValueInsetX          int    `json:"value_inset_x"`
 	NameInsetX           int    `json:"name_inset_x"`
 	CountInsetX          int    `json:"count_inset_x"`
+	// CountInsetY is relative to the name row's TextInsetY.  Keeping the
+	// relation in the pack makes the enemy count baseline version-owned
+	// without duplicating a DQ3-specific Y coordinate in the renderer.
+	CountInsetY *int `json:"count_inset_y,omitempty"`
 }
 
 // BattleSceneLayout 是版本專屬戰鬥場景帶與游標字模。引擎只套用這些
@@ -1515,12 +1519,12 @@ func (p *Pack) validateInterface() error {
 		}
 	}
 	if c := p.Interface.BattleCommand; c.ID != "" {
-		if err := validateBattlePanelLayout("battle command", c); err != nil {
+		if err := validateBattlePanelLayout("battle command", c, false); err != nil {
 			return err
 		}
 	}
 	if e := p.Interface.BattleEnemy; e.ID != "" {
-		if err := validateBattlePanelLayout("battle enemy", e); err != nil {
+		if err := validateBattlePanelLayout("battle enemy", e, true); err != nil {
 			return err
 		}
 	}
@@ -1743,7 +1747,7 @@ func validateNewGameGeometry(g NewGameGeometry) error {
 	return nil
 }
 
-func validateBattlePanelLayout(name string, p BattlePanelLayout) error {
+func validateBattlePanelLayout(name string, p BattlePanelLayout, requireCountY bool) error {
 	w := p.WindowLayout
 	if w.X < 0 || w.Y < 0 || w.Width <= 0 || w.Height <= 0 ||
 		w.TextInsetX < 0 || w.TextInsetY < 0 ||
@@ -1754,12 +1758,19 @@ func validateBattlePanelLayout(name string, p BattlePanelLayout) error {
 	if p.HeightMode != "rows_plus_base" || p.BaseRows < 0 || p.RowHeight <= 0 || p.RowHeight > 128 {
 		return fmt.Errorf("%s height rule is invalid", name)
 	}
-	for field, value := range map[string]int{
+	if requireCountY && p.CountInsetY == nil {
+		return fmt.Errorf("%s count_inset_y is required", name)
+	}
+	values := map[string]int{
 		"cursor_inset_x": p.CursorInsetX, "row_inset_y": p.RowInsetY,
 		"label_inset_x": p.LabelInsetX, "secondary_label_inset_x": p.SecondaryLabelInsetX,
 		"value_inset_x": p.ValueInsetX,
 		"name_inset_x":  p.NameInsetX, "count_inset_x": p.CountInsetX,
-	} {
+	}
+	if p.CountInsetY != nil {
+		values["count_inset_y"] = *p.CountInsetY
+	}
+	for field, value := range values {
 		if value < 0 {
 			return fmt.Errorf("%s %s must be non-negative", name, field)
 		}

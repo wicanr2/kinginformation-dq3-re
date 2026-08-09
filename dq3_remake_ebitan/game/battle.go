@@ -1912,9 +1912,13 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				}
 				fillPackBox(rgba, b.enemyLayout.WindowLayout, ex, ey, ew, eh)
 				for i, n := range names {
-					y := ey + w.TextInsetY + i*w.RowHeight
-					b.drawName(rgba, ex+w.NameInsetX, y, 0x258+n.monID, white)
-					drawNumber(rgba, b.tx, ex+w.CountInsetX, y, n.count, white)
+					nameY := ey + w.TextInsetY + i*w.RowHeight
+					b.drawName(rgba, ex+w.NameInsetX, nameY, 0x258+n.monID, white)
+					countY := nameY
+					if w.CountInsetY != nil {
+						countY += *w.CountInsetY
+					}
+					drawNumber(rgba, b.tx, ex+w.CountInsetX, countY, n.count, white)
 				}
 			}
 		}

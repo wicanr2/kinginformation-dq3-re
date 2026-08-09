@@ -1639,7 +1639,7 @@ func TestDQ3DialogueWindowMatchesOriginalEXE(t *testing.T) {
 	}
 	got := p.DialogueWindowLayout()
 	want := WindowLayout{ID: "dq3:window.dialogue", X: 152, Y: 238, Width: 352, Height: 96,
-		TextInsetX: 16, TextInsetY: 16, Columns: 20, LinesPerPage: 4, Evidence: got.Evidence}
+		TextInsetX: 16, TextInsetY: 16, Columns: 20, LinesPerPage: 4, Frame: got.Frame, Evidence: got.Evidence}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("dialogue layout=%+v, want %+v", got, want)
 	}
@@ -1671,7 +1671,7 @@ func TestDQ3BattleMessageWindowMatchesOriginalEXE(t *testing.T) {
 		t.Fatal("builtin pack missing battle message layout")
 	}
 	want := WindowLayout{ID: "dq3:window.battle_message", X: 152, Y: 238, Width: 352, Height: 96,
-		TextInsetX: 16, TextInsetY: 16, Columns: 20, LinesPerPage: 4, Evidence: got.Evidence}
+		TextInsetX: 16, TextInsetY: 16, Columns: 20, LinesPerPage: 4, Frame: got.Frame, Evidence: got.Evidence}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("battle message layout=%+v, want %+v", got, want)
 	}
@@ -1707,7 +1707,7 @@ func TestDQ3BattleHUDRectsMatchOriginalEXE(t *testing.T) {
 	}
 	enemy, ok := p.BattleEnemyLayout()
 	if !ok || enemy.X != 288 || enemy.Y != 248 || enemy.Width != 256 || enemy.Height != 48 ||
-		enemy.BaseRows != 2 || enemy.RowHeight != 16 || enemy.NameInsetX != 32 || enemy.CountInsetX != 144 ||
+		enemy.BaseRows != 2 || enemy.RowHeight != 16 || enemy.NameInsetX != 32 || enemy.CountInsetX != 144 || enemy.CountInsetY == nil || *enemy.CountInsetY != 0 ||
 		enemy.Frame == nil || enemy.Frame.ID != "dq3:frame.ega_window_white_black" {
 		t.Fatalf("battle enemy layout=%+v", enemy)
 	}
@@ -1734,6 +1734,26 @@ func TestDQ3BattleHUDRectsMatchOriginalEXE(t *testing.T) {
 		if len(exe) < off+len(wantRaw) || !bytes.Equal(exe[off:off+len(wantRaw)], wantRaw) {
 			t.Fatalf("DQ3.EXE battle HUD rect at file %#x does not match", off)
 		}
+	}
+}
+
+func TestBattleEnemyCountInsetYIsRequired(t *testing.T) {
+	p := BattlePanelLayout{
+		WindowLayout: WindowLayout{
+			X: 1, Y: 1, Width: 64, Height: 64, TextInsetX: 8, TextInsetY: 8,
+			Columns: 1, LinesPerPage: 1,
+			Evidence: Evidence{Level: "D3", SourceKind: "exe", Source: "DQ3.EXE",
+				AddressSpace: "file", Address: "0x1", Consumer: "test", Doc: "docs/x.md"},
+		},
+		HeightMode: "rows_plus_base", BaseRows: 2, RowHeight: 16,
+	}
+	if err := validateBattlePanelLayout("battle enemy", p, true); err == nil || !strings.Contains(err.Error(), "count_inset_y") {
+		t.Fatalf("missing count_inset_y error=%v", err)
+	}
+	zero := 0
+	p.CountInsetY = &zero
+	if err := validateBattlePanelLayout("battle enemy", p, true); err != nil {
+		t.Fatalf("valid count_inset_y rejected: %v", err)
 	}
 }
 

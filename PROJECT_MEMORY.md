@@ -88,7 +88,7 @@ save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；�
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
 同時控制寶箱與入口物件 visibility；詳見 `docs/101`。現行 pack manifest 為 schema
-`0.1.27`、`dq3_cht` content `0.1.30`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
+`0.1.27`、`dq3_cht` content `0.1.32`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
 的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
 `0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
 入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
@@ -244,7 +244,7 @@ palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmatio
 `battle_enemy`。可見幾何分別為 `(144,248,128,(menu_rows+2)*16)` 與
 `(288,248,256,(active_groups+2)*16)`；`sub_1c1d8`、`sub_1f908`、`sub_1b053`、
 `sub_1b101` 的 writer→consumer、raw bytes、IDA hash 與推論等級集中在 `docs/109`。
-原始 style pattern、spell／target 其他 rect 及數字 baseline 尚是 V3 長尾，不可從這批
+原始 style pattern、spell／target 其他 rect 及數字 writer 的 raw 內部轉換尚是 V3 長尾，不可從這批
 資料宣稱整個戰鬥畫面已完成。受影響的 `battle_party_command.png`、`battle_ally_target.png`、
 `battle_palpunte_menu.png`、`battle_enemy_target.png`、`battle_message_queue.png` 已重產。
 
@@ -271,7 +271,7 @@ timing／動畫／音效、抗性／formation／掉落或 release 已完成。
 2026-08-09 地表命令窗也已資料化：`interface.json.field_command_labels` 保存標題與六項
 正式命令的雙 glyph，`cmdmenu.go` 不再含 DQ3 專屬字模 table；`NewGameWithPack` 缺欄位
 即拒絕啟動。這是 D2，證據與限制見 `docs/110`；不代表 battle timing／音效／V3 或 release
-已完成。現行 pack schema `0.1.27`、content `0.1.30`。
+已完成。當時 pack schema `0.1.27`、content `0.1.32`（後續欄位切片沿用此 schema 版本）。
 
 2026-08-09 又完成戰鬥場景帶資料化：`interface.json.battle_scene` 保存 `field_y0=80`、
 `field_y1=246`、`ground_y=232` 與 `cursor_glyph=0x77`；`battle.go` 不再持有這組
@@ -339,3 +339,14 @@ pack evidence；推論說明見 [`docs/109`](docs/109-battle-hud-rects-re.md)）
 `internal/gamepack` 的 EXE/HUD parity、`game` 編譯、`TestBattleCommand`、
 `TestMultiEnemy`／`TestHit` 均在 Docker 通過；本輪未重播 311 秒完整 trace，戰鬥逐動作
 timing／動畫／音效、抗性／formation／掉落仍是 V3 長尾。
+
+2026-08-10 敵人數量列基線資料化：`sub_1b101` 的名稱／數量 writer 與
+`dosbox/orochi_boss.png`（SHA-256 `746d7a95c2456fa6338438e6b61ff4fe120670304ebb0f98fdb98c36ef0cad55`）
+均顯示數量字與名稱同一個可見 16px row；`interface.json.battle_enemy` 新增
+`count_inset_y=0`（相對 `text_inset_y`），`battle.go` 只消費 pack 欄位，validator
+拒絕負值／缺欄位，`TestDQ3BattleHUDRectsMatchOriginalEXE` 鎖定此值。這是 strong+D2
+的局部畫面契約；數字 writer 內部 raw DX 轉換、spell／target rect、逐動作 timing／
+動畫／音效仍不等於戰鬥 V3。Docker＋Xvfb 的 `TestDumpMultiEnemyBattle` 另產出
+[`battle_count_row_runtime.png`](dq3_remake_ebitan/docs/battle_count_row_runtime.png)
+（SHA-256 `a9c49e091d25bc28d018cf5363c07f75dac4a8029a91cf78f9da60b179518eb8`），僅作
+debug 視覺核對，不取代正式入口。

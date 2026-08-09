@@ -776,3 +776,13 @@ pack evidence；推論說明見 [`docs/109`](109-battle-hud-rects-re.md)）。
 `internal/gamepack` 的 EXE/HUD parity、`game` 編譯、`TestBattleCommand`、
 `TestMultiEnemy`／`TestHit` 均在 Docker 通過；本輪未重播 311 秒完整 trace，戰鬥逐動作
 timing／動畫／音效、抗性／formation／掉落仍是 V3 長尾。
+
+2026-08-10 敵人數量列基線接線：`sub_1b101` 的名稱／數量 writer 與
+`dosbox/orochi_boss.png` 的玩家可見像素均閉合為同一個 16px row；
+`interface.json.battle_enemy.count_inset_y=0` 明確表示相對名稱列的垂直偏移，
+`battle.go` 不再把這項關係藏在共用 renderer。這筆證據是 strong+D2，raw numeric
+writer 的 DX 內部轉換仍未升為 D3；spell／target rect、逐動作 timing／動畫／音效、
+抗性／formation／掉落仍是戰鬥 V3 長尾。Docker＋Xvfb 的
+`dq3_remake_ebitan/docs/battle_count_row_runtime.png`（SHA-256
+`a9c49e091d25bc28d018cf5363c07f75dac4a8029a91cf78f9da60b179518eb8`）只作 debug 視覺
+核對，不取代正式玩家輸入。
