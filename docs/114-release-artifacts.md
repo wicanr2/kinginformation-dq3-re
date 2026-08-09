@@ -17,8 +17,9 @@ WASM 不列入本輪發佈目標，也沒有把未完成的行動版／瀏覽器
 | macOS Apple Silicon | `dist/dq3-20260810-macos-arm64.zip` | 6,104,807 | `b4cd7247a9f525f755bd3bcb529f5bee2a264b9c8f8b3390eac9d8d1c91f58f0` |
 
 Linux 檔案是使用專案固定的 `work/.tools/runtime-x86_64` 與 `appimagetool` 產出的
-Type 2 AppImage，已在無 FUSE 的 Docker 內以 `--appimage-extract` 解包驗證；同一目錄
-另保留 `dq3-remake-linux-amd64` 直接 ELF 供診斷（本次 binary 13,228,568 bytes，SHA-256
+Type 2 AppImage，已在無 FUSE 的 Docker 內以 `--appimage-extract` 解包驗證；解包後的
+內嵌 ELF 路徑為 `squashfs-root/usr/bin/dq3-remake`，其 SHA-256 與同一目錄保留的
+`dq3-remake-linux-amd64` 直接 ELF 相同（13,228,568 bytes，
 `c7a3dad9d71b3c6dbff3d541f89d121c9d2d3484bb4b771f51df1449dd1b90f1`）。macOS ZIP 內含
 `Dragon Quest III.app/Contents/Info.plist` 與對應架構的可執行檔。桌面外部 game pack 仍可在
 不重新編譯的情況下替換，但需通過 schema、reference、content hash 及資產路徑驗證。
