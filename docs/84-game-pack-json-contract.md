@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.25"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.26"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -195,7 +195,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.25",
+  "schema_version": "0.1.26",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -988,6 +988,14 @@ writer／consumer、raw bytes、IDA linear／file 位址與尚未閉合的 style
 `NewGameWithPack` fail closed；直接 unit fixture 可以不載 pack，但不代表可執行遊戲有
 版本 fallback。
 
+`interface.json.battle_scene` 保存戰鬥場景帶與目標／命令游標的版本資料：
+`field_y0`、`field_y1`、`ground_y` 與 `cursor_glyph`。這些欄位只接受具名的
+renderer primitive；缺少 `battle_scene` 時 production `NewGameWithPack` fail closed，
+不可在 `battle.go` 以另一版的座標或 glyph 補值。DQ3 精訊版目前為
+`80..246`、草地基線 `232`、游標 glyph `0x77`（★），證據等級 D2，完整限制見
+[`docs/111`](111-battle-scene-layout-re.md)。框線 style pattern、逐動作動畫／停頓／音效
+仍不得由這組欄位推成 V3。
+
 標題閒置巡禮若有原版證據，可在同一檔提供 `attract`；引擎只實作輪播狀態機，不能在
 Go 內列出職業或檔名：
 
@@ -1049,7 +1057,7 @@ NPC 及交易後玩家的具名方向，`treasure_gates` 明列第二戰前不�
 
 ```json
 {
-  "schema_version": "0.1.25",
+  "schema_version": "0.1.26",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1079,7 +1087,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.25",
+  "schema_version": "0.1.26",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

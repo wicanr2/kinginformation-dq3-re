@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.25",
+  "schema_version": "0.1.26",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -102,6 +102,23 @@
       "consumer": "sub_1b053/sub_1b0cb mutate byte_28f00/byte_28f1e, sub_1f590 draws the frame and sub_1b101 draws monster names/counts",
       "doc": "docs/109-battle-hud-rects-re.md",
       "note": "raw win_rect 0x0b11, x=0x24*8=288, y=0xf8=248, width=0x20*8=256；+8=(active group rows+2)*0x10 (one row=48)."
+    }
+  },
+  "battle_scene": {
+    "id": "dq3:battle_scene",
+    "field_y0": 80,
+    "field_y1": 246,
+    "ground_y": 232,
+    "cursor_glyph": 119,
+    "evidence": {
+      "level": "D2",
+      "source_kind": "manual",
+      "source": "DQ3.EXE battle renderer / D3TXT00.FON",
+      "address_space": "none",
+      "address": "",
+      "consumer": "battle scene band, monster baseline and target cursor renderer",
+      "doc": "docs/111-battle-scene-layout-re.md",
+      "note": "場景帶與怪物基線由原版戰鬥 renderer 的 RE 座標系及同狀態畫面交叉閉合；cursor_glyph=0x77 對應 D3TXT00.FON 的 ★。尚未把 frame style pattern 或逐動作 timing 視為已完成。"
     }
   },
   "party_hud": {

@@ -2593,6 +2593,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.battle_enemy")
 	}
+	battleSceneLayout, ok := pack.BattleSceneLayout()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing interface.battle_scene")
+	}
 	battleCommandLabels, ok := pack.BattleCommandLabels()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.battle_command_labels")
@@ -2641,6 +2645,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.battle.setMessageLayout(battleMessageLayout)
 	g.battle.setCommandLayout(battleCommandLayout)
 	g.battle.setEnemyLayout(battleEnemyLayout)
+	g.battle.setSceneLayout(battleSceneLayout)
 	g.battle.setCommandLabels(battleCommandLabels)
 	g.cmd.setLabels(fieldCommandLabels)
 	g.tavern.equipment = memberEquipment

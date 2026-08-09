@@ -718,3 +718,9 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 `cmdmenu.go` 不再持有版本專屬 raw glyph table；缺少欄位時 `NewGameWithPack` fail closed。
 證據與 D2 限制見 [`docs/110`](110-field-command-labels-re.md)。這仍不等同戰鬥
 逐動作 timing／動畫／音效、場景 cue 或跨平台 release 已完成。
+
+2026-08-09 追加戰鬥場景資料化切片：`interface.json.battle_scene` 保存原版場景帶
+`80..246`、怪物基線 `232` 與 `D3TXT00.FON` 游標 glyph `0x77`；`battle.go` 移除這組
+DQ3 專屬常數，production 缺欄位即 fail closed。證據與 D2 限制見 [`docs/111`](111-battle-scene-layout-re.md)；框線
+style pattern、spell／target baseline、逐動作 timing／動畫／音效、完整抗性／formation／
+掉落與跨平台 release 仍是後續 V3 GAP。

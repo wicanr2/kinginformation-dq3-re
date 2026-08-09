@@ -108,6 +108,11 @@ const (
 
 type battlePhase int
 
+// curGlyph 是共用 UI renderer 的資料槽，不是版本常數；production bootstrap
+// 由 pack 的 battle_scene.cursor_glyph 寫入。零值只會出現在未安裝 pack 的
+// lightweight fixture，不能作為正式 fallback。
+var curGlyph int
+
 const (
 	phCommand     battlePhase = iota // 等玩家下指令
 	phSpell                          // 選咒文
@@ -176,7 +181,9 @@ type Battle struct {
 	messageLayout      gamepack.WindowLayout      // pack-owned shared battle message rect
 	commandLayout      gamepack.BattlePanelLayout // pack-owned command/selection panel
 	enemyLayout        gamepack.BattlePanelLayout // pack-owned enemy name/count panel
-	commandLabels      map[int][2]int             // pack-owned command glyph pairs
+	sceneLayout        gamepack.BattleSceneLayout // pack-owned field band and cursor glyph
+	sceneLayoutReady   bool
+	commandLabels      map[int][2]int // pack-owned command glyph pairs
 
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
@@ -240,6 +247,17 @@ func (b *Battle) setCommandLayout(layout gamepack.BattlePanelLayout) {
 
 func (b *Battle) setEnemyLayout(layout gamepack.BattlePanelLayout) {
 	b.enemyLayout = layout
+}
+
+// setSceneLayout installs the validated pack-owned battle field geometry.
+// Direct Battle fixtures may leave it empty; production bootstrap rejects that
+// omission before a player can enter a battle.
+func (b *Battle) setSceneLayout(layout gamepack.BattleSceneLayout) {
+	b.sceneLayout = layout
+	b.sceneLayoutReady = layout.ID != ""
+	if b.sceneLayoutReady {
+		curGlyph = layout.CursorGlyph
+	}
 }
 
 // setCommandLabels installs the version-owned glyph pair for each stable
@@ -1607,12 +1625,6 @@ func (b *Battle) wipedOut() bool {
 	return false
 }
 
-// 版面常數(1:1 對齊 C dq3_battlescene render,references/game3.png)。
-const (
-	fieldY0, fieldY1, groundY = 80, 246, 232 // 場景帶(天空+綠地)/ 綠地平線
-	curGlyph                  = 0x77         // ►/★ 游標 glyph(對齊 C)
-)
-
 // drawName:畫 D3TXT00 記錄 rec 的 glyph 序列(咒名/敵名;非 code+1)。
 func (b *Battle) drawName(rgba []byte, x, y, rec int, fg dq3data.Color) {
 	if b.nameText == nil {
@@ -1639,6 +1651,15 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	sky := dq3data.Color{R: 56, G: 120, B: 216}
 	ground := dq3data.Color{R: 40, G: 128, B: 40}
 	b.hits.reset()
+	if !b.sceneLayoutReady {
+		// 直接 Battle fixture 可省略場景資料；正式入口在 bootstrap 時已
+		// fail closed，不得在 renderer 內以 DQ3 座標猜測補值。
+		return
+	}
+	fieldY0 := b.sceneLayout.FieldY0
+	fieldY1 := b.sceneLayout.FieldY1
+	groundY := b.sceneLayout.GroundY
+	curGlyph := b.sceneLayout.CursorGlyph
 
 	// 背景:全黑 → 場景帶。有 packbg(草原 page22)→ 縮放進 80..246;否則純色 fallback。
 	for y := 0; y < ScreenH; y++ {

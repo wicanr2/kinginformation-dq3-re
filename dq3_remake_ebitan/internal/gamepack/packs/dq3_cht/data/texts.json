@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.25",
+  "schema_version": "0.1.26",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",

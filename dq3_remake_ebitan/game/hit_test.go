@@ -56,12 +56,17 @@ func installBattleDrawPack(t *testing.T, b *Battle) {
 	if !ok {
 		t.Fatal("builtin pack missing battle enemy layout")
 	}
+	scene, ok := p.BattleSceneLayout()
+	if !ok {
+		t.Fatal("builtin pack missing battle scene layout")
+	}
 	labels, ok := p.BattleCommandLabels()
 	if !ok {
 		t.Fatal("builtin pack missing battle command labels")
 	}
 	b.setCommandLayout(command)
 	b.setEnemyLayout(enemy)
+	b.setSceneLayout(scene)
 	b.setCommandLabels(labels)
 }
 

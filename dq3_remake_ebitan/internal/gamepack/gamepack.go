@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.25"
+	SchemaVersion = "0.1.26"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -127,6 +127,18 @@ type BattlePanelLayout struct {
 	CountInsetX          int    `json:"count_inset_x"`
 }
 
+// BattleSceneLayout 是版本專屬戰鬥場景帶與游標字模。引擎只套用這些
+// 已由原版證據閉合的幾何與字模，不把某一版的 y 座標或 raw glyph 留在
+// 共用 renderer。
+type BattleSceneLayout struct {
+	ID          string   `json:"id"`
+	FieldY0     int      `json:"field_y0"`
+	FieldY1     int      `json:"field_y1"`
+	GroundY     int      `json:"ground_y"`
+	CursorGlyph int      `json:"cursor_glyph"`
+	Evidence    Evidence `json:"evidence"`
+}
+
 // BattleCommandLabel 是一個原版雙 glyph 指令標籤。指令的流程語意由引擎
 // 共用；實際字模仍由 versioned game pack 提供，避免把某一版的中文字留在 Go。
 type BattleCommandLabel struct {
@@ -216,6 +228,7 @@ type Interface struct {
 	BattleMessage       WindowLayout         `json:"battle_message,omitempty"`
 	BattleCommand       BattlePanelLayout    `json:"battle_command,omitempty"`
 	BattleEnemy         BattlePanelLayout    `json:"battle_enemy,omitempty"`
+	BattleScene         *BattleSceneLayout   `json:"battle_scene,omitempty"`
 	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
 	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
 	PartyHUD            WindowLayout         `json:"party_hud,omitempty"`
@@ -1350,6 +1363,16 @@ func (p *Pack) validateInterface() error {
 	if e := p.Interface.BattleEnemy; e.ID != "" {
 		if err := validateBattlePanelLayout("battle enemy", e); err != nil {
 			return err
+		}
+	}
+	if s := p.Interface.BattleScene; s != nil {
+		if s.ID == "" || s.FieldY0 < 0 || s.FieldY1 <= s.FieldY0 ||
+			s.FieldY1 > 4096 || s.GroundY < s.FieldY0 || s.GroundY > s.FieldY1 ||
+			s.CursorGlyph < 0 || s.CursorGlyph > 0xffff {
+			return errors.New("battle scene layout is invalid")
+		}
+		if err := validateEvidence(s.Evidence); err != nil {
+			return fmt.Errorf("battle scene evidence: %w", err)
 		}
 	}
 	if labels := p.Interface.BattleCommandLabels; labels != nil {
@@ -3407,6 +3430,15 @@ func (p *Pack) BattleEnemyLayout() (BattlePanelLayout, bool) {
 		return BattlePanelLayout{}, false
 	}
 	return p.Interface.BattleEnemy, true
+}
+
+// BattleSceneLayout returns the pack-owned battle field band and cursor glyph.
+// Production bootstrap must require it before a battle can be entered.
+func (p *Pack) BattleSceneLayout() (BattleSceneLayout, bool) {
+	if p == nil || p.Interface.BattleScene == nil || p.Interface.BattleScene.ID == "" {
+		return BattleSceneLayout{}, false
+	}
+	return *p.Interface.BattleScene, true
 }
 
 // BattleCommandLabels returns the pack-owned glyphs for the five standard
