@@ -1,6 +1,10 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
+)
 
 // 資訊面板(狀況 / 道具):命令窗選 狀況/道具 開啟,B 關。用已建的升級/背包/品名系統。
 type panelKind int
@@ -18,24 +22,86 @@ const (
 	itemActionTarget
 )
 
-// drawStatus:主角狀況(等級/HP/EXP/G)。glyph 22='H'、標籤用數字為主(中文標籤 glyph 之後補)。
+// drawStatus:依原版 D3TXT00 record407 的 22×12 格狀況窗，將主角角色 record
+// 的七個持久能力與裝備衍生值填入 pack-owned anchors。沒有完整 pack 契約時
+// fail closed，不畫猜測版黑色大框。
 func (g *Game) drawStatus(rgba []byte, white dq3data.Color) {
-	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
+	if g.pack == nil || g.dlg.tx == nil {
+		return
+	}
+	layout, ok := g.pack.FieldStatusLayout()
+	if !ok {
+		return
+	}
+	glyphs, ok := g.pack.TextGlyphCodes(layout.TextID)
+	if !ok || len(glyphs) == 0 {
+		return
+	}
+	win := layout.Window
+	fillPackBox(rgba, win, win.X, win.Y, win.Width, win.Height)
+	drawGlyphGrid(rgba, g.dlg.tx, win.X, win.Y, win.Columns, win.LinesPerPage, glyphs, white)
+
 	level, maxHP, atk, def, agi := g.heroStats()
-	yellow := dq3data.Color{R: 255, G: 224, B: 32}
-	x := 64
-	// 每列:名稱 glyph(D3TXT00 對應字)+ 數值。這裡以 H 標 HP,其餘用數值列(中文標籤 glyph 之後補)。
-	drawNumber(rgba, g.dlg.tx, x, 60, level, yellow) // 等級
-	drawGlyph(rgba, g.dlg.tx, x, 90, 22, white)      // H
-	drawNumber(rgba, g.dlg.tx, x+24, 90, g.heroHP, white)
-	drawNumber(rgba, g.dlg.tx, x+120, 90, maxHP, white)
-	drawNumber(rgba, g.dlg.tx, x, 120, atk, white)     // 攻
-	drawNumber(rgba, g.dlg.tx, x+120, 120, def, white) // 防
-	drawNumber(rgba, g.dlg.tx, x+240, 120, agi, white) // 敏
-	drawNumber(rgba, g.dlg.tx, x, 150, int(g.heroExp), white)
-	drawNumber(rgba, g.dlg.tx, x, 180, g.heroGold, yellow)
-	// 主線進度階段(0..9;第一個未完成里程碑處停)—— 可見的破關進度指標
-	drawNumber(rgba, g.dlg.tx, x, 210, g.progressStage(), yellow)
+	maxMP := g.heroMaxMP()
+	value := dq3data.Color{R: 255, G: 224, B: 32}
+	drawStatusGlyphs(rgba, g.dlg.tx, layout.Name, g.heroName, white)
+	drawStatusGlyphs(rgba, g.dlg.tx, layout.Class, layout.HeroClassGlyphs, white)
+	sex := layout.MaleGlyphs
+	if g.heroGender != 0 {
+		sex = layout.FemaleGlyphs
+	}
+	drawStatusGlyphs(rgba, g.dlg.tx, layout.Sex, sex, white)
+	for _, field := range []struct {
+		anchor gamepack.GeometryAnchor
+		value  int
+	}{
+		{layout.Level, level}, {layout.CurrentHP, g.heroHP}, {layout.CurrentMP, g.heroMP},
+		{layout.Strength, int(g.heroStat[stats.STR])}, {layout.Agility, agi},
+		{layout.Vitality, int(g.heroStat[stats.VIT])}, {layout.Intelligence, int(g.heroStat[stats.INT])},
+		{layout.Luck, int(g.heroStat[stats.LUCK])}, {layout.MaxHP, maxHP},
+		{layout.MaxMP, maxMP}, {layout.Attack, atk}, {layout.Defense, def},
+		{layout.Experience, int(g.heroExp)},
+	} {
+		drawNumber(rgba, g.dlg.tx, field.anchor.X, field.anchor.Y, field.value, value)
+	}
+}
+
+// drawGlyphGrid 畫 pack 文字定義中的固定欄列與原始控制碼。record407 的換行
+// 是資料的一部分；renderer 不以字串內容猜測欄寬，也不把中文標籤寫回 Go。
+func drawGlyphGrid(rgba []byte, tx *dq3data.Text, x, y, columns, lines int, glyphs []uint16, fg dq3data.Color) {
+	if columns <= 0 || lines <= 0 {
+		return
+	}
+	col, line := 0, 0
+	for _, v := range glyphs {
+		if line >= lines {
+			return
+		}
+		switch v {
+		case dq3data.TxtEnd, dq3data.TxtPage:
+			return
+		case dq3data.TxtNL, dq3data.TxtNL2:
+			col, line = 0, line+1
+			continue
+		default:
+			if v < dq3data.GlyphMax {
+				drawGlyph(rgba, tx, x+col*dq3data.GlyphPx, y+line*dq3data.GlyphPx, int(v), fg)
+			}
+			col++
+			if col >= columns {
+				col, line = 0, line+1
+			}
+		}
+	}
+}
+
+func drawStatusGlyphs(rgba []byte, tx *dq3data.Text, anchor gamepack.GeometryAnchor, glyphs []int, fg dq3data.Color) {
+	for i, glyph := range glyphs {
+		if glyph < 0 || glyph >= dq3data.GlyphMax {
+			continue
+		}
+		drawGlyph(rgba, tx, anchor.X+i*dq3data.GlyphPx, anchor.Y, glyph, fg)
+	}
 }
 
 // drawCmdStatus:命令窗開啟時顯示 pack 定義的縱列隊伍 H/M/等級狀態窗。

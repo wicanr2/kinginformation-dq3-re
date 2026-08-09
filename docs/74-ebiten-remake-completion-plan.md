@@ -104,7 +104,7 @@
 | NPC／日夜 | DOSBox、RE | 三層可見性與晝夜已有 | 機制有，逐事件 flags 待接 |
 | 地表／HUD | 影片、網路圖 | 四欄 H/M/等級 HUD 已由 pack 幾何／glyph 驅動 | E2；需入口／palette／同狀態 V3 |
 | 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
-| 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 魯拉、烈米特、特黑洛斯、拉那魯達的 MP／gate／核心效果為 D2 | 其餘工具咒與逐窗仍需 E2 |
+| 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 詳細狀況窗已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 圖達 E2／V2；魯拉、烈米特、特黑洛斯、拉那魯達的 MP／gate／核心效果為 D2 | 狀況子選單／隊員詳情、道具／裝備逐窗與其餘工具咒仍需 E2／V3 |
 | 戰鬥 | DOSBox／影片／原始怪圖 | 公式、多敵、狀態、boss queue 已有 | 呈現／訊息／cue 長尾 |
 | 商店／旅社／教會／達瑪 | 原版資料、部分截圖 | 達瑪轉職已由正式流程閉合至 E3/V2；其餘多數已有 | 賣出、逐服務與達瑪原版同狀態 V3 仍缺 |
 | 船 | 影片、DOSBox 截圖 | 取船鏈、正式登船與首次航行已接 | E3；航海畫面仍待 V3 |
@@ -786,3 +786,13 @@ writer 的 DX 內部轉換仍未升為 D3；spell／target rect、逐動作 timi
 `dq3_remake_ebitan/docs/battle_count_row_runtime.png`（SHA-256
 `a9c49e091d25bc28d018cf5363c07f75dac4a8029a91cf78f9da60b179518eb8`）只作 debug 視覺
 核對，不取代正式玩家輸入。
+
+2026-08-10 詳細狀況窗切片接線：IDA Pro 9.4 以 `lea si, ds:3DA8h`→`sub_1F4E3` 閉合
+原版 `DGROUP 0x3DA8`（file `0x19EE8`）的 352×192 視窗結構；flags、位置、尺寸與
+D3TXT00 record 407 的 22×12 glyph/control stream 已寫入 `interface.json.field_status`
+與 `texts.json`。Go renderer 只消費 pack 的 frame、標籤 glyph、性別／職業 glyph 及
+具名 anchor，動態填入等級、HP／MP、五項能力、攻擊、防禦與經驗；缺契約、frame 或文字
+時 `NewGameWithPack` fail closed。Docker＋Xvfb 的正式新遊戲 fixture 產出
+`dq3_remake_ebitan/docs/status_detail_runtime.png`，狀態面板達 E2／V2；完整入口、子選單、
+隊員詳情、道具／裝備逐窗與同狀態原版 V3 對拍仍未閉合。raw bytes、位址基準、推論等級與
+限制見 [`docs/116`](116-field-status-panel-re.md)，欄位契約見 [`docs/84`](84-game-pack-json-contract.md)。

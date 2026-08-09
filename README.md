@@ -15,6 +15,8 @@
 能力條逐幀填充與淡入淡出仍待 V3。
 新遊戲能力確認畫面的 `FIRST.SCR` raw 背景也已由 game-pack 載入，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2；
 stat panel 幾何仍待同狀態 V3。
+地表詳細狀況窗則已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 達 E2／V2；
+狀況子選單、隊員詳情與道具／裝備逐窗仍待同狀態 V3，詳見 [`docs/116`](docs/116-field-status-panel-re.md)。
 
 ## 先讀這些
 

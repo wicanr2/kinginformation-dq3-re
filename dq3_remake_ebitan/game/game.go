@@ -2686,6 +2686,16 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.new_game_geometry")
 	}
+	fieldStatusLayout, ok := pack.FieldStatusLayout()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing interface.field_status")
+	}
+	if fieldStatusLayout.Window.Frame == nil {
+		return nil, fmt.Errorf("game pack missing interface.field_status.window.frame")
+	}
+	if statusGlyphs, defined := pack.TextGlyphCodes(fieldStatusLayout.TextID); !defined || len(statusGlyphs) == 0 {
+		return nil, fmt.Errorf("game pack field_status references unknown text %q", fieldStatusLayout.TextID)
+	}
 	battleDefs := make(map[string]battleTextDefinition, len(battleRefs.IDs()))
 	for role, id := range battleRefs.IDs() {
 		if id == "" {

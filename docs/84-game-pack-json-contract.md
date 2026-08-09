@@ -944,6 +944,17 @@ DQ3 CTY59 handler41 在 IDA linear `0x15bba`（file `0x6f2a`）比較 `DS:4f35==
 精訊版 canonical 為 `(48,244,448,80)`、四欄、四列，對應原版影片的姓名／H／M／等級
 狀態窗；缺資料時引擎不畫猜測版面。
 
+提供地表詳細狀況畫面的 pack 必須提供 `field_status`。其
+`window`、`frame`、`text_id`、`hero_class_glyphs`、`male_glyphs`、`female_glyphs`
+與所有動態欄位 anchor（`name`、`class`、`sex`、`level`、目前／最大 HP／MP、五項能力、
+`attack`、`defense`、`experience`）均屬版本資料；renderer 只依穩定欄位名填入 runtime
+值，不得在 Go 寫入 DQ3 座標、文字或字模。DQ3 精訊版 canonical window 是
+`(152,46,352,192)`、22×12，原始 `DGROUP 0x3DA8`（file `0x19ee8`）的 title record
+為 D3TXT00 record 407；`texts.json` 對應文字的 `layout.kind` 必須是 `field_status`，
+並保留該 record 的完整 glyph/control stream。缺 `field_status`、frame、glyph 或 anchor
+時，production 建立失敗即關閉，不使用 Go fallback。writer／consumer、原始 bytes 與
+runtime 對拍見 [`docs/116`](116-field-status-panel-re.md)。
+
 能力確認畫面若使用獨立 raw screen，可在同一檔提供 `new_game_confirmation`；引擎只實作
 row-interleaved 4bpp decoder 與 modal composition，尺寸、asset key、palette 與證據由 pack
 提供：

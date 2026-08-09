@@ -336,6 +336,36 @@ func (l *FieldCommandLabels) Entries() map[string]BattleCommandLabel {
 	}
 }
 
+// FieldStatusLayout 是地表「狀況→看各人的狀況」詳細面板的資料契約。
+// 原版先以 record 407 畫出 22×12 字格，再由角色 record 的欄位填入數值；
+// 引擎只負責套用這個跨版本可重用的欄位 primitive，所有座標、文字與職業／性別
+// 字模仍由 versioned game pack 提供。
+type FieldStatusLayout struct {
+	ID              string         `json:"id"`
+	Window          WindowLayout   `json:"window"`
+	TextID          string         `json:"text_id"`
+	HeroClassGlyphs []int          `json:"hero_class_glyphs"`
+	MaleGlyphs      []int          `json:"male_glyphs"`
+	FemaleGlyphs    []int          `json:"female_glyphs"`
+	Name            GeometryAnchor `json:"name"`
+	Class           GeometryAnchor `json:"class"`
+	Sex             GeometryAnchor `json:"sex"`
+	Level           GeometryAnchor `json:"level"`
+	CurrentHP       GeometryAnchor `json:"current_hp"`
+	CurrentMP       GeometryAnchor `json:"current_mp"`
+	Strength        GeometryAnchor `json:"strength"`
+	Agility         GeometryAnchor `json:"agility"`
+	Vitality        GeometryAnchor `json:"vitality"`
+	Intelligence    GeometryAnchor `json:"intelligence"`
+	Luck            GeometryAnchor `json:"luck"`
+	MaxHP           GeometryAnchor `json:"max_hp"`
+	MaxMP           GeometryAnchor `json:"max_mp"`
+	Attack          GeometryAnchor `json:"attack"`
+	Defense         GeometryAnchor `json:"defense"`
+	Experience      GeometryAnchor `json:"experience"`
+	Evidence        Evidence       `json:"evidence"`
+}
+
 // Entries returns a copy keyed by stable engine command roles.
 func (l *BattleCommandLabels) Entries() map[string]BattleCommandLabel {
 	if l == nil {
@@ -388,6 +418,7 @@ type Interface struct {
 	NewGameGeometry     *NewGameGeometry     `json:"new_game_geometry,omitempty"`
 	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
 	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
+	FieldStatus         *FieldStatusLayout   `json:"field_status,omitempty"`
 	PartyHUD            WindowLayout         `json:"party_hud,omitempty"`
 	Attract             *AttractSequence     `json:"attract,omitempty"`
 	NewGameConfirmation *RawScreenAsset      `json:"new_game_confirmation,omitempty"`
@@ -1604,6 +1635,11 @@ func (p *Pack) validateInterface() error {
 			}
 		}
 	}
+	if status := p.Interface.FieldStatus; status != nil {
+		if err := validateFieldStatusLayout(*status); err != nil {
+			return err
+		}
+	}
 	if h := p.Interface.PartyHUD; h.ID != "" {
 		if h.X < 0 || h.Y < 0 || h.Width <= 0 || h.Height <= 0 ||
 			h.TextInsetX < 0 || h.TextInsetY < 0 ||
@@ -1784,6 +1820,55 @@ func validateBattlePanelLayout(name string, p BattlePanelLayout, requireCountY b
 	return nil
 }
 
+func validateFieldStatusLayout(s FieldStatusLayout) error {
+	if s.ID == "" || s.TextID == "" {
+		return errors.New("field status id and text_id are required")
+	}
+	w := s.Window
+	if w.ID == "" || w.X < 0 || w.Y < 0 || w.Width <= 0 || w.Height <= 0 ||
+		w.TextInsetX < 0 || w.TextInsetY < 0 ||
+		w.TextInsetX*2 >= w.Width || w.TextInsetY*2 >= w.Height ||
+		w.Columns <= 0 || w.Columns > 100 || w.LinesPerPage <= 0 || w.LinesPerPage > 20 {
+		return errors.New("field status window layout is invalid")
+	}
+	for name, anchor := range map[string]GeometryAnchor{
+		"name": s.Name, "class": s.Class, "sex": s.Sex, "level": s.Level,
+		"current_hp": s.CurrentHP, "current_mp": s.CurrentMP,
+		"strength": s.Strength, "agility": s.Agility, "vitality": s.Vitality,
+		"intelligence": s.Intelligence, "luck": s.Luck, "max_hp": s.MaxHP,
+		"max_mp": s.MaxMP, "attack": s.Attack, "defense": s.Defense,
+		"experience": s.Experience,
+	} {
+		if err := validateGeometryAnchor("field_status."+name, anchor); err != nil {
+			return err
+		}
+	}
+	for name, glyphs := range map[string][]int{
+		"hero_class_glyphs": s.HeroClassGlyphs,
+		"male_glyphs":       s.MaleGlyphs,
+		"female_glyphs":     s.FemaleGlyphs,
+	} {
+		if len(glyphs) == 0 {
+			return fmt.Errorf("field status %s must not be empty", name)
+		}
+		for _, glyph := range glyphs {
+			if glyph < 0 || glyph > 0xffff {
+				return fmt.Errorf("field status %s glyph out of range", name)
+			}
+		}
+	}
+	if err := validateEvidence(w.Evidence); err != nil {
+		return fmt.Errorf("field status window evidence: %w", err)
+	}
+	if err := validateFrameStyle("field status", w.Frame); err != nil {
+		return err
+	}
+	if err := validateEvidence(s.Evidence); err != nil {
+		return fmt.Errorf("field status evidence: %w", err)
+	}
+	return nil
+}
+
 func validateFrameStyle(name string, f *FrameStyle) error {
 	if f == nil {
 		return nil
@@ -1903,6 +1988,11 @@ func (p *Pack) validateTexts() error {
 		case "battle_message":
 			if d.Source.Kind != "legacy_record" || d.Source.File == "" || d.Source.Record == nil {
 				return fmt.Errorf("%s: battle_message requires legacy_record source", d.ID)
+			}
+		case "field_status":
+			if d.Layout.Columns < 1 || d.Layout.LinesPerPage < 1 ||
+				d.Source.Kind != "legacy_record" || d.Source.File == "" || d.Source.Record == nil {
+				return fmt.Errorf("%s: incomplete field_status layout/source", d.ID)
 			}
 		default:
 			return fmt.Errorf("%s: unsupported layout kind %q", d.ID, d.Layout.Kind)
@@ -3790,6 +3880,16 @@ func (p *Pack) FieldCommandLabels() (FieldCommandLabels, bool) {
 		return FieldCommandLabels{}, false
 	}
 	return *p.Interface.FieldCommandLabels, true
+}
+
+// FieldStatusLayout returns the pack-owned detailed status panel. Production
+// bootstrap must require it before opening the field status command; fixtures
+// may omit it deliberately when they do not exercise that screen.
+func (p *Pack) FieldStatusLayout() (FieldStatusLayout, bool) {
+	if p == nil || p.Interface.FieldStatus == nil || p.Interface.FieldStatus.ID == "" {
+		return FieldStatusLayout{}, false
+	}
+	return *p.Interface.FieldStatus, true
 }
 
 // PartyHUDLayout is absent for packs that do not expose a longitudinal party

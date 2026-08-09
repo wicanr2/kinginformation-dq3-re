@@ -313,6 +313,75 @@
       "note": "原版 640x350 邏輯畫布的四欄 H/M/職業狀態框；以同影片 f000900 的玩家可見幾何作 D3 anchor。"
     }
   },
+  "field_status": {
+    "id": "dq3:field_status_detail",
+    "window": {
+      "id": "dq3:window.field_status_detail",
+      "x": 152,
+      "y": 46,
+      "width": 352,
+      "height": 192,
+      "text_inset_x": 0,
+      "text_inset_y": 0,
+      "columns": 22,
+      "lines_per_page": 12,
+      "frame": {
+        "id": "dq3:frame.ega_window_white_black",
+        "border_rgb": [255, 255, 255],
+        "interior_rgb": [0, 0, 0],
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x19ee8..0x19efc",
+          "consumer": "status detail window writer → sub_1f590 frame primitive",
+          "doc": "docs/116-field-status-panel-re.md",
+          "note": "DGROUP 0x3da8；原始結構 x=0x13、y=0x2e、width=0x2c、height=0xc0；frame style 的可見色彩沿用已閉合的 EGA writer。"
+        }
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "file",
+        "address": "0x19ee8",
+        "consumer": "logical 0x18338..0x1834d lea si,0x3da8 → sub_1f4e3 → status detail consumer",
+        "doc": "docs/116-field-status-panel-re.md",
+        "note": "原始 window structure 的 title record=0x197(407)，22×12 字格與 352×192 像素一致；同輸入畫面仍保留待補的逐幀閉合。"
+      }
+    },
+    "text_id": "dq3:text.field.status_detail",
+    "hero_class_glyphs": [106, 187],
+    "male_glyphs": [775],
+    "female_glyphs": [234],
+    "name": {"x": 184, "y": 62},
+    "class": {"x": 248, "y": 62},
+    "sex": {"x": 248, "y": 78},
+    "level": {"x": 248, "y": 94},
+    "current_hp": {"x": 248, "y": 110},
+    "current_mp": {"x": 248, "y": 126},
+    "strength": {"x": 440, "y": 62},
+    "agility": {"x": 440, "y": 78},
+    "vitality": {"x": 440, "y": 94},
+    "intelligence": {"x": 440, "y": 110},
+    "luck": {"x": 440, "y": 126},
+    "max_hp": {"x": 440, "y": 142},
+    "max_mp": {"x": 440, "y": 158},
+    "attack": {"x": 440, "y": 174},
+    "defense": {"x": 440, "y": 190},
+    "experience": {"x": 392, "y": 206},
+    "evidence": {
+      "level": "D2",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + D3TXT00.TXT + scratch_re/status407b.png",
+      "address_space": "record",
+      "address": "0x19ee8; D3TXT00 record 407",
+      "consumer": "status detail field renderer fills hero record stats after record407 frame",
+      "doc": "docs/116-field-status-panel-re.md",
+      "note": "數值來源為 heroStat／heroExp／裝備衍生值；各 anchor 保留在 pack，避免 renderer 內藏 DQ3 座標。"
+    }
+  },
   "new_game_confirmation": {
     "id": "dq3:screen.new_game_confirmation",
     "asset_key": "new_game_confirmation",

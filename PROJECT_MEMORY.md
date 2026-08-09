@@ -350,3 +350,25 @@ timing／動畫／音效、抗性／formation／掉落仍是 V3 長尾。
 [`battle_count_row_runtime.png`](dq3_remake_ebitan/docs/battle_count_row_runtime.png)
 （SHA-256 `a9c49e091d25bc28d018cf5363c07f75dac4a8029a91cf78f9da60b179518eb8`），僅作
 debug 視覺核對，不取代正式入口。
+
+2026-08-10 詳細狀況窗已完成一個可回查的資料化切片。IDA Pro 9.4 由
+`lea si, ds:3DA8h`→`sub_1F4E3` 閉合原版視窗結構：`DGROUP 0x3DA8`、file `0x19EE8`、
+flags `0x0301`、位置 `(152,46)`、尺寸 `352×192`、標題 D3TXT00 record 407；原始
+`D3TXT00` glyph/control stream 仍完整保存在 `docs/data/d3txt_codes.json` 與 game pack
+文字資料。`interface.json.field_status` 現在保存 window/frame、22×12 網格、職業／性別
+glyph 與具名欄位 anchor；`panel.go` 只依 pack 填入主角姓名、職業、性別、等級、HP／MP、
+五項能力、最大值、攻擊、防禦與經驗，沒有版本專屬文字或座標 fallback。缺資料時
+`NewGameWithPack` fail closed。證據與推論等級見 `docs/116-field-status-panel-re.md`，
+欄位契約見 `docs/84-game-pack-json-contract.md`；Docker＋Xvfb runtime 對拍為
+`dq3_remake_ebitan/docs/status_detail_runtime.png`，目前 E2／V2，尚非完整狀況子選單、
+隊員詳情、道具／裝備逐窗或同狀態 V3。
+
+本輪發行範圍仍只包含三種桌面包：Linux AppImage、Windows x86_64 ZIP、macOS ZIP（Intel
+與 Apple Silicon 各一包）；Android、WASM 不列入本輪驗收或發佈宣稱。所有建置、測試、
+截圖與影片工作必須在一次性 Docker 容器內執行；提交前清點並清除不再使用的專案容器，
+保留使用者未追蹤的 Android libs、scratchpad 與反組譯工具檔。
+
+狀況窗切片後已在 Docker 重新編譯並覆蓋同一批三平台桌面包；最新檔案尺寸／SHA-256、
+AppImage `squashfs-root/usr/bin/dq3-remake` 內嵌執行檔對照，以及 Windows MinGW 工具鏈
+來源均記錄於 `docs/114-release-artifacts.md`。推廣片仍為同一組版控 runtime PNG 剪輯的
+`dist/dq3-promo-20260810.mp4`；不要把未納入本輪的 Android／WASM 產物加入發佈清單。

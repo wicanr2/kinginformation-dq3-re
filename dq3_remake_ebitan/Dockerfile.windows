@@ -1,0 +1,9 @@
+# Windows x86_64 桌面發佈用 Go／Ebitengine 工具鏈。
+# 這個 revision 必須在 Docker 內建立；禁止在主機執行交叉編譯器。
+FROM golang:1.26.5-bookworm
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends mingw-w64 zip ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV GOTOOLCHAIN=local

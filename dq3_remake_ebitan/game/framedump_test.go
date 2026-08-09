@@ -135,6 +135,12 @@ func TestDumpNewGameScreens(t *testing.T) {
 	dump("equipment_party_inventory")
 	g.panel = panelNone
 
+	// 原版 D3TXT00 record407 的詳細狀況窗：正式命令入口只顯示
+	// pack-owned frame／標籤與主角角色 record 數值，不注入 debug 進度欄位。
+	g.panel = panelStatus
+	dump("status_detail")
+	g.panel = panelNone
+
 	// CTY10 sec5 原版 handler14：甘達特×1 + 手下×3 的混合編隊。
 	kandarEvent := g.pack.BossSurrenderEvents()[0]
 	kandar, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
