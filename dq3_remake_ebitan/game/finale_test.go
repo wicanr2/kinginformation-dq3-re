@@ -197,4 +197,19 @@ func TestEndingScroll(t *testing.T) {
 	if steps != end.NRecords {
 		t.Errorf("推進步數 %d != ENDTXT 段數 %d", steps, end.NRecords)
 	}
+	if len(g.endingPix) != ScreenW*ScreenH || len(g.endingPal) == 0 {
+		t.Fatalf("TIT3.P 終盤 pack asset 未載入：pix=%d pal=%d", len(g.endingPix), len(g.endingPal))
+	}
+	g.renderFrame()
+	for i, idx := range g.endingPix {
+		want := dq3data.Color{}
+		if int(idx) < len(g.endingPal) {
+			want = g.endingPal[idx]
+		}
+		o := i * 4
+		if g.rgba[o] != want.R || g.rgba[o+1] != want.G || g.rgba[o+2] != want.B || g.rgba[o+3] != 255 {
+			t.Fatalf("THE END renderer pixel %d = %v,%v,%v,%v want %v,%v,%v,255",
+				i, g.rgba[o], g.rgba[o+1], g.rgba[o+2], g.rgba[o+3], want.R, want.G, want.B)
+		}
+	}
 }

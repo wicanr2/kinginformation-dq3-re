@@ -3,7 +3,7 @@
 ## 結論
 
 本文件最初在 schema `0.1.21`／content `0.1.25` checkpoint 記錄愛的回憶後續；現行
-pack 版本以 `PROJECT_MEMORY.md` 與 manifest 為準（schema `0.1.22`／content `0.1.26`）。
+pack 版本以 `PROJECT_MEMORY.md` 與 manifest 為準（schema `0.1.22`／content `0.1.27`）。
 該切片內容如下：
 
 ```text

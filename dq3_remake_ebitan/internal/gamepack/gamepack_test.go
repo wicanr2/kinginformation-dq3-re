@@ -14,6 +14,25 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
+func TestBuiltinDQ3FinalePackReferences(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for key, want := range map[string]AssetRef{
+		"title_image":  {Path: "TITG.P", Size: 39610, SHA256: "127fbed5603b8c0f6481b54e44aac0413384c1581c901780fbf0ffe947ecafa8"},
+		"ending_image": {Path: "TIT3.P", Size: 28948, SHA256: "f4c0b82c0df531ff7e8e10ce05f18b22e3e87a7d9a21237666b98722f132378e"},
+	} {
+		got, ok := p.Asset(key)
+		if !ok || got != want {
+			t.Fatalf("pack asset %s = %+v/%v, want %+v", key, got, ok, want)
+		}
+	}
+	if track, ok := p.AudioTrack("ending"); !ok || track != 17 {
+		t.Fatalf("ending audio cue = %d/%v, want 17/true", track, ok)
+	}
+}
+
 func TestDQ3RuraNavigationMatchesOriginalEXE(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {

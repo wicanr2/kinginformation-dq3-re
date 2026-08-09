@@ -114,6 +114,13 @@ InputState、不中途注入座標／道具／事件函式，依序完成 CTY83 
 palette transition、逐畫面／音效 V3、Android／桌面 release 驗收仍是後續工作，不能與流程
 完成混稱。
 
+同日收尾切片已把終盤資產與配樂接回 versioned pack：`manifest.json` 以 SHA-256／尺寸宣告
+`title_image=TITG.P`、`ending_image=TIT3.P`，`data/audio.json` 以穩定 scene cue 提供
+TITLE/FIELD/CASTLE/TOWN/DUNGEON/BATTLE/ENDING（ENDING 為原版 track 17）。loader 會在 Docker runtime 讀取並 fail closed；正式 trace 在冊封後捲完
+`ENDTXT.TXT` 產生 `dq3_remake_ebitan/docs/img/ending_the_end_runtime.png`，與
+`docs/title/ending.png` 逐像素一致。這只把固定終盤畫面與 cue 升為 V3；終盤文字 timing、
+其餘場景／戰鬥畫面與跨平台 release 仍未完成，不得將單一終盤圖誤宣稱全程 parity。
+
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
 D2/D3 證據，未知值不得以可調參數名義猜填。Desktop 可讀外部 pack 免重編譯，
@@ -174,7 +181,7 @@ boot production trace 已從假王勝利正常住宿、魯拉、登船航行到 
 save/load。幽靈船座標已與玩家座標分離；四個 tile 由 RNG state 低二位選擇，物件離開
 `80×80` 活動視窗時依原版 18 筆候選表重定位。船員之骨 records740–744、同座標動態入口、
 CTY36 轉場、愛的回憶 `0x64` 寶箱及其 save/load 已由正式 InputState trace 閉合為 E3／V1。
-schema `0.1.22`／content `0.1.26` 延續 `coordinate_item_gate_events`，並新增
+schema `0.1.22`／content `0.1.27` 延續 `coordinate_item_gate_events`，並新增
 `direct_map_patch` 與 persistent `map_patch` 的分離契約。boot trace 從
 愛的回憶 checkpoint 依 CTY36 原始轉場離船；同座標停泊船會恢復 mode1，避免玩家困在
 水格。其後正式航行至 `(76,54)`，依 records597／598、item0x64 與 flag0x35 解除詛咒，

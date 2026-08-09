@@ -186,6 +186,11 @@ namespace:local_id
 | `data` | object | 是 | logical table 名稱到相對 JSON 路徑；路徑不得離開 pack root。 |
 | `assets` | object | 是 | logical asset 名稱、路徑、大小及 hash。 |
 
+`data` 可選擇提供 `audio` 路徑。存在時，檔案必須是同一 schema version 的
+`audio.json`，由 loader 嚴格驗證；未提供音效 cue 不得在 Go 端補上版本專屬軌號。
+`assets` 的 `size`／`sha256` 是外部原版素材的完整性 gate；引擎讀取 pack 指定的路徑並在
+載入時核對，不得把 `TITG.P`、`TIT3.P` 等檔名重新寫成共用引擎常數。
+
 最小示意：
 
 ```json
@@ -207,7 +212,8 @@ namespace:local_id
     "characters": "data/characters.json",
     "texts": "data/texts.json",
     "events": "data/events.json",
-    "interface": "data/interface.json"
+    "interface": "data/interface.json",
+    "audio": "data/audio.json"
   },
   "assets": {}
 }
@@ -920,7 +926,27 @@ NPC 及交易後玩家的具名方向，`treasure_gates` 明列第二戰前不�
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
   避免在規則表散落中文字串。
 - `audio.json` 將 cue ID 映射至原版 track/VOC 或合法替代資源，並記錄 loop、優先權、
-  scene transition 行為。
+  scene transition 行為。現行最小結構為：
+
+```json
+{
+  "schema_version": "0.1.22",
+  "cues": {
+    "ending": {
+      "kind": "music",
+      "track": 17,
+      "loop": true,
+      "priority": 100,
+      "evidence": {"level": "D3", "source_kind": "video", "address_space": "none",
+        "source": "…", "consumer": "ending sequence", "doc": "docs/61-music-scene-mapping.md"}
+    }
+  }
+}
+```
+
+cue 的 `track` 只能存在於 versioned pack；共用引擎以穩定 cue ID 查詢。`ending` 的
+DQ3 精訊版值與 `TIT3.P` 終盤畫面同一條正式玩家路徑驗證，不能由畫面名稱或 C prototype
+猜填。
 - UI layout 若跨三代共用，可用具名 component 參數；逐像素座標必須記錄 canvas、anchor
   與單位，不可依目前視窗縮放值猜測。
 

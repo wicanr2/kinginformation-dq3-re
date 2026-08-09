@@ -4,6 +4,7 @@
 package game
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io/fs"
 	"log"
@@ -20,10 +21,14 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
-// 場景配樂軌號(對齊 C dq3_audio g_scene_track):地表 FIELD=6、阿里阿罕城 CASTLE=1。
 const (
-	trackField  = 6
-	trackCastle = 1
+	audioCueEnding  = "ending"
+	audioCueTitle   = "title"
+	audioCueField   = "field"
+	audioCueCastle  = "castle"
+	audioCueTown    = "town"
+	audioCueDungeon = "dungeon"
+	audioCueBattle  = "battle"
 )
 
 const (
@@ -63,6 +68,15 @@ type Scene struct {
 	override        map[int]int // 執行期 tile 覆蓋(開門後 door→通行 tile;key=y*w+x)
 	npcRng          rng.RNG     // NPC 遊走用確定性 RNG(依 section 種子)
 	night           bool        // 此 scene 用黑夜 NPC 表載入(晝夜 cache 判斷用;overworld 恆 false)
+}
+
+// currentSceneSection 是 production code 使用的 section 讀取器；測試檔可另以
+// sceneSection 便利斷言，但正式 build 不得依賴 `_test.go` 的 helper。
+func currentSceneSection(s *Scene) int {
+	if s == nil {
+		return -1
+	}
+	return s.sec
 }
 
 // tileIdx:回 (x,y) 的 BLK tile 索引,先查執行期覆蓋(開門)再退靜態 tileAt。
@@ -309,6 +323,8 @@ type Game struct {
 	showTitle                 bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
 	titlePix                  []uint8
 	titlePal                  []dq3data.Color
+	endingPix                 []uint8 // pack asset ending_image(TIT3.P)
+	endingPal                 []dq3data.Color
 	cfg                       config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
 	pack                      *gamepack.Pack // versioned 精訊版 game pack；遊戲設定不得再散落為 Go table
 	settings                  Settings       // 設定選單 modal(標題畫面按 S 開)
@@ -416,13 +432,6 @@ type Game struct {
 	frame                  *ebiten.Image
 	rgba                   []byte
 }
-
-// 場景配樂軌(對齊 C g_scene_track):BATTLE=14、TOWN=2、DUNGEON=3。
-const (
-	trackBattle  = 14
-	trackTown    = 2
-	trackDungeon = 3
-)
 
 // dpadEdge:方向鍵「剛按下」→ facing 碼(0下 1上 2左 3右);無則 -1。選單導覽用。
 func dpadEdge() int {
@@ -928,7 +937,7 @@ func (g *Game) step(in InputState) error {
 			if won && len(g.bossQueue) > 0 { // boss 連戰:勝 → 接下一場
 				g.advanceBossQueue()
 			} else if g.endSeq < 0 { // 一般戰後回地表曲(結局進行中則不覆蓋)
-				g.music.Play(trackField)
+				g.playAudioCue(audioCueField)
 			}
 		}
 		g.renderFrame()
@@ -1349,7 +1358,7 @@ func (g *Game) enterTownCty(cty int) {
 		g.dlg.tx = sc.dlgText
 	}
 	g.cd = moveCooldown
-	g.music.Play(ctyMusicTrack(cty))
+	g.playSceneMusic(cty)
 	g.rememberTown()
 	g.renderFrame()
 }
@@ -1542,7 +1551,7 @@ func (g *Game) tryTransition() {
 		g.dlg.tx = ns.dlgText
 	}
 	if cross { // 跨 CTY → 換配樂
-		g.music.Play(ctyMusicTrack(ncty))
+		g.playSceneMusic(ncty)
 	}
 	g.cd = moveCooldown
 	g.renderFrame()
@@ -1576,7 +1585,7 @@ func (g *Game) warpTo(param int) bool {
 	if ns.dlgText != nil {
 		g.dlg.tx = ns.dlgText
 	}
-	g.music.Play(ctyMusicTrack(dcty))
+	g.playSceneMusic(dcty)
 	g.renderFrame()
 	return true
 }
@@ -1617,7 +1626,7 @@ func (g *Game) descend() {
 	g.layer, g.cur, g.inTown, g.curCty = 1, u, false, -1
 	g.px, g.py = 84, 68
 	g.progressSet(msDescend) // 下降里程碑(對 flagDescended)
-	g.music.Play(trackField)
+	g.playAudioCue(audioCueField)
 	g.renderFrame()
 }
 
@@ -1659,7 +1668,7 @@ func (g *Game) startOpening() {
 	// dlg.tx 維持 NewGame 初始的 D3TXT01(開場旁白 rec82/83 在此 bank)
 	g.openingIdx = 0
 	g.dlg.Open(openingSeq[0])
-	g.music.Play(ctyMusicTrack(0))
+	g.playSceneMusic(0)
 	g.renderFrame()
 }
 
@@ -1760,23 +1769,8 @@ func (g *Game) exitTown() {
 		g.shipAboard = true
 	}
 	g.cd = moveCooldown
-	g.music.Play(trackField) // 地表(FIELD 曲)
+	g.playAudioCue(audioCueField)
 	g.renderFrame()
-}
-
-// ctyMusicTrack:CTY → 配樂軌(移植 cty_music_kind:CASTLE 清單→1、BLK2/4/5 迷宮→3、其餘城鎮→2)。
-func ctyMusicTrack(cty int) int {
-	for _, c := range []int{0, 2, 6, 37, 73, 76} { // 城堡(王城)
-		if cty == c {
-			return trackCastle
-		}
-	}
-	if cty >= 0 && cty < len(mapBlkNum) {
-		if b := mapBlkNum[cty]; b == 2 || b == 4 || b == 5 {
-			return trackDungeon
-		}
-	}
-	return trackTown
 }
 
 func clampi(v, lo, hi int) int {
@@ -1857,7 +1851,7 @@ func (g *Game) startEncounter() {
 		monID := slot.Candidates[(start+i)%len(slot.Candidates)]
 		count := g.encounterGroupCount(monID, slot.Threshold)
 		if g.battle.startGroup(monID, count, int64(g.anim)*2654+1, hp, comps) {
-			g.music.Play(trackBattle)
+			g.playAudioCue(audioCueBattle)
 			return
 		}
 	}
@@ -1920,7 +1914,7 @@ func (g *Game) startBossBattle(monID int) bool {
 	g.battle.showInfo = g.cfg.CombatInfo
 	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
 	if g.battle.start(monID, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
-		g.music.Play(trackBattle)
+		g.playAudioCue(audioCueBattle)
 		return true
 	}
 	return false
@@ -2044,7 +2038,7 @@ func (g *Game) runFinale() {
 	g.px, g.py = ctyLoc[ctyZomaCastle][0], ctyLoc[ctyZomaCastle][1]
 	g.overPx, g.overPy = g.px, g.py
 	if g.music != nil {
-		g.music.Play(trackField)
+		g.playAudioCue(audioCueField)
 	}
 	g.renderFrame()
 }
@@ -2080,12 +2074,39 @@ func (g *Game) advanceEndingKing() {
 		g.flags = map[int]bool{}
 	}
 	g.flags[0x217] = true
+	g.playAudioCue(audioCueEnding)
 	// sub_1E713 後半是固定 ending 演出；remake 以已解出的 ENDTXT 分段播放。
 	if g.endText != nil && g.endText.NRecords > 0 {
 		g.endSeq = 0
 		g.dlg.tx = g.endText
 		g.dlg.Open(0)
 	}
+}
+
+func (g *Game) playAudioCue(id string) {
+	if g.music == nil || g.pack == nil {
+		return
+	}
+	if track, ok := g.pack.AudioTrack(id); ok {
+		g.music.Play(track)
+	}
+}
+
+// playSceneMusic 只保留跨版本的場景分類；實際軌號由 versioned audio.json 提供。
+func (g *Game) playSceneMusic(cty int) {
+	cue := audioCueTown
+	for _, castle := range []int{0, 2, 6, 37, 73, 76} {
+		if cty == castle {
+			cue = audioCueCastle
+			break
+		}
+	}
+	if cue == audioCueTown && cty >= 0 && cty < len(mapBlkNum) {
+		if b := mapBlkNum[cty]; b == 2 || b == 4 || b == 5 {
+			cue = audioCueDungeon
+		}
+	}
+	g.playAudioCue(cue)
 }
 
 // countItem:背包內某 item id 的數量。
@@ -2253,14 +2274,7 @@ func (g *Game) renderFrame() {
 		return
 	}
 	if g.showTitle && g.titlePix != nil { // 標題畫面(PCX indexed → palette)
-		for i, idx := range g.titlePix {
-			var c dq3data.Color
-			if int(idx) < len(g.titlePal) {
-				c = g.titlePal[idx]
-			}
-			o := i * 4
-			g.rgba[o], g.rgba[o+1], g.rgba[o+2], g.rgba[o+3] = c.R, c.G, c.B, 255
-		}
+		drawIndexedPCX(g.rgba, g.titlePix, g.titlePal)
 		white := dq3data.Color{R: 255, G: 255, B: 255}
 		if len(g.titlePal) > 15 {
 			white = g.titlePal[15]
@@ -2268,6 +2282,13 @@ func (g *Game) renderFrame() {
 		yellow := dq3data.Color{R: 255, G: 224, B: 32}
 		g.newGame.draw(g.rgba, g.dlg.tx, white, yellow) // 主選單/命名/性別(ngSplash 無疊繪)
 		g.settings.draw(g.rgba, g.cfg)                  // 設定選單(可疊其上;未開時 no-op)
+		g.frame.WritePixels(g.rgba)
+		return
+	}
+	if g.lotoBlessed && g.endSeq < 0 && !g.dlg.open && g.endingPix != nil {
+		// 結局文字全部關閉後，原版切到 TIT3.P 的固定片尾畫面；
+		// 這個分支只使用 pack asset，不以 DQ3 專屬座標或文字重畫。
+		drawIndexedPCX(g.rgba, g.endingPix, g.endingPal)
 		g.frame.WritePixels(g.rgba)
 		return
 	}
@@ -2367,6 +2388,20 @@ func (g *Game) renderFrame() {
 	g.drawFieldSpell(g.rgba, white)
 	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
+}
+
+func drawIndexedPCX(rgba []byte, pix []uint8, pal []dq3data.Color) {
+	for i, idx := range pix {
+		var c dq3data.Color
+		if int(idx) < len(pal) {
+			c = pal[idx]
+		}
+		o := i * 4
+		if o+3 >= len(rgba) {
+			break
+		}
+		rgba[o], rgba[o+1], rgba[o+2], rgba[o+3] = c.R, c.G, c.B, 255
+	}
 }
 
 func max0(v int) int {
@@ -2593,18 +2628,50 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 			g.music.SetMBG(mbg)
 		}
 	}
-	if tit := ld.read("TITG.P"); len(tit) > 0 { // 標題畫面(PCX)
-		if pix, pal, w, h, e := dq3data.DecodePCX(tit); e == nil && w == ScreenW && h == ScreenH {
-			g.titlePix, g.titlePal, g.showTitle = pix, pal, true
+	loadPCXAsset := func(key string) ([]uint8, []dq3data.Color, error) {
+		ref, ok := pack.Asset(key)
+		if !ok {
+			return nil, nil, nil
 		}
+		raw := ld.read(ref.Path)
+		if ld.err != nil {
+			return nil, nil, ld.err
+		}
+		if ref.Size > 0 && int64(len(raw)) != ref.Size {
+			return nil, nil, fmt.Errorf("game pack asset %q size mismatch: got %d want %d", key, len(raw), ref.Size)
+		}
+		if ref.SHA256 != "" {
+			got := fmt.Sprintf("%x", sha256.Sum256(raw))
+			if got != ref.SHA256 {
+				return nil, nil, fmt.Errorf("game pack asset %q sha256 mismatch: got %s want %s", key, got, ref.SHA256)
+			}
+		}
+		pix, pal, w, h, err := dq3data.DecodePCX(raw)
+		if err != nil {
+			return nil, nil, fmt.Errorf("decode game pack asset %q (%s): %w", key, ref.Path, err)
+		}
+		if w != ScreenW || h != ScreenH {
+			return nil, nil, fmt.Errorf("game pack asset %q has size %dx%d, want %dx%d", key, w, h, ScreenW, ScreenH)
+		}
+		return pix, pal, nil
+	}
+	var assetErr error
+	if g.titlePix, g.titlePal, assetErr = loadPCXAsset("title_image"); assetErr != nil {
+		return nil, assetErr
+	}
+	g.showTitle = g.titlePix != nil
+	if g.endingPix, g.endingPal, assetErr = loadPCXAsset("ending_image"); assetErr != nil {
+		return nil, assetErr
 	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	// 注意:不再於此自動續玩——存檔改由標題主選單「載入進度」明確觸發(newgame.go newGameInput
 	// ngOptLoad 分支),對齊 docs/36 開場流程(遊戲開始 = 全新主角,不會被舊存檔悄悄蓋掉)。
 	applyDebugEnv(g) // debug 環境變數可覆蓋(此時 music/frame 已就緒)
 	// 起始配樂(依最終場景;debug 進城已自行換軌)
-	if !g.inTown {
-		g.music.Play(trackField)
+	if g.showTitle {
+		g.playAudioCue(audioCueTitle)
+	} else if !g.inTown {
+		g.playAudioCue(audioCueField)
 	}
 	g.renderFrame() // 首幀
 	log.Printf("地表 %d×%d / 阿里阿罕 %d×%d(spawn %d,%d、NPC %d)— 城鎮依正式入口與邊界轉場進出、Space 命令窗",

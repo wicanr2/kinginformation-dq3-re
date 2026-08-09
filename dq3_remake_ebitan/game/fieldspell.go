@@ -351,9 +351,9 @@ func (g *Game) teleportToVisit(v townVisit) bool {
 	}
 	g.shipAboard, g.phoenixAboard = false, false
 	if g.layer == 1 {
-		g.music.Play(trackDungeon)
+		g.playAudioCue(audioCueDungeon)
 	} else {
-		g.music.Play(trackField)
+		g.playAudioCue(audioCueField)
 	}
 	return true
 }

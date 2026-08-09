@@ -47,7 +47,7 @@ func (g *Game) startPackFormation(f gamepack.BattleFormation, suppressDrop bool)
 		return false
 	}
 	g.battle.suppressDrop = suppressDrop
-	g.music.Play(trackBattle)
+	g.playAudioCue(audioCueBattle)
 	return true
 }
 

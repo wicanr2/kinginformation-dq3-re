@@ -154,7 +154,7 @@ func (g *Game) loadPackSceneDestination(d gamepack.SceneDestination) bool {
 		g.dlg.tx = ns.dlgText
 	}
 	if cross {
-		g.music.Play(ctyMusicTrack(d.CTYRaw))
+		g.playSceneMusic(d.CTYRaw)
 	}
 	g.cd = moveCooldown
 	return true

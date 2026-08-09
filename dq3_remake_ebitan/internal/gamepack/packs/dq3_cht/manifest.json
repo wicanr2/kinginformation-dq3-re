@@ -3,7 +3,7 @@
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
-  "content_version": "0.1.26",
+  "content_version": "0.1.27",
   "engine_api": ">=0.1.0 <0.2.0",
   "title_text_id": "dq3:text.title",
   "entry_event_id": "dq3:event.new_game",
@@ -20,7 +20,19 @@
     "interface": "data/interface.json",
     "events": "data/events.json",
     "characters": "data/characters.json",
-    "texts": "data/texts.json"
+    "texts": "data/texts.json",
+    "audio": "data/audio.json"
   },
-  "assets": {}
+  "assets": {
+    "title_image": {
+      "path": "TITG.P",
+      "size": 39610,
+      "sha256": "127fbed5603b8c0f6481b54e44aac0413384c1581c901780fbf0ffe947ecafa8"
+    },
+    "ending_image": {
+      "path": "TIT3.P",
+      "size": 28948,
+      "sha256": "f4c0b82c0df531ff7e8e10ce05f18b22e3e87a7d9a21237666b98722f132378e"
+    }
+  }
 }

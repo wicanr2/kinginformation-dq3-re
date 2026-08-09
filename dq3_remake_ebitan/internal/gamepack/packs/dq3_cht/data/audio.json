@@ -1,0 +1,110 @@
+{
+  "schema_version": "0.1.22",
+  "cues": {
+    "title": {
+      "kind": "music",
+      "track": 0,
+      "loop": true,
+      "priority": 10,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "video",
+        "source": "dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4",
+        "address_space": "none",
+        "consumer": "title screen music dispatch",
+        "doc": "docs/61-music-scene-mapping.md",
+        "note": "原版 TITLE cue；文件軌號 0。"
+      }
+    },
+    "field": {
+      "kind": "music",
+      "track": 6,
+      "loop": true,
+      "priority": 10,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "video",
+        "source": "dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4",
+        "address_space": "none",
+        "consumer": "overworld scene music dispatch",
+        "doc": "docs/61-music-scene-mapping.md",
+        "note": "原版 FIELD cue；文件軌號 6。"
+      }
+    },
+    "castle": {
+      "kind": "music",
+      "track": 1,
+      "loop": true,
+      "priority": 10,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "video",
+        "source": "dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4",
+        "address_space": "none",
+        "consumer": "castle scene music dispatch",
+        "doc": "docs/61-music-scene-mapping.md",
+        "note": "原版 CASTLE cue；文件軌號 1。"
+      }
+    },
+    "town": {
+      "kind": "music",
+      "track": 2,
+      "loop": true,
+      "priority": 10,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "video",
+        "source": "dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4",
+        "address_space": "none",
+        "consumer": "town scene music dispatch",
+        "doc": "docs/61-music-scene-mapping.md",
+        "note": "原版 TOWN cue；文件軌號 2。"
+      }
+    },
+    "dungeon": {
+      "kind": "music",
+      "track": 3,
+      "loop": true,
+      "priority": 10,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "video",
+        "source": "dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4",
+        "address_space": "none",
+        "consumer": "dungeon scene music dispatch",
+        "doc": "docs/61-music-scene-mapping.md",
+        "note": "原版 DUNGEON cue；文件軌號 3。"
+      }
+    },
+    "battle": {
+      "kind": "music",
+      "track": 14,
+      "loop": true,
+      "priority": 20,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "video",
+        "source": "dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4",
+        "address_space": "none",
+        "consumer": "battle scene music dispatch",
+        "doc": "docs/61-music-scene-mapping.md",
+        "note": "原版 BATTLE／BOSS cue；文件軌號 14。"
+      }
+    },
+    "ending": {
+      "kind": "music",
+      "track": 17,
+      "loop": true,
+      "priority": 100,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "video",
+        "source": "dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4",
+        "address_space": "none",
+        "consumer": "ending sequence after Radatome king certification",
+        "doc": "docs/61-music-scene-mapping.md",
+        "note": "原版 g_scene_track／main end_seq gate 的 ENDING cue；文件軌號 17。"
+      }
+    }
+  }
+}

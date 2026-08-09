@@ -76,7 +76,7 @@ func (g *Game) startBossSurrenderBattle() bool {
 	if !g.battle.startFormation(groups, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
 		return false
 	}
-	g.music.Play(trackBattle)
+	g.playAudioCue(audioCueBattle)
 	return true
 }
 

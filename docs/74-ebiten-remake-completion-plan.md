@@ -675,20 +675,25 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    C remake、攻略或推測值直接補 production config。
 3. **完整通關證明（已完成）**：`TestOpeningProductionInputTrace` 已在 Docker＋Xvfb
    由新遊戲以正式 `InputState` 不改狀態延伸至 `THE END`，並涵蓋 P4-P6 關鍵事件、戰鬥、
-   資源交易及中途 save/load round-trip；本項達 campaign E3。runtime 對拍目前為 V1，
-   不將此結果誤稱為逐畫面 V3。
+   資源交易及中途 save/load round-trip；本項達 campaign E3。終盤固定 `TIT3.P` 片尾已
+   透過同一條正式 trace 產生 `dq3_remake_ebitan/docs/img/ending_the_end_runtime.png`，
+   並與 `docs/title/ending.png` 逐像素一致；結局 cue=17 也由 `audio.json` 接到王城冊封
+   後的正式時序。這只把終盤畫面／cue 升為 V3，不將其餘流程誤稱為逐畫面 V3。
 4. **戰鬥長尾**：睡眠／混亂恢復時序與 99／100／101 邊界已閉合，但訊息的角色／怪物
    名稱代入、逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、
    boss 多次行動、掉落及逐項咒文
    效果仍需 RE 與同狀態驗證。
 5. **玩家可見 parity**：四人縱列與 HUD、能力確認立繪、母親逐格演出、attract、
    商店／教會／旅社／達瑪、二選一小視窗原版幾何、日夜 palette、剩餘 BGM／SFX 及
-   ending timing 尚未全部 V3。二選一小視窗現行 geometry 只有 legacy renderer，尚無 D3
+   ending timing 尚未全部 V3；固定片尾 `TIT3.P` 與 ENDING cue 已完成 V3，但結局文字
+   停頓／轉場 timing 仍待影片同狀態核對。二選一小視窗現行 geometry 只有 legacy renderer，尚無 D3
    結構證據，不得直接寫入 game-pack canonical JSON。
    教會復活確認的現行 runtime 證據為 `docs/img/church_revive_confirm.png`，仍待 DOSBox
    同狀態 V3。
 6. **Release**：完成正式流程後才做跨桌面平台包裝、Android 真機的觸控／lifecycle／音訊／
-   存檔驗收，以及選配 WASM smoke；公開包不得納入原版資產。
+   存檔驗收，以及選配 WASM smoke；公開包不得納入原版資產。Docker 內的桌面
+   `go build -buildvcs=false` 已通過；工作樹內受保護的空 `dq3_remake_ebitan/tmp_dump.go`
+   未刪除，build smoke 以不含該 scratch 的臨時副本執行。
 
 後續工作以 V3 畫面／音效對拍、戰鬥與場景 cue 長尾、跨平台發佈驗收為主；若重新開啟主線，
 仍須從上述合法 production checkpoint 重播並記錄第一個實際 blocker，不得改用孤立 handler

@@ -1,12 +1,15 @@
 package game
 
 import (
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
@@ -3469,6 +3472,32 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	if !g.lotoBlessed || !g.flags[0x217] || g.endSeq >= 0 {
 		t.Fatalf("THE END 正式冊封／捲動未閉合：loto=%v flag217=%v endSeq=%d",
 			g.lotoBlessed, g.flags[0x217], g.endSeq)
+	}
+	if out := os.Getenv("DQ3_PRODUCTION_DUMP_FINAL"); out != "" {
+		if len(g.endingPix) != ScreenW*ScreenH || len(g.endingPal) == 0 {
+			t.Fatalf("終盤 pack asset 尚未載入：pix=%d pal=%d", len(g.endingPix), len(g.endingPal))
+		}
+		// 主要 trace 期間刻意停用 frame；只在正式 THE END 狀態重建一次
+		// Ebiten image，避免長流程累積圖形命令，也不改玩家狀態。
+		g.frame = ebiten.NewImage(ScreenW, ScreenH)
+		g.renderFrame()
+		if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+			t.Fatalf("建立終盤 PNG 目錄：%v", err)
+		}
+		img := image.NewRGBA(image.Rect(0, 0, ScreenW, ScreenH))
+		copy(img.Pix, g.rgba)
+		f, err := os.Create(out)
+		if err != nil {
+			t.Fatalf("建立終盤 PNG：%v", err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			_ = f.Close()
+			t.Fatalf("寫入終盤 PNG：%v", err)
+		}
+		if err := f.Close(); err != nil {
+			t.Fatalf("關閉終盤 PNG：%v", err)
+		}
+		t.Logf("正式 THE END runtime PNG：%s", out)
 	}
 }
 

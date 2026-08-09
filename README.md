@@ -38,8 +38,9 @@ Go 1.24 + Ebitengine 的跨平台實作，是目前主要開發的產品線。�
 RE 文件。
 
 目前可見成果（以下為現行 Ebitengine runtime 證據；未另標示者是 V2，不代表已完成原版
-同狀態逐像素 V3）。本輪完成主線串接但沒有可與原版同狀態核對的新畫格，因此既有圖片不
-冒充終盤 V3；終盤證據／剩餘畫面工作見 [`docs/106`](docs/106-gaia-sword-volcano-re-worklist.md)。
+同狀態逐像素 V3）。本輪新增由正式新遊戲輸入 trace 產生的終盤固定片尾畫面與配樂 cue；
+其餘場景仍依各圖的 V1/V2 標註，不能把單一終盤畫格擴大解讀成全程 V3。終盤證據／剩餘
+畫面工作見 [`docs/106`](docs/106-gaia-sword-volcano-re-worklist.md)。
 
 ![Ebiten：原版新遊戲開場](dq3_remake_ebitan/docs/opening_home_rec82.png)
 
@@ -111,6 +112,8 @@ RE 文件。
 
 ![Ebiten：牢獄祠堂正式調查取得蓋亞之劍（V1，待原版同狀態對拍）](docs/img/gaia_sword_obtained.png)
 
+![Ebiten：正式新遊戲流程抵達 THE END（TIT3.P 終盤片尾，V3）](dq3_remake_ebitan/docs/img/ending_the_end_runtime.png)
+
 ### `dq3_remake/`：C99 + SDL2 參考實作
 
 此目錄保存較早的現代化 C prototype、parser、測試與實驗性流程，可協助理解資料格式與既有
@@ -133,9 +136,10 @@ RE 文件。
 5. 桌面版與 Android 共用同一套 Go game core。
 
 截至 2026-08-09，`TestOpeningProductionInputTrace` 已完成上述第 1、2、4 項的主線 E3
-驗收；第 3 項仍以 runtime V1／部分 V2 證據為主，第 5 項的跨平台 release 尚未宣告完成。
-編譯、單元測試、事件切片與畫面 dump 分別提供不同層次的信心；主線已由正式玩家流程串起，
-後續集中於 V3 對拍、音效 cue 與發佈驗收。
+驗收；終盤固定片尾 `TIT3.P` 與 ENDING 配樂 cue 已由同一條正式 trace 產生 runtime V3
+證據，第 3 項其餘場景仍以 runtime V1／部分 V2 為主，第 5 項的跨平台 release 尚未宣告
+完成。編譯、單元測試、事件切片與畫面 dump 分別提供不同層次的信心；主線已由正式玩家
+流程串起，後續集中於其餘 V3 對拍、戰鬥／場景音效長尾與發佈驗收。
 
 ## 證據優先序
 

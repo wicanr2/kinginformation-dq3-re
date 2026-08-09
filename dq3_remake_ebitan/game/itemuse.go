@@ -89,7 +89,7 @@ func (g *Game) usePackItemEffect(code int) bool {
 	switch effect.EffectID {
 	case "grant_quest_item":
 		if !g.inTown || g.cur == nil || g.curCty != effect.RequiredCTYRaw ||
-			sceneSection(g.cur) != effect.RequiredSection {
+			currentSceneSection(g.cur) != effect.RequiredSection {
 			return true
 		}
 		if g.hasPartyItem(effect.GrantItemRawID) {

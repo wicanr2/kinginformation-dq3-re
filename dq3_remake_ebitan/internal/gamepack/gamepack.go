@@ -48,6 +48,21 @@ type AssetRef struct {
 	SHA256 string `json:"sha256"`
 }
 
+// AudioDefinition 是 versioned game pack 的音樂／音效 cue 表。引擎只查穩定
+// cue ID，不把某一代遊戲的原始軌號寫進共用 renderer。
+type AudioDefinition struct {
+	SchemaVersion string              `json:"schema_version"`
+	Cues          map[string]AudioCue `json:"cues"`
+}
+
+type AudioCue struct {
+	Kind     string   `json:"kind"`
+	Track    int      `json:"track"`
+	Loop     bool     `json:"loop"`
+	Priority int      `json:"priority"`
+	Evidence Evidence `json:"evidence"`
+}
+
 type Evidence struct {
 	Level        string `json:"level"`
 	SourceKind   string `json:"source_kind"`
@@ -930,6 +945,7 @@ type Pack struct {
 	Events                     Events
 	Characters                 Characters
 	Texts                      Texts
+	Audio                      AudioDefinition
 	services                   map[string]*ServiceDefinition
 	bossEvents                 map[string]*BossSurrenderEvent
 	roleEvents                 map[string]*TemporaryRoleEvent
@@ -1056,17 +1072,29 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateTexts(); err != nil {
 		return nil, fmt.Errorf("%s: %w", textsPath, err)
 	}
+	if audioPath, ok := p.Manifest.Data["audio"]; ok {
+		if audioPath, err = cleanRelative(audioPath, "data.audio"); err != nil {
+			return nil, err
+		}
+		if err := decodeStrict(fsys, audioPath, &p.Audio); err != nil {
+			return nil, err
+		}
+		if err := p.validateAudio(); err != nil {
+			return nil, fmt.Errorf("%s: %w", audioPath, err)
+		}
+	}
 	if err := p.validateEventTextRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", eventsPath, err)
 	}
 	canonical, err := json.Marshal(struct {
-		Manifest   Manifest   `json:"manifest"`
-		Facilities Facilities `json:"facilities"`
-		Interface  Interface  `json:"interface"`
-		Events     Events     `json:"events"`
-		Characters Characters `json:"characters"`
-		Texts      Texts      `json:"texts"`
-	}{p.Manifest, p.Facilities, p.Interface, p.Events, p.Characters, p.Texts})
+		Manifest   Manifest        `json:"manifest"`
+		Facilities Facilities      `json:"facilities"`
+		Interface  Interface       `json:"interface"`
+		Events     Events          `json:"events"`
+		Characters Characters      `json:"characters"`
+		Texts      Texts           `json:"texts"`
+		Audio      AudioDefinition `json:"audio"`
+	}{p.Manifest, p.Facilities, p.Interface, p.Events, p.Characters, p.Texts, p.Audio})
 	if err != nil {
 		return nil, fmt.Errorf("canonicalize pack: %w", err)
 	}
@@ -2661,6 +2689,33 @@ func (p *Pack) validateManifest() error {
 	return nil
 }
 
+func (p *Pack) validateAudio() error {
+	if p.Audio.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported schema_version %q", p.Audio.SchemaVersion)
+	}
+	if p.Audio.Cues == nil {
+		return errors.New("cues must be present (use {} when empty)")
+	}
+	for id, cue := range p.Audio.Cues {
+		if id == "" {
+			return errors.New("cues contains an empty key")
+		}
+		if cue.Kind != "music" {
+			return fmt.Errorf("audio cue %q has unsupported kind %q", id, cue.Kind)
+		}
+		if cue.Track < 0 || cue.Track > 255 {
+			return fmt.Errorf("audio cue %q has invalid track %d", id, cue.Track)
+		}
+		if cue.Priority < 0 {
+			return fmt.Errorf("audio cue %q priority must not be negative", id)
+		}
+		if err := validateEvidence(cue.Evidence); err != nil {
+			return fmt.Errorf("audio cue %q evidence: %w", id, err)
+		}
+	}
+	return nil
+}
+
 func validateEvidence(e Evidence) error {
 	if e.Level != "D1" && e.Level != "D2" && e.Level != "D3" {
 		return fmt.Errorf("invalid evidence level %q", e.Level)
@@ -3009,6 +3064,33 @@ func (p *Pack) TextGlyphCodes(id string) ([]uint16, bool) {
 func (p *Pack) TextDefinition(id string) (*TextDefinition, bool) {
 	d, ok := p.texts[id]
 	return d, ok
+}
+
+// Asset returns a pack-owned logical asset reference. The engine remains
+// responsible for reading the referenced bytes from its external asset FS.
+func (p *Pack) Asset(key string) (AssetRef, bool) {
+	if p == nil {
+		return AssetRef{}, false
+	}
+	a, ok := p.Manifest.Assets[key]
+	return a, ok
+}
+
+func (p *Pack) AssetPath(key string) (string, bool) {
+	a, ok := p.Asset(key)
+	return a.Path, ok
+}
+
+// AudioTrack resolves a stable cue ID to the pack's original track number.
+func (p *Pack) AudioTrack(id string) (int, bool) {
+	if p == nil {
+		return 0, false
+	}
+	cue, ok := p.Audio.Cues[id]
+	if !ok {
+		return 0, false
+	}
+	return cue.Track, true
 }
 
 func (p *Pack) ID() string             { return p.Manifest.PackID }
