@@ -118,7 +118,7 @@
       "address": "",
       "consumer": "battle scene band, monster baseline and target cursor renderer",
       "doc": "docs/111-battle-scene-layout-re.md",
-      "note": "場景帶與怪物基線由原版戰鬥 renderer 的 RE 座標系及同狀態畫面交叉閉合；cursor_glyph=0x77 對應 D3TXT00.FON 的 ★。尚未把 frame style pattern 或逐動作 timing 視為已完成。"
+      "note": "DQ3.EXE SHA-256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；D3TXT00.FON SHA-256=c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02；IDA Pro 9.4／file 與 glyph table 的座標交叉核對。場景帶與怪物基線由原版戰鬥 renderer 的 RE 座標系及同狀態畫面交叉閉合；cursor_glyph=0x77 對應 D3TXT00.FON 的 ★。尚未把 frame style pattern 或逐動作 timing 視為已完成。"
     }
   },
   "party_hud": {

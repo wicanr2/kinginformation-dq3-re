@@ -8,8 +8,8 @@
 
 | 欄位 | 值 |
 |---|---|
-| 原始輸入 | `assets_raw/DQ3.EXE`、`assets_raw/D3TXT00.FON` |
-| 主要工具 | IDA Pro 9.4（Docker 內唯讀；`/home/anr2/ida_94_official/dist`）與原版戰鬥座標文件 |
+| 原始輸入 | `assets_raw/DQ3.EXE`（SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`）、`assets_raw/D3TXT00.FON`（SHA-256 `c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02`） |
+| 主要工具／位址基準 | IDA Pro `9.4.0.260610`（Docker 內唯讀；`/home/anr2/ida_94_official/dist`）；DQ3.EXE DOS loaded linear／file 與 D3TXT00.FON glyph index 分開記錄 |
 | 對應文件 | [`docs/13-exe-battle.md`](13-exe-battle.md)、[`docs/02-font-format.md`](02-font-format.md) |
 | 推論等級 | `D2`：靜態 renderer 座標／字模索引與玩家可見戰鬥畫面相符；尚無逐欄位 writer sidecar 可升為 D3 |
 
