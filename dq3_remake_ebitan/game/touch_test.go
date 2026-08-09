@@ -91,7 +91,7 @@ func TestUpdateTouchContextLabel(t *testing.T) {
 		t.Errorf("標題畫面(主選單前/中)應設情境標籤「設定」,得 %q", g.input.touch.ctxLabel)
 	}
 
-	g.newGame.stage = ngName // 主角命名階段(FLOW-GAP A3)→ 情境鍵應改「注」(英數↔注音),同酒館命名
+	g.newGame.stage = ngName // 主角命名階段→ 情境鍵應改「注」(英數↔注音),同酒館命名
 	g.updateTouchContext()
 	if g.input.touch.ctxLabel != "注" {
 		t.Errorf("主角命名階段應設情境標籤「注」,得 %q", g.input.touch.ctxLabel)

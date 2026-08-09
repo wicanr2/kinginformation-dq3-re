@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 )
 
@@ -24,14 +25,23 @@ type Tavern struct {
 	pendCls   int
 	ni        NameInput
 	gs        GenderSelect
+	labels    *gamepack.NewGameLabels
 	classHits hitList // 職業選單(tavClass)可點區塊,draw() 重建
 	equipment [4]int  // game-pack registered_member 初始四槽；-1=空
+}
+
+func (tv *Tavern) setLabels(labels gamepack.NewGameLabels) {
+	tv.labels = &labels
+	tv.ni.setLabels(tv.labels)
+	tv.gs.setLabels(tv.labels)
 }
 
 func (tv *Tavern) open() {
 	tv.active, tv.stage, tv.cursor, tv.pendCls = true, tavClass, 0, 0
 	tv.ni = NameInput{}
 	tv.gs = GenderSelect{}
+	tv.ni.setLabels(tv.labels)
+	tv.gs.setLabels(tv.labels)
 }
 
 // input:回 (recruited *Member, closed)。觸控直接點選(P2):tapIdx 命中對應階段的 hits(上一幀

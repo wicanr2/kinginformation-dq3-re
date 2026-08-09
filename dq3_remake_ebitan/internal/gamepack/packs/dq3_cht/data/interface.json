@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.26",
+  "schema_version": "0.1.27",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -119,6 +119,38 @@
       "consumer": "battle scene band, monster baseline and target cursor renderer",
       "doc": "docs/111-battle-scene-layout-re.md",
       "note": "DQ3.EXE SHA-256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；D3TXT00.FON SHA-256=c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02；IDA Pro 9.4／file 與 glyph table 的座標交叉核對。場景帶與怪物基線由原版戰鬥 renderer 的 RE 座標系及同狀態畫面交叉閉合；cursor_glyph=0x77 對應 D3TXT00.FON 的 ★。尚未把 frame style pattern 或逐動作 timing 視為已完成。"
+    }
+  },
+  "new_game_labels": {
+    "title": [106, 187, 207, 710, 179],
+    "start": [113, 689, 488, 711],
+    "load": [712, 519, 696, 283],
+    "male": [775, 674],
+    "female": [234, 674],
+    "level": [419, 420],
+    "hp": [22, 30],
+    "mp": [27, 30],
+    "agility": [282, 283],
+    "attack": [623, 624],
+    "defense": [340, 409],
+    "experience": [525, 526],
+    "sex": [674, 417],
+    "hero": [106, 187],
+    "cloth": [190, 149, 191, 192],
+    "prompt": [398, 546, 194, 229, 456, 534],
+    "yes": [399],
+    "no": [678],
+    "backspace": [11],
+    "ok": [29, 25],
+    "evidence": {
+      "level": "D2",
+      "source_kind": "data_file",
+      "source": "D3TXT00.FON + glyph_unicode_map.json",
+      "address_space": "none",
+      "address": "",
+      "consumer": "NewGameFlow/NameInput/GenderSelect renderer",
+      "doc": "docs/112-newgame-labels-re.md",
+      "note": "D3TXT00.FON size=47232 SHA-256=c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02；原版開場／創角實況與字模表交叉核對。逐 glyph 的 writer-consumer 閉合尚未另以 IDA sidecar 匯出，故保留 D2，不升格為 D3。"
     }
   },
   "party_hud": {

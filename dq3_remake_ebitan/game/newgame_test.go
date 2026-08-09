@@ -117,7 +117,7 @@ func TestHeroLevelUpAddsGrowthWithoutFullHeal(t *testing.T) {
 }
 
 // TestNewGameFlowNameRequiredGate:名字空時選「完成」不應放行(對齊 docs/15「[0x270a]>=1 才放行」),
-// 應留在 ngName 且仍在標題流程內——這是 FLOW-GAP A3 的核心驗收點(主角命名必填)。
+// 應留在 ngName 且仍在標題流程內——這是主角命名必填 gate 的回歸驗收點。
 func TestNewGameFlowNameRequiredGate(t *testing.T) {
 	g := newGameTestGame()
 	g.showTitle = true

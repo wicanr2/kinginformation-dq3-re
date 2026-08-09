@@ -166,12 +166,21 @@ func TestZhuyinBoardTapMovesAndSelects(t *testing.T) {
 }
 
 // TestNewGameMenuDrawHits:標題主選單(遊戲開始/載入進度)draw 後 hits 對齊幾何;點「載入進度」
-// 應移游標並等同確定(經 newGameInput 觸發 g.Load(),FLOW-GAP A2 的 P2 直接點選路徑)。
+// 應移游標並等同確定（經 newGameInput 觸發 g.Load() 的正式直接點選路徑）。
 // 幾何取自 newgame.go draw():bx=190,by=140,bw=200;row i 的 x=bx+60=250,y=by+40+i*22;
 // hits.add(x-18,y-3,120,18,i)。
 func TestNewGameMenuDrawHits(t *testing.T) {
 	g := &Game{input: newInput()}
 	g.dlg.tx = &dq3data.Text{}
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	labels, ok := pack.NewGameLabels()
+	if !ok {
+		t.Fatal("builtin pack missing new-game labels")
+	}
+	g.newGame.setLabels(labels)
 	g.showTitle = true
 	g.newGame.stage = ngMenu
 	rgba := newHitTestRGBA()

@@ -349,7 +349,7 @@ type Game struct {
 	cfg                       config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
 	pack                      *gamepack.Pack // versioned 精訊版 game pack；遊戲設定不得再散落為 Go table
 	settings                  Settings       // 設定選單 modal(標題畫面按 S 開)
-	newGame                   NewGameFlow    // 標題主選單 + 主角命名/性別創建 modal(FLOW-GAP A2/A3/A4)
+	newGame                   NewGameFlow    // 標題主選單 + 主角命名/性別創建 modal（正式流程已閉合；幾何仍待 V3）
 	heroName                  []int          // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
 	heroGender                int            // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0)。heroStat 是原版角色 record 的七個持久能力欄；
@@ -1698,7 +1698,8 @@ const (
 	aliahanWorldY = 0xae
 )
 
-// startOpening:新遊戲創角完成 → 進主角家(CTY00 sec4 室內)+ 播開場旁白。移植原版開場(FLOW-GAP A5/A6)。
+// startOpening:新遊戲創角完成 → 進主角家(CTY00 sec4 室內)+ 播開場旁白；正式 opening
+// production trace 已閉合，逐格演出與畫面 parity 仍屬 V3 工作。
 // 對齊 U1:原版開場是家室內 + 母親旁白,非地表中心。
 func (g *Game) startOpening() {
 	if g.assets == nil { // 無素材的裸 Game(單元測試純狀態驗證)→ 只走狀態轉移,不載場景
@@ -2605,6 +2606,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.field_command_labels")
 	}
+	newGameLabels, ok := pack.NewGameLabels()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing interface.new_game_labels")
+	}
 	battleDefs := make(map[string]battleTextDefinition, len(battleRefs.IDs()))
 	for role, id := range battleRefs.IDs() {
 		if id == "" {
@@ -2648,6 +2653,8 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.battle.setSceneLayout(battleSceneLayout)
 	g.battle.setCommandLabels(battleCommandLabels)
 	g.cmd.setLabels(fieldCommandLabels)
+	g.newGame.setLabels(newGameLabels)
+	g.tavern.setLabels(newGameLabels)
 	g.tavern.equipment = memberEquipment
 	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 

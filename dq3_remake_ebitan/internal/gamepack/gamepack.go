@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.26"
+	SchemaVersion = "0.1.27"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -139,6 +139,53 @@ type BattleSceneLayout struct {
 	Evidence    Evidence `json:"evidence"`
 }
 
+// NewGameLabels 是開場主選單、性別與能力確認畫面使用的版本專屬字模。
+// 欄位名稱固定，不承載可執行規則；共同 Evidence 套用到每一個原始 glyph
+// 陣列，讓來源、位址基準與推論等級不會隨 renderer 遺失。
+type NewGameLabels struct {
+	Title      []int    `json:"title"`
+	Start      []int    `json:"start"`
+	Load       []int    `json:"load"`
+	Male       []int    `json:"male"`
+	Female     []int    `json:"female"`
+	Level      []int    `json:"level"`
+	HP         []int    `json:"hp"`
+	MP         []int    `json:"mp"`
+	Agility    []int    `json:"agility"`
+	Attack     []int    `json:"attack"`
+	Defense    []int    `json:"defense"`
+	Experience []int    `json:"experience"`
+	Sex        []int    `json:"sex"`
+	Hero       []int    `json:"hero"`
+	Cloth      []int    `json:"cloth"`
+	Prompt     []int    `json:"prompt"`
+	Yes        []int    `json:"yes"`
+	No         []int    `json:"no"`
+	Backspace  []int    `json:"backspace"`
+	OK         []int    `json:"ok"`
+	Evidence   Evidence `json:"evidence"`
+}
+
+// Entries returns copies so callers cannot mutate the validated pack through
+// a renderer fixture.
+func (l *NewGameLabels) Entries() map[string][]int {
+	if l == nil {
+		return nil
+	}
+	return map[string][]int{
+		"title": append([]int(nil), l.Title...), "start": append([]int(nil), l.Start...),
+		"load": append([]int(nil), l.Load...), "male": append([]int(nil), l.Male...),
+		"female": append([]int(nil), l.Female...), "level": append([]int(nil), l.Level...),
+		"hp": append([]int(nil), l.HP...), "mp": append([]int(nil), l.MP...),
+		"agility": append([]int(nil), l.Agility...), "attack": append([]int(nil), l.Attack...),
+		"defense": append([]int(nil), l.Defense...), "experience": append([]int(nil), l.Experience...),
+		"sex": append([]int(nil), l.Sex...), "hero": append([]int(nil), l.Hero...),
+		"cloth": append([]int(nil), l.Cloth...), "prompt": append([]int(nil), l.Prompt...),
+		"yes": append([]int(nil), l.Yes...), "no": append([]int(nil), l.No...),
+		"backspace": append([]int(nil), l.Backspace...), "ok": append([]int(nil), l.OK...),
+	}
+}
+
 // BattleCommandLabel 是一個原版雙 glyph 指令標籤。指令的流程語意由引擎
 // 共用；實際字模仍由 versioned game pack 提供，避免把某一版的中文字留在 Go。
 type BattleCommandLabel struct {
@@ -229,6 +276,7 @@ type Interface struct {
 	BattleCommand       BattlePanelLayout    `json:"battle_command,omitempty"`
 	BattleEnemy         BattlePanelLayout    `json:"battle_enemy,omitempty"`
 	BattleScene         *BattleSceneLayout   `json:"battle_scene,omitempty"`
+	NewGameLabels       *NewGameLabels       `json:"new_game_labels,omitempty"`
 	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
 	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
 	PartyHUD            WindowLayout         `json:"party_hud,omitempty"`
@@ -1373,6 +1421,21 @@ func (p *Pack) validateInterface() error {
 		}
 		if err := validateEvidence(s.Evidence); err != nil {
 			return fmt.Errorf("battle scene evidence: %w", err)
+		}
+	}
+	if labels := p.Interface.NewGameLabels; labels != nil {
+		for role, glyphs := range labels.Entries() {
+			if len(glyphs) == 0 {
+				return fmt.Errorf("new-game label %s is empty", role)
+			}
+			for _, glyph := range glyphs {
+				if glyph < 0 || glyph > 0xffff {
+					return fmt.Errorf("new-game label %s glyph out of range", role)
+				}
+			}
+		}
+		if err := validateEvidence(labels.Evidence); err != nil {
+			return fmt.Errorf("new-game labels evidence: %w", err)
 		}
 	}
 	if labels := p.Interface.BattleCommandLabels; labels != nil {
@@ -3439,6 +3502,16 @@ func (p *Pack) BattleSceneLayout() (BattleSceneLayout, bool) {
 		return BattleSceneLayout{}, false
 	}
 	return *p.Interface.BattleScene, true
+}
+
+// NewGameLabels returns the pack-owned glyph streams used by the title,
+// creation, name-input and gender screens. Production bootstrap must require
+// this contract before opening the title flow; lightweight fixtures may omit it.
+func (p *Pack) NewGameLabels() (NewGameLabels, bool) {
+	if p == nil || p.Interface.NewGameLabels == nil {
+		return NewGameLabels{}, false
+	}
+	return *p.Interface.NewGameLabels, true
 }
 
 // BattleCommandLabels returns the pack-owned glyphs for the five standard

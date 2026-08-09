@@ -724,3 +724,19 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 DQ3 專屬常數，production 缺欄位即 fail closed。證據與 D2 限制見 [`docs/111`](111-battle-scene-layout-re.md)；框線
 style pattern、spell／target baseline、逐動作 timing／動畫／音效、完整抗性／formation／
 掉落與跨平台 release 仍是後續 V3 GAP。
+
+2026-08-09 追加開場／創角 glyph 資料化切片：`interface.json.new_game_labels` 保存主選單、
+性別、能力確認及英數姓名盤特殊格的完整 glyph stream；`NewGameFlow`、`NameInput`、
+`GenderSelect` 與酒館改由 pack 讀取，缺欄位時 `NewGameWithPack` fail closed。`D3TXT00.FON`
+大小／SHA-256、role 對映、D2 限制與 parity test 見 [`docs/112`](112-newgame-labels-re.md)。
+本批未改變 glyph 像素，因此不重產既有 runtime PNG；主選單／姓名盤／能力確認 panel 的
+座標與尺寸仍待下一個原版 writer／consumer geometry slice，不能宣稱創角畫面 V3。
+
+下一個事件串接前置工作：
+
+1. 以 IDA 9.4 追開場／創角面板 rect、文字 inset、列距與游標 consumer，建立
+   `interface.json.new_game_geometry`，並以 DOSBox 同狀態截圖完成 V3 對拍。
+2. 再處理戰鬥 frame style、spell／target rect、逐動作 timing／動畫／SFX 與完整抗性／
+   formation／boss 多次行動／掉落，所有設定先進 pack JSON 並補 D2/D3 parity。
+3. 完成場景／設施／日夜 palette、剩餘 BGM／SFX、結局 timing 及 Android／桌面 release
+   真機驗收；每批仍由合法 production checkpoint 重播，不用 debug shortcut。

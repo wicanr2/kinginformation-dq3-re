@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/zhuyin"
 )
 
@@ -34,15 +35,19 @@ type NameInput struct {
 	cursor  int
 	nameBuf []int
 	nameZhu bool // true=注音模式(Tab/CtxTap 切換)
+	labels  *gamepack.NewGameLabels
 	zh      zhuyin.Composer
 	hits    hitList // 目前畫面(英數格盤/注音盤/候選)的可點區塊,draw() 重建
 }
+
+func (ni *NameInput) setLabels(labels *gamepack.NewGameLabels) { ni.labels = labels }
 
 // Init 重設為新一輪命名輸入(英數模式、空緩衝、游標歸零)。
 // Init 重設輸入狀態。預設**注音模式**(對齊原版:docs/36 04 截圖新遊戲命名即注音盤,游標 raw0=ㄅ;
 // Tab/情境鍵切英數)。
 func (ni *NameInput) Init() {
-	*ni = NameInput{nameZhu: true}
+	labels := ni.labels
+	*ni = NameInput{nameZhu: true, labels: labels}
 	ni.zh.Init()
 }
 
@@ -176,11 +181,17 @@ func (ni *NameInput) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data.C
 		if g := niCellGlyph(c); g >= 0 {
 			drawGlyph(rgba, tx, x, y, g, white)
 		} else if c == niCellBS {
-			drawGlyph(rgba, tx, x, y, 11, white) // ← 近似
+			if ni.labels != nil {
+				for j, gl := range ni.labels.Backspace {
+					drawGlyph(rgba, tx, x+j*dq3data.GlyphPx, y, gl, white)
+				}
+			}
 		} else {
-			// OK 完成格:字母 O(29)+K(25),A-Z glyph 區已驗證;原版獨立功能列(英數/前進/後退/取消/完成)deferred C-7
-			drawGlyph(rgba, tx, x, y, 29, white)
-			drawGlyph(rgba, tx, x+13, y, 25, white)
+			if ni.labels != nil {
+				for j, gl := range ni.labels.OK {
+					drawGlyph(rgba, tx, x+j*dq3data.GlyphPx, y, gl, white)
+				}
+			}
 		}
 		ni.hits.add(x-4, y-3, 36, 18, c)
 	}
@@ -190,7 +201,10 @@ func (ni *NameInput) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data.C
 type GenderSelect struct {
 	cursor int
 	hits   hitList
+	labels *gamepack.NewGameLabels
 }
+
+func (gs *GenderSelect) setLabels(labels *gamepack.NewGameLabels) { gs.labels = labels }
 
 // Init 重設游標(新一輪性別選擇固定從男性開始)。
 func (gs *GenderSelect) Init() { gs.cursor = 0 }
@@ -212,14 +226,21 @@ func (gs *GenderSelect) input(in InputState, tapIdx int) (gender int, confirmed 
 
 // draw:兩列「男性/女性」(x,y0 為第一列起點,dy 為列距),游標 ► + hits 對齊 input() 的 tapIdx。
 func (gs *GenderSelect) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data.Color, x, y0, dy int) {
-	labels := [2][]int{{775, 674}, {234, 674}} // 男性 / 女性(C rec556 正解 dq3_tavern.c GENDER_M/F;272 為 map 反查誤碼)
 	gs.hits.reset()
 	for i := 0; i < 2; i++ {
 		y := y0 + i*dy
 		if i == gs.cursor {
 			drawGlyph(rgba, tx, x-18, y, curGlyph, yellow)
 		}
-		for j, g := range labels[i] {
+		var label []int
+		if gs.labels != nil {
+			if i == 0 {
+				label = gs.labels.Male
+			} else {
+				label = gs.labels.Female
+			}
+		}
+		for j, g := range label {
 			drawGlyph(rgba, tx, x+j*16, y, g, white)
 		}
 		gs.hits.add(x-18, y-3, 120, 18, i)

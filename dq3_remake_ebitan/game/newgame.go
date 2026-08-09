@@ -2,10 +2,11 @@ package game
 
 import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
-// 標題主選單 + 主角創建(FLOW-GAP A2/A3/A4,docs/36 §開場流程 + docs/15 命名子系統):
+// 標題主選單 + 主角創建(docs/36 §開場流程 + docs/15 命名子系統):
 // 標題(壓 A/Enter)→ 主選單「▶遊戲開始 / 載入進度」→ 遊戲開始 → 主角注音/英數命名(必填,
 // 完成放行條件=非空,對齊 docs/15「[0x270a]>=1 才放行」)→ 性別 →
 // Lv1 能力生成/「這個人可以嗎？」→ 開始新遊戲。
@@ -27,16 +28,6 @@ const (
 	ngOptCount
 )
 
-// 主選單標籤 glyph(D3TXT00.FON,經 docs/data/glyph_unicode_map.json 驗證,對齊 docs/36 實機截圖
-// 「勇者鬥惡龍 / ▶遊戲開始 / 載入進度」):標題 5 字、選項各 4 字。
-var (
-	ngTitleLabel = []int{106, 187, 207, 710, 179} // 勇者鬥惡龍
-	ngOptLabels  = [ngOptCount][]int{
-		{113, 689, 488, 711}, // 遊戲開始
-		{712, 519, 696, 283}, // 載入進度
-	}
-)
-
 // NewGameFlow 是標題主選單 + 主角創建的 modal 狀態機。
 type NewGameFlow struct {
 	stage         int
@@ -44,10 +35,19 @@ type NewGameFlow struct {
 	hits          hitList
 	ni            NameInput
 	gs            GenderSelect
+	labels        *gamepack.NewGameLabels
 	confirmCursor int // 0=是、1=否
 	preview       stats.Values
 	previewDef    int
 	previewGender int
+}
+
+// setLabels 安裝標題／創角流程共用的 game-pack 字模資料。Pack 在 bootstrap
+// 後視為唯讀；各 widget 只保留這個受驗證的指標，不複製版本專屬常數。
+func (nf *NewGameFlow) setLabels(labels gamepack.NewGameLabels) {
+	nf.labels = &labels
+	nf.ni.setLabels(nf.labels)
+	nf.gs.setLabels(nf.labels)
 }
 
 // openMenu:標題壓鍵後開主選單,游標歸零。
@@ -146,9 +146,13 @@ func (g *Game) newGameInput(in InputState) {
 func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data.Color) {
 	switch nf.stage {
 	case ngMenu:
+		if nf.labels == nil {
+			nf.hits.reset()
+			return
+		}
 		bx, by, bw := 190, 140, 200
 		fillBox(rgba, bx, by, bw, 90, white)
-		for i, g := range ngTitleLabel {
+		for i, g := range nf.labels.Title {
 			drawGlyph(rgba, tx, bx+30+i*16, by+10, g, white)
 		}
 		nf.hits.reset()
@@ -158,7 +162,11 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 			if i == nf.cursor {
 				drawGlyph(rgba, tx, x-18, y, curGlyph, yellow)
 			}
-			for j, g := range ngOptLabels[i] {
+			label := nf.labels.Start
+			if i == ngOptLoad {
+				label = nf.labels.Load
+			}
+			for j, g := range label {
 				drawGlyph(rgba, tx, x+j*16, y, g, white)
 			}
 			nf.hits.add(x-18, y-3, 120, 18, i)
@@ -177,21 +185,6 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 	}
 }
 
-var (
-	ngLabLevel = []int{419, 420}
-	ngLabHP    = []int{22, 30}
-	ngLabMP    = []int{27, 30}
-	ngLabAGI   = []int{282, 283}
-	ngLabATK   = []int{623, 624}
-	ngLabDEF   = []int{340, 409}
-	ngLabEXP   = []int{525, 526}
-	ngLabSex   = []int{674, 417}
-	ngHero     = []int{106, 187}
-	ngCloth    = []int{190, 149, 191, 192}
-	ngPrompt   = []int{398, 546, 194, 229, 456, 534} // 這個人可以嗎
-	ngYesNo    = [2][]int{{399}, {678}}              // 是 / 否
-)
-
 func drawNGRow(rgba []byte, tx *dq3data.Text, x, y int, lab []int, val int, c dq3data.Color) {
 	for i, gl := range lab {
 		drawGlyph(rgba, tx, x+i*dq3data.GlyphPx, y, gl, c)
@@ -202,6 +195,9 @@ func drawNGRow(rgba []byte, tx *dq3data.Text, x, y int, lab []int, val int, c dq
 // drawNewGameStats 重現原版 1c54→sub_96be 的能力確認資訊。裝備衍生值依
 // sub_9521：攻=力量、守=耐力+布衣防。
 func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yellow dq3data.Color) {
+	if nf.labels == nil {
+		return
+	}
 	const rowH = 16
 	// 原版 v3_01_afterstats.png 的四個 panel 幾何（640×350 native）。
 	fillBox(rgba, 128, 42, 116, 76, white)
@@ -213,40 +209,40 @@ func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yel
 	for i, gl := range nf.ni.nameBuf {
 		drawGlyph(rgba, tx, 170+i*dq3data.GlyphPx, 50, gl, white)
 	}
-	for i, gl := range ngHero {
+	for i, gl := range nf.labels.Hero {
 		drawGlyph(rgba, tx, 170+i*dq3data.GlyphPx, 66, gl, white)
 	}
-	for i, gl := range ngLabSex {
+	for i, gl := range nf.labels.Sex {
 		drawGlyph(rgba, tx, 145+i*dq3data.GlyphPx, 82, gl, white)
 	}
-	sexGlyph := 775
+	sexGlyph := nf.labels.Male[0]
 	if nf.previewGender == 1 {
-		sexGlyph = 234
+		sexGlyph = nf.labels.Female[0]
 	}
 	drawGlyph(rgba, tx, 196, 82, sexGlyph, white)
-	drawNGRow(rgba, tx, 145, 98, ngLabLevel, 1, white)
-	drawNGRow(rgba, tx, 145, 114, ngLabHP, int(nf.preview[stats.HP]), white)
-	drawNGRow(rgba, tx, 145, 130, ngLabMP, int(nf.preview[stats.MP]), white)
-	for i, gl := range ngCloth {
+	drawNGRow(rgba, tx, 145, 98, nf.labels.Level, 1, white)
+	drawNGRow(rgba, tx, 145, 114, nf.labels.HP, int(nf.preview[stats.HP]), white)
+	drawNGRow(rgba, tx, 145, 130, nf.labels.MP, int(nf.preview[stats.MP]), white)
+	for i, gl := range nf.labels.Cloth {
 		drawGlyph(rgba, tx, 158+i*dq3data.GlyphPx, 142, gl, white)
 	}
 
 	x := 274
-	drawNGRow(rgba, tx, x, 92, ngLabAGI, int(nf.preview[stats.AGI]), white)
-	drawNGRow(rgba, tx, x, 92+rowH, ngLabHP, int(nf.preview[stats.HP]), white)
-	drawNGRow(rgba, tx, x, 92+2*rowH, ngLabMP, int(nf.preview[stats.MP]), white)
-	drawNGRow(rgba, tx, x, 92+3*rowH, ngLabATK, int(nf.preview[stats.STR]), white)
-	drawNGRow(rgba, tx, x, 92+4*rowH, ngLabDEF, nf.previewDef, white)
-	drawNGRow(rgba, tx, x, 92+5*rowH, ngLabEXP, 0, white)
-	for i, gl := range ngPrompt {
+	drawNGRow(rgba, tx, x, 92, nf.labels.Agility, int(nf.preview[stats.AGI]), white)
+	drawNGRow(rgba, tx, x, 92+rowH, nf.labels.HP, int(nf.preview[stats.HP]), white)
+	drawNGRow(rgba, tx, x, 92+2*rowH, nf.labels.MP, int(nf.preview[stats.MP]), white)
+	drawNGRow(rgba, tx, x, 92+3*rowH, nf.labels.Attack, int(nf.preview[stats.STR]), white)
+	drawNGRow(rgba, tx, x, 92+4*rowH, nf.labels.Defense, nf.previewDef, white)
+	drawNGRow(rgba, tx, x, 92+5*rowH, nf.labels.Experience, 0, white)
+	for i, gl := range nf.labels.Prompt {
 		drawGlyph(rgba, tx, 304+i*dq3data.GlyphPx, 22, gl, white)
 	}
-	for i := range ngYesNo {
+	for i, label := range [][]int{nf.labels.Yes, nf.labels.No} {
 		y := 54 + i*16
 		if i == nf.confirmCursor {
 			drawGlyph(rgba, tx, 304, y, curGlyph, yellow)
 		}
-		for j, gl := range ngYesNo[i] {
+		for j, gl := range label {
 			drawGlyph(rgba, tx, 332+j*dq3data.GlyphPx, y, gl, white)
 		}
 	}

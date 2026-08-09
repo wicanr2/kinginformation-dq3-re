@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.26"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.27"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -195,7 +195,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.26",
+  "schema_version": "0.1.27",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -1035,6 +1035,19 @@ evidence 仍由 DQ3 pack 擁有；`cmdmenu.go` 只依穩定欄位繪製與處理
 版本專屬中文或 raw glyph table。正式 pack 缺少這組契約時 `NewGameWithPack` 必須
 fail closed；目前 DQ3 對映維持 D2，後續若要升為 D3 仍需補原版 writer／consumer sidecar。
 
+`interface.json.new_game_labels` 保存開場主選單、創角性別／能力確認，以及英數姓名盤
+特殊格的 glyph stream。欄位固定為 `title`、`start`、`load`、`male`、`female`、`level`、
+`hp`、`mp`、`agility`、`attack`、`defense`、`experience`、`sex`、`hero`、`cloth`、
+`prompt`、`yes`、`no`、`backspace`、`ok`，每欄都是非空的 `int[]` 原始 glyph index；
+不接受任意 JSON code 或直接玩家可見句子。整個物件必須有 `evidence`，目前 DQ3 為
+D2、來源 `D3TXT00.FON + glyph_unicode_map.json`，完整對映與限制見
+[`docs/112`](112-newgame-labels-re.md)。
+
+production `NewGameWithPack` 缺少 `new_game_labels` 即拒絕啟動；`NewGameFlow`、
+`NameInput`、`GenderSelect` 與酒館只依此契約繪製。這只封存字模資料，主選單／能力確認
+面板座標仍須另以原版 writer／consumer 閉合後放入 geometry 契約；不可把目前 renderer
+的座標視為已證實的跨版本預設。
+
 ### 6.10 `staged_boss_events`
 
 `staged_boss_events` 描述具有兩個正式入口、戰間移動／轉場、選項分支與事後寶箱 gate 的
@@ -1057,7 +1070,7 @@ NPC 及交易後玩家的具名方向，`treasure_gates` 明列第二戰前不�
 
 ```json
 {
-  "schema_version": "0.1.26",
+  "schema_version": "0.1.27",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1087,7 +1100,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.26",
+  "schema_version": "0.1.27",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [
