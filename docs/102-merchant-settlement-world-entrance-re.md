@@ -1,7 +1,9 @@
 # 商人聚落世界入口分支逆向證據
 
-狀態：入口選擇與商人交付已閉合（D3／E3）；CTY83 黃寶珠資料、牢中對話與元件交易
-已達 D3／E2／V1，從合法 checkpoint 自然完成中間 gate 的 production trace 尚未閉合。
+狀態：入口選擇與商人交付已閉合（D3／E3）；CTY59 handler41 的 Y=4 設施分支已由
+IDA／CTY／D3TXT 閉合並落成 `conditional_facility_events`（D3／E2）；CTY83 黃寶珠資料、
+牢中對話與元件交易已達 D3／E2／V1。從合法 checkpoint 自然重播中間 gate 的主線 trace
+仍屬後續 V3／路線補強，不把元件 closure 誤標成完整逐畫面 parity。
 
 ## 問題
 
@@ -132,9 +134,26 @@ component E2，不宣稱 E3 或原版同狀態 V2。
 因此建城階段由既有主線事件推進，不是時間、步數或 remake 專用「建城完成」旗標。晚交付
 商人時，下一次進城依玩家已清除的 gate 直接選較後 CTY，是 ordered chain 的自然結果。
 
+## CTY59 handler41 設施分支（confirmed）
+
+IDA Pro 9.4 的 `sub_15BBA`（IDA linear `0x15bba..0x15bd4`；file `0x6f2a..0x6f46`）
+先比較 `DS:4f35`（玩家 Y）與 `4`。未命中時設定 `di=0xbc0`，由 D3TXT07 loader
+解析為 record8「啊啊,是{變數}……」；命中時設 `BX=0` 呼叫共用設施 dispatcher
+`sub_17034`，其後從當前 CTY section 的 facility pointer table 取 type。CTY59 section0
+的 index0 block 是 type2、兩項貨架，因此這不是一般 facility subtype，而是「同一個
+handler 在 Y=4 才開道具店」的有限分支。
+
+此鏈已由 `conditional_facility_events` 提供 selector、Y gate、facility index、record8
+text ID 與 D3 evidence；production component test 以正式 `cmdTalk` 驗證 Y≠4 對話與
+Y=4 貨架兩條結果，並產出兩張現行 runtime PNG。原始 EXE／D3TXT parity test 鎖定
+file bytes 與 record8，沒有把 CTY59 或 handler41 常數放回共用 Go 流程。
+
+- [Y≠4 對話分支 runtime PNG](../dq3_remake_ebitan/docs/img/merchant_settlement_handler41_dialogue.png)
+- [Y=4 道具店分支 runtime PNG](../dq3_remake_ebitan/docs/img/merchant_settlement_handler41_shop.png)
+
 ## 尚未閉合
 
-- CTY59／60／61 的階段差異，以及 handler41 的 Y=4 設施派發 consumer。
+- CTY60／61 的階段差異，以及這些階段的原版同狀態 V2／V3。
 - 從商人交付合法 checkpoint 自然取得拉之鏡、完成假王事件、取得蓋亞之劍，再正式進入
   CTY83；目前黃寶珠 transaction 與 save/load 只有 component closure，仍不是 E3。
 - 從原版實況定位 CTY58 同狀態畫面，將上述 runtime PNG 由 V1 升為 V2。

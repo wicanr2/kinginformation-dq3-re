@@ -8,6 +8,8 @@
 `InputState` trace 從全新遊戲抵達 `THE END`，沿途核對設定資料、事件副作用、戰鬥與存讀檔。
 主線 campaign 已達 E3；逐畫面／音效 V3、Android／桌面 release 仍待後續驗收。現行進度與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
+本輪另以 IDA／原始資料閉合 CTY59 `handler41` 的 Y=4 設施分支；它已達 D3／E2／V1，
+不代表 CTY60／61 階段或全程畫面 parity 已完成。
 
 ## 先讀這些
 
@@ -97,6 +99,10 @@ RE 文件。
 ![Ebiten：地下藏寶室正式調查取得紅寶珠](docs/img/pirates_red_orb_obtained.png)
 
 ![Ebiten：商人城正式交付商人的首次確認](docs/img/merchant_settlement_first_offer.png)
+
+![Ebiten：CTY59 handler41 Y≠4 的原始對話分支](dq3_remake_ebitan/docs/img/merchant_settlement_handler41_dialogue.png)
+
+![Ebiten：CTY59 handler41 Y=4 的兩項道具店分支](dq3_remake_ebitan/docs/img/merchant_settlement_handler41_shop.png)
 
 ![Ebiten：革命後調查建城者座位後方取得黃寶珠](docs/img/merchant_revolution_yellow_orb_obtained.png)
 

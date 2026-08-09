@@ -858,6 +858,26 @@ DQ3 handler48 以 `flag0x4a`（黃寶珠 present flag）選擇 `record42→43` �
 `record42`。它不直接給道具；黃寶珠仍由 CTY83 event `01 6a 00 4a` 與共同寶箱 consumer
 交易。兩條路徑不得合併成「與建城者交談即得到寶珠」。
 
+`conditional_facility_events` 描述原版 subtype2 NPC 的座標條件設施分支。這類 handler
+不是一般 `facility` subtype：只有玩家位於指定 Y 座標時才透過原始 section facility
+指標表開啟設施，其他位置播放指定的重複對話。引擎只解讀有限的座標比較、facility
+索引與文字引用，不得把 CTY、handler 或對話句子寫回 Go：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `conditional_facility_events` | object[] | 是 | 可為空陣列；不得省略。 |
+| `[].id`／`[].kind` | string／enum | 是 | 穩定 ID；`kind` 固定為 `conditional_facility`。 |
+| `[].npc` | selector | 是 | `{cty_raw,section,tile,handler_raw}`；需與原始 NPC 完整相符。 |
+| `[].required_player_y` | int | 是 | 原版 handler 的玩家 Y gate；不是 NPC Y，也不可用鄰近格猜測。 |
+| `[].facility_k` | int | 是 | 命中時送入原始 section facility table 的 byte4 索引。 |
+| `[].fallback_text_id` | string | 是 | 未命中座標 gate 時的可重複對話 text ID。 |
+| `[].evidence` | object | 是 | compare、分支 caller、facility consumer、文字 record 與玩家可見結果的 D3 證據。 |
+
+DQ3 CTY59 handler41 在 IDA linear `0x15bba`（file `0x6f2a`）比較 `DS:4f35==4`；命中
+時以 `BX=0` 呼叫共用設施 dispatcher（CTY59 的兩項道具店），否則以 `di=0xbc0`
+播放 D3TXT07 record8。這個欄位契約保留兩條路徑，避免把「走到同一 NPC」誤簡化成永遠
+開店或永遠只顯示對話。
+
 `npc_item_reward_events` 描述「指定 NPC 依 present flag 顯示成功／事後文字，並把一件
 道具交給第一個有空格的隊員」的有限 primitive：
 

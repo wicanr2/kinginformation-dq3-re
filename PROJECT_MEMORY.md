@@ -87,8 +87,8 @@ handler37 正式接受試煉使四人暫時變單人，走 CTY23 原始轉場取
 save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；詳見 `docs/100`。
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
-同時控制寶箱與入口物件 visibility；詳見 `docs/101`。game-pack schema 已升至
-`0.1.20`，`dq3_cht` content 已升至 `0.1.24`。IDA Pro 9.4 證明商人聚落 `(210,64)`
+同時控制寶箱與入口物件 visibility；詳見 `docs/101`。現行 pack manifest 為 schema
+`0.1.22`、`dq3_cht` content `0.1.27`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
 的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
 `0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
 入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
@@ -103,9 +103,8 @@ boot trace 已由商人交付自然重進 CTY60，並正式航行到 CTY41、走
 同一條 trace 已使用黑暗燈，在 CTY44 sec1 `(14,7)` 由道具選單使用拉之鏡，閉合
 record97／98、monster89、變身杖 `0x62` 與勝利旗標交易，故此段升為 campaign E3／V1。
 IDA 9.4 證實離城 consumer 直接使用 transition X/Y、兩者皆零才回退 remembered
-coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。尚余幽靈船至蓋亞之劍、
-CTY83 黃寶珠的自然 E3、CTY59 handler41 設施分支及原版 V2 對拍。詳見 `docs/102`、
-`docs/103`。
+coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。後續狀態以本檔下方的
+`0.1.22` 段落與 `docs/74` 為準，不沿用本段早期的剩餘工作清單。
 2026-08-09 已用一次性 Docker+Xvfb 通過 `TestOpeningProductionInputTrace`：從新遊戲、正式
 InputState、不中途注入座標／道具／事件函式，依序完成 CTY83 黃寶珠、六珠／拉米亞、巴拉摩斯、
 自然下降、愛列夫加特、蓋亞之劍火山、尼羅肯特銀寶珠、索瑪城奧爾特加事件、封咒三連戰、
@@ -120,6 +119,15 @@ TITLE/FIELD/CASTLE/TOWN/DUNGEON/BATTLE/ENDING（ENDING 為原版 track 17）。l
 `ENDTXT.TXT` 產生 `dq3_remake_ebitan/docs/img/ending_the_end_runtime.png`，與
 `docs/title/ending.png` 逐像素一致。這只把固定終盤畫面與 cue 升為 V3；終盤文字 timing、
 其餘場景／戰鬥畫面與跨平台 release 仍未完成，不得將單一終盤圖誤宣稱全程 parity。
+
+同日已補閉合 CTY59 `handler41`：IDA Pro 9.4 的原始分支在玩家 Y=4 呼叫 section
+facility index 0，否則選 D3TXT07 record8；兩條路徑均由 `conditional_facility_events`
+JSON 提供。`TestConditionalFacilityOriginalCoordinateGate` 以原版建城後 NPC 可見旗標，
+從正式 `cmdTalk` 驗證對話／兩項道具店，`internal/gamepack` parity test 鎖定 EXE bytes
+與 record8 glyph，並產出 [對話狀態圖](dq3_remake_ebitan/docs/img/merchant_settlement_handler41_dialogue.png)
+與 [店鋪狀態圖](dq3_remake_ebitan/docs/img/merchant_settlement_handler41_shop.png)（V1）。
+這只關閉 handler41 的事件分支；CTY60／61 階段、CTY83 自然路線與全程 V2/V3 仍以
+`docs/74`、`docs/102` 的未閉合項為準。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需

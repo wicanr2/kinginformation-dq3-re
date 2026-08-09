@@ -238,6 +238,53 @@ func TestDQ3MerchantSettlementFounderMatchesOriginalBinaryAndText(t *testing.T) 
 	}
 }
 
+func TestDQ3MerchantSettlementConditionalShopMatchesOriginalEXEAndText(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	txt, err := os.ReadFile(filepath.Join(dir, "D3TXT07.TXT"))
+	if err != nil {
+		t.Skipf("original D3TXT07.TXT unavailable: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	event, ok := p.ConditionalFacilityEvent("dq3:event.merchant_settlement_shop_gate")
+	if !ok {
+		t.Fatal("missing CTY59 conditional shop event")
+	}
+	wantNPC := ScriptedNPCSelector{CTYRaw: 59, Section: 0,
+		Tile: TileCoordinate{X: 10, Y: 2}, HandlerRaw: 41}
+	if event.Kind != "conditional_facility" || event.NPC != wantNPC ||
+		event.RequiredPlayerY != 4 || event.FacilityK != 0 {
+		t.Fatalf("conditional shop event drifted: %+v", event)
+	}
+	// sub_15BBA (IDA linear 0x15bba; file 0x6f2a) branches on DS:4f35==4, then calls
+	// the generic facility dispatcher with BX=0; otherwise it selects di=0xbc0.
+	const handlerFile = 0x6f2a
+	if len(exe) < handlerFile+7 ||
+		!bytes.Equal(exe[handlerFile:handlerFile+7], []byte{0x83, 0x3e, 0x35, 0x4f, 0x04, 0x74, 0x0e}) {
+		t.Fatalf("handler41 Y=4 gate bytes changed: %x", exe[handlerFile:handlerFile+7])
+	}
+	start := int(binary.LittleEndian.Uint16(txt[8*2:]))
+	end := int(binary.LittleEndian.Uint16(txt[9*2:]))
+	want := make([]uint16, 0, (end-start)/2)
+	for off := start; off+2 <= end; off += 2 {
+		want = append(want, binary.LittleEndian.Uint16(txt[off:off+2]))
+	}
+	got, exists := p.TextGlyphCodes(event.FallbackTextID)
+	if !exists || !reflect.DeepEqual(got, want) {
+		t.Fatalf("%s does not exactly match D3TXT07 record8: got=%v want=%v",
+			event.FallbackTextID, got, want)
+	}
+}
+
 func TestDQ3JipangOrochiMatchesOriginalEXEAndText(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {
@@ -1963,7 +2010,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  "npc_push_rule":{"ctrl_mask":64,"ctrl_value":64,"blocked_by_effect_id":"temporary_invisibility",
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"file","address":"0x1","consumer":"collision","doc":"docs/x.md"}},
-	  "boss_surrender_events":[],"temporary_role_events":[],"temporary_solo_challenges":[],
+	  "boss_surrender_events":[],"temporary_role_events":[],"temporary_solo_challenges":[],"conditional_facility_events":[],
 	    "world_entrance_variants":[],"settlement_founder_events":[],"settlement_founder_followups":[],"quest_item_chain_events":[],"choice_item_exchange_events":[],"tracked_world_objects":[],"coordinate_item_gate_events":[],"treasure_events":[],"npc_item_reward_events":[],"item_use_effects":[],"tracking_guard_events":[],
 	    "push_puzzle_events":[],
 	    "two_step_floor_switch_gates":[],

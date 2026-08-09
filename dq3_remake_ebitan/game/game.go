@@ -461,6 +461,9 @@ func (g *Game) selectCommand(cmd int) {
 			if g.talkNPCItemReward(n) {
 				return
 			}
+			if g.talkConditionalFacility(n) {
+				return
+			}
 			switch sub := (n.ctrl >> 3) & 7; {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)

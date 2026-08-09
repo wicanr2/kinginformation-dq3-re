@@ -163,6 +163,25 @@
       }
     }
   ],
+  "conditional_facility_events": [
+    {
+      "id": "dq3:event.merchant_settlement_shop_gate",
+      "kind": "conditional_facility",
+      "npc": {"cty_raw": 59, "section": 0, "tile": {"x": 10, "y": 2}, "handler_raw": 41},
+      "required_player_y": 4,
+      "facility_k": 0,
+      "fallback_text_id": "dq3:text.merchant_settlement.old_friend",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY59.DAT + D3TXT07.TXT",
+        "address_space": "logical",
+        "address": "handler41 logical 0x5bba..0x5bd4 (IDA linear 0x15bba..0x15bd4); CTY59 sec0 NPC (10,2)",
+        "consumer": "handler41 displays D3TXT07 record8 unless player Y equals 4; at Y=4 it dispatches facility index 0 through the section facility table, which is CTY59's two-item shop",
+        "doc": "docs/102-merchant-settlement-world-entrance-re.md"
+      }
+    }
+  ],
   "npc_push_rule": {
     "ctrl_mask": 64,
     "ctrl_value": 64,

@@ -794,6 +794,22 @@
       "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + CTY23.DAT + D3TXT07.TXT", "address_space": "logical", "address": "handler86 0x668c; record67", "consumer": "CTY23 section2 raw handler86 displays record67", "doc": "docs/100-lancel-courage-blue-orb-production-trace.md"}
     },
     {
+      "id": "dq3:text.merchant_settlement.old_friend",
+      "value": "*「啊啊,是{變數}\n好懷念啊!\n是我啊,{變數}。\n---\n*「請等著看吧,\n我一定要把這裡\n變成一座大城鎮!",
+      "glyph_codes": [59, 60, 509, 509, 55, 399, 65525, 65534, 12, 12, 441, 1387, 637, 509, 57, 65534, 12, 12, 399, 493, 509, 55, 65526, 56, 65532, 59, 60, 571, 419, 484, 668, 499, 55, 65534, 12, 12, 493, 401, 1022, 504, 530, 398, 512, 65534, 12, 12, 315, 610, 401, 723, 163, 474, 475, 57, 65535],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT07.TXT", "record": 8},
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT07.TXT",
+        "address_space": "logical",
+        "address": "handler41 logical 0x5bba..0x5bd4; text selector di=0xbc0 resolves D3TXT07 record8",
+        "consumer": "handler41 fallback branch when player Y is not 4",
+        "doc": "docs/102-merchant-settlement-world-entrance-re.md"
+      }
+    },
+    {
       "id": "dq3:text.merchant_settlement.introduction",
       "value": "*「我在這裡想\n建造一個新城鎮。\n---\n*「城鎮能建起來的話,\n大家就會來了吧!\n---\n*「但是要建城鎮,\n商人是不可欠的。",
       "glyph_codes": [59,60,493,411,398,512,609,65534,12,12,917,1173,401,546,671,474,475,56,65532,59,60,474,475,408,917,583,461,149,449,55,65534,12,12,163,657,633,415,461,423,499,57,65532,59,60,508,399,504,917,474,475,55,65534,12,12,112,194,399,228,229,1382,149,56,65535],

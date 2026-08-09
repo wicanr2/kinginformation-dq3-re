@@ -856,6 +856,20 @@ type SettlementFounderFollowupEvent struct {
 	Evidence              Evidence            `json:"evidence"`
 }
 
+// ConditionalFacilityEvent describes a scripted NPC that becomes a normal
+// facility only when the original player coordinate matches a narrow gate.
+// The fallback dialogue and facility selector are pack data; the engine only
+// executes this finite conditional-facility primitive.
+type ConditionalFacilityEvent struct {
+	ID              string              `json:"id"`
+	Kind            string              `json:"kind"`
+	NPC             ScriptedNPCSelector `json:"npc"`
+	RequiredPlayerY int                 `json:"required_player_y"`
+	FacilityK       int                 `json:"facility_k"`
+	FallbackTextID  string              `json:"fallback_text_id"`
+	Evidence        Evidence            `json:"evidence"`
+}
+
 type Events struct {
 	SchemaVersion               string                           `json:"schema_version"`
 	ItemActions                 ItemActions                      `json:"item_actions"`
@@ -863,6 +877,7 @@ type Events struct {
 	WorldEntranceVariants       []WorldEntranceVariant           `json:"world_entrance_variants"`
 	SettlementFounderEvents     []SettlementFounderEvent         `json:"settlement_founder_events"`
 	SettlementFounderFollowups  []SettlementFounderFollowupEvent `json:"settlement_founder_followups"`
+	ConditionalFacilityEvents   []ConditionalFacilityEvent       `json:"conditional_facility_events"`
 	NPCPushRule                 NPCPushRule                      `json:"npc_push_rule"`
 	BossSurrenderEvents         []BossSurrenderEvent             `json:"boss_surrender_events"`
 	TemporaryRoleEvents         []TemporaryRoleEvent             `json:"temporary_role_events"`
@@ -1266,6 +1281,12 @@ func (p *Pack) validateEventTextRefs() error {
 			}
 		}
 	}
+	for _, event := range p.Events.ConditionalFacilityEvents {
+		if event.FallbackTextID == "" || p.texts[event.FallbackTextID] == nil {
+			return fmt.Errorf("%s fallback_text_id references unknown text %q",
+				event.ID, event.FallbackTextID)
+		}
+	}
 	for _, event := range p.Events.TemporaryRoleEvents {
 		refs := event.DialogueTextIDs
 		for field, id := range map[string]string{
@@ -1530,6 +1551,25 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.SettlementFounderFollowups == nil {
 		return errors.New("settlement_founder_followups must be present")
+	}
+	if p.Events.ConditionalFacilityEvents == nil {
+		return errors.New("conditional_facility_events must be present")
+	}
+	conditionalFacilityIDs := map[string]bool{}
+	for i, event := range p.Events.ConditionalFacilityEvents {
+		if event.ID == "" || event.Kind != "conditional_facility" ||
+			!validScriptedNPC(event.NPC) || event.RequiredPlayerY < 0 ||
+			event.RequiredPlayerY > 255 || event.FacilityK < 0 || event.FacilityK > 255 ||
+			event.FallbackTextID == "" {
+			return fmt.Errorf("conditional_facility_events[%d]: invalid event", i)
+		}
+		if conditionalFacilityIDs[event.ID] {
+			return fmt.Errorf("duplicate conditional facility event id %q", event.ID)
+		}
+		if err := validateEvidence(event.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", event.ID, err)
+		}
+		conditionalFacilityIDs[event.ID] = true
 	}
 	entranceIDs := map[string]bool{}
 	entranceTiles := map[[3]int]string{}
@@ -2934,6 +2974,20 @@ func (p *Pack) SettlementFounderFollowups() []SettlementFounderFollowupEvent {
 		result[i].DialogueTextIDs = append([]string(nil), result[i].DialogueTextIDs...)
 	}
 	return result
+}
+
+func (p *Pack) ConditionalFacilityEvents() []ConditionalFacilityEvent {
+	return append([]ConditionalFacilityEvent(nil), p.Events.ConditionalFacilityEvents...)
+}
+
+func (p *Pack) ConditionalFacilityEvent(id string) (*ConditionalFacilityEvent, bool) {
+	for i := range p.Events.ConditionalFacilityEvents {
+		if p.Events.ConditionalFacilityEvents[i].ID == id {
+			event := p.Events.ConditionalFacilityEvents[i]
+			return &event, true
+		}
+	}
+	return nil, false
 }
 
 func (p *Pack) ItemUseEffects() []ItemUseEffect {
