@@ -3,12 +3,13 @@
 ## 結論
 
 `interface.json.new_game_labels` 現在保存精訊版開場主選單、性別、能力確認與姓名輸入
-特殊格所需的原始 glyph index。`NewGameFlow`、`NameInput`、`GenderSelect` 與酒館共用
+畫面（rec451–456）的原始 glyph index。`NewGameFlow`、`NameInput`、`GenderSelect` 與酒館共用
 同一份受驗證 game-pack 資料；production `NewGameWithPack` 缺欄位即 fail closed，Go
 renderer 不再保存這批版本專屬字模常數。
 
-本批只資料化 glyph stream。主選單、姓名盤與能力確認面板的座標／尺寸仍是另一個待閉合
-的 V3 geometry slice；移入 JSON 不代表目前畫面已與原版逐像素一致。
+本批的 glyph stream 已與 `new_game_geometry` 一起接入正式 renderer；主選單、姓名盤與能力
+確認面板的座標／尺寸證據另見 [`docs/113`](113-newgame-geometry-re.md)。目前尚未閉合的是
+EGA 框線 pattern、逐幀游標／閃爍與同狀態演出，不把單張 PNG 誤稱為完整 V3 parity。
 
 ## 資料契約
 
@@ -23,18 +24,27 @@ renderer 不再保存這批版本專屬字模常數。
 | `sex` / `hero` / `cloth` | `674,417` / `106,187` / `190,149,191,192` | 能力確認固定標籤 |
 | `prompt` | `398,546,194,229,456,534` | 「這個人可以嗎」 |
 | `yes` / `no` | `399` / `678` | 能力確認選項 |
-| `backspace` / `ok` | `11` / `29,25` | 英數姓名盤特殊格 |
+| `name_title` | `690,519,691,692` | `輸入姓名` 標題（rec451） |
+| `name_left_arrow` / `name_right_arrow` | `693,693` / `694,694` | 姓名列左右雙箭頭（rec451） |
+| `name_zhuyin_grid` | 45 格 | 注音盤逐列 glyph（rec452，含特殊格） |
+| `name_alnum_grid` | 45 格 | 英數／符號盤逐列 glyph（rec453） |
+| `function_zhuyin` / `function_alnum` | 5×glyph rows | 右側功能列（rec452／453） |
+| `input_mode_zhuyin` | `690,519,702,313` | 注音組字提示（rec456） |
+| `backspace` / `ok` | `11` / `29,25` | 舊契約保留；正式 rec453 使用完整 45 格，不把符號格誤當退格 |
 
 ## 證據與限制
 
 - 輸入字型：`D3TXT00.FON`，47232 bytes，SHA-256
   `c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02`。
-- `glyph_unicode_map.json` 與原版開場／創角實機畫面交叉核對上述 index；component test
+- `assets_raw/D3TXT00.TXT` SHA-256 為
+  `38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b`；
+  `docs/data/d3txt_codes.json` 的 D3TXT00 records 451–456 與原版開場／創角實機畫面交叉核對上述 index；component test
   `TestDQ3NewGameLabelsMatchOriginalGlyphs` 會檢查字型大小、雜湊與完整 role 對映。
 - 目前推論等級為 **D2**：字模資料與玩家可見畫面已對齊，但本批尚未另行匯出每個
   glyph 的 IDA writer→consumer sidecar，因此不宣稱 D3。
-- 此欄位只描述字模，不描述文字控制碼、輸入規則或任意 JSON 程式碼。姓名輸入的注音
-  組字資料仍由共用 `zhuyin` 元件處理；畫面幾何待後續 `new_game_geometry` 契約閉合。
+- 此欄位只描述字模，不描述文字控制碼或任意 JSON 程式碼。姓名輸入的 raw 45 格→欄優先
+  cell 換算、功能列焦點與完成 gate 仍由共用狀態機處理；畫面幾何由
+  `new_game_geometry` 契約提供。
 
 原始 glyph index、pack 版本與 evidence 由
 [`docs/84-game-pack-json-contract.md`](84-game-pack-json-contract.md) 的 interface 契約

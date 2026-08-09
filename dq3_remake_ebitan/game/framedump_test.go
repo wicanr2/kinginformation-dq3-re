@@ -56,6 +56,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.newGame.stage = ngMenu
 	dump("ng_menu")
 	g.newGame.stage = ngName
+	g.newGame.ni.Init() // 原版新遊戲進入姓名畫面預設注音模式(raw0=ㄅ)
 	dump("ng_name")
 	g.newGame.stage = ngGender
 	dump("ng_gender")

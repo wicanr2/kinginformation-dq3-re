@@ -116,9 +116,18 @@ func TestCmdMenuTapSelectsAndConfirms(t *testing.T) {
 	}
 }
 
-// TestTavernAlnumGridHits:酒館英數格盤(niCells=38 格,9 欄)draw 後 hits 筆數與命中格對齊 draw() 幾何。
+// TestTavernAlnumGridHits:酒館英數格盤(原版 rec453 的 45 格,9 欄)draw 後 hits 筆數與命中格對齊。
 func TestTavernAlnumGridHits(t *testing.T) {
 	tv := &Tavern{tx: &dq3data.Text{}, active: true, stage: tavName}
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	geometry, ok := pack.NewGameGeometry()
+	if !ok {
+		t.Fatal("builtin pack missing new-game geometry")
+	}
+	tv.setGeometry(geometry)
 	rgba := newHitTestRGBA()
 	white := dq3data.Color{R: 248, G: 248, B: 248}
 	tv.draw(rgba, white)
@@ -126,25 +135,34 @@ func TestTavernAlnumGridHits(t *testing.T) {
 	if len(tv.ni.hits) != niCells {
 		t.Fatalf("英數格盤 draw 後 hits 應有 %d 筆,得 %d", niCells, len(tv.ni.hits))
 	}
-	// cell 10('A',col1,row1):x=64+1*40=104,y=96+1*22=118
-	if idx := tv.ni.hits.at(106, 120); idx != 10 {
-		t.Errorf("點 (106,120) 應命中 cell10('A'),得 %d", idx)
+	// 語意 cell10('A') 位於畫面 raw2(col2,row0):x=201,y=94。
+	if idx := tv.ni.hits.at(203, 96); idx != 2 {
+		t.Errorf("點 (203,96) 應命中 raw2(cell10 'A'),得 %d", idx)
 	}
 	// 點格後應可直接經 input() 附加該字元
-	if _, closed := tv.input(InputState{DirEdge: -1, Tapped: true, TapX: 106, TapY: 120}); closed {
+	if _, closed := tv.input(InputState{DirEdge: -1, Tapped: true, TapX: 203, TapY: 96}); closed {
 		t.Fatal("點英數格不應關閉酒館")
 	}
 	if len(tv.ni.nameBuf) != 1 || tv.ni.nameBuf[0] != niCellGlyph(10) {
-		t.Errorf("點 cell10 應附加對應字元到 nameBuf,得 %v", tv.ni.nameBuf)
+		t.Errorf("點 raw2/cell10 應附加對應字元到 nameBuf,得 %v", tv.ni.nameBuf)
 	}
-	if tv.ni.cursor != 10 {
-		t.Errorf("點格應把游標移到該格,得 cursor=%d", tv.ni.cursor)
+	if tv.ni.cursor != 2 {
+		t.Errorf("點格應把游標移到 raw2,得 cursor=%d", tv.ni.cursor)
 	}
 }
 
 // TestZhuyinBoardTapMovesAndSelects:注音盤(42 格)點格應移游標到該格並等同確定(選一個聲/介/韻/調)。
 func TestZhuyinBoardTapMovesAndSelects(t *testing.T) {
 	tv := &Tavern{tx: &dq3data.Text{}, active: true, stage: tavName}
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	geometry, ok := pack.NewGameGeometry()
+	if !ok {
+		t.Fatal("builtin pack missing new-game geometry")
+	}
+	tv.setGeometry(geometry)
 	tv.ni.nameZhu = true
 	tv.ni.zh.Init()
 	rgba := newHitTestRGBA()
@@ -154,12 +172,12 @@ func TestZhuyinBoardTapMovesAndSelects(t *testing.T) {
 	if len(tv.ni.hits) == 0 {
 		t.Fatal("注音盤 draw 後應有 hits")
 	}
-	// cell0(聲母 ㄅ):x=64,y=96
-	idx := tv.ni.hits.at(66, 98)
+	// cell0(聲母 ㄅ):x=169,y=94
+	idx := tv.ni.hits.at(171, 96)
 	if idx != 0 {
-		t.Fatalf("點 (66,98) 應命中 cell0,得 %d", idx)
+		t.Fatalf("點 (171,96) 應命中 cell0,得 %d", idx)
 	}
-	tv.input(InputState{DirEdge: -1, Tapped: true, TapX: 66, TapY: 98})
+	tv.input(InputState{DirEdge: -1, Tapped: true, TapX: 171, TapY: 96})
 	if tv.ni.zh.Sh != 1 {
 		t.Errorf("點注音盤 cell0(聲母)應選定 Sh=1,得 %d", tv.ni.zh.Sh)
 	}
@@ -181,6 +199,11 @@ func TestNewGameMenuDrawHits(t *testing.T) {
 		t.Fatal("builtin pack missing new-game labels")
 	}
 	g.newGame.setLabels(labels)
+	geometry, ok := pack.NewGameGeometry()
+	if !ok {
+		t.Fatal("builtin pack missing new-game geometry")
+	}
+	g.newGame.setGeometry(geometry)
 	g.showTitle = true
 	g.newGame.stage = ngMenu
 	rgba := newHitTestRGBA()
@@ -191,13 +214,13 @@ func TestNewGameMenuDrawHits(t *testing.T) {
 	if len(g.newGame.hits) != ngOptCount {
 		t.Fatalf("主選單 draw 後 hits 應有 %d 筆,得 %d", ngOptCount, len(g.newGame.hits))
 	}
-	// index1(載入進度):x=190+60=250,y=140+40+22=202 → box (232,199,120,18)
-	idx := g.newGame.hits.at(240, 205)
+	// index1(載入進度):x=253,y=186 → box (235,183,146,18)
+	idx := g.newGame.hits.at(240, 189)
 	if idx != ngOptLoad {
-		t.Fatalf("點 (240,205) 應命中 index%d(載入進度),得 %d", ngOptLoad, idx)
+		t.Fatalf("點 (240,189) 應命中 index%d(載入進度),得 %d", ngOptLoad, idx)
 	}
 	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "menu-tap.json")) // 無存檔,Load() 靜默略過
-	g.newGameInput(InputState{DirEdge: -1, Tapped: true, TapX: 240, TapY: 205})
+	g.newGameInput(InputState{DirEdge: -1, Tapped: true, TapX: 240, TapY: 189})
 	if g.newGame.cursor != ngOptLoad {
 		t.Errorf("點列應移游標到 ngOptLoad,得 %d", g.newGame.cursor)
 	}

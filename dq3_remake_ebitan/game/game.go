@@ -2335,7 +2335,10 @@ func (g *Game) renderFrame() {
 			g.frame.WritePixels(g.rgba)
 			return
 		}
-		if g.newGame.stage == ngConfirm {
+		// 原版在離開 title splash、進入主選單／姓名／性別／能力確認後，
+		// 皆切到 FIRST.SCR 的黑底雙立繪；不能把城堡標題 PCX 繼續
+		// 疊在創角視窗後方。ngSplash 才保留 title_image。
+		if g.newGame.stage != ngSplash {
 			if len(g.newGameConfirmPix) == ScreenW*ScreenH && len(g.newGameConfirmPal) == 16 {
 				drawIndexedPCX(g.rgba, g.newGameConfirmPix, g.newGameConfirmPal)
 			} else {
@@ -2610,6 +2613,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.new_game_labels")
 	}
+	newGameGeometry, ok := pack.NewGameGeometry()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing interface.new_game_geometry")
+	}
 	battleDefs := make(map[string]battleTextDefinition, len(battleRefs.IDs()))
 	for role, id := range battleRefs.IDs() {
 		if id == "" {
@@ -2654,7 +2661,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.battle.setCommandLabels(battleCommandLabels)
 	g.cmd.setLabels(fieldCommandLabels)
 	g.newGame.setLabels(newGameLabels)
+	g.newGame.setGeometry(newGameGeometry)
 	g.tavern.setLabels(newGameLabels)
+	g.tavern.setGeometry(newGameGeometry)
 	g.tavern.equipment = memberEquipment
 	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 

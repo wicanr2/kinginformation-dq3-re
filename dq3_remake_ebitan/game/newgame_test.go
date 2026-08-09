@@ -39,8 +39,8 @@ func TestNewGameFlowStageTransitions(t *testing.T) {
 	if g.newGame.ni.nameZhu {
 		t.Fatal("Toggle 後應為英數模式")
 	}
-	// 英數格盤:cell10='A' → 附加 1 字,再選 OK(niCellOK)完成(非空 → 放行)
-	g.newGame.ni.cursor = 10
+	// 英數格盤:語意 cell10='A' 的畫面 raw2 → 附加 1 字,再選右下完成。
+	g.newGame.ni.cursor = 2
 	g.newGameInput(InputState{DirEdge: -1, Confirm: true})
 	if len(g.newGame.ni.nameBuf) != 1 || g.newGame.ni.nameBuf[0] != niCellGlyph(10) {
 		t.Fatalf("應附加 1 字到 nameBuf,得 %v", g.newGame.ni.nameBuf)
@@ -197,6 +197,41 @@ func TestNewGameFlowZhuyinTogglePutsCellIntoComposer(t *testing.T) {
 	g.newGameInput(InputState{DirEdge: -1, Toggle: true}) // 切英數
 	if g.newGame.ni.nameZhu {
 		t.Fatal("Toggle 應切到英數模式")
+	}
+}
+
+// TestNameInputFunctionListUsesOriginalRawCell:正式姓名流程必須由注音／英數盤的
+// raw35(cell43=⊙)進入右側功能列，再以第五列「完成」放行；不能把右下角以外的
+// 任意 Enter 當成直接完成。
+func TestNameInputFunctionListUsesOriginalRawCell(t *testing.T) {
+	var ni NameInput
+	ni.Init()
+	ni.toggleMode() // 注音 → 英數
+	ni.cursor = 0
+	ni.input(InputState{Confirm: true, DirEdge: -1}, -1) // raw0:輸入一個字
+	if len(ni.nameBuf) != 1 || ni.nameBuf[0] != 0 {
+		t.Fatalf("英數 raw0 應寫入 glyph0，得 %v", ni.nameBuf)
+	}
+	// raw0→raw27(下三次)→raw35(右八次)，raw35 經欄優先換算為 cell43。
+	for i := 0; i < 3; i++ {
+		ni.input(InputState{DirEdge: 0}, -1)
+	}
+	for i := 0; i < 8; i++ {
+		ni.input(InputState{DirEdge: 3}, -1)
+	}
+	if ni.cursor != 35 {
+		t.Fatalf("raw 游標應到 35(⊙)，得 %d", ni.cursor)
+	}
+	ni.input(InputState{Confirm: true, DirEdge: -1}, -1)
+	if !ni.functionFocus || ni.functionCursor != 0 {
+		t.Fatalf("cell43 確定後應進功能列 row0，state=%+v", ni)
+	}
+	for i := 0; i < 4; i++ {
+		ni.input(InputState{DirEdge: 0}, -1)
+	}
+	confirmed, canceled := ni.input(InputState{Confirm: true, DirEdge: -1}, -1)
+	if !confirmed || canceled || ni.functionFocus {
+		t.Fatalf("功能列第五列完成應放行且關閉焦點：confirmed=%v canceled=%v focus=%v", confirmed, canceled, ni.functionFocus)
 	}
 }
 

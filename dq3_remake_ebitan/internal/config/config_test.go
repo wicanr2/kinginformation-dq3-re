@@ -9,7 +9,7 @@ import (
 func TestDefault(t *testing.T) {
 	c := Default()
 	if c.RngMode != RngDOS || !c.MusicEnabled || c.MusicVolume != 70 ||
-		c.AudioBackend != AudioMT32 || !c.CombatInfo || c.CombatHurtFx != 500 {
+		c.AudioBackend != AudioMT32 || c.CombatInfo || c.CombatHurtFx != 500 {
 		t.Errorf("預設值不符:%+v", c)
 	}
 }

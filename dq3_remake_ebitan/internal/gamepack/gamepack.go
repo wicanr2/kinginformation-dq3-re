@@ -139,31 +139,118 @@ type BattleSceneLayout struct {
 	Evidence    Evidence `json:"evidence"`
 }
 
-// NewGameLabels 是開場主選單、性別與能力確認畫面使用的版本專屬字模。
+// NewGameLabels 是開場主選單、姓名 rec451–456、性別與能力確認畫面使用的版本專屬字模。
 // 欄位名稱固定，不承載可執行規則；共同 Evidence 套用到每一個原始 glyph
 // 陣列，讓來源、位址基準與推論等級不會隨 renderer 遺失。
 type NewGameLabels struct {
-	Title      []int    `json:"title"`
-	Start      []int    `json:"start"`
-	Load       []int    `json:"load"`
-	Male       []int    `json:"male"`
-	Female     []int    `json:"female"`
-	Level      []int    `json:"level"`
-	HP         []int    `json:"hp"`
-	MP         []int    `json:"mp"`
-	Agility    []int    `json:"agility"`
-	Attack     []int    `json:"attack"`
-	Defense    []int    `json:"defense"`
-	Experience []int    `json:"experience"`
-	Sex        []int    `json:"sex"`
-	Hero       []int    `json:"hero"`
-	Cloth      []int    `json:"cloth"`
-	Prompt     []int    `json:"prompt"`
-	Yes        []int    `json:"yes"`
-	No         []int    `json:"no"`
-	Backspace  []int    `json:"backspace"`
-	OK         []int    `json:"ok"`
-	Evidence   Evidence `json:"evidence"`
+	Title           []int    `json:"title"`
+	Start           []int    `json:"start"`
+	Load            []int    `json:"load"`
+	Male            []int    `json:"male"`
+	Female          []int    `json:"female"`
+	Level           []int    `json:"level"`
+	HP              []int    `json:"hp"`
+	MP              []int    `json:"mp"`
+	Agility         []int    `json:"agility"`
+	Attack          []int    `json:"attack"`
+	Defense         []int    `json:"defense"`
+	Experience      []int    `json:"experience"`
+	Sex             []int    `json:"sex"`
+	Hero            []int    `json:"hero"`
+	Cloth           []int    `json:"cloth"`
+	Prompt          []int    `json:"prompt"`
+	Yes             []int    `json:"yes"`
+	No              []int    `json:"no"`
+	Backspace       []int    `json:"backspace"`
+	OK              []int    `json:"ok"`
+	NameTitle       []int    `json:"name_title"`
+	NameLeftArrow   []int    `json:"name_left_arrow"`
+	NameRightArrow  []int    `json:"name_right_arrow"`
+	NameZhuyinGrid  []int    `json:"name_zhuyin_grid"`
+	NameAlnumGrid   []int    `json:"name_alnum_grid"`
+	FunctionZhuyin  [][]int  `json:"function_zhuyin"`
+	FunctionAlnum   [][]int  `json:"function_alnum"`
+	InputModeZhuyin []int    `json:"input_mode_zhuyin"`
+	Evidence        Evidence `json:"evidence"`
+}
+
+// GeometryRect 是版本專屬的像素矩形。座標以 640×350 邏輯畫布為基準；
+// 原始 DOS window 結構另保存在 NewGameGeometry.RawWindows，避免把像素
+// 對拍值誤當成 EXE 的原始欄位。
+type GeometryRect struct {
+	X      int `json:"x"`
+	Y      int `json:"y"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
+// GeometryAnchor 是固定文字起點與可選列／欄步距。
+type GeometryAnchor struct {
+	X     int `json:"x"`
+	Y     int `json:"y"`
+	StepX int `json:"step_x,omitempty"`
+	StepY int `json:"step_y,omitempty"`
+}
+
+// GeometryGrid 是姓名盤等規則格盤的像素起點與步距。
+type GeometryGrid struct {
+	X       int `json:"x"`
+	Y       int `json:"y"`
+	Columns int `json:"columns"`
+	Rows    int `json:"rows"`
+	StepX   int `json:"step_x"`
+	StepY   int `json:"step_y"`
+}
+
+// RawNewGameWindow 保留 IDA linear address 空間中的原始 window 欄位；
+// Pixel 是同一結構經 EGA writer／實機截圖閉合後的 renderer 矩形。
+type RawNewGameWindow struct {
+	ID      string `json:"id"`
+	Flags   int    `json:"flags"`
+	X       int    `json:"x"`
+	Y       int    `json:"y"`
+	Width   int    `json:"width"`
+	Height  int    `json:"height"`
+	Address string `json:"address"`
+}
+
+// NewGameGeometry 是開場主選單、姓名盤、性別與能力確認畫面的資料契約。
+// 它只描述幾何與固定 anchor，不承載流程程式碼；缺欄位時 production
+// bootstrap 必須 fail closed，不能回退到 Go 內的 DQ3 座標。
+type NewGameGeometry struct {
+	ID                string             `json:"id"`
+	Menu              GeometryRect       `json:"menu"`
+	MenuTitle         GeometryAnchor     `json:"menu_title"`
+	MenuOptions       GeometryAnchor     `json:"menu_options"`
+	NamePanel         GeometryRect       `json:"name_panel"`
+	NameTitle         GeometryAnchor     `json:"name_title"`
+	NameLeftArrow     GeometryAnchor     `json:"name_left_arrow"`
+	NameRightArrow    GeometryAnchor     `json:"name_right_arrow"`
+	NameText          GeometryAnchor     `json:"name_text"`
+	NameGrid          GeometryGrid       `json:"name_grid"`
+	NameFunctionPanel GeometryRect       `json:"name_function_panel"`
+	NameFunction      GeometryAnchor     `json:"name_function"`
+	NameModePanel     GeometryRect       `json:"name_mode_panel"`
+	NameMode          GeometryAnchor     `json:"name_mode"`
+	GenderPanel       GeometryRect       `json:"gender_panel"`
+	Gender            GeometryAnchor     `json:"gender"`
+	ConfirmPrompt     GeometryRect       `json:"confirm_prompt"`
+	ConfirmChoice     GeometryRect       `json:"confirm_choice"`
+	StatsLeft         GeometryRect       `json:"stats_left"`
+	StatsEquipment    GeometryRect       `json:"stats_equipment"`
+	StatsRight        GeometryRect       `json:"stats_right"`
+	StatsName         GeometryAnchor     `json:"stats_name"`
+	StatsHero         GeometryAnchor     `json:"stats_hero"`
+	StatsSex          GeometryAnchor     `json:"stats_sex"`
+	StatsSexValue     GeometryAnchor     `json:"stats_sex_value"`
+	StatsLeftRows     GeometryAnchor     `json:"stats_left_rows"`
+	StatsCloth        GeometryAnchor     `json:"stats_cloth"`
+	StatsRightRows    GeometryAnchor     `json:"stats_right_rows"`
+	StatsPrompt       GeometryAnchor     `json:"stats_prompt"`
+	StatsChoice       GeometryAnchor     `json:"stats_choice"`
+	StatsChoiceCursor GeometryAnchor     `json:"stats_choice_cursor"`
+	RawWindows        []RawNewGameWindow `json:"raw_windows"`
+	Evidence          Evidence           `json:"evidence"`
 }
 
 // Entries returns copies so callers cannot mutate the validated pack through
@@ -183,6 +270,12 @@ func (l *NewGameLabels) Entries() map[string][]int {
 		"cloth": append([]int(nil), l.Cloth...), "prompt": append([]int(nil), l.Prompt...),
 		"yes": append([]int(nil), l.Yes...), "no": append([]int(nil), l.No...),
 		"backspace": append([]int(nil), l.Backspace...), "ok": append([]int(nil), l.OK...),
+		"name_title":        append([]int(nil), l.NameTitle...),
+		"name_left_arrow":   append([]int(nil), l.NameLeftArrow...),
+		"name_right_arrow":  append([]int(nil), l.NameRightArrow...),
+		"name_zhuyin_grid":  append([]int(nil), l.NameZhuyinGrid...),
+		"name_alnum_grid":   append([]int(nil), l.NameAlnumGrid...),
+		"input_mode_zhuyin": append([]int(nil), l.InputModeZhuyin...),
 	}
 }
 
@@ -277,6 +370,7 @@ type Interface struct {
 	BattleEnemy         BattlePanelLayout    `json:"battle_enemy,omitempty"`
 	BattleScene         *BattleSceneLayout   `json:"battle_scene,omitempty"`
 	NewGameLabels       *NewGameLabels       `json:"new_game_labels,omitempty"`
+	NewGameGeometry     *NewGameGeometry     `json:"new_game_geometry,omitempty"`
 	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
 	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
 	PartyHUD            WindowLayout         `json:"party_hud,omitempty"`
@@ -1434,8 +1528,39 @@ func (p *Pack) validateInterface() error {
 				}
 			}
 		}
+		for mode, rows := range map[string][][]int{
+			"function_zhuyin": labels.FunctionZhuyin,
+			"function_alnum":  labels.FunctionAlnum,
+		} {
+			if len(rows) != 5 {
+				return fmt.Errorf("new-game label %s must have five rows", mode)
+			}
+			for row, glyphs := range rows {
+				if len(glyphs) == 0 {
+					return fmt.Errorf("new-game label %s[%d] is empty", mode, row)
+				}
+				for _, glyph := range glyphs {
+					if glyph < 0 || glyph > 0xffff {
+						return fmt.Errorf("new-game label %s[%d] glyph out of range", mode, row)
+					}
+				}
+			}
+		}
+		for mode, glyphs := range map[string][]int{
+			"name_zhuyin_grid": labels.NameZhuyinGrid,
+			"name_alnum_grid":  labels.NameAlnumGrid,
+		} {
+			if len(glyphs) != 45 {
+				return fmt.Errorf("new-game label %s must have 45 cells", mode)
+			}
+		}
 		if err := validateEvidence(labels.Evidence); err != nil {
 			return fmt.Errorf("new-game labels evidence: %w", err)
+		}
+	}
+	if geometry := p.Interface.NewGameGeometry; geometry != nil {
+		if err := validateNewGameGeometry(*geometry); err != nil {
+			return err
 		}
 	}
 	if labels := p.Interface.BattleCommandLabels; labels != nil {
@@ -1517,6 +1642,83 @@ func (p *Pack) validateInterface() error {
 			}
 			seenAssets[frame.AssetKey] = true
 		}
+	}
+	return nil
+}
+
+func validateGeometryRect(name string, r GeometryRect) error {
+	if r.X < 0 || r.Y < 0 || r.Width <= 0 || r.Height <= 0 ||
+		r.X+r.Width > 4096 || r.Y+r.Height > 4096 {
+		return fmt.Errorf("new-game geometry %s rect is invalid", name)
+	}
+	return nil
+}
+
+func validateGeometryAnchor(name string, a GeometryAnchor) error {
+	if a.X < 0 || a.Y < 0 || a.X > 4096 || a.Y > 4096 ||
+		a.StepX < 0 || a.StepY < 0 || a.StepX > 4096 || a.StepY > 4096 {
+		return fmt.Errorf("new-game geometry %s anchor is invalid", name)
+	}
+	return nil
+}
+
+func validateGeometryGrid(name string, g GeometryGrid) error {
+	if g.X < 0 || g.Y < 0 || g.X > 4096 || g.Y > 4096 ||
+		g.Columns <= 0 || g.Columns > 64 || g.Rows <= 0 || g.Rows > 64 ||
+		g.StepX <= 0 || g.StepY <= 0 || g.StepX > 4096 || g.StepY > 4096 {
+		return fmt.Errorf("new-game geometry %s grid is invalid", name)
+	}
+	return nil
+}
+
+func validateNewGameGeometry(g NewGameGeometry) error {
+	if g.ID == "" {
+		return errors.New("new-game geometry id is required")
+	}
+	for name, rect := range map[string]GeometryRect{
+		"menu": g.Menu, "name_panel": g.NamePanel,
+		"name_function_panel": g.NameFunctionPanel, "name_mode_panel": g.NameModePanel,
+		"gender_panel": g.GenderPanel, "confirm_prompt": g.ConfirmPrompt,
+		"confirm_choice": g.ConfirmChoice, "stats_left": g.StatsLeft,
+		"stats_equipment": g.StatsEquipment, "stats_right": g.StatsRight,
+	} {
+		if err := validateGeometryRect(name, rect); err != nil {
+			return err
+		}
+	}
+	for name, anchor := range map[string]GeometryAnchor{
+		"menu_title": g.MenuTitle, "menu_options": g.MenuOptions,
+		"name_title": g.NameTitle, "name_left_arrow": g.NameLeftArrow,
+		"name_right_arrow": g.NameRightArrow, "name_text": g.NameText,
+		"name_function": g.NameFunction,
+		"name_mode":     g.NameMode, "gender": g.Gender,
+		"stats_name": g.StatsName, "stats_hero": g.StatsHero,
+		"stats_sex": g.StatsSex, "stats_sex_value": g.StatsSexValue,
+		"stats_left_rows": g.StatsLeftRows, "stats_cloth": g.StatsCloth,
+		"stats_right_rows": g.StatsRightRows, "stats_prompt": g.StatsPrompt,
+		"stats_choice": g.StatsChoice, "stats_choice_cursor": g.StatsChoiceCursor,
+	} {
+		if err := validateGeometryAnchor(name, anchor); err != nil {
+			return err
+		}
+	}
+	if err := validateGeometryGrid("name_grid", g.NameGrid); err != nil {
+		return err
+	}
+	if g.NameGrid.Columns != 9 || g.NameGrid.Rows != 5 {
+		return errors.New("new-game geometry name_grid must be 9x5")
+	}
+	if len(g.RawWindows) == 0 {
+		return errors.New("new-game geometry raw_windows are required")
+	}
+	for i, raw := range g.RawWindows {
+		if raw.ID == "" || raw.Address == "" || raw.Flags < 0 || raw.Flags > 0xff ||
+			raw.X < 0 || raw.Y < 0 || raw.Width <= 0 || raw.Height <= 0 {
+			return fmt.Errorf("new-game geometry raw_windows[%d] is invalid", i)
+		}
+	}
+	if err := validateEvidence(g.Evidence); err != nil {
+		return fmt.Errorf("new-game geometry evidence: %w", err)
 	}
 	return nil
 }
@@ -3220,7 +3422,7 @@ func validateEvidence(e Evidence) error {
 		return fmt.Errorf("invalid source_kind %q", e.SourceKind)
 	}
 	switch e.AddressSpace {
-	case "file", "logical", "dgroup", "record", "none":
+	case "file", "logical", "linear", "dgroup", "record", "none":
 	default:
 		return fmt.Errorf("invalid address_space %q", e.AddressSpace)
 	}
@@ -3512,6 +3714,15 @@ func (p *Pack) NewGameLabels() (NewGameLabels, bool) {
 		return NewGameLabels{}, false
 	}
 	return *p.Interface.NewGameLabels, true
+}
+
+// NewGameGeometry returns the pack-owned pixel anchors and raw window index
+// used by the opening creation screens. Production bootstrap must require it.
+func (p *Pack) NewGameGeometry() (NewGameGeometry, bool) {
+	if p == nil || p.Interface.NewGameGeometry == nil {
+		return NewGameGeometry{}, false
+	}
+	return *p.Interface.NewGameGeometry, true
 }
 
 // BattleCommandLabels returns the pack-owned glyphs for the five standard

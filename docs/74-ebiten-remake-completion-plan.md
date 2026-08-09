@@ -14,7 +14,8 @@
 2. **流程忠實**：主線入口、事件順序、gate、勝敗分支及道具／旗標副作用對齊精訊版。
 3. **玩家可見忠實**：關鍵畫面、UI、NPC 可見性、日夜、隊伍呈現、轉場、音樂及音效有原版證據。
 4. **可保存**：關鍵事件前後存檔／讀檔保持一致，不靠記憶體內暫態才能繼續。
-5. **跨平台**：同一 Go game core 通過桌面與 Android；WASM 是後續 release target，不阻塞玩法完成。
+5. **跨平台**：同一 Go game core 已建立本輪指定的 Linux AppImage、Windows ZIP 與 macOS ZIP；
+   Android／WASM 不屬本輪 release gate。
 
 以下不算完成：
 
@@ -473,13 +474,13 @@ Gate：由下層世界正常移動至 THE END，不使用 Z 或直接呼叫 boss
 
 支線也按正常入口驗收；不得用「不影響破關」永久跳過。
 
-### P8 — Release
+### P8 — Release（本輪指定桌面格式已產出）
 
 - 無 debug full playthrough，分段使用正式 save checkpoint。
 - 使用者實玩驗收。
 - Linux／Windows／macOS desktop packages。
-- Android APK/AAB 真機：安全區、觸控、背景恢復、音訊、存檔。
-- WASM smoke（若資產授權／載入策略允許）。
+- 本輪不含 Android APK/AAB 真機與 WASM smoke；若另開工作，須另建觸控／lifecycle／
+  音訊／存檔驗收計畫，不得由桌面包推論。
 - developer hooks 以 build tag 或明確 developer mode 隔離。
 - 公開包不含原版資產，啟動時驗證玩家提供的合法資產。
 
@@ -686,8 +687,9 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    pack 提供，缺資料時 production 啟動 fail closed。訊息階段另已改用 `battle_message`
    的原版 `(152,238,352,96)`／20×4 外框，隱藏左下指令框與右側空敵名框；指令／敵名
    panel 的 raw rect 亦已接入 pack，詳見 `docs/109`。Docker＋Xvfb
-   的 `internal/...` 與 `game` 全套測試通過，受影響戰鬥 PNG 已重產；欄位與證據見 `docs/108`。
-   仍需 RE／同狀態
+   的 `internal/...` 全套與 `game`（長 campaign trace 另行重播）其餘測試通過，受影響戰鬥
+   PNG 已重產；欄位與證據見 `docs/108`。
+   README 戰鬥 PNG 另已關閉非原版的 `combat_info` 診斷飄字後重產；仍需 RE／同狀態
    V3 的逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、boss 多次行動、
    掉落及逐項咒文效果，不能把文字層完成誤稱為整個戰鬥完成。
 5. **玩家可見 parity**：四人縱列與 HUD 已完成第一個 E2 runtime slice（`party_field_hud.png`；
@@ -699,12 +701,13 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    結構證據，不得直接寫入 game-pack canonical JSON。
    教會復活確認的現行 runtime 證據為 `docs/img/church_revive_confirm.png`，仍待 DOSBox
    同狀態 V3。
-6. **Release**：完成正式流程後才做跨桌面平台包裝、Android 真機的觸控／lifecycle／音訊／
-   存檔驗收，以及選配 WASM smoke；公開包不得納入原版資產。Docker 內的桌面
-   `go build -buildvcs=false` 已通過；工作樹內受保護的空 `dq3_remake_ebitan/tmp_dump.go`
-   未刪除，build smoke 以不含該 scratch 的臨時副本執行。
+6. **Release（本輪已完成指定桌面包）**：使用 Docker＋osxcross／既有 Ebitengine image
+   產出 AppImage、Windows x86_64 ZIP、macOS Intel ZIP 與 Apple Silicon ZIP；發佈包不納入
+   原版資產。Android、WASM 與真機觸控／lifecycle／音訊／存檔不屬於本輪三平台目標，未以
+   未完成的產物宣稱支援。工作樹內受保護的空 `dq3_remake_ebitan/tmp_dump.go` 未刪除，
+   build smoke 以不含該 scratch 的臨時副本執行；包裝與雜湊見 [`docs/114`](114-release-artifacts.md)。
 
-後續工作以 V3 畫面／音效對拍、戰鬥與場景 cue 長尾、跨平台發佈驗收為主；若重新開啟主線，
+後續工作以 V3 畫面／音效對拍、戰鬥與場景 cue 長尾為主；若重新開啟主線，
 仍須從上述合法 production checkpoint 重播並記錄第一個實際 blocker，不得改用孤立 handler
 或狀態注入取代玩家流程。
 
@@ -726,17 +729,28 @@ style pattern、spell／target baseline、逐動作 timing／動畫／音效、�
 掉落與跨平台 release 仍是後續 V3 GAP。
 
 2026-08-09 追加開場／創角 glyph 資料化切片：`interface.json.new_game_labels` 保存主選單、
-性別、能力確認及英數姓名盤特殊格的完整 glyph stream；`NewGameFlow`、`NameInput`、
-`GenderSelect` 與酒館改由 pack 讀取，缺欄位時 `NewGameWithPack` fail closed。`D3TXT00.FON`
-大小／SHA-256、role 對映、D2 限制與 parity test 見 [`docs/112`](112-newgame-labels-re.md)。
-本批未改變 glyph 像素，因此不重產既有 runtime PNG；主選單／姓名盤／能力確認 panel 的
-座標與尺寸仍待下一個原版 writer／consumer geometry slice，不能宣稱創角畫面 V3。
+性別、能力確認及 D3TXT00 records 451–456 的完整姓名畫面 glyph stream；`NewGameFlow`、
+`NameInput`、`GenderSelect` 與酒館改由 pack 讀取，缺欄位時 `NewGameWithPack` fail closed。
+姓名盤已恢復原版 45 raw cells、欄優先 cell 換算、raw35 功能列入口與第五列完成 gate，
+不再把 38 格英數盤的直接 OK 當作正式流程。`D3TXT00.FON` 大小／SHA-256、role 對映、
+D2 限制與 parity test 見 [`docs/112`](112-newgame-labels-re.md)。
+同日再完成開場／創角 geometry slice：`interface.json.new_game_geometry` 保存 IDA
+linear raw window（姓名 `0x29088`、功能列 `0x290a6`、注音／候選 `0x290c4/0x290e0`、
+能力確認 `0x28b78/0x28b92/0x28bc6`）、9×5／16px 姓名盤步距及 640×350 像素 rect；
+`NewGameWithPack` 缺欄位即 fail closed，renderer 不再把大黑框疊在標題城堡背景上，創角
+階段改用原版 `FIRST.SCR` 黑底雙立繪。IDA writer／consumer、截圖量測、D2 限制與 parity
+test 見 [`docs/113`](113-newgame-geometry-re.md)。本輪已以 Docker／Xvfb 正式 dump 更新
+`docs/ng_menu.png`、`docs/ng_name.png`、`docs/ng_gender.png`、`docs/ng_confirm.png`；其中
+`ng_name.png` SHA-256 為 `fb451c65be0d7a2ec7e05111c552fddd9203ce0546dea608e954a9c670c59120`。
+功能列字模、45 格輸入與正式功能焦點路徑已接入；框線 pattern、逐幀游標／動畫與同狀態演出
+仍不能宣稱 V3。
 
-下一個事件串接前置工作：
+下一個視覺／音效 parity 工作：
 
-1. 以 IDA 9.4 追開場／創角面板 rect、文字 inset、列距與游標 consumer，建立
-   `interface.json.new_game_geometry`，並以 DOSBox 同狀態截圖完成 V3 對拍。
+1. 補 EGA frame pattern、逐幀游標／動畫的 writer／consumer evidence，並把已產出的開場圖
+   保持可回查的 raw window／hash。
 2. 再處理戰鬥 frame style、spell／target rect、逐動作 timing／動畫／SFX 與完整抗性／
    formation／boss 多次行動／掉落，所有設定先進 pack JSON 並補 D2/D3 parity。
-3. 完成場景／設施／日夜 palette、剩餘 BGM／SFX、結局 timing 及 Android／桌面 release
-   真機驗收；每批仍由合法 production checkpoint 重播，不用 debug shortcut。
+3. 完成場景／設施／日夜 palette、剩餘 BGM／SFX、結局 timing；若另開 Android／WASM，
+   必須從新的工作範圍與容器驗收開始。每批仍由合法 production checkpoint 重播，不用
+   debug shortcut。

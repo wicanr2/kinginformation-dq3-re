@@ -4,9 +4,10 @@
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，
 製作可在現代平台執行的 Go／Ebiten remake。
 
-截至 2026-08-09，`dq3_remake_ebitan/` 已由一次性 Docker＋Xvfb 的正式
+截至 2026-08-10，`dq3_remake_ebitan/` 已由一次性 Docker＋Xvfb 的正式
 `InputState` trace 從全新遊戲抵達 `THE END`，沿途核對設定資料、事件副作用、戰鬥與存讀檔。
-主線 campaign 已達 E3；逐畫面／音效 V3、Android／桌面 release 仍待後續驗收。現行進度與工作順序以
+主線 campaign 已達 E3；逐畫面／音效 V3 的長尾仍待後續對拍，本輪指定的 AppImage、Windows ZIP
+與 macOS ZIP 已產出。Android／WASM 不屬本輪 release 目標。現行進度與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
 本輪另以 IDA／原始資料閉合 CTY59 `handler41` 的 Y=4 設施分支；它已達 D3／E2／V1，
 不代表 CTY60／61 階段或全程畫面 parity 已完成。
@@ -48,6 +49,11 @@ RE 文件。
 其餘場景仍依各圖的 V1/V2 標註，不能把單一終盤畫格擴大解讀成全程 V3。終盤證據／剩餘
 畫面工作見 [`docs/106`](docs/106-gaia-sword-volcano-re-worklist.md)。
 
+README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出，並使用預設
+`combat_info=0`。敵人上方的 `H/HP` 是可選的 remake 診斷資訊，不是精訊版原版畫面，
+因此不應出現在這些對拍圖；玩家可見的戰鬥文字也必須由框線／面板 renderer 佈局，若文字
+落在框外即視為尚未通過 V3 對拍。
+
 ![Ebiten：原版新遊戲開場](dq3_remake_ebitan/docs/opening_home_rec82.png)
 
 ![Ebiten：場景咒文選單](dq3_remake_ebitan/docs/field_spell_menu.png)
@@ -68,11 +74,11 @@ RE 文件。
 
 ![Ebiten：地表使用黑暗之燈後進入夜晚](docs/img/teidon_dark_lamp_night.png)
 
-![Ebiten：日邦格八頭大蛇第一戰（原版怪物遮罩與背景）](docs/img/jipang_orochi_first_battle.png)
+![Ebiten：日邦格八頭大蛇第一戰（原版怪物遮罩、背景與框內戰鬥文字）](docs/img/jipang_orochi_first_battle.png)
 
 ![Ebiten：第一戰後依原版移動至宮殿並顯示 rec70](docs/img/jipang_orochi_first_post.png)
 
-![Ebiten：拒絕無姬後的第二戰（原版掉落抑制）](docs/img/jipang_orochi_second_battle.png)
+![Ebiten：拒絕無姬後的第二戰（原版掉落抑制、無非原版怪物 HP 飄字）](docs/img/jipang_orochi_second_battle.png)
 
 ![Ebiten：第二戰後正式調查取得紫寶珠](docs/img/jipang_purple_orb_obtained.png)
 
@@ -149,12 +155,13 @@ RE 文件。
 2. 主要事件入口、順序、gate、勝敗分支、道具與旗標交易對齊精訊版。
 3. 關鍵 UI、角色／NPC、地圖、日夜、轉場、音樂及音效有原版畫面或資料佐證。
 4. 關鍵事件前後可正常存檔、讀檔並繼續。
-5. 桌面版與 Android 共用同一套 Go game core。
+5. Linux AppImage、Windows ZIP 與 macOS ZIP 共用同一套 Go game core。
 
 截至 2026-08-09，`TestOpeningProductionInputTrace` 已完成上述第 1、2、4 項的主線 E3
 驗收；終盤固定片尾 `TIT3.P` 與 ENDING 配樂 cue 已由同一條正式 trace 產生 runtime V3
-證據，第 3 項其餘場景仍以 runtime V1／部分 V2 為主，第 5 項的跨平台 release 尚未宣告
-完成。編譯、單元測試、事件切片與畫面 dump 分別提供不同層次的信心；主線已由正式玩家
+證據，第 3 項其餘場景仍以 runtime V1／部分 V2 為主；第 5 項指定桌面 release 已完成。
+編譯、單元測試、事件切片與畫面 dump 分別提供不同層次的信心；三種桌面發佈包與
+推廣片的雜湊／界線見 [`docs/114`](docs/114-release-artifacts.md)。主線已由正式玩家
 流程串起，後續集中於其餘 V3 對拍、戰鬥／場景音效長尾與發佈驗收。
 
 ## 證據優先序

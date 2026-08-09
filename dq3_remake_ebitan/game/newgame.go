@@ -36,6 +36,7 @@ type NewGameFlow struct {
 	ni            NameInput
 	gs            GenderSelect
 	labels        *gamepack.NewGameLabels
+	geometry      *gamepack.NewGameGeometry
 	confirmCursor int // 0=是、1=否
 	preview       stats.Values
 	previewDef    int
@@ -48,6 +49,12 @@ func (nf *NewGameFlow) setLabels(labels gamepack.NewGameLabels) {
 	nf.labels = &labels
 	nf.ni.setLabels(nf.labels)
 	nf.gs.setLabels(nf.labels)
+}
+
+// setGeometry 安裝 pack 擁有的創角像素幾何；production bootstrap 會在
+// NewGameWithPack 中 fail closed，直接 UI fixture 則需明確安裝同一份 pack。
+func (nf *NewGameFlow) setGeometry(geometry gamepack.NewGameGeometry) {
+	nf.geometry = &geometry
 }
 
 // openMenu:標題壓鍵後開主選單,游標歸零。
@@ -144,21 +151,25 @@ func (g *Game) newGameInput(in InputState) {
 
 // draw:標題子畫面(ngSplash 無額外疊繪,底圖由 renderFrame 畫;其餘三階段疊 modal 框)。
 func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data.Color) {
+	if nf.geometry == nil {
+		nf.hits.reset()
+		return
+	}
+	geo := nf.geometry
 	switch nf.stage {
 	case ngMenu:
 		if nf.labels == nil {
 			nf.hits.reset()
 			return
 		}
-		bx, by, bw := 190, 140, 200
-		fillBox(rgba, bx, by, bw, 90, white)
+		fillBox(rgba, geo.Menu.X, geo.Menu.Y, geo.Menu.Width, geo.Menu.Height, white)
 		for i, g := range nf.labels.Title {
-			drawGlyph(rgba, tx, bx+30+i*16, by+10, g, white)
+			drawGlyph(rgba, tx, geo.MenuTitle.X+i*geo.MenuTitle.StepX, geo.MenuTitle.Y+i*geo.MenuTitle.StepY, g, white)
 		}
 		nf.hits.reset()
 		for i := 0; i < ngOptCount; i++ {
-			y := by + 40 + i*22
-			x := bx + 60
+			x := geo.MenuOptions.X
+			y := geo.MenuOptions.Y + i*geo.MenuOptions.StepY
 			if i == nf.cursor {
 				drawGlyph(rgba, tx, x-18, y, curGlyph, yellow)
 			}
@@ -169,19 +180,21 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 			for j, g := range label {
 				drawGlyph(rgba, tx, x+j*16, y, g, white)
 			}
-			nf.hits.add(x-18, y-3, 120, 18, i)
+			nf.hits.add(x-18, y-3, geo.Menu.Width-24, 18, i)
 		}
 	case ngName:
-		fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
-		nf.ni.draw(rgba, tx, white, yellow, 80, 56)
+		fillBox(rgba, geo.NamePanel.X, geo.NamePanel.Y, geo.NamePanel.Width, geo.NamePanel.Height, white)
+		fillBox(rgba, geo.NameFunctionPanel.X, geo.NameFunctionPanel.Y, geo.NameFunctionPanel.Width, geo.NameFunctionPanel.Height, white)
+		fillBox(rgba, geo.NameModePanel.X, geo.NameModePanel.Y, geo.NameModePanel.Width, geo.NameModePanel.Height, white)
+		nf.ni.draw(rgba, tx, white, yellow, *geo)
 	case ngGender:
-		fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
+		fillBox(rgba, geo.GenderPanel.X, geo.GenderPanel.Y, geo.GenderPanel.Width, geo.GenderPanel.Height, white)
 		for i, g := range nf.ni.nameBuf { // 顯示已輸入主角名
-			drawGlyph(rgba, tx, 80+i*16, 56, g, white)
+			drawGlyph(rgba, tx, geo.NameText.X+i*16, geo.NameText.Y, g, white)
 		}
-		nf.gs.draw(rgba, tx, white, yellow, 80, 100, 22)
+		nf.gs.draw(rgba, tx, white, yellow, *geo)
 	case ngConfirm:
-		drawNewGameStats(rgba, tx, nf, white, yellow)
+		drawNewGameStats(rgba, tx, nf, white, yellow, geo)
 	}
 }
 
@@ -194,56 +207,56 @@ func drawNGRow(rgba []byte, tx *dq3data.Text, x, y int, lab []int, val int, c dq
 
 // drawNewGameStats 重現原版 1c54→sub_96be 的能力確認資訊。裝備衍生值依
 // sub_9521：攻=力量、守=耐力+布衣防。
-func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yellow dq3data.Color) {
+func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yellow dq3data.Color, geo *gamepack.NewGameGeometry) {
 	if nf.labels == nil {
 		return
 	}
-	const rowH = 16
-	// 原版 v3_01_afterstats.png 的四個 panel 幾何（640×350 native）。
-	fillBox(rgba, 128, 42, 116, 76, white)
-	fillBox(rgba, 128, 116, 116, 67, white)
-	fillBox(rgba, 243, 42, 181, 141, white)
-	fillBox(rgba, 294, 16, 116, 29, white)
-	fillBox(rgba, 294, 48, 79, 45, white)
+	// 原版 v3_01_afterstats.png 的 panel 幾何由 pack 提供；frame pattern
+	// 仍是獨立 V3 工作，這裡只套用已量測的外框矩形。
+	fillBox(rgba, geo.StatsLeft.X, geo.StatsLeft.Y, geo.StatsLeft.Width, geo.StatsLeft.Height, white)
+	fillBox(rgba, geo.StatsEquipment.X, geo.StatsEquipment.Y, geo.StatsEquipment.Width, geo.StatsEquipment.Height, white)
+	fillBox(rgba, geo.StatsRight.X, geo.StatsRight.Y, geo.StatsRight.Width, geo.StatsRight.Height, white)
+	fillBox(rgba, geo.ConfirmPrompt.X, geo.ConfirmPrompt.Y, geo.ConfirmPrompt.Width, geo.ConfirmPrompt.Height, white)
+	fillBox(rgba, geo.ConfirmChoice.X, geo.ConfirmChoice.Y, geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
 
 	for i, gl := range nf.ni.nameBuf {
-		drawGlyph(rgba, tx, 170+i*dq3data.GlyphPx, 50, gl, white)
+		drawGlyph(rgba, tx, geo.StatsName.X+i*dq3data.GlyphPx, geo.StatsName.Y, gl, white)
 	}
 	for i, gl := range nf.labels.Hero {
-		drawGlyph(rgba, tx, 170+i*dq3data.GlyphPx, 66, gl, white)
+		drawGlyph(rgba, tx, geo.StatsHero.X+i*dq3data.GlyphPx, geo.StatsHero.Y, gl, white)
 	}
 	for i, gl := range nf.labels.Sex {
-		drawGlyph(rgba, tx, 145+i*dq3data.GlyphPx, 82, gl, white)
+		drawGlyph(rgba, tx, geo.StatsSex.X+i*dq3data.GlyphPx, geo.StatsSex.Y, gl, white)
 	}
 	sexGlyph := nf.labels.Male[0]
 	if nf.previewGender == 1 {
 		sexGlyph = nf.labels.Female[0]
 	}
-	drawGlyph(rgba, tx, 196, 82, sexGlyph, white)
-	drawNGRow(rgba, tx, 145, 98, nf.labels.Level, 1, white)
-	drawNGRow(rgba, tx, 145, 114, nf.labels.HP, int(nf.preview[stats.HP]), white)
-	drawNGRow(rgba, tx, 145, 130, nf.labels.MP, int(nf.preview[stats.MP]), white)
+	drawGlyph(rgba, tx, geo.StatsSexValue.X, geo.StatsSexValue.Y, sexGlyph, white)
+	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y, nf.labels.Level, 1, white)
+	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y+geo.StatsLeftRows.StepY, nf.labels.HP, int(nf.preview[stats.HP]), white)
+	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y+2*geo.StatsLeftRows.StepY, nf.labels.MP, int(nf.preview[stats.MP]), white)
 	for i, gl := range nf.labels.Cloth {
-		drawGlyph(rgba, tx, 158+i*dq3data.GlyphPx, 142, gl, white)
+		drawGlyph(rgba, tx, geo.StatsCloth.X+i*dq3data.GlyphPx, geo.StatsCloth.Y, gl, white)
 	}
 
-	x := 274
-	drawNGRow(rgba, tx, x, 92, nf.labels.Agility, int(nf.preview[stats.AGI]), white)
-	drawNGRow(rgba, tx, x, 92+rowH, nf.labels.HP, int(nf.preview[stats.HP]), white)
-	drawNGRow(rgba, tx, x, 92+2*rowH, nf.labels.MP, int(nf.preview[stats.MP]), white)
-	drawNGRow(rgba, tx, x, 92+3*rowH, nf.labels.Attack, int(nf.preview[stats.STR]), white)
-	drawNGRow(rgba, tx, x, 92+4*rowH, nf.labels.Defense, nf.previewDef, white)
-	drawNGRow(rgba, tx, x, 92+5*rowH, nf.labels.Experience, 0, white)
+	x := geo.StatsRightRows.X
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y, nf.labels.Agility, int(nf.preview[stats.AGI]), white)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+geo.StatsRightRows.StepY, nf.labels.HP, int(nf.preview[stats.HP]), white)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+2*geo.StatsRightRows.StepY, nf.labels.MP, int(nf.preview[stats.MP]), white)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+3*geo.StatsRightRows.StepY, nf.labels.Attack, int(nf.preview[stats.STR]), white)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+4*geo.StatsRightRows.StepY, nf.labels.Defense, nf.previewDef, white)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+5*geo.StatsRightRows.StepY, nf.labels.Experience, 0, white)
 	for i, gl := range nf.labels.Prompt {
-		drawGlyph(rgba, tx, 304+i*dq3data.GlyphPx, 22, gl, white)
+		drawGlyph(rgba, tx, geo.StatsPrompt.X+i*dq3data.GlyphPx, geo.StatsPrompt.Y, gl, white)
 	}
 	for i, label := range [][]int{nf.labels.Yes, nf.labels.No} {
-		y := 54 + i*16
+		y := geo.StatsChoice.Y + i*geo.StatsChoice.StepY
 		if i == nf.confirmCursor {
-			drawGlyph(rgba, tx, 304, y, curGlyph, yellow)
+			drawGlyph(rgba, tx, geo.StatsChoiceCursor.X, y, curGlyph, yellow)
 		}
 		for j, gl := range label {
-			drawGlyph(rgba, tx, 332+j*dq3data.GlyphPx, y, gl, white)
+			drawGlyph(rgba, tx, geo.StatsChoice.X+j*dq3data.GlyphPx, y, gl, white)
 		}
 	}
 }

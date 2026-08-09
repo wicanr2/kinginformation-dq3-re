@@ -285,4 +285,36 @@ DQ3 專屬 renderer 常數，production 缺欄位即 fail closed。這是 D2 eng
 依 `D3TXT00.FON`（47232 bytes、SHA-256
 `c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02`）及開場實機畫面交叉
 核對，為 D2；證據與完整 role 對映見 [`docs/112`](docs/112-newgame-labels-re.md)。面板／姓名盤
-幾何仍待原版 writer／consumer 閉合，不能把本批資料化宣稱成創角畫面 V3。
+幾何已另由 `interface.json.new_game_geometry` 保存：`0x29088`／`0x290a6`／`0x290c4`／
+`0x290e0` 與能力確認 `0x28b78`／`0x28b92`／`0x28bc6` 的 raw window 欄位、9×5／16px
+姓名盤步距及 640×350 像素 rect 均由 IDA 9.4 writer／consumer 與 DOSBox 截圖交叉閉合；
+整體仍標 D2，證據見 [`docs/113`](docs/113-newgame-geometry-re.md)。本輪已修正 production
+創角階段切換到 `FIRST.SCR` 黑底立繪，並把 NewGameFlow／NameInput／GenderSelect 與酒館
+改讀 pack geometry；功能列文字已接入 pack，框線 pattern、逐幀游標／閃爍與逐幀演出仍未
+升為創角 V3。
+
+2026-08-09 開場姓名流程再校正：IDA Pro 9.4 的 `sub_10e8e/sub_10f5b/sub_10dc8` 與
+D3TXT00.TXT records 451–456 證實畫面是 9×5、45 個 raw cell；語意 cell 採
+`cell=col*5+row`，注音／英數的 raw35（cell43、⊙）才進右側五列功能列，功能列第五列
+才設完成旗標。`interface.json.new_game_labels` 現保存兩組 45 格、標題、雙箭頭、五列
+功能文字與 rec456 組字提示；`NameInput` 已移除舊 38 格／直接 OK 近似，正式 production
+trace 與 touch hit box 都走同一份 pack 資料。新增 parity／function-focus tests；完整
+開場 trace 已在單一 Docker＋Xvfb 容器重跑通過，四張 runtime PNG 也已重新產出。geometry 的
+`name_title=(233,46)`、`name_text=(249,62)` 來自 raw window／`sub_10e55`，若後續 DOSBox
+同輸入畫面推翻，必須追加勘誤而不覆寫 `docs/113` 原始證據。
+
+2026-08-09 README 戰鬥畫面勘誤：原設定 `CombatInfo=true` 會在怪物上方繪製 `H/HP`，但
+這是 remake 診斷增強、不是精訊版原版 UI；`internal/config.Default` 已改為 `false`，設定
+仍可由 `combat_info` 明確開啟。README 引用的八頭大蛇、巴哈拉達與怪力魔戰鬥 PNG 已在
+Docker／Xvfb 以關閉診斷資訊重產，避免玩家可見文字落在框線外；battle frame／文字框的
+完整 V3 對拍仍待原版同狀態核對。
+
+同日驗證：`TestOpeningProductionInputTrace` 在 Docker＋Xvfb 以正式 `InputState` 重播通過
+（311.44 秒，從新遊戲至 `THE END`）；NameInput 空名回傳仍由主角呼叫端 fail closed、酒館
+則回退職業名。README 戰鬥圖的 `combat_info=0` 重產也已完成。
+
+2026-08-10 完成指定桌面發佈收尾：Docker 內建立 Linux AppImage、Windows x86_64 ZIP、
+macOS Intel／Apple Silicon ZIP，並以正式 renderer PNG 剪出 1280×700、30 fps 的
+`dist/dq3-promo-20260810.mp4`。完整檔案、大小、SHA-256、Docker 工具鏈與驗證界線集中於
+[`docs/114`](docs/114-release-artifacts.md)；Android／WASM 不屬本輪三平台目標。這些
+`dist/` 產物不納入 Git，且沒有包含原版資產。

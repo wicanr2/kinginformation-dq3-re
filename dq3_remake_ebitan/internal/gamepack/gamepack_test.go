@@ -1816,32 +1816,65 @@ func TestDQ3NewGameLabelsMatchOriginalGlyphs(t *testing.T) {
 		t.Fatal("new-game labels missing")
 	}
 	want := map[string][]int{
-		"title":      {106, 187, 207, 710, 179},
-		"start":      {113, 689, 488, 711},
-		"load":       {712, 519, 696, 283},
-		"male":       {775, 674},
-		"female":     {234, 674},
-		"level":      {419, 420},
-		"hp":         {22, 30},
-		"mp":         {27, 30},
-		"agility":    {282, 283},
-		"attack":     {623, 624},
-		"defense":    {340, 409},
-		"experience": {525, 526},
-		"sex":        {674, 417},
-		"hero":       {106, 187},
-		"cloth":      {190, 149, 191, 192},
-		"prompt":     {398, 546, 194, 229, 456, 534},
-		"yes":        {399},
-		"no":         {678},
-		"backspace":  {11},
-		"ok":         {29, 25},
+		"title":             {106, 187, 207, 710, 179},
+		"start":             {113, 689, 488, 711},
+		"load":              {712, 519, 696, 283},
+		"male":              {775, 674},
+		"female":            {234, 674},
+		"level":             {419, 420},
+		"hp":                {22, 30},
+		"mp":                {27, 30},
+		"agility":           {282, 283},
+		"attack":            {623, 624},
+		"defense":           {340, 409},
+		"experience":        {525, 526},
+		"sex":               {674, 417},
+		"hero":              {106, 187},
+		"cloth":             {190, 149, 191, 192},
+		"prompt":            {398, 546, 194, 229, 456, 534},
+		"yes":               {399},
+		"no":                {678},
+		"backspace":         {11},
+		"ok":                {29, 25},
+		"name_title":        {690, 519, 691, 692},
+		"name_left_arrow":   {693, 693},
+		"name_right_arrow":  {694, 694},
+		"name_zhuyin_grid":  {65, 70, 75, 80, 85, 90, 95, 100, 104, 66, 71, 76, 81, 86, 91, 96, 101, 105, 67, 72, 77, 82, 87, 92, 97, 102, 697, 68, 73, 78, 83, 88, 93, 98, 700, 121, 69, 74, 79, 84, 89, 94, 99, 103, 122},
+		"name_alnum_grid":   {0, 5, 15, 20, 25, 30, 35, 40, 118, 1, 6, 16, 21, 26, 31, 36, 114, 119, 2, 7, 17, 22, 27, 32, 37, 115, 120, 3, 8, 18, 23, 28, 33, 38, 116, 121, 4, 9, 19, 24, 29, 34, 39, 117, 122},
+		"input_mode_zhuyin": {690, 519, 702, 313},
 	}
 	if !reflect.DeepEqual(labels.Entries(), want) {
 		t.Fatalf("new-game labels=%v, want %v", labels.Entries(), want)
 	}
-	if labels.Evidence.Level != "D2" || labels.Evidence.Source != "D3TXT00.FON"+" + glyph_unicode_map.json" || labels.Evidence.Doc != "docs/112-newgame-labels-re.md" {
+	if labels.Evidence.Level != "D2" || labels.Evidence.Source != "D3TXT00.TXT records 451-456 + D3TXT00.FON" || labels.Evidence.Doc != "docs/112-newgame-labels-re.md" {
 		t.Fatalf("new-game labels evidence=%+v, want D2/FON+map/docs/112", labels.Evidence)
+	}
+}
+
+func TestDQ3NewGameGeometryMatchesOriginalWindows(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, ok := p.NewGameGeometry()
+	if !ok {
+		t.Fatal("new-game geometry missing")
+	}
+	if g.ID != "dq3:new_game_geometry" ||
+		g.NamePanel != (GeometryRect{X: 159, Y: 52, Width: 242, Height: 130}) ||
+		g.NameGrid != (GeometryGrid{X: 169, Y: 94, Columns: 9, Rows: 5, StepX: 16, StepY: 16}) ||
+		g.NameTitle != (GeometryAnchor{X: 233, Y: 46, StepX: 16}) ||
+		g.NameText != (GeometryAnchor{X: 249, Y: 62, StepX: 16}) ||
+		g.GenderPanel != (GeometryRect{X: 344, Y: 46, Width: 96, Height: 64}) ||
+		len(g.RawWindows) != 7 {
+		t.Fatalf("new-game geometry=%+v, want raw windows and measured panels", g)
+	}
+	if g.RawWindows[0].Address != "linear:0x29088" || g.RawWindows[0].X != 19 ||
+		g.RawWindows[0].Y != 46 || g.RawWindows[0].Width != 32 || g.RawWindows[0].Height != 144 {
+		t.Fatalf("name raw window=%+v, want linear 0x29088 19,46,32,144", g.RawWindows[0])
+	}
+	if g.Evidence.Level != "D2" || g.Evidence.Doc != "docs/113-newgame-geometry-re.md" {
+		t.Fatalf("new-game geometry evidence=%+v, want D2/docs/113", g.Evidence)
 	}
 }
 

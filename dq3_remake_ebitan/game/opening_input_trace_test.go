@@ -67,8 +67,17 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Confirm: true}) // menu「遊戲開始」→ 注音命名
 	press(InputState{Toggle: true})  // 注音 → 英數
 	press(InputState{Confirm: true}) // cursor0：「0」
-	send(InputState{DirHeld: -1, DirEdge: 2})
-	press(InputState{Confirm: true}) // cursor37：OK → 性別
+	for i := 0; i < 3; i++ {
+		send(InputState{DirHeld: -1, DirEdge: 0}) // raw0→raw27
+	}
+	for i := 0; i < 8; i++ {
+		send(InputState{DirHeld: -1, DirEdge: 3}) // raw27→raw35(cell43,進功能列)
+	}
+	press(InputState{Confirm: true}) // cell43：進右側功能列
+	for i := 0; i < 4; i++ {
+		send(InputState{DirHeld: -1, DirEdge: 0}) // 功能列 row1→row5
+	}
+	press(InputState{Confirm: true}) // 功能列「完成」→ 性別
 	press(InputState{Confirm: true}) // 男性 → 能力確認
 	press(InputState{Confirm: true}) // 「是」→ startOpening
 
@@ -122,8 +131,17 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		press(InputState{Confirm: true}) // 職業
 		press(InputState{Toggle: true})  // 英數
 		press(InputState{Confirm: true}) // 輸入「0」
-		send(InputState{DirHeld: -1, DirEdge: 2})
-		press(InputState{Confirm: true}) // OK
+		for j := 0; j < 3; j++ {
+			send(InputState{DirHeld: -1, DirEdge: 0})
+		}
+		for j := 0; j < 8; j++ {
+			send(InputState{DirHeld: -1, DirEdge: 3})
+		}
+		press(InputState{Confirm: true}) // cell43：進功能列
+		for j := 0; j < 4; j++ {
+			send(InputState{DirHeld: -1, DirEdge: 0})
+		}
+		press(InputState{Confirm: true}) // 功能列「完成」
 		press(InputState{Confirm: true}) // 男性→完成
 	}
 	if len(g.roster) != 3 || len(g.companions) != 0 {
@@ -2096,8 +2114,17 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Confirm: true})
 	press(InputState{Toggle: true})
 	press(InputState{Confirm: true}) // 名稱「0」
-	send(InputState{DirHeld: -1, DirEdge: 2})
-	press(InputState{Confirm: true}) // OK
+	for i := 0; i < 3; i++ {
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	for i := 0; i < 8; i++ {
+		send(InputState{DirHeld: -1, DirEdge: 3})
+	}
+	press(InputState{Confirm: true}) // cell43：進功能列
+	for i := 0; i < 4; i++ {
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true}) // 功能列「完成」
 	press(InputState{Confirm: true}) // 男性
 	if len(g.roster) != 2 || g.roster[1].Class != 6 {
 		t.Fatalf("正式登錄商人失敗：roster=%d lastClass=%d",

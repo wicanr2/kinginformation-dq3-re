@@ -2,8 +2,9 @@
 
 精訊版《勇者鬥惡龍 III》的 Go／Ebitengine remake，也是本 repo 唯一現行產品線。
 
-目前可執行且已有多個系統與主線事件切片，但尚未完成從新遊戲、只用正式玩家輸入抵達
-THE END 的全程驗收。現況與工作順序以
+目前主線已由 Docker＋Xvfb 的正式 `InputState` trace，從新遊戲抵達 `THE END`，完成
+campaign E3 驗收；剩餘工作集中在戰鬥／場景的 V3 畫面與音效長尾，以及發佈包驗收。
+現況與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](../docs/74-ebiten-remake-completion-plan.md)
 為準；不要從本文件的歷史清單推算完成度。
 

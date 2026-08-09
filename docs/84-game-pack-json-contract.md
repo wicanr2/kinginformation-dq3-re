@@ -1035,18 +1035,27 @@ evidence 仍由 DQ3 pack 擁有；`cmdmenu.go` 只依穩定欄位繪製與處理
 版本專屬中文或 raw glyph table。正式 pack 缺少這組契約時 `NewGameWithPack` 必須
 fail closed；目前 DQ3 對映維持 D2，後續若要升為 D3 仍需補原版 writer／consumer sidecar。
 
-`interface.json.new_game_labels` 保存開場主選單、創角性別／能力確認，以及英數姓名盤
-特殊格的 glyph stream。欄位固定為 `title`、`start`、`load`、`male`、`female`、`level`、
-`hp`、`mp`、`agility`、`attack`、`defense`、`experience`、`sex`、`hero`、`cloth`、
-`prompt`、`yes`、`no`、`backspace`、`ok`，每欄都是非空的 `int[]` 原始 glyph index；
+`interface.json.new_game_labels` 保存開場主選單、創角性別／能力確認，以及 D3TXT00
+records 451–456 的姓名畫面 glyph stream。固定欄位除了既有的 `title`、`start`、`load`、
+`male`、`female`、`level`、`hp`、`mp`、`agility`、`attack`、`defense`、`experience`、
+`sex`、`hero`、`cloth`、`prompt`、`yes`、`no`、`backspace`、`ok` 外，還包括
+`name_title`、`name_left_arrow`、`name_right_arrow`、`name_zhuyin_grid`、
+`name_alnum_grid`、`function_zhuyin`、`function_alnum`、`input_mode_zhuyin`。前者是
+非空 `int[]`，兩個 grid 必須各為 45 格，兩個 function list 必須各為五列；
 不接受任意 JSON code 或直接玩家可見句子。整個物件必須有 `evidence`，目前 DQ3 為
-D2、來源 `D3TXT00.FON + glyph_unicode_map.json`，完整對映與限制見
+D2、來源 `D3TXT00.TXT records 451-456 + D3TXT00.FON`，完整對映與限制見
 [`docs/112`](112-newgame-labels-re.md)。
 
 production `NewGameWithPack` 缺少 `new_game_labels` 即拒絕啟動；`NewGameFlow`、
-`NameInput`、`GenderSelect` 與酒館只依此契約繪製。這只封存字模資料，主選單／能力確認
-面板座標仍須另以原版 writer／consumer 閉合後放入 geometry 契約；不可把目前 renderer
-的座標視為已證實的跨版本預設。
+`NameInput`、`GenderSelect` 與酒館只依此契約繪製。`NameInput` 的畫面 raw index 採
+`cell=col*5+row`，raw35 是注音／英數的功能列入口；第五列才設完成旗標，避免把舊的
+「直接按右下格」測試捷徑當成原版流程。這只封存字模資料，主選單／能力確認
+面板座標現在由 `interface.json.new_game_geometry` 提供。它保存 640×350 像素矩形、
+文字 anchor、9×5 姓名盤步距，以及 IDA linear address 的 `raw_windows` sidecar；後者
+保留 `0x29088`／`0x290a6`／`0x290c4`／`0x290e0` 與能力確認三組結構的原始欄位，
+不可用像素值取代。缺 geometry 時 production bootstrap 必須 fail closed；D2 evidence
+與 raw／pixel 對照見 [`docs/113`](113-newgame-geometry-re.md)。框線 pattern 與逐幀
+演出仍是另一個 V3 切片。
 
 ### 6.10 `staged_boss_events`
 

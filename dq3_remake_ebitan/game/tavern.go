@@ -26,6 +26,7 @@ type Tavern struct {
 	ni        NameInput
 	gs        GenderSelect
 	labels    *gamepack.NewGameLabels
+	geometry  *gamepack.NewGameGeometry
 	classHits hitList // 職業選單(tavClass)可點區塊,draw() 重建
 	equipment [4]int  // game-pack registered_member 初始四槽；-1=空
 }
@@ -34,6 +35,10 @@ func (tv *Tavern) setLabels(labels gamepack.NewGameLabels) {
 	tv.labels = &labels
 	tv.ni.setLabels(tv.labels)
 	tv.gs.setLabels(tv.labels)
+}
+
+func (tv *Tavern) setGeometry(geometry gamepack.NewGameGeometry) {
+	tv.geometry = &geometry
 }
 
 func (tv *Tavern) open() {
@@ -112,6 +117,13 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 	if !tv.active {
 		return
 	}
+	if tv.geometry == nil {
+		tv.classHits.reset()
+		tv.ni.hits.reset()
+		tv.gs.hits.reset()
+		return
+	}
+	geo := tv.geometry
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
 	yellow := dq3data.Color{R: 255, G: 224, B: 32}
 	switch tv.stage {
@@ -128,11 +140,15 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 			tv.classHits.add(62, y-3, 200, 18, i)
 		}
 	case tavName:
-		tv.ni.draw(rgba, tv.tx, white, yellow, 80, 56)
+		fillBox(rgba, geo.NamePanel.X, geo.NamePanel.Y, geo.NamePanel.Width, geo.NamePanel.Height, white)
+		fillBox(rgba, geo.NameFunctionPanel.X, geo.NameFunctionPanel.Y, geo.NameFunctionPanel.Width, geo.NameFunctionPanel.Height, white)
+		fillBox(rgba, geo.NameModePanel.X, geo.NameModePanel.Y, geo.NameModePanel.Width, geo.NameModePanel.Height, white)
+		tv.ni.draw(rgba, tv.tx, white, yellow, *geo)
 	case tavGender:
+		fillBox(rgba, geo.GenderPanel.X, geo.GenderPanel.Y, geo.GenderPanel.Width, geo.GenderPanel.Height, white)
 		for i, g := range classNames[tv.pendCls] { // 顯已選職業
-			drawGlyph(rgba, tv.tx, 80+i*16, 56, g, white)
+			drawGlyph(rgba, tv.tx, geo.NameText.X+i*16, geo.NameText.Y, g, white)
 		}
-		tv.gs.draw(rgba, tv.tx, white, yellow, 80, 100, 22)
+		tv.gs.draw(rgba, tv.tx, white, yellow, *geo)
 	}
 }

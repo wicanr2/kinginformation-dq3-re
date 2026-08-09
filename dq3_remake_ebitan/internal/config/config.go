@@ -42,7 +42,9 @@ func Default() Config {
 		MusicEnabled: true,
 		MusicVolume:  70,
 		AudioBackend: AudioMT32,
-		CombatInfo:   true,
+		// 原版戰鬥不在怪物上方顯示 H/HP；設定仍保留可選的 remake
+		// 戰鬥資訊，但預設必須維持原版畫面。
+		CombatInfo:   false,
 		CombatHurtFx: 500,
 	}
 }
