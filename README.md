@@ -15,7 +15,8 @@
 能力條逐幀填充與淡入淡出仍待 V3。
 新遊戲能力確認畫面的 `FIRST.SCR` raw 背景也已由 game-pack 載入，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2；
 右欄「運氣點數／最大HP／最大MP／攻擊力／守備力／經驗」已依 record 407 校正並資料化，
-但 EGA 框線 pattern 與 stat panel 同狀態逐像素對拍仍待 V3。
+但 `border_pattern=checkerboard_1px` 只閉合共用 EGA 邊線 primitive；palette、藍色選項框
+與 stat panel 同狀態逐像素對拍仍待 V3。
 地表詳細狀況窗則已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 達 E2／V2；
 狀況子選單、隊員詳情與道具／裝備逐窗仍待同狀態 V3，詳見 [`docs/116`](docs/116-field-status-panel-re.md)。
 

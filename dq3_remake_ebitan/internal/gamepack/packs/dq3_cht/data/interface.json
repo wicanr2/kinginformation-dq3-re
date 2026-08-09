@@ -12,6 +12,7 @@
     "lines_per_page": 4,
     "frame": {
       "id": "dq3:frame.ega_window_white_black",
+      "border_pattern": "solid",
       "border_rgb": [255, 255, 255],
       "interior_rgb": [0, 0, 0],
       "evidence": {
@@ -48,6 +49,7 @@
     "lines_per_page": 4,
     "frame": {
       "id": "dq3:frame.ega_window_white_black",
+      "border_pattern": "solid",
       "border_rgb": [255, 255, 255],
       "interior_rgb": [0, 0, 0],
       "evidence": {
@@ -84,6 +86,7 @@
     "lines_per_page": 4,
     "frame": {
       "id": "dq3:frame.ega_window_white_black",
+      "border_pattern": "solid",
       "border_rgb": [255, 255, 255],
       "interior_rgb": [0, 0, 0],
       "evidence": {
@@ -130,6 +133,7 @@
     "lines_per_page": 6,
     "frame": {
       "id": "dq3:frame.ega_window_white_black",
+      "border_pattern": "solid",
       "border_rgb": [255, 255, 255],
       "interior_rgb": [0, 0, 0],
       "evidence": {
@@ -229,6 +233,7 @@
     "id": "dq3:new_game_geometry",
     "frame": {
       "id": "dq3:frame.ega_window_lavender_black",
+      "border_pattern": "checkerboard_1px",
       "border_rgb": [255, 223, 255],
       "interior_rgb": [0, 0, 0],
       "evidence": {
@@ -307,6 +312,7 @@
     "level_label_glyph": 106,
     "frame": {
       "id": "dq3:frame.ega_window_white_black",
+      "border_pattern": "solid",
       "border_rgb": [255, 255, 255],
       "interior_rgb": [0, 0, 0],
       "evidence": {
@@ -345,6 +351,7 @@
       "lines_per_page": 12,
       "frame": {
         "id": "dq3:frame.ega_window_white_black",
+        "border_pattern": "solid",
         "border_rgb": [255, 255, 255],
         "interior_rgb": [0, 0, 0],
         "evidence": {

@@ -1,8 +1,8 @@
 # 開場能力確認框線：IDA writer／RGB sidecar
 
-本文件只封存能力確認與姓名／性別 modal 共用的**外框色彩**證據。它不把
-`confirm_choice` 的藍色交錯圖樣誤稱為已完成，也不把 raw EGA plane mask 當作可跨版本
-的 style ID。
+本文件封存能力確認與姓名／性別 modal 共用的**外框色彩與邊線遮罩**證據。它不把
+`confirm_choice` 內部的藍色交錯選擇圖樣誤稱為已完成，也不把 raw EGA plane mask 當作
+可任意擴充的 style ID；pack 只引用已註冊的 engine primitive。
 
 ## 輸入與位址基準
 
@@ -48,7 +48,10 @@ right:  di=[si+2]+[si+6]-2, ax=[si+4]+0x10, bp=2, cx=[si+8]-0x20
 `sub_1FDB1`（`0x1fdb1..0x1fe11`）設定 EGA graphics/sequencer registers，使用
 `bh=0xaa` 的旋轉 bit pattern 寫入四邊；每次由 `mov bl, ds:727h` 取得當前 plane mask。
 原始 EXE 的 `DS:0x727` byte 為 `0x05`（file `0x16867`），但該 byte 是原版 EGA 狀態
-資料，不能直接當作另一代引擎的 RGB 或 style enumeration。
+資料，不能直接當作另一代引擎的 RGB 或 style enumeration。以 logical frame 的每一條邊
+重播 `bh=0xaa` 後，像素層可表達為局部座標 `(x+y)%2==1` 的
+`checkerboard_1px` mask；未命中的像素保留底圖，這正是新遊戲 pack 目前引用的已註冊
+engine primitive。
 
 ### 3. 玩家可見色彩
 
@@ -60,17 +63,19 @@ viewport 取樣：
 - frame 內部為 `(0,0,0)`；
 - `confirm_choice` 另有 `(0,85,223)` 與黑色交錯 pattern，並與文字／角色 sprite 重疊。
 
-因此本輪只把可證實的外框 RGB 以 `interface.json.new_game_geometry.frame` 資料化；
-共用 renderer 仍只執行一像素矩形 primitive，不知道 DQ3 座標或 raw mask。
+因此本輪把可證實的外框 RGB 與 `border_pattern=checkerboard_1px` 以
+`interface.json.new_game_geometry.frame` 資料化；共用 renderer 只執行名稱化的
+一像素邊線 primitive，不知道 DQ3 座標或 raw mask。`confirm_choice` 內部的藍黑選擇
+圖樣仍需另外追 selection writer／palette 時序。
 
 ## 推論等級與限制
 
 | 結論 | 等級 | 限制 |
 |---|---|---|
-| `sub_1F590` → `sub_1FD30` → `sub_1FDB1` 是開場 window 的四邊 writer | `strong` | 有 IDA caller／callee／raw window 閉合；尚未以同一 InputState 做逐幀 DOSBox capture |
+| `sub_1F590` → `sub_1FD30` → `sub_1FDB1` 是開場 window 的四邊 writer，`bh=0xaa` 對應局部 checker mask | `strong` | 有 IDA caller／callee／raw window 與 bit pattern 閉合；尚未以同一 InputState 做逐幀 DOSBox capture |
 | 外框可見 RGB `(255,223,255)`、內部黑 | `D2`／`strong` | 原版 screenshot 與 static writer 交叉吻合；palette register 的完整時序未在本 sidecar 重建 |
 | `confirm_choice` 的藍色交錯 pattern | `unknown`／V3 gap | 目前只有玩家可見取樣，尚缺完整 plane/latch writer→動畫 consumer 閉合 |
 
-`NewGameWithPack` 現在要求 `new_game_geometry.frame`；直接 unit fixture 若未安裝 frame
-仍可使用導覽 fallback。這個切片提升的是外框色彩資料化與 runtime V2，不能宣稱整個
-開場畫面已達 V3。
+`NewGameWithPack` 現在要求 `new_game_geometry.frame` 及已註冊的 pattern；直接 unit
+fixture 若未安裝 frame 仍可使用導覽 fallback。這個切片提升的是外框遮罩資料化與
+runtime V2，不能宣稱 palette、`confirm_choice` 藍色選擇圖樣或整個開場畫面已達 V3。

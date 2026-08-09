@@ -91,14 +91,15 @@ type Facilities struct {
 	ServiceDefinitions []ServiceDefinition `json:"service_definitions"`
 }
 
-// FrameStyle 是版本專屬的視窗前景／內部色彩契約。原版 EGA 的框線演算法
-// 仍由引擎提供；pack 只提供玩家可見的 RGB 結果與證據，避免 renderer 偷藏
-// 某一版的黑底／白框預設。
+// FrameStyle 是版本專屬的視窗前景／內部色彩與邊線遮罩契約。原版 EGA 的
+// 邊線 primitive 仍由引擎提供；pack 只選擇已註冊的 pattern 與玩家可見
+// RGB 結果，避免 renderer 偷藏某一版的黑底／白框預設或任意 JSON 程式碼。
 type FrameStyle struct {
-	ID          string   `json:"id"`
-	BorderRGB   [3]uint8 `json:"border_rgb"`
-	InteriorRGB [3]uint8 `json:"interior_rgb"`
-	Evidence    Evidence `json:"evidence"`
+	ID            string   `json:"id"`
+	BorderPattern string   `json:"border_pattern"`
+	BorderRGB     [3]uint8 `json:"border_rgb"`
+	InteriorRGB   [3]uint8 `json:"interior_rgb"`
+	Evidence      Evidence `json:"evidence"`
 }
 
 // WindowLayout 是版本專屬的固定視窗幾何。引擎只依此通用契約繪製，
@@ -1887,6 +1888,12 @@ func validateFrameStyle(name string, f *FrameStyle) error {
 	}
 	if f.ID == "" {
 		return fmt.Errorf("%s frame id is required", name)
+	}
+	switch f.BorderPattern {
+	case "solid", "checkerboard_1px":
+		// Named engine primitives only; packs cannot supply arbitrary code.
+	default:
+		return fmt.Errorf("%s frame border_pattern %q is unsupported", name, f.BorderPattern)
 	}
 	if err := validateEvidence(f.Evidence); err != nil {
 		return fmt.Errorf("%s frame evidence: %w", name, err)

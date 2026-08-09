@@ -389,3 +389,13 @@ writer 及 `DS:0x727`（file `0x16867`）閉合共用 frame primitive。DOSBox
 新增 pack-owned `frame`，NewGameFlow／酒館改用該 frame，`NewGameWithPack` 缺欄位即
 fail closed。這是 D2／runtime V2；完整 pattern 與同狀態 V3 仍依 [`docs/117`](docs/117-newgame-frame-re.md)
 保留為後續工作。
+
+2026-08-10 開場 EGA 邊線遮罩切片：重新依 IDA `sub_1fd30`／`sub_1fdb1` 的 `bh=0xaa`
+與 raw `DS:0x727` plane mask 閉合 logical 邊線的局部奇偶遮罩；`FrameStyle` 新增必填的
+`border_pattern`，只接受 engine primitive `solid` 或 `checkerboard_1px`，禁止 pack 放任意
+JSON code。新遊戲 frame 使用 `checkerboard_1px`，其未命中的邊線像素保留 FIRST.SCR 底圖；
+戰鬥／對話／HUD／狀況窗明載 `solid`，validator 對缺值與未知 pattern fail closed。
+新增 `frame_pattern_test.go` 鎖定底圖保留語意，Docker＋Xvfb 重產並覆蓋
+`dq3_remake_ebitan/docs/ng_menu.png`、`ng_name.png`、`ng_gender.png`、`ng_confirm.png`。
+這是 strong／D2 的 engine-data slice；`confirm_choice` 藍色選擇圖樣、FIRST.SCR palette、
+逐幀游標／動畫與同狀態 V3 仍未閉合，不能將本切片宣稱為完整創角 parity。

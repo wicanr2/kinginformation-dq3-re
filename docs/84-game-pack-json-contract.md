@@ -973,8 +973,10 @@ DQ3 canonical 使用 `FIRST.SCR`（112000 bytes、640×350）與 `docs/title/fir
 
 `interface.json.battle_message` 保存戰鬥行動／結算訊息使用的版本專屬外框與文字網格，欄位
 同 `dialogue`（`id`、`x`、`y`、`width`、`height`、`text_inset_x`、`text_inset_y`、
-`columns`、`lines_per_page`、`frame`、`evidence`）。`frame` 是 `{id,border_rgb,
-interior_rgb,evidence}`；框線演算法屬於共用 engine，RGB 結果與證據屬於 pack。
+`columns`、`lines_per_page`、`frame`、`evidence`）。`frame` 是
+`{id,border_pattern,border_rgb,interior_rgb,evidence}`；`border_pattern` 只能引用已
+註冊的 `solid` 或 `checkerboard_1px` engine primitive，不可放任意 JSON code；框線
+演算法屬於共用 engine，pattern、RGB 結果與證據屬於 pack。
 DQ3 精訊版由 DQ3.EXE 的 DGROUP `0x3e6e`
 共用 `win_rect` 證實為可見 `(152,238,352,96)`、inset `(16,16)`、20 欄／4 行；
 `sub_1fb36` 的 `(360,112)` 只是關閉時備份背景範圍，不是玩家看見的框。battle
@@ -1072,13 +1074,14 @@ production `NewGameWithPack` 缺少 `new_game_labels` 即拒絕啟動；`NewGame
 `cell=col*5+row`，raw35 是注音／英數的功能列入口；第五列才設完成旗標，避免把舊的
 「直接按右下格」測試捷徑當成原版流程。這只封存字模資料，主選單／能力確認
 面板座標與共用外框 RGB 現在由 `interface.json.new_game_geometry` 提供。除既有 `id` 外，
-`frame` 必須是 `{id,border_rgb,interior_rgb,evidence}`；它保存版本專屬的玩家可見
-外框色彩，不把 EGA plane mask 變成 style ID。它另保存 640×350 像素矩形、文字 anchor、
+`frame` 必須是 `{id,border_pattern,border_rgb,interior_rgb,evidence}`；它保存版本專屬的
+玩家可見外框色彩與已證實的邊線 primitive，不把 EGA plane mask 變成任意 style ID。
+它另保存 640×350 像素矩形、文字 anchor、
 9×5 姓名盤步距，以及 IDA linear address 的 `raw_windows` sidecar；後者
 保留 `0x29088`／`0x290a6`／`0x290c4`／`0x290e0` 與能力確認三組結構的原始欄位，
-不可用像素值取代。缺 geometry 時 production bootstrap 必須 fail closed；D2 evidence
-與 raw／pixel 對照見 [`docs/113`](113-newgame-geometry-re.md)。外框的 EGA 交錯 pattern、
-`confirm_choice` 的藍色選擇框與逐幀演出仍是另一個 V3 切片。
+不可用像素值取代。缺 geometry 或不支援的 `border_pattern` 時 production bootstrap 必須
+fail closed；D2 evidence 與 raw／pixel 對照見 [`docs/113`](113-newgame-geometry-re.md)。
+`confirm_choice` 的藍色選擇框、palette 時序與逐幀演出仍是另一個 V3 切片。
 
 ### 6.10 `staged_boss_events`
 

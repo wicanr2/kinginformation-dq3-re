@@ -1887,6 +1887,7 @@ func TestDQ3NewGameGeometryMatchesOriginalWindows(t *testing.T) {
 	}
 	if g.ID != "dq3:new_game_geometry" ||
 		g.Frame == nil || g.Frame.ID != "dq3:frame.ega_window_lavender_black" ||
+		g.Frame.BorderPattern != "checkerboard_1px" ||
 		g.Frame.BorderRGB != [3]uint8{255, 223, 255} ||
 		g.Frame.InteriorRGB != [3]uint8{0, 0, 0} ||
 		g.NamePanel != (GeometryRect{X: 159, Y: 52, Width: 242, Height: 130}) ||

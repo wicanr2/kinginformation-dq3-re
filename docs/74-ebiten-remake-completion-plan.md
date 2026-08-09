@@ -95,7 +95,7 @@
 | 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 已有新遊戲／載入框架 | 需輸入與版面 E2 |
-| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace；`FIRST.SCR` 能力確認背景、右欄六個原版欄位已由 pack 接入 | E3；背景原始檔尺寸／解碼與配色 D2、runtime V2，EGA 框線 pattern／同狀態 stat panel 仍待 V3 |
+| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace；`FIRST.SCR` 能力確認背景、右欄六個原版欄位與 EGA 邊線 primitive 已由 pack 接入 | E3；背景／邊線遮罩 D2、runtime V2，palette、藍色選項框與同狀態 stat panel 仍待 V3 |
 | 家中／母親 | DOSBox、影片 | sec4+rec82/83；handler54 transaction 已接 | E3；逐格護送動畫仍待 V3 |
 | 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
@@ -741,22 +741,23 @@ linear raw window（姓名 `0x29088`、功能列 `0x290a6`、注音／候選 `0x
 階段改用原版 `FIRST.SCR` 黑底雙立繪。IDA writer／consumer、截圖量測、D2 限制與 parity
 test 見 [`docs/113`](113-newgame-geometry-re.md)。本輪已以 Docker／Xvfb 正式 dump 更新
 `docs/ng_menu.png`、`docs/ng_name.png`、`docs/ng_gender.png`、`docs/ng_confirm.png`；其中
-`ng_name.png` SHA-256 為 `fb451c65be0d7a2ec7e05111c552fddd9203ce0546dea608e954a9c670c59120`。
-功能列字模、45 格輸入與正式功能焦點路徑已接入；框線 pattern、逐幀游標／動畫與同狀態演出
+`ng_name.png` SHA-256 為 `7d489f8f13d9eb1cb4e246efc9cef4c82a84f957720bb31ba912294dc9dcc39a`。
+功能列字模、45 格輸入與正式功能焦點路徑已接入；palette、藍色選項框、逐幀游標／動畫與同狀態演出
 仍不能宣稱 V3。
 
 2026-08-10 再閉合開場外框色彩切片：IDA Pro 9.4 追查
 `sub_10854 → sub_1f590 → sub_1fd30 → sub_1fdb1`，確認四邊 writer 與
 `DS:0x727` 的 raw plane mask；DOSBox `v3_01_afterstats.png` 取樣外框為
-`(255,223,255)`、內部黑。`interface.json.new_game_geometry.frame` 已資料化，
-`NewGameFlow`／酒館消費 pack frame，缺欄位 fail closed；這是 D2／runtime V2，藍黑
-`confirm_choice` pattern 與逐幀 EGA 演出仍保留為 V3 gap。完整 sidecar 見
+`(255,223,255)`、內部黑。`interface.json.new_game_geometry.frame` 現以
+`border_pattern=checkerboard_1px` 資料化，`NewGameFlow`／酒館消費 pack frame，缺欄位或
+不支援 pattern fail closed；這是 D2／runtime V2，palette、藍黑 `confirm_choice` pattern
+與逐幀 EGA 演出仍保留為 V3 gap。完整 sidecar 見
 [`docs/117`](117-newgame-frame-re.md)。
 
 下一個視覺／音效 parity 工作：
 
-1. 補剩餘 EGA frame pattern、逐幀游標／動畫的 writer／consumer evidence，並把已產出的開場圖
-   保持可回查的 raw window／hash。
+1. 補 `confirm_choice` 藍色選擇框、palette／逐幀游標／動畫的 writer／consumer evidence，並把
+   已產出的開場圖保持可回查的 raw window／hash。
 2. 再處理戰鬥 frame style、spell／target rect、逐動作 timing／動畫／SFX 與完整抗性／
    formation／boss 多次行動／掉落，所有設定先進 pack JSON 並補 D2/D3 parity。
 3. 完成場景／設施／日夜 palette、剩餘 BGM／SFX、結局 timing；若另開 Android／WASM，

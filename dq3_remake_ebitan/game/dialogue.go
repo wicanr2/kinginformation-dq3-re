@@ -272,13 +272,17 @@ func drawGlyph(rgba []byte, tx *dq3data.Text, px, py, idx int, fg dq3data.Color)
 	}
 }
 
-// fillBoxStyle 以 pack 提供的內部色與框線色繪製視窗。框線演算法是共用
-// engine primitive；顏色與幾何屬於 game pack。
-func fillBoxStyle(rgba []byte, x, y, w, h int, interior, border dq3data.Color) {
+// fillBoxStyle 以 pack 提供的內部色、框線色與已註冊 pattern 繪製視窗。
+// pattern 是共用 engine primitive 的名稱，不是可執行的 JSON code；顏色與
+// 幾何仍屬於 game pack。checkerboard_1px 保留 EGA writer 未寫入的底圖像素。
+func fillBoxStyle(rgba []byte, x, y, w, h int, interior, border dq3data.Color, pattern string) {
 	for r := 0; r < h; r++ {
 		for c := 0; c < w; c++ {
 			col := interior
 			if r == 0 || r == h-1 || c == 0 || c == w-1 {
+				if !frameBorderPixel(pattern, c, r) {
+					continue
+				}
 				col = border
 			}
 			putPx(rgba, x+c, y+r, col)
@@ -286,10 +290,25 @@ func fillBoxStyle(rgba []byte, x, y, w, h int, interior, border dq3data.Color) {
 	}
 }
 
+func frameBorderPixel(pattern string, x, y int) bool {
+	switch pattern {
+	case "solid":
+		return true
+	case "checkerboard_1px":
+		// sub_1fdb1 starts each EGA edge with bh=0xaa; the visible logical
+		// mask is the local odd checker phase, leaving the underlying pixel.
+		return (x+y)&1 == 1
+	default:
+		// Invalid patterns are rejected by the pack validator. Keep direct
+		// fixtures visually closed rather than inventing a new pattern.
+		return false
+	}
+}
+
 // fillBox 保留給沒有安裝 pack 的輕量測試 fixture；正式畫面一律透過
 // fillPackBox 取得 JSON 的 frame 顏色。
 func fillBox(rgba []byte, x, y, w, h int, border dq3data.Color) {
-	fillBoxStyle(rgba, x, y, w, h, dq3data.Color{}, border)
+	fillBoxStyle(rgba, x, y, w, h, dq3data.Color{}, border, "solid")
 }
 
 func frameColor(rgb [3]uint8) dq3data.Color {
@@ -304,7 +323,7 @@ func fillGeometryBox(rgba []byte, frame *gamepack.FrameStyle, x, y, w, h int, fa
 		return
 	}
 	fillBoxStyle(rgba, x, y, w, h,
-		frameColor(frame.InteriorRGB), frameColor(frame.BorderRGB))
+		frameColor(frame.InteriorRGB), frameColor(frame.BorderRGB), frame.BorderPattern)
 }
 
 // fillPackBox 套用版本專屬 frame。direct unit fixture 若未安裝 frame，
@@ -315,7 +334,7 @@ func fillPackBox(rgba []byte, layout gamepack.WindowLayout, x, y, w, h int) {
 		return
 	}
 	fillBoxStyle(rgba, x, y, w, h,
-		frameColor(layout.Frame.InteriorRGB), frameColor(layout.Frame.BorderRGB))
+		frameColor(layout.Frame.InteriorRGB), frameColor(layout.Frame.BorderRGB), layout.Frame.BorderPattern)
 }
 
 func putPx(rgba []byte, x, y int, c dq3data.Color) {
