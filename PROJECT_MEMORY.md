@@ -1,6 +1,6 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 更新：2026-08-02。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-08-09。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
 
@@ -106,9 +106,13 @@ IDA 9.4 證實離城 consumer 直接使用 transition X/Y、兩者皆零才回�
 coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。尚余幽靈船至蓋亞之劍、
 CTY83 黃寶珠的自然 E3、CTY59 handler41 設施分支及原版 V2 對拍。詳見 `docs/102`、
 `docs/103`。
-**尚未完成從新遊戲開始到 THE END 的無 debug 全流程驗收**；下一個 audit 從假王勝利後
-checkpoint 繼續追變身杖／船員之骨。地表水面顏色及四輪 palette transition 仍未達 V3，
-不得因流程閉合而略過。
+2026-08-09 已用一次性 Docker+Xvfb 通過 `TestOpeningProductionInputTrace`：從新遊戲、正式
+InputState、不中途注入座標／道具／事件函式，依序完成 CTY83 黃寶珠、六珠／拉米亞、巴拉摩斯、
+自然下降、愛列夫加特、蓋亞之劍火山、尼羅肯特銀寶珠、索瑪城奧爾特加事件、封咒三連戰、
+光之珠弱化、王城冊封與 `THE END`。中途的雲雨之杖、彩虹水滴、蓋亞之劍、銀寶珠及關鍵戰前
+均有 save/load round-trip；主線流程目前是 campaign E3／runtime V1。地表水面顏色、四輪
+palette transition、逐畫面／音效 V3、Android／桌面 release 驗收仍是後續工作，不能與流程
+完成混稱。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
@@ -170,15 +174,20 @@ boot production trace 已從假王勝利正常住宿、魯拉、登船航行到 
 save/load。幽靈船座標已與玩家座標分離；四個 tile 由 RNG state 低二位選擇，物件離開
 `80×80` 活動視窗時依原版 18 筆候選表重定位。船員之骨 records740–744、同座標動態入口、
 CTY36 轉場、愛的回憶 `0x64` 寶箱及其 save/load 已由正式 InputState trace 閉合為 E3／V1。
-schema `0.1.21`／content `0.1.25` 已新增 `coordinate_item_gate_events`。boot trace 從
+schema `0.1.22`／content `0.1.26` 延續 `coordinate_item_gate_events`，並新增
+`direct_map_patch` 與 persistent `map_patch` 的分離契約。boot trace 從
 愛的回憶 checkpoint 依 CTY36 原始轉場離船；同座標停泊船會恢復 mode1，避免玩家困在
 水格。其後正式航行至 `(76,54)`，依 records597／598、item0x64 與 flag0x35 解除詛咒，
 再進 CTY55 調查取得蓋亞之劍0x0f並完成 save/load。CTY55 event0 已從 Go treasure table
-遷入 JSON；見 `docs/105`。下一個 blocker 是蓋亞之劍火山交易。IDA 已確認特殊 item table
+遷入 JSON；見 `docs/105`。2026-08-09 已完成蓋亞之劍火山切片：IDA 已確認特殊 item table
 `DGROUP 0x3666/0x3668` 將 item0x0f 派發至 `(logical) 0x3d65`，只接受 `(65,109)`，成功
-執行動畫、由 `DGROUP 0x3b96` 套地圖 patch 並 set 原版 world-state bit0x20。patch 尺寸／
-完整 bytes、重建 consumer 與 DOSBox 可見閉合仍待完成；現行「任意地表 set remake
-flag0x32」不得沿用。交接 ledger 與工作順序見 `docs/106`。
+執行動畫、set 原版 world-state bit0x20；`DGROUP 0x3b96` 的 direct viewport table 與
+`DGROUP 0x3a54` 的 persistent reload table 已分開存入 JSON，save/load 只重建後者。正式
+boot trace 已走 CTY56 南洞口的 sec1→2→3→2→3→sec0 北出口，進 CTY64 由 handler49
+取得銀寶珠，並通過 party-order inventory、save/load、重複對話。現行「任意地表 set
+remake flag0x32」已移除；完整 bytes／consumer／位址證據與路徑見 `docs/106`。同一條 boot
+trace 隨後已通過 CTY83、P4–P6 與 new game→THE END；後續只處理 V3 對拍、音效／音樂長尾、
+跨平台 release 與受影響的畫面更新。
 
 ## 固定工程方法
 

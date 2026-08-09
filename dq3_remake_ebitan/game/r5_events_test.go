@@ -3,6 +3,8 @@ package game
 import (
 	"reflect"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 func TestDragonQueenOriginalFlags(t *testing.T) {
@@ -185,5 +187,50 @@ func TestRainbowBridgeSaveRoundTrip(t *testing.T) {
 	if h.worldState&worldStateRainbowBridge == 0 ||
 		h.loadUnder().tileIdx(rainbowBridgeX, rainbowBridgeY) != rainbowBridgeTile {
 		t.Fatal("彩虹橋 world state / tile override 存檔 round-trip 失敗")
+	}
+}
+
+// CTY92 的精靈是原始 sub0/handler76 記錄；實際語意入口在 handler75
+// runner。驗證正式「話す」仍能由 game-pack transaction 取代 0x74→0x73。
+func TestStaffOfRainNaturalExchange(t *testing.T) {
+	g := r4Game(t)
+	var event *gamepack.NPCItemRewardEvent
+	for _, candidate := range g.pack.NPCItemRewardEvents() {
+		if candidate.ID == "dq3:event.staff_of_rain_exchange" {
+			copy := candidate
+			event = &copy
+			break
+		}
+	}
+	if event == nil || event.RequiredItemRawID == nil || !event.ReplaceRequired {
+		t.Fatal("缺少雲雨之杖 NPC exchange pack event")
+	}
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		event.NPC.CTYRaw, mapBlkNum[event.NPC.CTYRaw], event.NPC.Section, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.cur, g.town, g.inTown, g.curCty = sc, sc, true, event.NPC.CTYRaw
+	g.dlg.tx = sc.dlgText
+	g.inventory = []int{*event.RequiredItemRawID}
+	g.setStoryFlag(event.PresentFlagRaw, true)
+	g.px, g.py, g.facing = event.NPC.Tile.X, event.NPC.Tile.Y+1, 1
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.dlg.open {
+		t.Fatal("雲雨之杖交換正式話す未開啟對話")
+	}
+	closeDialogueByInput(t, g)
+	if !g.hasItem(event.GrantedItemRaw) || g.hasItem(*event.RequiredItemRawID) ||
+		g.storyFlag(event.PresentFlagRaw) {
+		t.Fatalf("雲雨之杖交換 transaction 錯：inv=%v present=%v",
+			g.inventory, g.storyFlag(event.PresentFlagRaw))
+	}
+	// 重複交談只顯示 after，不得再次消耗或新增道具。
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	closeDialogueByInput(t, g)
+	if len(g.inventory) != 1 || !g.hasItem(event.GrantedItemRaw) {
+		t.Fatalf("雲雨之杖重複對話改變 inventory：%v", g.inventory)
 	}
 }

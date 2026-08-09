@@ -2,7 +2,9 @@
 
 ## 結論
 
-schema `0.1.21`／content `0.1.25` 已把愛的回憶後續閉合成正式玩家切片：
+本文件最初在 schema `0.1.21`／content `0.1.25` checkpoint 記錄愛的回憶後續；現行
+pack 版本以 `PROJECT_MEMORY.md` 與 manifest 為準（schema `0.1.22`／content `0.1.26`）。
+該切片內容如下：
 
 ```text
 CTY36 取得愛的回憶 → 原始轉場離開幽靈船 → 同座標恢復停泊船 mode1
@@ -13,6 +15,16 @@ CTY36 取得愛的回憶 → 原始轉場離開幽靈船 → 同座標恢復停�
 全程由 boot 起的同一條 `InputState` trace 抵達，沒有直接設定座標、授予道具、呼叫事件
 handler 或跳過戰鬥。畫面目前只有 runtime V1；尚未定位原版影片的完全同狀態畫格，故不標
 V2／V3。
+
+2026-08-09 的後續 slice 已把同一條正式 trace 延伸為：
+
+```text
+CTY55 蓋亞之劍 → 火山 direct/reload patch → CTY56 南洞口
+→ sec1 → sec2 → sec3 → sec2 → sec3 → sec0 北出口
+→ world (43,138) → CTY64 尼羅肯特 → handler49 銀寶珠
+```
+
+洞窟 transition 來自 CTY56/57.DAT；不能把 CTY64 當成火山後的直航目的地。
 
 ## 原始輸入與位址口徑
 
@@ -56,10 +68,11 @@ V2／V3。
   - `docs/img/olivia_cape_memory_reunion.png`（V1）
   - `docs/img/gaia_sword_obtained.png`（V1）
 
-## 下一個 blocker
+## 歷史 blocker 與現況
 
-現行舊碼仍把蓋亞之劍 `0x0f` 寫成「地表任意位置使用即設 remake flag0x32」，這不是原版
-規格。後續 IDA 已確認特殊 item table 只列 `0x0f`，派發至 `(logical) 0x3d65`；唯一成功
-座標是 `(65,109)`，成功後進入動畫、套用 `DGROUP 0x3b96` 地圖 patch 並 set 原版
-world-state bit `0x20`。patch 尺寸／完整 bytes、重建 consumer 與 DOSBox 可見結果仍待閉合，
-因此尚未修改 production。詳細證據與下一輪順序見 [`docs/106`](106-gaia-sword-volcano-re-worklist.md)。
+舊碼曾把蓋亞之劍 `0x0f` 寫成「地表任意位置使用即設 remake flag0x32」，這不是原版
+規格。現已以 IDA Pro 9.4 閉合特殊 item table、唯一座標 `(65,109)`、world-state `0x20`、
+direct table `DGROUP:3B96` 與 reload table `DGROUP:3A54`，並移入 JSON；`direct_map_patch`
+只在成功使用當幀套用，save/load 只重建 persistent `map_patch`。其後同一條 boot trace 已
+完成 CTY83 黃寶珠、P4–P6、索瑪城三連戰與 `THE END`；本文件留下的 V1／原版逐畫面、音效
+與 release 長尾不再是主線 blocker，細節見 [`docs/106`](106-gaia-sword-volcano-re-worklist.md)。

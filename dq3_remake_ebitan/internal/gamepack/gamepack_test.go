@@ -1250,6 +1250,77 @@ func TestDQ3OliviaCapeAndGaiaSwordMatchOriginalEXECTYAndText(t *testing.T) {
 	}
 }
 
+// 蓋亞之劍的 item dispatcher、唯一座標、5×4 原始 patch 與 world-state writer
+// 必須直接對回同一份 DQ3.EXE；logical/file 換算見 docs/106。
+func TestDQ3GaiaSwordMatchesOriginalEXEAndPackPatch(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	effect, ok := p.ItemUseEffectByRawID(0x0f)
+	if !ok || effect.EffectID != "reveal_world_map_patch" || effect.UseTile == nil || effect.MapPatch == nil || effect.DirectMapPatch == nil {
+		t.Fatalf("蓋亞之劍 item_use effect missing/incomplete: %+v", effect)
+	}
+	if effect.UseTile.X != 0x41 || effect.UseTile.Y != 0x6d || effect.RequiredLayer != 0 ||
+		effect.RequiredVehicle != "" || effect.RequiredStoryFlagRaw != -1 || effect.Consume ||
+		effect.SetWorldStateMask != 0x20 || effect.AnimationCycles != 30 ||
+		effect.AnimationPaletteModeRaw != -1 {
+		t.Fatalf("蓋亞之劍 JSON gate/transaction 不符原版: %+v", effect)
+	}
+	if effect.MapPatch.Origin.X != 0x3d || effect.MapPatch.Origin.Y != 0x6f ||
+		effect.MapPatch.Width != 5 || effect.MapPatch.Height != 4 {
+		t.Fatalf("蓋亞 patch geometry=%+v", effect.MapPatch)
+	}
+	wantPatch := []int{
+		0x58, 0x58, 0x60, 0x58, 0x58,
+		0x58, 0x68, 0x42, 0x66, 0x58,
+		0x5e, 0x42, 0x7c, 0x42, 0x5c,
+		0x58, 0x5a, 0x5a, 0x5a, 0x58,
+	}
+	if !reflect.DeepEqual(effect.MapPatch.TilesRaw, wantPatch) {
+		t.Fatalf("蓋亞 patch tiles=%v, want %v", effect.MapPatch.TilesRaw, wantPatch)
+	}
+	wantDirectPatch := []int{
+		0x27, 0x09, 0x09, 0x03, 0x00,
+		0x09, 0x09, 0x03, 0x00, 0x42,
+		0x03, 0x50, 0x00, 0x26, 0x42,
+		0x6e, 0x26, 0x26, 0x25, 0x42,
+	}
+	if !reflect.DeepEqual(effect.DirectMapPatch.TilesRaw, wantDirectPatch) {
+		t.Fatalf("蓋亞 direct patch tiles=%v, want %v", effect.DirectMapPatch.TilesRaw, wantDirectPatch)
+	}
+	for off, want := range map[int][]byte{
+		0x50d5: {0x83, 0x3e, 0x2f, 0x4f, 0x41, 0x75, 0x0e},
+		0x50dc: {0x83, 0x3e, 0x31, 0x4f, 0x6d, 0x75, 0x07},
+		0x50e3: {0xe8, 0x3f, 0x0d, 0xe8, 0x50, 0x06, 0xc3},
+		0x57d1: {0x83, 0x0e, 0x44, 0x4f, 0x20},
+		0x19b94: {0x58, 0x58, 0x60, 0x58, 0x58, 0x58, 0x68, 0x42, 0x66, 0x58,
+			0x5e, 0x42, 0x7c, 0x42, 0x5c, 0x58, 0x5a, 0x5a, 0x5a, 0x58},
+		0x19cd6: {0x27, 0x09, 0x09, 0x03, 0x00, 0x09, 0x09, 0x03, 0x00, 0x42,
+			0x03, 0x50, 0x00, 0x26, 0x42, 0x6e, 0x26, 0x26, 0x25, 0x42},
+	} {
+		if off+len(want) > len(exe) || !bytes.Equal(exe[off:off+len(want)], want) {
+			got := []byte(nil)
+			if off < len(exe) {
+				end := off + len(want)
+				if end > len(exe) {
+					end = len(exe)
+				}
+				got = exe[off:end]
+			}
+			t.Fatalf("DQ3.EXE file %#x bytes=%x, want %x", off, got, want)
+		}
+	}
+}
+
 func TestDQ3PyramidSwitchGateMatchesOriginalEXECTYAndText(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {
@@ -1847,14 +1918,14 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.21","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.22","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.21","service_definitions":[{
+	  "schema_version":"0.1.22","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -1862,7 +1933,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.21",
+	  "schema_version":"0.1.22",
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -1881,7 +1952,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.21",
+	  "schema_version":"0.1.22",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -1891,7 +1962,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.21","definitions":[{
+	  "schema_version":"0.1.22","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -1900,7 +1971,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.21","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.22","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -1912,7 +1983,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.21"`, `"schema_version":"0.1.21","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.22"`, `"schema_version":"0.1.22","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

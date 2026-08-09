@@ -107,10 +107,10 @@
 | 戰鬥 | DOSBox／影片／原始怪圖 | 公式、多敵、狀態、boss queue 已有 | 呈現／訊息／cue 長尾 |
 | 商店／旅社／教會／達瑪 | 原版資料、部分截圖 | 達瑪轉職已由正式流程閉合至 E3/V2；其餘多數已有 | 賣出、逐服務與達瑪原版同狀態 V3 仍缺 |
 | 船 | 影片、DOSBox 截圖 | 航行系統與取船鏈已有 | 需正常流程 E3 |
-| 不死鳥／飛行 | 攻略、影片、EXE／CTY70 | 六珠祭壇、復活、搭乘、飛行與降落已有正式 trace | 已完成事件切片；全流程仍待稽核 |
-| 下降／下世界 | 影片、EXE | 巴拉摩斯後王座事件與自然下降入口已接 | 已完成事件切片 |
-| 終盤連戰 | 影片、RE | 光之珠、隱藏樓梯、歐里狄加與三連戰已有正式入口 | 已完成事件切片 |
-| THE END | 影片、TIT3 | 戰後回城、冊封與 ending scroll 已接 | 已有 production trace；逐畫面仍待 V3 |
+| 不死鳥／飛行 | 攻略、影片、EXE／CTY70 | 六珠祭壇、復活、搭乘、飛行與降落已有正式 trace | 新遊戲 boot trace 已通過 P4-P6；主線 E3，畫面 V1 |
+| 下降／下世界 | 影片、EXE | 巴拉摩斯後王座事件與自然下降入口已接 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
+| 終盤連戰 | 影片、RE | 光之珠、隱藏樓梯、歐里狄加與三連戰已有正式入口 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
+| THE END | 影片、TIT3 | 戰後回城、冊封與 ending scroll 已接 | 新遊戲 boot trace 已到 THE END；逐畫面與音效仍待 V3 |
 | 音樂／音效 | 原版 MCX/VOC、錄音研究 | OPL2/OGG 有相當基礎 | 逐場景 cue matrix 待驗 |
 | 觸控／Android | 無原版對照，屬 port UX | 輸入抽象與觸控已有 | 正式流程完成後驗收 |
 
@@ -123,13 +123,16 @@
   多敵、狀態咒文等已比 `docs/data/flow-gap-ebitan.md` 初版盤點進步。
 - R-2 沙曼歐莎的靜態 spec 已定。
 
-真正問題是：
+真正問題曾經是：
 
-1. 沒有一條 production input 驅動的完整主線 trace。
-2. `spine_test.go` 直接呼叫內部函式，不能證明玩家可達。
+1. ~~沒有一條 production input 驅動的完整主線 trace~~（2026-08-09 已由
+   `TestOpeningProductionInputTrace` 閉合，不再是 current blocker）。
+2. 歷史 `spine_test.go` 直接呼叫內部函式，不能證明玩家可達；它仍是線索／回歸材料，不取代
+   下方的正式 trace。
 3. ~~production 的 `T/R/U/Z/Enter/Cancel` demo/debug 行為~~（R-4/R-5a 已移除）。
-4. 六珠／不死鳥／飛行、下降與終盤正式事件切片已完成；尚缺的是從新遊戲開始、不改狀態的
-   單一路徑通關稽核，不能用各切片測試取代。
+4. 六珠／不死鳥／飛行、下降與終盤正式事件切片已完成，且已由同一條不改狀態的
+   production `InputState` trace 從新遊戲延伸至 THE END；目前不再把孤立切片當作 campaign
+   證明，後續只需補畫面／音效的 V3 對拍與發佈驗收。
 5. 畫面證據沒有形成逐界面的 current matrix，raw decode、component dump 和正常流程畫面容易混稱。
 6. `build.sh` 內 `go test | tail` 未啟用內層 `pipefail`，可遮蔽測試失敗；圖形測試應以
    明確啟動的 Xvfb 加 `go test -c` 執行，避免 `xvfb-run` wrapper 卡住而誤判程式失敗。
@@ -653,24 +656,27 @@ CTY27 raw 證明 `(26,9)` 可推物件、hidden transition→sec1 `(5,9)` 及 ev
 CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版同狀態影片畫格尚未定位，
 故畫面只標 V1；見 `docs/101`。
 
-下一輪依下列順序接手：
+本輪收尾狀態（2026-08-09）：
 
-1. **主線最高優先**：boot 起的同一條 trace 已正式完成商人交付、CTY41→42、CTY43
+1. **主線事件串接（已完成）**：boot 起的同一條 trace 已正式完成商人交付、CTY41→42、CTY43
    關卡、拉之鏡、假王／怪力魔、CTY54 變身杖交換、船員之骨定位、幽靈船動態物件／入口，
    並由 CTY36 原始轉場取得愛的回憶、離船後恢復同座標停泊船、通過 `(76,54)` 奧莉薇亞
-   海岬，再進 CTY55 取得蓋亞之劍並完成 save/load。下一輪從這個合法 checkpoint 重查
-   蓋亞之劍火山事件。IDA 已確認 raw item0x0f 經特殊 item table 派發至
+   海岬，再進 CTY55 取得蓋亞之劍並完成 save/load。IDA 已確認 raw item0x0f 經特殊 item
+   table 派發至
    `(logical) 0x3d65`，唯一成功座標 `(65,109)`，成功 set world-state bit0x20 並由
-   `DGROUP 0x3b96` 套用地圖 patch；但 patch 尺寸／完整 bytes、讀檔重建與實機動畫尚未
-   閉合，production 仍保留待刪的錯誤近似。下一輪依 `docs/106` 完成此交易，再閉合尼羅肯特、
-   銀寶珠與 CTY83 黃寶珠 E3；不得只改座標便宣稱完成。
-   不得因 P3 後段已有孤立 component tests，就跳過兩節點之間的玩家路徑、資源與存檔 gate。
+   `DGROUP 0x3b96` 套用 direct viewport patch；`DGROUP 0x3a54` 是 world-state reload 的
+   distinct persistent patch。`docs/106` 已完成 JSON／Go 遷移、IDA parity 與 direct/reload
+   分離；正式 trace 已由 CTY56 南洞口穿過 sec1→2→3→2→3→sec0 北出口，進 CTY64
+   以 handler49 取得銀寶珠，並通過 party-order inventory 與 save/load。其後同一條正式 trace
+   已完成 CTY83 黃寶珠、蓋亞之劍交換、索瑪城奧爾特加事件、封咒／三連戰、光之珠弱化、
+   回王城冊封與 `THE END`。
 2. **設定資料追蹤**：每個 blocker 都先由 IDA／原始指令追
    `writer → table/state → consumer → visible effect`，並以 DOSBox 同狀態核對；不得用
    C remake、攻略或推測值直接補 production config。
-3. **完整通關證明**：P3 至 P6 雖有多個正式入口事件切片，仍缺
-   `new game → THE END` 不改狀態、不中途呼叫內部函式的連續 campaign trace，以及各關鍵
-   checkpoint 的 save/load round-trip。
+3. **完整通關證明（已完成）**：`TestOpeningProductionInputTrace` 已在 Docker＋Xvfb
+   由新遊戲以正式 `InputState` 不改狀態延伸至 `THE END`，並涵蓋 P4-P6 關鍵事件、戰鬥、
+   資源交易及中途 save/load round-trip；本項達 campaign E3。runtime 對拍目前為 V1，
+   不將此結果誤稱為逐畫面 V3。
 4. **戰鬥長尾**：睡眠／混亂恢復時序與 99／100／101 邊界已閉合，但訊息的角色／怪物
    名稱代入、逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、
    boss 多次行動、掉落及逐項咒文
@@ -684,5 +690,6 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 6. **Release**：完成正式流程後才做跨桌面平台包裝、Android 真機的觸控／lifecycle／音訊／
    存檔驗收，以及選配 WASM smoke；公開包不得納入原版資產。
 
-下一輪第一項工作應是執行玩家流程 audit 並記錄「第一個實際 blocker」，不是再挑一個孤立
-機制實作。
+後續工作以 V3 畫面／音效對拍、戰鬥與場景 cue 長尾、跨平台發佈驗收為主；若重新開啟主線，
+仍須從上述合法 production checkpoint 重播並記錄第一個實際 blocker，不得改用孤立 handler
+或狀態注入取代玩家流程。

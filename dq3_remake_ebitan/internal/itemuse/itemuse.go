@@ -13,7 +13,6 @@ const (
 	CureParalysis             // 解麻痺(滿月草)
 	ReturnTown                // 回最後城鎮(蓋美拉翅膀)
 	Repel                     // 暫時驅弱敵(聖水)
-	Gaia                      // 蓋亞之劍(位置相關,不消耗)
 	FairyFlute                // 妖精之笛(位置相關,不消耗)
 	PrayerRing                // 祈禱之戒(回 MP + ~25.4% 損壞)
 	Ranaruta                  // 拉那魯達(切晝夜)
@@ -61,8 +60,6 @@ func KindOf(itemID int) Kind {
 		return MagicBall
 	case ItemMirror:
 		return Mirror
-	case 0x0f:
-		return Gaia // 蓋亞之劍(火山開通)
 	case 0x77:
 		return FairyFlute // 妖精之笛(魯比斯解詛咒)
 	case 0x75:

@@ -215,33 +215,87 @@ func TestTemptationCaveRealDataRebuildsClearedWall(t *testing.T) {
 	}
 }
 
-// 蓋亞之劍(0x0f):在地表使用 → 設 flag 0x32,不消耗(武器)。
-func TestUseGaiaOnField(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
-	g.inTown = false
-	g.inventory = []int{0x0f}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
-	if !g.flags[0x32] {
-		t.Errorf("蓋亞之劍在地表應設 flag 0x32")
+func gaiaSwordGame(t *testing.T) (*Game, *gamepack.ItemUseEffect) {
+	t.Helper()
+	g, err := NewGame(os.DirFS(spineAssetsDir(t)), nil)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if len(g.inventory) != 1 {
-		t.Errorf("蓋亞之劍不應消耗,剩 %d", len(g.inventory))
+	effect, ok := g.pack.ItemUseEffectByRawID(0x0f)
+	if !ok || effect.EffectID != "reveal_world_map_patch" || effect.UseTile == nil {
+		t.Fatalf("蓋亞之劍 pack effect 不完整：%+v", effect)
+	}
+	g.showTitle, g.openingIdx = false, -1
+	g.inTown, g.layer = false, effect.RequiredLayer
+	g.cur, g.px, g.py = g.overworldScene(), effect.UseTile.X, effect.UseTile.Y
+	g.shipAboard = false // 原版 handler 只有世界座標 gate，不要求載具。
+	g.inventory = []int{effect.ItemRawID}
+	g.panel, g.panelCursor = panelItem, 0
+	return g, effect
+}
+
+// 蓋亞之劍：原版唯一世界座標使用，設定 world-state bit0x20、套 5×4 patch，且不消耗。
+func TestPackGaiaSwordUsesOriginalCoordinateAndRevealsPatch(t *testing.T) {
+	g, effect := gaiaSwordGame(t)
+	g.useSelectedItem()
+	if g.worldState&uint16(effect.SetWorldStateMask) == 0 || g.panel != panelNone {
+		t.Fatalf("蓋亞之劍成功 transaction 錯：state=%#x panel=%d", g.worldState, g.panel)
+	}
+	if g.hasItem(effect.ItemRawID) == false || g.flags[0x32] {
+		t.Fatalf("蓋亞之劍不得消耗或寫舊 remake flag：item=%v flag32=%v",
+			g.hasItem(effect.ItemRawID), g.flags[0x32])
+	}
+	patch := effect.DirectMapPatch
+	if patch == nil {
+		t.Fatal("蓋亞 direct viewport patch 缺失")
+	}
+	for y := 0; y < patch.Height; y++ {
+		for x := 0; x < patch.Width; x++ {
+			want := patch.TilesRaw[y*patch.Width+x]
+			if got := g.over.tileIdx(patch.Origin.X+x, patch.Origin.Y+y); got != want {
+				t.Fatalf("蓋亞火山 patch (%d,%d)=%#x，want %#x",
+					patch.Origin.X+x, patch.Origin.Y+y, got, want)
+			}
+		}
+	}
+	// Reload rebuilds only the persistent consumer table; it must not retain
+	// the immediate 3B96 viewport values in memory.
+	persistent := effect.MapPatch
+	if persistent == nil {
+		t.Fatal("蓋亞 persistent reload patch 缺失")
+	}
+	g.over.override = nil
+	g.applyPackWorldMapPatches()
+	for y := 0; y < persistent.Height; y++ {
+		for x := 0; x < persistent.Width; x++ {
+			want := persistent.TilesRaw[y*persistent.Width+x]
+			if got := g.over.tileIdx(persistent.Origin.X+x, persistent.Origin.Y+y); got != want {
+				t.Fatalf("蓋亞 reload patch (%d,%d)=%#x，want %#x",
+					persistent.Origin.X+x, persistent.Origin.Y+y, got, want)
+			}
+		}
+	}
+	if effect.AnimationCycles != 30 || effect.AnimationPaletteModeRaw != -1 {
+		t.Fatalf("蓋亞動畫參數未保留原版證據：cycles=%d palette=%d",
+			effect.AnimationCycles, effect.AnimationPaletteModeRaw)
 	}
 }
 
-// 蓋亞之劍:在城鎮內使用 → 無效果、不設 flag。
-func TestUseGaiaInTownNoEffect(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
-	g.inTown = true
-	g.inventory = []int{0x0f}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
-	if g.flags[0x32] {
-		t.Errorf("蓋亞之劍在城鎮內不應設 flag 0x32")
-	}
-	if len(g.inventory) != 1 {
-		t.Errorf("蓋亞之劍不應消耗,剩 %d", len(g.inventory))
+func TestPackGaiaSwordFailsClosedOffCoordinateOrInTown(t *testing.T) {
+	for _, name := range []string{"off coordinate", "in town"} {
+		t.Run(name, func(t *testing.T) {
+			g, effect := gaiaSwordGame(t)
+			if name == "off coordinate" {
+				g.px++
+			} else {
+				g.inTown = true
+			}
+			g.useSelectedItem()
+			if g.worldState&uint16(effect.SetWorldStateMask) != 0 || !g.hasItem(effect.ItemRawID) {
+				t.Fatalf("錯誤 gate 不得改狀態或消耗：state=%#x item=%v",
+					g.worldState, g.hasItem(effect.ItemRawID))
+			}
+		})
 	}
 }
 
@@ -305,16 +359,13 @@ func TestUseThirstyPitcherFailsClosedOffTileOrOffShip(t *testing.T) {
 	}
 }
 
-// 妖精之笛(0x77):在魯比斯之塔(CTY82)使用 → 設 flag 0x34、給 0x74,不消耗。
+// 妖精之笛(0x77):在魯比斯之塔(CTY82)使用 → 由 game-pack 給 0x74,不消耗。
 func TestUseFairyFluteInRubissTower(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
+	g := r4Game(t)
 	g.inTown, g.curCty = true, 82
 	g.inventory = []int{0x77}
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
-	if !g.flags[0x34] {
-		t.Errorf("妖精之笛在魯比斯之塔應設 flag 0x34")
-	}
 	if !g.hasItem(0x74) {
 		t.Errorf("妖精之笛應給精靈的守護 0x74")
 	}
@@ -325,29 +376,42 @@ func TestUseFairyFluteInRubissTower(t *testing.T) {
 
 // 妖精之笛:已持有 0x74 時再使用 → 不重複給。
 func TestUseFairyFluteAlreadyHasSpiritGuard(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
+	g := r4Game(t)
 	g.inTown, g.curCty = true, 82
 	g.inventory = []int{0x77, 0x74}
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
-	if !g.flags[0x34] {
-		t.Errorf("妖精之笛在魯比斯之塔應設 flag 0x34")
-	}
 	if len(g.inventory) != 2 {
 		t.Errorf("已持有 0x74 不應重複給,應仍 2 個道具,剩 %d", len(g.inventory))
 	}
 }
 
+// 妖精之笛:精靈的守護若在同伴個人欄，也不得再生成第二份。
+func TestUseFairyFluteChecksPartyInventory(t *testing.T) {
+	g := r4Game(t)
+	g.inTown, g.curCty = true, 82
+	effect, ok := g.pack.ItemUseEffectByRawID(0x77)
+	if !ok {
+		t.Fatal("缺少妖精之笛 pack effect")
+	}
+	g.inventory = []int{effect.ItemRawID}
+	g.companions = []*Member{{Inventory: []int{effect.GrantItemRawID}}}
+	g.panel, g.panelCursor = panelItem, 0
+	g.useSelectedItem()
+	if len(g.inventory) != 1 || len(g.companions[0].Inventory) != 1 ||
+		g.companions[0].Inventory[0] != effect.GrantItemRawID {
+		t.Fatalf("同伴持有精靈的守護時不應重複給：hero=%v companion=%v",
+			g.inventory, g.companions[0].Inventory)
+	}
+}
+
 // 妖精之笛:位置不符 → 無效果、不設 flag。
 func TestUseFairyFluteWrongPlaceNoEffect(t *testing.T) {
-	g := &Game{flags: map[int]bool{}}
+	g := r4Game(t)
 	g.inTown, g.curCty = true, 4
 	g.inventory = []int{0x77}
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
-	if g.flags[0x34] {
-		t.Errorf("妖精之笛位置不符不應設 flag 0x34")
-	}
 	if len(g.inventory) != 1 {
 		t.Errorf("妖精之笛位置不符不應給道具,剩 %d", len(g.inventory))
 	}

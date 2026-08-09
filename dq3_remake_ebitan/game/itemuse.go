@@ -1,6 +1,9 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
+)
 
 // useSelectedItem:對道具面板游標指的道具套用使用效果(移植 main.c apply_item_use)。
 // Go 版狀態範圍:藥草(HP)、蓋美拉翅膀(回鎮)、聖水(驅敵)、祈禱之戒(MP+損壞)、
@@ -49,20 +52,6 @@ func (g *Game) useSelectedItem() {
 			g.removeItems(code, 1)
 			g.clampPanelCursor()
 		}
-	case itemuse.Gaia: // 蓋亞之劍:地表小火山旁 → 開通往尼羅肯特(武器,不消耗)
-		if !g.inTown {
-			g.flags[0x32] = true
-			g.noticeCode, g.noticeTimer = code, 90
-		}
-	case itemuse.FairyFlute: // 妖精之笛:魯比斯之塔(CTY82)解詛咒 → 得精靈的守護 0x74(不消耗)
-		if g.inTown && g.curCty == 82 {
-			const itemSpiritGuard = 0x74
-			if !g.hasItem(itemSpiritGuard) {
-				g.inventory = append(g.inventory, itemSpiritGuard)
-			}
-			g.flags[0x34] = true
-			g.noticeCode, g.noticeTimer = itemSpiritGuard, 90
-		}
 	case itemuse.Rainbow: // DQ3.EXE loc_14243：下層世界 (127,117) 使用，改 (126,117)=tile0x53
 		if !g.inTown && g.layer == 1 && g.px == rainbowUseX && g.py == rainbowUseY {
 			g.removeItems(code, 1)
@@ -98,6 +87,21 @@ func (g *Game) usePackItemEffect(code int) bool {
 		return true
 	}
 	switch effect.EffectID {
+	case "grant_quest_item":
+		if !g.inTown || g.cur == nil || g.curCty != effect.RequiredCTYRaw ||
+			sceneSection(g.cur) != effect.RequiredSection {
+			return true
+		}
+		if g.hasPartyItem(effect.GrantItemRawID) {
+			return true
+		}
+		if !g.grantPartyItem(effect.GrantItemRawID) {
+			return true
+		}
+		for _, flag := range effect.SetStoryFlagsRaw {
+			g.setStoryFlag(flag, true)
+		}
+		g.noticeCode, g.noticeTimer = effect.GrantItemRawID, 90
 	case "force_day_night_phase":
 		if g.dnPhase == effect.DayNightPhase {
 			return true
@@ -123,9 +127,11 @@ func (g *Game) usePackItemEffect(code int) bool {
 		g.noticeCode, g.noticeTimer = code, 90
 	case "reveal_world_map_patch":
 		if g.inTown || g.layer != effect.RequiredLayer ||
-			effect.RequiredVehicle != "ship" || !g.shipAboard || effect.UseTile == nil ||
+			(effect.RequiredVehicle != "" && effect.RequiredVehicle != "ship") ||
+			(effect.RequiredVehicle == "ship" && !g.shipAboard) || effect.UseTile == nil ||
 			g.px != effect.UseTile.X || g.py != effect.UseTile.Y ||
-			g.storyFlag(effect.RequiredStoryFlagRaw) != effect.RequiredStoryFlagSet {
+			(effect.RequiredStoryFlagRaw >= 0 &&
+				g.storyFlag(effect.RequiredStoryFlagRaw) != effect.RequiredStoryFlagSet) {
 			return true
 		}
 		g.worldState |= uint16(effect.SetWorldStateMask)
@@ -133,6 +139,7 @@ func (g *Game) usePackItemEffect(code int) bool {
 			g.setStoryFlag(flag, false)
 		}
 		g.applyPackWorldMapPatches()
+		g.applyPackDirectWorldMapPatch(effect)
 		g.panel = panelNone
 	case "open_facing_locked_door":
 		if !g.inTown || g.cur == nil {
@@ -162,26 +169,43 @@ func (g *Game) applyPackWorldMapPatches() {
 			g.worldState&uint16(effect.SetWorldStateMask) == 0 {
 			continue
 		}
-		patch := effect.MapPatch
-		var scene *Scene
-		switch patch.Layer {
-		case 0:
-			scene = g.over
-		case 1:
-			scene = g.loadUnder()
-		}
-		if scene == nil || patch.Origin.X+patch.Width > scene.w ||
-			patch.Origin.Y+patch.Height > scene.h {
-			continue
-		}
-		if scene.override == nil {
-			scene.override = map[int]int{}
-		}
-		for y := 0; y < patch.Height; y++ {
-			for x := 0; x < patch.Width; x++ {
-				i := y*patch.Width + x
-				scene.override[(patch.Origin.Y+y)*scene.w+patch.Origin.X+x] = patch.TilesRaw[i]
-			}
+		g.applyWorldMapPatch(effect.MapPatch)
+	}
+}
+
+// applyPackDirectWorldMapPatch applies the immediate viewport table used by
+// the original item handler. It is intentionally not called from save/load:
+// a reload must rebuild only the persistent world-state table.
+func (g *Game) applyPackDirectWorldMapPatch(effect *gamepack.ItemUseEffect) {
+	if effect == nil || effect.EffectID != "reveal_world_map_patch" ||
+		effect.DirectMapPatch == nil {
+		return
+	}
+	g.applyWorldMapPatch(effect.DirectMapPatch)
+}
+
+func (g *Game) applyWorldMapPatch(patch *gamepack.WorldMapPatch) {
+	if patch == nil {
+		return
+	}
+	var scene *Scene
+	switch patch.Layer {
+	case 0:
+		scene = g.over
+	case 1:
+		scene = g.loadUnder()
+	}
+	if scene == nil || patch.Origin.X+patch.Width > scene.w ||
+		patch.Origin.Y+patch.Height > scene.h {
+		return
+	}
+	if scene.override == nil {
+		scene.override = map[int]int{}
+	}
+	for y := 0; y < patch.Height; y++ {
+		for x := 0; x < patch.Width; x++ {
+			i := y*patch.Width + x
+			scene.override[(patch.Origin.Y+y)*scene.w+patch.Origin.X+x] = patch.TilesRaw[i]
 		}
 	}
 }

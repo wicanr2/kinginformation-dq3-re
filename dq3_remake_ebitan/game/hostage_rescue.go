@@ -145,7 +145,7 @@ func (g *Game) startHostageFormation(formation gamepack.BattleFormation) bool {
 	}
 	hp := heroParams{
 		level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
-		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells(),
+		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells(),
 	}
 	groups := make([]enemyGroup, len(formation.Groups))
 	for i, group := range formation.Groups {

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.21"
+	SchemaVersion = "0.1.22"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -263,6 +263,7 @@ type TreasureEvent struct {
 }
 
 type NPCItemRewardTextIDs struct {
+	Before  string `json:"before,omitempty"`
 	Success string `json:"success"`
 	After   string `json:"after"`
 }
@@ -271,39 +272,51 @@ type NPCItemRewardTextIDs struct {
 // searches the party's personal inventories in party order and only clears
 // PresentFlagRaw after the item was actually stored.
 type NPCItemRewardEvent struct {
-	ID              string               `json:"id"`
-	Kind            string               `json:"kind"`
-	NPC             ScriptedNPCSelector  `json:"npc"`
-	PresentFlagRaw  int                  `json:"present_flag_raw"`
-	GrantedItemRaw  int                  `json:"granted_item_raw"`
-	DialogueTextIDs NPCItemRewardTextIDs `json:"dialogue_text_ids"`
-	Evidence        Evidence             `json:"evidence"`
+	ID                 string               `json:"id"`
+	Kind               string               `json:"kind"`
+	NPC                ScriptedNPCSelector  `json:"npc"`
+	PresentFlagRaw     int                  `json:"present_flag_raw"`
+	GrantedItemRaw     int                  `json:"granted_item_raw"`
+	RequiredItemRawID  *int                 `json:"required_item_raw_id,omitempty"`
+	ReplaceRequired    bool                 `json:"replace_required,omitempty"`
+	ClearStoryFlagsRaw []int                `json:"clear_story_flags_raw,omitempty"`
+	DialogueTextIDs    NPCItemRewardTextIDs `json:"dialogue_text_ids"`
+	Evidence           Evidence             `json:"evidence"`
 }
 
 // ItemUseEffect 把版本專屬道具 ID 綁定至有限的引擎 primitive。
 // JSON 只提供選擇器與參數，不接受可執行運算式。
 type ItemUseEffect struct {
-	ID                      string          `json:"id"`
-	Kind                    string          `json:"kind"`
-	ItemRawID               int             `json:"item_raw_id"`
-	EffectID                string          `json:"effect_id"`
-	LocationKind            string          `json:"location_kind"`
-	DayNightPhase           int             `json:"day_night_phase"`
-	ResetDayNightSteps      bool            `json:"reset_day_night_steps"`
-	StepCount               int             `json:"step_count"`
-	Consume                 bool            `json:"consume"`
-	RequiredLayer           int             `json:"required_layer,omitempty"`
-	RequiredVehicle         string          `json:"required_vehicle,omitempty"`
-	UseTile                 *TileCoordinate `json:"use_tile,omitempty"`
-	RequiredStoryFlagRaw    int             `json:"required_story_flag_raw,omitempty"`
-	RequiredStoryFlagSet    bool            `json:"required_story_flag_set,omitempty"`
-	SetWorldStateMask       int             `json:"set_world_state_mask,omitempty"`
-	ClearStoryFlagsRaw      []int           `json:"clear_story_flags_raw,omitempty"`
-	MapPatch                *WorldMapPatch  `json:"map_patch,omitempty"`
-	AnimationPaletteModeRaw int             `json:"animation_palette_mode_raw,omitempty"`
-	AnimationCycles         int             `json:"animation_cycles,omitempty"`
-	DoorKeyTier             int             `json:"door_key_tier,omitempty"`
-	Evidence                Evidence        `json:"evidence"`
+	ID                   string          `json:"id"`
+	Kind                 string          `json:"kind"`
+	ItemRawID            int             `json:"item_raw_id"`
+	EffectID             string          `json:"effect_id"`
+	LocationKind         string          `json:"location_kind"`
+	DayNightPhase        int             `json:"day_night_phase"`
+	ResetDayNightSteps   bool            `json:"reset_day_night_steps"`
+	StepCount            int             `json:"step_count"`
+	Consume              bool            `json:"consume"`
+	RequiredLayer        int             `json:"required_layer,omitempty"`
+	RequiredCTYRaw       int             `json:"required_cty_raw,omitempty"`
+	RequiredSection      int             `json:"required_section,omitempty"`
+	RequiredVehicle      string          `json:"required_vehicle,omitempty"`
+	UseTile              *TileCoordinate `json:"use_tile,omitempty"`
+	RequiredStoryFlagRaw int             `json:"required_story_flag_raw,omitempty"`
+	RequiredStoryFlagSet bool            `json:"required_story_flag_set,omitempty"`
+	SetWorldStateMask    int             `json:"set_world_state_mask,omitempty"`
+	ClearStoryFlagsRaw   []int           `json:"clear_story_flags_raw,omitempty"`
+	GrantItemRawID       int             `json:"grant_item_raw_id,omitempty"`
+	SetStoryFlagsRaw     []int           `json:"set_story_flags_raw,omitempty"`
+	// MapPatch is the persistent world-state consumer table reapplied after
+	// save/load. It is distinct from DirectMapPatch because some original
+	// handlers first draw a transient viewport table and later reload a
+	// different persistent table (Gaia sword: DGROUP 3B96 vs 3A54).
+	MapPatch                *WorldMapPatch `json:"map_patch,omitempty"`
+	DirectMapPatch          *WorldMapPatch `json:"direct_map_patch,omitempty"`
+	AnimationPaletteModeRaw int            `json:"animation_palette_mode_raw,omitempty"`
+	AnimationCycles         int            `json:"animation_cycles,omitempty"`
+	DoorKeyTier             int            `json:"door_key_tier,omitempty"`
+	Evidence                Evidence       `json:"evidence"`
 }
 
 // WorldMapPatch is a finite row-major tile replacement copied from an
@@ -1955,6 +1968,17 @@ func (p *Pack) validateEvents() error {
 		if previous := npcRewardSelectors[selector]; previous != "" {
 			return fmt.Errorf("%s: NPC selector duplicates %s", e.ID, previous)
 		}
+		if e.RequiredItemRawID != nil && (*e.RequiredItemRawID < 0 || *e.RequiredItemRawID > 255) {
+			return fmt.Errorf("%s: required_item_raw_id out of range", e.ID)
+		}
+		if e.RequiredItemRawID == nil && e.ReplaceRequired {
+			return fmt.Errorf("%s: replace_required requires required_item_raw_id", e.ID)
+		}
+		for _, flag := range e.ClearStoryFlagsRaw {
+			if flag < 0 || flag >= 512 {
+				return fmt.Errorf("%s: clear story flag out of range", e.ID)
+			}
+		}
 		if err := validateEvidence(e.Evidence); err != nil {
 			return fmt.Errorf("%s evidence: %w", e.ID, err)
 		}
@@ -1992,16 +2016,20 @@ func (p *Pack) validateEvents() error {
 		case "reveal_world_map_patch":
 			patch := e.MapPatch
 			if e.LocationKind != "overworld" || e.RequiredLayer < 0 ||
-				e.RequiredVehicle != "ship" || e.UseTile == nil ||
+				(e.RequiredVehicle != "" && e.RequiredVehicle != "ship") || e.UseTile == nil ||
 				e.UseTile.X < 0 || e.UseTile.Y < 0 ||
-				e.RequiredStoryFlagRaw < 0 || e.RequiredStoryFlagRaw >= 512 ||
+				e.RequiredStoryFlagRaw < -1 || e.RequiredStoryFlagRaw >= 512 ||
 				e.RequiredStoryFlagSet || e.SetWorldStateMask <= 0 ||
 				e.SetWorldStateMask > 0xffff || e.Consume ||
 				patch == nil || patch.Layer != e.RequiredLayer ||
 				patch.Origin.X < 0 || patch.Origin.Y < 0 ||
 				patch.Width <= 0 || patch.Height <= 0 ||
 				len(patch.TilesRaw) != patch.Width*patch.Height ||
-				e.AnimationPaletteModeRaw < 0 || e.AnimationPaletteModeRaw > 255 ||
+				(e.DirectMapPatch != nil && (e.DirectMapPatch.Layer != e.RequiredLayer ||
+					e.DirectMapPatch.Origin.X < 0 || e.DirectMapPatch.Origin.Y < 0 ||
+					e.DirectMapPatch.Width <= 0 || e.DirectMapPatch.Height <= 0 ||
+					len(e.DirectMapPatch.TilesRaw) != e.DirectMapPatch.Width*e.DirectMapPatch.Height)) ||
+				e.AnimationPaletteModeRaw < -1 || e.AnimationPaletteModeRaw > 255 ||
 				e.AnimationCycles <= 0 {
 				return fmt.Errorf("%s: invalid reveal_world_map_patch configuration", e.ID)
 			}
@@ -2010,7 +2038,14 @@ func (p *Pack) validateEvents() error {
 					return fmt.Errorf("%s: map patch tile out of range", e.ID)
 				}
 			}
-			foundClear := false
+			if e.DirectMapPatch != nil {
+				for _, tile := range e.DirectMapPatch.TilesRaw {
+					if tile < 0 || tile > 255 {
+						return fmt.Errorf("%s: direct map patch tile out of range", e.ID)
+					}
+				}
+			}
+			foundClear := e.RequiredStoryFlagRaw < 0
 			for _, flag := range e.ClearStoryFlagsRaw {
 				if flag < 0 || flag >= 512 {
 					return fmt.Errorf("%s: clear story flag out of range", e.ID)
@@ -2024,8 +2059,21 @@ func (p *Pack) validateEvents() error {
 			if e.LocationKind != "town" || e.DoorKeyTier < 1 || e.DoorKeyTier > 3 ||
 				e.Consume || e.DayNightPhase != 0 || e.ResetDayNightSteps ||
 				e.StepCount != 0 || e.RequiredVehicle != "" || e.UseTile != nil ||
-				e.MapPatch != nil {
+				e.MapPatch != nil || e.DirectMapPatch != nil {
 				return fmt.Errorf("%s: invalid open_facing_locked_door configuration", e.ID)
+			}
+		case "grant_quest_item":
+			if e.LocationKind != "town" || e.RequiredCTYRaw < 0 || e.RequiredCTYRaw > 255 ||
+				e.RequiredSection < 0 || e.GrantItemRawID < 0 || e.GrantItemRawID > 255 ||
+				e.Consume || e.RequiredLayer != 0 || e.RequiredVehicle != "" ||
+				e.UseTile != nil || e.MapPatch != nil || e.DirectMapPatch != nil ||
+				e.SetWorldStateMask != 0 || len(e.ClearStoryFlagsRaw) != 0 {
+				return fmt.Errorf("%s: invalid grant_quest_item configuration", e.ID)
+			}
+			for _, flag := range e.SetStoryFlagsRaw {
+				if flag < 0 || flag >= 512 {
+					return fmt.Errorf("%s: set story flag out of range", e.ID)
+				}
 			}
 		default:
 			return fmt.Errorf("%s: unknown item use effect %q", e.ID, e.EffectID)
@@ -2785,6 +2833,16 @@ func (p *Pack) TreasureEvent(id string) (*TreasureEvent, bool) {
 
 func (p *Pack) NPCItemRewardEvents() []NPCItemRewardEvent {
 	return append([]NPCItemRewardEvent(nil), p.Events.NPCItemRewardEvents...)
+}
+
+func (p *Pack) NPCItemRewardEvent(id string) (*NPCItemRewardEvent, bool) {
+	for i := range p.Events.NPCItemRewardEvents {
+		if p.Events.NPCItemRewardEvents[i].ID == id {
+			event := p.Events.NPCItemRewardEvents[i]
+			return &event, true
+		}
+	}
+	return nil, false
 }
 
 func (p *Pack) RuraDestinations() []RuraDestination {

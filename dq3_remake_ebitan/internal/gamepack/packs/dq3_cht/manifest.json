@@ -1,9 +1,9 @@
 {
-  "schema_version": "0.1.21",
+  "schema_version": "0.1.22",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
-  "content_version": "0.1.25",
+  "content_version": "0.1.26",
   "engine_api": ">=0.1.0 <0.2.0",
   "title_text_id": "dq3:text.title",
   "entry_event_id": "dq3:event.new_game",

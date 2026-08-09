@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.21",
+  "schema_version": "0.1.22",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -712,6 +712,48 @@
         "consumer": "the revolution-stage chair-back event dispatches type1 item0x6a to the common inventory consumer and clears present flag0x4a; handler48 reads the same flag and only appends D3TXT07 record43 while the orb remains present",
         "doc": "docs/102-merchant-settlement-world-entrance-re.md"
       }
+    },
+    {
+      "id": "dq3:event.radatome_sun_stone",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 80,
+        "section": 2,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 114,
+        "present_flag_raw": 194
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY80.DAT + DQ3.EXE",
+        "address_space": "file",
+        "address": "legacy treasure raw tuple {80,2,0,1,114,194}; CTY80 section2 event0",
+        "consumer": "the CTY80 section2 type1 event gives Sun Stone 0x72 through the common pack treasure consumer and clears story flag0xc2",
+        "doc": "docs/66-original-flow-oracle.md"
+      }
+    },
+    {
+      "id": "dq3:event.maira_fairy_flute",
+      "kind": "treasure",
+      "treasure": {
+        "cty_raw": 81,
+        "section": 0,
+        "tile_subid": 0,
+        "event_type_raw": 1,
+        "item_raw_id": 119,
+        "present_flag_raw": 155
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "CTY81.DAT + DQ3.EXE",
+        "address_space": "file",
+        "address": "legacy treasure raw tuple {81,0,0,1,119,155}; CTY81 section0 event0",
+        "consumer": "the CTY81 type1 event gives Fairy Flute 0x77 through the common pack treasure consumer and clears story flag0x9b",
+        "doc": "docs/re-log-722-state-machine.md"
+      }
     }
   ],
   "npc_item_reward_events": [
@@ -738,6 +780,60 @@
         "address": "dispatcher 0x4fe5..0x5001, DGROUP 0x3bb4 entry35, handler 0x593a..0x5978",
         "consumer": "the CTY20 night NPC at (16,2) has subtype2/handler35; flag0x3e set opens rec38, gives item0x66 through the party-order eight-slot inventory consumer and clears the flag only on success; a cleared flag opens rec39",
         "doc": "docs/99-teidon-final-key-green-orb-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:event.nirokenta_silver_orb",
+      "kind": "npc_item_reward",
+      "npc": {
+        "cty_raw": 64,
+        "section": 0,
+        "tile": {"x": 16, "y": 10},
+        "handler_raw": 49
+      },
+      "present_flag_raw": 75,
+      "granted_item_raw": 107,
+      "dialogue_text_ids": {
+        "success": "dq3:text.nirokenta.silver_orb.success",
+        "after": "dq3:text.nirokenta.silver_orb.after"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY64.DAT + D3TXT01.TXT",
+        "address_space": "logical",
+        "address": "dispatcher 0x4fe5..0x5001, DGROUP 0x3bb4 entry49, handler 0x5d70..0x5dac",
+        "consumer": "CTY64 sec0 NPC (16,10) handler49 tests story flag0x4b; when set it displays D3TXT01 record84, writes item0x6b through the common inventory consumer, clears flag0x4b only after storage succeeds, and otherwise displays record85",
+        "doc": "docs/107-nirokenta-silver-orb-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:event.staff_of_rain_exchange",
+      "kind": "npc_item_reward",
+      "npc": {
+        "cty_raw": 92,
+        "section": 0,
+        "tile": {"x": 9, "y": 8},
+        "handler_raw": 76
+      },
+      "present_flag_raw": 311,
+      "granted_item_raw": 115,
+      "required_item_raw_id": 116,
+      "replace_required": true,
+      "clear_story_flags_raw": [311],
+      "dialogue_text_ids": {
+        "success": "dq3:text.staff_of_rain.success",
+        "after": "dq3:text.staff_of_rain.after"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY92.DAT + D3TXT09.TXT",
+        "address_space": "logical",
+        "address": "handler75 logical 0x6379; CTY92 sec0 NPC (9,8) raw handler76; D3TXT09 records28-29",
+        "consumer": "the lower-world spirit checks the party's Spirit Guard 0x74, replaces that inventory slot with Staff of Rain 0x73, then clears story flag0x137; repeat talks use the post-completion text",
+        "doc": "docs/re-log-722-state-machine.md",
+        "note": "The static NPC record is retained as raw handler76; the adjacent dispatcher handler75 is the IDA semantic entry."
       }
     }
   ],
@@ -875,6 +971,82 @@
         "address": "item table DGROUP 0x366a entry29; handler 0x4012..0x4062; world-state consumer 0x2c9c; patch table DGROUP 0x3a54",
         "consumer": "item 0x5e requires story flag0x12 clear, ship state1 and world (0x92,0x35); success sets world-state bit0x08, runs palette mode4 for four cycles, copies the 5x4 tile patch at (0x90,0x32), clears flag0x12 and redraws the field",
         "doc": "docs/98-thirsty-pitcher-final-key-production-trace.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.gaia_sword_volcano",
+      "kind": "item_use",
+      "item_raw_id": 15,
+      "effect_id": "reveal_world_map_patch",
+      "location_kind": "overworld",
+      "day_night_phase": 0,
+      "reset_day_night_steps": false,
+      "step_count": 0,
+      "consume": false,
+      "required_layer": 0,
+      "use_tile": {"x": 65, "y": 109},
+      "required_story_flag_raw": -1,
+      "required_story_flag_set": false,
+      "set_world_state_mask": 32,
+      "clear_story_flags_raw": [],
+      "map_patch": {
+        "layer": 0,
+        "origin": {"x": 61, "y": 111},
+        "width": 5,
+        "height": 4,
+        "tiles_raw": [
+          88, 88, 96, 88, 88,
+          88, 104, 66, 102, 88,
+          94, 66, 124, 66, 92,
+          88, 90, 90, 90, 88
+        ]
+      },
+      "direct_map_patch": {
+        "layer": 0,
+        "origin": {"x": 61, "y": 111},
+        "width": 5,
+        "height": 4,
+        "tiles_raw": [
+          39, 9, 9, 3, 0,
+          9, 9, 3, 0, 66,
+          3, 80, 0, 38, 66,
+          110, 38, 38, 37, 66
+        ]
+      },
+      "animation_palette_mode_raw": -1,
+      "animation_cycles": 30,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "item dispatcher 0x3ccf..0x3d16; special table DGROUP 0x3666/0x3668; handler 0x3d65..0x3d7c; direct writer 0x4d31 (DGROUP 0x3b96, file 0x19cd6); reload writer 0x2c9c..0x2d93 (DGROUP 0x3a54, file 0x19b94)",
+        "consumer": "raw item0x0f is the sole special-item table entry and reaches handler 0x3d65; only world (0x41,0x6d) succeeds, then handler 0x43c9 runs 30 update cycles and direct viewport writer 0x4d31 copies DGROUP0x3b96. It ORs DGROUP0x4f44 bit0x20; after a world reload consumer 0x2c9c copies the distinct persistent DGROUP0x3a54 table. The two tables must not be merged.",
+        "doc": "docs/106-gaia-sword-volcano-re-worklist.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.fairy_flute_rubiss",
+      "kind": "item_use",
+      "item_raw_id": 119,
+      "effect_id": "grant_quest_item",
+      "location_kind": "town",
+      "day_night_phase": 0,
+      "reset_day_night_steps": false,
+      "step_count": 0,
+      "consume": false,
+      "required_cty_raw": 82,
+      "required_section": 0,
+      "grant_item_raw_id": 116,
+      "set_story_flags_raw": [311],
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY81.DAT + CTY82.DAT + D3TXT09.TXT",
+        "address_space": "logical",
+        "address": "item raw0x77; CTY81 sec0 treasure (22,20) raw 01 77 00 9b; CTY82 Rubiss runner/use path; D3TXT09 records27-29",
+        "consumer": "the Fairy Flute 0x77 is retained, and using it in Rubiss Tower CTY82 grants one Spirit Guard 0x74 through the party inventory consumer",
+        "doc": "docs/re-log-722-state-machine.md"
       }
     }
   ],

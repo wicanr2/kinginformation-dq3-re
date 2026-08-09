@@ -328,7 +328,7 @@ type Game struct {
 	roster                  []*Member                       // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
 	flags                   map[int]bool                    // remake 暫存旗標；原版劇情旗標一律使用 storyBits
 	storyBits               [64]byte                        // 原版 [0x4f70] flag 陣列；祭壇用到 0x131，非舊誤判的 256-bit 上限
-	worldState              uint16                          // 原版 [0x4f44] 世界狀態；bit0x40=彩虹橋已架
+	worldState              uint16                          // 原版 [0x4f44] 世界狀態；bit0x20=蓋亞火山、bit0x40=彩虹橋
 	trackedWorldPositions   map[string]trackedWorldPosition // game-pack 動態世界物件座標；與玩家返回座標分離
 	worldObjectBufferX      int                             // 原版 80x80 world buffer 左上角（scratch，不進存檔）
 	worldObjectBufferY      int
@@ -446,13 +446,17 @@ func (g *Game) selectCommand(cmd int) {
 	case cmdTalk:
 		if idx := g.facingNPC(); idx >= 0 {
 			n := &g.cur.npcs[idx]
+			// Pack-owned NPC transactions may use the original runner/subtype
+			// value as a selector even when the map record is sub0/sub1. Check
+			// this finite data primitive before the generic dialogue branch.
+			if g.talkNPCItemReward(n) {
+				return
+			}
 			switch sub := (n.ctrl >> 3) & 7; {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
 			case sub == 2: // scripted NPC(給物/劇情)
-				if g.talkNPCItemReward(n) {
-					// game-pack NPC → party-order finite inventory reward primitive.
-				} else if g.curCty == ctyPhoenixShrine && n.b4 == phoenixGuardianHandler {
+				if g.curCty == ctyPhoenixShrine && n.b4 == phoenixGuardianHandler {
 					g.talkPhoenixGuardian()
 				} else if g.talkZomaFinal(n) {
 					// CTY90 sec5 handler80：自然交談入口。
@@ -548,6 +552,20 @@ func (g *Game) openAliahanSpecialNPC(n *npcInst) bool {
 }
 
 func (g *Game) hasItem(code int) bool { return g.countItem(code) > 0 }
+
+// hasPartyItem 對齊原版需要掃描整個隊伍物品記錄的劇情消費者；
+// hasItem 仍保留「主角背包」語意，避免一般道具選單與隊伍交易混用。
+func (g *Game) hasPartyItem(code int) bool {
+	if g.hasItem(code) {
+		return true
+	}
+	for _, member := range g.companions {
+		if containsInt(member.Inventory, code) {
+			return true
+		}
+	}
+	return false
+}
 
 // shipTileFor:我方 facing(0下1上2左3右)→ 船 BLK tile(移植 dq3_ship_tile_for_facing)。
 func shipTileFor(facing int) int {
@@ -1049,6 +1067,8 @@ func (g *Game) step(in InputState) error {
 					g.itemSelected = -1
 				case confirm && g.itemActionCursor == 1 && len(g.companions) > 0:
 					g.itemActionStage, g.itemActionCursor = itemActionTarget, 0
+				case confirm && g.itemActionCursor == 2:
+					g.dropSelectedItem()
 				case in.DirEdge == 0:
 					g.itemActionCursor = (g.itemActionCursor + 1) % 3
 				case in.DirEdge == 1:
@@ -1356,8 +1376,7 @@ func (g *Game) setStoryFlag(id int, v bool) {
 		return
 	}
 	m := byte(0x80 >> (uint(id) & 7))
-	before := g.storyBits[id>>3]&m != 0
-	if before == v {
+	if (g.storyBits[id>>3]&m != 0) == v {
 		return
 	}
 	if v {
@@ -1453,6 +1472,16 @@ func (g *Game) tryTransition() {
 	if !g.inTown {
 		return
 	}
+	// CTY90 的橋東側 (19,29) 同時是通往 sec5 的 transition。原版
+	// handler79 要求玩家先站在橋東側，再由右往左踏入 (18,29)；
+	// e0 尚在且向右跨上橋時必須暫緩 transition，否則玩家永遠無法
+	// 以正式輸入站到事件的起始格。事件完成後 e0 會清除，向右離橋
+	// 才恢復原始 sec4→sec5 轉場。
+	if g.curCty == ctyZomaCastle && g.cur != nil && g.cur.sec == ortegaSection &&
+		g.px == ortegaTriggerX+1 && g.py == ortegaTriggerY &&
+		g.facing == 3 && g.storyFlag(ortegaFightFlag) {
+		return
+	}
 	dcty, dsec, dx, dy, ok := g.cur.tileTransition(g.px, g.py)
 	if !ok {
 		return
@@ -1472,6 +1501,13 @@ func (g *Game) tryTransition() {
 			g.py = dy
 		}
 		g.overPx, g.overPy = g.px, g.py
+		// The original vehicle state stores only ownership/mounted status; the
+		// descent entrance has no separate persistent lower-world sprite
+		// coordinate. Re-anchor an owned, parked Phoenix at the real landing
+		// tile so the next formal Confirm can board it without a state injection.
+		if dsec == 0xfe && g.phoenixOwned && !g.phoenixAboard {
+			g.phoenixX, g.phoenixY = g.px, g.py
+		}
 		g.renderFrame()
 		return
 	}
@@ -1807,7 +1843,7 @@ func (g *Game) startEncounter() {
 		g.heroHP, g.heroMP, g.heroInit = maxHP, maxMP, true
 	}
 	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
-		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
+		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
 	comps := g.buildCompanionActors()
 	region := g.encounters.Region(g.px, g.py)
 	slot := g.encounters.Slot(region, g.prng.Next(4))
@@ -1879,8 +1915,8 @@ func (g *Game) startBossBattle(monID int) bool {
 		g.heroHP, g.heroMP, g.heroInit = maxHP, maxMP, true
 	}
 	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
-		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
-	g.battle.lightOrb = monID == 0x7c && g.hasItem(0x65) // 持光之珠 → 索瑪二階段弱化
+		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
+	g.battle.lightOrb = monID == 0x7c && g.hasPartyItem(itemLightOrb) // 隊伍持光之珠 → 索瑪二階段弱化
 	g.battle.showInfo = g.cfg.CombatInfo
 	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
 	if g.battle.start(monID, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
@@ -1910,7 +1946,7 @@ const (
 func (g *Game) tryOrtegaEvent() bool {
 	if !g.inTown || g.curCty != ctyZomaCastle || g.cur == nil || g.cur.sec != ortegaSection ||
 		g.px != ortegaTriggerX || g.py != ortegaTriggerY || g.ortegaStage != 0 ||
-		!g.storyFlag(ortegaFightFlag) {
+		!g.storyFlag(ortegaFightFlag) || g.facing != 2 {
 		return false
 	}
 	if !g.dlg.Open(ortegaFightRec) {
@@ -2063,6 +2099,20 @@ func (g *Game) countItem(code int) int {
 	return n
 }
 
+// countPartyItem:戰鬥可用的消耗品由整個隊伍的個人道具欄共同提供；
+// 一般地圖道具選單仍以主角背包為入口，避免把兩種查詢語意混在一起。
+func (g *Game) countPartyItem(code int) int {
+	n := g.countItem(code)
+	for _, m := range g.companions {
+		for _, c := range m.Inventory {
+			if c == code {
+				n++
+			}
+		}
+	}
+	return n
+}
+
 // removeItems:從背包移除最多 n 個某 item id。
 func (g *Game) removeItems(code, n int) {
 	out := g.inventory[:0]
@@ -2074,6 +2124,28 @@ func (g *Game) removeItems(code, n int) {
 		out = append(out, c)
 	}
 	g.inventory = out
+}
+
+// removePartyItems:依主角→同伴順序消耗隊伍共享的戰鬥消耗品。
+func (g *Game) removePartyItems(code, n int) {
+	if n <= 0 {
+		return
+	}
+	g.removeItems(code, n)
+	for _, m := range g.companions {
+		if n <= 0 {
+			break
+		}
+		out := m.Inventory[:0]
+		for _, c := range m.Inventory {
+			if c == code && n > 0 {
+				n--
+				continue
+			}
+			out = append(out, c)
+		}
+		m.Inventory = out
+	}
 }
 
 // buildCompanionActors:把同伴 Member 轉成戰鬥即時 actor(數值由職業成長表 + 裝備推導)。
@@ -2099,7 +2171,7 @@ func (g *Game) onBattleEnd() {
 		}
 	}
 	if g.battle.usedHerbs > 0 { // 扣掉戰鬥中用掉的藥草
-		g.removeItems(herbCode, g.battle.usedHerbs)
+		g.removePartyItems(herbCode, g.battle.usedHerbs)
 	}
 	if g.battle.result == 1 { // 勝:全隊加 exp/gold
 		oldLv := stats.LevelForExp(0, g.heroExp)

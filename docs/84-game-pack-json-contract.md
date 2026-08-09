@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.15"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.22"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -190,7 +190,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.15",
+  "schema_version": "0.1.22",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -611,7 +611,8 @@ save/load 見 [`docs/105`](105-olivia-cape-gaia-sword-production-trace.md)。
 | `[].required_story_flag_raw`／`[].required_story_flag_set` | int／boolean | patch 必填 | 有限 story-bit gate；不接受任意布林式。 |
 | `[].set_world_state_mask` | int | patch 必填 | 原版持久 world-state bit；必須非零。 |
 | `[].clear_story_flags_raw` | int[] | patch 必填 | 成功後依原始 handler clear；必須包含 gate flag。 |
-| `[].map_patch` | object | patch 必填 | `layer/origin/width/height/tiles_raw`；row-major 長度必須等於寬×高，tile 皆為 0–255。 |
+| `[].map_patch` | object | patch 必填 | **持久** world-state consumer 讀檔時重建的 `layer/origin/width/height/tiles_raw`；row-major 長度必須等於寬×高，tile 皆為 0–255。 |
+| `[].direct_map_patch` | object | 否 | 道具 handler 當幀直接寫入現行 viewport 的表；欄位同 `map_patch`。若原版 direct writer 與 reload consumer 使用不同 table，兩者必須分開保存；只在成功使用當幀套用，讀檔不得把它當持久資料。 |
 | `[].animation_palette_mode_raw`／`[].animation_cycles` | int／int | patch 必填 | 保存原版 transition 參數；不代表引擎已達逐幀 V3。 |
 | `[].evidence` | object | 是 | item dispatcher、pointer table、writer、clock/palette consumer 與可見結果的 D3 證據。 |
 
@@ -619,7 +620,9 @@ save/load 見 [`docs/105`](105-olivia-cape-gaia-sword-production-trace.md)。
 fallback 重新解釋。location／目前 phase gate 失敗不消耗、不重設 clock，也不得用 Go 預設值
 補缺欄位。`temporary_invisibility` 只設定具名暫態效果與步數；它不得直接內嵌守衛座標、
 NPC 移動或任意碰撞規則。`reveal_world_map_patch` 只能執行固定 gate、state bit 與有限
-row-major tile replacement；讀檔以同一 mask 重建，不能用 remake flag 取代。DQ3 canonical 範例見 `events.json`、
+row-major tile replacement；讀檔以 `map_patch` 持久表重建，不能用 remake flag 取代。
+若 `direct_map_patch` 存在，必須另有 IDA／原版 evidence 證明當幀 writer；不得把 direct 表
+誤當成 reload 表。DQ3 canonical 範例見 `events.json`、
 [`docs/93`](93-teidon-dark-lamp-production-trace.md) 與
 [`docs/96`](96-invisibility-grass-eginbear-production-trace.md)、
 [`docs/98`](98-thirsty-pitcher-final-key-production-trace.md)。
@@ -931,7 +934,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.15",
+  "schema_version": "0.1.22",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

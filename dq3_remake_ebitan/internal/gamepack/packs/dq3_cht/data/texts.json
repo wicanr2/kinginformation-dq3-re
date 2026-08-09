@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.21",
+  "schema_version": "0.1.22",
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
@@ -984,6 +984,38 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 598},
       "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "IDA linear 0x126f0..0x12701; record598", "consumer": "the item0x64 success branch displays record598 before clearing story flag0x35", "doc": "docs/105-olivia-cape-gaia-sword-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.nirokenta.silver_orb.success",
+      "value": "*「什麼,找到這裡來了!\n---\n*「你們的話,\n一定可以粉碎\n大魔王的陰謀。\n---\n*「那麼把這個拿去吧。",
+      "glyph_codes": [59,60,435,436,55,769,453,398,512,461,423,57,65532,59,60,528,529,149,449,55,65534,12,12,401,1022,229,456,257,639,65534,12,12,163,110,186,149,1016,1017,56,65532,59,60,354,436,530,398,546,558,448,499,56],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT01.TXT", "record": 84},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT01.TXT", "address_space": "logical", "address": "handler49 0x5d70; D3TXT01 record84", "consumer": "CTY64 handler49 success branch displays the text before storing item0x6b", "doc": "docs/107-nirokenta-silver-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.nirokenta.silver_orb.after",
+      "value": "*「你們的話,\n一定可以粉碎\n大魔王的陰謀。",
+      "glyph_codes": [59,60,528,529,149,449,55,65534,12,12,401,1022,229,456,257,639,65534,12,12,163,110,186,149,1016,1017,56],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT01.TXT", "record": 85},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT01.TXT", "address_space": "logical", "address": "handler49 0x5d70; D3TXT01 record85", "consumer": "CTY64 handler49 clear-flag branch displays the repeat dialogue", "doc": "docs/107-nirokenta-silver-orb-production-trace.md"}
+    },
+    {
+      "id": "dq3:text.staff_of_rain.success",
+      "value": "*「我是從前服侍魯比斯的精靈。\n---\n*「就給你充滿回憶的雲雨之杖。",
+      "glyph_codes": [59,60,493,399,511,535,192,1168,377,351,365,65534,12,12,149,338,339,56,65532,59,60,633,559,528,1459,251,312,320,65534,12,12,149,336,337,145,146,56],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT09.TXT", "record": 28},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT09.TXT", "address_space": "logical", "address": "handler75 logical 0x6379; record28", "consumer": "CTY92 staff-of-rain exchange success text before replacing Spirit Guard 0x74", "doc": "docs/re-log-722-state-machine.md"}
+    },
+    {
+      "id": "dq3:text.staff_of_rain.after",
+      "value": "*「為了魯比斯,\n請拯救這個世界吧。",
+      "glyph_codes": [59,60,611,423,377,351,365,55,65534,12,12,12,571,1059,597,398,546,269,270,499,56],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT09.TXT", "record": 29},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT09.TXT", "address_space": "logical", "address": "handler75 logical 0x6379; record29", "consumer": "CTY92 staff-of-rain exchange repeat dialogue after story flag0x137 clears", "doc": "docs/re-log-722-state-machine.md"}
     }
   ]
 }

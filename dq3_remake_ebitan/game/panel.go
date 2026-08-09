@@ -139,6 +139,26 @@ func (g *Game) giveSelectedItem(target int) bool {
 	return true
 }
 
+// dropSelectedItem:原版 rec421「丟掉」動作。丟棄只改主角目前選取的
+// inventory slot，不觸發任何道具效果、旗標或消耗動畫。
+func (g *Game) dropSelectedItem() bool {
+	if g.itemSelected < 0 || g.itemSelected >= len(g.inventory) {
+		return false
+	}
+	g.inventory = append(g.inventory[:g.itemSelected], g.inventory[g.itemSelected+1:]...)
+	if len(g.inventory) == 0 {
+		g.panelCursor = 0
+	} else if g.itemSelected >= len(g.inventory) {
+		g.panelCursor = len(g.inventory) - 1
+	} else {
+		g.panelCursor = g.itemSelected
+	}
+	g.itemSelected = -1
+	g.itemActionCursor = 0
+	g.itemActionStage = itemActionList
+	return true
+}
+
 func (g *Game) equipActorName(actor int) []int {
 	if actor == 0 {
 		if len(g.heroName) > 0 {

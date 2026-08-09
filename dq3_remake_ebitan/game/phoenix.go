@@ -41,17 +41,36 @@ func (g *Game) tryPhoenixAltar(x, y int) bool {
 	if !g.storyFlag(flag) {
 		return true
 	}
-	item := -1
+	item, owner := -1, -1 // 0=勇者，1..=目前隊伍中的同伴
 	for code := itemGreenOrb; code <= itemSilverOrb; code++ {
 		if g.hasItem(code) {
-			item = code
+			item, owner = code, 0
+			break
+		}
+		for i, member := range g.companions {
+			if containsInt(member.Inventory, code) {
+				item, owner = code, i+1
+				break
+			}
+		}
+		if item >= 0 {
 			break
 		}
 	}
 	if item < 0 {
 		return true
 	}
-	g.removeItems(item, 1)
+	if owner == 0 {
+		g.removeItems(item, 1)
+	} else {
+		member := g.companions[owner-1]
+		for i, code := range member.Inventory {
+			if code == item {
+				member.Inventory = append(member.Inventory[:i], member.Inventory[i+1:]...)
+				break
+			}
+		}
+	}
 	g.setStoryFlag(phoenixVisualFlagBase+item-itemGreenOrb, false)
 	g.setStoryFlag(flag, false)
 	g.dlg.Open(96)
