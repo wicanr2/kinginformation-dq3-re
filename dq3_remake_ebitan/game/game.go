@@ -335,6 +335,8 @@ type Game struct {
 	showTitle                 bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
 	titlePix                  []uint8
 	titlePal                  []dq3data.Color
+	newGameConfirmPix         []uint8
+	newGameConfirmPal         []dq3data.Color
 	attractPix                [][]uint8
 	attractPal                [][]dq3data.Color
 	attractSeq                *gamepack.AttractSequence
@@ -2332,7 +2334,18 @@ func (g *Game) renderFrame() {
 			g.frame.WritePixels(g.rgba)
 			return
 		}
-		drawIndexedPCX(g.rgba, g.titlePix, g.titlePal)
+		if g.newGame.stage == ngConfirm {
+			if len(g.newGameConfirmPix) == ScreenW*ScreenH && len(g.newGameConfirmPal) == 16 {
+				drawIndexedPCX(g.rgba, g.newGameConfirmPix, g.newGameConfirmPal)
+			} else {
+				for i := 0; i < ScreenW*ScreenH; i++ {
+					o := i * 4
+					g.rgba[o], g.rgba[o+1], g.rgba[o+2], g.rgba[o+3] = 0, 0, 0, 255
+				}
+			}
+		} else {
+			drawIndexedPCX(g.rgba, g.titlePix, g.titlePal)
+		}
 		white := dq3data.Color{R: 255, G: 255, B: 255}
 		if len(g.titlePal) > 15 {
 			white = g.titlePal[15]
@@ -2726,9 +2739,51 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		}
 		return pix, pal, nil
 	}
+	loadRawScreenAsset := func(spec *gamepack.RawScreenAsset) ([]uint8, []dq3data.Color, error) {
+		if spec == nil {
+			return nil, nil, nil
+		}
+		ref, ok := pack.Asset(spec.AssetKey)
+		if !ok {
+			return nil, nil, fmt.Errorf("game pack raw screen %q has no manifest asset", spec.ID)
+		}
+		raw := ld.read(ref.Path)
+		if ld.err != nil {
+			return nil, nil, ld.err
+		}
+		if ref.Size > 0 && int64(len(raw)) != ref.Size {
+			return nil, nil, fmt.Errorf("game pack asset %q size mismatch: got %d want %d", spec.AssetKey, len(raw), ref.Size)
+		}
+		if ref.SHA256 != "" {
+			got := fmt.Sprintf("%x", sha256.Sum256(raw))
+			if got != ref.SHA256 {
+				return nil, nil, fmt.Errorf("game pack asset %q sha256 mismatch: got %s want %s", spec.AssetKey, got, ref.SHA256)
+			}
+		}
+		if spec.Format != "row_interleaved_4bpp" {
+			return nil, nil, fmt.Errorf("game pack raw screen %q has unsupported format %q", spec.ID, spec.Format)
+		}
+		pix, err := dq3data.DecodeRowInterleaved4BPP(raw, spec.Width, spec.Height)
+		if err != nil {
+			return nil, nil, fmt.Errorf("decode game pack asset %q (%s): %w", spec.AssetKey, ref.Path, err)
+		}
+		if spec.Width != ScreenW || spec.Height != ScreenH {
+			return nil, nil, fmt.Errorf("game pack raw screen %q has size %dx%d, want %dx%d", spec.ID, spec.Width, spec.Height, ScreenW, ScreenH)
+		}
+		pal := make([]dq3data.Color, len(spec.Palette))
+		for i, rgb := range spec.Palette {
+			pal[i] = dq3data.Color{R: rgb[0], G: rgb[1], B: rgb[2]}
+		}
+		return pix, pal, nil
+	}
 	var assetErr error
 	if g.titlePix, g.titlePal, assetErr = loadPCXAsset("title_image"); assetErr != nil {
 		return nil, assetErr
+	}
+	if spec, ok := pack.NewGameConfirmation(); ok {
+		if g.newGameConfirmPix, g.newGameConfirmPal, assetErr = loadRawScreenAsset(spec); assetErr != nil {
+			return nil, assetErr
+		}
 	}
 	g.showTitle = g.titlePix != nil
 	if seq, ok := pack.AttractSequence(); ok {

@@ -12,6 +12,8 @@
 不代表 CTY60／61 階段或全程畫面 parity 已完成。
 標題閒置後的八張職業 attract 也已由 game-pack 接線，順序／PCX 達 D3、輪播 timing 達 E2；
 能力條逐幀填充與淡入淡出仍待 V3。
+新遊戲能力確認畫面的 `FIRST.SCR` raw 背景也已由 game-pack 載入，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2；
+stat panel 幾何仍待同狀態 V3。
 
 ## 先讀這些
 
@@ -109,6 +111,8 @@ RE 文件。
 ![Ebiten：四人縱列與四欄 H/M/等級隊伍 HUD（pack 驅動 E2）](dq3_remake_ebitan/docs/img/party_field_hud.png)
 
 ![Ebiten：標題閒置後的戰士職業 attract 卡（pack 驅動 E2）](dq3_remake_ebitan/docs/img/title_attract_warrior.png)
+
+![Ebiten：新遊戲能力確認畫面的 FIRST.SCR 人物背景（pack 驅動 D2／V2）](dq3_remake_ebitan/docs/ng_confirm.png)
 
 ![Ebiten：革命後調查建城者座位後方取得黃寶珠](docs/img/merchant_revolution_yellow_orb_obtained.png)
 

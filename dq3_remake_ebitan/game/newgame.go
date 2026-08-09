@@ -11,7 +11,8 @@ import (
 // Lv1 能力生成/「這個人可以嗎？」→ 開始新遊戲。
 // 命名/性別 widget 與酒館招募共用 NameInput/GenderSelect(nameinput.go),不重複兩份邏輯;
 // 差異只在完成放行 gate:主角創建強制非空(下方 ngName case),酒館允許空名回退職業名。
-// 出生點暫沿用現行地表中心(家室內場景待 C-2)、紅披風勇者立繪暫略(TODO C-7)。
+// 出生點由 startOpening 載入 CTY00 sec4；能力確認背景由 game-pack 的 raw screen 提供，
+// stat panel 本身仍是共用 renderer，逐像素幾何對拍另列 V3 工作。
 const (
 	ngSplash  = iota // 標題背景(壓任意鍵開主選單)
 	ngMenu           // 主選單:遊戲開始 / 載入進度
@@ -172,9 +173,6 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 		}
 		nf.gs.draw(rgba, tx, white, yellow, 80, 100, 22)
 	case ngConfirm:
-		for i := 0; i < ScreenW*ScreenH; i++ {
-			rgba[i*4], rgba[i*4+1], rgba[i*4+2], rgba[i*4+3] = 0, 0, 0, 255
-		}
 		drawNewGameStats(rgba, tx, nf, white, yellow)
 	}
 }

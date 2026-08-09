@@ -79,6 +79,33 @@ func TestDQ3AttractPackAssets(t *testing.T) {
 	}
 }
 
+func TestNewGameConfirmationBackground(t *testing.T) {
+	g := attractFixture(t)
+	if len(g.newGameConfirmPix) != ScreenW*ScreenH || len(g.newGameConfirmPal) != 16 {
+		t.Fatalf("FIRST.SCR confirmation background not loaded: pix=%d pal=%d",
+			len(g.newGameConfirmPix), len(g.newGameConfirmPal))
+	}
+	g.newGame.stage = ngConfirm
+	g.renderFrame()
+	if got := g.rgba[0:4]; got[0] != 0 || got[1] != 0 || got[2] != 0 || got[3] != 255 {
+		t.Fatalf("confirmation background first pixel=%v, want opaque black", got)
+	}
+	// Stable region coverage from FIRST.SCR proves that rendering is not the old
+	// empty black canvas; the palette itself is owned by the pack contract.
+	nonzero := 0
+	for y := 0; y < ScreenH; y++ {
+		for x := ScreenW / 2; x < ScreenW; x++ {
+			o := (y*ScreenW + x) * 4
+			if g.rgba[o] != 0 || g.rgba[o+1] != 0 || g.rgba[o+2] != 0 {
+				nonzero++
+			}
+		}
+	}
+	if nonzero < 1000 {
+		t.Fatalf("confirmation background figure region remained mostly black: nonzero=%d", nonzero)
+	}
+}
+
 func TestDumpAttractPNG(t *testing.T) {
 	if os.Getenv("DQ3_DUMP_ATTRACT") == "" {
 		t.Skip("設 DQ3_DUMP_ATTRACT=1 才輸出 attract 對拍圖")

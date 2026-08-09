@@ -88,7 +88,7 @@ save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；�
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
 同時控制寶箱與入口物件 visibility；詳見 `docs/101`。現行 pack manifest 為 schema
-`0.1.22`、`dq3_cht` content `0.1.27`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
+`0.1.23`、`dq3_cht` content `0.1.27`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
 的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
 `0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
 入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
@@ -104,7 +104,7 @@ boot trace 已由商人交付自然重進 CTY60，並正式航行到 CTY41、走
 record97／98、monster89、變身杖 `0x62` 與勝利旗標交易，故此段升為 campaign E3／V1。
 IDA 9.4 證實離城 consumer 直接使用 transition X/Y、兩者皆零才回退 remembered
 coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。後續狀態以本檔下方的
-`0.1.22` 段落與 `docs/74` 為準，不沿用本段早期的剩餘工作清單。
+`0.1.23` 段落與 `docs/74` 為準，不沿用本段早期的剩餘工作清單。
 2026-08-09 已用一次性 Docker+Xvfb 通過 `TestOpeningProductionInputTrace`：從新遊戲、正式
 InputState、不中途注入座標／道具／事件函式，依序完成 CTY83 黃寶珠、六珠／拉米亞、巴拉摩斯、
 自然下降、愛列夫加特、蓋亞之劍火山、尼羅肯特銀寶珠、索瑪城奧爾特加事件、封咒三連戰、
@@ -216,6 +216,13 @@ trace 隨後已通過 CTY83、P4–P6 與 new game→THE END；後續只處理 V
 輸入會中斷輪播並回主選單；`title_attract_warrior.png` 是 runtime 對拍。PCX／順序達 D3/E2，
 能力條逐幀填充與淡入淡出仍待 V3。商店／教會／旅社逐窗、日夜 palette、BGM／SFX 及
 Android／桌面 release 仍是未閉合工作。
+
+2026-08-09 另一個高可見度切片已完成：原版 `FIRST.SCR`（112000 bytes）經
+`DecodeRowInterleaved4BPP` 以每列 plane0..3 的 row-interleaved 格式解碼，專用 16 色
+palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmation`，manifest
+保存尺寸／SHA-256。正式 `ngConfirm` renderer 先畫 pack 背景再疊能力 stat panel；runtime
+圖 `dq3_remake_ebitan/docs/ng_confirm.png` 已更新，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2，panel 幾何仍待
+同狀態 V3。game-pack schema 現為 `0.1.23`；不得把此前 `0.1.22` 歷史段落當成目前版本。
 
 ## 固定工程方法
 

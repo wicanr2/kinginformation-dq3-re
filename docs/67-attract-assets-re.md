@@ -35,8 +35,10 @@
 
 ## FIRST.SCR(112,000 bytes = 640×350×4bpp 整,無 header raw)
 
-- plane-major 排列(整面 4 plane 分離)解出**連貫的單色雙人立繪**(灰階試看);row-interleave 排列破碎 → **採 plane-major**。
-- 內容:近景雙人物 mono 美術,屬開場演出族(「FIRST」= 開機第一張?)。真 palette 與在序列中的位置待影格對位。
+- **row-interleaved 排列**：每掃描列依序放 plane0..3，各 80 bytes；由 `DecodeRowInterleaved4BPP`
+  解出 640×350 雙人物原畫。
+- 原版另設開場專用 16 色 DAC；palette 已由 DOSBox 能力確認／姓名畫面 oracle 固定並資料化在
+  `interface.json.new_game_confirmation.palette`，不可直接套用 `DQ3.PAL`。
 
 ## Ebiten 接線狀態（2026-08-09）
 
@@ -47,13 +49,19 @@
 方向／觸控輸入都會中斷巡禮並交回原本主選單，無輸入注入或 debug shortcut。runtime 對拍：
 [`title_attract_warrior.png`](../dq3_remake_ebitan/docs/img/title_attract_warrior.png)。
 
+同一份 pack 也宣告 `FIRST.SCR` 為 `new_game_confirmation` raw screen；正式 `ngConfirm` renderer
+先解碼背景，再疊 stat panels。runtime 對拍圖為
+[`ng_confirm.png`](../dq3_remake_ebitan/docs/ng_confirm.png)，目前原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2，
+stat panel 的逐像素幾何仍待同狀態 V3。
+
 仍未宣稱逐像素 V3 的部分是原版能力條逐幀填充與淡入／淡出；目前先完成可重播的八卡
 E2／V1 vertical slice，待取得同狀態 DOSBox 逐幀 oracle 後再升級 timing／動畫。
 
 ## 對戰役的意義
 
-1. **attract/開場/結局美術層 = 21 張現成 PCX + 1 張 raw**,解碼器已存在(`internal/dq3data/pcx.go`)——
-   ebitan 實作 attract 演出**沒有素材障礙**,剩排程邏輯(輪播順序/秒數/能力條動畫)= 影格對位即可。
+1. **attract/開場/結局美術層 = 21 張現成 PCX + 1 張 raw**；PCX 由
+   `internal/dq3data/pcx.go`、FIRST.SCR 由 `DecodeRowInterleaved4BPP` 解碼，Ebiten 已接入
+   attract 與能力確認背景，剩排程／能力條動畫與同狀態 V3 對拍。
 2. oracle 待核對清單 #10 大半關閉:職業共 **8 張**、WORTHY=賢者、PLAYER=遊玩者、立繪=獨立 PCX。
-3. 殘項:TIT1/TIT2/TITA/TITC 鑑定、FIRST.SCR palette、attract 輪播節奏(秒/張)、
-   能力條捲動速度 —— 全部可由現有影格 + dump 完成,無需新 RE。
+3. 殘項:TIT1/TIT2/TITA/TITC 鑑定、attract 輪播節奏(秒/張)、能力條捲動速度與
+   能力確認 stat panel 幾何 —— 可由現有影格 + dump 繼續閉合,無需新 RE。

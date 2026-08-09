@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.22"
+	SchemaVersion = "0.1.23"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -126,11 +126,25 @@ type AttractSequence struct {
 	Evidence         Evidence       `json:"evidence"`
 }
 
+// RawScreenAsset describes a version-owned planar screen whose bytes and
+// palette are separate. The engine only knows the format primitive; the pack
+// supplies the asset key, dimensions, palette and evidence.
+type RawScreenAsset struct {
+	ID       string     `json:"id"`
+	AssetKey string     `json:"asset_key"`
+	Width    int        `json:"width"`
+	Height   int        `json:"height"`
+	Format   string     `json:"format"`
+	Palette  [][3]uint8 `json:"palette"`
+	Evidence Evidence   `json:"evidence"`
+}
+
 type Interface struct {
-	SchemaVersion string           `json:"schema_version"`
-	Dialogue      WindowLayout     `json:"dialogue"`
-	PartyHUD      WindowLayout     `json:"party_hud,omitempty"`
-	Attract       *AttractSequence `json:"attract,omitempty"`
+	SchemaVersion       string           `json:"schema_version"`
+	Dialogue            WindowLayout     `json:"dialogue"`
+	PartyHUD            WindowLayout     `json:"party_hud,omitempty"`
+	Attract             *AttractSequence `json:"attract,omitempty"`
+	NewGameConfirmation *RawScreenAsset  `json:"new_game_confirmation,omitempty"`
 }
 
 type TileCoordinate struct {
@@ -1189,6 +1203,21 @@ func (p *Pack) validateInterface() error {
 		}
 		if err := validateEvidence(h.Evidence); err != nil {
 			return fmt.Errorf("party HUD evidence: %w", err)
+		}
+	}
+	if s := p.Interface.NewGameConfirmation; s != nil {
+		if s.ID == "" || s.AssetKey == "" || s.Width <= 0 || s.Height <= 0 ||
+			s.Width%8 != 0 || s.Format != "row_interleaved_4bpp" {
+			return errors.New("new-game confirmation raw screen is invalid")
+		}
+		if _, ok := p.Manifest.Assets[s.AssetKey]; !ok {
+			return fmt.Errorf("new-game confirmation: unknown asset key %q", s.AssetKey)
+		}
+		if len(s.Palette) != 16 {
+			return fmt.Errorf("new-game confirmation palette has %d colors, want 16", len(s.Palette))
+		}
+		if err := validateEvidence(s.Evidence); err != nil {
+			return fmt.Errorf("new-game confirmation evidence: %w", err)
 		}
 	}
 	if a := p.Interface.Attract; a != nil {
@@ -3266,6 +3295,16 @@ func (p *Pack) AttractSequence() (*AttractSequence, bool) {
 		return nil, false
 	}
 	return p.Interface.Attract, true
+}
+
+// NewGameConfirmation returns the optional versioned raw screen used behind
+// the new-game ability confirmation modal. Missing data means a black fallback
+// remains available; malformed declared data is rejected during pack load.
+func (p *Pack) NewGameConfirmation() (*RawScreenAsset, bool) {
+	if p == nil || p.Interface.NewGameConfirmation == nil {
+		return nil, false
+	}
+	return p.Interface.NewGameConfirmation, true
 }
 
 // AudioTrack resolves a stable cue ID to the pack's original track number.

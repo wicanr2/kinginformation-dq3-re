@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.22"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.23"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -195,7 +195,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.22",
+  "schema_version": "0.1.23",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -943,6 +943,22 @@ DQ3 CTY59 handler41 在 IDA linear `0x15bba`（file `0x6f2a`）比較 `DS:4f35==
 精訊版 canonical 為 `(48,244,448,80)`、四欄、四列，對應原版影片的姓名／H／M／等級
 狀態窗；缺資料時引擎不畫猜測版面。
 
+能力確認畫面若使用獨立 raw screen，可在同一檔提供 `new_game_confirmation`；引擎只實作
+row-interleaved 4bpp decoder 與 modal composition，尺寸、asset key、palette 與證據由 pack
+提供：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `new_game_confirmation.id` | string | 是 | 穩定的版本專屬畫面 ID。 |
+| `new_game_confirmation.asset_key` | string | 是 | `manifest.assets` 的 raw screen asset key。 |
+| `width`／`height` | int | 是 | raw 畫布尺寸；寬度須為 8 的倍數。 |
+| `format` | string | 是 | 現行共用 primitive 為 `row_interleaved_4bpp`。 |
+| `palette` | RGB[] | 是 | 16 組 8-bit RGB；不可由引擎猜測或套用另一份 palette。 |
+| `evidence` | object | 是 | raw bytes、palette、consumer 與原版畫面證據。 |
+
+DQ3 canonical 使用 `FIRST.SCR`（112000 bytes、640×350）與 `docs/title/first_opening.png` 對拍；
+能力確認 modal 會在此背景上疊加 stat panels，缺失資料則 fail closed 為黑底，不推導其他版本畫面。
+
 標題閒置巡禮若有原版證據，可在同一檔提供 `attract`；引擎只實作輪播狀態機，不能在
 Go 內列出職業或檔名：
 
@@ -982,7 +998,7 @@ NPC 及交易後玩家的具名方向，`treasure_gates` 明列第二戰前不�
 
 ```json
 {
-  "schema_version": "0.1.22",
+  "schema_version": "0.1.23",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1012,7 +1028,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.22",
+  "schema_version": "0.1.23",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

@@ -94,7 +94,7 @@
 | 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 已有新遊戲／載入框架 | 需輸入與版面 E2 |
-| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace | E3；能力立繪仍待 V3 |
+| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace；`FIRST.SCR` 能力確認背景已由 pack 接入 | E3；背景原始檔尺寸／解碼與配色 D2、runtime V2，stat panel／幾何仍待 V3 |
 | 家中／母親 | DOSBox、影片 | sec4+rec82/83；handler54 transaction 已接 | E3；逐格護送動畫仍待 V3 |
 | 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
@@ -207,7 +207,7 @@
 - 能力表 writer 證實順序 `STR,VIT,AGI,HP,MP,INT,LUCK`，撤銷誤改 VIT 的舊 MP patch；
 - 從標題經正式 `InputState`、碰撞與 portal 一路走到王座的 E3 trace。
 
-尚未完成的是能力確認畫面人物立繪逐像素對拍與母親逐格移動動畫；不能因 transaction
+尚未完成的是能力確認畫面 stat panel 逐像素對拍與母親逐格移動動畫；不能因 transaction
 與 opening trace 通過就把整個 P1（酒場、四人隊、正常出城）標成完成。
 
 ## 4. 證據與驗收等級
@@ -684,7 +684,7 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    boss 多次行動、掉落及逐項咒文
    效果仍需 RE 與同狀態驗證。
 5. **玩家可見 parity**：四人縱列與 HUD 已完成第一個 E2 runtime slice（`party_field_hud.png`；
-   原版影片 `f000295`／`f000300`／`f000900` 作 oracle），仍需相同地圖／位置／晝夜的 V3；能力確認立繪、母親逐格演出、
+   原版影片 `f000295`／`f000300`／`f000900` 作 oracle），仍需相同地圖／位置／晝夜的 V3；能力確認 stat panel、母親逐格演出、
    attract 的能力條逐幀／淡入淡出、
    商店／教會／旅社／達瑪、二選一小視窗原版幾何、日夜 palette、剩餘 BGM／SFX 及
    ending timing 尚未全部 V3；固定片尾 `TIT3.P` 與 ENDING cue 已完成 V3，但結局文字

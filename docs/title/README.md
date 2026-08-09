@@ -12,6 +12,10 @@
 
 `first_opening.png` = 還原結果:DQ3 雙主角開場原畫(鳥山明風格),膚色已修正為正確肉色。
 
+Ebiten production 不在 Go 內複製這份版本專屬 palette；`dq3_cht` pack 的
+`interface.json.new_game_confirmation` 以 `FIRST.SCR` asset key、尺寸、格式與 16 色 RGB
+保存同一份證據，renderer 只使用共用 raw-screen decoder。
+
 ## TIT*.P = 標準 ZSoft PCX
 
 `TIT*.P`(TITA~TITP、TIT0~3 等)為**標準 ZSoft PCX 檔**(`tools/title_pcx.py` 解碼)。

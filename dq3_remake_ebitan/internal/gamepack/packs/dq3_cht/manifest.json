@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.22",
+  "schema_version": "0.1.23",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -33,6 +33,11 @@
       "path": "TIT3.P",
       "size": 28948,
       "sha256": "f4c0b82c0df531ff7e8e10ce05f18b22e3e87a7d9a21237666b98722f132378e"
+    },
+    "new_game_confirmation": {
+      "path": "FIRST.SCR",
+      "size": 112000,
+      "sha256": "f208f9c370d57e1f6c45082d5ba013f4db019f500aad77694a575f94817c5a6f"
     },
     "attract_warrior": {
       "path": "TITH.P",

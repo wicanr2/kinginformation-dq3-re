@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.22",
+  "schema_version": "0.1.23",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -43,6 +43,41 @@
       "consumer": "field command-window party status renderer",
       "doc": "docs/74-ebiten-remake-completion-plan.md#原版實況影片逐段對照",
       "note": "原版 640x350 邏輯畫布的四欄 H/M/職業狀態框；以同影片 f000900 的玩家可見幾何作 D3 anchor。"
+    }
+  },
+  "new_game_confirmation": {
+    "id": "dq3:screen.new_game_confirmation",
+    "asset_key": "new_game_confirmation",
+    "width": 640,
+    "height": 350,
+    "format": "row_interleaved_4bpp",
+    "palette": [
+      [0, 0, 0],
+      [204, 212, 212],
+      [168, 168, 168],
+      [252, 72, 0],
+      [8, 140, 252],
+      [0, 84, 220],
+      [0, 64, 180],
+      [224, 148, 16],
+      [0, 0, 0],
+      [252, 232, 32],
+      [204, 120, 16],
+      [0, 0, 0],
+      [220, 0, 0],
+      [252, 224, 180],
+      [252, 216, 156],
+      [252, 252, 252]
+    ],
+    "evidence": {
+      "level": "D2",
+      "source_kind": "data_file",
+      "source": "FIRST.SCR",
+      "address_space": "none",
+      "address": "0x00000..0x1b4ff",
+      "consumer": "new-game ability confirmation background before stat panels",
+      "doc": "docs/title/README.md",
+      "note": "640x350 row-interleaved 4bpp；palette 由原版能力確認／姓名畫面 DOSBox oracle 反推，index 14 為膚色。"
     }
   },
   "attract": {
