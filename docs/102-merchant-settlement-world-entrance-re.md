@@ -2,8 +2,9 @@
 
 狀態：入口選擇與商人交付已閉合（D3／E3）；CTY59 handler41 的 Y=4 設施分支已由
 IDA／CTY／D3TXT 閉合並落成 `conditional_facility_events`（D3／E2）；CTY83 黃寶珠資料、
-牢中對話與元件交易已達 D3／E2／V1。從合法 checkpoint 自然重播中間 gate 的主線 trace
-仍屬後續 V3／路線補強，不把元件 closure 誤標成完整逐畫面 parity。
+牢中對話與元件交易已達 D3／E2／V1。同一條 boot production trace 已從合法 checkpoint
+以正式輸入自然進入 CTY83、完成黃寶珠與 save/load（E3）；剩餘是跨階段與原版同狀態
+V2／V3 對拍，不把元件圖誤標成完整逐畫面 parity。
 
 ## 問題
 
@@ -154,6 +155,6 @@ file bytes 與 record8，沒有把 CTY59 或 handler41 常數放回共用 Go 流
 ## 尚未閉合
 
 - CTY60／61 的階段差異，以及這些階段的原版同狀態 V2／V3。
-- 從商人交付合法 checkpoint 自然取得拉之鏡、完成假王事件、取得蓋亞之劍，再正式進入
-  CTY83；目前黃寶珠 transaction 與 save/load 只有 component closure，仍不是 E3。
+- CTY83 黃寶珠與 CTY59 handler41 的 runtime 圖仍需原版同狀態 V2／V3 對拍；玩家路線
+  與 save/load 已由 boot production trace 閉合。
 - 從原版實況定位 CTY58 同狀態畫面，將上述 runtime PNG 由 V1 升為 V2。

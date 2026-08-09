@@ -393,7 +393,7 @@ Gate：不用 `DQ3_SHIP` 可自然取得船並航行。
   與 save/load component 已閉合（D3／E2／V1）；舊 Go treasure row 的反向 flag 語意已
   刪除。同一條 boot production trace 已由商人交付 checkpoint 自然重進 CTY60，並已
   走 CTY41→42、CTY43 關卡、CTY44、CTY24 拉之鏡與假王戰。尚缺蓋亞之劍 gate 後進
-  CTY83 的 E3 trace，以及 CTY60／61 階段的原版同狀態 V2；CTY59 handler41 的
+  CTY60／61 階段的原版同狀態 V2；CTY59 handler41 的
   Y=4 設施分支已由 IDA／原始文字與正式 `cmdTalk` 測試閉合為 D3／E2／V1，見 `docs/102`。
 - [x] 沙曼歐莎 R-2：
   `道具選單使用拉之鏡 → CTY44 sec1 玩家站(14,7) → 夜晚 → rec97/98 → 怪89 →

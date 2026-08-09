@@ -126,8 +126,8 @@ JSON 提供。`TestConditionalFacilityOriginalCoordinateGate` 以原版建城後
 從正式 `cmdTalk` 驗證對話／兩項道具店，`internal/gamepack` parity test 鎖定 EXE bytes
 與 record8 glyph，並產出 [對話狀態圖](dq3_remake_ebitan/docs/img/merchant_settlement_handler41_dialogue.png)
 與 [店鋪狀態圖](dq3_remake_ebitan/docs/img/merchant_settlement_handler41_shop.png)（V1）。
-這只關閉 handler41 的事件分支；CTY60／61 階段、CTY83 自然路線與全程 V2/V3 仍以
-`docs/74`、`docs/102` 的未閉合項為準。
+這只關閉 handler41 的事件分支；CTY60／61 階段與全程 V2/V3 仍以 `docs/74`、
+`docs/102` 的未閉合項為準；CTY83 自然路線已由 boot production trace 閉合。
 
 遊戲設定將逐批移至 versioned JSON game pack，長期讓同一 Go／Ebitengine core 支援
 精訊版 DQ1／DQ2／DQ3。原始 DAT／EXE decoder 必須保留為 parity oracle；JSON 值仍需
