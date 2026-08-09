@@ -227,6 +227,21 @@
   },
   "new_game_geometry": {
     "id": "dq3:new_game_geometry",
+    "frame": {
+      "id": "dq3:frame.ega_window_lavender_black",
+      "border_rgb": [255, 223, 255],
+      "interior_rgb": [0, 0, 0],
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + dosbox/v3_01_afterstats.png",
+        "address_space": "dgroup",
+        "address": "0x727 (file 0x16867); writer linear 0x1fd30..0x1fdf9",
+        "consumer": "sub_1f590 → sub_1fd30/sub_1fdb1 four-side EGA frame writer",
+        "doc": "docs/117-newgame-frame-re.md",
+        "note": "原版能力確認外框可見色為 (255,223,255)，內部為黑；confirm_choice 的藍色交錯 pattern 仍另列 V3，未由此 solid RGB 欄位假稱已閉合。"
+      }
+    },
     "menu": {"x": 231, "y": 151, "width": 170, "height": 56},
     "menu_title": {"x": 269, "y": 154, "step_x": 16},
     "menu_options": {"x": 253, "y": 170, "step_y": 16},

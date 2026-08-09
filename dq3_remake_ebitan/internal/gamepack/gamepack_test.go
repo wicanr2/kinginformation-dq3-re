@@ -1886,6 +1886,9 @@ func TestDQ3NewGameGeometryMatchesOriginalWindows(t *testing.T) {
 		t.Fatal("new-game geometry missing")
 	}
 	if g.ID != "dq3:new_game_geometry" ||
+		g.Frame == nil || g.Frame.ID != "dq3:frame.ega_window_lavender_black" ||
+		g.Frame.BorderRGB != [3]uint8{255, 223, 255} ||
+		g.Frame.InteriorRGB != [3]uint8{0, 0, 0} ||
 		g.NamePanel != (GeometryRect{X: 159, Y: 52, Width: 242, Height: 130}) ||
 		g.NameGrid != (GeometryGrid{X: 169, Y: 94, Columns: 9, Rows: 5, StepX: 16, StepY: 16}) ||
 		g.NameTitle != (GeometryAnchor{X: 233, Y: 46, StepX: 16}) ||
@@ -1900,6 +1903,10 @@ func TestDQ3NewGameGeometryMatchesOriginalWindows(t *testing.T) {
 	}
 	if g.Evidence.Level != "D2" || g.Evidence.Doc != "docs/113-newgame-geometry-re.md" {
 		t.Fatalf("new-game geometry evidence=%+v, want D2/docs/113", g.Evidence)
+	}
+	if g.Frame.Evidence.Level != "D2" || g.Frame.Evidence.Doc != "docs/117-newgame-frame-re.md" ||
+		g.Frame.Evidence.AddressSpace != "dgroup" {
+		t.Fatalf("new-game frame evidence=%+v, want D2/dgroup/docs/117", g.Frame.Evidence)
 	}
 }
 

@@ -380,3 +380,12 @@ record 407／`docs/data/glyph_unicode_map.json` 逐 glyph 解碼，確認原版�
 `NewGameFlow` 正式消費 `stats.LUCK`、最大 HP／MP，缺資料仍由 pack validator fail closed。
 這是 D2 設定資料切片與 runtime V2 修正，並非完整 V3：目前框線仍是簡化白框，原版 EGA
 pattern／藍色選項框／同狀態逐像素對拍未閉合。證據與 role 對映見 [`docs/112`](docs/112-newgame-labels-re.md)。
+
+2026-08-10 開場外框色彩切片：IDA Pro 9.4 以 `sub_10854` 的
+`byte_28b78/byte_28b92/byte_28bc6` caller、`sub_1f590 → sub_1fd30 → sub_1fdb1` 四邊
+writer 及 `DS:0x727`（file `0x16867`）閉合共用 frame primitive。DOSBox
+`v3_01_afterstats.png` 的能力／提示外框實際 RGB 是 `(255,223,255)`、內部黑；原版
+`confirm_choice` 仍有藍黑交錯 pattern，不能由 solid RGB 欄位假稱完成。`NewGameGeometry`
+新增 pack-owned `frame`，NewGameFlow／酒館改用該 frame，`NewGameWithPack` 缺欄位即
+fail closed。這是 D2／runtime V2；完整 pattern 與同狀態 V3 仍依 [`docs/117`](docs/117-newgame-frame-re.md)
+保留為後續工作。

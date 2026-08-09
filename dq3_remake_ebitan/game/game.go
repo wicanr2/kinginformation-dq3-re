@@ -2686,6 +2686,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.new_game_geometry")
 	}
+	if newGameGeometry.Frame == nil {
+		return nil, fmt.Errorf("game pack missing interface.new_game_geometry.frame")
+	}
 	fieldStatusLayout, ok := pack.FieldStatusLayout()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.field_status")

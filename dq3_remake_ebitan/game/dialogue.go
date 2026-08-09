@@ -296,6 +296,17 @@ func frameColor(rgb [3]uint8) dq3data.Color {
 	return dq3data.Color{R: rgb[0], G: rgb[1], B: rgb[2]}
 }
 
+// fillGeometryBox 套用 new_game_geometry 的版本專屬 frame。直接 UI fixture
+// 未安裝 frame 時仍保留導覽用 fallback；正式 pack 由 validator 先拒絕缺欄位。
+func fillGeometryBox(rgba []byte, frame *gamepack.FrameStyle, x, y, w, h int, fallback dq3data.Color) {
+	if frame == nil {
+		fillBox(rgba, x, y, w, h, fallback)
+		return
+	}
+	fillBoxStyle(rgba, x, y, w, h,
+		frameColor(frame.InteriorRGB), frameColor(frame.BorderRGB))
+}
+
 // fillPackBox 套用版本專屬 frame。direct unit fixture 若未安裝 frame，
 // 退回既有黑底白框只供測試導覽；NewGameWithPack 會先拒絕此資料缺口。
 func fillPackBox(rgba []byte, layout gamepack.WindowLayout, x, y, w, h int) {

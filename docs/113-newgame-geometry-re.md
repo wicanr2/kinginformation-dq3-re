@@ -1,7 +1,8 @@
 # 開場／創角幾何反組譯與對拍
 
 本文件封存 `interface.json.new_game_geometry` 的來源與限制。本輪已閉合「原始
-window 結構 → EGA writer → 640×350 玩家可見框線／格距」，並將 rec451–456 的標題、
+window 結構 → EGA writer → 640×350 玩家可見框線／格距」，並把共用外框的可見 RGB
+交給 `interface.json.new_game_geometry.frame`；同時將 rec451–456 的標題、
 注音／英數格、功能列及組字提示 glyph stream 接入 `new_game_labels`；仍未閉合的是
 EGA 框線圖樣、逐幀游標／動畫與能力面板逐像素 V3，不能把幾何與字模資料化誤讀成
 整個創角畫面已完成。
@@ -73,11 +74,12 @@ EGA 框線圖樣、逐幀游標／動畫與能力面板逐像素 V3，不能把�
 
 ## JSON 與推論等級
 
-`interface.json.new_game_geometry` 同時保存像素 rect、文字／格盤 anchor 與上述
-`raw_windows`。`new_game_labels` 另保存 rec451–456 的逐列 45 格與五列功能文字；
+`interface.json.new_game_geometry` 同時保存像素 rect、文字／格盤 anchor、共用外框
+RGB 與上述 `raw_windows`。`new_game_labels` 另保存 rec451–456 的逐列 45 格與五列
+功能文字；
 `NameInput` 以 `raw35 → cell43 → function list`、第五列完成的正式輸入路徑消除舊的
-直接完成捷徑。整個物件目前標為 `D2`：raw window writer、格距公式、字模 record 與
-實機框線已交叉吻合，但尚未為每一個 panel 建立同一輸入序列的逐幀 DOSBox capture，
+直接完成捷徑。整個物件目前標為 `D2`：raw window writer、格距公式、字模 record、
+外框 RGB 與實機框線已交叉吻合，但尚未為每一個 panel 建立同一輸入序列的逐幀 DOSBox capture，
 也尚未閉合 EGA frame pattern。因此 production 可使用這些幾何與字模，但不能宣稱
 創角畫面 V3。
 

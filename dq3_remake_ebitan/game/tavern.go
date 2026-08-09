@@ -140,12 +140,12 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 			tv.classHits.add(62, y-3, 200, 18, i)
 		}
 	case tavName:
-		fillBox(rgba, geo.NamePanel.X, geo.NamePanel.Y, geo.NamePanel.Width, geo.NamePanel.Height, white)
-		fillBox(rgba, geo.NameFunctionPanel.X, geo.NameFunctionPanel.Y, geo.NameFunctionPanel.Width, geo.NameFunctionPanel.Height, white)
-		fillBox(rgba, geo.NameModePanel.X, geo.NameModePanel.Y, geo.NameModePanel.Width, geo.NameModePanel.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.NamePanel.X, geo.NamePanel.Y, geo.NamePanel.Width, geo.NamePanel.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.NameFunctionPanel.X, geo.NameFunctionPanel.Y, geo.NameFunctionPanel.Width, geo.NameFunctionPanel.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.NameModePanel.X, geo.NameModePanel.Y, geo.NameModePanel.Width, geo.NameModePanel.Height, white)
 		tv.ni.draw(rgba, tv.tx, white, yellow, *geo)
 	case tavGender:
-		fillBox(rgba, geo.GenderPanel.X, geo.GenderPanel.Y, geo.GenderPanel.Width, geo.GenderPanel.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.GenderPanel.X, geo.GenderPanel.Y, geo.GenderPanel.Width, geo.GenderPanel.Height, white)
 		for i, g := range classNames[tv.pendCls] { // 顯已選職業
 			drawGlyph(rgba, tv.tx, geo.NameText.X+i*16, geo.NameText.Y, g, white)
 		}

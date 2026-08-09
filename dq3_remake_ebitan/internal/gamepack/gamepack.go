@@ -237,6 +237,7 @@ type RawNewGameWindow struct {
 // bootstrap 必須 fail closed，不能回退到 Go 內的 DQ3 座標。
 type NewGameGeometry struct {
 	ID                string             `json:"id"`
+	Frame             *FrameStyle        `json:"frame,omitempty"`
 	Menu              GeometryRect       `json:"menu"`
 	MenuTitle         GeometryAnchor     `json:"menu_title"`
 	MenuOptions       GeometryAnchor     `json:"menu_options"`
@@ -1739,6 +1740,12 @@ func validateGeometryGrid(name string, g GeometryGrid) error {
 func validateNewGameGeometry(g NewGameGeometry) error {
 	if g.ID == "" {
 		return errors.New("new-game geometry id is required")
+	}
+	if g.Frame == nil {
+		return errors.New("new-game geometry frame is required")
+	}
+	if err := validateFrameStyle("new-game geometry", g.Frame); err != nil {
+		return err
 	}
 	for name, rect := range map[string]GeometryRect{
 		"menu": g.Menu, "name_panel": g.NamePanel,

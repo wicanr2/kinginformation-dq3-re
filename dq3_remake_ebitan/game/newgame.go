@@ -162,7 +162,7 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 			nf.hits.reset()
 			return
 		}
-		fillBox(rgba, geo.Menu.X, geo.Menu.Y, geo.Menu.Width, geo.Menu.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.Menu.X, geo.Menu.Y, geo.Menu.Width, geo.Menu.Height, white)
 		for i, g := range nf.labels.Title {
 			drawGlyph(rgba, tx, geo.MenuTitle.X+i*geo.MenuTitle.StepX, geo.MenuTitle.Y+i*geo.MenuTitle.StepY, g, white)
 		}
@@ -183,12 +183,12 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 			nf.hits.add(x-18, y-3, geo.Menu.Width-24, 18, i)
 		}
 	case ngName:
-		fillBox(rgba, geo.NamePanel.X, geo.NamePanel.Y, geo.NamePanel.Width, geo.NamePanel.Height, white)
-		fillBox(rgba, geo.NameFunctionPanel.X, geo.NameFunctionPanel.Y, geo.NameFunctionPanel.Width, geo.NameFunctionPanel.Height, white)
-		fillBox(rgba, geo.NameModePanel.X, geo.NameModePanel.Y, geo.NameModePanel.Width, geo.NameModePanel.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.NamePanel.X, geo.NamePanel.Y, geo.NamePanel.Width, geo.NamePanel.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.NameFunctionPanel.X, geo.NameFunctionPanel.Y, geo.NameFunctionPanel.Width, geo.NameFunctionPanel.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.NameModePanel.X, geo.NameModePanel.Y, geo.NameModePanel.Width, geo.NameModePanel.Height, white)
 		nf.ni.draw(rgba, tx, white, yellow, *geo)
 	case ngGender:
-		fillBox(rgba, geo.GenderPanel.X, geo.GenderPanel.Y, geo.GenderPanel.Width, geo.GenderPanel.Height, white)
+		fillGeometryBox(rgba, geo.Frame, geo.GenderPanel.X, geo.GenderPanel.Y, geo.GenderPanel.Width, geo.GenderPanel.Height, white)
 		for i, g := range nf.ni.nameBuf { // 顯示已輸入主角名
 			drawGlyph(rgba, tx, geo.NameText.X+i*16, geo.NameText.Y, g, white)
 		}
@@ -213,11 +213,11 @@ func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yel
 	}
 	// 原版 v3_01_afterstats.png 的 panel 幾何由 pack 提供；frame pattern
 	// 仍是獨立 V3 工作，這裡只套用已量測的外框矩形。
-	fillBox(rgba, geo.StatsLeft.X, geo.StatsLeft.Y, geo.StatsLeft.Width, geo.StatsLeft.Height, white)
-	fillBox(rgba, geo.StatsEquipment.X, geo.StatsEquipment.Y, geo.StatsEquipment.Width, geo.StatsEquipment.Height, white)
-	fillBox(rgba, geo.StatsRight.X, geo.StatsRight.Y, geo.StatsRight.Width, geo.StatsRight.Height, white)
-	fillBox(rgba, geo.ConfirmPrompt.X, geo.ConfirmPrompt.Y, geo.ConfirmPrompt.Width, geo.ConfirmPrompt.Height, white)
-	fillBox(rgba, geo.ConfirmChoice.X, geo.ConfirmChoice.Y, geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
+	fillGeometryBox(rgba, geo.Frame, geo.StatsLeft.X, geo.StatsLeft.Y, geo.StatsLeft.Width, geo.StatsLeft.Height, white)
+	fillGeometryBox(rgba, geo.Frame, geo.StatsEquipment.X, geo.StatsEquipment.Y, geo.StatsEquipment.Width, geo.StatsEquipment.Height, white)
+	fillGeometryBox(rgba, geo.Frame, geo.StatsRight.X, geo.StatsRight.Y, geo.StatsRight.Width, geo.StatsRight.Height, white)
+	fillGeometryBox(rgba, geo.Frame, geo.ConfirmPrompt.X, geo.ConfirmPrompt.Y, geo.ConfirmPrompt.Width, geo.ConfirmPrompt.Height, white)
+	fillGeometryBox(rgba, geo.Frame, geo.ConfirmChoice.X, geo.ConfirmChoice.Y, geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
 
 	for i, gl := range nf.ni.nameBuf {
 		drawGlyph(rgba, tx, geo.StatsName.X+i*dq3data.GlyphPx, geo.StatsName.Y, gl, white)

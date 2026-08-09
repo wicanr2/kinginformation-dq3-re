@@ -1071,12 +1071,14 @@ production `NewGameWithPack` 缺少 `new_game_labels` 即拒絕啟動；`NewGame
 `NameInput`、`GenderSelect` 與酒館只依此契約繪製。`NameInput` 的畫面 raw index 採
 `cell=col*5+row`，raw35 是注音／英數的功能列入口；第五列才設完成旗標，避免把舊的
 「直接按右下格」測試捷徑當成原版流程。這只封存字模資料，主選單／能力確認
-面板座標現在由 `interface.json.new_game_geometry` 提供。它保存 640×350 像素矩形、
-文字 anchor、9×5 姓名盤步距，以及 IDA linear address 的 `raw_windows` sidecar；後者
+面板座標與共用外框 RGB 現在由 `interface.json.new_game_geometry` 提供。除既有 `id` 外，
+`frame` 必須是 `{id,border_rgb,interior_rgb,evidence}`；它保存版本專屬的玩家可見
+外框色彩，不把 EGA plane mask 變成 style ID。它另保存 640×350 像素矩形、文字 anchor、
+9×5 姓名盤步距，以及 IDA linear address 的 `raw_windows` sidecar；後者
 保留 `0x29088`／`0x290a6`／`0x290c4`／`0x290e0` 與能力確認三組結構的原始欄位，
 不可用像素值取代。缺 geometry 時 production bootstrap 必須 fail closed；D2 evidence
-與 raw／pixel 對照見 [`docs/113`](113-newgame-geometry-re.md)。框線 pattern 與逐幀
-演出仍是另一個 V3 切片。
+與 raw／pixel 對照見 [`docs/113`](113-newgame-geometry-re.md)。外框的 EGA 交錯 pattern、
+`confirm_choice` 的藍色選擇框與逐幀演出仍是另一個 V3 切片。
 
 ### 6.10 `staged_boss_events`
 

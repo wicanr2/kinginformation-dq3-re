@@ -745,9 +745,17 @@ test 見 [`docs/113`](113-newgame-geometry-re.md)。本輪已以 Docker／Xvfb �
 功能列字模、45 格輸入與正式功能焦點路徑已接入；框線 pattern、逐幀游標／動畫與同狀態演出
 仍不能宣稱 V3。
 
+2026-08-10 再閉合開場外框色彩切片：IDA Pro 9.4 追查
+`sub_10854 → sub_1f590 → sub_1fd30 → sub_1fdb1`，確認四邊 writer 與
+`DS:0x727` 的 raw plane mask；DOSBox `v3_01_afterstats.png` 取樣外框為
+`(255,223,255)`、內部黑。`interface.json.new_game_geometry.frame` 已資料化，
+`NewGameFlow`／酒館消費 pack frame，缺欄位 fail closed；這是 D2／runtime V2，藍黑
+`confirm_choice` pattern 與逐幀 EGA 演出仍保留為 V3 gap。完整 sidecar 見
+[`docs/117`](117-newgame-frame-re.md)。
+
 下一個視覺／音效 parity 工作：
 
-1. 補 EGA frame pattern、逐幀游標／動畫的 writer／consumer evidence，並把已產出的開場圖
+1. 補剩餘 EGA frame pattern、逐幀游標／動畫的 writer／consumer evidence，並把已產出的開場圖
    保持可回查的 raw window／hash。
 2. 再處理戰鬥 frame style、spell／target rect、逐動作 timing／動畫／SFX 與完整抗性／
    formation／boss 多次行動／掉落，所有設定先進 pack JSON 並補 D2/D3 parity。
