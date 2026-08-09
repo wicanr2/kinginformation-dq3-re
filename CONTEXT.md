@@ -162,6 +162,11 @@
   [`51`](docs/51-palette-and-overworld-sprites.md) palette/地表 sprite · [`46`](docs/46-debug-hook.md) DEBUG 口 ·
   [`69`](docs/69-why-remake-looked-done-but-wasnt.md) 失敗經驗與防再犯方法、
   [`74`](docs/74-ebiten-remake-completion-plan.md) 現行完成計畫 ·
+  [`84`](docs/84-game-pack-json-contract.md) 共用 engine／versioned game pack JSON 契約 ·
+  [`108`](docs/108-battle-text-pack.md) 戰鬥文字 record／glyph 對映 ·
+  [`109`](docs/109-battle-hud-rects-re.md) IDA 戰鬥 HUD rect／consumer 證據 ·
+  [`110`](docs/110-field-command-labels-re.md) 地表命令窗雙字模資料化 ·
+  [`111`](docs/111-battle-scene-layout-re.md) 戰鬥場景帶／游標 glyph 資料化與 D2 限制 ·
   [`88`](docs/88-norud-guided-passage-production-trace.md) 諾魯德密道 handler50/57、
   NPC 移動腳本與正式玩家輸入追蹤 ·
   [`91`](docs/91-garuna-satori-book-production-trace.md) 加爾那之塔領悟之書、睡眠恢復
