@@ -6,6 +6,7 @@ import (
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/config"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 // TestHitListAt:hitList.at 命中/未命中/邊界(半開區間 [x,x+w))。
@@ -40,6 +41,24 @@ func TestHitListAt(t *testing.T) {
 
 // newHitTestRGBA:640×350 RGBA 緩衝(供各選單 draw() 用,不需真素材)。
 func newHitTestRGBA() []byte { return make([]byte, ScreenW*ScreenH*4) }
+
+func installBattleDrawPack(t *testing.T, b *Battle) {
+	t.Helper()
+	p, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	command, ok := p.BattleCommandLayout()
+	if !ok {
+		t.Fatal("builtin pack missing battle command layout")
+	}
+	enemy, ok := p.BattleEnemyLayout()
+	if !ok {
+		t.Fatal("builtin pack missing battle enemy layout")
+	}
+	b.setCommandLayout(command)
+	b.setEnemyLayout(enemy)
+}
 
 // TestCmdMenuDrawHits:命令窗 draw 後應有 6 個 box;點第 3 格(index2「狀況」所在列)回 index2。
 // 幾何取自 cmdmenu.go draw():cx=x+c*cw、cy=y+rh+r*rh,cw=5*GlyphPx=80、rh=18,呼叫點 (x,y)=(48,32)。
@@ -232,14 +251,15 @@ func TestShopDrawHitsAndTap(t *testing.T) {
 // 屬 TestPlaythroughBattle 的整合覆蓋範圍,這裡只測 P2 直接點選這條路徑本身)。
 func TestBattleCommandDrawHits(t *testing.T) {
 	b := &Battle{tx: &dq3data.Text{}, phase: phCommand}
+	installBattleDrawPack(t, b)
 	rgba := newHitTestRGBA()
 	b.draw(rgba, nil)
 
 	if len(b.hits) != 4 {
 		t.Fatalf("無咒文首位角色應有4項指令,得 %d", len(b.hits))
 	}
-	// index bcItem(3):mx=120,my=236 → y=my+24+3*16=308
-	tapIdx := b.hits.at(130, 310)
+	// index bcItem(3):pack x=144,y=248 → row y=248+16+3*16=312
+	tapIdx := b.hits.at(150, 314)
 	if tapIdx != bcItem {
 		t.Fatalf("點 (130,310) 應命中 index%d(道具),得 %d", bcItem, tapIdx)
 	}
@@ -255,15 +275,16 @@ func TestBattleCommandDrawHits(t *testing.T) {
 // TestBattleSpellDrawHits:咒文子選單(2 咒)draw 後 hits 筆數對齊 spells,點格移 spellCursor。
 func TestBattleSpellDrawHits(t *testing.T) {
 	b := &Battle{tx: &dq3data.Text{}, phase: phSpell, spells: []int{121, 130}}
+	installBattleDrawPack(t, b)
 	rgba := newHitTestRGBA()
 	b.draw(rgba, nil)
 
 	if len(b.hits) != 2 {
 		t.Fatalf("2 咒 draw 後 hits 應有 2 筆,得 %d", len(b.hits))
 	}
-	// index1:y=236+24+16=276
-	if idx := b.hits.at(130, 278); idx != 1 {
-		t.Fatalf("點 (130,278) 應命中 index1,得 %d", idx)
+	// index1:y=248+16+16=280
+	if idx := b.hits.at(150, 282); idx != 1 {
+		t.Fatalf("點 (150,282) 應命中 index1,得 %d", idx)
 	}
 }
 
@@ -273,6 +294,7 @@ func TestBattleSpellDrawScrollsToLateSpell(t *testing.T) {
 		spells:      []int{121, 122, 123, 124, 125, 126, 180},
 		spellCursor: 6,
 	}
+	installBattleDrawPack(t, b)
 	rgba := newHitTestRGBA()
 	b.draw(rgba, nil)
 
@@ -298,6 +320,7 @@ func TestBattleTargetDrawHits(t *testing.T) {
 		heroHP: 10, enemies: []enemyUnit{{hp: 10}, {hp: 10}, {hp: 10}},
 		targetCursor: 1,
 	}
+	installBattleDrawPack(t, b)
 	b.draw(newHitTestRGBA(), nil)
 	if len(b.hits) != 3 {
 		t.Fatalf("三敵目標畫面應有3個怪物 hit-box，得 %d", len(b.hits))

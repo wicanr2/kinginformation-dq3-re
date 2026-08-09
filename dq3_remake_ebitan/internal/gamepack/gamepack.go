@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.23"
+	SchemaVersion = "0.1.24"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -109,6 +109,24 @@ type WindowLayout struct {
 	Evidence        Evidence `json:"evidence"`
 }
 
+// BattlePanelLayout extends the common window geometry with the small set of
+// data-owned offsets and row sizing rules used by the original battle HUD.
+// HeightMode is deliberately a named primitive rather than an expression: the
+// engine may apply a registered rule, but a pack still owns its row/base values.
+type BattlePanelLayout struct {
+	WindowLayout
+	HeightMode           string `json:"height_mode"`
+	BaseRows             int    `json:"base_rows"`
+	RowHeight            int    `json:"row_height"`
+	CursorInsetX         int    `json:"cursor_inset_x"`
+	RowInsetY            int    `json:"row_inset_y"`
+	LabelInsetX          int    `json:"label_inset_x"`
+	SecondaryLabelInsetX int    `json:"secondary_label_inset_x"`
+	ValueInsetX          int    `json:"value_inset_x"`
+	NameInsetX           int    `json:"name_inset_x"`
+	CountInsetX          int    `json:"count_inset_x"`
+}
+
 // AttractFrame 是標題閒置後輪播的一張版本專屬全螢幕 PCX。引擎只依穩定的
 // asset key 與資料化停留幀數輪播，不在 Go 內知道職業名稱或檔名。
 type AttractFrame struct {
@@ -140,13 +158,15 @@ type RawScreenAsset struct {
 }
 
 type Interface struct {
-	SchemaVersion       string           `json:"schema_version"`
-	Dialogue            WindowLayout     `json:"dialogue"`
-	BattleMessage       WindowLayout     `json:"battle_message,omitempty"`
-	PartyHUD            WindowLayout     `json:"party_hud,omitempty"`
-	Attract             *AttractSequence `json:"attract,omitempty"`
-	NewGameConfirmation *RawScreenAsset  `json:"new_game_confirmation,omitempty"`
-	BattleTexts         *BattleTextRefs  `json:"battle_texts,omitempty"`
+	SchemaVersion       string            `json:"schema_version"`
+	Dialogue            WindowLayout      `json:"dialogue"`
+	BattleMessage       WindowLayout      `json:"battle_message,omitempty"`
+	BattleCommand       BattlePanelLayout `json:"battle_command,omitempty"`
+	BattleEnemy         BattlePanelLayout `json:"battle_enemy,omitempty"`
+	PartyHUD            WindowLayout      `json:"party_hud,omitempty"`
+	Attract             *AttractSequence  `json:"attract,omitempty"`
+	NewGameConfirmation *RawScreenAsset   `json:"new_game_confirmation,omitempty"`
+	BattleTexts         *BattleTextRefs   `json:"battle_texts,omitempty"`
 }
 
 // BattleTextRefs assigns stable engine roles to version-owned D3TXT records.
@@ -1267,6 +1287,16 @@ func (p *Pack) validateInterface() error {
 			return fmt.Errorf("battle message evidence: %w", err)
 		}
 	}
+	if c := p.Interface.BattleCommand; c.ID != "" {
+		if err := validateBattlePanelLayout("battle command", c); err != nil {
+			return err
+		}
+	}
+	if e := p.Interface.BattleEnemy; e.ID != "" {
+		if err := validateBattlePanelLayout("battle enemy", e); err != nil {
+			return err
+		}
+	}
 	if h := p.Interface.PartyHUD; h.ID != "" {
 		if h.X < 0 || h.Y < 0 || h.Width <= 0 || h.Height <= 0 ||
 			h.TextInsetX < 0 || h.TextInsetY < 0 ||
@@ -1326,6 +1356,33 @@ func (p *Pack) validateInterface() error {
 			}
 			seenAssets[frame.AssetKey] = true
 		}
+	}
+	return nil
+}
+
+func validateBattlePanelLayout(name string, p BattlePanelLayout) error {
+	w := p.WindowLayout
+	if w.X < 0 || w.Y < 0 || w.Width <= 0 || w.Height <= 0 ||
+		w.TextInsetX < 0 || w.TextInsetY < 0 ||
+		w.TextInsetX*2 >= w.Width || w.TextInsetY*2 >= w.Height ||
+		w.Columns <= 0 || w.Columns > 100 || w.LinesPerPage <= 0 || w.LinesPerPage > 20 {
+		return fmt.Errorf("%s window layout is invalid", name)
+	}
+	if p.HeightMode != "rows_plus_base" || p.BaseRows < 0 || p.RowHeight <= 0 || p.RowHeight > 128 {
+		return fmt.Errorf("%s height rule is invalid", name)
+	}
+	for field, value := range map[string]int{
+		"cursor_inset_x": p.CursorInsetX, "row_inset_y": p.RowInsetY,
+		"label_inset_x": p.LabelInsetX, "secondary_label_inset_x": p.SecondaryLabelInsetX,
+		"value_inset_x": p.ValueInsetX,
+		"name_inset_x":  p.NameInsetX, "count_inset_x": p.CountInsetX,
+	} {
+		if value < 0 {
+			return fmt.Errorf("%s %s must be non-negative", name, field)
+		}
+	}
+	if err := validateEvidence(w.Evidence); err != nil {
+		return fmt.Errorf("%s evidence: %w", name, err)
 	}
 	return nil
 }
@@ -3259,6 +3316,22 @@ func (p *Pack) BattleMessageWindowLayout() (WindowLayout, bool) {
 		return WindowLayout{}, false
 	}
 	return p.Interface.BattleMessage, true
+}
+
+// BattleCommandLayout returns the pack-owned command/selection panel rule.
+func (p *Pack) BattleCommandLayout() (BattlePanelLayout, bool) {
+	if p.Interface.BattleCommand.ID == "" {
+		return BattlePanelLayout{}, false
+	}
+	return p.Interface.BattleCommand, true
+}
+
+// BattleEnemyLayout returns the pack-owned enemy-name/count panel rule.
+func (p *Pack) BattleEnemyLayout() (BattlePanelLayout, bool) {
+	if p.Interface.BattleEnemy.ID == "" {
+		return BattlePanelLayout{}, false
+	}
+	return p.Interface.BattleEnemy, true
 }
 
 // PartyHUDLayout is absent for packs that do not expose a longitudinal party

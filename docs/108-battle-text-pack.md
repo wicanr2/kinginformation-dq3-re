@@ -7,7 +7,9 @@ renderer 不再把 Unicode 字元猜成 glyph，而是直接消費 D3TXT00 的�
 啟動（fail closed）。
 
 本輪也把訊息外框接回 `interface.json.battle_message`：DQ3.EXE 的 DGROUP `0x3e6e`
-共用 `win_rect` 證實為 `(152,238,360,112)`、inset `(16,16)`、20 欄／4 行。訊息階段
+共用 `win_rect` 證實可見為 `(152,238,352,96)`、inset `(16,16)`、20 欄／4 行；
+先前把 `sub_1fb36` 備份範圍誤當外框的 `(360,112)` 已由 `sub_1fd30` 反證，詳見
+[`docs/109`](109-battle-hud-rects-re.md)。訊息階段
 現在隱藏指令／敵名框，只繪製這個 pack-owned rect；更新後的
 `dq3_remake_ebitan/docs/battle_message_queue.png` 可與 `references/game3.png` 的下方
 訊息區域直接核對，未再把文字塞進左下 150×108 指令框。

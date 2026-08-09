@@ -1,0 +1,116 @@
+# DQ3 戰鬥 HUD 框線與列高：IDA 9.4 非破壞性證據
+
+> 2026-08-09；本文件是 `DQ3.EXE` 的附加證據 ledger，不改寫原始 binary 或 IDA
+> database。語意只附加在原始 linear address／DGROUP／file offset 旁，舊結論若被
+> 推翻仍保留在引用文件中。
+
+## 輸入與工具
+
+| 欄位 | 值 |
+|---|---|
+| 輸入 | `assets_raw/DQ3.EXE` |
+| 大小 | `115282` bytes |
+| SHA-256 | `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c` |
+| 主要工具 | IDA Pro `9.4.0.260610` (`/home/anr2/ida_94_official/dist` 的 Docker image) |
+| IDA 位址基準 | DOS EXE loaded linear `0x10000..0x2aee0`；`seg016` linear base `0x24dd0` |
+| file 對照 | 本文明列的 raw rect 以 `DQ3.EXE` file offset 表示；不可與 logical／linear 數值混用 |
+| 分析限制 | IDAPython 在該授權 image 未載入，故本輪使用 IDA 產生的 `.asm`、xref／函式邊界與 raw-byte parity；`.i64`／`.asm` 留在 `/tmp`，不進 Git |
+
+## 共用 `win_rect` 的可見尺寸勘誤（confirmed）
+
+`sub_1f590` 先進入 `sub_1fb36`，其 `[si+6]+1`、`[si+8]+0x10` 是關閉時
+備份背景的 buffer 範圍。真正畫可見邊框的是 `sub_1fd30`：
+
+```text
+top/bottom:  x=[si+2], y=[si+4] / [si+4]+[si+8]-0x10, width=[si+6]
+left/right:  x=[si+2] / [si+2]+[si+6]-2, y=[si+4]+0x10, height=[si+8]-0x20
+```
+
+因此 production JSON 的可見 `width`／`height` 取 raw `+6`／`+8`，而不是把
+`sub_1fb36` 的備份額外範圍算進去。共用 rect `DGROUP 0x3e6e`（file `0x19fae`）的
+raw bytes `0b 01 13 00 ee 00 2c 00 60 00` 對應：
+
+```text
+x=0x13*8=152, y=0xee=238, width=0x2c*8=352, height=0x60=96
+```
+
+這推翻了 `docs/94` 舊版 `(360,112)` 的備份區解讀；舊 bytes、舊文件與反證鏈仍可回查，
+新的 JSON／parity test 改用 `(352,96)`。
+
+## 指令／選單框（confirmed + strong）
+
+### 入口到 consumer
+
+```text
+sub_1c169 (逐隊員下令)
+  → sub_1c1d8 (writer：填 DS:0x411a / 0x4126，使用 DS:0x4112)
+  → sub_1f590 (畫 frame；sub_1fd30 畫可見邊框)
+  → sub_1f908 (cursor；sub_215ee 畫 actor label)
+  → sub_1f779 (正式鍵盤／游標輸入)
+```
+
+`DS:0x4112` 在 IDA `seg016` 的 linear address 是 `0x28ee2`，raw file offset 是
+`0x1a252`。原始 bytes（保留 raw，不以自訂名稱取代）為：
+
+```text
+1a 03 | 12 00 | f8 00 | 10 00 | 60 00 | b9 01 | 00 00 | 00 00
+00 00 | 00 00 | 00 00 | 03 00 | 14 00 | 08 01 | 00 00
+```
+
+可證實的幾何與列規則：
+
+| 原始欄位／writer | JSON／畫面語意 | 等級 |
+|---|---|---|
+| `+2=0x12`, `+4=0xf8` | 左上角 `(144,248)` | `confirmed` |
+| `+6=0x10` | 可見寬 `128px` | `confirmed` |
+| `sub_1c1d8`：`+8=0x60`、`+0x14=4` | 四列時高 `96px` | `confirmed` |
+| `sub_1c1d8`：`+8=0x50`、`+0x14=3` | 三列時高 `80px` | `confirmed` |
+| `sub_1f908`：`+0x18=0x14`, `+0x1a=0x108` | 游標原點 `(160,264)`（相對框 `(16,16)`） | `confirmed` |
+| `sub_1c1d8`：`add bp,4` 後呼叫 `sub_215ee` | actor label X 相對框 `+32px` | `confirmed` |
+| `battleCmdLabels` 兩個 glyph 的欄距 | JSON `label_inset_x=32`、`secondary_label_inset_x=80`；由 raw menu record 與實機畫面共同校核 | `strong` |
+
+`height_mode="rows_plus_base"`、`base_rows=2`、`row_height=16` 是已閉合的具名
+engine primitive；Go 不保存 DQ3 的 3／4 或座標 fallback，pack 缺少此 panel 時
+`NewGameWithPack` 失敗即關閉。
+
+## 敵名／數量框（confirmed + strong）
+
+### 入口到 consumer
+
+```text
+sub_1b053 / sub_1b0cb
+  → writer: byte_28f00 / byte_28f1e 的 active-group height
+  → sub_1f590 (畫 frame)
+  → sub_1b101 (sub_213c4 畫 monster name；sub_21929 畫 count)
+```
+
+`byte_28f00` 的 IDA linear address 是 `0x28f00`，raw file offset `0x1a270`；
+`byte_28f1e` 是同一結構的第二份 variant，raw file offset `0x1a28e`。第一份
+raw bytes 為：
+
+```text
+11 0b | 24 00 | f8 00 | 20 00 | 60 00 | b4 01 | 02 00 | b5 01
+b6 01 | 01 01 | 00 00 | 03 00 | 26 00 | 08 01 | 00 00
+```
+
+可證實的幾何與列規則：
+
+| 原始欄位／writer | JSON／畫面語意 | 等級 |
+|---|---|---|
+| `+2=0x24`, `+4=0xf8` | 左上角 `(288,248)` | `confirmed` |
+| `+6=0x20` | 可見寬 `256px` | `confirmed` |
+| `sub_1b053/sub_1b0cb`：`word_28f08=(active_groups+2)<<4` | 高 `16*(active_groups+2)` | `confirmed` |
+| `sub_1b101`：`word_28f02+4`、`word_28f04+0x10` | 名稱文字相對框 `(32,16)` | `confirmed` |
+| `sub_1b101`：`bp+=0x0e` 後 `sub_21929` | 數量 X 相對框 `+144px` | `strong`（`sub_21929` 的 glyph baseline 仍需逐像素對拍） |
+
+JSON 的 `height` 以一列 canonical fixture 為 `48px`，實際 production 依
+`rows_plus_base` 動態套用 active group rows；未知列數不填 0，validator 會拒絕缺資料。
+
+## 未閉合項目
+
+- `sub_1f590` 的 style id（`0x031a`、`0x0b11`、`0x0912`）控制的是 VGA 框線／備份樣式，
+  目前 renderer 仍以通用白框呈現；這是 V3 視覺長尾，不得把 style 猜成純色設定。
+- `sub_21929` 數量 glyph 的 baseline 與三列 command variant 已有 writer／consumer，
+  但仍需各自 DOSBox 同狀態截圖再升級為完整 `confirmed`。
+- spell／target 子選單的其他原始 rect 尚未逐一建立 sidecar；本輪只把共用 command panel
+  primitive 接到既有 renderer，未宣稱所有 battle phase 的 V3 已完成。

@@ -2585,6 +2585,14 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.battle_message")
 	}
+	battleCommandLayout, ok := pack.BattleCommandLayout()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing interface.battle_command")
+	}
+	battleEnemyLayout, ok := pack.BattleEnemyLayout()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing interface.battle_enemy")
+	}
 	battleDefs := make(map[string]battleTextDefinition, len(battleRefs.IDs()))
 	for role, id := range battleRefs.IDs() {
 		if id == "" {
@@ -2623,6 +2631,8 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.dlg.layout = pack.DialogueWindowLayout()
 	g.battle.setTextDefinitions(battleDefs)
 	g.battle.setMessageLayout(battleMessageLayout)
+	g.battle.setCommandLayout(battleCommandLayout)
+	g.battle.setEnemyLayout(battleEnemyLayout)
 	g.tavern.equipment = memberEquipment
 	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 

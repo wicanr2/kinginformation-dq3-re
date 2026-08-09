@@ -39,7 +39,8 @@
 - **共用對話視窗 rect** — DGROUP `0x3e6e`（file `0x19fae`）的原版結構；`+2=0x13`
   是 X VGA byte、`+4=0xee` 是 Y pixel、`+6=0x2c` 是內容寬 VGA byte、`+8=0x60`
   是內容高 pixel。`sub_1fb36` 加左右 1 byte／上下 `0x10` 後，外框為
-  `(152,238,360,112)`，文字 inset `(16,16)`、20 欄、每頁 4 行。_Avoid_: 沿用 remake
+  `(152,238,352,96)`，文字 inset `(16,16)`、20 欄、每頁 4 行；`360×112` 只是
+  `sub_1fb36` 關閉時背景備份範圍，不能當可見框。_Avoid_: 沿用 remake
   的 `(24,244,592,96)` 或把 `+6/+8` 寬高對調（見 [`docs/94`](docs/94-dialogue-window-and-monster-mask-re.md)）。
 - **道具名 rec** — D3TXT00 記錄號 = 道具碼 + 1(docs/33);咒文名 rec = `spell_id + 0x79`。
 

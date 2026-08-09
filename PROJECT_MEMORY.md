@@ -88,7 +88,7 @@ save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；�
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
 同時控制寶箱與入口物件 visibility；詳見 `docs/101`。現行 pack manifest 為 schema
-`0.1.23`、`dq3_cht` content `0.1.27`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
+`0.1.24`、`dq3_cht` content `0.1.27`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
 的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
 `0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
 入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
@@ -104,7 +104,7 @@ boot trace 已由商人交付自然重進 CTY60，並正式航行到 CTY41、走
 record97／98、monster89、變身杖 `0x62` 與勝利旗標交易，故此段升為 campaign E3／V1。
 IDA 9.4 證實離城 consumer 直接使用 transition X/Y、兩者皆零才回退 remembered
 coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。後續狀態以本檔下方的
-`0.1.23` 段落與 `docs/74` 為準，不沿用本段早期的剩餘工作清單。
+下方最新版本段落與 `docs/74` 為準，不沿用本段早期的剩餘工作清單。
 2026-08-09 已用一次性 Docker+Xvfb 通過 `TestOpeningProductionInputTrace`：從新遊戲、正式
 InputState、不中途注入座標／道具／事件函式，依序完成 CTY83 黃寶珠、六珠／拉米亞、巴拉摩斯、
 自然下降、愛列夫加特、蓋亞之劍火山、尼羅肯特銀寶珠、索瑪城奧爾特加事件、封咒三連戰、
@@ -152,7 +152,7 @@ treasure table 遷出的完整 D3／E3 範例。
 schema `0.1.8` 的 `item_use_effects` 是道具效果資料化的第一個有限契約；提頓寶箱與
 黑暗燈 raw ID、旗標、適用場景、目標日夜 phase、步數重設及不消耗語意均由 JSON 提供，
 Go 不知道《黑暗之燈》或 DQ3 專屬 raw ID。
-schema `0.1.9` 新增 `interface.json`；原版共用對話框 `(152,238,360,112)`、文字 inset、
+schema `0.1.9` 新增 `interface.json`；原版共用對話框可見尺寸為 `(152,238,352,96)`、文字 inset、
 20 欄／4 行已由 EXE rect 的 caller、writer 與 consumer 證實並移出 Go。怪物透明度也已
 改由 `DQ3MNS.SHP` 四色 plane 後的獨立 RLE AND-mask 解碼，禁止再把黑色色號 0 當透明。
 證據見 `docs/94`；受影響的 production 截圖已重產並目視核對。
@@ -222,7 +222,7 @@ Android／桌面 release 仍是未閉合工作。
 palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmation`，manifest
 保存尺寸／SHA-256。正式 `ngConfirm` renderer 先畫 pack 背景再疊能力 stat panel；runtime
 圖 `dq3_remake_ebitan/docs/ng_confirm.png` 已更新，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2，panel 幾何仍待
-同狀態 V3。game-pack schema 現為 `0.1.23`；不得把此前 `0.1.22` 歷史段落當成目前版本。
+同狀態 V3。game-pack schema 現為 `0.1.24`；不得把此前 `0.1.22`／`0.1.23` 歷史段落當成目前版本。
 
 2026-08-09 戰鬥文字串接切片已完成：`interface.json.battle_texts` 將 25 個跨版本 battle role
 指向 `texts.json` 的 D3TXT00 record；`battle.go` 直接消費原始 glyph/control stream，角色／怪物
@@ -233,10 +233,20 @@ palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmatio
 逐動作 timing、動畫／音效、完整抗性／formation／掉落及跨平台 release 仍未閉合。
 
 後續修正也已把戰鬥訊息外框資料化：`interface.json.battle_message` 以 DQ3.EXE DGROUP
-`0x3e6e` 的 shared `win_rect` 提供 `(152,238,360,112)`、inset `(16,16)`、20 欄／4 行；
-訊息階段不再沿用左下 150×108 指令框，也不畫空的右側敵名框。`docs/108` 與
+`0x3e6e` 的 shared `win_rect` 提供可見 `(152,238,352,96)`、inset `(16,16)`、20 欄／4 行；
+`sub_1fb36` 的 `(360,112)` 只是備份範圍，已由 `sub_1fd30` 反證。訊息階段不再沿用左下
+150×108 指令框，也不畫空的右側敵名框。`docs/108`、`docs/109` 與
 `dq3_remake_ebitan/docs/battle_message_queue.png` 是本輪證據；缺 geometry 時 production
 `NewGameWithPack` fail closed。其餘戰鬥 timing／動畫／音效與 V3 長尾仍未完成。
+
+同日以 IDA Pro 9.4 追閉戰鬥下方 HUD：`DS:0x4112`（file `0x1a252`）的指令框與
+`byte_28f00`（file `0x1a270`）的敵名／數量框已進 `interface.json.battle_command`／
+`battle_enemy`。可見幾何分別為 `(144,248,128,(menu_rows+2)*16)` 與
+`(288,248,256,(active_groups+2)*16)`；`sub_1c1d8`、`sub_1f908`、`sub_1b053`、
+`sub_1b101` 的 writer→consumer、raw bytes、IDA hash 與推論等級集中在 `docs/109`。
+原始 style pattern、spell／target 其他 rect 及數字 baseline 尚是 V3 長尾，不可從這批
+資料宣稱整個戰鬥畫面已完成。受影響的 `battle_party_command.png`、`battle_ally_target.png`、
+`battle_palpunte_menu.png`、`battle_enemy_target.png`、`battle_message_queue.png` 已重產。
 
 ## 固定工程方法
 

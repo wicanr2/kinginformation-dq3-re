@@ -179,7 +179,9 @@ type Battle struct {
 	statusSleepingID   string // battleTextStatusSleeping 的 pack role ID
 	statusWokeID       string // battleTextStatusWoke 的 pack role ID
 	texts              map[string]battleTextDefinition
-	messageLayout      gamepack.WindowLayout // pack-owned shared battle message rect
+	messageLayout      gamepack.WindowLayout      // pack-owned shared battle message rect
+	commandLayout      gamepack.BattlePanelLayout // pack-owned command/selection panel
+	enemyLayout        gamepack.BattlePanelLayout // pack-owned enemy name/count panel
 
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
@@ -235,6 +237,14 @@ func (b *Battle) setTextDefinitions(defs map[string]battleTextDefinition) {
 // omission before a player can enter a battle.
 func (b *Battle) setMessageLayout(layout gamepack.WindowLayout) {
 	b.messageLayout = layout
+}
+
+func (b *Battle) setCommandLayout(layout gamepack.BattlePanelLayout) {
+	b.commandLayout = layout
+}
+
+func (b *Battle) setEnemyLayout(layout gamepack.BattlePanelLayout) {
+	b.enemyLayout = layout
 }
 
 func (b *Battle) showMessage(m battleMessage) {
@@ -1763,9 +1773,30 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				w.Columns, b.msgData, white)
 		}
 	} else {
-		// 下方左:指令窗(原版 sub_c169 的指令／咒文子選單)
-		{
-			mx, my, mw, mh := 120, 236, 150, 108
+		// 下方左:指令窗(原版 sub_c169 的指令／咒文子選單)。production
+		// 已在 NewGameWithPack 驗證並安裝 pack panel；缺資料的直接 fixture
+		// 不畫此版本專屬面板，避免 renderer 自行捏造座標。
+		if w := b.commandLayout; w.ID != "" {
+			mx, my, mw, mh := w.X, w.Y, w.Width, w.Height
+			cursorInsetX, rowInsetY := w.CursorInsetX, w.RowInsetY
+			labelInsetX, secondaryLabelInsetX := w.LabelInsetX, w.SecondaryLabelInsetX
+			valueInsetX, rowHeight := w.ValueInsetX, w.RowHeight
+			if w.HeightMode == "rows_plus_base" {
+				rows := 1
+				switch b.phase {
+				case phCommand:
+					rows = len(b.commandMenu(b.commandActor))
+				case phSpell:
+					rows = len(b.actorSpells(b.commandActor))
+					if rows > 5 {
+						rows = 5
+					}
+				}
+				if rows < 1 {
+					rows = 1
+				}
+				mh = (rows + w.BaseRows) * rowHeight
+			}
 			fillBox(rgba, mx, my, mw, mh, white)
 			if b.phase == phSpell {
 				spells := b.actorSpells(b.commandActor)
@@ -1777,50 +1808,50 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				}
 				for row, i := 0, start; row < 5 && i < len(spells); row, i = row+1, i+1 {
 					rec := spells[i]
-					y := my + 24 + row*16
+					y := my + rowInsetY + row*rowHeight
 					if i == b.spellCursor {
-						drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+						drawGlyph(rgba, b.tx, mx+cursorInsetX, y, curGlyph, white)
 					}
-					b.drawName(rgba, mx+28, y, rec, white)
+					b.drawName(rgba, mx+labelInsetX, y, rec, white)
 					if def, ok := spell.GetDef(rec); ok {
-						drawNumber(rgba, b.tx, mx+110, y, def.MP, cyan)
+						drawNumber(rgba, b.tx, mx+valueInsetX, y, def.MP, cyan)
 					}
-					b.hits.add(mx, y-4, mw, 16, i)
+					b.hits.add(mx, y-4, mw, rowHeight, i)
 				}
 			} else if b.phase == phTargetEnemy {
 				targets := b.aliveEnemyIndices()
 				if len(targets) > 0 {
 					target := targets[b.targetCursor]
-					y := my + 24
-					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
-					b.drawName(rgba, mx+28, y, 0x258+b.enemies[target].monID, white)
-					drawNumber(rgba, b.tx, mx+112, y, target+1, cyan)
+					y := my + rowInsetY
+					drawGlyph(rgba, b.tx, mx+cursorInsetX, y, curGlyph, white)
+					b.drawName(rgba, mx+labelInsetX, y, 0x258+b.enemies[target].monID, white)
+					drawNumber(rgba, b.tx, mx+valueInsetX, y, target+1, cyan)
 				}
 			} else if b.phase == phTargetAlly {
 				targets := b.aliveActorIndices()
 				if len(targets) > 0 {
 					actor := targets[b.targetCursor]
-					y := my + 24
-					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+					y := my + rowInsetY
+					drawGlyph(rgba, b.tx, mx+cursorInsetX, y, curGlyph, white)
 					name := classNames[0]
 					if actor > 0 {
 						name = classNames[b.companions[actor-1].class]
 					}
 					for i, glyph := range name {
-						drawGlyph(rgba, b.tx, mx+28+i*16, y, glyph, white)
+						drawGlyph(rgba, b.tx, mx+labelInsetX+i*16, y, glyph, white)
 					}
 				}
 			} else if b.phase == phCommand {
 				menu := b.commandMenu(b.commandActor)
 				for i, kind := range menu {
-					y := my + 24 + i*16
+					y := my + rowInsetY + i*rowHeight
 					if i == b.cursor {
-						drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+						drawGlyph(rgba, b.tx, mx+cursorInsetX, y, curGlyph, white)
 					}
 					label := battleCmdLabels[kind]
-					drawGlyph(rgba, b.tx, mx+28, y, label[0], white)
-					drawGlyph(rgba, b.tx, mx+72, y, label[1], white)
-					b.hits.add(mx, y-4, mw, 16, i)
+					drawGlyph(rgba, b.tx, mx+labelInsetX, y, label[0], white)
+					drawGlyph(rgba, b.tx, mx+secondaryLabelInsetX, y, label[1], white)
+					b.hits.add(mx, y-4, mw, rowHeight, i)
 				}
 			}
 		}
@@ -1844,15 +1875,17 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 					names = append(names, namedCount{monID: b.enemies[i].monID, count: 1})
 				}
 			}
-			ex, ey, ew, eh := 290, 262, 250, 20+16*len(names)
-			if eh < 36 {
-				eh = 36
-			}
-			fillBox(rgba, ex, ey, ew, eh, white)
-			for i, n := range names {
-				y := ey + 8 + i*16
-				b.drawName(rgba, ex+12, y, 0x258+n.monID, white)
-				drawNumber(rgba, b.tx, ex+ew-40, y, n.count, white)
+			if w := b.enemyLayout; w.ID != "" {
+				ex, ey, ew, eh := w.X, w.Y, w.Width, w.Height
+				if w.HeightMode == "rows_plus_base" {
+					eh = (len(names) + w.BaseRows) * w.RowHeight
+				}
+				fillBox(rgba, ex, ey, ew, eh, white)
+				for i, n := range names {
+					y := ey + w.TextInsetY + i*w.RowHeight
+					b.drawName(rgba, ex+w.NameInsetX, y, 0x258+n.monID, white)
+					drawNumber(rgba, b.tx, ex+w.CountInsetX, y, n.count, white)
+				}
 			}
 		}
 	}

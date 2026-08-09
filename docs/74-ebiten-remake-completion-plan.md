@@ -600,7 +600,8 @@ DGROUP `0x366a` 派發表抵達 `(logical) 0x4063`：只允許地表且當前為
 
 本輪插入的玩家可見 parity audit 已修正兩個會污染後續截圖判讀的共用錯誤。IDA Pro 9.4
 閉合 DGROUP `0x3e6e` 的 caller→rect→consumer，確認原版對話外框是
-`(152,238,360,112)`、文字 inset `(16,16)`、20 欄／4 行；schema `0.1.9` 已將其移入
+`(152,238,352,96)`、文字 inset `(16,16)`、20 欄／4 行；`sub_1fb36` 的較大範圍只是
+關閉時背景備份，schema 已將可見 rect 移入
 `interface.json`。另由 `sub_1b1fe → sub_1b31a/sub_1b37c → sub_1b2af` 證實
 `DQ3MNS.SHP` 透明度來自四色 plane 後的獨立 RLE AND-mask，不能把黑色色號 0 當透明。
 component/parity tests 與 README 所引用的受影響 runtime PNG 已重產；逆向證據見 `docs/94`。
@@ -683,7 +684,8 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    battle role 對映到 `texts.json` 的 D3TXT00 原始 glyph/control stream；名稱、數字插值、
    睡眠／醒來、攻擊／傷害／沒打中、勝利／經驗／金錢、狀態／解毒、帕魯朋特及全滅均由
    pack 提供，缺資料時 production 啟動 fail closed。訊息階段另已改用 `battle_message`
-   的原版 `(152,238,360,112)`／20×4 外框，隱藏左下指令框與右側空敵名框。Docker＋Xvfb
+   的原版 `(152,238,352,96)`／20×4 外框，隱藏左下指令框與右側空敵名框；指令／敵名
+   panel 的 raw rect 亦已接入 pack，詳見 `docs/109`。Docker＋Xvfb
    的 `internal/...` 與 `game` 全套測試通過，受影響戰鬥 PNG 已重產；欄位與證據見 `docs/108`。
    仍需 RE／同狀態
    V3 的逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、boss 多次行動、

@@ -174,8 +174,8 @@ row pitch 0x54、`and es:[di]` 透明遮罩),與 BLK/SHP/packbg 同 4-bit planar
 | `+0` | 框樣式 id(交 sub_10ea6 畫邊框)|
 | `+2` | 文字 X 原點(byte ×8 = px)→ [0x716] |
 | `+4` | 文字 Y 原點(px)→ [0x718] |
-| `+6` | 內容寬(VRAM byte；`sub_1fb36` 備份外框時再加 1 byte)|
-| `+8` | 內容高(pixel；`sub_1fb36` 備份外框時再加 0x10)|
+| `+6` | 可見框寬(VRAM byte)；`sub_1fb36` 只在備份背景時另加 1 byte |
+| `+8` | 可見框高(pixel)；`sub_1fb36` 只在備份背景時另加 0x10 |
 | `+0xa` | 標題列文字記錄 id |
 | `+0xc` | 內容行數(迴圈次數)|
 | `+0xe` | 內容列文字記錄 id(逐行/逐欄)|
@@ -193,8 +193,20 @@ row pitch 0x54、`and es:[di]` 透明遮罩),與 BLK/SHP/packbg 同 4-bit planar
 
 - 以基準游標 `[0x3e70]`/`[0x3e72]`(`battle_enter_screen` 設 0x12/0xf8)起算:
   X = `[0x3e70]+2`、Y = `[0x3e72]+0x10 + 行*0x10`;敵名記錄 = `sprite_id + 0x258`。
-- 原版靜態 rect 位於 DGROUP `0x3e6e`（file `0x19fae`），外框換算為
-  `(152,238,360,112)`；它也由 `sub_15002` 開啟供大量 scripted-event 對話使用，不是戰鬥專用。
+- 原版靜態 rect 位於 DGROUP `0x3e6e`（file `0x19fae`），可見框換算為
+  `(152,238,352,96)`；`(360,112)` 是把關閉時備份背景範圍誤當外框的舊結論，
+  已由 `sub_1fd30` 直接邊界 writer 反證。它也由 `sub_15002` 開啟供大量 scripted-event
+  對話使用，不是戰鬥專用。完整勘誤與 raw parity 見 `docs/94`、`docs/109`。
+
+### 指令／敵名框的新 IDA rect
+
+`sub_1c1d8` 使用 DS:0x4112（file `0x1a252`）畫指令框，原始可見幾何為
+`(144,248,128,(menu_rows+2)*16)`；`sub_1f908` 的游標與 `sub_215ee` 的 actor label
+也由同一 rect 提供。`sub_1b053`／`sub_1b0cb` 使用 `byte_28f00`（file `0x1a270`）
+畫敵名框，幾何為 `(288,248,256,(active_groups+2)*16)`，`sub_1b101` 讀取
+`byte_270f1` 寫入名稱／數量。JSON panel、輸入 hash、IDA linear 對照與 inference level
+見 `docs/109-battle-hud-rects-re.md`；目前 style pattern 與 number baseline 仍列為
+視覺長尾，不能由這段摘要推成已完成 V3。
 
 > remake `dq3_battlescene` 依此座標系排版(字/行 16px、狀態 4 欄 80px),不再肉眼對圖。
 
