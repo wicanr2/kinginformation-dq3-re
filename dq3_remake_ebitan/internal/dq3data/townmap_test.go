@@ -27,6 +27,9 @@ func TestOpenTownAliahan(t *testing.T) {
 	if town.MapFlags != 1 {
 		t.Fatalf("CTY00 sec0 header+0x10 應允許魯拉(bit0)：got %#x", town.MapFlags)
 	}
+	if town.EncounterFlag != cty[int(townU16(cty, 0))+0x11] {
+		t.Fatalf("CTY00 sec0 未保留 header+0x11 raw 遭遇旗標：got %#x", town.EncounterFlag)
+	}
 
 	// 版面尺寸合理(城鎮小圖,通常數十格見方)
 	if town.W < 4 || town.H < 4 || town.W > 256 || town.H > 256 {
@@ -77,6 +80,32 @@ func TestOpenTownAliahan(t *testing.T) {
 		}
 	}
 	t.Logf("阿里阿罕 NPC=%d(其中 %d 有 sprite key b2>=4)✓", len(town.NPCs), spr)
+}
+
+// EncounterFlag 必須逐 section 保留原始 +0x11；其極性由 IDA 的 consumer 判定，
+// parser 不得把非零值轉成 bool 或套用城鎮名稱猜測。
+func TestOpenTownPreservesEncounterFlagAcrossSections(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		sec  int
+	}{
+		{name: "CTY00", sec: 0},
+		{name: "CTY14", sec: 0},
+		{name: "CTY14", sec: 1},
+	} {
+		cty := findAsset(t, tc.name+".DAT")
+		so := int(townU16(cty, tc.sec*2))
+		if so == 0xffff || so+0x11 >= len(cty) {
+			t.Fatalf("%s sec%d header 不完整", tc.name, tc.sec)
+		}
+		town, err := OpenTown(cty, tc.sec, false)
+		if err != nil {
+			t.Fatalf("OpenTown %s sec%d: %v", tc.name, tc.sec, err)
+		}
+		if got, want := town.EncounterFlag, cty[so+0x11]; got != want {
+			t.Fatalf("%s sec%d encounter flag=%#x want raw %#x", tc.name, tc.sec, got, want)
+		}
+	}
 }
 
 // 多 section:阿里阿罕 CTY00 有多個 section(section0 外圍 + 室內/寶物層)。

@@ -157,7 +157,7 @@ README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出�
 4. 關鍵事件前後可正常存檔、讀檔並繼續。
 5. Linux AppImage、Windows ZIP 與 macOS ZIP 共用同一套 Go game core。
 
-截至 2026-08-09，`TestOpeningProductionInputTrace` 已完成上述第 1、2、4 項的主線 E3
+截至 2026-08-10，`TestOpeningProductionInputTrace` 已完成上述第 1、2、4 項的主線 E3
 驗收；終盤固定片尾 `TIT3.P` 與 ENDING 配樂 cue 已由同一條正式 trace 產生 runtime V3
 證據，第 3 項其餘場景仍以 runtime V1／部分 V2 為主；第 5 項指定桌面 release 已完成。
 編譯、單元測試、事件切片與畫面 dump 分別提供不同層次的信心；三種桌面發佈包與

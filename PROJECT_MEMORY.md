@@ -1,6 +1,6 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 更新：2026-08-09。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-08-10。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
 
@@ -318,3 +318,12 @@ macOS Intel／Apple Silicon ZIP，並以正式 renderer PNG 剪出 1280×700、3
 `dist/dq3-promo-20260810.mp4`。完整檔案、大小、SHA-256、Docker 工具鏈與驗證界線集中於
 [`docs/114`](docs/114-release-artifacts.md)；Android／WASM 不屬本輪三平台目標。這些
 `dist/` 產物不納入 Git，且沒有包含原版資產。
+
+2026-08-10 以 Docker 內 IDA Pro 9.4 重查遭遇 gate，勘誤 `docs/13`、`docs/34`、`docs/35`：
+`sub_130cf`（file `0x443f` 起）將 CTY section `+0x11` 寫入 `DS:[0xd77]`，而
+`sub_1BD97`（`dec [0x52f4]` 位於 file `0xd118`）在 CTY 模式比較該值，**0=安全、非0=可遇敵**。
+Go 現在由 `Town.EncounterFlag`／`Scene.encounterFlag` 保存 raw，正式地表與遭遇 CTY 移動使用
+`DS:[0x52f4]` 對映的步數計數器；安全 CTY、飛行與聖水 gate 均不誤觸發，save JSON 保存
+`encounter_step`。完整輸入雜湊、IDA linear／logical／file 位址與限制見 [`docs/115`](docs/115-encounter-cty-gate-re.md)。
+本輪只做受影響的針對性測試，沒有重跑長達 311 秒的完整 production trace；強制遭遇、完整
+encounter pack JSON、戰鬥 V3 與音效仍依 `docs/74` 保持未完成。

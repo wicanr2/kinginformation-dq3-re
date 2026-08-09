@@ -65,6 +65,7 @@ type Scene struct {
 	tileAt          func(x, y int) int // (x,y) → BLK tile 索引
 	spawnX, spawnY  int                // 城鎮進入 spawn(地表不用)
 	mapFlags        byte               // CTY section header +0x10；原版野外咒文場景 gate
+	encounterFlag   byte               // CTY section header +0x11 → DS:[0xd77]；0=安全、非0=可遇敵
 	dlgText         *dq3data.Text      // 該城對話 bank(D3TXT0<bank>.TXT;地表 nil)
 	hiMap           []byte             // 每格高 byte(事件 subid)
 	specialHandlers []int              // CTY section+4 scripted handler raw IDs
@@ -380,6 +381,7 @@ type Game struct {
 	shipAboard              bool          // 目前在船上
 	shipX, shipY            int           // 船停泊位置(地表)
 	repel                   int           // 聖水驅敵剩餘步數(>0 期間地表不遇弱敵,每步遞減)
+	encounterStep           int           // 原版 DS:[0x52f4]；剩餘可遇敵步數，0=尚未建立初始計數
 	remoaru                 int           // レムオル透明剩餘有效移動步數；原版 [0x52f7]，施放設 25
 	toramana                bool          // 多拉瑪那原版 world flag 0x2000；遇高傷害地板後轉 hazardGuard
 	hazardGuard             bool          // 原版 world flag 0x0400；只在同一段連續高傷害地板維持
@@ -1321,6 +1323,11 @@ func (g *Game) step(in InputState) error {
 		g.tryHostageRescueTrigger()
 		g.tryBaramosReturnEvent()
 		g.tryOrtegaEvent()
+		// 原版 sub_1BD97 在每幀事件 pass 後仍會檢查 DS:[0xd77]；
+		// 只有目前 CTY section 的 raw +0x11 非零才是遭遇區。
+		if g.inTown && !g.phoenixAboard {
+			g.advanceEncounterStep()
+		}
 	} else if moved && !g.inTown && !g.phoenixAboard { // 地表:飛行時不進城、不推晝夜、不遇敵
 		g.updateTrackedWorldObjectWindow(g.facing)
 		if g.tryCoordinateItemGateEvent() {
@@ -1352,11 +1359,7 @@ func (g *Game) step(in InputState) error {
 			}
 		}
 		g.advanceDaynight() // 地表走一步 → 推進晝夜(每 60 步一相位;城內不推進)
-		if g.repel > 0 {    // 聖水驅敵期間每步遞減、不遇弱敵(移植 #3 repel)
-			g.repel--
-		} else if g.prng.Next(16) == 0 {
-			g.startEncounter()
-		}
+		g.advanceEncounterStep()
 	}
 	if g.noticeTimer > 0 {
 		g.noticeTimer--
@@ -1883,6 +1886,60 @@ func (g *Game) rollHeroLevelOne() {
 	g.heroHP = int(g.heroStat[stats.HP])
 	g.heroMP = int(g.heroStat[stats.MP])
 	g.heroInit = true
+}
+
+// encounterEnabled:對齊原版 sub_1BD97 的場景 gate。地表一律可推進計數；
+// CTY 僅在 section header +0x11(DS:[0xd77]) 非零時可遇敵。零值是安全區，
+// 這個極性由 IDA Pro 9.4 的 `cmp [0xd77],0; jz return` 直接證實。
+func (g *Game) encounterEnabled() bool {
+	if g.phoenixAboard {
+		return false
+	}
+	if !g.inTown {
+		return true
+	}
+	return g.cur != nil && g.cur.encounterFlag != 0
+}
+
+// nextEncounterStep 對齊原版 sub_1BD97：一般遭遇在計數歸零後重擲
+// rng(0x12) 至少 10；夜間 raw [0x526c]=0 時再減 2。現行四相位時鐘只有
+// phase 0 對應原版白天 raw=1，其餘相位採夜間遭遇節奏。
+func (g *Game) nextEncounterStep() int {
+	for {
+		n := g.prng.Next(0x12)
+		if n < 10 {
+			continue
+		}
+		if g.dnPhase != 0 {
+			n -= 2
+		}
+		if n < 1 {
+			return 1
+		}
+		return n
+	}
+}
+
+// advanceEncounterStep:正式玩家移動後的原版步數遭遇計數器。
+// 初始 writer sub_1E6A3 以 rng(0x10)+4 建立 4..19 步；之後每次歸零由
+// sub_1BD97 重擲下一段距離，再交給 startEncounter 解析原始 region table。
+func (g *Game) advanceEncounterStep() {
+	if !g.encounterEnabled() {
+		return
+	}
+	if g.repel > 0 {
+		g.repel--
+		return
+	}
+	if g.encounterStep <= 0 {
+		g.encounterStep = 4 + g.prng.Next(0x10)
+	}
+	g.encounterStep--
+	if g.encounterStep > 0 {
+		return
+	}
+	g.encounterStep = g.nextEncounterStep()
+	g.startEncounter()
 }
 
 // startEncounter:依目前座標查原版 region/subtable/candidates，再依出現權重算群量。

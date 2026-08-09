@@ -20,7 +20,7 @@
 | +0x08 | word ptr | examine 事件表指標 | 調べる/寶箱/給道具/傳送(0xffff=無)|
 | +0x0c | word ptr | 轉場表指標 | 門/階梯/出城(0xffff=無)|
 | +0x0e | word ptr | layout 指標 | → `{w(2),h(2),tiles…}`,tiles 在 +4 |
-| +0x10/+0x11 | byte | 地圖旗標 / `[0xd77]` 遭遇安全旗標 | 0=可遇敵 |
+| +0x10/+0x11 | byte | 地圖旗標 / `[0xd77]` 遭遇旗標 | 0=安全、非0=可遇敵（IDA `sub_1BD97`） |
 | +0x13/+0x14 | byte | 玩家 spawn X / Y | |
 | **+0x17** | byte | **對話 bank** | → `D3TXT0<bank>`(docs/42)|
 | +0x18 | byte | `[0xd71]` 地圖 id | |

@@ -4,9 +4,10 @@ set -eu
 # 在已完成的 macOS 交叉編譯輸出旁建立可搬移的 .app 與 ZIP。
 # 預期從 Docker 容器執行，且 OUT_ROOT 指向可寫的 dist 目錄。
 OUT_ROOT=${OUT_ROOT:?請指定 OUT_ROOT}
+RELEASE_DATE=${RELEASE_DATE:-20260809}
 
 for arch in x86_64 arm64; do
-  base="${OUT_ROOT}/dq3-20260809-macos-${arch}"
+  base="${OUT_ROOT}/dq3-${RELEASE_DATE}-macos-${arch}"
   binary="${base}/dq3-remake"
   app="${base}/Dragon Quest III.app"
   test -x "${binary}"
@@ -23,7 +24,7 @@ for arch in x86_64 arm64; do
     '<key>CFBundleName</key><string>Dragon Quest III 精訊版重製</string>' \
     '<key>CFBundleDisplayName</key><string>Dragon Quest III 精訊版重製</string>' \
     '<key>CFBundlePackageType</key><string>APPL</string>' \
-    '<key>CFBundleVersion</key><string>2026.08.09</string>' \
+    "<key>CFBundleVersion</key><string>${RELEASE_DATE:0:4}.${RELEASE_DATE:4:2}.${RELEASE_DATE:6:2}</string>" \
     '<key>LSMinimumSystemVersion</key><string>10.13</string>' \
     '</dict>' '</plist>' > "${app}/Contents/Info.plist"
   BASE="${base}" python3 -c 'import os, zipfile; base=os.environ["BASE"]; app=os.path.join(base, "Dragon Quest III.app"); out=base+".zip"; z=zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED); [z.write(os.path.join(root, name), os.path.relpath(os.path.join(root, name), base)) for root, _, names in os.walk(app) for name in names]; z.close()'

@@ -41,6 +41,7 @@ type saveState struct {
 	PhoenixY                int                      `json:"phoenixy,omitempty"`
 	ShipX                   int                      `json:"shipx"`
 	ShipY                   int                      `json:"shipy"`
+	EncounterStep           int                      `json:"encounter_step,omitempty"`
 	PX                      int                      `json:"px"`
 	PY                      int                      `json:"py"`
 	OverPX                  int                      `json:"over_px,omitempty"`
@@ -113,7 +114,8 @@ func (g *Game) snapshot() saveState {
 		ShipOwned:               g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PhoenixOwned: g.phoenixOwned, PhoenixAboard: g.phoenixAboard,
 		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY,
-		PX: g.px, PY: g.py, OverPX: g.overPx, OverPY: g.overPy,
+		EncounterStep: g.encounterStep,
+		PX:            g.px, PY: g.py, OverPX: g.overPx, OverPY: g.overPy,
 		OverworldPosV2: true, InTown: g.inTown,
 		StoryBits:           append([]byte(nil), g.storyBits[:]...),
 		WorldState:          g.worldState,
@@ -266,6 +268,7 @@ func (g *Game) restore(s saveState) {
 	g.shipOwned, g.shipX, g.shipY = s.ShipOwned, s.ShipX, s.ShipY
 	g.phoenixOwned, g.phoenixAboard = s.PhoenixOwned, s.PhoenixAboard
 	g.phoenixX, g.phoenixY = s.PhoenixX, s.PhoenixY
+	g.encounterStep = s.EncounterStep
 	g.initStoryBits()
 	if len(s.StoryBits) > 0 {
 		copy(g.storyBits[:], s.StoryBits) // 32-byte 舊檔保留前 256 flags；高位沿用原版初值

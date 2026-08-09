@@ -100,7 +100,7 @@
 | 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
-| 城鎮／洞窟 | 影片、全 CTY render、DOSBox | 通用 loader/render 已有 | 需事件與 entrance closure |
+| 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render 已有；CTY `+0x11` raw 遭遇 gate 與步數計數器已接 | E2（遭遇 gate）；仍需事件與 entrance closure、同狀態 V3 |
 | NPC／日夜 | DOSBox、RE | 三層可見性與晝夜已有 | 機制有，逐事件 flags 待接 |
 | 地表／HUD | 影片、網路圖 | 四欄 H/M/等級 HUD 已由 pack 幾何／glyph 驅動 | E2；需入口／palette／同狀態 V3 |
 | 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
@@ -754,3 +754,13 @@ test 見 [`docs/113`](113-newgame-geometry-re.md)。本輪已以 Docker／Xvfb �
 3. 完成場景／設施／日夜 palette、剩餘 BGM／SFX、結局 timing；若另開 Android／WASM，
    必須從新的工作範圍與容器驗收開始。每批仍由合法 production checkpoint 重播，不用
    debug shortcut。
+
+2026-08-10 遭遇 gate 勘誤與接線：IDA Pro 9.4 重查 `sub_1BD97`（IDA linear
+`0x1bd97..0x1bdde`；`dec [0x52f4]` 的 file offset `0xd118`）確認 CTY 模式下
+`cmp [0xd77],0; jz return`，因此 section header `+0x11` **0=安全、非0=可遇敵**。
+原始 writer `sub_130cf`（file `0x443f` 起）把 `ah=[di+1]` 寫入 `[0xd77]`；完整輸入雜湊、
+位址基準、Go 對映與保留的不確定性見 [`docs/115`](115-encounter-cty-gate-re.md)。
+`Town.EncounterFlag`／`Scene.encounterFlag` 已保存 raw，正式地表／遭遇 CTY 移動改用
+`DS:[0x52f4]` 對映的計數器；安全 CTY 與飛行不推進，save JSON 保存計數器。這關閉的是
+遭遇 gate 的 E2／資料對映缺口，不把強制遭遇、完整 encounter pack JSON、戰鬥動畫／音效
+或同狀態 V3 誤標為完成；本輪只跑受影響的針對性測試，未重跑 311 秒完整 trace。
