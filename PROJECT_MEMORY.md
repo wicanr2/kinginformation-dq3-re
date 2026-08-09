@@ -204,6 +204,15 @@ remake flag0x32」已移除；完整 bytes／consumer／位址證據與路徑見
 trace 隨後已通過 CTY83、P4–P6 與 new game→THE END；後續只處理 V3 對拍、音效／音樂長尾、
 跨平台 release 與受影響的畫面更新。
 
+2026-08-09 另完成第一個高可見度玩家畫面切片：原版影片 `f000295`／`f000300`／`f000900`
+證實四人縱列與四欄 H/M/等級 HUD；Go 現在以 `characters.json.party_sprite` 解析
+`DQ3MST.BLS` 的 class/gender entry，透過 8 格移動前位置歷史繪製活人與隊尾棺材，並由
+`interface.json.party_hud` 提供 `(48,244,448,80)` 幾何與 label glyph。正式 renderer 對拍圖為
+`dq3_remake_ebitan/docs/img/party_field_hud.png`，component test 鎖定 pack 對映、trail 與
+真實資產；目前達 E2／runtime 圖證，尚未宣稱同地圖同晝夜 V3。進入新場景、傳送、讀檔、
+加入／離隊及單人試煉復隊均會重置 trail，避免跨場景瞬移。其餘 battle 長尾、母親／attract、
+商店／教會／旅社逐窗、日夜 palette、BGM／SFX 及 Android／桌面 release 仍是未閉合工作。
+
 ## 固定工程方法
 
 1. 每輪閉合一個垂直切片：正式入口 → 狀態交易 → 畫面/聲音 → 下一節點 → save/load。

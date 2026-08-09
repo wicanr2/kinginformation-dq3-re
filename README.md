@@ -104,6 +104,8 @@ RE 文件。
 
 ![Ebiten：CTY59 handler41 Y=4 的兩項道具店分支](dq3_remake_ebitan/docs/img/merchant_settlement_handler41_shop.png)
 
+![Ebiten：四人縱列與四欄 H/M/等級隊伍 HUD（pack 驅動 E2）](dq3_remake_ebitan/docs/img/party_field_hud.png)
+
 ![Ebiten：革命後調查建城者座位後方取得黃寶珠](docs/img/merchant_revolution_yellow_orb_obtained.png)
 
 ![Ebiten：沙曼歐莎夜間使用拉之鏡揭露假王](dq3_remake_ebitan/docs/samanosa_mirror_reveal.png)

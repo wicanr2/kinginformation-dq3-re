@@ -259,5 +259,5 @@ func (g *Game) heroSceneSprite() *dq3data.CharSprite {
 	if g.heroRole != nil {
 		return g.heroRole
 	}
-	return g.hero
+	return g.heroPartySprite()
 }

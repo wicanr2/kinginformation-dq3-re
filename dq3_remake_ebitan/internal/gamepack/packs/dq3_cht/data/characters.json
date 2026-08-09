@@ -41,5 +41,26 @@
         "doc": "docs/36-original-tavern-playthrough.md#露依達酒場冒險者登錄所從遊戲自身資料解出"
       }
     }
-  ]
+  ],
+  "party_sprite": {
+    "asset": "DQ3MST.BLS",
+    "entries": [
+      {"class_raw": 0, "gender_raw": 0, "entry_base": 0, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=0,entry_base=0", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 0, "gender_raw": 1, "entry_base": 4, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=1,entry_base=4", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 1, "gender_raw": 0, "entry_base": 8, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=2,entry_base=8", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 1, "gender_raw": 1, "entry_base": 12, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=3,entry_base=12", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 2, "gender_raw": 0, "entry_base": 16, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=4,entry_base=16", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 2, "gender_raw": 1, "entry_base": 20, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=5,entry_base=20", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 3, "gender_raw": 0, "entry_base": 24, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=6,entry_base=24", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 3, "gender_raw": 1, "entry_base": 28, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=7,entry_base=28", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 4, "gender_raw": 0, "entry_base": 32, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=8,entry_base=32", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 4, "gender_raw": 1, "entry_base": 36, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=9,entry_base=36", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 5, "gender_raw": 0, "entry_base": 40, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=10,entry_base=40", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 5, "gender_raw": 1, "entry_base": 44, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=11,entry_base=44", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 6, "gender_raw": 0, "entry_base": 48, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=12,entry_base=48", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 6, "gender_raw": 1, "entry_base": 52, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=13,entry_base=52", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 7, "gender_raw": 0, "entry_base": 56, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=14,entry_base=56", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
+      {"class_raw": 7, "gender_raw": 1, "entry_base": 60, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=15,entry_base=60", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}}
+    ]
+  }
 }

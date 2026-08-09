@@ -90,12 +90,14 @@ func (g *Game) recruitInput(in InputState) {
 			m := g.roster[i]
 			g.roster = append(g.roster[:i], g.roster[i+1:]...)
 			g.companions = append(g.companions, m)
+			g.resetPartyTrail()
 		})
 	case rcLeave:
 		g.recruitPick(in, tapIdx, len(g.companions), func(i int) {
 			m := g.companions[i]
 			g.companions = append(g.companions[:i], g.companions[i+1:]...)
 			g.roster = append(g.roster, m)
+			g.resetPartyTrail()
 		})
 	case rcView:
 		if in.Cancel || in.Confirm || tapIdx >= 0 {

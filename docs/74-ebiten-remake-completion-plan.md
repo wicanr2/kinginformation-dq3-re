@@ -98,10 +98,10 @@
 | 家中／母親 | DOSBox、影片 | sec4+rec82/83；目前自動護送 | 部分，互動語意不忠實 |
 | 王城謁見 | 攻略、影片、地圖 | 缺完整正式 gate／獎勵核對 | GAP |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
-| 四人縱列 | 影片多處 | production 主要仍單一主角 sprite | 高可見 GAP |
+| 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox | 通用 loader/render 已有 | 需事件與 entrance closure |
 | NPC／日夜 | DOSBox、RE | 三層可見性與晝夜已有 | 機制有，逐事件 flags 待接 |
-| 地表／HUD | 影片、網路圖 | 地圖、主角、panel 已有 | 需四人 HUD／入口／palette |
+| 地表／HUD | 影片、網路圖 | 四欄 H/M/等級 HUD 已由 pack 幾何／glyph 驅動 | E2；需入口／palette／同狀態 V3 |
 | 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
 | 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 魯拉、烈米特、特黑洛斯、拉那魯達的 MP／gate／核心效果為 D2 | 其餘工具咒與逐窗仍需 E2 |
 | 戰鬥 | DOSBox／影片／原始怪圖 | 公式、多敵、狀態、boss queue 已有 | 呈現／訊息／cue 長尾 |
@@ -683,7 +683,8 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    名稱代入、逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、
    boss 多次行動、掉落及逐項咒文
    效果仍需 RE 與同狀態驗證。
-5. **玩家可見 parity**：四人縱列與 HUD、能力確認立繪、母親逐格演出、attract、
+5. **玩家可見 parity**：四人縱列與 HUD 已完成第一個 E2 runtime slice（`party_field_hud.png`；
+   原版影片 `f000295`／`f000300`／`f000900` 作 oracle），仍需相同地圖／位置／晝夜的 V3；能力確認立繪、母親逐格演出、attract、
    商店／教會／旅社／達瑪、二選一小視窗原版幾何、日夜 palette、剩餘 BGM／SFX 及
    ending timing 尚未全部 V3；固定片尾 `TIT3.P` 與 ENDING cue 已完成 V3，但結局文字
    停頓／轉場 timing 仍待影片同狀態核對。二選一小視窗現行 geometry 只有 legacy renderer，尚無 D3

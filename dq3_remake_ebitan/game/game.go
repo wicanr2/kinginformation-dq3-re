@@ -48,6 +48,14 @@ type npcInst struct {
 	spr      *dq3data.CharSprite
 }
 
+// partyTrailEntry is one player position recorded immediately before a legal
+// grid move.  Followers consume the same history in party order, matching the
+// original caterpillar train instead of teleporting or inventing a path.
+type partyTrailEntry struct {
+	x, y   int
+	facing int
+}
+
 // Scene 是一張可走動的地圖(地表或城鎮),統一 render + 碰撞邏輯。
 type Scene struct {
 	blk             *dq3data.BLK
@@ -284,9 +292,13 @@ type Game struct {
 	worldEntranceGrace        bool           // 城鎮→地表後第一個成功步伐不重新觸發同列兩格入口（strong；見 docs/103）
 	hero                      *dq3data.CharSprite
 	heroRole                  *dq3data.CharSprite // 由 game-pack temporary_role active flag 推導；不另存檔
-	px, py                    int                 // 主角在 cur 內的 tile 座標
-	facing                    int                 // 0..3
-	walk                      int                 // 0/1 走路動畫相位
+	mstBLS                    []byte              // party sprite 來源(DQ3MST.BLS；由 pack asset 指定)
+	partySpriteCache          map[[2]int]*dq3data.CharSprite
+	partyTrail                [8]partyTrailEntry
+	partyTrailLen             int
+	px, py                    int // 主角在 cur 內的 tile 座標
+	facing                    int // 0..3
+	walk                      int // 0/1 走路動畫相位
 	cd, anim                  int
 	dlg                       Dialogue       // 對話視窗
 	cmd                       CmdMenu        // 野外命令窗
@@ -1257,6 +1269,7 @@ func (g *Game) step(in InputState) error {
 			}
 		}
 		if g.tryMove(nx, ny) { // 碰撞/航行:陸走 BLKBM+NPC、船走海、上/下船
+			g.recordPartyTrail()
 			g.px, g.py = nx, ny
 			moved = true
 		}
@@ -1357,7 +1370,8 @@ func (g *Game) enterTownCty(cty int) {
 		g.progressSet(msDhama)
 	}
 	g.px, g.py = sc.startPos() // spawn 出界/不可走 → pick_open_start(修 6 城進城掉圖外)
-	if sc.dlgText != nil {     // 切到該城對話 bank(NPC 對話用正確 bank)
+	g.resetPartyTrail()
+	if sc.dlgText != nil { // 切到該城對話 bank(NPC 對話用正確 bank)
 		g.dlg.tx = sc.dlgText
 	}
 	g.cd = moveCooldown
@@ -1471,6 +1485,7 @@ func (g *Game) reloadTownDaynight() {
 	if g.py >= ns.h {
 		g.py = ns.h - 1
 	}
+	g.resetPartyTrail()
 	if ns.dlgText != nil {
 		g.dlg.tx = ns.dlgText
 	}
@@ -1550,6 +1565,7 @@ func (g *Game) tryTransition() {
 	if dy < ns.h {
 		g.py = dy
 	}
+	g.resetPartyTrail()
 	if ns.dlgText != nil { // 切到目的城對話 bank
 		g.dlg.tx = ns.dlgText
 	}
@@ -1585,6 +1601,7 @@ func (g *Game) warpTo(param int) bool {
 	if dy < ns.h {
 		g.py = dy
 	}
+	g.resetPartyTrail()
 	if ns.dlgText != nil {
 		g.dlg.tx = ns.dlgText
 	}
@@ -1628,6 +1645,7 @@ func (g *Game) descend() {
 	}
 	g.layer, g.cur, g.inTown, g.curCty = 1, u, false, -1
 	g.px, g.py = 84, 68
+	g.resetPartyTrail()
 	g.progressSet(msDescend) // 下降里程碑(對 flagDescended)
 	g.playAudioCue(audioCueField)
 	g.renderFrame()
@@ -1667,6 +1685,7 @@ func (g *Game) startOpening() {
 	if g.px >= home.w || g.py >= home.h { // 資產版本不符時 fail-safe；合法 CTY00 sec4 必為 13×13
 		g.px, g.py = home.startPos()
 	}
+	g.resetPartyTrail()
 	g.rememberTown() // 原版初始進度已包含阿里阿罕；確保首次習得魯拉時可選。
 	// dlg.tx 維持 NewGame 初始的 D3TXT01(開場旁白 rec82/83 在此 bank)
 	g.openingIdx = 0
@@ -1688,6 +1707,7 @@ func (g *Game) motherEscort() {
 	if g.px >= sec0.w || g.py >= sec0.h {
 		g.px, g.py = sec0.spawnX, sec0.spawnY
 	}
+	g.resetPartyTrail()
 	if sec0.dlgText != nil {
 		g.dlg.tx = sec0.dlgText // 切到城鎮對話 bank
 	}
@@ -1766,6 +1786,7 @@ func (g *Game) advanceBaramosReturn() {
 func (g *Game) exitTown() {
 	g.cur, g.inTown, g.curCty = g.overworldScene(), false, -1 // 回目前地表層(地面/下層)
 	g.px, g.py = g.overPx, g.overPy
+	g.resetPartyTrail()
 	// 從船上世界物件回到地表時，出口可能與停泊船是同一座標。此時恢復
 	// vehicle mode1；否則玩家會被放在不可步行的水格且無法重新踏上船。
 	if g.shipOwned && g.layer == 0 && g.px == g.shipX && g.py == g.shipY {
@@ -2341,8 +2362,15 @@ func (g *Game) renderFrame() {
 			blitTile(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH, sc.blk.Tile(shipTileFor(g.facing)), sc.pal)
 		} else {
 			hero := g.heroSceneSprite()
-			blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
-				hero.Frames[g.facing*dq3data.CharWalk+g.walk], sc.pal)
+			if hero != nil {
+				frame := g.facing*dq3data.CharWalk + g.walk
+				if frame < 0 || frame >= len(hero.Frames) {
+					frame = 0
+				}
+				blitSprite(g.rgba, (g.px-camX)*TileW, (g.py-camY)*TileH,
+					hero.Frames[frame], sc.pal)
+			}
+			g.drawPartyFollowers(g.rgba, camX, camY, sc.pal)
 		}
 	}
 	white := dq3data.Color{R: 255, G: 255, B: 255}
@@ -2518,6 +2546,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing registered-member equipment")
 	}
+	partySpriteAsset, heroSpriteEntry, ok := pack.PartySprite(0, 0)
+	if !ok || partySpriteAsset == "" {
+		return nil, fmt.Errorf("game pack missing male hero party sprite")
+	}
 	ld := &loader{fsys: assets}
 	pal := dq3data.DecodePalette(ld.read("DQ3.PAL"), 256) // 城鎮/地表共用(tile 只用色 0..15)
 	g := &Game{
@@ -2548,10 +2580,12 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 
 	// 城鎮:懶載素材(NPC sprite 來源 + fs);阿里阿罕(CTY0)預載並快取。通用載入見 loadTownScene。
 	manBLS := ld.read("DQ3MAN.BLS")
+	mstBLS := ld.read(partySpriteAsset)
 	if ld.err != nil {
 		return nil, ld.err
 	}
-	g.assets, g.worldPal, g.manBLS = assets, pal, manBLS
+	g.assets, g.worldPal, g.manBLS, g.mstBLS = assets, pal, manBLS, mstBLS
+	g.partySpriteCache = make(map[[2]int]*dq3data.CharSprite)
 	g.towns = map[int]*Scene{}
 	g.curCty = -1
 	town0, terr := loadTownScene(assets, pal, manBLS, 0, 1, 0, g.storyFlag) // 阿里阿罕(開局白天)
@@ -2574,7 +2608,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.battle.nameText = g.shop.nameText                             // 咒文名同名表
 	g.tavern.tx = g.dlg.tx                                          // 酒館 glyph
 	g.recruit.tx = g.dlg.tx                                         // 酒場招募 glyph
-	g.hero = dq3data.LoadCharSprite(ld.read("DQ3MST.BLS"), 0)
+	g.hero = dq3data.LoadCharSprite(mstBLS, heroSpriteEntry)
 	g.phoenix = dq3data.LoadCharSprite(manBLS, 176) // CTY70 egg b2=48 → (48-4)*4；原版拉米亞 8-frame sprite
 
 	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)

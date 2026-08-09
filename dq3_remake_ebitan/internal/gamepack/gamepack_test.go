@@ -1650,6 +1650,31 @@ func TestDQ3DialogueWindowMatchesOriginalEXE(t *testing.T) {
 	}
 }
 
+func TestDQ3PartySpriteAndHUDContract(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	layout, ok := p.PartyHUDLayout()
+	if !ok || layout.ID != "dq3:window.field_party_hud" ||
+		layout.X != 48 || layout.Y != 244 || layout.Width != 448 || layout.Height != 80 ||
+		layout.Columns != 4 || layout.LinesPerPage != 4 ||
+		layout.HPLabelGlyph == nil || *layout.HPLabelGlyph != 22 ||
+		layout.MPLabelGlyph == nil || *layout.MPLabelGlyph != 27 ||
+		layout.LevelLabelGlyph == nil || *layout.LevelLabelGlyph != 106 {
+		t.Fatalf("party HUD layout=%+v, want DQ3 four-column contract", layout)
+	}
+	wantEntries := []int{0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60}
+	for class := 0; class < 8; class++ {
+		for gender := 0; gender < 2; gender++ {
+			asset, entry, ok := p.PartySprite(class, gender)
+			if !ok || asset != "DQ3MST.BLS" || entry != wantEntries[class*2+gender] {
+				t.Fatalf("party sprite class=%d gender=%d = %q/%d/%v", class, gender, asset, entry, ok)
+			}
+		}
+	}
+}
+
 func TestDQ3InitialEquipmentMatchesOriginalEXE(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {

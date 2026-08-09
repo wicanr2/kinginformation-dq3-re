@@ -369,6 +369,10 @@ section header 的某組座標當所有入口的 fallback。
 | `defaults[].id` | string | 是 | pack-owned 穩定 ID。 |
 | `defaults[].equipment` | object | 是 | `weapon/armor/shield/head`；空槽明寫 `null`，item 0 仍是合法道具。 |
 | `defaults[].evidence` | object | 是 | 初值 writer 與 consumer 的 D3 證據。 |
+| `party_sprite.asset` | string | `party` capability 時必填 | 隊伍角色圖的 pack asset；引擎不假設檔名。 |
+| `party_sprite.entries[]` | object[] | `party` capability 時必填 | `{class_raw,gender_raw,entry_base,evidence}`；每個 class/gender 只能有一筆。 |
+| `party_sprite.entries[].entry_base` | int | 是 | 角色圖格式的原始 entry base；保留原始 record 對映，不由共用引擎套公式。 |
+| `party_sprite.entries[].evidence` | object | 是 | asset bytes、對映與玩家可見角色的 D3 證據。 |
 
 runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validator 只檢查
 `default_refs` 是否指向同 pack 的 default，不硬寫 `dq3:` ID。
@@ -383,6 +387,12 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 | `layout` | object | 是 | `dialogue`、`menu_label`、`menu_record` 或 `battle_message`；對話另列 columns／lines_per_page。`menu_record` 是本身含框線／換行的原版 legacy record，不套用共用對話框容量。 |
 | `source` | object | 是 | `legacy_record` 的檔名／record，或 `glyph_map` 字模來源。 |
 | `evidence` | object | 是 | 玩家可見文字來源與 consumer。 |
+
+DQ3 精訊版的 `party_sprite` 對映由 `DQ3MST.BLS` 與 [`docs/27`](27-bls-character-sprites.md) 定錨；
+男／女各職業 entry base 是 pack 資料，不是 Go fallback。原版影片
+`dq3_real_video/frames/f000295.jpg`、`f000300.jpg`、`f000900.jpg` 的四人縱列與四欄
+H/M/HUD 可作玩家可見 oracle；runtime 對拍圖見
+[`party_field_hud.png`](../dq3_remake_ebitan/docs/img/party_field_hud.png)。
 
 目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
 諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89、波魯多加 D3TXT04 rec24–28、
@@ -927,6 +937,11 @@ DQ3 CTY59 handler41 在 IDA linear `0x15bba`（file `0x6f2a`）比較 `DS:4f35==
 邏輯畫布的 pixel；不得以目前縮放後視窗推算。DQ3 canonical 值為
 `(152,238,360,112)`、inset `(16,16)`、20 欄、每頁 4 行；EXE 結構與 consumer 見
 [`docs/94`](94-dialogue-window-and-monster-mask-re.md)。缺欄位或無效幾何一律 fail closed。
+
+有 `party` capability 的 pack 另須提供 `party_hud`；除通用 window geometry 外，
+`hp_label_glyph`、`mp_label_glyph`、`level_label_glyph` 也必須由 pack 指定。DQ3
+精訊版 canonical 為 `(48,244,448,80)`、四欄、四列，對應原版影片的姓名／H／M／等級
+狀態窗；缺資料時引擎不畫猜測版面。
 
 ### 6.10 `staged_boss_events`
 

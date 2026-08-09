@@ -20,5 +20,29 @@
       "doc": "docs/94-dialogue-window-and-monster-mask-re.md",
       "note": "DGROUP 0x3e6e；caller logical 0x5002/file 0x6372；consumer logical 0xf590/file 0x10900"
     }
+  },
+  "party_hud": {
+    "id": "dq3:window.field_party_hud",
+    "x": 48,
+    "y": 244,
+    "width": 448,
+    "height": 80,
+    "text_inset_x": 12,
+    "text_inset_y": 8,
+    "columns": 4,
+    "lines_per_page": 4,
+    "hp_label_glyph": 22,
+    "mp_label_glyph": 27,
+    "level_label_glyph": 106,
+    "evidence": {
+      "level": "D3",
+      "source_kind": "video",
+      "source": "dq3_real_video/frames/f000900.jpg",
+      "address_space": "none",
+      "address": "",
+      "consumer": "field command-window party status renderer",
+      "doc": "docs/74-ebiten-remake-completion-plan.md#原版實況影片逐段對照",
+      "note": "原版 640x350 邏輯畫布的四欄 H/M/職業狀態框；以同影片 f000900 的玩家可見幾何作 D3 anchor。"
+    }
   }
 }

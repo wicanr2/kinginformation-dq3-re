@@ -94,21 +94,25 @@ type Facilities struct {
 // WindowLayout 是版本專屬的固定視窗幾何。引擎只依此通用契約繪製，
 // 不保存任何 DQ3 專屬座標或尺寸。
 type WindowLayout struct {
-	ID           string   `json:"id"`
-	X            int      `json:"x"`
-	Y            int      `json:"y"`
-	Width        int      `json:"width"`
-	Height       int      `json:"height"`
-	TextInsetX   int      `json:"text_inset_x"`
-	TextInsetY   int      `json:"text_inset_y"`
-	Columns      int      `json:"columns"`
-	LinesPerPage int      `json:"lines_per_page"`
-	Evidence     Evidence `json:"evidence"`
+	ID              string   `json:"id"`
+	X               int      `json:"x"`
+	Y               int      `json:"y"`
+	Width           int      `json:"width"`
+	Height          int      `json:"height"`
+	TextInsetX      int      `json:"text_inset_x"`
+	TextInsetY      int      `json:"text_inset_y"`
+	Columns         int      `json:"columns"`
+	LinesPerPage    int      `json:"lines_per_page"`
+	HPLabelGlyph    *int     `json:"hp_label_glyph,omitempty"`
+	MPLabelGlyph    *int     `json:"mp_label_glyph,omitempty"`
+	LevelLabelGlyph *int     `json:"level_label_glyph,omitempty"`
+	Evidence        Evidence `json:"evidence"`
 }
 
 type Interface struct {
 	SchemaVersion string       `json:"schema_version"`
 	Dialogue      WindowLayout `json:"dialogue"`
+	PartyHUD      WindowLayout `json:"party_hud,omitempty"`
 }
 
 type TileCoordinate struct {
@@ -947,10 +951,27 @@ type CharacterDefaultRefs struct {
 	RegisteredPartyMember string `json:"registered_party_member,omitempty"`
 }
 
+// PartySpriteEntry maps one pack-owned party class/gender pair to a sprite
+// entry in the pack-owned character asset.  The engine never derives this
+// mapping from a DQ3 convention; a future pack may use a different asset or
+// ordering.
+type PartySpriteEntry struct {
+	ClassRaw  int      `json:"class_raw"`
+	GenderRaw int      `json:"gender_raw"`
+	EntryBase int      `json:"entry_base"`
+	Evidence  Evidence `json:"evidence"`
+}
+
+type PartySpriteDefinition struct {
+	Asset   string             `json:"asset"`
+	Entries []PartySpriteEntry `json:"entries"`
+}
+
 type Characters struct {
-	SchemaVersion string               `json:"schema_version"`
-	DefaultRefs   CharacterDefaultRefs `json:"default_refs"`
-	Defaults      []CharacterDefault   `json:"defaults"`
+	SchemaVersion string                `json:"schema_version"`
+	DefaultRefs   CharacterDefaultRefs  `json:"default_refs"`
+	Defaults      []CharacterDefault    `json:"defaults"`
+	PartySprite   PartySpriteDefinition `json:"party_sprite,omitempty"`
 }
 
 type Pack struct {
@@ -1131,6 +1152,27 @@ func (p *Pack) validateInterface() error {
 	if err := validateEvidence(w.Evidence); err != nil {
 		return fmt.Errorf("dialogue evidence: %w", err)
 	}
+	if h := p.Interface.PartyHUD; h.ID != "" {
+		if h.X < 0 || h.Y < 0 || h.Width <= 0 || h.Height <= 0 ||
+			h.TextInsetX < 0 || h.TextInsetY < 0 ||
+			h.TextInsetX*2 >= h.Width || h.TextInsetY*2 >= h.Height ||
+			h.Columns <= 0 || h.Columns > 16 || h.LinesPerPage <= 0 || h.LinesPerPage > 8 {
+			return errors.New("party HUD window layout is invalid")
+		}
+		if h.HPLabelGlyph == nil || h.MPLabelGlyph == nil || h.LevelLabelGlyph == nil {
+			return errors.New("party HUD label glyphs are required")
+		}
+		for name, glyph := range map[string]*int{
+			"hp": h.HPLabelGlyph, "mp": h.MPLabelGlyph, "level": h.LevelLabelGlyph,
+		} {
+			if *glyph < 0 || *glyph > 0xffff {
+				return fmt.Errorf("party HUD %s label glyph out of range", name)
+			}
+		}
+		if err := validateEvidence(h.Evidence); err != nil {
+			return fmt.Errorf("party HUD evidence: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -1179,6 +1221,25 @@ func (p *Pack) validateCharacters() error {
 	}
 	if ref := p.Characters.DefaultRefs.RegisteredPartyMember; ref != "" && p.charDefaults[ref] == nil {
 		return fmt.Errorf("default_refs.registered_party_member references unknown default %q", ref)
+	}
+	if hasParty {
+		if p.Characters.PartySprite.Asset == "" || len(p.Characters.PartySprite.Entries) == 0 {
+			return errors.New("party capability requires characters.party_sprite")
+		}
+	}
+	seenSprite := make(map[[2]int]bool, len(p.Characters.PartySprite.Entries))
+	for i, entry := range p.Characters.PartySprite.Entries {
+		if entry.ClassRaw < 0 || entry.GenderRaw < 0 || entry.GenderRaw > 1 || entry.EntryBase < 0 {
+			return fmt.Errorf("party_sprite.entries[%d] has invalid class/gender/entry", i)
+		}
+		key := [2]int{entry.ClassRaw, entry.GenderRaw}
+		if seenSprite[key] {
+			return fmt.Errorf("duplicate party sprite class/gender %d/%d", entry.ClassRaw, entry.GenderRaw)
+		}
+		seenSprite[key] = true
+		if err := validateEvidence(entry.Evidence); err != nil {
+			return fmt.Errorf("party_sprite.entries[%d] evidence: %w", i, err)
+		}
 	}
 	return nil
 }
@@ -3015,6 +3076,15 @@ func (p *Pack) DialogueWindowLayout() WindowLayout {
 	return p.Interface.Dialogue
 }
 
+// PartyHUDLayout is absent for packs that do not expose a longitudinal party
+// HUD.  Callers must check the boolean instead of inventing a geometry.
+func (p *Pack) PartyHUDLayout() (WindowLayout, bool) {
+	if p.Interface.PartyHUD.ID == "" {
+		return WindowLayout{}, false
+	}
+	return p.Interface.PartyHUD, true
+}
+
 func (p *Pack) TwoStepFloorSwitchGates() []TwoStepFloorSwitchGate {
 	return append([]TwoStepFloorSwitchGate(nil), p.Events.TwoStepFloorSwitchGates...)
 }
@@ -3101,6 +3171,17 @@ func (p *Pack) RegisteredPartyMemberEquipment() ([4]int, bool) {
 		return [4]int{-1, -1, -1, -1}, false
 	}
 	return p.CharacterEquipment(ref)
+}
+
+// PartySprite resolves a pack-defined class/gender pair to its asset and BLS
+// entry base.  The engine does not apply a version-specific arithmetic rule.
+func (p *Pack) PartySprite(classRaw, genderRaw int) (string, int, bool) {
+	for _, entry := range p.Characters.PartySprite.Entries {
+		if entry.ClassRaw == classRaw && entry.GenderRaw == genderRaw {
+			return p.Characters.PartySprite.Asset, entry.EntryBase, true
+		}
+	}
+	return "", 0, false
 }
 
 func (p *Pack) TextGlyphCodes(id string) ([]uint16, bool) {

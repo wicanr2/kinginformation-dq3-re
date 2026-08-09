@@ -320,6 +320,7 @@ func (g *Game) restore(s saveState) {
 		g.addVisitedTown(v.Cty) // 驗證並按 EXE table 正規化舊存檔順序。
 	}
 	g.px, g.py, g.inTown = s.PX, s.PY, s.InTown
+	g.resetPartyTrail()
 	if s.InTown {
 		g.restoreTownScene(s.Cty, s.Section)
 	} else {
@@ -371,6 +372,7 @@ func (g *Game) restoreTownScene(cty, section int) {
 		return
 	}
 	g.town, g.cur, g.curCty = ns, ns, cty
+	g.resetPartyTrail()
 	if g.towns == nil {
 		g.towns = map[int]*Scene{}
 	}

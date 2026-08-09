@@ -141,6 +141,7 @@ func (g *Game) beginSoloChallenge(event *gamepack.TemporarySoloChallengeEvent) {
 	g.overPx, g.overPy = g.px, g.py
 	g.inTown, g.curCty = false, -1
 	g.cur = g.overworldScene()
+	g.resetPartyTrail()
 	g.applyDaynightPalette()
 }
 
@@ -155,6 +156,7 @@ func (g *Game) finishSoloChallenge(event *gamepack.TemporarySoloChallengeEvent) 
 	g.inTown, g.curCty = true, d.CTYRaw
 	g.restoreTownScene(d.CTYRaw, d.Section)
 	g.px, g.py = d.X, d.Y
+	g.resetPartyTrail()
 	g.soloChallengeEventID = ""
 }
 
