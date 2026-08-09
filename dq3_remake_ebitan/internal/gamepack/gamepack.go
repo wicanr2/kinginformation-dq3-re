@@ -109,10 +109,28 @@ type WindowLayout struct {
 	Evidence        Evidence `json:"evidence"`
 }
 
+// AttractFrame 是標題閒置後輪播的一張版本專屬全螢幕 PCX。引擎只依穩定的
+// asset key 與資料化停留幀數輪播，不在 Go 內知道職業名稱或檔名。
+type AttractFrame struct {
+	AssetKey   string   `json:"asset_key"`
+	HoldFrames int      `json:"hold_frames"`
+	Evidence   Evidence `json:"evidence"`
+}
+
+// AttractSequence 描述原版標題後的職業巡禮。start_delay_frames 與 hold_frames
+// 都是 pack 設定，缺資料時不啟動 attract（fail closed）。
+type AttractSequence struct {
+	ID               string         `json:"id"`
+	StartDelayFrames int            `json:"start_delay_frames"`
+	Frames           []AttractFrame `json:"frames"`
+	Evidence         Evidence       `json:"evidence"`
+}
+
 type Interface struct {
-	SchemaVersion string       `json:"schema_version"`
-	Dialogue      WindowLayout `json:"dialogue"`
-	PartyHUD      WindowLayout `json:"party_hud,omitempty"`
+	SchemaVersion string           `json:"schema_version"`
+	Dialogue      WindowLayout     `json:"dialogue"`
+	PartyHUD      WindowLayout     `json:"party_hud,omitempty"`
+	Attract       *AttractSequence `json:"attract,omitempty"`
 }
 
 type TileCoordinate struct {
@@ -1171,6 +1189,30 @@ func (p *Pack) validateInterface() error {
 		}
 		if err := validateEvidence(h.Evidence); err != nil {
 			return fmt.Errorf("party HUD evidence: %w", err)
+		}
+	}
+	if a := p.Interface.Attract; a != nil {
+		if a.ID == "" || a.StartDelayFrames < 0 || len(a.Frames) == 0 {
+			return errors.New("attract sequence is invalid")
+		}
+		if err := validateEvidence(a.Evidence); err != nil {
+			return fmt.Errorf("attract evidence: %w", err)
+		}
+		seenAssets := make(map[string]bool, len(a.Frames))
+		for i, frame := range a.Frames {
+			if frame.AssetKey == "" || frame.HoldFrames <= 0 {
+				return fmt.Errorf("attract.frames[%d]: asset_key and positive hold_frames are required", i)
+			}
+			if seenAssets[frame.AssetKey] {
+				return fmt.Errorf("attract.frames[%d]: duplicate asset_key %q", i, frame.AssetKey)
+			}
+			if _, ok := p.Manifest.Assets[frame.AssetKey]; !ok {
+				return fmt.Errorf("attract.frames[%d]: unknown asset key %q", i, frame.AssetKey)
+			}
+			if err := validateEvidence(frame.Evidence); err != nil {
+				return fmt.Errorf("attract.frames[%d] evidence: %w", i, err)
+			}
+			seenAssets[frame.AssetKey] = true
 		}
 	}
 	return nil
@@ -3214,6 +3256,16 @@ func (p *Pack) Asset(key string) (AssetRef, bool) {
 func (p *Pack) AssetPath(key string) (string, bool) {
 	a, ok := p.Asset(key)
 	return a.Path, ok
+}
+
+// AttractSequence returns the pack-owned title attract contract. A nil result
+// means this edition has no verified attract sequence and the engine must keep
+// the normal title splash path.
+func (p *Pack) AttractSequence() (*AttractSequence, bool) {
+	if p == nil || p.Interface.Attract == nil {
+		return nil, false
+	}
+	return p.Interface.Attract, true
 }
 
 // AudioTrack resolves a stable cue ID to the pack's original track number.

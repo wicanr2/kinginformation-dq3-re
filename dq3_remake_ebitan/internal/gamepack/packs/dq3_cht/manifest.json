@@ -33,6 +33,46 @@
       "path": "TIT3.P",
       "size": 28948,
       "sha256": "f4c0b82c0df531ff7e8e10ce05f18b22e3e87a7d9a21237666b98722f132378e"
+    },
+    "attract_warrior": {
+      "path": "TITH.P",
+      "size": 33652,
+      "sha256": "1ceb9c032881c3964a6a833176df5956f4e7e03f4b5a5b7246cdba181991980a"
+    },
+    "attract_priest": {
+      "path": "TITI.P",
+      "size": 44013,
+      "sha256": "fd93507c7368b76d17de1599f084006a26d5bf698e871b9bb4663887d67b1940"
+    },
+    "attract_magician": {
+      "path": "TITJ.P",
+      "size": 35396,
+      "sha256": "da60fa852db0b8de00c3893bee9b8e8dd6f26aae6e22c626a9f197b79335508c"
+    },
+    "attract_fighter": {
+      "path": "TITK.P",
+      "size": 30932,
+      "sha256": "260a1f10416d767a76d4f90d23678c0de5db7b8aab14836829b3622f35ea5ad2"
+    },
+    "attract_merchant": {
+      "path": "TITL.P",
+      "size": 34777,
+      "sha256": "a4c81ea0c566bfb78b3b6e61eb115f782421c048d176215041b9017f1dd14160"
+    },
+    "attract_worthy": {
+      "path": "TITM.P",
+      "size": 34203,
+      "sha256": "180235e7abc2eec2a6a75111ff2e0b6205d662b5e4295d09d8274db31ca9fd5d"
+    },
+    "attract_player": {
+      "path": "TITN.P",
+      "size": 33336,
+      "sha256": "6ef7d9bc8aea237e923e0e7fd0e5cd83eba9f6b27c922ccd9b1b36f3df86d303"
+    },
+    "attract_hero": {
+      "path": "TITO.P",
+      "size": 35236,
+      "sha256": "f565a187ab2201b5d1f4bf8c2fa17270924cbef29a5cd6cb3e91fbe5553e7218"
     }
   }
 }

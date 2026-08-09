@@ -90,13 +90,13 @@
 
 | 畫面族 | 原版證據 | Ebiten 現況 | 判定 |
 |---|---|---|---|
-| 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | 未完整 production 接線 | GAP |
-| 標題 | DOSBox、影片、網路圖 | 已有 | 有基礎，需 lifecycle 對拍 |
-| attract 職業巡禮 | 影片、`docs/67` TITI–TITN | 素材定位，未播放 | GAP |
+| 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | 素材已定位，完整演出仍未接 | GAP（視覺） |
+| 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
+| attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 已有新遊戲／載入框架 | 需輸入與版面 E2 |
-| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件 | 核心已接，需完整 trace |
-| 家中／母親 | DOSBox、影片 | sec4+rec82/83；目前自動護送 | 部分，互動語意不忠實 |
-| 王城謁見 | 攻略、影片、地圖 | 缺完整正式 gate／獎勵核對 | GAP |
+| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace | E3；能力立繪仍待 V3 |
+| 家中／母親 | DOSBox、影片 | sec4+rec82/83；handler54 transaction 已接 | E3；逐格護送動畫仍待 V3 |
+| 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox | 通用 loader/render 已有 | 需事件與 entrance closure |
@@ -106,7 +106,7 @@
 | 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 魯拉、烈米特、特黑洛斯、拉那魯達的 MP／gate／核心效果為 D2 | 其餘工具咒與逐窗仍需 E2 |
 | 戰鬥 | DOSBox／影片／原始怪圖 | 公式、多敵、狀態、boss queue 已有 | 呈現／訊息／cue 長尾 |
 | 商店／旅社／教會／達瑪 | 原版資料、部分截圖 | 達瑪轉職已由正式流程閉合至 E3/V2；其餘多數已有 | 賣出、逐服務與達瑪原版同狀態 V3 仍缺 |
-| 船 | 影片、DOSBox 截圖 | 航行系統與取船鏈已有 | 需正常流程 E3 |
+| 船 | 影片、DOSBox 截圖 | 取船鏈、正式登船與首次航行已接 | E3；航海畫面仍待 V3 |
 | 不死鳥／飛行 | 攻略、影片、EXE／CTY70 | 六珠祭壇、復活、搭乘、飛行與降落已有正式 trace | 新遊戲 boot trace 已通過 P4-P6；主線 E3，畫面 V1 |
 | 下降／下世界 | 影片、EXE | 巴拉摩斯後王座事件與自然下降入口已接 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
 | 終盤連戰 | 影片、RE | 光之珠、隱藏樓梯、歐里狄加與三連戰已有正式入口 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
@@ -684,7 +684,8 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    boss 多次行動、掉落及逐項咒文
    效果仍需 RE 與同狀態驗證。
 5. **玩家可見 parity**：四人縱列與 HUD 已完成第一個 E2 runtime slice（`party_field_hud.png`；
-   原版影片 `f000295`／`f000300`／`f000900` 作 oracle），仍需相同地圖／位置／晝夜的 V3；能力確認立繪、母親逐格演出、attract、
+   原版影片 `f000295`／`f000300`／`f000900` 作 oracle），仍需相同地圖／位置／晝夜的 V3；能力確認立繪、母親逐格演出、
+   attract 的能力條逐幀／淡入淡出、
    商店／教會／旅社／達瑪、二選一小視窗原版幾何、日夜 palette、剩餘 BGM／SFX 及
    ending timing 尚未全部 V3；固定片尾 `TIT3.P` 與 ENDING cue 已完成 V3，但結局文字
    停頓／轉場 timing 仍待影片同狀態核對。二選一小視窗現行 geometry 只有 legacy renderer，尚無 D3

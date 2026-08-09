@@ -81,6 +81,7 @@ func (g *Game) newGameInput(in InputState) {
 			nf.stage = ngName
 		case confirm && nf.cursor == ngOptLoad:
 			_ = g.Load() // 載入進度:讀存檔(對齊 docs/36「載入進度」;無存檔則靜默略過,回一般流程)
+			g.titleIdleFrames = 0
 			g.showTitle = false
 		case in.DirEdge == 0 || in.DirEdge == 1:
 			nf.cursor ^= 1
@@ -133,6 +134,7 @@ func (g *Game) newGameInput(in InputState) {
 			return
 		}
 		if (in.Confirm || in.Enter) && nf.confirmCursor == 0 {
+			g.titleIdleFrames = 0
 			g.showTitle = false
 			g.startOpening()
 		}

@@ -943,6 +943,23 @@ DQ3 CTY59 handler41 在 IDA linear `0x15bba`（file `0x6f2a`）比較 `DS:4f35==
 精訊版 canonical 為 `(48,244,448,80)`、四欄、四列，對應原版影片的姓名／H／M／等級
 狀態窗；缺資料時引擎不畫猜測版面。
 
+標題閒置巡禮若有原版證據，可在同一檔提供 `attract`；引擎只實作輪播狀態機，不能在
+Go 內列出職業或檔名：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `attract.id` | string | 是 | 穩定的版本專屬巡禮 ID。 |
+| `attract.start_delay_frames` | int | 是 | 標題無輸入後開始巡禮的固定邏輯幀數；非負。 |
+| `attract.frames` | object[] | 是 | 有序全螢幕卡片；不得為空或重複 asset key。 |
+| `frames[].asset_key` | string | 是 | `manifest.assets` 的 PCX asset key；未知引用 fail closed。 |
+| `frames[].hold_frames` | int | 是 | 該卡片停留的固定邏輯幀數；正整數。 |
+| `attract.evidence`／`frames[].evidence` | object | 是 | 影片輪播順序／timing 與 PCX 檔案、consumer 的證據。 |
+
+DQ3 canonical `TITH.P`→`TITO.P` 八張職業卡、每卡 1200 個 60Hz frame 的證據與 runtime
+對拍見 [`docs/67`](67-attract-assets-re.md) 及 `dq3_remake_ebitan/docs/img/title_attract_warrior.png`。
+若其他版本只有標題而沒有經證實巡禮，省略 `attract` 即保持普通標題流程；不得以預設
+檔名或合理秒數補上。
+
 ### 6.10 `staged_boss_events`
 
 `staged_boss_events` 描述具有兩個正式入口、戰間移動／轉場、選項分支與事後寶箱 gate 的

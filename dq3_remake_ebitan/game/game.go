@@ -335,6 +335,13 @@ type Game struct {
 	showTitle                 bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
 	titlePix                  []uint8
 	titlePal                  []dq3data.Color
+	attractPix                [][]uint8
+	attractPal                [][]dq3data.Color
+	attractSeq                *gamepack.AttractSequence
+	attractFrame              int
+	attractIndex              int
+	attractActive             bool
+	titleIdleFrames           int
 	endingPix                 []uint8 // pack asset ending_image(TIT3.P)
 	endingPal                 []dq3data.Color
 	cfg                       config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
@@ -934,10 +941,32 @@ func (g *Game) step(in InputState) error {
 	// 標題畫面:主選單→主角命名→性別→能力確認→開始新遊戲(newgame.go)。
 	// S/CtxTap 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)。
 	if g.showTitle {
+		if g.attractActive {
+			if titleInputInterruptsAttract(in) {
+				g.stopAttract()
+				g.newGameInput(in)
+			} else {
+				g.advanceAttract()
+			}
+			g.renderFrame()
+			return nil
+		}
 		if g.settings.open {
 			g.settingsInput(in)
 			g.renderFrame()
 			return nil
+		}
+		if g.newGame.stage == ngSplash {
+			if titleInputInterruptsAttract(in) {
+				g.titleIdleFrames = 0
+			} else if g.attractSeq != nil {
+				g.titleIdleFrames++
+				if g.titleIdleFrames >= g.attractSeq.StartDelayFrames {
+					g.startAttract()
+				}
+			}
+		} else {
+			g.titleIdleFrames = 0
 		}
 		g.newGameInput(in)
 		g.renderFrame()
@@ -2298,6 +2327,11 @@ func (g *Game) renderFrame() {
 		return
 	}
 	if g.showTitle && g.titlePix != nil { // 標題畫面(PCX indexed → palette)
+		if g.attractActive && g.attractReady() {
+			drawIndexedPCX(g.rgba, g.attractPix[g.attractIndex], g.attractPal[g.attractIndex])
+			g.frame.WritePixels(g.rgba)
+			return
+		}
 		drawIndexedPCX(g.rgba, g.titlePix, g.titlePal)
 		white := dq3data.Color{R: 255, G: 255, B: 255}
 		if len(g.titlePal) > 15 {
@@ -2697,6 +2731,20 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		return nil, assetErr
 	}
 	g.showTitle = g.titlePix != nil
+	if seq, ok := pack.AttractSequence(); ok {
+		g.attractSeq = seq
+		g.attractPix = make([][]uint8, len(seq.Frames))
+		g.attractPal = make([][]dq3data.Color, len(seq.Frames))
+		for i, frame := range seq.Frames {
+			g.attractPix[i], g.attractPal[i], assetErr = loadPCXAsset(frame.AssetKey)
+			if assetErr != nil {
+				return nil, assetErr
+			}
+			if g.attractPix[i] == nil || len(g.attractPal[i]) == 0 {
+				return nil, fmt.Errorf("game pack attract frame %q is unavailable", frame.AssetKey)
+			}
+		}
+	}
 	if g.endingPix, g.endingPal, assetErr = loadPCXAsset("ending_image"); assetErr != nil {
 		return nil, assetErr
 	}

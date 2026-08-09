@@ -1675,6 +1675,29 @@ func TestDQ3PartySpriteAndHUDContract(t *testing.T) {
 	}
 }
 
+func TestDQ3AttractContract(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	seq, ok := p.AttractSequence()
+	if !ok || seq.ID != "dq3:attract.class_showcase" || seq.StartDelayFrames != 1200 || len(seq.Frames) != 8 {
+		t.Fatalf("attract sequence=%+v, want eight-card idle contract", seq)
+	}
+	want := []string{
+		"attract_warrior", "attract_priest", "attract_magician", "attract_fighter",
+		"attract_merchant", "attract_worthy", "attract_player", "attract_hero",
+	}
+	for i, frame := range seq.Frames {
+		if frame.AssetKey != want[i] || frame.HoldFrames != 1200 {
+			t.Fatalf("attract frame[%d]=%+v, want key=%q hold=1200", i, frame, want[i])
+		}
+		if ref, ok := p.Asset(frame.AssetKey); !ok || ref.Path == "" || ref.Size <= 0 || ref.SHA256 == "" {
+			t.Fatalf("attract asset %q missing manifest integrity", frame.AssetKey)
+		}
+	}
+}
+
 func TestDQ3InitialEquipmentMatchesOriginalEXE(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {

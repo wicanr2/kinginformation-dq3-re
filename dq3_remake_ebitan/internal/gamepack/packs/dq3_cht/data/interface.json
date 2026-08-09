@@ -44,5 +44,125 @@
       "doc": "docs/74-ebiten-remake-completion-plan.md#原版實況影片逐段對照",
       "note": "原版 640x350 邏輯畫布的四欄 H/M/職業狀態框；以同影片 f000900 的玩家可見幾何作 D3 anchor。"
     }
+  },
+  "attract": {
+    "id": "dq3:attract.class_showcase",
+    "start_delay_frames": 1200,
+    "frames": [
+      {
+        "asset_key": "attract_warrior",
+        "hold_frames": 1200,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "TITH.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "title attract warrior card",
+          "doc": "docs/67-attract-assets-re.md"
+        }
+      },
+      {
+        "asset_key": "attract_priest",
+        "hold_frames": 1200,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "TITI.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "title attract priest card",
+          "doc": "docs/67-attract-assets-re.md"
+        }
+      },
+      {
+        "asset_key": "attract_magician",
+        "hold_frames": 1200,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "TITJ.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "title attract magician card",
+          "doc": "docs/67-attract-assets-re.md"
+        }
+      },
+      {
+        "asset_key": "attract_fighter",
+        "hold_frames": 1200,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "TITK.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "title attract fighter card",
+          "doc": "docs/67-attract-assets-re.md"
+        }
+      },
+      {
+        "asset_key": "attract_merchant",
+        "hold_frames": 1200,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "TITL.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "title attract merchant card",
+          "doc": "docs/67-attract-assets-re.md"
+        }
+      },
+      {
+        "asset_key": "attract_worthy",
+        "hold_frames": 1200,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "TITM.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "title attract worthy card",
+          "doc": "docs/67-attract-assets-re.md"
+        }
+      },
+      {
+        "asset_key": "attract_player",
+        "hold_frames": 1200,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "TITN.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "title attract player card",
+          "doc": "docs/67-attract-assets-re.md"
+        }
+      },
+      {
+        "asset_key": "attract_hero",
+        "hold_frames": 1200,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "TITO.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "title attract hero card",
+          "doc": "docs/67-attract-assets-re.md"
+        }
+      }
+    ],
+    "evidence": {
+      "level": "D2",
+      "source_kind": "video",
+      "source": "dq3_real_video/frames_opening/o0090.jpg..o0250.jpg",
+      "address_space": "none",
+      "address": "",
+      "consumer": "title idle loop before player input",
+      "doc": "docs/67-attract-assets-re.md",
+      "note": "原始錄影每秒抽格可閉合八張職業卡的順序；每卡約 20 秒，故以 1200 個 60Hz frame 保存可重播的保守 timing。"
+    }
   }
 }

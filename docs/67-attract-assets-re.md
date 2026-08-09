@@ -38,6 +38,18 @@
 - plane-major 排列(整面 4 plane 分離)解出**連貫的單色雙人立繪**(灰階試看);row-interleave 排列破碎 → **採 plane-major**。
 - 內容:近景雙人物 mono 美術,屬開場演出族(「FIRST」= 開機第一張?)。真 palette 與在序列中的位置待影格對位。
 
+## Ebiten 接線狀態（2026-08-09）
+
+`dq3_cht` game pack 已將 `TITH.P`→`TITO.P` 的八張卡以 `attract.frames` 宣告，manifest
+保存每個 PCX 的大小與 SHA-256；標題閒置 1200 個 60Hz frame 後由共用引擎輪播，每張卡
+停留 1200 frame。原始錄影每秒抽格在 `o0090..o0250` 閉合卡片順序與約 20 秒間隔，故
+這組 timing 標為 **D2（影片 timing）**；PCX 檔案本身與 consumer 為 **D3**。任何確認／取消／
+方向／觸控輸入都會中斷巡禮並交回原本主選單，無輸入注入或 debug shortcut。runtime 對拍：
+[`title_attract_warrior.png`](../dq3_remake_ebitan/docs/img/title_attract_warrior.png)。
+
+仍未宣稱逐像素 V3 的部分是原版能力條逐幀填充與淡入／淡出；目前先完成可重播的八卡
+E2／V1 vertical slice，待取得同狀態 DOSBox 逐幀 oracle 後再升級 timing／動畫。
+
 ## 對戰役的意義
 
 1. **attract/開場/結局美術層 = 21 張現成 PCX + 1 張 raw**,解碼器已存在(`internal/dq3data/pcx.go`)——

@@ -10,6 +10,8 @@
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
 本輪另以 IDA／原始資料閉合 CTY59 `handler41` 的 Y=4 設施分支；它已達 D3／E2／V1，
 不代表 CTY60／61 階段或全程畫面 parity 已完成。
+標題閒置後的八張職業 attract 也已由 game-pack 接線，順序／PCX 達 D3、輪播 timing 達 E2；
+能力條逐幀填充與淡入淡出仍待 V3。
 
 ## 先讀這些
 
@@ -105,6 +107,8 @@ RE 文件。
 ![Ebiten：CTY59 handler41 Y=4 的兩項道具店分支](dq3_remake_ebitan/docs/img/merchant_settlement_handler41_shop.png)
 
 ![Ebiten：四人縱列與四欄 H/M/等級隊伍 HUD（pack 驅動 E2）](dq3_remake_ebitan/docs/img/party_field_hud.png)
+
+![Ebiten：標題閒置後的戰士職業 attract 卡（pack 驅動 E2）](dq3_remake_ebitan/docs/img/title_attract_warrior.png)
 
 ![Ebiten：革命後調查建城者座位後方取得黃寶珠](docs/img/merchant_revolution_yellow_orb_obtained.png)
 

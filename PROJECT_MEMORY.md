@@ -210,8 +210,12 @@ trace 隨後已通過 CTY83、P4–P6 與 new game→THE END；後續只處理 V
 `interface.json.party_hud` 提供 `(48,244,448,80)` 幾何與 label glyph。正式 renderer 對拍圖為
 `dq3_remake_ebitan/docs/img/party_field_hud.png`，component test 鎖定 pack 對映、trail 與
 真實資產；目前達 E2／runtime 圖證，尚未宣稱同地圖同晝夜 V3。進入新場景、傳送、讀檔、
-加入／離隊及單人試煉復隊均會重置 trail，避免跨場景瞬移。其餘 battle 長尾、母親／attract、
-商店／教會／旅社逐窗、日夜 palette、BGM／SFX 及 Android／桌面 release 仍是未閉合工作。
+加入／離隊及單人試煉復隊均會重置 trail，避免跨場景瞬移。其餘 battle 長尾與母親逐格護送仍是
+未閉合工作；同日也把標題 idle attract 接回 versioned pack：`interface.json.attract` 宣告
+`TITH.P`→`TITO.P` 八張卡、1200 frame delay／hold，manifest 保存每張 PCX 的尺寸／SHA-256，
+輸入會中斷輪播並回主選單；`title_attract_warrior.png` 是 runtime 對拍。PCX／順序達 D3/E2，
+能力條逐幀填充與淡入淡出仍待 V3。商店／教會／旅社逐窗、日夜 palette、BGM／SFX 及
+Android／桌面 release 仍是未閉合工作。
 
 ## 固定工程方法
 
