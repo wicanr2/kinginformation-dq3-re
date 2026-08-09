@@ -199,5 +199,32 @@
       "doc": "docs/67-attract-assets-re.md",
       "note": "原始錄影每秒抽格可閉合八張職業卡的順序；每卡約 20 秒，故以 1200 個 60Hz frame 保存可重播的保守 timing。"
     }
+  },
+  "battle_texts": {
+    "status_sleeping": "common:text.battle.status.sleeping",
+    "status_woke": "common:text.battle.status.woke",
+    "no_spell": "common:text.battle.no_spell",
+    "mp_insufficient": "common:text.battle.mp_insufficient",
+    "actor_fled": "common:text.battle.actor.fled",
+    "actor_healed": "common:text.battle.actor.healed",
+    "actor_missed": "common:text.battle.actor.missed",
+    "actor_damage": "common:text.battle.actor.damage",
+    "actor_attack": "common:text.battle.actor.attack",
+    "victory": "common:text.battle.victory",
+    "exp_reward": "common:text.battle.reward.exp",
+    "gold_reward": "common:text.battle.reward.gold",
+    "spell_sealed": "common:text.battle.spell.sealed",
+    "enemy_sleep": "common:text.battle.enemy.sleep",
+    "buff_attack": "common:text.battle.buff.attack",
+    "buff_defense": "common:text.battle.buff.defense",
+    "enemy_sealed": "common:text.battle.enemy.sealed",
+    "enemy_confused": "common:text.battle.enemy.confused",
+    "cure_poison": "common:text.battle.cure.poison",
+    "cure_status": "common:text.battle.cure.status",
+    "spell_no_effect": "common:text.battle.spell.no_effect",
+    "item_empty": "common:text.battle.item.empty",
+    "palpunte_blow_away": "common:text.battle.palpunte.blow_away",
+    "palpunte_drain_mp": "common:text.battle.palpunte.drain_mp",
+    "party_defeated": "common:text.battle.party.defeated"
   }
 }

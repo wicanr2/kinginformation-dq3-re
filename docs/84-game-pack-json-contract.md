@@ -397,8 +397,9 @@ H/M/HUD 可作玩家可見 oracle；runtime 對拍圖見
 目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
 諾亞尼爾全域 rec599、金字塔 D3TXT03 rec86–89、波魯多加 D3TXT04 rec24–28、
 諾魯德 D3TXT04 rec87–90、巴哈拉達 D3TXT03 rec86–87／106–120／124、
-戰鬥睡眠持續／醒來 D3TXT00 rec349–350／354–355
-與「是／否」已遷入
+戰鬥睡眠持續／醒來 D3TXT00 rec349–350／354–355，以及戰鬥行動／結算
+rec262、270、317–318、319、326、330、332、335、338、340、346、348、351、353、
+361、364、366、372–373、396、399，均已遷入
 `data/texts.json`；parity test 逐 word
 對原始 D3TXT，修改 pack 會改 canonical content hash，舊存檔不得靜默套用。
 
@@ -975,6 +976,15 @@ DQ3 canonical `TITH.P`→`TITO.P` 八張職業卡、每卡 1200 個 60Hz frame �
 對拍見 [`docs/67`](67-attract-assets-re.md) 及 `dq3_remake_ebitan/docs/img/title_attract_warrior.png`。
 若其他版本只有標題而沒有經證實巡禮，省略 `attract` 即保持普通標題流程；不得以預設
 檔名或合理秒數補上。
+
+`interface.json.battle_texts` 是 production 戰鬥訊息的角色→文字 ID 對映；欄位名稱是
+跨版本的 engine role，實際句子、D3TXT record、glyph/control words 與證據仍屬
+`texts.json`。目前 DQ3 pack 提供睡眠／醒來、咒文／MP gate、逃跑、攻擊／傷害／沒打中、
+勝利／經驗／金錢、狀態／增益／解毒、帕魯朋特及全滅等 25 個角色。每個目標文字的
+`layout.kind` 必須為 `battle_message`，renderer 直接消費 `glyph_codes`，不把 Unicode
+字串重新猜成字模，也不在 Go 保留玩家可見 fallback；缺少對映、文字或 glyph stream
+時，production `NewGameWithPack` fail closed。欄位與原始 record 對照及尚未閉合的動作
+停頓／動畫／音效長尾見 [`docs/108`](108-battle-text-pack.md)。
 
 ### 6.10 `staged_boss_events`
 

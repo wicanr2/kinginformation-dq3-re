@@ -145,6 +145,74 @@ type Interface struct {
 	PartyHUD            WindowLayout     `json:"party_hud,omitempty"`
 	Attract             *AttractSequence `json:"attract,omitempty"`
 	NewGameConfirmation *RawScreenAsset  `json:"new_game_confirmation,omitempty"`
+	BattleTexts         *BattleTextRefs  `json:"battle_texts,omitempty"`
+}
+
+// BattleTextRefs assigns stable engine roles to version-owned D3TXT records.
+// The role names are cross-version semantics; only the referenced text IDs
+// and their original glyph/control words belong to a game pack.
+type BattleTextRefs struct {
+	StatusSleeping   string `json:"status_sleeping"`
+	StatusWoke       string `json:"status_woke"`
+	NoSpell          string `json:"no_spell"`
+	MPInsufficient   string `json:"mp_insufficient"`
+	ActorFled        string `json:"actor_fled"`
+	ActorHealed      string `json:"actor_healed"`
+	ActorMissed      string `json:"actor_missed"`
+	ActorDamage      string `json:"actor_damage"`
+	ActorAttack      string `json:"actor_attack"`
+	Victory          string `json:"victory"`
+	ExpReward        string `json:"exp_reward"`
+	GoldReward       string `json:"gold_reward"`
+	SpellSealed      string `json:"spell_sealed"`
+	EnemySleep       string `json:"enemy_sleep"`
+	BuffAttack       string `json:"buff_attack"`
+	BuffDefense      string `json:"buff_defense"`
+	EnemySealed      string `json:"enemy_sealed"`
+	EnemyConfused    string `json:"enemy_confused"`
+	CurePoison       string `json:"cure_poison"`
+	CureStatus       string `json:"cure_status"`
+	SpellNoEffect    string `json:"spell_no_effect"`
+	ItemEmpty        string `json:"item_empty"`
+	PalpunteBlowAway string `json:"palpunte_blow_away"`
+	PalpunteDrainMP  string `json:"palpunte_drain_mp"`
+	PartyDefeated    string `json:"party_defeated"`
+}
+
+// IDs returns a copy of the role → pack text ID mapping for the engine
+// bootstrap. Empty role references are intentionally retained so startup can
+// fail closed with the role name rather than silently selecting a fallback.
+func (r *BattleTextRefs) IDs() map[string]string {
+	if r == nil {
+		return nil
+	}
+	return map[string]string{
+		"status_sleeping":    r.StatusSleeping,
+		"status_woke":        r.StatusWoke,
+		"no_spell":           r.NoSpell,
+		"mp_insufficient":    r.MPInsufficient,
+		"actor_fled":         r.ActorFled,
+		"actor_healed":       r.ActorHealed,
+		"actor_missed":       r.ActorMissed,
+		"actor_damage":       r.ActorDamage,
+		"actor_attack":       r.ActorAttack,
+		"victory":            r.Victory,
+		"exp_reward":         r.ExpReward,
+		"gold_reward":        r.GoldReward,
+		"spell_sealed":       r.SpellSealed,
+		"enemy_sleep":        r.EnemySleep,
+		"buff_attack":        r.BuffAttack,
+		"buff_defense":       r.BuffDefense,
+		"enemy_sealed":       r.EnemySealed,
+		"enemy_confused":     r.EnemyConfused,
+		"cure_poison":        r.CurePoison,
+		"cure_status":        r.CureStatus,
+		"spell_no_effect":    r.SpellNoEffect,
+		"item_empty":         r.ItemEmpty,
+		"palpunte_blow_away": r.PalpunteBlowAway,
+		"palpunte_drain_mp":  r.PalpunteDrainMP,
+		"party_defeated":     r.PartyDefeated,
+	}
 }
 
 type TileCoordinate struct {
@@ -1140,6 +1208,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateTexts(); err != nil {
 		return nil, fmt.Errorf("%s: %w", textsPath, err)
 	}
+	if err := p.validateBattleTextRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
 	if audioPath, ok := p.Manifest.Data["audio"]; ok {
 		if audioPath, err = cleanRelative(audioPath, "data.audio"); err != nil {
 			return nil, err
@@ -1361,6 +1432,27 @@ func (p *Pack) validateTexts() error {
 			return fmt.Errorf("%s evidence: %w", d.ID, err)
 		}
 		p.texts[d.ID] = d
+	}
+	return nil
+}
+
+// validateBattleTextRefs is intentionally separate from validateInterface:
+// interface.json is decoded before texts.json, while the cross-reference can
+// only be checked after the text index exists. Packs that omit the optional
+// field remain loadable as data fixtures, but NewGameWithPack rejects them
+// before a production battle can start.
+func (p *Pack) validateBattleTextRefs() error {
+	refs := p.Interface.BattleTexts
+	if refs == nil {
+		return nil
+	}
+	for role, id := range refs.IDs() {
+		if id == "" {
+			return fmt.Errorf("battle_texts.%s is required", role)
+		}
+		if _, ok := p.texts[id]; !ok {
+			return fmt.Errorf("battle_texts.%s references unknown text %q", role, id)
+		}
 	}
 	return nil
 }
@@ -3270,6 +3362,17 @@ func (p *Pack) TextGlyphCodes(id string) ([]uint16, bool) {
 func (p *Pack) TextDefinition(id string) (*TextDefinition, bool) {
 	d, ok := p.texts[id]
 	return d, ok
+}
+
+// BattleTextRefs returns the optional battle role contract. A missing
+// contract is deliberately distinguishable from an empty one so production
+// bootstrap can fail closed while lightweight data-fixture tests remain able
+// to exercise unrelated pack validators.
+func (p *Pack) BattleTextRefs() (*BattleTextRefs, bool) {
+	if p == nil || p.Interface.BattleTexts == nil {
+		return nil, false
+	}
+	return p.Interface.BattleTexts, true
 }
 
 // Asset returns a pack-owned logical asset reference. The engine remains

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
@@ -35,7 +34,7 @@ func TestPalpunteTableHasOnlyFiveEffectiveSlots(t *testing.T) {
 		b := palpunteBattle(t, 5, 1)
 		hp, mp := b.heroHP, b.heroMP
 		b.execPalpunte(effect)
-		if b.heroHP != hp || b.heroMP != mp || !strings.Contains(b.msg, "沒有效") {
+		if b.heroHP != hp || b.heroMP != mp || b.msg != battleTextSpellNoEffect {
 			t.Fatalf("table[%d] 應為 NULL/無效：hp=%d mp=%d msg=%q", effect, b.heroHP, b.heroMP, b.msg)
 		}
 	}

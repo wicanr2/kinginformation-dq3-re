@@ -224,6 +224,14 @@ palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmatio
 圖 `dq3_remake_ebitan/docs/ng_confirm.png` 已更新，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2，panel 幾何仍待
 同狀態 V3。game-pack schema 現為 `0.1.23`；不得把此前 `0.1.22` 歷史段落當成目前版本。
 
+2026-08-09 戰鬥文字串接切片已完成：`interface.json.battle_texts` 將 25 個跨版本 battle role
+指向 `texts.json` 的 D3TXT00 record；`battle.go` 直接消費原始 glyph/control stream，角色／怪物
+名稱與數字以 runtime 變數插入，缺少對映或 glyph 時 `NewGameWithPack` fail closed。勝利、經驗、
+金錢與全滅也已改回原始 record 順序；相關 role、record、推論等級與 consumer 見 `docs/108`，
+契約同步於 `docs/84`。Docker＋Xvfb 的 `internal/...` 與 `game` 全套測試通過，並重產十張受影響
+戰鬥 PNG；逃跑失敗未找到獨立原版句子，故不以「沒打中」猜代。這只完成戰鬥文字資料與 renderer，
+逐動作 timing、動畫／音效、完整抗性／formation／掉落及跨平台 release 仍未閉合。
+
 ## 固定工程方法
 
 1. 每輪閉合一個垂直切片：正式入口 → 狀態交易 → 畫面/聲音 → 下一節點 → save/load。

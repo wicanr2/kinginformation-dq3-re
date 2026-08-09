@@ -176,9 +176,11 @@ func TestBattleRoundMessagesPlayInActionThenResultOrder(t *testing.T) {
 	if b.phase != phMessage || b.msg == first || b.msg == "" {
 		t.Fatalf("第一次確認應前進到勝利訊息: phase=%d first=%q msg=%q", b.phase, first, b.msg)
 	}
-	b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	for i := 0; i < 4 && b.phase == phMessage; i++ {
+		b.input(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	}
 	if b.phase != phEnd {
-		t.Fatalf("所有訊息確認完才可進 phEnd，got %d", b.phase)
+		t.Fatalf("所有勝利／經驗／金錢訊息確認完才可進 phEnd，got %d", b.phase)
 	}
 }
 

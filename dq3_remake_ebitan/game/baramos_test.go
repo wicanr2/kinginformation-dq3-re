@@ -72,9 +72,9 @@ func TestBaramosProductionInputTrace(t *testing.T) {
 	for n := 0; g.battle.result == 0 && n < 16; n++ { // 命令→目標，逐一收完隊員才結算
 		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	}
-	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 攻擊訊息→勝利訊息
-	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 勝利訊息→end
-	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 關戰鬥→onBattleEnd
+	for i := 0; i < 8 && g.battle.active; i++ {
+		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 逐筆確認原版戰鬥／獎勵訊息
+	}
 	if g.battle.active || !g.flags[0x213] || g.storyFlag(0x29) || !g.dlg.open {
 		t.Fatalf("巴拉摩斯勝利狀態錯:battle=%v result=%d f213=%v f29=%v postDlg=%v",
 			g.battle.active, g.battle.result, g.flags[0x213], g.storyFlag(0x29), g.dlg.open)

@@ -679,10 +679,13 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
    透過同一條正式 trace 產生 `dq3_remake_ebitan/docs/img/ending_the_end_runtime.png`，
    並與 `docs/title/ending.png` 逐像素一致；結局 cue=17 也由 `audio.json` 接到王城冊封
    後的正式時序。這只把終盤畫面／cue 升為 V3，不將其餘流程誤稱為逐畫面 V3。
-4. **戰鬥長尾**：睡眠／混亂恢復時序與 99／100／101 邊界已閉合，但訊息的角色／怪物
-   名稱代入、逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、
-   boss 多次行動、掉落及逐項咒文
-   效果仍需 RE 與同狀態驗證。
+4. **戰鬥文字串接（本輪已完成）／戰鬥長尾**：`interface.json.battle_texts` 已將 25 個
+   battle role 對映到 `texts.json` 的 D3TXT00 原始 glyph/control stream；名稱、數字插值、
+   睡眠／醒來、攻擊／傷害／沒打中、勝利／經驗／金錢、狀態／解毒、帕魯朋特及全滅均由
+   pack 提供，缺資料時 production 啟動 fail closed。Docker＋Xvfb 的 `internal/...` 與
+   `game` 全套測試通過，受影響戰鬥 PNG 已重產；欄位與證據見 `docs/108`。仍需 RE／同狀態
+   V3 的逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、boss 多次行動、
+   掉落及逐項咒文效果，不能把文字層完成誤稱為整個戰鬥完成。
 5. **玩家可見 parity**：四人縱列與 HUD 已完成第一個 E2 runtime slice（`party_field_hud.png`；
    原版影片 `f000295`／`f000300`／`f000900` 作 oracle），仍需相同地圖／位置／晝夜的 V3；能力確認 stat panel、母親逐格演出、
    attract 的能力條逐幀／淡入淡出、

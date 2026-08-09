@@ -3,7 +3,7 @@
   "definitions": [
     {
       "id": "common:text.battle.status.sleeping",
-      "value": "還沒醒來!",
+      "value": "{變數}還沒醒來!",
       "glyph_codes": [65525, 524, 410, 299, 461, 57, 65535],
       "layout": {"kind": "battle_message"},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 349},
@@ -19,7 +19,7 @@
     },
     {
       "id": "common:text.battle.status.woke",
-      "value": "醒來了!",
+      "value": "{變數}醒來了!",
       "glyph_codes": [65525, 299, 461, 423, 57, 65535],
       "layout": {"kind": "battle_message"},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 354},
@@ -32,6 +32,190 @@
         "consumer": "player/enemy sleep turn consumer",
         "doc": "docs/37-monster-ai.md"
       }
+    },
+    {
+      "id": "common:text.battle.no_spell",
+      "value": "{變數}不會使用咒文。",
+      "glyph_codes": [65531, 228, 415, 210, 412, 429, 430, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 262},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "262", "consumer": "battle command no-spell guard", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.mp_insufficient",
+      "value": "{變數}的MP不夠。",
+      "glyph_codes": [65531, 149, 27, 30, 228, 552, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 366},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "366", "consumer": "battle spell MP guard", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.actor.fled",
+      "value": "{變數}逃跑了!",
+      "glyph_codes": [65531, 629, 630, 423, 57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 348},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "348", "consumer": "battle flee consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.actor.healed",
+      "value": "{變數}的傷口復原了。",
+      "glyph_codes": [65531, 149, 553, 554, 463, 555, 423, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 270},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "270", "consumer": "battle healing consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.actor.missed",
+      "value": "但是沒打中。",
+      "glyph_codes": [508, 399, 410, 487, 407, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 335},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "335", "consumer": "battle attack miss consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.actor.damage",
+      "value": "{變數}受到\n{變數}點的傷害。",
+      "glyph_codes": [65517, 452, 453, 65534, 65530, 425, 149, 553, 471, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 332},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "332", "consumer": "battle damage consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.actor.attack",
+      "value": "{變數}的攻擊!",
+      "glyph_codes": [65531, 149, 623, 624, 57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 330},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "330", "consumer": "enemy action message consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.victory",
+      "value": "怪物們被打倒了!",
+      "glyph_codes": [469, 470, 529, 437, 487, 627, 423, 57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 353},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "353", "consumer": "battle victory consumer", "doc": "docs/13-exe-battle.md"}
+    },
+    {
+      "id": "common:text.battle.reward.exp",
+      "value": "得到{變數}點經驗。",
+      "glyph_codes": [372, 453, 65530, 425, 525, 526, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 372},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "372", "consumer": "battle victory reward consumer", "doc": "docs/13-exe-battle.md"}
+    },
+    {
+      "id": "common:text.battle.reward.gold",
+      "value": "得到{變數}元。",
+      "glyph_codes": [372, 453, 65530, 457, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 373},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "373", "consumer": "battle victory reward consumer", "doc": "docs/13-exe-battle.md"}
+    },
+    {
+      "id": "common:text.battle.spell.sealed",
+      "value": "{變數}的咒文被封住了!",
+      "glyph_codes": [65517, 149, 65534, 429, 430, 437, 500, 569, 423, 57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 351},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "351", "consumer": "party spell-sealed guard", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.enemy.sleep",
+      "value": "{變數}睡著了‥‥",
+      "glyph_codes": [65531, 628, 484, 423, 123, 123],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 338},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "338", "consumer": "battle sleep effect consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.buff.attack",
+      "value": "{變數}的力量增加了。",
+      "glyph_codes": [65531, 149, 170, 280, 424, 368, 423, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 319},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "319", "consumer": "battle attack-buff consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.buff.defense",
+      "value": "{變數}的守備力\n增加{變數}點。",
+      "glyph_codes": [65531, 149, 340, 409, 170, 65534, 424, 368, 65530, 425, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 326},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "326", "consumer": "battle defense-buff consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.enemy.sealed",
+      "value": "{變數}的咒文被封住了!",
+      "glyph_codes": [65531, 149, 429, 430, 437, 500, 569, 423, 57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 340},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "340", "consumer": "enemy spell-seal consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.enemy.confused",
+      "value": "{變數}混亂了。",
+      "glyph_codes": [65517, 481, 482, 423, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 396},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "396", "consumer": "battle confusion/illusion consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.cure.poison",
+      "value": "{變數}體內的毒解了。",
+      "glyph_codes": [65531, 486, 638, 149, 137, 464, 423, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 364},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "364", "consumer": "battle poison-cure consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.cure.status",
+      "value": "{變數}的痲痺恢復了。",
+      "glyph_codes": [65531, 149, 465, 466, 462, 463, 423, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 399},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "399", "consumer": "battle status-cure consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.spell.no_effect",
+      "value": "但是這個咒文沒有效。",
+      "glyph_codes": [508, 399, 398, 546, 429, 430, 410, 147, 418, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 346},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "346", "consumer": "battle spell failure consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.item.empty",
+      "value": "什麼都沒有",
+      "glyph_codes": [435, 436, 556, 410, 147],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 271},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "271", "consumer": "battle herb-empty consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.palpunte.blow_away",
+      "value": "{變數}被吹走了。",
+      "glyph_codes": [65517, 437, 180, 612, 423, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 317},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "317", "consumer": "Palpunte blow-away consumer", "doc": "docs/78-palpunte-re.md"}
+    },
+    {
+      "id": "common:text.battle.palpunte.drain_mp",
+      "value": "{變數}被奪取了{變數}點的MP",
+      "glyph_codes": [65517, 437, 613, 614, 423, 65530, 425, 149, 27, 30],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 318},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "318", "consumer": "Palpunte MP-drain consumer", "doc": "docs/78-palpunte-re.md"}
+    },
+    {
+      "id": "common:text.battle.party.defeated",
+      "value": "{變數}們被打倒了!",
+      "glyph_codes": [65525, 529, 437, 487, 627, 423, 57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 361},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "361", "consumer": "all-party-defeated consumer", "doc": "docs/13-exe-battle.md"}
     },
     {
       "id": "dq3:text.shanpane_gandart.intro",

@@ -39,6 +39,50 @@ type enemyGroup struct {
 	count int
 }
 
+// Battle text roles are engine semantics; the referenced text ID and glyph
+// stream come from the versioned game pack. Keeping the role names here avoids
+// putting a DQ3 record number or player-visible sentence in the engine.
+const (
+	battleTextStatusSleeping   = "status_sleeping"
+	battleTextStatusWoke       = "status_woke"
+	battleTextNoSpell          = "no_spell"
+	battleTextMPInsufficient   = "mp_insufficient"
+	battleTextActorFled        = "actor_fled"
+	battleTextActorHealed      = "actor_healed"
+	battleTextActorMissed      = "actor_missed"
+	battleTextActorDamage      = "actor_damage"
+	battleTextActorAttack      = "actor_attack"
+	battleTextVictory          = "victory"
+	battleTextExpReward        = "exp_reward"
+	battleTextGoldReward       = "gold_reward"
+	battleTextSpellSealed      = "spell_sealed"
+	battleTextEnemySleep       = "enemy_sleep"
+	battleTextBuffAttack       = "buff_attack"
+	battleTextBuffDefense      = "buff_defense"
+	battleTextEnemySealed      = "enemy_sealed"
+	battleTextEnemyConfused    = "enemy_confused"
+	battleTextCurePoison       = "cure_poison"
+	battleTextCureStatus       = "cure_status"
+	battleTextSpellNoEffect    = "spell_no_effect"
+	battleTextItemEmpty        = "item_empty"
+	battleTextPalpunteBlowAway = "palpunte_blow_away"
+	battleTextPalpunteDrainMP  = "palpunte_drain_mp"
+	battleTextPartyDefeated    = "party_defeated"
+)
+
+type battleTextDefinition struct {
+	value   string
+	glyph   []uint16
+	columns int
+	lines   int
+}
+
+type battleMessage struct {
+	role string
+	text battleTextDefinition
+	vars [][]int
+}
+
 // enemyUnit 是群戰中一隻敵的即時狀態。怪物資料、AI 與 sprite 都逐隻保存，讓原版混合
 // formation 不會退化成「代表怪物 × N」。
 type enemyUnit struct {
@@ -99,8 +143,9 @@ type Battle struct {
 	heroDef            int
 	heroAgi            int
 	cursor             int
-	msg                string
-	messageQueue       []string // 已結算回合的後續逐筆訊息；msg 是目前顯示項
+	msg                string // 目前訊息的 pack value；供 log／測試，畫面走 msgData.glyph
+	msgData            battleMessage
+	messageQueue       []battleMessage // 已結算回合的後續逐筆訊息；msg 是目前顯示項
 	phase              battlePhase
 	result             int // 0 進行中、1 勝、2 敗、3 逃
 	gotExp             int
@@ -128,8 +173,11 @@ type Battle struct {
 	messageResume      battlePhase // 非回合訊息關閉後回到的選單；phEnd 表示正常回合訊息
 	actionActor        int
 	actionTarget       int
-	statusSleepingText string // game pack common:text.battle.status.sleeping
-	statusWokeText     string // game pack common:text.battle.status.woke
+	statusSleepingText string // pack value；僅供 log／舊測試相容
+	statusWokeText     string // pack value；僅供 log／舊測試相容
+	statusSleepingID   string // battleTextStatusSleeping 的 pack role ID
+	statusWokeID       string // battleTextStatusWoke 的 pack role ID
+	texts              map[string]battleTextDefinition
 
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
@@ -161,6 +209,95 @@ func hurtFxFrames(ms int) int {
 		f = 1
 	}
 	return f
+}
+
+// setTextDefinitions installs the validated pack-owned battle text streams.
+// Production startup supplies every role; unit tests may construct Battle
+// directly, in which case missing roles remain non-rendering technical IDs.
+func (b *Battle) setTextDefinitions(defs map[string]battleTextDefinition) {
+	b.texts = make(map[string]battleTextDefinition, len(defs))
+	for role, def := range defs {
+		def.glyph = append([]uint16(nil), def.glyph...)
+		b.texts[role] = def
+	}
+	if def, ok := b.texts[battleTextStatusSleeping]; ok {
+		b.statusSleepingID, b.statusSleepingText = battleTextStatusSleeping, def.value
+	}
+	if def, ok := b.texts[battleTextStatusWoke]; ok {
+		b.statusWokeID, b.statusWokeText = battleTextStatusWoke, def.value
+	}
+}
+
+func (b *Battle) showMessage(m battleMessage) {
+	b.msgData = m
+	b.msg = m.text.value
+}
+
+// emitText resolves a stable role to pack-owned glyph/control words. A
+// missing role never falls back to a Go sentence; the technical role remains
+// in msg so tests/logs can expose the broken contract while the renderer draws
+// nothing. Built-in production packs are rejected before this path is reached.
+func (b *Battle) emitText(role string, vars ...[]int) {
+	m := battleMessage{role: role, text: b.texts[role]}
+	m.vars = make([][]int, len(vars))
+	for i, v := range vars {
+		m.vars[i] = append([]int(nil), v...)
+	}
+	if m.text.value == "" {
+		m.text.value = role
+	}
+	if b.resolving {
+		b.messageQueue = append(b.messageQueue, m)
+		return
+	}
+	b.showMessage(m)
+}
+
+// emitStatus keeps direct Battle unit tests that provide only the historical
+// status value working, while the production path always uses a pack role.
+func (b *Battle) emitStatus(role, legacyValue string, vars ...[]int) {
+	if role == "" {
+		if legacyValue == "" {
+			return
+		}
+		m := battleMessage{text: battleTextDefinition{value: legacyValue}, vars: vars}
+		if b.resolving {
+			b.messageQueue = append(b.messageQueue, m)
+		} else {
+			b.showMessage(m)
+		}
+		return
+	}
+	b.emitText(role, vars...)
+}
+
+func (b *Battle) actorNameGlyphs(actor int) []int {
+	if actor == 0 {
+		return append([]int(nil), classNames[0]...)
+	}
+	if actor-1 >= 0 && actor-1 < len(b.companions) {
+		c := b.companions[actor-1]
+		if len(c.name) > 0 {
+			return append([]int(nil), c.name...)
+		}
+		if c.class >= 0 && c.class < len(classNames) {
+			return append([]int(nil), classNames[c.class]...)
+		}
+	}
+	return nil
+}
+
+func (b *Battle) enemyNameGlyphs(index int) []int {
+	if index < 0 || index >= len(b.enemies) || b.nameText == nil {
+		return nil
+	}
+	var out []int
+	for _, code := range b.nameText.Record(0x258 + b.enemies[index].monID) {
+		if code < dq3data.GlyphMax {
+			out = append(out, int(code))
+		}
+	}
+	return out
 }
 
 // battleActor 是戰鬥中一名同伴的即時數值(隊長為 hero* 欄位,同伴用此)。
@@ -209,9 +346,9 @@ func (b *Battle) consumeActorSleep(actor int) bool {
 	}
 	if playerStatusWakes(b.roll()) {
 		b.clearActorStatus(actor, statusParalysis)
-		b.emit(b.statusWokeText)
+		b.emitStatus(b.statusWokeID, b.statusWokeText, b.actorNameGlyphs(actor))
 	} else {
-		b.emit(b.statusSleepingText)
+		b.emitStatus(b.statusSleepingID, b.statusSleepingText, b.actorNameGlyphs(actor))
 	}
 	return true
 }
@@ -311,7 +448,7 @@ func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, 
 	}
 	b.partyBlind, b.partySealed = false, false
 	b.cursor, b.phase, b.result = 0, phCommand, 0
-	b.msg, b.gotExp, b.gotGold, b.gotDrop, b.suppressDrop = "", 0, 0, -1, false
+	b.msg, b.msgData, b.gotExp, b.gotGold, b.gotDrop, b.suppressDrop = "", battleMessage{}, 0, 0, -1, false
 	b.messageQueue = nil
 	b.active = true
 	b.seekCommandActor(0)
@@ -652,7 +789,8 @@ func (b *Battle) input(in InputState) (closed bool) {
 				if len(b.actorSpells(b.commandActor)) > 0 {
 					b.spellCursor, b.phase = 0, phSpell
 				} else {
-					b.msg, b.phase = "還沒學會咒文", phMessage
+					b.emitText(battleTextNoSpell, b.actorNameGlyphs(b.commandActor))
+					b.phase = phMessage
 				}
 			} else {
 				b.beginTarget(battleCommand{kind: kind, target: -1}, phCommand)
@@ -676,7 +814,8 @@ func (b *Battle) input(in InputState) (closed bool) {
 		case confirm:
 			rec := spells[b.spellCursor]
 			if def, ok := spell.GetDef(rec); ok && b.actorMP(b.commandActor) < def.MP {
-				b.msg, b.phase, b.messageResume = "MP 不足", phMessage, phSpell
+				b.emitText(battleTextMPInsufficient, b.actorNameGlyphs(b.commandActor))
+				b.phase, b.messageResume = phMessage, phSpell
 			} else {
 				b.beginTarget(battleCommand{kind: bcSpell, spell: rec, target: -1}, phSpell)
 			}
@@ -728,17 +867,17 @@ func (b *Battle) input(in InputState) (closed bool) {
 	case phMessage:
 		if in.Confirm {
 			if len(b.messageQueue) > 0 {
-				b.msg = b.messageQueue[0]
+				b.showMessage(b.messageQueue[0])
 				b.messageQueue = b.messageQueue[1:]
 			} else if b.result != 0 {
-				b.msg = ""
+				b.msg, b.msgData = "", battleMessage{}
 				b.phase = phEnd
 			} else if b.messageResume != phEnd {
-				b.msg = ""
+				b.msg, b.msgData = "", battleMessage{}
 				b.phase = b.messageResume
 				b.messageResume = phEnd
 			} else {
-				b.msg = ""
+				b.msg, b.msgData = "", battleMessage{}
 				b.phase = phCommand
 				b.resetCommandRound()
 			}
@@ -752,23 +891,12 @@ func (b *Battle) input(in InputState) (closed bool) {
 	return false
 }
 
-func (b *Battle) emit(msg string) {
-	if msg == "" {
-		return
-	}
-	if b.resolving {
-		b.messageQueue = append(b.messageQueue, msg)
-		return
-	}
-	b.msg = msg
-}
-
 func (b *Battle) beginMessagePlayback() {
 	b.phase = phMessage
 	if len(b.messageQueue) == 0 {
 		return
 	}
-	b.msg = b.messageQueue[0]
+	b.showMessage(b.messageQueue[0])
 	b.messageQueue = b.messageQueue[1:]
 }
 
@@ -789,20 +917,21 @@ func (b *Battle) execTurn() {
 	}
 	b.defending = false
 	if b.heroStatus&statusParalysis != 0 { // 睡眠/混亂(敵施144/152):本回合任何指令皆無法行動
-		b.emit("陷入異常,無法行動!")
+		b.emitStatus(b.statusSleepingID, b.statusSleepingText, b.actorNameGlyphs(b.actionActor))
 		return
 	}
 	switch b.cursor {
 	case bcFlee: // 逃げる
 		if battle.FleeOK(b.heroAgi, b.fleeResist(), b.roll()) {
 			b.result, b.phase = 3, phMessage
-			b.emit("逃走成功")
+			b.emitText(battleTextActorFled, b.actorNameGlyphs(b.actionActor))
 			return
 		}
-		b.emit("逃走失敗")
+		// D3TXT00 has a confirmed success record (348), but no separately
+		// identified original failure sentence. Do not substitute the attack
+		// miss record here; an unverified message is worse than silence.
 	case bcDef: // 防御(本回合受傷減半)
 		b.defending = true
-		b.emit("防御")
 	case bcItem: // 道具:用藥草回 HP
 		target := b.actionTarget
 		if target < 0 || target >= 1+len(b.companions) || !b.actorAlive(target) {
@@ -816,9 +945,9 @@ func (b *Battle) execTurn() {
 			}
 			b.setActorHP(target, cur+heal)
 			b.usedHerbs++
-			b.emit(fmt.Sprintf("回復 %d", heal))
+			b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(heal))
 		} else {
-			b.emit("沒有藥草")
+			b.emitText(battleTextItemEmpty)
 		}
 	default: // 戰う：使用已選敵方目標；若目標先被擊倒則退到下一個存活敵。
 		tgt := b.actionTarget
@@ -829,7 +958,7 @@ func (b *Battle) execTurn() {
 			break // 組內已無存活敵(全數逃走中)→ 揮空,直接進勝負判定
 		}
 		if b.partyBlind && b.roll() < 128 { // 我方幻惑(敵施158瑪努莎)→ ~50% 揮空(對齊 C g_party_blind)
-			b.emit("幻惑,揮空了")
+			b.emitText(battleTextActorMissed)
 			break
 		}
 		crit := 0
@@ -843,13 +972,11 @@ func (b *Battle) execTurn() {
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
 		}
-		b.emit(fmt.Sprintf("給予 %d 傷害", dmg))
+		b.emitText(battleTextActorDamage, b.enemyNameGlyphs(tgt), digitGlyphs(dmg))
 		b.flashCol = b.hurtFxFrames
 	}
 	if b.allEnemiesDead() {
-		b.settleVictoryRewards()
-		b.result, b.phase = 1, phMessage
-		b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
+		b.finishVictory()
 		return
 	}
 }
@@ -875,14 +1002,14 @@ func (b *Battle) execSpell(rec int) {
 		b.phase = phCommand
 		return
 	}
+	caster := b.actionActor
 	if b.partySealed { // 瑪荷頓(敵施156)→ 我方無法施咒,但仍耗費本回合(對齊 C)
-		b.emit("咒文被封印,無法施放!")
+		b.emitText(battleTextSpellSealed, b.actorNameGlyphs(caster))
 		return
 	}
-	caster := b.actionActor
 	if b.actorMP(caster) < def.MP {
 		b.phase = phMessage
-		b.emit("MP 不足")
+		b.emitText(battleTextMPInsufficient, b.actorNameGlyphs(caster))
 		return
 	}
 	b.setActorMP(caster, b.actorMP(caster)-def.MP)
@@ -893,7 +1020,6 @@ func (b *Battle) execSpell(rec int) {
 		if def.Target == spell.TargetAllyGroup {
 			targets = b.aliveActorIndices()
 		}
-		total := 0
 		for _, target := range targets {
 			if !b.actorAlive(target) {
 				continue
@@ -904,38 +1030,64 @@ func (b *Battle) execSpell(rec int) {
 				val = max - cur
 			}
 			b.setActorHP(target, cur+val)
-			total += val
+			if val > 0 {
+				b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(val))
+			}
 		}
-		b.emit(fmt.Sprintf("回復 %d", total))
 	case spell.Sleep:
 		n := b.applyEnemyStatus(def.Target, b.actionTarget, statusParalysis)
-		b.emit(fmt.Sprintf("%d 隻敵人陷入睡眠!", n))
+		for _, target := range b.aliveEnemyIndices() {
+			if b.enemies[target].status&statusParalysis != 0 {
+				b.emitText(battleTextEnemySleep, b.enemyNameGlyphs(target))
+			}
+		}
+		if n == 0 {
+			b.emitText(battleTextSpellNoEffect)
+		}
 	case spell.BuffAtk:
-		for _, target := range b.allySpellTargets(def.Target, b.actionTarget) {
+		targets := b.allySpellTargets(def.Target, b.actionTarget)
+		for _, target := range targets {
 			b.addActorAtkPct(target, 100)
+			b.emitText(battleTextBuffAttack, b.actorNameGlyphs(target))
 		}
-		b.emit("同伴的攻擊力提升了!")
 	case spell.BuffDef:
-		for _, target := range b.allySpellTargets(def.Target, b.actionTarget) {
+		targets := b.allySpellTargets(def.Target, b.actionTarget)
+		for _, target := range targets {
 			b.addActorDefPct(target, 50)
+			b.emitText(battleTextBuffDefense, b.actorNameGlyphs(target), digitGlyphs(50))
 		}
-		b.emit("同伴的守備力提升了!")
 	case spell.Seal:
 		n := b.applyEnemyStatus(def.Target, b.actionTarget, statusSealed)
-		b.emit(fmt.Sprintf("%d 隻敵人的咒文被封印!", n))
+		for _, target := range b.aliveEnemyIndices() {
+			if b.enemies[target].status&statusSealed != 0 {
+				b.emitText(battleTextEnemySealed, b.enemyNameGlyphs(target))
+			}
+		}
+		if n == 0 {
+			b.emitText(battleTextSpellNoEffect)
+		}
 	case spell.Blind:
 		n := b.applyEnemyStatus(def.Target, b.actionTarget, statusBlind)
-		b.emit(fmt.Sprintf("%d 隻敵人陷入幻惑!", n))
+		for _, target := range b.aliveEnemyIndices() {
+			if b.enemies[target].status&statusBlind != 0 {
+				b.emitText(battleTextEnemyConfused, b.enemyNameGlyphs(target))
+			}
+		}
+		if n == 0 {
+			b.emitText(battleTextSpellNoEffect)
+		}
 	case spell.CurePoison: // 基阿里166
-		for _, target := range b.allySpellTargets(def.Target, b.actionTarget) {
+		targets := b.allySpellTargets(def.Target, b.actionTarget)
+		for _, target := range targets {
 			b.clearActorStatus(target, statusPoison)
+			b.emitText(battleTextCurePoison, b.actorNameGlyphs(target))
 		}
-		b.emit("解毒了!")
 	case spell.CureStatus: // 基阿里克167/薩梅哈168(remake 簡化:麻痺/混亂/睡眠共用一位元)
-		for _, target := range b.allySpellTargets(def.Target, b.actionTarget) {
+		targets := b.allySpellTargets(def.Target, b.actionTarget)
+		for _, target := range targets {
 			b.clearActorStatus(target, statusParalysis)
+			b.emitText(battleTextCureStatus, b.actorNameGlyphs(target))
 		}
-		b.emit("異常解除了!")
 	case spell.Palpunte:
 		b.execPalpunte(b.rng.Next(16))
 	default: // Dmg
@@ -951,9 +1103,12 @@ func (b *Battle) execSpell(rec int) {
 					b.enemies[i].hp = 0
 				}
 				hit++
+				b.emitText(battleTextActorDamage, b.enemyNameGlyphs(i), digitGlyphs(v))
 			}
 			b.flashCol = b.hurtFxFrames
-			b.emit(fmt.Sprintf("咒文波及 %d 隻敵人", hit))
+			if hit == 0 {
+				b.emitText(battleTextSpellNoEffect)
+			}
 		} else {
 			tgt := b.actionTarget
 			if tgt < 0 || tgt >= len(b.enemies) || !b.enemies[tgt].alive() {
@@ -965,15 +1120,13 @@ func (b *Battle) execSpell(rec int) {
 				if b.enemies[tgt].hp < 0 {
 					b.enemies[tgt].hp = 0
 				}
-				b.emit(fmt.Sprintf("咒文 %d 傷害", val))
+				b.emitText(battleTextActorDamage, b.enemyNameGlyphs(tgt), digitGlyphs(val))
 			}
 			b.flashCol = b.hurtFxFrames
 		}
 	}
 	if b.allEnemiesDead() {
-		b.settleVictoryRewards()
-		b.result, b.phase = 1, phMessage
-		b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
+		b.finishVictory()
 		return
 	}
 }
@@ -1024,22 +1177,23 @@ func (b *Battle) execPalpunte(effect int) {
 			if b.rng.Next(256) < chance {
 				b.enemies[i].status |= statusParalysis
 				affected++
+				b.emitText(battleTextEnemySleep, b.enemyNameGlyphs(i))
 			}
 		}
 		if b.heroHP > 0 && b.heroStatus&statusParalysis == 0 && b.rng.Next(256) < 0x96 {
 			b.heroStatus |= statusParalysis
 			affected++
+			b.emitText(battleTextStatusSleeping, b.actorNameGlyphs(0))
 		}
-		for _, c := range b.companions {
+		for i, c := range b.companions {
 			if c.hp > 0 && c.status&statusParalysis == 0 && b.rng.Next(256) < 0x96 {
 				c.status |= statusParalysis
 				affected++
+				b.emitText(battleTextStatusSleeping, b.actorNameGlyphs(i+1))
 			}
 		}
 		if affected == 0 {
-			b.emit("但是這個咒文沒有效。")
-		} else {
-			b.emit("敵我之間有睡意‥‥")
+			b.emitText(battleTextSpellNoEffect)
 		}
 	case 2, 8: // BP=0x55 → 每名存活隊員回復 85..94，個別擲值並封頂
 		heal := func(cur, max int) int {
@@ -1056,11 +1210,18 @@ func (b *Battle) execPalpunte(effect int) {
 			}
 			return cur
 		}
+		old := b.heroHP
 		b.heroHP = heal(b.heroHP, b.heroMax)
-		for _, c := range b.companions {
-			c.hp = heal(c.hp, c.maxHP)
+		if b.heroHP > old {
+			b.emitText(battleTextActorHealed, b.actorNameGlyphs(0), digitGlyphs(b.heroHP-old))
 		}
-		b.emit("全體同伴的傷口復原了。")
+		for i, c := range b.companions {
+			old = c.hp
+			c.hp = heal(c.hp, c.maxHP)
+			if c.hp > old {
+				b.emitText(battleTextActorHealed, b.actorNameGlyphs(i+1), digitGlyphs(c.hp-old))
+			}
+		}
 	case 11: // sub_1D6C7：各敵依 spellID59 抗性判定，被吹走者不給 EXP/Gold
 		affected := 0
 		for i := range b.enemies {
@@ -1072,12 +1233,11 @@ func (b *Battle) execPalpunte(effect int) {
 				b.enemies[i].hp = 0
 				b.enemies[i].fled = true
 				affected++
+				b.emitText(battleTextPalpunteBlowAway, b.enemyNameGlyphs(i))
 			}
 		}
 		if affected == 0 {
-			b.emit("但是這個咒文沒有效。")
-		} else {
-			b.emit("怪物被吹走了。")
+			b.emitText(battleTextSpellNoEffect)
 		}
 	case 12: // effect type1：隨機一敵，吸取 1..min(10,MP)-1（原版 0 會改成 1）
 		alive := make([]int, 0, len(b.enemies))
@@ -1087,7 +1247,7 @@ func (b *Battle) execPalpunte(effect int) {
 			}
 		}
 		if len(alive) == 0 {
-			b.emit("但是這個咒文沒有效。")
+			b.emitText(battleTextSpellNoEffect)
 			return
 		}
 		tgt := alive[b.rng.Next(len(alive))]
@@ -1095,7 +1255,7 @@ func (b *Battle) execPalpunte(effect int) {
 		// effect type1 caller file 0xe69a uses JA failure，與其他效果的 JB
 		// success 不同；因此 roll==chance 仍成功。
 		if b.rng.Next(256) > chance || b.enemies[tgt].mp <= 0 {
-			b.emit("但是這個咒文沒有效。")
+			b.emitText(battleTextSpellNoEffect)
 			return
 		}
 		limit := b.enemies[tgt].mp
@@ -1108,9 +1268,9 @@ func (b *Battle) execPalpunte(effect int) {
 		}
 		b.enemies[tgt].mp -= drain
 		b.setActorMP(b.actionActor, b.actorMP(b.actionActor)+drain) // 原版不以 max MP 封頂
-		b.emit(fmt.Sprintf("奪取了 %d 點的MP", drain))
+		b.emitText(battleTextPalpunteDrainMP, b.enemyNameGlyphs(tgt), digitGlyphs(drain))
 	default:
-		b.emit("但是這個咒文沒有效。")
+		b.emitText(battleTextSpellNoEffect)
 	}
 }
 
@@ -1124,7 +1284,7 @@ func (b *Battle) turnSpeed(agi int) int {
 
 // resolveRound 對齊原版 sub_d6bf：收完全隊命令後，才把存活隊員與敵人依敏捷擲值混排。
 func (b *Battle) resolveRound() {
-	b.msg = ""
+	b.msg, b.msgData = "", battleMessage{}
 	b.messageQueue = nil
 	for _, c := range b.companions {
 		c.defending = false
@@ -1186,7 +1346,9 @@ func (b *Battle) resolveRound() {
 func (b *Battle) finishVictory() {
 	b.settleVictoryRewards()
 	b.result, b.phase = 1, phMessage
-	b.emit(fmt.Sprintf("打倒! EXP%d G%d", b.gotExp, b.gotGold))
+	b.emitText(battleTextVictory)
+	b.emitText(battleTextExpReward, digitGlyphs(b.gotExp))
+	b.emitText(battleTextGoldReward, digitGlyphs(b.gotGold))
 }
 
 func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
@@ -1195,13 +1357,10 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 	case bcFlee:
 		if battle.FleeOK(c.agi, b.fleeResist(), b.roll()) {
 			b.result, b.phase = 3, phMessage
-			b.emit("逃走成功")
-		} else {
-			b.emit("逃走失敗")
+			b.emitText(battleTextActorFled, b.actorNameGlyphs(i+1))
 		}
 	case bcDef:
 		c.defending = true
-		b.emit("防御")
 	case bcItem:
 		target := cmd.target
 		if target < 0 || target >= 1+len(b.companions) || !b.actorAlive(target) {
@@ -1215,9 +1374,9 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 			}
 			b.setActorHP(target, cur+heal)
 			b.usedHerbs++
-			b.emit(fmt.Sprintf("回復 %d", heal))
+			b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(heal))
 		} else {
-			b.emit("沒有藥草")
+			b.emitText(battleTextItemEmpty)
 		}
 	case bcSpell:
 		b.execSpell(cmd.spell)
@@ -1230,7 +1389,7 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 			return
 		}
 		if b.partyBlind && b.roll() < 128 {
-			b.emit("幻惑,揮空了")
+			b.emitText(battleTextActorMissed)
 			return
 		}
 		atk := pct(c.atk, b.actorAtkPct(i+1))
@@ -1240,7 +1399,7 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
 		}
-		b.emit(fmt.Sprintf("給予 %d 傷害", dmg))
+		b.emitText(battleTextActorDamage, b.enemyNameGlyphs(tgt), digitGlyphs(dmg))
 		b.flashCol = b.hurtFxFrames
 	}
 	if b.allEnemiesDead() {
@@ -1284,6 +1443,16 @@ func (b *Battle) targetDef(target int) int {
 	return b.companions[target].def
 }
 
+// actorIndex converts an enemy target representation (-1 for the leader,
+// zero-based companion index otherwise) to the shared actor index used by
+// name/status helpers (0 leader, 1.. companions).
+func actorIndex(target int) int {
+	if target < 0 {
+		return 0
+	}
+	return target + 1
+}
+
 // setTargetStatus:對目標(-1=隊長,i=同伴)加異常狀態位元(敵鏡像144/152 睡眠/混亂用)。
 func (b *Battle) setTargetStatus(target, bit int) {
 	if target < 0 {
@@ -1314,21 +1483,21 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 	if b.enemies[i].status&statusParalysis != 0 {
 		if enemyStatusWakes(b.roll()) {
 			b.enemies[i].status &^= statusParalysis
-			b.emit(b.statusWokeText)
+			b.emitStatus(b.statusWokeID, b.statusWokeText, b.enemyNameGlyphs(i))
 		} else {
-			b.emit(b.statusSleepingText)
+			b.emitText(battleTextEnemySleep, b.enemyNameGlyphs(i))
 		}
 		return
 	}
 	if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
 		b.enemies[i].hp, b.enemies[i].fled = 0, true
-		b.emit("敵人逃走了")
+		b.emitText(battleTextActorFled, b.enemyNameGlyphs(i))
 		return
 	}
 	targets := b.aliveTargets()
 	if len(targets) == 0 {
 		b.result, b.phase = 2, phMessage
-		b.emit("全滅‥")
+		b.emitText(battleTextPartyDefeated, b.actorNameGlyphs(0))
 		return
 	}
 	tgt := targets[b.rng.Next(len(targets))]
@@ -1343,38 +1512,38 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 					if b.enemies[i].hp > b.enemies[i].max {
 						b.enemies[i].hp = b.enemies[i].max
 					}
-					b.emit(fmt.Sprintf("敵使用咒文回復 %d", val))
+					b.emitText(battleTextActorHealed, b.enemyNameGlyphs(i), digitGlyphs(val))
 					return
 				case spell.Sleep:
 					b.setTargetStatus(tgt, statusParalysis)
-					b.emit("敵使用咒文,我方陷入異常!")
+					b.emitText(battleTextEnemySleep, b.actorNameGlyphs(actorIndex(tgt)))
 					return
 				case spell.BuffAtk:
 					b.enemyAtkPct += 100
 					if b.enemyAtkPct > 400 {
 						b.enemyAtkPct = 400
 					}
-					b.emit("敵方攻擊力上升了!")
+					b.emitText(battleTextBuffAttack, b.enemyNameGlyphs(i))
 					return
 				case spell.BuffDef:
 					b.enemyDefPct += 50
 					if b.enemyDefPct > 300 {
 						b.enemyDefPct = 300
 					}
-					b.emit("敵方守備力上升了!")
+					b.emitText(battleTextBuffDefense, b.enemyNameGlyphs(i), digitGlyphs(50))
 					return
 				case spell.Seal:
 					b.partySealed = true
-					b.emit("我方咒文被封印了!")
+					b.emitText(battleTextEnemySealed, b.actorNameGlyphs(actorIndex(tgt)))
 					return
 				case spell.Blind:
 					b.partyBlind = true
-					b.emit("我方陷入幻惑!")
+					b.emitText(battleTextEnemyConfused, b.actorNameGlyphs(actorIndex(tgt)))
 					return
 				default:
 					val := spell.CastValue(def.Base, b.roll())
 					b.damageMember(tgt, val)
-					b.emit(fmt.Sprintf("敵咒文 %d 傷害", val))
+					b.emitText(battleTextActorDamage, b.actorNameGlyphs(actorIndex(tgt)), digitGlyphs(val))
 					b.wipedOut()
 					return
 				}
@@ -1382,7 +1551,7 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 		}
 	}
 	if b.enemies[i].status&statusBlind != 0 && b.roll() < 128 {
-		b.emit("敵人陷入幻惑,攻擊落空")
+		b.emitText(battleTextActorMissed)
 		return
 	}
 	eatk := pct(b.enemies[i].atk, b.enemyAtkPct)
@@ -1396,7 +1565,8 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 		edmg /= 2
 	}
 	b.damageMember(tgt, edmg)
-	b.emit(fmt.Sprintf("敵攻擊 %d 傷害", edmg))
+	b.emitText(battleTextActorAttack, b.enemyNameGlyphs(i))
+	b.emitText(battleTextActorDamage, b.actorNameGlyphs(actor), digitGlyphs(edmg))
 	b.wipedOut()
 }
 
@@ -1404,7 +1574,7 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 func (b *Battle) wipedOut() bool {
 	if len(b.aliveTargets()) == 0 {
 		b.result, b.phase = 2, phMessage
-		b.emit("全滅‥")
+		b.emitText(battleTextPartyDefeated, b.actorNameGlyphs(0))
 		return true
 	}
 	return false
@@ -1624,7 +1794,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 				}
 			}
 		} else if b.phase == phMessage {
-			drawBattleMessage(rgba, b.tx, mx+12, my+16, 8, b.msg, white)
+			drawBattleMessage(rgba, b.tx, mx+12, my+16, 8, b.msgData, white)
 		} else if b.phase == phCommand {
 			menu := b.commandMenu(b.commandActor)
 			for i, kind := range menu {
@@ -1693,42 +1863,77 @@ func drawNumber(rgba []byte, tx *dq3data.Text, x, y, val int, fg dq3data.Color) 
 	}
 }
 
-// battleMessageGlyph 是本地 battle fallback 訊息會用到的 D3TXT00.FON 字。
-// 原版有對應的 rec330..376；待訊息變數 context 完整接入後可直接改以 record renderer。
-var battleMessageGlyph = map[rune]int{
-	' ': 13, ',': 55, '.': 43, '!': 57, ':': 61, '‥': 123, '。': 56,
-	'M': 27, 'E': 19, 'X': 38, 'P': 30, 'G': 21,
-	'上': 421, '不': 228, '中': 407, '之': 145, '了': 423, '予': 677,
-	'人': 194, '伴': 602, '但': 508, '個': 546, '倒': 627, '備': 409,
-	'傷': 553, '入': 519, '全': 594, '力': 170, '功': 195, '動': 619,
-	'升': 422, '印': 501, '原': 555, '及': 1026, '取': 614, '口': 554,
-	'同': 601, '吹': 180, '咒': 429, '回': 312, '失': 515, '奪': 613,
-	'守': 340, '害': 471, '封': 500, '常': 581, '幻': 295, '御': 204,
-	'復': 463, '怪': 469, '惑': 168, '意': 1076, '成': 610, '我': 493,
-	'打': 487, '提': 1214, '揮': 652, '擊': 624, '攻': 623, '放': 634,
-	'效': 418, '敗': 853, '敵': 478, '文': 430, '方': 547, '施': 1095,
-	'是': 399, '有': 147, '毒': 137, '沒': 410, '法': 208, '波': 659,
-	'滅': 912, '無': 495, '物': 470, '異': 643, '的': 149, '眠': 798,
-	'睡': 628, '空': 328, '給': 559, '草': 174, '落': 1053, '著': 484,
-	'藥': 244, '行': 531, '被': 437, '解': 464, '走': 612, '足': 1377,
-	'逃': 629, '這': 398, '間': 1174, '防': 203, '除': 790, '陷': 1158,
-	'隻': 680, '體': 486, '點': 425, '用': 240,
-}
-
-func drawBattleMessage(rgba []byte, tx *dq3data.Text, x, y, cols int, s string, fg dq3data.Color) {
+// drawBattleMessage consumes the original D3TXT glyph/control stream. Each
+// VAR control consumes one runtime glyph slice from the message context; an
+// unset variable reserves one blank cell just like the dialogue renderer.
+func drawBattleMessage(rgba []byte, tx *dq3data.Text, x, y, cols int, m battleMessage, fg dq3data.Color) {
+	lines := 4
+	if m.text.columns > 0 {
+		cols = m.text.columns
+	}
+	if m.text.lines > 0 {
+		lines = m.text.lines
+	}
 	col, line := 0, 0
-	for _, r := range s {
-		glyph, ok := battleMessageGlyph[r]
-		if r >= '0' && r <= '9' {
-			glyph, ok = int(r-'0'), true
-		}
-		if ok && r != ' ' {
-			drawGlyph(rgba, tx, x+col*16, y+line*16, glyph, fg)
+	varIdx := 0
+	for i := 0; i < len(m.text.glyph); i++ {
+		v := m.text.glyph[i]
+		switch {
+		case v == dq3data.TxtEnd:
+			return
+		case v == dq3data.TxtPage:
+			return
+		case v == dq3data.TxtNL || v == dq3data.TxtNL2:
+			col, line = 0, line+1
+			if line >= lines {
+				return
+			}
+			continue
+		case dq3data.IsVarInsert(v):
+			var glyphs []int
+			if varIdx < len(m.vars) {
+				glyphs = m.vars[varIdx]
+			}
+			varIdx++
+			if i+1 < len(m.text.glyph) {
+				i++ // raw D3TXT control parameter word
+			}
+			n := len(glyphs)
+			if n == 0 {
+				n = 1
+			}
+			for j := 0; j < n; j++ {
+				if j < len(glyphs) && tx != nil {
+					drawGlyph(rgba, tx, x+col*16, y+line*16, glyphs[j], fg)
+				}
+				col++
+				if col >= cols {
+					col, line = 0, line+1
+					if line >= lines {
+						return
+					}
+				}
+			}
+			continue
+		case v >= 0xffed:
+			// Unknown control words remain a one-cell non-rendering token.
+			col++
+			if col >= cols {
+				col, line = 0, line+1
+				if line >= lines {
+					return
+				}
+			}
+			continue
+		default:
+			if v < dq3data.GlyphMax && tx != nil {
+				drawGlyph(rgba, tx, x+col*16, y+line*16, int(v), fg)
+			}
 		}
 		col++
 		if col >= cols {
 			col, line = 0, line+1
-			if line >= 4 {
+			if line >= lines {
 				return
 			}
 		}
