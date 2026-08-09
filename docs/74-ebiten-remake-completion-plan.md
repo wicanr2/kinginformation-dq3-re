@@ -707,3 +707,8 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 後續工作以 V3 畫面／音效對拍、戰鬥與場景 cue 長尾、跨平台發佈驗收為主；若重新開啟主線，
 仍須從上述合法 production checkpoint 重播並記錄第一個實際 blocker，不得改用孤立 handler
 或狀態注入取代玩家流程。
+
+2026-08-09 另完成戰鬥指令標籤的資料化：`interface.json.battle_command_labels` 保存
+`war`、`flee`、`defend`、`item`、`spell` 五組原版雙 glyph，`battle.go` 不再持有
+這組玩家可見字模 table。這是 D2 engine/data 邊界切片；逐 label 的 IDA writer sidecar、
+框線樣式、逐動作 timing／動畫／音效、抗性／formation／掉落與跨平台 release 仍未閉合。

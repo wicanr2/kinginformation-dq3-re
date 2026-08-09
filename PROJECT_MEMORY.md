@@ -260,3 +260,10 @@ palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmatio
 
 接手先執行 `git status --short`。未追蹤的 Android libs、scratchpad 與 `tools/dosbox_verify_*`、
 `tools/tmp_*` 可能是使用者檔案；不得刪除、覆寫或誤納入 commit。
+
+2026-08-09 戰鬥指令標籤資料化：`interface.json.battle_command_labels` 新增 `war`、
+`flee`、`defend`、`item`、`spell` 五組原版 D3TXT00.FON 雙 glyph（D2，對映與欄距
+證據見 `docs/109-battle-hud-rects-re.md`）。`battle.go` 已移除對應的版本專屬 table；
+`NewGameWithPack` 會要求 labels 契約並在缺少時 fail closed，battle draw fixture 則明確
+安裝內建 pack。這只完成資料邊界，不代表逐 label IDA writer、戰鬥框線樣式、逐動作
+timing／動畫／音效、抗性／formation／掉落或 release 已完成。

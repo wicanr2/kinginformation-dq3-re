@@ -1707,6 +1707,20 @@ func TestDQ3BattleHUDRectsMatchOriginalEXE(t *testing.T) {
 		enemy.BaseRows != 2 || enemy.RowHeight != 16 || enemy.NameInsetX != 32 || enemy.CountInsetX != 144 {
 		t.Fatalf("battle enemy layout=%+v", enemy)
 	}
+	labels, ok := p.BattleCommandLabels()
+	if !ok {
+		t.Fatal("battle command labels missing")
+	}
+	wantLabels := map[string][2]int{
+		"war": {107, 207}, "flee": {629, 630}, "defend": {203, 204},
+		"item": {402, 1354}, "spell": {429, 430},
+	}
+	for role, want := range wantLabels {
+		got, exists := labels.Entries()[role]
+		if !exists || got.PrimaryGlyph != want[0] || got.SecondaryGlyph != want[1] {
+			t.Fatalf("battle command label %s=%+v, want glyphs %v", role, got, want)
+		}
+	}
 	// DS:0x4112 is linear 0x28ee2 and maps to file 0x1a252; byte_28f00 is
 	// linear 0x28f00/file 0x1a270. Keep both raw rects as parity anchors.
 	for off, wantRaw := range map[int][]byte{

@@ -127,6 +127,35 @@ type BattlePanelLayout struct {
 	CountInsetX          int    `json:"count_inset_x"`
 }
 
+// BattleCommandLabel 是一個原版雙 glyph 指令標籤。指令的流程語意由引擎
+// 共用；實際字模仍由 versioned game pack 提供，避免把某一版的中文字留在 Go。
+type BattleCommandLabel struct {
+	PrimaryGlyph   int      `json:"primary_glyph"`
+	SecondaryGlyph int      `json:"secondary_glyph"`
+	Evidence       Evidence `json:"evidence"`
+}
+
+// BattleCommandLabels 保存固定的跨版本指令角色對映。欄位刻意使用具名
+// primitive，不接受任意 JSON code，避免資料包偷偷承載可執行邏輯。
+type BattleCommandLabels struct {
+	War    BattleCommandLabel `json:"war"`
+	Flee   BattleCommandLabel `json:"flee"`
+	Defend BattleCommandLabel `json:"defend"`
+	Item   BattleCommandLabel `json:"item"`
+	Spell  BattleCommandLabel `json:"spell"`
+}
+
+// Entries returns a copy keyed by stable engine command roles.
+func (l *BattleCommandLabels) Entries() map[string]BattleCommandLabel {
+	if l == nil {
+		return nil
+	}
+	return map[string]BattleCommandLabel{
+		"war": l.War, "flee": l.Flee, "defend": l.Defend,
+		"item": l.Item, "spell": l.Spell,
+	}
+}
+
 // AttractFrame 是標題閒置後輪播的一張版本專屬全螢幕 PCX。引擎只依穩定的
 // asset key 與資料化停留幀數輪播，不在 Go 內知道職業名稱或檔名。
 type AttractFrame struct {
@@ -158,15 +187,16 @@ type RawScreenAsset struct {
 }
 
 type Interface struct {
-	SchemaVersion       string            `json:"schema_version"`
-	Dialogue            WindowLayout      `json:"dialogue"`
-	BattleMessage       WindowLayout      `json:"battle_message,omitempty"`
-	BattleCommand       BattlePanelLayout `json:"battle_command,omitempty"`
-	BattleEnemy         BattlePanelLayout `json:"battle_enemy,omitempty"`
-	PartyHUD            WindowLayout      `json:"party_hud,omitempty"`
-	Attract             *AttractSequence  `json:"attract,omitempty"`
-	NewGameConfirmation *RawScreenAsset   `json:"new_game_confirmation,omitempty"`
-	BattleTexts         *BattleTextRefs   `json:"battle_texts,omitempty"`
+	SchemaVersion       string               `json:"schema_version"`
+	Dialogue            WindowLayout         `json:"dialogue"`
+	BattleMessage       WindowLayout         `json:"battle_message,omitempty"`
+	BattleCommand       BattlePanelLayout    `json:"battle_command,omitempty"`
+	BattleEnemy         BattlePanelLayout    `json:"battle_enemy,omitempty"`
+	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
+	PartyHUD            WindowLayout         `json:"party_hud,omitempty"`
+	Attract             *AttractSequence     `json:"attract,omitempty"`
+	NewGameConfirmation *RawScreenAsset      `json:"new_game_confirmation,omitempty"`
+	BattleTexts         *BattleTextRefs      `json:"battle_texts,omitempty"`
 }
 
 // BattleTextRefs assigns stable engine roles to version-owned D3TXT records.
@@ -1295,6 +1325,16 @@ func (p *Pack) validateInterface() error {
 	if e := p.Interface.BattleEnemy; e.ID != "" {
 		if err := validateBattlePanelLayout("battle enemy", e); err != nil {
 			return err
+		}
+	}
+	if labels := p.Interface.BattleCommandLabels; labels != nil {
+		for role, label := range labels.Entries() {
+			if label.PrimaryGlyph < 0 || label.SecondaryGlyph < 0 {
+				return fmt.Errorf("battle command label %s has negative glyph", role)
+			}
+			if err := validateEvidence(label.Evidence); err != nil {
+				return fmt.Errorf("battle command label %s evidence: %w", role, err)
+			}
 		}
 	}
 	if h := p.Interface.PartyHUD; h.ID != "" {
@@ -3332,6 +3372,16 @@ func (p *Pack) BattleEnemyLayout() (BattlePanelLayout, bool) {
 		return BattlePanelLayout{}, false
 	}
 	return p.Interface.BattleEnemy, true
+}
+
+// BattleCommandLabels returns the pack-owned glyphs for the five standard
+// command roles. Production bootstrap must require this contract before a
+// battle can be entered; lightweight fixtures may omit it deliberately.
+func (p *Pack) BattleCommandLabels() (BattleCommandLabels, bool) {
+	if p == nil || p.Interface.BattleCommandLabels == nil {
+		return BattleCommandLabels{}, false
+	}
+	return *p.Interface.BattleCommandLabels, true
 }
 
 // PartyHUDLayout is absent for packs that do not expose a longitudinal party

@@ -69,6 +69,26 @@ sub_1c169 (逐隊員下令)
 | `sub_1c1d8`：`add bp,4` 後呼叫 `sub_215ee` | actor label X 相對框 `+32px` | `confirmed` |
 | `battleCmdLabels` 兩個 glyph 的欄距 | JSON `label_inset_x=32`、`secondary_label_inset_x=80`；由 raw menu record 與實機畫面共同校核 | `strong` |
 
+### 指令標籤的資料化
+
+原版 `sub_1c169` 的五種穩定指令角色使用下列 D3TXT00.FON glyph pair；這批先保留
+`D2`，因為字模索引與玩家可見畫面已對上，但逐指令的 IDA writer 位址仍未獨立匯出
+成 sidecar，不能把 `strong` 直接升成 D3。`interface.json.battle_command_labels`
+保存同一對映，renderer 不再從 Go table 猜字：
+
+| role | primary／secondary glyph | 原版字形 | inference |
+|---|---:|---|---|
+| `war` | `107／207` | 戰／鬥 | `D2` |
+| `flee` | `629／630` | 逃／跑 | `D2` |
+| `defend` | `203／204` | 防／禦 | `D2` |
+| `item` | `402／1354` | 道／具 | `D2` |
+| `spell` | `429／430` | 咒／文 | `D2` |
+
+`NewGameWithPack` 缺少這組契約會 fail closed；直接 Battle fixture 若不安裝 pack labels
+只是不繪製版本專屬文字，不能視為可發佈行為。後續若要升級至 D3，需從 IDA
+保留原始函式／位址／bytes 的 sidecar 補齊每個 label writer，並與同狀態 DOSBox 畫面
+核對，不得以現有 Go 常數回填證據。
+
 `height_mode="rows_plus_base"`、`base_rows=2`、`row_height=16` 是已閉合的具名
 engine primitive；Go 不保存 DQ3 的 3／4 或座標 fallback，pack 缺少此 panel 時
 `NewGameWithPack` 失敗即關閉。

@@ -309,5 +309,77 @@
     "palpunte_blow_away": "common:text.battle.palpunte.blow_away",
     "palpunte_drain_mp": "common:text.battle.palpunte.drain_mp",
     "party_defeated": "common:text.battle.party.defeated"
+  },
+  "battle_command_labels": {
+    "war": {
+      "primary_glyph": 107,
+      "secondary_glyph": 207,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "sub_1c169 指令選單繪製原版雙字模戰鬥指令",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "原版字模索引 107／207；字形為戰／鬥，欄距由同一 command rect 的 writer／consumer 閉合。"
+      }
+    },
+    "flee": {
+      "primary_glyph": 629,
+      "secondary_glyph": 630,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "sub_1c169 指令選單繪製原版雙字模逃跑指令",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "原版字模索引 629／630；字形為逃／跑。"
+      }
+    },
+    "defend": {
+      "primary_glyph": 203,
+      "secondary_glyph": 204,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "sub_1c169 指令選單繪製原版雙字模防禦指令",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "原版字模索引 203／204；字形為防／禦。"
+      }
+    },
+    "item": {
+      "primary_glyph": 402,
+      "secondary_glyph": 1354,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "sub_1c169 指令選單繪製原版雙字模道具指令",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "原版字模索引 402／1354；字形為道／具。"
+      }
+    },
+    "spell": {
+      "primary_glyph": 429,
+      "secondary_glyph": 430,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "sub_1c169 指令選單繪製原版雙字模咒文指令",
+        "doc": "docs/109-battle-hud-rects-re.md",
+        "note": "原版字模索引 429／430；字形為咒／文。"
+      }
+    }
   }
 }

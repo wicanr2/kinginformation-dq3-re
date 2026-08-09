@@ -1014,6 +1014,13 @@ DQ3 canonical `TITH.P`→`TITO.P` 八張職業卡、每卡 1200 個 60Hz frame �
 時，production `NewGameWithPack` fail closed。欄位與原始 record 對照及尚未閉合的動作
 停頓／動畫／音效長尾見 [`docs/108`](108-battle-text-pack.md)。
 
+`interface.json.battle_command_labels` 則保存戰鬥下方五種穩定指令角色的雙 glyph
+對映：`war`、`flee`、`defend`、`item`、`spell`。每項必須有非負的
+`primary_glyph`／`secondary_glyph` 與 evidence；這些數值是 D3TXT00.FON 的原版
+字模索引，不是 Unicode 字串，也不是可執行規則。DQ3 的目前對映與 command rect 的
+writer／consumer 交叉參照見 [`docs/109`](109-battle-hud-rects-re.md)。正式 pack
+缺少這組契約時啟動即拒絕，直接 unit fixture 可省略但不得被當成 production fallback。
+
 ### 6.10 `staged_boss_events`
 
 `staged_boss_events` 描述具有兩個正式入口、戰間移動／轉場、選項分支與事後寶箱 gate 的

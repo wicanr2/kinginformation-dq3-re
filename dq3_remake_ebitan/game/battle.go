@@ -21,12 +21,6 @@ const (
 	bcSpell = 4 // 咒文
 )
 
-// 戰鬥指令 glyph 標籤。
-var battleCmdLabels = map[int][2]int{
-	bcWar: {107, 207}, bcFlee: {629, 630}, bcDef: {203, 204},
-	bcItem: {402, 1354}, bcSpell: {429, 430},
-}
-
 const herbCode = 0x41 // 藥草 item id
 const herbHeal = 30   // DQ3_HERB_HEAL
 
@@ -182,6 +176,7 @@ type Battle struct {
 	messageLayout      gamepack.WindowLayout      // pack-owned shared battle message rect
 	commandLayout      gamepack.BattlePanelLayout // pack-owned command/selection panel
 	enemyLayout        gamepack.BattlePanelLayout // pack-owned enemy name/count panel
+	commandLabels      map[int][2]int             // pack-owned command glyph pairs
 
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
@@ -245,6 +240,19 @@ func (b *Battle) setCommandLayout(layout gamepack.BattlePanelLayout) {
 
 func (b *Battle) setEnemyLayout(layout gamepack.BattlePanelLayout) {
 	b.enemyLayout = layout
+}
+
+// setCommandLabels installs the version-owned glyph pair for each stable
+// command role. Missing pairs are intentionally non-rendering for direct unit
+// fixtures; production NewGameWithPack rejects an absent contract first.
+func (b *Battle) setCommandLabels(labels gamepack.BattleCommandLabels) {
+	b.commandLabels = map[int][2]int{
+		bcWar:   {labels.War.PrimaryGlyph, labels.War.SecondaryGlyph},
+		bcFlee:  {labels.Flee.PrimaryGlyph, labels.Flee.SecondaryGlyph},
+		bcDef:   {labels.Defend.PrimaryGlyph, labels.Defend.SecondaryGlyph},
+		bcItem:  {labels.Item.PrimaryGlyph, labels.Item.SecondaryGlyph},
+		bcSpell: {labels.Spell.PrimaryGlyph, labels.Spell.SecondaryGlyph},
+	}
 }
 
 func (b *Battle) showMessage(m battleMessage) {
@@ -1848,9 +1856,10 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 					if i == b.cursor {
 						drawGlyph(rgba, b.tx, mx+cursorInsetX, y, curGlyph, white)
 					}
-					label := battleCmdLabels[kind]
-					drawGlyph(rgba, b.tx, mx+labelInsetX, y, label[0], white)
-					drawGlyph(rgba, b.tx, mx+secondaryLabelInsetX, y, label[1], white)
+					if label, ok := b.commandLabels[kind]; ok {
+						drawGlyph(rgba, b.tx, mx+labelInsetX, y, label[0], white)
+						drawGlyph(rgba, b.tx, mx+secondaryLabelInsetX, y, label[1], white)
+					}
 					b.hits.add(mx, y-4, mw, rowHeight, i)
 				}
 			}

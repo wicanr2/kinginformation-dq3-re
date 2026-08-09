@@ -56,8 +56,13 @@ func installBattleDrawPack(t *testing.T, b *Battle) {
 	if !ok {
 		t.Fatal("builtin pack missing battle enemy layout")
 	}
+	labels, ok := p.BattleCommandLabels()
+	if !ok {
+		t.Fatal("builtin pack missing battle command labels")
+	}
 	b.setCommandLayout(command)
 	b.setEnemyLayout(enemy)
+	b.setCommandLabels(labels)
 }
 
 // TestCmdMenuDrawHits:命令窗 draw 後應有 6 個 box;點第 3 格(index2「狀況」所在列)回 index2。
