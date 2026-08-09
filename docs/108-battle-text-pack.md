@@ -6,6 +6,12 @@ renderer 不再把 Unicode 字元猜成 glyph，而是直接消費 D3TXT00 的�
 字模／換行／插值控制碼；缺少角色或 text ID 時，NewGameWithPack 會拒絕
 啟動（fail closed）。
 
+本輪也把訊息外框接回 `interface.json.battle_message`：DQ3.EXE 的 DGROUP `0x3e6e`
+共用 `win_rect` 證實為 `(152,238,360,112)`、inset `(16,16)`、20 欄／4 行。訊息階段
+現在隱藏指令／敵名框，只繪製這個 pack-owned rect；更新後的
+`dq3_remake_ebitan/docs/battle_message_queue.png` 可與 `references/game3.png` 的下方
+訊息區域直接核對，未再把文字塞進左下 150×108 指令框。
+
 ## 證據與欄位
 
 | 角色 | D3TXT00 record | 推論等級 | consumer |
@@ -32,6 +38,6 @@ battleMessage 保存 pack value 供 log／測試，但畫面只讀 glyph_codes�
 角色 glyph 或 D3TXT00 monster-name record 提供，數字由共用十進位 glyph
 轉換器提供。
 
-本批只閉合文字資料與插值 renderer；戰鬥的逐動作停頓、動畫／音效 cue、完整
+本批只閉合文字資料、插值 renderer 與訊息外框；戰鬥的逐動作停頓、動畫／音效 cue、完整
 抗性矩陣與所有 formation 的原版同狀態 V3 仍列在
 docs/74-ebiten-remake-completion-plan.md 長尾工作，不因 pack 化而宣稱 remake 已完成。

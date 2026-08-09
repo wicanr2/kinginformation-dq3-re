@@ -142,6 +142,7 @@ type RawScreenAsset struct {
 type Interface struct {
 	SchemaVersion       string           `json:"schema_version"`
 	Dialogue            WindowLayout     `json:"dialogue"`
+	BattleMessage       WindowLayout     `json:"battle_message,omitempty"`
 	PartyHUD            WindowLayout     `json:"party_hud,omitempty"`
 	Attract             *AttractSequence `json:"attract,omitempty"`
 	NewGameConfirmation *RawScreenAsset  `json:"new_game_confirmation,omitempty"`
@@ -1254,6 +1255,17 @@ func (p *Pack) validateInterface() error {
 	}
 	if err := validateEvidence(w.Evidence); err != nil {
 		return fmt.Errorf("dialogue evidence: %w", err)
+	}
+	if m := p.Interface.BattleMessage; m.ID != "" {
+		if m.X < 0 || m.Y < 0 || m.Width <= 0 || m.Height <= 0 ||
+			m.TextInsetX < 0 || m.TextInsetY < 0 ||
+			m.TextInsetX*2 >= m.Width || m.TextInsetY*2 >= m.Height ||
+			m.Columns <= 0 || m.Columns > 100 || m.LinesPerPage <= 0 || m.LinesPerPage > 20 {
+			return errors.New("battle message window layout is invalid")
+		}
+		if err := validateEvidence(m.Evidence); err != nil {
+			return fmt.Errorf("battle message evidence: %w", err)
+		}
 	}
 	if h := p.Interface.PartyHUD; h.ID != "" {
 		if h.X < 0 || h.Y < 0 || h.Width <= 0 || h.Height <= 0 ||
@@ -3237,6 +3249,16 @@ func (p *Pack) ItemUseEffectByRawID(itemRawID int) (*ItemUseEffect, bool) {
 
 func (p *Pack) DialogueWindowLayout() WindowLayout {
 	return p.Interface.Dialogue
+}
+
+// BattleMessageWindowLayout returns the pack-owned message window used while
+// a battle action or result is being displayed. Production callers must check
+// the boolean instead of inventing a version-specific rectangle.
+func (p *Pack) BattleMessageWindowLayout() (WindowLayout, bool) {
+	if p.Interface.BattleMessage.ID == "" {
+		return WindowLayout{}, false
+	}
+	return p.Interface.BattleMessage, true
 }
 
 // PartyHUDLayout is absent for packs that do not expose a longitudinal party

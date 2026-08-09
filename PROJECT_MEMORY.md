@@ -232,6 +232,12 @@ palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmatio
 戰鬥 PNG；逃跑失敗未找到獨立原版句子，故不以「沒打中」猜代。這只完成戰鬥文字資料與 renderer，
 逐動作 timing、動畫／音效、完整抗性／formation／掉落及跨平台 release 仍未閉合。
 
+後續修正也已把戰鬥訊息外框資料化：`interface.json.battle_message` 以 DQ3.EXE DGROUP
+`0x3e6e` 的 shared `win_rect` 提供 `(152,238,360,112)`、inset `(16,16)`、20 欄／4 行；
+訊息階段不再沿用左下 150×108 指令框，也不畫空的右側敵名框。`docs/108` 與
+`dq3_remake_ebitan/docs/battle_message_queue.png` 是本輪證據；缺 geometry 時 production
+`NewGameWithPack` fail closed。其餘戰鬥 timing／動畫／音效與 V3 長尾仍未完成。
+
 ## 固定工程方法
 
 1. 每輪閉合一個垂直切片：正式入口 → 狀態交易 → 畫面/聲音 → 下一節點 → save/load。

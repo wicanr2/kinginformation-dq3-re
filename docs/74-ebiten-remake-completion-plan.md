@@ -682,8 +682,10 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 4. **戰鬥文字串接（本輪已完成）／戰鬥長尾**：`interface.json.battle_texts` 已將 25 個
    battle role 對映到 `texts.json` 的 D3TXT00 原始 glyph/control stream；名稱、數字插值、
    睡眠／醒來、攻擊／傷害／沒打中、勝利／經驗／金錢、狀態／解毒、帕魯朋特及全滅均由
-   pack 提供，缺資料時 production 啟動 fail closed。Docker＋Xvfb 的 `internal/...` 與
-   `game` 全套測試通過，受影響戰鬥 PNG 已重產；欄位與證據見 `docs/108`。仍需 RE／同狀態
+   pack 提供，缺資料時 production 啟動 fail closed。訊息階段另已改用 `battle_message`
+   的原版 `(152,238,360,112)`／20×4 外框，隱藏左下指令框與右側空敵名框。Docker＋Xvfb
+   的 `internal/...` 與 `game` 全套測試通過，受影響戰鬥 PNG 已重產；欄位與證據見 `docs/108`。
+   仍需 RE／同狀態
    V3 的逐動作停頓、動畫／音效 cue、其他抗性與狀態、敵群 formation、boss 多次行動、
    掉落及逐項咒文效果，不能把文字層完成誤稱為整個戰鬥完成。
 5. **玩家可見 parity**：四人縱列與 HUD 已完成第一個 E2 runtime slice（`party_field_hud.png`；

@@ -960,6 +960,14 @@ row-interleaved 4bpp decoder 與 modal composition，尺寸、asset key、palett
 DQ3 canonical 使用 `FIRST.SCR`（112000 bytes、640×350）與 `docs/title/first_opening.png` 對拍；
 能力確認 modal 會在此背景上疊加 stat panels，缺失資料則 fail closed 為黑底，不推導其他版本畫面。
 
+`interface.json.battle_message` 保存戰鬥行動／結算訊息使用的版本專屬外框與文字網格，欄位
+同 `dialogue`（`id`、`x`、`y`、`width`、`height`、`text_inset_x`、`text_inset_y`、
+`columns`、`lines_per_page`、`evidence`）。DQ3 精訊版由 DQ3.EXE 的 DGROUP `0x3e6e`
+共用 `win_rect` 證實為 `(152,238,360,112)`、inset `(16,16)`、20 欄／4 行；battle
+renderer 只能讀這個 pack layout，缺少資料時 production 建立失敗，不把訊息塞回指令框或
+保留另一套 Go 座標。原始 bytes／consumer 見 [`docs/13`](13-exe-battle.md)，runtime 對拍
+由 [`docs/108`](108-battle-text-pack.md) 的戰鬥訊息圖更新。
+
 標題閒置巡禮若有原版證據，可在同一檔提供 `attract`；引擎只實作輪播狀態機，不能在
 Go 內列出職業或檔名：
 

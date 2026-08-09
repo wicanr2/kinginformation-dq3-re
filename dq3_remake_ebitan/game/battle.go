@@ -6,6 +6,7 @@ import (
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/battle"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	dosrng "github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 )
@@ -178,6 +179,7 @@ type Battle struct {
 	statusSleepingID   string // battleTextStatusSleeping 的 pack role ID
 	statusWokeID       string // battleTextStatusWoke 的 pack role ID
 	texts              map[string]battleTextDefinition
+	messageLayout      gamepack.WindowLayout // pack-owned shared battle message rect
 
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
@@ -226,6 +228,13 @@ func (b *Battle) setTextDefinitions(defs map[string]battleTextDefinition) {
 	if def, ok := b.texts[battleTextStatusWoke]; ok {
 		b.statusWokeID, b.statusWokeText = battleTextStatusWoke, def.value
 	}
+}
+
+// setMessageLayout installs the validated pack-owned battle message window.
+// Direct Battle fixtures may leave it empty; production startup rejects that
+// omission before a player can enter a battle.
+func (b *Battle) setMessageLayout(layout gamepack.WindowLayout) {
+	b.messageLayout = layout
 }
 
 func (b *Battle) showMessage(m battleMessage) {
@@ -1746,98 +1755,105 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 			}
 		}
 	}
-	// 下方左:指令窗(120,236,150×108)—— 指令 或 咒文子選單
-	{
-		mx, my, mw, mh := 120, 236, 150, 108
-		fillBox(rgba, mx, my, mw, mh, white)
-		if b.phase == phSpell {
-			spells := b.actorSpells(b.commandActor)
-			// 原版視窗只有 5 行；已學咒文超過 5 筆時，讓目前游標保持在可見
-			// 範圍內。舊版只畫前 5 筆，游標移到第 6 筆後會成為不可見選項。
-			start := 0
-			if b.spellCursor >= 5 {
-				start = b.spellCursor - 4
-			}
-			for row, i := 0, start; row < 5 && i < len(spells); row, i = row+1, i+1 {
-				rec := spells[i]
-				y := my + 24 + row*16
-				if i == b.spellCursor {
+	if b.phase == phMessage {
+		w := b.messageLayout
+		if w.ID != "" {
+			fillBox(rgba, w.X, w.Y, w.Width, w.Height, white)
+			drawBattleMessage(rgba, b.tx, w.X+w.TextInsetX, w.Y+w.TextInsetY,
+				w.Columns, b.msgData, white)
+		}
+	} else {
+		// 下方左:指令窗(原版 sub_c169 的指令／咒文子選單)
+		{
+			mx, my, mw, mh := 120, 236, 150, 108
+			fillBox(rgba, mx, my, mw, mh, white)
+			if b.phase == phSpell {
+				spells := b.actorSpells(b.commandActor)
+				// 原版視窗只有 5 行；已學咒文超過 5 筆時，讓目前游標保持在可見
+				// 範圍內。舊版只畫前 5 筆，游標移到第 6 筆後會成為不可見選項。
+				start := 0
+				if b.spellCursor >= 5 {
+					start = b.spellCursor - 4
+				}
+				for row, i := 0, start; row < 5 && i < len(spells); row, i = row+1, i+1 {
+					rec := spells[i]
+					y := my + 24 + row*16
+					if i == b.spellCursor {
+						drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+					}
+					b.drawName(rgba, mx+28, y, rec, white)
+					if def, ok := spell.GetDef(rec); ok {
+						drawNumber(rgba, b.tx, mx+110, y, def.MP, cyan)
+					}
+					b.hits.add(mx, y-4, mw, 16, i)
+				}
+			} else if b.phase == phTargetEnemy {
+				targets := b.aliveEnemyIndices()
+				if len(targets) > 0 {
+					target := targets[b.targetCursor]
+					y := my + 24
 					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+					b.drawName(rgba, mx+28, y, 0x258+b.enemies[target].monID, white)
+					drawNumber(rgba, b.tx, mx+112, y, target+1, cyan)
 				}
-				b.drawName(rgba, mx+28, y, rec, white)
-				if def, ok := spell.GetDef(rec); ok {
-					drawNumber(rgba, b.tx, mx+110, y, def.MP, cyan)
-				}
-				b.hits.add(mx, y-4, mw, 16, i)
-			}
-		} else if b.phase == phTargetEnemy {
-			targets := b.aliveEnemyIndices()
-			if len(targets) > 0 {
-				target := targets[b.targetCursor]
-				y := my + 24
-				drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
-				b.drawName(rgba, mx+28, y, 0x258+b.enemies[target].monID, white)
-				drawNumber(rgba, b.tx, mx+112, y, target+1, cyan)
-			}
-		} else if b.phase == phTargetAlly {
-			targets := b.aliveActorIndices()
-			if len(targets) > 0 {
-				actor := targets[b.targetCursor]
-				y := my + 24
-				drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
-				name := classNames[0]
-				if actor > 0 {
-					name = classNames[b.companions[actor-1].class]
-				}
-				for i, glyph := range name {
-					drawGlyph(rgba, b.tx, mx+28+i*16, y, glyph, white)
-				}
-			}
-		} else if b.phase == phMessage {
-			drawBattleMessage(rgba, b.tx, mx+12, my+16, 8, b.msgData, white)
-		} else if b.phase == phCommand {
-			menu := b.commandMenu(b.commandActor)
-			for i, kind := range menu {
-				y := my + 24 + i*16
-				if i == b.cursor {
+			} else if b.phase == phTargetAlly {
+				targets := b.aliveActorIndices()
+				if len(targets) > 0 {
+					actor := targets[b.targetCursor]
+					y := my + 24
 					drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+					name := classNames[0]
+					if actor > 0 {
+						name = classNames[b.companions[actor-1].class]
+					}
+					for i, glyph := range name {
+						drawGlyph(rgba, b.tx, mx+28+i*16, y, glyph, white)
+					}
 				}
-				label := battleCmdLabels[kind]
-				drawGlyph(rgba, b.tx, mx+28, y, label[0], white)
-				drawGlyph(rgba, b.tx, mx+72, y, label[1], white)
-				b.hits.add(mx, y-4, mw, 16, i)
-			}
-		}
-	}
-	// 下方右:敵名框。混合 formation 逐種列名與存活數；同種群維持單列。
-	{
-		type namedCount struct{ monID, count int }
-		var names []namedCount
-		for i := range b.enemies {
-			if !b.enemies[i].alive() {
-				continue
-			}
-			found := false
-			for j := range names {
-				if names[j].monID == b.enemies[i].monID {
-					names[j].count++
-					found = true
-					break
+			} else if b.phase == phCommand {
+				menu := b.commandMenu(b.commandActor)
+				for i, kind := range menu {
+					y := my + 24 + i*16
+					if i == b.cursor {
+						drawGlyph(rgba, b.tx, mx+8, y, curGlyph, white)
+					}
+					label := battleCmdLabels[kind]
+					drawGlyph(rgba, b.tx, mx+28, y, label[0], white)
+					drawGlyph(rgba, b.tx, mx+72, y, label[1], white)
+					b.hits.add(mx, y-4, mw, 16, i)
 				}
 			}
-			if !found {
-				names = append(names, namedCount{monID: b.enemies[i].monID, count: 1})
+		}
+		// 下方右:敵名框。混合 formation 逐種列名與存活數；同種群維持單列。
+		{
+			type namedCount struct{ monID, count int }
+			var names []namedCount
+			for i := range b.enemies {
+				if !b.enemies[i].alive() {
+					continue
+				}
+				found := false
+				for j := range names {
+					if names[j].monID == b.enemies[i].monID {
+						names[j].count++
+						found = true
+						break
+					}
+				}
+				if !found {
+					names = append(names, namedCount{monID: b.enemies[i].monID, count: 1})
+				}
 			}
-		}
-		ex, ey, ew, eh := 290, 262, 250, 20+16*len(names)
-		if eh < 36 {
-			eh = 36
-		}
-		fillBox(rgba, ex, ey, ew, eh, white)
-		for i, n := range names {
-			y := ey + 8 + i*16
-			b.drawName(rgba, ex+12, y, 0x258+n.monID, white)
-			drawNumber(rgba, b.tx, ex+ew-40, y, n.count, white)
+			ex, ey, ew, eh := 290, 262, 250, 20+16*len(names)
+			if eh < 36 {
+				eh = 36
+			}
+			fillBox(rgba, ex, ey, ew, eh, white)
+			for i, n := range names {
+				y := ey + 8 + i*16
+				b.drawName(rgba, ex+12, y, 0x258+n.monID, white)
+				drawNumber(rgba, b.tx, ex+ew-40, y, n.count, white)
+			}
 		}
 	}
 }

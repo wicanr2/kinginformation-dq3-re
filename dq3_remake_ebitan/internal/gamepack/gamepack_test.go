@@ -1650,6 +1650,37 @@ func TestDQ3DialogueWindowMatchesOriginalEXE(t *testing.T) {
 	}
 }
 
+func TestDQ3BattleMessageWindowMatchesOriginalEXE(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	got, ok := p.BattleMessageWindowLayout()
+	if !ok {
+		t.Fatal("builtin pack missing battle message layout")
+	}
+	want := WindowLayout{ID: "dq3:window.battle_message", X: 152, Y: 238, Width: 360, Height: 112,
+		TextInsetX: 16, TextInsetY: 16, Columns: 20, LinesPerPage: 4, Evidence: got.Evidence}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("battle message layout=%+v, want %+v", got, want)
+	}
+	// The shared win_rect at DGROUP 0x3e6e is consumed by both scripted
+	// dialogue and battle text_draw; preserve the raw file bytes as parity.
+	const off = 0x19fae
+	wantRaw := []byte{0x0b, 0x01, 0x13, 0x00, 0xee, 0x00, 0x2c, 0x00, 0x60, 0x00}
+	if len(exe) < off+len(wantRaw) || !bytes.Equal(exe[off:off+len(wantRaw)], wantRaw) {
+		t.Fatalf("DQ3.EXE battle message window structure at file %#x does not match", off)
+	}
+}
+
 func TestDQ3PartySpriteAndHUDContract(t *testing.T) {
 	p, err := BuiltinDQ3()
 	if err != nil {

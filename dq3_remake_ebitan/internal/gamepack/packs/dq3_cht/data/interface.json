@@ -21,6 +21,27 @@
       "note": "DGROUP 0x3e6e；caller logical 0x5002/file 0x6372；consumer logical 0xf590/file 0x10900"
     }
   },
+  "battle_message": {
+    "id": "dq3:window.battle_message",
+    "x": 152,
+    "y": 238,
+    "width": 360,
+    "height": 112,
+    "text_inset_x": 16,
+    "text_inset_y": 16,
+    "columns": 20,
+    "lines_per_page": 4,
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE",
+      "address_space": "file",
+      "address": "0x19fae",
+      "consumer": "battle text_draw uses shared win_rect; sub_f590 draws the message frame",
+      "doc": "docs/13-exe-battle.md",
+      "note": "DGROUP 0x3e6e；battle_enter_screen seeds cursor 0x3e70/0x3e72；same 20×4 text grid as shared dialogue"
+    }
+  },
   "party_hud": {
     "id": "dq3:window.field_party_hud",
     "x": 48,
