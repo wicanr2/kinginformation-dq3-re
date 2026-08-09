@@ -2597,6 +2597,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.battle_command_labels")
 	}
+	fieldCommandLabels, ok := pack.FieldCommandLabels()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing interface.field_command_labels")
+	}
 	battleDefs := make(map[string]battleTextDefinition, len(battleRefs.IDs()))
 	for role, id := range battleRefs.IDs() {
 		if id == "" {
@@ -2638,6 +2642,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.battle.setCommandLayout(battleCommandLayout)
 	g.battle.setEnemyLayout(battleEnemyLayout)
 	g.battle.setCommandLabels(battleCommandLabels)
+	g.cmd.setLabels(fieldCommandLabels)
 	g.tavern.equipment = memberEquipment
 	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 

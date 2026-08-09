@@ -88,7 +88,7 @@ save/load，再由 CTY75 handler62 原樣復隊並完成第二次 save/load；�
 同一條 trace 已再由正式魯拉至 CTY15 觸發船隻重定位，登船航行至 CTY27，推開具
 `ctrl bit0x40` 的入口物件，走密道取得紅寶珠 `0x68`，完成存讀檔並驗證 flag `0x3f`
 同時控制寶箱與入口物件 visibility；詳見 `docs/101`。現行 pack manifest 為 schema
-`0.1.24`、`dq3_cht` content `0.1.27`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
+`0.1.25`、`dq3_cht` content `0.1.28`；不要把本段早期的版本號當成現行值。IDA Pro 9.4 證明商人聚落 `(210,64)`
 的原版入口順序為 `flag0x23 clear→CTY58`，否則依序測 `0x47 set→59`、
 `0x42 set→60`、`0x48 set→61`、最後 CTY83；舊 C／Go「所有 set 即取」表已推翻。
 入口已由 game-pack JSON 載入；三個 stage gate 已閉合到最終鑰匙 `0x47`、假王事件
@@ -222,7 +222,7 @@ Android／桌面 release 仍是未閉合工作。
 palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmation`，manifest
 保存尺寸／SHA-256。正式 `ngConfirm` renderer 先畫 pack 背景再疊能力 stat panel；runtime
 圖 `dq3_remake_ebitan/docs/ng_confirm.png` 已更新，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2，panel 幾何仍待
-同狀態 V3。game-pack schema 現為 `0.1.24`；不得把此前 `0.1.22`／`0.1.23` 歷史段落當成目前版本。
+同狀態 V3。game-pack schema 現為 `0.1.25`；不得把此前 `0.1.22`／`0.1.23`／`0.1.24` 歷史段落當成目前版本。
 
 2026-08-09 戰鬥文字串接切片已完成：`interface.json.battle_texts` 將 25 個跨版本 battle role
 指向 `texts.json` 的 D3TXT00 record；`battle.go` 直接消費原始 glyph/control stream，角色／怪物
@@ -267,3 +267,8 @@ palette 與 `FIRST.SCR` asset key 已移入 `interface.json.new_game_confirmatio
 `NewGameWithPack` 會要求 labels 契約並在缺少時 fail closed，battle draw fixture 則明確
 安裝內建 pack。這只完成資料邊界，不代表逐 label IDA writer、戰鬥框線樣式、逐動作
 timing／動畫／音效、抗性／formation／掉落或 release 已完成。
+
+2026-08-09 地表命令窗也已資料化：`interface.json.field_command_labels` 保存標題與六項
+正式命令的雙 glyph，`cmdmenu.go` 不再含 DQ3 專屬字模 table；`NewGameWithPack` 缺欄位
+即拒絕啟動。這是 D2，證據與限制見 `docs/110`；不代表 battle timing／音效／V3 或 release
+已完成。現行 pack schema `0.1.25`、content `0.1.28`。

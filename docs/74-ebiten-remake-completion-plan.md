@@ -712,3 +712,9 @@ CTY27；取得後已完成 save/load 及入口物件 visibility 驗證。原版�
 `war`、`flee`、`defend`、`item`、`spell` 五組原版雙 glyph，`battle.go` 不再持有
 這組玩家可見字模 table。這是 D2 engine/data 邊界切片；逐 label 的 IDA writer sidecar、
 框線樣式、逐動作 timing／動畫／音效、抗性／formation／掉落與跨平台 release 仍未閉合。
+
+2026-08-09 同批再完成地表命令窗字模資料化：`interface.json.field_command_labels`
+保存 `title` 與 `talk`／`spell`／`status`／`item`／`equip`／`examine` 七組雙 glyph，
+`cmdmenu.go` 不再持有版本專屬 raw glyph table；缺少欄位時 `NewGameWithPack` fail closed。
+證據與 D2 限制見 [`docs/110`](110-field-command-labels-re.md)。這仍不等同戰鬥
+逐動作 timing／動畫／音效、場景 cue 或跨平台 release 已完成。

@@ -1,6 +1,9 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+)
 
 // 野外命令窗(命令):2 欄 × 3 列指令格。1:1 移植 C dq3_cmdmenu.c。
 // 標籤 glyph 取自 D3TXT00 rec400(官方字串,非猜)。
@@ -14,17 +17,30 @@ const (
 	cmdCount
 )
 
-// 每指令 2-glyph 標籤(對齊 C LABEL[]):對話/咒文/狀況/道具/裝備/調查。
-var cmdLabels = [cmdCount][2]int{
-	{443, 449}, {429, 430}, {665, 666}, {402, 237}, {197, 409}, {544, 545},
-}
-
 // CmdMenu 是命令窗狀態:cursor 0..5(列優先 r*2+c)。
 type CmdMenu struct {
-	tx     *dq3data.Text
-	cursor int
-	open   bool
-	hits   hitList // 6 格可點區塊,draw() 重建(P2 直接點選)
+	tx          *dq3data.Text
+	cursor      int
+	open        bool
+	labels      [cmdCount][2]int
+	title       [2]int
+	labelsReady bool
+	hits        hitList // 6 格可點區塊,draw() 重建(P2 直接點選)
+}
+
+// setLabels 安裝 versioned game pack 的玩家可見字模。直接 CmdMenu fixture
+// 可以不安裝；production bootstrap 缺資料時會在 NewGameWithPack fail closed。
+func (m *CmdMenu) setLabels(labels gamepack.FieldCommandLabels) {
+	m.title = [2]int{labels.Title.PrimaryGlyph, labels.Title.SecondaryGlyph}
+	m.labels = [cmdCount][2]int{
+		{labels.Talk.PrimaryGlyph, labels.Talk.SecondaryGlyph},
+		{labels.Spell.PrimaryGlyph, labels.Spell.SecondaryGlyph},
+		{labels.Status.PrimaryGlyph, labels.Status.SecondaryGlyph},
+		{labels.Item.PrimaryGlyph, labels.Item.SecondaryGlyph},
+		{labels.Equip.PrimaryGlyph, labels.Equip.SecondaryGlyph},
+		{labels.Examine.PrimaryGlyph, labels.Examine.SecondaryGlyph},
+	}
+	m.labelsReady = true
 }
 
 func (m *CmdMenu) Open() { m.cursor, m.open = 0, true }
@@ -52,8 +68,10 @@ func (m *CmdMenu) draw(rgba []byte, fg, curfg dq3data.Color, x, y int) {
 	const cw = 5 * gpx // 每欄寬(► + 2 字 + 間距)
 	const rh = 18
 	fillBox(rgba, x-gpx, y-gpx/2, 2*cw+gpx, rh*4+gpx, fg) // 視窗底 + 白框
-	drawGlyph(rgba, m.tx, x+gpx, y, 274, fg)              // 命
-	drawGlyph(rgba, m.tx, x+2*gpx, y, 664, fg)            // 令
+	if m.labelsReady {
+		drawGlyph(rgba, m.tx, x+gpx, y, m.title[0], fg)
+		drawGlyph(rgba, m.tx, x+2*gpx, y, m.title[1], fg)
+	}
 	m.hits.reset()
 	for i := 0; i < cmdCount; i++ {
 		r, c := i>>1, i&1
@@ -61,8 +79,10 @@ func (m *CmdMenu) draw(rgba []byte, fg, curfg dq3data.Color, x, y int) {
 		if i == m.cursor {
 			drawGlyph(rgba, m.tx, cx, cy, 11, curfg) // glyph 11 = ►
 		}
-		drawGlyph(rgba, m.tx, cx+gpx, cy, cmdLabels[i][0], fg)
-		drawGlyph(rgba, m.tx, cx+2*gpx, cy, cmdLabels[i][1], fg)
+		if m.labelsReady {
+			drawGlyph(rgba, m.tx, cx+gpx, cy, m.labels[i][0], fg)
+			drawGlyph(rgba, m.tx, cx+2*gpx, cy, m.labels[i][1], fg)
+		}
 		m.hits.add(cx, cy, cw, rh, i)
 	}
 }

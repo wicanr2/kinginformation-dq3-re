@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.24"
+	SchemaVersion = "0.1.25"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -145,6 +145,30 @@ type BattleCommandLabels struct {
 	Spell  BattleCommandLabel `json:"spell"`
 }
 
+// FieldCommandLabels 是地表命令窗的固定雙字模標籤。命令的輸入語意由
+// 共用引擎保留；實際字模仍由 versioned game pack 提供。
+type FieldCommandLabels struct {
+	Title   BattleCommandLabel `json:"title"`
+	Talk    BattleCommandLabel `json:"talk"`
+	Spell   BattleCommandLabel `json:"spell"`
+	Status  BattleCommandLabel `json:"status"`
+	Item    BattleCommandLabel `json:"item"`
+	Equip   BattleCommandLabel `json:"equip"`
+	Examine BattleCommandLabel `json:"examine"`
+}
+
+// Entries returns a copy keyed by stable field-command roles.
+func (l *FieldCommandLabels) Entries() map[string]BattleCommandLabel {
+	if l == nil {
+		return nil
+	}
+	return map[string]BattleCommandLabel{
+		"title": l.Title, "talk": l.Talk, "spell": l.Spell,
+		"status": l.Status, "item": l.Item, "equip": l.Equip,
+		"examine": l.Examine,
+	}
+}
+
 // Entries returns a copy keyed by stable engine command roles.
 func (l *BattleCommandLabels) Entries() map[string]BattleCommandLabel {
 	if l == nil {
@@ -193,6 +217,7 @@ type Interface struct {
 	BattleCommand       BattlePanelLayout    `json:"battle_command,omitempty"`
 	BattleEnemy         BattlePanelLayout    `json:"battle_enemy,omitempty"`
 	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
+	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
 	PartyHUD            WindowLayout         `json:"party_hud,omitempty"`
 	Attract             *AttractSequence     `json:"attract,omitempty"`
 	NewGameConfirmation *RawScreenAsset      `json:"new_game_confirmation,omitempty"`
@@ -1334,6 +1359,16 @@ func (p *Pack) validateInterface() error {
 			}
 			if err := validateEvidence(label.Evidence); err != nil {
 				return fmt.Errorf("battle command label %s evidence: %w", role, err)
+			}
+		}
+	}
+	if labels := p.Interface.FieldCommandLabels; labels != nil {
+		for role, label := range labels.Entries() {
+			if label.PrimaryGlyph < 0 || label.SecondaryGlyph < 0 {
+				return fmt.Errorf("field command label %s has negative glyph", role)
+			}
+			if err := validateEvidence(label.Evidence); err != nil {
+				return fmt.Errorf("field command label %s evidence: %w", role, err)
 			}
 		}
 	}
@@ -3382,6 +3417,16 @@ func (p *Pack) BattleCommandLabels() (BattleCommandLabels, bool) {
 		return BattleCommandLabels{}, false
 	}
 	return *p.Interface.BattleCommandLabels, true
+}
+
+// FieldCommandLabels returns the pack-owned glyphs for the field command
+// menu. Production bootstrap must require this contract before opening the
+// menu; lightweight fixtures may omit it deliberately.
+func (p *Pack) FieldCommandLabels() (FieldCommandLabels, bool) {
+	if p == nil || p.Interface.FieldCommandLabels == nil {
+		return FieldCommandLabels{}, false
+	}
+	return *p.Interface.FieldCommandLabels, true
 }
 
 // PartyHUDLayout is absent for packs that do not expose a longitudinal party

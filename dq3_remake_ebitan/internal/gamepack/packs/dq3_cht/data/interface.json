@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.24",
+  "schema_version": "0.1.25",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -379,6 +379,106 @@
         "consumer": "sub_1c169 指令選單繪製原版雙字模咒文指令",
         "doc": "docs/109-battle-hud-rects-re.md",
         "note": "原版字模索引 429／430；字形為咒／文。"
+      }
+    }
+  },
+  "field_command_labels": {
+    "title": {
+      "primary_glyph": 274,
+      "secondary_glyph": 664,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "地表命令窗繪製標題字模",
+        "doc": "docs/84-game-pack-json-contract.md",
+        "note": "原版字模索引 274／664；字形為命／令。"
+      }
+    },
+    "talk": {
+      "primary_glyph": 443,
+      "secondary_glyph": 449,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "地表命令窗繪製對話指令",
+        "doc": "docs/84-game-pack-json-contract.md",
+        "note": "原版字模索引 443／449；字形為對／話。"
+      }
+    },
+    "spell": {
+      "primary_glyph": 429,
+      "secondary_glyph": 430,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "地表命令窗繪製咒文指令",
+        "doc": "docs/84-game-pack-json-contract.md",
+        "note": "原版字模索引 429／430；字形為咒／文。"
+      }
+    },
+    "status": {
+      "primary_glyph": 665,
+      "secondary_glyph": 666,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "地表命令窗繪製狀況指令",
+        "doc": "docs/84-game-pack-json-contract.md",
+        "note": "原版字模索引 665／666；字形為狀／況。"
+      }
+    },
+    "item": {
+      "primary_glyph": 402,
+      "secondary_glyph": 237,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "地表命令窗繪製道具指令",
+        "doc": "docs/84-game-pack-json-contract.md",
+        "note": "原版字模索引 402／237；字形為道／具。"
+      }
+    },
+    "equip": {
+      "primary_glyph": 197,
+      "secondary_glyph": 409,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "地表命令窗繪製裝備指令",
+        "doc": "docs/84-game-pack-json-contract.md",
+        "note": "原版字模索引 197／409；字形為裝／備。"
+      }
+    },
+    "examine": {
+      "primary_glyph": 544,
+      "secondary_glyph": 545,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.FON",
+        "address_space": "none",
+        "address": "",
+        "consumer": "地表命令窗繪製調查指令",
+        "doc": "docs/84-game-pack-json-contract.md",
+        "note": "原版字模索引 544／545；字形為調／查。"
       }
     }
   }

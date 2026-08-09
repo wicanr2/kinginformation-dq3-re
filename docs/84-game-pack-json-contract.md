@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.24"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.25"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -195,7 +195,7 @@ namespace:local_id
 
 ```json
 {
-  "schema_version": "0.1.24",
+  "schema_version": "0.1.25",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -1021,6 +1021,12 @@ DQ3 canonical `TITH.P`→`TITO.P` 八張職業卡、每卡 1200 個 60Hz frame �
 writer／consumer 交叉參照見 [`docs/109`](109-battle-hud-rects-re.md)。正式 pack
 缺少這組契約時啟動即拒絕，直接 unit fixture 可省略但不得被當成 production fallback。
 
+`interface.json.field_command_labels` 以同一個雙 glyph 契約保存地表命令窗的標題與六項
+指令：`title`、`talk`、`spell`、`status`、`item`、`equip`、`examine`。字模索引與
+evidence 仍由 DQ3 pack 擁有；`cmdmenu.go` 只依穩定欄位繪製與處理輸入，不得再放
+版本專屬中文或 raw glyph table。正式 pack 缺少這組契約時 `NewGameWithPack` 必須
+fail closed；目前 DQ3 對映維持 D2，後續若要升為 D3 仍需補原版 writer／consumer sidecar。
+
 ### 6.10 `staged_boss_events`
 
 `staged_boss_events` 描述具有兩個正式入口、戰間移動／轉場、選項分支與事後寶箱 gate 的
@@ -1043,7 +1049,7 @@ NPC 及交易後玩家的具名方向，`treasure_gates` 明列第二戰前不�
 
 ```json
 {
-  "schema_version": "0.1.24",
+  "schema_version": "0.1.25",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1073,7 +1079,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.24",
+  "schema_version": "0.1.25",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [
