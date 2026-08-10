@@ -1895,6 +1895,8 @@ func TestDQ3NewGameGeometryMatchesOriginalWindows(t *testing.T) {
 		g.NameTitle != (GeometryAnchor{X: 233, Y: 46, StepX: 16}) ||
 		g.NameText != (GeometryAnchor{X: 249, Y: 62, StepX: 16}) ||
 		g.GenderPanel != (GeometryRect{X: 344, Y: 46, Width: 96, Height: 64}) ||
+		g.ConfirmChoiceContent != (GeometryRect{X: 376, Y: 78, Width: 80, Height: 32}) ||
+		g.StatsRightRows != (GeometryAnchor{X: 326, Y: 126, StepY: 16}) ||
 		len(g.RawWindows) != 7 {
 		t.Fatalf("new-game geometry=%+v, want raw windows and measured panels", g)
 	}
@@ -1904,6 +1906,32 @@ func TestDQ3NewGameGeometryMatchesOriginalWindows(t *testing.T) {
 	}
 	if g.Evidence.Level != "D2" || g.Evidence.Doc != "docs/113-newgame-geometry-re.md" {
 		t.Fatalf("new-game geometry evidence=%+v, want D2/docs/113", g.Evidence)
+	}
+	if g.ConfirmChoiceBackdrop == nil ||
+		g.ConfirmChoiceBackdrop.ID != "dq3:new_game.confirm_choice_blue_checkerboard" ||
+		g.ConfirmChoiceBackdrop.Pattern != "checkerboard_1px" ||
+		g.ConfirmChoiceBackdrop.Rect != (GeometryRect{X: 360, Y: 62, Width: 112, Height: 64}) ||
+		g.ConfirmChoiceBackdrop.RGB != [3]uint8{0, 85, 223} {
+		t.Fatalf("confirm choice backdrop=%+v, want original blue checkerboard rect", g.ConfirmChoiceBackdrop)
+	}
+	if g.ConfirmChoiceBackdrop.Evidence.Level != "D2" ||
+		g.ConfirmChoiceBackdrop.Evidence.Doc != "docs/118-newgame-choice-backdrop-re.md" ||
+		g.ConfirmChoiceBackdrop.Evidence.Address != "0x28bc6" {
+		t.Fatalf("confirm choice backdrop evidence=%+v, want D2/linear 0x28bc6/docs/118", g.ConfirmChoiceBackdrop.Evidence)
+	}
+	if g.ConfirmChoiceFrame == nil ||
+		g.ConfirmChoiceFrame.ID != "dq3:new_game.confirm_choice_lavender_skin_frame" ||
+		g.ConfirmChoiceFrame.BorderPattern != "checkerboard_frame_2px" ||
+		g.ConfirmChoiceFrame.BorderRGB != [3]uint8{255, 223, 255} ||
+		g.ConfirmChoiceFrame.BorderAccentRGB == nil ||
+		*g.ConfirmChoiceFrame.BorderAccentRGB != [3]uint8{235, 178, 130} {
+		t.Fatalf("confirm choice frame=%+v, want named lavender/skin 2px frame", g.ConfirmChoiceFrame)
+	}
+	if g.ConfirmChoiceFrame.Evidence.Level != "D2" ||
+		g.ConfirmChoiceFrame.Evidence.Doc != "docs/118-newgame-choice-backdrop-re.md" ||
+		g.ConfirmChoiceFrame.Evidence.AddressSpace != "linear" ||
+		g.ConfirmChoiceFrame.Evidence.Address != "0x28bc6" {
+		t.Fatalf("confirm choice frame evidence=%+v, want D2/linear 0x28bc6/docs/118", g.ConfirmChoiceFrame.Evidence)
 	}
 	if g.Frame.Evidence.Level != "D2" || g.Frame.Evidence.Doc != "docs/117-newgame-frame-re.md" ||
 		g.Frame.Evidence.AddressSpace != "dgroup" {
@@ -1957,6 +1985,26 @@ func TestDQ3AttractContract(t *testing.T) {
 		}
 		if ref, ok := p.Asset(frame.AssetKey); !ok || ref.Path == "" || ref.Size <= 0 || ref.SHA256 == "" {
 			t.Fatalf("attract asset %q missing manifest integrity", frame.AssetKey)
+		}
+	}
+}
+
+func TestDQ3OpeningCutsceneContract(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	seq, ok := p.OpeningSequence()
+	if !ok || seq.ID != "dq3:opening.boot_cutscene" || !seq.SkipOnInput || len(seq.Frames) != 5 {
+		t.Fatalf("opening sequence=%+v, want five-frame skip-on-input contract", seq)
+	}
+	want := []string{"opening_year", "opening_dragon", "opening_party", "opening_year_1993", "opening_crest"}
+	for i, frame := range seq.Frames {
+		if frame.AssetKey != want[i] || frame.HoldFrames != 120 {
+			t.Fatalf("opening frame[%d]=%+v, want key=%q hold=120", i, frame, want[i])
+		}
+		if ref, ok := p.Asset(frame.AssetKey); !ok || ref.Size <= 0 || ref.SHA256 == "" {
+			t.Fatalf("opening asset %q missing manifest integrity", frame.AssetKey)
 		}
 	}
 }

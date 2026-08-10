@@ -4,19 +4,27 @@
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，
 製作可在現代平台執行的 Go／Ebiten remake。
 
-截至 2026-08-10，`dq3_remake_ebitan/` 已由一次性 Docker＋Xvfb 的正式
-`InputState` trace 從全新遊戲抵達 `THE END`，沿途核對設定資料、事件副作用、戰鬥與存讀檔。
-主線 campaign 已達 E3；逐畫面／音效 V3 的長尾仍待後續對拍，本輪指定的 AppImage、Windows ZIP
-與 macOS ZIP 已產出。Android／WASM 不屬本輪 release 目標。現行進度與工作順序以
+截至 2026-08-10，`dq3_remake_ebitan/` 有一筆先前在一次性 Docker＋Xvfb 執行的正式
+`InputState` trace 紀錄，從全新遊戲抵達 `THE END`，並核對設定資料、事件副作用、戰鬥與存讀檔。
+這是歷史驗收證據；本輪依使用者要求不重跑完整長測試。主線 campaign 曾達 E3；逐畫面／音效
+V3 的長尾仍待後續對拍，本輪指定的 AppImage、Windows ZIP 與 macOS ZIP 已產出。Android／WASM 不屬本輪 release 目標。現行進度與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
+本次可公開的 patch checksum、Docker smoke 界線與不公開的本機完整版清單見
+[`docs/122`](docs/122-release-20260810.md)。
 本輪另以 IDA／原始資料閉合 CTY59 `handler41` 的 Y=4 設施分支；它已達 D3／E2／V1，
 不代表 CTY60／61 階段或全程畫面 parity 已完成。
 標題閒置後的八張職業 attract 也已由 game-pack 接線，順序／PCX 達 D3、輪播 timing 達 E2；
 能力條逐幀填充與淡入淡出仍待 V3。
+正常桌面／mobile 啟動現在先由 game-pack 播放 `TITA.P`、`TITB.P`、`TITD.P`、`TITE.P`、
+`TITP.P` 五張開機年代／巨龍過場；任一正式輸入可跳過並交回標題。素材 identity 達 D2、
+runtime 達 E2／V1，但每張停留 120 幀是可重播設定，不是原版逐幀 timing；排序、淡入淡出、
+TITP 位置與開場音效仍待 V3，詳見 [`docs/120`](docs/120-opening-cutscene-re.md)。
 新遊戲能力確認畫面的 `FIRST.SCR` raw 背景也已由 game-pack 載入，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2；
 右欄「運氣點數／最大HP／最大MP／攻擊力／守備力／經驗」已依 record 407 校正並資料化，
-但 `border_pattern=checkerboard_1px` 只閉合共用 EGA 邊線 primitive；palette、藍色選項框
-與 stat panel 同狀態逐像素對拍仍待 V3。
+`confirm_choice` 的藍黑 checkerboard backdrop、中央黑色 content 與 lavender／膚色 2px frame
+也已依原版穩定畫面拆入 JSON 並接到 runtime；靜態 geometry／frame 為 D2、runtime V2。
+palette register、游標閃爍／能力條時序與 stat panel 完整同狀態逐像素對拍仍待 V3，不能由此宣稱
+整段創角演出完成。
 地表詳細狀況窗則已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 達 E2／V2；
 狀況子選單、隊員詳情與道具／裝備逐窗仍待同狀態 V3，詳見 [`docs/116`](docs/116-field-status-panel-re.md)。
 
@@ -47,6 +55,25 @@ Go 1.24 + Ebitengine 的跨平台實作，是目前主要開發的產品線。�
 
 這是能力概覽，不作逐項完成度聲明；各功能的玩家入口、設定值與對拍狀態請查現行計畫及相關
 RE 文件。
+
+### 怪物圖鑑與 128／129 歷史回補
+
+Git 歷史中的 `01f023c`（2026-06-22）記錄了未完成怪物槽位的回補：`id 128` 歐里狄加
+（Ortega）與 `id 129` 五頭龍大王（King Hydra）原本沒有可供解碼的 sprite，父子決鬥因此
+可能在 blit 階段讀到空資料。後續 `8a538a5` 將圖鑑補到 130 格，並把 `id 129` 的配色改成
+對齊實機索瑪最終戰的綠色；這裡是歷史研究紀錄，不把提交訊息當成新的原版規格。
+
+回補工具 [`tools/make_sprites.py`](tools/make_sprites.py) 以參考圖產生符合 `MNSBK.PAL` 的
+16 色、4-plane planar SHP 資料，原始 `assets_raw/` 與產生的 `work/DQ3MNS_fixed.SHP` 均不納入
+Git。重新匯出的透明 PNG 保留原始槽位與像素比例，並以與現有圖鑑相同的深色索引背景展示：
+
+![130 格怪物圖鑑](docs/monsters/monster_sheet.png)
+
+![128／129 回補（同一 MNS palette 與像素縮放）](docs/monsters/restored_128_129.png)
+
+個別匯出可直接檢查 sprite 邊界與透明遮罩：[`spr_128.png`](docs/monsters/spr_128.png)、
+[`spr_129.png`](docs/monsters/spr_129.png)。格式、雜湊與風格檢查見
+[`docs/121`](docs/121-monster-128-129-style-audit.md)。
 
 目前可見成果（以下為現行 Ebitengine runtime 證據；未另標示者是 V2，不代表已完成原版
 同狀態逐像素 V3）。本輪新增由正式新遊戲輸入 trace 產生的終盤固定片尾畫面與配樂 cue；

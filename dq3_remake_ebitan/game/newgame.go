@@ -211,55 +211,78 @@ func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yel
 	if nf.labels == nil {
 		return
 	}
-	// 原版 v3_01_afterstats.png 的 panel 幾何由 pack 提供；frame pattern
-	// 仍是獨立 V3 工作，這裡只套用已量測的外框矩形。
+	// 原版能力 panel 的幾何與 confirm_choice 較大背景矩形都由 pack 提供。
+	// backdrop 必須在文字前寫入，讓未命中的黑色 phase 保留底圖，且不會
+	// 把能力欄位的 glyph 誤當成背景的一部分。
 	fillGeometryBox(rgba, geo.Frame, geo.StatsLeft.X, geo.StatsLeft.Y, geo.StatsLeft.Width, geo.StatsLeft.Height, white)
 	fillGeometryBox(rgba, geo.Frame, geo.StatsEquipment.X, geo.StatsEquipment.Y, geo.StatsEquipment.Width, geo.StatsEquipment.Height, white)
 	fillGeometryBox(rgba, geo.Frame, geo.StatsRight.X, geo.StatsRight.Y, geo.StatsRight.Width, geo.StatsRight.Height, white)
 	fillGeometryBox(rgba, geo.Frame, geo.ConfirmPrompt.X, geo.ConfirmPrompt.Y, geo.ConfirmPrompt.Width, geo.ConfirmPrompt.Height, white)
-	fillGeometryBox(rgba, geo.Frame, geo.ConfirmChoice.X, geo.ConfirmChoice.Y, geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
+	if geo.ConfirmChoiceBackdrop != nil {
+		fillPatternRect(rgba, geo.ConfirmChoiceBackdrop)
+		fillGeometryRect(rgba, geo.ConfirmChoiceFrame, geo.ConfirmChoiceContent, white)
+		strokeGeometryBox(rgba, geo.ConfirmChoiceFrame, geo.ConfirmChoice.X, geo.ConfirmChoice.Y,
+			geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
+	} else {
+		// 只保留給未安裝 production pack 的 direct fixture；正式 validator
+		// 會拒絕缺少 confirm_choice_backdrop 的資料。
+		fillGeometryBox(rgba, geo.Frame, geo.ConfirmChoice.X, geo.ConfirmChoice.Y, geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
+	}
+
+	// 能力確認頁的前景與游標跟 frame 共用原版 lavender palette；其他
+	// 新遊戲頁仍由呼叫端 white/yellow 控制，避免把未閉合的全域 palette
+	// 結論外推到姓名盤或性別頁。
+	textColor, cursorColor := white, yellow
+	choiceFrame := geo.ConfirmChoiceFrame
+	if choiceFrame == nil {
+		choiceFrame = geo.Frame
+	}
+	if choiceFrame != nil {
+		textColor = frameColor(choiceFrame.BorderRGB)
+		cursorColor = textColor
+	}
 
 	for i, gl := range nf.ni.nameBuf {
-		drawGlyph(rgba, tx, geo.StatsName.X+i*dq3data.GlyphPx, geo.StatsName.Y, gl, white)
+		drawGlyph(rgba, tx, geo.StatsName.X+i*dq3data.GlyphPx, geo.StatsName.Y, gl, textColor)
 	}
 	for i, gl := range nf.labels.Hero {
-		drawGlyph(rgba, tx, geo.StatsHero.X+i*dq3data.GlyphPx, geo.StatsHero.Y, gl, white)
+		drawGlyph(rgba, tx, geo.StatsHero.X+i*dq3data.GlyphPx, geo.StatsHero.Y, gl, textColor)
 	}
 	for i, gl := range nf.labels.Sex {
-		drawGlyph(rgba, tx, geo.StatsSex.X+i*dq3data.GlyphPx, geo.StatsSex.Y, gl, white)
+		drawGlyph(rgba, tx, geo.StatsSex.X+i*dq3data.GlyphPx, geo.StatsSex.Y, gl, textColor)
 	}
 	sexGlyph := nf.labels.Male[0]
 	if nf.previewGender == 1 {
 		sexGlyph = nf.labels.Female[0]
 	}
-	drawGlyph(rgba, tx, geo.StatsSexValue.X, geo.StatsSexValue.Y, sexGlyph, white)
-	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y, nf.labels.Level, 1, white)
-	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y+geo.StatsLeftRows.StepY, nf.labels.HP, int(nf.preview[stats.HP]), white)
-	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y+2*geo.StatsLeftRows.StepY, nf.labels.MP, int(nf.preview[stats.MP]), white)
+	drawGlyph(rgba, tx, geo.StatsSexValue.X, geo.StatsSexValue.Y, sexGlyph, textColor)
+	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y, nf.labels.Level, 1, textColor)
+	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y+geo.StatsLeftRows.StepY, nf.labels.HP, int(nf.preview[stats.HP]), textColor)
+	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y+2*geo.StatsLeftRows.StepY, nf.labels.MP, int(nf.preview[stats.MP]), textColor)
 	for i, gl := range nf.labels.Cloth {
-		drawGlyph(rgba, tx, geo.StatsCloth.X+i*dq3data.GlyphPx, geo.StatsCloth.Y, gl, white)
+		drawGlyph(rgba, tx, geo.StatsCloth.X+i*dq3data.GlyphPx, geo.StatsCloth.Y, gl, textColor)
 	}
 
 	x := geo.StatsRightRows.X
 	// 原版能力確認右欄不是「速度／HP／MP」：record 407 的這個面板
 	// 依序顯示「運氣點數／最大HP／最大MP／攻擊力／守備力／經驗」。
 	// `agility` 仍保留給詳細狀況窗的 pack 對映，但不能拿來填此六列。
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y, nf.labels.Luck, int(nf.preview[stats.LUCK]), white)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+geo.StatsRightRows.StepY, nf.labels.MaxHP, int(nf.preview[stats.HP]), white)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+2*geo.StatsRightRows.StepY, nf.labels.MaxMP, int(nf.preview[stats.MP]), white)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+3*geo.StatsRightRows.StepY, nf.labels.Attack, int(nf.preview[stats.STR]), white)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+4*geo.StatsRightRows.StepY, nf.labels.Defense, nf.previewDef, white)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+5*geo.StatsRightRows.StepY, nf.labels.Experience, 0, white)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y, nf.labels.Luck, int(nf.preview[stats.LUCK]), textColor)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+geo.StatsRightRows.StepY, nf.labels.MaxHP, int(nf.preview[stats.HP]), textColor)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+2*geo.StatsRightRows.StepY, nf.labels.MaxMP, int(nf.preview[stats.MP]), textColor)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+3*geo.StatsRightRows.StepY, nf.labels.Attack, int(nf.preview[stats.STR]), textColor)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+4*geo.StatsRightRows.StepY, nf.labels.Defense, nf.previewDef, textColor)
+	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+5*geo.StatsRightRows.StepY, nf.labels.Experience, 0, textColor)
 	for i, gl := range nf.labels.Prompt {
-		drawGlyph(rgba, tx, geo.StatsPrompt.X+i*dq3data.GlyphPx, geo.StatsPrompt.Y, gl, white)
+		drawGlyph(rgba, tx, geo.StatsPrompt.X+i*dq3data.GlyphPx, geo.StatsPrompt.Y, gl, textColor)
 	}
 	for i, label := range [][]int{nf.labels.Yes, nf.labels.No} {
 		y := geo.StatsChoice.Y + i*geo.StatsChoice.StepY
 		if i == nf.confirmCursor {
-			drawGlyph(rgba, tx, geo.StatsChoiceCursor.X, y, curGlyph, yellow)
+			drawGlyph(rgba, tx, geo.StatsChoiceCursor.X, y, curGlyph, cursorColor)
 		}
 		for j, gl := range label {
-			drawGlyph(rgba, tx, geo.StatsChoice.X+j*dq3data.GlyphPx, y, gl, white)
+			drawGlyph(rgba, tx, geo.StatsChoice.X+j*dq3data.GlyphPx, y, gl, textColor)
 		}
 	}
 }

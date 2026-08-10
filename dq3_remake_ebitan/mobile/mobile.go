@@ -30,6 +30,7 @@ func init() {
 		log.Printf("mobile NewGame(需把原版素材放進 mobile/assets):%v", err)
 		return
 	}
+	g.StartOpeningCutscene()
 	mobile.SetGame(g)
 }
 

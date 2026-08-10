@@ -290,6 +290,75 @@ func fillBoxStyle(rgba []byte, x, y, w, h int, interior, border dq3data.Color, p
 	}
 }
 
+// strokeBoxStyle 只畫外框，不改寫內部底圖。能力確認的
+// confirm_choice 先覆蓋一個較大的藍黑棋盤，再由這個 primitive 把
+// lavender 外框疊回去；若直接呼叫 fillBoxStyle，會把藍色奇偶 phase
+// 重新填成黑色，破壞原版的 plane/latch 可見結果。
+func strokeBoxStyle(rgba []byte, x, y, w, h int, border dq3data.Color, pattern string) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	for r := 0; r < h; r++ {
+		for c := 0; c < w; c++ {
+			if r != 0 && r != h-1 && c != 0 && c != w-1 {
+				continue
+			}
+			if frameBorderPixel(pattern, c, r) {
+				putPx(rgba, x+c, y+r, border)
+			}
+		}
+	}
+}
+
+func strokeFrameStyle(rgba []byte, frame *gamepack.FrameStyle, x, y, w, h int, fallback dq3data.Color) {
+	if frame == nil {
+		strokeBoxStyle(rgba, x, y, w, h, fallback, "solid")
+		return
+	}
+	if frame.BorderPattern == "checkerboard_frame_2px" && frame.BorderAccentRGB != nil {
+		strokeCheckerboardFrame2px(rgba, x, y, w, h,
+			frameColor(frame.BorderRGB), frameColor(*frame.BorderAccentRGB))
+		return
+	}
+	strokeBoxStyle(rgba, x, y, w, h, frameColor(frame.BorderRGB), frame.BorderPattern)
+}
+
+// strokeCheckerboardFrame2px 是原版 confirm_choice 的已命名 EGA frame
+// primitive。它不是任意 JSON code：兩個外框 band 使用 border／accent 交錯色，
+// 兩側各兩欄，四個角依 writer 的 edge phase 留在正確的 band 上。
+func strokeCheckerboardFrame2px(rgba []byte, x, y, w, h int, border, accent dq3data.Color) {
+	if w < 4 || h < 4 {
+		return
+	}
+	alt := func(n int, borderFirst bool) dq3data.Color {
+		if (n&1 == 1) == borderFirst {
+			return border
+		}
+		return accent
+	}
+	// Vertical bands first; horizontal bands then own the corner phase.
+	for r := 1; r < h-1; r++ {
+		putPx(rgba, x, y+r, alt(r, true))
+		putPx(rgba, x+1, y+r, alt(r, false))
+		putPx(rgba, x+w-2, y+r, alt(r, true))
+		putPx(rgba, x+w-1, y+r, alt(r, false))
+	}
+	for c := 1; c < w-1; c++ {
+		putPx(rgba, x+c, y, alt(c, true))
+		putPx(rgba, x+c, y+h-1, alt(c, false))
+	}
+	for c := 0; c < w; c++ {
+		putPx(rgba, x+c, y+1, alt(c, false))
+		putPx(rgba, x+c, y+h-2, alt(c, true))
+	}
+	// The top writer leaves the outermost corner on the underlying backdrop;
+	// its inner right corner is the border phase before the vertical writer's
+	// first interior row.  Keep this explicit edge phase instead of letting the
+	// horizontal alternating sequence wrap one pixel early.
+	putPx(rgba, x+w-2, y, border)
+	putPx(rgba, x, y+h-1, border)
+}
+
 func frameBorderPixel(pattern string, x, y int) bool {
 	switch pattern {
 	case "solid":
@@ -324,6 +393,44 @@ func fillGeometryBox(rgba []byte, frame *gamepack.FrameStyle, x, y, w, h int, fa
 	}
 	fillBoxStyle(rgba, x, y, w, h,
 		frameColor(frame.InteriorRGB), frameColor(frame.BorderRGB), frame.BorderPattern)
+}
+
+// strokeGeometryBox 套用 pack frame 的外框但保留內部像素。正式 pack 會
+// 先驗證 frame；nil 僅供 direct fixture 導覽，不是 production fallback。
+func strokeGeometryBox(rgba []byte, frame *gamepack.FrameStyle, x, y, w, h int, fallback dq3data.Color) {
+	strokeFrameStyle(rgba, frame, x, y, w, h, fallback)
+}
+
+// fillGeometryRect 只填 pack 指定的內容矩形。confirm_choice 的原版結果是
+// 「外圍藍黑棋盤 + 中央 80x32 黑色內容區 + lavender EGA frame」，因此
+// 不能把整個 frame interior 當成黑色而抹掉內容區外的 checker phase。
+func fillGeometryRect(rgba []byte, frame *gamepack.FrameStyle, rect gamepack.GeometryRect, fallback dq3data.Color) {
+	interior := fallback
+	if frame != nil {
+		interior = frameColor(frame.InteriorRGB)
+	}
+	for r := 0; r < rect.Height; r++ {
+		for c := 0; c < rect.Width; c++ {
+			putPx(rgba, rect.X+c, rect.Y+r, interior)
+		}
+	}
+}
+
+// fillPatternRect 寫入已註冊 pattern 命中的 phase，未命中的 phase 保留
+// 呼叫前的像素。這是 EGA 選項背景需要的非破壞性 plane-mask 語意，不把
+// DQ3 的座標或顏色硬寫在共用引擎。
+func fillPatternRect(rgba []byte, fill *gamepack.PatternFill) {
+	if fill == nil {
+		return
+	}
+	for r := 0; r < fill.Rect.Height; r++ {
+		for c := 0; c < fill.Rect.Width; c++ {
+			if !frameBorderPixel(fill.Pattern, c, r) {
+				continue
+			}
+			putPx(rgba, fill.Rect.X+c, fill.Rect.Y+r, frameColor(fill.RGB))
+		}
+	}
 }
 
 // fillPackBox 套用版本專屬 frame。direct unit fixture 若未安裝 frame，

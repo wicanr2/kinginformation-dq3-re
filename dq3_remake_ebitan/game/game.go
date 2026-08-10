@@ -338,6 +338,12 @@ type Game struct {
 	titlePal                  []dq3data.Color
 	newGameConfirmPix         []uint8
 	newGameConfirmPal         []dq3data.Color
+	openingPix                [][]uint8
+	openingPal                [][]dq3data.Color
+	openingSeq                *gamepack.OpeningSequence
+	openingFrame              int
+	openingIndex              int
+	openingActive             bool
 	attractPix                [][]uint8
 	attractPal                [][]dq3data.Color
 	attractSeq                *gamepack.AttractSequence
@@ -945,6 +951,10 @@ func (g *Game) step(in InputState) error {
 	// 標題畫面:主選單→主角命名→性別→能力確認→開始新遊戲(newgame.go)。
 	// S/CtxTap 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)。
 	if g.showTitle {
+		if g.openingInput(in) {
+			g.renderFrame()
+			return nil
+		}
 		if g.attractActive {
 			if titleInputInterruptsAttract(in) {
 				g.stopAttract()
@@ -2387,6 +2397,11 @@ func (g *Game) renderFrame() {
 		return
 	}
 	if g.showTitle && g.titlePix != nil { // 標題畫面(PCX indexed → palette)
+		if g.openingActive && g.openingReady() {
+			drawIndexedPCX(g.rgba, g.openingPix[g.openingIndex], g.openingPal[g.openingIndex])
+			g.frame.WritePixels(g.rgba)
+			return
+		}
 		if g.attractActive && g.attractReady() {
 			drawIndexedPCX(g.rgba, g.attractPix[g.attractIndex], g.attractPal[g.attractIndex])
 			g.frame.WritePixels(g.rgba)
@@ -2938,6 +2953,20 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 			}
 			if g.attractPix[i] == nil || len(g.attractPal[i]) == 0 {
 				return nil, fmt.Errorf("game pack attract frame %q is unavailable", frame.AssetKey)
+			}
+		}
+	}
+	if seq, ok := pack.OpeningSequence(); ok {
+		g.openingSeq = seq
+		g.openingPix = make([][]uint8, len(seq.Frames))
+		g.openingPal = make([][]dq3data.Color, len(seq.Frames))
+		for i, frame := range seq.Frames {
+			g.openingPix[i], g.openingPal[i], assetErr = loadPCXAsset(frame.AssetKey)
+			if assetErr != nil {
+				return nil, assetErr
+			}
+			if len(g.openingPix[i]) != ScreenW*ScreenH || len(g.openingPal[i]) == 0 {
+				return nil, fmt.Errorf("game pack opening frame %q is unavailable", frame.AssetKey)
 			}
 		}
 	}

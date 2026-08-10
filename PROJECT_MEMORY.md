@@ -399,3 +399,49 @@ JSON code。新遊戲 frame 使用 `checkerboard_1px`，其未命中的邊線像
 `dq3_remake_ebitan/docs/ng_menu.png`、`ng_name.png`、`ng_gender.png`、`ng_confirm.png`。
 這是 strong／D2 的 engine-data slice；`confirm_choice` 藍色選擇圖樣、FIRST.SCR palette、
 逐幀游標／動畫與同狀態 V3 仍未閉合，不能將本切片宣稱為完整創角 parity。
+
+2026-08-10 勘誤：`confirm_choice` 的「藍色選項框未接」已不再是靜態設定缺口。原版
+DOSBox 同輸入證據（raw linear `0x28bc6`）已閉合 `112×64` 藍黑 checkerboard backdrop、
+`80×32` 中央黑色 content、`98×50` lavender／膚色交錯 2px frame；`stats_right_rows`
+也由錯誤 `y=96` 校正為 `y=126` 起六列。`interface.json` 現保存三個具名欄位，engine
+只接受 `checkerboard_frame_2px` 註冊 primitive，缺欄位／accent／pattern fail closed；
+Docker frame unit test、gamepack test、Xvfb dump 通過，`dq3_remake_ebitan/docs/ng_confirm.png`
+已更新。這是 D2／V2 靜態畫面切片；palette register、游標閃爍／能力條逐幀時序與完整
+stat panel V3 仍未完成。詳見 [`docs/118`](docs/118-newgame-choice-backdrop-re.md)。
+
+同日第一性原理日夜結論：四階段 clock、`DarkenPalette`、住宿／黑暗之燈 reset、日／夜
+NPC table 及 story-flag filter 已在 engine 與 pack 正式存在，故不重寫日夜機制。剩餘工作是
+用原版 raw clock／palette 對拍，並按 [`docs/71`](docs/71-npc-story-flag-visibility.md)
+逐一閉合 21 個條件 flag 的入口→writer→pack state→consumer→玩家可見副作用；已有動態
+pack flag 不重複造表，無完整閉環者維持 `unknown`／fail closed。
+
+2026-08-10 開機過場切片：先前 `main.go`／mobile 直接進標題，造成玩家第一幀與精訊版不符。
+`interface.json.opening` 現保存五張已定位 PCX（`TITA.P`、`TITB.P`、`TITD.P`、`TITE.P`、
+`TITP.P`）及 manifest 大小／SHA-256；共用 engine 只消費 asset key、停留幀與跳過規則。
+桌面／mobile 的正式入口會啟動 sequence，無輸入推進，任一正式輸入停止並讓同一按鍵進入標題；
+Docker 的 gamepack、開機過場與正式 opening trace 測試已通過。素材 identity／靜態接線是 D2／E2／V1，
+每張 120 幀、排序、淡入淡出、TITP 是否為標題前最後一張及開場音效仍是限制，不得宣稱完整
+cutscene V3；證據與下一步見 [`docs/120`](docs/120-opening-cutscene-re.md)。
+
+2026-08-10 發佈包重建覆蓋前一批產物：目前 `dist/dq3-20260810-*` 是本輪 Go/Ebitengine
+原始碼（含 `opening` sequence）在 Docker 內重新編譯的 Linux AppImage、Windows x86_64 ZIP、
+macOS Intel ZIP 與 Apple Silicon ZIP；`dist/dq3-promo-20260810.mp4` 也重新剪入五張開機卡，
+固定為 1280×700、30 fps、1350 幀／45 秒。最新大小與 SHA-256 只以 [`docs/114`](docs/114-release-artifacts.md)
+為準；本段之前的同日期雜湊是歷史產物，不可複製到 release note。AppImage 已在 Docker
+`--appimage-extract-and-run`＋唯讀 `assets_raw` 啟動 smoke；Windows／macOS 只做 PE／Mach-O
+架構與 ZIP 內容檢查，未在 Linux 主機假裝執行。完整 311 秒主線 trace 沿用既有通過紀錄，
+本輪依使用者指示只跑受影響的快速測試，不能把這次重包解讀為戰鬥／音效 V3 完成。
+
+2026-08-10 release 分流：公開 release 只放不含原版素材的 Linux AppImage、Windows x86_64
+ZIP、macOS Intel／Apple Silicon ZIP；最新檔名、尺寸、SHA-256 與 Docker smoke 界線見
+[`docs/122`](docs/122-release-20260810.md)。另在被 Git 忽略的 `dist/release-20260810/full/`
+產出四個本機完整版，封裝副本使用合法 `assets_raw/` 並以 `work/DQ3MNS_fixed.SHP`（SHA-256
+`c2031a28dd5c79335931a9ac98e42ea7dc4969317b7b1c598f68ce69797531f7`）補上 128／129；不得
+上傳或把原版素材加入 Git。完整版 Linux headless smoke 只在沒有 `/dev/snd` 時省略 MT-32
+初始化，不能把此 smoke 當成音效 parity。
+
+2026-08-10 128／129 sprite 風格稽核：`01f023c`／`8a538a5` 的歷史提交確認外部回補背景與
+綠色 Hydra 的來源；目前 `tools/make_sprites.py` 仍以 MNSBK 前 16 色、4-plane planar、
+透明索引與整數倍 nearest 匯出。新加入的 `docs/monsters/spr_128.png`、`spr_129.png` 與
+深色索引聯絡圖只改善展示一致性，不平滑、不 AI 重畫、不修改原始 SHP；細節與每張雜湊見
+[`docs/121`](docs/121-monster-128-129-style-audit.md)。

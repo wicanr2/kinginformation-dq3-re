@@ -95,11 +95,12 @@ type Facilities struct {
 // 邊線 primitive 仍由引擎提供；pack 只選擇已註冊的 pattern 與玩家可見
 // RGB 結果，避免 renderer 偷藏某一版的黑底／白框預設或任意 JSON 程式碼。
 type FrameStyle struct {
-	ID            string   `json:"id"`
-	BorderPattern string   `json:"border_pattern"`
-	BorderRGB     [3]uint8 `json:"border_rgb"`
-	InteriorRGB   [3]uint8 `json:"interior_rgb"`
-	Evidence      Evidence `json:"evidence"`
+	ID              string    `json:"id"`
+	BorderPattern   string    `json:"border_pattern"`
+	BorderRGB       [3]uint8  `json:"border_rgb"`
+	BorderAccentRGB *[3]uint8 `json:"border_accent_rgb,omitempty"`
+	InteriorRGB     [3]uint8  `json:"interior_rgb"`
+	Evidence        Evidence  `json:"evidence"`
 }
 
 // WindowLayout 是版本專屬的固定視窗幾何。引擎只依此通用契約繪製，
@@ -221,6 +222,18 @@ type GeometryGrid struct {
 	StepY   int `json:"step_y"`
 }
 
+// PatternFill 是版本專屬的矩形底圖覆蓋。Pattern 只能引用引擎已註冊的
+// primitive；RGB、矩形與證據仍由 game pack 擁有。這讓 EGA 選項背景能
+// 保留「命中的 plane 寫入、未命中的 plane 留下底圖」的可見結果，而不把
+// 任意排版程式碼塞進 JSON。
+type PatternFill struct {
+	ID       string       `json:"id"`
+	Pattern  string       `json:"pattern"`
+	Rect     GeometryRect `json:"rect"`
+	RGB      [3]uint8     `json:"rgb"`
+	Evidence Evidence     `json:"evidence"`
+}
+
 // RawNewGameWindow 保留 IDA linear address 空間中的原始 window 欄位；
 // Pixel 是同一結構經 EGA writer／實機截圖閉合後的 renderer 矩形。
 type RawNewGameWindow struct {
@@ -237,40 +250,43 @@ type RawNewGameWindow struct {
 // 它只描述幾何與固定 anchor，不承載流程程式碼；缺欄位時 production
 // bootstrap 必須 fail closed，不能回退到 Go 內的 DQ3 座標。
 type NewGameGeometry struct {
-	ID                string             `json:"id"`
-	Frame             *FrameStyle        `json:"frame,omitempty"`
-	Menu              GeometryRect       `json:"menu"`
-	MenuTitle         GeometryAnchor     `json:"menu_title"`
-	MenuOptions       GeometryAnchor     `json:"menu_options"`
-	NamePanel         GeometryRect       `json:"name_panel"`
-	NameTitle         GeometryAnchor     `json:"name_title"`
-	NameLeftArrow     GeometryAnchor     `json:"name_left_arrow"`
-	NameRightArrow    GeometryAnchor     `json:"name_right_arrow"`
-	NameText          GeometryAnchor     `json:"name_text"`
-	NameGrid          GeometryGrid       `json:"name_grid"`
-	NameFunctionPanel GeometryRect       `json:"name_function_panel"`
-	NameFunction      GeometryAnchor     `json:"name_function"`
-	NameModePanel     GeometryRect       `json:"name_mode_panel"`
-	NameMode          GeometryAnchor     `json:"name_mode"`
-	GenderPanel       GeometryRect       `json:"gender_panel"`
-	Gender            GeometryAnchor     `json:"gender"`
-	ConfirmPrompt     GeometryRect       `json:"confirm_prompt"`
-	ConfirmChoice     GeometryRect       `json:"confirm_choice"`
-	StatsLeft         GeometryRect       `json:"stats_left"`
-	StatsEquipment    GeometryRect       `json:"stats_equipment"`
-	StatsRight        GeometryRect       `json:"stats_right"`
-	StatsName         GeometryAnchor     `json:"stats_name"`
-	StatsHero         GeometryAnchor     `json:"stats_hero"`
-	StatsSex          GeometryAnchor     `json:"stats_sex"`
-	StatsSexValue     GeometryAnchor     `json:"stats_sex_value"`
-	StatsLeftRows     GeometryAnchor     `json:"stats_left_rows"`
-	StatsCloth        GeometryAnchor     `json:"stats_cloth"`
-	StatsRightRows    GeometryAnchor     `json:"stats_right_rows"`
-	StatsPrompt       GeometryAnchor     `json:"stats_prompt"`
-	StatsChoice       GeometryAnchor     `json:"stats_choice"`
-	StatsChoiceCursor GeometryAnchor     `json:"stats_choice_cursor"`
-	RawWindows        []RawNewGameWindow `json:"raw_windows"`
-	Evidence          Evidence           `json:"evidence"`
+	ID                    string             `json:"id"`
+	Frame                 *FrameStyle        `json:"frame,omitempty"`
+	Menu                  GeometryRect       `json:"menu"`
+	MenuTitle             GeometryAnchor     `json:"menu_title"`
+	MenuOptions           GeometryAnchor     `json:"menu_options"`
+	NamePanel             GeometryRect       `json:"name_panel"`
+	NameTitle             GeometryAnchor     `json:"name_title"`
+	NameLeftArrow         GeometryAnchor     `json:"name_left_arrow"`
+	NameRightArrow        GeometryAnchor     `json:"name_right_arrow"`
+	NameText              GeometryAnchor     `json:"name_text"`
+	NameGrid              GeometryGrid       `json:"name_grid"`
+	NameFunctionPanel     GeometryRect       `json:"name_function_panel"`
+	NameFunction          GeometryAnchor     `json:"name_function"`
+	NameModePanel         GeometryRect       `json:"name_mode_panel"`
+	NameMode              GeometryAnchor     `json:"name_mode"`
+	GenderPanel           GeometryRect       `json:"gender_panel"`
+	Gender                GeometryAnchor     `json:"gender"`
+	ConfirmPrompt         GeometryRect       `json:"confirm_prompt"`
+	ConfirmChoice         GeometryRect       `json:"confirm_choice"`
+	ConfirmChoiceContent  GeometryRect       `json:"confirm_choice_content"`
+	ConfirmChoiceFrame    *FrameStyle        `json:"confirm_choice_frame,omitempty"`
+	ConfirmChoiceBackdrop *PatternFill       `json:"confirm_choice_backdrop,omitempty"`
+	StatsLeft             GeometryRect       `json:"stats_left"`
+	StatsEquipment        GeometryRect       `json:"stats_equipment"`
+	StatsRight            GeometryRect       `json:"stats_right"`
+	StatsName             GeometryAnchor     `json:"stats_name"`
+	StatsHero             GeometryAnchor     `json:"stats_hero"`
+	StatsSex              GeometryAnchor     `json:"stats_sex"`
+	StatsSexValue         GeometryAnchor     `json:"stats_sex_value"`
+	StatsLeftRows         GeometryAnchor     `json:"stats_left_rows"`
+	StatsCloth            GeometryAnchor     `json:"stats_cloth"`
+	StatsRightRows        GeometryAnchor     `json:"stats_right_rows"`
+	StatsPrompt           GeometryAnchor     `json:"stats_prompt"`
+	StatsChoice           GeometryAnchor     `json:"stats_choice"`
+	StatsChoiceCursor     GeometryAnchor     `json:"stats_choice_cursor"`
+	RawWindows            []RawNewGameWindow `json:"raw_windows"`
+	Evidence              Evidence           `json:"evidence"`
 }
 
 // Entries returns copies so callers cannot mutate the validated pack through
@@ -401,6 +417,15 @@ type AttractSequence struct {
 	Evidence         Evidence       `json:"evidence"`
 }
 
+// OpeningSequence 描述開機後、標題 splash 前的版本專屬全螢幕 PCX 過場。
+// 引擎只知道可跳過的 frame sequence；素材、順序、停留幀數與證據由 game pack 提供。
+type OpeningSequence struct {
+	ID          string         `json:"id"`
+	SkipOnInput bool           `json:"skip_on_input"`
+	Frames      []AttractFrame `json:"frames"`
+	Evidence    Evidence       `json:"evidence"`
+}
+
 // RawScreenAsset describes a version-owned planar screen whose bytes and
 // palette are separate. The engine only knows the format primitive; the pack
 // supplies the asset key, dimensions, palette and evidence.
@@ -427,6 +452,7 @@ type Interface struct {
 	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
 	FieldStatus         *FieldStatusLayout   `json:"field_status,omitempty"`
 	PartyHUD            WindowLayout         `json:"party_hud,omitempty"`
+	Opening             *OpeningSequence     `json:"opening,omitempty"`
 	Attract             *AttractSequence     `json:"attract,omitempty"`
 	NewGameConfirmation *RawScreenAsset      `json:"new_game_confirmation,omitempty"`
 	BattleTexts         *BattleTextRefs      `json:"battle_texts,omitempty"`
@@ -1710,6 +1736,30 @@ func (p *Pack) validateInterface() error {
 			seenAssets[frame.AssetKey] = true
 		}
 	}
+	if o := p.Interface.Opening; o != nil {
+		if o.ID == "" || len(o.Frames) == 0 {
+			return errors.New("opening sequence is invalid")
+		}
+		if err := validateEvidence(o.Evidence); err != nil {
+			return fmt.Errorf("opening evidence: %w", err)
+		}
+		seenAssets := make(map[string]bool, len(o.Frames))
+		for i, frame := range o.Frames {
+			if frame.AssetKey == "" || frame.HoldFrames <= 0 {
+				return fmt.Errorf("opening.frames[%d]: asset_key and positive hold_frames are required", i)
+			}
+			if seenAssets[frame.AssetKey] {
+				return fmt.Errorf("opening.frames[%d]: duplicate asset_key %q", i, frame.AssetKey)
+			}
+			if _, ok := p.Manifest.Assets[frame.AssetKey]; !ok {
+				return fmt.Errorf("opening.frames[%d]: unknown asset key %q", i, frame.AssetKey)
+			}
+			if err := validateEvidence(frame.Evidence); err != nil {
+				return fmt.Errorf("opening.frames[%d] evidence: %w", i, err)
+			}
+			seenAssets[frame.AssetKey] = true
+		}
+	}
 	return nil
 }
 
@@ -1717,6 +1767,25 @@ func validateGeometryRect(name string, r GeometryRect) error {
 	if r.X < 0 || r.Y < 0 || r.Width <= 0 || r.Height <= 0 ||
 		r.X+r.Width > 4096 || r.Y+r.Height > 4096 {
 		return fmt.Errorf("new-game geometry %s rect is invalid", name)
+	}
+	return nil
+}
+
+func validatePatternFill(name string, f *PatternFill) error {
+	if f == nil {
+		return fmt.Errorf("%s is required", name)
+	}
+	if f.ID == "" {
+		return fmt.Errorf("%s id is required", name)
+	}
+	if f.Pattern != "solid" && f.Pattern != "checkerboard_1px" {
+		return fmt.Errorf("%s pattern %q is unsupported", name, f.Pattern)
+	}
+	if err := validateGeometryRect(name+".rect", f.Rect); err != nil {
+		return err
+	}
+	if err := validateEvidence(f.Evidence); err != nil {
+		return fmt.Errorf("%s evidence: %w", name, err)
 	}
 	return nil
 }
@@ -1748,16 +1817,38 @@ func validateNewGameGeometry(g NewGameGeometry) error {
 	if err := validateFrameStyle("new-game geometry", g.Frame); err != nil {
 		return err
 	}
+	if err := validateFrameStyle("new-game geometry confirm_choice_frame", g.ConfirmChoiceFrame); err != nil {
+		return err
+	}
 	for name, rect := range map[string]GeometryRect{
 		"menu": g.Menu, "name_panel": g.NamePanel,
 		"name_function_panel": g.NameFunctionPanel, "name_mode_panel": g.NameModePanel,
 		"gender_panel": g.GenderPanel, "confirm_prompt": g.ConfirmPrompt,
-		"confirm_choice": g.ConfirmChoice, "stats_left": g.StatsLeft,
+		"confirm_choice": g.ConfirmChoice, "confirm_choice_content": g.ConfirmChoiceContent,
+		"stats_left":      g.StatsLeft,
 		"stats_equipment": g.StatsEquipment, "stats_right": g.StatsRight,
 	} {
 		if err := validateGeometryRect(name, rect); err != nil {
 			return err
 		}
+	}
+	if err := validatePatternFill("new-game geometry confirm_choice_backdrop", g.ConfirmChoiceBackdrop); err != nil {
+		return err
+	}
+	if g.ConfirmChoiceFrame == nil {
+		return errors.New("new-game geometry confirm_choice_frame is required")
+	}
+	backdrop := g.ConfirmChoiceBackdrop.Rect
+	content := g.ConfirmChoiceContent
+	if content.X < backdrop.X || content.Y < backdrop.Y ||
+		content.X+content.Width > backdrop.X+backdrop.Width ||
+		content.Y+content.Height > backdrop.Y+backdrop.Height {
+		return errors.New("new-game geometry confirm_choice_content must fit backdrop")
+	}
+	if content.X < g.ConfirmChoice.X || content.Y < g.ConfirmChoice.Y ||
+		content.X+content.Width > g.ConfirmChoice.X+g.ConfirmChoice.Width ||
+		content.Y+content.Height > g.ConfirmChoice.Y+g.ConfirmChoice.Height {
+		return errors.New("new-game geometry confirm_choice_content must fit frame")
 	}
 	for name, anchor := range map[string]GeometryAnchor{
 		"menu_title": g.MenuTitle, "menu_options": g.MenuOptions,
@@ -1892,6 +1983,10 @@ func validateFrameStyle(name string, f *FrameStyle) error {
 	switch f.BorderPattern {
 	case "solid", "checkerboard_1px":
 		// Named engine primitives only; packs cannot supply arbitrary code.
+	case "checkerboard_frame_2px":
+		if f.BorderAccentRGB == nil {
+			return fmt.Errorf("%s frame border_accent_rgb is required for checkerboard_frame_2px", name)
+		}
 	default:
 		return fmt.Errorf("%s frame border_pattern %q is unsupported", name, f.BorderPattern)
 	}
@@ -4070,6 +4165,16 @@ func (p *Pack) AttractSequence() (*AttractSequence, bool) {
 		return nil, false
 	}
 	return p.Interface.Attract, true
+}
+
+// OpeningSequence returns the pack-owned boot presentation. A nil result means
+// this edition has no declared opening cutscene and the caller may start at
+// the normal title splash.
+func (p *Pack) OpeningSequence() (*OpeningSequence, bool) {
+	if p == nil || p.Interface.Opening == nil {
+		return nil, false
+	}
+	return p.Interface.Opening, true
 }
 
 // NewGameConfirmation returns the optional versioned raw screen used behind

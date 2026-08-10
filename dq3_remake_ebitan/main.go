@@ -40,6 +40,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("NewGame 失敗:%v(設 DQ3_ASSETS 指向原版素材夾)", err)
 	}
+	g.StartOpeningCutscene()
 
 	ebiten.SetWindowSize(game.ScreenW*2, game.ScreenH*2)
 	ebiten.SetWindowTitle("Dragon Fighter III — Ebiten port (overworld + アリアハン)")

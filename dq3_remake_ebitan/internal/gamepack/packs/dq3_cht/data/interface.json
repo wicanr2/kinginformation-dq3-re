@@ -264,6 +264,40 @@
     "gender": {"x": 368, "y": 62, "step_y": 16},
     "confirm_prompt": {"x": 367, "y": 20, "width": 162, "height": 34},
     "confirm_choice": {"x": 367, "y": 68, "width": 98, "height": 50},
+    "confirm_choice_content": {"x": 376, "y": 78, "width": 80, "height": 32},
+    "confirm_choice_frame": {
+      "id": "dq3:new_game.confirm_choice_lavender_skin_frame",
+      "border_pattern": "checkerboard_frame_2px",
+      "border_rgb": [255, 223, 255],
+      "border_accent_rgb": [235, 178, 130],
+      "interior_rgb": [0, 0, 0],
+      "evidence": {
+        "level": "D2",
+        "source_kind": "dosbox",
+        "source": "DQ3.EXE + confirm_no_after_down.png + confirm_yes_after_up.png",
+        "address_space": "linear",
+        "address": "0x28bc6",
+        "consumer": "sub_1f590 four-side frame writer；2px lavender／skin alternating frame over confirm_choice backdrop",
+        "doc": "docs/118-newgame-choice-backdrop-re.md",
+        "note": "frame rect x=367..464、y=68..117；上下各 2 rows、左右各 2 columns，邊角依原版 writer 的 phase 保留底圖。"
+      }
+    },
+    "confirm_choice_backdrop": {
+      "id": "dq3:new_game.confirm_choice_blue_checkerboard",
+      "pattern": "checkerboard_1px",
+      "rect": {"x": 360, "y": 62, "width": 112, "height": 64},
+      "rgb": [0, 85, 223],
+      "evidence": {
+        "level": "D2",
+        "source_kind": "dosbox",
+        "source": "DQ3.EXE + confirm_no_after_down.png + confirm_yes_after_up.png",
+        "address_space": "linear",
+        "address": "0x28bc6",
+        "consumer": "sub_1f590 confirm_choice writer；藍色命中 plane 寫入、黑色未命中 phase 保留底圖，玩家可見選項視窗背景",
+        "doc": "docs/118-newgame-choice-backdrop-re.md",
+        "note": "同一正式命名／性別輸入下，兩個游標狀態都穩定呈現 x=360..471、y=62..125 的 112x64 藍黑棋盤；ID 仍保留 raw window linear 0x28bc6。"
+      }
+    },
     "stats_left": {"x": 159, "y": 52, "width": 145, "height": 98},
     "stats_equipment": {"x": 159, "y": 148, "width": 145, "height": 82},
     "stats_right": {"x": 303, "y": 52, "width": 193, "height": 178},
@@ -273,7 +307,7 @@
     "stats_sex_value": {"x": 250, "y": 80},
     "stats_left_rows": {"x": 200, "y": 96, "step_y": 16},
     "stats_cloth": {"x": 200, "y": 160},
-    "stats_right_rows": {"x": 326, "y": 96, "step_y": 16},
+    "stats_right_rows": {"x": 326, "y": 126, "step_y": 16},
     "stats_prompt": {"x": 390, "y": 26},
     "stats_choice": {"x": 394, "y": 72, "step_y": 16},
     "stats_choice_cursor": {"x": 368, "y": 72, "step_y": 16},
@@ -440,6 +474,92 @@
       "consumer": "new-game ability confirmation background before stat panels",
       "doc": "docs/title/README.md",
       "note": "640x350 row-interleaved 4bpp；palette 由原版能力確認／姓名畫面 DOSBox oracle 反推，index 14 為膚色。"
+    }
+  },
+  "opening": {
+    "id": "dq3:opening.boot_cutscene",
+    "skip_on_input": true,
+    "frames": [
+      {
+        "asset_key": "opening_year",
+        "hold_frames": 120,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "video",
+          "source": "DQ3.EXE + docs/36_shots/01_opening_cutscene.png + TITA.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "boot presentation first year card (1989)",
+          "doc": "docs/67-attract-assets-re.md",
+          "note": "TITA.P 解碼與原版 1989 畫面吻合；精確淡入／停留幀尚未由逐幀影片閉合。"
+        }
+      },
+      {
+        "asset_key": "opening_dragon",
+        "hold_frames": 120,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "video",
+          "source": "DQ3.EXE + docs/36_shots/01_opening_cutscene.png + TITB.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "boot presentation dragon-versus-hero card",
+          "doc": "docs/67-attract-assets-re.md",
+          "note": "TITB.P 已定位為單色巨龍／勇者；原版完整相鄰影格與停留幀仍待影片逐幀對拍。"
+        }
+      },
+      {
+        "asset_key": "opening_party",
+        "hold_frames": 120,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "video",
+          "source": "DQ3.EXE + docs/14-dosbox-validation.md + TITD.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "boot presentation three-character card",
+          "doc": "docs/67-attract-assets-re.md",
+          "note": "TITD.P 為開場稍後的三人灰階群像；錄影中 Enter 連按曾略過此張，時序仍標 strong。"
+        }
+      },
+      {
+        "asset_key": "opening_year_1993",
+        "hold_frames": 120,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "video",
+          "source": "DQ3.EXE + docs/title/scene_1993.png + TITE.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "boot presentation year card (1993)",
+          "doc": "docs/14-dosbox-validation.md",
+          "note": "TITE.P／1993 card 已解碼；未把 120 frames 當成原版已證實 timing。"
+        }
+      },
+      {
+        "asset_key": "opening_crest",
+        "hold_frames": 120,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "video",
+          "source": "DQ3.EXE + TITP.P",
+          "address_space": "none",
+          "address": "",
+          "consumer": "boot presentation crest transition before title splash",
+          "doc": "docs/67-attract-assets-re.md",
+          "note": "TITP.P 已定位為太陽翼紋章，但本輪尚無同狀態影片影格閉合；保留為可跳過候選。"
+        }
+      }
+    ],
+    "evidence": {
+      "level": "D2",
+      "source_kind": "video",
+      "source": "DQ3.EXE + docs/14-dosbox-validation.md + docs/36-original-tavern-playthrough.md",
+      "address_space": "none",
+      "address": "",
+      "consumer": "normal desktop/mobile boot before title splash",
+      "doc": "docs/120-opening-cutscene-re.md",
+      "note": "素材 identity 已閉合；各張排序／停留以 strong／hypothesis 保存，不能宣稱完整逐幀 V3。"
     }
   },
   "attract": {

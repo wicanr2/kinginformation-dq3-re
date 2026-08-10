@@ -1033,6 +1033,23 @@ DQ3 canonical `TITH.P`→`TITO.P` 八張職業卡、每卡 1200 個 60Hz frame �
 若其他版本只有標題而沒有經證實巡禮，省略 `attract` 即保持普通標題流程；不得以預設
 檔名或合理秒數補上。
 
+同一 `interface.json` 可選擇提供 `opening` 開機過場；它與 `attract` 都是全螢幕 PCX 卡片，
+但發生在標題 splash 之前，且由桌面／mobile 正式 bootstrap 明確呼叫。欄位契約如下：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `opening.id` | string | 是 | 穩定的版本專屬開機過場 ID。 |
+| `opening.skip_on_input` | boolean | 是 | 是否由正式方向／確認／取消／設定輸入中斷；中斷鍵必須交回標題，不可吞鍵。 |
+| `opening.frames` | object[] | 是 | 有序全螢幕卡片；不可為空、不可重複 asset key。 |
+| `opening.frames[].asset_key` | string | 是 | `manifest.assets` 的 PCX asset key；未知引用啟動時 fail closed。 |
+| `opening.frames[].hold_frames` | int | 是 | 正整數邏輯幀；只有可重播的設定，不可在文件中冒充原版逐幀 timing。 |
+| `opening.evidence`／`opening.frames[].evidence` | object | 是 | 素材 identity、排序／consumer 與 timing 限制；production 初值至少 D2。 |
+
+DQ3 現行五張 `TITA.P`／`TITB.P`／`TITD.P`／`TITE.P`／`TITP.P` 的 manifest integrity、入口、
+跳過交鍵與證據邊界見 [`docs/120`](120-opening-cutscene-re.md)。引擎只知道上述契約與
+`DecodePCX`，不得在 Go 內列出 DQ3 檔名、年份、文字或排序；未提供 `opening` 的其他版本仍可
+從普通 title splash 開始。
+
 `interface.json.battle_texts` 是 production 戰鬥訊息的角色→文字 ID 對映；欄位名稱是
 跨版本的 engine role，實際句子、D3TXT record、glyph/control words 與證據仍屬
 `texts.json`。目前 DQ3 pack 提供睡眠／醒來、咒文／MP gate、逃跑、攻擊／傷害／沒打中、
@@ -1074,14 +1091,21 @@ production `NewGameWithPack` 缺少 `new_game_labels` 即拒絕啟動；`NewGame
 `cell=col*5+row`，raw35 是注音／英數的功能列入口；第五列才設完成旗標，避免把舊的
 「直接按右下格」測試捷徑當成原版流程。這只封存字模資料，主選單／能力確認
 面板座標與共用外框 RGB 現在由 `interface.json.new_game_geometry` 提供。除既有 `id` 外，
-`frame` 必須是 `{id,border_pattern,border_rgb,interior_rgb,evidence}`；它保存版本專屬的
-玩家可見外框色彩與已證實的邊線 primitive，不把 EGA plane mask 變成任意 style ID。
+`frame` 必須是 `{id,border_pattern,border_rgb,border_accent_rgb?,interior_rgb,evidence}`；它保存
+版本專屬的玩家可見外框色彩與已註冊的邊線 primitive，不把 EGA plane mask 變成任意 style ID。
+`border_accent_rgb` 只供具名的 `checkerboard_frame_2px` primitive 使用；validator 會拒絕
+缺少 accent 的該 style，engine 不接受 pack 嵌入任意繪圖程式。
 它另保存 640×350 像素矩形、文字 anchor、
 9×5 姓名盤步距，以及 IDA linear address 的 `raw_windows` sidecar；後者
 保留 `0x29088`／`0x290a6`／`0x290c4`／`0x290e0` 與能力確認三組結構的原始欄位，
-不可用像素值取代。缺 geometry 或不支援的 `border_pattern` 時 production bootstrap 必須
-fail closed；D2 evidence 與 raw／pixel 對照見 [`docs/113`](113-newgame-geometry-re.md)。
-`confirm_choice` 的藍色選擇框、palette 時序與逐幀演出仍是另一個 V3 切片。
+不可用像素值取代。`confirm_choice` 另保存 `confirm_choice_content`、
+`confirm_choice_frame` 與 `confirm_choice_backdrop`：前者是中央黑色內容矩形，後兩者分別
+描述 lavender／膚色雙色 2px 外框與藍黑 checkerboard 底圖；`stats_right_rows` 的固定 anchor
+也必須使用原版量得的六列起點（目前 DQ3 為 `y=126`）。缺 geometry 或不支援的
+`border_pattern` 時 production bootstrap 必須 fail closed；D2 evidence 與 raw／pixel 對照見
+[`docs/113`](113-newgame-geometry-re.md) 及 [`docs/118`](118-newgame-choice-backdrop-re.md)。
+這個靜態確認頁切片已接入 runtime；palette register 切換、游標閃爍、能力條淡入與逐幀演出
+仍是另一個 V3 切片，不可由單張穩定畫面推導。
 
 ### 6.10 `staged_boss_events`
 

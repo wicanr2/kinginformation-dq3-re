@@ -91,17 +91,17 @@
 
 | 畫面族 | 原版證據 | Ebiten 現況 | 判定 |
 |---|---|---|---|
-| 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | 素材已定位，完整演出仍未接 | GAP（視覺） |
+| 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | `opening` 五張 PCX 已由 game-pack 載入；桌面／mobile 正式入口可無輸入播放、正式輸入跳過並交回標題 | E2／V1；素材 identity 為 D2，120 幀停留、排序／淡入淡出、TITP 位置與音效仍待 V3 |
 | 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 已有新遊戲／載入框架 | 需輸入與版面 E2 |
-| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace；`FIRST.SCR` 能力確認背景、右欄六個原版欄位與 EGA 邊線 primitive 已由 pack 接入 | E3；背景／邊線遮罩 D2、runtime V2，palette、藍色選項框與同狀態 stat panel 仍待 V3 |
+| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace；`FIRST.SCR`、右欄六個原版欄位、`confirm_choice` 藍黑 backdrop／中央黑色 content／lavender-膚色 2px frame 均由 pack 接入 | E3；靜態 geometry／frame D2、runtime V2，palette register、游標閃爍／能力條時序與完整同狀態 stat panel 仍待 V3 |
 | 家中／母親 | DOSBox、影片 | sec4+rec82/83；handler54 transaction 已接 | E3；逐格護送動畫仍待 V3 |
 | 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render 已有；CTY `+0x11` raw 遭遇 gate 與步數計數器已接 | E2（遭遇 gate）；仍需事件與 entrance closure、同狀態 V3 |
-| NPC／日夜 | DOSBox、RE | 三層可見性與晝夜已有 | 機制有，逐事件 flags 待接 |
+| NPC／日夜 | DOSBox、RE | 四階段 clock、palette darken、日／夜 NPC table 與 story-flag filter 已有正式入口 | E3；精確 raw palette／clock 對拍與 21 個條件旗標的逐事件 caller→writer→consumer audit 仍待 V3 |
 | 地表／HUD | 影片、網路圖 | 四欄 H/M/等級 HUD 已由 pack 幾何／glyph 驅動 | E2；需入口／palette／同狀態 V3 |
 | 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
 | 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 詳細狀況窗已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 圖達 E2／V2；魯拉、烈米特、特黑洛斯、拉那魯達的 MP／gate／核心效果為 D2 | 狀況子選單／隊員詳情、道具／裝備逐窗與其餘工具咒仍需 E2／V3 |
@@ -756,8 +756,9 @@ test 見 [`docs/113`](113-newgame-geometry-re.md)。本輪已以 Docker／Xvfb �
 
 下一個視覺／音效 parity 工作：
 
-1. 補 `confirm_choice` 藍色選擇框、palette／逐幀游標／動畫的 writer／consumer evidence，並把
-   已產出的開場圖保持可回查的 raw window／hash。
+1. 以 `confirm_choice` 已接的藍黑 backdrop／中央黑 content／lavender-膚色 2px frame 為基線，
+   補 palette register、逐幀游標／能力條動畫的 writer／consumer evidence，並維持現有
+   raw window／runtime hash 可回查。
 2. 再處理戰鬥 frame style、spell／target rect、逐動作 timing／動畫／SFX 與完整抗性／
    formation／boss 多次行動／掉落，所有設定先進 pack JSON 並補 D2/D3 parity。
 3. 完成場景／設施／日夜 palette、剩餘 BGM／SFX、結局 timing；若另開 Android／WASM，
@@ -813,3 +814,33 @@ D3TXT00 record 407 的 glyph code 逐列解碼，確認右欄不是舊 renderer 
 最大 MP 寫入對應列，`agility` 僅保留給詳細狀況窗。這修正設定資料 mismatch，證據仍為 D2、
 runtime 仍為 V2；原版 EGA pattern、藍色選項框與同狀態逐像素對拍另列 V3，不宣稱整個開場
 畫面已完成。
+
+2026-08-10 開場 `confirm_choice` 靜態設定資料勘誤與 runtime 接線：同一正式 DOSBox
+姓名／性別輸入量得 raw window `linear 0x28bc6` 的藍黑 checkerboard
+`x=360..471,y=62..125`（`RGB(0,85,223)`、local odd phase），中央黑色內容
+`x=376..455,y=78..109`，以及 lavender／膚色交錯的 `x=367..464,y=68..117` 雙色
+2px frame。`interface.json.new_game_geometry` 新增 `confirm_choice_backdrop`、
+`confirm_choice_content`、`confirm_choice_frame`；`FrameStyle` 的具名
+`checkerboard_frame_2px` 僅接受已註冊 primitive，缺 accent 或未知 pattern 即 fail closed。
+右欄六列 anchor 同批校正為 `y=126,142,158,174,190,206`。Docker＋Xvfb 針對性 tests、
+PNG dump 與純函式 frame phase test 通過；runtime `docs/ng_confirm.png` 已更新。這是
+D2／V2 的穩定畫面切片，palette register、游標閃爍／能力條淡入與逐幀演出仍列 V3，
+不把一張 PNG 擴大解讀為完整創角 parity。raw／像素與歷史勘誤見 [`docs/118`](118-newgame-choice-backdrop-re.md)
+及 [`docs/113`](113-newgame-geometry-re.md)。
+
+2026-08-10 日夜第一性原理 audit：現行 engine 已有 `dnPhaseSteps=60` 的四階段 clock、
+`DarkenPalette(worldPal, phase)`、住宿／黑暗之燈 reset、日／夜 NPC table 及 story flag
+filter，正式 component／開場 trace 也已涵蓋日夜入口；因此不重寫既有機制。下一輪只追
+原版 raw clock／palette register 的同狀態對拍，並對 `docs/71` 列出的 21 個條件 flag 逐一
+閉合入口、writer、pack state、consumer 與玩家可見結果；已有動態 pack flag 不重複造表，
+缺 caller／writer／consumer 的項目維持 `unknown`／fail closed。日夜 row 的原始判定更新為
+「機制 E3、精確 palette／逐事件 flags audit 待 V3」，不是把機制缺口誤記為尚未實作。
+
+2026-08-10 開機年代／巨龍過場正式接線：原先桌面／mobile `NewGame` 後直接進標題，與原版
+第一幀不符；`interface.json.opening` 現保存 `TITA.P`、`TITB.P`、`TITD.P`、`TITE.P`、
+`TITP.P` 五張 manifest-完整 PCX。`StartOpeningCutscene` 已接到桌面／mobile 正式入口，
+無輸入按 pack 幀推進，任何正式輸入停止並把同一按鍵交回標題；`TestOpeningCutsceneBootAndSkip`、
+`TestDQ3OpeningCutsceneContract`、Docker＋Xvfb 的 `TestDumpOpeningCutscene` 均通過。這關閉
+「開機直接跳標題」的 E2／V1 缺口；素材 identity／靜態 runtime 為 D2／E2，120 幀只是可重播
+設定，排序、TITP 位置、淡入淡出、開場音效與逐幀原版 timing 仍是 V3 長尾，完整邊界見
+[`docs/120`](120-opening-cutscene-re.md)。

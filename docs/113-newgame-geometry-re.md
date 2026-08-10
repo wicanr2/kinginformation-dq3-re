@@ -92,3 +92,19 @@ renderer 使用的「速度／HP／MP」。`agility` 只屬詳細狀況窗 role�
 
 若後續證據推翻任一矩形，應保留本文件與 JSON 的舊斷言，追加勘誤及新 sidecar；不
 得移動 `raw_windows` 位址或只留下改名後的語意。
+
+## 2026-08-10 勘誤：靜態 confirm_choice 已另立資料契約
+
+上文保留的是本文件原先「藍色選擇圖樣尚未閉合」時的歷史狀態。本輪以同一正式姓名／
+性別輸入重跑 DOSBox 穩定畫面後，將可見但不涉及逐幀時序的部分拆成三個 pack 欄位：
+`confirm_choice_backdrop`（`x=360,y=62,w=112,h=64`、`RGB(0,85,223)`、奇偶 phase）、
+`confirm_choice_content`（`x=376,y=78,w=80,h=32` 的黑色內容區）及
+`confirm_choice_frame`（`x=367,y=68,w=98,h=50`、`checkerboard_frame_2px`、
+lavender／膚色 accent）。能力確認右欄六列的實際 glyph 起點也校正為
+`y=126,142,158,174,190,206`；舊 JSON 的 `y=96` 會把文字畫入選擇框，已由
+`interface.json` 與 parity test 修正。完整 raw／像素證據與推論等級見
+[`docs/118`](118-newgame-choice-backdrop-re.md)。
+
+這項勘誤只把穩定畫面的幾何、色彩與可重現 frame primitive 接入 runtime（D2／V2）；
+palette register 切換、游標閃爍、能力條淡入及逐幀動畫仍保留原文件的 V3 限制，不能把
+靜態 PNG 對拍擴大解讀成整段創角演出已完成。
