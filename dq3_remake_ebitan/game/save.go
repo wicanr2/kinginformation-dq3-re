@@ -39,6 +39,7 @@ type saveState struct {
 	PhoenixAboard           bool                     `json:"phoenixaboard,omitempty"`
 	PhoenixX                int                      `json:"phoenixx,omitempty"`
 	PhoenixY                int                      `json:"phoenixy,omitempty"`
+	PhoenixMapCellWritten   bool                     `json:"phoenix_map_cell_written,omitempty"`
 	ShipX                   int                      `json:"shipx"`
 	ShipY                   int                      `json:"shipy"`
 	EncounterStep           int                      `json:"encounter_step,omitempty"`
@@ -113,7 +114,7 @@ func (g *Game) snapshot() saveState {
 		Flags:                   flagsToSav(g.flags),
 		ShipOwned:               g.shipOwned, ShipX: g.shipX, ShipY: g.shipY,
 		PhoenixOwned: g.phoenixOwned, PhoenixAboard: g.phoenixAboard,
-		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY,
+		PhoenixX: g.phoenixX, PhoenixY: g.phoenixY, PhoenixMapCellWritten: g.phoenixMapCellWritten,
 		EncounterStep: g.encounterStep,
 		PX:            g.px, PY: g.py, OverPX: g.overPx, OverPY: g.overPy,
 		OverworldPosV2: true, InTown: g.inTown,
@@ -268,6 +269,7 @@ func (g *Game) restore(s saveState) {
 	g.shipOwned, g.shipX, g.shipY = s.ShipOwned, s.ShipX, s.ShipY
 	g.phoenixOwned, g.phoenixAboard = s.PhoenixOwned, s.PhoenixAboard
 	g.phoenixX, g.phoenixY = s.PhoenixX, s.PhoenixY
+	g.phoenixMapCellWritten = s.PhoenixMapCellWritten
 	g.encounterStep = s.EncounterStep
 	g.initStoryBits()
 	if len(s.StoryBits) > 0 {
@@ -326,6 +328,7 @@ func (g *Game) restore(s saveState) {
 	g.resetPartyTrail()
 	if s.InTown {
 		g.restoreTownScene(s.Cty, s.Section)
+		g.applyPhoenixMapCell()
 	} else {
 		g.cur = g.overworldScene()
 		g.curCty = -1

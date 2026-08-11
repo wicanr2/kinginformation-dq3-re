@@ -101,7 +101,7 @@
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render 已有；CTY `+0x11` raw 遭遇 gate 與步數計數器已接 | E2（遭遇 gate）；仍需事件與 entrance closure、同狀態 V3 |
-| NPC／日夜 | DOSBox、RE | 四階段 clock、palette darken、日／夜 NPC table 與 story-flag filter 已有正式入口 | E3；精確 raw palette／clock 對拍與 21 個條件旗標的逐事件 caller→writer→consumer audit 仍待 V3 |
+| NPC／日夜 | DOSBox、RE | 四階段 clock、palette darken、日／夜 NPC table 與 story-flag filter 已有正式入口；IDA handler74／69／70／33 的四條 story-flag transaction 已由 pack 與正式 path 接線 | E2／D3；精確 raw palette／clock 對拍、完整 route 與未閉合旗標語意仍待 V3／unknown |
 | 地表／HUD | 影片、網路圖 | 四欄 H/M/等級 HUD 已由 pack 幾何／glyph 驅動 | E2；需入口／palette／同狀態 V3 |
 | 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
 | 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 詳細狀況窗已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 圖達 E2／V2；魯拉、烈米特、特黑洛斯、拉那魯達的 MP／gate／核心效果為 D2 | 狀況子選單／隊員詳情、道具／裝備逐窗與其餘工具咒仍需 E2／V3 |
@@ -844,3 +844,154 @@ filter，正式 component／開場 trace 也已涵蓋日夜入口；因此不重
 「開機直接跳標題」的 E2／V1 缺口；素材 identity／靜態 runtime 為 D2／E2，120 幀只是可重播
 設定，排序、TITP 位置、淡入淡出、開場音效與逐幀原版 timing 仍是 V3 長尾，完整邊界見
 [`docs/120`](120-opening-cutscene-re.md)。
+
+2026-08-10 戰鬥／日夜靜態 RE 閉環補充：IDA Pro 9.4 對同一份 `DQ3.EXE` 完成正式戰鬥
+`sub_1BDDF → sub_1C08B → sub_1C34F → sub_1A973` 的 caller／queue／actor chain，確認
+玩家／敵人速度排序、死亡／睡眠／逃跑／咒文／物理分派；`sub_1C425` 也確認經驗／金錢
+分配、`DGROUP 0x2518 bit1` 掉落抑制，以及 D3MNS `+0x25/+0x26` 的掉落 gate／item raw id。
+另在 `loc_190D7`（file `0xa447`）確認事件／AI-only runner 最多重建 12 輪，但每輪每個
+queue entry 仍只消費一次；這不構成 boss 同回合多次行動證據。
+`sub_1D7FB` 已閉合 D3MNS `+0x19..+0x1d` packed resistance 與 `0/68/180/255` 門檻；
+`sub_1A7D5`／`sub_1BF35` 已閉合候選八筆、38 點 encounter budget、group/background/page
+及 active position 的 formation 資料流。`sub_20770`／`sub_208A7`／`sub_208E2` 則把
+戰鬥 `BP` cue、`DS:0x253e` 指標表、`FVOC.VCX`／`NVOC.VCX` 與 Sound Blaster driver
+等待點接起；`sub_1C673`／`sub_1C642`／`sub_1B3C3` 的 tick／重畫 timing 也已保存。
+以上是 E1／D2 靜態證據，並不等於 cue 波形、逐格動畫或同狀態畫面／聲音 V3。
+
+同一輪完成日夜精確值：`sub_1EE23`（file `0x10193`）令 `DGROUP 0x251d` 在有效
+overworld tick `0..0xef` 遞增，`0x78`（120）寫 `0x526c=0`，`0xf0`（240）歸零並
+寫 `0x526c=1`；`sub_1EE76`（file `0x101e6`）依 `clock/0x14` 查 `DGROUP 0x25c5`
+的原始 12-byte palette index `01 00 00 00 01 02 03 04 04 04 03 02`，由 `DQ3.PAL`
+buffer `DS:0x3232` 選 bank 並上傳 DAC。`sub_1ECDC` 載入 `DQ3.PAL`／`MNSBK.PAL`，
+`sub_131BD` 以同一 `[0x526c]` 選日／夜 NPC 表，再測 `[0x4f70]` story bit。
+21 個條件 flag 的原版 SET literal→`sub_16EDF`→`[0x4f70]` ledger 已補至
+[`docs/123`](123-static-battle-daynight-re.md)；原版 writer 全部 confirmed，但
+`0x0d`、`0x11`、`0x24`、`0x1a`、`0x1b` 的 runtime 事件／consumer 仍 unknown，不能把
+「原版有 writer」誤寫成 remake 已接。
+
+本輪因此只關閉靜態設定 mismatch；未把 boss 同回合多次行動升格（正式鏈目前只證實
+每個活躍 actor 每回合一次），也未把現行 `dnPhaseSteps=60`／`DarkenPalette` 近似改成
+原版二值 selector。`docs/123` 與 [`docs/data/dq3-static-battle-daynight-evidence.json`](data/dq3-static-battle-daynight-evidence.json)
+已保存帶來源 hash／位址基準／推論等級的非 production sidecar；剩餘工作是將達 D2／D3 gate
+的欄位逐批遷入 versioned game-pack、補每個 formation／resistance descriptor、VOC cue
+波形與同狀態 DOSBox V3、逐動作動畫／停頓，以及缺失 21 flag 的正式玩家入口；未知值保持
+fail closed。
+
+2026-08-11 靜態勘誤：以 `sub_1D7FB` 的原始 `cmp`／`inc BX` 重算 packed resistance
+category，修正 Go `SpellChance` 的 first-`>=` 邊界誤讀與 `0x00` sentinel 遺失；
+`spell=2/38/59`、怪物 121、越界 fail-closed component tests 在 Docker 通過。完整
+effect 名稱／玩家可見抗性仍需逐項 descriptor／V3，未知資料不進 production pack。
+
+2026-08-11 靜態戰鬥／flag deep dive：本輪只補證據，不宣稱新增 runtime 完成度。formation
+候選表已按原始 `dec region; shl 5` 修正為區域 `1..27`、108 列完整 raw sidecar，13 個
+固定編隊 record 也保留 count／未命名 header／pair bytes；`sub_1AB2C`→active `+0x03`→
+`sub_1B1FE` 的 position writer／consumer 已達 strong，但螢幕座標仍 unknown。`DS:0x37c3`
+的 60 筆 resistance descriptor 與 D3TXT00 `0x79..0xb4` 中文 record 對映已 confirmed，
+不把名稱推成元素抗性。handler74／69／70／33 分別閉合 `0x0d`、`0x11`、`0x1a/0x1b`、
+`0x24` 的原版事件副作用，CTY full-byte NPC records 也證實 `sub_131BD` generic consumer；
+Go production writer／直接 GET caller／玩家可見事件仍 unknown。boss repeat-N、逐動作 SHP
+frame、PCM 波形與停頓維持 unknown／V3，未知欄位不得進 game-pack。
+
+2026-08-11 攻略×IDA 旗標身份勘誤：`0x1a/0x1b` 的現行身份是 CTY65 巴拉摩斯戰後
+世界／NPC 可見性交易（handler70 `sub_1622A`），不是龍之女王／彩虹材料中繼；龍之女王
+光之珠在 CTY67 handler52。`0x0d` 對應索瑪後期 CTY80、`0x11` 對應六珠祭壇 CTY70、
+`0x24` 對應沙曼歐莎條件居民／handler33。這些是原版 writer／generic consumer 的
+`confirmed` 路線身份，Go 正式入口仍 `unknown`，詳見 [`docs/119`](119-daynight-story-flag-audit.md)
+與 [`docs/123`](123-static-battle-daynight-re.md)；不得把攻略路線直接當成 runtime 已接。
+
+## 2026-08-11 E2 快速完成標準（使用者確認）
+
+本 milestone 採用 E2／D2 的靜態與資料驅動交付標準，不以重新啟動 DOSBox 作為驗收前置。
+驗收 oracle 限定為 IDA Pro 9.4 的非破壞性 listing／交叉參照、原始 EXE／DAT／SHP／VOC／CTY
+bytes、可重建 decoder、Docker 內 deterministic Go trace、schema/reference/parity tests
+及既有 reference PNG。戰鬥、事件、formation、抗性、掉落、SHP redraw、VOC cue 與 save/load
+只納入 `confirmed` 或必要的 `strong` 證據；未命名 raw 欄位與無法閉合的玩家語意一律保留
+`unknown`、raw sidecar 與 fail-closed，不用合理預設或 C remake 補值。
+
+本標準明確排除本 milestone 的 V3 承諾：boss repeat-N 的未知條件、精確螢幕座標、逐動作
+SHP frame、實際 PCM 播放波形／玩家停頓及五個缺失旗標的完整玩家可見語意。這些項目仍記錄
+在證據 ledger，但不阻塞 E2 的 JSON／引擎／headless 驗收，也不得被 README 或 release
+描述成已完成的原版 parity。
+
+E2 的最小充分切片順序為：
+
+1. 將已確認的戰鬥／formation／resistance／SHP／VOC／flag raw 契約遷入 versioned game-pack，
+   補 schema、reference validation 與原始 bytes parity test。
+2. 以共用引擎的 deterministic `InputState` trace 驗證 queue、掉落、抗性、formation、事件
+   交易與 save/load；不以 debug shortcut 或直接 handler 呼叫代替正式入口。
+3. 以 decoder 輸出及既有 PNG 做 headless contract 驗收；完成後只宣稱 E2／D2，不宣稱 V3
+   畫面／聲音 parity。
+
+### E2 第一個垂直切片（2026-08-11）
+
+- 修正 `internal/dq3data.EncounterTables.Slot`：原版 `dec region; shl 5` 對應 raw region
+  `1..27` 到 Go slot `0..26`，不再錯讀下一區；region `0` 與越界值 fail-closed。
+- 新增 `internal/gamepack/packs/dq3_cht/data/battle.json`，保存 27×4 候選 raw table、13
+  筆固定編隊、resistance threshold／class／60 筆 descriptor 與中文 record 對映。
+- `NewGameWithPack` 現從 `data.battle` 的驗證 raw bytes 建立 encounter decoder；不再從
+  `DQ3.EXE` 直接讀取版本專屬遭遇表。`gamepack` loader 檢查 source hash、raw length、
+  descriptor cardinality 與固定 stride，未知資料不提供 fallback。
+- `D3MNS.DAT`、`DQ3MNS.SHP`、`PACKBG.SCR`、`MNSBK.PAL`、`FVOC.VCX` 的 battle asset
+  路徑／完整性也移入 manifest；SHP 同時記錄原始 bytes 與已產生 128/129 版本的受控
+  alternate hash，兩者都必須精確匹配，不能接受任意檔案。
+- Docker `go test ./internal/gamepack ./internal/dq3data` 與 Xvfb headless `go test ./game -run ^$`
+  通過；這只證明 E2 loader／編譯契約，不代表 V3 畫面／音效 parity。
+
+### E2 headless trace 驗收（2026-08-11）
+
+未啟動 DOSBox；使用專案既有 `Dockerfile.test` 建立一次性工具鏈，並以唯讀 Go module cache、
+UID/GID 對映及 `xvfb-run` 執行。下列結果是同一個 `assets_raw`／pack 的可重播驗收：
+
+- `go test ./internal/... -count=1`：`battle`、`dq3data`、`gamepack`、音訊、物品、RNG、
+  spell、stats、注音等套件全綠。
+- `TestE2BattlePackEncounterTrace`：正式 `NewGame` 載入 `data/battle.json`，由 pack raw
+  建立 region／candidate decoder，阿里阿罕 raw region 1 與 `[5,6,5,10]` 候選一致。
+- `TestBaramosProductionInputTrace`、`TestMirrorProductionInputTrace`：事件入口、戰鬥命令、
+  回合收集、勝利交易與後續對話均由正式 `InputState` 推進。
+- `TestMirrorWinSaveRestore`、`TestSaveRoundTrip`、`TestSaveRecordsAndChecksGamePackIdentity`、
+  `TestSavePreservesRememberedOverworldPosition`：事件完成後 save/load 與 pack identity 檢查通過。
+- `TestBattle*`、`TestShanpaneOriginalMixedFormation`、`TestEnemyTurnEachAliveActs`、
+  `TestGroupBattleAllMustDie`：速度 queue、逐 actor 行動、混合編隊、全滅與獎勵通過。
+
+因此本輪可標記為「戰鬥資料／loader／headless 交易 E2、formation raw E2、畫面 V2（既有 PNG）」；
+不提升為 V3。boss 同回合 repeat-N、逐動作 SHP frame、PCM 波形／停頓、五個 story flag
+的完整 remake 玩家入口仍是 `unknown`／後續工作；formation 的 raw EGA projection 雖已接入
+pack／renderer，仍不能把它包裝成同狀態 V3 截圖 parity 或 release 的完整戰鬥宣告。
+
+補充：本輪重播時發現 CTY07／08 塔區的 section route fixture 會遇到原始遭遇表；已改由
+雷貝正式道具店購買聖水、以道具選單驅敵，並在 route helper 以正式戰鬥輸入處理意外遭遇。
+原始 CTY07→CTY08 transition chain 現可抵達 CTY08 sec3 並接上拿吉米老人；完整
+`TestOpeningProductionInputTrace` 後段仍在另一個 CTY13 路徑 fixture 停止，因此沒有把完整
+campaign／E3 宣稱為通過。這個狀態不是以 debug state 蓋掉；若要宣稱 E3，仍需從合法
+checkpoint 收尾後段路徑。V3 畫面／音效不足之處依 README 的 `V3-approx` 政策標示，不能
+改寫成逐像素或逐波形 parity。
+
+### E2 formation／PCM 補證（2026-08-11）
+
+IDA Pro 9.4 補出 `sub_1AAA1 → sub_1AAD5 → sub_1AB2C → sub_1B31A` 的完整 raw
+writer／consumer：`0x26 - Σ(D3MNS +0x28 × count) + 2` 是第一筆 active raw position，
+之後每隻以 `2 × D3MNS +0x28` 前進；`sub_1AB2C` 也逐個體擲 HP。這些常數已資料化為
+`battle.json.formation_position`，並由 production renderer 依 EGA `0x54` stride／`0x102`
+bottom 計算位置。VOC decoder 同步保留每 cue 的原始 sample rate、sample count 與可重建
+duration；host `PlaySFX` wall-clock 與 action frame 仍 unknown。完整位址、hash、推論等級與
+`NVOC` cue21 `0x1f973` 勘誤見 [`docs/123`](123-static-battle-daynight-re.md) 與 sidecar。
+
+## 2026-08-11 current checkpoint：IDA story-flag runtime E2 已接線
+
+前文「五個 flag 的 production writer／玩家入口仍 unknown」是接線前歷史紀錄；現行工作狀態
+以本節、`docs/119` 的 E2 勘誤及 `events.json` schema `0.1.29` 為準。四條已由 IDA handler
+與 CTY selector 閉合的固定 transaction 已接到共用 engine＋DQ3 pack：
+
+1. handler74／CTY80 國王冊封：寫 `0x0d`、清 `0xf5`、重載場景。
+2. handler69／CTY70 六珠祭壇：依 pack 動畫完成後寫 transient `0x11`、map cell `0x80`、
+   停放拉米亞，並在重載前清 transient；save/load 重放 map patch。
+3. handler70／CTY65 巴拉摩斯：固定編隊勝利後清 `0x29`、同時寫 `0x1a/0x1b`、重設
+   day phase／step 並套 palette。
+4. handler33／CTY44 `(13,27)`：正式命令入口開 `DI=0x0bff`（record 71），再清 `0x3d`、
+   寫 `0x24/0x21`、重建條件 NPC。
+
+`game/story_flags_test.go` 的 pack contract、正式 command trace、Phoenix map/save、Baramos
+aftermath 與 ending writer tests 在 Docker＋Xvfb 通過；這是 E2 engine/data／交易閉環，不是
+同狀態 DOSBox V3。boss repeat-N、逐動作 SHP frame、PCM wall-clock、精確 palette register
+與完整 campaign E3 仍依 `docs/123` 保持 `unknown`／V3 gap，不應重新開啟已完成的 JSON／flag
+切片。

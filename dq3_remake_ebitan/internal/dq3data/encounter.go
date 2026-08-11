@@ -25,15 +25,34 @@ func OpenEncounterTables(exe []byte) (*EncounterTables, error) {
 	if len(exe) < encounterTableFile+tableSize || len(exe) < encounterRegionFile+256 {
 		return nil, fmt.Errorf("DQ3.EXE 遭遇表截斷: %d bytes", len(exe))
 	}
+	return OpenEncounterTablesFromRaw(
+		exe[encounterRegionFile:encounterRegionFile+256],
+		exe[encounterTableFile:encounterTableFile+tableSize],
+	)
+}
+
+// OpenEncounterTablesFromRaw decodes pack-owned raw regions and the complete
+// 32×4 candidate table.  It keeps the decoder independent of DQ3.EXE so an
+// external versioned pack can replace the data without recompiling the engine.
+func OpenEncounterTablesFromRaw(regionRaw, tableRaw []byte) (*EncounterTables, error) {
+	const usedTableSize = 27 * 4 * 8
+	if len(regionRaw) < 256 || len(tableRaw) < usedTableSize {
+		return nil, fmt.Errorf("遭遇 raw table 截斷: region=%d table=%d", len(regionRaw), len(tableRaw))
+	}
 	t := &EncounterTables{}
-	copy(t.regions[:], exe[encounterRegionFile:encounterRegionFile+256])
+	copy(t.regions[:], regionRaw[:256])
 	for region := 0; region < 32; region++ {
 		for sub := 0; sub < 4; sub++ {
-			o := encounterTableFile + region*0x20 + sub*8
+			o := region*0x20 + sub*8
+			if o+8 > len(tableRaw) {
+				// The E2 pack stores only raw regions 1..27; unused tail
+				// slots remain zero and therefore fail closed.
+				continue
+			}
 			s := &t.slots[region][sub]
-			s.Threshold = int(exe[o+1])
-			s.Background = int(exe[o+2])
-			for _, id := range exe[o+4 : o+8] {
+			s.Threshold = int(tableRaw[o+1])
+			s.Background = int(tableRaw[o+2])
+			for _, id := range tableRaw[o+4 : o+8] {
 				if id != 0xff {
 					s.Candidates = append(s.Candidates, int(id))
 				}
@@ -59,8 +78,12 @@ func (t *EncounterTables) Region(x, y int) int {
 }
 
 func (t *EncounterTables) Slot(region, sub int) EncounterSlot {
-	if t == nil || region < 0 || region >= len(t.slots) {
+	// The original loader decrements the region byte before multiplying by the
+	// 0x20 row stride.  Region values 1..27 therefore address slots[0..26];
+	// treating the raw value as a Go index silently shifts every encounter
+	// table by one row.  Keep raw region 0 and out-of-range values fail-closed.
+	if t == nil || region <= 0 || region > len(t.slots) {
 		return EncounterSlot{}
 	}
-	return t.slots[region][sub&3]
+	return t.slots[region-1][sub&3]
 }

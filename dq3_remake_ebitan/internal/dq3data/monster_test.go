@@ -32,6 +32,20 @@ func TestMonsters(t *testing.T) {
 	if chance, ok := m.SpellChance(5, 59); !ok || chance != 255 {
 		t.Fatalf("史萊姆 Palpunte 成功門檻應由 packed 抗性解為255,得 %d ok=%v", chance, ok)
 	}
+	// 原版 threshold table 的相等邊界與 0 sentinel 都要保留：
+	// spell 2 屬 class 0，spell 38/59 屬 class 17；舊 bounds 寫法會各偏一格。
+	if chance, ok := m.SpellChance(4, 2); !ok || chance != 0 {
+		t.Fatalf("spell2 應落 class0/門檻0,得 %d ok=%v", chance, ok)
+	}
+	if chance, ok := m.SpellChance(2, 38); !ok || chance != 255 {
+		t.Fatalf("spell38 應落 class17/門檻255,得 %d ok=%v", chance, ok)
+	}
+	if chance, ok := m.SpellChance(121, 59); !ok || chance != 0 {
+		t.Fatalf("怪121 spell59 應落 class17/門檻0,得 %d ok=%v", chance, ok)
+	}
+	if _, ok := m.SpellChance(5, spellCount); ok {
+		t.Fatal("超出原版 60 筆 spell descriptor 的 id 應 fail closed")
+	}
 	// id89 怪力魔：+0x25=0（一般隨機率），+0x26=0x62 變身杖；handler 另以
 	// battle flag 強制掉落。+0x27=200 尚未命名，不能再誤標成掉落率。
 	s89, _ := m.Stat(89)

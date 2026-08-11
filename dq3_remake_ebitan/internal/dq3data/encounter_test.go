@@ -11,13 +11,19 @@ func TestEncounterTablesFromOriginalEXE(t *testing.T) {
 		t.Fatalf("阿里阿罕周邊 region=%d, want 1", got)
 	}
 	s := tab.Slot(1, 0)
-	want := []int{8, 9, 11, 7}
-	if s.Threshold != 99 || s.Background != 0 || len(s.Candidates) != len(want) {
+	want := []int{5, 6, 5, 10}
+	if s.Threshold != 1 || s.Background != 0 || len(s.Candidates) != len(want) {
 		t.Fatalf("region1/sub0 解碼錯: %+v", s)
 	}
 	for i := range want {
 		if s.Candidates[i] != want[i] {
 			t.Fatalf("region1/sub0 candidates=%v, want %v", s.Candidates, want)
 		}
+	}
+	if got := tab.Slot(2, 0); got.Threshold != 99 || got.Background != 0 {
+		t.Fatalf("region2/sub0 未對齊 dec region: %+v", got)
+	}
+	if got := tab.Slot(0, 0); len(got.Candidates) != 0 {
+		t.Fatalf("raw region 0 應 fail-closed: %+v", got)
 	}
 }

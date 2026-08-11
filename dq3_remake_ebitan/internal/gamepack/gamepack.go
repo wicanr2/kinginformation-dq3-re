@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.27"
+	SchemaVersion = "0.1.29"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -43,9 +43,11 @@ type Manifest struct {
 }
 
 type AssetRef struct {
-	Path   string `json:"path"`
-	Size   int64  `json:"size"`
-	SHA256 string `json:"sha256"`
+	Path            string `json:"path"`
+	Size            int64  `json:"size"`
+	SHA256          string `json:"sha256"`
+	AlternateSize   int64  `json:"alternate_size,omitempty"`
+	AlternateSHA256 string `json:"alternate_sha256,omitempty"`
 }
 
 // AudioDefinition 是 versioned game pack 的音樂／音效 cue 表。引擎只查穩定
@@ -72,6 +74,80 @@ type Evidence struct {
 	Consumer     string `json:"consumer"`
 	Doc          string `json:"doc"`
 	Note         string `json:"note,omitempty"`
+}
+
+// BattleSourceFile records the exact legacy input used to derive the E2 battle
+// contract.  It is metadata only; the engine still loads pack-owned assets and
+// never guesses missing raw data.
+type BattleSourceFile struct {
+	Path   string `json:"path"`
+	Size   int64  `json:"size"`
+	SHA256 string `json:"sha256"`
+}
+
+// BattleRawBlob preserves a non-destructive byte range together with its
+// original address and evidence.  Unknown fields remain bytes rather than
+// becoming speculative production names.
+type BattleRawBlob struct {
+	AddressSpace string   `json:"address_space"`
+	Address      string   `json:"address"`
+	FileOffset   string   `json:"file_offset,omitempty"`
+	LengthBytes  int      `json:"length_bytes"`
+	RawSHA256    string   `json:"raw_sha256"`
+	RawHex       string   `json:"raw_hex"`
+	Evidence     Evidence `json:"evidence"`
+}
+
+type BattleFixedFormationRecord struct {
+	DGroup   string   `json:"dgroup"`
+	File     string   `json:"file"`
+	Count    int      `json:"count"`
+	RawHex   string   `json:"raw_hex"`
+	Caller   string   `json:"caller"`
+	Evidence Evidence `json:"evidence"`
+}
+
+// BattleFormationPosition preserves the confirmed raw-to-EGA projection used
+// by the original enemy loader/drawer.  These are data-pack values rather
+// than renderer constants: the shared engine only applies the primitive.
+type BattleFormationPosition struct {
+	OriginRaw            int      `json:"origin_raw"`
+	FirstMemberOffsetRaw int      `json:"first_member_offset_raw"`
+	WeightStepMultiplier int      `json:"weight_step_multiplier"`
+	EGAStrideBytes       int      `json:"ega_stride_bytes"`
+	EGABottomRaw         int      `json:"ega_bottom_raw"`
+	PixelsPerRawByte     int      `json:"pixels_per_raw_byte"`
+	Evidence             Evidence `json:"evidence"`
+}
+
+type BattleEncounterData struct {
+	RegionLookup      BattleRawBlob                `json:"region_lookup"`
+	CandidateTable    BattleRawBlob                `json:"candidate_table"`
+	RowStrideBytes    int                          `json:"row_stride_bytes"`
+	RegionStrideBytes int                          `json:"region_stride_bytes"`
+	UsedRegionIDs     []int                        `json:"used_region_ids"`
+	FixedRecords      []BattleFixedFormationRecord `json:"fixed_records"`
+	FormationPosition BattleFormationPosition      `json:"formation_position"`
+	Evidence          Evidence                     `json:"evidence"`
+}
+
+type BattleResistanceData struct {
+	EffectThresholds BattleRawBlob     `json:"effect_thresholds"`
+	ClassThresholds  []int             `json:"class_thresholds"`
+	DescriptorTable  BattleRawBlob     `json:"descriptor_table"`
+	EffectNamesZH    map[string]string `json:"effect_names_zh"`
+	Evidence         Evidence          `json:"evidence"`
+}
+
+// BattlePackData is the E2 production contract for the statically confirmed
+// battle inputs.  It deliberately excludes unproven action-frame and player
+// timing semantics; those remain in the RE sidecar as unknown/V3.
+type BattlePackData struct {
+	SchemaVersion string               `json:"schema_version"`
+	SourceFiles   []BattleSourceFile   `json:"source_files"`
+	Encounter     BattleEncounterData  `json:"encounter"`
+	Resistance    BattleResistanceData `json:"resistance"`
+	Evidence      Evidence             `json:"evidence"`
 }
 
 type Pricing struct {
@@ -589,6 +665,59 @@ type ScriptedNPCSelector struct {
 	Section    int            `json:"section"`
 	Tile       TileCoordinate `json:"tile"`
 	HandlerRaw int            `json:"handler_raw"`
+}
+
+// StoryFlagMapCell is the raw map-cell mutation performed by a finite
+// story-flag handler. The value remains an original tile byte; the engine
+// does not infer a replacement from a screenshot or a C remake.
+type StoryFlagMapCell struct {
+	CTYRaw   int            `json:"cty_raw"`
+	Section  int            `json:"section"`
+	Tile     TileCoordinate `json:"tile"`
+	ValueRaw int            `json:"value_raw"`
+}
+
+// StoryFlagAnimation is a bounded presentation primitive. It carries only
+// the confirmed frame bytes and tick cadence; it cannot contain executable
+// JSON or an arbitrary renderer expression.
+type StoryFlagAnimation struct {
+	Position   TileCoordinate `json:"position"`
+	TilesRaw   []int          `json:"tiles_raw"`
+	FrameTicks int            `json:"frame_ticks"`
+}
+
+// StoryFlagRuntimeEvent describes one evidence-backed original handler whose
+// state transaction is part of the production game path. Different editions
+// may provide different entries while the engine executes only these finite
+// primitives.
+type StoryFlagRuntimeEvent struct {
+	ID                        string                `json:"id"`
+	Kind                      string                `json:"kind"`
+	HandlerRaw                int                   `json:"handler_raw"`
+	NPC                       ScriptedNPCSelector   `json:"npc"`
+	SetStoryFlagsRaw          []int                 `json:"set_story_flags_raw"`
+	ClearStoryFlagsRaw        []int                 `json:"clear_story_flags_raw"`
+	DialogueRecordRaw         int                   `json:"dialogue_record_raw,omitempty"`
+	DialogueSelectorRaw       int                   `json:"dialogue_selector_raw,omitempty"`
+	SceneReload               bool                  `json:"scene_reload,omitempty"`
+	DayNightPhase             int                   `json:"day_night_phase,omitempty"`
+	ResetDayNightSteps        bool                  `json:"reset_day_night_steps,omitempty"`
+	RebuildWorldScenes        bool                  `json:"rebuild_world_scenes,omitempty"`
+	MapCell                   *StoryFlagMapCell     `json:"map_cell,omitempty"`
+	Animation                 *StoryFlagAnimation   `json:"animation,omitempty"`
+	ParkPosition              *VehicleWorldPosition `json:"park_position,omitempty"`
+	PhoenixUnrevivedFlagRaw   int                   `json:"phoenix_unrevived_flag_raw,omitempty"`
+	PhoenixTransientFlagRaw   int                   `json:"phoenix_transient_flag_raw,omitempty"`
+	PhoenixRevivedDialogueRaw int                   `json:"phoenix_revived_dialogue_raw,omitempty"`
+	PhoenixAltarDialogueRaw   int                   `json:"phoenix_altar_dialogue_raw,omitempty"`
+	PhoenixOrbDialogueRaw     int                   `json:"phoenix_orb_dialogue_raw,omitempty"`
+	PhoenixAltarVisualTileRaw int                   `json:"phoenix_altar_visual_tile_raw,omitempty"`
+	PhoenixAltarFlagRaw       []int                 `json:"phoenix_altar_flag_raw,omitempty"`
+	PhoenixVisualFlagBaseRaw  int                   `json:"phoenix_visual_flag_base_raw,omitempty"`
+	PhoenixOrbItemFirstRaw    int                   `json:"phoenix_orb_item_first_raw,omitempty"`
+	PhoenixOrbItemLastRaw     int                   `json:"phoenix_orb_item_last_raw,omitempty"`
+	PhoenixAltarTiles         []TileCoordinate      `json:"phoenix_altar_tiles,omitempty"`
+	Evidence                  Evidence              `json:"evidence"`
 }
 
 type TemporaryRoleTextIDs struct {
@@ -1311,6 +1440,7 @@ type Events struct {
 	HostageRescueEvents         []HostageRescueEvent             `json:"hostage_rescue_events"`
 	ReclassEvents               []ReclassEvent                   `json:"reclass_events"`
 	StagedBossEvents            []StagedBossEvent                `json:"staged_boss_events"`
+	StoryFlagRuntimeEvents      []StoryFlagRuntimeEvent          `json:"story_flag_runtime_events"`
 }
 
 type TextSource struct {
@@ -1392,6 +1522,7 @@ type Pack struct {
 	Characters                 Characters
 	Texts                      Texts
 	Audio                      AudioDefinition
+	Battle                     BattlePackData
 	services                   map[string]*ServiceDefinition
 	bossEvents                 map[string]*BossSurrenderEvent
 	roleEvents                 map[string]*TemporaryRoleEvent
@@ -1412,6 +1543,7 @@ type Pack struct {
 	stagedBossEvents           map[string]*StagedBossEvent
 	charDefaults               map[string]*CharacterDefault
 	texts                      map[string]*TextDefinition
+	battlePresent              bool
 	contentHash                string
 }
 
@@ -1532,6 +1664,18 @@ func Load(fsys fs.FS) (*Pack, error) {
 			return nil, fmt.Errorf("%s: %w", audioPath, err)
 		}
 	}
+	if battlePath, ok := p.Manifest.Data["battle"]; ok {
+		if battlePath, err = cleanRelative(battlePath, "data.battle"); err != nil {
+			return nil, err
+		}
+		if err := decodeStrict(fsys, battlePath, &p.Battle); err != nil {
+			return nil, err
+		}
+		if err := p.validateBattlePack(); err != nil {
+			return nil, fmt.Errorf("%s: %w", battlePath, err)
+		}
+		p.battlePresent = true
+	}
 	if err := p.validateEventTextRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", eventsPath, err)
 	}
@@ -1543,7 +1687,8 @@ func Load(fsys fs.FS) (*Pack, error) {
 		Characters Characters      `json:"characters"`
 		Texts      Texts           `json:"texts"`
 		Audio      AudioDefinition `json:"audio"`
-	}{p.Manifest, p.Facilities, p.Interface, p.Events, p.Characters, p.Texts, p.Audio})
+		Battle     BattlePackData  `json:"battle"`
+	}{p.Manifest, p.Facilities, p.Interface, p.Events, p.Characters, p.Texts, p.Audio, p.Battle})
 	if err != nil {
 		return nil, fmt.Errorf("canonicalize pack: %w", err)
 	}
@@ -2399,6 +2544,105 @@ func validScriptedNPC(s ScriptedNPCSelector) bool {
 		s.Tile.X >= 0 && s.Tile.Y >= 0 && s.HandlerRaw >= 0 && s.HandlerRaw <= 255
 }
 
+func validateStoryFlagList(eventID, name string, flags []int, seen map[int]string) error {
+	if len(flags) == 0 {
+		return fmt.Errorf("%s: %s must be present", eventID, name)
+	}
+	for _, flag := range flags {
+		if flag < 0 || flag >= 512 {
+			return fmt.Errorf("%s: %s flag %d out of range", eventID, name, flag)
+		}
+		if previous := seen[flag]; previous != "" {
+			return fmt.Errorf("%s: flag %d appears in both %s and %s", eventID, flag, previous, name)
+		}
+		seen[flag] = name
+	}
+	return nil
+}
+
+func validateStoryFlagRuntimeEvent(e StoryFlagRuntimeEvent) error {
+	if e.ID == "" || e.HandlerRaw < 0 || e.HandlerRaw > 255 || !validScriptedNPC(e.NPC) {
+		return errors.New("invalid id, handler or NPC selector")
+	}
+	seen := map[int]string{}
+	if err := validateStoryFlagList(e.ID, "set_story_flags_raw", e.SetStoryFlagsRaw, seen); err != nil {
+		return err
+	}
+	if err := validateStoryFlagList(e.ID, "clear_story_flags_raw", e.ClearStoryFlagsRaw, seen); err != nil {
+		return err
+	}
+	if e.DialogueRecordRaw < 0 {
+		return fmt.Errorf("%s: dialogue_record_raw must be non-negative", e.ID)
+	}
+	if e.DialogueSelectorRaw < 0 || e.DialogueSelectorRaw > 0xffff {
+		return fmt.Errorf("%s: dialogue_selector_raw out of range", e.ID)
+	}
+	if e.ResetDayNightSteps && (e.DayNightPhase < 0 || e.DayNightPhase > 3) {
+		return fmt.Errorf("%s: day_night_phase out of range", e.ID)
+	}
+	if e.MapCell != nil {
+		if e.MapCell.CTYRaw < 0 || e.MapCell.CTYRaw > 255 || e.MapCell.Section < 0 ||
+			e.MapCell.Tile.X < 0 || e.MapCell.Tile.Y < 0 || e.MapCell.ValueRaw < 0 || e.MapCell.ValueRaw > 255 {
+			return fmt.Errorf("%s: invalid map_cell", e.ID)
+		}
+	}
+	if e.Animation != nil {
+		if e.Animation.Position.X < 0 || e.Animation.Position.Y < 0 ||
+			e.Animation.FrameTicks < 1 || e.Animation.FrameTicks > 120 || len(e.Animation.TilesRaw) == 0 {
+			return fmt.Errorf("%s: invalid animation", e.ID)
+		}
+		for _, tile := range e.Animation.TilesRaw {
+			if tile < 0 || tile > 255 {
+				return fmt.Errorf("%s: animation tile out of range", e.ID)
+			}
+		}
+	}
+	if e.ParkPosition != nil && (e.ParkPosition.X < 0 || e.ParkPosition.Y < 0 ||
+		e.ParkPosition.Layer < 0 || e.ParkPosition.Layer > 1) {
+		return fmt.Errorf("%s: invalid park_position", e.ID)
+	}
+	switch e.Kind {
+	case "post_zoma_ending":
+		if !e.SceneReload || e.DialogueRecordRaw == 0 || e.MapCell != nil || e.Animation != nil {
+			return fmt.Errorf("%s: invalid post_zoma_ending primitive", e.ID)
+		}
+	case "phoenix_revival":
+		if e.MapCell == nil || e.Animation == nil || e.ParkPosition == nil ||
+			e.PhoenixUnrevivedFlagRaw < 0 || e.PhoenixUnrevivedFlagRaw >= 512 ||
+			e.PhoenixTransientFlagRaw < 0 || e.PhoenixTransientFlagRaw >= 512 ||
+			e.PhoenixRevivedDialogueRaw <= 0 || e.PhoenixAltarDialogueRaw <= 0 || e.PhoenixOrbDialogueRaw <= 0 ||
+			e.PhoenixAltarVisualTileRaw < 0 || e.PhoenixAltarVisualTileRaw > 255 ||
+			len(e.PhoenixAltarFlagRaw) != 6 || len(e.PhoenixAltarTiles) != 6 ||
+			e.PhoenixVisualFlagBaseRaw < 0 || e.PhoenixVisualFlagBaseRaw >= 512 ||
+			e.PhoenixOrbItemFirstRaw < 0 || e.PhoenixOrbItemLastRaw < e.PhoenixOrbItemFirstRaw ||
+			e.PhoenixOrbItemLastRaw > 255 || e.MapCell.CTYRaw != e.NPC.CTYRaw ||
+			e.MapCell.Section != e.NPC.Section {
+			return fmt.Errorf("%s: invalid phoenix_revival primitive", e.ID)
+		}
+		for _, flag := range e.PhoenixAltarFlagRaw {
+			if flag < 0 || flag >= 512 {
+				return fmt.Errorf("%s: phoenix altar flag out of range", e.ID)
+			}
+		}
+		for _, tile := range e.PhoenixAltarTiles {
+			if tile.X < 0 || tile.Y < 0 {
+				return fmt.Errorf("%s: phoenix altar tile out of range", e.ID)
+			}
+		}
+	case "boss_aftermath":
+		if !e.ResetDayNightSteps || !e.RebuildWorldScenes || e.Animation != nil || e.MapCell != nil {
+			return fmt.Errorf("%s: invalid boss_aftermath primitive", e.ID)
+		}
+	case "conditional_story_flag":
+		if !e.SceneReload || e.DialogueRecordRaw == 0 || e.Animation != nil || e.MapCell != nil {
+			return fmt.Errorf("%s: invalid conditional_story_flag primitive", e.ID)
+		}
+	default:
+		return fmt.Errorf("%s: unsupported story flag event kind %q", e.ID, e.Kind)
+	}
+	return validateEvidence(e.Evidence)
+}
+
 func validTreasureSelector(t QuestTreasureSelector) bool {
 	return t.CTYRaw >= 0 && t.CTYRaw <= 255 && t.Section >= 0 &&
 		t.TileSubID >= 0 && t.TileSubID <= 31 &&
@@ -2575,6 +2819,19 @@ func (p *Pack) validateEvents() error {
 	}
 	if p.Events.StagedBossEvents == nil {
 		return errors.New("staged_boss_events must be present")
+	}
+	if p.Events.StoryFlagRuntimeEvents == nil {
+		return errors.New("story_flag_runtime_events must be present")
+	}
+	storyFlagEventIDs := map[string]bool{}
+	for i, event := range p.Events.StoryFlagRuntimeEvents {
+		if storyFlagEventIDs[event.ID] {
+			return fmt.Errorf("story_flag_runtime_events[%d]: duplicate id %q", i, event.ID)
+		}
+		if err := validateStoryFlagRuntimeEvent(event); err != nil {
+			return fmt.Errorf("story_flag_runtime_events[%d]: %w", i, err)
+		}
+		storyFlagEventIDs[event.ID] = true
 	}
 	p.settlementFounders = make(map[string]*SettlementFounderEvent,
 		len(p.Events.SettlementFounderEvents))
@@ -3632,6 +3889,12 @@ func (p *Pack) validateManifest() error {
 		if asset.Size < 0 {
 			return fmt.Errorf("assets.%s.size must not be negative", key)
 		}
+		if asset.AlternateSize < 0 {
+			return fmt.Errorf("assets.%s.alternate_size must not be negative", key)
+		}
+		if asset.AlternateSHA256 != "" && len(asset.AlternateSHA256) != sha256.Size*2 {
+			return fmt.Errorf("assets.%s.alternate_sha256 must be 64 hex characters", key)
+		}
 	}
 	return nil
 }
@@ -3661,6 +3924,134 @@ func (p *Pack) validateAudio() error {
 		}
 	}
 	return nil
+}
+
+func validateBattleSourceFiles(files []BattleSourceFile) error {
+	if files == nil {
+		return errors.New("source_files must be present")
+	}
+	seen := make(map[string]bool, len(files))
+	for i, file := range files {
+		if file.Path == "" || file.Size <= 0 || len(file.SHA256) != sha256.Size*2 {
+			return fmt.Errorf("source_files[%d] is incomplete", i)
+		}
+		if _, err := hex.DecodeString(file.SHA256); err != nil {
+			return fmt.Errorf("source_files[%d] sha256 is invalid: %w", i, err)
+		}
+		if seen[file.Path] {
+			return fmt.Errorf("duplicate source file %q", file.Path)
+		}
+		seen[file.Path] = true
+	}
+	return nil
+}
+
+func validateBattleRawBlob(name string, blob BattleRawBlob) error {
+	if blob.AddressSpace == "" || blob.Address == "" || blob.LengthBytes <= 0 ||
+		len(blob.RawSHA256) != sha256.Size*2 {
+		return fmt.Errorf("%s has incomplete address/length/hash", name)
+	}
+	raw, err := hex.DecodeString(blob.RawHex)
+	if err != nil {
+		return fmt.Errorf("%s raw_hex is invalid: %w", name, err)
+	}
+	if len(raw) != blob.LengthBytes {
+		return fmt.Errorf("%s raw_hex length=%d want %d", name, len(raw), blob.LengthBytes)
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256(raw)); got != blob.RawSHA256 {
+		return fmt.Errorf("%s raw_sha256=%s want %s", name, blob.RawSHA256, got)
+	}
+	if err := validateEvidence(blob.Evidence); err != nil {
+		return fmt.Errorf("%s evidence: %w", name, err)
+	}
+	return nil
+}
+
+func (p *Pack) validateBattlePack() error {
+	b := p.Battle
+	if b.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported schema_version %q", b.SchemaVersion)
+	}
+	if err := validateEvidence(b.Evidence); err != nil {
+		return fmt.Errorf("battle evidence: %w", err)
+	}
+	if err := validateBattleSourceFiles(b.SourceFiles); err != nil {
+		return err
+	}
+	if err := validateBattleRawBlob("encounter.region_lookup", b.Encounter.RegionLookup); err != nil {
+		return err
+	}
+	if err := validateBattleRawBlob("encounter.candidate_table", b.Encounter.CandidateTable); err != nil {
+		return err
+	}
+	if b.Encounter.RowStrideBytes != 8 || b.Encounter.RegionStrideBytes != 0x20 {
+		return errors.New("encounter raw strides do not match confirmed contract")
+	}
+	if len(b.Encounter.UsedRegionIDs) != 27 {
+		return fmt.Errorf("encounter used_region_ids=%d want 27", len(b.Encounter.UsedRegionIDs))
+	}
+	for i, id := range b.Encounter.UsedRegionIDs {
+		if id != i+1 {
+			return fmt.Errorf("encounter used_region_ids[%d]=%d want %d", i, id, i+1)
+		}
+	}
+	if len(b.Encounter.FixedRecords) == 0 {
+		return errors.New("encounter fixed_records must not be empty")
+	}
+	for i, record := range b.Encounter.FixedRecords {
+		if record.DGroup == "" || record.File == "" || record.Caller == "" || record.Count <= 0 {
+			return fmt.Errorf("encounter fixed_records[%d] is incomplete", i)
+		}
+		if _, err := hex.DecodeString(record.RawHex); err != nil || len(record.RawHex)%2 != 0 {
+			return fmt.Errorf("encounter fixed_records[%d] raw_hex is invalid", i)
+		}
+		if err := validateEvidence(record.Evidence); err != nil {
+			return fmt.Errorf("encounter fixed_records[%d] evidence: %w", i, err)
+		}
+	}
+	position := b.Encounter.FormationPosition
+	if position.OriginRaw != 0x26 || position.FirstMemberOffsetRaw != 2 || position.WeightStepMultiplier != 2 ||
+		position.EGAStrideBytes != 0x54 || position.EGABottomRaw != 0x102 ||
+		position.PixelsPerRawByte != 8 {
+		return fmt.Errorf("encounter formation_position=%+v does not match confirmed raw projection", position)
+	}
+	if err := validateEvidence(position.Evidence); err != nil {
+		return fmt.Errorf("encounter formation_position evidence: %w", err)
+	}
+	if err := validateBattleRawBlob("resistance.effect_thresholds", b.Resistance.EffectThresholds); err != nil {
+		return err
+	}
+	if len(b.Resistance.ClassThresholds) != 4 ||
+		!reflectIntSliceEqual(b.Resistance.ClassThresholds, []int{0, 68, 180, 255}) {
+		return fmt.Errorf("resistance class_thresholds=%v want [0 68 180 255]", b.Resistance.ClassThresholds)
+	}
+	if err := validateBattleRawBlob("resistance.descriptor_table", b.Resistance.DescriptorTable); err != nil {
+		return err
+	}
+	if len(b.Resistance.EffectNamesZH) != 60 {
+		return fmt.Errorf("resistance effect_names_zh=%d want 60", len(b.Resistance.EffectNamesZH))
+	}
+	for i := 0; i < 60; i++ {
+		if b.Resistance.EffectNamesZH[strconv.Itoa(i)] == "" {
+			return fmt.Errorf("resistance effect_names_zh missing %d", i)
+		}
+	}
+	if err := validateEvidence(b.Resistance.Evidence); err != nil {
+		return fmt.Errorf("resistance evidence: %w", err)
+	}
+	return nil
+}
+
+func reflectIntSliceEqual(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func validateEvidence(e Evidence) error {
@@ -4073,6 +4464,29 @@ func (p *Pack) StagedBossEvent(id string) (*StagedBossEvent, bool) {
 	return e, ok
 }
 
+// StoryFlagRuntimeEvents returns a copy of the finite, evidence-backed
+// handler contracts. Callers must select by kind and verify the NPC/scene
+// selector before applying a transaction.
+func (p *Pack) StoryFlagRuntimeEvents() []StoryFlagRuntimeEvent {
+	if p == nil {
+		return nil
+	}
+	return append([]StoryFlagRuntimeEvent(nil), p.Events.StoryFlagRuntimeEvents...)
+}
+
+func (p *Pack) StoryFlagRuntimeEventKind(kind string) (*StoryFlagRuntimeEvent, bool) {
+	if p == nil {
+		return nil, false
+	}
+	for i := range p.Events.StoryFlagRuntimeEvents {
+		if p.Events.StoryFlagRuntimeEvents[i].Kind == kind {
+			event := p.Events.StoryFlagRuntimeEvents[i]
+			return &event, true
+		}
+	}
+	return nil, false
+}
+
 // CharacterEquipment resolves one pack character default into engine slots.
 // Missing JSON slots become the engine's explicit -1 empty sentinel.
 func (p *Pack) CharacterEquipment(id string) ([4]int, bool) {
@@ -4197,6 +4611,43 @@ func (p *Pack) AudioTrack(id string) (int, bool) {
 		return 0, false
 	}
 	return cue.Track, true
+}
+
+// BattlePack returns the statically confirmed E2 battle contract.  A missing
+// contract is distinguishable from an empty value so production bootstrap can
+// fail closed instead of silently reading a DQ3-specific Go fallback.
+func (p *Pack) BattlePack() (BattlePackData, bool) {
+	if p == nil || !p.battlePresent {
+		return BattlePackData{}, false
+	}
+	return p.Battle, true
+}
+
+// BattleEncounterRaw decodes the two raw encounter blobs after strict pack
+// validation.  It is intentionally a narrow accessor for the shared decoder.
+func (p *Pack) BattleEncounterRaw() ([]byte, []byte, bool) {
+	if p == nil || !p.battlePresent {
+		return nil, nil, false
+	}
+	region, err := hex.DecodeString(p.Battle.Encounter.RegionLookup.RawHex)
+	if err != nil {
+		return nil, nil, false
+	}
+	candidates, err := hex.DecodeString(p.Battle.Encounter.CandidateTable.RawHex)
+	if err != nil {
+		return nil, nil, false
+	}
+	return region, candidates, true
+}
+
+// BattleFormationPosition returns the pack-owned raw position projection.
+// Production callers must validate the boolean instead of inventing a
+// version-specific horizontal or vertical fallback.
+func (p *Pack) BattleFormationPosition() (BattleFormationPosition, bool) {
+	if p == nil || !p.battlePresent || p.Battle.Encounter.FormationPosition.Evidence.Level == "" {
+		return BattleFormationPosition{}, false
+	}
+	return p.Battle.Encounter.FormationPosition, true
 }
 
 func (p *Pack) ID() string             { return p.Manifest.PackID }

@@ -453,6 +453,7 @@ type Game struct {
 	phoenixAboard          bool
 	phoenixX               int
 	phoenixY               int
+	phoenixMapCellWritten  bool  // handler69 map-cell byte0x80，重載／存檔後重放
 	phoenixStage           int   // 1=守護神 rec92 後續；2=逐顆 rec93；3=中央蛋六幀復活動畫
 	phoenixList            []int // 已放上祭壇、待 rec93 列出的寶珠
 	phoenixListPos         int
@@ -497,8 +498,10 @@ func (g *Game) selectCommand(cmd int) {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
 			case sub == 2: // scripted NPC(給物/劇情)
-				if g.curCty == ctyPhoenixShrine && n.b4 == phoenixGuardianHandler {
+				if g.isPhoenixGuardian(n) {
 					g.talkPhoenixGuardian()
+				} else if g.talkConditionalStoryFlag(n) {
+					// handler33：沙曼歐莎條件居民與 0x24/0x21 交易。
 				} else if g.talkZomaFinal(n) {
 					// CTY90 sec5 handler80：自然交談入口。
 				} else if g.talkEndingKing(n) {
@@ -1523,6 +1526,7 @@ func (g *Game) reloadTownDaynight() {
 	}
 	g.town, g.cur = ns, ns
 	g.towns[g.curCty] = ns
+	g.applyPhoenixMapCell()
 	if g.px >= ns.w { // 座標保留;越界夾回(section 尺寸理應相同,防護)
 		g.px = ns.w - 1
 	}
@@ -2166,21 +2170,15 @@ func (g *Game) runFinale() {
 	g.renderFrame()
 }
 
-const (
-	ctyRadatomeCastle  = 80
-	radatomeThroneSec  = 1
-	radatomeKingHandle = 74
-	radatomeEndingRec  = 48
-)
-
 // talkEndingKing:IDA handler74/sub_16346 的 post-Zoma 分支。flag e1 已被索瑪
 // 勝利清除時，國王不走平時 rec22/23，而是進 sub_1E713 的 rec48 冊封序列。
 func (g *Game) talkEndingKing(n *npcInst) bool {
-	if !g.cleared || g.lotoBlessed || g.storyFlag(0xe1) || g.curCty != ctyRadatomeCastle ||
-		g.cur == nil || g.cur.sec != radatomeThroneSec || n == nil || n.b4 != radatomeKingHandle {
+	e, ok := g.storyFlagRuntimeEvent("post_zoma_ending")
+	if !ok || !g.cleared || g.lotoBlessed || g.storyFlag(0xe1) ||
+		!storyFlagNPCMatches(e, g.curCty, currentSceneSection(g.cur), n) {
 		return false
 	}
-	if !g.dlg.Open(radatomeEndingRec) {
+	if !g.dlg.Open(e.DialogueRecordRaw) {
 		return false
 	}
 	g.endingKingStage = 1
@@ -2192,6 +2190,10 @@ func (g *Game) advanceEndingKing() {
 		return
 	}
 	g.endingKingStage = 0
+	if event, ok := g.storyFlagRuntimeEvent("post_zoma_ending"); ok {
+		g.applyStoryFlagLists(event)
+		g.reloadStoryFlagScene(event)
+	}
 	g.lotoBlessed = true // そして伝説へ…：國王在此正式授予「勇者洛特」封號
 	if g.flags == nil {
 		g.flags = map[int]bool{}
@@ -2365,6 +2367,7 @@ func (g *Game) onBattleEnd() {
 			if t.clearStoryFlag != 0 {
 				g.setStoryFlag(t.clearStoryFlag, false)
 			}
+			g.applyBossAftermathStoryFlag(t)
 			if t.postRec >= 0 {
 				g.dlg.Open(t.postRec)
 			}
@@ -2653,6 +2656,13 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if pack == nil {
 		return nil, fmt.Errorf("game pack is nil")
 	}
+	if _, ok := pack.BattlePack(); !ok {
+		return nil, fmt.Errorf("game pack missing data.battle")
+	}
+	formationPosition, ok := pack.BattleFormationPosition()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing data.battle.encounter.formation_position")
+	}
 	battleRefs, ok := pack.BattleTextRefs()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.battle_texts")
@@ -2745,6 +2755,29 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		return nil, fmt.Errorf("game pack missing male hero party sprite")
 	}
 	ld := &loader{fsys: assets}
+	readPackAsset := func(key string) []byte {
+		ref, ok := pack.Asset(key)
+		if !ok {
+			if ld.err == nil {
+				ld.err = fmt.Errorf("game pack missing asset %q", key)
+			}
+			return nil
+		}
+		raw := ld.read(ref.Path)
+		if ld.err != nil {
+			return nil
+		}
+		got := fmt.Sprintf("%x", sha256.Sum256(raw))
+		primaryOK := (ref.Size <= 0 || int64(len(raw)) == ref.Size) &&
+			(ref.SHA256 == "" || got == ref.SHA256)
+		alternateOK := ref.AlternateSHA256 != "" &&
+			(ref.AlternateSize <= 0 || int64(len(raw)) == ref.AlternateSize) && got == ref.AlternateSHA256
+		if !primaryOK && !alternateOK {
+			ld.err = fmt.Errorf("game pack asset %q integrity mismatch: got size=%d sha256=%s", key, len(raw), got)
+			return nil
+		}
+		return raw
+	}
 	pal := dq3data.DecodePalette(ld.read("DQ3.PAL"), 256) // 城鎮/地表共用(tile 只用色 0..15)
 	g := &Game{
 		rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default(), pack: pack,
@@ -2755,6 +2788,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.battle.setCommandLayout(battleCommandLayout)
 	g.battle.setEnemyLayout(battleEnemyLayout)
 	g.battle.setSceneLayout(battleSceneLayout)
+	g.battle.setFormationPosition(formationPosition)
 	g.battle.setCommandLabels(battleCommandLabels)
 	g.cmd.setLabels(fieldCommandLabels)
 	g.newGame.setLabels(newGameLabels)
@@ -2815,18 +2849,22 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.phoenix = dq3data.LoadCharSprite(manBLS, 176) // CTY70 egg b2=48 → (48-4)*4；原版拉米亞 8-frame sprite
 
 	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)
-	mons, merr := dq3data.OpenMonsters(ld.read("D3MNS.DAT"))
+	mons, merr := dq3data.OpenMonsters(readPackAsset("battle_monsters"))
 	if merr != nil && ld.err == nil {
 		return nil, fmt.Errorf("OpenMonsters: %w", merr)
 	}
 	g.battle.mons = mons
-	g.battle.shp = ld.read("DQ3MNS.SHP")
-	g.battle.scr = ld.read("PACKBG.SCR") // 戰鬥背景
-	g.battle.mpal = dq3data.DecodePalette(ld.read("MNSBK.PAL"), 256)
+	g.battle.shp = readPackAsset("battle_sprites")
+	g.battle.scr = readPackAsset("battle_background") // 戰鬥背景
+	g.battle.mpal = dq3data.DecodePalette(readPackAsset("battle_palette"), 256)
 	g.battle.tx = g.dlg.tx
-	encounters, eerr := dq3data.OpenEncounterTables(ld.read("DQ3.EXE"))
-	if eerr != nil && ld.err == nil {
-		return nil, fmt.Errorf("OpenEncounterTables: %w", eerr)
+	regionRaw, candidateRaw, rawOK := pack.BattleEncounterRaw()
+	if !rawOK {
+		return nil, fmt.Errorf("game pack data.battle encounter raw is invalid")
+	}
+	encounters, eerr := dq3data.OpenEncounterTablesFromRaw(regionRaw, candidateRaw)
+	if eerr != nil {
+		return nil, fmt.Errorf("OpenEncounterTablesFromRaw: %w", eerr)
 	}
 	g.encounters = encounters
 
@@ -2853,15 +2891,17 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.initStoryBits() // 新遊戲重置 [0x4f70] NPC 可見性旗標
 	// msStart 代表「已見國王且已能在酒場建隊」，不可在出生時提前完成。
 	g.noticeCode = -1
-	g.prng.Seed(0x1357)                                 // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)
-	g.music = gaudio.NewMusic(music)                    // MT-32 音樂(music fs 為 nil → 靜音降級)
-	if sfxRaw := ld.read("FVOC.VCX"); len(sfxRaw) > 0 { // 數位音效(VOC)
+	g.prng.Seed(0x1357)                                              // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)
+	g.music = gaudio.NewMusic(music)                                 // MT-32 音樂(music fs 為 nil → 靜音降級)
+	if sfxRaw := readPackAsset("battle_sfx_fvoc"); len(sfxRaw) > 0 { // 數位音效(VOC)
 		bank := dq3data.DecodeVOCBank(sfxRaw, 44100)
 		pcm := make([][]int16, len(bank))
+		durations := make([]int64, len(bank))
 		for i, s := range bank {
 			pcm[i] = s.PCM
+			durations[i] = s.SourceDurationNanos()
 		}
-		g.music.SetSFX(pcm)
+		g.music.SetSFXWithDurations(pcm, durations)
 	}
 	if os.Getenv("DQ3_FM") != "" { // SB-FM 音樂(OPL2 合成 MBG.MCX,取代 MT-32 OGG)
 		if mbg := ld.read("MBG.MCX"); len(mbg) > 0 {

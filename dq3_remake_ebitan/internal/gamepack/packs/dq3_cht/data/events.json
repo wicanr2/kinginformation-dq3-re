@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.27",
+  "schema_version": "0.1.29",
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -1572,6 +1572,102 @@
         "address": "0x5cb6, 0x5979, 0xc425..0xc562",
         "consumer": "handler45 runs formation 0x4ed0, original monster drop and flags before two rightward transition steps; handler36 owns the repeatable promise choice, suppresses the second drop, runs formation 0x4ed5 and exposes the CTY21 purple-orb treasure",
         "doc": "docs/95-jipang-orochi-production-trace.md"
+      }
+    }
+  ],
+  "story_flag_runtime_events": [
+    {
+      "id": "dq3:story.post_zoma_ending",
+      "kind": "post_zoma_ending",
+      "handler_raw": 74,
+      "npc": {"cty_raw": 80, "section": 1, "tile": {"x": 10, "y": 4}, "handler_raw": 74},
+      "set_story_flags_raw": [13],
+      "clear_story_flags_raw": [245],
+      "dialogue_record_raw": 48,
+      "scene_reload": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE sha256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; CTY80.DAT; walkthrough定位",
+        "address_space": "linear",
+        "address": "handler74 sub_16346 0x16346; sub_1E713; CTY80 sec1 (10,4)",
+        "consumer": "handler74 post-Zoma branch sets story flag0x0d, reloads the scene and runs the ending map animation after the Radatome king dialogue",
+        "doc": "docs/77-r5b-castle-aftermath.md"
+      }
+    },
+    {
+      "id": "dq3:story.phoenix_revival",
+      "kind": "phoenix_revival",
+      "handler_raw": 69,
+      "npc": {"cty_raw": 70, "section": 0, "tile": {"x": 7, "y": 10}, "handler_raw": 69},
+      "set_story_flags_raw": [17],
+      "clear_story_flags_raw": [142],
+      "dialogue_record_raw": 92,
+      "phoenix_revived_dialogue_raw": 94,
+      "phoenix_altar_dialogue_raw": 96,
+      "phoenix_orb_dialogue_raw": 93,
+      "phoenix_altar_visual_tile_raw": 149,
+      "scene_reload": true,
+      "map_cell": {"cty_raw": 70, "section": 0, "tile": {"x": 8, "y": 8}, "value_raw": 128},
+      "animation": {"position": {"x": 8, "y": 8}, "tiles_raw": [123, 124, 125, 126, 127, 128], "frame_ticks": 8},
+      "park_position": {"x": 48, "y": 189, "layer": 0},
+      "phoenix_unrevived_flag_raw": 142,
+      "phoenix_transient_flag_raw": 17,
+      "phoenix_altar_flag_raw": [143, 144, 145, 146, 147, 148],
+      "phoenix_visual_flag_base_raw": 300,
+      "phoenix_orb_item_first_raw": 102,
+      "phoenix_orb_item_last_raw": 107,
+      "phoenix_altar_tiles": [
+        {"x": 8, "y": 11}, {"x": 4, "y": 9}, {"x": 4, "y": 5},
+        {"x": 8, "y": 3}, {"x": 12, "y": 5}, {"x": 12, "y": 9}
+      ],
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE sha256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; CTY70.DAT; walkthrough定位",
+        "address_space": "linear",
+        "address": "handler69 sub_16139 0x16139; CTY70 sec0; map cell write and transient flag chain",
+        "consumer": "six-orb shrine writes map cell byte0x80, sets transient flag0x11 during NPC/scene rebuild, clears it before return, then parks Lamia at (0x30,0xbd)",
+        "doc": "docs/75-phoenix-orbs-re.md"
+      }
+    },
+    {
+      "id": "dq3:story.baramos_aftermath",
+      "kind": "boss_aftermath",
+      "handler_raw": 70,
+      "npc": {"cty_raw": 65, "section": 0, "tile": {"x": 8, "y": 3}, "handler_raw": 70},
+      "set_story_flags_raw": [26, 27],
+      "clear_story_flags_raw": [41],
+      "reset_day_night_steps": true,
+      "rebuild_world_scenes": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE sha256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; CTY65.DAT; walkthrough定位",
+        "address_space": "linear",
+        "address": "handler70 sub_1622A 0x1622A; fixed formation DS:0x4edf; CTY65 sec0 (8,3)",
+        "consumer": "after the Baramos fixed formation, handler70 resets party/world day selector, clock and palette, sets story flags0x1a/0x1b and rebuilds DQ3BLK/DQ3UND",
+        "doc": "docs/76-baramos-gaia-re.md"
+      }
+    },
+    {
+      "id": "dq3:story.samanosa_conditional_visibility",
+      "kind": "conditional_story_flag",
+      "handler_raw": 33,
+      "npc": {"cty_raw": 44, "section": 0, "tile": {"x": 13, "y": 27}, "handler_raw": 33},
+      "set_story_flags_raw": [36, 33],
+      "clear_story_flags_raw": [61],
+      "dialogue_record_raw": 71,
+      "dialogue_selector_raw": 3071,
+      "scene_reload": true,
+      "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE sha256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; CTY44.DAT; CTY43.DAT",
+      "address_space": "linear",
+        "address": "handler33 sub_15904 0x15904; CTY44 sec0 (13,27); CTY43 full-byte story records",
+        "consumer": "handler33 displays rec0x0bff, clears story flag0x3d, sets flags0x24/0x21 and closes through sub_15010; CTY43 records consume flag0x24",
+        "doc": "docs/103-samanoasa-mirror-production-trace.md"
       }
     }
   ]

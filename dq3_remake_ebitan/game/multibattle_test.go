@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 // W2(docs/72 A3)測試:多敵戰鬥陣列化 + 怪物群權重隻數。
@@ -118,6 +119,31 @@ func TestShanpaneOriginalMixedFormation(t *testing.T) {
 	b.finishVictory()
 	if b.gotExp != 2200+3*80 || b.gotGold != 0 {
 		t.Fatalf("混合編隊獎勵 EXP%d G%d, want EXP2440 G0", b.gotExp, b.gotGold)
+	}
+}
+
+func TestFormationPositionUsesOriginalWeightStride(t *testing.T) {
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
+	b.setFormationPosition(gamepack.BattleFormationPosition{
+		OriginRaw: 0x26, FirstMemberOffsetRaw: 2, WeightStepMultiplier: 2, EGAStrideBytes: 0x54,
+		EGABottomRaw: 0x102, PixelsPerRawByte: 8,
+		Evidence: gamepack.Evidence{Level: "D2"},
+	})
+	hero := heroParams{level: 30, curHP: 999, maxHP: 999, atk: 999, def: 999, agi: 999}
+	if !b.startFormation([]enemyGroup{{monID: 26, count: 1}, {monID: 27, count: 1}}, 1, hero, nil) {
+		t.Fatal("原版 formation position 測試啟動失敗")
+	}
+	// D3MNS +0x28: id26=10、id27=9；sub_1AAA1 先以總預算反向扣除，
+	// sub_1AAD5 再加 2，sub_1AB2C 逐隻以 weight*2 前進。
+	want := []int{0x26 - (10 + 9) + 2, 0x26 - (10 + 9) + 2 + 2*10}
+	for i, pos := range want {
+		if got := b.enemies[i].positionRaw; got != pos {
+			t.Fatalf("enemy%d positionRaw=0x%x, want 0x%x", i, got, pos)
+		}
 	}
 }
 

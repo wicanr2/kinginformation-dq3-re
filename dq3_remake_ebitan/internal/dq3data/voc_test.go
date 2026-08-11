@@ -27,5 +27,16 @@ func TestDecodeVOCBank(t *testing.T) {
 	if !hasWave {
 		t.Fatal("音效全靜音(疑解碼有誤)")
 	}
+	// BP=1 以 VCX offset table 的第二個 dword 為起點；第一個 dword
+	// 是 cue 0 的 file offset。這鎖定 cue index 與原始 block
+	// rate/sample count，避免只測「能播」卻錯一格。
+	cue1 := bank[1]
+	if cue1.FileOffset != 0x4e6 || cue1.BlockLength != 1163 || cue1.RateDiv != 102 ||
+		cue1.SourceRate != 6493 || cue1.SourceSamples != 1161 {
+		t.Fatalf("FVOC cue1 metadata=%+v, want offset=0x4e6 block=1163 div=102 rate=6493 samples=1161", cue1)
+	}
+	if got := cue1.SourceDurationNanos(); got <= 0 || got/1_000_000 != 178 {
+		t.Fatalf("FVOC cue1 source duration=%d ns, want about 178 ms", got)
+	}
 	t.Logf("FVOC.VCX 解出 %d 音效(%d 非空,有波形)✓", len(bank), nonEmpty)
 }

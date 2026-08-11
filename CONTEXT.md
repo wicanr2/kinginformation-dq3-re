@@ -203,6 +203,20 @@
   [咒文效果 dispatcher](docs/re-log-spell-effect-dispatch.md) ·
   [remake 接線教訓](docs/remake-wiring-lessons.md)
 
+### 2026-08-11 目前 IDA story-flag E2 接線
+- `dq3_cht` pack schema `0.1.29` 的 `events.json.story_flag_runtime_events` 保存四條已閉合
+  handler transaction：74／CTY80 `0x0d`、69／CTY70 `0x11`＋map byte `0x80`、70／CTY65
+  `0x1a/0x1b`、33／CTY44 `DI=0x0bff→record71` 的 `0x24/0x21`。
+- 共用 engine 只執行固定 primitive；`game/story_flags_test.go` 以正式 command／battle path、
+  Phoenix save/load map replay、Baramos aftermath 與 ending writer 驗收。完整 V3 route、
+  palette register、SHP／PCM timing、boss repeat-N 與未閉合 story 語意仍保持 `unknown`／fail-closed。
+- CTY07→CTY08 route 勘誤（2026-08-11）：原始 transition chain 已接通；塔區遭遇由正式聖水／
+  戰鬥輸入處理後可抵達 CTY08 sec3。完整 campaign 後段仍有其他路徑 fixture，不能把這條
+  route 的修正誤稱為 E3 全程通關；呈現與時序近似依 README 的 `V3-approx` 標記。
+- 詳細目前狀態：[`docs/119`](docs/119-daynight-story-flag-audit.md)、
+  [`docs/123`](docs/123-static-battle-daynight-re.md)、[`docs/74`](docs/74-ebiten-remake-completion-plan.md)、
+  [`docs/84`](docs/84-game-pack-json-contract.md)。
+
 ### 雜項工具筆記
 - [js-dos bundle 下載技巧](docs/js-dos-bundle.md)(dos.zczc.cz 線上模擬器抽 bundle zip)
 

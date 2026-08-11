@@ -17,16 +17,17 @@ const sampleRate = 44100
 
 // Music 管理當前播放的單軌(場景切換時換軌)。
 type Music struct {
-	ctx      *audio.Context
-	player   *audio.Player
-	cur      int
-	fsys     fs.FS // 放 track_NN.ogg 的檔案系統(桌面=os.DirFS、行動=embed.FS)
-	enabled  bool  // 音訊後端是否可用(初始化成功;非使用者開關)
-	musicOff bool  // 使用者音樂開關(SetEnabled 設;零值 false=預設開,對齊 config.Default().MusicEnabled=true)
-	vol      float64
-	sfx      [][]byte       // 預轉的音效(16-bit LE stereo)
-	mbg      []byte         // SB-FM 音樂源(MBG.MCX;非 nil → 用 OPL2 FM 取代 MT-32 OGG)
-	fmCache  map[int][]byte // 已渲染的 FM 軌(stereo bytes)
+	ctx          *audio.Context
+	player       *audio.Player
+	cur          int
+	fsys         fs.FS // 放 track_NN.ogg 的檔案系統(桌面=os.DirFS、行動=embed.FS)
+	enabled      bool  // 音訊後端是否可用(初始化成功;非使用者開關)
+	musicOff     bool  // 使用者音樂開關(SetEnabled 設;零值 false=預設開,對齊 config.Default().MusicEnabled=true)
+	vol          float64
+	sfx          [][]byte       // 預轉的音效(16-bit LE stereo)
+	sfxDurations []int64        // 原始 VOC source duration(ns), index follows sfx
+	mbg          []byte         // SB-FM 音樂源(MBG.MCX;非 nil → 用 OPL2 FM 取代 MT-32 OGG)
+	fmCache      map[int][]byte // 已渲染的 FM 軌(stereo bytes)
 }
 
 // SetMBG 啟用 SB-FM 音樂(OPL2 合成 MBG.MCX,取代 MT-32 OGG)。
@@ -123,10 +124,22 @@ func (m *Music) Stop() {
 
 // SetSFX 預轉 VOC 音效(mono s16 @ sampleRate)為 Ebiten 位元組(16-bit LE stereo)。
 func (m *Music) SetSFX(banks [][]int16) {
+	m.setSFX(banks, nil)
+}
+
+// SetSFXWithDurations installs PCM and the original VOC source durations.
+// The duration sidecar is scheduling metadata, not a replacement for the
+// decoded bytes; missing entries remain zero and therefore fail closed.
+func (m *Music) SetSFXWithDurations(banks [][]int16, durations []int64) {
+	m.setSFX(banks, durations)
+}
+
+func (m *Music) setSFX(banks [][]int16, durations []int64) {
 	if !m.enabled {
 		return
 	}
 	m.sfx = make([][]byte, len(banks))
+	m.sfxDurations = make([]int64, len(banks))
 	for i, pcm := range banks {
 		b := make([]byte, len(pcm)*4) // mono → stereo,每 sample 4 byte
 		for j, s := range pcm {
@@ -135,7 +148,19 @@ func (m *Music) SetSFX(banks [][]int16) {
 			b[o], b[o+1], b[o+2], b[o+3] = lo, hi, lo, hi // L, R
 		}
 		m.sfx[i] = b
+		if i < len(durations) && durations[i] > 0 {
+			m.sfxDurations[i] = durations[i]
+		}
 	}
+}
+
+// SFXDurationNanos exposes only the raw VOC timing sidecar.  It does not
+// claim that a host audio backend starts/ends on the same wall-clock tick.
+func (m *Music) SFXDurationNanos(i int) int64 {
+	if m == nil || i < 0 || i >= len(m.sfxDurations) {
+		return 0
+	}
+	return m.sfxDurations[i]
 }
 
 // PlaySFX 一次性播放第 i 個音效(fire-and-forget;非致命)。nil-safe。

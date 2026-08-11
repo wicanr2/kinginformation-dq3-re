@@ -239,7 +239,31 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// 不寫入 EXP、HP、金幣或 RNG，所有成長與補給都必須走 production consumer。
 	traceTrainNearTown(t, g, 0, 15)
 
-	// 從阿里阿罕出口沿真實地表走到拿吉米之塔；途中若發生隨機遭遇，也只送正式戰鬥輸入。
+	// CTY07/08 是有遭遇表的塔區；正式玩家會先到雷貝道具店買聖水，
+	// 再以道具選單驅敵穿越地道。阿里阿罕的原始貨架沒有聖水，
+	// 因此先由正式地表路線到雷貝採買，避免把戰鬥 RNG 誤當成
+	// CTY07→08 transition 不可達。
+	traceAdventureWalkToCty(t, g, 1)
+	traceTalkFacility(t, g, facItem)
+	najimiHolyIdx := -1
+	for i, code := range g.shop.codes {
+		if code == itemuse.ItemHolyWater {
+			najimiHolyIdx = i
+			break
+		}
+	}
+	if najimiHolyIdx < 0 {
+		t.Fatalf("雷貝道具店沒有聖水：codes=%v", g.shop.codes)
+	}
+	for bought := 0; bought < 10 && g.heroGold >= g.shop.items.Price(itemuse.ItemHolyWater); bought++ {
+		for g.shop.cursor != najimiHolyIdx {
+			send(InputState{DirHeld: -1, DirEdge: 0})
+		}
+		press(InputState{Confirm: true})
+	}
+	press(InputState{Cancel: true})
+	traceExitTownBoundary(t, g)
+	traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
 	traceAdventureWalkToCty(t, g, 7) // 阿里阿罕西側地道入口；塔本體隔海，不能由地表直走
 	traceTownSectionTo(t, g, 8, 3)
 	traceTalkNPC(t, g, 9, 9) // CTY08 sec3 sub2 handler12：巴可達老人
@@ -5619,6 +5643,19 @@ func traceWalkThroughPortal(t *testing.T, g *Game, x, y, wantCty, wantSec int, w
 		if arrived() {
 			return
 		}
+		if g.battle.active {
+			// CTY07/08 是有遭遇表的塔區；踏格時可能先進入正式戰鬥，
+			// 路由驗證必須用同一條 production battle input 完成，
+			// 不能把戰鬥留在背景而誤報成 portal 不可達。隨機高危遭遇
+			// 先依正式逃跑指令離開，避免把路由驗證變成資源／RNG 賭局；
+			// 事件型 boss 仍由各自的正式劇情段落處理。
+			traceResolveBattle(t, g, true)
+			continue
+		}
+		if g.repel <= 8 && g.countItem(itemuse.ItemHolyWater) > 1 {
+			traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
+			continue
+		}
 		if g.cd > 0 {
 			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
 				t.Fatalf("等待 portal cooldown: %v", err)
@@ -5754,6 +5791,14 @@ func traceWalkToNoPortal(t *testing.T, g *Game, x, y int) {
 
 func traceWalkOne(t *testing.T, g *Game, tx, ty int) {
 	t.Helper()
+	if g.battle.active {
+		traceResolveBattle(t, g, true)
+		return
+	}
+	if g.repel <= 8 && g.countItem(itemuse.ItemHolyWater) > 1 {
+		traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
+		return
+	}
 	if g.cd > 0 {
 		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
 			t.Fatalf("等待移動 cooldown: %v", err)

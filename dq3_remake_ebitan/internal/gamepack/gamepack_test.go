@@ -35,6 +35,61 @@ func TestBuiltinDQ3FinalePackReferences(t *testing.T) {
 	}
 }
 
+func TestBuiltinDQ3BattlePackMatchesOriginalRawTables(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, ok := p.BattlePack()
+	if !ok {
+		t.Fatal("missing E2 battle pack")
+	}
+	region, candidates, ok := p.BattleEncounterRaw()
+	if !ok {
+		t.Fatal("battle encounter raw accessor failed")
+	}
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	if !bytes.Equal(region, exe[0x16140+0x4966:0x16140+0x4a66]) {
+		t.Fatal("battle pack region lookup differs from DQ3.EXE")
+	}
+	if !bytes.Equal(candidates, exe[0x16140+0x4a56:0x16140+0x4a56+0x360]) {
+		t.Fatal("battle pack candidate table differs from DQ3.EXE")
+	}
+	threshold, err := hex.DecodeString(b.Resistance.EffectThresholds.RawHex)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(threshold, exe[0x16140+0x36e5:0x16140+0x36e5+20]) {
+		t.Fatal("battle pack resistance thresholds differ from DQ3.EXE")
+	}
+	descriptors, err := hex.DecodeString(b.Resistance.DescriptorTable.RawHex)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(descriptors, exe[0x16140+0x37c3:0x16140+0x37c3+60*3]) {
+		t.Fatal("battle pack resistance descriptors differ from DQ3.EXE")
+	}
+	if len(b.Encounter.FixedRecords) != 13 || len(b.Resistance.EffectNamesZH) != 60 {
+		t.Fatalf("battle pack cardinality fixed=%d names=%d", len(b.Encounter.FixedRecords), len(b.Resistance.EffectNamesZH))
+	}
+	position, ok := p.BattleFormationPosition()
+	if !ok || position.OriginRaw != 0x26 || position.FirstMemberOffsetRaw != 2 || position.WeightStepMultiplier != 2 ||
+		position.EGAStrideBytes != 0x54 || position.EGABottomRaw != 0x102 ||
+		position.PixelsPerRawByte != 8 {
+		t.Fatalf("battle formation position=%+v/%v, want origin=0x26 first=2 step=2 stride=0x54 bottom=0x102 px=8", position, ok)
+	}
+	if position.Evidence.Level != "D2" || position.Evidence.Source != "DQ3.EXE" {
+		t.Fatalf("battle formation position evidence=%+v, want D2/DQ3.EXE", position.Evidence)
+	}
+}
+
 func TestDQ3RuraNavigationMatchesOriginalEXE(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {
@@ -2359,14 +2414,14 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.27","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.29","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.27","service_definitions":[{
+	  "schema_version":"0.1.29","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2374,7 +2429,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.27",
+	  "schema_version":"0.1.29",
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2390,10 +2445,10 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	    "push_puzzle_events":[],
 	    "two_step_floor_switch_gates":[],
 	  "staged_vehicle_exchange_events":[],"guided_passage_events":[],
-	  "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[]
+  "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.27",
+	  "schema_version":"0.1.29",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -2403,7 +2458,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.27","definitions":[{
+	  "schema_version":"0.1.29","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -2412,7 +2467,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.27","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.29","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2424,7 +2479,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.27"`, `"schema_version":"0.1.27","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.29"`, `"schema_version":"0.1.29","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

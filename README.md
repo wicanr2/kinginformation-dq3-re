@@ -4,15 +4,24 @@
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，
 製作可在現代平台執行的 Go／Ebiten remake。
 
-截至 2026-08-10，`dq3_remake_ebitan/` 有一筆先前在一次性 Docker＋Xvfb 執行的正式
-`InputState` trace 紀錄，從全新遊戲抵達 `THE END`，並核對設定資料、事件副作用、戰鬥與存讀檔。
-這是歷史驗收證據；本輪依使用者要求不重跑完整長測試。主線 campaign 曾達 E3；逐畫面／音效
-V3 的長尾仍待後續對拍，本輪指定的 AppImage、Windows ZIP 與 macOS ZIP 已產出。Android／WASM 不屬本輪 release 目標。現行進度與工作順序以
+截至 2026-08-11，本專案採用使用者確認的 E2／D2 快速驗收：戰鬥 pack raw、loader、
+formation／抗性 decoder、正式事件輸入與 save/load 的 Docker headless targeted tests 已通過。
+本輪已修正 CTY07→CTY08 的正式 section 路由：依原始 transition table，並用正式道具／戰鬥
+輸入處理塔區遭遇，現在可抵達 CTY08 sec3；完整 campaign 的後段仍有另一個路徑 fixture
+需要獨立收尾，因此目前不把整段 campaign 宣稱為 E3 通過。逐畫面／音效 V3 的長尾仍待
+後續對拍，本輪指定的 AppImage、Windows ZIP 與 macOS ZIP 已產出。Android／WASM 不屬本輪 release 目標。現行進度與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
 本次可公開的 patch checksum、Docker smoke 界線與不公開的本機完整版清單見
 [`docs/122`](docs/122-release-20260810.md)。
 本輪另以 IDA／原始資料閉合 CTY59 `handler41` 的 Y=4 設施分支；它已達 D3／E2／V1，
 不代表 CTY60／61 階段或全程畫面 parity 已完成。
+
+### V3 近似驗收政策（2026-08-11）
+
+使用者允許在尚缺同狀態原版逐畫面、逐幀時鐘或逐 PCM 停頓證據的項目採近似方式補正。
+這類結果統一標為 `V3-approx`：保留原始資料、事件順序、正式輸入、JSON／D3 證據與
+存讀檔契約，但不宣稱逐像素、逐色盤或逐波形 parity。這項政策只處理可見呈現與時序的
+近似，不放寬玩家流程 gate，也不把 `unknown` 或未閉合的原版語意升格為 `confirmed`。
 標題閒置後的八張職業 attract 也已由 game-pack 接線，順序／PCX 達 D3、輪播 timing 達 E2；
 能力條逐幀填充與淡入淡出仍待 V3。
 正常桌面／mobile 啟動現在先由 game-pack 播放 `TITA.P`、`TITB.P`、`TITD.P`、`TITE.P`、
@@ -64,8 +73,11 @@ Git 歷史中的 `01f023c`（2026-06-22）記錄了未完成怪物槽位的回�
 對齊實機索瑪最終戰的綠色；這裡是歷史研究紀錄，不把提交訊息當成新的原版規格。
 
 回補工具 [`tools/make_sprites.py`](tools/make_sprites.py) 以參考圖產生符合 `MNSBK.PAL` 的
-16 色、4-plane planar SHP 資料，原始 `assets_raw/` 與產生的 `work/DQ3MNS_fixed.SHP` 均不納入
-Git。重新匯出的透明 PNG 保留原始槽位與像素比例，並以與現有圖鑑相同的深色索引背景展示：
+16 色、4-plane planar SHP 資料；[`tools/style_sprites.py`](tools/style_sprites.py) 再附上
+原版 consumer 所需的逐列 RLE AND-mask。產生的 `work/DQ3MNS_fixed.SHP`，以及存在時供
+Ebitengine mobile embed 使用的 `dq3_remake_ebitan/mobile/assets/DQ3MNS.SHP`，都是從唯讀
+`assets_raw/DQ3MNS.SHP` 衍生的執行版副本；原始基線不會被覆寫，也不納入 Git。重新匯出的透明
+PNG 保留原始槽位與像素比例，並以與現有圖鑑相同的深色索引背景展示：
 
 ![130 格怪物圖鑑](docs/monsters/monster_sheet.png)
 
@@ -188,12 +200,19 @@ README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出�
 4. 關鍵事件前後可正常存檔、讀檔並繼續。
 5. Linux AppImage、Windows ZIP 與 macOS ZIP 共用同一套 Go game core。
 
-截至 2026-08-10，`TestOpeningProductionInputTrace` 已完成上述第 1、2、4 項的主線 E3
-驗收；終盤固定片尾 `TIT3.P` 與 ENDING 配樂 cue 已由同一條正式 trace 產生 runtime V3
-證據，第 3 項其餘場景仍以 runtime V1／部分 V2 為主；第 5 項指定桌面 release 已完成。
-編譯、單元測試、事件切片與畫面 dump 分別提供不同層次的信心；三種桌面發佈包與
-推廣片的雜湊／界線見 [`docs/114`](docs/114-release-artifacts.md)。主線已由正式玩家
-流程串起，後續集中於其餘 V3 對拍、戰鬥／場景音效長尾與發佈驗收。
+截至 2026-08-11，E2 targeted 驗收已涵蓋 pack raw→loader→battle／event→save/load；IDA
+閉合的四條 story-flag transaction（handler74／69／70／33）也已遷入
+`events.json.story_flag_runtime_events` 並由正式 command／battle path 接線，
+並以既有 PNG 作畫面 V2 證據；CTY07→CTY08 route 已依原始 transition table 與正式輸入
+修正並可抵達 CTY08 sec3，但完整 `TestOpeningProductionInputTrace` 的後段仍有另一個
+路徑 fixture 未收尾，因此不作目前 E3 gate。第 3 項仍有 V1／V2 與 V3 長尾，
+boss repeat-N、逐動作 frame、PCM 波形／停頓及這四條事件的原版 V3 畫面／完整 route 仍是
+未閉合限制；未找到直接 runtime caller 的其他旗標仍維持 unknown。formation
+的 raw EGA position／stride 已納入 E2 pack／renderer，但同狀態
+逐像素 V3 仍未宣稱；依本頁 `V3-approx` 政策，可先以結構與資料一致的近似畫面交付，並
+保留限制標記。三種桌面發佈包與推廣片的雜湊／界線見
+[`docs/114`](docs/114-release-artifacts.md)；後續工作以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
+的 E2 handoff 與未決清單為準。
 
 ## 證據優先序
 

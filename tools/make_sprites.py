@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """把未完成的 sprite(128 歐里狄加 / 129 五頭龍大王)用參考圖重繪成精訊 DQ3 風格,
-注入 DQ3MNS.SHP。sprite 格式同 mns_sprite.decode_sprite,色 = mnsbk.pal 前 16 色,0=透明。"""
+注入衍生的 DQ3MNS.SHP。sprite 格式同 mns_sprite.decode_sprite,色 = mnsbk.pal 前
+16 色,0=透明。``assets_raw/DQ3MNS.SHP`` 是唯讀基線；輸出會放到 ``work/``，若
+embedded 素材目錄存在，也同步寫入 ignored 的 ``mobile/assets/`` 執行版副本。"""
 import struct, os
 from collections import deque
 from PIL import Image
 
 SHP = "assets_raw/DQ3MNS.SHP"; PAL = "assets_raw/MNSBK.PAL"
+MOBILE_SHP = "dq3_remake_ebitan/mobile/assets/DQ3MNS.SHP"
 pd = open(PAL, "rb").read()
 pal = [(pd[i*3] << 2, pd[i*3+1] << 2, pd[i*3+2] << 2) for i in range(16)]
 
@@ -70,6 +73,26 @@ def encode(Wb,H,grid):
                 for bit in range(8):
                     if (grid[row][bx*8+bit]>>pb)&1: b|=(0x80>>bit)
                 out.append(b)
+    # 128/129 的回補圖也附上與原版 consumer 相容的逐列 run-length AND-mask。
+    # bit=1 保留背景(透明)，bit=0 清除背景後寫入色彩 plane。
+    for row in grid:
+        mask_row = []
+        for bx in range(Wb):
+            b = 0
+            for bit in range(8):
+                if row[bx*8+bit] == 0: b |= (0x80 >> bit)
+            mask_row.append(b)
+        start = 0
+        while start < len(mask_row):
+            end = start + 1
+            while end < len(mask_row) and mask_row[end] == mask_row[start] and end - start < 0x3f:
+                end += 1
+            count, value = end - start, mask_row[start]
+            if value == 0xff: out.append(0x40 | count)
+            elif value == 0x00: out.append(0x80 | count)
+            elif value < 0x40 and count == 1: out.append(value)
+            else: out.extend((0xc0 | count, value))
+            start = end
     return bytes(out)
 
 JOBS = {
@@ -85,10 +108,61 @@ def remap_grid(grid, m):
             if row[x] in m: row[x]=m[row[x]]
     return grid
 
+def _grid_neighbours(grid, x, y):
+    h, w = len(grid), len(grid[0])
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            if not dx and not dy: continue
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < w and 0 <= ny < h: yield grid[ny][nx]
+
+def style_native_clusters(grid, mid):
+    """只調整既有 opaque mask 的像素群組，不重畫輪廓或改變尺寸。"""
+    if mid == 128:
+        aliases, light = {8: 15, 4: 13}, {1, 15}
+        dark, outline = {2, 5, 10, 11, 13}, 11
+    elif mid == 129:
+        aliases, light = {}, {6, 7}
+        dark, outline = {2, 3, 10, 11}, 11
+    else:
+        return grid
+    before = [row[:] for row in grid]
+    base = [[aliases.get(value, value) if value else 0 for value in row] for row in before]
+    grid = [row[:] for row in base]
+    h, w = len(grid), len(grid[0])
+    boundary = [[False] * w for _ in range(h)]
+    near_edge = [[False] * w for _ in range(h)]
+    for y in range(h):
+        for x in range(w):
+            if not base[y][x]: continue
+            ns = list(_grid_neighbours(base, x, y))
+            boundary[y][x] = any(v == 0 for v in ns) or x in (0, w - 1) or y in (0, h - 1)
+    for y in range(h):
+        for x in range(w):
+            if boundary[y][x]:
+                near_edge[y][x] = True
+            else:
+                near_edge[y][x] = any(boundary[ny][nx]
+                                      for ny in range(max(0, y - 1), min(h, y + 2))
+                                      for nx in range(max(0, x - 1), min(w, x + 2)))
+    for y in range(len(grid)):
+        for x in range(len(grid[0])):
+            value = base[y][x]
+            if value not in light: continue
+            if near_edge[y][x] and ((x + 2 * y + mid) & 3) == 0:
+                grid[y][x] = outline
+    for y in range(len(grid)):
+        for x in range(len(grid[0])):
+            if base[y][x] not in light: continue
+            if boundary[y][x] and ((3 * x + y + mid) % 7) == 0:
+                grid[y][x] = outline
+    return grid
+
 sprites={}
 for mid,(ref,Wb,H,bg) in JOBS.items():
     _,_,grid,ink = build_grid(ref,Wb,H,bg)
     if mid==129: grid=remap_grid(grid, GREEN_REMAP)   # 紫→綠對齊實機
+    grid=style_native_clusters(grid, mid)              # 局部像素群組／抖點整理
     sprites[mid]=encode(Wb,H,grid)
     print(f"id {mid}: {Wb*8}x{H} ink={ink} bytes={len(sprites[mid])}")
 
@@ -103,4 +177,7 @@ struct.pack_into("<I",new,129*4,o129)
 struct.pack_into("<I",new,130*4,len(new))
 os.makedirs("work",exist_ok=True)
 open("work/DQ3MNS_fixed.SHP","wb").write(new)
+if os.path.isdir(os.path.dirname(MOBILE_SHP)):
+    open(MOBILE_SHP, "wb").write(new)
 print(f"injected 128@{o128} 129@{o129} -> work/DQ3MNS_fixed.SHP ({len(new)} bytes)")
+print(f"embedded copy: {MOBILE_SHP}")

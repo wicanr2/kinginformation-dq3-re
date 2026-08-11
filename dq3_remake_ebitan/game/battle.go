@@ -81,14 +81,15 @@ type battleMessage struct {
 // enemyUnit 是群戰中一隻敵的即時狀態。怪物資料、AI 與 sprite 都逐隻保存，讓原版混合
 // formation 不會退化成「代表怪物 × N」。
 type enemyUnit struct {
-	monID    int
-	hp, max  int
-	mp       int // D3MNS +0x04；帕魯朋特的吸 MP 效果會消耗
-	atk, def int // 有效攻/防(索瑪+光之珠弱化後之值)
-	agi      int // D3MNS +0x0b；敵我混排行動順序
-	spr      *dq3data.MonsterSprite
-	fled     bool // 本場已逃走(不計入擊殺數→經驗/金錢排除,對齊 C g_fled)
-	status   int  // W3:異常狀態位元(statusParalysis/statusSealed/statusBlind,見下方 const)
+	monID       int
+	hp, max     int
+	mp          int // D3MNS +0x04；帕魯朋特的吸 MP 效果會消耗
+	atk, def    int // 有效攻/防(索瑪+光之珠弱化後之值)
+	agi         int // D3MNS +0x0b；敵我混排行動順序
+	spr         *dq3data.MonsterSprite
+	positionRaw int  // 原版 active enemy +0x03；pack-owned EGA raw horizontal offset
+	fled        bool // 本場已逃走(不計入擊殺數→經驗/金錢排除,對齊 C g_fled)
+	status      int  // W3:異常狀態位元(statusParalysis/statusSealed/statusBlind,見下方 const)
 }
 
 func (e *enemyUnit) alive() bool { return e.hp > 0 && !e.fled }
@@ -132,58 +133,60 @@ type Battle struct {
 	scr      []byte                                   // PACKBG.SCR(戰鬥背景)
 	bg       *[dq3data.PackBGH][dq3data.PackBGW]uint8 // 解碼後背景(草原 page22)
 
-	active             bool
-	monID              int                    // formation 第一筆怪物 id；單群相容與索瑪判斷用
-	spr                *dq3data.MonsterSprite // formation 第一筆 sprite；舊測試/單群相容用
-	enemies            []enemyUnit            // 敵群(N 隻,docs/72 A3;單敵 = 1 元素陣列)
-	lightOrb           bool                   // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
-	heroHP             int
-	heroMax            int
-	heroAtk            int
-	heroDef            int
-	heroAgi            int
-	cursor             int
-	msg                string // 目前訊息的 pack value；供 log／測試，畫面走 msgData.glyph
-	msgData            battleMessage
-	messageQueue       []battleMessage // 已結算回合的後續逐筆訊息；msg 是目前顯示項
-	phase              battlePhase
-	result             int // 0 進行中、1 勝、2 敗、3 逃
-	gotExp             int
-	gotGold            int
-	gotDrop            int  // 原版 D3MNS +0x26；-1 表示無掉落
-	suppressDrop       bool // 原版 battle state bit1；劇情第二戰等明確禁止掉落
-	rng                *dosrng.RNG
-	flashCol           int // >0:受擊閃光殘餘幀
-	defending          bool
-	heroHerbs          int   // 開戰時持有藥草數
-	usedHerbs          int   // 本戰用掉藥草數(戰後從背包扣)
-	heroLevel          int   // 我方等級(敵 AI 逃跑門檻用)
-	heroMP             int   // 目前 MP(施咒消耗)
-	heroMaxMP          int   //
-	spells             []int // 已學可施放咒文 rec
-	spellCursor        int
-	companions         []*battleActor // 同伴(狀態列顯示 + 可各自下令及被鎖定)
-	heroStatus         int            // 主角異常狀態位元(statusParalysis 等;166-168 解咒清此欄)
-	commandActor       int            // 目前下令者：0=隊長，1..=同伴
-	commands           []battleCommand
-	resolving          bool // 正在執行已收集命令；避免舊單步入口重複推進整回合
-	pending            battleCommand
-	targetCursor       int
-	targetFrom         battlePhase // 取消目標選擇時回 phCommand 或 phSpell
-	messageResume      battlePhase // 非回合訊息關閉後回到的選單；phEnd 表示正常回合訊息
-	actionActor        int
-	actionTarget       int
-	statusSleepingText string // pack value；僅供 log／舊測試相容
-	statusWokeText     string // pack value；僅供 log／舊測試相容
-	statusSleepingID   string // battleTextStatusSleeping 的 pack role ID
-	statusWokeID       string // battleTextStatusWoke 的 pack role ID
-	texts              map[string]battleTextDefinition
-	messageLayout      gamepack.WindowLayout      // pack-owned shared battle message rect
-	commandLayout      gamepack.BattlePanelLayout // pack-owned command/selection panel
-	enemyLayout        gamepack.BattlePanelLayout // pack-owned enemy name/count panel
-	sceneLayout        gamepack.BattleSceneLayout // pack-owned field band and cursor glyph
-	sceneLayoutReady   bool
-	commandLabels      map[int][2]int // pack-owned command glyph pairs
+	active                 bool
+	monID                  int                    // formation 第一筆怪物 id；單群相容與索瑪判斷用
+	spr                    *dq3data.MonsterSprite // formation 第一筆 sprite；舊測試/單群相容用
+	enemies                []enemyUnit            // 敵群(N 隻,docs/72 A3;單敵 = 1 元素陣列)
+	lightOrb               bool                   // 開戰時持光之珠(索瑪 0x7c 戰用;弱化後清)
+	heroHP                 int
+	heroMax                int
+	heroAtk                int
+	heroDef                int
+	heroAgi                int
+	cursor                 int
+	msg                    string // 目前訊息的 pack value；供 log／測試，畫面走 msgData.glyph
+	msgData                battleMessage
+	messageQueue           []battleMessage // 已結算回合的後續逐筆訊息；msg 是目前顯示項
+	phase                  battlePhase
+	result                 int // 0 進行中、1 勝、2 敗、3 逃
+	gotExp                 int
+	gotGold                int
+	gotDrop                int  // 原版 D3MNS +0x26；-1 表示無掉落
+	suppressDrop           bool // 原版 battle state bit1；劇情第二戰等明確禁止掉落
+	rng                    *dosrng.RNG
+	flashCol               int // >0:受擊閃光殘餘幀
+	defending              bool
+	heroHerbs              int   // 開戰時持有藥草數
+	usedHerbs              int   // 本戰用掉藥草數(戰後從背包扣)
+	heroLevel              int   // 我方等級(敵 AI 逃跑門檻用)
+	heroMP                 int   // 目前 MP(施咒消耗)
+	heroMaxMP              int   //
+	spells                 []int // 已學可施放咒文 rec
+	spellCursor            int
+	companions             []*battleActor // 同伴(狀態列顯示 + 可各自下令及被鎖定)
+	heroStatus             int            // 主角異常狀態位元(statusParalysis 等;166-168 解咒清此欄)
+	commandActor           int            // 目前下令者：0=隊長，1..=同伴
+	commands               []battleCommand
+	resolving              bool // 正在執行已收集命令；避免舊單步入口重複推進整回合
+	pending                battleCommand
+	targetCursor           int
+	targetFrom             battlePhase // 取消目標選擇時回 phCommand 或 phSpell
+	messageResume          battlePhase // 非回合訊息關閉後回到的選單；phEnd 表示正常回合訊息
+	actionActor            int
+	actionTarget           int
+	statusSleepingText     string // pack value；僅供 log／舊測試相容
+	statusWokeText         string // pack value；僅供 log／舊測試相容
+	statusSleepingID       string // battleTextStatusSleeping 的 pack role ID
+	statusWokeID           string // battleTextStatusWoke 的 pack role ID
+	texts                  map[string]battleTextDefinition
+	messageLayout          gamepack.WindowLayout      // pack-owned shared battle message rect
+	commandLayout          gamepack.BattlePanelLayout // pack-owned command/selection panel
+	enemyLayout            gamepack.BattlePanelLayout // pack-owned enemy name/count panel
+	sceneLayout            gamepack.BattleSceneLayout // pack-owned field band and cursor glyph
+	sceneLayoutReady       bool
+	formationPosition      gamepack.BattleFormationPosition // pack-owned active +0x03 projection
+	formationPositionReady bool
+	commandLabels          map[int][2]int // pack-owned command glyph pairs
 
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
@@ -258,6 +261,14 @@ func (b *Battle) setSceneLayout(layout gamepack.BattleSceneLayout) {
 	if b.sceneLayoutReady {
 		curGlyph = layout.CursorGlyph
 	}
+}
+
+// setFormationPosition installs the confirmed raw formation projection.  A
+// production pack must provide it; direct unit fixtures may omit it and retain
+// the historical renderer-only spacing for isolated tests.
+func (b *Battle) setFormationPosition(layout gamepack.BattleFormationPosition) {
+	b.formationPosition = layout
+	b.formationPositionReady = layout.Evidence.Level != ""
 }
 
 // setCommandLabels installs the version-owned glyph pair for each stable
@@ -412,8 +423,6 @@ func (b *Battle) start(monID int, seed int64, hp heroParams, comps []*battleActo
 }
 
 // startGroup 開一場 N 隻同種怪的群戰(docs/72 A3)。count 夾在 [1, MaxEnemies]。跳過空 sprite 的怪。
-// HP 上限對齊 C dq3_battlescene_run:「單一擲值套全組」(同種同 HP 上限,非逐隻各擲),
-// 故 N=1 時的亂數序列與舊版單敵 start() 完全等價(既有測試不受影響)。
 func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps []*battleActor) bool {
 	if count < 1 {
 		count = 1
@@ -424,8 +433,9 @@ func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps [
 	return b.startFormation([]enemyGroup{{monID: monID, count: count}}, seed, hp, comps)
 }
 
-// startFormation 開一場原版混合編隊戰。每個 group 依序解碼，且每筆只擲一次 HP，
-// 所以 startGroup 的 RNG 序列與既有同種群戰完全相容。
+// startFormation 開一場原版混合編隊戰。sub_1AAA1 先以全部群組的
+// D3MNS +0x28×count 從 0x26 反向扣除，再由 sub_1AAD5 加 2；每隻
+// sub_1AB2C 都各自擲一次 HP，並將 active +0x03 以 weight×2 前進。
 func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, comps []*battleActor) bool {
 	if len(groups) == 0 {
 		return false
@@ -433,17 +443,44 @@ func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, 
 	b.rng = dosrng.New(uint16(seed))
 	b.enemies = nil
 	b.monID, b.spr = 0, nil
+	// Normalize the same group/count sequence that will be materialized below.
+	// The original builder budgets every accepted member before it writes the
+	// first active record; doing this as a read-only pass keeps the RNG stream
+	// unchanged while retaining the raw +0x28 weight contract.
+	normalized := make([]enemyGroup, 0, len(groups))
+	remaining := MaxEnemies
+	formationWeight := 0
 	for _, group := range groups {
-		if len(b.enemies) >= MaxEnemies {
+		if remaining <= 0 {
 			break
 		}
 		count := group.count
 		if count < 1 {
 			continue
 		}
-		if count > MaxEnemies-len(b.enemies) {
-			count = MaxEnemies - len(b.enemies)
+		if count > remaining {
+			count = remaining
 		}
+		st, ok := b.mons.Stat(group.monID)
+		if !ok {
+			return false
+		}
+		normalized = append(normalized, enemyGroup{monID: group.monID, count: count})
+		formationWeight += count * int(st.SpawnWeight)
+		remaining -= count
+	}
+	if len(normalized) == 0 {
+		return false
+	}
+	positionRaw := 0
+	if b.formationPositionReady {
+		// sub_1AAA1 starts at raw 0x26, subtracts the complete formation
+		// budget, and sub_1AAD5 adds two before the first member.
+		positionRaw = b.formationPosition.OriginRaw - formationWeight +
+			b.formationPosition.FirstMemberOffsetRaw
+	}
+	for _, group := range normalized {
+		count := group.count
 		spr, err := dq3data.DecodeMonsterSprite(b.shp, group.monID)
 		if err != nil {
 			return false
@@ -455,7 +492,6 @@ func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, 
 		if len(b.enemies) == 0 {
 			b.monID, b.spr = group.monID, spr
 		}
-		hpRoll := int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
 		eatk, edef := int(st.Atk), int(st.Def)
 		if group.monID == 0x7c && b.lightOrb {
 			eatk /= 3
@@ -463,10 +499,15 @@ func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, 
 			b.lightOrb = false
 		}
 		for i := 0; i < count; i++ {
+			hpRoll := int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
 			b.enemies = append(b.enemies, enemyUnit{
 				monID: group.monID, hp: hpRoll, max: hpRoll, mp: int(st.MP),
 				atk: eatk, def: edef, agi: int(st.Agi), spr: spr,
+				positionRaw: positionRaw,
 			})
+			if b.formationPositionReady {
+				positionRaw += b.formationPosition.WeightStepMultiplier * int(st.SpawnWeight)
+			}
 		}
 	}
 	if len(b.enemies) == 0 {
@@ -1692,8 +1733,8 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 			}
 		}
 	}
-	// 怪群:橫排站綠地平線(對齊 C render:gx=(SCREEN_W*(i+1))/(en+1)-spr->w/2,en=組總隻數
-	// 含已死/逃走者,位置不因中途減員而重排);受擊閃紅;死/逃不畫。
+	// 怪群：正式 pack 使用 IDA sub_1B31A 的 EGA destination；直接 Battle
+	// fixture 才保留舊的等距 fallback。已死／逃走者不畫，但位置不重排。
 	if len(b.enemies) > 0 {
 		en := len(b.enemies)
 		flash := b.flashCol > 0
@@ -1707,8 +1748,20 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 			if !b.enemies[i].alive() || spr == nil {
 				continue
 			}
-			gx := ScreenW*(i+1)/(en+1) - spr.W/2
-			gy := groundY + 8 - spr.H
+			gx, gy := 0, 0
+			if b.formationPositionReady {
+				// IDA sub_1B31A computes
+				// stride*(bottom_raw-sprite_height)+active+0x03.  Convert that
+				// EGA byte address back to the pack's pixel surface without
+				// replacing the raw stride with a guessed screen width.
+				stride := b.formationPosition.EGAStrideBytes
+				dst := (b.formationPosition.EGABottomRaw-spr.H)*stride + b.enemies[i].positionRaw
+				gy = dst / stride
+				gx = (dst % stride) * b.formationPosition.PixelsPerRawByte
+			} else {
+				gx = ScreenW*(i+1)/(en+1) - spr.W/2
+				gy = groundY + 8 - spr.H
+			}
 			if b.phase == phTargetEnemy {
 				for pos, target := range targets {
 					if target != i {

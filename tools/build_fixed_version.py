@@ -3,7 +3,7 @@
 彙整各 agent 定位的高信心、同長度 binary patch + 重繪 sprite:
   #1 巴拉摩斯打不死        bug_patches.json   (EXE in-place)
   #2 彩虹水滴誤拿黃寶珠     bug_patches.json   (EXE in-place)
-  #3 五頭龍/歐里狄加當機    重繪 sprite        (DQ3MNS_fixed.SHP,見 make_sprites.py)
+  #3 五頭龍/歐里狄加當機    重繪 sprite        (DQ3MNS_fixed.SHP,見 make_sprites.py + style_sprites.py)
   #4 勇者 MP+1            未修（舊 stat patch 誤改 VIT，已撤銷）
   #7a 隼劍雙擊            codecave_patches.json (EXE 同長度區段改寫,復用既有 re-attack)
 未修(留 C 層 / SDL2,根因見 docs/18,23,22):#5 升級錯亂、#6 255溢位、#7b 魔甲抗魔。
@@ -45,9 +45,11 @@ diff = sum(1 for a, b in zip(open(ORIG,'rb').read(), exe) if a != b)
 print(f"EXE patch 套用 ({diff} bytes 變動):")
 for a in applied: print("  ", a)
 
-# #3 sprite:需 work/DQ3MNS_fixed.SHP(make_sprites.py)
+# #3 sprite:先從唯讀 assets_raw 產生 SHP，再以 style_sprites.py 附上 128/129 的
+# 風格整理與 direct-loader RLE AND-mask；不能因 work 檔已存在就沿用過期副本。
 if not os.path.exists("work/DQ3MNS_fixed.SHP"):
     subprocess.run([sys.executable, "tools/make_sprites.py"], check=True)
+subprocess.run([sys.executable, "tools/style_sprites.py"], check=True)
 
 GD = "work/dq3_fixed_game"
 if os.path.exists(GD): shutil.rmtree(GD)

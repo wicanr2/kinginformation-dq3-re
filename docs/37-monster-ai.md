@@ -91,10 +91,28 @@ handler 對到 `[0x2511]`(spell_id),咒文名 rec ≈ spell_id 區(對映細節�
 
 ## 五、與「行動次數 / 多段攻擊」
 
-本決策樹是**單次行動**的選擇;DQ3 部分強敵每回合行動 1~2 次,由外層回合迴圈
-(`battle_command_loop` 相關)依怪物資料決定行動次數後,**逐次**呼叫本決策樹。多段行動的
-次數欄位仍待定位(候選:D3MNS `+0x04` / `+0x1f` / `+0x25` / `+0x26` 等尚未完全定名欄位,
-docs/16 殘留項)。
+### 2026-08-10 靜態勘誤（本節新結論優先）
+
+IDA Pro 9.4 以原始 `DQ3.EXE`（115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`）重播正式戰鬥鏈：
+
+```text
+sub_1BDDF → sub_1C08B → sub_1C34F → sub_1A973 / sub_1B3F3
+```
+
+`sub_1C34F` 只建立一筆 queue record／actor entry，`sub_1C08B` 對該 entry 直接呼叫
+一次 actor consumer；回合結束後才重新建立下一筆 queue。這條 caller→queue→consumer
+沒有發現依怪物資料再呼叫 `sub_1A973` N 次的外層 repeat loop。因此目前可證實的是
+「每個活躍 actor 每回合一次」，不是「強敵每回合 1～2 次」。
+
+> **被推翻的舊句子（保留作歷史）**：本節早期曾寫「部分強敵每回合 1～2 次，由外層
+> 回合迴圈依怪物資料決定行動次數」。那是把攻略／慣例投射到未閉合欄位的假說，沒有
+> caller／writer／consumer 證據，現標為 `unknown`，不得作 production 規格。
+
+因此 D3MNS `+0x04`、`+0x1f`、`+0x25`、`+0x26` 仍不能命名為「行動次數」。若日後在
+另一條正式入口找到 repeat count，必須附原始位址、輸入 hash、writer、state、consumer
+與玩家可見時序；在此之前維持 `unknown`／fail closed。完整 queue／timing／boss ledger
+見 [`docs/123`](123-static-battle-daynight-re.md)。
 
 ## 六、玩家側睡眠／混亂 consumer（2026-07-30 IDA 補證）
 

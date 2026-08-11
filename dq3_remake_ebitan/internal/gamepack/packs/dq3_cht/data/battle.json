@@ -1,0 +1,447 @@
+{
+  "schema_version": "0.1.29",
+  "source_files": [
+    {
+      "path": "assets_raw/DQ3.EXE",
+      "size": 115282,
+      "sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c"
+    },
+    {
+      "path": "assets_raw/D3MNS.DAT",
+      "size": 5330,
+      "sha256": "48bf3ce78c425239363761c13c708a6e04f8daa628cd575f7e049bc0bc7bb4ed"
+    },
+    {
+      "path": "assets_raw/D3TXT00.TXT",
+      "size": 18680,
+      "sha256": "38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b"
+    }
+  ],
+  "evidence": {
+    "level": "D2",
+    "source_kind": "exe",
+    "source": "DQ3.EXE",
+    "address_space": "file",
+    "address": "0x1aaa6..0x199b6",
+    "consumer": "E2 static battle data contract; raw fields remain non-executable",
+    "doc": "docs/123-static-battle-daynight-re.md",
+    "note": "E2 contract excludes unproven action-frame, player timing and resistance semantic names."
+  },
+  "encounter": {
+    "region_lookup": {
+      "address_space": "dgroup",
+      "address": "DS:0x4966",
+      "file_offset": "0x1aaa6",
+      "length_bytes": 256,
+      "raw_sha256": "30deba2b9211e32da37177517571d16282a79952cd703b1cc52fee95a59a0294",
+      "raw_hex": "060606060606151515151717171717170606050506061515151517171717171705050404040b1515151514141414010105050404080b1515151514141414010105050404080b0b0b0d0d14141414010109090908080b0d0d0d0d141414140101090909090b0b0d0d0d0d1414141401010909131b010b0b0d0d011616161601011313131b010101010d01161616160101131313150101010101010303161601011515151506060606010103031616010115151515060606060101010116160101151515150606060601010101010101011515151506060606010101010101010117171717060606060101010101010101010100000506050a0201000005060605",
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "file",
+        "address": "0x1aaa6..0x1ade5",
+        "consumer": "sub_1A7D5 dec region/shl 5 and sub_1BF35 formation loader",
+        "doc": "docs/123-static-battle-daynight-re.md"
+      }
+    },
+    "candidate_table": {
+      "address_space": "dgroup",
+      "address": "DS:0x4a56",
+      "file_offset": "0x1ab96",
+      "length_bytes": 864,
+      "raw_sha256": "46edf59fa6234d3a4df49eb2e6ffdbbc0e277b5049a8510ac86c15caa26f3d69",
+      "raw_hex": "010100000506050a0201000005060605010100000506070a010100000506070a0163000008090b0702000000050a060702010000090a0b060201000005060708013200000c0d0e0f020100000c010f0902010000090a0f01030100000d0e010b020100000d0e0f10030100000e09100d013c00000d0e0f09020100000e08100d02010100111211190128010015111219020101001112111901280100151112190132010018141617020101001401140102010100161718190301010013151916013201001c1d1e1f013201001c1d1e1f01010100161718190301010013151916013202002021202101320200202120210201020020212021030102002021202101320200222323220132020022232322020102002427222302010200242722230132020023262925013202002326292502010200232526290201020023252629013203002a2f2c2e013203002f2a302c020103002a2c2e2f020103002a2c2f30013203002a2b2e3601320300362b2e32020103002d36012c020103002d36012b013203002b2c303301320300332c3032020103002b30313302010300373302320132030032343337020103003233343702010300323135330201030031353437020104003e3b4037020104003a3c3d41020104003a3c3d3e02010400413b4042013204004546423c02010400453c3d3e030104003b3c3d3e0301040046453c42013206005966656303010600596665630132070068696a6f0301070068696a6f0132070067726a6d0301070067726a6d013207006e707173030107006e707173013205007d47525703010500477d5257013205007d47525703010500477d52570132050052535403030105005253540302320500474d7d5703010500474d7d57013205004c4d4e4f0132050050524350020105004c4d4e4f02010500505204500132050051535603013205004d535641020105004d53564102010500515356470132050051535603013205004d535641020105004d53564102010500515356470114050048494a480114050048494a490132050048494a4a0201050048494a49013205004f5051540132050055564c4d020105004c4d5051020105005253545501320400443a3c41020104003a3c3d41020104003a443d3e02010400413b4044013206005f5b5c5d013206005e606103020106005a5b5c5f020106005a5f6003",
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "file",
+        "address": "0x1aaa6..0x1b2f5",
+        "consumer": "sub_1A7D5 -> sub_1AAA1/sub_1AB2C -> sub_1B1FE",
+        "doc": "docs/123-static-battle-daynight-re.md"
+      }
+    },
+    "row_stride_bytes": 8,
+    "region_stride_bytes": 32,
+    "used_region_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ],
+    "fixed_records": [
+      {
+        "dgroup": "0x4eb5",
+        "file": "0x1aff5",
+        "count": 4,
+        "raw_hex": "0418011a011b011b011b01",
+        "caller": "sub_15477",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1aff5 (DS:0x4eb5)",
+          "consumer": "sub_15477",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4ec0",
+        "file": "0x1b000",
+        "count": 1,
+        "raw_hex": "0118013904",
+        "caller": "sub_15ee0",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b000 (DS:0x4ec0)",
+          "consumer": "sub_15ee0",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4ec5",
+        "file": "0x1b005",
+        "count": 4,
+        "raw_hex": "0418013801390139013901",
+        "caller": "sub_16004",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b005 (DS:0x4ec5)",
+          "consumer": "sub_16004",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4ed0",
+        "file": "0x1b010",
+        "count": 1,
+        "raw_hex": "0123054b01",
+        "caller": "sub_15cb6",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b010 (DS:0x4ed0)",
+          "consumer": "sub_15cb6",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4ed5",
+        "file": "0x1b015",
+        "count": 1,
+        "raw_hex": "011a054b01",
+        "caller": "sub_15979",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b015 (DS:0x4ed5)",
+          "consumer": "sub_15979",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4eda",
+        "file": "0x1b01a",
+        "count": 1,
+        "raw_hex": "010c054301",
+        "caller": "sub_15e45",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b01a (DS:0x4eda)",
+          "consumer": "sub_15e45",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4edf",
+        "file": "0x1b01f",
+        "count": 1,
+        "raw_hex": "0127067901",
+        "caller": "sub_1622a",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b01f (DS:0x4edf)",
+          "consumer": "sub_1622a",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4ee4",
+        "file": "0x1b024",
+        "count": 1,
+        "raw_hex": "011f065901",
+        "caller": "sub_14312",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b024 (DS:0x4ee4)",
+          "consumer": "sub_14312",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4ee9",
+        "file": "0x1b029",
+        "count": 2,
+        "raw_hex": "022a0880018101",
+        "caller": "sub_16494",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b029 (DS:0x4ee9)",
+          "consumer": "sub_16494",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4ef0",
+        "file": "0x1b030",
+        "count": 1,
+        "raw_hex": "012d087c01",
+        "caller": "sub_164cd",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b030 (DS:0x4ef0)",
+          "consumer": "sub_164cd",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4ef5",
+        "file": "0x1b035",
+        "count": 1,
+        "raw_hex": "012a088101",
+        "caller": "sub_16586",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b035 (DS:0x4ef5)",
+          "consumer": "sub_16586",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4efa",
+        "file": "0x1b03a",
+        "count": 1,
+        "raw_hex": "012a087a01",
+        "caller": "sub_165e7",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b03a (DS:0x4efa)",
+          "consumer": "sub_165e7",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      },
+      {
+        "dgroup": "0x4eff",
+        "file": "0x1b03f",
+        "count": 1,
+        "raw_hex": "012a087b01",
+        "caller": "sub_1661e",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE",
+          "address_space": "file",
+          "address": "0x1b03f (DS:0x4eff)",
+          "consumer": "sub_1661e",
+          "doc": "docs/123-static-battle-daynight-re.md"
+        }
+      }
+    ],
+    "evidence": {
+      "level": "D2",
+      "source_kind": "exe",
+      "source": "DQ3.EXE",
+      "address_space": "file",
+      "address": "0x1aaa6..0x1b2f5",
+      "consumer": "sub_1A7D5 -> sub_1AAA1/sub_1AB2C -> sub_1B1FE",
+      "doc": "docs/123-static-battle-daynight-re.md"
+    },
+    "formation_position": {
+      "origin_raw": 38,
+      "first_member_offset_raw": 2,
+      "weight_step_multiplier": 2,
+      "ega_stride_bytes": 84,
+      "ega_bottom_raw": 258,
+      "pixels_per_raw_byte": 8,
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0xaaa1..0xab7e; 0xb1fe..0xb37c",
+        "consumer": "sub_1AAA1 origin 0x26 -> sub_1AB2C weight*2 -> active +0x03 -> sub_1B1FE/sub_1B31A EGA projection",
+        "doc": "docs/123-static-battle-daynight-re.md",
+        "note": "IDA Pro 9.4 linear 0x1aaa1..0x1ab7e/0x1b1fe..0x1b37c; input DQ3.EXE SHA-256=5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c。"
+      }
+    }
+  },
+  "resistance": {
+    "effect_thresholds": {
+      "address_space": "dgroup",
+      "address": "DS:0x36e5",
+      "file_offset": "0x19825",
+      "length_bytes": 20,
+      "raw_sha256": "104d5bb3c86893051ef596545aa7547eb650d1a003870d6550ce13de711a46f2",
+      "raw_hex": "0306090d10121617191b1c1d1f2325260044b4ff",
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "dgroup",
+        "address": "DS:0x36e5/DS:0x37c3",
+        "consumer": "sub_1D7FB/sub_1CB3C/sub_1D6C7",
+        "doc": "docs/123-static-battle-daynight-re.md"
+      }
+    },
+    "class_thresholds": [
+      0,
+      68,
+      180,
+      255
+    ],
+    "descriptor_table": {
+      "address_space": "dgroup",
+      "address": "DS:0x37c3",
+      "file_offset": "0x19903",
+      "length_bytes": 180,
+      "raw_sha256": "fffbf83c30789e9ee38a3bbae044cbe5dae1b1905fbdcb072dde54ad96f04721",
+      "raw_hex": "020a0d06500d0cb40d04141d06231d0c641d051415093c15128c15031e0d06321d0946150c641d040f1d06281d09641d08500d1ec81507ff0d07ff1d01ff1518ff1502001d03001d03001103000d04001d07000d03001d00000d06000905000d0c000903000904001103001d08000104001d060011060001031e0b05550b07ff0b1232133eff1303000b06000b0300110a000b14000b1200120800120800120300020200120400020c00020f0012000002140001",
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "dgroup",
+        "address": "DS:0x36e5/DS:0x37c3",
+        "consumer": "sub_1D7FB/sub_1CB3C/sub_1D6C7",
+        "doc": "docs/123-static-battle-daynight-re.md"
+      }
+    },
+    "effect_names_zh": {
+      "0": "美拉",
+      "1": "美拉米",
+      "2": "美拉宙瑪",
+      "3": "吉拉",
+      "4": "比吉拉瑪",
+      "5": "比吉拉肯",
+      "6": "伊歐",
+      "7": "伊歐拉",
+      "8": "伊歐那順",
+      "9": "希亞多",
+      "10": "希亞達可",
+      "11": "希亞達依恩",
+      "12": "瑪希亞多",
+      "13": "巴基",
+      "14": "巴基瑪",
+      "15": "巴基克洛斯",
+      "16": "萊丁",
+      "17": "基加丁",
+      "18": "沙基",
+      "19": "沙拉基",
+      "20": "梅干得",
+      "21": "多拉哥拉姆",
+      "22": "尼夫拉姆",
+      "23": "拉里荷",
+      "24": "皮歐里姆",
+      "25": "魯卡尼",
+      "26": "魯加南",
+      "27": "巴西魯拉",
+      "28": "伯米歐斯",
+      "29": "瑪荷多拉",
+      "30": "拜基魯多",
+      "31": "美達巴尼",
+      "32": "莫夏斯",
+      "33": "史卡拉",
+      "34": "史克魯多",
+      "35": "瑪荷頓",
+      "36": "瑪荷甘達",
+      "37": "瑪努莎",
+      "38": "夫巴哈",
+      "39": "阿斯特龍",
+      "40": "荷依米",
+      "41": "比荷依米",
+      "42": "比荷瑪",
+      "43": "比荷瑪拉",
+      "44": "比荷瑪順",
+      "45": "基阿里",
+      "46": "基阿里克",
+      "47": "薩梅哈",
+      "48": "薩歐拉魯",
+      "49": "薩歐里克",
+      "50": "夏那克",
+      "51": "魯拉",
+      "52": "烈米特",
+      "53": "因帕斯",
+      "54": "多拉瑪那",
+      "55": "特黑洛斯",
+      "56": "拉那魯達",
+      "57": "雷姆歐魯",
+      "58": "阿巴卡姆",
+      "59": "巴魯朋特"
+    },
+    "evidence": {
+      "level": "D2",
+      "source_kind": "exe",
+      "source": "DQ3.EXE",
+      "address_space": "dgroup",
+      "address": "DS:0x36e5/DS:0x36f5/DS:0x37c3",
+      "consumer": "sub_1D7FB/sub_1CB3C/sub_1D6C7",
+      "doc": "docs/123-static-battle-daynight-re.md"
+    }
+  }
+}

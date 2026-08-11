@@ -6,6 +6,7 @@ import "fmt"
 const (
 	MonsterCount = 130
 	monsterRec   = 41
+	spellCount   = 60 // DGROUP 0x37c3 的 spell descriptor 筆數；原版 effect id 0..59
 )
 
 // MonsterStat 是一隻怪的數值(欄位偏移對齊 C）。
@@ -60,22 +61,23 @@ func (m *Monsters) Stat(id int) (MonsterStat, bool) {
 
 // SpellChance 回原版對指定怪物施 spellID 時的成功門檻(0/68/180/255)。
 //
-// DQ3.EXE file 0xeb6b 以 spellID 分到 19 個抗性類別，再從 D3MNS.DAT
-// +0x19..+0x1d 的 packed 2-bit 欄取代碼。Palpunte 是 spellID 59，
-// 落在類別 18；caller 以 rng(256) < 此門檻判定成功。
+// DQ3.EXE file 0xeb6b 以 spellID 分到 packed 2-bit 類別，再從 D3MNS.DAT
+// +0x19..+0x1d 取代碼；在目前 0..59 的 descriptor domain 中，Palpunte 是 spellID 59，
+// 落在類別 17（類別 16 是原始 0 sentinel 形成的空洞）。這裡只回傳 raw threshold。
+// 原版 caller 的邊界不同：單體
+// sub_1D2D3 以 rng <= threshold 進效果，多體 sub_1D338/sub_1D3B7 以
+// rng < threshold 進效果；呼叫端不可把此函式當成固定的單一比較器。
 func (m *Monsters) SpellChance(id, spellID int) (int, bool) {
-	if id < 0 || id >= MonsterCount {
+	if id < 0 || id >= MonsterCount || spellID < 0 || spellID >= spellCount {
 		return 0, false
 	}
-	// DGROUP 0x36e5。原程式線性尋找第一個 >= spellID 的 entry；
-	// index 17 的 0 是原版資料，保留以維持高階咒文的類別編號。
-	bounds := [...]int{0, 3, 6, 9, 13, 16, 18, 22, 23, 25, 27, 28, 29, 31, 35, 37, 38, 0, 68}
-	category := len(bounds) - 1
-	for i, v := range bounds {
-		if spellID <= v {
-			category = i
-			break
-		}
+	// DGROUP 0x36e5。原程式是 cmp AL,[table+BX]；相等時先 inc BX，
+	// 所以邊界採「spellID >= threshold 就前進」，不能改成第一個 >= 的索引。
+	// 最後四個 byte 與 DGROUP 0x36f5 class table 連續，0 是原版資料，不能刪掉。
+	thresholds := [...]int{3, 6, 9, 13, 16, 18, 22, 23, 25, 27, 28, 29, 31, 35, 37, 38, 0, 68, 180, 255}
+	category := 0
+	for category < len(thresholds) && spellID >= thresholds[category] {
+		category++
 	}
 	packed := m.rec(id)[0x19+category/4]
 	// sub_eb6b 以 rol 2/4/6/8 後取低 2 bit，故類別依序放在
@@ -120,8 +122,9 @@ type MonsterSprite struct {
 }
 
 // DecodeMonsterSprite 解 DQ3MNS.SHP 第 id 隻。移植 dq3_monster_sprite_decode。
-// SHP:131×u32 offset 表 + 每隻 {u16 w_bytes, u16 h, 4 plane plane-major(plane 3,2,1,0)}。
-// 如果 SHP 該格為空或尺寸不合理（如未完成 boss id128/129），嘗試用復原資料回退。
+// SHP:131×u32 offset 表 + 每隻 {u16 w_bytes, u16 h, 4 plane plane-major(plane 3,2,1,0),
+// 逐列 RLE AND-mask}。原始基線的 boss id128/129 仍可能為空；執行版 patched SHP
+// 會直接提供兩格，只有空／無效時才嘗試用復原資料回退。
 // 回 nil,error 表空 sprite 且無復原資料、或越界。
 func DecodeMonsterSprite(shp []byte, id int) (*MonsterSprite, error) {
 	if id < 0 || id >= MonsterCount {
@@ -198,8 +201,8 @@ func decodeSpriteBytesInternal(data []byte, off, end, id int, requireMask bool) 
 	} else if requireMask {
 		return nil, fmt.Errorf("sprite mask 缺失(id %d)", id)
 	} else {
-		// remake 補完的 128/129 沒有原版 mask，只能以非零色作遮罩；
-		// 原版 0..127 一律走上面的獨立 RLE AND-mask。
+		// 舊版 embedded fallback 若沒有 mask，才以非零色作遮罩；現行產生檔的
+		// 128/129 已附 RLE AND-mask，正常不會走此分支。
 		for r := 0; r < h; r++ {
 			for x := 0; x < w; x++ {
 				spr.Opaque[r][x] = spr.Px[r][x] != 0

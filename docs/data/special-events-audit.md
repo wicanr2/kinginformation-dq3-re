@@ -53,13 +53,26 @@
 - rec18「客人好眼光,價錢減半」只是某 NPC 一句話,**無對應折扣商店系統**。
   原「折扣商店」判定是從單句對話的過度解讀 → 撤回,分類改 hint。
 
-### CTY65:70(龍之女王)→ handler 是彩虹材料/鑰匙處理,非「換蛋給光之珠」
+### CTY65:70（歷史誤判：龍之女王）→ 已由原始 CTY／IDA 證據推翻
 - CTY65 (8,3) sub=2 真實 byte4=70 = dlg=70(find_npc_b4 驗證,dlg=byte4 成立)。
-- byte4=70 handler L0x622a:操作道具 0x73 雲雨之杖 / 0x56 魔法鑰匙 / 0x72 太陽之石 / 0x74 精靈的守護
-  (彩虹材料 + 鑰匙,)+ 設 flag 0x1a/0x1b、改世界狀態 [0x4f40] 等。
-- 對話 rec69-71「女王生病/生蛋換命/龍之女王給光之珠」與此 handler **不對應**——
-  那段是 CTY65 其他 talk NPC 台詞,非 byte4=70 事件本身。byte4=70 是複雜的彩虹材料中繼事件。
-- **不接**:機制複雜(世界狀態系統)、與既有彩虹材料鏈(B-6)/光之珠(CTY67 byte4=52)重疊、非可玩性必要。
+- 原先把 handler70 解讀為「彩虹材料／鑰匙中繼」是**錯誤的歷史結論**；它把同城其他
+  NPC 的 rec69–71 台詞誤套到 sub2 handler。這段舊判讀保留在本節，不能再作現行規格。
+- 為保留可追溯索引，舊斷言的具體內容是「handler L0x622a 會處理道具 `0x73`、`0x56`、
+  `0x72`、`0x74`，設定 `0x1a/0x1b` 並改寫 `[0x4f40]`」；這些值只代表被推翻的歷史
+  語意套用，不能當成 CTY65:70 的 production 規格。
+
+### 2026-08-11 勘誤：CTY65:70 是巴拉摩斯戰後事件
+
+- 原始 `CTY65.DAT` sec0 的 `(8,3)` 事件是 sprite37、`byte4=70`、sub2 flag `0x29`；
+  `docs/76-baramos-gaia-re.md` 與攻略主線 step 44 均把此格定位為巴拉摩斯戰鬥，
+  不是龍之女王。龍之女王／光之珠是 `CTY67` 的 handler52（item `0x65`），兩者不可合併。
+- IDA Pro 9.4 的 `sub_1622A`（handler70）讀固定編隊 `DS:0x4edf`，戰後重置隊伍、日夜
+  selector／clock／palette，然後同時 SET story flag `0x1a`、`0x1b` 並重建 `DQ3BLK`／
+  `DQ3UND`。這條 writer→state 閉環等級為 `confirmed`。
+- CTY00／CTY25 的 full-byte NPC records 具有 `0x1b`／`0x1a`，文字包含「打倒巴拉摩斯」及
+  回到阿里阿罕後的居民反應；它們是 generic NPC visibility consumer，不是龍之女王素材表。
+- 因此目前正確分類是「巴拉摩斯戰後世界／NPC 可見性交易」；精確 Go 玩家入口仍列
+  `runtime unknown`，不得把舊的彩虹材料結論或合理預設寫入 production JSON。
 
 ### 連帶修正:glyph 234「文」→「女」(使用者指正)
 - unicode_map glyph 234 原誤標「文」(形近),實為「女」:龍之女王/美麗的女王/侍女語意驗證皆通。

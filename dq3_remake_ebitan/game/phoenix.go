@@ -27,7 +27,8 @@ var phoenixAltarTop = [6][2]int{
 // 六座祭壇接受背包中最低 code 的寶珠 66..6b；清 8f..94 表示祭壇已完成，
 // 清 12c..131 控制該顆寶珠的可見狀態。
 func (g *Game) tryPhoenixAltar(x, y int) bool {
-	if !g.inTown || g.cur == nil || g.curCty != ctyPhoenixShrine || g.cur.sec != 0 {
+	e, ok := g.phoenixRuntimeEvent()
+	if !ok || !g.inTown || g.cur == nil || g.curCty != e.NPC.CTYRaw || currentSceneSection(g.cur) != e.NPC.Section {
 		return false
 	}
 	ev, _, ok := g.cur.tileEvent(x, y)
@@ -35,14 +36,21 @@ func (g *Game) tryPhoenixAltar(x, y int) bool {
 		return false
 	}
 	flag := int(ev[2])
-	if flag < phoenixAltarFlagFirst || flag > phoenixAltarFlagLast {
+	altarIndex := -1
+	for i, altarFlag := range e.PhoenixAltarFlagRaw {
+		if flag == altarFlag {
+			altarIndex = i
+			break
+		}
+	}
+	if altarIndex < 0 {
 		return false
 	}
 	if !g.storyFlag(flag) {
 		return true
 	}
 	item, owner := -1, -1 // 0=勇者，1..=目前隊伍中的同伴
-	for code := itemGreenOrb; code <= itemSilverOrb; code++ {
+	for code := e.PhoenixOrbItemFirstRaw; code <= e.PhoenixOrbItemLastRaw; code++ {
 		if g.hasItem(code) {
 			item, owner = code, 0
 			break
@@ -71,17 +79,21 @@ func (g *Game) tryPhoenixAltar(x, y int) bool {
 			}
 		}
 	}
-	g.setStoryFlag(phoenixVisualFlagBase+item-itemGreenOrb, false)
+	g.setStoryFlag(e.PhoenixVisualFlagBaseRaw+item-e.PhoenixOrbItemFirstRaw, false)
 	g.setStoryFlag(flag, false)
-	g.dlg.Open(96)
+	g.dlg.Open(e.PhoenixAltarDialogueRaw)
 	g.setDlgVarNumItem(item)
 	return true
 }
 
 func (g *Game) placedPhoenixOrbs() []int {
+	e, ok := g.phoenixRuntimeEvent()
+	if !ok {
+		return nil
+	}
 	var out []int
-	for item := itemGreenOrb; item <= itemSilverOrb; item++ {
-		if !g.storyFlag(phoenixVisualFlagBase + item - itemGreenOrb) {
+	for item := e.PhoenixOrbItemFirstRaw; item <= e.PhoenixOrbItemLastRaw; item++ {
+		if !g.storyFlag(e.PhoenixVisualFlagBaseRaw + item - e.PhoenixOrbItemFirstRaw) {
 			out = append(out, item)
 		}
 	}
@@ -91,8 +103,12 @@ func (g *Game) placedPhoenixOrbs() []int {
 // talkPhoenixGuardian 對齊 handler69(file 0x74a9)：未復活時先說 rec92，
 // 部分寶珠逐顆 rec93；六顆齊備則進復活動畫 transaction。復活後為 rec94。
 func (g *Game) talkPhoenixGuardian() {
-	if !g.storyFlag(flagPhoenixUnrevived) {
-		g.dlg.Open(94)
+	e, ok := g.phoenixRuntimeEvent()
+	if !ok {
+		return
+	}
+	if !g.storyFlag(e.PhoenixUnrevivedFlagRaw) {
+		g.dlg.Open(e.PhoenixRevivedDialogueRaw)
 		return
 	}
 	g.phoenixList = g.placedPhoenixOrbs()
@@ -103,6 +119,11 @@ func (g *Game) talkPhoenixGuardian() {
 
 func (g *Game) advancePhoenixEvent() {
 	if g.phoenixStage == 0 || g.dlg.open {
+		return
+	}
+	e, ok := g.phoenixRuntimeEvent()
+	if !ok {
+		g.phoenixStage = 0
 		return
 	}
 	switch g.phoenixStage {
@@ -124,7 +145,7 @@ func (g *Game) advancePhoenixEvent() {
 		return
 	}
 	item := g.phoenixList[g.phoenixListPos]
-	g.dlg.Open(93)
+	g.dlg.Open(e.PhoenixOrbDialogueRaw)
 	g.setDlgVarNumItem(item)
 }
 
@@ -137,24 +158,33 @@ func (g *Game) revivePhoenix() {
 // advancePhoenixAnimation 對齊 file 0x7528..0x753d：中央 (8,8) 依序畫
 // tile 0x7b..0x80。原版是同步 delay；Ebiten 以每 8 update 一幀重現且封鎖輸入。
 func (g *Game) advancePhoenixAnimation() {
-	if g.phoenixStage != 3 {
+	e, ok := g.phoenixRuntimeEvent()
+	if !ok || e.Animation == nil || g.phoenixStage != 3 {
 		return
 	}
 	g.phoenixAnimTick++
-	if g.phoenixAnimTick < 8 {
+	if g.phoenixAnimTick < e.Animation.FrameTicks {
 		return
 	}
 	g.phoenixAnimTick = 0
 	g.phoenixAnim++
-	if g.phoenixAnim < 6 {
+	if g.phoenixAnim < len(e.Animation.TilesRaw) {
 		return
 	}
-	g.setStoryFlag(flagPhoenixUnrevived, false)
-	g.setStoryFlag(0x11, false) // file 0x7593：只在原版重載過場中暫設，return 前清除
+	g.applyStoryFlagLists(e)
+	g.phoenixMapCellWritten = true
+	// handler69 sets the transient flag while it writes the map cell and
+	// rebuilds the NPC list; it clears the flag before returning.
+	g.reloadStoryFlagScene(e)
+	for _, flag := range e.SetStoryFlagsRaw {
+		if flag == e.PhoenixTransientFlagRaw {
+			g.setStoryFlag(flag, false)
+		}
+	}
+	g.reloadStoryFlagScene(e)
 	g.phoenixOwned, g.phoenixAboard = true, false
-	g.phoenixX, g.phoenixY = phoenixParkX, phoenixParkY
+	g.phoenixX, g.phoenixY = e.ParkPosition.X, e.ParkPosition.Y
 	g.phoenixStage = 0
-	g.reloadTownDaynight()
 }
 
 // tryLandPhoenix 對齊 EXE file 0x434f：attr&0x64 非零不可降落。
@@ -175,27 +205,30 @@ func (g *Game) tryLandPhoenix() bool {
 // 旗標 8f..94 清除（已放珠）後，把空盆 tile 0x94 覆成紅珠 tile 0x95。
 // 0x7b..0x80 是復活時中央蛋的六幀動畫，不能誤拿 0x7b 當祭壇寶珠。
 func (g *Game) drawPhoenixAltars(camX, camY int) {
-	if g.cur == nil || g.curCty != ctyPhoenixShrine || g.cur.sec != 0 {
+	e, ok := g.phoenixRuntimeEvent()
+	if !ok || e.Animation == nil || g.cur == nil || g.curCty != e.NPC.CTYRaw || currentSceneSection(g.cur) != e.NPC.Section {
 		return
 	}
-	for i, xy := range phoenixAltarTop {
-		if g.storyFlag(phoenixAltarFlagFirst + i) {
+	for i, xy := range e.PhoenixAltarTiles {
+		if i >= len(e.PhoenixAltarFlagRaw) || g.storyFlag(e.PhoenixAltarFlagRaw[i]) {
 			continue
 		}
-		x, y := xy[0], xy[1]
+		x, y := xy.X, xy.Y
 		if x >= camX && x < camX+ViewCols && y >= camY && y < camY+ViewRows {
-			blitTile(g.rgba, (x-camX)*TileW, (y-camY)*TileH, g.cur.blk.Tile(0x95), g.cur.pal)
+			blitTile(g.rgba, (x-camX)*TileW, (y-camY)*TileH,
+				g.cur.blk.Tile(e.PhoenixAltarVisualTileRaw), g.cur.pal)
 		}
 	}
-	if g.phoenixStage == 3 && phoenixEggX >= camX && phoenixEggX < camX+ViewCols &&
-		phoenixEggY >= camY && phoenixEggY < camY+ViewRows {
+	pos := e.Animation.Position
+	if g.phoenixStage == 3 && pos.X >= camX && pos.X < camX+ViewCols &&
+		pos.Y >= camY && pos.Y < camY+ViewRows {
 		frame := g.phoenixAnim
 		if frame < 0 {
 			frame = 0
-		} else if frame > 5 {
-			frame = 5
+		} else if frame >= len(e.Animation.TilesRaw) {
+			frame = len(e.Animation.TilesRaw) - 1
 		}
-		blitTile(g.rgba, (phoenixEggX-camX)*TileW, (phoenixEggY-camY)*TileH,
-			g.cur.blk.Tile(0x7b+frame), g.cur.pal)
+		blitTile(g.rgba, (pos.X-camX)*TileW, (pos.Y-camY)*TileH,
+			g.cur.blk.Tile(e.Animation.TilesRaw[frame]), g.cur.pal)
 	}
 }

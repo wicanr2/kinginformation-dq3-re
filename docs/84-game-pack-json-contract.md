@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.27"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.29"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -184,18 +184,24 @@ namespace:local_id
 | `save_namespace` | string | 是 | 各代存檔隔離鍵。 |
 | `capabilities` | string[] | 是 | 例如 `party`、`classes`、`day_night`、`vehicles.ship`。 |
 | `data` | object | 是 | logical table 名稱到相對 JSON 路徑；路徑不得離開 pack root。 |
-| `assets` | object | 是 | logical asset 名稱、路徑、大小及 hash。 |
+| `assets` | object | 是 | logical asset 名稱、路徑、大小及 hash；必要時可列明受證據約束的 alternate size/hash。 |
 
 `data` 可選擇提供 `audio` 路徑。存在時，檔案必須是同一 schema version 的
 `audio.json`，由 loader 嚴格驗證；未提供音效 cue 不得在 Go 端補上版本專屬軌號。
+E2 戰鬥資料另外可提供 `battle` 路徑；正式 `NewGameWithPack` 必須有此契約，舊的純資料
+fixture 若未提供仍可由 loader 讀取，但不得啟動 production game。`battle.json` 只保存已由
+原始 bytes／IDA consumer 證實的資料，未閉合的玩家語意保留 raw／`unknown`，不可由 Go
+fallback 補值。
 `assets` 的 `size`／`sha256` 是外部原版素材的完整性 gate；引擎讀取 pack 指定的路徑並在
-載入時核對，不得把 `TITG.P`、`TIT3.P` 等檔名重新寫成共用引擎常數。
+載入時核對，不得把 `TITG.P`、`TIT3.P` 等檔名重新寫成共用引擎常數。`alternate_size`／
+`alternate_sha256` 只可用於同一資產的已記錄變體（例如保留原始 SHP 與加入 128/129 的
+可重建版本），不可用來接受任意未知 bytes。
 
 最小示意：
 
 ```json
 {
-  "schema_version": "0.1.27",
+  "schema_version": "0.1.29",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -213,11 +219,42 @@ namespace:local_id
     "texts": "data/texts.json",
     "events": "data/events.json",
     "interface": "data/interface.json",
-    "audio": "data/audio.json"
+    "audio": "data/audio.json",
+    "battle": "data/battle.json"
   },
   "assets": {}
 }
 ```
+
+### 6.1a `battle.json`（E2 靜態契約）
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `schema_version` | string | 是 | 必須等於 manifest schema。 |
+| `source_files` | object[] | 是 | 原始輸入檔名、大小、SHA-256；不可省略或重複。 |
+| `encounter.region_lookup` | raw object | 是 | `DS:0x4966` 的 256-byte 區域表；保存位址、file offset、raw hash。 |
+| `encounter.candidate_table` | raw object | 是 | `DS:0x4a56` 的實際 27×4×8-byte 候選區；未替欄位命名。 |
+| `encounter.row_stride_bytes`／`region_stride_bytes` | int | 是 | 原版固定為 `8`／`0x20`；`region` 先減一再索引。 |
+| `encounter.fixed_records` | object[] | 是 | 13 筆固定編隊 raw record；保留 count、caller 與原始 bytes。 |
+| `encounter.formation_position` | object | 是 | `sub_1AAA1`／`sub_1AAD5`／`sub_1AB2C` 到 `sub_1B31A` 的 raw formation 投影契約；不把 EGA 位址誤當成未證實的美術排列名稱。 |
+| `encounter.formation_position.origin_raw` | int | 是 | `word_272E3` 初值 `0x26`。 |
+| `encounter.formation_position.first_member_offset_raw` | int | 是 | `sub_1AAD5` 在第一筆 active record 前加入的 `2`。 |
+| `encounter.formation_position.weight_step_multiplier` | int | 是 | `sub_1AB2C` 每隻依 D3MNS `+0x28` 乘 `2` 前進。 |
+| `encounter.formation_position.ega_stride_bytes` | int | 是 | `sub_1B31A` 的 EGA 每列 stride `0x54` bytes。 |
+| `encounter.formation_position.ega_bottom_raw` | int | 是 | `sub_1B31A` 的 raw bottom `0x102`。 |
+| `encounter.formation_position.pixels_per_raw_byte` | int | 是 | EGA byte 到像素面的固定轉換 `8`；不是從目前視窗寬度推導。 |
+| `resistance.effect_thresholds` | raw object | 是 | `DS:0x36e5` threshold stream；連續 `0x00` sentinel 不可刪除。 |
+| `resistance.class_thresholds` | int[] | 是 | 原版 `[0,68,180,255]`。 |
+| `resistance.descriptor_table` | raw object | 是 | `DS:0x37c3` 60×3-byte descriptor。 |
+| `resistance.effect_names_zh` | object | 是 | effect id `0..59` 到 D3TXT00 record `0x79+id` 的文字對映；不代表元素／狀態語意。 |
+| `evidence` | object | 是 | E2 raw contract 的來源、consumer 與推論等級。 |
+
+`raw object` 必須有 `address_space`、`address`、`length_bytes`、`raw_sha256`、`raw_hex` 與
+`evidence`；loader 會檢查長度／SHA-256。`formation_position` 現在保存已由 IDA
+writer→consumer 閉合的 raw EGA 投影，production renderer 依此計算位置；它不等於已知每個
+動作的美術幀或玩家可見 timing。E2 仍不把 boss repeat-N、逐動作 SHP frame、PCM 播放停頓
+或缺失 story flag 的玩家語意寫入此表；那些項目仍留在
+[`docs/123`](123-static-battle-daynight-re.md) 的非 production sidecar。
 
 ## 6. 規則與內容表
 
@@ -1120,7 +1157,33 @@ NPC 及交易後玩家的具名方向，`treasure_gates` 明列第二戰前不�
 寶箱 gate 都需 D3 證據；缺值或未知方向 fail closed。第一個實例是
 `dq3:event.jipang_orochi`，證據見 [`docs/95`](95-jipang-orochi-production-trace.md)。
 
-### 6.11 `ui.json`、`audio.json`
+### 6.11 `story_flag_runtime_events`
+
+`events.json.story_flag_runtime_events` 保存已由 IDA Pro 9.4 閉合、且已接到正式玩家路徑的
+有限原版 handler transaction。引擎只執行 `kind` 對應的固定 primitive，不接受 JSON 程式碼；
+事件缺欄位、selector、旗標或 evidence 時整個 pack fail closed。每筆必須保留原始 handler、
+CTY／section／NPC 座標、set／clear story flag、consumer 與 D3 evidence。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---|---|---|
+| `story_flag_runtime_events` | object[] | 是 | 可為空；不得省略。ID 不得重複。 |
+| `[].id`／`[].kind` | string | 是 | 穩定事件 ID 與有限 primitive 種類：`post_zoma_ending`、`phoenix_revival`、`boss_aftermath`、`conditional_story_flag`。 |
+| `[].handler_raw`／`[].npc` | int/object | 是 | 原版 handler raw ID 及 `cty_raw/section/tile/handler_raw` selector；不得以 Go 常數取代。 |
+| `[].set_story_flags_raw`／`[].clear_story_flags_raw` | int[] | 是 | 原版 transaction；兩邊不得重複，未知旗標不可用 0 填補。 |
+| `[].dialogue_record_raw` | int | primitive 需要時 | 引擎可讀的 D3TXT record。若原版以 `DI` selector 傳入，另以 `dialogue_selector_raw` 保存未換算 raw（例如 `0x0bff → record 71`）。 |
+| `[].map_cell`／`[].animation`／`[].park_position` | object | 依 kind | 只允許已證實的 map byte、動畫 tile/frame tick 與載具停放位置；不可由畫面目測猜值。 |
+| `[].phoenix_*_dialogue_raw`／`phoenix_altar_visual_tile_raw` | int | `phoenix_revival` 必填 | 六珠祭壇的 rec92/93/94/96 與紅珠 tile raw；保留在 pack，不在 Go 留版本常數。 |
+| `[].evidence` | Evidence | 是 | 本輪事件均為 IDA／EXE D3；source 需含輸入雜湊與 address space，consumer 需能回查。 |
+
+DQ3 canonical 事件包含：handler74 的索瑪後拉達多姆冊封（`0x0d`）、handler69 的六珠祭壇
+拉米亞復活（`0x11` transient、CTY70 byte `0x80` map patch、save/load replay）、handler70
+巴拉摩斯戰後日夜／世界重建（`0x1a/0x1b`），以及 handler33 沙曼歐莎條件居民（原始
+`DI=0x0bff` 換算 record 71，交易 `0x3d→0x24/0x21`）。完整 raw／IDA chain 見
+[`docs/123`](123-static-battle-daynight-re.md)、[`docs/119`](119-daynight-story-flag-audit.md)
+與 pack `events.json`；尚未閉合的 runtime 語意仍留在 evidence ledger，不得寫入 production
+JSON 或用合理預設補洞。
+
+### 6.12 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
   避免在規則表散落中文字串。
@@ -1129,7 +1192,7 @@ NPC 及交易後玩家的具名方向，`treasure_gates` 明列第二戰前不�
 
 ```json
 {
-  "schema_version": "0.1.27",
+  "schema_version": "0.1.29",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1159,7 +1222,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.27",
+  "schema_version": "0.1.29",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

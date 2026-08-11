@@ -7,6 +7,15 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
+// 這些 raw selector 只供原版 identity／input trace tests；production runtime
+// 由 events.json.story_flag_runtime_events 提供同一份資料。
+const (
+	ctyRadatomeCastle  = 80
+	radatomeThroneSec  = 1
+	radatomeKingHandle = 74
+	radatomeEndingRec  = 48
+)
+
 // 光之珠弱化:索瑪(0x7c)持光之珠 → 開戰時敵攻/3、防/4、旗標清;無光之珠 → 全力。
 func TestZomaLightOrbWeaken(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))

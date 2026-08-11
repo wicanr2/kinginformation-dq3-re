@@ -31,7 +31,9 @@ render 成果在 `docs/maps/`:
 另外用 idx 5 = `(0,85,223)` 真藍,因此即使套靜態 palette 海岸也正確。
 
 `map_render.py` 預設把 idx 2/10 改藍(可讀性);設環境變數 `OCEAN_FIX=0` 可看原始 palette。
-精確的 runtime palette 仍在 `DQ3.EXE` 內(尚未抽出),未影響地圖可讀性。
+原版 runtime palette 的 clock／bank 選擇已由 IDA Pro 9.4 抽出；精確 table、輸入 hash
+與位址口徑見 [`docs/123`](123-static-battle-daynight-re.md)。本行取代早期「尚未抽出」
+的歷史描述；海面動態 DAC 的同狀態畫面仍屬 V3 對拍。
 
 ## BLK — tile 圖庫
 
