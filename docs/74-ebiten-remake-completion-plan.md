@@ -961,10 +961,12 @@ pack／renderer，仍不能把它包裝成同狀態 V3 截圖 parity 或 release
 補充：本輪重播時發現 CTY07／08 塔區的 section route fixture 會遇到原始遭遇表；已改由
 雷貝正式道具店購買聖水、以道具選單驅敵，並在 route helper 以正式戰鬥輸入處理意外遭遇。
 原始 CTY07→CTY08 transition chain 現可抵達 CTY08 sec3 並接上拿吉米老人；完整
-`TestOpeningProductionInputTrace` 後段仍在另一個 CTY13 路徑 fixture 停止，因此沒有把完整
-campaign／E3 宣稱為通過。這個狀態不是以 debug state 蓋掉；若要宣稱 E3，仍需從合法
-checkpoint 收尾後段路徑。V3 畫面／音效不足之處依 README 的 `V3-approx` 政策標示，不能
-改寫成逐像素或逐波形 parity。
+`TestOpeningProductionInputTrace` 舊版後段曾在 CTY13 路徑 fixture 停止；2026-08-11 已確認
+CTY13 sec2 的 raw encounter gate（`+0x11=10`）會開正式 battle modal，並在
+`traceWalkToNoPortal` 補上 production battle／聖水輸入。從合法前段 trace 已抵達 CTY13
+sec2、依序完成雙開關、取得 `0x56` 魔法鑰匙並通過 save/load（targeted E2）。這個修正不是
+以 debug state 蓋掉；完整 campaign 在修正後尚未重播完畢，故仍不宣稱 E3。V3 畫面／音效
+不足之處依 README 的 `V3-approx` 政策標示，不能改寫成逐像素或逐波形 parity。
 
 ### E2 formation／PCM 補證（2026-08-11）
 

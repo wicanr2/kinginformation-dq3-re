@@ -582,6 +582,13 @@ transition chain，先由雷貝正式道具店購買聖水，再以道具／戰�
 可抵達 CTY08 sec3 並接上拿吉米老人；完整 trace 的後段仍有 CTY13 路徑 fixture 未收尾，
 所以仍不宣稱 E3。README 的 `V3-approx` 政策只允許呈現／時序近似，不改變這個 gate。
 
+2026-08-11 CTY13 勘誤：前述「CTY13 路徑 fixture 未收尾」是修正前快照。CTY13 sec2 的
+原始 section header `+0x11=10` 允許遭遇，`(25,24)`／`(25,25)` 原始 tile 均可走；真正
+阻塞是 `traceWalkToNoPortal` 在遭遇 modal 時仍送方向鍵，沒有走正式 battle consumer。
+現已補 `traceResolveBattle` 與正式聖水輸入，從合法前段 trace 可抵達 CTY13 sec2、完成雙
+開關、取得 `0x56` 魔法鑰匙並通過 save/load（targeted E2）。完整 campaign 在此修正後尚未
+重播完畢，故仍不重新宣稱 E3。
+
 2026-08-11 formation／PCM 補證勘誤：IDA Pro 9.4 的 `sub_1AAA1→sub_1AAD5→sub_1AB2C→sub_1B31A`
 已閉合 raw position 公式：第一筆為 `0x26 - Σ(D3MNS +0x28×count) + 2`，後續每隻以
 `2×D3MNS +0x28` 前進；`sub_1AB2C` 逐個體擲 HP，不能再用同組代表 HP／起點 `0x26`。這些

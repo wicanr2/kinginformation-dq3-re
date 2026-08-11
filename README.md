@@ -7,8 +7,9 @@
 截至 2026-08-11，本專案採用使用者確認的 E2／D2 快速驗收：戰鬥 pack raw、loader、
 formation／抗性 decoder、正式事件輸入與 save/load 的 Docker headless targeted tests 已通過。
 本輪已修正 CTY07→CTY08 的正式 section 路由：依原始 transition table，並用正式道具／戰鬥
-輸入處理塔區遭遇，現在可抵達 CTY08 sec3；完整 campaign 的後段仍有另一個路徑 fixture
-需要獨立收尾，因此目前不把整段 campaign 宣稱為 E3 通過。逐畫面／音效 V3 的長尾仍待
+輸入處理塔區遭遇，現在可抵達 CTY08 sec3；本輪再修正 CTY13 金字塔開關路徑在遭遇 modal
+時未送正式戰鬥輸入的 trace blocker，已可由正式路徑取得魔法鑰匙並通過 save/load。完整
+campaign 修正後尚未重跑完畢，因此目前不把整段 campaign 宣稱為 E3 通過。逐畫面／音效 V3 的長尾仍待
 後續對拍，本輪指定的 AppImage、Windows ZIP 與 macOS ZIP 已產出。Android／WASM 不屬本輪 release 目標。現行進度與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
 本次可公開的 patch checksum、Docker smoke 界線與不公開的本機完整版清單見
@@ -203,9 +204,9 @@ README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出�
 截至 2026-08-11，E2 targeted 驗收已涵蓋 pack raw→loader→battle／event→save/load；IDA
 閉合的四條 story-flag transaction（handler74／69／70／33）也已遷入
 `events.json.story_flag_runtime_events` 並由正式 command／battle path 接線，
-並以既有 PNG 作畫面 V2 證據；CTY07→CTY08 route 已依原始 transition table 與正式輸入
-修正並可抵達 CTY08 sec3，但完整 `TestOpeningProductionInputTrace` 的後段仍有另一個
-路徑 fixture 未收尾，因此不作目前 E3 gate。第 3 項仍有 V1／V2 與 V3 長尾，
+並以既有 PNG 作畫面 V2 證據；CTY07→CTY08 與 CTY13 金字塔 route 已依原始 transition table、
+正式道具／戰鬥輸入修正，CTY13 checkpoint 已可取得魔法鑰匙並保存／讀回；完整
+`TestOpeningProductionInputTrace` 尚未在本修正後完整重播，因此不作目前 E3 gate。第 3 項仍有 V1／V2 與 V3 長尾，
 boss repeat-N、逐動作 frame、PCM 波形／停頓及這四條事件的原版 V3 畫面／完整 route 仍是
 未閉合限制；未找到直接 runtime caller 的其他旗標仍維持 unknown。formation
 的 raw EGA position／stride 已納入 E2 pack／renderer，但同狀態

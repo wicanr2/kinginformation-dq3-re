@@ -5763,6 +5763,17 @@ func traceWalkTo(t *testing.T, g *Game, x, y int) {
 func traceWalkToNoPortal(t *testing.T, g *Game, x, y int) {
 	t.Helper()
 	for i := 0; i < 3000 && (g.px != x || g.py != y); i++ {
+		if g.battle.active {
+			// CTY12/13 金字塔 section 仍保留原始遭遇 gate；正式走向
+			// 開關時若先觸發遭遇，必須以 production battle input 收尾，
+			// 不能讓 modal battle 吞掉後續方向鍵而誤報地圖不連通。
+			traceResolveBattle(t, g, true)
+			continue
+		}
+		if g.repel <= 8 && g.countItem(itemuse.ItemHolyWater) > 1 {
+			traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
+			continue
+		}
 		if g.cd > 0 {
 			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
 				t.Fatalf("等待無轉場路徑 cooldown: %v", err)

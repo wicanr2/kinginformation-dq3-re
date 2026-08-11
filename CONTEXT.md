@@ -211,8 +211,10 @@
   Phoenix save/load map replay、Baramos aftermath 與 ending writer 驗收。完整 V3 route、
   palette register、SHP／PCM timing、boss repeat-N 與未閉合 story 語意仍保持 `unknown`／fail-closed。
 - CTY07→CTY08 route 勘誤（2026-08-11）：原始 transition chain 已接通；塔區遭遇由正式聖水／
-  戰鬥輸入處理後可抵達 CTY08 sec3。完整 campaign 後段仍有其他路徑 fixture，不能把這條
-  route 的修正誤稱為 E3 全程通關；呈現與時序近似依 README 的 `V3-approx` 標記。
+  戰鬥輸入處理後可抵達 CTY08 sec3。CTY13 金字塔 sec2 同樣確認遭遇 gate 會開 modal；
+  `traceWalkToNoPortal` 已補正式戰鬥輸入，CTY13 開關／魔法鑰匙 checkpoint 可由正式 trace
+  抵達並 save/load。完整 campaign 修正後尚未重播完畢，不能把這些 route 修正誤稱為 E3 全程
+  通關；呈現與時序近似依 README 的 `V3-approx` 標記。
 - 詳細目前狀態：[`docs/119`](docs/119-daynight-story-flag-audit.md)、
   [`docs/123`](docs/123-static-battle-daynight-re.md)、[`docs/74`](docs/74-ebiten-remake-completion-plan.md)、
   [`docs/84`](docs/84-game-pack-json-contract.md)。
