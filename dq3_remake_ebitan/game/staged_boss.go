@@ -34,16 +34,11 @@ func (g *Game) startPackFormation(f gamepack.BattleFormation, suppressDrop bool)
 	for i, group := range f.Groups {
 		groups[i] = enemyGroup{monID: group.MonsterRawID, count: group.Count}
 	}
-	if bg, ok := dq3data.DecodePackBG(g.battle.scr, f.BackgroundRaw); ok {
-		g.battle.bg = bg
-	} else {
-		return false
-	}
 	hp := heroParams{
 		level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: g.heroMaxMP(), spells: g.heroSpells(),
 	}
-	if !g.battle.startFormation(groups, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
+	if !g.battle.startFormationWithBackground(groups, int64(g.anim)*2654+1, hp, g.buildCompanionActors(), &f.Background) {
 		return false
 	}
 	g.battle.suppressDrop = suppressDrop

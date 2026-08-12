@@ -40,6 +40,10 @@ UX 並完成 Docker debug APK（目前僅 `build-only`，尚無 emulator／真�
 [`docs/122`](docs/122-release-20260810.md)。
 本輪另以 IDA／原始資料閉合 CTY59 `handler41` 的 Y=4 設施分支；它已達 D3／E2／V1，
 不代表 CTY60／61 階段或全程畫面 parity 已完成。
+日邦格八頭大蛇兩場固定編隊的背景 selector 也已由 IDA 9.4 閉合並遷入 game pack：正式四人
+trace 現分別為洞窟與沙漠，達 near-state V2；這是必經 Boss 的可見修正，不把通用地形背景或
+逐畫面 V3 一併宣稱完成。該 schema 更新後的正式 `InputState` replay 仍在 Docker＋Xvfb 於
+67.24 秒抵達 `THE END`，詳見 [`docs/128`](docs/128-battle-background-selector-re.md)。
 
 ### V3 近似驗收政策（2026-08-11）
 
@@ -73,6 +77,7 @@ TITP 位置與開場音效仍待 V3，詳見 [`docs/120`](docs/120-opening-cutsc
 - [`docs/58-taiwan-jingxun-music-preservation.md`](docs/58-taiwan-jingxun-music-preservation.md)：精訊音樂與台灣電玩史保存紀錄。
 - [`docs/124-android-ux-spec.md`](docs/124-android-ux-spec.md)：保存優先的 Android 版 UX 與本輪 build-only 界線。
 - [`docs/125-acceptance-20260811.md`](docs/125-acceptance-20260811.md)：Go／Android／原版取樣驗收與 HUD 框線勘誤。
+- [`docs/128`](docs/128-battle-background-selector-re.md)：固定編隊背景 archive／palette selector 的原始資料、勘誤與 V2 界線。
 
 較早的 Markdown 可作為研究索引；進度以 `docs/74` 為主，規格則回到 `DQ3.EXE`、原始資料、
 DOSBox 實機與本機完整影片核對。
@@ -121,10 +126,11 @@ PNG 保留原始槽位與像素比例，並以與現有圖鑑相同的深色索�
 其餘場景仍依各圖的 V1/V2 標註，不能把單一終盤畫格擴大解讀成全程 V3。終盤證據／剩餘
 畫面工作見 [`docs/106`](docs/106-gaia-sword-volcano-re-worklist.md)。
 
-README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出，並使用預設
-`combat_info=0`。敵人上方的 `H/HP` 是可選的 remake 診斷資訊，不是精訊版原版畫面，
-因此不應出現在這些對拍圖；玩家可見的戰鬥文字也必須由框線／面板 renderer 佈局，若文字
-落在框外即視為尚未通過 V3 對拍。
+README 內的戰鬥圖使用 Docker 正式 renderer，並使用預設 `combat_info=0`。其中日邦格兩張
+已於 2026-08-12 以正式四人 `InputState` trace 重產：固定編隊 selector 分別取原版 page 35／
+bank 5 與 page 26／bank 5，作為 near-state V2 證據；它們不是逐像素 V3。敵人上方的 `H/HP`
+是可選的 remake 診斷資訊，不是精訊版原版畫面，因此不應出現在這些對拍圖；玩家可見的戰鬥
+文字也必須由框線／面板 renderer 佈局，若文字落在框外即視為尚未通過 V3 對拍。
 
 ![Ebiten：原版新遊戲開場](dq3_remake_ebitan/docs/opening_home_rec82.png)
 
@@ -146,11 +152,11 @@ README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出�
 
 ![Ebiten：地表使用黑暗之燈後進入夜晚](docs/img/teidon_dark_lamp_night.png)
 
-![Ebiten：日邦格八頭大蛇第一戰（原版怪物遮罩、背景與框內戰鬥文字）](docs/img/jipang_orochi_first_battle.png)
+![Ebiten：日邦格八頭大蛇第一戰（正式四人 trace、洞窟背景，near-state V2）](docs/img/jipang_orochi_first_battle.png)
 
 ![Ebiten：第一戰後依原版移動至宮殿並顯示 rec70](docs/img/jipang_orochi_first_post.png)
 
-![Ebiten：拒絕無姬後的第二戰（原版掉落抑制、無非原版怪物 HP 飄字）](docs/img/jipang_orochi_second_battle.png)
+![Ebiten：拒絕無姬後的第二戰（正式四人 trace、沙漠背景，near-state V2）](docs/img/jipang_orochi_second_battle.png)
 
 ![Ebiten：第二戰後正式調查取得紫寶珠](docs/img/jipang_purple_orb_obtained.png)
 
@@ -237,7 +243,8 @@ README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出�
 `TestOpeningProductionInputTrace` 已於本修正後由新遊戲重播至 `THE END`，因此主線達目前 E3 gate。第 3 項仍有 V1／V2 與 V3 長尾，
 boss repeat-N、逐動作 frame、PCM wall-clock 與可見 palette transition 沒有可安全填入的
 靜態 production 值，仍是 V3／unknown 限制；formation 的 raw EGA position／stride 已納入
-E2 pack／renderer。完整靜態收斂與停止條件見
+E2 pack／renderer。日邦格兩場必經 Boss 的固定背景則已按原版 archive page／palette bank
+達 near-state V2；通用地形背景沒有藉此宣稱 parity。完整靜態收斂與停止條件見
 [`docs/123`](docs/123-static-battle-daynight-re.md)。三種桌面發佈包與推廣片的雜湊／界線見
 [`docs/114`](docs/114-release-artifacts.md)；後續工作以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
 的 E2 handoff 與未決清單為準。

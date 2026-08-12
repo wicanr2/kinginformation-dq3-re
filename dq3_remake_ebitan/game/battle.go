@@ -125,13 +125,16 @@ const (
 
 // Battle 是一場戰鬥的狀態。
 type Battle struct {
-	mons     *dq3data.Monsters
-	shp      []byte
-	mpal     []dq3data.Color // MNSBK.PAL(怪物色盤 + packbg 色盤)
-	tx       *dq3data.Text
-	nameText *dq3data.Text                            // D3TXT00 名表(咒文名 rec)
-	scr      []byte                                   // PACKBG.SCR(戰鬥背景)
-	bg       *[dq3data.PackBGH][dq3data.PackBGW]uint8 // 解碼後背景(草原 page22)
+	mons            *dq3data.Monsters
+	shp             []byte
+	mpal            []dq3data.Color // MNSBK.PAL(怪物色盤 + packbg 色盤)
+	tx              *dq3data.Text
+	nameText        *dq3data.Text                 // D3TXT00 名表(咒文名 rec)
+	scr             []byte                        // PACKBG.SCR(戰鬥背景)
+	bg              *dq3data.PackBG               // pack 選定頁的可見戰鬥場景帶
+	background      gamepack.BattleBackgroundData // archive/layout/default selector，由 pack 提供
+	backgroundReady bool
+	bgPaletteBank   int
 
 	active                 bool
 	monID                  int                    // formation 第一筆怪物 id；單群相容與索瑪判斷用
@@ -269,6 +272,41 @@ func (b *Battle) setSceneLayout(layout gamepack.BattleSceneLayout) {
 func (b *Battle) setFormationPosition(layout gamepack.BattleFormationPosition) {
 	b.formationPosition = layout
 	b.formationPositionReady = layout.Evidence.Level != ""
+}
+
+// setBackgroundSource installs a fully validated pack-owned background
+// archive.  Direct Battle fixtures may omit it; production bootstrap must not.
+func (b *Battle) setBackgroundSource(background gamepack.BattleBackgroundData, scr []byte, palette []dq3data.Color) bool {
+	if background.PageStrideBytes <= 0 || background.PageCount <= 0 ||
+		background.PaletteBankCount <= 0 || background.PaletteEntriesPerBank <= 0 ||
+		len(scr) != background.PageCount*background.PageStrideBytes ||
+		len(palette) != background.PaletteBankCount*background.PaletteEntriesPerBank {
+		return false
+	}
+	b.scr, b.mpal = scr, palette
+	b.background, b.backgroundReady = background, true
+	b.bg, b.bgPaletteBank = nil, 0
+	return true
+}
+
+func (b *Battle) selectBackground(selector gamepack.BattleBackgroundSelector) bool {
+	if !b.backgroundReady || selector.PageRaw < 0 || selector.PageRaw >= b.background.PageCount ||
+		selector.PaletteBankRaw < 0 || selector.PaletteBankRaw >= b.background.PaletteBankCount {
+		return false
+	}
+	bg, ok := dq3data.DecodePackBG(b.scr, selector.PageRaw, dq3data.PackBGFormat{
+		PageStrideBytes:  b.background.PageStrideBytes,
+		FieldOffsetBytes: b.background.FieldOffsetBytes,
+		FieldChunkBytes:  b.background.FieldChunkBytes,
+		WidthPixels:      b.background.WidthPixels,
+		FieldRows:        b.background.FieldRows,
+		PlaneCount:       b.background.PlaneCount,
+	})
+	if !ok {
+		return false
+	}
+	b.bg, b.bgPaletteBank = bg, selector.PaletteBankRaw
+	return true
 }
 
 // setCommandLabels installs the version-owned glyph pair for each stable
@@ -437,6 +475,13 @@ func (b *Battle) startGroup(monID, count int, seed int64, hp heroParams, comps [
 // D3MNS +0x28×count 從 0x26 反向扣除，再由 sub_1AAD5 加 2；每隻
 // sub_1AB2C 都各自擲一次 HP，並將 active +0x03 以 weight×2 前進。
 func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, comps []*battleActor) bool {
+	return b.startFormationWithBackground(groups, seed, hp, comps, nil)
+}
+
+// startFormationWithBackground runs the same combat construction with an
+// optional pack selector for scripted formations.  nil means the pack's
+// validated default selector; direct fixtures without a pack remain isolated.
+func (b *Battle) startFormationWithBackground(groups []enemyGroup, seed int64, hp heroParams, comps []*battleActor, selector *gamepack.BattleBackgroundSelector) bool {
 	if len(groups) == 0 {
 		return false
 	}
@@ -513,8 +558,14 @@ func (b *Battle) startFormation(groups []enemyGroup, seed int64, hp heroParams, 
 	if len(b.enemies) == 0 {
 		return false
 	}
-	if b.bg == nil && b.scr != nil { // 首戰解碼草原背景(page22,對 game3.png)
-		b.bg, _ = dq3data.DecodePackBG(b.scr, 22)
+	if b.backgroundReady {
+		selected := b.background.DefaultSelector
+		if selector != nil {
+			selected = *selector
+		}
+		if !b.selectBackground(selected) {
+			return false
+		}
 	}
 	b.heroMax, b.heroHP = hp.maxHP, hp.curHP
 	b.heroAtk, b.heroDef, b.heroAgi, b.heroLevel = hp.atk, hp.def, hp.agi, hp.level
@@ -1702,21 +1753,25 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	groundY := b.sceneLayout.GroundY
 	curGlyph := b.sceneLayout.CursorGlyph
 
-	// 背景:全黑 → 場景帶。有 packbg(草原 page22)→ 縮放進 80..246;否則純色 fallback。
+	// 背景:全黑 → pack 選定的場景帶；未安裝 pack 的 direct fixture 才保留純色底。
 	for y := 0; y < ScreenH; y++ {
 		for x := 0; x < ScreenW; x++ {
 			putPx(rgba, x, y, black)
 		}
 	}
-	if b.bg != nil { // packbg:88 row 縮放進 fieldY0..fieldY1(對齊 C g_sky 渲染)
+	if b.bg != nil {
 		for y := fieldY0; y < fieldY1; y++ {
-			sr := (y - fieldY0) * dq3data.PackBGH / (fieldY1 - fieldY0)
-			if sr >= dq3data.PackBGH {
-				sr = dq3data.PackBGH - 1
+			sr := (y - fieldY0) * b.bg.Height / (fieldY1 - fieldY0)
+			if sr >= b.bg.Height {
+				sr = b.bg.Height - 1
 			}
-			for x := 0; x < ScreenW && x < dq3data.PackBGW; x++ {
+			for x := 0; x < ScreenW && x < b.bg.Width; x++ {
 				c := black
-				if idx := int(b.bg[sr][x]); idx < len(b.mpal) {
+				idx := int(b.bg.Pixels[sr*b.bg.Width+x])
+				if b.backgroundReady {
+					idx += b.bgPaletteBank * b.background.PaletteEntriesPerBank
+				}
+				if idx < len(b.mpal) {
 					c = b.mpal[idx]
 				}
 				putPx(rgba, x, y, c)

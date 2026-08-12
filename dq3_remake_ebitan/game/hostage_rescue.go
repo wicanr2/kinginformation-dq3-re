@@ -154,7 +154,7 @@ func (g *Game) startHostageFormation(formation gamepack.BattleFormation) bool {
 	g.battle.lightOrb = false
 	g.battle.showInfo = g.cfg.CombatInfo
 	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
-	if !g.battle.startFormation(groups, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
+	if !g.battle.startFormationWithBackground(groups, int64(g.anim)*2654+1, hp, g.buildCompanionActors(), &formation.Background) {
 		return false
 	}
 	g.playAudioCue(audioCueBattle)

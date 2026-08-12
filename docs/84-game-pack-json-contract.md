@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.30"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.31"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -201,7 +201,7 @@ fallback 補值。
 
 ```json
 {
-  "schema_version": "0.1.30",
+  "schema_version": "0.1.31",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -232,6 +232,13 @@ fallback 補值。
 |---|---:|---:|---|
 | `schema_version` | string | 是 | 必須等於 manifest schema。 |
 | `source_files` | object[] | 是 | 原始輸入檔名、大小、SHA-256；不可省略或重複。 |
+| `background` | object | 是 | 原始 planar 戰鬥背景 archive 與 palette bank 的共用解碼契約；引擎不能保留特定版的檔名、page 或 fallback。 |
+| `background.archive_asset`／`palette_asset` | string | 是 | 指向 manifest 的 logical asset key；loader 驗證 size／SHA-256 後才讀取。 |
+| `background.page_stride_bytes` | int | 是 | archive 每個原始 page 的完整 stride；不能以目前可見高度或舊 decoder 的 chunk 長度推導。 |
+| `background.field_offset_bytes`／`field_chunk_bytes` | int | 是 | page 內真正要畫的 planar field 起點與 byte 長度；兩者與 `width_pixels`、`field_rows`、`plane_count` 必須一致。 |
+| `background.width_pixels`／`field_rows`／`plane_count` | int | 是 | decoded indexed surface 的幾何與 plane 數；共享 decoder 用它做 range 驗證。 |
+| `background.page_count`／`palette_bank_count`／`palette_entries_per_bank` | int | 是 | archive／palette 的 strict upper bound；page 或 bank 越界必須 fail-closed。 |
+| `background.default_selector` | object | 是 | `{ "page_raw", "palette_bank_raw" }`；只可放有獨立 D2 證據的既有 generic baseline，不能把它誤稱為所有 terrain 的 selector。 |
 | `encounter.region_lookup` | raw object | 是 | `DS:0x4966` 的 256-byte 區域表；保存位址、file offset、raw hash。 |
 | `encounter.candidate_table` | raw object | 是 | `DS:0x4a56` 的實際 27×4×8-byte 候選區；未替欄位命名。 |
 | `encounter.row_stride_bytes`／`region_stride_bytes` | int | 是 | 原版固定為 `8`／`0x20`；`region` 先減一再索引。 |
@@ -255,6 +262,18 @@ writer→consumer 閉合的 raw EGA 投影，production renderer 依此計算位
 動作的美術幀或玩家可見 timing。E2 仍不把 boss repeat-N、逐動作 SHP frame、PCM 播放停頓
 或缺失 story flag 的玩家語意寫入此表；那些項目仍留在
 [`docs/123`](123-static-battle-daynight-re.md) 的非 production sidecar。
+
+凡引用原始固定編隊的 event formation，背景欄位統一為：
+
+```json
+"background": { "page_raw": 35, "palette_bank_raw": 5 }
+```
+
+兩個值必須逐 byte 對應 `raw_bytes_hex[1]`／`raw_bytes_hex[2]`，並落在
+`battle.background` 宣告的 page／bank 範圍內。`page_raw` 是 legacy archive page 的 raw selector，
+`palette_bank_raw` 是 legacy 16-color palette bank 的 raw selector；兩者不是 UI page、Go enum 或
+可自由命名的場景類型。若 generic terrain 的 selector 尚未閉合，只可保留已證實的
+`default_selector` baseline，不能藉由某個 boss 的值推導其他 terrain。
 
 ## 6. 規則與內容表
 
@@ -1144,7 +1163,7 @@ production `NewGameWithPack` 缺少 `new_game_labels` 即拒絕啟動；`NewGame
 這個靜態確認頁切片已接入 runtime；palette register 切換、游標閃爍、能力條淡入與逐幀演出
 仍是另一個 V3 切片，不可由單張穩定畫面推導。
 
-### 6.9a 創角能力確認 V3 靜態欄位（schema `0.1.30`）
+### 6.9a 創角能力確認 V3 靜態欄位（schema `0.1.31`）
 
 2026-08-12 起，`new_game_geometry` 的舊 `stats_left_rows`／`stats_right_rows` 只能當成
 歷史相容欄位；production 確認頁必須以 `stats` 的十三個具名欄位為 canonical owner。每個
@@ -1233,7 +1252,7 @@ JSON 或用合理預設補洞。
 
 ```json
 {
-  "schema_version": "0.1.30",
+  "schema_version": "0.1.31",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1263,7 +1282,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.30",
+  "schema_version": "0.1.31",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

@@ -142,18 +142,23 @@ read 像素分頁 → VGA planar 驅動 seg 0x111b blit(4-bit planar,AND-mask �
 繪圖底層:VGA planar 驅動 seg 0x111b(docs/06,`out 0x3c4` Map Mask 4 plane 輪寫、
 row pitch 0x54、`and es:[di]` 透明遮罩),與 BLK/SHP/packbg 同 4-bit planar 家族。
 
-## 戰鬥背景:packbg(頁由地形決定)
+## 戰鬥背景：固定編隊 selector 與 archive
 
-> **更正(原誤記「page 0x13」)**:`battle_enter_screen` 的 `bp=0x13` 是 `lcall 1053:240`
-> 這個 file op 的參數,**不是** packbg 頁。真正的背景頁由選頁 wrapper `sub_d9f8` 算出。
+> **2026-08-12 勘誤。**本節較早把 `sub_d9f8` 解作通用地形選頁，並把
+> `PACKBG.SCR` 說成每 `0x6e00` 的密集 132 張陣列、草原為索引 22。IDA 9.4 對原始
+> loader 的 seek／read 資料流已推翻該解釋；舊結論保留在 Git 歷史以追溯誤因，不可再作
+> game-pack 或 renderer 規格。
 
-`battle_enter_screen`(sub_bfd1)→ `sub_c688` → **`sub_d9f8`(選頁)** → `load_packbg_page`:
-- `terrain = [tile + 0x4df6]`(tile→地形類別表,DGROUP);`page = [0xd73] + terrain*8`
-  (`terrain==3` → page 0x19);`[0xd73]` 初值 0。
-- 每地形專屬 16 色子調色盤:`[0x25d1] = MNSBK.PAL + [0xd73]*0x30`。
-- `PACKBG.SCR` 為每 `0x6e00`(640×88,4-plane row-interleaved)一張背景的**密集陣列**
-  (共 132 張,全部解出乾淨);**草原戰鬥背景 = 陣列索引 22**(藍天 + 綠地,對 game3.png)。
-  (`page*0x3d80` 公式僅 page 0 與陣列對齊;remake 直接用 `index*0x6e00`。)
+固定編隊 runner `sub_1BF35` 將 record `raw[1]`、`raw[2]` 分別複製到
+`DS:0x0d71`、`DS:0x0d73`。`sub_1C688` 以後者乘 `0x30` 選擇 `MNSBK.PAL` 的 16 色 bank；在
+`DS:0x4f2d != 0` 的 direct 分支，前者被傳給 `sub_1C6E5`。該 loader 的 DOS seek 是
+`page * 0x13d80`，每 page 先讀 `0x6e00`，再讀供目前 battle scene 使用的
+`0xcf80 = 640/8 × 166 × 4` row-interleaved planar field。因此 `PACKBG.SCR` 為 46 個完整
+`0x13d80` page；不能把其中一段當獨立 archive stride。
+
+這只證實固定編隊的 raw selector → archive page／palette bank 鏈。通用地形如何選擇背景仍是
+另一個資料流；目前不可由舊的「page 22」或本段固定 boss 值推導。資料契約、原始 bytes、IDA
+位址、推論等級與 V2 對照見 [`docs/128`](128-battle-background-selector-re.md)。
 
 `battle_leave_screen`(sub_c03f)重載地圖 BLK(`load_blk`)回到地表 / 城鎮
 (註:離場未還原 DQ3.PAL → 原版 bug #8 戰後變黃綠,見 docs/28)。

@@ -59,8 +59,9 @@ HP 12、MP 9、聰明度 7、運氣點數 8、守備力 6、經驗 0。
 - 三筆 `window_backdrops` 的 raw window 參照、draw order 與 terminal EGA cell projection；
 - `FIRST.SCR` 的原始 palette RGB 值。
 
-因此 Go renderer 不含 DQ3 專屬 record、座標、flag 或玩家文字。資料契約升為
-`schema_version: "0.1.30"`，DQ3 pack 的 `content_version` 為 `0.1.35`；欄位說明見
+因此 Go renderer 不含 DQ3 專屬 record、座標、flag 或玩家文字。此固定 checkpoint 當時的
+資料契約是 `schema_version: "0.1.30"`、DQ3 pack `content_version: "0.1.35"`；現行契約已因
+固定編隊背景 selector 升為 `0.1.31`／`0.1.36`，不改變本頁能力確認的證據結論。欄位說明見
 [`docs/84-game-pack-json-contract.md`](84-game-pack-json-contract.md)。
 
 ## 反證：record 407 不是可直接貼上的 bitmap template

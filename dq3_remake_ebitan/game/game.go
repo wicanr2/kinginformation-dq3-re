@@ -2662,6 +2662,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if _, ok := pack.BattlePack(); !ok {
 		return nil, fmt.Errorf("game pack missing data.battle")
 	}
+	battleBackground, ok := pack.BattleBackground()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing data.battle.background")
+	}
 	formationPosition, ok := pack.BattleFormationPosition()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing data.battle.encounter.formation_position")
@@ -2851,15 +2855,17 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.hero = dq3data.LoadCharSprite(mstBLS, heroSpriteEntry)
 	g.phoenix = dq3data.LoadCharSprite(manBLS, 176) // CTY70 egg b2=48 → (48-4)*4；原版拉米亞 8-frame sprite
 
-	// 戰鬥:怪物數值(D3MNS.DAT)+ sprite(DQ3MNS.SHP)+ 怪物色盤(MNSBK.PAL)
+	// 戰鬥:怪物數值、sprite、背景 archive/palette 全由 pack logical asset key 指定。
 	mons, merr := dq3data.OpenMonsters(readPackAsset("battle_monsters"))
 	if merr != nil && ld.err == nil {
 		return nil, fmt.Errorf("OpenMonsters: %w", merr)
 	}
 	g.battle.mons = mons
 	g.battle.shp = readPackAsset("battle_sprites")
-	g.battle.scr = readPackAsset("battle_background") // 戰鬥背景
-	g.battle.mpal = dq3data.DecodePalette(readPackAsset("battle_palette"), 256)
+	if !g.battle.setBackgroundSource(battleBackground, readPackAsset(battleBackground.ArchiveAsset),
+		dq3data.DecodePalette(readPackAsset(battleBackground.PaletteAsset), 256)) {
+		return nil, fmt.Errorf("game pack battle background archive/layout mismatch")
+	}
 	g.battle.tx = g.dlg.tx
 	regionRaw, candidateRaw, rawOK := pack.BattleEncounterRaw()
 	if !rawOK {

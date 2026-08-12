@@ -240,11 +240,13 @@ decoder 的 bounds 正規化刪掉；本輪已以 `id=2/38/59` 及怪物 121 的
   monster id（候選基址 `DS:0x29826`）。
 - 將 `word_272e3` 設為 `0x26`（38 點 encounter budget），以 D3MNS `record +0x28`
   權重遞減；每次把 `(monster_id,count)` 寫入 `byte_270f1`，直到 budget 耗盡或沒有候選。
-- `sub_1BF35` 將 formation record 的 group count、background/page 欄位及 sprite id
+- `sub_1BF35` 將 formation record 的 group count、header `raw[1]`／`raw[2]` selector 及 sprite id
   複製到 `DS:0x231f`、`0x2321`、`0x0d71`／`0x0d73`，再呼叫 `sub_1AAA1`／`sub_1AB2C`
   逐隻建立 stride `0x16` 的 active enemy action record。
 
-候選表、權重、38 點 budget、group count 與 background/page 已是 `confirmed`。每個
+候選表、權重、38 點 budget、group count 與 fixed-formation raw selector 已是 `confirmed`。固定
+編隊 selector 的 archive page／palette consumer 已另於 [`docs/128`](128-battle-background-selector-re.md)
+閉合；它不代表 generic terrain selector 已知。每個
 formation 的 `active enemy +0x03` 位置欄位被 `sub_1B1FE` 作為畫面座標消費，故「位置
 不是 renderer 自己排版」也是 `confirmed`；完整 pack 內每個 formation 的位置 byte、
 混合群組與原始 table record 仍需逐筆 sidecar，標 `strong`。
@@ -408,7 +410,7 @@ literal／data-driven writer → sub_16EDF/16EF4 → DGROUP [0x4f70]
 2. SHP 的 sprite payload、RLE AND-mask、四 plane draw、位置欄位與六輪重畫時序。
 3. Sound Blaster VOC bank 載入、`BP` cue 指標、driver dispatch 與等待點。
 4. D3MNS packed resistance 的 bit pair 解碼及 `0/68/180/255` 門檻。
-5. formation 候選／權重／38 點 budget、group/background/page、掉落 gate 與 item raw id。
+5. formation 候選／權重／38 點 budget、固定編隊 raw selector、掉落 gate 與 item raw id。
 6. 日夜 `0..239` clock、120/240 邊界、二值 day selector、12 段 palette index、DQ3／MNSBK
    palette buffer 及 DAC upload。
 7. 21 個條件 flag 的原版 SET literal ledger 與 `[0x4f70]` state API；generic NPC filter。

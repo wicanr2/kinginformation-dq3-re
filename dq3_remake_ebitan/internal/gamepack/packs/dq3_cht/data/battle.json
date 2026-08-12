@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.30",
+  "schema_version": "0.1.31",
   "source_files": [
     {
       "path": "assets_raw/DQ3.EXE",
@@ -15,6 +15,16 @@
       "path": "assets_raw/D3TXT00.TXT",
       "size": 18680,
       "sha256": "38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b"
+    },
+    {
+      "path": "assets_raw/PACKBG.SCR",
+      "size": 3738880,
+      "sha256": "4e226cd23c38bbbce9db974da559933a2e84669b3abb1559ab9755c85ed800d0"
+    },
+    {
+      "path": "assets_raw/MNSBK.PAL",
+      "size": 480,
+      "sha256": "e2985503b3eb5256bcaf44f2f1b0a0b1ab124e66873c2de210e0d25ffd75110d"
     }
   ],
   "evidence": {
@@ -26,6 +36,29 @@
     "consumer": "E2 static battle data contract; raw fields remain non-executable",
     "doc": "docs/123-static-battle-daynight-re.md",
     "note": "E2 contract excludes unproven action-frame, player timing and resistance semantic names."
+  },
+  "background": {
+    "archive_asset": "battle_background",
+    "palette_asset": "battle_palette",
+    "page_stride_bytes": 81280,
+    "field_offset_bytes": 28160,
+    "field_chunk_bytes": 53120,
+    "width_pixels": 640,
+    "field_rows": 166,
+    "plane_count": 4,
+    "page_count": 46,
+    "palette_bank_count": 10,
+    "palette_entries_per_bank": 16,
+    "default_selector": {"page_raw": 0, "palette_bank_raw": 0},
+    "evidence": {
+      "level": "D2",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + PACKBG.SCR + MNSBK.PAL",
+      "address_space": "logical",
+      "address": "0x1c688..0x1c7d8",
+      "consumer": "sub_1BF35 copies formation raw[1]/raw[2] to DS:0x0d71/DS:0x0d73; sub_1C688 sets MNSBK.PAL bank DS:0x3352 + DS:0x0d73*0x30 and passes DS:0x0d71 to sub_1C6E5; sub_1C6E5 seeks page*0x13d80, reads 0x6e00 then the visible 0xcf80 field. The default 0/0 is the existing grass baseline only; terrain-to-page selection remains outside this fixed-formation slice.",
+      "doc": "docs/128-battle-background-selector-re.md"
+    }
   },
   "encounter": {
     "region_lookup": {

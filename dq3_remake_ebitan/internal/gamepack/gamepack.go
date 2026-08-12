@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.30"
+	SchemaVersion = "0.1.31"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -120,6 +120,33 @@ type BattleFormationPosition struct {
 	Evidence             Evidence `json:"evidence"`
 }
 
+// BattleBackgroundSelector is the non-executable selector copied from a
+// legacy formation record.  Its values are interpreted only through the
+// enclosing pack's checked archive and palette contract.
+type BattleBackgroundSelector struct {
+	PageRaw        int `json:"page_raw"`
+	PaletteBankRaw int `json:"palette_bank_raw"`
+}
+
+// BattleBackgroundData describes the original planar background archive as a
+// versioned asset contract.  The engine decodes this generic layout but does
+// not carry a DQ3 page, palette bank, filename, or byte stride fallback.
+type BattleBackgroundData struct {
+	ArchiveAsset          string                   `json:"archive_asset"`
+	PaletteAsset          string                   `json:"palette_asset"`
+	PageStrideBytes       int                      `json:"page_stride_bytes"`
+	FieldOffsetBytes      int                      `json:"field_offset_bytes"`
+	FieldChunkBytes       int                      `json:"field_chunk_bytes"`
+	WidthPixels           int                      `json:"width_pixels"`
+	FieldRows             int                      `json:"field_rows"`
+	PlaneCount            int                      `json:"plane_count"`
+	PageCount             int                      `json:"page_count"`
+	PaletteBankCount      int                      `json:"palette_bank_count"`
+	PaletteEntriesPerBank int                      `json:"palette_entries_per_bank"`
+	DefaultSelector       BattleBackgroundSelector `json:"default_selector"`
+	Evidence              Evidence                 `json:"evidence"`
+}
+
 type BattleEncounterData struct {
 	RegionLookup      BattleRawBlob                `json:"region_lookup"`
 	CandidateTable    BattleRawBlob                `json:"candidate_table"`
@@ -145,6 +172,7 @@ type BattleResistanceData struct {
 type BattlePackData struct {
 	SchemaVersion string               `json:"schema_version"`
 	SourceFiles   []BattleSourceFile   `json:"source_files"`
+	Background    BattleBackgroundData `json:"background"`
 	Encounter     BattleEncounterData  `json:"encounter"`
 	Resistance    BattleResistanceData `json:"resistance"`
 	Evidence      Evidence             `json:"evidence"`
@@ -694,10 +722,9 @@ type FormationGroup struct {
 }
 
 type BattleFormation struct {
-	BackgroundRaw int              `json:"background_raw"`
-	PageRaw       int              `json:"page_raw"`
-	Groups        []FormationGroup `json:"groups"`
-	RawBytesHex   string           `json:"raw_bytes_hex"`
+	Background  BattleBackgroundSelector `json:"background"`
+	Groups      []FormationGroup         `json:"groups"`
+	RawBytesHex string                   `json:"raw_bytes_hex"`
 }
 
 type TreasureGate struct {
@@ -1740,6 +1767,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 			return nil, fmt.Errorf("%s: %w", battlePath, err)
 		}
 		p.battlePresent = true
+		if err := p.validateBattleFormationSelectors(); err != nil {
+			return nil, fmt.Errorf("%s: %w", battlePath, err)
+		}
 	}
 	if err := p.validateEventTextRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", eventsPath, err)
@@ -2811,7 +2841,7 @@ func validatePackFormation(eventID, name string, formation BattleFormation) erro
 	if err != nil || len(formation.Groups) == 0 ||
 		len(raw) != 3+len(formation.Groups)*2 ||
 		int(raw[0]) != len(formation.Groups) ||
-		int(raw[1]) != formation.BackgroundRaw || int(raw[2]) != formation.PageRaw {
+		int(raw[1]) != formation.Background.PageRaw || int(raw[2]) != formation.Background.PaletteBankRaw {
 		return fmt.Errorf("%s: invalid %s", eventID, name)
 	}
 	for i, group := range formation.Groups {
@@ -3059,7 +3089,7 @@ func (p *Pack) validateEvents() error {
 			e.ClearFlagRaw != e.PresenceFlagRaw {
 			return fmt.Errorf("%s: invalid or inconsistent presence/clear flag", e.ID)
 		}
-		if e.Formation.BackgroundRaw < 0 || e.Formation.PageRaw < 0 ||
+		if e.Formation.Background.PageRaw < 0 || e.Formation.Background.PaletteBankRaw < 0 ||
 			len(e.Formation.Groups) == 0 || e.Formation.RawBytesHex == "" {
 			return fmt.Errorf("%s: incomplete formation", e.ID)
 		}
@@ -3068,7 +3098,8 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s: invalid formation raw_bytes_hex: %w", e.ID, err)
 		}
 		if len(raw) != 3+len(e.Formation.Groups)*2 || int(raw[0]) != len(e.Formation.Groups) ||
-			int(raw[1]) != e.Formation.BackgroundRaw || int(raw[2]) != e.Formation.PageRaw {
+			int(raw[1]) != e.Formation.Background.PageRaw ||
+			int(raw[2]) != e.Formation.Background.PaletteBankRaw {
 			return fmt.Errorf("%s: formation fields do not match raw_bytes_hex header", e.ID)
 		}
 		for j, group := range e.Formation.Groups {
@@ -3814,8 +3845,8 @@ func (p *Pack) validateEvents() error {
 			if err != nil || len(formation.Groups) == 0 ||
 				len(raw) != 3+len(formation.Groups)*2 ||
 				int(raw[0]) != len(formation.Groups) ||
-				int(raw[1]) != formation.BackgroundRaw ||
-				int(raw[2]) != formation.PageRaw {
+				int(raw[1]) != formation.Background.PageRaw ||
+				int(raw[2]) != formation.Background.PaletteBankRaw {
 				return fmt.Errorf("%s: invalid %s", e.ID, name)
 			}
 			for j, group := range formation.Groups {
@@ -4122,6 +4153,43 @@ func validateBattleRawBlob(name string, blob BattleRawBlob) error {
 	return nil
 }
 
+func validBattleBackgroundSelector(selector BattleBackgroundSelector, background BattleBackgroundData) bool {
+	return selector.PageRaw >= 0 && selector.PageRaw < background.PageCount &&
+		selector.PaletteBankRaw >= 0 && selector.PaletteBankRaw < background.PaletteBankCount
+}
+
+func (p *Pack) validateBattleBackground(background BattleBackgroundData) error {
+	if background.ArchiveAsset == "" || background.PaletteAsset == "" ||
+		background.PageStrideBytes <= 0 || background.FieldOffsetBytes < 0 ||
+		background.FieldChunkBytes <= 0 || background.WidthPixels <= 0 ||
+		background.WidthPixels%8 != 0 || background.FieldRows <= 0 ||
+		background.PlaneCount < 1 || background.PlaneCount > 8 ||
+		background.PageCount <= 0 || background.PaletteBankCount <= 0 ||
+		background.PaletteEntriesPerBank <= 0 || background.PaletteEntriesPerBank > 256 ||
+		background.PaletteBankCount*background.PaletteEntriesPerBank > 256 {
+		return errors.New("battle background contract is incomplete")
+	}
+	if _, ok := p.Manifest.Assets[background.ArchiveAsset]; !ok {
+		return fmt.Errorf("battle background archive asset %q is absent from manifest", background.ArchiveAsset)
+	}
+	if _, ok := p.Manifest.Assets[background.PaletteAsset]; !ok {
+		return fmt.Errorf("battle background palette asset %q is absent from manifest", background.PaletteAsset)
+	}
+	wantChunk := background.WidthPixels / 8 * background.FieldRows * background.PlaneCount
+	if background.FieldChunkBytes != wantChunk ||
+		background.FieldOffsetBytes+background.FieldChunkBytes > background.PageStrideBytes {
+		return fmt.Errorf("battle background planar layout is invalid: chunk=%d want=%d offset=%d stride=%d",
+			background.FieldChunkBytes, wantChunk, background.FieldOffsetBytes, background.PageStrideBytes)
+	}
+	if !validBattleBackgroundSelector(background.DefaultSelector, background) {
+		return errors.New("battle background default selector is outside the declared archive/palette range")
+	}
+	if err := validateEvidence(background.Evidence); err != nil {
+		return fmt.Errorf("battle background evidence: %w", err)
+	}
+	return nil
+}
+
 func (p *Pack) validateBattlePack() error {
 	b := p.Battle
 	if b.SchemaVersion != SchemaVersion {
@@ -4131,6 +4199,9 @@ func (p *Pack) validateBattlePack() error {
 		return fmt.Errorf("battle evidence: %w", err)
 	}
 	if err := validateBattleSourceFiles(b.SourceFiles); err != nil {
+		return err
+	}
+	if err := p.validateBattleBackground(b.Background); err != nil {
 		return err
 	}
 	if err := validateBattleRawBlob("encounter.region_lookup", b.Encounter.RegionLookup); err != nil {
@@ -4193,6 +4264,46 @@ func (p *Pack) validateBattlePack() error {
 	}
 	if err := validateEvidence(b.Resistance.Evidence); err != nil {
 		return fmt.Errorf("resistance evidence: %w", err)
+	}
+	return nil
+}
+
+// validateBattleFormationSelectors runs after both events and the battle
+// archive contract have loaded.  Earlier event validation only proves that
+// bytes 1/2 match raw_bytes_hex; this pass proves their references fit the
+// declared page and palette-bank ranges without inventing a fallback.
+func (p *Pack) validateBattleFormationSelectors() error {
+	if !p.battlePresent {
+		return errors.New("battle background contract is unavailable")
+	}
+	background := p.Battle.Background
+	check := func(eventID, name string, formation BattleFormation) error {
+		if !validBattleBackgroundSelector(formation.Background, background) {
+			return fmt.Errorf("%s: %s background selector page=%d palette_bank=%d is outside declared range",
+				eventID, name, formation.Background.PageRaw, formation.Background.PaletteBankRaw)
+		}
+		return nil
+	}
+	for _, event := range p.Events.BossSurrenderEvents {
+		if err := check(event.ID, "formation", event.Formation); err != nil {
+			return err
+		}
+	}
+	for _, event := range p.Events.HostageRescueEvents {
+		if err := check(event.ID, "guard_formation", event.GuardFormation); err != nil {
+			return err
+		}
+		if err := check(event.ID, "boss_formation", event.BossFormation); err != nil {
+			return err
+		}
+	}
+	for _, event := range p.Events.StagedBossEvents {
+		if err := check(event.ID, "first_formation", event.FirstFormation); err != nil {
+			return err
+		}
+		if err := check(event.ID, "second_formation", event.SecondFormation); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -4776,6 +4887,15 @@ func (p *Pack) BattlePack() (BattlePackData, bool) {
 		return BattlePackData{}, false
 	}
 	return p.Battle, true
+}
+
+// BattleBackground returns the pack-owned archive, planar layout and default
+// selector.  Production callers must check the boolean and fail closed.
+func (p *Pack) BattleBackground() (BattleBackgroundData, bool) {
+	if p == nil || !p.battlePresent || p.Battle.Background.Evidence.Level == "" {
+		return BattleBackgroundData{}, false
+	}
+	return p.Battle.Background, true
 }
 
 // BattleEncounterRaw decodes the two raw encounter blobs after strict pack

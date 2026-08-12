@@ -679,7 +679,7 @@ palette、游標動畫或整段創角流程為 V3。
 
 ## 2026-08-12 current memory：能力確認 V3 靜態與 RE 停止條件
 
-現行 game pack schema 是 `0.1.30`，DQ3 content version 是 `0.1.35`。能力確認頁的 DQ3
+現行 game pack schema 是 `0.1.31`，DQ3 content version 是 `0.1.36`。能力確認頁的 DQ3
 資料已完全留在 `interface.json`：record 407 glyph stream、13 個具名 stat field、raw EGA
 window backdrop layer、`frame_edge_widths`、`beveled_2px` 與 `FIRST.SCR` palette；Go 只保留
 跨版本 renderer／validator primitive。
@@ -695,20 +695,15 @@ transition 沒有安全 production 值。除非取得新原版 frame／音訊 tr
 不要再為這些項目猜 JSON、加 Go fallback 或廣泛重跑反組譯。完整界線見
 [`docs/123`](docs/123-static-battle-daynight-re.md)。
 
-## 2026-08-12 八頭大蛇 battle V2 勘驗：背景 selector 是目前實際缺口
+## 2026-08-12 current memory：八頭大蛇固定編隊背景 V2 已閉合
 
-不要再用 `docs/img/jipang_orochi_*_battle.png` 的單勇者 fixture 評估日邦格戰鬥。現有
-`TestOpeningProductionInputTrace` 可從標題以正式 `InputState` 到 `THE END`；設定
-`DQ3_PRODUCTION_DUMP_OROCHI` 時，只在兩場八頭大蛇的 command／message／end phase 取樣四人隊
-640×350 PNG。取樣 hook 會以正常 renderer 消耗暫態受擊 flash，避免快速 test trace 凍結
-500ms 紅色閃光；它不改寫命令、HP、RNG 或輸入。
+不要再以舊的單勇者 PNG 或修正前的天空／草地 trace 評估日邦格戰鬥。固定編隊 record 的
+`raw[1]`／`raw[2]` 已由 IDA Pro 9.4 關聯至 archive page／palette bank，並資料化為
+`events.json` 的 `background.{page_raw,palette_bank_raw}`；`battle.json.background` 保存完整
+`PACKBG.SCR`／`MNSBK.PAL` 契約，renderer 沒有 DQ3 fallback。
 
-同源本機 YouTube 畫格已確認第一戰勝利是洞窟、第二戰遭遇是沙漠；remake 正式 trace 則分別
-顯示天空草地與綠色背景。`Game.startPackFormation` 已使用 formation byte1 的 `BackgroundRaw`
-（35／26），卻直接將它當 `PACKBG.SCR` page，formation byte2 的 `PageRaw=5` 在 runtime 零使用。
-這是已證實的 direct mapping 行為，但原版兩個 raw byte 到 archive selector 的 consumer 尚未閉合；
-不可把它錯記成「固定 page22」或用合理預設補洞。怪物、四人 HUD 與命令框已能由正式路徑顯示，
-但背景選擇未 match，所以結論只能是 campaign E3／runtime V1、此戰鬥 near-state V2，不是 V3。
-下次只閉合兩個 raw byte→pack reference→renderer selector→正式 trace 的窄切片；不要以靜態截圖
-猜 selector。hash、frame mapping、推論等級與最小 gate 見
-[`docs/127-orochi-v2-production-compare.md`](docs/127-orochi-v2-production-compare.md)。
+正式 `InputState` replay 的第一、第二戰目前分別顯示洞窟與沙漠，達 near-state V2；不是同隊伍、
+同數值、同動態 phase 的 V3。這個窄修正是必要的 faithful-remake 工作，因兩場皆為必經且背景
+錯配很醒目；但 campaign 已 E3，且尚無新 player-visible discrepancy，故停止擴張成 generic
+terrain selector RE。通用戰鬥只保留已驗證草地 baseline `0/0`，不聲稱全地形 parity。可回查的
+raw、hash、推論等級、訂正與停止條件見 [`docs/128`](docs/128-battle-background-selector-re.md)。

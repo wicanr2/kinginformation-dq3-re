@@ -29,7 +29,7 @@
 Docker＋Xvfb 一次性重播 `TestOpeningProductionInputTrace` 通過，從標題以正式輸入抵達
 `THE END`；最終有界 hook 重播的六張 PNG hash 與本表一致。輸出在 `/tmp` 暫存，比對後清除。
 
-## phase 對照與結果
+## 修正前 phase 對照與結果（歷史）
 
 | phase | 原版玩家可見畫面 | remake 正式 trace | 判定 |
 |---|---|---|---|
@@ -44,22 +44,22 @@ Docker＋Xvfb 一次性重播 `TestOpeningProductionInputTrace` 通過，從標�
 phase，且場景背景不同，直接全圖 AE 或 RMSE 不可作 V3 指標。肉眼可見的相同素材形狀只能標為
 強推論（strong），不可替代同狀態 oracle。
 
-## 原因與推論等級
+## 修正前原因與推論等級（歷史）
 
 | 斷言 | 等級 | 證據 |
 |---|---|---|
 | 第一、第二戰的玩家可見背景分別是洞窟、沙漠 | 已證實（confirmed） | 同源影片的 `f000745`、`f000768`，位於連續事件序列 |
-| remake 正式路徑在兩戰分別顯示天空草地、綠色背景 | 已證實（confirmed） | 本輪六張正式 trace PNG |
+| 修正前 remake 正式路徑在兩戰分別顯示天空草地、綠色背景 | 已證實（confirmed） | 修正前六張正式 trace PNG |
 | 原版 staged-boss raw 背景值為第一戰 35、第二戰 26 | 已證實（confirmed） | `docs/95` 的 IDA Pro 9.4 DGROUP ledger，保留 raw bytes／位址 |
-| remake 將 formation byte1 的 `BackgroundRaw` 直接作為 `PACKBG.SCR` page | 已證實（confirmed） | `game/staged_boss.go` 的 `startPackFormation` 呼叫 `DecodePackBG(g.battle.scr, f.BackgroundRaw)`；本輪 trace 正好產生天空草地／綠色背景 |
-| formation byte2 的 `PageRaw=5` 目前沒有 runtime consumer | 已證實（confirmed） | `game/` 對 `PageRaw` 零引用；它只在 pack schema／raw parity validation 保存 |
-| raw 35／26、page5 應如何共同對應 archive page／palette／轉場細節 | 未知（unknown） | 尚未閉合原版 selector 的 archive loader／consumer；不得用影片顏色猜 JSON 值 |
+| 修正前 remake 將 formation byte1 的 `BackgroundRaw` 直接作為 `PACKBG.SCR` page | 已證實（confirmed） | 修正前 `game/staged_boss.go` 的 direct `DecodePackBG` 呼叫；該程式已被 pack selector 取代 |
+| 修正前 formation byte2 的 `PageRaw=5` 沒有 runtime consumer | 已證實（confirmed） | 修正前 `game/` 對 `PageRaw` 零引用；現行以 `palette_bank_raw` 驗證並消費 |
+| raw 35／26、page5 應如何共同對應 archive page／palette／轉場細節 | 已由後續閉合 | 現行 writer／consumer、archive stride 與新 trace 見 `docs/128`；此列僅保留當時未知狀態 |
 
 因此真正缺口是 **兩個 formation raw byte 到 battle backdrop selector 的對應**，不是 SHP 解碼、
 四人 HUD 或怪物透明度。最初的整片紅怪物是 test trace 未 Draw 時凍結的受擊 flash；在 normal
 renderer settled 後，正式輸出顯示完整怪物色盤，不能把那個中間狀態寫成產品素材 defect。
 
-## 下一個最小 gate（未執行）
+## 下一個最小 gate（已於 2026-08-12 完成）
 
 1. 以 IDA Pro 9.4 非破壞性閉合「DGROUP bytes 35／26、5 → archive／page／palette source →
    renderer consumer」；每一段附輸入 hash、位址基準、raw bytes 與推論等級。
@@ -67,3 +67,16 @@ renderer settled 後，正式輸出顯示完整怪物色盤，不能把那個中
    pack 契約；缺值 fail-closed，不在 Go 寫 DQ3 特例、直接 page mapping 或 page22 fallback。
 3. 重播相同正式 trace，取第一戰結束與第二戰遭遇的 settled PNG；先以影片作 V2 phase 對照。
    只有取得相同隊伍／數值／輸入／動態 phase 的原版 frame，才可重新評估 V3。
+
+## 2026-08-12 勘誤：固定編隊背景已閉合
+
+上列「天空／草地／綠色背景」與六個舊 hash 都是修正前產物，保留用來說明問題的成因，
+不能再當現行 remake 結果。IDA Pro 9.4 已閉合原版 `raw[1]` → archive page、
+`raw[2]` → `MNSBK.PAL` bank 的 writer／consumer 鏈；`PACKBG.SCR` 也已按完整
+`0x13d80` page stride 解碼，而非把 `0x6e00` 視為獨立 page。
+
+相同的正式 `InputState` trace 重播後，第一戰為洞窟 page 35、bank 5，第二戰為沙漠
+page 26、bank 5；六張新 PNG hash、原始輸入 hash、位址基準與強／已證實的界線都記在
+[`docs/128`](128-battle-background-selector-re.md)。這使兩場達 near-state V2，仍不能因為
+隊伍、數值與動態 phase 不相同而宣稱 V3。通用 terrain→background selector 未在本切片推導，
+也不應從這兩個 boss 值外推。

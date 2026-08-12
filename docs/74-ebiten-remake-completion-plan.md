@@ -1023,24 +1023,40 @@ PCM timing、精確 palette、boss repeat-N 的原版 parity 仍是獨立證據�
    boss repeat-N、動作 frame、PCM wall-clock 與可見 palette transition 沒有可安全填入的
    production 值，保留 `unknown`／fail-closed。收斂與停止條件見
    [`docs/123`](123-static-battle-daynight-re.md)。
-3. `dq3_cht` schema 已升為 `0.1.30`、content version `0.1.35`。新增資料契約只擴充共用
+3. `dq3_cht` schema 已升為 `0.1.31`、content version `0.1.36`。新增資料契約只擴充共用
    frame／backdrop primitive；所有 DQ3 glyph、raw window、geometry 與 layer 值仍在 pack，
    沒有新增版本專屬 Go 常數。
 
 下一個 V3 工作只能由新的可重播原版 frame／音訊 trace 驅動；在沒有該輸入時，不以更長的
 靜態反組譯或視覺猜測重新開啟已收斂的研究。
 
-## 2026-08-12 current checkpoint：日邦格八頭大蛇四人隊 V2 勘驗
+## 2026-08-12 修正前 checkpoint：日邦格八頭大蛇四人隊 V2 勘驗（歷史）
 
-本輪取得一條新且可重播的原版／remake 對照輸入：同源 YouTube 本機畫格明確顯示第一戰勝利
+本節保存修正前的可重播對照與 blocker 成因；現行結論以緊接的「固定編隊背景 selector V2
+閉合」章節為準。本輪取得一條新且可重播的原版／remake 對照輸入：同源 YouTube 本機畫格明確顯示第一戰勝利
 仍在洞窟、第二戰遭遇在沙漠；從標題至 `THE END` 的 Docker＋Xvfb 正式 remake trace 則在
 兩戰各輸出 `command`／`message`／`end` 四人隊畫面。這排除舊單勇者 fixture 造成的 HUD
 誤判，也確認八頭大蛇素材本身已可顯示。
 
-結論是 **戰鬥呈現尚未 match V2 oracle，不能宣稱 V3**：目前 `Game.startPackFormation` 把
+當時結論是 **戰鬥呈現尚未 match V2 oracle，不能宣稱 V3**：當時的 `Game.startPackFormation` 把
 formation byte1 的 `BackgroundRaw`（35／26）直接傳入 `DecodePackBG`，但 formation byte2 的
 `PageRaw=5` 沒有任何 runtime consumer。這個已證實（confirmed）的 direct mapping 產生天空草地
 與綠色背景，和已證實的洞窟／沙漠原版畫面不同；原版 selector 的 archive consumer 尚未閉合，
 不能猜它等於目前的 page index。下一個最小垂直切片僅應閉合「兩個 raw byte → pack reference →
 renderer selector → 兩張正式 trace 圖」；同時保留不同隊伍／數值／動態 phase 的限制，不把近似
 畫面升格為同狀態 V3。完整證據見 [`docs/127`](127-orochi-v2-production-compare.md)。
+
+## 2026-08-12 current checkpoint：固定編隊背景 selector V2 閉合
+
+上一節描述的是修正前的 actual blocker；它不再是 current plan。IDA Pro 9.4 已從固定編隊
+header 的 `raw[1]`／`raw[2]`，閉合到 `DS:0x0d71`／`DS:0x0d73`、`PACKBG.SCR` 的完整
+`0x13d80` archive page 與 `MNSBK.PAL` 的 `0x30` palette bank。共同 renderer 現只消費
+`dq3_cht` 的 `battle.background` 契約與每個 formation 的
+`{ "page_raw", "palette_bank_raw" }`，資產、幾何、範圍與 raw parity 不一致一律 fail-closed。
+
+同一條正式 `InputState` 重播的第一、第二八頭大蛇戰，現在分別呈現原版影片可見的洞窟與沙漠；
+此二者是 near-state V2，非同狀態 V3。由第一性原理，這個窄修正值得做，因為兩場是主線必經、
+高顯著的玩家可見設定錯配；反之，campaign 已可到 `THE END`，且沒有新 discrepancy 支持時，
+不應擴張成所有 terrain→page 的完整 RE。generic battle 只保留已有草地 reference 的 `0/0`
+baseline，明確不宣稱通用地形 parity。完整證據、hash 與停止條件見
+[`docs/128`](128-battle-background-selector-re.md)。

@@ -241,7 +241,7 @@
 
 ### 2026-08-12 current checkpoint：能力確認 V3 靜態與 RE 收斂
 
-- `dq3_cht` schema 為 `0.1.30`、content version 為 `0.1.35`。新欄位只擴充共用
+- `dq3_cht` schema 為 `0.1.31`、content version 為 `0.1.36`。新欄位只擴充共用
   `frame_edge_widths` 與 `window_backdrops` 契約；DQ3 專屬 glyph、record、raw window、座標與
   layer 全在 `interface.json`，Go 不新增版本專屬 fallback。
 - 正式原版創角輸入（名稱 `0`、男性、確認）的 DOSBox 1024×768 外殼已明確裁成左上 640×350
@@ -253,6 +253,15 @@
   boss repeat-N、逐動作 frame、PCM wall-clock 與玩家可見 palette transition 沒有安全
   production 值，保持 `unknown`／fail-closed，除非出現新原版 trace 或具體 caller。完整範圍與
   停止條件見 [`docs/123`](docs/123-static-battle-daynight-re.md)。
+
+### 2026-08-12 current checkpoint：固定編隊背景 selector
+
+- 八頭大蛇兩場的固定 formation header `raw[1]`／`raw[2]` 已由 IDA 9.4 閉合為
+  `PACKBG.SCR` archive page 與 `MNSBK.PAL` 16 色 bank；現行 pack 欄位為
+  `background.page_raw`／`background.palette_bank_raw`，archive 的完整 page stride 是 `0x13d80`。
+  兩場正式 trace 現為洞窟／沙漠 near-state V2，詳細 raw、hash 與推論等級見 [`docs/128`](docs/128-battle-background-selector-re.md)。
+- 這是必要的固定 boss 視覺修正，但不是 generic terrain selector 已完成。主線已 E3；沒有新的
+  玩家可見 mismatch 時，不重新開啟全地形背景 RE，也不從 `0/0` 草地 baseline 外推。
 
 ## Flagged ambiguities(待釐清)
 

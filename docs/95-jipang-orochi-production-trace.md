@@ -59,8 +59,8 @@ raw ID 乘記錄長度 `0x29`，從 D3MNS runtime record 的 `+0x25` 讀判定�
 
 結果確認四人狀態列、命令框與敵名框均由正式流程渲染；怪物也不是缺色或透明。然而同源
 原版影片第一戰結束畫面是洞窟、第二戰遭遇畫面是沙漠，remake 分別顯示天空草地與綠色背景。
-目前 staged-boss path 直接把 formation byte1 的 `background_raw`（35／26）當作
-`PACKBG.SCR` page，卻沒有 runtime consumer 使用 formation byte2 的 `page_raw=5`；這個直接
-映射不 match 玩家可見原版，並非單人 fixture 的問題。正確 archive selector 仍未知，詳細
-hash、phase 對照、程式 consumer 與後續最小 gate 見 [`docs/127`](127-orochi-v2-production-compare.md)；
-不得把本批提升為 V3。
+上述文字是 2026-08-12 早期 trace 的歷史缺口，已由後續 IDA 9.4 archive loader 閉合。現行
+staged-boss path 將 raw byte1／byte2 作為 `page_raw`／`palette_bank_raw`，由 pack 提供完整
+`PACKBG.SCR` stride 與 `MNSBK.PAL` bank；第一、第二戰正式 trace 分別顯示洞窟、沙漠，達
+near-state V2。這不是 generic terrain parity，也不是 V3。原始 raw、勘誤原因與最新 hashes
+見 [`docs/128`](128-battle-background-selector-re.md)。
