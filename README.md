@@ -259,8 +259,9 @@ boss repeat-N、逐動作 frame、PCM wall-clock 與可見 palette transition �
 E2 pack／renderer。日邦格兩場必經 Boss 的固定背景則已按原版 archive page／palette bank
 達 near-state V2；怪力魔、巴拉摩斯與索瑪三連戰已由相同 raw fixed-record selector 接入 runtime
 V1。通用地形背景沒有藉此宣稱 parity。完整靜態收斂與停止條件見
-[`docs/123`](docs/123-static-battle-daynight-re.md) 與 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。三種桌面發佈包與推廣片的雜湊／界線見
-[`docs/114`](docs/114-release-artifacts.md)；後續工作以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
+[`docs/123`](docs/123-static-battle-daynight-re.md) 與 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。三種桌面發佈包見
+[`docs/131`](docs/131-release-v0.1.34.md)；重新剪輯、含可聽 MT-32 音軌的 2026-08-12 推廣片與
+非靜音驗收見 [`docs/133`](docs/133-promo-video-20260812.md)。後續工作以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
 的 E2 handoff 與未決清單為準。
 
 ## 證據優先序

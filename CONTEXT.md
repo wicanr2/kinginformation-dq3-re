@@ -288,6 +288,17 @@
   觸控與 lifecycle。正式狀態仍不是實機通過，證據見
   [`docs/132`](docs/132-android-emulator-validation.md)。
 
+### 2026-08-12 current checkpoint：推廣片重排與聲音驗收
+
+- `work/video/dq3_remake_demo.mp4` 與 `dist/dq3-promo-20260812.mp4` 已重建為同一支 72 秒
+  1280×720／30 fps H.264＋48 kHz 雙聲道 AAC 推廣片；SHA-256 為
+  `a67eab136960768c046f8bba3ab11eb6cca9ca706942d932dd957fb7273f94c0`。
+- 開場 12 秒由正式 v0.1.34 AppRun 在 Docker／Xvfb 實錄；後段只使用現行 Go／Ebitengine
+  runtime 證據圖，依玩家旅程重排。6 月 28 日舊片已原樣備份。
+- 驗收不再只看 audio stream：必須完整解碼、平均音量高於 `-35 dB`、峰值高於 `-12 dB`，
+  且不能有超過三秒的連續數位靜音。完整證據與重建入口見
+  [`docs/133`](docs/133-promo-video-20260812.md)。
+
 ## Flagged ambiguities(待釐清)
 
 - 「event」一詞橫跨 section 事件表(4-byte entry)與 scripted-event(跳表 id);文件中需標明哪一種。

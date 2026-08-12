@@ -1107,6 +1107,10 @@ wall-clock 或 generic terrain 全表列成可由現有證據安全實作的必�
    [`docs/132`](132-android-emulator-validation.md)。
 3. 已停用仍會產生歷史 C/SDL 產品的 AppImage／Windows 發包入口；新發包只能走
    `dq3_remake_ebitan` 的 Go／Ebitengine 工具鏈。
+4. 推廣片已於 2026-08-12 依 6 月 28 日的完整冒險弧線重排，但畫面全部換成現行
+   Go／Ebitengine 動態／runtime 證據；音訊改為 48 kHz 雙聲道 AAC，並新增完整解碼、
+   音量與長段靜音的失敗即關閉驗收。現行檔案、雜湊與重建入口見
+   [`docs/133`](133-promo-video-20260812.md)。
 
 任何新的 V3 工作仍須先有可重播原版 frame／音訊 trace 或明確新 caller；沒有新 oracle 時，
 只保留為證據限制或可選 polish，不再擴張靜態 RE。

@@ -748,3 +748,17 @@ production 音訊版在 headless emulator 仍停於 OboeAudio host backend，首
 副本停用 mobile music FS 後，DQ3 標題／開場、觸控、pause／resume 與 force-stop／restart
 才全部通過。診斷探針不加入 production，也不可把它改寫成正式 Android 實機通過。證據見
 [`docs/132`](docs/132-android-emulator-validation.md)。
+
+## 2026-08-12 current memory：推廣片已重排並加入非靜音 gate
+
+現行本機推廣片是 `work/video/dq3_remake_demo.mp4`，日期化副本是
+`dist/dq3-promo-20260812.mp4`，SHA-256 均為
+`a67eab136960768c046f8bba3ab11eb6cca9ca706942d932dd957fb7273f94c0`。影片為 72 秒、
+1280×720／30 fps、H.264＋48 kHz 雙聲道 AAC；完整解碼量測平均 `-16.4 dB`、峰值
+`-1.5 dB`。6 月 28 日原檔保留為 `work/video/dq3_remake_demo_20260628_legacy.mp4`。
+
+不要再用 `dist/dq3-promo-20260810.mp4`（無音訊串流）或
+`dist/dq3-promo-20260811.mp4`（整段 `-91 dB` 數位靜音）作推廣。現行入口是
+`tools/capture_ebiten_promo_opening.sh`、`tools/build_ebiten_promo_video.sh` 與
+`tools/verify_promo_video.sh`；舊 C／SDL `tools/record_demo.sh` 已失敗即關閉。完整重排、
+來源與驗收界線見 [`docs/133`](docs/133-promo-video-20260812.md)。
