@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Android 綁定:把 game/ 套件經 mobile/ 綁成 .aar(給 Android Studio 引用打包 APK/AAB)。
 #
-# 前置(本機需 Android SDK + NDK,不在 docker 內做,因需 NDK toolchain):
-#   1. 安裝 Android SDK + NDK,設環境:
+# 前置：本腳本只能在一次性 Docker Android 工具鏈容器內執行；主機不得直接啟動 Go、
+# ebitenmobile、NDK 或 Gradle 工作負載。容器需提供 Android SDK + NDK，並設環境:
+#   1. 在容器內準備 Android SDK + NDK,設環境:
 #        export ANDROID_HOME=$HOME/Android/Sdk
 #        export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/<version>
 #   2. 安裝 ebitenmobile:

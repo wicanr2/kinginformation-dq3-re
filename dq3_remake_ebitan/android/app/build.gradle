@@ -1,7 +1,9 @@
 plugins { id 'com.android.application' }
 android {
     namespace 'com.wicanr2.dq3'
-    compileSdk 34
+    // Docker 工具鏈提供 SDK 35；targetSdk 維持 34，避免改變既有執行期行為。
+    compileSdk 35
+    buildToolsVersion '35.0.0'
     defaultConfig {
         applicationId 'com.wicanr2.dq3'
         minSdk 21

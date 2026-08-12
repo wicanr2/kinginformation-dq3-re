@@ -276,11 +276,19 @@ func drawGlyph(rgba []byte, tx *dq3data.Text, px, py, idx int, fg dq3data.Color)
 // pattern 是共用 engine primitive 的名稱，不是可執行的 JSON code；顏色與
 // 幾何仍屬於 game pack。checkerboard_1px 保留 EGA writer 未寫入的底圖像素。
 func fillBoxStyle(rgba []byte, x, y, w, h int, interior, border dq3data.Color, pattern string) {
+	fillBoxStyleWithEdgeWidths(rgba, x, y, w, h, interior, border, pattern, gamepack.FrameEdgeWidths{})
+}
+
+// fillBoxStyleWithEdgeWidths keeps the named frame primitive in the engine
+// while letting a game pack narrow one side of a shared seam. Zero widths use
+// the primitive default; no coordinates or version-specific branch enter the
+// renderer.
+func fillBoxStyleWithEdgeWidths(rgba []byte, x, y, w, h int, interior, border dq3data.Color, pattern string, widths gamepack.FrameEdgeWidths) {
 	for r := 0; r < h; r++ {
 		for c := 0; c < w; c++ {
 			col := interior
-			if r == 0 || r == h-1 || c == 0 || c == w-1 {
-				if !frameBorderPixel(pattern, c, r) {
+			if frameEdgeWithWidths(pattern, c, r, w, h, widths) {
+				if !frameBorderPixel(pattern, c, r, w, h) {
 					continue
 				}
 				col = border
@@ -300,14 +308,43 @@ func strokeBoxStyle(rgba []byte, x, y, w, h int, border dq3data.Color, pattern s
 	}
 	for r := 0; r < h; r++ {
 		for c := 0; c < w; c++ {
-			if r != 0 && r != h-1 && c != 0 && c != w-1 {
+			if !frameEdge(pattern, c, r, w, h) {
 				continue
 			}
-			if frameBorderPixel(pattern, c, r) {
+			if frameBorderPixel(pattern, c, r, w, h) {
 				putPx(rgba, x+c, y+r, border)
 			}
 		}
 	}
+}
+
+// frameEdge returns the pixels owned by a named frame primitive. The original
+// creation panel has a two-pixel bevel: its outermost four corners retain the
+// underlying screen, while the inner edge remains continuous. confirm_choice
+// has its own checkerboard_frame_2px primitive and does not come through this
+// path.
+func frameEdge(pattern string, x, y, w, h int) bool {
+	return frameEdgeWithWidths(pattern, x, y, w, h, gamepack.FrameEdgeWidths{})
+}
+
+func frameEdgeWithWidths(pattern string, x, y, w, h int, widths gamepack.FrameEdgeWidths) bool {
+	left, right, top, bottom := 1, 1, 1, 1
+	if pattern == "solid_2px" || pattern == "beveled_2px" {
+		left, right, top, bottom = 2, 2, 2, 2
+	}
+	if widths.Left > 0 {
+		left = widths.Left
+	}
+	if widths.Right > 0 {
+		right = widths.Right
+	}
+	if widths.Top > 0 {
+		top = widths.Top
+	}
+	if widths.Bottom > 0 {
+		bottom = widths.Bottom
+	}
+	return x < left || y < top || x >= w-right || y >= h-bottom
 }
 
 func strokeFrameStyle(rgba []byte, frame *gamepack.FrameStyle, x, y, w, h int, fallback dq3data.Color) {
@@ -359,9 +396,13 @@ func strokeCheckerboardFrame2px(rgba []byte, x, y, w, h int, border, accent dq3d
 	putPx(rgba, x, y+h-1, border)
 }
 
-func frameBorderPixel(pattern string, x, y int) bool {
+func frameBorderPixel(pattern string, x, y, w, h int) bool {
 	switch pattern {
-	case "solid":
+	case "solid", "solid_2px", "beveled_2px":
+		if pattern == "beveled_2px" &&
+			(x == 0 || x == w-1) && (y == 0 || y == h-1) {
+			return false
+		}
 		return true
 	case "checkerboard_1px":
 		// sub_1fdb1 starts each EGA edge with bh=0xaa; the visible logical
@@ -395,6 +436,18 @@ func fillGeometryBox(rgba []byte, frame *gamepack.FrameStyle, x, y, w, h int, fa
 		frameColor(frame.InteriorRGB), frameColor(frame.BorderRGB), frame.BorderPattern)
 }
 
+// fillGeometryFramedRect is the data-shaped companion to fillGeometryBox.
+// It applies an optional per-edge width carried by GeometryRect; callers that
+// only have scalar geometry keep using fillGeometryBox.
+func fillGeometryFramedRect(rgba []byte, frame *gamepack.FrameStyle, rect gamepack.GeometryRect, fallback dq3data.Color) {
+	if frame == nil {
+		fillBox(rgba, rect.X, rect.Y, rect.Width, rect.Height, fallback)
+		return
+	}
+	fillBoxStyleWithEdgeWidths(rgba, rect.X, rect.Y, rect.Width, rect.Height,
+		frameColor(frame.InteriorRGB), frameColor(frame.BorderRGB), frame.BorderPattern, rect.FrameEdgeWidths)
+}
+
 // strokeGeometryBox 套用 pack frame 的外框但保留內部像素。正式 pack 會
 // 先驗證 frame；nil 僅供 direct fixture 導覽，不是 production fallback。
 func strokeGeometryBox(rgba []byte, frame *gamepack.FrameStyle, x, y, w, h int, fallback dq3data.Color) {
@@ -425,7 +478,7 @@ func fillPatternRect(rgba []byte, fill *gamepack.PatternFill) {
 	}
 	for r := 0; r < fill.Rect.Height; r++ {
 		for c := 0; c < fill.Rect.Width; c++ {
-			if !frameBorderPixel(fill.Pattern, c, r) {
+			if !frameBorderPixel(fill.Pattern, c, r, fill.Rect.Width, fill.Rect.Height) {
 				continue
 			}
 			putPx(rgba, fill.Rect.X+c, fill.Rect.Y+r, frameColor(fill.RGB))

@@ -203,7 +203,7 @@
   [咒文效果 dispatcher](docs/re-log-spell-effect-dispatch.md) ·
   [remake 接線教訓](docs/remake-wiring-lessons.md)
 
-### 2026-08-11 目前 IDA story-flag E2 接線
+### 2026-08-11 IDA story-flag E2 接線（歷史 checkpoint）
 - `dq3_cht` pack schema `0.1.29` 的 `events.json.story_flag_runtime_events` 保存四條已閉合
   handler transaction：74／CTY80 `0x0d`、69／CTY70 `0x11`＋map byte `0x80`、70／CTY65
   `0x1a/0x1b`、33／CTY44 `DI=0x0bff→record71` 的 `0x24/0x21`。
@@ -213,14 +213,46 @@
 - CTY07→CTY08 route 勘誤（2026-08-11）：原始 transition chain 已接通；塔區遭遇由正式聖水／
   戰鬥輸入處理後可抵達 CTY08 sec3。CTY13 金字塔 sec2 同樣確認遭遇 gate 會開 modal；
   `traceWalkToNoPortal` 已補正式戰鬥輸入，CTY13 開關／魔法鑰匙 checkpoint 可由正式 trace
-  抵達並 save/load。完整 campaign 修正後尚未重播完畢，不能把這些 route 修正誤稱為 E3 全程
-  通關；呈現與時序近似依 README 的 `V3-approx` 標記。
+  抵達並 save/load。這是完整 campaign 重播前的歷史狀態；現行結果見下方 2026-08-12 checkpoint。
 - 詳細目前狀態：[`docs/119`](docs/119-daynight-story-flag-audit.md)、
   [`docs/123`](docs/123-static-battle-daynight-re.md)、[`docs/74`](docs/74-ebiten-remake-completion-plan.md)、
   [`docs/84`](docs/84-game-pack-json-contract.md)。
 
 ### 雜項工具筆記
 - [js-dos bundle 下載技巧](docs/js-dos-bundle.md)(dos.zczc.cz 線上模擬器抽 bundle zip)
+
+### Android port UX（2026-08-11）
+- [`docs/124`](docs/124-android-ux-spec.md) 保存優先的手機 UX：640×350 原畫、浮動四向十字鍵、
+  A/B、情境鍵、中文 App 身分、沉浸式橫向與生命週期界線。
+- Docker 已以 SDK 35／AGP 8.2.2 編譯 debug APK；`dist/dq3-android-debug-20260811.apk`
+  SHA-256 為 `ea830ea06dfde28ce3e912669092663c4cde03069575a8fd695c1e1915efe62c`。
+  目前只有 `build-only` 證據，沒有 emulator／真機 touch 或 lifecycle smoke，不得宣稱 Android
+  實機驗收。
+
+### 開場能力確認 HUD 框線（2026-08-11，歷史 checkpoint）
+- 以 `dosbox/v3_01_afterstats.png` logical pixels 取樣：StatsLeft／StatsEquipment／StatsRight
+  三個大面板為連續 lavender `RGB(255,223,255)`，上／下兩列、左／右兩欄；當時 pack
+  暫用具名 `solid_2px`，renderer 不寫 DQ3 專屬座標。此中間近似已由 2026-08-12 的
+  `beveled_2px` V3 靜態對拍取代，現行規格見 `docs/126`。
+- 中央 `confirm_choice` 的藍黑 checkerboard 與 `checkerboard_frame_2px` 保持不變；新增
+  `TestFramePatternSolid2pxMatchesOriginalNewGamePanels` 與新版 `docs/ng_confirm.png`。
+- 舊版 C／SDL `tools/game_tester.sh` 及 `work/dist/verify/game_tester.sh` 已移除；現行驗收
+  一律使用 Go／Xvfb／Docker，舊 `dq3_remake` 文件僅作歷史線索。
+
+### 2026-08-12 current checkpoint：能力確認 V3 靜態與 RE 收斂
+
+- `dq3_cht` schema 為 `0.1.30`、content version 為 `0.1.35`。新欄位只擴充共用
+  `frame_edge_widths` 與 `window_backdrops` 契約；DQ3 專屬 glyph、record、raw window、座標與
+  layer 全在 `interface.json`，Go 不新增版本專屬 fallback。
+- 正式原版創角輸入（名稱 `0`、男性、確認）的 DOSBox 1024×768 外殼已明確裁成左上 640×350
+  logical viewport，與 remake fixture 對拍得到 AE=1,474／224,000（0.658%）。這是固定
+  能力確認 checkpoint 的 V3 靜態，不涵蓋游標、palette、淡入或音效 timing。原始 hash、
+  殘差與反證見 [`docs/126`](docs/126-newgame-confirmation-v3-static-comparison.md)。
+- IDA Pro 9.4 重新交叉查核 queue／actor consumer、alternate runner、SHP redraw、VOC dispatch、
+  formation、resistance、日夜與五個 flag。可由目前原始輸入閉合的資料／runtime 已收斂；
+  boss repeat-N、逐動作 frame、PCM wall-clock 與玩家可見 palette transition 沒有安全
+  production 值，保持 `unknown`／fail-closed，除非出現新原版 trace 或具體 caller。完整範圍與
+  停止條件見 [`docs/123`](docs/123-static-battle-daynight-re.md)。
 
 ## Flagged ambiguities(待釐清)
 

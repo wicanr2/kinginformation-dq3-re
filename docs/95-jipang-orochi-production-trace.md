@@ -3,6 +3,9 @@
 > 狀態：原版設定與控制流 D3；從新遊戲起的正式玩家輸入 trace 與 save/load 已閉合至 E3；
 > 四張 Ebitengine runtime 圖為 V2，尚未做逐像素同狀態 DOSBox V3。
 
+2026-08-12 的四人隊正式 trace 已取代舊單勇者 fixture 作為戰鬥畫面證據；比對發現兩戰
+背景尚未 match 原版影片，故仍只是 V2／near-state，詳見 [`docs/127`](127-orochi-v2-production-compare.md)。
+
 ## 先前錯誤
 
 舊 `bossTrigger` 把 CTY19 第一戰直接視為事件完成，同時給草薙大劍 `0x14`、紫寶珠
@@ -45,3 +48,19 @@ raw ID 乘記錄長度 `0x29`，從 D3MNS runtime record 的 `+0x25` 讀判定�
 - component tests 另鎖定 Yes 分支不開戰且可重談、戰敗不交易旗標，以及第二戰不重複掉落。
 - runtime 圖：`docs/img/jipang_orochi_first_battle.png`、`jipang_orochi_first_post.png`、
   `jipang_orochi_second_battle.png`、`jipang_purple_orb_obtained.png`。尚待 DOSBox 同狀態 V3。
+
+## 2026-08-12 四人隊正式畫面勘驗
+
+舊 PNG 是 `NewGame` 加載 fixture，只有主角，不能用來判斷原版四人 HUD 或正式遭遇狀態。
+本輪在 Docker＋Xvfb 以 `TestOpeningProductionInputTrace` 從標題正常重播至 `THE END`，
+僅在既有的第一、第二八頭大蛇戰的 `command`／`message`／`end` phase
+輸出 640×350 PNG。取樣先讓 renderer 的短暫受擊 flash 消退，避免 high-speed trace 因未 Draw
+而把純紅受擊覆蓋誤當作怪物色盤。
+
+結果確認四人狀態列、命令框與敵名框均由正式流程渲染；怪物也不是缺色或透明。然而同源
+原版影片第一戰結束畫面是洞窟、第二戰遭遇畫面是沙漠，remake 分別顯示天空草地與綠色背景。
+目前 staged-boss path 直接把 formation byte1 的 `background_raw`（35／26）當作
+`PACKBG.SCR` page，卻沒有 runtime consumer 使用 formation byte2 的 `page_raw=5`；這個直接
+映射不 match 玩家可見原版，並非單人 fixture 的問題。正確 archive selector 仍未知，詳細
+hash、phase 對照、程式 consumer 與後續最小 gate 見 [`docs/127`](127-orochi-v2-production-compare.md)；
+不得把本批提升為 V3。

@@ -599,6 +599,24 @@ wall-clock、boss repeat-N、逐動作 SHP frame 仍 unknown／V3 gap。`NVOC` c
 勘誤為 `0x1f973`；完整證據在 [`docs/123`](docs/123-static-battle-daynight-re.md) 與
 `docs/data/dq3-static-battle-daynight-evidence.json`。
 
+## 2026-08-11 Android UX／build checkpoint
+
+使用者要求開啟 Android 版工作；本輪採保存優先的 port UX，不改寫精訊版 640×350 畫布、
+繁中劇本、注音／英數選字或 game-pack 邊界。`docs/124-android-ux-spec.md` 定義浮動四向
+十字鍵、右下 A/B、標題／命名情境鍵、非控制區選單點選、橫向沉浸式外殼、`FLAG_KEEP_SCREEN_ON`
+與 `onPause`／`onResume` 規則。Android manifest 的玩家可見 App 名稱改為「傳說的終章」，
+遊戲內文字仍只能來自 JSON／text ID。
+
+Docker build 使用既有 `rich2-go-android:20260809`（SDK 35、AGP 8.2.2），並以 UID 1000
+在隔離 HOME／Gradle cache 中執行；`compileSdk` 固定 35、`buildToolsVersion` 固定 35.0.0，
+`targetSdk` 維持 34。最新 Go AAR 為 `dist/dq3-android-current-20260811.aar`，SHA-256
+`cc0c12730c39190362e9699d07232e553d86d4a76fbdb209004f28965a4c8566`；debug APK 已產生於 ignored
+`dist/dq3-android-debug-20260811.apk`，
+SHA-256 `ea830ea06dfde28ce3e912669092663c4cde03069575a8fd695c1e1915efe62c`；`aapt` 確認
+套件 `com.wicanr2.dq3`、中文 label 與 landscape feature。這只是 `build-only`，尚無 emulator
+或真機 touch／lifecycle／音訊／存讀檔證據，不得把桌面包或 Docker build 宣稱為 Android 實機
+完成。APK 含本機合法素材且不加入 Git；Docker 工作容器已清理。
+
 ## 2026-08-11 IDA evidence → story-flag runtime E2 checkpoint
 
 本輪依 IDA Pro 9.4 已閉合的 handler／caller／consumer 直接接線，沒有以攻略或合理預設補
@@ -621,3 +639,76 @@ map/save replay、Baramos aftermath 與 ending writer；Docker＋Xvfb targeted t
 同狀態 V3、完整 campaign E3、逐幀 SHP／PCM wall-clock、精確 palette register 或 boss
 repeat-N。前文的「runtime unknown／missing」保留作歷史勘誤，現行狀態以本節、`docs/119`、
 `docs/123` 及 pack JSON 為準。
+
+## 2026-08-11 驗收勘誤：current checkpoint 尚未重播閉合
+
+本輪以現行 Go／Ebitengine 測試器、Docker＋Xvfb、Android 靜態工具鏈與 DOSBox oracle
+取樣驗收。`internal/...`、觸控 UX 契約測試全綠；完整 `TestOpeningProductionInputTrace`
+在 `traceBoardAndSailShip`／`renderFrame` 逾時，排除該長測後唯一觀察到的失敗是
+`TestKandarTowerProductionRouteOpensThiefKeyDoor` 的 Lv1 單人遭遇全滅。Android APK 可
+重現但沒有 emulator／裝置，屬 build-only。原版開場室內、新遊戲能力確認與 Orochi 戰鬥
+只形成 near-state／V2 對照，不能提升為像素 V3。歷史曾抵達 `THE END` 的 checkpoint
+不能取代本輪正式輸入重播；因此目前不宣稱 campaign E3。完整指令、雜湊、畫面差異與
+下一個最小動作見 [`docs/125-acceptance-20260811.md`](docs/125-acceptance-20260811.md)。
+
+## 2026-08-11 後續重播勘誤：campaign E3 已閉合
+
+上一節是當時受限重播的歷史快照，已被同日更強的完整重播推翻，保留它只為追溯錯誤成因。
+`boardPhoenix` 在下層前往拉米亞時把 battle 保留的 movement cooldown 誤當一般 cooldown，
+因而無限送空白輸入；修正後會以正式戰鬥選單結束隨機遭遇再繼續移動，未注入座標、事件或
+資源。`TestOpeningProductionInputTrace` 隨後以正式 `InputState` 從新遊戲到 `THE END` 通過
+（63.92 秒），含 P4–P6、巴拉摩斯、下層、索瑪三連戰、冊封及中途 save/load。
+
+同時修正甘達特塔 route fixture：它的 Lv1 單人狀態只意圖驗證盜賊鑰匙門與 transition，卻把
+塔區遭遇誤混入；現以正式道具面板使用聖水管理遭遇，不改怪物資料。Docker＋Xvfb 將全部
+288 個 `game` 頂層測試分 18 個一次性程序批次執行後全數通過；`internal/...` 亦全綠。
+因此現行主線狀態是 **campaign E3／runtime V1**，不是原版同狀態畫面與音效 V3；Android
+仍只有 build-only。完整命令、終局 PNG 雜湊及舊結論訂正見
+[`docs/125-acceptance-20260811.md`](docs/125-acceptance-20260811.md)。
+
+## 2026-08-11 能力確認 HUD 框線像素勘誤
+
+以 `dosbox/v3_01_afterstats.png` 的 640×350 logical pixels 逐點取樣後，確認能力確認頁
+三個大面板（StatsLeft／StatsEquipment／StatsRight）外框是連續 lavender
+`RGB(255,223,255)`，上／下各兩列、左／右各兩欄；先前把 EGA `bh=0xaa` 直接投影為
+`checkerboard_1px` 的結論已標為推翻。`interface.json.new_game_geometry.frame` 現改用
+具名 `solid_2px` primitive；中央 `confirm_choice` 的藍黑 checkerboard 與 lavender／膚色
+`checkerboard_frame_2px` 不變。新增 frame regression test，完整證據與勘誤見
+[`docs/117`](docs/117-newgame-frame-re.md)。此修正是 D2／V2 靜態 HUD 對拍，不提升逐幀
+palette、游標動畫或整段創角流程為 V3。
+
+## 2026-08-12 current memory：能力確認 V3 靜態與 RE 停止條件
+
+現行 game pack schema 是 `0.1.30`，DQ3 content version 是 `0.1.35`。能力確認頁的 DQ3
+資料已完全留在 `interface.json`：record 407 glyph stream、13 個具名 stat field、raw EGA
+window backdrop layer、`frame_edge_widths`、`beveled_2px` 與 `FIRST.SCR` palette；Go 只保留
+跨版本 renderer／validator primitive。
+
+原版正式創角輸入（名稱 `0`、男性、確認）與 remake fixture 在 640×350 得到 AE=1,474
+（0.658%）的 V3 靜態 checkpoint。此結果只適用固定畫面；游標／palette／淡入與音效
+時序未被單張 PNG 宣稱完成。原始 hash、殘差、實作與反證見 [`docs/126`](docs/126-newgame-confirmation-v3-static-comparison.md)。
+
+IDA Pro 9.4 的新 audit 重查 queue builder／actor consumer xref、alternate runner、SHP redraw
+及 VOC dispatch，確認可靜態閉合的 formation、resistance、五個 story flag、clock／palette
+bank 已在資料／runtime 接線；boss repeat-N、逐動作 frame、PCM wall-clock 與可見 palette
+transition 沒有安全 production 值。除非取得新原版 frame／音訊 trace 或具體新 caller，
+不要再為這些項目猜 JSON、加 Go fallback 或廣泛重跑反組譯。完整界線見
+[`docs/123`](docs/123-static-battle-daynight-re.md)。
+
+## 2026-08-12 八頭大蛇 battle V2 勘驗：背景 selector 是目前實際缺口
+
+不要再用 `docs/img/jipang_orochi_*_battle.png` 的單勇者 fixture 評估日邦格戰鬥。現有
+`TestOpeningProductionInputTrace` 可從標題以正式 `InputState` 到 `THE END`；設定
+`DQ3_PRODUCTION_DUMP_OROCHI` 時，只在兩場八頭大蛇的 command／message／end phase 取樣四人隊
+640×350 PNG。取樣 hook 會以正常 renderer 消耗暫態受擊 flash，避免快速 test trace 凍結
+500ms 紅色閃光；它不改寫命令、HP、RNG 或輸入。
+
+同源本機 YouTube 畫格已確認第一戰勝利是洞窟、第二戰遭遇是沙漠；remake 正式 trace 則分別
+顯示天空草地與綠色背景。`Game.startPackFormation` 已使用 formation byte1 的 `BackgroundRaw`
+（35／26），卻直接將它當 `PACKBG.SCR` page，formation byte2 的 `PageRaw=5` 在 runtime 零使用。
+這是已證實的 direct mapping 行為，但原版兩個 raw byte 到 archive selector 的 consumer 尚未閉合；
+不可把它錯記成「固定 page22」或用合理預設補洞。怪物、四人 HUD 與命令框已能由正式路徑顯示，
+但背景選擇未 match，所以結論只能是 campaign E3／runtime V1、此戰鬥 near-state V2，不是 V3。
+下次只閉合兩個 raw byte→pack reference→renderer selector→正式 trace 的窄切片；不要以靜態截圖
+猜 selector。hash、frame mapping、推論等級與最小 gate 見
+[`docs/127-orochi-v2-production-compare.md`](docs/127-orochi-v2-production-compare.md)。

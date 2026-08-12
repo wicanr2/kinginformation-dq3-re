@@ -42,18 +42,18 @@ func TestTouchZones(t *testing.T) {
 	}
 }
 
-// TestTouchContextZone:情境鍵(右上)只在 SetContext 給非空標籤時才吃觸點;
-// 隱藏(空字串)時同一點應回 zoneNone,不可誤吞其他區的觸控。
+// TestTouchContextZone:情境鍵(右上)只在 SetContext 給非 none 情境時才吃觸點;
+// 隱藏(none)時同一點應回 zoneNone,不可誤吞其他區的觸控。
 func TestTouchContextZone(t *testing.T) {
 	tu := newTouchUI()
 	if z := tu.zoneOf(ctxCX, ctxCY); z != zoneNone {
 		t.Errorf("未設情境標籤時,情境鍵座標應 zoneNone,得 %d", z)
 	}
-	tu.SetContext("設定")
+	tu.SetContext(touchContextSettings)
 	if z := tu.zoneOf(ctxCX, ctxCY); z != zoneCtx {
 		t.Errorf("SetContext 後情境鍵中心應 zoneCtx,得 %d", z)
 	}
-	tu.SetContext("")
+	tu.SetContext(touchContextNone)
 	if z := tu.zoneOf(ctxCX, ctxCY); z != zoneNone {
 		t.Errorf("SetContext(\"\") 後應回 zoneNone(隱藏不吃點),得 %d", z)
 	}
@@ -78,8 +78,8 @@ func TestCtxTapMapsToInputState(t *testing.T) {
 	}
 }
 
-// TestUpdateTouchContextLabel:驗證「狀態 → 情境鍵標籤」轉移(規劃 docs/64 §2):
-// 標題畫面 → 設定、酒館命名階段 → 注、其餘 → 隱藏(空字串)。
+// TestUpdateTouchContextLabel:驗證「狀態 → 情境鍵 enum」轉移(規劃 docs/64 §2):
+// 標題畫面 → settings、酒館命名階段 → toggle、其餘 → 隱藏(none)。
 // 只建純狀態 Game(無素材/無 ebiten 主迴圈),呼叫 updateTouchContext() 本身,
 // 不跑完整 Update()/RunGame(那需要地圖/素材等大量依賴,無法在單元測試輕量驗證)。
 func TestUpdateTouchContextLabel(t *testing.T) {
@@ -87,14 +87,14 @@ func TestUpdateTouchContextLabel(t *testing.T) {
 
 	g.showTitle = true
 	g.updateTouchContext()
-	if g.input.touch.ctxLabel != "設定" {
-		t.Errorf("標題畫面(主選單前/中)應設情境標籤「設定」,得 %q", g.input.touch.ctxLabel)
+	if g.input.touch.ctx != touchContextSettings {
+		t.Errorf("標題畫面(主選單前/中)應設 settings 情境,得 %d", g.input.touch.ctx)
 	}
 
 	g.newGame.stage = ngName // 主角命名階段→ 情境鍵應改「注」(英數↔注音),同酒館命名
 	g.updateTouchContext()
-	if g.input.touch.ctxLabel != "注" {
-		t.Errorf("主角命名階段應設情境標籤「注」,得 %q", g.input.touch.ctxLabel)
+	if g.input.touch.ctx != touchContextToggle {
+		t.Errorf("主角命名階段應設 toggle 情境,得 %d", g.input.touch.ctx)
 	}
 	g.newGame.stage = ngSplash // 還原,避免影響下方既有斷言
 
@@ -102,20 +102,20 @@ func TestUpdateTouchContextLabel(t *testing.T) {
 	g.tavern.active = true
 	g.tavern.stage = tavName
 	g.updateTouchContext()
-	if g.input.touch.ctxLabel != "注" {
-		t.Errorf("酒館命名階段應設情境標籤「注」,得 %q", g.input.touch.ctxLabel)
+	if g.input.touch.ctx != touchContextToggle {
+		t.Errorf("酒館命名階段應設 toggle 情境,得 %d", g.input.touch.ctx)
 	}
 
 	g.tavern.stage = tavGender // 酒館其他階段(非命名)→ 不應顯示情境鍵
 	g.updateTouchContext()
-	if g.input.touch.ctxLabel != "" {
-		t.Errorf("酒館非命名階段應隱藏情境鍵(空字串),得 %q", g.input.touch.ctxLabel)
+	if g.input.touch.ctx != touchContextNone {
+		t.Errorf("酒館非命名階段應隱藏情境鍵(none),得 %d", g.input.touch.ctx)
 	}
 
 	g.tavern.active = false
 	g.updateTouchContext()
-	if g.input.touch.ctxLabel != "" {
-		t.Errorf("一般情境應隱藏情境鍵(空字串),得 %q", g.input.touch.ctxLabel)
+	if g.input.touch.ctx != touchContextNone {
+		t.Errorf("一般情境應隱藏情境鍵(none),得 %d", g.input.touch.ctx)
 	}
 }
 
@@ -131,7 +131,7 @@ func TestTouchHeldState(t *testing.T) {
 	if z := tu.zoneOf(bCX, bCY); z != zoneB {
 		t.Fatalf("前提:B 鍵中心應 zoneB,得 %d", z)
 	}
-	tu.SetContext("設定")
+	tu.SetContext(touchContextSettings)
 	if z := tu.zoneOf(ctxCX, ctxCY); z != zoneCtx {
 		t.Fatalf("前提:情境鍵中心應 zoneCtx,得 %d", z)
 	}

@@ -636,3 +636,55 @@ fail-closed，這些未知不阻塞已完成的 raw formation integration。
 是 engine/data／save 的 E2 閉環，不是同狀態 DOSBox V3；原版完整後續 route、精確 palette
 register、逐幀 SHP／PCM wall-clock 與 boss repeat-N 仍維持本文件前述 `unknown`，不可在
 README 或 release 描述成全戰鬥 V3 parity。
+
+## 十二、2026-08-12 未閉合項目的 IDA 9.4 收斂
+
+本節不覆寫前述時間序列；它以新的、一次性 Docker IDA 9.4 audit 檢查目前仍可能影響
+remake 決策的項目，將「可由靜態資料閉合」和「靜態分析無法誠實保證」分開。原始
+`assets_raw/DQ3.EXE` 保持唯讀；工作副本、`.i64`、`.asm`、IDC 與輸出都在 `/tmp`，未加入
+Git，工作結束後刪除。輸入仍是 115,282 bytes、SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；位址均為 IDA DOS
+loaded linear address。
+
+### 1. queue／repeat-N 的窄範圍交叉檢查
+
+IDA 的 direct CREF 結果為：
+
+```text
+sub_1C34F (queue builder) ← 0x18ea7, 0x190e3, 0x1c0ad
+sub_1A973 (actor consumer) ← 0x190f4, 0x1c0de
+sub_1B3F3 (alternate consumer) ← 0x1c0d8
+```
+
+`0x1c0c5..0x1c104` 以 `CX=DS:0x2515` 逐筆取 2-byte queue record、依 actor code 呼叫
+一次 `sub_1A973` 或 `sub_1B3F3`，再 `SI+=2`；下一回合才回到 `sub_1C08B` 重建 queue。
+`0x190e3..0x19110` 同樣逐筆呼叫 `sub_1A973`，一輪後才遞增 `DS:0x26fc`，最多 `0x0c` 輪。
+第三個 queue-builder caller `0x18ea7` 只將已排序 queue 的結果寫入 `DS:0x35f2`；它沒有
+direct CREF 到 actor consumer，不能被命名為 boss repeat handler。
+
+這使「一般戰鬥每個 queue entry 一次」為 `confirmed`，也使「目前沒有找到資料驅動的同一
+actor repeat-N writer→consumer」成為 `strong` 的負面靜態證據。它**不**證明任何未找到的
+其他版本／自修改路徑永遠不存在；因此不能把未知欄位寫成 `boss_repeat_n=1`，也不應在
+remake 加入猜測性的 boss 多動作機制。現有的一次 queue action 是原始正式路徑的已證實預設。
+
+### 2. 其餘項目的停止條件
+
+| 項目 | 靜態最終結果 | remake 決策 |
+|---|---|---|
+| formation raw position | `sub_1AAA1 → sub_1AAD5 → sub_1AB2C → sub_1B31A` 的 raw formula、EGA stride／bottom 及 pack integration 已 `confirmed`／E2 | 不再把「缺每 formation sidecar」列為 blocker；像素排列仍只屬 V3 視覺驗收。 |
+| 抗性中文名稱 | effect id → D3TXT00 record 中文名稱與 packed class／threshold consumer 已 `confirmed` | 只保留 raw descriptor／class；不可把咒文名稱猜成元素或 `fire_resist` 等 production 欄位。 |
+| `0x0d`／`0x11`／`0x1a`／`0x1b`／`0x24` | handler、SET/CLEAR、generic NPC consumer 與四筆有限 runtime transaction 已 E2 接線 | 早期「runtime unknown/missing」是歷史狀態，不重開已閉合 JSON／engine 切片；同狀態演出仍是 V3。 |
+| 日夜 clock／palette bank | `0..0xef`、`0x78/0xf0`、12-byte bank index、DAC upload 已 `confirmed` | 不用 `DarkenPalette` 的合理值回寫原版；精確可見 RGB／transition 需同狀態 V3，不是再掃一次 EXE 可解。 |
+| SHP 動作 frame | `sub_1B3C3` 固定六次 `sub_1B220`，tick `[2,1]`；未見 action/frame selector | 不新增 `animation_id` 或逐動作 frame JSON；這是 `unknown`，需要原版 frame trace 才能升級。 |
+| PCM cue／timing | cue dispatch、VOC raw sample count／source duration、`sub_208E2` wait 已 `confirmed` | 不把 source duration 等同 host wall-clock、PCM 輸出波形或可見停頓；需錄音／frame trace。 |
+
+### 3. 結論與下一個可證偽輸入
+
+原版未閉合研究在「能由目前 EXE／DAT／VOC 靜態資料決定的範圍」已收斂：沒有尚待猜填的
+production 設定欄位，也沒有理由再以廣泛反組譯重跑同一批資料。剩下的是觀測性問題，不能
+由更長的 listing 變成真相：boss 特例的實際玩家路徑、逐 frame EGA/SHP 狀態、PCM 裝置輸出
+與 wall-clock、日夜每個 palette transition。
+
+因此後續只有取得可重播的原版同操作 frame／音訊 trace，或發現新的具體 caller／資料檔時，
+才重新開啟對應的窄任務。沒有新輸入時，production JSON 維持 fail-closed，README／release
+只可稱「靜態 E1/E2 與特定 checkpoint V3」，不可稱全戰鬥或全日夜 V3。

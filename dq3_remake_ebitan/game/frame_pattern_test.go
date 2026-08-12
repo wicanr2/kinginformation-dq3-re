@@ -41,6 +41,95 @@ func TestFramePatternCheckerboardLeavesUnderlyingBorder(t *testing.T) {
 	}
 }
 
+func TestFramePatternSolid2pxMatchesOriginalNewGamePanels(t *testing.T) {
+	const (
+		x = 20
+		y = 30
+		w = 10
+		h = 8
+	)
+	interior := dq3data.Color{R: 0, G: 0, B: 0}
+	border := dq3data.Color{R: 255, G: 223, B: 255}
+	rgba := make([]byte, ScreenW*ScreenH*4)
+	for i := 0; i < len(rgba); i += 4 {
+		rgba[i], rgba[i+1], rgba[i+2], rgba[i+3] = 7, 11, 13, 255
+	}
+
+	fillBoxStyle(rgba, x, y, w, h, interior, border, "solid_2px")
+	for row := 0; row < h; row++ {
+		for col := 0; col < w; col++ {
+			o := ((y+row)*ScreenW + x + col) * 4
+			want := interior
+			if col < 2 || row < 2 || col >= w-2 || row >= h-2 {
+				want = border
+			}
+			got := dq3data.Color{R: rgba[o], G: rgba[o+1], B: rgba[o+2]}
+			if got != want {
+				t.Fatalf("pixel (%d,%d)=%+v, want %+v", col, row, got, want)
+			}
+		}
+	}
+}
+
+func TestFramePatternBeveled2pxLeavesOnlyOuterCorners(t *testing.T) {
+	const (
+		x = 20
+		y = 30
+		w = 10
+		h = 8
+	)
+	interior := dq3data.Color{R: 0, G: 0, B: 0}
+	border := dq3data.Color{R: 255, G: 223, B: 255}
+	underlay := dq3data.Color{R: 7, G: 11, B: 13}
+	rgba := make([]byte, ScreenW*ScreenH*4)
+	for i := 0; i < len(rgba); i += 4 {
+		rgba[i], rgba[i+1], rgba[i+2], rgba[i+3] = underlay.R, underlay.G, underlay.B, 255
+	}
+
+	fillBoxStyle(rgba, x, y, w, h, interior, border, "beveled_2px")
+	for row := 0; row < h; row++ {
+		for col := 0; col < w; col++ {
+			o := ((y+row)*ScreenW + x + col) * 4
+			want := interior
+			edge := col < 2 || row < 2 || col >= w-2 || row >= h-2
+			outerCorner := (col == 0 || col == w-1) && (row == 0 || row == h-1)
+			if edge {
+				want = border
+			}
+			if outerCorner {
+				want = underlay
+			}
+			got := dq3data.Color{R: rgba[o], G: rgba[o+1], B: rgba[o+2]}
+			if got != want {
+				t.Fatalf("pixel (%d,%d)=%+v, want %+v", col, row, got, want)
+			}
+		}
+	}
+}
+
+func TestFramePatternAllowsPackOwnedSharedSeamWidth(t *testing.T) {
+	const (
+		x = 20
+		y = 30
+		w = 10
+		h = 8
+	)
+	interior := dq3data.Color{R: 0, G: 0, B: 0}
+	border := dq3data.Color{R: 255, G: 223, B: 255}
+	rgba := make([]byte, ScreenW*ScreenH*4)
+	fillBoxStyleWithEdgeWidths(rgba, x, y, w, h, interior, border, "beveled_2px", gamepack.FrameEdgeWidths{Right: 1})
+	colorAt := func(px, py int) dq3data.Color {
+		o := (py*ScreenW + px) * 4
+		return dq3data.Color{R: rgba[o], G: rgba[o+1], B: rgba[o+2]}
+	}
+	if got := colorAt(x+w-2, y+3); got != interior {
+		t.Fatalf("narrowed shared seam outer pixel=%+v, want interior %+v", got, interior)
+	}
+	if got := colorAt(x+w-1, y+3); got != border {
+		t.Fatalf("narrowed shared seam inner pixel=%+v, want border %+v", got, border)
+	}
+}
+
 func TestPatternFillCheckerboardWritesOnlyBluePhase(t *testing.T) {
 	const (
 		x = 360

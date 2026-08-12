@@ -1898,22 +1898,26 @@ func TestDQ3NewGameLabelsMatchOriginalGlyphs(t *testing.T) {
 		"load":              {712, 519, 696, 283},
 		"male":              {775, 674},
 		"female":            {234, 674},
-		"level":             {419, 420},
-		"hp":                {22, 30},
-		"mp":                {27, 30},
-		"agility":           {282, 283},
-		"luck":              {276, 426, 425, 427},
-		"max_hp":            {291, 163, 22, 30},
-		"max_mp":            {291, 163, 27, 30},
-		"attack":            {623, 624},
-		"defense":           {340, 409},
-		"experience":        {525, 526},
-		"sex":               {674, 417},
+		"level":             {12, 419, 12, 420, 667},
+		"hp":                {12, 12, 22, 30, 667},
+		"mp":                {12, 12, 27, 30, 667},
+		"strength":          {170, 280, 667},
+		"agility":           {282, 283, 667},
+		"vitality":          {284, 170, 667},
+		"intelligence":      {285, 286, 283, 667},
+		"luck":              {276, 426, 425, 427, 667},
+		"max_hp":            {291, 163, 22, 30, 667},
+		"max_mp":            {291, 163, 27, 30, 667},
+		"attack":            {623, 624, 170, 667},
+		"defense":           {340, 409, 170, 667},
+		"experience":        {525, 526, 667},
+		"sex":               {12, 674, 12, 417, 667},
 		"hero":              {106, 187},
 		"cloth":             {190, 149, 191, 192},
-		"prompt":            {398, 546, 194, 229, 456, 534},
+		"prompt":            {398, 546, 194, 229, 456, 534, 58},
 		"yes":               {399},
 		"no":                {678},
+		"choice_cursor":     {11},
 		"backspace":         {11},
 		"ok":                {29, 25},
 		"name_title":        {690, 519, 691, 692},
@@ -1926,7 +1930,7 @@ func TestDQ3NewGameLabelsMatchOriginalGlyphs(t *testing.T) {
 	if !reflect.DeepEqual(labels.Entries(), want) {
 		t.Fatalf("new-game labels=%v, want %v", labels.Entries(), want)
 	}
-	if labels.Evidence.Level != "D2" || labels.Evidence.Source != "D3TXT00.TXT records 451-456 + D3TXT00.FON" || labels.Evidence.Doc != "docs/112-newgame-labels-re.md" {
+	if labels.Evidence.Level != "D2" || labels.Evidence.Source != "D3TXT00.TXT records 407,451-456 + D3TXT00.FON" || labels.Evidence.Doc != "docs/112-newgame-labels-re.md" {
 		t.Fatalf("new-game labels evidence=%+v, want D2/FON+map/docs/112", labels.Evidence)
 	}
 }
@@ -1942,7 +1946,7 @@ func TestDQ3NewGameGeometryMatchesOriginalWindows(t *testing.T) {
 	}
 	if g.ID != "dq3:new_game_geometry" ||
 		g.Frame == nil || g.Frame.ID != "dq3:frame.ega_window_lavender_black" ||
-		g.Frame.BorderPattern != "checkerboard_1px" ||
+		g.Frame.BorderPattern != "beveled_2px" ||
 		g.Frame.BorderRGB != [3]uint8{255, 223, 255} ||
 		g.Frame.InteriorRGB != [3]uint8{0, 0, 0} ||
 		g.NamePanel != (GeometryRect{X: 159, Y: 52, Width: 242, Height: 130}) ||
@@ -1951,13 +1955,35 @@ func TestDQ3NewGameGeometryMatchesOriginalWindows(t *testing.T) {
 		g.NameText != (GeometryAnchor{X: 249, Y: 62, StepX: 16}) ||
 		g.GenderPanel != (GeometryRect{X: 344, Y: 46, Width: 96, Height: 64}) ||
 		g.ConfirmChoiceContent != (GeometryRect{X: 376, Y: 78, Width: 80, Height: 32}) ||
-		g.StatsRightRows != (GeometryAnchor{X: 326, Y: 126, StepY: 16}) ||
+		g.Stats == nil ||
+		g.StatsLeft != (GeometryRect{X: 159, Y: 52, Width: 145, Height: 98, FrameEdgeWidths: FrameEdgeWidths{Right: 1}}) ||
+		g.StatsEquipment != (GeometryRect{X: 159, Y: 148, Width: 145, Height: 82, FrameEdgeWidths: FrameEdgeWidths{Right: 1}}) ||
+		g.StatsRight != (GeometryRect{X: 303, Y: 52, Width: 194, Height: 178}) ||
+		g.StatsName != (GeometryAnchor{X: 200, Y: 46}) ||
+		g.StatsCloth != (GeometryAnchor{X: 200, Y: 158}) ||
+		g.Stats.Strength != (NewGameStatField{Label: GeometryAnchor{X: 376, Y: 62}, Value: NumberField{X: 408, Y: 62, Digits: 5}}) ||
+		g.Stats.Luck != (NewGameStatField{Label: GeometryAnchor{X: 344, Y: 126}, Value: NumberField{X: 408, Y: 126, Digits: 5}}) ||
+		g.Stats.Experience != (NewGameStatField{Label: GeometryAnchor{X: 328, Y: 206}, Value: NumberField{X: 360, Y: 206, Digits: 8}}) ||
 		len(g.RawWindows) != 7 {
 		t.Fatalf("new-game geometry=%+v, want raw windows and measured panels", g)
 	}
 	if g.RawWindows[0].Address != "linear:0x29088" || g.RawWindows[0].X != 19 ||
 		g.RawWindows[0].Y != 46 || g.RawWindows[0].Width != 32 || g.RawWindows[0].Height != 144 {
 		t.Fatalf("name raw window=%+v, want linear 0x29088 19,46,32,144", g.RawWindows[0])
+	}
+	if len(g.WindowBackdrops) != 3 ||
+		g.WindowBackdrops[0].RawWindowID != "creation_panel" ||
+		g.WindowBackdrops[0].Primitive != "ega_window_black_backdrop" ||
+		g.WindowBackdrops[1].RawWindowID != "confirm_prompt" ||
+		g.WindowBackdrops[2].RawWindowID != "confirm_choice" {
+		t.Fatalf("new-game window backdrops=%+v, want three ordered raw EGA black backdrops", g.WindowBackdrops)
+	}
+	for i, want := range []struct{ order, right, bottom int }{{0, 8, 8}, {1, 0, 8}, {1, 0, 0}} {
+		backdrop := g.WindowBackdrops[i]
+		if backdrop.DrawOrder == nil || backdrop.TerminalRightPixels == nil || backdrop.TerminalBottomPixels == nil ||
+			*backdrop.DrawOrder != want.order || *backdrop.TerminalRightPixels != want.right || *backdrop.TerminalBottomPixels != want.bottom {
+			t.Fatalf("window_backdrops[%d]=%+v, want draw_order/terminal=%+v", i, backdrop, want)
+		}
 	}
 	if g.Evidence.Level != "D2" || g.Evidence.Doc != "docs/113-newgame-geometry-re.md" {
 		t.Fatalf("new-game geometry evidence=%+v, want D2/docs/113", g.Evidence)
@@ -2414,14 +2440,14 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.29","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.30","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.29","service_definitions":[{
+	  "schema_version":"0.1.30","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2429,7 +2455,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.29",
+	  "schema_version":"0.1.30",
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2448,7 +2474,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
   "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.29",
+	  "schema_version":"0.1.30",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -2458,7 +2484,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.29","definitions":[{
+	  "schema_version":"0.1.30","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -2467,7 +2493,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.29","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.30","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2479,7 +2505,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.29"`, `"schema_version":"0.1.29","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.30"`, `"schema_version":"0.1.30","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

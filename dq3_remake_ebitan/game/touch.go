@@ -40,6 +40,16 @@ const (
 	ctxHit                 = 40
 )
 
+// touchContext 是跨版本的觸控情境，不攜帶任何版本專屬可見文字。
+// 文字與 glyph 仍由 game-pack／遊戲畫面提供；這裡只需要決定情境鍵是否存在及其動作。
+type touchContext uint8
+
+const (
+	touchContextNone touchContext = iota
+	touchContextSettings
+	touchContextToggle
+)
+
 type touchZone int
 
 const (
@@ -55,7 +65,7 @@ type TouchUI struct {
 	dpadDir               int // 這幀十字鍵方向(-1 無,0下 1上 2左 3右)
 	aTap, bTap            bool
 	aHeld, bHeld, ctxHeld bool                      // 這幀是否有觸點壓在該鈕區(不限 just-pressed;P3 壓感回饋用)
-	ctxLabel              string                    // 情境鍵標籤;空字串=隱藏(由 Game 每幀依情境設)
+	ctx                   touchContext              // 情境鍵情境;none=隱藏(由 Game 每幀依狀態設)
 	ctxTap                bool                      // 這幀情境鍵剛點(edge)
 	tapX, tapY            int                       // 落在 zoneNone 的 just-pressed 觸點座標(選單直接點選,P2)
 	tapEdge               bool                      // 這幀有 zoneNone 剛點(edge);每幀 reset
@@ -63,13 +73,13 @@ type TouchUI struct {
 	everTouched           bool                      // 有過觸控才畫控制(桌面預設不擾)
 }
 
-// SetContext:Game 每幀依當前狀態設情境鍵標籤;空字串 = 隱藏(不吃觸點)。
-func (t *TouchUI) SetContext(label string) { t.ctxLabel = label }
+// SetContext:Game 每幀依當前狀態設跨版本情境;none = 隱藏(不吃觸點)。
+func (t *TouchUI) SetContext(ctx touchContext) { t.ctx = ctx }
 
 func newTouchUI() *TouchUI { return &TouchUI{dpadDir: -1, origin: map[ebiten.TouchID][2]int{}} }
 
 func (t *TouchUI) zoneOf(x, y int) touchZone {
-	if t.ctxLabel != "" && (x-ctxCX)*(x-ctxCX)+(y-ctxCY)*(y-ctxCY) <= ctxHit*ctxHit {
+	if t.ctx != touchContextNone && (x-ctxCX)*(x-ctxCX)+(y-ctxCY)*(y-ctxCY) <= ctxHit*ctxHit {
 		return zoneCtx
 	}
 	if (x-aCX)*(x-aCX)+(y-aCY)*(y-aCY) <= btnHit*btnHit {
@@ -192,14 +202,54 @@ func (t *TouchUI) draw(rgba []byte) {
 		bAlpha, bRad = 0.8, btnR-6+4
 	}
 	fillCircle(rgba, bCX, bCY, bRad, base, bAlpha)
-	// 情境鍵(右上,標籤隨情境變義;MVP 不畫字,琥珀色圓明顯區別 A/B)
-	if t.ctxLabel != "" {
+	// 情境鍵(右上,語意隨情境變義;以通用圖示區分設定／切換,不硬寫版本文字)
+	if t.ctx != touchContextNone {
 		amber := dq3data.Color{R: 239, G: 154, B: 60}
 		ctxAlpha, ctxRad := 0.55, ctxR
 		if t.ctxHeld {
 			ctxAlpha, ctxRad = 0.85, ctxR+4
 		}
 		fillCircle(rgba, ctxCX, ctxCY, ctxRad, amber, ctxAlpha)
+		drawContextIcon(rgba, t.ctx, ctxCX, ctxCY)
+	}
+}
+
+// drawContextIcon 只畫跨版本的幾何圖示，不把「設定／注」等文字硬寫進共用 Go renderer。
+func drawContextIcon(rgba []byte, ctx touchContext, cx, cy int) {
+	ink := dq3data.Color{R: 42, G: 42, B: 52}
+	switch ctx {
+	case touchContextSettings:
+		// 八個齒點 + 中央孔：低解析度下仍比純色圓容易辨識。
+		fillCircle(rgba, cx, cy, 5, ink, 0.78)
+		for _, p := range [][2]int{{0, -9}, {0, 9}, {-9, 0}, {9, 0}, {-6, -6}, {6, -6}, {-6, 6}, {6, 6}} {
+			fillCircle(rgba, cx+p[0], cy+p[1], 2, ink, 0.78)
+		}
+		fillCircle(rgba, cx, cy, 2, dq3data.Color{R: 239, G: 154, B: 60}, 0.9)
+	case touchContextToggle:
+		// 兩條相反方向箭頭，代表英數／注音層切換；不依賴任何字型 glyph。
+		drawTouchSegment(rgba, cx-10, cy-4, cx+8, cy-4, ink, 0.86)
+		drawTouchSegment(rgba, cx+10, cy+4, cx-8, cy+4, ink, 0.86)
+		for _, p := range [][2]int{{cx + 8, cy - 7}, {cx + 8, cy - 1}, {cx - 8, cy + 1}, {cx - 8, cy + 7}} {
+			fillCircle(rgba, p[0], p[1], 2, ink, 0.86)
+		}
+	}
+}
+
+func drawTouchSegment(rgba []byte, x0, y0, x1, y1 int, c dq3data.Color, a float64) {
+	dx, dy := x1-x0, y1-y0
+	n := abs(dx)
+	if abs(dy) > n {
+		n = abs(dy)
+	}
+	if n == 0 {
+		blendPx(rgba, x0, y0, c, a)
+		return
+	}
+	for i := 0; i <= n; i++ {
+		x := x0 + dx*i/n
+		y := y0 + dy*i/n
+		blendPx(rgba, x, y, c, a)
+		blendPx(rgba, x+1, y, c, a)
 	}
 }
 

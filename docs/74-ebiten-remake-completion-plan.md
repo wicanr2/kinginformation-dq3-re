@@ -95,13 +95,13 @@
 | 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 已有新遊戲／載入框架 | 需輸入與版面 E2 |
-| 主角姓名／性別 | DOSBox 逐鍵截圖 | 已有共用元件與正式 trace；`FIRST.SCR`、右欄六個原版欄位、`confirm_choice` 藍黑 backdrop／中央黑色 content／lavender-膚色 2px frame 均由 pack 接入 | E3；靜態 geometry／frame D2、runtime V2，palette register、游標閃爍／能力條時序與完整同狀態 stat panel 仍待 V3 |
+| 主角姓名／性別 | DOSBox 正式輸入、IDA、同狀態 PNG | 共用元件與正式 trace；`FIRST.SCR`、record 407 的 13 個具名確認欄位、三層 raw EGA backdrop 與 `beveled_2px` frame 均由 pack 接入 | E3；能力確認固定 checkpoint 已 V3 靜態（AE 1,474／640×350），游標閃爍、palette register、能力條與整段 timing 仍待動態 V3 |
 | 家中／母親 | DOSBox、影片 | sec4+rec82/83；handler54 transaction 已接 | E3；逐格護送動畫仍待 V3 |
 | 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render 已有；CTY `+0x11` raw 遭遇 gate 與步數計數器已接 | E2（遭遇 gate）；仍需事件與 entrance closure、同狀態 V3 |
-| NPC／日夜 | DOSBox、RE | 四階段 clock、palette darken、日／夜 NPC table 與 story-flag filter 已有正式入口；IDA handler74／69／70／33 的四條 story-flag transaction 已由 pack 與正式 path 接線 | E2／D3；精確 raw palette／clock 對拍、完整 route 與未閉合旗標語意仍待 V3／unknown |
+| NPC／日夜 | DOSBox、RE | 四階段 runtime、日／夜 NPC table 與 story-flag filter 已有正式入口；IDA handler74／69／70／33 的四條 transaction 已接線，原始 clock／palette bank 靜態鏈已閉合 | E2／D3；精確可見 palette transition 與完整 route 仍待 V3；不再把五個已接旗標誤列為 runtime unknown |
 | 地表／HUD | 影片、網路圖 | 四欄 H/M/等級 HUD 已由 pack 幾何／glyph 驅動 | E2；需入口／palette／同狀態 V3 |
 | 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
 | 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 詳細狀況窗已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 圖達 E2／V2；魯拉、烈米特、特黑洛斯、拉那魯達的 MP／gate／核心效果為 D2 | 狀況子選單／隊員詳情、道具／裝備逐窗與其餘工具咒仍需 E2／V3 |
@@ -113,7 +113,7 @@
 | 終盤連戰 | 影片、RE | 光之珠、隱藏樓梯、歐里狄加與三連戰已有正式入口 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
 | THE END | 影片、TIT3 | 戰後回城、冊封與 ending scroll 已接 | 新遊戲 boot trace 已到 THE END；逐畫面與音效仍待 V3 |
 | 音樂／音效 | 原版 MCX/VOC、錄音研究 | OPL2/OGG 有相當基礎 | 逐場景 cue matrix 待驗 |
-| 觸控／Android | 無原版對照，屬 port UX | 輸入抽象與觸控已有 | 正式流程完成後驗收 |
+| 觸控／Android | 無原版對照，屬 port UX | 輸入抽象與觸控已有；保存優先的 Android UX 規格見 [`docs/124`](124-android-ux-spec.md) | Docker APK build、生命週期與真機 touch path 分開驗收 |
 
 ## 3. 現況判斷
 
@@ -479,8 +479,8 @@ Gate：由下層世界正常移動至 THE END，不使用 Z 或直接呼叫 boss
 - 無 debug full playthrough，分段使用正式 save checkpoint。
 - 使用者實玩驗收。
 - Linux／Windows／macOS desktop packages。
-- 本輪不含 Android APK/AAB 真機與 WASM smoke；若另開工作，須另建觸控／lifecycle／
-  音訊／存檔驗收計畫，不得由桌面包推論。
+- Android 已另開保存優先的 port UX 工作；本輪若只有 Docker APK/AAB build，狀態仍為
+  `build-only`，不得由桌面包推論真機 touch、lifecycle、音訊或存檔通過。WASM 仍不在本輪。
 - developer hooks 以 build tag 或明確 developer mode 隔離。
 - 公開包不含原版資產，啟動時驗證玩家提供的合法資產。
 
@@ -749,7 +749,7 @@ test 見 [`docs/113`](113-newgame-geometry-re.md)。本輪已以 Docker／Xvfb �
 `sub_10854 → sub_1f590 → sub_1fd30 → sub_1fdb1`，確認四邊 writer 與
 `DS:0x727` 的 raw plane mask；DOSBox `v3_01_afterstats.png` 取樣外框為
 `(255,223,255)`、內部黑。`interface.json.new_game_geometry.frame` 現以
-`border_pattern=checkerboard_1px` 資料化，`NewGameFlow`／酒館消費 pack frame，缺欄位或
+`border_pattern=solid_2px` 資料化，`NewGameFlow`／酒館消費 pack frame，缺欄位或
 不支援 pattern fail closed；這是 D2／runtime V2，palette、藍黑 `confirm_choice` pattern
 與逐幀 EGA 演出仍保留為 V3 gap。完整 sidecar 見
 [`docs/117`](117-newgame-frame-re.md)。
@@ -997,3 +997,50 @@ aftermath 與 ending writer tests 在 Docker＋Xvfb 通過；這是 E2 engine/da
 同狀態 DOSBox V3。boss repeat-N、逐動作 SHP frame、PCM wall-clock、精確 palette register
 與完整 campaign E3 仍依 `docs/123` 保持 `unknown`／V3 gap，不應重新開啟已完成的 JSON／flag
 切片。
+
+## 2026-08-11 後續正式重播勘誤：campaign E3 通過
+
+上一段關於「完整 campaign E3 仍 unknown」是接線後、重播前的暫時結論，已由更強的
+production replay 推翻。下層拉米亞 path 的 helper 曾把 active battle 保留的 movement cooldown
+當作普通 cooldown；修正為先用正式戰鬥輸入完成遭遇後，
+`TestOpeningProductionInputTrace` 在 Docker＋Xvfb 由新遊戲重播到 `THE END` 通過（63.92 秒），
+含巴拉摩斯、P4–P6、索瑪三連戰、冊封與關鍵 save/load。完整 `game` 測試因 Ebiten 圖形資源
+累積而改為同一二進位的 18 個一次性批次；288 個頂層測試全數通過。
+
+因此目前應標示為 **主線 campaign E3／runtime V1**。這個訂正不改變 V3 缺口：逐動作畫面與
+PCM timing、精確 palette、boss repeat-N 的原版 parity 仍是獨立證據／polish 工作。完整驗收與
+前述暫時 blocker 的原因、訂正、PNG 雜湊見 [`docs/125`](125-acceptance-20260811.md)。
+
+## 2026-08-12 current checkpoint：能力確認 V3 靜態／原版靜態研究收斂
+
+本節是 `docs/74` 的現行狀態表，優先於上述較早的 V2／unknown 文字：
+
+1. 創角能力確認的正式固定輸入已與原版 `640×350` 同狀態對拍，AE=1,474（0.658%）。
+   資料、原始定位、殘差與範圍見 [`docs/126`](126-newgame-confirmation-v3-static-comparison.md)。
+   它是此單一 checkpoint 的 V3 靜態，不是整段開場或全遊戲 V3。
+2. IDA 9.4 已重新審計戰鬥 queue／alternate runner、SHP redraw、VOC dispatch、formation、
+   resistance、日夜與五個 story flag。可由靜態原始資料決定的 pack／runtime 欄位已閉合；
+   boss repeat-N、動作 frame、PCM wall-clock 與可見 palette transition 沒有可安全填入的
+   production 值，保留 `unknown`／fail-closed。收斂與停止條件見
+   [`docs/123`](123-static-battle-daynight-re.md)。
+3. `dq3_cht` schema 已升為 `0.1.30`、content version `0.1.35`。新增資料契約只擴充共用
+   frame／backdrop primitive；所有 DQ3 glyph、raw window、geometry 與 layer 值仍在 pack，
+   沒有新增版本專屬 Go 常數。
+
+下一個 V3 工作只能由新的可重播原版 frame／音訊 trace 驅動；在沒有該輸入時，不以更長的
+靜態反組譯或視覺猜測重新開啟已收斂的研究。
+
+## 2026-08-12 current checkpoint：日邦格八頭大蛇四人隊 V2 勘驗
+
+本輪取得一條新且可重播的原版／remake 對照輸入：同源 YouTube 本機畫格明確顯示第一戰勝利
+仍在洞窟、第二戰遭遇在沙漠；從標題至 `THE END` 的 Docker＋Xvfb 正式 remake trace 則在
+兩戰各輸出 `command`／`message`／`end` 四人隊畫面。這排除舊單勇者 fixture 造成的 HUD
+誤判，也確認八頭大蛇素材本身已可顯示。
+
+結論是 **戰鬥呈現尚未 match V2 oracle，不能宣稱 V3**：目前 `Game.startPackFormation` 把
+formation byte1 的 `BackgroundRaw`（35／26）直接傳入 `DecodePackBG`，但 formation byte2 的
+`PageRaw=5` 沒有任何 runtime consumer。這個已證實（confirmed）的 direct mapping 產生天空草地
+與綠色背景，和已證實的洞窟／沙漠原版畫面不同；原版 selector 的 archive consumer 尚未閉合，
+不能猜它等於目前的 page index。下一個最小垂直切片僅應閉合「兩個 raw byte → pack reference →
+renderer selector → 兩張正式 trace 圖」；同時保留不同隊伍／數值／動態 phase 的限制，不把近似
+畫面升格為同狀態 V3。完整證據見 [`docs/127`](127-orochi-v2-production-compare.md)。

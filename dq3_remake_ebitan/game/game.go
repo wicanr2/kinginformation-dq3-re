@@ -925,18 +925,18 @@ func (g *Game) openFacility(k int) {
 	}
 }
 
-// updateTouchContext:依當前狀態設觸控情境鍵標籤(空=隱藏)。拆成獨立方法方便單元測試
+// updateTouchContext:依當前狀態設觸控情境 enum(none=隱藏)。拆成獨立方法方便單元測試
 // (不必跑完整 Update()/RunGame,只驗證「狀態 → 標籤」這條轉移邏輯本身)。
 func (g *Game) updateTouchContext() {
 	switch {
 	case g.showTitle && g.newGame.stage == ngName:
-		g.input.touch.SetContext("注") // 主角命名(英數↔注音切換,同酒館命名)
+		g.input.touch.SetContext(touchContextToggle) // 主角命名(英數↔注音切換,同酒館命名)
 	case g.showTitle:
-		g.input.touch.SetContext("設定")
+		g.input.touch.SetContext(touchContextSettings)
 	case g.tavern.active && g.tavern.stage == tavName:
-		g.input.touch.SetContext("注")
+		g.input.touch.SetContext(touchContextToggle)
 	default:
-		g.input.touch.SetContext("")
+		g.input.touch.SetContext(touchContextNone)
 	}
 }
 
@@ -2416,6 +2416,9 @@ func (g *Game) renderFrame() {
 		if g.newGame.stage != ngSplash {
 			if len(g.newGameConfirmPix) == ScreenW*ScreenH && len(g.newGameConfirmPal) == 16 {
 				drawIndexedPCX(g.rgba, g.newGameConfirmPix, g.newGameConfirmPal)
+				if g.newGame.stage == ngConfirm {
+					drawNewGameWindowBackdrops(g.rgba, g.newGame.geometry, 0)
+				}
 			} else {
 				for i := 0; i < ScreenW*ScreenH; i++ {
 					o := i * 4

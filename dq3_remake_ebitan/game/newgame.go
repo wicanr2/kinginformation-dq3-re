@@ -198,11 +198,85 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 	}
 }
 
-func drawNGRow(rgba []byte, tx *dq3data.Text, x, y int, lab []int, val int, c dq3data.Color) {
-	for i, gl := range lab {
-		drawGlyph(rgba, tx, x+i*dq3data.GlyphPx, y, gl, c)
+// drawNewGameWindowBackdrops replays one pack-selected draw layer of legacy
+// EGA window backdrops. Raw X/Width remain byte-addressed in the pack; the
+// shared renderer performs the registered projection and knows no DQ3
+// coordinates or window identities.
+func drawNewGameWindowBackdrops(rgba []byte, geo *gamepack.NewGameGeometry, drawOrder int) {
+	if geo == nil || len(geo.WindowBackdrops) == 0 {
+		return
 	}
-	drawNumber(rgba, tx, x+(len(lab)+1)*dq3data.GlyphPx, y, val, c)
+	rawByID := make(map[string]gamepack.RawNewGameWindow, len(geo.RawWindows))
+	for _, raw := range geo.RawWindows {
+		rawByID[raw.ID] = raw
+	}
+	black := dq3data.Color{}
+	for _, backdrop := range geo.WindowBackdrops {
+		order := 0
+		if backdrop.DrawOrder != nil {
+			order = *backdrop.DrawOrder
+		}
+		if order != drawOrder {
+			continue
+		}
+		raw, ok := rawByID[backdrop.RawWindowID]
+		if !ok {
+			// Production pack validation rejects this path. Direct fixtures may
+			// intentionally be partial, so preserve the already drawn background.
+			continue
+		}
+		switch backdrop.Primitive {
+		case "ega_window_black_backdrop":
+			// The pack makes any terminal EGA cell explicit: raw coordinates stay
+			// byte-addressed, while the generic primitive applies only the
+			// validated visible projection. Partial direct fixtures retain their
+			// raw rectangle; production validation rejects omitted projections.
+			right, bottom := 0, 0
+			if backdrop.TerminalRightPixels != nil {
+				right = *backdrop.TerminalRightPixels
+			}
+			if backdrop.TerminalBottomPixels != nil {
+				bottom = *backdrop.TerminalBottomPixels
+			}
+			x, width := raw.X*8, raw.Width*8+right
+			for y := raw.Y; y < raw.Y+raw.Height+bottom; y++ {
+				for px := x; px < x+width; px++ {
+					putPx(rgba, px, y, black)
+				}
+			}
+		}
+	}
+}
+
+func drawNGRow(rgba []byte, tx *dq3data.Text, field gamepack.NewGameStatField, lab []int, val int, c dq3data.Color) {
+	for i, gl := range lab {
+		drawGlyph(rgba, tx, field.Label.X+i*dq3data.GlyphPx, field.Label.Y, gl, c)
+	}
+	drawNGNumber(rgba, tx, field.Value, val, c)
+}
+
+// drawNGNumber 重現 sub_21929/sub_21822 的固定寬度 decimal field：原版先走
+// 高位、跳過 leading zero，仍逐格前進，最後一位固定落在欄位右端。
+func drawNGNumber(rgba []byte, tx *dq3data.Text, field gamepack.NumberField, val int, c dq3data.Color) {
+	if field.Digits <= 0 || val < 0 {
+		return
+	}
+	divisor := 1
+	for i := 1; i < field.Digits; i++ {
+		divisor *= 10
+	}
+	started := false
+	for i := 0; i < field.Digits; i++ {
+		digit := val / divisor
+		val %= divisor
+		if digit != 0 || started || i == field.Digits-1 {
+			drawGlyph(rgba, tx, field.X+i*dq3data.GlyphPx, field.Y, digit, c)
+			started = true
+		}
+		if divisor > 1 {
+			divisor /= 10
+		}
+	}
 }
 
 // drawNewGameStats 重現原版 1c54→sub_96be 的能力確認資訊。裝備衍生值依
@@ -211,23 +285,14 @@ func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yel
 	if nf.labels == nil {
 		return
 	}
-	// 原版能力 panel 的幾何與 confirm_choice 較大背景矩形都由 pack 提供。
-	// backdrop 必須在文字前寫入，讓未命中的黑色 phase 保留底圖，且不會
-	// 把能力欄位的 glyph 誤當成背景的一部分。
-	fillGeometryBox(rgba, geo.Frame, geo.StatsLeft.X, geo.StatsLeft.Y, geo.StatsLeft.Width, geo.StatsLeft.Height, white)
-	fillGeometryBox(rgba, geo.Frame, geo.StatsEquipment.X, geo.StatsEquipment.Y, geo.StatsEquipment.Width, geo.StatsEquipment.Height, white)
-	fillGeometryBox(rgba, geo.Frame, geo.StatsRight.X, geo.StatsRight.Y, geo.StatsRight.Width, geo.StatsRight.Height, white)
-	fillGeometryBox(rgba, geo.Frame, geo.ConfirmPrompt.X, geo.ConfirmPrompt.Y, geo.ConfirmPrompt.Width, geo.ConfirmPrompt.Height, white)
-	if geo.ConfirmChoiceBackdrop != nil {
-		fillPatternRect(rgba, geo.ConfirmChoiceBackdrop)
-		fillGeometryRect(rgba, geo.ConfirmChoiceFrame, geo.ConfirmChoiceContent, white)
-		strokeGeometryBox(rgba, geo.ConfirmChoiceFrame, geo.ConfirmChoice.X, geo.ConfirmChoice.Y,
-			geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
-	} else {
-		// 只保留給未安裝 production pack 的 direct fixture；正式 validator
-		// 會拒絕缺少 confirm_choice_backdrop 的資料。
-		fillGeometryBox(rgba, geo.Frame, geo.ConfirmChoice.X, geo.ConfirmChoice.Y, geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
+	if geo.Stats == nil {
+		return
 	}
+	// 原版能力 panel 的分割幾何與 confirm_choice 較大背景矩形都由 pack
+	// 提供。raw EGA backdrop 已先清為黑色；這三個可見框再依原始量測覆蓋。
+	fillGeometryFramedRect(rgba, geo.Frame, geo.StatsLeft, white)
+	fillGeometryFramedRect(rgba, geo.Frame, geo.StatsEquipment, white)
+	fillGeometryFramedRect(rgba, geo.Frame, geo.StatsRight, white)
 
 	// 能力確認頁的前景與游標跟 frame 共用原版 lavender palette；其他
 	// 新遊戲頁仍由呼叫端 white/yellow 控制，避免把未閉合的全域 palette
@@ -241,7 +306,6 @@ func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yel
 		textColor = frameColor(choiceFrame.BorderRGB)
 		cursorColor = textColor
 	}
-
 	for i, gl := range nf.ni.nameBuf {
 		drawGlyph(rgba, tx, geo.StatsName.X+i*dq3data.GlyphPx, geo.StatsName.Y, gl, textColor)
 	}
@@ -251,35 +315,58 @@ func drawNewGameStats(rgba []byte, tx *dq3data.Text, nf *NewGameFlow, white, yel
 	for i, gl := range nf.labels.Sex {
 		drawGlyph(rgba, tx, geo.StatsSex.X+i*dq3data.GlyphPx, geo.StatsSex.Y, gl, textColor)
 	}
-	sexGlyph := nf.labels.Male[0]
+	sexGlyphs := nf.labels.Male
 	if nf.previewGender == 1 {
-		sexGlyph = nf.labels.Female[0]
+		sexGlyphs = nf.labels.Female
 	}
-	drawGlyph(rgba, tx, geo.StatsSexValue.X, geo.StatsSexValue.Y, sexGlyph, textColor)
-	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y, nf.labels.Level, 1, textColor)
-	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y+geo.StatsLeftRows.StepY, nf.labels.HP, int(nf.preview[stats.HP]), textColor)
-	drawNGRow(rgba, tx, geo.StatsLeftRows.X, geo.StatsLeftRows.Y+2*geo.StatsLeftRows.StepY, nf.labels.MP, int(nf.preview[stats.MP]), textColor)
+	for i, gl := range sexGlyphs {
+		drawGlyph(rgba, tx, geo.StatsSexValue.X+i*dq3data.GlyphPx, geo.StatsSexValue.Y, gl, textColor)
+	}
+	statLayout := geo.Stats
+	drawNGRow(rgba, tx, statLayout.Level, nf.labels.Level, 1, textColor)
+	drawNGRow(rgba, tx, statLayout.HP, nf.labels.HP, int(nf.preview[stats.HP]), textColor)
+	drawNGRow(rgba, tx, statLayout.MP, nf.labels.MP, int(nf.preview[stats.MP]), textColor)
 	for i, gl := range nf.labels.Cloth {
 		drawGlyph(rgba, tx, geo.StatsCloth.X+i*dq3data.GlyphPx, geo.StatsCloth.Y, gl, textColor)
 	}
 
-	x := geo.StatsRightRows.X
-	// 原版能力確認右欄不是「速度／HP／MP」：record 407 的這個面板
-	// 依序顯示「運氣點數／最大HP／最大MP／攻擊力／守備力／經驗」。
-	// `agility` 仍保留給詳細狀況窗的 pack 對映，但不能拿來填此六列。
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y, nf.labels.Luck, int(nf.preview[stats.LUCK]), textColor)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+geo.StatsRightRows.StepY, nf.labels.MaxHP, int(nf.preview[stats.HP]), textColor)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+2*geo.StatsRightRows.StepY, nf.labels.MaxMP, int(nf.preview[stats.MP]), textColor)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+3*geo.StatsRightRows.StepY, nf.labels.Attack, int(nf.preview[stats.STR]), textColor)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+4*geo.StatsRightRows.StepY, nf.labels.Defense, nf.previewDef, textColor)
-	drawNGRow(rgba, tx, x, geo.StatsRightRows.Y+5*geo.StatsRightRows.StepY, nf.labels.Experience, 0, textColor)
+	// IDA linear 0x10854→0x1834e 會由同一角色 record 依序寫入十列：
+	// 四項基本能力，接著是運氣／最大 HP／最大 MP／攻防／經驗。每列的 leading
+	// blank、中文標籤及冒號均在 pack label glyph stream，不能由字長推導。
+	drawNGRow(rgba, tx, statLayout.Strength, nf.labels.Strength, int(nf.preview[stats.STR]), textColor)
+	drawNGRow(rgba, tx, statLayout.Agility, nf.labels.Agility, int(nf.preview[stats.AGI]), textColor)
+	drawNGRow(rgba, tx, statLayout.Vitality, nf.labels.Vitality, int(nf.preview[stats.VIT]), textColor)
+	drawNGRow(rgba, tx, statLayout.Intelligence, nf.labels.Intelligence, int(nf.preview[stats.INT]), textColor)
+	drawNGRow(rgba, tx, statLayout.Luck, nf.labels.Luck, int(nf.preview[stats.LUCK]), textColor)
+	drawNGRow(rgba, tx, statLayout.MaxHP, nf.labels.MaxHP, int(nf.preview[stats.HP]), textColor)
+	drawNGRow(rgba, tx, statLayout.MaxMP, nf.labels.MaxMP, int(nf.preview[stats.MP]), textColor)
+	drawNGRow(rgba, tx, statLayout.Attack, nf.labels.Attack, int(nf.preview[stats.STR]), textColor)
+	drawNGRow(rgba, tx, statLayout.Defense, nf.labels.Defense, nf.previewDef, textColor)
+	drawNGRow(rgba, tx, statLayout.Experience, nf.labels.Experience, 0, textColor)
+
+	// sub_10854 在 record407 的數值／標籤後才畫確認 prompt 與選項 window；
+	// 因此 choice backdrop 必須蓋住右欄前四列的一部分，不能讓 stat glyph
+	// 反向浮到藍黑底圖上。這個順序由同一正式輸入原版畫面與 IDA caller
+	// `sub_1834e → sub_1f590` 交叉確認。
+	drawNewGameWindowBackdrops(rgba, geo, 1)
+	fillGeometryBox(rgba, geo.Frame, geo.ConfirmPrompt.X, geo.ConfirmPrompt.Y, geo.ConfirmPrompt.Width, geo.ConfirmPrompt.Height, white)
+	if geo.ConfirmChoiceBackdrop != nil {
+		fillPatternRect(rgba, geo.ConfirmChoiceBackdrop)
+		fillGeometryRect(rgba, geo.ConfirmChoiceFrame, geo.ConfirmChoiceContent, white)
+		strokeGeometryBox(rgba, geo.ConfirmChoiceFrame, geo.ConfirmChoice.X, geo.ConfirmChoice.Y,
+			geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
+	} else {
+		// 只保留給未安裝 production pack 的 direct fixture；正式 validator
+		// 會拒絕缺少 confirm_choice_backdrop 的資料。
+		fillGeometryBox(rgba, geo.Frame, geo.ConfirmChoice.X, geo.ConfirmChoice.Y, geo.ConfirmChoice.Width, geo.ConfirmChoice.Height, white)
+	}
 	for i, gl := range nf.labels.Prompt {
 		drawGlyph(rgba, tx, geo.StatsPrompt.X+i*dq3data.GlyphPx, geo.StatsPrompt.Y, gl, textColor)
 	}
 	for i, label := range [][]int{nf.labels.Yes, nf.labels.No} {
 		y := geo.StatsChoice.Y + i*geo.StatsChoice.StepY
 		if i == nf.confirmCursor {
-			drawGlyph(rgba, tx, geo.StatsChoiceCursor.X, y, curGlyph, cursorColor)
+			drawGlyph(rgba, tx, geo.StatsChoiceCursor.X, y, nf.labels.ChoiceCursor[0], cursorColor)
 		}
 		for j, gl := range label {
 			drawGlyph(rgba, tx, geo.StatsChoice.X+j*dq3data.GlyphPx, y, gl, textColor)

@@ -4,13 +4,37 @@
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，
 製作可在現代平台執行的 Go／Ebiten remake。
 
-截至 2026-08-11，本專案採用使用者確認的 E2／D2 快速驗收：戰鬥 pack raw、loader、
+## 專案主軸：保存台灣遊戲文化資產
+
+這不只是把一款舊遊戲換成新的執行檔；我們要保存的是台灣 1990 年代「移植、中文化、
+玩家社群接力維修」的整套文化與技術脈絡。現存的 1994–1995 BBS 史料與精訊音樂研究
+記錄，留下了未正式發售版本的身世、玩家攻略、當年自行摸索的修正方法，以及 DOS 時代
+中文字庫、注音輸入、地圖引擎與 Sound Blaster FM 音訊整合的工藝。這些內容和原始
+`DQ3.EXE` 一樣，都是本專案要保存、註明來源、讓後人可以重新檢查的對象。
+
+我們以三層方式保存：
+
+- **玩家記憶與社群史料**：保留杜勝利、孔方兄、青衫詩客等攻略作者的來源與致敬，並連結
+  [台灣本土攻略原文收錄](references/walkthroughs/README.md) 及 [1994–1995 BBS 歷史紀錄](docs/history/dq3-bbs-1994.md)。
+- **技術與聲音工藝**：記錄 16×16 繁中文字模、注音／英數選字、精訊地名與劇本，以及
+  [精訊音樂保存紀錄](docs/58-taiwan-jingxun-music-preservation.md) 和 [MT-32 再詮釋的建置經驗](docs/59-munt-mt32-build.md)。
+- **可回查的工程證據**：原始檔、位址、資料格式、推論等級與 remake 的 JSON／runtime
+  分開保存；原版素材、影片與 ROM 仍由使用者合法持有，絕不放入公開 Git。
+
+歷史敘述與現行產品狀態刻意分層：攻略與 BBS 是文化史料及路線交叉佐證，`DQ3.EXE`、
+原始資料與同狀態實機結果才是行為 oracle；進度以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
+為準。早期 C/SDL prototype 的完成聲明保留在 Git 歷史與研究文件中，不直接當成現行
+Go／Ebitengine 產品的 parity 證據。
+
+截至 2026-08-12，本專案採用使用者確認的 E2／D2 快速驗收：戰鬥 pack raw、loader、
 formation／抗性 decoder、正式事件輸入與 save/load 的 Docker headless targeted tests 已通過。
 本輪已修正 CTY07→CTY08 的正式 section 路由：依原始 transition table，並用正式道具／戰鬥
 輸入處理塔區遭遇，現在可抵達 CTY08 sec3；本輪再修正 CTY13 金字塔開關路徑在遭遇 modal
 時未送正式戰鬥輸入的 trace blocker，已可由正式路徑取得魔法鑰匙並通過 save/load。完整
-campaign 修正後尚未重跑完畢，因此目前不把整段 campaign 宣稱為 E3 通過。逐畫面／音效 V3 的長尾仍待
-後續對拍，本輪指定的 AppImage、Windows ZIP 與 macOS ZIP 已產出。Android／WASM 不屬本輪 release 目標。現行進度與工作順序以
+campaign 隨後以正式 `InputState` clean replay 至 `THE END`（63.92 秒）並通過；完整 `game`
+回歸以一次性分片程序跑完 288 個頂層測試。因此主線可宣稱 campaign E3 通過，但逐畫面／音效 V3 的長尾仍待
+後續對拍，本輪指定的 AppImage、Windows ZIP 與 macOS ZIP 已產出；Android 已另開保存優先
+UX 並完成 Docker debug APK（目前僅 `build-only`，尚無 emulator／真機驗收），WASM 仍不在本輪 release 目標。現行進度與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
 本次可公開的 patch checksum、Docker smoke 界線與不公開的本機完整版清單見
 [`docs/122`](docs/122-release-20260810.md)。
@@ -29,12 +53,11 @@ campaign 修正後尚未重跑完畢，因此目前不把整段 campaign 宣稱�
 `TITP.P` 五張開機年代／巨龍過場；任一正式輸入可跳過並交回標題。素材 identity 達 D2、
 runtime 達 E2／V1，但每張停留 120 幀是可重播設定，不是原版逐幀 timing；排序、淡入淡出、
 TITP 位置與開場音效仍待 V3，詳見 [`docs/120`](docs/120-opening-cutscene-re.md)。
-新遊戲能力確認畫面的 `FIRST.SCR` raw 背景也已由 game-pack 載入，原始檔尺寸／解碼與配色維持 D2，runtime 背景達 V2；
-右欄「運氣點數／最大HP／最大MP／攻擊力／守備力／經驗」已依 record 407 校正並資料化，
-`confirm_choice` 的藍黑 checkerboard backdrop、中央黑色 content 與 lavender／膚色 2px frame
-也已依原版穩定畫面拆入 JSON 並接到 runtime；靜態 geometry／frame 為 D2、runtime V2。
-palette register、游標閃爍／能力條時序與 stat panel 完整同狀態逐像素對拍仍待 V3，不能由此宣稱
-整段創角演出完成。
+新遊戲能力確認畫面的 `FIRST.SCR` raw 背景、record 407 的十三個具名欄位、三層 EGA backdrop
+與 `beveled_2px` frame 已全由 game-pack 載入。正式輸入的固定確認 checkpoint 已完成
+640×350 同狀態 V3 靜態對拍（AE=1,474／0.658%）；原始 hash、殘差與反證見
+[`docs/126`](docs/126-newgame-confirmation-v3-static-comparison.md)。palette register、游標閃爍、
+能力條與整段創角的動態 timing 尚未由這張固定畫面宣稱完成。
 地表詳細狀況窗則已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 達 E2／V2；
 狀況子選單、隊員詳情與道具／裝備逐窗仍待同狀態 V3，詳見 [`docs/116`](docs/116-field-status-panel-re.md)。
 
@@ -45,6 +68,11 @@ palette register、游標閃爍／能力條時序與 stat panel 完整同狀態�
 - [`docs/74`](docs/74-ebiten-remake-completion-plan.md)：Go／Ebiten remake 的現行完成計畫。
 - [`docs/69`](docs/69-why-remake-looked-done-but-wasnt.md)：過往實作經驗與後續改善方法。
 - [`docs/00`](docs/00-re-methodology.md)：反組譯方法、證據分級與常見陷阱。
+- [`references/walkthroughs/README.md`](references/walkthroughs/README.md)：台灣本土攻略原文、作者與出處。
+- [`docs/history/dq3-bbs-1994.md`](docs/history/dq3-bbs-1994.md)：1994–1995 BBS 一手史料整理。
+- [`docs/58-taiwan-jingxun-music-preservation.md`](docs/58-taiwan-jingxun-music-preservation.md)：精訊音樂與台灣電玩史保存紀錄。
+- [`docs/124-android-ux-spec.md`](docs/124-android-ux-spec.md)：保存優先的 Android 版 UX 與本輪 build-only 界線。
+- [`docs/125-acceptance-20260811.md`](docs/125-acceptance-20260811.md)：Go／Android／原版取樣驗收與 HUD 框線勘誤。
 
 較早的 Markdown 可作為研究索引；進度以 `docs/74` 為主，規格則回到 `DQ3.EXE`、原始資料、
 DOSBox 實機與本機完整影片核對。
@@ -162,7 +190,7 @@ README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出�
 
 ![Ebiten：標題閒置後的戰士職業 attract 卡（pack 驅動 E2）](dq3_remake_ebitan/docs/img/title_attract_warrior.png)
 
-![Ebiten：新遊戲能力確認畫面的 FIRST.SCR 人物背景（pack 驅動 D2／V2）](dq3_remake_ebitan/docs/ng_confirm.png)
+![Ebiten：新遊戲能力確認畫面的 runtime 參考圖（固定 checkpoint 的 V3 靜態證據另見 docs/126）](dq3_remake_ebitan/docs/ng_confirm.png)
 
 ![Ebiten：革命後調查建城者座位後方取得黃寶珠](docs/img/merchant_revolution_yellow_orb_obtained.png)
 
@@ -201,17 +229,16 @@ README 內的戰鬥圖已在 2026-08-09 以 Docker 正式 renderer 重新產出�
 4. 關鍵事件前後可正常存檔、讀檔並繼續。
 5. Linux AppImage、Windows ZIP 與 macOS ZIP 共用同一套 Go game core。
 
-截至 2026-08-11，E2 targeted 驗收已涵蓋 pack raw→loader→battle／event→save/load；IDA
-閉合的四條 story-flag transaction（handler74／69／70／33）也已遷入
+截至 2026-08-12，E2 targeted 驗收已涵蓋 pack raw→loader→battle／event→save/load；IDA
+閉合的四條 story-flag transaction（handler74／69／70／33）已遷入
 `events.json.story_flag_runtime_events` 並由正式 command／battle path 接線，
-並以既有 PNG 作畫面 V2 證據；CTY07→CTY08 與 CTY13 金字塔 route 已依原始 transition table、
+並以既有 PNG 作畫面證據；CTY07→CTY08 與 CTY13 金字塔 route 已依原始 transition table、
 正式道具／戰鬥輸入修正，CTY13 checkpoint 已可取得魔法鑰匙並保存／讀回；完整
-`TestOpeningProductionInputTrace` 尚未在本修正後完整重播，因此不作目前 E3 gate。第 3 項仍有 V1／V2 與 V3 長尾，
-boss repeat-N、逐動作 frame、PCM 波形／停頓及這四條事件的原版 V3 畫面／完整 route 仍是
-未閉合限制；未找到直接 runtime caller 的其他旗標仍維持 unknown。formation
-的 raw EGA position／stride 已納入 E2 pack／renderer，但同狀態
-逐像素 V3 仍未宣稱；依本頁 `V3-approx` 政策，可先以結構與資料一致的近似畫面交付，並
-保留限制標記。三種桌面發佈包與推廣片的雜湊／界線見
+`TestOpeningProductionInputTrace` 已於本修正後由新遊戲重播至 `THE END`，因此主線達目前 E3 gate。第 3 項仍有 V1／V2 與 V3 長尾，
+boss repeat-N、逐動作 frame、PCM wall-clock 與可見 palette transition 沒有可安全填入的
+靜態 production 值，仍是 V3／unknown 限制；formation 的 raw EGA position／stride 已納入
+E2 pack／renderer。完整靜態收斂與停止條件見
+[`docs/123`](docs/123-static-battle-daynight-re.md)。三種桌面發佈包與推廣片的雜湊／界線見
 [`docs/114`](docs/114-release-artifacts.md)；後續工作以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
 的 E2 handoff 與未決清單為準。
 
@@ -233,6 +260,12 @@ boss repeat-N、逐動作 frame、PCM 波形／停頓及這四條事件的原版
 ```bash
 bash dq3_remake_ebitan/build.sh
 ```
+
+Android 保存優先 UX 與建置界線見 [`docs/124`](docs/124-android-ux-spec.md)。本輪 Docker
+debug APK 產物（含本機合法素材、ignored）為
+`dist/dq3-android-debug-20260811.apk`，SHA-256 為
+`ea830ea06dfde28ce3e912669092663c4cde03069575a8fd695c1e1915efe62c`；這只代表 `build-only`，
+不代表 emulator／真機 touch 或生命週期驗收。
 
 桌面執行方式與 Android 建置需求見
 [`dq3_remake_ebitan/README.md`](dq3_remake_ebitan/README.md)。

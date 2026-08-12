@@ -4,6 +4,8 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 )
 
 func kandarTestGame(t *testing.T) *Game {
@@ -123,8 +125,21 @@ func mustPackTextCodes(t *testing.T, g *Game, id string) []uint16 {
 func TestKandarTowerProductionRouteOpensThiefKeyDoor(t *testing.T) {
 	g := kandarTestGame(t)
 	event := g.pack.BossSurrenderEvents()[0]
-	g.inventory = []int{0x55}
+	// 此 fixture 只驗證已持盜賊鑰匙時的 CTY10 transition／開門路由；
+	// 隨機遭遇與隊伍戰力已由完整 E3 主線 trace 覆蓋。以正式道具面板
+	// 使用聖水，避免 Lv1 單人 fixture 偶遇 monster 23 而把門路由測試
+	// 錯誤地變成戰鬥難度測試。
+	g.inventory = []int{
+		0x55,
+		itemuse.ItemHolyWater, itemuse.ItemHolyWater, itemuse.ItemHolyWater,
+		itemuse.ItemHolyWater, itemuse.ItemHolyWater,
+	}
 	g.enterTownCty(event.Trigger.CTYRaw)
+	traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
+	if g.repel != itemuse.HolySteps || g.countItem(itemuse.ItemHolyWater) != 4 {
+		t.Fatalf("甘達特塔 route fixture 的正式聖水 transaction 錯：repel=%d inventory=%v",
+			g.repel, g.inventory)
+	}
 	traceTownSectionTo(t, g, event.Trigger.CTYRaw, event.Trigger.Section)
 	if sceneSection(g.cur) != event.Trigger.Section {
 		t.Fatalf("正式開門路線未抵達 CTY10 sec%d：sec=%d",

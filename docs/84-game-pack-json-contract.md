@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.29"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.30"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -201,7 +201,7 @@ fallback 補值。
 
 ```json
 {
-  "schema_version": "0.1.29",
+  "schema_version": "0.1.30",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -1012,7 +1012,7 @@ DQ3 canonical 使用 `FIRST.SCR`（112000 bytes、640×350）與 `docs/title/fir
 同 `dialogue`（`id`、`x`、`y`、`width`、`height`、`text_inset_x`、`text_inset_y`、
 `columns`、`lines_per_page`、`frame`、`evidence`）。`frame` 是
 `{id,border_pattern,border_rgb,interior_rgb,evidence}`；`border_pattern` 只能引用已
-註冊的 `solid` 或 `checkerboard_1px` engine primitive，不可放任意 JSON code；框線
+註冊的 `solid`、`solid_2px` 或 `checkerboard_1px` engine primitive，不可放任意 JSON code；框線
 演算法屬於共用 engine，pattern、RGB 結果與證據屬於 pack。
 DQ3 精訊版由 DQ3.EXE 的 DGROUP `0x3e6e`
 共用 `win_rect` 證實為可見 `(152,238,352,96)`、inset `(16,16)`、20 欄／4 行；
@@ -1144,6 +1144,47 @@ production `NewGameWithPack` 缺少 `new_game_labels` 即拒絕啟動；`NewGame
 這個靜態確認頁切片已接入 runtime；palette register 切換、游標閃爍、能力條淡入與逐幀演出
 仍是另一個 V3 切片，不可由單張穩定畫面推導。
 
+### 6.9a 創角能力確認 V3 靜態欄位（schema `0.1.30`）
+
+2026-08-12 起，`new_game_geometry` 的舊 `stats_left_rows`／`stats_right_rows` 只能當成
+歷史相容欄位；production 確認頁必須以 `stats` 的十三個具名欄位為 canonical owner。每個
+欄位都是：
+
+```json
+{
+  "label": {"x": 376, "y": 62},
+  "value": {"x": 408, "y": 62, "digits": 5}
+}
+```
+
+`label` 是 glyph stream 的起點，`value` 是固定寬度 decimal field 的左端與格數；leading
+blank、中文標籤與冒號必須留在 `new_game_labels`，不由 renderer 用字串長度或欄位名稱
+推導。DQ3 的十三個欄位是 `level`、`hp`、`mp`、`strength`、`agility`、`vitality`、
+`intelligence`、`luck`、`max_hp`、`max_mp`、`attack`、`defense`、`experience`；其中
+`level/hp/mp` 在左區塊，其餘十列依 `sub_1834E` 的固定位置寫入確認頁。契約 validator
+會拒絕少任一個欄位。
+
+`GeometryRect.frame_edge_widths` 為可選的 `{left,right,top,bottom}` 非負整數。缺值代表具名
+frame primitive 的預設厚度；存在時每個值必須不超過矩形對應尺寸。它只描述共享外框的
+ownership，不能用來把 DQ3 座標、像素色或程式碼塞入共用 renderer。
+
+`window_backdrops` 是 required 的 object array；每筆欄位如下：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `id` | string | 是 | 穩定、唯一的資料 ID。 |
+| `raw_window_id` | string | 是 | 指向 `raw_windows` 的唯一 ID；raw `x`／`width` 保持 EGA byte 單位。 |
+| `primitive` | enum | 是 | 現行僅允許 `ega_window_black_backdrop`，不接受任意 JSON 繪圖程式。 |
+| `draw_order` | int | 是 | `0..8`；指定相對於文字／foreground 的已量測 layer。 |
+| `terminal_right_px`／`terminal_bottom_px` | int | 是 | `0..8`；記錄該 raw window 在同狀態畫面量得的 terminal EGA cell projection，不是引擎 fallback。 |
+| `evidence` | Evidence | 是 | 需保留 EXE、raw 結構、consumer、推論等級與文件。 |
+
+DQ3 目前有三筆 backdrop：能力主面板 `draw_order=0,right=8,bottom=8`，提示窗
+`draw_order=1,right=0,bottom=8`，選項窗 `draw_order=1,right=0,bottom=0`。這些值只對
+`DQ3.EXE` SHA-256 `5178fd…7530c` 的 V3 靜態 checkpoint 成立；其他版本或動態 frame 不得
+複用。詳細原始資料流、反證與度量見
+[`docs/126`](126-newgame-confirmation-v3-static-comparison.md)。
+
 ### 6.10 `staged_boss_events`
 
 `staged_boss_events` 描述具有兩個正式入口、戰間移動／轉場、選項分支與事後寶箱 gate 的
@@ -1192,7 +1233,7 @@ JSON 或用合理預設補洞。
 
 ```json
 {
-  "schema_version": "0.1.29",
+  "schema_version": "0.1.30",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1222,7 +1263,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.29",
+  "schema_version": "0.1.30",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

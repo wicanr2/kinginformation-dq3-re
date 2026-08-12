@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.29",
+  "schema_version": "0.1.30",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -192,22 +192,26 @@
     "load": [712, 519, 696, 283],
     "male": [775, 674],
     "female": [234, 674],
-    "level": [419, 420],
-    "hp": [22, 30],
-    "mp": [27, 30],
-    "agility": [282, 283],
-    "luck": [276, 426, 425, 427],
-    "max_hp": [291, 163, 22, 30],
-    "max_mp": [291, 163, 27, 30],
-    "attack": [623, 624],
-    "defense": [340, 409],
-    "experience": [525, 526],
-    "sex": [674, 417],
+    "level": [12, 419, 12, 420, 667],
+    "hp": [12, 12, 22, 30, 667],
+    "mp": [12, 12, 27, 30, 667],
+    "strength": [170, 280, 667],
+    "agility": [282, 283, 667],
+    "vitality": [284, 170, 667],
+    "intelligence": [285, 286, 283, 667],
+    "luck": [276, 426, 425, 427, 667],
+    "max_hp": [291, 163, 22, 30, 667],
+    "max_mp": [291, 163, 27, 30, 667],
+    "attack": [623, 624, 170, 667],
+    "defense": [340, 409, 170, 667],
+    "experience": [525, 526, 667],
+    "sex": [12, 674, 12, 417, 667],
     "hero": [106, 187],
     "cloth": [190, 149, 191, 192],
-    "prompt": [398, 546, 194, 229, 456, 534],
+    "prompt": [398, 546, 194, 229, 456, 534, 58],
     "yes": [399],
     "no": [678],
+    "choice_cursor": [11],
     "backspace": [11],
     "ok": [29, 25],
     "name_title": [690, 519, 691, 692],
@@ -221,19 +225,19 @@
     "evidence": {
       "level": "D2",
       "source_kind": "data_file",
-      "source": "D3TXT00.TXT records 451-456 + D3TXT00.FON",
+      "source": "D3TXT00.TXT records 407,451-456 + D3TXT00.FON",
       "address_space": "record",
-      "address": "451-456",
-      "consumer": "sub_10e8e/sub_10f5b/sub_10dc8 layout_draw; NewGameFlow/NameInput/GenderSelect renderer",
+      "address": "407,451-456",
+      "consumer": "sub_10854→sub_1834e confirmation status renderer; sub_10e8e/sub_10f5b/sub_10dc8 layout_draw; NewGameFlow/NameInput/GenderSelect renderer",
       "doc": "docs/112-newgame-labels-re.md",
-      "note": "D3TXT00.TXT SHA-256=38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b；D3TXT00.FON SHA-256=c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02；由 docs/data/d3txt_codes.json、font parity test 交叉核對。IDA Pro 9.4 已閉合 layout_draw 的 record caller。逐 glyph writer-consumer 與同輸入 DOSBox 畫面仍保留 D2，不升格為 D3。"
+      "note": "D3TXT00.TXT SHA-256=38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b；D3TXT00.FON SHA-256=c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02；由 docs/data/d3txt_codes.json、font parity test 交叉核對。IDA Pro 9.4 於 linear 0x10854→0x1834e 閉合確認頁的 record／數值 consumer。逐 glyph writer-consumer 與同輸入 DOSBox 畫面仍保留 D2，不升格為 D3。"
     }
   },
   "new_game_geometry": {
     "id": "dq3:new_game_geometry",
     "frame": {
       "id": "dq3:frame.ega_window_lavender_black",
-      "border_pattern": "checkerboard_1px",
+      "border_pattern": "beveled_2px",
       "border_rgb": [255, 223, 255],
       "interior_rgb": [0, 0, 0],
       "evidence": {
@@ -244,7 +248,7 @@
         "address": "0x727 (file 0x16867); writer linear 0x1fd30..0x1fdf9",
         "consumer": "sub_1f590 → sub_1fd30/sub_1fdb1 four-side EGA frame writer",
         "doc": "docs/117-newgame-frame-re.md",
-        "note": "原版能力確認外框可見色為 (255,223,255)，內部為黑；confirm_choice 的藍色交錯 pattern 仍另列 V3，未由此 solid RGB 欄位假稱已閉合。"
+        "note": "原版能力確認三個大面板的外框可見色為 (255,223,255)，每邊為連續兩列／兩欄，內部為黑；confirm_choice 的藍色交錯 pattern 由專用 frame／backdrop 另列。"
       }
     },
     "menu": {"x": 231, "y": 151, "width": 170, "height": 56},
@@ -298,19 +302,32 @@
         "note": "同一正式命名／性別輸入下，兩個游標狀態都穩定呈現 x=360..471、y=62..125 的 112x64 藍黑棋盤；ID 仍保留 raw window linear 0x28bc6。"
       }
     },
-    "stats_left": {"x": 159, "y": 52, "width": 145, "height": 98},
-    "stats_equipment": {"x": 159, "y": 148, "width": 145, "height": 82},
-    "stats_right": {"x": 303, "y": 52, "width": 193, "height": 178},
-    "stats_name": {"x": 202, "y": 62},
-    "stats_hero": {"x": 202, "y": 78},
-    "stats_sex": {"x": 183, "y": 80},
-    "stats_sex_value": {"x": 250, "y": 80},
-    "stats_left_rows": {"x": 200, "y": 96, "step_y": 16},
-    "stats_cloth": {"x": 200, "y": 160},
-    "stats_right_rows": {"x": 326, "y": 126, "step_y": 16},
-    "stats_prompt": {"x": 390, "y": 26},
-    "stats_choice": {"x": 394, "y": 72, "step_y": 16},
-    "stats_choice_cursor": {"x": 368, "y": 72, "step_y": 16},
+    "stats_left": {"x": 159, "y": 52, "width": 145, "height": 98, "frame_edge_widths": {"right": 1}},
+    "stats_equipment": {"x": 159, "y": 148, "width": 145, "height": 82, "frame_edge_widths": {"right": 1}},
+    "stats_right": {"x": 303, "y": 52, "width": 194, "height": 178},
+    "stats_name": {"x": 200, "y": 46},
+    "stats_hero": {"x": 216, "y": 62},
+    "stats_sex": {"x": 168, "y": 78},
+    "stats_sex_value": {"x": 248, "y": 78},
+    "stats_cloth": {"x": 200, "y": 158},
+    "stats": {
+      "level": {"label": {"x": 168, "y": 94}, "value": {"x": 216, "y": 94, "digits": 5}},
+      "hp": {"label": {"x": 168, "y": 110}, "value": {"x": 216, "y": 110, "digits": 5}},
+      "mp": {"label": {"x": 168, "y": 126}, "value": {"x": 216, "y": 126, "digits": 5}},
+      "strength": {"label": {"x": 376, "y": 62}, "value": {"x": 408, "y": 62, "digits": 5}},
+      "agility": {"label": {"x": 376, "y": 78}, "value": {"x": 408, "y": 78, "digits": 5}},
+      "vitality": {"label": {"x": 376, "y": 94}, "value": {"x": 408, "y": 94, "digits": 5}},
+      "intelligence": {"label": {"x": 360, "y": 110}, "value": {"x": 408, "y": 110, "digits": 5}},
+      "luck": {"label": {"x": 344, "y": 126}, "value": {"x": 408, "y": 126, "digits": 5}},
+      "max_hp": {"label": {"x": 344, "y": 142}, "value": {"x": 408, "y": 142, "digits": 5}},
+      "max_mp": {"label": {"x": 344, "y": 158}, "value": {"x": 408, "y": 158, "digits": 5}},
+      "attack": {"label": {"x": 360, "y": 174}, "value": {"x": 408, "y": 174, "digits": 5}},
+      "defense": {"label": {"x": 360, "y": 190}, "value": {"x": 408, "y": 190, "digits": 5}},
+      "experience": {"label": {"x": 328, "y": 206}, "value": {"x": 360, "y": 206, "digits": 8}}
+    },
+    "stats_prompt": {"x": 392, "y": 30},
+    "stats_choice": {"x": 408, "y": 78, "step_y": 16},
+    "stats_choice_cursor": {"x": 376, "y": 78, "step_y": 16},
     "raw_windows": [
       {"id": "name_input", "flags": 1, "x": 19, "y": 46, "width": 32, "height": 144, "address": "linear:0x29088"},
       {"id": "function_list", "flags": 1, "x": 41, "y": 78, "width": 12, "height": 112, "address": "linear:0x290a6"},
@@ -319,6 +336,62 @@
       {"id": "creation_panel", "flags": 3, "x": 19, "y": 46, "width": 44, "height": 192, "address": "linear:0x28b78"},
       {"id": "confirm_prompt", "flags": 3, "x": 45, "y": 14, "width": 22, "height": 48, "address": "linear:0x28b92"},
       {"id": "confirm_choice", "flags": 3, "x": 43, "y": 46, "width": 12, "height": 64, "address": "linear:0x28bc6"}
+    ],
+    "window_backdrops": [
+      {
+        "id": "dq3:new_game.creation_panel_black_backdrop",
+        "raw_window_id": "creation_panel",
+        "primitive": "ega_window_black_backdrop",
+        "draw_order": 0,
+        "terminal_right_px": 8,
+        "terminal_bottom_px": 8,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + verify_open_10_story_01.png",
+          "address_space": "linear",
+          "address": "0x1f590→0x1fc57; raw 0x28b78",
+          "consumer": "sub_10854 confirmation window background → NewGameFlow confirmation renderer",
+          "doc": "docs/126-newgame-confirmation-v3-static-comparison.md",
+          "note": "原始 raw EGA window x=19,width=44 以 8 pixels/byte 投影；同輸入畫面在 352×192 區域的底圖結果為黑色，再由能力面板／文字／選項 foreground 疊回。"
+        }
+      },
+      {
+        "id": "dq3:new_game.confirm_prompt_black_backdrop",
+        "raw_window_id": "confirm_prompt",
+        "primitive": "ega_window_black_backdrop",
+        "draw_order": 1,
+        "terminal_right_px": 0,
+        "terminal_bottom_px": 8,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + verify_open_10_story_01.png",
+          "address_space": "linear",
+          "address": "0x1f590→0x1fc57; raw 0x28b92",
+          "consumer": "sub_10854 confirmation prompt window background → NewGameFlow confirmation renderer",
+          "doc": "docs/126-newgame-confirmation-v3-static-comparison.md",
+          "note": "原始 raw EGA window x=45,width=22 以 8 pixels/byte 投影；同輸入畫面在 prompt 的 176×48 原始覆蓋範圍內只保留黑色底與 lavender 前景。"
+        }
+      },
+      {
+        "id": "dq3:new_game.confirm_choice_black_backdrop",
+        "raw_window_id": "confirm_choice",
+        "primitive": "ega_window_black_backdrop",
+        "draw_order": 1,
+        "terminal_right_px": 0,
+        "terminal_bottom_px": 0,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + verify_open_10_story_01.png",
+          "address_space": "linear",
+          "address": "0x28bc6; sub_1f63c choice redraw",
+          "consumer": "choice background redraw → NewGameFlow confirmation renderer",
+          "doc": "docs/126-newgame-confirmation-v3-static-comparison.md",
+          "note": "原始 choice 結構保留 raw byte projection；其可見黑色區會再被 confirm_choice_backdrop／frame 覆蓋。直接移除本 layer 的同狀態 AE 由 1474 增為 1478，故保留已量測的最小投影。"
+        }
+      }
     ],
     "evidence": {
       "level": "D2",
@@ -449,21 +522,21 @@
     "format": "row_interleaved_4bpp",
     "palette": [
       [0, 0, 0],
-      [204, 212, 212],
-      [168, 168, 168],
-      [252, 72, 0],
-      [8, 140, 252],
-      [0, 84, 220],
-      [0, 64, 180],
-      [224, 148, 16],
+      [195, 186, 186],
+      [158, 150, 150],
+      [255, 73, 0],
+      [0, 142, 255],
+      [0, 85, 223],
+      [0, 56, 150],
+      [255, 162, 0],
       [0, 0, 0],
-      [252, 232, 32],
-      [204, 120, 16],
+      [255, 211, 0],
+      [178, 105, 28],
       [0, 0, 0],
-      [220, 0, 0],
-      [252, 224, 180],
-      [252, 216, 156],
-      [252, 252, 252]
+      [182, 44, 0],
+      [235, 178, 130],
+      [255, 227, 178],
+      [255, 255, 255]
     ],
     "evidence": {
       "level": "D2",

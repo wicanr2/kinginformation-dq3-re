@@ -7,6 +7,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+cat >&2 <<'NOTICE'
+此腳本屬於已停用的 dq3_remake C/SDL 歷史產品；舊版 game_tester 已移除。
+現行產品請使用 dq3_remake_ebitan/build.sh 與 Docker 驗收流程。
+NOTICE
+exit 2
+
 HOST_UID="$(id -u)"; HOST_GID="$(id -g)"
 echo "== 1. 容器內 release 建置(全 target)=="
 docker run --rm -e HOST_UID="$HOST_UID" -e HOST_GID="$HOST_GID" -v "$ROOT":/repo -v dq3build:/build dq3-remake bash -lc '

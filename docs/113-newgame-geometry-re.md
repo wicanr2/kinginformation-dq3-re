@@ -1,12 +1,10 @@
 # 開場／創角幾何反組譯與對拍
 
-本文件封存 `interface.json.new_game_geometry` 的來源與限制。本輪已閉合「原始
-window 結構 → EGA writer → 640×350 玩家可見框線／格距」，並把共用外框的可見 RGB
-與已註冊的 `checkerboard_1px` 邊線 primitive 交給
-`interface.json.new_game_geometry.frame`；同時將 rec451–456 的標題、注音／英數格、
-功能列及組字提示 glyph stream 接入 `new_game_labels`。仍未閉合的是
-`confirm_choice` 藍色選擇圖樣、palette／逐幀游標／動畫與能力面板逐像素 V3，不能把
-幾何與字模資料化誤讀成整個創角畫面已完成。
+本文件封存 `interface.json.new_game_geometry` 的來源與限制。初版的
+`checkerboard_1px`、`solid_2px` 與「尚未 V3」段落都保留為時間序列；2026-08-12 的
+現行 canonical 幾何是 `beveled_2px`、record 407 的十三個具名能力欄位與三層 raw EGA
+backdrop，固定能力確認畫面已達 V3 靜態對拍。完整現況與殘差見
+[`docs/126`](126-newgame-confirmation-v3-static-comparison.md)，不要以本文件早期段落覆蓋。
 
 ## 輸入與工具
 
@@ -55,7 +53,7 @@ window 結構 → EGA writer → 640×350 玩家可見框線／格距」，並�
 
 | IDA linear raw 結構 | raw 欄位 `(flags,x,y,width,height)` | 截圖中量到的 640×350 rect |
 |---|---|---|
-| `0x28b78` | `(3,19,46,44,192)` | 左能力 `x=159,y=52,w=145,h=98`、裝備 `x=159,y=148,w=145,h=82`、右能力 `x=303,y=52,w=193,h=178` |
+| `0x28b78` | `(3,19,46,44,192)` | 左能力 `x=159,y=52,w=145,h=98`、裝備 `x=159,y=148,w=145,h=82`、右能力 `x=303,y=52,w=194,h=178`（最終 V3 靜態 pack） |
 | `0x28b92` | `(3,45,14,22,48)` | `confirm_prompt: x=367,y=20,w=162,h=34` |
 | `0x28bc6` | `(3,43,46,12,64)` | `confirm_choice: x=367,y=68,w=98,h=50` |
 
@@ -108,3 +106,18 @@ lavender／膚色 accent）。能力確認右欄六列的實際 glyph 起點也�
 這項勘誤只把穩定畫面的幾何、色彩與可重現 frame primitive 接入 runtime（D2／V2）；
 palette register 切換、游標閃爍、能力條淡入及逐幀動畫仍保留原文件的 V3 限制，不能把
 靜態 PNG 對拍擴大解讀成整段創角演出已完成。
+
+## 2026-08-12 現行勘誤：固定確認頁 V3 靜態完成
+
+前段最後一句的「D2／V2」是當時的暫時狀態，已由較強的同輸入畫面比較取代。現在的
+`interface.json` 是唯一 canonical owner：
+
+- `stats_name=(200,46)`、`stats_hero=(216,62)`、`stats_sex=(168,78)`、
+  `stats_sex_value=(248,78)`、`stats_cloth=(200,158)`；
+- 13 個 `stats.*.{label,value}` 取代一維 row anchor，值欄保存 `digits`；
+- 左／裝備面板以 `frame_edge_widths.right=1` 描述 shared seam，右面板寬度為 194；
+- creation／prompt／choice raw backdrop 依 `draw_order=0/1/1` 在 foreground 前後合成。
+
+這些值由 `sub_10854 → sub_1834E`、raw windows、EGA writer 與同狀態 PNG 共同約束。
+完整 hash、AE=1,474、反證與 V3 範圍在 [`docs/126`](126-newgame-confirmation-v3-static-comparison.md)。
+逐幀游標、palette register 和整段創角 timing 仍是獨立的未完成工作。

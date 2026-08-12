@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.29"
+	SchemaVersion = "0.1.30"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -236,27 +236,32 @@ type BattleSceneLayout struct {
 // 欄位名稱固定，不承載可執行規則；共同 Evidence 套用到每一個原始 glyph
 // 陣列，讓來源、位址基準與推論等級不會隨 renderer 遺失。
 type NewGameLabels struct {
-	Title           []int    `json:"title"`
-	Start           []int    `json:"start"`
-	Load            []int    `json:"load"`
-	Male            []int    `json:"male"`
-	Female          []int    `json:"female"`
-	Level           []int    `json:"level"`
-	HP              []int    `json:"hp"`
-	MP              []int    `json:"mp"`
-	Agility         []int    `json:"agility"`
-	Luck            []int    `json:"luck"`
-	MaxHP           []int    `json:"max_hp"`
-	MaxMP           []int    `json:"max_mp"`
-	Attack          []int    `json:"attack"`
-	Defense         []int    `json:"defense"`
-	Experience      []int    `json:"experience"`
-	Sex             []int    `json:"sex"`
-	Hero            []int    `json:"hero"`
-	Cloth           []int    `json:"cloth"`
-	Prompt          []int    `json:"prompt"`
-	Yes             []int    `json:"yes"`
-	No              []int    `json:"no"`
+	Title        []int `json:"title"`
+	Start        []int `json:"start"`
+	Load         []int `json:"load"`
+	Male         []int `json:"male"`
+	Female       []int `json:"female"`
+	Level        []int `json:"level"`
+	HP           []int `json:"hp"`
+	MP           []int `json:"mp"`
+	Strength     []int `json:"strength"`
+	Agility      []int `json:"agility"`
+	Vitality     []int `json:"vitality"`
+	Intelligence []int `json:"intelligence"`
+	Luck         []int `json:"luck"`
+	MaxHP        []int `json:"max_hp"`
+	MaxMP        []int `json:"max_mp"`
+	Attack       []int `json:"attack"`
+	Defense      []int `json:"defense"`
+	Experience   []int `json:"experience"`
+	Sex          []int `json:"sex"`
+	Hero         []int `json:"hero"`
+	Cloth        []int `json:"cloth"`
+	Prompt       []int `json:"prompt"`
+	Yes          []int `json:"yes"`
+	No           []int `json:"no"`
+	// ChoiceCursor 是創角確認視窗的游標 glyph；不能借用戰鬥場景的目標游標。
+	ChoiceCursor    []int    `json:"choice_cursor"`
 	Backspace       []int    `json:"backspace"`
 	OK              []int    `json:"ok"`
 	NameTitle       []int    `json:"name_title"`
@@ -270,14 +275,25 @@ type NewGameLabels struct {
 	Evidence        Evidence `json:"evidence"`
 }
 
+// FrameEdgeWidths 是版本專屬 framed rectangle 的個別邊寬覆寫。0 表示使用
+// 已註冊 frame primitive 的預設寬度；正值只調整該邊，讓相鄰 panel 能以同一
+// 個共用 renderer 表達原版的共享 seam，而不在 Go 寫入版本座標。
+type FrameEdgeWidths struct {
+	Left   int `json:"left,omitempty"`
+	Right  int `json:"right,omitempty"`
+	Top    int `json:"top,omitempty"`
+	Bottom int `json:"bottom,omitempty"`
+}
+
 // GeometryRect 是版本專屬的像素矩形。座標以 640×350 邏輯畫布為基準；
 // 原始 DOS window 結構另保存在 NewGameGeometry.RawWindows，避免把像素
 // 對拍值誤當成 EXE 的原始欄位。
 type GeometryRect struct {
-	X      int `json:"x"`
-	Y      int `json:"y"`
-	Width  int `json:"width"`
-	Height int `json:"height"`
+	X               int             `json:"x"`
+	Y               int             `json:"y"`
+	Width           int             `json:"width"`
+	Height          int             `json:"height"`
+	FrameEdgeWidths FrameEdgeWidths `json:"frame_edge_widths,omitempty"`
 }
 
 // GeometryAnchor 是固定文字起點與可選列／欄步距。
@@ -286,6 +302,40 @@ type GeometryAnchor struct {
 	Y     int `json:"y"`
 	StepX int `json:"step_x,omitempty"`
 	StepY int `json:"step_y,omitempty"`
+}
+
+// NumberField 描述固定寬度十進位欄。X/Y 是最高位數的起點；Digits 不足時由
+// renderer 右對齊，對應原版 BP 每 digit 前進兩個 EGA bytes 的行為。
+type NumberField struct {
+	X      int `json:"x"`
+	Y      int `json:"y"`
+	Digits int `json:"digits"`
+}
+
+// NewGameStatField 把固定 label glyph stream 與動態數字欄分開保存。原版
+// record407 的 leading blank／冒號不可從字串長度推導，故 label 是完整的
+// 原始 glyph stream，數字仍使用固定 5/8 位 field。
+type NewGameStatField struct {
+	Label GeometryAnchor `json:"label"`
+	Value NumberField    `json:"value"`
+}
+
+// NewGameStatLayout 是創角確認的角色 record 欄位布局。欄位名是跨版本 RPG
+// 屬性角色；字模、像素位置、decimal width 均由版本 pack 提供。
+type NewGameStatLayout struct {
+	Level        NewGameStatField `json:"level"`
+	HP           NewGameStatField `json:"hp"`
+	MP           NewGameStatField `json:"mp"`
+	Strength     NewGameStatField `json:"strength"`
+	Agility      NewGameStatField `json:"agility"`
+	Vitality     NewGameStatField `json:"vitality"`
+	Intelligence NewGameStatField `json:"intelligence"`
+	Luck         NewGameStatField `json:"luck"`
+	MaxHP        NewGameStatField `json:"max_hp"`
+	MaxMP        NewGameStatField `json:"max_mp"`
+	Attack       NewGameStatField `json:"attack"`
+	Defense      NewGameStatField `json:"defense"`
+	Experience   NewGameStatField `json:"experience"`
 }
 
 // GeometryGrid 是姓名盤等規則格盤的像素起點與步距。
@@ -322,47 +372,60 @@ type RawNewGameWindow struct {
 	Address string `json:"address"`
 }
 
+// NewGameWindowBackdrop 將一個原始 EGA window 結構連到引擎已註冊的
+// 背景 primitive。原始 x／width 保持 EGA byte 單位，pixel 投影由共用引擎
+// 執行；pack 只選擇原始 window 與有證據的 primitive，不能嵌入任意繪圖程式。
+type NewGameWindowBackdrop struct {
+	ID                   string   `json:"id"`
+	RawWindowID          string   `json:"raw_window_id"`
+	Primitive            string   `json:"primitive"`
+	DrawOrder            *int     `json:"draw_order"`
+	TerminalRightPixels  *int     `json:"terminal_right_px"`
+	TerminalBottomPixels *int     `json:"terminal_bottom_px"`
+	Evidence             Evidence `json:"evidence"`
+}
+
 // NewGameGeometry 是開場主選單、姓名盤、性別與能力確認畫面的資料契約。
 // 它只描述幾何與固定 anchor，不承載流程程式碼；缺欄位時 production
 // bootstrap 必須 fail closed，不能回退到 Go 內的 DQ3 座標。
 type NewGameGeometry struct {
-	ID                    string             `json:"id"`
-	Frame                 *FrameStyle        `json:"frame,omitempty"`
-	Menu                  GeometryRect       `json:"menu"`
-	MenuTitle             GeometryAnchor     `json:"menu_title"`
-	MenuOptions           GeometryAnchor     `json:"menu_options"`
-	NamePanel             GeometryRect       `json:"name_panel"`
-	NameTitle             GeometryAnchor     `json:"name_title"`
-	NameLeftArrow         GeometryAnchor     `json:"name_left_arrow"`
-	NameRightArrow        GeometryAnchor     `json:"name_right_arrow"`
-	NameText              GeometryAnchor     `json:"name_text"`
-	NameGrid              GeometryGrid       `json:"name_grid"`
-	NameFunctionPanel     GeometryRect       `json:"name_function_panel"`
-	NameFunction          GeometryAnchor     `json:"name_function"`
-	NameModePanel         GeometryRect       `json:"name_mode_panel"`
-	NameMode              GeometryAnchor     `json:"name_mode"`
-	GenderPanel           GeometryRect       `json:"gender_panel"`
-	Gender                GeometryAnchor     `json:"gender"`
-	ConfirmPrompt         GeometryRect       `json:"confirm_prompt"`
-	ConfirmChoice         GeometryRect       `json:"confirm_choice"`
-	ConfirmChoiceContent  GeometryRect       `json:"confirm_choice_content"`
-	ConfirmChoiceFrame    *FrameStyle        `json:"confirm_choice_frame,omitempty"`
-	ConfirmChoiceBackdrop *PatternFill       `json:"confirm_choice_backdrop,omitempty"`
-	StatsLeft             GeometryRect       `json:"stats_left"`
-	StatsEquipment        GeometryRect       `json:"stats_equipment"`
-	StatsRight            GeometryRect       `json:"stats_right"`
-	StatsName             GeometryAnchor     `json:"stats_name"`
-	StatsHero             GeometryAnchor     `json:"stats_hero"`
-	StatsSex              GeometryAnchor     `json:"stats_sex"`
-	StatsSexValue         GeometryAnchor     `json:"stats_sex_value"`
-	StatsLeftRows         GeometryAnchor     `json:"stats_left_rows"`
-	StatsCloth            GeometryAnchor     `json:"stats_cloth"`
-	StatsRightRows        GeometryAnchor     `json:"stats_right_rows"`
-	StatsPrompt           GeometryAnchor     `json:"stats_prompt"`
-	StatsChoice           GeometryAnchor     `json:"stats_choice"`
-	StatsChoiceCursor     GeometryAnchor     `json:"stats_choice_cursor"`
-	RawWindows            []RawNewGameWindow `json:"raw_windows"`
-	Evidence              Evidence           `json:"evidence"`
+	ID                    string                  `json:"id"`
+	Frame                 *FrameStyle             `json:"frame,omitempty"`
+	Menu                  GeometryRect            `json:"menu"`
+	MenuTitle             GeometryAnchor          `json:"menu_title"`
+	MenuOptions           GeometryAnchor          `json:"menu_options"`
+	NamePanel             GeometryRect            `json:"name_panel"`
+	NameTitle             GeometryAnchor          `json:"name_title"`
+	NameLeftArrow         GeometryAnchor          `json:"name_left_arrow"`
+	NameRightArrow        GeometryAnchor          `json:"name_right_arrow"`
+	NameText              GeometryAnchor          `json:"name_text"`
+	NameGrid              GeometryGrid            `json:"name_grid"`
+	NameFunctionPanel     GeometryRect            `json:"name_function_panel"`
+	NameFunction          GeometryAnchor          `json:"name_function"`
+	NameModePanel         GeometryRect            `json:"name_mode_panel"`
+	NameMode              GeometryAnchor          `json:"name_mode"`
+	GenderPanel           GeometryRect            `json:"gender_panel"`
+	Gender                GeometryAnchor          `json:"gender"`
+	ConfirmPrompt         GeometryRect            `json:"confirm_prompt"`
+	ConfirmChoice         GeometryRect            `json:"confirm_choice"`
+	ConfirmChoiceContent  GeometryRect            `json:"confirm_choice_content"`
+	ConfirmChoiceFrame    *FrameStyle             `json:"confirm_choice_frame,omitempty"`
+	ConfirmChoiceBackdrop *PatternFill            `json:"confirm_choice_backdrop,omitempty"`
+	StatsLeft             GeometryRect            `json:"stats_left"`
+	StatsEquipment        GeometryRect            `json:"stats_equipment"`
+	StatsRight            GeometryRect            `json:"stats_right"`
+	StatsName             GeometryAnchor          `json:"stats_name"`
+	StatsHero             GeometryAnchor          `json:"stats_hero"`
+	StatsSex              GeometryAnchor          `json:"stats_sex"`
+	StatsSexValue         GeometryAnchor          `json:"stats_sex_value"`
+	StatsCloth            GeometryAnchor          `json:"stats_cloth"`
+	Stats                 *NewGameStatLayout      `json:"stats,omitempty"`
+	StatsPrompt           GeometryAnchor          `json:"stats_prompt"`
+	StatsChoice           GeometryAnchor          `json:"stats_choice"`
+	StatsChoiceCursor     GeometryAnchor          `json:"stats_choice_cursor"`
+	RawWindows            []RawNewGameWindow      `json:"raw_windows"`
+	WindowBackdrops       []NewGameWindowBackdrop `json:"window_backdrops"`
+	Evidence              Evidence                `json:"evidence"`
 }
 
 // Entries returns copies so callers cannot mutate the validated pack through
@@ -376,14 +439,16 @@ func (l *NewGameLabels) Entries() map[string][]int {
 		"load": append([]int(nil), l.Load...), "male": append([]int(nil), l.Male...),
 		"female": append([]int(nil), l.Female...), "level": append([]int(nil), l.Level...),
 		"hp": append([]int(nil), l.HP...), "mp": append([]int(nil), l.MP...),
-		"agility": append([]int(nil), l.Agility...), "luck": append([]int(nil), l.Luck...),
-		"max_hp": append([]int(nil), l.MaxHP...), "max_mp": append([]int(nil), l.MaxMP...),
-		"attack":  append([]int(nil), l.Attack...),
+		"strength": append([]int(nil), l.Strength...), "agility": append([]int(nil), l.Agility...),
+		"vitality": append([]int(nil), l.Vitality...), "intelligence": append([]int(nil), l.Intelligence...),
+		"luck": append([]int(nil), l.Luck...), "max_hp": append([]int(nil), l.MaxHP...),
+		"max_mp": append([]int(nil), l.MaxMP...), "attack": append([]int(nil), l.Attack...),
 		"defense": append([]int(nil), l.Defense...), "experience": append([]int(nil), l.Experience...),
 		"sex": append([]int(nil), l.Sex...), "hero": append([]int(nil), l.Hero...),
 		"cloth": append([]int(nil), l.Cloth...), "prompt": append([]int(nil), l.Prompt...),
 		"yes": append([]int(nil), l.Yes...), "no": append([]int(nil), l.No...),
-		"backspace": append([]int(nil), l.Backspace...), "ok": append([]int(nil), l.OK...),
+		"choice_cursor": append([]int(nil), l.ChoiceCursor...),
+		"backspace":     append([]int(nil), l.Backspace...), "ok": append([]int(nil), l.OK...),
 		"name_title":        append([]int(nil), l.NameTitle...),
 		"name_left_arrow":   append([]int(nil), l.NameLeftArrow...),
 		"name_right_arrow":  append([]int(nil), l.NameRightArrow...),
@@ -1913,6 +1978,19 @@ func validateGeometryRect(name string, r GeometryRect) error {
 		r.X+r.Width > 4096 || r.Y+r.Height > 4096 {
 		return fmt.Errorf("new-game geometry %s rect is invalid", name)
 	}
+	for edge, edgeWidth := range map[string]struct {
+		width int
+		limit int
+	}{
+		"left":   {r.FrameEdgeWidths.Left, r.Width},
+		"right":  {r.FrameEdgeWidths.Right, r.Width},
+		"top":    {r.FrameEdgeWidths.Top, r.Height},
+		"bottom": {r.FrameEdgeWidths.Bottom, r.Height},
+	} {
+		if edgeWidth.width < 0 || edgeWidth.width > edgeWidth.limit {
+			return fmt.Errorf("new-game geometry %s frame_edge_widths.%s is invalid", name, edge)
+		}
+	}
 	return nil
 }
 
@@ -1939,6 +2017,31 @@ func validateGeometryAnchor(name string, a GeometryAnchor) error {
 	if a.X < 0 || a.Y < 0 || a.X > 4096 || a.Y > 4096 ||
 		a.StepX < 0 || a.StepY < 0 || a.StepX > 4096 || a.StepY > 4096 {
 		return fmt.Errorf("new-game geometry %s anchor is invalid", name)
+	}
+	return nil
+}
+
+func validateNumberField(name string, f NumberField) error {
+	if f.X < 0 || f.Y < 0 || f.X > 4096 || f.Y > 4096 || f.Digits <= 0 || f.Digits > 16 {
+		return fmt.Errorf("new-game geometry %s number field is invalid", name)
+	}
+	return nil
+}
+
+func validateNewGameStatLayout(s NewGameStatLayout) error {
+	for name, field := range map[string]NewGameStatField{
+		"level": s.Level, "hp": s.HP, "mp": s.MP,
+		"strength": s.Strength, "agility": s.Agility, "vitality": s.Vitality,
+		"intelligence": s.Intelligence, "luck": s.Luck, "max_hp": s.MaxHP,
+		"max_mp": s.MaxMP, "attack": s.Attack, "defense": s.Defense,
+		"experience": s.Experience,
+	} {
+		if err := validateGeometryAnchor("stats."+name+".label", field.Label); err != nil {
+			return err
+		}
+		if err := validateNumberField("stats."+name+".value", field.Value); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -2003,8 +2106,8 @@ func validateNewGameGeometry(g NewGameGeometry) error {
 		"name_mode":     g.NameMode, "gender": g.Gender,
 		"stats_name": g.StatsName, "stats_hero": g.StatsHero,
 		"stats_sex": g.StatsSex, "stats_sex_value": g.StatsSexValue,
-		"stats_left_rows": g.StatsLeftRows, "stats_cloth": g.StatsCloth,
-		"stats_right_rows": g.StatsRightRows, "stats_prompt": g.StatsPrompt,
+		"stats_cloth":  g.StatsCloth,
+		"stats_prompt": g.StatsPrompt,
 		"stats_choice": g.StatsChoice, "stats_choice_cursor": g.StatsChoiceCursor,
 	} {
 		if err := validateGeometryAnchor(name, anchor); err != nil {
@@ -2014,17 +2117,69 @@ func validateNewGameGeometry(g NewGameGeometry) error {
 	if err := validateGeometryGrid("name_grid", g.NameGrid); err != nil {
 		return err
 	}
+	if g.Stats == nil {
+		return errors.New("new-game geometry stats are required")
+	}
+	if err := validateNewGameStatLayout(*g.Stats); err != nil {
+		return err
+	}
 	if g.NameGrid.Columns != 9 || g.NameGrid.Rows != 5 {
 		return errors.New("new-game geometry name_grid must be 9x5")
 	}
 	if len(g.RawWindows) == 0 {
 		return errors.New("new-game geometry raw_windows are required")
 	}
+	rawByID := make(map[string]RawNewGameWindow, len(g.RawWindows))
 	for i, raw := range g.RawWindows {
 		if raw.ID == "" || raw.Address == "" || raw.Flags < 0 || raw.Flags > 0xff ||
 			raw.X < 0 || raw.Y < 0 || raw.Width <= 0 || raw.Height <= 0 {
 			return fmt.Errorf("new-game geometry raw_windows[%d] is invalid", i)
 		}
+		if _, exists := rawByID[raw.ID]; exists {
+			return fmt.Errorf("new-game geometry raw_windows[%d] duplicates id %q", i, raw.ID)
+		}
+		rawByID[raw.ID] = raw
+	}
+	if len(g.WindowBackdrops) == 0 {
+		return errors.New("new-game geometry window_backdrops are required")
+	}
+	seenBackdropID := make(map[string]bool, len(g.WindowBackdrops))
+	seenRawWindow := make(map[string]bool, len(g.WindowBackdrops))
+	for i, backdrop := range g.WindowBackdrops {
+		if backdrop.ID == "" || backdrop.RawWindowID == "" {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] id and raw_window_id are required", i)
+		}
+		if seenBackdropID[backdrop.ID] {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] duplicates id %q", i, backdrop.ID)
+		}
+		if seenRawWindow[backdrop.RawWindowID] {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] duplicates raw_window_id %q", i, backdrop.RawWindowID)
+		}
+		raw, ok := rawByID[backdrop.RawWindowID]
+		if !ok {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] references unknown raw_window_id %q", i, backdrop.RawWindowID)
+		}
+		if raw.X > 511 || raw.Width > 512 || raw.X+raw.Width > 512 || raw.Y+raw.Height > 4096 {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] raw window %q is outside EGA bounds", i, raw.ID)
+		}
+		if backdrop.Primitive != "ega_window_black_backdrop" {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] primitive %q is unsupported", i, backdrop.Primitive)
+		}
+		if backdrop.DrawOrder == nil || *backdrop.DrawOrder < 0 || *backdrop.DrawOrder > 8 {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] draw_order is invalid", i)
+		}
+		if backdrop.TerminalRightPixels == nil || backdrop.TerminalBottomPixels == nil {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] terminal projection is required", i)
+		}
+		if *backdrop.TerminalRightPixels < 0 || *backdrop.TerminalRightPixels > 8 ||
+			*backdrop.TerminalBottomPixels < 0 || *backdrop.TerminalBottomPixels > 8 {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] terminal projection is outside one EGA cell", i)
+		}
+		if err := validateEvidence(backdrop.Evidence); err != nil {
+			return fmt.Errorf("new-game geometry window_backdrops[%d] evidence: %w", i, err)
+		}
+		seenBackdropID[backdrop.ID] = true
+		seenRawWindow[backdrop.RawWindowID] = true
 	}
 	if err := validateEvidence(g.Evidence); err != nil {
 		return fmt.Errorf("new-game geometry evidence: %w", err)
@@ -2126,7 +2281,7 @@ func validateFrameStyle(name string, f *FrameStyle) error {
 		return fmt.Errorf("%s frame id is required", name)
 	}
 	switch f.BorderPattern {
-	case "solid", "checkerboard_1px":
+	case "solid", "solid_2px", "beveled_2px", "checkerboard_1px":
 		// Named engine primitives only; packs cannot supply arbitrary code.
 	case "checkerboard_frame_2px":
 		if f.BorderAccentRGB == nil {

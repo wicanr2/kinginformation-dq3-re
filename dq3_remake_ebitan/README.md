@@ -2,8 +2,13 @@
 
 精訊版《勇者鬥惡龍 III》的 Go／Ebitengine remake，也是本 repo 唯一現行產品線。
 
-目前主線已由 Docker＋Xvfb 的正式 `InputState` trace，從新遊戲抵達 `THE END`，完成
-campaign E3 驗收；剩餘工作集中在戰鬥／場景的 V3 畫面與音效長尾，以及發佈包驗收。
+Docker＋Xvfb 的正式 `InputState` trace 已由新遊戲重播至 `THE END`（63.92 秒），並通過
+完整 `game` 的 288 個頂層回歸測試，因此主線為 campaign E3。先前船／地表追跡逾時與
+Kandar 塔 fixture 全滅均已釐清為測試路徑問題並修正；詳見
+[`docs/125-acceptance-20260811.md`](../docs/125-acceptance-20260811.md)。這不代表原版 V3
+畫面與音效 parity：創角能力確認的固定 checkpoint 已完成 V3 靜態對拍，其他逐畫面／
+逐動作／PCM 對拍及 Android 動態驗收仍待完成，詳見
+[`docs/126-newgame-confirmation-v3-static-comparison.md`](../docs/126-newgame-confirmation-v3-static-comparison.md)。
 現況與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](../docs/74-ebiten-remake-completion-plan.md)
 為準；不要從本文件的歷史清單推算完成度。
@@ -41,7 +46,9 @@ go run .
 測試相對路徑不會找到 repo 的 `assets_raw/`。素材缺失造成的 `SKIP` 不算對拍通過。
 
 Android 綁定入口在 `mobile/`，建置腳本是 `build-android.sh`；它與桌面版共用
-`game/` core。實機 APK／AAB、觸控打磨與完整流程仍需另行驗收。
+`game/` core。Android 專屬 UX（保存 640×350 原畫、橫向沉浸式畫面、中文 App 身分、
+生命週期與觸控安全區）見 [`docs/124`](../docs/124-android-ux-spec.md)。APK／AAB 的
+Docker build 與真機 touch path 是獨立 gate；只有 build 成功不能宣稱實機驗收。
 
 ## 目錄角色
 
