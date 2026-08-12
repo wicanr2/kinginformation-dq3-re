@@ -22,6 +22,8 @@ timeout 540s docker run --rm \
   --memory 6g \
   --cpus 2 \
   --pids-limit 1024 \
+  --device /dev/kvm \
+  --group-add 993 \
   --tmpfs /.android:rw,uid=1000,gid=1000,mode=0700 \
   -u 1000:1000 \
   -v /absolute/path/to/app-debug.apk:/input/app-debug.apk:ro \
@@ -30,8 +32,9 @@ timeout 540s docker run --rm \
   /input/app-debug.apk /out
 ```
 
-若主機沒有把 `/dev/kvm` 提供給容器，工具會退回純 TCG。2026-08-12 的隔離環境中，ADB
-於 181 秒上線、Android 14 可辨識且 boot animation 於 247 秒停止，但 framework 在 480 秒
-gate 內仍未令 `sys.boot_completed=1`，因此沒有執行 APK 安裝。這是環境 blocker，不可寫成
-動態 smoke 通過；在有 KVM 的主機重跑時，才可依輸出的安裝、Activity、截圖與 logcat 證據
-更新驗收狀態。
+`--group-add` 應使用主機 `/dev/kvm` 的實際群組 ID；上例的 `993` 是 2026-08-12 驗證主機值。
+腳本會把實際選用的加速模式寫入 `environment.txt`。若主機沒有把 `/dev/kvm` 提供給容器，
+工具會退回純 TCG。2026-08-12 的 KVM 驗證已完成 Android 14 framework 開機與 APK 安裝，
+但 APK 在 `MainActivity.applyGameChrome()` 發生啟動期空指標崩潰；觸控與 lifecycle gate 因而
+沒有執行。這是目前的產品 blocker，不可寫成動態 smoke 通過；完整證據見
+[`docs/132`](../../../docs/132-android-emulator-validation.md)。

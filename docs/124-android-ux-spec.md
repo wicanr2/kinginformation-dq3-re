@@ -78,10 +78,10 @@ Android 實機驗收完成。
   `sensorLandscape`、四 ABI；狀態仍為 `build-only`。
 - 動態 smoke 工具已固定為 `dq3-android-emulator:20260812-r1`：Android emulator 37.1.11、
   API 34 x86_64 system image revision 14，建置來源與有界腳本位於
-  [`android/tools`](../dq3_remake_ebitan/android/tools/README.md)。無 KVM 的純 TCG＋SwiftShader
-  測試中，ADB 於 181 秒上線、Android 14 可辨識、boot animation 於 247 秒停止，但 480 秒內
-  `sys.boot_completed` 始終為空，package manager／framework 尚未 ready，故沒有執行 APK
-  安裝。完成 smoke 前不得宣稱安裝、觸控、lifecycle 或存讀檔通過。
+  [`android/tools`](../dq3_remake_ebitan/android/tools/README.md)。KVM 下 framework 開機與 APK
+  安裝成功；Activity 隨後在 `MainActivity.applyGameChrome()` 因過早取得
+  `WindowInsetsController` 而崩潰。觸控、lifecycle 與存讀檔尚未執行，完整證據見
+  [`docs/132`](132-android-emulator-validation.md)。
 - 上述重建刻意使用 `LC_ALL=C`、離線 cache；`build-android.sh` 以
   `JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8` 固定 `ebitenmobile` 內部 `javac` 編碼，因此 Go
   匯出符號的繁中註解不再造成 US-ASCII 編譯失敗。

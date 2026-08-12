@@ -25,6 +25,12 @@ export ANDROID_USER_HOME="$WORK_ROOT/android-user"
 export ANDROID_AVD_HOME="$WORK_ROOT/avd"
 export TMPDIR="$WORK_ROOT/tmp"
 
+ACCEL_MODE="off"
+if [[ -r /dev/kvm && -w /dev/kvm ]]; then
+    ACCEL_MODE="on"
+fi
+printf 'emulator_accel=%s\n' "$ACCEL_MODE" >"$OUTPUT_DIR/environment.txt"
+
 cleanup() {
     "$ADB" emu kill >/dev/null 2>&1 || true
     if [[ -n "${EMULATOR_PID:-}" ]]; then
@@ -38,8 +44,7 @@ trap cleanup EXIT INT TERM
 printf 'no\n' | "$AVDMANAGER" create avd \
     --force \
     --name "$AVD_NAME" \
-    --package 'system-images;android-34;google_apis;x86_64' \
-    --device 'pixel_2'
+    --package 'system-images;android-34;google_apis;x86_64'
 
 # 縮小 headless smoke 的顯示與記憶體形狀，降低純 TCG 開機成本。
 cat >>"$ANDROID_AVD_HOME/${AVD_NAME}.avd/config.ini" <<'EOF'
@@ -51,7 +56,7 @@ EOF
 
 "$EMULATOR" \
     -avd "$AVD_NAME" \
-    -accel off \
+    -accel "$ACCEL_MODE" \
     -gpu swiftshader_indirect \
     -no-audio \
     -no-window \
@@ -88,6 +93,21 @@ while (( SECONDS < boot_deadline )); do
 done
 [[ "$boot_complete" == "1" ]]
 
+# boot_completed 可能早於 package/activity/window service 可穩定回應；三者都通過後再安裝。
+framework_deadline=$((SECONDS + 90))
+framework_ready=""
+while (( SECONDS < framework_deadline )); do
+    if timeout 10s "$ADB" shell pm path android 2>/dev/null | grep -q '^package:' \
+        && timeout 10s "$ADB" shell service check activity 2>/dev/null | grep -q 'found' \
+        && timeout 10s "$ADB" shell service check window 2>/dev/null | grep -q 'found'; then
+        framework_ready="1"
+        break
+    fi
+    sleep 3
+done
+[[ "$framework_ready" == "1" ]]
+sleep 15
+
 "$ADB" shell settings put system accelerometer_rotation 0
 "$ADB" shell settings put system user_rotation 1
 "$ADB" install -r "$APK_PATH" | tee "$OUTPUT_DIR/install.log"
@@ -95,7 +115,8 @@ done
 "$ADB" shell am start -W -n "$ACTIVITY_NAME" | tee "$OUTPUT_DIR/start.log"
 sleep 8
 "$ADB" shell dumpsys activity activities >"$OUTPUT_DIR/activity-first.txt"
-grep -E '(mResumedActivity|topResumedActivity).*com\.wicanr2\.dq3' \
+"$ADB" logcat -d -v threadtime >"$OUTPUT_DIR/logcat-first.txt"
+grep -E '(mResumedActivity|topResumedActivity|Resumed:|ResumedActivity:).*com\.wicanr2\.dq3' \
     "$OUTPUT_DIR/activity-first.txt"
 
 # 不假設遊戲內部場景；只驗證 Android 觸控輸入通道可送達前景 Activity。

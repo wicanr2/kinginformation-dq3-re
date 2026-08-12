@@ -741,8 +741,8 @@ label 位於欄起點 `+16px`、姓名／數值位於 `+32px`、姓名最多四 
 [`docs/130`](docs/130-party-field-hud-re.md)。
 
 Android 最新 source 已在 Docker 重建 AAR／debug APK並通過 `aapt` 靜態契約。專用
-`dq3-android-emulator:20260812-r1` 已鎖定 emulator 37.1.11 與 API 34 x86_64 revision 14；
-無 KVM 的純 TCG 測試在 181 秒取得 Android 14 ADB device，boot animation 於 247 秒停止，
-但 480 秒內 framework 未令 `sys.boot_completed=1`，所以沒有執行 APK 安裝。動態安裝、
-pause／resume、觸控與存讀檔仍是環境 blocker，不可把 build-only 改寫成實機通過。重現方式
-見 [`android/tools`](dq3_remake_ebitan/android/tools/README.md)。
+`dq3-android-emulator:20260812-r1` 已鎖定 emulator 37.1.11 與 API 34 x86_64 revision 14。
+KVM 驗證已令 Android 14 完成 framework 開機，APK 也安裝成功；真正 blocker 是
+`MainActivity.onCreate → applyGameChrome → PhoneWindow.getInsetsController` 的空指標崩潰。
+前景回到 Launcher，觸控、pause／resume、force-stop／restart 與存讀檔均未執行，不可把
+build-only 改寫成實機通過。證據與下一步見 [`docs/132`](docs/132-android-emulator-validation.md)。

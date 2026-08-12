@@ -1100,8 +1100,10 @@ wall-clock 或 generic terrain 全表列成可由現有證據安全實作的必�
 1. 三平台 patch／本機完整版已由精確 checkpoint 重建；公開 patch 的 release、雜湊與 macOS
    僅靜態驗證限制見 [`docs/131`](131-release-v0.1.34.md)。此項已完成。
 2. Android 最新 source 的 AAR／APK 已重建並通過 `aapt`；專用 emulator image 也已鎖定
-   emulator 37.1.11／API 34 revision 14。容器未提供 KVM，純 TCG 在 480 秒內未完成 framework
-   開機，因此 APK 安裝、觸控與 lifecycle 動態 smoke 仍是環境 blocker。
+   emulator 37.1.11／API 34 revision 14。KVM 驗證已完成 Android 開機與 APK 安裝，但
+   `MainActivity.applyGameChrome()` 在 content view 建立前取得 `WindowInsetsController` 而
+   崩潰；這是待修的 Android runtime 產品缺陷，觸控與 lifecycle 尚未執行。見
+   [`docs/132`](132-android-emulator-validation.md)。
 3. 已停用仍會產生歷史 C/SDL 產品的 AppImage／Windows 發包入口；新發包只能走
    `dq3_remake_ebitan` 的 Go／Ebitengine 工具鏈。
 
