@@ -59,6 +59,7 @@ type partyHUDActor struct {
 	name   []int
 	hp, mp int
 	level  int
+	class  int
 	alive  bool
 }
 
@@ -66,7 +67,7 @@ func (g *Game) partyHUDActors() []partyHUDActor {
 	level, _, _, _, _ := g.heroStats()
 	actors := []partyHUDActor{{
 		name: append([]int(nil), g.heroName...), hp: g.heroHP, mp: g.heroMP,
-		level: level, alive: g.heroHP > 0,
+		level: level, class: 0, alive: g.heroHP > 0,
 	}}
 	for _, member := range g.companions {
 		if member == nil {
@@ -74,7 +75,7 @@ func (g *Game) partyHUDActors() []partyHUDActor {
 		}
 		actors = append(actors, partyHUDActor{
 			name: append([]int(nil), member.Name...), hp: member.CurHP,
-			mp: member.CurMP, level: member.Level(), alive: member.Alive(),
+			mp: member.CurMP, level: member.Level(), class: member.Class, alive: member.Alive(),
 		})
 	}
 	return actors
@@ -89,11 +90,12 @@ func (g *Game) drawPartyHUD(rgba []byte, white dq3data.Color) {
 	}
 	layout, ok := g.pack.PartyHUDLayout()
 	if !ok || layout.Columns <= 0 || layout.LinesPerPage < 3 ||
-		layout.HPLabelGlyph == nil || layout.MPLabelGlyph == nil || layout.LevelLabelGlyph == nil ||
+		layout.HPLabelGlyph == nil || layout.MPLabelGlyph == nil ||
+		layout.NameMaxGlyphs <= 0 || len(layout.ClassGlyphs) == 0 ||
 		layout.Frame == nil {
 		return
 	}
-	fillPackBox(rgba, layout, layout.X, layout.Y, layout.Width, layout.Height)
+	fillPackBox(rgba, layout.WindowLayout, layout.X, layout.Y, layout.Width, layout.Height)
 	actors := g.partyHUDActors()
 	if len(actors) > layout.Columns {
 		actors = actors[:layout.Columns]
@@ -102,25 +104,32 @@ func (g *Game) drawPartyHUD(rgba []byte, white dq3data.Color) {
 	columnWidth := innerWidth / layout.Columns
 	rowHeight := dq3data.GlyphPx
 	for i, actor := range actors {
-		x := layout.X + layout.TextInsetX + i*columnWidth
+		labelX := layout.X + layout.TextInsetX + i*columnWidth
+		nameX := labelX + layout.NameInsetX
+		valueX := labelX + layout.ValueInsetX
 		y := layout.Y + layout.TextInsetY
-		maxName := columnWidth / dq3data.GlyphPx
+		maxName := layout.NameMaxGlyphs
 		if len(actor.name) > maxName {
 			actor.name = actor.name[:maxName]
 		}
 		for j, glyph := range actor.name {
-			drawGlyph(rgba, g.dlg.tx, x+j*dq3data.GlyphPx, y, glyph, white)
+			drawGlyph(rgba, g.dlg.tx, nameX+j*dq3data.GlyphPx, y, glyph, white)
 		}
 		labelColor := white
 		if !actor.alive {
 			labelColor = dq3data.Color{R: 192, G: 192, B: 192}
 		}
-		drawGlyph(rgba, g.dlg.tx, x, y+rowHeight, *layout.HPLabelGlyph, labelColor)
-		drawNumber(rgba, g.dlg.tx, x+2*dq3data.GlyphPx, y+rowHeight, actor.hp, labelColor)
-		drawGlyph(rgba, g.dlg.tx, x, y+2*rowHeight, *layout.MPLabelGlyph, labelColor)
-		drawNumber(rgba, g.dlg.tx, x+2*dq3data.GlyphPx, y+2*rowHeight, actor.mp, labelColor)
-		drawGlyph(rgba, g.dlg.tx, x, y+3*rowHeight, *layout.LevelLabelGlyph, labelColor)
-		drawNumber(rgba, g.dlg.tx, x+2*dq3data.GlyphPx, y+3*rowHeight, actor.level, labelColor)
+		drawGlyph(rgba, g.dlg.tx, labelX, y+rowHeight, *layout.HPLabelGlyph, labelColor)
+		drawNumber(rgba, g.dlg.tx, valueX, y+rowHeight, actor.hp, labelColor)
+		drawGlyph(rgba, g.dlg.tx, labelX, y+2*rowHeight, *layout.MPLabelGlyph, labelColor)
+		drawNumber(rgba, g.dlg.tx, valueX, y+2*rowHeight, actor.mp, labelColor)
+		if actor.class < 0 || actor.class >= len(layout.ClassGlyphs) {
+			continue
+		}
+		for j, glyph := range layout.ClassGlyphs[actor.class] {
+			drawGlyph(rgba, g.dlg.tx, labelX+j*dq3data.GlyphPx, y+3*rowHeight, glyph, labelColor)
+		}
+		drawNumber(rgba, g.dlg.tx, valueX, y+3*rowHeight, actor.level, labelColor)
 	}
 }
 

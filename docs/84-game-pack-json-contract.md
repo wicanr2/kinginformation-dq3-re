@@ -449,7 +449,7 @@ runtime 將 `null` 解為 `-1` 空槽，不用 `0` 當哨兵。reference validat
 DQ3 精訊版的 `party_sprite` 對映由 `DQ3MST.BLS` 與 [`docs/27`](27-bls-character-sprites.md) 定錨；
 男／女各職業 entry base 是 pack 資料，不是 Go fallback。原版影片
 `dq3_real_video/frames/f000295.jpg`、`f000300.jpg`、`f000900.jpg` 的四人縱列與四欄
-H/M/HUD 可作玩家可見 oracle；runtime 對拍圖見
+H/M/HUD 可作玩家可見 oracle；HUD 的 EXE writer／consumer 閉環見 [`docs/130`](130-party-field-hud-re.md)，runtime 對拍圖見
 [`party_field_hud.png`](../dq3_remake_ebitan/docs/img/party_field_hud.png)。
 
 目前甘達特 rec84–87、羅馬利亞 rec15／45–52／68–72、精靈女王 rec90／96、
@@ -998,9 +998,12 @@ DQ3 CTY59 handler41 在 IDA linear `0x15bba`（file `0x6f2a`）比較 `DS:4f35==
 [`docs/94`](94-dialogue-window-and-monster-mask-re.md)。缺欄位或無效幾何一律 fail closed。
 
 有 `party` capability 的 pack 另須提供 `party_hud`；除通用 window geometry 與 `frame`
-外，`hp_label_glyph`、`mp_label_glyph`、`level_label_glyph` 也必須由 pack 指定。DQ3
-精訊版 canonical 為 `(48,244,448,80)`、四欄、四列，對應原版影片的姓名／H／M／等級
-狀態窗；缺資料時引擎不畫猜測版面。
+外，`hp_label_glyph`、`mp_label_glyph`、`name_inset_x`、`value_inset_x`、
+`name_max_glyphs` 與按 raw class 索引的 `class_glyphs[][]` 都必須由 pack 指定。
+DQ3 精訊版 canonical 為 `(152,238,352,80)`、四欄、四列，label 起點為框內 16px、
+姓名／數值再右移 16px、姓名最多四 glyph，末列使用職業 glyph 加等級；完整 IDA
+writer／consumer 與 near-state 影片閉環見 [`docs/130`](130-party-field-hud-re.md)。缺資料時
+pack 載入失敗，不畫猜測版 UI。
 
 提供地表詳細狀況畫面的 pack 必須提供 `field_status`。其
 `window`、`frame`、`text_id`、`hero_class_glyphs`、`male_glyphs`、`female_glyphs`

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.31"
+	SchemaVersion = "0.1.32"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -224,6 +224,16 @@ type WindowLayout struct {
 	LevelLabelGlyph *int        `json:"level_label_glyph,omitempty"`
 	Frame           *FrameStyle `json:"frame,omitempty"`
 	Evidence        Evidence    `json:"evidence"`
+}
+
+// PartyHUDLayout extends the generic window with pack-owned column contents.
+// The engine does not assume where names, labels, values or class glyphs sit.
+type PartyHUDLayout struct {
+	WindowLayout
+	NameInsetX    int     `json:"name_inset_x"`
+	ValueInsetX   int     `json:"value_inset_x"`
+	NameMaxGlyphs int     `json:"name_max_glyphs"`
+	ClassGlyphs   [][]int `json:"class_glyphs"`
 }
 
 // BattlePanelLayout extends the common window geometry with the small set of
@@ -620,7 +630,7 @@ type Interface struct {
 	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
 	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
 	FieldStatus         *FieldStatusLayout   `json:"field_status,omitempty"`
-	PartyHUD            WindowLayout         `json:"party_hud,omitempty"`
+	PartyHUD            PartyHUDLayout       `json:"party_hud,omitempty"`
 	Opening             *OpeningSequence     `json:"opening,omitempty"`
 	Attract             *AttractSequence     `json:"attract,omitempty"`
 	NewGameConfirmation *RawScreenAsset      `json:"new_game_confirmation,omitempty"`
@@ -1920,14 +1930,30 @@ func (p *Pack) validateInterface() error {
 			h.Columns <= 0 || h.Columns > 16 || h.LinesPerPage <= 0 || h.LinesPerPage > 8 {
 			return errors.New("party HUD window layout is invalid")
 		}
-		if h.HPLabelGlyph == nil || h.MPLabelGlyph == nil || h.LevelLabelGlyph == nil {
-			return errors.New("party HUD label glyphs are required")
+		if h.HPLabelGlyph == nil || h.MPLabelGlyph == nil {
+			return errors.New("party HUD HP/MP label glyphs are required")
 		}
 		for name, glyph := range map[string]*int{
-			"hp": h.HPLabelGlyph, "mp": h.MPLabelGlyph, "level": h.LevelLabelGlyph,
+			"hp": h.HPLabelGlyph, "mp": h.MPLabelGlyph,
 		} {
 			if *glyph < 0 || *glyph > 0xffff {
 				return fmt.Errorf("party HUD %s label glyph out of range", name)
+			}
+		}
+		columnWidth := (h.Width - h.TextInsetX*2) / h.Columns
+		if h.NameInsetX < 0 || h.ValueInsetX < 0 || h.NameMaxGlyphs <= 0 ||
+			h.NameInsetX+h.NameMaxGlyphs*16 > columnWidth || h.ValueInsetX >= columnWidth ||
+			len(h.ClassGlyphs) == 0 {
+			return errors.New("party HUD column content layout is invalid")
+		}
+		for class, glyphs := range h.ClassGlyphs {
+			if len(glyphs) == 0 || len(glyphs) > h.NameMaxGlyphs {
+				return fmt.Errorf("party HUD class %d glyph count is invalid", class)
+			}
+			for _, glyph := range glyphs {
+				if glyph < 0 || glyph > 0xffff {
+					return fmt.Errorf("party HUD class %d glyph out of range", class)
+				}
 			}
 		}
 		if err := validateEvidence(h.Evidence); err != nil {
@@ -4707,9 +4733,9 @@ func (p *Pack) FieldStatusLayout() (FieldStatusLayout, bool) {
 
 // PartyHUDLayout is absent for packs that do not expose a longitudinal party
 // HUD.  Callers must check the boolean instead of inventing a geometry.
-func (p *Pack) PartyHUDLayout() (WindowLayout, bool) {
+func (p *Pack) PartyHUDLayout() (PartyHUDLayout, bool) {
 	if p.Interface.PartyHUD.ID == "" {
-		return WindowLayout{}, false
+		return PartyHUDLayout{}, false
 	}
 	return p.Interface.PartyHUD, true
 }

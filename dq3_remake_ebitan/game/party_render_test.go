@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
 func firstOpenOverworldTile(sc *Scene) (int, int, bool) {
@@ -90,6 +92,58 @@ func TestPartyRenderTrailAndPackSprites(t *testing.T) {
 	}
 }
 
+func inkInRect(rgba []byte, r image.Rectangle) int {
+	n := 0
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		for x := r.Min.X; x < r.Max.X; x++ {
+			off := (y*ScreenW + x) * 4
+			if rgba[off] != 0 || rgba[off+1] != 0 || rgba[off+2] != 0 {
+				n++
+			}
+		}
+	}
+	return n
+}
+
+func TestPartyHUDUsesOriginalPackColumnAnchors(t *testing.T) {
+	g := partyRenderFixture(t)
+	g.companions = nil
+	g.heroName = []int{15, 16, 17, 18, 19}
+	clear(g.rgba)
+	g.drawPartyHUD(g.rgba, dq3data.Color{R: 255, G: 255, B: 255})
+
+	// 原版 sub_18222：label 在 base+2 bytes、姓名/數值在 base+4
+	// bytes；姓名最多四字。略過頂框列，只量 glyph ink。
+	if inkInRect(g.rgba, image.Rect(184, 240, 248, 254)) == 0 {
+		t.Fatal("原版姓名 anchor (184,238) 沒有 glyph ink")
+	}
+	if inkInRect(g.rgba, image.Rect(248, 240, 264, 254)) != 0 {
+		t.Fatal("第五個姓名 glyph 不應越入下一欄")
+	}
+	if inkInRect(g.rgba, image.Rect(168, 254, 184, 270)) == 0 ||
+		inkInRect(g.rgba, image.Rect(184, 254, 232, 270)) == 0 {
+		t.Fatal("H label/value 未依原版 +2/+4 byte anchors 繪製")
+	}
+	if inkInRect(g.rgba, image.Rect(168, 286, 184, 302)) == 0 ||
+		inkInRect(g.rgba, image.Rect(184, 286, 232, 302)) == 0 {
+		t.Fatal("職業 glyph/等級值未依原版末列 anchors 繪製")
+	}
+}
+
+func TestPartyHUDOpensThroughProductionInput(t *testing.T) {
+	g := partyRenderFixture(t)
+	if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+		t.Fatal(err)
+	}
+	if !g.cmd.open {
+		t.Fatal("正式確認輸入未開啟含隊伍 HUD 的地表命令窗")
+	}
+	g.renderFrame()
+	if inkInRect(g.rgba, image.Rect(152, 238, 504, 318)) == 0 {
+		t.Fatal("正式命令入口沒有畫出 pack HUD")
+	}
+}
+
 func TestDumpPartyFieldPNG(t *testing.T) {
 	if os.Getenv("DQ3_DUMP_PARTY") == "" {
 		t.Skip("設 DQ3_DUMP_PARTY=1 才輸出隊伍對拍圖")
@@ -103,7 +157,12 @@ func TestDumpPartyFieldPNG(t *testing.T) {
 		g.recordPartyTrail()
 		g.px++
 	}
-	g.cmd.open = true
+	if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+		t.Fatal(err)
+	}
+	if !g.cmd.open {
+		t.Fatal("正式確認輸入未開啟命令窗")
+	}
 	g.renderFrame()
 	img := image.NewRGBA(image.Rect(0, 0, ScreenW, ScreenH))
 	copy(img.Pix, g.rgba)

@@ -1080,3 +1080,25 @@ single-monster record 解出 `{page_raw,palette_bank_raw}`，再交給共用 bat
 這是 D2／runtime V1 的資料與 renderer 閉環；只有八頭大蛇有原版影片 near-state V2。其餘五戰
 尚無同狀態原版畫格，不能升格 V2／V3。此修正也不表示 generic terrain selector 已完成；完整
 原始位址、推論等級與停止條件見 [`docs/129`](129-required-boss-backgrounds-re.md)。
+
+## 2026-08-12 current checkpoint：四人 HUD 訂正與剩餘交付 gate
+
+IDA 9.4 已從 `sub_17C83` 的 `DGROUP 0x3e9c` writer 與 `sub_18222` 的內容 writer，訂正地表
+四人 HUD：window `(152,238,352,80)`、label `+16px`、姓名／數值 `+32px`、姓名最多四 glyph，
+末列依 class raw id 選職業 glyph。schema 已升為 `0.1.32`、DQ3 content 為 `0.1.37`；Go 只新增
+通用 `PartyHUDLayout`，所有 DQ3 座標、glyph 與 evidence 留在 pack。正式 `InputState.Confirm`
+畫面、資料層測試及本輪 64.14 秒的新遊戲到 `THE END` 重播均通過。此切片為 D3／near-state
+V2，不是逐像素 V3；見 [`docs/130`](130-party-field-hud-re.md)。
+
+目前 remake 主線與必經 Boss 背景皆已完成；不再把 boss repeat-N、逐動作 frame、PCM
+wall-clock 或 generic terrain 全表列成可由現有證據安全實作的必做項。實際剩餘交付 gate 為：
+
+1. 從精確提交重建並發布包含 Boss 背景與 HUD 訂正的三平台 patch／本機完整版；macOS 只能
+   靜態驗證時必須明示未經真機。
+2. Android 最新 source 的 AAR／APK 已重建並通過 `aapt`；既有 image 缺 emulator binary、
+   system image 與 AVD，且容器無 KVM／DRI，故仍是 `build-only`，動態 smoke 保持 blocker。
+3. 已停用仍會產生歷史 C/SDL 產品的 AppImage／Windows 發包入口；新發包只能走
+   `dq3_remake_ebitan` 的 Go／Ebitengine 工具鏈。
+
+任何新的 V3 工作仍須先有可重播原版 frame／音訊 trace 或明確新 caller；沒有新 oracle 時，
+只保留為證據限制或可選 polish，不再擴張靜態 RE。

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.31",
+  "schema_version": "0.1.32",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -406,17 +406,20 @@
   },
   "party_hud": {
     "id": "dq3:window.field_party_hud",
-    "x": 48,
-    "y": 244,
-    "width": 448,
+    "x": 152,
+    "y": 238,
+    "width": 352,
     "height": 80,
-    "text_inset_x": 12,
-    "text_inset_y": 8,
+    "text_inset_x": 16,
+    "text_inset_y": 0,
     "columns": 4,
     "lines_per_page": 4,
     "hp_label_glyph": 22,
     "mp_label_glyph": 27,
-    "level_label_glyph": 106,
+    "name_inset_x": 16,
+    "value_inset_x": 16,
+    "name_max_glyphs": 4,
+    "class_glyphs": [[106], [107], [108], [109], [110], [111], [112], [113]],
     "frame": {
       "id": "dq3:frame.ega_window_white_black",
       "border_pattern": "solid",
@@ -435,13 +438,13 @@
     },
     "evidence": {
       "level": "D3",
-      "source_kind": "video",
-      "source": "dq3_real_video/frames/f000900.jpg",
-      "address_space": "none",
-      "address": "",
-      "consumer": "field command-window party status renderer",
-      "doc": "docs/74-ebiten-remake-completion-plan.md#原版實況影片逐段對照",
-      "note": "原版 640x350 邏輯畫布的四欄 H/M/職業狀態框；以同影片 f000900 的玩家可見幾何作 D3 anchor。"
+      "source_kind": "exe",
+      "source": "DQ3.EXE + dq3_real_video/frames/f000900.jpg",
+      "address_space": "linear",
+      "address": "0x17ccb..0x17cfd,0x18222..0x182e3",
+      "consumer": "sub_17c83 → sub_1f590/sub_18222 → field command-window party status renderer",
+      "doc": "docs/130-party-field-hud-re.md",
+      "note": "原始 DGROUP 0x3e9c writer 固定 x=0x13 byte、y=0xee、四欄時 width=0x2c byte、height=0x50；動態 writer 使用 label +2 byte、姓名/數值 +4 byte、姓名最多四字與 0x6a+class 職業 glyph。影片 f000900 提供玩家可見閉環。"
     }
   },
   "field_status": {

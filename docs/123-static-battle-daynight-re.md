@@ -6,6 +6,17 @@
 > `unknown` 表示不能從目前輸入安全推出。production JSON 不得以本文件的
 > `strong`／`hypothesis`／`unknown` 欄位填入合理預設。
 
+> [!IMPORTANT]
+> **歷史／已訂正。** 本文件保留 2026-08-10～11 的調查順序，因此前半部若寫「五個
+> story flag runtime unknown／missing」、campaign 尚未重播完成或 formation 仍缺接線，
+> 都是當時的 checkpoint，不是現行待辦。這些結論已由本文件「runtime 接線更新」與
+> 「未閉合項目的 IDA 9.4 收斂」兩節訂正；目前完成度以
+> [`docs/74`](74-ebiten-remake-completion-plan.md) 最新 checkpoint 為準。固定編隊／必經頭目
+> 背景見 [`docs/128`](128-battle-background-selector-re.md) 與
+> [`docs/129`](129-required-boss-backgrounds-re.md)，地表四人 HUD 見
+> [`docs/130`](130-party-field-hud-re.md)。這些後續結果仍只按各文件標示為 E2、V1 或
+> near-state V2，不構成全遊戲 V3。
+
 ## 輸入、工具與位址口徑
 
 本輪只讀取下列原始輸入，未在原位置解包、patch 或覆寫：
@@ -361,7 +372,12 @@ literal／data-driven writer → sub_16EDF/16EF4 → DGROUP [0x4f70]
 不能反過來宣稱它「沒有 consumer」，必須再查 `sub_16F09` 的 caller、event table 與
 直接 bit 操作。`docs/71` 的 21 個 literal writer 如下。
 
-## 七、21 個條件 flag 的原版 writer ledger
+## 七、21 個條件 flag 的原版 writer ledger（歷史 runtime 欄已訂正）
+
+> [!WARNING]
+> 下表的原版 SET 位址與 writer 證據仍有效，但 `runtime` 欄凍結於接線前狀態。表中
+> `unknown`／`missing` 已被本文件後段「runtime 接線更新（現行 E2）」推翻；保留原文是為了
+> 追溯當時為何需要補接線，不得據此重新開啟已完成的 flag JSON／engine 工作。
 
 下表的 `SET file` 是 `mov bx, literal` 到 `call sub_16EDF` 的原始 file offset；
 同一 flag 的多個位置表示不同事件階段或重試路徑。`原版 writer` 全部是 `confirmed`；
@@ -402,7 +418,12 @@ literal／data-driven writer → sub_16EDF/16EF4 → DGROUP [0x4f70]
 - 只有補上 caller→writer→state→consumer→同狀態畫面／聲音，才能把 runtime 欄由
   `strong` 升到 D3／E3。靜態 writer 本身不代表 remake 已完成該事件。
 
-## 八、目前可宣稱的完成度與剩餘工作
+## 八、當時可宣稱的完成度與剩餘工作（歷史／已訂正）
+
+> [!WARNING]
+> 本節是接線前的靜態研究結算。五個 story flag、formation 與 campaign 的現行結果請直接讀
+> 本文件後段的 E2 runtime 更新、IDA 收斂，以及 [`docs/74`](74-ebiten-remake-completion-plan.md)
+> 最新 checkpoint；本節只保存舊證據邊界，不再是 worklist。
 
 ### 靜態分析已完成（E1／D2）
 
@@ -474,7 +495,13 @@ word_272E3 = 0x26
 效果。因此 `+0x19..+0x1d` packed pair 仍只輸出 resistance class／threshold category，
 不得在 production JSON 產生未經 consumer 對拍的 `火焰抗性`、`睡眠抗性` 等欄位。
 
-### 3. 五個 story flag 的靜態事件與 generic NPC consumer
+### 3. 五個 story flag 的靜態事件與 generic NPC consumer（歷史 runtime 欄已訂正）
+
+> [!WARNING]
+> 下表在靜態 deep dive 當下尚未接入 Go，故保留 `runtime unknown` 的原始判定；後續
+> `events.json.story_flag_runtime_events` 與正式 command／battle tests 已完成有限 E2
+> transaction。原始 handler、SET／CLEAR 與 NPC consumer 仍是有效證據，但舊 runtime 欄
+> 不能再用來判定現行程式缺功能。
 
 事件跳表 `seg016:off_28984` 由 `sub_196D2` 以「index + 1」呼叫。五個旗標的 writer、
 事件副作用與 generic consumer 已閉合如下；「production runtime」欄仍不代表 Go 已接線：
@@ -546,7 +573,9 @@ PCM 波形／停頓、精確 formation 座標與五個 story flag 的 remake pla
 `unknown`／fail-closed。
 
 完整 `TestOpeningProductionInputTrace` 另作非 E2 回歸觀察時，在 CTY7 入口後的 CTY7→CTY8
-section route fixture 停在 `(7,6)`；這不改變上述 E2 結果，也不應被包裝成 E3／campaign 通過。
+section route fixture 停在 `(7,6)`；這是**歷史／已訂正**的中途觀察。後續正式輸入修正已由
+新遊戲重播至 `THE END`，現行 campaign 判定以 [`docs/74`](74-ebiten-remake-completion-plan.md)
+最新 checkpoint 為準；保留本段只為說明當時為何不能提前宣稱 E3。
 
 ## 十一、2026-08-11 IDA 9.4 formation／action／PCM 補證與 E2 接線
 

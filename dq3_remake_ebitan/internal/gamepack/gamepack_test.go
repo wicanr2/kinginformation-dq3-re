@@ -2103,14 +2103,21 @@ func TestDQ3PartySpriteAndHUDContract(t *testing.T) {
 	}
 	layout, ok := p.PartyHUDLayout()
 	if !ok || layout.ID != "dq3:window.field_party_hud" ||
-		layout.X != 48 || layout.Y != 244 || layout.Width != 448 || layout.Height != 80 ||
+		layout.X != 152 || layout.Y != 238 || layout.Width != 352 || layout.Height != 80 ||
+		layout.TextInsetX != 16 || layout.TextInsetY != 0 ||
 		layout.Columns != 4 || layout.LinesPerPage != 4 ||
 		layout.HPLabelGlyph == nil || *layout.HPLabelGlyph != 22 ||
 		layout.MPLabelGlyph == nil || *layout.MPLabelGlyph != 27 ||
-		layout.LevelLabelGlyph == nil || *layout.LevelLabelGlyph != 106 ||
+		layout.NameInsetX != 16 || layout.ValueInsetX != 16 || layout.NameMaxGlyphs != 4 ||
+		len(layout.ClassGlyphs) != 8 || len(layout.ClassGlyphs[0]) != 1 || layout.ClassGlyphs[0][0] != 106 ||
+		len(layout.ClassGlyphs[7]) != 1 || layout.ClassGlyphs[7][0] != 113 ||
 		layout.Frame == nil || layout.Frame.BorderRGB != [3]uint8{255, 255, 255} ||
 		layout.Frame.InteriorRGB != [3]uint8{0, 0, 0} {
-		t.Fatalf("party HUD layout=%+v, want DQ3 four-column contract", layout)
+		t.Fatalf("party HUD layout=%+v, want original DQ3 four-column contract", layout)
+	}
+	if layout.Evidence.Level != "D3" || layout.Evidence.Doc != "docs/130-party-field-hud-re.md" ||
+		layout.Evidence.AddressSpace != "linear" {
+		t.Fatalf("party HUD evidence=%+v, want D3 IDA/player-visible closure", layout.Evidence)
 	}
 	wantEntries := []int{0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60}
 	for class := 0; class < 8; class++ {
@@ -2516,14 +2523,14 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.31","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.32","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json"},"assets":{}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.31","service_definitions":[{
+	  "schema_version":"0.1.32","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2531,7 +2538,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.31",
+	  "schema_version":"0.1.32",
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2550,7 +2557,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
   "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.31",
+	  "schema_version":"0.1.32",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -2560,7 +2567,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.31","definitions":[{
+	  "schema_version":"0.1.32","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -2569,7 +2576,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.31","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.32","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2581,7 +2588,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.31"`, `"schema_version":"0.1.31","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.32"`, `"schema_version":"0.1.32","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

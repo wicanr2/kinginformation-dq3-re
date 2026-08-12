@@ -723,3 +723,20 @@ raw、hash、推論等級、訂正與停止條件見 [`docs/128`](docs/128-battl
 這是 D2／runtime V1；八頭大蛇兩場仍是唯一有原版影片 near-state V2 的頭目背景。未有同狀態原版
 畫格前，不將其他五戰升格 V2／V3，也不借固定 record 重開 generic terrain→page RE。證據、原始
 地址、測試與停止條件見 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。
+
+## 2026-08-12 current memory：地表四人 HUD 已依原始 writer 訂正
+
+舊的 `party_hud` `(48,244,448,80)` 是目測近似，不能再當作原版規格。IDA Pro 9.4 已由
+`sub_17C83` 閉合 `DGROUP 0x3e9c` 的四人幾何為 `(152,238,352,80)`；`sub_18222` 同時證實
+label 位於欄起點 `+16px`、姓名／數值位於 `+32px`、姓名最多四 glyph，末列使用
+`0x6a+class_raw` 的職業 glyph 再畫等級。
+
+現行 schema 為 `0.1.32`、DQ3 content version 為 `0.1.37`。共用 Go renderer 只消費
+`PartyHUDLayout` 的 offset、姓名上限與 class glyph map；DQ3 座標與 glyph 全留在
+`interface.json`，缺資料即 fail-closed。正式 `InputState.Confirm` 畫面與完整新遊戲到
+`THE END` 重播已通過；此畫面是 D3／near-state V2，不宣稱逐像素 V3。完整證據見
+[`docs/130`](docs/130-party-field-hud-re.md)。
+
+Android 最新 source 已在 Docker 重建 AAR／debug APK並通過 `aapt` 靜態契約；既有 emulator
+image 缺 emulator binary、system image 與 AVD，容器也未暴露 KVM／DRI，因此動態安裝、
+pause／resume、觸控與存讀檔 smoke 仍是明確交付 blocker。不可把 build-only 改寫成實機通過。

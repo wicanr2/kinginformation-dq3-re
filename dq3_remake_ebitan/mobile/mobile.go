@@ -34,5 +34,5 @@ func init() {
 	mobile.SetGame(g)
 }
 
-// Dummy 供 gomobile 產生的膠水碼引用(bind 需套件至少匯出一個符號)。
+// Dummy keeps one exported symbol for gomobile bind.
 func Dummy() {}

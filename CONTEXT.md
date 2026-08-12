@@ -273,6 +273,15 @@
   raw record，不可由單敵 accessor 任選。除八頭大蛇兩場有影片 V2 外，其餘五場目前只有
   D2／runtime V1，不宣稱同狀態 V2／V3。完整地址、raw 與限制見 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。
 
+### 2026-08-12 current checkpoint：地表四人 HUD 與 Android build
+
+- `sub_17C83`／`sub_18222` 已把地表四人 HUD 閉合為 `(152,238,352,80)`、label `+16px`、
+  姓名／數值 `+32px`、姓名最多四 glyph，以及依 class raw id 選職業 glyph。這些值皆在
+  `interface.json.party_hud`；schema `0.1.32`、content `0.1.37`，詳見 [`docs/130`](docs/130-party-field-hud-re.md)。
+- 最新 HUD／Boss 背景 source 已重建 Android AAR 與 debug APK；狀態仍是 `build-only`。
+  既有 emulator image 沒有 emulator／system image／AVD，且無 KVM／DRI，因此不可宣稱
+  Android 動態、觸控或 lifecycle smoke 已完成。
+
 ## Flagged ambiguities(待釐清)
 
 - 「event」一詞橫跨 section 事件表(4-byte entry)與 scripted-event(跳表 id);文件中需標明哪一種。

@@ -47,6 +47,9 @@ trace 現分別為洞窟與沙漠，達 near-state V2；這是必經 Boss 的可
 其餘必經單頭目（怪力魔、巴拉摩斯與索瑪三連戰）同樣已改由原版固定 record 的 page／palette
 selector 啟動，不再落回 generic 草地；目前只有 D2／runtime V1，沒有同狀態原版畫格時不升格
 為 V2／V3，詳見 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。
+地表四人 HUD 也已由 IDA 的原始 window／內容 writer 訂正為中央 `(152,238,352,80)` 四欄，
+姓名、H／M、職業與等級不再使用目測寬框；正式輸入 runtime 達 near-state V2，詳見
+[`docs/130`](docs/130-party-field-hud-re.md)。
 
 ### V3 近似驗收政策（2026-08-11）
 
@@ -82,6 +85,7 @@ TITP 位置與開場音效仍待 V3，詳見 [`docs/120`](docs/120-opening-cutsc
 - [`docs/125-acceptance-20260811.md`](docs/125-acceptance-20260811.md)：Go／Android／原版取樣驗收與 HUD 框線勘誤。
 - [`docs/128`](docs/128-battle-background-selector-re.md)：固定編隊背景 archive／palette selector 的原始資料、勘誤與 V2 界線。
 - [`docs/129`](docs/129-required-boss-backgrounds-re.md)：必經單頭目固定 record 到 renderer 的 IDA 接線與 V1 界線。
+- [`docs/130`](docs/130-party-field-hud-re.md)：地表四人 HUD 原始 window／內容 writer、pack 契約與 near-state V2 勘誤。
 
 較早的 Markdown 可作為研究索引；進度以 `docs/74` 為主，規格則回到 `DQ3.EXE`、原始資料、
 DOSBox 實機與本機完整影片核對。
@@ -276,10 +280,10 @@ bash dq3_remake_ebitan/build.sh
 ```
 
 Android 保存優先 UX 與建置界線見 [`docs/124`](docs/124-android-ux-spec.md)。本輪 Docker
-debug APK 產物（含本機合法素材、ignored）為
-`dist/dq3-android-debug-20260811.apk`，SHA-256 為
-`ea830ea06dfde28ce3e912669092663c4cde03069575a8fd695c1e1915efe62c`；這只代表 `build-only`，
-不代表 emulator／真機 touch 或生命週期驗收。
+已用最新 HUD／Boss 背景 source 重建 debug APK（含本機合法素材、ignored），SHA-256 為
+`7e23b96976a30f5b97f5e1e41c25f605c5c632e4b927650ba76be0f68ba79af0`；這只代表
+`build-only`。既有 emulator image 缺 emulator binary、system image 與 AVD，容器也沒有
+KVM／DRI，故不代表 emulator／真機觸控、存讀檔或生命週期驗收。
 
 桌面執行方式與 Android 建置需求見
 [`dq3_remake_ebitan/README.md`](dq3_remake_ebitan/README.md)。
