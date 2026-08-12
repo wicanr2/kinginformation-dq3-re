@@ -18,16 +18,28 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        applyGameChrome();
         Seq.setContext(getApplicationContext());
         ebitenView = new EbitenView(this);
         ebitenView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(ebitenView);
+        // 必須先掛上 content view，PhoneWindow 才會建立可供 WindowInsets 使用的 DecorView。
+        applyGameChrome();
     }
 
-    @Override protected void onPause()  { super.onPause();  ebitenView.suspendGame(); }
-    @Override protected void onResume() { super.onResume(); ebitenView.resumeGame(); }
+    @Override protected void onPause()  {
+        super.onPause();
+        if (ebitenView != null) {
+            ebitenView.suspendGame();
+        }
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (ebitenView != null) {
+            ebitenView.resumeGame();
+        }
+    }
 
     /**
      * Android 外殼只處理平台 chrome；640x350 遊戲畫布與觸控控制仍由 Ebitengine 管理。

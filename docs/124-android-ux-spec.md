@@ -79,8 +79,9 @@ Android 實機驗收完成。
 - 動態 smoke 工具已固定為 `dq3-android-emulator:20260812-r1`：Android emulator 37.1.11、
   API 34 x86_64 system image revision 14，建置來源與有界腳本位於
   [`android/tools`](../dq3_remake_ebitan/android/tools/README.md)。KVM 下 framework 開機與 APK
-  安裝成功；Activity 隨後在 `MainActivity.applyGameChrome()` 因過早取得
-  `WindowInsetsController` 而崩潰。觸控、lifecycle 與存讀檔尚未執行，完整證據見
+  安裝成功；`MainActivity.applyGameChrome()` 過早取得 `WindowInsetsController` 的崩潰已
+  修正。production 音訊版仍在 headless emulator 的 OboeAudio host backend 阻塞，首窗未完成；
+  只有隔離靜音探針完整顯示遊戲並通過觸控與 lifecycle。完整證據見
   [`docs/132`](132-android-emulator-validation.md)。
 - 上述重建刻意使用 `LC_ALL=C`、離線 cache；`build-android.sh` 以
   `JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8` 固定 `ebitenmobile` 內部 `javac` 編碼，因此 Go

@@ -58,7 +58,6 @@ EOF
     -avd "$AVD_NAME" \
     -accel "$ACCEL_MODE" \
     -gpu swiftshader_indirect \
-    -no-audio \
     -no-window \
     -no-snapshot \
     -no-boot-anim \
@@ -118,6 +117,11 @@ sleep 8
 "$ADB" logcat -d -v threadtime >"$OUTPUT_DIR/logcat-first.txt"
 grep -E '(mResumedActivity|topResumedActivity|Resumed:|ResumedActivity:).*com\.wicanr2\.dq3' \
     "$OUTPUT_DIR/activity-first.txt"
+grep -F 'firstWindowDrawn=true' "$OUTPUT_DIR/activity-first.txt"
+if grep -F 'Splash Screen com.wicanr2.dq3' "$OUTPUT_DIR/activity-first.txt" >/dev/null; then
+    printf '%s\n' 'Android smoke 仍停在系統 splash，遊戲首窗未完成' >&2
+    exit 1
+fi
 
 # 不假設遊戲內部場景；只驗證 Android 觸控輸入通道可送達前景 Activity。
 "$ADB" shell input tap 550 300
@@ -141,6 +145,11 @@ sleep 8
 "$ADB" shell dumpsys activity activities >"$OUTPUT_DIR/activity-restarted.txt"
 grep -E '(mResumedActivity|topResumedActivity).*com\.wicanr2\.dq3' \
     "$OUTPUT_DIR/activity-restarted.txt"
+grep -F 'firstWindowDrawn=true' "$OUTPUT_DIR/activity-restarted.txt"
+if grep -F 'Splash Screen com.wicanr2.dq3' "$OUTPUT_DIR/activity-restarted.txt" >/dev/null; then
+    printf '%s\n' 'Android smoke 重啟後仍停在系統 splash' >&2
+    exit 1
+fi
 "$ADB" exec-out screencap -p >"$OUTPUT_DIR/after-restart.png"
 
 "$ADB" logcat -d -v threadtime >"$OUTPUT_DIR/logcat.txt"

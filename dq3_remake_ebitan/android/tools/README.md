@@ -35,6 +35,7 @@ timeout 540s docker run --rm \
 `--group-add` 應使用主機 `/dev/kvm` 的實際群組 ID；上例的 `993` 是 2026-08-12 驗證主機值。
 腳本會把實際選用的加速模式寫入 `environment.txt`。若主機沒有把 `/dev/kvm` 提供給容器，
 工具會退回純 TCG。2026-08-12 的 KVM 驗證已完成 Android 14 framework 開機與 APK 安裝，
-但 APK 在 `MainActivity.applyGameChrome()` 發生啟動期空指標崩潰；觸控與 lifecycle gate 因而
-沒有執行。這是目前的產品 blocker，不可寫成動態 smoke 通過；完整證據見
+`MainActivity.applyGameChrome()` 的啟動空指標也已修正；production 音訊版仍受 headless host
+audio backend 阻塞。腳本會要求 `firstWindowDrawn=true` 且不得殘留 DQ3 splash，避免只憑
+resumed Activity 誤報通過。隔離靜音探針通過不代表正式音訊版或真機通過；完整證據見
 [`docs/132`](../../../docs/132-android-emulator-validation.md)。

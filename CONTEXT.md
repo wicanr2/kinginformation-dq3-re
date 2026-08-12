@@ -283,8 +283,9 @@
   `interface.json.party_hud`；schema `0.1.32`、content `0.1.37`，詳見 [`docs/130`](docs/130-party-field-hud-re.md)。
 - 最新 HUD／Boss 背景 source 已重建 Android AAR 與 debug APK；狀態仍是 `build-only`。
   專用 image 已鎖定 emulator 37.1.11／API 34 x86_64 revision 14；KVM 下 Android 開機與 APK
-  安裝成功，但 `MainActivity.applyGameChrome()` 在 content view 建立前取得
-  `WindowInsetsController` 而崩潰，故觸控與 lifecycle 尚未執行。證據見
+  安裝成功，`MainActivity.applyGameChrome()` 的啟動空指標也已修正。production 音訊版在
+  headless emulator 仍阻塞於 OboeAudio host backend；隔離靜音探針才完整顯示 DQ3 並通過
+  觸控與 lifecycle。正式狀態仍不是實機通過，證據見
   [`docs/132`](docs/132-android-emulator-validation.md)。
 
 ## Flagged ambiguities(待釐清)

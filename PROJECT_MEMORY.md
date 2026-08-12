@@ -742,7 +742,9 @@ label 位於欄起點 `+16px`、姓名／數值位於 `+32px`、姓名最多四 
 
 Android 最新 source 已在 Docker 重建 AAR／debug APK並通過 `aapt` 靜態契約。專用
 `dq3-android-emulator:20260812-r1` 已鎖定 emulator 37.1.11 與 API 34 x86_64 revision 14。
-KVM 驗證已令 Android 14 完成 framework 開機，APK 也安裝成功；真正 blocker 是
-`MainActivity.onCreate → applyGameChrome → PhoneWindow.getInsetsController` 的空指標崩潰。
-前景回到 Launcher，觸控、pause／resume、force-stop／restart 與存讀檔均未執行，不可把
-build-only 改寫成實機通過。證據與下一步見 [`docs/132`](docs/132-android-emulator-validation.md)。
+KVM 驗證已令 Android 14 完成 framework 開機，APK 也安裝成功。Luna Max 已修正
+`MainActivity.onCreate → applyGameChrome → PhoneWindow.getInsetsController` 的空指標；但
+production 音訊版在 headless emulator 仍停於 OboeAudio host backend，首窗未完成。只在隔離
+副本停用 mobile music FS 後，DQ3 標題／開場、觸控、pause／resume 與 force-stop／restart
+才全部通過。診斷探針不加入 production，也不可把它改寫成正式 Android 實機通過。證據見
+[`docs/132`](docs/132-android-emulator-validation.md)。

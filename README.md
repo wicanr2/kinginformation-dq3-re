@@ -286,9 +286,10 @@ Android 保存優先 UX 與建置界線見 [`docs/124`](docs/124-android-ux-spec
 已用最新 HUD／Boss 背景 source 重建 debug APK（含本機合法素材、ignored），SHA-256 為
 `38c222238a9dab068e37c5bf86eb3bad7c561f7104e32797c1a8e7c153a5e8ad`；這只代表
 `build-only`。專用 emulator image 已固定 Android emulator 37.1.11 與 API 34 revision 14；
-KVM 下 Android 14 與 APK 安裝均成功，但 `MainActivity.applyGameChrome()` 在 content view
-建立前取得 `WindowInsetsController` 而崩潰，故觸控、存讀檔與生命週期尚未驗收。證據與重現
-方式見 [`docs/132`](docs/132-android-emulator-validation.md)。
+KVM 下 Android 14 與 APK 安裝均成功；`MainActivity.applyGameChrome()` 的啟動空指標已修正。
+但 production 音訊版在 headless emulator 仍阻塞於 host audio backend，首個遊戲 window 未
+完成；停用音訊的隔離探針才完整顯示標題並通過 lifecycle。證據與界線見
+[`docs/132`](docs/132-android-emulator-validation.md)。
 
 桌面執行方式與 Android 建置需求見
 [`dq3_remake_ebitan/README.md`](dq3_remake_ebitan/README.md)。

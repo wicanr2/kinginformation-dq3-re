@@ -50,3 +50,35 @@ MainActivity.onCreate(MainActivity.java:21)
 完整未追蹤證據保留於 `/tmp/dq3-android-kvm-smoke-20260812/`，包含
 `activity-first.txt`、`logcat-first.txt`、`install.log`、`start.log`、`environment.txt` 與
 `emulator.log`。APK、原版素材及動態輸出不加入 Git。
+
+## 2026-08-12 Luna Max 修正與第二層驗證
+
+`MainActivity` 已採最小 lifecycle 修正：`Seq`／`EbitenView`／`setContentView` 完成後才首次
+呼叫 `applyGameChrome()`，`onPause()`／`onResume()` 也防護尚未初始化的 view。新增
+`check-main-activity-contract.sh`，以失敗即關閉方式鎖定首次 chrome 套用順序、焦點重套與
+lifecycle 防護。
+
+修正後的 build-only 產物：
+
+- AAR：122,650,265 bytes，SHA-256
+  `32db89d8af50b492292b2fe7f4a5d31d965da775269caa199410e7decdaa2c9d`。
+- debug APK：125,713,466 bytes，SHA-256
+  `69b678b237f1efb9902ea0bdc6e825be284e0217d6fdd84b92c94125d33b7b26`。
+- `aapt`：`com.wicanr2.dq3`、label「傳說的終章」、compile SDK 35、target SDK 34、
+  `MainActivity`；均維持原契約。
+
+KVM emulator 已證明原空指標消失，APK 可安裝，Activity 可保持 resumed，HOME 回復與
+force-stop 後冷啟動都有存活 PID，logcat 沒有 DQ3 crash／ANR。不過人工檢查推翻腳本最初的
+「通過」：production APK 的畫面仍停在 Android splash／全黑，`firstWindowDrawn=false`。
+兩個 DQ3 process 的最後進度都停在 OboeAudio `openStreamInternal/configure`，沒有 Go panic。
+
+隔離、未進 production 的診斷探針只把 mobile 傳入 `game.NewGame` 的 music FS 改為 `nil`；
+同一 KVM emulator 隨即在約 2.7 秒完成冷啟動，顯示 DQ3 標題與開場年份，且 install、前景、
+觸控截圖、HOME 回復、force-stop／restart、PID、無 crash／ANR 全部通過。這把「headless
+emulator host audio backend 令同步 `audio.NewContext` 阻塞」提升為強推論；AAR 內資產缺失
+已被排除。診斷探針不加入 Git，也不以永久停用 Android 音樂作正式修正。
+
+smoke 腳本因此新增 `firstWindowDrawn=true` 且不得殘留 DQ3 splash 的玩家可見 gate。現行
+Android 判定是：**Activity 啟動崩潰已修；production 音訊版的 headless emulator 畫面 gate
+仍受 host audio backend 阻塞；靜音診斷探針完整通過。** 真機或具可用 PulseAudio／ALSA
+backend 的 emulator 尚需重跑 production APK，不能把探針結果升格為正式 Android 驗收完成。
