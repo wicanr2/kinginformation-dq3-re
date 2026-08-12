@@ -1,5 +1,8 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 發佈記憶：v0.1.33 已是歷史；現行 v0.1.34 已由 checkpoint `9d639d0` 正式發布。
+> GitHub 只含公開 patch，本機 full 未上傳；hash 與驗證界線以 `docs/131` 為準。
+
 > 更新：2026-08-10。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。

@@ -1,5 +1,8 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-08-12 發佈 checkpoint：v0.1.34 已由 `9d639d0` 正式發布；現行 hash、
+> patch／full 素材邊界及驗證限制見 [`docs/131`](131-release-v0.1.34.md)。
+
 > 建立：2026-07-28（Asia/Taipei）
 >
 > 目標：完成 `dq3_remake_ebitan/`，讓玩家不用 debug 鍵或 debug 環境變數，從新遊戲依精訊版正常

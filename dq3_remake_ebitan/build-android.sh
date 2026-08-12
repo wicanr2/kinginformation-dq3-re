@@ -19,6 +19,11 @@ set -euo pipefail
 OUT="${1:-dq3.aar}"
 PKG="com.wicanr2.dq3"
 
+# gomobile 會把 Go 的匯出註解寫入生成的 Java source。容器若使用
+# POSIX locale，JDK 17 會把 javac 預設編碼視為 US-ASCII，因而拒絕繁中註解。
+# JAVA_TOOL_OPTIONS 會同時覆蓋 ebitenmobile 內部啟動的 javac，不依賴主機 locale。
+export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+${JAVA_TOOL_OPTIONS} }-Dfile.encoding=UTF-8"
+
 command -v ebitenmobile >/dev/null || {
   echo "找不到 ebitenmobile — 先跑:go install github.com/hajimehoshi/ebiten/v2/cmd/ebitenmobile@latest" >&2
   exit 1

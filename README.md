@@ -1,5 +1,8 @@
 # 精訊版《勇者鬥惡龍 III》反組譯與 remake
 
+> 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
+> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。
+
 本專案研究精訊資訊在 1990 年代製作的中文版 DQ3
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，
 製作可在現代平台執行的 Go／Ebiten remake。
@@ -281,7 +284,7 @@ bash dq3_remake_ebitan/build.sh
 
 Android 保存優先 UX 與建置界線見 [`docs/124`](docs/124-android-ux-spec.md)。本輪 Docker
 已用最新 HUD／Boss 背景 source 重建 debug APK（含本機合法素材、ignored），SHA-256 為
-`7e23b96976a30f5b97f5e1e41c25f605c5c632e4b927650ba76be0f68ba79af0`；這只代表
+`38c222238a9dab068e37c5bf86eb3bad7c561f7104e32797c1a8e7c153a5e8ad`；這只代表
 `build-only`。既有 emulator image 缺 emulator binary、system image 與 AVD，容器也沒有
 KVM／DRI，故不代表 emulator／真機觸控、存讀檔或生命週期驗收。
 
