@@ -2030,6 +2030,13 @@ func (g *Game) encounterGroupCount(monID int, threshold ...int) int {
 // startBossBattle:對指定怪 monID 開一場戰鬥(索瑪等 boss)。索瑪(0x7c)依背包光之珠設弱化旗標。
 // 移植 main.c zoma 觸發 + dq3_battlescene_set_light_orb。
 func (g *Game) startBossBattle(monID int) bool {
+	if g.pack == nil {
+		return false
+	}
+	formation, ok := g.pack.FixedBattleFormationForSingleMonster(monID)
+	if !ok {
+		return false
+	}
 	level, maxHP, atk, def, agi := g.heroStats()
 	maxMP := g.heroMaxMP()
 	if !g.heroInit {
@@ -2040,7 +2047,11 @@ func (g *Game) startBossBattle(monID int) bool {
 	g.battle.lightOrb = monID == 0x7c && g.hasPartyItem(itemLightOrb) // 隊伍持光之珠 → 索瑪二階段弱化
 	g.battle.showInfo = g.cfg.CombatInfo
 	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
-	if g.battle.start(monID, int64(g.anim)*2654+1, hp, g.buildCompanionActors()) {
+	groups := make([]enemyGroup, len(formation.Groups))
+	for i, group := range formation.Groups {
+		groups[i] = enemyGroup{monID: group.MonsterRawID, count: group.Count}
+	}
+	if g.battle.startFormationWithBackground(groups, int64(g.anim)*2654+1, hp, g.buildCompanionActors(), &formation.Background) {
 		g.playAudioCue(audioCueBattle)
 		return true
 	}

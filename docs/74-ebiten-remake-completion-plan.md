@@ -1060,3 +1060,23 @@ header 的 `raw[1]`／`raw[2]`，閉合到 `DS:0x0d71`／`DS:0x0d73`、`PACKBG.S
 不應擴張成所有 terrain→page 的完整 RE。generic battle 只保留已有草地 reference 的 `0/0`
 baseline，明確不宣稱通用地形 parity。完整證據、hash 與停止條件見
 [`docs/128`](128-battle-background-selector-re.md)。
+
+## 2026-08-12 current checkpoint：必經單頭目固定背景已接線
+
+八頭大蛇之外，主線必經的怪力魔、巴拉摩斯與索瑪三連戰原本都由舊的單敵
+`startBossBattle` 入口啟動，雖然原版 `battle.json.encounter.fixed_records` 已保留它們的
+record，renderer 卻會吃到 generic `0/0` 草地 baseline。IDA 9.4 的原始 caller 證明五筆 record
+皆走 `sub_1BE89 → sub_1BF35 → sub_1BFD1 → sub_1C688 → sub_1C6E5`；本輪改由 pack 的唯一
+single-monster record 解出 `{page_raw,palette_bank_raw}`，再交給共用 battle primitive。
+
+- 怪力魔 `DS:0x4ee4`：31／6；巴拉摩斯 `DS:0x4edf`：39／6；怨靈／殭屍
+  `DS:0x4efa`／`DS:0x4eff`：42／8；索瑪 `DS:0x4ef0`：45／8。
+- 同怪物有兩筆 record 時不猜選：八頭大蛇仍只走其兩階段 `staged_boss` pack event。甘達特與
+  巴哈拉達救援本已由 event formation 直接傳 selector，無需另開單敵 fallback。
+- `TestBuiltinDQ3BattlePackMatchesOriginalRawTables`、
+  `TestRequiredFixedBossBackgroundsUsePackSelectors` 與既有頭目正式輸入 trace 均在 Docker＋Xvfb
+  通過；完整 `InputState` campaign replay 也重新到達 `THE END`。
+
+這是 D2／runtime V1 的資料與 renderer 閉環；只有八頭大蛇有原版影片 near-state V2。其餘五戰
+尚無同狀態原版畫格，不能升格 V2／V3。此修正也不表示 generic terrain selector 已完成；完整
+原始位址、推論等級與停止條件見 [`docs/129`](129-required-boss-backgrounds-re.md)。

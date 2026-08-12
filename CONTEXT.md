@@ -263,6 +263,16 @@
 - 這是必要的固定 boss 視覺修正，但不是 generic terrain selector 已完成。主線已 E3；沒有新的
   玩家可見 mismatch 時，不重新開啟全地形背景 RE，也不從 `0/0` 草地 baseline 外推。
 
+### 2026-08-12 current checkpoint：必經單頭目背景
+
+- 怪力魔、巴拉摩斯、巴拉摩斯怨靈、巴拉摩斯殭屍與索瑪的原始固定 record，已由 IDA 9.4
+  caller → `sub_1BE89` → `sub_1BF35` → archive/palette consumer 接到同一個 pack selector。
+  `startBossBattle` 只能從唯一的 `fixed_records` record 解出 formation；缺 record 或同怪有兩筆
+  record 一律 fail-closed，不回退草地。page／bank 依序為 31／6、39／6、42／8、42／8、45／8。
+- 甘達特、巴哈拉達救援與八頭大蛇本來就由 event formation 提供 selector；八頭大蛇因有兩筆
+  raw record，不可由單敵 accessor 任選。除八頭大蛇兩場有影片 V2 外，其餘五場目前只有
+  D2／runtime V1，不宣稱同狀態 V2／V3。完整地址、raw 與限制見 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。
+
 ## Flagged ambiguities(待釐清)
 
 - 「event」一詞橫跨 section 事件表(4-byte entry)與 scripted-event(跳表 id);文件中需標明哪一種。

@@ -242,7 +242,7 @@ fallback 補值。
 | `encounter.region_lookup` | raw object | 是 | `DS:0x4966` 的 256-byte 區域表；保存位址、file offset、raw hash。 |
 | `encounter.candidate_table` | raw object | 是 | `DS:0x4a56` 的實際 27×4×8-byte 候選區；未替欄位命名。 |
 | `encounter.row_stride_bytes`／`region_stride_bytes` | int | 是 | 原版固定為 `8`／`0x20`；`region` 先減一再索引。 |
-| `encounter.fixed_records` | object[] | 是 | 13 筆固定編隊 raw record；保留 count、caller 與原始 bytes。 |
+| `encounter.fixed_records` | object[] | 是 | 13 筆固定編隊 raw record；保留 count、caller 與原始 bytes。共用引擎若需啟動固定單隻戰，只能從唯一、raw-validated record 解出 formation；多筆同怪 record 必須 fail-closed，不能依怪物 ID 任選背景。 |
 | `encounter.formation_position` | object | 是 | `sub_1AAA1`／`sub_1AAD5`／`sub_1AB2C` 到 `sub_1B31A` 的 raw formation 投影契約；不把 EGA 位址誤當成未證實的美術排列名稱。 |
 | `encounter.formation_position.origin_raw` | int | 是 | `word_272E3` 初值 `0x26`。 |
 | `encounter.formation_position.first_member_offset_raw` | int | 是 | `sub_1AAD5` 在第一筆 active record 前加入的 `2`。 |
@@ -273,7 +273,9 @@ writer→consumer 閉合的 raw EGA 投影，production renderer 依此計算位
 `battle.background` 宣告的 page／bank 範圍內。`page_raw` 是 legacy archive page 的 raw selector，
 `palette_bank_raw` 是 legacy 16-color palette bank 的 raw selector；兩者不是 UI page、Go enum 或
 可自由命名的場景類型。若 generic terrain 的 selector 尚未閉合，只可保留已證實的
-`default_selector` baseline，不能藉由某個 boss 的值推導其他 terrain。
+`default_selector` baseline，不能藉由某個 boss 的值推導其他 terrain。固定單隻 boss 若可在
+`fixed_records` 中唯一識別，也同樣必須由 raw header 解出這兩個欄位；不重複把 page／bank 寫成
+Go 常數。
 
 ## 6. 規則與內容表
 

@@ -135,6 +135,35 @@ func TestBuiltinDQ3BattlePackMatchesOriginalRawTables(t *testing.T) {
 			t.Fatalf("%s selector=%+v, raw=%02x%02x", tc.name, tc.selector, exe[tc.fileOff+1], exe[tc.fileOff+2])
 		}
 	}
+	for _, tc := range []struct {
+		name    string
+		monster int
+		fileOff int
+	}{
+		{"samanosa_boss_troll", 0x59, 0x16140 + 0x4ee4},
+		{"baramos", 0x79, 0x16140 + 0x4edf},
+		{"baramos_ghost", 0x7a, 0x16140 + 0x4efa},
+		{"baramos_zombie", 0x7b, 0x16140 + 0x4eff},
+		{"zoma", 0x7c, 0x16140 + 0x4ef0},
+	} {
+		formation, ok := p.FixedBattleFormationForSingleMonster(tc.monster)
+		if !ok {
+			t.Fatalf("%s fixed single-monster formation missing", tc.name)
+		}
+		if tc.fileOff+5 > len(exe) {
+			t.Fatalf("%s formation offset %#x outside DQ3.EXE", tc.name, tc.fileOff)
+		}
+		raw := exe[tc.fileOff : tc.fileOff+5]
+		if formation.Background.PageRaw != int(raw[1]) ||
+			formation.Background.PaletteBankRaw != int(raw[2]) ||
+			len(formation.Groups) != 1 || formation.Groups[0].MonsterRawID != int(raw[3]) ||
+			formation.Groups[0].Count != int(raw[4]) {
+			t.Fatalf("%s fixed formation=%+v, raw=%x", tc.name, formation, raw)
+		}
+	}
+	if _, ok := p.FixedBattleFormationForSingleMonster(0x4b); ok {
+		t.Fatal("two Orochi fixed records must not select an arbitrary background")
+	}
 }
 
 func TestDQ3RuraNavigationMatchesOriginalEXE(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 // 這些 raw selector 只供原版 identity／input trace tests；production runtime
@@ -118,7 +119,11 @@ func TestZomaSeq(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	g := &Game{flags: map[int]bool{}, endSeq: -1}
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{pack: pack, flags: map[int]bool{}, endSeq: -1}
 	g.battle.mons = mons
 	g.battle.shp = asset(t, "DQ3MNS.SHP")
 	g.dlg.tx = dq3data.LoadText(asset(t, "D3TXT00.FON"), asset(t, "D3TXT07.TXT"))

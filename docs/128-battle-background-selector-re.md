@@ -110,3 +110,7 @@ V3；完整前後差異保留在 [`docs/127`](127-orochi-v2-production-compare.m
 正式 renderer**。generic 地形背景目前保留已存在、已由草地 reference 支持的 `0/0` baseline；它
 不是「所有地形已還原」的聲明。若未來取得新的 player-visible discrepancy，才以該場景的
 writer → selector → archive → renderer 鏈另開窄任務。
+
+2026-08-12 後續盤點已將相同 raw contract 接到怪力魔、巴拉摩斯與索瑪三連戰的單頭目入口；
+它們沒有新增 generic terrain 推論，且缺同狀態原版畫格，僅標 D2／runtime V1。詳見
+[`docs/129`](129-required-boss-backgrounds-re.md)。

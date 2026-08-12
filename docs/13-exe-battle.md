@@ -62,7 +62,7 @@ battle_main:
   if alive==0: [0x2518]=0; return         ; 無人可戰 → 退出
   [0x24b4]=alive; [0x24b3]=enemy_total
   battle_setup_party (sub_c8c6)           ; 攤平隊伍 HP/MP/狀態 → [0x063a]
-  battle_enter_screen (sub_bfd1)          ; 載入 packbg 戰鬥背景(頁由地形 sub_d9f8 決定)
+  battle_enter_screen (sub_bfd1)          ; 載入 packbg 戰鬥背景（generic branch 由地形選頁；固定編隊則先由 sub_bf35 的 raw[1]/raw[2] 寫入 selector，見 docs/128、129）
   battle_draw_status (sub_c572)           ; 畫我方狀態框(隊伍人數定高度)
   battle_draw_names (sub_c59b)            ; 逐隻畫敵名 + 怪物群 sprite
   battle_command_loop (sub_c08b)          ; 逐角色下指令 + 回合執行

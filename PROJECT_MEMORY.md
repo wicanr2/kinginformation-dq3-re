@@ -707,3 +707,19 @@ transition 沒有安全 production 值。除非取得新原版 frame／音訊 tr
 錯配很醒目；但 campaign 已 E3，且尚無新 player-visible discrepancy，故停止擴張成 generic
 terrain selector RE。通用戰鬥只保留已驗證草地 baseline `0/0`，不聲稱全地形 parity。可回查的
 raw、hash、推論等級、訂正與停止條件見 [`docs/128`](docs/128-battle-background-selector-re.md)。
+
+## 2026-08-12 current memory：必經單頭目背景 selector 已閉合
+
+不要把單敵 `startBossBattle` 視為可以安全使用 generic 草地背景的舊入口。怪力魔、巴拉摩斯、
+巴拉摩斯怨靈、巴拉摩斯殭屍與索瑪都有原版 `fixed_records`；IDA 9.4 保留的 caller 都經
+`sub_1BE89 → sub_1BF35 → sub_1BFD1 → sub_1C688 → sub_1C6E5`，header `raw[1]`／`raw[2]`
+對應背景 page／palette bank。
+
+共用 `gamepack.FixedBattleFormationForSingleMonster` 只接受唯一、單群、單隻的 raw record；遺失或
+重複 record 一律 fail-closed。八頭大蛇有兩筆 record，必須繼續使用 `staged_boss` 的明確 formation，
+不可依 monster ID 任選。五場單頭目 selector 依序為怪力魔 31／6、巴拉摩斯 39／6、怨靈 42／8、
+殭屍 42／8、索瑪 45／8；所有值留在 `battle.json` raw record，Go 不新增 DQ3 page／bank 常數。
+
+這是 D2／runtime V1；八頭大蛇兩場仍是唯一有原版影片 near-state V2 的頭目背景。未有同狀態原版
+畫格前，不將其他五戰升格 V2／V3，也不借固定 record 重開 generic terrain→page RE。證據、原始
+地址、測試與停止條件見 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。

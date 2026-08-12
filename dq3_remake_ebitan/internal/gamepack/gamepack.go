@@ -2853,6 +2853,43 @@ func validatePackFormation(eventID, name string, formation BattleFormation) erro
 	return nil
 }
 
+// fixedBattleFormation 將原版固定編隊的 raw record 解成共用的有限 formation
+// primitive。page／palette 與 group 都逐 byte 保留 raw parity；這不是以怪物
+// 名稱或場景猜測背景。
+func fixedBattleFormation(record BattleFixedFormationRecord) (BattleFormation, error) {
+	if record.Count <= 0 {
+		return BattleFormation{}, errors.New("count must be positive")
+	}
+	raw, err := hex.DecodeString(record.RawHex)
+	if err != nil {
+		return BattleFormation{}, fmt.Errorf("raw_hex is invalid: %w", err)
+	}
+	if len(raw) != 3+record.Count*2 {
+		return BattleFormation{}, fmt.Errorf("raw length=%d want %d", len(raw), 3+record.Count*2)
+	}
+	if int(raw[0]) != record.Count {
+		return BattleFormation{}, fmt.Errorf("raw count=%d want %d", raw[0], record.Count)
+	}
+	formation := BattleFormation{
+		Background: BattleBackgroundSelector{
+			PageRaw:        int(raw[1]),
+			PaletteBankRaw: int(raw[2]),
+		},
+		Groups:      make([]FormationGroup, record.Count),
+		RawBytesHex: record.RawHex,
+	}
+	for i := range formation.Groups {
+		formation.Groups[i] = FormationGroup{
+			MonsterRawID: int(raw[3+i*2]),
+			Count:        int(raw[4+i*2]),
+		}
+		if formation.Groups[i].Count < 1 {
+			return BattleFormation{}, fmt.Errorf("group %d count must be positive", i)
+		}
+	}
+	return formation, nil
+}
+
 func (p *Pack) validateEvents() error {
 	if p.Events.ItemActions.PersonalInventorySlots < 1 ||
 		p.Events.ItemActions.PersonalInventorySlots > 32 {
@@ -4228,8 +4265,13 @@ func (p *Pack) validateBattlePack() error {
 		if record.DGroup == "" || record.File == "" || record.Caller == "" || record.Count <= 0 {
 			return fmt.Errorf("encounter fixed_records[%d] is incomplete", i)
 		}
-		if _, err := hex.DecodeString(record.RawHex); err != nil || len(record.RawHex)%2 != 0 {
-			return fmt.Errorf("encounter fixed_records[%d] raw_hex is invalid", i)
+		formation, err := fixedBattleFormation(record)
+		if err != nil {
+			return fmt.Errorf("encounter fixed_records[%d]: %w", i, err)
+		}
+		if !validBattleBackgroundSelector(formation.Background, b.Background) {
+			return fmt.Errorf("encounter fixed_records[%d] background selector page=%d palette_bank=%d is outside declared range",
+				i, formation.Background.PageRaw, formation.Background.PaletteBankRaw)
 		}
 		if err := validateEvidence(record.Evidence); err != nil {
 			return fmt.Errorf("encounter fixed_records[%d] evidence: %w", i, err)
@@ -4913,6 +4955,35 @@ func (p *Pack) BattleEncounterRaw() ([]byte, []byte, bool) {
 		return nil, nil, false
 	}
 	return region, candidates, true
+}
+
+// FixedBattleFormationForSingleMonster 找到唯一的原版固定單敵編隊。它只消費
+// pack 已驗證的 raw formation；若同一怪物有多筆固定 record 或完全沒有 record，
+// 則 fail-closed，呼叫端不得退回草地預設背景。
+func (p *Pack) FixedBattleFormationForSingleMonster(monsterRawID int) (BattleFormation, bool) {
+	if p == nil || !p.battlePresent || monsterRawID < 0 || monsterRawID > 255 {
+		return BattleFormation{}, false
+	}
+	var found *BattleFormation
+	for _, record := range p.Battle.Encounter.FixedRecords {
+		formation, err := fixedBattleFormation(record)
+		if err != nil {
+			return BattleFormation{}, false
+		}
+		if len(formation.Groups) != 1 || formation.Groups[0].Count != 1 ||
+			formation.Groups[0].MonsterRawID != monsterRawID {
+			continue
+		}
+		if found != nil || !validBattleBackgroundSelector(formation.Background, p.Battle.Background) {
+			return BattleFormation{}, false
+		}
+		copy := formation
+		found = &copy
+	}
+	if found == nil {
+		return BattleFormation{}, false
+	}
+	return *found, true
 }
 
 // BattleFormationPosition returns the pack-owned raw position projection.
