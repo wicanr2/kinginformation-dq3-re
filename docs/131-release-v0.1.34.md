@@ -1,5 +1,8 @@
 # v0.1.34 三平台正式發布
 
+> 本機已驗證的 patch/full 與推廣片集中於 `dist-all/v0.1.34/`；GitHub release 仍只上傳
+> 不含原版素材的 patch。完整本機包不加入 Git。
+
 > GitHub release：<https://github.com/wicanr2/kinginformation-dq3-re/releases/tag/v0.1.34>。
 > tag／附件均已核對；tag 指向 `9d639d01b46ce327c476e4a470dffa57ccbd069d`。
 

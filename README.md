@@ -1,7 +1,8 @@
 # 精訊版《勇者鬥惡龍 III》反組譯與 remake
 
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
-> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。
+> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機三平台包與推廣片
+> 的唯一現行交付樹為 `dist-all/v0.1.34/`，版型與驗收見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
 
 本專案研究精訊資訊在 1990 年代製作的中文版 DQ3
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，
@@ -261,7 +262,8 @@ E2 pack／renderer。日邦格兩場必經 Boss 的固定背景則已按原版 a
 V1。通用地形背景沒有藉此宣稱 parity。完整靜態收斂與停止條件見
 [`docs/123`](docs/123-static-battle-daynight-re.md) 與 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。三種桌面發佈包見
 [`docs/131`](docs/131-release-v0.1.34.md)；重新剪輯、含可聽 MT-32 音軌的 2026-08-12 推廣片與
-非靜音驗收見 [`docs/133`](docs/133-promo-video-20260812.md)。後續工作以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
+非靜音驗收見 [`docs/133`](docs/133-promo-video-20260812.md)，r2 與 `dist-all/` 交付規格見
+[`docs/134`](docs/134-promo-video-r2-dist-all.md)。後續工作以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
 的 E2 handoff 與未決清單為準。
 
 ## 證據優先序

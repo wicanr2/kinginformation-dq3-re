@@ -129,6 +129,12 @@
 
 ## 測試、container 與提交
 
+### `dist-all/` 現行交付目錄
+
+- DQ3 三平台包與推廣影片的現行交付只放在 `dist-all/<版本>/`：Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP，以及 `promo/` 下的推廣片與驗收 metadata。
+- `dist/` 與 `work/` 只作歷史／中間產物；文件、release note、驗收輸出與使用者下載指引不得把它們當成現行入口。應使用 `tools/collect_dist_all.sh` 集中收集並產生 manifest。
+- `dist-all/` 維持 gitignored；不得把原版素材、ROM／資料檔、私有音樂 render 或完整包加入 Git。所有收集、封裝、錄影與驗收仍必須在 Docker 內，以一次性 `--rm` 容器及目前 UID/GID 寫入。
+
 - 圖形測試在具備 `assets_raw` 的正確工作目錄，以 `go test -c` 後配合 Xvfb 執行；
   素材缺失造成的 SKIP 不算驗收。
 - 每次至少跑受影響的 tests；重大切片收尾跑完整 `game`、`internal/...` 與 desktop build。

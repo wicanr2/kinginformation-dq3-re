@@ -1,6 +1,7 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；公開 patch 不含原版素材，
+2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
+`dist-all/v0.1.34/`；公開 patch 不含原版素材，
 本機 full 未上傳。macOS 僅靜態驗證，詳見 `docs/131`。
 
 精訊版 DQ3 反組譯專案的單一入口:**canonical 術語**(命名 / 文件 / 程式一致用詞)與
@@ -288,16 +289,16 @@
   觸控與 lifecycle。正式狀態仍不是實機通過，證據見
   [`docs/132`](docs/132-android-emulator-validation.md)。
 
-### 2026-08-12 current checkpoint：推廣片重排與聲音驗收
+### 2026-08-12 current checkpoint：推廣片 r2 重拍與 `dist-all/` 交付
 
-- `work/video/dq3_remake_demo.mp4` 與 `dist/dq3-promo-20260812.mp4` 已重建為同一支 72 秒
+- `dist-all/v0.1.34/promo/dq3-remake-promo-20260812-r2.mp4` 是現行 72 秒
   1280×720／30 fps H.264＋48 kHz 雙聲道 AAC 推廣片；SHA-256 為
-  `a67eab136960768c046f8bba3ab11eb6cca9ca706942d932dd957fb7273f94c0`。
-- 開場 12 秒由正式 v0.1.34 AppRun 在 Docker／Xvfb 實錄；後段只使用現行 Go／Ebitengine
-  runtime 證據圖，依玩家旅程重排。6 月 28 日舊片已原樣備份。
+  `603aa9f98f27ef6cd7b1876cc1000da288e86ea622a6390a2abe2d5068d11cc5`。
+- 開場 12 秒由正式 v0.1.34 AppRun 在 Docker／Xvfb 重新實錄；後段改用全幅字幕帶、金框卡片、
+  資料卡與八頭大蛇雙畫面，依玩家旅程重排。6 月 28 日舊片仍原樣備份，r1 歷史證據見 `docs/133`。
 - 驗收不再只看 audio stream：必須完整解碼、平均音量高於 `-35 dB`、峰值高於 `-12 dB`，
   且不能有超過三秒的連續數位靜音。完整證據與重建入口見
-  [`docs/133`](docs/133-promo-video-20260812.md)。
+  [`docs/134`](docs/134-promo-video-r2-dist-all.md)；`dist/` 與 `work/` 只保留歷史／中間產物。
 
 ## Flagged ambiguities(待釐清)
 

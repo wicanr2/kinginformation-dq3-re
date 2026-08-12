@@ -11,7 +11,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 APP="${DQ3_PROMO_APP:-dist/v0.1.34/full/linux-amd64/AppDir/AppRun}"
-OUT="${DQ3_PROMO_CAPTURE_OUT:-work/video/dq3_ebiten_opening_runtime.mp4}"
+OUT="${DQ3_PROMO_CAPTURE_OUT:-dist-all/v0.1.34/promo/source/opening_runtime.mp4}"
 DISPLAY_ID="${DQ3_PROMO_DISPLAY:-:97}"
 LOG="${DQ3_PROMO_CAPTURE_LOG:-/tmp/dq3-promo-game.log}"
 
