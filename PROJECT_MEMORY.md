@@ -740,6 +740,9 @@ label 位於欄起點 `+16px`、姓名／數值位於 `+32px`、姓名最多四 
 `THE END` 重播已通過；此畫面是 D3／near-state V2，不宣稱逐像素 V3。完整證據見
 [`docs/130`](docs/130-party-field-hud-re.md)。
 
-Android 最新 source 已在 Docker 重建 AAR／debug APK並通過 `aapt` 靜態契約；既有 emulator
-image 缺 emulator binary、system image 與 AVD，容器也未暴露 KVM／DRI，因此動態安裝、
-pause／resume、觸控與存讀檔 smoke 仍是明確交付 blocker。不可把 build-only 改寫成實機通過。
+Android 最新 source 已在 Docker 重建 AAR／debug APK並通過 `aapt` 靜態契約。專用
+`dq3-android-emulator:20260812-r1` 已鎖定 emulator 37.1.11 與 API 34 x86_64 revision 14；
+無 KVM 的純 TCG 測試在 181 秒取得 Android 14 ADB device，boot animation 於 247 秒停止，
+但 480 秒內 framework 未令 `sys.boot_completed=1`，所以沒有執行 APK 安裝。動態安裝、
+pause／resume、觸控與存讀檔仍是環境 blocker，不可把 build-only 改寫成實機通過。重現方式
+見 [`android/tools`](dq3_remake_ebitan/android/tools/README.md)。

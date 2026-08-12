@@ -282,8 +282,10 @@
   姓名／數值 `+32px`、姓名最多四 glyph，以及依 class raw id 選職業 glyph。這些值皆在
   `interface.json.party_hud`；schema `0.1.32`、content `0.1.37`，詳見 [`docs/130`](docs/130-party-field-hud-re.md)。
 - 最新 HUD／Boss 背景 source 已重建 Android AAR 與 debug APK；狀態仍是 `build-only`。
-  既有 emulator image 沒有 emulator／system image／AVD，且無 KVM／DRI，因此不可宣稱
-  Android 動態、觸控或 lifecycle smoke 已完成。
+  專用 image 已鎖定 emulator 37.1.11／API 34 x86_64 revision 14；但無 KVM 的純 TCG 測試在
+  480 秒內沒有完成 framework 開機，因此未執行 APK 安裝，不可宣稱 Android 動態、觸控或
+  lifecycle smoke 已完成。可重現工具見
+  [`android/tools`](dq3_remake_ebitan/android/tools/README.md)。
 
 ## Flagged ambiguities(待釐清)
 

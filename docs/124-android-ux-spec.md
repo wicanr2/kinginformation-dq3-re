@@ -76,9 +76,12 @@ Android 實機驗收完成。
   `38c222238a9dab068e37c5bf86eb3bad7c561f7104e32797c1a8e7c153a5e8ad`。
 - SDK 35 `aapt`：`com.wicanr2.dq3`、label「傳說的終章」、`MainActivity`、
   `sensorLandscape`、四 ABI；狀態仍為 `build-only`。
-- 動態 smoke blocker：既有 emulator image 無 emulator binary、system image 或 AVD；容器未
-  暴露 KVM／DRI。官方 SDK 索引可取得鎖定版本的 emulator／API 34–35 x86_64 image，但本輪
-  未把臨時下載當成可重現工具鏈。完成 smoke 前不得宣稱安裝、觸控、lifecycle 或存讀檔通過。
+- 動態 smoke 工具已固定為 `dq3-android-emulator:20260812-r1`：Android emulator 37.1.11、
+  API 34 x86_64 system image revision 14，建置來源與有界腳本位於
+  [`android/tools`](../dq3_remake_ebitan/android/tools/README.md)。無 KVM 的純 TCG＋SwiftShader
+  測試中，ADB 於 181 秒上線、Android 14 可辨識、boot animation 於 247 秒停止，但 480 秒內
+  `sys.boot_completed` 始終為空，package manager／framework 尚未 ready，故沒有執行 APK
+  安裝。完成 smoke 前不得宣稱安裝、觸控、lifecycle 或存讀檔通過。
 - 上述重建刻意使用 `LC_ALL=C`、離線 cache；`build-android.sh` 以
   `JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8` 固定 `ebitenmobile` 內部 `javac` 編碼，因此 Go
   匯出符號的繁中註解不再造成 US-ASCII 編譯失敗。

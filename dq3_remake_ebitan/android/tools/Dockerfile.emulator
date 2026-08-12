@@ -1,0 +1,63 @@
+FROM rich2-go-android:20260809@sha256:dec5590ed4730bafbcf8e14875fb63f3d610e7fa72b66f1cd49af8db4bbd19ee
+
+ARG EMULATOR_VERSION=37.1.11
+ARG SYSTEM_IMAGE_PACKAGE=system-images;android-34;google_apis;x86_64
+ARG SYSTEM_IMAGE_REVISION=14
+
+LABEL org.opencontainers.image.title="DQ3 Android emulator smoke toolchain"
+LABEL org.opencontainers.image.version="20260812-r1"
+LABEL com.wicanr2.android.emulator.version="${EMULATOR_VERSION}"
+LABEL com.wicanr2.android.system-image="${SYSTEM_IMAGE_PACKAGE}"
+LABEL com.wicanr2.android.system-image.revision="${SYSTEM_IMAGE_REVISION}"
+
+# sdkmanager 會使用 JVM user.home 快取 repository manifest；建立隔離目錄
+# 避免 root home 與過期 manifest 導致「找不到 package」。授權與下載均有界。
+RUN mkdir -p /tmp/android-sdk-user /tmp/android-sdk-java-home \
+    && export ANDROID_USER_HOME=/tmp/android-sdk-user \
+    && export JAVA_TOOL_OPTIONS=-Duser.home=/tmp/android-sdk-java-home \
+    && bash -c \
+      'yes | timeout 300s sdkmanager --licenses >/tmp/android-sdk-licenses.log' \
+    && timeout 900s sdkmanager \
+      "emulator" \
+      "${SYSTEM_IMAGE_PACKAGE}" \
+    && rm -rf /root/.android/cache \
+      /tmp/android-sdk-user \
+      /tmp/android-sdk-java-home \
+      /tmp/android-sdk-licenses.log
+
+# emulator 即使使用 no-window，launcher 仍需要這些動態連結庫。
+RUN timeout 300s apt-get update \
+    && DEBIAN_FRONTEND=noninteractive timeout 300s apt-get install -y --no-install-recommends \
+      libasound2 \
+      libdbus-1-3 \
+      libfontconfig1 \
+      libgl1 \
+      libglu1-mesa \
+      libnss3 \
+      libpulse0 \
+      libx11-6 \
+      libxcomposite1 \
+      libxcursor1 \
+      libxdamage1 \
+      libxext6 \
+      libxfixes3 \
+      libxi6 \
+      libxkbcommon0 \
+      libxkbfile1 \
+      libxrandr2 \
+      libxrender1 \
+      libxtst6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# sdkmanager 只能安裝現行 revision；若上游更新，這一層必須失敗即關閉。
+RUN ldd /opt/android-sdk/emulator/emulator \
+    && /opt/android-sdk/emulator/emulator -version \
+    && installed_emulator_version="$(/opt/android-sdk/emulator/emulator -version 2>&1)" \
+    && printf '%s\n' "${installed_emulator_version}" | grep -F "${EMULATOR_VERSION}" \
+    && grep -F "Pkg.Revision=${SYSTEM_IMAGE_REVISION}" \
+      "/opt/android-sdk/system-images/android-34/google_apis/x86_64/source.properties"
+
+COPY smoke-emulator.sh /usr/local/bin/dq3-android-smoke
+RUN chmod 0755 /usr/local/bin/dq3-android-smoke
+
+ENTRYPOINT ["/usr/local/bin/dq3-android-smoke"]

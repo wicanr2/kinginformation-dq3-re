@@ -1093,13 +1093,15 @@ IDA 9.4 已從 `sub_17C83` 的 `DGROUP 0x3e9c` writer 與 `sub_18222` 的內容 
 畫面、資料層測試及本輪 64.14 秒的新遊戲到 `THE END` 重播均通過。此切片為 D3／near-state
 V2，不是逐像素 V3；見 [`docs/130`](130-party-field-hud-re.md)。
 
-目前 remake 主線與必經 Boss 背景皆已完成；不再把 boss repeat-N、逐動作 frame、PCM
-wall-clock 或 generic terrain 全表列成可由現有證據安全實作的必做項。實際剩餘交付 gate 為：
+目前 remake 主線與必經 Boss 背景皆已完成；v0.1.34 也已由 checkpoint `9d639d0` 正式發布。
+不再把 boss repeat-N、逐動作 frame、PCM
+wall-clock 或 generic terrain 全表列成可由現有證據安全實作的必做項。收尾狀態為：
 
-1. 從精確提交重建並發布包含 Boss 背景與 HUD 訂正的三平台 patch／本機完整版；macOS 只能
-   靜態驗證時必須明示未經真機。
-2. Android 最新 source 的 AAR／APK 已重建並通過 `aapt`；既有 image 缺 emulator binary、
-   system image 與 AVD，且容器無 KVM／DRI，故仍是 `build-only`，動態 smoke 保持 blocker。
+1. 三平台 patch／本機完整版已由精確 checkpoint 重建；公開 patch 的 release、雜湊與 macOS
+   僅靜態驗證限制見 [`docs/131`](131-release-v0.1.34.md)。此項已完成。
+2. Android 最新 source 的 AAR／APK 已重建並通過 `aapt`；專用 emulator image 也已鎖定
+   emulator 37.1.11／API 34 revision 14。容器未提供 KVM，純 TCG 在 480 秒內未完成 framework
+   開機，因此 APK 安裝、觸控與 lifecycle 動態 smoke 仍是環境 blocker。
 3. 已停用仍會產生歷史 C/SDL 產品的 AppImage／Windows 發包入口；新發包只能走
    `dq3_remake_ebitan` 的 Go／Ebitengine 工具鏈。
 

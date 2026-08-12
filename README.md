@@ -285,8 +285,10 @@ bash dq3_remake_ebitan/build.sh
 Android 保存優先 UX 與建置界線見 [`docs/124`](docs/124-android-ux-spec.md)。本輪 Docker
 已用最新 HUD／Boss 背景 source 重建 debug APK（含本機合法素材、ignored），SHA-256 為
 `38c222238a9dab068e37c5bf86eb3bad7c561f7104e32797c1a8e7c153a5e8ad`；這只代表
-`build-only`。既有 emulator image 缺 emulator binary、system image 與 AVD，容器也沒有
-KVM／DRI，故不代表 emulator／真機觸控、存讀檔或生命週期驗收。
+`build-only`。專用 emulator image 已固定 Android emulator 37.1.11 與 API 34 revision 14；
+無 KVM 的純 TCG 環境在 480 秒內仍未完成 framework 開機，因此尚未執行 APK 安裝，不能代表
+emulator／真機觸控、存讀檔或生命週期驗收。重現方式見
+[`android/tools`](dq3_remake_ebitan/android/tools/README.md)。
 
 桌面執行方式與 Android 建置需求見
 [`dq3_remake_ebitan/README.md`](dq3_remake_ebitan/README.md)。
