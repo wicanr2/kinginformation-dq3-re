@@ -3,9 +3,12 @@
 > 發佈記憶：v0.1.33 已是歷史；現行 v0.1.34 已由 checkpoint `9d639d0` 正式發布。
 > GitHub 只含公開 patch，本機 full 未上傳；hash 與驗證界線以 `docs/131` 為準。
 
-> 更新：2026-08-10。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-08-22。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
+
+> 反組譯邊界：DQ3.EXE 尚未完整語意解讀；整檔 byte-identical 只證明 bytes 保真。
+> 已閉合範圍、remake 接線與仍未知項目見 [`docs/135`](docs/135-re-assertion-audit-20260822.md)。
 
 ## 目標與完成定義
 

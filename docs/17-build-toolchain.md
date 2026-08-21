@@ -1,16 +1,21 @@
-# RE 正確性驗證:byte-identical 重組
+# DQ3.EXE bytes 保真驗證：byte-identical 重組
 
-本篇回答一個比「素材解碼對不對」更根本的問題:**我們對 DQ3.EXE 的反組譯,
-真的能 100% 還原原版二進位嗎?** 在此之前,只有素材(字型/地圖/標題)解碼經
-DOSBox 驗證;程式碼反組譯本身從未被獨立驗證。
+> **2026-08-22 勘誤：**本篇證明的是 MZ 區段、原始 bytes 與已列出的 seg0
+> 指令切分可重生，不是「每個 byte 的遊戲語意都已理解」。以 `db` 原樣輸出
+> 再得到相同 SHA-256，不能證明資料欄位、caller／consumer、狀態副作用或玩家
+> 可見行為。現行語意完成度與未知項目以 [`docs/135`](135-re-assertion-audit-20260822.md)
+> 為準；下文保留當時方法與數字，但不再作全域語意完成聲明。
 
-驗證方法是最確定的 pass/fail 訊號:**把反組譯產物用獨立組譯器(nasm)重組,
-`sha256sum` 與原版逐 byte 相同**。對得上 = 我們對每個 byte 的切分、對齊、語意標註
-都正確;這一步通了,才有資格說「RE 成功」。
+本篇回答的是:**DQ3.EXE 的檔案結構、原始 bytes 與已解碼的 seg0 指令邊界，
+能否精確重生?** 在此之前,只有素材(字型/地圖/標題)解碼經 DOSBox 驗證。
 
-最終結論先講:**整檔重組 sha256 與原版完全相同(PASS,100%)**;且 seg0 主碼
-12,949 條指令中,**實質 0 條反組譯錯誤**(助記符經獨立 encoder 比對,差異全為
-等價 encoding 選擇或 encoder 自身缺陷,非解碼錯誤)。
+驗證方法是明確的 bytes 保真訊號:**把匯出產物用獨立組譯器(nasm)重組,
+`sha256sum` 與原版逐 byte 相同**。對得上只證明輸出沒有遺失或改動原始 bytes；
+指令語意仍須以 IDA database 的交叉參照、writer-consumer 與 runtime oracle 個別閉合。
+
+最終結論先講:**整檔重組 sha256 與原版完全相同(PASS,bytes 100%)**；seg0
+12,949 條候選指令的助記符 round-trip 未發現已證實的解碼錯誤。這不等於
+12,949 條指令的高階語意、資料欄位與玩家效果都已解讀。
 
 ---
 
@@ -69,8 +74,9 @@ sha256sum assets_raw/DQ3.EXE work/reasm/dq3.rebuilt
 → **RESULT: PASS — nasm 重組 byte-identical(100%)**。獨立組譯器從我們產生的原始碼,
 組出與原版完全相同的 115,282 bytes。
 
-> 意義:這證明我們對整檔每一個 byte 的歸屬(header/reloc/padding/image)、seg0
-> 的指令切分與對齊,**全部正確**。reloc 1232 筆、entry、段邊界、尾端 pad 無一漏對。
+> 意義:這證明輸出的 header/reloc/padding/image 區域能無損重生，reloc 1232 筆、
+> entry、段邊界與尾端 pad 無一漏出輸出。由於 load image 以 `db` 保留，這項結果
+> 不能單獨證明其中每個 byte 的程式／資料分類或語意。
 
 ---
 
@@ -145,18 +151,21 @@ encoding 選擇差異或 encoder/文字限制。配合 §2 整檔 sha256 相同,
 
 ## 6. 結論與後續
 
-- **RE 基礎確認成立**:我們的反組譯能用獨立組譯器(nasm)100% 還原原版 DQ3.EXE
-  二進位(sha256 相同);seg0 主碼 12,949 條指令反組譯實質 0 錯誤。
-- 整檔每個 byte 都被正確切分、對齊、歸屬;reloc/entry/段邊界全對。
+- **bytes 保真基礎成立**:匯出內容能用獨立組譯器(nasm)100% 重生原版 DQ3.EXE
+  二進位(sha256 相同)；seg0 12,949 條候選指令的助記符 round-trip 未發現已證實
+  的解碼錯誤。
+- 整檔每個 byte 都被輸出覆蓋，reloc/entry/段邊界可重生；`db` 區域的程式／資料
+  歸屬與高階語意不由此測試證明。
 - 目前 seg0 主碼以助記符註解 + db 表示(byte-exact);runtime 段(VGA/SB/鍵盤等
   手寫組語)以 db 原樣保留,尚未逐指令解成助記符——但不影響 byte-identical 重組。
 
-### 後續(在 RE 確認成立之後,本任務不做)
+### 後續（在 bytes 保真確認之後，本任務不做）
 
 1. 把 seg0 的 db 形式逐步「升級」成可審閱的助記符標籤化反組譯(函式名、跳轉標籤),
    仍維持 nasm 組回 byte-identical(用 db 固定原版精確 encoding,助記符放標籤/註解)。
 2. runtime 段(0x11370 起)逐段反組譯命名(VGA planar / Sound Blaster / 鍵盤…)。
-3. RE 確認後,才往 C 重編 / SDL2 移植走(那兩條暫擱置)。
+3. 歷史規劃曾準備往 C 重編／SDL2 移植；現行產品已改為 Go／Ebitengine，且只按
+   玩家可見 blocker 開窄 RE 任務。
 
 > 受阻/殘留:無段對不齊。唯一「真正不同」的 13 條是 capstone 對 segment-override
 > 助記符的文字 round-trip 限制(指令本身解碼正確),不影響整檔 byte-identical。

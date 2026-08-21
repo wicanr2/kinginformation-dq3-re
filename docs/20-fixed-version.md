@@ -1,10 +1,12 @@
 # 精訊 DQ3 修正版(RE 價值的證明)
 
-既然 RE 已達 [byte-identical 重組(100% PASS)](17-build-toolchain.md),就有能力**精準修改原版**。
+依 [byte-identical bytes 重組](17-build-toolchain.md)保留的精確位址，再搭配各 bug 的
+獨立資料流證據，可以對**已閉合的特定位址**製作可重現 patch；這不代表整個 EXE
+都已語意解讀。
 本文記錄用反組譯成果做出的「修正版」——把當年害人卡關的 bug 修掉,在 DOSBox 跑起來。
 
 > 產生:`python3 tools/build_fixed_version.py` → `work/DQ3_fixed.EXE` + `work/dq3_fixed_game/`(可餵 DOSBox)。
-> 各 bug 完整反組譯分析見 [`docs/18-bug-analysis.md`](18-bug-analysis.md)。
+> 各 bug 的定位與必要資料流分析見 [`docs/18-bug-analysis.md`](18-bug-analysis.md)。
 
 ## 已修(binary patch 對照組,4/7；#4 舊 patch 已撤銷)
 
@@ -33,7 +35,7 @@
 ## DOSBox 驗證
 
 `work/dq3_fixed_game/`(原素材 + 修正 EXE/SHP)在 DOSBox 啟動:**開機 → 標題 DRAGON FIGHTER III →
-進遊戲 → 城鎮走動** 全部正常,與原版開場一致,**修正未造成任何回歸**。
+進遊戲 → 城鎮走動**均可執行，與原版開場取樣一致；已抽測路徑未觀察到回歸**。
 (九頭龍戰本身位於索瑪城深處,headless 自動化無法走到,故該場戰鬥的「不再當機」以
 sprite 資料層 + blit 邏輯 + 青衫官方碼一致性 佐證;留待有存檔時實機補測。)
 

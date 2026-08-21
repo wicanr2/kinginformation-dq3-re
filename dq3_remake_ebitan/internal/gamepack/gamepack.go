@@ -4925,9 +4925,9 @@ func (p *Pack) OpeningSequence() (*OpeningSequence, bool) {
 	return p.Interface.Opening, true
 }
 
-// NewGameConfirmation returns the optional versioned raw screen used behind
-// the new-game ability confirmation modal. Missing data means a black fallback
-// remains available; malformed declared data is rejected during pack load.
+// NewGameConfirmation 回傳新遊戲能力確認窗背後的可選版控 raw screen。某個版本可明確
+// 省略此 presentation layer；已宣告但格式錯誤的資料會在 pack load 時拒絕。
+// DQ3 自身的 contract test 則要求原版畫面資產存在。
 func (p *Pack) NewGameConfirmation() (*RawScreenAsset, bool) {
 	if p == nil || p.Interface.NewGameConfirmation == nil {
 		return nil, false

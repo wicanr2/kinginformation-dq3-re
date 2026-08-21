@@ -12,10 +12,11 @@
 
 ## 結果
 
-### 標題畫面(TITG.P)— 逐像素一致 ✅
+### 標題畫面(TITG.P)— 同素材、高度吻合 ✅
 
 `dosbox/oracle_title_compare.png`(原版上 / remake 下):
-- logo「DRAGON FIGHTER III」、副標「傳說的終章」、「© 1993 精訊資訊有限公司」完全一致。
+- logo「DRAGON FIGHTER III」、副標「傳說的終章」與版權文字目視吻合；DOSBox
+  letterbox／色盤量化不同，不能宣稱逐像素 identical。
 - 漸層天空、城堡綠色剪影、洋紅地面、劍+寶珠 logo 配色/版面一致。
 - remake 為原生 2×(640×400);原版截圖為 DOSBox letterbox 放大(1024×768)故水平略擠,
   內容像素與調色盤一致。
@@ -40,7 +41,8 @@
 - `dosbox/warp_*.png`(2026-06-23):全 CTY warp 進城逐張實機截圖,作為城鎮版面/色盤 oracle。
 - `tools/dosbox_to_overworld.sh`:原版自動進遊戲(注音輸入序列 RE)→ 起始房間/城鎮主角截圖,
   作為 sprite/palette 校正基準(docs/29)。
-- RE 鐵證:整檔反組譯→nasm 重組 **sha256==原版(byte-identical 100%)**(docs/17)。
+- bytes 保真證據:整檔匯出→nasm 重組 **sha256==原版(byte-identical 100%)**
+  (`docs/17`)；這不單獨證明全檔語意已解讀。
 
 ## 交付前自動化驗證(game_tester)
 

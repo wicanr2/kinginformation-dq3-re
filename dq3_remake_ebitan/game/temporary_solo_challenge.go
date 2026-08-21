@@ -40,9 +40,8 @@ func (g *Game) resolveSoloChallengeWorldEntrance(cty int) int {
 	return cty
 }
 
-// talkTemporarySoloChallenge owns only the finite party-removal transaction.
-// In particular it does not invent a writer for CompletedFlagRaw: IDA proves
-// the read branch, but its writer remains unknown.
+// talkTemporarySoloChallenge 只負責有限的隊伍移除 transaction。它不為
+// CompletedFlagRaw 猜造 writer：IDA 已證實讀取分支，但 writer 仍為 unknown。
 func (g *Game) talkTemporarySoloChallenge(n *npcInst) bool {
 	if g.pack == nil || g.soloChallengeStage != soloChallengeIdle {
 		return false

@@ -711,10 +711,12 @@ remake 加入猜測性的 boss 多動作機制。現有的一次 queue action �
 
 ### 3. 結論與下一個可證偽輸入
 
-原版未閉合研究在「能由目前 EXE／DAT／VOC 靜態資料決定的範圍」已收斂：沒有尚待猜填的
-production 設定欄位，也沒有理由再以廣泛反組譯重跑同一批資料。剩下的是觀測性問題，不能
-由更長的 listing 變成真相：boss 特例的實際玩家路徑、逐 frame EGA/SHP 狀態、PCM 裝置輸出
-與 wall-clock、日夜每個 palette transition。
+本文件限定的 battle queue／formation／resistance／VOC／day-night 與五個 story flag
+子集，在「能由目前 EXE／DAT／VOC 靜態資料決定的範圍」已收斂；這不代表整個
+DQ3.EXE 的語意均已解讀。此子集沒有尚待猜填的 production 設定欄位，也沒有理由再以
+廣泛反組譯重跑同一批資料。剩下的是觀測性問題，不能由更長的 listing 變成真相：boss
+特例的實際玩家路徑、逐 frame EGA/SHP 狀態、PCM 裝置輸出與 wall-clock、日夜每個
+palette transition。全專案仍未知項目見 [`docs/135`](135-re-assertion-audit-20260822.md)。
 
 因此後續只有取得可重播的原版同操作 frame／音訊 trace，或發現新的具體 caller／資料檔時，
 才重新開啟對應的窄任務。沒有新輸入時，production JSON 維持 fail-closed，README／release

@@ -478,7 +478,8 @@ func dpadEdge() int {
 	return -1
 }
 
-// selectCommand:命令窗選定一項後的動作。對話可用;其餘指令需隊伍/道具/事件系統(尚未移植)→ 暫關窗。
+// selectCommand 分派 game pack 宣告的六個地表命令。各分支只使用共用引擎 primitive
+// 與 pack 資料；缺少契約時失敗即關閉，不在此猜補 DQ3 專屬預設值。
 func (g *Game) selectCommand(cmd int) {
 	g.cmd.open = false
 	switch cmd {
@@ -1427,8 +1428,9 @@ func (g *Game) enterTownCty(cty int) {
 	g.renderFrame()
 }
 
-// dnPhaseSteps:每晝夜相位的地表步數。使用者指定「白天→黑夜=120 步、中間有黃昏」→ 每相位 60 步
-// (白天→黃昏→黑夜=2×60;全 4 相位循環=240 步,對齊原版 clock 0..0xf0)。移植 main.c DN_PHASE_STEPS。
+// dnPhaseSteps 是 remake 的四相位近似：每相位 60 步、每循環 240 步。它只對齊已證實
+// 的 0x78 夜晚邊界與 0xf0 wrap interval；未重現原版 12-entry palette bank 漸變，
+// 玩家可見 RGB transition 仍未達 V3。
 const dnPhaseSteps = 60
 
 // isNight:目前是否黑夜(相位 2)。供夜 gate 事件查詢(提頓夜綠寶珠等)。對齊 dq3_scene.c night 判定。

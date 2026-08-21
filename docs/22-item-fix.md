@@ -243,7 +243,7 @@ remake:`dq3_item_attack/defense/price/category/can_equip/equip_slot`(dq3_combat)
 先前以為「貨架是 EXE overlay 全域表、追蹤未果」。**更正**:商店貨架**就在 CTY 地圖資料裡**。
 路徑(設施 dispatcher file 0x839f):NPC `byte4` → section header **`+6`** 設施指標表 →
 設施 block。block 格式 `[type][count][item_id...]`(type 1=武防店、2=道具店;item_id = ITEM.DAT index)。
-ITEM.DAT 載到 DGROUP `0x1f9`(7 byte/筆),價格 = `[item*7+0x1f9+2]`。完整反組譯與 5 種設施
+ITEM.DAT 載到 DGROUP `0x1f9`(7 byte/筆),價格 = `[item*7+0x1f9+2]`。這五種設施的必要資料流
 (旅社/武防/道具/教會/記錄)見 **docs/40-facility-shops.md**。
 
 ### per-town 商品清單(資料驅動,已取代手工方案)

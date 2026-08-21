@@ -220,7 +220,9 @@
 
 - **E0 — 線索**：攻略、影片目視或合理推測。
 - **E1 — 原版證實**：原始資料、EXE RE 或 DOSBox 同操作證實。
-- **E2 — runtime parity**：Ebiten 以正式 renderer/input 在固定狀態重播，畫面／狀態與 oracle 相符。
+- **E2 — runtime 接線 parity**：對明確命名的資料／狀態交易，Ebiten 正式 runtime
+  已接到相同 writer、gate、consumer 與副作用。畫面證據另以 V 等級標示；E2 本身
+  不表示逐像素或玩家可見 parity。
 - **E3 — 玩家流程閉合**：從上一個正常節點只用正式輸入抵達，事件後可繼續且 save/load round-trip 通過。
 
 主線 GAP 只有 E3 才能標完成。畫面可另標 V0–V3：
@@ -522,7 +524,7 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 在開始 R-2 之前先做：
 
 1. 修正 `build.sh` pipefail 與 game test timeout。
-2. ~~完整反組譯 `file 0x13a0` 開場 owner 及其直接 callees，建立 opening state ledger。~~
+2. ~~閉合 `file 0x13a0` 開場 owner 及其直接 callees 的必要資料流，建立 opening state ledger。~~
    已追至 handler56(file `0x1633`)。
 3. ~~先修正已證實 mismatch：室內 `(5,5)`、remembered world `(0x99,0xae)`、單人隊伍、
    布衣 `0x1e`、不提前設 `msStart`、不提前給國王獎勵。~~ 已完成並加回歸。
@@ -1093,7 +1095,9 @@ IDA 9.4 已從 `sub_17C83` 的 `DGROUP 0x3e9c` writer 與 `sub_18222` 的內容 
 畫面、資料層測試及本輪 64.14 秒的新遊戲到 `THE END` 重播均通過。此切片為 D3／near-state
 V2，不是逐像素 V3；見 [`docs/130`](130-party-field-hud-re.md)。
 
-目前 remake 主線與必經 Boss 背景皆已完成；v0.1.34 也已由 checkpoint `9d639d0` 正式發布。
+目前 remake 主線正式輸入交易已達 E3；必經 Boss 背景 selector 已接線，畫面等級依
+`docs/128`／`docs/129` 分別停在 V1 或 near-state V2，不能概括成 V3 完成。
+v0.1.34 也已由 checkpoint `9d639d0` 正式發布。
 不再把 boss repeat-N、逐動作 frame、PCM
 wall-clock 或 generic terrain 全表列成可由現有證據安全實作的必做項。收尾狀態為：
 

@@ -296,24 +296,24 @@
     "level": "confirmed_generic_state_chain"
   },
   "story_flags_21": [
-    {"id": "0x0d", "set_file": ["0xfab0"], "writer": "sub_1E713", "runtime": "unknown"},
+    {"id": "0x0d", "set_file": ["0xfab0"], "writer": "sub_1E713", "runtime": "e2_connected", "runtime_history": "unknown_at_2026-08-11_static_audit", "runtime_scope": "handler74 finite transaction; player-visible V3 unknown"},
     {"id": "0x0e", "set_file": ["0x7830"], "writer": "sub_16494", "runtime": "strong"},
     {"id": "0x10", "set_file": ["0x56c8"], "writer": "sub_14312", "runtime": "confirmed"},
-    {"id": "0x11", "set_file": ["0x7563"], "writer": "sub_16139", "runtime": "unknown"},
+    {"id": "0x11", "set_file": ["0x7563"], "writer": "sub_16139", "runtime": "e2_connected", "runtime_history": "unknown_at_2026-08-11_static_audit", "runtime_scope": "handler69 transient finite transaction; player-visible V3 unknown"},
     {"id": "0x14", "set_file": ["0x736a"], "writer": "sub_15F5D", "runtime": "strong"},
     {"id": "0x16", "set_file": ["0x716a"], "writer": "sub_15DAF", "runtime": "confirmed"},
     {"id": "0x17", "set_file": ["0x156b"], "writer": "sub_1010B", "runtime": "confirmed"},
     {"id": "0x18", "set_file": ["0x162a"], "writer": "sub_1024C", "runtime": "strong"},
     {"id": "0x19", "set_file": ["0x5622", "0x5673", "0x719c"], "writer": "sub_14104", "runtime": "confirmed"},
-    {"id": "0x1a", "set_file": ["0x760a"], "writer": "sub_1622A", "runtime": "unknown"},
-    {"id": "0x1b", "set_file": ["0x7610"], "writer": "sub_1622A", "runtime": "unknown"},
+    {"id": "0x1a", "set_file": ["0x760a"], "writer": "sub_1622A", "runtime": "e2_connected", "runtime_history": "unknown_at_2026-08-11_static_audit", "runtime_scope": "handler70 finite transaction; player-visible V3 unknown"},
+    {"id": "0x1b", "set_file": ["0x7610"], "writer": "sub_1622A", "runtime": "e2_connected", "runtime_history": "unknown_at_2026-08-11_static_audit", "runtime_scope": "handler70 finite transaction; player-visible V3 unknown"},
     {"id": "0x1c", "set_file": ["0x7232"], "writer": "sub_15E6C", "runtime": "confirmed"},
     {"id": "0x1f", "set_file": ["0x6d4a"], "writer": "sub_15979", "runtime": "strong"},
     {"id": "0x20", "set_file": ["0x7053"], "writer": "sub_15CB6", "runtime": "strong"},
     {"id": "0x21", "set_file": ["0x6c8e"], "writer": "sub_15904", "runtime": "confirmed"},
     {"id": "0x22", "set_file": ["0x5735"], "writer": "sub_14312", "runtime": "confirmed"},
     {"id": "0x23", "set_file": ["0x6ea3", "0x6f1d"], "writer": "sub_15AA2", "runtime": "confirmed"},
-    {"id": "0x24", "set_file": ["0x6c88"], "writer": "sub_15904", "runtime": "unknown"},
+    {"id": "0x24", "set_file": ["0x6c88"], "writer": "sub_15904", "runtime": "e2_connected", "runtime_history": "unknown_at_2026-08-11_static_audit", "runtime_scope": "handler33 finite transaction; player-visible V3 unknown"},
     {"id": "0x25", "set_file": ["0x73f0"], "writer": "sub_16004", "runtime": "strong"},
     {"id": "0x26", "set_file": ["0x5336"], "writer": "sub_13C6D", "runtime": "confirmed"},
     {"id": "0x27", "set_file": ["0x6688"], "writer": "sub_1527E", "runtime": "confirmed"}
@@ -331,35 +331,35 @@
         "handler_id": 74,
         "direct_chain": "GET 0x0e1 and 0x136 -> sub_1E713 -> CLEAR 0x0f5 -> SET 0x0d -> sub_13534 scene reload -> sub_1E7C9/sub_1E7E8/sub_1E7F3 map animation",
         "generic_consumer": "sub_131BD full NPC record byte5 flag test; sub_134AB consumes record byte6; sub_11971 redraws map",
-        "level": "confirmed_writer_event_and_generic_consumer; production_runtime_unknown"
+        "level": "confirmed_original_writer_event_and_generic_consumer; remake_finite_transaction_e2; player_visible_v3_unknown"
       },
       "0x11": {
         "handler": "sub_16139",
         "handler_id": 69,
         "direct_chain": "GET 0x8e and 0x8f..0x94 -> sub_1E982/sub_1683A effect loop -> write loaded map cell byte 0x80 -> CLEAR 0x8e -> SET 0x11 -> sub_134AB -> sub_131BD -> sub_11971 -> sub_12C9C -> CLEAR 0x11",
         "generic_consumer": "sub_131BD full NPC record byte5 flag test; representative CTY70 record exists",
-        "level": "confirmed_transient_writer_and_generic_consumer; production_runtime_unknown"
+        "level": "confirmed_original_transient_writer_and_generic_consumer; remake_finite_transaction_e2; player_visible_v3_unknown"
       },
       "0x1a": {
         "handler": "sub_1622A",
         "handler_id": 70,
         "direct_chain": "fixed formation DS:0x4edf via sub_1BE89 -> CLEAR 0x29 -> sub_162A7 party reset -> day selector 0x526c=1 and clock 0 -> sub_1EE76 palette -> SET 0x1a and SET 0x1b -> sub_12DDF DQ3BLK/DQ3UND map rebuild",
         "generic_consumer": "sub_131BD full NPC record byte5 flag test; representative CTY25 record exists",
-        "level": "confirmed_writer_event_and_generic_consumer; production_runtime_unknown"
+        "level": "confirmed_original_writer_event_and_generic_consumer; remake_finite_transaction_e2; player_visible_v3_unknown"
       },
       "0x1b": {
         "handler": "sub_1622A",
         "handler_id": 70,
         "direct_chain": "same handler70 chain as 0x1a; both flags are set after the post-battle world reset",
         "generic_consumer": "sub_131BD full NPC record byte5 flag test; representative CTY00 record exists",
-        "level": "confirmed_writer_event_and_generic_consumer; production_runtime_unknown"
+        "level": "confirmed_original_writer_event_and_generic_consumer; remake_finite_transaction_e2; player_visible_v3_unknown"
       },
       "0x24": {
         "handler": "sub_15904",
         "handler_id": 33,
         "direct_chain": "sub_15002 -> draw record 0x0bff -> CLEAR 0x3d -> SET 0x24 and SET 0x21 -> sub_15010 redraw/close",
         "generic_consumer": "sub_131BD full NPC record byte5 flag test; representative CTY43 record exists",
-        "level": "confirmed_writer_event_and_generic_consumer; production_runtime_unknown"
+        "level": "confirmed_original_writer_event_and_generic_consumer; remake_finite_transaction_e2; player_visible_v3_unknown"
       }
     },
     "npc_record_scan": {
@@ -377,6 +377,6 @@
       },
       "level": "confirmed_generic_npc_consumer; records prove data reachability, not event semantics"
     },
-    "direct_get_status": "No direct sub_16F09 caller with immediate literal 0x0d, 0x11, 0x1a, 0x1b or 0x24 was found in the inspected handler chains; generic sub_131BD and the recorded event side effects are confirmed, production event wiring remains unknown."
+    "direct_get_status": "No direct sub_16F09 caller with immediate literal 0x0d, 0x11, 0x1a, 0x1b or 0x24 was found in the inspected original handler chains; generic sub_131BD and recorded event side effects are confirmed. The remake later connected the five finite transactions at E2; this does not add a missing original direct GET or prove player-visible V3."
   }
 }

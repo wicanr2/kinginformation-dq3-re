@@ -266,9 +266,9 @@ func (b *Battle) setSceneLayout(layout gamepack.BattleSceneLayout) {
 	}
 }
 
-// setFormationPosition installs the confirmed raw formation projection.  A
-// production pack must provide it; direct unit fixtures may omit it and retain
-// the historical renderer-only spacing for isolated tests.
+// setFormationPosition 套用已證實的 raw position formula；這本身不證明玩家可見的
+// 逐像素 parity（V3）。production pack 必須提供；直接單元 fixture 可省略，並只在
+// 隔離測試沿用歷史 renderer spacing。
 func (b *Battle) setFormationPosition(layout gamepack.BattleFormationPosition) {
 	b.formationPosition = layout
 	b.formationPositionReady = layout.Evidence.Level != ""
