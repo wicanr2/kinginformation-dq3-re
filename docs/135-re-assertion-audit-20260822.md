@@ -29,7 +29,7 @@ DQ3.EXE **沒有被完整語意解讀**。現有工程已對 remake 必經玩家
 | seg0 候選指令解碼 | strong：12,949 條助記符 round-trip 未見已證實解碼錯誤 | 供定位 | 不等於函式語意、資料欄位與間接 xref 完整 |
 | 敵方共用行動 dispatcher | confirmed：狀態／逃跑／物理／咒文主要分支與 raw 欄位 | 已資料化 | 不涵蓋 boss repeat-N、全部咒文語意、逐動作 frame／PCM timing |
 | formation | confirmed raw position formula；pixel surface 為 strong | 已接線 | 不得稱逐像素 V3 |
-| 日夜 | confirmed clock `0..0xef`、`0x78` boundary、12-byte palette selector | 四相位近似接線 | 不得稱原版 12-bank RGB transition parity |
+| 日夜 | confirmed clock `0..0xef`、`0x78` boundary、12-byte palette selector | 五個原始 bank／12 段 selector D3／E2 | 尚無同 clock DOSBox DAC 畫面，不得稱 V3 |
 | 五個 story flag | confirmed 原版 writer、event chain、generic NPC consumer | 有限 transaction E2 | E2 不等於 direct GET 存在或玩家可見 V3 |
 | 必經 Boss 背景 | selector／archive-page-palette 證據依 `docs/128`、`129` | V1；八頭大蛇 near-state V2 | 不得概括為全部 Boss V3 |
 | 正式主線 | remake 正式 input trace 到 THE END | transaction E3 | 不等於全遊戲每畫面、音效、時序皆原版 parity |
@@ -39,7 +39,8 @@ DQ3.EXE **沒有被完整語意解讀**。現有工程已對 remake 必經玩家
 - boss 同回合 repeat-N 的原版觸發來源仍為 `unknown`；正式 queue 只證明每個 entry
   呼叫一次 actor consumer。
 - 每個動作實際 SHP frame、PCM 波形／host wall-clock、cue 語意與玩家可見停頓未達 V3。
-- 日夜 12 個 palette bank 的玩家可見 RGB transition 未閉合；Go 四相位是明示近似。
+- 日夜五個原始 palette bank 與 12 段 selector 已接線；同 clock DOSBox DAC／畫面對拍
+  仍未閉合，因此玩家可見結果尚未達 V3。
 - generic terrain → battle background 全表未閉合；沒有新玩家可見 discrepancy 時不追。
 - formation 的 raw 公式已接線，但所有編隊的逐像素位置並未以同狀態原版畫面證實。
 - 抗性 raw descriptor／threshold 已閉合；全部中文效果名稱與語意不可由 raw 值外推。
@@ -63,3 +64,7 @@ DQ3.EXE **沒有被完整語意解讀**。現有工程已對 remake 必經玩家
   不把 E2 冒稱原版 direct GET 或 V3。
 - Go 註解：移除已過期的「命令尚未移植」、日夜 exact、NPC fallback 忠實與 formation V3
   暗示；未改 runtime 行為。
+- 日夜窄切片後續訂正：以 IDA 9.4／IDAPython 閉合 `sub_1EE23`、`sub_1EE76`、
+  `sub_1EE9B`、`sub_1ECDC`，將五個原始 `DQ3.PAL` bank 與 12 段 selector 接入 pack；
+  移除舊 C／Go 的無證據 RGB 縮放，並修正 clock `0x78..0xef`（phase 2／3）皆選夜間
+  NPC 表。這只新增該有限鏈的 D3／E2，不改變「DQ3.EXE 未被完整語意解讀」的總結。

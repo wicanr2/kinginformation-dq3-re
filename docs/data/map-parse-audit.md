@@ -1,7 +1,11 @@
-# 城鎮/地表地圖解析稽核(ebitan vs C oracle)
+# 城鎮／地表地圖解析稽核（ebitan vs 歷史 C comparison baseline）
+
+> **2026-08-22 術語勘誤：**本文件的 C 程式只用來抓兩套 decoder 的差異，不能當
+> 原版 oracle。下文保留「C oracle」舊稱以追溯當時方法，但所有一致結果只證明 Go 與
+> C 相符；只有另有原始 CTY／EXE bytes、IDA consumer 或原版實機閉環者才可升格。
 
 稽核日期:2026-07-03。範圍:`dq3_remake_ebitan/internal/dq3data`(Go)的城鎮/地表地圖解析,
-拿已 93/93 驗證的 C remake(`dq3_remake/src/dq3_town.c` + `dq3_field.c`)當 oracle。
+拿當時 93/93 自訂測試通過的 C remake(`dq3_remake/src/dq3_town.c` + `dq3_field.c`)作 comparison baseline。
 方法:兩邊各寫一支 dump 工具,對 **CTY00–CTY93(現存 89 個檔)× section 0–15** 全掃,
 輸出 CSV 逐格對帳(status/w/h/spawn/dlg_bank/events/transitions/npc 數/tile 上限),
 再針對差異點逐一讀 code 定位根因。C harness 直接連結 `dq3_town.c`/`dq3_scene.c`/`dq3_npc.c`

@@ -103,13 +103,16 @@ func (g *Game) usePackItemEffect(code int) bool {
 		}
 		g.noticeCode, g.noticeTimer = effect.GrantItemRawID, 90
 	case "force_day_night_phase":
-		if g.dnPhase == effect.DayNightPhase {
+		if effect.DayNightClock == nil {
+			return true
+		}
+		if g.isNight() {
 			return true
 		}
 		if !effect.ResetDayNightSteps {
 			return true
 		}
-		g.setDaynight(effect.DayNightPhase)
+		g.setDaynightClock(*effect.DayNightClock)
 		if effect.Consume {
 			g.removeItems(code, 1)
 			g.clampPanelCursor()

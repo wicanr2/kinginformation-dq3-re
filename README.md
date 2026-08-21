@@ -3,6 +3,8 @@
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
 > checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機三平台包與推廣片
 > 的唯一現行交付樹為 `dist-all/v0.1.34/`，版型與驗收見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
+> 儲存庫目前 source 已包含尚未發版的 schema `0.1.33`／content `0.1.38` 日夜原始
+> palette bank 修正；因此 v0.1.34 不能被描述為包含此修正，證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)。
 
 本專案研究精訊資訊在 1990 年代製作的中文版 DQ3
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，

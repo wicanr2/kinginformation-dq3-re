@@ -39,6 +39,10 @@ func TestDumpTeidonDarkLamp(t *testing.T) {
 		t.Fatal("缺 dq3:event.teidon_dark_lamp")
 	}
 	tr := event.Treasure
+	effect, ok := g.pack.ItemUseEffectByRawID(tr.ItemRawID)
+	if !ok || effect.DayNightClock == nil {
+		t.Fatal("缺黑暗之燈原版 day_night_clock")
+	}
 	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
 		tr.CTYRaw, mapBlkNum[tr.CTYRaw], tr.Section, 0, g.storyFlag)
 	if err != nil {
@@ -109,7 +113,7 @@ func TestDumpTeidonDarkLamp(t *testing.T) {
 	g.panel, g.panelCursor = panelItem, 0
 	g.noticeTimer = 0
 	g.useSelectedItem()
-	if g.dnPhase != 2 || g.dnStep != 0 || !g.hasItem(tr.ItemRawID) {
+	if g.dayNightClock() != *effect.DayNightClock || !g.hasItem(tr.ItemRawID) {
 		t.Fatalf("黑暗燈夜景 fixture transaction 錯：phase=%d step=%d item=%v",
 			g.dnPhase, g.dnStep, g.hasItem(tr.ItemRawID))
 	}

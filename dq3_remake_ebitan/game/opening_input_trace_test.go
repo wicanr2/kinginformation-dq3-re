@@ -1593,6 +1593,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatal("缺 dq3:event.teidon_dark_lamp")
 	}
 	darkLamp := darkLampEvent.Treasure
+	darkLampEffect, ok := g.pack.ItemUseEffectByRawID(darkLamp.ItemRawID)
+	if !ok || darkLampEffect.DayNightClock == nil {
+		t.Fatal("缺黑暗之燈原版 day_night_clock")
+	}
 	traceTownSectionTo(t, g, darkLamp.CTYRaw, darkLamp.Section)
 	traceExaminePackTreasure(t, g, darkLamp)
 	if !g.hasItem(darkLamp.ItemRawID) || g.storyFlag(darkLamp.PresentFlag) {
@@ -1606,7 +1610,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// rec421 選「使用」，強制夜晚但保留黑暗燈。
 	traceExitTownBoundary(t, g)
 	traceUseInventoryItem(t, g, darkLamp.ItemRawID)
-	if g.dnPhase != 2 || g.dnStep != 0 || !g.hasItem(darkLamp.ItemRawID) {
+	if g.dayNightClock() != *darkLampEffect.DayNightClock || !g.hasItem(darkLamp.ItemRawID) {
 		t.Fatalf("正式使用黑暗燈未閉合：phase=%d step=%d item=%v",
 			g.dnPhase, g.dnStep, g.hasItem(darkLamp.ItemRawID))
 	}
@@ -1622,7 +1626,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Confirm: true})
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	press(InputState{Confirm: true})
-	if g.inTown || g.dnPhase != 2 || g.dnStep != 0 ||
+	if g.inTown || g.dayNightClock() != *darkLampEffect.DayNightClock ||
 		!g.hasItem(darkLamp.ItemRawID) || g.storyFlag(darkLamp.PresentFlag) {
 		t.Fatalf("提頓黑暗燈 save/load round-trip 錯：town=%v phase=%d step=%d item=%v flag=%v",
 			g.inTown, g.dnPhase, g.dnStep, g.hasItem(darkLamp.ItemRawID),
@@ -2499,6 +2503,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// 可航水域的 CTY38 補滿，再從該港口出航尋找幽靈船；避免把後續
 	// 數段航路的 MP 耗盡誤當成尼羅肯特／蓋亞事件的功能缺陷。
 	traceRuraToCty(t, g, 38)
+	if g.isNight() {
+		// 原版 phase3 仍使用夜間 NPC 表；在城外以正式步行等到日表，
+		// 不把舊 remake 的「黎明=白天」錯誤固化成 trace 前提。
+		traceWaitForDayNearCty(t, g, 38)
+	}
 	traceAdventureWalkToCty(t, g, 38, false)
 	traceTalkFacility(t, g, facItem)
 	topUpHolyWater(8)

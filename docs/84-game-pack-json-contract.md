@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.31"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.33"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -201,7 +201,7 @@ fallback 補值。
 
 ```json
 {
-  "schema_version": "0.1.31",
+  "schema_version": "0.1.33",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -667,6 +667,18 @@ save/load 見 [`docs/105`](105-olivia-cape-gaia-sword-production-trace.md)。
 | `[].treasure` | object | 是 | `cty_raw/section/tile_subid/event_type_raw/item_raw_id/present_flag_raw`；present flag 採原版 set=可取、clear=已取。 |
 | `[].evidence` | object | 是 | CTY raw entry、EXE dispatcher／inventory consumer 與玩家可見結果的 D3 證據。 |
 
+`day_night_cycle` 是版本專屬 clock→palette bank 的有限資料契約：
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---:|---:|---|
+| `day_night_cycle.clock_ticks` | int | 是 | 正整數且可分為四個持久化 phase；DQ3 為 240。 |
+| `.night_start_tick` | int | 是 | 二值日／夜 selector 的夜間起點；現行四 phase 契約要求等於 cycle 一半。 |
+| `.palette_segment_ticks` | int | 是 | 每次查 palette selector 的 tick span；必須整除 cycle。 |
+| `.palette_entries_per_bank` | int | 是 | 一個 raw palette bank 的色數。 |
+| `.palette_bank_indices` | int[] | 是 | 長度必須等於 `clock_ticks/palette_segment_ticks`；所有 bank 非負。 |
+| `.palette_asset_key` | string | 是 | 必須引用 manifest 已鎖 size／SHA-256 的原始 palette asset。 |
+| `.evidence` | object | 是 | clock writer、raw table、asset loader 與 upload consumer 的 D3 證據。 |
+
 `item_use_effects` 將版本專屬 raw item ID 接到引擎的有限具名 primitive；不得用 JSON
 放任意條件式、callback 或程式碼：
 
@@ -678,6 +690,7 @@ save/load 見 [`docs/105`](105-olivia-cape-gaia-sword-production-trace.md)。
 | `[].effect_id` | enum | 是 | 支援 `force_day_night_phase`、`temporary_invisibility`、`reveal_world_map_patch`；未知值 fail closed。 |
 | `[].location_kind` | enum | 是 | 日夜與地圖 patch 使用 `overworld`；暫時隱形使用 `any`。不接受任意條件運算式。 |
 | `[].day_night_phase` | int | 是 | pack canonical 晝夜相位 `0..3`；DQ3 黑夜為 2。 |
+| `[].day_night_clock` | int/null | 條件必填 | `force_day_night_phase` 的原版 clock writer；須落在 `day_night_cycle.clock_ticks`，且與 phase 相符。其他 effect 必須省略。 |
 | `[].reset_day_night_steps` | boolean | 是 | 是否依原版 transaction 重設現行 phase step；`force_day_night_phase` 必須為 true，暫時隱形必須為 false。 |
 | `[].step_count` | int | 是 | 暫態效果剩餘步數；`temporary_invisibility` 必須大於 0，非步數效果必須為 0。 |
 | `[].consume` | boolean | 是 | 成功後是否消耗；黑暗燈為 false，隱形草原版會清除選中物品槽，故為 true。 |
@@ -1257,7 +1270,7 @@ JSON 或用合理預設補洞。
 
 ```json
 {
-  "schema_version": "0.1.31",
+  "schema_version": "0.1.33",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1287,7 +1300,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.31",
+  "schema_version": "0.1.33",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

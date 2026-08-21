@@ -7,6 +7,10 @@
 2026-08-22 反組譯斷言審計：DQ3.EXE 並未完整語意解讀；byte-identical 重組只證明
 bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界見 `docs/135`。
 
+2026-08-22 日夜 palette 訂正：`events.json.day_night_cycle` 保存 240-tick clock、
+夜間起點 120、20-tick segment、五個原始 `DQ3.PAL` bank 與 12-entry selector；
+phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/136`。
+
 精訊版 DQ3 反組譯專案的單一入口:**canonical 術語**(命名 / 文件 / 程式一致用詞)與
 **知識庫索引**(`docs/` 全文件按主題分組)。新概念先進這裡再用;模糊詞列在末尾待釐清。
 
@@ -246,9 +250,9 @@ bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界�
 - 舊版 C／SDL `tools/game_tester.sh` 及 `work/dist/verify/game_tester.sh` 已移除；現行驗收
   一律使用 Go／Xvfb／Docker，舊 `dq3_remake` 文件僅作歷史線索。
 
-### 2026-08-12 current checkpoint：能力確認 V3 靜態與 RE 收斂
+### 2026-08-12 歷史 checkpoint：能力確認 V3 靜態與 RE 收斂
 
-- `dq3_cht` schema 為 `0.1.31`、content version 為 `0.1.36`。新欄位只擴充共用
+- 當時 `dq3_cht` schema 為 `0.1.31`、content version 為 `0.1.36`。新欄位只擴充共用
   `frame_edge_widths` 與 `window_backdrops` 契約；DQ3 專屬 glyph、record、raw window、座標與
   layer 全在 `interface.json`，Go 不新增版本專屬 fallback。
 - 正式原版創角輸入（名稱 `0`、男性、確認）的 DOSBox 1024×768 外殼已明確裁成左上 640×350
@@ -261,7 +265,7 @@ bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界�
   production 值，保持 `unknown`／fail-closed，除非出現新原版 trace 或具體 caller。完整範圍與
   停止條件見 [`docs/123`](docs/123-static-battle-daynight-re.md)。
 
-### 2026-08-12 current checkpoint：固定編隊背景 selector
+### 2026-08-12 歷史 checkpoint：固定編隊背景 selector
 
 - 八頭大蛇兩場的固定 formation header `raw[1]`／`raw[2]` 已由 IDA 9.4 閉合為
   `PACKBG.SCR` archive page 與 `MNSBK.PAL` 16 色 bank；現行 pack 欄位為
@@ -270,7 +274,7 @@ bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界�
 - 這是必要的固定 boss 視覺修正，但不是 generic terrain selector 已完成。主線已 E3；沒有新的
   玩家可見 mismatch 時，不重新開啟全地形背景 RE，也不從 `0/0` 草地 baseline 外推。
 
-### 2026-08-12 current checkpoint：必經單頭目背景
+### 2026-08-12 歷史 checkpoint：必經單頭目背景
 
 - 怪力魔、巴拉摩斯、巴拉摩斯怨靈、巴拉摩斯殭屍與索瑪的原始固定 record，已由 IDA 9.4
   caller → `sub_1BE89` → `sub_1BF35` → archive/palette consumer 接到同一個 pack selector。
@@ -280,7 +284,7 @@ bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界�
   raw record，不可由單敵 accessor 任選。除八頭大蛇兩場有影片 V2 外，其餘五場目前只有
   D2／runtime V1，不宣稱同狀態 V2／V3。完整地址、raw 與限制見 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。
 
-### 2026-08-12 current checkpoint：地表四人 HUD 與 Android build
+### 2026-08-12 歷史 checkpoint：地表四人 HUD 與 Android build
 
 - `sub_17C83`／`sub_18222` 已把地表四人 HUD 閉合為 `(152,238,352,80)`、label `+16px`、
   姓名／數值 `+32px`、姓名最多四 glyph，以及依 class raw id 選職業 glyph。這些值皆在
@@ -292,7 +296,7 @@ bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界�
   觸控與 lifecycle。正式狀態仍不是實機通過，證據見
   [`docs/132`](docs/132-android-emulator-validation.md)。
 
-### 2026-08-12 current checkpoint：推廣片 r2 重拍與 `dist-all/` 交付
+### 2026-08-12 歷史 checkpoint：推廣片 r2 重拍與 `dist-all/` 交付
 
 - `dist-all/v0.1.34/promo/dq3-remake-promo-20260812-r2.mp4` 是現行 72 秒
   1280×720／30 fps H.264＋48 kHz 雙聲道 AAC 推廣片；SHA-256 為

@@ -132,13 +132,14 @@ func findCtyAtLayer(px, py, layer int) int {
 
 // loadTownScene:載入任一 CTY 城鎮(section 0)為 Scene(通用,移植 dq3_town_load 用法)。
 // blkn 由 mapBlkNum[cty] 決定 → DQ3<blkn>.BLK + BLKBM<blkn>.DAT。含 NPC(sprite 自 DQ3MAN.BLS)。
-// phase = 進城當下晝夜相位(0白天/1黃昏/2黑夜/3黎明):決定 NPC 日/夜表 + palette 調暗。
+// phase = 進城當下的四分段時鐘索引；原版 120..239 tick（phase 2/3）選夜間 NPC 表。
+// 色盤 bank 由 Game 依 game-pack 的完整 12 段時鐘表套用，本 loader 不猜相位色。
 func loadTownScene(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, phase int, flagSet func(int) bool) (*Scene, error) {
 	return loadTownSceneSec(assets, pal, manBLS, cty, blkn, 0, phase, flagSet)
 }
 
 // loadTownSceneSec 載入某城的指定 section(轉場用)。section 0 = 城鎮外圍入口層。
-// pal 須為日中 base 色盤;函式內依 phase 調暗(不動輸入),NPC 依 phase==2 選日/夜表。
+// pal 是原始 DQ3.PAL；本函式只複製，不作 RGB 近似。NPC 依原版夜間區間選表。
 // flagSet(id)=某 story-flag 是否已設(通常 g.flags 查詢);nil = 不過濾(測試用)。
 // 條件 NPC(NPCStoryGate)其 byte5 旗標未設時不載入(對齊原版 file 0x4560 的 je skip,docs/71)。
 func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blkn, section, phase int, flagSet func(int) bool) (*Scene, error) {
@@ -150,7 +151,7 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 	blkName := blkFile(blkn)
 	attrName := blkbmFile(blkn)
 
-	night := (phase & 3) == 2 // 2=黑夜 → NPC 用夜表;白天/黃昏/黎明皆當白天(對齊 dq3_scene.c:117)
+	night := (phase & 3) >= 2 // 原版 clock 0x78..0xef 均用夜表；phase2/3 都是夜間。
 	tw, err := dq3data.OpenTown(rd(ctyName), section, night)
 	if err != nil {
 		return nil, err
@@ -160,7 +161,7 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 		return nil, err
 	}
 	sc := &Scene{
-		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: dq3data.DarkenPalette(pal, phase),
+		blk: blk, attr: dq3data.OpenBlockAttr(rd(attrName)), pal: append([]dq3data.Color(nil), pal...),
 		w: tw.W, h: tw.H, tileAt: tw.Tile, spawnX: tw.SpawnX, spawnY: tw.SpawnY,
 		mapFlags: tw.MapFlags, encounterFlag: tw.EncounterFlag,
 		hiMap: tw.HiMap, specialHandlers: tw.SpecialHandlers,

@@ -22,8 +22,9 @@ func TestBuiltinDQ3FinalePackReferences(t *testing.T) {
 		t.Fatal(err)
 	}
 	for key, want := range map[string]AssetRef{
-		"title_image":  {Path: "TITG.P", Size: 39610, SHA256: "127fbed5603b8c0f6481b54e44aac0413384c1581c901780fbf0ffe947ecafa8"},
-		"ending_image": {Path: "TIT3.P", Size: 28948, SHA256: "f4c0b82c0df531ff7e8e10ce05f18b22e3e87a7d9a21237666b98722f132378e"},
+		"title_image":   {Path: "TITG.P", Size: 39610, SHA256: "127fbed5603b8c0f6481b54e44aac0413384c1581c901780fbf0ffe947ecafa8"},
+		"ending_image":  {Path: "TIT3.P", Size: 28948, SHA256: "f4c0b82c0df531ff7e8e10ce05f18b22e3e87a7d9a21237666b98722f132378e"},
+		"world_palette": {Path: "DQ3.PAL", Size: 240, SHA256: "178a9ca809a33108d8e2a6430796eae8909d98e514fe543fc1923139110389c4"},
 	} {
 		got, ok := p.Asset(key)
 		if !ok || got != want {
@@ -32,6 +33,41 @@ func TestBuiltinDQ3FinalePackReferences(t *testing.T) {
 	}
 	if track, ok := p.AudioTrack("ending"); !ok || track != 17 {
 		t.Fatalf("ending audio cue = %d/%v, want 17/true", track, ok)
+	}
+}
+
+func TestBuiltinDQ3DayNightCycleMatchesOriginalEXEAndPalette(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cycle := p.DayNightCycle()
+	wantBanks := []int{1, 0, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2}
+	if cycle.ClockTicks != 0xf0 || cycle.NightStartTick != 0x78 ||
+		cycle.PaletteSegmentTicks != 0x14 || cycle.PaletteEntriesPerBank != 16 ||
+		!reflect.DeepEqual(cycle.PaletteBankIndices, wantBanks) || cycle.PaletteAssetKey != "world_palette" {
+		t.Fatalf("day-night cycle=%+v", cycle)
+	}
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	palRaw, err := os.ReadFile(filepath.Join(dir, "DQ3.PAL"))
+	if err != nil {
+		t.Skipf("original DQ3.PAL unavailable: %v", err)
+	}
+	for i, raw := range exe[0x18705 : 0x18705+12] {
+		if cycle.PaletteBankIndices[i] != int(raw) {
+			t.Fatalf("palette selector[%d]=%d, EXE=%d", i, cycle.PaletteBankIndices[i], raw)
+		}
+	}
+	if len(palRaw) != 5*0x30 || fmt.Sprintf("%x", sha256.Sum256(palRaw)) !=
+		"178a9ca809a33108d8e2a6430796eae8909d98e514fe543fc1923139110389c4" {
+		t.Fatal("DQ3.PAL five-bank contract drift")
 	}
 }
 
@@ -519,6 +555,7 @@ func TestDQ3TeidonDarkLampMatchesOriginalEXEAndCTY(t *testing.T) {
 	}
 	if use.ItemRawID != 0x5f || use.EffectID != "force_day_night_phase" ||
 		use.LocationKind != "overworld" || use.DayNightPhase != 2 ||
+		use.DayNightClock == nil || *use.DayNightClock != 0x8c ||
 		!use.ResetDayNightSteps || use.Consume {
 		t.Fatalf("黑暗燈 item-use JSON 不符：%+v", use)
 	}
@@ -2523,14 +2560,14 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.32","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.33","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
-	  "characters":"characters.json","texts":"texts.json"},"assets":{}
+	  "characters":"characters.json","texts":"texts.json"},"assets":{"pal":{"path":"PAL","size":0,"sha256":""}}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.32","service_definitions":[{
+	  "schema_version":"0.1.33","service_definitions":[{
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2538,7 +2575,11 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.32",
+	  "schema_version":"0.1.33",
+	  "day_night_cycle":{"clock_ticks":4,"night_start_tick":2,"palette_segment_ticks":1,
+	    "palette_entries_per_bank":1,"palette_bank_indices":[0,0,0,0],"palette_asset_key":"pal",
+	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
+	      "address_space":"file","address":"0x1","consumer":"palette","doc":"docs/x.md"}},
 	  "item_actions":{"personal_inventory_slots":8,
 	    "text_ids":{"use":"x:text","give":"x:text","drop":"x:text"},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2557,7 +2598,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
   "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.32",
+	  "schema_version":"0.1.33",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -2567,7 +2608,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.32","definitions":[{
+	  "schema_version":"0.1.33","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -2576,7 +2617,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.32","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.33","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2585,10 +2626,10 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	tests := []struct {
 		name, manifest, facilities, events, characters, want string
 	}{
-		{"unknown manifest field", strings.Replace(validManifest, `"assets":{}`, `"assets":{},"typo":1`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
+		{"unknown manifest field", strings.Replace(validManifest, `"save_namespace":"test",`, `"save_namespace":"test","typo":1,`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.32"`, `"schema_version":"0.1.32","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.33"`, `"schema_version":"0.1.33","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,
@@ -2604,6 +2645,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 				"characters.json": {Data: []byte(tc.characters)},
 				"texts.json":      {Data: []byte(validTexts)},
 				"interface.json":  {Data: []byte(validInterface)},
+				"PAL":             {Data: []byte{0}},
 			}
 			_, err := Load(fsys)
 			if err == nil || !strings.Contains(err.Error(), tc.want) {

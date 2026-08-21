@@ -10,6 +10,9 @@
 > 反組譯邊界：DQ3.EXE 尚未完整語意解讀；整檔 byte-identical 只證明 bytes 保真。
 > 已閉合範圍、remake 接線與仍未知項目見 [`docs/135`](docs/135-re-assertion-audit-20260822.md)。
 
+> 2026-08-22：日夜已改由 pack schema `0.1.33` 直接選原始 `DQ3.PAL` 五 bank／12 段，
+> `0x78..0xef` 都是夜間，黑暗之燈寫 clock `0x8c`。目前 D3／E2／V2；見 `docs/136`。
+
 ## 目標與完成定義
 
 現行產品是 `dq3_remake_ebitan/`。玩家須由全新遊戲開始，只用正式遊戲輸入，依精訊版流程抵達
@@ -415,11 +418,14 @@ Docker frame unit test、gamepack test、Xvfb dump 通過，`dq3_remake_ebitan/d
 已更新。這是 D2／V2 靜態畫面切片；palette register、游標閃爍／能力條逐幀時序與完整
 stat panel V3 仍未完成。詳見 [`docs/118`](docs/118-newgame-choice-backdrop-re.md)。
 
-同日第一性原理日夜結論：四階段 clock、`DarkenPalette`、住宿／黑暗之燈 reset、日／夜
+同日歷史日夜結論（已由 2026-08-22 `docs/136` 訂正）：四階段 clock、`DarkenPalette`、住宿／黑暗之燈 reset、日／夜
 NPC table 及 story-flag filter 已在 engine 與 pack 正式存在，故不重寫日夜機制。剩餘工作是
 用原版 raw clock／palette 對拍，並按 [`docs/71`](docs/71-npc-story-flag-visibility.md)
 逐一閉合 21 個條件 flag 的入口→writer→pack state→consumer→玩家可見副作用；已有動態
 pack flag 不重複造表，無完整閉環者維持 `unknown`／fail closed。
+
+現行結論：production 已移除 `DarkenPalette`，直接依原版 240-tick clock、12 段 selector
+選取 `DQ3.PAL` bank；phase 2／3 都是夜間 NPC 區間。這是 D3／E2／V2，不是 V3。
 
 2026-08-10 開機過場切片：先前 `main.go`／mobile 直接進標題，造成玩家第一幀與精訊版不符。
 `interface.json.opening` 現保存五張已定位 PCX（`TITA.P`、`TITB.P`、`TITD.P`、`TITE.P`、
@@ -683,9 +689,9 @@ repeat-N。前文的「runtime unknown／missing」保留作歷史勘誤，現�
 [`docs/117`](docs/117-newgame-frame-re.md)。此修正是 D2／V2 靜態 HUD 對拍，不提升逐幀
 palette、游標動畫或整段創角流程為 V3。
 
-## 2026-08-12 current memory：能力確認 V3 靜態與 RE 停止條件
+## 2026-08-12 歷史 memory：能力確認 V3 靜態與 RE 停止條件
 
-現行 game pack schema 是 `0.1.31`，DQ3 content version 是 `0.1.36`。能力確認頁的 DQ3
+當時 game pack schema 是 `0.1.31`，DQ3 content version 是 `0.1.36`。能力確認頁的 DQ3
 資料已完全留在 `interface.json`：record 407 glyph stream、13 個具名 stat field、raw EGA
 window backdrop layer、`frame_edge_widths`、`beveled_2px` 與 `FIRST.SCR` palette；Go 只保留
 跨版本 renderer／validator primitive。
@@ -701,7 +707,7 @@ transition 沒有安全 production 值。除非取得新原版 frame／音訊 tr
 不要再為這些項目猜 JSON、加 Go fallback 或廣泛重跑反組譯。完整界線見
 [`docs/123`](docs/123-static-battle-daynight-re.md)。
 
-## 2026-08-12 current memory：八頭大蛇固定編隊背景 V2 已閉合
+## 2026-08-12 歷史 memory：八頭大蛇固定編隊背景 V2 已閉合
 
 不要再以舊的單勇者 PNG 或修正前的天空／草地 trace 評估日邦格戰鬥。固定編隊 record 的
 `raw[1]`／`raw[2]` 已由 IDA Pro 9.4 關聯至 archive page／palette bank，並資料化為
@@ -714,7 +720,7 @@ transition 沒有安全 production 值。除非取得新原版 frame／音訊 tr
 terrain selector RE。通用戰鬥只保留已驗證草地 baseline `0/0`，不聲稱全地形 parity。可回查的
 raw、hash、推論等級、訂正與停止條件見 [`docs/128`](docs/128-battle-background-selector-re.md)。
 
-## 2026-08-12 current memory：必經單頭目背景 selector 已閉合
+## 2026-08-12 歷史 memory：必經單頭目背景 selector 已閉合
 
 不要把單敵 `startBossBattle` 視為可以安全使用 generic 草地背景的舊入口。怪力魔、巴拉摩斯、
 巴拉摩斯怨靈、巴拉摩斯殭屍與索瑪都有原版 `fixed_records`；IDA 9.4 保留的 caller 都經
@@ -730,14 +736,14 @@ raw、hash、推論等級、訂正與停止條件見 [`docs/128`](docs/128-battl
 畫格前，不將其他五戰升格 V2／V3，也不借固定 record 重開 generic terrain→page RE。證據、原始
 地址、測試與停止條件見 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。
 
-## 2026-08-12 current memory：地表四人 HUD 已依原始 writer 訂正
+## 2026-08-12 歷史 memory：地表四人 HUD 已依原始 writer 訂正
 
 舊的 `party_hud` `(48,244,448,80)` 是目測近似，不能再當作原版規格。IDA Pro 9.4 已由
 `sub_17C83` 閉合 `DGROUP 0x3e9c` 的四人幾何為 `(152,238,352,80)`；`sub_18222` 同時證實
 label 位於欄起點 `+16px`、姓名／數值位於 `+32px`、姓名最多四 glyph，末列使用
 `0x6a+class_raw` 的職業 glyph 再畫等級。
 
-現行 schema 為 `0.1.32`、DQ3 content version 為 `0.1.37`。共用 Go renderer 只消費
+當時 schema 為 `0.1.32`、DQ3 content version 為 `0.1.37`。共用 Go renderer 只消費
 `PartyHUDLayout` 的 offset、姓名上限與 class glyph map；DQ3 座標與 glyph 全留在
 `interface.json`，缺資料即 fail-closed。正式 `InputState.Confirm` 畫面與完整新遊戲到
 `THE END` 重播已通過；此畫面是 D3／near-state V2，不宣稱逐像素 V3。完整證據見
@@ -752,7 +758,7 @@ production 音訊版在 headless emulator 仍停於 OboeAudio host backend，首
 才全部通過。診斷探針不加入 production，也不可把它改寫成正式 Android 實機通過。證據見
 [`docs/132`](docs/132-android-emulator-validation.md)。
 
-## 2026-08-12 current memory：推廣片 r2 重拍並集中到 `dist-all/`
+## 2026-08-12 歷史 memory：推廣片 r2 重拍並集中到 `dist-all/`
 
 現行本機推廣片是
 `dist-all/v0.1.34/promo/dq3-remake-promo-20260812-r2.mp4`，SHA-256 為

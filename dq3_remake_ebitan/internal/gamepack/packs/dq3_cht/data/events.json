@@ -1,5 +1,22 @@
 {
-  "schema_version": "0.1.32",
+  "schema_version": "0.1.33",
+  "day_night_cycle": {
+    "clock_ticks": 240,
+    "night_start_tick": 120,
+    "palette_segment_ticks": 20,
+    "palette_entries_per_bank": 16,
+    "palette_bank_indices": [1, 0, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2],
+    "palette_asset_key": "world_palette",
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + DQ3.PAL",
+      "address_space": "linear",
+      "address": "sub_1EE23 IDA 0x1ee23 file 0x10193; sub_1EE76 IDA 0x1ee76 file 0x101e6; DGROUP 0x25c5 file 0x18705; palette DGROUP 0x3232",
+      "consumer": "clock/0x14 indexes 12 raw bytes, selected bank*0x30 addresses one of five 16-color DQ3.PAL banks, then sub_20A3A uploads the bank",
+      "doc": "docs/136-daynight-palette-bank-spec.md"
+    }
+  },
   "item_actions": {
     "personal_inventory_slots": 8,
     "text_ids": {
@@ -917,6 +934,7 @@
       "effect_id": "force_day_night_phase",
       "location_kind": "overworld",
       "day_night_phase": 2,
+      "day_night_clock": 140,
       "reset_day_night_steps": true,
       "step_count": 0,
       "consume": false,

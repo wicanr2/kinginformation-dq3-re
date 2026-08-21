@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.32"
+	SchemaVersion = "0.1.33"
 	EngineAPI     = ">=0.1.0 <0.2.0"
 	ReviveService = "common:service.revive"
 )
@@ -953,6 +953,7 @@ type ItemUseEffect struct {
 	EffectID             string          `json:"effect_id"`
 	LocationKind         string          `json:"location_kind"`
 	DayNightPhase        int             `json:"day_night_phase"`
+	DayNightClock        *int            `json:"day_night_clock,omitempty"`
 	ResetDayNightSteps   bool            `json:"reset_day_night_steps"`
 	StepCount            int             `json:"step_count"`
 	Consume              bool            `json:"consume"`
@@ -977,6 +978,18 @@ type ItemUseEffect struct {
 	AnimationCycles         int            `json:"animation_cycles,omitempty"`
 	DoorKeyTier             int            `json:"door_key_tier,omitempty"`
 	Evidence                Evidence       `json:"evidence"`
+}
+
+// DayNightCycle 描述版本專屬 clock 如何選擇一個原始 palette bank。引擎只執行
+// 有界的整數索引，不推導色彩或接受任意運算式。
+type DayNightCycle struct {
+	ClockTicks            int      `json:"clock_ticks"`
+	NightStartTick        int      `json:"night_start_tick"`
+	PaletteSegmentTicks   int      `json:"palette_segment_ticks"`
+	PaletteEntriesPerBank int      `json:"palette_entries_per_bank"`
+	PaletteBankIndices    []int    `json:"palette_bank_indices"`
+	PaletteAssetKey       string   `json:"palette_asset_key"`
+	Evidence              Evidence `json:"evidence"`
 }
 
 // WorldMapPatch is a finite row-major tile replacement copied from an
@@ -1517,6 +1530,7 @@ type ConditionalFacilityEvent struct {
 
 type Events struct {
 	SchemaVersion               string                           `json:"schema_version"`
+	DayNightCycle               DayNightCycle                    `json:"day_night_cycle"`
 	ItemActions                 ItemActions                      `json:"item_actions"`
 	RuraNavigation              RuraNavigation                   `json:"rura_navigation"`
 	WorldEntranceVariants       []WorldEntranceVariant           `json:"world_entrance_variants"`
@@ -2917,6 +2931,24 @@ func fixedBattleFormation(record BattleFixedFormationRecord) (BattleFormation, e
 }
 
 func (p *Pack) validateEvents() error {
+	dn := p.Events.DayNightCycle
+	if dn.ClockTicks <= 0 || dn.ClockTicks%4 != 0 || dn.NightStartTick != dn.ClockTicks/2 ||
+		dn.PaletteSegmentTicks <= 0 || dn.ClockTicks%dn.PaletteSegmentTicks != 0 ||
+		dn.PaletteEntriesPerBank <= 0 || dn.PaletteAssetKey == "" ||
+		len(dn.PaletteBankIndices) != dn.ClockTicks/dn.PaletteSegmentTicks {
+		return errors.New("day_night_cycle has invalid clock, segment, bank or asset contract")
+	}
+	if _, ok := p.Manifest.Assets[dn.PaletteAssetKey]; !ok {
+		return fmt.Errorf("day_night_cycle references unknown asset %q", dn.PaletteAssetKey)
+	}
+	for i, bank := range dn.PaletteBankIndices {
+		if bank < 0 {
+			return fmt.Errorf("day_night_cycle.palette_bank_indices[%d] is negative", i)
+		}
+	}
+	if err := validateEvidence(dn.Evidence); err != nil {
+		return fmt.Errorf("day_night_cycle evidence: %w", err)
+	}
 	if p.Events.ItemActions.PersonalInventorySlots < 1 ||
 		p.Events.ItemActions.PersonalInventorySlots > 32 {
 		return errors.New("item_actions.personal_inventory_slots must be 1..32")
@@ -3482,11 +3514,16 @@ func (p *Pack) validateEvents() error {
 		if previous := p.itemUseEffects[e.ItemRawID]; previous != nil {
 			return fmt.Errorf("%s: item_raw_id duplicates %s", e.ID, previous.ID)
 		}
+		if e.EffectID != "force_day_night_phase" && e.DayNightClock != nil {
+			return fmt.Errorf("%s: day_night_clock is only valid for force_day_night_phase", e.ID)
+		}
 		switch e.EffectID {
 		case "force_day_night_phase":
 			if e.LocationKind != "overworld" ||
 				e.DayNightPhase < 0 || e.DayNightPhase > 3 ||
-				!e.ResetDayNightSteps || e.StepCount != 0 {
+				!e.ResetDayNightSteps || e.StepCount != 0 || e.DayNightClock == nil ||
+				*e.DayNightClock < 0 || *e.DayNightClock >= p.Events.DayNightCycle.ClockTicks ||
+				*e.DayNightClock/(p.Events.DayNightCycle.ClockTicks/4) != e.DayNightPhase {
 				return fmt.Errorf("%s: invalid force_day_night_phase configuration", e.ID)
 			}
 		case "temporary_invisibility":
@@ -4468,6 +4505,13 @@ func (p *Pack) ReviveCost(level int) int {
 
 func (p *Pack) BossSurrenderEvents() []BossSurrenderEvent {
 	return append([]BossSurrenderEvent(nil), p.Events.BossSurrenderEvents...)
+}
+
+// DayNightCycle returns a defensive copy of the validated versioned cycle.
+func (p *Pack) DayNightCycle() DayNightCycle {
+	cycle := p.Events.DayNightCycle
+	cycle.PaletteBankIndices = append([]int(nil), cycle.PaletteBankIndices...)
+	return cycle
 }
 
 func (p *Pack) BossSurrenderEvent(id string) (*BossSurrenderEvent, bool) {

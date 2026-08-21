@@ -1,5 +1,10 @@
 # dq3_remake WORKLIST
 
+> **歷史文件警示（2026-08-22）：**本檔記錄已停止開發的 C/SDL prototype，所有
+> 「完整／一模一樣／完成」只代表當時 prototype 自訂 gate，不代表原版 parity，也不得
+> 指導現行 Go／Ebitengine 產品。現況只看 `docs/74-ebiten-remake-completion-plan.md`；
+> 反組譯邊界看 `docs/135-re-assertion-audit-20260822.md`。
+
 > 目標:把精訊版 DQ3(Dragon Fighter III, 1993)用現代 C + SDL2 **跨平台重製**,放在 `dq3_remake/`,
 > 行為與原版**一模一樣**(DOSBox 原版當 oracle),且 **7 個 bug 全在 C 層修對**。
 > 紀律:**不用 subagent,全部自己在主執行緒做**;一切編譯/執行在 **docker**(不污染 host);每階段有產出就 commit+push。
@@ -104,15 +109,15 @@
   - ✅ **城內即時切換**(`main.c` `reload_town_daynight()`):拉那魯達/黑暗之燈在城內切日夜 → 重載當前 section NPC(保留座標)。
   - ✅ **驗證**:CTY00 24→6、CTY02 31→10、CTY01 11→4、CTY03 12→4(白天→黑夜),runtime 與資料表一致。
   - 「睡覺」NPC = 室內 section 夜間清單裡帶睡姿 sprite id 的記錄,由同一雙清單切換**資料驅動**載入(slot[2]=sprite id),無需額外碼。
-- [x] **晝夜精校 ✅**(可做的部分完成;唯一殘留為不可驗的 palette 逐格比色):
+- [x] **晝夜精校（歷史 C 近似；已由 Go 接線取代）**:
   - ✅ **提頓村=テドン 夜 gated 還原**:綠寶珠改夜限定(`g_dn_phase==黑夜` 才開牢門給珠;白天牢門深鎖只見留書),
     忠實 day-night doc §9「夜晚進村開牢門」。game_tester 加白天/夜晚兩斷言。
   - ✅ **原版步數計數器已定位**(2026-06-28,docs/60):`[0x251d]` 時刻計數器、`[0x101b8]` 每步 `inc`、
     0x78 閾值(→日)、0xf0 循環、`[0x4f2d]` gate(僅 overworld 前進)。remake 240 步全循環已對上原版
     clock 範圍(0..0xf0=240),120 步日→夜分界相符。(舊註「步數計數器多輪 RE 未定位」已過期。)
-  - 殘留(非待辦):各相位 palette 逐格比色 **此環境無 DOSBox oracle 不可驗**(記憶 `dq3-no-dosbox-debugger`);
-    現值(夜 42/44/70%、黃昏 82/62/58%、黎明 72/74/92%)為合理近似。原版本質為日/夜二態(`[0x526c]`),
-    remake 4 相位(含黃昏/黎明)是 palette 用的補插,NPC 仍只分日/夜。
+  - **2026-08-22 勘誤：**上述 C RGB 百分比沒有原版證據。IDA 已證實原版使用
+    `DQ3.PAL` 五個原始 bank 與 12 段 selector，夜間 selector 覆蓋 clock
+    `0x78..0xef`；現行 Go 已資料化接線。詳見 `docs/136-daynight-palette-bank-spec.md`。
 - [x] **per-member 裝備 4 槽 ✅**(2026-06-27,★RE 更正 5→4 槽):第一性原理從 ITEM.DAT b4 高位反推
   ——精訊版實為 **4 裝備槽**(武器 0x2_/鎧 0x4_/盾 0x6_/兜 0x8_,def 遞增佐證),**非 5 槽**;飾品(戒指/
   手環)無乾淨 b4 部位編碼(0x00 或同道具 0x18),不設槽。`dq3_item_equip_slot`=`(b4>>5)−1`;

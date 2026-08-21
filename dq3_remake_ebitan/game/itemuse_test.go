@@ -70,16 +70,16 @@ func TestPackDarkLampOriginalGateAndTransaction(t *testing.T) {
 		g.useSelectedItem()
 	}
 
-	overworld := &Game{pack: pack, dnPhase: 0, dnStep: 47}
+	overworld := &Game{pack: pack, dayNightCycle: pack.DayNightCycle(), dnPhase: 0, dnStep: 47}
 	use(overworld)
-	if overworld.dnPhase != effect.DayNightPhase || overworld.dnStep != 0 ||
+	if effect.DayNightClock == nil || overworld.dayNightClock() != *effect.DayNightClock ||
 		!overworld.hasItem(effect.ItemRawID) || overworld.noticeCode != effect.ItemRawID {
 		t.Fatalf("地表使用黑暗燈 transaction 錯：phase=%d step=%d item=%v notice=%d",
 			overworld.dnPhase, overworld.dnStep,
 			overworld.hasItem(effect.ItemRawID), overworld.noticeCode)
 	}
 
-	alreadyNight := &Game{pack: pack, dnPhase: effect.DayNightPhase, dnStep: 31}
+	alreadyNight := &Game{pack: pack, dayNightCycle: pack.DayNightCycle(), dnPhase: effect.DayNightPhase, dnStep: 31}
 	use(alreadyNight)
 	if alreadyNight.dnPhase != effect.DayNightPhase || alreadyNight.dnStep != 31 ||
 		alreadyNight.noticeTimer != 0 || !alreadyNight.hasItem(effect.ItemRawID) {
@@ -88,7 +88,7 @@ func TestPackDarkLampOriginalGateAndTransaction(t *testing.T) {
 			alreadyNight.hasItem(effect.ItemRawID))
 	}
 
-	town := &Game{pack: pack, inTown: true, dnPhase: 0, dnStep: 47}
+	town := &Game{pack: pack, dayNightCycle: pack.DayNightCycle(), inTown: true, dnPhase: 0, dnStep: 47}
 	use(town)
 	if town.dnPhase != 0 || town.dnStep != 47 || town.noticeTimer != 0 ||
 		!town.hasItem(effect.ItemRawID) {

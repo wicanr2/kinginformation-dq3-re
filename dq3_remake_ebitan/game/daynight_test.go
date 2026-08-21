@@ -6,12 +6,18 @@ import (
 	"image/png"
 	"os"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 // 晝夜相位步數推進:地表每走一步 dnStep++,每 60 步推進一相位,240 步一循環(白天→黃昏→黑夜→黎明)。
 // 對齊 C main.c DN_PHASE_STEPS=60 / 4 相位。純狀態(不需素材;applyDaynightPalette 對 nil scene 有防護)。
 func TestDaynightStepAdvance(t *testing.T) {
-	g := &Game{}
+	g := &Game{dayNightCycle: gamepack.DayNightCycle{
+		ClockTicks: 240, NightStartTick: 120, PaletteSegmentTicks: 20,
+		PaletteEntriesPerBank: 16, PaletteBankIndices: []int{1, 0, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2},
+	}}
 	if g.dnPhase != 0 || g.isNight() {
 		t.Fatal("初始應為白天(相位 0)")
 	}
@@ -36,14 +42,47 @@ func TestDaynightStepAdvance(t *testing.T) {
 	}
 	// 再 60(180)→ 黎明;再 60(240)→ 回白天(循環)
 	step(60)
-	if g.dnPhase != 3 {
-		t.Fatalf("180 步後應為黎明(3),得 %d", g.dnPhase)
+	if g.dnPhase != 3 || !g.isNight() {
+		t.Fatalf("180 步後應為夜間末段(phase3),得 %d night=%v", g.dnPhase, g.isNight())
 	}
 	step(60)
 	if g.dnPhase != 0 || g.dnStep != 0 {
 		t.Fatalf("240 步後應回白天(0)且 step 歸零,得相位 %d step %d", g.dnPhase, g.dnStep)
 	}
 	t.Log("步數推進:60步/相位、240步循環、120步=黑夜 ✓")
+}
+
+func TestDaynightSelectsOriginalTwelvePaletteSegments(t *testing.T) {
+	cycle := gamepack.DayNightCycle{
+		ClockTicks: 240, NightStartTick: 120, PaletteSegmentTicks: 20,
+		PaletteEntriesPerBank: 16, PaletteBankIndices: []int{1, 0, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2},
+	}
+	base := make([]dq3data.Color, 5*16)
+	for bank := 0; bank < 5; bank++ {
+		for i := 0; i < 16; i++ {
+			base[bank*16+i] = dq3data.Color{R: uint8(bank), G: uint8(i)}
+		}
+	}
+	g := &Game{dayNightCycle: cycle, worldPal: base}
+	for segment, wantBank := range cycle.PaletteBankIndices {
+		g.setDaynightClock(segment * cycle.PaletteSegmentTicks)
+		pal := g.dayNightPalette()
+		if len(pal) != 16 || pal[0].R != uint8(wantBank) {
+			t.Fatalf("segment %d palette bank=%v, want %d", segment, pal, wantBank)
+		}
+	}
+	g.setDaynightClock(119)
+	if g.isNight() {
+		t.Fatal("clock119 不得是夜間")
+	}
+	g.setDaynightClock(120)
+	if !g.isNight() {
+		t.Fatal("clock120 應進入夜間")
+	}
+	g.setDaynightClock(239)
+	if !g.isNight() || g.dnPhase != 3 || g.dnStep != 59 {
+		t.Fatalf("clock239 state=%d/%d night=%v", g.dnPhase, g.dnStep, g.isNight())
+	}
 }
 
 // setDaynight / toggleDaynight(拉那魯達/黑暗之燈用):強制相位,城外不重載(nil scene 防護)。

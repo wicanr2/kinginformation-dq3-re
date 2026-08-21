@@ -281,9 +281,10 @@ type Game struct {
 	layer                     int    // 目前地表層:0=地面 1=下層(城鎮進出以此決定回哪層)
 	cur                       *Scene
 	inTown                    bool
-	curCty                    int   // 目前所在 CTY 號(-1=地表)
-	dnPhase                   int   // 晝夜相位:0白天 1黃昏 2黑夜 3黎明(僅地表走動推進;城內固定)
-	dnStep                    int   // 地表步數計數器(每 dnPhaseSteps 步推進一相位)
+	curCty                    int // 目前所在 CTY 號(-1=地表)
+	dnPhase                   int // pack clock 的四個持久化區段；實際夜間邊界由 DayNightCycle 決定
+	dnStep                    int // 地表步數計數器(每 dnPhaseSteps 步推進一相位)
+	dayNightCycle             gamepack.DayNightCycle
 	assets                    fs.FS // 素材(懶載其他城鎮)
 	encounters                *dq3data.EncounterTables
 	worldPal                  []dq3data.Color
@@ -1406,8 +1407,6 @@ func (g *Game) enterTownCty(cty int) {
 		}
 		g.towns[cty] = s
 		sc = s
-	} else {
-		sc.pal = dq3data.DarkenPalette(g.worldPal, g.dnPhase) // cache 命中(同 night):重套相位色(黃昏/黎明差異)
 	}
 	g.overPx, g.overPy = g.px, g.py
 	g.town, g.cur, g.inTown, g.curCty = sc, sc, true, cty
@@ -1428,13 +1427,46 @@ func (g *Game) enterTownCty(cty int) {
 	g.renderFrame()
 }
 
-// dnPhaseSteps 是 remake 的四相位近似：每相位 60 步、每循環 240 步。它只對齊已證實
-// 的 0x78 夜晚邊界與 0xf0 wrap interval；未重現原版 12-entry palette bank 漸變，
-// 玩家可見 RGB transition 仍未達 V3。
+// dnPhaseSteps 只供沒有 pack 的直接單元 fixture 使用；production 的 tick 數、夜晚
+// 邊界與 palette selector 一律來自 versioned DayNightCycle。
 const dnPhaseSteps = 60
 
-// isNight:目前是否黑夜(相位 2)。供夜 gate 事件查詢(提頓夜綠寶珠等)。對齊 dq3_scene.c night 判定。
-func (g *Game) isNight() bool { return g.dnPhase == 2 }
+func (g *Game) dayNightPhaseTicks() int {
+	if g.dayNightCycle.ClockTicks == 0 && g.pack != nil {
+		g.dayNightCycle = g.pack.DayNightCycle()
+	}
+	if g.dayNightCycle.ClockTicks > 0 && g.dayNightCycle.ClockTicks%4 == 0 {
+		return g.dayNightCycle.ClockTicks / 4
+	}
+	if g.pack == nil { // 只供直接 unit fixture；production pack 缺契約會在 loader fail closed。
+		return dnPhaseSteps
+	}
+	return 0
+}
+
+func (g *Game) nightStartTick() int {
+	if g.dayNightCycle.NightStartTick > 0 {
+		return g.dayNightCycle.NightStartTick
+	}
+	return g.dayNightPhaseTicks() * 2 // 只供沒有 pack 的直接 fixture。
+}
+
+func (g *Game) dayNightClock() int {
+	phaseTicks := g.dayNightPhaseTicks()
+	if phaseTicks <= 0 {
+		return 0
+	}
+	return g.dnPhase*phaseTicks + g.dnStep
+}
+
+// isNight 依 pack 的 confirmed clock boundary 判斷，不從四相位持久化模型猜夜間區間。
+func (g *Game) isNight() bool {
+	if g.dayNightCycle.ClockTicks > 0 {
+		clock := g.dayNightClock()
+		return clock >= g.nightStartTick() && clock < g.dayNightCycle.ClockTicks
+	}
+	return g.dnPhase >= 2 // 只供沒有 pack 的直接 fixture。
+}
 
 // storyFlag / setStoryFlag:原版 [0x4f70] story-flag 陣列(NPC 可見性等;SET=file 0x824f、
 // CLR=0x8264、GET=0x8279)。祭壇會存取 flag 0x12c..0x131，故不能截成舊誤判的 256 flags。
@@ -1471,10 +1503,19 @@ func (g *Game) initStoryBits() { g.storyBits = dq3data.NPCStoryInitFlags }
 // advanceDaynight:地表走一步 → 步數計數;每 dnPhaseSteps 步推進一相位並重套地表 palette。
 // 只在地表(overworld)呼叫;城內相位固定(使用者確認)。
 func (g *Game) advanceDaynight() {
+	oldClock := g.dayNightClock()
+	phaseTicks := g.dayNightPhaseTicks()
+	if phaseTicks <= 0 {
+		return
+	}
 	g.dnStep++
-	if g.dnStep >= dnPhaseSteps {
+	if g.dnStep >= phaseTicks {
 		g.dnStep = 0
 		g.dnPhase = (g.dnPhase + 1) & 3
+	}
+	if g.dayNightCycle.PaletteSegmentTicks > 0 &&
+		oldClock/g.dayNightCycle.PaletteSegmentTicks !=
+			g.dayNightClock()/g.dayNightCycle.PaletteSegmentTicks {
 		g.applyDaynightPalette()
 	}
 }
@@ -1482,8 +1523,21 @@ func (g *Game) advanceDaynight() {
 // setDaynight:強制設相位(拉那魯達/黑暗之燈用)。重套 palette;若在城內,重載當前 section
 // 的 NPC(日/夜表不同,對齊 main.c:988 reload_town_daynight)。
 func (g *Game) setDaynight(phase int) {
-	g.dnPhase = phase & 3
-	g.dnStep = 0
+	phaseTicks := g.dayNightPhaseTicks()
+	if phaseTicks <= 0 {
+		return
+	}
+	g.setDaynightClock((phase & 3) * phaseTicks)
+}
+
+// setDaynightClock 套用 pack-owned 原版 clock；呼叫端不得傳版本專屬 Go 常數。
+func (g *Game) setDaynightClock(clock int) {
+	phaseTicks := g.dayNightPhaseTicks()
+	if phaseTicks <= 0 || clock < 0 ||
+		(g.dayNightCycle.ClockTicks > 0 && clock >= g.dayNightCycle.ClockTicks) {
+		return
+	}
+	g.dnPhase, g.dnStep = (clock/phaseTicks)&3, clock%phaseTicks
 	g.applyDaynightPalette()
 	g.reloadTownDaynight()
 }
@@ -1491,16 +1545,36 @@ func (g *Game) setDaynight(phase int) {
 // toggleDaynight:白天↔黑夜切換(拉那魯達語意)。非黑夜 → 黑夜;黑夜 → 白天。
 func (g *Game) toggleDaynight() {
 	if g.isNight() {
-		g.setDaynight(0)
+		g.setDaynightClock(0)
 	} else {
-		g.setDaynight(2)
+		g.setDaynightClock(g.nightStartTick())
 	}
 }
 
-// applyDaynightPalette:依當前相位由日中 base 色盤(worldPal,不變)重算調暗色盤,套到現行地表/
-// 城鎮 scene。base 恆為日色 → 可反覆套用不累積。
+// dayNightPalette 依 pack selector 從原始 palette asset 取一個完整 bank。
+func (g *Game) dayNightPalette() []dq3data.Color {
+	c := g.dayNightCycle
+	if c.ClockTicks <= 0 || c.PaletteSegmentTicks <= 0 || c.PaletteEntriesPerBank <= 0 ||
+		len(c.PaletteBankIndices) != c.ClockTicks/c.PaletteSegmentTicks {
+		return nil
+	}
+	segment := g.dayNightClock() / c.PaletteSegmentTicks
+	if segment < 0 || segment >= len(c.PaletteBankIndices) {
+		return nil
+	}
+	pal, ok := dq3data.SelectPaletteBank(g.worldPal, c.PaletteBankIndices[segment], c.PaletteEntriesPerBank)
+	if !ok {
+		return nil
+	}
+	return pal
+}
+
+// applyDaynightPalette 套用原版 raw bank；契約錯誤時維持現況，不猜 RGB fallback。
 func (g *Game) applyDaynightPalette() {
-	dp := dq3data.DarkenPalette(g.worldPal, g.dnPhase)
+	dp := g.dayNightPalette()
+	if dp == nil {
+		return
+	}
 	if g.over != nil {
 		g.over.pal = dp
 	}
@@ -1509,6 +1583,9 @@ func (g *Game) applyDaynightPalette() {
 	}
 	if g.inTown && g.town != nil {
 		g.town.pal = dp
+	}
+	if g.cur != nil {
+		g.cur.pal = dp
 	}
 }
 
@@ -2459,11 +2536,13 @@ func (g *Game) renderFrame() {
 		return
 	}
 	if g.battle.active {
+		g.applyDaynightPalette()
 		g.battle.draw(g.rgba, g.cur.pal)
 		g.frame.WritePixels(g.rgba)
 		return
 	}
 	sc := g.cur
+	g.applyDaynightPalette() // 進城、轉場與讀檔後也依目前 clock 選正確 bank。
 	// 攝影機:主角置中,但夾在地圖邊界內(移植 dq3_scene 的 cam clamp)→ 邊緣不露黑
 	camX := clampi(g.px-ViewCols/2, 0, max0(sc.w-ViewCols))
 	camY := clampi(g.py-ViewRows/2, 0, max0(sc.h-ViewRows))
@@ -2798,9 +2877,21 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		}
 		return raw
 	}
-	pal := dq3data.DecodePalette(ld.read("DQ3.PAL"), 256) // 城鎮/地表共用(tile 只用色 0..15)
+	dayNightCycle := pack.DayNightCycle()
+	pal := dq3data.DecodePalette(readPackAsset(dayNightCycle.PaletteAssetKey), 256)
+	maxBank := 0
+	for _, bank := range dayNightCycle.PaletteBankIndices {
+		if bank > maxBank {
+			maxBank = bank
+		}
+	}
+	if len(pal) < (maxBank+1)*dayNightCycle.PaletteEntriesPerBank {
+		return nil, fmt.Errorf("game pack day-night palette has %d entries, needs %d", len(pal),
+			(maxBank+1)*dayNightCycle.PaletteEntriesPerBank)
+	}
 	g := &Game{
 		rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default(), pack: pack,
+		dayNightCycle: dayNightCycle,
 	}
 	g.dlg.layout = pack.DialogueWindowLayout()
 	g.battle.setTextDefinitions(battleDefs)

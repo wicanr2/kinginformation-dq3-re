@@ -833,7 +833,7 @@ D2／V2 的穩定畫面切片，palette register、游標閃爍／能力條淡�
 不把一張 PNG 擴大解讀為完整創角 parity。raw／像素與歷史勘誤見 [`docs/118`](118-newgame-choice-backdrop-re.md)
 及 [`docs/113`](113-newgame-geometry-re.md)。
 
-2026-08-10 日夜第一性原理 audit：現行 engine 已有 `dnPhaseSteps=60` 的四階段 clock、
+2026-08-10 日夜第一性原理 audit（歷史快照；已由 2026-08-22 checkpoint 訂正）：當時 engine 有 `dnPhaseSteps=60` 的四階段 clock、
 `DarkenPalette(worldPal, phase)`、住宿／黑暗之燈 reset、日／夜 NPC table 及 story flag
 filter，正式 component／開場 trace 也已涵蓋日夜入口；因此不重寫既有機制。下一輪只追
 原版 raw clock／palette register 的同狀態對拍，並對 `docs/71` 列出的 21 個條件 flag 逐一
@@ -874,8 +874,8 @@ buffer `DS:0x3232` 選 bank 並上傳 DAC。`sub_1ECDC` 載入 `DQ3.PAL`／`MNSB
 `0x0d`、`0x11`、`0x24`、`0x1a`、`0x1b` 的 runtime 事件／consumer 仍 unknown，不能把
 「原版有 writer」誤寫成 remake 已接。
 
-本輪因此只關閉靜態設定 mismatch；未把 boss 同回合多次行動升格（正式鏈目前只證實
-每個活躍 actor 每回合一次），也未把現行 `dnPhaseSteps=60`／`DarkenPalette` 近似改成
+本輪因此只關閉當時的靜態設定 mismatch；未把 boss 同回合多次行動升格（正式鏈目前只證實
+每個活躍 actor 每回合一次），也未把當時的 `dnPhaseSteps=60`／`DarkenPalette` 近似改成
 原版二值 selector。`docs/123` 與 [`docs/data/dq3-static-battle-daynight-evidence.json`](data/dq3-static-battle-daynight-evidence.json)
 已保存帶來源 hash／位址基準／推論等級的非 production sidecar；剩餘工作是將達 D2／D3 gate
 的欄位逐批遷入 versioned game-pack、補每個 formation／resistance descriptor、VOC cue
@@ -983,7 +983,7 @@ bottom 計算位置。VOC decoder 同步保留每 cue 的原始 sample rate、sa
 duration；host `PlaySFX` wall-clock 與 action frame 仍 unknown。完整位址、hash、推論等級與
 `NVOC` cue21 `0x1f973` 勘誤見 [`docs/123`](123-static-battle-daynight-re.md) 與 sidecar。
 
-## 2026-08-11 current checkpoint：IDA story-flag runtime E2 已接線
+## 2026-08-11 歷史 checkpoint：IDA story-flag runtime E2 已接線
 
 前文「五個 flag 的 production writer／玩家入口仍 unknown」是接線前歷史紀錄；現行工作狀態
 以本節、`docs/119` 的 E2 勘誤及 `events.json` schema `0.1.29` 為準。四條已由 IDA handler
@@ -1016,7 +1016,7 @@ production replay 推翻。下層拉米亞 path 的 helper 曾把 active battle 
 PCM timing、精確 palette、boss repeat-N 的原版 parity 仍是獨立證據／polish 工作。完整驗收與
 前述暫時 blocker 的原因、訂正、PNG 雜湊見 [`docs/125`](125-acceptance-20260811.md)。
 
-## 2026-08-12 current checkpoint：能力確認 V3 靜態／原版靜態研究收斂
+## 2026-08-12 歷史 checkpoint：能力確認 V3 靜態／原版靜態研究收斂
 
 本節是 `docs/74` 的現行狀態表，優先於上述較早的 V2／unknown 文字：
 
@@ -1051,7 +1051,7 @@ formation byte1 的 `BackgroundRaw`（35／26）直接傳入 `DecodePackBG`，�
 renderer selector → 兩張正式 trace 圖」；同時保留不同隊伍／數值／動態 phase 的限制，不把近似
 畫面升格為同狀態 V3。完整證據見 [`docs/127`](127-orochi-v2-production-compare.md)。
 
-## 2026-08-12 current checkpoint：固定編隊背景 selector V2 閉合
+## 2026-08-12 歷史 checkpoint：固定編隊背景 selector V2 閉合
 
 上一節描述的是修正前的 actual blocker；它不再是 current plan。IDA Pro 9.4 已從固定編隊
 header 的 `raw[1]`／`raw[2]`，閉合到 `DS:0x0d71`／`DS:0x0d73`、`PACKBG.SCR` 的完整
@@ -1066,7 +1066,7 @@ header 的 `raw[1]`／`raw[2]`，閉合到 `DS:0x0d71`／`DS:0x0d73`、`PACKBG.S
 baseline，明確不宣稱通用地形 parity。完整證據、hash 與停止條件見
 [`docs/128`](128-battle-background-selector-re.md)。
 
-## 2026-08-12 current checkpoint：必經單頭目固定背景已接線
+## 2026-08-12 歷史 checkpoint：必經單頭目固定背景已接線
 
 八頭大蛇之外，主線必經的怪力魔、巴拉摩斯與索瑪三連戰原本都由舊的單敵
 `startBossBattle` 入口啟動，雖然原版 `battle.json.encounter.fixed_records` 已保留它們的
@@ -1086,7 +1086,7 @@ single-monster record 解出 `{page_raw,palette_bank_raw}`，再交給共用 bat
 尚無同狀態原版畫格，不能升格 V2／V3。此修正也不表示 generic terrain selector 已完成；完整
 原始位址、推論等級與停止條件見 [`docs/129`](129-required-boss-backgrounds-re.md)。
 
-## 2026-08-12 current checkpoint：四人 HUD 訂正與剩餘交付 gate
+## 2026-08-12 歷史 checkpoint：四人 HUD 訂正與剩餘交付 gate
 
 IDA 9.4 已從 `sub_17C83` 的 `DGROUP 0x3e9c` writer 與 `sub_18222` 的內容 writer，訂正地表
 四人 HUD：window `(152,238,352,80)`、label `+16px`、姓名／數值 `+32px`、姓名最多四 glyph，
@@ -1118,3 +1118,19 @@ wall-clock 或 generic terrain 全表列成可由現有證據安全實作的必�
 
 任何新的 V3 工作仍須先有可重播原版 frame／音訊 trace 或明確新 caller；沒有新 oracle 時，
 只保留為證據限制或可選 polish，不再擴張靜態 RE。
+
+## 2026-08-22 current checkpoint：日夜原始 palette bank E2 接線
+
+上一輪斷言審計確認 Go `DarkenPalette` 仍是四相位合理近似，且把 phase3 誤當日間 NPC
+selector。IDA Pro 9.4＋IDAPython 本輪從 `sub_1EE23`、`sub_1EE76`、`sub_1EE9B`、
+`sub_1ECDC` 重新閉合 clock writer、12-byte table、五個 `DQ3.PAL` bank 與 DAC upload：
+
+- clock `0..0xef`，`0x78..0xef` 全段為夜間；palette 每 `0x14` tick 更新；
+- selector 是 `[1,0,0,0,1,2,3,4,4,4,3,2]`，每 bank 16 色；
+- 黑暗之燈原版 writer 固定 clock `0x8c`，不再近似成 `0x78`。
+
+schema 升為 `0.1.33`、DQ3 content `0.1.38`；cycle、selector、asset key、黑暗之燈 clock
+與 D3 evidence 全在 pack，Go 只保留通用 clock／bank primitive。原始 EXE／PAL parity、
+pack validation 與受影響 runtime tests 已通過。此切片為 D3／E2／V2；仍缺同地點、同 clock
+的 DOSBox DAC／畫面，不能宣稱 V3。完整 spec 與可重建 IDAPython 匯出器見
+[`docs/136`](136-daynight-palette-bank-spec.md)。

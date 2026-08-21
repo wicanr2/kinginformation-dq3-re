@@ -1,6 +1,10 @@
 # 119 — 日夜 clock／NPC story flag audit（2026-08-10）
 
-本文件是 `docs/71-npc-story-flag-visibility.md` 的現行盤點，不把「已有日夜機制」誤寫成
+> **現況勘誤（2026-08-22）：**本檔的 2026-08-10 runtime 清單是歷史快照。
+> 現行日夜 clock／palette 接線以 [`docs/136`](136-daynight-palette-bank-spec.md) 為準；
+> 五個 story flag 的有限 E2 接線以 `docs/123` 後段與 `docs/74` 最新 checkpoint 為準。
+
+本文件是 `docs/71-npc-story-flag-visibility.md` 的歷史盤點，不把「已有日夜機制」誤寫成
 「21 個條件 NPC 旗標全部已接」。目標是把每個原版條件 flag 的
 `入口／writer → game-pack state → NPC consumer → 玩家可見副作用` 分開記錄；沒有閉環的項目
 維持 `unknown`，不以合理時序或攻略補值。
@@ -39,12 +43,12 @@ IDA Pro 9.4 已在同一份 `DQ3.EXE`（115282 bytes，SHA-256
 仍待**。舊段落保留作時間序列，不得再當目前結論。完整函式／table／推論等級見
 [`docs/123`](123-static-battle-daynight-re.md)。
 
-現行 engine 已有可到達的機制，這一輪不重寫：
+下列為 2026-08-10 engine 歷史快照，已由 `docs/136` 的原始 palette bank 接線訂正：
 
 1. `dnPhaseSteps=60`；phase 0/1/2/3 分別為日／黃昏／夜／黎明，240 個有效移動步完成一輪。
-2. 移動呼叫 `advanceDaynight`；`isNight` 只在 phase 2 成立；旅社成功交易重設 phase／step，
+2. 移動呼叫 `advanceDaynight`；當時 `isNight` 只在 phase 2 成立（錯誤，現行 phase 2／3 都是夜間）；旅社成功交易重設 phase／step，
    黑暗之燈使用原版 raw clock `0x008c` 並呼叫 `reloadTownDaynight`。
-3. `applyDaynightPalette` 以 `DarkenPalette(worldPal, phase)` 更新地表、地下與城鎮 palette；
+3. 當時 `applyDaynightPalette` 以無原版證據的 `DarkenPalette` 更新 palette（現已移除）；
    `loadTownSceneSec` 依 phase 選日／夜 NPC 表，再以 `[0x4f70]` story flag 過濾每筆 record。
 4. save/load、住宿付款失敗不改時鐘、夜間遭遇範圍與正式開場 trace 均有 component／input tests。
 
