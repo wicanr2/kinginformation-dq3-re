@@ -153,16 +153,16 @@ func TestGiveItemUsesOriginalPersonalEightSlotCapacity(t *testing.T) {
 	m.Inventory = []int{2, 3, 4, 5, 6, 7}
 	g := &Game{
 		pack: pack, companions: []*Member{m},
-		inventory: []int{0x4a}, itemSelected: 0,
+		inventory: []int{0x4a}, itemSelected: 0, panelActor: 0,
 	}
-	if g.giveSelectedItem(0) {
+	if g.giveSelectedItem(1) {
 		t.Fatal("個人物品八格已滿時，給予必須失敗")
 	}
 	if !reflect.DeepEqual(g.inventory, []int{0x4a}) || len(m.Inventory) != 6 {
 		t.Fatal("給予失敗不得消耗或複製道具")
 	}
 	m.Inventory = m.Inventory[:5]
-	if !g.giveSelectedItem(0) {
+	if !g.giveSelectedItem(1) {
 		t.Fatal("個人物品有一格空位時，給予應成功")
 	}
 	if len(g.inventory) != 0 || !containsInt(m.Inventory, 0x4a) {

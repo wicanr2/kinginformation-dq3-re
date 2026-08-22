@@ -39,7 +39,7 @@ func (g *Game) talkChoiceItemExchange(n *npcInst) bool {
 			return true
 		}
 		g.choiceItemExchangeEventID = event.ID
-		if g.hasItem(event.RequiredItemRawID) {
+		if g.hasPartyItem(event.RequiredItemRawID) {
 			if g.openPackText(event.DialogueTextIDs.Offer) {
 				g.choiceItemExchangeStage = choiceItemExchangeOffer
 			} else {
@@ -122,28 +122,19 @@ func (g *Game) completeChoiceItemExchange(event *gamepack.ChoiceItemExchangeEven
 	if !g.openPackText(event.DialogueTextIDs.Success) {
 		return
 	}
-	for i, item := range g.inventory {
-		if item != event.RequiredItemRawID {
-			continue
-		}
-		if !g.activateTrackedWorldObject(event.ActivateWorldObject) {
-			g.dlg.open, g.dlg.buf, g.dlg.pos = false, nil, 0
-			g.finishChoiceItemExchange()
-			return
-		}
-		g.inventory[i] = event.GrantedItemRawID
-		g.worldState |= uint16(event.SetWorldStateMaskRaw)
-		g.rebuildTrackedWorldObjects()
-		for _, flag := range event.ClearStoryFlagsRaw {
-			g.setStoryFlag(flag, false)
-		}
-		g.choiceItemExchangeStage = choiceItemExchangeSuccess
+	if !g.hasPartyItem(event.RequiredItemRawID) ||
+		!g.activateTrackedWorldObject(event.ActivateWorldObject) ||
+		!g.replacePartyItem(event.RequiredItemRawID, event.GrantedItemRawID) {
+		g.dlg.open, g.dlg.buf, g.dlg.pos = false, nil, 0
+		g.finishChoiceItemExchange()
 		return
 	}
-	// Inventory changed while the choice was open: fail closed and leave every
-	// other field untouched.
-	g.dlg.open, g.dlg.buf, g.dlg.pos = false, nil, 0
-	g.finishChoiceItemExchange()
+	g.worldState |= uint16(event.SetWorldStateMaskRaw)
+	g.rebuildTrackedWorldObjects()
+	for _, flag := range event.ClearStoryFlagsRaw {
+		g.setStoryFlag(flag, false)
+	}
+	g.choiceItemExchangeStage = choiceItemExchangeSuccess
 }
 
 func (g *Game) finishChoiceItemExchange() {

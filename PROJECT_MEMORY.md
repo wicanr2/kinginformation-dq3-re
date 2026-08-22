@@ -10,8 +10,36 @@
 > 反組譯邊界：DQ3.EXE 尚未完整語意解讀；整檔 byte-identical 只證明 bytes 保真。
 > 已閉合範圍、remake 接線與仍未知項目見 [`docs/135`](docs/135-re-assertion-audit-20260822.md)。
 
-> 2026-08-22：日夜已改由 pack schema `0.1.33` 直接選原始 `DQ3.PAL` 五 bank／12 段，
+> 2026-08-22：日夜已改由 pack 直接選原始 `DQ3.PAL` 五 bank／12 段，
 > `0x78..0xef` 都是夜間，黑暗之燈寫 clock `0x8c`。目前 D3／E2／V2；見 `docs/136`。
+> 工作樹現行 schema `0.1.43`／content `0.1.48`；驅毒草與滿月草 field transaction、
+> 怪物 action3／持久麻痺的原版閉環與停止線見 `docs/138`、`docs/152`。公開 v0.1.34
+> 尚不含本輪修改。前一 checkpoint 的完整 trace 曾由標題通過至 `THE END`；加入原版
+> action3 後曾於 Docker＋Xvfb 由標題抵達 `THE END`（121.799 秒）；後續 `docs/153`
+> 依 IDA 證實正常怪物 action 在選 bit 前必先消耗存活目標 RNG。其後 monster77／51
+> 失敗均已由正式路線與資料交易訂正越過；目前完整 trace 再次由標題抵達 `THE END`
+>（115.629 秒），campaign 為 E3。這些結果不否定
+> 已閉合 transaction，也不能把 battle item 清單或 V3 畫面／硬體音訊升格完成。
+> 本輪依序閉合 CTY23 解毒、monster89 補給、monster46 睡眠、銀寶珠返航、建城前酒場
+> 寄放、六珠持有權、終盤正式復隊、教會逐人解毒，以及巴拉摩斯 `0x79` 被錯排除於終盤
+> 回復策略的不可達分支。精確演進與停止線見 `docs/137..146`；主線為 E3，但逐畫面／音效
+> V3 長尾仍不得冒稱完成。
+> 同日 `docs/147` 又以 IDA Pro 9.4 閉合 ITEM `+4/+5 & 0x0e00` → equipped item word
+> `bit0x4000` → 教會 level×100 移除；五筆詛咒裝備、同部位換裝拒絕與 save/load 已接成
+> D3／E2／V1。完整 `game`＋`internal/...` 回歸再次通過，公開 v0.1.34 尚不含此修改。
+> 同日 `docs/148` 重新枚舉 action queue 的三個 builder caller、兩個 enemy consumer caller、
+> 唯一 player consumer caller 及 raw 函式指標候選，證實正式與 alternate runner 都是每個
+> 存活 actor 每回合恰好一筆；早期「Boss repeat-N 仍 unknown」已推翻。Go `resolveRound`
+> 已以同一 cardinality 契約與 component test 鎖定；逐動作 SHP／PCM 與畫面 V3 是不同議題。
+> 同日 `docs/150` 以 IDA Pro 9.4 閉合玩家一般物理攻擊的 cue 6／record0x14a／wait／cue 11／
+> wait／damage 順序；game pack 保存有序步驟，Battle 於每個原始 VOC duration gate 完成後才
+> 播放下一步。`docs/151` 接著閉合敵方攻擊 cue4、雙方命中 cue1、共同 miss cue3、
+> records331／333／336／357 與個別死亡訊息，並以 pack role 接成 D3／E2。cue9 特殊分支
+> 已由後續 `docs/152` 閉合；critical、咒文傷害與硬體 wall-clock 仍須分開研究。
+> 同日 `docs/149` 閉合玩家逃跑 cue 13、敵人逃跑 cue 21 與兩條
+> `sub_20770 → driver → sub_208E2` 完成等待鏈；pack 與 Battle 已用 VOC 原始 sample
+> duration 建立可重播的輸入等待閘門，為 D3／E2。這不宣稱 Sound Blaster wall-clock、
+> 重取樣波形或逐幀畫面達 V3。
 
 ## 目標與完成定義
 
@@ -110,7 +138,7 @@ CTY83 黃寶珠原始 event `01 6a 00 4a` 已遷入 JSON；舊 Go table 把 pres
 boot trace 已由商人交付自然重進 CTY60，並正式航行到 CTY41、走 CTY42 原始出口
 `(213,123)`、穿過 CTY43 關卡進 CTY44，再由 CTY24 取得拉之鏡並完成 save/load。
 同一條 trace 已使用黑暗燈，在 CTY44 sec1 `(14,7)` 由道具選單使用拉之鏡，閉合
-record97／98、monster89、變身杖 `0x62` 與勝利旗標交易，故此段升為 campaign E3／V1。
+record97／98、monster89、變身杖 `0x62` 與勝利旗標交易，故該歷史切片升為 campaign E3／V1。
 IDA 9.4 證實離城 consumer 直接使用 transition X/Y、兩者皆零才回退 remembered
 coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。後續狀態以本檔下方的
 下方最新版本段落與 `docs/74` 為準，不沿用本段早期的剩餘工作清單。
@@ -118,7 +146,7 @@ coordinates，不讀 facing；舊 remake 額外推出兩格的近似已移除。
 InputState、不中途注入座標／道具／事件函式，依序完成 CTY83 黃寶珠、六珠／拉米亞、巴拉摩斯、
 自然下降、愛列夫加特、蓋亞之劍火山、尼羅肯特銀寶珠、索瑪城奧爾特加事件、封咒三連戰、
 光之珠弱化、王城冊封與 `THE END`。中途的雲雨之杖、彩虹水滴、蓋亞之劍、銀寶珠及關鍵戰前
-均有 save/load round-trip；主線流程目前是 campaign E3／runtime V1。地表水面顏色、四輪
+均有 save/load round-trip；該 2026-08-09 checkpoint 是 campaign E3／runtime V1。地表水面顏色、四輪
 palette transition、逐畫面／音效 V3、Android／桌面 release 驗收仍是後續工作，不能與流程
 完成混稱。
 
@@ -467,10 +495,10 @@ ZIP、macOS Intel／Apple Silicon ZIP；最新檔名、尺寸、SHA-256 與 Dock
 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`）：
 
 - 正式戰鬥鏈 `sub_1BDDF → sub_1C08B → sub_1C34F → sub_1A973` 已證實玩家／敵人速度
-  queue、排序、每個活躍 actor 每回合一次、死亡／睡眠／逃跑／施咒／物理分派。沒有找到
-  boss 同回合 repeat-N 外層迴圈；另有 `loc_190D7`（file `0xa447`）的事件／AI-only
-  runner 會重建 queue 最多 12 輪，但每輪每個 entry 仍只呼叫一次。boss 同回合多次行動
-  維持 `unknown`，不可用連戰 queue 或 D3MNS 未命名欄位代替。
+  queue、排序、每個活躍 actor 每回合一次、死亡／睡眠／逃跑／施咒／物理分派。另有
+  `loc_190D7`（file `0xa447`）的事件／AI-only runner 會重建 queue 最多 12 輪，但每輪每個
+  entry 仍只呼叫一次。2026-08-22 的完整 caller／consumer audit 已證實本 EXE 沒有 Boss
+  同回合 repeat-N 路徑；不可用連戰 queue 或 D3MNS 未命名欄位虛構該功能，見 `docs/148`。
 - `sub_1C425` 已閉合經驗／金錢分配與掉落：`DGROUP 0x2518 bit1` 抑制掉落，D3MNS
   `+0x25` 作 **`AL <= +0x25` 的 inclusive RNG gate**（`0xff` 保證通過）、`+0x26` 作
   item raw id；`+0x21/+0x23` 的經驗／金錢 consumer 已確認。剩餘只是正規化顯示名稱與
@@ -533,8 +561,9 @@ Docker `go test ./internal/dq3data` 通過。這只修正 raw resistance decoder
   `0x24` 的 rec／clear/set／close。89 個 CTY、768 筆 NPC 的 full byte5 掃描命中
   `0x0d:26/0x11:1/0x1a:6/0x1b:25/0x24:4`，證明 generic `sub_131BD` consumer 有 raw
   records；Go production writer、direct GET caller 與玩家可見事件仍 unknown。
-- boss：正式 queue 與 alternate `loc_190D7` 都沒有同 actor 同回合 repeat-N；negative static
-  evidence 更完整，但 boss 多次行動的資料條件／數量仍 unknown。SHP 仍只找到 monster-id
+- boss：此段原記為「negative static evidence 更完整，但資料條件／數量仍 unknown」；
+  2026-08-22 已由 `docs/148` 枚舉全部 caller／consumer 與函式指標候選後推翻，現行結論是
+  本 EXE 每個存活 actor 每回合恰好一筆、沒有 Boss repeat-N。SHP 仍只找到 monster-id
   單 payload，VOC 只確認 `BP→DS:0x253e→sub_22CF5→sub_236B4→sub_208E2` 與 raw VCX
   blocks；動作 frame、PCM 波形與玩家停頓不由反組譯單獨升為 V3。
 
@@ -558,8 +587,9 @@ IDA 9.4 靜態證實；`0x0d`（索瑪後期）、`0x11`（六珠祭壇暫存）
 2026-08-11 E2 milestone 決策（使用者確認）：本輪改採快速 E2／D2 完成標準，使用 IDA Pro
 9.4、原始 EXE／DAT／SHP／VOC／CTY bytes、可重建 decoder、Docker deterministic trace、
 schema/reference/parity tests 與既有 reference PNG 作驗收，不重新啟動 DOSBox。只把
-`confirmed`／必要的 `strong` 證據遷入 versioned game-pack；boss repeat-N、精確座標、逐動作
-frame、PCM 播放／停頓及五個旗標的完整玩家語意仍保留 `unknown`／fail-closed，不得在
+`confirmed`／必要的 `strong` 證據遷入 versioned game-pack；當時 Boss repeat-N、精確座標、逐動作
+frame、PCM 播放／停頓及五個旗標的完整玩家語意保留 `unknown`／fail-closed。Boss 項目後來
+由 `docs/148` 證實不存在；其餘不得在
 README／release 宣稱 V3 parity。E2 工作先完成 JSON／engine integration、正式 InputState
 trace、事件／戰鬥交易與 save/load，再做 headless contract 驗收。
 
@@ -579,8 +609,9 @@ battle asset 路徑與完整性移入 manifest；SHP 同時接受原始 bytes �
 `TestE2BattlePackEncounterTrace`、`TestBaramosProductionInputTrace`、
 `TestMirrorProductionInputTrace`、`TestMirrorWinSaveRestore`、save round-trip、battle queue、
 混合 formation、逐敵行動與全滅獎勵測試均通過。這證實 pack raw → loader → production battle／
-event → save/load 的 E2/D2 閉環；既有 PNG 僅作畫面 V2 證據。boss repeat-N、逐動作 frame、PCM
-波形／玩家停頓、精確 formation 座標及五個 story flag 的 remake 可見入口仍為 `unknown`／V3
+event → save/load 的 E2/D2 閉環；既有 PNG 僅作畫面 V2 證據。當時 Boss repeat-N、逐動作 frame、PCM
+波形／玩家停頓、精確 formation 座標及五個 story flag 的 remake 可見入口列為 `unknown`／V3；
+Boss 項目後來由 `docs/148` 證實不存在，其餘
 gap，不能在 README 或 release 說成完整原版 parity。這批只更新文件與測試驗收紀錄，尚未
 commit/push。
 
@@ -606,8 +637,9 @@ transition chain，先由雷貝正式道具店購買聖水，再以道具／戰�
 `2×D3MNS +0x28` 前進；`sub_1AB2C` 逐個體擲 HP，不能再用同組代表 HP／起點 `0x26`。這些
 常數已遷入 `battle.json.formation_position`，renderer 依 EGA `0x54` stride／`0x102` bottom
 投影；raw formula 為 confirmed，像素面只標 strong static，未宣稱 V3 畫面。VOC decoder／
-gaudio sidecar 另保存 cue 的 source rate、sample count、可重建 duration；`PlaySFX` host
-wall-clock、boss repeat-N、逐動作 SHP frame 仍 unknown／V3 gap。`NVOC` cue21 raw offset
+gaudio sidecar 另保存 cue 的 source rate、sample count、可重建 duration。此歷史段原把
+Boss repeat-N 與 `PlaySFX` host wall-clock、逐動作 SHP frame 一起列為 unknown；前者已由
+`docs/148` 推翻，後兩者仍是 V3 gap。`NVOC` cue21 raw offset
 勘誤為 `0x1f973`；完整證據在 [`docs/123`](docs/123-static-battle-daynight-re.md) 與
 `docs/data/dq3-static-battle-daynight-evidence.json`。
 
@@ -648,8 +680,8 @@ SHA-256 `ea830ea06dfde28ce3e912669092663c4cde03069575a8fd695c1e1915efe62c`；`aa
 新增 `game/story_flags_test.go` 鎖定 pack evidence、正式 `InputState` command path、Phoenix
 map/save replay、Baramos aftermath 與 ending writer；Docker＋Xvfb targeted tests、
 `internal/gamepack` tests 通過。這是 E2 engine/data／save transaction closure；不宣稱原版
-同狀態 V3、完整 campaign E3、逐幀 SHP／PCM wall-clock、精確 palette register 或 boss
-repeat-N。前文的「runtime unknown／missing」保留作歷史勘誤，現行狀態以本節、`docs/119`、
+同狀態 V3、完整 campaign E3、逐幀 SHP／PCM wall-clock或精確 palette register；本段當時也
+未宣稱 Boss repeat-N，該項後續已由 `docs/148` 證實不存在。前文的「runtime unknown／missing」保留作歷史勘誤，現行狀態以本節、`docs/119`、
 `docs/123` 及 pack JSON 為準。
 
 ## 2026-08-11 驗收勘誤：current checkpoint 尚未重播閉合
@@ -674,8 +706,9 @@ repeat-N。前文的「runtime unknown／missing」保留作歷史勘誤，現�
 同時修正甘達特塔 route fixture：它的 Lv1 單人狀態只意圖驗證盜賊鑰匙門與 transition，卻把
 塔區遭遇誤混入；現以正式道具面板使用聖水管理遭遇，不改怪物資料。Docker＋Xvfb 將全部
 288 個 `game` 頂層測試分 18 個一次性程序批次執行後全數通過；`internal/...` 亦全綠。
-因此現行主線狀態是 **campaign E3／runtime V1**，不是原版同狀態畫面與音效 V3；Android
-仍只有 build-only。完整命令、終局 PNG 雜湊及舊結論訂正見
+因此該 2026-08-11 checkpoint 是 **campaign E3／runtime V1**，不是原版同狀態畫面與音效
+V3。現行未發版 poison 工作樹的 replay 狀態以本檔 2026-08-22 中毒段與 `docs/74` 為準，
+不得把本段歷史結果當成目前全綠。Android 當時仍只有 build-only。完整命令、終局 PNG 雜湊及舊結論訂正見
 [`docs/125-acceptance-20260811.md`](docs/125-acceptance-20260811.md)。
 
 ## 2026-08-11 能力確認 HUD 框線像素勘誤
@@ -702,10 +735,10 @@ window backdrop layer、`frame_edge_widths`、`beveled_2px` 與 `FIRST.SCR` pale
 
 IDA Pro 9.4 的新 audit 重查 queue builder／actor consumer xref、alternate runner、SHP redraw
 及 VOC dispatch，確認可靜態閉合的 formation、resistance、五個 story flag、clock／palette
-bank 已在資料／runtime 接線；boss repeat-N、逐動作 frame、PCM wall-clock 與可見 palette
-transition 沒有安全 production 值。除非取得新原版 frame／音訊 trace 或具體新 caller，
-不要再為這些項目猜 JSON、加 Go fallback 或廣泛重跑反組譯。完整界線見
-[`docs/123`](docs/123-static-battle-daynight-re.md)。
+bank 已在資料／runtime 接線。當時 Boss repeat-N 保留 unknown；2026-08-22 的完整 caller／
+consumer 與 raw pointer audit 已由 [`docs/148`](docs/148-battle-single-action-queue-spec.md)
+證實本 EXE 沒有該路徑。逐動作 frame、PCM wall-clock 與可見 palette transition 仍沒有安全
+production 值；除非取得新原版 frame／音訊 trace，不猜 JSON、不加 Go fallback。
 
 ## 2026-08-12 歷史 memory：八頭大蛇固定編隊背景 V2 已閉合
 
@@ -749,6 +782,21 @@ label 位於欄起點 `+16px`、姓名／數值位於 `+32px`、姓名最多四 
 `THE END` 重播已通過；此畫面是 D3／near-state V2，不宣稱逐像素 V3。完整證據見
 [`docs/130`](docs/130-party-field-hud-re.md)。
 
+## 2026-08-22 memory：怪物 action3 與持久麻痺
+
+不要再把 D3MNS mask bit3 當玩家 critical 或普通 spell。IDA Pro 9.4 已證實怪物
+3／48／51 的 action raw3 走 `sub_1ACCE`：忽略守備，傷害為
+`attack/2+rng(attack/4)`，存活者寫角色 `+0x38 bit0x10`；死亡不寫。該狀態與 bit0x20
+sleep 分離，會略過命令／action queue，戰後保留並由全隊共享 40 個合法場景步倒數清除。
+滿月草 `0x45` 的 field transaction、record201／334／364、cue9、save/load 與 battle
+CureStatus consumer 已接入 pack／Go，詳見 `docs/152`。
+
+現行 `bcItem` 還是只用藥草的歷史簡化；戰鬥道具清單與滿月草 battle transaction 沒有完成
+selector → owner → target → handler 閉環，不能由 field handler 外推。最新 campaign trace
+已因新原版行為重新驗證，精確 component tests 通過，完整正式 `InputState` replay 亦由標題
+抵達 `THE END`（121.799 秒）。這是 `docs/153` RNG 訂正前的歷史 checkpoint；現行 replay
+已在 CTY38→CTY70 航段重新 pending，不證明 battle item 清單或 V3 完成。
+
 Android 最新 source 已在 Docker 重建 AAR／debug APK並通過 `aapt` 靜態契約。專用
 `dq3-android-emulator:20260812-r1` 已鎖定 emulator 37.1.11 與 API 34 x86_64 revision 14。
 KVM 驗證已令 Android 14 完成 framework 開機，APK 也安裝成功。Luna Max 已修正
@@ -775,3 +823,48 @@ production 音訊版在 headless emulator 仍停於 OboeAudio host backend，首
 `tools/verify_promo_video.sh`；舊 C／SDL `tools/record_demo.sh` 已失敗即關閉。完整重排、
 原始問題盤點與 r1 證據保留於 [`docs/133`](docs/133-promo-video-20260812.md)；現行 r2
 版型、集中交付與驗收界線見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
+
+## 2026-08-22 memory：中毒與教會舊斷言已訂正
+
+不要再把 D3MNS 六個 AI mask bytes 全稱為玩家咒文表，也不要把解毒／解詛咒合併成
+角色 `+0x38` flags。IDA 9.4 已證實 bit38 經 remap 成 action0x32，呼叫 logical0xa307
+毒氣 handler並寫 `+0x38 bit0x40`；正式移動每步扣中毒成員 1 HP（船／飛行跳過），教會
+固定 5G 清除。解詛咒改掃 `+0x3a` 起八個 item word 的 bit0x4000，費用 level×100；
+後續 `docs/147` 已閉合 ITEM `+4/+5 & 0x0e00` 的 writer 與五筆原始裝備。
+
+該 checkpoint 的 Go 以 game-pack schema `0.1.40`／content `0.1.45` 接上 bit38 毒氣、逐名存活且未中毒
+成員判定、battle→Game／Member、save round-trip、移動每步 1 HP 與教會固定 5G 解毒，
+component／pack parity tests 通過，故為 remake E2。正式保護航路已越過原遠洋 blocker，
+正式道具選人流程已越過 CTY23 單人試煉回程；後續補給訂正再跨過 monster89、幽靈船與
+愛的回憶、CTY36、蓋亞之劍、銀寶珠、monster125 與黃寶珠。monster4×5 的低攻自療群體
+已由正式普攻策略越過。後續證明 monster77 返航不是怪物規則缺口，而是 trace 固定寄放了
+持綠寶珠同伴；改由正式酒場寄放無珠角色、六珠祭壇後正式復隊、教會復活／逐人解毒，並把
+巴拉摩斯 `0x79` 納入既有終盤回復策略後，完整 campaign 已重新由標題通過至 `THE END`。
+不得清除狀態、注入座標或改怪物數值繞過。cursed item 清單已由原始 ITEM writer 證實，
+不得改以攻略或名稱猜補；證據見
+[`docs/137`](docs/137-church-poison-condition-re.md)、
+[`docs/138`](docs/138-antidote-item-condition-re.md)、
+[`docs/139`](docs/139-cty23-solo-return-poison-recovery.md)、[`docs/140`](docs/140-monster89-prebattle-resupply.md)、
+[`docs/141`](docs/141-cty36-monster46-action-resource-spec.md)、[`docs/142`](docs/142-monster125-return-travel-strategy-spec.md)、
+[`docs/143`](docs/143-monster4-merchant-return-strategy-spec.md)、
+[`docs/144`](docs/144-merchant-roster-orb-custody-spec.md)、
+[`docs/145`](docs/145-baramos-prebattle-poison-cure-spec.md)、
+[`docs/146`](docs/146-baramos-healing-resource-strategy-spec.md)、
+[`docs/147`](docs/147-cursed-equipment-church-service-spec.md)。
+
+## 2026-08-22 歷史 memory：原野道具持有者接線後的暫時 blocker
+
+IDA Pro 9.4 已證實原版 rec421 前先選隊員，`DS:062D` 保存持有者、`DS:062F` 保存該角色
+的非空物品索引；給予、同 owner 重排與合法丟棄都操作該角色 `+0x3a` 的八個 word。現行
+Go 以 `panelActor` 保存持有者，清單、使用、給予與丟棄不再默認勇者；證據與驗收見
+[`docs/158`](docs/158-field-item-owner-selection-drop-spec.md)。
+
+正式 trace 已越過羅馬利亞滿格阻塞並完成戰士青銅盾／勇者龜殼甲胄購裝，但最新重播在
+取船後 CTY16 航線的 monster51 遭遇全滅。此前文件記錄的 `THE END` PASS 皆是較早程式
+checkpoint，當時不能證明該工作樹 campaign E3；該 checkpoint 必須維持 pending，並從
+這個第一玩家 blocker 重新走「讀 RE → spec → implement」。
+
+> **訂正：**本段只保存當時 monster51 的失敗狀態。後續 `docs/159..178` 已閉合隊伍
+> 持有／消耗、關鍵道具容量、野外補血與目標格遭遇輸入所有權；最新乾淨 Docker＋Xvfb
+> 正式重播以 115.629 秒抵達 `THE END`。現行 campaign 為 E3；V3 與未追查原版語意仍
+> 依 `docs/74`／`docs/135` 分開判定。

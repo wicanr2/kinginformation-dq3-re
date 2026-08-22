@@ -1,4 +1,5 @@
-// Package spell 是咒文系統(移植 dq3_spell:習得表 + 施放 descriptor)。純邏輯 + 內建 EXE 表。
+// Package spell 提供共用咒文型別、戰鬥咒文與原始 EXE 習得表 oracle。
+// 正式野外咒文 descriptor 由 game pack 載入；本套件內的表不可作為缺資料時的 fallback。
 // 傷害/回復公式(file 0xc22e):val = base/2 + rng(base/2)。咒名 rec 對 D3TXT00 名表。
 package spell
 
@@ -15,7 +16,7 @@ const (
 	Seal       // 瑪荷頓156:封敵對側單體咒文(不能施咒)
 	Blind      // 瑪努莎158:敵對側單體陷入幻惑(物攻易失手)
 	CurePoison // 基阿里166:解毒
-	CureStatus // 基阿里克167/薩梅哈168:解麻痺/混亂/睡眠(remake 簡化:三者共用同一狀態位元,對齊 C DQ3_STATUS_PARALYSIS)
+	CureStatus // 基阿里克167/薩梅哈168：解持久麻痺及戰鬥暫態睡眠／混亂；runtime 以不同位元保存
 	Palpunte   // 帕魯朋特180:16 格原版亂數表（5 格有效、4 種唯一戰鬥效果）
 )
 
@@ -174,7 +175,9 @@ func CastValue(base, roll int) int {
 	return half + half*roll/256
 }
 
-// 怪物咒文 bit(0..47)→ 咒名 rec(移植 dq3_monster_spell_rec,EXE 0x3930 remap,docs/37)。
+// 歷史 lookup：怪物 action bit(0..47)→ 候選文字 rec。現行 Battle 對未由 pack 接管的
+// bit 仍以此表嘗試普通 spell descriptor；這是尚待逐 bit RE 的相容近似，不是原版 exact，
+// 也尚未達成未知 action 失敗即關閉。
 var monsterSpellRec = [48]int{
 	121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132,
 	133, 134, 135, 136, 139, 140, 141, 144, 145, 146, 147, 148,
@@ -182,7 +185,7 @@ var monsterSpellRec = [48]int{
 	169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180,
 }
 
-// MonsterSpellRec:怪物咒文 bit → 咒名 rec;越界回 0。
+// MonsterSpellRec 保留歷史 API 名稱；回傳 action 的候選文字 rec，越界回 0。
 func MonsterSpellRec(bit int) int {
 	if bit < 0 || bit >= 48 {
 		return 0
@@ -190,7 +193,7 @@ func MonsterSpellRec(bit int) int {
 	return monsterSpellRec[bit]
 }
 
-// MonsterSpellBits:自 spell_mask[6] 取出所有已知咒文 bit(0..47)。
+// MonsterSpellBits 保留歷史 API 名稱；只列出 raw action mask 的 set bit。
 func MonsterSpellBits(mask [6]uint8) []int {
 	var out []int
 	for b := 0; b < 48; b++ {

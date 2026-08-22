@@ -291,6 +291,9 @@ type Game struct {
 	manBLS                    []byte         // NPC sprite 來源
 	towns                     map[int]*Scene // 已載入城鎮快取(cty→Scene)
 	overPx, overPy            int            // 記住進城前的地表座標(Esc 回來用)
+	respawn                   respawnPoint   // 最後一次成功記錄點；敗北只回位置、不回捲進度
+	partyLeader               int            // 0=勇者，1..=companions；死亡時依原版 pointer order 推進
+	defeatDialogueStage       int            // record361→362 的正式 modal transaction
 	worldEntranceGrace        bool           // 城鎮→地表後第一個成功步伐不重新觸發同列兩格入口（strong；見 docs/103）
 	hero                      *dq3data.CharSprite
 	heroRole                  *dq3data.CharSprite // 由 game-pack temporary_role active flag 推導；不另存檔
@@ -366,6 +369,8 @@ type Game struct {
 	heroGold                int
 	heroHP                  int
 	heroMP                  int
+	heroConditions          conditionSet
+	paralysisSteps          int // pack-owned shared field-step countdown; original uses one 0x28 counter for the party
 	heroStat                stats.Values
 	heroInit                bool
 	equip                   [4]int                          // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
@@ -547,7 +552,10 @@ func (g *Game) selectCommand(cmd int) {
 	case cmdSpell:
 		g.openFieldSpellMenu()
 	case cmdItem: // 道具
-		g.panel, g.panelCursor = panelItem, 0
+		g.panel, g.panelCursor, g.panelActor = panelItem, 0, -1
+		if len(g.companions) == 0 {
+			g.panelActor = 0
+		}
 		g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
 	case cmdEquip: // 裝備
 		g.panel, g.panelCursor, g.panelActor = panelEquip, 0, -1
@@ -700,7 +708,7 @@ func (g *Game) scriptedTalk(byte4 int) {
 		return
 	}
 	if require != 255 { // 檢查型:持物→give_rec、否則→before_rec(不消耗)
-		if g.hasItem(require) {
+		if g.hasPartyItem(require) {
 			g.dlg.Open(giveRec)
 		} else {
 			g.dlg.Open(beforeRec)
@@ -711,20 +719,22 @@ func (g *Game) scriptedTalk(byte4 int) {
 		g.dlg.Open(afterRec)
 		return
 	}
-	if prereq != 255 && !g.hasItem(prereq) { // 缺前置道具
+	if prereq != 255 && !g.hasPartyItem(prereq) { // 缺前置道具
 		g.dlg.Open(beforeRec)
 		return
 	}
-	if give != 255 && g.hasItem(give) { // 已持有 give_item → 不重給(對齊 C dq3_inv_find<0;修 milestone==0 列無限複製)
+	if give != 255 && g.hasPartyItem(give) { // 已持有 give_item → 不重給
 		g.dlg.Open(afterRec)
 		return
 	}
 	if give != 255 { // 給物 + 通知
-		g.inventory = append(g.inventory, give)
+		if !g.grantPartyItem(give) {
+			return
+		}
 		g.noticeCode, g.noticeTimer = give, 120
 	}
 	if consume == 1 && prereq != 255 {
-		g.removeItems(prereq, 1)
+		g.removePartyItems(prereq, 1)
 	}
 	if milestone != 0 {
 		g.flags[milestone] = true
@@ -744,11 +754,13 @@ const (
 // talkDragonQueen 還原 DQ3.EXE sub_15E02：取得光之珠後，
 // CLEAR story flag0x4e 並 SET story flag0x19。舊泛用表只給道具，漏了兩筆設定。
 func (g *Game) talkDragonQueen(s *[10]int) {
-	if g.storyFlag(0x19) || g.hasItem(itemLightOrb) {
+	if g.storyFlag(0x19) || g.hasPartyItem(itemLightOrb) {
 		g.dlg.Open(s[9])
 		return
 	}
-	g.inventory = append(g.inventory, itemLightOrb)
+	if !g.grantPartyItem(itemLightOrb) {
+		return
+	}
 	g.noticeCode, g.noticeTimer = itemLightOrb, 120
 	g.setStoryFlag(0x4e, false)
 	g.setStoryFlag(0x19, true)
@@ -815,11 +827,13 @@ func (g *Game) examine() {
 		if g.flags[flag] { // 已取
 			return true
 		}
-		g.flags[flag] = true
 		if t[3] == 1 || t[3] == 3 { // 寶箱給道具
-			g.inventory = append(g.inventory, t[4])
+			if !g.grantPartyItem(t[4]) {
+				return true
+			}
 			g.noticeCode, g.noticeTimer = t[4], 120
 		}
+		g.flags[flag] = true
 		return true
 	}
 	if g.inTown && g.curCty == shrineCty && g.synthRainbowAtShrine() { // 合成祠堂:太陽之石+雲雨之杖→彩虹水滴
@@ -875,14 +889,15 @@ func (g *Game) keyTier() int {
 	best := 0
 	for _, effect := range g.pack.ItemUseEffects() {
 		if effect.EffectID == "open_facing_locked_door" &&
-			g.hasItem(effect.ItemRawID) && effect.DoorKeyTier > best {
+			g.hasPartyItem(effect.ItemRawID) && effect.DoorKeyTier > best {
 			best = effect.DoorKeyTier
 		}
 	}
 	return best
 }
 
-// openFacility:面向設施 NPC(byte4=設施索引 k)→ 依當前 CTY 開對應設施(全城設施表)。
+// openFacility：面向 facility subtype NPC（byte4=raw block index）後查 legacy block
+// inventory。現行 lookup 尚未帶 section；不能外推為所有多 section 設施均已對齊原版。
 func (g *Game) openFacility(k int) {
 	f := facilityForCty(g.curCty, k)
 	if f == nil {
@@ -1089,8 +1104,16 @@ func (g *Game) step(in InputState) error {
 			g.panelActor, g.panelCursor = -1, 0
 		case in.Cancel && g.panel == panelItem && g.itemActionStage == itemActionTarget:
 			g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
+		case in.Cancel && g.panel == panelItem && g.itemActionStage == itemActionUseTarget:
+			g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
 		case in.Cancel && g.panel == panelItem && g.itemActionStage == itemActionMenu:
 			g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
+		case in.Cancel && g.panel == panelItem && g.panelActor >= 0:
+			if len(g.companions) == 0 {
+				g.panel = panelNone
+			} else {
+				g.panelActor, g.panelCursor = -1, 0
+			}
 		case in.Cancel:
 			g.panel = panelNone
 		case g.panel == panelEquip:
@@ -1116,28 +1139,51 @@ func (g *Game) step(in InputState) error {
 			}
 		case g.panel == panelItem:
 			confirm := in.Confirm
-			if g.itemActionStage == itemActionList && tapIdx >= 0 && len(g.inventory) > 0 {
+			items := g.equipActorInventory(g.panelActor)
+			if g.panelActor < 0 {
+				count := 1 + len(g.companions)
+				if tapIdx >= 0 && tapIdx < count {
+					g.panelCursor, confirm = tapIdx, true
+				}
+				switch {
+				case confirm:
+					g.panelActor, g.panelCursor = g.panelCursor, 0
+				case in.DirEdge == 0:
+					g.panelCursor = (g.panelCursor + 1) % count
+				case in.DirEdge == 1:
+					g.panelCursor = (g.panelCursor + count - 1) % count
+				}
+				break
+			}
+			if items == nil {
+				break
+			}
+			if g.itemActionStage == itemActionList && tapIdx >= 0 && len(*items) > 0 {
 				g.panelCursor, confirm = tapIdx, true
 			}
 			switch g.itemActionStage {
 			case itemActionList:
 				switch {
-				case confirm && len(g.inventory) > 0:
+				case confirm && len(*items) > 0:
 					g.itemSelected = g.panelCursor
 					g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
-				case in.DirEdge == 0 && len(g.inventory) > 0:
-					g.panelCursor = (g.panelCursor + 1) % len(g.inventory)
-				case in.DirEdge == 1 && len(g.inventory) > 0:
-					g.panelCursor = (g.panelCursor + len(g.inventory) - 1) % len(g.inventory)
+				case in.DirEdge == 0 && len(*items) > 0:
+					g.panelCursor = (g.panelCursor + 1) % len(*items)
+				case in.DirEdge == 1 && len(*items) > 0:
+					g.panelCursor = (g.panelCursor + len(*items) - 1) % len(*items)
 				}
 			case itemActionMenu:
 				switch {
 				case confirm && g.itemActionCursor == 0:
-					g.panelCursor = g.itemSelected
-					g.itemActionStage = itemActionList
-					g.useSelectedItem()
-					g.itemSelected = -1
-				case confirm && g.itemActionCursor == 1 && len(g.companions) > 0:
+					if g.selectedItemRequiresTarget() {
+						g.itemActionStage, g.itemActionCursor = itemActionUseTarget, 0
+					} else {
+						g.panelCursor = g.itemSelected
+						g.itemActionStage = itemActionList
+						g.useSelectedItem()
+						g.itemSelected = -1
+					}
+				case confirm && g.itemActionCursor == 1:
 					g.itemActionStage, g.itemActionCursor = itemActionTarget, 0
 				case confirm && g.itemActionCursor == 2:
 					g.dropSelectedItem()
@@ -1147,16 +1193,33 @@ func (g *Game) step(in InputState) error {
 					g.itemActionCursor = (g.itemActionCursor + 2) % 3
 				}
 			case itemActionTarget:
+				count := 1 + len(g.companions)
+				if tapIdx >= 0 && tapIdx < count {
+					g.itemActionCursor, confirm = tapIdx, true
+				}
 				switch {
-				case confirm && len(g.companions) > 0:
+				case confirm:
 					if g.giveSelectedItem(g.itemActionCursor) {
 						g.itemActionStage, g.itemActionCursor, g.itemSelected =
 							itemActionList, 0, -1
 					}
-				case in.DirEdge == 0 && len(g.companions) > 0:
-					g.itemActionCursor = (g.itemActionCursor + 1) % len(g.companions)
-				case in.DirEdge == 1 && len(g.companions) > 0:
-					g.itemActionCursor = (g.itemActionCursor + len(g.companions) - 1) % len(g.companions)
+				case in.DirEdge == 0:
+					g.itemActionCursor = (g.itemActionCursor + 1) % count
+				case in.DirEdge == 1:
+					g.itemActionCursor = (g.itemActionCursor + count - 1) % count
+				}
+			case itemActionUseTarget:
+				count := 1 + len(g.companions)
+				if tapIdx >= 0 && tapIdx < count {
+					g.itemActionCursor, confirm = tapIdx, true
+				}
+				switch {
+				case confirm:
+					g.useSelectedPackItemOnTarget(g.itemActionCursor)
+				case in.DirEdge == 0:
+					g.itemActionCursor = (g.itemActionCursor + 1) % count
+				case in.DirEdge == 1:
+					g.itemActionCursor = (g.itemActionCursor + count - 1) % count
 				}
 			}
 		case in.Confirm:
@@ -1167,10 +1230,30 @@ func (g *Game) step(in InputState) error {
 	}
 	// 商店 modal:方向選、A 買、B 關
 	if g.shop.active {
+		if g.shop.targeting {
+			count := 1 + len(g.companions)
+			confirm := in.Confirm
+			if in.Tapped {
+				if idx := g.shop.targetHits.at(in.TapX, in.TapY); idx >= 0 && idx < count {
+					g.shop.targetCursor, confirm = idx, true
+				}
+			}
+			switch {
+			case in.Cancel:
+				g.shop.targeting, g.shop.pendingCode = false, -1
+			case confirm:
+				g.purchaseShopItem(g.shop.targetCursor)
+			case in.DirEdge == 0:
+				g.shop.targetCursor = (g.shop.targetCursor + 1) % count
+			case in.DirEdge == 1:
+				g.shop.targetCursor = (g.shop.targetCursor + count - 1) % count
+			}
+			g.renderFrame()
+			return nil
+		}
 		if buy, _ := g.shop.input(in); buy >= 0 {
 			if price := g.shop.items.Price(buy); g.heroGold >= price {
-				g.heroGold -= price
-				g.inventory = append(g.inventory, buy)
+				g.shop.targeting, g.shop.pendingCode, g.shop.targetCursor = true, buy, 0
 			}
 		}
 		g.renderFrame()
@@ -1181,6 +1264,7 @@ func (g *Game) step(in InputState) error {
 		if in.Confirm {
 			g.dlg.Advance()
 			if !g.dlg.open {
+				g.advanceDefeatDialogue()
 				g.advanceBossDialogue()
 				g.advanceZomaIntro()
 				g.advanceOrtegaEvent()
@@ -1325,6 +1409,7 @@ func (g *Game) step(in InputState) error {
 	}
 	if moved {
 		g.advanceFieldSpellStep()
+		g.advancePersistentConditionStep()
 		g.applyHazardStep()
 	}
 	if moved && g.inTown { // 城內:踩到轉場格(門/階梯/出城)→ 切 section / 跨 CTY / 出城
@@ -1794,8 +1879,9 @@ const (
 	aliahanWorldY = 0xae
 )
 
-// startOpening:新遊戲創角完成 → 進主角家(CTY00 sec4 室內)+ 播開場旁白；正式 opening
-// production trace 已閉合，逐格演出與畫面 parity 仍屬 V3 工作。
+// startOpening:新遊戲創角完成 → 進主角家(CTY00 sec4 室內)+ 播開場旁白；opening
+// 垂直切片有正式 InputState coverage；2026-08-22 現行完整 campaign trace 已重新回綠，
+// 但此流程與完整主線測試都不能把逐格畫面／音效 parity 升格為 V3。
 // 對齊 U1:原版開場是家室內 + 母親旁白,非地表中心。
 func (g *Game) startOpening() {
 	if g.assets == nil { // 無素材的裸 Game(單元測試純狀態驗證)→ 只走狀態轉移,不載場景
@@ -1861,7 +1947,11 @@ func (g *Game) talkAliahanKing() {
 	if !g.storyFlag(0x17) || g.progressDone(msStart) {
 		return
 	}
-	g.inventory = append(g.inventory, aliahanKingRewardItems[:]...)
+	for _, code := range aliahanKingRewardItems {
+		if !g.grantPartyItem(code) {
+			return
+		}
+	}
 	g.heroGold += 0x32
 	g.setStoryFlag(0x17, false)
 	g.setStoryFlag(0x18, true)
@@ -2043,7 +2133,8 @@ func (g *Game) startEncounter() {
 		g.heroHP, g.heroMP, g.heroInit = maxHP, maxMP, true
 	}
 	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
-		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
+		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells(),
+		conditions: g.heroConditions}
 	comps := g.buildCompanionActors()
 	region := g.encounters.Region(g.px, g.py)
 	slot := g.encounters.Slot(region, g.prng.Next(4))
@@ -2122,7 +2213,8 @@ func (g *Game) startBossBattle(monID int) bool {
 		g.heroHP, g.heroMP, g.heroInit = maxHP, maxMP, true
 	}
 	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
-		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells()}
+		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells(),
+		conditions: g.heroConditions}
 	g.battle.lightOrb = monID == 0x7c && g.hasPartyItem(itemLightOrb) // 隊伍持光之珠 → 索瑪二階段弱化
 	g.battle.showInfo = g.cfg.CombatInfo
 	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
@@ -2335,8 +2427,8 @@ func (g *Game) countItem(code int) int {
 	return n
 }
 
-// countPartyItem:戰鬥可用的消耗品由整個隊伍的個人道具欄共同提供；
-// 一般地圖道具選單仍以主角背包為入口，避免把兩種查詢語意混在一起。
+// countPartyItem:戰鬥與原野 owner selector 都可見整隊個人物品；本 helper
+// 只計數，不取代原野清單所保存的持有者與欄位索引。
 func (g *Game) countPartyItem(code int) int {
 	n := g.countItem(code)
 	for _, m := range g.companions {
@@ -2367,7 +2459,15 @@ func (g *Game) removePartyItems(code, n int) {
 	if n <= 0 {
 		return
 	}
-	g.removeItems(code, n)
+	out := g.inventory[:0]
+	for _, c := range g.inventory {
+		if c == code && n > 0 {
+			n--
+			continue
+		}
+		out = append(out, c)
+	}
+	g.inventory = out
 	for _, m := range g.companions {
 		if n <= 0 {
 			break
@@ -2393,6 +2493,16 @@ func (g *Game) buildCompanionActors() []*battleActor {
 			hp: m.CurHP, maxHP: m.MaxHP(), mp: m.CurMP, maxMP: m.MaxMP(),
 			atk: m.Atk(g.shop.items), def: m.Def(g.shop.items), agi: m.Agi(),
 			spells: m.Spells(),
+			status: func() int {
+				status := 0
+				if m.Conditions&conditionPoison != 0 {
+					status |= statusPoison
+				}
+				if m.Conditions&conditionParalysis != 0 {
+					status |= statusPersistentParalysis
+				}
+				return status
+			}(),
 		})
 	}
 	return out
@@ -2401,10 +2511,39 @@ func (g *Game) buildCompanionActors() []*battleActor {
 // onBattleEnd:戰鬥結束後把結果寫回全隊(HP/MP 持久、藥草扣除、勝利全隊加 exp/gold、升級全補、敗北回城復活)。
 func (g *Game) onBattleEnd() {
 	g.heroHP, g.heroMP = g.battle.heroHP, g.battle.heroMP
+	if g.battle.heroStatus&statusPoison != 0 {
+		g.heroConditions |= conditionPoison
+	} else {
+		g.heroConditions &^= conditionPoison
+	}
+	if g.battle.heroStatus&statusPersistentParalysis != 0 {
+		g.heroConditions |= conditionParalysis
+	} else {
+		g.heroConditions &^= conditionParalysis
+	}
 	for i, c := range g.battle.companions { // 同步同伴 HP/MP
 		if i < len(g.companions) {
 			g.companions[i].CurHP, g.companions[i].CurMP = c.hp, c.mp
+			if c.status&statusPoison != 0 {
+				g.companions[i].Conditions |= conditionPoison
+			} else {
+				g.companions[i].Conditions &^= conditionPoison
+			}
+			if c.status&statusPersistentParalysis != 0 {
+				g.companions[i].Conditions |= conditionParalysis
+			} else {
+				g.companions[i].Conditions &^= conditionParalysis
+			}
 		}
+	}
+	if g.partyHasCondition(conditionParalysis) {
+		if g.pack != nil {
+			if condition, ok := g.pack.ConditionDefinition(gamepack.ParalysisCondition); ok {
+				g.paralysisSteps = condition.FieldClearAfterSteps
+			}
+		}
+	} else {
+		g.paralysisSteps = 0
 	}
 	if g.battle.usedHerbs > 0 { // 扣掉戰鬥中用掉的藥草
 		g.removePartyItems(herbCode, g.battle.usedHerbs)
@@ -2434,8 +2573,13 @@ func (g *Game) onBattleEnd() {
 			g.runFinale()
 		}
 		if g.battle.gotDrop >= 0 {
-			g.inventory = append(g.inventory, g.battle.gotDrop)
-			g.noticeCode, g.noticeTimer = g.battle.gotDrop, 120
+			// 原版 sub_1C425 → sub_1684E/sub_16856 依隊長至同伴順序掃
+			// 每人八格，裝備亦占格；全隊滿時 DS:0726=1 且沒有 writer。
+			// 角色姓名插值的滿格 record345 尚未閉合，見 docs/157；此處
+			// 先確保 storage transaction 不會越界或覆蓋既有物品。
+			if g.grantPartyItem(g.battle.gotDrop) {
+				g.noticeCode, g.noticeTimer = g.battle.gotDrop, 120
+			}
 		}
 	}
 	g.settleMirrorBattle()
@@ -2447,7 +2591,11 @@ func (g *Game) onBattleEnd() {
 		case g.battle.result == 1 && len(g.bossQueue) == 0: // 鏈全勝(最後一場也贏)→ 給獎勵 + 設旗標
 			t := g.pendingTrigger
 			if len(t.rewardItems) > 0 {
-				g.inventory = append(g.inventory, t.rewardItems...)
+				for _, code := range t.rewardItems {
+					if !g.grantPartyItem(code) {
+						return
+					}
+				}
 				g.noticeCode, g.noticeTimer = t.rewardItems[len(t.rewardItems)-1], 120
 			}
 			if g.flags == nil {
@@ -2467,20 +2615,10 @@ func (g *Game) onBattleEnd() {
 		}
 		// 鏈中段勝出(bossQueue 仍非空)→ 不動作,交給 Update() 的 advanceBossQueue 續打下一場
 	}
-	partyAllDown := g.heroHP <= 0
-	for _, m := range g.companions {
-		if m.CurHP > 0 {
-			partyAllDown = false
-		}
-	}
-	if partyAllDown { // 全滅:回阿里阿罕、全隊滿血復活(教會復活之簡化)
-		_, maxHP, _, _, _ := g.heroStats()
-		g.heroHP, g.heroMP = maxHP, g.heroMaxMP()
-		for _, m := range g.companions {
-			m.fullHeal()
-		}
-		g.cur, g.inTown = g.town, true
-		g.px, g.py = g.town.spawnX, g.town.spawnY
+	if g.partyAllDown() {
+		g.beginBattleDefeat()
+	} else {
+		g.selectLivingPartyLeader()
 	}
 }
 
@@ -2608,6 +2746,7 @@ func (g *Game) renderFrame() {
 	}
 	if g.shop.active { // 商店
 		g.shop.draw(g.rgba, g.heroGold, white)
+		g.drawShopTargets(g.rgba, white)
 	}
 	g.drawChurch(g.rgba, white)
 	g.drawBossSurrenderChoice(g.rgba, white)
@@ -2895,6 +3034,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	}
 	g.dlg.layout = pack.DialogueWindowLayout()
 	g.battle.setTextDefinitions(battleDefs)
+	g.battle.setMonsterActions(pack.MonsterActionDefinitions())
 	g.battle.setMessageLayout(battleMessageLayout)
 	g.battle.setCommandLayout(battleCommandLayout)
 	g.battle.setEnemyLayout(battleEnemyLayout)
@@ -2997,6 +3137,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	// 真正畫面會在創角完成後由 startOpening 切到 CTY00 sec4@(5,5)。
 	g.px, g.py = aliahanWorldX, aliahanWorldY
 	g.overPx, g.overPy = aliahanWorldX, aliahanWorldY
+	g.respawn = g.currentRespawnPoint()
 	g.heroGold = 0 // 國王的 50G 屬後續謁見 transaction，不在出生時預給
 	g.equip = heroEquipment
 	g.companions = nil // file 0x1c4e：[0x722]=1，開局只有主角
@@ -3016,6 +3157,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		}
 		g.music.SetSFXWithDurations(pcm, durations)
 	}
+	g.battle.setSoundCues(pack.BattleSoundCues(), g.music)
 	if os.Getenv("DQ3_FM") != "" { // SB-FM 音樂(OPL2 合成 MBG.MCX,取代 MT-32 OGG)
 		if mbg := ld.read("MBG.MCX"); len(mbg) > 0 {
 			g.music.SetMBG(mbg)

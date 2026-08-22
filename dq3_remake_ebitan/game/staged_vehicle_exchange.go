@@ -35,14 +35,14 @@ func (g *Game) talkStagedVehicleExchange(n *npcInst) bool {
 			g.vehicleExchangeStage = vehicleExchangeQuestIntro
 		case g.shipOwned || !g.storyFlag(event.ExchangeAvailableFlagRaw):
 			g.openPackText(event.DialogueTextIDs.After)
-		case !g.hasItem(event.RequiredItemRawID):
+		case !g.hasPartyItem(event.RequiredItemRawID):
 			g.openPackText(event.DialogueTextIDs.NeedItem)
 		default:
 			// Resolve every visible success reference before mutating state.
 			if !g.openPackText(event.DialogueTextIDs.Success) {
 				return true
 			}
-			g.removeItems(event.RequiredItemRawID, 1)
+			g.removePartyItems(event.RequiredItemRawID, 1)
 			for _, flag := range event.Vehicle.ClearFlagsRaw {
 				g.setStoryFlag(flag, false)
 			}
@@ -71,7 +71,9 @@ func (g *Game) advanceStagedVehicleExchangeDialogue() {
 			g.finishStagedVehicleExchange()
 			return
 		}
-		g.inventory = append(g.inventory, event.GrantedItemRawID)
+		if !g.grantPartyItem(event.GrantedItemRawID) {
+			return
+		}
 		g.setStoryFlag(event.QuestPresentFlagRaw, false)
 		g.noticeCode, g.noticeTimer = event.GrantedItemRawID, 120
 		g.vehicleExchangeStage = vehicleExchangeItemGrant

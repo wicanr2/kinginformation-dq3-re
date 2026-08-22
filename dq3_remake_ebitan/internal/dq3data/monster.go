@@ -23,12 +23,12 @@ type MonsterStat struct {
 	SpawnWeight    uint8  // +0x28
 }
 
-// MonsterAI 是一隻怪的行為(咒文機率/逃跑/已知咒文)。
+// MonsterAI 保存一隻怪的原始 action gate／mask 與逃跑參數。
 type MonsterAI struct {
-	CastProb   uint8    // +0x0d:rng(256) < 此 → 放咒
+	CastProb   uint8    // +0x0d:rng(256) < 此 → 選 action mask；歷史欄位名保留
 	FleeThresh uint8    // +0x17:我方平均等級 ≥ 此 → 考慮逃跑
 	FleeRate   uint8    // +0x18:觸發後 rng(256) ≤ 此就逃(0=不逃)
-	SpellMask  [6]uint8 // +0x0e..+0x13:已知咒文 bitmask
+	SpellMask  [6]uint8 // +0x0e..+0x13:raw action mask；並非每個 bit 都是咒文
 }
 
 // Monsters 持有 D3MNS.DAT 整檔。

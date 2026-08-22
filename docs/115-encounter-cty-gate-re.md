@@ -1,7 +1,9 @@
 # 115 — CTY 遭遇旗標與正式步數計數器：IDA 9.4 勘誤與接線
 
-> 2026-08-10。這份文件只修正 section `+0x11` 的 polarity，並記錄它如何進入 Go
+> 2026-08-10 歷史切片。這份文件只修正 section `+0x11` 的 polarity，並記錄它如何進入 Go
 > runtime；不把仍未閉合的強制遭遇、完整 encounter pack JSON 或戰鬥 V3 誤宣稱完成。
+> 下文的 campaign E3 只描述當時 checkpoint；現行工作樹狀態以 `docs/74` 最新 checkpoint
+> 為準，不得由本頁推定目前完整 trace 全綠。
 
 ## 1. 問題與輸入
 
@@ -42,9 +44,9 @@ SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`）的
   改寫或遺失。
 - `game` component test 確認 `0` 安全、非零 CTY 可遇敵、地表不受 CTY flag、飛行禁遇敵，
   並鎖定初始 4..19 與日／非日 10..17／8..15 的計數範圍。
-- 未把完整主線長測重新跑一遍；本輪依使用者要求只做受影響的針對性驗證。既有
-  `TestOpeningProductionInputTrace` 的 2026-08-09 通過結果仍是 campaign E3 證據，
-  不因本文件把所有畫面／音效提升為 V3。
+- 未把完整主線長測重新跑一遍；本輪依使用者要求只做受影響的針對性驗證。當時既有
+  `TestOpeningProductionInputTrace` 的 2026-08-09 通過結果只證明該歷史 checkpoint 的
+  campaign E3，不代表現行工作樹仍全綠，也不把所有畫面／音效提升為 V3。
 
 ## 4. 保留的不確定性
 

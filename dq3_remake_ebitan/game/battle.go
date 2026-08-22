@@ -47,6 +47,12 @@ const (
 	battleTextActorMissed      = "actor_missed"
 	battleTextActorDamage      = "actor_damage"
 	battleTextActorAttack      = "actor_attack"
+	battleTextEnemyAttack      = "enemy_attack"
+	battleTextPartyDamage      = "party_damage"
+	battleTextEnemyDefeated    = "enemy_defeated"
+	battleTextActorDied        = "actor_died"
+	battleTextFatalStrike      = "fatal_strike"
+	battleTextActorParalyzed   = "actor_paralyzed"
 	battleTextVictory          = "victory"
 	battleTextExpReward        = "exp_reward"
 	battleTextGoldReward       = "gold_reward"
@@ -56,6 +62,9 @@ const (
 	battleTextBuffDefense      = "buff_defense"
 	battleTextEnemySealed      = "enemy_sealed"
 	battleTextEnemyConfused    = "enemy_confused"
+	battleTextSleepBreath      = "sleep_breath"
+	battleTextPoisonGas        = "poison_gas"
+	battleTextActorPoisoned    = "actor_poisoned"
 	battleTextCurePoison       = "cure_poison"
 	battleTextCureStatus       = "cure_status"
 	battleTextSpellNoEffect    = "spell_no_effect"
@@ -76,6 +85,12 @@ type battleMessage struct {
 	role string
 	text battleTextDefinition
 	vars [][]int
+	sfx  []gamepack.BattleSoundCue
+}
+
+type battleSFXPlayer interface {
+	PlaySFX(int)
+	SFXDurationNanos(int) int64
 }
 
 // enemyUnit 是群戰中一隻敵的即時狀態。怪物資料、AI 與 sprite 都逐隻保存，讓原版混合
@@ -89,7 +104,7 @@ type enemyUnit struct {
 	spr         *dq3data.MonsterSprite
 	positionRaw int  // 原版 active enemy +0x03；pack-owned EGA raw horizontal offset
 	fled        bool // 本場已逃走(不計入擊殺數→經驗/金錢排除,對齊 C g_fled)
-	status      int  // W3:異常狀態位元(statusParalysis/statusSealed/statusBlind,見下方 const)
+	status      int  // 戰鬥鏡像狀態(statusPoison/statusParalysis/statusSealed/statusBlind；見下方 const)
 }
 
 func (e *enemyUnit) alive() bool { return e.hp > 0 && !e.fled }
@@ -101,10 +116,11 @@ func (e *enemyUnit) alive() bool { return e.hp > 0 && !e.fled }
 // 為 W3 新增(C 版對應的是「敵方全域」g_party_sealed/g_party_blind，W3 額外做
 // 「玩家對單一敵單位」的鏡像，故落在 per-unit 欄位)。
 const (
-	statusPoison    = 1 << iota // 中毒(既有位元,占位保留;W3 未接毒傷結算)
-	statusParalysis             // 睡眠/混亂(拉里荷144、美達巴尼152;敵方鏡像同)
-	statusSealed                // 瑪荷頓156:不能施咒
-	statusBlind                 // 瑪努莎158:物攻 ~50% 失手
+	statusPoison              = 1 << iota // 戰鬥內鏡像位元；持久條件由 conditionSet 保存，證據與接線見 docs/137
+	statusParalysis                       // 睡眠/混亂(拉里荷144、美達巴尼152;敵方鏡像同)
+	statusSealed                          // 瑪荷頓156:不能施咒
+	statusBlind                           // 瑪努莎158:物攻 ~50% 失手
+	statusPersistentParalysis             // 原版角色 +0x38 bit0x10；跨場景保存且不走睡眠自然甦醒
 )
 
 type battlePhase int
@@ -150,6 +166,8 @@ type Battle struct {
 	msg                    string // 目前訊息的 pack value；供 log／測試，畫面走 msgData.glyph
 	msgData                battleMessage
 	messageQueue           []battleMessage // 已結算回合的後續逐筆訊息；msg 是目前顯示項
+	messageWaitFrames      int             // 原版 sub_208E2 對應的最少訊息輸入 gate
+	messageSFXStep         int             // 目前訊息下一個尚未播放的 pack-owned cue step
 	phase                  battlePhase
 	result                 int // 0 進行中、1 勝、2 敗、3 逃
 	gotExp                 int
@@ -167,7 +185,7 @@ type Battle struct {
 	spells                 []int // 已學可施放咒文 rec
 	spellCursor            int
 	companions             []*battleActor // 同伴(狀態列顯示 + 可各自下令及被鎖定)
-	heroStatus             int            // 主角異常狀態位元(statusParalysis 等;166-168 解咒清此欄)
+	heroStatus             int            // 主角戰鬥鏡像狀態；毒／持久麻痺另於戰後同步回 conditionSet
 	commandActor           int            // 目前下令者：0=隊長，1..=同伴
 	commands               []battleCommand
 	resolving              bool // 正在執行已收集命令；避免舊單步入口重複推進整回合
@@ -182,6 +200,9 @@ type Battle struct {
 	statusSleepingID       string // battleTextStatusSleeping 的 pack role ID
 	statusWokeID           string // battleTextStatusWoke 的 pack role ID
 	texts                  map[string]battleTextDefinition
+	monsterActions         map[int]gamepack.MonsterActionDefinition
+	soundCues              gamepack.BattleSoundCues
+	sfxPlayer              battleSFXPlayer
 	messageLayout          gamepack.WindowLayout      // pack-owned shared battle message rect
 	commandLayout          gamepack.BattlePanelLayout // pack-owned command/selection panel
 	enemyLayout            gamepack.BattlePanelLayout // pack-owned enemy name/count panel
@@ -194,7 +215,7 @@ type Battle struct {
 	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
 	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
 	// 故隊長與同伴各自持有 atkPct/defPct；partyBlind/partySealed 仍是全隊狀態，
-	// 由敵施 158/156 設下,C 版全檔無中途清除 → 持續整場戰鬥(非單回合)。
+	// 由敵施 158/156 設下；目前 runtime 維持至戰鬥結束，原版中途清除時序尚未獨立閉合。
 	heroAtkPct  int  // 隊長物攻修正；拜基魯多為單體
 	heroDefPct  int  // 隊長守備修正；史卡拉單體、史克魯多全體
 	partyBlind  bool // 我方陷入幻惑(敵施158)→ 我方物攻 ~50% 失手
@@ -238,6 +259,17 @@ func (b *Battle) setTextDefinitions(defs map[string]battleTextDefinition) {
 	if def, ok := b.texts[battleTextStatusWoke]; ok {
 		b.statusWokeID, b.statusWokeText = battleTextStatusWoke, def.value
 	}
+}
+
+func (b *Battle) setMonsterActions(defs []gamepack.MonsterActionDefinition) {
+	b.monsterActions = make(map[int]gamepack.MonsterActionDefinition, len(defs))
+	for _, def := range defs {
+		b.monsterActions[def.MaskBit] = def
+	}
+}
+
+func (b *Battle) setSoundCues(cues gamepack.BattleSoundCues, player battleSFXPlayer) {
+	b.soundCues, b.sfxPlayer = cues, player
 }
 
 // setMessageLayout installs the validated pack-owned battle message window.
@@ -325,6 +357,40 @@ func (b *Battle) setCommandLabels(labels gamepack.BattleCommandLabels) {
 func (b *Battle) showMessage(m battleMessage) {
 	b.msgData = m
 	b.msg = m.text.value
+	b.messageWaitFrames = 0
+	b.messageSFXStep = 0
+	b.startNextMessageSFX()
+}
+
+// startNextMessageSFX starts ordered pack-owned cue steps. It stops on the
+// first positive completion gate; zero-duration/non-waiting steps advance
+// without inventing a fallback delay.
+func (b *Battle) startNextMessageSFX() bool {
+	if b.sfxPlayer == nil {
+		b.messageSFXStep = len(b.msgData.sfx)
+		return false
+	}
+	for b.messageSFXStep < len(b.msgData.sfx) {
+		cue := b.msgData.sfx[b.messageSFXStep]
+		b.messageSFXStep++
+		b.sfxPlayer.PlaySFX(cue.CueRaw)
+		if cue.WaitForCompletion {
+			b.messageWaitFrames = sfxWaitFrames(b.sfxPlayer.SFXDurationNanos(cue.CueRaw))
+			if b.messageWaitFrames > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func sfxWaitFrames(durationNanos int64) int {
+	if durationNanos <= 0 {
+		return 0
+	}
+	const nanosPerSecond int64 = 1_000_000_000
+	const battleTPS int64 = 60
+	return int((durationNanos*battleTPS + nanosPerSecond - 1) / nanosPerSecond)
 }
 
 // emitText resolves a stable role to pack-owned glyph/control words. A
@@ -333,6 +399,26 @@ func (b *Battle) showMessage(m battleMessage) {
 // nothing. Built-in production packs are rejected before this path is reached.
 func (b *Battle) emitText(role string, vars ...[]int) {
 	m := battleMessage{role: role, text: b.texts[role]}
+	m.vars = make([][]int, len(vars))
+	for i, v := range vars {
+		m.vars[i] = append([]int(nil), v...)
+	}
+	if m.text.value == "" {
+		m.text.value = role
+	}
+	if b.resolving {
+		b.messageQueue = append(b.messageQueue, m)
+		return
+	}
+	b.showMessage(m)
+}
+
+func (b *Battle) emitTextWithSFX(role string, cue gamepack.BattleSoundCue, vars ...[]int) {
+	b.emitTextWithSFXSequence(role, []gamepack.BattleSoundCue{cue}, vars...)
+}
+
+func (b *Battle) emitTextWithSFXSequence(role string, cues []gamepack.BattleSoundCue, vars ...[]int) {
+	m := battleMessage{role: role, text: b.texts[role], sfx: append([]gamepack.BattleSoundCue(nil), cues...)}
 	m.vars = make([][]int, len(vars))
 	for i, v := range vars {
 		m.vars[i] = append([]int(nil), v...)
@@ -404,7 +490,7 @@ type battleActor struct {
 	spells         []int
 	defending      bool
 	atkPct, defPct int
-	status         int // W3:異常狀態位元(statusParalysis 等,見 enemyUnit 旁 const)
+	status         int // 戰鬥鏡像狀態(statusPoison/statusParalysis 等；持久 condition 另存於 Game/Member)
 }
 
 type battleCommand struct {
@@ -447,12 +533,17 @@ func (b *Battle) consumeActorSleep(actor int) bool {
 	return true
 }
 
+func (b *Battle) actorCannotCommand(actor int) bool {
+	return b.actorStatus(actor)&(statusParalysis|statusPersistentParalysis) != 0
+}
+
 // heroParams 是開戰時由 Game 傳入的主角當前數值(等級推導,見 game.heroStats)。
 type heroParams struct {
 	level, curHP, maxHP, atk, def, agi int
 	herbs                              int   // 持有藥草數(戰鬥中可用)
 	mp, maxMP                          int   // 目前/最大 MP
 	spells                             []int // 已學可施放咒文 rec
+	conditions                         conditionSet
 }
 
 // start 開一場單敵戰鬥(monID + 主角數值 + 同伴)。等同 startGroup(monID, 1, …)。
@@ -574,6 +665,12 @@ func (b *Battle) startFormationWithBackground(groups []enemyGroup, seed int64, h
 	b.companions = comps
 	b.spellCursor = 0
 	b.heroStatus = 0
+	if hp.conditions&conditionPoison != 0 {
+		b.heroStatus |= statusPoison
+	}
+	if hp.conditions&conditionParalysis != 0 {
+		b.heroStatus |= statusPersistentParalysis
+	}
 	b.commandActor = 0
 	b.commands = emptyCommands(1 + len(comps))
 	b.resolving = false
@@ -587,6 +684,7 @@ func (b *Battle) startFormationWithBackground(groups []enemyGroup, seed int64, h
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.msgData, b.gotExp, b.gotGold, b.gotDrop, b.suppressDrop = "", battleMessage{}, 0, 0, -1, false
 	b.messageQueue = nil
+	b.messageWaitFrames, b.messageSFXStep = 0, 0
 	b.active = true
 	b.seekCommandActor(0)
 	return true
@@ -715,7 +813,7 @@ func (b *Battle) commandMenu(actor int) []int {
 
 func (b *Battle) firstCommandActor() int {
 	for i := 0; i < 1+len(b.companions); i++ {
-		if b.actorAlive(i) && b.actorStatus(i)&statusParalysis == 0 {
+		if b.actorAlive(i) && !b.actorCannotCommand(i) {
 			return i
 		}
 	}
@@ -724,7 +822,7 @@ func (b *Battle) firstCommandActor() int {
 
 func (b *Battle) seekCommandActor(from int) bool {
 	for i := from; i < 1+len(b.companions); i++ {
-		if b.actorAlive(i) && b.actorStatus(i)&statusParalysis == 0 {
+		if b.actorAlive(i) && !b.actorCannotCommand(i) {
 			b.commandActor, b.cursor = i, 0
 			return true
 		}
@@ -734,7 +832,7 @@ func (b *Battle) seekCommandActor(from int) bool {
 
 func (b *Battle) previousCommandActor() bool {
 	for i := b.commandActor - 1; i >= 0; i-- {
-		if b.actorAlive(i) && b.actorStatus(i)&statusParalysis == 0 {
+		if b.actorAlive(i) && !b.actorCannotCommand(i) {
 			b.commandActor, b.cursor = i, 0
 			return true
 		}
@@ -908,6 +1006,13 @@ func (b *Battle) fleeResist() int {
 // input 處理一幀輸入,回傳戰鬥是否結束(關閉)。點格(P2)= 游標移過去 + 等同 A 選定;
 // tapIdx 對照 b.hits(上一幀 draw() 依當前 phase 建的那組:指令 5 格 或 咒文清單)。
 func (b *Battle) input(in InputState) (closed bool) {
+	if b.phase == phMessage && b.messageWaitFrames > 0 {
+		b.messageWaitFrames--
+		if b.messageWaitFrames == 0 {
+			b.startNextMessageSFX()
+		}
+		return false
+	}
 	tapIdx := -1
 	if in.Tapped {
 		tapIdx = b.hits.at(in.TapX, in.TapY)
@@ -1061,7 +1166,7 @@ func (b *Battle) execTurn() {
 	case bcFlee: // 逃げる
 		if battle.FleeOK(b.heroAgi, b.fleeResist(), b.roll()) {
 			b.result, b.phase = 3, phMessage
-			b.emitText(battleTextActorFled, b.actorNameGlyphs(b.actionActor))
+			b.emitTextWithSFX(battleTextActorFled, b.soundCues.PlayerFled, b.actorNameGlyphs(b.actionActor))
 			return
 		}
 		// D3TXT00 has a confirmed success record (348), but no separately
@@ -1095,21 +1200,32 @@ func (b *Battle) execTurn() {
 			break // 組內已無存活敵(全數逃走中)→ 揮空,直接進勝負判定
 		}
 		if b.partyBlind && b.roll() < 128 { // 我方幻惑(敵施158瑪努莎)→ ~50% 揮空(對齊 C g_party_blind)
-			b.emitText(battleTextActorMissed)
+			b.emitTextWithSFXSequence(battleTextActorAttack, b.soundCues.PlayerPhysical.Steps,
+				b.actorNameGlyphs(b.actionActor))
+			b.emitTextWithSFX(battleTextActorMissed, b.soundCues.PhysicalMiss)
 			break
 		}
 		crit := 0
 		if b.roll() < 8 { // ~1/32 會心
 			crit = 1
 		}
+		if crit == 0 {
+			b.emitTextWithSFXSequence(battleTextActorAttack, b.soundCues.PlayerPhysical.Steps,
+				b.actorNameGlyphs(b.actionActor))
+		}
 		atk := pct(b.heroAtk, b.actorAtkPct(0))       // 拜基魯多151
 		def := pct(b.enemies[tgt].def, b.enemyDefPct) // 敵154/155自施升守備
 		dmg := battle.PhysDamage(atk, def, b.roll(), crit)
+		oldHP := b.enemies[tgt].hp
 		b.enemies[tgt].hp -= dmg
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
 		}
-		b.emitText(battleTextActorDamage, b.enemyNameGlyphs(tgt), digitGlyphs(dmg))
+		b.emitTextWithSFX(battleTextActorDamage, b.soundCues.PhysicalHit,
+			b.enemyNameGlyphs(tgt), digitGlyphs(dmg))
+		if oldHP > 0 && b.enemies[tgt].hp == 0 {
+			b.emitText(battleTextEnemyDefeated, b.enemyNameGlyphs(tgt))
+		}
 		b.flashCol = b.hurtFxFrames
 	}
 	if b.allEnemiesDead() {
@@ -1219,10 +1335,10 @@ func (b *Battle) execSpell(rec int) {
 			b.clearActorStatus(target, statusPoison)
 			b.emitText(battleTextCurePoison, b.actorNameGlyphs(target))
 		}
-	case spell.CureStatus: // 基阿里克167/薩梅哈168(remake 簡化:麻痺/混亂/睡眠共用一位元)
+	case spell.CureStatus: // 基阿里克167/薩梅哈168：原版 battle handler 亦清 +0x38 bit0x10
 		targets := b.allySpellTargets(def.Target, b.actionTarget)
 		for _, target := range targets {
-			b.clearActorStatus(target, statusParalysis)
+			b.clearActorStatus(target, statusParalysis|statusPersistentParalysis)
 			b.emitText(battleTextCureStatus, b.actorNameGlyphs(target))
 		}
 	case spell.Palpunte:
@@ -1419,14 +1535,9 @@ func (b *Battle) turnSpeed(agi int) int {
 	return base + b.rng.Next(base)
 }
 
-// resolveRound 對齊原版 sub_d6bf：收完全隊命令後，才把存活隊員與敵人依敏捷擲值混排。
-func (b *Battle) resolveRound() {
-	b.msg, b.msgData = "", battleMessage{}
-	b.messageQueue = nil
-	for _, c := range b.companions {
-		c.defending = false
-	}
-	b.defending = false
+// buildTurnOrder 對齊原版 sub_1C34F：每個建立 queue 當下仍存活的 actor 恰好寫一筆，
+// 再依敏捷擲值排序。Boss 沒有 repeat-N 特例；完整 caller/consumer 負證據見 docs/148。
+func (b *Battle) buildTurnOrder() []turnEntry {
 	order := make([]turnEntry, 0, 1+len(b.companions)+len(b.enemies))
 	if b.heroHP > 0 {
 		order = append(order, turnEntry{index: 0, speed: b.turnSpeed(b.heroAgi)})
@@ -1442,6 +1553,18 @@ func (b *Battle) resolveRound() {
 		}
 	}
 	sort.SliceStable(order, func(i, j int) bool { return order[i].speed > order[j].speed })
+	return order
+}
+
+// resolveRound 對齊原版 sub_1C08B：收完全隊命令後，逐筆消費 sub_1C34F action queue。
+func (b *Battle) resolveRound() {
+	b.msg, b.msgData = "", battleMessage{}
+	b.messageQueue = nil
+	for _, c := range b.companions {
+		c.defending = false
+	}
+	b.defending = false
+	order := b.buildTurnOrder()
 
 	b.resolving = true
 	defer func() { b.resolving = false }()
@@ -1454,7 +1577,8 @@ func (b *Battle) resolveRound() {
 			b.enemyAction(e.index, ai, aiOK)
 			continue
 		}
-		if !b.actorAlive(e.index) || b.consumeActorSleep(e.index) {
+		if !b.actorAlive(e.index) || b.actorStatus(e.index)&statusPersistentParalysis != 0 ||
+			b.consumeActorSleep(e.index) {
 			continue
 		}
 		cmd := b.commands[e.index]
@@ -1494,7 +1618,7 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 	case bcFlee:
 		if battle.FleeOK(c.agi, b.fleeResist(), b.roll()) {
 			b.result, b.phase = 3, phMessage
-			b.emitText(battleTextActorFled, b.actorNameGlyphs(i+1))
+			b.emitTextWithSFX(battleTextActorFled, b.soundCues.PlayerFled, b.actorNameGlyphs(i+1))
 		}
 	case bcDef:
 		c.defending = true
@@ -1526,17 +1650,26 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 			return
 		}
 		if b.partyBlind && b.roll() < 128 {
-			b.emitText(battleTextActorMissed)
+			b.emitTextWithSFXSequence(battleTextActorAttack, b.soundCues.PlayerPhysical.Steps,
+				b.actorNameGlyphs(i+1))
+			b.emitTextWithSFX(battleTextActorMissed, b.soundCues.PhysicalMiss)
 			return
 		}
+		b.emitTextWithSFXSequence(battleTextActorAttack, b.soundCues.PlayerPhysical.Steps,
+			b.actorNameGlyphs(i+1))
 		atk := pct(c.atk, b.actorAtkPct(i+1))
 		def := pct(b.enemies[tgt].def, b.enemyDefPct)
 		dmg := battle.PhysDamage(atk, def, b.roll(), 0)
+		oldHP := b.enemies[tgt].hp
 		b.enemies[tgt].hp -= dmg
 		if b.enemies[tgt].hp < 0 {
 			b.enemies[tgt].hp = 0
 		}
-		b.emitText(battleTextActorDamage, b.enemyNameGlyphs(tgt), digitGlyphs(dmg))
+		b.emitTextWithSFX(battleTextActorDamage, b.soundCues.PhysicalHit,
+			b.enemyNameGlyphs(tgt), digitGlyphs(dmg))
+		if oldHP > 0 && b.enemies[tgt].hp == 0 {
+			b.emitText(battleTextEnemyDefeated, b.enemyNameGlyphs(tgt))
+		}
 		b.flashCol = b.hurtFxFrames
 	}
 	if b.allEnemiesDead() {
@@ -1590,7 +1723,8 @@ func actorIndex(target int) int {
 	return target + 1
 }
 
-// setTargetStatus:對目標(-1=隊長,i=同伴)加異常狀態位元(敵鏡像144/152 睡眠/混亂用)。
+// setTargetStatus 對目標（-1=隊長，i=同伴）寫入 battle status mirror。
+// 睡眠只存在本場；毒與持久麻痺會在戰後同步回 conditionSet。
 func (b *Battle) setTargetStatus(target, bit int) {
 	if target < 0 {
 		b.heroStatus |= bit
@@ -1599,8 +1733,10 @@ func (b *Battle) setTargetStatus(target, bit int) {
 	b.companions[target].status |= bit
 }
 
-// enemyTurn:敵方回合(移植 C do_turn 敵方段:逐隻存活敵各行動一次——逃跑 → 施咒 → 物攻;
-// 逃跑/施咒/物攻皆鎖定隨機存活隊員;任一隻行動後我方全滅即中斷,結算敗;全體行動完畢才收尾訊息)。
+// enemyTurn:敵方回合；逐隻存活敵各行動一次——逃跑 → action mask → 物攻。
+// 普通單體 action／物攻選隨機存活隊員；已由 IDA 閉合的 bit38 毒氣與 bit41 睡眠
+// 依 pack scope 逐名處理，不得外推其他 action 也是全隊效果。
+// 任一隻行動後我方全滅即中斷，全部行動完畢才收尾訊息。
 // 混合 formation 必須逐隻依 monID 取 AI；同種群自然得到相同資料。
 func (b *Battle) enemyTurn() {
 	for i := range b.enemies {
@@ -1628,7 +1764,7 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 	}
 	if aiOK && ai.FleeRate > 0 && b.heroLevel >= int(ai.FleeThresh) && b.roll() <= int(ai.FleeRate) {
 		b.enemies[i].hp, b.enemies[i].fled = 0, true
-		b.emitText(battleTextActorFled, b.enemyNameGlyphs(i))
+		b.emitTextWithSFX(battleTextActorFled, b.soundCues.EnemyFled, b.enemyNameGlyphs(i))
 		return
 	}
 	targets := b.aliveTargets()
@@ -1637,11 +1773,37 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 		b.emitText(battleTextPartyDefeated, b.actorNameGlyphs(0))
 		return
 	}
-	tgt := targets[b.rng.Next(len(targets))]
+	bits := []int(nil)
+	if aiOK {
+		bits = spell.MonsterSpellBits(ai.SpellMask)
+	}
+	// IDA sub_1A973 先用 sub_1E6B9 做 cast gate；只有 gate 成功才進
+	// sub_199DC，並在其內依序由 sub_1AB83 抽存活隊員、sub_19AD6
+	// 選 raw action。即使最後進 bit38／41 全隊 handler，該次 target RNG
+	// 仍在 action bit 之前消耗；但 gate 失敗的物理分支不可在 gate 前抽目標
+	// （docs/153）。
+	tgt := -2
 	if aiOK && ai.CastProb > 0 && b.enemies[i].status&statusSealed == 0 && b.roll() < int(ai.CastProb) {
-		if bits := spell.MonsterSpellBits(ai.SpellMask); len(bits) > 0 {
-			rec := spell.MonsterSpellRec(bits[b.rng.Next(len(bits))])
+		if len(bits) > 0 {
+			tgt = targets[b.rng.Next(len(targets))]
+			bit := bits[b.rng.Next(len(bits))]
+			if b.executeMonsterAction(i, bit, tgt) {
+				return
+			}
+			// 歷史相容近似：舊 runtime 以文字 rec lookup 嘗試一般 spell descriptor。
+			// 目前 pack 只接已閉合的 bit3 paralysis、bit38 poison／bit41 sleep special action；其餘 bit尚未逐一
+			// 閉合，故此路徑不得在文件中宣稱為原版 exact，也不得反推所有 bit 都是咒文。
+			rec := spell.MonsterSpellRec(bit)
 			if def, ok := spell.GetDef(rec); ok {
+				cost := spell.MPCost(rec)
+				if cost < 0 || b.enemies[i].mp < cost {
+					b.emitText(battleTextMPInsufficient, b.enemyNameGlyphs(i))
+					return
+				}
+				b.enemies[i].mp -= cost
+				if tgt == -2 {
+					tgt = targets[b.rng.Next(len(targets))]
+				}
 				switch def.Kind {
 				case spell.Heal:
 					val := spell.CastValue(def.Base, b.roll())
@@ -1687,8 +1849,13 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 			}
 		}
 	}
+	if tgt == -2 {
+		tgt = targets[b.rng.Next(len(targets))]
+	}
 	if b.enemies[i].status&statusBlind != 0 && b.roll() < 128 {
-		b.emitText(battleTextActorMissed)
+		b.emitTextWithSFX(battleTextEnemyAttack, b.soundCues.EnemyPhysicalAttack,
+			b.enemyNameGlyphs(i))
+		b.emitTextWithSFX(battleTextActorMissed, b.soundCues.PhysicalMiss)
 		return
 	}
 	eatk := pct(b.enemies[i].atk, b.enemyAtkPct)
@@ -1701,10 +1868,84 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 	if tgt < 0 && b.defending || tgt >= 0 && b.companions[tgt].defending {
 		edmg /= 2
 	}
+	oldHP, _ := b.actorHP(actor)
 	b.damageMember(tgt, edmg)
-	b.emitText(battleTextActorAttack, b.enemyNameGlyphs(i))
-	b.emitText(battleTextActorDamage, b.actorNameGlyphs(actor), digitGlyphs(edmg))
+	newHP, _ := b.actorHP(actor)
+	b.emitTextWithSFX(battleTextEnemyAttack, b.soundCues.EnemyPhysicalAttack,
+		b.enemyNameGlyphs(i))
+	b.emitTextWithSFX(battleTextPartyDamage, b.soundCues.PhysicalHit,
+		b.actorNameGlyphs(actor), digitGlyphs(edmg))
+	if oldHP > 0 && newHP == 0 {
+		b.emitText(battleTextActorDied, b.actorNameGlyphs(actor))
+	}
 	b.wipedOut()
+}
+
+// executeMonsterAction 執行已由 pack 閉合的 mask action；目前支援 bit3 致命一擊、
+// bit38 poison 與 bit41 battle sleep，其餘 action 語意仍不得外推。
+// true 表示即使無目標成功也已消耗回合。
+func (b *Battle) executeMonsterAction(enemyIndex, maskBit, target int) bool {
+	action, ok := b.monsterActions[maskBit]
+	if !ok {
+		return false
+	}
+	if action.Kind == "special_physical_condition" {
+		return b.executeSpecialPhysicalCondition(enemyIndex, target, action)
+	}
+	if action.Kind != "apply_condition" {
+		return false
+	}
+	b.emitText(action.CastTextRole, b.enemyNameGlyphs(enemyIndex))
+	status := 0
+	switch action.ConditionID {
+	case gamepack.PoisonCondition:
+		status = statusPoison
+	case gamepack.SleepCondition:
+		status = statusParalysis
+	default:
+		return false
+	}
+	for _, target := range b.aliveTargets() {
+		actor := actorIndex(target)
+		if b.actorStatus(actor)&status != 0 || b.roll() > action.SuccessRollMax {
+			continue
+		}
+		b.setTargetStatus(target, status)
+		b.emitText(action.SuccessTextRole, b.actorNameGlyphs(actor))
+	}
+	return true
+}
+
+func (b *Battle) executeSpecialPhysicalCondition(enemyIndex, target int,
+	action gamepack.MonsterActionDefinition) bool {
+	if action.TargetScope != "party_one_alive" ||
+		action.ConditionID != gamepack.ParalysisCondition ||
+		action.DamageFormula != "ignore_defense_half_plus_random_quarter" ||
+		target == -2 {
+		return false
+	}
+	actor := actorIndex(target)
+	eatk := pct(b.enemies[enemyIndex].atk, b.enemyAtkPct)
+	damage := battle.IgnoreDefensePhysicalDamage(eatk, b.roll())
+	if target < 0 && b.defending || target >= 0 && b.companions[target].defending {
+		damage /= 2
+	}
+	oldHP, _ := b.actorHP(actor)
+	b.damageMember(target, damage)
+	newHP, _ := b.actorHP(actor)
+	b.emitTextWithSFX(battleTextEnemyAttack, b.soundCues.EnemyPhysicalAttack,
+		b.enemyNameGlyphs(enemyIndex))
+	b.emitTextWithSFX(action.CastTextRole, b.soundCues.FatalStrike)
+	b.emitText(battleTextPartyDamage, b.actorNameGlyphs(actor), digitGlyphs(damage))
+	if oldHP > 0 && newHP == 0 {
+		b.emitText(battleTextActorDied, b.actorNameGlyphs(actor))
+	} else if newHP > 0 && action.ConditionOnSurvival {
+		b.setTargetStatus(target, statusPersistentParalysis)
+		b.emitText(action.SuccessTextRole, b.actorNameGlyphs(actor))
+	}
+	b.flashCol = b.hurtFxFrames
+	b.wipedOut()
+	return true
 }
 
 // wipedOut:我方全滅 → 設敗、回 true(呼叫端應立即結束回合,別讓其餘敵繼續行動)。

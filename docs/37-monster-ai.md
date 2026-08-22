@@ -1,10 +1,15 @@
 # 精訊版 DQ3 怪物 AI(敵方行動邏輯)反組譯
 
+> **2026-08-22 閱讀閘門：**本文前六節保存原版 RE 證據；第七節的
+> `dq3_battlescene` 是歷史 C/SDL 狀態，不是現行 Go／Ebitengine 工作清單。現行 mask
+> remap、毒氣 writer 與現行 poison E2 接線以 [`docs/137`](137-church-poison-condition-re.md)
+> 及 [`docs/74`](74-ebiten-remake-completion-plan.md) 為準。
+
 精訊版 DQ3 戰鬥中,每隻怪物每回合怎麼決定要做什麼?本文把 `DQ3.EXE` 的敵方行動決策
-已靜態閉合共用敵方行動 dispatcher 的主要分支:「狀態檢查 → 逃跑判定 → 物理 / 咒文」
+已靜態閉合共用敵方行動 dispatcher 的主要分支:「狀態檢查 → 逃跑判定 → 物理／action mask」
 決策樹,加上四個藏在
 `D3MNS.DAT` 怪物資料裡的 AI 參數。資料驅動驗證:史萊姆只會打、荷依米史萊姆會補血、
-邪惡巫師會放六種咒文、金屬史萊姆很愛逃、boss 在此 gate 不逃——資料值與已知體感相符。
+邪惡巫師有六個 action 候選、金屬史萊姆很愛逃、boss 在此 gate 不逃——資料值與已知體感相符。
 這不涵蓋 boss repeat-N、逐動作 frame／PCM timing、全部咒文索引語意或 V3 對拍。
 
 > 位址為 **file offset**(`tools/re_disasm.py` 基準,同 docs/18 codecave note「file 0xc22e」);
@@ -26,8 +31,8 @@
      若 我方強度 [0x5094] >= D3MNS[+0x17]       → 進逃跑擲骰:
          rng(256) <= D3MNS[+0x18]              → 逃走!(HP=0、群數 -1、印 msg 0x15b)
 4. 行動選擇(file 0xbdc7):
-     dl = D3MNS[+0x0d]   ; 施咒機率
-     rng(256) < dl   → 0xad4c  施放咒文 / 特技
+     dl = D3MNS[+0x0d]   ; action-mask gate
+     rng(256) < dl   → 0xad4c  從 action mask 選普通咒文／特技
      rng(256) >= dl  → 0xbf75  物理攻擊
 ```
 
@@ -40,8 +45,8 @@
 
 | 偏移 | 語意 | 反組譯佐證(file) | 說明 |
 |---|---|---|---|
-| `+0x0d` | **施咒機率**(/256) | `0xbdc7 mov dl,[si+0xd]` → rng cmp | rng < 此值 → 放咒;0=純物攻、220=幾乎每回合放咒 |
-| `+0x0e`~`+0x13` | **已知咒文 bitmask**(6 byte = 48 bit) | `0xae8e si=[0x24a9]+0xe;` 掃 48 bit | 每 bit = 會某咒;放咒時從中**均勻隨機**挑一個 |
+| `+0x0d` | **action-mask gate**(/256) | `0xbdc7 mov dl,[si+0xd]` → rng cmp | rng < 此值 → 從 raw mask 選 action；0=純物攻，不代表非零值皆為普通咒文 |
+| `+0x0e`~`+0x13` | **怪物 action mask**(6 byte = 48 bit) | `0xae8e si=[0x24a9]+0xe;` 掃 48 bit | 從 set bit 均勻挑 raw action；普通咒文只是已閉合子集合，bit38 是毒氣特技 |
 | `+0x17` | **逃跑觸發閾值**(對我方強度 `[0x5094]`) | `0xbd71 al=[si+0x17]; cmp [0x5094],al; jb skip` | 我方強度 ≥ 此值才會考慮逃;boss=99 形同不逃 |
 | `+0x18` | **逃跑機率**(逃跑抗性) | `0xbd7c dl=[si+0x18]; rng cmp` | 觸發後 rng ≤ 此值就逃;0=即使該逃也不逃 |
 
@@ -49,14 +54,14 @@
 
 ### 實測值(資料驅動驗證)
 
-| id | 怪名 | +0d 施咒 | +17 逃閾 | +18 逃率 | 已知咒文 bit | 行為 |
+| id | 怪名 | +0d action gate | +17 逃閾 | +18 逃率 | raw action bit | 已閉合行為／舊名稱線索 |
 |---|---|---|---|---|---|---|
 | 5 | 史萊姆 | **0** | 7 | 180 | （無） | 純物理攻擊 |
 | 6 | 大烏鴉 | 0 | 7 | 180 | （無） | 純物理 |
-| 1 | 荷依米史萊姆 | **220** | 30 | 180 | [32] | 幾乎每回合放補血咒(治療型)|
+| 1 | 荷依米史萊姆 | **220** | 30 | 180 | [32] | 幾乎每回合進入 action 分支；此 bit 的治療 handler 已閉合 |
 | 8 | 人面蝶 | 140 | 9 | 180 | [31] | 常放咒 |
 | 30 | 魔法香菇怪 | 80 | 27 | 180 | [9, 32] | 2 種咒文 |
-| 100 | 邪惡巫師 | **200** | 47 | **0** | [1,12,19,26,29,42] | 6 種咒文、從不逃(真法師)|
+| 100 | 邪惡巫師 | **200** | 47 | **0** | [1,12,19,26,29,42] | 6 個 raw action 候選、從不逃；不可只憑文字 lookup 稱全為咒文 |
 | 2 | 金屬史萊姆 | 80 | **3** | 128 | [0] | 閾值極低 + 50% 逃率 → **超愛逃** |
 | 3 | 金屬怪 | 50 | 3 | 180 | [3] | 同樣早逃高機率 |
 | 120 | 劍魔 | 60 | 47 | 80 | [22] | 偶爾放咒、少逃 |
@@ -68,23 +73,26 @@ boss(逃閾 99 + 逃率 0)= 從不逃跑;史萊姆 / 大烏鴉(施咒 0)= 只會
 (施咒 220 + 補血咒)= 邊打邊補。這些是資料與共用分支的抽樣交叉驗證，
 不是全部怪物行為的實機完備證明。
 
-## 三、施咒:從 bitmask 均勻隨機挑一個(file 0xae46)
+## 三、動作 mask：從 set bit 均勻隨機挑一個(file 0xae46)
 
-放咒分支(0xad4c)先呼叫 **0xae46** 選一個咒文:
+action 分支(0xad4c)先呼叫 **0xae46** 選一個 raw action:
 
 ```
-count = popcount(D3MNS[+0x0e..+0x13])    ; 數該怪會幾種咒(48-bit mask)
+count = popcount(D3MNS[+0x0e..+0x13])    ; 數 set bit(48-bit action mask)
 if count == 0: 退回物理攻擊
 pick = rng(0xfa39) % count               ; 均勻隨機第 pick 個 set bit
-spell_id = bit 位置(0..47),小幅修正(in [0x10,0x12) 時 +2)
-[0x2511] = spell_id                      ; 設為要施放的咒
+action_id = bit 位置(0..17；其中 0x10..0x11 加 2)
+          或 DGROUP 0x3930[bit-18]       ; bit18..47 經 30-byte remap table
+[0x2511] = action_id                     ; 設為本次怪物動作
 → 套用效果(傷害 base/2+rng / 回復 / 狀態;魔甲對咒文傷害減半 #7b,file 0xc22e)
 ```
 
-所以怪物**不挑「最佳」咒,而是從會的咒裡隨機選一個**(這也是 DQ 系列一貫的怪物 AI 風格:
-無權重、純隨機;真正的強度差異來自「會哪些咒 + 施咒機率」)。咒文索引(bit 位置)經放咒
-handler 對到 `[0x2511]`(spell_id),咒文名 rec ≈ spell_id 區(對映細節見 docs/13 咒文系統,
-怪物咒文表與玩家咒文表的 index 對應待逐一坐實)。
+本版本已證實 selector 對 set bit 均勻取樣；這不證明每個 bit 都是咒文，也不外推成系列
+慣例或完整強度公式。raw action 經 handler 對到 `[0x2511]`。先前把 48 個 bit 全部直接
+稱為 spell ID 是錯誤斷言：IDA
+`sub_199DC` 證實 bit18..47 必須經 DGROUP `0x3930` remap，且 DGROUP `0x394e`
+是依 `action_id-0x14` 索引的間接 handler 表。例如 bit38 → action `0x32` →
+logical `0xa307` 毒氣 handler；它不是一般玩家咒文 descriptor。完整證據見 `docs/137`。
 
 ## 四、物理攻擊(file 0xbf75)
 
@@ -150,7 +158,8 @@ IDA Pro 9.4 重新追查後確認，先前「睡眠／混亂持續整場、不�
 
 - 逃跑:`我方平均等級 ≥ D3MNS[+0x17]` 時,`rng(256) ≤ D3MNS[+0x18]` 逃走。
 - 施咒 vs 物攻:`rng(256) < D3MNS[+0x0d]` 放咒,否則物攻。
-- 放咒:從 `D3MNS[+0x0e..+0x13]` bitmask 均勻隨機挑一咒(對映 `dq3_spelldef`)。
+- 特殊／咒文動作：從 `D3MNS[+0x0e..+0x13]` bitmask 均勻挑一個 set bit，再依
+  原版 remap 與間接 handler 表執行；不得把所有 bit 直接送入玩家 `dq3_spelldef`。
 - 怪物睡眠／混亂：bit7 每回合 `roll<100` 醒；玩家側對應 +0x38 bit0x20，
   每次行動前 `roll<=100` 醒。兩者醒來當回合都不行動。
 
@@ -168,8 +177,8 @@ IDA Pro 9.4 重新追查後確認，先前「睡眠／混亂持續整場、不�
 | 0xbd71 | `[0x5094] cmp [si+0x17]` | 逃跑觸發(我方強度 vs +0x17) |
 | 0xbd7c | `dl=[si+0x18]; rng cmp` | 逃跑機率 +0x18 |
 | 0xbdc7 | `dl=[si+0xd]; rng cmp → 0xad4c/0xbf75` | 施咒 vs 物攻(+0x0d) |
-| 0xae46 | popcount + `rng%count` 挑 bit | 從 bitmask 隨機選咒 |
-| 0xad4c | `[0x2511]=spell_id` → 套效果 | 放咒分支 |
+| 0xae46 | popcount + `rng%count` 挑 bit | 從 bitmask 隨機選動作 |
+| 0xad4c | remap 後寫 `[0x2511]`，再查間接表 | 咒文／特殊動作分派 |
 | 0xbf75 | msg 0x14b → 物理傷害 | 物攻分支 |
 
 > 工具:`tools/re_battle_dis.py` / capstone;AI 欄位值由 `D3MNS.DAT` 直接 dump 驗證

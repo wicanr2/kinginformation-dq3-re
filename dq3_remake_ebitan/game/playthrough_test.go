@@ -119,7 +119,7 @@ func TestPlaythroughEconomy(t *testing.T) {
 	if inn == nil || inn.typ != facInn || inn.innCost != 2 {
 		t.Fatalf("阿里阿罕宿屋應 inn_cost2,得 %+v", inn)
 	}
-	t.Logf("經濟 ✓:阿里阿罕武防店 7 品(銅劍100G)、宿屋 2G;全城設施表 %d 筆", len(allFacilities))
+	t.Logf("經濟 ✓:阿里阿罕武防店 7 品(銅劍100G)、宿屋 2G;raw facility rows %d 筆", len(allFacilities))
 }
 
 // 整合 game test:legacy 寶箱表 + 已遷入 pack 的 typed-event 可收集寶物。

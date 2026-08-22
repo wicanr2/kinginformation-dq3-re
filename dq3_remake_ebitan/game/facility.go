@@ -2,8 +2,9 @@ package game
 
 import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 
-// 城鎮設施(移植 dq3_shopdata:type 0=旅社 1=武防店 2=道具店 3=教會 4=記錄點)。
-// NPC 子型 (ctrl>>3)&7 >= 3 → 設施;byte4 = 設施索引 k。全城設施表在 shopdata.go(baked)。
+// 城鎮設施（type 0=旅社、1=武防店、2=道具店、3=教會、4=記錄點）。
+// NPC 子型 (ctrl>>3)&7 >=3 才是 consumer，byte4 是 block index；shopdata.go 保存 raw
+// block inventory，孤立 block 或 section 不吻合的 row 不等於玩家可用設施。
 const (
 	facInn = iota
 	facWeapon
@@ -25,29 +26,34 @@ const (
 )
 
 // Church 是教會三項服務 modal。原版 handler 0x83d8 的服務順序為解毒／解詛咒／復活；
-// 現行 Member 尚未持久化毒／詛咒旗標，前兩項 fail-closed，復活交易已按 0x85ff 實作。
+// 三者均由 pack 定價，解詛咒的 ITEM metadata→equipped word→教會 consumer 見 docs/147。
 type Church struct {
-	active        bool
-	stage         churchStage
-	serviceCursor int
-	targetCursor  int
-	confirmCursor int // 0=是、1=否
-	pendingTarget int
-	pendingCost   int
-	msg           string
-	tx            *dq3data.Text
+	active         bool
+	stage          churchStage
+	serviceCursor  int
+	targetCursor   int
+	confirmCursor  int // 0=是、1=否
+	pendingTarget  int
+	pendingService int
+	pendingCost    int
+	msg            string
+	tx             *dq3data.Text
 }
 
 // Shop 是開啟中的商店狀態(武防/道具店)。
 type Shop struct {
-	items    *dq3data.Items
-	tx       *dq3data.Text
-	nameText *dq3data.Text // 品名:D3TXT00.TXT record = code+1
-	active   bool
-	codes    []int // 貨架品項 id
-	cursor   int
-	msg      string
-	hits     hitList // 貨架列可點區塊,draw() 重建(P2 直接點選)
+	items        *dq3data.Items
+	tx           *dq3data.Text
+	nameText     *dq3data.Text // 品名:D3TXT00.TXT record = code+1
+	active       bool
+	codes        []int // 貨架品項 id
+	cursor       int
+	msg          string
+	hits         hitList // 貨架列可點區塊,draw() 重建(P2 直接點選)
+	targeting    bool
+	pendingCode  int
+	targetCursor int
+	targetHits   hitList
 }
 
 // itemNameGlyphs 取道具 code 的品名 glyph 序列(D3TXT00 rec=code+1;跳過控制/插值碼)。
@@ -82,6 +88,7 @@ func (s *Shop) drawItemName(rgba []byte, x, y, code int, fg dq3data.Color) {
 
 func (s *Shop) open(codes []int) {
 	s.codes, s.cursor, s.active, s.msg = codes, 0, true, ""
+	s.targeting, s.pendingCode, s.targetCursor = false, -1, 0
 }
 
 // input 處理商店輸入;回傳 (buyCode, closed):buyCode>=0 表要買該 id。

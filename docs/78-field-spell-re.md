@@ -3,6 +3,15 @@
 本文件只記可重用證據與未決事項。目標是避免後續又從 C remake 的近似值反推原版。
 位址皆為原始 `DQ3.EXE` file offset；分析以 `tools/dis.sh` 與 IDA Pro 9.4 交叉確認。
 
+> **2026-08-22 現況訂正：**本日較早的 Go `fieldspell.go` 只列 rec172–179 工具咒，當時
+> 尚未接原版非戰鬥回復咒文；因此本文過去把「field caster 已接」縮寫成場景咒文完成，會
+> 遮蔽核心玩家功能缺口。IDA Pro 9.4 sidecar `work/field-heal-ida-20260822.json` 已確認：
+> `sub_1CB3C` 以 `rec-0x79` 查 `DS:37C3`、檢查 MP；descriptor flags 同時以 bit `0x08`
+> gate `sub_188A9→sub_1885F` 的隊伍選人，並在共通施法後扣 `[caster+0x18]` MP；bit `0x02`
+> 才進 `DS:38CC` effect pointer table。後續 [`docs/171`](171-field-healing-spell-production-spec.md)
+> 已閉合 rec161–165 的 descriptor、共用 HP writer、單體／全體 consumer 與正式輸入交易，
+> 並由 `spells.json` 接線為 E2；逐 frame／PCM wall-clock 仍非 V3。
+
 ## 真正的咒文施放路徑：已證實（D2）
 
 - `0x1c9ee`：咒文選單；`0x1cb3c`：field caster。後者以

@@ -1,6 +1,7 @@
 package game
 
-// 全城設施表 + 品項池(自 dq3_shopdata baked)。
+// 原始 facility block inventory + 品項池（自歷史 dq3_shopdata baked）。block 必須另有
+// 同 section 的 NPC consumer 才是玩家可用設施；CTY43 index2 即為已證實的孤立 block。
 var shopItemPool = []int{0, 1, 3, 30, 31, 33, 57, 65, 66, 67, 52, 65, 66, 68, 67, 4, 6, 7, 32, 33, 50, 57, 7, 8, 11, 33, 34, 36, 58, 37, 50, 65, 66, 68, 67, 69, 8, 11, 9, 39, 38, 58, 59, 37, 65, 66, 68, 67, 69, 5, 35, 68, 67, 69, 70, 66, 69, 36, 39, 58, 59, 37, 48, 4, 7, 8, 11, 13, 13, 14, 35, 57, 54, 17, 65, 66, 68, 67, 69, 70, 11, 13, 14, 39, 35, 40, 59, 50, 65, 66, 68, 67, 69, 65, 66, 68, 67, 69, 17, 18, 21, 43, 41, 58, 108, 12, 18, 40, 35, 38, 108, 65, 66, 68, 67, 69, 71, 12, 18, 40, 25, 38, 108, 0, 1, 2, 6, 30, 49, 32, 65, 66, 68, 67, 69, 71, 93, 9, 12, 21, 22, 43, 60, 5, 4, 8, 13, 18, 35, 41, 108, 68, 67, 93, 65, 66, 65, 68, 67, 50, 21, 22, 12, 43, 41, 44, 60, 65, 68, 67, 71, 70, 93, 5, 12, 22, 110, 41, 44, 42, 65, 66, 68, 67, 69, 93, 11, 14, 44, 118, 60, 128, 65, 68, 67, 69, 21, 12, 41, 44, 62, 49, 110, 29, 35, 43, 60, 108}
 
 // facilityRow: cty,sec,k,type,count,itemOff,innCost。
@@ -98,7 +99,8 @@ var allFacilities = [][7]int{
 	{86, 1, 0, 3, 0, 0, 0},
 }
 
-// facilityForCty:依 (cty,k=NPC byte4) 查設施(section 0)。移植 dq3_facility_at。
+// facilityForCty 目前依 (cty,k=NPC byte4) 查 legacy table。raw row 雖含 section，
+// 此 API 尚未接收／比對 section；不能宣稱多 section 設施已與原版 dq3_facility_at 對齊。
 func facilityForCty(cty, k int) *facility {
 	for _, f := range allFacilities {
 		if f[0] == cty && f[2] == k { // f: cty,sec,k,type,count,itemOff,innCost

@@ -1,0 +1,140 @@
+{
+  "schema_version": "0.1.43",
+  "field": [
+    {
+      "record_raw": 161,
+      "effect_id": "common:spell.heal_hp",
+      "mp_cost": 3,
+      "base_amount": 30,
+      "flags_raw": 11,
+      "descriptor_raw_hex": "031e0b",
+      "target_scope": "party_member",
+      "amount_formula": "base_to_base_plus_9",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x2860B; handler 0x1CC4F; writer 0x146EB","consumer":"game.fieldSpellInput heal_hp","doc":"docs/171-field-healing-spell-production-spec.md"}
+    },
+    {
+      "record_raw": 162,
+      "effect_id": "common:spell.heal_hp",
+      "mp_cost": 5,
+      "base_amount": 85,
+      "flags_raw": 11,
+      "descriptor_raw_hex": "05550b",
+      "target_scope": "party_member",
+      "amount_formula": "base_to_base_plus_9",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x2860E; handler 0x1CC4F; writer 0x146EB","consumer":"game.fieldSpellInput heal_hp","doc":"docs/171-field-healing-spell-production-spec.md"}
+    },
+    {
+      "record_raw": 163,
+      "effect_id": "common:spell.heal_hp",
+      "mp_cost": 7,
+      "base_amount": 255,
+      "flags_raw": 11,
+      "descriptor_raw_hex": "07ff0b",
+      "target_scope": "party_member",
+      "amount_formula": "full_hp",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28611; handler 0x1CC4F; writer 0x146EB","consumer":"game.fieldSpellInput heal_hp","doc":"docs/171-field-healing-spell-production-spec.md"}
+    },
+    {
+      "record_raw": 164,
+      "effect_id": "common:spell.heal_hp",
+      "mp_cost": 18,
+      "base_amount": 50,
+      "flags_raw": 19,
+      "descriptor_raw_hex": "123213",
+      "target_scope": "party_all",
+      "amount_formula": "base_to_base_plus_9",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28614; handler 0x1CC4F; writer 0x146EB","consumer":"game.fieldSpellInput heal_hp","doc":"docs/171-field-healing-spell-production-spec.md"}
+    },
+    {
+      "record_raw": 165,
+      "effect_id": "common:spell.heal_hp",
+      "mp_cost": 62,
+      "base_amount": 255,
+      "flags_raw": 19,
+      "descriptor_raw_hex": "3eff13",
+      "target_scope": "party_all",
+      "amount_formula": "full_hp",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28617; handler 0x1CC4F; writer 0x146EB","consumer":"game.fieldSpellInput heal_hp","doc":"docs/171-field-healing-spell-production-spec.md"}
+    },
+    {
+      "record_raw": 172,
+      "effect_id": "common:spell.teleport",
+      "mp_cost": 8,
+      "base_amount": 0,
+      "flags_raw": 18,
+      "descriptor_raw_hex": "080012",
+      "target_scope": "none",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x2862C; handler 0x1CD6A","consumer":"game.fieldSpellInput teleport","doc":"docs/78-field-spell-re.md"}
+    },
+    {
+      "record_raw": 173,
+      "effect_id": "common:spell.exit_dungeon",
+      "mp_cost": 8,
+      "base_amount": 0,
+      "flags_raw": 18,
+      "descriptor_raw_hex": "080012",
+      "target_scope": "none",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x2862F; handler 0x1CD9C","consumer":"game.fieldSpellInput exit_dungeon","doc":"docs/78-field-spell-re.md"}
+    },
+    {
+      "record_raw": 174,
+      "effect_id": "common:spell.inspect_facing",
+      "mp_cost": 3,
+      "base_amount": 0,
+      "flags_raw": 2,
+      "descriptor_raw_hex": "030002",
+      "target_scope": "none",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28632; handler 0x1CDCB","consumer":"game.fieldSpellInput inspect_facing","doc":"docs/78-field-spell-re.md"}
+    },
+    {
+      "record_raw": 175,
+      "effect_id": "common:spell.hazard_guard",
+      "mp_cost": 2,
+      "base_amount": 0,
+      "flags_raw": 18,
+      "descriptor_raw_hex": "020012",
+      "target_scope": "none",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28635; handler 0x1CE1C","consumer":"game.fieldSpellInput hazard_guard","doc":"docs/78-field-spell-re.md"}
+    },
+    {
+      "record_raw": 176,
+      "effect_id": "common:spell.repel",
+      "mp_cost": 4,
+      "base_amount": 0,
+      "flags_raw": 2,
+      "descriptor_raw_hex": "040002",
+      "target_scope": "none",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28638; handler 0x1CE2C","consumer":"game.fieldSpellInput repel","doc":"docs/78-field-spell-re.md"}
+    },
+    {
+      "record_raw": 177,
+      "effect_id": "common:spell.toggle_day_night",
+      "mp_cost": 12,
+      "base_amount": 0,
+      "flags_raw": 2,
+      "descriptor_raw_hex": "0c0002",
+      "target_scope": "none",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x2863B; handler 0x1CE3B","consumer":"game.fieldSpellInput toggle_day_night","doc":"docs/78-field-spell-re.md"}
+    },
+    {
+      "record_raw": 178,
+      "effect_id": "common:spell.invisibility",
+      "mp_cost": 15,
+      "base_amount": 0,
+      "flags_raw": 18,
+      "descriptor_raw_hex": "0f0012",
+      "target_scope": "none",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x2863E; handler 0x1CE6F","consumer":"game.fieldSpellInput invisibility","doc":"docs/78-field-spell-re.md"}
+    },
+    {
+      "record_raw": 179,
+      "effect_id": "common:spell.open_facing_door",
+      "mp_cost": 0,
+      "base_amount": 0,
+      "flags_raw": 2,
+      "descriptor_raw_hex": "000002",
+      "target_scope": "none",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28641; handler 0x1CE82","consumer":"game.fieldSpellInput open_facing_door","doc":"docs/78-field-spell-re.md"}
+    }
+  ]
+}

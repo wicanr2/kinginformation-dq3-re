@@ -1,8 +1,9 @@
-# 設施系統(商店 / 旅社 / 教會 / 記錄點)— 靜態 RE 全解
+# 設施系統（商店／旅社／教會／記錄點）— facility block 與 dispatcher 靜態 RE
 
-> 把「每個城鎮賣什麼」這條線從 EXE 反組譯到底,並從 `CTY*.DAT` 直接萃取出全鎮商店品項。
+> 把 facility block 格式與共用 dispatcher 從 EXE 追到 `CTY*.DAT`，並萃取商店品項。
 > 結論:**商店貨架不靠猜、不靠攻略佐證,而是逐城寫死在 CTY 地圖資料裡**,由一個共用的
-> 設施 dispatcher 依 NPC 的 byte4 索引出來。docs/22「商店貨架全域表深追未果」的保留條目就此解掉。
+> 設施 dispatcher 依 NPC 的 byte4 索引出來。raw block 仍須有同 section NPC consumer 才是
+> 玩家可用設施；不能把 block inventory 擴張成「所有設施均已閉合」。
 
 ## 一、設施 dispatcher(file 0x839f)
 
@@ -82,7 +83,7 @@ DGROUP 0x1f9**,7 byte/筆,+2/+3 = 價格,對上 docs/22)。買單渲染 file 0x8
 | 22 | 旅社×2/武防店×2/道具店×2/教會×2 | 審判之杖、大鐵鎚、鋼甲、防禦衣、武鬥裝、鐵面具 | 藥草、驅毒草、聖水、蓋美拉翅膀、滿月草、毒蛾粉 |
 | 32 | 旅社/武防店/道具店/教會 | 檜木棒、木棒、銅劍、布的衣服、旅人的衣服、皮甲胄、皮盾 | 藥草、驅毒草、蓋美拉翅膀 |
 | 38 | 旅社/武防店/道具店 | 檜木棒、木棒、毒針、有刺的鞭子、布的衣服、華麗的衣服、功夫裝 | 藥草、驅毒草、聖水、蓋美拉翅膀、滿月草、毒蛾粉、隱身草 |
-| 43 | 旅社/武防店/道具店/教會 | 鐵爪、審判之杖、屠僵屍劍、屠龍劍、魔法的鎧甲、鏡盾、魔導士之杖 | 藥草、驅毒草、聖水、蓋美拉翅膀、滿月草、毒蛾粉 |
+| 43 | 旅社/武防店/道具店；另有無 NPC consumer 的教會 block | 鐵爪、審判之杖、屠僵屍劍、屠龍劍、魔法的鎧甲、鏡盾、魔導士之杖 | 藥草、驅毒草、聖水、蓋美拉翅膀、滿月草、毒蛾粉 |
 | 47 | 旅社/武防店/道具店 | 聖刀、鐵槍、鐵斧、大鐵鎚、防禦衣、魔法法衣、鐵面具 | 聖水、蓋美拉翅膀、隱身草 |
 | 59 | 道具店 | — | 藥草、驅毒草 |
 | 60 | 旅社/道具店 | — | 藥草、聖水、蓋美拉翅膀、皮帽子 |
@@ -96,6 +97,12 @@ DGROUP 0x1f9**,7 byte/筆,+2/+3 = 價格,對上 docs/22)。買單渲染 file 0x8
 
 (只列有商店的城;CTY8/45/46/49/51/85 等只有旅社或教會,無商品。完整逐攤資料見
 `dq3_remake/src/dq3_shopdata.c`,含 `sec`/`k`/旅社住宿費。)
+
+> 2026-08-22 訂正：上表的「設施」原先只枚舉 section facility blocks，會把孤立 block
+> 誤寫成玩家可用設施。IDA `sub_1702F` 證明還必須有 facility subtype NPC 以 `byte4`
+> 索引該 block。CTY43 section0 雖有 index2 type3 教會 block，但日／夜 NPC 表都沒有
+> facility consumer 指向 index2；`(12,4)` 的 `byte4=2` NPC 是 subtype0 對話者。因此
+> CTY43 教會不可用，完整 raw records 與 hash 見 `docs/140`。
 
 ## 六、remake 落地
 
@@ -132,6 +139,13 @@ DGROUP 0x1f9**,7 byte/筆,+2/+3 = 價格,對上 docs/22)。買單渲染 file 0x8
   `DQ3.EXE` file `0x19dac`。欄位契約見 `docs/84-game-pack-json-contract.md`。
 - 新遊戲 production trace 已在阿里阿罕低危區實際發生陣亡後，經設施 NPC、教會 modal、
   旅店及正式戰鬥輸入練到 Lv4，再繼續抵達羅馬利亞。
-- 解毒／解詛咒仍 fail closed：Ebiten `Member` 尚未持久化原版 `+0x38` poison/curse
-  flags，不能拿舊 C 狀態系統冒充已接線。
+- 解毒已由 pack condition、battle／角色／save、移動 consumer 與教會固定 5G transaction
+  接成 E2。解詛咒不是 `+0x38` flag，而是掃描角色 `+0x3a` 起八個物品 word 的
+  `bit0x4000`，費用為 `level×100`，付款後把命中 word 寫成 `0x00ff`。後續已由
+  `sub_17ED9` 證實 ITEM `+4/+5 & 0x0e00` 是該 bit 的 writer gate；五筆 raw ID、同部位
+  換裝拒絕與教會交易已接成 E2。完整鏈見 `docs/147`。
 - 同城多攤(CTY6/22 多家武防店):`dq3_facility_at` 已能逐攤(by k),走到不同店員開不同攤。
+
+> 現行 Go 限制：`facilityForCty(cty,k)` 尚未接收 section，雖 raw table 保存 `sec`，lookup
+> 目前會忽略它。CTY43 section1 與 CTY22 section1 這類同 CTY 多 section 設施因此尚未做
+> 原版 runtime parity；不得把舊 C 的 `dq3_facility_at(cty,sec,k)` 完成度套到 Ebitengine。

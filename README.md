@@ -3,8 +3,18 @@
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
 > checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機三平台包與推廣片
 > 的唯一現行交付樹為 `dist-all/v0.1.34/`，版型與驗收見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
-> 儲存庫目前 source 已包含尚未發版的 schema `0.1.33`／content `0.1.38` 日夜原始
-> palette bank 修正；因此 v0.1.34 不能被描述為包含此修正，證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)。
+> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.43`／content `0.1.48`：包含日夜原始
+> palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
+> 等待閘門；因此公開 v0.1.34 不能被描述為包含這些修正，
+> 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
+> [`docs/137`](docs/137-church-poison-condition-re.md)、[`docs/138`](docs/138-antidote-item-condition-re.md)、
+> [`docs/147`](docs/147-cursed-equipment-church-service-spec.md)、
+> [`docs/149`](docs/149-battle-flee-sfx-wait-spec.md)、
+> [`docs/150`](docs/150-player-physical-sfx-sequence-spec.md)、
+> [`docs/151`](docs/151-common-physical-result-sfx-spec.md)及
+> [`docs/152`](docs/152-special-physical-paralysis-spec.md)。後兩者接上敵方攻擊、雙方命中、
+> 共同 miss、個別死亡，以及 action3／cue9／持久麻痺的原版文字、狀態與 VOC completion gate；
+> 戰鬥道具 selector／持有人／目標 UI 仍待獨立閉合。
 
 本專案研究精訊資訊在 1990 年代製作的中文版 DQ3
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，
@@ -32,13 +42,17 @@
 為準。早期 C/SDL prototype 的完成聲明保留在 Git 歷史與研究文件中，不直接當成現行
 Go／Ebitengine 產品的 parity 證據。
 
-截至 2026-08-12，本專案採用使用者確認的 E2／D2 快速驗收：戰鬥 pack raw、loader、
+以下為 2026-08-12 發版 checkpoint 的歷史驗收：戰鬥 pack raw、loader、
 formation／抗性 decoder、正式事件輸入與 save/load 的 Docker headless targeted tests 已通過。
 本輪已修正 CTY07→CTY08 的正式 section 路由：依原始 transition table，並用正式道具／戰鬥
 輸入處理塔區遭遇，現在可抵達 CTY08 sec3；本輪再修正 CTY13 金字塔開關路徑在遭遇 modal
 時未送正式戰鬥輸入的 trace blocker，已可由正式路徑取得魔法鑰匙並通過 save/load。完整
-campaign 隨後以正式 `InputState` clean replay 至 `THE END`（63.92 秒）並通過；完整 `game`
-回歸以一次性分片程序跑完 288 個頂層測試。因此主線可宣稱 campaign E3 通過，但逐畫面／音效 V3 的長尾仍待
+campaign 當時以正式 `InputState` clean replay 至 `THE END`（63.92 秒）並通過；完整 `game`
+回歸以一次性分片程序跑完 288 個頂層測試，因此該 checkpoint 可宣稱 campaign E3。2026-08-22
+未發版工作樹在 action3 切片後曾由標題重播至 `THE END`；`docs/153` 依 IDA 修正
+怪物 action RNG 次序後出現的 monster77／51 玩家路線 blocker，已由 `docs/154..178`
+的正式交易與輸入切片越過。最新乾淨 Docker＋Xvfb trace 以 115.629 秒抵達 `THE END`，
+現行 campaign 為 E3；逐畫面／音效 V3 的長尾仍待
 後續對拍，本輪指定的 AppImage、Windows ZIP 與 macOS ZIP 已產出；Android 已另開保存優先
 UX 並完成 Docker debug APK（目前僅 `build-only`，尚無 emulator／真機驗收），WASM 仍不在本輪 release 目標。現行進度與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
@@ -92,6 +106,7 @@ TITP 位置與開場音效仍待 V3，詳見 [`docs/120`](docs/120-opening-cutsc
 - [`docs/128`](docs/128-battle-background-selector-re.md)：固定編隊背景 archive／palette selector 的原始資料、勘誤與 V2 界線。
 - [`docs/129`](docs/129-required-boss-backgrounds-re.md)：必經單頭目固定 record 到 renderer 的 IDA 接線與 V1 界線。
 - [`docs/130`](docs/130-party-field-hud-re.md)：地表四人 HUD 原始 window／內容 writer、pack 契約與 near-state V2 勘誤。
+- [`docs/149`](docs/149-battle-flee-sfx-wait-spec.md)：玩家／敵人逃跑 cue、原版完成等待鏈與 remake D3／E2 界線。
 
 較早的 Markdown 可作為研究索引；進度以 `docs/74` 為主，規格則回到 `DQ3.EXE`、原始資料、
 DOSBox 實機與本機完整影片核對。
@@ -251,14 +266,17 @@ bank 5 與 page 26／bank 5，作為 near-state V2 證據；它們不是逐像�
 4. 關鍵事件前後可正常存檔、讀檔並繼續。
 5. Linux AppImage、Windows ZIP 與 macOS ZIP 共用同一套 Go game core。
 
-截至 2026-08-12，E2 targeted 驗收已涵蓋 pack raw→loader→battle／event→save/load；IDA
+在 2026-08-12 checkpoint，E2 targeted 驗收已涵蓋 pack raw→loader→battle／event→save/load；IDA
 閉合的四條 story-flag transaction（handler74／69／70／33）已遷入
 `events.json.story_flag_runtime_events` 並由正式 command／battle path 接線，
 並以既有 PNG 作畫面證據；CTY07→CTY08 與 CTY13 金字塔 route 已依原始 transition table、
 正式道具／戰鬥輸入修正，CTY13 checkpoint 已可取得魔法鑰匙並保存／讀回；完整
-`TestOpeningProductionInputTrace` 已於本修正後由新遊戲重播至 `THE END`，因此主線達目前 E3 gate。第 3 項仍有 V1／V2 與 V3 長尾，
-boss repeat-N、逐動作 frame、PCM wall-clock 與可見 palette transition 沒有可安全填入的
-靜態 production 值，仍是 V3／unknown 限制；formation 的 raw EGA position／stride 已納入
+`TestOpeningProductionInputTrace` 當時由新遊戲重播至 `THE END`，因此該 checkpoint 達 E3 gate；
+2026-08-22 未發版工作樹在 `docs/154..178` 的後續訂正後，最新完整正式主線以
+115.629 秒抵達 `THE END`，現行 campaign 為 E3。第 3 項仍有 V1／V2 與 V3 長尾；
+Boss repeat-N 已由 [`docs/148`](docs/148-battle-single-action-queue-spec.md) 的完整 caller／consumer
+audit 證實在本 EXE 不存在，remake 以每個存活 actor 每回合一筆實作。逐動作 frame、PCM
+wall-clock 與可見 palette transition 仍是 V3／unknown 限制；formation 的 raw EGA position／stride 已納入
 E2 pack／renderer。日邦格兩場必經 Boss 的固定背景則已按原版 archive page／palette bank
 達 near-state V2；怪力魔、巴拉摩斯與索瑪三連戰已由相同 raw fixed-record selector 接入 runtime
 V1。通用地形背景沒有藉此宣稱 parity。完整靜態收斂與停止條件見

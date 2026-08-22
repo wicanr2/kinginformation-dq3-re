@@ -1,5 +1,17 @@
 # 73 — 「兩版都缺」缺口修正 worklist(2026-07-03)
 
+> **歷史 worklist 警示（2026-08-22）：**本檔保存 2026-07 的批次與當時 resume 語句，
+> 不再是現行工作清單；其中「延後／下週／尚待」不得單獨重新開啟。Go／Ebitengine 的唯一
+> current plan 是 `docs/74-ebiten-remake-completion-plan.md`，現行 RE 邊界見 `docs/135`。
+> 表內 C1「EBG 音效 cue」仍只是 2026-07 的廣義標籤；`docs/149..151` 後來已分別閉合
+> 玩家／敵人逃跑、玩家物理雙 cue、敵方攻擊、雙方命中／miss 與個別死亡訊息的有限
+> caller→VOC→wait→玩家可見鏈；cue9／action3 後續亦由 `docs/152` 閉合。這仍不代表
+> critical、咒文 damage、其他 action cue、波形、逐幀動畫或硬體 wall-clock 已完成；也不得
+> 再把已閉合的有限角色列為 current 待辦。
+> 最新訂正：`docs/158` 的原野道具持有者切片已達 E3；當時取船後 CTY16 航線 blocker
+> 已由 `docs/159..178` 的正式交易與輸入修正越過。最新乾淨 Docker＋Xvfb 完整 campaign
+> 以 115.629 秒抵達 `THE END`；現行 E3 與 V3 限制只由 `docs/74` 仲裁。
+
 > 來源 `docs/72`(3 subagent 盤點 + 協調者核實)。聚焦 **ebitan**(可玩 remake 主目標);
 > C 端同缺者標「C 另補」。協調者(Opus)派 sonnet 逐批實作,**每批獨立核實才收**
 > (重跑完整套件 game+internal 全綠 + 視覺/數量 dump + 抽查關鍵邏輯,rulebook 45/65)。
@@ -16,7 +28,7 @@
 | ✅ | R-3 六珠祭壇→拉米亞飛行 | CTY70 + EXE `0x7425..0x7599` + 本機原版影片 | 正式調查／對話／搭乘／降落 trace | 2026-07-28 完成事件切片 |
 | ✅ | R-4 巴拉摩斯→索瑪現身→下降 | EXE/CTY65/72/77 + 原版影片 | 正式交談、戰鬥、王座事件與 CTY 轉場 | 2026-07-28 完成事件切片 |
 | ✅ | R-5a 龍女王／彩虹橋／索瑪最終戰接線 | IDA `sub_15E02`,`loc_14243`,`sub_164CD..1661E` + CTY67/90 + 原版影片 | 光之珠 flags、精確橋座標/tile、CTY90 sec4→5、正常話す三 formation；移除 T/R/Z/Enter/Cancel 後門 | 2026-07-28 完成並測試 |
-| — | C1 EBG 音效 cue / C2 攻方狀態減半 0xd4f | 低信心/RE 未定 | — | 延後 |
+| — | C1 EBG 音效 cue / C2 攻方狀態減半 0xd4f | 2026-07 廣義歷史標籤；有限音效角色後續見 `docs/149..151` | — | 非 current worklist；其餘只由新玩家差異窄開 |
 
 ## 共通驗收(每批)
 - 完整套件 `go test ./game/ ./internal/... -count=1` **game+internal 全綠**、gofmt/vet clean。

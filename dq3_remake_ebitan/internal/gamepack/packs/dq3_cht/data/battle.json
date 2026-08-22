@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.33",
+  "schema_version": "0.1.43",
   "source_files": [
     {
       "path": "assets_raw/DQ3.EXE",
@@ -10,6 +10,11 @@
       "path": "assets_raw/D3MNS.DAT",
       "size": 5330,
       "sha256": "48bf3ce78c425239363761c13c708a6e04f8daa628cd575f7e049bc0bc7bb4ed"
+    },
+    {
+      "path": "assets_raw/FVOC.VCX",
+      "size": 72531,
+      "sha256": "47be27d2244e314ca6f2a21d3fa61a95d4e823f9085ed3d21808ac25d66b39c5"
     },
     {
       "path": "assets_raw/D3TXT00.TXT",
@@ -476,5 +481,229 @@
       "consumer": "sub_1D7FB/sub_1CB3C/sub_1D6C7",
       "doc": "docs/123-static-battle-daynight-re.md"
     }
-  }
+  },
+  "sound_cues": {
+    "player_fled": {
+      "cue_raw": 13,
+      "wait_for_completion": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + FVOC.VCX",
+        "address_space": "logical",
+        "address": "0xb4d3..0xb4e3; FVOC file offset0x8498",
+        "consumer": "sub_1B47E writes BP=0x0d, calls sub_20770, displays record0x15c, then waits in sub_208E2",
+        "doc": "docs/149-battle-flee-sfx-wait-spec.md"
+      }
+    },
+    "enemy_fled": {
+      "cue_raw": 21,
+      "wait_for_completion": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + FVOC.VCX",
+        "address_space": "logical",
+        "address": "0xaa37..0xaa47; FVOC file offset0x11146",
+        "consumer": "sub_1A973 writes BP=0x15, calls sub_20770, displays record0x15b, then waits in sub_208E2",
+        "doc": "docs/149-battle-flee-sfx-wait-spec.md"
+      }
+    },
+    "enemy_physical_attack": {
+      "cue_raw": 4,
+      "wait_for_completion": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT00.TXT + FVOC.VCX",
+        "address_space": "logical",
+        "address": "0xac0b..0xac16; FVOC file offset0x18a2",
+        "consumer": "sub_1AC05 writes BP=4, dispatches cue4 and displays record0x14b; the player-victim branch waits at sub_1ACCE 0xadcb",
+        "doc": "docs/151-common-physical-result-sfx-spec.md"
+      }
+    },
+    "physical_hit": {
+      "cue_raw": 1,
+      "wait_for_completion": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT00.TXT + FVOC.VCX",
+        "address_space": "logical",
+        "address": "0xadae..0xade9; FVOC file offset0x4e6",
+        "consumer": "sub_1ACCE dispatches cue1, selects record0x14c or 0x14d by victim mode, then waits in sub_208E2",
+        "doc": "docs/151-common-physical-result-sfx-spec.md"
+      }
+    },
+    "physical_miss": {
+      "cue_raw": 3,
+      "wait_for_completion": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT00.TXT + FVOC.VCX",
+        "address_space": "logical",
+        "address": "0xafc6..0xafdc; FVOC file offset0x12b6",
+        "consumer": "sub_1AFC6 dispatches cue3, displays record0x14f and waits in sub_208E2 for both physical victim modes",
+        "doc": "docs/151-common-physical-result-sfx-spec.md"
+      }
+    },
+    "fatal_strike": {
+      "cue_raw": 9,
+      "wait_for_completion": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT00.TXT + FVOC.VCX",
+        "address_space": "logical",
+        "address": "0xacf0..0xaf79; FVOC file offset0x4cd2",
+        "consumer": "sub_1ACCE action3 dispatches cue4 and waits, then dispatches cue9, displays record0x14e, waits for cue9 and displays the party damage record",
+        "doc": "docs/152-special-physical-paralysis-spec.md"
+      }
+    },
+    "player_physical": {
+      "steps": [
+        {
+          "cue_raw": 6,
+          "wait_for_completion": true,
+          "evidence": {
+            "level": "D3",
+            "source_kind": "exe",
+            "source": "DQ3.EXE + D3TXT00.TXT + FVOC.VCX",
+            "address_space": "logical",
+            "address": "0xb568..0xb578; FVOC file offset0x215e",
+            "consumer": "sub_1B4F6 writes BP=6, calls sub_20770, displays record0x14a, then waits in sub_208E2",
+            "doc": "docs/150-player-physical-sfx-sequence-spec.md"
+          }
+        },
+        {
+          "cue_raw": 11,
+          "wait_for_completion": true,
+          "evidence": {
+            "level": "D3",
+            "source_kind": "exe",
+            "source": "DQ3.EXE + FVOC.VCX",
+            "address_space": "logical",
+            "address": "0xb57d..0xb585; FVOC file offset0x7ad9",
+            "consumer": "sub_1B4F6 writes BP=0x0b, calls sub_20770, then waits in sub_208E2 before sub_19834/sub_1ACCE",
+            "doc": "docs/150-player-physical-sfx-sequence-spec.md"
+          }
+        }
+      ]
+    }
+  },
+  "conditions": [
+    {
+      "id": "common:condition.poison",
+      "persistence": "persistent",
+      "field_damage_per_step": 1,
+      "field_clear_after_steps": 0,
+      "suppress_world_state_mask": 3,
+      "legacy_status_mask": 64,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0x964e..0x96cc",
+        "consumer": "sub_1964E tests +0x38 bit0x40, skips world-state mask3, adds one to the per-step damage byte and writes death on zero HP",
+        "doc": "docs/137-church-poison-condition-re.md"
+      }
+    },
+    {
+      "id": "common:condition.sleep",
+      "persistence": "battle",
+      "field_damage_per_step": 0,
+      "field_clear_after_steps": 0,
+      "suppress_world_state_mask": 0,
+      "legacy_status_mask": 32,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0xa3ee..0xa432",
+        "consumer": "action0x35 skips +0x38 mask0xa0, applies bit0x20 to each party member on rng<=180 and emits rec338",
+        "doc": "docs/141-cty36-monster46-action-resource-spec.md"
+      }
+    },
+    {
+      "id": "common:condition.paralysis",
+      "persistence": "persistent",
+      "field_damage_per_step": 0,
+      "field_clear_after_steps": 40,
+      "suppress_world_state_mask": 0,
+      "legacy_status_mask": 16,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0xae5c..0xae81; 0xbf7f..0xbfd0; 0xc1d8..0xc333; 0x9530..0x9833",
+        "consumer": "action3 writes character +0x38 bit0x10; both command paths exclude mask0xb0; battle exit initializes shared counter0x28 and field-step sub_19530 calls sub_19810 to clear bit0x10 from every party member",
+        "doc": "docs/152-special-physical-paralysis-spec.md"
+      }
+    }
+  ],
+  "monster_actions": [
+    {
+      "mask_bit": 3,
+      "action_raw": 3,
+      "kind": "special_physical_condition",
+      "condition_id": "common:condition.paralysis",
+      "target_scope": "party_one_alive",
+      "success_roll_max": 0,
+      "damage_formula": "ignore_defense_half_plus_random_quarter",
+      "condition_on_survival": true,
+      "cast_text_role": "fatal_strike",
+      "success_text_role": "actor_paralyzed",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3MNS.DAT + D3TXT00.TXT + FVOC.VCX",
+        "address_space": "logical",
+        "address": "0x99dc..0x9ad5; 0xacf0..0xaf79",
+        "consumer": "sub_19AD6 selects MSB-first mask bit3 and sub_199DC stores action3; sub_1ACCE ignores defense, emits record334/cue9, damages one party target and writes +0x38 bit0x10 with record201 only when the target survives",
+        "doc": "docs/152-special-physical-paralysis-spec.md"
+      }
+    },
+    {
+      "mask_bit": 38,
+      "action_raw": 50,
+      "kind": "apply_condition",
+      "condition_id": "common:condition.poison",
+      "target_scope": "party_alive_unaffected",
+      "success_roll_max": 100,
+      "cast_text_role": "poison_gas",
+      "success_text_role": "actor_poisoned",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0x9ad6..0x9b4b; 0x99dc..0x9ad5; 0xa307..0xa357",
+        "consumer": "sub_19AD6 selects mask bit38, sub_199DC remaps it through DGROUP 0x3930 to action0x32, DGROUP 0x394e dispatches logical0xa307, which applies +0x38 bit0x40 on rng<=100",
+        "doc": "docs/137-church-poison-condition-re.md"
+      }
+    },
+    {
+      "mask_bit": 41,
+      "action_raw": 53,
+      "kind": "apply_condition",
+      "condition_id": "common:condition.sleep",
+      "target_scope": "party_alive_unaffected",
+      "success_roll_max": 180,
+      "cast_text_role": "sleep_breath",
+      "success_text_role": "enemy_sleep",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0x9ad6..0x9b4b; 0x99dc..0x9ad5; 0xa3ee..0xa432",
+        "consumer": "sub_19AD6 selects MSB-first mask bit41, sub_199DC remaps it to action0x35 and logical0xa3ee applies +0x38 bit0x20 per eligible party member on rng<=180",
+        "doc": "docs/141-cty36-monster46-action-resource-spec.md"
+      }
+    }
+  ]
 }

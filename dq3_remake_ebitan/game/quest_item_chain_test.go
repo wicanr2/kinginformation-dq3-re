@@ -112,6 +112,39 @@ func TestQuestItemChainExchangeReplacesInventorySlot(t *testing.T) {
 	}
 }
 
+func TestQuestItemChainExchangeReplacesCompanionInventorySlot(t *testing.T) {
+	g, event := questItemChainTestGame(t)
+	x := event.Exchange
+	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
+		x.NPC.CTYRaw, mapBlkNum[x.NPC.CTYRaw], x.NPC.Section, 0, g.storyFlag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.inTown, g.curCty, g.town, g.cur = true, x.NPC.CTYRaw, sc, sc
+	var queen *npcInst
+	for i := range sc.npcs {
+		if g.scriptedNPCMatches(&sc.npcs[i], x.NPC) {
+			queen = &sc.npcs[i]
+			break
+		}
+	}
+	if queen == nil {
+		t.Fatal("找不到 game-pack exchange NPC")
+	}
+
+	g.inventory = []int{0x41, 0x44}
+	g.companions = []*Member{{Inventory: []int{0x31, x.RequiredItemRawID, 0x32}}}
+	if !g.talkQuestItemChain(queen) {
+		t.Fatal("隊友持有前置道具時 exchange 未處理")
+	}
+	want := []int{0x31, x.GrantedItemRawID, 0x32}
+	if !reflect.DeepEqual(g.inventory, []int{0x41, 0x44}) ||
+		!reflect.DeepEqual(g.companions[0].Inventory, want) ||
+		g.hasPartyItem(x.RequiredItemRawID) || !g.hasPartyItem(x.GrantedItemRawID) {
+		t.Fatalf("隊友原格換物錯：hero=%v companion=%v", g.inventory, g.companions[0].Inventory)
+	}
+}
+
 func TestQuestItemChainLocationUseSwitchesSceneFlagsAndReloads(t *testing.T) {
 	g, event := questItemChainTestGame(t)
 	u := event.Use

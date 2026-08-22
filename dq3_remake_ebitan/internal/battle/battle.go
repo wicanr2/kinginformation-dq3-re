@@ -84,6 +84,28 @@ func PhysDamage(atk, def, roll, crit int) int {
 	return dmg
 }
 
+// IgnoreDefensePhysicalDamage is the action-3 special physical formula from
+// DQ3.EXE sub_1ACCE: floor(atk/2) + rng(floor(atk/4)). The caller applies the
+// defending half after this result, matching the player-victim branch.
+func IgnoreDefensePhysicalDamage(atk, roll int) int {
+	if atk < 0 {
+		atk = 0
+	}
+	if roll < 0 {
+		roll = 0
+	}
+	if roll > 255 {
+		roll = 255
+	}
+	base := atk / 2
+	quarter := base / 2
+	variance := 0
+	if quarter > 0 {
+		variance = quarter * roll / 256
+	}
+	return base + variance
+}
+
 // FleeOK 逃跑成功判定(agi 越高越易、敵抗性越高越難;roll 0..255)。移植 dq3_battle_flee_ok。
 func FleeOK(partyAgi, enemyFleeResist, roll int) bool {
 	chance := 128 + partyAgi - enemyFleeResist*2

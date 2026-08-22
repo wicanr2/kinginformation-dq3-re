@@ -21,6 +21,21 @@ func TestPhysDamage(t *testing.T) {
 	}
 }
 
+func TestIgnoreDefensePhysicalDamage(t *testing.T) {
+	for _, tc := range []struct {
+		atk, roll, want int
+	}{
+		{44, 0, 22},
+		{44, 255, 32},
+		{1, 255, 0},
+		{150, 128, 93},
+	} {
+		if got := IgnoreDefensePhysicalDamage(tc.atk, tc.roll); got != tc.want {
+			t.Fatalf("IgnoreDefensePhysicalDamage(%d,%d)=%d，預期 %d", tc.atk, tc.roll, got, tc.want)
+		}
+	}
+}
+
 func TestApplyDamage(t *testing.T) {
 	if ApplyDamage(30, 50) != 0 {
 		t.Error("HP30 受50傷 應 0(不下溢)")

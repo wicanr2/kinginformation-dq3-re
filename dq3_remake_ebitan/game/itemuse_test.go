@@ -2,6 +2,7 @@ package game
 
 import (
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
@@ -51,6 +52,40 @@ func TestUseHolyWaterRepel(t *testing.T) {
 	}
 	if len(g.inventory) != 0 {
 		t.Errorf("聖水應消耗,剩 %d", len(g.inventory))
+	}
+}
+
+func TestFullMoonHerbConsumesBeforeParalysisCheck(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name           string
+		hp             int
+		conditions     conditionSet
+		wantConditions conditionSet
+	}{
+		{"成功解除", 10, conditionParalysis, 0},
+		{"未麻痺仍消耗", 10, 0, 0},
+		{"死亡仍消耗", 0, conditionParalysis, conditionParalysis},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := &Game{pack: pack, heroHP: tc.hp, heroConditions: tc.conditions,
+				paralysisSteps: 23, inventory: []int{0x45}, itemSelected: 0}
+			if !g.useSelectedPackItemOnTarget(0) {
+				t.Fatal("滿月草正式 pack handler 未接管")
+			}
+			if len(g.inventory) != 0 {
+				t.Fatalf("原版先消耗契約失敗，inventory=%v", g.inventory)
+			}
+			if g.heroConditions != tc.wantConditions {
+				t.Fatalf("conditions=%#x，預期 %#x", g.heroConditions, tc.wantConditions)
+			}
+			if tc.wantConditions == 0 && g.paralysisSteps != 0 {
+				t.Fatalf("最後一名麻痺解除後倒數=%d，預期 0", g.paralysisSteps)
+			}
+		})
 	}
 }
 
@@ -501,5 +536,92 @@ func TestPackDoorKeyFailsClosedBelowRequiredTier(t *testing.T) {
 	if tier := g.cur.doorTier(17, 4); tier != 3 || !g.hasItem(magicKey.ItemRawID) {
 		t.Fatalf("tier2 key must not open tier3 door: tier=%d held=%v",
 			tier, g.hasItem(magicKey.ItemRawID))
+	}
+}
+
+func TestPackAntidoteConsumesThenClearsOnlySelectedPoison(t *testing.T) {
+	g := r4Game(t)
+	g.heroName = []int{113}
+	g.heroHP, g.heroConditions = 10, conditionPoison
+	g.companions = []*Member{
+		{Name: []int{114}, CurHP: 10, Conditions: conditionPoison},
+		{Name: []int{115}, CurHP: 10, Conditions: conditionPoison},
+	}
+	g.inventory = []int{0x42, 0x41}
+	g.itemSelected, g.panel = 0, panelItem
+	if !g.selectedItemRequiresTarget() || !g.useSelectedPackItemOnTarget(1) {
+		t.Fatal("antidote target transaction did not execute")
+	}
+	if len(g.inventory) != 1 || g.inventory[0] != 0x41 ||
+		g.heroConditions&conditionPoison == 0 ||
+		g.companions[0].Conditions&conditionPoison != 0 ||
+		g.companions[1].Conditions&conditionPoison == 0 {
+		t.Fatalf("selected antidote transaction inventory=%v hero=%#x companions=%#x/%#x",
+			g.inventory, g.heroConditions, g.companions[0].Conditions, g.companions[1].Conditions)
+	}
+	effect, _ := g.pack.ItemUseEffectByRawID(0x42)
+	want, _ := g.pack.TextGlyphCodes(effect.SuccessTextID)
+	if !g.dlg.open || !reflect.DeepEqual(g.dlg.buf, want) ||
+		!reflect.DeepEqual(g.dlg.varGlyph[dq3data.TxtVarEnt], []int{114}) {
+		t.Fatalf("antidote success dialogue=%v var=%v want=%v", g.dlg.buf,
+			g.dlg.varGlyph[dq3data.TxtVarEnt], want)
+	}
+}
+
+func TestPackAntidoteConsumesOnDeadOrUnaffectedTarget(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		hp         int
+		conditions conditionSet
+	}{
+		{name: "dead", hp: 0, conditions: conditionPoison},
+		{name: "unaffected", hp: 10, conditions: 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := r4Game(t)
+			g.heroHP, g.heroConditions = tc.hp, tc.conditions
+			g.inventory, g.itemSelected, g.panel = []int{0x42}, 0, panelItem
+			if !g.useSelectedPackItemOnTarget(0) {
+				t.Fatal("antidote no-effect transaction did not execute")
+			}
+			if len(g.inventory) != 0 || g.heroConditions != tc.conditions {
+				t.Fatalf("no-effect must consume without status mutation inventory=%v conditions=%#x",
+					g.inventory, g.heroConditions)
+			}
+			effect, _ := g.pack.ItemUseEffectByRawID(0x42)
+			want, _ := g.pack.TextGlyphCodes(effect.NoEffectTextID)
+			if !g.dlg.open || !reflect.DeepEqual(g.dlg.buf, want) {
+				t.Fatalf("no-effect dialogue=%v want=%v", g.dlg.buf, want)
+			}
+		})
+	}
+}
+
+func TestPackAntidoteProductionInputSelectsPartyMember(t *testing.T) {
+	g := r4Game(t)
+	g.heroHP, g.heroConditions = 10, conditionPoison
+	g.companions = []*Member{{Name: []int{114}, CurHP: 10, Conditions: conditionPoison}}
+	g.inventory = []int{0x42}
+	g.panel, g.panelCursor, g.itemSelected = panelItem, 0, 0
+	g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
+	step := func(in InputState) {
+		t.Helper()
+		if in.DirHeld == 0 {
+			in.DirHeld = -1
+		}
+		if err := g.step(in); err != nil {
+			t.Fatalf("antidote production input: %v", err)
+		}
+	}
+	step(InputState{Confirm: true})
+	if g.itemActionStage != itemActionUseTarget || len(g.inventory) != 1 {
+		t.Fatalf("使用後應先進選人且未消耗：stage=%d inventory=%v", g.itemActionStage, g.inventory)
+	}
+	step(InputState{DirEdge: 0})
+	step(InputState{Confirm: true})
+	if len(g.inventory) != 0 || g.companions[0].Conditions&conditionPoison != 0 ||
+		g.heroConditions&conditionPoison == 0 || !g.dlg.open {
+		t.Fatalf("正式選同伴 transaction 錯：inventory=%v hero=%#x companion=%#x dialogue=%v",
+			g.inventory, g.heroConditions, g.companions[0].Conditions, g.dlg.open)
 	}
 }

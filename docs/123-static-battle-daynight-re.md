@@ -8,7 +8,7 @@
 
 > [!IMPORTANT]
 > **歷史／已訂正。** 本文件保留 2026-08-10～11 的調查順序，因此前半部若寫「五個
-> story flag runtime unknown／missing」、campaign 尚未重播完成或 formation 仍缺接線，
+> story flag runtime unknown／missing」、Boss repeat-N unknown、campaign 尚未重播完成或 formation 仍缺接線，
 > 都是當時的 checkpoint，不是現行待辦。這些結論已由本文件「runtime 接線更新」與
 > 「未閉合項目的 IDA 9.4 收斂」兩節訂正；目前完成度以
 > [`docs/74`](74-ebiten-remake-completion-plan.md) 最新 checkpoint 為準。固定編隊／必經頭目
@@ -16,6 +16,11 @@
 > [`docs/129`](129-required-boss-backgrounds-re.md)，地表四人 HUD 見
 > [`docs/130`](130-party-field-hud-re.md)。這些後續結果仍只按各文件標示為 E2、V1 或
 > near-state V2，不構成全遊戲 V3。
+>
+> **2026-08-22 Boss repeat-N 勘誤：** [`docs/148`](148-battle-single-action-queue-spec.md)
+> 已重新匯出三個 queue-builder caller、全部 actor-consumer direct xref、alternate raw range
+> 及 raw 函式指標候選，證實本 EXE 每個存活 actor 每回合恰好一筆，沒有 Boss repeat-N
+> 路徑。本文後續仍出現的 `unknown` 只保留當時停止線，不得作為現行待辦。
 
 ## 輸入、工具與位址口徑
 
@@ -74,8 +79,9 @@ entry 內的呼叫次數。這是「每個活躍 actor 每回合一次」的 `co
 
 - 一般速度排序與 action order：`confirmed`。
 - 一回合內死亡／睡眠／逃跑會跳過本次行動：`confirmed`。
-- 「boss 多次行動」的數量、條件、間隔與特殊 cue：`unknown`。不能把 `D3MNS.DAT` 的
-  未命名欄位、攻略描述或舊 C remake 的 boss 特例升格成 production 設定。
+- 「Boss 多次行動」：2026-08-22 已 `confirmed` 本 EXE 不存在 repeat-N 路徑；不能把
+  `D3MNS.DAT` 未命名欄位、攻略描述或舊 C remake 的 Boss 特例升格成 production 設定。
+  特殊 cue／逐動作時序仍是另一個 `unknown` 議題。
 
 ### 2. action queue 的原始資料流
 
@@ -101,7 +107,7 @@ hash，不能以「角色敏捷越高越先」的文字近似。
 | 1 | actor index `-1`，stride `0x16`，HP `active+0x2334` | HP<=0 或 status bit0 時直接返回；`confirmed` |
 | 2 | status `0x233f` bit7，RNG 與 `0x64` | 失敗時清 bit7 並寫醒來訊息；成功時保留睡眠並跳過本輪；`confirmed` |
 | 3 | D3MNS record `DS:0x0d78 + monster_id*0x29` 的 `+0x17`、`+0x18` | 以 party strength 與 RNG 判斷逃跑；成功清 HP、減 group／total count、呼叫 `sub_1B23F` 消除 sprite；`confirmed` |
-| 4 | record `+0x0d` 與 RNG | 小於機率欄位進 `sub_199DC`（從 `+0x0e..+0x13` 48-bit spell mask 選咒文），否則進 `sub_1AC05`（物理／特殊）；`confirmed` |
+| 4 | record `+0x0d` 與 RNG | 小於機率欄位進 `sub_199DC`（從 `+0x0e..+0x13` 48-bit action mask 選 raw action），否則進 `sub_1AC05`（物理／特殊）；selector `confirmed`，並非全部 action 語意已閉合 |
 | 5 | `sub_18222`、HP 上限 `active+0x36` | 行動後結算回復／傷害並封頂；`confirmed` |
 
 `+0x08`、`+0x09`、`+0x0b` 由 `sub_1AB2C` 複製到 active enemy action record 的
@@ -265,9 +271,10 @@ formation 的 `active enemy +0x03` 位置欄位被 `sub_1B1FE` 作為畫面座�
 ### 2. boss 多次行動的結論
 
 正式回合只有 `sub_1C34F` 建 queue → `sub_1A973`／`sub_1B3F3` 一次 → queue 下一筆的
-閉環。固定 boss formation、連戰（例如多場 boss queue）與「一場後接下一場」是不同於
-「同一 boss 每回合多行動」的機制；不能把連戰 queue 當成多次行動。若未來在另一個
-caller 找到 repeat count，必須附 `writer→state→consumer→可見時序`，否則維持 `unknown`。
+閉環。固定 Boss formation、連戰（例如多場 Boss queue）與「一場後接下一場」不同於
+「同一 Boss 每回合多行動」；不能把連戰 queue 當成多次行動。`docs/148` 已補查第三個
+builder caller、全部 consumer caller 與 raw pointer 候選，現行結論為本 EXE 不存在
+repeat-N。若另一版本 binary 出現相反證據，必須另附 `writer→state→consumer→可見時序`。
 
 ## 五、戰後經驗、金錢與掉落
 
@@ -440,7 +447,7 @@ literal／data-driven writer → sub_16EDF/16EF4 → DGROUP [0x4f70]
 
 - 同狀態 DOSBox 的逐動作 frame／音效錄音、每個 cue 的實際波形與可見動畫長度（V3）。
 - 每一個 formation 的完整 pack 位置與混合群組 parity（部分 `strong`）。
-- boss 同回合多次行動（`unknown`，目前正式鏈只證實每 actor 一次）。
+- Boss 同回合 repeat-N 已由 `docs/148` 證實在本 EXE 不存在，不再列為待辦。
 - `+0x25` 的正規化顯示名稱與所有 scripted drop 抑制組合（inclusive raw gate 已證實；
   `DGROUP 0x2518 bit1` 抑制及 bit0 強制路徑仍需逐場景 parity）。
 - 21 flag 中 runtime 尚缺的事件（尤其 `0x0d`、`0x11`、`0x24`、`0x1a`、`0x1b`），以及
@@ -536,8 +543,9 @@ sub2 `byte4=70` 與固定編隊 `DS:0x4edf` 對上 `sub_1622A`，其戰後同時
 
 ### 4. 本輪對使用者問題的界線
 
-- boss 正式 queue 與 alternate runner 均未找到同一 actor 在同一回合的 repeat-N 迴圈；
-  靜態負證據已補強，但 boss 多次行動的實際條件／數量仍 `unknown`。
+- **歷史判定，已由 `docs/148` 訂正：**當時正式 queue 與 alternate runner 均未找到同一
+  actor 在同一回合的 repeat-N 迴圈，但仍保守把條件／數量標為 `unknown`；完整 caller／
+  consumer audit 現已證實本 EXE 不存在該路徑。
 - SHP loader 以 monster id 讀單一 payload，`sub_1B31A` 依 header 尺寸消費一次，沒有找到
   action frame index；六次 `sub_1B3C3` 是同 payload 的遮罩重畫。逐動作 frame 仍無法由
   目前靜態資料命名。
@@ -545,8 +553,8 @@ sub2 `byte4=70` 與固定編隊 `DS:0x4edf` 對上 `sub_1622A`，其戰後同時
   VCX bank 與 raw block descriptor 已 `confirmed`；中文 cue 名稱、PCM 解碼後波形與
   玩家可見停頓不是反組譯可單獨推出的 V3，仍列待對拍。
 
-sidecar 已同步保存上述 raw bytes、來源 hash、IDA 位址與每筆推論等級；production
-game-pack、boss repeat、逐動作動畫／音效與五個缺失事件仍遵守 fail-closed，不因本輪
+sidecar 已同步保存上述 raw bytes、來源 hash、IDA 位址與每筆推論等級；當時 production
+game-pack 對 Boss repeat、逐動作動畫／音效與五個缺失事件仍遵守 fail-closed，不因本輪
 靜態 consumer 閉合而宣稱 remake 完成。
 
 ## 十、E2 pack integration（2026-08-11）
@@ -559,18 +567,18 @@ stride、區域索引、固定 record 與名稱 cardinality；production 建立 
 只使用 pack raw，不再直接讀取 `DQ3.EXE` 的版本專屬遭遇表。
 
 `EncounterTables.Slot` 同步修正原版 `dec region; shl 5` 的 off-by-one，raw region `1..27`
-現在對應 Go slot `0..26`；region `0`／越界值 fail-closed。這是 E2/D2 資料與 loader 閉環，
-不改變 boss repeat-N、逐動作 frame、PCM 播放／停頓、精確螢幕座標或五個缺失旗標的
-`unknown`／V3 狀態。
+現在對應 Go slot `0..26`；region `0`／越界值 fail-closed。這是 E2/D2 資料與 loader 閉環；
+當時不改變 Boss repeat-N、逐動作 frame、PCM 播放／停頓、精確螢幕座標或五個缺失旗標的
+`unknown`／V3 狀態。Boss 項目後來由 `docs/148` 證實不存在。
 
 ### 2026-08-11 E2 headless closure
 
 在一次性 Docker＋Xvfb 中以同一個 versioned pack 重播正式 `InputState`：pack encounter
 decoder、巴拉摩斯事件戰鬥、薩曼奧薩鏡像事件、save/load identity、混合 formation、逐 actor
 敵方回合與掉落／獎勵 component tests 均通過；`go test ./internal/...` 亦全綠。這是 E2／D2
-的 engine/data／交易驗收，不是 DOSBox 或 V3 畫面／聲音驗收。boss repeat-N、SHP action frame、
-PCM 波形／停頓、精確 formation 座標與五個 story flag 的 remake player consumer 仍保留
-`unknown`／fail-closed。
+的 engine/data／交易驗收，不是 DOSBox 或 V3 畫面／聲音驗收。當時 Boss repeat-N、SHP action
+frame、PCM 波形／停頓、精確 formation 座標與五個 story flag 的 remake player consumer
+保留 `unknown`／fail-closed；Boss 項目後來由 `docs/148` 證實不存在。
 
 完整 `TestOpeningProductionInputTrace` 另作非 E2 回歸觀察時，在 CTY7 入口後的 CTY7→CTY8
 section route fixture 停在 `(7,6)`；這是**歷史／已訂正**的中途觀察。後續正式輸入修正已由
@@ -610,7 +618,7 @@ active record 逐個體擲 HP、複製速度／攻防／咒文欄位，再遞增
 轉成 renderer 像素。這一段是 `confirmed` writer→consumer；從 EGA byte 到目前像素面的
 轉換標為 `strong` 靜態投影，仍不宣稱同狀態 DOSBox V3 截圖。
 
-### 2. boss repeat-N 與逐動作 SHP frame 仍沒有可實作的原版值
+### 2. 歷史停止線：當時 Boss repeat-N 與逐動作 SHP frame 尚無可實作值
 
 - 正式 `sub_1C08B`（IDA `0x1c08b`／logical `0xc08b`／file `0xd3fb`）對每筆
   `sub_1C34F` queue entry 只呼叫一次 `sub_1A973` 或 `sub_1B3F3`；下一回合才重建 queue。
@@ -620,9 +628,9 @@ active record 逐個體擲 HP、複製速度／攻防／咒文欄位，再遞增
   `sub_1B220` 是同一 payload 的遮罩重畫與 `[2,1]` tick 等待，不是已證實的 action
   frame index。
 
-因此 `boss_repeat_n`、boss 特殊條件、逐動作 SHP frame 與每幀可見停頓仍為 `unknown`。
-不能用連戰 12 輪、D3MNS 未命名欄位或六次重畫猜成 `repeat=1`／`repeat=N`；E2 保持
-fail-closed，這些未知不阻塞已完成的 raw formation integration。
+因此當時將 `boss_repeat_n`、Boss 特殊條件、逐動作 SHP frame 與每幀可見停頓都標為
+`unknown`。`docs/148` 後來證實本 EXE 不存在前兩者的 repeat 路徑；逐動作 frame／停頓仍
+未知。不能用連戰 12 輪、D3MNS 未命名欄位或六次重畫猜成 `repeat=1`／`repeat=N`。
 
 ### 3. PCM raw timing metadata 已可重建，但 host wall-clock 仍未知
 
@@ -634,20 +642,23 @@ fail-closed，這些未知不阻塞已完成的 raw formation integration。
 `battle.audio.raw_block_descriptors`。`NVOC` cue 21 的正確位址是 `0x1f973`（不是舊文件
 誤寫的 `0x1f913`）。
 
-`gaudio` 已接收 decoder duration sidecar，但 `PlaySFX` 仍是非阻塞的 fire-and-forget；
-沒有把 44100 Hz 重取樣長度、Sound Blaster DMA 完成或玩家可見停頓冒稱為硬體精確 timing。
-故 raw sample timing 為 `confirmed` 可重建資料，cue 語意／實際波形／host wall-clock 與
-逐動作動畫同步仍是 `unknown`／V3 gap。
+`PlaySFX` API 本身仍是非阻塞呼叫；但 `docs/149` 已用 IDA 9.4 閉合兩條具體 consumer：
+玩家成功逃跑寫 cue 13、敵人成功逃跑寫 cue 21，兩者在訊息後都呼叫 `sub_208E2`
+等待完成。現行 `Battle` 因而以原始 VOC sample duration（向上換算 60 TPS）阻擋提前輸入，
+headless 也保留相同 duration，這兩個角色達 D3／E2。此近似沒有把 44100 Hz 重取樣長度、
+Sound Blaster DMA wall-clock、實際波形或逐幀畫面同步冒稱為硬體精確 V3；其餘 cue 的玩家
+語意與逐動作同步仍是 `unknown`。
 
 ### 4. 本輪可宣稱的 gate
 
 - `go test ./internal/... -count=1`：Docker 內通過，包含 pack formation schema、VOC
-  source metadata 與原始 parity。
+  source metadata、逃跑 cue／完成等待與原始 parity。
 - `DQ3_ASSETS=/repo/assets_raw` 的 Xvfb targeted game tests：混合編隊、原始 weight
   stride、逐敵行動、全滅與獎勵通過；測試仍是 remake 內部 deterministic trace，不是 DOSBox
   oracle。
-- 因此目前狀態是「formation raw E2／D2 已接線；PCM source metadata E2／D2 已保留；
-  boss repeat-N、逐動作 frame、host PCM wall-clock 仍 unknown」，不可在 README／release
+- 因此該 checkpoint 的狀態是「formation raw E2／D2 已接線；PCM source metadata E2／D2
+  已保留；當時 Boss repeat-N、逐動作 frame、host PCM wall-clock 仍 unknown」。Boss 項目
+  已由 `docs/148` 訂正為不存在；其餘不可在 README／release
 寫成完整戰鬥 V3 parity。
 
 ## 5. 2026-08-11 runtime 接線更新（現行 E2）
@@ -664,8 +675,9 @@ fail-closed，這些未知不阻塞已完成的 raw formation integration。
 | 33 `sub_15904` | CTY44 `(13,27)` 正式「話す」 | `DI=0x0bff` 換算 D3TXT record 71、clear `0x3d`、set `0x24/0x21`、scene reload | `TestSamanosaConditionalStoryFlagWriter` |
 
 `TestStoryFlagRuntimePackContracts` 另鎖定四筆 JSON 的 D3／IDA evidence 與 handler raw。這
-是 engine/data／save 的 E2 閉環，不是同狀態 DOSBox V3；原版完整後續 route、精確 palette
-register、逐幀 SHP／PCM wall-clock 與 boss repeat-N 仍維持本文件前述 `unknown`，不可在
+是 engine/data／save 的 E2 閉環，不是同狀態 DOSBox V3；當時原版完整後續 route、精確 palette
+register、逐幀 SHP／PCM wall-clock 與 Boss repeat-N 仍維持前述 `unknown`。Boss 項目已由
+`docs/148` 訂正為不存在；其餘不可在
 README 或 release 描述成全戰鬥 V3 parity。
 
 ## 十二、2026-08-12 未閉合項目的 IDA 9.4 收斂
@@ -693,10 +705,11 @@ sub_1B3F3 (alternate consumer) ← 0x1c0d8
 第三個 queue-builder caller `0x18ea7` 只將已排序 queue 的結果寫入 `DS:0x35f2`；它沒有
 direct CREF 到 actor consumer，不能被命名為 boss repeat handler。
 
-這使「一般戰鬥每個 queue entry 一次」為 `confirmed`，也使「目前沒有找到資料驅動的同一
-actor repeat-N writer→consumer」成為 `strong` 的負面靜態證據。它**不**證明任何未找到的
-其他版本／自修改路徑永遠不存在；因此不能把未知欄位寫成 `boss_repeat_n=1`，也不應在
-remake 加入猜測性的 boss 多動作機制。現有的一次 queue action 是原始正式路徑的已證實預設。
+這使「一般戰鬥每個 queue entry 一次」為 `confirmed`；當時把「沒有找到資料驅動的同一
+actor repeat-N writer→consumer」標為 `strong` 負證據。`docs/148` 後續再枚舉 raw pointer
+候選與全部 consumer caller，已將本 EXE 的結論閉合為 `confirmed absent`；它仍不外推其他
+版本或自修改程式。不能把未知欄位寫成 `boss_repeat_n=1`，也不能在 remake 加猜測性的 Boss
+多動作機制；一次 queue action 是本 EXE 的已證實契約。
 
 ### 2. 其餘項目的停止條件
 

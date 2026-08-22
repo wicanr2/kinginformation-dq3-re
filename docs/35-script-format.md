@@ -1,9 +1,12 @@
-# DQ3 腳本 / 事件 / 轉場格式(重新整理,靜態 RE 全解)
+# DQ3 腳本／事件／轉場的已閉合格式與限制
 
 > 把散在 docs/31/34 的事件系統重新逐 handler 反組譯、整理成一份可直接 implement 的格式規格。
 > 重點修正:**門/階梯/出城的 dispatch 是 section header `+0xc` 的「轉場表」純靜態資料**
 > (不是 type-2 事件)——先前以為「68 個多 section 大城無 type-2、門追不到、要 debugger」是
 > 誤判,門就在 `+0xc` 表裡。以 `assets_raw/DQ3.EXE` 逐段反組譯 + CTY00 實檔驗證。
+
+> 範圍警示：本文件閉合的是列出的 CTY header、轉場與已逐 handler 追查的 event primitive，
+> 不代表全部 scripted handler、所有間接 caller 或每個玩家可見副作用都已語意解讀。
 
 ## 位址對照(避免再踩 file/logical 陷阱)
 

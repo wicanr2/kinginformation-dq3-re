@@ -53,9 +53,15 @@ CTY27 外圍，依序完成：
 
 1. 走到入口物件下方 `(26,10)`。
 2. 按上推動具 `ctrl bit0x40` 的物件，露出 transition subid 1，進入 sec1 `(5,9)`。
-3. 走到 event0 寶箱並由調查命令取得紅寶珠 `0x68`；取得時 set flag `0x3f`。
-4. 存檔、回標題、正式讀檔，驗證紅寶珠與 flag 保留。
-5. 回到 sec0；同一 flag `0x3f` 使入口物件於場景重載後不再出現。
+3. 走到 event0 寶箱並由調查命令取得紅寶珠 `0x68`；原版 present flag `0x3f` 在取得後
+   **clear**，不是 set。
+4. 存檔、回標題、正式讀檔，驗證紅寶珠仍由全隊持有且 flag 維持 clear。
+5. 回到 sec0；同一 present flag `0x3f` clear 後，入口物件於場景重載時不再出現。
+
+> 2026-08-22 勘誤：舊版步驟把 `0x3f` 寫成「取得時 set」，與 CTY present-flag
+> consumer、現行 `collectPackTreasure` 及正式 trace 相反；本段已訂正並保留錯誤原因。
+> 共用取得 writer 接回後，紅寶珠也可能合法落入同伴，取得與 save/load 驗收改為全隊持有，
+> 不再假設勇者 owner。
 
 普通入口 `(6,3)` 即使門已開也無法走到密室寶箱；密道 transition 不是可省略的裝飾流程。
 

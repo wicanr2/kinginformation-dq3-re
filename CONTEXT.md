@@ -11,6 +11,22 @@ bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界�
 夜間起點 120、20-tick segment、五個原始 `DQ3.PAL` bank 與 12-entry selector；
 phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/136`。
 
+2026-08-22 現行主線：中毒／驅毒草為 E2；完整 campaign 已重新由標題以正式 `InputState`
+通過至 `THE END`，恢復 E3。返航 monster125／monster4／monster77 均已證明是玩家資源與
+寄放策略，不是應修改的怪物資料；六珠持有權、酒場復隊、教會逐人解毒及巴拉摩斯 `0x79`
+終盤回復策略分類已閉合，詳見 `docs/137..146`。逐動作畫面、音效與同狀態 V3 仍是獨立長尾，
+不能由本次 E3 通過推升。
+
+2026-08-22 怪物特殊物理／持久麻痺：D3MNS mask bit3 只有怪物 3／48／51 使用；IDA
+`sub_19AD6 → sub_199DC → sub_1ACCE` 證實 action3 為無視守備的
+`attack/2+rng(attack/4)`，存活目標寫 `+0x38 bit0x10`。戰鬥命令 gate、戰後 40 步解除、
+滿月草 field handler、save/load 與 CureStatus battle consumer 已接線，詳見 `docs/152`。
+原版 battle item 清單仍未閉合；`docs/153` 依 IDA 證實正常怪物 action 的順序為
+`cast gate → 存活目標 RNG → action bit`。其後 monster77／51 是歷史玩家策略 blocker，
+已由 `docs/154..178` 的正式路線、隊伍物品交易、野外補血與抵達格遭遇處理越過。
+最新乾淨 Docker＋Xvfb 完整 campaign 從標題抵達 `THE END`（115.629 秒），現行為 E3；
+仍不得外推 battle item 全清單、逐動作畫面、音效或硬體 timing 已完成。
+
 精訊版 DQ3 反組譯專案的單一入口:**canonical 術語**(命名 / 文件 / 程式一致用詞)與
 **知識庫索引**(`docs/` 全文件按主題分組)。新概念先進這裡再用;模糊詞列在末尾待釐清。
 
@@ -47,6 +63,9 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 - **glyph index** — 字模索引(0..1475),OCR → Unicode 才能 dump 純文字。
 - **control-code** — 訊息字串中的負值 word(`0xffff` 結束、`0xfffc` 捲動等);全為文字格式 / 變數插入,**無** run-event 碼。
 - **rec400 指令窗** — D3TXT00 記錄 400 = 精訊版野外指令窗本尊(命令 + 2×3 格 對話/咒文/狀況/道具/裝備/調查);UI 選單以「框線 glyph + 標籤」存成單一 record(同類:rec407 狀態畫面、rec421 道具 使用/給予/丟掉、rec441-444 戰鬥指令)。_Avoid_: 人工猜指令中文名(docs/12 舊標)。
+- **rec421 道具持有者** — 多人隊伍先由 party selector 選 owner，`DS:062D` 保存持有者、
+  `DS:062F` 保存該角色的非空物品索引；使用／給予／丟掉均操作 owner 的八格，不能把
+  rec421 解讀成勇者共用背包。已證實位址與現行 E3 驗收見 `docs/158`。
 - **共用對話視窗 rect** — DGROUP `0x3e6e`（file `0x19fae`）的原版結構；`+2=0x13`
   是 X VGA byte、`+4=0xee` 是 Y pixel、`+6=0x2c` 是內容寬 VGA byte、`+8=0x60`
   是內容高 pixel。`sub_1fb36` 加左右 1 byte／上下 `0x10` 後，外框為
@@ -57,7 +76,7 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 
 ### 角色 / 數值
 - **7 屬性序** — 成長表 14 byte = 7 個 (base,slope) 對,`kind*2`=列內 offset:0 HP、2 MP、4 速度、6 力量、8 聰明、A 耐力、C 運氣。語意三方交叉確認(成長表樣式 + 升級訊息 rec191-197 + BBS 存檔佈局 docs/history)。_Avoid_: 把屬性欄標成 B4/B6/B8/BA 不明名(舊 enum)。
-- **怪物 AI 欄位** — `D3MNS.DAT` 記錄內驅動敵方行動的 4 欄:`+0x0d` 施咒機率(/256)、`+0x0e..+0x13` 已知咒文 bitmask(6 byte/48 bit,放咒時均勻隨機挑)、`+0x17` 逃跑觸發閾值(對我方強度 `[0x5094]`)、`+0x18` 逃跑機率。決策樹 file 0xbcf0;見 [docs/37](docs/37-monster-ai.md)。_Avoid_: 把怪物施咒當「挑最佳咒」(實為隨機)。
+- **怪物 AI 欄位** — `D3MNS.DAT` 記錄內驅動敵方行動的 4 欄：`+0x0d` action gate 機率(/256)、`+0x0e..+0x13` raw action mask（6 byte／48 bit，均勻挑 set bit）、`+0x17` 逃跑觸發閾值、`+0x18` 逃跑機率。普通咒文只是已閉合子集合；bit3 是無視守備並附加持久麻痺的特殊物理、bit38 是毒氣；其餘特殊／未知 action 不可由歷史文字表命名。決策樹見 [docs/37](docs/37-monster-ai.md)，bit3 完整鏈見 [docs/152](docs/152-special-physical-paralysis-spec.md)。
 - **怪物掉落欄位** — `D3MNS.DAT` 記錄 `+0x25` 是掉落判定閾值、`+0x26` 是掉落道具；
   勝利結算在 logical `0xc425`（file `0xd795`）以 `DGROUP 0x2321` 的 formation 第一組
   怪物 raw ID 選記錄，依 `roll(256) <= +0x25` 判定，再讀
@@ -135,11 +154,11 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 - [`31`](docs/31-event-system.md) 事件 / 物件 / 互動子系統(校正中)
 - [`32`](docs/32-world-locations.md) 世界地點圖(cty_loc → 標記)
 - [`34`](docs/34-cty-load-format.md) load_cty 載入邏輯與 CTY 格式
-- [`35`](docs/35-script-format.md) 腳本 / 事件 / 轉場格式(靜態 RE 全解)
+- [`35`](docs/35-script-format.md) 腳本／事件／轉場的已閉合格式與剩餘限制
 - [地圖連通圖](docs/maps/map_graph.md) — 全 CTY 轉場連接(metadata 自動抽出;89 CTY/50 跨 CTY 連結)
 - [`36`](docs/36-original-tavern-playthrough.md) 原版 DOSBox 實機玩法:開機→姓名輸入→露依達酒場創角(知識庫;姓名輸入按鍵語意實機校正)
-- [`37`](docs/37-monster-ai.md) 怪物 AI(敵方行動邏輯)反組譯:狀態→逃跑→物理/咒文決策樹;D3MNS AI 欄位(+0x0d 施咒率/+0x0e..13 咒文 bitmask/+0x17 逃閾/+0x18 逃率),資料驅動驗證
-- [`38`](docs/38-monster-stats.md) 完整怪物屬性表(130 隻):HP/攻/防/速/經驗/金錢 + AI(施咒%/逃跑)+ 會用的法術(bitmask→真咒名)
+- [`37`](docs/37-monster-ai.md) 怪物 AI 反組譯：狀態→逃跑→物理/action gate；`+0x0e..13` 是 raw action mask，普通咒文與特殊 action 必須分開閉合
+- [`38`](docs/38-monster-stats.md) 130 隻 raw 屬性表；法術欄是歷史文字-rec lookup，不代表全部 action bit 語意已證實
 - [`39`](docs/39-encounter-zones.md) 遭遇區系統:overworld region map(0x4966 16×16 grid)+ 遭遇表(0x4a56,region→4 子表→候選怪);位置→region→怪
 
 ### 歷史 / 一手史料
@@ -220,7 +239,8 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
   `0x1a/0x1b`、33／CTY44 `DI=0x0bff→record71` 的 `0x24/0x21`。
 - 共用 engine 只執行固定 primitive；`game/story_flags_test.go` 以正式 command／battle path、
   Phoenix save/load map replay、Baramos aftermath 與 ending writer 驗收。完整 V3 route、
-  palette register、SHP／PCM timing、boss repeat-N 與未閉合 story 語意仍保持 `unknown`／fail-closed。
+  palette register、SHP／PCM timing與未閉合 story 語意仍保持 `unknown`／fail-closed；本段早期
+  並列的 Boss repeat-N 已由 `docs/148` 證實在本 EXE 不存在。
 - CTY07→CTY08 route 勘誤（2026-08-11）：原始 transition chain 已接通；塔區遭遇由正式聖水／
   戰鬥輸入處理後可抵達 CTY08 sec3。CTY13 金字塔 sec2 同樣確認遭遇 gate 會開 modal；
   `traceWalkToNoPortal` 已補正式戰鬥輸入，CTY13 開關／魔法鑰匙 checkpoint 可由正式 trace
@@ -260,10 +280,11 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
   能力確認 checkpoint 的 V3 靜態，不涵蓋游標、palette、淡入或音效 timing。原始 hash、
   殘差與反證見 [`docs/126`](docs/126-newgame-confirmation-v3-static-comparison.md)。
 - IDA Pro 9.4 重新交叉查核 queue／actor consumer、alternate runner、SHP redraw、VOC dispatch、
-  formation、resistance、日夜與五個 flag。可由目前原始輸入閉合的資料／runtime 已收斂；
-  boss repeat-N、逐動作 frame、PCM wall-clock 與玩家可見 palette transition 沒有安全
-  production 值，保持 `unknown`／fail-closed，除非出現新原版 trace 或具體 caller。完整範圍與
-  停止條件見 [`docs/123`](docs/123-static-battle-daynight-re.md)。
+  formation、resistance、日夜與五個 flag。2026-08-22 又枚舉所有 queue-builder／actor-consumer
+  caller 及 raw function-pointer 候選，證實本 EXE 每個存活 actor 每回合恰好一筆，沒有 Boss
+  repeat-N 路徑；見 [`docs/148`](docs/148-battle-single-action-queue-spec.md)。逐動作 frame、
+  PCM wall-clock 與玩家可見 palette transition 仍沒有安全 production 值，保持
+  `unknown`／fail-closed。完整範圍與停止條件見 [`docs/123`](docs/123-static-battle-daynight-re.md)。
 
 ### 2026-08-12 歷史 checkpoint：固定編隊背景 selector
 
@@ -271,7 +292,8 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
   `PACKBG.SCR` archive page 與 `MNSBK.PAL` 16 色 bank；現行 pack 欄位為
   `background.page_raw`／`background.palette_bank_raw`，archive 的完整 page stride 是 `0x13d80`。
   兩場正式 trace 現為洞窟／沙漠 near-state V2，詳細 raw、hash 與推論等級見 [`docs/128`](docs/128-battle-background-selector-re.md)。
-- 這是必要的固定 boss 視覺修正，但不是 generic terrain selector 已完成。主線已 E3；沒有新的
+- 這是必要的固定 boss 視覺修正，但不是 generic terrain selector 已完成。該歷史 checkpoint
+  的主線曾達 E3；現行工作樹是否回綠須看本文件末端 current checkpoint。沒有新的
   玩家可見 mismatch 時，不重新開啟全地形背景 RE，也不從 `0/0` 草地 baseline 外推。
 
 ### 2026-08-12 歷史 checkpoint：必經單頭目背景
@@ -308,6 +330,35 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
   [`docs/134`](docs/134-promo-video-r2-dist-all.md)；`dist/` 與 `work/` 只保留歷史／中間產物。
 
 ## Flagged ambiguities(待釐清)
+
+### 中毒／教會語意索引（2026-08-22）
+
+- D3MNS mask bit38 → action0x32 → logical0xa307 毒氣 writer：confirmed。
+- 角色 `+0x38 bit0x40` 是持久中毒；`sub_1964E` 正常移動每步 1 HP，船／飛行跳過；
+  `sub_1712B` 教會固定 5G 清除：confirmed。
+- 教會 curse 不讀 `+0x38`，而掃 `+0x3a` 起 item words 的 bit0x4000；`docs/147` 已閉合
+  ITEM `+4/+5 & 0x0e00` → 裝備 writer → bit0x4000 → level×100 教會 consumer：confirmed。
+- 中毒 ledger：[`docs/137`](docs/137-church-poison-condition-re.md)；詛咒來源與交易 ledger：
+  [`docs/147`](docs/147-cursed-equipment-church-service-spec.md)。現行 remake
+  該中毒 checkpoint 以 game-pack schema `0.1.40`／content `0.1.45` 接上 bit38 → battle → 持久角色／存檔
+  → 移動毒傷 → 教會 5G 解毒 → 驅毒草正式選人交易，為 E2；完整新遊戲主線 trace 已用
+  正式驅毒草越過 CTY23 單人回程；後續補給訂正已再跨過 monster89、幽靈船與愛的回憶，
+  已越過 CTY36、蓋亞之劍、銀寶珠、monster125 與黃寶珠；monster4×5 已由正式普攻策略
+  越過。monster77 返航後續已由無珠角色寄放、六珠後正式復隊、教會解毒與巴拉摩斯終盤
+  分類訂正閉合；完整 campaign 已重新通過至 `THE END`。
+  poison 與 curse 兩條有限垂直鏈均為 E2；教會畫面／cue timing 仍非 V3。
+- 戰鬥逃跑音效已由 [`docs/149`](docs/149-battle-flee-sfx-wait-spec.md) 閉合：玩家成功逃跑
+  使用 `FVOC cue 13`，敵人成功逃跑使用 `FVOC cue 21`，兩者皆經 `sub_208E2` 等待完成。
+  現行 Battle 依原始 VOC sample duration 建立確定性輸入閘門，為 D3／E2；硬體 wall-clock、
+  重取樣波形與玩家可見逐幀同步仍是 unknown／V3 gap。
+- 玩家一般物理攻擊已由 [`docs/150`](docs/150-player-physical-sfx-sequence-spec.md) 閉合
+  `cue 6 → record0x14a → wait → cue 11 → wait → damage consumer`；leader／companion
+  共用 pack-owned 有序序列。這只證實該 call-site 的 D3／E2，不把 cue 6 全域命名為攻擊，
+  也不外推 cue 6 其他 caller、critical 或 Sound Blaster wall-clock。
+- 一般物理結果已由 [`docs/151`](docs/151-common-physical-result-sfx-spec.md) 閉合：敵方
+  cue4／record331、成功傷害 cue1／record332 或 333、共同 miss cue3／record335，以及
+  record336／357 個別倒下訊息皆已接成 D3／E2；cue9 特殊分支、critical、咒文傷害與
+  硬體 wall-clock 仍是獨立 unknown／V3 長尾。
 
 - 「event」一詞橫跨 section 事件表(4-byte entry)與 scripted-event(跳表 id);文件中需標明哪一種。
 - 「物件 / NPC / 實體」三詞在 `docs/31` 尚未收斂(實體表 `[0x4f15]` vs CTY 內 NPC 記錄)。

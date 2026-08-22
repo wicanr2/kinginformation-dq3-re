@@ -6,7 +6,7 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
-// 資訊面板(狀況 / 道具):命令窗選 狀況/道具 開啟,B 關。用已建的升級/背包/品名系統。
+// 資訊面板（狀況／道具）：多人道具先選持有者，再操作該角色個人物品欄。
 type panelKind int
 
 const (
@@ -20,6 +20,7 @@ const (
 	itemActionList = iota
 	itemActionMenu
 	itemActionTarget
+	itemActionUseTarget
 )
 
 // drawStatus:依原版 D3TXT00 record407 的 22×12 格狀況窗，將主角角色 record
@@ -110,12 +111,29 @@ func (g *Game) drawCmdStatus(rgba []byte, white dq3data.Color) {
 	g.drawPartyHUD(rgba, white)
 }
 
-// drawItems:持有道具清單(品名 = D3TXT00 rec=code+1),游標可選 → A 使用。空 → 不列。
+// drawItems:持有者 selector 與角色局部道具清單（品名 = D3TXT00 rec=code+1）。
 func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
 	yellow := dq3data.Color{R: 255, G: 224, B: 32}
 	g.panelHits.reset()
-	for i, code := range g.inventory {
+	if g.panelActor < 0 {
+		for actor := 0; actor <= len(g.companions); actor++ {
+			y := 56 + actor*24
+			if actor == g.panelCursor {
+				drawGlyph(rgba, g.dlg.tx, 44, y, curGlyph, yellow)
+			}
+			for j, glyph := range g.equipActorName(actor) {
+				drawGlyph(rgba, g.dlg.tx, 64+j*16, y, glyph, white)
+			}
+			g.panelHits.add(44, y-3, ScreenW-80-8, 20, actor)
+		}
+		return
+	}
+	items := g.equipActorInventory(g.panelActor)
+	if items == nil {
+		return
+	}
+	for i, code := range *items {
 		if i >= 10 {
 			break
 		}
@@ -131,6 +149,8 @@ func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 		g.drawItemActionMenu(rgba, white)
 	case itemActionTarget:
 		g.drawItemGiveTargets(rgba, white)
+	case itemActionUseTarget:
+		g.drawItemUseTargets(rgba, white)
 	}
 }
 
@@ -159,51 +179,123 @@ func (g *Game) drawItemActionMenu(rgba []byte, white dq3data.Color) {
 }
 
 func (g *Game) drawItemGiveTargets(rgba []byte, white dq3data.Color) {
-	fillBox(rgba, 360, 48, 220, 32+len(g.companions)*24, white)
-	for i, m := range g.companions {
-		y := 64 + i*24
-		if i == g.itemActionCursor {
+	count := 1 + len(g.companions)
+	fillBox(rgba, 360, 48, 220, 32+count*24, white)
+	for actor := 0; actor < count; actor++ {
+		y := 64 + actor*24
+		if actor == g.itemActionCursor {
 			drawGlyph(rgba, g.dlg.tx, 372, y, curGlyph, white)
 		}
-		for j, glyph := range m.Name {
+		for j, glyph := range g.equipActorName(actor) {
 			drawGlyph(rgba, g.dlg.tx, 400+j*16, y, glyph, white)
 		}
+		g.panelHits.add(372, y-3, 200, 20, actor)
 	}
 }
 
+func (g *Game) drawItemUseTargets(rgba []byte, white dq3data.Color) {
+	count := 1 + len(g.companions)
+	fillBox(rgba, 360, 48, 220, 32+count*24, white)
+	for actor := 0; actor < count; actor++ {
+		y := 64 + actor*24
+		if actor == g.itemActionCursor {
+			drawGlyph(rgba, g.dlg.tx, 372, y, curGlyph, white)
+		}
+		for j, glyph := range g.equipActorName(actor) {
+			drawGlyph(rgba, g.dlg.tx, 400+j*16, y, glyph, white)
+		}
+		g.panelHits.add(372, y-3, 200, 20, actor)
+	}
+}
+
+func (g *Game) drawShopTargets(rgba []byte, white dq3data.Color) {
+	if !g.shop.targeting {
+		return
+	}
+	count := 1 + len(g.companions)
+	fillBox(rgba, 360, 48, 220, 32+count*24, white)
+	g.shop.targetHits.reset()
+	for actor := 0; actor < count; actor++ {
+		y := 64 + actor*24
+		if actor == g.shop.targetCursor {
+			drawGlyph(rgba, g.dlg.tx, 372, y, curGlyph, white)
+		}
+		for j, glyph := range g.equipActorName(actor) {
+			drawGlyph(rgba, g.dlg.tx, 400+j*16, y, glyph, white)
+		}
+		g.shop.targetHits.add(372, y-3, 200, 20, actor)
+	}
+}
+
+func (g *Game) purchaseShopItem(actor int) bool {
+	if g.pack == nil || !g.shop.targeting || g.shop.pendingCode < 0 ||
+		actor < 0 || actor > len(g.companions) || g.shop.items == nil {
+		return false
+	}
+	price := g.shop.items.Price(g.shop.pendingCode)
+	if price < 0 || g.heroGold < price {
+		return false
+	}
+	items := g.equipActorInventory(actor)
+	equipped := g.equipActorSlots(actor)
+	if items == nil || equipped == nil {
+		return false
+	}
+	used := len(*items)
+	for _, code := range equipped {
+		if code >= 0 {
+			used++
+		}
+	}
+	if slots := g.pack.ItemActions().PersonalInventorySlots; slots <= 0 || used >= slots {
+		return false
+	}
+	*items = append(*items, g.shop.pendingCode)
+	g.heroGold -= price
+	g.shop.targeting, g.shop.pendingCode = false, -1
+	return true
+}
+
 func (g *Game) giveSelectedItem(target int) bool {
-	if g.pack == nil || g.itemSelected < 0 || g.itemSelected >= len(g.inventory) ||
-		target < 0 || target >= len(g.companions) {
+	source := g.equipActorInventory(g.panelActor)
+	dest := g.equipActorInventory(target)
+	if g.pack == nil || source == nil || dest == nil || g.itemSelected < 0 ||
+		g.itemSelected >= len(*source) || target < 0 || target > len(g.companions) {
 		return false
 	}
-	m := g.companions[target]
-	if m.itemCount() >= g.pack.ItemActions().PersonalInventorySlots {
+	code := (*source)[g.itemSelected]
+	if target == g.panelActor {
+		*source = append(append((*source)[:g.itemSelected:g.itemSelected], (*source)[g.itemSelected+1:]...), code)
+		g.panelCursor = len(*source) - 1
+		return true
+	}
+	if g.actorItemCount(target) >= g.pack.ItemActions().PersonalInventorySlots {
 		return false
 	}
-	code := g.inventory[g.itemSelected]
-	g.inventory = append(g.inventory[:g.itemSelected], g.inventory[g.itemSelected+1:]...)
-	m.Inventory = append(m.Inventory, code)
-	if len(g.inventory) == 0 {
+	*source = append((*source)[:g.itemSelected], (*source)[g.itemSelected+1:]...)
+	*dest = append(*dest, code)
+	if len(*source) == 0 {
 		g.panelCursor = 0
-	} else if g.itemSelected >= len(g.inventory) {
-		g.panelCursor = len(g.inventory) - 1
+	} else if g.itemSelected >= len(*source) {
+		g.panelCursor = len(*source) - 1
 	} else {
 		g.panelCursor = g.itemSelected
 	}
 	return true
 }
 
-// dropSelectedItem:原版 rec421「丟掉」動作。丟棄只改主角目前選取的
-// inventory slot，不觸發任何道具效果、旗標或消耗動畫。
+// dropSelectedItem:原版 rec421「丟掉」動作。丟棄只改目前持有者的選定
+// personal inventory slot，不觸發任何道具效果、旗標或消耗動畫。
 func (g *Game) dropSelectedItem() bool {
-	if g.itemSelected < 0 || g.itemSelected >= len(g.inventory) {
+	items := g.equipActorInventory(g.panelActor)
+	if items == nil || g.itemSelected < 0 || g.itemSelected >= len(*items) {
 		return false
 	}
-	g.inventory = append(g.inventory[:g.itemSelected], g.inventory[g.itemSelected+1:]...)
-	if len(g.inventory) == 0 {
+	*items = append((*items)[:g.itemSelected], (*items)[g.itemSelected+1:]...)
+	if len(*items) == 0 {
 		g.panelCursor = 0
-	} else if g.itemSelected >= len(g.inventory) {
-		g.panelCursor = len(g.inventory) - 1
+	} else if g.itemSelected >= len(*items) {
+		g.panelCursor = len(*items) - 1
 	} else {
 		g.panelCursor = g.itemSelected
 	}
@@ -273,6 +365,21 @@ func (g *Game) equipActorInventory(actor int) *[]int {
 		return nil
 	}
 	return &g.companions[actor-1].Inventory
+}
+
+func (g *Game) actorItemCount(actor int) int {
+	items := g.equipActorInventory(actor)
+	slots := g.equipActorSlots(actor)
+	if items == nil || slots == nil {
+		return 0
+	}
+	n := len(*items)
+	for _, code := range slots {
+		if code >= 0 {
+			n++
+		}
+	}
+	return n
 }
 
 func (g *Game) equipCandidateCount(actor int) int {
@@ -354,6 +461,11 @@ func (g *Game) equipSelected() {
 		return
 	}
 	old := slots[slot]
+	// 原版 sub_17ED9 在同部位目前裝備帶 bit0x4000 時顯示 rec0xf2
+	// 並中止交易；該 bit 的 ITEM metadata writer 已於 docs/147 閉合。
+	if old >= 0 && g.pack.IsCursedEquipment(old) {
+		return
+	}
 	*items = append((*items)[:g.panelCursor], (*items)[g.panelCursor+1:]...)
 	g.setEquipActorSlot(g.panelActor, slot, code)
 	if old >= 0 {

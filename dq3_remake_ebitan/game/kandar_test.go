@@ -126,7 +126,8 @@ func TestKandarTowerProductionRouteOpensThiefKeyDoor(t *testing.T) {
 	g := kandarTestGame(t)
 	event := g.pack.BossSurrenderEvents()[0]
 	// 此 fixture 只驗證已持盜賊鑰匙時的 CTY10 transition／開門路由；
-	// 隨機遭遇與隊伍戰力已由完整 E3 主線 trace 覆蓋。以正式道具面板
+	// 隨機遭遇與隊伍戰力已由 2026-08-22 現行 E3 trace 重新覆蓋；
+	// 此 fixture 以正式道具面板
 	// 使用聖水，避免 Lv1 單人 fixture 偶遇 monster 23 而把門路由測試
 	// 錯誤地變成戰鬥難度測試。
 	g.inventory = []int{

@@ -135,11 +135,23 @@ func (m *Music) SetSFXWithDurations(banks [][]int16, durations []int64) {
 }
 
 func (m *Music) setSFX(banks [][]int16, durations []int64) {
+	if m == nil {
+		return
+	}
+	m.sfxDurations = make([]int64, len(banks))
+	for i := range banks {
+		if i < len(durations) && durations[i] > 0 {
+			m.sfxDurations[i] = durations[i]
+		}
+	}
+	// Headless／無裝置環境只需原始 duration 來維持規則時序；若仍把每個
+	// 44.1 kHz mono bank 複製成 stereo bytes，測試中每次建立 Game 都會保留
+	// 一份無法播放的巨大 PCM。播放後端不可用時不配置 bytes，但不能丟 duration。
 	if !m.enabled {
+		m.sfx = nil
 		return
 	}
 	m.sfx = make([][]byte, len(banks))
-	m.sfxDurations = make([]int64, len(banks))
 	for i, pcm := range banks {
 		b := make([]byte, len(pcm)*4) // mono → stereo,每 sample 4 byte
 		for j, s := range pcm {
@@ -148,9 +160,6 @@ func (m *Music) setSFX(banks [][]int16, durations []int64) {
 			b[o], b[o+1], b[o+2], b[o+3] = lo, hi, lo, hi // L, R
 		}
 		m.sfx[i] = b
-		if i < len(durations) && durations[i] > 0 {
-			m.sfxDurations[i] = durations[i]
-		}
 	}
 }
 

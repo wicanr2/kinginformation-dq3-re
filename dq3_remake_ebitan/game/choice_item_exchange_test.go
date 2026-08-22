@@ -123,3 +123,27 @@ func TestChoiceItemExchangeRejectThenSuccessMatchesOriginalTransaction(t *testin
 	}
 	assertChoiceExchangeText(t, g, event.DialogueTextIDs.After)
 }
+
+func TestChoiceItemExchangeReplacesCompanionOwnerSlot(t *testing.T) {
+	g, event, npc := choiceItemExchangeTestGame(t)
+	g.setStoryFlag(event.AvailableFlagRaw, true)
+	g.inventory = []int{7}
+	member := newMember([]int{1}, 1, 0, 0)
+	member.Inventory = []int{8, event.RequiredItemRawID, 9}
+	g.companions = []*Member{member}
+
+	if !g.talkChoiceItemExchange(npc) || g.choiceItemExchangeStage != choiceItemExchangeOffer {
+		t.Fatal("同伴持有變化之杖時仍應進交換提議")
+	}
+	g.dlg.open = false
+	g.advanceChoiceItemExchangeDialogue()
+	g.choiceItemExchangeChoiceInput(InputState{Confirm: true, DirEdge: -1})
+	wantMember := []int{8, event.GrantedItemRawID, 9}
+	if g.choiceItemExchangeStage != choiceItemExchangeSuccess ||
+		!reflect.DeepEqual(g.inventory, []int{7}) ||
+		!reflect.DeepEqual(member.Inventory, wantMember) ||
+		g.hasPartyItem(event.RequiredItemRawID) || !g.hasPartyItem(event.GrantedItemRawID) {
+		t.Fatalf("同伴 owner 原格交換錯：stage=%d hero=%v member=%v",
+			g.choiceItemExchangeStage, g.inventory, member.Inventory)
+	}
+}

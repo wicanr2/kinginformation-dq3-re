@@ -72,8 +72,10 @@ func TestBaramosProductionInputTrace(t *testing.T) {
 	for n := 0; g.battle.result == 0 && n < 16; n++ { // 命令→目標，逐一收完隊員才結算
 		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	}
-	for i := 0; i < 8 && g.battle.active; i++ {
-		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 逐筆確認原版戰鬥／獎勵訊息
+	for i := 0; i < 256 && g.battle.active; i++ {
+		// 逐幀走 production input；一般物理攻擊的兩段 VOC completion gate 也必須完成，
+		// 不用固定「幾筆訊息」代替原版時序。
+		testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	}
 	if g.battle.active || !g.flags[0x213] || g.storyFlag(0x29) || !g.dlg.open {
 		t.Fatalf("巴拉摩斯勝利狀態錯:battle=%v result=%d f213=%v f29=%v postDlg=%v",

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.33",
+  "schema_version": "0.1.43",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -104,7 +104,55 @@
       "glyph_codes": [65531, 149, 623, 624, 57],
       "layout": {"kind": "battle_message"},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 330},
-      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "330", "consumer": "enemy action message consumer", "doc": "docs/108-battle-text-pack.md"}
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_1B4F6 0xb570..0xb578; record330", "consumer": "player normal physical action displays record0x14a between cue6 dispatch and sub_208E2 completion wait", "doc": "docs/150-player-physical-sfx-sequence-spec.md"}
+    },
+    {
+      "id": "common:text.battle.enemy.attack",
+      "value": "{變數}的攻擊!",
+      "glyph_codes": [65517, 149, 623, 624, 57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 331},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_1AC05 0xac13..0xac16; record331", "consumer": "enemy normal physical action displays record0x14b after cue4 dispatch", "doc": "docs/151-common-physical-result-sfx-spec.md"}
+    },
+    {
+      "id": "common:text.battle.party.damage",
+      "value": "{變數}受到\n{變數}點的傷害。",
+      "glyph_codes": [65531, 452, 453, 65534, 65530, 425, 149, 553, 471, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 333},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_1ACCE 0xadd8..0xade9; record333", "consumer": "player-victim physical damage branch displays record0x14d after cue1", "doc": "docs/151-common-physical-result-sfx-spec.md"}
+    },
+    {
+      "id": "common:text.battle.enemy.defeated",
+      "value": "{變數}被打倒了",
+      "glyph_codes": [65517, 437, 487, 627, 423],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 336},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_1ACCE 0xafad..0xafc1; record336", "consumer": "enemy-victim HP<=0 branch displays record0x150 before alive-count update", "doc": "docs/151-common-physical-result-sfx-spec.md"}
+    },
+    {
+      "id": "common:text.battle.actor.died",
+      "value": "{變數}被打倒了!",
+      "glyph_codes": [65531, 437, 487, 627, 423, 57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 357},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_1ACCE 0xaf94..0xafaa; record357", "consumer": "player-victim HP<=0 branch sets the death bit and displays record0x165", "doc": "docs/151-common-physical-result-sfx-spec.md"}
+    },
+    {
+      "id": "common:text.battle.fatal_strike",
+      "value": "發出致命的一擊。",
+      "glyph_codes": [431,440,626,274,149,401,624,56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 334},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_1ACCE 0xaf20..0xaf66; record334", "consumer": "action3 dispatches cue9 and displays record0x14e before the party damage record", "doc": "docs/152-special-physical-paralysis-spec.md"}
+    },
+    {
+      "id": "common:text.battle.actor.paralyzed",
+      "value": "{變數}被痺了!",
+      "glyph_codes": [65531,437,438,423,57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 201},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_1ACCE 0xae5c..0xae81; record201", "consumer": "action3 writes player character +0x38 bit0x10 only after nonlethal damage and displays record0xc9", "doc": "docs/152-special-physical-paralysis-spec.md"}
     },
     {
       "id": "common:text.battle.victory",
@@ -179,6 +227,30 @@
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "396", "consumer": "battle confusion/illusion consumer", "doc": "docs/108-battle-text-pack.md"}
     },
     {
+      "id": "common:text.battle.sleep.breath",
+      "value": "{變數}吐出甜甜的味道。",
+      "glyph_codes": [65517, 622, 440, 65534, 640, 640, 149, 641, 402, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 369},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "369", "consumer": "DQ3.EXE logical0xa3ee action0x35 cast message before all-party sleep writer", "doc": "docs/141-cty36-monster46-action-resource-spec.md"}
+    },
+    {
+      "id": "common:text.battle.poison.gas",
+      "value": "{變數}放出毒氣。",
+      "glyph_codes": [65517, 634, 440, 137, 426, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 375},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "375", "consumer": "DQ3.EXE logical0xa307 poison-gas action entry", "doc": "docs/137-church-poison-condition-re.md"}
+    },
+    {
+      "id": "common:text.battle.actor.poisoned",
+      "value": "{變數}中毒了。",
+      "glyph_codes": [65531, 407, 137, 423, 56],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 371},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "371", "consumer": "DQ3.EXE IDA0x1a335 poison status writer success message", "doc": "docs/137-church-poison-condition-re.md"}
+    },
+    {
       "id": "common:text.battle.cure.poison",
       "value": "{變數}體內的毒解了。",
       "glyph_codes": [65531, 486, 638, 149, 137, 464, 423, 56],
@@ -233,6 +305,14 @@
       "layout": {"kind": "battle_message"},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 361},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "361", "consumer": "all-party-defeated consumer", "doc": "docs/13-exe-battle.md"}
+    },
+    {
+      "id": "common:text.defeat.revival_voice",
+      "value": "從某處傳來一個聲音:\n*「你們就這樣放棄了嗎?\n*「再給你們一次機會吧。",
+      "glyph_codes": [511,416,631,513,461,401,546,632,313,61,65532,59,60,528,529,633,398,537,634,635,423,534,58,65532,59,60,573,559,528,529,401,572,636,415,499,56],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 362},
+      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "362", "consumer": "sub_1C7D9 all-party-defeated respawn consumer", "doc": "docs/155-field-poison-defeat-respawn-spec.md"}
     },
     {
       "id": "dq3:text.shanpane_gandart.intro",
@@ -1233,6 +1313,30 @@
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT09.TXT", "record": 29},
       "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT09.TXT", "address_space": "logical", "address": "handler75 logical 0x6379; record29", "consumer": "CTY92 staff-of-rain exchange repeat dialogue after story flag0x137 clears", "doc": "docs/re-log-722-state-machine.md"}
+    },
+    {
+      "id": "dq3:text.item_use.no_effect",
+      "value": "什麼事也沒有發生。",
+      "glyph_codes": [508,399,435,436,494,410,147,431,273,56],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 341},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "sub_14307 logical 0x4307; record341", "consumer": "dead or unaffected target path after the selected consumable has already been removed", "doc": "docs/138-antidote-item-condition-re.md"}
+    },
+    {
+      "id": "dq3:text.item_use.antidote.success",
+      "value": "{角色}的毒消失了。",
+      "glyph_codes": [65531,486,638,149,137,464,423,56],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 364},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "item0x42 handler logical 0x3dc3; sub_1469F; record364", "consumer": "living target with +0x38 bit0x40 has that bit cleared and displays record364", "doc": "docs/138-antidote-item-condition-re.md"}
+    },
+    {
+      "id": "dq3:text.item_use.fullmoon.success",
+      "value": "{角色}體內的毒解了。",
+      "glyph_codes": [65531,486,638,149,137,464,423,56],
+      "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 364},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "logical", "address": "item0x45 handler logical 0x3e15; sub_1469F; record364", "consumer": "living target with +0x38 bit0x10 has that bit cleared and the original handler reuses record364", "doc": "docs/152-special-physical-paralysis-spec.md"}
     }
   ]
 }

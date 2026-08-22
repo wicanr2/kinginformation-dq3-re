@@ -1,5 +1,12 @@
 # 消耗品使用效果(#3)
 
+> **閱讀閘門：**本文主要記錄歷史 `dq3_remake/` C／SDL 實作，不代表現行
+> Go／Ebitengine 已接線或原版精確。現行 poison condition 已接 battle／save／movement／church；
+> 驅毒草 `0x42` 的正常選人／先消耗再判定 consumer 已由 `docs/138` 閉合。滿月草
+> `0x45` 的 field dispatcher、持久麻痺 writer／battle／field consumer、40 步解除與文字
+> 已由 `docs/152` 閉合並接入現行 Go；戰鬥道具清單仍是獨立架構缺口，不能把 field
+> handler 外推成 battle item UI 已完成。
+
 > 道具欄「使用」實際生效。記錄消耗品 id 的 RE 依據、效果種類、以及哪些數值是 RE 確鑿、
 > 哪些採經典 DQ3 值(誠實標註,不自由臆造)。
 
@@ -59,4 +66,7 @@ EXE 的 `5×4` tile table 寫入地表，不消耗道具。Go/Ebitengine 已改�
 ## 待補
 
 - ~~野外指令窗「道具→つかう」互動選取 UI~~ **已實作**(`main.c` `field_use_item`;指令窗道具項已串接)。
-- ~~解毒/解麻痺需狀態系統~~ **已實作**(狀態系統 `dq3_status.h` 已建,驅毒草/滿月草已生效)。
+- 歷史 C 的「解毒／解麻痺已實作」不是現行規格。IDA 9.4 已另行閉合驅毒草 `0x42` 的
+  dispatcher、消耗與 status consumer，並推翻「無狀態不消耗」；現行 Go 接線規格見
+  [`docs/138`](138-antidote-item-condition-re.md)。滿月草持久狀態與 field 使用已由
+  [`docs/152`](152-special-physical-paralysis-spec.md) 後續閉合；戰鬥道具選擇器仍未閉合。

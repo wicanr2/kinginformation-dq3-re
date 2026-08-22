@@ -173,7 +173,7 @@ namespace:local_id
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.33"`。 |
+| `schema_version` | string | 是 | 現行資料契約版本為 `"0.1.43"`。 |
 | `pack_id` | string | 是 | 例如 `"dq3_cht"`；只允許小寫 ASCII、數字及底線。 |
 | `game` | enum | 是 | `dq1`、`dq2`、`dq3`。 |
 | `edition` | string | 是 | 本專案使用 `"cht_jingxun"`。 |
@@ -201,7 +201,7 @@ fallback 補值。
 
 ```json
 {
-  "schema_version": "0.1.33",
+  "schema_version": "0.1.43",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
@@ -254,13 +254,38 @@ fallback 補值。
 | `resistance.class_thresholds` | int[] | 是 | 原版 `[0,68,180,255]`。 |
 | `resistance.descriptor_table` | raw object | 是 | `DS:0x37c3` 60×3-byte descriptor。 |
 | `resistance.effect_names_zh` | object | 是 | effect id `0..59` 到 D3TXT00 record `0x79+id` 的文字對映；不代表元素／狀態語意。 |
+| `sound_cues` | object | 是 | 已閉合 caller→VOC→driver wait 的穩定戰鬥角色；不得放僅靠擬聲或連號猜出的 cue。 |
+| `sound_cues.player_fled`／`enemy_fled` | object | 是 | 分別保存玩家／敵人逃跑成功的 raw cue、completion gate 與 D3 evidence。 |
+| `sound_cues.enemy_physical_attack`／`physical_hit`／`physical_miss`／`fatal_strike` | object | 是 | 一般物理流程的敵方攻擊、成功傷害、共同 miss 與 action3 特殊物理 cue；每個角色必須各自閉合 caller、record/result consumer 與 completion wait。 |
+| `sound_cues.*.cue_raw` | int | 是 | version-owned VOC cue；DQ3 現行逃跑為 `13`／`21`，一般物理結果為敵攻 `4`、命中 `1`、miss `3`，特殊物理為 `9`；Go 不得硬寫。 |
+| `sound_cues.*.wait_for_completion` | bool | 是 | 原版 call-site 是否在訊息後呼叫 `sub_208E2`；這是 input scheduling gate，不是 host wall-clock 聲明。 |
+| `sound_cues.player_physical.steps[]` | object[] | 是 | 玩家一般物理攻擊同一 call-site 的有序 cue 序列；DQ3 依序為 `6`、`11`，每一步各保存 completion gate 與 D3 evidence。 |
+| `conditions` | object[] | 是 | 具名 condition 與 pack-owned 場景參數；DQ3 現含持久 poison／paralysis 與只在戰鬥存在的 sleep。 |
+| `conditions[].id` | string | 是 | 跨版本語意 ID，例如 `common:condition.poison`；引擎不得由 legacy bit 自行命名。 |
+| `conditions[].persistence` | enum | 是 | `persistent` 會跨戰鬥／存檔，`battle` 只屬當場戰鬥；不可由 legacy bit 猜測。 |
+| `conditions[].field_damage_per_step` | int | 是 | 正常移動每步傷害；非負，必須有正式 movement consumer 證據。 |
+| `conditions[].field_clear_after_steps` | int | 是 | 合法場景步後解除的共享倒數；`0` 表示不依步數解除。DQ3 paralysis 為 `40`，poison／sleep 為 `0`。 |
+| `conditions[].suppress_world_state_mask` | int | 是 | 原版 consumer 的移動模式抑制 mask；DQ3 的 `3` 對應船／飛行，不能寫成 Go 常數。 |
+| `conditions[].legacy_status_mask` | int | 是 | 原始角色 record 狀態 mask，僅供 parity／證據；remake save bit layout 不冒充原版。 |
+| `monster_actions` | object[] | 是 | 原始 monster mask bit 到有限 engine effect 的資料化分派；不得把所有 bit 直接送入玩家咒文 descriptor。 |
+| `monster_actions[].mask_bit`／`action_raw` | int | 是 | 原始 48-bit mask index 與 remap 後 action ID。 |
+| `monster_actions[].kind`／`condition_id`／`target_scope` | string | 是 | 有限 primitive 為 `apply_condition` 或 `special_physical_condition`；scope 依 action 為 `party_alive_unaffected` 或 `party_one_alive`，未知組合 fail closed。 |
+| `monster_actions[].success_roll_max` | int | 是 | 成功比較的 inclusive 上界；DQ3 poison 為 `100`、sleep breath 為 `180`。 |
+| `monster_actions[].damage_formula` | string | `special_physical_condition` 必填 | 現行唯一合法值是 `ignore_defense_half_plus_random_quarter`；引擎不得依 action raw 猜公式。 |
+| `monster_actions[].condition_on_survival` | bool | `special_physical_condition` 必填 | 是否只在傷後存活時附加 condition；DQ3 action3 必須為 `true`。 |
+| `monster_actions[].cast_text_role`／`success_text_role` | string | 是 | 必須引用 `interface.battle_texts` 已定義角色，實際 record／glyph 留在 `texts.json`。 |
 | `evidence` | object | 是 | E2 raw contract 的來源、consumer 與推論等級。 |
 
 `raw object` 必須有 `address_space`、`address`、`length_bytes`、`raw_sha256`、`raw_hex` 與
 `evidence`；loader 會檢查長度／SHA-256。`formation_position` 現在保存已由 IDA
 writer→consumer 閉合的 raw EGA 投影，production renderer 依此計算位置；它不等於已知每個
-動作的美術幀或玩家可見 timing。E2 仍不把 boss repeat-N、逐動作 SHP frame、PCM 播放停頓
-或缺失 story flag 的玩家語意寫入此表；那些項目仍留在
+動作的美術幀或玩家可見 timing。一般咒文 action 仍由 descriptor 決定 MP 成本，runtime
+必須逐隻怪物檢查並扣除 active MP；不足時顯示原版 MP 不足文字並消耗該次行動。bit41 的
+party sleep 則由有限 `monster_actions` primitive 處理，不能假裝成玩家咒文。`sound_cues`
+目前接入 `docs/149` 的兩個逃跑 cue、`docs/150` 的玩家物理雙 cue sequence，以及
+`docs/151` 的敵方攻擊／成功傷害／共同 miss cue 與 source-duration input gate；Boss repeat-N
+已由 `docs/148` 證實在本 EXE 不存在。E2 仍不把逐動作 SHP frame、未閉合 PCM cue 語意、
+host wall-clock 或缺失 story flag 的玩家語意寫入此表；那些項目仍留在
 [`docs/123`](123-static-battle-daynight-re.md) 的非 production sidecar。
 
 凡引用原始固定編隊的 event formation，背景欄位統一為：
@@ -298,7 +323,7 @@ loader 測試及至少一個 pack fixture。
 
 ```json
 {
-  "formula_id": "common:formula.revive_level_table",
+  "formula_id": "common:formula.level_table",
   "parameters": {
     "costs_gold": [10, 10, 10, 20]
   }
@@ -322,14 +347,20 @@ loader 測試及至少一個 pack fixture。
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
-| `spells[].id` | string | 是 | 咒文 ID。 |
-| `spells[].mp_cost` | int | 是 | 非負。 |
-| `spells[].contexts` | enum[] | 是 | `field`、`battle`。 |
-| `spells[].target` | enum | 是 | `self`、`ally_one`、`ally_all`、`enemy_one`、`enemy_group`、`enemy_all`。 |
-| `spells[].effect_id` | string | 是 | 共用引擎 effect primitive。 |
-| `spells[].parameters` | object | 是 | effect schema 決定的 typed 參數。 |
-| `schools[].learn[].level` | int | 是 | 習得等級。 |
-| `schools[].learn[].spell_id` | string | 是 | 必須引用存在的 spell。 |
+| `field` | object[] | 是 | 原版野外 caster 可派發的 typed descriptor；不是戰鬥咒文表或兩者聯集。 |
+| `field[].record_raw` | int | 是 | 原版 D3TXT／descriptor record；DQ3 以 `record_raw-0x79` 定位三 byte descriptor。 |
+| `field[].effect_id` | string | 是 | 共用引擎 effect primitive；目前包含 `heal_hp` 與既有場景效果。 |
+| `field[].mp_cost` | int | 是 | 原始 descriptor byte0，範圍 0..255。 |
+| `field[].base_amount` | int | 是 | 原始 descriptor byte1；無數值效果時必須為 0。 |
+| `field[].flags_raw` | int | 是 | 原始 descriptor byte2；typed scope 必須與 raw flags 一致。 |
+| `field[].descriptor_raw_hex` | string | 是 | 與上述三欄逐 byte 相等的六位十六進位字串；loader 會 fail closed 驗證。 |
+| `field[].target_scope` | enum | 是 | `none`、`party_member` 或 `party_all`；不可由 runtime 猜測。 |
+| `field[].amount_formula` | enum | `heal_hp` 必填 | `base_to_base_plus_9` 或 `full_hp`；非回復效果不得夾帶。 |
+| `field[].evidence` | object | 是 | 輸入檔／hash、位址空間、原始位址、consumer、推論等級與文件。 |
+
+現行 `spells.json` 只承載已閉合的野外 caster 定義。戰鬥咒文與習得表仍由既有原始 EXE
+oracle 驗證，尚未遷入此 JSON；不得在契約文件虛構 `schools` 或以 `field` 缺項作 Go
+fallback。rec161–165 的原始 descriptor、共用 HP writer 及公式見 `docs/171`。
 
 ### 6.4 `items.json`
 
@@ -360,13 +391,15 @@ validator 必須檢查怪物引用、數量上下限、權重非負、region 完
 ### 6.6 `facilities.json`
 
 頂層 `service_definitions` 定義跨場景共用的服務與公式；`facilities` 才是各場景的 NPC
-設施實例。第一批 loader 已實作並驗證 `common:service.revive`，場景 instance 遷移時再
+設施實例。現行 loader 已實作並驗證 `common:service.revive`、
+`common:service.cure_poison` 與 `common:service.remove_curse`；場景 instance 遷移時再
 加入 `facilities`。
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---:|---:|---|
 | `service_definitions[].id` | string | 是 | 共用服務 ID。 |
-| `service_definitions[].pricing` | object | 是 | 具名公式、level cap 與完整費用表。 |
+| `service_definitions[].pricing` | object | 是 | `common:formula.level_table` 使用 level cap＋完整費用表；`common:formula.fixed` 只能提供非負 `fixed_gold`；`common:formula.level_multiplier` 只能提供正數 `gold_per_level`。三種形狀不可混用。 |
+| `service_definitions[].affected_equipped_item_raw_ids` | int[] | 解詛咒服務必填 | 由原始 metadata writer 證實、付款成功後移除的裝備 raw ID；不可由攻略補表。 |
 | `service_definitions[].evidence` | object | 是 | 公式／表來源；流程費用需 D3。 |
 | `facilities[].id` | string | 是 | 場所內的設施實例 ID。 |
 | `service_id` | string | 是 | 例如 `common:service.inn`、`common:service.revive`。 |
@@ -405,6 +438,10 @@ validator 必須檢查怪物引用、數量上下限、權重非負、region 完
 ```
 
 實際 DQ3 pack 必須列完整 40 筆，不可因文件示例截短而讓 loader 自動補值。
+
+解詛咒服務使用 `common:formula.level_multiplier` 與 `gold_per_level: 100`，並列出
+ITEM `+4/+5 & 0x0e00` 所得五個 raw ID。原始 writer、換裝 gate 與教會 consumer 見
+[`docs/147`](147-cursed-equipment-church-service-spec.md)；引擎不得依名稱或 ITEM 價格猜值。
 
 ### 6.7 `worlds.json`、`scenes.json`
 
@@ -687,13 +724,16 @@ save/load 見 [`docs/105`](105-olivia-cape-gaia-sword-production-trace.md)。
 | `item_use_effects` | object[] | 是 | 可為空陣列；不得省略。 |
 | `[].id`／`[].kind` | string／enum | 是 | 穩定 namespaced ID；kind 固定為 `item_use`。 |
 | `[].item_raw_id` | int | 是 | game pack 原始道具 ID；同一 pack 不可重複。 |
-| `[].effect_id` | enum | 是 | 支援 `force_day_night_phase`、`temporary_invisibility`、`reveal_world_map_patch`；未知值 fail closed。 |
-| `[].location_kind` | enum | 是 | 日夜與地圖 patch 使用 `overworld`；暫時隱形使用 `any`。不接受任意條件運算式。 |
+| `[].effect_id` | enum | 是 | 支援 `force_day_night_phase`、`temporary_invisibility`、`reveal_world_map_patch`、`clear_condition`；未知值 fail closed。 |
+| `[].location_kind` | enum | 是 | 日夜與地圖 patch 使用 `overworld`；暫時隱形與解狀態使用 `any`。不接受任意條件運算式。 |
 | `[].day_night_phase` | int | 是 | pack canonical 晝夜相位 `0..3`；DQ3 黑夜為 2。 |
 | `[].day_night_clock` | int/null | 條件必填 | `force_day_night_phase` 的原版 clock writer；須落在 `day_night_cycle.clock_ticks`，且與 phase 相符。其他 effect 必須省略。 |
 | `[].reset_day_night_steps` | boolean | 是 | 是否依原版 transaction 重設現行 phase step；`force_day_night_phase` 必須為 true，暫時隱形必須為 false。 |
 | `[].step_count` | int | 是 | 暫態效果剩餘步數；`temporary_invisibility` 必須大於 0，非步數效果必須為 0。 |
 | `[].consume` | boolean | 是 | 成功後是否消耗；黑暗燈為 false，隱形草原版會清除選中物品槽，故為 true。 |
+| `[].condition_id` | string | `clear_condition` 必填 | 必須引用 `battle.conditions[].id`；現行 field runtime 已閉合 `common:condition.poison` 與 `common:condition.paralysis`。 |
+| `[].target_scope` | enum | `clear_condition` 必填 | 現行只接受 `party_member`；確認前進正式選人 modal。 |
+| `[].success_text_id`／`[].no_effect_text_id` | string | `clear_condition` 必填 | 必須引用 pack text ID。原版驅毒草在成功與死亡／無狀態時使用不同 record。 |
 | `[].required_layer`／`[].required_vehicle` | int／enum | patch 必填 | 原版地表層與載具 gate；現行 vehicle 只接受 `ship`。 |
 | `[].use_tile` | `{x,y}` | patch 必填 | 唯一成功的原始 world coordinate。 |
 | `[].required_story_flag_raw`／`[].required_story_flag_set` | int／boolean | patch 必填 | 有限 story-bit gate；不接受任意布林式。 |
@@ -709,11 +749,15 @@ fallback 重新解釋。location／目前 phase gate 失敗不消耗、不重設
 補缺欄位。`temporary_invisibility` 只設定具名暫態效果與步數；它不得直接內嵌守衛座標、
 NPC 移動或任意碰撞規則。`reveal_world_map_patch` 只能執行固定 gate、state bit 與有限
 row-major tile replacement；讀檔以 `map_patch` 持久表重建，不能用 remake flag 取代。
+`clear_condition` 在確認目標前不消耗；確認後依原版 transaction 先移除道具，再判斷死亡與
+condition，因此無效果也不退還。現行全域 inventory 與原版 per-character 八格持有者仍是
+已知架構差距，不可因 target consumer 閉合便宣稱 ownership parity。
 若 `direct_map_patch` 存在，必須另有 IDA／原版 evidence 證明當幀 writer；不得把 direct 表
 誤當成 reload 表。DQ3 canonical 範例見 `events.json`、
 [`docs/93`](93-teidon-dark-lamp-production-trace.md) 與
 [`docs/96`](96-invisibility-grass-eginbear-production-trace.md)、
-[`docs/98`](98-thirsty-pitcher-final-key-production-trace.md)。
+[`docs/98`](98-thirsty-pitcher-final-key-production-trace.md)、
+[`docs/138`](138-antidote-item-condition-re.md)。
 
 `tracking_guard_events` 描述「玩家踏入有限 trigger 後，指定 NPC 沿單一軸追蹤；具名暫態
 效果可略過追蹤」的有限 primitive。它不能執行任意腳本，也不能把 DQ3 地圖寫進引擎：
@@ -1126,12 +1170,16 @@ DQ3 現行五張 `TITA.P`／`TITB.P`／`TITD.P`／`TITE.P`／`TITP.P` 的 manife
 
 `interface.json.battle_texts` 是 production 戰鬥訊息的角色→文字 ID 對映；欄位名稱是
 跨版本的 engine role，實際句子、D3TXT record、glyph/control words 與證據仍屬
-`texts.json`。目前 DQ3 pack 提供睡眠／醒來、咒文／MP gate、逃跑、攻擊／傷害／沒打中、
-勝利／經驗／金錢、狀態／增益／解毒、帕魯朋特及全滅等 25 個角色。每個目標文字的
-`layout.kind` 必須為 `battle_message`，renderer 直接消費 `glyph_codes`，不把 Unicode
-字串重新猜成字模，也不在 Go 保留玩家可見 fallback；缺少對映、文字或 glyph stream
-時，production `NewGameWithPack` fail closed。欄位與原始 record 對照及尚未閉合的動作
-停頓／動畫／音效長尾見 [`docs/108`](108-battle-text-pack.md)。
+`texts.json`。目前 DQ3 pack 提供睡眠／醒來、咒文／MP gate、逃跑、玩家／敵方攻擊、
+敵我受傷、物理 miss、個別玩家死亡／敵人倒下、勝利／經驗／金錢、狀態／增益／毒氣／
+中毒／解毒、帕魯朋特、全滅及全滅後聲音等角色。戰鬥訊息的 `layout.kind` 必須為
+`battle_message`；唯一跨場景的 `revival_voice` 是全滅 consumer 接續開啟的一般對話，
+因此使用 `dialogue`。renderer 直接消費 `glyph_codes`，不把 Unicode 字串重新猜成字模，
+也不在 Go 保留玩家可見 fallback；缺少對映、文字或 glyph stream 時，production
+`NewGameWithPack` fail closed。一般戰鬥欄位與原始 record 對照見
+[`docs/108`](108-battle-text-pack.md)；`party_defeated` rec361 → `revival_voice` rec362 →
+最後記錄點復活的 writer／consumer 與證據限制見
+[`docs/155`](155-field-poison-defeat-respawn-spec.md)。
 
 `interface.json.battle_command_labels` 則保存戰鬥下方五種穩定指令角色的雙 glyph
 對映：`war`、`flee`、`defend`、`item`、`spell`。每項必須有非負的
@@ -1270,7 +1318,7 @@ JSON 或用合理預設補洞。
 
 ```json
 {
-  "schema_version": "0.1.33",
+  "schema_version": "0.1.43",
   "cues": {
     "ending": {
       "kind": "music",
@@ -1300,7 +1348,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 
 ```json
 {
-  "schema_version": "0.1.33",
+  "schema_version": "0.1.43",
   "base_pack_id": "dq3_cht",
   "base_content_hash": "sha256:...",
   "changes": [

@@ -1,5 +1,10 @@
 # sub2 scripted NPC 完整 handler 結構(忠實反組譯)
 
+> **現況警示：**標題的「完整」只指本文列出的 sub2 handler 表形狀，不代表整個
+> scripted-event／flag runtime 或現行 remake 完成度。下方「remake 現況／待接」是早期
+> C/SDL 快照，已被 Go 正式主線 E3 與五個 flag 有限 E2 接線取代；current plan 只讀
+> [`docs/74`](../74-ebiten-remake-completion-plan.md)，不要從本表重開已完成項目。
+
 > 來源 `tools/decode_sub2_struct.py`(capstone)。每個 sub2 跳表 handler(0x3bb4)的雙區塊結構:
 > `call 0x6372(preamble);[always_rec];test_flag(prereq);je/jne→give 分支;before_rec;jmp 0x6380`。
 > give 分支:`give_rec;[item→0x2593;0x7bbe給/0x7c0c收];set_flag(0x8264)`。

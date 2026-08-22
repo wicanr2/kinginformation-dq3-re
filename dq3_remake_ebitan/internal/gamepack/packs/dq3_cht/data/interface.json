@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.33",
+  "schema_version": "0.1.43",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -768,6 +768,12 @@
     "actor_missed": "common:text.battle.actor.missed",
     "actor_damage": "common:text.battle.actor.damage",
     "actor_attack": "common:text.battle.actor.attack",
+    "enemy_attack": "common:text.battle.enemy.attack",
+    "party_damage": "common:text.battle.party.damage",
+    "enemy_defeated": "common:text.battle.enemy.defeated",
+    "actor_died": "common:text.battle.actor.died",
+    "fatal_strike": "common:text.battle.fatal_strike",
+    "actor_paralyzed": "common:text.battle.actor.paralyzed",
     "victory": "common:text.battle.victory",
     "exp_reward": "common:text.battle.reward.exp",
     "gold_reward": "common:text.battle.reward.gold",
@@ -777,13 +783,17 @@
     "buff_defense": "common:text.battle.buff.defense",
     "enemy_sealed": "common:text.battle.enemy.sealed",
     "enemy_confused": "common:text.battle.enemy.confused",
+    "sleep_breath": "common:text.battle.sleep.breath",
+    "poison_gas": "common:text.battle.poison.gas",
+    "actor_poisoned": "common:text.battle.actor.poisoned",
     "cure_poison": "common:text.battle.cure.poison",
     "cure_status": "common:text.battle.cure.status",
     "spell_no_effect": "common:text.battle.spell.no_effect",
     "item_empty": "common:text.battle.item.empty",
     "palpunte_blow_away": "common:text.battle.palpunte.blow_away",
     "palpunte_drain_mp": "common:text.battle.palpunte.drain_mp",
-    "party_defeated": "common:text.battle.party.defeated"
+    "party_defeated": "common:text.battle.party.defeated",
+    "revival_voice": "common:text.defeat.revival_voice"
   },
   "battle_command_labels": {
     "war": {

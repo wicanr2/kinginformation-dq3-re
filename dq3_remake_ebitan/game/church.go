@@ -5,8 +5,19 @@ import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 func (c *Church) open(tx *dq3data.Text) {
 	c.active, c.stage = true, churchService
 	c.serviceCursor, c.targetCursor, c.confirmCursor = 0, 0, 0
-	c.pendingTarget, c.pendingCost, c.msg, c.tx = -1, 0, "", tx
+	c.pendingTarget, c.pendingService, c.pendingCost, c.msg, c.tx = -1, -1, 0, "", tx
 }
+
+const (
+	churchMsgUnsupported  = "unsupported_service"
+	churchMsgNotPoisoned  = "not_poisoned"
+	churchMsgNotCursed    = "not_cursed"
+	churchMsgNoReviveNeed = "revive_not_needed"
+	churchMsgGoldShort    = "gold_insufficient"
+	churchMsgPoisonCured  = "poison_cured"
+	churchMsgCurseRemoved = "curse_removed"
+	churchMsgReviveDone   = "revive_done"
+)
 
 func (g *Game) churchPartyLen() int { return 1 + len(g.companions) }
 
@@ -39,6 +50,55 @@ func (g *Game) churchRevive(i int) {
 	}
 }
 
+func (g *Game) churchMemberPoisoned(i int) bool {
+	if i == 0 {
+		return g.heroConditions&conditionPoison != 0
+	}
+	return i > 0 && i <= len(g.companions) &&
+		g.companions[i-1].Conditions&conditionPoison != 0
+}
+
+func (g *Game) churchCurePoison(i int) {
+	if i == 0 {
+		g.heroConditions &^= conditionPoison
+		return
+	}
+	if i > 0 && i <= len(g.companions) {
+		g.companions[i-1].Conditions &^= conditionPoison
+	}
+}
+
+func (g *Game) churchMemberEquipment(i int) [4]int {
+	if i == 0 {
+		return g.equip
+	}
+	if i > 0 && i <= len(g.companions) {
+		m := g.companions[i-1]
+		return [4]int{m.Weapon, m.Armor, m.Shield, m.Head}
+	}
+	return [4]int{-1, -1, -1, -1}
+}
+
+func (g *Game) churchMemberCursed(i int) bool {
+	for _, rawID := range g.churchMemberEquipment(i) {
+		if rawID >= 0 && g.pack.IsCursedEquipment(rawID) {
+			return true
+		}
+	}
+	return false
+}
+
+// churchRemoveCurse mirrors sub_171CC: one successful transaction destroys
+// every equipped item whose original item word carried bit0x4000. It does not
+// return those items to inventory.
+func (g *Game) churchRemoveCurse(i int) {
+	for slot, rawID := range g.churchMemberEquipment(i) {
+		if rawID >= 0 && g.pack.IsCursedEquipment(rawID) {
+			g.setEquipActorSlot(i, slot, -1)
+		}
+	}
+}
+
 func (g *Game) churchInput(in InputState) {
 	c := &g.church
 	switch c.stage {
@@ -48,11 +108,7 @@ func (g *Game) churchInput(in InputState) {
 			c.active = false
 		case in.Confirm:
 			c.msg = ""
-			if c.serviceCursor != 2 {
-				// Member 尚無原版 +0x38 poison/curse 持久旗標；不能假裝免費清除。
-				c.msg = "此服務尚無可處理的狀態"
-				return
-			}
+			c.pendingService = c.serviceCursor
 			c.stage, c.targetCursor = churchTarget, 0
 		case in.DirEdge == 0:
 			c.serviceCursor = (c.serviceCursor + 1) % 3
@@ -65,12 +121,30 @@ func (g *Game) churchInput(in InputState) {
 		case in.Cancel:
 			c.stage, c.msg = churchService, ""
 		case in.Confirm:
-			if g.churchMemberAlive(c.targetCursor) {
-				c.msg = "不需要復活"
+			switch c.pendingService {
+			case 0:
+				if !g.churchMemberPoisoned(c.targetCursor) {
+					c.msg = churchMsgNotPoisoned
+					return
+				}
+				c.pendingCost = g.pack.CurePoisonCost()
+			case 1:
+				if !g.churchMemberCursed(c.targetCursor) {
+					c.msg = churchMsgNotCursed
+					return
+				}
+				c.pendingCost = g.pack.RemoveCurseCost(g.churchMemberLevel(c.targetCursor))
+			case 2:
+				if g.churchMemberAlive(c.targetCursor) {
+					c.msg = churchMsgNoReviveNeed
+					return
+				}
+				c.pendingCost = g.pack.ReviveCost(g.churchMemberLevel(c.targetCursor))
+			default:
+				c.stage, c.msg = churchService, churchMsgUnsupported
 				return
 			}
 			c.pendingTarget = c.targetCursor
-			c.pendingCost = g.pack.ReviveCost(g.churchMemberLevel(c.targetCursor))
 			c.confirmCursor, c.stage, c.msg = 0, churchConfirm, ""
 		case in.DirEdge == 0:
 			c.targetCursor = (c.targetCursor + 1) % n
@@ -87,12 +161,23 @@ func (g *Game) churchInput(in InputState) {
 				return
 			}
 			if g.heroGold < c.pendingCost {
-				c.stage, c.msg = churchService, "金錢不足"
+				c.stage, c.msg = churchService, churchMsgGoldShort
 				return
 			}
 			g.heroGold -= c.pendingCost
-			g.churchRevive(c.pendingTarget)
-			c.stage, c.msg = churchService, "復活完成"
+			switch c.pendingService {
+			case 0:
+				g.churchCurePoison(c.pendingTarget)
+				c.stage, c.msg = churchService, churchMsgPoisonCured
+			case 1:
+				g.churchRemoveCurse(c.pendingTarget)
+				c.stage, c.msg = churchService, churchMsgCurseRemoved
+			case 2:
+				g.churchRevive(c.pendingTarget)
+				c.stage, c.msg = churchService, churchMsgReviveDone
+			default:
+				c.stage, c.msg = churchService, churchMsgUnsupported
+			}
 		case in.DirEdge == 0 || in.DirEdge == 1:
 			c.confirmCursor ^= 1
 		}
@@ -154,7 +239,7 @@ func (g *Game) drawChurch(rgba []byte, white dq3data.Color) {
 			drawChurchRecord(rgba, c.tx, rec, 80, y, -1, white)
 		}
 	case churchTarget:
-		drawChurchRecord(rgba, c.tx, 312, 64, 54, -1, white)
+		drawChurchRecord(rgba, c.tx, 310+c.pendingService, 64, 54, -1, white)
 		for i := 0; i < g.churchPartyLen(); i++ {
 			y := 88 + i*30
 			if i == c.targetCursor {

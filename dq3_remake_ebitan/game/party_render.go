@@ -135,14 +135,12 @@ func (g *Game) drawPartyHUD(rgba []byte, white dq3data.Color) {
 
 func (g *Game) followerOrder() []int {
 	order := make([]int, 0, len(g.companions))
-	for i, member := range g.companions {
-		if member != nil && member.Alive() {
-			order = append(order, i)
-		}
-	}
-	for i, member := range g.companions {
-		if member != nil && !member.Alive() {
-			order = append(order, i)
+	for _, alive := range []bool{true, false} {
+		for actor := 0; actor <= len(g.companions); actor++ {
+			if actor == g.partyLeader || g.actorAlive(actor) != alive {
+				continue
+			}
+			order = append(order, actor)
 		}
 	}
 	return order
@@ -168,14 +166,13 @@ func (g *Game) drawPartyFollowers(rgba []byte, camX, camY int, pal []dq3data.Col
 	if len(g.companions) == 0 || g.remoaru != 0 || g.shipAboard || g.phoenixAboard {
 		return
 	}
-	for slot, memberIndex := range g.followerOrder() {
-		member := g.companions[memberIndex]
+	for slot, actor := range g.followerOrder() {
 		trail := partyTrailEntry{x: g.px, y: g.py, facing: g.facing & 3}
 		if g.partyTrailLen > slot {
 			trail = g.partyTrail[slot]
 		}
 		dx, dy := (trail.x-camX)*TileW, (trail.y-camY)*TileH
-		if !member.Alive() {
+		if !g.actorAlive(actor) {
 			coffinColor := dq3data.Color{R: 255, G: 255, B: 255}
 			if len(pal) > 15 {
 				coffinColor = pal[15]
@@ -183,7 +180,16 @@ func (g *Game) drawPartyFollowers(rgba []byte, camX, camY int, pal []dq3data.Col
 			drawPartyCoffin(rgba, dx, dy, coffinColor)
 			continue
 		}
-		sprite := g.partySprite(member.Class, member.Gender)
+		var sprite *dq3data.CharSprite
+		if actor == 0 {
+			sprite = g.heroRole
+			if sprite == nil {
+				sprite = g.heroPartySprite()
+			}
+		} else {
+			member := g.companions[actor-1]
+			sprite = g.partySprite(member.Class, member.Gender)
+		}
 		if sprite == nil {
 			continue
 		}

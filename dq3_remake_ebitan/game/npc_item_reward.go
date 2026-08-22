@@ -74,9 +74,8 @@ func (g *Game) replacePartyItem(required, granted int) bool {
 	return false
 }
 
-// grantPartyItem follows the original common reward consumer: search the
-// leader, then companions, and store in the first personal inventory with a
-// free slot. Equipped items count toward each eight-slot record capacity.
+// grantPartyItem 對齊原版共用取得物品 writer：依隊長至同伴尋找第一個
+// 有空位的個人物品欄；每名角色的裝備亦占八格容量。
 func (g *Game) grantPartyItem(code int) bool {
 	if g.pack == nil {
 		return false

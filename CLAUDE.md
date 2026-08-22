@@ -22,7 +22,9 @@
 - 只有從新遊戲開始、不用 debug shortcut，依正式玩家輸入抵達 THE END，且關鍵存讀檔、
   畫面與事件對拍通過，才可宣稱 remake 完成。
 
-原版驗證可使用 host 或 Docker DOSBox；RE 可使用 `tools/dis.sh`、Ghidra 與本機
-IDA Pro 9.4。不得把原版素材、IDA 授權或發佈包加入 Git。
+原版驗證、DOSBox、RE、IDA、搜尋、測試與遊戲執行一律只能在一次性 Docker 容器內進行；
+主機不得直接啟動工作負載。RE 必須優先把 `/home/anr2/ida_94_official/dist` 唯讀掛入
+專用 image，使用 IDA Pro 9.4＋IDAPython；`tools/dis.sh`／Ghidra 只作批次定位或交叉驗證。
+不得把原版素材、IDA database／授權或發佈包加入 Git。
 
 專案 repo：<https://github.com/wicanr2/kinginformation-dq3-re>

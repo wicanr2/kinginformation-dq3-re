@@ -2,10 +2,31 @@ package game
 
 import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
+
+// conditionSet 是跨場景持久狀態；數值是 remake save schema，不冒充原版
+// character +0x38 的 bit layout。各 game pack 仍必須提供原版 mask 與 consumer 證據。
+type conditionSet uint16
+
+const (
+	conditionPoison conditionSet = 1 << iota
+	conditionParalysis
+)
+
+func conditionBit(id string) (conditionSet, bool) {
+	switch id {
+	case gamepack.PoisonCondition:
+		return conditionPoison, true
+	case gamepack.ParalysisCondition:
+		return conditionParalysis, true
+	default:
+		return 0, false
+	}
+}
 
 // Member 是一名隊員(移植 dq3_recruit/dq3_member)。七項能力是原版角色 record 的持久值；
 // 攻防再疊加裝備，不可每幀由職業/等級 target 反推。
@@ -18,6 +39,7 @@ type Member struct {
 	Weapon, Armor, Shield, Head int   // item code；-1=無（0x00 是合法檜木棒）
 	Inventory                   []int // 個人未裝備道具；原版角色 record 最多八格（裝備亦占格）
 	LearnedSpells               []int // 已永久學會的全咒文 record；轉職後不清除
+	Conditions                  conditionSet
 }
 
 // 職業名 glyph(dq3_class_names):勇者/戰士/武鬥家/僧侶/魔法使者/賢者/商人/遊玩者。
@@ -132,8 +154,8 @@ func newLevelOneMember(name []int, class, gender int, r *rng.RNG, equipment [4]i
 	return m
 }
 
-// startingCompanions:示範用預建隊伍(戰士/僧侶/魔法使,與隊長同經驗)。
-// 註:忠實 DQ3 是在露易達酒館逐一創角招募(名字用注音輸入);此為 tavern UI 完成前的 placeholder。
+// startingCompanions 只建立 recruit 單元測試 fixture；production 新遊戲保持單人，
+// 必須在露易達酒館以正式創角／招募流程加入隊員。
 func startingCompanions(exp uint32) []*Member {
 	return []*Member{
 		newMember(classNames[1], 1, 0, exp), // 戰士

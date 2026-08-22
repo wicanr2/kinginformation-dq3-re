@@ -116,8 +116,12 @@
       },
       "raw_descriptor_level": "confirmed; source rate/sample-count/duration metadata is deterministic and sidecar-backed",
       "duration_formula": "source_duration_nanos = source_samples * 1e9 / floor(1000000 / (256 - rate_byte)); source_samples = VOC block length - 2",
-      "host_playback_level": "unknown; Ebitengine PlaySFX remains fire-and-forget and no hardware wall-clock claim is made",
-      "cue_semantic_names": "unknown",
+      "host_playback_level": "D3/E2 only for the player-flee cue 13 and enemy-flee cue 21 input gates; PlaySFX itself remains non-blocking and no hardware wall-clock claim is made",
+      "battle_flee_runtime": {
+        "player_fled": {"cue_raw": 13, "wait_call": "sub_208E2", "runtime_gate": "ceil(FVOC source_duration_nanos * 60 / 1e9)", "level": "D3/E2"},
+        "enemy_fled": {"cue_raw": 21, "wait_call": "sub_208E2", "runtime_gate": "ceil(FVOC source_duration_nanos * 60 / 1e9)", "level": "D3/E2"}
+      },
+      "cue_semantic_names": "player-flee cue 13 and enemy-flee cue 21 confirmed; remaining cue semantics unknown",
       "level": "confirmed_call_chain_and_raw_block; semantic_wave_mapping_pending"
     },
     "resistance": {
@@ -273,8 +277,11 @@
       "level": "confirmed_inclusive_gate_and_raw_consumer"
     },
     "boss_multi_action": {
-      "status": "unknown",
-      "confirmed_observation": "formal queue calls one actor consumer per entry; no repeat-N outer loop found",
+      "status": "confirmed_absent_in_this_exe",
+      "confirmed_observation": "formal and alternate runners call one actor consumer per queue entry; the third queue-builder caller only copies actor codes; all actor-consumer direct xrefs and raw logical-pointer candidates are enumerated in docs/148",
+      "remake_contract": "one queue entry per living actor per round; do not add boss repeat-N data or special cases",
+      "evidence": "docs/148-battle-single-action-queue-spec.md; work/boss-repeat-queue-20260822.json",
+      "historical_correction": "the earlier unknown status was retained after the consumer graph had already become complete; docs/148 closes and corrects that negative evidence",
       "do_not_infer_from": ["連戰 queue", "D3MNS +0x04", "D3MNS +0x1f", "D3MNS +0x25", "D3MNS +0x26"]
     }
   },

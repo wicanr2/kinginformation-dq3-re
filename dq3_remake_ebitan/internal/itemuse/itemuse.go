@@ -1,6 +1,5 @@
-// Package itemuse 是消耗品使用效果(移植 dq3_item_use.c)。純邏輯:道具 id → 效果種類 +
-// 數值(藥草治療、祈禱之戒 MP、聖水步數、損壞門檻)。效果種類為 RE 事實;數值採 classic DQ3 值
-// (docs/49:ITEM.DAT 無使用威力欄,同咒文威力表處境)。
+// Package itemuse 保存歷史道具效果 lookup。PrayerBreakLE 有原版 IDA 證據；藥草治療、
+// 祈禱 MP 與聖水步數仍是 classic／舊 C fallback，不能冒稱本 EXE 精確值。
 package itemuse
 
 // Kind:效果種類(對齊 dq3_item_use.h enum)。
@@ -33,7 +32,7 @@ const (
 	ItemMirror      = 0x61 // 拉之鏡
 )
 
-// 數值常數(classic DQ3 值 / RE 精確值,見 dq3_item_use.h)。
+// 數值常數：前三項是 classic／舊 C fallback；PrayerBreakLE 為 docs/22 confirmed。
 const (
 	HerbHeal      = 30   // 藥草固定治療量
 	PrayerMPAmt   = 30   // 祈禱之戒 MP 回復量

@@ -39,6 +39,19 @@ func (it *Items) Price(code int) int { return it.b(code, 2) | it.b(code, 3)<<8 }
 // Category 回類別/部位(b4)。移植 dq3_item_category。
 func (it *Items) Category(code int) int { return it.b(code, 4) }
 
+// MetadataWord 回 ITEM.DAT +4/+5 的 little-endian 原始 word。這是原始格式
+// oracle；各 bit 的玩家可見語意仍須由 EXE writer/consumer 個別閉合。
+func (it *Items) MetadataWord(code int) int {
+	return it.b(code, 4) | it.b(code, 5)<<8
+}
+
+// CursedWhenEquipped 回原版 sub_17ED9 的精確 writer gate：ITEM +4/+5
+// metadata word 與 0x0e00 相交時，裝備後的角色 item word 會 OR bit0x4000。
+// 此方法只作 DQ3 原始資料 parity oracle；production 清單仍由 game pack 提供。
+func (it *Items) CursedWhenEquipped(code int) bool {
+	return it.MetadataWord(code)&0x0e00 != 0
+}
+
 // EquipSlot 回引擎部位 0武器/1鎧/2盾/3兜。ITEM.DAT 類別群實為
 // 0x2_=武器、0x4_=鎧、0x6_=兜、0x8_/0x9_=盾；最後兩群不可用線性公式。
 func (it *Items) EquipSlot(code int) int {

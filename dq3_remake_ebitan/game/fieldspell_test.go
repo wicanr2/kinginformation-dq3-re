@@ -6,8 +6,46 @@ import (
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
+
+// Raw records are test evidence only. Production dispatch reads them from the
+// selected game pack and must not gain a DQ3-specific Go fallback.
+const (
+	fieldRura     = 172
+	fieldRemitto  = 173
+	fieldInpas    = 174
+	fieldToramana = 175
+	fieldToheros  = 176
+	fieldRanaruta = 177
+	fieldRemoaru  = 178
+	fieldAbakamu  = 179
+)
+
+func TestPersistentParalysisClearsWholePartyAfterFortySteps(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{
+		pack: pack, heroConditions: conditionParalysis,
+		companions:     []*Member{{CurHP: 10, Conditions: conditionParalysis}},
+		paralysisSteps: 40,
+	}
+	for step := 1; step < 40; step++ {
+		g.advancePersistentConditionStep()
+		if !g.partyHasCondition(conditionParalysis) || g.paralysisSteps != 40-step {
+			t.Fatalf("第 %d 步提前解除：conditions=%#x/%#x counter=%d",
+				step, g.heroConditions, g.companions[0].Conditions, g.paralysisSteps)
+		}
+	}
+	g.advancePersistentConditionStep()
+	if g.partyHasCondition(conditionParalysis) || g.paralysisSteps != 0 {
+		t.Fatalf("第 40 步未全隊解除：conditions=%#x/%#x counter=%d",
+			g.heroConditions, g.companions[0].Conditions, g.paralysisSteps)
+	}
+}
 
 func fieldSpellGame(t *testing.T, level int) *Game {
 	t.Helper()
@@ -32,6 +70,24 @@ func openSpellFromProductionInput(t *testing.T, g *Game) {
 	if !g.fieldSpell.active {
 		t.Fatal("正式命令窗選「咒文」後應開啟野外咒文 modal")
 	}
+	if !g.fieldSpell.selectingCaster {
+		t.Fatal("原版流程應先進入施法者選擇頁")
+	}
+	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 選主角
+}
+
+func openFieldSpellForRecord(t *testing.T, g *Game, rec int) {
+	t.Helper()
+	g.openFieldSpellMenu()
+	caster := g.fieldSpellCaster(rec)
+	if caster < 0 {
+		t.Fatalf("active party 無人可施放 pack field spell rec%d", rec)
+	}
+	g.fieldSpell.cursor = caster
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.fieldSpell.selectingCaster || fieldSpellChoiceIndex(g, rec) < 0 {
+		t.Fatalf("選施法者%d後未建立 rec%d 清單：%+v", caster, rec, g.fieldSpell.choices)
+	}
 }
 
 func TestRuraProductionInputVisitedTownAndMP(t *testing.T) {
@@ -45,8 +101,12 @@ func TestRuraProductionInputVisitedTownAndMP(t *testing.T) {
 	}
 	mp0 := g.heroMP
 	openSpellFromProductionInput(t, g)
-	if len(g.fieldSpell.choices) != 1 || g.fieldSpell.choices[0].rec != fieldRura {
-		t.Fatalf("Lv7 野外清單應只有魯拉，得 %+v", g.fieldSpell.choices)
+	ruraIndex := fieldSpellChoiceIndex(g, fieldRura)
+	if ruraIndex < 0 {
+		t.Fatalf("Lv7 野外清單應包含魯拉，得 %+v", g.fieldSpell.choices)
+	}
+	for g.fieldSpell.cursor != ruraIndex {
+		testStep(t, g, InputState{DirHeld: -1, DirEdge: 0})
 	}
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1}) // 魯拉→目的地
 	if !g.fieldSpell.dest || g.heroMP != mp0-8 {
@@ -70,10 +130,13 @@ func TestRemittoProductionInputDungeonOnly(t *testing.T) {
 	g.overPx, g.overPy = 44, 55
 	mp0 := g.heroMP
 	openSpellFromProductionInput(t, g)
-	if len(g.fieldSpell.choices) < 2 || g.fieldSpell.choices[1].rec != fieldRemitto {
-		t.Fatalf("Lv14 第二個野外咒應為烈米特，得 %+v", g.fieldSpell.choices)
+	remittoIndex := fieldSpellChoiceIndex(g, fieldRemitto)
+	if remittoIndex < 0 {
+		t.Fatalf("Lv14 野外清單應包含烈米特，得 %+v", g.fieldSpell.choices)
 	}
-	testStep(t, g, InputState{DirHeld: -1, DirEdge: 0})
+	for g.fieldSpell.cursor != remittoIndex {
+		testStep(t, g, InputState{DirHeld: -1, DirEdge: 0})
+	}
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.inTown || g.px != 44 || g.py != 55 || g.fieldSpell.active {
 		t.Fatalf("迷宮內烈米特應回入口地表：town=%v @(%d,%d) modal=%v",
@@ -103,7 +166,8 @@ func TestVisitedTownsSaveRoundTrip(t *testing.T) {
 func TestRuraCancelKeepsPreHandlerMPSpend(t *testing.T) {
 	g := fieldSpellGame(t, 7)
 	g.visitedTowns = []townVisit{{Cty: 0}}
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRura)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRura)
 	mp0 := g.heroMP
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	g.fieldSpellInput(InputState{Cancel: true, DirHeld: -1, DirEdge: -1})
@@ -113,7 +177,8 @@ func TestRuraCancelKeepsPreHandlerMPSpend(t *testing.T) {
 	}
 
 	g.heroMP = 7
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRura)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRura)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.fieldSpell.dest || g.heroMP != 7 {
 		t.Fatalf("MP 不足不可進目的地或扣 MP：mp=%d dest=%v", g.heroMP, g.fieldSpell.dest)
@@ -123,7 +188,7 @@ func TestRuraCancelKeepsPreHandlerMPSpend(t *testing.T) {
 func TestRemittoOutsideDungeonStillSpends(t *testing.T) {
 	g := fieldSpellGame(t, 14)
 	g.inTown, g.curCty = false, -1
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRemitto)
 	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRemitto)
 	mp0 := g.heroMP
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
@@ -140,6 +205,135 @@ func fieldSpellChoiceIndex(g *Game, rec int) int {
 		}
 	}
 	return -1
+}
+
+func TestFieldHealCompanionCasterAndTargetUsesOriginalTransaction(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	priest := newMember([]int{1}, 3, 0, stats.ExpForLevel(3, 14))
+	target := newMember([]int{2}, 1, 0, stats.ExpForLevel(1, 30))
+	priest.CurMP, target.CurHP = 99, 1
+	g.companions = []*Member{priest, target}
+
+	g.openFieldSpellMenu()
+	if !g.fieldSpell.selectingCaster {
+		t.Fatal("野外咒文必須先選施法者")
+	}
+	g.fieldSpell.cursor = 1
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	idx := fieldSpellChoiceIndex(g, 162)
+	if idx < 0 || containsRec(g.fieldActorSpells(0), 162) {
+		t.Fatalf("僧侶清單應含 rec162，且不得混入主角未習得咒文：%+v", g.fieldSpell.choices)
+	}
+	g.fieldSpell.cursor = idx
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.fieldSpell.targeting || priest.CurMP != 99 {
+		t.Fatalf("單體回復應先選目標且尚未扣 MP：targeting=%v mp=%d",
+			g.fieldSpell.targeting, priest.CurMP)
+	}
+	g.fieldSpell.cursor = 2
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	healed := target.CurHP - 1
+	if healed < 85 || healed > 94 || priest.CurMP != 94 || g.fieldSpell.active {
+		t.Fatalf("rec162 應回復85..94並扣5 MP：heal=%d mp=%d active=%v",
+			healed, priest.CurMP, g.fieldSpell.active)
+	}
+
+	b, err := encodeSave(g.snapshot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	saved, err := decodeSave(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if saved.Comps[0].CurMP != priest.CurMP || saved.Comps[1].CurHP != target.CurHP {
+		t.Fatalf("施法後 HP/MP 存檔 round-trip 漂移：got mp=%d hp=%d want mp=%d hp=%d",
+			saved.Comps[0].CurMP, saved.Comps[1].CurHP, priest.CurMP, target.CurHP)
+	}
+}
+
+func TestFieldHealTargetCancelDoesNotSpendMP(t *testing.T) {
+	g := fieldSpellGame(t, 4)
+	openFieldSpellForRecord(t, g, 161)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, 161)
+	mp0 := g.heroMP
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.fieldSpell.targeting {
+		t.Fatal("rec161 應進單體目標頁")
+	}
+	g.fieldSpellInput(InputState{Cancel: true, DirHeld: -1, DirEdge: -1})
+	if g.heroMP != mp0 || g.fieldSpell.active {
+		t.Fatalf("取消單體目標不應扣 MP 且應結束 modal：mp=%d active=%v", g.heroMP, g.fieldSpell.active)
+	}
+}
+
+func TestFieldHealFullAndDeadTargetsStillSpendAfterConfirm(t *testing.T) {
+	tests := []struct {
+		name string
+		dead bool
+	}{
+		{"full", false},
+		{"dead", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := fieldSpellGame(t, 4)
+			target := newMember([]int{2}, 1, 0, stats.ExpForLevel(1, 20))
+			if tt.dead {
+				target.CurHP = 0
+			}
+			g.companions = []*Member{target}
+			openFieldSpellForRecord(t, g, 161)
+			g.fieldSpell.cursor = fieldSpellChoiceIndex(g, 161)
+			mp0, hp0 := g.heroMP, target.CurHP
+			g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+			g.fieldSpell.cursor = 1
+			g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+			if g.heroMP != mp0-3 || target.CurHP != hp0 {
+				t.Fatalf("%s target 應維持 HP 但已扣3 MP：hp=%d/%d mp=%d/%d",
+					tt.name, target.CurHP, hp0, g.heroMP, mp0)
+			}
+		})
+	}
+}
+
+func TestFieldHealGroupUsesIndependentLivingMemberWriters(t *testing.T) {
+	g := fieldSpellGame(t, 40)
+	priest := newMember([]int{1}, 3, 0, stats.ExpForLevel(3, 34))
+	dead := newMember([]int{2}, 1, 0, stats.ExpForLevel(1, 30))
+	living := newMember([]int{3}, 4, 0, stats.ExpForLevel(4, 30))
+	priest.CurMP, priest.CurHP, dead.CurHP, living.CurHP = 99, 1, 0, 1
+	g.heroHP = 1
+	g.companions = []*Member{priest, dead, living}
+	openFieldSpellForRecord(t, g, 164)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, 164)
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	for name, hp := range map[string]int{"hero": g.heroHP, "priest": priest.CurHP, "living": living.CurHP} {
+		if hp < 51 || hp > 60 {
+			t.Fatalf("rec164 %s 應由1回復至51..60，得%d", name, hp)
+		}
+	}
+	if dead.CurHP != 0 || priest.CurMP != 81 || g.fieldSpell.active {
+		t.Fatalf("rec164 應略過死人且只扣一次18 MP：dead=%d mp=%d active=%v",
+			dead.CurHP, priest.CurMP, g.fieldSpell.active)
+	}
+}
+
+func TestFieldFullHealGroupUsesPackRec165(t *testing.T) {
+	g := fieldSpellGame(t, 41)
+	living := newMember([]int{1}, 1, 0, stats.ExpForLevel(1, 30))
+	dead := newMember([]int{2}, 1, 0, stats.ExpForLevel(1, 30))
+	g.heroHP, living.CurHP, dead.CurHP = 1, 1, 0
+	g.companions = []*Member{living, dead}
+	openFieldSpellForRecord(t, g, 165)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, 165)
+	mp0 := g.heroMP
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	_, heroMax, _, _, _ := g.heroStats()
+	if g.heroHP != heroMax || living.CurHP != living.MaxHP() || dead.CurHP != 0 || g.heroMP != mp0-62 {
+		t.Fatalf("rec165 應補滿活人、略過死人並扣62 MP：hero=%d/%d living=%d/%d dead=%d mp=%d/%d",
+			g.heroHP, heroMax, living.CurHP, living.MaxHP(), dead.CurHP, g.heroMP, mp0)
+	}
 }
 
 func placeFacingEventType(t *testing.T, g *Game, cty, sec, wantType int) {
@@ -186,7 +380,7 @@ func TestInpasOriginalEventTypeRecordsAndMP(t *testing.T) {
 			mage.CurMP = 99
 			g.companions = []*Member{mage}
 			placeFacingEventType(t, g, tt.cty, tt.sec, tt.typ)
-			g.openFieldSpellMenu()
+			openFieldSpellForRecord(t, g, fieldInpas)
 			idx := fieldSpellChoiceIndex(g, fieldInpas)
 			if idx < 0 {
 				t.Fatalf("Lv18 魔法使的場景咒文清單缺 rec174：%+v", g.fieldSpell.choices)
@@ -208,7 +402,7 @@ func TestInpasInvalidSceneStillSpendsAndShowsFailure(t *testing.T) {
 	mage.CurMP = 99
 	g.companions = []*Member{mage}
 	g.inTown, g.curCty = false, -1
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldInpas)
 	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldInpas)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if mage.CurMP != 96 || !g.dlg.open ||
@@ -223,7 +417,7 @@ func TestToramanaOriginalCostAndOneHazardRegionContract(t *testing.T) {
 	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 19))
 	mage.CurMP, mage.CurHP = 99, 50
 	g.companions = []*Member{mage}
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldToramana)
 	idx := fieldSpellChoiceIndex(g, fieldToramana)
 	if idx < 0 {
 		t.Fatalf("Lv19 魔法使的場景咒文清單缺 rec175：%+v", g.fieldSpell.choices)
@@ -273,7 +467,7 @@ func TestFieldSpellOriginalMapFlagsAndCosts(t *testing.T) {
 	mage.CurMP = 99
 	g.companions = []*Member{mage}
 	g.enterTownCty(8) // CTY08 sec0 header+0x10 == 2：烈米特可、魯拉不可
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRura)
 	mp0 := g.heroMP
 	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRura)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
@@ -283,14 +477,14 @@ func TestFieldSpellOriginalMapFlagsAndCosts(t *testing.T) {
 	}
 
 	g.exitTown()
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldToheros)
 	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldToheros)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.repel != 0x28 || g.heroMP != mp0-12 {
 		t.Fatalf("特黑洛斯應依 handler 設 40 步並扣 4 MP：repel=%d mp=%d", g.repel, g.heroMP)
 	}
 
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRanaruta)
 	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRanaruta)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if !g.isNight() || g.heroMP != mp0-12 || mage.CurMP != 87 {
@@ -305,7 +499,7 @@ func TestRanarutaInTownStillSpends(t *testing.T) {
 	mage.CurMP = 99
 	g.companions = []*Member{mage}
 	g.enterTownCty(0)
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRanaruta)
 	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRanaruta)
 	mp0 := g.heroMP
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
@@ -320,7 +514,7 @@ func TestRemoaruOriginalCostTimerAndExpiry(t *testing.T) {
 	mage := newMember(nil, 4, 0, stats.ExpForLevel(4, 33))
 	mage.CurMP = 99
 	g.companions = []*Member{mage}
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRemoaru)
 	idx := -1
 	for i, c := range g.fieldSpell.choices {
 		if c.rec == fieldRemoaru {
@@ -426,7 +620,7 @@ func TestAbakamuOpensAnyFacingDoorAtZeroMP(t *testing.T) {
 		t.Fatal("CTY00 找不到可由相鄰可走格面向的門")
 	}
 
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldAbakamu)
 	idx := -1
 	for i, c := range g.fieldSpell.choices {
 		if c.rec == fieldAbakamu {
@@ -453,7 +647,7 @@ func TestAbakamuFailureUsesOriginalGlobalMessage(t *testing.T) {
 	mage.CurMP = 0
 	g.companions = []*Member{mage}
 	g.inTown, g.curCty = false, -1
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldAbakamu)
 	for i, c := range g.fieldSpell.choices {
 		if c.rec == fieldAbakamu {
 			g.fieldSpell.cursor = i
@@ -469,7 +663,8 @@ func TestAbakamuFailureUsesOriginalGlobalMessage(t *testing.T) {
 func TestRuraSpecialDestination47Coordinate(t *testing.T) {
 	g := fieldSpellGame(t, 7)
 	g.visitedTowns = []townVisit{{Cty: 47}}
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRura)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRura)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.px != ctyLoc[47][0]+1 || g.py != ctyLoc[47][1] {
@@ -482,7 +677,8 @@ func TestRuraRelocatesOwnedShipFromPack(t *testing.T) {
 	g.shipOwned = true
 	g.shipX, g.shipY = 1, 1
 	g.visitedTowns = []townVisit{{Cty: 15}}
-	g.openFieldSpellMenu()
+	openFieldSpellForRecord(t, g, fieldRura)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldRura)
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.px != ctyLoc[15][0]-1 || g.py != ctyLoc[15][1] ||
@@ -503,5 +699,41 @@ func TestVisitedTownsKeepOriginalRuraOrder(t *testing.T) {
 		if g.visitedTowns[i].Cty != cty {
 			t.Fatalf("魯拉目的地須依 EXE table 排序：got %+v want %v", g.visitedTowns, want)
 		}
+	}
+}
+
+func TestPoisonFieldDamageUsesPackValueAndVehicleSuppression(t *testing.T) {
+	g := fieldSpellGame(t, 7)
+	g.cur = nil // 毒傷是 movement-status consumer，不依賴地形 attr。
+	g.heroHP, g.heroConditions = 5, conditionPoison
+	companion := newMember([]int{1}, 3, 0, 0)
+	companion.CurHP, companion.Conditions = 5, conditionPoison
+	g.companions = []*Member{companion}
+	g.applyHazardStep()
+	if g.heroHP != 4 || companion.CurHP != 4 {
+		t.Fatalf("poison step damage hero=%d companion=%d, want 4/4", g.heroHP, companion.CurHP)
+	}
+	g.shipAboard = true
+	g.applyHazardStep()
+	if g.heroHP != 4 || companion.CurHP != 4 {
+		t.Fatalf("ship must suppress poison damage hero=%d companion=%d", g.heroHP, companion.CurHP)
+	}
+	g.shipAboard, g.phoenixAboard = false, true
+	g.applyHazardStep()
+	if g.heroHP != 4 || companion.CurHP != 4 {
+		t.Fatalf("phoenix must suppress poison damage hero=%d companion=%d", g.heroHP, companion.CurHP)
+	}
+}
+
+func TestPoisonDamageAppliesOnlyToAffectedMember(t *testing.T) {
+	g := fieldSpellGame(t, 7)
+	g.heroHP, g.heroConditions = 10, conditionPoison
+	companion := newMember([]int{1}, 3, 0, 0)
+	companion.CurHP = 10
+	g.companions = []*Member{companion}
+	g.cur = nil
+	g.applyHazardStep()
+	if g.heroHP != 9 || companion.CurHP != 10 {
+		t.Fatalf("poison must apply only to affected member hero=%d companion=%d", g.heroHP, companion.CurHP)
 	}
 }

@@ -10,9 +10,47 @@ import (
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+	dosrng "github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 )
 
 // W2(docs/72 A3)測試:多敵戰鬥陣列化 + 怪物群權重隻數。
+
+// TestBuildTurnOrderOneEntryPerLivingActor 鎖定 docs/148 的原版 action queue cardinality：
+// 每個存活 actor 恰好一筆，死亡／逃跑者零筆，Boss 不存在 repeat-N 特例。
+func TestBuildTurnOrderOneEntryPerLivingActor(t *testing.T) {
+	b := &Battle{
+		rng:     dosrng.New(1),
+		heroHP:  10,
+		heroAgi: 20,
+		companions: []*battleActor{
+			{hp: 8, agi: 18},
+			{hp: 0, agi: 16},
+		},
+		enemies: []enemyUnit{
+			{monID: 0x79, hp: 20, agi: 14},
+			{monID: 0x7c, hp: 30, agi: 12},
+			{monID: 0x7d, hp: 40, agi: 10, fled: true},
+		},
+	}
+	order := b.buildTurnOrder()
+	if len(order) != 4 {
+		t.Fatalf("存活隊長、同伴與兩敵應各一筆，共 4 筆；得 %d：%+v", len(order), order)
+	}
+	party, enemies := map[int]int{}, map[int]int{}
+	for _, entry := range order {
+		if entry.enemy {
+			enemies[entry.index]++
+		} else {
+			party[entry.index]++
+		}
+	}
+	if party[0] != 1 || party[1] != 1 || party[2] != 0 {
+		t.Fatalf("party queue cardinality=%v，want leader=1, living companion=1, dead=0", party)
+	}
+	if enemies[0] != 1 || enemies[1] != 1 || enemies[2] != 0 {
+		t.Fatalf("enemy queue cardinality=%v，want each living boss=1, fled=0", enemies)
+	}
+}
 
 // TestFirstAliveEnemyTargeting:firstAliveEnemy 回組內第一個存活(hp>0 且未逃走)敵的 index;
 // 逐步死亡/逃走應依序退到下一個;全滅/全逃回 -1。
@@ -147,7 +185,8 @@ func TestFormationPositionUsesOriginalWeightStride(t *testing.T) {
 	}
 }
 
-// TestEnemyTurnEachAliveActs:enemyTurn 逐隻存活敵各行動一次(對齊 C do_turn 敵方段 for 迴圈),
+// TestEnemyTurnEachAliveActs:enemyTurn 逐隻存活敵各行動一次（對齊 IDA sub_1C34F →
+// sub_1C08B → sub_1A973 的單筆 queue 契約，見 docs/148），
 // 非只有組內第一隻打。用 id101×3(實測 fleeRate=0 不逃、castProb=0 不施咒 → 每隻必物攻)+
 // 高 HP 零防禦隊長(單一目標,無同伴→ 隨機選目標退化為必中隊長),驗一次 enemyTurn() 造成的
 // 總傷害落在「3 隻各物攻一次」的期望區間(PhysDamage(atk29,def0,*)=14+variance(0..6),

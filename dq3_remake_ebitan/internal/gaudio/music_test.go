@@ -50,6 +50,19 @@ func TestSetEnabledSetVolumeNilSafe(t *testing.T) {
 	m.Play(0)
 }
 
+func TestSFXDurationRetainedWithoutAudioBackend(t *testing.T) {
+	m := NewMusic(nil)
+	m.SetSFXWithDurations([][]int16{{1, -1}}, []int64{524362986})
+	if got := m.SFXDurationNanos(0); got != 524362986 {
+		t.Fatalf("headless SFX duration=%d, want 524362986", got)
+	}
+	if len(m.sfx) != 0 {
+		t.Fatalf("headless backend 不應配置不可播放的 stereo PCM，got %d banks", len(m.sfx))
+	}
+	// Playback remains a nil-safe no-op without a host backend.
+	m.PlaySFX(0)
+}
+
 // SetEnabled(false) 對已初始化(enabled=true)的 Music 應立即讓 Play 變 no-op,
 // 但不動 enabled 欄位本身(SFX 走獨立旗標,不受音樂開關影響)。
 func TestSetEnabledGatesMusicOnly(t *testing.T) {

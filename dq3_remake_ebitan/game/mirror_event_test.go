@@ -77,10 +77,11 @@ func TestMirrorProductionInputTrace(t *testing.T) {
 		t.Fatalf("rec98 後應進怪力魔89: stage=%d active=%v mon=%d",
 			g.mirrorStage, g.battle.active, g.battle.monID)
 	}
-	for i := 0; g.battle.active && i < 24; i++ {
+	for i := 0; g.battle.active && i < 512; i++ {
+		// 有界推進正式 battle phase；不要以舊版固定按鍵數跳過攻擊 VOC completion gate。
 		send(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	}
-	if g.battle.active || g.mirrorStage != 0 || !g.hasItem(itemModChangeStaff) ||
+	if g.battle.active || g.mirrorStage != 0 || !g.hasPartyItem(itemModChangeStaff) ||
 		g.storyFlag(0x42) || !g.storyFlag(0x22) || g.dnPhase != 0 || !g.dlg.open {
 		t.Fatalf("正式戰鬥輸入後勝利交易錯: active=%v stage=%d inv=%v f42=%v f22=%v phase=%d dlg=%v",
 			g.battle.active, g.mirrorStage, g.inventory, g.storyFlag(0x42),
@@ -94,7 +95,7 @@ func TestMirrorBattleTransactions(t *testing.T) {
 		g.useMirror()
 		g.mirrorStage, g.battle.monID, g.battle.result = 3, monsterBossTroll, 3
 		g.settleMirrorBattle()
-		if !g.storyFlag(0x42) || g.storyFlag(0x10) || g.hasItem(itemModChangeStaff) || !g.isNight() {
+		if !g.storyFlag(0x42) || g.storyFlag(0x10) || g.hasPartyItem(itemModChangeStaff) || !g.isNight() {
 			t.Fatalf("敗北回滾錯: f42=%v f10=%v staff=%v night=%v",
 				g.storyFlag(0x42), g.storyFlag(0x10), g.hasItem(itemModChangeStaff), g.isNight())
 		}
@@ -105,10 +106,24 @@ func TestMirrorBattleTransactions(t *testing.T) {
 		g.mirrorStage, g.battle.monID, g.battle.result = 3, monsterBossTroll, 1
 		g.settleMirrorBattle()
 		if g.storyFlag(0x42) || !g.storyFlag(0x10) || g.storyFlag(0x21) ||
-			!g.storyFlag(0x22) || !g.hasItem(itemModChangeStaff) || g.dnPhase != 0 || !g.dlg.open {
+			!g.storyFlag(0x22) || !g.hasPartyItem(itemModChangeStaff) || g.dnPhase != 0 || !g.dlg.open {
 			t.Fatalf("勝利交易錯: f42=%v f10=%v f21=%v f22=%v staff=%v phase=%d dlg=%v",
 				g.storyFlag(0x42), g.storyFlag(0x10), g.storyFlag(0x21), g.storyFlag(0x22),
 				g.hasItem(itemModChangeStaff), g.dnPhase, g.dlg.open)
+		}
+	})
+	t.Run("full party rolls event back", func(t *testing.T) {
+		g := mirrorEventGame(t)
+		fillActorInventoryToCapacity(t, g, 0, 0x41)
+		g.useMirror()
+		g.dlg.open = false // 模擬 rec97/98 已由正式輸入關閉、戰鬥已結束
+		g.mirrorStage, g.battle.monID, g.battle.result = 3, monsterBossTroll, 1
+		g.settleMirrorBattle()
+		if !g.storyFlag(0x42) || g.storyFlag(0x10) || g.storyFlag(0x22) ||
+			g.hasPartyItem(itemModChangeStaff) || !g.isNight() || g.dlg.open {
+			t.Fatalf("全隊滿格不得完成怪力魔事件：f42=%v f10=%v f22=%v staff=%v night=%v dlg=%v",
+				g.storyFlag(0x42), g.storyFlag(0x10), g.storyFlag(0x22),
+				g.hasPartyItem(itemModChangeStaff), g.isNight(), g.dlg.open)
 		}
 	})
 }
@@ -133,7 +148,7 @@ func TestMirrorWinSaveRestore(t *testing.T) {
 	if !restored.inTown || restored.curCty != ctySamanosa || restored.cur == nil ||
 		restored.cur.sec != mirrorSection || restored.px != mirrorX || restored.py != mirrorY ||
 		restored.dnPhase != 0 || restored.storyFlag(0x42) || !restored.storyFlag(0x22) ||
-		!restored.hasItem(itemModChangeStaff) {
+		!restored.hasPartyItem(itemModChangeStaff) {
 		t.Fatalf("讀檔未保留事件世界狀態: town=%v cty=%d sec=%d @%d,%d phase=%d f42=%v f22=%v inv=%v",
 			restored.inTown, restored.curCty, sceneSection(restored.cur), restored.px, restored.py,
 			restored.dnPhase, restored.storyFlag(0x42), restored.storyFlag(0x22), restored.inventory)

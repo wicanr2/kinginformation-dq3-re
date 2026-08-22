@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.33",
+  "schema_version": "0.1.43",
   "day_night_cycle": {
     "clock_ticks": 240,
     "night_start_tick": 120,
@@ -873,6 +873,48 @@
     }
   ],
   "item_use_effects": [
+    {
+      "id": "dq3:item_use.antidote_herb",
+      "kind": "item_use",
+      "item_raw_id": 66,
+      "effect_id": "clear_condition",
+      "location_kind": "any",
+      "consume": true,
+      "condition_id": "common:condition.poison",
+      "target_scope": "party_member",
+      "success_text_id": "dq3:text.item_use.antidote.success",
+      "no_effect_text_id": "dq3:text.item_use.no_effect",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT00.TXT",
+        "address_space": "logical",
+        "address": "dispatcher 0x3ccf; DGROUP 0x366c=file0x197ac word0x3dc3; handlers 0x3dc3, sub_14CF9, sub_1469F",
+        "consumer": "item0x42 removes the selected inventory word before testing target +0x38 bit0x40; living poisoned target clears bit0x40 and displays record364, while dead or unaffected target keeps status unchanged and displays record341 after consumption",
+        "doc": "docs/138-antidote-item-condition-re.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.fullmoon_herb",
+      "kind": "item_use",
+      "item_raw_id": 69,
+      "effect_id": "clear_condition",
+      "location_kind": "any",
+      "consume": true,
+      "condition_id": "common:condition.paralysis",
+      "target_scope": "party_member",
+      "success_text_id": "dq3:text.item_use.fullmoon.success",
+      "no_effect_text_id": "dq3:text.item_use.no_effect",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT00.TXT",
+        "address_space": "logical",
+        "address": "dispatcher 0x3ccf; DGROUP 0x3672=file0x197b2 word0x3e15; handlers 0x3e15, sub_14CF9, sub_1469F",
+        "consumer": "item0x45 removes the selected inventory word before testing target +0x38 bit0x10; a living paralyzed target clears bit0x10 and displays original record364, while dead or unaffected targets retain state and display record341 after consumption",
+        "doc": "docs/152-special-physical-paralysis-spec.md"
+      }
+    },
     {
       "id": "dq3:item_use.thief_key",
       "kind": "item_use",

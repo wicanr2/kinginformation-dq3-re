@@ -13,10 +13,14 @@ import (
 func TestSaveRoundTrip(t *testing.T) {
 	s := saveState{
 		HeroExp: 4364, HeroHP: 42, HeroGold: 250,
+		HeroConditions: conditionPoison | conditionParalysis, ParalysisSteps: 17,
 		Inventory: []int{3, 0x21, 0x1e},
+		Comps:     []compSav{{Name: []int{1}, CurHP: 12, Conditions: conditionPoison}},
 		PX:        12, PY: 28, InTown: true,
 		StoryBits: []byte{0x80, 0x40}, DNPhase: 2, DNStep: 17,
 		Cty: 44, Section: 1, Layer: 0,
+		Respawn:     &respawnSave{PX: 14, PY: 7, OverPX: 190, OverPY: 123, InTown: true, Cty: 44, Section: 1},
+		PartyLeader: 2,
 	}
 	b, err := encodeSave(s)
 	if err != nil {

@@ -30,7 +30,7 @@ func (g *Game) tryCoordinateItemGateEvent() bool {
 		return false
 	}
 	g.coordinateItemGateID = event.ID
-	if g.hasItem(event.RequiredItemRawID) {
+	if g.hasPartyItem(event.RequiredItemRawID) {
 		g.coordinateItemGateStage = coordinateGateSuccessApproach
 	} else {
 		g.coordinateItemGateStage = coordinateGateFailureApproach
@@ -59,7 +59,7 @@ func (g *Game) advanceCoordinateItemGateDialogue() {
 	case coordinateGateSuccessDialogue:
 		g.setStoryFlag(event.ClearStoryFlagRaw, false)
 		if event.ConsumeRequiredItem {
-			g.removeItems(event.RequiredItemRawID, 1)
+			g.removePartyItems(event.RequiredItemRawID, 1)
 		}
 		g.coordinateItemGateStage = coordinateGateIdle
 		g.coordinateItemGateID = ""

@@ -1,8 +1,9 @@
 # 拉之鏡與沙曼歐莎假王正式流程
 
-狀態：拉之鏡原始資料與 common consumer 已達 D3；同一條 boot production trace 已從
-CTY60 自然走過 CTY41→42、CTY43 關卡、CTY44、CTY24 拉之鏡、save/load 與假王戰，
-此切片現為 E3／V1。
+狀態：拉之鏡原始資料與 common consumer 已達 D3。2026-08-11 的歷史 boot production
+trace 曾從 CTY60 自然走過 CTY41→42、CTY43 關卡、CTY44、CTY24 拉之鏡、save/load
+與假王戰，當時此切片為 E3／V1；2026-08-22 中毒鏈接線後的現行 replay 在 monster89
+戰前資源／補給路徑停住，尚未恢復現行 campaign E3。最新證據見 `docs/140`。
 
 ## 原始輸入與定位
 
@@ -30,9 +31,19 @@ present flag set 解釋成「已取得」，會讓拉之鏡在正常初始旗標
 3. 沿用共用 `collectQuestTreasure` transaction，缺 JSON 時失敗即關閉；
 4. 將 content version 升為 `0.1.22`，schema 不變。
 
+> 2026-08-22 ownership 訂正：共用取得 writer 接回後，拉之鏡可能合法寫入同伴。取得與
+> save/load 驗收改為全隊持有；正式使用仍從道具選單選實際 owner。這不改 event0 raw、
+> `0x9f` present flag 或夜間位置 gate。
+
+> 2026-08-22 滿載交易訂正：新 IDA Pro 9.4 sidecar 證實 `sub_14312` 在 monster89 勝利
+> 後於 linear `0x143B5` 檢查共用 writer 的 `DS:0726`；全隊滿格會跳回 clear `0x10`／
+> restore `0x42` 的失敗分支，只有成功取得變化之杖才於 `0x143BC..0x143C5` clear `0x21`／
+> set `0x22`。舊 remake「獎勵失敗仍完成事件」已修正，完整證據見 `docs/168`。
+
 ## 正式玩家輸入現況
 
-`TestOpeningProductionInputTrace` 不使用 debug key、內部事件函式或狀態注入，目前證實：
+以下是 2026-08-11 歷史 checkpoint 的 `TestOpeningProductionInputTrace` 結果；它不使用
+debug key、內部事件函式或狀態注入，但不得取代 2026-08-22 工作樹的重播現況：
 
 1. 從商人交付並 save/load 的 CTY58 checkpoint 正式離城；
 2. 由同一世界座標重進，ordered gate 自然選到 CTY60；

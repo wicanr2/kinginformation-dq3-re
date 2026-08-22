@@ -39,3 +39,17 @@ func TestItems(t *testing.T) {
 	}
 	t.Logf("128 道具解析 ✓;銅劍 攻10 價%dG、皮甲 防8;有價 %d 項", it.Price(3), priced)
 }
+
+func TestCursedEquipmentMetadataMatchesOriginalITEM(t *testing.T) {
+	it, err := OpenItems(findAsset(t, "ITEM.DAT"))
+	if err != nil {
+		t.Fatalf("OpenItems: %v", err)
+	}
+	want := map[int]bool{0x1b: true, 0x1d: true, 0x37: true, 0x38: true, 0x3d: true}
+	for code := 0; code < ItemCount; code++ {
+		if got := it.CursedWhenEquipped(code); got != want[code] {
+			t.Fatalf("item %#x CursedWhenEquipped=%v metadata=%#x want %v",
+				code, got, it.MetadataWord(code), want[code])
+		}
+	}
+}

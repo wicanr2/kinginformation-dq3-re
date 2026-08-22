@@ -1,6 +1,39 @@
 {
-  "schema_version": "0.1.33",
+  "schema_version": "0.1.43",
   "service_definitions": [
+    {
+      "id": "common:service.cure_poison",
+      "pricing": {
+        "formula_id": "common:formula.fixed",
+        "fixed_gold": 5
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE",
+        "address_space": "logical",
+        "address": "0x712b..0x71bd",
+        "consumer": "sub_1712B tests character +0x38 bit0x40, gates payment at fixed 5G, then clears the bit and emits rec0x12f",
+        "doc": "docs/137-church-poison-condition-re.md"
+      }
+    },
+    {
+      "id": "common:service.remove_curse",
+      "pricing": {
+        "formula_id": "common:formula.level_multiplier",
+        "gold_per_level": 100
+      },
+      "affected_equipped_item_raw_ids": [27, 29, 55, 56, 61],
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + ITEM.DAT",
+        "address_space": "logical",
+        "address": "sub_17ED9 logical 0x7ed9..0x80f2; sub_171CC logical 0x71cc..0x728e",
+        "consumer": "ITEM +4/+5 word & 0x0e00 writes equipped item bit0x4000; church charges level*100 and replaces every matching item word with 0x00ff",
+        "doc": "docs/147-cursed-equipment-church-service-spec.md"
+      }
+    },
     {
       "id": "common:service.revive",
       "pricing": {

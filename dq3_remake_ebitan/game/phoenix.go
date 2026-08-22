@@ -51,7 +51,7 @@ func (g *Game) tryPhoenixAltar(x, y int) bool {
 	}
 	item, owner := -1, -1 // 0=勇者，1..=目前隊伍中的同伴
 	for code := e.PhoenixOrbItemFirstRaw; code <= e.PhoenixOrbItemLastRaw; code++ {
-		if g.hasItem(code) {
+		if g.hasPartyItem(code) {
 			item, owner = code, 0
 			break
 		}
@@ -69,7 +69,7 @@ func (g *Game) tryPhoenixAltar(x, y int) bool {
 		return true
 	}
 	if owner == 0 {
-		g.removeItems(item, 1)
+		g.removePartyItems(item, 1)
 	} else {
 		member := g.companions[owner-1]
 		for i, code := range member.Inventory {

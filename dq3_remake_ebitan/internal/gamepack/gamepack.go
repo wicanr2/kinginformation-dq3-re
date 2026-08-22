@@ -19,9 +19,23 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.33"
-	EngineAPI     = ">=0.1.0 <0.2.0"
-	ReviveService = "common:service.revive"
+	SchemaVersion       = "0.1.43"
+	EngineAPI           = ">=0.1.0 <0.2.0"
+	ReviveService       = "common:service.revive"
+	CurePoisonService   = "common:service.cure_poison"
+	RemoveCurseService  = "common:service.remove_curse"
+	PoisonCondition     = "common:condition.poison"
+	SleepCondition      = "common:condition.sleep"
+	ParalysisCondition  = "common:condition.paralysis"
+	FieldHealHP         = "common:spell.heal_hp"
+	FieldTeleport       = "common:spell.teleport"
+	FieldExitDungeon    = "common:spell.exit_dungeon"
+	FieldInspectFacing  = "common:spell.inspect_facing"
+	FieldHazardGuard    = "common:spell.hazard_guard"
+	FieldRepel          = "common:spell.repel"
+	FieldToggleDayNight = "common:spell.toggle_day_night"
+	FieldInvisibility   = "common:spell.invisibility"
+	FieldOpenFacingDoor = "common:spell.open_facing_door"
 )
 
 //go:embed packs/dq3_cht
@@ -166,28 +180,108 @@ type BattleResistanceData struct {
 	Evidence         Evidence          `json:"evidence"`
 }
 
-// BattlePackData is the E2 production contract for the statically confirmed
-// battle inputs.  It deliberately excludes unproven action-frame and player
-// timing semantics; those remain in the RE sidecar as unknown/V3.
+// BattleConditionDefinition 保存已有原版 writer／consumer 證據的狀態。
+// Persistence 明確區分跨場景持久條件與只存在本場戰鬥的狀態；未知 ID 不執行。
+type BattleConditionDefinition struct {
+	ID                     string   `json:"id"`
+	Persistence            string   `json:"persistence"`
+	FieldDamagePerStep     int      `json:"field_damage_per_step"`
+	FieldClearAfterSteps   int      `json:"field_clear_after_steps"`
+	SuppressWorldStateMask int      `json:"suppress_world_state_mask"`
+	LegacyStatusMask       int      `json:"legacy_status_mask"`
+	Evidence               Evidence `json:"evidence"`
+}
+
+// MonsterActionDefinition 保存一個已有原版 handler 證據的 raw monster-mask bit。
+// 現行 runtime 只閉合 DQ3 bit3 持久麻痺特殊物理、bit38 poison 與 bit41 sleep；不能外推其餘 bit 已知。
+// 玩家文字只引用穩定的 battle-text role，不嵌入字串。
+type MonsterActionDefinition struct {
+	MaskBit             int      `json:"mask_bit"`
+	ActionRaw           int      `json:"action_raw"`
+	Kind                string   `json:"kind"`
+	ConditionID         string   `json:"condition_id"`
+	TargetScope         string   `json:"target_scope"`
+	SuccessRollMax      int      `json:"success_roll_max"`
+	DamageFormula       string   `json:"damage_formula,omitempty"`
+	ConditionOnSurvival bool     `json:"condition_on_survival,omitempty"`
+	CastTextRole        string   `json:"cast_text_role"`
+	SuccessTextRole     string   `json:"success_text_role"`
+	Evidence            Evidence `json:"evidence"`
+}
+
+// BattleSoundCue maps a stable engine role to a version-owned raw VOC cue.
+// WaitForCompletion means the message gate follows the original driver wait;
+// it does not claim host-audio wall-clock identity.
+type BattleSoundCue struct {
+	CueRaw            int      `json:"cue_raw"`
+	WaitForCompletion bool     `json:"wait_for_completion"`
+	Evidence          Evidence `json:"evidence"`
+}
+
+// BattleSoundSequence preserves an ordered group of raw cue calls whose
+// completion gates are closed by one original action consumer.
+type BattleSoundSequence struct {
+	Steps []BattleSoundCue `json:"steps"`
+}
+
+type BattleSoundCues struct {
+	PlayerFled          BattleSoundCue      `json:"player_fled"`
+	EnemyFled           BattleSoundCue      `json:"enemy_fled"`
+	EnemyPhysicalAttack BattleSoundCue      `json:"enemy_physical_attack"`
+	PhysicalHit         BattleSoundCue      `json:"physical_hit"`
+	PhysicalMiss        BattleSoundCue      `json:"physical_miss"`
+	FatalStrike         BattleSoundCue      `json:"fatal_strike"`
+	PlayerPhysical      BattleSoundSequence `json:"player_physical"`
+}
+
+// BattlePackData is the E2 production contract for statically confirmed battle
+// inputs. SoundCues contains only call-sites whose raw cue and driver wait are
+// closed; unproven action-frame and host wall-clock semantics remain excluded.
 type BattlePackData struct {
-	SchemaVersion string               `json:"schema_version"`
-	SourceFiles   []BattleSourceFile   `json:"source_files"`
-	Background    BattleBackgroundData `json:"background"`
-	Encounter     BattleEncounterData  `json:"encounter"`
-	Resistance    BattleResistanceData `json:"resistance"`
-	Evidence      Evidence             `json:"evidence"`
+	SchemaVersion  string                      `json:"schema_version"`
+	SourceFiles    []BattleSourceFile          `json:"source_files"`
+	Background     BattleBackgroundData        `json:"background"`
+	Encounter      BattleEncounterData         `json:"encounter"`
+	Resistance     BattleResistanceData        `json:"resistance"`
+	Conditions     []BattleConditionDefinition `json:"conditions"`
+	MonsterActions []MonsterActionDefinition   `json:"monster_actions"`
+	SoundCues      BattleSoundCues             `json:"sound_cues"`
+	Evidence       Evidence                    `json:"evidence"`
+}
+
+// FieldSpellDefinition is one version-owned out-of-battle spell descriptor.
+// Record numbers, costs, target flags and amounts come from the selected game
+// pack; the shared engine only dispatches stable effect/formula primitives.
+type FieldSpellDefinition struct {
+	RecordRaw     int      `json:"record_raw"`
+	EffectID      string   `json:"effect_id"`
+	MPCost        int      `json:"mp_cost"`
+	BaseAmount    int      `json:"base_amount"`
+	FlagsRaw      int      `json:"flags_raw"`
+	DescriptorHex string   `json:"descriptor_raw_hex"`
+	TargetScope   string   `json:"target_scope"`
+	AmountFormula string   `json:"amount_formula,omitempty"`
+	Evidence      Evidence `json:"evidence"`
+}
+
+type SpellPackData struct {
+	SchemaVersion string                 `json:"schema_version"`
+	Field         []FieldSpellDefinition `json:"field"`
 }
 
 type Pricing struct {
-	FormulaID string `json:"formula_id"`
-	LevelCap  int    `json:"level_cap"`
-	CostsGold []int  `json:"costs_gold"`
+	FormulaID    string `json:"formula_id"`
+	FixedGold    *int   `json:"fixed_gold,omitempty"`
+	GoldPerLevel int    `json:"gold_per_level,omitempty"`
+	LevelCap     int    `json:"level_cap,omitempty"`
+	CostsGold    []int  `json:"costs_gold,omitempty"`
 }
 
 type ServiceDefinition struct {
-	ID       string   `json:"id"`
-	Pricing  Pricing  `json:"pricing"`
-	Evidence Evidence `json:"evidence"`
+	ID                         string   `json:"id"`
+	Pricing                    Pricing  `json:"pricing"`
+	AffectedEquippedItemRawIDs []int    `json:"affected_equipped_item_raw_ids,omitempty"`
+	Evidence                   Evidence `json:"evidence"`
 }
 
 type Facilities struct {
@@ -650,6 +744,12 @@ type BattleTextRefs struct {
 	ActorMissed      string `json:"actor_missed"`
 	ActorDamage      string `json:"actor_damage"`
 	ActorAttack      string `json:"actor_attack"`
+	EnemyAttack      string `json:"enemy_attack"`
+	PartyDamage      string `json:"party_damage"`
+	EnemyDefeated    string `json:"enemy_defeated"`
+	ActorDied        string `json:"actor_died"`
+	FatalStrike      string `json:"fatal_strike"`
+	ActorParalyzed   string `json:"actor_paralyzed"`
 	Victory          string `json:"victory"`
 	ExpReward        string `json:"exp_reward"`
 	GoldReward       string `json:"gold_reward"`
@@ -659,6 +759,9 @@ type BattleTextRefs struct {
 	BuffDefense      string `json:"buff_defense"`
 	EnemySealed      string `json:"enemy_sealed"`
 	EnemyConfused    string `json:"enemy_confused"`
+	SleepBreath      string `json:"sleep_breath"`
+	PoisonGas        string `json:"poison_gas"`
+	ActorPoisoned    string `json:"actor_poisoned"`
 	CurePoison       string `json:"cure_poison"`
 	CureStatus       string `json:"cure_status"`
 	SpellNoEffect    string `json:"spell_no_effect"`
@@ -666,6 +769,7 @@ type BattleTextRefs struct {
 	PalpunteBlowAway string `json:"palpunte_blow_away"`
 	PalpunteDrainMP  string `json:"palpunte_drain_mp"`
 	PartyDefeated    string `json:"party_defeated"`
+	RevivalVoice     string `json:"revival_voice"`
 }
 
 // IDs returns a copy of the role → pack text ID mapping for the engine
@@ -685,6 +789,12 @@ func (r *BattleTextRefs) IDs() map[string]string {
 		"actor_missed":       r.ActorMissed,
 		"actor_damage":       r.ActorDamage,
 		"actor_attack":       r.ActorAttack,
+		"enemy_attack":       r.EnemyAttack,
+		"party_damage":       r.PartyDamage,
+		"enemy_defeated":     r.EnemyDefeated,
+		"actor_died":         r.ActorDied,
+		"fatal_strike":       r.FatalStrike,
+		"actor_paralyzed":    r.ActorParalyzed,
 		"victory":            r.Victory,
 		"exp_reward":         r.ExpReward,
 		"gold_reward":        r.GoldReward,
@@ -694,6 +804,9 @@ func (r *BattleTextRefs) IDs() map[string]string {
 		"buff_defense":       r.BuffDefense,
 		"enemy_sealed":       r.EnemySealed,
 		"enemy_confused":     r.EnemyConfused,
+		"sleep_breath":       r.SleepBreath,
+		"poison_gas":         r.PoisonGas,
+		"actor_poisoned":     r.ActorPoisoned,
 		"cure_poison":        r.CurePoison,
 		"cure_status":        r.CureStatus,
 		"spell_no_effect":    r.SpellNoEffect,
@@ -701,6 +814,7 @@ func (r *BattleTextRefs) IDs() map[string]string {
 		"palpunte_blow_away": r.PalpunteBlowAway,
 		"palpunte_drain_mp":  r.PalpunteDrainMP,
 		"party_defeated":     r.PartyDefeated,
+		"revival_voice":      r.RevivalVoice,
 	}
 }
 
@@ -977,6 +1091,10 @@ type ItemUseEffect struct {
 	AnimationPaletteModeRaw int            `json:"animation_palette_mode_raw,omitempty"`
 	AnimationCycles         int            `json:"animation_cycles,omitempty"`
 	DoorKeyTier             int            `json:"door_key_tier,omitempty"`
+	ConditionID             string         `json:"condition_id,omitempty"`
+	TargetScope             string         `json:"target_scope,omitempty"`
+	SuccessTextID           string         `json:"success_text_id,omitempty"`
+	NoEffectTextID          string         `json:"no_effect_text_id,omitempty"`
 	Evidence                Evidence       `json:"evidence"`
 }
 
@@ -1639,6 +1757,7 @@ type Pack struct {
 	Texts                      Texts
 	Audio                      AudioDefinition
 	Battle                     BattlePackData
+	Spells                     SpellPackData
 	services                   map[string]*ServiceDefinition
 	bossEvents                 map[string]*BossSurrenderEvent
 	roleEvents                 map[string]*TemporaryRoleEvent
@@ -1659,6 +1778,7 @@ type Pack struct {
 	stagedBossEvents           map[string]*StagedBossEvent
 	charDefaults               map[string]*CharacterDefault
 	texts                      map[string]*TextDefinition
+	fieldSpells                map[int]*FieldSpellDefinition
 	battlePresent              bool
 	contentHash                string
 }
@@ -1795,6 +1915,19 @@ func Load(fsys fs.FS) (*Pack, error) {
 			return nil, fmt.Errorf("%s: %w", battlePath, err)
 		}
 	}
+	spellsPath, ok := p.Manifest.Data["spells"]
+	if !ok {
+		return nil, errors.New("manifest.json: data.spells is required")
+	}
+	if spellsPath, err = cleanRelative(spellsPath, "data.spells"); err != nil {
+		return nil, err
+	}
+	if err := decodeStrict(fsys, spellsPath, &p.Spells); err != nil {
+		return nil, err
+	}
+	if err := p.validateSpells(); err != nil {
+		return nil, fmt.Errorf("%s: %w", spellsPath, err)
+	}
 	if err := p.validateEventTextRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", eventsPath, err)
 	}
@@ -1807,7 +1940,8 @@ func Load(fsys fs.FS) (*Pack, error) {
 		Texts      Texts           `json:"texts"`
 		Audio      AudioDefinition `json:"audio"`
 		Battle     BattlePackData  `json:"battle"`
-	}{p.Manifest, p.Facilities, p.Interface, p.Events, p.Characters, p.Texts, p.Audio, p.Battle})
+		Spells     SpellPackData   `json:"spells"`
+	}{p.Manifest, p.Facilities, p.Interface, p.Events, p.Characters, p.Texts, p.Audio, p.Battle, p.Spells})
 	if err != nil {
 		return nil, fmt.Errorf("canonicalize pack: %w", err)
 	}
@@ -2507,10 +2641,40 @@ func (p *Pack) validateBattleTextRefs() error {
 			return fmt.Errorf("battle_texts.%s references unknown text %q", role, id)
 		}
 	}
+	roles := refs.IDs()
+	for i, action := range p.Battle.MonsterActions {
+		for field, role := range map[string]string{
+			"cast_text_role": action.CastTextRole, "success_text_role": action.SuccessTextRole,
+		} {
+			if _, ok := roles[role]; !ok {
+				return fmt.Errorf("monster_actions[%d].%s references unknown battle role %q", i, field, role)
+			}
+		}
+	}
 	return nil
 }
 
 func (p *Pack) validateEventTextRefs() error {
+	conditions := make(map[string]bool, len(p.Battle.Conditions))
+	for _, condition := range p.Battle.Conditions {
+		conditions[condition.ID] = true
+	}
+	for _, effect := range p.Events.ItemUseEffects {
+		if effect.EffectID != "clear_condition" {
+			continue
+		}
+		if !conditions[effect.ConditionID] {
+			return fmt.Errorf("%s condition_id references unknown condition %q", effect.ID, effect.ConditionID)
+		}
+		for field, id := range map[string]string{
+			"success_text_id":   effect.SuccessTextID,
+			"no_effect_text_id": effect.NoEffectTextID,
+		} {
+			if id == "" || p.texts[id] == nil {
+				return fmt.Errorf("%s %s references unknown text %q", effect.ID, field, id)
+			}
+		}
+	}
 	for field, id := range map[string]string{
 		"use":  p.Events.ItemActions.TextIDs.Use,
 		"give": p.Events.ItemActions.TextIDs.Give,
@@ -3531,6 +3695,13 @@ func (p *Pack) validateEvents() error {
 				e.ResetDayNightSteps || e.StepCount <= 0 || !e.Consume {
 				return fmt.Errorf("%s: invalid temporary_invisibility configuration", e.ID)
 			}
+		case "clear_condition":
+			if e.LocationKind != "any" || e.ConditionID == "" ||
+				e.TargetScope != "party_member" || !e.Consume ||
+				e.SuccessTextID == "" || e.NoEffectTextID == "" ||
+				e.DayNightPhase != 0 || e.ResetDayNightSteps || e.StepCount != 0 {
+				return fmt.Errorf("%s: invalid clear_condition configuration", e.ID)
+			}
 		case "reveal_world_map_patch":
 			patch := e.MapPatch
 			if e.LocationKind != "overworld" || e.RequiredLayer < 0 ||
@@ -4212,6 +4383,61 @@ func (p *Pack) validateAudio() error {
 	return nil
 }
 
+func (p *Pack) validateSpells() error {
+	if p.Spells.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported schema_version %q", p.Spells.SchemaVersion)
+	}
+	if p.Spells.Field == nil {
+		return errors.New("field must be present (use [] when empty)")
+	}
+	p.fieldSpells = make(map[int]*FieldSpellDefinition, len(p.Spells.Field))
+	validEffects := map[string]bool{
+		FieldHealHP: true, FieldTeleport: true, FieldExitDungeon: true,
+		FieldInspectFacing: true, FieldHazardGuard: true, FieldRepel: true,
+		FieldToggleDayNight: true, FieldInvisibility: true, FieldOpenFacingDoor: true,
+	}
+	for i := range p.Spells.Field {
+		d := &p.Spells.Field[i]
+		if d.RecordRaw < 0 || d.RecordRaw > 0xffff || d.MPCost < 0 ||
+			d.MPCost > 255 || d.BaseAmount < 0 || d.BaseAmount > 255 ||
+			d.FlagsRaw < 0 || d.FlagsRaw > 255 || !validEffects[d.EffectID] {
+			return fmt.Errorf("field[%d] has invalid record, descriptor or effect", i)
+		}
+		if p.fieldSpells[d.RecordRaw] != nil {
+			return fmt.Errorf("duplicate field spell record %d", d.RecordRaw)
+		}
+		raw, err := hex.DecodeString(d.DescriptorHex)
+		if err != nil || len(raw) != 3 || int(raw[0]) != d.MPCost ||
+			int(raw[1]) != d.BaseAmount || int(raw[2]) != d.FlagsRaw {
+			return fmt.Errorf("field[%d] descriptor_raw_hex does not match decoded fields", i)
+		}
+		switch d.TargetScope {
+		case "none":
+			if d.EffectID == FieldHealHP {
+				return fmt.Errorf("field[%d] heal_hp requires a party target", i)
+			}
+		case "party_member", "party_all":
+			if d.EffectID != FieldHealHP {
+				return fmt.Errorf("field[%d] party target is only valid for heal_hp", i)
+			}
+		default:
+			return fmt.Errorf("field[%d] has invalid target_scope %q", i, d.TargetScope)
+		}
+		if d.EffectID == FieldHealHP {
+			if d.AmountFormula != "base_to_base_plus_9" && d.AmountFormula != "full_hp" {
+				return fmt.Errorf("field[%d] has invalid heal amount_formula %q", i, d.AmountFormula)
+			}
+		} else if d.AmountFormula != "" || d.BaseAmount != 0 {
+			return fmt.Errorf("field[%d] non-heal spell must not define an amount formula", i)
+		}
+		if err := validateEvidence(d.Evidence); err != nil {
+			return fmt.Errorf("field[%d] evidence: %w", i, err)
+		}
+		p.fieldSpells[d.RecordRaw] = d
+	}
+	return nil
+}
+
 func validateBattleSourceFiles(files []BattleSourceFile) error {
 	if files == nil {
 		return errors.New("source_files must be present")
@@ -4370,6 +4596,104 @@ func (p *Pack) validateBattlePack() error {
 	if err := validateEvidence(b.Resistance.Evidence); err != nil {
 		return fmt.Errorf("resistance evidence: %w", err)
 	}
+	for role, cue := range map[string]BattleSoundCue{
+		"player_fled":           b.SoundCues.PlayerFled,
+		"enemy_fled":            b.SoundCues.EnemyFled,
+		"enemy_physical_attack": b.SoundCues.EnemyPhysicalAttack,
+		"physical_hit":          b.SoundCues.PhysicalHit,
+		"physical_miss":         b.SoundCues.PhysicalMiss,
+		"fatal_strike":          b.SoundCues.FatalStrike,
+	} {
+		if cue.CueRaw < 0 || !cue.WaitForCompletion {
+			return fmt.Errorf("battle sound_cues.%s is incomplete or unsupported", role)
+		}
+		if err := validateEvidence(cue.Evidence); err != nil {
+			return fmt.Errorf("battle sound_cues.%s evidence: %w", role, err)
+		}
+	}
+	if len(b.SoundCues.PlayerPhysical.Steps) == 0 {
+		return errors.New("battle sound_cues.player_physical.steps must not be empty")
+	}
+	for i, cue := range b.SoundCues.PlayerPhysical.Steps {
+		if cue.CueRaw < 0 || !cue.WaitForCompletion {
+			return fmt.Errorf("battle sound_cues.player_physical.steps[%d] is incomplete or unsupported", i)
+		}
+		if err := validateEvidence(cue.Evidence); err != nil {
+			return fmt.Errorf("battle sound_cues.player_physical.steps[%d] evidence: %w", i, err)
+		}
+	}
+	conditions := make(map[string]BattleConditionDefinition, len(b.Conditions))
+	for i, condition := range b.Conditions {
+		if condition.ID == "" ||
+			(condition.Persistence != "persistent" && condition.Persistence != "battle") ||
+			condition.FieldDamagePerStep < 0 || condition.FieldClearAfterSteps < 0 ||
+			condition.SuppressWorldStateMask < 0 || condition.LegacyStatusMask <= 0 {
+			return fmt.Errorf("conditions[%d] is incomplete", i)
+		}
+		if _, exists := conditions[condition.ID]; exists {
+			return fmt.Errorf("duplicate condition id %q", condition.ID)
+		}
+		if err := validateEvidence(condition.Evidence); err != nil {
+			return fmt.Errorf("conditions[%d] evidence: %w", i, err)
+		}
+		conditions[condition.ID] = condition
+	}
+	if _, ok := conditions[PoisonCondition]; !ok {
+		return fmt.Errorf("required condition %q is missing", PoisonCondition)
+	}
+	if _, ok := conditions[SleepCondition]; !ok {
+		return fmt.Errorf("required condition %q is missing", SleepCondition)
+	}
+	if _, ok := conditions[ParalysisCondition]; !ok {
+		return fmt.Errorf("required condition %q is missing", ParalysisCondition)
+	}
+	if poison := conditions[PoisonCondition]; poison.Persistence != "persistent" || poison.FieldDamagePerStep <= 0 {
+		return fmt.Errorf("%s must be persistent with field damage", PoisonCondition)
+	}
+	if sleep := conditions[SleepCondition]; sleep.Persistence != "battle" ||
+		sleep.FieldDamagePerStep != 0 || sleep.FieldClearAfterSteps != 0 ||
+		sleep.SuppressWorldStateMask != 0 {
+		return fmt.Errorf("%s must be battle-only without field damage", SleepCondition)
+	}
+	if paralysis := conditions[ParalysisCondition]; paralysis.Persistence != "persistent" ||
+		paralysis.FieldDamagePerStep != 0 || paralysis.FieldClearAfterSteps != 0x28 ||
+		paralysis.SuppressWorldStateMask != 0 {
+		return fmt.Errorf("%s must be persistent with the original shared 0x28-step clear", ParalysisCondition)
+	}
+	seenActionBits := make(map[int]bool, len(b.MonsterActions))
+	for i, action := range b.MonsterActions {
+		if action.MaskBit < 0 || action.MaskBit >= 48 || action.ActionRaw < 0 ||
+			action.ConditionID == "" ||
+			action.CastTextRole == "" || action.SuccessTextRole == "" {
+			return fmt.Errorf("monster_actions[%d] is incomplete or unsupported", i)
+		}
+		switch action.Kind {
+		case "apply_condition":
+			if action.TargetScope != "party_alive_unaffected" ||
+				action.SuccessRollMax < 0 || action.SuccessRollMax > 255 ||
+				action.DamageFormula != "" || action.ConditionOnSurvival {
+				return fmt.Errorf("monster_actions[%d] has invalid apply_condition fields", i)
+			}
+		case "special_physical_condition":
+			if action.TargetScope != "party_one_alive" ||
+				action.DamageFormula != "ignore_defense_half_plus_random_quarter" ||
+				!action.ConditionOnSurvival || action.SuccessRollMax != 0 {
+				return fmt.Errorf("monster_actions[%d] has invalid special physical fields", i)
+			}
+		default:
+			return fmt.Errorf("monster_actions[%d] has unsupported kind %q", i, action.Kind)
+		}
+		if seenActionBits[action.MaskBit] {
+			return fmt.Errorf("duplicate monster action mask_bit %d", action.MaskBit)
+		}
+		if _, ok := conditions[action.ConditionID]; !ok {
+			return fmt.Errorf("monster_actions[%d] references unknown condition %q", i, action.ConditionID)
+		}
+		if err := validateEvidence(action.Evidence); err != nil {
+			return fmt.Errorf("monster_actions[%d] evidence: %w", i, err)
+		}
+		seenActionBits[action.MaskBit] = true
+	}
 	return nil
 }
 
@@ -4467,17 +4791,40 @@ func (p *Pack) validateFacilities() error {
 		if _, exists := p.services[s.ID]; exists {
 			return fmt.Errorf("duplicate service id %q", s.ID)
 		}
-		if s.Pricing.FormulaID != "common:formula.level_table" {
+		switch s.Pricing.FormulaID {
+		case "common:formula.level_table":
+			if s.Pricing.FixedGold != nil || s.Pricing.LevelCap < 1 ||
+				s.Pricing.GoldPerLevel != 0 || len(s.Pricing.CostsGold) != s.Pricing.LevelCap {
+				return fmt.Errorf("%s: level_cap %d must equal costs_gold length %d and omit fixed_gold",
+					s.ID, s.Pricing.LevelCap, len(s.Pricing.CostsGold))
+			}
+			for level, cost := range s.Pricing.CostsGold {
+				if cost < 0 {
+					return fmt.Errorf("%s: negative level %d cost", s.ID, level+1)
+				}
+			}
+		case "common:formula.fixed":
+			if s.Pricing.FixedGold == nil || *s.Pricing.FixedGold < 0 ||
+				s.Pricing.GoldPerLevel != 0 || s.Pricing.LevelCap != 0 || len(s.Pricing.CostsGold) != 0 {
+				return fmt.Errorf("%s: fixed pricing requires non-negative fixed_gold only", s.ID)
+			}
+		case "common:formula.level_multiplier":
+			if s.Pricing.FixedGold != nil || s.Pricing.GoldPerLevel <= 0 ||
+				s.Pricing.LevelCap != 0 || len(s.Pricing.CostsGold) != 0 {
+				return fmt.Errorf("%s: level multiplier pricing requires positive gold_per_level only", s.ID)
+			}
+		default:
 			return fmt.Errorf("%s: unsupported pricing formula %q", s.ID, s.Pricing.FormulaID)
 		}
-		if s.Pricing.LevelCap < 1 || len(s.Pricing.CostsGold) != s.Pricing.LevelCap {
-			return fmt.Errorf("%s: level_cap %d must equal costs_gold length %d",
-				s.ID, s.Pricing.LevelCap, len(s.Pricing.CostsGold))
-		}
-		for level, cost := range s.Pricing.CostsGold {
-			if cost < 0 {
-				return fmt.Errorf("%s: negative level %d cost", s.ID, level+1)
+		seenItems := make(map[int]bool, len(s.AffectedEquippedItemRawIDs))
+		for j, rawID := range s.AffectedEquippedItemRawIDs {
+			if rawID < 0 || rawID > 0xffff {
+				return fmt.Errorf("%s: affected_equipped_item_raw_ids[%d] out of range: %d", s.ID, j, rawID)
 			}
+			if seenItems[rawID] {
+				return fmt.Errorf("%s: duplicate affected equipped item raw id %#x", s.ID, rawID)
+			}
+			seenItems[rawID] = true
 		}
 		if err := validateEvidence(s.Evidence); err != nil {
 			return fmt.Errorf("%s evidence: %w", s.ID, err)
@@ -4486,6 +4833,17 @@ func (p *Pack) validateFacilities() error {
 	}
 	if _, ok := p.services[ReviveService]; !ok {
 		return fmt.Errorf("required service %q is missing", ReviveService)
+	}
+	if _, ok := p.services[CurePoisonService]; !ok {
+		return fmt.Errorf("required service %q is missing", CurePoisonService)
+	}
+	removeCurse, ok := p.services[RemoveCurseService]
+	if !ok {
+		return fmt.Errorf("required service %q is missing", RemoveCurseService)
+	}
+	if removeCurse.Pricing.FormulaID != "common:formula.level_multiplier" ||
+		len(removeCurse.AffectedEquippedItemRawIDs) == 0 {
+		return fmt.Errorf("%s requires level_multiplier pricing and affected equipped item ids", RemoveCurseService)
 	}
 	return nil
 }
@@ -4502,6 +4860,56 @@ func (p *Pack) ReviveCost(level int) int {
 	}
 	return s.Pricing.CostsGold[level-1]
 }
+
+// CurePoisonCost returns the pack-owned fixed price. Validation guarantees the
+// service exists and uses common:formula.fixed.
+func (p *Pack) CurePoisonCost() int {
+	return *p.services[CurePoisonService].Pricing.FixedGold
+}
+
+// RemoveCurseCost returns the pack-owned per-level service price. A caller
+// supplies the selected character level; non-positive levels fail closed.
+func (p *Pack) RemoveCurseCost(level int) int {
+	if level < 1 {
+		return 0
+	}
+	return level * p.services[RemoveCurseService].Pricing.GoldPerLevel
+}
+
+// IsCursedEquipment reports whether the pack marks a raw equipped item as a
+// source of the curse condition consumed by the remove-curse service.
+func (p *Pack) IsCursedEquipment(rawID int) bool {
+	for _, candidate := range p.services[RemoveCurseService].AffectedEquippedItemRawIDs {
+		if candidate == rawID {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Pack) CursedEquipmentRawIDs() []int {
+	return append([]int(nil), p.services[RemoveCurseService].AffectedEquippedItemRawIDs...)
+}
+
+func (p *Pack) PoisonConditionDefinition() (BattleConditionDefinition, bool) {
+	return p.ConditionDefinition(PoisonCondition)
+}
+
+// ConditionDefinition returns one validated pack-owned condition contract.
+func (p *Pack) ConditionDefinition(id string) (BattleConditionDefinition, bool) {
+	for _, condition := range p.Battle.Conditions {
+		if condition.ID == id {
+			return condition, true
+		}
+	}
+	return BattleConditionDefinition{}, false
+}
+
+func (p *Pack) MonsterActionDefinitions() []MonsterActionDefinition {
+	return append([]MonsterActionDefinition(nil), p.Battle.MonsterActions...)
+}
+
+func (p *Pack) BattleSoundCues() BattleSoundCues { return p.Battle.SoundCues }
 
 func (p *Pack) BossSurrenderEvents() []BossSurrenderEvent {
 	return append([]BossSurrenderEvent(nil), p.Events.BossSurrenderEvents...)
@@ -5064,6 +5472,19 @@ func (p *Pack) BattleFormationPosition() (BattleFormationPosition, bool) {
 		return BattleFormationPosition{}, false
 	}
 	return p.Battle.Encounter.FormationPosition, true
+}
+
+// FieldSpellByRecord returns a copy of one strictly validated field spell.
+// Missing records stay unavailable; callers must not synthesize defaults.
+func (p *Pack) FieldSpellByRecord(recordRaw int) (FieldSpellDefinition, bool) {
+	if p == nil || p.fieldSpells == nil {
+		return FieldSpellDefinition{}, false
+	}
+	d, ok := p.fieldSpells[recordRaw]
+	if !ok || d == nil {
+		return FieldSpellDefinition{}, false
+	}
+	return *d, true
 }
 
 func (p *Pack) ID() string             { return p.Manifest.PackID }

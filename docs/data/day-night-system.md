@@ -1,5 +1,10 @@
 # 晝夜系統(2026-06-27;★含一次結論更正)
 
+> **2026-08-22 歷史勘誤：**本文保存早期定位過程；其中「逐指令未完全定位」與
+> 四相位 RGB 縮放已被 IDA 9.4 的 clock→12-byte selector→五個原始 `DQ3.PAL` bank
+> 證據推翻。現行規格只讀 [`docs/136`](../136-daynight-palette-bank-spec.md)；不得用本文
+> 的舊近似重新覆蓋 pack。
+
 > 使用者問:「遊戲是否有黑夜系統(野外走路會白天/黃昏/黑夜/黎明轉換)?」
 
 ## 結論(更正後)
@@ -37,11 +42,12 @@
 以上是原版 clock／palette 的精確靜態設定。
 
 > **2026-08-22 runtime 訂正：**IDA Pro 9.4＋IDAPython 已重播上述四個函式；現行
-> Go 已移除沒有原版依據的 `DarkenPalette`，由 schema `0.1.33` 的
+> Go 已移除沒有原版依據的 `DarkenPalette`；本切片落地時 schema `0.1.35` 的
 > `day_night_cycle` 直接選 `DQ3.PAL` 五個原始 16 色 bank。12 段表、clock
 > `0..0xef`、夜間 `0x78..0xef` 與黑暗之燈 clock `0x8c` 已達 D3／E2。
 > 同一地點／同一 clock 的 DOSBox DAC 畫面仍未對拍，因此畫面維持 V2，不升 V3。
-> 規格與可重建匯出見 [`docs/136`](../136-daynight-palette-bank-spec.md)。
+> 規格與可重建匯出見 [`docs/136`](../136-daynight-palette-bank-spec.md)；工作樹現行版本
+> 以根 README 與 manifest 為準。
 
 ### ★ 結論更正紀錄(誠實留痕)
 - 先前(本檔初版)誤判「走動不會自動循環,只靠咒/道具」,**論證錯誤**:我用「黑暗之燈存在 →

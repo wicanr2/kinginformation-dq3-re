@@ -19,6 +19,8 @@ type saveState struct {
 	HeroExp                 uint32                   `json:"exp"`
 	HeroHP                  int                      `json:"hp"`
 	HeroMP                  int                      `json:"mp"`
+	HeroConditions          conditionSet             `json:"conditions,omitempty"`
+	ParalysisSteps          int                      `json:"paralysis_steps,omitempty"`
 	HeroStat                stats.Values             `json:"stats,omitempty"`
 	HeroGold                int                      `json:"gold"`
 	HeroName                []int                    `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
@@ -58,6 +60,39 @@ type saveState struct {
 	Section                 int                      `json:"section,omitempty"`
 	Layer                   int                      `json:"layer,omitempty"`
 	VisitedTowns            []townVisit              `json:"visited_towns,omitempty"`
+	Respawn                 *respawnSave             `json:"respawn,omitempty"`
+	PartyLeader             int                      `json:"party_leader,omitempty"`
+}
+
+type respawnSave struct {
+	PX      int  `json:"px"`
+	PY      int  `json:"py"`
+	OverPX  int  `json:"over_px"`
+	OverPY  int  `json:"over_py"`
+	InTown  bool `json:"in_town"`
+	Cty     int  `json:"cty"`
+	Section int  `json:"section"`
+	Layer   int  `json:"layer"`
+}
+
+func respawnToSave(r respawnPoint) *respawnSave {
+	if !r.Valid {
+		return nil
+	}
+	return &respawnSave{
+		PX: r.PX, PY: r.PY, OverPX: r.OverPX, OverPY: r.OverPY,
+		InTown: r.InTown, Cty: r.Cty, Section: r.Section, Layer: r.Layer,
+	}
+}
+
+func respawnFromSave(r *respawnSave) respawnPoint {
+	if r == nil {
+		return respawnPoint{}
+	}
+	return respawnPoint{
+		Valid: true, PX: r.PX, PY: r.PY, OverPX: r.OverPX, OverPY: r.OverPY,
+		InTown: r.InTown, Cty: r.Cty, Section: r.Section, Layer: r.Layer,
+	}
 }
 
 type trackedWorldObjectSave struct {
@@ -75,8 +110,9 @@ type compSav struct {
 	Stats                       stats.Values `json:"stats,omitempty"`
 	CurHP, CurMP                int
 	Weapon, Armor, Shield, Head int
-	Inventory                   []int `json:"inventory,omitempty"`
-	LearnedSpells               []int `json:"learned_spells,omitempty"`
+	Inventory                   []int        `json:"inventory,omitempty"`
+	LearnedSpells               []int        `json:"learned_spells,omitempty"`
+	Conditions                  conditionSet `json:"conditions,omitempty"`
 }
 
 func encodeSave(s saveState) ([]byte, error) { return json.Marshal(s) }
@@ -99,7 +135,9 @@ func (g *Game) snapshot() saveState {
 	}
 	s := saveState{
 		PackID: packID, PackSchema: packSchema, PackContentHash: packHash,
-		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroStat: g.heroStat, HeroGold: g.heroGold,
+		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroConditions: g.heroConditions,
+		ParalysisSteps: g.paralysisSteps,
+		HeroStat:       g.heroStat, HeroGold: g.heroGold,
 		HeroName: append([]int(nil), g.heroName...), HeroGender: g.heroGender,
 		Inventory:               append([]int(nil), g.inventory...),
 		Equip:                   g.equip,
@@ -123,6 +161,7 @@ func (g *Game) snapshot() saveState {
 		TrackedWorldObjects: trackedWorldObjectsToSave(g.trackedWorldPositions),
 		DNPhase:             g.dnPhase, DNStep: g.dnStep, Cty: g.curCty, Layer: g.layer,
 		VisitedTowns: append([]townVisit(nil), g.visitedTowns...),
+		Respawn:      respawnToSave(g.respawn), PartyLeader: g.partyLeader,
 	}
 	if g.inTown && g.cur != nil {
 		s.Section = g.cur.sec
@@ -157,7 +196,7 @@ func compsToSav(ms []*Member) []compSav {
 			Exp: m.Exp, Stats: m.Stats, CurHP: m.CurHP, CurMP: m.CurMP,
 			Weapon: m.Weapon, Armor: m.Armor, Shield: m.Shield, Head: m.Head,
 			Inventory:     append([]int(nil), m.Inventory...),
-			LearnedSpells: append([]int(nil), m.LearnedSpells...)}
+			LearnedSpells: append([]int(nil), m.LearnedSpells...), Conditions: m.Conditions}
 	}
 	return out
 }
@@ -169,6 +208,8 @@ func (g *Game) restore(s saveState) {
 	g.toramana, g.hazardGuard = false, false
 	g.heroExp, g.heroHP, g.heroMP, g.heroStat, g.heroGold =
 		s.HeroExp, s.HeroHP, s.HeroMP, s.HeroStat, s.HeroGold
+	g.heroConditions = s.HeroConditions
+	g.paralysisSteps = s.ParalysisSteps
 	g.heroName, g.heroGender = append([]int(nil), s.HeroName...), s.HeroGender
 	g.heroInit = true
 	g.ensureHeroStats() // 舊版 JSON 沒有 stats 欄時，以當前等級 target 安全升級
@@ -195,7 +236,7 @@ func (g *Game) restore(s saveState) {
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
 				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
 				Inventory:     append([]int(nil), c.Inventory...),
-				LearnedSpells: append([]int(nil), c.LearnedSpells...)}
+				LearnedSpells: append([]int(nil), c.LearnedSpells...), Conditions: c.Conditions}
 			if !s.EquipmentV2 {
 				migrateLegacyMemberEquipment(m)
 			}
@@ -216,7 +257,8 @@ func (g *Game) restore(s saveState) {
 			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
 				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
-				Inventory: append([]int(nil), c.Inventory...), LearnedSpells: append([]int(nil), c.LearnedSpells...)}
+				Inventory: append([]int(nil), c.Inventory...), LearnedSpells: append([]int(nil), c.LearnedSpells...),
+				Conditions: c.Conditions}
 			if !s.EquipmentV2 {
 				migrateLegacyMemberEquipment(m)
 			}
@@ -240,7 +282,7 @@ func (g *Game) restore(s saveState) {
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
 				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
 				Inventory:     append([]int(nil), c.Inventory...),
-				LearnedSpells: append([]int(nil), c.LearnedSpells...)}
+				LearnedSpells: append([]int(nil), c.LearnedSpells...), Conditions: c.Conditions}
 			if !s.EquipmentV2 {
 				migrateLegacyMemberEquipment(m)
 			}
@@ -258,7 +300,8 @@ func (g *Game) restore(s saveState) {
 		m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 			Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
 			Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
-			Inventory: append([]int(nil), c.Inventory...), LearnedSpells: append([]int(nil), c.LearnedSpells...)}
+			Inventory: append([]int(nil), c.Inventory...), LearnedSpells: append([]int(nil), c.LearnedSpells...),
+			Conditions: c.Conditions}
 		if !s.EquipmentV2 {
 			migrateLegacyMemberEquipment(m)
 		}
@@ -307,6 +350,11 @@ func (g *Game) restore(s saveState) {
 		delete(g.flags, 0x35)
 	}
 	g.dnPhase, g.dnStep = s.DNPhase&3, s.DNStep
+	g.respawn = respawnFromSave(s.Respawn)
+	g.partyLeader = s.PartyLeader
+	if g.partyLeader < 0 || g.partyLeader > len(g.companions) {
+		g.partyLeader = 0
+	}
 	g.layer, g.curCty = s.Layer, s.Cty
 	switch {
 	case s.OverworldPosV2:
@@ -344,6 +392,10 @@ func (g *Game) restore(s saveState) {
 	g.applyRainbowBridge()
 	g.applyPackWorldMapPatches()
 	g.applyDaynightPalette()
+	if !g.respawn.Valid { // 舊 Go 存檔：loaded position 是唯一可證明的記錄點。
+		g.respawn = g.currentRespawnPoint()
+	}
+	g.selectLivingPartyLeader()
 	g.dlg.heroName = append([]int(nil), g.heroName...)
 }
 
@@ -398,12 +450,19 @@ func savePath() string {
 
 // Save 寫存檔。
 func (g *Game) Save() error {
-	b, err := encodeSave(g.snapshot())
+	point := g.currentRespawnPoint()
+	s := g.snapshot()
+	s.Respawn = respawnToSave(point)
+	b, err := encodeSave(s)
 	if err != nil {
 		return err
 	}
 	_ = os.MkdirAll(filepath.Dir(savePath()), 0o755)
-	return os.WriteFile(savePath(), b, 0o644)
+	if err := os.WriteFile(savePath(), b, 0o644); err != nil {
+		return err
+	}
+	g.respawn = point
+	return nil
 }
 
 // Load 讀存檔(不存在 → 靜默略過,回 nil)。

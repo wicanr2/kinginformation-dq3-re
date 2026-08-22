@@ -63,7 +63,7 @@ func (g *Game) talkTemporaryRole(n *npcInst) bool {
 					return true
 				}
 				// DQ3.EXE handler9 performs the transaction before rec49.
-				g.removeItems(event.RequiredItemRawID, 1)
+				g.removePartyItems(event.RequiredItemRawID, 1)
 				g.setStoryFlag(event.PendingFlagRaw, false)
 				g.temporaryRoleStage = temporaryRoleReturnPraise
 			default:
@@ -256,6 +256,12 @@ func (g *Game) syncTemporaryRoleVisual() {
 }
 
 func (g *Game) heroSceneSprite() *dq3data.CharSprite {
+	if g.partyLeader > 0 && g.partyLeader <= len(g.companions) {
+		member := g.companions[g.partyLeader-1]
+		if member != nil && member.Alive() {
+			return g.partySprite(member.Class, member.Gender)
+		}
+	}
 	if g.heroRole != nil {
 		return g.heroRole
 	}

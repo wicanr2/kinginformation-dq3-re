@@ -47,8 +47,10 @@ func (g *Game) collectPackTreasure(t gamepack.QuestTreasureSelector) bool {
 	if !g.storyFlag(t.PresentFlag) {
 		return true
 	}
+	if !g.grantPartyItem(t.ItemRawID) {
+		return true
+	}
 	g.setStoryFlag(t.PresentFlag, false)
-	g.inventory = append(g.inventory, t.ItemRawID)
 	g.noticeCode, g.noticeTimer = t.ItemRawID, 120
 	return true
 }
@@ -64,21 +66,16 @@ func (g *Game) talkQuestItemChain(n *npcInst) bool {
 		if !g.scriptedNPCMatches(n, x.NPC) {
 			continue
 		}
-		if !g.hasItem(x.RequiredItemRawID) {
+		if !g.hasPartyItem(x.RequiredItemRawID) {
 			g.openPackText(x.BeforeTextID)
 			return true
 		}
 		if !g.openPackText(x.SuccessTextID) {
 			return true
 		}
-		for i, item := range g.inventory {
-			if item == x.RequiredItemRawID {
-				// Original handler16 replaces the matched inventory word in
-				// place (DQ3.EXE file 0x690a), preserving slot order.
-				g.inventory[i] = x.GrantedItemRawID
-				return true
-			}
-		}
+		// 原版 handler16 直接覆寫找到的持有者背包 word（DQ3.EXE file
+		// 0x690a），因此沿用隊伍順序尋找並保留該角色的原格位置。
+		g.replacePartyItem(x.RequiredItemRawID, x.GrantedItemRawID)
 		return true
 	}
 	return false
@@ -103,7 +100,7 @@ func (g *Game) useQuestItemChain(item int) bool {
 		if !ok {
 			return true
 		}
-		g.removeItems(item, 1)
+		g.consumeSelectedItem(item)
 		for _, flag := range u.SetFlagsRaw {
 			g.setStoryFlag(flag, true)
 		}

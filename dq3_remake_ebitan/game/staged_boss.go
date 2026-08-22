@@ -37,6 +37,7 @@ func (g *Game) startPackFormation(f gamepack.BattleFormation, suppressDrop bool)
 	hp := heroParams{
 		level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: g.heroMaxMP(), spells: g.heroSpells(),
+		conditions: g.heroConditions,
 	}
 	if !g.battle.startFormationWithBackground(groups, int64(g.anim)*2654+1, hp, g.buildCompanionActors(), &f.Background) {
 		return false

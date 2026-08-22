@@ -251,7 +251,9 @@ HP(`[di+0x16]`)≠0 者計入,並設 0x80 已處理旗標;回 0 = 全滅。
 `battle_setup_party`(sub_c8c6):4 名隊員各從結構 `[bx+0x4f0d]` 取 5 個 word
 (+0x1a/+0x1c/+0x1e/+0x20/+0x24,推定 HP/MaxHP/MP/MaxMP/攻擊或經驗)+ 3 個 byte
 (+0x01/+0x2e/+0x2f,推定 等級 / 狀態),攤平到戰鬥工作緩衝 `[0x063a]`;另掃 +0x3a
-起 8 格裝備設睡眠(`0x4d`→bit0x800)/ 中毒(`0x11`&`0x80`→bit0x4000)狀態旗標。
+起 8 格裝備 word 的已知 bits。舊文曾把 `bit0x4000` 直接命名為中毒；docs/137 已證實
+持久中毒是角色 `+0x38 bit0x40`；item-word `bit0x4000` 則已由 `docs/147` 證實為
+ITEM `+4/+5 & 0x0e00` 在裝備時寫入的詛咒鎖定，兩者不是同一狀態。
 
 → game3.png 上方狀態框(H=HP、M=MP、勇/武/僧/魔 各一行)即 `battle_draw_status`
 (sub_c572,框高 = 隊伍人數×0xa+4)+ `battle_setup_party` 攤平的 HP/MP word。
@@ -355,4 +357,5 @@ DGROUP `0x37c3` 起、60 筆×3 byte：`b0=MP cost、b1=base、b2=target/effect 
   傷害公式 ~127-255(非即死語意)。非破關 blocker,待效果型別 RE 後一併修。
 
 ⇒ **結論**:monster-status 卡在效果 dispatcher(0xbfd0 dl 來源)RE,非單純 data 抽取可解。
-狀態系統其餘已閉環(overworld 毒傷+戰鬥毒傷/麻痺+道具/教會解,docs/47 #5)。
+目前只可宣稱 docs/137 的 poison writer／移動／教會鏈，以及另有證據的睡眠醒來門檻；
+全部效果 dispatcher、狀態咒與道具 consumer 尚未完整閉合。

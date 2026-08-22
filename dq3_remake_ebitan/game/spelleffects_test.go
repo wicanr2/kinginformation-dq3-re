@@ -88,10 +88,9 @@ func TestSukaraBuffsPartyDef(t *testing.T) {
 	}
 }
 
-// TestRariHoSleepSkipsEnemyTurn:拉里荷(144)施放後,目標敵 status 應標記睡眠(statusParalysis),
-// 且該敵接下來的 enemyTurn 不行動(heroHP 不變)。對齊 C 版行為(dq3_battlescene.c 全檔搜尋無中途
-// 自動清除麻痺/睡眠):睡眠會持續整場戰鬥,不會自動甦醒,直到解咒/戰鬥結束才清除——故第二次
-// enemyTurn 仍應持續無法行動。
+// TestRariHoSleepSkipsEnemyTurn:拉里荷(144)後目標敵標記睡眠；本 fixture 的 deterministic
+// 下一次醒來擲骰未命中，因此該回合仍不行動。另有 status 測試鎖定原版可醒門檻；
+// 不得由本 seed 外推成「睡眠持續整場」。
 func TestRariHoSleepSkipsEnemyTurn(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
 	if err != nil {
@@ -111,9 +110,9 @@ func TestRariHoSleepSkipsEnemyTurn(t *testing.T) {
 		t.Fatalf("敵剛陷入睡眠的當回合不應行動,heroHP 應不變,得 %d", b.heroHP)
 	}
 	before := b.heroHP
-	b.enemyTurn() // 再跑一次:睡眠應持續(無自動甦醒)
+	b.enemyTurn() // 此 deterministic roll 未醒，故本回合仍跳過。
 	if b.heroHP != before {
-		t.Fatalf("睡眠應持續整場(對齊 C 無中途清除),敵仍不應行動,heroHP 變 %d→%d", before, b.heroHP)
+		t.Fatalf("此 deterministic 未醒分支不應行動,heroHP 變 %d→%d", before, b.heroHP)
 	}
 }
 
@@ -258,6 +257,18 @@ func TestCureStatusClearsParalysis(t *testing.T) {
 	b2.execSpell(166) // 基阿里
 	if b2.heroStatus&statusPoison != 0 {
 		t.Fatal("基阿里後 heroStatus 應清除中毒位元")
+	}
+
+	// IDA 0x1ccb2 以 DX=0x10、record399 呼叫 sub_1469F；未麻痺的
+	// 同伴施放基阿里克時，必須清除目標的持久麻痺，而非只清 bit0x20 睡眠。
+	b3 := &Battle{
+		heroHP: 999, heroMax: 999, heroStatus: statusPersistentParalysis,
+		companions:  []*battleActor{{hp: 999, maxHP: 999, mp: 99, spells: []int{167}}},
+		actionActor: 1, actionTarget: 0, resolving: true,
+	}
+	b3.execCompanionCommand(0, battleCommand{kind: bcSpell, spell: 167, target: 0})
+	if b3.heroStatus&statusPersistentParalysis != 0 {
+		t.Fatalf("基阿里克未清除持久麻痺：status=%#x", b3.heroStatus)
 	}
 }
 

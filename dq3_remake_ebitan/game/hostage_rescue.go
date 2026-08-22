@@ -125,7 +125,9 @@ func (g *Game) hostageRescueChoiceInput(in InputState) {
 		}
 	case hostageRescueRewardChoice:
 		if yes {
-			g.inventory = append(g.inventory, event.RewardItemRawID)
+			if !g.grantPartyItem(event.RewardItemRawID) {
+				return
+			}
 			g.setStoryFlag(event.RewardAvailableFlagRaw, false)
 			g.noticeCode, g.noticeTimer = event.RewardItemRawID, 120
 			g.openPackText(event.DialogueTextIDs.RewardReceived)
@@ -146,6 +148,7 @@ func (g *Game) startHostageFormation(formation gamepack.BattleFormation) bool {
 	hp := heroParams{
 		level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells(),
+		conditions: g.heroConditions,
 	}
 	groups := make([]enemyGroup, len(formation.Groups))
 	for i, group := range formation.Groups {

@@ -75,7 +75,7 @@ func (g *Game) advanceGuidedPassageDialogue() {
 	}
 	switch g.guidedPassageStage {
 	case guidedPassageIntroduction:
-		if !g.hasItem(event.RequiredItemRawID) {
+		if !g.hasPartyItem(event.RequiredItemRawID) {
 			g.finishGuidedPassage()
 			return
 		}
@@ -188,7 +188,7 @@ func (g *Game) advanceGuidedPassageAnimation() {
 				n.facing = facing
 			}
 			if event.ConsumeRequiredItem {
-				g.removeItems(event.RequiredItemRawID, 1)
+				g.removePartyItems(event.RequiredItemRawID, 1)
 			}
 			g.setStoryFlag(event.AnimationPendingFlagRaw, false)
 			g.setStoryFlag(event.GuidePresentFlagRaw, false)

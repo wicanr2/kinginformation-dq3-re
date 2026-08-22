@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 func loadTestItems(t *testing.T) *dq3data.Items {
@@ -21,8 +22,18 @@ func loadTestItems(t *testing.T) *dq3data.Items {
 	return items
 }
 
+func loadTestPack(t *testing.T) *gamepack.Pack {
+	t.Helper()
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	return pack
+}
+
 func TestEquipSelectedTransfersInventoryAndSupportsItemZero(t *testing.T) {
 	g := &Game{
+		pack:        loadTestPack(t),
 		panelActor:  0,
 		panelCursor: 0,
 		inventory:   []int{0x00},
@@ -39,6 +50,7 @@ func TestEquipSelectedCompanionReturnsOldEquipment(t *testing.T) {
 	m := newMember([]int{107, 144}, 1, 0, 0)
 	m.Weapon = 0x00
 	g := &Game{
+		pack:        loadTestPack(t),
 		panelActor:  1,
 		panelCursor: 0,
 		equip:       [4]int{-1, 0x1e, -1, -1},
@@ -55,6 +67,22 @@ func TestEquipSelectedCompanionReturnsOldEquipment(t *testing.T) {
 	}
 	if len(g.inventory) != 0 {
 		t.Fatalf("同伴換裝不得污染主角物品欄：%v", g.inventory)
+	}
+}
+
+func TestEquipSelectedCannotReplaceCursedSameSlot(t *testing.T) {
+	g := &Game{
+		pack:        loadTestPack(t),
+		panelActor:  0,
+		panelCursor: 0,
+		inventory:   []int{0x03},
+		equip:       [4]int{0x1b, 0x1e, -1, -1},
+	}
+	g.shop.items = loadTestItems(t)
+	g.equipSelected()
+	if g.equip[0] != 0x1b || len(g.inventory) != 1 || g.inventory[0] != 0x03 {
+		t.Fatalf("cursed weapon must block same-slot replacement: equip=%v inv=%v",
+			g.equip, g.inventory)
 	}
 }
 

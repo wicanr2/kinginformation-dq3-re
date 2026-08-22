@@ -1,6 +1,7 @@
 # load_cty 載入邏輯與 CTY 地圖格式(深挖 RE)
 
-座標 → 事件 → 載入城鎮/洞窟 的完整鏈,逐段反組譯確認;並校正 remake 的 `dq3_town.c`。
+本文閉合座標入口、section/layout parser 與主要載入 consumer；不是全部 CTY runtime
+事件／NPC／spawn 的完整語意表。歷史 C parser 校正僅作證據線索，現行產品為 Go／Ebitengine。
 
 ## 鏈路
 
@@ -30,14 +31,15 @@
   差別只在大小與 section 數(城鎮多房間、洞窟常 1-2 section)。
 - 例:CTY00 section0=word[0]=0xc→42×43(阿里阿罕全鎮);CTY93 section0=word[0]=2→17×17(合成祠堂)。
 
-## remake 校正(dq3_town.c)— 三個錯,修正後 89/89 全載入
+## 歷史 C parser 校正(dq3_town.c)— 三個錯，修正後 89/89 可解析
 
 1. **section i = `word[i]`**(原誤把 `word[0]` 當 count、從 `word[1]` 起算 `2+2*section` →
    **漏掉 section 0(地表入口層)、整個差一格**,城鎮被渲成室內房間、洞窟/祠堂全 oob)。← 主因
 2. **tiles = layout + 4**(原誤 +8 → 圖位移 2 格)。
 3. **spawn = section_base + 0x13/0x14**(原誤讀 layout+4/+6)。
 
-修正後實測:**89 個 CTY 全部正確載入**(原 50)。CTY00=阿里阿罕全鎮、CTY93=17×17 合成祠堂
+修正後實測：**89 個 CTY 都可由該 parser 載入**（原 50）；這不證明 runtime spawn、NPC
+上限與玩家可見結果全部正確，已知差異見 docs/67。CTY00=阿里阿罕全鎮、CTY93=17×17 合成祠堂
 (紅地板+柱列邊框+中央祭壇,正確渲染);headless game 進 CTY93 → #2 合成 result=0x75。
 
 ## `[0x256a]` 入口 section 來源
@@ -71,7 +73,7 @@
 - remake 務實路徑:先支援「section 事件表 type-2 → warp[param] → 載入 dest section/CTY + spawn」
   (顯式門),再補城鎮外圍的 tile-based 建築入口。屬 階段③ 互動完整化的一塊。
 
-## section header 完整欄位(0x443f 解析,已解碼)
+## section header 已閉合欄位（0x443f parser）
 
 `section_base = CTY[[0x256a]*2]`,header 欄位(相對 section_base):
 
@@ -82,7 +84,7 @@
 | +0xe | **layout 指標** → `{w(2), h(2), tiles…}`,tiles 在 +4 |
 | +0x10/+0x11 | 地圖旗標 / `[0xd77]` **遭遇旗標**(0=安全、非0=可遇敵；IDA `sub_1BD97` gate)|
 | +0x13/+0x14 | 玩家 spawn X / Y |
-| +0x15..0x18 | 地圖參數;`[0xd71]` = 地圖 id |
+| +0x15..0x18 | 原始地圖參數；只有已追到 consumer 的子欄位可命名，不能整段視為已解碼 |
 
 NPC/物件記錄 = **7 byte**:`{X, Y, b2, b3, b4, flags, b6}`(位置 = Y*寬+X;flags bit→[0x4f70] 屬性表決定顯示);
 複製到 `[0xb66]` 8-byte 槽。

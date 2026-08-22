@@ -17,15 +17,12 @@ func (g *Game) synthRainbowAtShrine() bool {
 	if g.progressDone(msRainbow) { // 旗標 0x139 已設 → 不再合成(避免重複)
 		return false
 	}
-	if !g.hasItem(itemSunStone) || !g.hasItem(itemRaincloudRod) { // 材料不足
+	if !g.hasPartyItem(itemSunStone) || !g.hasPartyItem(itemRaincloudRod) { // 材料不足
 		return false
 	}
-	g.removeItems(itemSunStone, 1) // 消耗太陽之石
-	for i, code := range g.inventory {
-		if code == itemRaincloudRod { // 在雲雨之杖格寫入成品
-			g.inventory[i] = itemRainbowDrop
-			break
-		}
+	g.removePartyItems(itemSunStone, 1) // 消耗太陽之石
+	if !g.replacePartyItem(itemRaincloudRod, itemRainbowDrop) {
+		return false
 	}
 	g.progressSet(msRainbow) // set flag 0x139 → 推進 RAINBOW 里程碑
 	g.noticeCode, g.noticeTimer = itemRainbowDrop, 120

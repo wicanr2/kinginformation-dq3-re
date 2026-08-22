@@ -36,6 +36,286 @@ func TestBuiltinDQ3FinalePackReferences(t *testing.T) {
 	}
 }
 
+func TestBuiltinDQ3BattleFleeSoundCuesMatchOriginal(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cues := p.BattleSoundCues()
+	if cues.PlayerFled.CueRaw != 13 || !cues.PlayerFled.WaitForCompletion ||
+		cues.EnemyFled.CueRaw != 21 || !cues.EnemyFled.WaitForCompletion {
+		t.Fatalf("battle flee sound cues=%+v", cues)
+	}
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	for _, anchor := range []struct {
+		off int
+		raw []byte
+	}{
+		{0xc843, []byte{0xbd, 0x0d, 0x00}}, // IDA 0x1b4d3: player flee cue13
+		{0xbda7, []byte{0xbd, 0x15, 0x00}}, // IDA 0x1aa37: enemy flee cue21
+	} {
+		if anchor.off+len(anchor.raw) > len(exe) || !bytes.Equal(exe[anchor.off:anchor.off+len(anchor.raw)], anchor.raw) {
+			t.Fatalf("DQ3.EXE flee cue anchor file0x%x mismatch", anchor.off)
+		}
+	}
+	fvoc, err := os.ReadFile(filepath.Join(dir, "FVOC.VCX"))
+	if err != nil {
+		t.Skipf("original FVOC.VCX unavailable: %v", err)
+	}
+	bank := dq3data.DecodeVOCBank(fvoc, 44100)
+	if len(bank) <= 21 || bank[13].FileOffset != 0x8498 || bank[13].SourceSamples != 3519 ||
+		bank[21].FileOffset != 0x11146 || bank[21].SourceSamples != 2566 {
+		t.Fatalf("FVOC flee descriptors cue13=%+v cue21=%+v", bank[13], bank[21])
+	}
+}
+
+func TestBuiltinDQ3PlayerPhysicalSoundSequenceMatchesOriginal(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	steps := p.BattleSoundCues().PlayerPhysical.Steps
+	if len(steps) != 2 || steps[0].CueRaw != 6 || !steps[0].WaitForCompletion ||
+		steps[1].CueRaw != 11 || !steps[1].WaitForCompletion {
+		t.Fatalf("player physical sound sequence=%+v, want cue6 then cue11 with completion waits", steps)
+	}
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	for _, anchor := range []struct {
+		off int
+		raw []byte
+	}{
+		{0xc8d8, []byte{0xbd, 0x06, 0x00}}, // IDA 0x1b568: first player physical cue
+		{0xc8e0, []byte{0xbf, 0x4a, 0x01}}, // IDA 0x1b570: D3TXT record0x14a
+		{0xc8ed, []byte{0xbd, 0x0b, 0x00}}, // IDA 0x1b57d: second player physical cue
+	} {
+		if anchor.off+len(anchor.raw) > len(exe) || !bytes.Equal(exe[anchor.off:anchor.off+len(anchor.raw)], anchor.raw) {
+			t.Fatalf("DQ3.EXE player physical anchor file0x%x mismatch", anchor.off)
+		}
+	}
+	fvoc, err := os.ReadFile(filepath.Join(dir, "FVOC.VCX"))
+	if err != nil {
+		t.Skipf("original FVOC.VCX unavailable: %v", err)
+	}
+	bank := dq3data.DecodeVOCBank(fvoc, 44100)
+	if len(bank) <= 11 || bank[6].FileOffset != 0x215e || bank[6].BlockLength != 1224 ||
+		bank[6].SourceRate != 6711 || bank[6].SourceSamples != 1222 ||
+		bank[11].FileOffset != 0x7ad9 || bank[11].BlockLength != 1167 ||
+		bank[11].SourceRate != 6711 || bank[11].SourceSamples != 1165 {
+		t.Fatalf("FVOC player physical descriptors cue6=%+v cue11=%+v", bank[6], bank[11])
+	}
+	txtRaw, err := os.ReadFile(filepath.Join(dir, "D3TXT00.TXT"))
+	if err != nil {
+		t.Fatalf("read D3TXT00.TXT: %v", err)
+	}
+	got, ok := p.TextGlyphCodes("common:text.battle.actor.attack")
+	if !ok {
+		t.Fatal("missing pack actor.attack text")
+	}
+	want := dq3data.LoadText(nil, txtRaw).Record(330)
+	if !reflect.DeepEqual(got, want) || !reflect.DeepEqual(want, []uint16{0xfffb, 149, 623, 624, 57}) {
+		t.Fatalf("actor.attack glyphs=%v want D3TXT00 record330=%v", got, want)
+	}
+}
+
+func TestBuiltinDQ3CommonPhysicalResultMatchesOriginal(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cues := p.BattleSoundCues()
+	for role, got := range map[string]BattleSoundCue{
+		"enemy_physical_attack": cues.EnemyPhysicalAttack,
+		"physical_hit":          cues.PhysicalHit,
+		"physical_miss":         cues.PhysicalMiss,
+	} {
+		want := map[string]int{"enemy_physical_attack": 4, "physical_hit": 1, "physical_miss": 3}[role]
+		if got.CueRaw != want || !got.WaitForCompletion {
+			t.Fatalf("%s cue=%+v, want cue%d with completion wait", role, got, want)
+		}
+	}
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	for _, anchor := range []struct {
+		off int
+		raw []byte
+	}{
+		{0xbf7b, []byte{0xbd, 0x04, 0x00}}, // IDA 0x1ac0b: enemy physical cue4
+		{0xbf83, []byte{0xbf, 0x4b, 0x01}}, // IDA 0x1ac13: enemy attack record331
+		{0xc11e, []byte{0xbd, 0x01, 0x00}}, // IDA 0x1adae: successful damage cue1
+		{0xc132, []byte{0xbf, 0x4c, 0x01}}, // IDA 0x1adc2: enemy-victim damage record332
+		{0xc14b, []byte{0xbf, 0x4d, 0x01}}, // IDA 0x1addb: player-victim damage record333
+		{0xc314, []byte{0xbf, 0x65, 0x01}}, // IDA 0x1afa4: player death record357
+		{0xc323, []byte{0xbf, 0x50, 0x01}}, // IDA 0x1afb3: enemy defeated record336
+		{0xc336, []byte{0xbd, 0x03, 0x00}}, // IDA 0x1afc6: physical miss cue3
+		{0xc33e, []byte{0xbf, 0x4f, 0x01}}, // IDA 0x1afce: physical miss record335
+	} {
+		if anchor.off+len(anchor.raw) > len(exe) || !bytes.Equal(exe[anchor.off:anchor.off+len(anchor.raw)], anchor.raw) {
+			t.Fatalf("DQ3.EXE common physical anchor file0x%x mismatch", anchor.off)
+		}
+	}
+	fvoc, err := os.ReadFile(filepath.Join(dir, "FVOC.VCX"))
+	if err != nil {
+		t.Fatalf("read FVOC.VCX: %v", err)
+	}
+	bank := dq3data.DecodeVOCBank(fvoc, 44100)
+	for cue, want := range map[int]struct {
+		off, block, rate, samples int
+	}{
+		1: {0x4e6, 1163, 6493, 1161},
+		3: {0x12b6, 1511, 6493, 1509},
+		4: {0x18a2, 1155, 6493, 1153},
+	} {
+		got := bank[cue]
+		if got.FileOffset != want.off || got.BlockLength != want.block ||
+			got.SourceRate != want.rate || got.SourceSamples != want.samples {
+			t.Fatalf("FVOC cue%d descriptor=%+v, want %+v", cue, got, want)
+		}
+	}
+	txtRaw, err := os.ReadFile(filepath.Join(dir, "D3TXT00.TXT"))
+	if err != nil {
+		t.Fatalf("read D3TXT00.TXT: %v", err)
+	}
+	table := dq3data.LoadText(nil, txtRaw)
+	for id, record := range map[string]int{
+		"common:text.battle.enemy.attack":   331,
+		"common:text.battle.actor.damage":   332,
+		"common:text.battle.party.damage":   333,
+		"common:text.battle.actor.missed":   335,
+		"common:text.battle.enemy.defeated": 336,
+		"common:text.battle.actor.died":     357,
+	} {
+		got, ok := p.TextGlyphCodes(id)
+		if !ok || !reflect.DeepEqual(got, table.Record(record)) {
+			t.Fatalf("%s glyphs=%v/%v, want D3TXT00 record%d=%v", id, got, ok, record, table.Record(record))
+		}
+	}
+}
+
+func TestDQ3SpecialPhysicalParalysisPackMatchesOriginal(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var action MonsterActionDefinition
+	for _, candidate := range p.MonsterActionDefinitions() {
+		if candidate.MaskBit == 3 {
+			action = candidate
+		}
+	}
+	if action.ActionRaw != 3 || action.Kind != "special_physical_condition" ||
+		action.ConditionID != ParalysisCondition || action.TargetScope != "party_one_alive" ||
+		action.DamageFormula != "ignore_defense_half_plus_random_quarter" ||
+		!action.ConditionOnSurvival || action.CastTextRole != "fatal_strike" ||
+		action.SuccessTextRole != "actor_paralyzed" {
+		t.Fatalf("特殊物理 pack action=%+v", action)
+	}
+	condition, ok := p.ConditionDefinition(ParalysisCondition)
+	if !ok || condition.Persistence != "persistent" || condition.LegacyStatusMask != 0x10 ||
+		condition.FieldClearAfterSteps != 0x28 || condition.FieldDamagePerStep != 0 {
+		t.Fatalf("麻痺 condition=%+v ok=%v", condition, ok)
+	}
+	if cue := p.BattleSoundCues().FatalStrike; cue.CueRaw != 9 || !cue.WaitForCompletion {
+		t.Fatalf("致命一擊 cue=%+v", cue)
+	}
+
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	for _, anchor := range []struct {
+		off int
+		raw []byte
+	}{
+		{0xc060, []byte{0x83, 0x3e, 0x11, 0x25, 0x03, 0x75, 0x06, 0xba, 0x00, 0x00}},
+		{0xc22e, []byte{0xd1, 0xeb, 0x8b, 0xc3, 0xd1, 0xe8, 0x53, 0x8b, 0xd8}},
+		{0xc1cc, []byte{0x83, 0x3e, 0x11, 0x25, 0x03, 0x75, 0x21, 0xbf, 0xc9, 0x00}},
+		{0xc290, []byte{0xbd, 0x09, 0x00}},
+		{0xd304, []byte{0xf7, 0x44, 0x38, 0xb0, 0x00}},
+		{0xd559, []byte{0xf7, 0x44, 0x38, 0xb0, 0x00}},
+		{0xdebe, []byte{0xf7, 0x45, 0x38, 0x10, 0x00}},
+		{0xa8c3, []byte{0xf7, 0x06, 0x44, 0x4f, 0x10, 0x00}},
+	} {
+		if anchor.off+len(anchor.raw) > len(exe) ||
+			!bytes.Equal(exe[anchor.off:anchor.off+len(anchor.raw)], anchor.raw) {
+			t.Fatalf("DQ3.EXE 麻痺錨點 file0x%x 不一致", anchor.off)
+		}
+	}
+
+	mons, err := os.ReadFile(filepath.Join(dir, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatalf("read D3MNS.DAT: %v", err)
+	}
+	var users []int
+	for id := 0; id < len(mons)/0x29; id++ {
+		record := mons[id*0x29 : (id+1)*0x29]
+		if record[0x0e]&0x10 != 0 {
+			users = append(users, id)
+			if !bytes.Equal(record[0x0e:0x14], []byte{0x10, 0, 0, 0, 0, 0}) {
+				t.Fatalf("monster%d action mask=%x", id, record[0x0e:0x14])
+			}
+		}
+	}
+	if !reflect.DeepEqual(users, []int{3, 48, 51}) {
+		t.Fatalf("mask bit3 users=%v，預期 [3 48 51]", users)
+	}
+
+	txtRaw, err := os.ReadFile(filepath.Join(dir, "D3TXT00.TXT"))
+	if err != nil {
+		t.Fatalf("read D3TXT00.TXT: %v", err)
+	}
+	table := dq3data.LoadText(nil, txtRaw)
+	for id, record := range map[string]int{
+		"common:text.battle.fatal_strike":    334,
+		"common:text.battle.actor.paralyzed": 201,
+		"dq3:text.item_use.fullmoon.success": 364,
+		"dq3:text.item_use.no_effect":        341,
+	} {
+		got, ok := p.TextGlyphCodes(id)
+		if !ok || !reflect.DeepEqual(got, table.Record(record)) {
+			t.Fatalf("%s glyphs=%v/%v，預期 record%d=%v", id, got, ok, record, table.Record(record))
+		}
+	}
+
+	fvoc, err := os.ReadFile(filepath.Join(dir, "FVOC.VCX"))
+	if err != nil {
+		t.Fatalf("read FVOC.VCX: %v", err)
+	}
+	bank := dq3data.DecodeVOCBank(fvoc, 44100)
+	if len(bank) <= 9 || bank[9].FileOffset != 0x4cd2 || bank[9].BlockLength != 2978 ||
+		bank[9].SourceRate != 6711 || bank[9].SourceSamples != 2976 {
+		t.Fatalf("FVOC cue9 descriptor=%+v", bank[9])
+	}
+	effect, ok := p.ItemUseEffectByRawID(0x45)
+	if !ok || effect.EffectID != "clear_condition" || effect.ConditionID != ParalysisCondition ||
+		effect.TargetScope != "party_member" || !effect.Consume {
+		t.Fatalf("滿月草 effect=%+v ok=%v", effect, ok)
+	}
+}
+
 func TestBuiltinDQ3DayNightCycleMatchesOriginalEXEAndPalette(t *testing.T) {
 	p, err := BuiltinDQ3()
 	if err != nil {
@@ -2285,6 +2565,250 @@ func TestDQ3ReviveCostsMatchOriginalEXE(t *testing.T) {
 	}
 }
 
+func TestDQ3PoisonPackMatchesOriginalActionAndConsumers(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	actions := p.MonsterActionDefinitions()
+	byBit := make(map[int]MonsterActionDefinition, len(actions))
+	for _, action := range actions {
+		byBit[action.MaskBit] = action
+	}
+	poison, ok := byBit[38]
+	if !ok || poison.ActionRaw != 0x32 || poison.SuccessRollMax != 0x64 ||
+		poison.ConditionID != PoisonCondition {
+		t.Fatalf("poison monster action=%+v", actions)
+	}
+	// DGROUP 0x3930 remap：bit38 的 index 是 38-18=20；DGROUP 0x394e
+	// handler table 的 action0x32 entry 是 logical0xa307。
+	if got := exe[0x19a70+20]; got != byte(poison.ActionRaw) {
+		t.Fatalf("poison remap JSON=%#x EXE=%#x", poison.ActionRaw, got)
+	}
+	if got := binary.LittleEndian.Uint16(exe[0x19aca:]); got != 0xa307 {
+		t.Fatalf("poison handler pointer=%#x want logical0xa307", got)
+	}
+	condition, ok := p.PoisonConditionDefinition()
+	if !ok || condition.LegacyStatusMask != 0x40 || condition.FieldDamagePerStep != 1 ||
+		condition.SuppressWorldStateMask != 3 {
+		t.Fatalf("poison condition=%+v ok=%v", condition, ok)
+	}
+	for off, want := range map[int][]byte{
+		0x84d2: {0xa9, 0x40, 0x00},                   // church test +0x38 bit0x40
+		0x84e6: {0xc7, 0x06, 0x93, 0x25, 0x05, 0x00}, // fixed 5G writer
+		0xa9f5: {0xa9, 0x40, 0x00},                   // movement poison test
+		0xaa02: {0x80, 0x87, 0x62, 0x06, 0x01},       // per-step damage +1
+		0xb6a5: {0x80, 0x4d, 0x38, 0x40},             // poison-gas status writer
+	} {
+		if got := exe[off : off+len(want)]; !bytes.Equal(got, want) {
+			t.Fatalf("DQ3.EXE file %#x=%x want %x", off, got, want)
+		}
+	}
+	if p.CurePoisonCost() != 5 {
+		t.Fatalf("CurePoisonCost=%d want 5", p.CurePoisonCost())
+	}
+	if p.RemoveCurseCost(7) != 700 {
+		t.Fatalf("RemoveCurseCost(7)=%d want 700", p.RemoveCurseCost(7))
+	}
+	wantCursed := []int{0x1b, 0x1d, 0x37, 0x38, 0x3d}
+	if got := p.CursedEquipmentRawIDs(); !reflect.DeepEqual(got, wantCursed) {
+		t.Fatalf("cursed equipment ids=%v want %v", got, wantCursed)
+	}
+	itemsRaw, err := os.ReadFile(filepath.Join(dir, "ITEM.DAT"))
+	if err != nil {
+		t.Fatalf("read ITEM.DAT: %v", err)
+	}
+	items, err := dq3data.OpenItems(itemsRaw)
+	if err != nil {
+		t.Fatalf("OpenItems: %v", err)
+	}
+	for rawID := 0; rawID < dq3data.ItemCount; rawID++ {
+		if got, want := p.IsCursedEquipment(rawID), items.CursedWhenEquipped(rawID); got != want {
+			t.Fatalf("item %#x pack cursed=%v ITEM writer oracle=%v", rawID, got, want)
+		}
+	}
+	txtRaw, err := os.ReadFile(filepath.Join(dir, "D3TXT00.TXT"))
+	if err != nil {
+		t.Fatalf("read D3TXT00.TXT: %v", err)
+	}
+	decoded := dq3data.LoadText(nil, txtRaw)
+	for id, record := range map[string]int{
+		"common:text.battle.actor.poisoned": 371,
+		"common:text.battle.poison.gas":     375,
+	} {
+		got, ok := p.TextGlyphCodes(id)
+		if !ok {
+			t.Fatalf("missing poison text %q", id)
+		}
+		raw := decoded.Record(record)
+		if !reflect.DeepEqual(got, raw) {
+			t.Fatalf("%s glyphs=%v want D3TXT00 rec%d=%v", id, got, record, raw)
+		}
+	}
+}
+
+func TestDQ3DefeatRespawnTextsAndConsumerMatchOriginal(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	txtRaw, err := os.ReadFile(filepath.Join(dir, "D3TXT00.TXT"))
+	if err != nil {
+		t.Fatalf("read D3TXT00.TXT: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	refs, ok := p.BattleTextRefs()
+	if !ok {
+		t.Fatal("missing battle_texts")
+	}
+	decoded := dq3data.LoadText(nil, txtRaw)
+	for id, record := range map[string]int{
+		refs.PartyDefeated: 361,
+		refs.RevivalVoice:  362,
+	} {
+		got, ok := p.TextGlyphCodes(id)
+		if !ok {
+			t.Fatalf("missing defeat text %q", id)
+		}
+		if want := decoded.Record(record); !reflect.DeepEqual(got, want) {
+			t.Fatalf("%s glyphs=%v want D3TXT00 rec%d=%v", id, got, record, want)
+		}
+	}
+	// IDA 9.4 linear 0x1962f selects record 361 before the all-down
+	// consumer; 0x1c7fd selects record 362, then 0x1c815 addresses the
+	// fixed first character and restores current HP from max HP.  File
+	// offsets use file=(linear-0x10000)+0x1370 for this exact executable.
+	for off, want := range map[int][]byte{
+		0xa99f: {0xbf, 0x69, 0x01},
+		0xdb6d: {0xbf, 0x6a, 0x01},
+		0xdb85: {0x8d, 0x36, 0x7f, 0x50, 0x81, 0x64, 0x38, 0x7f, 0xff, 0x8b, 0x44, 0x2a, 0x89, 0x44, 0x16},
+	} {
+		if got := exe[off : off+len(want)]; !bytes.Equal(got, want) {
+			t.Fatalf("DQ3.EXE file %#x=%x want %x", off, got, want)
+		}
+	}
+}
+
+func TestDQ3Monster46SleepActionAndMPMatchOriginal(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	mons, err := os.ReadFile(filepath.Join(dir, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatalf("read D3MNS.DAT: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	var sleep MonsterActionDefinition
+	for _, action := range p.MonsterActionDefinitions() {
+		if action.MaskBit == 41 {
+			sleep = action
+		}
+	}
+	if sleep.ActionRaw != 0x35 || sleep.SuccessRollMax != 0xb4 ||
+		sleep.ConditionID != SleepCondition || sleep.CastTextRole != "sleep_breath" {
+		t.Fatalf("monster46 sleep action=%+v", sleep)
+	}
+	record := mons[46*0x29 : 47*0x29]
+	if !bytes.Equal(record[14:20], []byte{0, 0x40, 0, 0, 0, 0x40}) ||
+		binary.LittleEndian.Uint16(record[4:6]) != 10 {
+		t.Fatalf("monster46 MP/mask=%d/%x", binary.LittleEndian.Uint16(record[4:6]), record[14:20])
+	}
+	if got := exe[0x19a70+23]; got != byte(sleep.ActionRaw) {
+		t.Fatalf("sleep remap JSON=%#x EXE=%#x", sleep.ActionRaw, got)
+	}
+	if got := binary.LittleEndian.Uint16(exe[0x19ad0:]); got != 0xa3ee {
+		t.Fatalf("sleep handler pointer=%#x want logical0xa3ee", got)
+	}
+	for off, want := range map[int][]byte{
+		0xb776: {0xf7, 0x44, 0x38, 0xa0, 0x00}, // skip dead/already sleeping
+		0xb780: {0x3c, 0xb4},                   // success roll <=180
+		0xb784: {0x80, 0x4c, 0x38, 0x20},       // +0x38 bit0x20 writer
+	} {
+		if got := exe[off : off+len(want)]; !bytes.Equal(got, want) {
+			t.Fatalf("DQ3.EXE file %#x=%x want %x", off, got, want)
+		}
+	}
+	txtRaw, err := os.ReadFile(filepath.Join(dir, "D3TXT00.TXT"))
+	if err != nil {
+		t.Fatalf("read D3TXT00.TXT: %v", err)
+	}
+	decoded := dq3data.LoadText(nil, txtRaw)
+	got, ok := p.TextGlyphCodes("common:text.battle.sleep.breath")
+	if !ok || !reflect.DeepEqual(got, decoded.Record(369)) {
+		t.Fatalf("sleep breath glyphs=%v ok=%v want rec369=%v", got, ok, decoded.Record(369))
+	}
+}
+
+func TestDQ3AntidotePackMatchesOriginalDispatcherHandlerAndText(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatalf("BuiltinDQ3: %v", err)
+	}
+	effect, ok := p.ItemUseEffectByRawID(0x42)
+	if !ok || effect.EffectID != "clear_condition" || effect.ConditionID != PoisonCondition ||
+		effect.TargetScope != "party_member" || !effect.Consume {
+		t.Fatalf("antidote effect=%+v ok=%v", effect, ok)
+	}
+	if got := binary.LittleEndian.Uint16(exe[0x197ac:]); got != 0x3dc3 {
+		t.Fatalf("item0x42 handler pointer=%#x want logical0x3dc3", got)
+	}
+	for off, want := range map[int][]byte{
+		0x5133: {0xe8, 0x33, 0x0f, 0xba, 0x40, 0x00, 0xbd, 0x6c, 0x01},
+		0x6069: {0xe8, 0x38, 0x4b, 0x83, 0xc6, 0x3a, 0xb9, 0x08, 0x00},
+		0x5a2c: {0x8b, 0x44, 0x38, 0x85, 0xc2},
+		0x5a41: {0x21, 0x54, 0x38},
+	} {
+		if got := exe[off : off+len(want)]; !bytes.Equal(got, want) {
+			t.Fatalf("DQ3.EXE file %#x=%x want %x", off, got, want)
+		}
+	}
+	txtRaw, err := os.ReadFile(filepath.Join(dir, "D3TXT00.TXT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded := dq3data.LoadText(nil, txtRaw)
+	for id, record := range map[string]int{
+		effect.NoEffectTextID: 341,
+		effect.SuccessTextID:  364,
+	} {
+		got, ok := p.TextGlyphCodes(id)
+		if !ok || !reflect.DeepEqual(got, decoded.Record(record)) {
+			t.Fatalf("%s glyphs=%v ok=%v want rec%d=%v", id, got, ok, record, decoded.Record(record))
+		}
+	}
+}
+
 func TestDQ3DhamaReclassMatchesOriginalTextAndConfig(t *testing.T) {
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {
@@ -2560,14 +3084,19 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.33","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.43","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
-	  "characters":"characters.json","texts":"texts.json"},"assets":{"pal":{"path":"PAL","size":0,"sha256":""}}
+	  "characters":"characters.json","texts":"texts.json","spells":"spells.json"},"assets":{"pal":{"path":"PAL","size":0,"sha256":""}}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.33","service_definitions":[{
+	  "schema_version":"0.1.43","service_definitions":[{
+	    "id":"common:service.cure_poison","pricing":{"formula_id":"common:formula.fixed","fixed_gold":5},
+	    "evidence":{"level":"D2","source_kind":"exe","source":"x","address_space":"file","address":"1","consumer":"x","doc":"x"}}, {
+	    "id":"common:service.remove_curse","pricing":{"formula_id":"common:formula.level_multiplier","gold_per_level":100},
+	    "affected_equipped_item_raw_ids":[27],
+	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE+ITEM.DAT","address_space":"logical","address":"0x1","consumer":"curse writer","doc":"docs/x.md"}}, {
 	    "id":"common:service.revive",
 	    "pricing":{"formula_id":"common:formula.level_table","level_cap":1,"costs_gold":[10]},
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2575,7 +3104,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.33",
+	  "schema_version":"0.1.43",
 	  "day_night_cycle":{"clock_ticks":4,"night_start_tick":2,"palette_segment_ticks":1,
 	    "palette_entries_per_bank":1,"palette_bank_indices":[0,0,0,0],"palette_asset_key":"pal",
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -2598,7 +3127,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
   "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.33",
+	  "schema_version":"0.1.43",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -2608,7 +3137,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.33","definitions":[{
+	  "schema_version":"0.1.43","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -2617,19 +3146,20 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.33","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.43","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"file","address":"0x1","consumer":"renderer","doc":"docs/x.md"}}
 	}`
+	validSpells := `{"schema_version":"0.1.43","field":[]}`
 	tests := []struct {
 		name, manifest, facilities, events, characters, want string
 	}{
 		{"unknown manifest field", strings.Replace(validManifest, `"save_namespace":"test",`, `"save_namespace":"test","typo":1,`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.33"`, `"schema_version":"0.1.33","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.43"`, `"schema_version":"0.1.43","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,
@@ -2645,11 +3175,53 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 				"characters.json": {Data: []byte(tc.characters)},
 				"texts.json":      {Data: []byte(validTexts)},
 				"interface.json":  {Data: []byte(validInterface)},
+				"spells.json":     {Data: []byte(validSpells)},
 				"PAL":             {Data: []byte{0}},
 			}
 			_, err := Load(fsys)
 			if err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Fatalf("Load error=%v, want substring %q", err, tc.want)
+			}
+		})
+	}
+}
+
+func TestFieldHealSpellPackMatchesOriginalDescriptors(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[int]string{
+		161: "031e0b", 162: "05550b", 163: "07ff0b", 164: "123213", 165: "3eff13",
+	}
+	for rec, raw := range want {
+		d, ok := p.FieldSpellByRecord(rec)
+		if !ok || d.DescriptorHex != raw || d.EffectID != FieldHealHP {
+			t.Fatalf("field spell rec%d mismatch: ok=%v def=%+v want raw=%s", rec, ok, d, raw)
+		}
+		if rec <= 163 && d.TargetScope != "party_member" || rec >= 164 && d.TargetScope != "party_all" {
+			t.Fatalf("field spell rec%d target scope=%q", rec, d.TargetScope)
+		}
+	}
+}
+
+func TestFieldSpellPackRejectsDescriptorAndFormulaDrift(t *testing.T) {
+	tests := []struct {
+		name string
+		edit func(*FieldSpellDefinition)
+	}{
+		{"raw mismatch", func(d *FieldSpellDefinition) { d.DescriptorHex = "001e0b" }},
+		{"unknown formula", func(d *FieldSpellDefinition) { d.AmountFormula = "battle_half_base" }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, err := BuiltinDQ3()
+			if err != nil {
+				t.Fatal(err)
+			}
+			tt.edit(&p.Spells.Field[0])
+			if err := p.validateSpells(); err == nil {
+				t.Fatal("drifted field spell definition must fail closed")
 			}
 		})
 	}

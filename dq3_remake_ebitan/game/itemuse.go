@@ -1,19 +1,81 @@
 package game
 
 import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 )
 
+func (g *Game) selectedItemRequiresTarget() bool {
+	items := g.equipActorInventory(g.panelActor)
+	if g.pack == nil || items == nil || g.itemSelected < 0 || g.itemSelected >= len(*items) {
+		return false
+	}
+	effect, ok := g.pack.ItemUseEffectByRawID((*items)[g.itemSelected])
+	return ok && effect.EffectID == "clear_condition" && effect.TargetScope == "party_member"
+}
+
+// useSelectedPackItemOnTarget 執行已確認的 pack-owned 選人道具交易。原版驅毒草與
+// 滿月草都先消耗 item，再檢查死亡／condition；因此無效果也不退還。
+func (g *Game) useSelectedPackItemOnTarget(actor int) bool {
+	items := g.equipActorInventory(g.panelActor)
+	if g.pack == nil || items == nil || g.itemSelected < 0 || g.itemSelected >= len(*items) ||
+		actor < 0 || actor > len(g.companions) {
+		return false
+	}
+	code := (*items)[g.itemSelected]
+	effect, ok := g.pack.ItemUseEffectByRawID(code)
+	if !ok || effect.EffectID != "clear_condition" || effect.TargetScope != "party_member" ||
+		!effect.Consume {
+		return false
+	}
+	condition, ok := conditionBit(effect.ConditionID)
+	if !ok {
+		return false
+	}
+	g.panelCursor = g.itemSelected
+	g.consumeSelectedItem(code)
+	g.clampPanelCursor()
+	alive, affected := g.heroHP > 0, g.heroConditions&condition != 0
+	if actor > 0 {
+		member := g.companions[actor-1]
+		alive, affected = member.CurHP > 0, member.Conditions&condition != 0
+		if alive && affected {
+			member.Conditions &^= condition
+		}
+	} else if alive && affected {
+		g.heroConditions &^= condition
+	}
+	if condition == conditionParalysis && !g.partyHasCondition(conditionParalysis) {
+		g.paralysisSteps = 0
+	}
+	textID := effect.NoEffectTextID
+	if alive && affected {
+		textID = effect.SuccessTextID
+	}
+	name := g.equipActorName(actor)
+	g.panel = panelNone
+	g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
+	if !g.openPackText(textID) {
+		return false
+	}
+	if alive && affected {
+		g.setDlgVarGlyphs(dq3data.TxtVarEnt, name)
+	}
+	return true
+}
+
 // useSelectedItem:對道具面板游標指的道具套用使用效果(移植 main.c apply_item_use)。
 // Go 版狀態範圍:藥草(HP)、蓋美拉翅膀(回鎮)、聖水(驅敵)、祈禱之戒(MP+損壞)、
 // 覺醒粉/蓋亞之劍/乾渴壺/妖精之笛/彩虹水滴(位置相關劇情道具)已接;
-// 拉那魯達/黑暗之燈(切晝夜,不消耗)已接;解狀態(無狀態系統)→ 不消耗(對齊原版「無對應→不消耗」)。
+// 拉那魯達/黑暗之燈(切晝夜,不消耗)、驅毒草與滿月草(選人、先消耗再判定狀態)已接；
+// 未由 pack 閉合的效果維持失敗即關閉且不消耗。
 func (g *Game) useSelectedItem() {
-	if g.panelCursor < 0 || g.panelCursor >= len(g.inventory) {
+	items := g.equipActorInventory(g.panelActor)
+	if items == nil || g.panelCursor < 0 || g.panelCursor >= len(*items) {
 		return
 	}
-	code := g.inventory[g.panelCursor]
+	code := (*items)[g.panelCursor]
 	if g.usePackItemEffect(code) {
 		return
 	}
@@ -26,12 +88,12 @@ func (g *Game) useSelectedItem() {
 	switch itemuse.KindOf(code) {
 	case itemuse.HealHP: // 藥草:回復第一個未滿且未陣亡的隊員 HP
 		if g.applyHealHP(code) {
-			g.removeItems(code, 1)
+			g.consumeSelectedItem(code)
 			g.noticeCode, g.noticeTimer = code, 90
 			g.clampPanelCursor()
 		}
 	case itemuse.ReturnTown: // 蓋美拉翅膀：地上回阿里阿罕，下層回拉達多姆外城 CTY79
-		g.removeItems(code, 1)
+		g.consumeSelectedItem(code)
 		g.panel = panelNone
 		dest := 0
 		if g.layer == 1 {
@@ -40,7 +102,7 @@ func (g *Game) useSelectedItem() {
 		g.enterTownCty(dest)
 	case itemuse.Repel: // 聖水:驅弱敵 64 步
 		g.repel = itemuse.HolySteps
-		g.removeItems(code, 1)
+		g.consumeSelectedItem(code)
 		g.noticeCode, g.noticeTimer = code, 90
 		g.clampPanelCursor()
 	case itemuse.PrayerRing: // 祈禱之戒:回勇者 MP;每次使用 ~25.4% 損壞(RNG(256)≤0x40)。損壞才消耗
@@ -49,12 +111,12 @@ func (g *Game) useSelectedItem() {
 			g.noticeCode, g.noticeTimer = code, 90
 		}
 		if g.prng.Next(256) <= itemuse.PrayerBreakLE { // 損壞消失(忠實 RE:無「MP 滿則不用」閘)
-			g.removeItems(code, 1)
+			g.consumeSelectedItem(code)
 			g.clampPanelCursor()
 		}
 	case itemuse.Rainbow: // DQ3.EXE loc_14243：下層世界 (127,117) 使用，改 (126,117)=tile0x53
 		if !g.inTown && g.layer == 1 && g.px == rainbowUseX && g.py == rainbowUseY {
-			g.removeItems(code, 1)
+			g.consumeSelectedItem(code)
 			g.worldState |= worldStateRainbowBridge
 			g.applyRainbowBridge()
 			g.noticeCode, g.noticeTimer = code, 90
@@ -69,7 +131,7 @@ func (g *Game) useSelectedItem() {
 	case itemuse.Mirror:
 		g.useMirror()
 	default:
-		// 解狀態(無狀態系統)→ 不消耗,對齊原版
+		// 未接線效果不改狀態、不消耗；不得把此 fallback 當成原版精確 consumer。
 	}
 }
 
@@ -114,7 +176,7 @@ func (g *Game) usePackItemEffect(code int) bool {
 		}
 		g.setDaynightClock(*effect.DayNightClock)
 		if effect.Consume {
-			g.removeItems(code, 1)
+			g.consumeSelectedItem(code)
 			g.clampPanelCursor()
 		}
 		g.noticeCode, g.noticeTimer = code, 90
@@ -124,7 +186,7 @@ func (g *Game) usePackItemEffect(code int) bool {
 		}
 		g.remoaru = effect.StepCount
 		if effect.Consume {
-			g.removeItems(code, 1)
+			g.consumeSelectedItem(code)
 			g.clampPanelCursor()
 		}
 		g.noticeCode, g.noticeTimer = code, 90
@@ -235,7 +297,7 @@ func (g *Game) useMagicBall() {
 	g.panel = panelNone
 	g.setStoryFlag(magicBallIntactFlag, false)
 	g.cur.applyClearedEventTiles(g.storyFlag)
-	g.removeItems(itemuse.ItemMagicBall, 1)
+	g.consumeSelectedItem(itemuse.ItemMagicBall)
 	g.clampPanelCursor()
 }
 
@@ -313,8 +375,13 @@ func (g *Game) settleMirrorBattle() {
 		g.reloadTownDaynight()
 		return
 	}
-	if !g.hasItem(itemModChangeStaff) {
-		g.inventory = append(g.inventory, itemModChangeStaff)
+	if !g.hasPartyItem(itemModChangeStaff) && !g.grantPartyItem(itemModChangeStaff) {
+		// 原版在獎勵 writer 設 DS:0726=1 後跳回敗／逃回滾分支；
+		// 滿載不得留下成功旗標而永久失去變化之杖。
+		g.setStoryFlag(0x10, false)
+		g.setStoryFlag(0x42, true)
+		g.reloadTownDaynight()
+		return
 	}
 	g.setStoryFlag(0x21, false)
 	g.setStoryFlag(0x22, true)
@@ -341,10 +408,31 @@ func (g *Game) applyHealHP(code int) bool {
 
 // clampPanelCursor:道具消耗後,把游標夾回清單範圍。
 func (g *Game) clampPanelCursor() {
-	if g.panelCursor >= len(g.inventory) {
-		g.panelCursor = len(g.inventory) - 1
+	items := g.equipActorInventory(g.panelActor)
+	if items == nil {
+		g.panelCursor = 0
+		return
+	}
+	if g.panelCursor >= len(*items) {
+		g.panelCursor = len(*items) - 1
 	}
 	if g.panelCursor < 0 {
 		g.panelCursor = 0
 	}
+}
+
+// consumeSelectedItem 移除目前道具持有者的確切 panelCursor 欄位；進入選人
+// modal 前會先把 itemSelected 複製回 panelCursor，因此不需按 item id 掃描。
+func (g *Game) consumeSelectedItem(code int) bool {
+	items := g.equipActorInventory(g.panelActor)
+	if items == nil {
+		return false
+	}
+	idx := g.panelCursor
+	if idx < 0 || idx >= len(*items) || (*items)[idx] != code {
+		return false
+	}
+	*items = append((*items)[:idx], (*items)[idx+1:]...)
+	g.panelCursor = idx
+	return true
 }

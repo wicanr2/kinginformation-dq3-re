@@ -1,0 +1,15 @@
+FROM ida-pro-9.4-ver3:py312-x11-v3
+
+USER root
+
+# Base image keeps the private license in /root.  Headless evidence exporters
+# must run as the host UID so their sidecars never become root-owned; install a
+# existing UID 1000 home, copy the already-present license there, and pin the
+# exact Python shared object in that user's IDA registry.
+RUN cp -a /root/.idapro /home/ubuntu/.idapro \
+    && chown -R 1000:1000 /home/ubuntu/.idapro
+
+USER ubuntu
+ENV HOME=/home/ubuntu
+RUN /opt/ida-pro-9.4/idapyswitch --force-path \
+    /usr/lib/x86_64-linux-gnu/libpython3.12.so.1.0
