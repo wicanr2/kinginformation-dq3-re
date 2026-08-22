@@ -93,16 +93,20 @@ DQ3.EXE **沒有被完整語意解讀**。現有工程已對 remake 必經玩家
 - 驅毒草後續訂正：item `0x42` 經 DGROUP `0x366c` 進 logical `0x3dc3`；`sub_14CF9`
   先把命中物品槽寫成 `0x00ff`，`sub_1469F` 才判斷死亡／`+0x38 bit0x40` 並選 rec341
   或 rec364。這推翻歷史 C「沒中毒不消耗」斷言；現行 pack、選人 modal 與文字 consumer
-  為 E2／V1。原版 per-character inventory ownership 仍未閉合；滿月草持久麻痺與 field
-  consumer 已由後續 `docs/152` 訂正，不能再列為全域未知。
+  為 E2／V1。原版 per-character inventory ownership 已由後續 `docs/158` 閉合；滿月草
+  持久麻痺與 field consumer 已由 `docs/152` 訂正，兩者都不能再列為全域未知。尚未閉合
+  的是 battle item selector → owner → handler → target UI，列為最後功能 worklist 第一項。
 - CTY23 重播訂正：全滅時主角 `conditionPoison` 已設且背包已有 `0x42`；正式移動 helper
   現在經道具清單與選人 modal 解毒並越過單人回程。後續補給、隊伍與巴拉摩斯策略切片
   曾讓當時完整 replay 再次抵達 `THE END`；CTY23 本身不再是 blocker，但 `docs/153`
-  RNG 訂正後的現行 campaign 已於後段 CTY38→CTY70 航路重新 pending。
+  RNG 訂正後曾於後段 CTY38→CTY70 航路重新 pending；該歷史 blocker 已由
+  `docs/154..178` 的正式玩家交易與路線訂正越過，最新 campaign 已恢復 E3。
 - 戰鬥逃跑音效後續訂正：IDA 9.4 已證實玩家成功逃跑 `cue 13`、敵人成功逃跑
   `cue 21`，兩條 caller 都在訊息後呼叫 `sub_208E2`。現行 pack／Battle 以原始 VOC
   sample duration 阻擋提前輸入，為 D3／E2；`PlaySFX` API 本身仍非阻塞，硬體
-  wall-clock、重取樣波形與逐幀同步仍未閉合，詳見 `docs/149`。
+  cue 選擇與完成等待已閉合，詳見 `docs/149`。硬體 wall-clock、DAC／PIT／DMA 與
+  重取樣標準行為改依平台規格近似，不再列為遊戲 RE；逐幀玩家可見同步仍只在有新
+  同狀態 oracle 時窄做。
 - 玩家一般物理攻擊後續訂正：IDA 9.4 已證實 `sub_1B4F6` 正常分支依序 dispatch
   cue 6、顯示 D3TXT record `0x14a`、等待完成、dispatch cue 11、再等待後進入共同傷害
   consumer。現行 pack／Battle 保存並執行這個有序序列，為 D3／E2；文本原先將 record330

@@ -11,6 +11,13 @@
 > `InputState` 重播至 `THE END`（115.629 秒），campaign 恢復 E3。下文 monster77、
 > monster51 與各補給失敗是促成本輪訂正的歷史 checkpoint，不再是 current blocker。
 > 本結果只證明主線玩家流程；逐畫面、逐音效及硬體 timing 仍依各列維持 V1／V2／unknown。
+>
+> **2026-08-22 最後功能 worklist（不含回歸／發包）：**依序只做
+> ①戰鬥道具、②原始怪物表實際使用且尚未閉合的 action、③剩餘合法野外咒文、
+> ④商店賣出、⑤船進城載具交易、⑥必要選單與玩家可見支線語意。完成一項後才進下一項，
+> 每項固定走「既有 RE → IDA Pro 9.4／IDAPython 補證 → spec → game-pack／runtime」。
+> PCM hardware wall-clock、DAC、PIT、DMA 等平台時序只引用 Wiki／datasheet／成熟模擬器
+> 規格並採可重現近似，不再列為遊戲 RE 或 remake 完成 gate。
 
 > 建立：2026-07-28（Asia/Taipei）
 >
@@ -1000,7 +1007,8 @@ writer／consumer：`0x26 - Σ(D3MNS +0x28 × count) + 2` 是第一筆 active ra
 之後每隻以 `2 × D3MNS +0x28` 前進；`sub_1AB2C` 也逐個體擲 HP。這些常數已資料化為
 `battle.json.formation_position`，並由 production renderer 依 EGA `0x54` stride／`0x102`
 bottom 計算位置。VOC decoder 同步保留每 cue 的原始 sample rate、sample count 與可重建
-duration；host `PlaySFX` wall-clock 與 action frame 仍 unknown。完整位址、hash、推論等級與
+duration；該歷史 checkpoint 當時把 host `PlaySFX` wall-clock 列為 unknown，現已依本檔
+頂端停止線改採平台規格近似；action frame 仍只由新原版 oracle 驅動。完整位址、hash、推論等級與
 `NVOC` cue21 `0x1f973` 勘誤見 [`docs/123`](123-static-battle-daynight-re.md) 與 sidecar。
 
 ## 2026-08-11 歷史 checkpoint：IDA story-flag runtime E2 已接線
@@ -1225,7 +1233,8 @@ consumer caller及 raw 函式指標候選。正式與 alternate runner 都只為
 該逃跑音效切片當時以 schema `0.1.40`／content `0.1.45` 保存 raw cue、等待契約與 D3 evidence；Battle 在訊息實際顯示時
 播放 cue，並以 VOC 原始 sample duration 向上換算 60 TPS 來阻擋提前輸入。原始 callsite、
 descriptor、pack validation 與 headless duration tests 已通過，故這兩個角色達 D3／E2。
-Sound Blaster DMA wall-clock、44100 Hz 重取樣波形及逐幀動畫同步仍為 unknown／V3 gap。
+Sound Blaster DMA wall-clock 與重取樣標準行為依平台規格近似，不再是 RE gap；逐幀動畫
+同步仍須有同狀態 oracle 才能升 V3。
 
 ## 2026-08-22 current checkpoint：玩家一般物理攻擊雙 VOC 序列
 
@@ -1235,7 +1244,7 @@ Sound Blaster DMA wall-clock、44100 Hz 重取樣波形及逐幀動畫同步仍�
 evidence；Battle 只有在前一步原始 VOC duration gate 完成後才播放下一步，leader／companion
 都先排 `actor_attack` 再排 damage。原始 EXE／FVOC parity 與 component tests 已通過，故此
 有限角色為 D3／E2。此切片當時尚未涵蓋敵方 attack 與共同 damage cue；兩者已由下一節
-`docs/151` 獨立閉合。cue 6 的其他 call-site、critical、硬體 wall-clock 與逐幀動畫仍是
+`docs/151` 獨立閉合。cue 6 的其他 call-site、critical 與逐幀動畫仍是
 unknown／V3，不由兩個切片外推。
 
 ## 2026-08-22 current checkpoint：一般物理結果、敵方攻擊與個別死亡訊息
@@ -1280,8 +1289,9 @@ all-party mask 的跳過近似後，targeted tests 通過，但目前完整 repl
 嘗試仍停在同一狀態，已撤回這些未收斂的 trace 改動。該 checkpoint 的 campaign E3 因而 pending；
 下一輪需把該 deterministic 長航路當成獨立玩家路線／補給切片，不改怪物或 RNG。
 
-剩餘實作缺口：現行 `bcItem` 仍只支援藥草，原版戰鬥道具清單／滿月草 transaction 尚未由
-selector → inventory owner → handler → target UI 完整閉合；不得用 field item handler 猜接。
+剩餘實作缺口的第一順位：現行 `bcItem` 仍只支援藥草，原版戰鬥道具清單／滿月草
+transaction 尚未由 selector → inventory owner → handler → target UI 完整閉合；不得用
+field item handler 猜接。其後順位固定依本檔頂端最後功能 worklist，不由舊 milestone 改寫。
 
 ## 2026-08-22 歷史 checkpoint：原野道具 owner E3，當時 campaign 後移至取船後航線
 
@@ -1317,7 +1327,8 @@ encounter／補給 RE，寫獨立 spec，再決定實作；不得以較早的 `T
 乾淨 Docker＋Xvfb 的 `TestOpeningProductionInputTrace` 已從標題以正式 `InputState`
 抵達 `THE END`，耗時 115.629 秒。沒有清狀態、座標注入、debug key、怪物數值或 RNG
 近似；因此目前 campaign 為 E3。這不證明 DQ3.EXE 已逐行完整解讀，也不把戰鬥逐動作
-SHP、PCM wall-clock、所有選單或所有場景升為 V3；這些仍須在出現玩家可見差異時，以
+SHP、所有選單或所有場景升為 V3；PCM wall-clock 已依平台規格近似並退出 RE 範圍，
+其餘項目仍須在出現玩家可見差異時，以
 獨立窄切片取得原版 oracle，不能重新把 remake 收尾變成無界反編譯。
 
 同一工作樹的比例驗收另已通過 `go test ./internal/...` 全部套件、Docker＋Xvfb

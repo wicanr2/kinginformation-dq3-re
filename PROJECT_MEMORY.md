@@ -6,6 +6,11 @@
 > 更新：2026-08-22。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
+>
+> 2026-08-22 收尾決策：完整正式主線已達 E3；不含回歸與發包的最後功能順序固定為
+> 戰鬥道具 → 實際使用的剩餘怪物 action → 剩餘合法野外咒文 → 商店賣出 → 船進城 →
+> 必要選單／玩家可見支線。每項仍須 RE→spec→implement。PCM hardware wall-clock、
+> DAC／PIT／DMA 只引用平台 Wiki／datasheet／成熟模擬器規格，不再深入遊戲 driver。
 
 > 反組譯邊界：DQ3.EXE 尚未完整語意解讀；整檔 byte-identical 只證明 bytes 保真。
 > 已閉合範圍、remake 接線與仍未知項目見 [`docs/135`](docs/135-re-assertion-audit-20260822.md)。
@@ -35,7 +40,8 @@
 > wait／damage 順序；game pack 保存有序步驟，Battle 於每個原始 VOC duration gate 完成後才
 > 播放下一步。`docs/151` 接著閉合敵方攻擊 cue4、雙方命中 cue1、共同 miss cue3、
 > records331／333／336／357 與個別死亡訊息，並以 pack role 接成 D3／E2。cue9 特殊分支
-> 已由後續 `docs/152` 閉合；critical、咒文傷害與硬體 wall-clock 仍須分開研究。
+> 已由後續 `docs/152` 閉合；critical、咒文傷害仍須分開研究，硬體 wall-clock 則引用
+> 平台規格近似，不再開遊戲 RE。
 > 同日 `docs/149` 閉合玩家逃跑 cue 13、敵人逃跑 cue 21 與兩條
 > `sub_20770 → driver → sub_208E2` 完成等待鏈；pack 與 Battle 已用 VOC 原始 sample
 > duration 建立可重播的輸入等待閘門，為 D3／E2。這不宣稱 Sound Blaster wall-clock、
@@ -737,7 +743,7 @@ IDA Pro 9.4 的新 audit 重查 queue builder／actor consumer xref、alternate 
 及 VOC dispatch，確認可靜態閉合的 formation、resistance、五個 story flag、clock／palette
 bank 已在資料／runtime 接線。當時 Boss repeat-N 保留 unknown；2026-08-22 的完整 caller／
 consumer 與 raw pointer audit 已由 [`docs/148`](docs/148-battle-single-action-queue-spec.md)
-證實本 EXE 沒有該路徑。逐動作 frame、PCM wall-clock 與可見 palette transition 仍沒有安全
+證實本 EXE 沒有該路徑。逐動作 frame 與可見 palette transition 仍沒有安全
 production 值；除非取得新原版 frame／音訊 trace，不猜 JSON、不加 Go fallback。
 
 ## 2026-08-12 歷史 memory：八頭大蛇固定編隊背景 V2 已閉合

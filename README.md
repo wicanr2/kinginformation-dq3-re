@@ -71,6 +71,23 @@ selector 啟動，不再落回 generic 草地；目前只有 D2／runtime V1，�
 姓名、H／M、職業與等級不再使用目測寬框；正式輸入 runtime 達 near-state V2，詳見
 [`docs/130`](docs/130-party-field-hud-re.md)。
 
+### 尚未發版工作樹的最後功能順序
+
+最新完整正式輸入主線已抵達 `THE END`；剩餘工作不是重新串主線，而是依下列順序移除
+仍可由玩家遇到的近似或缺少交易：
+
+1. 戰鬥道具持有人、清單、目標與原版消耗時序。
+2. 原始怪物表實際使用、但尚未閉合的 action；完成後移除 `MonsterSpellRec` 猜測 fallback。
+3. 由 field caster 原始 descriptor 證實的剩餘野外咒文。
+4. 商店賣出、售價、裝備與特殊交易。
+5. 船直接進城時的停泊／離船／出城復船狀態。
+6. 必要的狀況／道具／裝備子選單與確有玩家可見差異的支線語意。
+
+每項均以 IDA Pro 9.4／IDAPython 的有限 caller→writer→consumer 證據寫 spec 後才實作；
+不逐行翻譯 DQ3.EXE。PCM hardware wall-clock、DAC、PIT、DMA 與 Sound Blaster 標準時序
+改直接引用 Wiki／datasheet／成熟模擬器規格，採可重現近似，不再深入遊戲 driver 或列為
+完成 gate。逐畫面 V3 只由新的同狀態 oracle 驅動，沒有新 discrepancy 時不擴張範圍。
+
 ### V3 近似驗收政策（2026-08-11）
 
 使用者允許在尚缺同狀態原版逐畫面、逐幀時鐘或逐 PCM 停頓證據的項目採近似方式補正。
@@ -275,8 +292,9 @@ bank 5 與 page 26／bank 5，作為 near-state V2 證據；它們不是逐像�
 2026-08-22 未發版工作樹在 `docs/154..178` 的後續訂正後，最新完整正式主線以
 115.629 秒抵達 `THE END`，現行 campaign 為 E3。第 3 項仍有 V1／V2 與 V3 長尾；
 Boss repeat-N 已由 [`docs/148`](docs/148-battle-single-action-queue-spec.md) 的完整 caller／consumer
-audit 證實在本 EXE 不存在，remake 以每個存活 actor 每回合一筆實作。逐動作 frame、PCM
-wall-clock 與可見 palette transition 仍是 V3／unknown 限制；formation 的 raw EGA position／stride 已納入
+audit 證實在本 EXE 不存在，remake 以每個存活 actor 每回合一筆實作。逐動作 frame、
+玩家可見同步與 palette transition 仍是 V3／unknown 限制；硬體 wall-clock 已改採平台
+規格近似，不再列為 RE 缺口。formation 的 raw EGA position／stride 已納入
 E2 pack／renderer。日邦格兩場必經 Boss 的固定背景則已按原版 archive page／palette bank
 達 near-state V2；怪力魔、巴拉摩斯與索瑪三連戰已由相同 raw fixed-record selector 接入 runtime
 V1。通用地形背景沒有藉此宣稱 parity。完整靜態收斂與停止條件見

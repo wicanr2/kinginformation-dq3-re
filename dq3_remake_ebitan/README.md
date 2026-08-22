@@ -9,7 +9,8 @@ campaign E3。2026-08-22 未發版工作樹依 [`docs/153`](../docs/153-monster-
 交易與輸入切片越過；最新乾淨 Docker＋Xvfb trace 以 115.629 秒抵達 `THE END`，現行
 campaign 為 E3。這不否定仍未知語意，也不把畫面／音效升格為 V3。
 現行未發版 game pack 為 schema `0.1.43`／content `0.1.48`；其中玩家／敵人成功逃跑
-已依原版 cue 13／21 與完成等待鏈接成 D3／E2，硬體 wall-clock 與逐幀同步仍非 V3，詳見
+已依原版 cue 13／21 與完成等待鏈接成 D3／E2；逐幀同步仍非 V3，硬體 wall-clock 則依
+平台規格近似且不再作遊戲 RE，詳見
 [`docs/149-battle-flee-sfx-wait-spec.md`](../docs/149-battle-flee-sfx-wait-spec.md)。
 玩家一般物理攻擊的 cue 6 → cue 11 有序完成等待另見
 [`docs/150-player-physical-sfx-sequence-spec.md`](../docs/150-player-physical-sfx-sequence-spec.md)；
@@ -17,8 +18,14 @@ campaign 為 E3。這不否定仍未知語意，也不把畫面／音效升格�
 [`docs/151-common-physical-result-sfx-spec.md`](../docs/151-common-physical-result-sfx-spec.md)；
 cue9 特殊分支與 action3／持久麻痺已由
 [`docs/152-special-physical-paralysis-spec.md`](../docs/152-special-physical-paralysis-spec.md)
-獨立閉合；critical、咒文傷害及硬體 wall-clock 仍未由這些切片外推。戰鬥道具 selector、
+獨立閉合；critical 與咒文傷害仍未由這些切片外推，硬體 wall-clock 依平台規格近似。
+戰鬥道具 selector、
 持有人、raw item dispatch 與目標 UI 仍未閉合，不能由滿月草 field handler 外推完成。
+
+現行最後功能順序固定為：戰鬥道具 → 原始怪物表實際使用的剩餘 action → 剩餘合法野外
+咒文 → 商店賣出 → 船進城 → 必要選單／玩家可見支線。每項先以 IDA Pro 9.4／IDAPython
+寫獨立 spec，再進 game pack 與 runtime；PCM hardware wall-clock、DAC／PIT／DMA 只採
+平台規格近似，不再當成遊戲 RE 或完成 gate。唯一 current plan 仍是根目錄 `docs/74`。
 先前船／地表追跡逾時與
 Kandar 塔 fixture 全滅均已釐清為測試路徑問題並修正；詳見
 [`docs/125-acceptance-20260811.md`](../docs/125-acceptance-20260811.md)。這不代表原版 V3

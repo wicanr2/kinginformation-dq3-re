@@ -7,6 +7,11 @@
 2026-08-22 反組譯斷言審計：DQ3.EXE 並未完整語意解讀；byte-identical 重組只證明
 bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界見 `docs/135`。
 
+2026-08-22 最後功能順序：戰鬥道具 → 原始怪物表實際使用的剩餘 action → 剩餘合法
+野外咒文 → 商店賣出 → 船進城 → 必要選單／玩家可見支線。每項固定走
+RE→IDA Pro 9.4／IDAPython→spec→implement。PCM hardware wall-clock、DAC／PIT／DMA
+屬平台規格，引用 Wiki／datasheet／成熟模擬器並採可重現近似，不再深挖遊戲 driver。
+
 2026-08-22 日夜 palette 訂正：`events.json.day_night_cycle` 保存 240-tick clock、
 夜間起點 120、20-tick segment、五個原始 `DQ3.PAL` bank 與 12-entry selector；
 phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/136`。
@@ -283,7 +288,8 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
   formation、resistance、日夜與五個 flag。2026-08-22 又枚舉所有 queue-builder／actor-consumer
   caller 及 raw function-pointer 候選，證實本 EXE 每個存活 actor 每回合恰好一筆，沒有 Boss
   repeat-N 路徑；見 [`docs/148`](docs/148-battle-single-action-queue-spec.md)。逐動作 frame、
-  PCM wall-clock 與玩家可見 palette transition 仍沒有安全 production 值，保持
+  PCM wall-clock 已改採平台規格近似而不再列為 RE；玩家可見 palette transition 仍沒有
+  安全 production 值，保持
   `unknown`／fail-closed。完整範圍與停止條件見 [`docs/123`](docs/123-static-battle-daynight-re.md)。
 
 ### 2026-08-12 歷史 checkpoint：固定編隊背景 selector
@@ -358,7 +364,7 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 - 一般物理結果已由 [`docs/151`](docs/151-common-physical-result-sfx-spec.md) 閉合：敵方
   cue4／record331、成功傷害 cue1／record332 或 333、共同 miss cue3／record335，以及
   record336／357 個別倒下訊息皆已接成 D3／E2；cue9 特殊分支、critical、咒文傷害與
-  硬體 wall-clock 仍是獨立 unknown／V3 長尾。
+  硬體 wall-clock 已依平台規格近似退出遊戲 RE；逐幀可見同步仍是獨立 V3 長尾。
 
 - 「event」一詞橫跨 section 事件表(4-byte entry)與 scripted-event(跳表 id);文件中需標明哪一種。
 - 「物件 / NPC / 實體」三詞在 `docs/31` 尚未收斂(實體表 `[0x4f15]` vs CTY 內 NPC 記錄)。
