@@ -1335,3 +1335,17 @@ SHP、所有選單或所有場景升為 V3；PCM wall-clock 已依平台規格�
 `go test ./game` 全套（164.874 秒），以及只指定 `main.go`、不碰使用者受保護
 `tmp_dump.go` 的隔離 Linux desktop build（13,373,336 bytes）。這些證明目前程式與資料
 契約可建置且回歸一致；不取代 macOS 真機、原版逐畫面或人耳音訊驗收。
+
+## 2026-08-23 current slice：戰鬥道具 owner／selector／消耗品 handler
+
+[`docs/179`](179-battle-item-selector-runtime-spec.md) 以 IDA Pro 9.4 閉合
+`sub_1C1D8 → sub_1B836 → DGROUP 0x0d50/0x0d4b → sub_1B95C`：原版從目前
+actor record `+0x3a` 掃八個 item word，保存原始格序與目標，再由 near function pointer
+分派；不使用全隊藥草計數。Go 已新增正式 `phItem`、逐 actor inventory/equipment slot、
+target route、先消耗與戰後逐 owner 寫回；`0x41/42/43/44/45/48/4c` 的已證實 handler
+參數進入 `battle.json.items[]`。schema `0.1.44`／content `0.1.49`。
+
+本切片的 `go test ./internal/...` 與 Docker＋Xvfb `go test ./game -run Battle` 為比例驗收；
+完整 campaign 未因本批重跑。`0x05/0x0a/0x0c/0x10/0x14/0x17/0x18/0x1a/0x1c/0x46`
+共用 spell-action consumer 仍由下一個「實際使用的剩餘怪物 action」切片統一閉合，避免
+在戰鬥道具分支另造一份猜測 mapping。它們目前缺 definition 時失敗即關閉，不冒稱完成。

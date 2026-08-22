@@ -267,6 +267,14 @@ fallback 補值。
 | `conditions[].field_clear_after_steps` | int | 是 | 合法場景步後解除的共享倒數；`0` 表示不依步數解除。DQ3 paralysis 為 `40`，poison／sleep 為 `0`。 |
 | `conditions[].suppress_world_state_mask` | int | 是 | 原版 consumer 的移動模式抑制 mask；DQ3 的 `3` 對應船／飛行，不能寫成 Go 常數。 |
 | `conditions[].legacy_status_mask` | int | 是 | 原始角色 record 狀態 mask，僅供 parity／證據；remake save bit layout 不冒充原版。 |
+| `items` | object[] | 是 | 戰鬥道具 raw ID 到有限 engine primitive 的分派；選單 owner／格位由 runtime 保存，不以全隊藥草計數近似。 |
+| `items[].item_raw_id` | int | 是 | 原始 ITEM ID；共用 Go 不得由數字猜效果。 |
+| `items[].kind` | enum | 是 | `heal_hp`、`clear_condition`、`escape_battle`、`restore_mp_breakable`、`revive` 或 `no_effect`。未知 handler 不得填合理預設。 |
+| `items[].target_scope` | enum | 是 | `self`、`ally_one` 或 `enemy_one`；對應原版 selector table／consumer。 |
+| `items[].amount`／`amount_max` | int | 依 kind | 原版 inclusive 隨機範圍；相等才是固定值。 |
+| `items[].break_roll_max` | int | `restore_mp_breakable` 必填 | inclusive 損壞門檻；DQ3 祈禱之戒是 byte RNG `≤0x40`。 |
+| `items[].condition_id` | string | `clear_condition` 必填 | 必須引用同一 `battle.conditions[]`，不得在 renderer 解 legacy mask。 |
+| `items[].consume` | bool | 是 | 一般消耗或條件損壞由原版 handler 決定；裝備用法不可因共用 effect 而被誤刪。 |
 | `monster_actions` | object[] | 是 | 原始 monster mask bit 到有限 engine effect 的資料化分派；不得把所有 bit 直接送入玩家咒文 descriptor。 |
 | `monster_actions[].mask_bit`／`action_raw` | int | 是 | 原始 48-bit mask index 與 remap 後 action ID。 |
 | `monster_actions[].kind`／`condition_id`／`target_scope` | string | 是 | 有限 primitive 為 `apply_condition` 或 `special_physical_condition`；scope 依 action 為 `party_alive_unaffected` 或 `party_one_alive`，未知組合 fail closed。 |

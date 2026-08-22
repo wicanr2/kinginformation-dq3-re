@@ -17,12 +17,11 @@ const (
 	bcWar   = 0 // 戰う
 	bcFlee  = 1 // 逃げる
 	bcDef   = 2 // 防御
-	bcItem  = 3 // 道具(藥草)
+	bcItem  = 3 // 道具
 	bcSpell = 4 // 咒文
 )
 
 const herbCode = 0x41 // 藥草 item id
-const herbHeal = 30   // DQ3_HERB_HEAL
 
 // MaxEnemies:一場戰鬥敵群上限(對齊 C MAXE=8、docs/13 encounter_build_group 群量上限)。
 const MaxEnemies = 8
@@ -133,6 +132,7 @@ var curGlyph int
 const (
 	phCommand     battlePhase = iota // 等玩家下指令
 	phSpell                          // 選咒文
+	phItem                           // 選目前下令者的個人物品格
 	phTargetEnemy                    // 選單體敵方目標
 	phTargetAlly                     // 選單體我方目標
 	phMessage                        // 顯示訊息(A 推進)
@@ -184,6 +184,10 @@ type Battle struct {
 	heroMaxMP              int   //
 	spells                 []int // 已學可施放咒文 rec
 	spellCursor            int
+	itemCursor             int
+	heroItems              []battleItemSlot
+	itemsReady             bool
+	returnTown             bool
 	companions             []*battleActor // 同伴(狀態列顯示 + 可各自下令及被鎖定)
 	heroStatus             int            // 主角戰鬥鏡像狀態；毒／持久麻痺另於戰後同步回 conditionSet
 	commandActor           int            // 目前下令者：0=隊長，1..=同伴
@@ -201,6 +205,7 @@ type Battle struct {
 	statusWokeID           string // battleTextStatusWoke 的 pack role ID
 	texts                  map[string]battleTextDefinition
 	monsterActions         map[int]gamepack.MonsterActionDefinition
+	battleItems            map[int]gamepack.BattleItemDefinition
 	soundCues              gamepack.BattleSoundCues
 	sfxPlayer              battleSFXPlayer
 	messageLayout          gamepack.WindowLayout      // pack-owned shared battle message rect
@@ -265,6 +270,13 @@ func (b *Battle) setMonsterActions(defs []gamepack.MonsterActionDefinition) {
 	b.monsterActions = make(map[int]gamepack.MonsterActionDefinition, len(defs))
 	for _, def := range defs {
 		b.monsterActions[def.MaskBit] = def
+	}
+}
+
+func (b *Battle) setBattleItems(defs []gamepack.BattleItemDefinition) {
+	b.battleItems = make(map[int]gamepack.BattleItemDefinition, len(defs))
+	for _, def := range defs {
+		b.battleItems[def.ItemRawID] = def
 	}
 }
 
@@ -491,12 +503,20 @@ type battleActor struct {
 	defending      bool
 	atkPct, defPct int
 	status         int // 戰鬥鏡像狀態(statusPoison/statusParalysis 等；持久 condition 另存於 Game/Member)
+	items          []battleItemSlot
+}
+
+type battleItemSlot struct {
+	rawID    int
+	equipped bool
 }
 
 type battleCommand struct {
-	kind   int
-	spell  int
-	target int // 敵方 index，或我方 actor index；不需目標時為 -1
+	kind     int
+	spell    int
+	itemRaw  int
+	itemSlot int
+	target   int // 敵方 index，或我方 actor index；不需目標時為 -1
 }
 
 type turnEntry struct {
@@ -544,6 +564,7 @@ type heroParams struct {
 	mp, maxMP                          int   // 目前/最大 MP
 	spells                             []int // 已學可施放咒文 rec
 	conditions                         conditionSet
+	items                              []battleItemSlot
 }
 
 // start 開一場單敵戰鬥(monID + 主角數值 + 同伴)。等同 startGroup(monID, 1, …)。
@@ -662,8 +683,11 @@ func (b *Battle) startFormationWithBackground(groups []enemyGroup, seed int64, h
 	b.heroAtk, b.heroDef, b.heroAgi, b.heroLevel = hp.atk, hp.def, hp.agi, hp.level
 	b.heroHerbs, b.usedHerbs, b.defending = hp.herbs, 0, false
 	b.heroMP, b.heroMaxMP, b.spells = hp.mp, hp.maxMP, hp.spells
+	b.heroItems = append([]battleItemSlot(nil), hp.items...)
+	b.itemsReady = true
+	b.returnTown = false
 	b.companions = comps
-	b.spellCursor = 0
+	b.spellCursor, b.itemCursor = 0, 0
 	b.heroStatus = 0
 	if hp.conditions&conditionPoison != 0 {
 		b.heroStatus |= statusPoison
@@ -711,6 +735,30 @@ func (b *Battle) actorSpells(i int) []int {
 	return b.companions[i-1].spells
 }
 
+func (b *Battle) actorItems(i int) []battleItemSlot {
+	if i == 0 {
+		return b.heroItems
+	}
+	if i < 1 || i > len(b.companions) {
+		return nil
+	}
+	return b.companions[i-1].items
+}
+
+func (b *Battle) removeActorItemSlot(actor, slot int) bool {
+	items := b.actorItems(actor)
+	if slot < 0 || slot >= len(items) || items[slot].equipped {
+		return false
+	}
+	items = append(items[:slot], items[slot+1:]...)
+	if actor == 0 {
+		b.heroItems = items
+	} else {
+		b.companions[actor-1].items = items
+	}
+	return true
+}
+
 func (b *Battle) actorMP(i int) int {
 	if i == 0 {
 		return b.heroMP
@@ -724,6 +772,81 @@ func (b *Battle) setActorMP(i, v int) {
 		return
 	}
 	b.companions[i-1].mp = v
+}
+
+func (b *Battle) actorMaxMP(i int) int {
+	if i == 0 {
+		return b.heroMaxMP
+	}
+	return b.companions[i-1].maxMP
+}
+
+func (b *Battle) execBattleItem(actor int, cmd battleCommand) {
+	def, ok := b.battleItems[cmd.itemRaw]
+	if !ok {
+		b.emitText(battleTextItemEmpty)
+		return
+	}
+	target := cmd.target
+	if target < 0 || target >= 1+len(b.companions) {
+		target = actor
+	}
+	if def.Consume && !b.removeActorItemSlot(actor, cmd.itemSlot) {
+		b.emitText(battleTextItemEmpty)
+		return
+	}
+	if def.Consume && cmd.itemRaw == herbCode {
+		b.usedHerbs++
+	}
+	switch def.Kind {
+	case "heal_hp":
+		cur, max := b.actorHP(target)
+		amount := def.Amount
+		if def.AmountMax > def.Amount {
+			amount += b.rng.Next(def.AmountMax - def.Amount + 1)
+		}
+		if cur+amount > max {
+			amount = max - cur
+		}
+		if amount < 0 {
+			amount = 0
+		}
+		b.setActorHP(target, cur+amount)
+		b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(amount))
+	case "clear_condition":
+		switch def.ConditionID {
+		case gamepack.PoisonCondition:
+			b.clearActorStatus(target, statusPoison)
+		case gamepack.ParalysisCondition:
+			b.clearActorStatus(target, statusParalysis|statusPersistentParalysis)
+		}
+		b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(0))
+	case "escape_battle":
+		b.result, b.returnTown = 3, true
+		b.emitTextWithSFX(battleTextActorFled, b.soundCues.PlayerFled,
+			b.actorNameGlyphs(actor))
+	case "restore_mp_breakable":
+		amount := def.Amount
+		if def.AmountMax > def.Amount {
+			amount += b.rng.Next(def.AmountMax - def.Amount + 1)
+		}
+		mp := b.actorMP(target) + amount
+		if mp > b.actorMaxMP(target) {
+			mp = b.actorMaxMP(target)
+		}
+		b.setActorMP(target, mp)
+		if b.roll() <= def.BreakRollMax {
+			b.removeActorItemSlot(actor, cmd.itemSlot)
+		}
+		b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(amount))
+	case "revive":
+		_, max := b.actorHP(target)
+		b.setActorHP(target, max)
+		b.clearActorStatus(target, statusPersistentParalysis|statusParalysis)
+		b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(max))
+	default:
+		b.emitText(battleTextItemEmpty)
+	}
 }
 
 func (b *Battle) actorHP(i int) (cur, max int) {
@@ -859,7 +982,7 @@ func emptyCommands(n int) []battleCommand {
 
 func (b *Battle) resetCommandRound() {
 	b.commands = emptyCommands(1 + len(b.companions))
-	b.commandActor, b.cursor, b.spellCursor = 0, 0, 0
+	b.commandActor, b.cursor, b.spellCursor, b.itemCursor = 0, 0, 0, 0
 	// 隊長死亡且所有仍存活同伴都處於睡眠／混亂時，沒有人可以下令。
 	// 不可退回已死亡 actor 0 的命令窗；直接以空命令結算敵方回合，待回合
 	// 訊息播放完後再重新判斷是否已有可動隊員。
@@ -888,13 +1011,43 @@ func (b *Battle) aliveActorIndices() []int {
 	return out
 }
 
+func (b *Battle) allActorIndices() []int {
+	out := make([]int, 1+len(b.companions))
+	for i := range out {
+		out[i] = i
+	}
+	return out
+}
+
+func (b *Battle) allyTargetIndices() []int {
+	if b.pending.kind == bcItem {
+		if def, ok := b.battleItems[b.pending.itemRaw]; ok && def.Kind == "revive" {
+			return b.allActorIndices()
+		}
+	}
+	return b.aliveActorIndices()
+}
+
 func (b *Battle) beginTarget(cmd battleCommand, from battlePhase) {
 	b.pending, b.targetFrom, b.targetCursor = cmd, from, 0
 	switch cmd.kind {
 	case bcWar:
 		b.phase = phTargetEnemy
 	case bcItem:
-		b.phase = phTargetAlly
+		def, ok := b.battleItems[cmd.itemRaw]
+		if !ok {
+			b.queueCommand(cmd)
+			return
+		}
+		switch def.TargetScope {
+		case "enemy_one":
+			b.phase = phTargetEnemy
+		case "ally_one":
+			b.phase = phTargetAlly
+		default:
+			cmd.target = b.commandActor
+			b.queueCommand(cmd)
+		}
 	case bcSpell:
 		def, ok := spell.GetDef(cmd.spell)
 		if !ok {
@@ -1034,6 +1187,13 @@ func (b *Battle) input(in InputState) (closed bool) {
 					b.emitText(battleTextNoSpell, b.actorNameGlyphs(b.commandActor))
 					b.phase = phMessage
 				}
+			} else if kind == bcItem {
+				if len(b.actorItems(b.commandActor)) > 0 {
+					b.itemCursor, b.phase = 0, phItem
+				} else {
+					b.emitText(battleTextItemEmpty)
+					b.phase = phMessage
+				}
 			} else {
 				b.beginTarget(battleCommand{kind: kind, target: -1}, phCommand)
 			}
@@ -1066,6 +1226,24 @@ func (b *Battle) input(in InputState) (closed bool) {
 		case in.DirEdge == 1:
 			b.spellCursor = (b.spellCursor + len(spells) - 1) % len(spells)
 		}
+	case phItem:
+		items := b.actorItems(b.commandActor)
+		confirm := in.Confirm
+		if tapIdx >= 0 && tapIdx < len(items) {
+			b.itemCursor, confirm = tapIdx, true
+		}
+		switch {
+		case in.Cancel:
+			b.phase = phCommand
+		case confirm:
+			slot := items[b.itemCursor]
+			b.beginTarget(battleCommand{kind: bcItem, itemRaw: slot.rawID,
+				itemSlot: b.itemCursor, target: -1}, phItem)
+		case in.DirEdge == 0:
+			b.itemCursor = (b.itemCursor + 1) % len(items)
+		case in.DirEdge == 1:
+			b.itemCursor = (b.itemCursor + len(items) - 1) % len(items)
+		}
 	case phTargetEnemy:
 		targets := b.aliveEnemyIndices()
 		if len(targets) == 0 {
@@ -1087,7 +1265,7 @@ func (b *Battle) input(in InputState) (closed bool) {
 			b.targetCursor = moveTargetCursor(b.targetCursor, len(targets), in.DirEdge)
 		}
 	case phTargetAlly:
-		targets := b.aliveActorIndices()
+		targets := b.allyTargetIndices()
 		if len(targets) == 0 {
 			b.resolveRound()
 			break
@@ -1174,23 +1352,10 @@ func (b *Battle) execTurn() {
 		// miss record here; an unverified message is worse than silence.
 	case bcDef: // 防御(本回合受傷減半)
 		b.defending = true
-	case bcItem: // 道具:用藥草回 HP
-		target := b.actionTarget
-		if target < 0 || target >= 1+len(b.companions) || !b.actorAlive(target) {
-			target = 0
-		}
-		cur, max := b.actorHP(target)
-		if b.usedHerbs < b.heroHerbs && cur < max {
-			heal := herbHeal
-			if cur+heal > max {
-				heal = max - cur
-			}
-			b.setActorHP(target, cur+heal)
-			b.usedHerbs++
-			b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(heal))
-		} else {
-			b.emitText(battleTextItemEmpty)
-		}
+	case bcItem:
+		cmd := b.commands[b.actionActor]
+		cmd.target = b.actionTarget
+		b.execBattleItem(b.actionActor, cmd)
 	default: // 戰う：使用已選敵方目標；若目標先被擊倒則退到下一個存活敵。
 		tgt := b.actionTarget
 		if tgt < 0 || tgt >= len(b.enemies) || !b.enemies[tgt].alive() {
@@ -1623,22 +1788,7 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 	case bcDef:
 		c.defending = true
 	case bcItem:
-		target := cmd.target
-		if target < 0 || target >= 1+len(b.companions) || !b.actorAlive(target) {
-			target = i + 1
-		}
-		cur, max := b.actorHP(target)
-		if b.usedHerbs < b.heroHerbs && cur < max {
-			heal := herbHeal
-			if cur+heal > max {
-				heal = max - cur
-			}
-			b.setActorHP(target, cur+heal)
-			b.usedHerbs++
-			b.emitText(battleTextActorHealed, b.actorNameGlyphs(target), digitGlyphs(heal))
-		} else {
-			b.emitText(battleTextItemEmpty)
-		}
+		b.execBattleItem(i+1, cmd)
 	case bcSpell:
 		b.execSpell(cmd.spell)
 	default:
@@ -1972,6 +2122,12 @@ func (b *Battle) drawName(rgba []byte, x, y, rec int, fg dq3data.Color) {
 	}
 }
 
+func (b *Battle) drawItemName(rgba []byte, x, y, rawID int, fg dq3data.Color) {
+	for i, glyph := range itemNameGlyphs(b.nameText, rawID) {
+		drawGlyph(rgba, b.nameText, x+i*dq3data.GlyphPx, y, glyph, fg)
+	}
+}
+
 // draw 畫整個戰鬥畫面到 rgba,1:1 對齊 C render():上狀態列 / 中怪群站綠地 / 下左指令 + 下右敵名。
 func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 	white := dq3data.Color{R: 248, G: 248, B: 248}
@@ -2134,7 +2290,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 			drawCol(tx0+(i+1)*colpx, classNames[c.class], c.hp, c.mp, c.level, c.hp > 0)
 		}
 		if b.phase == phTargetAlly {
-			for pos, actor := range b.aliveActorIndices() {
+			for pos, actor := range b.allyTargetIndices() {
 				cx := tx0 + actor*colpx
 				if pos == b.targetCursor {
 					drawGlyph(rgba, b.tx, cx-16, ty0, curGlyph, white)
@@ -2169,6 +2325,8 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 					if rows > 5 {
 						rows = 5
 					}
+				case phItem:
+					rows = len(b.actorItems(b.commandActor))
 				}
 				if rows < 1 {
 					rows = 1
@@ -2196,6 +2354,15 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 					}
 					b.hits.add(mx, y-4, mw, rowHeight, i)
 				}
+			} else if b.phase == phItem {
+				for i, item := range b.actorItems(b.commandActor) {
+					y := my + rowInsetY + i*rowHeight
+					if i == b.itemCursor {
+						drawGlyph(rgba, b.tx, mx+cursorInsetX, y, curGlyph, white)
+					}
+					b.drawItemName(rgba, mx+labelInsetX, y, item.rawID, white)
+					b.hits.add(mx, y-4, mw, rowHeight, i)
+				}
 			} else if b.phase == phTargetEnemy {
 				targets := b.aliveEnemyIndices()
 				if len(targets) > 0 {
@@ -2206,7 +2373,7 @@ func (b *Battle) draw(rgba []byte, scenePal []dq3data.Color) {
 					drawNumber(rgba, b.tx, mx+valueInsetX, y, target+1, cyan)
 				}
 			} else if b.phase == phTargetAlly {
-				targets := b.aliveActorIndices()
+				targets := b.allyTargetIndices()
 				if len(targets) > 0 {
 					actor := targets[b.targetCursor]
 					y := my + rowInsetY

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.43",
+  "schema_version": "0.1.44",
   "source_files": [
     {
       "path": "assets_raw/DQ3.EXE",
@@ -643,6 +643,64 @@
         "consumer": "action3 writes character +0x38 bit0x10; both command paths exclude mask0xb0; battle exit initializes shared counter0x28 and field-step sub_19530 calls sub_19810 to clear bit0x10 from every party member",
         "doc": "docs/152-special-physical-paralysis-spec.md"
       }
+    }
+  ],
+  "items": [
+    {
+      "item_raw_id": 65,
+      "kind": "heal_hp",
+      "target_scope": "ally_one",
+      "amount": 30,
+      "amount_max": 39,
+      "consume": true,
+      "evidence": {"level":"D2","source_kind":"exe","source":"DQ3.EXE","address_space":"logical","address":"0x3db9..0x3dc2; 0x4cf9..0x4d14","consumer":"sub_1B95C dispatches item 0x41 to sub_13DB9; sub_14CF9 removes the selected owner slot before sub_146EB heals 30..39 HP","doc":"docs/179-battle-item-selector-runtime-spec.md"}
+    },
+    {
+      "item_raw_id": 66,
+      "kind": "clear_condition",
+      "target_scope": "ally_one",
+      "condition_id": "common:condition.poison",
+      "consume": true,
+      "evidence": {"level":"D2","source_kind":"exe","source":"DQ3.EXE","address_space":"logical","address":"0x3dc3..0x3dcf; 0x469f..0x46ea","consumer":"sub_13DC3 consumes the selected slot and clears actor status mask 0x40 through sub_1469F","doc":"docs/179-battle-item-selector-runtime-spec.md"}
+    },
+    {
+      "item_raw_id": 67,
+      "kind": "escape_battle",
+      "target_scope": "self",
+      "consume": true,
+      "evidence": {"level":"D2","source_kind":"exe","source":"DQ3.EXE","address_space":"logical","address":"0x3dd0..0x3ddc; 0x4a8c..0x4ab4","consumer":"sub_13DD0 consumes the selected slot, invokes the common return transition and sets DS:0x072e","doc":"docs/179-battle-item-selector-runtime-spec.md"}
+    },
+    {
+      "item_raw_id": 68,
+      "kind": "no_effect",
+      "target_scope": "ally_one",
+      "consume": true,
+      "evidence": {"level":"D2","source_kind":"exe","source":"DQ3.EXE","address_space":"logical","address":"0x3ddd..0x3e02","consumer":"sub_13DDD consumes item 0x44; battle-state branch only emits record 0x269 and performs no field repel mutation","doc":"docs/179-battle-item-selector-runtime-spec.md"}
+    },
+    {
+      "item_raw_id": 69,
+      "kind": "clear_condition",
+      "target_scope": "ally_one",
+      "condition_id": "common:condition.paralysis",
+      "consume": true,
+      "evidence": {"level":"D2","source_kind":"exe","source":"DQ3.EXE","address_space":"logical","address":"0x3e15..0x3e21; 0x469f..0x46ea","consumer":"sub_13E15 consumes the selected slot and clears actor status mask 0x10 through sub_1469F","doc":"docs/179-battle-item-selector-runtime-spec.md"}
+    },
+    {
+      "item_raw_id": 72,
+      "kind": "restore_mp_breakable",
+      "target_scope": "self",
+      "amount": 22,
+      "amount_max": 31,
+      "break_roll_max": 64,
+      "consume": false,
+      "evidence": {"level":"D2","source_kind":"exe","source":"DQ3.EXE","address_space":"logical","address":"0x3e40..0x3e46; 0x473f..0x479b","consumer":"sub_1473F restores selected actor MP by rejection-sampled 22..31 and removes item 0x48 only when RNG byte <=0x40","doc":"docs/179-battle-item-selector-runtime-spec.md"}
+    },
+    {
+      "item_raw_id": 76,
+      "kind": "revive",
+      "target_scope": "ally_one",
+      "consume": true,
+      "evidence": {"level":"D2","source_kind":"exe","source":"DQ3.EXE","address_space":"logical","address":"0x3e82..0x3e91; 0x469f..0x46ea","consumer":"sub_13E82 consumes the selected slot, clears death mask 0x80, restores max HP and calls the battle refresh consumer","doc":"docs/179-battle-item-selector-runtime-spec.md"}
     }
   ],
   "monster_actions": [

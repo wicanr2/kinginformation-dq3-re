@@ -2134,7 +2134,7 @@ func (g *Game) startEncounter() {
 	}
 	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells(),
-		conditions: g.heroConditions}
+		conditions: g.heroConditions, items: g.battleItemSlots(0)}
 	comps := g.buildCompanionActors()
 	region := g.encounters.Region(g.px, g.py)
 	slot := g.encounters.Slot(region, g.prng.Next(4))
@@ -2214,7 +2214,7 @@ func (g *Game) startBossBattle(monID int) bool {
 	}
 	hp := heroParams{level: level, curHP: g.heroHP, maxHP: maxHP, atk: atk, def: def, agi: agi,
 		herbs: g.countPartyItem(herbCode), mp: g.heroMP, maxMP: maxMP, spells: g.heroSpells(),
-		conditions: g.heroConditions}
+		conditions: g.heroConditions, items: g.battleItemSlots(0)}
 	g.battle.lightOrb = monID == 0x7c && g.hasPartyItem(itemLightOrb) // 隊伍持光之珠 → 索瑪二階段弱化
 	g.battle.showInfo = g.cfg.CombatInfo
 	g.battle.hurtFxFrames = hurtFxFrames(g.cfg.CombatHurtFx)
@@ -2487,12 +2487,13 @@ func (g *Game) removePartyItems(code, n int) {
 // buildCompanionActors:把同伴 Member 轉成戰鬥即時 actor(數值由職業成長表 + 裝備推導)。
 func (g *Game) buildCompanionActors() []*battleActor {
 	var out []*battleActor
-	for _, m := range g.companions {
+	for actor, m := range g.companions {
 		out = append(out, &battleActor{
 			name: classNames[m.Class], class: m.Class, level: m.Level(),
 			hp: m.CurHP, maxHP: m.MaxHP(), mp: m.CurMP, maxMP: m.MaxMP(),
 			atk: m.Atk(g.shop.items), def: m.Def(g.shop.items), agi: m.Agi(),
 			spells: m.Spells(),
+			items:  g.battleItemSlots(actor + 1),
 			status: func() int {
 				status := 0
 				if m.Conditions&conditionPoison != 0 {
@@ -2508,9 +2509,40 @@ func (g *Game) buildCompanionActors() []*battleActor {
 	return out
 }
 
+func (g *Game) battleItemSlots(actor int) []battleItemSlot {
+	var out []battleItemSlot
+	if items := g.equipActorInventory(actor); items != nil {
+		for _, rawID := range *items {
+			out = append(out, battleItemSlot{rawID: rawID})
+		}
+	}
+	if equipped := g.equipActorSlots(actor); equipped != nil {
+		for _, rawID := range equipped {
+			if rawID >= 0 {
+				out = append(out, battleItemSlot{rawID: rawID, equipped: true})
+			}
+		}
+	}
+	return out
+}
+
+func unequippedBattleItemIDs(items []battleItemSlot) []int {
+	out := make([]int, 0, len(items))
+	for _, item := range items {
+		if !item.equipped {
+			out = append(out, item.rawID)
+		}
+	}
+	return out
+}
+
 // onBattleEnd:戰鬥結束後把結果寫回全隊(HP/MP 持久、藥草扣除、勝利全隊加 exp/gold、升級全補、敗北回城復活)。
 func (g *Game) onBattleEnd() {
 	g.heroHP, g.heroMP = g.battle.heroHP, g.battle.heroMP
+	if g.battle.itemsReady {
+		g.inventory = unequippedBattleItemIDs(g.battle.heroItems)
+	}
+	returnTown := g.battle.returnTown
 	if g.battle.heroStatus&statusPoison != 0 {
 		g.heroConditions |= conditionPoison
 	} else {
@@ -2524,6 +2556,9 @@ func (g *Game) onBattleEnd() {
 	for i, c := range g.battle.companions { // 同步同伴 HP/MP
 		if i < len(g.companions) {
 			g.companions[i].CurHP, g.companions[i].CurMP = c.hp, c.mp
+			if g.battle.itemsReady {
+				g.companions[i].Inventory = unequippedBattleItemIDs(c.items)
+			}
 			if c.status&statusPoison != 0 {
 				g.companions[i].Conditions |= conditionPoison
 			} else {
@@ -2544,9 +2579,6 @@ func (g *Game) onBattleEnd() {
 		}
 	} else {
 		g.paralysisSteps = 0
-	}
-	if g.battle.usedHerbs > 0 { // 扣掉戰鬥中用掉的藥草
-		g.removePartyItems(herbCode, g.battle.usedHerbs)
 	}
 	if g.battle.result == 1 { // 勝:全隊加 exp/gold
 		oldLv := stats.LevelForExp(0, g.heroExp)
@@ -2581,6 +2613,13 @@ func (g *Game) onBattleEnd() {
 				g.noticeCode, g.noticeTimer = g.battle.gotDrop, 120
 			}
 		}
+	}
+	if returnTown {
+		dest := 0
+		if g.layer == 1 {
+			dest = 79
+		}
+		g.enterTownCty(dest)
 	}
 	g.settleMirrorBattle()
 	g.settleBossSurrenderBattle()
@@ -3035,6 +3074,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.dlg.layout = pack.DialogueWindowLayout()
 	g.battle.setTextDefinitions(battleDefs)
 	g.battle.setMonsterActions(pack.MonsterActionDefinitions())
+	g.battle.setBattleItems(pack.BattleItemDefinitions())
 	g.battle.setMessageLayout(battleMessageLayout)
 	g.battle.setCommandLayout(battleCommandLayout)
 	g.battle.setEnemyLayout(battleEnemyLayout)

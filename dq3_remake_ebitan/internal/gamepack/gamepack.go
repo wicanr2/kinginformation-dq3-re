@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.43"
+	SchemaVersion       = "0.1.44"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -234,6 +234,21 @@ type BattleSoundCues struct {
 	PlayerPhysical      BattleSoundSequence `json:"player_physical"`
 }
 
+// BattleItemDefinition binds one version-owned item ID to a finite battle
+// primitive. The shared engine never guesses an effect from the raw ID.
+type BattleItemDefinition struct {
+	ItemRawID      int      `json:"item_raw_id"`
+	Kind           string   `json:"kind"`
+	TargetScope    string   `json:"target_scope"`
+	Amount         int      `json:"amount,omitempty"`
+	AmountMax      int      `json:"amount_max,omitempty"`
+	BreakRollMax   int      `json:"break_roll_max,omitempty"`
+	ConditionID    string   `json:"condition_id,omitempty"`
+	SpellRecordRaw int      `json:"spell_record_raw,omitempty"`
+	Consume        bool     `json:"consume"`
+	Evidence       Evidence `json:"evidence"`
+}
+
 // BattlePackData is the E2 production contract for statically confirmed battle
 // inputs. SoundCues contains only call-sites whose raw cue and driver wait are
 // closed; unproven action-frame and host wall-clock semantics remain excluded.
@@ -244,6 +259,7 @@ type BattlePackData struct {
 	Encounter      BattleEncounterData         `json:"encounter"`
 	Resistance     BattleResistanceData        `json:"resistance"`
 	Conditions     []BattleConditionDefinition `json:"conditions"`
+	Items          []BattleItemDefinition      `json:"items"`
 	MonsterActions []MonsterActionDefinition   `json:"monster_actions"`
 	SoundCues      BattleSoundCues             `json:"sound_cues"`
 	Evidence       Evidence                    `json:"evidence"`
@@ -4660,6 +4676,54 @@ func (p *Pack) validateBattlePack() error {
 		paralysis.SuppressWorldStateMask != 0 {
 		return fmt.Errorf("%s must be persistent with the original shared 0x28-step clear", ParalysisCondition)
 	}
+	seenItems := make(map[int]bool, len(b.Items))
+	for i, item := range b.Items {
+		if item.ItemRawID < 0 || item.ItemRawID >= 128 || seenItems[item.ItemRawID] {
+			return fmt.Errorf("battle items[%d] has invalid or duplicate item_raw_id", i)
+		}
+		switch item.TargetScope {
+		case "self", "ally_one", "enemy_one":
+		default:
+			return fmt.Errorf("battle items[%d] has unsupported target_scope %q", i, item.TargetScope)
+		}
+		switch item.Kind {
+		case "heal_hp":
+			if item.Amount <= 0 || item.AmountMax < item.Amount || item.TargetScope != "ally_one" || !item.Consume {
+				return fmt.Errorf("battle items[%d] has invalid heal_hp fields", i)
+			}
+		case "clear_condition":
+			if item.ConditionID == "" || item.TargetScope != "ally_one" || !item.Consume {
+				return fmt.Errorf("battle items[%d] has invalid clear_condition fields", i)
+			}
+			if _, ok := conditions[item.ConditionID]; !ok {
+				return fmt.Errorf("battle items[%d] references unknown condition %q", i, item.ConditionID)
+			}
+		case "cast_spell":
+			if item.SpellRecordRaw <= 0 {
+				return fmt.Errorf("battle items[%d] has invalid cast_spell record", i)
+			}
+		case "no_effect":
+		case "escape_battle":
+			if item.TargetScope != "self" || !item.Consume {
+				return fmt.Errorf("battle items[%d] has invalid escape_battle fields", i)
+			}
+		case "restore_mp_breakable":
+			if item.TargetScope != "self" || item.Amount <= 0 || item.AmountMax < item.Amount ||
+				item.BreakRollMax < 0 || item.BreakRollMax > 255 || item.Consume {
+				return fmt.Errorf("battle items[%d] has invalid restore_mp_breakable fields", i)
+			}
+		case "revive":
+			if item.TargetScope != "ally_one" || !item.Consume {
+				return fmt.Errorf("battle items[%d] has invalid revive fields", i)
+			}
+		default:
+			return fmt.Errorf("battle items[%d] has unsupported kind %q", i, item.Kind)
+		}
+		if err := validateEvidence(item.Evidence); err != nil {
+			return fmt.Errorf("battle items[%d] evidence: %w", i, err)
+		}
+		seenItems[item.ItemRawID] = true
+	}
 	seenActionBits := make(map[int]bool, len(b.MonsterActions))
 	for i, action := range b.MonsterActions {
 		if action.MaskBit < 0 || action.MaskBit >= 48 || action.ActionRaw < 0 ||
@@ -4907,6 +4971,10 @@ func (p *Pack) ConditionDefinition(id string) (BattleConditionDefinition, bool) 
 
 func (p *Pack) MonsterActionDefinitions() []MonsterActionDefinition {
 	return append([]MonsterActionDefinition(nil), p.Battle.MonsterActions...)
+}
+
+func (p *Pack) BattleItemDefinitions() []BattleItemDefinition {
+	return append([]BattleItemDefinition(nil), p.Battle.Items...)
 }
 
 func (p *Pack) BattleSoundCues() BattleSoundCues { return p.Battle.SoundCues }

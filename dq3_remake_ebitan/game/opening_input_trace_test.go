@@ -6465,6 +6465,14 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 		}
 		return false
 	}
+	herbSlot := func(actor int) int {
+		for i, item := range g.battle.actorItems(actor) {
+			if item.rawID == herbCode && !item.equipped {
+				return i
+			}
+		}
+		return -1
+	}
 	// 舊預算 8192 已涵蓋沒有逐 cue wait 的長戰。docs/150、151 接入後，玩家物理 miss
 	// 是最長單一結果：cue6／cue11 各 11 frame，再接 cue3 的 14 frame。因此以每次語意
 	// 確認最大 1+36 frame 膨脹原預算；正常命中為 22+11，敵方命中為 11+11，均在此界內。
@@ -6545,7 +6553,7 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 				// 先以正式咒文救治，下一回合再由首位送出逃跑。
 				wantedSpell = bestHealSpell(g.battle.commandActor)
 				wantCommand = bcSpell
-			case needHeal && !preserveMP && g.battle.usedHerbs < usableHerbs:
+			case needHeal && !preserveMP && herbSlot(g.battle.commandActor) >= 0:
 				wantCommand = bcItem
 			case needFlee:
 				// 高危遭遇的正式玩家策略是先嘗試逃跑；若先治療，
@@ -6575,7 +6583,7 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 				// 沒有補血咒文的魔法使者不要搶用共享藥草；讓有
 				// 荷依米的同伴在本回合處理最低 HP 目標。
 				wantCommand = bcWar
-			case needHeal && finalBoss && g.battle.usedHerbs < usableHerbs:
+			case needHeal && finalBoss && herbSlot(g.battle.commandActor) >= 0:
 				// 正式隊伍藥草是可跨戰保留的資源；終盤先用道具，
 				// 將 MP 留給封咒與後續敵人。
 				wantCommand = bcItem
@@ -6622,6 +6630,16 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) {
 				if wantedSpell == 151 {
 					attackBuffAttempted = true
 				}
+				in.Confirm = true
+			}
+		case phItem:
+			want := herbSlot(g.battle.commandActor)
+			if want < 0 {
+				t.Fatalf("正式戰鬥進入道具選單但 actor %d 沒有藥草", g.battle.commandActor)
+			}
+			if g.battle.itemCursor != want {
+				in.DirEdge = 0
+			} else {
 				in.Confirm = true
 			}
 		case phTargetAlly:
