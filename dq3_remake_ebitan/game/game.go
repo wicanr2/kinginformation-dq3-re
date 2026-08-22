@@ -1550,6 +1550,11 @@ func (g *Game) enterTownCty(cty int) {
 		g.towns[cty] = s
 		sc = s
 	}
+	// 原版 vehicle mode1 進入地表物件／城鎮時，船停在入口 world tile，
+	// 城內切回徒步；出城回到同一 tile 時再恢復乘船。兩個地表層共用此交易。
+	if g.shipAboard {
+		g.shipX, g.shipY, g.shipAboard = g.px, g.py, false
+	}
 	g.overPx, g.overPy = g.px, g.py
 	g.town, g.cur, g.inTown, g.curCty = sc, sc, true, cty
 	switch cty { // 進城推進主線里程碑(移植 main.c cur_cty 判定)
@@ -2064,7 +2069,7 @@ func (g *Game) exitTown() {
 	g.resetPartyTrail()
 	// 從船上世界物件回到地表時，出口可能與停泊船是同一座標。此時恢復
 	// vehicle mode1；否則玩家會被放在不可步行的水格且無法重新踏上船。
-	if g.shipOwned && g.layer == 0 && g.px == g.shipX && g.py == g.shipY {
+	if g.shipOwned && g.px == g.shipX && g.py == g.shipY {
 		g.shipAboard = true
 	}
 	g.cd = moveCooldown

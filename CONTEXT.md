@@ -8,7 +8,7 @@
 bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界見 `docs/135`。
 
 2026-08-23 最後功能順序：戰鬥道具、原始怪物表 39/39 實際 action 與野外輔助咒文
-`rec166–171` 與一般商店賣出已完成；目前進入船進城，其後為必要選單／玩家可見支線。每項固定走
+`rec166–171`、一般商店賣出與船進城載具交易已完成；目前進入必要選單／玩家可見支線。每項固定走
 RE→IDA Pro 9.4／IDAPython→spec→implement。PCM hardware wall-clock、DAC／PIT／DMA
 屬平台規格，引用 Wiki／datasheet／成熟模擬器並採可重現近似，不再深挖遊戲 driver。
 

@@ -83,8 +83,8 @@ selector 啟動，不再落回 generic 草地；目前只有 D2／runtime V1，�
 2. ~~原始怪物表實際使用的 action。~~ 已完成 39/39 definition，並移除 `MonsterSpellRec` 猜測 fallback。
 3. ~~由 field caster 原始 descriptor 證實的剩餘野外咒文。~~ 已完成。
 4. ~~一般商店賣出、售價與裝備交易。~~ 已完成；瑪依拉特店列入第 6 項支線。
-5. **目前工作：**船直接進城時的停泊／離船／出城復船狀態。
-6. 必要的狀況／道具／裝備子選單與確有玩家可見差異的支線語意。
+5. ~~船直接進城時的停泊／離船／出城復船狀態。~~ 已完成。
+6. **目前工作：**必要的狀況／道具／裝備子選單與確有玩家可見差異的支線語意。
 
 每項均以 IDA Pro 9.4／IDAPython 的有限 caller→writer→consumer 證據寫 spec 後才實作；
 不逐行翻譯 DQ3.EXE。PCM hardware wall-clock、DAC、PIT、DMA 與 Sound Blaster 標準時序

@@ -1383,3 +1383,11 @@ IDA Pro 9.4 已閉合角色 item slot → ITEM price → `price/2 + price/4` →
 零價物品失敗即關閉。schema `0.1.47`／content `0.1.52`，證據與瑪依拉特店停止線見
 `docs/182-shop-sell-runtime-spec.md`。下一項是船進城；`DGROUP 0x0b62=1` 特店與王者之劍
 保留到必要支線，不冒稱一般商店完成即代表該支線 E3。
+
+## 2026-08-23 current checkpoint：船進城載具交易 D2／E2
+
+一般 CTY 載入成功後，若玩家仍在船上，現在會把船停到入口 world tile、城內切回徒步；
+出城回到同一格時恢復乘船。原先只允許 layer0 restoration 的限制已移除，地表 CTY38 與
+下層 CTY85 的正式 `enterTownCty`／`exitTown` component trace 均通過。證據等級與未冒稱的
+普通 CTY IDA caller 限制見 `docs/183-ship-town-entry-transaction.md`。下一項是必要選單與
+玩家可見支線盤點。

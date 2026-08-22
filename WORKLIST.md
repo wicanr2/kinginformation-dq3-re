@@ -9,8 +9,8 @@
 | 2 | 原始怪物表實際使用的 action | 完成（39/39 definitions，D2／E2） | [`docs/180`](docs/180-monster-action-runtime-spec.md) |
 | 3 | 剩餘合法野外咒文 | 完成（D3／E2） | [`docs/181`](docs/181-field-support-spells-runtime-spec.md) |
 | 4 | 商店賣出／售價／裝備交易 | 完成（一般店 D3／E2） | [`docs/182`](docs/182-shop-sell-runtime-spec.md) |
-| 5 | 船直接進城／離船／出城復船 | **進行中：下一項** | world transition caller |
-| 6 | 必要選單與玩家可見支線 | 待盤點後逐項閉合 | 含瑪依拉特店 selector／王者之劍；只接受正常玩家路徑 discrepancy |
+| 5 | 船直接進城／離船／出城復船 | 完成（D2／E2） | [`docs/183`](docs/183-ship-town-entry-transaction.md) |
+| 6 | 必要選單與玩家可見支線 | **進行中：下一項，先盤點** | 含瑪依拉特店 selector／王者之劍；只接受正常玩家路徑 discrepancy |
 
 不屬於功能完成 gate：全遊戲逐畫面 V3、DOS PCM/DAC/PIT wall-clock 深挖、未被原始資料
 使用的 helper/action。這些只能由新的玩家可見差異或正式發行需求重新開啟。

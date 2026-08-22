@@ -22,8 +22,7 @@ cue9 特殊分支與 action3／持久麻痺已由
 戰鬥道具 selector／持有人／raw item dispatch／目標 UI 已由 `docs/179` 閉合；D3MNS 實際
 使用的 39 個 action 也由 `docs/180` 接入有限 primitive，並移除 `MonsterSpellRec` 猜測。
 
-現行最後功能順序的前四項已完成；目前依序為：船進城 →
-必要選單／玩家可見支線。每項先以 IDA Pro 9.4／IDAPython
+現行最後功能順序的前五項已完成；目前進入必要選單／玩家可見支線。每項先以 IDA Pro 9.4／IDAPython
 寫獨立 spec，再進 game pack 與 runtime；PCM hardware wall-clock、DAC／PIT／DMA 只採
 平台規格近似，不再當成遊戲 RE 或完成 gate。唯一 current plan 仍是根目錄 `docs/74`。
 先前船／地表追跡逾時與
