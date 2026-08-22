@@ -1374,4 +1374,12 @@ IDA Pro 9.4 已閉合六個合法 field handler。毒／麻痺解除、battle-on
 與解除詛咒均由 `spells.json` 的有限 primitive 接上正式咒文與目標選單；其中 rec169 精確為
 `rng(100) >= 50` 才滿 HP 復活，rec170 則跳過亂數並回復半 HP。schema `0.1.46`／content
 `0.1.51`；針對性 `game`、`internal/gamepack`、`internal/spell` 測試通過。完整證據與停止線見
-`docs/181-field-support-spells-runtime-spec.md`。下一項是商店賣出。
+`docs/181-field-support-spells-runtime-spec.md`。一般商店賣出已由 `docs/182` 閉合；下一項是船進城。
+
+## 2026-08-23 current checkpoint：一般商店賣出 D3／E2
+
+IDA Pro 9.4 已閉合角色 item slot → ITEM price → `price/2 + price/4` → 確認後清 slot →
+加錢 writer。remake 由正常商店貨架進入選人／列物／二次確認，未裝備與裝備槽均可交易；
+零價物品失敗即關閉。schema `0.1.47`／content `0.1.52`，證據與瑪依拉特店停止線見
+`docs/182-shop-sell-runtime-spec.md`。下一項是船進城；`DGROUP 0x0b62=1` 特店與王者之劍
+保留到必要支線，不冒稱一般商店完成即代表該支線 E3。

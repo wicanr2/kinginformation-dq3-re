@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.46",
+  "schema_version": "0.1.47",
   "service_definitions": [
     {
       "id": "common:service.cure_poison",
@@ -56,5 +56,23 @@
         "doc": "docs/40-facility-shops.md#教會"
       }
     }
-  ]
+  ],
+  "shop_sell": {
+    "formula_id": "common:formula.purchase_price_ratio",
+    "numerator": 3,
+    "denominator": 4,
+    "zero_price_sellable": false,
+    "overrides": [
+      {"shop_kind": "special", "item_raw_id": 109, "price_gold": 22500}
+    ],
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "linear",
+      "address": "0x1783e..0x178a8",
+      "consumer": "selected ITEM price is halved then quartered and added; scripted special-shop mode raw0x6d override writes 0x57e4; confirmation clears item word before add-gold writer",
+      "doc": "docs/182-shop-sell-runtime-spec.md"
+    }
+  }
 }

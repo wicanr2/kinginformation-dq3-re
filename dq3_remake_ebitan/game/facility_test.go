@@ -52,6 +52,62 @@ func TestShopEightSlotWriterMatchesOriginal(t *testing.T) {
 	}
 }
 
+func TestShopSellUsesPackPriceAndRemovesOnlyAfterConfirm(t *testing.T) {
+	g := &Game{pack: loadTestPack(t), heroGold: 100, inventory: []int{0, 109}}
+	g.shop.items = loadTestItems(t)
+	g.shop.active, g.shop.kind, g.shop.stage = true, "weapon", shopSellItem
+	g.shop.sellActor, g.shop.sellCursor = 0, 0
+	price, ok := g.shopSellPrice(0)
+	if !ok || price != g.shop.items.Price(0)*3/4 {
+		t.Fatalf("一般售價=%d/%v，want ITEM price 的 3/4", price, ok)
+	}
+	before := append([]int(nil), g.inventory...)
+	if !g.sellShopItem(0, 0) || g.heroGold != 100+price || len(g.inventory) != 1 || g.inventory[0] != before[1] {
+		t.Fatalf("一般賣出交易錯誤: gold=%d inventory=%v", g.heroGold, g.inventory)
+	}
+	g.shop.kind = "special"
+	if special, ok := g.shopSellPrice(109); !ok || special != 22500 {
+		t.Fatalf("special raw0x6d 特價=%d/%v want 22500/true", special, ok)
+	}
+}
+
+func TestShopSellRejectsZeroPriceAndKeepsItem(t *testing.T) {
+	g := &Game{pack: loadTestPack(t), heroGold: 100, inventory: []int{127}}
+	g.shop.items = loadTestItems(t)
+	g.shop.kind = "item"
+	if g.shop.items.Price(127) != 0 {
+		t.Skip("ITEM fixture raw127 is not a zero-price record")
+	}
+	if g.sellShopItem(0, 0) || g.heroGold != 100 || len(g.inventory) != 1 {
+		t.Fatalf("零價物品不得出售: gold=%d inventory=%v", g.heroGold, g.inventory)
+	}
+}
+
+func TestShopSellEquippedItemClearsSlotAndRecalculatesThroughNormalStats(t *testing.T) {
+	g := &Game{pack: loadTestPack(t), heroGold: 0, equip: [4]int{1, -1, -1, -1}}
+	g.shop.items = loadTestItems(t)
+	g.shop.kind = "weapon"
+	price, ok := g.shopSellPrice(1)
+	if !ok || !g.sellShopItem(0, 0) || g.equip[0] != -1 || g.heroGold != price {
+		t.Fatalf("裝備賣出交易錯誤: price=%d/%v equip=%v gold=%d", price, ok, g.equip, g.heroGold)
+	}
+}
+
+func TestShopSellBytesMatchOriginal(t *testing.T) {
+	exe, err := os.ReadFile(filepath.Join(spineAssetsDir(t), "DQ3.EXE"))
+	if err != nil {
+		t.Skipf("original DQ3.EXE unavailable: %v", err)
+	}
+	for off, want := range map[int][]byte{
+		0x8be3: {0xd1, 0xe8, 0x8b, 0xd8, 0xd1, 0xe8, 0x03, 0xc3, 0xa3, 0x93, 0x25},
+		0x8c0e: {0xc7, 0x04, 0xff, 0x00, 0xa1, 0x93, 0x25, 0xe8, 0xb4, 0x10},
+	} {
+		if got := exe[off : off+len(want)]; !bytes.Equal(got, want) {
+			t.Fatalf("DQ3.EXE file %#x=%x want %x", off, got, want)
+		}
+	}
+}
+
 func TestCTY43ChurchBlockHasNoFacilityNPCConsumer(t *testing.T) {
 	g, err := NewGame(os.DirFS(spineAssetsDir(t)), nil)
 	if err != nil {

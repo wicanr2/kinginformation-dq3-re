@@ -54,7 +54,20 @@ type Shop struct {
 	pendingCode  int
 	targetCursor int
 	targetHits   hitList
+	kind         string
+	stage        shopStage
+	sellActor    int
+	sellCursor   int
 }
+
+type shopStage int
+
+const (
+	shopBrowse shopStage = iota
+	shopSellActor
+	shopSellItem
+	shopSellConfirm
+)
 
 // itemNameGlyphs 取道具 code 的品名 glyph 序列(D3TXT00 rec=code+1;跳過控制/插值碼)。
 // drawItemName 與對話插值 VAR_ITEM(dialogue.go varGlyphs)共用同一套查表,別各自重寫。
@@ -86,9 +99,13 @@ func (s *Shop) drawItemName(rgba []byte, x, y, code int, fg dq3data.Color) {
 	}
 }
 
-func (s *Shop) open(codes []int) {
+func (s *Shop) open(codes []int, kind ...string) {
 	s.codes, s.cursor, s.active, s.msg = codes, 0, true, ""
 	s.targeting, s.pendingCode, s.targetCursor = false, -1, 0
+	s.kind, s.stage, s.sellActor, s.sellCursor = "", shopBrowse, 0, 0
+	if len(kind) > 0 {
+		s.kind = kind[0]
+	}
 }
 
 // input 處理商店輸入;回傳 (buyCode, closed):buyCode>=0 表要買該 id。
@@ -103,6 +120,10 @@ func (s *Shop) input(in InputState) (buyCode int, closed bool) {
 	}
 	switch {
 	case in.Cancel:
+		if s.kind != "" {
+			s.stage, s.sellActor, s.sellCursor = shopSellActor, 0, 0
+			return -1, false
+		}
 		s.active = false
 		return -1, true
 	case confirm:

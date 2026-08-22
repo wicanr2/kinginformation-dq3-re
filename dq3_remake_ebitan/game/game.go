@@ -933,7 +933,11 @@ func (g *Game) openFacility(k int) {
 	case facWeapon, facItem: // 商店:開貨架(品項自全城品項池 itemOff..+count)
 		lo, hi := f.itemOff, f.itemOff+f.count
 		if lo >= 0 && hi <= len(shopItemPool) {
-			g.shop.open(append([]int(nil), shopItemPool[lo:hi]...))
+			kind := "item"
+			if f.typ == facWeapon {
+				kind = "weapon"
+			}
+			g.shop.open(append([]int(nil), shopItemPool[lo:hi]...), kind)
 		}
 	case facChurch:
 		g.church.open(g.shop.nameText)
@@ -1230,6 +1234,59 @@ func (g *Game) step(in InputState) error {
 	}
 	// 商店 modal:方向選、A 買、B 關
 	if g.shop.active {
+		if g.shop.stage == shopSellActor {
+			count := 1 + len(g.companions)
+			switch {
+			case in.Cancel:
+				g.shop.active = false
+			case in.Confirm:
+				if len(g.shopSellEntries(g.shop.sellActor)) > 0 {
+					g.shop.stage, g.shop.sellCursor = shopSellItem, 0
+				}
+			case in.DirEdge == 0:
+				g.shop.sellActor = (g.shop.sellActor + 1) % count
+			case in.DirEdge == 1:
+				g.shop.sellActor = (g.shop.sellActor + count - 1) % count
+			}
+			g.renderFrame()
+			return nil
+		}
+		if g.shop.stage == shopSellItem || g.shop.stage == shopSellConfirm {
+			items := g.shopSellEntries(g.shop.sellActor)
+			if len(items) == 0 {
+				g.shop.stage, g.shop.sellCursor = shopSellActor, 0
+				g.renderFrame()
+				return nil
+			}
+			if g.shop.sellCursor >= len(items) {
+				g.shop.sellCursor = len(items) - 1
+			}
+			if g.shop.stage == shopSellConfirm {
+				switch {
+				case in.Cancel:
+					g.shop.stage = shopSellItem
+				case in.Confirm:
+					if g.sellShopItem(g.shop.sellActor, g.shop.sellCursor) {
+						g.shop.stage = shopSellItem
+					}
+				}
+			} else {
+				switch {
+				case in.Cancel:
+					g.shop.stage, g.shop.sellCursor = shopSellActor, 0
+				case in.Confirm:
+					if _, ok := g.shopSellPrice(items[g.shop.sellCursor].code); ok {
+						g.shop.stage = shopSellConfirm
+					}
+				case in.DirEdge == 0:
+					g.shop.sellCursor = (g.shop.sellCursor + 1) % len(items)
+				case in.DirEdge == 1:
+					g.shop.sellCursor = (g.shop.sellCursor + len(items) - 1) % len(items)
+				}
+			}
+			g.renderFrame()
+			return nil
+		}
 		if g.shop.targeting {
 			count := 1 + len(g.companions)
 			confirm := in.Confirm
@@ -2797,7 +2854,15 @@ func (g *Game) renderFrame() {
 		g.dlg.draw(g.rgba, white)
 	}
 	if g.shop.active { // 商店
-		g.shop.draw(g.rgba, g.heroGold, white)
+		if g.shop.stage == shopSellActor {
+			g.shop.targeting, g.shop.targetCursor = true, g.shop.sellActor
+			g.drawShopTargets(g.rgba, white)
+			g.shop.targeting = false
+		} else if g.shop.stage == shopSellItem || g.shop.stage == shopSellConfirm {
+			g.drawShopSellItems(g.rgba, white)
+		} else {
+			g.shop.draw(g.rgba, g.heroGold, white)
+		}
 		g.drawShopTargets(g.rgba, white)
 	}
 	g.drawChurch(g.rgba, white)

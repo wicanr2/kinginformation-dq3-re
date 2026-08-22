@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.46"
+	SchemaVersion       = "0.1.47"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -313,9 +313,25 @@ type ServiceDefinition struct {
 	Evidence                   Evidence `json:"evidence"`
 }
 
+type ShopSellOverride struct {
+	ShopKind  string `json:"shop_kind"`
+	ItemRawID int    `json:"item_raw_id"`
+	PriceGold int    `json:"price_gold"`
+}
+
+type ShopSellRules struct {
+	FormulaID         string             `json:"formula_id"`
+	Numerator         int                `json:"numerator"`
+	Denominator       int                `json:"denominator"`
+	ZeroPriceSellable bool               `json:"zero_price_sellable"`
+	Overrides         []ShopSellOverride `json:"overrides"`
+	Evidence          Evidence           `json:"evidence"`
+}
+
 type Facilities struct {
 	SchemaVersion      string              `json:"schema_version"`
 	ServiceDefinitions []ServiceDefinition `json:"service_definitions"`
+	ShopSell           ShopSellRules       `json:"shop_sell"`
 }
 
 // FrameStyle 是版本專屬的視窗前景／內部色彩與邊線遮罩契約。原版 EGA 的
@@ -5004,7 +5020,46 @@ func (p *Pack) validateFacilities() error {
 		len(removeCurse.AffectedEquippedItemRawIDs) == 0 {
 		return fmt.Errorf("%s requires level_multiplier pricing and affected equipped item ids", RemoveCurseService)
 	}
+	sell := p.Facilities.ShopSell
+	if sell.FormulaID != "common:formula.purchase_price_ratio" || sell.Numerator <= 0 ||
+		sell.Denominator <= 0 || sell.Numerator > sell.Denominator || sell.Overrides == nil {
+		return errors.New("shop_sell requires purchase_price_ratio and a finite overrides array")
+	}
+	seenOverrides := map[string]bool{}
+	for i, override := range sell.Overrides {
+		key := fmt.Sprintf("%s:%d", override.ShopKind, override.ItemRawID)
+		if (override.ShopKind != "weapon" && override.ShopKind != "item" && override.ShopKind != "special") ||
+			override.ItemRawID < 0 || override.ItemRawID >= 128 || override.PriceGold <= 0 || seenOverrides[key] {
+			return fmt.Errorf("shop_sell overrides[%d] is invalid or duplicate", i)
+		}
+		seenOverrides[key] = true
+	}
+	if err := validateEvidence(sell.Evidence); err != nil {
+		return fmt.Errorf("shop_sell evidence: %w", err)
+	}
 	return nil
+}
+
+// ShopSellPrice applies only the selected pack's finite sale contract. A zero
+// purchase price is not silently made sellable unless the pack says so.
+func (p *Pack) ShopSellPrice(shopKind string, itemRawID, purchasePrice int) (int, bool) {
+	if p == nil || purchasePrice < 0 {
+		return 0, false
+	}
+	rules := p.Facilities.ShopSell
+	for _, override := range rules.Overrides {
+		if override.ShopKind == shopKind && override.ItemRawID == itemRawID {
+			return override.PriceGold, true
+		}
+	}
+	if purchasePrice == 0 && !rules.ZeroPriceSellable {
+		return 0, false
+	}
+	if rules.Denominator <= 0 {
+		return 0, false
+	}
+	price := purchasePrice * rules.Numerator / rules.Denominator
+	return price, price > 0 || rules.ZeroPriceSellable
 }
 
 // ReviveCost returns the original per-level revival cost. Levels outside the

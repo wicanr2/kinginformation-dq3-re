@@ -3,7 +3,7 @@
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
 > checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機三平台包與推廣片
 > 的唯一現行交付樹為 `dist-all/v0.1.34/`，版型與驗收見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
-> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.46`／content `0.1.51`：包含日夜原始
+> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.47`／content `0.1.52`：包含日夜原始
 > palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
 > 等待閘門；因此公開 v0.1.34 不能被描述為包含這些修正，
 > 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
@@ -82,8 +82,8 @@ selector 啟動，不再落回 generic 草地；目前只有 D2／runtime V1，�
 1. ~~戰鬥道具持有人、清單、目標與原版消耗時序。~~ 已完成。
 2. ~~原始怪物表實際使用的 action。~~ 已完成 39/39 definition，並移除 `MonsterSpellRec` 猜測 fallback。
 3. ~~由 field caster 原始 descriptor 證實的剩餘野外咒文。~~ 已完成。
-4. **目前工作：**商店賣出、售價、裝備與特殊交易。
-5. 船直接進城時的停泊／離船／出城復船狀態。
+4. ~~一般商店賣出、售價與裝備交易。~~ 已完成；瑪依拉特店列入第 6 項支線。
+5. **目前工作：**船直接進城時的停泊／離船／出城復船狀態。
 6. 必要的狀況／道具／裝備子選單與確有玩家可見差異的支線語意。
 
 每項均以 IDA Pro 9.4／IDAPython 的有限 caller→writer→consumer 證據寫 spec 後才實作；

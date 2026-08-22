@@ -415,6 +415,11 @@ validator 必須檢查怪物引用、數量上下限、權重非負、region 完
 | `service_definitions[].pricing` | object | 是 | `common:formula.level_table` 使用 level cap＋完整費用表；`common:formula.fixed` 只能提供非負 `fixed_gold`；`common:formula.level_multiplier` 只能提供正數 `gold_per_level`。三種形狀不可混用。 |
 | `service_definitions[].affected_equipped_item_raw_ids` | int[] | 解詛咒服務必填 | 由原始 metadata writer 證實、付款成功後移除的裝備 raw ID；不可由攻略補表。 |
 | `service_definitions[].evidence` | object | 是 | 公式／表來源；流程費用需 D3。 |
+| `shop_sell.formula_id` | string | 是 | 固定為有限公式 `common:formula.purchase_price_ratio`。 |
+| `shop_sell.numerator`／`denominator` | int | 是 | 售價比例；兩者皆須為正且 numerator 不大於 denominator。逐步位移造成的截斷差異必須由 parity test 鎖定。 |
+| `shop_sell.zero_price_sellable` | bool | 是 | 原始買價 0 是否可賣；不得由引擎猜預設。 |
+| `shop_sell.overrides[]` | object[] | 是 | `{shop_kind,item_raw_id,price_gold}` 的有限特殊模式 override；空陣列合法，未知 kind／raw ID 失敗即關閉。 |
+| `shop_sell.evidence` | object | 是 | slot→ITEM price→公式→確認後清 slot→加錢 writer 的 D3 證據。 |
 | `facilities[].id` | string | 是 | 場所內的設施實例 ID。 |
 | `service_id` | string | 是 | 例如 `common:service.inn`、`common:service.revive`。 |
 | `scene_id` | string | 是 | 所在場景。 |

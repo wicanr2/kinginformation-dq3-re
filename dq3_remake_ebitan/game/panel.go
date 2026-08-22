@@ -256,6 +256,79 @@ func (g *Game) purchaseShopItem(actor int) bool {
 	return true
 }
 
+type shopSellEntry struct {
+	code           int
+	inventoryIndex int
+	equipmentSlot  int
+}
+
+func (g *Game) shopSellEntries(actor int) []shopSellEntry {
+	items := g.equipActorInventory(actor)
+	equipment := g.equipActorSlots(actor)
+	if items == nil || equipment == nil {
+		return nil
+	}
+	out := make([]shopSellEntry, 0, len(*items)+len(equipment))
+	for index, code := range *items {
+		out = append(out, shopSellEntry{code: code, inventoryIndex: index, equipmentSlot: -1})
+	}
+	for slot, code := range equipment {
+		if code >= 0 {
+			out = append(out, shopSellEntry{code: code, inventoryIndex: -1, equipmentSlot: slot})
+		}
+	}
+	return out
+}
+
+func (g *Game) shopSellPrice(code int) (int, bool) {
+	if g.pack == nil || g.shop.items == nil || code < 0 {
+		return 0, false
+	}
+	return g.pack.ShopSellPrice(g.shop.kind, code, g.shop.items.Price(code))
+}
+
+func (g *Game) sellShopItem(actor, index int) bool {
+	entries := g.shopSellEntries(actor)
+	if index < 0 || index >= len(entries) {
+		return false
+	}
+	entry := entries[index]
+	price, ok := g.shopSellPrice(entry.code)
+	if !ok {
+		return false
+	}
+	if entry.inventoryIndex >= 0 {
+		items := g.equipActorInventory(actor)
+		*items = append((*items)[:entry.inventoryIndex], (*items)[entry.inventoryIndex+1:]...)
+	} else {
+		equipment := g.equipActorSlots(actor)
+		(*equipment)[entry.equipmentSlot] = -1
+	}
+	g.heroGold += price
+	return true
+}
+
+func (g *Game) drawShopSellItems(rgba []byte, white dq3data.Color) {
+	entries := g.shopSellEntries(g.shop.sellActor)
+	if entries == nil {
+		return
+	}
+	fillBox(rgba, 24, 24, ScreenW-48, ScreenH-96, white)
+	yellow := dq3data.Color{R: 255, G: 224, B: 32}
+	for i, entry := range entries {
+		code := entry.code
+		y := 40 + i*22
+		if i == g.shop.sellCursor {
+			drawGlyph(rgba, g.dlg.tx, 40, y, curGlyph, white)
+		}
+		g.shop.drawItemName(rgba, 64, y, code, white)
+		if price, ok := g.shopSellPrice(code); ok {
+			drawNumber(rgba, g.dlg.tx, 380, y, price, white)
+		}
+	}
+	drawNumber(rgba, g.dlg.tx, 64, ScreenH-84, g.heroGold, yellow)
+}
+
 func (g *Game) giveSelectedItem(target int) bool {
 	source := g.equipActorInventory(g.panelActor)
 	dest := g.equipActorInventory(target)
