@@ -360,18 +360,21 @@ loader 測試及至少一個 pack fixture。
 |---|---:|---:|---|
 | `field` | object[] | 是 | 原版野外 caster 可派發的 typed descriptor；不是戰鬥咒文表或兩者聯集。 |
 | `field[].record_raw` | int | 是 | 原版 D3TXT／descriptor record；DQ3 以 `record_raw-0x79` 定位三 byte descriptor。 |
-| `field[].effect_id` | string | 是 | 共用引擎 effect primitive；目前包含 `heal_hp` 與既有場景效果。 |
+| `field[].effect_id` | string | 是 | 共用引擎有限 primitive；包含 `heal_hp`、`cure_condition`、`wake_party`、`revive`、`remove_curse` 與既有場景效果。 |
 | `field[].mp_cost` | int | 是 | 原始 descriptor byte0，範圍 0..255。 |
 | `field[].base_amount` | int | 是 | 原始 descriptor byte1；無數值效果時必須為 0。 |
 | `field[].flags_raw` | int | 是 | 原始 descriptor byte2；typed scope 必須與 raw flags 一致。 |
 | `field[].descriptor_raw_hex` | string | 是 | 與上述三欄逐 byte 相等的六位十六進位字串；loader 會 fail closed 驗證。 |
 | `field[].target_scope` | enum | 是 | `none`、`party_member` 或 `party_all`；不可由 runtime 猜測。 |
-| `field[].amount_formula` | enum | `heal_hp` 必填 | `base_to_base_plus_9` 或 `full_hp`；非回復效果不得夾帶。 |
+| `field[].amount_formula` | enum | 回復／復活必填 | `base_to_base_plus_9`、`full_hp` 或 `half_hp`；其他效果不得夾帶。 |
+| `field[].condition_id` | string | `cure_condition` 必填 | 要清除的穩定 condition ID；目前只允許已閉合的 poison／paralysis。 |
+| `field[].success_roll_min` | int | 否 | `revive` 成功所需 `rng(100)` inclusive 下限；省略表示不擲亂數。不可用機率等價但比較方向相反的上界取代。 |
 | `field[].evidence` | object | 是 | 輸入檔／hash、位址空間、原始位址、consumer、推論等級與文件。 |
 
 現行 `spells.json` 只承載已閉合的野外 caster 定義。戰鬥咒文與習得表仍由既有原始 EXE
 oracle 驗證，尚未遷入此 JSON；不得在契約文件虛構 `schools` 或以 `field` 缺項作 Go
-fallback。rec161–165 的原始 descriptor、共用 HP writer 及公式見 `docs/171`。
+fallback。rec161–165 的原始 descriptor、共用 HP writer 及公式見 `docs/171`；rec166–171
+的 condition、復活亂數方向與解除詛咒交易見 `docs/181`。
 
 ### 6.4 `items.json`
 

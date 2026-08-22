@@ -13,6 +13,12 @@ import (
 // Raw records are test evidence only. Production dispatch reads them from the
 // selected game pack and must not gain a DQ3-specific Go fallback.
 const (
+	fieldKiarii   = 166
+	fieldKiaryku  = 167
+	fieldZameha   = 168
+	fieldZaoral   = 169
+	fieldZaoriku  = 170
+	fieldShanaku  = 171
 	fieldRura     = 172
 	fieldRemitto  = 173
 	fieldInpas    = 174
@@ -22,6 +28,82 @@ const (
 	fieldRemoaru  = 178
 	fieldAbakamu  = 179
 )
+
+func addSageFieldCaster(g *Game) *Member {
+	m := newMember([]int{1}, 5, 0, stats.ExpForLevel(5, 40))
+	m.CurMP = 99
+	g.companions = append(g.companions, m)
+	return m
+}
+
+func castTargetedFieldSpell(t *testing.T, g *Game, rec, target int) {
+	t.Helper()
+	openFieldSpellForRecord(t, g, rec)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, rec)
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if !g.fieldSpell.targeting {
+		t.Fatalf("rec%d 應進單體目標頁", rec)
+	}
+	g.fieldSpell.cursor = target
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+}
+
+func TestFieldSupportCureAndReviveTransactions(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	caster := addSageFieldCaster(g)
+	g.heroConditions = conditionPoison | conditionParalysis
+	g.paralysisSteps = 40
+	mp0 := caster.CurMP
+	castTargetedFieldSpell(t, g, fieldKiarii, 0)
+	if g.heroConditions&conditionPoison != 0 || g.heroConditions&conditionParalysis == 0 || caster.CurMP != mp0-3 {
+		t.Fatalf("rec166 交易錯誤: conditions=%#x mp=%d", g.heroConditions, caster.CurMP)
+	}
+	castTargetedFieldSpell(t, g, fieldKiaryku, 0)
+	if g.heroConditions&conditionParalysis != 0 || g.paralysisSteps != 0 || caster.CurMP != mp0-9 {
+		t.Fatalf("rec167 交易錯誤: conditions=%#x steps=%d mp=%d", g.heroConditions, g.paralysisSteps, caster.CurMP)
+	}
+	g.heroHP = 0
+	castTargetedFieldSpell(t, g, fieldZaoriku, 0)
+	_, maxHP, _, _, _ := g.heroStats()
+	if g.heroHP != maxHP/2 || caster.CurMP != mp0-29 {
+		t.Fatalf("rec170 應必定半 HP 復活: hp=%d/%d mp=%d", g.heroHP, maxHP, caster.CurMP)
+	}
+	g.heroHP = 0
+	for seed := uint16(0); ; seed++ {
+		g.prng.Seed(seed)
+		if g.prng.Next(100) >= 50 {
+			g.prng.Seed(seed)
+			break
+		}
+	}
+	castTargetedFieldSpell(t, g, fieldZaoral, 0)
+	if g.heroHP != maxHP || caster.CurMP != mp0-39 {
+		t.Fatalf("rec169 命中時應滿 HP 復活: hp=%d/%d mp=%d", g.heroHP, maxHP, caster.CurMP)
+	}
+}
+
+func TestFieldRemoveCurseUnequipsButKeepsItem(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	caster := addSageFieldCaster(g)
+	g.equip = [4]int{27, -1, -1, -1}
+	mp0 := caster.CurMP
+	castTargetedFieldSpell(t, g, fieldShanaku, 0)
+	if g.equip[0] != -1 || len(g.inventory) != 1 || g.inventory[0] != 27 || caster.CurMP != mp0-18 {
+		t.Fatalf("rec171 解除詛咒交易錯誤: equip=%v inventory=%v mp=%d", g.equip, g.inventory, caster.CurMP)
+	}
+}
+
+func TestFieldWakePartyConsumesMPWithoutInventingPersistentSleep(t *testing.T) {
+	g := fieldSpellGame(t, 1)
+	caster := addSageFieldCaster(g)
+	mp0 := caster.CurMP
+	openFieldSpellForRecord(t, g, fieldZameha)
+	g.fieldSpell.cursor = fieldSpellChoiceIndex(g, fieldZameha)
+	g.fieldSpellInput(InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
+	if g.fieldSpell.active || caster.CurMP != mp0-3 {
+		t.Fatalf("rec168 應完成 field 交易且只消耗 MP: active=%v mp=%d", g.fieldSpell.active, caster.CurMP)
+	}
+}
 
 func TestPersistentParalysisClearsWholePartyAfterFortySteps(t *testing.T) {
 	pack, err := gamepack.BuiltinDQ3()

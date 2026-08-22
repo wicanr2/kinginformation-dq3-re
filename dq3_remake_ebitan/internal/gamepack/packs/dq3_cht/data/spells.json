@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.45",
+  "schema_version": "0.1.46",
   "field": [
     {
       "record_raw": 161,
@@ -55,6 +55,71 @@
       "target_scope": "party_all",
       "amount_formula": "full_hp",
       "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28617; handler 0x1CC4F; writer 0x146EB","consumer":"game.fieldSpellInput heal_hp","doc":"docs/171-field-healing-spell-production-spec.md"}
+    },
+    {
+      "record_raw": 166,
+      "effect_id": "common:spell.cure_condition",
+      "mp_cost": 3,
+      "base_amount": 0,
+      "flags_raw": 11,
+      "descriptor_raw_hex": "03000b",
+      "target_scope": "party_member",
+      "condition_id": "common:condition.poison",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x2861a; handler 0x1cca8; writer 0x1469f","consumer":"game.applyFieldSupport cure_condition","doc":"docs/181-field-support-spells-runtime-spec.md"}
+    },
+    {
+      "record_raw": 167,
+      "effect_id": "common:spell.cure_condition",
+      "mp_cost": 6,
+      "base_amount": 0,
+      "flags_raw": 11,
+      "descriptor_raw_hex": "06000b",
+      "target_scope": "party_member",
+      "condition_id": "common:condition.paralysis",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x2861d; handler 0x1ccb2; writer 0x1469f","consumer":"game.applyFieldSupport cure_condition","doc":"docs/181-field-support-spells-runtime-spec.md"}
+    },
+    {
+      "record_raw": 168,
+      "effect_id": "common:spell.wake_party",
+      "mp_cost": 3,
+      "base_amount": 0,
+      "flags_raw": 17,
+      "descriptor_raw_hex": "030011",
+      "target_scope": "party_all",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28620; handler 0x1ccbc","consumer":"game.fieldSpellInput wake_party; original clears battle-only +0x38 bit0x20","doc":"docs/181-field-support-spells-runtime-spec.md"}
+    },
+    {
+      "record_raw": 169,
+      "effect_id": "common:spell.revive",
+      "mp_cost": 10,
+      "base_amount": 0,
+      "flags_raw": 11,
+      "descriptor_raw_hex": "0a000b",
+      "target_scope": "party_member",
+      "amount_formula": "full_hp",
+      "success_roll_min": 50,
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28623; handler 0x1cd04; writer 0x1ceae","consumer":"game.applyFieldSupport revive","doc":"docs/181-field-support-spells-runtime-spec.md"}
+    },
+    {
+      "record_raw": 170,
+      "effect_id": "common:spell.revive",
+      "mp_cost": 20,
+      "base_amount": 0,
+      "flags_raw": 11,
+      "descriptor_raw_hex": "14000b",
+      "target_scope": "party_member",
+      "amount_formula": "half_hp",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28626; handler 0x1cd0e; writer 0x1ceae","consumer":"game.applyFieldSupport revive","doc":"docs/181-field-support-spells-runtime-spec.md"}
+    },
+    {
+      "record_raw": 171,
+      "effect_id": "common:spell.remove_curse",
+      "mp_cost": 18,
+      "base_amount": 0,
+      "flags_raw": 18,
+      "descriptor_raw_hex": "120012",
+      "target_scope": "party_member",
+      "evidence": {"level":"D3","source_kind":"exe","source":"DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c","address_space":"linear","address":"0x28629; handler 0x1cd18","consumer":"game.unequipFirstCursedItem","doc":"docs/181-field-support-spells-runtime-spec.md"}
     },
     {
       "record_raw": 172,

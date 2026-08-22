@@ -7,8 +7,8 @@
 |---:|---|---|---|
 | 1 | 戰鬥道具 | 完成（D3／E2） | [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) |
 | 2 | 原始怪物表實際使用的 action | 完成（39/39 definitions，D2／E2） | [`docs/180`](docs/180-monster-action-runtime-spec.md) |
-| 3 | 剩餘合法野外咒文 | **進行中：下一項** | `fieldspell.go`、原始 field caster descriptor |
-| 4 | 商店賣出／售價／裝備交易 | 待辦 | `docs/156` 與商店 caller |
+| 3 | 剩餘合法野外咒文 | 完成（D3／E2） | [`docs/181`](docs/181-field-support-spells-runtime-spec.md) |
+| 4 | 商店賣出／售價／裝備交易 | **進行中：下一項** | `docs/156` 與商店 caller |
 | 5 | 船直接進城／離船／出城復船 | 待辦 | world transition caller |
 | 6 | 必要選單與玩家可見支線 | 待盤點後逐項閉合 | 只接受正常玩家路徑 discrepancy |
 

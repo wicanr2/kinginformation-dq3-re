@@ -185,6 +185,85 @@ func (g *Game) applyFieldHeal(choice fieldSpellChoice, target int) {
 	g.healFieldActor(target, choice.def)
 }
 
+func (g *Game) applyFieldSupport(choice fieldSpellChoice, target int) {
+	switch choice.def.EffectID {
+	case gamepack.FieldHealHP:
+		g.applyFieldHeal(choice, target)
+	case gamepack.FieldCureCondition:
+		if !g.fieldActorAlive(target) {
+			return
+		}
+		bit, ok := conditionBit(choice.def.ConditionID)
+		if !ok {
+			return
+		}
+		if target == 0 {
+			g.heroConditions &^= bit
+		} else {
+			g.companions[target-1].Conditions &^= bit
+		}
+		if bit == conditionParalysis && !g.partyHasCondition(conditionParalysis) {
+			g.paralysisSteps = 0
+		}
+	case gamepack.FieldRevive:
+		if g.fieldActorAlive(target) {
+			return
+		}
+		if choice.def.SuccessRollMin > 0 && g.prng.Next(100) < choice.def.SuccessRollMin {
+			return
+		}
+		if target == 0 {
+			_, maxHP, _, _, _ := g.heroStats()
+			g.heroHP = maxHP
+			if choice.def.AmountFormula == "half_hp" {
+				g.heroHP /= 2
+			}
+			if g.heroHP < 1 {
+				g.heroHP = 1
+			}
+			return
+		}
+		member := g.companions[target-1]
+		member.CurHP = member.MaxHP()
+		if choice.def.AmountFormula == "half_hp" {
+			member.CurHP /= 2
+		}
+		if member.CurHP < 1 {
+			member.CurHP = 1
+		}
+	case gamepack.FieldRemoveCurse:
+		g.unequipFirstCursedItem(target)
+	}
+}
+
+func (g *Game) unequipFirstCursedItem(actor int) bool {
+	if g.pack == nil || actor < 0 || actor > len(g.companions) {
+		return false
+	}
+	if actor == 0 {
+		for slot, rawID := range g.equip {
+			if rawID < 0 || !g.pack.IsCursedEquipment(rawID) {
+				continue
+			}
+			g.equip[slot] = -1
+			g.inventory = append(g.inventory, rawID)
+			return true
+		}
+		return false
+	}
+	member := g.companions[actor-1]
+	equipment := []*int{&member.Weapon, &member.Armor, &member.Shield, &member.Head}
+	for _, slot := range equipment {
+		if *slot < 0 || !g.pack.IsCursedEquipment(*slot) {
+			continue
+		}
+		member.Inventory = append(member.Inventory, *slot)
+		*slot = -1
+		return true
+	}
+	return false
+}
+
 func (g *Game) fieldSpellInput(in InputState) {
 	m := &g.fieldSpell
 	n := len(m.choices)
@@ -242,7 +321,7 @@ func (g *Game) fieldSpellInput(in InputState) {
 			*m = FieldSpellMenu{}
 			return
 		}
-		g.applyFieldHeal(choice, m.cursor)
+		g.applyFieldSupport(choice, m.cursor)
 		*m = FieldSpellMenu{}
 		return
 	}
@@ -251,7 +330,7 @@ func (g *Game) fieldSpellInput(in InputState) {
 		*m = FieldSpellMenu{}
 		return
 	}
-	if c.def.EffectID == gamepack.FieldHealHP && c.def.TargetScope == "party_member" {
+	if c.def.TargetScope == "party_member" {
 		m.pending, m.targeting, m.cursor = c, true, 0
 		return
 	}
@@ -265,6 +344,10 @@ func (g *Game) fieldSpellInput(in InputState) {
 	switch c.def.EffectID {
 	case gamepack.FieldHealHP:
 		g.applyFieldHeal(c, 0)
+		*m = FieldSpellMenu{}
+	case gamepack.FieldWakeParty:
+		// rec168 只清原版 battle sleep bit0x20；該位元不跨出戰鬥，field 正常路徑
+		// 因此沒有持久狀態可改，但施法與 MP 交易仍完成。
 		*m = FieldSpellMenu{}
 	case gamepack.FieldTeleport:
 		// 原版 field handler file 0xe0da：地表可用；CTY section 僅 mapFlags bit0 可用。

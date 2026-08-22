@@ -7,8 +7,8 @@
 2026-08-22 反組譯斷言審計：DQ3.EXE 並未完整語意解讀；byte-identical 重組只證明
 bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界見 `docs/135`。
 
-2026-08-23 最後功能順序：戰鬥道具與原始怪物表 39/39 實際 action 已完成；目前進入剩餘合法
-野外咒文，其後為商店賣出 → 船進城 → 必要選單／玩家可見支線。每項固定走
+2026-08-23 最後功能順序：戰鬥道具、原始怪物表 39/39 實際 action 與野外輔助咒文
+`rec166–171` 已完成；目前進入商店賣出，其後為船進城 → 必要選單／玩家可見支線。每項固定走
 RE→IDA Pro 9.4／IDAPython→spec→implement。PCM hardware wall-clock、DAC／PIT／DMA
 屬平台規格，引用 Wiki／datasheet／成熟模擬器並採可重現近似，不再深挖遊戲 driver。
 

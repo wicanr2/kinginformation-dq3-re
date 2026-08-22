@@ -3,7 +3,7 @@
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
 > checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機三平台包與推廣片
 > 的唯一現行交付樹為 `dist-all/v0.1.34/`，版型與驗收見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
-> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.45`／content `0.1.50`：包含日夜原始
+> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.46`／content `0.1.51`：包含日夜原始
 > palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
 > 等待閘門；因此公開 v0.1.34 不能被描述為包含這些修正，
 > 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
@@ -14,7 +14,8 @@
 > [`docs/151`](docs/151-common-physical-result-sfx-spec.md)及
 > [`docs/152`](docs/152-special-physical-paralysis-spec.md)。後兩者接上敵方攻擊、雙方命中、
 > 共同 miss、個別死亡，以及 action3／cue9／持久麻痺的原版文字、狀態與 VOC completion gate；
-> 戰鬥道具 selector／持有人／目標 UI 與原始怪物表實際使用的 39 個 action 已完成
+> 戰鬥道具 selector／持有人／目標 UI、原始怪物表實際使用的 39 個 action，以及
+> field caster 合法的 `rec166–171` 野外輔助咒文已完成
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
@@ -80,8 +81,8 @@ selector 啟動，不再落回 generic 草地；目前只有 D2／runtime V1，�
 
 1. ~~戰鬥道具持有人、清單、目標與原版消耗時序。~~ 已完成。
 2. ~~原始怪物表實際使用的 action。~~ 已完成 39/39 definition，並移除 `MonsterSpellRec` 猜測 fallback。
-3. **目前工作：**由 field caster 原始 descriptor 證實的剩餘野外咒文。
-4. 商店賣出、售價、裝備與特殊交易。
+3. ~~由 field caster 原始 descriptor 證實的剩餘野外咒文。~~ 已完成。
+4. **目前工作：**商店賣出、售價、裝備與特殊交易。
 5. 船直接進城時的停泊／離船／出城復船狀態。
 6. 必要的狀況／道具／裝備子選單與確有玩家可見差異的支線語意。
 

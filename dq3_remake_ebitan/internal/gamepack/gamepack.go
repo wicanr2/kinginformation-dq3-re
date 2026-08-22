@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.45"
+	SchemaVersion       = "0.1.46"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -28,6 +28,10 @@ const (
 	SleepCondition      = "common:condition.sleep"
 	ParalysisCondition  = "common:condition.paralysis"
 	FieldHealHP         = "common:spell.heal_hp"
+	FieldCureCondition  = "common:spell.cure_condition"
+	FieldWakeParty      = "common:spell.wake_party"
+	FieldRevive         = "common:spell.revive"
+	FieldRemoveCurse    = "common:spell.remove_curse"
 	FieldTeleport       = "common:spell.teleport"
 	FieldExitDungeon    = "common:spell.exit_dungeon"
 	FieldInspectFacing  = "common:spell.inspect_facing"
@@ -276,15 +280,17 @@ type BattlePackData struct {
 // Record numbers, costs, target flags and amounts come from the selected game
 // pack; the shared engine only dispatches stable effect/formula primitives.
 type FieldSpellDefinition struct {
-	RecordRaw     int      `json:"record_raw"`
-	EffectID      string   `json:"effect_id"`
-	MPCost        int      `json:"mp_cost"`
-	BaseAmount    int      `json:"base_amount"`
-	FlagsRaw      int      `json:"flags_raw"`
-	DescriptorHex string   `json:"descriptor_raw_hex"`
-	TargetScope   string   `json:"target_scope"`
-	AmountFormula string   `json:"amount_formula,omitempty"`
-	Evidence      Evidence `json:"evidence"`
+	RecordRaw      int      `json:"record_raw"`
+	EffectID       string   `json:"effect_id"`
+	MPCost         int      `json:"mp_cost"`
+	BaseAmount     int      `json:"base_amount"`
+	FlagsRaw       int      `json:"flags_raw"`
+	DescriptorHex  string   `json:"descriptor_raw_hex"`
+	TargetScope    string   `json:"target_scope"`
+	AmountFormula  string   `json:"amount_formula,omitempty"`
+	ConditionID    string   `json:"condition_id,omitempty"`
+	SuccessRollMin int      `json:"success_roll_min,omitempty"`
+	Evidence       Evidence `json:"evidence"`
 }
 
 type SpellPackData struct {
@@ -4416,6 +4422,7 @@ func (p *Pack) validateSpells() error {
 	p.fieldSpells = make(map[int]*FieldSpellDefinition, len(p.Spells.Field))
 	validEffects := map[string]bool{
 		FieldHealHP: true, FieldTeleport: true, FieldExitDungeon: true,
+		FieldCureCondition: true, FieldWakeParty: true, FieldRevive: true, FieldRemoveCurse: true,
 		FieldInspectFacing: true, FieldHazardGuard: true, FieldRepel: true,
 		FieldToggleDayNight: true, FieldInvisibility: true, FieldOpenFacingDoor: true,
 	}
@@ -4436,12 +4443,12 @@ func (p *Pack) validateSpells() error {
 		}
 		switch d.TargetScope {
 		case "none":
-			if d.EffectID == FieldHealHP {
+			if d.EffectID == FieldHealHP || d.EffectID == FieldCureCondition || d.EffectID == FieldRevive || d.EffectID == FieldRemoveCurse {
 				return fmt.Errorf("field[%d] heal_hp requires a party target", i)
 			}
 		case "party_member", "party_all":
-			if d.EffectID != FieldHealHP {
-				return fmt.Errorf("field[%d] party target is only valid for heal_hp", i)
+			if d.EffectID != FieldHealHP && d.EffectID != FieldCureCondition && d.EffectID != FieldWakeParty && d.EffectID != FieldRevive && d.EffectID != FieldRemoveCurse {
+				return fmt.Errorf("field[%d] party target is invalid for effect %q", i, d.EffectID)
 			}
 		default:
 			return fmt.Errorf("field[%d] has invalid target_scope %q", i, d.TargetScope)
@@ -4450,8 +4457,24 @@ func (p *Pack) validateSpells() error {
 			if d.AmountFormula != "base_to_base_plus_9" && d.AmountFormula != "full_hp" {
 				return fmt.Errorf("field[%d] has invalid heal amount_formula %q", i, d.AmountFormula)
 			}
-		} else if d.AmountFormula != "" || d.BaseAmount != 0 {
+		} else if d.EffectID == FieldRevive {
+			if (d.AmountFormula != "full_hp" && d.AmountFormula != "half_hp") || d.BaseAmount != 0 ||
+				d.SuccessRollMin < 0 || d.SuccessRollMin > 99 || d.TargetScope != "party_member" {
+				return fmt.Errorf("field[%d] has invalid revive contract", i)
+			}
+		} else if d.AmountFormula != "" || d.BaseAmount != 0 || d.SuccessRollMin != 0 {
 			return fmt.Errorf("field[%d] non-heal spell must not define an amount formula", i)
+		}
+		if d.EffectID == FieldCureCondition {
+			if d.TargetScope != "party_member" || (d.ConditionID != PoisonCondition && d.ConditionID != ParalysisCondition) {
+				return fmt.Errorf("field[%d] has invalid cure condition", i)
+			}
+		} else if d.ConditionID != "" {
+			return fmt.Errorf("field[%d] condition_id is invalid for effect %q", i, d.EffectID)
+		}
+		if d.EffectID == FieldWakeParty && d.TargetScope != "party_all" ||
+			d.EffectID == FieldRemoveCurse && d.TargetScope != "party_member" {
+			return fmt.Errorf("field[%d] has invalid support target scope", i)
 		}
 		if err := validateEvidence(d.Evidence); err != nil {
 			return fmt.Errorf("field[%d] evidence: %w", i, err)

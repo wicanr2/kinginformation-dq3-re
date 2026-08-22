@@ -1365,5 +1365,13 @@ target route、先消耗與戰後逐 owner 寫回；`0x41/42/43/44/45/48/4c` 的
 本批不重跑完整 campaign。
 
 完成度為 D2/D3→E2；逐筆戰鬥文字、每個抗性結果、動畫 frame 與 PCM wall-clock 不由本批
-升格 V3。下一個且唯一進行中的功能切片是「剩餘合法野外咒文」，之後才是商店賣出、
-船進城、必要選單／玩家可見支線。
+升格 V3。`rec166–171` 野外輔助咒文已由 `docs/181` 續接為 D3／E2；下一個且唯一進行中的
+功能切片是商店賣出，之後才是船進城、必要選單／玩家可見支線。
+
+## 2026-08-23 current checkpoint：野外輔助咒文 rec166–171 D3／E2
+
+IDA Pro 9.4 已閉合六個合法 field handler。毒／麻痺解除、battle-only sleep 清除、兩種復活
+與解除詛咒均由 `spells.json` 的有限 primitive 接上正式咒文與目標選單；其中 rec169 精確為
+`rng(100) >= 50` 才滿 HP 復活，rec170 則跳過亂數並回復半 HP。schema `0.1.46`／content
+`0.1.51`；針對性 `game`、`internal/gamepack`、`internal/spell` 測試通過。完整證據與停止線見
+`docs/181-field-support-spells-runtime-spec.md`。下一項是商店賣出。
