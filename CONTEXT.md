@@ -7,8 +7,8 @@
 2026-08-22 反組譯斷言審計：DQ3.EXE 並未完整語意解讀；byte-identical 重組只證明
 bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界見 `docs/135`。
 
-2026-08-22 最後功能順序：戰鬥道具 → 原始怪物表實際使用的剩餘 action → 剩餘合法
-野外咒文 → 商店賣出 → 船進城 → 必要選單／玩家可見支線。每項固定走
+2026-08-23 最後功能順序：戰鬥道具與原始怪物表 39/39 實際 action 已完成；目前進入剩餘合法
+野外咒文，其後為商店賣出 → 船進城 → 必要選單／玩家可見支線。每項固定走
 RE→IDA Pro 9.4／IDAPython→spec→implement。PCM hardware wall-clock、DAC／PIT／DMA
 屬平台規格，引用 Wiki／datasheet／成熟模擬器並採可重現近似，不再深挖遊戲 driver。
 
@@ -26,11 +26,11 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 `sub_19AD6 → sub_199DC → sub_1ACCE` 證實 action3 為無視守備的
 `attack/2+rng(attack/4)`，存活目標寫 `+0x38 bit0x10`。戰鬥命令 gate、戰後 40 步解除、
 滿月草 field handler、save/load 與 CureStatus battle consumer 已接線，詳見 `docs/152`。
-原版 battle item 清單仍未閉合；`docs/153` 依 IDA 證實正常怪物 action 的順序為
+原版 battle item 清單已由 `docs/179` 閉合；`docs/153` 依 IDA 證實正常怪物 action 的順序為
 `cast gate → 存活目標 RNG → action bit`。其後 monster77／51 是歷史玩家策略 blocker，
 已由 `docs/154..178` 的正式路線、隊伍物品交易、野外補血與抵達格遭遇處理越過。
 最新乾淨 Docker＋Xvfb 完整 campaign 從標題抵達 `THE END`（115.629 秒），現行為 E3；
-仍不得外推 battle item 全清單、逐動作畫面、音效或硬體 timing 已完成。
+`docs/180` 已接管 D3MNS 實際使用的 39 個 action 並移除猜測 fallback；逐動作畫面、音效或硬體 timing 仍不得外推完成。
 
 精訊版 DQ3 反組譯專案的單一入口:**canonical 術語**(命名 / 文件 / 程式一致用詞)與
 **知識庫索引**(`docs/` 全文件按主題分組)。新概念先進這裡再用;模糊詞列在末尾待釐清。

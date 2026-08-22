@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.44",
+  "schema_version": "0.1.45",
   "service_definitions": [
     {
       "id": "common:service.cure_poison",

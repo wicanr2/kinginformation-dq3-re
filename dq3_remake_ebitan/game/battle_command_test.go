@@ -434,7 +434,7 @@ func TestPackMonsterSleepBreathAppliesToEveryEligiblePartyMember(t *testing.T) {
 	}
 }
 
-func TestOriginalMonsterSpellConsumesPerEnemyMP(t *testing.T) {
+func TestPackMonsterDescriptorConsumesPerEnemyMP(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
 	if err != nil {
 		t.Fatal(err)
@@ -443,6 +443,11 @@ func TestOriginalMonsterSpellConsumesPerEnemyMP(t *testing.T) {
 		mons: mons, rng: dosrng.New(1), heroHP: 9999, heroLevel: 0,
 		enemies: []enemyUnit{{monID: 46, hp: 40, mp: 10}}, resolving: true,
 	}
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	b.setMonsterActions(pack.MonsterActionDefinitions())
 	ai := dq3data.MonsterAI{CastProb: 255, SpellMask: [6]uint8{0, 0x40, 0, 0, 0, 0}}
 	for n := 0; n < 3; n++ {
 		b.enemyAction(0, ai, true)
@@ -839,5 +844,96 @@ func TestBattleActorWakeConsumesCurrentTurn(t *testing.T) {
 	}
 	if b.msg != "醒來" {
 		t.Fatalf("醒來訊息=%q", b.msg)
+	}
+}
+
+func TestClosedMonsterDescriptorDamageConsumesMPAndHitsParty(t *testing.T) {
+	b := &Battle{
+		heroHP: 200, heroMax: 200, heroAtkPct: 100, heroDefPct: 100,
+		companions: []*battleActor{{hp: 200, maxHP: 200, atkPct: 100, defPct: 100}},
+		enemies:    []enemyUnit{{hp: 10, max: 10, mp: 20}}, rng: dosrng.New(0),
+	}
+	action := gamepack.MonsterActionDefinition{Kind: "descriptor_damage", TargetScope: "party_alive", MPCost: 6, SuccessRollMax: 255, AmountMin: 17, AmountMax: 33}
+	if !b.executeClosedMonsterPrimitive(0, -1, action) {
+		t.Fatal("已閉合 descriptor action 應消耗回合")
+	}
+	if b.enemies[0].mp != 14 {
+		t.Fatalf("MP 扣除=%d, want 14", b.enemies[0].mp)
+	}
+	if b.heroHP >= 200 || b.heroHP < 167 || b.companions[0].hp >= 200 || b.companions[0].hp < 167 {
+		t.Fatalf("群體傷害範圍錯誤: hero=%d companion=%d", b.heroHP, b.companions[0].hp)
+	}
+}
+
+func TestClosedMonsterDrainAndStatScale(t *testing.T) {
+	b := &Battle{
+		heroHP: 20, heroMax: 20, heroMP: 8, heroAtkPct: 100, heroDefPct: 100,
+		companions: []*battleActor{{hp: 20, maxHP: 20, mp: 7, atkPct: 100, defPct: 100}},
+		enemies:    []enemyUnit{{hp: 10, max: 10, mp: 2}}, rng: dosrng.New(0),
+	}
+	drain := gamepack.MonsterActionDefinition{Kind: "drain_mp", TargetScope: "party_one_alive", AmountMin: 3, AmountMax: 3}
+	b.executeClosedMonsterPrimitive(0, -1, drain)
+	if b.heroMP != 5 || b.enemies[0].mp != 5 {
+		t.Fatalf("吸 MP 交易錯誤: hero=%d enemy=%d", b.heroMP, b.enemies[0].mp)
+	}
+	scale := gamepack.MonsterActionDefinition{Kind: "scale_party_stat", TargetScope: "party_alive", Stat: "attack", FirstPercent: 50, SecondPercent: 25}
+	b.executeClosedMonsterPrimitive(0, -1, scale)
+	b.executeClosedMonsterPrimitive(0, -1, scale)
+	if b.heroAtkPct != 25 || b.companions[0].atkPct != 25 {
+		t.Fatalf("兩次攻擊削弱應為 25%%: hero=%d companion=%d", b.heroAtkPct, b.companions[0].atkPct)
+	}
+}
+
+func TestMonsterBanishMovesCompanionBackToRoster(t *testing.T) {
+	member := &Member{CurHP: 20, CurMP: 5}
+	g := &Game{companions: []*Member{member}}
+	g.battle = Battle{
+		heroHP: 20, heroMax: 20,
+		companions: []*battleActor{{hp: 20, maxHP: 20, mp: 5}},
+		enemies:    []enemyUnit{{hp: 10, max: 10}}, rng: dosrng.New(0),
+	}
+	action := gamepack.MonsterActionDefinition{Kind: "banish_companion", TargetScope: "party_one_alive", SuccessRollMax: 255}
+	if !g.battle.executeClosedMonsterPrimitive(0, 0, action) || !g.battle.companions[0].banished {
+		t.Fatal("非勇者目標應被標記移出 active party")
+	}
+	g.onBattleEnd()
+	if len(g.companions) != 0 || len(g.roster) != 1 || g.roster[0] != member {
+		t.Fatalf("戰後 roster 交易錯誤: active=%d roster=%d", len(g.companions), len(g.roster))
+	}
+}
+
+func TestMonsterAgilityScaleHasOneTimeGate(t *testing.T) {
+	b := &Battle{enemies: []enemyUnit{{hp: 10, max: 10, agi: 20}, {hp: 10, max: 10, agi: 21}}, rng: dosrng.New(0)}
+	action := gamepack.MonsterActionDefinition{Kind: "scale_enemy_stat", TargetScope: "enemy_alive", Stat: "agility", FirstPercent: 150}
+	b.executeClosedMonsterPrimitive(0, -1, action)
+	b.executeClosedMonsterPrimitive(0, -1, action)
+	if b.enemies[0].agi != 30 || b.enemies[1].agi != 31 {
+		t.Fatalf("敏捷只能加半一次: got %d/%d", b.enemies[0].agi, b.enemies[1].agi)
+	}
+}
+
+func TestEveryUsedD3MNSActionBitHasPackDefinition(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defined := make(map[int]bool)
+	for _, action := range pack.MonsterActionDefinitions() {
+		defined[action.MaskBit] = true
+	}
+	for id := 0; id < dq3data.MonsterCount; id++ {
+		ai, ok := mons.AI(id)
+		if !ok {
+			t.Fatalf("monster%d AI unavailable", id)
+		}
+		for bit := 0; bit < 48; bit++ {
+			if ai.SpellMask[bit/8]&(0x80>>uint(bit%8)) != 0 && !defined[bit] {
+				t.Errorf("monster%d uses raw action bit%d without a validated pack definition", id, bit)
+			}
+		}
 	}
 }

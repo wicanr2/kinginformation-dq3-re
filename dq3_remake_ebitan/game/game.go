@@ -2571,6 +2571,19 @@ func (g *Game) onBattleEnd() {
 			}
 		}
 	}
+	// action0x1b（IDA sub_19EC0）只會移走非勇者同伴；原版會縮短 active party，
+	// remake 對應成搬回酒館 roster，保留同一 Member 的持久資料。
+	if len(g.battle.companions) == len(g.companions) {
+		active := g.companions[:0]
+		for i, member := range g.companions {
+			if g.battle.companions[i].banished {
+				g.roster = append(g.roster, member)
+				continue
+			}
+			active = append(active, member)
+		}
+		g.companions = active
+	}
 	if g.partyHasCondition(conditionParalysis) {
 		if g.pack != nil {
 			if condition, ok := g.pack.ConditionDefinition(gamepack.ParalysisCondition); ok {

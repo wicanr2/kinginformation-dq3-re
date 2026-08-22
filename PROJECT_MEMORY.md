@@ -7,9 +7,9 @@
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
 >
-> 2026-08-22 收尾決策：完整正式主線已達 E3；不含回歸與發包的最後功能順序固定為
-> 戰鬥道具 → 實際使用的剩餘怪物 action → 剩餘合法野外咒文 → 商店賣出 → 船進城 →
-> 必要選單／玩家可見支線。每項仍須 RE→spec→implement。PCM hardware wall-clock、
+> 2026-08-23 收尾狀態：完整正式主線已達 E3；戰鬥道具與實際使用的 39 個怪物 action
+> 已完成。後續順序固定為剩餘合法野外咒文 → 商店賣出 → 船進城 → 必要選單／玩家可見
+> 支線。每項仍須 RE→spec→implement。PCM hardware wall-clock、
 > DAC／PIT／DMA 只引用平台 Wiki／datasheet／成熟模擬器規格，不再深入遊戲 driver。
 
 > 反組譯邊界：DQ3.EXE 尚未完整語意解讀；整檔 byte-identical 只證明 bytes 保真。
@@ -17,14 +17,16 @@
 
 > 2026-08-22：日夜已改由 pack 直接選原始 `DQ3.PAL` 五 bank／12 段，
 > `0x78..0xef` 都是夜間，黑暗之燈寫 clock `0x8c`。目前 D3／E2／V2；見 `docs/136`。
-> 工作樹現行 schema `0.1.43`／content `0.1.48`；驅毒草與滿月草 field transaction、
+> 工作樹現行 schema `0.1.45`／content `0.1.50`；戰鬥道具與 D3MNS 實際使用的
+> 39/39 action 已分別由 `docs/179`、`docs/180` 接成 E2，歷史 `MonsterSpellRec` 猜測已移除。
+> 驅毒草與滿月草 field transaction、
 > 怪物 action3／持久麻痺的原版閉環與停止線見 `docs/138`、`docs/152`。公開 v0.1.34
 > 尚不含本輪修改。前一 checkpoint 的完整 trace 曾由標題通過至 `THE END`；加入原版
 > action3 後曾於 Docker＋Xvfb 由標題抵達 `THE END`（121.799 秒）；後續 `docs/153`
 > 依 IDA 證實正常怪物 action 在選 bit 前必先消耗存活目標 RNG。其後 monster77／51
 > 失敗均已由正式路線與資料交易訂正越過；目前完整 trace 再次由標題抵達 `THE END`
 >（115.629 秒），campaign 為 E3。這些結果不否定
-> 已閉合 transaction，也不能把 battle item 清單或 V3 畫面／硬體音訊升格完成。
+> 已閉合 transaction，也不能把 V3 畫面／硬體音訊升格完成。下一項是剩餘合法野外咒文。
 > 本輪依序閉合 CTY23 解毒、monster89 補給、monster46 睡眠、銀寶珠返航、建城前酒場
 > 寄放、六珠持有權、終盤正式復隊、教會逐人解毒，以及巴拉摩斯 `0x79` 被錯排除於終盤
 > 回復策略的不可達分支。精確演進與停止線見 `docs/137..146`；主線為 E3，但逐畫面／音效

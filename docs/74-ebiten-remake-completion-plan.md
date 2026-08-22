@@ -1347,5 +1347,23 @@ target route、先消耗與戰後逐 owner 寫回；`0x41/42/43/44/45/48/4c` 的
 
 本切片的 `go test ./internal/...` 與 Docker＋Xvfb `go test ./game -run Battle` 為比例驗收；
 完整 campaign 未因本批重跑。`0x05/0x0a/0x0c/0x10/0x14/0x17/0x18/0x1a/0x1c/0x46`
-共用 spell-action consumer 仍由下一個「實際使用的剩餘怪物 action」切片統一閉合，避免
-在戰鬥道具分支另造一份猜測 mapping。它們目前缺 definition 時失敗即關閉，不冒稱完成。
+共用 spell-action consumer 已由下一節的怪物 action 切片接管；戰鬥道具分支沒有另造一份
+猜測 mapping。
+
+## 2026-08-23 current checkpoint：D3MNS 實際怪物 action 39/39 E2
+
+[`docs/180`](180-monster-action-runtime-spec.md) 以 IDA Pro 9.4 重新匯出
+`sub_19AD6 → sub_199DC → DGROUP 0x3930/0x394e`，並由間接 operand 索引補齊
+`+0x38 bit0x400/0x200/0x100` 與 active enemy 高位狀態的 consumer。原始 D3MNS 130 筆
+實際使用的 39 個 bit 均已有 validated `battle.json.monster_actions[]` definition；歷史
+`MonsterSpellRec` 猜測 fallback 已刪除，未定義 bit 失敗即關閉並走普通物理。
+
+正式 runtime 現涵蓋 descriptor 傷害／即死、自爆、睡眠／毒、攻防削弱、banish 回酒館、
+吸 MP、混亂改打我方、咒文／回復無效、敏捷一次 buff、反射、敵方補血／復活、三段吐息
+及同種／關聯怪物增援。schema `0.1.45`／content `0.1.50`。Docker＋Xvfb targeted
+`go test ./game -run "Monster|Closed"` 與 `internal/dq3data`／`gamepack`／`spell` 通過；
+本批不重跑完整 campaign。
+
+完成度為 D2/D3→E2；逐筆戰鬥文字、每個抗性結果、動畫 frame 與 PCM wall-clock 不由本批
+升格 V3。下一個且唯一進行中的功能切片是「剩餘合法野外咒文」，之後才是商店賣出、
+船進城、必要選單／玩家可見支線。

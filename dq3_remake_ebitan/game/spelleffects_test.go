@@ -306,7 +306,7 @@ func spellRecsOf(ai dq3data.MonsterAI) []int {
 	var recs []int
 	for b := 0; b < 48; b++ {
 		if ai.SpellMask[b/8]&(0x80>>(b%8)) != 0 {
-			recs = append(recs, b) // 佔位,實際 rec 轉換見 internal/spell.MonsterSpellRec;此處只需知道「非空」
+			recs = append(recs, b) // 此處只驗 raw mask 非空；action 語意由 game pack 定義。
 		}
 	}
 	return recs

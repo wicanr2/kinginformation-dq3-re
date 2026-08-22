@@ -29,6 +29,7 @@ type MonsterAI struct {
 	FleeThresh uint8    // +0x17:我方平均等級 ≥ 此 → 考慮逃跑
 	FleeRate   uint8    // +0x18:觸發後 rng(256) ≤ 此就逃(0=不逃)
 	SpellMask  [6]uint8 // +0x0e..+0x13:raw action mask；並非每個 bit 都是咒文
+	SummonRaw  uint8    // +0x20:action0x3a 關聯召喚的怪物 raw id
 }
 
 // Monsters 持有 D3MNS.DAT 整檔。
@@ -96,6 +97,7 @@ func (m *Monsters) AI(id int) (MonsterAI, bool) {
 	r := m.rec(id)
 	ai := MonsterAI{CastProb: r[0x0d], FleeThresh: r[0x17], FleeRate: r[0x18]}
 	copy(ai.SpellMask[:], r[0x0e:0x14])
+	ai.SummonRaw = r[0x20]
 	return ai, true
 }
 

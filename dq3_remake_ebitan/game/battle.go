@@ -120,6 +120,11 @@ const (
 	statusSealed                          // 瑪荷頓156:不能施咒
 	statusBlind                           // 瑪努莎158:物攻 ~50% 失手
 	statusPersistentParalysis             // 原版角色 +0x38 bit0x10；跨場景保存且不走睡眠自然甦醒
+	statusEnemyAgilityRaised              // 原版 active enemy +0x12 bit0x200；action0x22 一次性敏捷加半 gate
+	statusConfused                        // 原版角色 +0x38 bit0x400；行動時改抽我方存活目標並物攻
+	statusSpellNull                       // 原版角色 +0x38 bit0x200；扣 MP 後令咒文無效
+	statusHealBlocked                     // 原版角色 +0x38 bit0x100；回復 consumer 不增加 HP
+	statusReflect                         // 原版 active enemy +0x12 high bits；反射玩家側咒文
 )
 
 type battlePhase int
@@ -504,6 +509,7 @@ type battleActor struct {
 	atkPct, defPct int
 	status         int // 戰鬥鏡像狀態(statusPoison/statusParalysis 等；持久 condition 另存於 Game/Member)
 	items          []battleItemSlot
+	banished       bool // action0x1b：戰後由 active party 搬回酒館 roster
 }
 
 type battleItemSlot struct {
@@ -1431,6 +1437,10 @@ func (b *Battle) execSpell(rec int) {
 		return
 	}
 	b.setActorMP(caster, b.actorMP(caster)-def.MP)
+	if b.actorStatus(caster)&statusSpellNull != 0 {
+		b.emitText(battleTextSpellNoEffect)
+		return
+	}
 	b.defending = false
 	switch def.Kind {
 	case spell.Heal:
@@ -1440,6 +1450,10 @@ func (b *Battle) execSpell(rec int) {
 		}
 		for _, target := range targets {
 			if !b.actorAlive(target) {
+				continue
+			}
+			if b.actorStatus(target)&statusHealBlocked != 0 {
+				b.emitText(battleTextSpellNoEffect)
 				continue
 			}
 			cur, max := b.actorHP(target)
@@ -1516,9 +1530,13 @@ func (b *Battle) execSpell(rec int) {
 					continue
 				}
 				v := spell.CastValue(def.Base, b.roll())
-				b.enemies[i].hp -= v
-				if b.enemies[i].hp < 0 {
-					b.enemies[i].hp = 0
+				if b.enemies[i].status&statusReflect != 0 {
+					b.damageMember(caster-1, v)
+				} else {
+					b.enemies[i].hp -= v
+					if b.enemies[i].hp < 0 {
+						b.enemies[i].hp = 0
+					}
 				}
 				hit++
 				b.emitText(battleTextActorDamage, b.enemyNameGlyphs(i), digitGlyphs(v))
@@ -1534,9 +1552,13 @@ func (b *Battle) execSpell(rec int) {
 			}
 			if tgt >= 0 {
 				val := spell.CastValue(def.Base, b.roll())
-				b.enemies[tgt].hp -= val
-				if b.enemies[tgt].hp < 0 {
-					b.enemies[tgt].hp = 0
+				if b.enemies[tgt].status&statusReflect != 0 {
+					b.damageMember(caster-1, val)
+				} else {
+					b.enemies[tgt].hp -= val
+					if b.enemies[tgt].hp < 0 {
+						b.enemies[tgt].hp = 0
+					}
 				}
 				b.emitText(battleTextActorDamage, b.enemyNameGlyphs(tgt), digitGlyphs(val))
 			}
@@ -1748,6 +1770,10 @@ func (b *Battle) resolveRound() {
 		}
 		cmd := b.commands[e.index]
 		b.actionActor, b.actionTarget = e.index, cmd.target
+		if b.actorStatus(e.index)&statusConfused != 0 {
+			b.execConfusedActorAttack(e.index)
+			continue
+		}
 		if e.index == 0 {
 			b.cursor = cmd.kind
 			if cmd.kind == bcSpell {
@@ -1767,6 +1793,26 @@ func (b *Battle) resolveRound() {
 		}
 	}
 	b.beginMessagePlayback()
+}
+
+// execConfusedActorAttack 對齊 sub_1B4F6 的 +0x38 bit0x400 consumer：忽略玩家命令，
+// 由存活隊員中重抽目標並執行一次物理攻擊。狀態本身不在此自動清除。
+func (b *Battle) execConfusedActorAttack(actor int) {
+	targets := b.aliveActorIndices()
+	if len(targets) == 0 {
+		return
+	}
+	target := targets[b.rng.Next(len(targets))]
+	atk := b.heroAtk
+	if actor > 0 {
+		atk = b.companions[actor-1].atk
+	}
+	atk = pct(atk, b.actorAtkPercent(actor))
+	def := pct(b.targetDef(target-1), b.actorDefPercent(target))
+	damage := battle.PhysDamage(atk, def, b.roll(), 0)
+	b.damageMember(target-1, damage)
+	b.emitText(battleTextPartyDamage, b.actorNameGlyphs(target), digitGlyphs(damage))
+	b.wipedOut()
 }
 
 func (b *Battle) finishVictory() {
@@ -1940,63 +1986,8 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 			if b.executeMonsterAction(i, bit, tgt) {
 				return
 			}
-			// 歷史相容近似：舊 runtime 以文字 rec lookup 嘗試一般 spell descriptor。
-			// 目前 pack 只接已閉合的 bit3 paralysis、bit38 poison／bit41 sleep special action；其餘 bit尚未逐一
-			// 閉合，故此路徑不得在文件中宣稱為原版 exact，也不得反推所有 bit 都是咒文。
-			rec := spell.MonsterSpellRec(bit)
-			if def, ok := spell.GetDef(rec); ok {
-				cost := spell.MPCost(rec)
-				if cost < 0 || b.enemies[i].mp < cost {
-					b.emitText(battleTextMPInsufficient, b.enemyNameGlyphs(i))
-					return
-				}
-				b.enemies[i].mp -= cost
-				if tgt == -2 {
-					tgt = targets[b.rng.Next(len(targets))]
-				}
-				switch def.Kind {
-				case spell.Heal:
-					val := spell.CastValue(def.Base, b.roll())
-					b.enemies[i].hp += val
-					if b.enemies[i].hp > b.enemies[i].max {
-						b.enemies[i].hp = b.enemies[i].max
-					}
-					b.emitText(battleTextActorHealed, b.enemyNameGlyphs(i), digitGlyphs(val))
-					return
-				case spell.Sleep:
-					b.setTargetStatus(tgt, statusParalysis)
-					b.emitText(battleTextEnemySleep, b.actorNameGlyphs(actorIndex(tgt)))
-					return
-				case spell.BuffAtk:
-					b.enemyAtkPct += 100
-					if b.enemyAtkPct > 400 {
-						b.enemyAtkPct = 400
-					}
-					b.emitText(battleTextBuffAttack, b.enemyNameGlyphs(i))
-					return
-				case spell.BuffDef:
-					b.enemyDefPct += 50
-					if b.enemyDefPct > 300 {
-						b.enemyDefPct = 300
-					}
-					b.emitText(battleTextBuffDefense, b.enemyNameGlyphs(i), digitGlyphs(50))
-					return
-				case spell.Seal:
-					b.partySealed = true
-					b.emitText(battleTextEnemySealed, b.actorNameGlyphs(actorIndex(tgt)))
-					return
-				case spell.Blind:
-					b.partyBlind = true
-					b.emitText(battleTextEnemyConfused, b.actorNameGlyphs(actorIndex(tgt)))
-					return
-				default:
-					val := spell.CastValue(def.Base, b.roll())
-					b.damageMember(tgt, val)
-					b.emitText(battleTextActorDamage, b.actorNameGlyphs(actorIndex(tgt)), digitGlyphs(val))
-					b.wipedOut()
-					return
-				}
-			}
+			// 未列入 pack 的 bit 沒有可證實的 consumer，必須失敗即關閉並落回普通物理；
+			// 禁止再以 MonsterSpellRec 的歷史順序表猜測效果。
 		}
 	}
 	if tgt == -2 {
@@ -2031,18 +2022,23 @@ func (b *Battle) enemyAction(i int, ai dq3data.MonsterAI, aiOK bool) {
 	b.wipedOut()
 }
 
-// executeMonsterAction 執行已由 pack 閉合的 mask action；目前支援 bit3 致命一擊、
-// bit38 poison 與 bit41 battle sleep，其餘 action 語意仍不得外推。
+// executeMonsterAction 執行已由 pack 閉合的 mask action。未列入 pack 的 bit 不猜測。
 // true 表示即使無目標成功也已消耗回合。
 func (b *Battle) executeMonsterAction(enemyIndex, maskBit, target int) bool {
 	action, ok := b.monsterActions[maskBit]
 	if !ok {
 		return false
 	}
-	if action.Kind == "special_physical_condition" {
+	switch action.Kind {
+	case "special_physical_condition":
 		return b.executeSpecialPhysicalCondition(enemyIndex, target, action)
-	}
-	if action.Kind != "apply_condition" {
+	case "descriptor_damage", "instant_death", "drain_mp", "breath_damage", "scale_party_stat",
+		"heal_enemy", "revive_enemy", "summon_clone", "banish_companion", "scale_enemy_stat",
+		"apply_actor_status", "reflect_enemy", "sacrifice_death", "summon_related":
+		return b.executeClosedMonsterPrimitive(enemyIndex, target, action)
+	case "apply_condition":
+		// handled below
+	default:
 		return false
 	}
 	b.emitText(action.CastTextRole, b.enemyNameGlyphs(enemyIndex))
@@ -2064,6 +2060,238 @@ func (b *Battle) executeMonsterAction(enemyIndex, maskBit, target int) bool {
 		b.emitText(action.SuccessTextRole, b.actorNameGlyphs(actor))
 	}
 	return true
+}
+
+func (b *Battle) executeClosedMonsterPrimitive(enemyIndex, target int,
+	action gamepack.MonsterActionDefinition) bool {
+	if enemyIndex < 0 || enemyIndex >= len(b.enemies) {
+		return false
+	}
+	if action.MPCost > 0 {
+		if b.enemies[enemyIndex].mp < action.MPCost {
+			b.emitText(battleTextMPInsufficient, b.enemyNameGlyphs(enemyIndex))
+			return true
+		}
+		b.enemies[enemyIndex].mp -= action.MPCost
+	}
+	targets := []int{target}
+	if action.TargetScope == "party_alive" {
+		targets = b.aliveTargets()
+	}
+	switch action.Kind {
+	case "descriptor_damage", "breath_damage":
+		for _, t := range targets {
+			if t == -2 || !b.actorAlive(actorIndex(t)) {
+				continue
+			}
+			if action.Kind == "descriptor_damage" && b.roll() > action.SuccessRollMax {
+				continue
+			}
+			v := action.AmountMin
+			if action.AmountMax > action.AmountMin {
+				v += b.rng.Next(action.AmountMax - action.AmountMin + 1)
+			}
+			b.damageMember(t, v)
+			b.emitText(battleTextPartyDamage, b.actorNameGlyphs(actorIndex(t)), digitGlyphs(v))
+		}
+		b.wipedOut()
+	case "instant_death":
+		for _, t := range targets {
+			if t == -2 || !b.actorAlive(actorIndex(t)) || b.roll() > action.SuccessRollMax {
+				continue
+			}
+			b.setActorHP(actorIndex(t), 0)
+			b.emitText(battleTextActorDied, b.actorNameGlyphs(actorIndex(t)))
+		}
+		b.wipedOut()
+	case "drain_mp":
+		if target == -2 {
+			return true
+		}
+		actor := actorIndex(target)
+		amount := action.AmountMin
+		if action.AmountMax > action.AmountMin {
+			amount += b.rng.Next(action.AmountMax - action.AmountMin + 1)
+		}
+		if amount > b.actorMP(actor) {
+			amount = b.actorMP(actor)
+		}
+		b.setActorMP(actor, b.actorMP(actor)-amount)
+		if action.Stat != "discard" {
+			b.enemies[enemyIndex].mp += amount
+		}
+	case "scale_party_stat":
+		for _, t := range b.aliveTargets() {
+			actor := actorIndex(t)
+			if action.Stat == "attack" {
+				if b.actorAtkPercent(actor) > action.FirstPercent {
+					b.setActorAtkPercent(actor, action.FirstPercent)
+				} else if b.actorAtkPercent(actor) > action.SecondPercent {
+					b.setActorAtkPercent(actor, action.SecondPercent)
+				}
+			} else {
+				if b.actorDefPercent(actor) > action.FirstPercent {
+					b.setActorDefPercent(actor, action.FirstPercent)
+				} else if b.actorDefPercent(actor) > action.SecondPercent {
+					b.setActorDefPercent(actor, action.SecondPercent)
+				}
+			}
+		}
+	case "heal_enemy":
+		enemyTargets := []int{enemyIndex}
+		if action.TargetScope == "enemy_alive" {
+			enemyTargets = b.aliveEnemyIndices()
+		}
+		for _, i := range enemyTargets {
+			v := action.AmountMin
+			if action.AmountMax > action.AmountMin {
+				v += b.rng.Next(action.AmountMax - action.AmountMin + 1)
+			}
+			b.enemies[i].hp += v
+			if b.enemies[i].hp > b.enemies[i].max {
+				b.enemies[i].hp = b.enemies[i].max
+			}
+			b.emitText(battleTextActorHealed, b.enemyNameGlyphs(i), digitGlyphs(v))
+		}
+	case "revive_enemy":
+		for i := range b.enemies {
+			if b.enemies[i].hp > 0 && !b.enemies[i].fled {
+				continue
+			}
+			b.enemies[i].fled = false
+			b.enemies[i].hp = b.enemies[i].max * action.FirstPercent / 100
+			if b.enemies[i].hp < 1 {
+				b.enemies[i].hp = 1
+			}
+			break
+		}
+	case "summon_clone":
+		if len(b.enemies) < MaxEnemies {
+			clone := b.enemies[enemyIndex]
+			clone.hp, clone.fled, clone.status = clone.max, false, 0
+			b.enemies = append(b.enemies, clone)
+		}
+	case "banish_companion":
+		if target < 0 || target >= len(b.companions) || b.roll() > action.SuccessRollMax {
+			return true
+		}
+		b.companions[target].banished = true
+		b.companions[target].hp = 0
+	case "scale_enemy_stat":
+		for i := range b.enemies {
+			if !b.enemies[i].alive() || b.enemies[i].status&statusEnemyAgilityRaised != 0 {
+				continue
+			}
+			b.enemies[i].agi = b.enemies[i].agi * action.FirstPercent / 100
+			b.enemies[i].status |= statusEnemyAgilityRaised
+		}
+	case "apply_actor_status":
+		status := map[string]int{"confusion": statusConfused, "spell_null": statusSpellNull, "heal_block": statusHealBlocked}[action.Stat]
+		actorTargets := []int{actorIndex(target)}
+		if action.TargetScope == "party_alive" {
+			actorTargets = b.aliveActorIndices()
+		} else if action.TargetScope == "party_dead" {
+			actorTargets = nil
+			for i := 0; i < 1+len(b.companions); i++ {
+				if !b.actorAlive(i) {
+					actorTargets = append(actorTargets, i)
+				}
+			}
+		}
+		for _, actor := range actorTargets {
+			if actor < 0 || actor >= 1+len(b.companions) || b.actorStatus(actor)&status != 0 || b.roll() > action.SuccessRollMax {
+				continue
+			}
+			if actor == 0 {
+				b.heroStatus |= status
+			} else {
+				b.companions[actor-1].status |= status
+			}
+		}
+	case "reflect_enemy":
+		b.enemies[enemyIndex].status |= statusReflect
+	case "sacrifice_death":
+		for _, t := range b.aliveTargets() {
+			if b.roll() > action.SuccessRollMax {
+				continue
+			}
+			b.setActorHP(actorIndex(t), 0)
+			b.emitText(battleTextActorDied, b.actorNameGlyphs(actorIndex(t)))
+		}
+		b.enemies[enemyIndex].hp = 0
+		b.wipedOut()
+	case "summon_related":
+		b.summonRelatedEnemy(enemyIndex)
+	}
+	return true
+}
+
+func (b *Battle) summonRelatedEnemy(enemyIndex int) bool {
+	if b.mons == nil || enemyIndex < 0 || enemyIndex >= len(b.enemies) || len(b.enemies) >= MaxEnemies {
+		return false
+	}
+	ai, ok := b.mons.AI(b.enemies[enemyIndex].monID)
+	if !ok || int(ai.SummonRaw) >= dq3data.MonsterCount {
+		return false
+	}
+	st, ok := b.mons.Stat(int(ai.SummonRaw))
+	if !ok {
+		return false
+	}
+	spr, err := dq3data.DecodeMonsterSprite(b.shp, int(ai.SummonRaw))
+	if err != nil {
+		return false
+	}
+	hp := int(st.HPBase) + b.rng.Next(int(st.HPRand)+1)
+	position := b.enemies[enemyIndex].positionRaw
+	if b.formationPositionReady {
+		position += b.formationPosition.WeightStepMultiplier * int(st.SpawnWeight)
+	}
+	b.enemies = append(b.enemies, enemyUnit{
+		monID: int(ai.SummonRaw), hp: hp, max: hp, mp: int(st.MP), atk: int(st.Atk),
+		def: int(st.Def), agi: int(st.Agi), spr: spr, positionRaw: position,
+	})
+	return true
+}
+
+func (b *Battle) actorAtkPercent(actor int) int {
+	if actor == 0 {
+		return b.heroAtkPct
+	}
+	if actor-1 >= 0 && actor-1 < len(b.companions) {
+		return b.companions[actor-1].atkPct
+	}
+	return 0
+}
+
+func (b *Battle) setActorAtkPercent(actor, value int) {
+	if actor == 0 {
+		b.heroAtkPct = value
+		return
+	}
+	if actor-1 >= 0 && actor-1 < len(b.companions) {
+		b.companions[actor-1].atkPct = value
+	}
+}
+
+func (b *Battle) actorDefPercent(actor int) int {
+	if actor == 0 {
+		return b.heroDefPct
+	}
+	if actor-1 >= 0 && actor-1 < len(b.companions) {
+		return b.companions[actor-1].defPct
+	}
+	return 0
+}
+
+func (b *Battle) setActorDefPercent(actor, value int) {
+	if actor == 0 {
+		b.heroDefPct = value
+		return
+	}
+	if actor-1 >= 0 && actor-1 < len(b.companions) {
+		b.companions[actor-1].defPct = value
+	}
 }
 
 func (b *Battle) executeSpecialPhysicalCondition(enemyIndex, target int,

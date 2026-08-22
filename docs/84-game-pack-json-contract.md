@@ -277,19 +277,22 @@ fallback 補值。
 | `items[].consume` | bool | 是 | 一般消耗或條件損壞由原版 handler 決定；裝備用法不可因共用 effect 而被誤刪。 |
 | `monster_actions` | object[] | 是 | 原始 monster mask bit 到有限 engine effect 的資料化分派；不得把所有 bit 直接送入玩家咒文 descriptor。 |
 | `monster_actions[].mask_bit`／`action_raw` | int | 是 | 原始 48-bit mask index 與 remap 後 action ID。 |
-| `monster_actions[].kind`／`condition_id`／`target_scope` | string | 是 | 有限 primitive 為 `apply_condition` 或 `special_physical_condition`；scope 依 action 為 `party_alive_unaffected` 或 `party_one_alive`，未知組合 fail closed。 |
-| `monster_actions[].success_roll_max` | int | 是 | 成功比較的 inclusive 上界；DQ3 poison 為 `100`、sleep breath 為 `180`。 |
+| `monster_actions[].kind`／`condition_id`／`target_scope` | string | 是 | schema 0.1.45 的有限 primitive 包含 descriptor 傷害／即死、狀態、攻防或敏捷比例、吸 MP、敵方補血／復活／增援、吐息、banish 與反射；完整合法組合由 validator 白名單鎖定，未知組合失敗即關閉。 |
+| `monster_actions[].spell_record_raw`／`mp_cost` | int | 依 kind | 原始 action 對應 record 與 descriptor MP 成本；不是以連號在 Go 推導。 |
+| `monster_actions[].amount_min`／`amount_max` | int | 依 kind | 傷害、回復或吸 MP 的 inclusive 原始範圍。 |
+| `monster_actions[].first_percent`／`second_percent`／`stat` | int／string | 依 kind | 攻防第一次／第二次比例、敏捷一次比例，或封閉列舉的狀態語意；不得當任意 JSON script。 |
+| `monster_actions[].success_roll_max` | int | 依 kind | 成功比較的 inclusive 上界；例如 poison `100`、sleep breath `180`、原始 `<0x50` 寫成 `79`。 |
 | `monster_actions[].damage_formula` | string | `special_physical_condition` 必填 | 現行唯一合法值是 `ignore_defense_half_plus_random_quarter`；引擎不得依 action raw 猜公式。 |
 | `monster_actions[].condition_on_survival` | bool | `special_physical_condition` 必填 | 是否只在傷後存活時附加 condition；DQ3 action3 必須為 `true`。 |
-| `monster_actions[].cast_text_role`／`success_text_role` | string | 是 | 必須引用 `interface.battle_texts` 已定義角色，實際 record／glyph 留在 `texts.json`。 |
+| `monster_actions[].cast_text_role`／`success_text_role` | string | 狀態／特殊物理必填 | 必須引用 `interface.battle_texts` 已定義角色；無獨立文字的數值 primitive 可省略，實際 record／glyph 仍只留在 `texts.json`。 |
 | `evidence` | object | 是 | E2 raw contract 的來源、consumer 與推論等級。 |
 
 `raw object` 必須有 `address_space`、`address`、`length_bytes`、`raw_sha256`、`raw_hex` 與
 `evidence`；loader 會檢查長度／SHA-256。`formation_position` 現在保存已由 IDA
 writer→consumer 閉合的 raw EGA 投影，production renderer 依此計算位置；它不等於已知每個
-動作的美術幀或玩家可見 timing。一般咒文 action 仍由 descriptor 決定 MP 成本，runtime
-必須逐隻怪物檢查並扣除 active MP；不足時顯示原版 MP 不足文字並消耗該次行動。bit41 的
-party sleep 則由有限 `monster_actions` primitive 處理，不能假裝成玩家咒文。`sound_cues`
+動作的美術幀或玩家可見 timing。原始 D3MNS 實際使用的 39 個 bit 均由
+`monster_actions` 定義，runtime 逐隻怪物檢查並扣除 active MP；不足時顯示 MP 不足文字並
+消耗該次行動。`MonsterSpellRec` 歷史猜測表已移除，詳見 [`docs/180`](180-monster-action-runtime-spec.md)。`sound_cues`
 目前接入 `docs/149` 的兩個逃跑 cue、`docs/150` 的玩家物理雙 cue sequence，以及
 `docs/151` 的敵方攻擊／成功傷害／共同 miss cue 與 source-duration input gate；Boss repeat-N
 已由 `docs/148` 證實在本 EXE 不存在。E2 仍不把逐動作 SHP frame、未閉合 PCM cue 語意、

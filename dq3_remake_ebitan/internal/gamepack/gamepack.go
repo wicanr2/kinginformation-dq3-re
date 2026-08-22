@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.44"
+	SchemaVersion       = "0.1.45"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -193,7 +193,7 @@ type BattleConditionDefinition struct {
 }
 
 // MonsterActionDefinition 保存一個已有原版 handler 證據的 raw monster-mask bit。
-// 現行 runtime 只閉合 DQ3 bit3 持久麻痺特殊物理、bit38 poison 與 bit41 sleep；不能外推其餘 bit 已知。
+// Effect/數值是有限的跨版本 primitive；pack 不得藉此嵌入任意流程。
 // 玩家文字只引用穩定的 battle-text role，不嵌入字串。
 type MonsterActionDefinition struct {
 	MaskBit             int      `json:"mask_bit"`
@@ -202,6 +202,13 @@ type MonsterActionDefinition struct {
 	ConditionID         string   `json:"condition_id"`
 	TargetScope         string   `json:"target_scope"`
 	SuccessRollMax      int      `json:"success_roll_max"`
+	SpellRecordRaw      int      `json:"spell_record_raw,omitempty"`
+	MPCost              int      `json:"mp_cost,omitempty"`
+	AmountMin           int      `json:"amount_min,omitempty"`
+	AmountMax           int      `json:"amount_max,omitempty"`
+	FirstPercent        int      `json:"first_percent,omitempty"`
+	SecondPercent       int      `json:"second_percent,omitempty"`
+	Stat                string   `json:"stat,omitempty"`
 	DamageFormula       string   `json:"damage_formula,omitempty"`
 	ConditionOnSurvival bool     `json:"condition_on_survival,omitempty"`
 	CastTextRole        string   `json:"cast_text_role"`
@@ -4726,23 +4733,86 @@ func (p *Pack) validateBattlePack() error {
 	}
 	seenActionBits := make(map[int]bool, len(b.MonsterActions))
 	for i, action := range b.MonsterActions {
-		if action.MaskBit < 0 || action.MaskBit >= 48 || action.ActionRaw < 0 ||
-			action.ConditionID == "" ||
-			action.CastTextRole == "" || action.SuccessTextRole == "" {
+		if action.MaskBit < 0 || action.MaskBit >= 48 || action.ActionRaw < 0 {
 			return fmt.Errorf("monster_actions[%d] is incomplete or unsupported", i)
 		}
 		switch action.Kind {
 		case "apply_condition":
-			if action.TargetScope != "party_alive_unaffected" ||
+			if action.ConditionID == "" || action.CastTextRole == "" || action.SuccessTextRole == "" ||
+				action.TargetScope != "party_alive_unaffected" ||
 				action.SuccessRollMax < 0 || action.SuccessRollMax > 255 ||
 				action.DamageFormula != "" || action.ConditionOnSurvival {
 				return fmt.Errorf("monster_actions[%d] has invalid apply_condition fields", i)
 			}
 		case "special_physical_condition":
-			if action.TargetScope != "party_one_alive" ||
+			if action.ConditionID == "" || action.CastTextRole == "" || action.SuccessTextRole == "" ||
+				action.TargetScope != "party_one_alive" ||
 				action.DamageFormula != "ignore_defense_half_plus_random_quarter" ||
 				!action.ConditionOnSurvival || action.SuccessRollMax != 0 {
 				return fmt.Errorf("monster_actions[%d] has invalid special physical fields", i)
+			}
+		case "descriptor_damage":
+			if action.SpellRecordRaw <= 0 || action.MPCost < 0 || action.AmountMin <= 0 ||
+				action.AmountMax < action.AmountMin || action.SuccessRollMax < 0 || action.SuccessRollMax > 255 ||
+				(action.TargetScope != "party_one_alive" && action.TargetScope != "party_alive") {
+				return fmt.Errorf("monster_actions[%d] has invalid descriptor_damage fields", i)
+			}
+		case "instant_death":
+			if action.SpellRecordRaw <= 0 || action.MPCost < 0 || action.SuccessRollMax < 0 || action.SuccessRollMax > 255 ||
+				(action.TargetScope != "party_one_alive" && action.TargetScope != "party_alive") {
+				return fmt.Errorf("monster_actions[%d] has invalid instant_death fields", i)
+			}
+		case "drain_mp":
+			if action.AmountMin <= 0 || action.AmountMax < action.AmountMin || action.TargetScope != "party_one_alive" {
+				return fmt.Errorf("monster_actions[%d] has invalid drain_mp fields", i)
+			}
+		case "breath_damage":
+			if action.AmountMin <= 0 || action.AmountMax < action.AmountMin || action.TargetScope != "party_alive" {
+				return fmt.Errorf("monster_actions[%d] has invalid breath_damage fields", i)
+			}
+		case "scale_party_stat":
+			if (action.Stat != "attack" && action.Stat != "defense") ||
+				action.FirstPercent <= 0 || action.SecondPercent <= 0 || action.TargetScope != "party_alive" {
+				return fmt.Errorf("monster_actions[%d] has invalid scale_party_stat fields", i)
+			}
+		case "heal_enemy":
+			if action.MPCost < 0 || action.AmountMin <= 0 || action.AmountMax < action.AmountMin ||
+				(action.TargetScope != "enemy_self" && action.TargetScope != "enemy_alive") {
+				return fmt.Errorf("monster_actions[%d] has invalid heal_enemy fields", i)
+			}
+		case "revive_enemy":
+			if (action.FirstPercent != 50 && action.FirstPercent != 100) || action.TargetScope != "enemy_dead_one" {
+				return fmt.Errorf("monster_actions[%d] has invalid revive_enemy fields", i)
+			}
+		case "summon_clone":
+			if action.TargetScope != "enemy_self" {
+				return fmt.Errorf("monster_actions[%d] has invalid summon_clone fields", i)
+			}
+		case "banish_companion":
+			if action.TargetScope != "party_one_alive" || action.SuccessRollMax < 0 || action.SuccessRollMax > 255 {
+				return fmt.Errorf("monster_actions[%d] has invalid banish_companion fields", i)
+			}
+		case "scale_enemy_stat":
+			if action.Stat != "agility" || action.FirstPercent != 150 || action.TargetScope != "enemy_alive" {
+				return fmt.Errorf("monster_actions[%d] has invalid scale_enemy_stat fields", i)
+			}
+		case "apply_actor_status":
+			if (action.Stat != "confusion" && action.Stat != "spell_null" && action.Stat != "heal_block") ||
+				action.SuccessRollMax < 0 || action.SuccessRollMax > 255 ||
+				(action.TargetScope != "party_one_alive" && action.TargetScope != "party_alive" && action.TargetScope != "party_dead") {
+				return fmt.Errorf("monster_actions[%d] has invalid apply_actor_status fields", i)
+			}
+		case "reflect_enemy":
+			if action.TargetScope != "enemy_self" {
+				return fmt.Errorf("monster_actions[%d] has invalid reflect_enemy fields", i)
+			}
+		case "sacrifice_death":
+			if action.TargetScope != "party_alive" || action.MPCost < 0 || action.SuccessRollMax < 0 || action.SuccessRollMax > 255 {
+				return fmt.Errorf("monster_actions[%d] has invalid sacrifice_death fields", i)
+			}
+		case "summon_related":
+			if action.TargetScope != "enemy_self" {
+				return fmt.Errorf("monster_actions[%d] has invalid summon_related fields", i)
 			}
 		default:
 			return fmt.Errorf("monster_actions[%d] has unsupported kind %q", i, action.Kind)
@@ -4750,8 +4820,10 @@ func (p *Pack) validateBattlePack() error {
 		if seenActionBits[action.MaskBit] {
 			return fmt.Errorf("duplicate monster action mask_bit %d", action.MaskBit)
 		}
-		if _, ok := conditions[action.ConditionID]; !ok {
-			return fmt.Errorf("monster_actions[%d] references unknown condition %q", i, action.ConditionID)
+		if action.ConditionID != "" {
+			if _, ok := conditions[action.ConditionID]; !ok {
+				return fmt.Errorf("monster_actions[%d] references unknown condition %q", i, action.ConditionID)
+			}
 		}
 		if err := validateEvidence(action.Evidence); err != nil {
 			return fmt.Errorf("monster_actions[%d] evidence: %w", i, err)

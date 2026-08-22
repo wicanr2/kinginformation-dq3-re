@@ -175,24 +175,6 @@ func CastValue(base, roll int) int {
 	return half + half*roll/256
 }
 
-// 歷史 lookup：怪物 action bit(0..47)→ 候選文字 rec。現行 Battle 對未由 pack 接管的
-// bit 仍以此表嘗試普通 spell descriptor；這是尚待逐 bit RE 的相容近似，不是原版 exact，
-// 也尚未達成未知 action 失敗即關閉。
-var monsterSpellRec = [48]int{
-	121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132,
-	133, 134, 135, 136, 139, 140, 141, 144, 145, 146, 147, 148,
-	149, 150, 152, 154, 155, 156, 157, 158, 161, 162, 163, 164,
-	169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180,
-}
-
-// MonsterSpellRec 保留歷史 API 名稱；回傳 action 的候選文字 rec，越界回 0。
-func MonsterSpellRec(bit int) int {
-	if bit < 0 || bit >= 48 {
-		return 0
-	}
-	return monsterSpellRec[bit]
-}
-
 // MonsterSpellBits 保留歷史 API 名稱；只列出 raw action mask 的 set bit。
 func MonsterSpellBits(mask [6]uint8) []int {
 	var out []int
