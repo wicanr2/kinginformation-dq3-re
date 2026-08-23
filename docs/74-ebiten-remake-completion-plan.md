@@ -19,14 +19,15 @@
 > PCM hardware wall-clock、DAC、PIT、DMA 等平台時序只引用 Wiki／datasheet／成熟模擬器
 > 規格並採可重現近似，不再列為遊戲 RE 或 remake 完成 gate。上述六項現已由
 > `docs/179..184` 閉合，後續四項 polish 另由 `docs/185` 收斂；公開 v0.1.34 早於目前
-> schema `0.1.48`／content `0.1.54`，重新
-> 打包／發版是交付 gate，不是功能缺口。
+> schema `0.1.48`／content `0.1.54`；新版完整版與推廣片已依使用者決定完成本機交付，
+> 不建立公開 tag／Release。這不是功能缺口。
 
 > **接手判讀鐵則：**本檔第 4–10 節及各日期 checkpoint 保存證據形成史，不是可直接執行的
 > current worklist。現況只由本段、下方「玩家可見畫面盤點」、文件末端最新 checkpoint 與
 > [`WORKLIST.md`](../WORKLIST.md) 共同仲裁；舊段落出現「待辦／unknown／pending」時，必須先查
-> 是否已被 `docs/128..185` 訂正。2026-08-23 的必要剩餘工作只有以目前 content 重新打包及
-> 發版；沒有新的玩家可見反證時，不重新開啟已完成功能或無界反組譯。
+> 是否已被 `docs/128..185` 訂正。2026-08-23 已在 `dist-all/v0.1.35-local/` 完成本機四個
+> 完整版與有音樂推廣片；依使用者決定不發布這批完整素材與 MT-32 音樂。沒有新的玩家可見
+> 反證時，不重新開啟已完成功能或無界反組譯。
 
 > 建立：2026-07-28（Asia/Taipei）
 >
@@ -1414,7 +1415,7 @@ jump table `0x28a14 → sub_16315`、特殊模式 `DGROUP 0x0b62` 及 flag `0x13
 狀況、道具、裝備與其他已接支線均有正常玩家入口，完整主線先前亦已達 E3；因此使用者指定
 的六項功能 worklist 到此清空。尚缺同狀態 oracle 的隊員詳情／逐窗像素、音訊體感與全場景
 V3 留作可選 parity，不再反向升格為 remake 功能 blocker。公開 v0.1.34 不含本批未發版修改；
-下一個必要 gate 只會是使用者另行要求的發行重包，而不是繼續無界 RE。
+該段當時所稱的「發行重包」已由下方 `v0.1.35-local` 現行 checkpoint 完成本機交付，不再是待辦。
 
 ## 2026-08-23 現行 checkpoint：四項殘餘 polish 閉合
 
@@ -1425,6 +1426,9 @@ V3 留作可選 parity，不再反向升格為 remake 功能 blocker。公開 v0
 direct consumer，保留為 `Unknown27` raw 欄，不命名成掉落率或多次行動。
 
 現行版本為 schema `0.1.48`／content `0.1.54`。功能 worklist 已清空，campaign 維持 E3；
-必要剩餘項目只有把此 checkpoint 重新封裝至 `dist-all/<新版本>/`、重錄非靜音推廣片並發布。
+checkpoint `aa77bdd` 的四個本機完整版與 72 秒有音樂推廣片已集中於
+`dist-all/v0.1.35-local/`，雜湊與驗收邊界由該目錄的 `SHA256SUMS.txt`、
+`LOCAL-DELIVERY.txt` 與 `promo/` metadata 保存。依使用者決定，這批內容不加入 Git、
+不建立 tag 或 GitHub Release；公開版仍是 v0.1.34。
 少數明示的 classic／舊 C 道具參數、全遊戲逐畫面／逐音效 V3、Android host audio／真機及
 macOS 真機驗收，分別屬證據限制或可選驗收，不是 remake 功能缺口。

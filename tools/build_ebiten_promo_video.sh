@@ -12,7 +12,7 @@ fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-for command_name in ffmpeg ffprobe convert montage awk sha256sum; do
+for command_name in ffmpeg ffprobe convert awk sha256sum; do
   command -v "$command_name" >/dev/null 2>&1 || {
     echo "錯誤：容器缺少 $command_name。" >&2
     exit 2
@@ -21,9 +21,9 @@ done
 
 SERIF_FONT="${DQ3_PROMO_SERIF_FONT:-/usr/share/fonts/opentype/noto/NotoSerifCJK-Bold.ttc}"
 SANS_FONT="${DQ3_PROMO_FONT:-/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc}"
-OUT="${DQ3_PROMO_OUT:-dist-all/v0.1.34/promo/dq3-remake-promo-20260812-r2.mp4}"
+OUT="${DQ3_PROMO_OUT:-dist-all/v0.1.35-local/promo/dq3-remake-promo-v0.1.35-local-music.mp4}"
 AUDIO_ROOT="${DQ3_PROMO_AUDIO_ROOT:-work/music/export/mt32}"
-OPENING_CAPTURE="${DQ3_PROMO_OPENING_CAPTURE:-dist-all/v0.1.34/promo/source/opening_runtime.mp4}"
+OPENING_CAPTURE="${DQ3_PROMO_OPENING_CAPTURE:-dist-all/v0.1.35-local/promo/source/opening_runtime.mp4}"
 
 test -f "$SERIF_FONT" || { echo "錯誤：缺少繁中字型 $SERIF_FONT。" >&2; exit 2; }
 test -f "$SANS_FONT" || { echo "錯誤：缺少繁中字型 $SANS_FONT。" >&2; exit 2; }
@@ -60,6 +60,10 @@ mkdir -p "$(dirname "$OUT")"
 TMP="$(mktemp -d /tmp/dq3-promo-r2-XXXXXX)"
 cleanup() { rm -rf "$TMP"; }
 trap cleanup EXIT INT TERM
+export XDG_CACHE_HOME="$TMP/cache"
+mkdir -p "$XDG_CACHE_HOME/fontconfig"
+export MAGICK_THREAD_LIMIT=1
+export OMP_NUM_THREADS=1
 
 W=1280
 H=720
@@ -103,8 +107,12 @@ scene_png() {
       ;;
     split)
       test -s "$image2" || { echo "錯誤：雙畫面版型缺少第二張圖。" >&2; exit 2; }
-      montage "$image" "$image2" -tile 2x1 -geometry 620x500+8+8 \
-        -background "$BG" "$TMP/split.png"
+      # Debian ImageMagick 6 的 montage 在受限非 root 容器會 abort；用兩次明確
+      # composite 保持相同 2×1 幾何，並避免隱含的 montage worker pool。
+      convert -size "${W}x516" "xc:${BG}" \
+        \( "$image" -resize "620x500>" \) -gravity west -geometry +8+0 -composite \
+        \( "$image2" -resize "620x500>" \) -gravity east -geometry +8+0 -composite \
+        "$TMP/split.png"
       convert -size "${W}x${H}" "gradient:${BG}-${BG2}" \
         \( "$TMP/split.png" -bordercolor "$GOLD" -border 4 \) \
         -gravity center -geometry +0-30 -composite \
@@ -140,7 +148,7 @@ card_png "$TMP/00-title.png" "傳說的終章" "精訊版 DQ3：一段台灣 DOS
 static_video "$TMP/00-title.mp4" "$TMP/00-title.png" 4
 append_clip "$TMP/00-title.mp4"
 
-# 這段是目前 v0.1.34 AppRun 在 Xvfb 中以正式輸入擷取的實機畫面。
+# 這段是目前 v0.1.35-local AppRun 在 Xvfb 中以正式輸入擷取的實機畫面。
 ffmpeg -y -loglevel error -i "$OPENING_CAPTURE" -t 12 \
   -vf "scale=${W}:${H}:force_original_aspect_ratio=decrease:flags=neighbor,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,drawtext=fontfile=${SANS_FONT}:text='現行 Go／Ebitengine 實際運行':fontcolor=${CAPTION}:fontsize=27:x=24:y=26:box=1:boxcolor=0x000000b8:boxborderw=10,format=yuv420p" \
   -an -c:v libx264 -preset veryfast -threads 2 -crf 18 -pix_fmt yuv420p -r "$FPS" "$TMP/01-runtime.mp4"

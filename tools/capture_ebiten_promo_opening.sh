@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 在 Docker／Xvfb 中錄下正式 v0.1.34 AppRun 的開場動態；不在主機啟動遊戲。
+# 在 Docker／Xvfb 中錄下現行本機 AppRun 的開場動態；不在主機啟動遊戲。
 set -euo pipefail
 
 if [ ! -f /.dockerenv ]; then
@@ -10,8 +10,8 @@ fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-APP="${DQ3_PROMO_APP:-dist/v0.1.34/full/linux-amd64/AppDir/AppRun}"
-OUT="${DQ3_PROMO_CAPTURE_OUT:-dist-all/v0.1.34/promo/source/opening_runtime.mp4}"
+APP="${DQ3_PROMO_APP:-dist-all/v0.1.35-local/full/linux-amd64/dq3-remake-v0.1.35-local-full-linux-amd64.AppImage}"
+OUT="${DQ3_PROMO_CAPTURE_OUT:-dist-all/v0.1.35-local/promo/source/opening_runtime.mp4}"
 DISPLAY_ID="${DQ3_PROMO_DISPLAY:-:97}"
 LOG="${DQ3_PROMO_CAPTURE_LOG:-/tmp/dq3-promo-game.log}"
 
@@ -43,6 +43,7 @@ export HOME="$runtime_home"
 export XDG_CONFIG_HOME="$runtime_home/config"
 export XDG_DATA_HOME="$runtime_home/data"
 export XDG_CACHE_HOME="$runtime_home/cache"
+export APPIMAGE_EXTRACT_AND_RUN=1
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_CACHE_HOME"
 
 for _ in $(seq 1 50); do

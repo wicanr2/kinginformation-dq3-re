@@ -1,9 +1,10 @@
 # 精訊版《勇者鬥惡龍 III》反組譯與 remake
 
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
-> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機三平台包與推廣片
-> 的唯一現行交付樹為 `dist-all/v0.1.34/`，版型與驗收見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
-> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.48`／content `0.1.54`：包含日夜原始
+> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機完整版與推廣片的
+> 唯一現行交付樹為 `dist-all/v0.1.35-local/`；其中 `LOCAL-DELIVERY.txt`、`SHA256SUMS.txt`
+> 與 `promo/` metadata 保存本輪邊界，舊版型形成史見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
+> 儲存庫目前 source checkpoint 為尚未發版的 schema `0.1.48`／content `0.1.54`：包含日夜原始
 > palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
 > 等待閘門；因此公開 v0.1.34 不能被描述為包含這些修正，
 > 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
@@ -20,10 +21,11 @@
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
 目前狀態（2026-08-23）：正式輸入主線為 E3，指定的六項玩家功能與四項殘餘 polish 均已
-閉合；現行工作樹為 schema `0.1.48`／content `0.1.54`，但公開版仍是較早的 v0.1.34。
-remake 已沒有待串接的必要玩家功能，下一個必要工作只剩交付新版：在
-`dist-all/<新版本>/` 重建 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64
-ZIP 的 patch／full，重錄並驗證非靜音推廣片，再建立 tag 與 GitHub Release。全遊戲逐畫面
+閉合；現行工作樹為 schema `0.1.48`／content `0.1.54`。以 checkpoint `aa77bdd` 建立的
+`dist-all/v0.1.35-local/` 已含 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS
+x86_64／arm64 ZIP 四個完整版，以及 72 秒、AAC 雙聲道、通過非靜音驗收的有音樂推廣片。
+這批完整素材與 MT-32 音樂只供本機保存，不加入 Git、不建立 tag 或 GitHub Release；公開版
+仍是較早且不含原版素材的 v0.1.34。remake 目前沒有待串接或待交付的必要工作。全遊戲逐畫面
 V3、Android host audio／真機、macOS 真機，以及仍明示為 classic／舊 C 近似的少數道具
 參數，都是證據限制或可選驗收，不能寫成已達原版 exact，也不反向推翻 remake 玩家流程完成。
 快速狀態表見 [`WORKLIST.md`](WORKLIST.md)，現況與歷史閱讀閘門見 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)，
@@ -67,7 +69,8 @@ campaign 當時以正式 `InputState` clean replay 至 `THE END`（63.92 秒）�
 的正式交易與輸入切片越過。最新乾淨 Docker＋Xvfb trace 以 115.629 秒抵達 `THE END`，
 現行 campaign 為 E3；逐畫面／音效 V3 的長尾仍待
 後續對拍，本輪指定的 AppImage、Windows ZIP 與 macOS ZIP 已產出；Android 已另開保存優先
-UX 並完成 Docker debug APK（目前僅 `build-only`，尚無 emulator／真機驗收），WASM 仍不在本輪 release 目標。現行進度與工作順序以
+UX，完成 Docker debug APK、Android 14／KVM 安裝，以及隔離靜音探針的畫面、觸控與生命週期驗收；
+production 音訊版仍受 headless emulator 的 host audio backend 限制，WASM 不在本輪 release 目標。現行進度與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md) 為準。
 本次可公開的 patch checksum、Docker smoke 界線與不公開的本機完整版清單見
 [`docs/122`](docs/122-release-20260810.md)。
@@ -84,10 +87,10 @@ selector 啟動，不再落回 generic 草地；目前只有 D2／runtime V1，�
 姓名、H／M、職業與等級不再使用目測寬框；正式輸入 runtime 達 near-state V2，詳見
 [`docs/130`](docs/130-party-field-hud-re.md)。
 
-### 尚未發版工作樹的最後功能順序
+### 歷史功能收尾順序（已完成）
 
-最新完整正式輸入主線已抵達 `THE END`；剩餘工作不是重新串主線，而是依下列順序移除
-仍可由玩家遇到的近似或缺少交易：
+最新完整正式輸入主線已抵達 `THE END`。以下保留當時的功能收尾順序；六項均已完成，
+不再是現行待辦：
 
 1. ~~戰鬥道具持有人、清單、目標與原版消耗時序。~~ 已完成。
 2. ~~原始怪物表實際使用的 action。~~ 已完成 39/39 definition，並移除 `MonsterSpellRec` 猜測 fallback。
@@ -125,7 +128,7 @@ parity，不再列為 remake 功能 blocker，詳見 [`docs/116`](docs/116-field
 
 ## 先讀這些
 
-- [`WORKLIST.md`](WORKLIST.md)：目前六項收尾順序與完成狀態的短表。
+- [`WORKLIST.md`](WORKLIST.md)：目前完成狀態、本機交付與非必要後續項目的短表。
 - [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md)：接手時應保留的少量穩定決策。
 - [`CONTEXT.md`](CONTEXT.md)：術語、位址口徑與文件索引。
 - [`docs/74`](docs/74-ebiten-remake-completion-plan.md)：Go／Ebiten remake 的現行完成計畫。
@@ -134,7 +137,7 @@ parity，不再列為 remake 功能 blocker，詳見 [`docs/116`](docs/116-field
 - [`references/walkthroughs/README.md`](references/walkthroughs/README.md)：台灣本土攻略原文、作者與出處。
 - [`docs/history/dq3-bbs-1994.md`](docs/history/dq3-bbs-1994.md)：1994–1995 BBS 一手史料整理。
 - [`docs/58-taiwan-jingxun-music-preservation.md`](docs/58-taiwan-jingxun-music-preservation.md)：精訊音樂與台灣電玩史保存紀錄。
-- [`docs/124-android-ux-spec.md`](docs/124-android-ux-spec.md)：保存優先的 Android 版 UX 與本輪 build-only 界線。
+- [`docs/124-android-ux-spec.md`](docs/124-android-ux-spec.md)：保存優先的 Android 版 UX 與 emulator／音訊驗收界線。
 - [`docs/125-acceptance-20260811.md`](docs/125-acceptance-20260811.md)：Go／Android／原版取樣驗收與 HUD 框線勘誤。
 - [`docs/128`](docs/128-battle-background-selector-re.md)：固定編隊背景 archive／palette selector 的原始資料、勘誤與 V2 界線。
 - [`docs/129`](docs/129-required-boss-backgrounds-re.md)：必經單頭目固定 record 到 renderer 的 IDA 接線與 V1 界線。
@@ -317,8 +320,10 @@ V1。通用地形背景沒有藉此宣稱 parity。完整靜態收斂與停止�
 [`docs/123`](docs/123-static-battle-daynight-re.md) 與 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。三種桌面發佈包見
 [`docs/131`](docs/131-release-v0.1.34.md)；重新剪輯、含可聽 MT-32 音軌的 2026-08-12 推廣片與
 非靜音驗收見 [`docs/133`](docs/133-promo-video-20260812.md)，r2 與 `dist-all/` 交付規格見
-[`docs/134`](docs/134-promo-video-r2-dist-all.md)。後續工作以 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)
-的 E2 handoff 與未決清單為準。
+[`docs/134`](docs/134-promo-video-r2-dist-all.md)。目前 source 的三平台完整版與有音樂推廣片
+集中於本機 `dist-all/v0.1.35-local/`，以其中的 `LOCAL-DELIVERY.txt`、`SHA256SUMS.txt`
+與 `promo/` metadata 為驗收依據。必要 remake 工作目前為零；現況以
+[`WORKLIST.md`](WORKLIST.md) 與 [`docs/74`](docs/74-ebiten-remake-completion-plan.md) 頂端 checkpoint 為準。
 
 ## 證據優先序
 
@@ -339,10 +344,10 @@ V1。通用地形背景沒有藉此宣稱 parity。完整靜態收斂與停止�
 bash dq3_remake_ebitan/build.sh
 ```
 
-Android 保存優先 UX 與建置界線見 [`docs/124`](docs/124-android-ux-spec.md)。本輪 Docker
-已用最新 HUD／Boss 背景 source 重建 debug APK（含本機合法素材、ignored），SHA-256 為
-`38c222238a9dab068e37c5bf86eb3bad7c561f7104e32797c1a8e7c153a5e8ad`；這只代表
-`build-only`。專用 emulator image 已固定 Android emulator 37.1.11 與 API 34 revision 14；
+Android 保存優先 UX 與建置界線見 [`docs/124`](docs/124-android-ux-spec.md)。2026-08-12 的
+歷史 debug APK（含本機合法素材、ignored）SHA-256 為
+`38c222238a9dab068e37c5bf86eb3bad7c561f7104e32797c1a8e7c153a5e8ad`；該雜湊只代表當時的
+build-only 產物，不代表目前 source。專用 emulator image 已固定 Android emulator 37.1.11 與 API 34 revision 14；
 KVM 下 Android 14 與 APK 安裝均成功；`MainActivity.applyGameChrome()` 的啟動空指標已修正。
 但 production 音訊版在 headless emulator 仍阻塞於 host audio backend，首個遊戲 window 未
 完成；停用音訊的隔離探針才完整顯示標題並通過 lifecycle。證據與界線見

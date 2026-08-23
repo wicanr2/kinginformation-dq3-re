@@ -21,25 +21,27 @@
 |---|---|---|
 | remake 玩家流程 | campaign E3；上述六項皆已接入正式入口 | 否，已完成 |
 | 原版證據限制 | 藥草治療量、祈禱之戒 MP 回復量、聖水步數仍是 classic／舊 C 近似；部分逐窗、逐幀與音效只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
-| 交付 | 公開 v0.1.34 早於 schema `0.1.48`／content `0.1.54` | 是發行工作，不是功能缺口；重新發版時集中到 `dist-all/<版本>/` |
+| 交付 | `dist-all/v0.1.35-local/` 已含四個完整版與有音樂推廣片；公開版仍是 v0.1.34 | 已完成本機交付；依使用者決定不建立 tag／GitHub Release |
 
 2026-08-23 polish：record345 隊長姓名、蘭西爾 `0x13` 無 writer 的否定性證據、舊 C
 `partyBlind/partySealed` 死狀態，以及 D3MNS `+0x27` 未使用 raw 欄均已由 [`docs/185`](docs/185-remaining-polish-closure.md)
 閉合，不再列為 remake 待辦。
 
-## 下一個必要工作：新版交付
+## 本機交付（已完成）
 
-這是目前唯一未完成的必要工作，執行順序如下：
+2026-08-23 已完成：
 
-1. 從目前已提交 checkpoint 決定新版本號，重建 Linux x86_64 AppImage、Windows x86_64
-   ZIP、macOS x86_64／arm64 ZIP；patch／full 全部集中到 `dist-all/<新版本>/`。
-2. 重錄有聲推廣片至 `dist-all/<新版本>/promo/`，驗證影像、音訊、時長、非靜音與雜湊。
-3. 驗證包體架構、patch／full 資產邊界、Linux 啟動及各檔 SHA-256；macOS 若沒有真機，必須
-   明示只有靜態 Mach-O／封包驗證。
-4. 更新 release note 與下載入口，建立 tag 並發布 GitHub Release；公開 patch 不包含原版素材。
+1. `dist-all/v0.1.35-local/full/`：Linux x86_64 AppImage、Windows x86_64 ZIP、macOS
+   x86_64／arm64 ZIP，均為本機完整版。
+2. `dist-all/v0.1.35-local/promo/`：72 秒有音樂推廣片、實機開場來源、contact sheet、
+   FFprobe、音量／非靜音驗收及音樂來源雜湊。
+3. 四包皆核對架構、CRC／解包、checkpoint、修正版 `DQ3MNS.SHP` 與 IDA sidecar 排除；Linux
+   AppImage 另通過 Docker＋Xvfb 8 秒啟動。macOS 沒有真機驗收，維持靜態驗證標記。
+4. `SHA256SUMS.txt` 與 `LOCAL-DELIVERY.txt` 已放在同一版本根目錄。
 
-完成上述四步後，必要 worklist 即為零。Android host audio／真機、macOS 真機與全遊戲 V3
-仍保留在可選驗收，不得在發版時誤寫成已通過。
+依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git、不發布、不建立
+新 tag。至此必要 worklist 為零；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
+可選驗收，不得誤寫成已通過。
 
 本輪依使用者指示不以完整回歸作完成條件。若沒有新的玩家可見差異、正式發行需求或更強
 原版證據，不重新開啟已完成切片，也不把可選 V3 長尾改列為功能 blocker。
