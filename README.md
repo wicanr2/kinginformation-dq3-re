@@ -19,11 +19,15 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前狀態（2026-08-23）：正式輸入主線為 E3，指定的六項玩家功能 worklist 已完成；尚未發版
-工作樹不是公開 v0.1.34。必要後續只有重新打包／發版；全遊戲逐畫面 V3、Android 正式音訊
-動態驗收，以及仍明示為 classic／舊 C 近似的少數道具參數，都是證據限制或可選驗收，不能
-寫成已達原版 exact，也不反向推翻 remake 玩家流程完成。快速狀態表見 [`WORKLIST.md`](WORKLIST.md)。
-四項殘餘 polish 的 IDA 閉環與否定性證據見 [`docs/185`](docs/185-remaining-polish-closure.md)。
+目前狀態（2026-08-23）：正式輸入主線為 E3，指定的六項玩家功能與四項殘餘 polish 均已
+閉合；現行工作樹為 schema `0.1.48`／content `0.1.54`，但公開版仍是較早的 v0.1.34。
+remake 已沒有待串接的必要玩家功能，下一個必要工作只剩交付新版：在
+`dist-all/<新版本>/` 重建 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64
+ZIP 的 patch／full，重錄並驗證非靜音推廣片，再建立 tag 與 GitHub Release。全遊戲逐畫面
+V3、Android host audio／真機、macOS 真機，以及仍明示為 classic／舊 C 近似的少數道具
+參數，都是證據限制或可選驗收，不能寫成已達原版 exact，也不反向推翻 remake 玩家流程完成。
+快速狀態表見 [`WORKLIST.md`](WORKLIST.md)，現況與歷史閱讀閘門見 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)，
+四項 polish 的 IDA 閉環與否定性證據見 [`docs/185`](docs/185-remaining-polish-closure.md)。
 
 本專案研究精訊資訊在 1990 年代製作的中文版 DQ3
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，

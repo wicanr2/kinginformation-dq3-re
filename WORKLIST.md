@@ -27,5 +27,19 @@
 `partyBlind/partySealed` 死狀態，以及 D3MNS `+0x27` 未使用 raw 欄均已由 [`docs/185`](docs/185-remaining-polish-closure.md)
 閉合，不再列為 remake 待辦。
 
+## 下一個必要工作：新版交付
+
+這是目前唯一未完成的必要工作，執行順序如下：
+
+1. 從目前已提交 checkpoint 決定新版本號，重建 Linux x86_64 AppImage、Windows x86_64
+   ZIP、macOS x86_64／arm64 ZIP；patch／full 全部集中到 `dist-all/<新版本>/`。
+2. 重錄有聲推廣片至 `dist-all/<新版本>/promo/`，驗證影像、音訊、時長、非靜音與雜湊。
+3. 驗證包體架構、patch／full 資產邊界、Linux 啟動及各檔 SHA-256；macOS 若沒有真機，必須
+   明示只有靜態 Mach-O／封包驗證。
+4. 更新 release note 與下載入口，建立 tag 並發布 GitHub Release；公開 patch 不包含原版素材。
+
+完成上述四步後，必要 worklist 即為零。Android host audio／真機、macOS 真機與全遊戲 V3
+仍保留在可選驗收，不得在發版時誤寫成已通過。
+
 本輪依使用者指示不以完整回歸作完成條件。若沒有新的玩家可見差異、正式發行需求或更強
 原版證據，不重新開啟已完成切片，也不把可選 V3 長尾改列為功能 blocker。

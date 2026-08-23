@@ -18,8 +18,15 @@
 > 每項固定走「既有 RE → IDA Pro 9.4／IDAPython 補證 → spec → game-pack／runtime」。
 > PCM hardware wall-clock、DAC、PIT、DMA 等平台時序只引用 Wiki／datasheet／成熟模擬器
 > 規格並採可重現近似，不再列為遊戲 RE 或 remake 完成 gate。上述六項現已由
-> `docs/179..185` 閉合；公開 v0.1.34 早於目前 schema `0.1.48`／content `0.1.54`，重新
+> `docs/179..184` 閉合，後續四項 polish 另由 `docs/185` 收斂；公開 v0.1.34 早於目前
+> schema `0.1.48`／content `0.1.54`，重新
 > 打包／發版是交付 gate，不是功能缺口。
+
+> **接手判讀鐵則：**本檔第 4–10 節及各日期 checkpoint 保存證據形成史，不是可直接執行的
+> current worklist。現況只由本段、下方「玩家可見畫面盤點」、文件末端最新 checkpoint 與
+> [`WORKLIST.md`](../WORKLIST.md) 共同仲裁；舊段落出現「待辦／unknown／pending」時，必須先查
+> 是否已被 `docs/128..185` 訂正。2026-08-23 的必要剩餘工作只有以目前 content 重新打包及
+> 發版；沒有新的玩家可見反證時，不重新開啟已完成功能或無界反組譯。
 
 > 建立：2026-07-28（Asia/Taipei）
 >
@@ -119,26 +126,26 @@
 | 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | `opening` 五張 PCX 已由 game-pack 載入；桌面／mobile 正式入口可無輸入播放、正式輸入跳過並交回標題 | E2／V1；素材 identity 為 D2，120 幀停留、排序／淡入淡出、TITP 位置與音效仍待 V3 |
 | 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
-| 主選單 | DOSBox、網路圖 | 已有新遊戲／載入框架 | 需輸入與版面 E2 |
+| 主選單 | DOSBox、網路圖 | 新遊戲與載入皆有正式輸入入口；campaign 由新遊戲入口達 E3 | 功能 E3；逐畫面版面仍是可選 V3 |
 | 主角姓名／性別 | DOSBox 正式輸入、IDA、同狀態 PNG | 共用元件與正式 trace；`FIRST.SCR`、record 407 的 13 個具名確認欄位、三層 raw EGA backdrop 與 `beveled_2px` frame 均由 pack 接入 | E3；能力確認固定 checkpoint 已 V3 靜態（AE 1,474／640×350），游標閃爍、palette register、能力條與整段 timing 仍待動態 V3 |
 | 家中／母親 | DOSBox、影片 | sec4+rec82/83；handler54 transaction 已接 | E3；逐格護送動畫仍待 V3 |
 | 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
-| 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render 已有；CTY `+0x11` raw 遭遇 gate 與步數計數器已接 | E2（遭遇 gate）；仍需事件與 entrance closure、同狀態 V3 |
+| 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render、CTY `+0x11` 遭遇 gate、步數與主線 entrance／event transaction 已接 | 主線 E3；非主線逐入口與同狀態畫面屬可選 V3 |
 | NPC／日夜 | DOSBox、RE | 四階段 runtime、日／夜 NPC table 與 story-flag filter 已有正式入口；IDA handler74／69／70／33 的四條 transaction 已接線，原始 clock／palette bank 靜態鏈已閉合 | E2／D3；精確可見 palette transition 與完整 route 仍待 V3；不再把五個已接旗標誤列為 runtime unknown |
 | 地表／HUD | 影片、網路圖 | 四欄 H/M/等級 HUD 已由 pack 幾何／glyph 驅動 | E2；需入口／palette／同狀態 V3 |
-| 指令窗 | 影片、攻略操作說明 | 2×3 六指令已有 | 需所有子選單與 Enter 語意 |
-| 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 詳細狀況窗已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 圖達 E2／V2；魯拉、烈米特、特黑洛斯、拉那魯達的 MP／gate／核心效果為 D2 | 狀況子選單／隊員詳情、道具／裝備逐窗與其餘工具咒仍需 E2／V3 |
-| 戰鬥 | DOSBox／影片／原始怪圖 | 公式、多敵、狀態、boss queue 已有 | 呈現／訊息／cue 長尾 |
-| 商店／旅社／教會／達瑪 | 原版資料、部分截圖 | 達瑪轉職已由正式流程閉合至 E3/V2；其餘多數已有 | 賣出、逐服務與達瑪原版同狀態 V3 仍缺 |
+| 指令窗 | 影片、攻略操作說明 | 2×3 六指令、必要子選單與 Enter／Cancel 正式語意已接 | 功能 E2、主線 E3；逐窗幾何屬可選 V3 |
+| 道具／裝備／狀況／咒文 | 影片、EXE field caster/handler | 狀況、道具、裝備及合法 field spell 均有正式入口；`rec166–171` 見 `docs/181` | 功能 E2、主線 E3；隊員詳情與逐窗像素屬可選 V3 |
+| 戰鬥 | DOSBox／影片／原始怪圖 | 公式、多敵、39/39 production action、狀態、單次 action queue、道具與掉落交易均已接 | 功能 E2、主線 E3；逐動作畫面／音效仍是可選 V3 |
+| 商店／旅社／教會／達瑪 | 原版資料、部分截圖 | 一般買賣、裝備交易、瑪依拉特店、必要服務與達瑪正式路徑已接 | 功能 E2、必要路徑 E3；逐服務同狀態畫面屬可選 V3 |
 | 船 | 影片、DOSBox 截圖 | 取船鏈、正式登船與首次航行已接 | E3；航海畫面仍待 V3 |
 | 不死鳥／飛行 | 攻略、影片、EXE／CTY70 | 六珠祭壇、復活、搭乘、飛行與降落已有正式 trace | 新遊戲 boot trace 已通過 P4-P6；主線 E3，畫面 V1 |
 | 下降／下世界 | 影片、EXE | 巴拉摩斯後王座事件與自然下降入口已接 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
 | 終盤連戰 | 影片、RE | 光之珠、隱藏樓梯、歐里狄加與三連戰已有正式入口 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
 | THE END | 影片、TIT3 | 戰後回城、冊封與 ending scroll 已接 | 新遊戲 boot trace 已到 THE END；逐畫面與音效仍待 V3 |
-| 音樂／音效 | 原版 MCX/VOC、錄音研究 | OPL2/OGG 有相當基礎 | 逐場景 cue matrix 待驗 |
-| 觸控／Android | 無原版對照，屬 port UX | 輸入抽象與觸控已有；保存優先的 Android UX 規格見 [`docs/124`](124-android-ux-spec.md) | Docker APK build、生命週期與真機 touch path 分開驗收 |
+| 音樂／音效 | 原版 MCX/VOC、錄音研究 | OPL2/OGG、關鍵戰鬥 cue 與 completion gate 已接；硬體 wall-clock 依平台規格近似 | 主線不阻塞；全場景 cue、人耳與同狀態音訊屬可選 V3 |
+| 觸控／Android | 無原版對照，屬 port UX | 輸入抽象、保存優先 UX、Docker APK 與隔離靜音 emulator 觸控／lifecycle 已驗 | host audio backend 與真機驗收未完成；不屬桌面 remake release gate |
 
 ## 3. 現況判斷
 
@@ -159,7 +166,8 @@
 4. 六珠／不死鳥／飛行、下降與終盤正式事件切片已完成，且已由同一條不改狀態的
    production `InputState` trace 從新遊戲延伸至 THE END；目前不再把孤立切片當作 campaign
    證明，後續只需補畫面／音效的 V3 對拍與發佈驗收。
-5. 畫面證據沒有形成逐界面的 current matrix，raw decode、component dump 和正常流程畫面容易混稱。
+5. 上方 current matrix 已分開功能 E2／E3 與畫面 V1–V3；新增截圖仍須標明 exact-state、
+   near-state 或 layout-only，不能用 raw decode／component dump 取代正常流程畫面。
 6. `build.sh` 內 `go test | tail` 未啟用內層 `pipefail`，可遮蔽測試失敗；圖形測試應以
    明確啟動的 Xvfb 加 `go test -c` 執行，避免 `xvfb-run` wrapper 卡住而誤判程式失敗。
 
@@ -236,7 +244,7 @@
 尚未完成的是能力確認畫面 stat panel 逐像素對拍與母親逐格移動動畫；不能因 transaction
 與 opening trace 通過就把整個 P1（酒場、四人隊、正常出城）標成完成。
 
-## 4. 證據與驗收等級
+## 4. 證據與驗收等級（長期規則；不是待辦表）
 
 每個 GAP 使用以下狀態：
 
@@ -289,7 +297,7 @@
 - decompiler 行數異常膨脹或大量 unreachable 時視為不可信，回原始指令。
 - 未知設定 fail closed，不以 generic fallback 靜默取代。
 
-## 5. 執行計畫
+## 5. 歷史執行計畫（P0–P8 已由後段 checkpoint 仲裁）
 
 ### P0.5 — 精訊版 DQ 共用 game pack
 
@@ -541,7 +549,7 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 8. Oracle comparison。
 9. Worklist 更新：E/V/D 等級，不寫模糊「完成」。
 
-## 8. 第一個實作 sprint
+## 8. 歷史第一個實作 sprint
 
 在開始 R-2 之前先做：
 
@@ -561,7 +569,7 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 
 這個順序直接處理過去最大失敗模式：先確保玩家真的走得到，再增加更多孤立機制。
 
-## 9. 下一輪 breakdown（2026-07-28）
+## 9. 歷史下一輪 breakdown（2026-07-28）
 
 下一輪先修「機制存在但原版設定未 match」，不新增無證據的近似功能。
 
@@ -607,7 +615,7 @@ R-2 可在 P1/P2 同期作獨立功能切片，但不得因它的 spec 已齊就
 4. `git diff --check`、確認不納入原版素材／IDA 檔／使用者 scratch files，再做一次重大
    commit 與 push。
 
-## 10. 今日收尾與剩餘工作（更新 2026-08-02）
+## 10. 歷史收尾與當時剩餘工作（2026-08-02；非現況）
 
 boot 起的同一條正式 trace 已由首次航行繼續至加爾那之塔《領悟之書》`0x4a`、
 CTY17 達瑪神殿轉職，再閉合 CTY20《黑暗之燈》`0x5f`。
@@ -1339,7 +1347,7 @@ SHP、所有選單或所有場景升為 V3；PCM wall-clock 已依平台規格�
 `tmp_dump.go` 的隔離 Linux desktop build（13,373,336 bytes）。這些證明目前程式與資料
 契約可建置且回歸一致；不取代 macOS 真機、原版逐畫面或人耳音訊驗收。
 
-## 2026-08-23 current slice：戰鬥道具 owner／selector／消耗品 handler
+## 2026-08-23 歷史 checkpoint：戰鬥道具 owner／selector／消耗品 handler
 
 [`docs/179`](179-battle-item-selector-runtime-spec.md) 以 IDA Pro 9.4 閉合
 `sub_1C1D8 → sub_1B836 → DGROUP 0x0d50/0x0d4b → sub_1B95C`：原版從目前
@@ -1395,7 +1403,7 @@ IDA Pro 9.4 已閉合角色 item slot → ITEM price → `price/2 + price/4` →
 普通 CTY IDA caller 限制見 `docs/183-ship-town-entry-transaction.md`。此 checkpoint 當時把
 必要選單與玩家可見支線列為待辦；其結果已由下節 `docs/184` 訂正為完成。
 
-## 2026-08-23 current checkpoint：六項功能 worklist 完成
+## 2026-08-23 歷史 checkpoint：六項功能 worklist 完成
 
 [`docs/184`](184-maira-kings-sword-special-shop.md) 以 CTY81 section1 原始 sub2 handler72、
 jump table `0x28a14 → sub_16315`、特殊模式 `DGROUP 0x0b62` 及 flag `0x134/0x135`
@@ -1407,3 +1415,16 @@ jump table `0x28a14 → sub_16315`、特殊模式 `DGROUP 0x0b62` 及 flag `0x13
 的六項功能 worklist 到此清空。尚缺同狀態 oracle 的隊員詳情／逐窗像素、音訊體感與全場景
 V3 留作可選 parity，不再反向升格為 remake 功能 blocker。公開 v0.1.34 不含本批未發版修改；
 下一個必要 gate 只會是使用者另行要求的發行重包，而不是繼續無界 RE。
+
+## 2026-08-23 現行 checkpoint：四項殘餘 polish 閉合
+
+[`docs/185`](185-remaining-polish-closure.md) 已完成最後四項指定 polish：record345 的
+`0xFFFB` 由顯示端重設 selector 為 1，確證插入隊長姓名；蘭西爾 flag `0x13` 在本 EXE
+有 reader 但沒有 gameplay writer，因此 remake 不合成 writer；舊 C prototype 遺留的
+`partyBlind`／`partySealed` 沒有 production writer，已移除；D3MNS `+0x27` 沒有已分析
+direct consumer，保留為 `Unknown27` raw 欄，不命名成掉落率或多次行動。
+
+現行版本為 schema `0.1.48`／content `0.1.54`。功能 worklist 已清空，campaign 維持 E3；
+必要剩餘項目只有把此 checkpoint 重新封裝至 `dist-all/<新版本>/`、重錄非靜音推廣片並發布。
+少數明示的 classic／舊 C 道具參數、全遊戲逐畫面／逐音效 V3、Android host audio／真機及
+macOS 真機驗收，分別屬證據限制或可選驗收，不是 remake 功能缺口。
