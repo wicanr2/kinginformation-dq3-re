@@ -8,8 +8,9 @@
 bytes 保真。現行已證實範圍、remake E2/E3 與原版 unknown 的分界見 `docs/135`。
 
 2026-08-23 最後功能順序：戰鬥道具、原始怪物表 39/39 實際 action 與野外輔助咒文
-`rec166–171`、一般商店賣出與船進城載具交易已完成；目前進入必要選單／玩家可見支線。每項固定走
-RE→IDA Pro 9.4／IDAPython→spec→implement。PCM hardware wall-clock、DAC／PIT／DMA
+`rec166–171`、一般商店賣出、船進城載具交易與瑪依拉特殊店／王者之劍已完成；六項功能
+worklist 已清空。最後一項以 IDA Pro 9.4 閉合 handler72、flag `0x134/0x135`，見 `docs/184`。
+狀況／道具／裝備已有正常入口；逐窗 V3 只在新 discrepancy 出現時重開。PCM hardware wall-clock、DAC／PIT／DMA
 屬平台規格，引用 Wiki／datasheet／成熟模擬器並採可重現近似，不再深挖遊戲 driver。
 
 2026-08-22 日夜 palette 訂正：`events.json.day_night_cycle` 保存 240-tick clock、

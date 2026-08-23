@@ -3,7 +3,7 @@
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
 > checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機三平台包與推廣片
 > 的唯一現行交付樹為 `dist-all/v0.1.34/`，版型與驗收見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
-> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.47`／content `0.1.52`：包含日夜原始
+> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.48`／content `0.1.53`：包含日夜原始
 > palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
 > 等待閘門；因此公開 v0.1.34 不能被描述為包含這些修正，
 > 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
@@ -82,9 +82,10 @@ selector 啟動，不再落回 generic 草地；目前只有 D2／runtime V1，�
 1. ~~戰鬥道具持有人、清單、目標與原版消耗時序。~~ 已完成。
 2. ~~原始怪物表實際使用的 action。~~ 已完成 39/39 definition，並移除 `MonsterSpellRec` 猜測 fallback。
 3. ~~由 field caster 原始 descriptor 證實的剩餘野外咒文。~~ 已完成。
-4. ~~一般商店賣出、售價與裝備交易。~~ 已完成；瑪依拉特店列入第 6 項支線。
+4. ~~一般商店賣出、售價與裝備交易。~~ 已完成。
 5. ~~船直接進城時的停泊／離船／出城復船狀態。~~ 已完成。
-6. **目前工作：**必要的狀況／道具／裝備子選單與確有玩家可見差異的支線語意。
+6. ~~必要的狀況／道具／裝備子選單與確有玩家可見差異的支線語意。~~ 已完成；瑪依拉
+   特殊店以原版兩旗標交易接回王者之劍，見 [`docs/184`](docs/184-maira-kings-sword-special-shop.md)。
 
 每項均以 IDA Pro 9.4／IDAPython 的有限 caller→writer→consumer 證據寫 spec 後才實作；
 不逐行翻譯 DQ3.EXE。PCM hardware wall-clock、DAC、PIT、DMA 與 Sound Blaster 標準時序
@@ -109,7 +110,8 @@ TITP 位置與開場音效仍待 V3，詳見 [`docs/120`](docs/120-opening-cutsc
 [`docs/126`](docs/126-newgame-confirmation-v3-static-comparison.md)。palette register、游標閃爍、
 能力條與整段創角的動態 timing 尚未由這張固定畫面宣稱完成。
 地表詳細狀況窗則已依 `DGROUP 0x3DA8`／D3TXT00 record 407 資料化，runtime 達 E2／V2；
-狀況子選單、隊員詳情與道具／裝備逐窗仍待同狀態 V3，詳見 [`docs/116`](docs/116-field-status-panel-re.md)。
+狀況、道具與裝備皆有正常玩家入口。隊員詳情與各窗逐畫面仍待同狀態 V3，但屬可選視覺
+parity，不再列為 remake 功能 blocker，詳見 [`docs/116`](docs/116-field-status-panel-re.md)。
 
 ## 先讀這些
 

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.47"
+	SchemaVersion       = "0.1.48"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -1691,6 +1691,21 @@ type ConditionalFacilityEvent struct {
 	Evidence        Evidence            `json:"evidence"`
 }
 
+// SpecialShopEvent 描述 scripted NPC 暫時進入共用商店，並由兩個 story flag 控制一次性
+// 貨架的有限交易。賣出指定前置品會清除解鎖旗標；買下條件品會清除庫存旗標。
+// 所有遊戲專屬 ID 均保留在 pack。
+type SpecialShopEvent struct {
+	ID                     string              `json:"id"`
+	Kind                   string              `json:"kind"`
+	NPC                    ScriptedNPCSelector `json:"npc"`
+	FacilityK              int                 `json:"facility_k"`
+	UnlockSellItemRawID    int                 `json:"unlock_sell_item_raw_id"`
+	UnlockFlagRaw          int                 `json:"unlock_flag_raw"`
+	ConditionalItemRawID   int                 `json:"conditional_item_raw_id"`
+	ConditionalItemFlagRaw int                 `json:"conditional_item_flag_raw"`
+	Evidence               Evidence            `json:"evidence"`
+}
+
 type Events struct {
 	SchemaVersion               string                           `json:"schema_version"`
 	DayNightCycle               DayNightCycle                    `json:"day_night_cycle"`
@@ -1700,6 +1715,7 @@ type Events struct {
 	SettlementFounderEvents     []SettlementFounderEvent         `json:"settlement_founder_events"`
 	SettlementFounderFollowups  []SettlementFounderFollowupEvent `json:"settlement_founder_followups"`
 	ConditionalFacilityEvents   []ConditionalFacilityEvent       `json:"conditional_facility_events"`
+	SpecialShopEvents           []SpecialShopEvent               `json:"special_shop_events"`
 	NPCPushRule                 NPCPushRule                      `json:"npc_push_rule"`
 	BossSurrenderEvents         []BossSurrenderEvent             `json:"boss_surrender_events"`
 	TemporaryRoleEvents         []TemporaryRoleEvent             `json:"temporary_role_events"`
@@ -3210,6 +3226,28 @@ func (p *Pack) validateEvents() error {
 			return fmt.Errorf("%s evidence: %w", event.ID, err)
 		}
 		conditionalFacilityIDs[event.ID] = true
+	}
+	if p.Events.SpecialShopEvents == nil {
+		return errors.New("special_shop_events must be present")
+	}
+	specialShopIDs := map[string]bool{}
+	for i, event := range p.Events.SpecialShopEvents {
+		if event.ID == "" || event.Kind != "special_shop" ||
+			!validScriptedNPC(event.NPC) || event.FacilityK < 0 || event.FacilityK > 255 ||
+			event.UnlockSellItemRawID < 0 || event.UnlockSellItemRawID > 255 ||
+			event.ConditionalItemRawID < 0 || event.ConditionalItemRawID > 255 ||
+			event.UnlockFlagRaw < 0 || event.UnlockFlagRaw >= 512 ||
+			event.ConditionalItemFlagRaw < 0 || event.ConditionalItemFlagRaw >= 512 ||
+			event.UnlockFlagRaw == event.ConditionalItemFlagRaw {
+			return fmt.Errorf("special_shop_events[%d]: invalid event", i)
+		}
+		if specialShopIDs[event.ID] {
+			return fmt.Errorf("duplicate special shop event id %q", event.ID)
+		}
+		if err := validateEvidence(event.Evidence); err != nil {
+			return fmt.Errorf("%s evidence: %w", event.ID, err)
+		}
+		specialShopIDs[event.ID] = true
 	}
 	entranceIDs := map[string]bool{}
 	entranceTiles := map[[3]int]string{}
@@ -5286,6 +5324,20 @@ func (p *Pack) ConditionalFacilityEvent(id string) (*ConditionalFacilityEvent, b
 	for i := range p.Events.ConditionalFacilityEvents {
 		if p.Events.ConditionalFacilityEvents[i].ID == id {
 			event := p.Events.ConditionalFacilityEvents[i]
+			return &event, true
+		}
+	}
+	return nil, false
+}
+
+func (p *Pack) SpecialShopEvents() []SpecialShopEvent {
+	return append([]SpecialShopEvent(nil), p.Events.SpecialShopEvents...)
+}
+
+func (p *Pack) SpecialShopEvent(id string) (*SpecialShopEvent, bool) {
+	for i := range p.Events.SpecialShopEvents {
+		if p.Events.SpecialShopEvents[i].ID == id {
+			event := p.Events.SpecialShopEvents[i]
 			return &event, true
 		}
 	}

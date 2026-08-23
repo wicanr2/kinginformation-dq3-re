@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.47",
+  "schema_version": "0.1.48",
   "day_night_cycle": {
     "clock_ticks": 240,
     "night_start_tick": 120,
@@ -196,6 +196,27 @@
         "address": "handler41 logical 0x5bba..0x5bd4 (IDA linear 0x15bba..0x15bd4); CTY59 sec0 NPC (10,2)",
         "consumer": "handler41 displays D3TXT07 record8 unless player Y equals 4; at Y=4 it dispatches facility index 0 through the section facility table, which is CTY59's two-item shop",
         "doc": "docs/102-merchant-settlement-world-entrance-re.md"
+      }
+    }
+  ],
+  "special_shop_events": [
+    {
+      "id": "dq3:event.maira_kings_sword_shop",
+      "kind": "special_shop",
+      "npc": {"cty_raw": 81, "section": 1, "tile": {"x": 4, "y": 3}, "handler_raw": 72},
+      "facility_k": 0,
+      "unlock_sell_item_raw_id": 109,
+      "unlock_flag_raw": 308,
+      "conditional_item_raw_id": 28,
+      "conditional_item_flag_raw": 309,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY81.DAT",
+        "address_space": "linear",
+        "address": "sub_16315 0x16315..0x16333; sub_174D8 0x174e5..0x17500, 0x176b8..0x176cc; sell 0x17845..0x178a8",
+        "consumer": "CTY81 section1 sub2 handler72 enters facility0 with special mode; selling raw0x6d clears flag0x134, which exposes hidden raw0x1c while flag0x135 remains set; buying raw0x1c clears flag0x135",
+        "doc": "docs/184-maira-kings-sword-special-shop.md"
       }
     }
   ],

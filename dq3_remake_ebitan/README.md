@@ -8,7 +8,7 @@ campaign E3。2026-08-22 未發版工作樹依 [`docs/153`](../docs/153-monster-
 修正怪物 action RNG 次序後，monster77／51 玩家路線 blocker 已由 `docs/154..178` 的正式
 交易與輸入切片越過；最新乾淨 Docker＋Xvfb trace 以 115.629 秒抵達 `THE END`，現行
 campaign 為 E3。這不否定仍未知語意，也不把畫面／音效升格為 V3。
-現行未發版 game pack 為 schema `0.1.47`／content `0.1.52`；其中玩家／敵人成功逃跑
+現行未發版 game pack 為 schema `0.1.48`／content `0.1.53`；其中玩家／敵人成功逃跑
 已依原版 cue 13／21 與完成等待鏈接成 D3／E2；逐幀同步仍非 V3，硬體 wall-clock 則依
 平台規格近似且不再作遊戲 RE，詳見
 [`docs/149-battle-flee-sfx-wait-spec.md`](../docs/149-battle-flee-sfx-wait-spec.md)。
@@ -22,8 +22,8 @@ cue9 特殊分支與 action3／持久麻痺已由
 戰鬥道具 selector／持有人／raw item dispatch／目標 UI 已由 `docs/179` 閉合；D3MNS 實際
 使用的 39 個 action 也由 `docs/180` 接入有限 primitive，並移除 `MonsterSpellRec` 猜測。
 
-現行最後功能順序的前五項已完成；目前進入必要選單／玩家可見支線。每項先以 IDA Pro 9.4／IDAPython
-寫獨立 spec，再進 game pack 與 runtime；PCM hardware wall-clock、DAC／PIT／DMA 只採
+現行最後六項功能順序已完成；最後以 IDA Pro 9.4／IDAPython 閉合瑪依拉 handler72 的
+歐里空金屬賣出、王者之劍動態上架與一次性購買，見 `docs/184`。PCM hardware wall-clock、DAC／PIT／DMA 只採
 平台規格近似，不再當成遊戲 RE 或完成 gate。唯一 current plan 仍是根目錄 `docs/74`。
 先前船／地表追跡逾時與
 Kandar 塔 fixture 全滅均已釐清為測試路徑問題並修正；詳見

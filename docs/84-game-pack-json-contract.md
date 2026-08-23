@@ -1328,7 +1328,28 @@ DQ3 canonical 事件包含：handler74 的索瑪後拉達多姆冊封（`0x0d`�
 與 pack `events.json`；尚未閉合的 runtime 語意仍留在 evidence ledger，不得寫入 production
 JSON 或用合理預設補洞。
 
-### 6.12 `ui.json`、`audio.json`
+### 6.12 `special_shop_events`
+
+`events.json.special_shop_events` 描述「scripted NPC 暫時進入共用商店，賣出指定道具後由
+story flag 解鎖一次性貨架」的有限 primitive。它不是任意 JSON script；引擎只執行成功
+交易後的兩次 CLEAR，金錢、個人八格容量、ITEM price 與商店選單仍走共用正式狀態機。
+
+| 欄位 | 型別 | 必填 | 說明 |
+|---|---|---|---|
+| `special_shop_events` | object[] | 是 | 可為空，不得省略；ID 不得重複。 |
+| `[].id`／`[].kind` | string | 是 | 穩定 ID；kind 固定為 `special_shop`。 |
+| `[].npc` | object | 是 | 完整 `cty_raw/section/tile/handler_raw` selector。 |
+| `[].facility_k` | int | 是 | 同 section 的原始 facility index；lookup 必須含 section。 |
+| `[].unlock_sell_item_raw_id` | int | 是 | 成功賣出才清 unlock flag 的 raw item。 |
+| `[].unlock_flag_raw` | int | 是 | set 時隱藏條件品；成功賣出後 clear。 |
+| `[].conditional_item_raw_id` | int | 是 | unlock flag clear 且 stock flag set 時加入的一次性商品。 |
+| `[].conditional_item_flag_raw` | int | 是 | 商品可購買旗標；成功買入後 clear。不得與 unlock flag 相同。 |
+| `[].evidence` | Evidence | 是 | 必須閉合 NPC handler、facility、買賣 writer 與旗標 consumer。 |
+
+DQ3 canonical 實例是 CTY81 section1 handler72：raw `0x6d`／flag `0x134` 解鎖 raw `0x1c`，
+買下後 clear flag `0x135`；見 [`docs/184`](184-maira-kings-sword-special-shop.md)。
+
+### 6.13 `ui.json`、`audio.json`
 
 - `ui.json` 將穩定 text ID 映射至原版 bank/record/glyph sequence；保留 raw record，
   避免在規則表散落中文字串。

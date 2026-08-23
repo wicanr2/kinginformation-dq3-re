@@ -501,6 +501,9 @@ func (g *Game) selectCommand(cmd int) {
 			if g.talkConditionalFacility(n) {
 				return
 			}
+			if g.talkSpecialShop(n) {
+				return
+			}
 			switch sub := (n.ctrl >> 3) & 7; {
 			case sub <= 1: // 對話
 				g.dlg.Open(n.b4)
@@ -896,10 +899,14 @@ func (g *Game) keyTier() int {
 	return best
 }
 
-// openFacility：面向 facility subtype NPC（byte4=raw block index）後查 legacy block
-// inventory。現行 lookup 尚未帶 section；不能外推為所有多 section 設施均已對齊原版。
+// openFacility：面向 facility subtype NPC（byte4=raw block index）後，以目前 CTY／section
+// 查 legacy block inventory；缺少同 section consumer 時失敗即關閉。
 func (g *Game) openFacility(k int) {
-	f := facilityForCty(g.curCty, k)
+	section := 0
+	if g.cur != nil {
+		section = g.cur.sec
+	}
+	f := facilityForCty(g.curCty, section, k)
 	if f == nil {
 		return
 	}

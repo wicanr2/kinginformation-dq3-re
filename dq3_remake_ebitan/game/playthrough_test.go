@@ -100,7 +100,7 @@ func TestPlaythroughEconomy(t *testing.T) {
 		t.Fatal(err)
 	}
 	// 阿里阿罕(cty0)武防店(k1):7 品項,含銅劍(id3,價100)
-	f := facilityForCty(0, 1)
+	f := facilityForCty(0, 0, 1)
 	if f == nil || f.typ != facWeapon || f.count != 7 {
 		t.Fatalf("阿里阿罕武防店應 7 品,得 %+v", f)
 	}
@@ -115,7 +115,7 @@ func TestPlaythroughEconomy(t *testing.T) {
 		t.Fatalf("武防店應賣銅劍(id3,100G),貨架=%v", codes)
 	}
 	// 宿屋(k0)inn_cost=2
-	inn := facilityForCty(0, 0)
+	inn := facilityForCty(0, 0, 0)
 	if inn == nil || inn.typ != facInn || inn.innCost != 2 {
 		t.Fatalf("阿里阿罕宿屋應 inn_cost2,得 %+v", inn)
 	}

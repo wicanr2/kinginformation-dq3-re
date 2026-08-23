@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.47",
+  "schema_version": "0.1.48",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",

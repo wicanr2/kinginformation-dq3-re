@@ -99,11 +99,11 @@ var allFacilities = [][7]int{
 	{86, 1, 0, 3, 0, 0, 0},
 }
 
-// facilityForCty 目前依 (cty,k=NPC byte4) 查 legacy table。raw row 雖含 section，
-// 此 API 尚未接收／比對 section；不能宣稱多 section 設施已與原版 dq3_facility_at 對齊。
-func facilityForCty(cty, k int) *facility {
+// facilityForCty 依原始 (cty,section,k=NPC byte4) 查 facility block；不同 section
+// 可以重用同一個 k，故不得只用城鎮與索引查找。
+func facilityForCty(cty, section, k int) *facility {
 	for _, f := range allFacilities {
-		if f[0] == cty && f[2] == k { // f: cty,sec,k,type,count,itemOff,innCost
+		if f[0] == cty && f[1] == section && f[2] == k { // f: cty,sec,k,type,count,itemOff,innCost
 			return &facility{k: f[2], typ: f[3], count: f[4], itemOff: f[5], innCost: f[6]}
 		}
 	}

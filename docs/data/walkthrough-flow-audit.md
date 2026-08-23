@@ -42,7 +42,9 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
 3. 乾渴壺 `0x5e` 已由 CTY76 正常推石流程取得；現行 Go trace 以 119 步正式方向輸入
    完成 handler30、passage、event0 調查與 save/load，見 `docs/97`。下一個 blocker 是
    海中淺灘使用乾渴壺與最終鑰匙取得。
-4. ~~王者之劍商店解鎖未接~~ → **修正:已接**(main.c:1247 瑪依拉 CTY81 2F 道具店主)。實作為 transform NPC:
+4. ~~王者之劍商店解鎖未接~~ → **歷史 C/SDL 近似，已由 Go/Ebitengine 原版閉環取代**。
+   舊 `main.c:1247` transform NPC 直接以淨額換物，不是原版規格；現行 handler72 先賣出
+   raw0x6d、清 flag0x134，再以 35000G 買 raw0x1c、清 flag0x135，見 `docs/184`。
    歐里空金屬 0x6d + 淨 12500G(賣22500−買35000)→ 王者之劍 0x1c。實機驗證通過、game_tester 已測。**非缺口**。
 
 ### A′. ★賢者轉職 gate 比對錯碼 — ✅ 已修(2026-06-27)

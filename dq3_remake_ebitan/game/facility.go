@@ -42,22 +42,26 @@ type Church struct {
 
 // Shop 是開啟中的商店狀態(武防/道具店)。
 type Shop struct {
-	items        *dq3data.Items
-	tx           *dq3data.Text
-	nameText     *dq3data.Text // 品名:D3TXT00.TXT record = code+1
-	active       bool
-	codes        []int // 貨架品項 id
-	cursor       int
-	msg          string
-	hits         hitList // 貨架列可點區塊,draw() 重建(P2 直接點選)
-	targeting    bool
-	pendingCode  int
-	targetCursor int
-	targetHits   hitList
-	kind         string
-	stage        shopStage
-	sellActor    int
-	sellCursor   int
+	items                  *dq3data.Items
+	tx                     *dq3data.Text
+	nameText               *dq3data.Text // 品名:D3TXT00.TXT record = code+1
+	active                 bool
+	codes                  []int // 貨架品項 id
+	cursor                 int
+	msg                    string
+	hits                   hitList // 貨架列可點區塊,draw() 重建(P2 直接點選)
+	targeting              bool
+	pendingCode            int
+	targetCursor           int
+	targetHits             hitList
+	kind                   string
+	stage                  shopStage
+	sellActor              int
+	sellCursor             int
+	unlockSellItemRawID    int
+	unlockFlagRaw          int
+	conditionalItemRawID   int
+	conditionalItemFlagRaw int
 }
 
 type shopStage int
@@ -103,6 +107,8 @@ func (s *Shop) open(codes []int, kind ...string) {
 	s.codes, s.cursor, s.active, s.msg = codes, 0, true, ""
 	s.targeting, s.pendingCode, s.targetCursor = false, -1, 0
 	s.kind, s.stage, s.sellActor, s.sellCursor = "", shopBrowse, 0, 0
+	s.unlockSellItemRawID, s.unlockFlagRaw = -1, -1
+	s.conditionalItemRawID, s.conditionalItemFlagRaw = -1, -1
 	if len(kind) > 0 {
 		s.kind = kind[0]
 	}

@@ -232,7 +232,8 @@ func (g *Game) purchaseShopItem(actor int) bool {
 		actor < 0 || actor > len(g.companions) || g.shop.items == nil {
 		return false
 	}
-	price := g.shop.items.Price(g.shop.pendingCode)
+	purchasedCode := g.shop.pendingCode
+	price := g.shop.items.Price(purchasedCode)
 	if price < 0 || g.heroGold < price {
 		return false
 	}
@@ -250,9 +251,10 @@ func (g *Game) purchaseShopItem(actor int) bool {
 	if slots := g.pack.ItemActions().PersonalInventorySlots; slots <= 0 || used >= slots {
 		return false
 	}
-	*items = append(*items, g.shop.pendingCode)
+	*items = append(*items, purchasedCode)
 	g.heroGold -= price
 	g.shop.targeting, g.shop.pendingCode = false, -1
+	g.completeSpecialShopPurchase(purchasedCode)
 	return true
 }
 
@@ -305,6 +307,7 @@ func (g *Game) sellShopItem(actor, index int) bool {
 		(*equipment)[entry.equipmentSlot] = -1
 	}
 	g.heroGold += price
+	g.completeSpecialShopSale(entry.code)
 	return true
 }
 

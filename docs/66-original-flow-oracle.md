@@ -148,7 +148,7 @@
 | 49 | 加萊祠堂 | 屋內左上第三格往上密門到屋後,地下室 | 《銀豎琴》(0x71) | — | 杜Ch49;quest-items 0x71 寶箱(CTY78 sec1,flag0x9a) |
 | 50 | 達姆杜拉鎮 | 右下養羊圍欄綠草地中央調查 | 《歐里空金屬》(0x6d) | — | 杜Ch50;quest-items 0x6d 寶箱 |
 | 51 | 利姆達爾鎮 | 旅館房間寶箱 | 《生命戒指》(0x70) | — | 杜Ch51;quest-items 0x70 寶箱(CTY86 sec0,flag0xd4) |
-| 52 | 瑪依拉村 | 露天溫泉泉水往下第五格調查;道具店 2F 賣歐里空金屬(22500)後可買《王者之劍》(35000) | 《妖精之笛》(0x77)+《王者之劍》(0x1c,淨支出 12500G) | 持 0x6d(賣)→ 持金 35000(買) | 杜Ch52;quest-items 0x77 寶箱;walkthrough-flow-audit A-4「王者之劍」main.c:1247 transform NPC,實機驗證通過 |
+| 52 | 瑪依拉村 | 露天溫泉泉水往下第五格調查；道具店 2F 賣歐里空金屬(22500)後可買《王者之劍》(35000) | 《妖精之笛》(0x77)+《王者之劍》(0x1c，兩筆獨立交易) | 持 0x6d(賣)→ flag0x134 clear → 0x1c 上架 → 購買後 flag0x135 clear | 杜Ch52 供路線定位；原版 handler72 D3／remake E2 見 docs/184。舊 main.c 淨額 transform 已推翻，不作 oracle。 |
 | 53 | 魯比斯之塔 | 5F 找到被詛咒的精靈「魯比斯」,使用妖精之笛解除詛咒 | 《精靈的守護》(0x74) | 持 0x77(USE) | 杜Ch53;quest-items 0x74 DQ3_USE_FAIRYFLUTE |
 | 54 | 精靈祠堂 | 沼氣區祠堂,曾服侍魯比斯的精靈,身上持精靈的守護 | 《雲雨之杖》(0x73) | 持 0x74 | 杜Ch54;quest-items 0x73 transform;walkthrough-flow-audit B-6「精靈祠堂=CTY92」RE |
 | 55 | 神聖祠堂 | 群山環繞小島群山祠堂,身上持雲雨之杖+太陽之石,由祠堂內的人合成 | 《彩虹水滴》(0x75,**原版 bug**:合成結果誤變 0x6b 銀寶珠,見§3) | 持 0x73+0x72 | 杜Ch55;quest-items 0x75(remake 已修正合成產出 0x75) |

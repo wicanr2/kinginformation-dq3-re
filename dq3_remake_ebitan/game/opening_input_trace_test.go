@@ -4212,7 +4212,7 @@ func traceTrainNearTown(t *testing.T, g *Game, cty, wantLevel int) {
 		}
 		before := g.heroGold
 		traceTalkFacility(t, g, facInn)
-		wantCost := facilityForCty(cty, 0).innCost * (1 + len(g.companions))
+		wantCost := facilityForCty(cty, 0, 0).innCost * (1 + len(g.companions))
 		if g.heroGold != before-wantCost {
 			t.Fatalf("練級住宿扣款錯：before=%d after=%d want=%d",
 				before, g.heroGold, wantCost)
@@ -4316,7 +4316,7 @@ func traceTalkFacility(t *testing.T, g *Game, typ int) {
 	t.Helper()
 	for i := range g.cur.npcs {
 		n := &g.cur.npcs[i]
-		f := facilityForCty(g.curCty, n.b4)
+		f := facilityForCty(g.curCty, g.cur.sec, n.b4)
 		if f == nil || f.typ != typ || (n.ctrl>>3)&7 < 3 {
 			continue
 		}
