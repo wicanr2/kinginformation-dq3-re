@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.48"
+	SchemaVersion       = "0.1.49"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -665,6 +665,14 @@ type FieldCommandLabels struct {
 	Examine BattleCommandLabel `json:"examine"`
 }
 
+// HelpOverlay 保存玩家快捷鍵說明的視窗與字模列；引擎只負責開關與逐列繪製。
+type HelpOverlay struct {
+	ID       string       `json:"id"`
+	Window   WindowLayout `json:"window"`
+	Lines    [][]int      `json:"lines"`
+	Evidence Evidence     `json:"evidence"`
+}
+
 // Entries returns a copy keyed by stable field-command roles.
 func (l *FieldCommandLabels) Entries() map[string]BattleCommandLabel {
 	if l == nil {
@@ -768,6 +776,7 @@ type Interface struct {
 	NewGameGeometry     *NewGameGeometry     `json:"new_game_geometry,omitempty"`
 	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
 	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
+	Help                *HelpOverlay         `json:"help,omitempty"`
 	FieldStatus         *FieldStatusLayout   `json:"field_status,omitempty"`
 	PartyHUD            PartyHUDLayout       `json:"party_hud,omitempty"`
 	Opening             *OpeningSequence     `json:"opening,omitempty"`
@@ -2125,6 +2134,26 @@ func (p *Pack) validateInterface() error {
 			if err := validateEvidence(label.Evidence); err != nil {
 				return fmt.Errorf("field command label %s evidence: %w", role, err)
 			}
+		}
+	}
+	if help := p.Interface.Help; help != nil {
+		if help.ID == "" || help.Window.ID == "" || help.Window.Frame == nil ||
+			help.Window.Width <= 0 || help.Window.Height <= 0 || len(help.Lines) == 0 ||
+			len(help.Lines) > help.Window.LinesPerPage {
+			return errors.New("help overlay is invalid")
+		}
+		for row, line := range help.Lines {
+			if len(line) == 0 || len(line) > help.Window.Columns {
+				return fmt.Errorf("help line %d exceeds its window", row)
+			}
+			for _, glyph := range line {
+				if glyph < 0 || glyph > 0xffff {
+					return fmt.Errorf("help line %d glyph out of range", row)
+				}
+			}
+		}
+		if err := validateEvidence(help.Evidence); err != nil {
+			return fmt.Errorf("help evidence: %w", err)
 		}
 	}
 	if status := p.Interface.FieldStatus; status != nil {
@@ -5441,6 +5470,14 @@ func (p *Pack) FieldCommandLabels() (FieldCommandLabels, bool) {
 		return FieldCommandLabels{}, false
 	}
 	return *p.Interface.FieldCommandLabels, true
+}
+
+// HelpOverlay returns the pack-owned player shortcut reference.
+func (p *Pack) HelpOverlay() (HelpOverlay, bool) {
+	if p == nil || p.Interface.Help == nil || p.Interface.Help.ID == "" {
+		return HelpOverlay{}, false
+	}
+	return *p.Interface.Help, true
 }
 
 // FieldStatusLayout returns the pack-owned detailed status panel. Production

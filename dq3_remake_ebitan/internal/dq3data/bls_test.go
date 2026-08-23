@@ -2,6 +2,27 @@ package dq3data
 
 import "testing"
 
+func TestLoadCharSpriteReordersRawUpAndLeftToLogicalDirections(t *testing.T) {
+	raw := make([]byte, blsBody0+CharDirs*blsStride)
+	// 每個 raw direction 的第一個 pixel 寫入不同 palette index，mask 預設不影響 Px。
+	for dir := 0; dir < CharDirs; dir++ {
+		base := blsBody0 + dir*blsStride
+		value := dir + 1
+		for storedPlane, logicalPlane := range [4]int{3, 2, 1, 0} {
+			if value&(1<<logicalPlane) != 0 {
+				raw[base+storedPlane*4*CharH] = 0x80
+			}
+		}
+	}
+	sprite := LoadCharSprite(raw, 0)
+	want := [CharDirs]uint8{1, 3, 2, 4} // logical 下、上、左、右 ← raw 下、左、上、右
+	for dir := 0; dir < CharDirs; dir++ {
+		if got := sprite.Frames[dir*CharWalk].Px[0][0]; got != want[dir] {
+			t.Fatalf("logical direction %d palette=%d, want %d", dir, got, want[dir])
+		}
+	}
+}
+
 func TestLoadCharSprite(t *testing.T) {
 	raw := findAsset(t, "DQ3MST.BLS") // 主角
 	cs := LoadCharSprite(raw, 0)      // entry_base 0

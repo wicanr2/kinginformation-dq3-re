@@ -21,7 +21,7 @@
 |---|---|---|
 | remake 玩家流程 | campaign E3；上述六項皆已接入正式入口 | 否，已完成 |
 | 原版證據限制 | 藥草治療量、祈禱之戒 MP 回復量、聖水步數仍是 classic／舊 C 近似；部分逐窗、逐幀與音效只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
-| 交付 | `dist-all/v0.1.35-local/` 已含四個完整版與有音樂推廣片；公開版仍是 v0.1.34 | 已完成本機交付；依使用者決定不建立 tag／GitHub Release |
+| 交付 | `dist-all/v0.1.36-local/` 已含修正後四個完整版與 MT-32 OGG／ROM；推廣片在 `v0.1.35-local/promo/`；公開版仍是 v0.1.34 | 已完成本機交付；依使用者決定不建立 tag／GitHub Release |
 
 2026-08-23 polish：record345 隊長姓名、蘭西爾 `0x13` 無 writer 的否定性證據、舊 C
 `partyBlind/partySealed` 死狀態，以及 D3MNS `+0x27` 未使用 raw 欄均已由 [`docs/185`](docs/185-remaining-polish-closure.md)
@@ -31,13 +31,17 @@
 
 2026-08-23 已完成：
 
-1. `dist-all/v0.1.35-local/full/`：Linux x86_64 AppImage、Windows x86_64 ZIP、macOS
-   x86_64／arm64 ZIP，均為本機完整版。
+1. `dist-all/v0.1.36-local/full/`：Linux x86_64 AppImage、Windows x86_64 ZIP、macOS
+   x86_64／arm64 ZIP，均為本機完整版；包含 18 軌 MT-32 OGG 與 CONTROL／PCM ROM。
 2. `dist-all/v0.1.35-local/promo/`：72 秒有音樂推廣片、實機開場來源、contact sheet、
    FFprobe、音量／非靜音驗收及音樂來源雜湊。
 3. 四包皆核對架構、CRC／解包、checkpoint、修正版 `DQ3MNS.SHP` 與 IDA sidecar 排除；Linux
    AppImage 另通過 Docker＋Xvfb 8 秒啟動。macOS 沒有真機驗收，維持靜態驗證標記。
 4. `SHA256SUMS.txt` 與 `LOCAL-DELIVERY.txt` 已放在同一版本根目錄。
+
+同日依玩家實際操作反證修正 BLS 上／左 frame、NPC 交談轉向、`F1` HELP、`F2`／`S`
+系統設定及一般完整版無音樂；具名測試、pack validator、桌面純編譯、ZIP CRC／架構與 Linux
+ALSA null sink 啟動 smoke 已通過，見 [`docs/186`](docs/186-player-controls-audio-polish.md)。
 
 依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git、不發布、不建立
 新 tag。至此必要 worklist 為零；Android host audio／真機、macOS 真機與全遊戲 V3 仍是

@@ -5,13 +5,13 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
-// 設定選單(modal)。忠實移植 dq3_remake/src/main.c config_modal 的 6 列 + ←/→/Enter 切值 +
+// 系統設定選單(modal)。移植 dq3_remake/src/main.c config_modal 的 6 列 + ←/→/Enter 切值 +
 // ESC 關閉行為;版面座標(bx/by/rowy)沿用 C 版同一份 640×350 座標系。
 //
 // Go port 對「切了但沒真的接」的兩列誠實標記為 no-op / 需重啟(不假裝有效,對齊任務硬規則):
 //   - RNG(row0):Go port 戰鬥恆用 DOS 忠實亂數,這列顯示但切換不改變行為。
-//   - 音源(row3):MT-32 OGG ↔ SB-FM OPL2 是啟動時決定的播放路徑(NewGame 依 DQ3_FM 環境變數
-//     選其一),執行期熱切換沒有對應機制;這列只顯示目前值,切換不即時套用。
+//   - 音源(row3):MT-32 OGG ↔ SB-FM OPL2 是啟動時決定的播放路徑；DQ3_MT32 明確指定 OGG，
+//     否則完整包預設讀 MBG.MCX。執行期熱切換尚未接線，這列只顯示目前值。
 const (
 	setRowRNG        = iota
 	setRowMusic      // 音樂 開/關 → 即時套用 g.music.SetEnabled

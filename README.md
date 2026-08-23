@@ -1,10 +1,11 @@
 # 精訊版《勇者鬥惡龍 III》反組譯與 remake
 
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
-> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機完整版與推廣片的
-> 唯一現行交付樹為 `dist-all/v0.1.35-local/`；其中 `LOCAL-DELIVERY.txt`、`SHA256SUMS.txt`
-> 與 `promo/` metadata 保存本輪邊界，舊版型形成史見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
-> 儲存庫目前 source checkpoint 為尚未發版的 schema `0.1.48`／content `0.1.54`：包含日夜原始
+> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。最新本機完整版為
+> `dist-all/v0.1.36-local/`；推廣片仍在 `dist-all/v0.1.35-local/promo/`。
+> 各自的 `LOCAL-DELIVERY.txt`、`SHA256SUMS.txt` 與 promo metadata 保存驗收邊界，舊版型形成史
+> 見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。儲存庫目前 source checkpoint 為
+> 尚未發版的 schema `0.1.49`／content `0.1.55`：包含日夜原始
 > palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
 > 等待閘門；因此公開 v0.1.34 不能被描述為包含這些修正，
 > 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
@@ -21,9 +22,12 @@
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
 目前狀態（2026-08-23）：正式輸入主線為 E3，指定的六項玩家功能與四項殘餘 polish 均已
-閉合；現行工作樹為 schema `0.1.48`／content `0.1.54`。以 checkpoint `aa77bdd` 建立的
-`dist-all/v0.1.35-local/` 已含 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS
-x86_64／arm64 ZIP 四個完整版，以及 72 秒、AAC 雙聲道、通過非靜音驗收的有音樂推廣片。
+閉合；現行工作樹為 schema `0.1.49`／content `0.1.55`。`dist-all/v0.1.36-local/` 已重建
+Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完整版，修正角色
+上／左 frame、NPC 對話轉向、`F1` HELP、`F2`／`S` 系統設定與預設 MT-32 音樂。每包另含
+本機合法持有的 18 軌 MT-32 OGG 與 CONTROL／PCM ROM；證據與限制見
+[`docs/186`](docs/186-player-controls-audio-polish.md)。72 秒有音樂推廣片仍在
+`dist-all/v0.1.35-local/promo/`。
 這批完整素材與 MT-32 音樂只供本機保存，不加入 Git、不建立 tag 或 GitHub Release；公開版
 仍是較早且不含原版素材的 v0.1.34。remake 目前沒有待串接或待交付的必要工作。全遊戲逐畫面
 V3、Android host audio／真機、macOS 真機，以及仍明示為 classic／舊 C 近似的少數道具

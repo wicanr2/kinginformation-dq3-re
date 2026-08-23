@@ -1214,6 +1214,13 @@ evidence 仍由 DQ3 pack 擁有；`cmdmenu.go` 只依穩定欄位繪製與處理
 版本專屬中文或 raw glyph table。正式 pack 缺少這組契約時 `NewGameWithPack` 必須
 fail closed；目前 DQ3 對映維持 D2，後續若要升為 D3 仍需補原版 writer／consumer sidecar。
 
+`interface.json.help` 是移植層的玩家快捷鍵說明，不冒稱原版存在 F1 畫面。它包含 `id`、
+一般 `WindowLayout`、逐列 `lines` glyph 陣列與 evidence；視窗大小、文字 inset、每頁行列數
+及玩家可見字模都由 pack 提供。引擎只保留 `F1` 開關、Confirm／Cancel 關閉與逐列繪製，
+不得在 Go 內寫入 DQ3 專屬說明文字。DQ3 pack 目前說明 `F1 HELP`、`F2 SYSTEM`、
+`SPACE 命令`、方向鍵移動及 `ESC` 取消；此契約屬 remake UX 的 D2 manual evidence，
+不是原版 parity 證據。缺少視窗、frame、行內容或 evidence 時 production 啟動即拒絕。
+
 `interface.json.new_game_labels` 保存開場主選單、創角性別／能力確認，以及 D3TXT00
 records 451–456 的姓名畫面 glyph stream。固定欄位除了既有的 `title`、`start`、`load`、
 `male`、`female`、`level`、`hp`、`mp`、`agility`、`luck`、`max_hp`、`max_mp`、`attack`、

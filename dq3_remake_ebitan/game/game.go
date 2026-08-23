@@ -359,7 +359,8 @@ type Game struct {
 	endingPal                 []dq3data.Color
 	cfg                       config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
 	pack                      *gamepack.Pack // versioned 精訊版 game pack；遊戲設定不得再散落為 Go table
-	settings                  Settings       // 設定選單 modal(標題畫面按 S 開)
+	settings                  Settings       // 系統設定 modal（標題或一般地表按 S／F2 開）
+	help                      HelpOverlay    // F1 HELP；內容與幾何由 game pack 提供
 	newGame                   NewGameFlow    // 標題主選單 + 主角命名/性別創建 modal（正式流程已閉合；幾何仍待 V3）
 	heroName                  []int          // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
 	heroGender                int            // 主角性別(0=男 1=女)
@@ -492,6 +493,8 @@ func (g *Game) selectCommand(cmd int) {
 	case cmdTalk:
 		if idx := g.facingNPC(); idx >= 0 {
 			n := &g.cur.npcs[idx]
+			// 交談開始時，NPC 面向主角。玩家方向碼的反向為下↔上、左↔右。
+			n.facing = g.facing ^ 1
 			// Pack-owned NPC transactions may use the original runner/subtype
 			// value as a selector even when the map record is sub0/sub1. Check
 			// this finite data primitive before the generic dialogue branch.
@@ -982,6 +985,11 @@ func (g *Game) step(in InputState) error {
 	// 標題畫面:主選單→主角命名→性別→能力確認→開始新遊戲(newgame.go)。
 	// S/CtxTap 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)。
 	if g.showTitle {
+		if g.help.open || in.Help {
+			g.utilityInput(in)
+			g.renderFrame()
+			return nil
+		}
 		if g.openingInput(in) {
 			g.renderFrame()
 			return nil
@@ -1406,6 +1414,12 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	// HELP／系統設定只在一般地表狀態開啟，不蓋過戰鬥、對話或其他既有 modal。
+	if g.utilityInput(in) {
+		g.renderFrame()
+		return nil
+	}
+
 	// 命令窗 modal:方向移游標、A 選定、B 關窗;點格(P2)= 游標移過去 + 等同 A 選定
 	if g.cmd.open {
 		confirm := in.Confirm
@@ -2785,6 +2799,7 @@ func (g *Game) renderFrame() {
 		yellow := dq3data.Color{R: 255, G: 224, B: 32}
 		g.newGame.draw(g.rgba, g.dlg.tx, white, yellow) // 主選單/命名/性別(ngSplash 無疊繪)
 		g.settings.draw(g.rgba, g.cfg)                  // 設定選單(可疊其上;未開時 no-op)
+		g.help.draw(g.rgba, white)
 		g.frame.WritePixels(g.rgba)
 		return
 	}
@@ -2866,6 +2881,8 @@ func (g *Game) renderFrame() {
 	if g.dlg.open { // 對話框
 		g.dlg.draw(g.rgba, white)
 	}
+	g.help.draw(g.rgba, white)
+	g.settings.draw(g.rgba, g.cfg)
 	if g.shop.active { // 商店
 		if g.shop.stage == shopSellActor {
 			g.shop.targeting, g.shop.targetCursor = true, g.shop.sellActor
@@ -3082,6 +3099,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if newGameGeometry.Frame == nil {
 		return nil, fmt.Errorf("game pack missing interface.new_game_geometry.frame")
 	}
+	helpOverlay, ok := pack.HelpOverlay()
+	if !ok {
+		return nil, fmt.Errorf("game pack missing interface.help")
+	}
 	fieldStatusLayout, ok := pack.FieldStatusLayout()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing interface.field_status")
@@ -3175,6 +3196,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.cmd.setLabels(fieldCommandLabels)
 	g.newGame.setLabels(newGameLabels)
 	g.newGame.setGeometry(newGameGeometry)
+	g.help.layout = helpOverlay
 	g.tavern.setLabels(newGameLabels)
 	g.tavern.setGeometry(newGameGeometry)
 	g.tavern.equipment = memberEquipment
@@ -3218,6 +3240,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
 	g.cmd.tx = g.dlg.tx                                             // 命令窗標籤 glyph 也走同一字型
 	g.settings.tx = g.dlg.tx                                        // 設定選單標籤 glyph 也走同一字型
+	g.help.tx = g.dlg.tx                                            // HELP glyph 也走同一字型
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1
 	g.dlg.itemNames = g.shop.nameText                               // 對話插值 VAR_ITEM 用同一品名表(W1)
 	g.dlg.heroName = g.heroName                                     // 對話插值 VAR_NAME 用主角名(創角/讀檔後另行同步)
@@ -3276,8 +3299,14 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.initStoryBits() // 新遊戲重置 [0x4f70] NPC 可見性旗標
 	// msStart 代表「已見國王且已能在酒場建隊」，不可在出生時提前完成。
 	g.noticeCode = -1
-	g.prng.Seed(0x1357)                                              // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)
-	g.music = gaudio.NewMusic(music)                                 // MT-32 音樂(music fs 為 nil → 靜音降級)
+	g.prng.Seed(0x1357) // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)
+	musicFS := music
+	if musicFS == nil {
+		musicFS = assets // 未指定 MT-32 時，仍建立後端供原版 MBG.MCX 的 SB-FM 播放。
+	}
+	g.music = gaudio.NewMusic(musicFS)
+	g.music.SetEnabled(g.cfg.MusicEnabled)
+	g.music.SetVolume(g.cfg.MusicVolume)
 	if sfxRaw := readPackAsset("battle_sfx_fvoc"); len(sfxRaw) > 0 { // 數位音效(VOC)
 		bank := dq3data.DecodeVOCBank(sfxRaw, 44100)
 		pcm := make([][]int16, len(bank))
@@ -3289,7 +3318,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		g.music.SetSFXWithDurations(pcm, durations)
 	}
 	g.battle.setSoundCues(pack.BattleSoundCues(), g.music)
-	if os.Getenv("DQ3_FM") != "" { // SB-FM 音樂(OPL2 合成 MBG.MCX,取代 MT-32 OGG)
+	if music == nil || os.Getenv("DQ3_FM") != "" { // 預設 SB-FM；明確 DQ3_MT32 才使用外部 OGG。
 		if mbg := ld.read("MBG.MCX"); len(mbg) > 0 {
 			g.music.SetMBG(mbg)
 		}

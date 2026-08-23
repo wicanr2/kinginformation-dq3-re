@@ -68,10 +68,13 @@ func decodeFrame(d []byte, base int) Frame {
 // LoadCharSprite 解一個角色的 8 frame。移植 dq3_charsprite_load。
 func LoadCharSprite(d []byte, entryBase int) *CharSprite {
 	cs := &CharSprite{}
-	for fr := 0; fr < CharDirs; fr++ {
-		slot := blsBody0 + (entryBase+fr)*blsStride
+	// BLS 的原始 entry 順序是下、左、上、右；引擎方向碼則是下、上、左、右。
+	// 在 decoder 邊界重排，讓移動、碰撞、對話與 renderer 共用同一個邏輯方向碼。
+	rawDirection := [CharDirs]int{0, 2, 1, 3}
+	for logicalDirection, raw := range rawDirection {
+		slot := blsBody0 + (entryBase+raw)*blsStride
 		for w := 0; w < CharWalk; w++ {
-			cs.Frames[fr*CharWalk+w] = decodeFrame(d, slot+w*blsSubframe)
+			cs.Frames[logicalDirection*CharWalk+w] = decodeFrame(d, slot+w*blsSubframe)
 		}
 	}
 	return cs

@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/dq3_remake_ebitan/game"
@@ -20,10 +21,13 @@ func assetsDir() string {
 }
 
 func main() {
-	assets := os.DirFS(assetsDir())
-	var music fs.FS // DQ3_MT32 指向 track_NN.ogg 目錄;未設 → 靜音
+	assetPath := assetsDir()
+	assets := os.DirFS(assetPath)
+	var music fs.FS // DQ3_MT32 明確覆蓋；完整版預設讀 assets_raw/mt32，缺少才回 SB-FM MBG.MCX。
 	if d := os.Getenv("DQ3_MT32"); d != "" {
 		music = os.DirFS(d)
+	} else if _, err := os.Stat(filepath.Join(assetPath, "mt32", "track_00.ogg")); err == nil {
+		music = os.DirFS(filepath.Join(assetPath, "mt32"))
 	}
 
 	var g *game.Game

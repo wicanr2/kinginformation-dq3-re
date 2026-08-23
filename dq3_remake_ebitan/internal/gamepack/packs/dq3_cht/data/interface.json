@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.48",
+  "schema_version": "0.1.49",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -402,6 +402,64 @@
       "consumer": "sub_1f590/sub_1fb36 EGA window writer; sub_10e55/sub_11172/sub_1123c grid cursor; NewGameFlow/NameInput/GenderSelect renderer",
       "doc": "docs/113-newgame-geometry-re.md",
       "note": "IDA Pro 9.4 linear addresses preserve the raw structures; pixel rects are measured on the 640x350 logical viewport. D2 until a same-input frame-by-frame DOSBox capture is linked to every panel and frame-style pattern remains separately open."
+    }
+  },
+  "help": {
+    "id": "dq3:window.help",
+    "window": {
+      "id": "dq3:window.help.frame",
+      "x": 80,
+      "y": 48,
+      "width": 480,
+      "height": 240,
+      "text_inset_x": 32,
+      "text_inset_y": 24,
+      "columns": 26,
+      "lines_per_page": 8,
+      "frame": {
+        "id": "dq3:frame.ega_window_white_black",
+        "border_pattern": "solid",
+        "border_rgb": [255, 255, 255],
+        "interior_rgb": [0, 0, 0],
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + dosbox/orochi_boss.png",
+          "address_space": "linear",
+          "address": "0x1fd30..0x1fdf9",
+          "consumer": "shared EGA window renderer",
+          "doc": "docs/109-battle-hud-rects-re.md",
+          "note": "HELP 是移植版操作輔助；只沿用已證實的共用框線 primitive，不宣稱原版存在 F1 畫面。"
+        }
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "manual",
+        "source": "remake desktop UX requirement 2026-08-23",
+        "address_space": "none",
+        "address": "",
+        "consumer": "F1 help overlay",
+        "doc": "docs/84-game-pack-json-contract.md",
+        "note": "移植層 HELP 幾何；不是原版 parity 斷言。"
+      }
+    },
+    "lines": [
+      [22, 19, 26, 30],
+      [20, 1, 12, 22, 19, 26, 30],
+      [20, 2, 12, 33, 39, 33, 34, 19, 27],
+      [33, 30, 15, 17, 19, 12, 274, 664],
+      [15, 32, 32, 29, 37, 33, 12, 27, 29, 36, 19],
+      [19, 33, 17, 12, 17, 15, 28, 17, 19, 26]
+    ],
+    "evidence": {
+      "level": "D2",
+      "source_kind": "manual",
+      "source": "remake desktop UX requirement 2026-08-23",
+      "address_space": "none",
+      "address": "",
+      "consumer": "game.HelpOverlay",
+      "doc": "docs/84-game-pack-json-contract.md",
+      "note": "F1 HELP、F2 SYSTEM、SPACE 命令、方向鍵移動、ESC 取消；玩家可見 glyph 全由 pack 提供。"
     }
   },
   "party_hud": {

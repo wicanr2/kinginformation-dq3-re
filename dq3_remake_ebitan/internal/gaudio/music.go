@@ -49,7 +49,8 @@ func monoToStereo(pcm []int16) []byte {
 	return b
 }
 
-// NewMusic:fsys = 放 track_NN.ogg 的檔案系統(nil → 停用音樂)。桌面傳 os.DirFS(dir),行動傳 embed 子樹。
+// NewMusic:fsys 是音樂來源檔案系統；MT-32 路徑讀 track_NN.ogg，SB-FM 路徑稍後由 SetMBG
+// 安裝 MBG bytes。nil 只供明確的無音訊測試／降級路徑。
 func NewMusic(fsys fs.FS) (m *Music) {
 	m = &Music{fsys: fsys, cur: -1, vol: 0.5}
 	if fsys == nil {

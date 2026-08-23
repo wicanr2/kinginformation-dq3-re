@@ -19,14 +19,17 @@
 > PCM hardware wall-clock、DAC、PIT、DMA 等平台時序只引用 Wiki／datasheet／成熟模擬器
 > 規格並採可重現近似，不再列為遊戲 RE 或 remake 完成 gate。上述六項現已由
 > `docs/179..184` 閉合，後續四項 polish 另由 `docs/185` 收斂；公開 v0.1.34 早於目前
-> schema `0.1.48`／content `0.1.54`；新版完整版與推廣片已依使用者決定完成本機交付，
+> schema `0.1.49`／content `0.1.55`；角色方向、NPC 交談轉向、F1 HELP、遊戲中系統設定與
+> 預設 MT-32 音樂已由 `docs/186` 閉合。修正後四個完整版在 `dist-all/v0.1.36-local/`，
+> 有音樂推廣片仍在 `dist-all/v0.1.35-local/promo/`；兩者皆依使用者決定只作本機交付，
 > 不建立公開 tag／Release。這不是功能缺口。
 
 > **接手判讀鐵則：**本檔第 4–10 節及各日期 checkpoint 保存證據形成史，不是可直接執行的
 > current worklist。現況只由本段、下方「玩家可見畫面盤點」、文件末端最新 checkpoint 與
 > [`WORKLIST.md`](../WORKLIST.md) 共同仲裁；舊段落出現「待辦／unknown／pending」時，必須先查
-> 是否已被 `docs/128..185` 訂正。2026-08-23 已在 `dist-all/v0.1.35-local/` 完成本機四個
-> 完整版與有音樂推廣片；依使用者決定不發布這批完整素材與 MT-32 音樂。沒有新的玩家可見
+> 是否已被 `docs/128..186` 訂正。2026-08-23 已在 `dist-all/v0.1.36-local/` 完成本機四個
+> 修正版完整包；有音樂推廣片位於前一個 `v0.1.35-local/promo/`。依使用者決定不發布這批
+> 完整素材、MT-32 OGG 或 ROM。沒有新的玩家可見
 > 反證時，不重新開啟已完成功能或無界反組譯。
 
 > 建立：2026-07-28（Asia/Taipei）
