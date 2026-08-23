@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -73,6 +74,10 @@ func TestBattleDropAllPartyFullDoesNotMutateInventory(t *testing.T) {
 		t.Fatalf("滿格仍須結算金錢且不得冒稱取得物品：gold=%d notice=%#x/%d",
 			g.heroGold, g.noticeCode, g.noticeTimer)
 	}
+	want, ok := g.pack.TextGlyphCodes("common:text.battle.drop.inventory_full")
+	if !ok || !g.dlg.open || !reflect.DeepEqual(g.dlg.buf, want) {
+		t.Fatal("全隊滿格時未顯示 pack-owned record345")
+	}
 }
 
 func TestBattleDropInventoryWriterMatchesOriginal(t *testing.T) {
@@ -84,13 +89,15 @@ func TestBattleDropInventoryWriterMatchesOriginal(t *testing.T) {
 		file int
 		hex  []byte
 	}{
-		{0xd879, []byte{0xa0, 0x21, 0x23}},             // first formation monster
-		{0xd897, []byte{0x8a, 0x87, 0x9e, 0x0d}},       // D3MNS +0x26 item
-		{0xd8a7, []byte{0xe8, 0x14, 0xa3}},             // call sub_1684E
-		{0x7be8, []byte{0x80, 0xfa, 0x08}},             // eight personal words
-		{0x7bf5, []byte{0xc6, 0x06, 0x26, 0x07, 0x01}}, // all party full
-		{0x7bfc, []byte{0xc6, 0x06, 0x26, 0x07, 0x00}}, // found free slot
-		{0x7c05, []byte{0x89, 0x04}},                   // write item word
+		{0xd879, []byte{0xa0, 0x21, 0x23}},                   // first formation monster
+		{0xd897, []byte{0x8a, 0x87, 0x9e, 0x0d}},             // D3MNS +0x26 item
+		{0xd8a7, []byte{0xe8, 0x14, 0xa3}},                   // call sub_1684E
+		{0xd8c4, []byte{0xc7, 0x06, 0x9c, 0x25, 0x01, 0x00}}, // full: DS:259C=1 (leader name)
+		{0xd8ca, []byte{0xbf, 0x59, 0x01}},                   // full: record 0x159 / 345
+		{0x7be8, []byte{0x80, 0xfa, 0x08}},                   // eight personal words
+		{0x7bf5, []byte{0xc6, 0x06, 0x26, 0x07, 0x01}},       // all party full
+		{0x7bfc, []byte{0xc6, 0x06, 0x26, 0x07, 0x00}},       // found free slot
+		{0x7c05, []byte{0x89, 0x04}},                         // write item word
 	} {
 		if want.file < 0 || want.file+len(want.hex) > len(raw) ||
 			!bytes.Equal(raw[want.file:want.file+len(want.hex)], want.hex) {

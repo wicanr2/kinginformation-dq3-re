@@ -86,8 +86,9 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 - **怪物掉落欄位** — `D3MNS.DAT` 記錄 `+0x25` 是掉落判定閾值、`+0x26` 是掉落道具；
   勝利結算在 logical `0xc425`（file `0xd795`）以 `DGROUP 0x2321` 的 formation 第一組
   怪物 raw ID 選記錄，依 `roll(256) <= +0x25` 判定，再讀
-  `+0x26`。戰鬥狀態 `DGROUP 0x2518 bit1` 會抑制掉落。`+0x27` 尚未閉合，維持
-  `unknown_27`。_Avoid_: 沿用舊 parser 把 `+0x27` 稱為掉落率。
+  `+0x26`。戰鬥狀態 `DGROUP 0x2518 bit1` 會抑制掉落。`+0x27` 已由 `docs/185` 收斂為
+  本 EXE 無 direct consumer 的保留 raw 欄（未使用為 strong）。_Avoid_: 沿用舊 parser
+  把 `+0x27` 稱為掉落率或猜成 boss repeat count。
 - **SHP AND-mask** — `DQ3MNS.SHP` 每隻怪的四個色彩 plane 後另有逐列 RLE 遮罩；mask bit
   1 保留背景（透明），bit 0 清背景後寫色彩（不透明）。調色盤索引 0 是黑色且可為實體像素。
   _Avoid_: `palette index 0 = transparent`（見 [`docs/94`](docs/94-dialogue-window-and-monster-mask-re.md)）。
@@ -232,7 +233,7 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 - [sub2 結構](docs/data/sub2-struct.md) · [sub2 handlers](docs/data/sub2-handlers.md) ·
   [sub2 live NPC](docs/data/sub2-npcs-live.md) · [DGROUP 表](docs/data/dgroup-tables.md) ·
   [oracle 驗證](docs/data/oracle-validation.md) · [原版已知 bug](docs/data/original-known-bugs.md) ·
-  [結局未完成](docs/data/endtxt-incomplete.md)
+  [原版 ENDTXT 未定稿（不是 remake 缺口）](docs/data/endtxt-incomplete.md)
 
 ### RE 攻關日誌 / 教訓
 - [`[0x722]` runner 狀態機](docs/re-log-722-state-machine.md) ·
@@ -261,10 +262,11 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 ### Android port UX（2026-08-11）
 - [`docs/124`](docs/124-android-ux-spec.md) 保存優先的手機 UX：640×350 原畫、浮動四向十字鍵、
   A/B、情境鍵、中文 App 身分、沉浸式橫向與生命週期界線。
-- Docker 已以 SDK 35／AGP 8.2.2 編譯 debug APK；`dist/dq3-android-debug-20260811.apk`
+- 2026-08-11 當時以 SDK 35／AGP 8.2.2 編譯的 debug APK；`dist/dq3-android-debug-20260811.apk`
   SHA-256 為 `ea830ea06dfde28ce3e912669092663c4cde03069575a8fd695c1e1915efe62c`。
-  目前只有 `build-only` 證據，沒有 emulator／真機 touch 或 lifecycle smoke，不得宣稱 Android
-  實機驗收。
+  當時只有 `build-only` 證據。後續 emulator 已完成 Android 14 開機與 APK 安裝，並在隔離
+  靜音探針通過觸控／lifecycle；production 音訊仍阻塞於 headless OboeAudio backend，故仍
+  不得宣稱 Android 完整動態或真機驗收，現行證據見 `docs/132`。
 
 ### 開場能力確認 HUD 框線（2026-08-11，歷史 checkpoint）
 - 以 `dosbox/v3_01_afterstats.png` logical pixels 取樣：StatsLeft／StatsEquipment／StatsRight
@@ -346,8 +348,8 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 - 教會 curse 不讀 `+0x38`，而掃 `+0x3a` 起 item words 的 bit0x4000；`docs/147` 已閉合
   ITEM `+4/+5 & 0x0e00` → 裝備 writer → bit0x4000 → level×100 教會 consumer：confirmed。
 - 中毒 ledger：[`docs/137`](docs/137-church-poison-condition-re.md)；詛咒來源與交易 ledger：
-  [`docs/147`](docs/147-cursed-equipment-church-service-spec.md)。現行 remake
-  該中毒 checkpoint 以 game-pack schema `0.1.40`／content `0.1.45` 接上 bit38 → battle → 持久角色／存檔
+  [`docs/147`](docs/147-cursed-equipment-church-service-spec.md)。該中毒 checkpoint 當時以
+  game-pack schema `0.1.40`／content `0.1.45` 接上 bit38 → battle → 持久角色／存檔
   → 移動毒傷 → 教會 5G 解毒 → 驅毒草正式選人交易，為 E2；完整新遊戲主線 trace 已用
   正式驅毒草越過 CTY23 單人回程；後續補給訂正已再跨過 monster89、幽靈船與愛的回憶，
   已越過 CTY36、蓋亞之劍、銀寶珠、monster125 與黃寶珠；monster4×5 已由正式普攻策略

@@ -622,7 +622,8 @@ NPC 還原完全相同隊伍」的有限交易。它不允許 JSON 提供任意�
 
 存檔必須在試煉途中保存 active event ID 與完整離隊角色 records，不能只保存現役單人隊伍；
 返回時按原順序恢復。缺 selector、文字或 pack event 一律 fail closed。DQ3 canonical 範例、
-完成旗標 writer 的未知狀態及 production trace 見 [`docs/100`](100-lancel-courage-blue-orb-production-trace.md)。
+完成旗標 reader、production trace，以及本 EXE 無 gameplay writer 的否定性閉環見
+[`docs/100`](100-lancel-courage-blue-orb-production-trace.md)與 [`docs/185`](185-remaining-polish-closure.md)。
 
 第三個已實作 primitive 是 `quest_item_chain_events`，供「一次性寶物→指定 NPC 原地換物→
 指定地點使用結果道具→切換場景旗標與重載」的有限流程使用。它不包含諾亞尼爾、精靈女王

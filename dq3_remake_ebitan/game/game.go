@@ -2688,11 +2688,12 @@ func (g *Game) onBattleEnd() {
 		}
 		if g.battle.gotDrop >= 0 {
 			// 原版 sub_1C425 → sub_1684E/sub_16856 依隊長至同伴順序掃
-			// 每人八格，裝備亦占格；全隊滿時 DS:0726=1 且沒有 writer。
-			// 角色姓名插值的滿格 record345 尚未閉合，見 docs/157；此處
-			// 先確保 storage transaction 不會越界或覆蓋既有物品。
+			// 每人八格，裝備亦占格；全隊滿時 DS:0726=1。sub_1C425 會在
+			// 顯示 record345 前把 DS:259C 重設為 1，因此 0xFFFB 插入隊長姓名。
 			if g.grantPartyItem(g.battle.gotDrop) {
 				g.noticeCode, g.noticeTimer = g.battle.gotDrop, 120
+			} else {
+				g.openPackText("common:text.battle.drop.inventory_full")
 			}
 		}
 	}

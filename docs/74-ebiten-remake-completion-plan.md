@@ -7,17 +7,19 @@
 > 每個存活 actor 每回合恰好一筆，沒有 Boss repeat-N。本文較早 milestone 中將其列為
 > `unknown`／後續工作的段落只保留歷史，不得重新開啟或猜 JSON。
 >
-> **2026-08-22 唯一現況：**目前工作樹已在乾淨 Docker＋Xvfb 中，從標題以正式
+> **2026-08-23 唯一現況：**目前工作樹已在乾淨 Docker＋Xvfb 中，從標題以正式
 > `InputState` 重播至 `THE END`（115.629 秒），campaign 恢復 E3。下文 monster77、
 > monster51 與各補給失敗是促成本輪訂正的歷史 checkpoint，不再是 current blocker。
 > 本結果只證明主線玩家流程；逐畫面、逐音效及硬體 timing 仍依各列維持 V1／V2／unknown。
 >
-> **2026-08-22 最後功能 worklist（不含回歸／發包）：**依序只做
+> **2026-08-22 最後功能 worklist（2026-08-23 已完成的歷史順序）：**當時依序只做
 > ①戰鬥道具、②原始怪物表實際使用且尚未閉合的 action、③剩餘合法野外咒文、
 > ④商店賣出、⑤船進城載具交易、⑥必要選單與玩家可見支線語意。完成一項後才進下一項，
 > 每項固定走「既有 RE → IDA Pro 9.4／IDAPython 補證 → spec → game-pack／runtime」。
 > PCM hardware wall-clock、DAC、PIT、DMA 等平台時序只引用 Wiki／datasheet／成熟模擬器
-> 規格並採可重現近似，不再列為遊戲 RE 或 remake 完成 gate。
+> 規格並採可重現近似，不再列為遊戲 RE 或 remake 完成 gate。上述六項現已由
+> `docs/179..185` 閉合；公開 v0.1.34 早於目前 schema `0.1.48`／content `0.1.54`，重新
+> 打包／發版是交付 gate，不是功能缺口。
 
 > 建立：2026-07-28（Asia/Taipei）
 >
@@ -671,7 +673,8 @@ schema `0.1.14` 已接續閉合最終鑰匙的原版輸入 owner、魯拉載具�
 schema `0.1.15` 已接續閉合蘭西爾勇氣試煉與藍寶珠。IDA Pro 9.4 證明 handler37
 `(logical) 0x59e4` 保存 active party count、強制單人、寫 world `(82,165)` 並設 mode bit
 `0x80`；handler62 `(logical) 0x608a` 原樣復隊並清 mode bit。舊文件「接受即 set flag0x13」
-及反向 `owPortal` 已推翻；flag0x13 writer 仍 unknown，不在 production 合成。同一條 boot trace
+及反向 `owPortal` 已推翻；`docs/185` 已 confirmed negative 本 EXE 無 flag0x13 gameplay
+writer，不在 production 合成。同一條 boot trace
 已經正式航行、住宿切白天、以最終鑰匙開門、接受挑戰、走 CTY23、取得藍寶珠、途中
 save/load、返回 CTY75 復隊及再次 save/load；見 `docs/100`。
 
@@ -1151,7 +1154,7 @@ EXE 不存在，remake 的正式 queue 以每個存活 actor 一筆鎖定；逐�
 任何新的 V3 工作仍須先有可重播原版 frame／音訊 trace 或明確新 caller；沒有新 oracle 時，
 只保留為證據限制或可選 polish，不再擴張靜態 RE。
 
-## 2026-08-22 current checkpoint：日夜原始 palette bank E2 接線
+## 2026-08-22 歷史 checkpoint：日夜原始 palette bank E2 接線
 
 上一輪斷言審計確認 Go `DarkenPalette` 仍是四相位合理近似，且把 phase3 誤當日間 NPC
 selector。IDA Pro 9.4＋IDAPython 本輪從 `sub_1EE23`、`sub_1EE76`、`sub_1EE9B`、
@@ -1167,7 +1170,7 @@ pack validation 與受影響 runtime tests 已通過。此切片為 D3／E2／V2
 的 DOSBox DAC／畫面，不能宣稱 V3。完整 spec 與可重建 IDAPython 匯出器見
 [`docs/136`](136-daynight-palette-bank-spec.md)。
 
-## 2026-08-22 current checkpoint：中毒鏈 E2，完整主線 E3 已恢復
+## 2026-08-22 歷史 checkpoint：中毒鏈 E2，完整主線 E3 已恢復
 
 IDA Pro 9.4 已閉合 `D3MNS +0x0e..+0x13` 的 bit38，經 `sub_19AD6` 均勻選 bit、
 `sub_199DC` remap 為 action `0x32`，再由 DGROUP `0x394e` 間接表進入 logical
@@ -1220,7 +1223,7 @@ campaign 尚未恢復，後續已由本節末端最新重播訂正。怪物 46 �
 `TestTraceSelectHealSpellPolicy` 與 church consumer tests 通過。此結果恢復 campaign E3；
 V3 畫面／音效不因此升格；curse item metadata 的後續訂正見 `docs/147`。
 
-## 2026-08-22 current checkpoint：單次行動 queue 與逃跑音效等待
+## 2026-08-22 歷史 checkpoint：單次行動 queue 與逃跑音效等待
 
 `docs/148` 已用 IDA Pro 9.4 枚舉三個 action queue builder caller、全部 player／enemy
 consumer caller及 raw 函式指標候選。正式與 alternate runner 都只為每個存活 actor
@@ -1236,7 +1239,7 @@ descriptor、pack validation 與 headless duration tests 已通過，故這兩�
 Sound Blaster DMA wall-clock 與重取樣標準行為依平台規格近似，不再是 RE gap；逐幀動畫
 同步仍須有同狀態 oracle 才能升 V3。
 
-## 2026-08-22 current checkpoint：玩家一般物理攻擊雙 VOC 序列
+## 2026-08-22 歷史 checkpoint：玩家一般物理攻擊雙 VOC 序列
 
 [`docs/150`](150-player-physical-sfx-sequence-spec.md) 以 IDA Pro 9.4 閉合
 `sub_1B4F6` 的正常玩家物理分支：cue 6 → record `0x14a` → `sub_208E2` → cue 11 →
@@ -1247,7 +1250,7 @@ evidence；Battle 只有在前一步原始 VOC duration gate 完成後才播放�
 `docs/151` 獨立閉合。cue 6 的其他 call-site、critical 與逐幀動畫仍是
 unknown／V3，不由兩個切片外推。
 
-## 2026-08-22 current checkpoint：一般物理結果、敵方攻擊與個別死亡訊息
+## 2026-08-22 歷史 checkpoint：一般物理結果、敵方攻擊與個別死亡訊息
 
 [`docs/151`](151-common-physical-result-sfx-spec.md) 以 IDA Pro 9.4／IDAPython 接續
 `sub_1AC05`、`sub_1ACCE`、`sub_1AFC6` 與死亡分支，閉合敵方 cue4／record331、雙方成功
@@ -1284,14 +1287,14 @@ Docker＋Xvfb 重播曾由標題抵達 `THE END`（121.799 秒），該時點工
 文件／註解稽核撤回一項未經 selector RE 就改動 RNG 次序的嘗試後，同一正式 trace 又以
 134.912 秒通過；該次失敗與撤回保留為證據，不能靠調整 trace 掩蓋未證實的原版順序。
 後續 `docs/153` 已以 IDA 9.4 證實正常分支確實在選 action bit 前抽存活目標；移除
-all-party mask 的跳過近似後，targeted tests 通過，但目前完整 replay 在 CTY38→CTY70
+all-party mask 的跳過近似後，targeted tests 通過，但該 checkpoint 的完整 replay 在 CTY38→CTY70
 航段的 monster77×2 全滅。多次以 CTY83／CTY38 正式商店、旅店、教會與 8／16 瓶聖水
 嘗試仍停在同一狀態，已撤回這些未收斂的 trace 改動。該 checkpoint 的 campaign E3 因而 pending；
 下一輪需把該 deterministic 長航路當成獨立玩家路線／補給切片，不改怪物或 RNG。
 
-剩餘實作缺口的第一順位：現行 `bcItem` 仍只支援藥草，原版戰鬥道具清單／滿月草
+該 checkpoint 當時的第一順位：`bcItem` 仍只支援藥草，原版戰鬥道具清單／滿月草
 transaction 尚未由 selector → inventory owner → handler → target UI 完整閉合；不得用
-field item handler 猜接。其後順位固定依本檔頂端最後功能 worklist，不由舊 milestone 改寫。
+field item handler 猜接。此缺口已由 `docs/179` 閉合；本段不得用來覆蓋本檔頂端現況。
 
 ## 2026-08-22 歷史 checkpoint：原野道具 owner E3，當時 campaign 後移至取船後航線
 
@@ -1315,7 +1318,7 @@ encounter／補給 RE，寫獨立 spec，再決定實作；不得以較早的 `T
 > 逐項以「RE 文件 → spec → 正式玩家輸入實作」閉合隊伍物品持有、獎勵容量、原野補血與
 > 抵達目標同一步的戰鬥 modal；最新完整重播結果以本檔頂端與下節為準。
 
-## 2026-08-22 current checkpoint：主線 E3 恢復，RE／V3 邊界保留
+## 2026-08-22 歷史 checkpoint：主線 E3 恢復，RE／V3 邊界保留
 
 [`docs/159`](159-party-owned-field-supply-trace-spec.md) 至
 [`docs/178`](178-rainbow-tile-arrival-encounter-spec.md) 依序閉合隊伍道具供應與消耗、
@@ -1350,7 +1353,7 @@ target route、先消耗與戰後逐 owner 寫回；`0x41/42/43/44/45/48/4c` 的
 共用 spell-action consumer 已由下一節的怪物 action 切片接管；戰鬥道具分支沒有另造一份
 猜測 mapping。
 
-## 2026-08-23 current checkpoint：D3MNS 實際怪物 action 39/39 E2
+## 2026-08-23 歷史 checkpoint：D3MNS 實際怪物 action 39/39 E2
 
 [`docs/180`](180-monster-action-runtime-spec.md) 以 IDA Pro 9.4 重新匯出
 `sub_19AD6 → sub_199DC → DGROUP 0x3930/0x394e`，並由間接 operand 索引補齊
@@ -1365,26 +1368,26 @@ target route、先消耗與戰後逐 owner 寫回；`0x41/42/43/44/45/48/4c` 的
 本批不重跑完整 campaign。
 
 完成度為 D2/D3→E2；逐筆戰鬥文字、每個抗性結果、動畫 frame 與 PCM wall-clock 不由本批
-升格 V3。`rec166–171` 野外輔助咒文已由 `docs/181` 續接為 D3／E2；下一個且唯一進行中的
-功能切片是商店賣出，之後才是船進城、必要選單／玩家可見支線。
+升格 V3。`rec166–171` 野外輔助咒文後續已由 `docs/181` 續接為 D3／E2；當時下一項是
+商店賣出，現已由 `docs/182..184` 全部閉合。
 
-## 2026-08-23 current checkpoint：野外輔助咒文 rec166–171 D3／E2
+## 2026-08-23 歷史 checkpoint：野外輔助咒文 rec166–171 D3／E2
 
 IDA Pro 9.4 已閉合六個合法 field handler。毒／麻痺解除、battle-only sleep 清除、兩種復活
 與解除詛咒均由 `spells.json` 的有限 primitive 接上正式咒文與目標選單；其中 rec169 精確為
 `rng(100) >= 50` 才滿 HP 復活，rec170 則跳過亂數並回復半 HP。schema `0.1.46`／content
 `0.1.51`；針對性 `game`、`internal/gamepack`、`internal/spell` 測試通過。完整證據與停止線見
-`docs/181-field-support-spells-runtime-spec.md`。一般商店賣出已由 `docs/182` 閉合；下一項是船進城。
+`docs/181-field-support-spells-runtime-spec.md`。一般商店賣出與後續項目已由 `docs/182..184` 閉合。
 
-## 2026-08-23 current checkpoint：一般商店賣出 D3／E2
+## 2026-08-23 歷史 checkpoint：一般商店賣出 D3／E2
 
 IDA Pro 9.4 已閉合角色 item slot → ITEM price → `price/2 + price/4` → 確認後清 slot →
 加錢 writer。remake 由正常商店貨架進入選人／列物／二次確認，未裝備與裝備槽均可交易；
 零價物品失敗即關閉。schema `0.1.47`／content `0.1.52`，證據與瑪依拉特店停止線見
-`docs/182-shop-sell-runtime-spec.md`。下一項是船進城；`DGROUP 0x0b62=1` 特店與王者之劍
-保留到必要支線，不冒稱一般商店完成即代表該支線 E3。
+`docs/182-shop-sell-runtime-spec.md`。當時尚待船進城與 `DGROUP 0x0b62=1` 特店；兩者後續已由
+`docs/183..184` 閉合，不能只靠本段推算現況。
 
-## 2026-08-23 current checkpoint：船進城載具交易 D2／E2
+## 2026-08-23 歷史 checkpoint：船進城載具交易 D2／E2
 
 一般 CTY 載入成功後，若玩家仍在船上，現在會把船停到入口 world tile、城內切回徒步；
 出城回到同一格時恢復乘船。原先只允許 layer0 restoration 的限制已移除，地表 CTY38 與
@@ -1398,7 +1401,7 @@ IDA Pro 9.4 已閉合角色 item slot → ITEM price → `price/2 + price/4` →
 jump table `0x28a14 → sub_16315`、特殊模式 `DGROUP 0x0b62` 及 flag `0x134/0x135`
 閉合瑪依拉交易：raw `0x6d` 賣 22,500G 後清 `0x134`，raw `0x1c` 王者之劍才加入貨架；
 購買後清 `0x135`。正常 `InputState` 已通過交談、賣出、重進、購買與存讀檔，schema
-`0.1.48`／content `0.1.53`。
+`0.1.48`／content `0.1.53`（該切片歷史版本；`docs/185` 後現行 content `0.1.54`）。
 
 狀況、道具、裝備與其他已接支線均有正常玩家入口，完整主線先前亦已達 E3；因此使用者指定
 的六項功能 worklist 到此清空。尚缺同狀態 oracle 的隊員詳情／逐窗像素、音訊體感與全場景

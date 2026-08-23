@@ -8,7 +8,7 @@ campaign E3。2026-08-22 未發版工作樹依 [`docs/153`](../docs/153-monster-
 修正怪物 action RNG 次序後，monster77／51 玩家路線 blocker 已由 `docs/154..178` 的正式
 交易與輸入切片越過；最新乾淨 Docker＋Xvfb trace 以 115.629 秒抵達 `THE END`，現行
 campaign 為 E3。這不否定仍未知語意，也不把畫面／音效升格為 V3。
-現行未發版 game pack 為 schema `0.1.48`／content `0.1.53`；其中玩家／敵人成功逃跑
+現行未發版 game pack 為 schema `0.1.48`／content `0.1.54`；其中玩家／敵人成功逃跑
 已依原版 cue 13／21 與完成等待鏈接成 D3／E2；逐幀同步仍非 V3，硬體 wall-clock 則依
 平台規格近似且不再作遊戲 RE，詳見
 [`docs/149-battle-flee-sfx-wait-spec.md`](../docs/149-battle-flee-sfx-wait-spec.md)。
@@ -29,8 +29,10 @@ cue9 特殊分支與 action3／持久麻痺已由
 Kandar 塔 fixture 全滅均已釐清為測試路徑問題並修正；詳見
 [`docs/125-acceptance-20260811.md`](../docs/125-acceptance-20260811.md)。這不代表原版 V3
 畫面與音效 parity：創角能力確認的固定 checkpoint 已完成 V3 靜態對拍，其他逐畫面／
-逐動作／PCM 對拍及 Android 動態驗收仍待完成，詳見
-[`docs/126-newgame-confirmation-v3-static-comparison.md`](../docs/126-newgame-confirmation-v3-static-comparison.md)。
+逐動作／PCM 對拍仍是可選 V3 長尾。Android emulator 已完成 Android 14 開機與 APK 安裝，
+但 production 音訊在 headless host backend 阻塞，不能宣稱完整動態驗收；畫面證據見
+[`docs/126`](../docs/126-newgame-confirmation-v3-static-comparison.md)，Android 邊界見
+[`docs/132`](../docs/132-android-emulator-validation.md)。
 現況與工作順序以
 [`docs/74-ebiten-remake-completion-plan.md`](../docs/74-ebiten-remake-completion-plan.md)
 為準；不要從本文件的歷史清單推算完成度。

@@ -222,16 +222,13 @@ type Battle struct {
 	formationPositionReady bool
 	commandLabels          map[int][2]int // pack-owned command glyph pairs
 
-	// per-battle 修正狀態(W3,docs/data/spell-effects-research.md;每場 startGroup 歸零,
-	// 對齊 C reset_battle_mods() 類型的每戰暫態修正。151/154 是單體、155 是我方全體，
-	// 故隊長與同伴各自持有 atkPct/defPct；partyBlind/partySealed 仍是全隊狀態，
-	// 由敵施 158/156 設下；目前 runtime 維持至戰鬥結束，原版中途清除時序尚未獨立閉合。
-	heroAtkPct  int  // 隊長物攻修正；拜基魯多為單體
-	heroDefPct  int  // 隊長守備修正；史卡拉單體、史克魯多全體
-	partyBlind  bool // 我方陷入幻惑(敵施158)→ 我方物攻 ~50% 失手
-	partySealed bool // 我方咒文被封(敵施156)→ 我方無法施咒
-	enemyAtkPct int  // 敵方物攻%(敵自施151,上限400)
-	enemyDefPct int  // 敵方守備%(敵自施154/155,上限300)
+	// per-battle 修正狀態。151/154 是單體、155 是我方全體，故隊長與同伴各自持有
+	// atkPct/defPct。舊 C 的全隊 partyBlind/partySealed 沒有 D3MNS action writer，已移除；
+	// 玩家施放 156/158 只寫各 enemyUnit 的 statusSealed/statusBlind，存續至本場結束。
+	heroAtkPct  int // 隊長物攻修正；拜基魯多為單體
+	heroDefPct  int // 隊長守備修正；史卡拉單體、史克魯多全體
+	enemyAtkPct int // 敵方物攻%(敵自施151,上限400)
+	enemyDefPct int // 敵方守備%(敵自施154/155,上限300)
 
 	// 設定選單驅動(config.CombatInfo / CombatHurtFx;由 Game 在 start() 前設好,
 	// start() 不重置 —— 與既有 lightOrb 同一套「呼叫端先設欄位」慣例)。
@@ -710,7 +707,6 @@ func (b *Battle) startFormationWithBackground(groups []enemyGroup, seed int64, h
 	for _, c := range b.companions {
 		c.atkPct, c.defPct = 100, 100
 	}
-	b.partyBlind, b.partySealed = false, false
 	b.cursor, b.phase, b.result = 0, phCommand, 0
 	b.msg, b.msgData, b.gotExp, b.gotGold, b.gotDrop, b.suppressDrop = "", battleMessage{}, 0, 0, -1, false
 	b.messageQueue = nil
@@ -1370,12 +1366,6 @@ func (b *Battle) execTurn() {
 		if tgt < 0 {
 			break // 組內已無存活敵(全數逃走中)→ 揮空,直接進勝負判定
 		}
-		if b.partyBlind && b.roll() < 128 { // 我方幻惑(敵施158瑪努莎)→ ~50% 揮空(對齊 C g_party_blind)
-			b.emitTextWithSFXSequence(battleTextActorAttack, b.soundCues.PlayerPhysical.Steps,
-				b.actorNameGlyphs(b.actionActor))
-			b.emitTextWithSFX(battleTextActorMissed, b.soundCues.PhysicalMiss)
-			break
-		}
 		crit := 0
 		if b.roll() < 8 { // ~1/32 會心
 			crit = 1
@@ -1427,10 +1417,6 @@ func (b *Battle) execSpell(rec int) {
 		return
 	}
 	caster := b.actionActor
-	if b.partySealed { // 瑪荷頓(敵施156)→ 我方無法施咒,但仍耗費本回合(對齊 C)
-		b.emitText(battleTextSpellSealed, b.actorNameGlyphs(caster))
-		return
-	}
 	if b.actorMP(caster) < def.MP {
 		b.phase = phMessage
 		b.emitText(battleTextMPInsufficient, b.actorNameGlyphs(caster))
@@ -1843,12 +1829,6 @@ func (b *Battle) execCompanionCommand(i int, cmd battleCommand) {
 			tgt = b.firstAliveEnemy()
 		}
 		if tgt < 0 {
-			return
-		}
-		if b.partyBlind && b.roll() < 128 {
-			b.emitTextWithSFXSequence(battleTextActorAttack, b.soundCues.PlayerPhysical.Steps,
-				b.actorNameGlyphs(i+1))
-			b.emitTextWithSFX(battleTextActorMissed, b.soundCues.PhysicalMiss)
 			return
 		}
 		b.emitTextWithSFXSequence(battleTextActorAttack, b.soundCues.PlayerPhysical.Steps,

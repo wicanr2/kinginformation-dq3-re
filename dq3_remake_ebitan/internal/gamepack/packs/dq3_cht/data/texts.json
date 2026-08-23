@@ -184,7 +184,7 @@
       "glyph_codes": [65517, 149, 65534, 429, 430, 437, 500, 569, 423, 57],
       "layout": {"kind": "battle_message"},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 351},
-      "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "351", "consumer": "party spell-sealed guard", "doc": "docs/108-battle-text-pack.md"}
+      "evidence": {"level": "D2", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "351", "consumer": "retained original battle text role; docs/185 proves this EXE has no D3MNS party-sealed writer, so it is not a current runtime guard", "doc": "docs/185-remaining-polish-closure.md"}
     },
     {
       "id": "common:text.battle.enemy.sleep",
@@ -265,6 +265,14 @@
       "layout": {"kind": "battle_message"},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 399},
       "evidence": {"level": "D3", "source_kind": "data_file", "source": "D3TXT00.TXT", "address_space": "record", "address": "399", "consumer": "battle status-cure consumer", "doc": "docs/108-battle-text-pack.md"}
+    },
+    {
+      "id": "common:text.battle.drop.inventory_full",
+      "value": "但是{勇者名}攜帶的東西\n太多了,帶不走!",
+      "glyph_codes": [508,399,65531,549,540,149,539,380,65534,334,357,423,55,540,228,612,57],
+      "layout": {"kind": "battle_message"},
+      "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 345},
+      "evidence": {"level": "D3", "source_kind": "exe", "source": "DQ3.EXE + D3TXT00.TXT", "address_space": "linear", "address": "0x16856..0x16885; 0x1c54a..0x1c55d; 0x21670..0x216a2", "consumer": "all-party-full branch resets DS:259C=1 before record345; text control 0xFFFB resolves selector1 through DS:4F15 to the leader name", "doc": "docs/185-remaining-polish-closure.md"}
     },
     {
       "id": "common:text.battle.spell.no_effect",

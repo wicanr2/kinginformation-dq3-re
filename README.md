@@ -3,7 +3,7 @@
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
 > checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。本機三平台包與推廣片
 > 的唯一現行交付樹為 `dist-all/v0.1.34/`，版型與驗收見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。
-> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.48`／content `0.1.53`：包含日夜原始
+> 儲存庫目前工作樹已進到尚未發版的 schema `0.1.48`／content `0.1.54`：包含日夜原始
 > palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
 > 等待閘門；因此公開 v0.1.34 不能被描述為包含這些修正，
 > 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
@@ -18,6 +18,12 @@
 > field caster 合法的 `rec166–171` 野外輔助咒文已完成
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
+
+目前狀態（2026-08-23）：正式輸入主線為 E3，指定的六項玩家功能 worklist 已完成；尚未發版
+工作樹不是公開 v0.1.34。必要後續只有重新打包／發版；全遊戲逐畫面 V3、Android 正式音訊
+動態驗收，以及仍明示為 classic／舊 C 近似的少數道具參數，都是證據限制或可選驗收，不能
+寫成已達原版 exact，也不反向推翻 remake 玩家流程完成。快速狀態表見 [`WORKLIST.md`](WORKLIST.md)。
+四項殘餘 polish 的 IDA 閉環與否定性證據見 [`docs/185`](docs/185-remaining-polish-closure.md)。
 
 本專案研究精訊資訊在 1990 年代製作的中文版 DQ3
 （程式內題名 *Dragon Fighter III／傳說的終章*），並以原版 DOS 程式與資料為證據，

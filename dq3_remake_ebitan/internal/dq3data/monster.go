@@ -19,7 +19,7 @@ type MonsterStat struct {
 	Exp, Gold      uint16 // +0x21 / +0x23
 	DropRate       uint8  // +0x25；勝利結算以 rng(256) <= 此值，0xff 必掉
 	DropItem       uint8  // +0x26
-	Unknown27      uint8  // +0x27；尚未閉合，不得誤當掉落率
+	Unknown27      uint8  // +0x27；IDA 全 code 無 direct consumer，strong:此 EXE 未使用／保留欄，不得誤當掉落率
 	SpawnWeight    uint8  // +0x28
 }
 

@@ -35,8 +35,8 @@ oracle，數值仍由 EXE／DAT 仲裁。
 raw ID 乘記錄長度 `0x29`，從 D3MNS runtime record 的 `+0x25` 讀判定閾值，以
 `roll(256) <= threshold` 判定，再從 `+0x26` 讀道具；`DGROUP 0x2518 bit1` 會略過
 掉落。怪75為 `+0x25=0xff`、`+0x26=0x14`，所以第一戰由正常掉落取得草薙大劍；第二戰
-由 handler36 抑制，不會再掉一把。`+0x27` consumer 尚未閉合，程式與文件保持
-`unknown_27`，不再沿用舊的 `DropRate` 誤名。
+由 handler36 抑制，不會再掉一把。`+0x27` 後續已由 `docs/185` 收斂為本 EXE 無 direct
+consumer 的保留 raw 欄（未使用為 strong），不再沿用舊的 `DropRate` 誤名。
 
 ## Remake 對應與驗收
 

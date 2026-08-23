@@ -133,51 +133,23 @@ func TestMahotonCastSetsEnemySealed(t *testing.T) {
 	}
 }
 
-// TestSealedEnemyCannotCast:敵鏡像測試(item4,「敵方施放」)—— mon43(素材實測 castProb=255、
-// 已知咒 rec=[152 美達巴尼, 158 瑪努莎],docs 調查用 cmd/dumpai 一次性核實,無 flee 干擾)。
-// 未封咒時,幾乎每次 CastProb roll 都會嘗試施法(255/256);玩家用瑪荷頓封住該敵後,不論 RNG
-// 種子為何,statusSealed 檢查都在擲骰「是否施法」之前短路擋下,故應 100% 不再命中 152/158。
-func TestSealedEnemyCannotCast(t *testing.T) {
+// TestEnemySealAndBlindHaveNoMidBattleTimer：156／158 寫入敵方個體狀態後，正常物理 action
+// 不會按回合清除；狀態只隨本場 Battle instance 結束。舊「mon43=rec152/158」推測已撤回。
+func TestEnemySealAndBlindHaveNoMidBattleTimer(t *testing.T) {
 	mons, err := dq3data.OpenMonsters(asset(t, "D3MNS.DAT"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	ai, ok := mons.AI(43)
-	if !ok || ai.CastProb < 200 || len(spellRecsOf(ai)) == 0 {
-		t.Skip("mon43 AI 資料與預期(castProb≈255,已知152/158)不符,素材可能已變,跳過")
+	b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
+	hero := heroParams{level: 99, curHP: 9999, maxHP: 9999, atk: 1, def: 999, agi: 1}
+	if !b.startGroup(101, 1, 1, hero, nil) {
+		t.Fatal("開戰失敗")
 	}
-
-	newBattle := func(seed int64) *Battle {
-		b := &Battle{mons: mons, shp: asset(t, "DQ3MNS.SHP")}
-		hero := heroParams{level: 1, curHP: 999, maxHP: 999, atk: 1, def: 1, agi: 1}
-		if !b.startGroup(43, 1, seed, hero, nil) {
-			t.Fatal("開戰失敗(mon43)")
-		}
-		return b
-	}
-
-	// 對照組:未封咒,50 個 seed 內應至少命中一次(否則測試前提本身有誤,先自我核實)。
-	landed := false
-	for seed := int64(1); seed <= 50; seed++ {
-		b := newBattle(seed)
-		b.enemyTurn()
-		if b.heroStatus&statusParalysis != 0 || b.partyBlind {
-			landed = true
-			break
-		}
-	}
-	if !landed {
-		t.Fatal("前提核實失敗:mon43(castProb≈255)未封咒時 50 個 seed 內應命中152/158其一,一次都沒有,懷疑素材/邏輯已變")
-	}
-
-	// 實驗組:封咒後,30 個 seed 皆不應命中(statusSealed 短路擋在擲骰之前,無 RNG 依賴)。
-	for seed := int64(1); seed <= 30; seed++ {
-		b := newBattle(seed)
-		b.enemies[0].status |= statusSealed
-		b.enemyTurn()
-		if b.heroStatus&statusParalysis != 0 || b.partyBlind {
-			t.Fatalf("敵已被瑪荷頓封咒,不應再命中152/158(seed%d):heroStatus=%d partyBlind=%v",
-				seed, b.heroStatus, b.partyBlind)
+	b.enemies[0].status |= statusSealed | statusBlind
+	for turn := 0; turn < 20; turn++ {
+		b.enemyAction(0, dq3data.MonsterAI{}, false)
+		if got := b.enemies[0].status & (statusSealed | statusBlind); got != statusSealed|statusBlind {
+			t.Fatalf("第%d回合敵方156/158狀態被未證實 timer 清除：%#x", turn+1, got)
 		}
 	}
 }
@@ -285,7 +257,6 @@ func TestBattleModsResetEachStart(t *testing.T) {
 		t.Fatal("開戰失敗")
 	}
 	b.heroAtkPct, b.heroDefPct, b.enemyAtkPct, b.enemyDefPct = 400, 300, 400, 300
-	b.partyBlind, b.partySealed = true, true
 	b.heroStatus = statusParalysis
 
 	if !b.startGroup(101, 1, 2, hero, nil) { // 重開下一場
@@ -295,19 +266,7 @@ func TestBattleModsResetEachStart(t *testing.T) {
 		t.Fatalf("新戰應歸零百分比修正(基準100),得 atk%d def%d eatk%d edef%d",
 			b.heroAtkPct, b.heroDefPct, b.enemyAtkPct, b.enemyDefPct)
 	}
-	if b.partyBlind || b.partySealed || b.heroStatus != 0 {
-		t.Fatalf("新戰應清除旗標/狀態,得 partyBlind=%v partySealed=%v heroStatus=%d",
-			b.partyBlind, b.partySealed, b.heroStatus)
+	if b.heroStatus != 0 {
+		t.Fatalf("新戰應清除角色戰鬥狀態,得 heroStatus=%d", b.heroStatus)
 	}
-}
-
-// spellRecsOf:測試用小工具,把 AI SpellMask 轉成 rec 清單(供前置核實用,不進正式產品碼)。
-func spellRecsOf(ai dq3data.MonsterAI) []int {
-	var recs []int
-	for b := 0; b < 48; b++ {
-		if ai.SpellMask[b/8]&(0x80>>(b%8)) != 0 {
-			recs = append(recs, b) // 此處只驗 raw mask 非空；action 語意由 game pack 定義。
-		}
-	}
-	return recs
 }

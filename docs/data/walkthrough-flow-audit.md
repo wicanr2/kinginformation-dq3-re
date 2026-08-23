@@ -78,7 +78,8 @@ remake 的劇情接線分兩種,缺口只可能出在「需顯式接線」那種
 8. **勇氣神殿「單獨戰鬥」gate** — ✅ **Go/Ebitengine 正式流程閉合（2026-08-02）**。
    - 非破壞性 IDA 9.4 重查推翻舊結論：handler37 **不寫** flag `0x13`；接受時保存
      active party count、強制 count=1、寫 world `(82,165)` 並設 mode bit `0x80`。handler62
-     播 rec12 後還原 count 並清 mode bit。flag `0x13` 只有已完成分支 reader，writer 仍 unknown。
+     播 rec12 後還原 count 並清 mode bit。flag `0x13` 只有已完成分支 reader；`docs/185` 已
+     confirmed negative 本 EXE 沒有 gameplay writer，remake 不合成該旗標。
    - 舊 C remake 的 `{82,165}: flag0x13→CTY75, else→CTY47` 方向也相反；原版 reader 是
      clear→CTY75、set→CTY47。錯誤 `owPortal` 已從 Ebiten 移除，由 game-pack 有限事件接管。
    - CTY23 sec2 藍寶珠 raw event 為 `01 67 00 ad`；D3TXT06 rec9–12／84 與 D3TXT07

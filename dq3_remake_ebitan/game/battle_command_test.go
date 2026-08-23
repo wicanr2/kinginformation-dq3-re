@@ -228,16 +228,11 @@ func TestBattleCommonPhysicalResultQueuesOriginalRolesAndCues(t *testing.T) {
 		t.Fatalf("player lethal physical defeat count=%d", countMessageRole(playerDeath.messageQueue, battleTextEnemyDefeated))
 	}
 
-	findMiss := func(enemy bool) *Battle {
+	findMiss := func() *Battle {
 		for seed := uint16(0); ; seed++ {
 			b := newBattle(999, 999, seed)
-			if enemy {
-				b.enemies[0].status |= statusBlind
-				b.enemyAction(0, dq3data.MonsterAI{}, false)
-			} else {
-				b.partyBlind = true
-				b.execTurn()
-			}
+			b.enemies[0].status |= statusBlind
+			b.enemyAction(0, dq3data.MonsterAI{}, false)
 			if len(b.messageQueue) >= 2 && b.messageQueue[1].role == battleTextActorMissed {
 				return b
 			}
@@ -246,7 +241,7 @@ func TestBattleCommonPhysicalResultQueuesOriginalRolesAndCues(t *testing.T) {
 			}
 		}
 	}
-	for side, miss := range map[string]*Battle{"player": findMiss(false), "enemy": findMiss(true)} {
+	for side, miss := range map[string]*Battle{"enemy": findMiss()} {
 		if !reflect.DeepEqual(miss.messageQueue[1].sfx, []gamepack.BattleSoundCue{cues.PhysicalMiss}) {
 			t.Fatalf("%s physical miss messages=%+v", side, miss.messageQueue)
 		}

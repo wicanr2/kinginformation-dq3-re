@@ -17,7 +17,7 @@
 
 > 2026-08-22：日夜已改由 pack 直接選原始 `DQ3.PAL` 五 bank／12 段，
 > `0x78..0xef` 都是夜間，黑暗之燈寫 clock `0x8c`。目前 D3／E2／V2；見 `docs/136`。
-> 工作樹現行 schema `0.1.48`／content `0.1.53`；戰鬥道具與 D3MNS 實際使用的
+> 工作樹現行 schema `0.1.48`／content `0.1.54`；戰鬥道具與 D3MNS 實際使用的
 > 39/39 action 已分別由 `docs/179`、`docs/180` 接成 E2，歷史 `MonsterSpellRec` 猜測已移除。
 > 驅毒草與滿月草 field transaction、
 > 怪物 action3／持久麻痺的原版閉環與停止線見 `docs/138`、`docs/152`。公開 v0.1.34
@@ -165,7 +165,8 @@ palette transition、逐畫面／音效 V3、Android／桌面 release 驗收仍�
 TITLE/FIELD/CASTLE/TOWN/DUNGEON/BATTLE/ENDING（ENDING 為原版 track 17）。loader 會在 Docker runtime 讀取並 fail closed；正式 trace 在冊封後捲完
 `ENDTXT.TXT` 產生 `dq3_remake_ebitan/docs/img/ending_the_end_runtime.png`，與
 `docs/title/ending.png` 逐像素一致。這只把固定終盤畫面與 cue 升為 V3；終盤文字 timing、
-其餘場景／戰鬥畫面與跨平台 release 仍未完成，不得將單一終盤圖誤宣稱全程 parity。
+該 checkpoint 的其餘場景／戰鬥畫面與跨平台 release 當時仍未完成；桌面 v0.1.34 後來已
+發佈，但仍不得將單一終盤圖誤宣稱全程 parity。
 
 同日已補閉合 CTY59 `handler41`：IDA Pro 9.4 的原始分支在玩家 Y=4 呼叫 section
 facility index 0，否則選 D3TXT07 record8；兩條路徑均由 `conditional_facility_events`
@@ -220,7 +221,8 @@ schema `0.1.14` 新增 `rura_navigation`、鑰匙 `door_key_tier` 與
 與 boot production trace；詳見 `docs/99`。
 schema `0.1.15` 新增 `temporary_solo_challenges`；入口／返回 NPC、完成旗標 reader、mode
 mask、世界／場景落點、洞窟訊息與所有文字均由 JSON 提供。原版 handler37 不寫 flag0x13，
-其 writer 維持 unknown；試煉途中完整離隊角色 records 會進存檔，handler62 後按原序復隊。
+其 gameplay writer 已由 `docs/185` 的完整 setter caller ledger 證實在本 EXE 不存在；試煉
+途中完整離隊角色 records 會進存檔，handler62 後按原序復隊，remake 不合成不可達完成旗標。
 CTY23 藍寶珠亦已遷入 `treasure_events`；詳見 `docs/100`。
 schema `0.1.16` 新增 `world_entrance_variants`；同一 world coordinate 的 ordered
 flag branches、每支極性、layer、目的 CTY 與 default 全由 JSON 提供。商人聚落舊表把
@@ -694,7 +696,7 @@ map/save replay、Baramos aftermath 與 ending writer；Docker＋Xvfb targeted t
 未宣稱 Boss repeat-N，該項後續已由 `docs/148` 證實不存在。前文的「runtime unknown／missing」保留作歷史勘誤，現行狀態以本節、`docs/119`、
 `docs/123` 及 pack JSON 為準。
 
-## 2026-08-11 驗收勘誤：current checkpoint 尚未重播閉合
+## 2026-08-11 歷史驗收勘誤：該 checkpoint 尚未重播閉合
 
 本輪以現行 Go／Ebitengine 測試器、Docker＋Xvfb、Android 靜態工具鏈與 DOSBox oracle
 取樣驗收。`internal/...`、觸控 UX 契約測試全綠；完整 `TestOpeningProductionInputTrace`
@@ -801,11 +803,12 @@ sleep 分離，會略過命令／action queue，戰後保留並由全隊共享 4
 滿月草 `0x45` 的 field transaction、record201／334／364、cue9、save/load 與 battle
 CureStatus consumer 已接入 pack／Go，詳見 `docs/152`。
 
-現行 `bcItem` 還是只用藥草的歷史簡化；戰鬥道具清單與滿月草 battle transaction 沒有完成
+該歷史 checkpoint 的 `bcItem` 還只用藥草；戰鬥道具清單與滿月草 battle transaction 尚未完成
 selector → owner → target → handler 閉環，不能由 field handler 外推。最新 campaign trace
 已因新原版行為重新驗證，精確 component tests 通過，完整正式 `InputState` replay 亦由標題
 抵達 `THE END`（121.799 秒）。這是 `docs/153` RNG 訂正前的歷史 checkpoint；現行 replay
-已在 CTY38→CTY70 航段重新 pending，不證明 battle item 清單或 V3 完成。
+已在 CTY38→CTY70 航段重新 pending，不證明當時的 battle item 清單或 V3 完成。此功能缺口
+後來已由 `docs/179` 閉合；現行 campaign E3 與六項完成狀態以本檔末端及 `docs/74` 為準。
 
 Android 最新 source 已在 Docker 重建 AAR／debug APK並通過 `aapt` 靜態契約。專用
 `dq3-android-emulator:20260812-r1` 已鎖定 emulator 37.1.11 與 API 34 x86_64 revision 14。

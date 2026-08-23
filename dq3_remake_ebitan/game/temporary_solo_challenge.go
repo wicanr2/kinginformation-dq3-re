@@ -41,7 +41,8 @@ func (g *Game) resolveSoloChallengeWorldEntrance(cty int) int {
 }
 
 // talkTemporarySoloChallenge 只負責有限的隊伍移除 transaction。它不為
-// CompletedFlagRaw 猜造 writer：IDA 已證實讀取分支，但 writer 仍為 unknown。
+// CompletedFlagRaw 合成 writer：docs/185 已用完整 setter caller ledger 證實本 EXE
+// 沒有該 gameplay writer，completed reader 是未發售 binary 的不可達殘留分支。
 func (g *Game) talkTemporarySoloChallenge(n *npcInst) bool {
 	if g.pack == nil || g.soloChallengeStage != soloChallengeIdle {
 		return false

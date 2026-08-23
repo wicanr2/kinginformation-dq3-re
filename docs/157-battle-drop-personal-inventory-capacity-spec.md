@@ -61,19 +61,20 @@ record 345 動態姓名插值的精確 owner。
 若 `DS:0726==1` 再顯示 record `0x159`／345（「攜帶的東西太多，帶不走」）。record 345 的
 原始 words 為
 `01fc 018f fffb 0225 021c 0095 021b 017c fffe 014e 0165 01a7 0037 021c 00e4 0264 0039 ffff`。
-`0xFFFB` 的精確角色插值 owner 本切片仍為 **unknown**，不得用勇者姓名猜值。
+`0xFFFB` 的精確角色插值 owner 在本切片當時仍為 **unknown**；後續 `docs/185` 已由
+`sub_1C425` 的 `DS:259C=1` writer 與 `sub_21651` consumer 證實為隊長姓名。
 
 推論等級：掉落 threshold、item writer、全隊順序、每人八格、`0x00FF` 空值、滿格不寫與
 `DS:0726` 分支均為 **confirmed**；record 345 的固定文字 words 為 **confirmed**，其
-`0xFFFB` runtime 插值對象為 **unknown**。
+`0xFFFB` runtime 插值對象在當時為 **unknown**；現已由 `docs/185` 訂正為 **confirmed** 隊長。
 
 ## Remake 規格
 
 1. 戰後掉落必須呼叫共用 `grantPartyItem`，依隊長至同伴順序尋找第一個有空位的個人物品欄。
 2. 裝備與未裝備物品合計占用 game-pack `personal_inventory_slots`；缺契約時 fail closed。
 3. 全隊滿格時不得寫入、不得覆蓋、不得讓任何 inventory 超過容量；經驗與金錢仍照常結算。
-4. 成功才顯示現行取得物品提示；滿格 record 345 的玩家可見接線另需先閉合 `0xFFFB`
-   插值 owner，不能在 Go 猜姓名。
+4. 成功才顯示取得物品提示；滿格時以 pack-owned record345 顯示隊長姓名，依 `docs/185`
+   的 `DS:259C=1 → DS:4F15[0]` 閉環，不在 Go 猜字串或角色。
 5. 正式 trace 不可用清空 slice 或直接改數量修復；應讓早期藥草掉落自然停止於全隊容量。
 
 ## 驗收

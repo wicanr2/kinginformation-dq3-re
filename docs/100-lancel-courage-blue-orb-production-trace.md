@@ -1,7 +1,8 @@
 # 蘭西爾勇氣試煉／藍寶珠 production trace
 
 > 2026-08-02。範圍：提頓綠寶珠合法 checkpoint → 蘭西爾 handler37 → 單人勇氣洞窟
-> → CTY23 藍寶珠 → CTY75 handler62 復隊。本文件不宣稱已找到 story flag `0x13` writer。
+> → CTY23 藍寶珠 → CTY75 handler62 復隊。本文件當時未找到 story flag `0x13` writer；
+> `docs/185` 後續以完整 setter caller ledger 證實本 EXE 沒有 gameplay writer。
 
 ## 結論
 
@@ -32,7 +33,7 @@ CTY23 sec2 的藍寶珠 `{type=1,item=0x67,present_flag=0xad}` 同步遷入
 | proven | handler62 `(logical) 0x608a`；caller `(IDA linear) 0x28a00` | 播 rec12，還原 `0x5057→0x5077`，AND clear mode bit `0x80`，重載正常場景。 |
 | proven | handlers85／86 `(logical) 0x6685/0x668c` | CTY23 sec2 raw handlers只播 D3TXT07 rec66／67；不寫完成旗標。 |
 | proven | world loader `(logical) 0x25fe` | `(82,165)` 的 flag `0x13` 讀分支為 clear→CTY75、set→CTY47；舊 C remake 與舊 `owPortal` 的方向相反。 |
-| unknown | flag `0x13` writer | handler37、handler62、handlers85／86 與 CTY23 event table 都沒有 writer；不得因攻略或舊 C 程式自行在接受挑戰或取珠時設定。 |
+| confirmed negative | flag `0x13` gameplay writer | `docs/185` 枚舉兩個 setter 的全部 direct caller，沒有 `BX=0x13`；handler37、handler62、handlers85／86 與 CTY23 event table 也沒有 writer。此未發售 EXE 的 completed reader 分支不可由正常流程抵達。 |
 
 原始影片 `dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4`
 約 38:30–42:00 顯示四人進神殿、接受後只剩勇者、取得藍寶珠、返回神官後四人重新出現。
@@ -67,8 +68,8 @@ go build -o /tmp/dq3-remake .  # 在排除使用者空白 scratch tmp_dump.go �
 
 ## 尚未關閉
 
-- flag `0x13` writer 仍為 unknown；後續遇到需要完成態 rec84 的正式流程時，必須再次從 writer
-  追到 consumer，不可把「取得藍寶珠」自動等同於設定該 flag。
+- flag `0x13` 的 gameplay writer 已由 `docs/185` 以 confirmed negative 關閉；不可把「取得
+  藍寶珠」自動等同於設定該 flag，也不再把不可達 rec84 分支列為 remake 待辦。
 - 原版與 remake 的同狀態畫面對拍仍缺，維持 V2。
 - 二選一小視窗目前沿用既有共用 renderer；其幾何尚未完成原版結構的 D3 閉合，不得把現行
   `430/220/120/68` 提升為 game-pack canonical 設定。本輪只消除新事件的重複 hardcode。

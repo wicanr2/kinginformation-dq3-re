@@ -59,7 +59,8 @@ DQ3.EXE **沒有被完整語意解讀**。現有工程已對 remake 必經玩家
   現行 `enemyAction` 對未由 pack 定義的 bit 仍保留歷史
   `MonsterSpellRec`→`spell.GetDef` 相容近似；這是 remake 行為，不是原版 exact 證據，
   也不能用來產生「完整怪物咒文表」。本輪只校正斷言，不擅自改變戰鬥規則。
-- temporary solo challenge 的 completed writer 尚未由原版證實。
+- temporary solo challenge 的 completed writer 在本次審計時尚未證實；`docs/185` 後續以
+  完整 setter caller ledger confirmed negative 本 EXE 沒有 gameplay writer。
 - 對話保留控制碼的部分語意與怪物記錄 `+0x27` 仍未閉合。教會 poison／curse 的舊合併
   敘述已由 `docs/137` 拆開訂正；後續 `docs/147` 又閉合 ITEM metadata → item word
   `bit0x4000` → level×100 教會移除，現行 poison 與 curse 兩條有限鏈皆為 E2。
