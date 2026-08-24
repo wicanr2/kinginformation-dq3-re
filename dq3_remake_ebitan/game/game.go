@@ -350,6 +350,7 @@ type Game struct {
 	openingEscortIndex        int
 	openingEscortTick         int
 	openingEscortNPC          int
+	openingEscortPhase        int
 	openingFrame              int
 	openingIndex              int
 	openingActive             bool
@@ -1409,21 +1410,23 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
-	// 開場演出:rec82→83→81 在家中；母親帶到家門外後播 rec80，才交回操作。
-	// DQ3.EXE file 0x140a..0x147a 與 runner handler54(file 0x147b)。
+	// 開場演出：rec82→83→81 後由 pack 的兩階段有限序列接管；家中母親帶路、
+	// 轉場後主角自動走至城門，完成對話關閉後才交易旗標並交回操作。
+	// DQ3.EXE sub_1010B，IDA linear 0x1010b..0x1020b／file 0x147b..0x157a。
 	if g.openingIdx >= 0 {
 		g.openingIdx++
 		if g.openingIdx < len(openingSeq) {
-			if openingSeq[g.openingIdx] == openingMotherDirectionsRec {
-				if g.startMotherEscort() {
-					g.renderFrame()
-					return nil
-				}
-				g.finishMotherEscort()
-			}
 			g.dlg.Open(openingSeq[g.openingIdx])
+		} else if g.openingIdx == len(openingSeq) {
+			if g.startMotherEscort() {
+				g.renderFrame()
+				return nil
+			}
+			// 合法 pack 卻找不到起始 NPC 時失敗即關閉，不跳過整段演出。
+			g.openingIdx--
 		} else {
 			g.openingIdx = -1
+			g.completeOpeningEscort()
 		}
 		g.renderFrame()
 		return nil
@@ -1960,11 +1963,9 @@ func (g *Game) descend() {
 	g.renderFrame()
 }
 
-// openingSeq 由 DQ3.EXE file 0x140a..0x147a 與 handler54(file 0x147b)定錨：
-// 生日旁白 → 母親邀請 → 主角回答 → 到家門外指向王城。
-const openingMotherDirectionsRec = 80
-
-var openingSeq = []int{82, 83, 81, openingMotherDirectionsRec}
+// openingSeq 由 DQ3.EXE file 0x140a..0x147a 定錨，只含帶路前的三段對白。
+// handler54 的完成對白、路線與旗標交易由 game pack 的 opening_escort 提供。
+var openingSeq = []int{82, 83, 81}
 
 // 原版新遊戲初始化常數(DQ3.EXE file 0x13a0..0x1431):
 // remembered overworld=(0x99,0xae)、CTY00 sec4、室內位置=(5,5)。
@@ -2005,26 +2006,33 @@ func (g *Game) startOpening() {
 	g.renderFrame()
 }
 
-// motherEscort:開場 rec81 後 → 母親帶到阿里阿罕家門外(sec0 8,38)。
-// 原版 runner handler54(file 0x147b)檢查初始 flag0x50，演出後 set flag0x17、
-// clear flag0x50，再播 rec80；本函式保存相同可見性狀態與落點。
-func (g *Game) finishMotherEscort() {
-	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0, g.dnPhase, g.storyFlag)
+// finishMotherEscort performs only the scene transition between the two
+// pack-owned opening legs.  Destination, route, dialogue and flags are data;
+// this helper must not treat the landing tile as the event endpoint.
+func (g *Game) finishMotherEscort() bool {
+	e := g.openingEscort
+	if e == nil || len(e.ArrivalFrames) == 0 || e.Destination.CTY < 0 || e.Destination.CTY >= len(mapBlkNum) {
+		return false
+	}
+	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, e.Destination.CTY,
+		mapBlkNum[e.Destination.CTY], e.Destination.Section, g.dnPhase, g.storyFlag)
 	if err != nil {
-		return
+		return false
 	}
-	g.town, g.cur, g.curCty, g.inTown = sec0, sec0, 0, true
-	g.px, g.py = 8, 38 // sec4 transition[0] dest(家門→城鎮外圍)
-	if g.px >= sec0.w || g.py >= sec0.h {
-		g.px, g.py = sec0.spawnX, sec0.spawnY
+	for _, frame := range e.ArrivalFrames {
+		if frame.Player.X >= sec0.w || frame.Player.Y >= sec0.h || sec0.Blocked(frame.Player.X, frame.Player.Y) {
+			return false
+		}
 	}
+	g.town, g.cur, g.curCty, g.inTown = sec0, sec0, e.Destination.CTY, true
+	first := e.ArrivalFrames[0].Player
+	g.px, g.py = first.X, first.Y
 	g.resetPartyTrail()
 	if sec0.dlgText != nil {
 		g.dlg.tx = sec0.dlgText // 切到城鎮對話 bank
 	}
-	g.setStoryFlag(0x17, true)
-	g.setStoryFlag(0x50, false)
 	g.renderFrame()
+	return true
 }
 
 const (
@@ -3444,6 +3452,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if escort, ok := pack.OpeningEscort(); ok {
 		g.openingEscort = escort
 		g.openingEscortNPC = -1
+		g.openingEscortPhase = -1
 	}
 	if g.endingPix, g.endingPal, assetErr = loadPCXAsset("ending_image"); assetErr != nil {
 		return nil, assetErr

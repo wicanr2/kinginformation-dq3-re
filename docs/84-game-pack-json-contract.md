@@ -1412,16 +1412,24 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 loader 必須拒絕不存在欄位、非 tunable 欄位及 base hash 不符。正式 parity test 永遠以
 未套 override 的 canonical pack 執行。
 
-### 6.9b 注音組字與開場帶路（schema `0.1.50`）
+### 6.9b 注音組字與開場帶路（schema `0.1.51`）
 
 - `new_game_geometry.name_composition` 是注音組字的 `GeometryAnchor`；不得再從姓名列寬度
   推導。DQ3 的組字顯示在獨立「輸入注音」框，與 `name_function_panel` 不得重疊。
 - `new_game_labels.zhuyin_candidate_aliases[]` 每筆含 `sh/ji/yu/tone/glyphs/evidence`。
   它只附加並去重版本字庫的候選，不重排標準表；`source_kind=user_report` 表示玩家可重現
   需求或明示 UX 相容，不能引用為原版讀音證據。
-- `interface.opening_escort` 含 `id/cty/section/frames/evidence`；每個 frame 含
-  `leader{x,y}`、`player{x,y}`、正數 `hold_frames`。引擎只依相鄰 tile 推導面向與切換步行幀，
-  完成後才執行既有事件轉場。DQ3 專屬 CTY、座標與節拍不得寫回 Go。
+- `interface.opening_escort` 的家中段由 `cty/section/frames` 定義；每個 frame 含
+  `leader{x,y}`、`player{x,y}`、正數 `hold_frames`。
+- 場景切換後的主角自動步行由 `destination{cty,section}` 與
+  `arrival_frames[{player{x,y},hold_frames}]` 定義。兩組 frames 內相鄰項都必須是四方向相鄰
+  tile；runtime 另須拒絕越界或不可通行的抵達路線，不得自行尋路或使用 Go fallback。
+- `completion_dialogue_record` 是抵達後才開啟的版本專屬文字 record；只有該對話關閉後，
+  才依 `set_story_flags[]`／`clear_story_flags[]` 完成狀態交易。兩組旗標不得重複，值域為
+  `0..65535`。
+- 引擎只重播 pack 指定座標、依相鄰 tile 推導面向並切換步行幀。DQ3 專屬 CTY、座標、
+  record、旗標與節拍不得寫回 Go。DQ3 實例與證據限制見
+  `docs/188-opening-escort-to-castle-spec.md`。
 
 ## 8. 驗證與測試契約
 

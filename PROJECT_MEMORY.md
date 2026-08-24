@@ -17,7 +17,7 @@
 
 > 2026-08-22：日夜已改由 pack 直接選原始 `DQ3.PAL` 五 bank／12 段，
 > `0x78..0xef` 都是夜間，黑暗之燈寫 clock `0x8c`。目前 D3／E2／V2；見 `docs/136`。
-> 工作樹現行 schema `0.1.50`／content `0.1.56`；戰鬥道具與 D3MNS 實際使用的
+> 工作樹現行 schema `0.1.51`／content `0.1.57`；戰鬥道具與 D3MNS 實際使用的
 > 39/39 action 已分別由 `docs/179`、`docs/180` 接成 E2，歷史 `MonsterSpellRec` 猜測已移除。
 > 驅毒草與滿月草 field transaction、
 > 怪物 action3／持久麻痺的原版閉環與停止線見 `docs/138`、`docs/152`。公開 v0.1.34
@@ -259,8 +259,9 @@ trace 隨後已通過 CTY83、P4–P6 與 new game→THE END；後續只處理 V
 `interface.json.party_hud` 提供 `(48,244,448,80)` 幾何與 label glyph。正式 renderer 對拍圖為
 `dq3_remake_ebitan/docs/img/party_field_hud.png`，component test 鎖定 pack 對映、trail 與
 真實資產；目前達 E2／runtime 圖證，尚未宣稱同地圖同晝夜 V3。進入新場景、傳送、讀檔、
-加入／離隊及單人試煉復隊均會重置 trail，避免跨場景瞬移。其餘 battle 長尾與母親逐格護送仍是
-未閉合工作；同日也把標題 idle attract 接回 versioned pack：`interface.json.attract` 宣告
+加入／離隊及單人試煉復隊均會重置 trail，避免跨場景瞬移。當時尚未閉合的母親逐格護送
+已由 `docs/187` 的家中段與 `docs/188` 的轉場後自動走到王城入口段完成；同日也把標題 idle
+attract 接回 versioned pack：`interface.json.attract` 宣告
 `TITH.P`→`TITO.P` 八張卡、1200 frame delay／hold，manifest 保存每張 PCX 的尺寸／SHA-256，
 輸入會中斷輪播並回主選單；`title_attract_warrior.png` 是 runtime 對拍。PCX／順序達 D3/E2，
 能力條逐幀填充與淡入淡出仍待 V3。商店／教會／旅社逐窗、日夜 palette、BGM／SFX 及
@@ -895,3 +896,18 @@ SHA-256 為 `719affa467a17daca51b621cd85faaee5136f5fe9e4e53ac70419f76f24d5321`�
 OGG、兩個 ROM、BUILD commit／schema／content 均核對，Docker＋Xvfb／ALSA null 12 秒 smoke
 未見 panic／fatal。這是 Linux 單平台本機更新；Windows／macOS 仍是 `v0.1.36-local`，
 推廣片仍在 `v0.1.35-local/promo/`，不得把三者誤記成同一 source checkpoint。
+
+## 2026-08-24 memory：開場 handler54 完整函式勘誤
+
+舊文件把 handler54 在 CTY00 sec0 `(8,38)` 的場景轉換誤當作事件終點。IDA Pro 9.4 已按
+`DQ3.EXE` SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`
+重建並匯出非破壞 sidecar：完整 `sub_1010B` 是 IDA linear `0x1010b..0x1020b`／file
+`0x147b..0x157a`；轉場後仍有三段狀態／movement consumer，最後才 set `0x17`、clear
+`0x50`。本機原版影片 `4:53–5:22` 同時證實家中帶路後，主角會自動走到王城入口才顯示
+rec80。
+
+現行 schema `0.1.51`／content `0.1.57` 已把 destination、player-only arrival frames、
+completion record 與 completion flags 全部放入 `interface.json.opening_escort`；Go 只重播
+兩階段有限序列並對越界／阻擋資料失敗即關閉。王座 rec78「漏畫勇者」則是截圖誤判；
+同 tile 的正常／透明 renderer 像素差異測試證實既有程式會畫出勇者。規格與證據等級見
+`docs/188-opening-escort-to-castle-spec.md`。

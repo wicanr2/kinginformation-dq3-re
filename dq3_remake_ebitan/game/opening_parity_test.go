@@ -52,7 +52,7 @@ func TestOriginalNewGameInitialState(t *testing.T) {
 }
 
 // TestOriginalOpeningEventTransactions 固定開場 runner handler54/56 的狀態交易：
-// 母親帶到家門外後切 flag50→17；首次見王得到精確六件物品與 50G，再切 17→18。
+// 母親帶到城門、rec80 關閉後切 flag50→17；首次見王得到精確六件物品與 50G，再切 17→18。
 func TestOriginalOpeningEventTransactions(t *testing.T) {
 	dir := spineAssetsDir(t)
 	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "opening-events-save.json"))
@@ -61,7 +61,7 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGame: %v", err)
 	}
-	wantSeq := []int{82, 83, 81, 80}
+	wantSeq := []int{82, 83, 81}
 	if len(openingSeq) != len(wantSeq) {
 		t.Fatalf("開場對白序列長度=%d，應為 %d", len(openingSeq), len(wantSeq))
 	}
@@ -72,8 +72,8 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 	}
 
 	g.motherEscort()
-	if g.curCty != 0 || g.cur == nil || g.cur.sec != 0 || g.px != 8 || g.py != 38 {
-		t.Fatalf("母親帶路落點應 CTY00 sec0@(8,38)，得 cty=%d sec=%v @(%d,%d)",
+	if g.curCty != 0 || g.cur == nil || g.cur.sec != 0 || g.px != 21 || g.py != 9 {
+		t.Fatalf("母親帶路落點應 CTY00 sec0@(21,9)，得 cty=%d sec=%v @(%d,%d)",
 			g.curCty, sceneSection(g.cur), g.px, g.py)
 	}
 	if !g.storyFlag(0x17) || g.storyFlag(0x50) {

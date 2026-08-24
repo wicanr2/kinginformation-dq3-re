@@ -19,7 +19,7 @@
 
 | 分類 | 現況 | 是否阻塞 remake 功能完成 |
 |---|---|---|
-| remake 玩家流程 | campaign E3；上述六項皆已接入正式入口 | 否，已完成 |
+| remake 玩家流程 | 六項功能皆已接入；2026-08-24 game test 找到的開場轉場後自動行走缺段已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列；component、正式創角 trace 開場段與王座勇者像素差異均通過 | 否；完整 trace 後段仍會在既有 Lv20 練級上限失敗，與本切片無關 |
 | 原版證據限制 | 藥草治療量、祈禱之戒 MP 回復量、聖水步數仍是 classic／舊 C 近似；部分逐窗、逐幀與音效只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
 | 交付 | `v0.1.37-local` Linux AppImage 已包含 2026-08-24 修正；Windows／macOS 的 `v0.1.36-local` 仍是前一 checkpoint | 本輪指定的 Linux 重包已完成；不建立 tag／GitHub Release |
 

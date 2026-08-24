@@ -9,7 +9,7 @@
 | 背景音樂有噪音 | 找不到 `mt32/track_00.ogg` 時自動安裝 `MBG.MCX` 的 OPL2 FM fallback | 正常產品只直接解碼 `track_NN.ogg`；`DQ3_FM` 僅供明確診斷 | runtime E2；不宣稱播放器 wall-clock V3 |
 | `ㄨㄤˇ` 沒有「王」 | 生成表依標準讀音把 glyph186「王」列在 `ㄨㄤˊ`；`ㄨㄤˇ` 只有「往、枉」 | 標準候選不改，pack 另以 `user_report` D3 相容別名把「王」附加到 `ㄨㄤˇ` | 這是明示 UX 相容，不是原版或國語讀音斷言 |
 | 組字注音被遮住 | renderer 把組字畫在姓名列第五格後，與右側功能欄重疊 | 新增 `name_composition` pack anchor，依原版 DOSBox 畫面畫在下方「輸入注音」框 | DOSBox 同畫面 D2／runtime E2 |
-| rec81 後直接傳送 | `motherEscort` 直接切到 CTY00 sec0 `(8,38)` | `opening_escort` 由 pack 保存母親／玩家 tile frames；逐格走到右下樓梯後才執行 handler54 旗標與轉場 | 本機原版影片 4:53–5:12 證實可見順序；每格 6 frames 是可重播近似，不稱 wall-clock exact |
+| rec81 後直接傳送 | `motherEscort` 直接切到 CTY00 sec0 `(8,38)` | `opening_escort` 由 pack 保存家中母親／玩家 tile frames；逐格走到右下樓梯後才轉場 | 本機原版影片 4:53–5:12 只證實家中段；當時誤把轉場當事件終點。2026-08-24 完整對拍已證實後面還有主角自動走到王城入口的第二階段，見 [`docs/188`](188-opening-escort-to-castle-spec.md)。 |
 | NPC 靜止、移動面向錯 | `npcTick` 只改 tile；沒有寫 renderer facing／walk，交談轉向會殘留 | CTY ctrl 下／左／上／右轉為 renderer 下／上／左／右；待機每 18 幀切換兩幀，移動前同步面向 | 原始 ctrl mover 規則既有 D2；動畫節拍屬可見近似 |
 
 ## 資料與引擎邊界
@@ -22,7 +22,9 @@
 ## 驗收與交付界線
 
 具名測試鎖定 `ㄨㄤˇ` 包含 glyph186、標準候選順序不變、NPC 待機切幀與右移面向、母親
-帶路有可見 hold frames 且最後才抵達 CTY00 sec0 `(8,38)` 並開 rec80。
+家中帶路有可見 hold frames。本文當時將 CTY00 sec0 `(8,38)` 後立即開 rec80 視為完成；
+這項結論已由完整影片與 IDA 函式尾端推翻，必須改由 [`docs/188`](188-opening-escort-to-castle-spec.md)
+的兩階段契約仲裁。
 
 2026-08-24 已將現行 source 重包為
 `dist-all/v0.1.37-local/full/linux-amd64/dq3-remake-v0.1.37-local-full-linux-amd64.AppImage`。

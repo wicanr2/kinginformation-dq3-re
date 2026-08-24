@@ -79,9 +79,9 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.dlg.Open(81)
 	dump("opening_home_rec81")
 
-	// handler54:母親帶出門 → sec0 (8,38) → rec80。
+	// handler54:母親帶出門 → 主角自動走到 sec0 (21,9) → rec80。
 	g.motherEscort()
-	g.dlg.Open(openingMotherDirectionsRec)
+	g.dlg.Open(g.openingEscort.CompletionDialogueRecord)
 	dump("opening_town_rec80")
 
 	// handler56:走到阿里阿罕王座正前方 → rec78 + 50G/六件裝備。

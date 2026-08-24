@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.50"
+	SchemaVersion       = "0.1.51"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -773,12 +773,29 @@ type OpeningEscortFrame struct {
 	HoldFrames int            `json:"hold_frames"`
 }
 
+// OpeningArrivalFrame describes the player-only leg after a scene transition.
+// The pack owns every tile; the engine only validates and replays adjacency.
+type OpeningArrivalFrame struct {
+	Player     TileCoordinate `json:"player"`
+	HoldFrames int            `json:"hold_frames"`
+}
+
+type SceneCoordinate struct {
+	CTY     int `json:"cty"`
+	Section int `json:"section"`
+}
+
 type OpeningEscort struct {
-	ID       string               `json:"id"`
-	CTY      int                  `json:"cty"`
-	Section  int                  `json:"section"`
-	Frames   []OpeningEscortFrame `json:"frames"`
-	Evidence Evidence             `json:"evidence"`
+	ID                       string                `json:"id"`
+	CTY                      int                   `json:"cty"`
+	Section                  int                   `json:"section"`
+	Frames                   []OpeningEscortFrame  `json:"frames"`
+	Destination              SceneCoordinate       `json:"destination"`
+	ArrivalFrames            []OpeningArrivalFrame `json:"arrival_frames"`
+	CompletionDialogueRecord int                   `json:"completion_dialogue_record"`
+	SetStoryFlags            []int                 `json:"set_story_flags"`
+	ClearStoryFlags          []int                 `json:"clear_story_flags"`
+	Evidence                 Evidence              `json:"evidence"`
 }
 
 // RawScreenAsset describes a version-owned planar screen whose bytes and
@@ -2309,7 +2326,9 @@ func (p *Pack) validateInterface() error {
 		}
 	}
 	if e := p.Interface.OpeningEscort; e != nil {
-		if e.ID == "" || e.CTY < 0 || e.Section < 0 || len(e.Frames) < 2 {
+		if e.ID == "" || e.CTY < 0 || e.Section < 0 || len(e.Frames) < 2 ||
+			e.Destination.CTY < 0 || e.Destination.Section < 0 || len(e.ArrivalFrames) < 2 ||
+			e.CompletionDialogueRecord < 0 || len(e.SetStoryFlags) == 0 || len(e.ClearStoryFlags) == 0 {
 			return errors.New("opening escort is invalid")
 		}
 		if err := validateEvidence(e.Evidence); err != nil {
@@ -2318,6 +2337,39 @@ func (p *Pack) validateInterface() error {
 		for i, frame := range e.Frames {
 			if frame.Leader.X < 0 || frame.Leader.Y < 0 || frame.Player.X < 0 || frame.Player.Y < 0 || frame.HoldFrames <= 0 {
 				return fmt.Errorf("opening_escort.frames[%d] is invalid", i)
+			}
+		}
+		for i, frame := range e.ArrivalFrames {
+			if frame.Player.X < 0 || frame.Player.Y < 0 || frame.HoldFrames <= 0 {
+				return fmt.Errorf("opening_escort.arrival_frames[%d] is invalid", i)
+			}
+			if i > 0 {
+				prev := e.ArrivalFrames[i-1].Player
+				dx, dy := frame.Player.X-prev.X, frame.Player.Y-prev.Y
+				if dx < 0 {
+					dx = -dx
+				}
+				if dy < 0 {
+					dy = -dy
+				}
+				if dx+dy != 1 {
+					return fmt.Errorf("opening_escort.arrival_frames[%d] is not adjacent", i)
+				}
+			}
+		}
+		seenFlags := map[int]string{}
+		for _, group := range []struct {
+			name  string
+			flags []int
+		}{{"set_story_flags", e.SetStoryFlags}, {"clear_story_flags", e.ClearStoryFlags}} {
+			for i, flag := range group.flags {
+				if flag < 0 || flag > 0xffff {
+					return fmt.Errorf("opening_escort.%s[%d] is invalid", group.name, i)
+				}
+				if prior, ok := seenFlags[flag]; ok {
+					return fmt.Errorf("opening_escort flag %#x is duplicated in %s and %s", flag, prior, group.name)
+				}
+				seenFlags[flag] = group.name
 			}
 		}
 	}

@@ -26,7 +26,10 @@
 >
 > **2026-08-24 玩家反證訂正：**正常產品已固定直接播放 OGG，不再因找不到音樂目錄而
 > 自動退回 FM；注音組字框、`ㄨㄤˇ` 的「王」相容候選、母親逐格帶路及 NPC 待機／移動
-> 幀已由 [`docs/187`](187-opening-player-path-polish.md) 閉合。`v0.1.36-local` 早於此修正，
+> 家中幀已由 [`docs/187`](187-opening-player-path-polish.md) 接入；2026-08-24 的完整原版
+> 對拍證實轉場後仍缺「主角自動走到王城入口才播 rec80」，現已依
+> [`docs/188`](188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列。王座 rec78 的勇者
+> 經同 tile 像素差異測試證實既有 renderer 已繪出，先前截圖判讀已撤回。`v0.1.36-local` 早於此修正，
 > 不能描述為現行 source 交付。使用者指定的 Linux AppImage 已重包至
 > `dist-all/v0.1.37-local/full/linux-amd64/`；Windows／macOS 尚維持 `v0.1.36-local`，但本輪
 > 未要求更新。功能 worklist 與本輪指定交付均已清空。
@@ -139,8 +142,8 @@
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 新遊戲與載入皆有正式輸入入口；campaign 由新遊戲入口達 E3 | 功能 E3；逐畫面版面仍是可選 V3 |
 | 主角姓名／性別 | DOSBox 正式輸入、IDA、同狀態 PNG | 共用元件與正式 trace；`FIRST.SCR`、record 407 的 13 個具名確認欄位、三層 raw EGA backdrop 與 `beveled_2px` frame 均由 pack 接入 | E3；能力確認固定 checkpoint 已 V3 靜態（AE 1,474／640×350），游標閃爍、palette register、能力條與整段 timing 仍待動態 V3 |
-| 家中／母親 | DOSBox、影片 | sec4+rec82/83；handler54 transaction 已接 | E3；逐格護送動畫仍待 V3 |
-| 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接 | E3；原版畫面仍待 V3 |
+| 家中／母親 | DOSBox、影片、IDA `sub_1010B` | sec4 家中逐格與轉場後主角自動走到王城入口均已由 pack 接線；正式創角 trace 已通過本段 | E3；逐 tile 原版路點與 timing 不稱 V3 |
+| 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接；rec78 勇者像素差異測試已通過 | E3；原版逐幀仍屬可選 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render、CTY `+0x11` 遭遇 gate、步數與主線 entrance／event transaction 已接 | 主線 E3；非主線逐入口與同狀態畫面屬可選 V3 |
@@ -240,7 +243,8 @@
   `heroGold=0`、單人、只裝備布衣 `0x1e`、不提前設 `msStart`。
 - 沿 caller/runner 繼續追到 file `0x140a..0x1633`：
   - 家中對白順序 `rec82→83→81`；
-  - handler54 自動帶至 CTY00 sec0 `(8,38)`、`set flag17/clear flag50`、播 rec80；
+  - `sub_1010B` 先完成家中帶路並轉至 CTY00 sec0 `(8,38)`，再令主角自動走到王城入口，
+    播 rec80，最後 `set flag17/clear flag50`；舊文件在轉場處提前截斷，已由 `docs/188` 勘誤；
   - 王座 handler56 播 rec78，GIVE `00,01,01,03,1f,1f`，加 `0x32=50G`，
     `clear flag17/set flag18`。
 - Ebiten 已按同一 transaction 接線，`TestOriginalOpeningEventTransactions` 從真實 CTY 素材驗證

@@ -1,12 +1,12 @@
 # 精訊版《勇者鬥惡龍 III》反組譯與 remake
 
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
-> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。最新 source 對應的
-> Linux 完整版為 `dist-all/v0.1.37-local/full/linux-amd64/`；Windows／macOS 完整版仍在
+> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。最近一次本機 Linux
+> 完整版為 `dist-all/v0.1.37-local/full/linux-amd64/`；Windows／macOS 完整版仍在
 > 前一 checkpoint `dist-all/v0.1.36-local/`，推廣片仍在 `dist-all/v0.1.35-local/promo/`。
 > 各自的 `LOCAL-DELIVERY.txt`、`SHA256SUMS.txt` 與 promo metadata 保存驗收邊界，舊版型形成史
 > 見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。儲存庫目前 source checkpoint 為
-> 尚未發版的 schema `0.1.50`／content `0.1.56`：包含日夜原始
+> 尚未發版的 schema `0.1.51`／content `0.1.57`：包含日夜原始
 > palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
 > 等待閘門；因此公開 v0.1.34 不能被描述為包含這些修正，
 > 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
@@ -22,13 +22,40 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前狀態（2026-08-24）：正式輸入主線為 E3，指定的六項玩家功能與四項殘餘 polish 均已
-閉合；現行工作樹為 schema `0.1.50`／content `0.1.56`。本輪依玩家實測把正常音樂固定為
+目前狀態（2026-08-24）：指定的六項玩家功能與四項殘餘 polish 已接入；最新原版／remake
+game test 找到開場連續演出在家門轉場後缺少「主角自動走到王城入口」的玩家可見段落，
+現已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為 game-pack 兩階段序列。
+王座 rec78 的勇者經像素差異測試確認既有 renderer 已正確繪出，先前截圖判讀不列為缺陷。
+現行工作樹為 schema `0.1.51`／content `0.1.57`。本輪依玩家實測把正常音樂固定為
 直接 OGG（FM 僅保留明確診斷開關）、將注音組字移回原版下方面板、加入 `ㄨㄤˇ` 可選「王」
 的明示相容別名、補母親逐格帶路，以及 NPC 待機兩幀與移動面向同步；見
-[`docs/187`](docs/187-opening-player-path-polish.md)。Linux 已以現行 source 重包為
+[`docs/187`](docs/187-opening-player-path-polish.md)。Linux 最近一次本機重包為
 `dist-all/v0.1.37-local/full/linux-amd64/dq3-remake-v0.1.37-local-full-linux-amd64.AppImage`；
-Windows／macOS 的 `v0.1.36-local` 仍是前一 source checkpoint，不得描述為包含本輪修正。
+它仍是 schema `0.1.50`／content `0.1.56` checkpoint；Windows／macOS 的 `v0.1.36-local`
+更早。三者都不得描述為包含本輪開場修正。
+
+### 自我評估：現行 remake 與原版的差距
+
+本專案目前可合理稱為「主要玩家流程已重製、核心資料與事件大多接線完成」，但不能稱為
+「逐畫面、逐幀、逐聲音完全等同原版」。完成度必須按不同維度判斷，不能用單一百分比掩蓋
+證據強弱：
+
+| 維度 | 現況 | 與原版仍有的差距 | 是否阻塞一般 remake 完成 |
+|---|---|---|---|
+| 主線可玩性 | 先前乾淨正式輸入 trace 已由新遊戲抵達 `THE END`，主要事件、戰鬥、載具與結局具正常入口 | 本輪完整 trace 已通過新修正的開場，後段因測試用低危區練至 Lv20 的 500000-step 上限停止；這是 trace 策略／隨機遭遇穩定性問題，不是已重現的玩家流程死路 | 否；但下一次發版前仍應用可重現 checkpoint 抽驗 |
+| 開場與設定資料 | 家中母親帶路、轉場後主角自動走到王城入口、rec80 與旗標交易已依 IDA／影片改為兩階段 game-pack 序列 | `arrival_frames` 是以原始 CTY 可通行格及影片轉折核對的可見近似；尚未證明每個內部路點與逐幀 timing 完全一致 | 否；E3，但不是 V3 |
+| 規則與資料 | 主線必要的道具、怪物 action、抗性、formation、商店、咒文、掉落、日夜及事件交易多數達 D2/D3→E2 | 少數道具參數仍明示採 classic／舊 C 近似；未被玩家路徑使用的 helper 與原版未知欄位沒有為了追求整檔翻譯而深挖 | 否；未知項不得冒稱 exact |
+| 畫面與操作 | 原始資產、中文字型、HUD、選單、NPC、角色與主要場景均可由正式 runtime 顯示；能力確認固定畫面已有 V3 靜態對拍 | 多數畫面仍是 V1／V2；palette transition、戰鬥逐動作、視窗逐頁、角色動畫、attract／ending timing 尚未逐一同狀態 V3 | 否；屬忠實度 polish 與抽樣驗收 |
+| 音樂與音效 | 正常產品直接播放 OGG；關鍵戰鬥 VOC cue 與完成等待已接線 | 全場景 cue、人耳音量／切換、逐動作停頓尚未完整對拍；DAC／PIT／DMA wall-clock 依公開硬體規格作可重現近似，不宣稱逐週期一致 | 否；發版前需抽樣人耳驗收 |
+| 存檔與資料包 | pack 具 schema、reference validation、content hash；主要事件有 save/load transaction | 不是每個可選支線與每個演出中間 frame 都有 round-trip；演出中途存檔語意未證實時採失敗即關閉 | 否；正常 checkpoint 已涵蓋主線 |
+| 平台交付 | Linux／Windows／macOS／Android 都有較早 checkpoint 的本機可執行產物 | 尚未依本輪 `0.1.51/0.1.57` 重包；macOS 真機、Android host audio／真機仍未完成 | 阻塞「本輪四平台同版發行」，不阻塞 source 層 remake 功能 |
+
+綜合判定：**功能層可維持 campaign E3；資料／規則主要為 E2；整體視覺與聲音仍不能標 V3。**
+目前沒有已知的必要主線功能缺口，但仍有可選的原版忠實度、測試穩定性與跨平台同版交付工作。
+新發現只有在會改變玩家體驗或交付 gate 時才重新開啟實作；純硬體逐週期、未使用 helper 或
+沒有玩家可見差異的完整反編譯不再列為 remake 完成條件。詳細逐畫面矩陣見
+[`docs/74`](docs/74-ebiten-remake-completion-plan.md)，開場勘誤與證據限制見
+[`docs/188`](docs/188-opening-escort-to-castle-spec.md)。
 
 前一版 `dist-all/v0.1.36-local/` 已重建
 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完整版，修正角色
@@ -37,8 +64,8 @@ Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完�
 [`docs/186`](docs/186-player-controls-audio-polish.md)。72 秒有音樂推廣片仍在
 `dist-all/v0.1.35-local/promo/`。
 這批完整素材與 MT-32 音樂只供本機保存，不加入 Git、不建立 tag 或 GitHub Release；公開版
-仍是較早且不含原版素材的 v0.1.34。remake 功能串接目前沒有其他必要工作；使用者本輪指定的
-Linux AppImage 已重包，Windows／macOS 更新包未在本輪要求。全遊戲逐畫面
+仍是較早且不含原版素材的 v0.1.34。目前沒有已知的必要主線功能缺口，但本輪 source 尚未
+重新打包；現有 Linux AppImage、Windows／macOS 更新包均早於 schema `0.1.51`。全遊戲逐畫面
 V3、Android host audio／真機、macOS 真機，以及仍明示為 classic／舊 C 近似的少數道具
 參數，都是證據限制或可選驗收，不能寫成已達原版 exact，也不反向推翻 remake 玩家流程完成。
 快速狀態表見 [`WORKLIST.md`](WORKLIST.md)，現況與歷史閱讀閘門見 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)，

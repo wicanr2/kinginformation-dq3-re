@@ -222,9 +222,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceCloseDialogue(t, g)
 	send(InputState{DirHeld: -1, DirEdge: -1})
 	if g.openingIdx != -1 || g.dlg.open || g.curCty != 0 || g.cur.sec != 0 ||
-		g.px != 8 || g.py != 38 || !g.storyFlag(0x17) {
-		t.Fatalf("母親演出後狀態錯：idx=%d dlg=%v cty=%d sec=%d @(%d,%d) flag17=%v",
-			g.openingIdx, g.dlg.open, g.curCty, sceneSection(g.cur), g.px, g.py, g.storyFlag(0x17))
+		g.px != 21 || g.py != 9 || !g.storyFlag(0x17) || g.storyFlag(0x50) {
+		t.Fatalf("母親演出後狀態錯：idx=%d dlg=%v cty=%d sec=%d @(%d,%d) flag17=%v flag50=%v",
+			g.openingIdx, g.dlg.open, g.curCty, sceneSection(g.cur), g.px, g.py,
+			g.storyFlag(0x17), g.storyFlag(0x50))
 	}
 
 	traceWalkThroughPortal(t, g, 21, 8, ctyAliahanCastle, 0)
