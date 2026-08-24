@@ -1,7 +1,8 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-08-12 發佈 checkpoint：v0.1.34 已由 `9d639d0` 正式發布；現行 hash、
-> patch／full 素材邊界及驗證限制見 [`docs/131`](131-release-v0.1.34.md)。
+> 2026-08-24 發佈 checkpoint：v0.1.35 已由 `b26bb48` 正式發布；現行 hash、
+> patch／full 素材邊界及驗證限制見 [`docs/190`](190-release-v0.1.35.md)。v0.1.34 與
+> [`docs/131`](131-release-v0.1.34.md) 僅保存上一版發行史。
 >
 > 2026-08-22 戰鬥勘誤：[`docs/148`](148-battle-single-action-queue-spec.md) 已證實本 EXE
 > 每個存活 actor 每回合恰好一筆，沒有 Boss repeat-N。本文較早 milestone 中將其列為
@@ -18,28 +19,27 @@
 > 每項固定走「既有 RE → IDA Pro 9.4／IDAPython 補證 → spec → game-pack／runtime」。
 > PCM hardware wall-clock、DAC、PIT、DMA 等平台時序只引用 Wiki／datasheet／成熟模擬器
 > 規格並採可重現近似，不再列為遊戲 RE 或 remake 完成 gate。上述六項現已由
-> `docs/179..184` 閉合，後續四項 polish 另由 `docs/185` 收斂；公開 v0.1.34 早於目前
+> `docs/179..184` 閉合，後續四項 polish 另由 `docs/185` 收斂；當時的公開 v0.1.34 早於
 > schema `0.1.50`／content `0.1.56`；角色方向、NPC 交談轉向、F1 HELP、遊戲中系統設定與
 > 預設 MT-32 音樂已由 `docs/186` 閉合。修正後四個完整版在 `dist-all/v0.1.36-local/`，
-> 有音樂推廣片仍在 `dist-all/v0.1.35-local/promo/`；兩者皆依使用者決定只作本機交付，
-> 不建立公開 tag／Release。這不是功能缺口。
+> 有音樂推廣片仍在 `dist-all/v0.1.35-local/promo/`；這段是 2026-08-23 的歷史交付狀態，
+> 已由 2026-08-24 的 v0.1.35 正式桌面版取代，不是現行功能缺口。
 >
 > **2026-08-24 玩家反證訂正：**正常產品已固定直接播放 OGG，不再因找不到音樂目錄而
 > 自動退回 FM；注音組字框、`ㄨㄤˇ` 的「王」相容候選、母親逐格帶路及 NPC 待機／移動
 > 家中幀已由 [`docs/187`](187-opening-player-path-polish.md) 接入；2026-08-24 的完整原版
 > 對拍證實轉場後仍缺「主角自動走到王城入口才播 rec80」，現已依
 > [`docs/188`](188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列。王座 rec78 的勇者
-> 經同 tile 像素差異測試證實既有 renderer 已繪出，先前截圖判讀已撤回。`v0.1.36-local` 早於此修正，
-> 不能描述為現行 source 交付。使用者指定的 Linux AppImage 已重包至
-> `dist-all/v0.1.37-local/full/linux-amd64/`；Windows／macOS 尚維持 `v0.1.36-local`，但本輪
-> 未要求更新。功能 worklist 與本輪指定交付均已清空。
+> 經同 tile 像素差異測試證實既有 renderer 已繪出，先前截圖判讀已撤回。`v0.1.36-local`／
+> `v0.1.37-local` 是修正形成期間的歷史包；現行 checkpoint `b26bb48` 已以 v0.1.35 重建四個
+> 桌面公開 patch 與四個本機完整版。功能 worklist 與本輪指定交付均已清空。
 
 > **接手判讀鐵則：**本檔第 4–10 節及各日期 checkpoint 保存證據形成史，不是可直接執行的
 > current worklist。現況只由本段、下方「玩家可見畫面盤點」、文件末端最新 checkpoint 與
 > [`WORKLIST.md`](../WORKLIST.md) 共同仲裁；舊段落出現「待辦／unknown／pending」時，必須先查
-> 是否已被 `docs/128..186` 訂正。2026-08-23 已在 `dist-all/v0.1.36-local/` 完成本機四個
-> 修正版完整包；有音樂推廣片位於前一個 `v0.1.35-local/promo/`。依使用者決定不發布這批
-> 完整素材、MT-32 OGG 或 ROM。沒有新的玩家可見
+> 是否已被 `docs/128..190` 訂正。現行桌面交付在 `dist-all/v0.1.35/`；公開 patch 已發布，
+> 完整素材、MT-32 OGG 與 ROM 只在本機完整版保存，不加入 GitHub。既有有音樂推廣片仍位於
+> `dist-all/v0.1.35-local/promo/`，不是 v0.1.35 release 的同 checkpoint 錄影。沒有新的玩家可見
 > 反證時，不重新開啟已完成功能或無界反組譯。
 
 > 建立：2026-07-28（Asia/Taipei）
@@ -1424,14 +1424,14 @@ IDA Pro 9.4 已閉合角色 item slot → ITEM price → `price/2 + price/4` →
 jump table `0x28a14 → sub_16315`、特殊模式 `DGROUP 0x0b62` 及 flag `0x134/0x135`
 閉合瑪依拉交易：raw `0x6d` 賣 22,500G 後清 `0x134`，raw `0x1c` 王者之劍才加入貨架；
 購買後清 `0x135`。正常 `InputState` 已通過交談、賣出、重進、購買與存讀檔，schema
-`0.1.48`／content `0.1.53`（該切片歷史版本；`docs/185` 後現行 content `0.1.54`）。
+`0.1.48`／content `0.1.53`（該切片歷史版本；後續版本見文件頂端現況）。
 
 狀況、道具、裝備與其他已接支線均有正常玩家入口，完整主線先前亦已達 E3；因此使用者指定
 的六項功能 worklist 到此清空。尚缺同狀態 oracle 的隊員詳情／逐窗像素、音訊體感與全場景
-V3 留作可選 parity，不再反向升格為 remake 功能 blocker。公開 v0.1.34 不含本批未發版修改；
-該段當時所稱的「發行重包」已由下方 `v0.1.35-local` 現行 checkpoint 完成本機交付，不再是待辦。
+V3 留作可選 parity，不再反向升格為 remake 功能 blocker。下段保存當時的本機交付史；
+本批修改後來已納入文件頂端所列 v0.1.35 正式桌面版。
 
-## 2026-08-23 現行 checkpoint：四項殘餘 polish 閉合
+## 2026-08-23 歷史 checkpoint：四項殘餘 polish 閉合
 
 [`docs/185`](185-remaining-polish-closure.md) 已完成最後四項指定 polish：record345 的
 `0xFFFB` 由顯示端重設 selector 為 1，確證插入隊長姓名；蘭西爾 flag `0x13` 在本 EXE
@@ -1439,10 +1439,10 @@ V3 留作可選 parity，不再反向升格為 remake 功能 blocker。公開 v0
 `partyBlind`／`partySealed` 沒有 production writer，已移除；D3MNS `+0x27` 沒有已分析
 direct consumer，保留為 `Unknown27` raw 欄，不命名成掉落率或多次行動。
 
-現行版本為 schema `0.1.48`／content `0.1.54`。功能 worklist 已清空，campaign 維持 E3；
+當時版本為 schema `0.1.48`／content `0.1.54`。功能 worklist 已清空，campaign 維持 E3；
 checkpoint `aa77bdd` 的四個本機完整版與 72 秒有音樂推廣片已集中於
 `dist-all/v0.1.35-local/`，雜湊與驗收邊界由該目錄的 `SHA256SUMS.txt`、
 `LOCAL-DELIVERY.txt` 與 `promo/` metadata 保存。依使用者決定，這批內容不加入 Git、
-不建立 tag 或 GitHub Release；公開版仍是 v0.1.34。
+不建立 tag 或 GitHub Release；當時公開版仍是 v0.1.34。這項發行狀態已由 v0.1.35 取代。
 少數明示的 classic／舊 C 道具參數、全遊戲逐畫面／逐音效 V3、Android host audio／真機及
 macOS 真機驗收，分別屬證據限制或可選驗收，不是 remake 功能缺口。

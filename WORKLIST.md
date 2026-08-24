@@ -21,7 +21,7 @@
 |---|---|---|
 | remake 玩家流程 | 六項功能皆已接入；2026-08-24 game test 找到的開場轉場後自動行走缺段已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列；component、正式創角 trace 開場段與王座勇者像素差異均通過 | 否；完整 trace 後段仍會在既有 Lv20 練級上限失敗，與本切片無關 |
 | 原版證據限制 | 藥草治療量、祈禱之戒 MP 回復量、聖水步數仍是 classic／舊 C 近似；部分逐窗、逐幀與音效只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
-| 交付 | `v0.1.37-local` Linux AppImage 仍是 schema `0.1.50`／content `0.1.56` checkpoint；Windows／macOS 的 `v0.1.36-local` 更早，三者都不含 `docs/188` 的開場第二階段 | 現行 `0.1.51/0.1.57` source 尚待三平台 patch／完整版重包與公開 release |
+| 交付 | `v0.1.35` 已由 commit `b26bb48` 建立 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 的公開 patch 與本機完整版；公開 patch 私有素材為 0 | 已完成；checksum、smoke 與限制見 [`docs/190`](docs/190-release-v0.1.35.md) |
 
 2026-08-24 開場抽樣對拍確認：rec80 的事件順序與文字語意相符，但原版城鎮道路／水道背景
 與 remake 小型城堡圖塊顯著不符；rec78 勇者可見且角色關係相符，但 viewport、palette、
@@ -61,8 +61,8 @@ ALSA null smoke 通過，SHA-256 為
 本機更新；它早於 `docs/188` 的開場修正，也不代表 Windows／macOS 已重包到同一 source
 checkpoint。
 
-依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git、不發布、不建立
-新 tag。現行 `0.1.51/0.1.57` source 尚未重包；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
+依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git 或公開 release；
+公開 patch 使用 v0.1.35 tag。現行 `0.1.51/0.1.57` 已於 `dist-all/v0.1.35/` 重包；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
 可選驗收，不得誤寫成已通過。
 
 本輪依使用者指示不以完整回歸作完成條件。若沒有新的玩家可見差異、正式發行需求或更強

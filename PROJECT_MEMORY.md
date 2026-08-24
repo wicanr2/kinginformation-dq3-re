@@ -1,9 +1,9 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 發佈記憶：v0.1.33 已是歷史；現行 v0.1.34 已由 checkpoint `9d639d0` 正式發布。
-> GitHub 只含公開 patch，本機 full 未上傳；hash 與驗證界線以 `docs/131` 為準。
+> 發佈記憶：現行 v0.1.35 已由 checkpoint `b26bb48` 正式發布；v0.1.34 是歷史。
+> GitHub 只含公開 patch，本機 full 未上傳；hash 與驗證界線以 `docs/190` 為準。
 
-> 更新：2026-08-22。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-08-24。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
 >
@@ -916,3 +916,9 @@ completion record 與 completion flags 全部放入 `interface.json.opening_esco
 道路／水道／住宅場景，remake 卻顯示小型城堡圖塊；rec78 的勇者、國王與大臣關係相符，
 但 viewport、palette、對話框及分頁仍不同。這是已知 V2 差異，不阻塞功能 release，卻阻止
 任何「視覺忠實完成」或完整 V3 聲明；詳見 `docs/189-opening-sampled-parity-20260824.md`。
+
+同一 checkpoint `b26bb4864afb77dab1ae2b7246a6a840d829a5a6` 已封裝為正式 v0.1.35：
+四個公開 patch 與四個本機完整版集中於 `dist-all/v0.1.35/`。公開 patch 經解包／ZIP 掃描確認
+不含原版資料、OGG 或 ROM；完整版含 18 OGG、兩個 ROM 與修正版 SHP。Linux patch/full
+AppImage 的 Docker＋Xvfb＋ALSA null 8 秒 smoke 通過；macOS 仍只有交叉編譯與靜態驗證，
+未經真機。公開 checksum 與限制見 `docs/190-release-v0.1.35.md`。
