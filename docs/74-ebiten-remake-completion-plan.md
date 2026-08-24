@@ -27,7 +27,9 @@
 > **2026-08-24 玩家反證訂正：**正常產品已固定直接播放 OGG，不再因找不到音樂目錄而
 > 自動退回 FM；注音組字框、`ㄨㄤˇ` 的「王」相容候選、母親逐格帶路及 NPC 待機／移動
 > 幀已由 [`docs/187`](187-opening-player-path-polish.md) 閉合。`v0.1.36-local` 早於此修正，
-> 不能描述為現行 source 交付；剩餘必要工作只有本機完整版重包。
+> 不能描述為現行 source 交付。使用者指定的 Linux AppImage 已重包至
+> `dist-all/v0.1.37-local/full/linux-amd64/`；Windows／macOS 尚維持 `v0.1.36-local`，但本輪
+> 未要求更新。功能 worklist 與本輪指定交付均已清空。
 
 > **接手判讀鐵則：**本檔第 4–10 節及各日期 checkpoint 保存證據形成史，不是可直接執行的
 > current worklist。現況只由本段、下方「玩家可見畫面盤點」、文件末端最新 checkpoint 與

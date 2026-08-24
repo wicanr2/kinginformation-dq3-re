@@ -21,7 +21,7 @@
 |---|---|---|
 | remake 玩家流程 | campaign E3；上述六項皆已接入正式入口 | 否，已完成 |
 | 原版證據限制 | 藥草治療量、祈禱之戒 MP 回復量、聖水步數仍是 classic／舊 C 近似；部分逐窗、逐幀與音效只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
-| 交付 | `dist-all/v0.1.36-local/` 是前一 checkpoint；尚不含 2026-08-24 的 OGG-only、注音、母親帶路與 NPC 動畫修正 | 待本輪 source 穩定後重包本機完整版；不建立 tag／GitHub Release |
+| 交付 | `v0.1.37-local` Linux AppImage 已包含 2026-08-24 修正；Windows／macOS 的 `v0.1.36-local` 仍是前一 checkpoint | 本輪指定的 Linux 重包已完成；不建立 tag／GitHub Release |
 
 2026-08-24 玩家路徑 polish：正常產品不再自動退回 FM；注音組字回到獨立下方面板，
 `ㄨㄤˇ` 以明示相容別名補「王」；母親帶路改為 pack-owned 可見逐格序列；NPC 待機切換
@@ -47,8 +47,16 @@
 系統設定及一般完整版無音樂；具名測試、pack validator、桌面純編譯、ZIP CRC／架構與 Linux
 ALSA null sink 啟動 smoke 已通過，見 [`docs/186`](docs/186-player-controls-audio-polish.md)。
 
+2026-08-24 已另以現行 source 建立
+`dist-all/v0.1.37-local/full/linux-amd64/dq3-remake-v0.1.37-local-full-linux-amd64.AppImage`。
+其 `AppRun` 明確把 `DQ3_ASSETS` 指向包內 `usr/share/dq3/assets_raw`，修正前包把 OGG 放在該處、
+卻指向另一目錄而退回 FM 的封裝錯誤；包內含 18 軌 OGG 與兩個 MT-32 ROM，Docker＋Xvfb／
+ALSA null smoke 通過，SHA-256 為
+`719affa467a17daca51b621cd85faaee5136f5fe9e4e53ac70419f76f24d5321`。這是 Linux 單平台
+本機更新，不代表 Windows／macOS 已重包到同一 source checkpoint。
+
 依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git、不發布、不建立
-新 tag。本輪 source 功能已閉合，剩餘必要工作只有重建 `dist-all` 本機完整版；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
+新 tag。本輪 source 功能及指定的 Linux 重包已閉合；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
 可選驗收，不得誤寫成已通過。
 
 本輪依使用者指示不以完整回歸作完成條件。若沒有新的玩家可見差異、正式發行需求或更強

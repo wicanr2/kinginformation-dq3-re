@@ -881,3 +881,17 @@ checkpoint，當時不能證明該工作樹 campaign E3；該 checkpoint 必須�
 > 持有／消耗、關鍵道具容量、野外補血與目標格遭遇輸入所有權；最新乾淨 Docker＋Xvfb
 > 正式重播以 115.629 秒抵達 `THE END`。現行 campaign 為 E3；V3 與未追查原版語意仍
 > 依 `docs/74`／`docs/135` 分開判定。
+
+## 2026-08-24 memory：現行 Linux AppImage 重包
+
+checkpoint `765566c` 的 schema `0.1.50`／content `0.1.56` 已重包為本機 Linux 完整版：
+`dist-all/v0.1.37-local/full/linux-amd64/dq3-remake-v0.1.37-local-full-linux-amd64.AppImage`，
+SHA-256 為 `719affa467a17daca51b621cd85faaee5136f5fe9e4e53ac70419f76f24d5321`。
+
+舊 `v0.1.36-local` AppImage 的封裝根因已確認：18 軌 OGG 與 ROM 放在
+`usr/share/dq3/assets_raw`，但 `AppRun` 將 `DQ3_ASSETS` 指向不存在的
+`usr/share/dq3_remake/assets`，所以 runtime 找不到 OGG 並走到舊 FM fallback。新包已讓
+`AppRun` 指向實際資產目錄，且在 ROM 目錄存在時設定 `DQ3_MT32`；包內 binary hash、18 軌
+OGG、兩個 ROM、BUILD commit／schema／content 均核對，Docker＋Xvfb／ALSA null 12 秒 smoke
+未見 panic／fatal。這是 Linux 單平台本機更新；Windows／macOS 仍是 `v0.1.36-local`，
+推廣片仍在 `v0.1.35-local/promo/`，不得把三者誤記成同一 source checkpoint。

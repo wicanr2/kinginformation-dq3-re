@@ -1,8 +1,9 @@
 # 精訊版《勇者鬥惡龍 III》反組譯與 remake
 
 > 桌面版 v0.1.34 已由 checkpoint `9d639d0` 正式發布；公開 patch 不含原版素材，
-> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。最新本機完整版為
-> `dist-all/v0.1.36-local/`；推廣片仍在 `dist-all/v0.1.35-local/promo/`。
+> checksum 與驗證界線見 [`docs/131`](docs/131-release-v0.1.34.md)。最新 source 對應的
+> Linux 完整版為 `dist-all/v0.1.37-local/full/linux-amd64/`；Windows／macOS 完整版仍在
+> 前一 checkpoint `dist-all/v0.1.36-local/`，推廣片仍在 `dist-all/v0.1.35-local/promo/`。
 > 各自的 `LOCAL-DELIVERY.txt`、`SHA256SUMS.txt` 與 promo metadata 保存驗收邊界，舊版型形成史
 > 見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。儲存庫目前 source checkpoint 為
 > 尚未發版的 schema `0.1.50`／content `0.1.56`：包含日夜原始
@@ -25,8 +26,9 @@
 閉合；現行工作樹為 schema `0.1.50`／content `0.1.56`。本輪依玩家實測把正常音樂固定為
 直接 OGG（FM 僅保留明確診斷開關）、將注音組字移回原版下方面板、加入 `ㄨㄤˇ` 可選「王」
 的明示相容別名、補母親逐格帶路，以及 NPC 待機兩幀與移動面向同步；見
-[`docs/187`](docs/187-opening-player-path-polish.md)。`dist-all/v0.1.36-local/` 是前一 source
-checkpoint 的四平台本機完整版，尚不包含本輪修正，必須重包後才可交付。
+[`docs/187`](docs/187-opening-player-path-polish.md)。Linux 已以現行 source 重包為
+`dist-all/v0.1.37-local/full/linux-amd64/dq3-remake-v0.1.37-local-full-linux-amd64.AppImage`；
+Windows／macOS 的 `v0.1.36-local` 仍是前一 source checkpoint，不得描述為包含本輪修正。
 
 前一版 `dist-all/v0.1.36-local/` 已重建
 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完整版，修正角色
@@ -35,8 +37,8 @@ Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完�
 [`docs/186`](docs/186-player-controls-audio-polish.md)。72 秒有音樂推廣片仍在
 `dist-all/v0.1.35-local/promo/`。
 這批完整素材與 MT-32 音樂只供本機保存，不加入 Git、不建立 tag 或 GitHub Release；公開版
-仍是較早且不含原版素材的 v0.1.34。remake 功能串接目前沒有其他必要工作；本輪尚待重包本機
-完整版。全遊戲逐畫面
+仍是較早且不含原版素材的 v0.1.34。remake 功能串接目前沒有其他必要工作；使用者本輪指定的
+Linux AppImage 已重包，Windows／macOS 更新包未在本輪要求。全遊戲逐畫面
 V3、Android host audio／真機、macOS 真機，以及仍明示為 classic／舊 C 近似的少數道具
 參數，都是證據限制或可選驗收，不能寫成已達原版 exact，也不反向推翻 remake 玩家流程完成。
 快速狀態表見 [`WORKLIST.md`](WORKLIST.md)，現況與歷史閱讀閘門見 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)，
@@ -331,9 +333,10 @@ V1。通用地形背景沒有藉此宣稱 parity。完整靜態收斂與停止�
 [`docs/123`](docs/123-static-battle-daynight-re.md) 與 [`docs/129`](docs/129-required-boss-backgrounds-re.md)。三種桌面發佈包見
 [`docs/131`](docs/131-release-v0.1.34.md)；重新剪輯、含可聽 MT-32 音軌的 2026-08-12 推廣片與
 非靜音驗收見 [`docs/133`](docs/133-promo-video-20260812.md)，r2 與 `dist-all/` 交付規格見
-[`docs/134`](docs/134-promo-video-r2-dist-all.md)。目前 source 的三平台完整版與有音樂推廣片
-集中於本機 `dist-all/v0.1.35-local/`，以其中的 `LOCAL-DELIVERY.txt`、`SHA256SUMS.txt`
-與 `promo/` metadata 為驗收依據。必要 remake 工作目前為零；現況以
+[`docs/134`](docs/134-promo-video-r2-dist-all.md)。現行 source 的 Linux 完整版位於
+`dist-all/v0.1.37-local/`；前一 source 的 Windows／macOS 完整版位於 `v0.1.36-local/`，
+有音樂推廣片位於 `v0.1.35-local/promo/`。各版本以自己的 `LOCAL-DELIVERY.txt`、
+`SHA256SUMS.txt` 與 `promo/` metadata 為驗收依據。必要 remake 工作目前為零；現況以
 [`WORKLIST.md`](WORKLIST.md) 與 [`docs/74`](docs/74-ebiten-remake-completion-plan.md) 頂端 checkpoint 為準。
 
 ## 證據優先序

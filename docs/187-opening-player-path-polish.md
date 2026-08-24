@@ -22,5 +22,13 @@
 ## 驗收與交付界線
 
 具名測試鎖定 `ㄨㄤˇ` 包含 glyph186、標準候選順序不變、NPC 待機切幀與右移面向、母親
-帶路有可見 hold frames 且最後才抵達 CTY00 sec0 `(8,38)` 並開 rec80。`dist-all/v0.1.36-local/`
-早於本切片；在重新打包前不得描述為包含本輪修正。
+帶路有可見 hold frames 且最後才抵達 CTY00 sec0 `(8,38)` 並開 rec80。
+
+2026-08-24 已將現行 source 重包為
+`dist-all/v0.1.37-local/full/linux-amd64/dq3-remake-v0.1.37-local-full-linux-amd64.AppImage`。
+舊 `v0.1.36-local` AppImage 的 OGG 位於 `usr/share/dq3/assets_raw`，但 `AppRun` 卻指向
+`usr/share/dq3_remake/assets`；新包修正 `DQ3_ASSETS`，並在 ROM 目錄存在時設定 `DQ3_MT32`。
+包內 18 軌 OGG、兩個 MT-32 ROM、內嵌 binary hash 與 BUILD 版本均已核對，Docker＋Xvfb／
+ALSA null 12 秒 smoke 未見 panic／fatal；AppImage SHA-256 為
+`719affa467a17daca51b621cd85faaee5136f5fe9e4e53ac70419f76f24d5321`。Windows／macOS 的
+`v0.1.36-local` 未在本輪重包，不得描述為包含本切片。
