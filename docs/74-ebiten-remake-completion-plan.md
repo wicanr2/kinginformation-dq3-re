@@ -142,8 +142,8 @@
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 新遊戲與載入皆有正式輸入入口；campaign 由新遊戲入口達 E3 | 功能 E3；逐畫面版面仍是可選 V3 |
 | 主角姓名／性別 | DOSBox 正式輸入、IDA、同狀態 PNG | 共用元件與正式 trace；`FIRST.SCR`、record 407 的 13 個具名確認欄位、三層 raw EGA backdrop 與 `beveled_2px` frame 均由 pack 接入 | E3；能力確認固定 checkpoint 已 V3 靜態（AE 1,474／640×350），游標閃爍、palette register、能力條與整段 timing 仍待動態 V3 |
-| 家中／母親 | DOSBox、影片、IDA `sub_1010B` | sec4 家中逐格與轉場後主角自動走到王城入口均已由 pack 接線；正式創角 trace 已通過本段 | E3；逐 tile 原版路點與 timing 不稱 V3 |
-| 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接；rec78 勇者像素差異測試已通過 | E3；原版逐幀仍屬可選 V3 |
+| 家中／母親 | DOSBox、影片、IDA `sub_1010B` | sec4 家中逐格與轉場後主角自動走到王城入口均已由 pack 接線；正式創角 trace 已通過本段 | E3；`docs/189` 抽樣顯示 rec80 背景顯著不符，畫面僅 V2 |
+| 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接；rec78 勇者像素差異測試已通過 | E3；角色構圖 V2，viewport／palette／對話框與分頁不是 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render、CTY `+0x11` 遭遇 gate、步數與主線 entrance／event transaction 已接 | 主線 E3；非主線逐入口與同狀態畫面屬可選 V3 |

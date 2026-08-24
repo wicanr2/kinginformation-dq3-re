@@ -21,7 +21,12 @@
 |---|---|---|
 | remake 玩家流程 | 六項功能皆已接入；2026-08-24 game test 找到的開場轉場後自動行走缺段已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列；component、正式創角 trace 開場段與王座勇者像素差異均通過 | 否；完整 trace 後段仍會在既有 Lv20 練級上限失敗，與本切片無關 |
 | 原版證據限制 | 藥草治療量、祈禱之戒 MP 回復量、聖水步數仍是 classic／舊 C 近似；部分逐窗、逐幀與音效只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
-| 交付 | `v0.1.37-local` Linux AppImage 已包含 2026-08-24 修正；Windows／macOS 的 `v0.1.36-local` 仍是前一 checkpoint | 本輪指定的 Linux 重包已完成；不建立 tag／GitHub Release |
+| 交付 | `v0.1.37-local` Linux AppImage 仍是 schema `0.1.50`／content `0.1.56` checkpoint；Windows／macOS 的 `v0.1.36-local` 更早，三者都不含 `docs/188` 的開場第二階段 | 現行 `0.1.51/0.1.57` source 尚待三平台 patch／完整版重包與公開 release |
+
+2026-08-24 開場抽樣對拍確認：rec80 的事件順序與文字語意相符，但原版城鎮道路／水道背景
+與 remake 小型城堡圖塊顯著不符；rec78 勇者可見且角色關係相符，但 viewport、palette、
+對話框及分頁仍不是 V3。詳見 [`docs/189`](docs/189-opening-sampled-parity-20260824.md)。這些
+不反向推翻 campaign E3，但阻止 README／release 使用「視覺忠實完成」或完整 V3 的措辭。
 
 2026-08-24 玩家路徑 polish：正常產品不再自動退回 FM；注音組字回到獨立下方面板，
 `ㄨㄤˇ` 以明示相容別名補「王」；母親帶路改為 pack-owned 可見逐格序列；NPC 待機切換
@@ -47,16 +52,17 @@
 系統設定及一般完整版無音樂；具名測試、pack validator、桌面純編譯、ZIP CRC／架構與 Linux
 ALSA null sink 啟動 smoke 已通過，見 [`docs/186`](docs/186-player-controls-audio-polish.md)。
 
-2026-08-24 已另以現行 source 建立
+2026-08-24 曾以當時的 schema `0.1.50`／content `0.1.56` source 建立
 `dist-all/v0.1.37-local/full/linux-amd64/dq3-remake-v0.1.37-local-full-linux-amd64.AppImage`。
 其 `AppRun` 明確把 `DQ3_ASSETS` 指向包內 `usr/share/dq3/assets_raw`，修正前包把 OGG 放在該處、
 卻指向另一目錄而退回 FM 的封裝錯誤；包內含 18 軌 OGG 與兩個 MT-32 ROM，Docker＋Xvfb／
 ALSA null smoke 通過，SHA-256 為
 `719affa467a17daca51b621cd85faaee5136f5fe9e4e53ac70419f76f24d5321`。這是 Linux 單平台
-本機更新，不代表 Windows／macOS 已重包到同一 source checkpoint。
+本機更新；它早於 `docs/188` 的開場修正，也不代表 Windows／macOS 已重包到同一 source
+checkpoint。
 
 依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git、不發布、不建立
-新 tag。本輪 source 功能及指定的 Linux 重包已閉合；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
+新 tag。現行 `0.1.51/0.1.57` source 尚未重包；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
 可選驗收，不得誤寫成已通過。
 
 本輪依使用者指示不以完整回歸作完成條件。若沒有新的玩家可見差異、正式發行需求或更強

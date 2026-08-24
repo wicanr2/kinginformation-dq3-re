@@ -911,3 +911,8 @@ completion record 與 completion flags 全部放入 `interface.json.opening_esco
 兩階段有限序列並對越界／阻擋資料失敗即關閉。王座 rec78「漏畫勇者」則是截圖誤判；
 同 tile 的正常／透明 renderer 像素差異測試證實既有程式會畫出勇者。規格與證據等級見
 `docs/188-opening-escort-to-castle-spec.md`。
+
+同日依本機原版影片重新抽樣後，流程 E3 不變，但畫面完成度必須下修：rec80 原版是阿里阿罕
+道路／水道／住宅場景，remake 卻顯示小型城堡圖塊；rec78 的勇者、國王與大臣關係相符，
+但 viewport、palette、對話框及分頁仍不同。這是已知 V2 差異，不阻塞功能 release，卻阻止
+任何「視覺忠實完成」或完整 V3 聲明；詳見 `docs/189-opening-sampled-parity-20260824.md`。

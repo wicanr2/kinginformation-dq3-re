@@ -43,19 +43,21 @@ game test 找到開場連續演出在家門轉場後缺少「主角自動走到�
 | 維度 | 現況 | 與原版仍有的差距 | 是否阻塞一般 remake 完成 |
 |---|---|---|---|
 | 主線可玩性 | 先前乾淨正式輸入 trace 已由新遊戲抵達 `THE END`，主要事件、戰鬥、載具與結局具正常入口 | 本輪完整 trace 已通過新修正的開場，後段因測試用低危區練至 Lv20 的 500000-step 上限停止；這是 trace 策略／隨機遭遇穩定性問題，不是已重現的玩家流程死路 | 否；但下一次發版前仍應用可重現 checkpoint 抽驗 |
-| 開場與設定資料 | 家中母親帶路、轉場後主角自動走到王城入口、rec80 與旗標交易已依 IDA／影片改為兩階段 game-pack 序列 | `arrival_frames` 是以原始 CTY 可通行格及影片轉折核對的可見近似；尚未證明每個內部路點與逐幀 timing 完全一致 | 否；E3，但不是 V3 |
+| 開場與設定資料 | 家中母親帶路、轉場後主角自動走到王城入口、rec80 與旗標交易已依 IDA／影片改為兩階段 game-pack 序列 | `arrival_frames` 尚未證明每個內部路點／timing exact；2026-08-24 抽樣另發現 rec80 原版城鎮道路／水道背景與 remake 小型城堡圖塊顯著不符 | 不阻塞流程 E3；阻塞該畫面 V3 |
 | 規則與資料 | 主線必要的道具、怪物 action、抗性、formation、商店、咒文、掉落、日夜及事件交易多數達 D2/D3→E2 | 少數道具參數仍明示採 classic／舊 C 近似；未被玩家路徑使用的 helper 與原版未知欄位沒有為了追求整檔翻譯而深挖 | 否；未知項不得冒稱 exact |
-| 畫面與操作 | 原始資產、中文字型、HUD、選單、NPC、角色與主要場景均可由正式 runtime 顯示；能力確認固定畫面已有 V3 靜態對拍 | 多數畫面仍是 V1／V2；palette transition、戰鬥逐動作、視窗逐頁、角色動畫、attract／ending timing 尚未逐一同狀態 V3 | 否；屬忠實度 polish 與抽樣驗收 |
+| 畫面與操作 | 原始資產、中文字型、HUD、選單、NPC、角色與主要場景均可由正式 runtime 顯示；能力確認固定畫面已有 V3 靜態對拍 | 多數畫面仍是 V1／V2；新抽樣證實 rec80 背景不符，rec78 雖角色構圖正確，但 viewport、palette、對話框與分頁不同；其他逐窗、戰鬥、attract／ending timing 亦未全面 V3 | 不阻塞功能 release；阻塞「視覺忠實完成」聲明 |
 | 音樂與音效 | 正常產品直接播放 OGG；關鍵戰鬥 VOC cue 與完成等待已接線 | 全場景 cue、人耳音量／切換、逐動作停頓尚未完整對拍；DAC／PIT／DMA wall-clock 依公開硬體規格作可重現近似，不宣稱逐週期一致 | 否；發版前需抽樣人耳驗收 |
 | 存檔與資料包 | pack 具 schema、reference validation、content hash；主要事件有 save/load transaction | 不是每個可選支線與每個演出中間 frame 都有 round-trip；演出中途存檔語意未證實時採失敗即關閉 | 否；正常 checkpoint 已涵蓋主線 |
 | 平台交付 | Linux／Windows／macOS／Android 都有較早 checkpoint 的本機可執行產物 | 尚未依本輪 `0.1.51/0.1.57` 重包；macOS 真機、Android host audio／真機仍未完成 | 阻塞「本輪四平台同版發行」，不阻塞 source 層 remake 功能 |
 
-綜合判定：**功能層可維持 campaign E3；資料／規則主要為 E2；整體視覺與聲音仍不能標 V3。**
+綜合判定：**功能層可維持 campaign E3；資料／規則主要為 E2；抽樣已證實整體視覺與聲音
+仍不能標 V3，且 rec80 存在高可見度背景差異。**
 目前沒有已知的必要主線功能缺口，但仍有可選的原版忠實度、測試穩定性與跨平台同版交付工作。
 新發現只有在會改變玩家體驗或交付 gate 時才重新開啟實作；純硬體逐週期、未使用 helper 或
 沒有玩家可見差異的完整反編譯不再列為 remake 完成條件。詳細逐畫面矩陣見
 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)，開場勘誤與證據限制見
-[`docs/188`](docs/188-opening-escort-to-castle-spec.md)。
+[`docs/188`](docs/188-opening-escort-to-castle-spec.md)，本輪實際抽樣與畫面差異見
+[`docs/189`](docs/189-opening-sampled-parity-20260824.md)。
 
 前一版 `dist-all/v0.1.36-local/` 已重建
 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完整版，修正角色
