@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.49",
+  "schema_version": "0.1.50",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -222,6 +222,21 @@
     "function_zhuyin": [[695, 427], [535, 696], [698, 699], [614, 514], [701, 610]],
     "function_alnum": [[702, 313], [535, 696], [698, 699], [614, 514], [701, 610]],
     "input_mode_zhuyin": [690, 519, 702, 313],
+    "zhuyin_candidate_aliases": [
+      {
+        "sh": 0, "ji": 2, "yu": 11, "tone": 2, "glyphs": [186],
+        "evidence": {
+          "level": "D3",
+          "source_kind": "user_report",
+          "source": "2026-08-24 玩家創角輸入回報",
+          "address_space": "none",
+          "address": "",
+          "consumer": "name input candidate list after ㄨㄤˇ",
+          "doc": "docs/187-opening-player-path-polish.md",
+          "note": "可用性相容別名：標準讀音的王仍是 ㄨㄤˊ；此資料只讓玩家在 ㄨㄤˇ 候選中也可選王，不得引用為原版注音事實。"
+        }
+      }
+    ],
     "evidence": {
       "level": "D2",
       "source_kind": "data_file",
@@ -264,6 +279,7 @@
     "name_function": {"x": 344, "y": 94, "step_y": 16},
     "name_mode_panel": {"x": 159, "y": 196, "width": 82, "height": 34},
     "name_mode": {"x": 169, "y": 200},
+    "name_composition": {"x": 169, "y": 212, "step_x": 16},
     "gender_panel": {"x": 344, "y": 46, "width": 96, "height": 64},
     "gender": {"x": 368, "y": 62, "step_y": 16},
     "confirm_prompt": {"x": 367, "y": 20, "width": 162, "height": 34},
@@ -694,6 +710,39 @@
       "consumer": "normal desktop/mobile boot before title splash",
       "doc": "docs/120-opening-cutscene-re.md",
       "note": "素材 identity 已閉合；各張排序／停留以 strong／hypothesis 保存，不能宣稱完整逐幀 V3。"
+    }
+  },
+  "opening_escort": {
+    "id": "dq3:opening.mother_escort",
+    "cty": 0,
+    "section": 4,
+    "frames": [
+      {"leader": {"x": 8, "y": 3}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
+      {"leader": {"x": 7, "y": 3}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
+      {"leader": {"x": 6, "y": 3}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
+      {"leader": {"x": 5, "y": 3}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
+      {"leader": {"x": 5, "y": 4}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
+      {"leader": {"x": 5, "y": 5}, "player": {"x": 5, "y": 6}, "hold_frames": 6},
+      {"leader": {"x": 5, "y": 6}, "player": {"x": 5, "y": 7}, "hold_frames": 6},
+      {"leader": {"x": 5, "y": 7}, "player": {"x": 5, "y": 8}, "hold_frames": 6},
+      {"leader": {"x": 5, "y": 8}, "player": {"x": 5, "y": 9}, "hold_frames": 6},
+      {"leader": {"x": 6, "y": 8}, "player": {"x": 5, "y": 8}, "hold_frames": 6},
+      {"leader": {"x": 7, "y": 8}, "player": {"x": 6, "y": 8}, "hold_frames": 6},
+      {"leader": {"x": 8, "y": 8}, "player": {"x": 7, "y": 8}, "hold_frames": 6},
+      {"leader": {"x": 9, "y": 8}, "player": {"x": 8, "y": 8}, "hold_frames": 6},
+      {"leader": {"x": 10, "y": 8}, "player": {"x": 9, "y": 8}, "hold_frames": 6},
+      {"leader": {"x": 10, "y": 9}, "player": {"x": 10, "y": 8}, "hold_frames": 6},
+      {"leader": {"x": 10, "y": 10}, "player": {"x": 10, "y": 9}, "hold_frames": 6}
+    ],
+    "evidence": {
+      "level": "D2",
+      "source_kind": "video",
+      "source": "dq3_real_video/YTDown_YouTube_Media_J_fozjiKTB8_001_1080p.mp4 4:53–5:12 + CTY00 section4",
+      "address_space": "none",
+      "address": "",
+      "consumer": "post-record81 automatic mother/player walk to the home stair, then handler54 destination",
+      "doc": "docs/66-original-flow-oracle.md",
+      "note": "影片證實母親與主角逐格走到右下樓梯後才轉場；6-frame tile cadence 是 remake 可重播近似，未宣稱原版 wall-clock exact。"
     }
   },
   "attract": {

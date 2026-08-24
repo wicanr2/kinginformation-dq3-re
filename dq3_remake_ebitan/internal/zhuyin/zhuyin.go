@@ -66,6 +66,25 @@ type Composer struct {
 	Pick             bool  // true=候選挑字階段
 }
 
+// AddCandidates 在已進入候選階段後附加 pack 宣告的字模，保留標準候選順序並去重。
+func (c *Composer) AddCandidates(glyphs ...int) {
+	if !c.Pick {
+		return
+	}
+	for _, glyph := range glyphs {
+		found := false
+		for _, existing := range c.Cand {
+			if existing == glyph {
+				found = true
+				break
+			}
+		}
+		if !found {
+			c.Cand = append(c.Cand, glyph)
+		}
+	}
+}
+
 // Init 重設組字。
 func (c *Composer) Init() { *c = Composer{tone: -1} }
 

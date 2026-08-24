@@ -17,7 +17,7 @@
 
 > 2026-08-22：日夜已改由 pack 直接選原始 `DQ3.PAL` 五 bank／12 段，
 > `0x78..0xef` 都是夜間，黑暗之燈寫 clock `0x8c`。目前 D3／E2／V2；見 `docs/136`。
-> 工作樹現行 schema `0.1.48`／content `0.1.54`；戰鬥道具與 D3MNS 實際使用的
+> 工作樹現行 schema `0.1.50`／content `0.1.56`；戰鬥道具與 D3MNS 實際使用的
 > 39/39 action 已分別由 `docs/179`、`docs/180` 接成 E2，歷史 `MonsterSpellRec` 猜測已移除。
 > 驅毒草與滿月草 field transaction、
 > 怪物 action3／持久麻痺的原版閉環與停止線見 `docs/138`、`docs/152`。公開 v0.1.34

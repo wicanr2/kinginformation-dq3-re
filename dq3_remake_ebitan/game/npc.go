@@ -19,8 +19,21 @@ func (g *Game) npcTick() {
 	}
 	half := len(sc.npcs) / 2
 	for i := range sc.npcs {
+		n := &sc.npcs[i]
+		if n.ctrl&npcFrozenBit == 0 {
+			n.anim++
+			if n.anim%18 == 0 {
+				n.walk ^= 1
+			}
+		}
 		g.npcStep(i, half)
 	}
+}
+
+// CTY NPC ctrl 的方向序是下、左、上、右；renderer／玩家方向序是下、上、左、右。
+// 兩者不能直接共用 raw 0..3，否則 NPC 往右移動時仍可能沿交談後的舊面向滑動。
+func npcCtrlFacing(dir int) int {
+	return [...]int{0, 2, 1, 3}[dir&3]
 }
 
 // npcStep:單一 NPC 步進判定(移植 dq3_npc_step)。
@@ -39,6 +52,7 @@ func (g *Game) npcStep(idx, half int) {
 	cur := n.ctrl & 3
 	rdir := sc.npcRng.Next(4) // 隨機方向(L02062)
 	if rdir == cur {          // 同朝向 → 直接走(L02057)
+		n.facing = npcCtrlFacing(cur)
 		g.npcTryStep(idx)
 		return
 	}
@@ -48,6 +62,7 @@ func (g *Game) npcStep(idx, half int) {
 			nd = (cur + 1) & 3
 		}
 		n.ctrl = (n.ctrl &^ 3) | nd
+		n.facing = npcCtrlFacing(nd)
 		g.npcTryStep(idx)
 	}
 }
@@ -57,6 +72,7 @@ func (g *Game) npcTryStep(idx int) bool {
 	sc := g.cur
 	n := &sc.npcs[idx]
 	dir := n.ctrl & 3
+	n.facing = npcCtrlFacing(dir)
 	tx, ty := n.x+npcDDX[dir], n.y+npcDDY[dir]
 	if tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h { // 界外
 		return false

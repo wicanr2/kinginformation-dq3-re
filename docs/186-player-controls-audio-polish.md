@@ -9,9 +9,9 @@
 | 按上顯示向左、按左顯示向上 | BLS raw entry 為下／左／上／右，renderer 直接套用引擎下／上／左／右碼 | `LoadCharSprite` 在 decoder 邊界以 `{0,2,1,3}` 重排，所有角色共用同一邏輯方向 | 玩家實測 confirmed；decoder test E2 |
 | NPC 對話不面向主角 | `cmdTalk` 命中 NPC 後沒有 facing writer | 交談入口寫入 `playerFacing ^ 1`，即下↔上、左↔右，再進既有 scripted／generic consumer | 玩家實測 confirmed；正式 command test E2 |
 | 沒有 HELP／遊戲中系統設定 | `S` 只在標題處理，沒有 F1 input role | `F1` 開 pack-owned HELP；`F2`／`S` 在一般地表開既有 Settings；Confirm／Cancel 關閉 | remake UX D2／E2，不冒稱原版 UI |
-| 一般完整版沒有音樂 | desktop 只有 `DQ3_MT32` 才傳音樂 FS，FM 又要求 `DQ3_FM`，正常啟動必然靜音 | 完整版若有 `assets_raw/mt32/track_00.ogg` 即預設 MT-32 OGG；否則建立 assets audio backend 並讀 `MBG.MCX` 作 SB-FM fallback | runtime wiring E2；人耳／硬體 wall-clock 不由本測試升格 |
+| 一般完整版沒有音樂 | desktop 只有 `DQ3_MT32` 才傳音樂 FS，FM 又要求 `DQ3_FM`，正常啟動必然靜音 | 完整版若有 `assets_raw/mt32/track_00.ogg` 即預設 MT-32 OGG；否則建立 assets audio backend 並讀 `MBG.MCX` 作 SB-FM fallback | **歷史修正，已被 docs/187 訂正**：玩家回報 fallback 有噪音後，正常產品固定 OGG；FM 僅限明確 `DQ3_FM` 診斷 |
 
-HELP 的視窗、字模列與 evidence 在 `interface.json.help`，schema `0.1.49`、content `0.1.55`；
+HELP 的視窗、字模列與 evidence 在 `interface.json.help`；本文件當時版本是 schema `0.1.49`、content `0.1.55`，現況請以 docs/187 與 docs/74 為準；
 Go 只保留通用 modal 與 renderer。欄位說明已追加至 `docs/84`。
 
 ## 驗收

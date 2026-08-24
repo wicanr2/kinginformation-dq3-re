@@ -53,3 +53,14 @@ func TestZhuyin(t *testing.T) {
 	}
 	t.Logf("注音表 ✓:%d key 全有候選、pool %d、Composer 組字→候選 %d 字", nbucket, len(zhPool), len(c.Cand))
 }
+
+func TestAddCandidatesKeepsStandardOrderAndDeduplicates(t *testing.T) {
+	c := Composer{Pick: true, Cand: []int{754, 1374}}
+	c.AddCandidates(186, 754)
+	want := []int{754, 1374, 186}
+	for i := range want {
+		if c.Cand[i] != want[i] {
+			t.Fatalf("候選順序錯：got %v want %v", c.Cand, want)
+		}
+	}
+}

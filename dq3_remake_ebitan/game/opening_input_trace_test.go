@@ -202,13 +202,25 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("輸入名稱未經 production flow 寫回：%v", g.heroName)
 	}
 
-	for _, wantIdx := range []int{0, 1, 2, 3} {
+	for _, wantIdx := range []int{0, 1, 2} {
 		if g.openingIdx != wantIdx || !g.dlg.open {
 			t.Fatalf("開場段 %d 未開啟：idx=%d open=%v", wantIdx, g.openingIdx, g.dlg.open)
 		}
 		traceCloseDialogue(t, g)
 		send(InputState{DirHeld: -1, DirEdge: -1}) // opening runner 開下一段
 	}
+	if !g.openingEscortAnimating() || g.openingIdx != 3 || g.dlg.open {
+		t.Fatalf("rec81 後應進母親逐格帶路：idx=%d escort=%v dlg=%v",
+			g.openingIdx, g.openingEscortAnimating(), g.dlg.open)
+	}
+	for g.openingEscortAnimating() {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if g.openingIdx != 3 || !g.dlg.open {
+		t.Fatalf("帶路完成後 rec80 未開啟：idx=%d dlg=%v", g.openingIdx, g.dlg.open)
+	}
+	traceCloseDialogue(t, g)
+	send(InputState{DirHeld: -1, DirEdge: -1})
 	if g.openingIdx != -1 || g.dlg.open || g.curCty != 0 || g.cur.sec != 0 ||
 		g.px != 8 || g.py != 38 || !g.storyFlag(0x17) {
 		t.Fatalf("母親演出後狀態錯：idx=%d dlg=%v cty=%d sec=%d @(%d,%d) flag17=%v",

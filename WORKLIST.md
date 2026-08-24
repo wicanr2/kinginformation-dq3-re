@@ -1,6 +1,6 @@
 # DQ3 Go／Ebitengine 現行工作清單
 
-更新：2026-08-23。唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
+更新：2026-08-24。唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
 本檔只保存可快速接手的目前順序，不收錄歷史 C/SDL 工作。
 
 | 順序 | 工作 | 狀態 | 直接證據 |
@@ -21,7 +21,11 @@
 |---|---|---|
 | remake 玩家流程 | campaign E3；上述六項皆已接入正式入口 | 否，已完成 |
 | 原版證據限制 | 藥草治療量、祈禱之戒 MP 回復量、聖水步數仍是 classic／舊 C 近似；部分逐窗、逐幀與音效只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
-| 交付 | `dist-all/v0.1.36-local/` 已含修正後四個完整版與 MT-32 OGG／ROM；推廣片在 `v0.1.35-local/promo/`；公開版仍是 v0.1.34 | 已完成本機交付；依使用者決定不建立 tag／GitHub Release |
+| 交付 | `dist-all/v0.1.36-local/` 是前一 checkpoint；尚不含 2026-08-24 的 OGG-only、注音、母親帶路與 NPC 動畫修正 | 待本輪 source 穩定後重包本機完整版；不建立 tag／GitHub Release |
+
+2026-08-24 玩家路徑 polish：正常產品不再自動退回 FM；注音組字回到獨立下方面板，
+`ㄨㄤˇ` 以明示相容別名補「王」；母親帶路改為 pack-owned 可見逐格序列；NPC 待機切換
+兩幀，移動時由 CTY ctrl 方向同步 renderer 面向。具名測試與證據見 [`docs/187`](docs/187-opening-player-path-polish.md)。
 
 2026-08-23 polish：record345 隊長姓名、蘭西爾 `0x13` 無 writer 的否定性證據、舊 C
 `partyBlind/partySealed` 死狀態，以及 D3MNS `+0x27` 未使用 raw 欄均已由 [`docs/185`](docs/185-remaining-polish-closure.md)
@@ -44,7 +48,7 @@
 ALSA null sink 啟動 smoke 已通過，見 [`docs/186`](docs/186-player-controls-audio-polish.md)。
 
 依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git、不發布、不建立
-新 tag。至此必要 worklist 為零；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
+新 tag。本輪 source 功能已閉合，剩餘必要工作只有重建 `dist-all` 本機完整版；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
 可選驗收，不得誤寫成已通過。
 
 本輪依使用者指示不以完整回歸作完成條件。若沒有新的玩家可見差異、正式發行需求或更強

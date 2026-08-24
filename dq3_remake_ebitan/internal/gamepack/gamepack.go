@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.49"
+	SchemaVersion       = "0.1.50"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -438,18 +438,30 @@ type NewGameLabels struct {
 	Yes          []int `json:"yes"`
 	No           []int `json:"no"`
 	// ChoiceCursor 是創角確認視窗的游標 glyph；不能借用戰鬥場景的目標游標。
-	ChoiceCursor    []int    `json:"choice_cursor"`
-	Backspace       []int    `json:"backspace"`
-	OK              []int    `json:"ok"`
-	NameTitle       []int    `json:"name_title"`
-	NameLeftArrow   []int    `json:"name_left_arrow"`
-	NameRightArrow  []int    `json:"name_right_arrow"`
-	NameZhuyinGrid  []int    `json:"name_zhuyin_grid"`
-	NameAlnumGrid   []int    `json:"name_alnum_grid"`
-	FunctionZhuyin  [][]int  `json:"function_zhuyin"`
-	FunctionAlnum   [][]int  `json:"function_alnum"`
-	InputModeZhuyin []int    `json:"input_mode_zhuyin"`
-	Evidence        Evidence `json:"evidence"`
+	ChoiceCursor    []int                  `json:"choice_cursor"`
+	Backspace       []int                  `json:"backspace"`
+	OK              []int                  `json:"ok"`
+	NameTitle       []int                  `json:"name_title"`
+	NameLeftArrow   []int                  `json:"name_left_arrow"`
+	NameRightArrow  []int                  `json:"name_right_arrow"`
+	NameZhuyinGrid  []int                  `json:"name_zhuyin_grid"`
+	NameAlnumGrid   []int                  `json:"name_alnum_grid"`
+	FunctionZhuyin  [][]int                `json:"function_zhuyin"`
+	FunctionAlnum   [][]int                `json:"function_alnum"`
+	InputModeZhuyin []int                  `json:"input_mode_zhuyin"`
+	ZhuyinAliases   []ZhuyinCandidateAlias `json:"zhuyin_candidate_aliases,omitempty"`
+	Evidence        Evidence               `json:"evidence"`
+}
+
+// ZhuyinCandidateAlias 是版本字庫的可用性別名，不宣稱是原版發音表。
+// 只允許把既有 glyph 附加到明確音節；標準候選仍由注音表先提供。
+type ZhuyinCandidateAlias struct {
+	Sh       int      `json:"sh"`
+	Ji       int      `json:"ji"`
+	Yu       int      `json:"yu"`
+	Tone     int      `json:"tone"`
+	Glyphs   []int    `json:"glyphs"`
+	Evidence Evidence `json:"evidence"`
 }
 
 // FrameEdgeWidths 是版本專屬 framed rectangle 的個別邊寬覆寫。0 表示使用
@@ -581,6 +593,7 @@ type NewGameGeometry struct {
 	NameFunction          GeometryAnchor          `json:"name_function"`
 	NameModePanel         GeometryRect            `json:"name_mode_panel"`
 	NameMode              GeometryAnchor          `json:"name_mode"`
+	NameComposition       GeometryAnchor          `json:"name_composition"`
 	GenderPanel           GeometryRect            `json:"gender_panel"`
 	Gender                GeometryAnchor          `json:"gender"`
 	ConfirmPrompt         GeometryRect            `json:"confirm_prompt"`
@@ -752,6 +765,22 @@ type OpeningSequence struct {
 	Evidence    Evidence       `json:"evidence"`
 }
 
+// OpeningEscort 是創角後的有限自動帶路演出。每幀只宣告領路 NPC 與玩家的
+// tile、停留時間；引擎負責方向、步行幀、轉場與對話，不在 Go 內知道 DQ3 路徑。
+type OpeningEscortFrame struct {
+	Leader     TileCoordinate `json:"leader"`
+	Player     TileCoordinate `json:"player"`
+	HoldFrames int            `json:"hold_frames"`
+}
+
+type OpeningEscort struct {
+	ID       string               `json:"id"`
+	CTY      int                  `json:"cty"`
+	Section  int                  `json:"section"`
+	Frames   []OpeningEscortFrame `json:"frames"`
+	Evidence Evidence             `json:"evidence"`
+}
+
 // RawScreenAsset describes a version-owned planar screen whose bytes and
 // palette are separate. The engine only knows the format primitive; the pack
 // supplies the asset key, dimensions, palette and evidence.
@@ -780,6 +809,7 @@ type Interface struct {
 	FieldStatus         *FieldStatusLayout   `json:"field_status,omitempty"`
 	PartyHUD            PartyHUDLayout       `json:"party_hud,omitempty"`
 	Opening             *OpeningSequence     `json:"opening,omitempty"`
+	OpeningEscort       *OpeningEscort       `json:"opening_escort,omitempty"`
 	Attract             *AttractSequence     `json:"attract,omitempty"`
 	NewGameConfirmation *RawScreenAsset      `json:"new_game_confirmation,omitempty"`
 	BattleTexts         *BattleTextRefs      `json:"battle_texts,omitempty"`
@@ -2107,6 +2137,20 @@ func (p *Pack) validateInterface() error {
 				return fmt.Errorf("new-game label %s must have 45 cells", mode)
 			}
 		}
+		for i, alias := range labels.ZhuyinAliases {
+			if alias.Sh < 0 || alias.Sh > 21 || alias.Ji < 0 || alias.Ji > 3 ||
+				alias.Yu < 0 || alias.Yu > 13 || alias.Tone < 0 || alias.Tone > 4 || len(alias.Glyphs) == 0 {
+				return fmt.Errorf("new-game zhuyin alias[%d] is invalid", i)
+			}
+			for _, glyph := range alias.Glyphs {
+				if glyph < 0 || glyph > 0xffff {
+					return fmt.Errorf("new-game zhuyin alias[%d] glyph out of range", i)
+				}
+			}
+			if err := validateEvidence(alias.Evidence); err != nil {
+				return fmt.Errorf("new-game zhuyin alias[%d] evidence: %w", i, err)
+			}
+		}
 		if err := validateEvidence(labels.Evidence); err != nil {
 			return fmt.Errorf("new-game labels evidence: %w", err)
 		}
@@ -2264,6 +2308,19 @@ func (p *Pack) validateInterface() error {
 			seenAssets[frame.AssetKey] = true
 		}
 	}
+	if e := p.Interface.OpeningEscort; e != nil {
+		if e.ID == "" || e.CTY < 0 || e.Section < 0 || len(e.Frames) < 2 {
+			return errors.New("opening escort is invalid")
+		}
+		if err := validateEvidence(e.Evidence); err != nil {
+			return fmt.Errorf("opening escort evidence: %w", err)
+		}
+		for i, frame := range e.Frames {
+			if frame.Leader.X < 0 || frame.Leader.Y < 0 || frame.Player.X < 0 || frame.Player.Y < 0 || frame.HoldFrames <= 0 {
+				return fmt.Errorf("opening_escort.frames[%d] is invalid", i)
+			}
+		}
+	}
 	return nil
 }
 
@@ -2397,7 +2454,8 @@ func validateNewGameGeometry(g NewGameGeometry) error {
 		"name_title": g.NameTitle, "name_left_arrow": g.NameLeftArrow,
 		"name_right_arrow": g.NameRightArrow, "name_text": g.NameText,
 		"name_function": g.NameFunction,
-		"name_mode":     g.NameMode, "gender": g.Gender,
+		"name_mode":     g.NameMode, "name_composition": g.NameComposition,
+		"gender":     g.Gender,
 		"stats_name": g.StatsName, "stats_hero": g.StatsHero,
 		"stats_sex": g.StatsSex, "stats_sex_value": g.StatsSexValue,
 		"stats_cloth":  g.StatsCloth,
@@ -4996,7 +5054,7 @@ func validateEvidence(e Evidence) error {
 		return fmt.Errorf("invalid evidence level %q", e.Level)
 	}
 	switch e.SourceKind {
-	case "exe", "data_file", "dosbox", "video", "manual":
+	case "exe", "data_file", "dosbox", "video", "manual", "user_report":
 	default:
 		return fmt.Errorf("invalid source_kind %q", e.SourceKind)
 	}
@@ -5682,6 +5740,13 @@ func (p *Pack) OpeningSequence() (*OpeningSequence, bool) {
 		return nil, false
 	}
 	return p.Interface.Opening, true
+}
+
+func (p *Pack) OpeningEscort() (*OpeningEscort, bool) {
+	if p == nil || p.Interface.OpeningEscort == nil {
+		return nil, false
+	}
+	return p.Interface.OpeningEscort, true
 }
 
 // NewGameConfirmation 回傳新遊戲能力確認窗背後的可選版控 raw screen。某個版本可明確

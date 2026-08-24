@@ -200,7 +200,8 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 			spr = dq3data.LoadCharSprite(manBLS, (b2-4)*4)
 			sprCache[b2] = spr
 		}
-		sc.npcs = append(sc.npcs, npcInst{x: n.X, y: n.Y, ctrl: n.Ctrl, b4: n.B4, spr: spr})
+		sc.npcs = append(sc.npcs, npcInst{x: n.X, y: n.Y, ctrl: n.Ctrl, b4: n.B4,
+			facing: npcCtrlFacing(n.Ctrl), spr: spr})
 	}
 	return sc, nil
 }

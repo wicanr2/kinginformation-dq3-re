@@ -19,10 +19,15 @@
 > PCM hardware wall-clock、DAC、PIT、DMA 等平台時序只引用 Wiki／datasheet／成熟模擬器
 > 規格並採可重現近似，不再列為遊戲 RE 或 remake 完成 gate。上述六項現已由
 > `docs/179..184` 閉合，後續四項 polish 另由 `docs/185` 收斂；公開 v0.1.34 早於目前
-> schema `0.1.49`／content `0.1.55`；角色方向、NPC 交談轉向、F1 HELP、遊戲中系統設定與
+> schema `0.1.50`／content `0.1.56`；角色方向、NPC 交談轉向、F1 HELP、遊戲中系統設定與
 > 預設 MT-32 音樂已由 `docs/186` 閉合。修正後四個完整版在 `dist-all/v0.1.36-local/`，
 > 有音樂推廣片仍在 `dist-all/v0.1.35-local/promo/`；兩者皆依使用者決定只作本機交付，
 > 不建立公開 tag／Release。這不是功能缺口。
+>
+> **2026-08-24 玩家反證訂正：**正常產品已固定直接播放 OGG，不再因找不到音樂目錄而
+> 自動退回 FM；注音組字框、`ㄨㄤˇ` 的「王」相容候選、母親逐格帶路及 NPC 待機／移動
+> 幀已由 [`docs/187`](187-opening-player-path-polish.md) 閉合。`v0.1.36-local` 早於此修正，
+> 不能描述為現行 source 交付；剩餘必要工作只有本機完整版重包。
 
 > **接手判讀鐵則：**本檔第 4–10 節及各日期 checkpoint 保存證據形成史，不是可直接執行的
 > current worklist。現況只由本段、下方「玩家可見畫面盤點」、文件末端最新 checkpoint 與

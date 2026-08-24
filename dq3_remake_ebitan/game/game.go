@@ -45,6 +45,7 @@ type npcInst struct {
 	ctrl, b4 int // 互動:(ctrl>>3)&7=子型;b4=對話 rec / 設施索引
 	facing   int
 	walk     int
+	anim     int // 兩幀角色圖的視覺節拍；靜止 NPC 也會呼吸／踏步
 	spr      *dq3data.CharSprite
 }
 
@@ -345,6 +346,10 @@ type Game struct {
 	openingPix                [][]uint8
 	openingPal                [][]dq3data.Color
 	openingSeq                *gamepack.OpeningSequence
+	openingEscort             *gamepack.OpeningEscort
+	openingEscortIndex        int
+	openingEscortTick         int
+	openingEscortNPC          int
 	openingFrame              int
 	openingIndex              int
 	openingActive             bool
@@ -1388,6 +1393,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.openingEscortAnimating() {
+		g.advanceOpeningEscort()
+		g.renderFrame()
+		return nil
+	}
 	// 結局捲動:一段 ENDTXT 翻完關閉後,自動接下一段,直到全部播完(移植 main.c end_seq 推進)。
 	if g.endSeq >= 0 {
 		g.endSeq++
@@ -1405,7 +1415,11 @@ func (g *Game) step(in InputState) error {
 		g.openingIdx++
 		if g.openingIdx < len(openingSeq) {
 			if openingSeq[g.openingIdx] == openingMotherDirectionsRec {
-				g.motherEscort()
+				if g.startMotherEscort() {
+					g.renderFrame()
+					return nil
+				}
+				g.finishMotherEscort()
 			}
 			g.dlg.Open(openingSeq[g.openingIdx])
 		} else {
@@ -1994,7 +2008,7 @@ func (g *Game) startOpening() {
 // motherEscort:開場 rec81 後 → 母親帶到阿里阿罕家門外(sec0 8,38)。
 // 原版 runner handler54(file 0x147b)檢查初始 flag0x50，演出後 set flag0x17、
 // clear flag0x50，再播 rec80；本函式保存相同可見性狀態與落點。
-func (g *Game) motherEscort() {
+func (g *Game) finishMotherEscort() {
 	sec0, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0, g.dnPhase, g.storyFlag)
 	if err != nil {
 		return
@@ -3302,7 +3316,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.prng.Seed(0x1357) // 祈禱之戒損壞判定 RNG(對齊 C apply_item_use)
 	musicFS := music
 	if musicFS == nil {
-		musicFS = assets // 未指定 MT-32 時，仍建立後端供原版 MBG.MCX 的 SB-FM 播放。
+		// OGG 缺少時仍建立音訊 context，讓 VOC 音效可用；音樂本身會因根目錄
+		// 沒有 track_NN.ogg 而安靜失敗，不再自動播放可能帶噪音的 FM 合成。
+		musicFS = assets
 	}
 	g.music = gaudio.NewMusic(musicFS)
 	g.music.SetEnabled(g.cfg.MusicEnabled)
@@ -3318,7 +3334,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		g.music.SetSFXWithDurations(pcm, durations)
 	}
 	g.battle.setSoundCues(pack.BattleSoundCues(), g.music)
-	if music == nil || os.Getenv("DQ3_FM") != "" { // 預設 SB-FM；明確 DQ3_MT32 才使用外部 OGG。
+	if os.Getenv("DQ3_FM") != "" { // FM 僅供明確診斷；正常產品固定直接播放 OGG。
 		if mbg := ld.read("MBG.MCX"); len(mbg) > 0 {
 			g.music.SetMBG(mbg)
 		}
@@ -3424,6 +3440,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 				return nil, fmt.Errorf("game pack opening frame %q is unavailable", frame.AssetKey)
 			}
 		}
+	}
+	if escort, ok := pack.OpeningEscort(); ok {
+		g.openingEscort = escort
+		g.openingEscortNPC = -1
 	}
 	if g.endingPix, g.endingPal, assetErr = loadPCXAsset("ending_image"); assetErr != nil {
 		return nil, assetErr

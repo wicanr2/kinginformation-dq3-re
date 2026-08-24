@@ -63,3 +63,27 @@ func TestNpcNearPlayerGate(t *testing.T) {
 		}
 	}
 }
+
+func TestNpcFacingAndIdleAnimation(t *testing.T) {
+	if got := npcCtrlFacing(1); got != 2 {
+		t.Fatalf("ctrl 左應轉 renderer 左，got %d", got)
+	}
+	if got := npcCtrlFacing(2); got != 1 {
+		t.Fatalf("ctrl 上應轉 renderer 上，got %d", got)
+	}
+	sc := &Scene{w: 10, h: 10, tileAt: func(x, y int) int { return 0 }, attr: walkableAttr()}
+	g := &Game{cur: sc, inTown: true, px: 0, py: 0}
+	sc.npcs = []npcInst{{x: 5, y: 5, ctrl: 0}}
+	for i := 0; i < 18; i++ {
+		g.npcTick()
+	}
+	if sc.npcs[0].walk != 1 {
+		t.Fatal("靜止 NPC 經 18 幀應切換角色步行幀")
+	}
+	n := &sc.npcs[0]
+	n.ctrl = npcMoveBit | 3
+	g.npcTryStep(0)
+	if n.facing != 3 {
+		t.Fatalf("往右移動應面向右，got %d", n.facing)
+	}
+}
