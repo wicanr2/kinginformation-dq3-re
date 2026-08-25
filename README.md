@@ -43,10 +43,10 @@ game test 找到開場連續演出在家門轉場後缺少「主角自動走到�
 |---|---:|---:|---:|---|
 | 玩家流程與事件串接 | 96% | 35% | 33.6% | 新遊戲至 `THE END` 的正常輸入 trace 已達 E3；開場 escort 已補正，尚未再跑完整人工回歸 |
 | 資料、規則與存檔 | 93% | 25% | 23.25% | 藥草、聖水、祈禱之戒的參數、持有者／目標選擇與消耗順序已由 IDA 閉合並遷入 JSON；未知 helper 仍不冒稱 exact |
-| 畫面與動畫 | 75% | 20% | 15.0% | BLK 位平面、同格 rec80→rec79、20×4 分頁與 16×16 glyph cell 已依 EXE／D3TXT／影片閉合；逐 tile 與全場景動態對拍仍以 V2 為主 |
+| 畫面與動畫 | 78% | 20% | 15.6% | BLK 位平面、同格 rec80→rec79、20×4 分頁與 16×16 glyph cell 已依 EXE／D3TXT／影片閉合；rec78 證據圖已排除逐字初始幀假缺字，但同頁原版畫格與全場景動態仍以 V2 為主 |
 | 音樂、音效與時序 | 70% | 10% | 7.0% | OGG 與關鍵 cue 已接線；全場景人耳、切換與逐動作停頓尚未完整對拍 |
 | 三平台交付 | 90% | 10% | 9.0% | Linux／Windows／macOS 同版封裝完成；macOS 尚缺真機驗收，Android 不在本輪三平台範圍 |
-| **合計** |  | **100%** | **87.85%（對外取整為 88%）** | **剩餘差距約 12%，主要集中於全場景動態／聲音 V3 與真機驗收** |
+| **合計** |  | **100%** | **88.45%（對外取整為 88%）** | **剩餘差距約 12%，主要集中於全場景動態／聲音 V3 與真機驗收** |
 
 本專案目前可合理稱為「主要玩家流程已重製、核心資料與事件大多接線完成」，但不能稱為
 「逐畫面、逐幀、逐聲音完全等同原版」。下表保留各維度的證據與限制，避免總百分比掩蓋
@@ -57,7 +57,7 @@ game test 找到開場連續演出在家門轉場後缺少「主角自動走到�
 | 主線可玩性 | 先前乾淨正式輸入 trace 已由新遊戲抵達 `THE END`，主要事件、戰鬥、載具與結局具正常入口 | 本輪完整 trace 已通過新修正的開場，後段因測試用低危區練至 Lv20 的 500000-step 上限停止；這是 trace 策略／隨機遭遇穩定性問題，不是已重現的玩家流程死路 | 否；但下一次發版前仍應用可重現 checkpoint 抽驗 |
 | 開場與設定資料 | 家中母親帶路、轉場後自動行走、同格 rec80→rec79 與旗標交易已依 IDA／D3TXT／影片接成 game-pack 序列；BLK 位平面勘誤後背景色號已對齊 | `arrival_frames` 尚未證明每個內部路點／timing exact；逐 glyph timer 採硬體規格近似，不宣稱 DOS wall-clock 逐週期一致 | 不阻塞流程 E3；文字 record／cell layout 已閉合，整體動態畫面仍阻塞 V3 |
 | 規則與資料 | 主線必要的道具、怪物 action、抗性、formation、商店、咒文、掉落、日夜及事件交易多數達 D2/D3→E2 | 藥草、聖水、祈禱之戒已移除舊近似並接正式選人；未被玩家路徑使用的 helper 仍保留證據限制 | 否；未知項不得冒稱 exact |
-| 畫面與操作 | 原始資產、中文字型、HUD、選單、NPC、角色與主要場景均可由正式 runtime 顯示；能力確認固定畫面已有 V3 靜態對拍；BLK 位平面修正後 rec80 背景色號已對齊，opening 文字 record／cell layout 已達 V3 | 多數其他畫面仍是 V1／V2；rec78 的 viewport、palette 與同頁 glyph 尚未完整閉合，逐窗、戰鬥、attract／ending timing 亦未全面 V3 | 不阻塞功能 release；阻塞「視覺忠實完成」聲明 |
+| 畫面與操作 | 原始資產、中文字型、HUD、選單、NPC、角色與主要場景均可由正式 runtime 顯示；能力確認固定畫面已有 V3 靜態對拍；BLK 位平面修正後 rec80 背景色號已對齊，opening 文字 record／cell layout 已達 V3；rec78 dump 現固定輸出完整當頁 | 多數其他畫面仍是 V1／V2；rec78 尚缺同頁原版畫格，不能把 viewport／palette 整體升格；逐窗、戰鬥、attract／ending timing 亦未全面 V3 | 不阻塞功能 release；阻塞「視覺忠實完成」聲明 |
 | 音樂與音效 | 正常產品直接播放 OGG；關鍵戰鬥 VOC cue 與完成等待已接線 | 全場景 cue、人耳音量／切換、逐動作停頓尚未完整對拍；DAC／PIT／DMA wall-clock 依公開硬體規格作可重現近似，不宣稱逐週期一致 | 否；發版前需抽樣人耳驗收 |
 | 存檔與資料包 | pack 具 schema、reference validation、content hash；主要事件有 save/load transaction | 不是每個可選支線與每個演出中間 frame 都有 round-trip；演出中途存檔語意未證實時採失敗即關閉 | 否；正常 checkpoint 已涵蓋主線 |
 | 平台交付 | Linux／Windows／macOS 已依 release checkpoint `0.1.51/0.1.57` 建立公開 patch 與本機完整版；現行 source 已升至 `0.1.53/0.1.59`，Android 有較早 checkpoint 產物 | 現行 source 尚未重包為新 release；macOS 真機、Android host audio／真機仍未完成，Android 不屬本輪桌面 release | 不阻塞既有三平台桌面 release；新版本發佈前需重包 |

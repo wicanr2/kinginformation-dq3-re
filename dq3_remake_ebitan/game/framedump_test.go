@@ -100,9 +100,17 @@ func TestDumpNewGameScreens(t *testing.T) {
 	if !g.tryOpeningRegionEvent() {
 		t.Fatal("王座 opening region 未觸發")
 	}
+	// 證據圖不能在逐字顯示剛開始時截圖，否則會把正確的 record 78
+	// 誤判成文字或分頁缺漏；事件時序另由具名測試驗證。
+	for g.dlg.revealCells < g.dlg.pageCellCount() {
+		g.dlg.Tick()
+	}
 	dump("opening_king_rec78")
 	t.Logf("開場:謁見後 cty=%d sec=%d @(%d,%d), gold=%d items=%v",
 		g.curCty, g.cur.sec, g.px, g.py, g.heroGold, g.inventory)
+	if os.Getenv("DQ3_DUMP_OPENING_ONLY") != "" {
+		return
+	}
 
 	// CTY00 原版 sub2 handler 身分接線後的兩個可達酒場畫面。
 	luida, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 0, 0, nil)

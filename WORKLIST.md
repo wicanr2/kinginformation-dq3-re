@@ -1,6 +1,6 @@
 # DQ3 Go／Ebitengine 現行工作清單
 
-更新：2026-08-24。唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
+更新：2026-08-25。唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
 本檔只保存可快速接手的目前順序，不收錄歷史 C/SDL 工作。
 
 | 順序 | 工作 | 狀態 | 直接證據 |
@@ -19,14 +19,15 @@
 
 | 分類 | 現況 | 是否阻塞 remake 功能完成 |
 |---|---|---|
-| remake 玩家流程 | 六項功能皆已接入；2026-08-24 game test 找到的開場轉場後自動行走缺段已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列；component、正式創角 trace 開場段與王座勇者像素差異均通過 | 否；完整 trace 後段仍會在既有 Lv20 練級上限失敗，與本切片無關 |
-| 原版證據限制 | 藥草治療量、祈禱之戒 MP 回復量、聖水步數仍是 classic／舊 C 近似；部分逐窗、逐幀與音效只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
+| remake 玩家流程 | 六項功能皆已接入；開場轉場後自動行走已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列，rec80→rec79、逐字顯示與王座勇者像素檢查均通過 | 否；完整 trace 後段仍會在既有 Lv20 練級上限失敗，與本切片無關 |
+| 原版證據限制 | 藥草、祈禱之戒與聖水參數已由 [`docs/191`](docs/191-field-item-parameter-re.md) 訂正；目前限制是王座同頁原版畫格、開場淡入淡出、職業能力條逐格及部分音效仍只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
 | 交付 | `v0.1.35` 已由 commit `b26bb48` 建立 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 的公開 patch 與本機完整版；公開 patch 私有素材為 0 | 已完成；checksum、smoke 與限制見 [`docs/190`](docs/190-release-v0.1.35.md) |
 
-2026-08-24 開場抽樣對拍確認：rec80 的事件順序與文字語意相符，但原版城鎮道路／水道背景
-與 remake 小型城堡圖塊顯著不符；rec78 勇者可見且角色關係相符，但 viewport、palette、
-對話框及分頁仍不是 V3。詳見 [`docs/189`](docs/189-opening-sampled-parity-20260824.md)。這些
-不反向推翻 campaign E3，但阻止 README／release 使用「視覺忠實完成」或完整 V3 的措辭。
+2026-08-25 勘誤：[`docs/192`](docs/192-opening-dialogue-v3-closure.md) 已證實先前 rec80
+「小型城堡／錯誤背景」是 BLK 位平面解碼錯誤，修正後同狀態背景與 rec80→rec79 已閉合；
+record 78 的勇者及角色關係亦已由像素差異測試確認。王座同頁原版畫格、開場淡入淡出與
+職業能力條逐格仍缺足夠 oracle，維持 V2／unknown，不反向推翻 campaign E3，也不使用
+「全畫面 V3」措辭。
 
 2026-08-24 玩家路徑 polish：正常產品不再自動退回 FM；注音組字回到獨立下方面板，
 `ㄨㄤˇ` 以明示相容別名補「王」；母親帶路改為 pack-owned 可見逐格序列；NPC 待機切換
@@ -62,7 +63,8 @@ ALSA null smoke 通過，SHA-256 為
 checkpoint。
 
 依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git 或公開 release；
-公開 patch 使用 v0.1.35 tag。現行 `0.1.51/0.1.57` 已於 `dist-all/v0.1.35/` 重包；Android host audio／真機、macOS 真機與全遊戲 V3 仍是
+公開 patch 使用 v0.1.35 tag。release checkpoint `0.1.51/0.1.57` 已於 `dist-all/v0.1.35/`
+重包；現行 source 已為 schema `0.1.53`／content `0.1.59`，尚未重新發版。Android host audio／真機、macOS 真機與全遊戲 V3 仍是
 可選驗收，不得誤寫成已通過。
 
 本輪依使用者指示不以完整回歸作完成條件。若沒有新的玩家可見差異、正式發行需求或更強

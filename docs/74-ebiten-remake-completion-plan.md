@@ -137,13 +137,13 @@
 
 | 畫面族 | 原版證據 | Ebiten 現況 | 判定 |
 |---|---|---|---|
-| 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | `opening` 五張 PCX 已由 game-pack 載入；桌面／mobile 正式入口可無輸入播放、正式輸入跳過並交回標題 | E2／V1；素材 identity 為 D2，120 幀停留、排序／淡入淡出、TITP 位置與音效仍待 V3 |
+| 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | `opening` 五張 PCX 已由 game-pack 載入；桌面／mobile 正式入口可無輸入播放、正式輸入跳過並交回標題 | E2／V1；素材 identity 為 D2，120 幀是 pack 明示近似；淡入淡出、TITP 位置與音效仍待同狀態動態 oracle，不冒稱 V3 |
 | 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
-| attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
+| attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接；每卡 1200 幀約 20 秒為既有 D2 對拍 | E2／V1；能力條長度、增長節奏與淡入淡出缺逐格 oracle，仍待 V3 且不得猜值 |
 | 主選單 | DOSBox、網路圖 | 新遊戲與載入皆有正式輸入入口；campaign 由新遊戲入口達 E3 | 功能 E3；逐畫面版面仍是可選 V3 |
 | 主角姓名／性別 | DOSBox 正式輸入、IDA、同狀態 PNG | 共用元件與正式 trace；`FIRST.SCR`、record 407 的 13 個具名確認欄位、三層 raw EGA backdrop 與 `beveled_2px` frame 均由 pack 接入 | E3；能力確認固定 checkpoint 已 V3 靜態（AE 1,474／640×350），游標閃爍、palette register、能力條與整段 timing 仍待動態 V3 |
 | 家中／母親 | DOSBox、影片、IDA `sub_1010B` | sec4 家中逐格、轉場後自動行走與同格 rec80→rec79 已由 pack 接線；原始 record 與 handler consumer 閉合 | E3；文字 record／cell layout V3，逐格路線與 wall-clock 仍僅 V2 |
-| 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接；rec78 勇者像素差異測試已通過 | E3；角色構圖 V2，viewport／palette／對話框與分頁不是 V3 |
+| 王城謁見 | 攻略、影片、地圖、EXE 全域視窗契約 | 正式 region gate／精確獎勵／一次性已接；rec78 勇者像素差異測試已通過；證據產生器固定輸出完整顯示的 rec78 當頁，避免逐字初始幀造成假缺字 | E3；角色構圖、record／20×4／16×16 cell 已閉合；缺同頁原版畫格，整體仍為 V2，不把 viewport／palette 升格 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render、CTY `+0x11` 遭遇 gate、步數與主線 entrance／event transaction 已接 | 主線 E3；非主線逐入口與同狀態畫面屬可選 V3 |
@@ -1456,5 +1456,6 @@ macOS 真機驗收，分別屬證據限制或可選驗收，不是 remake 功能
   最後一段關閉後才交易旗標並續走。
   同狀態抽樣已消除先前「小型城堡／錯誤背景」判讀，仍未聲稱逐格 timing 或文字分頁 V3。
 - 驗收：`internal/dq3data`、`internal/gamepack` 與開場／三道具目標測試通過；完整 campaign
-  本批未重跑，既有 E3 不因局部測試升降。下一個視覺窄切片是 rec78 同頁文字／角色 sprite
-  與水平 viewport 抽樣，不重新開啟無界 RE。
+  本批未重跑，既有 E3 不因局部測試升降。rec78 dump 已固定為完整當頁，並停止
+  把逐字初始幀當成缺字證據；同頁原版畫格尚不可取得，因此王座整體維持 V2。開場淡入淡出、
+  職業能力條逐格與未具 oracle 的 wall-clock 不以猜值補洞，也不重新開啟無界 RE。
