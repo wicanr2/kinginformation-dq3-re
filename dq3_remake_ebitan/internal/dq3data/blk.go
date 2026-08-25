@@ -4,7 +4,9 @@ import "errors"
 
 // BLK 是 DQ3 tile 圖庫(地表 DQ3.BLK / 城鎮 DQ3N.BLK)。移植自 C dq3_blk.c(docs/04)。
 // header 6B(row_bytes, height, count);每 tile = row_bytes*height*4 bytes,4-bit planar
-// (4 plane 各 row_bytes*height,row×row_bytes,MSB-first);解出 32×24 indexed 像素(0..15)。
+// (4 plane 各 row_bytes*height,row×row_bytes,MSB-first)。檔內 segment 依 EGA
+// map-mask 高位到低位排列，因此第一段貢獻 color bit3、末段貢獻 bit0；解出
+// 32×24 indexed 像素(0..15)。
 type BLK struct {
 	RowBytes int
 	Height   int
@@ -42,8 +44,9 @@ func (b *BLK) Tile(idx int) [24][32]uint8 {
 	}
 	tile := b.body[idx*b.TileSize:]
 	planesz := b.RowBytes * b.Height
-	for plane := 0; plane < 4; plane++ {
-		base := plane * planesz
+	for segment := 0; segment < 4; segment++ {
+		base := segment * planesz
+		colorBit := uint(3 - segment)
 		for row := 0; row < b.Height && row < 24; row++ {
 			ro := base + row*b.RowBytes
 			for bx := 0; bx < b.RowBytes && bx < 4; bx++ {
@@ -53,7 +56,7 @@ func (b *BLK) Tile(idx int) [24][32]uint8 {
 				}
 				for bit := 0; bit < 8; bit++ {
 					if by&(0x80>>bit) != 0 {
-						px[row][bx*8+bit] |= 1 << plane
+						px[row][bx*8+bit] |= 1 << colorBit
 					}
 				}
 			}

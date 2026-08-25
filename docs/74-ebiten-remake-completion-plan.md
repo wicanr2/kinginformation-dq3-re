@@ -142,7 +142,7 @@
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接 | E2／V1；能力條逐幀仍待 V3 |
 | 主選單 | DOSBox、網路圖 | 新遊戲與載入皆有正式輸入入口；campaign 由新遊戲入口達 E3 | 功能 E3；逐畫面版面仍是可選 V3 |
 | 主角姓名／性別 | DOSBox 正式輸入、IDA、同狀態 PNG | 共用元件與正式 trace；`FIRST.SCR`、record 407 的 13 個具名確認欄位、三層 raw EGA backdrop 與 `beveled_2px` frame 均由 pack 接入 | E3；能力確認固定 checkpoint 已 V3 靜態（AE 1,474／640×350），游標閃爍、palette register、能力條與整段 timing 仍待動態 V3 |
-| 家中／母親 | DOSBox、影片、IDA `sub_1010B` | sec4 家中逐格與轉場後主角自動走到王城入口均已由 pack 接線；正式創角 trace 已通過本段 | E3；`docs/189` 抽樣顯示 rec80 背景顯著不符，畫面僅 V2 |
+| 家中／母親 | DOSBox、影片、IDA `sub_1010B` | sec4 家中逐格、轉場後自動行走與同格 rec80→rec79 已由 pack 接線；原始 record 與 handler consumer 閉合 | E3；文字 record／cell layout V3，逐格路線與 wall-clock 仍僅 V2 |
 | 王城謁見 | 攻略、影片、地圖 | 正式 region gate／精確獎勵／一次性已接；rec78 勇者像素差異測試已通過 | E3；角色構圖 V2，viewport／palette／對話框與分頁不是 V3 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
@@ -244,7 +244,8 @@
 - 沿 caller/runner 繼續追到 file `0x140a..0x1633`：
   - 家中對白順序 `rec82→83→81`；
   - `sub_1010B` 先完成家中帶路並轉至 CTY00 sec0 `(8,38)`，再令主角自動走到王城入口，
-    播 rec80，最後 `set flag17/clear flag50`；舊文件在轉場處提前截斷，已由 `docs/188` 勘誤；
+    同格依序播 rec80／rec79，最後 `set flag17/clear flag50`；舊文件先在轉場、後在 rec80
+    提前截斷，已由 `docs/188`／`docs/192` 勘誤；
   - 王座 handler56 播 rec78，GIVE `00,01,01,03,1f,1f`，加 `0x32=50G`，
     `clear flag17/set flag18`。
 - Ebiten 已按同一 transaction 接線，`TestOriginalOpeningEventTransactions` 從真實 CTY 素材驗證
@@ -1446,3 +1447,14 @@ checkpoint `aa77bdd` 的四個本機完整版與 72 秒有音樂推廣片已集�
 不建立 tag 或 GitHub Release；當時公開版仍是 v0.1.34。這項發行狀態已由 v0.1.35 取代。
 少數明示的 classic／舊 C 道具參數、全遊戲逐畫面／逐音效 V3、Android host audio／真機及
 macOS 真機驗收，分別屬證據限制或可選驗收，不是 remake 功能缺口。
+
+## 2026-08-25 current polish checkpoint
+
+- 資料／規則：IDA Pro 9.4 已把藥草、聖水與祈禱之戒的參數、選人及消耗順序閉合並遷入
+  game-pack；舊 64 步聖水、固定 30 MP 與自動選第一位受傷者均已撤回。
+- 畫面／動畫：BLK 四段改為高位至低位解碼；arrival index36 同格依序開 rec80→rec79，
+  最後一段關閉後才交易旗標並續走。
+  同狀態抽樣已消除先前「小型城堡／錯誤背景」判讀，仍未聲稱逐格 timing 或文字分頁 V3。
+- 驗收：`internal/dq3data`、`internal/gamepack` 與開場／三道具目標測試通過；完整 campaign
+  本批未重跑，既有 E3 不因局部測試升降。下一個視覺窄切片是 rec78 同頁文字／角色 sprite
+  與水平 viewport 抽樣，不重新開啟無界 RE。

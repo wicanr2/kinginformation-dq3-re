@@ -62,3 +62,25 @@ func TestOpenBLK(t *testing.T) {
 		t.Fatal("解碼非決定性")
 	}
 }
+
+func TestBLKPlaneSegmentsUseHighToLowColorBits(t *testing.T) {
+	// 1 byte/row、1 row、1 tile；四個 segment 的最左像素依序應為
+	// color bit3、bit2、bit1、bit0。這固定檔案排列，避免再次把可辨識圖案
+	// 誤當成 palette 正確性的證明。
+	raw := []byte{
+		1, 0, // row bytes
+		1, 0, // height
+		1, 0, // count
+		0x80, 0x40, 0x20, 0x10,
+	}
+	blk, err := OpenBLK(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	px := blk.Tile(0)
+	for x, want := range []uint8{8, 4, 2, 1} {
+		if px[0][x] != want {
+			t.Fatalf("segment pixel x=%d got color index %d, want %d", x, px[0][x], want)
+		}
+	}
+}

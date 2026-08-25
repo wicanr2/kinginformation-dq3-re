@@ -51,8 +51,8 @@
 ```
 
 > 與 BLK tile(docs/04)同屬 VGA **4-bit planar** 家族,差別:
-> - SHP 是 **plane-major**(plane3,plane2,plane1,plane0 各整段);BLK tile 也是 plane-major
->   但 plane0→3 順序。SHP 的 plane 順序由 Map Mask `ah` 高位先寫決定(plane3 先)。
+> - SHP 是 **plane-major**(plane3,plane2,plane1,plane0 各整段)；BLK tile 亦為高位至低位。
+>   2026-08-25 已以 CTY00 同狀態影片對拍勘誤舊稱的「BLK plane0→3」。
 > - SHP 每隻寬高可變(header 帶),BLK 固定 32×24。
 > - 怪名先前推定 sprite0 表頭 `{16,123,..}` —— 該推定錯誤:那 8 bytes 是 **offset table
 >   的兩個 u32**(this_off / next_off),不是 sprite 表頭。真正的 sprite 表頭是資料區的

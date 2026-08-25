@@ -52,7 +52,7 @@ func TestOriginalNewGameInitialState(t *testing.T) {
 }
 
 // TestOriginalOpeningEventTransactions 固定開場 runner handler54/56 的狀態交易：
-// 母親帶到城門、rec80 關閉後切 flag50→17；首次見王得到精確六件物品與 50G，再切 17→18。
+// 母親帶到城門、rec80→rec79 關閉後切 flag50→17；首次見王得到精確六件物品與 50G，再切 17→18。
 func TestOriginalOpeningEventTransactions(t *testing.T) {
 	dir := spineAssetsDir(t)
 	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "opening-events-save.json"))

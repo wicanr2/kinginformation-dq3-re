@@ -216,11 +216,16 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	for g.openingEscortAnimating() {
 		send(InputState{DirHeld: -1, DirEdge: -1})
 	}
-	if g.openingIdx != 3 || !g.dlg.open {
-		t.Fatalf("帶路完成後 rec80 未開啟：idx=%d dlg=%v", g.openingIdx, g.dlg.open)
+	dialogueFrame := g.openingEscort.ArrivalFrames[g.openingEscort.DialogueFrameIndex].Player
+	if g.openingIdx != 3 || !g.dlg.open || g.px != dialogueFrame.X || g.py != dialogueFrame.Y {
+		t.Fatalf("中途格 opening 對話序列未開啟：idx=%d dlg=%v pos=(%d,%d) want=(%d,%d)",
+			g.openingIdx, g.dlg.open, g.px, g.py, dialogueFrame.X, dialogueFrame.Y)
 	}
 	traceCloseDialogue(t, g)
 	send(InputState{DirHeld: -1, DirEdge: -1})
+	for g.openingEscortAnimating() {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
 	if g.openingIdx != -1 || g.dlg.open || g.curCty != 0 || g.cur.sec != 0 ||
 		g.px != 21 || g.py != 9 || !g.storyFlag(0x17) || g.storyFlag(0x50) {
 		t.Fatalf("母親演出後狀態錯：idx=%d dlg=%v cty=%d sec=%d @(%d,%d) flag17=%v flag50=%v",

@@ -351,6 +351,7 @@ type Game struct {
 	openingEscortTick         int
 	openingEscortNPC          int
 	openingEscortPhase        int
+	openingEscortDialogue     int
 	openingFrame              int
 	openingIndex              int
 	openingActive             bool
@@ -987,6 +988,7 @@ func (g *Game) Update() error {
 // 測試不得再用直接呼叫事件函式冒充完整 playthrough。
 func (g *Game) step(in InputState) error {
 	moved := false
+	g.dlg.Tick()
 
 	// 標題畫面:主選單→主角命名→性別→能力確認→開始新遊戲(newgame.go)。
 	// S/CtxTap 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)。
@@ -1399,6 +1401,11 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.resumeOpeningEscortAfterDialogue() {
+		g.openingIdx = -1
+		g.renderFrame()
+		return nil
+	}
 	// 結局捲動:一段 ENDTXT 翻完關閉後,自動接下一段,直到全部播完(移植 main.c end_seq 推進)。
 	if g.endSeq >= 0 {
 		g.endSeq++
@@ -1411,7 +1418,7 @@ func (g *Game) step(in InputState) error {
 		return nil
 	}
 	// 開場演出：rec82→83→81 後由 pack 的兩階段有限序列接管；家中母親帶路、
-	// 轉場後主角自動走至城門，完成對話關閉後才交易旗標並交回操作。
+	// 轉場後主角依 pack 路線行走，在指定格停下完成對話與旗標交易，再走至城門。
 	// DQ3.EXE sub_1010B，IDA linear 0x1010b..0x1020b／file 0x147b..0x157a。
 	if g.openingIdx >= 0 {
 		g.openingIdx++

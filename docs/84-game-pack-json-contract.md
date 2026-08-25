@@ -744,12 +744,14 @@ save/load 見 [`docs/105`](105-olivia-cape-gaia-sword-production-trace.md)。
 | `item_use_effects` | object[] | 是 | 可為空陣列；不得省略。 |
 | `[].id`／`[].kind` | string／enum | 是 | 穩定 namespaced ID；kind 固定為 `item_use`。 |
 | `[].item_raw_id` | int | 是 | game pack 原始道具 ID；同一 pack 不可重複。 |
-| `[].effect_id` | enum | 是 | 支援 `force_day_night_phase`、`temporary_invisibility`、`reveal_world_map_patch`、`clear_condition`；未知值 fail closed。 |
+| `[].effect_id` | enum | 是 | 另支援 `heal_hp_selected`、`repel_encounters`、`restore_mp_breakable`；未知值 fail closed。 |
 | `[].location_kind` | enum | 是 | 日夜與地圖 patch 使用 `overworld`；暫時隱形與解狀態使用 `any`。不接受任意條件運算式。 |
 | `[].day_night_phase` | int | 是 | pack canonical 晝夜相位 `0..3`；DQ3 黑夜為 2。 |
 | `[].day_night_clock` | int/null | 條件必填 | `force_day_night_phase` 的原版 clock writer；須落在 `day_night_cycle.clock_ticks`，且與 phase 相符。其他 effect 必須省略。 |
 | `[].reset_day_night_steps` | boolean | 是 | 是否依原版 transaction 重設現行 phase step；`force_day_night_phase` 必須為 true，暫時隱形必須為 false。 |
-| `[].step_count` | int | 是 | 暫態效果剩餘步數；`temporary_invisibility` 必須大於 0，非步數效果必須為 0。 |
+| `[].step_count` | int | 是 | 暫態效果剩餘步數；`temporary_invisibility`／`repel_encounters` 必須大於 0，非步數效果必須為 0。 |
+| `[].amount_min`／`[].amount_max` | int | 條件必填 | HP／MP 回復的封閉整數範圍；runtime 使用 pack 共用 PRNG 取樣後依角色上限截斷。 |
+| `[].break_roll_max` | int | `restore_mp_breakable` 必填 | `RNG(256) <= break_roll_max` 時移除所選物品；DQ3 祈禱之戒為 `0x40`。 |
 | `[].consume` | boolean | 是 | 成功後是否消耗；黑暗燈為 false，隱形草原版會清除選中物品槽，故為 true。 |
 | `[].condition_id` | string | `clear_condition` 必填 | 必須引用 `battle.conditions[].id`；現行 field runtime 已閉合 `common:condition.poison` 與 `common:condition.paralysis`。 |
 | `[].target_scope` | enum | `clear_condition` 必填 | 現行只接受 `party_member`；確認前進正式選人 modal。 |
@@ -1412,7 +1414,7 @@ content hash，避免其 screenshot 或 save 被誤當原版對拍。
 loader 必須拒絕不存在欄位、非 tunable 欄位及 base hash 不符。正式 parity test 永遠以
 未套 override 的 canonical pack 執行。
 
-### 6.9b 注音組字與開場帶路（schema `0.1.51`）
+### 6.9b 注音組字與開場帶路（schema `0.1.53`）
 
 - `new_game_geometry.name_composition` 是注音組字的 `GeometryAnchor`；不得再從姓名列寬度
   推導。DQ3 的組字顯示在獨立「輸入注音」框，與 `name_function_panel` 不得重疊。
@@ -1424,9 +1426,14 @@ loader 必須拒絕不存在欄位、非 tunable 欄位及 base hash 不符。�
 - 場景切換後的主角自動步行由 `destination{cty,section}` 與
   `arrival_frames[{player{x,y},hold_frames}]` 定義。兩組 frames 內相鄰項都必須是四方向相鄰
   tile；runtime 另須拒絕越界或不可通行的抵達路線，不得自行尋路或使用 Go fallback。
-- `completion_dialogue_record` 是抵達後才開啟的版本專屬文字 record；只有該對話關閉後，
+- `dialogue_frame_index` 必須指向 `arrival_frames` 的非首尾項；抵達該格時依序開啟非空的
+  `dialogue_records[]`。只有最後一筆對話關閉後，
   才依 `set_story_flags[]`／`clear_story_flags[]` 完成狀態交易。兩組旗標不得重複，值域為
   `0..65535`。
+- `interface.dialogue.glyph_hold_frames` 是每個可見 glyph cell 的 engine update 間隔；大於
+  0 時必須同時提供 `glyph_timing_evidence`。DQ3 的 3 frames 以 60 TPS 近似 IBM PC
+  18.2 Hz timer 的一 tick，證據等級是 D2／hardware-spec approximation，不是 DOS PIT
+  wall-clock exact。控制碼參數不占可見 cell；插值展開後每個 glyph 各占一 cell。
 - 引擎只重播 pack 指定座標、依相鄰 tile 推導面向並切換步行幀。DQ3 專屬 CTY、座標、
   record、旗標與節拍不得寫回 Go。DQ3 實例與證據限制見
   `docs/188-opening-escort-to-castle-spec.md`。

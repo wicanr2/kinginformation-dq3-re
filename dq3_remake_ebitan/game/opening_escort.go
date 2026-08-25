@@ -10,7 +10,7 @@ func (g *Game) openingEscortAnimating() bool {
 	switch g.openingEscortPhase {
 	case 0:
 		return g.openingEscortIndex < len(g.openingEscort.Frames) && g.openingEscortNPC >= 0
-	case 1:
+	case 1, 3:
 		return g.openingEscortIndex < len(g.openingEscort.ArrivalFrames)
 	default:
 		return false
@@ -31,6 +31,7 @@ func (g *Game) startMotherEscort() bool {
 	g.openingEscortPhase = 0
 	g.openingEscortIndex = 0
 	g.openingEscortTick = 0
+	g.openingEscortDialogue = 0
 	g.applyOpeningEscortFrame(first)
 	return true
 }
@@ -94,11 +95,32 @@ func (g *Game) advanceOpeningEscort() {
 	}
 	if g.openingEscortIndex < len(g.openingEscort.ArrivalFrames) {
 		g.applyOpeningArrivalFrame(g.openingEscort.ArrivalFrames[g.openingEscortIndex])
+		if g.openingEscortPhase == 1 && g.openingEscortIndex == g.openingEscort.DialogueFrameIndex {
+			g.openingEscortPhase = 2
+			g.openingEscortDialogue = 0
+			g.dlg.Open(g.openingEscort.DialogueRecords[0])
+		}
 		return
 	}
 	g.openingEscortPhase = -1
 	g.openingEscortIndex = -1
-	g.dlg.Open(g.openingEscort.CompletionDialogueRecord)
+}
+
+// resumeOpeningEscortAfterDialogue consumes the pack-owned dialogue sequence
+// at one route frame. Only after its final record closes does it commit the
+// transaction and resume the remaining visible walk.
+func (g *Game) resumeOpeningEscortAfterDialogue() bool {
+	if g.openingEscort == nil || g.openingEscortPhase != 2 || g.dlg.open {
+		return false
+	}
+	g.openingEscortDialogue++
+	if g.openingEscortDialogue < len(g.openingEscort.DialogueRecords) {
+		return g.dlg.Open(g.openingEscort.DialogueRecords[g.openingEscortDialogue])
+	}
+	g.completeOpeningEscort()
+	g.openingEscortPhase = 3
+	g.openingEscortTick = 0
+	return true
 }
 
 func (g *Game) applyOpeningArrivalFrame(frame gamepack.OpeningArrivalFrame) {

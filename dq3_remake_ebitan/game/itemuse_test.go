@@ -12,38 +12,51 @@ import (
 
 // 藥草治療:勇者受傷 → 用藥草回 30(封頂 maxHP)、消耗 1 個。
 func TestUseHerbHeals(t *testing.T) {
-	g := &Game{}
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{pack: pack}
 	_, maxHP, _, _, _ := g.heroStats() // level1 勇者 maxHP
 	g.heroHP = 1
 	g.inventory = []int{itemuse.ItemHerb, itemuse.ItemHerb}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
+	g.panel, g.panelCursor, g.itemSelected = panelItem, 0, 0
+	if !g.useSelectedPackItemOnTarget(0) {
+		t.Fatal("藥草應走 pack 選人 handler")
+	}
 
-	want := 1 + itemuse.HealHPAmount(1, maxHP)
-	if g.heroHP != want {
-		t.Errorf("藥草後 HP=%d, want %d", g.heroHP, want)
+	if g.heroHP < min(maxHP, 31) || g.heroHP > min(maxHP, 40) {
+		t.Errorf("藥草後 HP=%d，不在原版 30..39 回復封頂範圍", g.heroHP)
 	}
 	if len(g.inventory) != 1 {
 		t.Errorf("藥草應消耗 1 個,剩 %d", len(g.inventory))
 	}
 }
 
-// 藥草滿血不消耗:HP 已滿 → 用藥草無效、不消耗(對齊原版「無人需要治療 → 不消耗」)。
-func TestUseHerbFullNoConsume(t *testing.T) {
-	g := &Game{}
+// 原版 handler 先消耗 owner slot，再檢查所選目標；滿血也不退還藥草。
+func TestUseHerbFullStillConsumesSelectedOwnerSlot(t *testing.T) {
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{pack: pack}
 	_, maxHP, _, _, _ := g.heroStats()
 	g.heroHP = maxHP
 	g.inventory = []int{itemuse.ItemHerb}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
-	if len(g.inventory) != 1 {
-		t.Errorf("滿血用藥草不應消耗,剩 %d", len(g.inventory))
+	g.panel, g.panelCursor, g.itemSelected = panelItem, 0, 0
+	g.useSelectedPackItemOnTarget(0)
+	if len(g.inventory) != 0 {
+		t.Errorf("滿血目標仍應先消耗藥草，剩 %d", len(g.inventory))
 	}
 }
 
-// 聖水:使用 → repel = 64 步、消耗。
+// 聖水：正式 pack 的 0x28 步參數生效並消耗。
 func TestUseHolyWaterRepel(t *testing.T) {
-	g := &Game{}
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{pack: pack}
 	g.inventory = []int{itemuse.ItemHolyWater}
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
@@ -155,21 +168,36 @@ func TestPackInvisibilityGrassConsumesAndSharesRemoaruTimer(t *testing.T) {
 	}
 }
 
-// 祈禱之戒:回勇者 MP(未滿補 30 封頂);損壞為機率,MP 一定被回復。
+// 祈禱之戒：正式 pack 依原版 rejection sampling 回復 22..31 MP；損壞另擲一次。
 func TestUsePrayerRingMP(t *testing.T) {
-	g := &Game{}
+	pack, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{pack: pack}
 	g.prng.Seed(0x1357)
 	g.heroExp = 5000 // 拉高等級讓勇者有 MP
+	g.heroHP = 1
 	g.heroMP = 0
 	max := g.heroMaxMP()
 	if max == 0 {
 		t.Skip("此等級勇者無 MP")
 	}
 	g.inventory = []int{itemuse.ItemPrayerRing}
-	g.panel, g.panelCursor = panelItem, 0
-	g.useSelectedItem()
-	if g.heroMP != itemuse.PrayerMPAmount(0, max) {
-		t.Errorf("祈禱之戒後 MP=%d, want %d", g.heroMP, itemuse.PrayerMPAmount(0, max))
+	g.panel, g.panelCursor, g.itemSelected = panelItem, 0, 0
+	if !g.useSelectedPackItemOnTarget(0) {
+		t.Fatal("祈禱之戒應走 pack 選人 handler")
+	}
+	wantMin, wantMax := 22, 31
+	if max < wantMin {
+		wantMin = max
+	}
+	if max < wantMax {
+		wantMax = max
+	}
+	if g.heroMP < wantMin || g.heroMP > wantMax {
+		t.Errorf("祈禱之戒後 MP=%d，不在原版 22..31 經 maxMP=%d 封頂後的 %d..%d 範圍",
+			g.heroMP, max, wantMin, wantMax)
 	}
 }
 

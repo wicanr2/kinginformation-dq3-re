@@ -2,6 +2,7 @@ package game
 
 import (
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -22,14 +23,54 @@ func TestOpeningMotherEscortUsesVisibleFrames(t *testing.T) {
 	if steps <= len(g.openingEscort.Frames) {
 		t.Fatalf("帶路應有可見 hold frames，僅 %d 次更新", steps)
 	}
-	if g.curCty != 0 || g.cur == nil || g.cur.sec != 0 || g.px != 21 || g.py != 9 {
-		t.Fatalf("帶路完成落點錯：cty=%d sec=%v pos=(%d,%d)", g.curCty, currentSceneSection(g.cur), g.px, g.py)
+	dialogueFrame := g.openingEscort.ArrivalFrames[g.openingEscort.DialogueFrameIndex].Player
+	if g.curCty != 0 || g.cur == nil || g.cur.sec != 0 || g.px != dialogueFrame.X || g.py != dialogueFrame.Y {
+		t.Fatalf("opening 對話序列觸發位置錯：cty=%d sec=%v pos=(%d,%d)，want=(%d,%d)",
+			g.curCty, currentSceneSection(g.cur), g.px, g.py, dialogueFrame.X, dialogueFrame.Y)
 	}
-	if !g.dlg.open {
-		t.Fatal("帶路完成後應開 rec80 對話")
+	if !g.dlg.open || g.openingEscortDialogue != 0 {
+		t.Fatal("抵達 pack 指定格後應開第一段對話")
+	}
+	if !reflect.DeepEqual(g.dlg.buf, g.cur.dlgText.Record(80)) {
+		t.Fatal("第一段不是 D3TXT01 record 80")
+	}
+	if g.dlg.layout.GlyphHoldFrames != 3 || g.dlg.revealCells != 0 {
+		t.Fatalf("逐字初值錯：hold=%d visible=%d", g.dlg.layout.GlyphHoldFrames, g.dlg.revealCells)
+	}
+	g.dlg.Tick()
+	g.dlg.Tick()
+	if g.dlg.revealCells != 0 {
+		t.Fatal("未滿 pack hold frames 不得提早顯示 glyph")
+	}
+	g.dlg.Tick()
+	if g.dlg.revealCells != 1 {
+		t.Fatal("滿 pack hold frames 應顯示一個 glyph cell")
 	}
 	if g.storyFlag(0x17) || !g.storyFlag(0x50) {
 		t.Fatalf("rec80 關閉前不得交易旗標：17=%v 50=%v", g.storyFlag(0x17), g.storyFlag(0x50))
+	}
+	g.dlg.open = false
+	if !g.resumeOpeningEscortAfterDialogue() {
+		t.Fatal("第一段關閉後應在同一格開第二段對話")
+	}
+	if !g.dlg.open || g.openingEscortDialogue != 1 || g.storyFlag(0x17) || !g.storyFlag(0x50) {
+		t.Fatalf("第二段對話狀態錯：open=%v index=%d flag17=%v flag50=%v",
+			g.dlg.open, g.openingEscortDialogue, g.storyFlag(0x17), g.storyFlag(0x50))
+	}
+	if !reflect.DeepEqual(g.dlg.buf, g.cur.dlgText.Record(79)) {
+		t.Fatal("第二段不是 D3TXT01 record 79")
+	}
+	g.dlg.open = false
+	if !g.resumeOpeningEscortAfterDialogue() {
+		t.Fatal("最後一段關閉後應交易旗標並恢復剩餘自動步行")
+	}
+	for g.openingEscortAnimating() && steps < 2000 {
+		g.advanceOpeningEscort()
+		steps++
+	}
+	if g.px != 21 || g.py != 9 || g.storyFlag(0x17) == false || g.storyFlag(0x50) {
+		t.Fatalf("剩餘步行完成狀態錯：pos=(%d,%d) flag17=%v flag50=%v",
+			g.px, g.py, g.storyFlag(0x17), g.storyFlag(0x50))
 	}
 }
 

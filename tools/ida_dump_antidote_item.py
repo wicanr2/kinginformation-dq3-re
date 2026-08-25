@@ -1,4 +1,4 @@
-"""非破壞性匯出 DQ3 item 0x42 驅毒草的 dispatcher／handler 證據。
+"""非破壞性匯出 DQ3 基本道具與祈禱之戒的 dispatcher／handler 證據。
 
 IDA 9.4 batch：
   idat -A '-Stools/ida_dump_antidote_item.py /tmp/antidote.json' DQ3.EXE
@@ -22,7 +22,7 @@ import idc
 
 DISPATCHER = 0x13CCF
 TABLE = 0x2843A  # DGROUP 0x366a; file 0x197aa
-ITEMS = range(0x41, 0x46)
+ITEMS = (0x41, 0x42, 0x43, 0x44, 0x45, 0x48)
 
 
 def line(ea):
@@ -101,7 +101,7 @@ for item in ITEMS:
     handlers[hex(item)] = function(handler_ea)
 
 result = {
-    "schema": "dq3.ida_antidote_item_evidence.v1",
+    "schema": "dq3.ida_field_item_evidence.v2",
     "input": {"path": str(input_path), "size": len(raw), "sha256": hashlib.sha256(raw).hexdigest()},
     "tool": {
         "name": "IDA Pro",
@@ -116,6 +116,7 @@ result = {
         "sub_14CF9": function(0x14CF9),
         "sub_1469F": function(0x1469F),
         "sub_146EB": function(0x146EB),
+		"sub_1473F": function(0x1473F),
         "sub_14685": function(0x14685),
         "sub_14307": function(0x14307),
         "sub_19834": function(0x19834),

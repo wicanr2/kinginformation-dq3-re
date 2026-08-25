@@ -12,7 +12,7 @@ func (g *Game) selectedItemRequiresTarget() bool {
 		return false
 	}
 	effect, ok := g.pack.ItemUseEffectByRawID((*items)[g.itemSelected])
-	return ok && effect.EffectID == "clear_condition" && effect.TargetScope == "party_member"
+	return ok && effect.TargetScope == "party_member"
 }
 
 // useSelectedPackItemOnTarget 執行已確認的 pack-owned 選人道具交易。原版驅毒草與
@@ -25,8 +25,65 @@ func (g *Game) useSelectedPackItemOnTarget(actor int) bool {
 	}
 	code := (*items)[g.itemSelected]
 	effect, ok := g.pack.ItemUseEffectByRawID(code)
-	if !ok || effect.EffectID != "clear_condition" || effect.TargetScope != "party_member" ||
-		!effect.Consume {
+	if !ok || effect.TargetScope != "party_member" {
+		return false
+	}
+	if effect.EffectID == "heal_hp_selected" {
+		amount := effect.AmountMin
+		if effect.AmountMax > effect.AmountMin {
+			amount += g.prng.Next(effect.AmountMax - effect.AmountMin + 1)
+		}
+		g.panelCursor = g.itemSelected
+		g.consumeSelectedItem(code) // 原版 handler 先移除 owner slot，再檢查目標。
+		if actor == 0 {
+			_, maxHP, _, _, _ := g.heroStats()
+			if h := boundedRecovery(g.heroHP, maxHP, amount); h > 0 {
+				g.heroHP += h
+				g.noticeCode, g.noticeTimer = code, 90
+			}
+		} else if m := g.companions[actor-1]; m != nil {
+			if h := boundedRecovery(m.CurHP, m.MaxHP(), amount); h > 0 {
+				m.CurHP += h
+				g.noticeCode, g.noticeTimer = code, 90
+			}
+		}
+		g.clampPanelCursor()
+		g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
+		return true
+	}
+	if effect.EffectID == "restore_mp_breakable" {
+		alive := g.heroHP > 0
+		if actor > 0 {
+			alive = g.companions[actor-1] != nil && g.companions[actor-1].CurHP > 0
+		}
+		if alive {
+			amount := effect.AmountMin
+			if effect.AmountMax > effect.AmountMin {
+				amount += g.prng.Next(effect.AmountMax - effect.AmountMin + 1)
+			}
+			if actor == 0 {
+				g.heroMP += amount
+				if max := g.heroMaxMP(); g.heroMP > max {
+					g.heroMP = max
+				}
+			} else {
+				m := g.companions[actor-1]
+				m.CurMP += amount
+				if max := m.MaxMP(); m.CurMP > max {
+					m.CurMP = max
+				}
+			}
+			g.noticeCode, g.noticeTimer = code, 90
+			if g.prng.Next(256) <= effect.BreakRollMax {
+				g.panelCursor = g.itemSelected
+				g.consumeSelectedItem(code)
+				g.clampPanelCursor()
+			}
+		}
+		g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
+		return true
+	}
+	if effect.EffectID != "clear_condition" || !effect.Consume {
 		return false
 	}
 	condition, ok := conditionBit(effect.ConditionID)
@@ -100,7 +157,7 @@ func (g *Game) useSelectedItem() {
 			dest = 79
 		}
 		g.enterTownCty(dest)
-	case itemuse.Repel: // 聖水:驅弱敵 64 步
+	case itemuse.Repel: // 舊相容路徑；正式 DQ3 pack 已由 repel_encounters 接管
 		g.repel = itemuse.HolySteps
 		g.consumeSelectedItem(code)
 		g.noticeCode, g.noticeTimer = code, 90
@@ -145,10 +202,49 @@ func (g *Game) usePackItemEffect(code int) bool {
 	if !ok {
 		return false
 	}
+	if effect.TargetScope == "party_member" {
+		return true
+	}
 	if effect.LocationKind == "overworld" && g.inTown {
 		return true
 	}
 	switch effect.EffectID {
+	case "heal_hp_first_injured":
+		amount := effect.AmountMin
+		if effect.AmountMax > effect.AmountMin {
+			amount += g.prng.Next(effect.AmountMax - effect.AmountMin + 1)
+		}
+		if g.applyHealHPAmount(amount) {
+			if effect.Consume {
+				g.consumeSelectedItem(code)
+				g.clampPanelCursor()
+			}
+			g.noticeCode, g.noticeTimer = code, 90
+		}
+	case "repel_encounters":
+		g.repel = effect.StepCount
+		if effect.Consume {
+			g.consumeSelectedItem(code)
+			g.clampPanelCursor()
+		}
+		g.noticeCode, g.noticeTimer = code, 90
+	case "restore_hero_mp_breakable":
+		amount := effect.AmountMin
+		if effect.AmountMax > effect.AmountMin {
+			amount += g.prng.Next(effect.AmountMax - effect.AmountMin + 1)
+		}
+		maxMP := g.heroMaxMP()
+		if g.heroMP < maxMP {
+			g.heroMP += amount
+			if g.heroMP > maxMP {
+				g.heroMP = maxMP
+			}
+			g.noticeCode, g.noticeTimer = code, 90
+		}
+		if g.prng.Next(256) <= effect.BreakRollMax {
+			g.consumeSelectedItem(code)
+			g.clampPanelCursor()
+		}
 	case "grant_quest_item":
 		if !g.inTown || g.cur == nil || g.curCty != effect.RequiredCTYRaw ||
 			currentSceneSection(g.cur) != effect.RequiredSection {
@@ -392,18 +488,32 @@ func (g *Game) settleMirrorBattle() {
 
 // applyHealHP:對第一個未滿且未陣亡的隊員套藥草治療(勇者優先,再同伴)。回是否有人被治療。
 func (g *Game) applyHealHP(code int) bool {
+	return g.applyHealHPAmount(itemuse.HerbHeal)
+}
+
+func (g *Game) applyHealHPAmount(amount int) bool {
 	_, maxHP, _, _, _ := g.heroStats()
-	if h := itemuse.HealHPAmount(g.heroHP, maxHP); h > 0 { // 勇者
+	if h := boundedRecovery(g.heroHP, maxHP, amount); h > 0 { // 勇者
 		g.heroHP += h
 		return true
 	}
 	for _, m := range g.companions { // 同伴
-		if h := itemuse.HealHPAmount(m.CurHP, m.MaxHP()); h > 0 {
+		if h := boundedRecovery(m.CurHP, m.MaxHP(), amount); h > 0 {
 			m.CurHP += h
 			return true
 		}
 	}
 	return false
+}
+
+func boundedRecovery(cur, max, amount int) int {
+	if cur == 0 || cur >= max || amount <= 0 {
+		return 0
+	}
+	if cur+amount > max {
+		return max - cur
+	}
+	return amount
 }
 
 // clampPanelCursor:道具消耗後,把游標夾回清單範圍。

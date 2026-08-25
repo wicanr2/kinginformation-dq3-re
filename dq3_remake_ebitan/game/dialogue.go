@@ -10,12 +10,14 @@ const noVar = -1
 
 // Dialogue 是一個對話視窗狀態機:Open(rec) → 逐頁 Advance() → 關閉。
 type Dialogue struct {
-	tx        *dq3data.Text
-	itemNames *dq3data.Text // 道具名表(D3TXT00.TXT,rec=code+1)。固定,獨立於 tx 目前切換的城鎮 bank;Game 初始化時同步 = g.shop.nameText。
-	layout    gamepack.WindowLayout
-	buf       []uint16
-	pos       int
-	open      bool
+	tx          *dq3data.Text
+	itemNames   *dq3data.Text // 道具名表(D3TXT00.TXT,rec=code+1)。固定,獨立於 tx 目前切換的城鎮 bank;Game 初始化時同步 = g.shop.nameText。
+	layout      gamepack.WindowLayout
+	buf         []uint16
+	pos         int
+	open        bool
+	revealCells int
+	revealTick  int
 
 	// 插值 var context(docs/42 §四;比照 C dq3_text_set_var_*/dq3_text_clear_vars)。
 	varItem    int              // VAR_ITEM 插值:道具 code(noVar=未設 → 空白)
@@ -47,9 +49,50 @@ func (d *Dialogue) openRecord(b []uint16) bool {
 		return false
 	}
 	d.buf, d.pos, d.open = b, 0, true
+	d.revealCells, d.revealTick = 0, 0
 	d.varItem, d.varNum, d.varNumItem = noVar, noVar, noVar
 	d.varGlyph = nil
 	return true
+}
+
+// Tick advances the visible typewriter by one cell after the pack-owned hold.
+// A zero hold keeps engines whose pack has no timing contract instantaneous.
+func (d *Dialogue) Tick() {
+	if !d.open || d.layout.GlyphHoldFrames <= 0 {
+		return
+	}
+	d.revealTick++
+	if d.revealTick >= d.layout.GlyphHoldFrames {
+		d.revealTick = 0
+		if d.revealCells < d.pageCellCount() {
+			d.revealCells++
+		}
+	}
+}
+
+func (d *Dialogue) pageCellCount() int {
+	end, _ := d.scanPage(d.pos)
+	cells := 0
+	for i := d.pos; i < end && i < len(d.buf); {
+		v := d.buf[i]
+		switch {
+		case v == dq3data.TxtPage:
+			return cells
+		case v == dq3data.TxtNL || v == dq3data.TxtNL2:
+			i++
+		case dq3data.IsVarInsert(v):
+			n := len(d.varGlyphs(v))
+			if n == 0 {
+				n = 1
+			}
+			cells += n
+			i += 2
+		default:
+			cells++
+			i++
+		}
+	}
+	return cells
 }
 
 // openPackText resolves a stable game-pack text ID to canonical glyph/control
@@ -156,6 +199,7 @@ func (d *Dialogue) Advance() {
 		return
 	}
 	d.pos = next
+	d.revealCells, d.revealTick = 0, 0
 }
 
 // setDlgVarItem/setDlgVarNum:設定即將渲染的對話插值 context(VAR_ITEM/VAR_NUM)。
@@ -196,6 +240,11 @@ func (d *Dialogue) draw(rgba []byte, white dq3data.Color) {
 	}
 	end, _ := d.scanPage(d.pos)
 	col, line := 0, 0
+	drawnCells := 0
+	visibleCells := d.revealCells
+	if w.GlyphHoldFrames <= 0 {
+		visibleCells = int(^uint(0) >> 1)
+	}
 	x0, y0 := w.X+w.TextInsetX, w.Y+w.TextInsetY
 loop:
 	for i := d.pos; i < end && i < len(d.buf); {
@@ -220,9 +269,10 @@ loop:
 				n = 1 // 未設 var → 空白一格
 			}
 			for j := 0; j < n; j++ {
-				if j < len(glyphs) {
+				if drawnCells < visibleCells && j < len(glyphs) {
 					d.drawGlyph(rgba, x0+col*dq3data.GlyphPx, y0+line*dq3data.GlyphPx, glyphs[j], white)
 				}
+				drawnCells++
 				col++
 				if col >= w.Columns {
 					col, line = 0, line+1
@@ -232,15 +282,17 @@ loop:
 				}
 			}
 		case v >= 0xffed: // 未知保留控制碼 → 空白一格
+			drawnCells++
 			col++
 			i++
 			if col >= w.Columns {
 				col, line = 0, line+1
 			}
 		default:
-			if v < dq3data.GlyphMax {
+			if drawnCells < visibleCells && v < dq3data.GlyphMax {
 				d.drawGlyph(rgba, x0+col*dq3data.GlyphPx, y0+line*dq3data.GlyphPx, int(v), white)
 			}
+			drawnCells++
 			col++
 			i++
 			if col >= w.Columns {

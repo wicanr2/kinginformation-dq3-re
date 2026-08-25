@@ -79,10 +79,14 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.dlg.Open(81)
 	dump("opening_home_rec81")
 
-	// handler54:母親帶出門 → 主角自動走到 sec0 (21,9) → rec80。
-	g.motherEscort()
-	g.dlg.Open(g.openingEscort.CompletionDialogueRecord)
+	// handler54:母親帶出門 → 主角走到 pack 指定的中途格 → rec80。
+	if !g.finishMotherEscort() {
+		t.Fatal("無法載入開場抵達段")
+	}
+	g.applyOpeningArrivalFrame(g.openingEscort.ArrivalFrames[g.openingEscort.DialogueFrameIndex])
+	g.dlg.Open(g.openingEscort.DialogueRecords[0])
 	dump("opening_town_rec80")
+	g.completeOpeningEscort() // 後續王座 fixture 模擬 rec80 已關閉的正式旗標交易。
 
 	// handler56:走到阿里阿罕王座正前方 → rec78 + 50G/六件裝備。
 	throne, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,

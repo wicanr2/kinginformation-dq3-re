@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.51",
+  "schema_version": "0.1.53",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -10,6 +10,17 @@
     "text_inset_y": 16,
     "columns": 20,
     "lines_per_page": 4,
+    "glyph_hold_frames": 3,
+    "glyph_timing_evidence": {
+      "level": "D2",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + IBM PC timer specification",
+      "address_space": "linear",
+      "address": "0x214b9..0x214f8",
+      "consumer": "sub_21414 draws one glyph then waits for DS:0x0005 >= 1 unless fast mode is active",
+      "doc": "docs/192-opening-dialogue-v3-closure.md",
+      "note": "3 updates at 60 TPS approximate one 18.2 Hz timer tick; hardware-spec approximation, not DOS wall-clock exact"
+    },
     "frame": {
       "id": "dq3:frame.ega_window_white_black",
       "border_pattern": "solid",
@@ -784,7 +795,8 @@
       {"player": {"x": 21, "y": 10}, "hold_frames": 6},
       {"player": {"x": 21, "y": 9}, "hold_frames": 6}
     ],
-    "completion_dialogue_record": 80,
+    "dialogue_frame_index": 36,
+    "dialogue_records": [80, 79],
     "set_story_flags": [23],
     "clear_story_flags": [80],
     "evidence": {

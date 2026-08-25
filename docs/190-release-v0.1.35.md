@@ -42,3 +42,6 @@ GitHub。四包 checksum 見本機 `dist-all/v0.1.35/SHA256SUMS.txt`。
 本輪原版抽樣確認 rec80 背景顯著不符，rec78 雖角色關係相符，但 viewport、palette、對話框與
 分頁仍不同；詳見 [`docs/189`](189-opening-sampled-parity-20260824.md)。本 release 是可玩功能
 checkpoint，不宣稱逐像素、逐幀或逐聲音完全還原。
+
+> 2026-08-25 勘誤：rec80 背景差異後來證實是 BLK 四段位平面順序反轉；現行工作樹已修正，
+> 但 v0.1.35 產物仍保留該缺陷。現行 opening 另閉合 rec80→rec79，見 `docs/192`。

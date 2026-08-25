@@ -43,6 +43,22 @@ func TestFieldItemCompanionUseConsumesExactOwnerSlot(t *testing.T) {
 	}
 }
 
+func TestFieldHerbSeparatesCompanionOwnerFromSelectedHeroTarget(t *testing.T) {
+	g := bossTestGame(t)
+	m := newMember([]int{1}, 1, 0, 0)
+	m.Inventory = []int{0x42, itemuse.ItemHerb}
+	g.companions = []*Member{m}
+	g.heroHP = 1
+	g.panel, g.panelActor, g.panelCursor, g.itemSelected = panelItem, 1, 1, 1
+
+	if !g.selectedItemRequiresTarget() || !g.useSelectedPackItemOnTarget(0) {
+		t.Fatal("藥草應先選目標，再由同伴 owner 的確切格位消耗")
+	}
+	if g.heroHP <= 1 || !reflect.DeepEqual(m.Inventory, []int{0x42}) {
+		t.Fatalf("藥草 owner／target 交易錯：heroHP=%d member=%v", g.heroHP, m.Inventory)
+	}
+}
+
 func TestFieldSupplyTraceUsesCompanionOwnedHolyWater(t *testing.T) {
 	g := bossTestGame(t)
 	m := newMember([]int{1}, 1, 0, 0)

@@ -56,10 +56,13 @@ render 成果在 `docs/maps/`:
 
 - 4 個 plane 連續排列,每 plane 96 bytes(24 row × 4 byte/row)。
 - 每 byte = 8 像素的 1 個 bit-plane,MSB 先(bit 0x80 = 最左像素)。
-- 像素色號 = `(plane0_bit) | (plane1_bit<<1) | (plane2_bit<<2) | (plane3_bit<<3)`,值域 0–15。
+- 檔案中的四段依序是色號 bit3、bit2、bit1、bit0；像素色號 =
+  `(segment0_bit<<3) | (segment1_bit<<2) | (segment2_bit<<1) | segment3_bit`，值域 0–15。
 
 驗證:`(65286-6)/170 = 384`、`4 byte/row × 8 × 24 row = 32×24 px`、`32×24×4bit/8 = 384`。
-此為 4 個其他排列假設中唯一 render 出可辨識地形的解(見 git 歷史的 probe)。
+2026-08-25 勘誤：舊文件把第一段稱為 plane0，只以「可辨識地形」判定，證據不足。
+同一 CTY00 `(21,19)` 與原版影片對拍顯示舊解碼的色號恰為 4-bit reversal；改成高位至低位後，
+水道、道路與植栽 palette index 同時對齊。`TestBLKPlaneSegmentsUseHighToLowColorBits` 鎖定此契約。
 
 ## DQ3CON.MAP / DQ3UND.MAP — 世界地圖佈局
 

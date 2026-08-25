@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.51",
+  "schema_version": "0.1.53",
   "day_night_cycle": {
     "clock_ticks": 240,
     "night_start_tick": 120,
@@ -894,6 +894,65 @@
     }
   ],
   "item_use_effects": [
+    {
+      "id": "dq3:item_use.medicinal_herb",
+      "kind": "item_use",
+      "item_raw_id": 65,
+      "effect_id": "heal_hp_selected",
+      "location_kind": "any",
+      "amount_min": 30,
+      "amount_max": 39,
+      "target_scope": "party_member",
+      "consume": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+        "address_space": "linear",
+        "address": "item table 0x2843a -> handler 0x13db9; helper 0x146eb",
+        "consumer": "handler passes BP=0x1e to the common rejection-sampled recovery writer, producing 30..39 HP before max-HP clamping",
+        "doc": "docs/191-field-item-parameter-closure.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.holy_water",
+      "kind": "item_use",
+      "item_raw_id": 68,
+      "effect_id": "repel_encounters",
+      "location_kind": "any",
+      "step_count": 40,
+      "consume": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+        "address_space": "linear",
+        "address": "item table 0x28440 -> handler 0x13ddd; writer DS:0x52f6",
+        "consumer": "field branch consumes item 0x44 and writes the encounter-repel counter to 0x28; battle branch has no field-counter mutation",
+        "doc": "docs/191-field-item-parameter-closure.md"
+      }
+    },
+    {
+      "id": "dq3:item_use.prayer_ring",
+      "kind": "item_use",
+      "item_raw_id": 72,
+      "effect_id": "restore_mp_breakable",
+      "location_kind": "any",
+      "amount_min": 22,
+      "amount_max": 31,
+      "break_roll_max": 64,
+      "target_scope": "party_member",
+      "consume": false,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+        "address_space": "linear",
+        "address": "item table 0x28448 -> handler 0x13e40; helper 0x1473f..0x1479b",
+        "consumer": "handler passes BP=0x16; helper rejection-samples 22..31 MP, clamps to max MP, then removes item 0x48 only when RNG byte <=0x40",
+        "doc": "docs/191-field-item-parameter-closure.md"
+      }
+    },
     {
       "id": "dq3:item_use.antidote_herb",
       "kind": "item_use",

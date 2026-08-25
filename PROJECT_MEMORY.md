@@ -922,3 +922,23 @@ completion record 與 completion flags 全部放入 `interface.json.opening_esco
 不含原版資料、OGG 或 ROM；完整版含 18 OGG、兩個 ROM 與修正版 SHP。Linux patch/full
 AppImage 的 Docker＋Xvfb＋ALSA null 8 秒 smoke 通過；macOS 仍只有交叉編譯與靜態驗證，
 未經真機。公開 checksum 與限制見 `docs/190-release-v0.1.35.md`。
+
+## 2026-08-25 memory：資料規則與開場畫面／動畫 polish
+
+原版影片逐格重查推翻「rec80 在城門終點才開」：實際於 CTY00 路線 `(21,19)` 開啟，
+關閉後仍自動走到 `(21,9)`。當時 schema `0.1.52`／content `0.1.58` 以
+`dialogue_frame_index=36`／`dialogue_records=[80,79]` 保存同格兩段對話；Go 狀態機在最後
+一段關閉後才交易旗標並續走，
+不含 DQ3 座標 fallback。BLK 舊解碼同時被證實把四段位平面高低位反轉；改為 bit3→bit0 後，
+rec80 的水道、道路與植栽色號與原版同狀態畫面對齊。詳見 `docs/188`／`docs/189`。
+
+IDA Pro 9.4 另閉合三個野外道具參數：藥草 30–39 HP、聖水 40 步、祈禱之戒 22–31 MP
+且 RNG byte `<=0x40` 損壞。舊 64 步與固定 30 MP 已推翻；正式數值遷入 `events.json`，
+證據見 `docs/191-field-item-parameter-closure.md`。同一 helper 資料流證實 `DS:0x0741` 是所選
+目標；野外藥草與祈禱之戒已改走正式隊員選擇，持有者與目標分離，藥草先消耗再判效果。
+
+同日再以原版影片、D3TXT01 與 IDA `sub_1010B` 閉合開場文字：第一個 `sub_15002` 消費
+rec80，緊接的 `sub_21414` 在角色尚未移動前消費 rec79；第二段結束後才有三個 movement
+consumer 與旗標交易。schema `0.1.53`／content `0.1.59` 因此把單數 record 改成有序
+`dialogue_records`。`sub_21414` 證實一般 glyph 有 timer gate，但 PIT／wall-clock 依硬體規格
+停止線只作 approximation，不再深挖。完整原始位址與推論等級見 `docs/192`。

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.51"
+	SchemaVersion       = "0.1.53"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -358,6 +358,8 @@ type WindowLayout struct {
 	TextInsetY      int         `json:"text_inset_y"`
 	Columns         int         `json:"columns"`
 	LinesPerPage    int         `json:"lines_per_page"`
+	GlyphHoldFrames int         `json:"glyph_hold_frames,omitempty"`
+	GlyphTiming     *Evidence   `json:"glyph_timing_evidence,omitempty"`
 	HPLabelGlyph    *int        `json:"hp_label_glyph,omitempty"`
 	MPLabelGlyph    *int        `json:"mp_label_glyph,omitempty"`
 	LevelLabelGlyph *int        `json:"level_label_glyph,omitempty"`
@@ -786,16 +788,17 @@ type SceneCoordinate struct {
 }
 
 type OpeningEscort struct {
-	ID                       string                `json:"id"`
-	CTY                      int                   `json:"cty"`
-	Section                  int                   `json:"section"`
-	Frames                   []OpeningEscortFrame  `json:"frames"`
-	Destination              SceneCoordinate       `json:"destination"`
-	ArrivalFrames            []OpeningArrivalFrame `json:"arrival_frames"`
-	CompletionDialogueRecord int                   `json:"completion_dialogue_record"`
-	SetStoryFlags            []int                 `json:"set_story_flags"`
-	ClearStoryFlags          []int                 `json:"clear_story_flags"`
-	Evidence                 Evidence              `json:"evidence"`
+	ID                 string                `json:"id"`
+	CTY                int                   `json:"cty"`
+	Section            int                   `json:"section"`
+	Frames             []OpeningEscortFrame  `json:"frames"`
+	Destination        SceneCoordinate       `json:"destination"`
+	ArrivalFrames      []OpeningArrivalFrame `json:"arrival_frames"`
+	DialogueFrameIndex int                   `json:"dialogue_frame_index"`
+	DialogueRecords    []int                 `json:"dialogue_records"`
+	SetStoryFlags      []int                 `json:"set_story_flags"`
+	ClearStoryFlags    []int                 `json:"clear_story_flags"`
+	Evidence           Evidence              `json:"evidence"`
 }
 
 // RawScreenAsset describes a version-owned planar screen whose bytes and
@@ -1171,6 +1174,9 @@ type ItemUseEffect struct {
 	DayNightClock        *int            `json:"day_night_clock,omitempty"`
 	ResetDayNightSteps   bool            `json:"reset_day_night_steps"`
 	StepCount            int             `json:"step_count"`
+	AmountMin            int             `json:"amount_min,omitempty"`
+	AmountMax            int             `json:"amount_max,omitempty"`
+	BreakRollMax         int             `json:"break_roll_max,omitempty"`
 	Consume              bool            `json:"consume"`
 	RequiredLayer        int             `json:"required_layer,omitempty"`
 	RequiredCTYRaw       int             `json:"required_cty_raw,omitempty"`
@@ -2080,6 +2086,15 @@ func (p *Pack) validateInterface() error {
 	if err := validateEvidence(w.Evidence); err != nil {
 		return fmt.Errorf("dialogue evidence: %w", err)
 	}
+	if w.GlyphHoldFrames < 0 || w.GlyphHoldFrames > 60 ||
+		(w.GlyphHoldFrames > 0 && w.GlyphTiming == nil) {
+		return errors.New("dialogue glyph timing is invalid")
+	}
+	if w.GlyphTiming != nil {
+		if err := validateEvidence(*w.GlyphTiming); err != nil {
+			return fmt.Errorf("dialogue glyph timing evidence: %w", err)
+		}
+	}
 	if err := validateFrameStyle("dialogue", w.Frame); err != nil {
 		return err
 	}
@@ -2328,7 +2343,8 @@ func (p *Pack) validateInterface() error {
 	if e := p.Interface.OpeningEscort; e != nil {
 		if e.ID == "" || e.CTY < 0 || e.Section < 0 || len(e.Frames) < 2 ||
 			e.Destination.CTY < 0 || e.Destination.Section < 0 || len(e.ArrivalFrames) < 2 ||
-			e.CompletionDialogueRecord < 0 || len(e.SetStoryFlags) == 0 || len(e.ClearStoryFlags) == 0 {
+			e.DialogueFrameIndex <= 0 || e.DialogueFrameIndex >= len(e.ArrivalFrames)-1 ||
+			len(e.DialogueRecords) == 0 || len(e.SetStoryFlags) == 0 || len(e.ClearStoryFlags) == 0 {
 			return errors.New("opening escort is invalid")
 		}
 		if err := validateEvidence(e.Evidence); err != nil {
@@ -2355,6 +2371,11 @@ func (p *Pack) validateInterface() error {
 				if dx+dy != 1 {
 					return fmt.Errorf("opening_escort.arrival_frames[%d] is not adjacent", i)
 				}
+			}
+		}
+		for i, record := range e.DialogueRecords {
+			if record < 0 {
+				return fmt.Errorf("opening_escort.dialogue_records[%d] is invalid", i)
 			}
 		}
 		seenFlags := map[int]string{}
@@ -3923,6 +3944,23 @@ func (p *Pack) validateEvents() error {
 				e.SuccessTextID == "" || e.NoEffectTextID == "" ||
 				e.DayNightPhase != 0 || e.ResetDayNightSteps || e.StepCount != 0 {
 				return fmt.Errorf("%s: invalid clear_condition configuration", e.ID)
+			}
+		case "heal_hp_selected":
+			if e.LocationKind != "any" || !e.Consume || e.AmountMin <= 0 ||
+				e.AmountMax < e.AmountMin || e.StepCount != 0 || e.BreakRollMax != 0 ||
+				e.TargetScope != "party_member" {
+				return fmt.Errorf("%s: invalid heal_hp_selected configuration", e.ID)
+			}
+		case "repel_encounters":
+			if e.LocationKind != "any" || !e.Consume || e.StepCount <= 0 ||
+				e.AmountMin != 0 || e.AmountMax != 0 || e.BreakRollMax != 0 {
+				return fmt.Errorf("%s: invalid repel_encounters configuration", e.ID)
+			}
+		case "restore_mp_breakable":
+			if e.LocationKind != "any" || e.Consume || e.AmountMin <= 0 ||
+				e.AmountMax < e.AmountMin || e.BreakRollMax < 0 || e.BreakRollMax > 255 ||
+				e.StepCount != 0 || e.TargetScope != "party_member" {
+				return fmt.Errorf("%s: invalid restore_mp_breakable configuration", e.ID)
 			}
 		case "reveal_world_map_patch":
 			patch := e.MapPatch

@@ -1,5 +1,5 @@
-// Package itemuse 提供有限的道具效果 lookup。PrayerBreakLE 有原版 IDA 證據；藥草治療、
-// 祈禱 MP 與聖水步數仍是 classic／舊 C 近似（hypothesis），不是本 EXE 的 confirmed 精確值。
+// Package itemuse 提供歷史相容的有限道具 lookup。正式 DQ3 數值由 game-pack JSON
+// 提供；此套件不得作為新增版本資料的落點。
 package itemuse
 
 // Kind:效果種類(對齊 dq3_item_use.h enum)。
@@ -32,11 +32,11 @@ const (
 	ItemMirror      = 0x61 // 拉之鏡
 )
 
-// 數值常數：前三項是 classic／舊 C 近似（hypothesis）；PrayerBreakLE 為 docs/22 confirmed。
+// 相容常數。正式玩家路徑已改讀 game-pack；保留供尚未遷移的純函式測試使用。
 const (
 	HerbHeal      = 30   // 藥草固定治療量
 	PrayerMPAmt   = 30   // 祈禱之戒 MP 回復量
-	HolySteps     = 64   // 聖水驅敵步數
+	HolySteps     = 40   // 原版 handler 寫入 0x28；正式值仍由 JSON 提供
 	PrayerBreakLE = 0x40 // 祈禱之戒損壞門檻:RNG(256) ≤ 0x40 → 損壞(~25.4%)
 )
 
