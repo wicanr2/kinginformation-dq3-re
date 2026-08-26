@@ -34,7 +34,9 @@ game test 找到開場連續演出在家門轉場後缺少「主角自動走到�
 `dist-all/v0.1.36/`；四個公開檔已發布，四個完整版不公開，詳見 [`docs/194`](docs/194-release-v0.1.36.md)。
 發行後工作樹另修正戰後固定誤回地表曲及音樂 OFF→ON 不立即恢復的 runtime 路由；
 castle／town／dungeon／field 與 title／battle／ending 現共用同一場景 selector，見
-[`docs/195`](docs/195-audio-transition-runtime-polish.md)。此修正尚未重包為新 release。
+[`docs/195`](docs/195-audio-transition-runtime-polish.md)。此修正尚未重包為新公開 release。
+本機完整版已另以 `v0.1.38-local` 同 checkpoint 重包至 `dist-all/v0.1.38-local/full/`；
+這不是公開 release，亦未上傳 GitHub。
 
 ### 自我評估：現行 remake 與原版的差距
 

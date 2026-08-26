@@ -31,7 +31,8 @@ field 軌的 3.112 秒尾段安靜區保留為編曲／loop-point 未知，不�
 2026-08-26 音訊 runtime polish：戰鬥結束不再固定播放 field，而依結算後場景恢復
 castle／town／dungeon／field；音樂 OFF→ON 亦立即恢復當前 title／battle／scene／ending cue。
 具名路由測試與七軌重驗通過，見 [`docs/195`](docs/195-audio-transition-runtime-polish.md)。
-音訊維度自評由 78% 提升至 84%，總分為 90.25%（對外仍取整 90%）；本批尚未重包 release。
+音訊維度自評由 78% 提升至 84%，總分為 90.25%（對外仍取整 90%）。commit `1dc5546`
+已重包為 `dist-all/v0.1.38-local/full/` 的四個本機完整版；尚未建立新的公開 release。
 
 2026-08-25 勘誤：[`docs/192`](docs/192-opening-dialogue-v3-closure.md) 已證實先前 rec80
 「小型城堡／錯誤背景」是 BLK 位平面解碼錯誤，修正後同狀態背景與 rec80→rec79 已閉合；

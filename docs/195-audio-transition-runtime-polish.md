@@ -37,6 +37,14 @@ consumer。修正只把「結束／重新啟用」接回同一個具名場景 se
 結果，也沒有把 EBG 18–23 或每個戰鬥動作停頓全部接成原版同狀態 oracle，因此維持非 V3；
 DAC／PIT／DMA wall-clock 依既定停止線不重新研究。
 
+## 本機完整版
+
+commit `1dc5546` 已於 2026-08-26 重包為 `dist-all/v0.1.38-local/full/`：Linux x86_64
+AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP。四包均含 18 軌 OGG、兩個 MT-32
+ROM 與現行 `DQ3MNS.SHP`，IDA database／sidecar 命中為 0；ZIP CRC、AppImage 解包、架構、
+SHA-256、七軌抽樣及 Linux Docker＋Xvfb＋ALSA null 啟動均通過。macOS 尚未經真機驗收，
+完整包只在本機保留，沒有建立或更新 GitHub Release。
+
 ## 自評影響
 
 「音樂、音效與時序」由 78% 調為 84%。固定權重下總分由 89.65% 增至 90.25%，對外仍取整

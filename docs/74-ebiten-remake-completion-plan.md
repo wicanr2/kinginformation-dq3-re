@@ -1469,5 +1469,6 @@ macOS 真機驗收，分別屬證據限制或可選驗收，不是 remake 功能
 
 Docker＋Xvfb 的 audio／music／sound／settings／battle cue 比例回歸及七軌 FFmpeg 完整解碼、
 音量、峰值、長靜音 gate 均通過。音訊自評由 78% 調為 84%，總分 90.25%（對外 90%）。
-Windows／macOS 實際裝置人耳、EBG 18–23 事件 consumer 與逐動作停頓仍不是 V3；本批尚未
-重包為 v0.1.36 之後的新 release。
+Windows／macOS 實際裝置人耳、EBG 18–23 事件 consumer 與逐動作停頓仍不是 V3。commit
+`1dc5546` 已重包為 `dist-all/v0.1.38-local/full/` 的 Linux x86_64 AppImage、Windows x86_64
+ZIP、macOS x86_64／arm64 ZIP；這是本機完整版，尚未建立 v0.1.36 之後的新公開 release。
