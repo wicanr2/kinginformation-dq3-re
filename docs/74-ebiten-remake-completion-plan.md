@@ -1,8 +1,8 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-08-24 發佈 checkpoint：v0.1.35 已由 `b26bb48` 正式發布；現行 hash、
-> patch／full 素材邊界及驗證限制見 [`docs/190`](190-release-v0.1.35.md)。v0.1.34 與
-> [`docs/131`](131-release-v0.1.34.md) 僅保存上一版發行史。
+> 2026-08-26 發佈 checkpoint：v0.1.36 已由 `d6184f4` 正式發布；現行 hash、
+> patch／full 素材邊界及驗證限制見 [`docs/194`](194-release-v0.1.36.md)。v0.1.35 與
+> [`docs/190`](190-release-v0.1.35.md) 僅保存上一版發行史。
 >
 > 2026-08-22 戰鬥勘誤：[`docs/148`](148-battle-single-action-queue-spec.md) 已證實本 EXE
 > 每個存活 actor 每回合恰好一筆，沒有 Boss repeat-N。本文較早 milestone 中將其列為
@@ -31,15 +31,15 @@
 > 對拍證實轉場後仍缺「主角自動走到王城入口才播 rec80」，現已依
 > [`docs/188`](188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列。王座 rec78 的勇者
 > 經同 tile 像素差異測試證實既有 renderer 已繪出，先前截圖判讀已撤回。`v0.1.36-local`／
-> `v0.1.37-local` 是修正形成期間的歷史包；現行 checkpoint `b26bb48` 已以 v0.1.35 重建四個
+> `v0.1.37-local` 是修正形成期間的歷史包；現行 checkpoint `d6184f4` 已以 v0.1.36 重建四個
 > 桌面公開 patch 與四個本機完整版。功能 worklist 與本輪指定交付均已清空。
 
 > **接手判讀鐵則：**本檔第 4–10 節及各日期 checkpoint 保存證據形成史，不是可直接執行的
 > current worklist。現況只由本段、下方「玩家可見畫面盤點」、文件末端最新 checkpoint 與
 > [`WORKLIST.md`](../WORKLIST.md) 共同仲裁；舊段落出現「待辦／unknown／pending」時，必須先查
-> 是否已被 `docs/128..190` 訂正。現行桌面交付在 `dist-all/v0.1.35/`；公開 patch 已發布，
+> 是否已被 `docs/128..194` 訂正。現行桌面交付在 `dist-all/v0.1.36/`；公開 patch 已發布，
 > 完整素材、MT-32 OGG 與 ROM 只在本機完整版保存，不加入 GitHub。既有有音樂推廣片仍位於
-> `dist-all/v0.1.35-local/promo/`，不是 v0.1.35 release 的同 checkpoint 錄影。沒有新的玩家可見
+> `dist-all/v0.1.35-local/promo/`，不是 v0.1.36 release 的同 checkpoint 錄影。沒有新的玩家可見
 > 反證時，不重新開啟已完成功能或無界反組譯。
 
 > 建立：2026-07-28（Asia/Taipei）

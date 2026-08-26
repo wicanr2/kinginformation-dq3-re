@@ -1,6 +1,6 @@
 # DQ3 Go／Ebitengine 現行工作清單
 
-更新：2026-08-25。唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
+更新：2026-08-26。唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
 本檔只保存可快速接手的目前順序，不收錄歷史 C/SDL 工作。
 
 | 順序 | 工作 | 狀態 | 直接證據 |
@@ -21,7 +21,7 @@
 |---|---|---|
 | remake 玩家流程 | 六項功能皆已接入；開場轉場後自動行走已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為兩階段 pack 序列，rec80→rec79、逐字顯示與王座勇者像素檢查均通過 | 否；完整 trace 後段仍會在既有 Lv20 練級上限失敗，與本切片無關 |
 | 原版證據限制 | 藥草、祈禱之戒與聖水參數已由 [`docs/191`](docs/191-field-item-parameter-re.md) 訂正；目前限制是王座同頁原版畫格、開場淡入淡出、職業能力條逐格及部分音效仍只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
-| 交付 | `v0.1.35` 已由 commit `b26bb48` 建立 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 的公開 patch 與本機完整版；公開 patch 私有素材為 0 | 已完成；checksum、smoke 與限制見 [`docs/190`](docs/190-release-v0.1.35.md) |
+| 交付 | `v0.1.36` 已由 commit `d6184f4` 建立 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 的公開 patch 與本機完整版；公開 patch 私有素材為 0 | 已完成；checksum、smoke 與限制見 [`docs/194`](docs/194-release-v0.1.36.md) |
 
 2026-08-25 音訊抽樣：正式場景使用的七軌 OGG 已由 [`docs/193`](docs/193-audio-sampling-polish-20260825.md)
 完成格式、時長、音量、長靜音、完整解碼與 SHA-256 驗收；沒有 clipping 或近似靜音。
@@ -68,8 +68,9 @@ ALSA null smoke 通過，SHA-256 為
 checkpoint。
 
 依使用者決定，完整版與含 MT-32 音樂的推廣片都只在本機保留，不加入 Git 或公開 release；
-公開 patch 使用 v0.1.35 tag。release checkpoint `0.1.51/0.1.57` 已於 `dist-all/v0.1.35/`
-重包；現行 source 已為 schema `0.1.53`／content `0.1.59`，尚未重新發版。Android host audio／真機、macOS 真機與全遊戲 V3 仍是
+公開 patch 使用 v0.1.36 tag。現行 schema `0.1.53`／content `0.1.59` 已於
+`dist-all/v0.1.36/` 完成四平台架構檔（Linux、Windows、兩種 macOS 架構）的 patch／full
+同 checkpoint 封裝，公開 release 只含四個 patch。Android host audio／真機、macOS 真機與全遊戲 V3 仍是
 可選驗收，不得誤寫成已通過。
 
 本輪依使用者指示不以完整回歸作完成條件。若沒有新的玩家可見差異、正式發行需求或更強

@@ -1,13 +1,13 @@
 # 精訊版《勇者鬥惡龍 III》反組譯與 remake
 
-> 桌面版 v0.1.35 已由 checkpoint `b26bb48` 正式發布；公開 patch 不含原版素材，
-> checksum、完成度與已知視覺差異見 [`docs/190`](docs/190-release-v0.1.35.md)。同 checkpoint
-> 的 Linux／Windows／macOS 本機完整版集中於 `dist-all/v0.1.35/full/`，只在本機保留；
+> 桌面版 v0.1.36 已由 checkpoint `d6184f4` 正式發布；公開 patch 不含原版素材，
+> checksum、素材邊界與驗證限制見 [`docs/194`](docs/194-release-v0.1.36.md)。同 checkpoint
+> 的 Linux／Windows／macOS 本機完整版集中於 `dist-all/v0.1.36/full/`，只在本機保留；
 > 推廣片仍在較早的 `dist-all/v0.1.35-local/promo/`，不可描述為本 release 錄影。
-> 公開下載：<https://github.com/wicanr2/kinginformation-dq3-re/releases/tag/v0.1.35>
+> 公開下載：<https://github.com/wicanr2/kinginformation-dq3-re/releases/tag/v0.1.36>
 > 各自的 `LOCAL-DELIVERY.txt`、`SHA256SUMS.txt` 與 promo metadata 保存驗收邊界，舊版型形成史
 > 見 [`docs/134`](docs/134-promo-video-r2-dist-all.md)。目前 release source 為 schema
-> `0.1.51`／content `0.1.57`：包含日夜原始
+> `0.1.53`／content `0.1.59`：包含日夜原始
 > palette bank、poison／curse E2、驅毒草選人交易，以及玩家／敵人逃跑的 VOC cue 與完成
 > 等待閘門；因此較早的公開 v0.1.34 不能被描述為包含這些修正，
 > 證據見 [`docs/136`](docs/136-daynight-palette-bank-spec.md)、
@@ -23,7 +23,7 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前狀態（2026-08-25）：指定的六項玩家功能與四項殘餘 polish 已接入；最新原版／remake
+目前狀態（2026-08-26）：指定的六項玩家功能與四項殘餘 polish 已接入；最新原版／remake
 game test 找到開場連續演出在家門轉場後缺少「主角自動走到王城入口」的玩家可見段落，
 現已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為 game-pack 兩階段序列。
 王座 rec78 的勇者經像素差異測試確認既有 renderer 已正確繪出，先前截圖判讀不列為缺陷。
@@ -31,11 +31,11 @@ game test 找到開場連續演出在家門轉場後缺少「主角自動走到�
 直接 OGG（FM 僅保留明確診斷開關）、將注音組字移回原版下方面板、加入 `ㄨㄤˇ` 可選「王」
 的明示相容別名、補母親逐格帶路，以及 NPC 待機兩幀與移動面向同步；見
 [`docs/187`](docs/187-opening-player-path-polish.md)。同版公開 patch 與本機完整版已重包於
-`dist-all/v0.1.35/`；四個公開檔已發布，四個完整版不公開，詳見 [`docs/190`](docs/190-release-v0.1.35.md)。
+`dist-all/v0.1.36/`；四個公開檔已發布，四個完整版不公開，詳見 [`docs/194`](docs/194-release-v0.1.36.md)。
 
 ### 自我評估：現行 remake 與原版的差距
 
-**整體 remake 完成度：約 89%；相對原版仍有約 11% 差距。** 這是截至 2026-08-25、以
+**整體 remake 完成度：約 90%；相對原版仍有約 10% 差距。** 這是截至 2026-08-26、以
 玩家可見成果加權的工程自評，不是「已解讀 85% executable bytes」，也不代表逐像素 parity。
 固定計算方式為「玩家流程 35%＋資料／規則 25%＋畫面 20%＋聲音 10%＋平台交付 10%」：
 
@@ -45,8 +45,8 @@ game test 找到開場連續演出在家門轉場後缺少「主角自動走到�
 | 資料、規則與存檔 | 93% | 25% | 23.25% | 藥草、聖水、祈禱之戒的參數、持有者／目標選擇與消耗順序已由 IDA 閉合並遷入 JSON；未知 helper 仍不冒稱 exact |
 | 畫面與動畫 | 78% | 20% | 15.6% | BLK 位平面、同格 rec80→rec79、20×4 分頁與 16×16 glyph cell 已依 EXE／D3TXT／影片閉合；rec78 證據圖已排除逐字初始幀假缺字，但同頁原版畫格與全場景動態仍以 V2 為主 |
 | 音樂、音效與時序 | 78% | 10% | 7.8% | OGG 與關鍵 cue 已接線；七個正式場景軌已通過格式、時長、音量、長靜音及完整解碼抽樣；跨平台人耳、EBG 事件 cue 與逐動作停頓尚未完整對拍 |
-| 三平台交付 | 90% | 10% | 9.0% | Linux／Windows／macOS 同版封裝完成；macOS 尚缺真機驗收，Android 不在本輪三平台範圍 |
-| **合計** |  | **100%** | **89.25%（對外取整為 89%）** | **剩餘差距約 11%，主要集中於全場景動態／聲音 V3 與真機驗收** |
+| 三平台交付 | 94% | 10% | 9.4% | v0.1.36 的 Linux／Windows／macOS 公開 patch 與本機完整版同 checkpoint 封裝完成；macOS 尚缺真機驗收，Android 不在本輪三平台範圍 |
+| **合計** |  | **100%** | **89.65%（對外取整為 90%）** | **剩餘差距約 10%，主要集中於全場景動態／聲音 V3 與真機驗收** |
 
 本專案目前可合理稱為「主要玩家流程已重製、核心資料與事件大多接線完成」，但不能稱為
 「逐畫面、逐幀、逐聲音完全等同原版」。下表保留各維度的證據與限制，避免總百分比掩蓋
@@ -58,9 +58,9 @@ game test 找到開場連續演出在家門轉場後缺少「主角自動走到�
 | 開場與設定資料 | 家中母親帶路、轉場後自動行走、同格 rec80→rec79 與旗標交易已依 IDA／D3TXT／影片接成 game-pack 序列；BLK 位平面勘誤後背景色號已對齊 | `arrival_frames` 尚未證明每個內部路點／timing exact；逐 glyph timer 採硬體規格近似，不宣稱 DOS wall-clock 逐週期一致 | 不阻塞流程 E3；文字 record／cell layout 已閉合，整體動態畫面仍阻塞 V3 |
 | 規則與資料 | 主線必要的道具、怪物 action、抗性、formation、商店、咒文、掉落、日夜及事件交易多數達 D2/D3→E2 | 藥草、聖水、祈禱之戒已移除舊近似並接正式選人；未被玩家路徑使用的 helper 仍保留證據限制 | 否；未知項不得冒稱 exact |
 | 畫面與操作 | 原始資產、中文字型、HUD、選單、NPC、角色與主要場景均可由正式 runtime 顯示；能力確認固定畫面已有 V3 靜態對拍；BLK 位平面修正後 rec80 背景色號已對齊，opening 文字 record／cell layout 已達 V3；rec78 dump 現固定輸出完整當頁 | 多數其他畫面仍是 V1／V2；rec78 尚缺同頁原版畫格，不能把 viewport／palette 整體升格；逐窗、戰鬥、attract／ending timing 亦未全面 V3 | 不阻塞功能 release；阻塞「視覺忠實完成」聲明 |
-| 音樂與音效 | 正常產品直接播放 OGG；關鍵戰鬥 VOC cue 與完成等待已接線；七個正式場景軌已通過 codec／32 kHz／雙聲道、時長、音量、長靜音、完整解碼及 SHA-256 抽樣，見 [`docs/193`](docs/193-audio-sampling-polish-20260825.md) | 跨平台實際裝置的人耳切換、EBG 事件 cue、逐動作停頓尚未完整對拍；DAC／PIT／DMA wall-clock 依公開硬體規格作可重現近似，不宣稱逐週期一致 | 否；新完整版需重跑同一抽樣，真機人耳屬 V3 |
+| 音樂與音效 | 正常產品直接播放 OGG；關鍵戰鬥 VOC cue 與完成等待已接線；v0.1.36 完整版的七個正式場景軌已通過 codec／32 kHz／雙聲道、時長、音量、長靜音、完整解碼及 SHA-256 抽樣，見 [`docs/193`](docs/193-audio-sampling-polish-20260825.md) 與 [`docs/194`](docs/194-release-v0.1.36.md) | 跨平台實際裝置的人耳切換、EBG 事件 cue、逐動作停頓尚未完整對拍；DAC／PIT／DMA wall-clock 依公開硬體規格作可重現近似，不宣稱逐週期一致 | 否；真機人耳屬 V3 |
 | 存檔與資料包 | pack 具 schema、reference validation、content hash；主要事件有 save/load transaction | 不是每個可選支線與每個演出中間 frame 都有 round-trip；演出中途存檔語意未證實時採失敗即關閉 | 否；正常 checkpoint 已涵蓋主線 |
-| 平台交付 | Linux／Windows／macOS 已依 release checkpoint `0.1.51/0.1.57` 建立公開 patch 與本機完整版；現行 source 已升至 `0.1.53/0.1.59`，Android 有較早 checkpoint 產物 | 現行 source 尚未重包為新 release；macOS 真機、Android host audio／真機仍未完成，Android 不屬本輪桌面 release | 不阻塞既有三平台桌面 release；新版本發佈前需重包 |
+| 平台交付 | Linux／Windows／macOS 已依現行 release checkpoint `0.1.53/0.1.59` 建立 v0.1.36 公開 patch 與本機完整版；Android 有較早 checkpoint 產物 | macOS 真機、Android host audio／真機仍未完成，Android 不屬本輪桌面 release | 不阻塞三平台桌面 release |
 
 綜合判定：**功能層可維持 campaign E3；資料／規則主要為 E2；rec80→rec79 的文字
 record／cell layout 已閉合，但整體視覺與聲音仍不能標 V3。**
@@ -79,7 +79,7 @@ Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完�
 [`docs/186`](docs/186-player-controls-audio-polish.md)。72 秒有音樂推廣片仍在
 `dist-all/v0.1.35-local/promo/`。
 這批完整素材與 MT-32 音樂只供本機保存，不加入 Git 或 GitHub Release；公開版現為不含
-原版素材的 v0.1.35。目前沒有已知的必要主線功能缺口，且本輪 source 已完成
+原版素材的 v0.1.36。目前沒有已知的必要主線功能缺口，且本輪 source 已完成
 三平台同版重包。全遊戲逐畫面
 V3、Android host audio／真機與 macOS 真機
 參數，都是證據限制或可選驗收，不能寫成已達原版 exact，也不反向推翻 remake 玩家流程完成。
