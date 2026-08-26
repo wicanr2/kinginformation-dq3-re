@@ -23,6 +23,11 @@
 | 原版證據限制 | 藥草、祈禱之戒與聖水參數已由 [`docs/191`](docs/191-field-item-parameter-re.md) 訂正；目前限制是王座同頁原版畫格、開場淡入淡出、職業能力條逐格及部分音效仍只到 V1／V2／unknown | 否；文件與程式必須保留近似／未知標記，不得冒稱 exact |
 | 交付 | `v0.1.35` 已由 commit `b26bb48` 建立 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 的公開 patch 與本機完整版；公開 patch 私有素材為 0 | 已完成；checksum、smoke 與限制見 [`docs/190`](docs/190-release-v0.1.35.md) |
 
+2026-08-25 音訊抽樣：正式場景使用的七軌 OGG 已由 [`docs/193`](docs/193-audio-sampling-polish-20260825.md)
+完成格式、時長、音量、長靜音、完整解碼與 SHA-256 驗收；沒有 clipping 或近似靜音。
+field 軌的 3.112 秒尾段安靜區保留為編曲／loop-point 未知，不在沒有原版循環邊界時裁切。
+跨平台人耳與尚未閉合完成／恢復時序的 EBG 事件 cue 是可選 V3，不是功能 blocker。
+
 2026-08-25 勘誤：[`docs/192`](docs/192-opening-dialogue-v3-closure.md) 已證實先前 rec80
 「小型城堡／錯誤背景」是 BLK 位平面解碼錯誤，修正後同狀態背景與 rec80→rec79 已閉合；
 record 78 的勇者及角色關係亦已由像素差異測試確認。王座同頁原版畫格、開場淡入淡出與

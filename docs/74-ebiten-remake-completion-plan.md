@@ -158,7 +158,7 @@
 | 下降／下世界 | 影片、EXE | 巴拉摩斯後王座事件與自然下降入口已接 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
 | 終盤連戰 | 影片、RE | 光之珠、隱藏樓梯、歐里狄加與三連戰已有正式入口 | 新遊戲 boot trace 已通過；主線 E3，畫面 V1 |
 | THE END | 影片、TIT3 | 戰後回城、冊封與 ending scroll 已接 | 新遊戲 boot trace 已到 THE END；逐畫面與音效仍待 V3 |
-| 音樂／音效 | 原版 MCX/VOC、錄音研究 | OPL2/OGG、關鍵戰鬥 cue 與 completion gate 已接；硬體 wall-clock 依平台規格近似 | 主線不阻塞；全場景 cue、人耳與同狀態音訊屬可選 V3 |
+| 音樂／音效 | 原版 MCX/VOC、錄音研究 | OPL2/OGG、關鍵戰鬥 cue 與 completion gate 已接；七個正式場景 OGG 已通過 codec／聲道／時長／音量／長靜音與完整解碼抽樣，見 `docs/193`；硬體 wall-clock 依平台規格近似 | E2 技術抽樣；跨平台人耳、EBG 事件 cue 與同狀態音訊仍屬可選 V3 |
 | 觸控／Android | 無原版對照，屬 port UX | 輸入抽象、保存優先 UX、Docker APK 與隔離靜音 emulator 觸控／lifecycle 已驗 | host audio backend 與真機驗收未完成；不屬桌面 remake release gate |
 
 ## 3. 現況判斷

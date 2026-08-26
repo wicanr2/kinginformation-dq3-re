@@ -57,6 +57,14 @@ func TestBuiltinDQ3FinalePackReferences(t *testing.T) {
 	if track, ok := p.AudioTrack("ending"); !ok || track != 17 {
 		t.Fatalf("ending audio cue = %d/%v, want 17/true", track, ok)
 	}
+	for cue, want := range map[string]int{
+		"title": 0, "castle": 1, "town": 2, "dungeon": 3,
+		"field": 6, "battle": 14, "ending": 17,
+	} {
+		if got, ok := p.AudioTrack(cue); !ok || got != want {
+			t.Fatalf("audio cue %s = %d/%v, want %d/true", cue, got, ok, want)
+		}
+	}
 }
 
 func TestBuiltinDQ3BattleFleeSoundCuesMatchOriginal(t *testing.T) {
