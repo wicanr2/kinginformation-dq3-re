@@ -1459,3 +1459,15 @@ macOS 真機驗收，分別屬證據限制或可選驗收，不是 remake 功能
   本批未重跑，既有 E3 不因局部測試升降。rec78 dump 已固定為完整當頁，並停止
   把逐字初始幀當成缺字證據；同頁原版畫格尚不可取得，因此王座整體維持 V2。開場淡入淡出、
   職業能力條逐格與未具 oracle 的 wall-clock 不以猜值補洞，也不重新開啟無界 RE。
+
+## 2026-08-26 音訊 runtime polish checkpoint
+
+[`docs/195`](195-audio-transition-runtime-polish.md) 已訂正兩個玩家可見路由：一般／劇情戰鬥
+結束後依結算後場景恢復 castle／town／dungeon／field，不再固定 field；設定音樂 OFF→ON
+會立即恢復 title／battle／scene／ending 的當前 cue。實際軌號仍由 game-pack `audio.json`
+解析，未新增玩家可見文字或音軌 fallback。
+
+Docker＋Xvfb 的 audio／music／sound／settings／battle cue 比例回歸及七軌 FFmpeg 完整解碼、
+音量、峰值、長靜音 gate 均通過。音訊自評由 78% 調為 84%，總分 90.25%（對外 90%）。
+Windows／macOS 實際裝置人耳、EBG 18–23 事件 consumer 與逐動作停頓仍不是 V3；本批尚未
+重包為 v0.1.36 之後的新 release。

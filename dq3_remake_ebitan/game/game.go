@@ -31,6 +31,18 @@ const (
 	audioCueBattle  = "battle"
 )
 
+// gameAudio 是遊戲流程需要的跨版本音訊契約。正式實作為 gaudio.Music；保留介面可讓
+// 場景切換、戰鬥返回與設定熱切換以實際 track 呼叫驗證，不必在測試建立主機音訊裝置。
+type gameAudio interface {
+	Play(int)
+	PlaySFX(int)
+	SFXDurationNanos(int) int64
+	SetEnabled(bool)
+	SetVolume(int)
+	SetSFXWithDurations([][]int16, []int64)
+	SetMBG([]byte)
+}
+
 const (
 	ScreenW, ScreenH = 640, 350
 	TileW, TileH     = 32, 24
@@ -336,7 +348,7 @@ type Game struct {
 	fieldSpell                FieldSpellMenu // 野外咒文／魯拉目的地 modal
 	visitedTowns              []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
 	inventory                 []int          // 持有道具 id
-	music                     *gaudio.Music
+	music                     gameAudio
 	input                     *Input // 抽象輸入(鍵盤 + 觸控)
 	showTitle                 bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
 	titlePix                  []uint8
@@ -1034,15 +1046,16 @@ func (g *Game) step(in InputState) error {
 		return nil
 	}
 
-	// 戰鬥 modal:結束時寫回主角結果 + 回地表音樂
+	// 戰鬥 modal：結束時寫回結果，再依實際所在場景恢復音樂；不可把城鎮、
+	// 城堡或迷宮的戰後路由一律降成地表曲。
 	if g.battle.active {
 		if g.battle.input(in) {
 			won := g.battle.result == 1
 			g.onBattleEnd()
 			if won && len(g.bossQueue) > 0 { // boss 連戰:勝 → 接下一場
 				g.advanceBossQueue()
-			} else if g.endSeq < 0 { // 一般戰後回地表曲(結局進行中則不覆蓋)
-				g.playAudioCue(audioCueField)
+			} else if g.endSeq < 0 { // 結局進行中不覆蓋 ending cue
+				g.resumeCurrentMusic()
 			}
 		}
 		g.renderFrame()
@@ -2511,21 +2524,45 @@ func (g *Game) playAudioCue(id string) {
 	}
 }
 
-// playSceneMusic 只保留跨版本的場景分類；實際軌號由 versioned audio.json 提供。
-func (g *Game) playSceneMusic(cty int) {
+// currentAudioCue 回傳玩家目前可見 modal／場景應使用的具名音樂角色。實際軌號仍完全
+// 由 versioned game-pack audio.json 決定；此處只保存跨版本的狀態優先序。
+func (g *Game) currentAudioCue() string {
+	if g.lotoBlessed {
+		return audioCueEnding
+	}
+	if g.battle.active {
+		return audioCueBattle
+	}
+	if g.showTitle {
+		return audioCueTitle
+	}
+	if g.inTown {
+		return sceneAudioCue(g.curCty)
+	}
+	return audioCueField
+}
+
+// resumeCurrentMusic 用於戰鬥／設定 modal 結束後恢復當前玩家場景。
+func (g *Game) resumeCurrentMusic() { g.playAudioCue(g.currentAudioCue()) }
+
+func sceneAudioCue(cty int) string {
 	cue := audioCueTown
 	for _, castle := range []int{0, 2, 6, 37, 73, 76} {
 		if cty == castle {
-			cue = audioCueCastle
-			break
+			return audioCueCastle
 		}
 	}
-	if cue == audioCueTown && cty >= 0 && cty < len(mapBlkNum) {
+	if cty >= 0 && cty < len(mapBlkNum) {
 		if b := mapBlkNum[cty]; b == 2 || b == 4 || b == 5 {
 			cue = audioCueDungeon
 		}
 	}
-	g.playAudioCue(cue)
+	return cue
+}
+
+// playSceneMusic 只保留跨版本的場景分類；實際軌號由 versioned audio.json 提供。
+func (g *Game) playSceneMusic(cty int) {
+	g.playAudioCue(sceneAudioCue(cty))
 }
 
 // countItem:背包內某 item id 的數量。

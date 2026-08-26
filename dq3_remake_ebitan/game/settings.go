@@ -10,8 +10,8 @@ import (
 //
 // Go port 對「切了但沒真的接」的兩列誠實標記為 no-op / 需重啟(不假裝有效,對齊任務硬規則):
 //   - RNG(row0):Go port 戰鬥恆用 DOS 忠實亂數,這列顯示但切換不改變行為。
-//   - 音源(row3):MT-32 OGG ↔ SB-FM OPL2 是啟動時決定的播放路徑；DQ3_MT32 明確指定 OGG，
-//     否則完整包預設讀 MBG.MCX。執行期熱切換尚未接線，這列只顯示目前值。
+//   - 音源(row3):正常產品固定使用 MT-32 OGG；SB-FM OPL2 只由明確的 DQ3_FM 診斷開關
+//     在啟動時選用。執行期熱切換尚未接線，這列只顯示目前值。
 const (
 	setRowRNG        = iota
 	setRowMusic      // 音樂 開/關 → 即時套用 g.music.SetEnabled
@@ -65,7 +65,12 @@ func (g *Game) applySettingChange(row, dir int) {
 		// no-op:Go port 戰鬥恆用 DOS 忠實亂數(見 internal/rng),沒有 real 模式可切。
 	case setRowMusic:
 		g.cfg.MusicEnabled = !g.cfg.MusicEnabled
-		g.music.SetEnabled(g.cfg.MusicEnabled)
+		if g.music != nil {
+			g.music.SetEnabled(g.cfg.MusicEnabled)
+		}
+		if g.cfg.MusicEnabled && g.music != nil {
+			g.resumeCurrentMusic()
+		}
 	case setRowVolume:
 		v := g.cfg.MusicVolume + dir*10
 		if v > 100 {
@@ -74,7 +79,9 @@ func (g *Game) applySettingChange(row, dir int) {
 			v = 100
 		}
 		g.cfg.MusicVolume = v
-		g.music.SetVolume(v)
+		if g.music != nil {
+			g.music.SetVolume(v)
+		}
 	case setRowAudio:
 		// no-op(顯示用):MT-32/SB-FM 為啟動時決定的播放路徑,執行期不熱切換;誠實不假裝生效。
 	case setRowCombatInfo:

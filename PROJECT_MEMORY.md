@@ -1,11 +1,15 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 發佈記憶：現行 v0.1.35 已由 checkpoint `b26bb48` 正式發布；v0.1.34 是歷史。
-> GitHub 只含公開 patch，本機 full 未上傳；hash 與驗證界線以 `docs/190` 為準。
+> 發佈記憶：現行 v0.1.36 已由 checkpoint `d6184f4` 正式發布；v0.1.35 是歷史。
+> GitHub 只含公開 patch，本機 full 未上傳；hash 與驗證界線以 `docs/194` 為準。
 
-> 更新：2026-08-24。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
+> 更新：2026-08-26。接手先讀 `CLAUDE.md`、`CONTEXT.md`，再讀
 > [`docs/74-ebiten-remake-completion-plan.md`](docs/74-ebiten-remake-completion-plan.md)。
 > 本檔只保存不易過期的決策；逐項狀態不要在此重複維護。
+
+> 2026-08-26 音訊 polish：發行後工作樹已把戰後固定 field 修成依實際場景恢復，並讓
+> 音樂 OFF→ON 立即恢復當前 cue；比例回歸與七軌抽樣通過，見 `docs/195`。此修改尚未重包
+> 為 v0.1.36 以後的新 release，不能誤稱現行公開 binary 已包含。
 >
 > 2026-08-23 收尾狀態：完整正式主線已達 E3；戰鬥道具、實際使用的 39 個怪物 action、
 > 野外輔助咒文 `rec166–171`、一般商店賣出、船進城載具交易，以及瑪依拉特殊店／王者之劍
