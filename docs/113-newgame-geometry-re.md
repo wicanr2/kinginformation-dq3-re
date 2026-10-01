@@ -1,8 +1,8 @@
 # 開場／創角幾何反組譯與對拍
 
-2026-10-01 現行狀態：命名跨列導航與功能切英數已達下方限定 CONFORMED；
-主選單／初始命名繪圖仍為 DRAFT，正式全畫布差異尚未修正。
-早期「production 尚未變更」記錄保留形成史，不能覆蓋最新導航切片或據此宣稱繪圖完成。
+2026-10-01 現行狀態：命名導航與有限繪圖均已達下方限定 CONFORMED；
+主選單、初始注音與兩條導航共 12 張正式全畫布 RGB 零差異。
+早期 DRAFT／5,508、8,025 差異／「production 尚未變更」段落保留形成史，不能覆蓋現況。
 
 本文件封存 `interface.json.new_game_geometry` 的來源與限制。初版的
 `checkerboard_1px`、`solid_2px` 與「尚未 V3」段落都保留為時間序列；2026-08-12 的
@@ -206,6 +206,91 @@ READY 時的兩份收據已依內容 hash 在同一目錄存檔，沒有覆寫�
 
 下一個最小閘門仍為上方繪圖 DRAFT 的有限 pack 欄位與正式 renderer，
 不是重新研究已閉合導航；原版能力擲骰、出生點與母親保持 unknown，Issue #4 保持開啟。
+
+### 2026-10-01：正式主選單／命名字盤繪圖契約（DRAFT → READY）
+
+本切片沿用上方固定 EXE／TXT／FON、IDA 9.4 位址契約及冷啟動收據，
+處理主選單、初始注音、六次方向導航、raw35 功能焦點及英數盤的正式完整畫布。
+typed contract 是 `new_game_geometry.raster`：三個具名視窗 role（menu／header／mode）
+各引用既有 raw window ID 與完整文字 text ID；另有注音／英數 grid text ID、grid origin、
+menu／function cursor 與 hit rect、陰影位移、框線邊帶寬高、字模色號、框線／游標 XOR
+遮罩及有限 palette overrides。它描述資料與引用，不承載繪圖命令串或任意 JSON code。
+新欄位採 schema `0.1.55`／content `0.1.61`，缺值、未知 window／text、越界或非法
+控制字一律由 loader 拒絕；初始化需確認字模與背景素材完整，不能猜預設值。
+
+證據審查：menu raw `0x28B1E` 的 30 bytes 及 record475 已由原版與試作全畫布閉合；
+header raw `0x29088`／record451、grid452/453、mode raw `0x290C4`／record456 依
+原始 caller→writer 及冷啟動 PNG 閉合。字盤 origin `(152,94)`、姓名 `(248,62)`、
+格盤 `(168,94)`；word shadow offset `(8,8)`，frame 邊帶16px；font index8、frame XOR5、
+游標 XOR12／16×15，palette index8=`(255,223,255)`。上述為限定狀態 `confirmed`。
+完整 palette 初始化 writer 與閃爍相位仍未知，不由靜態圖外推。
+function raw `0x290A6` 的 cursor words +24/+26=`41/94`，經 `sub_1F908` 為 `(328,94)`，
+row step16，selected glyph11／blank12；menu cursor `(240,166)`。`1F93F` 的原始
+`mov ax,[si+6]; sub ax,4` 為 row 區域寬度，byte 投影8，menu144px／function64px；
+同列兩個 cursor 皆由既有 pack `choice_cursor` 字模提供。
+模式焦點 PNG 證實 grid cursor 移除、功能 glyph11 出現、下方 mode window 關閉；
+切英數後 grid raw35 游標恢復，下方 mode window 不再出現。
+
+實作固定順序：唯讀背景複製 → word-latch 陰影 → 完整 record 不透明字模 →
+flags bit2 控制四邊 XOR → menu glyph cursor；命名則 header → 模式 grid →
+姓名字元／姓名 XOR cursor → grid XOR 或 function glyph cursor，注音且無功能焦點才畫
+mode window／既有組字欄。title palette 使用複製後有限 override，不修改背景或 pack。
+正式 `InputState` 與姓名狀態機保持前批導航規格，不加入 debug 入口。
+
+候選字窗、性別及能力確認維持既有獨立繪圖路徑，不把尚未閉合的候選行為猜進本契約；
+酒館沿用既有場景色盤／繪圖，抽測其正式命名與存讀檔，不把 title palette 外推到城鎮。
+共享姓名／格盤 anchor 的一像素及標題位置勘誤由原始字模／writer 修正，舊幾何斷言保留
+在本文形成史。存檔格式不變，pack hash／版本照既有流程更新。
+
+驗收：原始 EXE 的三個 raw window 與 cursor bytes、原始 TXT 完整 records 維持 Go decoder
+parity oracle；reference／邊界／缺值拒絕；正式 NewGame／InputState 在完整640×350 RGB
+比較 menu、初始 name、導航、功能 focus 與 alnum，不裁切或遮罩；背景及 palette 不變測試；
+姓名／酒館／存讀檔及正常主線，完整 game／internal／desktop。已審查證據足以描述上述
+輸入、順序、邊界、輸出與驗收，**此限定契約 READY，准予正式實作**。
+輸入 `D3TXT00.TXT` 18,680 bytes、SHA-256
+`38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b`；
+`D3TXT00.FON` 47,232 bytes、SHA-256
+`c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02`。
+原始資產與 PNG／state／IDA database 仍僅存本機；本切片沒有原版能力 RNG、母親或完整
+campaign 完成聲明。新增通用繪圖入口 `game/indexed_window.go` 與原始資料驗證
+`internal/gamepack/newgame_raster_test.go` 均由本段及 docs/84 掛入索引。
+
+### 2026-10-01 追加：正式繪圖限定 CONFORMED
+
+上述 READY 後，正式 `NewGameWithPack` 編譯索引色繪圖設定；`NewGameFlow.draw`
+透過同一正式 menu／name 狀態繪圖。沒有用試作 buffer 或直接切入事件。
+完整字模記錄、視窗、色號、陰影、框線與游標設定均由資料包提供，
+schema `0.1.55`／content `0.1.61`；缺引用、字模、邊界或 D3 證據均拒絕載入。
+既有組字映射抽成共用輸出，沒有另增一份聲母／介音／韻母常數表。
+
+| 正式玩家狀態 | 全畫布 RGB 差異像素 |
+|---|---:|
+| 主選單／初始注音命名 | 0／0 |
+| 六次方向：左、右、上、下、左、左 | 每一步 0，共六張 |
+| 上、左、Enter 功能焦點、Enter 切英數 | 每一步 0，共四張 |
+
+比較入口仍為 `TestDosgolemNewGameMenuAndNameComparison` 與
+`TestDosgolemNameInputNavigationComparison`；後者現在也逐步比較畫面，
+原版 artifact hash 與模式／游標觀察仍先驗證。沒有裁切、遮罩或挑選重擲。
+完整有界 `production` 及 `--navigation` 入口已從冷啟動重生並返回0；
+每次均保留舊收據。主選單、注音及英數 PNG 已目視核對，背景與共享色盤未被繪圖修改。
+
+`TestNewGameRasterOriginalDataParity` 直接讀固定雜湊的 EXE／TXT，
+核對三組 raw window、文字引用、五筆完整記錄與兩組 cursor／hit 寬度；
+12 項損壞契約案例均被拒絕。完整 game 359 項頂層／28 項子測試通過，
+33 項選用擷取／額外收據未執行（含歷史試作及既有開機收據），沒有素材缺失跳過。
+全部 `internal/...` 及 desktop `main.go` 建置通過。正常新遊戲主線含主角、
+酒館三人正式功能列命名與各段存讀檔，抵達 THE END（109.47 秒）。
+重製 seed 在首個玩家輸入前固定 `0x1357`，沒有中途重設；原版全部收據在能力擲骰前，
+所以此處**沒有原版 RND 對拍**。
+
+私有收據 `work/dosgolem-opening/issue4-raster-verification-receipt.json`：
+13,128 bytes，SHA-256 `4f9fe517d6d0f23fa158f5f3bd6a55d5900620dd11069e876a76d59d21aa8e73`。
+保存固定原始輸入、dosgolem revision、Go／IDA／Docker 版本、實作來源 hash、
+12 組原版／正式 PNG hash、日誌及範圍；原版／重製皆沒有狀態注入。
+所有原版圖像、state、database 與完整收據仍只在本機，不加入 Git 或公開包。
+本次 CONFORMED 限於上表狀態；候選字、性別、能力亂數、出生點、母親、
+閃爍相位、音訊與完整原版 campaign 仍待各自閉合。下一步由 Issue #4 繼續追原版創角後路線。
 
 ## 輸入與工具
 

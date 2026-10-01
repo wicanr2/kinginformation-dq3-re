@@ -37,6 +37,7 @@ type NewGameFlow struct {
 	gs            GenderSelect
 	labels        *gamepack.NewGameLabels
 	geometry      *gamepack.NewGameGeometry
+	raster        *indexedNewGameRenderer
 	confirmCursor int // 0=是、1=否
 	preview       stats.Values
 	previewDef    int
@@ -156,6 +157,10 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 		return
 	}
 	geo := nf.geometry
+	if nf.raster != nil && (nf.stage == ngMenu || (nf.stage == ngName && !nf.ni.zh.Pick)) {
+		nf.raster.draw(rgba, tx, nf)
+		return
+	}
 	switch nf.stage {
 	case ngMenu:
 		if nf.labels == nil {

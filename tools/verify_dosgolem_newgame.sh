@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # 主機僅做 Docker／Git 控制；探測、建置、測試與輸出全部在容器內。
 # 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation]
-# 正式比較目前會回報 Issue #4 已知差異；--prototype 僅驗證 DRAFT。
-# --navigation 重生兩條正式命名收據，只比較狀態，不宣稱畫面通過。
+# 預設重生主選單／初始命名並比較正式畫面；--prototype 僅驗證歷史 DRAFT。
+# --navigation 重生兩條命名收據，驗證六次方向與四次功能輸入的狀態及完整畫布。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"

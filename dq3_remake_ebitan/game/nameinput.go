@@ -369,23 +369,10 @@ func (ni *NameInput) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data.C
 			composeStep = dq3data.GlyphPx
 		}
 		cx := compose.X
-		if ni.zh.Sh != 0 {
-			if g := ni.zhComponentGlyph(ni.zh.Sh - 1); g >= 0 {
-				drawGlyph(rgba, tx, cx, compose.Y, g, yellow)
-			}
+		ni.eachCompositionGlyph(func(g int) {
+			drawGlyph(rgba, tx, cx, compose.Y, g, yellow)
 			cx += composeStep
-		}
-		if ni.zh.Ji != 0 {
-			if g := ni.zhComponentGlyph(34 + ni.zh.Ji - 1); g >= 0 {
-				drawGlyph(rgba, tx, cx, compose.Y, g, yellow)
-			}
-			cx += composeStep
-		}
-		if ni.zh.Yu != 0 {
-			if g := ni.zhComponentGlyph(21 + ni.zh.Yu - 1); g >= 0 {
-				drawGlyph(rgba, tx, cx, compose.Y, g, yellow)
-			}
-		}
+		})
 		if ni.zh.Pick { // 候選窗(9 欄)
 			ni.cursor = ni.zh.Cursor
 			for i, g := range ni.zh.Cand {
@@ -418,6 +405,25 @@ func (ni *NameInput) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data.C
 			drawGlyph(rgba, tx, x, y, g, white)
 		}
 		ni.hits.add(x-4, y-3, grid.StepX+2, grid.StepY+2, raw)
+	}
+}
+
+// 兩種繪圖器共用既有組字順序，避免重複一份注音欄位映射。
+func (ni *NameInput) eachCompositionGlyph(emit func(int)) {
+	if ni.zh.Sh != 0 {
+		if g := ni.zhComponentGlyph(ni.zh.Sh - 1); g >= 0 {
+			emit(g)
+		}
+	}
+	if ni.zh.Ji != 0 {
+		if g := ni.zhComponentGlyph(34 + ni.zh.Ji - 1); g >= 0 {
+			emit(g)
+		}
+	}
+	if ni.zh.Yu != 0 {
+		if g := ni.zhComponentGlyph(21 + ni.zh.Yu - 1); g >= 0 {
+			emit(g)
+		}
 	}
 }
 

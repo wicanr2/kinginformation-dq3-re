@@ -1299,6 +1299,30 @@ DQ3 目前有三筆 backdrop：能力主面板 `draw_order=0,right=8,bottom=8`�
 複用。詳細原始資料流、反證與度量見
 [`docs/126`](126-newgame-confirmation-v3-static-comparison.md)。
 
+### 6.9b 主選單與命名字盤的索引色契約（schema `0.1.55`）
+
+`new_game_geometry.raster` 是必填的有限繪圖設定，不能嵌入任意程式。
+`menu/header/mode` 各以 `{raw_window_id,text_id}` 引用原始 byte 視窗與完整
+`menu_record`；`zhuyin_text_id/alnum_text_id` 保留兩張完整字盤的框線、空白及換行。
+`grid_origin` 為完整記錄起點，`name_grid` 為可選格起點，兩者不可混用。
+
+`menu_cursor/function_cursor` 保存選擇箭頭的 anchor 與 `step_y`；
+`menu_hit/function_hit` 保存觸控矩形。`shadow_offset`、`frame_band_width/height`、
+`font_index`、`frame_xor`、`cursor_xor`、`cursor_width/height` 與
+`palette_overrides:[{index,rgb}]` 必須全部明示。validator 拒絕未知引用、未達 D3、
+不完整字模行、未支援控制碼、重複色號及越界。
+索引色引擎依序執行既有背景複製、EGA word latch 陰影、完整不透明字模與 XOR；
+色盤只修改私有副本，不寫回 pack 或原始背景。姓名與候選組字沿用共用輸入狀態機。
+
+契約與原始位址見 [`docs/113`](113-newgame-geometry-re.md) 的 READY 審查；
+實作入口為 [`indexed_window.go`](../dq3_remake_ebitan/game/indexed_window.go)，
+EXE／TXT 原始格式驗證為
+[`newgame_raster_test.go`](../dq3_remake_ebitan/internal/gamepack/newgame_raster_test.go)，
+正式輸入全畫布驗證為
+[`opening_input_trace_test.go`](../dq3_remake_ebitan/game/opening_input_trace_test.go)。
+本次契約只涵蓋主選單、初始字盤、已列出的導航、功能焦點及英數切換；
+候選窗、性別、能力確認與母親演出仍各自驗收。
+
 ### 6.10 `staged_boss_events`
 
 `staged_boss_events` 描述具有兩個正式入口、戰間移動／轉場、選項分支與事後寶箱 gate 的

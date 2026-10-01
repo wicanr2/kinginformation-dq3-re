@@ -237,3 +237,34 @@ READY 後只改共用全格盤運算與功能切英數的游標保留，沒有�
 使用者 scratch／Android libs、原版資產、dosgolem 上游與 IDA database 未納入提交，
 沒有新 image 或發行包。提交／推送及精確 HEAD 另回填 Issue #4；
 下一步仍為有限 pack 規格與正式 renderer，原版創角／出生點／母親待閉合。
+
+## 2026-10-01 — Issue #4 正式主選單與命名字盤繪圖
+
+依原版 writer、完整字模記錄及冷啟動收據，先在 docs/113 審查有限契約至 READY，
+再接入正式 NewGameFlow。共用引擎只執行不透明字模、EGA word-latch 陰影與 XOR，
+版面、文字引用與色號在 pack；schema/content 升為0.1.55／0.1.61。
+聲母／介音／韻母的既有組字順序抽成共用輸出，34／21 是刪除原行後原值搬移，
+不是新設定或另一份 fallback；新繪圖器沒有 DQ3 座標、record 或 flag 常數。
+JSON 保留既有格式，沒有混入整批無關格式化。
+
+正式 InputState 的主選單、初始注音、六次方向及四次功能輸入共12張，
+完整640×350 RGB 均零差異；兩個有界入口從原版冷啟動重生後再次通過。
+原版收據逐筆 hash、IRQ1、模式與 cursor 均核對，沒有裁切／遮罩／狀態注入。
+背景及共享色盤保持原樣；主選單、注音與英數 runtime PNG 已目視核對。
+EXE／TXT 直接 parity、12個無效 pack 案例及完整 internal 通過。
+完整 game 359項頂層／28項子測試通過，33個選用擷取／額外收據未執行，
+沒有素材缺失跳過。正常主線含主角、酒館三人功能列命名與各段存讀檔，
+由新遊戲抵達 THE END（109.47秒）；desktop main.go 建置通過。
+主線 seed 在首個輸入前固定0x1357，未重設或重擲；原版尚未能力擲骰，不能宣稱 RND 對拍。
+
+docs/113 將本表限定狀態標成 CONFORMED，docs/84 登記欄位及新檔入口；
+PROJECT_MEMORY、CONTEXT、docs/74、WORKLIST 同步現況。私有收據
+`work/dosgolem-opening/issue4-raster-verification-receipt.json` 為13,128bytes，
+SHA-256 `4f9fe517d6d0f23fa158f5f3bd6a55d5900620dd11069e876a76d59d21aa8e73`。
+候選字、原版能力擲骰、出生點／母親及完整 campaign 尚未閉合，Issue #4 保持開啟。
+提交標題為「閉合主選單與命名字盤正式畫面對拍（#4）」；精確 commit／push 由 Issue 回填。
+
+一次性 Docker 容器均採 --rm、UID/GID1000、有界資源與唯讀原始輸入，
+本批來源及產物擁有權已驗證。歷史root-owned仍3636項，沒有.md目錄或新root-owned產物；
+未廣域修復。沒有新image或發行包，使用者scratch／Android libs保持原樣。
+本批相關執行中／停止容器收尾已清空；原版資產、PNG／state／database未納入提交。

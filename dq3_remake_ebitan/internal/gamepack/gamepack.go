@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.54"
+	SchemaVersion       = "0.1.55"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -580,6 +580,7 @@ type NewGameWindowBackdrop struct {
 // 它只描述幾何與固定 anchor，不承載流程程式碼；缺欄位時 production
 // bootstrap 必須 fail closed，不能回退到 Go 內的 DQ3 座標。
 type NewGameGeometry struct {
+	Raster                *NewGameRasterLayout    `json:"raster"`
 	ID                    string                  `json:"id"`
 	Frame                 *FrameStyle             `json:"frame,omitempty"`
 	Menu                  GeometryRect            `json:"menu"`
@@ -618,6 +619,41 @@ type NewGameGeometry struct {
 	RawWindows            []RawNewGameWindow      `json:"raw_windows"`
 	WindowBackdrops       []NewGameWindowBackdrop `json:"window_backdrops"`
 	Evidence              Evidence                `json:"evidence"`
+}
+
+// NewGameRasterLayout 是有限的索引色視窗資料；順序由具名 UI 狀態機決定。
+// 文字引用完整記錄，不能省略框線／空白字模或在 renderer 猜座標／色號。
+type NewGameRasterLayout struct {
+	Menu             RasterWindowRef `json:"menu"`
+	Header           RasterWindowRef `json:"header"`
+	Mode             RasterWindowRef `json:"mode"`
+	ZhuyinTextID     string          `json:"zhuyin_text_id"`
+	AlnumTextID      string          `json:"alnum_text_id"`
+	GridOrigin       GeometryAnchor  `json:"grid_origin"`
+	MenuCursor       GeometryAnchor  `json:"menu_cursor"`
+	FunctionCursor   GeometryAnchor  `json:"function_cursor"`
+	MenuHit          GeometryRect    `json:"menu_hit"`
+	FunctionHit      GeometryRect    `json:"function_hit"`
+	ShadowOffset     *GeometryAnchor `json:"shadow_offset"`
+	FrameBandWidth   int             `json:"frame_band_width"`
+	FrameBandHeight  int             `json:"frame_band_height"`
+	FontIndex        *int            `json:"font_index"`
+	FrameXOR         *int            `json:"frame_xor"`
+	CursorXOR        *int            `json:"cursor_xor"`
+	CursorWidth      int             `json:"cursor_width"`
+	CursorHeight     int             `json:"cursor_height"`
+	PaletteOverrides []RasterColor   `json:"palette_overrides"`
+	Evidence         Evidence        `json:"evidence"`
+}
+
+type RasterWindowRef struct {
+	RawWindowID string `json:"raw_window_id"`
+	TextID      string `json:"text_id"`
+}
+
+type RasterColor struct {
+	Index int     `json:"index"`
+	RGB   []uint8 `json:"rgb"`
 }
 
 // Entries returns copies so callers cannot mutate the validated pack through
@@ -2082,6 +2118,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateTexts(); err != nil {
 		return nil, fmt.Errorf("%s: %w", textsPath, err)
 	}
+	if err := p.validateNewGameRasterRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
 	if err := p.validateBattleTextRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
@@ -2725,6 +2764,102 @@ func validateNewGameGeometry(g NewGameGeometry) error {
 	}
 	if err := validateEvidence(g.Evidence); err != nil {
 		return fmt.Errorf("new-game geometry evidence: %w", err)
+	}
+	return nil
+}
+
+func (p *Pack) validateNewGameRasterRefs() error {
+	g := p.Interface.NewGameGeometry
+	if g == nil {
+		return nil // 無此 UI 的資料包不需這個契約；正式 bootstrap 另要求 UI 存在。
+	}
+	r := g.Raster
+	if r == nil || r.ShadowOffset == nil || r.FontIndex == nil || r.FrameXOR == nil || r.CursorXOR == nil {
+		return errors.New("new-game raster required fields are missing")
+	}
+	if *r.FontIndex < 0 || *r.FontIndex >= 16 || *r.FrameXOR <= 0 || *r.FrameXOR >= 16 ||
+		*r.CursorXOR <= 0 || *r.CursorXOR >= 16 || r.FrameBandWidth <= 0 || r.FrameBandHeight <= 0 ||
+		r.CursorWidth <= 0 || r.CursorHeight <= 0 || r.ShadowOffset.X < 0 || r.ShadowOffset.Y < 0 {
+		return errors.New("new-game raster style is invalid")
+	}
+	if err := validateEvidence(r.Evidence); err != nil {
+		return fmt.Errorf("new-game raster evidence: %w", err)
+	}
+	if r.Evidence.Level != "D3" {
+		return errors.New("new-game raster requires D3 evidence")
+	}
+	seen := map[int]bool{}
+	if len(r.PaletteOverrides) == 0 {
+		return errors.New("new-game raster palette_overrides are required")
+	}
+	for _, c := range r.PaletteOverrides {
+		if c.Index < 0 || c.Index >= 16 || len(c.RGB) != 3 || seen[c.Index] {
+			return errors.New("new-game raster palette override is invalid or duplicated")
+		}
+		seen[c.Index] = true
+	}
+	for _, rect := range []GeometryRect{r.MenuHit, r.FunctionHit} {
+		if err := validateGeometryRect("new-game raster hit", rect); err != nil {
+			return err
+		}
+	}
+	for _, anchor := range []GeometryAnchor{r.GridOrigin, r.MenuCursor, r.FunctionCursor} {
+		if err := validateGeometryAnchor("new-game raster anchor", anchor); err != nil {
+			return err
+		}
+	}
+	if r.MenuCursor.StepY <= 0 || r.FunctionCursor.StepY <= 0 {
+		return errors.New("new-game raster cursor row steps are required")
+	}
+	raw := map[string]RawNewGameWindow{}
+	for _, w := range g.RawWindows {
+		raw[w.ID] = w
+	}
+	checkText := func(id string, x, y int) error {
+		d, ok := p.texts[id]
+		if !ok || d.Layout.Kind != "menu_record" || d.Layout.Columns <= 0 || d.Layout.LinesPerPage <= 0 {
+			return fmt.Errorf("new-game raster text %q is unknown or lacks complete record layout", id)
+		}
+		cols, rows := 0, 1
+		for _, code := range d.GlyphCodes {
+			if code == 0xfffe {
+				if cols != d.Layout.Columns {
+					return fmt.Errorf("new-game raster text %q row width mismatch", id)
+				}
+				cols, rows = 0, rows+1
+			} else if code >= 0xff00 {
+				return fmt.Errorf("new-game raster text %q has unsupported control", id)
+			} else {
+				cols++
+			}
+		}
+		if cols != d.Layout.Columns || rows != d.Layout.LinesPerPage || x < 0 || y < 0 ||
+			x+d.Layout.Columns*16 > 640 || y+rows*16 > 350 {
+			return fmt.Errorf("new-game raster text %q shape or bounds mismatch", id)
+		}
+		return nil
+	}
+	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode} {
+		w, ok := raw[ref.RawWindowID]
+		if !ok || (w.Flags != 1 && w.Flags != 3) || w.Width%2 != 0 ||
+			w.X*8+w.Width*8+r.ShadowOffset.X > 640 || w.Y+w.Height+r.ShadowOffset.Y > 350 ||
+			r.FrameBandWidth*2 > w.Width*8 || r.FrameBandHeight*2 > w.Height {
+			return fmt.Errorf("new-game raster window %q is unknown or outside bounds", ref.RawWindowID)
+		}
+		if err := checkText(ref.TextID, w.X*8, w.Y); err != nil {
+			return err
+		}
+	}
+	for _, id := range []string{r.ZhuyinTextID, r.AlnumTextID} {
+		if err := checkText(id, r.GridOrigin.X, r.GridOrigin.Y); err != nil {
+			return err
+		}
+	}
+	for _, a := range []GeometryAnchor{g.NameText, {X: g.NameGrid.X, Y: g.NameGrid.Y},
+		{X: g.NameGrid.X + (g.NameGrid.Columns-1)*g.NameGrid.StepX, Y: g.NameGrid.Y + (g.NameGrid.Rows-1)*g.NameGrid.StepY}} {
+		if a.X+r.CursorWidth > 640 || a.Y+r.CursorHeight > 350 {
+			return errors.New("new-game raster cursor outside bounds")
+		}
 	}
 	return nil
 }

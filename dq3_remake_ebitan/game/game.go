@@ -3523,6 +3523,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if g.endingPix, g.endingPal, assetErr = loadPCXAsset("ending_image"); assetErr != nil {
 		return nil, assetErr
 	}
+	g.newGame.raster, err = newIndexedNewGameRenderer(pack, newGameGeometry, g.dlg.tx, g.newGameConfirmPix, g.newGameConfirmPal)
+	if err != nil {
+		return nil, fmt.Errorf("new-game raster: %w", err)
+	}
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	// 注意:不再於此自動續玩——存檔改由標題主選單「載入進度」明確觸發(newgame.go newGameInput
 	// ngOptLoad 分支),對齊 docs/36 開場流程(遊戲開始 = 全新主角,不會被舊存檔悄悄蓋掉)。

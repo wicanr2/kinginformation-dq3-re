@@ -1,14 +1,17 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> **2026-10-01 最新閘門（Issue #4）：**原版冷啟動、IRQ1 正式 Enter 已到主選單／初始注音命名。
-> 正式 remake 全畫布 RGB 差異為 5,508／8,025 像素；IDA 9.4 原始 window／record／EGA
-> writer 試作均零差異，但尚未接入 production。下一步為有限 pack 規格審查 → 正式 renderer
-> 修正 → 正式對拍，再推進創角／出生點／母親。沒有能力擲骰或原版母親對拍完成聲明。
-> 命名導航已另閉合：左右全格盤循環／功能切英數保留 raw35；六次方向及四次功能輸入
-> 的原版狀態對拍通過。主角及酒館三人經正式功能列切英數，正常主線與存讀檔重驗至
-> THE END（69.58 秒）。導航 CONFORMED 不替代繪圖 DRAFT，也不提升原版 campaign 完成度。
-> 工作權威為 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，直接證據及工具入口
-> 見 [docs/113](113-newgame-geometry-re.md)；Issue #1～#3 的已閉合範圍保持有效。
+> **2026-10-01 最新閘門（Issue #4）：**
+> 原版冷啟動以真實 IRQ1 進入新遊戲；正式重製主選單、初始注音及六次方向／四次功能輸入
+> 的 12 張完整 640×350 RGB 畫面均零差異，有限繪圖契約已達 CONFORMED。
+> 共用索引色繪圖讀取資料包的完整字模記錄、原始視窗、陰影及 XOR 設定；
+> schema `0.1.55`／content `0.1.61`，EXE／TXT parity、拒絕損壞引用及素材不可變驗證通過。
+> 完整 game 359 項頂層／28 項子測試通過，33 項選用擷取／額外收據未執行，沒有素材缺失跳過；
+> 全部 internal 及桌面 main.go 建置通過。主角與酒館三人經正式功能列命名、各段存讀檔，
+> 正常主線抵達 THE END（109.47 秒，重製 seed 在執行前固定為 0x1357）。
+> 此批原版尚未能力擲骰，沒有原版 RNG 對拍；出生點、母親及完整 campaign 音畫仍未閉合。
+> 重生入口為 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem production`
+> 及同入口的 `--navigation`；證據與範圍見 [docs/113](113-newgame-geometry-re.md)。
+> 工作權威為 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)；Issue #1～#3 的限定閉合仍有效。
 
 > **2026-10-01 現況：**依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 > 建立 dosgolem 自然開機收據並修正六幕序列／動態標誌。前五幕色號通過，第六幕全部

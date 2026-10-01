@@ -42,7 +42,7 @@ func newProductionTraceGame(assets fs.FS) (*Game, error) {
 }
 
 // 讀取原版冷啟動實際觀察值，以等價正式 InputState 比較命名邊界及功能切換。
-// 只驗收 modal 狀態；已知的全畫布繪圖差異仍由獨立正式畫面測試回報。
+// 同時驗證 modal 狀態與每個輸入後的全畫布，範圍限定於能力擲骰之前。
 func TestDosgolemNameInputNavigationComparison(t *testing.T) {
 	dir := os.Getenv("DQ3_DOSGOLEM_NEWGAME_DIR")
 	if dir == "" {
@@ -51,9 +51,10 @@ func TestDosgolemNameInputNavigationComparison(t *testing.T) {
 	for _, scenario := range []struct {
 		name, prefix string
 		inputs       int
+		captures     []string
 	}{
-		{"name_navigation", "issue4-name", 6}, // 六次方向鍵；候選規則另案驗收。
-		{"name_function_mode", "issue4-mode", 4},
+		{"name_navigation", "issue4-name", 6, []string{"left-wrap", "right-wrap", "up-wrap", "down-wrap", "left-again", "raw43"}}, // 六次方向鍵；候選規則另案驗收。
+		{"name_function_mode", "issue4-mode", 4, []string{"up-wrap", "function-cell", "function-focus", "alnum"}},
 	} {
 		t.Run(scenario.name, func(t *testing.T) {
 			var receipt struct {
@@ -117,6 +118,8 @@ func TestDosgolemNameInputNavigationComparison(t *testing.T) {
 				t.Fatal("正式新遊戲未進入命名")
 			}
 			seed := g.prng.State()
+			background := append([]byte(nil), g.newGameConfirmPix...)
+			palette := append([]dq3data.Color(nil), g.newGameConfirmPal...)
 			observation := regexp.MustCompile(`DS=15ed raw_cursor=(\d+) name_mode=([0-9a-f]+)$`)
 			for i := 0; i < scenario.inputs; i++ {
 				in := InputState{DirHeld: -1, DirEdge: -1}
@@ -149,6 +152,12 @@ func TestDosgolemNameInputNavigationComparison(t *testing.T) {
 					t.Fatalf("第%d個正式輸入後與原版不符：原版 raw%d/mode%#x；重製 cursor=%d zhuyin=%v focus=%v name=%v stage=%d", i+1, cursor, mode, ni.cursor, ni.nameZhu, ni.functionFocus, ni.nameBuf, g.newGame.stage)
 				}
 				t.Logf("正式輸入%d：raw%d、注音=%v、功能焦點=%v 與原版一致；沒有選字或消耗 RNG", i+1, cursor, ni.nameZhu, ni.functionFocus)
+				g.renderFrame()
+				capture := scenario.prefix + "-" + scenario.captures[i]
+				compareDosgolemRasterFrame(t, g, dir, capture+".png", "issue4-raster-remake-"+capture+".png", capture)
+				if !reflect.DeepEqual(background, g.newGameConfirmPix) || !reflect.DeepEqual(palette, g.newGameConfirmPal) {
+					t.Fatal("繪圖修改了原始背景或共用色盤")
+				}
 			}
 			g.renderFrame()
 			out, err := os.Create(filepath.Join(dir, "issue4-remake-"+scenario.name+".png"))
@@ -160,7 +169,7 @@ func TestDosgolemNameInputNavigationComparison(t *testing.T) {
 			if err != nil || closeErr != nil {
 				t.Fatalf("寫出正式導航 PNG：%v/%v", err, closeErr)
 			}
-			t.Log("命名狀態通過；繪圖仍待獨立全畫布比較，不宣稱 V3")
+			t.Log("命名狀態與本條收據的每一步全畫布均通過；不延伸為候選字／能力亂數對拍")
 		})
 	}
 }
@@ -208,57 +217,58 @@ func compareDosgolemNewGameWindows(t *testing.T, prototype bool) {
 		if prototype {
 			prototypeOriginalNewGameWindow(t, g, stage.name)
 		}
-		f, err := os.Open(filepath.Join(dir, stage.original))
-		if err != nil {
-			t.Fatal(err)
-		}
-		original, err := png.Decode(f)
-		f.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if original.Bounds() != image.Rect(0, 0, ScreenW, ScreenH) {
-			t.Fatalf("原版畫面尺寸錯：%v", original.Bounds())
-		}
-		remake := &image.RGBA{Pix: append([]byte(nil), g.rgba...), Stride: ScreenW * 4, Rect: original.Bounds()}
 		prefix := "issue4-remake-"
 		if prototype {
 			prefix = "issue4-prototype-"
 		}
-		out, err := os.Create(filepath.Join(dir, prefix+stage.name+".png"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = png.Encode(out, remake)
-		out.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-		diff := 0
-		bounds := image.Rectangle{}
-		for y := 0; y < ScreenH; y++ {
-			for x := 0; x < ScreenW; x++ {
-				r, gr, b, _ := original.At(x, y).RGBA()
-				i := (y*ScreenW + x) * 4
-				if byte(r>>8) != g.rgba[i] || byte(gr>>8) != g.rgba[i+1] || byte(b>>8) != g.rgba[i+2] {
-					p := image.Rect(x, y, x+1, y+1)
-					if diff == 0 {
-						bounds = p
-					} else {
-						bounds = bounds.Union(p)
-					}
-					diff++
+		compareDosgolemRasterFrame(t, g, dir, stage.original, prefix+stage.name+".png", stage.name)
+	}
+}
+
+func compareDosgolemRasterFrame(t *testing.T, g *Game, dir, originalName, outputName, label string) {
+	t.Helper()
+	f, err := os.Open(filepath.Join(dir, originalName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	original, err := png.Decode(f)
+	f.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if original.Bounds() != image.Rect(0, 0, ScreenW, ScreenH) {
+		t.Fatalf("原版畫面尺寸錯：%v", original.Bounds())
+	}
+	remake := &image.RGBA{Pix: append([]byte(nil), g.rgba...), Stride: ScreenW * 4, Rect: original.Bounds()}
+	out, err := os.Create(filepath.Join(dir, outputName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = png.Encode(out, remake)
+	out.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	diff := 0
+	bounds := image.Rectangle{}
+	for y := 0; y < ScreenH; y++ {
+		for x := 0; x < ScreenW; x++ {
+			r, gr, b, _ := original.At(x, y).RGBA()
+			i := (y*ScreenW + x) * 4
+			if byte(r>>8) != g.rgba[i] || byte(gr>>8) != g.rgba[i+1] || byte(b>>8) != g.rgba[i+2] {
+				p := image.Rect(x, y, x+1, y+1)
+				if diff == 0 {
+					bounds = p
+				} else {
+					bounds = bounds.Union(p)
 				}
+				diff++
 			}
 		}
-		kind := "正式重製畫面"
-		if prototype {
-			kind = "DRAFT 試作畫面（不是 production）"
-		}
-		t.Logf("%s：原版／%s RGB 差異像素=%d 範圍=%v；未裁切或遮罩", stage.name, kind, diff, bounds)
-		if diff != 0 {
-			t.Errorf("%s 畫面尚未逐點一致", stage.name)
-		}
+	}
+	t.Logf("%s：原版／%s RGB 差異像素=%d 範圍=%v；未裁切或遮罩", label, "逐點比較", diff, bounds)
+	if diff != 0 {
+		t.Errorf("%s 畫面尚未逐點一致", label)
 	}
 }
 
