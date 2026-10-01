@@ -122,6 +122,38 @@ func TestTemporaryRoleQuestAndForcedItemReturn(t *testing.T) {
 	}
 }
 
+func TestTemporaryRoleCompanionCrownReturnConsumesOneItem(t *testing.T) {
+	g, event := temporaryRoleTestGame(t)
+	g.inventory = []int{0x55}
+	first := newMember([]int{1}, 1, 0, 0)
+	first.Inventory = []int{0x41}
+	owner := newMember([]int{2}, 3, 0, 0)
+	owner.Inventory = []int{0x42, event.RequiredItemRawID, event.RequiredItemRawID}
+	g.companions = []*Member{first, owner}
+	g.setStoryFlag(event.PendingFlagRaw, true)
+	king := loadTemporaryRoleScene(t, g, event.OfferNPC)
+
+	if !g.talkTemporaryRole(king) || g.temporaryRoleStage != temporaryRoleReturnPraise ||
+		!reflect.DeepEqual(g.dlg.buf, mustPackTextCodes(t, g, event.DialogueTextIDs.ReturnPraise)) {
+		t.Fatal("同伴持有必要道具時應直接進入還冠對話")
+	}
+	if g.storyFlag(event.PendingFlagRaw) ||
+		!reflect.DeepEqual(g.inventory, []int{0x55}) ||
+		!reflect.DeepEqual(first.Inventory, []int{0x41}) ||
+		!reflect.DeepEqual(owner.Inventory, []int{0x42, event.RequiredItemRawID}) {
+			t.Fatalf("還冠應只消耗命中同伴的一件道具：hero=%v first=%v owner=%v pending=%v",
+			g.inventory, first.Inventory, owner.Inventory, g.storyFlag(event.PendingFlagRaw))
+	}
+	if out := os.Getenv("DQ3_DUMP_COMPANION_CROWN"); out != "" {
+		// 只作元件畫面擷取；正式玩家可達性由主線輸入重播另外驗證。
+		g.px, g.py, g.facing = king.x, king.y+1, 1
+		for frames := g.dlg.pageCellCount() * g.dlg.layout.GlyphHoldFrames; frames > 0; frames-- {
+			g.dlg.Tick()
+		}
+		dumpThirstyPitcherFrame(t, g, out)
+	}
+}
+
 func TestTemporaryRoleRestoreTwoStageChoiceAndSaveDerivation(t *testing.T) {
 	g, event := temporaryRoleTestGame(t)
 	g.setStoryFlag(event.PendingFlagRaw, false)

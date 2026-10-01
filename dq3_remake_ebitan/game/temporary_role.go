@@ -51,7 +51,7 @@ func (g *Game) talkTemporaryRole(n *npcInst) bool {
 			g.temporaryRoleEventID = event.ID
 			switch {
 			case g.storyFlag(event.PendingFlagRaw) &&
-				g.countItem(event.RequiredItemRawID) == 0:
+				g.countPartyItem(event.RequiredItemRawID) == 0:
 				if !g.openPackText(event.DialogueTextIDs.QuestGreeting) {
 					g.temporaryRoleEventID = ""
 					return true

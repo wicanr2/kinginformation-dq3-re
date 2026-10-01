@@ -78,3 +78,65 @@ Go 只實作跨版本的具名狀態機、交易與角色圖派生。驗收證�
 
 此切片已達 E3；runtime 畫面已有 V2 證據，但逐幀動畫、音訊 cue 與同幀像素級 V3 仍屬
 全案視聽長尾，不能由事件流程通過推成整個 remake 完成。
+
+## 2026-10-01 同伴持有皇冠的 gate 勘誤
+
+工作依據：[Issue #3](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)。
+**READY：限全隊持有權查找與一件還冠交易。** 原有主線讓主角持冠，未涵蓋同伴持有；
+本輪正式路線在同伴取得皇冠並存讀檔後，國王仍播放找皇冠任務。Production gate 使用
+只查主角的 `countItem`，與本文件原先記錄的全隊搜尋、實際全隊移除 consumer 不一致。
+這是測試覆蓋缺口所掩蓋的引擎缺陷，不推翻原有 EXE 證據，也不改物品資料。
+
+輸入：`assets_raw/DQ3.EXE`，115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+工具：IDA Pro 9.4、`ida-pro-9.4-idapython:locked-v1`；一次性 database，原版唯讀。
+位址：`file = IDA linear − 0x10000 + 0x1370`；DGROUP 偏移保持原始運算元。
+
+| 原始定位／bytes | 附加語意 | 推論等級與證據 |
+|---|---|---|
+| IDA `0x152b3`／file `0x6623`，`c70693253300`；IDA `0x152b9`／file `0x6629`，`e8e015` | handler9 把 selected item 寫成皇冠 `0x33`，呼叫原名 `sub_1689C` | confirmed：固定 EXE bytes／直接 call xref |
+| `sub_1689C`，IDA `0x1689c..0x168df`／file `0x7c0c..0x7c4f` | `[DS:5077h]` 為迴圈次數；由 `[bx+4F15h]` 取角色指標、加 `0x3a`，逐角色掃八個 u16 槽；先以 `&0xff` 比對 `[DS:2593h]` | confirmed：callee 原始迴圈、取址與讀取；沒有只限首名或存活角色的分支 |
+| IDA `0x168d9`／file `0x7c49`，`c606260700`；IDA `0x152bc`／file `0x662c`，`803e260700` | 命中留下 SI 指向槽位，寫 `[DS:726h]=0`；caller 以此選還冠分支 | confirmed：callee writer → caller consumer |
+| IDA `0x152d9`／file `0x6649`，`c704ff00` | `[si]=0xff` 只清搜尋命中的一格，再清 pending flag、顯示 rec49 | confirmed：原始間接 writer／後續旗標與文字 call |
+
+實作契約：pending flag 為真時查目前全隊持有權；無皇冠仍播任務且不消耗，命中則
+依主角→同伴順序移除一件，再清 pending flag、播放 return_praise。其他選項與角色圖
+沿用原規格。新 component 必須涵蓋同伴持有及兩件只消耗一件；正式 trace 必須保留
+取得皇冠時的持有者與隊伍存讀檔，再由正常對話還冠與辭位。
+
+可重現 IDA 匯出入口：`tools/ida_dump_temporary_role_item_gate.py`，輸出 sidecar 到
+`/tmp/dq3-crown-gate-ida.json`；每筆指令自動附加原始定位、語意、等級與本節證據。
+匯出未註記部分保持醒目的 UNKNOWN，不從名稱推導規則。原始 EXE 與 database 不入 Git。
+本輪首份 sidecar 為空，沒有採用；明定 UTF-8 並增加工具日誌後於同一 image 重跑，
+核對非空、輸入 hash、版本及原始 caller／callee，才採用證據。首次空檔的根因未獨立驗證。
+
+原版正常玩家路線／畫面仍待 dosgolem 收據；本節靜態資料流不能宣稱完整主線同狀態 parity。
+
+本輪 remake 驗證：新增同伴持有兩件的 component 在修正前失敗、修正後通過；
+既有任務、強制選項、辭位與存檔角色圖派生亦通過。正式新遊戲 trace 已驗證同伴持冠、
+隊伍物品／持有者存讀檔、正常還冠、王位／辭位，再繼續至日邦格；未重新設定亂數種子。
+其餘 game、全部 internal 與 desktop build 通過；整段主線仍由 Issue #2 重驗。
+局部引擎修正已通過以上驗證，原版 dosgolem 動態驗收保持 pending，不升格 V3。
+
+本輪限定實作狀態為 **CONFORMED：全隊持有權與單件消耗**，不包含原版動態同狀態。
+`TestTemporaryRoleCompanionCrownReturnConsumesOneItem` 可指定
+`DQ3_DUMP_COMPANION_CROWN=<PNG 路徑>` 擷取已顯字的元件畫面；父目錄須先存在。
+本輪 `work/dosgolem-opening/issue3-companion-crown-return.png` 為 640×350，18491 bytes，
+SHA-256 `e00ca60fbecb99a80ce9738834ea3a9d4cbc67a221040ca332c41c0918ca3a2e`；
+已目視確認還冠對白及視窗，這是元件畫面，沒有冒稱 dosgolem 同狀態收據。
+舊 `TestDumpNewGameScreens` 在更早的魔法球測試設定停止，未取得還冠畫面；故改在已通過的
+限定元件重生 PNG。首張只含逐字顯示的空白初始幀，依資料包等待長度推進文字後重取。
+
+重生匯出（原版唯讀，database 僅存在容器 `/tmp`，sidecar 寫入主機 `/tmp`）：
+
+```bash
+test -d /home/anr2/dq3 && test -d /tmp && timeout 120s docker run --rm \
+  --network none --memory 3g --cpus 2 --pids-limit 192 -u "$(id -u):$(id -g)" \
+  --mount type=bind,src=/home/anr2/dq3,dst=/repo,readonly \
+  --mount type=bind,src=/tmp,dst=/out ida-pro-9.4-idapython:locked-v1 \
+  bash -c 'idat -A -c -o/tmp/dq3-crown-gate.i64 "-S/repo/tools/ida_dump_temporary_role_item_gate.py /out/dq3-crown-gate-reviewed.json" /repo/assets_raw/DQ3.EXE'
+```
+
+本輪 reviewed sidecar：248027 bytes，SHA-256
+`564f7c375960d9c308f73bff9d914f0f05e8e6f91e40153d1099bd87e8fe3163`；
+含 288 筆原始指令，其中 12 筆附上述限定語意，其餘保持 unknown。
