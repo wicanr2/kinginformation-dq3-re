@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/png"
 	"io/fs"
@@ -41,9 +42,125 @@ func newProductionTraceGame(assets fs.FS) (*Game, error) {
 	return g, nil
 }
 
+// 從同一冷啟動創角輸入接受角色；等待只送正式空白 InputState，
+// 不直接呼叫 startOpening，也不改角色座標、對話位置或故事旗標。
+func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
+	dir := os.Getenv("DQ3_DOSGOLEM_NEWGAME_DIR")
+	if os.Getenv("DQ3_DOSGOLEM_OPENING_COMPARE") != "1" || dir == "" {
+		t.Skip("需明確啟用 dosgolem 冷啟動接受角色收據比較")
+	}
+	var receipt struct {
+		Scenario       string `json:"scenario"`
+		OriginalSHA    string `json:"original_sha256"`
+		OriginalSize   int    `json:"original_size"`
+		Revision       string `json:"upstream_revision_observed"`
+		StateInjection *bool  `json:"game_state_injection"`
+		Seed           struct {
+			Value      string `json:"seed"`
+			Configured bool   `json:"configured_before_execution"`
+			OnlyRNG    bool   `json:"only_rng_state_modified"`
+			OtherState *bool  `json:"other_gameplay_state_injection"`
+		} `json:"test_rng_seed_control"`
+		Inputs []struct {
+			Scan string `json:"scan"`
+		} `json:"player_input"`
+		Artifacts []struct {
+			Path string `json:"path"`
+			SHA  string `json:"sha256"`
+			Size int    `json:"size"`
+		} `json:"artifacts"`
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "issue4-opening-receipt.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &receipt); err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Scenario != "opening_accept" || receipt.OriginalSize != 115282 ||
+		receipt.OriginalSHA != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" ||
+		receipt.Revision != "2f44a68ebfc54b28fb15dd4a34510b0b04a5415d" ||
+		receipt.StateInjection == nil || *receipt.StateInjection ||
+		receipt.Seed.Value != "0x1357" || !receipt.Seed.Configured || !receipt.Seed.OnlyRNG ||
+		receipt.Seed.OtherState == nil || *receipt.Seed.OtherState {
+		t.Fatal("接受角色原版收據來源、固定種子或非注入前提不符")
+	}
+	want := []string{"0x1c", "0x1c", "0x48", "0x4b", "0x1c", "0x1c", "0x4d", "0x50", "0x1c", "0x48", "0x4b", "0x1c", "0x48", "0x1c", "0x1c", "0x1c", "0x1c"}
+	if len(receipt.Inputs) != len(want) || len(receipt.Artifacts) == 0 {
+		t.Fatal("原版17次正常輸入或圖像索引缺失")
+	}
+	indexed := make(map[string]bool)
+	for _, artifact := range receipt.Artifacts {
+		if filepath.Base(artifact.Path) != artifact.Path {
+			t.Fatal("原版收據路徑越界")
+		}
+		blob, err := os.ReadFile(filepath.Join(dir, artifact.Path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(blob) != artifact.Size || fmt.Sprintf("%x", sha256.Sum256(blob)) != artifact.SHA {
+			t.Fatalf("原版收據雜湊不符：%s", artifact.Path)
+		}
+		indexed[artifact.Path] = true
+	}
+	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "opening-accept-save.json"))
+	g, err := newProductionTraceGame(os.DirFS(spineAssetsDir(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.prng.Seed(0x1357)
+	for i, input := range receipt.Inputs {
+		if input.Scan != want[i] {
+			t.Fatalf("第%d次原版輸入不符", i+1)
+		}
+		in := InputState{DirHeld: -1, DirEdge: -1}
+		switch input.Scan {
+		case "0x1c":
+			in.Confirm = true
+		case "0x48":
+			in.DirEdge = 1
+		case "0x50":
+			in.DirEdge = 0
+		case "0x4b":
+			in.DirEdge = 2
+		case "0x4d":
+			in.DirEdge = 3
+		default:
+			t.Fatal("原版輸入尚未驗收")
+		}
+		if err := g.step(in); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if g.showTitle {
+		t.Fatal("正常接受角色後仍在創角畫面")
+	}
+	for i := 0; i < 2000 && g.dlg.open && g.dlg.revealCells < g.dlg.pageCellCount(); i++ {
+		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if g.dlg.open && g.dlg.revealCells < g.dlg.pageCellCount() {
+		t.Fatal("開場首頁等待未完成")
+	}
+	g.renderFrame()
+	t.Logf("正常接受角色：CTY=%d section=%d position=(%d,%d) dialogue=%v pos=%d reveal=%d seed=%04x", g.curCty, sceneSection(g.cur), g.px, g.py, g.dlg.open, g.dlg.pos, g.dlg.revealCells, g.prng.State())
+
+	if g.prng.State() != 0x356d {
+		t.Fatal("接受角色或旁白等待消耗了創角之後的RNG")
+	}
+	for _, name := range []string{"accepted", "stable"} {
+		original := "issue4-opening-" + name + ".png"
+		if !indexed[original] {
+			t.Fatal("原版生日首頁未登記")
+		}
+		compareDosgolemRasterFrame(t, g, dir, original, "issue4-opening-remake-"+name+".png", "opening-"+name)
+	}
+}
+
 // 以原版自然創角收據驗證正式輸入及 Lv1 交易。種子在兩側執行前明定；
 // 原版只在自然生成入口控制 RNG，重製在第一個正式輸入前設定一次。
-// 性別畫面維持嚴格逐點比較；能力面板與確認提示的階段先由原版控制流閉合。
+// 性別、能力等待與確認維持完整畫布比較；第17次接受角色由上方測試獨立驗收。
 func TestDosgolemNewGameCreationComparison(t *testing.T) {
 	dir := os.Getenv("DQ3_DOSGOLEM_NEWGAME_DIR")
 	if os.Getenv("DQ3_DOSGOLEM_CREATION_COMPARE") != "1" || dir == "" {
@@ -74,18 +191,22 @@ func TestDosgolemNewGameCreationComparison(t *testing.T) {
 			Size int    `json:"size"`
 		} `json:"artifacts"`
 	}
-	blob, err := os.ReadFile(filepath.Join(dir, "issue4-creation-receipt.json"))
+	prefix, scenario, inputCount := "issue4-creation", "name_creation", 16
+	if os.Getenv("DQ3_DOSGOLEM_OPENING_COMPARE") == "1" {
+		prefix, scenario, inputCount = "issue4-opening", "opening_accept", 17
+	}
+	blob, err := os.ReadFile(filepath.Join(dir, prefix+"-receipt.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := json.Unmarshal(blob, &receipt); err != nil {
 		t.Fatal(err)
 	}
-	if receipt.Scenario != "name_creation" || receipt.OriginalSize != 115282 || receipt.Image != "dq3-ebiten-test:20260822-r1" || receipt.OriginalSHA != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" ||
+	if receipt.Scenario != scenario || receipt.OriginalSize != 115282 || receipt.Image != "dq3-ebiten-test:20260822-r1" || receipt.OriginalSHA != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" ||
 		receipt.Revision != "2f44a68ebfc54b28fb15dd4a34510b0b04a5415d" || receipt.StateInjection == nil || *receipt.StateInjection ||
 		receipt.Seed.Value != "0x1357" || !receipt.Seed.Configured || !receipt.Seed.OnlyRNG || receipt.Seed.OtherState == nil || *receipt.Seed.OtherState ||
 		!regexp.MustCompile(`DS=15ed SI=507f return=08cf previous=[0-9a-f]{4} fixed=1357$`).MatchString(receipt.Seed.Event) ||
-		len(receipt.Inputs) != 16 || len(receipt.Results) != 1 || len(receipt.RandomEvents) != 14 || len(receipt.Artifacts) == 0 {
+		len(receipt.Inputs) != inputCount || len(receipt.Results) != 1 || len(receipt.RandomEvents) != 14 || len(receipt.Artifacts) == 0 {
 		t.Fatal("原版創角收據的來源、固定種子前提或輸入／結果範圍不符")
 	}
 	indexed := make(map[string]bool)
@@ -133,7 +254,7 @@ func TestDosgolemNewGameCreationComparison(t *testing.T) {
 			t.Fatal("能力生成前消耗了測試 RNG")
 		}
 		if capture, ok := captures[i]; ok {
-			name := "issue4-creation-" + capture + ".png"
+			name := prefix + "-" + capture + ".png"
 			if !indexed[name] {
 				t.Fatalf("原版圖像未登記：%s", name)
 			}
@@ -196,7 +317,7 @@ func TestDosgolemNewGameCreationComparison(t *testing.T) {
 			if g.newGame.stage != ngReview {
 				t.Error("選定性別後提前顯示確認提示，原版仍在能力檢視等待")
 			}
-			compareDosgolemRasterFrame(t, g, dir, "issue4-creation-ability-waiting.png", "issue4-creation-remake-ability-waiting.png", "ability-waiting")
+			compareDosgolemRasterFrame(t, g, dir, prefix+"-ability-waiting.png", "issue4-creation-remake-ability-waiting.png", "ability-waiting")
 			if receipt.Inputs[15].Scan != "0x1c" {
 				t.Fatal("原版能力檢視確認輸入不符")
 			}
@@ -210,7 +331,7 @@ func TestDosgolemNewGameCreationComparison(t *testing.T) {
 				t.Fatal("能力檢視ACK不得重新擲骰、改能力或切換選項")
 			}
 			g.renderFrame()
-			compareDosgolemRasterFrame(t, g, dir, "issue4-creation-ability-confirm.png", "issue4-creation-remake-ability-confirm.png", "ability-confirm")
+			compareDosgolemRasterFrame(t, g, dir, prefix+"-ability-confirm.png", "issue4-creation-remake-ability-confirm.png", "ability-confirm")
 		})
 	}
 }

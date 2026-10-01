@@ -1442,6 +1442,10 @@ func (g *Game) step(in InputState) error {
 	// DQ3.EXE sub_1010B，IDA linear 0x1010b..0x1020b／file 0x147b..0x157a。
 	if g.openingIdx >= 0 {
 		g.openingIdx++
+		g.dlg.prelude, g.dlg.preludeFrame = nil, nil
+		if g.pack != nil {
+			g.dlg.layout = g.pack.DialogueWindowLayout()
+		}
 		if g.openingIdx < len(openingSeq) {
 			g.dlg.Open(openingSeq[g.openingIdx])
 		} else if g.openingIdx == len(openingSeq) {
@@ -2028,7 +2032,15 @@ func (g *Game) startOpening() {
 	g.rememberTown() // 原版初始進度已包含阿里阿罕；確保首次習得魯拉時可選。
 	// dlg.tx 維持 NewGame 初始的 D3TXT01(開場旁白 rec82/83 在此 bank)
 	g.openingIdx = 0
-	g.dlg.Open(openingSeq[0])
+	prelude, ok := g.pack.OpeningPrelude()
+	if !ok || !g.openPackText(prelude.TextID) {
+		return
+	}
+	frame, ok := g.pack.TextGlyphCodes(prelude.FrameTextID)
+	if !ok {
+		return
+	}
+	g.dlg.prelude, g.dlg.preludeFrame, g.dlg.layout = prelude, frame, prelude.Window
 	g.playSceneMusic(0)
 	g.renderFrame()
 }
@@ -2836,6 +2848,15 @@ func (g *Game) renderFrame() {
 	if g.frame == nil { // 尚未初始化(如 NewGame 中途 debug 呼叫)→ 略過
 		return
 	}
+	if !g.showTitle && g.openingIdx >= 0 && g.dlg.prelude != nil {
+		p := g.dlg.prelude
+		for i := 0; i < len(g.rgba); i += 4 {
+			g.rgba[i], g.rgba[i+1], g.rgba[i+2], g.rgba[i+3] = p.BackdropRGB[0], p.BackdropRGB[1], p.BackdropRGB[2], 255
+		}
+		g.dlg.draw(g.rgba, dq3data.Color{R: p.ForegroundRGB[0], G: p.ForegroundRGB[1], B: p.ForegroundRGB[2]})
+		g.frame.WritePixels(g.rgba)
+		return
+	}
 	if g.showTitle && g.titlePix != nil { // 標題畫面(PCX indexed → palette)
 		if g.openingActive && g.openingReady() {
 			drawIndexedPCX(g.rgba, g.openingPixels(), g.openingPalette())
@@ -3109,6 +3130,9 @@ func NewGame(assets fs.FS, music fs.FS) (*Game, error) {
 func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, error) {
 	if pack == nil {
 		return nil, fmt.Errorf("game pack is nil")
+	}
+	if _, ok := pack.OpeningPrelude(); !ok {
+		return nil, fmt.Errorf("game pack missing data.interface.opening_prelude")
 	}
 	if _, ok := pack.BattlePack(); !ok {
 		return nil, fmt.Errorf("game pack missing data.battle")

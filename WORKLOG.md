@@ -326,3 +326,49 @@ SHA-256 `4f9fe517d6d0f23fa158f5f3bd6a55d5900620dd11069e876a76d59d21aa8e73`。
 本批來源及產物擁有權已驗證。歷史root-owned仍3636項，沒有.md目錄或新root-owned產物；
 未廣域修復。沒有新image或發行包，使用者scratch／Android libs保持原樣。
 本批相關執行中／停止容器收尾已清空；原版資產、PNG／state／database未納入提交。
+
+
+## 2026-10-01 — Issue #4 接受角色後生日首頁
+
+由上一合法checkpoint的16次創角輸入延伸第17次IRQ1 Enter，原版先清畫面並顯示黑底
+生日旁白；重製提前顯示房間。紅測試完整畫布差異167,706像素。IDA Pro9.4查明
+raw DGROUP3E6E／linear28C3E／file19FAE的record404框線、24px字距，以及0xfff5
+不吞下一word的姓名插值；舊解析把「16歲」顯示為「6歲」。
+
+先將證據、固定輸入與分級寫入docs/188 DRAFT；隔離繪圖試作完整RGB差異0後審查READY，
+才把文字／完整字模框、黑底、顏色、版面、字距及控制碼長度放入opening_prelude。
+試作已移除，正式正常輸入兩張首頁零差異，連同既有20張共22張通過；首頁限定CONFORMED。
+一般對話維持先前解析，本批不外推全遊戲變數語意。schema/content為0.1.58／0.1.64。
+原始文字glyph_codes直接來自D3TXT；value沿用可讀字模索引，不作未考訂續頁的字形權威。
+
+補上33項旁白損壞／巢狀缺欄位拒絕與原始EXE／TXT parity。全部11個internal、桌面main.go
+建置與完整game通過：359頂層／34子測試；37項選用跳過，其中4項原版收據另行嚴格通過，
+沒有素材缺失。正常新遊戲／主角與酒館命名／各段存讀檔至THE END為102.55秒，僅屬重製回歸。
+有界控制入口新增--opening；冷啟動重生17次原版IRQ1後，創角等待／確認與生日首頁均通過。
+生成腳本原文納入私有收據；等待圖由錯誤診斷名稱home改為birthday-wait並重生，未換名假造收據。
+
+原版首頁檢視工具曾呈現不完整畫面，後以PNG實際RGB及色號位元組證實兩張完全相同，
+沒有把顯示工具問題寫成產品缺陷。新增測試最初漏匯入fmt，修正後在同一容器命令乾淨重跑；
+圖片解析最初假設RGB PNG，改依真實indexed PNG格式核對。這些是驗證工具問題，與產品紅測試分開。
+
+docs/94保留舊框線形成史並追加勘誤；IDA匯出同列合併原名、位址、原始MZ bytes與loaded bytes，
+附有限分級與警示，自動核對docs/94／84入口。confirmed只涵蓋raw window前12bytes。
+PROJECT_MEMORY、CONTEXT唯一現況表、docs/74、WORKLIST同步生日首頁及下一閘門；
+README只修正開發版與有限驗收摘要，將舊重包成果明列為歷史checkpoint。
+整批私有驗收work/dosgolem-opening/issue4-birthday-verification-receipt.json：19,286bytes，
+SHA-256 c0a5cdb30fe9d61fe5c5be5ba947b0bfd1a88cb0ceb7d59dba5666ce6e967ab9。
+提交／推送的精確HEAD回填Issue #4；Issue保持開啟，下一步生日續頁，再到房間與母親。
+重製既有內部場景預載尚未同原版出生時序閉合，不將首頁零差異宣稱為全狀態或整段campaign parity。
+
+提交前Go掃描命中兩處原始控制碼勘誤註解與共用換行validator；初次稽核錯將所有hex命中
+都視為違規，依專案允許的parser／validator／證據註解逐項分類後乾淨重跑通過，沒有新增production fallback。
+所有來源與產物UID/GID1000；一次性--rm容器收尾已清空，沒有新image／發行包。
+歷史root候選仍3636項、沒有.md誤掛載目錄或本批新root產物；未廣域修復。
+原版EXE／TXT／FON、dosgolem上游、使用者scratch／Android libs保持原樣；
+圖片、state、原版素材、IDA database／授權與完整私有收據未納入Git或公開Issue附件。
+
+最後核對匯出工具，發現頂層unknown導覽標籤仍寫歷史模板file0x147b；實際target、bytes、
+xref與逐項分級均正確。改為由指定target產生file0x13a0／linear0x10030標籤後，以同一IDA
+容器重生補充收據work/issue4-birthday-reviewed-final-ida.json（1,369,167bytes；SHA-256
+f9f2ae6ec39d7db880b7e028507a3eb31947025e1f58a46d45dd6845cdc27cea）。
+舊收據及整批驗收雜湊保持原樣，docs/188追加勘誤；沒有改動遊戲行為或提升語意等級。

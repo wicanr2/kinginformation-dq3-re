@@ -1,4 +1,4 @@
-"""IDA 9.4 batch exporter for the DQ3 opening handler around file 0x147b.
+"""IDA 9.4 開場函式與直接 consumer 的非破壞批次匯出。
 
 Usage:
   idat -A -c -o/work/opening.i64 \
@@ -26,6 +26,19 @@ import ida_nalt
 import idautils
 import idc
 
+INPUT_BLOB = b""
+INPUT_PATH = ""
+REVIEW_LEDGER = [
+    (0x10077, 0x100ab, "strong", "創角返回後清畫面、開共用視窗、消費生日文字；只閉合首頁"),
+    (0x100b5, 0x100c4, "strong", "生日文字返回後寫DGROUP4F33/4F35=5,5並呼叫場景consumer；下一畫面待動態驗收"),
+    (0x15002, 0x15010, "strong", "共用DGROUP3E6E視窗caller；生日首頁record404字模框已逐點閉合"),
+    (0x20a07, 0x20a3a, "strong", "四平面清零writer；生日首頁黑底由自然輸入動態閉合，不外推其他caller"),
+    (0x214f8, 0x21501, "strong", "一般字模SI+=2、BP+=3，即24px步距；生日首頁已閉合"),
+    (0x215b7, 0x215ce, "strong", "0xfff5姓名插值後只越過控制碼本身；下一word不是參數"),
+    (0x21651, 0x216bf, "strong", "姓名consumer保存並還原SI；BP增加名字長度乘3；生日姓名0已閉合"),
+    (0x28c3e, 0x28c4a, "confirmed", "raw共用視窗前12bytes及record404字模畫布；限定自然生日首頁，其他欄位／場景未外推"),
+]
+
 
 def clean_line(ea):
     return ida_lines.generate_disasm_line(ea, ida_lines.GENDSM_REMOVE_TAGS) or ""
@@ -41,16 +54,34 @@ def item_record(ea):
             "ida_linear": hex(dst),
             "original_name": ida_funcs.get_func_name(dst) or idc.get_name(dst) or "",
         })
-    return {
+    result = {
         "ida_linear": hex(ea),
         "file_offset": hex(file_offset) if file_offset >= 0 else None,
         "bytes": raw.hex(),
+        "bytes_basis": "IDA loaded linear；可能包含MZ relocation；原始檔案另列file_bytes",
+        "file_bytes": INPUT_BLOB[file_offset:file_offset + size].hex() if file_offset >= 0 else None,
         "disassembly": clean_line(ea),
         "code_refs_from": refs_from,
+        "source_path": INPUT_PATH,
+        "source_size": len(INPUT_BLOB),
+        "source_sha256": hashlib.sha256(INPUT_BLOB).hexdigest(),
+        "semantic": "UNKNOWN：開場定位線索，尚未審查writer／consumer閉環",
+        "inference_level": "unknown",
+        "warning": "⚠ unknown：不可將自動名稱或定位線索當成已證實語意",
+        "evidence": "本次非破壞IDA database匯出；docs/188、docs/192只供定位",
     }
+    for start, end, level, semantic in REVIEW_LEDGER:
+        if start <= ea < end:
+            result.update(inference_level=level, semantic=semantic,
+                          reviewed_range={"ida_linear_start": hex(start), "ida_linear_end_exclusive": hex(end)},
+                          evidence="docs/188：2026-10-01有限首頁READY；固定seed冷啟動17次IRQ1與完整畫布核對；原始bytes／database xref")
+            result["warning"] = "" if level == "confirmed" else "⚠ " + level + "：未達已證實，不能外推未驗收玩家路徑"
+            break
+    return result
 
 
 def main():
+    global INPUT_BLOB, INPUT_PATH
     ida_auto.auto_wait()
     if len(idc.ARGV) < 3:
         raise RuntimeError("output path and target file offset are required")
@@ -59,6 +90,9 @@ def main():
     input_path = ida_nalt.get_input_file_path()
     with open(input_path, "rb") as fh:
         blob = fh.read()
+    INPUT_BLOB, INPUT_PATH = blob, input_path
+    if len(blob) != 115282 or hashlib.sha256(blob).hexdigest() != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c":
+        raise RuntimeError("輸入DQ3.EXE大小或雜湊不符，停止匯出")
 
     target_ea = ida_loader.get_fileregion_ea(target_file)
     if target_ea == idc.BADADDR:
@@ -86,11 +120,28 @@ def main():
         })
 
     instructions = [item_record(ea) for ea in idautils.FuncItems(fn.start_ea)]
+    related_starts = set()
+    for ea in idautils.FuncItems(fn.start_ea):
+        for target in idautils.CodeRefsFrom(ea, False):
+            related = ida_funcs.get_func(target)
+            if related is not None and related.start_ea != fn.start_ea:
+                related_starts.add(related.start_ea)
+    related_functions = []
+    for start in sorted(related_starts):
+        related = ida_funcs.get_func(start)
+        related_functions.append({
+            **item_record(start),
+            "original_function": ida_funcs.get_func_name(start),
+            "function_end_ida_linear": hex(related.end_ea),
+            "instructions": [item_record(ea) for ea in idautils.FuncItems(start)],
+            "xrefs": [{**item_record(ref.frm), "xref_type": ref.type}
+                      for ref in idautils.XrefsTo(start)],
+        })
     result = {
         "evidence_contract": {
-            "semantic_annotation": "opening handler containing historical file offset 0x147b",
+            "semantic_annotation": f"file {target_file:#x}／IDA linear {target_ea:#x} 所在原始函式；僅作導覽",
             "inference_level": "unknown",
-            "note": "Navigation label only; interpretation requires caller/writer/consumer review.",
+            "note": "原始函式導覽標籤；語意須逐項審查caller／writer／consumer，不能把標籤當證據。",
         },
         "input": {
             "path": input_path,
@@ -100,7 +151,7 @@ def main():
         "tool": {
             "name": "IDA Pro",
             "version": ida_kernwin.get_kernel_version(),
-            "address_space": "IDA linear address plus original MZ file offset",
+            "address_space": "IDA linear；MZ file=linear−0xEC90；DGROUP基底linear0x24DD0",
         },
         "target": {
             "requested_file_offset": hex(target_file),
@@ -112,7 +163,30 @@ def main():
         },
         "callers": callers,
         "instructions": instructions,
+        "review_ledger": [{"ida_linear_start": hex(a), "ida_linear_end_exclusive": hex(b),
+                           "inference_level": level, "semantic": semantic,
+                           "evidence": "docs/188：2026-10-01有限首頁READY"}
+                          for a, b, level, semantic in REVIEW_LEDGER],
+        "related_functions": related_functions,
+        "raw_windows": [{**item_record(ea), "length_bytes": 30,
+                         "raw_hex": (ida_bytes.get_bytes(ea, 30) or b"").hex(),
+                         "xrefs": [{**item_record(ref.frm), "xref_type": ref.type}
+                                   for ref in idautils.XrefsTo(ea)]}
+                        for ea in (0x28c3e,)],
     }
+    repo_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    result["resolution_backlinks"] = []
+    for relative, marker in (
+        ("docs/94-dialogue-window-and-monster-mask-re.md", "2026-10-01 勘誤：raw"),
+        ("docs/84-game-pack-json-contract.md", "創角後生日旁白（schema 0.1.58"),
+    ):
+        with open(os.path.join(repo_root, relative), encoding="utf-8") as stream:
+            text = stream.read()
+        if marker not in text or "188-opening-escort-to-castle-spec.md" not in text:
+            raise RuntimeError(relative + " 缺生日旁白勘誤或契約入口")
+        result["resolution_backlinks"].append({"older_spec": relative, "required_marker": marker,
+                                                "evidence_spec": "docs/188-opening-escort-to-castle-spec.md",
+                                                "source_sha256": hashlib.sha256(blob).hexdigest(), "checked": True})
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, "w", encoding="utf-8") as fh:
         json.dump(result, fh, ensure_ascii=False, indent=2)

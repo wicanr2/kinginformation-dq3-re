@@ -1,4 +1,4 @@
-"""原版冷啟動、主選單與命名操作收據；創角測試在執行前明定種子；母親開場仍待閉合。
+"""原版冷啟動、主選單、創角與生日首頁收據；執行前明定種子；續頁／母親仍待閉合。
 
 入口與證據分級見 docs/113-newgame-geometry-re.md、GitHub Issue #4。
 只在一次性 Docker 執行；原版、上游來源唯讀，工作產物不入 Git。
@@ -8,10 +8,13 @@ import hashlib, json, os, re, shutil, subprocess, tempfile
 
 repo = Path('/repo')
 out = Path('/work/dosgolem-opening')
+generation_script = Path(__file__).read_bytes()
 scenario = os.environ.get('DQ3_NEWGAME_PROBE_SCENARIO', 'initial')
-assert scenario in ('initial', 'name_navigation', 'name_function_mode', 'name_creation'), scenario
+creation_scenarios = ('name_creation', 'opening_accept')
+assert scenario in ('initial', 'name_navigation', 'name_function_mode') + creation_scenarios, scenario
 prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
-          'name_function_mode':'issue4-mode', 'name_creation':'issue4-creation'}[scenario]
+          'name_function_mode':'issue4-mode', 'name_creation':'issue4-creation',
+          'opening_accept':'issue4-opening'}[scenario]
 keys = [(710000000, 0x1c), (731000000, 0x1c)]
 captures = [(729000000, 'menu'), (740000000, 'create'),
             (750000000, 'final' if scenario == 'initial' else 'initial')]
@@ -26,14 +29,14 @@ if scenario == 'name_navigation':
                  (851000000, 'left-again'), (871000000, 'raw43'),
                  (891000000, 'candidate-empty'), (911000000, 'candidate-dismissed')]
     stop = 920000000
-if scenario in ('name_function_mode', 'name_creation'):
+if scenario in ('name_function_mode',) + creation_scenarios:
     # raw0 → 上 raw36 → 左 raw35 → Enter 進功能列 → Enter 選英數。
     # raw35 才是語意 cell43；raw43 是聲調，不能混為功能格。
     keys += [(760000000, 0x48), (780000000, 0x4b), (800000000, 0x1c), (820000000, 0x1c)]
     captures += [(771000000, 'up-wrap'), (791000000, 'function-cell'),
                  (811000000, 'function-focus'), (831000000, 'alnum')]
     stop = 840000000
-if scenario == 'name_creation':
+if scenario in creation_scenarios:
     # raw35 → 右raw36 → 下raw0 → Enter輸入0；上、左、Enter進功能列，
     # 上鍵環繞至完成，Enter進性別，最後Enter選預設男性。seed在執行前定義。
     keys += [(840000000,0x4d),(860000000,0x50),(880000000,0x1c),
@@ -48,6 +51,12 @@ if scenario == 'name_creation':
     keys += [(1060000000,0x1c)]
     captures += [(1051000000,'ability-waiting'),(1071000000,'ability-confirm')]
     stop = 1080000000
+if scenario == 'opening_accept':
+    # 第17次正式 Enter 接受角色；後續只觀察，不寫入出生位置或故事狀態。
+    keys += [(1100000000, 0x1c)]
+    captures += [(1111000000, 'accepted'), (1151000000, 'birthday-wait'),
+                 (1191000000, 'stable')]
+    stop = 1200000000
 assert out.is_dir() and out.stat().st_uid == os.getuid()
 exe = repo / 'assets_raw/DQ3.EXE'
 assert len(exe.read_bytes()) == 115282
@@ -103,7 +112,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     queue_cases = ''.join(f'\t\tcase {step}: m.QueueKey(0x{scan:02x}); fmt.Printf("DQ3_KEY_QUEUED step=%d scan={scan:02x}\\n", m.Steps)\n' for step, scan in keys)
     observed_steps = ', '.join(str(step) for step, _ in captures)
     probetext = probetext.replace(marker, '''\tm.KeyEvery = 500000\n\tvar previousKeyIRQs uint64\n'''+marker+'''\t\tswitch m.Steps {\n'''+queue_cases+'''\t\t}\n\t\tif m.KeyIRQs != previousKeyIRQs {\n\t\t\tfmt.Printf("DQ3_KEY_DELIVERED step=%d count=%d port60=%02x CSIP=%04x:%04x\\n", m.Steps, m.KeyIRQs, m.In8(0x60), m.CPU.Seg[cpu.CS], m.CPU.IP)\n\t\t\tpreviousKeyIRQs = m.KeyIRQs\n\t\t}\n'''+f'''\t\tswitch m.Steps {{\n\t\tcase {observed_steps}:\n\t\t\tfmt.Printf("DQ3_NAME_OBSERVED step=%d DS=%04x raw_cursor=%d name_mode=%04x\\n", m.Steps, m.CPU.Seg[cpu.DS], m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS], 0x26fe)), m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS], 0x26fc)))\n\t\t}}\n''')
-    if scenario == 'name_creation':
+    if scenario in creation_scenarios:
         seed_hook = r"""
         // 原版由正常玩家輸入抵達此處；只在已審查的Lv1交易套用預先固定種子。
         // IDA linear → runtime physical = linear−0xEF00；DGROUP DS=15ED。
@@ -159,7 +168,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             'upstream_revision_observed':'2f44a68ebfc54b28fb15dd4a34510b0b04a5415d',
             'docker_image':'dq3-ebiten-test:20260822-r1',
             'go_version':subprocess.check_output(['go','version'],text=True).strip(),
-            'generation_script_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            'generation_script_sha256':hashlib.sha256(generation_script).hexdigest(),
             'build_flags':['-trimpath','-p','2'],
             'upstream_files_sha256':hashlib.sha256(raw).hexdigest(),'patched_files_sha256':hashlib.sha256(files.read_bytes()).hexdigest(),
             'original_bios_sha256':hashlib.sha256(biosraw).hexdigest(),'patched_bios_sha256':hashlib.sha256(bios.read_bytes()).hexdigest(),
@@ -168,6 +177,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             'probe_sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'args':args,
             'scenario':scenario,'player_input':[{'queued_step':step,'scan':hex(scan)} for step,scan in keys], 'minimum_scan_interval':500000,'game_state_injection':False}
     (out / f'{prefix}-meta.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n')
+    (out / f'{prefix}-generation.py').write_bytes(generation_script)
     print('原版自然探測開始',flush=True)
     with (out / f'{prefix}.log').open('w') as log:
         result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=180)
@@ -195,14 +205,16 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     meta['actual_irq1_events'] = key_events
     meta['name_observations'] = [line for line in lines if line.startswith('DQ3_NAME_OBSERVED ')]
     expected_cursors = {'initial':[0,0,0], 'name_navigation':[0,0,0,44,0,36,0,44,43,43,0],
-                        'name_function_mode':[0,0,0,36,35,35,35], 'name_creation':[0,0,0,36,35,35,35]}[scenario]
+                        'name_function_mode':[0,0,0,36,35,35,35],
+                        'name_creation':[0,0,0,36,35,35,35],
+                        'opening_accept':[0,0,0,36,35,35,35]}[scenario]
     observations = [re.search(r'DS=([0-9a-f]+) raw_cursor=(\d+) name_mode=([0-9a-f]+)', line)
                     for line in meta['name_observations']]
     assert len(observations) == len(captures) and all(observations)
     assert all(match.group(1) == '15ed' for match in observations)
     assert [int(match.group(2)) for match in observations[:len(expected_cursors)]] == expected_cursors
     expected_modes = [0] + [1]*(len(expected_cursors)-1)
-    if scenario in ('name_function_mode', 'name_creation'):
+    if scenario in ('name_function_mode',) + creation_scenarios:
         expected_modes[-2:] = [5,2]
     assert [int(match.group(3),16) for match in observations[:len(expected_modes)]] == expected_modes
     meta['observation_contract'] = {'raw_cursor_dgroup_offset':'0x26fe',
@@ -210,7 +222,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                                     'expected_raw_cursors':expected_cursors,
                                     'expected_modes':expected_modes}
     meta['test_rng_seed_control'] = None
-    if scenario == 'name_creation':
+    if scenario in creation_scenarios:
         seed_events=[line for line in lines if line.startswith('DQ3_CREATION_SEED ')]
         results=[line for line in lines if line.startswith('DQ3_CREATION_RESULT ')]
         assert len(seed_events)==1 and 'fixed=1357' in seed_events[0], seed_events
@@ -224,10 +236,13 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         meta['creation_flow_events']=[line for line in lines if line.startswith('DQ3_CREATION_FLOW ')]
     meta['rng_comparison'] = False
     meta['scope'] = '只到主選單及命名導航／模式選擇；沒有創角能力、出生點或母親開場 parity'
-    if scenario == 'name_creation':
+    if scenario in creation_scenarios:
         meta['scope']='固定原版測試種子後，自然創角能力的原版收據；尚未與重製對拍，母親仍未知'
+    if scenario == 'opening_accept':
+        meta['scope']='冷啟動17次正式IRQ1輸入，固定創角種子並正常接受角色後的原版畫面；出生位置與母親開場尚未對拍'
+        meta['observation_contract']['post_creation_cursor_semantics'] = '創角後僅保留原始欄位值，不將命名游標解讀為場景狀態'
     meta['artifacts'] = []
-    artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log']
+    artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log', f'{prefix}-generation.py']
     for name in artifact_names:
         artifact = out / name
         assert artifact.is_file() and artifact.stat().st_size > 0

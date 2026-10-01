@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.57"
+	SchemaVersion       = "0.1.58"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -919,6 +919,32 @@ type OpeningEscort struct {
 	Evidence           Evidence              `json:"evidence"`
 }
 
+// OpeningPrelude 描述創角後、場景顯示前的有限文字演出。
+// 框線與文字由具名引用提供；字距與控制碼長度只使用已註冊的解析原語。
+type OpeningPrelude struct {
+	ID                string       `json:"id"`
+	TextID            string       `json:"text_id"`
+	FrameTextID       string       `json:"frame_text_id"`
+	Window            WindowLayout `json:"window"`
+	GlyphStepX        int          `json:"glyph_step_x"`
+	VariableCodeWords int          `json:"variable_code_words"`
+	ForegroundRGB     []uint8      `json:"foreground_rgb"`
+	BackdropRGB       []uint8      `json:"backdrop_rgb"`
+	Evidence          Evidence     `json:"evidence"`
+}
+
+func (p *OpeningPrelude) UnmarshalJSON(raw []byte) error {
+	type plain OpeningPrelude
+	if err := decodeOpeningObject(raw, (*plain)(p), []string{"id", "text_id", "frame_text_id", "window", "glyph_step_x", "variable_code_words", "foreground_rgb", "backdrop_rgb", "evidence"}); err != nil {
+		return err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+	return decodeOpeningObject(fields["window"], &p.Window, []string{"id", "x", "y", "width", "height", "text_inset_x", "text_inset_y", "columns", "lines_per_page", "glyph_hold_frames", "glyph_timing_evidence", "evidence"})
+}
+
 // RawScreenAsset describes a version-owned planar screen whose bytes and
 // palette are separate. The engine only knows the format primitive; the pack
 // supplies the asset key, dimensions, palette and evidence.
@@ -948,6 +974,7 @@ type Interface struct {
 	PartyHUD            PartyHUDLayout       `json:"party_hud,omitempty"`
 	Opening             *OpeningSequence     `json:"opening,omitempty"`
 	OpeningEscort       *OpeningEscort       `json:"opening_escort,omitempty"`
+	OpeningPrelude      *OpeningPrelude      `json:"opening_prelude,omitempty"`
 	Attract             *AttractSequence     `json:"attract,omitempty"`
 	NewGameConfirmation *RawScreenAsset      `json:"new_game_confirmation,omitempty"`
 	BattleTexts         *BattleTextRefs      `json:"battle_texts,omitempty"`
@@ -2130,6 +2157,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateNewGameRasterRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
+	if err := p.validateOpeningPreludeRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
 	if err := p.validateBattleTextRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
@@ -2505,6 +2535,29 @@ func (p *Pack) validateInterface() error {
 			seenAssets[frame.AssetKey] = true
 		}
 	}
+	if e := p.Interface.OpeningPrelude; e != nil {
+		w := e.Window
+		if e.ID == "" || e.TextID == "" || e.FrameTextID == "" || e.Evidence.Level != "D3" || w.Evidence.Level == "D1" ||
+			e.GlyphStepX < 16 || e.GlyphStepX > 64 || e.VariableCodeWords < 1 || e.VariableCodeWords > 2 ||
+			len(e.ForegroundRGB) != 3 || len(e.BackdropRGB) != 3 ||
+			w.ID == "" || w.X < 0 || w.Y < 0 || w.Width <= 0 || w.Height <= 0 ||
+			w.X+w.Width > 640 || w.Y+w.Height > 350 || w.Width%16 != 0 || w.Height%16 != 0 ||
+			w.TextInsetX < 0 || w.TextInsetY < 0 || w.TextInsetX*2 >= w.Width || w.TextInsetY*2 >= w.Height ||
+			w.Columns <= 0 || w.Columns > 100 || w.LinesPerPage <= 0 || w.LinesPerPage > 20 ||
+			w.GlyphHoldFrames < 0 || w.GlyphHoldFrames > 60 || (w.GlyphHoldFrames > 0 && w.GlyphTiming == nil) {
+			return errors.New("opening prelude is invalid")
+		}
+		for _, evidence := range []Evidence{e.Evidence, w.Evidence} {
+			if err := validateEvidence(evidence); err != nil {
+				return fmt.Errorf("opening prelude evidence: %w", err)
+			}
+		}
+		if w.GlyphTiming != nil {
+			if err := validateEvidence(*w.GlyphTiming); err != nil {
+				return fmt.Errorf("opening prelude glyph timing: %w", err)
+			}
+		}
+	}
 	if e := p.Interface.OpeningEscort; e != nil {
 		if e.ID == "" || e.CTY < 0 || e.Section < 0 || len(e.Frames) < 2 ||
 			e.Destination.CTY < 0 || e.Destination.Section < 0 || len(e.ArrivalFrames) < 2 ||
@@ -2558,6 +2611,37 @@ func (p *Pack) validateInterface() error {
 				seenFlags[flag] = group.name
 			}
 		}
+	}
+	return nil
+}
+
+func (p *Pack) validateOpeningPreludeRefs() error {
+	e := p.Interface.OpeningPrelude
+	if e == nil {
+		return nil
+	}
+	if text, ok := p.TextGlyphCodes(e.TextID); !ok || len(text) == 0 {
+		return errors.New("opening prelude text reference is missing")
+	}
+	frame, ok := p.TextGlyphCodes(e.FrameTextID)
+	if !ok {
+		return errors.New("opening prelude frame reference is missing")
+	}
+	columns, rows, col, row := e.Window.Width/16, e.Window.Height/16, 0, 1
+	for _, code := range frame {
+		if code == 0xfffe {
+			if col != columns {
+				return errors.New("opening prelude frame shape is invalid")
+			}
+			col, row = 0, row+1
+		} else if code >= 1476 {
+			return errors.New("opening prelude frame glyph is invalid")
+		} else {
+			col++
+		}
+	}
+	if col != columns || row != rows {
+		return errors.New("opening prelude frame shape is invalid")
 	}
 	return nil
 }
@@ -6098,6 +6182,13 @@ func (p *Pack) OpeningSequence() (*OpeningSequence, bool) {
 		return nil, false
 	}
 	return p.Interface.Opening, true
+}
+
+func (p *Pack) OpeningPrelude() (*OpeningPrelude, bool) {
+	if p == nil || p.Interface.OpeningPrelude == nil {
+		return nil, false
+	}
+	return p.Interface.OpeningPrelude, true
 }
 
 func (p *Pack) OpeningEscort() (*OpeningEscort, bool) {

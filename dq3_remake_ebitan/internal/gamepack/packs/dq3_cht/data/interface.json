@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.57",
+  "schema_version": "0.1.58",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -1090,6 +1090,65 @@
       "consumer": "原版自然開機依序讀取 TITA.P、TITB.P、TITC.P、TITD.P、TITE.P、TITF.P，後續進標題",
       "doc": "docs/196-dosgolem-opening-sequence-parity.md",
       "note": "confirmed 僅限六張素材與順序；無鍵盤輸入、EXE 修改或狀態注入。精確 skip、RGB／時序與音訊仍未知。"
+    }
+  },
+  "opening_prelude": {
+    "id": "dq3:opening.birthday_prelude",
+    "text_id": "dq3:text.opening.birthday",
+    "frame_text_id": "dq3:text.opening.dialogue_frame",
+    "window": {
+      "id": "dq3:window.opening_prelude",
+      "x": 152,
+      "y": 238,
+      "width": 352,
+      "height": 96,
+      "text_inset_x": 16,
+      "text_inset_y": 16,
+      "columns": 20,
+      "lines_per_page": 4,
+      "glyph_hold_frames": 3,
+      "glyph_timing_evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + IBM PC timer specification",
+        "address_space": "linear",
+        "address": "0x214b9..0x214f8",
+        "consumer": "sub_21414 draws one glyph then waits for DS:0x0005 >= 1 unless fast mode is active",
+        "doc": "docs/192-opening-dialogue-v3-closure.md",
+        "note": "3 updates at 60 TPS approximate one 18.2 Hz timer tick; hardware-spec approximation, not DOS wall-clock exact"
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT01.TXT + D3TXT00.TXT/FON + dosgolem自然生日首頁",
+        "address_space": "linear",
+        "address": "0x28c3e",
+        "consumer": "sub_15002→sub_1F590讀DGROUP3E6E；raw版面是record404字模畫布",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "首頁限定READY；原始定位、SHA與推論等級見docs/188，不外推續頁／母親"
+      }
+    },
+    "glyph_step_x": 24,
+    "variable_code_words": 1,
+    "foreground_rgb": [
+      243,
+      243,
+      243
+    ],
+    "backdrop_rgb": [
+      0,
+      0,
+      0
+    ],
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + D3TXT01.TXT + D3TXT00.TXT/FON + dosgolem自然生日首頁",
+      "address_space": "linear",
+      "address": "0x10077..0x100b2;0x214f8..0x215cb",
+      "consumer": "sub_10030清畫面→sub_15002→sub_21414；字模與姓名前進3個VGA bytes，變數不吞下一word",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "首頁限定READY；原始定位、SHA與推論等級見docs/188，不外推續頁／母親"
     }
   },
   "opening_escort": {

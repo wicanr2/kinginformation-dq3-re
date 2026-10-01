@@ -1,20 +1,23 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
-> 能力等待／確認已依原版caller、完整字模與外框切換順序修正；正式兩張完整640×350 RGB差異0，
-> 連同既有18張共20張通過。男性Lv1、英數姓名0的穩定能力兩階段限定CONFORMED；
-> 原版冷啟動、16次真實IRQ1輸入重生後再次通過，沒有遮罩或遊戲狀態注入。
-> 原版自然生成入口固定seed1357一次，重製首個InputState前固定同值；七能力、目前HP／MP
-> 及最後seed356D一致。閒置／只按住方向不離開等待，ACK不重新擲骰，也不在同次接受角色。
-> schema/content為0.1.57／0.1.63；完整record407／557／434及裝備marker由pack提供。
-> 原始EXE／TXT parity、24項損壞引用拒絕、全部internal及desktop main.go建置通過。
-> 標準game359項頂層／34項子測試通過；36項選用未執行，其中3項原版收據測試另行嚴格通過，
-> 沒有素材缺失。正常新遊戲、主角／酒館及各段存讀檔至THE END通過（99.04秒），只屬remake回歸。
-> 重生入口 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --creation` 現在必驗等待／確認；
-> 不需選用ACK旗標。下一步是原版正常接受角色後的出生點／母親，音訊及完整原版campaign仍未知。
-> 證據與歷史定位勘誤見[docs/113](docs/113-newgame-geometry-re.md)；原始性別28BC6與能力選項28E50分開。
-> 私有驗收 `work/dosgolem-opening/issue4-ack-verification-receipt.json`，20,665bytes，SHA-256
-> `6f6aba6327d33f7136e96584e20190229152f2298b0e99fdcfa31c8cccdef052`；原版素材、database及圖像不公開。
+> 接受角色後的生日首頁已修正：黑底、完整record404字模框、24px字距、獨立姓名插值，
+> 避免提前顯示房間與吞掉「16歲」的十位字模。從冷啟動17次真實IRQ1、固定seed1357一次，
+> 正式InputState的兩張首頁全640×350 RGB差異0，連同既有20張共22張通過；首頁限定CONFORMED。
+> schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用與具名解析原語。
+> 原始EXE／TXT parity及33項旁白損壞／缺欄位拒絕通過，全部11個internal套件及desktop main.go建置通過。
+> 標準game359項頂層／34項子測試通過；37項選用未執行，其中4項原版收據測試另行嚴格通過；
+> 沒有素材缺失。正常新遊戲、主角／酒館及各段存讀檔至THE END（102.55秒），只屬remake回歸。
+> 原版自然Lv1入口固定seed1357，重製首個InputState前固定同值；七能力、目前HP／MP及Lv1末seed356D一致。
+> 生日等待不消耗重製RNG；本批不宣稱原版接受角色後的後續骰序一致。
+> 重生入口 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --opening`；同批必驗創角等待／確認與生日首頁。
+> 證據、有限分級及歷史勘誤見[docs/188](docs/188-opening-escort-to-castle-spec.md)，欄位契約見[docs/84](docs/84-game-pack-json-contract.md)。
+> 私有驗收 `work/dosgolem-opening/issue4-birthday-verification-receipt.json`，19,286bytes，SHA-256
+> `c0a5cdb30fe9d61fe5c5be5ba947b0bfd1a88cb0ceb7d59dba5666ce6e967ab9`；原始生成腳本納入私有收據。
+> 下一步從正常輸入推進生日續頁，再到房間與母親。箭頭、出生時序、音訊及完整原版campaign仍未知。
+> 本批只閉合可見首頁；重製沿用原有內部場景／座標預載，未宣稱完整出生狀態同原版。
+> 原版與dosgolem上游保持唯讀，Docker容器已清理，沒有新image或發行包。
+
 
 > 2026-10-01 對拍：依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 > 修正開機漏 1990 卡、錯用 TITP 與缺 DFP 動態標誌；第六幕 129 個位置已逐色號／RGB 通過，

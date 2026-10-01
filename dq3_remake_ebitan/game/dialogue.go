@@ -10,14 +10,16 @@ const noVar = -1
 
 // Dialogue 是一個對話視窗狀態機:Open(rec) → 逐頁 Advance() → 關閉。
 type Dialogue struct {
-	tx          *dq3data.Text
-	itemNames   *dq3data.Text // 道具名表(D3TXT00.TXT,rec=code+1)。固定,獨立於 tx 目前切換的城鎮 bank;Game 初始化時同步 = g.shop.nameText。
-	layout      gamepack.WindowLayout
-	buf         []uint16
-	pos         int
-	open        bool
-	revealCells int
-	revealTick  int
+	tx           *dq3data.Text
+	itemNames    *dq3data.Text // 道具名表(D3TXT00.TXT,rec=code+1)。固定,獨立於 tx 目前切換的城鎮 bank;Game 初始化時同步 = g.shop.nameText。
+	layout       gamepack.WindowLayout
+	buf          []uint16
+	pos          int
+	open         bool
+	revealCells  int
+	revealTick   int
+	prelude      *gamepack.OpeningPrelude
+	preludeFrame []uint16
 
 	// 插值 var context(docs/42 §四;比照 C dq3_text_set_var_*/dq3_text_clear_vars)。
 	varItem    int              // VAR_ITEM 插值:道具 code(noVar=未設 → 空白)
@@ -86,7 +88,7 @@ func (d *Dialogue) pageCellCount() int {
 				n = 1
 			}
 			cells += n
-			i += 2
+			i += d.variableCodeWords()
 		default:
 			cells++
 			i++
@@ -134,9 +136,17 @@ func (d *Dialogue) varGlyphs(code uint16) []int {
 	return nil
 }
 
+// 一般對話保留既有解析；有限旁白使用資料包已審查的控制碼長度。
+func (d *Dialogue) variableCodeWords() int {
+	if d.prelude != nil {
+		return d.prelude.VariableCodeWords
+	}
+	return 2
+}
+
 // scanPage:從 pos 掃到本頁結尾,回 (下一頁起點, 是否已到記錄結尾)。移植 scan_page。
-// 動態插值控制碼(0xfffb/fffa/fff9/fff6/fff5/ffed)消耗控制碼本身 +1 參數 word,展開的字模序列
-// (道具名/數值/主角名,未設則視為 1 格空白)一樣走欄位/換行計數,避免展開後溢出視窗。
+// 動態插值長度由有限旁白契約指定；一般對話保留既有解析，
+// 原版生日的0xfff5不消耗下一字模，勘誤與界線見docs/188。
 func (d *Dialogue) scanPage(pos int) (int, bool) {
 	col, line, i := 0, 0, pos
 	for i < len(d.buf) {
@@ -151,10 +161,7 @@ func (d *Dialogue) scanPage(pos int) (int, bool) {
 			}
 		case dq3data.IsVarInsert(v):
 			n := len(d.varGlyphs(v))
-			i++
-			if i < len(d.buf) { // 消耗 +1 參數 word(不算欄位)
-				i++
-			}
+			i += d.variableCodeWords()
 			if n == 0 {
 				n = 1 // 未設 var → 空白一格(維持版面,不可 0 寬)
 			}
@@ -229,13 +236,25 @@ func (d *Dialogue) draw(rgba []byte, white dq3data.Color) {
 	}
 	w := d.layout
 	dark := dq3data.Color{R: 0, G: 0, B: 0}
-	for r := 0; r < w.Height; r++ {
-		for c := 0; c < w.Width; c++ {
-			col := dark
-			if r == 0 || r == w.Height-1 || c == 0 || c == w.Width-1 { // 白框
-				col = white
+	if d.prelude != nil {
+		x, y := w.X, w.Y
+		for _, code := range d.preludeFrame {
+			if code == dq3data.TxtNL {
+				x, y = w.X, y+dq3data.GlyphPx
+				continue
 			}
-			putPx(rgba, w.X+c, w.Y+r, col)
+			d.drawGlyph(rgba, x, y, int(code), white)
+			x += dq3data.GlyphPx
+		}
+	} else {
+		for r := 0; r < w.Height; r++ {
+			for c := 0; c < w.Width; c++ {
+				col := dark
+				if r == 0 || r == w.Height-1 || c == 0 || c == w.Width-1 { // 白框
+					col = white
+				}
+				putPx(rgba, w.X+c, w.Y+r, col)
+			}
 		}
 	}
 	end, _ := d.scanPage(d.pos)
@@ -246,6 +265,10 @@ func (d *Dialogue) draw(rgba []byte, white dq3data.Color) {
 		visibleCells = int(^uint(0) >> 1)
 	}
 	x0, y0 := w.X+w.TextInsetX, w.Y+w.TextInsetY
+	stepX := dq3data.GlyphPx
+	if d.prelude != nil {
+		stepX = d.prelude.GlyphStepX
+	}
 loop:
 	for i := d.pos; i < end && i < len(d.buf); {
 		v := d.buf[i]
@@ -260,17 +283,14 @@ loop:
 			}
 		case dq3data.IsVarInsert(v):
 			glyphs := d.varGlyphs(v)
-			i++
-			if i < len(d.buf) { // 消耗 +1 參數 word(不畫)
-				i++
-			}
+			i += d.variableCodeWords()
 			n := len(glyphs)
 			if n == 0 {
 				n = 1 // 未設 var → 空白一格
 			}
 			for j := 0; j < n; j++ {
 				if drawnCells < visibleCells && j < len(glyphs) {
-					d.drawGlyph(rgba, x0+col*dq3data.GlyphPx, y0+line*dq3data.GlyphPx, glyphs[j], white)
+					d.drawGlyph(rgba, x0+col*stepX, y0+line*dq3data.GlyphPx, glyphs[j], white)
 				}
 				drawnCells++
 				col++
@@ -290,7 +310,7 @@ loop:
 			}
 		default:
 			if drawnCells < visibleCells && v < dq3data.GlyphMax {
-				d.drawGlyph(rgba, x0+col*dq3data.GlyphPx, y0+line*dq3data.GlyphPx, int(v), white)
+				d.drawGlyph(rgba, x0+col*stepX, y0+line*dq3data.GlyphPx, int(v), white)
 			}
 			drawnCells++
 			col++

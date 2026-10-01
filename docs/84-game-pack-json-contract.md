@@ -1550,3 +1550,28 @@ DQ3新增完整record407／557／434與真正能力選項raw window `0x28E50`；
 - 每個原版數值只應有一個 canonical JSON owner；Go、測試與文件不可再各留一份手抄表。
 - converter 可由原始 binary 產生 JSON，但生成結果仍需 review、evidence 與 deterministic diff。
 - 「能改 JSON」不是 fidelity 證據；數值是否正確仍由原版 writer／table／consumer 與實機對拍決定。
+
+
+### 創角後生日旁白（schema 0.1.58／DQ3 content 0.1.64）
+
+`interface.opening_prelude` 是正式新遊戲入口必需的有限呈現契約；資料 fixture 可省略，
+正式 `NewGameWithPack` 不得接受缺漏。證據、首頁 READY／CONFORMED 及重生入口見
+[docs/188](188-opening-escort-to-castle-spec.md)。
+
+| 欄位 | 契約 |
+|---|---|
+| `id` | 穩定的演出身分 |
+| `text_id`／`frame_text_id` | 必須存在的文字引用；生日為 D3TXT01 record82，框線為 D3TXT00 record404 |
+| `window` | 明列原點、大小、inset、欄數、每頁行數、逐字等待與證據；巢狀欄位也不可省略 |
+| `glyph_step_x` | 已審查的一般字模／姓名橫向步距；DQ3 24px，來自 `BP+=3` VGA bytes |
+| `variable_code_words` | 插值控制碼佔用的原始 word 數；DQ3 生日為 1，不能吞掉「16歲」的十位字模 |
+| `foreground_rgb`／`backdrop_rgb` | 三個 byte；生日首頁分別 `[243,243,243]`／`[0,0,0]` |
+| `evidence` | 流程需 D3，版面至少 D2；保留原始定位與直接 consumer |
+
+原始 352×96 是 22×6 個 16px 字模的框線畫布。完整框線引用必須逐行符合此形狀，
+不得改成在 raw 外界畫矩形。背景、字距與文字都由 pack 提供；引擎沒有 DQ3 字串或座標 fallback。
+逐字等待沿用公開 timer 規格近似，不宣稱原版 wall-clock。`value` 保留既有字模索引的
+可讀解碼；原始 `glyph_codes` 與 EXE／TXT parity 才是字形權威，續頁未考訂字形不升格為證據。
+
+本契約已驗的是首段文字的穩定首頁。一般對話仍使用既有變數解析，箭頭、續頁累積／捲動、
+房間與母親需獨立原版收據；本批不延伸為全遊戲文字或整個開場 V3。

@@ -23,12 +23,14 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前開發版為 schema `0.1.54`／content `0.1.60`。dosgolem 已驗證六幕順序、
+目前開發版為 schema `0.1.58`／content `0.1.64`。dosgolem 已驗證六幕順序、
 前五幕色號及第六幕 129 個完整翻頁的色號／RGB，並修正漏卡與動態標誌；
 範圍與時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
+正常輸入的命名、性別、能力等待／確認及接受角色後生日首頁共22張完整畫布 RGB 零差異，
+範圍見 [docs/113](docs/113-newgame-geometry-re.md) 與 [docs/188](docs/188-opening-escort-to-castle-spec.md)。
 正常路線另修正同伴持有金皇冠時的還冠持有權檢查，見 [docs/82](docs/82-romaly-king-production-trace.md)。
 現行 remake 正式新遊戲輸入已抵達 `THE END`，標準回歸與桌面建置通過；
-原版創角以後的 dosgolem 玩家路線、完整音畫對拍尚未完成。
+原版生日續頁、出生時序／母親、完整玩家路線與音畫對拍尚未完成。
 歷史 E3 與 90% 自評不能代替本輪收據。現況以 [CONTEXT.md](CONTEXT.md) 為準，
 工作依據為 [GitHub Issues](https://github.com/wicanr2/kinginformation-dq3-re/issues)，
 歷程與歷史自評見 [WORKLOG.md](WORKLOG.md)。尚未發布包含本輪修改的新包。
@@ -41,7 +43,7 @@ Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完�
 `dist-all/v0.1.35-local/promo/`。
 這批完整素材與 MT-32 音樂只供本機保存，不加入 Git 或 GitHub Release；公開版現為不含
 原版素材的 v0.1.36。目前沒有已知的必要主線功能缺口，且本輪 source 已完成
-三平台同版重包。全遊戲逐畫面
+三平台同版重包；這是該歷史 checkpoint 的成果，本次對拍修改尚未打包。全遊戲逐畫面
 V3、Android host audio／真機與 macOS 真機
 參數，都是證據限制或可選驗收，不能寫成已達原版 exact，也不反向推翻 remake 玩家流程完成。
 快速狀態表見 [`WORKLIST.md`](WORKLIST.md)，現況與歷史閱讀閘門見 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)，

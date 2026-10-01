@@ -1,5 +1,10 @@
 # 對話視窗幾何與怪物 AND-mask 逆向閉合
 
+> 2026-10-01 勘誤：raw 352×96 是 record404 的字模畫布，不是可見白線矩形。
+> dosgolem 冷啟動生日首頁及 IDA consumer 證實框線由完整 record404 產生；
+> 直接用 raw 外界畫 1px 矩形不符合原版。舊證據與形成史保留，
+> 有限首頁 READY 與重生入口見 [docs/188](188-opening-escort-to-castle-spec.md)。
+
 > 2026-08-01；IDA Pro 9.4，原始 `DQ3.EXE`／`DQ3MNS.SHP`。本文只記錄可重現結論。
 
 ## 1. 共用對話視窗

@@ -1,5 +1,87 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+## 2026-10-01：接受角色後的生日旁白（CONFORMED，首頁限定）
+
+工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，目前主線基準
+`f3e3e1189ba58bb4b2b6f0de4fdb7ee60f83ada2`。本節先閉合接受角色後的首頁；
+本文件下方母親帶路的歷史 E3，不等於 dosgolem 已完成同狀態對拍。
+
+冷啟動延續 16 次已驗收創角輸入，再以第 17 次 IRQ1 Enter 接受男性、英數姓名 `0`。
+原版只在自然 Lv1 入口固定 seed `0x1357` 一次，未寫入座標、對話或旗標。
+私有原版收據 `work/dosgolem-opening/issue4-opening-receipt.json`：17,832 bytes，SHA-256
+`0a83f01a50aae94aedb3e9dd20485c2f2f6490548990dc59035233e4cc57dad5`。
+第 1,111,000,000 與 1,191,000,000 步的 PNG／色號位元組完全相同；
+中間一張多出等待箭頭。不以圖片檢視工具曾呈現的黑畫面推論文字消失。
+
+| 原始定位與 consumer | 有限結論 | 等級與證據 |
+|---|---|---|
+| IDA linear `0x10077..0x1009a`／file `0x13e7..0x140a`，`sub_20A07` | 創角返回後清畫面，再開共用視窗 | strong；database caller、四平面清零 writer；自然原版首頁黑底，該首頁已 confirmed |
+| linear `0x100a3..0x100a6`／file `0x1413..0x1416`，`DI=0x0c0a` → `sub_21414` | 消費 D3TXT01 record82；房間尚未顯示 | confirmed；原始 record 與冷啟動畫面閉合 |
+| linear `0x100b5..0x100c1`／file `0x1425..0x1431` | 上述文字返回後才寫 `DGROUP4F33/4F35=5,5` 並呼叫 `sub_11900` | strong；本批未動態驗收下一個畫面，不能宣稱出生點已對拍 |
+| linear `0x28c3e`／file `0x19fae`／DGROUP `0x3e6e` → `sub_15002` → `sub_1F590` | raw `0b 01 13 00 ee 00 2c 00 60 00 94 01`：原點 `(152,238)`、352×96、record404；框線由完整字模內容產生 | strong；與原版首頁核對後才升級，不能把 raw 外界直接畫成一條矩形 |
+| linear `0x214f8..0x214fe`／file `0x12868..0x1286e` | 一般字模之後 `SI+=2`、`BP+=3`，橫向步距 24px | strong；IDA bytes、writer／consumer，待試作全畫布核對 |
+| linear `0x215b7..0x215cb`，`sub_21651` 保存並還原 SI、`BP+=名字長度×3` | `0xfff5` 是獨立的姓名插值控制碼，不吞掉下一個 word；下一個 `1` 是「16歲」的十位字模 | strong；生日 raw record、插值 consumer；舊 `+1參數` 說法在此不成立 |
+
+輸入 `assets_raw/DQ3.EXE`：115,282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；
+`D3TXT01.TXT`：6,420 bytes，SHA-256
+`4d0f78b20f123a986feb9af62845183213adee6881e953825eb74678abce8271`。
+IDA Pro 9.4、位址空間為 IDA linear，MZ file=`linear−0xEC90`；匯出同列保留
+IDA loaded bytes、MZ file bytes、原名、推論等級與出處，原檔不修改。
+重生入口為 `tools/ida_dump_opening_handler54.py`，target file `0x13a0`／`0x12784`。
+第一份 caller／直接 callee sidecar `work/issue4-birthday-caller-ida.json`：1,352,787 bytes，
+SHA-256 `83cacdd7cccb1838072f9a3b14af19be4cce239f0e9d25e36104fe1be52ac785`。
+
+原始生日首頁與目前正式輸入重播的差異為 167,706 個 RGB 像素，遍及整張畫面。
+重製提前顯示房間、以矩形代替 record404、採 16px 步距，且錯吞十位字模。
+可丟棄繪圖試作已通過完整 640×350 RGB 比較，差異 0，沒有裁切、遮罩或更換原版收據。
+試作紀錄 `work/issue4-birthday-prototype.log` 保留；這仍不是正式修正。
+因此將黑底、record82文字 ID、record404完整框線 ID、raw版面、24px步距與獨立變數碼
+契約審查為首頁限定 READY：新增 `interface.opening_prelude`，透過具名文字引用和
+有限的 `glyph_step_x`／`variable_code_words` 原語呈現，不嵌入任意程式。
+正式引擎只讀契約；缺欄位、引用、框線字模形狀、顏色或版面一律拒絕載入。
+採用的動態姓名控制碼 `0xfff5` 本身只佔一個 word，姓名與一般字模都前進 24px；
+其他正式對話目前仍沿用既有解析，本批不把尚未重驗的整體文字規則宣稱為原版 parity。
+箭頭動畫、續頁、房間與母親仍待後續收據，正式首頁已由17次正常輸入與完整RGB比較限定 CONFORMED。
+
+
+### 首頁正式驗收與下一閘門
+
+提交前另核對 IDA 匯出工具的導覽標籤：舊 sidecar 的頂層 `unknown` 標籤沿用
+歷史模板 `file 0x147b`，但實際 target、原始 bytes、xref 與分級索引均為
+`file 0x13a0`／IDA linear `0x10030`。工具現改為依指定 target 產生標籤；
+舊收據與整批驗收雜湊保留，不覆寫歷史。新增私有補充收據
+`work/issue4-birthday-reviewed-final-ida.json`：1,369,167 bytes，SHA-256
+`f9f2ae6ec39d7db880b7e028507a3eb31947025e1f58a46d45dd6845cdc27cea`。
+本次勘誤只修導覽中繼資料，不擴大原有語意證據等級。
+
+正式兩張生日首頁零差異，連同既有20張共22張通過；DRAFT繪圖替換已移除。
+`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --opening` 已在正確image
+由原版冷啟動重生、17次IRQ1 make/break共34次送達後，再通過創角與生日首頁正式比較。
+中間擷取標為 `birthday-wait`，不能以舊診斷名稱 `home` 當成房間證據。
+最終原版收據18,022bytes，SHA-256
+`8bed7d6d21c7fb7f401c4d1f17c7c8bc45429c7a21e380306cdb5a157879f2bb`；
+最終整批私有驗收19,286bytes，SHA-256
+`c0a5cdb30fe9d61fe5c5be5ba947b0bfd1a88cb0ceb7d59dba5666ce6e967ab9`，
+路徑 `work/dosgolem-opening/issue4-birthday-verification-receipt.json`。
+生成腳本原文與hash已同時納入收據，先前收據以內容hash保存，不改寫形成史。
+
+最終有限語意sidecar `work/issue4-birthday-reviewed-ida.json`，1,369,130bytes，SHA-256
+`220bd5fc93d3e068a8fff4f4c1999246e17f18b2ffe830b58a126f0862af2422`。
+自動合併台帳、保留原名／定位／兩種bytes、警示未確認語意，並檢查docs/94／84回鏈。
+confirmed範圍只包含raw window前12bytes；相鄰欄位與下一結構不能跟著升級。
+
+schema/content為0.1.58／0.1.64，EXE／TXT parity與33項旁白損壞／巢狀缺欄位拒絕通過。
+全部11個internal套件、desktop main.go、標準game359項頂層／34項子測試通過；
+37項選用在標準批次跳過，其中4項原版收據已另行嚴格通過，沒有素材缺失。
+正常新遊戲→THE END為102.55秒，主角／酒館與各段存讀檔通過；這只證明重製回歸。
+
+首頁只宣稱E2／限定V3可見畫面。重製仍沿用先前內部場景／座標預載，完整出生狀態、
+生日續頁累積／捲動、箭頭、母親、音訊與全campaign均未達原版CONFORMED。
+下一個原版輸入先重生生日續頁，不能用後段checkpoint或直接事件呼叫跳過。
+Docker一次性容器已清理、UID/GID1000、原版及上游唯讀；歷史root候選3636項不改動，
+沒有`.md`誤掛載目錄或本批root產物，也沒有建立新image／發行包。
+
 日期：2026-08-24。這份文件取代 `docs/66`、`docs/74` 與 `docs/187` 中「handler54 在
 CTY00 sec0 `(8,38)` 立即播 rec80 並交回操作」的舊結論。舊證據保留，但舊解釋已推翻。
 

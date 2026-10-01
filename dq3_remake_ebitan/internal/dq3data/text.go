@@ -14,7 +14,8 @@ const (
 	txtVarLo = 0xffed // >= 此值 = 控制/插值占位(渲染為空白)
 	GlyphMax = 1476   // >= 此值不畫(非字模)
 
-	// 動態插值控制碼(docs/12/31/42;每個後接 +1 word 參數,須一併消耗)。
+	// 動態插值控制碼。舊引擎將後一word一併消耗，不是原版格式事實；
+	// docs/188 已證實生日0xfff5獨立，loader仍完整保留raw words。
 	// 渲染時依目前變數 context 替換為實字(主角/受話者名 / 數值 / 道具名);未設則略過。
 	TxtVarIdx  = 0xffed // VAR_IDX:索引字串(依 [0x249d]/[0x249f])→ remake:名字後備
 	TxtVar0    = 0xfff5 // VAR0:變數子字串 variant 0(城鎮對話最常見)→ 名字
