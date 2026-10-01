@@ -3,9 +3,11 @@ package game
 import (
 	"fmt"
 	"image"
+	"strconv"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
 // 索引色視窗只實作有限的原始字模／陰影／XOR primitive；所有版面與色號來自 pack。
@@ -37,7 +39,8 @@ func newIndexedNewGameRenderer(pack *gamepack.Pack, geo gamepack.NewGameGeometry
 	for _, c := range r.style.PaletteOverrides {
 		r.palette[c.Index] = dq3data.Color{R: c.RGB[0], G: c.RGB[1], B: c.RGB[2]}
 	}
-	for _, id := range []string{r.style.Menu.TextID, r.style.Header.TextID, r.style.Mode.TextID, r.style.Gender.TextID, r.style.ZhuyinTextID, r.style.AlnumTextID} {
+	for _, id := range []string{r.style.Menu.TextID, r.style.Header.TextID, r.style.Mode.TextID, r.style.Gender.TextID,
+		r.style.Ability.TextID, r.style.ConfirmationPrompt.TextID, r.style.ConfirmationChoice.TextID, r.style.ZhuyinTextID, r.style.AlnumTextID} {
 		codes, ok := pack.TextGlyphCodes(id)
 		if !ok {
 			return nil, fmt.Errorf("missing raster text %q", id)
@@ -57,6 +60,12 @@ func newIndexedNewGameRenderer(pack *gamepack.Pack, geo gamepack.NewGameGeometry
 	}
 	if _, ok := tx.Glyph(labels.ChoiceCursor[0]); !ok {
 		return nil, fmt.Errorf("selection cursor glyph missing")
+	}
+	if r.style.EquipmentMarkerGlyph == nil {
+		return nil, fmt.Errorf("missing equipment marker glyph")
+	}
+	if _, ok := tx.Glyph(*r.style.EquipmentMarkerGlyph); !ok {
+		return nil, fmt.Errorf("equipment marker glyph missing")
 	}
 	// 狀態機容量沿用既有常數；幾何來自 pack，進入正式 UI 前驗證最遠寫入。
 	inside := func(x, y, width, height int) bool {
@@ -145,6 +154,13 @@ func (r *indexedNewGameRenderer) window(tx *dq3data.Text, ref gamepack.RasterWin
 	offset := r.style.ShadowOffset
 	r.shadow(image.Rect(x+offset.X, y+offset.Y, x+offset.X+width, y+offset.Y+height))
 	r.text(tx, ref.TextID, image.Pt(x, y))
+	r.frame(ref)
+}
+
+// 活動外框的高亮是可逆 XOR；新視窗先撤銷前一個外框，姓名等後畫字模也一併切換。
+func (r *indexedNewGameRenderer) frame(ref gamepack.RasterWindowRef) {
+	w := r.windows[ref.RawWindowID]
+	x, y, width, height := w.X*8, w.Y, w.Width*8, w.Height
 	if w.Flags&2 != 0 {
 		bw, bh := r.style.FrameBandWidth, r.style.FrameBandHeight
 		for _, rect := range []image.Rectangle{
@@ -179,6 +195,8 @@ func (r *indexedNewGameRenderer) draw(rgba []byte, tx *dq3data.Text, nf *NewGame
 			h := s.GenderHit
 			nf.gs.hits.add(h.X, h.Y+row*s.GenderCursor.StepY, h.Width, h.Height, row)
 		}
+	} else if nf.stage == ngReview || nf.stage == ngConfirm {
+		r.ability(tx, nf)
 	} else {
 		ni, geo := &nf.ni, r.geo
 		r.window(tx, s.Header)
@@ -216,4 +234,55 @@ func (r *indexedNewGameRenderer) draw(rgba []byte, tx *dq3data.Text, nf *NewGame
 		}
 	}
 	drawIndexedPCX(rgba, r.pixels, r.palette)
+}
+
+func (r *indexedNewGameRenderer) number(tx *dq3data.Text, field gamepack.NumberField, value int) {
+	if field.Digits <= 0 || value < 0 {
+		return
+	}
+	digits := strconv.Itoa(value)
+	for i, digit := range digits {
+		r.opaqueGlyph(tx, field.X+(field.Digits-len(digits)+i)*dq3data.GlyphPx, field.Y, int(digit-'0'))
+	}
+}
+
+func (r *indexedNewGameRenderer) ability(tx *dq3data.Text, nf *NewGameFlow) {
+	s, geo := r.style, r.geo
+	r.window(tx, s.Ability)
+	glyphs := func(anchor gamepack.GeometryAnchor, codes []int) {
+		for i, code := range codes {
+			r.opaqueGlyph(tx, anchor.X+i*dq3data.GlyphPx, anchor.Y, code)
+		}
+	}
+	r.opaqueGlyph(tx, s.EquipmentMarker.X, s.EquipmentMarker.Y, *s.EquipmentMarkerGlyph)
+	glyphs(geo.StatsCloth, nf.labels.Cloth)
+	glyphs(geo.StatsHero, nf.labels.Hero)
+	sex := nf.labels.Male
+	if nf.previewGender != 0 {
+		sex = nf.labels.Female
+	}
+	glyphs(geo.StatsSexValue, sex)
+	glyphs(geo.StatsName, nf.ni.nameBuf)
+	l := geo.Stats
+	for _, v := range []struct {
+		field gamepack.NumberField
+		value int
+	}{
+		{l.Level.Value, nf.previewLevel}, {l.HP.Value, nf.previewHP}, {l.MP.Value, nf.previewMP},
+		{l.Strength.Value, int(nf.preview[stats.STR])}, {l.Agility.Value, int(nf.preview[stats.AGI])},
+		{l.Vitality.Value, int(nf.preview[stats.VIT])}, {l.Intelligence.Value, int(nf.preview[stats.INT])},
+		{l.Luck.Value, int(nf.preview[stats.LUCK])}, {l.MaxHP.Value, int(nf.preview[stats.HP])},
+		{l.MaxMP.Value, int(nf.preview[stats.MP])}, {l.Attack.Value, int(nf.preview[stats.STR])},
+		{l.Defense.Value, nf.previewDef}, {l.Experience.Value, nf.previewExp},
+	} {
+		r.number(tx, v.field, v.value)
+	}
+	if nf.stage == ngConfirm {
+		r.frame(s.Ability)
+		r.window(tx, s.ConfirmationPrompt)
+		r.frame(s.ConfirmationPrompt)
+		r.window(tx, s.ConfirmationChoice)
+		a := geo.StatsChoiceCursor
+		r.opaqueGlyph(tx, a.X, a.Y+nf.confirmCursor*a.StepY, nf.labels.ChoiceCursor[0])
+	}
 }

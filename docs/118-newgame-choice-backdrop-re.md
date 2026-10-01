@@ -1,5 +1,13 @@
 # 開場能力確認 `confirm_choice` 藍黑棋盤證據
 
+> **2026-10-01 勘誤：能力確認原始定位。** 本文把能力選項歸到
+> IDA linear `0x28BC6` 的說法已推翻；該處是性別record556。
+> 原版caller `0x108F5→sub_1F63C` 在 `0x1F646` 載入DGROUP4080，
+> 真正選項為linear `0x28E50`／file `0x1A1C0`、record434。
+> 現行完整record、外框XOR順序、等待／確認兩階段的證據及限定對拍
+> 以[docs/113](113-newgame-geometry-re.md)為準。下文保留歷史量測與形成原因；
+> 已被替代的清黑矩形不再用於正式raster路徑，不能把歷史定位當作已證實。
+
 > 狀態：`strong`／D2；本文件只閉合玩家可見的背景矩形與寫入 phase，尚未把
 > 游標逐幀時序、FIRST.SCR 全 palette 或整個能力頁升為 V3。
 

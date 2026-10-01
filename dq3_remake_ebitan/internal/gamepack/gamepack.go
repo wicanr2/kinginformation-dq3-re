@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.56"
+	SchemaVersion       = "0.1.57"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -624,29 +624,35 @@ type NewGameGeometry struct {
 // NewGameRasterLayout 是有限的索引色視窗資料；順序由具名 UI 狀態機決定。
 // 文字引用完整記錄，不能省略框線／空白字模或在 renderer 猜座標／色號。
 type NewGameRasterLayout struct {
-	Menu             RasterWindowRef `json:"menu"`
-	Header           RasterWindowRef `json:"header"`
-	Mode             RasterWindowRef `json:"mode"`
-	Gender           RasterWindowRef `json:"gender"`
-	ZhuyinTextID     string          `json:"zhuyin_text_id"`
-	AlnumTextID      string          `json:"alnum_text_id"`
-	GridOrigin       GeometryAnchor  `json:"grid_origin"`
-	MenuCursor       GeometryAnchor  `json:"menu_cursor"`
-	FunctionCursor   GeometryAnchor  `json:"function_cursor"`
-	GenderCursor     GeometryAnchor  `json:"gender_cursor"`
-	MenuHit          GeometryRect    `json:"menu_hit"`
-	FunctionHit      GeometryRect    `json:"function_hit"`
-	GenderHit        GeometryRect    `json:"gender_hit"`
-	ShadowOffset     *GeometryAnchor `json:"shadow_offset"`
-	FrameBandWidth   int             `json:"frame_band_width"`
-	FrameBandHeight  int             `json:"frame_band_height"`
-	FontIndex        *int            `json:"font_index"`
-	FrameXOR         *int            `json:"frame_xor"`
-	CursorXOR        *int            `json:"cursor_xor"`
-	CursorWidth      int             `json:"cursor_width"`
-	CursorHeight     int             `json:"cursor_height"`
-	PaletteOverrides []RasterColor   `json:"palette_overrides"`
-	Evidence         Evidence        `json:"evidence"`
+	Ability                  RasterWindowRef `json:"ability"`
+	ConfirmationPrompt       RasterWindowRef `json:"confirmation_prompt"`
+	ConfirmationChoice       RasterWindowRef `json:"confirmation_choice"`
+	ReviewBeforeConfirmation *bool           `json:"review_before_confirmation"`
+	EquipmentMarker          GeometryAnchor  `json:"equipment_marker"`
+	EquipmentMarkerGlyph     *int            `json:"equipment_marker_glyph"`
+	Menu                     RasterWindowRef `json:"menu"`
+	Header                   RasterWindowRef `json:"header"`
+	Mode                     RasterWindowRef `json:"mode"`
+	Gender                   RasterWindowRef `json:"gender"`
+	ZhuyinTextID             string          `json:"zhuyin_text_id"`
+	AlnumTextID              string          `json:"alnum_text_id"`
+	GridOrigin               GeometryAnchor  `json:"grid_origin"`
+	MenuCursor               GeometryAnchor  `json:"menu_cursor"`
+	FunctionCursor           GeometryAnchor  `json:"function_cursor"`
+	GenderCursor             GeometryAnchor  `json:"gender_cursor"`
+	MenuHit                  GeometryRect    `json:"menu_hit"`
+	FunctionHit              GeometryRect    `json:"function_hit"`
+	GenderHit                GeometryRect    `json:"gender_hit"`
+	ShadowOffset             *GeometryAnchor `json:"shadow_offset"`
+	FrameBandWidth           int             `json:"frame_band_width"`
+	FrameBandHeight          int             `json:"frame_band_height"`
+	FontIndex                *int            `json:"font_index"`
+	FrameXOR                 *int            `json:"frame_xor"`
+	CursorXOR                *int            `json:"cursor_xor"`
+	CursorWidth              int             `json:"cursor_width"`
+	CursorHeight             int             `json:"cursor_height"`
+	PaletteOverrides         []RasterColor   `json:"palette_overrides"`
+	Evidence                 Evidence        `json:"evidence"`
 }
 
 type RasterWindowRef struct {
@@ -2777,12 +2783,14 @@ func (p *Pack) validateNewGameRasterRefs() error {
 		return nil // 無此 UI 的資料包不需這個契約；正式 bootstrap 另要求 UI 存在。
 	}
 	r := g.Raster
-	if r == nil || r.ShadowOffset == nil || r.FontIndex == nil || r.FrameXOR == nil || r.CursorXOR == nil {
+	if r == nil || r.ShadowOffset == nil || r.FontIndex == nil || r.FrameXOR == nil || r.CursorXOR == nil ||
+		r.ReviewBeforeConfirmation == nil || r.EquipmentMarkerGlyph == nil {
 		return errors.New("new-game raster required fields are missing")
 	}
 	if *r.FontIndex < 0 || *r.FontIndex >= 16 || *r.FrameXOR <= 0 || *r.FrameXOR >= 16 ||
 		*r.CursorXOR <= 0 || *r.CursorXOR >= 16 || r.FrameBandWidth <= 0 || r.FrameBandHeight <= 0 ||
-		r.CursorWidth <= 0 || r.CursorHeight <= 0 || r.ShadowOffset.X < 0 || r.ShadowOffset.Y < 0 {
+		r.CursorWidth <= 0 || r.CursorHeight <= 0 || r.ShadowOffset.X < 0 || r.ShadowOffset.Y < 0 ||
+		*r.EquipmentMarkerGlyph < 0 || *r.EquipmentMarkerGlyph >= 0xff00 {
 		return errors.New("new-game raster style is invalid")
 	}
 	if err := validateEvidence(r.Evidence); err != nil {
@@ -2806,7 +2814,7 @@ func (p *Pack) validateNewGameRasterRefs() error {
 			return err
 		}
 	}
-	for _, anchor := range []GeometryAnchor{r.GridOrigin, r.MenuCursor, r.FunctionCursor, r.GenderCursor} {
+	for _, anchor := range []GeometryAnchor{r.GridOrigin, r.MenuCursor, r.FunctionCursor, r.GenderCursor, r.EquipmentMarker} {
 		if err := validateGeometryAnchor("new-game raster anchor", anchor); err != nil {
 			return err
 		}
@@ -2815,7 +2823,8 @@ func (p *Pack) validateNewGameRasterRefs() error {
 		return errors.New("new-game raster cursor row steps are required")
 	}
 	if r.GenderCursor.X+16 > 640 || r.GenderCursor.Y+r.GenderCursor.StepY+16 > 350 ||
-		r.GenderHit.Y+r.GenderCursor.StepY+r.GenderHit.Height > 350 {
+		r.GenderHit.Y+r.GenderCursor.StepY+r.GenderHit.Height > 350 ||
+		r.EquipmentMarker.X+16 > 640 || r.EquipmentMarker.Y+16 > 350 {
 		return errors.New("new-game raster gender cursor or hit rows outside canvas")
 	}
 	raw := map[string]RawNewGameWindow{}
@@ -2846,7 +2855,7 @@ func (p *Pack) validateNewGameRasterRefs() error {
 		}
 		return nil
 	}
-	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode, r.Gender} {
+	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode, r.Gender, r.Ability, r.ConfirmationPrompt, r.ConfirmationChoice} {
 		w, ok := raw[ref.RawWindowID]
 		if !ok || (w.Flags != 1 && w.Flags != 3) || w.Width%2 != 0 ||
 			w.X*8+w.Width*8+r.ShadowOffset.X > 640 || w.Y+w.Height+r.ShadowOffset.Y > 350 ||

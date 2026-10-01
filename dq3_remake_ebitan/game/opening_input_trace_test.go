@@ -161,7 +161,7 @@ func TestDosgolemNewGameCreationComparison(t *testing.T) {
 		actual := map[string]int{"gender_raw": g.heroGender + 1, "level": stats.LevelForExp(0, g.heroExp), "current_hp": g.heroHP, "current_mp": g.heroMP,
 			"str": int(g.heroStat[stats.STR]), "vit": int(g.heroStat[stats.VIT]), "agi": int(g.heroStat[stats.AGI]),
 			"max_hp": int(g.heroStat[stats.HP]), "max_mp": int(g.heroStat[stats.MP]), "int": int(g.heroStat[stats.INT]), "luck": int(g.heroStat[stats.LUCK]), "seed": int(g.prng.State())}
-		if g.newGame.stage != ngConfirm || !reflect.DeepEqual(g.heroName, []int{0}) {
+		if g.newGame.stage != ngReview || !reflect.DeepEqual(g.heroName, []int{0}) {
 			t.Fatalf("正式輸入未到能力確認：stage=%d name=%v", g.newGame.stage, g.heroName)
 		}
 		for key, value := range actual {
@@ -182,11 +182,18 @@ func TestDosgolemNewGameCreationComparison(t *testing.T) {
 	if err != nil || closeErr != nil {
 		t.Fatalf("寫出能力診斷畫面：%v/%v", err, closeErr)
 	}
-	t.Log("能力PNG僅為診斷；原版檢視等待已證實，重製尚未修正，不宣稱確認階段畫面對拍")
-	if os.Getenv("DQ3_DOSGOLEM_CREATION_ACK_AUDIT") == "1" {
+	t.Log("能力PNG保留診斷；正式等待／確認由下方完整畫布與階段閘門驗證")
+
+	{ // 正式創角對拍必須包含已證實的等待／確認閘門。
 		// 已證實的下一個產品差異；明確啟用的紅測試不可用能力數值綠測試掩蓋。
 		t.Run("ability-acknowledgement-gate", func(t *testing.T) {
-			if g.newGame.stage == ngConfirm {
+			seed, values, hp, mp := g.prng.State(), g.heroStat, g.heroHP, g.heroMP
+			for _, idle := range []InputState{{DirHeld: -1, DirEdge: -1}, {DirHeld: 0, DirEdge: -1}} {
+				if err := g.step(idle); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if g.newGame.stage != ngReview {
 				t.Error("選定性別後提前顯示確認提示，原版仍在能力檢視等待")
 			}
 			compareDosgolemRasterFrame(t, g, dir, "issue4-creation-ability-waiting.png", "issue4-creation-remake-ability-waiting.png", "ability-waiting")
@@ -198,6 +205,9 @@ func TestDosgolemNewGameCreationComparison(t *testing.T) {
 			}
 			if !g.showTitle || g.newGame.stage != ngConfirm {
 				t.Fatal("能力檢視Enter應只進確認提示，重製提前開始遊戲")
+			}
+			if g.prng.State() != seed || g.heroStat != values || g.heroHP != hp || g.heroMP != mp || g.newGame.confirmCursor != 0 {
+				t.Fatal("能力檢視ACK不得重新擲骰、改能力或切換選項")
 			}
 			g.renderFrame()
 			compareDosgolemRasterFrame(t, g, dir, "issue4-creation-ability-confirm.png", "issue4-creation-remake-ability-confirm.png", "ability-confirm")
@@ -739,7 +749,8 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		send(InputState{DirHeld: -1, DirEdge: 0}) // 功能列 row1→row5
 	}
 	press(InputState{Confirm: true}) // 功能列「完成」→ 性別
-	press(InputState{Confirm: true}) // 男性 → 能力確認
+	press(InputState{Confirm: true}) // 男性 → 能力檢視
+	press(InputState{Confirm: true}) // 能力檢視 → 確認提示
 	press(InputState{Confirm: true}) // 「是」→ startOpening
 
 	if g.showTitle || g.newGame.stage != ngConfirm || !g.inTown || g.cur.sec != 4 ||

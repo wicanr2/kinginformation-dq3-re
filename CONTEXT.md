@@ -1,20 +1,22 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，已獲授權持續更新。
-原版冷啟動以真實 IRQ1 英數命名「0」、完成及男性自然創角。正式命名／性別畫面新增6張零差異，
-連同先前12張共18張完整640×350 RGB零差異；性別繪圖限定CONFORMED。
-原版在自然Lv1生成入口只套用預先指定seed1357一次，重製在首個正式輸入前固定同值；
-七能力、目前HP／MP及最後seed356D一致。schema `0.1.56`／content `0.1.62`，
-完整record556、原始性別窗口與游標由資料包提供，EXE／TXT及損壞引用拒絕驗證通過。
-完整game 360項頂層／35項子測試通過；33項選用擷取／額外收據未執行，沒有素材缺失跳過。
-全部internal乾淨重跑及桌面main.go建置通過；正常主線與各段存讀檔到THE END（91.52秒）。
-下一個已證實差異是能力檢視等待：原版再按Enter才畫確認提示，重製目前提前顯示提示並提前開始遊戲。
-嚴格稽核以 `DQ3_DOSGOLEM_CREATION_ACK_AUDIT=1` 啟用，保持紅；能力等待頁差15,468像素。
-重生入口是 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --creation`，
-只驗證命名／性別畫面及能力交易；完整創角、出生點、母親、音訊及原版campaign仍未閉合。
-本批私有驗收為 `work/dosgolem-opening/issue4-creation-verification-receipt.json`；
-證據、原始位址、分級索引與限定範圍見 [docs/113](docs/113-newgame-geometry-re.md)。
-原版 disk state 未保存 CRTC，畫面收據只使用冷啟動；不把磁碟續跑亂圖當成產品缺陷。
+2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
+能力等待／確認已依原版caller、完整字模與外框切換順序修正；正式兩張完整640×350 RGB差異0，
+連同既有18張共20張通過。男性Lv1、英數姓名0的穩定能力兩階段限定CONFORMED；
+原版冷啟動、16次真實IRQ1輸入重生後再次通過，沒有遮罩或遊戲狀態注入。
+原版自然生成入口固定seed1357一次，重製首個InputState前固定同值；七能力、目前HP／MP
+及最後seed356D一致。閒置／只按住方向不離開等待，ACK不重新擲骰，也不在同次接受角色。
+schema/content為0.1.57／0.1.63；完整record407／557／434及裝備marker由pack提供。
+原始EXE／TXT parity、24項損壞引用拒絕、全部internal及desktop main.go建置通過。
+標準game359項頂層／34項子測試通過；36項選用未執行，其中3項原版收據測試另行嚴格通過，
+沒有素材缺失。正常新遊戲、主角／酒館及各段存讀檔至THE END通過（99.04秒），只屬remake回歸。
+重生入口 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --creation` 現在必驗等待／確認；
+不需選用ACK旗標。下一步是原版正常接受角色後的出生點／母親，音訊及完整原版campaign仍未知。
+證據與歷史定位勘誤見[docs/113](docs/113-newgame-geometry-re.md)；原始性別28BC6與能力選項28E50分開。
+私有驗收 `work/dosgolem-opening/issue4-ack-verification-receipt.json`，20,665bytes，SHA-256
+`6f6aba6327d33f7136e96584e20190229152f2298b0e99fdcfa31c8cccdef052`；原版素材、database及圖像不公開。
+
+原版disk state未保存CRTC，正式畫面只採冷啟動；dosgolem上游唯讀。
 
 2026-10-01：dosgolem 原版開場對拍依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 進行；原版六張卡片順序已確認，舊五張序列漏 `TITC.P` 且誤用 `TITP.P`。
@@ -35,12 +37,12 @@
 
 | 目前狀態（2026-10-01） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.56／content 0.1.62；未發布新包 |
-| 最新繪圖切片已完成 | Issue #4共18張正式畫面全畫布零差異，性別限定CONFORMED；固定seed的Lv1交易一致，能力等待仍RED；docs/113 |
+| 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.57／content 0.1.63；未發布新包 |
+| 最新繪圖切片已完成 | Issue #4共20張正式畫面全畫布零差異，能力等待／確認限定CONFORMED；固定seed的Lv1交易一致；docs/113 |
 | 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
-| 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、能力檢視／確認、出生點／母親與完整 campaign；時間只採硬體規格近似 |
+| 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、接受角色後、出生點／母親與完整 campaign；時間只採硬體規格近似 |
 | 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |
-| 現行回歸已完成 | 正式新遊戲 InputState → THE END 91.52 秒，主角／酒館及各段存讀檔、game／internal 及桌面建置通過；本批收據 work/dosgolem-opening/issue4-creation-verification-receipt.json，Issue #4 |
+| 現行回歸已完成 | 正式新遊戲 InputState → THE END 99.04 秒，主角／酒館及各段存讀檔、game／internal 及桌面建置通過；本批收據 work/dosgolem-opening/issue4-ack-verification-receipt.json，Issue #4 |
 | 額外畫廊限制 | 31 項選用擷取未納入標準回歸；大型新遊戲畫廊的魔法球測試設定失敗另有紀錄，未判為產品缺陷；還冠元件與正式 THE END PNG 已核對 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

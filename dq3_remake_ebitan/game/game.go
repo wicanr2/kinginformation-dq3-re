@@ -1007,6 +1007,11 @@ func (g *Game) step(in InputState) error {
 	// 標題畫面:主選單→主角命名→性別→能力確認→開始新遊戲(newgame.go)。
 	// S/CtxTap 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)。
 	if g.showTitle {
+		if g.newGame.stage == ngReview {
+			g.newGameInput(in)
+			g.renderFrame()
+			return nil
+		}
 		if g.help.open || in.Help {
 			g.utilityInput(in)
 			g.renderFrame()
@@ -2848,7 +2853,7 @@ func (g *Game) renderFrame() {
 		if g.newGame.stage != ngSplash {
 			if len(g.newGameConfirmPix) == ScreenW*ScreenH && len(g.newGameConfirmPal) == 16 {
 				drawIndexedPCX(g.rgba, g.newGameConfirmPix, g.newGameConfirmPal)
-				if g.newGame.stage == ngConfirm {
+				if g.newGame.stage == ngConfirm && g.newGame.raster == nil {
 					drawNewGameWindowBackdrops(g.rgba, g.newGame.geometry, 0)
 				}
 			} else {

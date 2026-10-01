@@ -1505,6 +1505,33 @@ DQ3 content `0.1.60` 的原始證據與近似界線見
 6. save test：存檔記錄 `pack_id/schema_version/content_hash`，不相容時明確拒絕或 migration；
 7. visual test：受影響畫面更新 runtime PNG，不能以 JSON snapshot 代替畫面對拍。
 
+### 能力檢視等待與確認（schema 0.1.57／DQ3 content 0.1.63）
+
+`interface.new_game_geometry.raster` 新增下列必填欄位；入口、原始定位及READY審查
+見[docs/113](113-newgame-geometry-re.md)。這是有限UI階段的資料，不含JSON程式碼。
+
+| 欄位 | 契約 |
+|---|---|
+| `ability`、`confirmation_prompt`、`confirmation_choice` | 各含 `raw_window_id/text_id`；引用已登記raw窗口及完整 `menu_record`，框線、空白與換行均保留 |
+| `review_before_confirmation` | 顯式boolean，不得省略；為true時，能力生成後需新鍵盤按下邊緣才進確認；該輸入只消費一次 |
+| `equipment_marker` | 原始裝備writer的像素anchor，16×16字模必須完整位於畫布 |
+| `equipment_marker_glyph` | 必填原始字模索引；不得以引擎常數、Unicode或缺字fallback填補 |
+
+活動外框由具名狀態機依序XOR撤銷與高亮，不能用任意draw-order腳本描述。
+能力數字沿用typed `stats.*.value` 的五／八位欄位；姓名、class、sex及裝備文字
+沿用pack字模資料。renderer不改背景或共用palette。省略欄位、未知引用、
+非法字模、控制碼、記錄形狀或越界均拒絕。
+
+DQ3新增完整record407／557／434與真正能力選項raw window `0x28E50`；
+性別raw `0x28BC6` 保留原定位，不能以其歷史ID推論角色。初值及順序有D3證據；
+其他鍵盤make code的consumer為靜態強推論，逐鍵動態、女性與閃爍未由本批升級。
+版本及canonical hash改變後，既有不相容存檔按原契約拒絕；未提供自動遷移。
+
+原始資料驗證：`TestNewGameRasterOriginalDataParity` 直接讀固定雜湊EXE／TXT，
+核對raw window、完整字模、游標、裝備marker指令及等待call的原始MZ bytes。
+正式玩家比較：`TestDosgolemNewGameCreationComparison` 必須含能力等待／確認，
+不得以選用旗標跳過此已證實閘門；正常主線及save/load仍由正式InputState驗證。
+
 ## 9. 遷移順序
 
 1. 建立 `internal/gamepack` 型別、嚴格 JSON decoder、validator 及最小 fixture。

@@ -3,7 +3,7 @@
 # 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation]
 # 預設重生主選單／初始命名並比較正式畫面；--prototype 僅驗證歷史 DRAFT。
 # --navigation 重生兩條命名收據，驗證六次方向與四次功能輸入的狀態及完整畫布。
-# --creation 重生固定種子創角，驗證命名／性別畫面與能力交易；能力等待階段尚待修正。
+# --creation 重生固定種子創角，驗證命名／性別、能力交易與等待／確認完整畫面。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"

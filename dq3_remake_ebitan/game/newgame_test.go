@@ -5,12 +5,19 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
 // newGameTestGame:純狀態 Game(無素材/無 ebiten 主迴圈),只驅動 newGameInput()/newGame 狀態機。
 func newGameTestGame() *Game {
-	return &Game{input: newInput()}
+	g := &Game{input: newInput()}
+	p, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		panic(err)
+	}
+	g.newGame.setGeometry(*p.Interface.NewGameGeometry)
+	return g
 }
 
 // TestNewGameFlowStageTransitions:標題主選單 → 命名 → 性別 → 能力確認 → 收尾。
@@ -56,11 +63,15 @@ func TestNewGameFlowStageTransitions(t *testing.T) {
 
 	g.newGame.gs.cursor = 1 // 女性
 	g.newGameInput(InputState{DirEdge: -1, Confirm: true})
-	if g.newGame.stage != ngConfirm || !g.showTitle {
-		t.Fatalf("性別選定後應先進能力確認，stage=%d title=%v", g.newGame.stage, g.showTitle)
+	if g.newGame.stage != ngReview || !g.showTitle {
+		t.Fatalf("性別選定後應先進能力檢視，stage=%d title=%v", g.newGame.stage, g.showTitle)
 	}
 	if g.heroStat[stats.MP] != 9 || g.heroStat[stats.HP] < 9 || g.heroStat[stats.HP] > 15 {
 		t.Fatalf("原版 Lv1 能力 transaction 錯：%v", g.heroStat)
+	}
+	g.newGameInput(InputState{DirEdge: -1, Confirm: true}) // 檢視→確認提示
+	if g.newGame.stage != ngConfirm || !g.showTitle {
+		t.Fatal("能力檢視按鍵應只進確認提示")
 	}
 	g.newGameInput(InputState{DirEdge: -1, Confirm: true}) // 「是」
 	if g.showTitle {
@@ -83,7 +94,8 @@ func TestNewGameStatsRejectRestartsCreation(t *testing.T) {
 	g.newGame.gs.Init()
 	g.newGameInput(InputState{DirEdge: -1, Confirm: true})
 	first := g.heroStat
-	g.newGameInput(InputState{DirEdge: 0}) // 移到「否」
+	g.newGameInput(InputState{DirEdge: -1, Confirm: true}) // 檢視→確認提示
+	g.newGameInput(InputState{DirEdge: 0})                 // 移到「否」
 	g.newGameInput(InputState{DirEdge: -1, Confirm: true})
 	if g.newGame.stage != ngName {
 		t.Fatalf("能力確認選否應回整個創角命名，得 stage=%d", g.newGame.stage)
@@ -93,6 +105,59 @@ func TestNewGameStatsRejectRestartsCreation(t *testing.T) {
 	}
 	if first == (stats.Values{}) {
 		t.Fatal("進能力確認前應已擲出 Lv1 record")
+	}
+}
+
+func TestNewGameAbilityReviewConsumesOnlyNewKey(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		input   InputState
+		advance bool
+	}{
+		{"idle", InputState{DirHeld: -1, DirEdge: -1}, false},
+		{"held", InputState{DirHeld: 0, DirEdge: -1}, false},
+		{"enter", InputState{DirEdge: -1, Enter: true}, true},
+		{"confirm", InputState{DirEdge: -1, Confirm: true}, true},
+		{"cancel", InputState{DirEdge: -1, Cancel: true}, true},
+		{"down", InputState{DirEdge: 0}, true},
+		{"help", InputState{DirEdge: -1, Help: true}, true},
+		{"other_key", InputState{DirEdge: -1, AnyKeyEdge: true}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := newGameTestGame()
+			g.showTitle = true
+			g.prng.Seed(0x1357)
+			g.newGame.stage = ngGender
+			g.newGame.ni.nameBuf = []int{0}
+			g.newGame.gs.Init()
+			g.newGameInput(InputState{Confirm: true, DirEdge: -1})
+			if g.newGame.stage != ngReview {
+				t.Fatal("正式性別輸入未進等待")
+			}
+			seed, values, hp, mp := g.prng.State(), g.heroStat, g.heroHP, g.heroMP
+			g.newGameInput(tc.input)
+			want := ngReview
+			if tc.advance {
+				want = ngConfirm
+			}
+			if g.newGame.stage != want || !g.showTitle || g.newGame.confirmCursor != 0 ||
+				g.prng.State() != seed || g.heroStat != values || g.heroHP != hp || g.heroMP != mp {
+				t.Fatal("等待輸入應只切換階段，不接受角色、換選項或重新消耗能力")
+			}
+		})
+	}
+}
+
+func TestNewGameMissingReviewContractDoesNotRoll(t *testing.T) {
+	g := newGameTestGame()
+	g.showTitle = true
+	g.newGame.geometry = nil
+	g.newGame.stage = ngGender
+	g.newGame.gs.Init()
+	g.prng.Seed(0x1357)
+	g.newGameInput(InputState{Confirm: true, DirEdge: -1})
+	if g.newGame.stage != ngGender || g.prng.State() != 0x1357 || g.heroStat != (stats.Values{}) {
+		t.Fatal("缺流程契約不得猜值或擲骰")
 	}
 }
 

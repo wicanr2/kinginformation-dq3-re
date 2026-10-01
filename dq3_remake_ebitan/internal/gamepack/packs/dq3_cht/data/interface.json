@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.56",
+  "schema_version": "0.1.57",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -356,13 +356,69 @@
     "stats_choice": {"x": 408, "y": 78, "step_y": 16},
     "stats_choice_cursor": {"x": 376, "y": 78, "step_y": 16},
     "raw_windows": [
-      {"id": "name_input", "flags": 1, "x": 19, "y": 46, "width": 32, "height": 144, "address": "linear:0x29088"},
-      {"id": "function_list", "flags": 1, "x": 41, "y": 78, "width": 12, "height": 112, "address": "linear:0x290a6"},
-      {"id": "zhuyin_grid", "flags": 1, "x": 19, "y": 190, "width": 12, "height": 48, "address": "linear:0x290c4"},
-      {"id": "candidate_window", "flags": 1, "x": 19, "y": 190, "width": 34, "height": 48, "address": "linear:0x290e0"},
-      {"id": "creation_panel", "flags": 3, "x": 19, "y": 46, "width": 44, "height": 192, "address": "linear:0x28b78"},
-      {"id": "confirm_prompt", "flags": 3, "x": 45, "y": 14, "width": 22, "height": 48, "address": "linear:0x28b92"},
-      {"id": "confirm_choice", "flags": 3, "x": 43, "y": 46, "width": 12, "height": 64, "address": "linear:0x28bc6"},
+      {
+        "id": "name_input",
+        "flags": 1,
+        "x": 19,
+        "y": 46,
+        "width": 32,
+        "height": 144,
+        "address": "linear:0x29088"
+      },
+      {
+        "id": "function_list",
+        "flags": 1,
+        "x": 41,
+        "y": 78,
+        "width": 12,
+        "height": 112,
+        "address": "linear:0x290a6"
+      },
+      {
+        "id": "zhuyin_grid",
+        "flags": 1,
+        "x": 19,
+        "y": 190,
+        "width": 12,
+        "height": 48,
+        "address": "linear:0x290c4"
+      },
+      {
+        "id": "candidate_window",
+        "flags": 1,
+        "x": 19,
+        "y": 190,
+        "width": 34,
+        "height": 48,
+        "address": "linear:0x290e0"
+      },
+      {
+        "id": "creation_panel",
+        "flags": 3,
+        "x": 19,
+        "y": 46,
+        "width": 44,
+        "height": 192,
+        "address": "linear:0x28b78"
+      },
+      {
+        "id": "confirm_prompt",
+        "flags": 3,
+        "x": 45,
+        "y": 14,
+        "width": 22,
+        "height": 48,
+        "address": "linear:0x28b92"
+      },
+      {
+        "id": "confirm_choice",
+        "flags": 3,
+        "x": 43,
+        "y": 46,
+        "width": 12,
+        "height": 64,
+        "address": "linear:0x28bc6"
+      },
       {
         "id": "menu",
         "flags": 3,
@@ -371,6 +427,15 @@
         "width": 22,
         "height": 64,
         "address": "linear:0x28b1e"
+      },
+      {
+        "id": "ability_confirmation_choice",
+        "flags": 3,
+        "x": 45,
+        "y": 62,
+        "width": 14,
+        "height": 64,
+        "address": "linear:0x28e50"
       }
     ],
     "window_backdrops": [
@@ -506,10 +571,10 @@
         "source_kind": "exe",
         "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + D3TXT00.TXT/FON + dosgolem 冷啟動收據",
         "address_space": "linear",
-        "address": "0x28b1e/0x29088/0x290a6/0x290c4；writer 0x1fc57/0x1fd30/0x211b6/0x1126f",
+        "address": "0x28b1e/0x29088/0x290a6/0x290c4；writer 0x1fc57/0x1fd30/0x211b6/0x1126f；ability0x28B78/prompt0x28B92/choice0x28E50；writer0x1834E/0x1FCC6/0x1FCE1",
         "consumer": "sub_1F4E3/1F590/1F908 + 10D17/10DC8/10E8E/10F5B/11087 → 冷啟動完整畫布",
         "doc": "docs/113-newgame-geometry-re.md",
-        "note": "已證實限定 menu／初始命名／導航／功能／英數；palette 初始化 writer 與閃爍相位仍未知。 本批追加性別預設男性raw window／record556；正常IRQ1及隔離試作完整畫布差異0，女性與能力階段另驗。"
+        "note": "已證實限定 menu／初始命名／導航／功能／英數；palette 初始化 writer 與閃爍相位仍未知。 本批追加性別預設男性raw window／record556；正常IRQ1及隔離試作完整畫布差異0，女性與能力階段另驗。 能力檢視等待與確認兩階段，record407/557/434及原始writer順序；隔離試作完整畫布差0，限定男性Lv1英數姓名0。"
       },
       "gender": {
         "raw_window_id": "confirm_choice",
@@ -525,7 +590,25 @@
         "y": 62,
         "width": 64,
         "height": 16
-      }
+      },
+      "ability": {
+        "raw_window_id": "creation_panel",
+        "text_id": "dq3:text.new_game.ability_window"
+      },
+      "confirmation_prompt": {
+        "raw_window_id": "confirm_prompt",
+        "text_id": "dq3:text.new_game.confirmation_prompt_window"
+      },
+      "confirmation_choice": {
+        "raw_window_id": "ability_confirmation_choice",
+        "text_id": "dq3:text.new_game.confirmation_choice_window"
+      },
+      "review_before_confirmation": true,
+      "equipment_marker": {
+        "x": 168,
+        "y": 158
+      },
+      "equipment_marker_glyph": 10
     }
   },
   "help": {

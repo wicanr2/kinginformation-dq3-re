@@ -9,16 +9,17 @@ import (
 // 標題主選單 + 主角創建(docs/36 §開場流程 + docs/15 命名子系統):
 // 標題(壓 A/Enter)→ 主選單「▶遊戲開始 / 載入進度」→ 遊戲開始 → 主角注音/英數命名(必填,
 // 完成放行條件=非空,對齊 docs/15「[0x270a]>=1 才放行」)→ 性別 →
-// Lv1 能力生成/「這個人可以嗎？」→ 開始新遊戲。
+// Lv1 能力生成→能力檢視等待→「這個人可以嗎？」→ 開始新遊戲。
 // 命名/性別 widget 與酒館招募共用 NameInput/GenderSelect(nameinput.go),不重複兩份邏輯;
 // 差異只在完成放行 gate:主角創建強制非空(下方 ngName case),酒館允許空名回退職業名。
 // 出生點由 startOpening 載入 CTY00 sec4；能力確認背景由 game-pack 的 raw screen 提供，
-// stat panel 本身仍是共用 renderer，逐像素幾何對拍另列 V3 工作。
+// 能力兩階段的原始record及外框切換由資料包raster引用；限定對拍見docs/113。
 const (
 	ngSplash  = iota // 標題背景(壓任意鍵開主選單)
 	ngMenu           // 主選單:遊戲開始 / 載入進度
 	ngName           // 主角命名
 	ngGender         // 主角性別
+	ngReview         // 能力檢視等待；新的按鍵只前進至確認。
 	ngConfirm        // 原版 sub_1c01..1c84：能力確認（否→整個創角重來）
 )
 
@@ -42,6 +43,10 @@ type NewGameFlow struct {
 	preview       stats.Values
 	previewDef    int
 	previewGender int
+	previewLevel  int
+	previewHP     int
+	previewMP     int
+	previewExp    int
 }
 
 // setLabels 安裝標題／創角流程共用的 game-pack 字模資料。Pack 在 bootstrap
@@ -120,6 +125,9 @@ func (g *Game) newGameInput(in InputState) {
 		case in.Cancel: // 回命名(可修改),游標停在 OK 格(對齊酒館既有 Cancel 語意)
 			nf.stage, nf.ni.cursor = ngName, niCellOK
 		case confirmed:
+			if nf.geometry == nil || nf.geometry.Raster == nil || nf.geometry.Raster.ReviewBeforeConfirmation == nil {
+				return // 正式 bootstrap 已驗證；缺資料不得猜流程或消耗能力 RNG。
+			}
 			g.heroName = append([]int(nil), nf.ni.nameBuf...)
 			g.dlg.heroName = g.heroName // 對話插值 VAR_NAME 同步(創角後 heroName 重新 assign,須重同步)
 			g.heroGender = gender
@@ -127,10 +135,18 @@ func (g *Game) newGameInput(in InputState) {
 			nf.preview = g.heroStat
 			nf.previewDef = int(g.heroStat[stats.VIT])
 			nf.previewGender = gender
+			nf.previewLevel, nf.previewHP, nf.previewMP, nf.previewExp = g.heroStatsLevel(), g.heroHP, g.heroMP, int(g.heroExp)
 			if g.shop.items != nil {
 				nf.previewDef += g.shop.items.Defense(g.equip[1])
 			}
 			nf.stage, nf.confirmCursor = ngConfirm, 0
+			if *nf.geometry.Raster.ReviewBeforeConfirmation {
+				nf.stage = ngReview
+			}
+		}
+	case ngReview:
+		if in.AnyKeyEdge || in.Confirm || in.Enter || in.Cancel || in.DirEdge >= 0 || in.Toggle || in.Settings || in.Help {
+			nf.stage = ngConfirm
 		}
 	case ngConfirm:
 		if in.DirEdge == 0 || in.DirEdge == 1 {
@@ -157,7 +173,7 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 		return
 	}
 	geo := nf.geometry
-	if nf.raster != nil && (nf.stage == ngMenu || nf.stage == ngGender || (nf.stage == ngName && !nf.ni.zh.Pick)) {
+	if nf.raster != nil && (nf.stage == ngMenu || nf.stage == ngGender || nf.stage == ngReview || nf.stage == ngConfirm || (nf.stage == ngName && !nf.ni.zh.Pick)) {
 		nf.raster.draw(rgba, tx, nf)
 		return
 	}
@@ -198,7 +214,7 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 			drawGlyph(rgba, tx, geo.NameText.X+i*16, geo.NameText.Y, g, white)
 		}
 		nf.gs.draw(rgba, tx, white, yellow, *geo)
-	case ngConfirm:
+	case ngReview, ngConfirm:
 		drawNewGameStats(rgba, tx, nf, white, yellow, geo)
 	}
 }

@@ -8,18 +8,19 @@ import (
 // InputState 是「一幀的抽象動作」——遊戲邏輯只依賴這個,不知也不管來源(鍵盤 / 觸控)。
 // 對齊 docs/63:先抽象再綁定,讓桌面/WASM/手機共用同一套邏輯。
 type InputState struct {
-	DirHeld  int  // 按住的方向(走動),-1 無;0下 1上 2左 3右
-	DirEdge  int  // 剛按下的方向(選單導覽),-1 無
-	Confirm  bool // A:確定 / 對話 / 選定(edge)
-	Cancel   bool // B:取消(edge)
-	Enter    bool // 標題／設定選單的鍵盤確認(edge)；遊戲中無 debug 傳送
-	Toggle   bool // Tab:英數 ↔ 注音 切換(酒館命名;edge)
-	Settings bool // S:開設定選單(標題畫面;edge)
-	Help     bool // F1:開 HELP 指令說明(edge)
-	CtxTap   bool // 觸控情境鍵剛點(edge);意義隨情境由呼叫端解讀(設定/切換…)
-	Tapped   bool // 觸控選單直接點選剛點(edge,P2);TapX/TapY 為該次觸點座標
-	TapX     int
-	TapY     int
+	AnyKeyEdge bool // 任意鍵盤按下邊緣；供原版等待鍵盤的具名階段使用。
+	DirHeld    int  // 按住的方向(走動),-1 無;0下 1上 2左 3右
+	DirEdge    int  // 剛按下的方向(選單導覽),-1 無
+	Confirm    bool // A:確定 / 對話 / 選定(edge)
+	Cancel     bool // B:取消(edge)
+	Enter      bool // 標題／設定選單的鍵盤確認(edge)；遊戲中無 debug 傳送
+	Toggle     bool // Tab:英數 ↔ 注音 切換(酒館命名;edge)
+	Settings   bool // S:開設定選單(標題畫面;edge)
+	Help       bool // F1:開 HELP 指令說明(edge)
+	CtxTap     bool // 觸控情境鍵剛點(edge);意義隨情境由呼叫端解讀(設定/切換…)
+	Tapped     bool // 觸控選單直接點選剛點(edge,P2);TapX/TapY 為該次觸點座標
+	TapX       int
+	TapY       int
 }
 
 // Input 合流鍵盤 + 觸控兩個來源。
@@ -33,6 +34,7 @@ func newInput() *Input { return &Input{touch: newTouchUI(), prevTouchDir: -1} }
 // Poll:讀這一幀的鍵盤 + 觸控,OR 合併成抽象 InputState。
 func (ip *Input) Poll() InputState {
 	s := InputState{DirHeld: -1, DirEdge: -1}
+	s.AnyKeyEdge = len(inpututil.AppendJustPressedKeys(nil)) != 0
 	// 鍵盤
 	if d := keyDirHeld(); d >= 0 {
 		s.DirHeld = d

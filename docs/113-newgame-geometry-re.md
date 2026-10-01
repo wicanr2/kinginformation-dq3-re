@@ -394,6 +394,108 @@ SHA-256 `0581086322b07394b8c9dffa7e697c115b220670e6613de5f046b426f83b1775`。
 維持RED：等待頁差15,468像素，範圍`(152,14)..(536,246)`；重製多一次Enter提前開始遊戲。
 正式修正只限定性別繪圖及能力交易，不能把此RED或能力／確認色彩差異包裝成通過。
 
+### 2026-10-01 追加勘誤：能力檢視與確認（DRAFT → 證據審查 → READY）
+
+本節訂正上方「性別與能力選項引用同一結構」及歷史表格將
+`0x28BC6` 稱為能力 `confirm_choice` 的定位。原始性別定位保持原樣；
+其原始記錄是556。`0x108F5`（file `0x1C65`）呼叫 `sub_1F63C`，
+該函式 `0x1F646` 的 bytes `8d368040` 載入 DGROUP `0x4080`，
+再由 `0x1F64A` 呼叫 `sub_1F4E3`。真正的能力選項是
+IDA linear `0x28E50`／file `0x1A1C0`，record434；不是性別DGROUP3DF6。
+舊斷言已推翻，形成史及審查sidecar仍保留，不把歷史PNG量測當原始結構。
+
+本次輸入仍是 `assets_raw/DQ3.EXE`，115,282bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+工具是IDA Pro9.4、image `ida-pro-9.4-idapython:locked-v1`；
+位址契約是IDA linear減EC90得MZ file，DGROUP基底linear24DD0。
+[`ida_dump_creation_rng.py`](../tools/ida_dump_creation_rng.py)新增原始窗口、
+caller及writer匯出，未改名、patch或改函式邊界；新查詢仍逐項分級。
+私有審查sidecar `work/issue4-ack-review-ida.json`，1,869,327bytes，SHA-256
+`5914fc15a35d55f703cb3789564e3ec3a8bbc54b2f0b89672274accc0e8a0480`。
+舊 `issue4-creation-ida-reviewed.json` 的hash見前節，另保留未審查匯出。
+
+| 原始定位（IDA linear／file／DGROUP） | 原始資料與有限結論 |
+|---|---|
+| `0x28B78`／`0x19EE8`／`3DA8` | flags3、X19byte、Y46、W44byte、H192、record407；完整能力面板 |
+| `0x28B92`／`0x19F02`／`3DC2` | flags3、X45byte、Y14、W22byte、H48、record557；確認提示 |
+| `0x28E50`／`0x1A1C0`／`4080` | flags3、X45byte、Y62、W14byte、H64、record434；2選項、kind3、cursor X47byte／Y78 |
+| `0x18377..0x18392`／`0x96E7..0x9702` | 裝備條件8000bit，marker glyph10，BP=25−4 byte、DX158，後接item+1文字record；本批布衣 |
+| `0x183A8..0x18493`／`0x9718..0x9803` | class／sex、姓名、13個數字欄writer；五位數 `sub_21929→sub_21958`、經驗八位 `sub_21822`，高位零不畫仍前進 |
+| `0x18498`／`0x9808` | 等待 `sub_2111B`；正常原版Enter後才回caller並畫提示／選項，動態已證實 |
+
+`sub_1F590／1F4E3` 先以 `sub_1FCC6` 對前一個活動外框再XOR，
+新窗口完整record／shadow後由 `sub_1FCE1→1FD30` 高亮自己的四個外框band。
+所以確認頁必須依序撤銷能力面板高亮、畫prompt、撤銷prompt高亮、畫choice；
+不能以舊像素矩形清黑近似。姓名在撤銷能力框後出現的藍色圖樣亦由此產生。
+
+等待helper `0x2111B..0x21148` 清DGROUP2856、等待非零，再清零返回。
+IRQ1 writer `0x210AD..0x210B9` 將小於80h的make code寫入，break寫零；
+本段是固定range的最小輸入證據，不延伸硬體driver／時序考古。
+因此等待需要新的鍵盤按下邊緣，持續按住不應接受；按鍵只能前進一次，
+不改confirm cursor、不重新擲骰、不在同一輸入接受角色。
+Enter正常動態已證實；其他make code的同一consumer為`strong`，不冒稱逐鍵動態驗收。
+
+DRAFT試作沿用正式InputState取得的姓名與七能力，唯獨畫面在測試隔離層重播上述
+原始record及writer順序。等待、確認兩張完整640×350 RGB均差0，未裁切、遮罩或改原版收據。
+日誌 `work/issue4-ability-window-prototype.log`，SHA-256
+`9a683c01a7045afeb38df332d6a0c4df3214f469948f5bcbac82cada6f5bd131`。
+試作成功只閉合有限繪圖規格，正式狀態機仍是RED；試作碼收尾移除，不進production。
+
+READY（限定本批男性Lv1、英數姓名0的兩個穩定階段）：
+`new_game_geometry.raster` 新增必填能力／prompt／choice的window及完整text引用、
+顯式 `review_before_confirmation`、裝備marker字模與anchor。原始性別window ID保持，
+真正能力choice另立ID，不覆蓋原定位。共用引擎新增具名 `ngReview` 與鍵盤邊緣輸入；
+pack決定是否檢視等待。renderer只重播有限原始primitive與既有typed欄位，
+不得新增版本raw值、玩家文字或JSON程式碼。schema/content升為0.1.57／0.1.63。
+
+正式驗收閘門：原始EXE／TXT直接parity與缺引用拒絕、等待／確認嚴格全畫布比較、
+既有18張回歸、一次ACK不消耗與不接受、正常主線／存讀檔及desktop建置。
+出生點、母親與全原版campaign不由此升級；正式驗收通過前不標CONFORMED。
+
+驗證腳本勘誤：首次新增的原始MZ bytes測試誤用IDA載入後已relocation的
+`9adb000421`。同一file `0x9808` 原始bytes其實為 `9adb000411`；
+這是位址空間／載入重定位差異，不能判為原版或pack錯誤。測試訂正後以
+相同容器與命令乾淨重跑；匯出工具同時保留 `bytes`（IDA loaded）及
+`file_bytes`（原始MZ）與 `bytes_basis`，不改歷史sidecar。
+
+回填索引（固定輸入EXE hash如上）：`0x28BC6→性別record556`、
+`0x28E50→能力確認record434` 的歷史訂正已連回docs/118及docs/126，
+兩份皆含「2026-10-01 勘誤：能力確認原始定位」標記。docs/74的舊定位
+只保留歷史，以上方最新閘門及本節為準；docs/117只引用性別，沒有受此定位訂正影響。
+匯出工具自動檢查上述backlink與標記，缺入口即失敗。
+
+### 能力等待／確認限定 CONFORMED（2026-10-01）
+
+上述READY契約已接入正式 `ngReview→ngConfirm`、pack與索引色renderer。
+能力等待、確認兩張完整640×350 RGB均為0差異，連同既有18張全部20張通過；
+原版由冷啟動、16次真實IRQ1輸入重生後再次通過，沒有遮罩或遊戲狀態注入。
+兩側預先固定1357，能力交易與最後356D仍一致；閒置／只按住方向不能離開等待，
+ACK只進確認，不改選項、能力、HP／MP或種子。嚴格ACK比較現在是創角驗收必跑，
+不需 `DQ3_DOSGOLEM_CREATION_ACK_AUDIT` 選用旗標。
+
+重生入口仍為 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --creation`；
+原版收據 `issue4-creation-receipt.json`，16,156bytes，SHA-256
+`219c3f1f4d7d7d85f684b54b94eeb549a26266b7f61220f998444cb558facd3c`。
+最終IDA匯出 `work/issue4-ack-final-ida.json`，2,223,232bytes，SHA-256
+`8bd594676ab6f1258f430d66e4a8c1cbfe04efc9bd2d7c37d941fac700af7537`，
+包含原始MZ及IDA載入位元組、分級語意與兩份歷史規格backlink正對照；舊sidecar保留。
+
+原始EXE／TXT parity與24項損壞契約拒絕通過。標準game359項頂層／34項子測試
+通過；36項選用擷取／額外收據未執行，其中3項原版收據測試已另行嚴格通過。
+沒有素材缺失跳過。全部internal乾淨重跑及desktop `main.go`建置通過。
+正常新遊戲以正式InputState到THE END及各段存讀檔通過（99.04秒），只屬remake回歸。
+新增raw window後，歷史數量斷言仍為8的驗證錯誤已訂正為9，使用同一工具／命令乾淨重跑。
+
+私有驗收索引 `work/dosgolem-opening/issue4-ack-verification-receipt.json`，20,665bytes，
+SHA-256 `6f6aba6327d33f7136e96584e20190229152f2298b0e99fdcfa31c8cccdef052`。
+它保存20組畫面hash、輸入、兩側seed、來源hash、基線RED／隔離試作／最終正式日誌及限制。
+試作碼已移除；使用者scratch及Android libs未動，原始素材／database／完整收據未加入Git。
+本輪容器及輸出擁有權收尾依Issue #4記錄。
+
+此CONFORMED限定男性Lv1英數姓名0的穩定能力等待／確認階段，不包含實際接受後的
+出生點、母親、其他按鍵動態、女性、候選字、閃爍、音訊或完整原版campaign。
+下一步從正常確認輸入繼續原版玩家路線；磁碟state缺CRTC仍不能作正式續跑圖像依據。
+
 ## 輸入與工具
 
 以下保存 2026-08 的形成史；當時 image 的 IDAPython 限制不能覆蓋上方

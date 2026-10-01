@@ -1,5 +1,31 @@
 # DQ3 工作歷程
 
+## 2026-10-01 — Issue #4：能力等待／確認正式對拍
+
+使用者再次明確授權建立／更新Issue；主機gh回讀確認啟動Issue #1已關閉、創角Issue #4開啟，
+續行記錄更新到#4，沒有重複建立。基線0a8aa6a的嚴格等待測試仍RED，15,468像素差異及提前
+開始遊戲保留。IDA 9.4追caller後證實能力選項在DGROUP4080／linear28E50／file1A1C0、record434，
+舊28BC6定位實為性別record556。原始名稱／位址不改，舊證據保留，docs/118、126同批回填勘誤。
+
+原始完整record407／557／434、字模及frame XOR順序的隔離試作兩張差0，先完成DRAFT→READY審查，
+再接入正式ngReview→ngConfirm與pack（schema0.1.57／content0.1.63）；試作碼收尾移除。
+正式等待／確認兩張及既有18張全畫布RGB均0，冷啟動、16次真實IRQ1輸入重生後再次通過。
+原版自然入口及重製首個輸入前各固定1357一次，七能力／目前HP、MP及最後356D仍相同。
+ACK現在為創角必跑閘門；閒置／只按住方向不前進，新的按鍵只顯示確認，不重擲或接受角色。
+
+標準game359項頂層／34項子測試通過；36項選用未執行，其中3項原版收據測試另行嚴格通過。
+沒有素材缺失。正常正式輸入／主角與酒館命名／存讀檔至THE END（99.04秒），全部internal及desktop建置通過。
+首次新增parity測試誤用IDA relocation bytes、預覽經驗值型別及歷史raw-window數量8造成驗證失敗；
+依原始檔及新契約訂正後在相同工具鏈乾淨重跑，沒有弱化斷言。匯出工具同列IDA loaded與MZ file bytes，
+另驗證歷史規格backlink；所有database／原始圖像／收據留在本機。
+
+私有驗收work/dosgolem-opening/issue4-ack-verification-receipt.json為20,665bytes，SHA-256
+6f6aba6327d33f7136e96584e20190229152f2298b0e99fdcfa31c8cccdef052。限定能力等待／確認CONFORMED，
+接受角色後、出生點／母親、女性、候選字、閃爍、音訊與完整原版campaign仍待後續Issue工作。
+本輪一次性容器收尾清空、輸出UID/GID1000，歷史root-owned3636項保持原狀；使用者scratch／Android libs保留。
+commit／push及遠端回讀另回填Issue，不建立發行包。
+
+
 ## 2026-10-01 — Issue #4：性別畫面與固定種子Lv1交易
 
 沿用遠端Issue #4及已授權的更新／commit／push，沒有重複建立Issue。由冷啟動IRQ1

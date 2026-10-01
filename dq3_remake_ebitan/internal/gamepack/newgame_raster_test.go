@@ -45,7 +45,7 @@ func TestNewGameRasterOriginalDataParity(t *testing.T) {
 	for _, w := range g.RawWindows {
 		raw[w.ID] = w
 	}
-	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode, r.Gender} {
+	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode, r.Gender, r.Ability, r.ConfirmationPrompt, r.ConfirmationChoice} {
 		w := raw[ref.RawWindowID]
 		linear, err := strconv.ParseInt(strings.TrimPrefix(w.Address, "linear:"), 0, 32)
 		if err != nil {
@@ -73,6 +73,9 @@ func TestNewGameRasterOriginalDataParity(t *testing.T) {
 			r.GenderHit.Height != 16 || r.GenderCursor.StepY != 16) {
 			t.Fatal("性別游標／命中列與原始結構及選項 consumer 不符")
 		}
+		if ref == r.ConfirmationChoice && (g.StatsChoiceCursor.X != word(24)*8 || g.StatsChoiceCursor.Y != word(26) || g.StatsChoiceCursor.StepY != 16) {
+			t.Fatal("能力選項游標與真正原始結構不符")
+		}
 	}
 	// 測試專用原始定位，保留 IDA linear／MZ file 換算；不進 production renderer。
 	functionOffset := 0x290a6 - 0xec90
@@ -82,7 +85,7 @@ func TestNewGameRasterOriginalDataParity(t *testing.T) {
 		t.Fatal("功能列游標／命中寬度與原始結構不符")
 	}
 	decoded := dq3data.LoadText(nil, txt)
-	for _, id := range []string{r.Menu.TextID, r.Header.TextID, r.Mode.TextID, r.Gender.TextID, r.ZhuyinTextID, r.AlnumTextID} {
+	for _, id := range []string{r.Menu.TextID, r.Header.TextID, r.Mode.TextID, r.Gender.TextID, r.Ability.TextID, r.ConfirmationPrompt.TextID, r.ConfirmationChoice.TextID, r.ZhuyinTextID, r.AlnumTextID} {
 		d := p.texts[id]
 		codes, ok := p.TextGlyphCodes(id)
 		if !ok || d.Source.Record == nil {
@@ -95,6 +98,14 @@ func TestNewGameRasterOriginalDataParity(t *testing.T) {
 			t.Fatalf("%s 未達 D3", id)
 		}
 	}
+	// 原始writer指令為oracle，保留file位址及乘8的byte→pixel基準。
+	wordAt := func(linear int) int { return int(binary.LittleEndian.Uint16(exe[linear-0xec90:])) }
+	if r.ReviewBeforeConfirmation == nil || !*r.ReviewBeforeConfirmation ||
+		!reflect.DeepEqual(exe[0x18498-0xec90:0x1849d-0xec90], []byte{0x9a, 0xdb, 0, 4, 0x11}) ||
+		r.EquipmentMarker.Y != wordAt(0x18369) || *r.EquipmentMarkerGlyph != wordAt(0x18383) ||
+		r.EquipmentMarker.X != (wordAt(0x18363)-int(exe[0x1837d-0xec90]))*8 {
+		t.Fatal("檢視等待或裝備marker與原始writer不符")
+	}
 }
 
 func TestNewGameRasterRejectsInvalidPack(t *testing.T) {
@@ -103,6 +114,13 @@ func TestNewGameRasterRejectsInvalidPack(t *testing.T) {
 		mutate func(*Pack)
 	}{
 		{"missing", func(p *Pack) { p.Interface.NewGameGeometry.Raster = nil }},
+		{"review_gate", func(p *Pack) { p.Interface.NewGameGeometry.Raster.ReviewBeforeConfirmation = nil }},
+		{"ability_window", func(p *Pack) { p.Interface.NewGameGeometry.Raster.Ability.RawWindowID = "unknown" }},
+		{"ability_text", func(p *Pack) { p.Interface.NewGameGeometry.Raster.Ability.TextID = "unknown" }},
+		{"prompt_window", func(p *Pack) { p.Interface.NewGameGeometry.Raster.ConfirmationPrompt.RawWindowID = "unknown" }},
+		{"choice_window", func(p *Pack) { p.Interface.NewGameGeometry.Raster.ConfirmationChoice.RawWindowID = "unknown" }},
+		{"equipment_glyph", func(p *Pack) { p.Interface.NewGameGeometry.Raster.EquipmentMarkerGlyph = nil }},
+		{"equipment_bounds", func(p *Pack) { p.Interface.NewGameGeometry.Raster.EquipmentMarker.X = 639 }},
 		{"font", func(p *Pack) { p.Interface.NewGameGeometry.Raster.FontIndex = nil }},
 		{"window", func(p *Pack) { p.Interface.NewGameGeometry.Raster.Header.RawWindowID = "unknown" }},
 		{"gender_window", func(p *Pack) { p.Interface.NewGameGeometry.Raster.Gender.RawWindowID = "unknown" }},
