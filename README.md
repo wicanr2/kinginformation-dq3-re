@@ -23,59 +23,15 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前狀態（2026-08-26）：指定的六項玩家功能與四項殘餘 polish 已接入；最新原版／remake
-game test 找到開場連續演出在家門轉場後缺少「主角自動走到王城入口」的玩家可見段落，
-現已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為 game-pack 兩階段序列。
-王座 rec78 的勇者經像素差異測試確認既有 renderer 已正確繪出，先前截圖判讀不列為缺陷。
-現行工作樹為 schema `0.1.53`／content `0.1.59`。本輪依玩家實測把正常音樂固定為
-直接 OGG（FM 僅保留明確診斷開關）、將注音組字移回原版下方面板、加入 `ㄨㄤˇ` 可選「王」
-的明示相容別名、補母親逐格帶路，以及 NPC 待機兩幀與移動面向同步；見
-[`docs/187`](docs/187-opening-player-path-polish.md)。同版公開 patch 與本機完整版已重包於
-`dist-all/v0.1.36/`；四個公開檔已發布，四個完整版不公開，詳見 [`docs/194`](docs/194-release-v0.1.36.md)。
-發行後工作樹另修正戰後固定誤回地表曲及音樂 OFF→ON 不立即恢復的 runtime 路由；
-castle／town／dungeon／field 與 title／battle／ending 現共用同一場景 selector，見
-[`docs/195`](docs/195-audio-transition-runtime-polish.md)。此修正尚未重包為新公開 release。
-本機完整版已另以 `v0.1.38-local` 同 checkpoint 重包至 `dist-all/v0.1.38-local/full/`；
-這不是公開 release，亦未上傳 GitHub。
-
-### 自我評估：現行 remake 與原版的差距
-
-**整體 remake 完成度：約 90%；相對原版仍有約 10% 差距。** 這是截至 2026-08-26、以
-玩家可見成果加權的工程自評，不是「已解讀 85% executable bytes」，也不代表逐像素 parity。
-固定計算方式為「玩家流程 35%＋資料／規則 25%＋畫面 20%＋聲音 10%＋平台交付 10%」：
-
-| 評估面向 | 目前分數 | 權重 | 加權貢獻 | 主要依據 |
-|---|---:|---:|---:|---|
-| 玩家流程與事件串接 | 96% | 35% | 33.6% | 新遊戲至 `THE END` 的正常輸入 trace 已達 E3；開場 escort 已補正，尚未再跑完整人工回歸 |
-| 資料、規則與存檔 | 93% | 25% | 23.25% | 藥草、聖水、祈禱之戒的參數、持有者／目標選擇與消耗順序已由 IDA 閉合並遷入 JSON；未知 helper 仍不冒稱 exact |
-| 畫面與動畫 | 78% | 20% | 15.6% | BLK 位平面、同格 rec80→rec79、20×4 分頁與 16×16 glyph cell 已依 EXE／D3TXT／影片閉合；rec78 證據圖已排除逐字初始幀假缺字，但同頁原版畫格與全場景動態仍以 V2 為主 |
-| 音樂、音效與時序 | 84% | 10% | 8.4% | OGG 與關鍵 cue 已接線；七個正式場景軌通過完整解碼抽樣，戰後依 castle／town／dungeon／field 恢復，音樂 OFF→ON 立即恢復當前場景；跨平台人耳、EBG 事件 cue 與逐動作停頓尚未完整對拍 |
-| 三平台交付 | 94% | 10% | 9.4% | v0.1.36 的 Linux／Windows／macOS 公開 patch 與本機完整版同 checkpoint 封裝完成；macOS 尚缺真機驗收，Android 不在本輪三平台範圍 |
-| **合計** |  | **100%** | **90.25%（對外取整為 90%）** | **剩餘差距約 10%，主要集中於全場景動態／聲音 V3 與真機驗收** |
-
-本專案目前可合理稱為「主要玩家流程已重製、核心資料與事件大多接線完成」，但不能稱為
-「逐畫面、逐幀、逐聲音完全等同原版」。下表保留各維度的證據與限制，避免總百分比掩蓋
-證據強弱：
-
-| 維度 | 現況 | 與原版仍有的差距 | 是否阻塞一般 remake 完成 |
-|---|---|---|---|
-| 主線可玩性 | 先前乾淨正式輸入 trace 已由新遊戲抵達 `THE END`，主要事件、戰鬥、載具與結局具正常入口 | 本輪完整 trace 已通過新修正的開場，後段因測試用低危區練至 Lv20 的 500000-step 上限停止；這是 trace 策略／隨機遭遇穩定性問題，不是已重現的玩家流程死路 | 否；但下一次發版前仍應用可重現 checkpoint 抽驗 |
-| 開場與設定資料 | 家中母親帶路、轉場後自動行走、同格 rec80→rec79 與旗標交易已依 IDA／D3TXT／影片接成 game-pack 序列；BLK 位平面勘誤後背景色號已對齊 | `arrival_frames` 尚未證明每個內部路點／timing exact；逐 glyph timer 採硬體規格近似，不宣稱 DOS wall-clock 逐週期一致 | 不阻塞流程 E3；文字 record／cell layout 已閉合，整體動態畫面仍阻塞 V3 |
-| 規則與資料 | 主線必要的道具、怪物 action、抗性、formation、商店、咒文、掉落、日夜及事件交易多數達 D2/D3→E2 | 藥草、聖水、祈禱之戒已移除舊近似並接正式選人；未被玩家路徑使用的 helper 仍保留證據限制 | 否；未知項不得冒稱 exact |
-| 畫面與操作 | 原始資產、中文字型、HUD、選單、NPC、角色與主要場景均可由正式 runtime 顯示；能力確認固定畫面已有 V3 靜態對拍；BLK 位平面修正後 rec80 背景色號已對齊，opening 文字 record／cell layout 已達 V3；rec78 dump 現固定輸出完整當頁 | 多數其他畫面仍是 V1／V2；rec78 尚缺同頁原版畫格，不能把 viewport／palette 整體升格；逐窗、戰鬥、attract／ending timing 亦未全面 V3 | 不阻塞功能 release；阻塞「視覺忠實完成」聲明 |
-| 音樂與音效 | 正常產品直接播放 OGG；關鍵戰鬥 VOC cue 與完成等待已接線；v0.1.36 完整版七軌通過完整解碼抽樣；發行後工作樹另閉合戰後場景恢復與音樂 OFF→ON 熱恢復，見 [`docs/193`](docs/193-audio-sampling-polish-20260825.md)、[`docs/194`](docs/194-release-v0.1.36.md) 與 [`docs/195`](docs/195-audio-transition-runtime-polish.md) | 跨平台實際裝置的人耳切換、EBG 事件 cue、逐動作停頓尚未完整對拍；DAC／PIT／DMA wall-clock 依公開硬體規格作可重現近似，不宣稱逐週期一致 | 否；真機人耳屬 V3 |
-| 存檔與資料包 | pack 具 schema、reference validation、content hash；主要事件有 save/load transaction | 不是每個可選支線與每個演出中間 frame 都有 round-trip；演出中途存檔語意未證實時採失敗即關閉 | 否；正常 checkpoint 已涵蓋主線 |
-| 平台交付 | Linux／Windows／macOS 已依現行 release checkpoint `0.1.53/0.1.59` 建立 v0.1.36 公開 patch 與本機完整版；Android 有較早 checkpoint 產物 | macOS 真機、Android host audio／真機仍未完成，Android 不屬本輪桌面 release | 不阻塞三平台桌面 release |
-
-綜合判定：**功能層可維持 campaign E3；資料／規則主要為 E2；rec80→rec79 的文字
-record／cell layout 已閉合，但整體視覺與聲音仍不能標 V3。**
-目前沒有已知的必要主線功能缺口，但仍有可選的原版忠實度、測試穩定性與跨平台同版交付工作。
-新發現只有在會改變玩家體驗或交付 gate 時才重新開啟實作；純硬體逐週期、未使用 helper 或
-沒有玩家可見差異的完整反編譯不再列為 remake 完成條件。詳細逐畫面矩陣見
-[`docs/74`](docs/74-ebiten-remake-completion-plan.md)，開場勘誤與證據限制見
-[`docs/188`](docs/188-opening-escort-to-castle-spec.md)，本輪實際抽樣與畫面差異見
-[`docs/189`](docs/189-opening-sampled-parity-20260824.md)，rec80→rec79 與逐 glyph timer 證據見
-[`docs/192`](docs/192-opening-dialogue-v3-closure.md)。
+目前開發版為 schema `0.1.54`／content `0.1.60`。dosgolem 已驗證六幕順序、
+前五幕色號及第六幕 129 個完整翻頁的色號／RGB，並修正漏卡與動態標誌；
+範圍與時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
+正常路線另修正同伴持有金皇冠時的還冠持有權檢查，見 [docs/82](docs/82-romaly-king-production-trace.md)。
+現行 remake 正式新遊戲輸入已抵達 `THE END`，標準回歸與桌面建置通過；
+原版創角以後的 dosgolem 玩家路線、完整音畫對拍尚未完成。
+歷史 E3 與 90% 自評不能代替本輪收據。現況以 [CONTEXT.md](CONTEXT.md) 為準，
+工作依據為 [GitHub Issues](https://github.com/wicanr2/kinginformation-dq3-re/issues)，
+歷程與歷史自評見 [WORKLOG.md](WORKLOG.md)。尚未發布包含本輪修改的新包。
 
 前一版 `dist-all/v0.1.36-local/` 已重建
 Linux x86_64 AppImage、Windows x86_64 ZIP、macOS x86_64／arm64 ZIP 四個完整版，修正角色

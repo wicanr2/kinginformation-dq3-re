@@ -26,3 +26,147 @@ schema `0.1.54`／content `0.1.60` 的正式無輸入序列、原版前五幕色
 盜賊鑰匙 fixture 全滅兩項失敗；以修改前 `0c6f780` 在同一容器與實際素材重現相同失敗，
 另登記 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)，不能冒稱完整回歸全綠。
 本批未建立發行包，未提交原版素材或 IDA database。commit／push 與最後清理核對於 Issue #1 記錄。
+
+## 2026-10-01 — Issue #3：同伴持冠還冠 gate
+
+Issue #2 正式重播在同伴持冠並存讀檔後，晉見國王仍走任務對話。保留原有 docs/82，
+以 IDA 9.4 一次性 database 重查 handler9 → sub_1689C → 命中 SI → caller 間接清格，
+確認原版逐角色掃八格。新增可重現匯出入口與分級索引；來源 hash／位址與 READY 審查
+見 docs/82，不提交 EXE 或 database。第一份暫存 sidecar 為空，未採用；明定 UTF-8、
+增加工具日誌後重生並核對非空／schema／hash，根因未獨立驗證。
+
+新增同伴持有兩件的 component 在修正前失敗，gate 由主角計數改為全隊計數後通過，
+只消耗一件且不動無關持有者。既有任務、王位、辭位與存檔派生測試通過；同輪正式
+新遊戲 trace 已經同伴持冠、隊伍存讀檔、還冠、王位／辭位，再繼續至日邦格紫寶珠。
+除整段主線外，其餘 game、全部 internal 與 desktop main.go 建置通過；原版 dosgolem
+動態同狀態路線仍未取得，整段主線由 Issue #2 繼續重驗，不能宣稱 E3 或完整 parity。
+
+回歸計數：381 項 game 通過、32 項 opt-in 跳過，沒有素材缺失。31 項是可選畫面擷取；
+另 1 項為未指定收據目錄的開場對拍，重新指定既有收據後獨立通過（3.84 秒），
+前五幕色號與第六幕 129 次翻頁色號／RGB 維持一致。這不是重新執行原版 campaign。
+
+測試工具環境：高速正式路線會密集建立原生音訊播放器，曾出現 SIGKILL 與音訊堆疊逾時，
+前者未證實 Docker OOM。測試專用 adapter 停止輸出聲音，但仍轉送原始 VOC duration 與
+完成等待，不修改 production 音訊；這些回歸沒有做人耳驗收。編譯診斷曾誤用不存在的
+companionsToSave 方法，改回 compsToSav；更換回復 closure 後移除未使用宣告，乾淨重跑。
+
+工作樹未追蹤使用者檔案保留；本輪未建新發行包。還冠局部修正已由
+`fc78bb5d5f8bc97f91ad0b34fc257ce7834dc638` 提交並推送，
+[Issue #3](https://github.com/wicanr2/kinginformation-dq3-re/issues/3) 已關閉。還冠三項元件再次
+通過，已重生並目視核對顯字 PNG；路徑、hash 與元件範圍見 docs/82。
+
+## 2026-10-01 — Issue #2：正式主線回歸重驗
+
+起始母親失敗是舊斷言仍期待 rec80 結束就移動；現行原始開場規格為同格切換 rec79。
+依正常輸入核對記錄、座標與旗標後訂正斷言。盜賊鑰匙路線的測試背包超過個人八格，
+改以合法容量購入與正式使用聖水，路線回歸通過。兩者均不改 production 規則。
+
+整段主線每次自新遊戲入口開始，執行前固定 remake 種子 `0x1357`，未重設種子挑選結果。
+回歸陸續越過同伴持冠／還冠、轉職後正式重新裝備、兩場八頭大蛇與紫寶珠、建城商人、
+拉之鏡與怪力魔、變化杖交換、幽靈船愛的回憶／存讀檔及奧莉薇亞海岬旗標交易。
+測試策略改用正式商店關閉、教會復活／解毒、旅店、隊伍容量與道具給予、回復咒文、
+攻擊增益及既有避敵資源；事件或數值沒有注入。缺陷中的同伴還冠另由 Issue #3 追蹤。
+
+幽靈船前舊十格補給斷言已與後續野外回復規格衝突，訂正追加於 docs/170，保留歷史。
+海岬原航路未啟用避敵資源，且以怪物編號 80 作逃跑門檻，遇 monster78 全滅。
+原始 D3MNS.DAT（5330 bytes、SHA-256
+`48bf3ce78c425239363761c13c708a6e04f8daa628cd575f7e049bc0bc7bb4ed`）record78、
+file offset3198 的 cast probability 為40，唯一 mask bit18；依 docs/180 已審 consumer
+為全體死亡後施術怪 HP 歸零的 `sacrifice_death`。採正式避敵與能力判定後海岬事件通過。
+
+返航診斷再顯示三名同伴死亡、勇者 MP 僅1；出港前旅店不能代替復活，幽靈船去程也仍
+有舊怪物編號策略。正在同一容器、同一種子乾淨重驗正式教會與航行資源策略，尚未
+THE END，不宣稱整體 E3 或原版同狀態對拍。一次編譯使用不存在的復活輔助函式名稱，
+核對既有入口 `traceReviveDeadAtChurch` 後更正；這是測試程式錯誤。
+
+後續勘誤：此 checkpoint 只有勇者已學特黑洛斯，同伴剩餘 MP 不能作避敵資源。取得
+愛的回憶後經正式魯拉回港補給，海岬、蓋亞之劍與存讀檔通過。無轉場步行加入與一般
+步行相同的有界 NPC 等待，越過回港通道的暫時阻塞。尼羅肯特仍在避敵資源耗盡後遇
+monster91／92 全滅；補給時另抓到備品整理把有場景用途的蓋亞之劍丟棄，已依資料包
+效果引用保留。保留魯拉的戰鬥策略也錯誤封住同伴全部 MP，正限定只保留勇者成本，
+讓同伴使用已學回復及傷害咒文；仍由相同固定種子乾淨重驗，不改 production。
+
+選用大型畫廊在魔法球測試設定停止，沒有跑到還冠段；不據此猜改遊戲。限定同伴還冠
+元件擷取通過。初張 PNG 是逐字顯示初始空白幀，依資料包等待長度推進文字後重取；
+不是原版同狀態畫面。此限制已登記 Issue #2／#3。
+
+最終回歸：實際地表進洞入口原先沒有避敵，補上正式資源使用、同伴戰鬥 MP 與位置
+診斷後，尼羅肯特／銀寶珠、六珠、巴拉摩斯及下層世界均通過。彩虹橋原斷言只查勇者
+聖水，改用全隊物品或既有可負擔咒文，正式主線由標題抵達 THE END（148.88 秒）。
+種子 0x1357 在第一個輸入前斷言固定，沒有重新設種或挑選結果；各段存讀檔通過。
+
+同一版本其餘標準 game 回歸 356 項頂層／382 項含子測試通過，加上主線為
+357 項頂層／383 項含子測試；31 項明示選用畫面擷取跳過，沒有素材缺失。
+指定既有原版收據的六幕／129 翻頁比較通過（9.09 秒），全部 internal 與 desktop
+main.go 建置通過。未重複執行已通過且未再改動的長主線。
+
+本機收據為 `work/dosgolem-opening/issue2-regression-receipt.json`，3392 bytes、SHA-256
+`b12899ff50e98242e7c9303b3503df2defde4dd2d7698bdf4762246fb374c7cb`，保存來源檔 hash、
+工具 image、種子、輸入、範圍及日誌雜湊。正式 THE END PNG 已目視核對，14386 bytes、
+SHA-256 `250a981f8f56aa3130e83c99d1b330a7474a5432b132203e2056d23c804fbfc9`。
+原版開場僅重用既有 dosgolem 收據比較；創角後原版／完整音畫與人耳驗收仍未知。
+這些結果不代表完整 remake 或 dosgolem campaign 對拍完成，沒有新發行包。
+
+Docker 衛生：確認 docs/105-gaia-sword-re.md 與 docs/106-gaia-sword-idapro.md 為
+UID0、完全空白的歷史誤掛載目錄後，只移除這兩個目錄。未遞迴更改持有者；使用者
+scratch、Android libs、原版素材與資料庫均未改動或納入提交。另確認並移除同樣完全
+空白的 game/world.go 誤掛載目錄；全專案仍有 3636 個歷史 root-owned 項目，未廣域修復。
+
+## 2026-08-26 — README 歷史自評（2026-10-01 移存）
+
+以下逐字保留原首頁的當時自評與來源，不能覆蓋目前 CONTEXT／docs/74／遠端 Issue。
+相對連結因兩文件同位於根目錄而保持有效。
+
+目前狀態（2026-08-26）：指定的六項玩家功能與四項殘餘 polish 已接入；最新原版／remake
+game test 找到開場連續演出在家門轉場後缺少「主角自動走到王城入口」的玩家可見段落，
+現已依 [`docs/188`](docs/188-opening-escort-to-castle-spec.md) 改為 game-pack 兩階段序列。
+王座 rec78 的勇者經像素差異測試確認既有 renderer 已正確繪出，先前截圖判讀不列為缺陷。
+現行工作樹為 schema `0.1.53`／content `0.1.59`。本輪依玩家實測把正常音樂固定為
+直接 OGG（FM 僅保留明確診斷開關）、將注音組字移回原版下方面板、加入 `ㄨㄤˇ` 可選「王」
+的明示相容別名、補母親逐格帶路，以及 NPC 待機兩幀與移動面向同步；見
+[`docs/187`](docs/187-opening-player-path-polish.md)。同版公開 patch 與本機完整版已重包於
+`dist-all/v0.1.36/`；四個公開檔已發布，四個完整版不公開，詳見 [`docs/194`](docs/194-release-v0.1.36.md)。
+發行後工作樹另修正戰後固定誤回地表曲及音樂 OFF→ON 不立即恢復的 runtime 路由；
+castle／town／dungeon／field 與 title／battle／ending 現共用同一場景 selector，見
+[`docs/195`](docs/195-audio-transition-runtime-polish.md)。此修正尚未重包為新公開 release。
+本機完整版已另以 `v0.1.38-local` 同 checkpoint 重包至 `dist-all/v0.1.38-local/full/`；
+這不是公開 release，亦未上傳 GitHub。
+
+### 自我評估：現行 remake 與原版的差距
+
+**整體 remake 完成度：約 90%；相對原版仍有約 10% 差距。** 這是截至 2026-08-26、以
+玩家可見成果加權的工程自評，不是「已解讀 85% executable bytes」，也不代表逐像素 parity。
+固定計算方式為「玩家流程 35%＋資料／規則 25%＋畫面 20%＋聲音 10%＋平台交付 10%」：
+
+| 評估面向 | 目前分數 | 權重 | 加權貢獻 | 主要依據 |
+|---|---:|---:|---:|---|
+| 玩家流程與事件串接 | 96% | 35% | 33.6% | 新遊戲至 `THE END` 的正常輸入 trace 已達 E3；開場 escort 已補正，尚未再跑完整人工回歸 |
+| 資料、規則與存檔 | 93% | 25% | 23.25% | 藥草、聖水、祈禱之戒的參數、持有者／目標選擇與消耗順序已由 IDA 閉合並遷入 JSON；未知 helper 仍不冒稱 exact |
+| 畫面與動畫 | 78% | 20% | 15.6% | BLK 位平面、同格 rec80→rec79、20×4 分頁與 16×16 glyph cell 已依 EXE／D3TXT／影片閉合；rec78 證據圖已排除逐字初始幀假缺字，但同頁原版畫格與全場景動態仍以 V2 為主 |
+| 音樂、音效與時序 | 84% | 10% | 8.4% | OGG 與關鍵 cue 已接線；七個正式場景軌通過完整解碼抽樣，戰後依 castle／town／dungeon／field 恢復，音樂 OFF→ON 立即恢復當前場景；跨平台人耳、EBG 事件 cue 與逐動作停頓尚未完整對拍 |
+| 三平台交付 | 94% | 10% | 9.4% | v0.1.36 的 Linux／Windows／macOS 公開 patch 與本機完整版同 checkpoint 封裝完成；macOS 尚缺真機驗收，Android 不在本輪三平台範圍 |
+| **合計** |  | **100%** | **90.25%（對外取整為 90%）** | **剩餘差距約 10%，主要集中於全場景動態／聲音 V3 與真機驗收** |
+
+本專案目前可合理稱為「主要玩家流程已重製、核心資料與事件大多接線完成」，但不能稱為
+「逐畫面、逐幀、逐聲音完全等同原版」。下表保留各維度的證據與限制，避免總百分比掩蓋
+證據強弱：
+
+| 維度 | 現況 | 與原版仍有的差距 | 是否阻塞一般 remake 完成 |
+|---|---|---|---|
+| 主線可玩性 | 先前乾淨正式輸入 trace 已由新遊戲抵達 `THE END`，主要事件、戰鬥、載具與結局具正常入口 | 本輪完整 trace 已通過新修正的開場，後段因測試用低危區練至 Lv20 的 500000-step 上限停止；這是 trace 策略／隨機遭遇穩定性問題，不是已重現的玩家流程死路 | 否；但下一次發版前仍應用可重現 checkpoint 抽驗 |
+| 開場與設定資料 | 家中母親帶路、轉場後自動行走、同格 rec80→rec79 與旗標交易已依 IDA／D3TXT／影片接成 game-pack 序列；BLK 位平面勘誤後背景色號已對齊 | `arrival_frames` 尚未證明每個內部路點／timing exact；逐 glyph timer 採硬體規格近似，不宣稱 DOS wall-clock 逐週期一致 | 不阻塞流程 E3；文字 record／cell layout 已閉合，整體動態畫面仍阻塞 V3 |
+| 規則與資料 | 主線必要的道具、怪物 action、抗性、formation、商店、咒文、掉落、日夜及事件交易多數達 D2/D3→E2 | 藥草、聖水、祈禱之戒已移除舊近似並接正式選人；未被玩家路徑使用的 helper 仍保留證據限制 | 否；未知項不得冒稱 exact |
+| 畫面與操作 | 原始資產、中文字型、HUD、選單、NPC、角色與主要場景均可由正式 runtime 顯示；能力確認固定畫面已有 V3 靜態對拍；BLK 位平面修正後 rec80 背景色號已對齊，opening 文字 record／cell layout 已達 V3；rec78 dump 現固定輸出完整當頁 | 多數其他畫面仍是 V1／V2；rec78 尚缺同頁原版畫格，不能把 viewport／palette 整體升格；逐窗、戰鬥、attract／ending timing 亦未全面 V3 | 不阻塞功能 release；阻塞「視覺忠實完成」聲明 |
+| 音樂與音效 | 正常產品直接播放 OGG；關鍵戰鬥 VOC cue 與完成等待已接線；v0.1.36 完整版七軌通過完整解碼抽樣；發行後工作樹另閉合戰後場景恢復與音樂 OFF→ON 熱恢復，見 [`docs/193`](docs/193-audio-sampling-polish-20260825.md)、[`docs/194`](docs/194-release-v0.1.36.md) 與 [`docs/195`](docs/195-audio-transition-runtime-polish.md) | 跨平台實際裝置的人耳切換、EBG 事件 cue、逐動作停頓尚未完整對拍；DAC／PIT／DMA wall-clock 依公開硬體規格作可重現近似，不宣稱逐週期一致 | 否；真機人耳屬 V3 |
+| 存檔與資料包 | pack 具 schema、reference validation、content hash；主要事件有 save/load transaction | 不是每個可選支線與每個演出中間 frame 都有 round-trip；演出中途存檔語意未證實時採失敗即關閉 | 否；正常 checkpoint 已涵蓋主線 |
+| 平台交付 | Linux／Windows／macOS 已依現行 release checkpoint `0.1.53/0.1.59` 建立 v0.1.36 公開 patch 與本機完整版；Android 有較早 checkpoint 產物 | macOS 真機、Android host audio／真機仍未完成，Android 不屬本輪桌面 release | 不阻塞三平台桌面 release |
+
+綜合判定：**功能層可維持 campaign E3；資料／規則主要為 E2；rec80→rec79 的文字
+record／cell layout 已閉合，但整體視覺與聲音仍不能標 V3。**
+目前沒有已知的必要主線功能缺口，但仍有可選的原版忠實度、測試穩定性與跨平台同版交付工作。
+新發現只有在會改變玩家體驗或交付 gate 時才重新開啟實作；純硬體逐週期、未使用 helper 或
+沒有玩家可見差異的完整反編譯不再列為 remake 完成條件。詳細逐畫面矩陣見
+[`docs/74`](docs/74-ebiten-remake-completion-plan.md)，開場勘誤與證據限制見
+[`docs/188`](docs/188-opening-escort-to-castle-spec.md)，本輪實際抽樣與畫面差異見
+[`docs/189`](docs/189-opening-sampled-parity-20260824.md)，rec80→rec79 與逐 glyph timer 證據見
+[`docs/192`](docs/192-opening-dialogue-v3-closure.md)。

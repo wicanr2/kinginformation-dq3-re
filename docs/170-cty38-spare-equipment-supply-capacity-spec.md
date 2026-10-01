@@ -60,3 +60,26 @@ free=0, antidote=1, herb=0
 - 每名角色 `actorItemCount<=8`；equipped slots 原值不變；整理後至少十格可供本航段補給。
 - 完整 campaign 通過 CTY38、幽靈船、奧莉薇亞解毒／治療路線，再以後續第一個真實 blocker
   決定是否需要調整數量。
+
+## 2026-10-01 回填：十格斷言與後續回復規格衝突
+
+[Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2) 的正式重播通過商人建城、
+拉之鏡與變化之杖交換後，整理備品仍只有五個空格；測試因舊 `minimum=10` 停止。
+收據：`work/dosgolem-opening/issue2-mirror-supply-replay.log`（82.32 秒）。
+上述驗收的「至少十格」源於僅用藥草的歷史策略，與本文件第 5 點及後續
+[docs/171](171-field-healing-spell-production-spec.md) 已接線的正式野外回復不一致。
+保留舊文作形成紀錄；現行測試最低容量改為「缺少的兩瓶聖水＋缺少的三份驅毒草」，
+依全隊實際持有量計算；其餘空格才買藥草，回復仍由正式物品／咒文選單處理。
+未放寬八格上限，未注入 HP、MP 或道具；這是測試補給策略，並非原版固定需求。
+完整主線仍待重播，不因越過容量斷言而預先宣稱通過。
+
+## 2026-10-01 後續驗收
+
+本輪正式新遊戲輸入已抵達 THE END（148.88 秒），標準 game／internal 與桌面建置通過，
+收據見 [WORKLOG](../WORKLOG.md) 與 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)。
+後續海岬解毒完成後，經正式丟棄清單騰出剩餘
+驅毒草與備品容量補聖水；具有資料包場景使用效果的裝備必須保留，避免誤丟蓋亞之劍。
+篩選入口為 [正式路線測試](../dq3_remake_ebitan/game/opening_input_trace_test.go) 的
+`dropSpareEquipmentForPartyInventorySlots`，以 `ItemUseEffectByRawID` 核對資料包引用。
+尼羅肯特的保留魯拉策略只保留勇者成本，同伴仍可用已學戰鬥咒文；不改個人八格容量、
+怪物或遭遇資料。本輪沒有取得原版創角後 dosgolem 同狀態收據，不升格完整 parity。

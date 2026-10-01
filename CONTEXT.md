@@ -5,17 +5,26 @@
 證據與修正規格見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)，
 工作歷程見 [WORKLOG.md](WORKLOG.md)。dosgolem 必須使用明示的檔名解析工具修正；
 第六幕七圖塊的 129 個翻頁畫面已逐色號／RGB 通過。現行候選 schema `0.1.54`／content
-`0.1.60`；完整 `internal` 通過，但完整 `game` 的兩項既有路線失敗也在 `0c6f780` 重現，
-詳見 docs/196。完整遊戲對拍與現行 campaign 重驗仍未完成。
-下一個工作依據為 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)：
-先核對兩項既有正式路線回歸失敗，不因測試斷言就猜改原版規則。
+`0.1.60`；起始 `game` 的兩項既有路線失敗也在 `0c6f780` 重現，詳見 docs/196。
+經 Issue #2 訂正測試斷言與正式玩家策略後，現行主線由標題抵達 THE END（148.88 秒），
+其餘標準 game、全部 internal 與桌面建置通過。完整原版遊戲對拍仍未完成。
+本輪路線暴露同伴持冠時國王只查主角背包的缺陷，已依 IDA 9.4 原始全隊搜尋修正；
+證據、READY 審查與匯出入口見 [docs/82](docs/82-romaly-king-production-trace.md)，
+工作依據為 [Issue #3](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)。
+局部修正已由 `fc78bb5` 推送，Issue #3 已關閉；完整主線另由 Issue #2 保持追蹤。
+國王 component、同伴持冠取得／存讀檔／還冠／辭位的正常輸入已通過；
+31 項選用畫面擷取不屬於標準回歸；沒有因素材缺失而跳過。沒有新發行包。
+正式路線回歸的收據與演進依 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)，
+詳見 [WORKLOG.md](WORKLOG.md)。下一步恢復原版創角後的 dosgolem 玩家路徑對拍。
 
 | 目前狀態（2026-10-01） | 最近驗收與界線 |
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.54／content 0.1.60；未發布新包 |
 | 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
 | 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、創角以後與完整 campaign；時間只採硬體規格近似 |
-| 現行回歸待查 | internal 與桌面建置通過；完整 game 兩項失敗在舊 checkpoint 也重現；Issue #2 |
+| 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |
+| 現行回歸已完成 | 正式新遊戲 InputState → THE END 148.88 秒，各段存讀檔、標準 game／internal 及桌面建置通過；收據 work/dosgolem-opening/issue2-regression-receipt.json，Issue #2 |
+| 額外畫廊限制 | 31 項選用擷取未納入標準回歸；大型新遊戲畫廊的魔法球測試設定失敗另有紀錄，未判為產品缺陷；還冠元件與正式 THE END PNG 已核對 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，

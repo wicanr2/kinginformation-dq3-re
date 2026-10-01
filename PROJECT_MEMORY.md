@@ -3,8 +3,15 @@
 > 2026-10-01 對拍：依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 > 修正開機漏 1990 卡、錯用 TITP 與缺 DFP 動態標誌；第六幕 129 個位置已逐色號／RGB 通過，
 > 原版與 remake 正常無輸入 bootstrap 的範圍／時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
-> 全部 internal 通過，但完整 game 的兩個路線失敗在修改前 `0c6f780` 也重現；
-> 歷史 E3 不能替代現行回歸，完整 dosgolem campaign 尚未完成。未建立新發行包。
+> 起始 game 兩個路線失敗在修改前 `0c6f780` 也重現；經本輪訂正，正式新遊戲輸入
+> 已重驗至 THE END（148.88 秒），標準 game、全部 internal 與桌面建置通過。
+> 歷史 E3 不替代本輪收據；完整 dosgolem campaign 尚未完成。未建立新發行包。
+
+> 本輪主線回歸另暴露同伴持冠的國王 gate：依原始 handler9 全隊搜尋修正，
+> 同伴持有、單件消耗、正常還冠／辭位及隊伍存讀檔已通過；[Issue #3](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)、
+> [docs/82](docs/82-romaly-king-production-trace.md) 保存證據；`fc78bb5` 已推送，Issue #3 已關閉。
+> [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2) 保存主線、存讀檔與回歸收據，
+> 31 項選用擷取未執行，沒有素材缺失跳過。下一步回到 dosgolem 原版創角後路線。
 
 > 發佈記憶：現行 v0.1.36 已由 checkpoint `d6184f4` 正式發布；v0.1.35 是歷史。
 > GitHub 只含公開 patch，本機 full 未上傳；hash 與驗證界線以 `docs/194` 為準。

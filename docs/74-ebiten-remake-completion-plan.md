@@ -3,9 +3,18 @@
 > **2026-10-01 現況：**依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 > 建立 dosgolem 自然開機收據並修正六幕序列／動態標誌。前五幕色號通過，第六幕全部
 > 129 次完整翻頁的色號與 RGB 通過；其他相位、音訊、跳過與創角以後尚未對拍。
-> 完整 internal 通過；完整 game 的母親帶路斷言與 Lv1 盜賊鑰匙路線失敗在修改前
-> `0c6f780` 亦重現，需先查證測試與現行規格，不能據此猜改規則。歷史 THE END 收據仍保留，
-> 但不代表本輪已重驗 E3。證據／收據入口與限制見 [docs/196](196-dosgolem-opening-sequence-parity.md)。
+> 起始 game 的母親帶路斷言與 Lv1 盜賊鑰匙路線失敗在修改前 `0c6f780` 亦重現；
+> 經查證與訂正後，本輪正式主線與標準回歸已通過，詳見下方更新。
+> 原版開場證據／收據入口與限制見 [docs/196](196-dosgolem-opening-sequence-parity.md)。
+
+> **本輪更新：**正式新遊戲 InputState 已抵達 THE END（148.88 秒），各段存讀檔通過。
+> 此過程暴露同伴持冠時國王只查主角的 gate，已依原版全隊搜尋修正，見
+> [Issue #3](https://github.com/wicanr2/kinginformation-dq3-re/issues/3) 與 [docs/82](82-romaly-king-production-trace.md)。
+> 還冠修正 fc78bb5 已推送，Issue #3 已關閉。合併主線共 357 項頂層 game 測試及
+> 26 項子測試通過，31 項選用畫面擷取未執行，沒有素材缺失跳過；全部 internal、
+> 桌面 main.go 建置及既有 dosgolem 六幕／129 翻頁收據比較通過。
+> 工作及收據依 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)，歷程見
+> [WORKLOG](../WORKLOG.md)。這是 remake 回歸，原版創角後與完整音畫對拍仍未知。
 
 > 2026-08-26 發佈 checkpoint：v0.1.36 已由 `d6184f4` 正式發布；現行 hash、
 > patch／full 素材邊界及驗證限制見 [`docs/194`](194-release-v0.1.36.md)。v0.1.35 與

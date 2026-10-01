@@ -1,7 +1,15 @@
 # DQ3 Go／Ebitengine 現行工作清單
 
-更新：2026-08-26。唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
+更新：2026-10-01。遠端 Issue 是本輪工作的權威；唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
 本檔只保存可快速接手的目前順序，不收錄歷史 C/SDL 工作。
+
+| 本輪工作 | 狀態與驗證界線 | 權威入口 |
+|---|---|---|
+| 原版六幕開場 | 已完成本輪限定色號／RGB 對拍，其他相位與音訊未知 | [Issue #1（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)、[docs/196](docs/196-dosgolem-opening-sequence-parity.md) |
+| 正式玩家路線回歸 | 已重驗至 THE END（148.88 秒），各段存讀檔、標準 game／internal 及桌面建置通過；原版動態對拍仍未知 | [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2) |
+| 同伴持冠還冠持有權檢查 | 已由 fc78bb5 推送，原版局部靜態閉環、元件、正式還冠／辭位及存讀檔通過；原版動態路線待 dosgolem | [Issue #3（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)、[docs/82](docs/82-romaly-king-production-trace.md) |
+
+下方為 2026-08-26 功能與交付歷史，不能覆蓋上表的現行驗收，也不限制本輪使用者授權的對拍目標。
 
 | 順序 | 工作 | 狀態 | 直接證據 |
 |---:|---|---|---|
