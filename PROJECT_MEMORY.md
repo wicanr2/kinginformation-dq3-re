@@ -5,6 +5,10 @@
 > 原版收據已重生；工具 BIOS 色盤頁面補足有獨立紅綠測試。正式 remake 的完整畫布
 > 差異仍為 5,508／8,025 像素；IDA 9.4 writer 驅動的可丟棄試作兩頁均零差異。
 > 試作尚未接入 production；下一閘門為有限 pack 規格審查及正式 renderer 修正。
+> 命名共用元件的跨列導航／功能切英數游標保留已修正，原版狀態對拍通過；
+> 主角及酒館三人使用正式功能列，正常主線與存讀檔重驗至 THE END（69.58 秒）。
+> 導航的 READY／CONFORMED 不提升繪圖規格；重生入口是
+> `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --navigation`。
 > 原版出生點／母親開場仍未閉合，證據、工具與測試入口見 [docs/113](docs/113-newgame-geometry-re.md)。
 
 > 2026-10-01 對拍：依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)

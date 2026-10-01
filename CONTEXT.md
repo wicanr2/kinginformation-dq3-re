@@ -5,6 +5,11 @@
 收據入口 `tools/dosgolem_newgame_probe.py`，私有結果 `work/dosgolem-opening/issue4-keylog-receipt.json`。
 正式 remake 完整 RGB 差異仍是 5,508／8,025 像素；IDA writer 的兩頁試作均零差異，
 尚未接入 production。下一步完成有限 pack 規格審查及正式 renderer 修正，再續行創角／母親。
+命名導航已依原版冷啟動收據修正：左右沿全格盤循環，功能列切英數保留 raw35；
+六次方向與四次功能輸入的原版狀態對拍通過。主角及酒館三人均經正式功能列命名，
+正常主線／存讀檔重驗到 THE END（69.58 秒）。這是導航切片，未提升上述畫面到 V3。
+重生入口：`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --navigation`；
+收據為 `work/dosgolem-opening/issue4-name-receipt.json`／`issue4-mode-receipt.json`，均不入 Git。
 原版 disk state 未保存 CRTC 等顯示狀態，本輪畫面只能使用冷啟動收據；
 語意索引、DRAFT 與試作入口見 [docs/113](docs/113-newgame-geometry-re.md)。
 

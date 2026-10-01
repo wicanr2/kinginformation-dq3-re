@@ -1,13 +1,18 @@
 package game
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"image"
 	"image/png"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"runtime"
+	"strconv"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -34,6 +39,130 @@ func newProductionTraceGame(assets fs.FS) (*Game, error) {
 	g.music = productionTraceAudio{g.music}
 	g.battle.sfxPlayer = g.music
 	return g, nil
+}
+
+// 讀取原版冷啟動實際觀察值，以等價正式 InputState 比較命名邊界及功能切換。
+// 只驗收 modal 狀態；已知的全畫布繪圖差異仍由獨立正式畫面測試回報。
+func TestDosgolemNameInputNavigationComparison(t *testing.T) {
+	dir := os.Getenv("DQ3_DOSGOLEM_NEWGAME_DIR")
+	if dir == "" {
+		t.Skip("需提供 dosgolem 原版冷啟動命名收據目錄")
+	}
+	for _, scenario := range []struct {
+		name, prefix string
+		inputs       int
+	}{
+		{"name_navigation", "issue4-name", 6}, // 六次方向鍵；候選規則另案驗收。
+		{"name_function_mode", "issue4-mode", 4},
+	} {
+		t.Run(scenario.name, func(t *testing.T) {
+			var receipt struct {
+				Scenario       string `json:"scenario"`
+				OriginalSHA    string `json:"original_sha256"`
+				Revision       string `json:"upstream_revision_observed"`
+				Image          string `json:"docker_image"`
+				StateInjection *bool  `json:"game_state_injection"`
+				RNGComparison  *bool  `json:"rng_comparison"`
+				Inputs         []struct {
+					Scan string `json:"scan"`
+				} `json:"player_input"`
+				Observations []string `json:"name_observations"`
+				Artifacts    []struct {
+					Path string `json:"path"`
+					SHA  string `json:"sha256"`
+				} `json:"artifacts"`
+			}
+			blob, err := os.ReadFile(filepath.Join(dir, scenario.prefix+"-receipt.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(blob, &receipt); err != nil {
+				t.Fatal(err)
+			}
+			if receipt.Scenario != scenario.name || receipt.OriginalSHA != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" ||
+				receipt.Revision != "2f44a68ebfc54b28fb15dd4a34510b0b04a5415d" || receipt.Image != "dq3-ebiten-test:20260822-r1" ||
+				receipt.StateInjection == nil || *receipt.StateInjection || receipt.RNGComparison == nil || *receipt.RNGComparison {
+				t.Fatalf("原版收據來源或狀態注入／亂數範圍不符：%+v", receipt)
+			}
+			if len(receipt.Artifacts) == 0 {
+				t.Fatal("原版 artifact 索引缺失")
+			}
+			for _, artifact := range receipt.Artifacts {
+				if filepath.Base(artifact.Path) != artifact.Path {
+					t.Fatalf("原版 artifact 必須在同一收據目錄：%q", artifact.Path)
+				}
+				data, err := os.ReadFile(filepath.Join(dir, artifact.Path))
+				if err != nil {
+					t.Fatal(err)
+				}
+				hash := sha256.Sum256(data)
+				if hex.EncodeToString(hash[:]) != artifact.SHA {
+					t.Fatalf("原版 artifact 雜湊不符：%s", artifact.Path)
+				}
+			}
+			if len(receipt.Inputs) < scenario.inputs+2 || len(receipt.Observations) < scenario.inputs+3 {
+				t.Fatal("原版正式輸入／觀察紀錄不足")
+			}
+			t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "name-navigation-save.json"))
+			g, err := newProductionTraceGame(os.DirFS(spineAssetsDir(t)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for i := 0; i < 2; i++ {
+				if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if g.newGame.stage != ngName {
+				t.Fatal("正式新遊戲未進入命名")
+			}
+			seed := g.prng.State()
+			observation := regexp.MustCompile(`DS=15ed raw_cursor=(\d+) name_mode=([0-9a-f]+)$`)
+			for i := 0; i < scenario.inputs; i++ {
+				in := InputState{DirHeld: -1, DirEdge: -1}
+				switch receipt.Inputs[i+2].Scan {
+				case "0x48":
+					in.DirEdge = 1
+				case "0x50":
+					in.DirEdge = 0
+				case "0x4b":
+					in.DirEdge = 2
+				case "0x4d":
+					in.DirEdge = 3
+				case "0x1c":
+					in.Confirm = true
+				default:
+					t.Fatalf("未驗收的原版按鍵：%q", receipt.Inputs[i+2].Scan)
+				}
+				if err := g.step(in); err != nil {
+					t.Fatal(err)
+				}
+				match := observation.FindStringSubmatch(receipt.Observations[i+3])
+				if match == nil {
+					t.Fatalf("原版觀察欄位缺失：%s", receipt.Observations[i+3])
+				}
+				cursor, _ := strconv.Atoi(match[1])
+				mode, _ := strconv.ParseInt(match[2], 16, 16)
+				ni := &g.newGame.ni
+				if ni.cursor != cursor || ni.nameZhu != (mode&1 != 0) || ni.functionFocus != (mode&4 != 0) ||
+					len(ni.nameBuf) != 0 || g.prng.State() != seed || g.newGame.stage != ngName {
+					t.Fatalf("第%d個正式輸入後與原版不符：原版 raw%d/mode%#x；重製 cursor=%d zhuyin=%v focus=%v name=%v stage=%d", i+1, cursor, mode, ni.cursor, ni.nameZhu, ni.functionFocus, ni.nameBuf, g.newGame.stage)
+				}
+				t.Logf("正式輸入%d：raw%d、注音=%v、功能焦點=%v 與原版一致；沒有選字或消耗 RNG", i+1, cursor, ni.nameZhu, ni.functionFocus)
+			}
+			g.renderFrame()
+			out, err := os.Create(filepath.Join(dir, "issue4-remake-"+scenario.name+".png"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = png.Encode(out, &image.RGBA{Pix: append([]byte(nil), g.rgba...), Stride: ScreenW * 4, Rect: image.Rect(0, 0, ScreenW, ScreenH)})
+			closeErr := out.Close()
+			if err != nil || closeErr != nil {
+				t.Fatalf("寫出正式導航 PNG：%v/%v", err, closeErr)
+			}
+			t.Log("命名狀態通過；繪圖仍待獨立全畫布比較，不宣稱 V3")
+		})
+	}
 }
 
 // 只比較尚未擲出創角能力的正式選單／初始注音畫面；原版收據必須
@@ -414,8 +543,17 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 
 	press(InputState{Confirm: true}) // splash → menu
 	press(InputState{Confirm: true}) // menu「遊戲開始」→ 注音命名
-	press(InputState{Toggle: true})  // 注音 → 英數
-	press(InputState{Confirm: true}) // cursor0：「0」
+	// 原版正式功能入口：raw0 上→raw36、左→raw35，切英數後保留 raw35。
+	send(InputState{DirHeld: -1, DirEdge: 1})
+	send(InputState{DirHeld: -1, DirEdge: 2})
+	press(InputState{Confirm: true}) // 功能格 → 功能列
+	press(InputState{Confirm: true}) // 第一列切英數
+	if g.newGame.ni.nameZhu || g.newGame.ni.cursor != 35 || g.newGame.ni.functionFocus {
+		t.Fatal("主角命名功能切英數未保留原版 raw35")
+	}
+	send(InputState{DirHeld: -1, DirEdge: 0}) // raw35 → raw44
+	send(InputState{DirHeld: -1, DirEdge: 3}) // raw44 → raw0
+	press(InputState{Confirm: true})          // cursor0：「0」
 	for i := 0; i < 3; i++ {
 		send(InputState{DirHeld: -1, DirEdge: 0}) // raw0→raw27
 	}
@@ -506,8 +644,16 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			send(InputState{DirHeld: -1, DirEdge: 0})
 		}
 		press(InputState{Confirm: true}) // 職業
-		press(InputState{Toggle: true})  // 英數
-		press(InputState{Confirm: true}) // 輸入「0」
+		send(InputState{DirHeld: -1, DirEdge: 1})
+		send(InputState{DirHeld: -1, DirEdge: 2})
+		press(InputState{Confirm: true}) // raw35 功能格
+		press(InputState{Confirm: true}) // 功能列切英數
+		if g.tavern.ni.nameZhu || g.tavern.ni.cursor != 35 || g.tavern.ni.functionFocus {
+			t.Fatalf("酒館第%d人命名功能切英數未保留原版 raw35", i+1)
+		}
+		send(InputState{DirHeld: -1, DirEdge: 0})
+		send(InputState{DirHeld: -1, DirEdge: 3}) // raw44 → raw0
+		press(InputState{Confirm: true})          // 輸入「0」
 		for j := 0; j < 3; j++ {
 			send(InputState{DirHeld: -1, DirEdge: 0})
 		}

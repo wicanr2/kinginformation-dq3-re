@@ -57,6 +57,26 @@ ledger = {
     },
 }
 
+# 導航與模式交易逐項審查；只對 docs/113 限定的 45 格命名盤成立。
+for ea, semantic in (
+    (0x11087, "英數／注音共用導航入口；保留原始 sub_11087 與 caller xref"),
+    (0x110C9, "上移減欄數 DGROUP2702，負值加全格數 DGROUP2704"),
+    (0x110EC, "下移加欄數 DGROUP2702，達全格數後減 DGROUP2704"),
+    (0x11110, "左移 dec cx；全格數循環，raw0 左移為 raw44，不限制同列"),
+    (0x11134, "右移 inc cx；全格數循環，raw44 右移為 raw0，不限制同列"),
+    (0x10F86, "注音盤欄數 writer：DGROUP2702=9；原始 word_274D2"),
+    (0x10F8C, "注音盤全格數 writer：DGROUP2704=45；原始 word_274D4"),
+    (0x10DE8, "功能第一列由注音切英數：移除模式 bit1，未寫 raw 游標"),
+    (0x10DED, "功能第一列加入英數 bit2；原版實際 raw35 保留"),
+    (0x10E4F, "功能交易移除焦點 bit4；原版 mode5 轉 mode2"),
+    (0x10EB0, "英數 writer 畫 record453 後呼叫共用導航；既有 raw 游標保留"),
+    (0x10F80, "注音 writer 初始化 raw 游標為0；反向切換沿用此既有行為"),
+):
+    ledger[ea - 0xEC90] = {
+        "semantic": semantic, "inference_level": "confirmed",
+        "evidence": "IDA database caller/writer/consumer + docs/113 READY；issue4-name/mode 冷啟動 IRQ1 狀態／PNG 收據；注音重設只作原始 writer 斷言",
+    }
+
 def row(ea):
     offset = ida_loader.get_fileregion_offset(ea)
     annotation = ledger.get(offset, {
@@ -83,7 +103,7 @@ for ea in (0x28B1E, 0x2735F, 0x254F7):
         if fn is not None:
             functions.add(fn.start_ea)
     anchors.append({**row(ea), "xrefs": refs})
-for ea in (0x1000A, 0x10030, 0x10624, 0x10854, 0x10D17, 0x10DC8, 0x10E55, 0x10F5B,
+for ea in (0x1000A, 0x10030, 0x10624, 0x10854, 0x10D17, 0x10DC8, 0x10E55, 0x10E8E, 0x10F5B,
            0x11087, 0x11172, 0x1123C, 0x1126F, 0x1F4E3, 0x1F590, 0x1F63C,
            0x1F779, 0x1FB36, 0x1FC57, 0x1FD30, 0x1FDB1,
            0x1FCE1, 0x1F908, 0x211B6, 0x21286, 0x213C4, 0x21B98):

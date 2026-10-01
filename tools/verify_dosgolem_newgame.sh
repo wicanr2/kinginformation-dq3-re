@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # 主機僅做 Docker／Git 控制；探測、建置、測試與輸出全部在容器內。
-# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype]
+# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation]
 # 正式比較目前會回報 Issue #4 已知差異；--prototype 僅驗證 DRAFT。
+# --navigation 重生兩條正式命名收據，只比較狀態，不宣稱畫面通過。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"
 MODE="${2:-production}"
-case "$MODE" in production|--prototype) ;; *) echo '模式須為 production 或 --prototype' >&2; exit 1;; esac
+case "$MODE" in production|--prototype|--navigation) ;; *) echo '模式須為 production、--prototype 或 --navigation' >&2; exit 1;; esac
 for path in "$ROOT" "$SOURCE" "$ROOT/assets_raw" "$ROOT/work" "$ROOT/work/dosgolem-opening" "$ROOT/work/.gocache-test" "$ROOT/work/.gopath-test"; do
   test -d "$path" || { echo "目錄不存在：$path" >&2; exit 1; }
 done
@@ -18,7 +19,9 @@ test -z "$(git -C "$SOURCE" status --porcelain --untracked-files=no)" || { echo 
 NAME="dq3-dosgolem-newgame-$$"
 cleanup() { docker rm -f "$NAME" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
-timeout 240s docker run --rm --name "$NAME" --network none \
+LIMIT=240
+test "$MODE" != --navigation || LIMIT=480
+timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
   --memory 4g --cpus 2 --pids-limit 192 -u "$(id -u):$(id -g)" \
   -v "$ROOT:/repo:ro" -v "$ROOT/work:/work" -v "$SOURCE:/dosgolem:ro" \
   -w /repo/dq3_remake_ebitan -e DQ3_NEWGAME_VERIFY_MODE="$MODE" \
@@ -31,7 +34,13 @@ timeout 240s docker run --rm --name "$NAME" --network none \
       test "$(stat -c %u "$target")" = "$(id -u)"
       test "$(stat -c %g "$target")" = "$(id -g)"
     done
-    python3 /repo/tools/dosgolem_newgame_probe.py
+    if test "$DQ3_NEWGAME_VERIFY_MODE" = --navigation; then
+      for scenario in name_navigation name_function_mode; do
+        DQ3_NEWGAME_PROBE_SCENARIO="$scenario" python3 /repo/tools/dosgolem_newgame_probe.py
+      done
+    else
+      python3 /repo/tools/dosgolem_newgame_probe.py
+    fi
     go test -p 2 -c -o /tmp/dq3-game.test ./game
     Xvfb :88 -screen 0 640x350x24 -nolisten tcp >/tmp/xvfb.log 2>&1 & xvfb_pid=$!
     trap '\''kill "$xvfb_pid" 2>/dev/null || true; wait "$xvfb_pid" 2>/dev/null || true'\'' EXIT
@@ -45,6 +54,8 @@ timeout 240s docker run --rm --name "$NAME" --network none \
     if test "$DQ3_NEWGAME_VERIFY_MODE" = --prototype; then
       export DQ3_DOSGOLEM_WINDOW_PROTOTYPE=1
       comparison=TestDosgolemNewGameWindowPrototype
+    elif test "$DQ3_NEWGAME_VERIFY_MODE" = --navigation; then
+      comparison=TestDosgolemNameInputNavigationComparison
     else
       comparison=TestDosgolemNewGameMenuAndNameComparison
     fi

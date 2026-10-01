@@ -41,18 +41,19 @@ func niMoveRaw(raw, dir int) int {
 	if raw < 0 || raw >= niCells {
 		raw = 0
 	}
-	row, col := raw/niCols, raw%niCols
+	// 原版 sub_11087 在全部格數內加減；左右跨列，不能只對欄數取餘數。
+	// 規格與冷啟動原版收據見 docs/113 的導航 READY 切片。
 	switch dir {
 	case 0: // 下
-		row = (row + 1) % niRows
+		return (raw + niCols) % niCells
 	case 1: // 上
-		row = (row + niRows - 1) % niRows
+		return (raw + niCells - niCols) % niCells
 	case 2: // 左
-		col = (col + niCols - 1) % niCols
+		return (raw + niCells - 1) % niCells
 	case 3: // 右
-		col = (col + 1) % niCols
+		return (raw + 1) % niCells
 	}
-	return row*niCols + col
+	return raw
 }
 
 const niTapFunctionBase = -100
@@ -281,7 +282,13 @@ func (ni *NameInput) activateFunction(fn int) (confirmed, canceled bool) {
 	ni.functionFocus = false
 	switch fn {
 	case 0: // 英數／注音
+		cursor := ni.cursor
 		ni.toggleMode()
+		if !ni.nameZhu {
+			// 原版 sub_10DC8 → sub_10E8E 保留格盤游標；
+			// 反向注音仍由 sub_10F5B 初始化為0。Tab 的便利操作維持原行為。
+			ni.cursor = cursor
+		}
 	case 1: // 前進
 		if ni.namePos < len(ni.nameBuf) {
 			ni.namePos++

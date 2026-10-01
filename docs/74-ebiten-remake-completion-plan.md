@@ -4,6 +4,9 @@
 > 正式 remake 全畫布 RGB 差異為 5,508／8,025 像素；IDA 9.4 原始 window／record／EGA
 > writer 試作均零差異，但尚未接入 production。下一步為有限 pack 規格審查 → 正式 renderer
 > 修正 → 正式對拍，再推進創角／出生點／母親。沒有能力擲骰或原版母親對拍完成聲明。
+> 命名導航已另閉合：左右全格盤循環／功能切英數保留 raw35；六次方向及四次功能輸入
+> 的原版狀態對拍通過。主角及酒館三人經正式功能列切英數，正常主線與存讀檔重驗至
+> THE END（69.58 秒）。導航 CONFORMED 不替代繪圖 DRAFT，也不提升原版 campaign 完成度。
 > 工作權威為 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，直接證據及工具入口
 > 見 [docs/113](113-newgame-geometry-re.md)；Issue #1～#3 的已閉合範圍保持有效。
 

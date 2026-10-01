@@ -1,13 +1,38 @@
-"""原版冷啟動到主選單／初始命名的收據；不包含能力擲骰或母親開場。
+"""原版冷啟動、主選單與命名操作收據；不包含能力擲骰或母親開場。
 
 入口與證據分級見 docs/113-newgame-geometry-re.md、GitHub Issue #4。
 只在一次性 Docker 執行；原版、上游來源唯讀，工作產物不入 Git。
 """
 from pathlib import Path
-import hashlib, json, os, shutil, subprocess, tempfile
+import hashlib, json, os, re, shutil, subprocess, tempfile
 
 repo = Path('/repo')
 out = Path('/work/dosgolem-opening')
+scenario = os.environ.get('DQ3_NEWGAME_PROBE_SCENARIO', 'initial')
+assert scenario in ('initial', 'name_navigation', 'name_function_mode'), scenario
+prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
+          'name_function_mode':'issue4-mode'}[scenario]
+keys = [(710000000, 0x1c), (731000000, 0x1c)]
+captures = [(729000000, 'menu'), (740000000, 'create'),
+            (750000000, 'final' if scenario == 'initial' else 'initial')]
+stop = 750000000
+if scenario == 'name_navigation':
+    # 正式 IRQ1 四方向邊界，再左、左、Enter、Enter；不改遊戲記憶體。
+    keys += [(760000000, 0x4b), (780000000, 0x4d), (800000000, 0x48),
+             (820000000, 0x50), (840000000, 0x4b), (860000000, 0x4b),
+             (880000000, 0x1c), (900000000, 0x1c)]
+    captures += [(771000000, 'left-wrap'), (791000000, 'right-wrap'),
+                 (811000000, 'up-wrap'), (831000000, 'down-wrap'),
+                 (851000000, 'left-again'), (871000000, 'raw43'),
+                 (891000000, 'candidate-empty'), (911000000, 'candidate-dismissed')]
+    stop = 920000000
+if scenario == 'name_function_mode':
+    # raw0 → 上 raw36 → 左 raw35 → Enter 進功能列 → Enter 選英數。
+    # raw35 才是語意 cell43；raw43 是聲調，不能混為功能格。
+    keys += [(760000000, 0x48), (780000000, 0x4b), (800000000, 0x1c), (820000000, 0x1c)]
+    captures += [(771000000, 'up-wrap'), (791000000, 'function-cell'),
+                 (811000000, 'function-focus'), (831000000, 'alnum')]
+    stop = 840000000
 assert out.is_dir() and out.stat().st_uid == os.getuid()
 exe = repo / 'assets_raw/DQ3.EXE'
 assert len(exe.read_bytes()) == 115282
@@ -16,7 +41,10 @@ for p in out.glob('issue4-*'):
     assert p.stat().st_uid == os.getuid(), str(p)
 # 重生前以內容 hash 保留上一批，避免下輪覆寫唯一的正式收據與圖像。
 # 沿用既有工作目錄，不另建交付或研究目錄。
-for previous in sorted(out.glob('issue4-keylog-*')):
+previous_files = set(out.glob(prefix + '-*'))
+if (out / (prefix + '.log')).exists():
+    previous_files.add(out / (prefix + '.log'))
+for previous in sorted(previous_files):
     assert previous.is_file(), str(previous)
     data = previous.read_bytes()
     archive = out / ('issue4-archive-' + hashlib.sha256(data).hexdigest() + previous.suffix)
@@ -57,14 +85,16 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     probetext = probe.read_text()
     marker = '\tfor m.Steps < *steps && !m.CPU.Halted && !d.Exited {\n'
     assert probetext.count(marker) == 1
-    probetext = probetext.replace(marker, '''\tm.KeyEvery = 500000\n\tvar previousKeyIRQs uint64\n'''+marker+'''\t\tif m.Steps == 710000000 || m.Steps == 731000000 {\n\t\t\tfmt.Printf("DQ3_KEY_QUEUED step=%d scan=1c\\n", m.Steps)\n\t\t\tm.QueueKey(0x1c)\n\t\t}\n\t\tif m.KeyIRQs != previousKeyIRQs {\n\t\t\tfmt.Printf("DQ3_KEY_DELIVERED step=%d count=%d port60=%02x CSIP=%04x:%04x\\n", m.Steps, m.KeyIRQs, m.In8(0x60), m.CPU.Seg[cpu.CS], m.CPU.IP)\n\t\t\tpreviousKeyIRQs = m.KeyIRQs\n\t\t}\n''')
+    queue_cases = ''.join(f'\t\tcase {step}: m.QueueKey(0x{scan:02x}); fmt.Printf("DQ3_KEY_QUEUED step=%d scan={scan:02x}\\n", m.Steps)\n' for step, scan in keys)
+    observed_steps = ', '.join(str(step) for step, _ in captures)
+    probetext = probetext.replace(marker, '''\tm.KeyEvery = 500000\n\tvar previousKeyIRQs uint64\n'''+marker+'''\t\tswitch m.Steps {\n'''+queue_cases+'''\t\t}\n\t\tif m.KeyIRQs != previousKeyIRQs {\n\t\t\tfmt.Printf("DQ3_KEY_DELIVERED step=%d count=%d port60=%02x CSIP=%04x:%04x\\n", m.Steps, m.KeyIRQs, m.In8(0x60), m.CPU.Seg[cpu.CS], m.CPU.IP)\n\t\t\tpreviousKeyIRQs = m.KeyIRQs\n\t\t}\n'''+f'''\t\tswitch m.Steps {{\n\t\tcase {observed_steps}:\n\t\t\tfmt.Printf("DQ3_NAME_OBSERVED step=%d DS=%04x raw_cursor=%d name_mode=%04x\\n", m.Steps, m.CPU.Seg[cpu.DS], m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS], 0x26fe)), m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS], 0x26fc)))\n\t\t}}\n''')
     probe.write_text(probetext)
     subprocess.run(['gofmt','-w',str(probe)],cwd=src,check=True)
-    binary = out / 'issue4-probe-keylog'
+    binary = out / (prefix.replace('issue4-', 'issue4-probe-'))
     subprocess.run(['go','build','-trimpath','-p','2','-o',str(binary),'./cmd/probe'], cwd=src, check=True)
-    args = [str(binary),'-exe',str(exe),'-root',str(exe.parent),'-steps','750000001','-trace','16','-log-calls',
-            '-dump-at',f'729000000:{out}/issue4-keylog-menu.png;740000000:{out}/issue4-keylog-create.png;750000000:{out}/issue4-keylog-final.png',
-            '-save-state',f'750000000:{out}/issue4-keylog-final.state']
+    args = [str(binary),'-exe',str(exe),'-root',str(exe.parent),'-steps',str(stop+1),'-trace','16','-log-calls',
+            '-dump-at',';'.join(f'{step}:{out}/{prefix}-{name}.png' for step, name in captures),
+            '-save-state',f'{stop}:{out}/{prefix}-final.state']
     meta = {'kind':'原版自然啟動能力探測；尚未完成新遊戲對拍',
             'original_path':str(exe),'original_size':exe.stat().st_size,
             'original_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),
@@ -77,31 +107,60 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             'original_bios_sha256':hashlib.sha256(biosraw).hexdigest(),'patched_bios_sha256':hashlib.sha256(bios.read_bytes()).hexdigest(),
             'original_vga_sha256':hashlib.sha256(vgaraw).hexdigest(),'patched_vga_sha256':hashlib.sha256(vga.read_bytes()).hexdigest(),
             'probe_source_sha256':hashlib.sha256(probe.read_bytes()).hexdigest(),
-            'probe_sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'args':args,'player_input':['IRQ1 Enter queued@710000000','IRQ1 Enter queued@731000000'], 'minimum_scan_interval':500000,'game_state_injection':False}
-    (out / 'issue4-keylog-meta.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n')
+            'probe_sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'args':args,
+            'scenario':scenario,'player_input':[{'queued_step':step,'scan':hex(scan)} for step,scan in keys], 'minimum_scan_interval':500000,'game_state_injection':False}
+    (out / f'{prefix}-meta.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n')
     print('原版自然探測開始',flush=True)
-    with (out / 'issue4-keylog.log').open('w') as log:
-        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=150)
+    with (out / f'{prefix}.log').open('w') as log:
+        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=180)
     print('原版探測結束',result.returncode,flush=True)
-    lines = (out / 'issue4-keylog.log').read_text().splitlines()
+    lines = (out / f'{prefix}.log').read_text().splitlines()
     assert result.returncode == 0
     assert '沒實作的服務（0 種）：' in lines
     assert not any('找不到的檔（' in line for line in lines)
     key_events = [line for line in lines if line.startswith('DQ3_KEY_DELIVERED ')]
-    expected_steps = [710000001, 710500001, 731000001, 731500001]
+    expected_steps = [event for step, _ in keys for event in (step+1, step+500001)]
     assert len(key_events) == len(expected_steps), key_events
     for line, step in zip(key_events, expected_steps):
-        assert f'step={step} ' in line, line
+        if scenario == 'initial':
+            assert f'step={step} ' in line, line
+    # 後續 IRQ1 要等 IF 放行；契約是完整 make/break 在下一張收據前送達，
+    # 不是每次都恰好 queued_step+1。記錄實際步數，不猜 ISR wall-clock。
+    for i,(queued,scan) in enumerate(keys):
+        make,release = key_events[2*i:2*i+2]
+        make_step = int(re.search(r'step=(\d+)', make).group(1))
+        release_step = int(re.search(r'step=(\d+)', release).group(1))
+        deadline = min(step for step,_ in captures if step > queued)
+        assert queued < make_step < release_step < deadline, (make,release)
+        assert release_step - make_step >= 500000
+        assert f'port60={scan:02x} ' in make and f'port60={scan|0x80:02x} ' in release
     meta['actual_irq1_events'] = key_events
+    meta['name_observations'] = [line for line in lines if line.startswith('DQ3_NAME_OBSERVED ')]
+    expected_cursors = {'initial':[0,0,0], 'name_navigation':[0,0,0,44,0,36,0,44,43,43,0],
+                        'name_function_mode':[0,0,0,36,35,35,35]}[scenario]
+    observations = [re.search(r'DS=([0-9a-f]+) raw_cursor=(\d+) name_mode=([0-9a-f]+)', line)
+                    for line in meta['name_observations']]
+    assert len(observations) == len(captures) and all(observations)
+    assert all(match.group(1) == '15ed' for match in observations)
+    assert [int(match.group(2)) for match in observations] == expected_cursors
+    expected_modes = [0] + [1]*(len(captures)-1)
+    if scenario == 'name_function_mode':
+        expected_modes[-2:] = [5,2]
+    assert [int(match.group(3),16) for match in observations] == expected_modes
+    meta['observation_contract'] = {'raw_cursor_dgroup_offset':'0x26fe',
+                                    'name_mode_dgroup_offset':'0x26fc',
+                                    'expected_raw_cursors':expected_cursors,
+                                    'expected_modes':expected_modes}
     meta['rng_comparison'] = False
-    meta['scope'] = '只到主選單及初始注音命名；沒有創角能力、出生點或母親開場 parity'
+    meta['scope'] = '只到主選單及命名導航／模式選擇；沒有創角能力、出生點或母親開場 parity'
     meta['artifacts'] = []
-    for name in ['issue4-keylog-menu.png','issue4-keylog-menu.bin','issue4-keylog-create.png','issue4-keylog-create.bin','issue4-keylog-final.png','issue4-keylog-final.bin','issue4-keylog.log']:
+    artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log']
+    for name in artifact_names:
         artifact = out / name
         assert artifact.is_file() and artifact.stat().st_size > 0
         assert artifact.stat().st_uid == os.getuid()
         meta['artifacts'].append({'path':name,'size':artifact.stat().st_size,'sha256':hashlib.sha256(artifact.read_bytes()).hexdigest()})
-    (out / 'issue4-keylog-receipt.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n')
+    (out / f'{prefix}-receipt.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n')
     print('\n'.join(lines[:30]))
     for i,line in enumerate(lines):
         if any(s in line for s in ('沒實作的服務','按鍵去向','硬體鍵盤','鍵盤輸入','停止原因','開過的檔')):

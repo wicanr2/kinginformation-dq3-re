@@ -1,5 +1,9 @@
 # 開場／創角幾何反組譯與對拍
 
+2026-10-01 現行狀態：命名跨列導航與功能切英數已達下方限定 CONFORMED；
+主選單／初始命名繪圖仍為 DRAFT，正式全畫布差異尚未修正。
+早期「production 尚未變更」記錄保留形成史，不能覆蓋最新導航切片或據此宣稱繪圖完成。
+
 本文件封存 `interface.json.new_game_geometry` 的來源與限制。初版的
 `checkerboard_1px`、`solid_2px` 與「尚未 V3」段落都保留為時間序列；2026-08-12 的
 現行 canonical 幾何是 `beveled_2px`、record 407 的十三個具名能力欄位與三層 raw EGA
@@ -90,6 +94,118 @@ word AND 的 latch 依據為 dosgolem `Machine.Read16/Write16` 與
 下一閘門是把已驗證原始 record／window／色盤規則寫成有限且可驗證的 pack 欄位，完成
 DRAFT → READY 審查後接入正式 renderer；再由正式對拍入口重跑。不可把測試中的 raw
 數值複製為 production Go 常數，也不可把試作 buffer 合成當成正式 UI 完成。
+
+### 2026-10-01 追加：命名導航與功能切換規格（DRAFT → READY → CONFORMED）
+
+此切片由 [Issue #4 的導航紀錄](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5928028713)
+追蹤。輸入沿用上述 `assets_raw/DQ3.EXE` 路徑、115,282 bytes 與固定 SHA-256；
+IDA Pro 9.4 位址仍為 linear，MZ file offset=`linear−0xEC90`。
+執行器為 dosgolem `2f44a68ebfc54b28fb15dd4a34510b0b04a5415d` 的有界唯讀來源副本，
+Docker image 為 `dq3-ebiten-test:20260822-r1`。所有收據在既有 `work/dosgolem-opening/`，
+原版圖像、色號、狀態及 IDA database 不加入 Git。
+
+| 原始定位 | 附加語意、等級與來源 |
+|---|---|
+| `sub_11087`，linear `0x11087..0x11172`／file `0x23F7..0x24E2` | `strong`：英數 `sub_10E8E` 與注音 `sub_10F5B` 共用導航；IDA database 匯出含 caller xref type17。方向分支見下列原始指令 |
+| linear `0x110C5..0x110DE`／file `0x2435..0x244E` | `strong`：上移先減 DGROUP `0x2702` 欄數，負值加 DGROUP `0x2704` 格數；`2b0e0227`、`030e0427`，保留原始 `word_274D2`／`word_274D4` |
+| linear `0x110E8..0x11102`／file `0x2458..0x2472` | `strong`：下移加欄數，達格數則減格數；`030e0227`、`2b0e0427` |
+| linear `0x11109..0x11125`／file `0x2479..0x2495` | `confirmed`：左移 `dec cx`（`49`），負值加全格數；冷啟動 raw0→raw44，沒有列內環繞 |
+| linear `0x1112D..0x1114A`／file `0x249D..0x24BA` | `strong`：右移 `inc cx`（`41`），達格數則減全格數；不限制同一列 |
+| `word_274CE`，linear `0x274CE`／DGROUP `0x26FE` | `confirmed`：原版 raw 游標。原版 IRQ1 左鍵、上鍵、左鍵及 PNG／唯讀 runtime 觀察；實際 DS=`0x15ED`，不用探測器固定的 `ds:` 別名 |
+| `word_274CC`，linear `0x274CC`／DGROUP `0x26FC` | `confirmed`：本切片觀察注音=1、功能焦點=5、英數=2；功能切換後 raw35 保留。上、左、Enter、Enter 冷啟動實驗與 PNG；其他旗標不外推 |
+
+typed input 為既有 `InputState.DirEdge` 的下／上／左／右與 Confirm／Enter。
+只修正格盤導航及功能列第零項模式切換：raw 範圍 `0..44`；上下加減欄數後在全格數內
+環繞；左右加減一後在全格數內環繞。從 raw0 上、左到 raw35，才對應欄優先語意
+cell43；Enter 進五列功能，Enter 切英數時保留 raw35。模式切換不能偷偷選取字元、
+改姓名、觸發完成或消耗亂數。既有 Tab／情境鍵的便利操作不是原版按鍵證據。
+
+垂直鏈為原始 `sub_10F5B` 的欄數／格數 writer → `sub_11087` → raw 游標 →
+`sub_1123C`／`sub_1126F` 畫面位置，以及 raw→語意 cell→功能入口。
+重製經既有 pack 的 45 格文字／幾何與共用 `NameInput`，同時影響正式新遊戲及酒館命名。
+沒有新增資料欄位、raw ID、座標或文字；存檔格式不變，游標是 modal 暫態。
+驗收須涵蓋原版四方向邊界、功能切換的實際觀察值、重製兩個正式入口、產生姓名後的
+存讀檔與既有正常主線。錯誤方向及越界輸入維持既有保護，不新增版本預設。
+
+探測勘誤：首次左、左、Enter、Enter 的 raw43 是語意 cell39 的聲調，實際出現
+「查無此字」並返回注音盤。該次 `function-cell`、`function-focus`、`alnum` 檔名有誤，
+原始收據與內容 hash 存檔保留；不能當作功能／英數 oracle。新探測用
+`DQ3_NEWGAME_PROBE_SCENARIO=name_navigation` 的正確候選名稱，功能入口另用
+`name_function_mode`；生成入口仍是 `tools/dosgolem_newgame_probe.py`。
+第一次正確功能探測的觀察斷言仍猜 raw0／mode1，已被原版 raw35／mode5 反證，
+歸為驗證腳本問題；不改原版狀態，修正斷言後以同一工具鏈乾淨重跑。
+
+停止線：此規格不包含候選空窗規則、能力擲骰、游標閃爍相位或逐像素繪圖修正；
+正式畫面仍有上方 5,508／8,025 差異，不能因導航通過升格為 V3。
+能力擲骰前尚未比較 `RND()`，不宣稱原版 campaign／完整 remake 完成。
+形成史：上述 DRAFT 時 production 尚未依此段變更；等待乾淨收據及審查。
+
+**READY 審查（正式實作前）：**同一容器、同一輸入乾淨重跑已通過。
+`issue4-name-receipt.json` 為 9,671 bytes、SHA-256
+`b5467fe3940cc8b0bf4a700be0d31b1988a8d168da749835732153e5aaf8f16a`，
+實際游標依序 `0→44→0→36→0→44→43`，覆蓋四方向邊界；候選探測保留於收據，
+不納入本次候選規則驗收。`issue4-mode-receipt.json` 為 6,893 bytes、SHA-256
+`4f6758d9c7012e33e3d95e3605de03258b738a8a3462950de66d3a733d129017`，
+實際 `raw0/mode1→raw36/1→raw35/1→raw35/5→raw35/2`。兩者固定原版輸入 hash、
+腳本 hash、Go 1.24.13、執行器 pin、實際 IRQ1 make/break、圖像／色號 hash；
+沒有未實作服務、狀態注入或亂數比較。已目視核對原版右環繞及英數 raw35 PNG。
+
+新增英數 writer 的 IDA database 匯出 `dq3-newgame-navigation-unknown.json` 為
+1,119,759 bytes、SHA-256 `c09ce10f1129a79fa05534d0321dfa7aa432a0b9c6740f08e1f0f36eed0f0da3`，
+仍逐筆醒目標未知；審查只提升本段已閉合導航／模式交易，其他條目不批次升格。
+`sub_10DC8` linear `0x10DE8/0x10DED/0x10E4F` 的原始 bytes
+`8326fc260e`／`830efc2602`／`8326fc260b` 只改模式及焦點；
+`sub_10E8E` linear `0x10E8E..0x10EB3` 不寫 raw 游標，直接畫 record453 並呼叫
+`sub_11087`。反向切注音由 `sub_10F5B` linear `0x10F80`（`c706fe260000`）重設 raw0；
+本批保留這個既有行為，不外推雙向都保留游標。四方向表列初始 `strong` 的項目，
+現在由原始 writer／consumer 與四方向正式 PNG／runtime 狀態閉合，限定此 45 格盤為 `confirmed`。
+右、上、下及英數焦點已無會影響此修正的未知；純導航演算法及既有功能切換可以正式實作。
+正式 renderer 仍另為 DRAFT。
+
+驗收入口：`TestDosgolemNameInputNavigationComparison` 讀實際原版觀察值及檔案 hash，
+以正常 `NewGame`／`InputState` 對照六個方向與四個功能輸入；
+`TestNameInputModeFunctionPreservesRawCursor` 另隔離模式重設回歸。
+完整 `TestOpeningProductionInputTrace` 必須讓主角及酒館登錄三人以功能列切換英數，
+不用 Toggle 捷徑，再正常輸入姓名、存讀檔並走到 THE END。這是玩家流程回歸，
+後段原版亂數／campaign parity 不因這條重製 trace 通過而成立。
+
+**CONFORMED（只限本段導航／功能切英數）：**修正前正式對拍呈紅燈：原版左移 raw44，
+重製卻為 raw8；原版上、左為 raw35，重製為 raw44；隔離模式測試另重現 raw35 被重設0。
+正式修正只改共用 `niMoveRaw` 全格盤運算與功能切英數保留既有 raw 游標，沒有新增
+pack 值、資料格式、raw ID、座標或玩家文字。修正後六次方向及四次功能狀態均吻合原版，
+不選字、不完成、不消耗 RNG。受影響 12 項頂層測試及兩個原版收據子測試通過。
+
+正式主線的主角與酒館三人改用上、左、Enter、Enter 進英數，不使用 Toggle；
+姓名、性別、各段存讀檔及正常玩家路線到 THE END 通過（69.58 秒，執行前固定
+remake `0x1357`，未重新設種）。其餘 game 為 356 項頂層及 26 項子測試通過；
+35 項選用擷取／收據測試在該標準批次跳過，其中本切片導航收據已另行明確執行。
+沒有素材缺失，全部 internal 與 desktop `main.go` 建置通過。
+已重生並目視核對正式導航／英數 PNG；格位狀態一致，外框／字色／游標繪圖仍有
+已知差異，沒有 V3 聲明。
+
+可重現控制入口追加 `--navigation`：
+`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --navigation`，
+順序冷啟動重生兩條原版收據，再執行正式狀態比較；整條命令回傳0。
+最新原版導航收據為 9,677 bytes、SHA-256
+`0f4a2c60ea17f5686a17a53dab609d281fe526ca21ccc7ed33bc1ec2928072a3`；
+功能收據為 6,899 bytes、SHA-256
+`3f45aba19f45c82f293b3be0ef781c0d9aa4a337027aa752d75076d62355d14d`。
+READY 時的兩份收據已依內容 hash 在同一目錄存檔，沒有覆寫形成史。
+生成工具現在連同原版日誌存檔，延伸情境的 750,000,000 步圖像標為 `initial`，
+避免與最後 state 的時點混淆；不把磁碟 state 當作正式畫面來源。
+
+審查後 IDA 匯出 `dq3-newgame-navigation-reviewed.json` 為 1,121,400 bytes、SHA-256
+`4288bba262aa9fd8cc5518227c79d3ba019922a16f33d7f17957a0a55b57f6d5`，
+12 筆已審查導航／模式定位由受版控索引自動附註，仍保留每筆原名、位址、bytes、
+推論等級與來源；其他項目醒目保留 unknown。
+驗收收據 `work/dosgolem-opening/issue4-navigation-verification-receipt.json` 為
+4,890 bytes、SHA-256 `11ba6c16ca3d5b9383acbfb60f947f2b86e7d7841d66266b3b6d5d9fb1a3551f`，
+保存實際 image ID、程式／測試／工具 hash、原版收據 hash、seed、輸入、日誌及範圍。
+所有本批檔案為 UID/GID1000:1000，沒有新增誤掛載 `.md` 目錄；
+3,636 個歷史 root-owned 項目沒有廣域改動，一次性容器均已清理。
+
+下一個最小閘門仍為上方繪圖 DRAFT 的有限 pack 欄位與正式 renderer，
+不是重新研究已閉合導航；原版能力擲骰、出生點與母親保持 unknown，Issue #4 保持開啟。
 
 ## 輸入與工具
 

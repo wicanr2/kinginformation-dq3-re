@@ -5,7 +5,7 @@
 
 | 本輪工作 | 狀態與驗證界線 | 權威入口 |
 |---|---|---|
-| 原版新遊戲／創角／母親開場 | 進行中：冷啟動正式按鍵已到主選單／初始命名；兩頁試作零差異，正式 renderer 修正及後續原版玩家路線待閉合 | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/113](docs/113-newgame-geometry-re.md) |
+| 原版新遊戲／創角／母親開場 | 進行中：命名跨列導航／功能切英數已修正並通過原版狀態對拍，主角／酒館與存讀檔正常主線通過（69.58 秒）；兩頁繪圖試作零差異，正式 renderer 及原版創角／母親待閉合 | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/113](docs/113-newgame-geometry-re.md) |
 | 原版六幕開場 | 已完成本輪限定色號／RGB 對拍，其他相位與音訊未知 | [Issue #1（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)、[docs/196](docs/196-dosgolem-opening-sequence-parity.md) |
 | 正式玩家路線回歸 | 已重驗至 THE END（148.88 秒），各段存讀檔、標準 game／internal 及桌面建置通過；原版動態對拍仍未知 | [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2) |
 | 同伴持冠還冠持有權檢查 | 已由 fc78bb5 推送，原版局部靜態閉環、元件、正式還冠／辭位及存讀檔通過；原版動態路線待 dosgolem | [Issue #3（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)、[docs/82](docs/82-romaly-king-production-trace.md) |

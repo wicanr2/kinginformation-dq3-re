@@ -235,6 +235,24 @@ func TestNameInputFunctionListUsesOriginalRawCell(t *testing.T) {
 	}
 }
 
+// 原版 sub_10DC8 → sub_10E8E：由功能列切英數只換模式，保留 raw35。
+// 路線先用既有不跨列的步行到功能格，獨立鎖定模式切換的回歸。
+func TestNameInputModeFunctionPreservesRawCursor(t *testing.T) {
+	var ni NameInput
+	ni.Init()
+	for i := 0; i < 3; i++ {
+		ni.input(InputState{DirEdge: 0}, -1)
+	}
+	for i := 0; i < 8; i++ {
+		ni.input(InputState{DirEdge: 3}, -1)
+	}
+	ni.input(InputState{Confirm: true, DirEdge: -1}, -1)
+	confirmed, canceled := ni.input(InputState{Confirm: true, DirEdge: -1}, -1)
+	if ni.nameZhu || ni.functionFocus || ni.cursor != 35 || confirmed || canceled || len(ni.nameBuf) != 0 {
+		t.Fatalf("功能列切英數應保留 raw35，且不選字／完成／取消：state=%+v confirmed=%v canceled=%v", ni, confirmed, canceled)
+	}
+}
+
 // TestNewGameFlowLoadOption:主選單選「載入進度」應直接 g.Load() 讀存檔(含主角名/性別)並離開
 // 標題流程,不經過命名/性別畫面——對齊 docs/36「▶遊戲開始/載入進度」兩條分岔路。
 func TestNewGameFlowLoadOption(t *testing.T) {
