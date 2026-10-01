@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/itemuse"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/spell"
@@ -33,6 +34,215 @@ func newProductionTraceGame(assets fs.FS) (*Game, error) {
 	g.music = productionTraceAudio{g.music}
 	g.battle.sfxPlayer = g.music
 	return g, nil
+}
+
+// 只比較尚未擲出創角能力的正式選單／初始注音畫面；原版收據必須
+// 由冷啟動及真實 IRQ1 輸入取得。不得以固定畫面 fixture 代替玩家入口。
+func TestDosgolemNewGameMenuAndNameComparison(t *testing.T) {
+	compareDosgolemNewGameWindows(t, false)
+}
+
+// 試作與正式對拍使用不同測試入口，避免試作通過被誤報為產品修正。
+func TestDosgolemNewGameWindowPrototype(t *testing.T) {
+	if os.Getenv("DQ3_DOSGOLEM_WINDOW_PROTOTYPE") != "1" {
+		t.Skip("Issue #4 的可丟棄 DRAFT 繪圖試作")
+	}
+	compareDosgolemNewGameWindows(t, true)
+}
+
+func compareDosgolemNewGameWindows(t *testing.T, prototype bool) {
+	t.Helper()
+	dir := os.Getenv("DQ3_DOSGOLEM_NEWGAME_DIR")
+	if dir == "" {
+		t.Skip("需提供 dosgolem 原版冷啟動新遊戲收據目錄")
+	}
+	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "newgame-comparison-save.json"))
+	g, err := newProductionTraceGame(os.DirFS(spineAssetsDir(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, stage := range []struct {
+		name     string
+		original string
+		want     int
+	}{
+		{"menu", "issue4-keylog-menu.png", int(ngMenu)},
+		{"name", "issue4-keylog-create.png", int(ngName)},
+	} {
+		if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatal(err)
+		}
+		if int(g.newGame.stage) != stage.want || !g.showTitle {
+			t.Fatalf("正式輸入未到 %s：stage=%d title=%v", stage.name, g.newGame.stage, g.showTitle)
+		}
+		g.renderFrame()
+		if prototype {
+			prototypeOriginalNewGameWindow(t, g, stage.name)
+		}
+		f, err := os.Open(filepath.Join(dir, stage.original))
+		if err != nil {
+			t.Fatal(err)
+		}
+		original, err := png.Decode(f)
+		f.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if original.Bounds() != image.Rect(0, 0, ScreenW, ScreenH) {
+			t.Fatalf("原版畫面尺寸錯：%v", original.Bounds())
+		}
+		remake := &image.RGBA{Pix: append([]byte(nil), g.rgba...), Stride: ScreenW * 4, Rect: original.Bounds()}
+		prefix := "issue4-remake-"
+		if prototype {
+			prefix = "issue4-prototype-"
+		}
+		out, err := os.Create(filepath.Join(dir, prefix+stage.name+".png"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = png.Encode(out, remake)
+		out.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		diff := 0
+		bounds := image.Rectangle{}
+		for y := 0; y < ScreenH; y++ {
+			for x := 0; x < ScreenW; x++ {
+				r, gr, b, _ := original.At(x, y).RGBA()
+				i := (y*ScreenW + x) * 4
+				if byte(r>>8) != g.rgba[i] || byte(gr>>8) != g.rgba[i+1] || byte(b>>8) != g.rgba[i+2] {
+					p := image.Rect(x, y, x+1, y+1)
+					if diff == 0 {
+						bounds = p
+					} else {
+						bounds = bounds.Union(p)
+					}
+					diff++
+				}
+			}
+		}
+		kind := "正式重製畫面"
+		if prototype {
+			kind = "DRAFT 試作畫面（不是 production）"
+		}
+		t.Logf("%s：原版／%s RGB 差異像素=%d 範圍=%v；未裁切或遮罩", stage.name, kind, diff, bounds)
+		if diff != 0 {
+			t.Errorf("%s 畫面尚未逐點一致", stage.name)
+		}
+	}
+}
+
+// 可丟棄畫面 prototype，僅限 Issue #4 的 DRAFT writer 審查。
+// 數值來自原始 raw window 0x28b1e 與 record475；不得接入 production。
+func prototypeOriginalNewGameWindow(t *testing.T, g *Game, stage string) {
+	t.Helper()
+	t.Logf("prototype 背景資產 palette：%v", g.newGameConfirmPal)
+	data, err := os.ReadFile(filepath.Join(spineAssetsDir(t), "D3TXT00.TXT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	codes := dq3data.LoadText(nil, data).Record(475)
+	indexed := append([]byte(nil), g.newGameConfirmPix...)
+	// sub_1fc57：x+1 byte、y+8 的四平面交錯 AND 清底。
+	clearWordBackdrop := func(rect image.Rectangle) {
+		for y := rect.Min.Y; y < rect.Max.Y; y++ {
+			for wordX := rect.Min.X; wordX < rect.Max.X; wordX += 16 {
+				// 1FCA5 為 word AND：兩次讀取後 latch 保留第二 byte。
+				// 先保留該 byte，兩次寫回共用其平面資料；不改執行器。
+				var latched [8]byte
+				copy(latched[:], indexed[y*ScreenW+wordX+8:y*ScreenW+wordX+16])
+				for px := 0; px < 16; px++ {
+					color := latched[px%8]
+					if (px+y-rect.Min.Y)%2 == 0 {
+						color = 0
+					}
+					indexed[y*ScreenW+wordX+px] = color
+				}
+			}
+		}
+	}
+	clearWordBackdrop(image.Rect(232, 158, 408, 222))
+	opaqueGlyph := func(x, y, index int) {
+		bitmap, ok := g.dlg.tx.Glyph(index)
+		if !ok {
+			t.Fatalf("原版字模不存在：%d", index)
+		}
+		for py := 0; py < dq3data.GlyphPx; py++ {
+			for px := 0; px < dq3data.GlyphPx; px++ {
+				color := byte(0)
+				if bitmap[py][px] != 0 {
+					color = 8
+				}
+				indexed[(y+py)*ScreenW+x+px] = color
+			}
+		}
+	}
+	if stage == "name" {
+		// sub_10D17 → 1F590 record451；10F5B record452/456。
+		// flags=1 不呼叫 1FD30；原始 record 本身保存框線字模。
+		indexed = append([]byte(nil), g.newGameConfirmPix...)
+		clearWordBackdrop(image.Rect(160, 54, 416, 198))
+		for _, record := range []struct{ id, x, y int }{
+			{451, 152, 46}, {452, 152, 94}, {456, 152, 190},
+		} {
+			if record.id == 456 {
+				clearWordBackdrop(image.Rect(160, 198, 256, 246))
+			}
+			x, y := record.x, record.y
+			for _, code := range dq3data.LoadText(nil, data).Record(record.id) {
+				if code == dq3data.TxtNL {
+					x, y = record.x, y+dq3data.GlyphPx
+					continue
+				}
+				opaqueGlyph(x, y, int(code))
+				x += dq3data.GlyphPx
+			}
+		}
+		// sub_1126F：0x802 → 0x402，只 XOR 平面 8/4；兩 byte ×15列。
+		for _, origin := range []image.Point{{248, 62}, {168, 94}} {
+			for py := origin.Y; py < origin.Y+15; py++ {
+				for px := origin.X; px < origin.X+16; px++ {
+					indexed[py*ScreenW+px] ^= 12
+				}
+			}
+		}
+		palette := append([]dq3data.Color(nil), g.newGameConfirmPal...)
+		palette[8] = frameColor(g.newGame.geometry.Frame.BorderRGB)
+		drawIndexedPCX(g.rgba, indexed, palette)
+		return
+	}
+	x, y := 224, 150
+	for _, code := range codes {
+		if code == dq3data.TxtNL {
+			x, y = 224, y+dq3data.GlyphPx
+			continue
+		}
+		opaqueGlyph(x, y, int(code))
+		x += dq3data.GlyphPx
+	}
+	// sub_1fd30/sub_1fdb1：四條 raw window 邊帶依平面遮罩 XOR。
+	for _, rect := range []image.Rectangle{
+		image.Rect(224, 150, 400, 166), image.Rect(224, 198, 400, 214),
+		image.Rect(224, 166, 240, 198), image.Rect(384, 166, 400, 198),
+	} {
+		for py := rect.Min.Y; py < rect.Max.Y; py++ {
+			for px := rect.Min.X; px < rect.Max.X; px++ {
+				// 1FDE4 每列 ror 一次；平面迴圈回到 1FDE6，略過旋轉。
+				// 第一列 0xAA → 0x55，所以 XOR 位元落在奇數欄。
+				if (px-rect.Min.X+py-rect.Min.Y)%2 == 1 {
+					indexed[py*ScreenW+px] ^= 5
+				}
+			}
+		}
+	}
+	opaqueGlyph(240, 166, 11)
+	palette := append([]dq3data.Color(nil), g.newGameConfirmPal...)
+	// dosgolem 執行期 index8=(255,223,255)，原始 FIRST.SCR palette
+	// 的保留 index8 則為黑。數值與既有 pack 的 frame 色相同，尚待
+	// 將執行期 palette writer 回填 READY 規格，不改寫背景資產 palette。
+	palette[8] = frameColor(g.newGame.geometry.Frame.BorderRGB)
+	drawIndexedPCX(g.rgba, indexed, palette)
 }
 
 // TestOpeningProductionInputTrace 從標題開始，只送入 production InputState：

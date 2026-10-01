@@ -1,5 +1,13 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-01 最新工作：[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) 已建立並獲授權持續更新。
+原版冷啟動經 IRQ1 Enter 到主選單／初始注音命名；沒有狀態注入或能力擲骰。
+收據入口 `tools/dosgolem_newgame_probe.py`，私有結果 `work/dosgolem-opening/issue4-keylog-receipt.json`。
+正式 remake 完整 RGB 差異仍是 5,508／8,025 像素；IDA writer 的兩頁試作均零差異，
+尚未接入 production。下一步完成有限 pack 規格審查及正式 renderer 修正，再續行創角／母親。
+原版 disk state 未保存 CRTC 等顯示狀態，本輪畫面只能使用冷啟動收據；
+語意索引、DRAFT 與試作入口見 [docs/113](docs/113-newgame-geometry-re.md)。
+
 2026-10-01：dosgolem 原版開場對拍依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 進行；原版六張卡片順序已確認，舊五張序列漏 `TITC.P` 且誤用 `TITP.P`。
 證據與修正規格見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)，
@@ -20,6 +28,7 @@
 | 目前狀態（2026-10-01） | 最近驗收與界線 |
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.54／content 0.1.60；未發布新包 |
+| 現行玩家可見差異 | Issue #4 主選單／初始命名正式畫布有 5,508／8,025 像素差異；僅 DRAFT 試作零差異，正式修正待規格審查；docs/113 |
 | 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
 | 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、創角以後與完整 campaign；時間只採硬體規格近似 |
 | 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |

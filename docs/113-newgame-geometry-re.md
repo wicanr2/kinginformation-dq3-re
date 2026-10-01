@@ -6,7 +6,95 @@
 backdrop，固定能力確認畫面已達 V3 靜態對拍。完整現況與殘差見
 [`docs/126`](126-newgame-confirmation-v3-static-comparison.md)，不要以本文件早期段落覆蓋。
 
+## 2026-10-01：dosgolem 正式主選單／初始命名差異（DRAFT）
+
+工作依據：[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
+原版由冷啟動、IRQ1 Enter 710,000,000／731,000,000 步取得主選單及初始注音畫面；
+沒有遊戲狀態注入，也尚未進行能力擲骰。正式重製 `InputState` 兩次 Confirm 的
+完整 640×350 RGB 比較分別有 5,508／8,025 個差異像素，範圍為介面區域，
+背景立繪逐點一致。測試入口為
+`TestDosgolemNewGameMenuAndNameComparison`（`DQ3_DOSGOLEM_NEWGAME_DIR` 指向原版收據目錄）。
+不得裁切或遮罩差異後宣稱通過。
+
+工具缺口已分開處理：dosgolem 副本的 BIOS `AX=1013h` 色盤頁面服務依
+[RBIL 契約](https://fd.lod.bz/rbil/interrup/video/101013.html) 與
+[DOSBox Staging 實作](https://github.com/dosbox-staging/dosbox-staging/blob/main/src/ints/int10_pal.cpp)
+補足，兩種頁面模式與 DAC 映射的紅綠測試及完整 DOS／machine 回歸通過。
+上游唯讀。磁碟檢查點未保存 CRTC 等顯示狀態，續跑畫面異常不能當作 remake 反證；
+本次正式畫面比較只使用冷啟動生成的收據。
+
+新增非破壞 IDA 9.4 匯出入口
+[`tools/ida_dump_newgame_entry_windows.py`](../tools/ida_dump_newgame_entry_windows.py)，
+每筆保留原始函式名、IDA linear、MZ file offset、bytes、推論等級、證據及輸入 hash。
+未審查條目一律醒目列 unknown；不能以這份匯出直接命名 production JSON 欄位。
+輸入仍為本文固定 SHA-256 的 `assets_raw/DQ3.EXE`。目前僅完成差異重現，
+外框、標題清底與游標 writer 的修正規格尚未 READY，production 尚未變更。
+
+原版收據生成來源為
+[`tools/dosgolem_newgame_probe.py`](../tools/dosgolem_newgame_probe.py)；
+有界 Docker／Git 控制入口為
+[`tools/verify_dosgolem_newgame.sh`](../tools/verify_dosgolem_newgame.sh)：
+`bash tools/verify_dosgolem_newgame.sh` 重生冷啟動收據並跑正式比較；
+`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --prototype`
+另驗 DRAFT，不能當作 production 通過。它只沿用既有工具 image 與工作目錄，不建立新目錄。
+工具副本的色盤頁面驗證為
+[`tools/dosgolem_palette_contract_test.go`](../tools/dosgolem_palette_contract_test.go)。
+來源掛 `/repo` 唯讀、dosgolem 掛 `/dosgolem` 唯讀、既有 `work/` 掛 `/work` 可寫，
+在 `dq3-ebiten-test:20260822-r1` 一次性 Docker 容器執行，預設無網路並以目前 UID/GID
+寫入；Go 快取指向既有 `work/.gocache-test`／`.gopath-test`。新階段產物皆使用
+`work/dosgolem-opening/issue4-*`，不覆寫 Issue #1 收據；工具副本保留在容器暫存區，
+不改 dosgolem 上游。
+
+### 2026-10-01 追加：writer 閉合與試作結果
+
+這次追加保留上方正式版差異及早期尺寸斷言；**試作通過不代表 production 已修正**。
+`TestDosgolemNewGameWindowPrototype` 必須明確設定
+`DQ3_DOSGOLEM_WINDOW_PROTOTYPE=1`，與正式對拍測試分開執行。
+主選單及初始注音命名均為完整 640×350 RGB **0 差異**；試作只改 test buffer，
+沒有改正式 Game 狀態、production Go renderer 或 game-pack。
+
+| 原始定位（IDA linear／MZ file／DGROUP） | 附加語意與等級 | caller／consumer 與證據 |
+|---|---|---|
+| `0x10006`／`0x1376` | `confirmed`：主選單 raw window 取址 | `lea si,ds:3D4E` → `0x1000A` 呼叫 `sub_1F4E3`；冷啟動 Enter 主選單 |
+| `0x28B1E`／`0x19E8E`／`0x3D4E` | `confirmed`：主選單 `(flags=3,x_byte=28,y=150,width_byte=22,height=64,record=475)` | `sub_1F4E3` 讀 `[si+2/4/6/8/0A]`；原始 30 bytes 保留在私有 sidecar |
+| `0x1FC57..0x1FCC5`／`0x10FC7..0x11035` | `confirmed`：陰影起點 raw x+1 byte、y+8；逐列旋轉 `0xAAAA` 的四平面 word AND | `sub_1F4E3`／`sub_1F590` → writer；原版與試作的立繪交界亦逐點吻合 |
+| `0x1FD30..0x1FE10`／`0x110A0..0x11180` | `confirmed`：上／下 16 列、左／右 2 byte 邊帶 XOR；每列只旋轉一次 | `1FDE4` 執行 `ror bh,1`，平面回跳 `1FDE6`；原先直條試作判讀已推翻，棋盤格控制流與全畫布比較提供反證 |
+| `0x211B6..0x2121B`／`0x12526..0x1258B` | `confirmed`：16×16 不透明字模；前景色讀 DS:`0x258F` | `sub_213C4` → `sub_211B6` → `sub_21B98`；record475/451/452/456 的框線及空白 glyph 不可省略 |
+| `0x1126F..0x112B2`／`0x25DF..0x2622` | `confirmed`：命名游標 XOR 平面 8/4；兩 byte、15 列 | `sub_10E55`／`sub_11087→sub_1123C`；姓名 `(248,62)` 與字盤 `(168,94)` 初始游標吻合 |
+
+上述等級只適用本文固定 EXE 與這兩個靜態玩家狀態。完整 palette 初始化 writer 仍為
+`unknown`；冷啟動收據可直接觀察 palette index8=`(255,223,255)`、框線 XOR index5，
+`FIRST.SCR` 保留的 index8 則為黑，不能直接沿用背景 palette 當前景色。
+能力擲骰、游標閃爍相位、其他命名操作、性別及母親流程尚未對拍。
+
+word AND 的 latch 依據為 dosgolem `Machine.Read16/Write16` 與
+[DOSBox-X 的 VGA_UnchainedVGA_Handler](https://dosbox-x.com/doxygen/html/vga__memory_8cpp_source.html)：
+兩次 byte 讀取完成後 latch 保留第二 byte，兩次寫回共用該 latch。逐像素 AND 的早期
+試作剩 22 個立繪交界差異；保留 word 讀寫語意後為零。這是可重播執行器／成熟模擬器
+契約，不擴大聲稱所有實機顯示卡的匯流排行為逐週期一致。
+
+非破壞匯出工具已追加上述逐筆語意索引；其餘指令醒目保持 `unknown`。直接 xref 未涵蓋
+這些 DS 相對取址，保留 `entry_range` 與原始運算元，不能用空 xref 判斷沒有 caller。
+私有 `dq3-newgame-cursor.json` 審查前快照為 877,844 bytes、SHA-256
+`4826be95b82b6e4a2132cdd546d5426edd2935a2479a68a6904857abb801ba94`，工具 IDA Pro 9.4；
+語意索引的後續重生快照另記 hash，不覆寫這份形成史。
+審查後非破壞重生的 `dq3-newgame-reviewed.json` 為 1,080,283 bytes、SHA-256
+`79f6b2c82be70d6f0d4dc86372ec3568171f269c55d55ca9899eea297ca8a133`；
+每筆補有輸入路徑、大小、hash、原始指令大小，已確認與未知條目分級顯示。
+追加 raw window 與 DS 相對運算元索引後的 `dq3-newgame-reviewed-v2.json` 為
+1,080,574 bytes、SHA-256 `519186d2f3320e1de0e1c9db5bf3b9e4556e4f246cf133464bbea99aa52311ca`；
+匯出自動附上已確認語意及 palette 初始化 writer 未知的限制。
+收據重生工具會先把上一批 `issue4-keylog-*` 以內容 hash 存為同目錄的
+`issue4-archive-<SHA256>.<副檔名>`，供回查形成史；不移動原始輸入、不加入 Git。
+
+下一閘門是把已驗證原始 record／window／色盤規則寫成有限且可驗證的 pack 欄位，完成
+DRAFT → READY 審查後接入正式 renderer；再由正式對拍入口重跑。不可把測試中的 raw
+數值複製為 production Go 常數，也不可把試作 buffer 合成當成正式 UI 完成。
+
 ## 輸入與工具
+
+以下保存 2026-08 的形成史；當時 image 的 IDAPython 限制不能覆蓋上方
+2026-10-01 由 `ida-pro-9.4-idapython:locked-v1` 重生的 sidecar 與目前工具入口。
 
 - 輸入：`assets_raw/DQ3.EXE`，115282 bytes，SHA-256
   `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。

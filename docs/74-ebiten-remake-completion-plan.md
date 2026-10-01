@@ -1,5 +1,12 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> **2026-10-01 最新閘門（Issue #4）：**原版冷啟動、IRQ1 正式 Enter 已到主選單／初始注音命名。
+> 正式 remake 全畫布 RGB 差異為 5,508／8,025 像素；IDA 9.4 原始 window／record／EGA
+> writer 試作均零差異，但尚未接入 production。下一步為有限 pack 規格審查 → 正式 renderer
+> 修正 → 正式對拍，再推進創角／出生點／母親。沒有能力擲骰或原版母親對拍完成聲明。
+> 工作權威為 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，直接證據及工具入口
+> 見 [docs/113](113-newgame-geometry-re.md)；Issue #1～#3 的已閉合範圍保持有效。
+
 > **2026-10-01 現況：**依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 > 建立 dosgolem 自然開機收據並修正六幕序列／動態標誌。前五幕色號通過，第六幕全部
 > 129 次完整翻頁的色號與 RGB 通過；其他相位、音訊、跳過與創角以後尚未對拍。

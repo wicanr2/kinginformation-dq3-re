@@ -170,3 +170,37 @@ record／cell layout 已閉合，但整體視覺與聲音仍不能標 V3。**
 [`docs/188`](docs/188-opening-escort-to-castle-spec.md)，本輪實際抽樣與畫面差異見
 [`docs/189`](docs/189-opening-sampled-parity-20260824.md)，rec80→rec79 與逐 glyph timer 證據見
 [`docs/192`](docs/192-opening-dialogue-v3-closure.md)。
+
+## 2026-10-01 — Issue #4 原版新遊戲入口與 DRAFT 視窗驗證
+
+使用者明確授權建立及持續更新 Issue 後，建立
+[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)；前兩個探測／差異項目已完成，
+創角到母親、正式修正及完整驗收保持待辦。Issue #1～#3 未重開。
+
+原版冷啟動到 750,000,001 步，以第 710,000,000／731,000,000 步排入 Enter，
+四次 IRQ1 make/break 均記錄實際送達。獨立 dosgolem 副本依 BIOS 公開契約補 AX=1013h，
+色盤頁面測試修改前失敗、修改後及完整 DOS／machine 回歸通過；上游與 EXE 唯讀。
+磁碟 state 缺 CRTC 等顯示狀態，續跑亂圖分類為執行器限制；正式畫面只由冷啟動重生。
+原版、工具來源、Go 版本、binary、實際輸入與產物 hash 保存於私有
+`work/dosgolem-opening/issue4-keylog-receipt.json`，未進 Git。
+
+IDA 9.4 非破壞匯出與逐筆語意索引閉合 raw window、record475/451/452/456、字模、
+陰影、框線及初始命名游標。`docs/113` 保存輸入 hash、位址基準、推論等級與勘誤：
+旋轉只每列執行一次，平面回跳略過旋轉；word AND 保留第二 byte latch。
+兩頁試作全畫布 RGB 差異均為零，正式 renderer 仍有 5,508／8,025 像素差異。
+新增獨立試作／正式對拍測試與有界 Docker 控制入口；沒有變更 production 或 game-pack。
+
+驗證：Python 編譯、Go 編譯、腳本語法、工具紅綠測試、試作與正式失敗分離檢查通過；
+正式 InputState 主線再次到 THE END（144.84 秒），共 14 項受影響測試通過。
+起初的 100 秒外層逾時小於既知整段主線耗時，分類為驗證腳本範圍／逾時設定問題；
+同一 image 及測試命令改為有界 300 秒後乾淨重跑通過，未寫成產品缺陷。
+另修正紅測試診斷比對漏寫 `0x` 的腳本斷言，再重生收據；不是 BIOS 修補失敗。
+
+下一閘門為有限 pack 契約 DRAFT→READY 審查、正式 renderer 修正及創角後對拍；
+目前沒有能力擲骰、出生點、母親、完整 campaign 音畫或新發行包的原版完成聲明。
+Docker 使用一次性 `--rm`、UID/GID1000、唯讀輸入及有界資源；本批產物持有者已抽查。
+工作歷程與提交僅含上述工具、測試和現況文件，保留使用者 scratch／Android libs。
+有界控制入口的完整 `--prototype` 執行已通過；原版重生與正式 RED 亦分開重驗。
+每次重生前以內容 hash 保留上一批正式收據／畫面，入口及權利分類仍由 docs/113 指定。
+本批相關執行中／停止 Docker 容器均清空，沒有建立新 image；全專案歷史 root-owned
+候選仍為 3636 項，沒有 `.md` 誤掛載目錄或本批新 root-owned 產物，未廣域修復。

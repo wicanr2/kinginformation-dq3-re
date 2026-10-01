@@ -1,5 +1,12 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-01 最新對拍工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)：
+> dosgolem 冷啟動以真實 IRQ1 Enter 到主選單／初始注音命名，沒有狀態注入或能力擲骰。
+> 原版收據已重生；工具 BIOS 色盤頁面補足有獨立紅綠測試。正式 remake 的完整畫布
+> 差異仍為 5,508／8,025 像素；IDA 9.4 writer 驅動的可丟棄試作兩頁均零差異。
+> 試作尚未接入 production；下一閘門為有限 pack 規格審查及正式 renderer 修正。
+> 原版出生點／母親開場仍未閉合，證據、工具與測試入口見 [docs/113](docs/113-newgame-geometry-re.md)。
+
 > 2026-10-01 對拍：依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 > 修正開機漏 1990 卡、錯用 TITP 與缺 DFP 動態標誌；第六幕 129 個位置已逐色號／RGB 通過，
 > 原版與 remake 正常無輸入 bootstrap 的範圍／時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
