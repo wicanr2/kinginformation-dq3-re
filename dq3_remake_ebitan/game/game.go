@@ -357,6 +357,8 @@ type Game struct {
 	newGameConfirmPal         []dq3data.Color
 	openingPix                [][]uint8
 	openingPal                [][]dq3data.Color
+	openingSprites            [][]dq3data.PlanarSprite
+	openingComposite          []uint8
 	openingSeq                *gamepack.OpeningSequence
 	openingEscort             *gamepack.OpeningEscort
 	openingEscortIndex        int
@@ -2831,7 +2833,7 @@ func (g *Game) renderFrame() {
 	}
 	if g.showTitle && g.titlePix != nil { // 標題畫面(PCX indexed → palette)
 		if g.openingActive && g.openingReady() {
-			drawIndexedPCX(g.rgba, g.openingPix[g.openingIndex], g.openingPal[g.openingIndex])
+			drawIndexedPCX(g.rgba, g.openingPixels(), g.openingPalette())
 			g.frame.WritePixels(g.rgba)
 			return
 		}
@@ -3483,6 +3485,8 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		g.openingSeq = seq
 		g.openingPix = make([][]uint8, len(seq.Frames))
 		g.openingPal = make([][]dq3data.Color, len(seq.Frames))
+		g.openingSprites = make([][]dq3data.PlanarSprite, len(seq.Frames))
+		g.openingComposite = make([]uint8, ScreenW*ScreenH)
 		for i, frame := range seq.Frames {
 			g.openingPix[i], g.openingPal[i], assetErr = loadPCXAsset(frame.AssetKey)
 			if assetErr != nil {
@@ -3490,6 +3494,24 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 			}
 			if len(g.openingPix[i]) != ScreenW*ScreenH || len(g.openingPal[i]) == 0 {
 				return nil, fmt.Errorf("game pack opening frame %q is unavailable", frame.AssetKey)
+			}
+			if overlay := frame.Overlay; overlay != nil {
+				layouts := make([]string, len(overlay.Sprites))
+				for j, sprite := range overlay.Sprites {
+					layouts[j] = sprite.PlaneLayout
+				}
+				g.openingSprites[i], assetErr = dq3data.DecodePlanarDirectory(readPackAsset(overlay.AssetKey), layouts)
+				if ld.err != nil {
+					return nil, ld.err
+				}
+				if assetErr != nil {
+					return nil, fmt.Errorf("opening overlay %q: %w", overlay.AssetKey, assetErr)
+				}
+				for j, sprite := range g.openingSprites[i] {
+					if overlay.Sprites[j].X+sprite.Width > ScreenW {
+						return nil, fmt.Errorf("opening overlay %q sprite %d exceeds screen", overlay.AssetKey, j)
+					}
+				}
 			}
 		}
 	}

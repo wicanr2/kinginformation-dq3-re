@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.53",
+  "schema_version": "0.1.54",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -643,84 +643,273 @@
     "frames": [
       {
         "asset_key": "opening_year",
-        "hold_frames": 120,
+        "hold_frames": 462,
         "evidence": {
-          "level": "D2",
-          "source_kind": "video",
-          "source": "DQ3.EXE + docs/36_shots/01_opening_cutscene.png + TITA.P",
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c）",
           "address_space": "none",
           "address": "",
-          "consumer": "boot presentation first year card (1989)",
-          "doc": "docs/67-attract-assets-re.md",
-          "note": "TITA.P 解碼與原版 1989 畫面吻合；精確淡入／停留幀尚未由逐幀影片閉合。"
+          "consumer": "原版無輸入自然開機讀取 TITA.P 並繪出平面畫面",
+          "doc": "docs/196-dosgolem-opening-sequence-parity.md",
+          "note": "素材／順序 confirmed；停留與淡入淡出計數見 IDA 原始定位；60 TPS 取樣屬 hardware-spec approximation，非實機精確時間。"
+        },
+        "timing": {
+          "rate_numerator": 315000000,
+          "rate_denominator": 17301504,
+          "fade_in_step_ticks": 5,
+          "fade_out_step_ticks": 5,
+          "hold_ticks": 40,
+          "gap_ticks": 10,
+          "fade_deductions": [
+            64,
+            56,
+            48,
+            40,
+            32,
+            24,
+            16,
+            8,
+            0
+          ]
         }
       },
       {
         "asset_key": "opening_dragon",
-        "hold_frames": 120,
+        "hold_frames": 462,
         "evidence": {
-          "level": "D2",
-          "source_kind": "video",
-          "source": "DQ3.EXE + docs/36_shots/01_opening_cutscene.png + TITB.P",
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c）",
           "address_space": "none",
           "address": "",
-          "consumer": "boot presentation dragon-versus-hero card",
-          "doc": "docs/67-attract-assets-re.md",
-          "note": "TITB.P 已定位為單色巨龍／勇者；原版完整相鄰影格與停留幀仍待影片逐幀對拍。"
+          "consumer": "原版無輸入自然開機讀取 TITB.P 並繪出平面畫面",
+          "doc": "docs/196-dosgolem-opening-sequence-parity.md",
+          "note": "素材／順序 confirmed；停留與淡入淡出計數見 IDA 原始定位；60 TPS 取樣屬 hardware-spec approximation，非實機精確時間。"
+        },
+        "timing": {
+          "rate_numerator": 315000000,
+          "rate_denominator": 17301504,
+          "fade_in_step_ticks": 5,
+          "fade_out_step_ticks": 5,
+          "hold_ticks": 40,
+          "gap_ticks": 10,
+          "fade_deductions": [
+            64,
+            56,
+            48,
+            40,
+            32,
+            24,
+            16,
+            8,
+            0
+          ]
+        }
+      },
+      {
+        "asset_key": "opening_year_1990",
+        "hold_frames": 462,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c）",
+          "address_space": "none",
+          "address": "",
+          "consumer": "原版無輸入自然開機讀取 TITC.P 並繪出平面畫面",
+          "doc": "docs/196-dosgolem-opening-sequence-parity.md",
+          "note": "素材／順序 confirmed；停留與淡入淡出計數見 IDA 原始定位；60 TPS 取樣屬 hardware-spec approximation，非實機精確時間。"
+        },
+        "timing": {
+          "rate_numerator": 315000000,
+          "rate_denominator": 17301504,
+          "fade_in_step_ticks": 5,
+          "fade_out_step_ticks": 5,
+          "hold_ticks": 40,
+          "gap_ticks": 10,
+          "fade_deductions": [
+            64,
+            56,
+            48,
+            40,
+            32,
+            24,
+            16,
+            8,
+            0
+          ]
         }
       },
       {
         "asset_key": "opening_party",
-        "hold_frames": 120,
+        "hold_frames": 462,
         "evidence": {
-          "level": "D2",
-          "source_kind": "video",
-          "source": "DQ3.EXE + docs/14-dosbox-validation.md + TITD.P",
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c）",
           "address_space": "none",
           "address": "",
-          "consumer": "boot presentation three-character card",
-          "doc": "docs/67-attract-assets-re.md",
-          "note": "TITD.P 為開場稍後的三人灰階群像；錄影中 Enter 連按曾略過此張，時序仍標 strong。"
+          "consumer": "原版無輸入自然開機讀取 TITD.P 並繪出平面畫面",
+          "doc": "docs/196-dosgolem-opening-sequence-parity.md",
+          "note": "素材／順序 confirmed；停留與淡入淡出計數見 IDA 原始定位；60 TPS 取樣屬 hardware-spec approximation，非實機精確時間。"
+        },
+        "timing": {
+          "rate_numerator": 315000000,
+          "rate_denominator": 17301504,
+          "fade_in_step_ticks": 5,
+          "fade_out_step_ticks": 5,
+          "hold_ticks": 40,
+          "gap_ticks": 10,
+          "fade_deductions": [
+            64,
+            56,
+            48,
+            40,
+            32,
+            24,
+            16,
+            8,
+            0
+          ]
         }
       },
       {
         "asset_key": "opening_year_1993",
-        "hold_frames": 120,
+        "hold_frames": 627,
         "evidence": {
-          "level": "D2",
-          "source_kind": "video",
-          "source": "DQ3.EXE + docs/title/scene_1993.png + TITE.P",
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c）",
           "address_space": "none",
           "address": "",
-          "consumer": "boot presentation year card (1993)",
-          "doc": "docs/14-dosbox-validation.md",
-          "note": "TITE.P／1993 card 已解碼；未把 120 frames 當成原版已證實 timing。"
+          "consumer": "原版無輸入自然開機讀取 TITE.P 並繪出平面畫面",
+          "doc": "docs/196-dosgolem-opening-sequence-parity.md",
+          "note": "素材／順序 confirmed；停留與淡入淡出計數見 IDA 原始定位；60 TPS 取樣屬 hardware-spec approximation，非實機精確時間。"
+        },
+        "timing": {
+          "rate_numerator": 315000000,
+          "rate_denominator": 17301504,
+          "fade_in_step_ticks": 5,
+          "fade_out_step_ticks": 5,
+          "hold_ticks": 100,
+          "gap_ticks": 0,
+          "fade_deductions": [
+            64,
+            56,
+            48,
+            40,
+            32,
+            24,
+            16,
+            8,
+            0
+          ]
         }
       },
       {
-        "asset_key": "opening_crest",
-        "hold_frames": 120,
+        "asset_key": "opening_logo",
+        "hold_frames": 208,
         "evidence": {
-          "level": "D2",
-          "source_kind": "video",
-          "source": "DQ3.EXE + TITP.P",
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c）",
           "address_space": "none",
           "address": "",
-          "consumer": "boot presentation crest transition before title splash",
-          "doc": "docs/67-attract-assets-re.md",
-          "note": "TITP.P 已定位為太陽翼紋章，但本輪尚無同狀態影片影格閉合；保留為可跳過候選。"
+          "consumer": "原版無輸入自然開機讀取 TITF.P 並繪出平面畫面",
+          "doc": "docs/196-dosgolem-opening-sequence-parity.md",
+          "note": "素材／順序 confirmed；停留與淡入淡出計數見 IDA 原始定位；60 TPS 取樣屬 hardware-spec approximation，非實機精確時間。"
+        },
+        "overlay": {
+          "asset_key": "opening_logo_sprites",
+          "sprites": [
+            {
+              "plane_layout": "byte_interleaved",
+              "x": 16,
+              "y": 5,
+              "transparent_zero": true
+            },
+            {
+              "plane_layout": "byte_interleaved",
+              "x": 72,
+              "y": 13,
+              "transparent_zero": true
+            },
+            {
+              "plane_layout": "byte_interleaved",
+              "x": 72,
+              "y": 82,
+              "transparent_zero": true
+            },
+            {
+              "plane_layout": "byte_interleaved",
+              "x": 536,
+              "y": 0,
+              "transparent_zero": true
+            },
+            {
+              "plane_layout": "byte_interleaved",
+              "x": 344,
+              "y": 8,
+              "transparent_zero": true
+            },
+            {
+              "plane_layout": "byte_interleaved",
+              "x": 392,
+              "y": 82,
+              "transparent_zero": true
+            },
+            {
+              "plane_layout": "row_planar",
+              "x": 72,
+              "y": 33,
+              "transparent_zero": false
+            }
+          ],
+          "start_y": 348,
+          "end_y": 92,
+          "step_y": -2,
+          "step_ticks": 2,
+          "evidence": {
+            "level": "D3",
+            "source_kind": "exe",
+            "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c）；DFP.PIC SHA-256 c3ad3b4ee95434f1601e519b1dfb16094184aa1393f2972136fac7e735299b00",
+            "address_space": "file",
+            "address": "0x13512;0x135b6;0x13634;0x1bd1e",
+            "consumer": "sub_220F0→sub_221A2→sub_222C4/sub_22246；dosgolem 自然開機 129 個完整翻頁色號逐點閉合",
+            "doc": "docs/196-dosgolem-opening-sequence-parity.md",
+            "note": "confirmed：圖塊、平面排列、透明政策、座標與移動位置；段尾未讀取 byte 保留 unknown。"
+          }
+        },
+        "timing": {
+          "rate_numerator": 315000000,
+          "rate_denominator": 3280992,
+          "fade_in_step_ticks": 5,
+          "fade_out_step_ticks": 1,
+          "hold_ticks": 20,
+          "gap_ticks": 0,
+          "fade_deductions": [
+            64,
+            56,
+            48,
+            40,
+            32,
+            24,
+            16,
+            8,
+            0
+          ]
         }
       }
     ],
     "evidence": {
-      "level": "D2",
-      "source_kind": "video",
-      "source": "DQ3.EXE + docs/14-dosbox-validation.md + docs/36-original-tavern-playthrough.md",
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + dosgolem 2f44a68 + 明示 DOS 檔名解析工具修正 + work/dosgolem-opening/receipt.json",
       "address_space": "none",
       "address": "",
-      "consumer": "normal desktop/mobile boot before title splash",
-      "doc": "docs/120-opening-cutscene-re.md",
-      "note": "素材 identity 已閉合；各張排序／停留以 strong／hypothesis 保存，不能宣稱完整逐幀 V3。"
+      "consumer": "原版自然開機依序讀取 TITA.P、TITB.P、TITC.P、TITD.P、TITE.P、TITF.P，後續進標題",
+      "doc": "docs/196-dosgolem-opening-sequence-parity.md",
+      "note": "confirmed 僅限六張素材與順序；無鍵盤輸入、EXE 修改或狀態注入。精確 skip、RGB／時序與音訊仍未知。"
     }
   },
   "opening_escort": {

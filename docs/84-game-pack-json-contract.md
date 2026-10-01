@@ -1440,6 +1440,30 @@ loader 必須拒絕不存在欄位、非 tunable 欄位及 base hash 不符。�
 
 ## 8. 驗證與測試契約
 
+### 開機有限疊圖與時間（schema 0.1.54）
+
+`interface.opening.frames[]` 保留 `asset_key`、`hold_frames` 與 `evidence`，另可宣告：
+
+| 欄位 | 契約 |
+|---|---|
+| `timing.rate_numerator/rate_denominator` | 每秒 ticks 的正有理數；引擎以 60 TPS 累積取樣，不逐段取整 |
+| `timing.fade_in_step_ticks/fade_out_step_ticks` | 每個扣色階維持的 ticks，必須正值 |
+| `timing.fade_deductions` | 六位元 DAC 的嚴格遞減扣色階，最後必須為 0；淡出反序 |
+| `timing.hold_ticks/gap_ticks` | 全亮停留與全黑間隔；總時間含淡入、疊圖動畫、停留、淡出及間隔 |
+| `overlay.asset_key` | manifest 的原始平面圖塊 directory 引用；具 size／SHA-256 |
+| `overlay.sprites[]` | 順序對應 u32 directory entry；`plane_layout` 僅允許 `byte_interleaved`／`row_planar`，座標為 `x/y` 像素；`transparent_zero` 明確指定是否保留背景 |
+| `overlay.start_y/end_y/step_y/step_ticks` | 有限線性移動；起迄皆顯示、步長不得為零，方向與整除必須成立 |
+| `overlay.evidence` | D3 consumer 與原始定位；不能由 filename 或副檔名推測格式 |
+
+有 timing 時，`hold_frames` 必須等於總 ticks 依 rate 換算至 60 TPS 後向上取整，
+不一致即拒絕。疊圖必須同時有 timing；loader 檢查實檔 directory 範圍／尺寸／畫面寬度。
+原始 decoder 保留 consumer 未讀取的段尾 bytes 為未知，不推測終止碼。
+此契約沒有任意運算式、函式名稱或可執行 JSON。
+
+DQ3 content `0.1.60` 的原始證據與近似界線見
+[docs/196](196-dosgolem-opening-sequence-parity.md)。舊 pack／存檔 identity 按既有嚴格
+版本與 canonical hash 契約拒絕不相容，沒有宣稱跨 schema 存檔自動遷移。
+
 每一批 hardcode 遷移須同時具備：
 
 1. schema unit test：合法 fixture 可載入，未知欄位與非法值會失敗；

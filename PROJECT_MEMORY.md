@@ -1,5 +1,11 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-01 對拍：依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
+> 修正開機漏 1990 卡、錯用 TITP 與缺 DFP 動態標誌；第六幕 129 個位置已逐色號／RGB 通過，
+> 原版與 remake 正常無輸入 bootstrap 的範圍／時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
+> 全部 internal 通過，但完整 game 的兩個路線失敗在修改前 `0c6f780` 也重現；
+> 歷史 E3 不能替代現行回歸，完整 dosgolem campaign 尚未完成。未建立新發行包。
+
 > 發佈記憶：現行 v0.1.36 已由 checkpoint `d6184f4` 正式發布；v0.1.35 是歷史。
 > GitHub 只含公開 patch，本機 full 未上傳；hash 與驗證界線以 `docs/194` 為準。
 

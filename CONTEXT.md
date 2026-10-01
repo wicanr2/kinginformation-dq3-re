@@ -1,5 +1,22 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-01：dosgolem 原版開場對拍依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
+進行；原版六張卡片順序已確認，舊五張序列漏 `TITC.P` 且誤用 `TITP.P`。
+證據與修正規格見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)，
+工作歷程見 [WORKLOG.md](WORKLOG.md)。dosgolem 必須使用明示的檔名解析工具修正；
+第六幕七圖塊的 129 個翻頁畫面已逐色號／RGB 通過。現行候選 schema `0.1.54`／content
+`0.1.60`；完整 `internal` 通過，但完整 `game` 的兩項既有路線失敗也在 `0c6f780` 重現，
+詳見 docs/196。完整遊戲對拍與現行 campaign 重驗仍未完成。
+下一個工作依據為 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)：
+先核對兩項既有正式路線回歸失敗，不因測試斷言就猜改原版規則。
+
+| 目前狀態（2026-10-01） | 最近驗收與界線 |
+|---|---|
+| 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.54／content 0.1.60；未發布新包 |
+| 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
+| 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、創角以後與完整 campaign；時間只採硬體規格近似 |
+| 現行回歸待查 | internal 與桌面建置通過；完整 game 兩項失敗在舊 checkpoint 也重現；Issue #2 |
+
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，
 本機 full 未上傳。macOS 僅靜態驗證，詳見 `docs/131`。

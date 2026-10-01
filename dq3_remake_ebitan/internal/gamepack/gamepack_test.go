@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -2527,16 +2528,186 @@ func TestDQ3OpeningCutsceneContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	seq, ok := p.OpeningSequence()
-	if !ok || seq.ID != "dq3:opening.boot_cutscene" || !seq.SkipOnInput || len(seq.Frames) != 5 {
-		t.Fatalf("opening sequence=%+v, want five-frame skip-on-input contract", seq)
+	if !ok || seq.ID != "dq3:opening.boot_cutscene" || !seq.SkipOnInput || len(seq.Frames) != 6 {
+		t.Fatalf("opening sequence=%+v, want six-frame skip-on-input contract", seq)
 	}
-	want := []string{"opening_year", "opening_dragon", "opening_party", "opening_year_1993", "opening_crest"}
+	// 原版自然開機讀檔序列：docs/196；不再接受 docs/120 的五張候選。
+	want := []string{"opening_year", "opening_dragon", "opening_year_1990", "opening_party", "opening_year_1993", "opening_logo"}
+	wantHold := []int{462, 462, 462, 462, 627, 208}
 	for i, frame := range seq.Frames {
-		if frame.AssetKey != want[i] || frame.HoldFrames != 120 {
-			t.Fatalf("opening frame[%d]=%+v, want key=%q hold=120", i, frame, want[i])
+		if frame.AssetKey != want[i] || frame.HoldFrames != wantHold[i] || frame.Timing == nil {
+			t.Fatalf("opening frame[%d]=%+v, want key=%q hold=%d", i, frame, want[i], wantHold[i])
 		}
 		if ref, ok := p.Asset(frame.AssetKey); !ok || ref.Size <= 0 || ref.SHA256 == "" {
 			t.Fatalf("opening asset %q missing manifest integrity", frame.AssetKey)
+		}
+		if frame.Evidence.Level != "D3" || frame.Evidence.Doc != "docs/196-dosgolem-opening-sequence-parity.md" {
+			t.Fatalf("opening frame %q lacks natural-boot evidence", frame.AssetKey)
+		}
+	}
+}
+
+func TestDQ3OpeningOverlayMatchesOriginalEXE(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fmt.Sprintf("%x", sha256.Sum256(exe)) != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" {
+		t.Fatal("EXE 版本不符")
+	}
+	f := p.Interface.Opening.Frames[5]
+	o := f.Overlay
+	if o == nil || len(o.Sprites) != 7 {
+		t.Fatal("七圖塊契約缺失")
+	}
+	for i := 0; i < 6; i++ {
+		off := 0x16140 + 0x5bde + i*4
+		if o.Sprites[i].Y != int(binary.LittleEndian.Uint16(exe[off:])) || o.Sprites[i].X != 8*int(binary.LittleEndian.Uint16(exe[off+2:])) ||
+			!o.Sprites[i].TransparentZero || o.Sprites[i].PlaneLayout != "byte_interleaved" {
+			t.Fatalf("原版圖塊 %d 座標／格式不符", i)
+		}
+	}
+	// 各 immediate 保留原始 file 定位與 consumer；不把 tool rename 當證據。
+	checks := []struct {
+		offset, value int
+		width         int
+	}{
+		{0x13525, o.StartY, 2},           // mov ds:5BDC,015C
+		{0x1355a, o.Sprites[6].Y, 2},     // add ax,21h
+		{0x13563, o.Sprites[6].X / 8, 2}, // mov ds:5BD6,9
+		{0x1356c, o.StepTicks, 2},        // mov cx,2
+		{0x13591, -o.StepY, 1},           // sub ds:5BDC,2
+		{0x13596, o.EndY + o.StepY, 1},   // cmp ds:5BDC,5Ah
+	}
+	for _, c := range checks {
+		got := int(exe[c.offset])
+		if c.width == 2 {
+			got = int(binary.LittleEndian.Uint16(exe[c.offset:]))
+		}
+		if got != c.value {
+			t.Fatalf("file %#x 的原始 immediate=%d，pack=%d", c.offset, got, c.value)
+		}
+	}
+	if o.Sprites[6].TransparentZero || o.Sprites[6].PlaneLayout != "row_planar" {
+		t.Fatal("第七圖塊不應透明")
+	}
+	ref, ok := p.Asset(o.AssetKey)
+	if !ok {
+		t.Fatal("疊圖素材引用未知")
+	}
+	raw, err := os.ReadFile(filepath.Join(dir, ref.Path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if int64(len(raw)) != ref.Size || fmt.Sprintf("%x", sha256.Sum256(raw)) != ref.SHA256 {
+		t.Fatal("疊圖素材完整性不符")
+	}
+	layouts := make([]string, len(o.Sprites))
+	for i, s := range o.Sprites {
+		layouts[i] = s.PlaneLayout
+	}
+	if _, err := dq3data.DecodePlanarDirectory(raw, layouts); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestOpeningValidationRejectsBrokenOverlay(t *testing.T) {
+	cases := []struct {
+		name string
+		edit func(*OpeningFrame)
+	}{
+		{"zero movement", func(f *OpeningFrame) { f.Overlay.StepY = 0 }},
+		{"wrong direction", func(f *OpeningFrame) { f.Overlay.StepY = 2 }},
+		{"unknown asset", func(f *OpeningFrame) { f.Overlay.AssetKey = "unknown" }},
+		{"unknown layout", func(f *OpeningFrame) { f.Overlay.Sprites[0].PlaneLayout = "guessed" }},
+		{"zero clock", func(f *OpeningFrame) { f.Timing.RateDenominator = 0 }},
+		{"duration drift", func(f *OpeningFrame) { f.HoldFrames++ }},
+		{"missing consumer", func(f *OpeningFrame) { f.Overlay.Evidence.Consumer = "" }},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			p, err := BuiltinDQ3()
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.edit(&p.Interface.Opening.Frames[5])
+			if err := p.validateInterface(); err == nil {
+				t.Fatal("破損契約未拒絕")
+			}
+		})
+	}
+}
+
+func TestOpeningRequiredFieldsRejectOmission(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := p.Interface.Opening.Frames[5]
+	cases := []struct {
+		name, key   string
+		value       any
+		destination any
+	}{
+		{"opacity", "transparent_zero", f.Overlay.Sprites[6], &OpeningSprite{}},
+		{"coordinate", "x", f.Overlay.Sprites[6], &OpeningSprite{}},
+		{"motion start", "start_y", f.Overlay, &OpeningOverlay{}},
+		{"zero gap", "gap_ticks", f.Timing, &OpeningTiming{}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			raw, err := json.Marshal(c.value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var fields map[string]json.RawMessage
+			if err := json.Unmarshal(raw, &fields); err != nil {
+				t.Fatal(err)
+			}
+			delete(fields, c.key)
+			raw, err = json.Marshal(fields)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(raw, c.destination); err == nil || !strings.Contains(err.Error(), "required field") {
+				t.Fatalf("缺欄位未拒絕：%v", err)
+			}
+		})
+	}
+}
+
+func TestDQ3OpeningAssetsMatchOriginalPCX(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = filepath.Join("..", "..", "..", "assets_raw")
+	}
+	for _, frame := range p.Interface.Opening.Frames {
+		ref, ok := p.Asset(frame.AssetKey)
+		if !ok {
+			t.Fatal(frame.AssetKey)
+		}
+		raw, err := os.ReadFile(filepath.Join(dir, ref.Path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if int64(len(raw)) != ref.Size || fmt.Sprintf("%x", sha256.Sum256(raw)) != ref.SHA256 {
+			t.Fatalf("%s source integrity mismatch", ref.Path)
+		}
+		pixels, palette, w, h, err := dq3data.DecodePCX(raw)
+		if err != nil || w != 640 || h != 350 || len(pixels) != w*h || len(palette) != 16 {
+			t.Fatalf("%s PCX contract: %dx%d, %d/%d, %v", ref.Path, w, h, len(pixels), len(palette), err)
 		}
 	}
 }
@@ -3135,14 +3306,14 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.53","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.54","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json","spells":"spells.json"},"assets":{"pal":{"path":"PAL","size":0,"sha256":""}}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.53","service_definitions":[{
+	  "schema_version":"0.1.54","service_definitions":[{
 	    "id":"common:service.cure_poison","pricing":{"formula_id":"common:formula.fixed","fixed_gold":5},
 	    "evidence":{"level":"D2","source_kind":"exe","source":"x","address_space":"file","address":"1","consumer":"x","doc":"x"}}, {
 	    "id":"common:service.remove_curse","pricing":{"formula_id":"common:formula.level_multiplier","gold_per_level":100},
@@ -3158,7 +3329,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	    "evidence":{"level":"D3","source_kind":"exe","source":"x","address_space":"linear","address":"0x1","consumer":"x","doc":"x"}}
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.53",
+	  "schema_version":"0.1.54",
 	  "day_night_cycle":{"clock_ticks":4,"night_start_tick":2,"palette_segment_ticks":1,
 	    "palette_entries_per_bank":1,"palette_bank_indices":[0,0,0,0],"palette_asset_key":"pal",
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
@@ -3181,7 +3352,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
   "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.53",
+	  "schema_version":"0.1.54",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -3191,7 +3362,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.53","definitions":[{
+	  "schema_version":"0.1.54","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -3200,20 +3371,20 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.53","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.54","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"file","address":"0x1","consumer":"renderer","doc":"docs/x.md"}}
 	}`
-	validSpells := `{"schema_version":"0.1.53","field":[]}`
+	validSpells := `{"schema_version":"0.1.54","field":[]}`
 	tests := []struct {
 		name, manifest, facilities, events, characters, want string
 	}{
 		{"unknown manifest field", strings.Replace(validManifest, `"save_namespace":"test",`, `"save_namespace":"test","typo":1,`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.53"`, `"schema_version":"0.1.49","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.54"`, `"schema_version":"0.1.49","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

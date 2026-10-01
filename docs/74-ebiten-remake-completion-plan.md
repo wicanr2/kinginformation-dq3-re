@@ -1,5 +1,12 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> **2026-10-01 現況：**依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
+> 建立 dosgolem 自然開機收據並修正六幕序列／動態標誌。前五幕色號通過，第六幕全部
+> 129 次完整翻頁的色號與 RGB 通過；其他相位、音訊、跳過與創角以後尚未對拍。
+> 完整 internal 通過；完整 game 的母親帶路斷言與 Lv1 盜賊鑰匙路線失敗在修改前
+> `0c6f780` 亦重現，需先查證測試與現行規格，不能據此猜改規則。歷史 THE END 收據仍保留，
+> 但不代表本輪已重驗 E3。證據／收據入口與限制見 [docs/196](196-dosgolem-opening-sequence-parity.md)。
+
 > 2026-08-26 發佈 checkpoint：v0.1.36 已由 `d6184f4` 正式發布；現行 hash、
 > patch／full 素材邊界及驗證限制見 [`docs/194`](194-release-v0.1.36.md)。v0.1.35 與
 > [`docs/190`](190-release-v0.1.35.md) 僅保存上一版發行史。
@@ -137,7 +144,7 @@
 
 | 畫面族 | 原版證據 | Ebiten 現況 | 判定 |
 |---|---|---|---|
-| 年代／巨龍 cutscene | DOSBox、TIT/FIRST 資產 | `opening` 五張 PCX 已由 game-pack 載入；桌面／mobile 正式入口可無輸入播放、正式輸入跳過並交回標題 | E2／V1；素材 identity 為 D2，120 幀是 pack 明示近似；淡入淡出、TITP 位置與音效仍待同狀態動態 oracle，不冒稱 V3 |
+| 年代／巨龍 cutscene | dosgolem 自然開機、IDA 9.4、TIT／DFP 實檔；docs/196 | 六幕 PCX 與七圖塊移動已由 JSON 驅動；正式 bootstrap／無輸入／Confirm／存讀檔通過 | 前五幕色號 V2；第六幕 129 個翻頁同位置色號／RGB V3；淡入淡出逐相位、音效、skip 尚未對拍；時間為 hardware-spec approximation |
 | 標題 | DOSBox、影片、網路圖 | 標題／主選單／創角 lifecycle 已有 | E2；逐畫面仍待對拍 |
 | attract 職業巡禮 | 影片、`docs/67` TITH–TITO | pack 八卡輪播、輸入中斷、runtime 圖已接；每卡 1200 幀約 20 秒為既有 D2 對拍 | E2／V1；能力條長度、增長節奏與淡入淡出缺逐格 oracle，仍待 V3 且不得猜值 |
 | 主選單 | DOSBox、網路圖 | 新遊戲與載入皆有正式輸入入口；campaign 由新遊戲入口達 E3 | 功能 E3；逐畫面版面仍是可選 V3 |

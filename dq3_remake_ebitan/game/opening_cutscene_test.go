@@ -10,8 +10,8 @@ func TestOpeningCutsceneBootAndSkip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if g.openingSeq == nil || len(g.openingSeq.Frames) != 5 || len(g.openingPix) != 5 {
-		t.Fatalf("opening assets=%v/%d, want five pack frames", g.openingSeq, len(g.openingPix))
+	if g.openingSeq == nil || len(g.openingSeq.Frames) != 6 || len(g.openingPix) != 6 {
+		t.Fatalf("opening assets=%v/%d, want six pack frames", g.openingSeq, len(g.openingPix))
 	}
 	g.StartOpeningCutscene()
 	if !g.openingActive || g.openingIndex != 0 || g.openingFrame != 0 {

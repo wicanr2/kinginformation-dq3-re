@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.53"
+	SchemaVersion       = "0.1.54"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -763,8 +763,81 @@ type AttractSequence struct {
 type OpeningSequence struct {
 	ID          string         `json:"id"`
 	SkipOnInput bool           `json:"skip_on_input"`
-	Frames      []AttractFrame `json:"frames"`
+	Frames      []OpeningFrame `json:"frames"`
 	Evidence    Evidence       `json:"evidence"`
+}
+
+// OpeningFrame 是有限過場；可選的計時與疊圖均由資料包宣告。
+type OpeningFrame struct {
+	AssetKey   string          `json:"asset_key"`
+	HoldFrames int             `json:"hold_frames"`
+	Timing     *OpeningTiming  `json:"timing,omitempty"`
+	Overlay    *OpeningOverlay `json:"overlay,omitempty"`
+	Evidence   Evidence        `json:"evidence"`
+}
+
+type OpeningTiming struct {
+	RateNumerator    int   `json:"rate_numerator"`
+	RateDenominator  int   `json:"rate_denominator"`
+	FadeInStepTicks  int   `json:"fade_in_step_ticks"`
+	FadeOutStepTicks int   `json:"fade_out_step_ticks"`
+	HoldTicks        int   `json:"hold_ticks"`
+	GapTicks         int   `json:"gap_ticks"`
+	FadeDeductions   []int `json:"fade_deductions"`
+}
+
+func (t OpeningTiming) TotalTicks(animationTicks int) int {
+	return len(t.FadeDeductions)*(t.FadeInStepTicks+t.FadeOutStepTicks) + t.HoldTicks + t.GapTicks + animationTicks
+}
+
+type OpeningSprite struct {
+	PlaneLayout     string `json:"plane_layout"`
+	X               int    `json:"x"`
+	Y               int    `json:"y"`
+	TransparentZero bool   `json:"transparent_zero"`
+}
+
+type OpeningOverlay struct {
+	AssetKey  string          `json:"asset_key"`
+	Sprites   []OpeningSprite `json:"sprites"`
+	StartY    int             `json:"start_y"`
+	EndY      int             `json:"end_y"`
+	StepY     int             `json:"step_y"`
+	StepTicks int             `json:"step_ticks"`
+	Evidence  Evidence        `json:"evidence"`
+}
+
+func (o OpeningOverlay) Positions() int { return (o.EndY-o.StartY)/o.StepY + 1 }
+
+// 零座標／零間隔／不透明都是合法值，但缺欄位不能默認為這些值。
+func decodeOpeningObject(raw []byte, dst any, required []string) error {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+	for _, key := range required {
+		if value, ok := fields[key]; !ok || bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+			return fmt.Errorf("opening object: required field %q is missing", key)
+		}
+	}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	return decoder.Decode(dst)
+}
+
+func (s *OpeningSprite) UnmarshalJSON(raw []byte) error {
+	type plain OpeningSprite
+	return decodeOpeningObject(raw, (*plain)(s), []string{"plane_layout", "x", "y", "transparent_zero"})
+}
+
+func (s *OpeningOverlay) UnmarshalJSON(raw []byte) error {
+	type plain OpeningOverlay
+	return decodeOpeningObject(raw, (*plain)(s), []string{"asset_key", "sprites", "start_y", "end_y", "step_y", "step_ticks", "evidence"})
+}
+
+func (s *OpeningTiming) UnmarshalJSON(raw []byte) error {
+	type plain OpeningTiming
+	return decodeOpeningObject(raw, (*plain)(s), []string{"rate_numerator", "rate_denominator", "fade_in_step_ticks", "fade_out_step_ticks", "hold_ticks", "gap_ticks", "fade_deductions"})
 }
 
 // OpeningEscort 是創角後的有限自動帶路演出。每幀只宣告領路 NPC 與玩家的
@@ -2336,6 +2409,50 @@ func (p *Pack) validateInterface() error {
 			}
 			if err := validateEvidence(frame.Evidence); err != nil {
 				return fmt.Errorf("opening.frames[%d] evidence: %w", i, err)
+			}
+			animationTicks := 0
+			if overlay := frame.Overlay; overlay != nil {
+				if frame.Timing == nil || overlay.AssetKey == "" || len(overlay.Sprites) == 0 || len(overlay.Sprites) > 256 ||
+					overlay.StartY < 0 || overlay.EndY < 0 || overlay.StartY > 4096 || overlay.EndY > 4096 ||
+					overlay.StepY == 0 || overlay.StepY < -4096 || overlay.StepY > 4096 || (overlay.EndY-overlay.StartY)*overlay.StepY < 0 ||
+					(overlay.EndY-overlay.StartY)%overlay.StepY != 0 || overlay.Positions() > 1024 ||
+					overlay.StepTicks <= 0 || overlay.StepTicks > 10000 {
+					return fmt.Errorf("opening.frames[%d]: invalid overlay", i)
+				}
+				if _, ok := p.Manifest.Assets[overlay.AssetKey]; !ok {
+					return fmt.Errorf("opening.frames[%d]: unknown overlay asset", i)
+				}
+				if err := validateEvidence(overlay.Evidence); err != nil {
+					return fmt.Errorf("opening.frames[%d] overlay evidence: %w", i, err)
+				}
+				for _, sprite := range overlay.Sprites {
+					if (sprite.PlaneLayout != "byte_interleaved" && sprite.PlaneLayout != "row_planar") ||
+						sprite.X < 0 || sprite.X > 16384 || sprite.Y < 0 || sprite.Y > 4096 {
+						return fmt.Errorf("opening.frames[%d]: invalid overlay sprite", i)
+					}
+				}
+				animationTicks = overlay.Positions() * overlay.StepTicks
+			}
+			if timing := frame.Timing; timing != nil {
+				if timing.RateNumerator <= 0 || timing.RateNumerator > 1000000000 || timing.RateDenominator <= 0 || timing.RateDenominator > 1000000000 ||
+					timing.FadeInStepTicks <= 0 || timing.FadeInStepTicks > 10000 || timing.FadeOutStepTicks <= 0 || timing.FadeOutStepTicks > 10000 ||
+					timing.HoldTicks <= 0 || timing.HoldTicks > 10000 || timing.GapTicks < 0 || timing.GapTicks > 10000 ||
+					len(timing.FadeDeductions) < 2 || len(timing.FadeDeductions) > 256 {
+					return fmt.Errorf("opening.frames[%d]: invalid timing", i)
+				}
+				for n, deduction := range timing.FadeDeductions {
+					if deduction < 0 || deduction > 64 || (n > 0 && deduction >= timing.FadeDeductions[n-1]) {
+						return fmt.Errorf("opening.frames[%d]: invalid fade", i)
+					}
+				}
+				if timing.FadeDeductions[len(timing.FadeDeductions)-1] != 0 {
+					return fmt.Errorf("opening.frames[%d]: fade must reach full brightness", i)
+				}
+				den := int64(timing.RateNumerator)
+				frames := (int64(timing.TotalTicks(animationTicks))*60*int64(timing.RateDenominator) + den - 1) / den
+				if int64(frame.HoldFrames) != frames {
+					return fmt.Errorf("opening.frames[%d]: hold_frames disagrees with tick timeline", i)
+				}
 			}
 			seenAssets[frame.AssetKey] = true
 		}

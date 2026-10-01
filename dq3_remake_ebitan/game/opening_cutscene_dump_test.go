@@ -9,10 +9,9 @@ import (
 	"testing"
 )
 
-// TestDumpOpeningCutscene 以 production renderer 輸出五張開機過場卡片。
+// TestDumpOpeningCutscene 以 production renderer 輸出六張開機過場卡片。
 // 平常跳過；設 DQ3_DUMP_OPENING=1 與 OPENING_OUT=<gitignored 目錄> 才執行。
-// 這個 dump 只證明 game-pack asset 已經由正常 opening state 消費，不把
-// 120 幀停留或排序升格成原版逐幀 timing。
+// 以正式無輸入走到各卡全亮及疊圖最後一個位置；不升格為實機時間對拍。
 func TestDumpOpeningCutscene(t *testing.T) {
 	if os.Getenv("DQ3_DUMP_OPENING") == "" {
 		t.Skip("設 DQ3_DUMP_OPENING=1 才輸出開機過場 runtime 圖")
@@ -65,8 +64,20 @@ func TestDumpOpeningCutscene(t *testing.T) {
 		if !g.openingActive || g.openingIndex != i {
 			t.Fatalf("opening frame state active=%v index=%d want=%d", g.openingActive, g.openingIndex, i)
 		}
+		target := 0
+		if frame.Timing != nil {
+			target = len(frame.Timing.FadeDeductions) * frame.Timing.FadeInStepTicks
+		}
+		if frame.Overlay != nil {
+			target += (frame.Overlay.Positions() - 1) * frame.Overlay.StepTicks
+		}
+		for g.openingActive && g.openingTick() < target {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatal(err)
+			}
+		}
 		dump(frame.AssetKey)
-		for n := 0; n < frame.HoldFrames; n++ {
+		for g.openingActive && g.openingIndex == i {
 			// -1 表示沒有方向 edge／held；InputState 的零值是「下」方向，
 			// 不能拿來代表無輸入，否則會被 skip_on_input 正確中斷。
 			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {

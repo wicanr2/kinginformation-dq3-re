@@ -1,9 +1,9 @@
 {
-  "schema_version": "0.1.53",
+  "schema_version": "0.1.54",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
-  "content_version": "0.1.59",
+  "content_version": "0.1.60",
   "engine_api": ">=0.1.0 <0.2.0",
   "title_text_id": "dq3:text.title",
   "entry_event_id": "dq3:event.new_game",
@@ -56,6 +56,11 @@
       "size": 36010,
       "sha256": "9dfdf59bba55afa4dde2264db5f8f012e2b3d7a28d3c6ad5e825a5d6d0010c6b"
     },
+    "opening_year_1990": {
+      "path": "TITC.P",
+      "size": 7599,
+      "sha256": "afe590ef5d4a65a7fd2757ad2fb49009db03740397c7529aca9984ee35a63d3d"
+    },
     "opening_party": {
       "path": "TITD.P",
       "size": 83104,
@@ -66,10 +71,10 @@
       "size": 7498,
       "sha256": "962c5199e3b7ecc2d3086b5ee7fbd478eeb75eb4cab0b3de9c99e9a70c5dbc19"
     },
-    "opening_crest": {
-      "path": "TITP.P",
-      "size": 14723,
-      "sha256": "a81b542ce323f600734c438a1c193925e95718b576176580e34bba5ec3bc3a4e"
+    "opening_logo": {
+      "path": "TITF.P",
+      "size": 10352,
+      "sha256": "982afcb23f1af74d877e11874be86ad7c3dfa75a3163325ce86effe61145b308"
     },
     "attract_warrior": {
       "path": "TITH.P",
@@ -142,6 +147,11 @@
       "path": "NVOC.VCX",
       "size": 143156,
       "sha256": "53c710f356b728e97287bfb64af7f64cf2067b28f83a9dfe32f99a6eb61f4156"
+    },
+    "opening_logo_sprites": {
+      "path": "DFP.PIC",
+      "size": 24435,
+      "sha256": "c3ad3b4ee95434f1601e519b1dfb16094184aa1393f2972136fac7e735299b00"
     }
   }
 }
