@@ -37,7 +37,7 @@ func newIndexedNewGameRenderer(pack *gamepack.Pack, geo gamepack.NewGameGeometry
 	for _, c := range r.style.PaletteOverrides {
 		r.palette[c.Index] = dq3data.Color{R: c.RGB[0], G: c.RGB[1], B: c.RGB[2]}
 	}
-	for _, id := range []string{r.style.Menu.TextID, r.style.Header.TextID, r.style.Mode.TextID, r.style.ZhuyinTextID, r.style.AlnumTextID} {
+	for _, id := range []string{r.style.Menu.TextID, r.style.Header.TextID, r.style.Mode.TextID, r.style.Gender.TextID, r.style.ZhuyinTextID, r.style.AlnumTextID} {
 		codes, ok := pack.TextGlyphCodes(id)
 		if !ok {
 			return nil, fmt.Errorf("missing raster text %q", id)
@@ -73,6 +73,7 @@ func newIndexedNewGameRenderer(pack *gamepack.Pack, geo gamepack.NewGameGeometry
 	}{
 		{r.style.MenuCursor, r.style.MenuHit, ngOptCount},
 		{r.style.FunctionCursor, r.style.FunctionHit, len(labels.FunctionZhuyin)},
+		{r.style.GenderCursor, r.style.GenderHit, 2},
 	} {
 		last := rows.count - 1
 		if !inside(rows.anchor.X, rows.anchor.Y+last*rows.anchor.StepY, dq3data.GlyphPx, dq3data.GlyphPx) ||
@@ -169,6 +170,14 @@ func (r *indexedNewGameRenderer) draw(rgba []byte, tx *dq3data.Text, nf *NewGame
 		for row := 0; row < ngOptCount; row++ {
 			h := s.MenuHit
 			nf.hits.add(h.X, h.Y+row*s.MenuCursor.StepY, h.Width, h.Height, row)
+		}
+	} else if nf.stage == ngGender {
+		r.window(tx, s.Gender)
+		r.opaqueGlyph(tx, s.GenderCursor.X, s.GenderCursor.Y+nf.gs.cursor*s.GenderCursor.StepY, nf.labels.ChoiceCursor[0])
+		nf.gs.hits.reset()
+		for row := 0; row < 2; row++ {
+			h := s.GenderHit
+			nf.gs.hits.add(h.X, h.Y+row*s.GenderCursor.StepY, h.Width, h.Height, row)
 		}
 	} else {
 		ni, geo := &nf.ni, r.geo

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.55"
+	SchemaVersion       = "0.1.56"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -627,13 +627,16 @@ type NewGameRasterLayout struct {
 	Menu             RasterWindowRef `json:"menu"`
 	Header           RasterWindowRef `json:"header"`
 	Mode             RasterWindowRef `json:"mode"`
+	Gender           RasterWindowRef `json:"gender"`
 	ZhuyinTextID     string          `json:"zhuyin_text_id"`
 	AlnumTextID      string          `json:"alnum_text_id"`
 	GridOrigin       GeometryAnchor  `json:"grid_origin"`
 	MenuCursor       GeometryAnchor  `json:"menu_cursor"`
 	FunctionCursor   GeometryAnchor  `json:"function_cursor"`
+	GenderCursor     GeometryAnchor  `json:"gender_cursor"`
 	MenuHit          GeometryRect    `json:"menu_hit"`
 	FunctionHit      GeometryRect    `json:"function_hit"`
+	GenderHit        GeometryRect    `json:"gender_hit"`
 	ShadowOffset     *GeometryAnchor `json:"shadow_offset"`
 	FrameBandWidth   int             `json:"frame_band_width"`
 	FrameBandHeight  int             `json:"frame_band_height"`
@@ -2798,18 +2801,22 @@ func (p *Pack) validateNewGameRasterRefs() error {
 		}
 		seen[c.Index] = true
 	}
-	for _, rect := range []GeometryRect{r.MenuHit, r.FunctionHit} {
+	for _, rect := range []GeometryRect{r.MenuHit, r.FunctionHit, r.GenderHit} {
 		if err := validateGeometryRect("new-game raster hit", rect); err != nil {
 			return err
 		}
 	}
-	for _, anchor := range []GeometryAnchor{r.GridOrigin, r.MenuCursor, r.FunctionCursor} {
+	for _, anchor := range []GeometryAnchor{r.GridOrigin, r.MenuCursor, r.FunctionCursor, r.GenderCursor} {
 		if err := validateGeometryAnchor("new-game raster anchor", anchor); err != nil {
 			return err
 		}
 	}
-	if r.MenuCursor.StepY <= 0 || r.FunctionCursor.StepY <= 0 {
+	if r.MenuCursor.StepY <= 0 || r.FunctionCursor.StepY <= 0 || r.GenderCursor.StepY <= 0 {
 		return errors.New("new-game raster cursor row steps are required")
+	}
+	if r.GenderCursor.X+16 > 640 || r.GenderCursor.Y+r.GenderCursor.StepY+16 > 350 ||
+		r.GenderHit.Y+r.GenderCursor.StepY+r.GenderHit.Height > 350 {
+		return errors.New("new-game raster gender cursor or hit rows outside canvas")
 	}
 	raw := map[string]RawNewGameWindow{}
 	for _, w := range g.RawWindows {
@@ -2839,7 +2846,7 @@ func (p *Pack) validateNewGameRasterRefs() error {
 		}
 		return nil
 	}
-	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode} {
+	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode, r.Gender} {
 		w, ok := raw[ref.RawWindowID]
 		if !ok || (w.Flags != 1 && w.Flags != 3) || w.Width%2 != 0 ||
 			w.X*8+w.Width*8+r.ShadowOffset.X > 640 || w.Y+w.Height+r.ShadowOffset.Y > 350 ||

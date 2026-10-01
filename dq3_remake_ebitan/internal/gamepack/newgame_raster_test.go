@@ -45,7 +45,7 @@ func TestNewGameRasterOriginalDataParity(t *testing.T) {
 	for _, w := range g.RawWindows {
 		raw[w.ID] = w
 	}
-	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode} {
+	for _, ref := range []RasterWindowRef{r.Menu, r.Header, r.Mode, r.Gender} {
 		w := raw[ref.RawWindowID]
 		linear, err := strconv.ParseInt(strings.TrimPrefix(w.Address, "linear:"), 0, 32)
 		if err != nil {
@@ -68,6 +68,11 @@ func TestNewGameRasterOriginalDataParity(t *testing.T) {
 		if ref == r.Menu && r.MenuHit.Width != (word(6)-4)*8 {
 			t.Fatal("主選單命中寬度與原始結構／sub_1F908 consumer 不符")
 		}
+		if ref == r.Gender && (r.GenderCursor.X != word(24)*8 || r.GenderCursor.Y != word(26) ||
+			r.GenderHit.X != word(24)*8 || r.GenderHit.Y != word(26) || r.GenderHit.Width != (word(6)-4)*8 ||
+			r.GenderHit.Height != 16 || r.GenderCursor.StepY != 16) {
+			t.Fatal("性別游標／命中列與原始結構及選項 consumer 不符")
+		}
 	}
 	// 測試專用原始定位，保留 IDA linear／MZ file 換算；不進 production renderer。
 	functionOffset := 0x290a6 - 0xec90
@@ -77,7 +82,7 @@ func TestNewGameRasterOriginalDataParity(t *testing.T) {
 		t.Fatal("功能列游標／命中寬度與原始結構不符")
 	}
 	decoded := dq3data.LoadText(nil, txt)
-	for _, id := range []string{r.Menu.TextID, r.Header.TextID, r.Mode.TextID, r.ZhuyinTextID, r.AlnumTextID} {
+	for _, id := range []string{r.Menu.TextID, r.Header.TextID, r.Mode.TextID, r.Gender.TextID, r.ZhuyinTextID, r.AlnumTextID} {
 		d := p.texts[id]
 		codes, ok := p.TextGlyphCodes(id)
 		if !ok || d.Source.Record == nil {
@@ -100,6 +105,11 @@ func TestNewGameRasterRejectsInvalidPack(t *testing.T) {
 		{"missing", func(p *Pack) { p.Interface.NewGameGeometry.Raster = nil }},
 		{"font", func(p *Pack) { p.Interface.NewGameGeometry.Raster.FontIndex = nil }},
 		{"window", func(p *Pack) { p.Interface.NewGameGeometry.Raster.Header.RawWindowID = "unknown" }},
+		{"gender_window", func(p *Pack) { p.Interface.NewGameGeometry.Raster.Gender.RawWindowID = "unknown" }},
+		{"gender_text", func(p *Pack) { p.Interface.NewGameGeometry.Raster.Gender.TextID = "unknown" }},
+		{"gender_cursor", func(p *Pack) { p.Interface.NewGameGeometry.Raster.GenderCursor.StepY = 0 }},
+		{"gender_hit", func(p *Pack) { p.Interface.NewGameGeometry.Raster.GenderHit.Width = 0 }},
+		{"gender_last_row", func(p *Pack) { p.Interface.NewGameGeometry.Raster.GenderCursor.Y = 330 }},
 		{"text", func(p *Pack) { p.Interface.NewGameGeometry.Raster.AlnumTextID = "unknown" }},
 		{"mask", func(p *Pack) { *p.Interface.NewGameGeometry.Raster.CursorXOR = 16 }},
 		{"palette", func(p *Pack) { p.Interface.NewGameGeometry.Raster.PaletteOverrides[0].RGB = []uint8{1} }},

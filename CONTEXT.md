@@ -1,16 +1,19 @@
 # CONTEXT — 術語表 + 知識庫索引
 
 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，已獲授權持續更新。
-原版冷啟動以真實 IRQ1 進入新遊戲；正式重製主選單、初始注音及六次方向／四次功能輸入
-的 12 張完整 640×350 RGB 畫面均零差異，有限繪圖契約已達 CONFORMED。
-共用索引色繪圖讀取資料包的完整字模記錄、原始視窗、陰影及 XOR 設定；
-schema `0.1.55`／content `0.1.61`，EXE／TXT parity、拒絕損壞引用及素材不可變驗證通過。
-完整 game 359 項頂層／28 項子測試通過，33 項選用擷取／額外收據未執行，沒有素材缺失跳過；
-全部 internal 及桌面 main.go 建置通過。主角與酒館三人經正式功能列命名、各段存讀檔，
-正常主線抵達 THE END（109.47 秒，重製 seed 在執行前固定為 0x1357）。
-此批原版尚未能力擲骰，沒有原版 RNG 對拍；出生點、母親及完整 campaign 音畫仍未閉合。
-重生入口為 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem production`
-及同入口的 `--navigation`；證據與範圍見 [docs/113](docs/113-newgame-geometry-re.md)。
+原版冷啟動以真實 IRQ1 英數命名「0」、完成及男性自然創角。正式命名／性別畫面新增6張零差異，
+連同先前12張共18張完整640×350 RGB零差異；性別繪圖限定CONFORMED。
+原版在自然Lv1生成入口只套用預先指定seed1357一次，重製在首個正式輸入前固定同值；
+七能力、目前HP／MP及最後seed356D一致。schema `0.1.56`／content `0.1.62`，
+完整record556、原始性別窗口與游標由資料包提供，EXE／TXT及損壞引用拒絕驗證通過。
+完整game 360項頂層／35項子測試通過；33項選用擷取／額外收據未執行，沒有素材缺失跳過。
+全部internal乾淨重跑及桌面main.go建置通過；正常主線與各段存讀檔到THE END（91.52秒）。
+下一個已證實差異是能力檢視等待：原版再按Enter才畫確認提示，重製目前提前顯示提示並提前開始遊戲。
+嚴格稽核以 `DQ3_DOSGOLEM_CREATION_ACK_AUDIT=1` 啟用，保持紅；能力等待頁差15,468像素。
+重生入口是 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --creation`，
+只驗證命名／性別畫面及能力交易；完整創角、出生點、母親、音訊及原版campaign仍未閉合。
+本批私有驗收為 `work/dosgolem-opening/issue4-creation-verification-receipt.json`；
+證據、原始位址、分級索引與限定範圍見 [docs/113](docs/113-newgame-geometry-re.md)。
 原版 disk state 未保存 CRTC，畫面收據只使用冷啟動；不把磁碟續跑亂圖當成產品缺陷。
 
 2026-10-01：dosgolem 原版開場對拍依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
@@ -32,12 +35,12 @@ schema `0.1.55`／content `0.1.61`，EXE／TXT parity、拒絕損壞引用及素
 
 | 目前狀態（2026-10-01） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.55／content 0.1.61；未發布新包 |
-| 最新繪圖切片已完成 | Issue #4 主選單／命名字盤及兩條導航共 12 張正式畫面全畫布零差異；限定 CONFORMED，候選字及創角後仍未知；docs/113 |
+| 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.56／content 0.1.62；未發布新包 |
+| 最新繪圖切片已完成 | Issue #4共18張正式畫面全畫布零差異，性別限定CONFORMED；固定seed的Lv1交易一致，能力等待仍RED；docs/113 |
 | 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
-| 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、創角以後與完整 campaign；時間只採硬體規格近似 |
+| 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、能力檢視／確認、出生點／母親與完整 campaign；時間只採硬體規格近似 |
 | 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |
-| 現行回歸已完成 | 正式新遊戲 InputState → THE END 109.47 秒，主角／酒館及各段存讀檔、game／internal 及桌面建置通過；本批收據 work/dosgolem-opening/issue4-raster-verification-receipt.json，Issue #4 |
+| 現行回歸已完成 | 正式新遊戲 InputState → THE END 91.52 秒，主角／酒館及各段存讀檔、game／internal 及桌面建置通過；本批收據 work/dosgolem-opening/issue4-creation-verification-receipt.json，Issue #4 |
 | 額外畫廊限制 | 31 項選用擷取未納入標準回歸；大型新遊戲畫廊的魔法球測試設定失敗另有紀錄，未判為產品缺陷；還冠元件與正式 THE END PNG 已核對 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

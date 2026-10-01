@@ -41,6 +41,170 @@ func newProductionTraceGame(assets fs.FS) (*Game, error) {
 	return g, nil
 }
 
+// 以原版自然創角收據驗證正式輸入及 Lv1 交易。種子在兩側執行前明定；
+// 原版只在自然生成入口控制 RNG，重製在第一個正式輸入前設定一次。
+// 性別畫面維持嚴格逐點比較；能力面板與確認提示的階段先由原版控制流閉合。
+func TestDosgolemNewGameCreationComparison(t *testing.T) {
+	dir := os.Getenv("DQ3_DOSGOLEM_NEWGAME_DIR")
+	if os.Getenv("DQ3_DOSGOLEM_CREATION_COMPARE") != "1" || dir == "" {
+		t.Skip("需明確啟用 dosgolem 原版固定種子創角收據比較")
+	}
+	var receipt struct {
+		Scenario       string `json:"scenario"`
+		OriginalSHA    string `json:"original_sha256"`
+		OriginalSize   int    `json:"original_size"`
+		Image          string `json:"docker_image"`
+		Revision       string `json:"upstream_revision_observed"`
+		StateInjection *bool  `json:"game_state_injection"`
+		Seed           struct {
+			Value      string `json:"seed"`
+			Configured bool   `json:"configured_before_execution"`
+			OnlyRNG    bool   `json:"only_rng_state_modified"`
+			OtherState *bool  `json:"other_gameplay_state_injection"`
+			Event      string `json:"event"`
+		} `json:"test_rng_seed_control"`
+		Inputs []struct {
+			Scan string `json:"scan"`
+		} `json:"player_input"`
+		Results      []string `json:"creation_results"`
+		RandomEvents []string `json:"ability_random_events"`
+		Artifacts    []struct {
+			Path string `json:"path"`
+			SHA  string `json:"sha256"`
+			Size int    `json:"size"`
+		} `json:"artifacts"`
+	}
+	blob, err := os.ReadFile(filepath.Join(dir, "issue4-creation-receipt.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(blob, &receipt); err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Scenario != "name_creation" || receipt.OriginalSize != 115282 || receipt.Image != "dq3-ebiten-test:20260822-r1" || receipt.OriginalSHA != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" ||
+		receipt.Revision != "2f44a68ebfc54b28fb15dd4a34510b0b04a5415d" || receipt.StateInjection == nil || *receipt.StateInjection ||
+		receipt.Seed.Value != "0x1357" || !receipt.Seed.Configured || !receipt.Seed.OnlyRNG || receipt.Seed.OtherState == nil || *receipt.Seed.OtherState ||
+		!regexp.MustCompile(`DS=15ed SI=507f return=08cf previous=[0-9a-f]{4} fixed=1357$`).MatchString(receipt.Seed.Event) ||
+		len(receipt.Inputs) != 16 || len(receipt.Results) != 1 || len(receipt.RandomEvents) != 14 || len(receipt.Artifacts) == 0 {
+		t.Fatal("原版創角收據的來源、固定種子前提或輸入／結果範圍不符")
+	}
+	indexed := make(map[string]bool)
+	for _, artifact := range receipt.Artifacts {
+		if filepath.Base(artifact.Path) != artifact.Path {
+			t.Fatal("原版 artifact 路徑越界")
+		}
+		data, err := os.ReadFile(filepath.Join(dir, artifact.Path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		hash := sha256.Sum256(data)
+		if len(data) != artifact.Size || hex.EncodeToString(hash[:]) != artifact.SHA {
+			t.Fatalf("原版 artifact 不符：%s", artifact.Path)
+		}
+		indexed[artifact.Path] = true
+	}
+	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "creation-save.json"))
+	g, err := newProductionTraceGame(os.DirFS(spineAssetsDir(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.prng.Seed(0x1357)
+	captures := map[int]string{8: "name-zero", 9: "finish-up", 10: "finish-cell", 11: "finish-focus", 12: "finish-choice", 13: "gender"}
+	for i, input := range receipt.Inputs[:15] {
+		in := InputState{DirHeld: -1, DirEdge: -1}
+		switch input.Scan {
+		case "0x1c":
+			in.Confirm = true
+		case "0x48":
+			in.DirEdge = 1
+		case "0x50":
+			in.DirEdge = 0
+		case "0x4b":
+			in.DirEdge = 2
+		case "0x4d":
+			in.DirEdge = 3
+		default:
+			t.Fatalf("原版創角按鍵未驗收：%q", input.Scan)
+		}
+		if err := g.step(in); err != nil {
+			t.Fatal(err)
+		}
+		if i < 14 && g.prng.State() != 0x1357 {
+			t.Fatal("能力生成前消耗了測試 RNG")
+		}
+		if capture, ok := captures[i]; ok {
+			name := "issue4-creation-" + capture + ".png"
+			if !indexed[name] {
+				t.Fatalf("原版圖像未登記：%s", name)
+			}
+			g.renderFrame()
+			t.Run(capture, func(t *testing.T) {
+				compareDosgolemRasterFrame(t, g, dir, name, "issue4-creation-remake-"+capture+".png", capture)
+			})
+		}
+	}
+	t.Run("ability-transaction", func(t *testing.T) {
+		fields := map[string]int{}
+		for _, match := range regexp.MustCompile(`([a-z_]+)=([0-9a-f]+)`).FindAllStringSubmatch(receipt.Results[0], -1) {
+			base := 10
+			if match[1] == "seed" || match[1] == "base" {
+				base = 16
+			}
+			value, err := strconv.ParseInt(match[2], base, 64)
+			if err == nil {
+				fields[match[1]] = int(value)
+			}
+		}
+		if fields["class_raw"] != 0 || fields["level"] != 1 {
+			t.Fatal("原版交易不是已驗收的主角Lv1前提")
+		}
+		actual := map[string]int{"gender_raw": g.heroGender + 1, "level": stats.LevelForExp(0, g.heroExp), "current_hp": g.heroHP, "current_mp": g.heroMP,
+			"str": int(g.heroStat[stats.STR]), "vit": int(g.heroStat[stats.VIT]), "agi": int(g.heroStat[stats.AGI]),
+			"max_hp": int(g.heroStat[stats.HP]), "max_mp": int(g.heroStat[stats.MP]), "int": int(g.heroStat[stats.INT]), "luck": int(g.heroStat[stats.LUCK]), "seed": int(g.prng.State())}
+		if g.newGame.stage != ngConfirm || !reflect.DeepEqual(g.heroName, []int{0}) {
+			t.Fatalf("正式輸入未到能力確認：stage=%d name=%v", g.newGame.stage, g.heroName)
+		}
+		for key, value := range actual {
+			want, ok := fields[key]
+			if !ok || want != value {
+				t.Errorf("原版／重製 %s 不符：original=%d remake=%d present=%v", key, want, value, ok)
+			}
+		}
+		t.Logf("固定種子0x1357的正式Lv1交易：%v；沒有重擲或直接呼叫生成函式", actual)
+	})
+	g.renderFrame()
+	output, err := os.Create(filepath.Join(dir, "issue4-creation-remake-ability-diagnostic.png"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = png.Encode(output, &image.RGBA{Pix: append([]byte(nil), g.rgba...), Stride: ScreenW * 4, Rect: image.Rect(0, 0, ScreenW, ScreenH)})
+	closeErr := output.Close()
+	if err != nil || closeErr != nil {
+		t.Fatalf("寫出能力診斷畫面：%v/%v", err, closeErr)
+	}
+	t.Log("能力PNG僅為診斷；原版檢視等待已證實，重製尚未修正，不宣稱確認階段畫面對拍")
+	if os.Getenv("DQ3_DOSGOLEM_CREATION_ACK_AUDIT") == "1" {
+		// 已證實的下一個產品差異；明確啟用的紅測試不可用能力數值綠測試掩蓋。
+		t.Run("ability-acknowledgement-gate", func(t *testing.T) {
+			if g.newGame.stage == ngConfirm {
+				t.Error("選定性別後提前顯示確認提示，原版仍在能力檢視等待")
+			}
+			compareDosgolemRasterFrame(t, g, dir, "issue4-creation-ability-waiting.png", "issue4-creation-remake-ability-waiting.png", "ability-waiting")
+			if receipt.Inputs[15].Scan != "0x1c" {
+				t.Fatal("原版能力檢視確認輸入不符")
+			}
+			if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatal(err)
+			}
+			if !g.showTitle || g.newGame.stage != ngConfirm {
+				t.Fatal("能力檢視Enter應只進確認提示，重製提前開始遊戲")
+			}
+			g.renderFrame()
+			compareDosgolemRasterFrame(t, g, dir, "issue4-creation-ability-confirm.png", "issue4-creation-remake-ability-confirm.png", "ability-confirm")
+		})
+	}
+}
+
 // 讀取原版冷啟動實際觀察值，以等價正式 InputState 比較命名邊界及功能切換。
 // 同時驗證 modal 狀態與每個輸入後的全畫布，範圍限定於能力擲骰之前。
 func TestDosgolemNameInputNavigationComparison(t *testing.T) {

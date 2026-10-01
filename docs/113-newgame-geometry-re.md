@@ -292,6 +292,108 @@ schema `0.1.55`／content `0.1.61`；缺引用、字模、邊界或 D3 證據均
 本次 CONFORMED 限於上表狀態；候選字、性別、能力亂數、出生點、母親、
 閃爍相位、音訊與完整原版 campaign 仍待各自閉合。下一步由 Issue #4 繼續追原版創角後路線。
 
+### 2026-10-01 追加：原版創角與固定種子探測（DRAFT）
+
+依 Issue #4，由既有冷啟動／IRQ1 新遊戲入口延伸英數命名、完成及性別，
+先收錄原版生成能力的正常入口與結果，再與正式重製比較。
+工具入口仍為 [`dosgolem_newgame_probe.py`](../tools/dosgolem_newgame_probe.py)，
+本批新增 `name_creation` 探測；正式種子測試只修改亂數狀態，不寫人物／地圖／事件。
+
+IDA Pro 9.4 非破壞 sidecar `work/issue4-creation-ida-unknown.json`，287,108 bytes，
+SHA-256 `291deeec36b43082b1bf998cb83c1fbefab80de5b5cb20797bd1c905b8d5196b`，
+輸入為本文件固定路徑／115,282 bytes／SHA-256 的 DQ3.EXE。
+匯出入口暫存 `/tmp/dq3-ida-creation.py`，後續審查版使用
+[`ida_dump_creation_rng.py`](../tools/ida_dump_creation_rng.py)。
+每筆保留原名、IDA linear、MZ file、bytes、xref type 與 unknown；
+下表是本次審查後的有限靜態結論，動態玩家結果尚未驗收。
+
+| 原始定位（IDA linear／MZ file） | 語意及證據等級 |
+|---|---|
+| `sub_10854`，`0x10854..0x10924`／`0x1BC4..0x1C94` | `strong`：命名→性別→清角色欄→Lv1生成→確認／否重來；caller `0x1006A`，需正常玩家動態閉合 |
+| `0x108CC`／`0x1C3C`，bytes `e8fdd0` | `strong`：以 SI=DGROUP507F 的主角 record 呼叫 `sub_1D9CC`；返回位址 logical08CF。此處為自然抵達的能力交易，可在進入前套用測試種子 |
+| `sub_1D9CC`，`0x1D9CC..0x1DB48`／`0xED3C..0xEEB8` | `strong`：class `+1`、level `+15`、DS4366成長表 → 七個持久能力 writer → `sub_181B1` consumer；間接 record 寫入完整保留 |
+| `sub_1E6B9`，`0x1E6B9..0x1E6C9`／`0xFA29..0xFA39` | `strong`：讀／寫 DGROUP0B5A，16-bit加9018後旋轉3；本批不擴張全遊戲骰序要求 |
+| `sub_1E6E7`，`0x1E6E7..0x1E713`／`0xFA57..0xFA83` | `strong`：AX為正delta時同一種子前進，餘數0改1；保留AX/BX/DX原始資料流 |
+| `sub_16F4B`，`0x16F4B..0x16FCF`／`0x82BB..0x833F` | `strong`：BIOS tick寫CS:701B，供預設名稱；**不能以此代替DGROUP0B5A的能力種子**。保留舊文件並在此限定用途，尚未宣稱其涵蓋遊戲所有亂數 |
+
+固定測試條件在執行前明定 seed `0x1357`，於原版自然到 `sub_1D9CC`
+且返回08CF／DS15ED／SI507F／class0／Lv1全部符合時，恰好一次寫DGROUP0B5A。
+不跳入口、不改人物、不卡死正式種子，不重擲挑結果；原版呼叫後的seed與能力一併記錄。
+重製也在正式輸入前固定0x1357；比較點是同一Lv1能力交易，沒有要求此前初始化骰序相同。
+若自然入口或前提不符，收據失敗而停止；不改成其他未驗證位置。
+
+首次 IDA 匯出因 image 的ASCII預設文字編碼而失敗；補明確UTF-8後，
+相同image／命令乾淨重跑成功。失敗分類為驗證腳本，不是遊戲或IDA不支援。
+
+### 性別視窗證據審查與 READY（2026-10-01）
+
+`sub_10854` 的 IDA linear `0x1087B..0x10882` 以 SI=DGROUP3DF6 呼叫
+`sub_1F4E3`；原始 raw window 是 `0x28BC6`（MZ file `0x19F36`），
+30 bytes `08032b002e000c0040002c020000000000000000020003002d003e000000`。
+其中 flags=3、byte X=43、Y=46、width=12、height=64、record556、cursor byte X=45、Y=62。
+`sub_1F4E3` 的 `0x1F504..0x1F507` 讀 `+0A` 記錄交給字模 writer；
+`0x1F569..0x1F578` 的選項 consumer 使用 `+14` 的兩列與原始游標欄位。
+此處與能力頁的選項會引用同一結構，但不得外推兩者的背景或繪圖階段相同。
+
+原版 IRQ1「完成」後的性別畫面只有獨立視窗，沒有姓名額外疊字。
+正式比較原先差3,176像素；測試隔離試作直接使用完整 record556、已閉合的
+索引色 shadow／frame XOR／opaque glyph primitive，以及原始游標 `(360,62)`，
+完整640×350 RGB差異0。這些結論標 `confirmed`，僅限本文件固定 hash 的原版、
+預設男性游標與此次正常輸入；女性、閃爍及能力選項不由此提升。
+
+READY：`new_game_geometry.raster` 新增必填 `gender` window／text reference、
+`gender_cursor` 及 `gender_hit`；資料包新增完整 record556的文字ID。
+游標及觸控命中高度沿用16px列距，寬度由原始 `(width−4)*8` consumer 得出64px。
+共用 renderer 使用既有 primitive；不得留下 raw record／座標或姓名顯示 fallback。
+schema/content 升為0.1.56／0.1.62；EXE／TXT直接 parity、引用及邊界拒絕案例
+和正式創角輸入／原版完整畫布是交付閘門。
+
+### 創角能力動態結果與下一個阻塞點
+
+原版種子在 step1020025995 的自然生成入口套用一次，step1020026435完成交易。
+七次 delta `3,2,2,8,1,3,3` 回傳 `2,1,1,7,1,1,1`；
+STR8、VIT4、AGI4、最大與目前HP15、MP9、INT7、LUCK7，最後seed356D。
+正式重製在首個輸入前固定1357，經同一命名／男性輸入取得相同結果與seed。
+`TestDosgolemNewGameCreationComparison` 限定此Lv1交易與命名／性別畫面，
+不能當成創角確認整段流程通過。
+
+已證實的下一個差異：`sub_1834E` 在 linear `0x18498`／file `0x9808`
+（bytes `9adb000421`）呼叫 `sub_2111B`，等待輸入後才返回。
+原版 step1020291438到`0x108EB`；step1060000000排入Enter，
+step1060000054到`0x108EE`，step1060063863到`0x108F5`，確認提示才出現。
+重製目前在選定性別後直接進`ngConfirm`，尚未修正這個等待階段；
+能力與確認畫面仍須逐階段規格、同狀態對拍。出生點／母親保持未知。
+
+### 性別及能力交易限定 CONFORMED
+
+正式性別窗口已遷入上述READY契約；完整原始record556、窗口、游標及觸控命中
+由pack提供，不在Go加入版本座標。五張命名完成前畫面與預設男性性別畫面全部RGB差異0；
+先前12張正式畫面重新比較也維持0，共18張，不裁切、不遮罩。
+`TestDosgolemNewGameCreationComparison` 以原版artifact hash及正式InputState，
+驗證同一男性Lv1能力交易與最後seed356D；沒有直接生成呼叫或中途重新設種。
+
+`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --creation`
+從原版冷啟動重生，回傳0；此入口只代表上段限定範圍。
+原版收據 `work/dosgolem-opening/issue4-creation-receipt.json`，16,156 bytes，
+SHA-256 `8e7990886d3c237d978ebdb1c1757b7b26495bf659eeb418b0c1b1d66ebe98ae`。
+審查IDA sidecar `work/issue4-creation-ida-reviewed.json`，760,812 bytes，
+SHA-256 `945b96b0676505b9d61749ce3b35dae1e94b2a8ddccfe7f12dcb3417cece3228`，
+由受版控的有限range台帳自動合併語意、推論等級與警示；原始unknown快照仍保留。
+
+完整game 360項頂層／35項子測試、全部internal與桌面main.go建置通過；
+33項明示選用擷取／額外收據未執行，沒有素材缺失。
+正常新遊戲、主角／酒館命名、各段存讀檔至THE END通過（91.52秒），只屬重製回歸。
+internal首次失敗是六項舊schema測試輸入未升版；修正測試輸入後以相同工具／命令乾淨重跑通過。
+本批驗收索引 `work/dosgolem-opening/issue4-creation-verification-receipt.json`，19,276 bytes，
+SHA-256 `0581086322b07394b8c9dffa7e697c115b220670e6613de5f046b426f83b1775`。
+它保存來源hash、兩側seed方法、輸入、18組PNGhash、日誌及已知阻塞點。
+
+下一個嚴格稽核入口：同一Docker圖形測試環境加
+`DQ3_DOSGOLEM_CREATION_COMPARE=1 DQ3_DOSGOLEM_CREATION_ACK_AUDIT=1`
+執行 `TestDosgolemNewGameCreationComparison`。子測試`ability-acknowledgement-gate`
+維持RED：等待頁差15,468像素，範圍`(152,14)..(536,246)`；重製多一次Enter提前開始遊戲。
+正式修正只限定性別繪圖及能力交易，不能把此RED或能力／確認色彩差異包裝成通過。
+
 ## 輸入與工具
 
 以下保存 2026-08 的形成史；當時 image 的 IDAPython 限制不能覆蓋上方

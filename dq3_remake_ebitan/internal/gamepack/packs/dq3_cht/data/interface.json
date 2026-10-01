@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.55",
+  "schema_version": "0.1.56",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -509,7 +509,22 @@
         "address": "0x28b1e/0x29088/0x290a6/0x290c4；writer 0x1fc57/0x1fd30/0x211b6/0x1126f",
         "consumer": "sub_1F4E3/1F590/1F908 + 10D17/10DC8/10E8E/10F5B/11087 → 冷啟動完整畫布",
         "doc": "docs/113-newgame-geometry-re.md",
-        "note": "已證實限定 menu／初始命名／導航／功能／英數；palette 初始化 writer 與閃爍相位仍未知。"
+        "note": "已證實限定 menu／初始命名／導航／功能／英數；palette 初始化 writer 與閃爍相位仍未知。 本批追加性別預設男性raw window／record556；正常IRQ1及隔離試作完整畫布差異0，女性與能力階段另驗。"
+      },
+      "gender": {
+        "raw_window_id": "confirm_choice",
+        "text_id": "dq3:text.new_game.gender_window"
+      },
+      "gender_cursor": {
+        "x": 360,
+        "y": 62,
+        "step_y": 16
+      },
+      "gender_hit": {
+        "x": 360,
+        "y": 62,
+        "width": 64,
+        "height": 16
       }
     }
   },

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.55",
+  "schema_version": "0.1.56",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -1793,6 +1793,59 @@
         "consumer": "sub_213C4→sub_211B6 不透明全文字模；dosgolem 冷啟動畫布",
         "doc": "docs/113-newgame-geometry-re.md",
         "note": "GlyphCodes 為 canonical 原始記錄；Unicode 轉錄沿用既有映射，□ 只屬未辨識字模的轉錄，renderer 不使用 Value。"
+      }
+    },
+    {
+      "id": "dq3:text.new_game.gender_window",
+      "value": "┌┐┐┐┐└\n│ 男性 │\n│ 女性 │\n┘┐┐┐┐├",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        48,
+        49,
+        65534,
+        54,
+        12,
+        775,
+        674,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        234,
+        674,
+        12,
+        54,
+        65534,
+        50,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 6,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 556
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b + D3TXT00.FON",
+        "address_space": "record",
+        "address": "556",
+        "consumer": "sub_10854→sub_1F4E3 raw0x28BC6 record556→sub_213C4/sub_211B6；正常IRQ1性別畫面",
+        "doc": "docs/113-newgame-geometry-re.md",
+        "note": "原始完整記錄；只閉合預設男性性別視窗，能力確認選項不得套用此背景契約。"
       }
     }
   ]

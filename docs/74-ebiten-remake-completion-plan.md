@@ -1,17 +1,20 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
 > **2026-10-01 最新閘門（Issue #4）：**
-> 原版冷啟動以真實 IRQ1 進入新遊戲；正式重製主選單、初始注音及六次方向／四次功能輸入
-> 的 12 張完整 640×350 RGB 畫面均零差異，有限繪圖契約已達 CONFORMED。
-> 共用索引色繪圖讀取資料包的完整字模記錄、原始視窗、陰影及 XOR 設定；
-> schema `0.1.55`／content `0.1.61`，EXE／TXT parity、拒絕損壞引用及素材不可變驗證通過。
-> 完整 game 359 項頂層／28 項子測試通過，33 項選用擷取／額外收據未執行，沒有素材缺失跳過；
-> 全部 internal 及桌面 main.go 建置通過。主角與酒館三人經正式功能列命名、各段存讀檔，
-> 正常主線抵達 THE END（109.47 秒，重製 seed 在執行前固定為 0x1357）。
-> 此批原版尚未能力擲骰，沒有原版 RNG 對拍；出生點、母親及完整 campaign 音畫仍未閉合。
-> 重生入口為 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem production`
-> 及同入口的 `--navigation`；證據與範圍見 [docs/113](113-newgame-geometry-re.md)。
-> 工作權威為 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)；Issue #1～#3 的限定閉合仍有效。
+> 原版冷啟動以真實 IRQ1 英數命名「0」、完成及男性自然創角。正式命名／性別畫面新增6張零差異，
+> 連同先前12張共18張完整640×350 RGB零差異；性別繪圖限定CONFORMED。
+> 原版在自然Lv1生成入口只套用預先指定seed1357一次，重製在首個正式輸入前固定同值；
+> 七能力、目前HP／MP及最後seed356D一致。schema `0.1.56`／content `0.1.62`，
+> 完整record556、原始性別窗口與游標由資料包提供，EXE／TXT及損壞引用拒絕驗證通過。
+> 完整game 360項頂層／35項子測試通過；33項選用擷取／額外收據未執行，沒有素材缺失跳過。
+> 全部internal乾淨重跑及桌面main.go建置通過；正常主線與各段存讀檔到THE END（91.52秒）。
+> 下一個已證實差異是能力檢視等待：原版再按Enter才畫確認提示，重製目前提前顯示提示並提前開始遊戲。
+> 嚴格稽核以 `DQ3_DOSGOLEM_CREATION_ACK_AUDIT=1` 啟用，保持紅；能力等待頁差15,468像素。
+> 重生入口是 `bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --creation`，
+> 只驗證命名／性別畫面及能力交易；完整創角、出生點、母親、音訊及原版campaign仍未閉合。
+> 本批私有驗收為 `work/dosgolem-opening/issue4-creation-verification-receipt.json`；
+> 證據、原始位址、分級索引與限定範圍見 [docs/113](113-newgame-geometry-re.md)。
+> 工作權威為 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)；下一步先修正能力檢視等待。
 
 > **2026-10-01 現況：**依 [Issue #1](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)
 > 建立 dosgolem 自然開機收據並修正六幕序列／動態標誌。前五幕色號通過，第六幕全部

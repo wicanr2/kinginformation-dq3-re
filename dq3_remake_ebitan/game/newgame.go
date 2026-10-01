@@ -157,7 +157,7 @@ func (nf *NewGameFlow) draw(rgba []byte, tx *dq3data.Text, white, yellow dq3data
 		return
 	}
 	geo := nf.geometry
-	if nf.raster != nil && (nf.stage == ngMenu || (nf.stage == ngName && !nf.ni.zh.Pick)) {
+	if nf.raster != nil && (nf.stage == ngMenu || nf.stage == ngGender || (nf.stage == ngName && !nf.ni.zh.Pick)) {
 		nf.raster.draw(rgba, tx, nf)
 		return
 	}

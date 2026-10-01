@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # 主機僅做 Docker／Git 控制；探測、建置、測試與輸出全部在容器內。
-# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation]
+# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation]
 # 預設重生主選單／初始命名並比較正式畫面；--prototype 僅驗證歷史 DRAFT。
 # --navigation 重生兩條命名收據，驗證六次方向與四次功能輸入的狀態及完整畫布。
+# --creation 重生固定種子創角，驗證命名／性別畫面與能力交易；能力等待階段尚待修正。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"
 MODE="${2:-production}"
-case "$MODE" in production|--prototype|--navigation) ;; *) echo '模式須為 production、--prototype 或 --navigation' >&2; exit 1;; esac
+case "$MODE" in production|--prototype|--navigation|--creation) ;; *) echo '模式須為 production、--prototype、--navigation 或 --creation' >&2; exit 1;; esac
 for path in "$ROOT" "$SOURCE" "$ROOT/assets_raw" "$ROOT/work" "$ROOT/work/dosgolem-opening" "$ROOT/work/.gocache-test" "$ROOT/work/.gopath-test"; do
   test -d "$path" || { echo "目錄不存在：$path" >&2; exit 1; }
 done
@@ -38,6 +39,8 @@ timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
       for scenario in name_navigation name_function_mode; do
         DQ3_NEWGAME_PROBE_SCENARIO="$scenario" python3 /repo/tools/dosgolem_newgame_probe.py
       done
+    elif test "$DQ3_NEWGAME_VERIFY_MODE" = --creation; then
+      DQ3_NEWGAME_PROBE_SCENARIO=name_creation python3 /repo/tools/dosgolem_newgame_probe.py
     else
       python3 /repo/tools/dosgolem_newgame_probe.py
     fi
@@ -56,6 +59,9 @@ timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
       comparison=TestDosgolemNewGameWindowPrototype
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --navigation; then
       comparison=TestDosgolemNameInputNavigationComparison
+    elif test "$DQ3_NEWGAME_VERIFY_MODE" = --creation; then
+      export DQ3_DOSGOLEM_CREATION_COMPARE=1
+      comparison=TestDosgolemNewGameCreationComparison
     else
       comparison=TestDosgolemNewGameMenuAndNameComparison
     fi

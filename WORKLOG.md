@@ -1,5 +1,37 @@
 # DQ3 工作歷程
 
+## 2026-10-01 — Issue #4：性別畫面與固定種子Lv1交易
+
+沿用遠端Issue #4及已授權的更新／commit／push，沒有重複建立Issue。由冷啟動IRQ1
+英數命名「0」、完成及預設男性自然到生成入口；IDA 9.4先確認能力種子是DGROUP0B5A，
+舊文件的BIOS tick→CS:701B屬預設名稱，不能混用。原版生成入口固定1357一次，重製
+首個正式輸入前固定同值。七項能力、目前HP／MP及最後seed356D一致，交易對拍通過。
+
+正式性別PNG初差3,176像素；以raw0x28BC6／record556／選項consumer及完整IRQ1畫面
+完成DRAFT→隔離試作0差異→READY，再接入共用索引色renderer與pack，正式差異0。
+五張完成前命名畫面同樣0；先前12張重跑後均0，合計18張完整640×350 RGB。
+schema/content升為0.1.56／0.1.62；EXE／TXT parity、五項性別損壞契約拒絕通過。
+原版EXE／dosgolem上游唯讀；完整素材、PNG／state、IDA及收據不入Git。
+
+完整game360項頂層／35項子測試通過，33項選用擷取／額外收據未執行，沒有素材缺失。
+正式新遊戲至THE END及各段存讀檔通過（91.52秒）。internal首次被六項舊schema測試
+輸入擋住；更新該輸入後，使用相同容器／命令乾淨重跑全部internal及桌面main.go建置通過。
+冷啟動重生入口`tools/verify_dosgolem_newgame.sh --creation`亦通過；完整參數見docs/113。
+
+保留下一個產品阻塞點：原版能力面板`sub_1834E→sub_2111B`等待Enter，才返回caller並
+畫確認提示；原版三個PC事件及正式按鍵已閉合。重製選性別後提前提示，再按Enter提前
+開始遊戲。明確啟用的能力等待稽核保持RED，等待頁差15,468像素，沒有弱化斷言。
+本批性別／能力交易CONFORMED不代表創角確認、出生點／母親或完整原版campaign完成。
+
+新匯出入口`tools/ida_dump_creation_rng.py`同批掛入docs/113；有限range台帳自動附加
+語意、推論等級、證據與未達confirmed警示，原始名稱／位址／bytes／xref及unknown保留。
+首次ASCII文字編碼失敗改明定UTF-8，仍用同一IDA工具鏈重跑；Docker heredoc初漏`-i`
+導致腳本未執行，補標準輸入後重跑；均分類為工具問題，不改遊戲規則。
+
+最新私有驗收`work/dosgolem-opening/issue4-creation-verification-receipt.json`，19,276bytes，
+SHA-256 `0581086322b07394b8c9dffa7e697c115b220670e6613de5f046b426f83b1775`；
+精確原版／IDA收據hash與入口見docs/113。最後Docker與擁有權、工作樹及push核對回填Issue。
+
 ## 2026-10-01 — Issue #1：dosgolem 開場對拍
 
 起始 HEAD `0c6f780`，未追蹤使用者檔案全數保留。主機 gh 登入成功，遠端原先沒有 Issue；
