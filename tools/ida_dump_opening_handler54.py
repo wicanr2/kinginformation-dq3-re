@@ -29,6 +29,10 @@ import idc
 INPUT_BLOB = b""
 INPUT_PATH = ""
 REVIEW_LEDGER = [
+    (0x216c5, 0x216d0, "confirmed", "生日／房間等待以BP42即336px、當前行DX、不透明字模13顯示箭頭；完整生日兩相閉合，房間人物仍RED"),
+    (0x216e6, 0x216f3, "confirmed", "原始計數閾值8後以字模12清除箭頭；原版自然相位及原型完整生日RGB閉合；時長只採hardware-spec approximation"),
+    (0x21709, 0x21710, "confirmed", "原始空白閾值5後回到顯示字模；兩相可見閉合，不外推ISR或硬體wall-clock"),
+    (0x21710, 0x21718, "confirmed", "自然確認後以字模12清除，再返回既有文字續頁；生日末尾／四次捲動全畫布閉合"),
     (0x10077, 0x100ab, "strong", "創角返回後清畫面、開共用視窗、消費生日文字；只閉合首頁"),
     (0x100ab, 0x100ae, "confirmed", "第18次正常Enter後生日consumer已返回；未追加EOF按鍵，限定出生交易順序"),
     (0x100b5, 0x100c4, "confirmed", "生日返回後才寫DGROUP4F33/4F35=5,5並呼叫11900；房間渲染未對拍"),
@@ -55,6 +59,10 @@ CONTINUATION_RANGES = {0x100ab, 0x100b5, 0x100cd, 0x21514, 0x21558}
 
 
 def review_evidence(start):
+    if start in (0x216c5, 0x216e6, 0x21709, 0x21710):
+        return ("docs/188：2026-10-02等待箭頭有限READY；原始bytes、字模、自然相位與5029ccf隔離原型；"
+                "原版收據SHA-256 54a0c21f80559c355b0e0dbaf9f726af59739021c7cfcfaf33a833468fcfbe51；"
+                "seed1357固定一次、19次IRQ1輸入、生日兩相全640×350 RGB差異0；房間人物261仍RED；時間為平台近似")
     if start in (0x21558, 0x219fe):
         return ("docs/188：2026-10-02生日保留／捲動READY；IDA原始bytes／consumer與正常InputState隔離原型六張全640×350 RGB差異0；"
                 "原版冷啟動收據SHA-256 fe874811378a8f88223dc55b8cc4361ac391105e86e5e0c5b5017f59c36f2984；"

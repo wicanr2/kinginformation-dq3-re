@@ -1,6 +1,29 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-## 2026-10-02 最新契約：出生場景的有限呈現
+## 2026-10-02 最新契約：當前文字行的等待指示
+
+schema為`0.1.62`，DQ3 content為`0.1.68`。有限READY／CONFORMED與原始定位見
+[docs/188](188-opening-escort-to-castle-spec.md)。`interface.opening_prelude.wait_indicator`必填：
+
+| 欄位 | 契約 | 本pack來源 |
+|---|---|---|
+| `mode` | 唯一已註冊原語`cursor_row_blink`；只在內嵌等待時顯示 | 原始文字consumer當前行，确认後清除 |
+| `x` | 文字區內的8px對齊橫座標，整個字模不得越界 | BP=42 VGA bytes，即336px |
+| `visible_glyph`、`hidden_glyph` | 不同且有效的原始字模索引，不設引擎預設 | 13箭頭／12空白，16×16不透明寫入 |
+| `visible_ticks`、`hidden_ticks` | 1..65535個來源計時tick | EXE閾值8／5 |
+| `rate_numerator`、`rate_denominator` | 各1..1000000000；向上取整後每相位最多3600個更新 | 315000000／17301504 Hz平台契約 |
+| `evidence` | D3來源、位址、consumer與文件入口 | EXE／FON及正常dosgolem相位 |
+| `timing_evidence` | 至少D2且有明確平台來源 | 60TPS換算27／17個更新，只屬hardware-spec approximation |
+
+每個欄位拒絕缺少、null與未知欄位；契約拒絕越界字模／幾何、零頻率、無界時長及未審查證據。
+縱座標由現行文字行、Window inset與字模高度導出，沒有DQ3專用Go常數。
+確認即停止繪製指示，續頁保留原有文字；下一停點從顯示相位重新開始。
+生日完整兩相零差異，完整房間兩相仍261個人物像素差異；不稱人物或原版wall-clock已閉合。
+原始Go格式解碼器與EXE／FON parity test保留，資料包變更受canonical hash約束。
+
+以下段落保存此前契約及形成史；現行版本與適用範圍以本節為準。
+
+## 2026-10-02 上一契約：出生場景的有限呈現
 
 schema為`0.1.61`，DQ3 content為`0.1.67`。READY審查、原始定位與完整RGB紅結果見
 [docs/188](188-opening-escort-to-castle-spec.md)。`interface.opening_scene_presentation`

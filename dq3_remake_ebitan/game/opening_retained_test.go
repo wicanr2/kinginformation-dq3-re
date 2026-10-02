@@ -15,7 +15,7 @@ import (
 func TestRetainedRowsPauseAfterScrollAndFinalHold(t *testing.T) {
 	d := Dialogue{layout: gamepack.WindowLayout{Columns: 1, LinesPerPage: 2, GlyphHoldFrames: 1}, prelude: &gamepack.OpeningPrelude{
 		GlyphStepX: 24, VariableCodeWords: 1, ReturnMode: "automatic_after_reveal",
-		TextFlow: gamepack.RetainedTextFlow{Mode: "retained_rows", ScrollStepPixels: 8, ScrollSteps: 2, ScrollHoldFrames: 2}}}
+		WaitIndicator: gamepack.OpeningWaitIndicator{VisibleTicks: 1, HiddenTicks: 1, RateNumerator: 60, RateDenominator: 1}, TextFlow: gamepack.RetainedTextFlow{Mode: "retained_rows", ScrollStepPixels: 8, ScrollSteps: 2, ScrollHoldFrames: 2}}}
 	d.openRecord([]uint16{1, dq3data.TxtNL, 2, dq3data.TxtPage, 3})
 	d.Tick()
 	d.Tick()
@@ -57,7 +57,7 @@ func TestRetainedRowsPauseAfterScrollAndFinalHold(t *testing.T) {
 
 func TestRetainedRowsUsesEncodedNewlines(t *testing.T) {
 	d := Dialogue{layout: gamepack.WindowLayout{Columns: 1, LinesPerPage: 2, GlyphHoldFrames: 1}, prelude: &gamepack.OpeningPrelude{
-		GlyphStepX: 24, VariableCodeWords: 1, ReturnMode: "automatic_after_reveal", TextFlow: gamepack.RetainedTextFlow{Mode: "retained_rows", ScrollStepPixels: 8, ScrollSteps: 2, ScrollHoldFrames: 1}}}
+		GlyphStepX: 24, VariableCodeWords: 1, ReturnMode: "automatic_after_reveal", WaitIndicator: gamepack.OpeningWaitIndicator{VisibleTicks: 1, HiddenTicks: 1, RateNumerator: 60, RateDenominator: 1}, TextFlow: gamepack.RetainedTextFlow{Mode: "retained_rows", ScrollStepPixels: 8, ScrollSteps: 2, ScrollHoldFrames: 1}}}
 	d.openRecord([]uint16{1, 2, 3})
 	for i := 0; i < 3; i++ {
 		d.Tick()
@@ -74,6 +74,51 @@ func TestRetainedRowsUsesEncodedNewlines(t *testing.T) {
 	d.openRecord([]uint16{4})
 	if d.retained != nil {
 		t.Fatal("新record保留上一段畫布操作")
+	}
+}
+
+func TestRetainedWaitIndicatorCycleAndConfirm(t *testing.T) {
+	p, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := p.Interface.OpeningPrelude
+	d := Dialogue{layout: e.Window, prelude: e}
+	d.openRecord([]uint16{1, dq3data.TxtPage, 2, dq3data.TxtPage, 3})
+	for i := 0; i < 100 && !d.waitingForConfirm(); i++ {
+		d.Tick()
+	}
+	if !d.waitingForConfirm() || d.retained.row != 1 || d.retained.waitFrames != 0 {
+		t.Fatal("第一個等待沒有在下一行顯示")
+	}
+	w := e.WaitIndicator
+	on, off := w.HoldFrames(w.VisibleTicks), w.HoldFrames(w.HiddenTicks)
+	for cycle := 0; cycle < 3; cycle++ {
+		for i := 0; i < on; i++ {
+			if d.retained.waitFrames >= on {
+				t.Fatal("箭頭提前清除")
+			}
+			d.Tick()
+		}
+		for i := 0; i < off; i++ {
+			if d.retained.waitFrames < on {
+				t.Fatal("空白相位提前返回")
+			}
+			d.Tick()
+		}
+		if d.retained.waitFrames != 0 {
+			t.Fatal("等待相位未循環")
+		}
+	}
+	d.Advance()
+	if d.waitingForConfirm() {
+		t.Fatal("確認未清除等待指示")
+	}
+	for i := 0; i < 100 && !d.waitingForConfirm(); i++ {
+		d.Tick()
+	}
+	if !d.waitingForConfirm() || d.retained.row != 2 || d.retained.waitFrames != 0 {
+		t.Fatal("下一停點未依當前行重設相位")
 	}
 }
 
@@ -184,6 +229,23 @@ func TestDosgolemOpeningRetainedRowsComparison(t *testing.T) {
 		compareDosgolemRasterFrame(t, g, dir, original, prefix+"-remake-"+name+".png", name)
 	}
 	wait(func() bool { return g.dlg.waitingForConfirm() })
+
+	// 原版accepted／stable均是清除相位；依來源契約空白更新，不用圖片匹配挑相位。
+	compare("birthday-wait-arrow-visible")
+	w := g.dlg.prelude.WaitIndicator
+	idleFrames := func(n int) {
+		t.Helper()
+		for i := 0; i < n; i++ {
+			if err := g.step(idle); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	idleFrames(w.HoldFrames(w.VisibleTicks))
+	compare("birthday-wait-arrow-hidden")
+	idleFrames(w.HoldFrames(w.HiddenTicks))
+	compare("birthday-wait-arrow-visible")
+	idleFrames(w.HoldFrames(w.VisibleTicks))
 	compare("stable")
 	if err := g.step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}); err != nil {
 		t.Fatal(err)
@@ -211,5 +273,5 @@ func TestDosgolemOpeningRetainedRowsComparison(t *testing.T) {
 	if !reflect.DeepEqual(g.dlg.buf, g.dlg.tx.Record(83)) || g.prng.State() != 0x356d || g.dayNightClock() != g.dayNightCycle.InitialClock {
 		t.Fatal("生日返回後未自然抵達既有下一節點")
 	}
-	t.Log("17次創角輸入與第18次確認，6張完整RGB；捲動期間無出生交易或RNG消耗；EOF無額外確認")
+	t.Log("17次創角輸入與第18次確認，生日兩相及6張續頁完整RGB；捲動期間無出生交易或RNG消耗；EOF無額外確認")
 }

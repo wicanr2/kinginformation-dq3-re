@@ -7,6 +7,27 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
+func validateOpeningWaitIndicator(w OpeningWaitIndicator, layout WindowLayout) error {
+	if w.Mode != "cursor_row_blink" || w.X < layout.X+layout.TextInsetX || w.X%8 != 0 ||
+		w.X+dq3data.GlyphPx > layout.X+layout.Width-layout.TextInsetX ||
+		w.VisibleGlyph < 0 || w.VisibleGlyph >= dq3data.GlyphMax ||
+		w.HiddenGlyph < 0 || w.HiddenGlyph >= dq3data.GlyphMax || w.VisibleGlyph == w.HiddenGlyph ||
+		w.VisibleTicks <= 0 || w.VisibleTicks > 65535 || w.HiddenTicks <= 0 || w.HiddenTicks > 65535 ||
+		w.RateNumerator <= 0 || w.RateNumerator > 1000000000 || w.RateDenominator <= 0 || w.RateDenominator > 1000000000 {
+		return errors.New("opening wait indicator is invalid")
+	}
+	if w.HoldFrames(w.VisibleTicks) > 3600 || w.HoldFrames(w.HiddenTicks) > 3600 ||
+		w.Evidence.Level != "D3" || (w.TimingEvidence.Level != "D2" && w.TimingEvidence.Level != "D3") {
+		return errors.New("opening wait indicator timing or evidence is invalid")
+	}
+	for _, e := range []Evidence{w.Evidence, w.TimingEvidence} {
+		if err := validateEvidence(e); err != nil {
+			return fmt.Errorf("opening wait indicator evidence: %w", err)
+		}
+	}
+	return nil
+}
+
 func (p *Pack) validateOpeningScenePresentation() error {
 	e, prelude, escort := p.Interface.OpeningScenePresentation, p.Interface.OpeningPrelude, p.Interface.OpeningEscort
 	if e == nil {

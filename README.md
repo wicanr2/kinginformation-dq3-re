@@ -23,7 +23,7 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前開發版為 schema `0.1.61`／content `0.1.67`。dosgolem 已驗證六幕順序、
+目前開發版為 schema `0.1.62`／content `0.1.68`。dosgolem 已驗證六幕順序、
 前五幕色號及第六幕 129 個完整翻頁的色號／RGB，並修正漏卡與動態標誌；
 範圍與時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
 正常輸入的命名、性別、能力等待／確認及接受角色後生日首頁共22張完整畫布 RGB 零差異，
@@ -31,8 +31,8 @@
 正常路線另修正同伴持有金皇冠時的還冠持有權檢查，見 [docs/82](docs/82-romaly-king-production-trace.md)。
 現行 remake 正式新遊戲輸入已抵達 `THE END`，標準回歸與桌面建置通過；
 生日自動返回、返回後出生交易及初始晝夜時鐘已依原版修正。
-生日續頁保留前文及四次捲動新增五張完整RGB零差異，累計限定畫面27張；
-房間視野、界外圖塊、共用文字框與陰影已修正；完整畫面仍差302像素，人物影格與箭頭待對拍。
+生日續頁、四次捲動與等待箭頭兩相已核對完整RGB，累計限定畫面28張；
+房間視野、界外圖塊、共用文字框、陰影與等待箭頭已修正，完整畫面仍差261個人物像素。
 母親、完整原版玩家路線與音畫對拍尚未完成。
 歷史 E3 與 90% 自評不能代替本輪收據。現況以 [CONTEXT.md](CONTEXT.md) 為準，
 工作依據為 [GitHub Issues](https://github.com/wicanr2/kinginformation-dq3-re/issues)，

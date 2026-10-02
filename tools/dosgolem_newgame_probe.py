@@ -195,9 +195,40 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                     m.Steps,flowPC,ds,m.CPU.R[cpu.BX],m.CPU.R[cpu.SI],m.CPU.R[cpu.DI],
                     m.Read8(cpu.Addr(ds,0x0004)),m.Read16(cpu.Addr(ds,0x0b5a)))
             }
+            if flowPC >= 0x216d0 && flowPC <= 0x21718 &&
+                (flowPC == 0x216d0 || flowPC == 0x216f3 || flowPC == 0x21718) {
+                ds := m.CPU.Seg[cpu.DS]
+                location := "birthday"
+                if m.Read16(cpu.Addr(ds,0x4f33)) == 5 && m.Read16(cpu.Addr(ds,0x4f35)) == 5 {
+                    location = "room"
+                }
+                phase := "visible"
+                if flowPC != 0x216d0 { phase = "hidden" }
+                fmt.Printf("DQ3_WAIT_PHASE step=%d ida_linear=%05x location=%s phase=%s DS=%04x BP=%04x DX=%04x raw0005=%d raw0004=%d raw0b34=%d seed=%04x\n",
+                    m.Steps,flowPC,location,phase,ds,m.CPU.R[cpu.BP],m.CPU.R[cpu.DX],
+                    m.Read16(cpu.Addr(ds,0x0005)),m.Read8(cpu.Addr(ds,0x0004)),
+                    m.Read16(cpu.Addr(ds,0x0b34)),m.Read16(cpu.Addr(ds,0x0b5a)))
+                name := location+"-wait-arrow-"+phase
+                capture := false
+                if flowPC != 0x21718 {
+                    dq3PhaseSeen[name]++
+                    capture = dq3PhaseSeen[name] == 1
+                    // 首次生日箭頭早於可見頁換入；保留為換頁診斷，第二次才是完整畫面。
+                    if location == "birthday" && phase == "visible" {
+                        capture = dq3PhaseSeen[name] <= 2
+                        if dq3PhaseSeen[name] == 1 { name += "-transient" }
+                    }
+                }
+                if capture {
+                    path := "/work/dosgolem-opening/__PREFIX__-"+name
+                    if err := writeScreen(m,path+".png",0,0); err != nil { die(err) }
+                    if err := os.WriteFile(path+".bin",m.Indexed(),0o644); err != nil { die(err) }
+                }
+            }
         }
 """
-        probetext = probetext.replace(marker, marker + flow_hook, 1)
+        flow_hook = flow_hook.replace('__PREFIX__', prefix)
+        probetext = probetext.replace(marker, '\tvar dq3PhaseSeen = map[string]int{}\n' + marker + flow_hook, 1)
     probe.write_text(probetext)
     subprocess.run(['gofmt','-w',str(probe)],cwd=src,check=True)
     binary = out / (prefix.replace('issue4-', 'issue4-probe-'))
@@ -223,7 +254,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     (out / f'{prefix}-generation.py').write_bytes(generation_script)
     print('原版自然探測開始',flush=True)
     with (out / f'{prefix}.log').open('w') as log:
-        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=240 if scenario == 'birthday_continue' else 180)
+        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=360 if scenario == 'birthday_continue' else 180)
     print('原版探測結束',result.returncode,flush=True)
     lines = (out / f'{prefix}.log').read_text().splitlines()
     assert result.returncode == 0
@@ -289,8 +320,15 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         meta['scope']='冷啟動19次正式IRQ1輸入，創角種子固定一次，再正常接受角色與兩次生日續頁；續頁與下一場景尚待重製比較'
         meta['birthday_flow_events'] = [line for line in lines if line.startswith('DQ3_BIRTHDAY_FLOW ')]
         meta['room_sprite_events'] = [line for line in lines if line.startswith('DQ3_ROOM_SPRITE ')]
+        meta['wait_phase_events'] = [line for line in lines if line.startswith('DQ3_WAIT_PHASE ')]
     meta['artifacts'] = []
     artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log', f'{prefix}-generation.py']
+    if scenario == 'birthday_continue':
+        artifact_names += [f'{prefix}-{location}-wait-arrow-{phase}.{suffix}'
+                           for location in ('birthday', 'room') for phase in ('visible', 'hidden')
+                           for suffix in ('png', 'bin')]
+        artifact_names += [f'{prefix}-birthday-wait-arrow-visible-transient.{suffix}'
+                           for suffix in ('png', 'bin')]
     for name in artifact_names:
         artifact = out / name
         assert artifact.is_file() and artifact.stat().st_size > 0

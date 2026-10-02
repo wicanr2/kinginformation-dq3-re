@@ -8,6 +8,7 @@ type retainedTextFlow struct {
 	word, x, row    int
 	glyphs          []int
 	waiting         bool
+	waitFrames      int
 	scrolling       bool
 	scrollRemaining int
 	afterScroll     retainedTextAction
@@ -37,6 +38,8 @@ func (d *Dialogue) tickRetainedRows() {
 	}
 	f := d.retained
 	if f.waiting {
+		w := d.prelude.WaitIndicator
+		f.waitFrames = (f.waitFrames + 1) % (w.HoldFrames(w.VisibleTicks) + w.HoldFrames(w.HiddenTicks))
 		return
 	}
 	d.revealTick++
@@ -60,6 +63,7 @@ func (d *Dialogue) tickRetainedRows() {
 			f.afterScroll = retainedContinue
 			if action == retainedWait {
 				f.waiting = true
+				f.waitFrames = 0
 				return
 			}
 			if action == retainedReturn {
@@ -100,6 +104,7 @@ func (d *Dialogue) tickRetainedRows() {
 			f.row++
 			if v == dq3data.TxtPage {
 				f.waiting = true
+				f.waitFrames = 0
 				return
 			}
 		case dq3data.IsVarInsert(v):
@@ -111,7 +116,34 @@ func (d *Dialogue) tickRetainedRows() {
 	}
 }
 
+func (d *Dialogue) drawWaitIndicator(rgba []byte, fg dq3data.Color) {
+	if d.retained == nil || !d.retained.waiting {
+		return
+	}
+	w := d.prelude.WaitIndicator
+	code := w.VisibleGlyph
+	if d.retained.waitFrames >= w.HoldFrames(w.VisibleTicks) {
+		code = w.HiddenGlyph
+	}
+	glyph, ok := d.tx.Glyph(code)
+	if !ok {
+		return
+	}
+	y := d.layout.Y + d.layout.TextInsetY + d.retained.row*dq3data.GlyphPx
+	bg := dq3data.Color{R: d.prelude.BackdropRGB[0], G: d.prelude.BackdropRGB[1], B: d.prelude.BackdropRGB[2]}
+	for r := 0; r < dq3data.GlyphPx; r++ {
+		for c := 0; c < dq3data.GlyphPx; c++ {
+			color := bg
+			if glyph[r][c] != 0 {
+				color = fg
+			}
+			putPx(rgba, w.X+c, y+r, color)
+		}
+	}
+}
+
 func (d *Dialogue) drawRetainedRows(rgba []byte, fg dq3data.Color) {
+	defer d.drawWaitIndicator(rgba, fg)
 	if d.retained == nil {
 		return
 	}

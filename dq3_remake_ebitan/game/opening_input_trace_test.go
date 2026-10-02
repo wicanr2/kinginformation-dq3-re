@@ -198,6 +198,15 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 	if g.prng.State() != 0x356d {
 		t.Fatal("接受角色或旁白等待消耗了創角之後的RNG")
 	}
+
+	// 兩張來源首頁都是hidden相位；由正常空白InputState前進已審查的visible持續時間。
+	w := g.dlg.prelude.WaitIndicator
+	for tick := 0; tick < w.HoldFrames(w.VisibleTicks); tick++ {
+		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	g.renderFrame()
 	for _, name := range []string{"accepted", "stable"} {
 		original := prefix + "-" + name + ".png"
 		if !indexed[original] {
@@ -231,7 +240,26 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 			if !indexed[original] {
 				t.Fatal("原版生日續頁未登記")
 			}
+
 			compareDosgolemRasterFrame(t, g, dir, original, prefix+"-remake-"+name+".png", name)
+			if i == 0 {
+				for _, phase := range []string{"visible", "hidden"} {
+					if phase == "hidden" {
+						for tick := 0; tick < w.HoldFrames(w.VisibleTicks); tick++ {
+							if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+								t.Fatal(err)
+							}
+						}
+						g.renderFrame()
+					}
+					name := "room-wait-arrow-" + phase
+					original := prefix + "-" + name + ".png"
+					if !indexed[original] {
+						t.Fatal("原版房間相位未登記")
+					}
+					compareDosgolemRasterFrame(t, g, dir, original, prefix+"-remake-"+name+".png", name)
+				}
+			}
 		}
 	}
 }

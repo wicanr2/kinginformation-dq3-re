@@ -1,6 +1,75 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
-## 2026-10-02 最新結果：有限房間呈現已正式接入，完整RGB仍RED
+## 2026-10-02：等待箭頭相位（生日限定CONFORMED，人物仍RED）
+
+依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)接續5029ccf。
+本輪起點的完整房間302個RGB差異中，箭頭佔41，人物佔261。本節只閉合共用文字等待指示。
+
+| 原始定位 | 附加語意 | 等級與限制 |
+|---|---|---|
+| IDA linear0x216C5／file0x12A35，`BD 2A 00` | 字模橫座標為42個VGA bytes，即336px | confirmed；來源bytes與完整生日兩相閉合 |
+| linear0x216C8..0x216CB／file0x12A38..0x12A3B，`BX=13`→sub_211B6 | 16×16不透明寫入箭頭；DX沿用文字consumer的當前行 | confirmed；不將首次換頁暫態當完整首頁 |
+| linear0x216E6／file0x12A56，`3D 08 00` | 顯示後等待DGROUP0005至少8，再寫入字模12 | confirmed；只證實來源閾值與可見清除，實機wall-clock仍為近似 |
+| linear0x21709／file0x12A79，`3D 05 00` | 空白等待至少5，再回到箭頭繪製 | confirmed；來源bytes與自然相位，不研究ISR逐週期 |
+| linear0x21710..0x21718／file0x12A80..0x12A88 | 確認輸入後亦先寫字模12，再返回文字流程 | confirmed；正常輸入後續頁、六張畫面閉合 |
+
+IDA Pro9.4匯出`work/issue4-wait-arrow-ida.json`，282,146bytes，SHA-256
+`20ebafb740eca58d0c030652ea1dd3e591efb2ddb0a79615ae993bf92634be47`。
+重生入口`tools/ida_dump_opening_handler54.py`，target file0x12A33、末端0x12A97。
+輸入`assets_raw/DQ3.EXE`，115,282bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；
+位址空間為IDA linear，file=linear−0xEC90，runtime physical=linear−0xEF00。
+147筆原始file bytes已核對，保留原名、位址、xref與分級，沒有rename原檔。
+字模來源`assets_raw/D3TXT00.FON`，47,232bytes，SHA-256
+`c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02`。
+
+正式`opening_prelude.wait_indicator`必填有限契約：mode、x、visible_glyph、hidden_glyph、
+visible_ticks、hidden_ticks、rate_numerator、rate_denominator、evidence與timing_evidence。
+引擎只知道當前行的兩相字模閃爍，60TPS更新幀數由資料包頻率向上取整。
+沿用既有315000000／17301504 Hz時基，8／5 ticks分別約27／17個更新。
+時間只標hardware-spec approximation，來源為
+[DOSBox Staging timer實作](https://github.com/dosbox-staging/dosbox-staging/blob/main/src/hardware/timer.cpp)
+的65536除數與timer delay契約；不宣稱原版逐週期時序一致。
+
+原版首次生日箭頭擷取仍在可見頁換入前，只有箭頭，必須保留為暫態診斷。
+正式完整首頁採下一次顯示與首次清除兩個已識別相位；不挑選相似圖片或更換人物影格。
+前一批捕捉超過240秒，已清除容器；本批沿用image與資源限制，內外逾時改為360／420秒。
+原版原始資料與dosgolem來源仍唯讀，19次輸入及種子設定不改。
+原型來源固定5029ccf，入口`work/issue4-wait-indicator-prototype.py`，結果保存於
+`work/issue4-wait-indicator-prototype.log`。生日顯示、清除、再次顯示及原有六張續頁全RGB零差異。
+房間兩相均261差異，範圍只在人物，沒有遮罩或指定影格；完整房間仍RED。
+自然相位確認字模、當前行與清除控制流，可見部分升為confirmed，8／5閾值來自原始指令。
+上述有限契約審為READY；定時精度維持hardware-spec approximation，不外推人物或後續事件。
+完整原版收據`work/dosgolem-opening/issue4-birthday-pages-receipt.json`，83,763bytes，SHA-256
+`54a0c21f80559c355b0e0dbaf9f726af59739021c7cfcfaf33a833468fcfbe51`，80份產物含39張PNG／bin、log與生成腳本。
+首次生日顯示步數1102060165保留為transient；完整顯示1103628229、清除1103025099。
+301筆相位觀測只讀取DGROUP欄位，種子仍0x356D，沒有新增遊戲狀態寫入。
+
+### 正式驗收
+
+正式來源`game/dialogue_retained.go`與`internal/gamepack/gamepack.go`／`opening_scene.go`。
+嚴格解碼與原始EXE／FON parity在`opening_scene_test.go`；生日兩相、再次顯示、續頁清除與六張既有捲動由
+`game/opening_retained_test.go`正常InputState核對，沒有文字狀態注入。
+房間完整RGB兩相及穩定畫面均261差異，範圍(289,131)..(412,168)只在人物；箭頭41差異消除。
+第19次不同狀態的196,698仍只作診斷。生日新增一張獨立顯示畫面，累計限定28張；房間未加入通過數。
+schema/content為0.1.62／0.1.68，位置、字模、閾值、頻率與證據全部放在JSON，沒有Go版本 fallback。
+
+完整game365項頂層／34項子測試、11個internal、desktop main.go通過；
+正常新遊戲至THE END63.35秒，主角／酒館與各段存讀檔通過，只屬重製回歸。
+標準38項選用SKIP，創角與生日嚴格PASS、房間RED，餘35項未執行，沒有素材缺失。
+測試記錄`work/issue4-wait-indicator-production.log`與`work/issue4-wait-indicator-full.log`。
+附分級IDA sidecar `work/issue4-wait-arrow-reviewed-ida.json`，289,977bytes，SHA-256
+`61e18140a63a00217a468af5c2eb646fa4dbf23a190576bd6abdbe5f0b6bc8a3`。
+147筆原始file bytes再核對；原版名字／位址不改，先前未知收據保留，新增語意由REVIEW_LEDGER自動附註。
+
+私有稽核入口`work/issue4-wait-indicator-audit.py`，收據`work/issue4-wait-indicator-evidence-receipt.json`，
+28,655bytes，SHA-256 `f802ab3a1024cbb25ebcb758be3dcb128150776fc0e5a05b14f0afd5f1e09ce3`。
+核對80份原版產物、兩份IDA共294筆raw rows、正式來源hash、正常19次輸入與固定種子、完整RGB和回歸。
+原版與dosgolem來源唯讀，本輪UID/GID1000；歷史root候選3213與Markdown目錄候選4保留。
+本輪一次性容器已清除，未建立新image或發行包，原版圖片／資料／database不入Git。
+下一切片為NPC繪製時的相位及record83返回後更新，不以固定人物影格近似。
+
+## 2026-10-02 上一輪結果：有限房間呈現已正式接入，完整RGB仍RED
 
 本輪工作與有限READY審查依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
 固定現行5a2101d的隔離原型302差異，正式版本亦重現302：場景人物261、文字框箭頭41。

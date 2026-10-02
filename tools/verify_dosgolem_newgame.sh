@@ -24,7 +24,7 @@ cleanup() { docker rm -f "$NAME" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 LIMIT=240
 test "$MODE" != --navigation || LIMIT=480
-test "$MODE" != --birthday-pages || LIMIT=300
+test "$MODE" != --birthday-pages || LIMIT=420
 timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
   --memory 4g --cpus 2 --pids-limit 192 -u "$(id -u):$(id -g)" \
   -v "$ROOT:/repo:ro" -v "$ROOT/work:/work" -v "$SOURCE:/dosgolem:ro" \

@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.61"
+	SchemaVersion       = "0.1.62"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -935,18 +935,44 @@ func (f *RetainedTextFlow) UnmarshalJSON(raw []byte) error {
 	return decodeOpeningObject(raw, (*plain)(f), []string{"mode", "scroll_step_pixels", "scroll_steps", "scroll_hold_frames", "evidence"})
 }
 
+// OpeningWaitIndicator 定義當前文字行的有限兩相字模指示。
+// 來源tick閾值與平台時基分開保存；換算不聲稱原版wall-clock精度。
+type OpeningWaitIndicator struct {
+	Mode            string   `json:"mode"`
+	X               int      `json:"x"`
+	VisibleGlyph    int      `json:"visible_glyph"`
+	HiddenGlyph     int      `json:"hidden_glyph"`
+	VisibleTicks    int      `json:"visible_ticks"`
+	HiddenTicks     int      `json:"hidden_ticks"`
+	RateNumerator   int      `json:"rate_numerator"`
+	RateDenominator int      `json:"rate_denominator"`
+	Evidence        Evidence `json:"evidence"`
+	TimingEvidence  Evidence `json:"timing_evidence"`
+}
+
+func (w *OpeningWaitIndicator) UnmarshalJSON(raw []byte) error {
+	type plain OpeningWaitIndicator
+	return decodeOpeningObject(raw, (*plain)(w), []string{"mode", "x", "visible_glyph", "hidden_glyph", "visible_ticks", "hidden_ticks", "rate_numerator", "rate_denominator", "evidence", "timing_evidence"})
+}
+
+// HoldFrames 在固定60TPS引擎中向上取整，輸入先經資料包驗證。
+func (w OpeningWaitIndicator) HoldFrames(ticks int) int {
+	return int((int64(ticks)*60*int64(w.RateDenominator) + int64(w.RateNumerator) - 1) / int64(w.RateNumerator))
+}
+
 type OpeningPrelude struct {
-	ID                string           `json:"id"`
-	TextID            string           `json:"text_id"`
-	FrameTextID       string           `json:"frame_text_id"`
-	Window            WindowLayout     `json:"window"`
-	GlyphStepX        int              `json:"glyph_step_x"`
-	VariableCodeWords int              `json:"variable_code_words"`
-	ReturnMode        string           `json:"return_mode"`
-	TextFlow          RetainedTextFlow `json:"text_flow"`
-	ForegroundRGB     []uint8          `json:"foreground_rgb"`
-	BackdropRGB       []uint8          `json:"backdrop_rgb"`
-	Evidence          Evidence         `json:"evidence"`
+	ID                string               `json:"id"`
+	TextID            string               `json:"text_id"`
+	FrameTextID       string               `json:"frame_text_id"`
+	Window            WindowLayout         `json:"window"`
+	GlyphStepX        int                  `json:"glyph_step_x"`
+	VariableCodeWords int                  `json:"variable_code_words"`
+	ReturnMode        string               `json:"return_mode"`
+	TextFlow          RetainedTextFlow     `json:"text_flow"`
+	WaitIndicator     OpeningWaitIndicator `json:"wait_indicator"`
+	ForegroundRGB     []uint8              `json:"foreground_rgb"`
+	BackdropRGB       []uint8              `json:"backdrop_rgb"`
+	Evidence          Evidence             `json:"evidence"`
 }
 
 // OpeningScenePresentation references shared text presentation and a finite
@@ -994,7 +1020,7 @@ func (s *WindowShadow) UnmarshalJSON(raw []byte) error {
 
 func (p *OpeningPrelude) UnmarshalJSON(raw []byte) error {
 	type plain OpeningPrelude
-	if err := decodeOpeningObject(raw, (*plain)(p), []string{"id", "text_id", "frame_text_id", "window", "glyph_step_x", "variable_code_words", "return_mode", "text_flow", "foreground_rgb", "backdrop_rgb", "evidence"}); err != nil {
+	if err := decodeOpeningObject(raw, (*plain)(p), []string{"id", "text_id", "frame_text_id", "window", "glyph_step_x", "variable_code_words", "return_mode", "text_flow", "wait_indicator", "foreground_rgb", "backdrop_rgb", "evidence"}); err != nil {
 		return err
 	}
 	var fields map[string]json.RawMessage
@@ -2605,6 +2631,9 @@ func (p *Pack) validateInterface() error {
 		}
 	}
 	if e := p.Interface.OpeningPrelude; e != nil {
+		if err := validateOpeningWaitIndicator(e.WaitIndicator, e.Window); err != nil {
+			return err
+		}
 		w := e.Window
 		f := e.TextFlow
 		if f.Mode != "retained_rows" || e.ReturnMode != "automatic_after_reveal" || f.Evidence.Level != "D3" ||

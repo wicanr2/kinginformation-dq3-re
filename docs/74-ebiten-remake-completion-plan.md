@@ -1,15 +1,20 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> **2026-10-02 最新閘門（Issue #4，有限房間呈現已接入，完整畫面仍RED）：**
-> 視野、界外圖塊、共用文字框與字組陰影經原始資料／consumer及現行來源原型審查READY，正式完整RGB由172,261降至302。
-> 剩餘人物261、箭頭41，沒有裁切或遮罩；第19次兩側狀態不同，196,698只供診斷，不能稱房間CONFORMED。
-> schema/content為0.1.61／0.1.67；版本值與文字序列均在JSON，帶路前清除共用呈現。
-> 正常18／19次確認經record83保留文字／EOF捲動與81返回後接回帶路；母親原版NPC更新與狀態仍未知。
-> 生日六張零差異與創角嚴格通過，累計限定27張保持。黑頁新增觀測不當作背景oracle，原始66份PNG／bin及19次輸入／38次IRQ1不變。
-> game364頂層／34子測試、11個internal及desktop main.go通過；正常新遊戲到THE END106.51秒，主角／酒館與各段存讀檔通過，只屬重製回歸。
-> 標準38項選用SKIP，原版三項另行兩PASS、一房間RED，沒有素材缺失；下一步NPC／箭頭相位與83返回後原版狀態。
-> 規格／稽核見[docs/188](188-opening-escort-to-castle-spec.md)，JSON契約見[docs/84](84-game-pack-json-contract.md)，目前驗收表以[CONTEXT](../CONTEXT.md)為準。
-> 入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍以房間完整RGB差異退出1，不重開已通過生日或深挖硬體時序。
+> **2026-10-02 最新閘門：生日等待箭頭有限CONFORMED，房間人物仍RED。**
+> 2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，等待箭頭有限READY已接入正式文字流程。
+> 生日顯示／清除全640×350 RGB零差異，另加一張獨立顯示畫面，累計限定28張。
+> 房間兩相及第18次穩定畫面由302降至261個差異，全在人物；完整房間仍RED。
+> 字模13／12、336px與當前行位置來自原始consumer；顯示8／清除5 ticks換算27／17個60TPS更新，只屬hardware-spec approximation。
+> `opening_prelude.wait_indicator`必填，所有版本值保存JSON，schema/content為0.1.62／0.1.68。
+> 正常19次輸入及38次IRQ1不變，兩側seed1357各固定一次，生日與房間等待seed356D。
+> 新原版54a0c21f含80份產物，既有68份PNG／bin保持；首次生日箭頭是換頁暫態，不當完整畫面。
+> 創角與生日兩相／六張續頁嚴格PASS，房間人物仍RED；第19次不同狀態196,698僅供診斷。
+> 完整game365項頂層／34項子測試、11個internal與desktop main.go通過；正常新遊戲至THE END63.35秒，主角／酒館及各段存讀檔通過，只屬重製回歸。
+> 標準38項選用SKIP，三項原版收據另行兩PASS、一RED，餘35項未跑，沒有素材缺失。
+> 原始定位、有限CONFORMED及私有稽核f802ab3a見[docs/188](188-opening-escort-to-castle-spec.md)，必填契約見[docs/84](84-game-pack-json-contract.md)。
+> 原版重生入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍預期房間RED退出1。
+> 下一步追NPC繪製時的相位與83返回後NPC／母親狀態；不寫死人物影格，不重開已閉合生日或深挖硬體逐週期時序。
+> 目前狀態以[CONTEXT唯一表](../CONTEXT.md)為準。
 
 > **2026-10-01 最新閘門（Issue #4，生日首頁）：**
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
