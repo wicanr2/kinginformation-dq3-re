@@ -5,7 +5,7 @@
 
 | 本輪工作 | 狀態與驗證界線 | 權威入口 |
 |---|---|---|
-| 原版新遊戲／創角／母親開場 | 進行中：生日EOF／出生交易／初始clock30已修正，第18次正常輸入到record83等待；既有22張仍零差異。房間正式完整RGB仍RED；隔離試作差2,034像素，下一步文字保留／捲動、視野／框線、母親及箭頭證據→READY→正式修正 | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/188](docs/188-opening-escort-to-castle-spec.md) |
+| 原版新遊戲／創角／母親開場 | 進行中：生日EOF／出生交易／初始clock30已修正，第18次正常輸入到record83等待；既有22張仍零差異。正式房間仍RED；layer0外界圖塊及陰影來源已連接，字組陰影試作剩302像素。下一步共享文字流與動畫時間條件→READY→正式修正 | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/188](docs/188-opening-escort-to-castle-spec.md) |
 | 原版六幕開場 | 已完成本輪限定色號／RGB 對拍，其他相位與音訊未知 | [Issue #1（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)、[docs/196](docs/196-dosgolem-opening-sequence-parity.md) |
 | 正式玩家路線回歸 | 已重驗至THE END（61.09秒），各段存讀檔、完整game／11個internal及桌面建置通過；原版動態對拍仍未知 | [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)、[Issue #4本輪修正回歸](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) |
 | 同伴持冠還冠持有權檢查 | 已由 fc78bb5 推送，原版局部靜態閉環、元件、正式還冠／辭位及存讀檔通過；原版動態路線待 dosgolem | [Issue #3（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)、[docs/82](docs/82-romaly-king-production-trace.md) |

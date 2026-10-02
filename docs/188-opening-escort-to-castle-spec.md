@@ -1,5 +1,120 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+## 2026-10-02：房間背景與陰影來源閉合，完整渲染仍 DRAFT
+
+工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，正式基準
+`8cebf4a983e32cc55132c7830604fe4cb4e0b55b`。本批只新增唯讀原版觀測與有限語意索引，
+沒有更改正式 Go 或資料包，schema/content 仍為0.1.59／0.1.65。
+正式第18次輸入抵達record83等待，完整640×350 RGB仍差172,261像素；第19次兩側狀態不同，
+198,652像素只供診斷。生日返回／初始clock的有限CONFORMED仍成立。
+
+### 已審查的原始定位
+
+輸入為 `assets_raw/DQ3.EXE`，115,282bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+工具為IDA Pro9.4，位址空間為IDA linear，MZ file=`linear−0xEC90`，DGROUP基底linear`0x24DD0`。
+資料庫、EXE及上游dosgolem均未修改；每筆匯出保留原名、原始定位、file bytes、loaded bytes、xref、分級與出處。
+
+| 原始定位 | 附加語意 | 等級與界線 |
+|---|---|---|
+| linear `0x11971..0x11991`／file `0x2ce1..0x2d01`，`sub_11900`之後的相鄰資料庫項目 | 房間視野為玩家減9、7，20×15格，未夾住地圖邊界 | strong；保留函式邊界，隔離畫布核對，尚未接入正式路徑 |
+| linear `0x130f4..0x1311e`／file `0x4464..0x448e` | section+0x12經DH寫入DGROUP0B2D；家中值為71 | confirmed只限raw欄位及writer，與自然flow的raw0B2D=71閉合 |
+| linear `0x11dd8..0x11ddc`、`0x11e47..0x11e4b`／file `0x3148..0x314c`、`0x31b7..0x31bb` | layer=0的X／Y界外圖塊讀取DGROUP0B2D | strong；不外推非零layer的0B57替代路徑 |
+| `sub_1FC57` linear `0x1fc57..0x1fcc6`／file `0x10fc7..0x11036` | x原始byte+1、y+8、完整width／height的陰影；逐行旋轉AAAA遮罩，再做16位元AND | strong；只採dosgolem字組鎖存契約，未宣稱實機逐週期一致 |
+| `sub_11ED0` linear `0x11ed0..0x11eee`／file `0x3240..0x325e` | NPC朝向與動畫位元選圖庫指標；bit7可略過動畫位元 | strong；自然繪圖時的索引與指標已取得，跨兩側的動畫時間仍待對齊 |
+| `sub_21B98` linear `0x21b98..0x21bac`／file `0x12f08..0x12f1c` | 14條指令僅設定VGA暫存器，沒有額外24px清底 | strong；不從helper名稱推定畫布清除範圍 |
+
+CTY00.DAT為7,546bytes，SHA-256
+`ac8427c5fafcad4e29246dd3c2796c476bb5ad93e53dd7c7127a6b2faa31a836`。
+section4的file基底為0x1383，+0x12=0x47；loader的取址、寫入與視野consumer已連接。
+NPC loader在linear`0x131bd..0x13370`／file`0x452d..0x46e0`保留可見性、raw控制欄位、
+圖庫快取槽的間接寫入；圖庫槽不能直接當成BLS原始人物ID。
+
+### 陰影勘誤與完整畫布試作
+
+`docs/94`舊句將`sub_1FC57`稱為清內容，本批追加勘誤。`sub_1FB36`只備份背景，
+`sub_1FC57`做偏移陰影，字模consumer才處理文字畫布，三者不能互換。
+原始共用結構使陰影範圍為x160、y246、352×96。
+
+dosgolem的`internal/machine/machine.go:Read16/Write16`依序呼叫兩次byte讀寫，
+`internal/machine/vga.go`每次讀取更新四個平面鎖存值；陰影的AND寫入共用最後讀取的值。
+因此16px字組前8px的保留色彩來自後8px，不能用單純RGBA棋盤黑點取代。
+這是本次固定revision執行器的渲染契約；[DOSBox Staging的VGA讀寫來源](https://github.com/dosbox-staging/dosbox-staging/blob/main/src/hardware/video/vga_memory.cpp)
+亦提供逐byte讀寫與鎖存運算的交叉核對，未用DOSBox圖片替代原版收據。
+
+隔離副本固定來源`4903f533e66369a78467ebcba5125de7cc283cf5`，延續既有18次InputState。
+它沿用上一批的視野／外界圖塊／共用框／clock試作，沒有更改原版輸入、seed或人物姿態。
+此副本不代表現行production。完整畫布沒有裁切或遮罩：
+
+| 試作 | 完整RGB差異 | 尚未匹配 |
+|---|---:|---|
+| 前批視野／色盤／共用字模框 | 2,034 | NPC、陰影、箭頭 |
+| 純棋盤陰影 | 544 | 兩個NPC 261、箭頭41、框底242 |
+| 依字組鎖存契約處理陰影 | 302 | 兩個NPC 261、箭頭41；框底242已消除 |
+
+入口為本機`work/issue4-room-shadow-prototype.py`與`work/issue4-room-latch-prototype.py`，
+須在既有`dq3-ebiten-test:20260822-r1`容器的來源副本執行，沿用Go編譯及有trap的Xvfb；
+測試名稱為`TestIssue4RoomShadowPrototype`／`TestIssue4RoomLatchPrototype`。
+日誌為`work/issue4-room-shadow-prototype-poses.log`／`work/issue4-room-latch-prototype.log`。
+兩項測試保留完整RGB紅結果，預期退出1；不可把試作執行成功寫成原版對拍通過。
+
+### 人物影格的有限動態觀測
+
+同一次冷啟動在實際圖庫consumer取指標後讀取暫存器，沒有原版寫入：
+
+| 步數／IDA linear | 原始暫存器 | 有限定位 |
+|---|---|---|
+| 1,222,142,894／`0x11ee8` | BX=0056、SI=50A0、DI=6C82、raw0004=1、seed356D | 母親所在格的快取索引43 |
+| 1,222,161,235／`0x11ee8` | BX=0042、SI=3DE0、DI=7456、raw0004=1、seed356D | 床邊NPC所在格的快取索引33 |
+| 1,222,323,332／`0x1e30b` | BX=0000、SI=0000、DI=0000、raw0004=0、seed356D | 勇者選第0影格 |
+
+兩個NPC的差異分別為159、102像素，對應步行影格；勇者的102像素舊分類線索已訂正為床邊NPC。
+本輪中途將母親索引口述為33亦已訂正，目的位址及原始事件保留供回查。
+等待時raw0004又變為1，不能拿等待點的值倒推先前勇者畫出的影格。
+正式測試目前只重播鍵序，未對齊兩側逐個輸入的動畫時間；不得把原版這次影格寫死在正式遊戲。
+箭頭由原版glyph13在x336、y286呈現41個可見像素；顯示／空白相位尚未進入正式契約。
+
+使用的原始素材身分：DQ3MAN.BLS 222,726bytes，SHA-256
+`823f57e0724e36ac8ed1aa472f59d2e8fb059f171e05e3aafc457e386f77158d`；
+DQ3MST.BLS 115,206bytes，SHA-256
+`a1a48eaf6c13ae73472d5ff77769fa538c19e048c24496d20218a89f3230f244`；
+DQ31.BLK 65,286bytes，SHA-256
+`5996d95d743fb8e1fe8d3ad29c513f5241af2c3574cf9f652dce57ebd6ba3298`。
+FON及PAL身分沿用下節已列輸入，原始素材不入Git。
+
+### 收據與下一閘門
+
+原版冷啟動入口仍為
+`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`。
+最新收據`work/dosgolem-opening/issue4-birthday-pages-receipt.json`為31,719bytes，SHA-256
+`b077e99c3b38f58b3326df8f8d25ed72b74d58f351a71d41374bc5063db4358c`。
+舊35fc及本批29fd收據按內容hash保留。27張PNG／27份色號、38次IRQ1及16筆既有flow均未改變。
+生成腳本留收據，SHA-256為`ffdb0e43eb7fce280c7208d551f44ebd6cad3ca31afe4b2cd187e9ce3024f563`。
+本輪wrapper退出1，仍只因既有兩項完整RGB差異；同批創角8張及生日首頁2張通過。
+
+已審查結論回填`tools/ida_dump_opening_handler54.py`的非破壞語意索引，
+新exporter SHA-256為`e138dbb9fcae439e5dadda8dd14e121d4a2c738c93983d61978a0ffebd5ae656`。
+在既有IDA9.4容器用以下file target重生，舊sidecar不覆寫：
+
+| 私有sidecar | target／額外末端 | bytes／SHA-256 |
+|---|---|---|
+| `work/issue4-room-section-reviewed-ida.json` | 0x443f／0x452d | 126,689／`fe03311344acdacb1f874cb0322123aea7c6554774b8bd1febf4d1a9a120305d` |
+| `work/issue4-room-tile-reviewed-ida.json` | 0x30fa／0x3350 | 467,829／`e6af7820d9faac2c87e2500d5b2d540baee8d78cfb85a3af02ec245fbbb294da` |
+| `work/issue4-room-window-reviewed-ida.json` | 0x10900／0x10b80 | 1,252,631／`612cde50f8cfa8fb3bca65926b3374c967b47c88bfa24414346ac4491421df43` |
+| `work/issue4-room-glyph-clear-reviewed-ida.json` | 0x12f08 | 37,877／`72880c5a2d5c4497c3ac637fc2f179b5acb1ffaf1ecb4744bf0c852f01d5216b` |
+
+`glyph-clear`僅是工作檔名，匯出語意明確標示沒有清底行為。
+補充NPC／sprite／背景備份／writer候選的sidecar及原始腳本，統一由本機
+`work/issue4-room-audit.py`稽核，產出`work/issue4-room-evidence-receipt.json`：6,045bytes，SHA-256
+`a240c5cff84059c96c20e81fb92e6ff35198b883eb6e79881761b99f3cfc5273`。
+稽核檢查完整圖像、IRQ1、既有flow、原始file bytes、推論警示、工具來源及UID/GID1000。
+狀態為`draft_prototype_full_raster_mismatch`；歷史收據不可覆寫。
+
+下一步先補共享文字流保留／捲動及兩側動畫時間條件，再審查有限資料包欄位與正式rendering入口。
+不深挖PIT／ISR逐週期同步；時間採平台規格近似，畫面驗收明列實際採樣相位。
+房間整體仍DRAFT，未接入production，也未宣稱正常原版campaign完成。
+最近完整game／internal／桌面及新遊戲→THE END仍是下節的61.09秒批次，本批未重跑完整回歸。
+
 ## 2026-10-02：有限返回／初始 clock 修正（CONFORMED，限返回順序與初值；房間畫面仍 DRAFT）
 
 下節完整續頁仍未 READY。本節只審查兩項可獨立實作的已證實行為：生日文字在

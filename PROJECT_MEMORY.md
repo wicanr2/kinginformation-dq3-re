@@ -4,8 +4,9 @@
 > 原版EXE初值與自然冷啟動flow均為clock30；正式第18次InputState現在自然抵達家中record83等待，seed356D。
 > schema/content為0.1.59／0.1.65；有限返回／clock規格及未完成界線見docs/188。
 > 既有22張保持零差異；房間正式完整RGB仍RED，文字保留／捲動、視野／框線、母親與箭頭待閉合。
-> 隔離房間試作差2,034像素，不能當成正式成果或把未審查值寫進Go；下一步沿此差異閉合。
-> 本輪正常新遊戲至THE END（61.09秒）、主角／酒館及各段存讀檔、完整game、11個internal與桌面建置通過。
+> 新IDA證據閉合layer0外界圖塊及偏移陰影；字組鎖存試作剩302像素，含NPC步行影格261及箭頭41。
+> 正式程式未變，完整房間仍DRAFT；下一步補共享文字流及動畫時間條件，不把特定影格寫死。收據b077／a240及入口見docs/188。
+> 最近正常新遊戲至THE END（61.09秒）、主角／酒館及各段存讀檔、完整game、11個internal與桌面建置通過；本批未重跑完整回歸。
 > 冷啟動19次輸入與唯讀flow入口為`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`，目前預期紅測試退出1。
 
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。

@@ -1,5 +1,13 @@
 # 對話視窗幾何與怪物 AND-mask 逆向閉合
 
+> 2026-10-02 勘誤：`sub_1FC57`做偏移陰影，本文舊「清內容」解釋已推翻。
+> IDA linear `0x1fc57..0x1fcc6`／file `0x10fc7..0x11036`的ROR遮罩及16位元AND，
+> 連同dosgolem字組鎖存契約，使隔離完整房間差異由544降為302像素。
+> `sub_1FB36`只備份背景，`sub_21B98`只設定VGA暫存器，不能當成文字清底。
+> 輸入身分、原始bytes、strong分級、正常冷啟動收據與重生入口見
+> [docs/188房間渲染DRAFT](188-opening-escort-to-castle-spec.md)。正式房間仍未CONFORMED。
+> 下方20欄／4行只保留舊契約形成史，不證明24px字距之文字流的原版換行／捲動容量。
+
 > 2026-10-01 勘誤：raw 352×96 是 record404 的字模畫布，不是可見白線矩形。
 > dosgolem 冷啟動生日首頁及 IDA consumer 證實框線由完整 record404 產生；
 > 直接用 raw 外界畫 1px 矩形不符合原版。舊證據與形成史保留，

@@ -172,11 +172,20 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             case 0x100ab, 0x100b5, 0x100c4, 0x100d5, 0x100d8, 0x100e9, 0x100fa,
                  0x21558, 0x21501, 0x216c3, 0x21726:
                 ds := m.CPU.Seg[cpu.DS]
-                fmt.Printf("DQ3_BIRTHDAY_FLOW step=%d ida_linear=%05x DS=%04x SI=%04x BP=%04x DX=%04x raw259b=%d raw0716=%04x raw0718=%04x raw4f33=%d raw4f35=%d seed=%04x raw251d=%d raw0b2d=%d raw25d1=%04x raw4f2d=%d\n",
+                fmt.Printf("DQ3_BIRTHDAY_FLOW step=%d ida_linear=%05x DS=%04x SI=%04x BP=%04x DX=%04x raw259b=%d raw0716=%04x raw0718=%04x raw4f33=%d raw4f35=%d seed=%04x raw251d=%d raw0b2d=%d raw25d1=%04x raw4f2d=%d raw0004=%d raw26ad=%d\n",
                     m.Steps,flowPC,ds,m.CPU.R[cpu.SI],m.CPU.R[cpu.BP],m.CPU.R[cpu.DX],
                     m.Read8(cpu.Addr(ds,0x259b)),m.Read16(cpu.Addr(ds,0x0716)),m.Read16(cpu.Addr(ds,0x0718)),
                     m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),m.Read16(cpu.Addr(ds,0x0b5a)),
-                    m.Read16(cpu.Addr(ds,0x251d)),m.Read8(cpu.Addr(ds,0x0b2d)),m.Read16(cpu.Addr(ds,0x25d1)),m.Read16(cpu.Addr(ds,0x4f2d)))
+                    m.Read16(cpu.Addr(ds,0x251d)),m.Read8(cpu.Addr(ds,0x0b2d)),m.Read16(cpu.Addr(ds,0x25d1)),m.Read16(cpu.Addr(ds,0x4f2d)),
+                    m.Read8(cpu.Addr(ds,0x0004)),m.Read8(cpu.Addr(ds,0x26ad)))
+            }
+            if (flowPC == 0x11ee8 || flowPC == 0x1e30b) &&
+                m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS],0x4f33)) == 5 &&
+                m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS],0x4f35)) == 5 {
+                ds := m.CPU.Seg[cpu.DS]
+                fmt.Printf("DQ3_ROOM_SPRITE step=%d ida_linear=%05x DS=%04x BX=%04x SI=%04x DI=%04x raw0004=%d seed=%04x\n",
+                    m.Steps,flowPC,ds,m.CPU.R[cpu.BX],m.CPU.R[cpu.SI],m.CPU.R[cpu.DI],
+                    m.Read8(cpu.Addr(ds,0x0004)),m.Read16(cpu.Addr(ds,0x0b5a)))
             }
         }
 """
@@ -271,6 +280,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     if scenario == 'birthday_continue':
         meta['scope']='冷啟動19次正式IRQ1輸入，創角種子固定一次，再正常接受角色與兩次生日續頁；續頁與下一場景尚待重製比較'
         meta['birthday_flow_events'] = [line for line in lines if line.startswith('DQ3_BIRTHDAY_FLOW ')]
+        meta['room_sprite_events'] = [line for line in lines if line.startswith('DQ3_ROOM_SPRITE ')]
     meta['artifacts'] = []
     artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log', f'{prefix}-generation.py']
     for name in artifact_names:

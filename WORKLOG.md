@@ -463,3 +463,41 @@ unknown完整文字流分開記錄於docs/188；目前表、工作清單與READM
 b537cf20fbf3c1120dcc9855d6c0430401821fbf47fb54a0f581ed10231800f5，
 狀態finite_state_conformed_full_raster_mismatch。歷史root候選3,213，本輪新增root產物0、
 Markdown誤掛載目錄0；本輪DQ3容器無殘留，其他專案資源未變更。
+
+## 2026-10-02：Issue #4房間陰影來源及唯讀人物影格
+
+正式基準8cebf4a，schema/content0.1.59／0.1.65。本批在Issue #4登記後，沿用既有
+dosgolem與IDA9.4容器，沒有修改正式Go或資料包。路由命中逆向重製、dosgolem、IDA及
+規格閘門；收尾再查同一路由，未把DRAFT試作加入production。
+
+IDA閉合CTY section+0x12經DH寫入DGROUP0B2D及layer0視野的界外consumer。
+家中CTY00 sec4值71與自然flow相同。原始定位、分級與可重生target回填docs/188及
+IDA匯出索引，舊sidecar與原始binary保留。writer候選查詢最初因直接import會執行main，
+第二次因IDA預設ASCII讀取中文失敗；改成只載入定義及明示UTF-8後在相同容器重跑成功。
+兩次都是工具腳本問題，沒有寫成remake缺陷或退回主機分析。
+
+共用視窗的1FB36為背景備份，1FC57為偏移陰影；docs/94舊「清內容」解釋追加勘誤。
+21B98只有14條VGA設定指令，沒有額外24px清底。陰影試作固定4903f53來源副本及
+第18次正常輸入，完整RGB由2,034降為544；依dosgolem字組鎖存契約處理後，框底242像素
+差異消失，完整RGB剩302。兩個NPC步行影格共261，箭頭41，紅測試保留，沒有裁切或遮罩。
+
+唯讀probe新增raw0004／raw26ad及取圖庫指標後的57筆暫存器事件，未增加原版寫入。
+母親原始快取索引43、床邊NPC33、勇者第0影格；NPC繪圖時動畫位元1，勇者繪圖時已為0。
+中途把母親索引口述為33與勇者102像素分類線索均已訂正；原始目的位址證明後者是床邊NPC。
+正式比較仍需補兩側動畫時間條件，不將固定seed這次觀測到的影格永久鎖進遊戲。
+
+同一入口重生19次IRQ1冷啟動，38次make/break送達。新收據31,719bytes／SHA-256
+b077e99c3b38f58b3326df8f8d25ed72b74d58f351a71d41374bc5063db4358c；
+54份PNG／色號、38次IRQ1與16筆既有flow和35fc歷史收據相同。中間29fd亦按hash保留。
+wrapper退出1只因正式房間172,261像素與第19次不同狀態198,652像素；同批創角8張及
+生日首頁2張通過。沒有重跑完整game／internal／desktop；最近完整回歸仍是前批61.09秒。
+
+四份已分級IDA匯出與其餘sidecar、生成腳本及完整PNG由work/issue4-room-audit.py稽核。
+7,357筆原始file bytes、分級警示、來源hash與UID/GID通過；私有整批收據6,045bytes，
+SHA-256 a240c5cff84059c96c20e81fb92e6ff35198b883eb6e79881761b99f3cfc5273，
+狀態draft_prototype_full_raster_mismatch。原版素材、圖片、state、database與完整收據不入Git。
+
+CONTEXT唯一目前表、PROJECT_MEMORY、docs/74與WORKLIST更新試作前沿，README維持穩定摘要。
+修改檔與本批產物UID/GID1000；歷史root候選3,213無新增，本批root產物及.md誤掛載目錄0。
+DQ3／IDA一次性容器收尾為空，未更動其他專案容器、使用者scratch或Android libs。
+本批提交及推送回填Issue #4，仍保持開啟；下一步共享文字流及動畫時間條件，再審查READY。

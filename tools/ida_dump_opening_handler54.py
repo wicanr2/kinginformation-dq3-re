@@ -42,12 +42,22 @@ REVIEW_LEDGER = [
     (0x21651, 0x216bf, "strong", "姓名consumer保存並還原SI；BP增加名字長度乘3；生日姓名0已閉合"),
     (0x28c3e, 0x28c4a, "confirmed", "raw共用視窗前12bytes及record404字模畫布；限定自然生日首頁，其他欄位／場景未外推"),
     (0x272ed, 0x272ef, "confirmed", "DGROUP251D原始初值1e00即30；自然生日／房間等待觀測亦為30，只限新遊戲初值"),
-    (0x11971, 0x11991, "strong", "房間重繪原點為玩家減9、7，範圍20×15；完整房間2034像素試作差異尚未閉合"),
+    (0x11971, 0x11991, "strong", "房間重繪原點為玩家減9、7，範圍20×15；隔離陰影字組試作剩302像素，正式房間尚未閉合"),
+    (0x1311a, 0x1311e, "confirmed", "section+0x12經DH寫DGROUP0B2D；自然家中外界圖塊為71，限定原始欄位與寫入"),
+    (0x11dd8, 0x11ddc, "strong", "房間視野Y界外且layer為0時讀DGROUP0B2D作圖塊；不外推其他layer"),
+    (0x11e47, 0x11e4b, "strong", "房間視野X界外且layer為0時讀DGROUP0B2D作圖塊；不外推其他layer"),
+    (0x11ed0, 0x11eee, "strong", "NPC朝向與動畫位元選圖庫指標；第18次自然房間觀測原始索引43／33，初始姿態writer仍未知"),
+    (0x1fc57, 0x1fcc6, "strong", "共用視窗偏移8px陰影；ROR AAAA逐行遮罩與16位元AND讀寫，不是清文字內容；限dosgolem字組鎖存契約"),
+    (0x21b98, 0x21bac, "strong", "僅設定VGA繪圖暫存器；沒有額外24px清底，不能把此helper稱作文字清底"),
 ]
 CONTINUATION_RANGES = {0x100ab, 0x100b5, 0x100cd, 0x21514, 0x21558}
 
 
 def review_evidence(start):
+    if start in (0x1311a, 0x11dd8, 0x11e47, 0x11ed0, 0x1fc57, 0x21b98):
+        return ("docs/188：2026-10-02房間渲染DRAFT；IDA原始bytes／writer-consumer與自然19次IRQ1唯讀觀測；"
+                "原版收據SHA-256 b077e99c3b38f58b3326df8f8d25ed72b74d58f351a71d41374bc5063db4358c；"
+                "字組陰影隔離試作302像素，非正式完整parity，NPC初始姿態與箭頭仍待閉合")
     if start in (0x272ed, 0x11971):
         return ("docs/188：2026-10-02有限返回／初始clock READY及房間DRAFT；原版冷啟動收據SHA-256 "
                 "a23584e6b08ece0ad065f3e26efe217c1d3ad5f96d4eaada9fb4664d1eff3165；原始bytes與唯讀flow；不代表房間CONFORMED")

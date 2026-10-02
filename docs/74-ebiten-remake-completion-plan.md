@@ -3,8 +3,9 @@
 > **2026-10-02 最新閘門（Issue #4，有限返回已修正／完整續頁DRAFT）：**
 > 原版EXE／IDA9.4與19次正常IRQ1flow閉合後，已修正生日EOF多餘確認、出生交易時序與初始clock30。
 > 正式第18次InputState自然抵達家中record83等待，seed356D；既有22張仍完整RGB零差異。
-> schema/content為0.1.59／0.1.65。房間完整RGB仍RED；不能用狀態修正或隔離試作2,034像素差異宣稱完成。
-> 下一步閉合共享文字流保留／捲動、視野／外界圖塊、框線、母親及箭頭，再審查READY接入正式路徑。
+> schema/content為0.1.59／0.1.65。房間正式完整RGB仍差172,261像素；本批未改正式程式。
+> IDA及唯讀繪圖觀測已連接layer0外界圖塊與偏移陰影；字組陰影隔離試作由2,034降至302像素，仍未通過。
+> 剩餘兩個NPC步行影格261、箭頭41。下一步補共享文字流保留／捲動與兩側動畫時間條件，再審查READY接入正式路徑。
 > 有限規格與收據見[docs/188](188-opening-escort-to-castle-spec.md)，目前驗收表以[CONTEXT](../CONTEXT.md)為準。
 > 入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍以完整RGB差異退出1。
 
