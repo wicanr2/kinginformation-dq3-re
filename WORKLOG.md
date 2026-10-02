@@ -850,3 +850,34 @@ Python／shell語法、Go格式及git diff --check通過；新增production Go�
 輸出UID/GID1000；既有root候選3213、Markdown目錄0維持。本批一次性容器已移除，未建立image或新發行包。
 提交、推送、遠端Issue核對及Docker清理另存work/issue4-castle-layers-post-push-receipt.json。
 下一切片閉合閒置狀態窗後正常續行謁見；非零層轉換、NPC遮蔽、原版讀檔朝向、音訊與完整原版campaign保持待驗。
+
+## 2026-10-03：Issue #4 閒置狀態窗原版來源與布局試作
+
+接續bcc6ce0，工作登記5961286946，進度5961717243。命中dosgolem、畫面對拍、GUI還原、規格閘門、IDA及平台規格路由。
+以既有IDA9.4 image及同一唯讀EXE追正常閒置caller、動態視窗header、隊伍內容、三位數前導空白與色盤consumer。
+三份有界sidecar共1740列核對file bytes與MZ relocation，保留原名、定位、xref type及分級警示；沒有改原版或database原始身份。
+
+新增king_idle來源情境與--king-idle-original重生入口，沿正常47次進城再送兩次上鍵。
+首輪900秒工具逾時，最後92次IRQ1，沒有完整閒置收據。原始失敗log按hash歸檔，分類為工具期限不足。
+只將本情境期限改1200秒、外層1260秒，以同輸入、seed、原版、來源及image乾淨重跑，退出0。
+原版收據5cd11f15為49次輸入、98次IRQ1、216份唯一產物；196份前輪PNG／bin逐項相同。
+觀測到三次自然開窗、兩次上鍵關窗。兩次鍵都消耗於關窗，位置維持15／30，58bytes角色資料在35筆觀測保持。
+三次入口計數差值皆300，前面各有298／299／300，PIT ticks與遊戲計數各遞增一；實際除數12428保持。
+只驗有限遊戲邊界，不深入ISR或宣稱原版硬體wall-clock一致。靜態pop與動態pop前觀測分開保存。
+
+固定bcc6ce0的隔離布局試作從正常新遊戲及47次正式InputState續行，再組合DRAFT布局，不接正式timer。
+首次誤讀目前城堡對話bank差1299；第二次差1315。重查GUI與同狀態契約後，定位為前景色、未覆蓋冒號與主角動畫。
+依原始D3TXT00 frame、前導空白glyph及正常3C色盤重跑，視窗與陰影區域RGB差0，整張仍差182。
+原型PASS只表示組合及輸出成功，不當成完整RGB或正常閒置生命週期完成。未裁切、遮罩或指定角色frame。
+原版兩次restore的完整圖比較均差182，全部在主角；第三次等待差182，第五次等待差1811，完整差異保留。
+
+來源驗證器核對輸入、IRQ1、角色內容不變、完整開關順序、三輪PIT邊界、原始header及所有產物。
+16種損壞收據全部拒絕；暫存log與metadata同步修改並重算manifest，正式來源保持。
+私有收尾work/issue4-idle-status-final-audit.py輸出issue4-idle-status-final-receipt.json，12469bytes，SHA-256
+`0e9ce1b1db36a3a1a64737094e171ad615102b3b6193f927b023e45e24d9ab1c`；所有新入口掛回docs/188。
+Python／shell語法通過，輸出UID/GID1000；既有root候選3213、Markdown目錄0保持。
+正式Go、pack與存檔未改，schema0.6.0／content0.1.74維持，前輪完整產品回歸不重跑。
+CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74與docs/188同步，README穩定產品摘要維持。
+本批一次性容器均已結束，未建立新image或發行包。提交／推送及遠端Issue結果留在同前綴post-push收據。
+下一步審查閒置狀態機的輸入所有權、平台時間換算及存讀檔暫態，再經READY接入正式JSON與玩家路徑。
+結果留言5961959766及Issue主文已更新，正式閒置UI仍未勾選完成。

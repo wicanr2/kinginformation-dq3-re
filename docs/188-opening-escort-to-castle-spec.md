@@ -1361,6 +1361,95 @@ internal收據為`work/issue4-castle-layers-internal.jsonl`，桌面產物為`wo
 遠端結果留言5961178819；Issue #4保持OPEN，後續以其未完成項目為準。
 下一切片為閒置狀態窗的正常開關、資料consumer及時間域。非零層轉換動畫、NPC遮蔽、原版讀檔朝向與謁見另保留待驗。
 
+#### 閒置狀態窗生命週期追查（DRAFT）
+
+接續bcc6ce0，以Issue #4留言5961286946登記。正式schema0.6.0／content0.1.74保持。
+使用已驗證IDA Pro9.4 image及同一唯讀EXE，原始身份、linear／file換算沿用上節。
+有界匯出入口為`work/issue4-idle-status-ida.py`，sidecar為`work/issue4-idle-status-ida.json`；
+保留原名、raw bytes、MZ relocation、xref type及未證實警示，沒有覆寫函式或資料名稱。
+
+| 原始定位 | 目前證據與未閉合範圍 |
+|---|---|
+| IDA linear1991D..1997C／fileAC8D..ACEC | confirmed有限正常入口：4F1F為FFh，三次差值300進19952；三組298／299／300與PIT ticks各遞增一。恢復0000／0007／0013的靜態指令為strong；19966觀測在pop0000之前，不宣稱已動態讀取pop後值 |
+| linear17DBB..17E11／file912B..9181 | confirmed單人正常開關：三次寫入相同動態header，三次2111B等待及兩次17E11恢復；完整底圖恢復差異僅在主角動畫。其他隊伍人數維持strong |
+| linear18222..182E3／file9592..9653 | confirmed本角色內容：姓名0、HP15、MP9、等級1及職業glyph；原生58bytes角色資料全程不變。四字上限、十byte欄距與異常狀態分支仍為strong |
+| linear1F590..1F603／file10900..10973 | strong：window+0A的record401為左框、+0E的402依人數重複、+10的403為右框。此組是D3TXT00視窗record，不讀目前城堡對話bank |
+
+新增`king_idle`情境沿原先47次正常輸入進城，再送兩次真實上鍵觀察關窗與續行。
+入口`tools/dosgolem_newgame_probe.py`，私有前綴`work/dosgolem-opening/issue4-king-idle-*`，
+保留唯讀`DQ3_IDLE_STATUS`及`DQ3_IDLE_WINDOW`觀測，不注入計數器、視窗、位置、朝向或旗標。
+本情境不覆寫前輪`issue4-king-approach-*`收據。時間域、按鍵消耗及再次開窗以新的動態結果為準。
+
+隔離布局原型入口為`work/issue4-idle-window-layout-prototype.py`，固定bcc6ce0。
+重播正式新遊戲及47次輸入後，以已定位的原始record、姓名與數值consumer組合畫面。
+輸出同前綴`.png`、`.json`及`.log`；乾淨重跑log為`-clean.log`。
+這是layout-only原型，沒有正式idle狀態或timer，不能當成正常閒置生命週期已完成。
+首次原型差1299，因誤讀目前城堡對話bank而缺少視窗frame／標籤；改讀原始D3TXT00後再核對。
+第二次仍差1315。重查GUI composition與同狀態路由後，逐像素分類為1117個前景色、16個未覆蓋冒號及182個主角相位差異。
+追加IDA窄匯出`work/issue4-idle-status-number-ida.py`及`.json`，linear219AA..219F3證實三位數欄位的前導空白glyph0C。
+原始DGROUP25D6／file18716的正常色盤表為3C／3C／3C；沿用已審查開場前景色243／243／243，沒有從圖像手調座標或字距。
+第三次原型完整RGB仍差182，全部在主角(288,179)..(319,191)；視窗及陰影區域逐像素差0。
+最新執行log為`work/issue4-idle-window-layout-prototype-reviewed.log`，完整差異保留，`full_rgb_parity=false`。
+原型執行PASS只表示組合與輸出成功。尚缺同影格oracle的完整零差異斷言撤回，不把剩餘主角差異遮罩或裁切掉。
+獨立稽核入口`work/issue4-idle-window-layout-audit.py`及`.json`，核對三份IDA共1740列原始file bytes與MZ relocation、全畫布差異及布局區域。
+正常色盤consumer另存`work/issue4-idle-status-palette-ida.py`及`.json`：linear1EF5E..1EF94，
+25D5選三byte表項，更新六個色盤bank的index8，再提交25D1指向的色盤資料。
+原版等待PNG的PLTE index8亦為243／243／243，與原始3C／3C／3C及已有開場前景色一致；其他健康色狀態尚未動態抽樣。
+
+| 有限typed資料／行為 | 原始約束與尚待驗收 |
+|---|---|
+| 視窗起點、高度 | x=19個byte、y=238、height80；17DC5／17DCB與原始3EA4 |
+| 動態寬度 | 隊伍人數×10個byte+4；每欄80px、基礎寬32px；17DD4..17DDB |
+| 左框／每欄／右框 | D3TXT00 record401／402／403，1F590按實際隊伍人數重複body；不是三筆玩家對話 |
+| 姓名 | x為視窗+32px，最多四glyph；215EE..2164F，每glyph正常步距16px |
+| HP／MP／等級 | 同三位數欄位、右對齊、前導空白glyph12；219AA..219F3。末列有狀態時改畫status record，尚未動態抽樣 |
+| 職業 | 182BE..182CB使用既有pack的class單字glyph，x為視窗+16px；不在引擎計算版本record或glyph |
+| 關窗與恢復 | 兩次正常上鍵只關窗，位置仍15／30；完整底圖恢復差異僅在主角。靜態恢復計數／輸入不改稱動態pop後讀值 |
+| 等待延遲 | 三次0000／000D差值門檻300，三組邊界各與PIT ticks遞增一；實際除數12428。正式60TPS換算仍須引用平台契約，不能用300個remake更新 |
+
+重生入口為`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --king-idle-original`。
+支援固定2f44a68執行器、正常49次輸入及唯讀閒置觀測；須沿用檔首Docker／權限／來源契約。
+核對器`tools/verify_dosgolem_idle_status.py`與私有`work/issue4-king-idle-source-audit.json`僅核對原版，
+不把layout-only原型升為remake生命週期parity。既有正式原版收據維持196份PNG／bin前綴對照。
+首輪原版延長路線在900秒工具期限終止，最後送達92次IRQ1，沒有完整閒置收據。
+失敗log已按hash保存為`work/dosgolem-opening/issue4-archive-b87d3dd30ec21ae7b65cbe7f88e3f2115c4057b48a4b0f786f1eaf3145313e8f.log`。
+增加本情境期限至1200秒、外層1260秒，以相同輸入、seed、原版及image乾淨重跑；未調原版狀態。
+乾淨生成log為`work/issue4-king-idle-clean.log`，本情境產物仍按hash歸檔，不覆寫前輪正式進城收據。
+乾淨重跑退出0，原版收據`work/dosgolem-opening/issue4-king-idle-receipt.json`為507785bytes，SHA-256
+`5cd11f15beb7e8c42f89780da825e5802b5cb38033b683e000bc06e32fb021d1`。
+49次正常輸入、98次IRQ1及216份唯一產物通過；原先196份PNG／bin逐項不變。
+兩次上鍵分別在2160000000、2200000000排入，實際make／break及窗口關閉均由原版自然送達。
+
+| 順序與原版步數 | 觀測與有限分級 |
+|---|---|
+| waiting1，2138831661 | confirmed，2111B自然等待，位置15／30，單人 |
+| restore2，2160026794 | confirmed，17E11恢復；第一個上鍵未移動 |
+| waiting3，2197937916 | confirmed，正常再次開窗，角色資料不變 |
+| restore4，2200026793 | confirmed，第二個上鍵未移動；角色資料不變 |
+| waiting5，2237864789 | confirmed，正常第三次開窗；不外推其他輸入或隊伍人數 |
+
+三次19952的0000／000D差值皆恰為300。每次前面都有298、299、300的19940觀測，
+ticks與0000逐項各遞增一，實際PIT divisor12428保持。此結論只限三次原版閒置邊界，
+不將所有遊戲counter改稱PIT ticks，也不證明原版硬體wall-clock或逐週期一致。
+58bytes角色資料在35筆唯讀觀測中相同，姓名、職業、性別、等級、目前／最大HP及MP與創角收據吻合。
+0007保留raw定位，不根據數值替它命名為掃描碼；19966在pop0000前，靜態stack恢復與動態讀值分開記錄。
+
+完整640×350比較：第一次等待與前輪等待RGB差0；兩次restore相對前閒置圖或前次restore均差182，
+全在主角(288,179)..(319,191)。第三次等待相對第一次差182；第五次等待相對第一次差1811，
+範圍(0,0)..(382,167)，保留完整場景變化。沒有裁切、遮罩、固定人物frame或重擲seed。
+獨立布局原型仍只證實視窗及陰影區域差0，完整畫面差182，不提升為正式UI或整張等待V3。
+
+最小充分收尾入口`work/issue4-idle-status-final-audit.py`及`work/issue4-idle-status-final-receipt.json`，
+12469bytes，SHA-256 `0e9ce1b1db36a3a1a64737094e171ad615102b3b6193f927b023e45e24d9ab1c`。
+核對216份來源、196份前輪圖像、三份IDA原始1740列、完整原版五組圖像比較及布局原型。
+16種損壞收據全部拒絕，包含timer間距、actor變動、位置、header、開窗／關窗順序及IRQ1；
+負例同時修改暫存log與metadata並重算manifest，原始收據不改。Python／shell語法及UID/GID1000核對通過。
+
+正式schema0.6.0／content0.1.74、Go及pack未改。正常單人開關、資料呈現及有限時間域已取得D3來源；
+正式UI仍DRAFT，下一步審查具名狀態機的正常輸入／held-key所有權、平台規格換算及存讀檔暫態影響，
+通過READY後才接入JSON與正式玩家路徑。其他健康色與status分支未動態抽樣，不以本收據宣稱完成。
+遠端結果留言5961959766，Issue #4保持OPEN。提交後稽核入口為`work/issue4-idle-status-post-push-audit.py`及同前綴`-receipt.json`，核對遠端commit、Issue與容器清理。
+
 ## 2026-10-03 城鎮攝影機（有限 READY）
 
 依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。
