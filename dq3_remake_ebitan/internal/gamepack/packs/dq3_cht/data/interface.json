@@ -168,6 +168,26 @@
           "note": "限定CTY25 section0視野；圖層遮蔽見scene_tile_layers。閒置狀態窗與謁見仍未通過。"
         }
       }
+    },
+    {
+      "cty": 25,
+      "section": 1,
+      "camera": {
+        "mode": "player_anchor",
+        "anchor_x": 9,
+        "anchor_y": 7,
+        "exterior_tile": 27,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + CTY25.DAT + dosgolem正常90次輸入的首次上樓",
+          "address_space": "linear",
+          "address": "0x11971..0x11991;CTY25 file0x08C7+0x12",
+          "consumer": "正常9,22落點：11971玩家減anchor→11D8A；130F4 section界外圖塊→11DD8",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "限定CTY25 section1攝影機；完整RGB仍2159差異，圖層、動畫、閒置窗與國王交易未完成。"
+        }
+      }
     }
   ],
   "dialogue": {

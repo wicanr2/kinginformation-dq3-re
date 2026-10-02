@@ -916,3 +916,38 @@ Go格式與git diff --check通過。新增production Go掃描僅命中typed CTY�
 輸出UID/GID1000；既有root候選3213、Markdown目錄0維持。一次性容器已結束，沒有新image或發行包。
 遠端結果留言5962628881及Issue主文已更新，Issue保持OPEN；提交／推送與最後容器清理另存work/issue4-field-idle-post-push-receipt.json。
 下一切片從關窗後正常續行謁見，先取得原版輸入、狀態、畫面與副作用證據。
+
+## 2026-10-03：Issue #4 正常王座接近與攝影機修正
+
+接續572e3bb，工作登記5962742201，進度留言5963166706。命中dosgolem、對拍、IDA9.4及規格閘門路由。
+原版正常冷啟動90次輸入／180IRQ1、386唯一產物核對PASS，先前214份PNG／bin逐byte不變。
+固定乾淨dosgolem2f44a68，EXE／原始資料唯讀，seed1357沿自然Lv1入口一次固定。
+原版正常上樓至9,22；上樓後閒置窗消耗一個上鍵，最後9,8，五次Enter沒有觸發謁見。
+追加來源工具與嚴格核對器，沒有把送出九十次按鍵提升為完成國王交易。
+1991D的堆疊欄位只保留raw words，不猜far return；213C4不是國王21414入口，限制回填docs/188。
+
+IDA9.4三份私有匯出核對原始bytes／MZ relocation、函式邊界及xref。
+handler56的文字呼叫在六件物品、50金及clear17h／set18h前；record78有九個FFFC等待。
+此為strong靜態順序，缺自然玩家交易，不直接改正式獎勵或猜補時序，未深入ISR／音訊driver。
+
+首次上樓的原提交clamp造成主角低96px，完整RGB差86603。
+隔離camera原型只增加section1綁定，完整差降至2159，保留柱子圖層及人物差異。
+有限READY後新增正式JSON camera；schema0.7.0／content0.1.76，所有值由既有typed契約消費。
+canonical hash `sha256:ccbf6f5f2add47996f6e48bcd35a81a5553428517a9b0bfbb25436edaf5e7469`。
+正常上樓、完整PNG、同版本Save／標題Load恢復camera與旗標、後續上鍵移動通過。
+正式PNG逐byte等於原型；完整RGB仍2159，不稱整張V3。不同pack hash的存檔照原契約拒絕。
+
+gamepack86頂層／238子、六項受影響game、desktop Linux x86_64 ELF通過，沒有SKIP。
+正常新遊戲InputState至THE END81.38秒通過，只屬重製回歸。
+本批未重跑全部game及其他internal，前批結果保留其版本界線。
+九種來源收據損壞均拒絕，原始收據未改；轉換器從乾淨572e3bb重建九份JSON與正式檔完全相同。
+私有收尾`work/issue4-throne-camera-final-audit.py`產生27698bytes收據，SHA-256
+`34085fc4334bee169597bbf026dfdcdeee65850b1c08709840759163bee69ec4`。
+所有新增工具、測試、私有RE與驗收入口索引在docs/188，現況表與docs/74同步。
+
+自動核准審查曾拒絕主機shell wrapper，理由是可能在主機執行dosgolem。
+改用明確的一次性Docker命令後核准，沒有退回主機執行工作負載；此為環境／命令審查問題。
+較早後段原型遭SIGKILL且未產生收據，不當作產品缺陷或完成證據；縮小到首次上樓正常重跑。
+一次編輯命令缺Docker標準輸入選項，沒有執行修改；另存v2並核對source／差異欄位後重跑。
+新輸出UID/GID1000，既有root候選3213及Markdown目錄0維持，未建新image或發行包。
+下一切片閉合王座圖層與section1閒置窗，再以正常輸入觸發謁見；Issue #4保持OPEN。

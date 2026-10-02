@@ -1529,6 +1529,100 @@ internal147頂層／238子、全部11套件PASS、4選用SKIP；無素材缺失�
 所有原版素材、圖片、IDA database／授權與完整包留在本機；未建立新發行包。
 遠端結果留言5962628881及Issue主文已更新，Issue #4保持OPEN。
 
+#### 正常關窗後王座路線來源（DRAFT）
+
+依Issue #4接續572e3bb，工作登記5962742201。正式schema0.7.0／content0.1.75維持。
+沿用同一唯讀EXE、CTY25、固定dosgolem2f44a68及自然Lv1入口一次seed1357。
+來源入口為`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --king-audience-original`。
+`tools/dosgolem_newgame_probe.py`的`king_audience`情境保留原先49次輸入，
+在第三次自然等待窗後追加上鍵關窗，再送35次上鍵與5次Enter；共90次正常鍵封包。
+第一步行鍵距關窗鍵8000000個原版steps，其他步行／確認鍵間隔20000000；不由時序假設宣稱完成移動。
+工具期限1800秒、外層1860秒；所有執行、建置及圖像擷取仍在一次性Docker，原版與dosgolem來源唯讀。
+
+原始CTY25的section0北側樓梯資料指向section1的9,22，只作正常輸入路線的定位線索。
+不以舊remake、現有獎勵測試或影片描述代替本次原版結果。
+新增唯讀`DQ3_KING_AUDIENCE`觀測保留player原始位置、raw0B24／0B55／4F1F、文字DI、
+返回堆疊、計數、人物前128bytes與64bytes旗標。不替暫時DS或raw0B55命名為目前section。
+linear1991D、213C4及2111B用於候選循環／文字入口／等待位置；標籤ready與waiting仍須caller及動態結果核對。
+每次新增輸入後保留定時完整PNG，另在候選自然等待或循環位置保留完整PNG／色號資料。
+私有產物前綴`work/dosgolem-opening/issue4-king-audience-*`，不覆寫既有idle或approach來源。
+來源生成PASS只能表示探測收尾成功；王座抵達、文字、旗標與獎勵、RGB及remake parity均待獨立核對。
+
+#### 王座接近來源核對與攝影機審查（有限 READY）
+
+原版來源正常結束，90次輸入／180次IRQ1、386份唯一產物全部核對，前輪214份PNG／bin逐byte不變。
+收據`work/dosgolem-opening/issue4-king-audience-receipt.json`的SHA-256為
+`325b5e7be2ceea0fa2a0fe0bbc291dcfed11c7c30d90cc3865f96d208defcc04`。
+獨立入口為`tools/verify_dosgolem_king_audience.py`，輸出`work/issue4-king-audience-source-audit.json`。
+生成腳本、Go probe原始碼與執行檔均留本機，前綴同原版收據；Go原始碼hash與當次metadata相符。
+初次Go source由執行中容器另存，不在386項manifest內，仍以metadata的hash獨立核對。
+收尾後producer自動保存Go source並納入manifest，後續同路線重生為387項；額外一項只為來源文字，
+不改輸入、觀測或圖像。本次歷史386項收據及生成腳本保持，不重寫為新版產物數。
+上樓後額外閒置窗消耗了一次上鍵，最後停在9,8，五次Enter未觸發handler56。
+本收據只能證實正常上樓及接近，不能宣稱已完成謁見、獎勵或國王文字。
+linear1991D的ready只代表候選循環取樣；兩個堆疊欄位保留raw words，不當作far return IP／CS。
+213C4是簡單文字reader，不能代替真正國王對話21414的入口觀測。
+
+第一個新視野差異出現在CTY25 section1的正常落點9,22。
+來源新增第21次輸入為第20次步行，上樓前section0基底file0006，上樓後raw0B24為08C7，
+與原始CTY25 section1基底file08C7相符；不從raw0B55推定section。
+正常原版`audience-north-20.png`與乾淨572e3bb的相同落點完整640×350比較差86603像素。
+舊重製clamp使camY=11、主角低96px；原版11971..11991讀4F33／4F35減9／7，故camY=15。
+section1的界外圖塊由file0x08C7+0x12取得27，沿用130F4 loader與11DD8 consumer。
+本有限場景的視野及界外資料為D3／confirmed，依相同來源與既有camera契約接入。
+
+隔離入口`work/issue4-throne-camera-prototype-v2.py`從乾淨572e3bb、正式新遊戲與InputState重播，
+只在私有副本增加section1的SceneCamera綁定，沒有控制人物影格、位置、旗標或重新擲seed。
+同提交基準／原型輸出為`work/issue4-throne-camera-v2-{0,1}.json`及同前綴完整PNG與log。
+完整差異由86603降為2159，仍保留柱子／圖層及人物差異，不宣稱整張RGB通過。
+原型前一版後段遭SIGKILL，未產生完整狀態收據；縮小至首次上樓的同工具鏈重跑通過。
+另一版少了docker標準輸入傳遞，未執行編輯；保留輸出，v2才是有camera變更與差異欄位的原型。
+
+READY範圍：在既有`scene_cameras`新增CTY25 section1，anchor9／7、exterior27均留JSON。
+沿用schema0.7.0，content升0.1.76；不同canonical hash的存檔照既有契約拒絕，不自動遷移。
+共用引擎不加版本常數、fallback或新架構。驗收包括EXE／CTY parity、正常落點完整PNG、
+正常Save及標題Load恢復camera、放開後新上鍵續行、既有城堡視野／閒置窗與desktop建置。
+王座圖層、section1閒置窗、國王文字／獎勵及動畫另保留未完成狀態。
+
+靜態國王順序的私有入口為`work/issue4-king-audience-rewards-ida.py/.json`與
+`work/issue4-king-audience-text-ida.py/.json`，均由IDA9.4對唯讀同一EXE的一次性DB匯出。
+linear1024C..102C4的原始sub_1024C先以DI0C06呼叫21414，再給六件物品、50金、clear17h／set18h。
+21414的FFFC分支21558／2157E呼叫216C3，216D8與216FB輪詢21148；FFFF在21501分支retf。
+record3078映射D3TXT01 record78，含九個FFFC等待；此次五次Enter沒有自然抵達該record。
+原始6次物品writer16856搜尋全隊8格00FF空槽，金錢writer1895C寫4F37／4F39。
+這是strong靜態順序，尚缺本次玩家可見交易閉合，不修改正式獎勵順序或猜補等待時長。
+IDA輸出保留原始bytes、MZ relocation、位址與xref type；未更名原始定位，未深入ISR或PCM driver。
+
+正式實作／驗收入口為`game/throne_camera_test.go`及`internal/gamepack/scene_camera_test.go`，
+資料重建入口`work/issue4-make-throne-camera-pack.py`，比例驗證入口`work/issue4-run-throne-camera-production.sh`。
+正式輸出為`work/issue4-throne-camera-production.json`、同前綴完整PNG／log及`.test`，
+`work/issue4-throne-camera-gamepack.jsonl`保存全部gamepack契約結果，desktop與正常campaign採同前綴獨立log。
+私有獨立稽核入口`work/issue4-throne-camera-final-audit.py`及同前綴`-final-receipt.json`，
+核對完整來源、損壞拒絕、三份IDA原始bytes／relocation、同提交原型與正式PNG、資料重建及工作樹衛生。
+前一版隔離正常探測為`work/issue4-king-audience-prototype.py`及`work/issue4-throne-camera-prototype.py`，
+不得以無camera修改的前一版candidate輸出替代v2。
+
+#### 王座攝影機正式驗收（有限 CONFORMED）
+
+正式schema0.7.0／content0.1.76，canonical hash
+`sha256:ccbf6f5f2add47996f6e48bcd35a81a5553428517a9b0bfbb25436edaf5e7469`。
+正常新遊戲至首次上樓共70次輸入的等價按鍵，控制seed與picture BIOS條件沿前批一次設定。
+每鍵在冷卻完成後送出及放開，不宣稱CPU steps與60TPS的wall-clock等價。
+正常落點9,22、cam0,15與界外27通過；正式完整PNG逐byte等於隔離camera原型。
+完整RGB仍2159，保留原版／正式兩張畫面，不裁切、遮罩或指定人物frame。
+Save及正常標題Load恢復相同camera、座標、旗標、物品與金錢；後續新上鍵可到9,21。
+只屬同版本重製round-trip，未外推原版存檔、自然等待窗或謁見parity。
+
+全部gamepack86頂層／238子PASS，沒有SKIP；六項受影響game及正常主線另用新程序PASS。
+正常InputState新遊戲至THE END81.38秒，只屬重製回歸；desktop為Linux x86_64 ELF。
+舊城堡前閒置全RGB差0及三次等待窗182／979／1960、視窗區域差0保持。
+本批按資料修改比例驗證，未重跑全部game及其他internal，不將前批全套清單算成本批結果。
+九種壞來源收據全部拒絕；三份IDA sidecar原始file bytes／MZ relocation獨立核對通過。
+轉換器從乾淨572e3bb重建全部九份JSON，與正式檔逐byte相同。
+私有最終收據27698bytes，SHA-256
+`34085fc4334bee169597bbf026dfdcdeee65850b1c08709840759163bee69ec4`。
+本批只閉合camera；柱子圖層、王座閒置窗、國王文字／獎勵、動畫、原版讀檔及音訊保持未完成。
+
 ## 2026-10-03 城鎮攝影機（有限 READY）
 
 依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。

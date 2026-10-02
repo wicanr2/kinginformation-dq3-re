@@ -1,5 +1,16 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 2026-10-03 現行王座攝影機資料
+
+schema0.7.0／DQ3 content0.1.76。欄位沿用下方`scene_cameras`及`field_idle_status`契約，沒有格式變更。
+`scene_cameras`現在包含CTY25 section0及section1，分別使用原始界外圖塊0及27。
+新增section1的正常9,22落點、anchor9／7及原始header parity見
+[docs/188](188-opening-escort-to-castle-spec.md)王座接近來源與有限READY審查。
+`scene_tile_layers`與`field_idle_status.scenes`仍只宣告section0；不得從camera綁定推導圖層或等待窗資料。
+完整王座畫面仍2159像素差異，謁見及原版存讀檔尚未通過；不同canonical hash的存檔明確拒絕。
+
+下方保留前版欄位契約；現行版本以本節及資料包manifest為準。
+
 ## 2026-10-03 現行場景圖層契約
 
 schema0.6.0／DQ3 content0.1.74。來源及有限READY審查見[docs/188](188-opening-escort-to-castle-spec.md)進城後圖層節。

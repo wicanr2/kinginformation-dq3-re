@@ -79,7 +79,7 @@ func TestSceneCameraMatchesOriginalCastleHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Interface.SceneCameras) != 1 {
+	if len(p.Interface.SceneCameras) != 2 {
 		t.Fatal("unexpected reviewed scene count")
 	}
 	c := p.SceneCamera(25, 0)
@@ -97,7 +97,13 @@ func TestSceneCameraMatchesOriginalCastleHeader(t *testing.T) {
 	if c.AnchorX != int(binary.LittleEndian.Uint16(exe[start+4:])) || c.AnchorY != int(exe[start+15]) || c.ExteriorTile != int(raw[int(binary.LittleEndian.Uint16(raw))+0x12]) {
 		t.Fatal("scene camera differs from original writer/header")
 	}
-	if p.SceneCamera(25, 1) != nil || p.SceneCamera(0, 0) != nil {
+	throne := p.SceneCamera(25, 1)
+	if throne == nil || throne.Mode != "player_anchor" || throne.Evidence.Level != "D3" ||
+		throne.AnchorX != c.AnchorX || throne.AnchorY != c.AnchorY ||
+		throne.ExteriorTile != int(raw[0x08c7+0x12]) {
+		t.Fatal("throne camera differs from original writer/header")
+	}
+	if p.SceneCamera(25, 2) != nil || p.SceneCamera(0, 0) != nil {
 		t.Fatal("camera leaked into undeclared scenes")
 	}
 	p.Interface.SceneCameras = []SceneCameraBinding{}
