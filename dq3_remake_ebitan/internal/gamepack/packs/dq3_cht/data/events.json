@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.6.0",
+  "schema_version": "0.7.0",
   "day_night_cycle": {
     "initial_clock": 30,
     "clock_ticks": 240,

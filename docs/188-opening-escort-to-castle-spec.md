@@ -1450,6 +1450,85 @@ ticks與0000逐項各遞增一，實際PIT divisor12428保持。此結論只限�
 通過READY後才接入JSON與正式玩家路徑。其他健康色與status分支未動態抽樣，不以本收據宣稱完成。
 遠端結果留言5961959766，Issue #4保持OPEN。提交後稽核入口為`work/issue4-idle-status-post-push-audit.py`及同前綴`-receipt.json`，核對遠端commit、Issue與容器清理。
 
+#### 閒置狀態窗正式契約審查（有限 READY）
+
+接續acc3819。正式入口只套用已有正常原版來源的CTY25 section0；其他場景不由此宣稱對拍完成。
+新增`interface.field_idle_status`，共用引擎以具名等待／開窗／按鍵消耗狀態機處理，
+不保存版本座標、record、遮罩、字串或硬體除數。布局引用既有party_hud的幾何、姓名及職業字模，
+左右frame及每欄body以獨立text ID引用，寬度由原始record形狀與實際隊伍人數組合。
+所有新巢狀欄位必填，缺失、null、未知欄位、無效來源或素材越界拒絕；最多人數沿既有HUD四欄容量。
+
+平台前提依[DOSBox Staging timer.h](https://github.com/dosbox-staging/dosbox-staging/blob/main/src/hardware/timer.h)的PIT_TICK_RATE1193182及
+[timer.cpp](https://github.com/dosbox-staging/dosbox-staging/blob/main/src/hardware/timer.cpp)的counter／時脈週期契約。
+遊戲除數12428及300次閒置邊界由5cd11f15來源取得。固定60TPS的延遲為
+ceil(300×60×12428／1193182)=188更新；只屬hardware-spec approximation，不宣稱原版wall-clock或逐週期一致。
+一般輸入或其他modal重置等待；已開窗時凍結底圖，按鍵只關窗，方向held在該次按下未放開前持續消耗，
+放開後才能接受下一次移動。原版兩次make到break間未移動提供本有限方向封包的D3來源，未外推鍵盤自動重複的精確時序。
+
+存檔不新增視窗或計數欄位；同版本Save／標題Load保持位置、隊伍、HP／MP、條件與旗標，
+restore清除凍結底圖、等待與按鍵暫態，再正常等待開窗。此為重製自身round-trip，不宣稱原版存檔格式或朝向parity。
+開窗、等待與關窗只讀角色內容，不消耗RNG、HP、MP、金錢、物品或旗標。
+
+狀態末列的DI起點是0x24C，即十進位588，依七筆mask優先序使用588..594。
+前輪筆記若將其轉為596則為十進位轉換錯誤，原始bytes及定位保持，追加此勘誤。
+`work/issue4-idle-status-strings-ida.json`閉合213C4→21286→252E的原始文字reader，
+`work/issue4-idle-status-record-index-ida.json`確認未達3000的DI直接查record指標；兩份同名.py可重生。
+原始D3TXT00的588..594依序是死亡、麻痺、睡眠、混亂、瑪荷、瑪努、中毒；私有原始字模圖為
+`work/issue4-idle-status-glyphs.png`。mask、健康色五表及欄位consumer均為D2／strong資料，
+只宣稱正常單人的D3動態呈現；其他健康色與狀態的原版動態抽樣仍未完成。
+
+實作與驗收入口：`internal/gamepack/field_idle_status.go`及其`_test.go`保存typed契約、reference validation與原始EXE／TXT parity；
+`game/field_idle_status.go`及其`_test.go`保存正式正常入口、source validation、按鍵消耗、三輪自然開關及Save／標題Load。
+JSON欄位權威見[docs/84](84-game-pack-json-contract.md)。需保存完整640×350 PNG及差異，不用裁切或指定影格消除已知動畫差異。
+schema0.7.0／content0.1.75；舊schema與hash的存檔明確拒絕，不自動遷移。
+本有限契約經來源、原型、平台與存檔影響審查為READY；動畫與原版讀檔、音訊、完整campaign保持原有未完成狀態。
+
+#### 正式閒置窗驗收（有限 CONFORMED）
+
+正式schema0.7.0／content0.1.75，canonical hash為
+`sha256:6fa52a4c7a71f5a8a1462ad4bd22674c05270238500b6770847bb37ddf604f17`。
+正常新遊戲、創角、家中選圖、城鎮帶路及九次上鍵進城後，不直接呼叫開窗函式，
+由正式InputState自然等待188更新，觀察三次開窗、兩次關窗。
+兩個關窗上鍵及持續按住均不移動；放開後新按鍵可往下一格。
+開窗期間完整畫布與RNG保持；完整存檔快照逐byte不變。
+同一Game的Load及正常標題選單Load均清除等待／底圖／方向暫態，位置與遊戲進度保持。
+此續行只證明重製可正常移動，尚未由原版謁見oracle驗收。
+
+三次自然開窗的視窗及陰影區域RGB差0，第一張正式PNG與較早布局原型逐byte相同。
+完整五張640×350圖的差異依序為182、182、979、979、1960；完整等待圖依序182、979、1960。
+沒有指定動畫frame、裁切或遮罩。圖像差異仍在場景與人物，完整RGB對拍保持false。
+較早camera測試的9951是尚未到延遲門檻的前閒置畫面對等待窗的診斷，不能再代表正式等待窗缺失。
+正常47次輸入的前閒置完整RGB差0與讀檔304個主角差異保持各自限定範圍。
+其他隊伍人數、健康色與異常狀態只有原始D2資料及component tests，缺原版動態抽樣。
+時間精度維持hardware-spec approximation，不宣稱原版硬體wall-clock。
+
+字型資源由`font_asset`引用、驗大小與hash並直接綁定renderer；不依賴當前場景對話bank。
+十五種壞JSON契約、五種壞runtime來源、健康色正常／半血／四分之一／加總上限／死亡分支通過。
+原始EXE／TXT parity覆蓋等待門檻、兩次SHR、健康色上限與死亡索引、palette index、前導空白、
+三位數consumer、優先mask、視窗座標、原始record及glyph shape；不刪原生decoder。
+列位置亦由JSON提供。linear18263／18270／1828D及182AF的原始`add dx,10h`，
+分別閉合HP+16、MP+32及狀態／等級／職業+48；姓名沿既有text_inset_y。
+全部位置必填，缺失、null、非字模步距或超出視窗均拒絕，不留共用Go座標fallback。
+
+私有重跑入口為`work/issue4-run-idle-status-production.sh`及`work/issue4-run-idle-status-full-game.sh`，
+分批工具`work/issue4-idle-status-partition.py`以同一binary清單覆蓋正常主線及四批新程序。
+資料轉換器為`work/issue4-make-idle-status-pack.py`。
+正式normal輸出`work/issue4-field-idle-production.json`與同前綴五張完整PNG，
+log為`work/issue4-idle-status-contract-clean.log`及`work/issue4-idle-status-production-reviewed.log`。
+最終獨立核對入口`work/issue4-field-idle-final-audit.py`及`work/issue4-field-idle-final-receipt.json`，
+核對原版216份產物、196份前輪圖像、16種損壞收據、五份IDA raw bytes／MZ relocation、
+完整正式PNG、分批完整清單與internal／desktop，以及UID/GID及Docker衛生。
+資料轉換器從acc3819的乾淨pack重建，九份JSON與正式檔逐byte比較，避免手編資料無法重生。
+最終收據22245bytes，SHA-256 `4135934fa5128573b0f641e4197907ac0fda5ef0514733ed89dd78bbb4c05b74`。
+完整game414個頂層清單無重複或遺漏，376頂層／63子PASS、38選用SKIP；
+internal147頂層／238子、全部11套件PASS、4選用SKIP；無素材缺失跳過，desktop為Linux x86_64 ELF。
+正常新遊戲InputState至THE END226.04秒，只屬remake回歸；五份IDA共1901列原始bytes／relocation核對通過。
+最近產品log為`work/issue4-idle-status-partition-{campaign,batch1,batch2,batch3,batch4}.jsonl`及其selection清單、
+`work/issue4-field-idle-current-internal.jsonl`、`work/issue4-field-idle-current-desktop.log`。
+提交後核對入口為`work/issue4-field-idle-post-push-audit.py`及同前綴`-receipt.json`。
+所有原版素材、圖片、IDA database／授權與完整包留在本機；未建立新發行包。
+遠端結果留言5962628881及Issue主文已更新，Issue #4保持OPEN。
+
 ## 2026-10-03 城鎮攝影機（有限 READY）
 
 依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。

@@ -290,6 +290,8 @@ func (sc *Scene) npcAt(x, y int) int {
 }
 
 type Game struct {
+	fieldIdle                 fieldIdleState
+	fieldIdleFont             *dq3data.Text
 	over, town                *Scene // 地表 / 目前城鎮
 	under                     *Scene // 下層地表(DQ3UND.MAP,懶載;共用地表 BLK/attr/pal)
 	layer                     int    // 目前地表層:0=地面 1=下層(城鎮進出以此決定回哪層)
@@ -1006,6 +1008,17 @@ func (g *Game) Update() error {
 func (g *Game) step(in InputState) error {
 	moved := false
 	g.dlg.Tick()
+	fieldStage := false
+	defer func() {
+		if !fieldStage {
+			g.fieldIdle.elapsed = 0
+		}
+	}()
+	if g.fieldIdle.open {
+		g.stepFieldIdle(in)
+		g.renderFrame()
+		return nil
+	}
 
 	// 標題畫面:主選單→主角命名→性別→能力確認→開始新遊戲(newgame.go)。
 	// S/CtxTap 開設定選單(疊在標題上,ESC/Cancel 關閉回標題)。
@@ -1501,6 +1514,11 @@ func (g *Game) step(in InputState) error {
 		return nil
 	}
 	// HELP／系統設定只在一般地表狀態開啟，不蓋過戰鬥、對話或其他既有 modal。
+	fieldStage = true
+	if g.stepFieldIdle(in) {
+		g.renderFrame()
+		return nil
+	}
 	if g.utilityInput(in) {
 		g.renderFrame()
 		return nil
@@ -2912,6 +2930,17 @@ func (g *Game) renderFrame() {
 	if g.frame == nil { // 尚未初始化(如 NewGame 中途 debug 呼叫)→ 略過
 		return
 	}
+	if (g.fieldIdle.open || g.fieldIdle.restoring) && len(g.fieldIdle.background) == len(g.rgba) {
+		copy(g.rgba, g.fieldIdle.background)
+		if g.fieldIdle.open {
+			g.drawFieldIdleStatus()
+		} else {
+			g.fieldIdle.restoring = false
+			g.fieldIdle.background = nil
+		}
+		g.frame.WritePixels(g.rgba)
+		return
+	}
 	if !g.showTitle && g.openingIdx == 0 && g.dlg.prelude != nil {
 		p := g.dlg.prelude
 		for i := 0; i < len(g.rgba); i += 4 {
@@ -2976,6 +3005,7 @@ func (g *Game) renderFrame() {
 	}
 	sc := g.cur
 	g.applyDaynightPalette() // 進城、轉場與讀檔後也依目前 clock 選正確 bank。
+	g.applyFieldIdlePalette()
 	// 已宣告的場景由pack指定camera；其餘場景沿用既有視野。
 	camX := clampi(g.px-ViewCols/2, 0, max0(sc.w-ViewCols))
 	camY := clampi(g.py-ViewRows/2, 0, max0(sc.h-ViewRows))
@@ -3226,6 +3256,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if err := validateSceneCameraSources(assets, pack); err != nil {
 		return nil, err
 	}
+	fieldIdleFont, err := loadFieldIdleSources(assets, pack)
+	if err != nil {
+		return nil, err
+	}
 	if _, ok := pack.OpeningPrelude(); !ok {
 		return nil, fmt.Errorf("game pack missing data.interface.opening_prelude")
 	}
@@ -3373,7 +3407,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	}
 	g := &Game{
 		rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default(), pack: pack,
-		dayNightCycle: dayNightCycle,
+		dayNightCycle: dayNightCycle, fieldIdleFont: fieldIdleFont,
 	}
 	phaseTicks := dayNightCycle.ClockTicks / 4
 	g.dnPhase, g.dnStep = dayNightCycle.InitialClock/phaseTicks, dayNightCycle.InitialClock%phaseTicks

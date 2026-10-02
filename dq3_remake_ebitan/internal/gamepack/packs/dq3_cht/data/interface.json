@@ -1,5 +1,133 @@
 {
-  "schema_version": "0.6.0",
+  "schema_version": "0.7.0",
+  "field_idle_status": {
+    "id": "dq3:window.field_idle_status",
+    "scenes": [
+      {
+        "cty": 25,
+        "section": 0
+      }
+    ],
+    "party_hud_id": "dq3:window.field_party_hud",
+    "font_asset": "ui_font",
+    "left_text_id": "dq3:text.field.idle_frame_left",
+    "column_text_id": "dq3:text.field.idle_frame_column",
+    "right_text_id": "dq3:text.field.idle_frame_right",
+    "delay_ticks": 300,
+    "rate_numerator": 1193182,
+    "rate_denominator": 12428,
+    "digits": 3,
+    "blank_glyph": 12,
+    "status_inset_x": 48,
+    "hp_inset_y": 16,
+    "mp_inset_y": 32,
+    "status_inset_y": 48,
+    "shadow": {
+      "mode": "vga_word_latch_and",
+      "offset_x": 8,
+      "offset_y": 8,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY00.DAT + D3TXT01.TXT + dosgolem自然第18次輸入",
+        "address_space": "linear",
+        "address": "0x1fc57..0x1fcc6",
+        "consumer": "raw byte x+1／y+8，逐行ROR AAAA，16位元AND寫入",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "固定dosgolem revision 2f44a68的字組鎖存呈現，非實機逐週期wall-clock。"
+      }
+    },
+    "backdrop_rgb": [
+      0,
+      0,
+      0
+    ],
+    "status_rows": [
+      {
+        "mask_raw": 128,
+        "text_id": "dq3:text.field.idle_status_588"
+      },
+      {
+        "mask_raw": 16,
+        "text_id": "dq3:text.field.idle_status_589"
+      },
+      {
+        "mask_raw": 32,
+        "text_id": "dq3:text.field.idle_status_590"
+      },
+      {
+        "mask_raw": 1024,
+        "text_id": "dq3:text.field.idle_status_591"
+      },
+      {
+        "mask_raw": 512,
+        "text_id": "dq3:text.field.idle_status_592"
+      },
+      {
+        "mask_raw": 256,
+        "text_id": "dq3:text.field.idle_status_593"
+      },
+      {
+        "mask_raw": 64,
+        "text_id": "dq3:text.field.idle_status_594"
+      }
+    ],
+    "dead_status_mask": 128,
+    "health_divisors": [
+      2,
+      4
+    ],
+    "health_sum_cap": 3,
+    "dead_palette_index": 4,
+    "palette_index": 8,
+    "health_palette_raw": [
+      [
+        60,
+        60,
+        60
+      ],
+      [
+        62,
+        60,
+        26
+      ],
+      [
+        63,
+        37,
+        22
+      ],
+      [
+        0,
+        57,
+        0
+      ],
+      [
+        63,
+        20,
+        20
+      ]
+    ],
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + dosgolem正常49次輸入",
+      "address_space": "linear",
+      "address": "0x1991D..0x1997C;0x17DBB..0x17E11;0x18222..0x182E3",
+      "consumer": "正常三次開窗、兩次按鍵消耗與關窗；588..594靜態狀態reader",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "單人正常開關D3；其他隊伍、健康色及狀態字串靜態D2，動畫及原版存檔未驗。"
+    },
+    "timing_evidence": {
+      "level": "D2",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + dosgolem邊界與PIT除數12428 + DOSBox Staging timer.h/timer.cpp",
+      "address_space": "linear",
+      "address": "0x19940..0x19952",
+      "consumer": "300 ticks以1193182/12428 Hz換算固定60TPS向上取整188 updates",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "hardware-spec approximation；不宣稱原版逐週期或wall-clock。"
+    }
+  },
   "scene_tile_layers": [
     {
       "cty": 25,

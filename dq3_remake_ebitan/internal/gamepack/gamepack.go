@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.6.0"
+	SchemaVersion       = "0.7.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -1078,6 +1078,7 @@ type RawScreenAsset struct {
 }
 
 type Interface struct {
+	FieldIdleStatus          *FieldIdleStatus          `json:"field_idle_status,omitempty"`
 	SchemaVersion            string                    `json:"schema_version"`
 	SceneCameras             []SceneCameraBinding      `json:"scene_cameras"`
 	SceneTileLayers          []SceneTileLayers         `json:"scene_tile_layers"`
@@ -2288,6 +2289,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateOpeningPreludeRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
+	if err := p.validateFieldIdleStatusRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
 	if err := p.validateOpeningSceneRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
@@ -2710,6 +2714,9 @@ func (p *Pack) validateInterface() error {
 		return err
 	}
 	if err := p.validateSceneTileLayers(); err != nil {
+		return err
+	}
+	if err := p.validateFieldIdleStatus(); err != nil {
 		return err
 	}
 	if e := p.Interface.OpeningEscort; e != nil {

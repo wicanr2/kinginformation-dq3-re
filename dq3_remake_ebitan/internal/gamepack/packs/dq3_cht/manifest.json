@@ -1,9 +1,9 @@
 {
-  "schema_version": "0.6.0",
+  "schema_version": "0.7.0",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
-  "content_version": "0.1.74",
+  "content_version": "0.1.75",
   "engine_api": ">=0.1.0 <0.2.0",
   "title_text_id": "dq3:text.title",
   "entry_event_id": "dq3:event.new_game",
@@ -26,6 +26,11 @@
     "spells": "data/spells.json"
   },
   "assets": {
+    "ui_font": {
+      "path": "D3TXT00.FON",
+      "size": 47232,
+      "sha256": "c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02"
+    },
     "world_palette": {
       "path": "DQ3.PAL",
       "size": 240,

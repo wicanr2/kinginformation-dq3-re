@@ -881,3 +881,38 @@ CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74與docs/188同步，README穩�
 本批一次性容器均已結束，未建立新image或發行包。提交／推送及遠端Issue結果留在同前綴post-push收據。
 下一步審查閒置狀態機的輸入所有權、平台時間換算及存讀檔暫態，再經READY接入正式JSON與玩家路徑。
 結果留言5961959766及Issue主文已更新，正式閒置UI仍未勾選完成。
+
+## 2026-10-03：Issue #4 正式閒置隊伍窗
+
+接續acc3819，工作登記5962141169。命中dosgolem、GUI還原、對拍、規格閘門與平台時序路由。
+沿用原版49次正常輸入／98IRQ1的5cd11f15收據，不注入位置、旗標或人物影格。
+IDA9.4補足原始文字reader兩份窄匯出，五份sidecar共1901列核對file bytes與MZ relocation。
+原始DI24Ch應為十進位588，前輪596的轉換錯誤在docs/188追加勘誤，原始定位與bytes保持。
+
+有限READY後接入正式等待／開窗／按鍵消耗狀態機；只宣告已有來源的正常城堡場景。
+所有版本文字、字型、列位置、狀態mask、健康色及時間參數由pack提供。
+字型驗證後直接綁定renderer，HP／MP／狀態列依原始add dx指令遷入JSON，不留引擎版本座標。
+schema0.7.0／content0.1.75；九份JSON由acc3819乾淨pack重建，逐byte相同。
+300個原版tick依公開PIT契約換為188個60TPS更新，精度維持hardware-spec approximation，未深入ISR。
+
+正常新遊戲、創角、家中選圖、城鎮42狀態及九次上鍵進城後，三次自然開窗與兩次關窗通過。
+方向鍵只關窗，持續按住不移動；放開後新按鍵可續行。開窗凍結畫布與RNG。
+完整存檔快照逐byte不變；同一Game的Load及正常標題Load清除等待、底圖與按鍵暫態。
+三次視窗及陰影RGB差0；完整五圖依序182、182、979、979、1960，差異保持。
+完整等待第一圖從較早缺窗9951降至182；前閒置全RGB零差異與讀檔304個主角差異仍各有獨立限定範圍。
+第一張正式PNG與布局試作逐byte相同，但本次由正常等待狀態機生成。
+其他隊伍、健康色及status動態、謁見、原版讀檔、音訊與完整原版campaign未驗，不宣稱完整V3。
+
+十五種壞JSON、五種壞來源、五個健康色分支及原始EXE／TXT parity通過。
+初次原生資料測試誤取EXE immediate偏移，按IDA原始bytes改正後同工具鏈乾淨重跑；分類為驗證腳本問題。
+完整game414頂層清單分長主線及四批新程序，376頂層／63子PASS、38選用SKIP。
+internal147頂層／238子及11套件PASS、4選用SKIP；desktop Linux x86_64 ELF通過，無素材缺失跳過。
+正常新遊戲InputState至THE END226.04秒，只屬remake可玩回歸。
+十六種原版收據損壞均拒絕；負例同時改暫存log與metadata並重算manifest，來源保持。
+
+私有收尾work/issue4-field-idle-final-audit.py輸出issue4-field-idle-final-receipt.json，22245bytes，
+SHA-256 `4135934fa5128573b0f641e4197907ac0fda5ef0514733ed89dd78bbb4c05b74`；新工具與產物索引掛回docs/188。
+Go格式與git diff --check通過。新增production Go掃描僅命中typed CTY引用與legacy_record來源驗證，沒有版本raw ID／座標／旗標或玩家文字。
+輸出UID/GID1000；既有root候選3213、Markdown目錄0維持。一次性容器已結束，沒有新image或發行包。
+遠端結果留言5962628881及Issue主文已更新，Issue保持OPEN；提交／推送與最後容器清理另存work/issue4-field-idle-post-push-receipt.json。
+下一切片從關窗後正常續行謁見，先取得原版輸入、狀態、畫面與副作用證據。

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.6.0",
+  "schema_version": "0.7.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -2724,6 +2724,327 @@
         "consumer": "正常房間EOF、母親16動作、圖像選擇、手動接近",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "confirmed限定狀態及輸入；完整RGB與硬體wall-clock另列限制。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_frame_left",
+      "value": "┌\n│\n│\n│\n└",
+      "glyph_codes": [
+        47,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        50
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 1,
+        "lines_per_page": 5
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 401
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "401",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_frame_column",
+      "value": "─────\nH    \nM    \n ：   \n─────",
+      "glyph_codes": [
+        48,
+        48,
+        48,
+        48,
+        48,
+        65534,
+        22,
+        12,
+        12,
+        12,
+        12,
+        65534,
+        27,
+        12,
+        12,
+        12,
+        12,
+        65534,
+        12,
+        667,
+        12,
+        12,
+        12,
+        65534,
+        48,
+        48,
+        48,
+        48,
+        48
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 5,
+        "lines_per_page": 5
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 402
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "402",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_frame_right",
+      "value": "┐\n│\n│\n│\n┘",
+      "glyph_codes": [
+        49,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 1,
+        "lines_per_page": 5
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 403
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "403",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_status_588",
+      "value": "死亡",
+      "glyph_codes": [
+        490,
+        598
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 2,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 588
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "588",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_status_589",
+      "value": "麻痺",
+      "glyph_codes": [
+        465,
+        466
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 2,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 589
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "589",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_status_590",
+      "value": "睡眠",
+      "glyph_codes": [
+        628,
+        798
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 2,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 590
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "590",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_status_591",
+      "value": "混亂",
+      "glyph_codes": [
+        481,
+        482
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 2,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 591
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "591",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_status_592",
+      "value": "瑪荷",
+      "glyph_codes": [
+        349,
+        376
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 2,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 592
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "592",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_status_593",
+      "value": "瑪努",
+      "glyph_codes": [
+        349,
+        388
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 2,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 593
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "593",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
+      }
+    },
+    {
+      "id": "dq3:text.field.idle_status_594",
+      "value": "中毒",
+      "glyph_codes": [
+        407,
+        137
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 2,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 594
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "data_file",
+        "source": "D3TXT00.TXT + 原始字模FON + DQ3.EXE consumer",
+        "address_space": "record",
+        "address": "594",
+        "consumer": "1F590／18222／213C4／21286；原始record形狀及指標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "框線正常單人布局已動態驗；狀態字串僅靜態D2。"
       }
     }
   ]

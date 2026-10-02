@@ -1810,3 +1810,19 @@ DQ3新增完整record407／557／434與真正能力選項raw window `0x28E50`；
 同版本位置與旗標 round-trip，NPC 動畫及原版存檔格式不由此宣稱 parity。
 
 `arrival_frames[].player`與`leader`的x、y亦為必填，合法0不等於缺值；缺欄位、null及未知欄位一律拒絕。
+
+## 場景閒置隊伍窗（schema0.7.0／content0.1.75）
+
+`interface.field_idle_status`引用`party_hud_id`及`left_text_id`、`column_text_id`、`right_text_id`。
+`font_asset`必須引用manifest字型素材，建立Game時驗證實際大小與hash，renderer直接使用此已載入字型。
+原始欄位與有限READY範圍見[docs/188](188-opening-escort-to-castle-spec.md)。
+`scenes`明列已有正常入口證據的CTY／section；未宣告場景不套用本狀態機。
+`delay_ticks`、`rate_numerator`、`rate_denominator`保存遊戲門檻及具來源的時間域，以60TPS向上取整。
+`digits`、`blank_glyph`、`status_inset_x`、`shadow`、`backdrop_rgb`描述有限原語，不能嵌入程式。
+`hp_inset_y`、`mp_inset_y`及`status_inset_y`保存相對視窗的列位置，姓名引用既有`party_hud.text_inset_y`。
+列位置必須為字模步距且在視窗內，renderer不保留版本專屬列座標。
+`status_rows`依原始優先序明列`mask_raw`及`text_id`；`dead_status_mask`、`health_divisors`、
+`health_sum_cap`、`dead_palette_index`、`palette_index`及`health_palette_raw`提供原始健康色選擇資料。
+資料最低D2，正式狀態機與scene入口需D3，`timing_evidence`明示hardware-spec approximation。
+所有巢狀欄位必填，文字shape、record來源、字模、索引、scene及證據均驗證，沒有引擎fallback。
+存檔不序列化UI暫態；同版本讀檔清除等待、底圖及方向消耗後重新等待，遊戲進度保持。
