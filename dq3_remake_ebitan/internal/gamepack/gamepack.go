@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"io"
 	"io/fs"
 	"path"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.59"
+	SchemaVersion       = "0.1.60"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -921,22 +922,36 @@ type OpeningEscort struct {
 
 // OpeningPrelude 描述創角後、場景顯示前的有限文字演出。
 // 框線與文字由具名引用提供；字距與控制碼長度只使用已註冊的解析原語。
+type RetainedTextFlow struct {
+	Mode             string   `json:"mode"`
+	ScrollStepPixels int      `json:"scroll_step_pixels"`
+	ScrollSteps      int      `json:"scroll_steps"`
+	ScrollHoldFrames int      `json:"scroll_hold_frames"`
+	Evidence         Evidence `json:"evidence"`
+}
+
+func (f *RetainedTextFlow) UnmarshalJSON(raw []byte) error {
+	type plain RetainedTextFlow
+	return decodeOpeningObject(raw, (*plain)(f), []string{"mode", "scroll_step_pixels", "scroll_steps", "scroll_hold_frames", "evidence"})
+}
+
 type OpeningPrelude struct {
-	ID                string       `json:"id"`
-	TextID            string       `json:"text_id"`
-	FrameTextID       string       `json:"frame_text_id"`
-	Window            WindowLayout `json:"window"`
-	GlyphStepX        int          `json:"glyph_step_x"`
-	VariableCodeWords int          `json:"variable_code_words"`
-	ReturnMode        string       `json:"return_mode"`
-	ForegroundRGB     []uint8      `json:"foreground_rgb"`
-	BackdropRGB       []uint8      `json:"backdrop_rgb"`
-	Evidence          Evidence     `json:"evidence"`
+	ID                string           `json:"id"`
+	TextID            string           `json:"text_id"`
+	FrameTextID       string           `json:"frame_text_id"`
+	Window            WindowLayout     `json:"window"`
+	GlyphStepX        int              `json:"glyph_step_x"`
+	VariableCodeWords int              `json:"variable_code_words"`
+	ReturnMode        string           `json:"return_mode"`
+	TextFlow          RetainedTextFlow `json:"text_flow"`
+	ForegroundRGB     []uint8          `json:"foreground_rgb"`
+	BackdropRGB       []uint8          `json:"backdrop_rgb"`
+	Evidence          Evidence         `json:"evidence"`
 }
 
 func (p *OpeningPrelude) UnmarshalJSON(raw []byte) error {
 	type plain OpeningPrelude
-	if err := decodeOpeningObject(raw, (*plain)(p), []string{"id", "text_id", "frame_text_id", "window", "glyph_step_x", "variable_code_words", "return_mode", "foreground_rgb", "backdrop_rgb", "evidence"}); err != nil {
+	if err := decodeOpeningObject(raw, (*plain)(p), []string{"id", "text_id", "frame_text_id", "window", "glyph_step_x", "variable_code_words", "return_mode", "text_flow", "foreground_rgb", "backdrop_rgb", "evidence"}); err != nil {
 		return err
 	}
 	var fields map[string]json.RawMessage
@@ -2544,6 +2559,13 @@ func (p *Pack) validateInterface() error {
 	}
 	if e := p.Interface.OpeningPrelude; e != nil {
 		w := e.Window
+		f := e.TextFlow
+		if f.Mode != "retained_rows" || e.ReturnMode != "automatic_after_reveal" || f.Evidence.Level != "D3" ||
+			f.ScrollStepPixels <= 0 || f.ScrollStepPixels > dq3data.GlyphPx || f.ScrollSteps <= 0 || f.ScrollSteps > dq3data.GlyphPx ||
+			f.ScrollStepPixels*f.ScrollSteps != dq3data.GlyphPx || f.ScrollHoldFrames <= 0 || f.ScrollHoldFrames > 60 ||
+			w.GlyphHoldFrames <= 0 || w.Height-2*w.TextInsetY != w.LinesPerPage*dq3data.GlyphPx || (w.Width-2*w.TextInsetX)%8 != 0 {
+			return errors.New("opening prelude text flow is invalid")
+		}
 		if e.ID == "" || e.TextID == "" || e.FrameTextID == "" || e.Evidence.Level != "D3" || w.Evidence.Level == "D1" ||
 			e.GlyphStepX < 16 || e.GlyphStepX > 64 || e.VariableCodeWords < 1 || e.VariableCodeWords > 2 ||
 			(e.ReturnMode != "automatic_after_reveal" && e.ReturnMode != "confirm") ||
@@ -2555,7 +2577,7 @@ func (p *Pack) validateInterface() error {
 			w.GlyphHoldFrames < 0 || w.GlyphHoldFrames > 60 || (w.GlyphHoldFrames > 0 && w.GlyphTiming == nil) {
 			return errors.New("opening prelude is invalid")
 		}
-		for _, evidence := range []Evidence{e.Evidence, w.Evidence} {
+		for _, evidence := range []Evidence{e.Evidence, w.Evidence, f.Evidence} {
 			if err := validateEvidence(evidence); err != nil {
 				return fmt.Errorf("opening prelude evidence: %w", err)
 			}
@@ -2628,8 +2650,22 @@ func (p *Pack) validateOpeningPreludeRefs() error {
 	if e == nil {
 		return nil
 	}
-	if text, ok := p.TextGlyphCodes(e.TextID); !ok || len(text) == 0 {
+	text, ok := p.TextGlyphCodes(e.TextID)
+	if !ok || len(text) == 0 {
 		return errors.New("opening prelude text reference is missing")
+	}
+	for i := 0; i < len(text); i++ {
+		code := text[i]
+		switch {
+		case code < dq3data.GlyphMax, code == dq3data.TxtNL, code == dq3data.TxtNL2, code == dq3data.TxtPage:
+		case dq3data.IsVarInsert(code):
+			i += e.VariableCodeWords - 1
+			if i >= len(text) {
+				return errors.New("opening prelude variable control is incomplete")
+			}
+		default:
+			return errors.New("opening prelude text control is unsupported")
+		}
 	}
 	frame, ok := p.TextGlyphCodes(e.FrameTextID)
 	if !ok {

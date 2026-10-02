@@ -1,5 +1,29 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 2026-10-02 最新契約：生日保留文字與有限捲動
+
+schema 為 `0.1.60`，DQ3 content 為 `0.1.66`。規格與原始定位見
+[docs/188](188-opening-escort-to-castle-spec.md) 的生日續頁 READY 審查。
+`interface.opening_prelude.text_flow` 必填且拒絕未知欄位：
+
+| 欄位 | 契約 | DQ3 資料與來源 |
+|---|---|---|
+| `mode` | 唯一已註冊原語 `retained_rows`；搭配 `automatic_after_reveal` | FFFC 保留前文，換行只依原始控制碼 |
+| `scroll_step_pixels` | 正整數、不超過字模高度 | 4，IDA linear0x21A71 clear writer |
+| `scroll_steps` | 正整數，與每步位移相乘必須等於字模高度 | 4，IDA linear0x219FE CX=4 |
+| `scroll_hold_frames` | 1..60 個60TPS更新 | 3，既有平台時序近似，非原版逐週期時間 |
+| `evidence` | D3，保留原始來源、consumer、位址與文件入口 | EXE及dosgolem正常輸入的生日末尾／四次捲動 |
+
+文字區從既有 `window` 導出，寬為外框寬減兩側inset，
+高為行數乘16px，並必須等於外框高度減上下inset。D3 EXE parity鎖定320×64，
+每步讀取下移4px的60列並清除最後4列。字模不透明寫入16×16，沿用24px水平步距。
+確認只能解除已抵達的內嵌等待；捲動中與EOF末字等待均不能被確認跳過。
+缺值、null、未知原語、未審查證據、錯誤幾何與不完整變數碼一律拒絕載入。
+本段只擴充已閉合的有限生日流程，其他record仍沿用既有解析。正式冷啟動六張比較
+及完整回歸通過後，本生日流程限定 CONFORMED；捲動速度仍屬平台時序近似。
+
+以下同日較早契約保存形成史，現行版號與文字流程以上段為準。
+
 ## 2026-10-02：有限生日返回與初始 clock（schema 0.1.59／content 0.1.65）
 
 依 [docs/188](188-opening-escort-to-castle-spec.md) 的有限 READY 審查，新增兩個必要欄位：

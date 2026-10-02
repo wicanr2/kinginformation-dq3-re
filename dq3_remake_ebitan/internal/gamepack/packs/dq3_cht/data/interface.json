@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.59",
+  "schema_version": "0.1.60",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -1149,7 +1149,23 @@
       "address": "0x10077..0x100b2;0x214f8..0x215cb;0x21501..0x21534",
       "consumer": "sub_10030清畫面→sub_15002→sub_21414；字模與姓名前進3個VGA bytes，變數不吞下一word",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
-      "note": "首頁及生日EOF有限返回READY；完整文字保留、捲動、房間與母親尚未CONFORMED；見docs/188"
+      "note": "生日首頁／EOF及保留捲動限定READY；房間、母親與其他record尚未CONFORMED，見docs/188"
+    },
+    "text_flow": {
+      "mode": "retained_rows",
+      "scroll_step_pixels": 4,
+      "scroll_steps": 4,
+      "scroll_hold_frames": 3,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + D3TXT01.TXT + dosgolem自然生日續頁／四次捲動",
+        "address_space": "linear",
+        "address": "0x2149a..0x214ba;0x21501..0x21593;0x219fe..0x21aa6",
+        "consumer": "sub_21414→sub_219F4；保留前文，320×64文字區每次上移4px，共四次，然後返回caller",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "生日record82保留與捲動限定READY；每步3個60TPS更新沿用hardware-spec approximation，非原版逐週期wall-clock"
+      }
     }
   },
   "opening_escort": {

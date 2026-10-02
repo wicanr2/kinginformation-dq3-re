@@ -62,8 +62,15 @@ if scenario == 'birthday_continue':
     # 在已自然抵達的生日等待狀態追加兩次Enter；未知續頁不預先命名為房間。
     keys += [(1220000000, 0x1c), (1340000000, 0x1c)]
     captures += [(1231000000, 'continue-1'), (1271000000, 'continue-1-wait'),
-                 (1311000000, 'continue-1-stable'), (1351000000, 'continue-2'),
-                 (1391000000, 'continue-2-wait'), (1431000000, 'continue-2-stable')]
+                  (1311000000, 'continue-1-stable'), (1351000000, 'continue-2'),
+                  (1391000000, 'continue-2-wait'), (1431000000, 'continue-2-stable')]
+    # 已觀測的自然consumer邊界，僅擷取，不跳轉或寫入文字／場景狀態。
+    captures += [(1221357922, 'birthday-tail-before-eof'),
+                 (1221370959, 'birthday-scroll-1'),
+                 (1221491508, 'birthday-scroll-2'),
+                 (1221612130, 'birthday-scroll-3'),
+                 (1221732757, 'birthday-scroll-4'),
+                 (1221840427, 'birthday-scroll-complete')]
     stop = 1440000000
 assert out.is_dir() and out.stat().st_uid == os.getuid()
 exe = repo / 'assets_raw/DQ3.EXE'
@@ -170,7 +177,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         if dq3SeedApplied {
             switch flowPC {
             case 0x100ab, 0x100b5, 0x100c4, 0x100d5, 0x100d8, 0x100e9, 0x100fa,
-                 0x21558, 0x21501, 0x216c3, 0x21726:
+                 0x21558, 0x21501, 0x216c3, 0x21726, 0x21a8b:
                 ds := m.CPU.Seg[cpu.DS]
                 fmt.Printf("DQ3_BIRTHDAY_FLOW step=%d ida_linear=%05x DS=%04x SI=%04x BP=%04x DX=%04x raw259b=%d raw0716=%04x raw0718=%04x raw4f33=%d raw4f35=%d seed=%04x raw251d=%d raw0b2d=%d raw25d1=%04x raw4f2d=%d raw0004=%d raw26ad=%d\n",
                     m.Steps,flowPC,ds,m.CPU.R[cpu.SI],m.CPU.R[cpu.BP],m.CPU.R[cpu.DX],

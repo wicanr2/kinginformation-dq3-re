@@ -5,7 +5,7 @@
 # --navigation 重生兩條命名收據，驗證六次方向與四次功能輸入的狀態及完整畫布。
 # --creation 重生固定種子創角，驗證命名／性別、能力交易與等待／確認完整畫面。
 # --opening 從冷啟動延伸第17次接受角色，驗證同批創角與黑底生日首頁；續頁／母親仍待閉合。
-# --birthday-pages 延伸兩次生日續頁，必跑正式紅測試；DRAFT未閉合前預期非零，不能當成完成收據。
+# --birthday-pages 延伸兩次生日續頁及四次捲動；生日文字必須通過，房間未閉合前仍有正式紅測試。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"
@@ -73,8 +73,8 @@ timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
       export DQ3_DOSGOLEM_CREATION_COMPARE=1 DQ3_DOSGOLEM_OPENING_COMPARE=1
       comparison="TestDosgolem(NewGameCreation|OpeningAcceptance)Comparison"
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --birthday-pages; then
-      export DQ3_DOSGOLEM_CREATION_COMPARE=1 DQ3_DOSGOLEM_BIRTHDAY_COMPARE=1
-      comparison="TestDosgolem(NewGameCreation|OpeningAcceptance)Comparison"
+      export DQ3_DOSGOLEM_CREATION_COMPARE=1 DQ3_DOSGOLEM_BIRTHDAY_COMPARE=1 DQ3_DOSGOLEM_RETAINED_COMPARE=1
+      comparison="TestDosgolem(NewGameCreation|OpeningAcceptance|OpeningRetainedRows)Comparison"
     else
       comparison=TestDosgolemNewGameMenuAndNameComparison
     fi

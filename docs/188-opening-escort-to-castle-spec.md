@@ -1,6 +1,41 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
-## 2026-10-02：房間背景與陰影來源閉合，完整渲染仍 DRAFT
+## 2026-10-02 最新結果：生日保留前文與四次捲動限定 CONFORMED
+
+依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，下方生日續頁規格
+已完成 RE→DRAFT→原型審查→READY→正式實作→同狀態驗收。
+正式從創角與第18次確認自然抵達末尾及四次捲動，六張完整640×350 RGB差異均為0，
+沒有裁切或遮罩。其中五張是新增比較點，連同既有22張累計27張限定可見對拍。
+FFFC保留前文，最後一字等待後四次捲動，自動返回，再交易出生場景。
+捲動中不能提前確認，沒有RNG消耗；返回後自然抵達record83。時序只採平台規格近似。
+
+最後冷啟動原版收據 `work/dosgolem-opening/issue4-birthday-pages-receipt.json`：36,603bytes，
+SHA-256 `13c5e2632d3fd874f42b21ce061df16b7d3f6681846322ca8c59b79cb21c756f`。
+與原型前冷啟動的66份PNG／bin全部相同；收據差異只在log artifact，38次IRQ1送達，
+19次輸入與執行前一次固定0x1357均維持。原始圖像、腳本與archive留在本機。
+正式紅測試仍保留：房間差172,261像素，第19次兩側不同狀態差198,652僅供診斷。
+本段沒有把房間試作302像素的結果接入正式程式，也沒有寫死NPC步行影格。
+
+schema/content為0.1.60／0.1.66，`opening_prelude.text_flow`提供具名保留文字原語與捲動參數。
+實作為 `game/dialogue_retained.go`，正常輸入對拍為 `game/opening_retained_test.go`；
+原始EXE parity、缺欄位／null／未知欄位／錯誤幾何拒絕見 `internal/gamepack/gamepack_test.go`。
+自動合併台帳已追加本段有限語意，重生 sidecar `work/issue4-retained-reviewed-ida.json`：
+849,255bytes，SHA-256 `f5858634c360f87a146348840d19b4383833d667c4475f4974cb61d75bc814e2`。
+IDA9.4、原始EXE路徑／大小／hash／兩種bytes及原始位址均保留，舊sidecar不覆寫。
+
+完整game362項頂層／34項子測試、11個internal套件及desktop main.go通過；正常新遊戲
+到THE END85.55秒，主角／酒館與各段存讀檔通過。這只屬重製回歸。
+標準批次38項選用SKIP，創角與本生日對拍另行嚴格通過，接受角色對拍因房間差異仍RED，
+其餘35項未執行；沒有素材缺失。初次完整重播於末字揭露後立即按確認，尚未抵達
+原版FFFC等待點；已修正驗證腳本以正式空白InputState等到等待，再用同一工具鏈乾淨重跑。
+下一步為房間視野／外界圖塊／陰影的正式資料契約與動畫時間條件，不重新開啟已通過生日切片。
+
+整批私有稽核入口 `work/issue4-retained-audit.py`，收據 `work/issue4-retained-evidence-receipt.json`：
+21,932bytes，SHA-256 `3432cd48b3cb2894538189264d6b779f0ac6c303d6a57dc4a6574551dafc6713`。
+769筆原始file bytes、全部當輪原始產物、正式來源hash及UID/GID1000通過；歷史root候選3213保留，
+新增root及Markdown誤掛載目錄0。相關一次性Docker容器均清除，沒有新image或發行包。
+
+## 同日較早證據：房間背景與陰影來源閉合，完整渲染仍 DRAFT
 
 工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，正式基準
 `8cebf4a983e32cc55132c7830604fe4cb4e0b55b`。本批只新增唯讀原版觀測與有限語意索引，
@@ -421,3 +456,50 @@ CTY00、`(8,38)`、王城入口、rec80、`0x17` 或 `0x50`。
 2026-08-24 已通過 schema、component、王座像素差異及正式創角 production trace 的開場段；
 完整 trace 繼續抵達後續主線，最後在既有「低危區練至 Lv20」500000-step 上限失敗，與本切片
 無關。因此本開場切片恢復 E3；逐 tile 原版內部路點與逐幀 timing 仍只到上述證據等級，不稱 V3。
+
+## 生日續頁保留與捲動規格，2026-10-02
+
+DRAFT 建於本輪原型前，現經下列證據審查為 READY；範圍限 `opening_prelude` 的生日 record82。入口仍為正式創角，
+第18次確認延續原有文字；捲動完成後才允許出生交易。房間、record83、箭頭與
+NPC 動畫另有未完成閘門，不藉此擴大對拍聲明。
+
+來源仍為上述原始 EXE 與 D3TXT01 雜湊。IDA Pro 9.4 匯出
+`work/issue4-birthday-pages-text-ida.json`，769,130 bytes，SHA-256
+`690857dc7e26685c3fd0f05998b2d902c0a8307fa95d91b2d9cde2bc90416140`。
+這是 database 的 caller／consumer 匯出，保留原名、bytes、xref 與位址基準。
+
+| 原始定位 | 行為 | 證據等級 |
+|---|---|---|
+| IDA linear `0x2149a..0x214ba` | 換行重設水平游標；四行滿後呼叫 `sub_219F4`，不自動依 columns 換行 | strong；consumer，待自然畫面閉合 |
+| IDA linear `0x21558..0x21593` | FFFC 先推進一行，再等待確認；確認後沿用原畫面 | strong；consumer 與自然流程觀測 |
+| IDA linear `0x219fe`／file `0x12d6e` | `B9 04 00`，四次捲動 | strong；原始 bytes 與四次自然呼叫觀測 |
+| IDA linear `0x21a0a..0x21a28`／file `0x12d7a..0x12d98` | 寬40個 VGA bytes，即320px；讀取60列，來源 y+20，目的 y+16 | strong；視窗 consumer 與 copy writer |
+| IDA linear `0x21a71`／file `0x12de1` | `BB 04 00`，每次清除底部4列；文字區320×64，每次上移4px | strong；四平面 clear writer |
+| IDA linear `0x21501..0x2152f` | EOF 最後一字等待後捲動，再自動返回，沒有額外確認 | 已有 EOF confirmed；四次可見捲動待本輪核對 |
+
+具名有限流程 `retained_rows` 保留繪圖操作，依原始控制碼換行。字模以16×16
+不透明寫入，姓名沿用已審查的24px步距。`text_flow` 必填 mode、scroll_step_pixels、
+scroll_steps、scroll_hold_frames 與 evidence；幾何由既有 Window 的 inset 與行数導出。
+驗證要求 content height 等於行數×字模高度、四次位移合計一行、引用與 D3 證據有效。
+此具名流程只搭配已審查的 `automatic_after_reveal`。捲動每步等待3個60TPS更新，沿用既有平台時序近似，屬 hardware-spec approximation；
+不聲稱與原版硬體 wall-clock 逐週期一致。
+
+驗收用同一種子0x1357、同一19次IRQ輸入的 dosgolem 冷啟動收據，新增 EOF 前及
+四次捲動後擷取。重製經17次創角輸入與第18次確認，僅用正式空白 InputState 等待。
+逐張比較完整640×350 RGB，不裁切、不遮罩；另外檢查捲動中不交易出生、不消耗RNG，
+返回後抵達原有下一節點並由既有 production trace 驗證存讀檔。原型通過才審為 READY。
+
+### READY 審查結果
+
+固定來源 `e2d6cc25467a8e3d4896a7f68ead4f3110d4588b` 的私有原型由正常 InputState
+抵達全部六個比較點，完整RGB均為0差異；已目視核對續頁末尾與第四次捲動。
+`work/issue4-retained-prototype.py`／`work/issue4-retained-prototype.go`／
+`work/issue4-retained-test.go` 與 `work/issue4-retained-prototype.log` 保留重生方法與結果。
+原型前原版收據已保存為 `work/dosgolem-opening/issue4-archive-fe874811378a8f88223dc55b8cc4361ac391105e86e5e0c5b5017f59c36f2984.json`：36,603bytes，SHA-256
+`fe874811378a8f88223dc55b8cc4361ac391105e86e5e0c5b5017f59c36f2984`。
+既有54張PNG／bin內容均與上一批一致，38次IRQ1送達，兩側種子執行前固定一次0x1357。
+沒有修改輸入、注入座標、文字或故事狀態。新擷取只增加既有consumer邊界的唯讀觀測。
+上表可見幾何、FFFC保留及四次捲動升為 confirmed，僅限此生日流程；時序仍為平台近似。
+四次捲動位於step1221370959／1221491508／1221612130／1221732757，consumer均為
+IDA linear0x21A8B。完成時1221840427的畫布與第四次擷取相同，caller為linear0x100AB。
+正式實作接入前的房間紅測試仍為172,261差異，本段驗收不會取消該閘門。

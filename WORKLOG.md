@@ -501,3 +501,47 @@ CONTEXT唯一目前表、PROJECT_MEMORY、docs/74與WORKLIST更新試作前沿�
 修改檔與本批產物UID/GID1000；歷史root候選3,213無新增，本批root產物及.md誤掛載目錄0。
 DQ3／IDA一次性容器收尾為空，未更動其他專案容器、使用者scratch或Android libs。
 本批提交及推送回填Issue #4，仍保持開啟；下一步共享文字流及動畫時間條件，再審查READY。
+
+## 2026-10-02：Issue #4生日保留文字與四次捲動正式修正
+
+從e2d6cc2接續Issue #4已登記的生日文字切片。路由命中dosgolem、IDA9.4與規格閘門；
+實作前及結論回填前重查spec gate與文件職責。原版consumer證明FFFC先推進行再等待，
+確認後保留前文；EOF於最後一行分四次複製320×60、清除底部4列，完成後才返回caller。
+原始EXE／TXT身份、IDA linear／file定位及bytes保留在docs/188，不重新命名或修改binary。
+
+probe只新增EOF前及四次捲動邊界擷取，不改19次IRQ輸入或執行前一次種子1357。
+固定e2d6cc2的隔離原型六張全640×350 RGB差異0，先追加DRAFT、審查READY，再接入正式
+retained_rows引擎。pack新增必填text_flow，schema/content0.1.60／0.1.66；參數、D3來源及
+拒絕規則見docs/84。正式確認不能跳過揭露／捲動；捲動中不交易出生、不消耗RNG。
+速度沿用3個60TPS更新的硬體規格近似，不宣稱原版wall-clock逐週期一致。
+
+最後冷啟動以同一入口重生33張PNG／33份色號，66份圖像與原型前完全相同，38次IRQ1送達。
+正式生日六張0差異、創角8張及生日首頁2張通過；生日六張中的stable與首頁重複，新增5張，
+累計限定27張可見畫面。房間正式仍差172,261，第19次不同狀態198,652只作診斷，wrapper退出1。
+未接入房間試作302差異，也未把NPC影格或箭頭相位寫死。Issue #4仍開啟，下一步為房間契約。
+
+component、原始EXE parity與巢狀缺欄位／null／未知欄位／錯誤幾何拒絕通過。完整game362頂層／
+34子測試、11個internal與desktop main.go通過。正常新遊戲至THE END85.55秒，主角／酒館及
+各段存讀檔通過，僅屬重製回歸。標準38項選用SKIP，三項對拍另跑，創角與生日捲動PASS、
+接受角色的房間RED；其餘35項未跑，沒有素材缺失。
+
+初次原型容器呼叫的自動核准審查逾時，重試一次成功，沒有退回主機。正式首次編譯缺少
+原始文字decoder import，補齊後同命令重跑通過。首次全程trace在最後一字顯示後立即按確認，
+尚未等到FFFC；修正驗證腳本只送空白InputState等到正式等待，再於同容器乾淨重跑。
+稽核腳本原先要求日誌包含只在失敗時印出的THE END訊息；改核對實際終點斷言及trace成功，
+沒有弱化遊戲驗收。這些驗證／工具問題與房間產品差異分開記錄。
+
+最後原版收據36,603bytes／SHA-256
+13c5e2632d3fd874f42b21ce061df16b7d3f6681846322ca8c59b79cb21c756f；
+原型前fe874與早期b077均按hash保留。新分級IDA sidecar849,255bytes／SHA-256
+f5858634c360f87a146348840d19b4383833d667c4475f4974cb61d75bc814e2；
+自動附加有限語意，769筆原始file bytes核對通過，不覆寫舊sidecar。
+整批私有稽核work/issue4-retained-evidence-receipt.json為21,932bytes／SHA-256
+3432cd48b3cb2894538189264d6b779f0ac6c303d6a57dc4a6574551dafc6713。
+本機圖片、原版素材、state、database及完整收據不入Git或公開附件。
+
+CONTEXT唯一目前表、PROJECT_MEMORY、docs/74、WORKLIST與README摘要同步。
+git diff --check通過；既有image無rg，限定新增Go行的等價regex掃描只命中測試oracle，
+新正式原語沒有版本專屬ID／座標／record／旗標／顏色常數。UID/GID1000，歷史root候選3213保留，
+本批root產物及.md誤掛載目錄0。dosgolem、IDA與Xvfb容器均已清除，其他專案資源不變。
+使用者scratch／Android libs保留，未建立新image或發行包；正式切片提交及推送連結回填Issue #4。

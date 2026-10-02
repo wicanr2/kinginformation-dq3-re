@@ -1,11 +1,13 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> **2026-10-02 最新閘門（Issue #4，有限返回已修正／完整續頁DRAFT）：**
-> 原版EXE／IDA9.4與19次正常IRQ1flow閉合後，已修正生日EOF多餘確認、出生交易時序與初始clock30。
-> 正式第18次InputState自然抵達家中record83等待，seed356D；既有22張仍完整RGB零差異。
-> schema/content為0.1.59／0.1.65。房間正式完整RGB仍差172,261像素；本批未改正式程式。
-> IDA及唯讀繪圖觀測已連接layer0外界圖塊與偏移陰影；字組陰影隔離試作由2,034降至302像素，仍未通過。
-> 剩餘兩個NPC步行影格261、箭頭41。下一步補共享文字流保留／捲動與兩側動畫時間條件，再審查READY接入正式路徑。
+> **2026-10-02 最新閘門（Issue #4，生日保留／捲動已修正，房間DRAFT）：**
+> 生日原始文字consumer與自然四次捲動閉合，原型六張零差異後審查READY，已接入正式引擎及pack。
+> 正式冷啟動六張全640×350 RGB零差異，五張新增，連同既有22張累計限定27張；本生日流程CONFORMED。
+> 捲動中不提前交易出生、不消耗RNG；第18次正常InputState自然到家中record83、seed356D、clock30。
+> schema/content為0.1.60／0.1.66。game362頂層／34子測試、11個internal與桌面建置通過，正常新遊戲到THE END85.55秒。
+> 主角／酒館與各段存讀檔通過；這只屬重製回歸。標準38項選用SKIP，三項對拍另跑，兩項PASS、一項房間RED，沒有素材缺失。
+> 房間正式仍差172,261；第19次不同狀態198,652僅診斷；字組陰影試作302未接入正式程式。
+> 下一步房間視野／外界圖塊／陰影的正式契約及動畫時間條件，不寫死NPC影格，不重開已完成生日切片。
 > 有限規格與收據見[docs/188](188-opening-escort-to-castle-spec.md)，目前驗收表以[CONTEXT](../CONTEXT.md)為準。
 > 入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍以完整RGB差異退出1。
 

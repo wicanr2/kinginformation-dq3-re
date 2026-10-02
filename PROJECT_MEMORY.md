@@ -1,12 +1,14 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-02：Issue #4已修正生日EOF多等一次確認、返回前提早交易出生場景，以及初始clock0選錯色盤。
-> 原版EXE初值與自然冷啟動flow均為clock30；正式第18次InputState現在自然抵達家中record83等待，seed356D。
-> schema/content為0.1.59／0.1.65；有限返回／clock規格及未完成界線見docs/188。
-> 既有22張保持零差異；房間正式完整RGB仍RED，文字保留／捲動、視野／框線、母親與箭頭待閉合。
-> 新IDA證據閉合layer0外界圖塊及偏移陰影；字組鎖存試作剩302像素，含NPC步行影格261及箭頭41。
-> 正式程式未變，完整房間仍DRAFT；下一步補共享文字流及動畫時間條件，不把特定影格寫死。收據b077／a240及入口見docs/188。
-> 最近正常新遊戲至THE END（61.09秒）、主角／酒館及各段存讀檔、完整game、11個internal與桌面建置通過；本批未重跑完整回歸。
+> 2026-10-02：Issue #4的生日保留前文及四次捲動已正式修正，六張完整RGB零差異，五張新增，累計限定27張。
+> 原型READY審查、原始bytes／IDA9.4台帳與正式冷啟動收據見docs/188；本生日流程限定CONFORMED。
+> schema/content為0.1.60／0.1.66，必填text_flow參數在pack JSON；其他record仍沿用既有解析。
+> 第18次正常InputState自然到家中record83、seed356D、clock30；捲動中不能提前確認、交易出生或消耗RNG。
+> 19次輸入、38次IRQ1維持，原版收據13c5e263，66份PNG／bin與原型前相同；速度只採既有平台規格近似。
+> 房間完整RGB仍差172,261；陰影試作302差異未接入正式程式，NPC動畫與箭頭仍待閉合，不把特定影格寫死。
+> 下一步為房間視野／外界圖塊／陰影的正式資料契約及動畫時間條件，不重開已完成生日切片。
+> 最近正常新遊戲至THE END85.55秒、主角／酒館及各段存讀檔、game362頂層／34子測試、11個internal及桌面建置通過。
+> 標準38項選用SKIP，其中三項另跑，創角與生日捲動PASS、房間RED；沒有素材缺失。
 > 冷啟動19次輸入與唯讀flow入口為`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`，目前預期紅測試退出1。
 
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。

@@ -38,7 +38,8 @@ REVIEW_LEDGER = [
     (0x214f8, 0x21501, "strong", "一般字模SI+=2、BP+=3，即24px步距；生日首頁已閉合"),
     (0x215b7, 0x215ce, "strong", "0xfff5姓名插值後只越過控制碼本身；下一word不是參數"),
     (0x21514, 0x21530, "strong", "row3的EOF分支捲動後返回，沒有按鍵等待；生日自然caller已閉合"),
-    (0x21558, 0x2157e, "strong", "0xfffc推進行並等待，再續寫同一文字流；保留／捲動完整畫面未閉合"),
+    (0x21558, 0x2157e, "confirmed", "生日record82的0xfffc先推進行再等待；第18次確認保留前文，末尾及四次捲動全畫布閉合；不外推其他record"),
+    (0x219fe, 0x21aa6, "confirmed", "生日record82文字區320×64，每次複製60列、清除底部4列，共四次上移4px後返回；可見幾何已閉合，等待時長只採hardware-spec approximation"),
     (0x21651, 0x216bf, "strong", "姓名consumer保存並還原SI；BP增加名字長度乘3；生日姓名0已閉合"),
     (0x28c3e, 0x28c4a, "confirmed", "raw共用視窗前12bytes及record404字模畫布；限定自然生日首頁，其他欄位／場景未外推"),
     (0x272ed, 0x272ef, "confirmed", "DGROUP251D原始初值1e00即30；自然生日／房間等待觀測亦為30，只限新遊戲初值"),
@@ -54,6 +55,10 @@ CONTINUATION_RANGES = {0x100ab, 0x100b5, 0x100cd, 0x21514, 0x21558}
 
 
 def review_evidence(start):
+    if start in (0x21558, 0x219fe):
+        return ("docs/188：2026-10-02生日保留／捲動READY；IDA原始bytes／consumer與正常InputState隔離原型六張全640×350 RGB差異0；"
+                "原版冷啟動收據SHA-256 fe874811378a8f88223dc55b8cc4361ac391105e86e5e0c5b5017f59c36f2984；"
+                "種子1357固定一次、19次正常IRQ輸入；只限生日record82，不外推其他record、房間或逐週期時序")
     if start in (0x1311a, 0x11dd8, 0x11e47, 0x11ed0, 0x1fc57, 0x21b98):
         return ("docs/188：2026-10-02房間渲染DRAFT；IDA原始bytes／writer-consumer與自然19次IRQ1唯讀觀測；"
                 "原版收據SHA-256 b077e99c3b38f58b3326df8f8d25ed72b74d58f351a71d41374bc5063db4358c；"

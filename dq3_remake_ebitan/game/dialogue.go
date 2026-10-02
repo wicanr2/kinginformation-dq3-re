@@ -20,6 +20,7 @@ type Dialogue struct {
 	revealTick   int
 	prelude      *gamepack.OpeningPrelude
 	preludeFrame []uint16
+	retained     *retainedTextFlow
 
 	// 插值 var context(docs/42 §四;比照 C dq3_text_set_var_*/dq3_text_clear_vars)。
 	varItem    int              // VAR_ITEM 插值:道具 code(noVar=未設 → 空白)
@@ -50,6 +51,7 @@ func (d *Dialogue) openRecord(b []uint16) bool {
 	if b == nil {
 		return false
 	}
+	d.retained = nil
 	d.buf, d.pos, d.open = b, 0, true
 	d.revealCells, d.revealTick = 0, 0
 	d.varItem, d.varNum, d.varNumItem = noVar, noVar, noVar
@@ -61,6 +63,10 @@ func (d *Dialogue) openRecord(b []uint16) bool {
 // A zero hold keeps engines whose pack has no timing contract instantaneous.
 func (d *Dialogue) Tick() {
 	if !d.open {
+		return
+	}
+	if d.usesRetainedRows() {
+		d.tickRetainedRows()
 		return
 	}
 	_, eof := d.scanPage(d.pos)
@@ -89,6 +95,9 @@ func (d *Dialogue) Tick() {
 // waitingForConfirm distinguishes a visible inline pause from an automatic
 // return that is still holding the final glyph on screen.
 func (d *Dialogue) waitingForConfirm() bool {
+	if d.usesRetainedRows() {
+		return d.open && d.retained != nil && d.retained.waiting
+	}
 	if !d.open || (d.layout.GlyphHoldFrames > 0 && d.revealCells < d.pageCellCount()) {
 		return false
 	}
@@ -224,6 +233,14 @@ func (d *Dialogue) Advance() {
 	if !d.open {
 		return
 	}
+	if d.usesRetainedRows() {
+		if d.retained != nil && d.retained.waiting {
+			d.retained.waiting = false
+			d.pos = d.retained.word
+			d.revealCells, d.revealTick = 0, 0
+		}
+		return
+	}
 	next, eof := d.scanPage(d.pos)
 	if eof {
 		if d.prelude != nil && d.prelude.ReturnMode == "automatic_after_reveal" {
@@ -283,6 +300,10 @@ func (d *Dialogue) draw(rgba []byte, white dq3data.Color) {
 				putPx(rgba, w.X+c, w.Y+r, col)
 			}
 		}
+	}
+	if d.usesRetainedRows() {
+		d.drawRetainedRows(rgba, white)
+		return
 	}
 	end, _ := d.scanPage(d.pos)
 	col, line := 0, 0

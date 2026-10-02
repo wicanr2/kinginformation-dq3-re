@@ -184,12 +184,12 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 	if g.inTown || g.openingIdx != 0 || g.dayNightClock() != g.dayNightCycle.InitialClock {
 		t.Fatal("生日尚未返回就交易出生場景，或初始clock不符資料包")
 	}
-	for i := 0; i < 2000 && g.dlg.open && g.dlg.revealCells < g.dlg.pageCellCount(); i++ {
+	for i := 0; i < 2000 && g.dlg.open && !g.dlg.waitingForConfirm(); i++ {
 		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if g.dlg.open && g.dlg.revealCells < g.dlg.pageCellCount() {
+	if g.dlg.open && !g.dlg.waitingForConfirm() {
 		t.Fatal("開場首頁等待未完成")
 	}
 	g.renderFrame()
@@ -964,10 +964,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("輸入名稱未經 production flow 寫回：%v", g.heroName)
 	}
 
-	for i := 0; i < 2000 && g.dlg.revealCells < g.dlg.pageCellCount(); i++ {
+	for i := 0; i < 2000 && !g.dlg.waitingForConfirm(); i++ {
 		send(InputState{DirHeld: -1, DirEdge: -1})
 	}
-	if !g.dlg.open || g.dlg.pos != 0 {
+	if !g.dlg.waitingForConfirm() || g.dlg.pos != 0 {
 		t.Fatal("生日內嵌確認等待未保留")
 	}
 	press(InputState{Confirm: true})
