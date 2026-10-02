@@ -1106,16 +1106,16 @@
       "text_inset_y": 16,
       "columns": 20,
       "lines_per_page": 4,
-      "glyph_hold_frames": 3,
+      "glyph_hold_frames": 1,
       "glyph_timing_evidence": {
         "level": "D2",
         "source_kind": "exe",
-        "source": "DQ3.EXE + IBM PC timer specification",
+        "source": "DQ3.EXE + dosgolem自然生日／房間PITDivisor + DOSBox Staging timer契約",
         "address_space": "linear",
         "address": "0x214b9..0x214f8",
         "consumer": "sub_21414 draws one glyph then waits for DS:0x0005 >= 1 unless fast mode is active",
-        "doc": "docs/192-opening-dialogue-v3-closure.md",
-        "note": "3 updates at 60 TPS approximate one 18.2 Hz timer tick; hardware-spec approximation, not DOS wall-clock exact"
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "原版觀測除數12428，315000000／3280992 Hz；1tick向上取整為1個60TPS更新。hardware-spec approximation，非原版逐週期wall-clock。"
       },
       "evidence": {
         "level": "D3",
@@ -1159,7 +1159,7 @@
       "visible_ticks": 8,
       "hidden_ticks": 5,
       "rate_numerator": 315000000,
-      "rate_denominator": 17301504,
+      "rate_denominator": 3280992,
       "evidence": {
         "level": "D3",
         "source_kind": "exe",
@@ -1173,19 +1173,19 @@
       "timing_evidence": {
         "level": "D2",
         "source_kind": "exe",
-        "source": "DQ3.EXE + DOSBox Staging src/hardware/timer.cpp",
+        "source": "DQ3.EXE + dosgolem自然生日／房間PITDivisor + DOSBox Staging src/hardware/timer.cpp",
         "address_space": "linear",
         "address": "0x216E6;0x21709",
         "consumer": "8／5 timer ticks換算固定60TPS更新，向上取整",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
-        "note": "315000000／17301504 Hz平台契約；27／17 updates屬hardware-spec approximation，非原版逐週期wall-clock。"
+        "note": "原版觀測除數12428，315000000／3280992 Hz；5／4 updates屬hardware-spec approximation，非原版逐週期wall-clock。"
       }
     },
     "text_flow": {
       "mode": "retained_rows",
       "scroll_step_pixels": 4,
       "scroll_steps": 4,
-      "scroll_hold_frames": 3,
+      "scroll_hold_frames": 1,
       "evidence": {
         "level": "D3",
         "source_kind": "exe",
@@ -1194,7 +1194,7 @@
         "address": "0x2149a..0x214ba;0x21501..0x21593;0x219fe..0x21aa6",
         "consumer": "sub_21414→sub_219F4；保留前文，320×64文字區每次上移4px，共四次，然後返回caller",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
-        "note": "生日record82保留與捲動限定READY；每步3個60TPS更新沿用hardware-spec approximation，非原版逐週期wall-clock"
+        "note": "生日record82保留與捲動限定READY；原版觀測除數12428，每步1tick，向上取整為1個60TPS更新。hardware-spec approximation，非原版逐週期wall-clock。"
       }
     }
   },

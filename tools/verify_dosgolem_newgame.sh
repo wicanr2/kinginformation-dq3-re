@@ -29,6 +29,7 @@ timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
   --memory 4g --cpus 2 --pids-limit 192 -u "$(id -u):$(id -g)" \
   -v "$ROOT:/repo:ro" -v "$ROOT/work:/work" -v "$SOURCE:/dosgolem:ro" \
   -w /repo/dq3_remake_ebitan -e DQ3_NEWGAME_VERIFY_MODE="$MODE" \
+  -e DQ3_DOSGOLEM_SOURCE_HOST_PATH="$SOURCE" \
   -e GOCACHE=/work/.gocache-test -e GOPATH=/work/.gopath-test \
   -e GOMAXPROCS=2 -e GOMEMLIMIT=2GiB -e GOPROXY=off -e GOSUMDB=off \
   -e DQ3_ASSETS=/repo/assets_raw -e DQ3_DOSGOLEM_NEWGAME_DIR=/work/dosgolem-opening \

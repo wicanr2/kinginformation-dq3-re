@@ -1,6 +1,23 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-## 2026-10-02 最新契約：當前文字行的等待指示
+## 2026-10-02 最新資料勘誤：開場文字時間
+
+schema維持`0.1.62`，content改`0.1.69`。既有欄位未變；原版實際PIT除數12428推翻預設65536的時間假設。
+規格、原始定位、唯讀觀測及有限READY審查見[docs/188](188-opening-escort-to-castle-spec.md)。
+
+| 欄位 | 現行值與驗收 |
+|---|---|
+| `opening_prelude.wait_indicator.rate_numerator/denominator` | 315000000／3280992 Hz；來源PIT輸入315000000／264再除以12428 |
+| `visible_ticks/hidden_ticks` | 原始閾值8／5維持；60TPS向上取整為5／4次更新 |
+| `opening_prelude.window.glyph_hold_frames` | 1；來源consumer等待至少1tick |
+| `opening_prelude.text_flow.scroll_hold_frames` | 1；來源consumer等待大於0tick，正常四次捲動的觀測每步差1tick |
+
+版本參數仍全在JSON，沒有引擎預設或存檔格式變更。嚴格正常輸入測試核對生日與房間的自然計時觀測，
+並驗證頻率、兩相閾值及捲動間隔；EXE原始bytes與完整RGB比較保留。
+時間只屬hardware-spec approximation，沒有升級NPC動畫、母親流程或實機逐週期精度。
+下節27／17及較早每步3更新的內容保存形成史，由本節訂正。
+
+## 2026-10-02 前一契約：當前文字行的等待指示
 
 schema為`0.1.62`，DQ3 content為`0.1.68`。有限READY／CONFORMED與原始定位見
 [docs/188](188-opening-escort-to-castle-spec.md)。`interface.opening_prelude.wait_indicator`必填：

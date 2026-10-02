@@ -244,7 +244,7 @@ def main():
                            "xrefs": [{**item_record(ref.frm), "xref_type": ref.type,
                                       "original_function": ida_funcs.get_func_name(ref.frm)}
                                      for ref in idautils.XrefsTo(ea)]}
-                          for ea in (0x24dd0 + 0x0b2d, 0x272ed)],
+                          for ea in (0x24dd0 + 0x0b2d, 0x272ed, 0x24dd0 + 0x0004, 0x24dd0 + 0x0005)],
     }
     repo_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     result["resolution_backlinks"] = []

@@ -1,20 +1,12 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> **2026-10-02 最新閘門：生日等待箭頭有限CONFORMED，房間人物仍RED。**
-> 2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，等待箭頭有限READY已接入正式文字流程。
-> 生日顯示／清除全640×350 RGB零差異，另加一張獨立顯示畫面，累計限定28張。
-> 房間兩相及第18次穩定畫面由302降至261個差異，全在人物；完整房間仍RED。
-> 字模13／12、336px與當前行位置來自原始consumer；顯示8／清除5 ticks換算27／17個60TPS更新，只屬hardware-spec approximation。
-> `opening_prelude.wait_indicator`必填，所有版本值保存JSON，schema/content為0.1.62／0.1.68。
-> 正常19次輸入及38次IRQ1不變，兩側seed1357各固定一次，生日與房間等待seed356D。
-> 新原版54a0c21f含80份產物，既有68份PNG／bin保持；首次生日箭頭是換頁暫態，不當完整畫面。
-> 創角與生日兩相／六張續頁嚴格PASS，房間人物仍RED；第19次不同狀態196,698僅供診斷。
-> 完整game365項頂層／34項子測試、11個internal與desktop main.go通過；正常新遊戲至THE END63.35秒，主角／酒館及各段存讀檔通過，只屬重製回歸。
-> 標準38項選用SKIP，三項原版收據另行兩PASS、一RED，餘35項未跑，沒有素材缺失。
-> 原始定位、有限CONFORMED及私有稽核f802ab3a見[docs/188](188-opening-escort-to-castle-spec.md)，必填契約見[docs/84](84-game-pack-json-contract.md)。
-> 原版重生入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍預期房間RED退出1。
-> 下一步追NPC繪製時的相位與83返回後NPC／母親狀態；不寫死人物影格，不重開已閉合生日或深挖硬體逐週期時序。
-> 目前狀態以[CONTEXT唯一表](../CONTEXT.md)為準。
+> **2026-10-02 最新閘門：文字時間訂正通過，NPC流程保持DRAFT。**
+> Issue #4：原版PIT除數12428推翻預設18.2Hz假設，正式JSON改為箭頭5／4、逐字及捲動1更新。
+> 生日兩相與六張續頁完整RGB、創角及完整remake回歸通過；房間仍261個人物像素差異。
+> 原版83返回後先移動NPC0，再播放81；主角仍(5,5)。目前remake人物選擇與順序有反證。
+> 下一步先閉合0x1010B正式觸發與NPC狀態鏈，完成有限READY，再修正式路徑；不猜補或固定影格。
+> 原始定位、時間CONFORMED與NPC DRAFT見[docs/188](188-opening-escort-to-castle-spec.md)，必填契約見[docs/84](84-game-pack-json-contract.md)。
+> 唯一現況、版號及驗收限制以[CONTEXT狀態表](../CONTEXT.md)為準。下方歷史checkpoint不反向覆蓋本段。
 
 > **2026-10-01 最新閘門（Issue #4，生日首頁）：**
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。

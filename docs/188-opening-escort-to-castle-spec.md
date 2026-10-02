@@ -1,5 +1,100 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+## 2026-10-02：PIT 除數勘誤與 NPC0 移動序列（有限時間 CONFORMED，NPC DRAFT）
+
+依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) 接續 `de91dda`。
+下節沿用預設 PIT 除數65536的18.2 Hz換算已被新收據推翻；字模、8／5閾值與完整生日畫布的結論保留。
+原版唯讀觀測 `Ticks` 與 `PITDivisor()`，生日與房間全部301筆箭頭相位均為12428。
+生日第一次顯示ticks5907、清除5915、再次顯示5920；8／5差值與來源閾值一致。
+生日與房間各四次捲動提交的ticks分別6896..6899、7896..7899，每步差1。
+原始逐字consumer仍為DGROUP0005至少1，定位linear0x214B9..0x214F8；不研究ISR逐週期。
+
+新原版收據 `work/dosgolem-opening/issue4-birthday-pages-receipt.json`，111,787bytes，SHA-256
+`1c41e8bc2566ad659cfea40ab52fb984f4d0e128bfca34703707b55819801644`。
+來源EXE、位址基準、IDA9.4及字模身份沿用下節；dosgolem固定revision
+`2f44a68ebfc54b28fb15dd4a34510b0b04a5415d`，Go1.24.13，既有image。
+上游 `cmd/probe/main.go` 有未提交修改，保持原狀；改用只讀的乾淨隔離副本
+`/tmp/dq3-dosgolem-2f44a68`。入口為
+`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --birthday-pages`。
+觀測僅讀取原版欄位，19次正式輸入、38次IRQ1及一次固定seed0x1357維持。
+
+有限草案只修正生日／房間共用文字時間參數。依
+[DOSBox Staging timer契約](https://github.com/dosbox-staging/dosbox-staging/blob/main/src/hardware/timer.cpp)，
+頻率是PIT輸入除以已觀測除數。沿用PIT輸入315000000／264 Hz，頻率改為315000000／3280992 Hz。
+固定60TPS向上取整：8tick為5更新、5tick為4更新、1tick為1更新。
+`wait_indicator`頻率、`window.glyph_hold_frames`與`text_flow.scroll_hold_frames`均由JSON保存。
+時間維持hardware-spec approximation；不宣稱同硬體wall-clock、NPC動畫或整段campaign parity。
+驗收需正常17／18次輸入、生日兩相與六張續頁完整RGB、原始bytes、pack嚴格驗證、後續正常玩家流程及存讀檔回歸。
+可丟棄原型固定 `de91dda`，入口 `work/issue4-clock-prototype.py`／`issue4-clock-prototype-run.sh`。
+
+另外，原版第19次Enter解除record83後，先等待7tick，再以DX0消費DGROUP3CBC三位元組序列，之後才播放record81。
+序列raw `02 01 00 06 00 00 07 03 00 01 01 02 FF`，EXE file0x19DFC、IDA linear0x28A8C。
+16個動作依序左2、下6、右7、轉左；NPC0由(5,4)到(10,10)，主角全程(5,5)。
+每動作等待8個已觀測tick，除數亦12428。record81 EOF及開場caller返回時主角仍(5,5)。
+目前remake直接接record81，再把(8,3)的人物與主角一起移動；此順序與人物選擇有原版反證。
+後續linear0x1010B帶路入口的正式觸發仍unknown；NPC全域相位的初始化亦尚未閉合。
+這部分保持DRAFT，不以固定人物影格或猜測觸發補入正式路徑。
+
+### 有限時間契約審查
+
+可丟棄JSON原型的生日顯示／清除／再次顯示及原有六張續頁完整RGB均零差異，創角嚴格PASS。
+房間仍261個人物差異，第19次不同狀態仍196,698，沒有掩蓋或固定影格。
+原版118份產物全部核對，與前一份7ca7da23收據的116份PNG／bin完全相同，19次輸入及38次IRQ1亦相同。
+301筆箭頭觀測中，定時兩相均相差8／5tick；兩個正常確認清除事件可提前終止相位，不套用定時閾值。
+原始consumer的逐字 `3D 01 00` 在file0x12863，捲動 `3D 00 00`／`7E F6` 在file0x12E01／0x12E04，皆等1tick。
+四份IDA原始bytes已逐列核對，時間與NPC來源審查收據
+`work/issue4-clock-source-evidence-receipt.json`，30,744bytes，SHA-256
+`f5087b5a90bd88974440e492de3da9ab11b304fbb477583dd4f484772c33a1a5`。
+只將生日／房間共享文字的時間契約升為READY；schema欄位不變，content改0.1.69。
+本切片不修改存檔格式或NPC流程；回歸必須驗證正常下一節點及既有存讀檔。
+
+### 正式時間驗收
+
+已將有限READY接入原有JSON欄位，schema0.1.62／content0.1.69。
+正式正常17／18次輸入的生日兩相及六張續頁完整RGB零差異，創角嚴格PASS；限定28張保持。
+原始EXE glyph／scroll閾值bytes及FON parity、必填契約拒絕測試通過。
+`game/opening_retained_test.go`另以自然收據核對生日／房間實際除數、8／5tick及四次捲動每步1tick，
+避免再次以未觀測的BIOS預設頻率代替遊戲參數。沒有新增production Go版本常數或存檔格式。
+完整房間兩相及穩定畫面仍261個人物像素差異；第19次不同狀態196,698仍僅診斷。
+完整game365項頂層／34項子測試、11個internal與desktop main.go通過。
+正常新遊戲至THE END88.40秒、主角／酒館及各段存讀檔通過，只屬remake回歸。
+標準38項選用SKIP，創角／生日嚴格PASS，房間RED，其他35項未執行；沒有素材缺失。
+
+驗證log `work/issue4-clock-production.log`／`issue4-clock-full.log`，私有稽核入口
+`work/issue4-clock-final-audit.py`；正式收據 `work/issue4-clock-final-evidence-receipt.json`，
+9,414bytes，SHA-256 `93d75e9a3c6f03cb63d03eab9b42c05f161f4605e7818e5ce6c9920552307b33`。
+本節時間換算有限CONFORMED，仍標hardware-spec approximation；不升級整段wall-clock或NPC流程。
+所有新增輸出UID／GID1000，歷史root／Markdown目錄候選3213保留；本輪一次性Docker容器已清除。
+沒有新image、發行包或原版素材入Git；上游未提交修改與使用者scratch／Android libs保持。
+
+### NPC序列證據與下個閘門
+
+| 原始定位與 consumer | 有限語意 | 等級與限制 |
+|---|---|---|
+| IDA linear0x100D5..0x100F2／file0x1445..0x1462 | record83返回→7tick停頓→DX0／SI3CBC→sub_167C5→視窗→record81 | confirmed；正常第19次Enter的動態順序與原始caller閉合 |
+| DGROUP3CBC／linear0x28A8C／file0x19DFC | 三位元組repeat／direction／mode序列，FF結束；左2、下6、右7、轉左 | confirmed；13個raw bytes、parser與16個自然結果一致 |
+| linear0x167C5..0x16822／file0x7B35..0x7B92 | sub_167C5解讀序列，sub_167F6依序NPC writer、場景renderer、主角consumer、page flip，再等待counter大於7 | confirmed；每步原始consumer與Ticks差8，不宣稱同硬體wall-clock |
+| linear0x121EF..0x122CD／file0x355F..0x363D | DX選DGROUP0B66+8×DX；低2位方向先寫，mode2只轉向，其餘按方向更新X／Y及佔位 | strong；原始writer及16個自然結果閉合，mode1尚未玩家路徑驗收 |
+| CTY00 section4，file0x139C起的day表 | 第一原始列(5,4)，flag50h，對應可見runtime NPC0；(8,3)是另一可見人物 | confirmed；raw CTY與同次runtime slot；不合併人物 |
+| linear0x100FA..0x1010A／file0x146A..0x147A | record81 EOF、7tick、恢復視窗、caller返回；主角仍(5,5)，NPC0(10,10) | confirmed；唯讀原版同次觀測，尚未宣稱自由移動入口 |
+| linear0x11ED0..0x11F4E／file0x3240..0x32BE，DGROUP0004 | NPC取圖讀全域相位，ctrl80h凍結分支；當前remake每NPC計数不同 | strong；原始reader與直接xref，初始相位與更新契約尚未READY |
+| linear0x1010B起／file0x147B起 | 後續帶路函式存在，先檢查flag50h；沒有直接caller xref | unknown；正式玩家觸發尚未閉合，不以零xref宣稱未使用 |
+
+輸入 `assets_raw/CTY00.DAT`，7,546bytes，SHA-256
+`ac8427c5fafcad4e29246dd3c2796c476bb5ad93e53dd7c7127a6b2faa31a836`。
+其餘沿用本節EXE身份與IDA9.4位址基準。sidecar保留原名、原始位址、loaded及file bytes、xref type與unknown原始分級；
+本表附加審查語意，不把自動函式名當證據，不修改資料庫名稱。
+
+| 私有sidecar | 大小 | SHA-256 | 已核對raw rows |
+|---|---|---|---|
+| `work/issue4-npc-consumer-ida.json` | 89,448 | `c83c03ce5243fbda2485927ba2b28a6541fe165e09395e3ccc8b64eb15cd871c` | 58 |
+| `work/issue4-npc-sequence-ida.json` | 659,974 | `a576cd2c866f02ed2dbf48ce62de44001f1fb120c888d76c83e4d6b6bb873dc2` | 368 |
+| `work/issue4-npc-follow-ida.json` | 1,506,253 | `3b5738dd5fbca63a3e02253d69087ba9680944f20066f19b2e3a82b89451a4b1` | 539 |
+
+匯出入口 `tools/ida_dump_opening_handler54.py`，target file依序0x3240、0x7B35、0x147B，仍在一次性IDA Docker執行。
+下一切片先找0x1010B的entry selector及正常觸發，補齊83返回後的NPC狀態鏈與有限pack規格，
+再修正正式人物選擇與文字順序。全域相位不以固定walk值近似；硬體ISR／PIT逐週期細節依停止線不追。
+
 ## 2026-10-02：等待箭頭相位（生日限定CONFORMED，人物仍RED）
 
 依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)接續5029ccf。

@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -148,6 +150,8 @@ func TestDosgolemOpeningRetainedRowsComparison(t *testing.T) {
 			SHA  string `json:"sha256"`
 			Size int    `json:"size"`
 		} `json:"artifacts"`
+		WaitPhases   []string `json:"wait_phase_events"`
+		BirthdayFlow []string `json:"birthday_flow_events"`
 	}
 	prefix := "issue4-birthday-pages"
 	raw, err := os.ReadFile(filepath.Join(dir, prefix+"-receipt.json"))
@@ -189,6 +193,7 @@ func TestDosgolemOpeningRetainedRowsComparison(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.prng.Seed(0x1357)
+	verifyOpeningTimerObservations(t, receipt.WaitPhases, receipt.BirthdayFlow, g.pack.Interface.OpeningPrelude)
 	for _, input := range receipt.Inputs[:17] {
 		in := InputState{DirHeld: -1, DirEdge: -1}
 		switch input.Scan {
@@ -274,4 +279,77 @@ func TestDosgolemOpeningRetainedRowsComparison(t *testing.T) {
 		t.Fatal("生日返回後未自然抵達既有下一節點")
 	}
 	t.Log("17次創角輸入與第18次確認，生日兩相及6張續頁完整RGB；捲動期間無出生交易或RNG消耗；EOF無額外確認")
+}
+
+// 用自然原版觀測守住遊戲實際除數，避免再次套用 BIOS 預設頻率。
+func verifyOpeningTimerObservations(t *testing.T, phases, flow []string, p *gamepack.OpeningPrelude) {
+	t.Helper()
+	fields := func(line string) map[string]string {
+		v := map[string]string{}
+		for _, field := range strings.Fields(line) {
+			if k, value, ok := strings.Cut(field, "="); ok {
+				v[k] = value
+			}
+		}
+		return v
+	}
+	integer := func(v map[string]string, name string) int {
+		t.Helper()
+		n, err := strconv.Atoi(v[name])
+		if err != nil {
+			t.Fatalf("原版計時觀測缺少有效%s：%v", name, err)
+		}
+		return n
+	}
+	w := p.WaitIndicator
+	previous := map[string]map[string]string{}
+	counts := map[string]int{}
+	for _, line := range phases {
+		v := fields(line)
+		divisor := integer(v, "pit_divisor")
+		if divisor != 12428 || w.RateNumerator != 315000000 || w.RateDenominator != 264*divisor {
+			t.Fatal("JSON頻率與自然原版PIT除數不符")
+		}
+		location := v["location"]
+		if location != "birthday" && location != "room" {
+			t.Fatal("未知計時觀測場景")
+		}
+		if a := previous[location]; a != nil && v["ida_linear"] != "21718" {
+			want := w.HiddenTicks
+			if a["phase"] == "visible" {
+				want = w.VisibleTicks
+			}
+			if integer(v, "ticks")-integer(a, "ticks") != want {
+				t.Fatal("原版定時兩相與來源閾值不符")
+			}
+		}
+		previous[location] = v
+		counts[location]++
+	}
+	if counts["birthday"] < 3 || counts["room"] < 3 {
+		t.Fatal("缺少生日或房間自然計時觀測")
+	}
+	scrollTicks := []int{}
+	for _, line := range flow {
+		v := fields(line)
+		if v["ida_linear"] != "21a8b" {
+			continue
+		}
+		if integer(v, "pit_divisor") != 12428 {
+			t.Fatal("捲動PIT除數與等待不同")
+		}
+		scrollTicks = append(scrollTicks, integer(v, "ticks"))
+	}
+	if len(scrollTicks) != 8 {
+		t.Fatal("原版兩段各四次捲動觀測不足")
+	}
+	for i := 1; i < len(scrollTicks); i++ {
+		if i != 4 && scrollTicks[i]-scrollTicks[i-1] != 1 {
+			t.Fatal("原版每次捲動未相差1tick")
+		}
+	}
+	if p.Window.GlyphHoldFrames != w.HoldFrames(1) || p.TextFlow.ScrollHoldFrames != w.HoldFrames(1) {
+		t.Fatal("逐字或捲動時間未使用已觀測頻率")
+	}
+	t.Logf("自然原版PIT除數12428；JSON時間近似：箭頭%d／%d、逐字%d、捲動%d個60TPS更新", w.HoldFrames(w.VisibleTicks), w.HoldFrames(w.HiddenTicks), p.Window.GlyphHoldFrames, p.TextFlow.ScrollHoldFrames)
 }

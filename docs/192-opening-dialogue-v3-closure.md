@@ -8,6 +8,11 @@
 冷啟動動態閉合、原始定位與正式紅測試見[docs/188](188-opening-escort-to-castle-spec.md)最新DRAFT。
 本文件的舊版面與「逐頁關閉」不能代替該續頁規格，也不外推其他尚未重驗record。
 
+2026-10-02追加時間勘誤：生日／房間自然dosgolem觀測的PIT除數是12428，約96Hz。
+先前以BIOS預設18.2Hz換算每字3更新的假設已推翻。此consumer的1tick閾值仍成立，
+本次正式修正只套用已觀測生日／房間契約；其他record不外推。
+來源、位址、READY審查與回歸入口見[docs/188](188-opening-escort-to-castle-spec.md)。
+
 ## 輸入與工具
 
 - 原版：`dq3_remake_ebitan/mobile/assets/DQ3.EXE`，115282 bytes，SHA-256

@@ -180,12 +180,12 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             case 0x100ab, 0x100b5, 0x100c4, 0x100d5, 0x100d8, 0x100e9, 0x100fa,
                  0x21558, 0x21501, 0x216c3, 0x21726, 0x21a8b:
                 ds := m.CPU.Seg[cpu.DS]
-                fmt.Printf("DQ3_BIRTHDAY_FLOW step=%d ida_linear=%05x DS=%04x SI=%04x BP=%04x DX=%04x raw259b=%d raw0716=%04x raw0718=%04x raw4f33=%d raw4f35=%d seed=%04x raw251d=%d raw0b2d=%d raw25d1=%04x raw4f2d=%d raw0004=%d raw26ad=%d\n",
+                fmt.Printf("DQ3_BIRTHDAY_FLOW step=%d ida_linear=%05x DS=%04x SI=%04x BP=%04x DX=%04x raw259b=%d raw0716=%04x raw0718=%04x raw4f33=%d raw4f35=%d seed=%04x raw251d=%d raw0b2d=%d raw25d1=%04x raw4f2d=%d raw0004=%d raw26ad=%d ticks=%d pit_divisor=%d\n",
                     m.Steps,flowPC,ds,m.CPU.R[cpu.SI],m.CPU.R[cpu.BP],m.CPU.R[cpu.DX],
                     m.Read8(cpu.Addr(ds,0x259b)),m.Read16(cpu.Addr(ds,0x0716)),m.Read16(cpu.Addr(ds,0x0718)),
                     m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),m.Read16(cpu.Addr(ds,0x0b5a)),
                     m.Read16(cpu.Addr(ds,0x251d)),m.Read8(cpu.Addr(ds,0x0b2d)),m.Read16(cpu.Addr(ds,0x25d1)),m.Read16(cpu.Addr(ds,0x4f2d)),
-                    m.Read8(cpu.Addr(ds,0x0004)),m.Read8(cpu.Addr(ds,0x26ad)))
+                    m.Read8(cpu.Addr(ds,0x0004)),m.Read8(cpu.Addr(ds,0x26ad)),m.Ticks,m.PITDivisor())
             }
             if (flowPC == 0x11ee8 || flowPC == 0x1e30b) &&
                 m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS],0x4f33)) == 5 &&
@@ -194,6 +194,32 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                 fmt.Printf("DQ3_ROOM_SPRITE step=%d ida_linear=%05x DS=%04x BX=%04x SI=%04x DI=%04x raw0004=%d seed=%04x\n",
                     m.Steps,flowPC,ds,m.CPU.R[cpu.BX],m.CPU.R[cpu.SI],m.CPU.R[cpu.DI],
                     m.Read8(cpu.Addr(ds,0x0004)),m.Read16(cpu.Addr(ds,0x0b5a)))
+            }
+            if flowPC == 0x167c5 || flowPC == 0x167f6 || flowPC == 0x16822 ||
+                flowPC == 0x122cd || flowPC == 0x100e9 || flowPC == 0x100fa || flowPC == 0x1010a {
+                ds := m.CPU.Seg[cpu.DS]
+                if flowPC == 0x167f6 { dq3NPCSequenceStep++ }
+                npc := uint16(0x0b66)
+                fmt.Printf("DQ3_NPC_SEQUENCE step=%d ida_linear=%05x ordinal=%d ticks=%d pit_divisor=%d DS=%04x SI=%04x DX=%04x AX=%04x CX=%04x npc0=%02x%02x%02x%02x%02x%02x%02x%02x raw3d4c=%d raw0004=%d seed=%04x player_x=%d player_y=%d\n",
+                    m.Steps,flowPC,dq3NPCSequenceStep,m.Ticks,m.PITDivisor(),ds,
+                    m.CPU.R[cpu.SI],m.CPU.R[cpu.DX],m.CPU.R[cpu.AX],m.CPU.R[cpu.CX],
+                    m.Read8(cpu.Addr(ds,npc)),m.Read8(cpu.Addr(ds,npc+1)),
+                    m.Read8(cpu.Addr(ds,npc+2)),m.Read8(cpu.Addr(ds,npc+3)),
+                    m.Read8(cpu.Addr(ds,npc+4)),m.Read8(cpu.Addr(ds,npc+5)),
+                    m.Read8(cpu.Addr(ds,npc+6)),m.Read8(cpu.Addr(ds,npc+7)),
+                    m.Read16(cpu.Addr(ds,0x3d4c)),m.Read8(cpu.Addr(ds,0x0004)),
+                    m.Read16(cpu.Addr(ds,0x0b5a)),m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)))
+                name := ""
+                if flowPC == 0x16822 { name = fmt.Sprintf("npc-sequence-%02d",dq3NPCSequenceStep) }
+                if flowPC == 0x100e9 { name = "npc-sequence-complete" }
+                if flowPC == 0x100fa { name = "mother-dialogue-eof" }
+                if flowPC == 0x1010a { name = "mother-dialogue-return" }
+                if name != "" && !dq3NPCCaptures[name] {
+                    dq3NPCCaptures[name] = true
+                    path := "/work/dosgolem-opening/__PREFIX__-"+name
+                    if err := writeScreen(m,path+".png",0,0); err != nil { die(err) }
+                    if err := os.WriteFile(path+".bin",m.Indexed(),0o644); err != nil { die(err) }
+                }
             }
             if flowPC >= 0x216d0 && flowPC <= 0x21718 &&
                 (flowPC == 0x216d0 || flowPC == 0x216f3 || flowPC == 0x21718) {
@@ -204,10 +230,10 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                 }
                 phase := "visible"
                 if flowPC != 0x216d0 { phase = "hidden" }
-                fmt.Printf("DQ3_WAIT_PHASE step=%d ida_linear=%05x location=%s phase=%s DS=%04x BP=%04x DX=%04x raw0005=%d raw0004=%d raw0b34=%d seed=%04x\n",
+                fmt.Printf("DQ3_WAIT_PHASE step=%d ida_linear=%05x location=%s phase=%s DS=%04x BP=%04x DX=%04x raw0005=%d raw0004=%d raw0b34=%d seed=%04x ticks=%d pit_divisor=%d\n",
                     m.Steps,flowPC,location,phase,ds,m.CPU.R[cpu.BP],m.CPU.R[cpu.DX],
                     m.Read16(cpu.Addr(ds,0x0005)),m.Read8(cpu.Addr(ds,0x0004)),
-                    m.Read16(cpu.Addr(ds,0x0b34)),m.Read16(cpu.Addr(ds,0x0b5a)))
+                    m.Read16(cpu.Addr(ds,0x0b34)),m.Read16(cpu.Addr(ds,0x0b5a)),m.Ticks,m.PITDivisor())
                 name := location+"-wait-arrow-"+phase
                 capture := false
                 if flowPC != 0x21718 {
@@ -228,7 +254,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         }
 """
         flow_hook = flow_hook.replace('__PREFIX__', prefix)
-        probetext = probetext.replace(marker, '\tvar dq3PhaseSeen = map[string]int{}\n' + marker + flow_hook, 1)
+        probetext = probetext.replace(marker, '\tvar dq3PhaseSeen = map[string]int{}\n\tvar dq3NPCSequenceStep int\n\tvar dq3NPCCaptures = map[string]bool{}\n' + marker + flow_hook, 1)
     probe.write_text(probetext)
     subprocess.run(['gofmt','-w',str(probe)],cwd=src,check=True)
     binary = out / (prefix.replace('issue4-', 'issue4-probe-'))
@@ -240,6 +266,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             'original_path':str(exe),'original_size':exe.stat().st_size,
             'original_sha256':hashlib.sha256(exe.read_bytes()).hexdigest(),
             'upstream_revision_observed':'2f44a68ebfc54b28fb15dd4a34510b0b04a5415d',
+            'upstream_source_host_path':os.environ.get('DQ3_DOSGOLEM_SOURCE_HOST_PATH','unknown'),
             'docker_image':'dq3-ebiten-test:20260822-r1',
             'go_version':subprocess.check_output(['go','version'],text=True).strip(),
             'generation_script_sha256':hashlib.sha256(generation_script).hexdigest(),
@@ -321,6 +348,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         meta['birthday_flow_events'] = [line for line in lines if line.startswith('DQ3_BIRTHDAY_FLOW ')]
         meta['room_sprite_events'] = [line for line in lines if line.startswith('DQ3_ROOM_SPRITE ')]
         meta['wait_phase_events'] = [line for line in lines if line.startswith('DQ3_WAIT_PHASE ')]
+        meta['npc_sequence_events'] = [line for line in lines if line.startswith('DQ3_NPC_SEQUENCE ')]
     meta['artifacts'] = []
     artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log', f'{prefix}-generation.py']
     if scenario == 'birthday_continue':
@@ -328,6 +356,10 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                            for location in ('birthday', 'room') for phase in ('visible', 'hidden')
                            for suffix in ('png', 'bin')]
         artifact_names += [f'{prefix}-birthday-wait-arrow-visible-transient.{suffix}'
+                           for suffix in ('png', 'bin')]
+        artifact_names += [f'{prefix}-{name}.{suffix}'
+                           for name in [f'npc-sequence-{i:02d}' for i in range(1,17)] +
+                                       ['npc-sequence-complete', 'mother-dialogue-eof', 'mother-dialogue-return']
                            for suffix in ('png', 'bin')]
     for name in artifact_names:
         artifact = out / name

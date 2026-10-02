@@ -588,3 +588,34 @@ record83保留前文、83／81自動返回再接帶路；原版NPC更新、母�
 私有稽核f802ab3a核對80份產物與294筆IDA原始rows，UID/GID1000，歷史root候選3213／Markdown目錄4保持。
 本批一次性容器清除，沒有新image、發行包或原版公開附件；所有證據入口與限制見docs/188。
 下一步追NPC繪製相位與83返回後NPC／母親狀態，完整原版campaign仍未CONFORMED。
+
+## 2026-10-02：Issue #4 實際PIT除數與NPC0原版序列
+
+接續de91dda的房間人物對拍，先核對NPC reader的全域相位，再補拍record83返回後16個自然動作。
+發現生日／房間PIT除數12428，推翻先前預設65536的18.2Hz換算。原始8／5及1tick consumer閾值維持。
+新原版1c41e8bc收據118份產物全部核對，116份PNG／bin與前次7ca7da23相同，19次輸入及38次IRQ1不變。
+正常Lv1入口seed1357只固定一次，不注入角色位置／旗標，不挑圖片或人物影格。
+上游cmd/probe/main.go已有未提交修改，保留；Docker內建立固定2f44a68的乾淨只讀副本再跑。
+
+有限DRAFT與固定de91dda的JSON原型證實生日兩相及六張續頁零差異，審為READY後正式套用。
+正式JSON箭頭顯示／清除5／4更新，逐字與每步捲動1更新；schema0.1.62維持，content0.1.69。
+新增正常原版觀測守門，核對兩個場景實際除數、8／5tick、四次捲動每步1tick及JSON換算。
+原始EXE glyph／scroll bytes測試保留，沒有production Go版本常數或fallback。
+完整game365項頂層／34項子測試、11個internal、desktop main.go通過；正常新遊戲至THE END88.40秒、主角／酒館及各段存讀檔通過。
+標準38項選用SKIP，創角及生日嚴格PASS，房間RED，餘35項未跑；沒有素材缺失。
+
+原版NPC0由(5,4)到(10,10)後轉左，再顯示record81；主角與caller返回時仍(5,5)。
+現行remake選(8,3)人物並於81之後帶動主角的順序已有反證。後續0x1010B正式觸發未知，NPC保持DRAFT。
+原始名稱、位址、raw bytes與推論等級見docs/188；三份新IDA sidecar共965筆file bytes核對，沒有rename。
+不重開硬體ISR／PIT逐週期研究，不以RNG內部呼叫數一致作完成閘門。
+
+首次原型控制命令未獲Docker socket存取，未執行工作負載；改用已授權的host Docker控制後同image完成。
+來源稽核曾把正常確認清除當定時清除；依原始21718分支分類後重跑，301觀測與閾值通過。
+自動核准審查拒絕包含本機路徑、逆向細節及雜湊的Issue留言。改為不含上述資訊的工作狀態留言後成功，未上傳原版素材或圖片。
+工作留言 https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5951152098 ，Issue保持開啟。
+私有來源審查f5087b5a及正式驗收入口見docs/188；提交、推送及清理結果另行回填。
+
+正式私有收據work/issue4-clock-final-evidence-receipt.json為9,414bytes，SHA-256
+93d75e9a3c6f03cb63d03eab9b42c05f161f4605e7818e5ce6c9920552307b33。
+終點由TestOpeningProductionInputTrace的THE END狀態斷言驗證；標準執行不開選用PNG，不能要求其附加log。
+輸出UID/GID1000、歷史root／Markdown目錄候選3213保持；本批DQ3容器已清除，沒有新image或發行包。

@@ -191,7 +191,7 @@ func TestOpeningWaitIndicatorMatchesOriginalBytes(t *testing.T) {
 	if n != 41 {
 		t.Fatal("箭頭原始字模像素數不符")
 	}
-	if w.RateNumerator != 315000000 || w.RateDenominator != 17301504 || w.HoldFrames(w.VisibleTicks) != 27 || w.HoldFrames(w.HiddenTicks) != 17 {
+	if w.RateNumerator != 315000000 || w.RateDenominator != 264*12428 || w.HoldFrames(w.VisibleTicks) != 5 || w.HoldFrames(w.HiddenTicks) != 4 {
 		t.Fatal("已審查平台時序近似不符")
 	}
 }

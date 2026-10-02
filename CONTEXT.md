@@ -1,18 +1,17 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，等待箭頭有限READY已接入正式文字流程。
-生日顯示／清除全640×350 RGB零差異，另加一張獨立顯示畫面，累計限定28張。
-房間兩相及第18次穩定畫面由302降至261個差異，全在人物；完整房間仍RED。
-字模13／12、336px與當前行位置來自原始consumer；顯示8／清除5 ticks換算27／17個60TPS更新，只屬hardware-spec approximation。
-`opening_prelude.wait_indicator`必填，所有版本值保存JSON，schema/content為0.1.62／0.1.68。
-正常19次輸入及38次IRQ1不變，兩側seed1357各固定一次，生日與房間等待seed356D。
-新原版54a0c21f含80份產物，既有68份PNG／bin保持；首次生日箭頭是換頁暫態，不當完整畫面。
-創角與生日兩相／六張續頁嚴格PASS，房間人物仍RED；第19次不同狀態196,698僅供診斷。
-完整game365項頂層／34項子測試、11個internal與desktop main.go通過；正常新遊戲至THE END63.35秒，主角／酒館及各段存讀檔通過，只屬重製回歸。
-標準38項選用SKIP，三項原版收據另行兩PASS、一RED，餘35項未跑，沒有素材缺失。
-原始定位、有限CONFORMED及私有稽核f802ab3a見[docs/188](docs/188-opening-escort-to-castle-spec.md)，必填契約見[docs/84](docs/84-game-pack-json-contract.md)。
-原版重生入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍預期房間RED退出1。
-下一步追NPC繪製時的相位與83返回後NPC／母親狀態；不寫死人物影格，不重開已閉合生日或深挖硬體逐週期時序。
+2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，訂正生日／房間共享文字的計時頻率。
+原版自然觀測PIT除數12428，推翻預設18.2Hz假設；箭頭改5／4、逐字及每步捲動改1個60TPS更新。
+所有時間參數仍在JSON，schema0.1.62／content0.1.69，精度維持hardware-spec approximation。
+正常輸入的創角、生日兩相與六張續頁完整RGB通過，限定28張保持；完整房間仍261個人物差異。
+原版冷啟動收據1c41e8bc含118份產物，116份PNG／bin與前次相同，19次輸入／38次IRQ1及一次seed1357維持。
+原版83返回後先移動NPC0(5,4)至(10,10)，再播放81，主角全程(5,5)；目前remake人物選擇與順序有反證。
+後續0x1010B正式觸發及全域人物相位仍未閉合，NPC契約保持DRAFT，不猜補或指定影格。
+完整game365項頂層／34項子測試、11個internal及desktop main.go通過；正常新遊戲至THE END88.40秒，主角／酒館及各段存讀檔通過，只屬重製回歸。
+標準38項選用SKIP，創角及生日另行嚴格PASS，完整房間RED；餘35項未跑，沒有素材缺失。
+證據、有限時間審查與NPC下一閘門見[docs/188](docs/188-opening-escort-to-castle-spec.md)，資料契約見[docs/84](docs/84-game-pack-json-contract.md)。
+上游dosgolem工作樹的未提交修改保持原狀；使用固定2f44a68的乾淨唯讀副本。
+本輪重生入口`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --birthday-pages`，仍預期房間RED退出1。
 
 下方段落為歷史checkpoint；目前真相以本段及狀態表為準。
 
@@ -55,15 +54,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-02） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；schema 0.1.62／content 0.1.68；未發布新包 |
-| 最新繪圖切片已完成 | 等待箭頭生日兩相與原有六張續頁全RGB零差異，累計限定28張；生日兩相有限CONFORMED，docs/188 |
-| 最新時序修正 | 第18次正常確認自然抵達家中record83、seed356D、clock30；EOF最後一字hold與四次捲動完成後才交易出生；時長為平台規格近似，docs/188 |
-| 最新原版反證 | 房間兩相及穩定畫面完整RGB差261，均為人物；第19次不同狀態196,698僅診斷；首次生日箭頭暫態不能當完整首頁，docs/188 |
-| 最新有限RE | 當前行／字模13及12／8及5 ticks來源consumer已閉合；原版54a0c21f保持原有68份PNG／bin及38次IRQ1，新增五張相位觀測；原始位址與限制見docs/188 |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.1.62／content0.1.69；未發布新包 |
+| 最新繪圖切片已完成 | 生日兩相與六張續頁完整RGB仍零差異，限定28張保持；房間人物未通過，docs/188 |
+| 最新時序修正 | 原版PIT除數12428；箭頭5／4、逐字／每步捲動1個60TPS更新；第18次自然抵達record83；hardware-spec approximation，docs/188 |
+| 最新原版反證 | 房間完整RGB差261；NPC0先(5,4)→(10,10)再播放81，主角維持(5,5)；目前人物選擇及順序錯誤，docs/188 |
+| 最新有限RE | 301相位證實實際除數；16個NPC動作、caller返回與raw序列閉合；原版1c41e8bc保留116份PNG／bin及38次IRQ1，docs/188 |
 | 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
-| 原版 oracle 未完成 | NPC繪製相位、83返回後NPC更新、母親狀態、淡入淡出逐相位、音訊、skip、其他文字與完整campaign；時間只採硬體規格近似 |
+| 原版 oracle 未完成 | NPC全域相位、0x1010B正式觸發與母親狀態鏈、音訊、skip、其他文字與完整campaign；不追PIT／ISR逐週期 |
 | 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |
-| 現行回歸已完成 | 正式新遊戲InputState→THE END63.35秒，主角／酒館及各段存讀檔、game365項頂層／34項子測試、11個internal及桌面建置通過；work/issue4-wait-indicator-full.log，Issue #4 |
+| 現行回歸已完成 | 正式新遊戲InputState→THE END88.40秒，主角／酒館及各段存讀檔；game365項頂層／34子測試、11個internal與desktop通過；work/issue4-clock-full.log |
 | 額外驗證限制 | 標準38項選用跳過，創角及生日捲動兩項嚴格PASS，接受角色的房間仍RED；剩餘35項未跑，沒有素材缺失 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

@@ -205,6 +205,8 @@ func TestOpeningPreludeMatchesOriginalData(t *testing.T) {
 		{0x12d8b, []byte{0x83, 0xc7, 0x14}},                                     // IDA21A1B: source y+=20。
 		{0x12d95, []byte{0x83, 0xc7, 0x10}},                                     // IDA21A25: destination y+=16。
 		{0x12de1, []byte{0xbb, 0x04, 0x00}},                                     // IDA21A71: clear 4 rows。
+		{0x12863, []byte{0x3d, 0x01, 0x00, 0x7c, 0xf6}},                         // IDA214F3: glyph等待至少1tick。
+		{0x12e01, []byte{0x3d, 0x00, 0x00, 0x7e, 0xf6}},                         // IDA21A91: scroll等待大於0tick。
 	} {
 		if !bytes.Equal(exe[anchor.offset:anchor.offset+len(anchor.bytes)], anchor.bytes) {
 			t.Fatalf("原始consumer file%#x不符", anchor.offset)
@@ -228,7 +230,7 @@ func TestOpeningPreludeMatchesOriginalData(t *testing.T) {
 		f.ScrollStepPixels != int(binary.LittleEndian.Uint16(exe[0x12de2:0x12de4])) ||
 		w.Width-2*w.TextInsetX != int(binary.LittleEndian.Uint16(exe[0x12d7b:0x12d7d]))*8 ||
 		w.LinesPerPage*dq3data.GlyphPx-f.ScrollStepPixels != int(binary.LittleEndian.Uint16(exe[0x12d7e:0x12d80])) ||
-		f.ScrollHoldFrames != 3 || f.Evidence.Level != "D3" {
+		f.ScrollHoldFrames != e.WaitIndicator.HoldFrames(1) || w.GlyphHoldFrames != e.WaitIndicator.HoldFrames(1) || f.Evidence.Level != "D3" {
 		t.Fatal("保留文字／捲動契約與原始consumer或已審查平台時序近似不符")
 	}
 }
