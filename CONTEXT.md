@@ -1,12 +1,21 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-02最新原版證據：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，已閉合母親的正常接近入口。
+冷啟動37次正式輸入／74次IRQ1，seed1357固定一次；主角走至(9,10)才經selector1／raw54進入帶路。
+轉場後主角(8,38)、母親(8,37)，37個自動步進抵達主角(22,19)、母親(22,18)的提示等待。
+原版210份產物全部核對hash與本次生成記錄，前一生日的116份PNG／bin重生且相同。
+未修改正式remake或pack，schema0.1.62／content0.1.69保持；NPC有限規格仍DRAFT。
+同一正常InputState反例在ad00d38失敗、隔離原型通過；不代表正式人物RGB、接近流程或存檔已修正。
+下一閘門是城門對話後與保存／恢復，然後完成母親順序、正式觸發與共同帶路的有限READY。
+證據、被推翻的21,19定位與可重生入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+
 2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，訂正生日／房間共享文字的計時頻率。
 原版自然觀測PIT除數12428，推翻預設18.2Hz假設；箭頭改5／4、逐字及每步捲動改1個60TPS更新。
 所有時間參數仍在JSON，schema0.1.62／content0.1.69，精度維持hardware-spec approximation。
 正常輸入的創角、生日兩相與六張續頁完整RGB通過，限定28張保持；完整房間仍261個人物差異。
 原版冷啟動收據1c41e8bc含118份產物，116份PNG／bin與前次相同，19次輸入／38次IRQ1及一次seed1357維持。
 原版83返回後先移動NPC0(5,4)至(10,10)，再播放81，主角全程(5,5)；目前remake人物選擇與順序有反證。
-後續0x1010B正式觸發及全域人物相位仍未閉合，NPC契約保持DRAFT，不猜補或指定影格。
+本段較早的「0x1010B正式觸發未知」已由上方最新原版證據解出；全域人物相位與NPC契約仍DRAFT。
 完整game365項頂層／34項子測試、11個internal及desktop main.go通過；正常新遊戲至THE END88.40秒，主角／酒館及各段存讀檔通過，只屬重製回歸。
 標準38項選用SKIP，創角及生日另行嚴格PASS，完整房間RED；餘35項未跑，沒有素材缺失。
 證據、有限時間審查與NPC下一閘門見[docs/188](docs/188-opening-escort-to-castle-spec.md)，資料契約見[docs/84](docs/84-game-pack-json-contract.md)。
@@ -57,10 +66,10 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 | 現行程式 | `dq3_remake_ebitan/`；schema0.1.62／content0.1.69；未發布新包 |
 | 最新繪圖切片已完成 | 生日兩相與六張續頁完整RGB仍零差異，限定28張保持；房間人物未通過，docs/188 |
 | 最新時序修正 | 原版PIT除數12428；箭頭5／4、逐字／每步捲動1個60TPS更新；第18次自然抵達record83；hardware-spec approximation，docs/188 |
-| 最新原版反證 | 房間完整RGB差261；NPC0先(5,4)→(10,10)再播放81，主角維持(5,5)；目前人物選擇及順序錯誤，docs/188 |
-| 最新有限RE | 301相位證實實際除數；16個NPC動作、caller返回與raw序列閉合；原版1c41e8bc保留116份PNG／bin及38次IRQ1，docs/188 |
+| 最新原版反證 | NPC0先(5,4)→(10,10)再播放81；走近9,10才帶路；城門提示為22,19；目前人物選擇、順序、觸發及對話定位錯誤，docs/188 |
+| 最新有限RE | 冷啟動37次輸入／74次IRQ1閉合selector1→raw54→010B；37個城鎮自動步進、210份產物與116份出生畫面不變；原版1e5ab45d，docs/188 |
 | 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
-| 原版 oracle 未完成 | NPC全域相位、0x1010B正式觸發與母親狀態鏈、音訊、skip、其他文字與完整campaign；不追PIT／ISR逐週期 |
+| 原版 oracle 未完成 | NPC全域相位、母親對話後／存檔與其他接近失敗gate、音訊、skip、其他文字與完整campaign；不追PIT／ISR逐週期 |
 | 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |
 | 現行回歸已完成 | 正式新遊戲InputState→THE END88.40秒，主角／酒館及各段存讀檔；game365項頂層／34子測試、11個internal與desktop通過；work/issue4-clock-full.log |
 | 額外驗證限制 | 標準38項選用跳過，創角及生日捲動兩項嚴格PASS，接受角色的房間仍RED；剩餘35項未跑，沒有素材缺失 |

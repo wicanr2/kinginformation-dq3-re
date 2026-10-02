@@ -1,5 +1,101 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+## 2026-10-02：母親正式入口追查（DRAFT）
+
+依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) 接續 `ad00d38`。
+本節只補足原版入口證據，不把尚未閉合的觸發寫入正式路徑。
+來源仍為唯讀 `assets_raw/DQ3.EXE`，115,282bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；
+IDA Pro9.4，linear−0xEC90=file，DGROUP基底linear0x24DD0。
+CTY來源 `assets_raw/CTY00.DAT`，7,546bytes，SHA-256
+`ac8427c5fafcad4e29246dd3c2796c476bb5ad93e53dd7c7127a6b2faa31a836`。
+
+| 原始定位 | 有限語意 | 等級與邊界 |
+|---|---|---|
+| linear0x289F0／file0x19D60，raw `0B 01` | 指向原始 `sub_1010B` 的資料交叉參照；近位址010B，原始CS1000 | strong；保留原名、資料xref type1，不因直接code xref為零而判定無入口 |
+| DGROUP3BB4／linear0x28984／file0x19CF4 | 兩位元組分派表；raw index54選到上述010B | strong；54是原始索引，不能混用歷史catalog的index+1標籤 |
+| linear0x196D2..0x1970D／file0xAA42..0xAA7D | section+4的清單以DGROUP258C−1取handler，再乘2索引DGROUP3BB4，最後間接call `[SI]` | strong；caller為原始19574，待正常接近的動態閉環 |
+| linear0x11B05..0x11B1A／file0x2E75..0x2E8A | 目標cell高位元組低5位非零，且tile attr沒有C8遮罩時，寫4F46位元0800及258C selector；之後提交玩家位置 | strong；caller119C8→11A6A，觸發仍受阻擋與其他gate影響 |
+| CTY00 sec4 base file0x1383，handler file0x13B2 `36` | selector1對應raw handler54；(10,9)、(9,10)、(11,10)、(10,11)四格都是tile4／subid1 | strong；母親10,10所在tile21不同，不能把樓梯轉場當成唯一事件入口 |
+
+新匯出 `work/issue4-mother-{entry,dispatch,selector,trigger,movement,tile,modal,modal-input}-ida.json`。
+全部3,181列指令以原始MZ file bytes及linear/file換算逐列核對，沒有重新命名函式或改動原始資料。
+稽核入口 `work/issue4-mother-entry-audit.py`；完整原版自然入口尚未核對前，這些語意維持strong。
+
+### 正常輸入探測勘誤
+
+第一次32次輸入的冷啟動收據有64次IRQ1送達，卻停在原版圖像選擇選單。
+它沒有抵達母親入口，不能作為走近觸發或remake parity證據。
+原始19530先檢查4F46位元4，呼叫21DDC；該流程先進入選單，再由21EC1呼叫21F79三次選圖，
+最後21E3E等待結果確認。正常輸入需五次Enter；原始21F04..21F18的比較與NOP保持原樣。
+不修改選單驗證、旗標、座標或程式進入點。
+
+第二次探測漏了進入選單的確認，第一個方向鍵仍用來關窗；原先向左的通路還碰到床。
+該批另在任意移動抓圖點讀到暫時CTY segment，原有「所有抓圖DS必為15ED」斷言不適用。
+這是觀測腳本問題；命名契約仍限創角段，不把暫時DS中的raw欄位當作游標語意。
+兩次失敗的log、影像與生成腳本依內容hash保留，沒有挑選亂數重擲。
+
+修正探測從同一冷啟動、同一seed1357一次出發，保留原有19次創角／生日輸入，
+再五次Enter及下2／左2／下3／右6，循CTY原始通路接近(9,10)。
+共37次正式輸入；入口 `tools/dosgolem_newgame_probe.py` 的 `mother_approach` 情境。
+重生命令 `bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --mother-entry-original`。
+此模式只重生原版收據，結束成功不代表remake對拍通過。
+原版、乾淨dosgolem來源與資產唯讀；只有收據輸出可寫。
+結果仍須驗證74次IRQ1、所有產物hash、先前116份PNG／bin不變，以及selector→54→010B的動態鏈。
+尚未據此修改production Go、JSON、存檔或完成聲明。
+
+### 原版入口與城鎮帶路的有限閉合
+
+乾淨重跑已成功。原版收據 `work/dosgolem-opening/issue4-mother-approach-receipt.json`，
+464,340bytes，SHA-256 `1e5ab45df66191749d0e2ef9f2dfe0261cf5f295c1c959d52fb6031e802c2536`。
+dosgolem revision、image、Go版本與原始EXE身份沿用上節既有契約。
+37次正常輸入、74次IRQ1、seed1357一次；沒有座標、旗標或對話狀態注入。
+210份產物全部核對hash與擁有權；每張PNG另核對本次log的實際生成記錄，拒絕沿用舊圖。
+前一生日收據的116份PNG／bin皆由本次重生且相同。
+新增210份產物不是210張remake對拍通過；本批沒有正式remake圖像比較。
+
+| 自然狀態／入口 | 原版結果 | 等級 |
+|---|---|---|
+| 第37次正式方向鍵，主角由(8,10)右移至(9,10) | 19530→196D2→1970B，selector1、SI3C20、AX010B→原始1010B | confirmed；只限這條正常接近路徑 |
+| 10121，家中母親下移一步後 | 主角仍(9,10)，NPC0從(10,10)到(10,11) | confirmed；沒有主角家中自動跟隨16步 |
+| 10130，原始轉場後 | CTY00 sec0，主角(8,38)，NPC0(8,37) | confirmed；原始section base從1383變000C |
+| 37次194C3及其返回點 | 主角北2／西2／北7／東16／北10，逐格抵達(22,19)；NPC0在(22,18)轉向下 | confirmed；全部37個主角位置核對，不靠截圖推算 |
+| 101C5及末尾抓圖 | 城門提示等待，主角(22,19)，母親(22,18) | confirmed；尚未觀測101D3／1020A，不宣稱對話後移動或旗標完成 |
+
+因此本節上方入口表的raw54資料xref與selector分派，升為上述單一路徑的confirmed。
+移動writer的其他阻擋／attr gate分支仍strong；四個事件格的分布是原始CTY事實，
+沒有把另外三條接近方向也算作動態通過。
+早期 `rec81後立即自動護送`、人物(8,3)及城門對話(21,19)的解釋已被本次原版反證推翻。
+下方歷史表保留形成史；相關勘誤回鏈見[docs/66](66-original-flow-oracle.md)與[docs/192](192-opening-dialogue-v3-closure.md)。
+母親順序、接近觸發與共同帶路必須一併重寫有限規格，不能把新版原型直接放進正式路徑。
+存檔恢復、全域人物相位、正常接近的失敗gate及城門對話後仍是DRAFT閘門。
+另已推翻docs/192把101BF的NPC動作誤作第一段文字consumer的解釋。
+原始caller在101CE只有一個明確 `sub_21414` 呼叫；詞流／record連接須由下一次自然確認閉合。
+不能依舊表把remake目前的兩次dialogue.Open直接升級為原版對話流程。
+
+觀測腳本另外修正了一次分類錯誤：沒有用初始主角座標猜生日／其他場景；
+改為只在自然抵達1010B後標記後續相位。舊產物先以內容hash完整歸檔，再移除本情境檔案後重生。
+較早有分類錯誤的收據不作新圖像驗收。480秒逾時屬執行預算問題，改660秒後以同一工具鏈重跑。
+本節動態狀態鏈與全數圖像重生已通過，不升級為remake CONFORMED。
+
+非破壞附加台帳由 `tools/ida_dump_opening_handler54.py` 自動合併；
+`work/issue4-mother-reviewed-ida.json` 保留原名、位址、兩種bytes、推論等級與本節回鏈。
+審查入口 `work/issue4-mother-entry-audit.py`，結果 `work/issue4-mother-entry-evidence-receipt.json`，
+核對九份IDA匯出的3,720列原始指令、自然分派、37步、210份產物與116份不變畫面。
+審查收據25,856bytes，SHA-256 `946e279ccbdf06090f23e6127c823bcd0bc823e2c4250b40635b1ea0d2a17c1c`。
+這些工作產物與原版資產留在本機，不加入Git。
+
+有限可丟棄原型另驗證83與81之間的NPC0移動。固定 `ad00d38`，沿用現有typed frame，
+由pack提供初始(5,4)、16個動作與主角不動的資料；末步轉左需明示方向。
+正式17／18／19次InputState必須先播放83，再完成上述序列，最後才開81。
+原型只核對人物選擇、位置及順序，不把既有動畫位元當作原版全域相位，也不處理後續接近／存檔。
+入口 `work/issue4-mother-birth-prototype.py`，正式來源唯讀，原型與測試位於容器/tmp。
+
+同一正常InputState測試在未改動的 `ad00d38` 失敗，NPC仍(5,4)，主角(5,5)；
+隔離原型通過，NPC已(10,10)且轉左，另一NPC保持(8,3)，之後才開81。
+log為 `work/issue4-mother-birth-baseline.log`／`issue4-mother-birth-prototype.log`。
+這只支持人物狀態與對話順序的有限草案，沒有升級人物RGB、全域相位、接近事件或存檔。
+
 ## 2026-10-02：PIT 除數勘誤與 NPC0 移動序列（有限時間 CONFORMED，NPC DRAFT）
 
 依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) 接續 `de91dda`。
@@ -68,6 +164,10 @@
 沒有新image、發行包或原版素材入Git；上游未提交修改與使用者scratch／Android libs保持。
 
 ### NPC序列證據與下個閘門
+
+追加勘誤：下表較早寫「1010B正式觸發未知」已由本文件最新母親入口節解出。
+原版是正式走近觸發；城鎮37步抵達(22,19)，不沿用舊影片近似路線。
+其餘未驗的全域相位、對話後與存檔仍未知，沒有因入口已解出而升級。
 
 | 原始定位與 consumer | 有限語意 | 等級與限制 |
 |---|---|---|

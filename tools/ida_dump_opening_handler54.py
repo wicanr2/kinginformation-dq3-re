@@ -29,6 +29,11 @@ import idc
 INPUT_BLOB = b""
 INPUT_PATH = ""
 REVIEW_LEDGER = [
+    (0x289f0, 0x289f2, "confirmed", "原始raw handler54的近位址010B；正常接近9,10時selector1／SI3C20／AX010B與sub_1010B閉合；限定該路徑"),
+    (0x196df, 0x1970e, "confirmed", "section+4清單以selector減1取raw handler，再乘2讀DGROUP3BB4並間接call；正常家中9,10只驗selector1／handler54"),
+    (0x11b05, 0x11b1b, "strong", "原始目標格subid非零且attr不含C8時寫事件位0800及selector；正常9,10已見consumer結果，其他阻擋／gate分支未逐項動態驗證"),
+    (0x10116, 0x10130, "confirmed", "正常母親入口後NPC0由10,10向下至10,11，主角仍9,10；轉場後CTY00 sec0主角8,38、NPC0 8,37；不外推存檔"),
+    (0x10130, 0x101c5, "confirmed", "正常母親帶路37個主角自動步進，北2／西2／北7／東16／北10；主角抵達22,19、NPC0 22,18轉下；對話後尚未閉合"),
     (0x216c5, 0x216d0, "confirmed", "生日／房間等待以BP42即336px、當前行DX、不透明字模13顯示箭頭；完整生日兩相閉合，房間人物仍RED"),
     (0x216e6, 0x216f3, "confirmed", "原始計數閾值8後以字模12清除箭頭；原版自然相位及原型完整生日RGB閉合；時長只採hardware-spec approximation"),
     (0x21709, 0x21710, "confirmed", "原始空白閾值5後回到顯示字模；兩相可見閉合，不外推ISR或硬體wall-clock"),
@@ -59,6 +64,10 @@ CONTINUATION_RANGES = {0x100ab, 0x100b5, 0x100cd, 0x21514, 0x21558}
 
 
 def review_evidence(start):
+    if start in (0x289f0, 0x196df, 0x11b05, 0x10116, 0x10130):
+        return ("docs/188：2026-10-02母親正式入口DRAFT的已審查RE；原始EXE／CTY bytes、IDA9.4資料xref／writer-consumer，"
+                "dosgolem固定1357一次的冷啟動37次正常IRQ1；selector1→raw54→010B及37步城鎮帶路；"
+                "只限已觀測接近路徑，不代表remake、全域相位、其他gate、對話後或存檔CONFORMED")
     if start in (0x216c5, 0x216e6, 0x21709, 0x21710):
         return ("docs/188：2026-10-02等待箭頭有限READY；原始bytes、字模、自然相位與5029ccf隔離原型；"
                 "原版收據SHA-256 54a0c21f80559c355b0e0dbaf9f726af59739021c7cfcfaf33a833468fcfbe51；"
@@ -225,6 +234,10 @@ def main():
             "function_end_ida_linear": hex(fn.end_ea),
         },
         "callers": callers,
+        "target_xrefs": [{**item_record(ref.frm), "xref_type": ref.type,
+                          "original_function": ida_funcs.get_func_name(ref.frm)}
+                         for ref in idautils.XrefsTo(fn.start_ea)],
+        "target_cs": hex(idc.get_sreg(fn.start_ea, "cs")),
         "instructions": instructions,
         "selected_range": selected_range,
         "data_xrefs_note": "DS相對運算元與間接讀寫未必產生直接xref；空清單不能證明沒有writer或consumer。",
@@ -244,11 +257,15 @@ def main():
                            "xrefs": [{**item_record(ref.frm), "xref_type": ref.type,
                                       "original_function": ida_funcs.get_func_name(ref.frm)}
                                      for ref in idautils.XrefsTo(ea)]}
-                          for ea in (0x24dd0 + 0x0b2d, 0x272ed, 0x24dd0 + 0x0004, 0x24dd0 + 0x0005)],
+                          for ea in (0x24dd0 + 0x0b2d, 0x272ed, 0x24dd0 + 0x0004, 0x24dd0 + 0x0005,
+                                     0x28984, 0x289f0, 0x24dd0 + 0x258a,
+                                     0x24dd0 + 0x258c, 0x24dd0 + 0x4f46)],
     }
     repo_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     result["resolution_backlinks"] = []
     for relative, marker in (
+        ("docs/66-original-flow-oracle.md", "2026-10-02追加勘誤：母親開場"),
+        ("docs/192-opening-dialogue-v3-closure.md", "2026-10-02追加入口勘誤：母親帶路"),
         ("docs/94-dialogue-window-and-monster-mask-re.md", "2026-10-01 勘誤：raw"),
         ("docs/84-game-pack-json-contract.md", "創角後生日旁白（schema 0.1.58"),
     ):

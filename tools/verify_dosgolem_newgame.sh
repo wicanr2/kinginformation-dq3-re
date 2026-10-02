@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # 主機僅做 Docker／Git 控制；探測、建置、測試與輸出全部在容器內。
-# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation|--opening|--birthday-pages]
+# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original]
 # 預設重生主選單／初始命名並比較正式畫面；--prototype 僅驗證歷史 DRAFT。
 # --navigation 重生兩條命名收據，驗證六次方向與四次功能輸入的狀態及完整畫布。
 # --creation 重生固定種子創角，驗證命名／性別、能力交易與等待／確認完整畫面。
 # --opening 從冷啟動延伸第17次接受角色，驗證同批創角與黑底生日首頁；續頁／母親仍待閉合。
 # --birthday-pages 延伸兩次生日續頁及四次捲動；生日文字必須通過，房間未閉合前仍有正式紅測試。
+# --mother-entry-original 只重生原版37次正常輸入的母親入口收據，不宣稱remake對拍通過。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"
 MODE="${2:-production}"
-case "$MODE" in production|--prototype|--navigation|--creation|--opening|--birthday-pages) ;; *) echo '模式須為 production、--prototype、--navigation、--creation、--opening 或 --birthday-pages' >&2; exit 1;; esac
+case "$MODE" in production|--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original) ;; *) echo '模式須為 production、--prototype、--navigation、--creation、--opening、--birthday-pages 或 --mother-entry-original' >&2; exit 1;; esac
 for path in "$ROOT" "$SOURCE" "$ROOT/assets_raw" "$ROOT/work" "$ROOT/work/dosgolem-opening" "$ROOT/work/.gocache-test" "$ROOT/work/.gopath-test"; do
   test -d "$path" || { echo "目錄不存在：$path" >&2; exit 1; }
 done
@@ -25,6 +26,7 @@ trap cleanup EXIT
 LIMIT=240
 test "$MODE" != --navigation || LIMIT=480
 test "$MODE" != --birthday-pages || LIMIT=420
+test "$MODE" != --mother-entry-original || LIMIT=720
 timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
   --memory 4g --cpus 2 --pids-limit 192 -u "$(id -u):$(id -g)" \
   -v "$ROOT:/repo:ro" -v "$ROOT/work:/work" -v "$SOURCE:/dosgolem:ro" \
@@ -49,6 +51,11 @@ timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
       DQ3_NEWGAME_PROBE_SCENARIO=opening_accept python3 /repo/tools/dosgolem_newgame_probe.py
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --birthday-pages; then
       DQ3_NEWGAME_PROBE_SCENARIO=birthday_continue python3 /repo/tools/dosgolem_newgame_probe.py
+    elif test "$DQ3_NEWGAME_VERIFY_MODE" = --mother-entry-original; then
+      DQ3_NEWGAME_PROBE_SCENARIO=mother_approach python3 /repo/tools/dosgolem_newgame_probe.py
+      python3 -c "import json; from pathlib import Path; d=json.loads(Path(\"/work/dosgolem-opening/issue4-mother-approach-receipt.json\").read_text()); assert any(\"ida_linear=1010b \" in line for line in d[\"mother_entry_events\"]), \"尚未自然抵達母親入口\""
+      echo "原版母親入口收據已重生；尚未執行remake比較。"
+      exit 0
     else
       python3 /repo/tools/dosgolem_newgame_probe.py
     fi

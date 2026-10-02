@@ -4,7 +4,9 @@
 > Issue #4：原版PIT除數12428推翻預設18.2Hz假設，正式JSON改為箭頭5／4、逐字及捲動1更新。
 > 生日兩相與六張續頁完整RGB、創角及完整remake回歸通過；房間仍261個人物像素差異。
 > 原版83返回後先移動NPC0，再播放81；主角仍(5,5)。目前remake人物選擇與順序有反證。
-> 下一步先閉合0x1010B正式觸發與NPC狀態鏈，完成有限READY，再修正式路徑；不猜補或固定影格。
+> 最新RE已由冷啟動37次正式輸入／74次IRQ1閉合0x1010B：走近9,10才帶路，37個城鎮步進抵達22,19。
+> 210份原版產物及116份不變出生PNG／bin通過；隔離人物順序原型PASS，正式ad00d38同測試FAIL。
+> 正式remake尚未套用此修正。下一步閉合城門對話後與保存／恢復，完成有限READY，再修正式路徑。
 > 原始定位、時間CONFORMED與NPC DRAFT見[docs/188](188-opening-escort-to-castle-spec.md)，必填契約見[docs/84](84-game-pack-json-contract.md)。
 > 唯一現況、版號及驗收限制以[CONTEXT狀態表](../CONTEXT.md)為準。下方歷史checkpoint不反向覆蓋本段。
 

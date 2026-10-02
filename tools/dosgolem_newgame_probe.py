@@ -10,12 +10,13 @@ repo = Path('/repo')
 out = Path('/work/dosgolem-opening')
 generation_script = Path(__file__).read_bytes()
 scenario = os.environ.get('DQ3_NEWGAME_PROBE_SCENARIO', 'initial')
-creation_scenarios = ('name_creation', 'opening_accept', 'birthday_continue')
+creation_scenarios = ('name_creation', 'opening_accept', 'birthday_continue', 'mother_approach')
 assert scenario in ('initial', 'name_navigation', 'name_function_mode') + creation_scenarios, scenario
 prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
           'name_function_mode':'issue4-mode', 'name_creation':'issue4-creation',
           'opening_accept':'issue4-opening',
-          'birthday_continue':'issue4-birthday-pages'}[scenario]
+          'birthday_continue':'issue4-birthday-pages',
+          'mother_approach':'issue4-mother-approach'}[scenario]
 keys = [(710000000, 0x1c), (731000000, 0x1c)]
 captures = [(729000000, 'menu'), (740000000, 'create'),
             (750000000, 'final' if scenario == 'initial' else 'initial')]
@@ -52,13 +53,13 @@ if scenario in creation_scenarios:
     keys += [(1060000000,0x1c)]
     captures += [(1051000000,'ability-waiting'),(1071000000,'ability-confirm')]
     stop = 1080000000
-if scenario in ('opening_accept', 'birthday_continue'):
+if scenario in ('opening_accept', 'birthday_continue', 'mother_approach'):
     # 第17次正式 Enter 接受角色；後續只觀察，不寫入出生位置或故事狀態。
     keys += [(1100000000, 0x1c)]
     captures += [(1111000000, 'accepted'), (1151000000, 'birthday-wait'),
                  (1191000000, 'stable')]
     stop = 1200000000
-if scenario == 'birthday_continue':
+if scenario in ('birthday_continue', 'mother_approach'):
     # 在已自然抵達的生日等待狀態追加兩次Enter；未知續頁不預先命名為房間。
     keys += [(1220000000, 0x1c), (1340000000, 0x1c)]
     captures += [(1231000000, 'continue-1'), (1271000000, 'continue-1-wait'),
@@ -73,6 +74,22 @@ if scenario == 'birthday_continue':
                  (1221840427, 'birthday-scroll-complete'),
                  (1222142894, 'room-background-before-actors')]
     stop = 1440000000
+if scenario == 'mother_approach':
+    # 第19次正常確認後，原版必經進入選單、三次圖像選擇與結果確認。
+    # sub_21F79接受預設選項；保留原始EXE內NOP比較，不修改驗證或旗標。
+    for i in range(5):
+        step = 1440000000 + i*20000000
+        keys.append((step, 0x1c))
+        captures.append((step+11000000, f'opening-modal-{i+1:02d}'))
+    # 主角(5,5)左側是床；先下2、左2、下3、右6接近(9,10)。
+    # 逐格遵循原始CTY通路，沒有狀態注入或談話快捷入口。
+    directions = [0x50]*2 + [0x4b]*2 + [0x50]*3 + [0x4d]*6
+    for i, scan in enumerate(directions):
+        step = 1540000000 + i*20000000
+        keys.append((step, scan))
+        captures.append((step+11000000, f'approach-{i+1:02d}'))
+    captures.append((1851000000, 'after-approach'))
+    stop = 1860000000
 assert out.is_dir() and out.stat().st_uid == os.getuid()
 exe = repo / 'assets_raw/DQ3.EXE'
 assert len(exe.read_bytes()) == 115282
@@ -92,6 +109,9 @@ for previous in sorted(previous_files):
         assert archive.is_file() and archive.read_bytes() == data
     else:
         archive.write_bytes(data)
+# 已完整按hash歸檔後移除本情境舊產物；未重生的圖不能混入新收據。
+for previous in sorted(previous_files):
+    previous.unlink()
 with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     src = Path(temp)
     for name in ('internal', 'cmd/probe'):
@@ -171,7 +191,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         marker = '\tfor m.Steps < *steps && !m.CPU.Halted && !d.Exited {\n'
         assert probetext.count(marker)==1
         probetext=probetext.replace(marker,'\tvar dq3SeedApplied, dq3AbilityRNG bool\n'+marker+seed_hook,1)
-    if scenario == 'birthday_continue':
+    if scenario in ('birthday_continue', 'mother_approach'):
         # 唯讀觀測IDA已定位的caller與文字等待；raw欄位不在探測器猜命名。
         flow_hook = r"""
         flowPC := uint32(m.CPU.Seg[cpu.CS])*16+uint32(m.CPU.IP)+0xef00
@@ -228,6 +248,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                 if m.Read16(cpu.Addr(ds,0x4f33)) == 5 && m.Read16(cpu.Addr(ds,0x4f35)) == 5 {
                     location = "room"
                 }
+                __OTHER_LOCATION__
                 phase := "visible"
                 if flowPC != 0x216d0 { phase = "hidden" }
                 fmt.Printf("DQ3_WAIT_PHASE step=%d ida_linear=%05x location=%s phase=%s DS=%04x BP=%04x DX=%04x raw0005=%d raw0004=%d raw0b34=%d seed=%04x ticks=%d pit_divisor=%d\n",
@@ -254,7 +275,39 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         }
 """
         flow_hook = flow_hook.replace('__PREFIX__', prefix)
-        probetext = probetext.replace(marker, '\tvar dq3PhaseSeen = map[string]int{}\n\tvar dq3NPCSequenceStep int\n\tvar dq3NPCCaptures = map[string]bool{}\n' + marker + flow_hook, 1)
+        flow_hook = flow_hook.replace('__OTHER_LOCATION__', '''if dq3MotherEntered {
+                    location = "other"
+                }''' if scenario == 'mother_approach' else '')
+        if scenario == 'mother_approach':
+            flow_hook = flow_hook.replace('if dq3SeedApplied {',
+                'if dq3SeedApplied && flowPC == 0x1010b { dq3MotherEntered = true }\n        if dq3SeedApplied {',1)
+            flow_hook += """
+        if dq3SeedApplied && ((flowPC == 0x19530 &&
+            (m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS],0x4f1f)) != 0xff ||
+             m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS],0x4f46))&4 != 0)) || flowPC == 0x196d2 || flowPC == 0x1970b ||
+            flowPC == 0x1010b || flowPC == 0x10121 || flowPC == 0x10130 || flowPC == 0x101c5 ||
+            flowPC == 0x194c3 || flowPC == 0x10148 || flowPC == 0x10163 || flowPC == 0x1017e ||
+            flowPC == 0x10199 || flowPC == 0x101b4 || flowPC == 0x101d3 || flowPC == 0x1020a ||
+            flowPC == 0x21ddc || flowPC == 0x21e94) {
+            ds := m.CPU.Seg[cpu.DS]
+            fmt.Printf("DQ3_MOTHER_ENTRY step=%d ida_linear=%05x ticks=%d pit_divisor=%d player_x=%d player_y=%d raw0b24=%04x raw0b55=%d raw258a=%04x raw258c=%04x SI=%04x AX=%04x npc0=%02x%02x%02x%02x%02x%02x%02x%02x seed=%04x flag_byte50=%02x clock=%d\\n",
+                m.Steps,flowPC,m.Ticks,m.PITDivisor(),m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),
+                m.Read16(cpu.Addr(ds,0x0b24)),m.Read8(cpu.Addr(ds,0x0b55)),m.Read16(cpu.Addr(ds,0x258a)),m.Read16(cpu.Addr(ds,0x258c)),
+                m.CPU.R[cpu.SI],m.CPU.R[cpu.AX],m.Read8(cpu.Addr(ds,0x0b66)),m.Read8(cpu.Addr(ds,0x0b67)),
+                m.Read8(cpu.Addr(ds,0x0b68)),m.Read8(cpu.Addr(ds,0x0b69)),m.Read8(cpu.Addr(ds,0x0b6a)),m.Read8(cpu.Addr(ds,0x0b6b)),
+                m.Read8(cpu.Addr(ds,0x0b6c)),m.Read8(cpu.Addr(ds,0x0b6d)),m.Read16(cpu.Addr(ds,0x0b5a)),m.Read8(cpu.Addr(ds,0x4f7a)),m.Read16(cpu.Addr(ds,0x251d)))
+            if flowPC == 0x1010b || flowPC == 0x10130 || flowPC == 0x101c5 {
+                path := fmt.Sprintf("/work/dosgolem-opening/__PREFIX__-mother-entry-%05x",flowPC)
+                if err := writeScreen(m,path+".png",0,0); err != nil { die(err) }
+                if err := os.WriteFile(path+".bin",m.Indexed(),0o644); err != nil { die(err) }
+            }
+        }
+"""
+            flow_hook = flow_hook.replace('__PREFIX__', prefix)
+        declarations = '\tvar dq3PhaseSeen = map[string]int{}\n\tvar dq3NPCSequenceStep int\n\tvar dq3NPCCaptures = map[string]bool{}\n'
+        if scenario == 'mother_approach':
+            declarations += '\tvar dq3MotherEntered bool\n'
+        probetext = probetext.replace(marker, declarations + marker + flow_hook, 1)
     probe.write_text(probetext)
     subprocess.run(['gofmt','-w',str(probe)],cwd=src,check=True)
     binary = out / (prefix.replace('issue4-', 'issue4-probe-'))
@@ -281,7 +334,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     (out / f'{prefix}-generation.py').write_bytes(generation_script)
     print('原版自然探測開始',flush=True)
     with (out / f'{prefix}.log').open('w') as log:
-        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=360 if scenario == 'birthday_continue' else 180)
+        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=660 if scenario == 'mother_approach' else 360 if scenario == 'birthday_continue' else 180)
     print('原版探測結束',result.returncode,flush=True)
     lines = (out / f'{prefix}.log').read_text().splitlines()
     assert result.returncode == 0
@@ -309,11 +362,14 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                         'name_function_mode':[0,0,0,36,35,35,35],
                         'name_creation':[0,0,0,36,35,35,35],
                         'opening_accept':[0,0,0,36,35,35,35],
-                        'birthday_continue':[0,0,0,36,35,35,35]}[scenario]
+                        'birthday_continue':[0,0,0,36,35,35,35],
+                        'mother_approach':[0,0,0,36,35,35,35]}[scenario]
     observations = [re.search(r'DS=([0-9a-f]+) raw_cursor=(\d+) name_mode=([0-9a-f]+)', line)
                     for line in meta['name_observations']]
     assert len(observations) == len(captures) and all(observations)
-    assert all(match.group(1) == '15ed' for match in observations)
+    # 正式移動的任意抓圖點可能正處於讀取CTY的暫時DS；命名契約只套創角段。
+    checked_observations = observations[:len(expected_cursors)] if scenario == 'mother_approach' else observations
+    assert all(match.group(1) == '15ed' for match in checked_observations)
     assert [int(match.group(2)) for match in observations[:len(expected_cursors)]] == expected_cursors
     expected_modes = [0] + [1]*(len(expected_cursors)-1)
     if scenario in ('name_function_mode',) + creation_scenarios:
@@ -340,21 +396,28 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     meta['scope'] = '只到主選單及命名導航／模式選擇；沒有創角能力、出生點或母親開場 parity'
     if scenario in creation_scenarios:
         meta['scope']='固定原版測試種子後，自然創角能力的原版收據；尚未與重製對拍，母親仍未知'
-    if scenario in ('opening_accept', 'birthday_continue'):
+    if scenario in ('opening_accept', 'birthday_continue', 'mother_approach'):
         meta['scope']='冷啟動17次正式IRQ1輸入，固定創角種子並正常接受角色後的原版畫面；出生位置與母親開場尚未對拍'
         meta['observation_contract']['post_creation_cursor_semantics'] = '創角後僅保留原始欄位值，不將命名游標解讀為場景狀態'
-    if scenario == 'birthday_continue':
+    if scenario in ('birthday_continue', 'mother_approach'):
         meta['scope']='冷啟動19次正式IRQ1輸入，創角種子固定一次，再正常接受角色與兩次生日續頁；續頁與下一場景尚待重製比較'
         meta['birthday_flow_events'] = [line for line in lines if line.startswith('DQ3_BIRTHDAY_FLOW ')]
         meta['room_sprite_events'] = [line for line in lines if line.startswith('DQ3_ROOM_SPRITE ')]
         meta['wait_phase_events'] = [line for line in lines if line.startswith('DQ3_WAIT_PHASE ')]
         meta['npc_sequence_events'] = [line for line in lines if line.startswith('DQ3_NPC_SEQUENCE ')]
+    if scenario == 'mother_approach':
+        meta['scope']='冷啟動37次正式IRQ1輸入；正常創角、生日及原始選單進入／三次圖像選擇／結果確認後，下2／左2／下3／右6接近家中原始事件格；母親入口尚未與重製對拍'
+        meta['mother_entry_events'] = [line for line in lines if line.startswith('DQ3_MOTHER_ENTRY ')]
     meta['artifacts'] = []
     artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log', f'{prefix}-generation.py']
-    if scenario == 'birthday_continue':
+    if scenario in ('birthday_continue', 'mother_approach'):
         artifact_names += [f'{prefix}-{location}-wait-arrow-{phase}.{suffix}'
                            for location in ('birthday', 'room') for phase in ('visible', 'hidden')
                            for suffix in ('png', 'bin')]
+    if scenario == 'mother_approach':
+        # 正常執行抵達的入口與轉場才會產生；沒有圖像也照實保留未知。
+        artifact_names += [p.name for pattern in (f'{prefix}-*.png', f'{prefix}-*.bin')
+                           for p in sorted(out.glob(pattern)) if p.name not in artifact_names]
         artifact_names += [f'{prefix}-birthday-wait-arrow-visible-transient.{suffix}'
                            for suffix in ('png', 'bin')]
         artifact_names += [f'{prefix}-{name}.{suffix}'
