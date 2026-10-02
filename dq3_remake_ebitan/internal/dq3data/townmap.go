@@ -11,6 +11,7 @@ type Town struct {
 	DlgBank         int      // 對話 bank(section header +0x17 → D3TXT0<bank>.TXT)
 	MapFlags        byte     // section header +0x10；bit0=魯拉可用、bit1=烈米特可用
 	EncounterFlag   byte     // section header +0x11；原始 DS:[0xd77]，0=安全、非0=可遇敵
+	ExteriorTile    byte     // section header +0x12；原始界外圖塊
 	HiMap           []byte   // 每格高 byte(低 5 bit = 事件/轉場 subid)
 	SpecialHandlers []int    // section+4 byte table：tile/scene scripted handler raw IDs
 	Events          [][3]int // section 事件表(section+8):{type, param, p2}
@@ -74,6 +75,7 @@ func OpenTown(cty []byte, section int, night bool) (*Town, error) {
 		DlgBank:       dlgBank,
 		MapFlags:      cty[so+0x10],
 		EncounterFlag: cty[so+0x11],
+		ExteriorTile:  cty[so+0x12],
 	}
 	t.HiMap = make([]byte, w*h)
 	for i := 0; i < w*h; i++ {

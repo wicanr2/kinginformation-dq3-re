@@ -75,6 +75,44 @@ func validateSceneCamera(c SceneCamera) error {
 	return validateEvidence(c.Evidence)
 }
 
+func (b *SceneCameraBinding) UnmarshalJSON(raw []byte) error {
+	type plain SceneCameraBinding
+	return requiredHome(raw, (*plain)(b))
+}
+
+func (p *Pack) validateSceneCameras() error {
+	if p.Interface.SceneCameras == nil {
+		return errors.New("scene cameras must be declared")
+	}
+	seen := map[[2]int]bool{}
+	for _, binding := range p.Interface.SceneCameras {
+		key := [2]int{binding.CTY, binding.Section}
+		if binding.CTY < 0 || binding.Section < 0 || binding.Camera == nil || seen[key] {
+			return errors.New("scene camera reference is invalid or duplicated")
+		}
+		seen[key] = true
+		if err := validateSceneCamera(*binding.Camera); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SceneCamera returns the declared camera for a scene; an undeclared scene
+// keeps its existing rendering contract.
+func (p *Pack) SceneCamera(cty, section int) *SceneCamera {
+	if p == nil {
+		return nil
+	}
+	for i := range p.Interface.SceneCameras {
+		b := &p.Interface.SceneCameras[i]
+		if b.CTY == cty && b.Section == section {
+			return b.Camera
+		}
+	}
+	return nil
+}
+
 func (e *OpeningEscort) UnmarshalJSON(raw []byte) error {
 	type plain OpeningEscort
 	return requiredHome(raw, (*plain)(e))

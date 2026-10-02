@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 主機僅做 Docker／Git 控制；探測、建置、測試與輸出全部在容器內。
-# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original|--mother-home-animation-original]
+# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original|--mother-home-animation-original|--king-approach-original]
 # 預設重生主選單／初始命名並比較正式畫面；--prototype 僅驗證歷史 DRAFT。
 # --navigation 重生兩條命名收據，驗證六次方向與四次功能輸入的狀態及完整畫布。
 # --creation 重生固定種子創角，驗證命名／性別、能力交易與等待／確認完整畫面。
@@ -12,11 +12,12 @@
 # --mother-home-contract-original 另讀取獨立圖像初始化的自然BIOS時鐘。
 # --mother-home-navigation-original 驗證Escape選定當前選項與四方向環繞，仍只重生原版。
 # --mother-home-animation-original 核對完整啟動共用動畫計數及NPC取圖，仍只重生原版。
+# --king-approach-original 保留母親返回輸入，再以正常上鍵核對城堡入口。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"
 MODE="${2:-production}"
-case "$MODE" in production|--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original|--mother-home-animation-original) ;; *) echo '未知驗證模式；請依檔首列出的模式選擇' >&2; exit 1;; esac
+case "$MODE" in production|--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original|--mother-home-animation-original|--king-approach-original) ;; *) echo '未知驗證模式；請依檔首列出的模式選擇' >&2; exit 1;; esac
 for path in "$ROOT" "$SOURCE" "$ROOT/assets_raw" "$ROOT/work" "$ROOT/work/dosgolem-opening" "$ROOT/work/.gocache-test" "$ROOT/work/.gopath-test"; do
   test -d "$path" || { echo "目錄不存在：$path" >&2; exit 1; }
 done
@@ -37,6 +38,7 @@ test "$MODE" != --mother-home-original || LIMIT=720
 test "$MODE" != --mother-home-contract-original || LIMIT=840
 test "$MODE" != --mother-home-navigation-original || LIMIT=900
 test "$MODE" != --mother-home-animation-original || LIMIT=900
+test "$MODE" != --king-approach-original || LIMIT=960
 timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
   --memory 4g --cpus 2 --pids-limit 192 -u "$(id -u):$(id -g)" \
   -v "$ROOT:/repo:ro" -v "$ROOT/work:/work" -v "$SOURCE:/dosgolem:ro" \
@@ -61,6 +63,10 @@ timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
       DQ3_NEWGAME_PROBE_SCENARIO=opening_accept python3 /repo/tools/dosgolem_newgame_probe.py
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --birthday-pages; then
       DQ3_NEWGAME_PROBE_SCENARIO=birthday_continue python3 /repo/tools/dosgolem_newgame_probe.py
+    elif test "$DQ3_NEWGAME_VERIFY_MODE" = --king-approach-original; then
+      DQ3_NEWGAME_PROBE_SCENARIO=king_approach python3 /repo/tools/dosgolem_newgame_probe.py
+      python3 /repo/tools/verify_dosgolem_king_approach.py --output /work/issue4-king-approach-source-audit.json
+      exit 0
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --mother-home-animation-original; then
       DQ3_NEWGAME_PROBE_SCENARIO=mother_home_animation python3 /repo/tools/dosgolem_newgame_probe.py
       python3 /repo/tools/verify_dosgolem_npc_animation.py --receipt /work/dosgolem-opening/issue4-home-animation-receipt.json --output /work/issue4-home-animation-source-audit.json

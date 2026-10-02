@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.4.0"
+	SchemaVersion       = "0.5.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -1014,6 +1014,12 @@ type SceneCamera struct {
 	Evidence     Evidence `json:"evidence"`
 }
 
+type SceneCameraBinding struct {
+	CTY     int          `json:"cty"`
+	Section int          `json:"section"`
+	Camera  *SceneCamera `json:"camera"`
+}
+
 type WindowShadow struct {
 	Mode     string   `json:"mode"`
 	OffsetX  int      `json:"offset_x"`
@@ -1063,6 +1069,7 @@ type RawScreenAsset struct {
 
 type Interface struct {
 	SchemaVersion            string                    `json:"schema_version"`
+	SceneCameras             []SceneCameraBinding      `json:"scene_cameras"`
 	Dialogue                 WindowLayout              `json:"dialogue"`
 	BattleMessage            WindowLayout              `json:"battle_message,omitempty"`
 	BattleCommand            BattlePanelLayout         `json:"battle_command,omitempty"`
@@ -2686,6 +2693,9 @@ func (p *Pack) validateInterface() error {
 		}
 	}
 	if err := p.validateOpeningScenePresentation(); err != nil {
+		return err
+	}
+	if err := p.validateSceneCameras(); err != nil {
 		return err
 	}
 	if e := p.Interface.OpeningEscort; e != nil {

@@ -1,6 +1,29 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-## 2026-10-03 現行城鎮攝影機契約
+## 2026-10-03 現行場景攝影機契約
+
+現行schema0.5.0／DQ3 content0.1.73。九份JSON同步版本；舊schema或不同canonical hash的存檔明確拒絕。
+限定原始資料、READY審查及正常玩家入口見[docs/188](188-opening-escort-to-castle-spec.md)正常城堡接近節。
+
+| 欄位 | 契約 |
+|---|---|
+| `interface.scene_cameras` | 必填陣列；可明示空陣列，缺失或null拒絕 |
+| `scene_cameras[].cty`／`section` | 非負場景引用，0合法但不得省略；同一CTY／section不得重複 |
+| `scene_cameras[].camera` | 必填完整`SceneCamera`；既有player_anchor、20×15界限、界外圖塊及D3證據契約保持 |
+
+本版只宣告CTY25 section0。共用引擎優先使用已宣告的家中／arrival camera，再查場景集合；
+沒有新Go版本座標、raw ID或camera預設。未宣告scene沿用既有render契約，不提升其原版parity。
+同版正常標題讀檔以場景選回相同camera。原版進城視野已有最小充分來源，
+完整RGB、閒置狀態窗與右上8000h圖塊語意仍未通過，不稱V3。
+
+建立遊戲狀態前，`game/opening_scene.go`的`validateSceneCameraSources`以原生Town解碼器
+核對每個宣告的CTY檔、實際section與`exterior_tile`。有宣告而無素材、未知CTY／section或
+界外圖塊不符均拒絕，不補引擎預設。`internal/dq3data/townmap.go`保留原始section+12解析為oracle。
+契約與來源測試入口為`internal/gamepack/scene_camera_test.go`及`game/scene_camera_test.go`。
+
+以下保留較早契約及其版本；既有欄位仍適用，現行版本以本文件首節為準。
+
+## 2026-10-03 前一城鎮攝影機契約
 
 現行schema0.4.0／DQ3 content0.1.72。有限READY及原始EXE／CTY證據見
 [docs/188](188-opening-escort-to-castle-spec.md)城鎮攝影機節。下方家中0.3.0契約仍適用，版本欄位由本節更新。

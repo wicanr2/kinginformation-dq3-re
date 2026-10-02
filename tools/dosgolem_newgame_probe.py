@@ -11,7 +11,7 @@ out = Path('/work/dosgolem-opening')
 generation_script = Path(__file__).read_bytes()
 scenario = os.environ.get('DQ3_NEWGAME_PROBE_SCENARIO', 'initial')
 home_scenarios = ('mother_home_entry', 'mother_home_contract', 'mother_home_navigation', 'mother_home_animation')
-mother_scenarios = ('mother_approach', 'mother_finish') + home_scenarios
+mother_scenarios = ('mother_approach', 'mother_finish', 'king_approach') + home_scenarios
 creation_scenarios = ('name_creation', 'opening_accept', 'birthday_continue') + mother_scenarios
 assert scenario in ('initial', 'name_navigation', 'name_function_mode') + creation_scenarios, scenario
 prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
@@ -20,6 +20,7 @@ prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
           'birthday_continue':'issue4-birthday-pages',
           'mother_approach':'issue4-mother-approach',
           'mother_finish':'issue4-mother-finish',
+          'king_approach':'issue4-king-approach',
           'mother_home_entry':'issue4-home-entry',
           'mother_home_contract':'issue4-home-contract',
           'mother_home_navigation':'issue4-home-navigation',
@@ -102,11 +103,19 @@ if scenario in mother_scenarios:
     extra_steps = (len(modal_scans) - 5) * 20000000
     captures.append((1851000000 + extra_steps, 'after-approach'))
     stop = 1860000000 + extra_steps
-if scenario == 'mother_finish':
+if scenario in ('mother_finish', 'king_approach'):
     # 原始record80只有一個FFFC；追加一次正常Enter，觀察EOF後的自然續行。
     keys.append((1900000000, 0x1c))
     captures += [(1911000000, 'castle-confirm'), (1931000000, 'after-mother-return')]
     stop = 1940000000
+if scenario == 'king_approach':
+    # 保留母親返回的38次正常輸入，再沿城鎮通路向北走9格。
+    # 這是待驗路線；只記錄原版結果，不注入城堡／王座狀態。
+    for i in range(9):
+        step = 1960000000 + i * 20000000
+        keys.append((step, 0x48))
+        captures.append((step + 11000000, f'castle-north-{i+1:02d}'))
+    stop = 2140000000
 assert out.is_dir() and out.stat().st_uid == os.getuid()
 exe = repo / 'assets_raw/DQ3.EXE'
 assert len(exe.read_bytes()) == 115282
@@ -397,6 +406,42 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         if scenario in mother_scenarios:
             declarations += '\tvar dq3MotherEntered, dq3MotherReturned bool\n'
         probetext = probetext.replace(marker, declarations + marker + flow_hook, 1)
+    if scenario == 'king_approach':
+        marker = '\tfor m.Steps < *steps && !m.CPU.Halted && !d.Exited {\n'
+        observed_steps = ', '.join(str(step) for step, _ in captures if step > 1940000000)
+        observation = f'''\t\tswitch m.Steps {{
+        case {observed_steps}:
+            ds := uint16(0x15ed)
+            fmt.Printf("DQ3_KING_APPROACH step=%d actual_ds=%04x dgroup=%04x player_x=%d player_y=%d raw0b24=%04x raw0b55=%d raw4f25=%d raw4f27=%d rawflag_byte17=%02x rawflag_byte18=%02x seed=%04x\\n",
+                m.Steps,m.CPU.Seg[cpu.DS],ds,m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),
+                m.Read16(cpu.Addr(ds,0x0b24)),m.Read8(cpu.Addr(ds,0x0b55)),
+                int16(m.Read16(cpu.Addr(ds,0x4f25))),int16(m.Read16(cpu.Addr(ds,0x4f27))),
+                m.Read8(cpu.Addr(ds,0x4f72)),m.Read8(cpu.Addr(ds,0x4f73)),m.Read16(cpu.Addr(ds,0x0b5a)))
+        }}
+        if m.Steps > 1960000000 {{
+            pc := uint32(m.CPU.Seg[cpu.CS])*16+uint32(m.CPU.IP)+0xef00
+            ordinal := int((m.Steps-1960000000)/20000000)+1
+            if ordinal <= 9 && pc == 0x11994 {{
+                ds := uint16(0x15ed)
+                fmt.Printf("DQ3_KING_CAMERA step=%d ordinal=%d ida_linear=%05x player_x=%d player_y=%d origin_x=%d origin_y=%d\\n",m.Steps,ordinal,pc,
+                    m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),
+                    int16(m.Read16(cpu.Addr(ds,0x4f25))),int16(m.Read16(cpu.Addr(ds,0x4f27))))
+            }}
+            if ordinal <= 9 && pc == 0x2111b && !dq3KingReady[ordinal] {{
+                dq3KingReady[ordinal] = true
+                ds := uint16(0x15ed)
+                ss, sp := m.CPU.Seg[cpu.SS],m.CPU.R[cpu.SP]
+                fmt.Printf("DQ3_KING_READY step=%d ordinal=%d ida_linear=%05x player_x=%d player_y=%d return_cs=%04x return_ip=%04x raw0b24=%04x raw0b55=%d\\n",m.Steps,ordinal,pc,
+                    m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),
+                    m.Read16(cpu.Addr(ss,sp+2)),m.Read16(cpu.Addr(ss,sp)),m.Read16(cpu.Addr(ds,0x0b24)),m.Read8(cpu.Addr(ds,0x0b55)))
+                path := fmt.Sprintf("/work/dosgolem-opening/{prefix}-king-ready-%02d",ordinal)
+                if err := writeScreen(m,path+".png",0,0); err != nil {{ die(err) }}
+                if err := os.WriteFile(path+".bin",m.Indexed(),0o644); err != nil {{ die(err) }}
+            }}
+        }}
+'''
+        assert probetext.count(marker) == 1
+        probetext = probetext.replace(marker, '\tvar dq3KingReady = map[int]bool{}\n' + marker + observation, 1)
     probe.write_text(probetext)
     subprocess.run(['gofmt','-w',str(probe)],cwd=src,check=True)
     binary = out / (prefix.replace('issue4-', 'issue4-probe-'))
@@ -423,7 +468,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     (out / f'{prefix}-generation.py').write_bytes(generation_script)
     print('原版自然探測開始',flush=True)
     with (out / f'{prefix}.log').open('w') as log:
-        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=840 if scenario == 'mother_home_animation' else 780 if scenario in ('mother_finish', 'mother_home_navigation') else 660 if scenario in mother_scenarios else 360 if scenario == 'birthday_continue' else 180)
+        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=900 if scenario == 'king_approach' else 840 if scenario == 'mother_home_animation' else 780 if scenario in ('mother_finish', 'mother_home_navigation') else 660 if scenario in mother_scenarios else 360 if scenario == 'birthday_continue' else 180)
     print('原版探測結束',result.returncode,flush=True)
     lines = (out / f'{prefix}.log').read_text().splitlines()
     assert result.returncode == 0
@@ -454,6 +499,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                         'birthday_continue':[0,0,0,36,35,35,35],
                         'mother_approach':[0,0,0,36,35,35,35],
                         'mother_finish':[0,0,0,36,35,35,35],
+                        'king_approach':[0,0,0,36,35,35,35],
                         'mother_home_entry':[0,0,0,36,35,35,35],
                         'mother_home_contract':[0,0,0,36,35,35,35],
                         'mother_home_navigation':[0,0,0,36,35,35,35],
@@ -517,10 +563,16 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             assert meta['picture_init_events'], '尚未觀測圖像選擇的自然初始化'
         if scenario == 'mother_home_navigation':
             meta['scope'] = '原版42次正式IRQ1冷啟動家中流程，含取消與四方向邊界；不代表remake parity'
-    if scenario == 'mother_finish':
+    if scenario in ('mother_finish', 'king_approach'):
         meta['scope']='冷啟動38次正式IRQ1輸入；保留母親接近路徑，再一次Enter解除城門record80內嵌等待；後續移動與旗標尚未與重製對拍'
         text = exe.parent / 'D3TXT01.TXT'
         meta['original_text']={'path':str(text),'size':text.stat().st_size,'sha256':hashlib.sha256(text.read_bytes()).hexdigest()}
+    if scenario == 'king_approach':
+        meta['scope']='保留原版冷啟動38次母親返回輸入，再以9次正常上鍵走向城堡；只讀原版結果，尚未與重製對拍'
+        meta['king_approach_events']=[line for line in lines if line.startswith('DQ3_KING_APPROACH ')]
+        meta['king_ready_events']=[line for line in lines if line.startswith('DQ3_KING_READY ')]
+        meta['king_camera_events']=[line for line in lines if line.startswith('DQ3_KING_CAMERA ')]
+        assert len(meta['king_approach_events']) == 9
     meta['artifacts'] = []
     artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log', f'{prefix}-generation.py']
     if scenario in ('birthday_continue',) + mother_scenarios:

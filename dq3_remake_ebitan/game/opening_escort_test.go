@@ -105,6 +105,10 @@ func TestOpeningMotherEscortUsesVisibleFrames(t *testing.T) {
 // This compares the town leg at its natural production checkpoint. The known
 // home/modal mismatch remains outside this state-only assertion and is recorded.
 func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
+	runDosgolemMotherArrivalStateComparison(t)
+}
+
+func runDosgolemMotherArrivalStateComparison(t *testing.T) *Game {
 	receiptPath := os.Getenv("DQ3_MOTHER_FINISH_ORIGINAL")
 	if receiptPath == "" {
 		t.Skip("set DQ3_MOTHER_FINISH_ORIGINAL to the freshly generated original receipt")
@@ -319,6 +323,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 		}
 	}
 	t.Log(fmt.Sprintf("正常家中選圖、手動接近、城鎮42狀態及最後完整RGB通過；標題讀檔camera維持，完整開場與音訊未完成"))
+	return g
 }
 
 func TestOpeningKingAudienceRendersHero(t *testing.T) {

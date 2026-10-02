@@ -1,0 +1,108 @@
+package gamepack
+
+import (
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func TestSceneCamerasRejectIncompleteBindings(t *testing.T) {
+	for _, name := range []string{"missing_collection", "missing_scene", "null_camera", "missing_tile", "unknown_field", "negative_scene", "duplicate_scene", "unreviewed"} {
+		t.Run(name, func(t *testing.T) {
+			p, err := BuiltinDQ3()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if name == "missing_collection" {
+				p.Interface.SceneCameras = nil
+			} else {
+				raw, err := json.Marshal(p.Interface.SceneCameras[0])
+				if err != nil {
+					t.Fatal(err)
+				}
+				var changed map[string]any
+				if err = json.Unmarshal(raw, &changed); err != nil {
+					t.Fatal(err)
+				}
+				camera := changed["camera"].(map[string]any)
+				switch name {
+				case "missing_scene":
+					delete(changed, "section")
+				case "null_camera":
+					changed["camera"] = nil
+				case "missing_tile":
+					delete(camera, "exterior_tile")
+				case "unknown_field":
+					changed["guessed"] = true
+				case "negative_scene":
+					changed["cty"] = -1
+				case "unreviewed":
+					camera["evidence"].(map[string]any)["level"] = "D2"
+				}
+				raw, err = json.Marshal(changed)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var binding SceneCameraBinding
+				if err = json.Unmarshal(raw, &binding); err != nil {
+					return
+				}
+				p.Interface.SceneCameras = []SceneCameraBinding{binding}
+				if name == "duplicate_scene" {
+					p.Interface.SceneCameras = append(p.Interface.SceneCameras, binding)
+				}
+			}
+			if err := p.validateInterface(); err == nil {
+				t.Fatal("accepted incomplete scene camera")
+			}
+		})
+	}
+}
+
+func TestSceneCameraMatchesOriginalCastleHeader(t *testing.T) {
+	dir := os.Getenv("DQ3_ASSETS")
+	if dir == "" {
+		dir = "../../../../assets_raw"
+	}
+	raw, err := os.ReadFile(filepath.Join(dir, "CTY25.DAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(raw) != 3756 || fmt.Sprintf("%x", sha256.Sum256(raw)) != "11d5c60377c6a98bbb9cfc9532652c5e23f4e5c939e769397e8fa5b2f22f9e2b" {
+		t.Fatal("original castle identity differs")
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(p.Interface.SceneCameras) != 1 {
+		t.Fatal("unexpected reviewed scene count")
+	}
+	c := p.SceneCamera(25, 0)
+	if c == nil || c.Mode != "player_anchor" || c.Evidence.Level != "D3" {
+		t.Fatal("reviewed castle camera missing")
+	}
+	exe, err := os.ReadFile(filepath.Join(dir, "DQ3.EXE"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(exe) != 115282 || fmt.Sprintf("%x", sha256.Sum256(exe)) != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" {
+		t.Fatal("original executable differs")
+	}
+	start := 0x11971 - 0xec90
+	if c.AnchorX != int(binary.LittleEndian.Uint16(exe[start+4:])) || c.AnchorY != int(exe[start+15]) || c.ExteriorTile != int(raw[int(binary.LittleEndian.Uint16(raw))+0x12]) {
+		t.Fatal("scene camera differs from original writer/header")
+	}
+	if p.SceneCamera(25, 1) != nil || p.SceneCamera(0, 0) != nil {
+		t.Fatal("camera leaked into undeclared scenes")
+	}
+	p.Interface.SceneCameras = []SceneCameraBinding{}
+	if err = p.validateSceneCameras(); err != nil {
+		t.Fatal("explicit empty collection rejected", err)
+	}
+	t.Logf("schema=%s content=%s hash=%s", p.Schema(), p.Manifest.ContentVersion, p.ContentHash())
+}

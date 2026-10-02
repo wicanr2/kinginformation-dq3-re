@@ -1,5 +1,27 @@
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
+  "scene_cameras": [
+    {
+      "cty": 25,
+      "section": 0,
+      "camera": {
+        "mode": "player_anchor",
+        "anchor_x": 9,
+        "anchor_y": 7,
+        "exterior_tile": 0,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + CTY25.DAT + dosgolem正常城堡接近47次輸入",
+          "address_space": "linear",
+          "address": "0x11971..0x11991;CTY25 file0x0006+0x12",
+          "consumer": "11971玩家減anchor→11D8A；CTY section界外圖塊",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "限定CTY25 section0視野；完整RGB、閒置狀態窗及8000h圖塊語意仍未通過。"
+        }
+      }
+    }
+  ],
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,

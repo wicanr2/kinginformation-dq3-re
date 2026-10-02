@@ -1,6 +1,6 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
-目前家中正式流程以「2026-10-03 正式家中驗收」為準，城鎮攝影機見文末最新節；下列較早DRAFT保留研究歷史。
+目前家中正式流程以「2026-10-03 正式家中驗收」為準，城鎮及城堡攝影機見文末對應驗收節；下列較早DRAFT保留研究歷史。
 
 ## 2026-10-02：家中序列與圖像選擇的來源核對及現行試作（DRAFT）
 
@@ -1187,6 +1187,87 @@ game38項及internal4項選用測試未執行，沒有素材缺失跳過，沒�
 - 最小充分稽核：`work/issue4-npc-animation-audit.py`，輸出`work/issue4-npc-animation-final-audit.json`。核對既有三份來源、168個不變圖像、IDA原始rows、八筆台帳、shell／Python語法及十種損壞收據拒絕。損壞案例連同暫存日誌重新計算manifest，確認拒絕來自語意檢查；正式原版收據維持不變。
 
 本批只修正來源驗證器與可重生證據工具，不提升正式動畫、全畫面、原版音訊或campaign完成度。
+
+## 2026-10-03 正常城堡接近與視野（有限 CONFORMED，完整畫面 DRAFT）
+
+Issue #4從已通過的母親返回繼續。修改前基準為`de52686`，schema0.4.0／content0.1.72。
+探針保留原先38次冷啟動輸入，再從(21,17)送9次正常上鍵。
+此路線只用於尋找下一個玩家阻塞點；不注入座標、場景、旗標、影格或文字進度。
+正式原版EXE身份、dosgolem版本、Docker工具鏈及位址基準沿用本文件。
+
+- 重生入口：`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --king-approach-original`。固定乾淨來源2f44a68，960秒外層逾時，原版及來源唯讀。
+- 生成器：`tools/dosgolem_newgame_probe.py`的`king_approach`情境；唯讀觀測9個位置及原始DGROUP欄位，不預先將未知欄位命名。
+- 來源核對：Docker內執行`python3 /repo/tools/verify_dosgolem_king_approach.py --output /work/issue4-king-approach-source-audit.json`。核對前38次輸入、前76次IRQ1、能力seed、母親事件及先前全部PNG／bin保持，再核對新增輸入、日誌及產物雜湊。
+- 原版收據：`work/dosgolem-opening/issue4-king-approach-receipt.json`，SHA-256 `c8548e8459daa90e1980d3a9a6d617b5344edf3f921d2b8f06cf5812e28eeac6`。47次輸入、94次IRQ1、198個唯一產物已核對；174個舊PNG／bin不變。
+- 隔離重製比較：`work/issue4-king-approach-prototype.py`固定de52686，從正常新遊戲及已通過的42個城鎮狀態續行9次上鍵。輸出`work/issue4-king-remake-approach.json`及9張PNG；不修改production規則。
+
+隔離重製第1至8步由(21,16)至(21,9)，第9步正常轉入CTY25 section0的(15,30)。
+原版也自然抵達CTY25 section0的(15,30)。定時擷取的第1步尚在更新，第2至9步位置吻合；
+不把任意步數畫面當作完成影格。原版完整等待圖在linear2111B的caller返回0110:7E00，
+對應IDA linear17DFB→17E00。該等待由1991D的閒置計數分支進入17DBB，含狀態窗，
+並非每步地圖完成閘門。本批只有第9步自然觀測到該等待，不宣稱9個完成影格。
+
+城堡視野有限READY依據：原始EXE的11971..11991讀玩家座標減9、7後呼叫11D8A，
+原版與重製到同一進城位置，隔離攝影機原型使進城定時圖完整RGB差異從171566降至2775。
+兩張圖片目視核對。CTY25.DAT為3756 bytes，SHA-256
+`11d5c60377c6a98bbb9cfc9532652c5e23f4e5c939e769397e8fa5b2f22f9e2b`；
+section0基底file0006，界外圖塊在file0018，值0。現行renderer將Y夾至17，
+使主角顯示在底部；契約指定視野原點(6,23)，將主角置於視野圖塊座標(9,7)。
+這些定位、資料與同位置試作共同支持本scene的D3幾何，不外推其他scene。
+
+正式實作範圍只限CTY25 section0攝影機。`interface.scene_cameras`保存明示的scene與camera，
+共用引擎只查引用及套用既有player_anchor原語。宣告須完整、唯一且帶D3，缺欄位／未知欄位
+或重複scene拒絕。集合為空可表示尚無額外宣告，集合缺失拒絕。新版存檔依schema及pack hash拒絕舊資料。
+原始EXE／DAT核對、完整正常輸入、攝影機參數、標題存讀檔及完整回歸是驗收範圍。
+
+完整等待圖與攝影機原型仍差12726像素，包含閒置狀態窗及頂部圖塊。右上CTY tile高位含8000h，
+語意及consumer尚未閉合，不猜補屋頂或影格。完整RGB、閒置狀態窗與謁見時序保持DRAFT。
+11994返回時4F25／4F27已被renderer重用；本次值(6,38)不可解讀為視野原點。
+只用11971..11991原始writer作幾何證據，不以任意時刻的raw欄位覆蓋已確認的運算。
+有界IDA匯出與唯讀snapshot堆疊檢查分別在`work/issue4-king-map-wait-ida.json`、
+`work/issue4-king-status-wait-ida.json`與`work/issue4-king-state-stack.json`；均保留原始定位與輸入身份。
+
+| 原始定位與consumer | 推論等級與限定語意 |
+|---|---|
+| IDA9.4 linear11971..11991／file2CE1..2D01→11D8A，EXE身份沿用本節 | confirmed；玩家減9、7，僅CTY25 section0已有正常同位置與試作閉合 |
+| CTY25 section0 file0006，file0018→既有section loader／界外consumer | confirmed；界外圖塊0，不外推其他section |
+| IDA9.4 linear1991D→17DBB→17DFB→2111B，實際返回0110:7E00 | strong；原始閒置分支及狀態窗呼叫鏈。第9步自然等待caller為confirmed，正式UI與時間契約仍unknown |
+| CTY25 row23 x24..26的raw8018／8004／8221，row24的raw801A | confirmed原始資料；8000h語意及consumer為unknown，不命名屋頂 |
+
+IDA linear−EC90=file，DGROUP基底linear24DD0；工具、EXE大小與SHA-256沿用本文件來源契約。
+唯讀堆疊檢查只解碼已保存的原版狀態，未恢復或執行該snapshot，不當冷啟動對拍。
+
+第一次wrapper收尾解析失敗源於執行中編輯腳本，探針及獨立來源核對成功。
+固定腳本後以同一Docker命令乾淨重跑退出0；保留第一次收據及產物的內容雜湊歸檔，不記為產品缺陷。
+
+### 城堡攝影機正式驗收
+
+上述幾何經有限READY審查後正式接入，schema0.5.0／content0.1.73，canonical hash
+`sha256:27423313471ff2b262ae1805a6177899a1173f025c8bea99979b329e4e403064`。
+`internal/gamepack/scene_camera_test.go`核對原始EXE anchor、CTY25 section0界外資料及八種損壞契約拒絕。
+`game/opening_scene.go`只選pack引用；建立Game前由原生Town解碼器驗證CTY、section與界外圖塊，
+無素材／未知引用／不符資料均拒絕。`internal/dq3data/townmap.go`新增原始`ExteriorTile`欄位，沒有版本fallback。
+正常入口驗收在`game/scene_camera_test.go`，重用完整母親返回測試，再送原版九次上鍵。
+47次正式輸入自然抵達(15,30)，camera原點(6,23)，Save及標題正常Load維持camera與旗標。
+既有城鎮最後完整RGB差0保持。正式城堡PNG與隔離camera原型逐byte相同，SHA-256
+`3e698b90d0ce5a81e2e5d0648d5e4f7b2c95461d6d004cf97d421b02c6ac29a1`。
+完整RGB診斷仍定時2775、完整等待12726；僅幾何限定CONFORMED，不稱城堡整張V3或謁見完成。
+
+game372項頂層／48子PASS、38選用SKIP，410個頂層完整清單由長主線及四批新程序完全覆蓋、無重複。
+正常新遊戲至THE END130.22秒，僅屬重製回歸。internal142頂層／211子與11套件PASS、4選用SKIP；desktop建置PASS。
+沒有素材缺失跳過。單程序完整game兩輪均在最後進城測試異常退出；第二輪Docker事件確認OOM。
+排除長主線的一次大批執行亦晚段退出，不能算整批PASS；相同binary、工具鏈、容器限額與斷言分為四批後均PASS。
+失敗log保留，未改遊戲規則、seed或斷言。internal首輪三個拒絕案例因fixture未宣告新必要集合而提前被拒絕，
+fixture明示空集合後，原拒絕斷言保持，同工具鏈乾淨重跑PASS。
+
+本機正式產物：`work/issue4-castle-camera-production.png`及`.json`；來源核對為`work/issue4-king-approach-source-audit.json`。
+完整分批工具為`work/issue4-castle-camera-partition.py`，log及清單為`work/issue4-castle-camera-partition-{campaign,batch1,batch2,batch3,batch4}.jsonl`與各自`.selection.json`。
+internal與建置為`work/issue4-castle-camera-final-internal.jsonl`、`work/issue4-castle-camera-desktop`。
+最終私有稽核入口為`work/issue4-castle-camera-final-audit.py`，輸出`work/issue4-castle-camera-final-receipt.json`。
+收據7853bytes，SHA-256 `c20eebe898042be5367e7dd0bfef13dea86909495de00511183cb085a82cd41e`；八種損壞來源均拒絕。
+提交、推送與遠端Issue核對保存於`work/issue4-castle-camera-post-push-receipt.json`。
+原始失敗log為`work/issue4-castle-camera-game.jsonl`、`issue4-castle-camera-final-game.jsonl`及`issue4-castle-camera-partition-rest.jsonl`。
+本批新增工具、契約、測試及本機產物均由本節索引。下一切片是正常進城後閒置狀態窗與8000h圖塊consumer，再續行謁見。
 
 ## 2026-10-03 城鎮攝影機（有限 READY）
 

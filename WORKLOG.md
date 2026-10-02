@@ -783,3 +783,39 @@ fixture改使用現行SchemaVersion，原路徑、長度、未知欄位及事件
 work/issue4-town-camera-final-audit.py及issue4-town-camera-final-receipt.json，索引在docs/188。
 最後以實際InputState.Enter重播原版掃描碼，42狀態、最後完整RGB零差異與標題讀檔再次PASS，
 log為work/issue4-town-camera-enter.log；只有測試輸入映射與註解調整，已通過的產品回歸保持。
+
+## 2026-10-03：Issue #4 正常進城攝影機修正
+
+接續de52686，工作登記5958958481及來源進度5959336233。dosgolem固定乾淨2f44a68，
+保留38次正常母親返回輸入，再送九次上鍵；能力seed1357在自然入口只固定一次。
+第二次乾淨來源c8548e84有47次輸入、94次IRQ1、198個唯一產物，174個原先PNG／bin逐項相同。
+原版自然抵達CTY25 section0的(15,30)，沒有座標、旗標、文字或影格注入。
+定時抓圖包含更新中狀態，不能宣稱九個完成影格。唯一第九步等待由閒置狀態窗caller進入，
+IDA9.4原始堆疊、caller與consumer閉合；4F25／4F27在renderer返回後重用，不能把當時(6,38)當視野。
+第一次wrapper因執行中編輯腳本而解析失敗，探針與獨立核對成功；固定腳本後同命令乾淨重跑退出0。
+第一次來源依內容雜湊完整歸檔，未覆寫歷史或當產品缺陷。
+
+原始EXE的玩家減9、7及CTY25 section0界外圖塊0提供最小充分幾何證據。
+固定de52686的正常進城基準定時圖差171566，隔離camera原型降至2775，完整等待圖由170381降至12726。
+有限READY後正式接入scene_cameras，schema0.5.0／content0.1.73；九份JSON同步，所有版本值保留在pack。
+引擎只查scene引用並消費既有player_anchor。建立Game前以原生Town parser驗證CTY、section與exterior，
+缺素材、未知引用或資料不符均拒絕。parser保留section+12原始欄位，production Go沒有新增版本ID／座標／旗標或玩家文字。
+八種契約拒絕、原始EXE／DAT parity、無素材與三種來源錯誤拒絕通過。
+正式47次InputState自然進城，Save及正常標題Load維持camera、位置與旗標；城鎮最後全RGB差0保持。
+正式PNG與隔離camera原型逐byte相同；城堡完整等待圖仍12726差異，只閉合camera幾何。
+閒置狀態窗、8000h圖塊consumer、謁見、音訊及原版完整campaign保持待驗，不猜屋頂或指定動畫影格。
+
+完整單程序game兩輪均於最後進城測試異常退出，第二輪Docker監看記錄明確OOM事件。
+兩輪正常新遊戲至THE END已通過，但不能將異常退出整批記PASS。排除主線的大批亦晚段退出。
+依環境路由，用相同binary、容器4GiB／2CPU、GOMEMLIMIT2GiB及原斷言，將長主線與其餘四批分成新程序。
+核對410個頂層完整清單聯集相同且無重複；game372頂層／48子PASS、38選用SKIP。
+正常新遊戲InputState至THE END130.22秒，僅屬重製可玩回歸。最後正常進城及標題讀檔6.57秒PASS。
+internal首輪三個拒絕案例因fixture缺少新必要集合而提前拒絕；明示空集合後保留原斷言，乾淨重跑PASS。
+最終internal142頂層／211子及11套件PASS、4選用SKIP；desktop建置PASS，沒有素材缺失跳過。
+
+收據驗證器另核對新增18次IRQ的實際掃描碼、送達時間及完整等待PNG／bin。
+八種損壞來源在暫存副本全部拒絕。Python／shell語法、Go格式與git diff --check通過。
+私有稽核入口work/issue4-castle-camera-final-audit.py及結果issue4-castle-camera-final-receipt.json，
+連同正式PNG、JSON、所有分批清單、失敗log、IDA及來源工具均掛回docs/188。
+輸出UID/GID1000，歷史root候選3213、Markdown目錄0保持。本批一次性容器均已結束，未建立新image或發行包。
+提交、推送、遠端Issue更新與最後Docker清理另存work/issue4-castle-camera-post-push-receipt.json；Issue保持OPEN。

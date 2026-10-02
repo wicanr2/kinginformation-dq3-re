@@ -3207,6 +3207,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if pack == nil {
 		return nil, fmt.Errorf("game pack is nil")
 	}
+	if err := validateSceneCameraSources(assets, pack); err != nil {
+		return nil, err
+	}
 	if _, ok := pack.OpeningPrelude(); !ok {
 		return nil, fmt.Errorf("game pack missing data.interface.opening_prelude")
 	}

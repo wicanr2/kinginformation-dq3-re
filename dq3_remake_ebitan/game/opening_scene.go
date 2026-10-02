@@ -1,9 +1,37 @@
 package game
 
 import (
+	"fmt"
+	"io/fs"
+
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
+
+// validateSceneCameraSources validates declared scene references against the
+// native town loader before any game state is created.
+func validateSceneCameraSources(assets fs.FS, pack *gamepack.Pack) error {
+	if len(pack.Interface.SceneCameras) > 0 && assets == nil {
+		return fmt.Errorf("scene camera assets are nil")
+	}
+	for _, b := range pack.Interface.SceneCameras {
+		raw, err := fs.ReadFile(assets, ctyFile(b.CTY))
+		if err != nil {
+			return fmt.Errorf("scene camera source: %w", err)
+		}
+		if b.Section >= len(raw)/2 {
+			return fmt.Errorf("scene camera section is outside source")
+		}
+		town, err := dq3data.OpenTown(raw, b.Section, false)
+		if err != nil {
+			return fmt.Errorf("scene camera section: %w", err)
+		}
+		if b.Camera == nil || b.Camera.ExteriorTile != int(town.ExteriorTile) {
+			return fmt.Errorf("scene camera exterior tile differs from source")
+		}
+	}
+	return nil
+}
 
 func (g *Game) activeOpeningScenePresentation() *gamepack.OpeningScenePresentation {
 	e, ok := g.pack.OpeningScenePresentation()
@@ -21,6 +49,9 @@ func (g *Game) activeSceneCamera() *gamepack.SceneCamera {
 	if e, ok := g.pack.OpeningEscort(); ok && g.inTown && g.cur != nil &&
 		g.curCty == e.Destination.CTY && g.cur.sec == e.Destination.Section {
 		return e.ArrivalCamera
+	}
+	if g.inTown && g.cur != nil {
+		return g.pack.SceneCamera(g.curCty, g.cur.sec)
 	}
 	return nil
 }
