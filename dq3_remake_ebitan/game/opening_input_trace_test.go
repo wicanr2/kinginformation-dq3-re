@@ -982,8 +982,13 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		if g.openingIdx != wantIdx || !g.dlg.open {
 			t.Fatalf("開場段 %d 未開啟：idx=%d open=%v", wantIdx, g.openingIdx, g.dlg.open)
 		}
-		traceCloseDialogue(t, g)
-		send(InputState{DirHeld: -1, DirEdge: -1}) // opening runner 開下一段
+		// 自動EOF會在同一更新開下一段，等待runner前進，不能等整串dialogue關閉。
+		for tick := 0; tick < 2000 && g.openingIdx == wantIdx; tick++ {
+			send(InputState{DirHeld: -1, DirEdge: -1, Confirm: g.dlg.waitingForConfirm()})
+		}
+		if g.openingIdx != wantIdx+1 {
+			t.Fatalf("開場段%d未在正常輸入下返回下一節點", wantIdx)
+		}
 	}
 	if !g.openingEscortAnimating() || g.openingIdx != 3 || g.dlg.open {
 		t.Fatalf("rec81 後應進母親逐格帶路：idx=%d escort=%v dlg=%v",

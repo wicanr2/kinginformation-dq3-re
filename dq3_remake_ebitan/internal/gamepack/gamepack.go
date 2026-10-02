@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.60"
+	SchemaVersion       = "0.1.61"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -949,6 +949,49 @@ type OpeningPrelude struct {
 	Evidence          Evidence         `json:"evidence"`
 }
 
+// OpeningScenePresentation references shared text presentation and a finite
+// scene camera/shadow contract. It does not supply executable game logic.
+type OpeningScenePresentation struct {
+	ID             string       `json:"id"`
+	CTY            int          `json:"cty"`
+	Section        int          `json:"section"`
+	PresentationID string       `json:"presentation_id"`
+	TextIDs        []string     `json:"text_ids"`
+	Camera         SceneCamera  `json:"camera"`
+	Shadow         WindowShadow `json:"shadow"`
+	Evidence       Evidence     `json:"evidence"`
+}
+
+type SceneCamera struct {
+	Mode         string   `json:"mode"`
+	AnchorX      int      `json:"anchor_x"`
+	AnchorY      int      `json:"anchor_y"`
+	ExteriorTile int      `json:"exterior_tile"`
+	Evidence     Evidence `json:"evidence"`
+}
+
+type WindowShadow struct {
+	Mode     string   `json:"mode"`
+	OffsetX  int      `json:"offset_x"`
+	OffsetY  int      `json:"offset_y"`
+	Evidence Evidence `json:"evidence"`
+}
+
+func (e *OpeningScenePresentation) UnmarshalJSON(raw []byte) error {
+	type plain OpeningScenePresentation
+	return decodeOpeningObject(raw, (*plain)(e), []string{"id", "cty", "section", "presentation_id", "text_ids", "camera", "shadow", "evidence"})
+}
+
+func (c *SceneCamera) UnmarshalJSON(raw []byte) error {
+	type plain SceneCamera
+	return decodeOpeningObject(raw, (*plain)(c), []string{"mode", "anchor_x", "anchor_y", "exterior_tile", "evidence"})
+}
+
+func (s *WindowShadow) UnmarshalJSON(raw []byte) error {
+	type plain WindowShadow
+	return decodeOpeningObject(raw, (*plain)(s), []string{"mode", "offset_x", "offset_y", "evidence"})
+}
+
 func (p *OpeningPrelude) UnmarshalJSON(raw []byte) error {
 	type plain OpeningPrelude
 	if err := decodeOpeningObject(raw, (*plain)(p), []string{"id", "text_id", "frame_text_id", "window", "glyph_step_x", "variable_code_words", "return_mode", "text_flow", "foreground_rgb", "backdrop_rgb", "evidence"}); err != nil {
@@ -975,25 +1018,26 @@ type RawScreenAsset struct {
 }
 
 type Interface struct {
-	SchemaVersion       string               `json:"schema_version"`
-	Dialogue            WindowLayout         `json:"dialogue"`
-	BattleMessage       WindowLayout         `json:"battle_message,omitempty"`
-	BattleCommand       BattlePanelLayout    `json:"battle_command,omitempty"`
-	BattleEnemy         BattlePanelLayout    `json:"battle_enemy,omitempty"`
-	BattleScene         *BattleSceneLayout   `json:"battle_scene,omitempty"`
-	NewGameLabels       *NewGameLabels       `json:"new_game_labels,omitempty"`
-	NewGameGeometry     *NewGameGeometry     `json:"new_game_geometry,omitempty"`
-	BattleCommandLabels *BattleCommandLabels `json:"battle_command_labels,omitempty"`
-	FieldCommandLabels  *FieldCommandLabels  `json:"field_command_labels,omitempty"`
-	Help                *HelpOverlay         `json:"help,omitempty"`
-	FieldStatus         *FieldStatusLayout   `json:"field_status,omitempty"`
-	PartyHUD            PartyHUDLayout       `json:"party_hud,omitempty"`
-	Opening             *OpeningSequence     `json:"opening,omitempty"`
-	OpeningEscort       *OpeningEscort       `json:"opening_escort,omitempty"`
-	OpeningPrelude      *OpeningPrelude      `json:"opening_prelude,omitempty"`
-	Attract             *AttractSequence     `json:"attract,omitempty"`
-	NewGameConfirmation *RawScreenAsset      `json:"new_game_confirmation,omitempty"`
-	BattleTexts         *BattleTextRefs      `json:"battle_texts,omitempty"`
+	SchemaVersion            string                    `json:"schema_version"`
+	Dialogue                 WindowLayout              `json:"dialogue"`
+	BattleMessage            WindowLayout              `json:"battle_message,omitempty"`
+	BattleCommand            BattlePanelLayout         `json:"battle_command,omitempty"`
+	BattleEnemy              BattlePanelLayout         `json:"battle_enemy,omitempty"`
+	BattleScene              *BattleSceneLayout        `json:"battle_scene,omitempty"`
+	NewGameLabels            *NewGameLabels            `json:"new_game_labels,omitempty"`
+	NewGameGeometry          *NewGameGeometry          `json:"new_game_geometry,omitempty"`
+	BattleCommandLabels      *BattleCommandLabels      `json:"battle_command_labels,omitempty"`
+	FieldCommandLabels       *FieldCommandLabels       `json:"field_command_labels,omitempty"`
+	Help                     *HelpOverlay              `json:"help,omitempty"`
+	FieldStatus              *FieldStatusLayout        `json:"field_status,omitempty"`
+	PartyHUD                 PartyHUDLayout            `json:"party_hud,omitempty"`
+	Opening                  *OpeningSequence          `json:"opening,omitempty"`
+	OpeningEscort            *OpeningEscort            `json:"opening_escort,omitempty"`
+	OpeningPrelude           *OpeningPrelude           `json:"opening_prelude,omitempty"`
+	OpeningScenePresentation *OpeningScenePresentation `json:"opening_scene_presentation,omitempty"`
+	Attract                  *AttractSequence          `json:"attract,omitempty"`
+	NewGameConfirmation      *RawScreenAsset           `json:"new_game_confirmation,omitempty"`
+	BattleTexts              *BattleTextRefs           `json:"battle_texts,omitempty"`
 }
 
 // BattleTextRefs assigns stable engine roles to version-owned D3TXT records.
@@ -2182,6 +2226,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateOpeningPreludeRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
+	if err := p.validateOpeningSceneRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
 	if err := p.validateBattleTextRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
@@ -2587,6 +2634,9 @@ func (p *Pack) validateInterface() error {
 				return fmt.Errorf("opening prelude glyph timing: %w", err)
 			}
 		}
+	}
+	if err := p.validateOpeningScenePresentation(); err != nil {
+		return err
 	}
 	if e := p.Interface.OpeningEscort; e != nil {
 		if e.ID == "" || e.CTY < 0 || e.Section < 0 || len(e.Frames) < 2 ||

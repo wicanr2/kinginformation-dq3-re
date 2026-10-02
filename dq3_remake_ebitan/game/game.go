@@ -1441,17 +1441,20 @@ func (g *Game) step(in InputState) error {
 	// 轉場後主角依 pack 路線行走，在指定格停下完成對話與旗標交易，再走至城門。
 	// DQ3.EXE sub_1010B，IDA linear 0x1010b..0x1020b／file 0x147b..0x157a。
 	if g.openingIdx >= 0 {
+		presentation, ok := g.pack.OpeningScenePresentation()
+		if !ok {
+			return fmt.Errorf("opening scene presentation unavailable")
+		}
 		if g.openingIdx == 0 && !g.enterOpeningScene() {
 			return fmt.Errorf("opening scene transaction failed")
 		}
 		g.openingIdx++
-		g.dlg.prelude, g.dlg.preludeFrame = nil, nil
-		if g.pack != nil {
-			g.dlg.layout = g.pack.DialogueWindowLayout()
-		}
-		if g.openingIdx < len(openingSeq) {
-			g.dlg.Open(openingSeq[g.openingIdx])
-		} else if g.openingIdx == len(openingSeq) {
+		if g.openingIdx <= len(presentation.TextIDs) {
+			if !g.openOpeningSceneText(presentation.TextIDs[g.openingIdx-1]) {
+				return fmt.Errorf("opening scene text unavailable")
+			}
+		} else if g.openingIdx == len(presentation.TextIDs)+1 {
+			g.clearOpeningPresentation()
 			if g.startMotherEscort() {
 				g.renderFrame()
 				return nil
@@ -1459,6 +1462,7 @@ func (g *Game) step(in InputState) error {
 			// 合法 pack 卻找不到起始 NPC 時失敗即關閉，不跳過整段演出。
 			g.openingIdx--
 		} else {
+			g.clearOpeningPresentation()
 			g.openingIdx = -1
 			g.completeOpeningEscort()
 		}
@@ -1996,10 +2000,6 @@ func (g *Game) descend() {
 	g.playAudioCue(audioCueField)
 	g.renderFrame()
 }
-
-// openingSeq 由 DQ3.EXE file 0x140a..0x147a 定錨，只含帶路前的三段對白。
-// handler54 的完成對白、路線與旗標交易由 game pack 的 opening_escort 提供。
-var openingSeq = []int{82, 83, 81}
 
 // 原版新遊戲初始化常數(DQ3.EXE file 0x13a0..0x1431):
 // remembered overworld=(0x99,0xae)、CTY00 sec4、室內位置=(5,5)。
@@ -2860,7 +2860,7 @@ func (g *Game) renderFrame() {
 	if g.frame == nil { // 尚未初始化(如 NewGame 中途 debug 呼叫)→ 略過
 		return
 	}
-	if !g.showTitle && g.openingIdx >= 0 && g.dlg.prelude != nil {
+	if !g.showTitle && g.openingIdx == 0 && g.dlg.prelude != nil {
 		p := g.dlg.prelude
 		for i := 0; i < len(g.rgba); i += 4 {
 			g.rgba[i], g.rgba[i+1], g.rgba[i+2], g.rgba[i+3] = p.BackdropRGB[0], p.BackdropRGB[1], p.BackdropRGB[2], 255
@@ -2927,9 +2927,20 @@ func (g *Game) renderFrame() {
 	// 攝影機:主角置中,但夾在地圖邊界內(移植 dq3_scene 的 cam clamp)→ 邊緣不露黑
 	camX := clampi(g.px-ViewCols/2, 0, max0(sc.w-ViewCols))
 	camY := clampi(g.py-ViewRows/2, 0, max0(sc.h-ViewRows))
+	presentation := g.activeOpeningScenePresentation()
+	if presentation != nil {
+		camX, camY = g.px-presentation.Camera.AnchorX, g.py-presentation.Camera.AnchorY
+	}
 	for cy := 0; cy < ViewRows; cy++ {
 		for cx := 0; cx < ViewCols; cx++ {
-			tile := sc.blk.Tile(sc.tileIdx(camX+cx, camY+cy))
+			x, y := camX+cx, camY+cy
+			var idx int
+			if presentation != nil && (x < 0 || y < 0 || x >= sc.w || y >= sc.h) {
+				idx = presentation.Camera.ExteriorTile
+			} else {
+				idx = sc.tileIdx(x, y)
+			}
+			tile := sc.blk.Tile(idx)
 			blitTile(g.rgba, cx*TileW, cy*TileH, tile, sc.pal)
 		}
 	}

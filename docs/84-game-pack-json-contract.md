@@ -1,5 +1,31 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 2026-10-02 最新契約：出生場景的有限呈現
+
+schema為`0.1.61`，DQ3 content為`0.1.67`。READY審查、原始定位與完整RGB紅結果見
+[docs/188](188-opening-escort-to-castle-spec.md)。`interface.opening_scene_presentation`
+在宣告`opening_prelude`時必填；其他pack可明確省略兩者。
+
+| 欄位 | 契約 | 本pack來源 |
+|---|---|---|
+| `id`、`cty`、`section` | 具名呈現與場景；必須與`opening_escort`出生入口相同 | CTY00 section4，既有出生交易 |
+| `presentation_id` | 必須引用`opening_prelude.id`，重用版面、字模框、顏色與保留文字原語 | DGROUP3E6E共用raw視窗，record404 |
+| `text_ids` | 非空且無重複的文字引用；逐一驗證字模與控制碼 | 原始caller依序record83、81，原始詞流另作parity |
+| `camera.mode` | 已註冊原語`player_anchor` | 玩家減anchor，不夾住地圖邊界 |
+| `camera.anchor_x/y` | 分別在20×15視野內；不由引擎猜值 | 9／7，IDA linear11971..11991 |
+| `camera.exterior_tile` | 0..255，界外先取此值，不查可能別名的tile override | section+12→DGROUP0B2D→layer0 consumer，本場景71 |
+| `shadow.mode` | 已註冊原語`vga_word_latch_and`，採固定執行器的字組鎖存契約 | IDA linear1FC57..1FCC6，ROR AAAA與16位元AND |
+| `shadow.offset_x/y` | 非負、x以8px對齊；陰影不得超出640×350 | raw byte x+1、y+8，本pack8／8 |
+| 各`evidence` | 必要D3來源、位址、consumer與文件入口 | 原始EXE／CTY／文字與正常dosgolem等待 |
+
+上述物件各欄位必要，缺欄位、null、未知欄位／原語、無效幾何與引用均拒絕。
+正式入口依文字ID開啟對話；共用引擎不再保存開場record序列，原始Go解碼器保留為oracle。
+呈現只作用於指定出生場景及文字序列，帶路前清除，不外推到其他城鎮或文字。
+文字呈現與有限資料已接入，完整房間仍差302像素；NPC影格、箭頭相位與母親狀態未CONFORMED。
+保留文字速度沿用60TPS平台規格近似，不宣稱原版逐週期時間。
+
+以下為較早契約的形成史，現行版號與適用範圍以上段為準。
+
 ## 2026-10-02 最新契約：生日保留文字與有限捲動
 
 schema 為 `0.1.60`，DQ3 content 為 `0.1.66`。規格與原始定位見

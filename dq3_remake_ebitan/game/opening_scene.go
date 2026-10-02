@@ -1,0 +1,57 @@
+package game
+
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+)
+
+func (g *Game) activeOpeningScenePresentation() *gamepack.OpeningScenePresentation {
+	e, ok := g.pack.OpeningScenePresentation()
+	if !ok || g.openingIdx <= 0 || g.openingIdx > len(e.TextIDs) ||
+		!g.inTown || g.cur == nil || g.curCty != e.CTY || g.cur.sec != e.Section {
+		return nil
+	}
+	return e
+}
+
+func (g *Game) openOpeningSceneText(id string) bool {
+	e := g.activeOpeningScenePresentation()
+	p, ok := g.pack.OpeningPrelude()
+	if e == nil || !ok || e.PresentationID != p.ID {
+		return false
+	}
+	codes, ok := g.pack.TextGlyphCodes(id)
+	if !ok || !g.dlg.openRecord(codes) {
+		return false
+	}
+	frame, ok := g.pack.TextGlyphCodes(p.FrameTextID)
+	if !ok {
+		return false
+	}
+	g.dlg.prelude, g.dlg.preludeFrame, g.dlg.layout = p, frame, p.Window
+	g.dlg.shadow = &e.Shadow
+	return true
+}
+
+func (g *Game) clearOpeningPresentation() {
+	g.dlg.prelude, g.dlg.preludeFrame, g.dlg.shadow = nil, nil, nil
+	g.dlg.layout = g.pack.DialogueWindowLayout()
+}
+
+// drawWindowWordLatchShadow models the reviewed executor's byte-read latches:
+// both writes of a 16-bit AND use the last (second-byte) VGA latch. See docs/188.
+// Values and geometry come from the pack; this is not a DOS wall-clock model.
+func drawWindowWordLatchShadow(rgba []byte, w gamepack.WindowLayout, s gamepack.WindowShadow, dark dq3data.Color) {
+	x, y := w.X+s.OffsetX, w.Y+s.OffsetY
+	for row := 0; row < w.Height; row++ {
+		for col := 0; col < w.Width; col++ {
+			color := dark
+			if (col+row)&1 != 0 {
+				sourceX := x + (col/16)*16 + 8 + (col % 8)
+				o := ((y+row)*ScreenW + sourceX) * 4
+				color = dq3data.Color{R: rgba[o], G: rgba[o+1], B: rgba[o+2]}
+			}
+			putPx(rgba, x+col, y+row, color)
+		}
+	}
+}

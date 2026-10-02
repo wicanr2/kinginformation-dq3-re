@@ -70,7 +70,8 @@ if scenario == 'birthday_continue':
                  (1221491508, 'birthday-scroll-2'),
                  (1221612130, 'birthday-scroll-3'),
                  (1221732757, 'birthday-scroll-4'),
-                 (1221840427, 'birthday-scroll-complete')]
+                 (1221840427, 'birthday-scroll-complete'),
+                 (1222142894, 'room-background-before-actors')]
     stop = 1440000000
 assert out.is_dir() and out.stat().st_uid == os.getuid()
 exe = repo / 'assets_raw/DQ3.EXE'

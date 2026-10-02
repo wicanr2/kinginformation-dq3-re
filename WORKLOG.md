@@ -545,3 +545,26 @@ git diff --check通過；既有image無rg，限定新增Go行的等價regex掃�
 新正式原語沒有版本專屬ID／座標／record／旗標／顏色常數。UID/GID1000，歷史root候選3213保留，
 本批root產物及.md誤掛載目錄0。dosgolem、IDA與Xvfb容器均已清除，其他專案資源不變。
 使用者scratch／Android libs保留，未建立新image或發行包；正式切片提交及推送連結回填Issue #4。
+
+## 2026-10-02：Issue #4有限房間呈現正式修正，完整對拍仍RED
+
+基準5a2101d，主機gh回讀OPEN的Issue #4後登記續行，審查留言5946174168。
+現行來源隔離原型302差異後，依docs/188將有限視野／界外圖塊／共用文字框／字組陰影審查READY。
+接入正式開場入口與pack，版本0.1.61／0.1.67，移除Go開場record陣列。
+完整房間由172,261降至302，人物261／箭頭41仍RED，沒有裁切或指定人物影格。
+record83保留前文、83／81自動返回再接帶路；原版NPC更新、母親狀態及時間相位仍未閉合。
+
+只新增步數1222142894的唯讀觀測，擷取是黑色顯示頁，訂正「已完成背景」假設；不作背景oracle。
+新原版52ad27c0與原13c5e263的66份PNG／bin及19次輸入／38次IRQ1相同，新增兩份黑頁觀測。
+生日六張及創角嚴格通過，累計限定27張保持；第19次196,698是不同狀態診斷。
+正式結果見work/issue4-room-production2.log、差異分類見work/issue4-room-production-diff.log。
+初次完整回歸受舊schema fixture及trace連按／等待整串關閉影響；修正驗證腳本後，
+同一工具鏈乾淨重跑work/issue4-room-full4.log，全game364頂層／34子測試、11個internal與桌面通過。
+正常新遊戲→THE END106.51秒，主角／酒館及各段存讀檔通過；標準38項選用SKIP，無素材缺失。
+
+私有稽核work/issue4-room-production-evidence-receipt.json為26,625bytes，SHA-256
+63a3f70a88a450ac2822f172556ff3531f0fb3e8554e271f6fb31045aa9e78ef。
+原始產物、來源、IDA9.4 raw bytes及UID/GID通過；歷史root候選3213與Markdown目錄4保留。
+原版／dosgolem上游唯讀、保留使用者scratch與Android libs，一次性Docker清除，沒有新image／發行包。
+依使用者既有授權commit＋push，commit hash與遠端現況由Issue #4末次結果回讀保存。
+下一步NPC／箭頭相位與83返回後原版狀態；Goal仍active，不稱完整remake或campaign parity完成。

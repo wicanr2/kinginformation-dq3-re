@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.60",
+  "schema_version": "0.1.61",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -2483,6 +2483,111 @@
         "consumer": "raw DGROUP3E6E +0A record404→sub_1F590→sub_213C4完整字模框線",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "首頁限定READY；原始定位、SHA與推論等級見docs/188，不外推續頁／母親"
+      }
+    },
+    {
+      "id": "dq3:text.opening.room",
+      "value": "*「今天是相當重要\n  的一天呢。\f*「要帶你去晉見國王喔。\n  走吧。",
+      "glyph_codes": [
+        59,
+        60,
+        926,
+        209,
+        399,
+        763,
+        1030,
+        605,
+        504,
+        65534,
+        12,
+        12,
+        149,
+        401,
+        209,
+        592,
+        56,
+        65532,
+        59,
+        60,
+        504,
+        540,
+        528,
+        448,
+        1028,
+        953,
+        300,
+        186,
+        776,
+        56,
+        65534,
+        12,
+        12,
+        612,
+        499,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT01.TXT",
+        "record": 83
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY00.DAT + D3TXT01.TXT + dosgolem自然第18次輸入",
+        "address_space": "linear",
+        "address": "0x100b5..0x100fa;0x21414..0x216c3",
+        "consumer": "出生交易後原始caller依序DI0C0B／0C09→共用文字consumer",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY：共用樣式、保留文字、EOF返回；NPC更新、動畫與母親狀態尚未閉合。"
+      }
+    },
+    {
+      "id": "dq3:text.opening.mother",
+      "value": "*「好的,母親,\n  現在就去吧。",
+      "glyph_codes": [
+        59,
+        60,
+        441,
+        149,
+        55,
+        862,
+        751,
+        55,
+        65534,
+        12,
+        12,
+        432,
+        411,
+        633,
+        448,
+        499,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT01.TXT",
+        "record": 81
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY00.DAT + D3TXT01.TXT + dosgolem自然第18次輸入",
+        "address_space": "linear",
+        "address": "0x100b5..0x100fa;0x21414..0x216c3",
+        "consumer": "出生交易後原始caller依序DI0C0B／0C09→共用文字consumer",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY：共用樣式、保留文字、EOF返回；NPC更新、動畫與母親狀態尚未閉合。"
       }
     }
   ]

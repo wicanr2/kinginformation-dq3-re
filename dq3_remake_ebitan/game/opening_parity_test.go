@@ -3,6 +3,7 @@ package game
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -69,12 +70,16 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 		t.Fatalf("NewGame: %v", err)
 	}
 	wantSeq := []int{82, 83, 81}
-	if len(openingSeq) != len(wantSeq) {
-		t.Fatalf("開場對白序列長度=%d，應為 %d", len(openingSeq), len(wantSeq))
+	presentation, ok := g.pack.OpeningScenePresentation()
+	prelude, preludeOK := g.pack.OpeningPrelude()
+	if !ok || !preludeOK || len(presentation.TextIDs)+1 != len(wantSeq) {
+		t.Fatal("開場對白資料包序列缺失")
 	}
-	for i := range wantSeq {
-		if openingSeq[i] != wantSeq[i] {
-			t.Fatalf("開場對白[%d]=%d，應為 %d", i, openingSeq[i], wantSeq[i])
+	ids := append([]string{prelude.TextID}, presentation.TextIDs...)
+	for i, id := range ids {
+		codes, ok := g.pack.TextGlyphCodes(id)
+		if !ok || !reflect.DeepEqual(codes, g.dlg.tx.Record(wantSeq[i])) {
+			t.Fatalf("開場資料包對白[%d]與原始record%d不符", i, wantSeq[i])
 		}
 	}
 

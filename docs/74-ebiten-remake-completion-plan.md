@@ -1,15 +1,15 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> **2026-10-02 最新閘門（Issue #4，生日保留／捲動已修正，房間DRAFT）：**
-> 生日原始文字consumer與自然四次捲動閉合，原型六張零差異後審查READY，已接入正式引擎及pack。
-> 正式冷啟動六張全640×350 RGB零差異，五張新增，連同既有22張累計限定27張；本生日流程CONFORMED。
-> 捲動中不提前交易出生、不消耗RNG；第18次正常InputState自然到家中record83、seed356D、clock30。
-> schema/content為0.1.60／0.1.66。game362頂層／34子測試、11個internal與桌面建置通過，正常新遊戲到THE END85.55秒。
-> 主角／酒館與各段存讀檔通過；這只屬重製回歸。標準38項選用SKIP，三項對拍另跑，兩項PASS、一項房間RED，沒有素材缺失。
-> 房間正式仍差172,261；第19次不同狀態198,652僅診斷；字組陰影試作302未接入正式程式。
-> 下一步房間視野／外界圖塊／陰影的正式契約及動畫時間條件，不寫死NPC影格，不重開已完成生日切片。
-> 有限規格與收據見[docs/188](188-opening-escort-to-castle-spec.md)，目前驗收表以[CONTEXT](../CONTEXT.md)為準。
-> 入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍以完整RGB差異退出1。
+> **2026-10-02 最新閘門（Issue #4，有限房間呈現已接入，完整畫面仍RED）：**
+> 視野、界外圖塊、共用文字框與字組陰影經原始資料／consumer及現行來源原型審查READY，正式完整RGB由172,261降至302。
+> 剩餘人物261、箭頭41，沒有裁切或遮罩；第19次兩側狀態不同，196,698只供診斷，不能稱房間CONFORMED。
+> schema/content為0.1.61／0.1.67；版本值與文字序列均在JSON，帶路前清除共用呈現。
+> 正常18／19次確認經record83保留文字／EOF捲動與81返回後接回帶路；母親原版NPC更新與狀態仍未知。
+> 生日六張零差異與創角嚴格通過，累計限定27張保持。黑頁新增觀測不當作背景oracle，原始66份PNG／bin及19次輸入／38次IRQ1不變。
+> game364頂層／34子測試、11個internal及desktop main.go通過；正常新遊戲到THE END106.51秒，主角／酒館與各段存讀檔通過，只屬重製回歸。
+> 標準38項選用SKIP，原版三項另行兩PASS、一房間RED，沒有素材缺失；下一步NPC／箭頭相位與83返回後原版狀態。
+> 規格／稽核見[docs/188](188-opening-escort-to-castle-spec.md)，JSON契約見[docs/84](84-game-pack-json-contract.md)，目前驗收表以[CONTEXT](../CONTEXT.md)為準。
+> 入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍以房間完整RGB差異退出1，不重開已通過生日或深挖硬體時序。
 
 > **2026-10-01 最新閘門（Issue #4，生日首頁）：**
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。

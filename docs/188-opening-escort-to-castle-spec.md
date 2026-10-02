@@ -1,5 +1,71 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+## 2026-10-02 最新結果：有限房間呈現已正式接入，完整RGB仍RED
+
+本輪工作與有限READY審查依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
+固定現行5a2101d的隔離原型302差異，正式版本亦重現302：場景人物261、文字框箭頭41。
+完整640×350 RGB全部計入，未裁切／遮罩或指定人物影格；原有172,261差異已大幅縮小。
+陰影框底差異消除，背景、字模框與文字亦已目視核對；完整房間仍DRAFT／RED，沒有增加已通過對拍張數。
+record83保留前文及EOF捲動、81自動返回後正常接回帶路；NPC更新與母親狀態仍待原版閉合。
+第19次兩側不同狀態的196,698差異只供診斷，不當same-state驗收。
+
+正式來源`game/opening_scene.go`、`game/dialogue.go`與`game/game.go`；
+契約與原始資料parity在`internal/gamepack/opening_scene.go`及`opening_scene_test.go`。
+`game/opening_scene_test.go`使用17次創角、第18／19次確認與正式空白InputState，
+不注入場景／人物；驗證呈現不洩漏到帶路。所有版本值與83／81文字引用移入JSON，
+移除Go中的開場record陣列，schema/content為0.1.61／0.1.67，欄位入口見[docs/84](84-game-pack-json-contract.md)。
+
+生日六張全RGB仍零差異，創角嚴格通過，累計限定27張保持。原版新收據37,150bytes，
+SHA-256 `52ad27c06e8821d3f115f42dbbdf4794d7782b16256e5901623b4dfec9a6eaa6`。
+原始66份PNG／bin與13c5e263收據相同，另加兩份黑頁觀測；19次輸入與38次IRQ1相同。
+生成腳本SHA-256 `de8b9e3b27d9d977e554d38f2667ff0714c54fbba757f273beaec9557ec36c88`。
+黑頁觀測推翻「人物前已完成完整背景」假設，原始收據與下方勘誤保留。
+
+完整game364項頂層／34項子測試、11個internal及desktop main.go通過；
+正常新遊戲至THE END106.51秒，主角／酒館及各段存讀檔通過，只屬重製回歸。
+標準38項選用SKIP，原版三項另行兩PASS、一房間RED，剩35項未執行，沒有素材缺失。
+初次回歸的fixture仍寫舊schema；trace仍連按確認，且舊helper等待整串關閉而越過同更新的下一段。
+已依正式狀態機改成等待當段openingIdx轉移，只在文字停點確認，再以同一容器乾淨重跑。
+
+私有稽核入口`work/issue4-room-production-audit.py`，收據`work/issue4-room-production-evidence-receipt.json`：
+26,625bytes，SHA-256 `63a3f70a88a450ac2822f172556ff3531f0fb3e8554e271f6fb31045aa9e78ef`。
+保存原始source／sidecar、正式PNG與完整回歸、冷啟動及固定seed條件。
+UID/GID1000；歷史root候選3213及Markdown目錄4保留，新增輸出擁有權通過。
+一次性Docker均隨工作清除，沒有新image或發行包。
+下一步為兩側NPC繪圖相位、箭頭相位及83返回後的原版狀態，不寫死這次人物影格、不深挖PIT／ISR。
+
+
+## 房間正式呈現規格草案，接續5a2101d
+
+狀態 READY，限下列資料與呈現原語；完整房間仍 DRAFT。沿用下方原始EXE／CTY／FON／PAL身份、IDA9.4 sidecar及自然19次IRQ收據。
+先閉合正常出生場景的背景producer、共用字模框與文字consumer，再處理人物動畫及箭頭。
+正式原版第一個房間等待仍以完整640×350 RGB守門，不裁切或遮罩；302差異原型不算通過。
+
+預定資料契約 `interface.opening_scene_presentation` 指定CTY／section、player_anchor視野、
+界外圖塊、共用presentation引用、文字ID序列與具名VGA字組陰影。全部版本數值在JSON，
+引擎只處理有限原語。攝影機只在明確指定的opening場景及文字序列期間使用此契約，
+未審查的其他場景仍列原版oracle待辦，不把家中證據外推。資料缺失或引用錯誤拒絕載入。
+
+勘誤：步數1222142894、IDA linear0x11EE8的新增擷取實際為全黑顯示頁，
+推翻本草案先前「已完成完整背景」的假設。這份PNG保留為觀測限制，不能用作背景驗收。
+原始圖塊consumer亦有穿插NPC繪圖的分支，不能假設兩側renderer有相同階段。
+本輪以現行來源隔離重播最終record83等待，完整畫布比較視野player−9/7、界外圖塊71、
+共用文字框與陰影。人物、箭頭及其他差異全部計入，不以中途背景或遮罩代替最終畫面。
+
+共用原始視窗由record404產生，原點152/238、352×96、字距24、文字前景243；
+陰影由原始byte x+1與y+8，按固定dosgolem revision的16位元AND／鎖存契約呈現。
+record83及81的原始詞流引用pack文字，EOF與FFFC沿用同一已審查consumer；
+原版83返回後的NPC更新與母親移動仍須獨立閉合，不能只因文字返回就稱整段開場完成。
+驗收包括schema／原始資料parity、正式InputState、完整RGB、後續節點及存讀檔回歸。
+
+審查結果：固定現行來源5a2101d的隔離副本，正式17次創角與第18次確認後等待record83，
+完整640×350 RGB差異302，與舊副本一致。沒有設定人物姿態或清除差異。
+有限契約採`presentation_id`引用已審查生日樣式，`text_ids`依原始caller提供83、81；
+`camera`採player_anchor與9/7、layer0界外71；`shadow`採vga_word_latch_and與8/8。
+CTY／section必須與既有出生入口相同，文字引用及控制碼必須驗證，所有欄位必要且拒絕null／未知。
+Go不保存這些版本數值。缺資料拒絕載入，不把NPC更新、步行影格或箭頭相位一同升級。
+record81與83共用consumer只授權保留／捲動與返回原語；母親演出狀態仍未對拍閉合。
+
 ## 2026-10-02 最新結果：生日保留前文與四次捲動限定 CONFORMED
 
 依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，下方生日續頁規格
