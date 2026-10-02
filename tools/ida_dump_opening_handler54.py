@@ -259,9 +259,33 @@ def main():
                                      for ref in idautils.XrefsTo(ea)]}
                           for ea in (0x24dd0 + 0x0b2d, 0x272ed, 0x24dd0 + 0x0004, 0x24dd0 + 0x0005,
                                      0x28984, 0x289f0, 0x24dd0 + 0x258a,
-                                     0x24dd0 + 0x258c, 0x24dd0 + 0x4f46)],
+                                     0x24dd0 + 0x258c, 0x24dd0 + 0x4f46,
+                                     0x24dd0 + 0x09f1, 0x24dd0 + 0x2b7a,
+                                     0x24dd0 + 0x4348, 0x24dd0 + 0x2534)],
     }
     repo_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    # DS-relative fields can lack direct xrefs. Preserve address-taking and
+    # displacement candidates from the database, without inferring reads/writes.
+    result["opening_picture_operand_candidates"] = []
+    picture_offsets = {0x09f1, 0x2b7a, 0x4348, 0x2534}
+    for ea in idautils.Heads(ida_ida.inf_get_min_ea(), ida_ida.inf_get_max_ea()):
+        if not ida_bytes.is_code(ida_bytes.get_full_flags(ea)):
+            continue
+        operands = [{"index": index, "kind": idc.get_operand_type(ea, index),
+                     "original_operand": idc.print_operand(ea, index),
+                     "value": hex(idc.get_operand_value(ea, index))}
+                    for index in range(2)
+                    if idc.get_operand_type(ea, index) in (idc.o_imm, idc.o_displ, idc.o_mem)
+                    and idc.get_operand_value(ea, index) in picture_offsets]
+        if operands:
+            owner = ida_funcs.get_func(ea)
+            result["opening_picture_operand_candidates"].append({
+                **item_record(ea), "operands": operands,
+                "original_function": ida_funcs.get_func_name(ea),
+                "function_start_ida_linear": hex(owner.start_ea) if owner else None,
+                "function_end_ida_linear": hex(owner.end_ea) if owner else None,
+                "classification": "unknown：位址／偏移候選，不依operand位置猜讀寫或DS基準",
+            })
     result["resolution_backlinks"] = []
     for relative, marker in (
         ("docs/66-original-flow-oracle.md", "2026-10-02追加勘誤：母親開場"),

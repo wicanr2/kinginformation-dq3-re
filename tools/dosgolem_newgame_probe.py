@@ -10,7 +10,7 @@ repo = Path('/repo')
 out = Path('/work/dosgolem-opening')
 generation_script = Path(__file__).read_bytes()
 scenario = os.environ.get('DQ3_NEWGAME_PROBE_SCENARIO', 'initial')
-mother_scenarios = ('mother_approach', 'mother_finish')
+mother_scenarios = ('mother_approach', 'mother_finish', 'mother_home_entry')
 creation_scenarios = ('name_creation', 'opening_accept', 'birthday_continue') + mother_scenarios
 assert scenario in ('initial', 'name_navigation', 'name_function_mode') + creation_scenarios, scenario
 prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
@@ -18,7 +18,8 @@ prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
           'opening_accept':'issue4-opening',
           'birthday_continue':'issue4-birthday-pages',
           'mother_approach':'issue4-mother-approach',
-          'mother_finish':'issue4-mother-finish'}[scenario]
+          'mother_finish':'issue4-mother-finish',
+          'mother_home_entry':'issue4-home-entry'}[scenario]
 keys = [(710000000, 0x1c), (731000000, 0x1c)]
 captures = [(729000000, 'menu'), (740000000, 'create'),
             (750000000, 'final' if scenario == 'initial' else 'initial')]
@@ -320,7 +321,37 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         if flowPC == 0x1020a { dq3MotherReturned = true }
 """
             flow_hook = flow_hook.replace('__PREFIX__', prefix)
+        if scenario == 'mother_home_entry':
+            # 只讀取正常選單入口、圖塊 consumer 與選擇結果；原始 NOP 比較保持。
+            flow_hook += r"""
+        if flowPC == 0x21ddc { dq3HomeModal = true }
+        if dq3HomeModal {
+            switch flowPC {
+            case 0x21ddc, 0x21e1f, 0x21e26, 0x21ec1, 0x21f79, 0x21fd2,
+                 0x22016, 0x21f11, 0x21e3e, 0x21e43, 0x21e94, 0x1ea8c,
+                 0x1f590, 0x1f779:
+                ds := m.CPU.Seg[cpu.DS]
+                if ds != 0x15ed { panic("home modal DS differs") }
+                fmt.Printf("DQ3_HOME_MODAL step=%d ida_linear=%05x DS=%04x AX=%04x BX=%04x CX=%04x DX=%04x BP=%04x SI=%04x DI=%04x raw26fe=%d raw0722=%d raw0726=%d raw4f46=%04x choices=%02x%02x%02x raw4f09=%04x raw2534=%04x\n",
+                    m.Steps,flowPC,ds,m.CPU.R[cpu.AX],m.CPU.R[cpu.BX],m.CPU.R[cpu.CX],
+                    m.CPU.R[cpu.DX],m.CPU.R[cpu.BP],m.CPU.R[cpu.SI],m.CPU.R[cpu.DI],
+                    m.Read16(cpu.Addr(ds,0x26fe)),m.Read16(cpu.Addr(ds,0x0722)),m.Read16(cpu.Addr(ds,0x0726)),
+                    m.Read16(cpu.Addr(ds,0x4f46)),m.Read8(cpu.Addr(ds,0x2606)),m.Read8(cpu.Addr(ds,0x2607)),
+                    m.Read8(cpu.Addr(ds,0x2608)),m.Read16(cpu.Addr(ds,0x4f09)),m.Read16(cpu.Addr(ds,0x2534)))
+                if flowPC == 0x21e26 {
+                    for _, region := range []struct{start, size uint16}{{0x09f1,19},{0x4348,32},{0x2b7a,132},{0x00db,16}} {
+                        fmt.Printf("DQ3_HOME_MODAL_DATA step=%d DGROUP=%04x raw=",m.Steps,region.start)
+                        for i:=uint16(0);i<region.size;i++ {fmt.Printf("%02x",m.Read8(cpu.Addr(ds,region.start+i)))}
+                        fmt.Println()
+                    }
+                }
+            }
+        }
+        if flowPC == 0x21e94 { dq3HomeModal = false }
+"""
         declarations = '\tvar dq3PhaseSeen = map[string]int{}\n\tvar dq3NPCSequenceStep int\n\tvar dq3NPCCaptures = map[string]bool{}\n'
+        if scenario == 'mother_home_entry':
+            declarations += '\tvar dq3HomeModal bool\n'
         if scenario in mother_scenarios:
             declarations += '\tvar dq3MotherEntered, dq3MotherReturned bool\n'
         probetext = probetext.replace(marker, declarations + marker + flow_hook, 1)
@@ -350,7 +381,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     (out / f'{prefix}-generation.py').write_bytes(generation_script)
     print('原版自然探測開始',flush=True)
     with (out / f'{prefix}.log').open('w') as log:
-        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=780 if scenario == 'mother_finish' else 660 if scenario == 'mother_approach' else 360 if scenario == 'birthday_continue' else 180)
+        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=780 if scenario == 'mother_finish' else 660 if scenario in mother_scenarios else 360 if scenario == 'birthday_continue' else 180)
     print('原版探測結束',result.returncode,flush=True)
     lines = (out / f'{prefix}.log').read_text().splitlines()
     assert result.returncode == 0
@@ -380,7 +411,8 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                         'opening_accept':[0,0,0,36,35,35,35],
                         'birthday_continue':[0,0,0,36,35,35,35],
                         'mother_approach':[0,0,0,36,35,35,35],
-                        'mother_finish':[0,0,0,36,35,35,35]}[scenario]
+                        'mother_finish':[0,0,0,36,35,35,35],
+                        'mother_home_entry':[0,0,0,36,35,35,35]}[scenario]
     observations = [re.search(r'DS=([0-9a-f]+) raw_cursor=(\d+) name_mode=([0-9a-f]+)', line)
                     for line in meta['name_observations']]
     assert len(observations) == len(captures) and all(observations)
@@ -426,6 +458,11 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         meta['scope']='冷啟動37次正式IRQ1輸入；正常創角、生日及原始選單進入／三次圖像選擇／結果確認後，下2／左2／下3／右6接近家中原始事件格；母親入口尚未與重製對拍'
         meta['mother_entry_events'] = [line for line in lines if line.startswith('DQ3_MOTHER_ENTRY ')]
         meta['mother_text_events'] = [line for line in lines if line.startswith('DQ3_MOTHER_TEXT ')]
+    if scenario == 'mother_home_entry':
+        meta['home_modal_events'] = [line for line in lines if line.startswith('DQ3_HOME_MODAL ')]
+        meta['home_modal_data'] = [line for line in lines if line.startswith('DQ3_HOME_MODAL_DATA ')]
+        assert meta['home_modal_events'] and len(meta['home_modal_data']) == 4
+        meta['scope'] = '原版37次正式IRQ1冷啟動家中流程、三次圖像選擇與正常走近；只讀幾何／consumer／選擇結果，不代表remake parity'
     if scenario == 'mother_finish':
         meta['scope']='冷啟動38次正式IRQ1輸入；保留母親接近路徑，再一次Enter解除城門record80內嵌等待；後續移動與旗標尚未與重製對拍'
         text = exe.parent / 'D3TXT01.TXT'

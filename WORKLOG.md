@@ -679,3 +679,29 @@ Docker、來源擁有權及提交／推送收據於本批收尾另行核對；�
 衛生腳本曾錯用較早Markdown目錄4的假設；以同容器指定find重跑核對實際0，分類為驗證腳本問題。
 本批DQ3一次性容器已清除，dosgolem上游cmd/probe/main.go使用者修改保持，沒有新增image或交付物。
 提交、推送、Issue最新狀態與Docker清理記錄由work/issue4-arrival-post-push-receipt.json保存。
+
+## 2026-10-02：Issue #4 家中原版收據、選圖來源及現行版本試作
+
+接續c4d2a3c，已先回讀Issue #4並登記續行，留言5954641898。
+新增mother_home_entry情境的唯讀選圖觀測，原版自然冷啟動、seed1357一次、37次正式輸入／74次IRQ1。
+收據4063460c的170個唯一產物全部核對，168個PNG／bin與前次完整返回收據相同。
+核對母親16動作、三輪選圖／結果確認、13次手動接近及轉場鏈；不宣稱remake parity。
+
+IDA9.4補足視窗、游標、BLS consumer及動態選圖writer，十份sidecar共2,008筆唯一原始rows核對。
+直接xref缺少DS相對欄位，新增保留原operand及取址候選的匯出，不猜讀寫。
+定位16F4B從BIOS046C初始化獨立generator；09F1與2B7A是runtime資料，不能當EXE靜態表。
+初次來源驗證誤把這兩區當靜態EXE bytes，依原始writer更正分類後同原版收據重跑通過，屬驗證腳本問題。
+DQ3LIN.BLS實際46,086bytes、96個480bytes圖塊；單次圖號13／18選項不寫成正式固定初值。
+
+固定現行c4d2a3c，以正式17／18／19次InputState測試，原提交在母親移動前先播81而FAIL。
+可丟棄人物試作17狀態PASS，母親NPC0先到10,10轉左，勇者保持5,5，再播81。
+沒有改production Go、pack或存檔，選圖、正常接近與家中存讀檔仍須一併READY後實作。
+素材原型把透明區域當黑底的假說已保留反證；僅核對不透明素材仍有7色號差異，維持RED，完整RGB未驗。
+
+新增原版收據驗證入口tools/verify_dosgolem_home_entry.py，十種損壞收據拒絕通過；shell／Python語法通過。
+現行原提交FAIL與隔離試作PASS、來源／IDA raw bytes及圖像RED的私有稽核為
+work/issue4-home-final-evidence-receipt.json，SHA-256 ea67ada60442d1f4c116dca7106466fb458bf8bf8ef4de9523ca43747024ce99。
+重生模式為tools/verify_dosgolem_newgame.sh的--mother-home-original；所有工作均在一次性Docker執行。
+16FFA／17006的triplet原始規則已取得；下輪閉合clock初始條件、預覽及取消分支原型，再接完整家中玩家流程。
+全域人物相位、音訊及原版campaign仍未完成。
+清理、提交、推送與Issue回讀結果另存本機收尾收據，不把本輪來源工作算成正式remake完成。

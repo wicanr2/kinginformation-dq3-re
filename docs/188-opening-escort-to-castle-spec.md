@@ -1,5 +1,76 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+## 2026-10-02：家中序列與圖像選擇的來源核對及現行試作（DRAFT）
+
+依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) 接續 `c4d2a3c`。
+正式程式仍為 schema0.2.0／content0.1.70。本節沒有套入家中 production 修正。
+先前城鎮42狀態、record80、後三步及旗標交易的有限驗收維持，不把它外推為家中流程已符合。
+
+原版再次由冷啟動、自然創角入口固定seed1357一次、37次正式輸入及74次IRQ1重生。
+收據 `work/dosgolem-opening/issue4-home-entry-receipt.json`，SHA-256
+`4063460ca46d743e1e8f7a3e34f6956d7e2306801e9180276988d5f4eaf00581`。
+170個唯一產物的大小、雜湊及UID／GID1000全部核對，168個PNG／bin與前次母親完整返回收據相同。
+只有一次測試seed設定，其他觀測唯讀；沒有座標、故事旗標或進入點注入。
+dosgolem固定revision `2f44a68ebfc54b28fb15dd4a34510b0b04a5415d`、Go1.24.13及既有Docker image。
+來源EXE仍為115,282bytes、SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA Pro9.4；IDA linear−0xEC90=file，DGROUP基底linear0x24DD0。
+
+| 原始定位及consumer | 有限結果 | 分級與邊界 |
+|---|---|---|
+| DGROUP3CBC／file0x19DFC，100D5→167C5→100F2 | 83返回後NPC0左2、下6、右7、轉左，主角全程(5,5)，之後才播81 | confirmed；同次自然16動作、原始序列bytes及8tick等待閉合，動畫相位未驗 |
+| linear0x21DDC、21F79、21E3E、21E94 | 第一次Enter開始選圖，三次Enter選三輪，最後Enter確認結果；結果AX1、choices010101 | confirmed；只限本次正常五次Enter，不把其他選項或取消算成動態驗收 |
+| DGROUP00DB／file0x1621B，22017→1EA8C | 選圖從DQ3LIN.BLS載入18個480bytes的masked frame | confirmed；唯讀檔名、實際開檔、BLS形狀及自然18次consumer閉合；完整RGB仍未通過 |
+| DGROUP4348／file0x1A488，1F590→1F779 | 靜態視窗與六選項的共同選擇consumer；佈局模式4 | strong；runtime與EXE bytes一致，完整視窗／游標尚未試作驗收 |
+| linear0x1E932..0x1E96C，DGROUP2B7A | 執行時生成480bytes步距表，原始迴圈200個word；此次只核對前66個及實際選項 | strong；直接writer bytes、自然偏移表及檔案索引閉合，不稱未抽樣槽位全部可用 |
+| linear0x16F4B..0x16FCE，DGROUP09F1／09F2 | BIOS046C取初值，獨立generator選0..99圖號，取08C0三個值後生成三輪選項 | strong；IDA caller、取址、writer及直接triplet consumer閉合，clock初始條件與完整UI未驗 |
+| linear0x16FDE..0x1702E／file0x834E..0x839E | 正確triplet與隨機triplet的前後順序由generator低bit選擇；triplet為floor(id/3)×3起的三個連續圖塊 | strong；原始bytes、100組table及本次三輪選項一致；不去重同組候選，不永久固定seed |
+| linear0x1010B→10121→10130 | 下2／左2／下3／右6走到(9,10)才觸發；母親再到(10,11)，轉場後主角(8,38)、母親(8,37) | confirmed；本次同條正式接近重驗，其他方向與失敗gate仍未驗 |
+
+DQ3LIN.BLS為46,086bytes，SHA-256
+`f4a7218ec17147188607fc9b61f7e359278cbf9b716e5afc8776d77958cccd0c`。
+原始6bytes表頭是byte-width4、高24、count96，實際檔案也正好6＋96×480。
+本次原版的18個選項由runtime生成，不是EXE靜態資料，不得當成正式固定選項。
+同理，單次顯示圖號13不是永久初值，也不能用創角seed替代另一個以BIOS clock初始化的generator。
+
+重生入口：
+`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --mother-home-original`。
+收據驗證入口：`tools/verify_dosgolem_home_entry.py`，只在Docker內執行。
+驗證涵蓋來源身份、seed條件、按下／放開、唯一產物、素材形狀、16動作、三輪選圖、結果確認及手動轉場鏈。
+十種損壞收據另行驗證均拒絕，包括注入狀態、未先固定seed、錯誤版本、輸入／IRQ缺失、
+重複產物、越界路徑、雜湊不符、來源不符及缺少選圖結果。
+成功只表示原版收據通過核對，不表示remake對拍通過。
+
+### 現行版本的可丟棄試作
+
+`work/issue4-home-current-prototype.py`固定目前提交`c4d2a3c`，容器內從Git唯讀匯出到tmp。
+正式17次創角輸入、18／19次確認，逐次觀測實際`InputState`，不呼叫事件helper或注入人物。
+原提交在83返回後立刻播放81，沒有16動作，測試FAIL；隔離試作依runtime證據宣告17個人物狀態，
+先移動原始NPC0到(10,10)並轉左，勇者全程(5,5)、另一NPC仍(8,3)，之後才播放81，測試PASS。
+log為`work/issue4-home-current-baseline.log`與`issue4-home-current-prototype.log`。
+原型未實作圖像選擇、手動接近及家中存讀檔，不能進入正式路徑。
+
+選圖素材試作`work/issue4-home-sprite-prototype.py`使用原始1EF4h／84及每格4bytes公式定位。
+第一次把透明區域當黑底的假說已推翻，原始失敗保存在`issue4-home-sprite-black-background-rejected.json`。
+依BLS mask只核對不透明素材後，18個選項仍有7個色號差異，均在第三輪第二個圖塊的最左欄。
+此結果保持RED，不遮掉七個像素、不當完整RGB，也不推測為已解出的游標或硬體問題。
+透明背景、調色盤、完整視窗與正式UI仍待驗證。
+
+### 證據匯出與下一個正式閘門
+
+私有IDA sidecar為`work/issue4-home-{picture,window,selector,window-range,box,table-writer,indirect-writer,options-init,offsets-init,triplet}-ida.json`。
+十份共2,008筆唯一原始rows逐項核對EXE bytes及linear/file基準。
+保留原函式、原始位址與xref type；附加台帳不覆寫原始語意。
+匯出工具`tools/ida_dump_opening_handler54.py`補上DS相對取址及位移候選，均標unknown，不依operand位置猜讀寫。
+零直接xref未用來宣稱沒有writer；選項writer由IDA資料庫的09F1原始operand定位到16F4B。
+
+完整私有稽核入口`work/issue4-home-final-audit.py`，結果
+`work/issue4-home-final-evidence-receipt.json`，SHA-256
+`ea67ada60442d1f4c116dca7106466fb458bf8bf8ef4de9523ca43747024ce99`。
+16FFA／17006的triplet規則已取得最小原始證據；下一步閉合clock初始條件、預覽與取消分支原型，及pack圖像選擇資料和有限狀態機，
+再將家中母親順序、選圖、正常接近與同版本存讀檔一併審為READY並實作。
+NPC全域相位、完整RGB、音訊與完整原版campaign仍未CONFORMED，不重開PIT／ISR逐週期研究。
+
 ## 2026-10-02：母親正式入口追查（DRAFT）
 
 依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) 接續 `ad00d38`。

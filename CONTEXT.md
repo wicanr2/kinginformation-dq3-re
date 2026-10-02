@@ -1,5 +1,13 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-02本輪續行：Issue #4的家中原版收據已重新核對，37次正常輸入／74次IRQ1、170個唯一產物。
+168個PNG／bin與前次相同；來源、16個母親動作、三輪選圖與手動轉場鏈通過，十種損壞收據均拒絕。
+固定目前c4d2a3c的正常InputState測試在原提交FAIL，隔離人物順序試作17個狀態PASS。
+選圖來源DQ3LIN.BLS實際96個frame；選項由runtime生成，不能永久固定為單次seed的18個圖塊。
+素材試作仍有7個不透明色號差異；完整RGB未驗。本輪未修改production Go、pack或存檔。
+現行程式及先前城鎮切片維持下段；家中順序、選圖、接近與存讀檔仍需一併READY後實作。
+證據、試作、拒絕測試及重生入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)最新節。
+
 2026-10-02最新現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
 母親城鎮帶路的有限狀態切片已修正。原版冷啟動38次正常輸入／76次IRQ1，seed1357固定一次，
 自然完成單一record80、後三步及旗標交易。176個唯一產物逐項核對；先前168個PNG／bin相同。
@@ -72,10 +80,10 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；schema0.2.0／content0.1.70；未發布新包，舊schema存檔拒絕 |
 | 最新remake已完成 | 城鎮42個兩者位置／方向、單一record80、後三步與最後旗標交易；正常輸入後同版本存讀檔，docs/188 |
-| 最新原版oracle | 冷啟動38次輸入／76次IRQ1，自然到1020A；176個唯一產物，原版9358ce6e，docs/188 |
+| 最新原版oracle | 家中37次／74次IRQ1、170個唯一產物、16動作及選圖／正常入口，原版4063460c；先前完整返回38次／76次IRQ1及176產物9358ce6e保持，docs/188 |
 | 既有繪圖切片 | 六幕與129次翻頁、創角及生日續頁完整RGB已驗；本輪創角與生日捲動嚴格PASS |
 | 最新畫面未通過 | 房間三圖各261像素；家中續行圖198049；城鎮返回83387、水平視野差32px；V3未完成 |
-| 下一production切片 | 家中NPC0先移動再播81；五次圖像選擇確認、13次正常接近才啟動帶路；相關人物動畫仍DRAFT |
+| 下一production切片 | 家中17狀態隔離試作PASS，原提交FAIL；圖像選擇triplet、正常接近及存讀檔須一併READY；素材7像素RED、相關動畫仍DRAFT |
 | 原版oracle仍未知 | 其他接近失敗gate、全域動畫相位、原版存檔、音訊與完整campaign；不追PIT／ISR逐週期 |
 | 現行remake回歸 | 正式新遊戲InputState→THE END65.74秒；367頂層／34子測試、11個internal及desktop通過；work/issue4-arrival-full.log |
 | 額外驗證限制 | 標準38項選用跳過，三項原版圖像比較另行兩PASS、一RED；沒有素材缺失；狀態比較不宣稱兩側38次同輸入 |
@@ -125,7 +133,7 @@ phase2/3 均為夜間，黑暗之燈 clock 為 140。證據與限制見 `docs/13
 - **file offset** — `tools/re_disasm.py` 輸出的位址基準。換算 `file = logical + 0x1370`。_Avoid_: 兩者混稱「位址」(見 [`docs/00`](docs/00-re-methodology.md) §3 陷阱)。
 - **DGROUP** — 資料段;變數 `[DS_off]` 的檔內位置 `file = 0x16140 + DS_off`。
 - **scripted-event** — runner `0xabb2` 的 event-id 派發基址是 `DGROUP 0x3baa`；直接 subtype2 NPC dispatcher logical `0x4fe5..0x5001` 則以 `DGROUP 0x3bb4 + byte4×2` 取 handler。兩者是同一張表相差 5 entries，不得互換 index。
-- **oracle** — DOSBox 跑原版 `DQ3.EXE` 的實機畫面 / 記憶體,當還原結果的黃金對照。_Avoid_: 「參考版」。
+- **oracle** — dosgolem執行原版`DQ3.EXE`的可重播狀態、輸入與畫面收據；入口為`/home/anr2/cht/dosgolem/README.md`及`CLAUDE.md`。DOSBox只補足能力缺口並作輔助交叉驗證，正式收據仍由dosgolem重生。_Avoid_: 「參考版」。
 
 ### 地圖 / 場景
 - **CTY** — 城鎮或洞窟地圖檔 `CTYNN.DAT`;城鎮與洞窟同格式,差別在大小與 section 數。
