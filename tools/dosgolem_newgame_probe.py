@@ -10,7 +10,8 @@ repo = Path('/repo')
 out = Path('/work/dosgolem-opening')
 generation_script = Path(__file__).read_bytes()
 scenario = os.environ.get('DQ3_NEWGAME_PROBE_SCENARIO', 'initial')
-mother_scenarios = ('mother_approach', 'mother_finish', 'mother_home_entry')
+home_scenarios = ('mother_home_entry', 'mother_home_contract', 'mother_home_navigation')
+mother_scenarios = ('mother_approach', 'mother_finish') + home_scenarios
 creation_scenarios = ('name_creation', 'opening_accept', 'birthday_continue') + mother_scenarios
 assert scenario in ('initial', 'name_navigation', 'name_function_mode') + creation_scenarios, scenario
 prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
@@ -19,7 +20,9 @@ prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
           'birthday_continue':'issue4-birthday-pages',
           'mother_approach':'issue4-mother-approach',
           'mother_finish':'issue4-mother-finish',
-          'mother_home_entry':'issue4-home-entry'}[scenario]
+          'mother_home_entry':'issue4-home-entry',
+          'mother_home_contract':'issue4-home-contract',
+          'mother_home_navigation':'issue4-home-navigation'}[scenario]
 keys = [(710000000, 0x1c), (731000000, 0x1c)]
 captures = [(729000000, 'menu'), (740000000, 'create'),
             (750000000, 'final' if scenario == 'initial' else 'initial')]
@@ -80,19 +83,24 @@ if scenario in ('birthday_continue',) + mother_scenarios:
 if scenario in mother_scenarios:
     # 第19次正常確認後，原版必經進入選單、三次圖像選擇與結果確認。
     # sub_21F79接受預設選項；保留原始EXE內NOP比較，不修改驗證或旗標。
-    for i in range(5):
+    modal_scans = [0x1c] * 5
+    if scenario == 'mother_home_navigation':
+        # Escape實際選定第一輪；第二輪四方向環繞，完成選圖及結果確認後多送一次Enter。
+        modal_scans = [0x1c, 0x01, 0x4b, 0x48, 0x4d, 0x50] + [0x1c] * 4
+    for i, scan in enumerate(modal_scans):
         step = 1440000000 + i*20000000
-        keys.append((step, 0x1c))
+        keys.append((step, scan))
         captures.append((step+11000000, f'opening-modal-{i+1:02d}'))
     # 主角(5,5)左側是床；先下2、左2、下3、右6接近(9,10)。
     # 逐格遵循原始CTY通路，沒有狀態注入或談話快捷入口。
     directions = [0x50]*2 + [0x4b]*2 + [0x50]*3 + [0x4d]*6
     for i, scan in enumerate(directions):
-        step = 1540000000 + i*20000000
+        step = 1440000000 + len(modal_scans)*20000000 + i*20000000
         keys.append((step, scan))
         captures.append((step+11000000, f'approach-{i+1:02d}'))
-    captures.append((1851000000, 'after-approach'))
-    stop = 1860000000
+    extra_steps = (len(modal_scans) - 5) * 20000000
+    captures.append((1851000000 + extra_steps, 'after-approach'))
+    stop = 1860000000 + extra_steps
 if scenario == 'mother_finish':
     # 原始record80只有一個FFFC；追加一次正常Enter，觀察EOF後的自然續行。
     keys.append((1900000000, 0x1c))
@@ -321,7 +329,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         if flowPC == 0x1020a { dq3MotherReturned = true }
 """
             flow_hook = flow_hook.replace('__PREFIX__', prefix)
-        if scenario == 'mother_home_entry':
+        if scenario in home_scenarios:
             # 只讀取正常選單入口、圖塊 consumer 與選擇結果；原始 NOP 比較保持。
             flow_hook += r"""
         if flowPC == 0x21ddc { dq3HomeModal = true }
@@ -329,7 +337,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             switch flowPC {
             case 0x21ddc, 0x21e1f, 0x21e26, 0x21ec1, 0x21f79, 0x21fd2,
                  0x22016, 0x21f11, 0x21e3e, 0x21e43, 0x21e94, 0x1ea8c,
-                 0x1f590, 0x1f779:
+                 0x1f590, 0x1f779, 0x1f908:
                 ds := m.CPU.Seg[cpu.DS]
                 if ds != 0x15ed { panic("home modal DS differs") }
                 fmt.Printf("DQ3_HOME_MODAL step=%d ida_linear=%05x DS=%04x AX=%04x BX=%04x CX=%04x DX=%04x BP=%04x SI=%04x DI=%04x raw26fe=%d raw0722=%d raw0726=%d raw4f46=%04x choices=%02x%02x%02x raw4f09=%04x raw2534=%04x\n",
@@ -349,8 +357,21 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         }
         if flowPC == 0x21e94 { dq3HomeModal = false }
 """
+            if scenario != 'mother_home_entry':
+                # 觀測另一個自然clock初始化的generator；不固定第二個seed、不寫入原版欄位。
+                flow_hook += r"""
+        switch flowPC {
+        case 0x16f4b, 0x16f56, 0x16f65, 0x16fce:
+            ds := m.CPU.Seg[cpu.DS]
+            if ds != 0x15ed { panic("picture initialization DS differs") }
+            fmt.Printf("DQ3_PICTURE_INIT step=%d ida_linear=%05x DS=%04x AX=%04x bios046c=%04x challenge=%d options=",
+                m.Steps,flowPC,ds,m.CPU.R[cpu.AX],m.Read16(0x046c),m.Read8(cpu.Addr(ds,0x09f1)))
+            for i:=uint16(0);i<18;i++ {fmt.Printf("%02x",m.Read8(cpu.Addr(ds,0x09f2+i)))}
+            fmt.Printf(" expected=%02x%02x%02x\n",m.Read8(cpu.Addr(ds,0x0745)),m.Read8(cpu.Addr(ds,0x0746)),m.Read8(cpu.Addr(ds,0x0747)))
+        }
+"""
         declarations = '\tvar dq3PhaseSeen = map[string]int{}\n\tvar dq3NPCSequenceStep int\n\tvar dq3NPCCaptures = map[string]bool{}\n'
-        if scenario == 'mother_home_entry':
+        if scenario in home_scenarios:
             declarations += '\tvar dq3HomeModal bool\n'
         if scenario in mother_scenarios:
             declarations += '\tvar dq3MotherEntered, dq3MotherReturned bool\n'
@@ -381,7 +402,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     (out / f'{prefix}-generation.py').write_bytes(generation_script)
     print('原版自然探測開始',flush=True)
     with (out / f'{prefix}.log').open('w') as log:
-        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=780 if scenario == 'mother_finish' else 660 if scenario in mother_scenarios else 360 if scenario == 'birthday_continue' else 180)
+        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=780 if scenario in ('mother_finish', 'mother_home_navigation') else 660 if scenario in mother_scenarios else 360 if scenario == 'birthday_continue' else 180)
     print('原版探測結束',result.returncode,flush=True)
     lines = (out / f'{prefix}.log').read_text().splitlines()
     assert result.returncode == 0
@@ -412,7 +433,9 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                         'birthday_continue':[0,0,0,36,35,35,35],
                         'mother_approach':[0,0,0,36,35,35,35],
                         'mother_finish':[0,0,0,36,35,35,35],
-                        'mother_home_entry':[0,0,0,36,35,35,35]}[scenario]
+                        'mother_home_entry':[0,0,0,36,35,35,35],
+                        'mother_home_contract':[0,0,0,36,35,35,35],
+                        'mother_home_navigation':[0,0,0,36,35,35,35]}[scenario]
     observations = [re.search(r'DS=([0-9a-f]+) raw_cursor=(\d+) name_mode=([0-9a-f]+)', line)
                     for line in meta['name_observations']]
     assert len(observations) == len(captures) and all(observations)
@@ -458,11 +481,16 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         meta['scope']='冷啟動37次正式IRQ1輸入；正常創角、生日及原始選單進入／三次圖像選擇／結果確認後，下2／左2／下3／右6接近家中原始事件格；母親入口尚未與重製對拍'
         meta['mother_entry_events'] = [line for line in lines if line.startswith('DQ3_MOTHER_ENTRY ')]
         meta['mother_text_events'] = [line for line in lines if line.startswith('DQ3_MOTHER_TEXT ')]
-    if scenario == 'mother_home_entry':
+    if scenario in home_scenarios:
         meta['home_modal_events'] = [line for line in lines if line.startswith('DQ3_HOME_MODAL ')]
         meta['home_modal_data'] = [line for line in lines if line.startswith('DQ3_HOME_MODAL_DATA ')]
         assert meta['home_modal_events'] and len(meta['home_modal_data']) == 4
         meta['scope'] = '原版37次正式IRQ1冷啟動家中流程、三次圖像選擇與正常走近；只讀幾何／consumer／選擇結果，不代表remake parity'
+        if scenario != 'mother_home_entry':
+            meta['picture_init_events'] = [line for line in lines if line.startswith('DQ3_PICTURE_INIT ')]
+            assert meta['picture_init_events'], '尚未觀測圖像選擇的自然初始化'
+        if scenario == 'mother_home_navigation':
+            meta['scope'] = '原版42次正式IRQ1冷啟動家中流程，含取消與四方向邊界；不代表remake parity'
     if scenario == 'mother_finish':
         meta['scope']='冷啟動38次正式IRQ1輸入；保留母親接近路徑，再一次Enter解除城門record80內嵌等待；後續移動與旗標尚未與重製對拍'
         text = exe.parent / 'D3TXT01.TXT'

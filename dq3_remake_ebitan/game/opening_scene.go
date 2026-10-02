@@ -7,7 +7,7 @@ import (
 
 func (g *Game) activeOpeningScenePresentation() *gamepack.OpeningScenePresentation {
 	e, ok := g.pack.OpeningScenePresentation()
-	if !ok || g.openingIdx <= 0 || g.openingIdx > len(e.TextIDs) ||
+	if !ok || (!g.homeSelection.active && !g.homeAwait && (g.openingIdx <= 0 || g.openingIdx > len(e.TextIDs))) ||
 		!g.inTown || g.cur == nil || g.curCty != e.CTY || g.cur.sec != e.Section {
 		return nil
 	}

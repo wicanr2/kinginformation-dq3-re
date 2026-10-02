@@ -1,5 +1,7 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+目前家中正式流程以文末「2026-10-03 正式家中驗收」為準；下列較早DRAFT保留研究歷史。
+
 ## 2026-10-02：家中序列與圖像選擇的來源核對及現行試作（DRAFT）
 
 依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) 接續 `c4d2a3c`。
@@ -998,3 +1000,111 @@ MOTHER-FINISH-38-INPUTS是舊規格勘誤標記；本機稽核逐項檢查標記
 
 提交／推送與遠端Issue收尾收據：`work/issue4-arrival-post-push-receipt.json`；
 容器及擁有權稽核：`work/issue4-arrival-hygiene-receipt.json`。未新增公開原版附件。
+# 2026-10-02 家中完整流程續作規格
+
+## 2026-10-03 READY 審查
+
+`work/issue4-home-production-prototype.py`以現行HEAD只讀快照建立隔離副本。
+`TestOpeningHomeProductionPrototype`兩條正常輸入路徑通過：17次創角輸入、生日及房間確認、
+17個原版人物狀態、母親對話自動返回、預覽及三輪選圖、交還控制、13次手動移動、
+城鎮對話與最後旗標交易。Escape路徑依本輪動態收據等同選定當前圖像。
+能力種子1357、獨立圖像種子151B均於首個輸入前固定一次。
+家中及城鎮分別經正式Save／Load通過，沒有用讀檔替代初次正常玩家入口。
+
+原版新收據SHA-256：contract為
+`fbbb273d850f0db6deebd26a1301bbfac79e4764c5d11677f3571fbf97622074`，navigation為
+`4777dacdcfc4803d0362e248e1cb34d293b586614cd910601528ec6852cfe6dd`。
+兩者生成器封存SHA-256均為
+`d354dd5eabe704265bb3583899a84c823bea3b13b39652c9adbe1e37642d67a5`。
+來源工具、唯讀觀測、原始hash及輸入列全部留在本機manifest。
+
+追加訂正：先前BLS的七個像素差異位於相鄰圖像首列，來源是34px游標框跨過32px圖像格。
+依原始1F908／204B1在圖片之後施加XOR8即吻合，不需修改圖片或增加例外。
+透明區域依1EA8C以原始背景tile0及sprite平面合成。數字欄先畫前導空白glyph12。
+預覽、三輪選圖及結果的336×192視窗RGB均0差異。完整640×350各124差異，
+視窗外人物動畫仍為RED。驗收輸出為 `work/issue4-home-production-visual-audit.json`，
+只將已驗證的有限流程及視窗primitive審為READY，不宣稱全畫面、音訊或硬體wall-clock完成。
+
+正式接入範圍：共用有限狀態機、嚴格JSON、完整96張BLS形狀與reference validation、
+母親原始record0、正常接近入口及等待接近存檔。schema升為0.3.0，content為0.1.71。
+新增契約與重生入口維持本文件及docs/84索引；後續須跑受影響測試、完整game／internal、
+desktop build及正常新遊戲至THE END，再更新唯一目前狀態表。
+
+本節沿用 Issue #4、dosgolem 2f44a68 與同一 DQ3.EXE。入口為正常創角17次輸入，
+生日及房間各確認一次。原始 NPC record0 執行左2、下6、右7、原地向左，主角固定5,5。
+先完成移動再播放record81，EOF後開啟圖像選擇。此鏈不得以直接事件或座標注入驗收。
+
+圖像初始化的只讀收據為 `work/dosgolem-opening/issue4-home-contract-receipt.json`。
+IDA linear16F4B讀BIOS046C，正常冷啟動讀值151Bh；16F56保存獨立種子，
+1701D以16位加9014h再左旋3位。問題取低7位並拒絕大於99，
+原始100組三個目標在DGROUP08C0、file16A00。16FDE混合目標及隨機三連圖像，
+重複組合不排除。正常觀測問題13，選項為3,4,5,57,58,59／33,34,35,48,49,50／6,7,8,24,25,26。
+此處151Bh是本次自然時鐘值，重製測試於首個輸入前固定獨立選圖種子一次，正式執行由時鐘取值。
+
+21EC1先以1E829／1E82D顯示七個診斷數字，第一確認撤回左上80×112區域，
+才開始三輪選圖。初始游標1；左／上遞減，右／下遞增，1至6環繞。
+Escape的初步靜態解讀為回第一輪，已被本輪正常導航收據推翻。
+1460001231的21FD2雖返回AX=FFFF、DGROUP0726低位=1，caller仍保存當前選項1，
+1460004089的21F79已進第二輪。故此EXE的Escape等同確認當前選項。
+三次選擇後顯示結果，再確認才還玩家控制。
+原版21F0C／21F0D為NOP，第三輪選1即使不等於正解4仍返回成功，不猜補答錯處罰。
+
+畫面資料取原始視窗DGROUP4348與consumer1F590：152,46、336×192、
+record476頂列、record466重複10列、record467底列。矩形204B1的高度為BP+1、寬度DX。
+圖片原點224,94，間距32；已選圖片272,182；游標223,93，34×26，XOR8。
+圖像來源DQ3LIN.BLS實際96張，逐張480bytes；引擎先驗證header、完整長度與引用。
+選單色盤bank0及index8=243,243,243。七個素材像素差異已由上述跨格游標閉合，完整人物動畫仍列為V3限制。
+
+手動路徑下2、左2、下3、右6抵達9,10，才進原始handler54／1010B。
+母親10,10先向下至10,11，主角保持9,10；再接既有42個城鎮狀態。
+正式資料宣告原始NPC身分、接近條件與有限步驟；共用Go不寫DQ3座標、文字或raw handler fallback。
+存讀檔需保留選圖結束後等待接近的狀態及母親位置，並可由正常輸入繼續。
+
+來源位址為IDA9.4 linear，file=linear−EC90；原始bytes與hash見既有匯出。
+新增只讀匯出為 `work/issue4-home-preview-ida.json`、`work/issue4-home-preview-consumer-ida.json`。
+新來源模式為 `mother_home_contract`、`mother_home_navigation`，均由
+`tools/dosgolem_newgame_probe.py`自行重生，沒有寫入問題或選項。
+READY前需隔離原型通過正常輸入、Escape／環繞、接近入口及同版本存讀檔；完整RGB保留實測差異。
+
+## 2026-10-03 正式家中驗收（有限 CONFORMED）
+
+接續`a2e477d`，依上節READY接入schema0.3.0／content0.1.71。
+正式人物順序、獨立圖像生成、預覽／三輪／結果、控制交還及13步手動接近通過。
+家中不再於對話返回後直接轉場；主角正常抵達已驗事件格才接城鎮42個狀態與最後旗標交易。
+選項、幾何、文字、色盤及原始actor引用只由pack提供。
+
+| 驗證 | 實測結果與界線 |
+|---|---|
+| 原版來源核對 | contract37次輸入／74次IRQ1／170唯一產物；navigation42次／84次／180產物；全部大小、hash及生成記錄吻合 |
+| 正式Enter玩家路徑 | 17次創角、生日／房間確認、17個母親狀態、三輪選圖與手動接近PASS；確認鍵分支另由原有來源狀態測試驗證 |
+| Escape及四方向 | 保存第一輪當前選項、第二輪游標1→6→5→6→1，最後三輪結果010101 PASS；navigation原版的額外主流程Enter不列為整條等價輸入聲明 |
+| 有限畫面 | 五個完整336×192視窗RGB差0；每張640×350全畫布仍124差異，完整V3保持RED |
+| 同版本存讀檔 | 家中等待接近狀態由正常標題選單恢復，繼續走到城門；城鎮最後旗標及位置round-trip PASS |
+| 失敗不消耗 | 不相容、錯場景、缺gate及越界存檔拒絕且狀態不變；標題讀檔失敗留在原選單；modal存檔拒絕且不覆寫冒險之書 |
+| 嚴格資料與素材 | 12項損壞契約、5項archive／palette損壞拒絕；原始300bytes問題表、人物序列、視窗結構與三個原始record字模PASS |
+| 完整重製回歸 | game370項頂層／45項子測試、internal138項頂層／193項子測試及全部11個套件、desktop PASS；正式新遊戲至THE END224.65秒，只屬remake可玩性 |
+
+實際鍵盤Enter與確認鍵在`InputState`是不同欄位。正式測試現以Enter重播創角及開場；
+性別與有限開場對話補齊Enter。預覽及結果依原始等待鍵consumer接受按鍵邊緣，
+三輪選擇仍以確認／Escape保存選項，方向鍵只移動游標。沒有將Enter改成一般場景命令鍵。
+
+### 實作與可重現入口
+
+- 共用資料契約及拒絕測試：`internal/gamepack/opening_home.go`、`opening_home_test.go`；欄位索引在[docs/84](84-game-pack-json-contract.md)。
+- 正式有限狀態機及繪圖：`game/opening_home.go`；正常玩家入口及存讀檔：`game/opening_home_test.go`。
+- 素材形狀及存檔交易拒絕：`game/opening_home_asset_test.go`；原版PNG身份與全畫布／視窗分別計數：`game/opening_home_window_test.go`。
+- 原版重生：在既有Docker工具鏈執行`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --mother-home-contract-original`；導航改用`--mother-home-navigation-original`。兩個模式僅重生並驗證原版，不能單獨表示remake通過。
+- 正式比較：Docker內從`dq3_remake_ebitan/`編譯`go test -p 2 -c ./game`，以Xvfb執行`TestOpeningHomeNormalInput`及`TestDosgolemMotherArrivalStateComparison`。設定`DQ3_ASSETS`為唯讀素材，`DQ3_HOME_ORIGINAL_DIR`為原版收據目錄，`DQ3_MOTHER_FINISH_ORIGINAL`為既有完整返回收據；不提供來源時不產生畫面parity聲明。
+- 本機驗收：`work/issue4-home-production-final.log`、`work/issue4-home-game.jsonl`、`work/issue4-home-internal.jsonl`、`work/issue4-home-production-visual-audit.json`；完整來源及圖像留在gitignored工作目錄。
+
+完整回歸使用既有`dq3-ebiten-test:20260822-r1`、Go1.24.13及有界一次性Docker／Xvfb。
+第一次在4GiB硬上限被OOM中止，`work/issue4-home-game-oom.jsonl`保留當次記錄；
+Docker事件核對後設定`GOMEMLIMIT=2GiB`及`GOMAXPROCS=2`，同工具鏈完整乾淨重跑PASS。
+game38項及internal4項選用測試未執行，沒有素材缺失跳過，沒有把環境中止當作產品缺陷。
+最終私有來源／程式／輸出與擁有權稽核入口為`work/issue4-home-production-final-receipt.json`。
+本批384項程式／工作輸出UID／GID1000；歷史root-owned3213項保持，Markdown目錄0。
+一次性DQ3測試容器已清除，沒有新增image，使用者scratch及Android libs保持。
+
+有限CONFORMED只涵蓋上述人物狀態、正式輸入、資料、存檔及五個視窗。
+房間261及選圖124個人物像素、城鎮水平視野、音訊、其他接近方向與完整原版campaign仍未通過。
+來源DS13／15／17的後續用途仍unknown；不依數值猜正式規則，也不重開PIT／ISR逐週期研究。

@@ -804,6 +804,8 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("正式重播初始種子未符合固定驗收條件：got=%#x want=0x1357", g.prng.State())
 	}
 	t.Logf("正式重播初始亂數狀態：%#x（NewGame 初始化，未重新設種子）", g.prng.State())
+	pictureSeed := uint16(0x151b)
+	g.homeSelection.seed = &pictureSeed
 	roleEvent := mustTemporaryRoleEvent(t, g)
 	questEvents := g.pack.QuestItemChainEvents()
 	if len(questEvents) != 1 {
@@ -1014,19 +1016,30 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		for tick := 0; tick < 2000 && g.openingIdx == wantIdx; tick++ {
 			send(InputState{DirHeld: -1, DirEdge: -1, Confirm: g.dlg.waitingForConfirm()})
 		}
-		if g.openingIdx != wantIdx+1 {
+		if (wantIdx == 1 && g.openingIdx != 2) || (wantIdx == 2 && !g.homeSelection.active) {
 			t.Fatalf("開場段%d未在正常輸入下返回下一節點", wantIdx)
 		}
 	}
-	if !g.openingEscortAnimating() || g.openingIdx != 3 || g.dlg.open {
-		t.Fatalf("rec81 後應進母親逐格帶路：idx=%d escort=%v dlg=%v",
-			g.openingIdx, g.openingEscortAnimating(), g.dlg.open)
+	for i := 0; i < 5; i++ {
+		press(InputState{Confirm: true})
+	}
+	if !g.homeAwait || g.cur.sec != 4 || g.px != 5 || g.py != 5 {
+		t.Fatal("選圖後未交還家中控制")
+	}
+	for _, dir := range []int{0, 0, 2, 2, 0, 0, 0, 3, 3, 3, 3, 3, 3} {
+		for g.cd > 0 {
+			send(InputState{DirHeld: -1, DirEdge: -1})
+		}
+		send(InputState{DirHeld: dir, DirEdge: -1})
+	}
+	for i := 0; i < 100 && g.openingEscortPhase == 5; i++ {
+		send(InputState{DirHeld: -1, DirEdge: -1})
 	}
 	for g.openingEscortAnimating() {
 		send(InputState{DirHeld: -1, DirEdge: -1})
 	}
 	dialogueFrame := g.openingEscort.ArrivalFrames[g.openingEscort.DialogueFrameIndex].Player
-	if g.openingIdx != 3 || !g.dlg.open || g.px != dialogueFrame.X || g.py != dialogueFrame.Y {
+	if g.openingIdx != -1 || !g.dlg.open || g.px != dialogueFrame.X || g.py != dialogueFrame.Y {
 		t.Fatalf("中途格 opening 對話序列未開啟：idx=%d dlg=%v pos=(%d,%d) want=(%d,%d)",
 			g.openingIdx, g.dlg.open, g.px, g.py, dialogueFrame.X, dialogueFrame.Y)
 	}

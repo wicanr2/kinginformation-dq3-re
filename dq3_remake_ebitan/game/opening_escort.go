@@ -26,7 +26,21 @@ func (g *Game) startMotherEscort() bool {
 		return false
 	}
 	first := e.Frames[0]
-	idx := g.cur.npcAt(first.Leader.X, first.Leader.Y)
+	if g.px != first.Player.X || g.py != first.Player.Y {
+		return false
+	}
+	for _, f := range e.Frames {
+		if f.Leader.X < 0 || f.Leader.Y < 0 || f.Player.X < 0 || f.Player.Y < 0 || f.Leader.X >= g.cur.w || f.Leader.Y >= g.cur.h || f.Player.X >= g.cur.w || f.Player.Y >= g.cur.h {
+			return false
+		}
+	}
+	idx := -1
+	for i, n := range g.cur.npcs {
+		if n.recordIndex == *e.Home.LeaderRecord && n.x == first.Leader.X && n.y == first.Leader.Y {
+			idx = i
+			break
+		}
+	}
 	if idx < 0 {
 		return false
 	}
@@ -39,17 +53,19 @@ func (g *Game) startMotherEscort() bool {
 	return true
 }
 
-func (g *Game) applyOpeningEscortFrame(frame gamepack.OpeningEscortFrame) {
+func (g *Game) applyOpeningEscortFrame(frame gamepack.OpeningArrivalFrame) {
 	if g.cur == nil || g.openingEscortNPC < 0 || g.openingEscortNPC >= len(g.cur.npcs) {
 		return
 	}
 	n := &g.cur.npcs[g.openingEscortNPC]
-	n.facing = facingBetween(n.x, n.y, frame.Leader.X, frame.Leader.Y, n.facing)
+	n.facing = frame.LeaderFacing
 	n.x, n.y = frame.Leader.X, frame.Leader.Y
 	n.walk ^= 1
 	g.facing = facingBetween(g.px, g.py, frame.Player.X, frame.Player.Y, g.facing)
+	if g.px != frame.Player.X || g.py != frame.Player.Y {
+		g.walk ^= 1
+	}
 	g.px, g.py = frame.Player.X, frame.Player.Y
-	g.walk ^= 1
 }
 
 func facingBetween(x0, y0, x1, y1, fallback int) int {
@@ -85,13 +101,7 @@ func (g *Game) advanceOpeningEscort() error {
 			g.applyOpeningEscortFrame(g.openingEscort.Frames[g.openingEscortIndex])
 			return nil
 		}
-		g.openingEscortNPC = -1
-		if !g.finishMotherEscort() {
-			return errors.New("opening arrival transaction failed")
-		}
-		g.openingEscortPhase = 1
-		g.openingEscortIndex = 0
-		g.applyOpeningArrivalFrame(g.openingEscort.ArrivalFrames[0])
+		g.openingEscortIndex, g.openingEscortPhase = -1, 4
 		return nil
 	}
 	if g.openingEscortIndex < len(g.openingEscort.ArrivalFrames) {
@@ -177,7 +187,8 @@ func (g *Game) completeOpeningEscort() {
 }
 
 // motherEscort remains a direct full-transaction helper for focused state and
-// renderer fixtures. Production input uses the timed two-phase sequence.
+// renderer fixtures. Production input walks home, selects pictures, approaches
+// the mother manually, then follows the timed town sequence.
 func (g *Game) motherEscort() {
 	if g.openingEscort == nil || len(g.openingEscort.ArrivalFrames) == 0 {
 		return

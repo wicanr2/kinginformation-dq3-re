@@ -13,6 +13,7 @@ import (
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
 type saveState struct {
+	OpeningHomeAwait        bool                     `json:"opening_home_await,omitempty"`
 	PackID                  string                   `json:"pack_id,omitempty"`
 	PackSchema              string                   `json:"pack_schema,omitempty"`
 	PackContentHash         string                   `json:"pack_content_hash,omitempty"`
@@ -134,7 +135,7 @@ func (g *Game) snapshot() saveState {
 		founder = &saved
 	}
 	s := saveState{
-		PackID: packID, PackSchema: packSchema, PackContentHash: packHash,
+		PackID: packID, PackSchema: packSchema, PackContentHash: packHash, OpeningHomeAwait: g.homeAwait,
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroConditions: g.heroConditions,
 		ParalysisSteps: g.paralysisSteps,
 		HeroStat:       g.heroStat, HeroGold: g.heroGold,
@@ -389,6 +390,24 @@ func (g *Game) restore(s saveState) {
 			g.rememberTown()
 		}
 	}
+	g.homeSelection.active = false
+	g.openingIdx = -1
+	g.openingEscortPhase = -1
+	g.openingEscortIndex = -1
+	g.homeAwait = false
+	if s.OpeningHomeAwait && g.openingEscort != nil && g.inTown && g.curCty == g.openingEscort.CTY && g.cur.sec == g.openingEscort.Section {
+		last := g.openingEscort.Frames[len(g.openingEscort.Frames)-1]
+		for i, n := range g.cur.npcs {
+			if n.recordIndex == *g.openingEscort.Home.LeaderRecord {
+				g.openingEscortNPC = i
+				g.cur.npcs[i].x = last.Leader.X
+				g.cur.npcs[i].y = last.Leader.Y
+				g.cur.npcs[i].facing = last.LeaderFacing
+				g.homeAwait = true
+				break
+			}
+		}
+	}
 	g.applyRainbowBridge()
 	g.applyPackWorldMapPatches()
 	g.applyDaynightPalette()
@@ -450,6 +469,9 @@ func savePath() string {
 
 // Save 寫存檔。
 func (g *Game) Save() error {
+	if g.homeSelection.active || (g.homeAwait && g.openingEscortPhase == 5) {
+		return fmt.Errorf("opening home transaction is not at a save checkpoint")
+	}
 	point := g.currentRespawnPoint()
 	s := g.snapshot()
 	s.Respawn = respawnToSave(point)
@@ -489,6 +511,39 @@ func (g *Game) Load() error {
 		return fmt.Errorf("save game pack mismatch: save=%s/%s/%s current=%s/%s/%s",
 			s.PackID, s.PackSchema, s.PackContentHash,
 			g.pack.ID(), g.pack.Schema(), g.pack.ContentHash())
+	}
+	if s.OpeningHomeAwait {
+		e := g.openingEscort
+		if e == nil || s.PackID == "" || !s.InTown || s.Cty != e.CTY || s.Section != e.Section || s.PX < 0 || s.PY < 0 {
+			return fmt.Errorf("opening home save checkpoint invalid")
+		}
+		flag := e.Home.ApproachFlag
+		if flag/8 >= len(s.StoryBits) || s.StoryBits[flag/8]&(128>>uint(flag%8)) == 0 {
+			return fmt.Errorf("opening home save gate missing")
+		}
+		if s.Cty >= len(mapBlkNum) {
+			return fmt.Errorf("opening home save scene unavailable")
+		}
+		scene, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, s.Cty, mapBlkNum[s.Cty], s.Section, s.DNPhase, func(flag int) bool {
+			return flag >= 0 && flag/8 < len(s.StoryBits) && s.StoryBits[flag/8]&(128>>uint(flag%8)) != 0
+		})
+		if err != nil {
+			return fmt.Errorf("opening home save scene: %w", err)
+		}
+		last := e.Frames[len(e.Frames)-1]
+		if s.PX >= scene.w || s.PY >= scene.h || last.Leader.X >= scene.w || last.Leader.Y >= scene.h {
+			return fmt.Errorf("opening home save position outside scene")
+		}
+		found := false
+		for _, actor := range scene.npcs {
+			if actor.recordIndex == *e.Home.LeaderRecord {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("opening home save actor missing")
+		}
 	}
 	g.restore(s)
 	return nil

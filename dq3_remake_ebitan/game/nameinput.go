@@ -448,7 +448,7 @@ func (gs *GenderSelect) Init() { gs.cursor = 0 }
 
 // input:方向鍵切換(0/1 兩列環繞)、Confirm/點列 選定 → (gender, confirmed)。
 func (gs *GenderSelect) input(in InputState, tapIdx int) (gender int, confirmed bool) {
-	confirm := in.Confirm
+	confirm := in.Confirm || in.Enter
 	if tapIdx >= 0 {
 		gs.cursor, confirm = tapIdx, true
 	}

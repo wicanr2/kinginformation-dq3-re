@@ -67,11 +67,11 @@ func TestOpeningScenePresentationNormalInput(t *testing.T) {
 	if !reflect.DeepEqual(g.dlg.buf, g.dlg.tx.Record(81)) || g.dlg.retained != nil {
 		t.Fatal("房間EOF未自動返回下一段，或保留上一段畫布")
 	}
-	wait(func() bool { return g.openingEscortAnimating() })
-	if g.dlg.prelude != nil || g.dlg.shadow != nil || g.activeOpeningScenePresentation() != nil {
-		t.Fatal("共用呈現洩漏到帶路流程")
+	wait(func() bool { return g.homeSelection.active })
+	if g.dlg.prelude != nil || g.dlg.shadow != nil || g.activeOpeningScenePresentation() == nil {
+		t.Fatal("選圖沒有保留家中攝影機，或對話呈現未清除")
 	}
-	t.Log("正常創角、第18／19次確認：record83保留前文與EOF捲動，record81自動返回帶路；無場景注入")
+	t.Log("正常創角、第18／19次確認：record83保留前文與EOF捲動，母親移動之後record81自動返回選圖；無場景注入")
 }
 
 func TestWindowShadowUsesSecondByteLatch(t *testing.T) {

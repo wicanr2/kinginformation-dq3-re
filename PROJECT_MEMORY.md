@@ -1,5 +1,12 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-03：Issue #4的家中順序、完整圖像選擇及手動接近已接正式玩家路徑。
+> 現行schema0.3.0／content0.1.71；家中存檔可由標題選單恢復，城鎮42狀態及旗標維持。
+> 五個選圖視窗RGB差0，完整畫面仍124差異；原版完整主線與音訊未完成。
+> 唯一目前狀態表在[CONTEXT](CONTEXT.md)，下一切片在[docs/74](docs/74-ebiten-remake-completion-plan.md)，規格與限制見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+
+以下保存歷史檢查點，不能以舊待辦重新開啟已閉合功能。
+
 > 本輪續行：Issue #4家中原版37次／74次IRQ1、170唯一產物、16動作、三輪選圖及手動轉場鏈核對PASS，168個既有PNG／bin不變。
 > 固定c4d2a3c的正常輸入原提交FAIL、人物順序隔離試作17狀態PASS；選圖素材仍7色號差異，完整RGB未驗。
 > 正式程式、pack及存檔未改；家中順序／選圖／手動接近／存讀檔須一併READY後實作。動態選項不可固定成單次seed結果，詳見docs/188最新節。

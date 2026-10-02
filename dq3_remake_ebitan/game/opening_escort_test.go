@@ -37,6 +37,22 @@ func TestOpeningMotherEscortUsesVisibleFrames(t *testing.T) {
 	if steps <= len(g.openingEscort.Frames) {
 		t.Fatalf("帶路應有可見 hold frames，僅 %d 次更新", steps)
 	}
+	if g.cur.sec != g.openingEscort.Section || g.px != 5 || g.py != 5 || g.cur.npcAt(10, 10) < 0 {
+		t.Fatal("家中序列未保持主角位置")
+	}
+	// 局部城鎮fixture；完整家中選圖及手動接近由正常InputState測試驗證。
+	if !g.finishMotherEscort() {
+		t.Fatal("城鎮fixture失敗")
+	}
+	g.openingEscortPhase = 1
+	g.openingEscortIndex = 0
+	g.applyOpeningArrivalFrame(g.openingEscort.ArrivalFrames[0])
+	for g.openingEscortAnimating() && steps < 1500 {
+		if err := g.advanceOpeningEscort(); err != nil {
+			t.Fatal(err)
+		}
+		steps++
+	}
 	dialogueFrame := g.openingEscort.ArrivalFrames[g.openingEscort.DialogueFrameIndex].Player
 	if g.curCty != 0 || g.cur == nil || g.cur.sec != 0 || g.px != dialogueFrame.X || g.py != dialogueFrame.Y {
 		t.Fatalf("opening 對話序列觸發位置錯：cty=%d sec=%v pos=(%d,%d)，want=(%d,%d)",
@@ -143,6 +159,8 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.prng.Seed(0x1357)
+	pictureSeed := uint16(0x151b)
+	g.homeSelection.seed = &pictureSeed
 	idle := InputState{DirHeld: -1, DirEdge: -1}
 	step := func(in InputState) {
 		t.Helper()
@@ -167,15 +185,29 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 		step(in)
 	}
 	confirmations := 0
-	for i := 0; i < 4000 && !(g.openingEscortPhase == 1 && g.openingEscortIndex == 0); i++ {
+	for i := 0; i < 4000 && !g.homeAwait; i++ {
 		in := idle
-		if g.dlg.waitingForConfirm() {
+		if g.dlg.waitingForConfirm() || g.homeSelection.active {
 			in.Confirm = true
 			confirmations++
 		}
 		step(in)
 	}
-	if confirmations != 2 || g.openingEscortPhase != 1 || g.openingEscortIndex != 0 {
+	if !g.homeAwait {
+		t.Fatal("正常選圖沒有交還控制")
+	}
+	for _, dir := range []int{0, 0, 2, 2, 0, 0, 0, 3, 3, 3, 3, 3, 3} {
+		for g.cd > 0 {
+			step(idle)
+		}
+		in := idle
+		in.DirHeld = dir
+		step(in)
+	}
+	for i := 0; i < 100 && g.openingEscortPhase == 5; i++ {
+		step(idle)
+	}
+	if confirmations != 7 || g.openingEscortPhase != 1 || g.openingEscortIndex != 0 {
 		t.Fatal("正常創角無法抵達城鎮帶路checkpoint")
 	}
 	observed := make([]state, 0, len(expected))
@@ -266,7 +298,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 		if closeErr != nil {
 			t.Fatal(closeErr)
 		}
-		report := map[string]any{"scope": "原版城鎮checkpoint有限狀態對拍；家中與圖像選擇選單仍不一致，未宣稱38次同輸入或V3", "original_receipt": receiptPath, "original_seed": "1357一次自然Lv1入口", "remake_seed": "1357首次正式InputState前", "remake_confirmations_before_town": confirmations, "castle_confirmations": 1, "state_count": len(observed), "states": observed, "save_load_player_flags": true, "visual_parity": false, "audio_parity": false, "pack_schema": g.pack.Schema(), "pack_content_hash": g.pack.ContentHash()}
+		report := map[string]any{"scope": "正常創角、家中、選圖及13步手動接近後的城鎮42狀態對拍；完整RGB與音訊仍未V3", "original_receipt": receiptPath, "original_seed": "1357一次自然Lv1入口", "remake_seed": "1357首次正式InputState前", "remake_confirmations_before_town": confirmations, "castle_confirmations": 1, "state_count": len(observed), "states": observed, "save_load_player_flags": true, "visual_parity": false, "audio_parity": false, "pack_schema": g.pack.Schema(), "pack_content_hash": g.pack.ContentHash()}
 		out, err := json.MarshalIndent(report, "", "  ")
 		if err != nil {
 			t.Fatal(err)
@@ -275,7 +307,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	t.Log(fmt.Sprintf("正常創角到城鎮42個狀態、單次城門確認、最後旗標與存讀檔通過；家中／選單／視覺／音訊未完成"))
+	t.Log(fmt.Sprintf("正常家中選圖、手動接近到城鎮42狀態、單次城門確認、旗標及存讀檔通過；完整RGB與音訊仍未完成"))
 }
 
 func TestOpeningKingAudienceRendersHero(t *testing.T) {
@@ -332,14 +364,12 @@ func TestOpeningArrivalMissingActorFailsClosed(t *testing.T) {
 		t.Fatal("家中 fixture 應可開始")
 	}
 	home := g.cur
-	var failure error
 	for i := 0; i < 1000 && g.openingEscortAnimating(); i++ {
-		failure = g.advanceOpeningEscort()
-		if failure != nil {
-			break
+		if err := g.advanceOpeningEscort(); err != nil {
+			t.Fatal(err)
 		}
 	}
-	if failure == nil || g.cur != home || g.cur.sec != broken.Section || g.storyFlag(0x17) || !g.storyFlag(0x50) {
+	if g.finishMotherEscort() || g.cur != home || g.cur.sec != broken.Section || g.storyFlag(0x17) || !g.storyFlag(0x50) {
 		t.Fatal("缺少原始領路NPC時跳過轉場或消耗旗標")
 	}
 }

@@ -1,5 +1,37 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 2026-10-03 現行家中流程契約
+
+現行schema0.3.0／DQ3 content0.1.71。有限規格、原始位址及READY審查見
+[docs/188](188-opening-escort-to-castle-spec.md)。下方舊版本段落保留形成史。
+
+| 欄位 | 契約 |
+|---|---|
+| `opening_escort.frames[]` | 與arrival共用嚴格frame型別；兩者座標、母親方向及停留更新數必填，座標0合法但不能省略；家中主角不隨母親移動 |
+| `opening_escort.home.leader_record` | 家中原始NPC記錄索引；不得使用經過濾後的陣列位置或另一個NPC的座標代替 |
+| `approach_tiles`／`approach_flag`／`approach_subid`／`approach_handler_raw` | 已審查的接近條件；只有正式移動成功、原始場景及原始handler都吻合才觸發；本版只驗9,10 |
+| `approach_frame` | 接近後的一個有限母親動作，之後才提交目的場景；不以選圖結束代替手動接近 |
+| `picture.asset_key`／`palette_asset_key` | manifest邏輯資產引用；runtime驗header、完整長度、實際frame count、palette bank及全部目標索引 |
+| `random_add`／`random_rotate`／`random_mask`／`triplet_size`／`questions` | 有限16位圖像生成原語及原始問題表；獨立於能力RNG；不把單次seed產生的18張選項固定成正式資料 |
+| `option_count`／`accept_policy` | 有限選擇契約；本EXE為`unchecked`，Escape亦保存當前選項；不猜補答錯處罰 |
+| `window`／三個frame文字ID／`body_rows` | 原始頂列、重複body列、底列；字模直接由D3TXT00原始record oracle核對 |
+| `font_index`／`blank_glyph`／`palette_bank`／`palette_overrides` | 字模、前導空白與色盤資料；缺資料或RGB形狀錯誤拒絕，不設引擎色彩預設 |
+| `background_tile` | 原始圖像consumer的背景圖塊；透明區域依背景與原始平面合成，不套一般角色的透明畫法 |
+| `shadow_offset`／`boxes`／圖片原點／`step_x`／`cursor`／`cursor_xor` | 已審查的陰影、矩形、圖片、游標幾何及XOR原語；所有巢狀x、y與尺寸必填 |
+| `question_field`／`preview_field`／`preview_values`／`preview_step_y` | 原版問題號及診斷數字的有限資料欄位；沒有任意JSON程式碼 |
+| `home.evidence`／`picture.evidence` | 必須D3；有限狀態及視窗與全域動畫、音訊、硬體時間分別分級 |
+
+loader先驗schema、reference及幾何，再由原始EXE／TXT parity與正常InputState驗收。
+所有資料檔同步schema0.3.0；舊schema及不同canonical hash的存檔明確拒絕，不自動遷移。
+存檔的`opening_home_await`只保存選圖結束後等待接近的狀態，恢復母親最後位置及方向。
+讀檔先驗場景、旗標、界限及原始NPC；失敗不消耗現行狀態，標題讀檔失敗保留選單。
+選圖及強制轉場途中不建立存檔。此欄位屬remake自有格式，不宣稱原版存檔相容。
+
+目前五個視窗階段RGB均0差異；完整640×350各124差異，仍為RED。
+其他seed、全域人物動畫及原版`DS13/15/17`選擇資料的後續用途，未由本切片升為全流程parity。
+來源重生工具為`tools/verify_dosgolem_newgame.sh`的
+`--mother-home-contract-original`與`--mother-home-navigation-original`；支援範圍及執行條件見docs/188。
+
 ## 2026-10-02 最新資料勘誤：開場文字時間
 
 schema維持`0.1.62`，content改`0.1.69`。既有欄位未變；原版實際PIT除數12428推翻預設65536的時間假設。

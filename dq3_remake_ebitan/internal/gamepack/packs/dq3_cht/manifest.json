@@ -1,9 +1,9 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "pack_id": "dq3_cht",
   "game": "dq3",
   "edition": "cht_jingxun",
-  "content_version": "0.1.70",
+  "content_version": "0.1.71",
   "engine_api": ">=0.1.0 <0.2.0",
   "title_text_id": "dq3:text.title",
   "entry_event_id": "dq3:event.new_game",
@@ -152,6 +152,11 @@
       "path": "DFP.PIC",
       "size": 24435,
       "sha256": "c3ad3b4ee95434f1601e519b1dfb16094184aa1393f2972136fac7e735299b00"
+    },
+    "opening_pictures": {
+      "path": "DQ3LIN.BLS",
+      "size": 46086,
+      "sha256": "f4a7218ec17147188607fc9b61f7e359278cbf9b716e5afc8776d77958cccd0c"
     }
   }
 }

@@ -94,7 +94,9 @@ func (g *Game) newGameInput(in InputState) {
 			nf.ni.Init()
 			nf.stage = ngName
 		case confirm && nf.cursor == ngOptLoad:
-			_ = g.Load() // 載入進度:讀存檔(對齊 docs/36「載入進度」;無存檔則靜默略過,回一般流程)
+			if err := g.Load(); err != nil {
+				return
+			} // 不相容或損壞的存檔保留在標題選單。
 			g.titleIdleFrames = 0
 			g.showTitle = false
 		case in.DirEdge == 0 || in.DirEdge == 1:

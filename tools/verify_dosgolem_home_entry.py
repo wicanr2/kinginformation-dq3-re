@@ -31,15 +31,18 @@ def verify(receipt_path, assets):
     require(len(executable) == data['original_size'] == 115282, '原版 EXE 大小不符')
     require(sha(executable) == data['original_sha256'] ==
             '5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c', '原版 EXE 身分不符')
-    require(data['scenario'] == 'mother_home_entry', '情境不符')
+    require(data['scenario'] in ('mother_home_entry', 'mother_home_contract', 'mother_home_navigation'), '情境不符')
+    navigation = data['scenario'] == 'mother_home_navigation'
     require(data['upstream_revision_observed'] == '2f44a68ebfc54b28fb15dd4a34510b0b04a5415d', 'dosgolem 版本未審查')
     require(not data['game_state_injection'], '禁止遊戲狀態注入')
     seed = data['test_rng_seed_control']
     require(seed['seed'] == '0x1357' and seed['configured_before_execution'] and
             seed['only_rng_state_modified'] and not seed['other_gameplay_state_injection'], 'seed 條件不符')
     inputs, events = data['player_input'], data['actual_irq1_events']
-    require(len(inputs) == 37 and len(events) == 74, '正常輸入或 IRQ1 數量不符')
-    expected_tail = [0x1c] * 5 + [0x50] * 2 + [0x4b] * 2 + [0x50] * 3 + [0x4d] * 6
+    expected_count = 42 if navigation else 37
+    require(len(inputs) == expected_count and len(events) == expected_count * 2, '正常輸入或 IRQ1 數量不符')
+    modal_input = [0x1c, 0x01, 0x4b, 0x48, 0x4d, 0x50] + [0x1c] * 4 if navigation else [0x1c] * 5
+    expected_tail = modal_input + [0x50] * 2 + [0x4b] * 2 + [0x50] * 3 + [0x4d] * 6
     require([int(i['scan'], 16) for i in inputs[19:]] == expected_tail, '選圖及接近輸入不符')
     for index, item in enumerate(inputs):
         make, release = map(fields, events[index * 2:index * 2 + 2])
@@ -117,7 +120,47 @@ def verify(receipt_path, assets):
     returned = [f for f in modal if f['ida_linear'] == '21e94']
     require(len(result) == len(returned) == 1 and result[0]['AX'] == returned[0]['AX'] == '0001' and
             result[0]['choices'] == returned[0]['choices'] == '010101', '選擇交易或結果確認不符')
-    require(int(result[0]['step']) < inputs[23]['queued_step'] < int(returned[0]['step']), '結果確認未經正式輸入')
+    ack_index = 27 if navigation else 23
+    require(int(result[0]['step']) < inputs[ack_index]['queued_step'] < int(returned[0]['step']), '結果確認未經正式輸入')
+    if data['scenario'] != 'mother_home_entry':
+        initialization = [fields(line) for line in data['picture_init_events']]
+        require([f['ida_linear'] for f in initialization] == ['16f4b', '16f56', '16f65', '16fce'], '獨立圖像初始化缺失')
+        require(initialization[1]['AX'] == initialization[1]['bios046c'] == '151b', '自然BIOS時鐘來源不符')
+        table = executable[0x16a00:0x16a00 + 300]
+        require(len(table) == 300 and max(table) < count, '原始100組問題資料無效')
+        random_state = int(initialization[1]['AX'], 16)
+        def draw():
+            nonlocal random_state
+            random_state = (random_state + 0x9014) & 0xffff
+            random_state = ((random_state << 3) | (random_state >> 13)) & 0xffff
+            return random_state
+        def sample(limit):
+            for _ in range(65536):
+                value = draw() & 0x7f
+                if value < limit:
+                    return value
+            raise ValueError('原始圖像PRNG未能取得有效值')
+        question = sample(100)
+        generated = []
+        for target in table[question * 3:question * 3 + 3]:
+            random_first = draw() & 1
+            alternate = sample(count)
+            bases = [target // 3 * 3, alternate // 3 * 3]
+            if random_first:
+                bases.reverse()
+            generated += [base + i for base in bases for i in range(3)]
+        require(question == int(initialization[3]['challenge']) == regions[0x09f1][0] and
+                bytes(generated).hex() == initialization[3]['options'] and generated == options,
+                '自然時鐘初始化、EXE表格、runtime選項不符')
+    if navigation:
+        escaped = [f for f in modal if f['ida_linear'] == '21fd2' and f['AX'] == 'ffff']
+        require(len(escaped) == 1 and int(escaped[0]['raw26fe']) == 0 and
+                int(escaped[0]['raw0726']) & 0xff == 1, 'Escape原始返回狀態不符')
+        require(rounds[1]['choices'] == '010000' and int(rounds[1]['step']) > int(escaped[0]['step']),
+                '此EXE的Escape應選定當前選項並進下一輪')
+        cursors = [int(f['raw0722']) for f in modal if f['ida_linear'] == '1f908' and
+                   inputs[21]['queued_step'] < int(f['step']) < inputs[25]['queued_step']]
+        require(cursors == [1, 6, 6, 5, 5, 6, 6, 1], '四方向環繞游標不符')
     entry = [fields(line) for line in data['mother_entry_events']]
     chain = []
     for address in ('1010b', '10121', '10130'):
@@ -132,7 +175,7 @@ def verify(receipt_path, assets):
             (chain[2]['player_x'], chain[2]['player_y']) == ('8', '38') and
             bytes.fromhex(chain[2]['npc0'])[:2] == bytes((8, 37)), '家中末步或正常轉場落點不符')
     return {'kind': '原版家中開場自然輸入證據核對', 'receipt_sha256': sha(raw),
-            'original_inputs': 37, 'irq1_events': 74, 'unique_artifacts_verified': len(artifact_names),
+            'original_inputs': len(inputs), 'irq1_events': len(events), 'unique_artifacts_verified': len(artifact_names),
             'mother_actions_verified': len(actions), 'picture_rounds_verified': len(rounds),
             'picture_asset': filename, 'picture_asset_size': len(sprite), 'picture_asset_sha256': sha(sprite),
             'picture_asset_count': count, 'picture_option_raw_indices': options,

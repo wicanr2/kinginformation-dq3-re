@@ -367,6 +367,8 @@ type Game struct {
 	openingEscortNPC          int
 	openingEscortPhase        int
 	openingEscortDialogue     int
+	homeSelection             homePictureSelection
+	homeAwait                 bool
 	openingFrame              int
 	openingIndex              int
 	openingActive             bool
@@ -1360,9 +1362,9 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
-	// 對話 modal:只吃 A(推進/關閉),不移動
+	// 開場對話也接受鍵盤 Enter；對話期間不移動。
 	if g.dlg.open {
-		if in.Confirm {
+		if in.Confirm || (in.Enter && g.dlg.prelude != nil) {
 			g.dlg.Advance()
 			if !g.dlg.open {
 				g.advanceDefeatDialogue()
@@ -1417,6 +1419,26 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
+	if g.homeSelection.active {
+		g.stepHomePicture(in)
+		g.renderFrame()
+		return nil
+	}
+	if g.openingEscortPhase == 5 {
+		g.openingEscortTick++
+		if g.openingEscortTick >= g.openingEscort.Home.ApproachFrame.HoldFrames {
+			if !g.finishMotherEscort() {
+				return fmt.Errorf("opening arrival transaction failed")
+			}
+			g.homeAwait = false
+			g.openingEscortPhase = 1
+			g.openingEscortIndex = 0
+			g.openingEscortTick = 0
+			g.applyOpeningArrivalFrame(g.openingEscort.ArrivalFrames[0])
+		}
+		g.renderFrame()
+		return nil
+	}
 	if g.openingEscortAnimating() {
 		if err := g.advanceOpeningEscort(); err != nil {
 			return err
@@ -1440,8 +1462,8 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return nil
 	}
-	// 開場演出：rec82→83→81 後由 pack 的兩階段有限序列接管；家中母親帶路、
-	// 轉場後主角依 pack 路線行走，在指定格停下完成對話與旗標交易，再走至城門。
+	// 開場演出：生日與房間返回後先移動母親，再開對話與圖像選擇。
+	// 選圖交還玩家控制；正常接近才接城鎮有限路線、對話及最後旗標交易。
 	// DQ3.EXE sub_1010B，IDA linear 0x1010b..0x1020b／file 0x147b..0x157a。
 	if g.openingIdx >= 0 {
 		presentation, ok := g.pack.OpeningScenePresentation()
@@ -1451,6 +1473,14 @@ func (g *Game) step(in InputState) error {
 		if g.openingIdx == 0 && !g.enterOpeningScene() {
 			return fmt.Errorf("opening scene transaction failed")
 		}
+		if g.openingIdx == 1 && g.openingEscortPhase < 0 {
+			g.clearOpeningPresentation()
+			if !g.startMotherEscort() {
+				return fmt.Errorf("opening home actor unavailable")
+			}
+			g.renderFrame()
+			return nil
+		}
 		g.openingIdx++
 		if g.openingIdx <= len(presentation.TextIDs) {
 			if !g.openOpeningSceneText(presentation.TextIDs[g.openingIdx-1]) {
@@ -1458,12 +1488,10 @@ func (g *Game) step(in InputState) error {
 			}
 		} else if g.openingIdx == len(presentation.TextIDs)+1 {
 			g.clearOpeningPresentation()
-			if g.startMotherEscort() {
-				g.renderFrame()
-				return nil
+			if err := g.startHomePicture(); err != nil {
+				return err
 			}
-			// 合法 pack 卻找不到起始 NPC 時失敗即關閉，不跳過整段演出。
-			g.openingIdx--
+			g.openingIdx = -1
 		} else {
 			g.clearOpeningPresentation()
 			g.openingIdx = -1
@@ -1553,6 +1581,10 @@ func (g *Game) step(in InputState) error {
 		g.tryTrackingGuardEvent()
 		g.tryPushPuzzleCompletionEvent()
 		g.trySequenceGateEvent()
+		if g.tryHomeApproach() {
+			g.renderFrame()
+			return nil
+		}
 		g.tryOpeningRegionEvent()
 		g.tryBossSurrenderEvent()
 		g.tryGuidedPassageTrigger()
@@ -2023,6 +2055,10 @@ func (g *Game) startOpening() {
 		return
 	}
 	// dlg.tx 維持 NewGame 初始的 D3TXT01(開場旁白 rec82/83 在此 bank)
+	g.homeSelection.active = false
+	g.homeAwait = false
+	g.openingEscortPhase = -1
+	g.openingEscortIndex = -1
 	g.openingIdx = 0
 	prelude, ok := g.pack.OpeningPrelude()
 	if !ok || !g.openPackText(prelude.TextID) {
@@ -3057,6 +3093,7 @@ func (g *Game) renderFrame() {
 		g.drawRecruit(g.rgba, white)
 	}
 	g.drawFieldSpell(g.rgba, white)
+	g.drawHomePicture()
 	g.input.touch.draw(g.rgba) // 觸控控制疊在最上層(有觸控過才顯示)
 	g.frame.WritePixels(g.rgba)
 }
@@ -3587,6 +3624,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	}
 	if escort, ok := pack.OpeningEscort(); ok {
 		g.openingEscort = escort
+		if err := g.loadHomePicture(readPackAsset); err != nil {
+			return nil, err
+		}
 		g.openingEscortNPC = -1
 		g.openingEscortPhase = -1
 	}

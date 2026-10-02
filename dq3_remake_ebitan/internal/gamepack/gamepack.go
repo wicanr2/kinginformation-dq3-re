@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.2.0"
+	SchemaVersion       = "0.3.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -886,14 +886,6 @@ func (s *OpeningTiming) UnmarshalJSON(raw []byte) error {
 	return decodeOpeningObject(raw, (*plain)(s), []string{"rate_numerator", "rate_denominator", "fade_in_step_ticks", "fade_out_step_ticks", "hold_ticks", "gap_ticks", "fade_deductions"})
 }
 
-// OpeningEscort 是創角後的有限自動帶路演出。每幀只宣告領路 NPC 與玩家的
-// tile、停留時間；引擎負責方向、步行幀、轉場與對話，不在 Go 內知道 DQ3 路徑。
-type OpeningEscortFrame struct {
-	Leader     TileCoordinate `json:"leader"`
-	Player     TileCoordinate `json:"player"`
-	HoldFrames int            `json:"hold_frames"`
-}
-
 // OpeningArrivalFrame describes both actors after a scene transition.
 // LeaderFacing uses the engine direction contract; raw directions stay in evidence.
 type OpeningArrivalFrame struct {
@@ -927,10 +919,11 @@ type SceneCoordinate struct {
 }
 
 type OpeningEscort struct {
+	Home                   *OpeningHome          `json:"home"`
 	ID                     string                `json:"id"`
 	CTY                    int                   `json:"cty"`
 	Section                int                   `json:"section"`
-	Frames                 []OpeningEscortFrame  `json:"frames"`
+	Frames                 []OpeningArrivalFrame `json:"frames"`
 	Destination            SceneCoordinate       `json:"destination"`
 	ArrivalFrames          []OpeningArrivalFrame `json:"arrival_frames"`
 	DialogueFrameIndex     int                   `json:"dialogue_frame_index"`
@@ -2704,6 +2697,9 @@ func (p *Pack) validateInterface() error {
 			len(e.SetStoryFlags) == 0 || len(e.ClearStoryFlags) == 0 {
 			return errors.New("opening escort is invalid")
 		}
+		if err := p.validateOpeningHome(e); err != nil {
+			return err
+		}
 		if e.ArrivalEvidence.Level != "D3" {
 			return errors.New("opening escort arrival requires D3 evidence")
 		}
@@ -2776,6 +2772,9 @@ func absTileDifference(a, b int) int {
 }
 
 func (p *Pack) validateOpeningPreludeRefs() error {
+	if err := p.validateOpeningHomeRefs(); err != nil {
+		return err
+	}
 	e := p.Interface.OpeningPrelude
 	if e == nil {
 		return nil

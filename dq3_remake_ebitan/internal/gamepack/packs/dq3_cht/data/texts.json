@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -2649,6 +2649,81 @@
         "consumer": "原版 handler54 自然入口，37步雙角色帶路，單一record80，最後三步後交易旗標",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "raw glyph_codes 與自然consumer全部36words含EOF吻合；value沿用既有未完整考訂字形轉錄，不作runtime缺字fallback。"
+      }
+    },
+    {
+      "id": "dq3:text.opening.picture_top",
+      "value": "原版圖像選擇視窗top",
+      "glyph_codes": [47, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 21,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 476
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + dosgolem mother_home_contract",
+        "address_space": "linear",
+        "address": "0x100D5;0x167C5;0x16F4B..0x1702E;0x21DDC..0x22016;0x1010B",
+        "consumer": "正常房間EOF、母親16動作、圖像選擇、手動接近",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定狀態及輸入；完整RGB與硬體wall-clock另列限制。"
+      }
+    },
+    {
+      "id": "dq3:text.opening.picture_body",
+      "value": "原版圖像選擇視窗body",
+      "glyph_codes": [54, 12, 12, 12, 12, 12, 706, 706, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 54],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 21,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 466
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + dosgolem mother_home_contract",
+        "address_space": "linear",
+        "address": "0x100D5;0x167C5;0x16F4B..0x1702E;0x21DDC..0x22016;0x1010B",
+        "consumer": "正常房間EOF、母親16動作、圖像選擇、手動接近",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定狀態及輸入；完整RGB與硬體wall-clock另列限制。"
+      }
+    },
+    {
+      "id": "dq3:text.opening.picture_bottom",
+      "value": "原版圖像選擇視窗bottom",
+      "glyph_codes": [50, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 51],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 21,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 467
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + dosgolem mother_home_contract",
+        "address_space": "linear",
+        "address": "0x100D5;0x167C5;0x16F4B..0x1702E;0x21DDC..0x22016;0x1010B",
+        "consumer": "正常房間EOF、母親16動作、圖像選擇、手動接近",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定狀態及輸入；完整RGB與硬體wall-clock另列限制。"
       }
     }
   ]

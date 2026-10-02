@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 主機僅做 Docker／Git 控制；探測、建置、測試與輸出全部在容器內。
-# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original]
+# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original]
 # 預設重生主選單／初始命名並比較正式畫面；--prototype 僅驗證歷史 DRAFT。
 # --navigation 重生兩條命名收據，驗證六次方向與四次功能輸入的狀態及完整畫布。
 # --creation 重生固定種子創角，驗證命名／性別、能力交易與等待／確認完整畫面。
@@ -9,11 +9,13 @@
 # --mother-entry-original 只重生原版37次正常輸入的母親入口收據，不宣稱remake對拍通過。
 # --mother-finish-original 延伸至城門確認、後三步與旗標返回，仍只重生原版。
 # --mother-home-original 重生家中人物、選圖原始資料與正常接近，逐項驗證原版收據。
+# --mother-home-contract-original 另讀取獨立圖像初始化的自然BIOS時鐘。
+# --mother-home-navigation-original 驗證Escape選定當前選項與四方向環繞，仍只重生原版。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"
 MODE="${2:-production}"
-case "$MODE" in production|--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original) ;; *) echo '未知驗證模式；請依檔首列出的模式選擇' >&2; exit 1;; esac
+case "$MODE" in production|--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original) ;; *) echo '未知驗證模式；請依檔首列出的模式選擇' >&2; exit 1;; esac
 for path in "$ROOT" "$SOURCE" "$ROOT/assets_raw" "$ROOT/work" "$ROOT/work/dosgolem-opening" "$ROOT/work/.gocache-test" "$ROOT/work/.gopath-test"; do
   test -d "$path" || { echo "目錄不存在：$path" >&2; exit 1; }
 done
@@ -31,6 +33,8 @@ test "$MODE" != --birthday-pages || LIMIT=420
 test "$MODE" != --mother-entry-original || LIMIT=720
 test "$MODE" != --mother-finish-original || LIMIT=840
 test "$MODE" != --mother-home-original || LIMIT=720
+test "$MODE" != --mother-home-contract-original || LIMIT=840
+test "$MODE" != --mother-home-navigation-original || LIMIT=900
 timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
   --memory 4g --cpus 2 --pids-limit 192 -u "$(id -u):$(id -g)" \
   -v "$ROOT:/repo:ro" -v "$ROOT/work:/work" -v "$SOURCE:/dosgolem:ro" \
@@ -55,6 +59,14 @@ timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
       DQ3_NEWGAME_PROBE_SCENARIO=opening_accept python3 /repo/tools/dosgolem_newgame_probe.py
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --birthday-pages; then
       DQ3_NEWGAME_PROBE_SCENARIO=birthday_continue python3 /repo/tools/dosgolem_newgame_probe.py
+    elif test "$DQ3_NEWGAME_VERIFY_MODE" = --mother-home-contract-original; then
+      DQ3_NEWGAME_PROBE_SCENARIO=mother_home_contract python3 /repo/tools/dosgolem_newgame_probe.py
+      python3 /repo/tools/verify_dosgolem_home_entry.py --receipt /work/dosgolem-opening/issue4-home-contract-receipt.json --output /work/issue4-home-contract-source-audit.json
+      exit 0
+    elif test "$DQ3_NEWGAME_VERIFY_MODE" = --mother-home-navigation-original; then
+      DQ3_NEWGAME_PROBE_SCENARIO=mother_home_navigation python3 /repo/tools/dosgolem_newgame_probe.py
+      python3 /repo/tools/verify_dosgolem_home_entry.py --receipt /work/dosgolem-opening/issue4-home-navigation-receipt.json --output /work/issue4-home-navigation-source-audit.json
+      exit 0
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --mother-home-original; then
       DQ3_NEWGAME_PROBE_SCENARIO=mother_home_entry python3 /repo/tools/dosgolem_newgame_probe.py
       python3 /repo/tools/verify_dosgolem_home_entry.py --output /work/issue4-home-source-evidence-receipt.json
