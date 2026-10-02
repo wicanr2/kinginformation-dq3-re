@@ -1,5 +1,71 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+## 2026-10-02：生日續頁與出生時序（DRAFT，正式紅測試已重現）
+
+工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，正式程式基準
+`53fb722159b25e007ef6c0498187a366eacb14c0`。首頁22張既有驗收保持通過；本節記錄
+首頁之後的新反證，不推翻下方首頁限定CONFORMED，也不以舊母親E3代替原版對拍。
+
+從原版冷啟動重播既有17次IRQ1輸入，第18次Enter在步數1,220,000,000，
+第19次Enter在1,340,000,000；全部19次make/break共38次均在擷取前送達。
+種子只在自然Lv1入口預先固定0x1357一次，沒有入口跳轉、座標／旗標／文字狀態注入。
+唯讀呼叫觀測只列原始IDA位址、暫存器與DGROUP欄位，沒有增加原版寫入。
+
+| 原始定位／動態步數 | 附加語意 | 等級與限制 |
+|---|---|---|
+| `sub_21414` linear `0x21462..0x21467`／file `0x127d2..0x127d7` → linear `0x21558..0x2157b`／file `0x128c8..0x128eb` | record82的`0xfffc`在目前行之後等待，再返回同一文字consumer；不是清框重新開獨立文字頁 | strong；分支、row writer與consumer已取得，完整中間捲動畫面仍待核對 |
+| linear `0x216c3..0x21726`／file `0x12a33..0x12a96`，等待返回在步數1,220,000,367 | 第18次正常Enter解除生日內嵌等待 | confirmed；自然呼叫觀測與原版完整畫布閉合，未外推其他按鍵 |
+| linear `0x21501..0x21534`／file `0x12871..0x128a4` → `sub_219F4` | `0xffff`結束分支在row=3時捲動後返回，沒有另一個按鍵等待 | strong；IDA資料庫原始指令與caller；沒有為硬體timer再開driver研究 |
+| linear `0x100ab`／file `0x141b`，步數1,221,840,427 | 生日record82返回caller，seed仍0x356D | confirmed；同一次正常Enter之後，沒有追加生日結束鍵 |
+| linear `0x100b5..0x100c1`／file `0x1425..0x1431` → `sub_11900`，linear `0x100c4`／file `0x1434`，步數1,222,328,466 | 生日返回後才寫DGROUP4F33／4F35為5、5，再消費場景；下一段文字之前重建共用視窗 | confirmed；writer／consumer與純讀取動態觀測，不把生日前raw15、22解讀成已確認場景座標 |
+| linear `0x100cd..0x100d0`／file `0x143d..0x1440`，下一次內嵌等待步數1,224,373,605 | 同一次第18次Enter後，房間已出現，record83停在其內嵌等待 | confirmed；D3TXT01 record83與完整原版畫面；未宣稱重製房間像素已一致 |
+| linear `0x100d5`／file `0x1445`，步數1,342,465,423；linear `0x100e9`／file `0x1459`；linear `0x100fa`／file `0x146a` | 第19次Enter後record83返回，進NPC consumer與record81，再返回開場caller | strong；有自然呼叫觀測，但後續畫面的渲染正確性、母親移動與同狀態關係尚未閉合 |
+
+原始輸入：`assets_raw/DQ3.EXE`，115,282bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；
+`assets_raw/D3TXT01.TXT`，6,420bytes，SHA-256
+`4d0f78b20f123a986feb9af62845183213adee6881e953825eb74678abce8271`。
+record82的file範圍`0x1426..0x1462`、record83 `0x1462..0x14ac`均含一個`0xfffc`與末端`0xffff`；
+record81 `0x1402..0x1426`沒有`0xfffc`。這些是TXT file offset，不能和EXE或IDA位址混用。
+IDA Pro9.4、MZ file=`linear−0xEC90`，DGROUP base linear`0x24dd0`，
+runtime physical=`linear−0xef00`。新sidecar `work/issue4-birthday-pages-text-ida.json`：
+769,130bytes，SHA-256 `690857dc7e26685c3fd0f05998b2d902c0a8307fa95d91b2d9cde2bc90416140`，
+同列保存原名、定位、MZ file bytes、loaded bytes、xref與分級，沒有rename或修改原檔。
+
+唯讀flow收據 `work/dosgolem-opening/issue4-archive-f8752bdf2c4e8d333c53b05bd591ccd211d34d6f16c516fde8643db0f06790df.json`，
+24,493bytes，SHA-256 `f8752bdf2c4e8d333c53b05bd591ccd211d34d6f16c516fde8643db0f06790df`。
+原始19次輸入、IRQ1、flow、生成腳本原文與所有圖像雜湊都保留；後續重生不覆寫唯一歷史收據。
+執行器唯讀revision為`2f44a68ebfc54b28fb15dd4a34510b0b04a5415d`，
+image為`dq3-ebiten-test:20260822-r1`，Go1.24.13；檔名／BIOS色盤修正仍在一次性工作副本內。
+
+正式紅測試只透過`InputState`與空白更新等待文字穩定；不得因對話剛關閉便比較暫態黑畫面。
+第18次輸入後，重製仍停在生日buffer pos15，完整640×350 RGB差異170,238像素；
+第19次輸入後，重製才進record83，差異198,874像素。後者與原版已到後續caller的狀態不同，
+只作診斷，不當成兩側相同record的繪圖parity。首頁兩張仍零差異，19次收據的創角8張也通過。
+原版房間與目前重製房間還有視野原點、外部底色、文字布局與框線差異；截圖只是定位線索，
+正式geometry仍須由場景／視窗writer-consumer閉合後才可放進JSON。
+
+本節尚未READY：需補齊共享文字流的保留／捲動範圍、出生場景視野consumer與後續NPC事件，
+再以可丟棄試作核對第18次輸入的完整畫布，審查有限game-pack契約。
+正式修正需同時移除多餘生日EOF等待、維持可見文字順序、在生日返回後才交易出生場景，
+並由正常輸入驗證下一個等待點；未知不可在Go或JSON中猜補。
+目前沒有更改production或schema/content，仍為0.1.58／0.1.64。
+重生入口：`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`；
+它必跑同批創角與續頁正式比較，未修正前預期退出1。既有首頁入口`--opening`維持綠色。
+
+上述有界入口已實際冷啟動重跑，退出1來自已記錄的兩個續頁差異，創角8張通過。
+與前一次唯讀flow冷啟動相比，27張原版PNG與色號位元組的雜湊、38次IRQ1及16筆flow全部相同。
+最終原版收據`work/dosgolem-opening/issue4-birthday-pages-receipt.json`為24,493bytes，SHA-256
+`7fd546d5b73a65933c5ddd24a34988bef4ca49df18d01074e082e692dce0417c`。
+整批私有證據`work/issue4-birthday-pages-evidence-receipt.json`為2,999bytes，SHA-256
+`e24ffc33a19413e15e91718c2ef3ff3d2d8f3fe7d943b1c6e67482ab7b7d8e32`，狀態為`known_mismatch`。
+原版素材、圖片、state、database與完整收據不入Git或公開Issue附件。
+
+已審查的返回／出生交易亦回填自動匯出索引，保留先前strong與unknown收據作歷史。
+新增`work/issue4-birthday-pages-reviewed-ida.json`為1,380,185bytes，SHA-256
+`82803df5acaa0c31986f670b6fa2566603062ba39cae63834d66b409e21f138d`。
+confirmed只限表中自然輸入後的返回、5／5交易與record83等待；捲動畫面與房間渲染仍未升級。
+
 ## 2026-10-01：接受角色後的生日旁白（CONFORMED，首頁限定）
 
 工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，目前主線基準

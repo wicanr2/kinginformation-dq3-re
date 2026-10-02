@@ -3,6 +3,11 @@
 日期：2026-08-25。本文件勘誤 `docs/188` 把開場城門提示描述成單一 rec80 的舊結論；
 原始位址與舊證據仍保留，新增證據只附加語意，不以 rename 取代定位。
 
+2026-10-02補記：生日record82／家中record83的`0xfffc`是同一文字consumer內嵌等待，
+不是EOF後再等待一鍵；`0xffff`於生日row3捲動後直接返回，原版第18次Enter已進家中。
+冷啟動動態閉合、原始定位與正式紅測試見[docs/188](188-opening-escort-to-castle-spec.md)最新DRAFT。
+本文件的舊版面與「逐頁關閉」不能代替該續頁規格，也不外推其他尚未重驗record。
+
 ## 輸入與工具
 
 - 原版：`dq3_remake_ebitan/mobile/assets/DQ3.EXE`，115282 bytes，SHA-256

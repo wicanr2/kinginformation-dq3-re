@@ -30,14 +30,27 @@ INPUT_BLOB = b""
 INPUT_PATH = ""
 REVIEW_LEDGER = [
     (0x10077, 0x100ab, "strong", "創角返回後清畫面、開共用視窗、消費生日文字；只閉合首頁"),
-    (0x100b5, 0x100c4, "strong", "生日文字返回後寫DGROUP4F33/4F35=5,5並呼叫場景consumer；下一畫面待動態驗收"),
+    (0x100ab, 0x100ae, "confirmed", "第18次正常Enter後生日consumer已返回；未追加EOF按鍵，限定出生交易順序"),
+    (0x100b5, 0x100c4, "confirmed", "生日返回後才寫DGROUP4F33/4F35=5,5並呼叫11900；房間渲染未對拍"),
+    (0x100cd, 0x100d5, "confirmed", "同一次第18次Enter後消費record83並抵達內嵌等待；限自然固定seed創角"),
     (0x15002, 0x15010, "strong", "共用DGROUP3E6E視窗caller；生日首頁record404字模框已逐點閉合"),
     (0x20a07, 0x20a3a, "strong", "四平面清零writer；生日首頁黑底由自然輸入動態閉合，不外推其他caller"),
     (0x214f8, 0x21501, "strong", "一般字模SI+=2、BP+=3，即24px步距；生日首頁已閉合"),
     (0x215b7, 0x215ce, "strong", "0xfff5姓名插值後只越過控制碼本身；下一word不是參數"),
+    (0x21514, 0x21530, "strong", "row3的EOF分支捲動後返回，沒有按鍵等待；生日自然caller已閉合"),
+    (0x21558, 0x2157e, "strong", "0xfffc推進行並等待，再續寫同一文字流；保留／捲動完整畫面未閉合"),
     (0x21651, 0x216bf, "strong", "姓名consumer保存並還原SI；BP增加名字長度乘3；生日姓名0已閉合"),
     (0x28c3e, 0x28c4a, "confirmed", "raw共用視窗前12bytes及record404字模畫布；限定自然生日首頁，其他欄位／場景未外推"),
 ]
+CONTINUATION_RANGES = {0x100ab, 0x100b5, 0x100cd, 0x21514, 0x21558}
+
+
+def review_evidence(start):
+    if start in CONTINUATION_RANGES:
+        return ("docs/188：2026-10-02續頁DRAFT的已審查RE；原版19次IRQ1／38次送達與純讀取flow，"
+                "收據SHA-256 f8752bdf2c4e8d333c53b05bd591ccd211d34d6f16c516fde8643db0f06790df；"
+                "原始bytes／database xref；不代表production或房間渲染已符合")
+    return "docs/188：2026-10-01有限首頁READY；固定seed冷啟動17次IRQ1與完整畫布核對；原始bytes／database xref"
 
 
 def clean_line(ea):
@@ -74,7 +87,7 @@ def item_record(ea):
         if start <= ea < end:
             result.update(inference_level=level, semantic=semantic,
                           reviewed_range={"ida_linear_start": hex(start), "ida_linear_end_exclusive": hex(end)},
-                          evidence="docs/188：2026-10-01有限首頁READY；固定seed冷啟動17次IRQ1與完整畫布核對；原始bytes／database xref")
+                          evidence=review_evidence(start))
             result["warning"] = "" if level == "confirmed" else "⚠ " + level + "：未達已證實，不能外推未驗收玩家路徑"
             break
     return result
@@ -165,7 +178,7 @@ def main():
         "instructions": instructions,
         "review_ledger": [{"ida_linear_start": hex(a), "ida_linear_end_exclusive": hex(b),
                            "inference_level": level, "semantic": semantic,
-                           "evidence": "docs/188：2026-10-01有限首頁READY"}
+                           "evidence": review_evidence(a)}
                           for a, b, level, semantic in REVIEW_LEDGER],
         "related_functions": related_functions,
         "raw_windows": [{**item_record(ea), "length_bytes": 30,

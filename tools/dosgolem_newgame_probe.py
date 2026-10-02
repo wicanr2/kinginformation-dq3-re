@@ -10,11 +10,12 @@ repo = Path('/repo')
 out = Path('/work/dosgolem-opening')
 generation_script = Path(__file__).read_bytes()
 scenario = os.environ.get('DQ3_NEWGAME_PROBE_SCENARIO', 'initial')
-creation_scenarios = ('name_creation', 'opening_accept')
+creation_scenarios = ('name_creation', 'opening_accept', 'birthday_continue')
 assert scenario in ('initial', 'name_navigation', 'name_function_mode') + creation_scenarios, scenario
 prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
           'name_function_mode':'issue4-mode', 'name_creation':'issue4-creation',
-          'opening_accept':'issue4-opening'}[scenario]
+          'opening_accept':'issue4-opening',
+          'birthday_continue':'issue4-birthday-pages'}[scenario]
 keys = [(710000000, 0x1c), (731000000, 0x1c)]
 captures = [(729000000, 'menu'), (740000000, 'create'),
             (750000000, 'final' if scenario == 'initial' else 'initial')]
@@ -51,12 +52,19 @@ if scenario in creation_scenarios:
     keys += [(1060000000,0x1c)]
     captures += [(1051000000,'ability-waiting'),(1071000000,'ability-confirm')]
     stop = 1080000000
-if scenario == 'opening_accept':
+if scenario in ('opening_accept', 'birthday_continue'):
     # 第17次正式 Enter 接受角色；後續只觀察，不寫入出生位置或故事狀態。
     keys += [(1100000000, 0x1c)]
     captures += [(1111000000, 'accepted'), (1151000000, 'birthday-wait'),
                  (1191000000, 'stable')]
     stop = 1200000000
+if scenario == 'birthday_continue':
+    # 在已自然抵達的生日等待狀態追加兩次Enter；未知續頁不預先命名為房間。
+    keys += [(1220000000, 0x1c), (1340000000, 0x1c)]
+    captures += [(1231000000, 'continue-1'), (1271000000, 'continue-1-wait'),
+                 (1311000000, 'continue-1-stable'), (1351000000, 'continue-2'),
+                 (1391000000, 'continue-2-wait'), (1431000000, 'continue-2-stable')]
+    stop = 1440000000
 assert out.is_dir() and out.stat().st_uid == os.getuid()
 exe = repo / 'assets_raw/DQ3.EXE'
 assert len(exe.read_bytes()) == 115282
@@ -155,6 +163,23 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         marker = '\tfor m.Steps < *steps && !m.CPU.Halted && !d.Exited {\n'
         assert probetext.count(marker)==1
         probetext=probetext.replace(marker,'\tvar dq3SeedApplied, dq3AbilityRNG bool\n'+marker+seed_hook,1)
+    if scenario == 'birthday_continue':
+        # 唯讀觀測IDA已定位的caller與文字等待；raw欄位不在探測器猜命名。
+        flow_hook = r"""
+        flowPC := uint32(m.CPU.Seg[cpu.CS])*16+uint32(m.CPU.IP)+0xef00
+        if dq3SeedApplied {
+            switch flowPC {
+            case 0x100ab, 0x100b5, 0x100c4, 0x100d5, 0x100d8, 0x100e9, 0x100fa,
+                 0x21558, 0x21501, 0x216c3, 0x21726:
+                ds := m.CPU.Seg[cpu.DS]
+                fmt.Printf("DQ3_BIRTHDAY_FLOW step=%d ida_linear=%05x DS=%04x SI=%04x BP=%04x DX=%04x raw259b=%d raw0716=%04x raw0718=%04x raw4f33=%d raw4f35=%d seed=%04x\n",
+                    m.Steps,flowPC,ds,m.CPU.R[cpu.SI],m.CPU.R[cpu.BP],m.CPU.R[cpu.DX],
+                    m.Read8(cpu.Addr(ds,0x259b)),m.Read16(cpu.Addr(ds,0x0716)),m.Read16(cpu.Addr(ds,0x0718)),
+                    m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),m.Read16(cpu.Addr(ds,0x0b5a)))
+            }
+        }
+"""
+        probetext = probetext.replace(marker, marker + flow_hook, 1)
     probe.write_text(probetext)
     subprocess.run(['gofmt','-w',str(probe)],cwd=src,check=True)
     binary = out / (prefix.replace('issue4-', 'issue4-probe-'))
@@ -180,7 +205,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     (out / f'{prefix}-generation.py').write_bytes(generation_script)
     print('原版自然探測開始',flush=True)
     with (out / f'{prefix}.log').open('w') as log:
-        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=180)
+        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=240 if scenario == 'birthday_continue' else 180)
     print('原版探測結束',result.returncode,flush=True)
     lines = (out / f'{prefix}.log').read_text().splitlines()
     assert result.returncode == 0
@@ -207,7 +232,8 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     expected_cursors = {'initial':[0,0,0], 'name_navigation':[0,0,0,44,0,36,0,44,43,43,0],
                         'name_function_mode':[0,0,0,36,35,35,35],
                         'name_creation':[0,0,0,36,35,35,35],
-                        'opening_accept':[0,0,0,36,35,35,35]}[scenario]
+                        'opening_accept':[0,0,0,36,35,35,35],
+                        'birthday_continue':[0,0,0,36,35,35,35]}[scenario]
     observations = [re.search(r'DS=([0-9a-f]+) raw_cursor=(\d+) name_mode=([0-9a-f]+)', line)
                     for line in meta['name_observations']]
     assert len(observations) == len(captures) and all(observations)
@@ -238,9 +264,12 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     meta['scope'] = '只到主選單及命名導航／模式選擇；沒有創角能力、出生點或母親開場 parity'
     if scenario in creation_scenarios:
         meta['scope']='固定原版測試種子後，自然創角能力的原版收據；尚未與重製對拍，母親仍未知'
-    if scenario == 'opening_accept':
+    if scenario in ('opening_accept', 'birthday_continue'):
         meta['scope']='冷啟動17次正式IRQ1輸入，固定創角種子並正常接受角色後的原版畫面；出生位置與母親開場尚未對拍'
         meta['observation_contract']['post_creation_cursor_semantics'] = '創角後僅保留原始欄位值，不將命名游標解讀為場景狀態'
+    if scenario == 'birthday_continue':
+        meta['scope']='冷啟動19次正式IRQ1輸入，創角種子固定一次，再正常接受角色與兩次生日續頁；續頁與下一場景尚待重製比較'
+        meta['birthday_flow_events'] = [line for line in lines if line.startswith('DQ3_BIRTHDAY_FLOW ')]
     meta['artifacts'] = []
     artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log', f'{prefix}-generation.py']
     for name in artifact_names:

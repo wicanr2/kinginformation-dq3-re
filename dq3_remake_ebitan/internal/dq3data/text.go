@@ -9,7 +9,7 @@ const (
 	GlyphPx  = 16
 	TxtNL    = 0xfffe // 換行
 	TxtNL2   = 0xfffd
-	TxtPage  = 0xfffc // 換頁
+	TxtPage  = 0xfffc // 歷史引擎視為換頁；原版生日是內嵌等待後續寫，docs/188 DRAFT。
 	TxtEnd   = 0xffff // 記錄結束
 	txtVarLo = 0xffed // >= 此值 = 控制/插值占位(渲染為空白)
 	GlyphMax = 1476   // >= 此值不畫(非字模)

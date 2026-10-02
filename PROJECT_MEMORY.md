@@ -1,5 +1,11 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-02：Issue #4的生日續頁正式紅測試已重現。原版第18次Enter後讀完生日文字，
+> 隨即寫出生座標5、5並進家中record83；重製多停一頁，170,238像素差異。
+> docs/188新節維持DRAFT；下一步補文字保留／捲動與場景視野consumer，試作後再審查READY。
+> 既有22張正式對拍保持通過，production與schema/content未改；不能用第19次額外Enter替代修正。
+> 冷啟動19次輸入與唯讀flow入口為`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`，目前預期紅測試退出1。
+
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
 > 接受角色後的生日首頁已修正：黑底、完整record404字模框、24px字距、獨立姓名插值，
 > 避免提前顯示房間與吞掉「16歲」的十位字模。從冷啟動17次真實IRQ1、固定seed1357一次，

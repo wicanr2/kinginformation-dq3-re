@@ -1,5 +1,14 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)從冷啟動19次IRQ1
+取得生日續頁反證：第18次Enter後原版已返回生日consumer、寫出生座標5、5並顯示家中record83，
+重製仍停生日pos15，完整RGB差異170,238像素。唯讀flow與IDA9.4證據見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+續頁規格DRAFT，尚未更改production／schema；既有22張首頁以前的正式對拍本輪仍通過。
+下一步補共享文字流保留／捲動與場景視野consumer，試作核對後審查READY；不以多按一次Enter掩蓋差異。
+重生入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`預期退出1，
+同批創角8張保持通過；後續母親畫面不能由尚未同狀態的第19次輸入結果宣稱parity。
+最近完整主線／internal／桌面驗收仍為下方53fb722生日首頁切片，本輪只改探測與正式紅測試。
+
 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
 接受角色後的生日首頁已修正：黑底、完整record404字模框、24px字距、獨立姓名插值，
 避免提前顯示房間與吞掉「16歲」的十位字模。從冷啟動17次真實IRQ1、固定seed1357一次，
@@ -37,10 +46,11 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 正式路線回歸的收據與演進依 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)，
 詳見 [WORKLOG.md](WORKLOG.md)。下一步恢復原版創角後的 dosgolem 玩家路徑對拍。
 
-| 目前狀態（2026-10-01） | 最近驗收與界線 |
+| 目前狀態（2026-10-02） | 最近驗收與界線 |
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.58／content 0.1.64；未發布新包 |
 | 最新繪圖切片已完成 | Issue #4共22張正式畫面全畫布零差異，生日首頁限定CONFORMED；能力等待／確認與固定seed Lv1交易保持通過；docs/188 |
+| 最新原版反證 | 第18次Enter後原版已進家中，重製多停生日頁；170,238像素差異，續頁DRAFT；19次IRQ1／38次送達、純讀取flow與IDA9.4側錄閉合返回時序，docs/188 |
 | 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
 | 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、生日續頁／箭頭、出生時序／母親與完整 campaign；時間只採硬體規格近似 |
 | 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |

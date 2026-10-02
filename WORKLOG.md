@@ -372,3 +372,50 @@ xref與逐項分級均正確。改為由指定target產生file0x13a0／linear0x1
 容器重生補充收據work/issue4-birthday-reviewed-final-ida.json（1,369,167bytes；SHA-256
 f9f2ae6ec39d7db880b7e028507a3eb31947025e1f58a46d45dd6845cdc27cea）。
 舊收據及整批驗收雜湊保持原樣，docs/188追加勘誤；沒有改動遊戲行為或提升語意等級。
+
+## 2026-10-02 — Issue #4 生日續頁正式紅測試與出生返回證據
+
+接續53fb722，從未修改原版冷啟動重播17次IRQ1，再於1,220,000,000與1,340,000,000步
+送兩次正常Enter；19次make/break共38次在擷取前送達。種子在自然Lv1入口固定1357一次，
+沒有座標、旗標、文字或入口注入。追加純讀取IDA已定位caller與等待事件，不改原版狀態。
+
+原版第18次Enter後，birthday consumer返回linear100AB，才寫DGROUP4F33／4F35=5、5，
+經11900與15002後在家中record83的內嵌等待停下。Go仍停生日pos15，多要求一個EOF按鍵；
+完整640×350 RGB差異170,238像素。第19次原版已走向後續NPC／record81，Go才進record83，
+差異198,874像素；兩側record狀態不同，只記診斷，不宣稱同record繪圖parity。
+
+IDA Pro9.4新sidecar非空、輸入115282bytes／SHA及位址基準均驗證。FFFC在共用consumer內
+等待後續寫；FFFF於row3捲動後返回，沒有另一個按鍵等待。docs/188追加帶原始bytes定位、
+動態步數與confirmed／strong分級的DRAFT，docs/192追加反向入口；生日前raw15、22沒有被
+猜成場景座標。共享文字捲動與出生視野writer／consumer尚需補證，不能把截圖目測寫進pack。
+
+工具新增birthday_continue情境與--birthday-pages有界入口；正式測試由原版收據的19次輸入
+與正常空白InputState重播，等待文字穩定後比較，沒有debug狀態捷徑。實際wrapper冷啟動
+重跑退出1為已知續頁紅測試，創角8張保持通過；與前一次冷啟動的27張PNG／色號、IRQ1與
+16筆唯讀flow逐項一致。既有主選單／導航／創角／生日首頁22張仍零差異；Go測試可建置，
+Python與shell語法檢查通過。本輪未改production或schema/content，未重跑完整game／internal／
+桌面；最近完整驗收仍為53fb722生日首頁切片，不把局部驗收升格為campaign原版對拍。
+
+最初新增情境漏列收據cursor檢核分支，原版已正常完成而Python收尾報KeyError；修正後
+在同一容器與固定輸入乾淨重跑，保留第一次產物。第一版比較在Go剛關閉文字時取到暫態
+黑畫面；改用正常空白更新完成下一段轉移後，差異數改為198,874並保留兩份日誌。
+映像Entrypoint欄位查詢與技能symlink容器路徑問題均已修正；沒有新增image或退回主機分析。
+
+原版最終收據24,493bytes／SHA-256
+7fd546d5b73a65933c5ddd24a34988bef4ca49df18d01074e082e692dce0417c；整批私有證據
+work/issue4-birthday-pages-evidence-receipt.json為2,999bytes／SHA-256
+e24ffc33a19413e15e91718c2ef3ff3d2d8f3fe7d943b1c6e67482ab7b7d8e32，明列known_mismatch。
+歷史flow收據按內容hash保存，重生不覆寫唯一證據。CONTEXT、PROJECT_MEMORY、docs/74與
+WORKLIST同步目前DRAFT及下一步；README原有「續頁尚未完成」摘要仍正確，未加入流水帳。
+
+所有本批產物與修改檔UID/GID1000；一次性Docker容器完成後清理，歷史root候選3213，
+沒有.md誤掛載目錄，不廣域修復。原版EXE／TXT／FON、dosgolem唯讀上游及使用者scratch／
+Android libs保持原樣；圖片、state、database與完整收據不納入Git或公開Issue附件。
+本批提交／推送及精確HEAD回填Issue #4，仍保持開啟；下一步補場景視野與文字捲動證據，
+試作與READY審查後修正正式續頁及出生交易，不能用額外按鍵掩蓋差異。
+
+已動態審查的返回／出生交易回填自動語意索引，confirmed限於第18次自然Enter後的caller、
+5／5交易與record83等待，不提升房間渲染；舊strong側錄保留。新reviewed sidecar
+work/issue4-birthday-pages-reviewed-ida.json為1,380,185bytes／SHA-256
+82803df5acaa0c31986f670b6fa2566603062ba39cae63834d66b409e21f138d，原始bytes／分級／
+出處與反向入口檢查通過。沒有以工具內名稱或database本身代替證據。

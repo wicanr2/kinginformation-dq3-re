@@ -46,7 +46,8 @@ func newProductionTraceGame(assets fs.FS) (*Game, error) {
 // 不直接呼叫 startOpening，也不改角色座標、對話位置或故事旗標。
 func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 	dir := os.Getenv("DQ3_DOSGOLEM_NEWGAME_DIR")
-	if os.Getenv("DQ3_DOSGOLEM_OPENING_COMPARE") != "1" || dir == "" {
+	pages := os.Getenv("DQ3_DOSGOLEM_BIRTHDAY_COMPARE") == "1"
+	if (os.Getenv("DQ3_DOSGOLEM_OPENING_COMPARE") != "1" && !pages) || dir == "" {
 		t.Skip("需明確啟用 dosgolem 冷啟動接受角色收據比較")
 	}
 	var receipt struct {
@@ -70,14 +71,18 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 			Size int    `json:"size"`
 		} `json:"artifacts"`
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "issue4-opening-receipt.json"))
+	prefix, scenario := "issue4-opening", "opening_accept"
+	if pages {
+		prefix, scenario = "issue4-birthday-pages", "birthday_continue"
+	}
+	data, err := os.ReadFile(filepath.Join(dir, prefix+"-receipt.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := json.Unmarshal(data, &receipt); err != nil {
 		t.Fatal(err)
 	}
-	if receipt.Scenario != "opening_accept" || receipt.OriginalSize != 115282 ||
+	if receipt.Scenario != scenario || receipt.OriginalSize != 115282 ||
 		receipt.OriginalSHA != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" ||
 		receipt.Revision != "2f44a68ebfc54b28fb15dd4a34510b0b04a5415d" ||
 		receipt.StateInjection == nil || *receipt.StateInjection ||
@@ -86,6 +91,9 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 		t.Fatal("接受角色原版收據來源、固定種子或非注入前提不符")
 	}
 	want := []string{"0x1c", "0x1c", "0x48", "0x4b", "0x1c", "0x1c", "0x4d", "0x50", "0x1c", "0x48", "0x4b", "0x1c", "0x48", "0x1c", "0x1c", "0x1c", "0x1c"}
+	if pages {
+		want = append(want, "0x1c", "0x1c")
+	}
 	if len(receipt.Inputs) != len(want) || len(receipt.Artifacts) == 0 {
 		t.Fatal("原版17次正常輸入或圖像索引缺失")
 	}
@@ -109,7 +117,7 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.prng.Seed(0x1357)
-	for i, input := range receipt.Inputs {
+	for i, input := range receipt.Inputs[:17] {
 		if input.Scan != want[i] {
 			t.Fatalf("第%d次原版輸入不符", i+1)
 		}
@@ -150,11 +158,37 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 		t.Fatal("接受角色或旁白等待消耗了創角之後的RNG")
 	}
 	for _, name := range []string{"accepted", "stable"} {
-		original := "issue4-opening-" + name + ".png"
+		original := prefix + "-" + name + ".png"
 		if !indexed[original] {
 			t.Fatal("原版生日首頁未登記")
 		}
-		compareDosgolemRasterFrame(t, g, dir, original, "issue4-opening-remake-"+name+".png", "opening-"+name)
+		compareDosgolemRasterFrame(t, g, dir, original, prefix+"-remake-"+name+".png", "opening-"+name)
+	}
+	if pages {
+		for i, input := range receipt.Inputs[17:] {
+			if input.Scan != want[17+i] {
+				t.Fatal("生日續頁原版輸入不符")
+			}
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}); err != nil {
+				t.Fatal(err)
+			}
+			for tick := 0; tick < 2000; tick++ {
+				if g.dlg.open && g.dlg.revealCells >= g.dlg.pageCellCount() {
+					break
+				}
+				if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+					t.Fatal(err)
+				}
+			}
+			g.renderFrame()
+			t.Logf("生日續頁%d：dialogue=%v pos=%d reveal=%d seed=%04x", i+1, g.dlg.open, g.dlg.pos, g.dlg.revealCells, g.prng.State())
+			name := fmt.Sprintf("continue-%d-stable", i+1)
+			original := prefix + "-" + name + ".png"
+			if !indexed[original] {
+				t.Fatal("原版生日續頁未登記")
+			}
+			compareDosgolemRasterFrame(t, g, dir, original, prefix+"-remake-"+name+".png", name)
+		}
 	}
 }
 
@@ -194,6 +228,9 @@ func TestDosgolemNewGameCreationComparison(t *testing.T) {
 	prefix, scenario, inputCount := "issue4-creation", "name_creation", 16
 	if os.Getenv("DQ3_DOSGOLEM_OPENING_COMPARE") == "1" {
 		prefix, scenario, inputCount = "issue4-opening", "opening_accept", 17
+	}
+	if os.Getenv("DQ3_DOSGOLEM_BIRTHDAY_COMPARE") == "1" {
+		prefix, scenario, inputCount = "issue4-birthday-pages", "birthday_continue", 19
 	}
 	blob, err := os.ReadFile(filepath.Join(dir, prefix+"-receipt.json"))
 	if err != nil {

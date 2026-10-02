@@ -1,5 +1,14 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> **2026-10-02 最新閘門（Issue #4，生日續頁DRAFT）：**
+> 冷啟動19次IRQ1與純讀取flow確認：第18次Enter後原版生日文字返回，接著寫出生座標5、5，
+> 在家中record83內嵌等待；重製仍停生日pos15，完整畫布差異170,238像素。
+> EOF與內嵌等待不等價，不能靠多按一次Enter近似。第19次輸入的兩側record狀態也已不同，
+> 不把其畫面差異當成相同record的parity。證據與未閉合範圍見[docs/188](188-opening-escort-to-castle-spec.md)。
+> 下一步補共享文字流保留／捲動、出生場景視野consumer與NPC事件，再試作、READY及正式修正。
+> 本輪未改production或schema/content，既有22張對拍保持通過；完整主線與建置最近驗收仍以下方生日首頁切片為準。
+> 入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`已新增，未修正前預期退出1。
+
 > **2026-10-01 最新閘門（Issue #4，生日首頁）：**
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
 > 接受角色後的生日首頁已修正：黑底、完整record404字模框、24px字距、獨立姓名插值，
