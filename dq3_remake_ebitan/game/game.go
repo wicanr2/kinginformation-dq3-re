@@ -2976,19 +2976,19 @@ func (g *Game) renderFrame() {
 	}
 	sc := g.cur
 	g.applyDaynightPalette() // 進城、轉場與讀檔後也依目前 clock 選正確 bank。
-	// 攝影機:主角置中,但夾在地圖邊界內(移植 dq3_scene 的 cam clamp)→ 邊緣不露黑
+	// 已宣告的場景由pack指定camera；其餘場景沿用既有視野。
 	camX := clampi(g.px-ViewCols/2, 0, max0(sc.w-ViewCols))
 	camY := clampi(g.py-ViewRows/2, 0, max0(sc.h-ViewRows))
-	presentation := g.activeOpeningScenePresentation()
-	if presentation != nil {
-		camX, camY = g.px-presentation.Camera.AnchorX, g.py-presentation.Camera.AnchorY
+	camera := g.activeSceneCamera()
+	if camera != nil {
+		camX, camY = g.px-camera.AnchorX, g.py-camera.AnchorY
 	}
 	for cy := 0; cy < ViewRows; cy++ {
 		for cx := 0; cx < ViewCols; cx++ {
 			x, y := camX+cx, camY+cy
 			var idx int
-			if presentation != nil && (x < 0 || y < 0 || x >= sc.w || y >= sc.h) {
-				idx = presentation.Camera.ExteriorTile
+			if camera != nil && (x < 0 || y < 0 || x >= sc.w || y >= sc.h) {
+				idx = camera.ExteriorTile
 			} else {
 				idx = sc.tileIdx(x, y)
 			}

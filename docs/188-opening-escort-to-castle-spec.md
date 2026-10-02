@@ -1,6 +1,6 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
-目前家中正式流程以文末「2026-10-03 正式家中驗收」為準；下列較早DRAFT保留研究歷史。
+目前家中正式流程以「2026-10-03 正式家中驗收」為準，城鎮攝影機見文末最新節；下列較早DRAFT保留研究歷史。
 
 ## 2026-10-02：家中序列與圖像選擇的來源核對及現行試作（DRAFT）
 
@@ -1108,3 +1108,142 @@ game38項及internal4項選用測試未執行，沒有素材缺失跳過，沒�
 有限CONFORMED只涵蓋上述人物狀態、正式輸入、資料、存檔及五個視窗。
 房間261及選圖124個人物像素、城鎮水平視野、音訊、其他接近方向與完整原版campaign仍未通過。
 來源DS13／15／17的後續用途仍unknown；不依數值猜正式規則，也不重開PIT／ISR逐週期研究。
+
+## 2026-10-03 NPC動畫續作（DRAFT）
+
+接續`b7516c5`及Issue #4。問題限房間261與選圖124個人物像素，不重新實作已閉合的家中流程。
+先由原始取圖consumer、DGROUP0004及其writer追查初值與作用範圍，再由dosgolem正常創角重生。
+不指定人物影格，不以裁切或遮罩代替全畫布驗證，未達READY不修改正式動畫。
+非破壞IDA匯出入口為`tools/ida_dump_npc_animation.py`，輸出
+`work/issue4-npc-animation-ida.json`。工具保留原始位址、bytes、xref type及unknown候選；
+未識別函式邊界的區間仍按原始位址匯出，不猜修database。
+原版重生使用`tools/dosgolem_newgame_probe.py`的`mother_home_animation`情境，
+在既有Docker工具鏈將來源掛為`/dosgolem`、repo唯讀、work可寫，設定
+`DQ3_NEWGAME_PROBE_SCENARIO=mother_home_animation`後執行該Python入口。
+輸出沿用`work/dosgolem-opening/issue4-home-animation-*`，37次原有輸入保持。
+可丟棄動畫試作入口為`work/issue4-npc-animation-prototype.py`；固定`b7516c5`唯讀快照，
+從原始六tick翻轉及已觀測頻率計算共用phase，再以正常Enter流程檢查影響。
+試作值僅留隔離副本，尚未進production；原始phase條件、modal保持與存讀檔契約仍須審查。
+
+### 六tick共用phase的有限來源閉合
+
+原版EXE身份、IDA9.4及位址基準沿用本文件。`tools/ida_dump_npc_animation.py`的database
+直接xref只列出DGROUP0004的writer；operand候選另找到缺直接xref的reader，不以空xref推定沒有讀取。
+
+| 原始定位與bytes | 有限結論 | 推論等級 |
+|---|---|---|
+| linear1FE87..1FEA9，file111F7..11219，`83 3E 02 00 06`／`80 36 04 00 01` | word0002累計到6歸零，再翻轉byte0004低位 | confirmed；自然1160次翻轉全部間隔6tick，僅保留已選參數，不深挖ISR或硬體逐週期 |
+| linear11EA7..11ECC，file3217..323C | 原始NPC bank乘8、ctrl低兩位乘2形成base frame | confirmed；原始bytes及取圖前後寄存器閉合，尚未外推全部CTY素材 |
+| linear11EDA..11EE8，file324A..3258，`02 1E 04 00` | 非凍結NPC取圖加共用byte0004，再乘2取指標 | confirmed；自然18532個reader pair核對0／1增量，沒有各NPC獨立phase |
+| linear11ED5..11EDA，file3245..324A，`F6 C2 80`／`75 04` | ctrl80h跳過共用phase加法 | strong；來源branch清楚，本次沒有凍結人物的動態樣本 |
+
+第一份新增原版收據SHA-256為`d64fa77cf5d041fa0fa8c694aba57a816b6ca56ac0f84558ec78a5f73062a6e9`。
+37次正式輸入、74次IRQ1及170個唯一產物核對；168個既有PNG／色號檔與contract收據完全相同。
+來源原始圖片沒有換名取代oracle，動畫觀測唯讀。先前把1FEA9每次進入都當翻轉返回的稽核假設已訂正，
+只有counter0002=0的返回才與1FEA4配對，沒有修改原版事件或放寬六tick斷言。
+
+隔離共用clock原型的正式家中路徑及五個視窗仍PASS，完整畫面仍各124差異。
+正常快速InputState共193個更新到選圖，原型實際phase與latch為1；原版背景取圖在tick8059、phase0。
+這是不同時間條件，不能因兩者都是問題13就宣稱同動畫狀態；沒有將phase硬改成0。
+後續重生已新增每個正常輸入的虛擬tick及整段翻轉原點，保留固定輸入及seed，不重擲。
+來源驗證入口為`tools/verify_dosgolem_npc_animation.py`，同時核對既有家中收據與動畫／輸入clock。
+正式動畫及pack仍保持`b7516c5`；目前只升級來源writer／consumer的有限證據，不升級完整畫面或動畫DRAFT。
+
+### 完整啟動計數與原型反證
+
+本節追加訂正前段有限觀測，不改寫第一份收據。新完整啟動收據SHA-256為
+`0b57ba81e303f3d18dead8068775093074796f2e12b7bd669da5241a2b9e6023`；
+37次正式輸入、74次IRQ1、170個唯一產物全部核對，168個既有PNG／bin仍與contract完全相同。
+生成器封存SHA-256為`34bbda6bc1a88645b310c056bbb96cb06a6118efce1e75f4bf85e67eb0a22f9c`。
+正常輸入順序及能力seed保持，新增唯讀輸入時鐘與完整啟動計數，沒有重擲或指定frame。
+
+原始linear1FEA9共有12180次觀測，word0002從1逐次到5、0再循環，byte0004只在0翻轉。
+2030次翻轉全部間隔六次遊戲計數。dosgolem虛擬Ticks在step481045303至481317467從757到761，
+此間遊戲word0002卻只從1到2；因此不能用總Ticks除6推導相位。
+啟動觀測的計時除數為65536，玩家NPC取圖及37次輸入時鐘均為12428。
+驗證器改核對原始遞增序列、翻轉配對、各輸入時鐘及當次日誌一致性；
+沒有增加「容許一次九tick」例外，也不深入ISR或硬體時鐘。所有18532個NPC取圖配對仍通過。
+凍結人物動態樣本為0，ctrl80h分支維持strong，不能由此提升為confirmed。
+
+| 同次房間繪圖的自然觀測 | 相位及取圖 | 結論 |
+|---|---|---|
+| step1222142883／1222142894，linear11ED0→11EE8，virtual tick6902 | base42→frame43，phase1 | NPC reader動態閉合 |
+| step1222161224／1222161235，同consumer、tick6902 | base32→frame33，phase1 | 第二NPC同相位 |
+| step1222323328／1222323332，linear1E2FF→1E30B，tick6904 | BX0→0，phase0 | 主角稍後取圖；同次畫面不能假定只取一個相位 |
+
+隔離原型的家中兩條正常輸入與五個視窗仍PASS；完整選圖畫面各124，房間三圖各261，維持RED。
+生日兩相、六張續頁及四次捲動仍PASS；第19次之後另一狀態的231差異只作診斷，不當房間同狀態驗收。
+反證推翻「整張畫面只取一次共用phase」假說，原型不進正式Go、pack或存檔。
+正式程式仍為schema0.3.0／content0.1.71，先進城鎮攝影機切片；動畫繪圖時序保持DRAFT。
+相位writer與NPC reader已取得最小充分證據，不為這些像素重開PIT／ISR逐週期研究。
+
+### 工具、附加語意與核對入口
+
+- 完整來源重生：`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --mother-home-animation-original`。主機只控制Docker；900秒外層逾時，既有image、UID/GID1000、唯讀來源及素材。此模式只重生原版，不執行remake比較。
+- 來源驗證：Docker內執行`python3 /repo/tools/verify_dosgolem_npc_animation.py --receipt /work/dosgolem-opening/issue4-home-animation-receipt.json --output /work/issue4-home-animation-source-audit.json`。核對六次遊戲計數、逐對取圖及37次正常輸入時鐘，不把虛擬Ticks視為遊戲計數。
+- 已審查台帳：`tools/ida_npc_animation_ledger.json`。以原始EXE身份、IDA linear／file、bytes為key，逐項保存有限語意、consumer、推論等級及本節證據回鏈。`tools/ida_dump_npc_animation.py`自動合併，先驗證EXE與IDA bytes；unknown／strong均帶警示，原名及原始位址保持。
+- 私有IDA重生：`work/issue4-npc-animation-reviewed-ida.json`及同名log，IDA9.4一次性database位於容器tmp，完成即清除。八筆台帳為六confirmed、二strong；新加主角reader仍為unknown候選，不由可讀反組譯自動提升。
+- 私有原型與結果：`work/issue4-npc-animation-prototype.py`、`issue4-npc-animation-prototype.log`、`issue4-npc-animation-prototype-room.log`。來源快照固定b7516c5，原型值僅在隔離副本。
+- 最小充分稽核：`work/issue4-npc-animation-audit.py`，輸出`work/issue4-npc-animation-final-audit.json`。核對既有三份來源、168個不變圖像、IDA原始rows、八筆台帳、shell／Python語法及十種損壞收據拒絕。損壞案例連同暫存日誌重新計算manifest，確認拒絕來自語意檢查；正式原版收據維持不變。
+
+本批只修正來源驗證器與可重生證據工具，不提升正式動畫、全畫面、原版音訊或campaign完成度。
+
+## 2026-10-03 城鎮攝影機（有限 READY）
+
+依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。
+原始linear11971..11991／file2CE1..2D01讀玩家4F33／4F35，分別減9、7，
+寫4F25／4F27，再以20×15呼叫11D8A。此原始renderer沒有地圖邊界clamp。
+目的場景由已確認的10130及42個自然狀態限定CTY00 section0；CTY section基底file000C，
+file001E的界外圖塊為0，沿用130F4..1311E→DGROUP0B2D→11DD8..11E4B的既有loader／consumer。
+不把房間的界外71套到城鎮。以上為本目的場景的confirmed，不外推其他CTY。
+
+`work/issue4-town-camera-prototype.py`固定b7516c5，在唯讀快照的隔離副本只改目的場景camera，
+沒有改seed、人物frame、位置、旗標、輸入或舊動畫。由正常創角、家中選圖、13步手動接近，
+重播原版42個城鎮狀態及單次城門確認，最後正常Save／Load通過。
+完整640×350與來源9358ce6e的1020A PNG逐點比較RGB差0，沒有裁切、遮罩或指定frame。
+私有原型log為`work/issue4-town-camera-prototype.log`；圖片及狀態收據同前綴。
+第一次原型測試有區域變數命名衝突，修正測試名稱後同來源、同命令重跑，沒有修改產品規則。
+
+有限READY契約：`opening_escort.arrival_camera`使用既有SceneCamera型別，所有欄位必填且D3。
+只在pack的destination場景套用，包含帶路完成後及同版本讀檔；其他場景不由本切片宣稱符合。
+共用Go只選scene camera與執行player_anchor；CTY／section、9／7與界外0全部放入JSON。
+schema0.4.0／content0.1.72，同步全部資料schema；舊schema或hash的存檔明確拒絕，不自動遷移。
+正式驗收須原始EXE／CTY parity、缺失／null／未知欄位／壞幾何及D2證據拒絕、
+同條正常玩家狀態、完整PNG、讀檔後camera與PNG、後續玩家路線，以及完整game／internal／desktop。
+動畫DRAFT及原版音訊、完整campaign保持，不以這張城鎮零差異提升其他畫面。
+
+正式入口與測試索引：`game/opening_scene.go`選camera、`game/game.go`消費；
+`internal/gamepack/arrival_camera_test.go`核對原始EXE／CTY與損壞契約，
+`game/arrival_camera_test.go`從當次manifest核對最後PNG並嚴格全RGB比較，
+`game/opening_escort_test.go`保留正常42狀態並由標題選單讀檔。
+欄位入口為[docs/84](84-game-pack-json-contract.md)最新城鎮camera節。
+原有八筆NPC台帳另追加linear11974／1197E兩筆anchor定位，保留原始bytes、consumer及9358ce6e來源。
+現行十筆由`tools/ida_dump_npc_animation.py`自動附加，新的私有匯出為
+`work/issue4-town-camera-reviewed-ida.json`，前一份八筆NPC匯出與稽核保持歷史身份。
+
+### 城鎮攝影機正式驗收（有限 CONFORMED）
+
+schema0.4.0／content0.1.72，canonical hash為
+`sha256:80a1123aa00731b8471f86f5160e46b6de12d1986e75f1f4f553aca820abd890`。
+同一b7516c5、同條正常InputState的基準完整RGB差81962，隔離原型及正式接入均0。
+原版38次輸入／76次IRQ1完整返回收據9358ce6e保持；來源最後1020A PNG依當次manifest驗大小及hash，
+正式比較完整640×350，不裁切、不遮罩、不指定動畫frame。兩張最後畫面已目視核對。
+42個人物狀態、最後旗標交易、正常標題讀檔及camera資料維持；讀檔後原版NPC位置／圖像不由此宣稱parity。
+家中兩條正常玩家路線及五個視窗RGB差0、完整各124限制維持。
+
+十種攝影機契約損壞均拒絕，含合法0界外圖塊被省略；原始EXE anchor與CTY exterior parity通過。
+完整game370項頂層／45子、internal140項頂層／203子、全部11個套件及desktop建置PASS。
+正常新遊戲至THE END423.50秒，僅屬remake可玩回歸；game38及internal4項選用SKIP，無素材缺失。
+首次internal六個失敗因fixture留在舊schema，提前被版本檢查拒絕。
+fixture改引用現行SchemaVersion，未知欄位與其他拒絕斷言保持，同工具鏈乾淨重跑通過；
+已通過的game未因fixture調整重跑。原始失敗log保留，不記為產品缺陷。
+
+正式驗收log：`work/issue4-town-camera-production.log`、`issue4-town-camera-contract.log`、
+`issue4-town-camera-game.jsonl`、`issue4-town-camera-internal-clean.jsonl`；失敗internal保存在原同前綴檔。
+最小充分收尾入口為`work/issue4-town-camera-final-audit.py`，輸出`work/issue4-town-camera-final-receipt.json`；
+核對176個原版產物、正式正常狀態、嚴格全RGB、原始台帳、程式／文件與輸出UID／GID及Docker衛生。
+最後將原版1C掃描碼對應至實際`InputState.Enter`，同條玩家路徑、42狀態、全RGB零差異與標題讀檔重驗PASS；
+log為`work/issue4-town-camera-enter.log`，沒有改產品規則或重新設定seed。
+本切片新增工具、測試及私有稽核入口均在本文件索引，不建立另一份工作清單。
+遠端結果留言5958611871；Issue #4保持OPEN。下一段從原版城門返回後，以正常輸入續行謁見。
+房間261、家中124、動畫繪圖時序、原版音訊及完整campaign仍未完成，不深入ISR或硬體逐週期。

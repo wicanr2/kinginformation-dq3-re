@@ -42,9 +42,8 @@ func (p *Pack) validateOpeningScenePresentation() error {
 		return errors.New("opening scene presentation reference is invalid")
 	}
 	c, s, w := e.Camera, e.Shadow, prelude.Window
-	if c.Mode != "player_anchor" || c.AnchorX < 0 || c.AnchorX >= 20 || c.AnchorY < 0 || c.AnchorY >= 15 ||
-		c.ExteriorTile < 0 || c.ExteriorTile > 255 {
-		return errors.New("opening scene camera is invalid")
+	if err := validateSceneCamera(c); err != nil {
+		return err
 	}
 	if s.Mode != "vga_word_latch_and" || s.OffsetX < 0 || s.OffsetX%8 != 0 || s.OffsetY < 0 ||
 		w.X+s.OffsetX+w.Width > 640 || w.Y+s.OffsetY+w.Height > 350 {
@@ -66,6 +65,19 @@ func (p *Pack) validateOpeningScenePresentation() error {
 		}
 	}
 	return nil
+}
+
+func validateSceneCamera(c SceneCamera) error {
+	if c.Mode != "player_anchor" || c.AnchorX < 0 || c.AnchorX >= 20 || c.AnchorY < 0 || c.AnchorY >= 15 ||
+		c.ExteriorTile < 0 || c.ExteriorTile > 255 || c.Evidence.Level != "D3" {
+		return errors.New("scene camera geometry or evidence is invalid")
+	}
+	return validateEvidence(c.Evidence)
+}
+
+func (e *OpeningEscort) UnmarshalJSON(raw []byte) error {
+	type plain OpeningEscort
+	return requiredHome(raw, (*plain)(e))
 }
 
 func (p *Pack) validateOpeningSceneRefs() error {

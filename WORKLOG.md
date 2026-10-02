@@ -733,3 +733,53 @@ work/issue4-home-final-evidence-receipt.json，SHA-256 ea67ada60442d1f4c116dca71
 16FFA／17006的triplet原始規則已取得；下輪閉合clock初始條件、預覽及取消分支原型，再接完整家中玩家流程。
 全域人物相位、音訊及原版campaign仍未完成。
 清理、提交、推送與Issue回讀結果另存本機收尾收據，不把本輪來源工作算成正式remake完成。
+
+## 2026-10-03：Issue #4 家中正式流程接入
+
+補記已推送b7516c5的有限切片。依docs/188的READY，母親17個人物狀態先於record81，
+預覽、三輪選圖、結果及13步正常手動接近接入正式玩家流程。獨立圖像種子、100組問題表、
+實際96張BLS、視窗、色盤及游標XOR由原始資料閉合，全部版本值放進JSON。
+schema0.3.0／content0.1.71；Escape保存當前選項，不猜答錯處罰。
+家中標題正常讀檔、城鎮42狀態與最後旗標交易通過；五個336×192視窗RGB差0，
+完整畫面仍各124個人物差異。第一次完整回歸被容器OOM中止，按Docker事件分類為環境，
+同工具鏈設定GOMEMLIMIT2GiB乾淨重跑通過。game370頂層／45子、internal138頂層／193子及11套件、
+desktop建置通過；正常新遊戲至THE END224.65秒，只屬remake可玩回歸。
+來源、正式PNG與最終私有核對入口見docs/188；Issue留言5957335599，沒有新發行包或公開原版附件。
+
+## 2026-10-03：Issue #4 共用NPC相位反證與城鎮camera修正
+
+接續b7516c5，遠端工作登記5957380305。dosgolem固定乾淨2f44a68，
+原版完整啟動37次正常輸入／74次IRQ1，能力seed1357只設定一次。
+新來源0b57ba81的170個唯一產物全部核對，168個既有PNG／bin與contract相同。
+12180次遊戲計數、2030次六計數翻轉、18532個NPC reader pair及37次輸入時鐘全部閉合。
+虛擬Ticks757→761期間遊戲計數只進一次；驗證器核對原始遞增序列，沒有增加九tick例外。
+十種語意損壞收據在暫存副本拒絕，原始來源保持。非凍結reader為confirmed，凍結動態樣本0，分支維持strong。
+
+IDA9.4一次性database保持原始名字、位址與bytes。新八筆已分級台帳由匯出自動合併。
+首次核對發現八個loaded／file差異，全部對應原始MZ relocation；補足兩種bytes及原始relocation對照後，
+同image重生、423列raw核對通過。這是驗證工具問題，不當成EXE或產品缺陷。
+私有匯出、台帳、來源驗證器與負向案例入口全數掛回docs/188。
+
+房間同次繪圖NPC在tick6902取phase1，主角於tick6904取phase0。
+單次全畫面phase原型仍房間261、選圖124，生日保留文字仍PASS；假說已推翻，原型未進production。
+最小充分writer／reader證據已取得，動畫時序保持DRAFT，不追ISR或硬體逐週期。
+
+轉到同Issue既有城鎮視野工作，登記5958225007。原始renderer為玩家減9、7、不clamp，
+目的CTY00 section0的原始界外圖塊0。固定b7516c5同條正常創角、選圖及接近的完整城鎮最後PNG，
+修改前81962像素差異，隔離camera原型0差異；沒有改人物frame、seed、旗標或輸入。
+原型初次區域變數名衝突，修正測試後同來源重跑，分類為原型工具問題。
+有限READY後正式新增必填arrival_camera，schema0.4.0／content0.1.72。
+所有版本值由JSON提供，destination場景及標題正常讀檔選相同camera；其他場景不外推。
+十種契約拒絕、EXE／CTY parity、42個正常人物狀態與最後完整640×350 RGB差0通過。
+家中兩條正常玩家路徑、五視窗差0及完整124限制維持。完整回歸及提交／推送在本批收尾記錄。
+
+正式完整game370頂層／45子、38項選用SKIP通過，正常新遊戲至THE END423.50秒。
+internal首次失敗來自六個錯誤資料測試的舊schema fixture，提前在版本gate被拒絕。
+fixture改使用現行SchemaVersion，原路徑、長度、未知欄位及事件拒絕斷言保持；
+同工具鏈乾淨重跑internal140頂層／203子及11套件PASS，4項選用SKIP，desktop建置PASS。
+沒有素材缺失跳過。已通過的完整game沒有因fixture修改重跑。
+兩張最後640×350 PNG已目視核對；正式最後畫布零差異只限本狀態，不提升房間、家中、音訊或原版campaign。
+遠端結果留言5958611871及Issue主文已更新，Issue保持OPEN。私有完整收尾入口為
+work/issue4-town-camera-final-audit.py及issue4-town-camera-final-receipt.json，索引在docs/188。
+最後以實際InputState.Enter重播原版掃描碼，42狀態、最後完整RGB零差異與標題讀檔再次PASS，
+log為work/issue4-town-camera-enter.log；只有測試輸入映射與註解調整，已通過的產品回歸保持。

@@ -1,0 +1,37 @@
+{
+  "input_path": "assets_raw/DQ3.EXE",
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "address_space": "IDA Pro 9.4 linear；file=linear−0xEC90；DGROUP基底linear0x24DD0",
+  "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-03 NPC動畫續作",
+  "dynamic_evidence": {
+    "path": "work/dosgolem-opening/issue4-home-animation-receipt.json",
+    "sha256": "0b57ba81e303f3d18dead8068775093074796f2e12b7bd669da5241a2b9e6023",
+    "tool": "dosgolem 2f44a68",
+    "scope": "37次正常輸入；12180次遊戲計數、2030次翻轉、18532個NPC取圖配對；不證明重製相位或全畫面"
+  },
+  "annotations": [
+    {"ida_linear": "0x1fe87", "file_offset": "0x111f7", "bytes": "ff060200", "inference_level": "confirmed", "semantic": "遊戲接受一次更新後遞增DGROUP0002", "consumer": "IDA linear0x1FE97；此計數不等於dosgolem虛擬Ticks"},
+    {"ida_linear": "0x1fe97", "file_offset": "0x11207", "bytes": "833e020006", "inference_level": "confirmed", "semantic": "DGROUP0002與遊戲選定的六次更新比較", "consumer": "IDA linear0x1FE9E／0x1FEA4"},
+    {"ida_linear": "0x1fe9e", "file_offset": "0x1120e", "bytes": "c70602000000", "inference_level": "confirmed", "semantic": "第六次遊戲計數歸零", "consumer": "IDA linear0x1FEA4"},
+    {"ida_linear": "0x1fea4", "file_offset": "0x11214", "bytes": "8036040001", "inference_level": "confirmed", "semantic": "翻轉DGROUP0004的共用相位低位", "consumer": "IDA linear0x11EDA；2030次自然翻轉，不外推逐週期硬體時序"},
+    {"ida_linear": "0x11ed5", "file_offset": "0x3245", "bytes": "f6c280", "inference_level": "strong", "semantic": "檢查原始ctrl80h以略過共用相位", "consumer": "IDA linear0x11ED8／0x11EDE；本次凍結人物動態樣本為零"},
+    {"ida_linear": "0x11ed8", "file_offset": "0x3248", "bytes": "7504", "inference_level": "strong", "semantic": "ctrl80h分支跳過linear0x11EDA的相位加法", "consumer": "IDA linear0x11EDE；尚無凍結人物動態閉合"},
+    {"ida_linear": "0x11eda", "file_offset": "0x324a", "bytes": "021e0400", "inference_level": "confirmed", "semantic": "非凍結NPC的base frame加DGROUP0004共用相位", "consumer": "IDA linear0x11EE4；18532個自然取圖配對，不證明重製clock原點"},
+    {"ida_linear": "0x11ee4", "file_offset": "0x3254", "bytes": "8bb77a2b", "inference_level": "confirmed", "semantic": "以實際frame乘二的BX讀取runtime圖像偏移表", "consumer": "IDA linear0x11EE8觀測點；限已核對的NPC取圖路徑"},
+    {
+      "ida_linear": "0x11974", "file_offset": "0x2ce4", "bytes": "2d0900", "inference_level": "confirmed",
+      "semantic": "目的城鎮視野原點X為玩家X減9；不夾地圖邊界",
+      "consumer": "IDA linear0x11977→0x11991→0x11D8A；限定CTY00 section0的42狀態及1020A完整畫布",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-03 城鎮攝影機有限READY",
+      "dynamic_evidence": {"path": "work/dosgolem-opening/issue4-mother-finish-receipt.json", "sha256": "9358ce6e7a8e5c4547555daeccf74a2339f003ab106ebe4d57b32111602c0f3f", "tool": "dosgolem 2f44a68", "scope": "原始座標及最後1020A畫布；固定b7516c5正常InputState攝影機原型完整RGB差0，不證明其他CTY"}
+    },
+    {
+      "ida_linear": "0x1197e", "file_offset": "0x2cee", "bytes": "83eb07", "inference_level": "confirmed",
+      "semantic": "目的城鎮視野原點Y為玩家Y減7；不夾地圖邊界",
+      "consumer": "IDA linear0x11981→0x11991→0x11D8A；限定CTY00 section0的42狀態及1020A完整畫布",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-03 城鎮攝影機有限READY",
+      "dynamic_evidence": {"path": "work/dosgolem-opening/issue4-mother-finish-receipt.json", "sha256": "9358ce6e7a8e5c4547555daeccf74a2339f003ab106ebe4d57b32111602c0f3f", "tool": "dosgolem 2f44a68", "scope": "原始座標及最後1020A畫布；固定b7516c5正常InputState攝影機原型完整RGB差0，不證明其他CTY"}
+    }
+  ]
+}

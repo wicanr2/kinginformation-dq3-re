@@ -172,7 +172,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 		in := idle
 		switch scan {
 		case 0x1c:
-			in.Confirm = true
+			in.Enter = true
 		case 0x48:
 			in.DirEdge = 1
 		case 0x50:
@@ -188,7 +188,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 	for i := 0; i < 4000 && !g.homeAwait; i++ {
 		in := idle
 		if g.dlg.waitingForConfirm() || g.homeSelection.active {
-			in.Confirm = true
+			in.Enter = true
 			confirmations++
 		}
 		step(in)
@@ -250,7 +250,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 	if !g.dlg.waitingForConfirm() {
 		t.Fatal("record80未達內嵌確認")
 	}
-	step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
+	step(InputState{DirHeld: -1, DirEdge: -1, Enter: true})
 	for i := 0; i < 2000 && g.openingEscortPhase == 2; i++ {
 		step(idle)
 	}
@@ -272,6 +272,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 	if len(observed) != 42 || g.px != 21 || g.py != 17 || !g.storyFlag(0x17) || g.storyFlag(0x50) {
 		t.Fatal("原版最後位置與旗標交易不符")
 	}
+	assertArrivalCanvas(t, g, receiptPath)
 	if err := g.Save(); err != nil {
 		t.Fatal(err)
 	}
@@ -279,11 +280,21 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = loaded.Load(); err != nil {
-		t.Fatal(err)
+	for _, in := range []InputState{
+		{DirHeld: -1, DirEdge: -1, Enter: true},
+		{DirHeld: -1, DirEdge: 0},
+		{DirHeld: -1, DirEdge: -1, Enter: true},
+	} {
+		if err = loaded.step(in); err != nil {
+			t.Fatal(err)
+		}
 	}
-	if loaded.px != g.px || loaded.py != g.py || loaded.curCty != g.curCty || loaded.cur.sec != g.cur.sec || !loaded.storyFlag(0x17) || loaded.storyFlag(0x50) {
+	if loaded.showTitle || loaded.px != g.px || loaded.py != g.py || loaded.curCty != g.curCty || loaded.cur.sec != g.cur.sec || !loaded.storyFlag(0x17) || loaded.storyFlag(0x50) {
 		t.Fatal("帶路完成後存讀檔遺失位置或旗標")
+	}
+	camera, restoredCamera := g.activeSceneCamera(), loaded.activeSceneCamera()
+	if camera == nil || restoredCamera == nil || *camera != *restoredCamera {
+		t.Fatal("正常標題讀檔遺失目的場景camera")
 	}
 	if prefix := os.Getenv("DQ3_MOTHER_STATE_OUT"); prefix != "" {
 		f, err := os.Create(prefix + "-final.png")
@@ -298,7 +309,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 		if closeErr != nil {
 			t.Fatal(closeErr)
 		}
-		report := map[string]any{"scope": "正常創角、家中、選圖及13步手動接近後的城鎮42狀態對拍；完整RGB與音訊仍未V3", "original_receipt": receiptPath, "original_seed": "1357一次自然Lv1入口", "remake_seed": "1357首次正式InputState前", "remake_confirmations_before_town": confirmations, "castle_confirmations": 1, "state_count": len(observed), "states": observed, "save_load_player_flags": true, "visual_parity": false, "audio_parity": false, "pack_schema": g.pack.Schema(), "pack_content_hash": g.pack.ContentHash()}
+		report := map[string]any{"scope": "正常創角、家中選圖及手動接近後的城鎮42狀態與最後1020A完整RGB；完整開場及音訊仍未V3", "original_receipt": receiptPath, "original_seed": "1357一次自然Lv1入口", "remake_seed": "1357首次正式InputState前", "remake_confirmations_before_town": confirmations, "castle_confirmations": 1, "state_count": len(observed), "states": observed, "save_load_player_flags": true, "save_load_camera": true, "final_canvas_rgb_parity": true, "visual_parity": false, "audio_parity": false, "pack_schema": g.pack.Schema(), "pack_content_hash": g.pack.ContentHash()}
 		out, err := json.MarshalIndent(report, "", "  ")
 		if err != nil {
 			t.Fatal(err)
@@ -307,7 +318,7 @@ func TestDosgolemMotherArrivalStateComparison(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	t.Log(fmt.Sprintf("正常家中選圖、手動接近到城鎮42狀態、單次城門確認、旗標及存讀檔通過；完整RGB與音訊仍未完成"))
+	t.Log(fmt.Sprintf("正常家中選圖、手動接近、城鎮42狀態及最後完整RGB通過；標題讀檔camera維持，完整開場與音訊未完成"))
 }
 
 func TestOpeningKingAudienceRendersHero(t *testing.T) {

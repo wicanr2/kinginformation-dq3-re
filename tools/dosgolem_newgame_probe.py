@@ -10,7 +10,7 @@ repo = Path('/repo')
 out = Path('/work/dosgolem-opening')
 generation_script = Path(__file__).read_bytes()
 scenario = os.environ.get('DQ3_NEWGAME_PROBE_SCENARIO', 'initial')
-home_scenarios = ('mother_home_entry', 'mother_home_contract', 'mother_home_navigation')
+home_scenarios = ('mother_home_entry', 'mother_home_contract', 'mother_home_navigation', 'mother_home_animation')
 mother_scenarios = ('mother_approach', 'mother_finish') + home_scenarios
 creation_scenarios = ('name_creation', 'opening_accept', 'birthday_continue') + mother_scenarios
 assert scenario in ('initial', 'name_navigation', 'name_function_mode') + creation_scenarios, scenario
@@ -22,7 +22,8 @@ prefix = {'initial':'issue4-keylog', 'name_navigation':'issue4-name',
           'mother_finish':'issue4-mother-finish',
           'mother_home_entry':'issue4-home-entry',
           'mother_home_contract':'issue4-home-contract',
-          'mother_home_navigation':'issue4-home-navigation'}[scenario]
+          'mother_home_navigation':'issue4-home-navigation',
+          'mother_home_animation':'issue4-home-animation'}[scenario]
 keys = [(710000000, 0x1c), (731000000, 0x1c)]
 captures = [(729000000, 'menu'), (740000000, 'create'),
             (750000000, 'final' if scenario == 'initial' else 'initial')]
@@ -162,6 +163,8 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     marker = '\tfor m.Steps < *steps && !m.CPU.Halted && !d.Exited {\n'
     assert probetext.count(marker) == 1
     queue_cases = ''.join(f'\t\tcase {step}: m.QueueKey(0x{scan:02x}); fmt.Printf("DQ3_KEY_QUEUED step=%d scan={scan:02x}\\n", m.Steps)\n' for step, scan in keys)
+    if scenario == 'mother_home_animation':
+        queue_cases = ''.join(f'\t\tcase {step}: m.QueueKey(0x{scan:02x}); fmt.Printf("DQ3_KEY_QUEUED step=%d scan={scan:02x}\\n", m.Steps); fmt.Printf("DQ3_INPUT_CLOCK step=%d scan={scan:02x} ticks=%d pit_divisor=%d counter0002=%d phase0004=%d\\n",m.Steps,m.Ticks,m.PITDivisor(),m.Read16(cpu.Addr(0x15ed,2)),m.Read8(cpu.Addr(0x15ed,4)))\n' for step, scan in keys)
     observed_steps = ', '.join(str(step) for step, _ in captures)
     probetext = probetext.replace(marker, '''\tm.KeyEvery = 500000\n\tvar previousKeyIRQs uint64\n'''+marker+'''\t\tswitch m.Steps {\n'''+queue_cases+'''\t\t}\n\t\tif m.KeyIRQs != previousKeyIRQs {\n\t\t\tfmt.Printf("DQ3_KEY_DELIVERED step=%d count=%d port60=%02x CSIP=%04x:%04x\\n", m.Steps, m.KeyIRQs, m.In8(0x60), m.CPU.Seg[cpu.CS], m.CPU.IP)\n\t\t\tpreviousKeyIRQs = m.KeyIRQs\n\t\t}\n'''+f'''\t\tswitch m.Steps {{\n\t\tcase {observed_steps}:\n\t\t\tfmt.Printf("DQ3_NAME_OBSERVED step=%d DS=%04x raw_cursor=%d name_mode=%04x\\n", m.Steps, m.CPU.Seg[cpu.DS], m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS], 0x26fe)), m.Read16(cpu.Addr(m.CPU.Seg[cpu.DS], 0x26fc)))\n\t\t}}\n''')
     if scenario in creation_scenarios:
@@ -290,6 +293,24 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             }
         }
 """
+        if scenario == 'mother_home_animation':
+            # 只觀測已定位的六tick翻轉參數及取圖consumer，不追IRQ driver細節。
+            flow_hook += r"""
+        if flowPC == 0x1fea4 || flowPC == 0x1fea9 || (dq3SeedApplied &&
+            (flowPC == 0x11ed0 || flowPC == 0x11ee8 || flowPC == 0x1e2ff || flowPC == 0x1e30b)) {
+            ds := m.CPU.Seg[cpu.DS]
+            if ds != 0x15ed { panic("animation observer DS differs") }
+            fmt.Printf("DQ3_NPC_ANIMATION step=%d ida_linear=%05x DS=%04x AX=%04x BX=%04x DX=%04x SI=%04x DI=%04x BP=%04x counter0002=%d phase0004=%d ticks=%d pit_divisor=%d player_x=%d player_y=%d npc0=%02x%02x%02x%02x%02x%02x%02x%02x\n",
+                m.Steps,flowPC,ds,m.CPU.R[cpu.AX],m.CPU.R[cpu.BX],m.CPU.R[cpu.DX],
+                m.CPU.R[cpu.SI],m.CPU.R[cpu.DI],m.CPU.R[cpu.BP],
+                m.Read16(cpu.Addr(ds,2)),m.Read8(cpu.Addr(ds,4)),m.Ticks,m.PITDivisor(),
+                m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),
+                m.Read8(cpu.Addr(ds,0x0b66)),m.Read8(cpu.Addr(ds,0x0b67)),
+                m.Read8(cpu.Addr(ds,0x0b68)),m.Read8(cpu.Addr(ds,0x0b69)),
+                m.Read8(cpu.Addr(ds,0x0b6a)),m.Read8(cpu.Addr(ds,0x0b6b)),
+                m.Read8(cpu.Addr(ds,0x0b6c)),m.Read8(cpu.Addr(ds,0x0b6d)))
+        }
+"""
         flow_hook = flow_hook.replace('__PREFIX__', prefix)
         flow_hook = flow_hook.replace('__OTHER_LOCATION__', '''if dq3MotherEntered {
                     location = "other"
@@ -402,7 +423,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
     (out / f'{prefix}-generation.py').write_bytes(generation_script)
     print('原版自然探測開始',flush=True)
     with (out / f'{prefix}.log').open('w') as log:
-        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=780 if scenario in ('mother_finish', 'mother_home_navigation') else 660 if scenario in mother_scenarios else 360 if scenario == 'birthday_continue' else 180)
+        result = subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=840 if scenario == 'mother_home_animation' else 780 if scenario in ('mother_finish', 'mother_home_navigation') else 660 if scenario in mother_scenarios else 360 if scenario == 'birthday_continue' else 180)
     print('原版探測結束',result.returncode,flush=True)
     lines = (out / f'{prefix}.log').read_text().splitlines()
     assert result.returncode == 0
@@ -435,7 +456,8 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                         'mother_finish':[0,0,0,36,35,35,35],
                         'mother_home_entry':[0,0,0,36,35,35,35],
                         'mother_home_contract':[0,0,0,36,35,35,35],
-                        'mother_home_navigation':[0,0,0,36,35,35,35]}[scenario]
+                        'mother_home_navigation':[0,0,0,36,35,35,35],
+                        'mother_home_animation':[0,0,0,36,35,35,35]}[scenario]
     observations = [re.search(r'DS=([0-9a-f]+) raw_cursor=(\d+) name_mode=([0-9a-f]+)', line)
                     for line in meta['name_observations']]
     assert len(observations) == len(captures) and all(observations)
@@ -465,6 +487,10 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         meta['ability_random_events']=[line for line in lines if line.startswith('DQ3_ABILITY_RNG_')]
         meta['creation_flow_events']=[line for line in lines if line.startswith('DQ3_CREATION_FLOW ')]
     meta['rng_comparison'] = False
+    if scenario == 'mother_home_animation':
+        meta['npc_animation_events'] = [line for line in lines if line.startswith('DQ3_NPC_ANIMATION ')]
+        meta['input_clock_events'] = [line for line in lines if line.startswith('DQ3_INPUT_CLOCK ')]
+        assert len(meta['input_clock_events']) == len(keys)
     meta['scope'] = '只到主選單及命名導航／模式選擇；沒有創角能力、出生點或母親開場 parity'
     if scenario in creation_scenarios:
         meta['scope']='固定原版測試種子後，自然創角能力的原版收據；尚未與重製對拍，母親仍未知'

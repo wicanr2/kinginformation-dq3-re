@@ -23,7 +23,7 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前開發版為 schema `0.2.0`／content `0.1.70`。dosgolem 已驗證六幕順序、
+目前開發版為 schema `0.4.0`／content `0.1.72`。dosgolem 已驗證六幕順序、
 前五幕色號及第六幕 129 個完整翻頁的色號／RGB，並修正漏卡與動態標誌；
 範圍與時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
 正常輸入的命名、性別、能力等待／確認及接受角色後生日首頁共22張完整畫布 RGB 零差異，
@@ -35,7 +35,9 @@
 房間視野、界外圖塊、共用文字框、陰影與等待箭頭已修正，完整畫面仍差261個人物像素。
 生日／房間文字速度已依原版實際計時除數修正，精度仍為平台規格近似。
 母親城鎮帶路的位置、方向、單一對話與最後旗標順序已修正，有限狀態及同版本存讀檔通過。
-家中人物與順序、正常接近、城鎮視野及動畫仍有差異；完整原版玩家路線與音畫對拍尚未完成。
+家中人物順序、三輪圖像選擇、控制交還及手動接近已修正；五個選圖視窗RGB零差異。
+城鎮視野已修正，帶路最後完整畫面RGB零差異；完整選圖畫面仍差124個人物像素。
+動畫繪圖時序、完整原版玩家路線與音畫對拍尚未完成。
 此版要求新的pack契約，舊schema存檔會明確拒絕；目前沒有自動遷移。
 歷史 E3 與 90% 自評不能代替本輪收據。現況以 [CONTEXT.md](CONTEXT.md) 為準，
 工作依據為 [GitHub Issues](https://github.com/wicanr2/kinginformation-dq3-re/issues)，

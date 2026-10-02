@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.3.0"
+	SchemaVersion       = "0.4.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -932,6 +932,7 @@ type OpeningEscort struct {
 	DialoguePresentationID string                `json:"dialogue_presentation_id"`
 	ArrivalLeaderRecord    *int                  `json:"arrival_leader_record"`
 	ArrivalEvidence        Evidence              `json:"arrival_evidence"`
+	ArrivalCamera          *SceneCamera          `json:"arrival_camera"`
 	SetStoryFlags          []int                 `json:"set_story_flags"`
 	ClearStoryFlags        []int                 `json:"clear_story_flags"`
 	Evidence               Evidence              `json:"evidence"`
@@ -2699,6 +2700,12 @@ func (p *Pack) validateInterface() error {
 		}
 		if err := p.validateOpeningHome(e); err != nil {
 			return err
+		}
+		if e.ArrivalCamera == nil {
+			return errors.New("opening escort arrival camera is required")
+		}
+		if err := validateSceneCamera(*e.ArrivalCamera); err != nil {
+			return fmt.Errorf("opening escort arrival camera: %w", err)
 		}
 		if e.ArrivalEvidence.Level != "D3" {
 			return errors.New("opening escort arrival requires D3 evidence")

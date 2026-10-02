@@ -3646,13 +3646,17 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	      "address_space":"file","address":"0x1","consumer":"renderer","doc":"docs/x.md"}}
 	}`
 	validSpells := `{"schema_version":"0.3.0","field":[]}`
+	currentSchema := `"schema_version":"` + SchemaVersion + `"`
+	for _, fixture := range []*string{&validManifest, &validFacilities, &validEvents, &validCharacters, &validTexts, &validInterface, &validSpells} {
+		*fixture = strings.ReplaceAll(*fixture, `"schema_version":"0.3.0"`, currentSchema)
+	}
 	tests := []struct {
 		name, manifest, facilities, events, characters, want string
 	}{
 		{"unknown manifest field", strings.Replace(validManifest, `"save_namespace":"test",`, `"save_namespace":"test","typo":1,`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.3.0"`, `"schema_version":"0.1.49","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, currentSchema, currentSchema+`,"typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

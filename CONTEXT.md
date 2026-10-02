@@ -6,8 +6,11 @@
 Escape依原版EXE實際行為保存當前選項，已追加推翻初步取消解讀的證據。
 家中Save／標題正常Load、城鎮42狀態與最後旗標交易通過。五個選圖視窗RGB均0差異，
 完整640×350各124差異，仍為RED。完整game、全部11個internal與desktop建置通過，
-正常新遊戲至THE END224.65秒；只屬重製可玩回歸。schema0.3.0／content0.1.71，
-未建立發行包。唯一狀態表見下；規格及重生入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+現行正常新遊戲至THE END423.50秒，只屬重製可玩回歸；schema0.4.0／content0.1.72。
+城鎮攝影機已修正，正常42狀態的最後全畫布RGB差0，標題正常讀檔camera維持；未建立發行包。
+最新NPC來源核對2030次六計數翻轉及18532組取圖；動畫原型仍RED，未進正式版。
+房間同次繪圖的NPC與主角讀到不同相位，單次全畫面相位取樣假說已推翻；不深入硬體逐週期。
+下一個正常玩家對拍由城門返回後續行。唯一狀態表見下；規格及重生入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下段落保存歷史檢查點；目前狀態以上述說明及下方表格為準。
 
@@ -89,14 +92,14 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-03） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；schema0.3.0／content0.1.71；canonical hash `sha256:027903b9d85232d2b0d7e7ff18d28ea9b56a920a06ffc93b4ef9a976547776a1`；未發布新包 |
-| 最新remake已完成 | 家中17人物狀態、母親對話、獨立RNG選圖、正常控制及手動接近；城鎮42狀態與最後旗標；家中標題讀檔及城鎮存讀檔 |
-| 最新原版oracle | contract37次／74IRQ1／170產物fbbb273d；navigation42次／84IRQ1／180產物4777dacd；自然圖像時鐘151B、問題13及Escape選定行為；舊完整返回9358ce6e保持 |
-| 最新畫面已驗 | 預覽、三輪選圖、結果五個336×192視窗RGB差0；七個圖像差異由跨格游標XOR閉合，不修改原始資產 |
-| 最新畫面未通過 | 上述完整640×350均124人物像素差異；房間261與城鎮水平視野仍待下一切片；完整V3未完成 |
-| 下一production切片 | 原始人物frame consumer與同狀態動畫，再修城鎮攝影機；不重新實作已閉合的家中有限流程 |
-| 原版oracle仍未知 | 其他接近gate、全域動畫、DS13/15/17後續用途、原版存檔、音訊及完整campaign；不追PIT／ISR逐週期 |
-| 現行remake回歸 | 正常新遊戲InputState至THE END224.65秒；game370項頂層／45項子測試、internal138項頂層／193項子測試及11個套件、desktop PASS；家中Enter、原版母親狀態、原子存檔拒絕與五個視窗同批PASS |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.4.0／content0.1.72；canonical hash `sha256:80a1123aa00731b8471f86f5160e46b6de12d1986e75f1f4f553aca820abd890`；未發布新包 |
+| 最新remake已完成 | 家中17人物狀態、母親對話、獨立RNG選圖、正常控制及手動接近；城鎮42狀態與最後旗標、目的城鎮camera；家中及城鎮標題正常讀檔 |
+| 最新原版oracle | 動畫0b57ba81：37次／74IRQ1／170產物，12180次遊戲計數、2030次翻轉、18532組NPC取圖；168個既有PNG／bin相同。contract fbbb273d、navigation4777dacd及完整返回9358ce6e維持 |
+| 最新畫面已驗 | 城鎮最後1020A完整640×350 RGB差0；同版本修改前81962。預覽、三輪選圖、結果五個336×192視窗RGB差0；不修改原始資產 |
+| 最新畫面未通過 | 家中完整640×350均124人物像素差異，房間261；完整開場V3未完成，不能以城鎮單張提升其他畫面 |
+| 下一production切片 | 原版城門返回後以正常輸入續行謁見；動畫writer／NPC consumer已閉合，繪圖時序仍DRAFT。單次phase原型房間261、選圖124仍RED，不指定frame或深入ISR |
+| 原版oracle仍未知 | 其他接近gate、動畫繪圖時序、凍結人物動態樣本、DS13/15/17後續用途、原版存檔、音訊及完整campaign；不追PIT／ISR逐週期 |
+| 現行remake回歸 | 正常新遊戲InputState至THE END423.50秒；game370項頂層／45項子、internal140項頂層／203項子及全部11個套件、desktop PASS；game38／internal4項選用SKIP，無素材缺失。家中Enter、城鎮完整畫布及標題讀檔同批PASS |
 | 額外驗證限制 | game38及internal4項選用未執行；沒有素材缺失跳過。原版38次主流程與存讀檔分支分開驗證；第一次完整執行OOM，設定Go軟上限後同工具鏈乾淨重跑PASS |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

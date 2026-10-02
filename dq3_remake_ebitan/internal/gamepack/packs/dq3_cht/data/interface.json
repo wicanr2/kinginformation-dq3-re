@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -2167,6 +2167,22 @@
         "consumer": "正常房間EOF、母親16動作、圖像選擇、手動接近",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "confirmed限定狀態及輸入；完整RGB與硬體wall-clock另列限制。"
+      }
+    },
+    "arrival_camera": {
+      "mode": "player_anchor",
+      "anchor_x": 9,
+      "anchor_y": 7,
+      "exterior_tile": 0,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY00.DAT + dosgolem正常母親城鎮42狀態及1020A畫布",
+        "address_space": "linear",
+        "address": "0x11971..0x11991;0x130f4..0x1311e;0x11dd8..0x11e4b",
+        "consumer": "目的場景section+0x12→DGROUP0B2D→layer0界外；11971玩家減anchor，不夾邊界",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "限定destination CTY00 section0；完整640x350原型RGB差0。動畫及其他場景不由此提升。"
       }
     }
   },

@@ -1,5 +1,18 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 2026-10-03 現行城鎮攝影機契約
+
+現行schema0.4.0／DQ3 content0.1.72。有限READY及原始EXE／CTY證據見
+[docs/188](188-opening-escort-to-castle-spec.md)城鎮攝影機節。下方家中0.3.0契約仍適用，版本欄位由本節更新。
+
+`opening_escort.arrival_camera`必填，型別與房間`camera`相同：`mode`、`anchor_x`、`anchor_y`、
+`exterior_tile`及`evidence`。模式只接受`player_anchor`；anchor必須落在20×15視野內，
+界外圖塊0合法但不得省略，evidence必須D3。缺欄位、null或未知欄位均拒絕。
+此camera只綁定`opening_escort.destination`，帶路結束及同版標題讀檔仍使用相同資料。
+共用引擎從場景選camera，再以玩家減anchor繪圖；不把值硬寫為版本分支或預設。
+九份資料檔同步schema0.4.0；舊schema／不同canonical hash存檔明確拒絕，沒有自動遷移。
+不提升其他場景、動畫或原版存檔格式的parity。
+
 ## 2026-10-03 現行家中流程契約
 
 現行schema0.3.0／DQ3 content0.1.71。有限規格、原始位址及READY審查見

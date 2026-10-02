@@ -14,6 +14,17 @@ func (g *Game) activeOpeningScenePresentation() *gamepack.OpeningScenePresentati
 	return e
 }
 
+func (g *Game) activeSceneCamera() *gamepack.SceneCamera {
+	if e := g.activeOpeningScenePresentation(); e != nil {
+		return &e.Camera
+	}
+	if e, ok := g.pack.OpeningEscort(); ok && g.inTown && g.cur != nil &&
+		g.curCty == e.Destination.CTY && g.cur.sec == e.Destination.Section {
+		return e.ArrivalCamera
+	}
+	return nil
+}
+
 func (g *Game) openOpeningSceneText(id string) bool {
 	e := g.activeOpeningScenePresentation()
 	p, ok := g.pack.OpeningPrelude()

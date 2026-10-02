@@ -31,7 +31,7 @@ def verify(receipt_path, assets):
     require(len(executable) == data['original_size'] == 115282, '原版 EXE 大小不符')
     require(sha(executable) == data['original_sha256'] ==
             '5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c', '原版 EXE 身分不符')
-    require(data['scenario'] in ('mother_home_entry', 'mother_home_contract', 'mother_home_navigation'), '情境不符')
+    require(data['scenario'] in ('mother_home_entry', 'mother_home_contract', 'mother_home_navigation', 'mother_home_animation'), '情境不符')
     navigation = data['scenario'] == 'mother_home_navigation'
     require(data['upstream_revision_observed'] == '2f44a68ebfc54b28fb15dd4a34510b0b04a5415d', 'dosgolem 版本未審查')
     require(not data['game_state_injection'], '禁止遊戲狀態注入')
