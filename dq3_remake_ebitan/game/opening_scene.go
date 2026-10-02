@@ -8,10 +8,10 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
-// validateSceneCameraSources validates declared scene references against the
+// validateSceneCameraSources validates declared camera and layer references against the
 // native town loader before any game state is created.
 func validateSceneCameraSources(assets fs.FS, pack *gamepack.Pack) error {
-	if len(pack.Interface.SceneCameras) > 0 && assets == nil {
+	if (len(pack.Interface.SceneCameras) > 0 || len(pack.Interface.SceneTileLayers) > 0) && assets == nil {
 		return fmt.Errorf("scene camera assets are nil")
 	}
 	for _, b := range pack.Interface.SceneCameras {
@@ -30,7 +30,49 @@ func validateSceneCameraSources(assets fs.FS, pack *gamepack.Pack) error {
 			return fmt.Errorf("scene camera exterior tile differs from source")
 		}
 	}
+	for _, s := range pack.Interface.SceneTileLayers {
+		raw, err := fs.ReadFile(assets, ctyFile(s.CTY))
+		if err != nil {
+			return fmt.Errorf("scene tile layer source: %w", err)
+		}
+		if s.Section >= len(raw)/2 {
+			return fmt.Errorf("scene tile layer section is outside source")
+		}
+		town, err := dq3data.OpenTown(raw, s.Section, false)
+		if err != nil {
+			return fmt.Errorf("scene tile layer section: %w", err)
+		}
+		if s.BaseTile != int(town.BaseLayerTile) || s.OtherTile != int(town.OtherLayerTile) {
+			return fmt.Errorf("scene tile layers differ from source")
+		}
+		if s.CTY >= len(mapBlkNum) {
+			return fmt.Errorf("scene tile layer block source is unknown")
+		}
+		block, err := fs.ReadFile(assets, blkFile(mapBlkNum[s.CTY]))
+		if err != nil {
+			return fmt.Errorf("scene tile layer block source: %w", err)
+		}
+		blk, err := dq3data.OpenBLK(block)
+		if err != nil || s.BaseTile >= blk.Count || s.OtherTile >= blk.Count {
+			return fmt.Errorf("scene tile layers exceed block source")
+		}
+	}
 	return nil
+}
+
+func (sc *Scene) tileLayer(x, y int) int {
+	return dq3data.TownTileLayer(sc.hiMap[y*sc.w+x])
+}
+
+func sceneLayerTile(s *gamepack.SceneTileLayers, playerLayer, tileLayer int, outside bool, tile int) int {
+	if playerLayer == s.BaseLayer {
+		if !outside && tileLayer != s.BaseLayer {
+			return s.BaseTile
+		}
+	} else if outside || tileLayer != playerLayer {
+		return s.OtherTile
+	}
+	return tile
 }
 
 func (g *Game) activeOpeningScenePresentation() *gamepack.OpeningScenePresentation {

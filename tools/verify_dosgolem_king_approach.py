@@ -52,6 +52,35 @@ def validate(path):
     assert all(word in ready[0] for word in ['ordinal=9 ', 'ida_linear=2111b ',
                'player_x=15 player_y=30 ', 'return_cs=0110 return_ip=7e00 ', 'raw0b24=0006 '])
     assert [line for line in lines if line.startswith('DQ3_KING_CAMERA ')] == data['king_camera_events']
+    layer_validated = False
+    if 'layer_tile_events' in data:
+        layer_events = [line for line in lines if line.startswith('DQ3_LAYER_TILE ')]
+        assert layer_events == data['layer_tile_events'] and len(layer_events) >= 8
+        town = original.with_name('CTY25.DAT')
+        raw_town = town.read_bytes()
+        assert len(raw_town) == 3756
+        assert digest(town) == '11d5c60377c6a98bbb9cfc9532652c5e23f4e5c939e769397e8fa5b2f22f9e2b'
+        u16 = lambda offset: int.from_bytes(raw_town[offset:offset+2], 'little')
+        section = u16(0)
+        layout = section + u16(section+14)
+        width = u16(layout)
+        assert raw_town[section+21:section+23] == bytes([27, 70])
+        pending, completed = {}, set()
+        for event in layer_events:
+            fields = dict(re.findall(r'(\w+)=(\S+)', event))
+            x, y = int(fields['x']), int(fields['y'])
+            assert int(fields['ordinal']) == 9 and (x,y) in {(24,23),(25,23),(24,24),(25,24)}
+            assert fields['layer'] == '00' and fields['raw0b56'] == '1b' and fields['raw0b57'] == '46'
+            value = int(fields['raw_bx'],16)
+            if fields['ida_linear'] == '11e07':
+                assert value == u16(layout+4+(y*width+x)*2)
+                pending[x,y] = value
+            else:
+                assert fields['ida_linear'] == '11e4b' and (x,y) in pending
+                assert value == (pending.pop((x,y)) & 0xc000) | 27
+                completed.add((x,y))
+        assert not pending and completed == {(24,23),(25,23),(24,24),(25,24)}
+        layer_validated = True
     observations = []
     for index, event in enumerate(events):
         fields = dict(re.findall(r'(\w+)=(\S+)', event))
@@ -87,6 +116,7 @@ def validate(path):
             'artifacts': len(artifacts), 'prior_identical_images_and_indices': identical,
             'observations': observations, 'game_state_injection': False,
             'idle_status_wait_events': ready, 'all_steps_are_complete_frames': False,
+            'layer_tile_validated': layer_validated,
             'remake_parity': False, 'king_audience_parity': False, 'audio_parity': False}
 
 

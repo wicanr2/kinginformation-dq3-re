@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.5.0"
+	SchemaVersion       = "0.6.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -1020,6 +1020,16 @@ type SceneCameraBinding struct {
 	Camera  *SceneCamera `json:"camera"`
 }
 
+type SceneTileLayers struct {
+	CTY       int      `json:"cty"`
+	Section   int      `json:"section"`
+	Mode      string   `json:"mode"`
+	BaseLayer int      `json:"base_layer"`
+	BaseTile  int      `json:"base_tile"`
+	OtherTile int      `json:"other_tile"`
+	Evidence  Evidence `json:"evidence"`
+}
+
 type WindowShadow struct {
 	Mode     string   `json:"mode"`
 	OffsetX  int      `json:"offset_x"`
@@ -1070,6 +1080,7 @@ type RawScreenAsset struct {
 type Interface struct {
 	SchemaVersion            string                    `json:"schema_version"`
 	SceneCameras             []SceneCameraBinding      `json:"scene_cameras"`
+	SceneTileLayers          []SceneTileLayers         `json:"scene_tile_layers"`
 	Dialogue                 WindowLayout              `json:"dialogue"`
 	BattleMessage            WindowLayout              `json:"battle_message,omitempty"`
 	BattleCommand            BattlePanelLayout         `json:"battle_command,omitempty"`
@@ -2696,6 +2707,9 @@ func (p *Pack) validateInterface() error {
 		return err
 	}
 	if err := p.validateSceneCameras(); err != nil {
+		return err
+	}
+	if err := p.validateSceneTileLayers(); err != nil {
 		return err
 	}
 	if e := p.Interface.OpeningEscort; e != nil {

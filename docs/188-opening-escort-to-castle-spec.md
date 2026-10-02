@@ -1269,6 +1269,98 @@ internal與建置為`work/issue4-castle-camera-final-internal.jsonl`、`work/iss
 原始失敗log為`work/issue4-castle-camera-game.jsonl`、`issue4-castle-camera-final-game.jsonl`及`issue4-castle-camera-partition-rest.jsonl`。
 本批新增工具、契約、測試及本機產物均由本節索引。下一切片是正常進城後閒置狀態窗與8000h圖塊consumer，再續行謁見。
 
+### 2026-10-03 進城後圖塊與閒置狀態窗追查（DRAFT）
+
+接續0900bd2，以Issue #4留言5960375932登記；以下追查起點為schema0.5.0／content0.1.73，最新正式驗收見本節末。
+先以一次性IDA9.4資料庫追11971→11D8A的圖塊consumer，以及17DBB→18222的狀態窗內容。
+有界匯出腳本為`work/issue4-castle-consumers-ida.py`，sidecar為`work/issue4-castle-consumers-ida.json`。
+層欄位xref與取址候選追加匯出為`work/issue4-castle-layers-ida.py`及`.json`，不因直接xref缺writer就宣稱沒有寫入。
+完整writer追加為`work/issue4-castle-layer-writers-ida.py`及`.json`。重生前保留manifest於`work/issue4-castle-prior-source.json`。
+同條47次正常輸入追加`DQ3_LAYER_TILE`唯讀觀測，記錄右上四格原始BX、層selector及替代圖塊欄位，沒有改原版狀態。
+隔離試作由`work/issue4-make-castle-layer-prototype.py`產生`work/issue4-castle-layer-prototype.py`，固定0900bd2重播正常輸入。
+試作只驗證來源分支的可見影響，版本值暫留隔離副本，不進正式程式。輸出`work/issue4-castle-layer-prototype-approach.json`及九張`-north-NN.png`。
+沿用本節EXE大小、SHA-256與IDA linear／MZ file換算；原始名字、bytes、xref及未證實警示保留。
+追查時未將未知8000h語意或閒置時間契約放入正式程式；圖層原始資料與consumer閉合後依下方有限READY實作。
+前輪原始c8548e84收據已依內容hash歸檔至`work/dosgolem-opening/issue4-archive-c8548e8459daa90e1980d3a9a6d617b5344edf3f921d2b8f06cf5812e28eeac6.json`；原先manifest另保留於`work/issue4-castle-prior-source.json`。
+
+#### 圖層遮蔽來源與有限 READY
+
+同條正常47次輸入重生退出0，新原版收據SHA-256
+`16f0c0fc60f5f4aeb96e452eb0d0a6c25024c23a3c2662c90262a5722f50e918`。
+198個唯一產物全部核對，先前196份PNG／bin逐項相同。最新獨立核對為`work/issue4-castle-layer-source-audit.json`。
+原版右上四格在11E07讀到8018／8004／801A／801A，層selector00，替代欄位0B56=1B、0B57=46；
+八個指令後於11E4B皆為801B，證實此正常進城狀態使用tile27。沒有改原版位置、旗標或layer。
+隔離試作同條正常InputState的最後完整640×350 RGB差0，私有比較為`work/issue4-castle-layer-prototype-rgb.json`。
+該圖位於閒置窗之前；不把它提升為包含閒置窗的完整等待畫面或九個完成影格。
+
+| 原始定位與資料流 | 推論等級與範圍 |
+|---|---|
+| IDA9.4 linear13162..1317D／file44D2..44ED，section+15／+16→DGROUP0B56／0B57 | confirmed原始header與writer；本CTY值27／70。70的非零層動態畫面未抽樣，呈現資料為D2 |
+| linear13135..1315A及11910..1195D，玩家格高byte與C0h→DGROUP2579 | strong；兩條原始取址與selector writer閉合，正常進城的selector00有動態確認 |
+| linear11E07..11E4B／file3177..31BB→2D0A圖塊表 | confirmed零層分支：其他層替換為0B56；非零層不同類別替換0B57的靜態分支為strong |
+| CTY25 section0，raw高byte的上兩bit | confirmed原始資料及零層遮蔽consumer，不將8000h命名屋頂；未核對其他層的轉換動畫或NPC遮蔽 |
+
+typed契約：原生Town parser保留section+15／+16並把高byte上兩bit解為0..3圖層。
+正式入口為`game/opening_scene.go`、`game/game.go`、`internal/dq3data/townmap.go`；
+契約與原始資料核對見`internal/gamepack/scene_tile_layers_test.go`，正常玩家與來源拒絕見`game/scene_camera_test.go`。
+新增表頭長度拒絕抽樣見`internal/dq3data/townmap_layers_test.go`。
+pack新增必要陣列`interface.scene_tile_layers`，可明示空陣列；每筆CTY／section唯一，包含
+`mode=player_cell_layer`、`base_layer`、`base_tile`、`other_tile`及分級證據。
+本pack只宣告CTY25 section0、base_layer0、base_tile27、other_tile70。缺欄位、null、未知原語、
+越界圖號／圖層、重複或無camera引用均拒絕；建立Game前核對實際CTY／section與兩個header圖塊。
+另以正常loader的實際BLK count拒絕替代圖塊越界，不能把byte上限當成素材數量。
+base_layer時，其他層的格子改畫base_tile；非base_layer時，非玩家所在層及界外畫other_tile。
+保留原生移動／事件圖號，繪製選擇不改碰撞、事件、角色、亂數或圖塊資料。
+只在宣告場景套用；不宣稱其他layer的轉換動畫、NPC遮蔽或整個城堡已V3。
+
+資料欄位最低D2；此次玩家可見零層分支及base_tile達D3，其他tile70依原始header／consumer為D2，
+只改繪製，不增加正式流程gate。缺失值不猜補，不把static strong寫成全分支動態confirmed。
+schema0.6.0／content0.1.74；同版Save及正常標題Load須恢復目前格、hiMap與相同繪製規則。
+驗收包含原始EXE／CTY parity、必要欄位及未知來源拒絕、正常47次進城、前閒置全RGB零差異、
+同版本標題讀檔、後續正常主線回歸、完整game分批及internal／desktop。此有限規格審為READY。
+
+閒置窗仍DRAFT。1991D的原始比較為FFh與12Ch，不能擴成FFFFh或12C300h；
+時間域尚未審查，不據此猜秒數。18222已定位隊伍姓名、HP、MP、狀態／等級及職業consumer，
+正式閒置window與時序須另閉合，這輪不以測試注入開窗取代正常閒置流程。
+
+#### 讀檔畫面驗收勘誤
+
+新增加的「讀檔後也須與進城原版PNG零差異」斷言連續兩次差304，未視為產品缺陷。
+診斷`work/issue4-castle-layers-load-diagnostic.log`證實正常朝向1、讀檔0，walk皆0、layer皆0；
+全畫布差異僅在(288,176)..(319,191)主角範圍。現行remake的saveState不保存朝向，
+原版讀檔朝向尚未取得oracle；新斷言誤將不同朝向當同狀態，不能以調影格或注入朝向修成零差異。
+回到證據審查後，保留47次正常進城的嚴格全RGB零差異，以及camera、layer宣告、完整hiMap、目前格與旗標的標題讀檔斷言。
+讀檔完整RGB保持診斷304，不裁切／遮罩，正式收據明示`original_save_load_oracle=false`與`title_load_full_rgb_parity=false`。
+這不是原版存讀檔完成聲明。讀檔後所有場景的完整原版畫面與朝向仍是待驗gate。
+新的正式PNG／JSON與讀檔PNG為`work/issue4-castle-layers-production{.png,.json,-title-loaded.png}`，
+乾淨通過log為`work/issue4-castle-layers-production-clean.log`；第一次失敗`work/issue4-castle-layers-production.log`與唯讀診斷log保留。
+完整game由`work/issue4-castle-layers-partition.py`分為campaign與四批，產物同前綴的`.jsonl`及`.selection.json`，不覆寫前輪camera收據。
+
+#### 零層圖塊遮蔽正式驗收（有限 CONFORMED）
+
+schema0.6.0／content0.1.74，canonical hash為
+`sha256:bb8a154a01619c2d0541eab4055fa2e2485d7babd9bef744ec322d9b1f25f9c8`。
+正式正常47次InputState從新遊戲進城，前閒置640×350 RGB由2775差異降為0，與隔離試作逐byte相同。
+正式PNG SHA-256為`4744e8a26b67e786313f4becc9f9ae1452811d71abf237885b048b620300153c`，已目視核對。
+完整閒置等待圖由12726降為9951，仍RED；不把前閒置對拍擴成完整等待、謁見或整個城堡V3。
+城鎮42狀態及全RGB零差異保持；同版標題讀檔保留camera、完整hiMap、layer、位置及旗標，朝向差異仍依上節限制記錄。
+
+12種pack契約損壞、5種runtime來源損壞與原生表頭截斷拒絕通過。
+來源稽核新增5種層觀測損壞，連同8種原有收據損壞均拒絕；負例同時修改log及metadata，避免只證明兩者不符。
+三份IDA sidecar共逐列核對原始file bytes及MZ relocation，保留原名、位址、推論等級與未證實警示。
+最小充分收尾入口為`work/issue4-castle-layers-final-audit.py`，輸出`work/issue4-castle-layers-final-receipt.json`；
+核對198份原版產物、196份歷史PNG／bin不變、正式零差異與未知gate、完整測試清單、輸出UID／GID及主機衛生。
+完整game373項頂層／53子PASS、38選用SKIP，411個頂層由campaign及四批覆蓋且無重複或遺漏。
+internal145項頂層／223子與全部11套件PASS，4選用SKIP；桌面ELF建置通過。
+正常新遊戲至THE END184.69秒，只屬remake回歸；原版完整campaign與音訊仍未CONFORMED。
+internal收據為`work/issue4-castle-layers-internal.jsonl`，桌面產物為`work/issue4-castle-layers-desktop`。
+首輪分批工具誤指不存在的`-final.test`，未開始測試；改為實際`-layers.test`後以相同容器與命令乾淨重跑。
+隔離試作先有shell引用錯誤、再有helper回傳值編譯錯誤，修正工具後乾淨log為`work/issue4-castle-layer-prototype-clean.log`。
+未改正式規則、seed或角色frame來消除驗證失敗。所有原始資料與私有圖像仍不進Git；沒有新發行包。
+提交後稽核入口為`work/issue4-castle-layers-post-push-audit.py`與同前綴`-receipt.json`，核對遠端commit、Issue與清理狀態。
+遠端結果留言5961178819；Issue #4保持OPEN，後續以其未完成項目為準。
+下一切片為閒置狀態窗的正常開關、資料consumer及時間域。非零層轉換動畫、NPC遮蔽、原版讀檔朝向與謁見另保留待驗。
+
 ## 2026-10-03 城鎮攝影機（有限 READY）
 
 依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。

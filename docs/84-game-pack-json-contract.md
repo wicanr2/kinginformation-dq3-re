@@ -1,6 +1,28 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-## 2026-10-03 現行場景攝影機契約
+## 2026-10-03 現行場景圖層契約
+
+schema0.6.0／DQ3 content0.1.74。來源及有限READY審查見[docs/188](188-opening-escort-to-castle-spec.md)進城後圖層節。
+`interface.scene_tile_layers`必填，可明示空陣列；缺失或null拒絕。
+
+| 欄位 | 契約 |
+|---|---|
+| `cty`／`section` | 非負且唯一，必須有同場景camera；0合法但不得省略 |
+| `mode` | 唯一已註冊`player_cell_layer`原語，依玩家目前格的typed layer選擇繪製圖塊 |
+| `base_layer` | 0..3，必填；原生parser解CTY高byte上兩bit，不在共用引擎寫raw mask |
+| `base_tile`／`other_tile` | 0..255且必填，來源為section+15／+16；建立Game前與原生header核對 |
+| `evidence` | 至少D2來源與consumer；此正常零層分支為D3，未抽樣的非零層呈現分支保留strong限制 |
+
+宣告場景在base_layer時遮蔽其他層的圖塊；其他layer只顯示玩家所在層，非同層及界外使用other_tile。
+繪製不修改原生圖號、碰撞或事件。正常標題讀檔重建native場景，再從已恢復hiMap取得layer。
+未知引用、缺素材、header不符或不完整宣告拒絕，不提供共用Go預設。
+替代圖塊另以正常loader使用的實際BLK count核對，越界宣告拒絕，不能以255版本上限代替archive形狀。
+本pack只新增CTY25 section0。前閒置畫面的有限對拍不替代閒置窗、轉換動畫、NPC遮蔽與完整謁見。
+九份JSON同步schema；舊schema或不同canonical hash存檔明確拒絕，不自動遷移。
+
+以下保存較早版本契約；攝影機欄位仍適用，現行圖層與版本以首節為準。
+
+## 2026-10-03 前一場景攝影機契約
 
 現行schema0.5.0／DQ3 content0.1.73。九份JSON同步版本；舊schema或不同canonical hash的存檔明確拒絕。
 限定原始資料、READY審查及正常玩家入口見[docs/188](188-opening-escort-to-castle-spec.md)正常城堡接近節。

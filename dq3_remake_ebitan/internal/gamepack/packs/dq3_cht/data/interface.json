@@ -1,5 +1,25 @@
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.6.0",
+  "scene_tile_layers": [
+    {
+      "cty": 25,
+      "section": 0,
+      "mode": "player_cell_layer",
+      "base_layer": 0,
+      "base_tile": 27,
+      "other_tile": 70,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY25.DAT + dosgolem正常進城47次輸入",
+        "address_space": "linear",
+        "address": "0x13162..0x1317D;0x11E07..0x11E4B",
+        "consumer": "section+15/+16→DGROUP0B56/0B57；玩家格上兩bit→2579→圖塊替代",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "零層正常進城四格consumer與完整前閒置畫面已驗；非零層tile70為原始header/consumer D2資料，轉換動畫、NPC遮蔽及閒置窗未驗。"
+      }
+    }
+  ],
   "scene_cameras": [
     {
       "cty": 25,
@@ -17,7 +37,7 @@
           "address": "0x11971..0x11991;CTY25 file0x0006+0x12",
           "consumer": "11971玩家減anchor→11D8A；CTY section界外圖塊",
           "doc": "docs/188-opening-escort-to-castle-spec.md",
-          "note": "限定CTY25 section0視野；完整RGB、閒置狀態窗及8000h圖塊語意仍未通過。"
+          "note": "限定CTY25 section0視野；圖層遮蔽見scene_tile_layers。閒置狀態窗與謁見仍未通過。"
         }
       }
     }

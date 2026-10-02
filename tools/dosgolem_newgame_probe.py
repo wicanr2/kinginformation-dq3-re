@@ -427,6 +427,14 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
                     m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),
                     int16(m.Read16(cpu.Addr(ds,0x4f25))),int16(m.Read16(cpu.Addr(ds,0x4f27))))
             }}
+            if ordinal <= 9 && (pc == 0x11e07 || pc == 0x11e4b) {{
+                ds := uint16(0x15ed)
+                x,y := m.Read16(cpu.Addr(ds,0x4f25)),m.Read16(cpu.Addr(ds,0x4f27))
+                if m.Read16(cpu.Addr(ds,0x0b24)) == 6 && x >= 24 && x <= 25 && y >= 23 && y <= 24 {{
+                    fmt.Printf("DQ3_LAYER_TILE step=%d ordinal=%d ida_linear=%05x x=%d y=%d raw_bx=%04x layer=%02x raw0b56=%02x raw0b57=%02x\\n",m.Steps,ordinal,pc,x,y,
+                        m.CPU.R[cpu.BX],m.Read8(cpu.Addr(ds,0x2579)),m.Read8(cpu.Addr(ds,0x0b56)),m.Read8(cpu.Addr(ds,0x0b57)))
+                }}
+            }}
             if ordinal <= 9 && pc == 0x2111b && !dq3KingReady[ordinal] {{
                 dq3KingReady[ordinal] = true
                 ds := uint16(0x15ed)
@@ -572,6 +580,7 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
         meta['king_approach_events']=[line for line in lines if line.startswith('DQ3_KING_APPROACH ')]
         meta['king_ready_events']=[line for line in lines if line.startswith('DQ3_KING_READY ')]
         meta['king_camera_events']=[line for line in lines if line.startswith('DQ3_KING_CAMERA ')]
+        meta['layer_tile_events']=[line for line in lines if line.startswith('DQ3_LAYER_TILE ')]
         assert len(meta['king_approach_events']) == 9
     meta['artifacts'] = []
     artifact_names = [f'{prefix}-{name}.{suffix}' for _,name in captures for suffix in ('png','bin')] + [f'{prefix}.log', f'{prefix}-generation.py']

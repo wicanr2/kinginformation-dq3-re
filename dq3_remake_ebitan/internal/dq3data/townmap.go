@@ -6,12 +6,14 @@ import "fmt"
 // CTY 檔用 CTYnn.DAT;阿里阿罕(起始城)= CTY00.DAT / section 0 / blk_n=1(DQ31.BLK+BLKBM1.DAT)。
 type Town struct {
 	W, H            int
-	Cells           []byte   // 每格 tile 索引(u16 低 byte;高 byte=事件 subid,渲染不用)
+	Cells           []byte   // 每格原始圖塊索引，取u16低byte
 	SpawnX, SpawnY  int      // 版面 spawn(section header +0x13/+0x14)
 	DlgBank         int      // 對話 bank(section header +0x17 → D3TXT0<bank>.TXT)
 	MapFlags        byte     // section header +0x10；bit0=魯拉可用、bit1=烈米特可用
 	EncounterFlag   byte     // section header +0x11；原始 DS:[0xd77]，0=安全、非0=可遇敵
 	ExteriorTile    byte     // section header +0x12；原始界外圖塊
+	BaseLayerTile   byte     // section header +0x15 → DGROUP0B56
+	OtherLayerTile  byte     // section header +0x16 → DGROUP0B57
 	HiMap           []byte   // 每格高 byte(低 5 bit = 事件/轉場 subid)
 	SpecialHandlers []int    // section+4 byte table：tile/scene scripted handler raw IDs
 	Events          [][3]int // section 事件表(section+8):{type, param, p2}
@@ -50,7 +52,7 @@ func OpenTown(cty []byte, section int, night bool) (*Town, error) {
 		return nil, fmt.Errorf("section out of range")
 	}
 	so := int(townU16(cty, 2*section))
-	if so == 0xffff || so+0x16 > len(cty) {
+	if so == 0xffff || so+0x17 > len(cty) {
 		return nil, fmt.Errorf("section empty/oob")
 	}
 	lay := so + int(townU16(cty, so+0x0e)) // layout_ptr 相對 section
@@ -69,13 +71,15 @@ func OpenTown(cty []byte, section int, night bool) (*Town, error) {
 	}
 	t := &Town{
 		W: w, H: h,
-		Cells:         make([]byte, w*h),
-		SpawnX:        int(cty[so+0x13]), // spawn_x(section header)
-		SpawnY:        int(cty[so+0x14]), // spawn_y
-		DlgBank:       dlgBank,
-		MapFlags:      cty[so+0x10],
-		EncounterFlag: cty[so+0x11],
-		ExteriorTile:  cty[so+0x12],
+		Cells:          make([]byte, w*h),
+		SpawnX:         int(cty[so+0x13]), // spawn_x(section header)
+		SpawnY:         int(cty[so+0x14]), // spawn_y
+		DlgBank:        dlgBank,
+		MapFlags:       cty[so+0x10],
+		EncounterFlag:  cty[so+0x11],
+		ExteriorTile:   cty[so+0x12],
+		BaseLayerTile:  cty[so+0x15],
+		OtherLayerTile: cty[so+0x16],
 	}
 	t.HiMap = make([]byte, w*h)
 	for i := 0; i < w*h; i++ {
@@ -202,3 +206,7 @@ func (t *Town) Tile(x, y int) int {
 	}
 	return int(t.Cells[y*t.W+x])
 }
+
+// TownTileLayer decodes the native cell's upper two attribute bits. It does not
+// assign a visual name to a layer or alter the low-bit event selector.
+func TownTileLayer(high byte) int { return int(high >> 6) }

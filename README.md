@@ -23,7 +23,7 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前開發版為 schema `0.5.0`／content `0.1.73`。dosgolem 已驗證六幕順序、
+目前開發版為 schema `0.6.0`／content `0.1.74`。dosgolem 已驗證六幕順序、
 前五幕色號及第六幕 129 個完整翻頁的色號／RGB，並修正漏卡與動態標誌；
 範圍與時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
 正常輸入的命名、性別、能力等待／確認及接受角色後生日首頁共22張完整畫布 RGB 零差異，
@@ -37,7 +37,8 @@
 母親城鎮帶路的位置、方向、單一對話與最後旗標順序已修正，有限狀態及同版本存讀檔通過。
 家中人物順序、三輪圖像選擇、控制交還及手動接近已修正；五個選圖視窗RGB零差異。
 城鎮視野已修正，帶路最後完整畫面RGB零差異；完整選圖畫面仍差124個人物像素。
-正常進城的城堡視野與同版本標題讀檔已修正；完整等待畫面仍有狀態窗及圖塊差異，限定範圍見 [docs/188](docs/188-opening-escort-to-castle-spec.md)。
+正常進城的城堡視野與圖層已修正，前閒置完整畫面RGB零差異；同版本標題讀檔恢復相同圖層資料。
+完整等待畫面的狀態窗及原版讀檔朝向仍待驗，限定範圍見 [docs/188](docs/188-opening-escort-to-castle-spec.md)。
 動畫繪圖時序、完整原版玩家路線與音畫對拍尚未完成。
 此版要求新的pack契約，舊schema存檔會明確拒絕；目前沒有自動遷移。
 歷史 E3 與 90% 自評不能代替本輪收據。現況以 [CONTEXT.md](CONTEXT.md) 為準，

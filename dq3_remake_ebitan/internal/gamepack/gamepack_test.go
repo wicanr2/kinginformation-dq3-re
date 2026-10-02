@@ -3639,7 +3639,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.3.0","scene_cameras":[],"dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.3.0","scene_cameras":[],"scene_tile_layers":[],"dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",

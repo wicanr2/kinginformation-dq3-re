@@ -2983,14 +2983,30 @@ func (g *Game) renderFrame() {
 	if camera != nil {
 		camX, camY = g.px-camera.AnchorX, g.py-camera.AnchorY
 	}
+	var layers *gamepack.SceneTileLayers
+	if g.inTown {
+		layers = g.pack.SceneTileLayers(g.curCty, sc.sec)
+	}
+	playerLayer := 0
+	if layers != nil {
+		playerLayer = sc.tileLayer(g.px, g.py)
+	}
 	for cy := 0; cy < ViewRows; cy++ {
 		for cx := 0; cx < ViewCols; cx++ {
 			x, y := camX+cx, camY+cy
 			var idx int
-			if camera != nil && (x < 0 || y < 0 || x >= sc.w || y >= sc.h) {
+			outside := x < 0 || y < 0 || x >= sc.w || y >= sc.h
+			if camera != nil && outside {
 				idx = camera.ExteriorTile
 			} else {
 				idx = sc.tileIdx(x, y)
+			}
+			if layers != nil {
+				tileLayer := playerLayer
+				if !outside {
+					tileLayer = sc.tileLayer(x, y)
+				}
+				idx = sceneLayerTile(layers, playerLayer, tileLayer, outside, idx)
 			}
 			tile := sc.blk.Tile(idx)
 			blitTile(g.rgba, cx*TileW, cy*TileH, tile, sc.pal)

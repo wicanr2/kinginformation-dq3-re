@@ -819,3 +819,34 @@ internal首輪三個拒絕案例因fixture缺少新必要集合而提前拒絕�
 連同正式PNG、JSON、所有分批清單、失敗log、IDA及來源工具均掛回docs/188。
 輸出UID/GID1000，歷史root候選3213、Markdown目錄0保持。本批一次性容器均已結束，未建立新image或發行包。
 提交、推送、遠端Issue更新與最後Docker清理另存work/issue4-castle-camera-post-push-receipt.json；Issue保持OPEN。
+
+## 2026-10-03：正常進城圖層遮蔽修正
+
+依Issue #4留言5960375932接續0900bd2。命中原版畫面對拍、規格閘門、IDA及文件職責路由。
+原版EXE／CTY唯讀，以IDA9.4追section表頭writer、玩家格selector與圖塊consumer；原始定位及等級見docs/188。
+原版冷啟動47次正常輸入／94次IRQ1重生198份唯一產物，196份前輪PNG／bin逐項不變。
+四格八筆唯讀觀測閉合正常零層的替代圖塊，沒有注入位置、旗標、layer或影格。
+固定0900bd2的隔離圖層原型從正常新遊戲重播，前閒置完整640×350 RGB由2775降為0。
+依有限READY接入scene_tile_layers；schema0.6.0／content0.1.74，版本資料與圖塊引用留在JSON。
+原生Town parser保存section+15／+16並解typed layer；共用renderer只選已宣告規則，繪製不改碰撞或事件。
+建立Game前核對實際CTY／section、header值及正常loader的實際BLK count，未知或越界拒絕。
+12種pack契約損壞、5種runtime來源損壞、表頭截斷及原始EXE／CTY parity通過。
+
+正式47次InputState前閒置完整RGB差0，PNG與隔離原型逐byte相同並目視核對；完整等待圖仍9951差異。
+城鎮42狀態及全RGB零差異保持；標題Save／Load維持camera、layer、完整hiMap、位置與旗標。
+新讀檔零差異斷言兩次失敗304，診斷朝向1／0且差異全在主角。現行saveState沒有朝向，原版讀檔oracle未知。
+重查同狀態路由後，保留正常47次嚴格零差異與讀檔狀態斷言；保留完整讀檔PNG及304差異，明示原版oracle及讀檔parity均false。
+未注入朝向、裁切或遮罩來消除差異；未改正式存檔行為。此新斷言的同狀態假設失效，不記成已證實的原版讀檔產品缺陷。
+隔離試作曾有shell引用與helper回傳值編譯錯誤；分批runner曾誤指不存在的binary，均屬工具問題。
+修正工具後以相同隔離流程乾淨重跑，未改正式規則或seed。
+
+完整game373頂層／53子PASS、38選用SKIP；411頂層由長主線與四批全新程序完整覆蓋，無重複或遺漏。
+正常新遊戲至THE END184.69秒，只屬remake回歸；internal145頂層／223子、全部11套件PASS，4選用SKIP；desktop ELF通過。
+13種原版收據損壞均拒絕，新layer負例同時修改log與metadata；三份IDA sidecar逐列核對file bytes與MZ relocation。
+最小充分稽核work/issue4-castle-layers-final-audit.py輸出issue4-castle-layers-final-receipt.json，9902bytes，SHA-256
+`9174a2ce5ae1df4a0c91d66677850c5308dedb1cbff7b66368cfba3b5faba3eb`；全部私有產物入口掛回docs/188。
+Python／shell語法、Go格式及git diff --check通過；新增production Go無版本raw ID／座標／旗標／玩家文字，原生格式與驗證域除外。
+現況同步CONTEXT唯一表、PROJECT_MEMORY、docs/74、docs/84及README；遠端結果留言5961178819，Issue保持OPEN。
+輸出UID/GID1000；既有root候選3213、Markdown目錄0維持。本批一次性容器已移除，未建立image或新發行包。
+提交、推送、遠端Issue核對及Docker清理另存work/issue4-castle-layers-post-push-receipt.json。
+下一切片閉合閒置狀態窗後正常續行謁見；非零層轉換、NPC遮蔽、原版讀檔朝向、音訊與完整原版campaign保持待驗。

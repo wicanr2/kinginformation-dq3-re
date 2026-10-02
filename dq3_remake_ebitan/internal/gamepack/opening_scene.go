@@ -113,6 +113,44 @@ func (p *Pack) SceneCamera(cty, section int) *SceneCamera {
 	return nil
 }
 
+func (s *SceneTileLayers) UnmarshalJSON(raw []byte) error {
+	type plain SceneTileLayers
+	return requiredHome(raw, (*plain)(s))
+}
+
+func (p *Pack) validateSceneTileLayers() error {
+	if p.Interface.SceneTileLayers == nil {
+		return errors.New("scene tile layers must be declared")
+	}
+	seen := map[[2]int]bool{}
+	for _, s := range p.Interface.SceneTileLayers {
+		key := [2]int{s.CTY, s.Section}
+		if s.CTY < 0 || s.Section < 0 || seen[key] || p.SceneCamera(s.CTY, s.Section) == nil ||
+			s.Mode != "player_cell_layer" || s.BaseLayer < 0 || s.BaseLayer > 3 ||
+			s.BaseTile < 0 || s.BaseTile > 255 || s.OtherTile < 0 || s.OtherTile > 255 ||
+			(s.Evidence.Level != "D2" && s.Evidence.Level != "D3") {
+			return errors.New("scene tile layer declaration is invalid")
+		}
+		seen[key] = true
+		if err := validateEvidence(s.Evidence); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Pack) SceneTileLayers(cty, section int) *SceneTileLayers {
+	if p != nil {
+		for i := range p.Interface.SceneTileLayers {
+			s := &p.Interface.SceneTileLayers[i]
+			if s.CTY == cty && s.Section == section {
+				return s
+			}
+		}
+	}
+	return nil
+}
+
 func (e *OpeningEscort) UnmarshalJSON(raw []byte) error {
 	type plain OpeningEscort
 	return requiredHome(raw, (*plain)(e))
