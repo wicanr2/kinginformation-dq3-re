@@ -37,6 +37,13 @@ func TestOriginalNewGameInitialState(t *testing.T) {
 	}
 
 	g.startOpening()
+	if g.inTown || g.openingIdx != 0 || !g.dlg.open || g.dayNightClock() != g.dayNightCycle.InitialClock {
+		t.Fatal("生日尚未返回不得先交易出生場景，初始clock須保持資料包值")
+	}
+	// 本測試只驗局部交易；自然生日返回由正式 InputState 對拍守門。
+	if !g.enterOpeningScene() {
+		t.Fatal("已審查的出生交易失敗")
+	}
 	if !g.inTown || g.curCty != 0 || g.cur == nil || g.cur.sec != 4 {
 		sec := -1
 		if g.cur != nil {

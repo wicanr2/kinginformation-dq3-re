@@ -1,13 +1,12 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> **2026-10-02 最新閘門（Issue #4，生日續頁DRAFT）：**
-> 冷啟動19次IRQ1與純讀取flow確認：第18次Enter後原版生日文字返回，接著寫出生座標5、5，
-> 在家中record83內嵌等待；重製仍停生日pos15，完整畫布差異170,238像素。
-> EOF與內嵌等待不等價，不能靠多按一次Enter近似。第19次輸入的兩側record狀態也已不同，
-> 不把其畫面差異當成相同record的parity。證據與未閉合範圍見[docs/188](188-opening-escort-to-castle-spec.md)。
-> 下一步補共享文字流保留／捲動、出生場景視野consumer與NPC事件，再試作、READY及正式修正。
-> 本輪未改production或schema/content，既有22張對拍保持通過；完整主線與建置最近驗收仍以下方生日首頁切片為準。
-> 入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`已新增，未修正前預期退出1。
+> **2026-10-02 最新閘門（Issue #4，有限返回已修正／完整續頁DRAFT）：**
+> 原版EXE／IDA9.4與19次正常IRQ1flow閉合後，已修正生日EOF多餘確認、出生交易時序與初始clock30。
+> 正式第18次InputState自然抵達家中record83等待，seed356D；既有22張仍完整RGB零差異。
+> schema/content為0.1.59／0.1.65。房間完整RGB仍RED；不能用狀態修正或隔離試作2,034像素差異宣稱完成。
+> 下一步閉合共享文字流保留／捲動、視野／外界圖塊、框線、母親及箭頭，再審查READY接入正式路徑。
+> 有限規格與收據見[docs/188](188-opening-escort-to-castle-spec.md)，目前驗收表以[CONTEXT](../CONTEXT.md)為準。
+> 入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`仍以完整RGB差異退出1。
 
 > **2026-10-01 最新閘門（Issue #4，生日首頁）：**
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。

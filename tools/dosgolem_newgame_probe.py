@@ -172,10 +172,11 @@ with tempfile.TemporaryDirectory(prefix='dq3-issue4-') as temp:
             case 0x100ab, 0x100b5, 0x100c4, 0x100d5, 0x100d8, 0x100e9, 0x100fa,
                  0x21558, 0x21501, 0x216c3, 0x21726:
                 ds := m.CPU.Seg[cpu.DS]
-                fmt.Printf("DQ3_BIRTHDAY_FLOW step=%d ida_linear=%05x DS=%04x SI=%04x BP=%04x DX=%04x raw259b=%d raw0716=%04x raw0718=%04x raw4f33=%d raw4f35=%d seed=%04x\n",
+                fmt.Printf("DQ3_BIRTHDAY_FLOW step=%d ida_linear=%05x DS=%04x SI=%04x BP=%04x DX=%04x raw259b=%d raw0716=%04x raw0718=%04x raw4f33=%d raw4f35=%d seed=%04x raw251d=%d raw0b2d=%d raw25d1=%04x raw4f2d=%d\n",
                     m.Steps,flowPC,ds,m.CPU.R[cpu.SI],m.CPU.R[cpu.BP],m.CPU.R[cpu.DX],
                     m.Read8(cpu.Addr(ds,0x259b)),m.Read16(cpu.Addr(ds,0x0716)),m.Read16(cpu.Addr(ds,0x0718)),
-                    m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),m.Read16(cpu.Addr(ds,0x0b5a)))
+                    m.Read16(cpu.Addr(ds,0x4f33)),m.Read16(cpu.Addr(ds,0x4f35)),m.Read16(cpu.Addr(ds,0x0b5a)),
+                    m.Read16(cpu.Addr(ds,0x251d)),m.Read8(cpu.Addr(ds,0x0b2d)),m.Read16(cpu.Addr(ds,0x25d1)),m.Read16(cpu.Addr(ds,0x4f2d)))
             }
         }
 """

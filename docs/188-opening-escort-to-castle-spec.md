@@ -1,5 +1,76 @@
 # 188 — 開場連續演出勘誤與修正規格：家中 → 王城入口 → 國王
 
+## 2026-10-02：有限返回／初始 clock 修正（CONFORMED，限返回順序與初值；房間畫面仍 DRAFT）
+
+下節完整續頁仍未 READY。本節只審查兩項可獨立實作的已證實行為：生日文字在
+EOF 揭露完成後自動返回，與原版初始晝夜 clock；不把尚未閉合的文字保留／捲動、
+母親姿態、箭頭、完整視野或房間像素一起升級。
+
+原版 EXE 的 DGROUP `0x251d`／IDA linear `0x272ed`／file `0x1865d` 初值為
+`1e 00`，即30。IDA Pro9.4 `sub_1EE76` linear `0x1ee76..0x1ee9a`／file
+`0x101e6..0x1020a` 讀該 clock，除以20後索引既有色盤表；30選 bank0，0選 bank1。
+最新 dosgolem 冷啟動19次IRQ1收據亦在生日、出生交易及房間等待觀測到 raw251d=30、
+raw25d1=0x3232，seed仍0x356D；confirmed只限這條自然創角路徑及上述有限初值。
+輸入 EXE 身份同下節；PAL為240bytes，SHA-256
+`178a9ca809a33108d8e2a6430796eae8909d98e514fe543fc1923139110389c4`。
+首輪新增flow收據已歸檔至 `work/dosgolem-opening/issue4-archive-a23584e6b08ece0ad065f3e26efe217c1d3ad5f96d4eaada9fb4664d1eff3165.json`，25,213bytes，SHA-256
+`a23584e6b08ece0ad065f3e26efe217c1d3ad5f96d4eaada9fb4664d1eff3165`；前版收據已按hash歸檔。
+只新增唯讀原始欄位觀測，19次輸入與固定一次seed不變。
+
+隔離來源副本的試作以第18次正常確認、空白更新抵達record83首頁等待，seed0x356D，
+沒有額外生日EOF鍵。房間試作再使用原版視野 `player−(9,7)`、CTY raw外界tile71、
+共用字模框與初始clock30，完整RGB差異由153,932降為2,034像素；仍未通過。
+試作來源 `work/issue4-birth-prototype.py`，紀錄 `work/issue4-birth-return-prototype.log`、
+`work/issue4-birth-color-prototype.log`；不將試作中的診斷硬碼或未審查視野加入正式程式。
+重生入口固定來源`4903f533e66369a78467ebcba5125de7cc283cf5`，避免正式修正破壞舊試作；
+`work/issue4-birth-color-prototype-replay.log`再次以第18次輸入重現2,034像素差異。
+
+有限契約審查：`opening_prelude.return_mode` 明確選擇具名原語
+`automatic_after_reveal`或`confirm`，缺欄位／未知值失敗即關閉；本pack採前者。
+內嵌`0xfffc`仍等待一次正式確認；末字完成同一hold後返回caller，不再多等一次確認。
+場景交易移到生日返回後，使用已版控 `opening_escort` 的CTY、section及首frame玩家位置；
+本pack值與原版caller寫入5、5一致，沒有新增Go座標或推導fallback。
+`day_night_cycle.initial_clock`為必要整數欄位，範圍`[0,clock_ticks)`，本pack採30；
+新遊戲初始化既有可存讀的phase／step，不改玩家之後的晝夜推進。
+兩項須由原版EXE／TXT parity、正式第18次輸入狀態、正常流程回歸及存讀檔驗證。
+房間完整RGB紅測試保留；READY不代表完整續頁CONFORMED。
+
+正式實作及驗收：schema/content為0.1.59／0.1.65。第17次接受角色仍為生日黑底；
+第18次確認後，只送正常空白InputState等待，末字完成既有hold後自動返回並交易房間，
+抵達record83首頁等待、seed356D、clock30。內嵌等待、末字hold、早到確認不跳過末字及
+EOF沒有額外確認，皆由component與正常玩家流程守門。出生落點不套用移動碰撞檢查，
+原版是直接寫入床上的5、5；初版誤加該檢查的失敗日誌保留，修正後同工具鏈重跑。
+兩項有限行為到E2／CONFORMED，不宣稱完整文字流或房間V3。
+
+既有22張完整640×350 RGB零差異；第18次兩側現在同record83等待，但正式房間完整RGB
+仍差172,261像素。第19次remake仍在record83尾段、原版已進後續caller，198,652像素
+僅作不同狀態的診斷。保留紅測試，不能拿隔離試作2,034像素當成正式結果。
+新原版冷啟動wrapper確實退出1，原因只有兩項上述RGB差異，同批創角8張通過。
+最終原版收據 `work/dosgolem-opening/issue4-birthday-pages-receipt.json`，25,213bytes，SHA-256
+`35fccfec8e86c629a04d91a9c0f72e7eba112d5913ab78b55f2d181ba08d9c95`。
+與首輪a235收據相比，27張原版PNG／色號、38次IRQ1與16筆唯讀flow均相同；生成腳本留收據。
+執行日誌另有差異，完整收據各自保留，不把日誌等同於畫面或流程一致性。
+
+全部11個internal套件、完整game362項頂層／36項子測試與desktop main.go建置通過。
+標準批次35項選用跳過，其中創角／生日兩項另行嚴格執行；剩餘33項未跑，沒有素材缺失。
+正常新遊戲→THE END為61.09秒，主角／酒館與各段存讀檔通過；只屬remake回歸。
+日誌：`work/issue4-birth-return-internal.log`、`work/issue4-birth-return-game-final2.log`、
+`work/issue4-birth-return-comparison-final2.log`、`work/issue4-birth-return-wrapper-final.log`。
+整批私有稽核收據`work/issue4-birth-return-evidence-receipt.json`，8,159bytes，SHA-256
+`b537cf20fbf3c1120dcc9855d6c0430401821fbf47fb54a0f581ed10231800f5`；
+入口`work/issue4-birth-return-audit.py`核對54份圖像產物、原版事件、IDA bytes與來源hash。
+狀態為`finite_state_conformed_full_raster_mismatch`，只列有限CONFORMED；本輪UID/GID1000，
+歷史root候選3,213無新增本輪產物，Markdown誤掛載目錄0，DQ3一次性容器均已清理。
+
+已分級caller匯出 `work/issue4-birth-return-reviewed-ida.json`，1,435,677bytes，SHA-256
+`77b720a8d8b1d1956e9184c27b210027a02cf168282497f1d3acb47181cc3721`。
+有界視野匯出 `work/issue4-birth-viewport-final-ida.json`，1,603,289bytes，SHA-256
+`701a83cae83e03ad5357d3a46ccf6537066614a3a40a73ca07736c42bd4367ea`。
+重生入口 `tools/ida_dump_opening_handler54.py` 可在既有IDA容器以target file0x2c70、
+額外末端0x3000匯出相鄰資料庫項目；完整末指令使實際file範圍至0x3002／linear11C92。
+同列保留原名／定位／bytes／分級／出處，不合併函式邊界；DS相對運算元沒有直接xref
+不代表沒有writer。clock初值已confirmed，視野仍strong，不從工具標籤升級完整畫面。
+
 ## 2026-10-02：生日續頁與出生時序（DRAFT，正式紅測試已重現）
 
 工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，正式程式基準

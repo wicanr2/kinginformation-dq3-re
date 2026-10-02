@@ -1,5 +1,14 @@
 # 136 — 原版日夜 clock／palette bank 接線規格
 
+## 2026-10-02 初始 clock 勘誤
+
+舊 bank／selector證據保持有效，但新遊戲不應用Go零值clock0初始化。
+EXE DGROUP251D／IDA linear272ED／file1865D原始word為30；dosgolem自然生日及房間等待
+同樣觀測到30與palette pointer3232，即bank0。remake原先clock0選bank1，造成開場色盤差異。
+現以必要JSON欄位`initial_clock:30`初始化既有可存讀phase／step；有限審查、來源hash、
+工具版本及完整RGB仍未通過的界線見[docs/188](188-opening-escort-to-castle-spec.md)，
+欄位與嚴格拒絕契約見[docs/84](84-game-pack-json-contract.md)。不改寫下方歷史selector形成紀錄。
+
 > 日期：2026-08-22。範圍只包含地表／城鎮 16 色 palette bank 選擇與黑暗之燈的
 > clock writer；NPC 日夜雙表沿用 `docs/60`。本規格不宣稱 DOSBox DAC capture 或
 > 同狀態逐像素 V3。

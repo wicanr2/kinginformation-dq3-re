@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.58"
+	SchemaVersion       = "0.1.59"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -928,6 +928,7 @@ type OpeningPrelude struct {
 	Window            WindowLayout `json:"window"`
 	GlyphStepX        int          `json:"glyph_step_x"`
 	VariableCodeWords int          `json:"variable_code_words"`
+	ReturnMode        string       `json:"return_mode"`
 	ForegroundRGB     []uint8      `json:"foreground_rgb"`
 	BackdropRGB       []uint8      `json:"backdrop_rgb"`
 	Evidence          Evidence     `json:"evidence"`
@@ -935,7 +936,7 @@ type OpeningPrelude struct {
 
 func (p *OpeningPrelude) UnmarshalJSON(raw []byte) error {
 	type plain OpeningPrelude
-	if err := decodeOpeningObject(raw, (*plain)(p), []string{"id", "text_id", "frame_text_id", "window", "glyph_step_x", "variable_code_words", "foreground_rgb", "backdrop_rgb", "evidence"}); err != nil {
+	if err := decodeOpeningObject(raw, (*plain)(p), []string{"id", "text_id", "frame_text_id", "window", "glyph_step_x", "variable_code_words", "return_mode", "foreground_rgb", "backdrop_rgb", "evidence"}); err != nil {
 		return err
 	}
 	var fields map[string]json.RawMessage
@@ -1353,6 +1354,7 @@ type ItemUseEffect struct {
 // DayNightCycle 描述版本專屬 clock 如何選擇一個原始 palette bank。引擎只執行
 // 有界的整數索引，不推導色彩或接受任意運算式。
 type DayNightCycle struct {
+	InitialClock          int      `json:"initial_clock"`
 	ClockTicks            int      `json:"clock_ticks"`
 	NightStartTick        int      `json:"night_start_tick"`
 	PaletteSegmentTicks   int      `json:"palette_segment_ticks"`
@@ -1360,6 +1362,11 @@ type DayNightCycle struct {
 	PaletteBankIndices    []int    `json:"palette_bank_indices"`
 	PaletteAssetKey       string   `json:"palette_asset_key"`
 	Evidence              Evidence `json:"evidence"`
+}
+
+func (c *DayNightCycle) UnmarshalJSON(raw []byte) error {
+	type plain DayNightCycle
+	return decodeOpeningObject(raw, (*plain)(c), []string{"initial_clock", "clock_ticks", "night_start_tick", "palette_segment_ticks", "palette_entries_per_bank", "palette_bank_indices", "palette_asset_key", "evidence"})
 }
 
 // WorldMapPatch is a finite row-major tile replacement copied from an
@@ -2539,6 +2546,7 @@ func (p *Pack) validateInterface() error {
 		w := e.Window
 		if e.ID == "" || e.TextID == "" || e.FrameTextID == "" || e.Evidence.Level != "D3" || w.Evidence.Level == "D1" ||
 			e.GlyphStepX < 16 || e.GlyphStepX > 64 || e.VariableCodeWords < 1 || e.VariableCodeWords > 2 ||
+			(e.ReturnMode != "automatic_after_reveal" && e.ReturnMode != "confirm") ||
 			len(e.ForegroundRGB) != 3 || len(e.BackdropRGB) != 3 ||
 			w.ID == "" || w.X < 0 || w.Y < 0 || w.Width <= 0 || w.Height <= 0 ||
 			w.X+w.Width > 640 || w.Y+w.Height > 350 || w.Width%16 != 0 || w.Height%16 != 0 ||
@@ -3670,6 +3678,7 @@ func fixedBattleFormation(record BattleFixedFormationRecord) (BattleFormation, e
 func (p *Pack) validateEvents() error {
 	dn := p.Events.DayNightCycle
 	if dn.ClockTicks <= 0 || dn.ClockTicks%4 != 0 || dn.NightStartTick != dn.ClockTicks/2 ||
+		dn.InitialClock < 0 || dn.InitialClock >= dn.ClockTicks ||
 		dn.PaletteSegmentTicks <= 0 || dn.ClockTicks%dn.PaletteSegmentTicks != 0 ||
 		dn.PaletteEntriesPerBank <= 0 || dn.PaletteAssetKey == "" ||
 		len(dn.PaletteBankIndices) != dn.ClockTicks/dn.PaletteSegmentTicks {

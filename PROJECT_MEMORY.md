@@ -1,9 +1,11 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-02：Issue #4的生日續頁正式紅測試已重現。原版第18次Enter後讀完生日文字，
-> 隨即寫出生座標5、5並進家中record83；重製多停一頁，170,238像素差異。
-> docs/188新節維持DRAFT；下一步補文字保留／捲動與場景視野consumer，試作後再審查READY。
-> 既有22張正式對拍保持通過，production與schema/content未改；不能用第19次額外Enter替代修正。
+> 2026-10-02：Issue #4已修正生日EOF多等一次確認、返回前提早交易出生場景，以及初始clock0選錯色盤。
+> 原版EXE初值與自然冷啟動flow均為clock30；正式第18次InputState現在自然抵達家中record83等待，seed356D。
+> schema/content為0.1.59／0.1.65；有限返回／clock規格及未完成界線見docs/188。
+> 既有22張保持零差異；房間正式完整RGB仍RED，文字保留／捲動、視野／框線、母親與箭頭待閉合。
+> 隔離房間試作差2,034像素，不能當成正式成果或把未審查值寫進Go；下一步沿此差異閉合。
+> 本輪正常新遊戲至THE END（61.09秒）、主角／酒館及各段存讀檔、完整game、11個internal與桌面建置通過。
 > 冷啟動19次輸入與唯讀flow入口為`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`，目前預期紅測試退出1。
 
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。

@@ -17,6 +17,44 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
+func TestDayNightInitialClockRejectsMissingAndInvalidValues(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(p.DayNightCycle())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		t.Fatal(err)
+	}
+	delete(fields, "initial_clock")
+	missing, err := json.Marshal(fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cycle DayNightCycle
+	if err := json.Unmarshal(missing, &cycle); err == nil {
+		t.Fatal("初始clock缺失卻被當成0")
+	}
+	fields["initial_clock"] = json.RawMessage("null")
+	nullValue, err := json.Marshal(fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(nullValue, &cycle); err == nil {
+		t.Fatal("初始clock為null卻被接受")
+	}
+	for _, value := range []int{-1, p.Events.DayNightCycle.ClockTicks} {
+		p.Events.DayNightCycle.InitialClock = value
+		if err := p.validateEvents(); err == nil {
+			t.Fatalf("越界clock%d被接受", value)
+		}
+	}
+}
+
 func TestOpeningPreludeRejectsBrokenContract(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -26,6 +64,7 @@ func TestOpeningPreludeRejectsBrokenContract(t *testing.T) {
 		{"invalid glyph advance", func(e *OpeningPrelude) { e.GlyphStepX = 0 }},
 		{"zero control words", func(e *OpeningPrelude) { e.VariableCodeWords = 0 }},
 		{"unknown control primitive", func(e *OpeningPrelude) { e.VariableCodeWords = 3 }},
+		{"unknown return primitive", func(e *OpeningPrelude) { e.ReturnMode = "unknown" }},
 		{"incomplete foreground", func(e *OpeningPrelude) { e.ForegroundRGB = []uint8{243} }},
 		{"incomplete backdrop", func(e *OpeningPrelude) { e.BackdropRGB = nil }},
 		{"out of bounds", func(e *OpeningPrelude) { e.Window.X = 640 }},
@@ -138,7 +177,7 @@ func TestOpeningPreludeMatchesOriginalData(t *testing.T) {
 	w := e.Window
 	if w.X != int(binary.LittleEndian.Uint16(raw[2:4]))*8 || w.Y != int(binary.LittleEndian.Uint16(raw[4:6])) ||
 		w.Width != int(binary.LittleEndian.Uint16(raw[6:8]))*8 || w.Height != int(binary.LittleEndian.Uint16(raw[8:10])) ||
-		w.TextInsetX != 16 || w.TextInsetY != 16 || e.GlyphStepX != 24 || e.VariableCodeWords != 1 ||
+		w.TextInsetX != 16 || w.TextInsetY != 16 || e.GlyphStepX != 24 || e.VariableCodeWords != 1 || e.ReturnMode != "automatic_after_reveal" ||
 		!reflect.DeepEqual(e.ForegroundRGB, []uint8{243, 243, 243}) || !reflect.DeepEqual(e.BackdropRGB, []uint8{0, 0, 0}) {
 		t.Fatal("旁白契約與原始consumer不符")
 	}
@@ -148,8 +187,9 @@ func TestOpeningPreludeMatchesOriginalData(t *testing.T) {
 	}{
 		{0x140d, []byte{0xc6, 0x06, 0x34, 0x0b, 0x01}},
 		{0x1413, []byte{0xbf, 0x0a, 0x0c}},
-		{0x12868, []byte{0x83, 0xc6, 0x02, 0x83, 0xc5, 0x03}}, // IDA214F8: SI+=2, BP+=3。
-		{0x12938, []byte{0x83, 0xc6, 0x02}},                   // IDA215C8: 姓名插值後只越過控制碼本身。
+		{0x12868, []byte{0x83, 0xc6, 0x02, 0x83, 0xc5, 0x03}},                   // IDA214F8: SI+=2, BP+=3。
+		{0x12938, []byte{0x83, 0xc6, 0x02}},                                     // IDA215C8: 姓名插值後只越過控制碼本身。
+		{0x12897, []byte{0xe8, 0xca, 0x04, 0x83, 0x2e, 0x18, 0x07, 0x10, 0xcb}}, // IDA21527: scroll→retf，沒有EOF等待。
 	} {
 		if !bytes.Equal(exe[anchor.offset:anchor.offset+len(anchor.bytes)], anchor.bytes) {
 			t.Fatalf("原始consumer file%#x不符", anchor.offset)
@@ -529,6 +569,9 @@ func TestBuiltinDQ3DayNightCycleMatchesOriginalEXEAndPalette(t *testing.T) {
 		if cycle.PaletteBankIndices[i] != int(raw) {
 			t.Fatalf("palette selector[%d]=%d, EXE=%d", i, cycle.PaletteBankIndices[i], raw)
 		}
+	}
+	if cycle.InitialClock != int(binary.LittleEndian.Uint16(exe[0x1865d:0x1865f])) || cycle.InitialClock != 30 {
+		t.Fatalf("初始clock=%d，與EXE DGROUP251D及自然開場觀測不符", cycle.InitialClock)
 	}
 	if len(palRaw) != 5*0x30 || fmt.Sprintf("%x", sha256.Sum256(palRaw)) !=
 		"178a9ca809a33108d8e2a6430796eae8909d98e514fe543fc1923139110389c4" {
@@ -3459,14 +3502,14 @@ func TestDQ3PiratesRedOrbMatchesOriginalEXEAndCTY(t *testing.T) {
 
 func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	validManifest := `{
-	  "schema_version":"0.1.58","pack_id":"test","game":"dq3","edition":"cht_jingxun",
+	  "schema_version":"0.1.59","pack_id":"test","game":"dq3","edition":"cht_jingxun",
 	  "content_version":"0.1.0","engine_api":">=0.1.0 <0.2.0",
 	  "title_text_id":"x:title","entry_event_id":"x:new","save_namespace":"test",
 	  "capabilities":[],"data":{"facilities":"facilities.json","events":"events.json","interface":"interface.json",
 	  "characters":"characters.json","texts":"texts.json","spells":"spells.json"},"assets":{"pal":{"path":"PAL","size":0,"sha256":""}}
 	}`
 	validFacilities := `{
-	  "schema_version":"0.1.58","service_definitions":[{
+	  "schema_version":"0.1.59","service_definitions":[{
 	    "id":"common:service.cure_poison","pricing":{"formula_id":"common:formula.fixed","fixed_gold":5},
 	    "evidence":{"level":"D2","source_kind":"exe","source":"x","address_space":"file","address":"1","consumer":"x","doc":"x"}}, {
 	    "id":"common:service.remove_curse","pricing":{"formula_id":"common:formula.level_multiplier","gold_per_level":100},
@@ -3482,8 +3525,8 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	    "evidence":{"level":"D3","source_kind":"exe","source":"x","address_space":"linear","address":"0x1","consumer":"x","doc":"x"}}
 	}`
 	validEvents := `{
-	  "schema_version":"0.1.58",
-	  "day_night_cycle":{"clock_ticks":4,"night_start_tick":2,"palette_segment_ticks":1,
+	  "schema_version":"0.1.59",
+	  "day_night_cycle":{"initial_clock":0,"clock_ticks":4,"night_start_tick":2,"palette_segment_ticks":1,
 	    "palette_entries_per_bank":1,"palette_bank_indices":[0,0,0,0],"palette_asset_key":"pal",
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"file","address":"0x1","consumer":"palette","doc":"docs/x.md"}},
@@ -3505,7 +3548,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
   "hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
 	}`
 	validCharacters := `{
-	  "schema_version":"0.1.58",
+	  "schema_version":"0.1.59",
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
@@ -3515,7 +3558,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  ]
 	}`
 	validTexts := `{
-	  "schema_version":"0.1.58","definitions":[{
+	  "schema_version":"0.1.59","definitions":[{
 	    "id":"x:text","value":"字","glyph_codes":[1],
 	    "layout":{"kind":"menu_label"},
 	    "source":{"kind":"glyph_map","file":"font.bin"},
@@ -3524,20 +3567,20 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  }]
 	}`
 	validInterface := `{
-	  "schema_version":"0.1.58","dialogue":{"id":"x:dialogue","x":1,"y":1,
+	  "schema_version":"0.1.59","dialogue":{"id":"x:dialogue","x":1,"y":1,
 	    "width":64,"height":64,"text_inset_x":8,"text_inset_y":8,
 	    "columns":3,"lines_per_page":3,
 	    "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	      "address_space":"file","address":"0x1","consumer":"renderer","doc":"docs/x.md"}}
 	}`
-	validSpells := `{"schema_version":"0.1.58","field":[]}`
+	validSpells := `{"schema_version":"0.1.59","field":[]}`
 	tests := []struct {
 		name, manifest, facilities, events, characters, want string
 	}{
 		{"unknown manifest field", strings.Replace(validManifest, `"save_namespace":"test",`, `"save_namespace":"test","typo":1,`, 1), validFacilities, validEvents, validCharacters, "unknown field"},
 		{"path escape", strings.Replace(validManifest, `"facilities.json"`, `"../facilities.json"`, 1), validFacilities, validEvents, validCharacters, "pack-relative"},
 		{"cost length", validManifest, strings.Replace(validFacilities, `"level_cap":1`, `"level_cap":2`, 1), validEvents, validCharacters, "must equal"},
-		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.58"`, `"schema_version":"0.1.49","typo":1`, 1), validEvents, validCharacters, "unknown field"},
+		{"unknown facilities field", validManifest, strings.Replace(validFacilities, `"schema_version":"0.1.59"`, `"schema_version":"0.1.49","typo":1`, 1), validEvents, validCharacters, "unknown field"},
 		{"unknown events field", validManifest, validFacilities, strings.Replace(validEvents, `"boss_surrender_events":[]`, `"boss_surrender_events":[],"typo":1`, 1), validCharacters, "unknown field"},
 		{"invalid push puzzle", validManifest, validFacilities, strings.Replace(validEvents,
 			`"push_puzzle_events":[]`,

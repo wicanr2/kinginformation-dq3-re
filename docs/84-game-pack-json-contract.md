@@ -1,5 +1,37 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 2026-10-02：有限生日返回與初始 clock（schema 0.1.59／content 0.1.65）
+
+依 [docs/188](188-opening-escort-to-castle-spec.md) 的有限 READY 審查，新增兩個必要欄位：
+
+- `interface.opening_prelude.return_mode`：`automatic_after_reveal`或`confirm`。
+  前者只在文字EOF且最後一字完成既有hold後返回；內嵌等待仍需正式確認。
+  本pack採前者，缺值、null與未知原語均拒絕，不猜預設行為。
+- `events.day_night_cycle.initial_clock`：整數，必須在`[0,clock_ticks)`。
+  本pack為30，來源為EXE DGROUP251D／IDA linear272ED／file1865D初值`1e00`，
+  並由自然創角後的dosgolem唯讀flow確認。初始化既有phase／step及色盤選擇，
+  不鎖住正式遊戲之後的clock或RNG，也不覆寫既有存檔的clock。
+
+出生場景使用既有`opening_escort.cty/section/frames[0].player`，在生日返回後才交易；
+引擎不新增版本專屬座標或fallback。原始EXE／TXT parity、必要欄位拒絕與正式輸入守門。
+完整文字保留／捲動、房間視野與框線、母親及箭頭仍未CONFORMED，不由本契約猜補。
+
+## 2026-10-02：有限生日返回與初始 clock（schema 0.1.59／content 0.1.65）
+
+依 [docs/188](188-opening-escort-to-castle-spec.md) 的有限 READY 審查，新增兩個必要欄位：
+
+- `interface.opening_prelude.return_mode`：`automatic_after_reveal`或`confirm`。
+  前者只在文字EOF且最後一字完成既有hold後返回；內嵌等待仍需正式確認。
+  本pack採前者，缺值、null與未知原語均拒絕，不猜預設行為。
+- `events.day_night_cycle.initial_clock`：整數，必須在`[0,clock_ticks)`。
+  本pack為30，來源為EXE DGROUP251D／IDA linear272ED／file1865D初值`1e00`，
+  並由自然創角後的dosgolem唯讀flow確認。初始化既有phase／step及色盤選擇，
+  不鎖住正式遊戲之後的clock或RNG，也不覆寫既有存檔的clock。
+
+出生場景使用既有`opening_escort.cty/section/frames[0].player`，在生日返回後才交易；
+引擎不新增版本專屬座標或fallback。原始EXE／TXT parity、必要欄位拒絕與正式輸入守門。
+完整文字保留／捲動、房間視野與框線、母親及箭頭仍未CONFORMED，不由本契約猜補。
+
 > 狀態：v0.1 已有嚴格 loader、canonical hash、存檔 pack identity 與逐批擴充的有限事件 primitive；
 > 其餘資料表依垂直切片逐批遷移。
 >

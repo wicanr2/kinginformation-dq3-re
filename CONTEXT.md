@@ -1,13 +1,16 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)從冷啟動19次IRQ1
-取得生日續頁反證：第18次Enter後原版已返回生日consumer、寫出生座標5、5並顯示家中record83，
-重製仍停生日pos15，完整RGB差異170,238像素。唯讀flow與IDA9.4證據見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
-續頁規格DRAFT，尚未更改production／schema；既有22張首頁以前的正式對拍本輪仍通過。
-下一步補共享文字流保留／捲動與場景視野consumer，試作核對後審查READY；不以多按一次Enter掩蓋差異。
+2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)及原版19次IRQ1收據，
+已修正生日EOF多餘確認、返回前提早交易出生場景，以及clock0選錯色盤；原版初始clock為30。
+正式第18次InputState自然抵達家中record83等待，seed356D；出生落點以既有pack資料交易，沒有新增Go座標。
+有限規格、原始bytes／hash／IDA9.4與未完成範圍見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+schema/content為0.1.59／0.1.65；既有22張完整RGB零差異，房間正式完整RGB仍差172,261像素。
+隔離視野／色盤／共用框試作差2,034像素，不能當作正式成果；下一步文字保留／捲動、視野／框線、母親及箭頭。
 重生入口`bash tools/verify_dosgolem_newgame.sh /home/anr2/cht/dosgolem --birthday-pages`預期退出1，
 同批創角8張保持通過；後續母親畫面不能由尚未同狀態的第19次輸入結果宣稱parity。
-最近完整主線／internal／桌面驗收仍為下方53fb722生日首頁切片，本輪只改探測與正式紅測試。
+本輪完整game362項頂層／36項子測試、11個internal套件及桌面main.go通過；
+正式新遊戲至THE END為61.09秒，包含主角／酒館及各段存讀檔，只屬remake回歸。
+下方2026-10-01段落為歷史checkpoint；目前真相以本段及狀態表為準。
 
 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。
 接受角色後的生日首頁已修正：黑底、完整record404字模框、24px字距、獨立姓名插值，
@@ -48,14 +51,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-02） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；本批 schema 0.1.58／content 0.1.64；未發布新包 |
+| 現行程式 | `dq3_remake_ebitan/`；schema 0.1.59／content 0.1.65；未發布新包 |
 | 最新繪圖切片已完成 | Issue #4共22張正式畫面全畫布零差異，生日首頁限定CONFORMED；能力等待／確認與固定seed Lv1交易保持通過；docs/188 |
-| 最新原版反證 | 第18次Enter後原版已進家中，重製多停生日頁；170,238像素差異，續頁DRAFT；19次IRQ1／38次送達、純讀取flow與IDA9.4側錄閉合返回時序，docs/188 |
+| 最新時序修正 | 第18次正常確認已自然抵達家中record83等待、seed356D；生日EOF末字完成hold後自動返回，再交易出生場景；原版初始clock30由EXE及自然flow閉合，docs/188 |
+| 最新原版反證 | 房間正式完整RGB差172,261像素；第19次輸入後兩側狀態不同，198,652像素僅診斷；隔離試作差2,034像素，完整續頁仍DRAFT，docs/188 |
 | 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
-| 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、生日續頁／箭頭、出生時序／母親與完整 campaign；時間只採硬體規格近似 |
+| 原版 oracle 未完成 | 淡入淡出逐相位、音訊、skip、文字保留／捲動、房間視野／框線、母親／箭頭與完整campaign；時間只採硬體規格近似 |
 | 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |
-| 現行回歸已完成 | 正式新遊戲 InputState → THE END 102.55 秒，主角／酒館及各段存讀檔、game／internal 及桌面建置通過；本批收據 work/dosgolem-opening/issue4-birthday-verification-receipt.json，Issue #4 |
-| 額外畫廊限制 | 31 項選用擷取未納入標準回歸；大型新遊戲畫廊的魔法球測試設定失敗另有紀錄，未判為產品缺陷；還冠元件與正式 THE END PNG 已核對 |
+| 現行回歸已完成 | 正式新遊戲InputState→THE END61.09秒，主角／酒館及各段存讀檔、game362項頂層／36項子測試、11個internal及桌面建置通過；work/issue4-birth-return-game-final2.log，Issue #4 |
+| 額外驗證限制 | 標準批次35項選用跳過，其中創角／生日兩項另行嚴格執行；剩餘33項未跑，沒有素材缺失；生日完整RGB紅測試保留 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，

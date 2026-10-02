@@ -42,6 +42,44 @@ func newProductionTraceGame(assets fs.FS) (*Game, error) {
 	return g, nil
 }
 
+func TestOpeningPreludeAutomaticReturnGate(t *testing.T) {
+	for _, mode := range []string{"automatic_after_reveal", "confirm"} {
+		d := Dialogue{layout: gamepack.WindowLayout{Columns: 20, LinesPerPage: 4, GlyphHoldFrames: 1},
+			prelude: &gamepack.OpeningPrelude{ReturnMode: mode, VariableCodeWords: 1}}
+		d.openRecord([]uint16{1, dq3data.TxtPage, 2, 3})
+		for i := 0; i < 10; i++ {
+			d.Tick()
+		}
+		if !d.open || d.pos != 0 {
+			t.Fatal("內嵌等待被EOF自動返回跳過")
+		}
+		d.Advance()
+		d.Tick()
+		if !d.open {
+			t.Fatal("末段尚未揭露完成就返回")
+		}
+		d.Advance()
+		if mode == "automatic_after_reveal" && !d.open {
+			t.Fatal("早到的確認跳過末段揭露")
+		}
+		if mode == "confirm" {
+			continue
+		}
+		d.Tick()
+		if !d.open || d.waitingForConfirm() {
+			t.Fatal("末字必須保留一個hold，再自動返回，不能變成額外確認頁")
+		}
+		d.Advance()
+		if !d.open {
+			t.Fatal("確認跳過末字顯示hold")
+		}
+		d.Tick()
+		if d.open {
+			t.Fatal("末段揭露完成仍多等一次確認")
+		}
+	}
+}
+
 // 從同一冷啟動創角輸入接受角色；等待只送正式空白 InputState，
 // 不直接呼叫 startOpening，也不改角色座標、對話位置或故事旗標。
 func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
@@ -143,6 +181,9 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 	if g.showTitle {
 		t.Fatal("正常接受角色後仍在創角畫面")
 	}
+	if g.inTown || g.openingIdx != 0 || g.dayNightClock() != g.dayNightCycle.InitialClock {
+		t.Fatal("生日尚未返回就交易出生場景，或初始clock不符資料包")
+	}
 	for i := 0; i < 2000 && g.dlg.open && g.dlg.revealCells < g.dlg.pageCellCount(); i++ {
 		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
 			t.Fatal(err)
@@ -173,7 +214,7 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 				t.Fatal(err)
 			}
 			for tick := 0; tick < 2000; tick++ {
-				if g.dlg.open && g.dlg.revealCells >= g.dlg.pageCellCount() {
+				if g.dlg.waitingForConfirm() {
 					break
 				}
 				if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
@@ -181,6 +222,9 @@ func TestDosgolemOpeningAcceptanceComparison(t *testing.T) {
 				}
 			}
 			g.renderFrame()
+			if i == 0 && (g.openingIdx != 1 || !reflect.DeepEqual(g.dlg.buf, g.dlg.tx.Record(83)) || g.prng.State() != 0x356d) {
+				t.Fatal("第18次正式確認未自然抵達房間record83等待，或意外消耗RNG")
+			}
 			t.Logf("生日續頁%d：dialogue=%v pos=%d reveal=%d seed=%04x", i+1, g.dlg.open, g.dlg.pos, g.dlg.revealCells, g.prng.State())
 			name := fmt.Sprintf("continue-%d-stable", i+1)
 			original := prefix + "-" + name + ".png"
@@ -911,16 +955,30 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Confirm: true}) // 能力檢視 → 確認提示
 	press(InputState{Confirm: true}) // 「是」→ startOpening
 
-	if g.showTitle || g.newGame.stage != ngConfirm || !g.inTown || g.cur.sec != 4 ||
-		g.px != openingHomeX || g.py != openingHomeY {
-		t.Fatalf("創角輸入後應落在家中：title=%v stage=%d cty=%d sec=%d @(%d,%d)",
+	if g.showTitle || g.newGame.stage != ngConfirm || g.inTown || g.openingIdx != 0 || !g.dlg.open ||
+		g.dayNightClock() != g.dayNightCycle.InitialClock {
+		t.Fatalf("創角後應先等待生日文字、維持初始clock，未交易房間：title=%v stage=%d cty=%d sec=%d @(%d,%d)",
 			g.showTitle, g.newGame.stage, g.curCty, sceneSection(g.cur), g.px, g.py)
 	}
 	if len(g.heroName) != 1 || g.heroName[0] != niCellGlyph(0) {
 		t.Fatalf("輸入名稱未經 production flow 寫回：%v", g.heroName)
 	}
 
-	for _, wantIdx := range []int{0, 1, 2} {
+	for i := 0; i < 2000 && g.dlg.revealCells < g.dlg.pageCellCount(); i++ {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if !g.dlg.open || g.dlg.pos != 0 {
+		t.Fatal("生日內嵌確認等待未保留")
+	}
+	press(InputState{Confirm: true})
+	for i := 0; i < 2000 && g.openingIdx == 0; i++ {
+		send(InputState{DirHeld: -1, DirEdge: -1})
+	}
+	if g.openingIdx != 1 || !g.inTown || g.cur.sec != 4 || g.px != openingHomeX || g.py != openingHomeY ||
+		g.dayNightClock() != g.dayNightCycle.InitialClock {
+		t.Fatal("生日一次正常確認後未自動交易房間，或等待誤推進clock")
+	}
+	for _, wantIdx := range []int{1, 2} {
 		if g.openingIdx != wantIdx || !g.dlg.open {
 			t.Fatalf("開場段 %d 未開啟：idx=%d open=%v", wantIdx, g.openingIdx, g.dlg.open)
 		}

@@ -41,11 +41,16 @@ REVIEW_LEDGER = [
     (0x21558, 0x2157e, "strong", "0xfffc推進行並等待，再續寫同一文字流；保留／捲動完整畫面未閉合"),
     (0x21651, 0x216bf, "strong", "姓名consumer保存並還原SI；BP增加名字長度乘3；生日姓名0已閉合"),
     (0x28c3e, 0x28c4a, "confirmed", "raw共用視窗前12bytes及record404字模畫布；限定自然生日首頁，其他欄位／場景未外推"),
+    (0x272ed, 0x272ef, "confirmed", "DGROUP251D原始初值1e00即30；自然生日／房間等待觀測亦為30，只限新遊戲初值"),
+    (0x11971, 0x11991, "strong", "房間重繪原點為玩家減9、7，範圍20×15；完整房間2034像素試作差異尚未閉合"),
 ]
 CONTINUATION_RANGES = {0x100ab, 0x100b5, 0x100cd, 0x21514, 0x21558}
 
 
 def review_evidence(start):
+    if start in (0x272ed, 0x11971):
+        return ("docs/188：2026-10-02有限返回／初始clock READY及房間DRAFT；原版冷啟動收據SHA-256 "
+                "a23584e6b08ece0ad065f3e26efe217c1d3ad5f96d4eaada9fb4664d1eff3165；原始bytes與唯讀flow；不代表房間CONFORMED")
     if start in CONTINUATION_RANGES:
         return ("docs/188：2026-10-02續頁DRAFT的已審查RE；原版19次IRQ1／38次送達與純讀取flow，"
                 "收據SHA-256 f8752bdf2c4e8d333c53b05bd591ccd211d34d6f16c516fde8643db0f06790df；"
@@ -75,6 +80,8 @@ def item_record(ea):
         "file_bytes": INPUT_BLOB[file_offset:file_offset + size].hex() if file_offset >= 0 else None,
         "disassembly": clean_line(ea),
         "code_refs_from": refs_from,
+        "data_refs_from": [{"ida_linear": hex(dst), "original_name": idc.get_name(dst) or ""}
+                           for dst in idautils.DataRefsFrom(ea)],
         "source_path": INPUT_PATH,
         "source_size": len(INPUT_BLOB),
         "source_sha256": hashlib.sha256(INPUT_BLOB).hexdigest(),
@@ -132,9 +139,28 @@ def main():
             "disassembly": clean_line(ref),
         })
 
-    instructions = [item_record(ea) for ea in idautils.FuncItems(fn.start_ea)]
+    selected_heads = list(idautils.FuncItems(fn.start_ea))
+    selected_range = None
+    if len(idc.ARGV) > 3:
+        end_file = int(idc.ARGV[3], 0)
+        if not target_file < end_file <= len(blob) or end_file - target_file > 4096:
+            raise RuntimeError("額外範圍須為有效且不超過4096bytes的原始檔案區間")
+        last_ea = ida_loader.get_fileregion_ea(end_file - 1)
+        if last_ea == idc.BADADDR:
+            raise RuntimeError("額外範圍末端未映射到IDA位址")
+        last_head = ida_bytes.get_item_head(last_ea)
+        end_ea = last_head + max(1, ida_bytes.get_item_size(last_head))
+        selected_heads = list(idautils.Heads(target_ea, end_ea))
+        if not selected_heads:
+            raise RuntimeError("額外範圍沒有可匯出的資料庫項目")
+        actual_end_file = ida_loader.get_fileregion_offset(last_head) + ida_bytes.get_item_size(last_head)
+        selected_range = {"file_start": hex(target_file), "requested_file_end_exclusive": hex(end_file),
+                          "file_end_exclusive": hex(actual_end_file),
+                          "ida_linear_start": hex(target_ea), "ida_linear_end_exclusive": hex(end_ea),
+                          "note": "有界資料庫區間；末端保留完整原始指令，不合併或修改函式邊界"}
+    instructions = [item_record(ea) for ea in selected_heads]
     related_starts = set()
-    for ea in idautils.FuncItems(fn.start_ea):
+    for ea in selected_heads:
         for target in idautils.CodeRefsFrom(ea, False):
             related = ida_funcs.get_func(target)
             if related is not None and related.start_ea != fn.start_ea:
@@ -164,6 +190,7 @@ def main():
         "tool": {
             "name": "IDA Pro",
             "version": ida_kernwin.get_kernel_version(),
+            "export_script_sha256": hashlib.sha256(open(__file__, "rb").read()).hexdigest(),
             "address_space": "IDA linear；MZ file=linear−0xEC90；DGROUP基底linear0x24DD0",
         },
         "target": {
@@ -176,6 +203,8 @@ def main():
         },
         "callers": callers,
         "instructions": instructions,
+        "selected_range": selected_range,
+        "data_xrefs_note": "DS相對運算元與間接讀寫未必產生直接xref；空清單不能證明沒有writer或consumer。",
         "review_ledger": [{"ida_linear_start": hex(a), "ida_linear_end_exclusive": hex(b),
                            "inference_level": level, "semantic": semantic,
                            "evidence": review_evidence(a)}
@@ -186,6 +215,13 @@ def main():
                          "xrefs": [{**item_record(ref.frm), "xref_type": ref.type}
                                    for ref in idautils.XrefsTo(ea)]}
                         for ea in (0x28c3e,)],
+        "raw_data_refs": [{**item_record(ea),
+                           "length_bytes": 2,
+                           "raw_hex": (ida_bytes.get_bytes(ea, 2) or b"").hex(),
+                           "xrefs": [{**item_record(ref.frm), "xref_type": ref.type,
+                                      "original_function": ida_funcs.get_func_name(ref.frm)}
+                                     for ref in idautils.XrefsTo(ea)]}
+                          for ea in (0x24dd0 + 0x0b2d, 0x272ed)],
     }
     repo_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     result["resolution_backlinks"] = []

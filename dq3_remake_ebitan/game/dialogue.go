@@ -60,16 +60,40 @@ func (d *Dialogue) openRecord(b []uint16) bool {
 // Tick advances the visible typewriter by one cell after the pack-owned hold.
 // A zero hold keeps engines whose pack has no timing contract instantaneous.
 func (d *Dialogue) Tick() {
-	if !d.open || d.layout.GlyphHoldFrames <= 0 {
+	if !d.open {
 		return
 	}
-	d.revealTick++
-	if d.revealTick >= d.layout.GlyphHoldFrames {
-		d.revealTick = 0
-		if d.revealCells < d.pageCellCount() {
-			d.revealCells++
+	_, eof := d.scanPage(d.pos)
+	automatic := eof && d.prelude != nil && d.prelude.ReturnMode == "automatic_after_reveal"
+	if d.layout.GlyphHoldFrames <= 0 {
+		if automatic {
+			d.open = false
+		}
+		return
+	}
+	if d.layout.GlyphHoldFrames > 0 {
+		d.revealTick++
+		if d.revealTick >= d.layout.GlyphHoldFrames {
+			d.revealTick = 0
+			if d.revealCells < d.pageCellCount() {
+				d.revealCells++
+			} else if automatic {
+				// The final glyph must remain visible for the same hold as
+				// earlier glyphs before returning to the caller.
+				d.open = false
+			}
 		}
 	}
+}
+
+// waitingForConfirm distinguishes a visible inline pause from an automatic
+// return that is still holding the final glyph on screen.
+func (d *Dialogue) waitingForConfirm() bool {
+	if !d.open || (d.layout.GlyphHoldFrames > 0 && d.revealCells < d.pageCellCount()) {
+		return false
+	}
+	_, eof := d.scanPage(d.pos)
+	return !eof || d.prelude == nil || d.prelude.ReturnMode != "automatic_after_reveal"
 }
 
 func (d *Dialogue) pageCellCount() int {
@@ -202,6 +226,9 @@ func (d *Dialogue) Advance() {
 	}
 	next, eof := d.scanPage(d.pos)
 	if eof {
+		if d.prelude != nil && d.prelude.ReturnMode == "automatic_after_reveal" {
+			return
+		}
 		d.open = false
 		return
 	}

@@ -419,3 +419,47 @@ Android libs保持原樣；圖片、state、database與完整收據不納入Git�
 work/issue4-birthday-pages-reviewed-ida.json為1,380,185bytes／SHA-256
 82803df5acaa0c31986f670b6fa2566603062ba39cae63834d66b409e21f138d，原始bytes／分級／
 出處與反向入口檢查通過。沒有以工具內名稱或database本身代替證據。
+
+## 2026-10-02 — Issue #4：生日返回、出生交易與初始clock正式修正
+
+基準4903f53，遠端Issue #4保持開啟；沿用使用者明確授權的Issue更新及commit／push。
+IDA9.4資料庫原始bytes與dosgolem自然19次IRQ1／38次送達閉合兩項有限行為：生日EOF
+不再等待確認、初始DGROUP251D word為30。原版clock30選bank0，舊remake零值選bank1。
+在隔離來源副本先驗證第18次正常確認可到record83，再以來源審查為有限READY；
+共用視野／外界圖塊／字模框與正確色盤試作仍差2,034像素，沒有加入正式來源。
+
+正式pack新增必要return_mode與initial_clock，schema/content0.1.59／0.1.65；缺值、null、
+未知原語與clock越界拒絕，保留EXE／TXT decoder與原始bytes parity。
+生日EOF末字完成既有hold後自動返回，內嵌等待仍需正常確認；出生場景改在返回後交易，
+使用既有opening_escort的CTY／section／首frame玩家位置，不新增Go版本座標或fallback。
+初始clock寫入既有可存讀phase／step，不鎖住正式遊戲或覆寫既有存檔。
+
+首輪完整回歸抓到舊測試仍要求生日之前已進房間；改成生日等待→一次確認→自動返回。
+局部母親fixture明示建立返回後場景，不冒充正式路線。修正時誤加出生落點移動碰撞檢查，
+床上5、5遭拒；依原版直接writer移除多餘檢查，保留失敗日誌後同容器乾淨重跑。
+另補末字hold後才返回，避免最後一字尚未可見便切場景；再次完整重跑。
+
+11個internal套件、game362項頂層／36項子測試與desktop main.go通過；
+正常新遊戲、主角／酒館及各段存讀檔至THE END（61.09秒）。35項選用標準批次跳過，
+其中創角／生日兩項另行嚴格執行，剩餘33項未跑，沒有素材缺失。
+既有22張完整RGB零差異，第18次正式輸入到record83等待、seed356D、clock30。
+房間正式完整RGB仍差172,261像素；第19次兩側不同狀態，198,652像素只供診斷。
+冷啟動wrapper已重生並退出1，原因只有兩項已知RGB紅測試，同批創角8張通過。
+
+最終原版收據25,213bytes／SHA-256
+35fccfec8e86c629a04d91a9c0f72e7eba112d5913ab78b55f2d181ba08d9c95；
+首輪a235與上輪7fd收據均按內容hash保留。來源、有限CONFORMED、strong視野與
+unknown完整文字流分開記錄於docs/188；目前表、工作清單與README同步現行程式，
+不把試作或綠色內部測試當成房間V3。所有PNG、色號、收據、原版素材、IDA資料庫留本機。
+
+沿用原有Docker images，原版及dosgolem上游唯讀；一次性容器均清理，其他專案容器不動。
+本批修改與產物UID/GID1000，工作樹protected scratch／Android libs保留，無新image或發行包。
+提交／推送與回讀結果回填Issue #4；下一步閉合文字保留／捲動、視野／框線、母親及箭頭。
+
+收尾稽核：首輪a235與最終35fc的27張PNG／27份色號、38次IRQ1及16筆flow均相同；
+所有56份當輪產物hash核對通過，執行日誌差異分開保存。IDA原始file bytes與完整指令末端
+核對通過；新增Go無版本專屬record、flag或座標。隔離試作固定4903f53再次重生2,034像素。
+私有整批收據work/issue4-birth-return-evidence-receipt.json為8,159bytes，SHA-256
+b537cf20fbf3c1120dcc9855d6c0430401821fbf47fb54a0f581ed10231800f5，
+狀態finite_state_conformed_full_raster_mismatch。歷史root候選3,213，本輪新增root產物0、
+Markdown誤掛載目錄0；本輪DQ3容器無殘留，其他專案資源未變更。

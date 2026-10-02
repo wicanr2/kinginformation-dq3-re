@@ -12,6 +12,12 @@ func TestOpeningMotherEscortUsesVisibleFrames(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.startOpening()
+	// 局部帶路 fixture 明確建立生日返回後的場景；正式玩家輸入另行驗證。
+	if !g.enterOpeningScene() {
+		t.Fatal("出生場景 fixture 載入失敗")
+	}
+	g.dlg.prelude, g.dlg.preludeFrame = nil, nil
+	g.dlg.layout = g.pack.DialogueWindowLayout()
 	if !g.startMotherEscort() {
 		t.Fatal("CTY00 sec4 應找到 pack 指定母親並開始逐格帶路")
 	}

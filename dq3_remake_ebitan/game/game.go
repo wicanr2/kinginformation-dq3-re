@@ -1441,6 +1441,9 @@ func (g *Game) step(in InputState) error {
 	// 轉場後主角依 pack 路線行走，在指定格停下完成對話與旗標交易，再走至城門。
 	// DQ3.EXE sub_1010B，IDA linear 0x1010b..0x1020b／file 0x147b..0x157a。
 	if g.openingIdx >= 0 {
+		if g.openingIdx == 0 && !g.enterOpeningScene() {
+			return fmt.Errorf("opening scene transaction failed")
+		}
 		g.openingIdx++
 		g.dlg.prelude, g.dlg.preludeFrame = nil, nil
 		if g.pack != nil {
@@ -2016,20 +2019,6 @@ func (g *Game) startOpening() {
 	if g.assets == nil { // 無素材的裸 Game(單元測試純狀態驗證)→ 只走狀態轉移,不載場景
 		return
 	}
-	home, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, 0, mapBlkNum[0], 4, g.dnPhase, g.storyFlag)
-	if err != nil { // 載入失敗 → 退回地表中心(不卡死;g.over 可能 nil,防護)
-		if g.over != nil {
-			g.px, g.py = g.over.w/2, g.over.h/2
-		}
-		return
-	}
-	g.town, g.cur, g.inTown, g.curCty = home, home, true, 0
-	g.px, g.py = openingHomeX, openingHomeY
-	if g.px >= home.w || g.py >= home.h { // 資產版本不符時 fail-safe；合法 CTY00 sec4 必為 13×13
-		g.px, g.py = home.startPos()
-	}
-	g.resetPartyTrail()
-	g.rememberTown() // 原版初始進度已包含阿里阿罕；確保首次習得魯拉時可選。
 	// dlg.tx 維持 NewGame 初始的 D3TXT01(開場旁白 rec82/83 在此 bank)
 	g.openingIdx = 0
 	prelude, ok := g.pack.OpeningPrelude()
@@ -2043,6 +2032,29 @@ func (g *Game) startOpening() {
 	g.dlg.prelude, g.dlg.preludeFrame, g.dlg.layout = prelude, frame, prelude.Window
 	g.playSceneMusic(0)
 	g.renderFrame()
+}
+
+// enterOpeningScene commits the pack-owned scene only after the prelude
+// returns. The first escort frame carries the same player starting position;
+// missing content or an invalid landing fails closed without a fallback.
+func (g *Game) enterOpeningScene() bool {
+	if g.pack == nil || g.assets == nil {
+		return false
+	}
+	e, ok := g.pack.OpeningEscort()
+	if !ok || len(e.Frames) == 0 || e.CTY < 0 || e.CTY >= len(mapBlkNum) {
+		return false
+	}
+	home, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS, e.CTY, mapBlkNum[e.CTY], e.Section, g.dnPhase, g.storyFlag)
+	p := e.Frames[0].Player
+	if err != nil || p.X < 0 || p.Y < 0 || p.X >= home.w || p.Y >= home.h {
+		return false
+	}
+	g.town, g.cur, g.inTown, g.curCty = home, home, true, e.CTY
+	g.px, g.py = p.X, p.Y
+	g.resetPartyTrail()
+	g.rememberTown()
+	return true
 }
 
 // finishMotherEscort performs only the scene transition between the two
@@ -3280,6 +3292,8 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		rgba: make([]byte, ScreenW*ScreenH*4), input: newInput(), cfg: config.Default(), pack: pack,
 		dayNightCycle: dayNightCycle,
 	}
+	phaseTicks := dayNightCycle.ClockTicks / 4
+	g.dnPhase, g.dnStep = dayNightCycle.InitialClock/phaseTicks, dayNightCycle.InitialClock%phaseTicks
 	g.dlg.layout = pack.DialogueWindowLayout()
 	g.battle.setTextDefinitions(battleDefs)
 	g.battle.setMonsterActions(pack.MonsterActionDefinitions())

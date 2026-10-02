@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.58",
+  "schema_version": "0.1.59",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -1130,6 +1130,7 @@
     },
     "glyph_step_x": 24,
     "variable_code_words": 1,
+    "return_mode": "automatic_after_reveal",
     "foreground_rgb": [
       243,
       243,
@@ -1145,10 +1146,10 @@
       "source_kind": "exe",
       "source": "DQ3.EXE + D3TXT01.TXT + D3TXT00.TXT/FON + dosgolem自然生日首頁",
       "address_space": "linear",
-      "address": "0x10077..0x100b2;0x214f8..0x215cb",
+      "address": "0x10077..0x100b2;0x214f8..0x215cb;0x21501..0x21534",
       "consumer": "sub_10030清畫面→sub_15002→sub_21414；字模與姓名前進3個VGA bytes，變數不吞下一word",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
-      "note": "首頁限定READY；原始定位、SHA與推論等級見docs/188，不外推續頁／母親"
+      "note": "首頁及生日EOF有限返回READY；完整文字保留、捲動、房間與母親尚未CONFORMED；見docs/188"
     }
   },
   "opening_escort": {
