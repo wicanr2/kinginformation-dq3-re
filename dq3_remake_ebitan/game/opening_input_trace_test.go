@@ -1030,8 +1030,8 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("中途格 opening 對話序列未開啟：idx=%d dlg=%v pos=(%d,%d) want=(%d,%d)",
 			g.openingIdx, g.dlg.open, g.px, g.py, dialogueFrame.X, dialogueFrame.Y)
 	}
-	// docs/192 已證實同一路點依序顯示 rec80、rec79；每一段都必須
-	// 由正式 Confirm 關閉，最後一段之前不得交易旗標或恢復移動。
+	// docs/188 原版續跑只呼叫 record80；內嵌確認後自動 EOF，
+	// 最後三步完成前不得交易旗標。
 	for i, record := range g.openingEscort.DialogueRecords {
 		if !g.dlg.open || g.openingEscortDialogue != i ||
 			!reflect.DeepEqual(g.dlg.buf, g.cur.dlgText.Record(record)) ||
@@ -1046,7 +1046,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		send(InputState{DirHeld: -1, DirEdge: -1})
 	}
 	if g.openingIdx != -1 || g.dlg.open || g.curCty != 0 || g.cur.sec != 0 ||
-		g.px != 21 || g.py != 9 || !g.storyFlag(0x17) || g.storyFlag(0x50) {
+		g.px != 21 || g.py != 17 || !g.storyFlag(0x17) || g.storyFlag(0x50) {
 		t.Fatalf("母親演出後狀態錯：idx=%d dlg=%v cty=%d sec=%d @(%d,%d) flag17=%v flag50=%v",
 			g.openingIdx, g.dlg.open, g.curCty, sceneSection(g.cur), g.px, g.py,
 			g.storyFlag(0x17), g.storyFlag(0x50))
@@ -2473,7 +2473,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		}
 		return free
 	}
-	for partyFreeSlots() < 8 {
+	neededHolyWaterSlots := 8 - g.countPartyItem(itemuse.ItemHolyWater)
+	if neededHolyWaterSlots < 0 {
+		neededHolyWaterSlots = 0
+	}
+	for partyFreeSlots() < neededHolyWaterSlots {
 		discardActor := -1
 		for actor := 0; actor <= len(g.companions); actor++ {
 			items := g.equipActorInventory(actor)
@@ -2483,8 +2487,8 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			}
 		}
 		if discardActor < 0 {
-			t.Fatalf("巴哈拉塔補給前無法以正式丟棄清出八格：free=%d hero=%v",
-				partyFreeSlots(), g.inventory)
+			t.Fatalf("巴哈拉塔補給前無法以正式丟棄清出缺少聖水所需空格：free=%d need=%d hero=%v",
+				partyFreeSlots(), neededHolyWaterSlots, g.inventory)
 		}
 		traceDropActorInventoryItem(t, g, discardActor, herbCode)
 	}
@@ -2544,6 +2548,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 
 	traceTownSectionTo(t, g, 16, 0)
+	// 固定種子不重擲。取船後、首次長途航行前正常住宿，
+	// 不把取胡椒／取船後的剩餘 MP 當成整段遠洋的補給。
+	traceTalkFacility(t, g, facInn)
 	traceTownSectionTo(t, g, -1, -1)
 	traceBoardAndSailShip(t, g)
 
@@ -3859,10 +3866,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatal("缺幽靈船愛的回憶 treasure event")
 	}
 	traceExaminePackTreasure(t, g, loveMemory.Treasure)
-	if !g.hasItem(loveMemory.Treasure.ItemRawID) ||
+	if !g.hasPartyItem(loveMemory.Treasure.ItemRawID) ||
 		g.storyFlag(loveMemory.Treasure.PresentFlag) {
 		t.Fatalf("正式幽靈船寶箱錯：memory=%v present=%v",
-			g.hasItem(loveMemory.Treasure.ItemRawID),
+			g.hasPartyItem(loveMemory.Treasure.ItemRawID),
 			g.storyFlag(loveMemory.Treasure.PresentFlag))
 	}
 	if err := g.Save(); err != nil {
@@ -3878,10 +3885,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	press(InputState{Confirm: true})
 	if !g.inTown || g.curCty != ghostObject.EntranceCTYRaw || sceneSection(g.cur) != 1 ||
-		!g.hasItem(loveMemory.Treasure.ItemRawID) ||
+		!g.hasPartyItem(loveMemory.Treasure.ItemRawID) ||
 		g.storyFlag(loveMemory.Treasure.PresentFlag) {
 		t.Fatalf("愛的回憶 save/load 錯：town=%v cty=%d sec=%d memory=%v present=%v",
-			g.inTown, g.curCty, sceneSection(g.cur), g.hasItem(loveMemory.Treasure.ItemRawID),
+			g.inTown, g.curCty, sceneSection(g.cur), g.hasPartyItem(loveMemory.Treasure.ItemRawID),
 			g.storyFlag(loveMemory.Treasure.PresentFlag))
 	}
 
@@ -3915,10 +3922,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.dlg.open, g.coordinateItemGateStage, g.px, g.py)
 	}
 	traceCloseDialogue(t, g)
-	if g.storyFlag(oliviaGate.ClearStoryFlagRaw) || !g.hasItem(oliviaGate.RequiredItemRawID) ||
+	if g.storyFlag(oliviaGate.ClearStoryFlagRaw) || !g.hasPartyItem(oliviaGate.RequiredItemRawID) ||
 		g.coordinateForcedSteps != 0 {
 		t.Fatalf("海岬成功交易錯：flag35=%v memory=%v forced=%d",
-			g.storyFlag(oliviaGate.ClearStoryFlagRaw), g.hasItem(oliviaGate.RequiredItemRawID),
+			g.storyFlag(oliviaGate.ClearStoryFlagRaw), g.hasPartyItem(oliviaGate.RequiredItemRawID),
 			g.coordinateForcedSteps)
 	}
 
@@ -3968,10 +3975,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 	traceSailToTown(t, g, gaiaTreasure.Treasure.CTYRaw, true)
 	traceExaminePackTreasure(t, g, gaiaTreasure.Treasure)
-	if !g.hasItem(gaiaTreasure.Treasure.ItemRawID) ||
+	if !g.hasPartyItem(gaiaTreasure.Treasure.ItemRawID) ||
 		g.storyFlag(gaiaTreasure.Treasure.PresentFlag) {
 		t.Fatalf("正式取得蓋亞之劍錯：item=%v present=%v",
-			g.hasItem(gaiaTreasure.Treasure.ItemRawID),
+			g.hasPartyItem(gaiaTreasure.Treasure.ItemRawID),
 			g.storyFlag(gaiaTreasure.Treasure.PresentFlag))
 	}
 	if err := g.Save(); err != nil {
@@ -3987,11 +3994,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	press(InputState{Confirm: true})
 	if !g.inTown || g.curCty != gaiaTreasure.Treasure.CTYRaw ||
-		!g.hasItem(gaiaTreasure.Treasure.ItemRawID) ||
+		!g.hasPartyItem(gaiaTreasure.Treasure.ItemRawID) ||
 		g.storyFlag(oliviaGate.ClearStoryFlagRaw) ||
 		g.storyFlag(gaiaTreasure.Treasure.PresentFlag) {
 		t.Fatalf("蓋亞之劍 save/load 錯：town=%v cty=%d sword=%v flag35=%v present=%v",
-			g.inTown, g.curCty, g.hasItem(gaiaTreasure.Treasure.ItemRawID),
+			g.inTown, g.curCty, g.hasPartyItem(gaiaTreasure.Treasure.ItemRawID),
 			g.storyFlag(oliviaGate.ClearStoryFlagRaw),
 			g.storyFlag(gaiaTreasure.Treasure.PresentFlag))
 	}
@@ -4055,9 +4062,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceWalkToWorldCoordinate(t, g, gaiaUse.UseTile.X, gaiaUse.UseTile.Y)
 	traceUseInventoryItem(t, g, gaiaUse.ItemRawID)
 	if g.worldState&uint16(gaiaUse.SetWorldStateMask) == 0 ||
-		!g.hasItem(gaiaUse.ItemRawID) || g.panel != panelNone {
+		!g.hasPartyItem(gaiaUse.ItemRawID) || g.panel != panelNone {
 		t.Fatalf("正式使用蓋亞之劍 transaction 錯：state=%#x item=%v panel=%d",
-			g.worldState, g.hasItem(gaiaUse.ItemRawID), g.panel)
+			g.worldState, g.hasPartyItem(gaiaUse.ItemRawID), g.panel)
 	}
 	for y := 0; y < gaiaUse.DirectMapPatch.Height; y++ {
 		for x := 0; x < gaiaUse.DirectMapPatch.Width; x++ {
@@ -4160,6 +4167,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// 這段航路的正式戰鬥策略保留魯拉 MP；從 CTY64 世界出口先以
 	// 魯拉返回已造訪港口，讓原版 handler 正常重定位停泊船。
 	traceRuraToCty(t, g, 38)
+	// 洞窟後再走商人城與不死鳥祠堂長航路，先正常進港住宿。
+	// 保存的剩餘 MP 已驗證，不把魯拉落點當成資源已恢復。
+	traceAdventureWalkToCty(t, g, 38)
+	traceTalkFacility(t, g, facInn)
+	traceExitTownBoundary(t, g, true)
 	traceBoardAndSailShip(t, g)
 	traceAdventureTravelToCty(t, g, 83, true)
 	yellowOrb, ok := g.pack.TreasureEvent("dq3:event.merchant_town_yellow_orb")
@@ -4347,17 +4359,17 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		send(InputState{DirHeld: -1, DirEdge: 1}) // 咒文→調查
 		press(InputState{Confirm: true})
 		traceCloseDialogue(t, g)
-		if g.storyFlag(phoenixAltarFlagFirst+i) || g.hasItem(itemGreenOrb+i) {
+		if g.storyFlag(phoenixAltarFlagFirst+i) || g.hasPartyItem(itemGreenOrb+i) {
 			t.Fatalf("祭壇%d transaction 錯：flag=%v item=%v inv=%v",
-				i, g.storyFlag(phoenixAltarFlagFirst+i), g.hasItem(itemGreenOrb+i), g.inventory)
+				i, g.storyFlag(phoenixAltarFlagFirst+i), g.hasPartyItem(itemGreenOrb+i), g.inventory)
 		}
 	}
 	if len(g.placedPhoenixOrbs()) != 6 {
 		t.Fatalf("六座祭壇後 placed orb 數=%d，want 6", len(g.placedPhoenixOrbs()))
 	}
-	// inventory 可有其他物品；這裡只要求六顆珠子都已從主角欄位移除。
+	// inventory 可有其他物品；這裡要求六顆珠子都已從隊伍欄位移除。
 	for code := itemGreenOrb; code <= itemSilverOrb; code++ {
-		if g.hasItem(code) {
+		if g.hasPartyItem(code) {
 			t.Fatalf("六座祭壇後仍有珠子 %#x：inv=%v", code, g.inventory)
 		}
 	}
@@ -4826,7 +4838,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 	traceTalkNPC(t, g, staffEvent.NPC.Tile.X, staffEvent.NPC.Tile.Y)
 	traceCloseDialogue(t, g)
-	if !g.hasItem(staffEvent.GrantedItemRaw) || g.hasItem(*staffEvent.RequiredItemRawID) ||
+	if !g.hasPartyItem(staffEvent.GrantedItemRaw) || g.hasPartyItem(*staffEvent.RequiredItemRawID) ||
 		g.storyFlag(staffEvent.PresentFlagRaw) {
 		t.Fatalf("正式取得雲雨之杖錯：inv=%v present=%v",
 			g.inventory, g.storyFlag(staffEvent.PresentFlagRaw))
@@ -4843,16 +4855,16 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Confirm: true})
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	press(InputState{Confirm: true})
-	if !g.inTown || g.curCty != 92 || !g.hasItem(staffEvent.GrantedItemRaw) ||
+	if !g.inTown || g.curCty != 92 || !g.hasPartyItem(staffEvent.GrantedItemRaw) ||
 		g.storyFlag(staffEvent.PresentFlagRaw) {
 		t.Fatalf("雲雨之杖 save/load 錯：town=%v cty=%d staff=%v present=%v",
-			g.inTown, g.curCty, g.hasItem(staffEvent.GrantedItemRaw),
+			g.inTown, g.curCty, g.hasPartyItem(staffEvent.GrantedItemRaw),
 			g.storyFlag(staffEvent.PresentFlagRaw))
 	}
 	traceTalkNPC(t, g, staffEvent.NPC.Tile.X, staffEvent.NPC.Tile.Y)
 	traceCloseDialogue(t, g)
-	if len(g.inventory) == 0 || !g.hasItem(staffEvent.GrantedItemRaw) ||
-		g.hasItem(*staffEvent.RequiredItemRawID) {
+	if len(g.inventory) == 0 || !g.hasPartyItem(staffEvent.GrantedItemRaw) ||
+		g.hasPartyItem(*staffEvent.RequiredItemRawID) {
 		t.Fatalf("雲雨之杖重複對話改變道具：%v", g.inventory)
 	}
 	traceTownSectionTo(t, g, -1, 0)
@@ -4875,10 +4887,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	press(InputState{Confirm: true})
 	traceAdventureWalkToCty(t, g, 93, true)
 	traceExamineCurrent(t, g)
-	if !g.hasItem(itemRainbowDrop) || g.hasItem(itemSunStone) || g.hasItem(itemRaincloudRod) ||
+	if !g.hasPartyItem(itemRainbowDrop) || g.hasPartyItem(itemSunStone) || g.hasPartyItem(itemRaincloudRod) ||
 		!g.progressDone(msRainbow) {
 		t.Fatalf("神聖祠堂彩虹合成錯：inv=%v rainbow=%v progress=%v",
-			g.inventory, g.hasItem(itemRainbowDrop), g.progressDone(msRainbow))
+			g.inventory, g.hasPartyItem(itemRainbowDrop), g.progressDone(msRainbow))
 	}
 	traceTownSectionTo(t, g, -1, 0)
 
@@ -4910,8 +4922,8 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceBoardAndSailShip(t, g)
 	traceSailToWorldCoordinate(t, g, rainbowUseX, rainbowUseY)
 	traceUseInventoryItem(t, g, itemRainbowDrop)
-	if g.worldState&worldStateRainbowBridge == 0 || g.hasItem(itemRainbowDrop) {
-		t.Fatalf("彩虹水滴正式使用錯：worldState=%#x item=%v", g.worldState, g.hasItem(itemRainbowDrop))
+	if g.worldState&worldStateRainbowBridge == 0 || g.hasPartyItem(itemRainbowDrop) {
+		t.Fatalf("彩虹水滴正式使用錯：worldState=%#x item=%v", g.worldState, g.hasPartyItem(itemRainbowDrop))
 	}
 
 	// 彩虹橋後進 CTY90：隱藏樓梯、歐魯迪卡橋事件、索瑪三連戰。
@@ -7575,6 +7587,22 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 				bestHP, bestMax := 0, 1
 				for _, actor := range g.battle.aliveActorIndices() {
 					hp, maxHP := g.battle.actorHP(actor)
+					// 兩階段固定戰中，先前角色的命令已排程，HP 尚未實際更新。
+					// 以回復公式的最低量估計，不讓三名角色同時對同一
+					// 低血量隊員重複回復，卻漏救其他隊員。這只改玩家策略。
+					for caster, command := range g.battle.commands {
+						if !stagedBoss || caster >= g.battle.commandActor || command.kind != bcSpell {
+							continue
+						}
+						def, ok := spell.GetDef(command.spell)
+						if ok && def.Kind == spell.Heal &&
+							(command.target == actor || def.Target == spell.TargetAllyGroup) {
+							hp += def.Base / 2
+						}
+					}
+					if hp > maxHP {
+						hp = maxHP
+					}
 					if hp*4 <= maxHP*3 &&
 						(healTarget < 0 || hp*bestMax < bestHP*maxHP) {
 						healTarget, bestHP, bestMax = actor, hp, maxHP
@@ -7612,7 +7640,7 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 				// 多拉瑪那施法者採正式普通攻擊而不施咒，保留 MP 給
 				// 玩家可見的場景路徑，而非在戰後補寫資源或延長咒文效果。
 				wantCommand = bcWar
-			case finalBoss && !sealAttempted && hasAffordableSpell(g.battle.commandActor, 156):
+			case (finalBoss || stagedBoss) && !sealAttempted && hasAffordableSpell(g.battle.commandActor, 156):
 				// 巴拉摩斯、殭屍索瑪與索瑪都必須先完成原版封咒
 				// 效果，否則其回復／特殊行動會讓戰鬥資源無法閉合。
 				wantedSpell, wantCommand = 156, bcSpell
@@ -7639,10 +7667,10 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 				// 逃跑指令在全隊命令輸入完後才結算；此模式連補血也不選，
 				// 所有成員只普攻，避免航路 trace 在等待逃跑時耗盡 MP。
 				wantCommand = bcWar
-			case g.bossSurrenderStage == bossSurrenderBattle &&
+			case (g.bossSurrenderStage == bossSurrenderBattle || stagedBoss) &&
 				!blindAttempted && hasAffordableSpell(g.battle.commandActor, 158):
 				wantedSpell, wantCommand = 158, bcSpell
-			case g.bossSurrenderStage == bossSurrenderBattle &&
+			case (g.bossSurrenderStage == bossSurrenderBattle || stagedBoss) &&
 				defenseCasts < 2 && hasAffordableSpell(g.battle.commandActor, 154):
 				wantedSpell, wantCommand = 154, bcSpell
 			case finalBoss && g.battle.monID == 0x7a && g.battle.commandActor == 0:

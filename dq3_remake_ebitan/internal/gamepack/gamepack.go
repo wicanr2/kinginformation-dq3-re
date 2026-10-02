@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.1.62"
+	SchemaVersion       = "0.2.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -894,11 +894,31 @@ type OpeningEscortFrame struct {
 	HoldFrames int            `json:"hold_frames"`
 }
 
-// OpeningArrivalFrame describes the player-only leg after a scene transition.
-// The pack owns every tile; the engine only validates and replays adjacency.
+// OpeningArrivalFrame describes both actors after a scene transition.
+// LeaderFacing uses the engine direction contract; raw directions stay in evidence.
 type OpeningArrivalFrame struct {
-	Player     TileCoordinate `json:"player"`
-	HoldFrames int            `json:"hold_frames"`
+	Player       TileCoordinate `json:"player"`
+	Leader       TileCoordinate `json:"leader"`
+	LeaderFacing int            `json:"leader_facing"`
+	HoldFrames   int            `json:"hold_frames"`
+}
+
+func (f *OpeningArrivalFrame) UnmarshalJSON(raw []byte) error {
+	type plain OpeningArrivalFrame
+	if err := decodeOpeningObject(raw, (*plain)(f), []string{"player", "leader", "leader_facing", "hold_frames"}); err != nil {
+		return err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+	for _, actor := range []string{"player", "leader"} {
+		var tile TileCoordinate
+		if err := decodeOpeningObject(fields[actor], &tile, []string{"x", "y"}); err != nil {
+			return fmt.Errorf("opening arrival %s: %w", actor, err)
+		}
+	}
+	return nil
 }
 
 type SceneCoordinate struct {
@@ -907,17 +927,21 @@ type SceneCoordinate struct {
 }
 
 type OpeningEscort struct {
-	ID                 string                `json:"id"`
-	CTY                int                   `json:"cty"`
-	Section            int                   `json:"section"`
-	Frames             []OpeningEscortFrame  `json:"frames"`
-	Destination        SceneCoordinate       `json:"destination"`
-	ArrivalFrames      []OpeningArrivalFrame `json:"arrival_frames"`
-	DialogueFrameIndex int                   `json:"dialogue_frame_index"`
-	DialogueRecords    []int                 `json:"dialogue_records"`
-	SetStoryFlags      []int                 `json:"set_story_flags"`
-	ClearStoryFlags    []int                 `json:"clear_story_flags"`
-	Evidence           Evidence              `json:"evidence"`
+	ID                     string                `json:"id"`
+	CTY                    int                   `json:"cty"`
+	Section                int                   `json:"section"`
+	Frames                 []OpeningEscortFrame  `json:"frames"`
+	Destination            SceneCoordinate       `json:"destination"`
+	ArrivalFrames          []OpeningArrivalFrame `json:"arrival_frames"`
+	DialogueFrameIndex     int                   `json:"dialogue_frame_index"`
+	DialogueRecords        []int                 `json:"dialogue_records"`
+	DialogueTextIDs        []string              `json:"dialogue_text_ids"`
+	DialoguePresentationID string                `json:"dialogue_presentation_id"`
+	ArrivalLeaderRecord    *int                  `json:"arrival_leader_record"`
+	ArrivalEvidence        Evidence              `json:"arrival_evidence"`
+	SetStoryFlags          []int                 `json:"set_story_flags"`
+	ClearStoryFlags        []int                 `json:"clear_story_flags"`
+	Evidence               Evidence              `json:"evidence"`
 }
 
 // OpeningPrelude 描述創角後、場景顯示前的有限文字演出。
@@ -2255,6 +2279,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 	if err := p.validateOpeningSceneRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
+	if err := p.validateOpeningEscortTextRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
 	if err := p.validateBattleTextRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
@@ -2671,8 +2698,17 @@ func (p *Pack) validateInterface() error {
 		if e.ID == "" || e.CTY < 0 || e.Section < 0 || len(e.Frames) < 2 ||
 			e.Destination.CTY < 0 || e.Destination.Section < 0 || len(e.ArrivalFrames) < 2 ||
 			e.DialogueFrameIndex <= 0 || e.DialogueFrameIndex >= len(e.ArrivalFrames)-1 ||
-			len(e.DialogueRecords) == 0 || len(e.SetStoryFlags) == 0 || len(e.ClearStoryFlags) == 0 {
+			len(e.DialogueRecords) == 0 || len(e.DialogueTextIDs) != len(e.DialogueRecords) ||
+			e.ArrivalLeaderRecord == nil || *e.ArrivalLeaderRecord < 0 ||
+			p.Interface.OpeningPrelude == nil || e.DialoguePresentationID != p.Interface.OpeningPrelude.ID ||
+			len(e.SetStoryFlags) == 0 || len(e.ClearStoryFlags) == 0 {
 			return errors.New("opening escort is invalid")
+		}
+		if e.ArrivalEvidence.Level != "D3" {
+			return errors.New("opening escort arrival requires D3 evidence")
+		}
+		if err := validateEvidence(e.ArrivalEvidence); err != nil {
+			return fmt.Errorf("opening escort arrival evidence: %w", err)
 		}
 		if err := validateEvidence(e.Evidence); err != nil {
 			return fmt.Errorf("opening escort evidence: %w", err)
@@ -2683,10 +2719,16 @@ func (p *Pack) validateInterface() error {
 			}
 		}
 		for i, frame := range e.ArrivalFrames {
-			if frame.Player.X < 0 || frame.Player.Y < 0 || frame.HoldFrames <= 0 {
+			if frame.Player.X < 0 || frame.Player.Y < 0 || frame.Leader.X < 0 || frame.Leader.Y < 0 ||
+				frame.LeaderFacing < 0 || frame.LeaderFacing > 3 || frame.HoldFrames <= 0 {
 				return fmt.Errorf("opening_escort.arrival_frames[%d] is invalid", i)
 			}
 			if i > 0 {
+				leaderDistance := absTileDifference(frame.Leader.X, e.ArrivalFrames[i-1].Leader.X) +
+					absTileDifference(frame.Leader.Y, e.ArrivalFrames[i-1].Leader.Y)
+				if leaderDistance > 1 {
+					return fmt.Errorf("opening_escort.arrival_frames[%d] leader is not adjacent", i)
+				}
 				prev := e.ArrivalFrames[i-1].Player
 				dx, dy := frame.Player.X-prev.X, frame.Player.Y-prev.Y
 				if dx < 0 {
@@ -2695,7 +2737,9 @@ func (p *Pack) validateInterface() error {
 				if dy < 0 {
 					dy = -dy
 				}
-				if dx+dy != 1 {
+				turnOnly := dx+dy == 0 && frame.Leader == e.ArrivalFrames[i-1].Leader &&
+					frame.LeaderFacing != e.ArrivalFrames[i-1].LeaderFacing
+				if dx+dy != 1 && !turnOnly {
 					return fmt.Errorf("opening_escort.arrival_frames[%d] is not adjacent", i)
 				}
 			}
@@ -2722,6 +2766,13 @@ func (p *Pack) validateInterface() error {
 		}
 	}
 	return nil
+}
+
+func absTileDifference(a, b int) int {
+	if a < b {
+		return b - a
+	}
+	return a - b
 }
 
 func (p *Pack) validateOpeningPreludeRefs() error {

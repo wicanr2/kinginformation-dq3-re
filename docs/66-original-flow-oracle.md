@@ -1,5 +1,10 @@
 # 原版主線流程 Oracle(精訊版 DQ3,開機 → 破關)
 
+2026-10-02續跑勘誤（MOTHER-FINISH-38-INPUTS）：原版城門確認後已自然閉合。
+單一record80關閉，主角再走到(21,17)，母親維持(22,18)朝下，最後set flag17h／clear flag50h。
+收據、原始位址與有限production修正見[docs/188](188-opening-escort-to-castle-spec.md)。
+家中NPC順序、正常接近、圖像選擇選單及完整campaign仍待remake對拍。
+
 2026-10-02追加勘誤：母親開場以[docs/188](188-opening-escort-to-castle-spec.md)的自然dosgolem收據為準。
 record83後NPC0先單獨移動再播放81；之後由正常走近事件格觸發帶路。
 本次實際城門提示為主角(22,19)、NPC0(22,18)，不是舊影片近似的(21,19)。

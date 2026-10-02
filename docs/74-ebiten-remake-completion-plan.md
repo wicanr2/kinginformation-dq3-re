@@ -1,14 +1,15 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> **2026-10-02 最新閘門：文字時間訂正通過，NPC流程保持DRAFT。**
-> Issue #4：原版PIT除數12428推翻預設18.2Hz假設，正式JSON改為箭頭5／4、逐字及捲動1更新。
-> 生日兩相與六張續頁完整RGB、創角及完整remake回歸通過；房間仍261個人物像素差異。
-> 原版83返回後先移動NPC0，再播放81；主角仍(5,5)。目前remake人物選擇與順序有反證。
-> 最新RE已由冷啟動37次正式輸入／74次IRQ1閉合0x1010B：走近9,10才帶路，37個城鎮步進抵達22,19。
-> 210份原版產物及116份不變出生PNG／bin通過；隔離人物順序原型PASS，正式ad00d38同測試FAIL。
-> 正式remake尚未套用此修正。下一步閉合城門對話後與保存／恢復，完成有限READY，再修正式路徑。
-> 原始定位、時間CONFORMED與NPC DRAFT見[docs/188](188-opening-escort-to-castle-spec.md)，必填契約見[docs/84](84-game-pack-json-contract.md)。
-> 唯一現況、版號及驗收限制以[CONTEXT狀態表](../CONTEXT.md)為準。下方歷史checkpoint不反向覆蓋本段。
+> **2026-10-02 最新閘門：母親城鎮狀態已修正，完整畫面未通過。**
+> Issue #4：原版38次正常輸入／76次IRQ1自然到1020A，176個唯一產物全部核對。
+> 單一record80、37步城鎮帶路、母親轉身、主角後三步至21,17及最後旗標交易已審為限定READY。
+> 正式remake的42個兩者狀態與同版本存讀檔通過；完整回歸、11個internal及desktop通過，正常新遊戲至THE END65.74秒。
+> schema0.2.0／content0.1.70；原始NPC身分與文字引用由pack提供，缺欄位失敗即關閉，舊schema存檔拒絕。
+> 創角與生日捲動仍PASS；房間三圖各261、家中續行198049、城鎮返回83387像素仍RED。
+> 下一步修家中NPC0先獨走再播81、圖像選擇選單及13次正常接近；水平視野、全域動畫與音訊仍待對拍。
+> MOTHER-FINISH-38-INPUTS：下方80／79雙record及旗標先於剩餘移動的舊描述已推翻，不作現行規格。
+> 原始定位、限定READY與收據見[docs/188](188-opening-escort-to-castle-spec.md)，必填契約見[docs/84](84-game-pack-json-contract.md)。
+> 唯一現況與驗收限制以[CONTEXT狀態表](../CONTEXT.md)為準。下方歷史checkpoint不反向覆蓋本段。
 
 > **2026-10-01 最新閘門（Issue #4，生日首頁）：**
 > 2026-10-01 最新工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)。

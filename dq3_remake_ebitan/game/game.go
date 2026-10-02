@@ -53,12 +53,13 @@ const (
 
 // npcInst 是場景裡一個已定位、已載入 sprite 的 NPC。
 type npcInst struct {
-	x, y     int
-	ctrl, b4 int // 互動:(ctrl>>3)&7=子型;b4=對話 rec / 設施索引
-	facing   int
-	walk     int
-	anim     int // 兩幀角色圖的視覺節拍；靜止 NPC 也會呼吸／踏步
-	spr      *dq3data.CharSprite
+	recordIndex int // 原始場景 NPC 記錄索引；可見性過濾不改變身分。
+	x, y        int
+	ctrl, b4    int // 互動:(ctrl>>3)&7=子型;b4=對話 rec / 設施索引
+	facing      int
+	walk        int
+	anim        int // 兩幀角色圖的視覺節拍；靜止 NPC 也會呼吸／踏步
+	spr         *dq3data.CharSprite
 }
 
 // partyTrailEntry is one player position recorded immediately before a legal
@@ -1417,7 +1418,9 @@ func (g *Game) step(in InputState) error {
 		return nil
 	}
 	if g.openingEscortAnimating() {
-		g.advanceOpeningEscort()
+		if err := g.advanceOpeningEscort(); err != nil {
+			return err
+		}
 		g.renderFrame()
 		return nil
 	}
@@ -2070,12 +2073,25 @@ func (g *Game) finishMotherEscort() bool {
 	if err != nil {
 		return false
 	}
+	// The reviewed forced sequence can cross ordinary collision tiles.
+	// Check bounds and actor identity before committing the scene transaction.
 	for _, frame := range e.ArrivalFrames {
-		if frame.Player.X >= sec0.w || frame.Player.Y >= sec0.h || sec0.Blocked(frame.Player.X, frame.Player.Y) {
+		if frame.Player.X >= sec0.w || frame.Player.Y >= sec0.h || frame.Leader.X >= sec0.w || frame.Leader.Y >= sec0.h {
 			return false
 		}
 	}
+	leader := -1
+	for i := range sec0.npcs {
+		if e.ArrivalLeaderRecord != nil && sec0.npcs[i].recordIndex == *e.ArrivalLeaderRecord {
+			leader = i
+			break
+		}
+	}
+	if leader < 0 {
+		return false
+	}
 	g.town, g.cur, g.curCty, g.inTown = sec0, sec0, e.Destination.CTY, true
+	g.openingEscortNPC = leader
 	first := e.ArrivalFrames[0].Player
 	g.px, g.py = first.X, first.Y
 	g.resetPartyTrail()

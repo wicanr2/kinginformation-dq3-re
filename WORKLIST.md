@@ -5,9 +5,9 @@
 
 | 本輪工作 | 狀態與驗證界線 | 權威入口 |
 |---|---|---|
-| 原版新遊戲／創角／母親開場 | 進行中：生日限定CONFORMED及累計27張保持。有限房間呈現READY已正式接入，完整RGB由172,261降至302，人物261／箭頭41仍RED；下一步相位及83返回後NPC狀態→READY→正式修正 | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/188](docs/188-opening-escort-to-castle-spec.md) |
+| 原版新遊戲／創角／母親開場 | 進行中：城鎮42狀態、單一record80、後三步與最後旗標已修正，正常輸入後同版本存讀檔PASS。家中順序／圖像選擇／正常接近仍待修；房間及城鎮完整RGB仍RED。schema0.2.0／content0.1.70，舊schema存檔拒絕 | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/188](docs/188-opening-escort-to-castle-spec.md) |
 | 原版六幕開場 | 已完成本輪限定色號／RGB 對拍，其他相位與音訊未知 | [Issue #1（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)、[docs/196](docs/196-dosgolem-opening-sequence-parity.md) |
-| 正式玩家路線回歸 | 已重驗至THE END106.51秒，各段存讀檔、game364頂層／34子測試、11個internal及桌面建置通過；原版動態對拍仍未知 | [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)、[Issue #4本輪修正回歸](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) |
+| 正式玩家路線回歸 | 正式新遊戲InputState至THE END65.74秒，各段存讀檔、game367頂層／34子測試、11個internal及桌面建置PASS；原版完整動態對拍仍未知 | [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)、[Issue #4本輪修正回歸](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) |
 | 同伴持冠還冠持有權檢查 | 已由 fc78bb5 推送，原版局部靜態閉環、元件、正式還冠／辭位及存讀檔通過；原版動態路線待 dosgolem | [Issue #3（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)、[docs/82](docs/82-romaly-king-production-trace.md) |
 
 下方為 2026-08-26 功能與交付歷史，不能覆蓋上表的現行驗收，也不限制本輪使用者授權的對拍目標。

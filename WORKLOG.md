@@ -642,3 +642,40 @@ record83保留前文、83／81自動返回再接帶路；原版NPC更新、母�
 93d75e9a3c6f03cb63d03eab9b42c05f161f4605e7818e5ce6c9920552307b33。
 終點由TestOpeningProductionInputTrace的THE END狀態斷言驗證；標準執行不開選用PNG，不能要求其附加log。
 輸出UID/GID1000、歷史root／Markdown目錄候選3213保持；本批DQ3容器已清除，沒有新image或發行包。
+
+
+## 2026-10-02：Issue #4 母親城鎮42狀態與最後交易修正
+
+接續ed27d71，原版冷啟動38次正式輸入、76次IRQ1、seed1357一次，自然續跑至1020A。
+176個唯一產物hash／大小通過，168個既有PNG／bin重生且相同。前輪210列實際170檔、40重複，
+原始收據不覆寫；生成器已拒絕重複。原版EXE、dosgolem上游及使用者未提交資料均保留。
+
+DRAFT經原始EXE／CTY／TXT與完整動態consumer審查為有限READY，再實作城鎮切片。
+以原始NPC record0識別母親；pack宣告42個兩者位置／方向，單一record80引用穩定文字ID，
+FFFC確認後走到21,17，最後交易set17h／clear50h。版本為schema0.2.0／content0.1.70，
+缺actor、必要欄位、null、未知引用或不合法移動均失敗即關閉；舊schema存檔拒絕，無自動遷移。
+修改前同條正常輸入在城鎮第一步FAIL；修正版42狀態與同版本存讀檔PASS。家中流程未一併提升。
+
+完整回歸暴露測試策略與斷言問題：取船後與尼羅肯特返港未住宿、聖水容量未扣既有存量、
+分階段Boss未用已學的封咒／致盲／防禦且同回合重複安排治療。
+測試改走正式旅店及戰鬥選單，治療策略考慮同回合已排命令；正式遊戲數值、規則及seed保持。
+幽靈船、海岬、蓋亞之劍、雲雨之杖與彩虹合成的隊伍獎勵仍被部分測試只查勇者背包，
+已依現行writer修正為全隊檢查，旗標、道具存在／消耗及存讀檔驗收保留，六珠消耗檢查亦涵蓋全隊。
+
+最終完整game367頂層／34子測試、11個internal與desktop main.go PASS，正常新遊戲InputState至THE END65.74秒。
+標準38項選用SKIP；原版創角與生日捲動另行嚴格PASS，完整房間與續行仍RED，無素材缺失。
+一批原版比較忘記啟用選用參數而SKIP，未當驗收；啟用後同容器重跑得到上述PASS／RED。
+房間三圖各261、家中續行198049、城鎮返回83387像素差異，保留完整畫布、不裁切或遮罩。
+城鎮水平視野差32px，動畫、音訊、家中NPC順序／圖像選擇／正常接近及完整原版campaign仍未完成。
+本輪只閉合共同城鎮checkpoint的有限狀態，不宣稱兩側38次同輸入或整個開場V3。
+
+docs/188保存證據與READY範圍，docs/84保存契約；docs/192、189、66、74追加原始位址勘誤與回鏈。
+所有本機收據入口見docs/188。Issue工作與進度留言為5952414514、5953241717，Issue保持OPEN。
+Docker、來源擁有權及提交／推送收據於本批收尾另行核對；沒有新image、發行包或原版公開附件。
+
+本批收尾已核對原版176個唯一產物、42狀態收據、程式／資料／文件及失敗即關閉的勘誤回鏈。
+私有稽核入口為work/issue4-arrival-final-audit.py，輸出work/issue4-arrival-final-evidence-receipt.json。
+所有本批變更與輸出UID/GID1000；指定find檢查得既有root候選3213、Markdown目錄0，未新增root檔。
+衛生腳本曾錯用較早Markdown目錄4的假設；以同容器指定find重跑核對實際0，分類為驗證腳本問題。
+本批DQ3一次性容器已清除，dosgolem上游cmd/probe/main.go使用者修改保持，沒有新增image或交付物。
+提交、推送、Issue最新狀態與Docker清理記錄由work/issue4-arrival-post-push-receipt.json保存。

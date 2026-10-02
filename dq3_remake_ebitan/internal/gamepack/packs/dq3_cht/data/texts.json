@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.62",
+  "schema_version": "0.2.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -2588,6 +2588,67 @@
         "consumer": "出生交易後原始caller依序DI0C0B／0C09→共用文字consumer",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "有限READY：共用樣式、保留文字、EOF返回；NPC更新、動畫與母親狀態尚未閉合。"
+      }
+    },
+    {
+      "id": "dq3:text.opening.castle_mother",
+      "value": "*「#1ff#18e#200#191#3b2#264,\n            #279#18f#ba#1da#1a7,\n    --page--\n      #234#12c#ba#1b9#1b9\n            #1e7#191#205#2d7#3e8#1f3",
+      "glyph_codes": [
+        59,
+        60,
+        511,
+        398,
+        512,
+        401,
+        946,
+        612,
+        55,
+        65534,
+        12,
+        12,
+        633,
+        399,
+        186,
+        474,
+        423,
+        55,
+        65532,
+        12,
+        12,
+        564,
+        300,
+        186,
+        441,
+        441,
+        65534,
+        12,
+        12,
+        487,
+        401,
+        517,
+        727,
+        1000,
+        499
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT01.TXT",
+        "record": 80
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c） + CTY00.DAT + D3TXT01.TXT + dosgolem mother_finish",
+        "address_space": "linear",
+        "address": "0x10130..0x1020a;0x21414;0x21441",
+        "consumer": "原版 handler54 自然入口，37步雙角色帶路，單一record80，最後三步後交易旗標",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "raw glyph_codes 與自然consumer全部36words含EOF吻合；value沿用既有未完整考訂字形轉錄，不作runtime缺字fallback。"
       }
     }
   ]

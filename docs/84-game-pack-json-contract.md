@@ -1697,3 +1697,26 @@ DQ3新增完整record407／557／434與真正能力選項raw window `0x28E50`；
 
 本契約已驗的是首段文字的穩定首頁。一般對話仍使用既有變數解析，箭頭、續頁累積／捲動、
 房間與母親需獨立原版收據；本批不延伸為全遊戲文字或整個開場 V3。
+## 城鎮母親帶路契約（schema 0.2.0／DQ3 content 0.1.70）
+
+此版新增必需欄位，依本文變更規則提升 schema 次版。原始證據與限定 READY 範圍見
+[docs/188](188-opening-escort-to-castle-spec.md)。原始 NPC 記錄索引在 loader 的可見性
+過濾後仍保留，不能以可見陣列位置代替身分。
+
+| 欄位 | 契約 |
+|---|---|
+| `opening_escort.arrival_leader_record` | 目的場景原始 NPC 記錄索引；必須明列，0 是有效值；缺少或不可載入時失敗即關閉 |
+| `arrival_frames[].leader`／`leader_facing` | 每步母親位置與共用引擎方向：0下、1上、2左、3右；必須明列 |
+| `arrival_frames[].player` | 每步主角位置；一般相鄰移動，僅領路者原地轉身可保留相同主角位置 |
+| `dialogue_text_ids` | 穩定文字引用，長度與原始 record oracle 相同；共用 Go 不再以版本專屬 record 開對話 |
+| `dialogue_records` | 保留原始 record 供 reference validation 與 EXE／TXT parity；不作 runtime fallback |
+| `dialogue_presentation_id` | 已審查共用文字呈現的引用；不帶入家中 camera |
+| `arrival_evidence` | 狀態鏈需 D3；位置、NPC、文字及旗標順序與動畫／停留時間證據分開 |
+
+遷移方式：外部 pack 先加入上述欄位及證據，所有 JSON 的 `schema_version` 更新為
+`0.2.0`，再由 loader、原始資料 parity 與正式玩家 trace 驗證。不得替舊 pack
+猜補領路 NPC、座標或文字引用。DQ3 內建 pack 已同步。存檔維持既有 pack ID、schema
+與 hash 核對；此版不擅自改寫舊存檔，跨 schema 的既有檔仍明確拒絕。新檔須完成
+同版本位置與旗標 round-trip，NPC 動畫及原版存檔格式不由此宣稱 parity。
+
+`arrival_frames[].player`與`leader`的x、y亦為必填，合法0不等於缺值；缺欄位、null及未知欄位一律拒絕。

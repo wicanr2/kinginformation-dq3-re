@@ -833,3 +833,97 @@ scroll_steps、scroll_hold_frames 與 evidence；幾何由既有 Window 的 inse
 四次捲動位於step1221370959／1221491508／1221612130／1221732757，consumer均為
 IDA linear0x21A8B。完成時1221840427的畫布與第四次擷取相同，caller為linear0x100AB。
 正式實作接入前的房間紅測試仍為172,261差異，本段驗收不會取消該閘門。
+## 2026-10-02 母親城鎮帶路續跑與限定實作規格
+
+本節追加訂正，不取代前輪收據。Issue #4 是遠端工作入口。本輪先將城鎮抵達後的
+位置、NPC、文字與旗標交易列為 DRAFT，再以原版冷啟動續跑審查。家中自動接管、
+圖像選擇選單、全域動畫相位與完整畫面對拍仍待修正，不把本節升格為整個開場完成。
+
+## 原版續跑與證據審查
+
+- 重生工具：`tools/dosgolem_newgame_probe.py`，環境
+  `DQ3_NEWGAME_PROBE_SCENARIO=mother_finish`。沿用 dosgolem `2f44a68` 與既有隔離工具鏈，
+  完整冷啟動 38 次正常輸入、76 次 IRQ1，固定測試種子一次，沒有其他遊戲狀態注入。
+- 原始 EXE：`assets_raw/DQ3.EXE`，115282 bytes，SHA-256
+  `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+- 原始文字：`assets_raw/D3TXT01.TXT`，6420 bytes，SHA-256
+  `4d0f78b20f123a986feb9af62845183213adee6881e953825eb74678abce8271`。
+- 本機收據：`work/dosgolem-opening/issue4-mother-finish-receipt.json`，SHA-256
+  `9358ce6e7a8e5c4547555daeccf74a2339f003ab106ebe4d57b32111602c0f3f`；
+  `work/issue4-mother-finish-evidence-receipt.json` 保存核對結果。176 個唯一產物的
+  大小與雜湊全部吻合，先前 168 個 PNG／色號檔維持相同內容。
+- 已證實：IDA linear `10130` 的主角 `(8,38)`、原始 NPC record0 `(8,37)`，
+  接著 37 次 caller 返回的位置形成北2、西2、北7、東16、北10。
+  `101C5` 主角 `(22,19)`、母親 `(22,18)` 朝下。
+- 已證實：IDA linear `101CE` 只有一次 `DI=0C08 → sub_21414`。
+  `21441` 的 36 個 raw words 與原始 record80 完整相同，包含一個 `FFFC` 及最後 `FFFF`。
+  record79 不屬於這次帶路對話。
+- 已證實：IDA linear `101D3 → 101E6 → 101EF → 101F8 → 1020A`，
+  確認後主角依序 `(21,19)`、`(21,18)`、`(21,17)`；母親仍在 `(22,18)` 朝下。
+  到 `101F8` 旗標尚未交易；`1020A` 的 DGROUP `4F72` 從 `00` 變成 `01`，
+  `4F7A` 從 `FF` 變成 `7F`，`0B34` 歸零。
+  此處 flag17h 是高位優先 bit map 的 bit0，flag50h 是 bit7。
+
+位址使用 IDA Pro 9.4 loaded linear，file offset = linear − EC90；上列動態事件
+由 dosgolem 只讀觀察自然入口。原始 bytes 與非破壞性 IDA 索引沿用本文件既有證據鏈。
+
+## READY 範圍
+
+上述城鎮抵達後的有限狀態鏈已達 D3，限定實作可進 production：
+
+1. pack 宣告原始 NPC record 身分、每步兩者位置、母親方向、單一文字 ID。
+2. 原始 record number 留作資料 oracle；共用引擎只消費穩定文字 ID。
+3. 對話關閉後仍保留母親旗標，完成最後三步才交易旗標。
+4. 正式新遊戲 InputState trace 必須走到下一個可操作節點，驗證存讀檔及後續謁見。
+
+本輪不重新證實既有 hold_frames、家中序列或角色動畫。既有每步等待只保留為未完成的
+呈現近似，不能以本節位置證據宣稱時序或 RGB 已達 V3。runtime 圖片必須如實保留差異。
+
+前輪 `mother_approach` manifest 有 210 列，實際是 170 個唯一檔案，重複 40 列。
+原始收據維持不變；本輪生成器改為拒絕重複檔名，並確認 PNG 由當次執行寫出。
+
+### 限定實作與驗收
+
+現行schema0.2.0／content0.1.70。原始NPC記錄索引在可見性過濾後仍保留，目的場景
+以pack引用選母親；42步逐項宣告兩者位置及母親方向。強制帶路可穿過原版普通碰撞格，
+但轉場提交前仍驗界內與NPC身分。未知actor／文字引用回報錯誤，不跳過交易或猜補。
+文字由穩定ID與已審查共享呈現開啟，單一record80的FFFC等待後自動EOF；最後三步完成才交易旗標。
+既有家中演出、每步hold_frames與動畫仍為未驗證近似，這些範圍未升級CONFORMED。
+
+| 驗證 | 結果與界線 |
+|---|---|
+| 修改前ed27d71同條正常輸入 | 第一個城鎮步進FAIL：主角7,38／母親8,37；原版應8,37／8,36 |
+| EXE／CTY／TXT parity | 42個兩者狀態、原始NPC record0、單一文字及旗標引用PASS；必填及null／未知欄位拒絕PASS |
+| 正式玩家入口到城鎮checkpoint | seed1357於首個InputState前固定一次；42個原版觀測值逐項PASS，城門確認一次，未注入位置／旗標 |
+| 同版本存讀檔 | 主角21,17、場景與旗標PASS；原版存檔格式與NPC動畫不由此宣稱parity |
+| 完整remake回歸 | 367項game頂層／34子測試、11個internal與desktop main.go PASS；正式新遊戲至THE END65.74秒 |
+| 嚴格原版畫面 | 創角與生日捲動PASS；接受角色的完整房間三圖各261、家中續行198049像素，RED |
+| 城鎮返回完整640×350 RGB | 83387像素差異；可見水平視野差32px與人物動畫差異，RED；不裁切或遮罩 |
+
+原版38次輸入含五次圖像選擇確認及13次家中接近；正式remake仍沿用錯誤家中自動接管。
+本輪state比較限定共同城鎮checkpoint，不宣稱兩側38次等價輸入、整個開場E3／V3或音訊一致。
+來源重生入口：`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --mother-finish-original`。
+這個入口只重生原版，成功不代表remake通過。remake正式比較入口為
+`TestDosgolemMotherArrivalStateComparison`，在既有Docker／Xvfb驗證環境設定
+`DQ3_MOTHER_FINISH_ORIGINAL=/work/dosgolem-opening/issue4-mother-finish-receipt.json`，素材仍唯讀。
+
+本機收據：`work/dosgolem-opening/issue4-remake-mother-arrival-receipt.json`、
+`work/issue4-arrival-baseline.log`、`work/issue4-arrival-full.log`、
+`work/issue4-arrival-retained.log`、`work/issue4-arrival-visual-receipt.json`。
+`work/issue4-arrival-final-audit.py`核對來源、收據、文件回鏈及輸出擁有權，
+輸出`work/issue4-arrival-final-evidence-receipt.json`；私有圖像與原版檔不加入Git。
+
+### 結論回填索引
+
+原始鍵為DOS／上述SHA-256的DQ3.EXE／IDA9.4 linear，file=linear−EC90。
+MOTHER-FINISH-38-INPUTS是舊規格勘誤標記；本機稽核逐項檢查標記及docs/188回鏈存在。
+
+| 原始鍵 | 新證據語意與等級 | 回填文件 |
+|---|---|---|
+| 101BF／101CE／21441 | NPC轉身後單一record80，全部36words含EOF；confirmed | docs/192、docs/189、docs/74；舊雙record已推翻 |
+| 101D3／101E6／101EF／101F8／1020A | 三步後主角21,17，最後set17h／clear50h；confirmed | docs/192、docs/189、docs/66、docs/74；舊對話後未知與提前旗標已勘誤 |
+
+原始位址與歷史表保留；不用較早V3聲明提升本輪畫面。家中入口、動畫與原版存檔仍分開追蹤。
+
+提交／推送與遠端Issue收尾收據：`work/issue4-arrival-post-push-receipt.json`；
+容器及擁有權稽核：`work/issue4-arrival-hygiene-receipt.json`。未新增公開原版附件。

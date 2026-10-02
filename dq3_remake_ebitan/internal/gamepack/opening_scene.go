@@ -101,3 +101,26 @@ func (p *Pack) OpeningScenePresentation() (*OpeningScenePresentation, bool) {
 	}
 	return p.Interface.OpeningScenePresentation, true
 }
+
+func (p *Pack) validateOpeningEscortTextRefs() error {
+	e := p.Interface.OpeningEscort
+	if e == nil {
+		return nil
+	}
+	seen := map[string]bool{}
+	for i, id := range e.DialogueTextIDs {
+		definition := p.texts[id]
+		if id == "" || seen[id] || definition == nil || definition.Evidence.Level != "D3" ||
+			definition.Source.Kind != "legacy_record" || definition.Source.Record == nil ||
+			i >= len(e.DialogueRecords) || *definition.Source.Record != e.DialogueRecords[i] {
+			return fmt.Errorf("opening escort text %q has an invalid source reference", id)
+		}
+		seen[id] = true
+		for _, code := range definition.GlyphCodes {
+			if code >= dq3data.GlyphMax && code != dq3data.TxtNL && code != dq3data.TxtNL2 && code != dq3data.TxtPage {
+				return fmt.Errorf("opening escort text %q has an unsupported control", id)
+			}
+		}
+	}
+	return nil
+}

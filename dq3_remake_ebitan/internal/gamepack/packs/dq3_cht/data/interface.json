@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.62",
+  "schema_version": "0.2.0",
   "dialogue": {
     "id": "dq3:window.dialogue",
     "x": 152,
@@ -1203,77 +1203,355 @@
     "cty": 0,
     "section": 4,
     "frames": [
-      {"leader": {"x": 8, "y": 3}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
-      {"leader": {"x": 7, "y": 3}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
-      {"leader": {"x": 6, "y": 3}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
-      {"leader": {"x": 5, "y": 3}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
-      {"leader": {"x": 5, "y": 4}, "player": {"x": 5, "y": 5}, "hold_frames": 6},
-      {"leader": {"x": 5, "y": 5}, "player": {"x": 5, "y": 6}, "hold_frames": 6},
-      {"leader": {"x": 5, "y": 6}, "player": {"x": 5, "y": 7}, "hold_frames": 6},
-      {"leader": {"x": 5, "y": 7}, "player": {"x": 5, "y": 8}, "hold_frames": 6},
-      {"leader": {"x": 5, "y": 8}, "player": {"x": 5, "y": 9}, "hold_frames": 6},
-      {"leader": {"x": 6, "y": 8}, "player": {"x": 5, "y": 8}, "hold_frames": 6},
-      {"leader": {"x": 7, "y": 8}, "player": {"x": 6, "y": 8}, "hold_frames": 6},
-      {"leader": {"x": 8, "y": 8}, "player": {"x": 7, "y": 8}, "hold_frames": 6},
-      {"leader": {"x": 9, "y": 8}, "player": {"x": 8, "y": 8}, "hold_frames": 6},
-      {"leader": {"x": 10, "y": 8}, "player": {"x": 9, "y": 8}, "hold_frames": 6},
-      {"leader": {"x": 10, "y": 9}, "player": {"x": 10, "y": 8}, "hold_frames": 6},
-      {"leader": {"x": 10, "y": 10}, "player": {"x": 10, "y": 9}, "hold_frames": 6}
+      {
+        "leader": {"x": 8, "y": 3},
+        "player": {"x": 5, "y": 5},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 7, "y": 3},
+        "player": {"x": 5, "y": 5},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 6, "y": 3},
+        "player": {"x": 5, "y": 5},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 5, "y": 3},
+        "player": {"x": 5, "y": 5},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 5, "y": 4},
+        "player": {"x": 5, "y": 5},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 5, "y": 5},
+        "player": {"x": 5, "y": 6},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 5, "y": 6},
+        "player": {"x": 5, "y": 7},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 5, "y": 7},
+        "player": {"x": 5, "y": 8},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 5, "y": 8},
+        "player": {"x": 5, "y": 9},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 6, "y": 8},
+        "player": {"x": 5, "y": 8},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 7, "y": 8},
+        "player": {"x": 6, "y": 8},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 8, "y": 8},
+        "player": {"x": 7, "y": 8},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 9, "y": 8},
+        "player": {"x": 8, "y": 8},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 10, "y": 8},
+        "player": {"x": 9, "y": 8},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 10, "y": 9},
+        "player": {"x": 10, "y": 8},
+        "hold_frames": 6
+      },
+      {
+        "leader": {"x": 10, "y": 10},
+        "player": {"x": 10, "y": 9},
+        "hold_frames": 6
+      }
     ],
-    "destination": {"cty": 0, "section": 0},
+    "destination": {
+      "cty": 0,
+      "section": 0
+    },
     "arrival_frames": [
-      {"player": {"x": 8, "y": 38}, "hold_frames": 6},
-      {"player": {"x": 7, "y": 38}, "hold_frames": 6},
-      {"player": {"x": 7, "y": 37}, "hold_frames": 6},
-      {"player": {"x": 7, "y": 36}, "hold_frames": 6},
-      {"player": {"x": 7, "y": 35}, "hold_frames": 6},
-      {"player": {"x": 7, "y": 34}, "hold_frames": 6},
-      {"player": {"x": 7, "y": 33}, "hold_frames": 6},
-      {"player": {"x": 6, "y": 33}, "hold_frames": 6},
-      {"player": {"x": 6, "y": 32}, "hold_frames": 6},
-      {"player": {"x": 6, "y": 31}, "hold_frames": 6},
-      {"player": {"x": 6, "y": 30}, "hold_frames": 6},
-      {"player": {"x": 6, "y": 29}, "hold_frames": 6},
-      {"player": {"x": 6, "y": 28}, "hold_frames": 6},
-      {"player": {"x": 7, "y": 28}, "hold_frames": 6},
-      {"player": {"x": 8, "y": 28}, "hold_frames": 6},
-      {"player": {"x": 9, "y": 28}, "hold_frames": 6},
-      {"player": {"x": 10, "y": 28}, "hold_frames": 6},
-      {"player": {"x": 11, "y": 28}, "hold_frames": 6},
-      {"player": {"x": 11, "y": 27}, "hold_frames": 6},
-      {"player": {"x": 12, "y": 27}, "hold_frames": 6},
-      {"player": {"x": 12, "y": 26}, "hold_frames": 6},
-      {"player": {"x": 13, "y": 26}, "hold_frames": 6},
-      {"player": {"x": 14, "y": 26}, "hold_frames": 6},
-      {"player": {"x": 15, "y": 26}, "hold_frames": 6},
-      {"player": {"x": 16, "y": 26}, "hold_frames": 6},
-      {"player": {"x": 17, "y": 26}, "hold_frames": 6},
-      {"player": {"x": 18, "y": 26}, "hold_frames": 6},
-      {"player": {"x": 18, "y": 25}, "hold_frames": 6},
-      {"player": {"x": 18, "y": 24}, "hold_frames": 6},
-      {"player": {"x": 18, "y": 23}, "hold_frames": 6},
-      {"player": {"x": 18, "y": 22}, "hold_frames": 6},
-      {"player": {"x": 18, "y": 21}, "hold_frames": 6},
-      {"player": {"x": 18, "y": 20}, "hold_frames": 6},
-      {"player": {"x": 18, "y": 19}, "hold_frames": 6},
-      {"player": {"x": 19, "y": 19}, "hold_frames": 6},
-      {"player": {"x": 20, "y": 19}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 19}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 18}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 17}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 16}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 15}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 14}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 13}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 12}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 11}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 10}, "hold_frames": 6},
-      {"player": {"x": 21, "y": 9}, "hold_frames": 6}
+      {
+        "player": {"x": 8, "y": 38},
+        "leader": {"x": 8, "y": 37},
+        "leader_facing": 0,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 8, "y": 37},
+        "leader": {"x": 8, "y": 36},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 8, "y": 36},
+        "leader": {"x": 8, "y": 35},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 7, "y": 36},
+        "leader": {"x": 7, "y": 35},
+        "leader_facing": 2,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 6, "y": 36},
+        "leader": {"x": 6, "y": 35},
+        "leader_facing": 2,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 6, "y": 35},
+        "leader": {"x": 6, "y": 34},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 6, "y": 34},
+        "leader": {"x": 6, "y": 33},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 6, "y": 33},
+        "leader": {"x": 6, "y": 32},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 6, "y": 32},
+        "leader": {"x": 6, "y": 31},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 6, "y": 31},
+        "leader": {"x": 6, "y": 30},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 6, "y": 30},
+        "leader": {"x": 6, "y": 29},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 6, "y": 29},
+        "leader": {"x": 6, "y": 28},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 7, "y": 29},
+        "leader": {"x": 7, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 8, "y": 29},
+        "leader": {"x": 8, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 9, "y": 29},
+        "leader": {"x": 9, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 10, "y": 29},
+        "leader": {"x": 10, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 11, "y": 29},
+        "leader": {"x": 11, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 12, "y": 29},
+        "leader": {"x": 12, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 13, "y": 29},
+        "leader": {"x": 13, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 14, "y": 29},
+        "leader": {"x": 14, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 15, "y": 29},
+        "leader": {"x": 15, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 16, "y": 29},
+        "leader": {"x": 16, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 17, "y": 29},
+        "leader": {"x": 17, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 18, "y": 29},
+        "leader": {"x": 18, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 19, "y": 29},
+        "leader": {"x": 19, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 20, "y": 29},
+        "leader": {"x": 20, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 21, "y": 29},
+        "leader": {"x": 21, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 29},
+        "leader": {"x": 22, "y": 28},
+        "leader_facing": 3,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 28},
+        "leader": {"x": 22, "y": 27},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 27},
+        "leader": {"x": 22, "y": 26},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 26},
+        "leader": {"x": 22, "y": 25},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 25},
+        "leader": {"x": 22, "y": 24},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 24},
+        "leader": {"x": 22, "y": 23},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 23},
+        "leader": {"x": 22, "y": 22},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 22},
+        "leader": {"x": 22, "y": 21},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 21},
+        "leader": {"x": 22, "y": 20},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 20},
+        "leader": {"x": 22, "y": 19},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 19},
+        "leader": {"x": 22, "y": 18},
+        "leader_facing": 1,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 22, "y": 19},
+        "leader": {"x": 22, "y": 18},
+        "leader_facing": 0,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 21, "y": 19},
+        "leader": {"x": 22, "y": 18},
+        "leader_facing": 0,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 21, "y": 18},
+        "leader": {"x": 22, "y": 18},
+        "leader_facing": 0,
+        "hold_frames": 6
+      },
+      {
+        "player": {"x": 21, "y": 17},
+        "leader": {"x": 22, "y": 18},
+        "leader_facing": 0,
+        "hold_frames": 6
+      }
     ],
-    "dialogue_frame_index": 36,
-    "dialogue_records": [80, 79],
-    "set_story_flags": [23],
-    "clear_story_flags": [80],
+    "dialogue_frame_index": 38,
+    "dialogue_records": [
+      80
+    ],
+    "set_story_flags": [
+      23
+    ],
+    "clear_story_flags": [
+      80
+    ],
     "evidence": {
       "level": "D2",
       "source_kind": "video",
@@ -1283,6 +1561,21 @@
       "consumer": "post-record81 home escort, transition, player-only automatic walk to castle entrance, rec80, then completion flags",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "影片證實兩階段可見順序；arrival tiles 是原始 CTY00 上與影片路線一致的合法路徑。每格 6 frames 是 remake 可重播近似，未宣稱原版 wall-clock exact。"
+    },
+    "dialogue_text_ids": [
+      "dq3:text.opening.castle_mother"
+    ],
+    "dialogue_presentation_id": "dq3:opening.birthday_prelude",
+    "arrival_leader_record": 0,
+    "arrival_evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "assets_raw/DQ3.EXE（115282 bytes，SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c） + CTY00.DAT + D3TXT01.TXT + dosgolem mother_finish",
+      "address_space": "linear",
+      "address": "0x10130..0x1020a;0x21414;0x21441",
+      "consumer": "原版 handler54 自然入口，37步雙角色帶路，單一record80，最後三步後交易旗標",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "confirmed 限定座標、原始NPC record0、朝向、文字與旗標順序。hold_frames沿用既有呈現近似，動畫、圖像選擇選單與家中路線仍未CONFORMED。"
     }
   },
   "attract": {

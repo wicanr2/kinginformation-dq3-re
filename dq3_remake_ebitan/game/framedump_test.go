@@ -84,7 +84,9 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal("無法載入開場抵達段")
 	}
 	g.applyOpeningArrivalFrame(g.openingEscort.ArrivalFrames[g.openingEscort.DialogueFrameIndex])
-	g.dlg.Open(g.openingEscort.DialogueRecords[0])
+	if !g.openOpeningEscortText(g.openingEscort.DialogueTextIDs[0]) {
+		t.Fatal("無法套用已審查的城門文字呈現")
+	}
 	dump("opening_town_rec80")
 	g.completeOpeningEscort() // 後續王座 fixture 模擬 rec80 已關閉的正式旗標交易。
 

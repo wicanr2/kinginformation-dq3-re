@@ -177,7 +177,7 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 	}
 	sc.dlgText = dq3data.LoadText(rd("D3TXT00.FON"), rd("D3TXT0"+string(rune('0'+bank))+".TXT"))
 	sprCache := map[int]*dq3data.CharSprite{}
-	for _, n := range tw.NPCs {
+	for recordIndex, n := range tw.NPCs {
 		// NPC 可見性過濾(對齊原版 file 0x4560:test [byte5→0x4f70]; je skip):byte5=story-flag id,
 		// 該旗標未設就不載入。新遊戲初值 flag 0-39 清、40-255 設(dq3data.NPCStoryInitFlags),
 		// 故 byte5<40 的條件 NPC 起始隱藏、≥40 的基礎人口顯示。flagSet==nil 時不過濾(測試)。
@@ -200,7 +200,7 @@ func loadTownSceneSec(assets fs.FS, pal []dq3data.Color, manBLS []byte, cty, blk
 			spr = dq3data.LoadCharSprite(manBLS, (b2-4)*4)
 			sprCache[b2] = spr
 		}
-		sc.npcs = append(sc.npcs, npcInst{x: n.X, y: n.Y, ctrl: n.Ctrl, b4: n.B4,
+		sc.npcs = append(sc.npcs, npcInst{recordIndex: recordIndex, x: n.X, y: n.Y, ctrl: n.Ctrl, b4: n.B4,
 			facing: npcCtrlFacing(n.Ctrl), spr: spr})
 	}
 	return sc, nil

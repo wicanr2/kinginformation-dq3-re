@@ -84,8 +84,8 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 	}
 
 	g.motherEscort()
-	if g.curCty != 0 || g.cur == nil || g.cur.sec != 0 || g.px != 21 || g.py != 9 {
-		t.Fatalf("母親帶路落點應 CTY00 sec0@(21,9)，得 cty=%d sec=%v @(%d,%d)",
+	if g.curCty != 0 || g.cur == nil || g.cur.sec != 0 || g.px != 21 || g.py != 17 {
+		t.Fatalf("母親帶路落點應 CTY00 sec0@(21,17)，得 cty=%d sec=%v @(%d,%d)",
 			g.curCty, sceneSection(g.cur), g.px, g.py)
 	}
 	if !g.storyFlag(0x17) || g.storyFlag(0x50) {

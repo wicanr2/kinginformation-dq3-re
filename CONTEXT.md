@@ -1,13 +1,20 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-02最新原版證據：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，已閉合母親的正常接近入口。
-冷啟動37次正式輸入／74次IRQ1，seed1357固定一次；主角走至(9,10)才經selector1／raw54進入帶路。
-轉場後主角(8,38)、母親(8,37)，37個自動步進抵達主角(22,19)、母親(22,18)的提示等待。
-原版210份產物全部核對hash與本次生成記錄，前一生日的116份PNG／bin重生且相同。
-未修改正式remake或pack，schema0.1.62／content0.1.69保持；NPC有限規格仍DRAFT。
-同一正常InputState反例在ad00d38失敗、隔離原型通過；不代表正式人物RGB、接近流程或存檔已修正。
-下一閘門是城門對話後與保存／恢復，然後完成母親順序、正式觸發與共同帶路的有限READY。
-證據、被推翻的21,19定位與可重生入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+2026-10-02最新現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
+母親城鎮帶路的有限狀態切片已修正。原版冷啟動38次正常輸入／76次IRQ1，seed1357固定一次，
+自然完成單一record80、後三步及旗標交易。176個唯一產物逐項核對；先前168個PNG／bin相同。
+前輪210列manifest實際為170個唯一檔案、40列重複；原始收據不改，本輪拒絕重複。
+現行schema0.2.0／content0.1.70，加入原始NPC身分、兩者位置／方向與穩定文字引用。
+42個城鎮狀態、最後(21,17)及set17h／clear50h順序、正常輸入後同版本存讀檔通過。
+修改前ed27d71在第一個城鎮步進即失敗；修正版未注入玩家位置或故事旗標。
+完整game367項頂層／34項子測試、11個internal與desktop main.go通過；正式新遊戲至THE END65.74秒。
+標準38項選用跳過；創角、生日捲動另行嚴格通過，接受角色後的完整房間與後續流程仍RED。
+房間等待三圖差261像素；家中續行圖差198049像素，不能把單項失敗縮寫成只有人物差異。
+城鎮返回圖完整RGB差83387像素，可見水平視野差32px；動畫、音訊與完整原版campaign未CONFORMED。
+家中NPC0先獨走再播81、五次圖像選擇確認及13次正常接近，尚未套入正式remake。
+此版新增必填欄位，舊schema pack與存檔明確拒絕，沒有自動遷移或新發行包。
+證據、READY限定範圍與重生入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)，
+契約見[docs/84](docs/84-game-pack-json-contract.md)。以下段落保存歷史，不覆蓋本段及狀態表。
 
 2026-10-02：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，訂正生日／房間共享文字的計時頻率。
 原版自然觀測PIT除數12428，推翻預設18.2Hz假設；箭頭改5／4、逐字及每步捲動改1個60TPS更新。
@@ -63,16 +70,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-02） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；schema0.1.62／content0.1.69；未發布新包 |
-| 最新繪圖切片已完成 | 生日兩相與六張續頁完整RGB仍零差異，限定28張保持；房間人物未通過，docs/188 |
-| 最新時序修正 | 原版PIT除數12428；箭頭5／4、逐字／每步捲動1個60TPS更新；第18次自然抵達record83；hardware-spec approximation，docs/188 |
-| 最新原版反證 | NPC0先(5,4)→(10,10)再播放81；走近9,10才帶路；城門提示為22,19；目前人物選擇、順序、觸發及對話定位錯誤，docs/188 |
-| 最新有限RE | 冷啟動37次輸入／74次IRQ1閉合selector1→raw54→010B；37個城鎮自動步進、210份產物與116份出生畫面不變；原版1e5ab45d，docs/188 |
-| 開機切片已完成 | 六幕順序、前五幕色號、第六幕 129 個翻頁色號／RGB，正式 bootstrap／InputState 及存讀檔通過；docs/196 |
-| 原版 oracle 未完成 | NPC全域相位、母親對話後／存檔與其他接近失敗gate、音訊、skip、其他文字與完整campaign；不追PIT／ISR逐週期 |
-| 還冠修正已驗證 | 原版局部靜態資料流與 remake 同伴持有／單件消耗、正常還冠及存讀檔通過；原版動態玩家路線仍待 dosgolem |
-| 現行回歸已完成 | 正式新遊戲InputState→THE END88.40秒，主角／酒館及各段存讀檔；game365項頂層／34子測試、11個internal與desktop通過；work/issue4-clock-full.log |
-| 額外驗證限制 | 標準38項選用跳過，創角及生日捲動兩項嚴格PASS，接受角色的房間仍RED；剩餘35項未跑，沒有素材缺失 |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.2.0／content0.1.70；未發布新包，舊schema存檔拒絕 |
+| 最新remake已完成 | 城鎮42個兩者位置／方向、單一record80、後三步與最後旗標交易；正常輸入後同版本存讀檔，docs/188 |
+| 最新原版oracle | 冷啟動38次輸入／76次IRQ1，自然到1020A；176個唯一產物，原版9358ce6e，docs/188 |
+| 既有繪圖切片 | 六幕與129次翻頁、創角及生日續頁完整RGB已驗；本輪創角與生日捲動嚴格PASS |
+| 最新畫面未通過 | 房間三圖各261像素；家中續行圖198049；城鎮返回83387、水平視野差32px；V3未完成 |
+| 下一production切片 | 家中NPC0先移動再播81；五次圖像選擇確認、13次正常接近才啟動帶路；相關人物動畫仍DRAFT |
+| 原版oracle仍未知 | 其他接近失敗gate、全域動畫相位、原版存檔、音訊與完整campaign；不追PIT／ISR逐週期 |
+| 現行remake回歸 | 正式新遊戲InputState→THE END65.74秒；367頂層／34子測試、11個internal及desktop通過；work/issue4-arrival-full.log |
+| 額外驗證限制 | 標準38項選用跳過，三項原版圖像比較另行兩PASS、一RED；沒有素材缺失；狀態比較不宣稱兩側38次同輸入 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，

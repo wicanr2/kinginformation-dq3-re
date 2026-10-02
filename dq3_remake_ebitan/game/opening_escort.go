@@ -1,6 +1,9 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+import (
+	"errors"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+)
 
 // openingEscortAnimating reports the finite post-creation mother escort.
 func (g *Game) openingEscortAnimating() bool {
@@ -64,7 +67,7 @@ func facingBetween(x0, y0, x1, y1, fallback int) int {
 	}
 }
 
-func (g *Game) advanceOpeningEscort() {
+func (g *Game) advanceOpeningEscort() error {
 	holdFrames := 0
 	if g.openingEscortPhase == 0 {
 		holdFrames = g.openingEscort.Frames[g.openingEscortIndex].HoldFrames
@@ -73,60 +76,92 @@ func (g *Game) advanceOpeningEscort() {
 	}
 	g.openingEscortTick++
 	if g.openingEscortTick < holdFrames {
-		return
+		return nil
 	}
 	g.openingEscortTick = 0
 	g.openingEscortIndex++
 	if g.openingEscortPhase == 0 {
 		if g.openingEscortIndex < len(g.openingEscort.Frames) {
 			g.applyOpeningEscortFrame(g.openingEscort.Frames[g.openingEscortIndex])
-			return
+			return nil
 		}
 		g.openingEscortNPC = -1
 		if !g.finishMotherEscort() {
-			g.openingEscortPhase = -1
-			g.openingEscortIndex = -1
-			return
+			return errors.New("opening arrival transaction failed")
 		}
 		g.openingEscortPhase = 1
 		g.openingEscortIndex = 0
 		g.applyOpeningArrivalFrame(g.openingEscort.ArrivalFrames[0])
-		return
+		return nil
 	}
 	if g.openingEscortIndex < len(g.openingEscort.ArrivalFrames) {
 		g.applyOpeningArrivalFrame(g.openingEscort.ArrivalFrames[g.openingEscortIndex])
 		if g.openingEscortPhase == 1 && g.openingEscortIndex == g.openingEscort.DialogueFrameIndex {
 			g.openingEscortPhase = 2
 			g.openingEscortDialogue = 0
-			g.dlg.Open(g.openingEscort.DialogueRecords[0])
+			if !g.openOpeningEscortText(g.openingEscort.DialogueTextIDs[0]) {
+				return errors.New("opening escort text unavailable")
+			}
 		}
-		return
+		if g.openingEscortPhase == 3 && g.openingEscortIndex == len(g.openingEscort.ArrivalFrames)-1 {
+			g.completeOpeningEscort()
+			g.openingEscortPhase, g.openingEscortIndex, g.openingEscortNPC = -1, -1, -1
+		}
+		return nil
 	}
 	g.openingEscortPhase = -1
 	g.openingEscortIndex = -1
+	g.openingEscortNPC = -1
+	g.completeOpeningEscort()
+	return nil
 }
 
 // resumeOpeningEscortAfterDialogue consumes the pack-owned dialogue sequence
-// at one route frame. Only after its final record closes does it commit the
-// transaction and resume the remaining visible walk.
+// at one route frame. The flag transaction waits until the final movement ends.
 func (g *Game) resumeOpeningEscortAfterDialogue() bool {
 	if g.openingEscort == nil || g.openingEscortPhase != 2 || g.dlg.open {
 		return false
 	}
 	g.openingEscortDialogue++
-	if g.openingEscortDialogue < len(g.openingEscort.DialogueRecords) {
-		return g.dlg.Open(g.openingEscort.DialogueRecords[g.openingEscortDialogue])
+	if g.openingEscortDialogue < len(g.openingEscort.DialogueTextIDs) {
+		return g.openOpeningEscortText(g.openingEscort.DialogueTextIDs[g.openingEscortDialogue])
 	}
-	g.completeOpeningEscort()
+	g.clearOpeningPresentation()
 	g.openingEscortPhase = 3
 	g.openingEscortTick = 0
 	return true
 }
 
 func (g *Game) applyOpeningArrivalFrame(frame gamepack.OpeningArrivalFrame) {
+	if g.cur == nil || g.openingEscortNPC < 0 || g.openingEscortNPC >= len(g.cur.npcs) {
+		return
+	}
+	n := &g.cur.npcs[g.openingEscortNPC]
+	n.x, n.y, n.facing = frame.Leader.X, frame.Leader.Y, frame.LeaderFacing
+	moved := g.px != frame.Player.X || g.py != frame.Player.Y
 	g.facing = facingBetween(g.px, g.py, frame.Player.X, frame.Player.Y, g.facing)
 	g.px, g.py = frame.Player.X, frame.Player.Y
-	g.walk ^= 1
+	if moved {
+		g.walk ^= 1
+	}
+}
+
+// The shared finite text renderer consumes a stable ID and a reviewed presentation.
+// It does not inherit the home scene's camera when the dialogue is in another scene.
+func (g *Game) openOpeningEscortText(id string) bool {
+	p, ok := g.pack.OpeningPrelude()
+	e, sceneOK := g.pack.OpeningScenePresentation()
+	if !ok || !sceneOK || g.openingEscort == nil || g.openingEscort.DialoguePresentationID != p.ID {
+		return false
+	}
+	codes, ok := g.pack.TextGlyphCodes(id)
+	frame, frameOK := g.pack.TextGlyphCodes(p.FrameTextID)
+	if !ok || !frameOK || !g.dlg.openRecord(codes) {
+		return false
+	}
+	g.dlg.prelude, g.dlg.preludeFrame, g.dlg.layout = p, frame, p.Window
+	g.dlg.shadow = &e.Shadow
+	return true
 }
 
 func (g *Game) completeOpeningEscort() {
