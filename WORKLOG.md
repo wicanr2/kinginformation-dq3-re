@@ -1308,3 +1308,12 @@ r1未設DQ3_ASSETS造成素材SKIP，正確設定後相同binary正常198輸入7
 工作與結果登記Issue #4，進度留言5973523662；現況、下一閘門与证據入口同步CONTEXT、PROJECT_MEMORY及docs/74、docs/188。
 沒有production修改，不重跑無改動的完整Go回歸，沒有新發行包。最終稽核、commit／push及容器清理記錄於本輪收據。
 下一步核對事件短曲的播放完成介面，取得正常返回來源後才完成READY及正式修正。Goal繼續，Issue保持OPEN。
+
+### 同輪只讀續驗
+
+r6保持相同冷啟動、seed及13项條件，在caller和等待入口只讀原始狀態；前198個packet及396份PNG／bin逐byte保持。
+BP20h實際進20959 EBG consumer，等待時286D1、2898=1、2871=0，正常進208F5音樂查詢，排除另一等待分支。
+22E10原始bytes讀共享byte5C02並交換FF，22D47..22D50傳狀態位址給FMDRV；後者只有strong靜態設定證據。
+原版有界續跑仍未返回，未改正式Go或pack；沒有展開硬體driver／ISR，沒有清旗標或完成byte。
+只讀重播、獨立審查及兩份有界IDA匯出皆通過，輸入與私有日志保留。文件patch錨點失敗後核對工作樹，整批未寫入，修正錨點後重試。
+索引及雜湊追加docs/188，唯一目前狀態表同步CONTEXT、PROJECT_MEMORY與docs/74。完整入隊仍DRAFT，Goal繼續。

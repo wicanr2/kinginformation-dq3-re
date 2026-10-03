@@ -2894,3 +2894,31 @@ IDA重生沿用上節一次性DB及-S入口，輸出改用尚不存在的檔案�
 隔離壞來源及所有權檢查保存於work/issue4-recruit-join-review-r1.py及同前綴收據；八種損壞皆拒絕，原始輸入保持。
 文件最後修訂後的八檔雜湊保存於work/issue4-recruit-join-review-r2-receipt.json；提交與Issue核對為work/issue4-recruit-join-post-push-receipt.json。
 本輪未改production，不重跑既有完整game／internal；最近正式回歸仍由前節收據仲裁。原版、PNG、database及binary留本機。
+
+### 入隊播放等待分支的只讀續驗
+
+r6從同一正常冷啟動重播，seed1357及13項來源條件與r5保持，沒有增加AdLib或clock參數。
+只在應用程式caller與等待入口讀原始狀態，首次等待後1000000指令自然停止；未寫入guest state。
+獨立核對前198個packet、472IRQ1及396份完整PNG／bin逐byte保持。第199個packet仍未完成。
+
+| 本次confirmed有限觀察 | 原始定位及狀態 |
+|---|---|
+| BP20h確實進EBG consumer | step2136382143、IDA linear10447，BP0020；2136382150進20959，DGROUP286D=0001 |
+| cue後狀態 | linear1044C時DGROUP2898由0變1，2871保持0；不聲稱曲名、時長或聲音已驗收 |
+| 等待分支 | step2137703544進linear208F5；286D=1、2898=1、2871=0，進22E10查詢，沒有走2091B分支 |
+| 有界停點 | step2138703538、linear208FA；2898仍1、counter1915、474IRQ1，未返回玩家操作 |
+
+IDA9.4限定應用程式wrapper匯出確認：linear22E14比較原operand`ds:5C02h`，非零時22E1D以`xchg al,ds:5C02h`交換FF；零時AX0返回。
+因此22E10並非直接呼叫FMDRV的查詢服務，它讀應用程式提供的共享byte；此為原始bytes的confirmed結論。
+linear22D47..22D50以DX=DGROUP、AX=5C02h、BX=1呼叫23920，原值存CS22D67／22D69。
+23920的原始signature為FMDRV，入口跳24A2F。此狀態位址設定為strong，尚缺動態設定端與公開介面契約，不把driver內部writer猜成已證實。
+5C02直接xref為空，register-based位址傳入已見，不能據此宣稱沒有writer。driver／ISR未展開。
+dosgolem系統控制埠61h回保存值，與本次故障的因果未證實；此線索不作修法依據。
+
+只讀產生器為`work/issue4-recruit-join-r6-builder.py`；獨立審查入口為`work/issue4-recruit-join-r6-review.py`。
+收據`work/issue4-recruit-join-r6-review-receipt.json`，SHA256`ebc0ec6c2ed21cbc4947076e14bc8347800562c04c9dcf85a40a0c908028c78f`。
+完整r6.log SHA256`8527809ee9a15855e056c82f7bc06b0d45a5b8f73c5e8139bee94b3ab2e74af9`；source及binary雜湊見該收據。
+限定wrapper匯出入口為`work/issue4-recruit-join-interface-build-r1.py`及`-r2.py`，產生同前綴`interface-r1-ida.py`／`interface-r2-ida.py`與JSON。
+r2 sidecar SHA256`99652386dd01214b98c05df48e5a733675d2b120cb94ed7e3ca9616ffbbf7841`，script SHA256`ff4a5c23677e261b2c06e30ea6b1852ca34fedb19df2253601618f5f2ced2a20`，輸入與位址基準沿上節。
+最終核對為`work/issue4-recruit-join-r6-final-audit.py`及同前綴收據；Issue結果文字為`work/issue4-recruit-join-r6-result.txt`。
+完整入隊仍DRAFT，正式程式與pack保持。下一步只核對狀態位址介面及dosgolem能力，再由原版正常重播返回，不清共享byte或跳過等待。
