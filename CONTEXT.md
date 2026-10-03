@@ -7,7 +7,7 @@
 未消費與已消費檢查點的同版本Save／Load、阻擋不消費、新事件覆蓋及壞存檔拒絕通過。
 甘達特對話當步結束特殊事件分派，避免同時開啟隨機遭遇；原始四敵編隊保持。
 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
-原版存檔、音訊、NPC相位及完整主線仍未知。登錄所完整取消來源0467c01b已接受，remake流程仍DRAFT；正常單一戰士男性出生來源de818064亦已接受，正式流程待READY。
+原版存檔、音訊、NPC相位及完整主線仍未知。登錄所取消0467c01b與單一戰士男性出生de818064來源已接受；視窗consumer及typed契約已達有限READY，正式流程仍未實作。
 唯一現況表見下，證據與私有收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下段落保存歷史檢查點；目前狀態以上述說明及下方表格為準。
@@ -95,8 +95,8 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 | 最新原版oracle | c38bcc09有限冷啟動來源41次／82IRQ1；174份父PNG／bin保持；4F46=0800／258C=1由196D2清事件後進1020B、record79與強制北行，後兩步不重複 |
 | 最新畫面已驗 | 首次Up警告完整640×350 RGB差0；既有Down勸告視窗及陰影RGB差0。既有零差異範圍保持 |
 | 最新畫面未通過 | 首三個Up完整差195／9039／22192；Down完整提示13145、返回13340。既有回程城鎮13983、酒館1403、登錄所118、國王893、王座2159／1772、城堡182／979／1960／304、家中124、房間261限制保持；完整V3未完成 |
-| 下一production切片 | 登錄所問候、詢問、姓名取消與出生順序；先補正常出生來源及READY契約。NPC可見性另需consumer，不由圖塊規則猜補；入口docs/188 |
-| 本輪登錄所DRAFT | 原版取消來源0467c01b已接受：202次正常輸入／404IRQ1、328份packet PNG／bin、174父產物保持及13種損壞拒絕。正常remake前149個位置、section、旗標與金錢相符；packet150等價交談直接開職業選單，缺record550。正常單一戰士男性出生de818064已接受210次／420IRQ1、344份packet產物及13種拒絕；slot1由0到1。正式流程仍需READY，production保持0.1.81 |
+| 下一production切片 | 依docs/188及docs/84的有限READY契約，加入typed registration並修正正式問候、姓名、六職業、性別、能力等待／接受、名冊及Load暫態。不用再重開已閉合的視窗consumer；NPC可見性另需直接證據 |
+| 本輪登錄所有限READY | 取消0467c01b及單一出生de818064來源保持；正式等價交談仍缺550。IDA9.4匯出6064fa97，1649筆原始指令核對，26confirmed／6strong／1617unknown；八窗投影、姓名非空gate、六職業及接受後名冊交易已形成有限READY。獨立收據9e5017de，六種損壞拒絕。其他class／gender、滿額替換及完整RGB不升格；production保持0.1.81 |
 | 原版oracle仍未知 | 其他登錄職業／性別原版路線與取消／出生remake同狀態路線、其他健康色／status、鍵盤自動重複、非零層轉換動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
 | 現行remake回歸 | 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。 |
 | 額外驗證限制 | 重製pending ID與必要actor的存檔恢復為engine D2；原版Save／Load未知。等待為hardware-spec approximation，不固定人物相位或後段RNG骰序。拉之鏡失敗為測試玩家容量滿，已用正常選單丟棄備品，不改production交易 |

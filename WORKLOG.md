@@ -1223,3 +1223,28 @@ CONTEXT唯一現況、PROJECT_MEMORY、docs/74及docs/188同步。Issue留言597
 產生器與獨立驗證工具受版控，原版資產、source收據及PNG留本機。
 取消稽核提交6b44d35已推送；出生證據與當前閘門追加同一docs/188，不把來源通過寫成remake完成。
 production仍0.1.81；下一步完成視窗consumer與READY契約，再修正正式登錄流程。
+
+## 2026-10-04 登錄視窗consumer與有限READY契約
+
+依Issue #4從c810d49續行。命中復古remake／對拍路由，載入規格閘門及文件職責；
+IDA工作另沿用use-ida-pro-9-4技能、專用README與工具契約。
+既有IDA9.4 locked-v1以UID1000在一次性Docker建立database，原始EXE及工具來源唯讀。
+r1／r2／r3有界匯出分別核對窗口、選單入口與完整caller／writer／consumer；形成史不覆寫。
+正式工具重生6064fa97、2919168bytes、1649筆原始指令；26confirmed／6strong／1617unknown。
+新增32筆登錄旁註與既有16筆索引自動合併，保留原名、位址、運算元、bytes及推論等級。
+
+共同文字窗為DGROUP3E6E的352×96；3E9C的352×80是HUD，不能互換。
+姓名、六職業、性別、能力及Yes/No窗皆由SI consumer導出，不依截圖目測。
+原始職業窗count5由1078F覆寫6，class映射1,2,3,4,6,7。
+首次詢問選否走551，取消558／成功559後選否走560；首次選否仍static strong。
+正常取消0467c01b及單一出生de818064再次完整重建通過，形成有限READY契約。
+typed registration、正式狀態機、保留文字、候選交易、Load暫態及正常驗收方法寫入docs/188／docs/84。
+CONTEXT唯一現況表、PROJECT_MEMORY及docs/74同步；下一批直接進正式實作，不重開已閉合consumer。
+
+獨立審查收據9e5017de、6832bytes；六種損壞拒絕且原始來源保持。
+正式IDA工具面對既存輸出exit2，原sidecar保持；工具AST、輸出UID／GID及容器清理另核對。
+工具失敗保留：不存在party.go、非指令邊界10AAA、漏module搜尋路徑、將IRQ事件陣列當數字比較。
+修正查詢及審查器後用相同隔離工具鏈乾淨重跑，沒有改原版或production製造通過。
+production保持schema0.9.0／content0.1.81及d6c7994e canonical hash；正常問候與順序差異仍待修正。
+本批沒有Go／pack修改，不重跑無改動的game全套，前輪r10仍是最近production回歸。
+私有來源、PNG、IDA database與完整交付不加入Git；Issue保持OPEN，Goal繼續，沒有新發行包。

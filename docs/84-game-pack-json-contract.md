@@ -1921,3 +1921,38 @@ DQ3新增完整record407／557／434與真正能力選項raw window `0x28E50`；
 content0.1.77沿用schema0.7.0，在`field_idle_status.scenes`新增已有D3正常入口的CTY25 section1。
 等待與恢復、字型、文字、陰影及存檔暫態契約不變；場景引用與原版自然來源見[docs/188](188-opening-escort-to-castle-spec.md)。
 不同canonical hash的舊存檔仍拒絕，不自動遷移。
+
+## 登錄契約的READY設計
+
+此節是下一批實作的輸入，目前schema0.9.0／content0.1.81尚未加入`registration`。
+有限READY來源、推論等級、停止線及正常玩家驗收見[docs/188](188-opening-escort-to-castle-spec.md)。
+正式加入必填契約時須更新schema／content及canonical hash，不以舊格式默默套用新流程。
+
+`interface.registration`採單一具名登錄狀態機，沒有任意JSON流程或程式碼。
+Go只執行問候、是否登錄、姓名、職業、性別、能力等待、能力接受、再詢問及退出。
+資料引用如下，巢狀欄位須保留缺失與零值的區別，缺失、null、未知key或錯誤引用一律拒絕。
+
+| 欄位 | 類型與資料來源 | 驗證要求 |
+|---|---|---|
+| `id` | 穩定的登錄契約ID | 非空、唯一 |
+| `binding` | `cty_raw`、`section`、`npc_handler_raw`；本版為CTY00、section2、handler3 | 原始CTY及交談分派驗證；Go不得保留版本座標或handler fallback |
+| `presentation_id`、`shadow` | 既有保留文字呈現及已審查陰影原語 | 引用存在，字型與record404完整框線在bootstrap核對 |
+| `geometry_id` | 已驗證的共同姓名、性別與能力幾何ID | 共用raw window引用逐項對照，不能只以外觀近似判定可共用 |
+| `text_roles` | `greeting`、`initial_decline`、`name_prompt`、`creation_cancelled`、`registered`、`farewell`的stable text ID | 本版分別為550、551、554、558、559、560；來源record保存於文字JSON。第一個選否與再次選否分開 |
+| `class_options` | 有序的`class_raw`及`text_id` | 本版依原始表為1,2,3,4,6,7；對應record458,459,460,461,463,464。拒絕重複、未知class及文字引用 |
+| `class_menu` | `raw_window`、`window_text_id`、`cursor`、`hit_rect` | 原始DGROUP3DD8；runtime count由5覆寫6，不能以EXE初始count5截掉第六職業 |
+| `require_nonempty_name` | 必填boolean，本版true | 共用10D17長度gate；空名不能回退為職業名稱或消耗能力RNG |
+| `review_before_confirmation` | 必填boolean，本版true | 新按鍵只由能力等待前進確認，接受需下一次正常輸入 |
+| `retain_text_between_records` | 必填boolean，本版true | 同一caller開框時清空，後續record延續文字行與捲動；不重新抹掉550 |
+| `roster_capacity` | 原始掃描資料，本版11個非hero slot | 排除hero，計入registered及active；滿額替換支線仍待獨立動態閉合，不猜替換交易 |
+| `evidence` | 輸入EXE身份、原始範圍、caller／consumer及直接證據文件 | 資料最低D2，正式玩家入口與交易需D3；分級及動態限制不能省略 |
+
+`raw_window`沿用`RawNewGameWindow`的原始EGA byte座標；renderer依既有原語投影，
+不新增版本專屬Go座標。職業游標由原始`[si+18h/1Ah]`導出，
+性別、能力與Yes/No則引用共同幾何及完整文字記錄，不複製另一套窗口常數。
+原版選項為一基；typed loader正規化為引擎游標後保留raw class映射，不假定游標就是class。
+
+未接受的候選角色屬UI暫態，取消不改roster、companions、金錢、旗標或存檔。
+能力接受只commit一次，角色先加入roster，再由樓下招募流程移入companions。
+同版本Load清除候選與窗口，已登錄角色由現有角色存檔資料讀回；原版Load仍unknown。
+正常來源只有首次戰士男性的動態證據，其他class／gender的原始映射不等於全部能力或畫面parity。

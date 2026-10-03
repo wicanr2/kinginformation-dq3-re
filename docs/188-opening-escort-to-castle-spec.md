@@ -2626,3 +2626,90 @@ IDA linear10A9F..10ABD從DS520B向DS52FD+DX*61h複製97bytes；本次DX1，
 出生來源結果留言為 `work/issue4-registry-birth-normal-r2-result-comment.txt`；
 遠端Issue本文的更新前快照及更新文本為同前綴`prior-issue-body.txt`／`issue-body.txt`。
 最終提交、來源完整性、Issue與Docker清理記錄沿用 `work/issue4-registry-cancel-post-push-receipt.json`。
+
+### 2026-10-04 登錄視窗consumer審查入口
+
+非破壞匯出為 [`tools/ida_dump_registry_ui_contract.py`](../tools/ida_dump_registry_ui_contract.py)，
+自動合併已分級的 [`tools/ida_registry_ui_ledger.json`](../tools/ida_registry_ui_ledger.json)。
+原始EXE唯讀，由既有IDA9.4 image在一次性database執行；輸出路徑必須不存在。
+本輪私有匯出為 `work/issue4-registry-ui-consumers-r1-ida.json`、`r2-ida.json`、`r3-ida.json`；
+同前綴Python與log保留形成史。正式工具的審查後重生與有限READY契約記錄於下方。
+
+### 登錄視窗與正常交易的有限 READY 契約
+
+本段取代上方「視窗SI consumer尚未閉合」的目前待辦；歷史段落保持。
+目前正式remake仍為schema0.9.0／content0.1.81，完整登錄流程尚未實作。
+READY只涵蓋已接受的正常姓名取消路線及單一戰士男性出生路線。
+其他職業／性別的動態畫面、滿額替換、原版存讀檔及音訊不隨本段升格。
+
+輸入為`assets_raw/DQ3.EXE`，115282bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA Pro9.4使用linear位址；MZ file=linear−EC90，DGROUP基底linear24DD0。
+原始資料、一次性database及輸出保持私有；語意以原始定位為key附加。
+審查後匯出為`work/issue4-registry-ui-reviewed-r1-ida.json`，2919168bytes，SHA-256
+`6064fa977b2c6bcfc8335a4a68508c08821b853f430970c705ea459c5da3b798`。
+工具SHA-256為`20a1694af4736df06ef1254c96de3796a12d355cea2d607915dbe2b7e3fbab02`；
+ledger SHA-256為`a8e9c86a55e94cf06c0e7dfadc2b3e088118b21648a3d38ec337e312d5cbf4fb`。
+1649筆原始指令中，26筆confirmed、6筆strong、1617筆unknown；未審查項目沒有批次升格。
+ledger保留既有16筆NPC旁註並追加32筆登錄旁註，匯出自動核對EXE bytes及MZ relocation。
+
+| 原始窗口定位 | SI consumer與像素投影 | 本段用途與限制 |
+|---|---|---|
+| DGROUP3E6E；linear28C3E；file19FAE | `15002→1F590`；x=152、y=238、width=352、height=96；record404 | 共同文字框。`21414`取x byte+2、y+16及保留行位置；不能換成80px高HUD |
+| DGROUP42B8；linear29088；file1A3F8 | `1076B→10D17→1F590`；152,46,256,144；record451 | 姓名框，沿用已驗證的共用姓名盤與導航 |
+| DGROUP3DD8；linear28BA8；file19F18 | `107A1→1F4E3`；344,46,128,128；record555 | 原始count=5由1078F覆寫6。職業先後序不得由舊八職業UI推定 |
+| DGROUP3DF6；linear28BC6；file19F36 | `107BD→1F4E3`；344,46,96,64；record556 | 姓名及職業完成後才進性別 |
+| DGROUP3DA8；linear28B78；file19EE8 | `107DD→1F590→1834E`；152,46,352,192；record407 | 能力與已裝備物品，等待一次正常按鍵後才進確認 |
+| DGROUP3DC2；linear28B92；file19F02 | `107E7→1F590`；360,14,176,48；record557 | 能力接受詢問，沿用已驗證的框線／陰影原語 |
+| DGROUP4080；linear28E50；file1A1C0 | `1F63C→1F4E3`；360,62,112,64；record434 | 共用Yes/No選單，不能把Enter同時用於能力等待與接受 |
+| DGROUP3E9C；linear28C6C；file19FDC | 152,238,352,80；record401 | 場景HUD的既有來源，沒有證據可將它當登錄文字框 |
+
+以上投影由`1F4E3/1F590`讀`[si+2/4/6/8]`、EGA每byte八個像素及
+`1FC57/1FD30`的原始consumer導出，沒有以截圖估計窗口尺寸。
+單列選單的游標由`1F956..1F964`讀`[si+18h/1Ah]`，y每項加16。
+職業及性別起點為360,62，共同Yes/No為376,78；游標／滑鼠幾何目前為strong靜態結論。
+`1F779`將選項初始化為1，方向鍵環繞選項，Enter與Space接受，Escape取消。
+`1F908`的無滑鼠游標使用glyph11／12；存在滑鼠時的反白路線不在本段動態驗收。
+
+| 狀態與交易 | 原始定位與推論等級 | 正式實作要求 |
+|---|---|---|
+| 問候及是否登錄 | 106DF／106E7，confirmed；取消與出生packet150至153 | 保留record550兩次inline wait，再開Yes/No；不能直接開職業窗 |
+| 姓名 | 10763／1076B，confirmed；共用10D17的10D84長度gate | 播554後進姓名；空名選完成留在姓名盤，不回退為職業名 |
+| 姓名取消 | 1076E..10775／1081F，confirmed；取消packet160至161 | 播558，重新詢問；不建角色、不消耗能力RNG、不改名冊 |
+| 六職業 | 10789／1078F／107A1，confirmed；107B6映射為strong | 原始表DGROUP4F54／file1B094為0001020304060705；一基選項映射1,2,3,4,6,7。原版可見六項為戰士、武鬥家、僧侶、魔法使者、商人、遊玩者 |
+| 性別及候選能力 | 107BD／107D1／107D4，confirmed限本次cursor1男性 | 完成職業後才生成候選；候選尚未進名冊 |
+| 能力等待與接受 | 107E4／107E7／107EE，confirmed；出生packet167至169 | 新按鍵只從等待到確認；選是之後才commit，不重用同一輸入 |
+| 名冊登錄 | 10811／10816及10A9F..10ABD，confirmed限本次DX1 | 複製97bytes後slot1狀態0→1。重製只加入roster，不自動加入companions；目的record bytes仍未直接動態觀察 |
+| 再次詢問及退出 | 1082A／1083F／10847／1084C，confirmed | 成功559或取消558後詢問；選否播560，最後等待後擦框，返回原來2,5 |
+| 首次詢問選否 | 106EA..10700，strong | 播551後走最後等待。此分支未有動態來源，不能與再次詢問的560合併宣稱已驗 |
+| 名冊容量 | 10974／10706，strong | slot1..11計算registered與active，排除hero slot0。滿額替換支線未動態驗證，不猜刪除／替換流程 |
+
+typed pack欄位及有限狀態機邊界見[docs/84](84-game-pack-json-contract.md)「登錄契約的READY設計」。
+正式Go只查stable text ID、已驗證的class映射、共用窗口引用及具名狀態機；
+原始record、CTY／section／handler、class raw值、游標幾何及可調容量都保留在pack。
+保留文字須由共同caller開框時清空，後續record延續原始行位置，不能每段重新清除550。
+候選能力沿用已驗證的Lv1規則；本次兩側只有冷啟動seed1357一致，長路線閒置RNG條件尚未對齊，
+不能因種子數字相同就要求這名候選所有能力逐值一致，也不重新設種挑選數值。
+
+正常驗收先重播已有38次冷新遊戲、謁見及回程，前149個位置／section／旗標／金錢保持。
+交談使用現行命令窗的明示等價輸入，保留raw-key Enter差異；不暗改全域綁定。
+取消路線須經姓名功能列選取消，再選否、正常下一步及同版本存讀檔。
+出生路線須經正常姓名、第一職業、男性、能力等待與接受，再選否、名冊保存／讀回及樓下招募。
+Load取消未接受候選與UI暫態，不增加名冊、不消耗額外RNG；存檔只屬engine契約，原版Load未知。
+每一狀態保存完整640×350 PNG並逐項報告RGB差異；窗口局部相符不能宣稱完整V3。
+
+本輪獨立核對入口為`work/issue4-registry-ui-contract-review-r1.py`，
+結果為`work/issue4-registry-ui-contract-review-r1-receipt.json`。
+新IDA查詢曾提供非指令邊界10AAA，工具拒絕；改為資料庫的10AA9／10AAB，沒有改原始定位。
+較早讀取程式的不存在`game/party.go`歸為搜尋腳本問題，正式名冊入口位於`game/recruit.go`。
+這些工具失敗不當作產品缺陷，現行remake的問候與順序分歧仍由前輪正常輸入收據保留。
+獨立審查收據6832bytes，SHA-256
+`9e5017de3c4b77504b47327e91c544377e106f92244cf74fdcdb02c14879f57f`。
+審查器先漏掉相依module搜尋路徑，再將IRQ1事件陣列當計數；修正為正式工具目錄及陣列長度後，
+以相同Docker命令乾淨重跑通過。原版及既有收據保持不變。
+六種隔離損壞入口為`work/issue4-registry-ui-contract-negatives-r1.py`，結果為同前綴JSON；
+1239bytes，SHA-256 `94e24ec3e042abcd4380326f3afa636356172476aa3c4c52260fbd4fc2cb14ae`。
+拒絕覆寫的實際IDA日誌為`work/issue4-registry-ui-refuse-overwrite-r1.log`，exit2且已接受sidecar保持。
+本輪Issue文字為`work/issue4-registry-ui-ready-r1-issue-comment.txt`；
+工具、所有權與索引核對為`work/issue4-registry-ui-ready-r1-hygiene.json`，
+提交／推送、Issue及清理收尾為`work/issue4-registry-ui-ready-r1-post-push-receipt.json`。

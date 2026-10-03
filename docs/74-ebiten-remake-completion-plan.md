@@ -10,7 +10,7 @@
 > 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
 > 14種協同壞來源拒絕；來源c38bcc09，canonical hash sha256:d6c7994ee7fa53d227a98263f12606a8f4109a87f4afea01cd6996ad7f269b5d。
 > quiescent-r2全路線202次正常輸入／404IRQ1取消來源0467c01b已接受；13種損壞拒絕通過，remake取消與出生仍DRAFT。
-> 取消0467c01b及正常單一出生de818064來源已接受；下一切片閉合視窗consumer並修正正式問候、姓名與出生順序。原版音訊、NPC相位及完整campaign待驗。
+> 取消0467c01b及正常單一出生de818064來源已接受；視窗consumer與typed registration已達有限READY，IDA匯出6064fa97、1649筆指令核對及六種損壞拒絕通過。下一切片直接實作正式問候、姓名、六職業、性別、能力接受及名冊／Load暫態；production仍0.1.81。原版音訊、NPC相位及完整campaign待驗。
 > 沒有新發行包。唯一現況表見[CONTEXT](../CONTEXT.md)，證據與收據入口見[docs/188](188-opening-escort-to-castle-spec.md)。
 
 以下是歷史閘門，不能據此重開家中順序、選圖或手動接近。
