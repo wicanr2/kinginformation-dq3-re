@@ -99,7 +99,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	}
 	g.cur, g.town, g.curCty = throne, throne, ctyAliahanCastle
 	g.px, g.py, g.facing = aliahanKingX, aliahanKingY+1, 1
-	if !g.tryOpeningRegionEvent() {
+	if !g.tryRegionDialogueReward() {
 		t.Fatal("王座 opening region 未觸發")
 	}
 	// 證據圖不能在逐字顯示剛開始時截圖，否則會把正確的 record 78

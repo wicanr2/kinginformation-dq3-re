@@ -1,14 +1,15 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-03現行閘門：王座等待窗已接入；完整人物畫面與謁見仍未通過。
-> schema0.7.0／content0.1.77；正常王座等待窗及陰影RGB差0，完整等待／恢復均1772差異。
-> 同提交基準缺窗完整10143差異；正式上樓仍2159，但全在人物圖格，四柱與底圖一致，前輪柱子判讀撤回。
-> 原版90次輸入／180IRQ1／386產物及前輪214份PNG／bin保持；最後9,8尚未觸發謁見。
-> 自然188更新門檻、模態凍結、方向鍵消耗、同版本正常標題存讀檔及後續上鍵通過。
-> gamepack86頂層／238子、受影響game七項與desktop通過，十二種壞來源拒絕，九份JSON可重建。
-> 正常新遊戲THE END129.64秒，只屬重製回歸；未重跑全部game／internal，不將前批全套結果算成本批。
+> 2026-10-03現行閘門：正常國王文字與延後獎勵已修正；完整人物畫面仍未通過。
+> schema0.8.0／content0.1.78；原版100次輸入／200IRQ1／435產物，前批384份PNG／bin保持。
+> 正式九次實際Enter、EOF後六件物品／50金及17h→18h旗標交易通過。
+> 九頁視窗及陰影RGB差0，完整各893差異，只在兩個NPC圖格；正式PNG逐byte等於試作。
+> 共用有限事件原語與JSON入口閉合，一次性、後續步行、正常標題存讀檔及Load取消pending通過。
+> 完整game418頂層覆蓋，378頂層／70子PASS、40選用SKIP；internal149頂層／250子PASS、4選用SKIP及11套件通過。
+> 十二種壞來源拒絕，九份JSON從乾淨e56a8e3重建；desktop Linux x86_64 ELF通過，無素材缺失SKIP。
+> 正常新遊戲THE END75.37秒，只屬重製回歸；不宣稱原版完整campaign對拍。
 > 城鎮及進城前閒置完整RGB零差異、家中／城堡已完成範圍保持；其他完整人物差異不重開規則。
-> 下一切片延長正常路線取得國王九次文字等待與獎勵交易來源；靜態先文字後獎勵尚缺自然閉合。
+> 下一切片延長原版正常謁見後的離城與酒館路線；人物動畫差異另保留，不能重新猜補已閉合交易。
 > 原版音訊、存讀檔及完整campaign未完成。不固定frame或深入ISR，證據READY才改正式行為。
 > 唯一現況表見[CONTEXT](../CONTEXT.md)，限定規格及驗收入口見[docs/188](188-opening-escort-to-castle-spec.md)。
 
@@ -210,7 +211,7 @@
 | 主選單 | DOSBox、網路圖 | 新遊戲與載入皆有正式輸入入口；campaign 由新遊戲入口達 E3 | 功能 E3；逐畫面版面仍是可選 V3 |
 | 主角姓名／性別 | DOSBox 正式輸入、IDA、同狀態 PNG | 共用元件與正式 trace；`FIRST.SCR`、record 407 的 13 個具名確認欄位、三層 raw EGA backdrop 與 `beveled_2px` frame 均由 pack 接入 | E3；能力確認固定 checkpoint 已 V3 靜態（AE 1,474／640×350），游標閃爍、palette register、能力條與整段 timing 仍待動態 V3 |
 | 家中／母親 | DOSBox、影片、IDA `sub_1010B` | sec4 家中逐格、轉場後自動行走與同格 rec80→rec79 已由 pack 接線；原始 record 與 handler consumer 閉合 | E3；文字 record／cell layout V3，逐格路線與 wall-clock 仍僅 V2 |
-| 王城謁見 | 攻略、影片、地圖、EXE 全域視窗契約 | 正式 region gate／精確獎勵／一次性已接；rec78 勇者像素差異測試已通過；證據產生器固定輸出完整顯示的 rec78 當頁，避免逐字初始幀造成假缺字 | E3；角色構圖、record／20×4／16×16 cell 已閉合；缺同頁原版畫格，整體仍為 V2，不把 viewport／palette 升格 V3 |
+| 王城謁見 | 原版EXE／CTY／D3TXT與dosgolem正常100次輸入 | 九次Enter、EOF後物品／金錢／旗標、一次性及存讀檔已閉合；共用有限原語由JSON提供入口及獎勵 | 有限E3；九頁文字窗與陰影RGB差0，完整各893個NPC像素差異，整張V3未完成；見docs/188 |
 | 酒場／登錄所 | 攻略、D3TXT、地圖、EXE handler | 正式入口與四人隊正常輸入 trace 已閉合（2026-07-28） | E3 |
 | 四人縱列 | 影片多處 | pack 對映 + 8 步 trail + 死者隊尾 + runtime 對拍已接 | E2；需同狀態 V3 |
 | 城鎮／洞窟 | 影片、全 CTY render、DOSBox、IDA `sub_1BD97` | 通用 loader/render、CTY `+0x11` 遭遇 gate、步數與主線 entrance／event transaction 已接 | 主線 E3；非主線逐入口與同狀態畫面屬可選 V3 |

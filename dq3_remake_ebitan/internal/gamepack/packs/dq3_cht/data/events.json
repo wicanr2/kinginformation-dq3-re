@@ -1,5 +1,65 @@
 {
-  "schema_version": "0.7.0",
+  "schema_version": "0.8.0",
+  "region_dialogue_reward_events": [
+    {
+      "id": "dq3:event.first_audience",
+      "cty_raw": 25,
+      "section": 1,
+      "handler_raw": 56,
+      "tile": {
+        "x": 9,
+        "y": 7
+      },
+      "required_flag_raw": 23,
+      "clear_flag_raw": 23,
+      "set_flag_raw": 24,
+      "progress_flag_raw": 512,
+      "item_raw_ids": [
+        0,
+        1,
+        1,
+        3,
+        31,
+        31
+      ],
+      "gold": 50,
+      "text_id": "dq3:text.first_audience",
+      "presentation_id": "dq3:opening.birthday_prelude",
+      "shadow": {
+        "mode": "vga_word_latch_and",
+        "offset_x": 8,
+        "offset_y": 8,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + CTY00.DAT + D3TXT01.TXT + dosgolem自然第18次輸入",
+          "address_space": "linear",
+          "address": "0x1fc57..0x1fcc6",
+          "consumer": "raw byte x+1／y+8，逐行ROR AAAA，16位元AND寫入",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "固定dosgolem revision 2f44a68的字組鎖存呈現，非實機逐週期wall-clock。"
+        }
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE (115282 bytes; SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c) + CTY25.DAT + dosgolem 2f44a68",
+        "address_space": "linear",
+        "address": "IDA 9.4 linear 0x1024C..0x102C4; file=linear-0xEC90; text 0x21414; grant 0x16856; DGROUP actor+0x3A",
+        "consumer": "normal step at CTY25 section1 (9,7), nine blocking waits, EOF, six ordered grants then gold and clear/set flags; source receipt b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32",
+        "doc": "docs/188-opening-escort-to-castle-spec.md"
+      },
+      "compatibility_evidence": {
+        "level": "D2",
+        "source_kind": "engine",
+        "source": "game/progress.go msStart at e56a8e3; existing remake save compatibility",
+        "address_space": "none",
+        "address": "",
+        "consumer": "retain existing remake-only milestone 0x200 after native reward sequence; not a native story flag",
+        "doc": "docs/188-opening-escort-to-castle-spec.md"
+      }
+    }
+  ],
   "day_night_cycle": {
     "initial_clock": 30,
     "clock_ticks": 240,

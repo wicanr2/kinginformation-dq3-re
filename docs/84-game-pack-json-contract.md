@@ -1,12 +1,38 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-## 2026-10-03 現行王座攝影機資料
+## 2026-10-03 正常 region 文字後獎勵（schema0.8.0／content0.1.78）
+
+`events.json.region_dialogue_reward_events`是必填集合，可明確為空。
+每筆嚴格要求以下欄位，缺漏、null、未知欄位、重複入口與未知引用均拒絕。
+
+| 欄位 | 契約 |
+|---|---|
+| `id` | 唯一事件ID |
+| `cty_raw`、`section`、`tile`、`handler_raw` | 正常步行入口；camera須已宣告，實際CTY圖格與handler來源須吻合 |
+| `required_flag_raw` | 原版啟動旗標；未設則不開文字、不交易 |
+| `text_id`、`presentation_id`、`shadow` | 版本文字與既有保留文字演出；只接受自動EOF，陰影不得越界 |
+| `item_raw_ids`、`gold` | EOF後依序呼叫共用隊伍grant，再加gold；caller不以grant失敗中止後續交易 |
+| `clear_flag_raw`、`set_flag_raw` | 獎勵後依序清除及設定原版旗標 |
+| `progress_flag_raw`、`compatibility_evidence` | 現有重製存檔的里程碑ID與D2相容證據，不能當原版旗標 |
+| `evidence` | 正常玩家入口、文字返回及交易的D3閉環 |
+
+DQ3正式資料只綁定CTY25 section1的9,7、handler56及record78。
+六件物品、50金及17h／18h旗標取自IDA9.4原始操作數與dosgolem正常動態來源。
+0x200是既有重製存檔里程碑，來源另列，不宣稱原版含此旗標。
+其`source_kind: engine`只標記重製程式相容證據，不能提升為原版D3。
+共用Go原語不含DQ3座標、record、獎勵數值或玩家文字。
+載入時核對實際CTY入口與完整原始D3TXT字碼，資料缺失或不同即拒絕。
+pending只屬UI暫態，Load取消pending及其文字呈現，不發放未完成獎勵。
+來源、有限READY與正式驗收入口見[docs/188](188-opening-escort-to-castle-spec.md)。
+
+## 2026-10-03 王座攝影機遷移紀錄（content0.1.76）
 
 schema0.7.0／DQ3 content0.1.76。欄位沿用下方`scene_cameras`及`field_idle_status`契約，沒有格式變更。
 `scene_cameras`現在包含CTY25 section0及section1，分別使用原始界外圖塊0及27。
 新增section1的正常9,22落點、anchor9／7及原始header parity見
 [docs/188](188-opening-escort-to-castle-spec.md)王座接近來源與有限READY審查。
-`scene_tile_layers`與`field_idle_status.scenes`仍只宣告section0；不得從camera綁定推導圖層或等待窗資料。
+該批`scene_tile_layers`與`field_idle_status.scenes`只宣告section0；content0.1.77另加入王座等待窗綁定。
+不得從camera綁定推導圖層或等待窗資料。
 完整王座畫面仍2159像素差異，謁見及原版存讀檔尚未通過；不同canonical hash的存檔明確拒絕。
 
 下方保留前版欄位契約；現行版本以本節及資料包manifest為準。

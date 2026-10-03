@@ -1691,6 +1691,100 @@ schema0.7.0／content0.1.77，canonical hash
 輸出UID/GID1000，既有root候選3213、Markdown目錄0保持；一次性容器皆已移除，沒有新image或發行包。
 下一切片延長正常國王路線，先由dosgolem取得自然文字及獎勵交易；動畫、原版讀檔、音訊及完整主線保持待驗。
 
+#### 正常國王文字與獎勵續行（DRAFT）
+
+接續e56a8e3，正式content0.1.77維持。延長原版正常90次輸入，新增3102000000步的上鍵，
+再於3130000000起每20000000步送九次Enter，終點3320000000；尚不由排程推定九次等待已完成。
+前批最後按鍵3070000000且正常ready在3070527441，延長鍵只用來接近事件格，不注入位置或旗標。
+所有既有capture及90次輸入保持，新情境`king_text`／前綴`work/dosgolem-opening/issue4-king-text-*`。
+觀測入口為`tools/dosgolem_newgame_probe.py`，重生入口為
+`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --king-text-original`；
+唯讀追1024C原始handler、21414文字reader、216C3／216D8等待、10268返回及逐次交易定位。
+保留原名、EXE hash與IDA linear基準，原版全畫面只由新情境冷啟動重生，不從磁碟狀態擷取。
+來源獨立核對入口預定`tools/verify_dosgolem_king_text.py`及`work/issue4-king-text-source-audit.json`；
+重製正常路線診斷入口為`work/issue4-king-text-remake-prototype.py`，不依DRAFT改正式獎勵順序。
+工具期限1980秒、外層2040秒，沿用固定2f44a68執行器、原始資料唯讀、UID/GID1000及一次性Docker。
+原始檔身份、seed、舊來源索引與IDA9.4證據沿上節；國王交易、畫面及存檔仍待有限READY審查。
+
+乾淨e56a8e3的正常100次InputState基準先在9,8、無物品／金錢，再正常上鍵到9,7。
+首個自然文字等待已得六件物品／50金並clear17h／set18h；九次Enter仍停同頁。
+正式Poll只把Space映成Confirm，Enter僅設Enter；共用對話分支只接受Confirm或有prelude的Enter。
+基準是實際Enter旗標，沒有用Confirm冒充鍵盤Enter。
+私有`presented_deferred`試作只在乾淨副本沿用已解的404框／21414保留文字原語、既有陰影，
+將獎勵移至文字EOF；DRAFT診斷暫用舊Go值，不能進production或commit。
+原始window file19FAE的十個word為010B／0013／00EE／002C／0060／0194／0000／0000／0000／0000，
+與已審查352×96、record404字模框相同。國王動態畫面與場景綁定仍待本次冷啟動閉合。
+
+隔離`presented_deferred`試作從相同正常路線抵達9,7，第一頁至第九次等待維持無物品／金錢及17h旗標。
+九次實際Enter可逐次續行，最後EOF才取得六件物品／50金及旗標切換。
+結果只證明試作的正常路徑；原版本次來源及九頁完整PNG尚待核對，不提升為正式修正。
+逐頁獨立比較入口為`work/issue4-king-text-compare.py`及同前綴JSON，不裁切或遮罩完整畫面。
+
+#### 國王文字與延後交易（有限 READY）
+
+本次冷啟動原版收據SHA-256為`b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32`。
+獨立來源核對通過100次正常輸入、200次IRQ1、435個產物，先前384份PNG／bin逐byte保持。
+九次原生等待都在9,7；21414以DI0C06讀文字，九次Enter分別返回216C3等待。
+10268文字返回時actor物品欄、金錢及旗標仍等於入口。
+六次grant返回依序新增00、01、01、03、1F、1F，之後102B1金錢為0032，102B7 clear17h、102BD set18h，
+102C3返回後1991D正常runner恢復。以上對明列EXE及此正常玩家路線為confirmed。
+actor原始物品欄是+3A的八個word，原先801E出生裝備及最後00FF空槽保持，不把裝備混成背包。
+呼叫端每次grant後直接設定下一物品，沒有依AX回傳跳過後續交易；滿欄失敗提示的動態畫面未驗。
+
+乾淨e56a8e3基準九頁完整差6966／7390／7847／7394／7225／7641／7706／7242／7421，
+視窗及陰影差6073／6497／6954／6501／6332／6748／6813／6349／6528。
+隔離試作九頁完整均差893，視窗及陰影均0。完整圖保持，不以區域零差宣稱整張V3。
+
+有限READY只新增共用有限`region_dialogue_reward_events`：scene、tile、所需／清除／設定旗標、
+文字ID、既有presentation ID、shadow、依序物品與gold均由JSON提供。
+事件在正式步行命中時開文字，禁止先給獎勵；九次等待接受實際Enter，EOF後才依序交易並恢復場景。
+primitive不讀DQ3人物或座標常數，不執行JSON程式碼；未知引用、缺欄位、未審查證據拒絕。
+`progress_flag_raw`只遷移現有重製存檔的0x200里程碑，另帶compatibility evidence，
+不是原版旗標，不能用它證明原版進度；正式save格式及里程碑語意維持。
+原版授予失敗不分支的caller沿用，未宣稱滿欄提示 parity；正式正常新遊戲具有充分空位。
+schema升至0.8.0、content0.1.78；不同schema／hash存檔仍依現行契約拒絕。
+驗收包括原始EXE／CTY／D3TXT parity、損壞契約拒絕、同條100輸入、九頁完整與視窗比較，
+後續步行、一次性、正常Save／標題Load與同一Game Load清除pending，以及game／internal／desktop回歸。
+正式入口預定`game/region_dialogue_reward.go`、`internal/gamepack/region_dialogue_reward.go`；
+測試入口預定兩套件的`region_dialogue_reward_test.go`，欄位契約同步docs/84。
+
+重建入口`work/issue4-make-king-text-pack.py`從乾淨e56a8e3資料包遷移九份JSON；
+正式驗證入口`work/issue4-run-king-text-production.sh`在同一工具image與既有Go快取執行。
+來源拒絕與收尾入口為`work/issue4-king-text-final-audit.py`及同前綴JSON。
+正式`handler_raw`另核對實際CTY25圖格subid1指向原始56，文字逐word核對原始D3TXT01。
+
+#### 國王正常謁見正式驗收（有限 CONFORMED）
+
+正式schema0.8.0／content0.1.78，canonical hash
+`sha256:82ca3334826bc909a65636e75a46895d4ee99b832cad1cd2cb0f430fd6029f2f`。
+正式100次正常InputState至9,7，沒有位置、人物frame或旗標注入，沒有重新設定seed。
+九頁自然等待接受實際Enter；各頁無物品／金錢交易，EOF後才依原版順序給六物品、50金及clear17h／set18h。
+追加確認不重複發放，正常下鍵可到9,8；正式Save／標題Load完整快照保持。
+從真正Save的謁見前狀態重新上鍵進入，再以同一Game Load取消pending，未完成文字不發獎勵。
+
+正式九張完整PNG逐byte等於隔離試作；獨立解碼再與原版全640×350比較，完整均差893。
+差異只在兩個NPC圖格，15,3為438、2,9為455；視窗及陰影均0。
+因此只確認九頁文字窗、輸入與正常交易，整張V3、滿欄提示、原版存讀檔及音訊保持未知。
+原版435產物及前批384份PNG／bin未改；十二種壞來源收據拒絕，含log／metadata／manifest同步改造的錯誤時序。
+首輪負面核對發現text_return可被改成早於等待；verifier追加所有原始事件step嚴格遞增後，正常來源通過、反例拒絕。
+
+全部game418頂層清單由21個有界程序覆蓋，378頂層／70子PASS、40選用SKIP。
+全部internal149頂層／250子PASS、4選用SKIP及11套件通過，desktop為Linux x86_64 ELF，無素材缺失SKIP。
+正常新遊戲至THE END75.37秒，只屬重製可玩回歸，不能提升原版campaign parity。
+舊元件fixture停在標題及連按64次的舊假設造成失敗；訂正為實際保留文字等待。
+自然EOF後測試額外Confirm誤開命令窗；helper在EOF直接返回後乾淨重跑，未改產品輸入規則。
+容器Go快取及模組路徑一度不正確，改回既有`work/.gocache-test`／`.gopath-test`，未重建image。
+相容里程碑來源分類由暫存user_report訂正為engine，最終包與全部測試重新建置驗證。
+
+九份JSON從乾淨e56a8e3重建逐byte相同。既有`tools/ida_npc_animation_ledger.json`追加六筆原始定位，
+保留前十筆與原名／bytes／位址，新增語意引用b875807a正常交易來源。
+既有`tools/ida_dump_npc_animation.py`增加1024C..102C4有界範圍，自動附加分級語意。
+本輪沿用先前IDA9.4原始匯出，新增分級以動態閉環審查，不宣稱重做database分析。
+獨立收尾收據`work/issue4-king-text-final-receipt.json`為11805bytes，SHA-256
+`9ec36ece96411c0229780666aaa4a14febaf13706dc49fea14f541e83de569d9`。
+輸出UID/GID1000，既有root候選3213及Markdown目錄0保持；原版素材與圖像不加入Git。
+下一原版切片從正常謁見完成checkpoint走回城鎮及酒館；人物動畫及音畫差異保持待驗。
+
 ## 2026-10-03 城鎮攝影機（有限 READY）
 
 依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。

@@ -984,3 +984,37 @@ gamepack86頂層／238子、七項受影響game、desktop Linux x86_64 ELF PASS�
 CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74、docs/84及README同步；原始素材與私有圖像不進Git。
 輸出UID/GID1000，既有root候選3213、Markdown目錄0保持。一次性Docker均清除，未建新image或發行包。
 下一切片為正常國王文字及獎勵交易來源，Issue #4保持OPEN；動畫、原版讀檔、音訊與完整原版主線待驗。
+
+## 2026-10-03 Issue #4 正常謁見文字與延後獎勵
+
+接續e56a8e3及已授權Issue／commit／push。重讀規格閘門路由、docs/74與docs/188，
+沿用唯一CONTEXT狀態表。原版由dosgolem2f44a68冷啟動延伸至100次正常輸入／200IRQ1，
+435個產物核對，前批384份PNG／bin保持。來源SHA-256為b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32。
+九次原生等待、文字返回、六次物品writer、50金、clear17h／set18h及正常runner閉合。
+
+乾淨基準提前發獎且實際Enter停在首頁。隔離試作改用已審查保留文字原語、EOF後交易，
+九頁視窗與陰影差0、完整均893。有限READY後正式新增共用region_dialogue_reward原語，
+入口、handler、文字、旗標與獎勵移入JSON，source validator核對實際CTY及完整D3TXT字碼。
+schema0.8.0／content0.1.78，hash82ca3334826bc909a65636e75a46895d4ee99b832cad1cd2cb0f430fd6029f2f。
+重製0x200里程碑維持，另以engine D2證據標記，不冒稱原版旗標。
+
+正式正常100輸入、九次Enter、EOF後交易、一次性、後續下鍵、Save／標題Load通過。
+真正Save的謁見前狀態重新進入後，同一Game Load取消pending且不給未完成獎勵。
+九張正式完整PNG逐byte等於試作，獨立全RGB各893，只在15,3的438及2,9的455個NPC像素。
+視窗及陰影差0；完整畫面、滿欄提示、原版存讀檔及音訊不宣稱parity。
+
+舊fixture未退出標題、連按64確認不足，以及自然EOF後多送Confirm開命令窗，均定位為測試問題。
+訂正helper後同工具鏈乾淨重跑，沒有改產品輸入。容器快取路徑修回既有工具設定；保留失敗log。
+獨立負面收據發現原先缺事件step單調檢查；強化verifier後十二種壞來源全部拒絕。
+產生器尚存舊user_report分類造成JSON重建差異，訂正為engine後九份JSON逐byte通過。
+
+最終資料包完整game418頂層清單由21程序覆蓋，378頂層／70子PASS、40選用SKIP。
+全部internal149頂層／250子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF通過。
+正常InputState至THE END75.37秒，只屬重製回歸，無素材缺失SKIP。
+既有位址索引追加六筆confirmed語意，原始IDA9.4定位與前十筆保持，來源均引用本次正常閉環。
+工具、私有產生器、驗證與收尾入口掛回docs/188；CONTEXT、PROJECT_MEMORY、docs/74、docs/84、README同步。
+收尾收據11805bytes，SHA-256 9ec36ece96411c0229780666aaa4a14febaf13706dc49fea14f541e83de569d9。
+輸出UID/GID1000，root候選3213、Markdown目錄0保持；原始素材與私有PNG未加入Git。
+本輪沒有新發行包；Issue #4保持OPEN，下一切片為正常謁見後離城與酒館來源。
+提交前掃描：新增production Go沒有版本raw ID；命中只在原始CTY格式遮罩與資料驗證範圍。
+game40與internal4個SKIP均已抽核理由，沒有素材缺失。一次性Docker容器均清除，未新增image。

@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.7.0"
+	SchemaVersion       = "0.8.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -2043,6 +2043,7 @@ type SpecialShopEvent struct {
 }
 
 type Events struct {
+	RegionDialogueRewardEvents  []RegionDialogueRewardEvent      `json:"region_dialogue_reward_events"`
 	SchemaVersion               string                           `json:"schema_version"`
 	DayNightCycle               DayNightCycle                    `json:"day_night_cycle"`
 	ItemActions                 ItemActions                      `json:"item_actions"`
@@ -2288,6 +2289,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 	}
 	if err := p.validateOpeningPreludeRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
+	if err := p.validateRegionDialogueRewardRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", eventsPath, err)
 	}
 	if err := p.validateFieldIdleStatusRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
@@ -3879,6 +3883,9 @@ func fixedBattleFormation(record BattleFixedFormationRecord) (BattleFormation, e
 }
 
 func (p *Pack) validateEvents() error {
+	if err := p.validateRegionDialogueRewards(); err != nil {
+		return err
+	}
 	dn := p.Events.DayNightCycle
 	if dn.ClockTicks <= 0 || dn.ClockTicks%4 != 0 || dn.NightStartTick != dn.ClockTicks/2 ||
 		dn.InitialClock < 0 || dn.InitialClock >= dn.ClockTicks ||
@@ -5708,7 +5715,7 @@ func validateEvidence(e Evidence) error {
 		return fmt.Errorf("invalid evidence level %q", e.Level)
 	}
 	switch e.SourceKind {
-	case "exe", "data_file", "dosbox", "video", "manual", "user_report":
+	case "exe", "data_file", "dosbox", "video", "manual", "user_report", "engine":
 	default:
 		return fmt.Errorf("invalid source_kind %q", e.SourceKind)
 	}

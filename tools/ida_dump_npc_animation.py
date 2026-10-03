@@ -106,7 +106,8 @@ def main():
         return [{**row(ref.frm), "xref_type": ref.type} for ref in idautils.XrefsTo(ea)]
 
     ranges = [(0x11EA7, 0x11F4E), (0x1FDB0, 0x1FED0),
-              (0x11900, 0x119B0), (0x131BD, 0x132A3), (0x1E2F0, 0x1E340)]
+              (0x11900, 0x119B0), (0x131BD, 0x132A3), (0x1E2F0, 0x1E340),
+              (0x1024C, 0x102C4)]
     sections = []
     for start, end in ranges:
         rows = [row(ea) for ea in idautils.Heads(start, end)]

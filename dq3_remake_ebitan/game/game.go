@@ -290,6 +290,7 @@ func (sc *Scene) npcAt(x, y int) int {
 }
 
 type Game struct {
+	regionDialogueReward      *gamepack.RegionDialogueRewardEvent
 	fieldIdle                 fieldIdleState
 	fieldIdleFont             *dq3data.Text
 	over, town                *Scene // 地表 / 目前城鎮
@@ -1008,6 +1009,11 @@ func (g *Game) Update() error {
 func (g *Game) step(in InputState) error {
 	moved := false
 	g.dlg.Tick()
+	if g.completeRegionDialogueReward() {
+		g.fieldIdle.elapsed = 0
+		g.renderFrame()
+		return nil
+	}
 	fieldStage := false
 	defer func() {
 		if !fieldStage {
@@ -1380,6 +1386,7 @@ func (g *Game) step(in InputState) error {
 		if in.Confirm || (in.Enter && g.dlg.prelude != nil) {
 			g.dlg.Advance()
 			if !g.dlg.open {
+				g.completeRegionDialogueReward()
 				g.advanceDefeatDialogue()
 				g.advanceBossDialogue()
 				g.advanceZomaIntro()
@@ -1603,7 +1610,7 @@ func (g *Game) step(in InputState) error {
 			g.renderFrame()
 			return nil
 		}
-		g.tryOpeningRegionEvent()
+		g.tryRegionDialogueReward()
 		g.tryBossSurrenderEvent()
 		g.tryGuidedPassageTrigger()
 		g.tryHostageRescueTrigger()
@@ -2161,41 +2168,7 @@ const (
 	aliahanThroneSection = 1
 	aliahanKingX         = 9
 	aliahanKingY         = 6
-	recAliahanKingStart  = 78
 )
-
-var aliahanKingRewardItems = [...]int{0x00, 0x01, 0x01, 0x03, 0x1f, 0x1f}
-
-// talkAliahanKing 還原首次謁見獎勵。DQ3.EXE handler56(file 0x15bc..0x1633):
-// rec78 → GIVE 00,01,01,03,1f,1f → 加 0x32(50)G → clear flag17/set flag18。
-// 這批是國王明說「給同伴的武器及防具」，不等同主角出生裝備。
-func (g *Game) talkAliahanKing() {
-	if !g.storyFlag(0x17) || g.progressDone(msStart) {
-		return
-	}
-	for _, code := range aliahanKingRewardItems {
-		if !g.grantPartyItem(code) {
-			return
-		}
-	}
-	g.heroGold += 0x32
-	g.setStoryFlag(0x17, false)
-	g.setStoryFlag(0x18, true)
-	g.progressSet(msStart)
-	g.dlg.Open(recAliahanKingStart)
-}
-
-// tryOpeningRegionEvent:阿里阿罕王座不是一般可見 NPC 對話，而是 runner region
-// handler56。玩家走到國王正前方 (9,7) 即觸發首次謁見。
-func (g *Game) tryOpeningRegionEvent() bool {
-	if !g.inTown || g.cur == nil || g.curCty != ctyAliahanCastle ||
-		g.cur.sec != aliahanThroneSection || g.px != aliahanKingX || g.py != aliahanKingY+1 ||
-		!g.storyFlag(0x17) || g.progressDone(msStart) {
-		return false
-	}
-	g.talkAliahanKing()
-	return true
-}
 
 // tryBaramosReturnEvent:巴拉摩斯勝利後回阿里阿罕王座正前方，
 // 原版 sub2 handler5 依 flag0x29 播 rec98→rec99，最後 CLR flag0x4d。
@@ -2941,7 +2914,7 @@ func (g *Game) renderFrame() {
 		g.frame.WritePixels(g.rgba)
 		return
 	}
-	if !g.showTitle && g.openingIdx == 0 && g.dlg.prelude != nil {
+	if !g.showTitle && g.openingIdx == 0 && g.dlg.prelude != nil && g.dlg.shadow == nil {
 		p := g.dlg.prelude
 		for i := 0; i < len(g.rgba); i += 4 {
 			g.rgba[i], g.rgba[i+1], g.rgba[i+2], g.rgba[i+3] = p.BackdropRGB[0], p.BackdropRGB[1], p.BackdropRGB[2], 255
@@ -3254,6 +3227,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		return nil, fmt.Errorf("game pack is nil")
 	}
 	if err := validateSceneCameraSources(assets, pack); err != nil {
+		return nil, err
+	}
+	if err := validateRegionDialogueRewardSources(assets, pack); err != nil {
 		return nil, err
 	}
 	fieldIdleFont, err := loadFieldIdleSources(assets, pack)

@@ -203,6 +203,11 @@ func compsToSav(ms []*Member) []compSav {
 }
 
 func (g *Game) restore(s saveState) {
+	if g.regionDialogueReward != nil {
+		g.regionDialogueReward = nil
+		g.dlg.open = false
+		g.clearOpeningPresentation()
+	}
 	g.fieldIdle = fieldIdleState{}
 	// Go 冒險之書不保存暫態場景咒文 timer；restore 必須清掉同一 Game instance
 	// 載入前的透明效果。原版 save 是否序列化這類 timer 仍需獨立 RE。

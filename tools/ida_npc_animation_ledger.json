@@ -32,6 +32,96 @@
       "consumer": "IDA linear0x11981→0x11991→0x11D8A；限定CTY00 section0的42狀態及1020A完整畫布",
       "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-03 城鎮攝影機有限READY",
       "dynamic_evidence": {"path": "work/dosgolem-opening/issue4-mother-finish-receipt.json", "sha256": "9358ce6e7a8e5c4547555daeccf74a2339f003ab106ebe4d57b32111602c0f3f", "tool": "dosgolem 2f44a68", "scope": "原始座標及最後1020A畫布；固定b7516c5正常InputState攝影機原型完整RGB差0，不證明其他CTY"}
+    },
+    {
+      "ida_linear": "0x1024c",
+      "file_offset": "0x15bc",
+      "bytes": "bb1700",
+      "inference_level": "confirmed",
+      "semantic": "首次謁見讀取原始17h gate",
+      "consumer": "IDA linear0x1024F→0x16F09；正常9,7入口",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：國王文字與延後交易有限READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-king-text-receipt.json",
+        "sha256": "b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32",
+        "tool": "dosgolem 2f44a68",
+        "scope": "100次正常輸入、九次文字等待、物品及金錢writer返回、旗標交易與正常runner；不證明滿欄提示、音訊或硬體逐週期"
+      }
+    },
+    {
+      "ida_linear": "0x10260",
+      "file_offset": "0x15d0",
+      "bytes": "bf060c",
+      "inference_level": "confirmed",
+      "semantic": "DI載入0C06h，blocking reader讀D3TXT01 record78",
+      "consumer": "IDA linear0x10263→0x21414；九次216C3等待後10268才返回",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：國王文字與延後交易有限READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-king-text-receipt.json",
+        "sha256": "b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32",
+        "tool": "dosgolem 2f44a68",
+        "scope": "100次正常輸入、九次文字等待、物品及金錢writer返回、旗標交易與正常runner；不證明滿欄提示、音訊或硬體逐週期"
+      }
+    },
+    {
+      "ida_linear": "0x10272",
+      "file_offset": "0x15e2",
+      "bytes": "c70693250000",
+      "inference_level": "confirmed",
+      "semantic": "文字返回與視窗恢復後寫第一件原始物品00",
+      "consumer": "IDA linear0x10278→0x16898；六次grant順序00/01/01/03/1F/1F，不以AX失敗中止",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：國王文字與延後交易有限READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-king-text-receipt.json",
+        "sha256": "b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32",
+        "tool": "dosgolem 2f44a68",
+        "scope": "100次正常輸入、九次文字等待、物品及金錢writer返回、旗標交易與正常runner；不證明滿欄提示、音訊或硬體逐週期"
+      }
+    },
+    {
+      "ida_linear": "0x102a8",
+      "file_offset": "0x1618",
+      "bytes": "b83200",
+      "inference_level": "confirmed",
+      "semantic": "六次物品呼叫後載入50金",
+      "consumer": "IDA linear0x102AE→0x1895C；102B1返回金錢0032",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：國王文字與延後交易有限READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-king-text-receipt.json",
+        "sha256": "b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32",
+        "tool": "dosgolem 2f44a68",
+        "scope": "100次正常輸入、九次文字等待、物品及金錢writer返回、旗標交易與正常runner；不證明滿欄提示、音訊或硬體逐週期"
+      }
+    },
+    {
+      "ida_linear": "0x102b1",
+      "file_offset": "0x1621",
+      "bytes": "bb1700",
+      "inference_level": "confirmed",
+      "semantic": "載入將清除的原版旗標17h",
+      "consumer": "IDA linear0x102B4→0x16EF4；102B7返回clear17h",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：國王文字與延後交易有限READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-king-text-receipt.json",
+        "sha256": "b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32",
+        "tool": "dosgolem 2f44a68",
+        "scope": "100次正常輸入、九次文字等待、物品及金錢writer返回、旗標交易與正常runner；不證明滿欄提示、音訊或硬體逐週期"
+      }
+    },
+    {
+      "ida_linear": "0x102b7",
+      "file_offset": "0x1627",
+      "bytes": "bb1800",
+      "inference_level": "confirmed",
+      "semantic": "載入將設定的原版旗標18h",
+      "consumer": "IDA linear0x102BA→0x16EDF；102BD返回set18h",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：國王文字與延後交易有限READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-king-text-receipt.json",
+        "sha256": "b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32",
+        "tool": "dosgolem 2f44a68",
+        "scope": "100次正常輸入、九次文字等待、物品及金錢writer返回、旗標交易與正常runner；不證明滿欄提示、音訊或硬體逐週期"
+      }
     }
   ]
 }

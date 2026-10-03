@@ -1,13 +1,14 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-03：Issue #4王座層自然等待窗已修正，schema0.7.0／content0.1.77。
-> 視窗與陰影RGB差0，完整等待／恢復1772差異；基準缺窗完整10143。
-> 上樓2159差異只在人物圖格，四柱及底圖一致，前輪「柱子圖層差異」撤回。
-> 正常開關、方向鍵消耗、凍結、同版本標題存讀檔及後續上鍵通過。
-> 原版90次／180IRQ1／386產物及214份前輪圖像不變；最後9,8，尚未謁見。
-> gamepack86頂層／238子、受影響game七項、desktop與正常THE END129.64秒通過，只屬重製回歸。
-> 十二種壞來源拒絕，九份JSON從乾淨61f60d3重建；本批未重跑全部game／internal。
-> 下一切片為正常國王文字與獎勵來源；人物動畫、原版存檔、音訊與完整campaign未完成。
+> 2026-10-03：Issue #4正常謁見已修正，schema0.8.0／content0.1.78。
+> 原版冷啟動100次輸入／200IRQ1／435產物，前批384份PNG／bin保持。
+> 九次實際Enter可續行；文字結束後才給六件物品、50金，再clear17h／set18h。
+> 正式九頁視窗與陰影RGB差0，完整各893差異，只在兩個NPC圖格；不宣稱整張V3。
+> 一次性、正常後續步行、同版本標題讀檔及同一Game Load取消pending通過。
+> 完整game清單418頂層覆蓋，378頂層／70子PASS、40選用SKIP；internal149頂層／250子PASS、4選用SKIP及11套件通過。
+> desktop與正常InputState至THE END75.37秒PASS，只屬重製回歸，無素材缺失SKIP。
+> 十二種壞來源拒絕，九份JSON從乾淨e56a8e3重建；六項原始位址語意追加至既有索引。
+> 下一切片為謁見後正常離城與酒館入口；人物動畫、原版存檔、音訊與完整campaign未完成。
 > 唯一現況表見[CONTEXT](CONTEXT.md)，計畫見[docs/74](docs/74-ebiten-remake-completion-plan.md)，證據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下保存歷史檢查點，不能以舊待辦重新開啟已閉合功能。

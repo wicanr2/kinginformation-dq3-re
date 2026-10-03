@@ -69,6 +69,7 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGame: %v", err)
 	}
+	g.showTitle = false // Component fixture starts after the title; normal entry is covered separately.
 	wantSeq := []int{82, 83, 81}
 	presentation, ok := g.pack.OpeningScenePresentation()
 	prelude, preludeOK := g.pack.OpeningPrelude()
@@ -101,16 +102,23 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 	}
 	g.cur, g.town, g.curCty, g.inTown = throne, throne, ctyAliahanCastle, true
 	g.px, g.py, g.facing = aliahanKingX, aliahanKingY+1, 1
-	if !g.tryOpeningRegionEvent() { // production runner 路徑：踏入國王正前方 region
+	if !g.tryRegionDialogueReward() { // production runner 路徑：踏入國王正前方 region
 		t.Fatal("國王正前方應命中 opening runner handler56")
+	}
+	if g.heroGold != 0 || len(g.inventory) != 0 {
+		t.Fatal("audience granted before text returned")
+	}
+	traceCloseDialogue(t, g)
+	if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+		t.Fatal(err)
 	}
 	if g.heroGold != 50 {
 		t.Errorf("首次謁見應得 50G，得 %d", g.heroGold)
 	}
-	if len(g.inventory) != len(aliahanKingRewardItems) {
-		t.Fatalf("首次謁見應得 %d 件，得 %v", len(aliahanKingRewardItems), g.inventory)
+	if len(g.inventory) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) {
+		t.Fatalf("首次謁見應得 %d 件，得 %v", len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs), g.inventory)
 	}
-	for i, want := range aliahanKingRewardItems {
+	for i, want := range g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs {
 		if g.inventory[i] != want {
 			t.Errorf("國王獎勵[%d]=%#x，應為 %#x", i, g.inventory[i], want)
 		}
@@ -121,8 +129,8 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 	}
 
 	// 再呼叫不可重複領取。
-	g.talkAliahanKing()
-	if g.heroGold != 50 || len(g.inventory) != len(aliahanKingRewardItems) {
+	g.tryRegionDialogueReward()
+	if g.heroGold != 50 || len(g.inventory) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) {
 		t.Errorf("國王獎勵必須一次性：gold=%d inventory=%v", g.heroGold, g.inventory)
 	}
 }

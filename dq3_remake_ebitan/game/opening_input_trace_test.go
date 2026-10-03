@@ -1069,8 +1069,13 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceWalkThroughPortal(t, g, 15, 10, ctyAliahanCastle, aliahanThroneSection)
 	traceWalkTo(t, g, aliahanKingX, aliahanKingY+1)
 
+	if g.heroGold != 0 || len(g.inventory) != 0 || g.progressDone(msStart) {
+		t.Fatal("normal audience rewarded before EOF")
+	}
+	traceCloseDialogue(t, g)
+	send(InputState{DirHeld: -1, DirEdge: -1})
 	if !g.progressDone(msStart) || g.heroGold != 50 ||
-		len(g.inventory) != len(aliahanKingRewardItems) || !g.dlg.open {
+		len(g.inventory) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) || g.dlg.open {
 		t.Fatalf("正式步行到王座後未完成謁見：ms=%v gold=%d items=%v dlg=%v",
 			g.progressDone(msStart), g.heroGold, g.inventory, g.dlg.open)
 	}
@@ -8020,6 +8025,16 @@ func traceNPCReachable(g *Game, cty, sec, sx, sy, nx, ny int) bool {
 func traceCloseDialogue(t *testing.T, g *Game) {
 	t.Helper()
 	for i := 0; i < 64 && g.dlg.open; i++ {
+		// A retained region dialogue includes animated scrolling and automatic
+		// EOF. Wait for its next native confirmation point before pressing.
+		for n := 0; g.regionDialogueReward != nil && g.dlg.open && !g.dlg.waitingForConfirm() && n < 3000; n++ {
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if !g.dlg.open {
+			return // Automatic EOF already returned; do not send Confirm to the field menu.
+		}
 		if err := g.step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}); err != nil {
 			t.Fatalf("推進對話: %v", err)
 		}
