@@ -2593,3 +2593,36 @@ r1原始Enter綁定差29540另保留。兩者不是對拍通過，不用修改�
 來源工具的語法、UID／GID及既有root候選檢查為 `work/issue4-registry-cancel-hygiene-r1.json`。
 本輪提交／推送、Issue與來源版本核對保存於 `work/issue4-registry-cancel-post-push-receipt.json`，
 出生工作若尚在執行則明示記錄live與外層逾時，不當作完成收據。
+normal-r2原版已自然結束：210次正常輸入／420IRQ1，172組packet，返回2,5。
+獨立審查為 `work/issue4-registry-birth-normal-r2-source-review.py`，
+結果為 `work/dosgolem-opening/issue4-registry-birth-normal-r2-source-r1-receipt.json`。
+核對174父產物及前153組取消來源的狀態／PNG／bin保持；其後正常姓名、六職業、性別、能力等待及接受。
+IDA linear10A9F..10ABD從DS520B向DS52FD+DX*61h複製97bytes；本次DX1，
+10816之前slot1狀態0，1081C之後狀態1。候選128bytes只有前97bytes屬本次copy，
+不把未直接觀測的目的record bytes或其他職業／性別路徑當已完成。
+出生來源審查PASS：368685bytes，SHA-256
+`de818064f9bcaf3f36dcd6a5d8b9259908781356a27c128cf1e8b41218c10ce3`。
+可重現產生器為 `tools/dosgolem_registry_birth_probe.py`，與已執行私有producer逐byte相同。
+獨立重建／不覆寫重生為 `tools/verify_dosgolem_registry_birth.py`，
+在既有Docker內執行 `python3 /repo/tools/verify_dosgolem_registry_birth.py <收據>`，重生時加`--emit`。
+產生器沿用 `/repo`唯讀、`/work`UID1000可寫與凍結 `/dosgolem`唯讀掛載；
+`/work/dosgolem-opening`須已存在，且此normal-r2前綴未占用，不能在既有來源上覆寫。
+出生來源陽性重建與13種損壞拒絕為 `work/issue4-registry-birth-normal-r2-negatives-r1.py`，
+結果為同前綴JSON／log，所有原版及父來源保持唯讀。
+
+### 登錄所下一個實作閘門（DRAFT）
+
+已接受的原版取消0467c01b與單一戰士男性出生de818064提供正常輸入順序與交易邊界。
+已證實：550兩次內嵌等待→是否登錄→554姓名；姓名完成後六職業→性別→能力等待→接受能力。
+已證實：取消姓名走558再次詢問，選否560再返回行走；成功登錄走559再次詢問，選否560再返回。
+已證實本次登錄：候選初始化、97bytes writer、slot1由0到1，hero／gold／story與位置保持。
+限制：目的record bytes未直接觀察，其他職業／性別及名冊滿額路線未動態驗證；原版Save／Load與音訊未知。
+正式修正前須把3E9C／3E6E、職業、性別與能力視窗的SI consumer對照成typed pack契約，
+不以截圖目測或現有Tavern的40,40大框補值。原始資料→loader→狀態機→正常交談／出生→存檔→對拍一起驗收。
+正常對拍明示使用現行命令窗的等價交談；raw-key綁定差異另記，不暗改全域操作。
+姓名／職業／性別／能力與文字皆由pack提供；共用Go只處理具名狀態機，不能新增DQ3 raw ID或fallback。
+目前正式流程仍DRAFT；證據足以完成此下一步，不需使用者補資訊或重選方向。
+出生工具語法、執行版本一致及資料所有權收據為 `work/issue4-registry-birth-normal-r2-hygiene-r1.json`。
+出生來源結果留言為 `work/issue4-registry-birth-normal-r2-result-comment.txt`；
+遠端Issue本文的更新前快照及更新文本為同前綴`prior-issue-body.txt`／`issue-body.txt`。
+最終提交、來源完整性、Issue與Docker清理記錄沿用 `work/issue4-registry-cancel-post-push-receipt.json`。

@@ -7,7 +7,7 @@
 未消費與已消費檢查點的同版本Save／Load、阻擋不消費、新事件覆蓋及壞存檔拒絕通過。
 甘達特對話當步結束特殊事件分派，避免同時開啟隨機遭遇；原始四敵編隊保持。
 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
-原版存檔、音訊、NPC相位及完整主線仍未知。登錄所完整取消來源0467c01b已接受，remake流程仍DRAFT；正常出生來源蒐集中。
+原版存檔、音訊、NPC相位及完整主線仍未知。登錄所完整取消來源0467c01b已接受，remake流程仍DRAFT；正常單一戰士男性出生來源de818064亦已接受，正式流程待READY。
 唯一現況表見下，證據與私有收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下段落保存歷史檢查點；目前狀態以上述說明及下方表格為準。
@@ -96,8 +96,8 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 | 最新畫面已驗 | 首次Up警告完整640×350 RGB差0；既有Down勸告視窗及陰影RGB差0。既有零差異範圍保持 |
 | 最新畫面未通過 | 首三個Up完整差195／9039／22192；Down完整提示13145、返回13340。既有回程城鎮13983、酒館1403、登錄所118、國王893、王座2159／1772、城堡182／979／1960／304、家中124、房間261限制保持；完整V3未完成 |
 | 下一production切片 | 登錄所問候、詢問、姓名取消與出生順序；先補正常出生來源及READY契約。NPC可見性另需consumer，不由圖塊規則猜補；入口docs/188 |
-| 本輪登錄所DRAFT | 原版取消來源0467c01b已接受：202次正常輸入／404IRQ1、328份packet PNG／bin、174父產物保持及13種損壞拒絕。正常remake前149個位置、section、旗標與金錢相符；packet150等價交談直接開職業選單，缺record550。出生normal-r2正在冷原版蒐證，production保持0.1.81 |
-| 原版oracle仍未知 | 登錄所出生原版來源與取消／出生remake同狀態路線、其他健康色／status、鍵盤自動重複、非零層轉換動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
+| 本輪登錄所DRAFT | 原版取消來源0467c01b已接受：202次正常輸入／404IRQ1、328份packet PNG／bin、174父產物保持及13種損壞拒絕。正常remake前149個位置、section、旗標與金錢相符；packet150等價交談直接開職業選單，缺record550。正常單一戰士男性出生de818064已接受210次／420IRQ1、344份packet產物及13種拒絕；slot1由0到1。正式流程仍需READY，production保持0.1.81 |
+| 原版oracle仍未知 | 其他登錄職業／性別原版路線與取消／出生remake同狀態路線、其他健康色／status、鍵盤自動重複、非零層轉換動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
 | 現行remake回歸 | 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。 |
 | 額外驗證限制 | 重製pending ID與必要actor的存檔恢復為engine D2；原版Save／Load未知。等待為hardware-spec approximation，不固定人物相位或後段RNG骰序。拉之鏡失敗為測試玩家容量滿，已用正常選單丟棄備品，不改production交易 |
 
