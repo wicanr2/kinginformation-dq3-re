@@ -2922,3 +2922,113 @@ dosgolem系統控制埠61h回保存值，與本次故障的因果未證實；此
 r2 sidecar SHA256`99652386dd01214b98c05df48e5a733675d2b120cb94ed7e3ca9616ffbbf7841`，script SHA256`ff4a5c23677e261b2c06e30ea6b1852ca34fedb19df2253601618f5f2ced2a20`，輸入與位址基準沿上節。
 最終核對為`work/issue4-recruit-join-r6-final-audit.py`及同前綴收據；Issue結果文字為`work/issue4-recruit-join-r6-result.txt`。
 完整入隊仍DRAFT，正式程式與pack保持。下一步只核對狀態位址介面及dosgolem能力，再由原版正常重播返回，不清共享byte或跳過等待。
+
+### 公開狀態介面與正常播放返回值
+
+本輪命中原版對拍、平台規格及READY閘門，載入既有入口；不增加硬體driver或ISR逆向範圍。
+[RBIL的SBFM介面紀錄](https://files.mpoli.fi/unpacked/software/texts/computer/inter56d.zip/interrup.p)
+將BX1定義為DX:AX狀態byte位址，BX2為樂器表、BX4為驅動時脈除數、BX6為播放。
+BX6的AX0表示成功，AX1表示已有音樂；BX9／10是暫停／續播。這份公開INT介面用於解讀參數，
+DQ3使用內嵌FMDRV的far call，不能據此宣稱兩個driver的全部內部行為相同。
+
+r8沿r6的相同正常冷啟動，原版、dosgolem版本、seed1357與13項來源條件保持。
+執行前核對凍結Go含API、資料及等待三個observer，首次等待後20000000指令有界停止。
+獨立審查前198個queue／consume／capture、472IRQ1及396份完整PNG／bin逐項保持。
+沒有還原state、寫guest state、改clock或增加AdLib參數；完整入隊仍DRAFT。
+
+| 本次confirmed有限觀察 | IDA linear原始定位與讀值 |
+|---|---|
+| 初始化確實傳入狀態位址 | 22D50，BX0001、DX:AX=15ED:5C02；22D55返回AX0 |
+| 正常入隊先暫停再重設 | packet199，22DFC／22E01的BX9返回AX0；22DAD／22DB2的BX8返回AX0，5C02由FF轉00 |
+| 時脈與樂器設定返回 | 22DCD／22DD2，BX4、AX308C返回AX0，PIT除數65536→12428；22DA0／22DA5，BX2、CX1返回AX0 |
+| 短曲播放請求成功返回 | 22D8A，BX6、DX:AX=3999:058B；22D8F返回AX0，5C02由00轉FF；本次事件前32bytes另存收據 |
+| 等待仍未完成 | 首次等待後20000000指令，2157703538停208EF，2898=1、5C02=FF、474IRQ1；packet199未完成 |
+
+上述返回值排除本次播放請求被拒絕。等待期間ticks14491→14573，但5C02仍FF；計時器前進不代表播放完成。
+沒有觀察到10459續播、record540或下一次玩家操作，不能據此寫完整入隊READY或宣稱已修正remake。
+接著只讀核對中斷向量與有限入口，若發現平台缺口，先依公開契約補足，再正常重播取得返回來源。
+
+r7先因組裝語法錯誤在執行前失敗，修正後又漏插API observer。核對凍結Go後明確停止容器，保留中斷產物。
+這是診斷腳本問題，不列產品缺陷。r8改為插入前斷言及執行前preflight，通過後才啟動原版。
+產生器為`work/issue4-recruit-join-r8-builder.py`；先讀r7的Go literal，再組合既有r6／r5，所有來源都保持。
+preflight為`work/issue4-recruit-join-r8-preflight.json`，source SHA256`cef4fc99cf8db7dc654f3be11d29336b8ee9bdc7101a9f7ec18f7c8be6adad72`。
+獨立審查入口`work/issue4-recruit-join-r8-review.py`；收據`work/issue4-recruit-join-r8-review-receipt.json`，
+SHA256`351ec454af7a6e8f33f8b0dcd4dbd25a0e0e400956be2a39917354d3a7ae291b`。
+原版log／meta／source／binary在`work/dosgolem-opening/issue4-recruit-normal-r8-*`，各自雜湊由收據保存。
+r9入口為`work/issue4-recruit-join-r9-builder.py`與同前綴preflight；只增加向量讀取，不改CPU或DOS服務。
+公開r4 guard、r5／r6驗證工具與已接受來源不變，不把新DRAFT產物放寬成正式來源。
+
+原廠SDK第2版僅作文件查找：[封存入口](https://www.ardent-tool.com/sound/Sound_Blaster.html)。
+本機`work/issue4-fmdrv-sdk-reference-ctsbk2.exe`，1170683bytes，
+SHA256`14261354702f0221e95d73f0c2e5d7dccbba620992a28d9da82c9497137e997d`；只讀取文件，沒有執行封存程式。
+其舊CMF介面指向前版手冊，沒有提供本次根因契約，不當DQ3 oracle。
+擷取文件留在`work/issue4-fmdrv-sdk-reference-*`，原廠文件與SDK內容不加入Git。
+工作進度文字`work/issue4-recruit-join-r8-progress.txt`已登記Issue #4留言5974169729。
+
+### 中斷入口與PIC有限平台實驗
+
+r8補核對實際EBG.MCX，3369bytes，SHA256`ad4e139c5154b1271b2b6a6129a37684b019ea1e36ac6270ef24cc74127d5824`。
+packet199的3999:058B前32bytes與檔案offset58B逐byte相同，不沿用舊C或Go音樂decoder作格式oracle。
+補驗入口為`work/issue4-recruit-join-r8-review-r2.py`，收據SHA256`9e28a96c99857aeef0c177197c934b78b56faa0f20ebed3ee5c6856bc5333d6d`。
+`work/issue4-recruit-join-r8-negatives.py`拒絕改seed、Go來源、PNG、播放返回值、等待狀態及preflight來源共六種損壞。
+原始產物保持；收據`work/issue4-recruit-join-r8-negative-receipt.json`，SHA256`68bd8f0995b1bda363a34daf6533224fc618423b0b593406f178e2de2e23214c`。
+首輪負測試未替換雙引號的preflight路徑，被測到仍在讀真實preflight，測試拒絕認列；修正隔離路徑後乾淨重跑。
+
+r9只增加中斷向量及有限入口讀取。前198個packet、472IRQ1、396份PNG／bin保持，API／資料／等待觀察與r8逐行相同。
+初始化與packet199的1Ch向量為10F1:0043，70h仍為0080:01C0。
+ticks14444至14499共56次確實進1Ch入口；首次播放等待後14473至14499仍進入，5C02保持FF。
+這排除該範圍完全沒有送入1Ch的解釋，沒有證實它能完成音樂。
+步前observer可能漏掉硬體IRQ08的第一條指令，零筆08入口記錄不能解讀為沒有IRQ08。
+入口`work/issue4-recruit-join-r9-review.py`及收據`work/issue4-recruit-join-r9-review-receipt.json`，
+SHA256`bb2bacbe702ab51dba599e47f6050aa2925123c02ef879e8fd3a05facfa02313`。
+
+查到dosgolem原生machine僅保存PIC遮罩，沒有in-service狀態，20h的EOI只保存埠值。
+依[Intel8259A第14頁](https://www.pcjs.org/documents/datasheets/intel/INTEL_8259A_PIC.pdf)，
+fully nested模式在EOI前阻擋同級及較低優先中斷，非特定EOI清除最高優先的in-service bit。
+本次小程式明確重現EOI前第二次IRQ0，屬已證實的平台契約缺口，與入隊等待的因果仍未知。
+
+可丟棄r11／r12副本在主PIC補IRQ0／IRQ1 in-service及非特定EOI，讓BIOS timer stub發EOI。
+三項有限契約測試通過：IRQ0須等EOI、IRQ0可搶先IRQ1及BIOS釋放IRQ0。
+此副本沒有完整PIC命令、slave、讀取介面或snapshot狀態契約，不是可發布的dosgolem修正。
+上游與原版唯讀；初始化即固定此能力，不在流程中清旗標、完成byte或調clock。
+r10測試漏設定首個到期時間，原版未執行；保留產物，修正fixture後另存r11。
+
+r11的20M觀察仍未返回。52份前198個PNG／bin與舊工具不同，其餘344份相同；不得把它冒充既有未修改來源。
+步數、timer、部分人物相位及AX有差異；實際變更欄位與52份檔名由`work/issue4-recruit-join-r11-observation-receipt.json`保存，
+SHA256`bf5c72ffd5358e349518e104a0cd3e8ea218c14a0af55fd329cfd08fed7926ac`。
+本輪曾把總埠計數增加當作音樂寫入前進，已訂正：總埠包含新增EOI，不能證明OPL進度。
+
+事件格式只用於選觀察上限。[AdPlug的CMF／MIDI解析器](https://github.com/adplug/adplug/blob/master/src/mid.cpp)
+提供變長delta與事件處理參考；本機有界解析81個事件、461個delta tick、offset6B0的FF2F00結尾。
+以本次BX4除數12428及公開PIT參考1193180Hz，推得約4.801713秒，等級為hardware-spec approximation。
+這不設定production音訊時間，也不稱原版逐週期或wall-clock parity。
+入口`work/issue4-recruit-join-ebg-duration-draft.py`；收據SHA256`7a9e4ec6bd0de88d5aef327bb36ced0ff30ad784e4b8e8f6550ca8079d551761`。
+
+r12在執行前固定首次等待後100M觀察上限，同一PIC副本、seed與clock設定；前198個packet及396份PNG／bin逐項等於r11。
+tick已超過格式推算曲長，仍未進10459續播或下一操作。2237707546停208EF，packet199、2898=1、5C02=FF、474IRQ1。
+因此PIC有限補足在本次長觀察仍不足以閉合等待，不認列為remake修法或完整原版來源。
+獨立審查`work/issue4-recruit-join-r12-review.py`及收據SHA256`40819d2d7ad61bc19746efbd6e5705b8a720c7ce07726daec405244b9ab0020d`。
+r11／r12產生器、平台before／after logs、三份凍結Go與platform preflight均在`work/issue4-recruit-join-r11-*`／`-r12-*`。
+平台r11 preflight SHA256`65fb2488088ebfa1a87a121b019c1e9bcafec83ea073db2d6cb5570e09bc8f70`；各份凍結來源hash由該收據列出。
+Issue進度`work/issue4-recruit-join-r11-progress.txt`對應留言5974288002。
+下一步從未改PIC的工具鏈只讀核對OPL、PIC／PIT讀取計數及應用程式wrapper；r13入口為`work/issue4-recruit-join-r13-builder.py`。
+不展開硬體driver／ISR，不因局部平台測試綠色就升格完整入隊READY。正式remake、pack及最近完整回歸保持。
+
+### 未修改工具鏈的長觀察與下一個有限切片
+
+r13回到未修改PIC的2f44a68工具鏈，固定首次等待後100M上限；seed及13項來源條件保持。
+前198個正常packet、472IRQ1及396份PNG／bin逐項等於r5／r8。沒有將PIC副本的52份相位差異帶回正式來源。
+十個只讀樣本的OPL寫入計數均為1235；PIC20讀取0、21讀取1、PIT40讀取0、61讀取474、OPL388讀取65，均不前進。
+本次等待未持續讀取這些硬體埠；不能藉調61、PIT latch或PIC狀態查詢猜修法。
+應用程式wrapper的linear22E40／22E4A沒有觀察記錄，功能仍unknown；沒有跟進driver或ISR。
+最後2237703538停208F3，packet199、2898=1、5C02=FF、474IRQ1；完整入隊仍DRAFT。
+入口`work/issue4-recruit-join-r13-review.py`與收據`work/issue4-recruit-join-r13-review-receipt.json`，
+SHA256`761367b3e3ad8aa2186801402d765a83a167e42fcf0aa018fd4cc672a6b29586`。
+原版log／meta／source／binary在`work/dosgolem-opening/issue4-recruit-normal-r13-*`，雜湊由該收據保存。
+
+下一切片收斂到已觀察的packet197：record530、選人窗口及正常取消。這是既有入隊差異中先遇到的畫面阻塞。
+沿10974計數、109E5逐人文字consumer及3E14原始窗口建立有限DRAFT，再由正常輸入驗證取消與下一步。
+僅當選人窗口的資料、引用、geometry及正常玩家路徑足夠READY，才修正式pack與renderer。
+不把尚缺正常播放完成來源的199後入隊流程混入此READY，後段音樂完成介面保持unknown並登記Issue。
+本輪只保存有限證據，正式Go／pack及最近完整Go回歸保持，不新增發行包。
+收尾入口為`work/issue4-recruit-join-r13-final-audit.py`及同前綴收據；遠端結果與核對另存同前綴result／post-push產物。
