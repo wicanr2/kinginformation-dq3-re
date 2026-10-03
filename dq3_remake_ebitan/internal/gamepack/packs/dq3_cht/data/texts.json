@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.10.0",
+  "schema_version": "0.11.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -3917,6 +3917,176 @@
         "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_entry.greeting",
+      "value": "*「這裡是露依達的店,\n---\n  旅人們與同伴相會,\n  分離的酒吧。",
+      "glyph_codes": [
+        59,
+        60,
+        398,
+        512,
+        399,
+        761,
+        359,
+        358,
+        149,
+        455,
+        55,
+        65532,
+        12,
+        12,
+        193,
+        194,
+        529,
+        762,
+        601,
+        602,
+        763,
+        415,
+        55,
+        65534,
+        12,
+        12,
+        764,
+        502,
+        149,
+        765,
+        499,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 527
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x1036D..0x103D7;0x1F4E3..0x1FE11;DGROUP3E32",
+        "consumer": "normal lower-floor greeting527/528 -> main menu529; first entry only",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；原版r4首次招募來源a85cad67獨立接受。234正常輸入／468IRQ1。入隊之後、分離、查看、音訊及原版Load不在本切片。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_entry.question",
+      "value": "*「客人有什麼吵咐呢?",
+      "glyph_codes": [
+        59,
+        60,
+        766,
+        194,
+        147,
+        435,
+        436,
+        767,
+        768,
+        592,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 528
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x1036D..0x103D7;0x1F4E3..0x1FE11;DGROUP3E32",
+        "consumer": "normal lower-floor greeting527/528 -> main menu529; first entry only",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；原版r4首次招募來源a85cad67獨立接受。234正常輸入／468IRQ1。入隊之後、分離、查看、音訊及原版Load不在本切片。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_entry.menu",
+      "value": "┌───────┐\n│ 找同伴參加 │\n│ 與同伴分離 │\n│ 觀看名單  │\n└───────┘",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        49,
+        65534,
+        54,
+        12,
+        769,
+        601,
+        602,
+        770,
+        368,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        762,
+        601,
+        602,
+        764,
+        502,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        771,
+        668,
+        692,
+        772,
+        12,
+        12,
+        54,
+        65534,
+        50,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 529
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x1036D..0x103D7;0x1F4E3..0x1FE11;DGROUP3E32",
+        "consumer": "normal lower-floor greeting527/528 -> main menu529; first entry only",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；原版r4首次招募來源a85cad67獨立接受。234正常輸入／468IRQ1。入隊之後、分離、查看、音訊及原版Load不在本切片。"
       }
     }
   ]

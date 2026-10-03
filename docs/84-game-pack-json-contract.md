@@ -1956,3 +1956,20 @@ Go只執行問候、是否登錄、姓名、職業、性別、能力等待、能
 能力接受只commit一次，角色先加入roster，再由樓下招募流程移入companions。
 同版本Load清除候選與窗口，已登錄角色由現有角色存檔資料讀回；原版Load仍unknown。
 正常來源只有首次戰士男性的動態證據，其他class／gender的原始映射不等於全部能力或畫面parity。
+
+## 首次招募入口契約
+
+schema0.11.0新增必填`interface.recruitment_entry`，content0.1.83；舊schema存檔依既有策略拒絕，不自動遷移。
+來源與有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。入隊後文字、分離、查看及音訊未隨入口升格。
+
+| 欄位 | 資料與驗證 |
+|---|---|
+| `id`、`binding` | 穩定ID與原始CTY／section／NPC handler；缺失、null或未知key拒絕，無Go版本fallback |
+| `presentation_id`、`geometry_id`、`shadow` | 引用既有保留文字及索引色視窗原語；引用及共同陰影必須一致 |
+| `greeting_text_ids` | 有序stable text ID；本版527及528；EOF後繼續同一文字畫布 |
+| `menu` | `RegistrationMenu`共用strict欄位形狀；raw window、文字ID、游標及hit rect；本版529與DGROUP3E32 |
+| `option_actions` | 有序具名join／leave／view，拒絕未知與重複；Go游標不承載DQ3 record或中文字模 |
+| `evidence` | D3原始EXE身份、IDA位址、caller／consumer及正常dosgolem來源；限制保留 |
+
+加入或分離角色仍由既有狀態機處理；本契約沒有任意JSON程式碼。
+有效Load清除入口UI暫態並保留契約，拒絕Load保持原畫布。正常存讀檔只證明remake，原版Load未知。

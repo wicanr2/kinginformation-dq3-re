@@ -76,7 +76,15 @@ func TestRecruitJoinMovesRosterMemberIntoParty(t *testing.T) {
 	b := newMember(classNames[2], 2, 0, 0)
 	g := &Game{roster: []*Member{a, b}}
 
+	configureRecruitmentEntryFixture(t, &g.recruit)
 	g.recruit.open()
+	for i := 0; i < 5000 && g.recruit.stage == rcGreeting; i++ {
+		in := InputState{DirEdge: -1}
+		if g.recruit.dialogue.waitingForConfirm() {
+			in.Confirm = true
+		}
+		g.recruitInput(in)
+	}
 	g.recruitInput(InputState{DirEdge: -1, Confirm: true}) // 主選單 cursor0「找同伴參加」→ rcJoin
 	if g.recruit.stage != rcJoin {
 		t.Fatalf("選主選單第 0 項應進 rcJoin,得 stage=%d", g.recruit.stage)

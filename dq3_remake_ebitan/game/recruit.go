@@ -1,17 +1,13 @@
 package game
 
-import "github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+)
 
-// 酒場「找同伴參加 / 與同伴分離 / 觀看名單」(1F,對照 dq3_remake/src/dq3_tavern.c 的
-// DQ3_TAV_ROSTER 畫面 + dq3_roster.c 的 dq3_party_add/remove)。對齊原版兩段式
-// (docs/36 rec527-550):
-//   - 2F 冒險者登錄所(Tavern,tavern.go)創角只登錄到 roster,不自動入隊。
-//   - 1F 酒場(本檔)才把 roster 內角色拉進/移出 g.companions(隊伍上限 rcPartyMax=主角+3)。
-//
-// 注意:C 版 dq3_tavern.c 的 DQ3_TAV_GENDER 分支建完角色後立刻呼叫 dq3_party_add
-// 自動入隊——那是 C demo 的簡化,**不照抄**;本檔刻意把「登錄」與「入隊」分成兩個獨立動作。
-//
-// 主選單三項直接取 D3TXT00 rec529 解出的原版 glyph，不再使用 0/1/2 佔位。
+// 招募入口依 docs/188 的有限 READY 播放問候並顯示資料包選單。
+// 登錄只加入 roster；既有加入／分離狀態機搬移 roster 與 companions。
+// 入隊後文字、分離與查看的原版對拍尚未完成，不以舊 C 實作作 oracle。
 const (
 	rcMenu  = 0 // 主選單:0 找同伴參加(→rcJoin)/1 與同伴分離(→rcLeave)/2 觀看名單(→rcView)
 	rcJoin  = 1 // 從 roster(未入隊)選一名 → 入隊(companions,滿則擋掉,不頂替)
@@ -29,15 +25,28 @@ const (
 // drawStatus/equipSelected 模式——選單需要同時讀寫兩份 Game 層清單,不適合像 Tavern
 // 那樣做成不持有 *Game 的純 UI struct。
 type Recruit struct {
-	tx       *dq3data.Text
-	active   bool
-	stage    int
-	cursor   int
-	menuHits hitList
-	listHits hitList
+	contract                   *gamepack.RecruitmentEntry
+	texts                      map[string][]uint16
+	dialogue                   Dialogue
+	greetingIndex, cursorGlyph int
+	raster                     *indexedNewGameRenderer
+	tx                         *dq3data.Text
+	active                     bool
+	stage                      int
+	cursor                     int
+	menuHits                   hitList
+	listHits                   hitList
 }
 
-func (rc *Recruit) open() { rc.active, rc.stage, rc.cursor = true, rcMenu, 0 }
+func (rc *Recruit) open() {
+	rc.reset()
+	if rc.contract == nil {
+		return
+	}
+	rc.active, rc.stage, rc.cursor = true, rcGreeting, 0
+	rc.greetingIndex = 0
+	rc.startGreeting()
+}
 
 // tavernCreate:酒館 2F 登錄所 modal 的輸入 glue(掛在 g.tavern 上)。建角**只登錄 roster,
 // 不自動入隊**(見檔頭說明)。抽成獨立方法,方便單元測試不必經過完整 Update()/ebiten 輸入輪詢。
@@ -52,6 +61,10 @@ func (g *Game) tavernCreate(in InputState) {
 // recruitInput:酒場招募 modal 的輸入處理(掛在 g.recruit 上)。
 func (g *Game) recruitInput(in InputState) {
 	rc := &g.recruit
+	if rc.stage == rcGreeting {
+		rc.greetingInput(in)
+		return
+	}
 	tapIdx := -1
 	if in.Tapped {
 		if rc.stage == rcMenu {
@@ -62,7 +75,7 @@ func (g *Game) recruitInput(in InputState) {
 	}
 	switch rc.stage {
 	case rcMenu:
-		confirm := in.Confirm
+		confirm := in.Confirm || in.Enter
 		if tapIdx >= 0 {
 			rc.cursor, confirm = tapIdx, true
 		}
@@ -70,18 +83,26 @@ func (g *Game) recruitInput(in InputState) {
 		case in.Cancel:
 			rc.active = false
 		case confirm:
-			switch rc.cursor {
-			case 0:
+			if rc.contract == nil || rc.cursor < 0 || rc.cursor >= len(rc.contract.OptionActions) {
+				return
+			}
+			switch rc.contract.OptionActions[rc.cursor] {
+			case gamepack.RecruitJoin:
 				rc.stage, rc.cursor = rcJoin, 0
-			case 1:
+			case gamepack.RecruitLeave:
 				rc.stage, rc.cursor = rcLeave, 0
-			case 2:
+			case gamepack.RecruitView:
 				rc.stage, rc.cursor = rcView, 0
 			}
-		case in.DirEdge == 0:
-			rc.cursor = (rc.cursor + 1) % 3
-		case in.DirEdge == 1:
-			rc.cursor = (rc.cursor + 2) % 3
+		case in.DirEdge == 0 || in.DirEdge == 3:
+			if rc.contract != nil {
+				rc.cursor = (rc.cursor + 1) % len(rc.contract.OptionActions)
+			}
+		case in.DirEdge == 1 || in.DirEdge == 2:
+			if rc.contract != nil {
+				n := len(rc.contract.OptionActions)
+				rc.cursor = (rc.cursor + n - 1) % n
+			}
 		}
 	case rcJoin:
 		g.recruitPick(in, tapIdx, len(g.roster), func(i int) {
@@ -111,7 +132,7 @@ func (g *Game) recruitInput(in InputState) {
 // 搬移(呼叫端自行決定滿員擋不擋)。Cancel 回主選單;清單空時方向鍵/確定不動作(避免除以 0)。
 func (g *Game) recruitPick(in InputState, tapIdx, n int, onConfirm func(i int)) {
 	rc := &g.recruit
-	confirm := in.Confirm
+	confirm := in.Confirm || in.Enter
 	if tapIdx >= 0 {
 		rc.cursor, confirm = tapIdx, true
 	}
@@ -139,26 +160,13 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 	if !rc.active {
 		return
 	}
+	if rc.stage == rcGreeting || rc.stage == rcMenu {
+		rc.drawEntry(rgba, white)
+		return
+	}
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
 	yellow := dq3data.Color{R: 255, G: 224, B: 32}
 	switch rc.stage {
-	case rcMenu:
-		rc.menuHits.reset()
-		labels := [3][]int{
-			{769, 601, 602, 770, 368}, // 找同伴參加
-			{762, 601, 602, 764, 502}, // 與同伴分離
-			{771, 668, 692, 772},      // 觀看名單
-		}
-		for i := 0; i < 3; i++ {
-			y := 56 + i*22
-			if i == rc.cursor {
-				drawGlyph(rgba, rc.tx, 80-18, y, curGlyph, yellow)
-			}
-			for j, gi := range labels[i] {
-				drawGlyph(rgba, rc.tx, 80+j*dq3data.GlyphPx, y, gi, white)
-			}
-			rc.menuHits.add(62, y-3, 200, 18, i)
-		}
 	case rcJoin:
 		g.drawRecruitList(rgba, white, yellow, g.roster)
 	case rcLeave:

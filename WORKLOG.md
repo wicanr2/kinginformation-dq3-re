@@ -1268,3 +1268,23 @@ r5完整campaign商人仍用職業先行的舊操作；r7改為正常問候、�
 CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74、docs/84、docs/188與README穩定摘要同步。
 全部工作依Issue #4，已登記實作進度5972241036。原版／圖片／database／封包及使用者scratch均不入Git。
 最後收尾收據記錄提交、push、遠端Issue核對及Docker清理；Issue保持OPEN，Goal繼續，沒有新發行包。
+
+## 2026-10-04 Issue #4 首次樓下招募入口
+
+沿120f322正常出生來源延長原版下樓與交談。r2錯把有家具的路線當直線，停於3,5；保留全部來源。
+改用已驗證登錄所反向通路及實際CTY通路，r3到首次選單並選擇入隊；後段4000計時旗標觸發拒絕，不宣稱招募完成。
+r4在首次三項選單正常停止：234次輸入／468IRQ1、196packet、392PNG／bin；174父產物及出生前172packet保持。
+正式來源a85cad67，目的slot1的97bytes等於出生writer。本次狀態1不變性只限單一Warrior male。
+新增有限READY、strict recruitment_entry、原始問候527／528與529選單、JSON binding／geometry、Load UI清除與正常InputState。
+完整game434覆蓋，385頂層／86子PASS、49選用SKIP；正常THE END66.12秒，只屬remake回歸。
+internal155頂層／293子PASS、4選用SKIP及11套件；12種壞契約、八種壞來源拒絕；desktop ELF64 x86_64通過。
+取消／出生／首次招募與Load後正式下一步在獨立程序PASS；85完整PNG保持，首次兩圖各295RGB，完整V3未完成。
+IDA9.4沿既有image在一次性DB匯出，原始EXE唯讀；五筆confirmed旁註保留原名、位址與bytes，自動合併至匯出。
+
+保留形成史及失敗：初版Python命名空間與Go未使用變數在原版啟動前拒絕；r2路線錯誤；r3後段旗標拒絕。
+prototype首輪收據缺共同canvas比較所需的頂層EXE身份，另存r2不覆寫首份後通過。
+文件指令反引號曾被shell展開，改以完整檔案輸入修正；Python slim不含git，改用既有Ebitengine image收斂JSON差異。
+正式合併三條native案例第三條被SIGKILL；相同image與4GiB下拆成獨立程序重跑，未改seed、原版或期待值。
+一次容器自動核准審查逾時，依工具指示重試一次成功；不是憑證或產品阻塞。
+所有工作登記Issue #4；首次進度5972746542。提交、push、Issue及Docker清理記錄由本輪收尾收據保存。
+沒有新發行包；原版、圖片、database、binary與使用者scratch不入Git。下一切片為入隊後文字與4000旗標分類，不重開本批入口。

@@ -630,13 +630,17 @@ func (g *Game) openAliahanSpecialNPC(n *npcInst) bool {
 		g.tavern.open()
 		return true
 	}
+	if c := g.recruit.contract; c != nil && g.cur != nil && g.curCty == c.Binding.CTYRaw && g.cur.sec == c.Binding.Section && n.b4 == c.Binding.NPCHandlerRaw {
+		if err := g.recruit.installRaster(g.newGame.raster, g.cur.pal); err != nil {
+			return true
+		}
+		g.recruit.open()
+		return true
+	}
 	if g.curCty != 0 || g.cur == nil {
 		return false
 	}
 	switch {
-	case g.cur.sec == 0 && n.b4 == 1:
-		g.recruit.open()
-		return true
 	case g.cur.sec == 0 && n.b4 == 4:
 		g.dlg.OpenFrom(g.shop.nameText, 561) // 全域 D3TXT00 rec561「預存所」。
 		return true
@@ -3477,8 +3481,11 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if err := g.tavern.configure(pack, g.dlg.tx); err != nil {
 		return nil, err
 	}
-	g.tavern.tx = g.dlg.tx  // 酒館 glyph
-	g.recruit.tx = g.dlg.tx // 酒場招募 glyph
+	g.tavern.tx = g.dlg.tx // 酒館 glyph
+	if err := g.recruit.configure(pack, g.dlg.tx); err != nil {
+		return nil, err
+	}
+	g.recruit.cursorGlyph = g.tavern.labels.ChoiceCursor[0]
 	g.hero = dq3data.LoadCharSprite(mstBLS, heroSpriteEntry)
 	g.phoenix = dq3data.LoadCharSprite(manBLS, 176) // CTY70 egg b2=48 → (48-4)*4；原版拉米亞 8-frame sprite
 

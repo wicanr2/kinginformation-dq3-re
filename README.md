@@ -23,8 +23,9 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前開發版為 schema `0.10.0`／content `0.1.82`。登錄已接入原版姓名、六職業、性別、能力等待與接受交易，角色先進名冊。
-正常取消、單一戰士男性登錄、同版本存讀檔及樓下招募通過；完整登錄畫面與後段亂數條件仍有差異。
+目前開發版為 schema `0.11.0`／content `0.1.83`。登錄後先進名冊，正常樓下問候及首次招募選單已接入原版資料。
+正常取消、單一戰士男性登錄、首次招募入口及同版本存讀檔通過；完整畫面、入隊後文字與音訊仍待對拍。
+舊schema存檔依既有策略拒絕，不自動遷移。
 dosgolem 已驗證六幕順序、
 前五幕色號及第六幕 129 個完整翻頁的色號／RGB，並修正漏卡與動態標誌；
 範圍與時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。

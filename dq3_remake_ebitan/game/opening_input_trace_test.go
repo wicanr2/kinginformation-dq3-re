@@ -1146,6 +1146,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	// 回樓下，對 b4=1 露依達，從名冊連續找三名同伴加入。
 	traceWalkThroughPortal(t, g, 8, 2, 0, 0)
 	traceTalkNPC(t, g, 2, 16)
+	traceRecruitmentGreeting(t, g)
 	if !g.recruit.active {
 		t.Fatal("對露依達 NPC 應開 recruit modal")
 	}
@@ -3459,6 +3460,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceRuraToCty(t, g, 0)
 	traceAdventureWalkToCty(t, g, 0, false)
 	traceTalkNPC(t, g, 2, 16)
+	traceRecruitmentGreeting(t, g)
 	if !g.recruit.active || g.recruit.stage != rcMenu || len(g.companions) != 3 {
 		t.Fatalf("商人登錄前露易達酒場狀態錯：active=%v stage=%d companions=%d",
 			g.recruit.active, g.recruit.stage, len(g.companions))
@@ -3530,6 +3532,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	merchantName := append([]int(nil), g.roster[1].Name...)
 	traceWalkThroughPortal(t, g, 8, 2, 0, 0)
 	traceTalkNPC(t, g, 2, 16)
+	traceRecruitmentGreeting(t, g)
 	press(InputState{Confirm: true}) // 找同伴參加
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	press(InputState{Confirm: true}) // roster[1] 商人
@@ -3634,6 +3637,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceRuraToCty(t, g, 0)
 	traceAdventureWalkToCty(t, g, 0, false)
 	traceTalkNPC(t, g, 2, 16)
+	traceRecruitmentGreeting(t, g)
 	if !g.recruit.active || g.recruit.stage != rcMenu {
 		t.Fatalf("建城後立即復隊未開啟露易達主選單：active=%v stage=%d",
 			g.recruit.active, g.recruit.stage)
@@ -4356,6 +4360,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		// 城鎮入口，不能把城外落點當成已在酒場內。
 		traceAdventureWalkToCty(t, g, 0)
 		traceTalkNPC(t, g, 2, 16)
+		traceRecruitmentGreeting(t, g)
 		press(InputState{Confirm: true}) // 找同伴參加
 		for i := 0; i < rosterIndex; i++ {
 			send(InputState{DirHeld: -1, DirEdge: 0})
@@ -4599,6 +4604,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		traceRuraToCty(t, g, 0)
 		traceAdventureWalkToCty(t, g, 0, false)
 		traceTalkNPC(t, g, 2, 16)
+		traceRecruitmentGreeting(t, g)
 		if !g.recruit.active || g.recruit.stage != rcMenu {
 			t.Fatalf("終盤復隊未開啟露依達主選單：active=%v stage=%d",
 				g.recruit.active, g.recruit.stage)

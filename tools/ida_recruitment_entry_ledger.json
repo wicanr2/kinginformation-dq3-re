@@ -1,0 +1,58 @@
+{
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+  "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收",
+  "annotations": [
+    {
+      "ida_linear": "0x1036d",
+      "file_offset": "0x16dd",
+      "bytes": "e8924c",
+      "semantic": "首次招募caller建立共同文字框",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10370",
+      "file_offset": "0x16e0",
+      "bytes": "bf0f02",
+      "semantic": "首次問候record527",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10378",
+      "file_offset": "0x16e8",
+      "bytes": "bf1002",
+      "semantic": "問候EOF後record528，未新增確認",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10380",
+      "file_offset": "0x16f0",
+      "bytes": "8d36323e",
+      "semantic": "首次三項選單取原始DGROUP3E32",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10384",
+      "file_offset": "0x16f4",
+      "bytes": "e85cf1",
+      "semantic": "首次三項選單SI consumer1F4E3",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    }
+  ]
+}

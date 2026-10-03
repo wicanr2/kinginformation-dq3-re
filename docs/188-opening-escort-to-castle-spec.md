@@ -2766,3 +2766,72 @@ renderer沿用共用視窗primitive、當前場景palette bank及pack的字模�
 完整game收據`work/issue4-registry-impl-r7-full/receipt.json`為24763bytes，SHA256
 `0d57da62b2ce8e7ab18d7a4e46a67751b4417895cce18ec56a3feb9201a82e81`。
 r1／r2環境設定失敗、r3／r4未畫窗、r5姓名窗殘留及campaign舊商人操作的輸出保留，詳見WORKLOG。
+
+### 2026-10-04 首次樓下招募選單的有限 READY
+
+範圍是正常出生後下樓、正式交談、record527內嵌等待、record528及三項首次選單。
+入隊後文字、分離、查看、原版Load與音訊不隨本段升格。完整RGB仍另行驗收。
+原版EXE及位址換算沿用前節：115282bytes、SHA2565178fdc8，IDA9.4 linear，file=linear−EC90。
+
+原版r4來源為234次正常輸入／468次IRQ1，196個queued／consumed／capture與392份完整packet PNG／bin。
+174冷啟動父產物及前172個出生packet的344份PNG／bin逐byte保持。
+本次直接觀察DS535E的97bytes，與出生10A9F候選前97bytes相同；slot1已登錄且首次選單前狀態1保持。
+此目的record不變性限定本次Warrior male，不外推其他職業、完整名冊或存檔。
+正式收據432468bytes，SHA256 `a85cad67ab6611291b82824973ec39de0e2192f4ad9808b0f362bd18a6e4fda9`；
+較早r1來源1baabf39保留，r2增加共同對拍器所需的頂層EXE身份，不覆寫r1。
+
+| confirmed 原始定位 | 正式行為 |
+|---|---|
+| IDA1036D `e8924c`、10370 `bf0f02` | 建共同文字框，開始record527，packet195為一次inline wait |
+| IDA10378 `bf1002`、10380 `8d36323e`、10384 `e85cf1` | 問候EOF後直接record528，再由DGROUP3E32進1F4E3；packet196 count3、cursor1 |
+| DGROUP3E32、linear28C02、file19F72；1F4E3與1F956 consumer | 原始byte座標43,30、寬18、高80投影344,30,144,80；游標360,46、行距16，由原始consumer導出 |
+| 正常原生poll與IRQ1 | 出生field2,5經原有通路反向下樓，CTY00 sec0生於8,14，正常到2,18交談；英雄、金錢與故事旗標保持 |
+
+pack新增必填`interface.recruitment_entry`。binding、問候text ID、有序具名選項、原始視窗、游標與點擊幾何皆由JSON提供。
+Go只執行問候→首次選單，不新增DQ3座標、record或玩家文字。文字EOF及選單不共用同一個按鍵。
+同版本Load清除招募UI暫態，錯誤存檔不改當前問候；此為engine存檔契約，原版Load仍unknown。
+資料契約見[docs/84](84-game-pack-json-contract.md)的首次招募入口節。
+
+重生產生器為 [tools/dosgolem_recruitment_entry_probe.py](../tools/dosgolem_recruitment_entry_probe.py)。
+沿用repo與凍結dosgolem唯讀、work UID1000可寫及既有dq3-ebiten-test:20260822-r1；
+正常從新遊戲開始，seed1357只設定一次，無座標、旗標、名冊或角色注入。
+新產物前綴為issue4-recruit-normal-r4，已占用即拒絕，不在舊來源上覆寫。
+[tools/verify_dosgolem_recruitment_entry.py](../tools/verify_dosgolem_recruitment_entry.py)獨立重建來源；
+容器內執行 `python3 /repo/tools/verify_dosgolem_recruitment_entry.py /work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json`。
+重生加`--emit`並提供尚不存在、同basename的輸出及完整原版父鏈。
+驗證固定234／468／196、完整通路與record、IRQ按放鍵、消費階段、PNG／bin及出生前綴。
+
+IDA重生入口為 [tools/ida_dump_recruitment_entry_contract.py](../tools/ida_dump_recruitment_entry_contract.py)，
+自動合併 [tools/ida_recruitment_entry_ledger.json](../tools/ida_recruitment_entry_ledger.json)五筆已分級旁註。
+以既有IDA9.4 image在一次性DB執行，EXE唯讀、輸出須不存在；不改原始名稱、位址或operand。
+正常InputState入口為`TestRecruitmentEntryDosgolemNormalInputComparison`；需設定`DQ3_MOTHER_FINISH_ORIGINAL`、
+`DQ3_RECRUIT_ENTRY_ORACLE_DIR`及新的`DQ3_RECRUIT_ENTRY_RECEIPT_DIR`，先go test -c，再從正確game目錄以有界Xvfb執行。
+
+r2下樓計畫在3,5碰到家具，原版未到櫃檯。DRAFT導航審查0c3e6b69只接受出生目的bytes及既有父鏈，不接受招募。
+r3改用已驗證反向通路，正常到首次選單並選擇入隊；packet198見slot1由1→2與record536。
+其後record537／538出現4000計時旗標，探針拒絕。後段旗標仍待分類，不能稱為產品缺陷或最終入隊收據。
+r4在首次選單自然停止，沒有放寬計時檢查或挪用DOSBox圖像。
+PCM／硬體時序仍依AGENTS停止線，不深入driver或ISR。完成聲明只限首次招募入口；後續分支需另續原版來源。
+
+### 首次招募入口正式實作與驗收
+
+schema0.11.0／content0.1.83，canonical `sha256:1e30085e7a81e37446f20699051048b5e254ec30978d124ae5a96921ac75dc10`。
+Go的`game/recruitment_entry.go`與`internal/gamepack/recruitment_entry.go`只處理共用狀態及嚴格引用；原始資料在pack JSON。
+正常InputState從母親合法checkpoint重播全部196個packet，位置、場景、金錢、旗標及問候／首次選單通過。
+同版本Save／Load、Load後正式下一步與壞Load不改問候通過，原版Load仍unknown。
+47張完整入口PNG逐byte等於隔離試作，38張取消／出生逐byte等於前次正式輸出；兩張首次問候／選單各差295RGB。
+有限狀態E2／E3及畫面V2，完整V3仍RED，不把後段未接受的r3交易升格。
+
+完整game434清單，385頂層／86子PASS、49選用SKIP；正常THE END66.12秒，只屬remake回歸。
+internal155頂層／293子PASS、4選用SKIP及11套件；12種壞pack拒絕。desktop main.go建置為Linux x86_64 ELF。
+八種隔離壞原版來源拒絕且原始收據保持。正式IDA匯出1846499bytes、SHA25683c9ac67，五筆confirmed旁註按原始定位合併。
+
+正式完整回歸為`work/issue4-recruit-entry-production-r1-full/receipt.json`及同目錄logs。
+合併原版對拍程序在第三條路線被SIGKILL；前兩條未當作整批通過，失敗log保持。
+以相同image及4GiB條件拆成獨立程序乾淨重跑，入口為`work/issue4-recruit-entry-production-r2-native-run.py`，
+結果在`work/issue4-recruit-entry-production-r2-compare`。末次只補測試的Load後正式下一步，production Go／JSON與完整回歸相同。
+來源拒絕入口為`work/issue4-recruit-entry-negatives-r1.py`及同前綴JSON；source CLI與IDA producer皆拒絕覆寫既有來源。
+所有原版、PNG／bin、database、完整執行檔與使用者scratch留本機；沒有新發行包。Issue #4保持OPEN。
+提交前檢查入口為`work/issue4-recruit-entry-final-audit.py`，末次收據為`work/issue4-recruit-entry-final-r2-receipt.json`。
+新增Go掃描為`work/issue4-recruit-entry-added-go-scan.json`；命中限於測試證據、共用格式上限、schema版本與註解，無新增版本專屬production fallback。
+提交、遠端與Issue核對收據保存於`work/issue4-recruit-entry-post-push-receipt.json`。

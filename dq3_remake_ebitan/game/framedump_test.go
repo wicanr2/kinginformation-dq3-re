@@ -123,6 +123,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.px, g.py, g.facing = 2, 18, 1 // 隔 row17 櫃台面向 b4=1 露依達
 	g.dlg.open = false
 	g.recruit.open()
+	traceRecruitmentGreeting(t, g)
 	dump("luida_recruit")
 	g.recruit.active = false
 
