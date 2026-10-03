@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.9.0"
+	SchemaVersion       = "0.10.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -1078,6 +1078,7 @@ type RawScreenAsset struct {
 }
 
 type Interface struct {
+	Registration             *Registration             `json:"registration"`
 	FieldIdleStatus          *FieldIdleStatus          `json:"field_idle_status,omitempty"`
 	SchemaVersion            string                    `json:"schema_version"`
 	SceneCameras             []SceneCameraBinding      `json:"scene_cameras"`
@@ -2286,6 +2287,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 		return nil, fmt.Errorf("%s: %w", textsPath, err)
 	}
 	if err := p.validateNewGameRasterRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
+	if err := p.validateRegistration(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
 	if err := p.validateOpeningPreludeRefs(); err != nil {

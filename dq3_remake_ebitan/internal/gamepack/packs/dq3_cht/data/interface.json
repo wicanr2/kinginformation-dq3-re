@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.9.0",
+  "schema_version": "0.10.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -2820,6 +2820,103 @@
       "consumer": "出生交易後原始caller依序DI0C0B／0C09→共用文字consumer",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "有限READY：共用樣式、保留文字、EOF返回；NPC更新、動畫與母親狀態尚未閉合。"
+    }
+  },
+  "registration": {
+    "id": "dq3:registration",
+    "binding": {
+      "cty_raw": 0,
+      "section": 2,
+      "npc_handler_raw": 3
+    },
+    "presentation_id": "dq3:opening.birthday_prelude",
+    "geometry_id": "dq3:new_game_geometry",
+    "shadow": {
+      "mode": "vga_word_latch_and",
+      "offset_x": 8,
+      "offset_y": 8,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    "text_roles": {
+      "greeting": "dq3:text.registration.greeting",
+      "initial_decline": "dq3:text.registration.initial_decline",
+      "name_prompt": "dq3:text.registration.name_prompt",
+      "creation_cancelled": "dq3:text.registration.creation_cancelled",
+      "registered": "dq3:text.registration.registered",
+      "farewell": "dq3:text.registration.farewell"
+    },
+    "class_options": [
+      {
+        "class_raw": 1,
+        "text_id": "dq3:text.registration.class.1"
+      },
+      {
+        "class_raw": 2,
+        "text_id": "dq3:text.registration.class.2"
+      },
+      {
+        "class_raw": 3,
+        "text_id": "dq3:text.registration.class.3"
+      },
+      {
+        "class_raw": 4,
+        "text_id": "dq3:text.registration.class.4"
+      },
+      {
+        "class_raw": 6,
+        "text_id": "dq3:text.registration.class.6"
+      },
+      {
+        "class_raw": 7,
+        "text_id": "dq3:text.registration.class.7"
+      }
+    ],
+    "class_menu": {
+      "raw_window": {
+        "id": "registration_class",
+        "flags": 3,
+        "x": 43,
+        "y": 46,
+        "width": 16,
+        "height": 128,
+        "address": "linear:0x28ba8"
+      },
+      "window_text_id": "dq3:text.registration.class_menu",
+      "cursor": {
+        "x": 360,
+        "y": 62,
+        "step_x": 0,
+        "step_y": 16
+      },
+      "hit_rect": {
+        "x": 360,
+        "y": 62,
+        "width": 96,
+        "height": 16
+      }
+    },
+    "require_nonempty_name": true,
+    "review_before_confirmation": true,
+    "retain_text_between_records": true,
+    "roster_capacity": 11,
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+      "address_space": "linear",
+      "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+      "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
     }
   }
 }

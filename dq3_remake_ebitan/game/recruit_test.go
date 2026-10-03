@@ -9,69 +9,63 @@ import (
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
-// createViaTavern:跑完整酒館 2F 登錄所流程(職業→命名→性別)產一名成員,回傳 tv.input 的結果。
-// 命名跳過注音輸入,直接選英數格盤 OK 格(允許空名 → 回退職業名,tavern.go tavGender 分支邏輯)。
-func createViaTavern(tv *Tavern) *Member {
+// 元件測試走登錄狀態機；正常玩家路徑另見 registration_test.go。
+func createViaTavern(t *testing.T, tv *Tavern) *Member {
+	t.Helper()
+	configureRegistrationFixture(t, tv)
 	r := rng.New(0x1357)
 	tv.open()
-	tv.input(InputState{DirEdge: -1, Confirm: true}, r) // 選職業(游標預設0)→ 進命名
+	drainRegistrationText(t, tv, r)
+	tv.input(InputState{DirEdge: -1, Confirm: true}, r)
+	drainRegistrationText(t, tv, r)
 	tv.ni.nameZhu = false
+	tv.ni.nameBuf = []int{0}
 	tv.ni.cursor = niCellOK
-	tv.input(InputState{DirEdge: -1, Confirm: true}, r) // 完成命名(空名)→ 進性別
+	tv.input(InputState{DirEdge: -1, Confirm: true}, r)
+	tv.input(InputState{DirEdge: -1, Confirm: true}, r)
+	tv.input(InputState{DirEdge: -1, Confirm: true}, r)
+	if tv.stage != tavReview {
+		t.Fatal("missing ability review")
+	}
+	tv.input(InputState{DirEdge: -1, Confirm: true}, r)
 	m, _ := tv.input(InputState{DirEdge: -1, Confirm: true}, r)
 	return m
 }
-
-// TestTavernCreateGoesToRosterNotCompanions:酒館 2F 登錄所創角(g.tavernCreate glue)只登錄
-// roster,不觸碰既有 companions——這是本次修的核心 bug(舊碼建完角色立即 append 進 companions,
-// 滿 3 人時 `append(companions[1:], m)` 頂替最舊成員)。建 4 名角色後 roster 應有 4 筆,
-// companions 維持原本 3 名不變(逐一比對 pointer,確認第 0 位「最舊」成員沒被頂替/丟失)。
 func TestTavernCreateGoesToRosterNotCompanions(t *testing.T) {
 	g := &Game{companions: startingCompanions(0)}
 	orig := append([]*Member(nil), g.companions...)
-
 	var tv Tavern
 	for i := 0; i < 4; i++ {
-		m := createViaTavern(&tv)
+		m := createViaTavern(t, &tv)
 		if m == nil {
-			t.Fatalf("第 %d 名創角應成功回傳 Member", i+1)
+			t.Fatal("missing accepted member")
 		}
-		if len(g.roster) < rcRosterMax { // 對齊 g.tavernCreate 的 glue 邏輯(見 TestGameTavernCreateGoesToRoster)
-			g.roster = append(g.roster, m)
-		}
+		g.roster = append(g.roster, m)
 	}
-
-	if len(g.roster) != 4 {
-		t.Fatalf("roster 應有 4 筆(創 4 名角色),得 %d", len(g.roster))
-	}
-	if len(g.companions) != 3 {
-		t.Fatalf("companions 不應被創角動作變動,應維持 3 名,得 %d", len(g.companions))
-	}
-	for i, m := range orig {
-		if g.companions[i] != m {
-			t.Errorf("companions[%d] 被創角動作改動(疑似頂替/丟隊友 bug 重現):原 %p 現 %p", i, m, g.companions[i])
-		}
+	if len(g.roster) != 4 || !reflect.DeepEqual(orig, g.companions) {
+		t.Fatal("registration changed companions")
 	}
 }
-
-// TestGameTavernCreateGoesToRoster:直接經 g.tavern(而非獨立 Tavern 值)+ g.tavernCreate 走一遍,
-// 對齊 game.go Update() 實際呼叫路徑(g.tavern.active 分支)。
 func TestGameTavernCreateGoesToRoster(t *testing.T) {
 	g := &Game{companions: startingCompanions(0)}
-	origLen := len(g.companions)
-
+	configureRegistrationFixture(t, &g.tavern)
 	g.tavern.open()
-	g.tavernCreate(InputState{DirEdge: -1, Confirm: true}) // 選職業 → 命名
+	r := &g.prng
+	drainRegistrationText(t, &g.tavern, r)
+	g.tavernCreate(InputState{DirEdge: -1, Confirm: true})
+	drainRegistrationText(t, &g.tavern, r)
 	g.tavern.ni.nameZhu = false
+	g.tavern.ni.nameBuf = []int{0}
 	g.tavern.ni.cursor = niCellOK
-	g.tavernCreate(InputState{DirEdge: -1, Confirm: true}) // 完成命名(空名)→ 性別
-	g.tavernCreate(InputState{DirEdge: -1, Confirm: true}) // 選性別 → 建角,glue 應寫進 roster
-
-	if len(g.roster) != 1 {
-		t.Fatalf("g.tavernCreate 建角後 roster 應有 1 筆,得 %d", len(g.roster))
+	for i := 0; i < 4; i++ {
+		g.tavernCreate(InputState{DirEdge: -1, Confirm: true})
 	}
-	if len(g.companions) != origLen {
-		t.Fatalf("g.tavernCreate 不應動 companions,應維持 %d,得 %d", origLen, len(g.companions))
+	if len(g.roster) != 0 || g.tavern.stage != tavAccept {
+		t.Fatal("registration wrote before acceptance")
+	}
+	g.tavernCreate(InputState{DirEdge: -1, Confirm: true})
+	if len(g.roster) != 1 || len(g.companions) != 3 {
+		t.Fatal("acceptance must register only")
 	}
 }
 

@@ -181,3 +181,17 @@ func (d *Dialogue) drawRetainedRows(rgba []byte, fg dq3data.Color) {
 		}
 	}
 }
+
+// appendRetainedRecord 維持 caller 的原生文字行計數與已畫操作。
+// EOF 未捲動時移至下一行；最後一行的 EOF 已完成捲動。
+func (d *Dialogue) appendRetainedRecord(codes []uint16) {
+	old := d.retained
+	d.openRecord(codes)
+	if old != nil {
+		row := old.row
+		if row < d.layout.LinesPerPage-1 {
+			row++
+		}
+		d.retained = &retainedTextFlow{row: row, ops: old.ops}
+	}
+}

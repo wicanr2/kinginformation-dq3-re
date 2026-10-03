@@ -205,6 +205,7 @@ func compsToSav(ms []*Member) []compSav {
 }
 
 func (g *Game) restore(s saveState) {
+	g.tavern.reset()
 	g.deferredRegionDialogueReturnID = s.DeferredRegionDialogueReturnID
 	if g.regionDialogueReturn != nil {
 		g.regionDialogueReturn = nil

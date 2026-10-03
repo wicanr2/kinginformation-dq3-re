@@ -1922,11 +1922,11 @@ content0.1.77沿用schema0.7.0，在`field_idle_status.scenes`新增已有D3正�
 等待與恢復、字型、文字、陰影及存檔暫態契約不變；場景引用與原版自然來源見[docs/188](188-opening-escort-to-castle-spec.md)。
 不同canonical hash的舊存檔仍拒絕，不自動遷移。
 
-## 登錄契約的READY設計
+## 登錄契約（schema0.10.0／content0.1.82）
 
-此節是下一批實作的輸入，目前schema0.9.0／content0.1.81尚未加入`registration`。
+此版已加入必填`registration`。正常取消及首次戰士男性登錄狀態鏈、名冊與Load暫態已驗證；完整畫面仍未通過。
 有限READY來源、推論等級、停止線及正常玩家驗收見[docs/188](188-opening-escort-to-castle-spec.md)。
-正式加入必填契約時須更新schema／content及canonical hash，不以舊格式默默套用新流程。
+九份JSON與引擎schema同步更新；舊schema或不同canonical hash的存檔明確拒絕，不自動遷移。
 
 `interface.registration`採單一具名登錄狀態機，沒有任意JSON流程或程式碼。
 Go只執行問候、是否登錄、姓名、職業、性別、能力等待、能力接受、再詢問及退出。

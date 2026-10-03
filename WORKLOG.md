@@ -1248,3 +1248,23 @@ CONTEXT唯一現況表、PROJECT_MEMORY及docs/74同步；下一批直接進正�
 production保持schema0.9.0／content0.1.81及d6c7994e canonical hash；正常問候與順序差異仍待修正。
 本批沒有Go／pack修改，不重跑無改動的game全套，前輪r10仍是最近production回歸。
 私有來源、PNG、IDA database與完整交付不加入Git；Issue保持OPEN，Goal繼續，沒有新發行包。
+
+## 2026-10-04 Issue #4 正式登錄狀態鏈
+
+依6faf4e7有限READY完成typed registration、問候與詢問、姓名先於六職業、性別、能力預覽／接受、再詢問與最終返回。
+接受後才寫名冊，不自動入隊；取消與有效Load清除候選，壞Load保持候選。schema0.10.0／content0.1.82，canonical140f2d39。
+正常取消／單一戰士男性出生、後續正常樓下招募與同版本存讀通過；38張完整PNG保留296／608／263／677差異。
+能力HP原版11、remake13，長路線亂數條件未對齊，完整V3不升格。首次No551維持static strong；滿額替換fail closed。
+完整game430項覆蓋，382頂層／86子PASS、48選用SKIP；正常THE END92.12秒，只屬remake回歸。
+全部internal153頂層／281子PASS、4選用SKIP及11套件；desktop main.go ELF64 x86_64建置通過。
+
+保留所有失敗輸出。r1 pack測試漏掛 /assets_raw，r2正常對拍漏設定母親來源，均為驗證設定問題。
+r3／r4捕捉到保留文字前景色不在場景索引表時整個選單未畫出；r5按pack前景色建立索引後姓名差296。
+r5職業／性別錯誤保留姓名窗；原版10D9C／10DA0與正常packet165／166證實撤窗，r6完整差降為608。
+r5完整campaign商人仍用職業先行的舊操作；r7改為正常問候、姓名、六職業映射、能力接受，完整回歸通過。
+兩次desktop腳本誤用不存在cmd/dq3，後用main.go完成；image缺file工具，以Python讀ELF header確認架構，未當成產品缺陷。
+末次只加嚴loader的字模邊界、word對齊與共用陰影一致性，資料和有效玩家流程保持；重跑internal與受影響登錄／desktop。
+
+CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74、docs/84、docs/188與README穩定摘要同步。
+全部工作依Issue #4，已登記實作進度5972241036。原版／圖片／database／封包及使用者scratch均不入Git。
+最後收尾收據記錄提交、push、遠端Issue核對及Docker清理；Issue保持OPEN，Goal繼續，沒有新發行包。

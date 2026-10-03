@@ -9,7 +9,7 @@ import (
 // 共用「命名輸入」+「性別選單」widget(移植 dq3_nameinput,docs/15):英數格盤(0-9/A-Z + ←/OK)+
 // 注音組字(zhuyin.Composer,42 格盤 + 同音候選)、Tab/情境鍵切模式。酒館招募(tavern.go)與
 // 主角創建(newgame.go)共用同一份實作,不重複兩份邏輯——差異只在「OK 時是否強制非空才放行」,
-// 由呼叫端依情境判斷(酒館允許空名回退職業名;主角創建必填,見 docs/15 §「完成放行條件」)。
+// 主角創建與登錄的呼叫端都要求非空姓名，見 docs/188 的完成放行條件。
 const (
 	niChars   = 36 // 0-9 + A-Z
 	niCols    = 9
@@ -299,7 +299,7 @@ func (ni *NameInput) activateFunction(fn int) (confirmed, canceled bool) {
 		}
 	case 3: // 取消
 		return false, true
-	case 4: // 完成；空名是否放行由主角／酒館呼叫端決定
+	case 4: // 完成；呼叫端驗證姓名非空
 		return true, false
 	}
 	return false, false

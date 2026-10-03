@@ -11,7 +11,7 @@ import (
 // 完成放行條件=非空,對齊 docs/15「[0x270a]>=1 才放行」)→ 性別 →
 // Lv1 能力生成→能力檢視等待→「這個人可以嗎？」→ 開始新遊戲。
 // 命名/性別 widget 與酒館招募共用 NameInput/GenderSelect(nameinput.go),不重複兩份邏輯;
-// 差異只在完成放行 gate:主角創建強制非空(下方 ngName case),酒館允許空名回退職業名。
+// 主角創建與登錄都要求非空姓名，各自的呼叫端執行放行條件。
 // 出生點由 startOpening 載入 CTY00 sec4；能力確認背景由 game-pack 的 raw screen 提供，
 // 能力兩階段的原始record及外框切換由資料包raster引用；限定對拍見docs/113。
 const (

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.9.0",
+  "schema_version": "0.10.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -3358,6 +3358,565 @@
         "address": "IDA 9.4 linear0x1022A..0x10232; DI0C07 selector; D3TXT01 record79",
         "consumer": "normal first Down after mother return; automatic warning then forced north step; docs/188",
         "doc": "docs/188-opening-escort-to-castle-spec.md"
+      }
+    },
+    {
+      "id": "dq3:text.registration.greeting",
+      "value": "*「這裡是冒險者的登錄所\n---\n*「把想成為同伴的人登錄\n  起來,再到樓下的酒店\n  把人找出來。\n---\n*「要把新人\n  登錄在名冊上嗎?",
+      "glyph_codes": [
+        59,
+        60,
+        398,
+        512,
+        399,
+        533,
+        218,
+        187,
+        149,
+        607,
+        532,
+        608,
+        65532,
+        59,
+        60,
+        530,
+        609,
+        610,
+        611,
+        601,
+        602,
+        149,
+        194,
+        607,
+        532,
+        65534,
+        12,
+        12,
+        583,
+        461,
+        55,
+        573,
+        453,
+        725,
+        517,
+        149,
+        765,
+        455,
+        65534,
+        12,
+        12,
+        530,
+        194,
+        769,
+        440,
+        461,
+        56,
+        65532,
+        59,
+        60,
+        504,
+        530,
+        671,
+        194,
+        65534,
+        12,
+        12,
+        607,
+        532,
+        411,
+        692,
+        787,
+        421,
+        534,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 550
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.initial_decline",
+      "value": "*「那麼,想把新人登錄\n  在名冊上時在來吧!",
+      "glyph_codes": [
+        59,
+        60,
+        354,
+        436,
+        55,
+        609,
+        530,
+        671,
+        194,
+        607,
+        532,
+        65534,
+        12,
+        12,
+        411,
+        692,
+        787,
+        421,
+        782,
+        411,
+        461,
+        499,
+        57
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 551
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.name_prompt",
+      "value": "*「誰要登錄呢?",
+      "glyph_codes": [
+        59,
+        60,
+        505,
+        504,
+        607,
+        532,
+        592,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 554
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.creation_cancelled",
+      "value": "*「啊!不行嗎?\n---\n*「那麼還要登錄別人嗎?",
+      "glyph_codes": [
+        59,
+        60,
+        509,
+        57,
+        228,
+        531,
+        534,
+        58,
+        65532,
+        59,
+        60,
+        354,
+        436,
+        524,
+        504,
+        607,
+        532,
+        417,
+        194,
+        534,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 558
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.registered",
+      "value": "*「還要登錄別人嗎?",
+      "glyph_codes": [
+        59,
+        60,
+        524,
+        504,
+        607,
+        532,
+        417,
+        194,
+        534,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 559
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.farewell",
+      "value": "*「謝謝光臨。",
+      "glyph_codes": [
+        59,
+        60,
+        582,
+        582,
+        243,
+        563,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 560
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.class_menu",
+      "value": "┌┐┐┐┐┐┐└\n│ 戰 士  │\n│ 武鬥家  │\n│ 僧 侶  │\n│ 魔法使者 │\n│ 商 人  │\n│ 遊玩者  │\n┘┐┐┐┐┐┐├",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        49,
+        65534,
+        54,
+        12,
+        107,
+        12,
+        144,
+        12,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        108,
+        207,
+        657,
+        12,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        109,
+        12,
+        704,
+        12,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        110,
+        208,
+        210,
+        187,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        112,
+        12,
+        194,
+        12,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        113,
+        705,
+        187,
+        12,
+        12,
+        54,
+        65534,
+        50,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 555
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.class.1",
+      "value": "戰士",
+      "glyph_codes": [
+        107,
+        144
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 458
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.class.2",
+      "value": "武鬥家",
+      "glyph_codes": [
+        108,
+        207,
+        657
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 459
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.class.3",
+      "value": "僧侶",
+      "glyph_codes": [
+        109,
+        704
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 460
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.class.4",
+      "value": "魔法使者",
+      "glyph_codes": [
+        110,
+        208,
+        210,
+        187
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 461
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.class.6",
+      "value": "商人",
+      "glyph_codes": [
+        112,
+        194
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 463
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
+      }
+    },
+    {
+      "id": "dq3:text.registration.class.7",
+      "value": "遊玩者",
+      "glyph_codes": [
+        113,
+        705,
+        187
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 464
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear0x106DC..0x10854;0x10924..0x109BD;0x10A9F..0x10ABE;0x1F4E3..0x1FE11;0x21414..0x21651;DGROUP4F54",
+        "consumer": "normal registration greeting/name/class/gender/review/accept/again/final-wait; registry UI reviewed receipt6064fa and independent review9e5017",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；初次No551 static strong；一名Warrior male正常登錄與取消已觀測。其他職業與滿額替換、原版存檔及聲音尚未對拍。"
       }
     }
   ]

@@ -42,8 +42,9 @@ func (rc *Recruit) open() { rc.active, rc.stage, rc.cursor = true, rcMenu, 0 }
 // tavernCreate:酒館 2F 登錄所 modal 的輸入 glue(掛在 g.tavern 上)。建角**只登錄 roster,
 // 不自動入隊**(見檔頭說明)。抽成獨立方法,方便單元測試不必經過完整 Update()/ebiten 輸入輪詢。
 func (g *Game) tavernCreate(in InputState) {
-	if m, _ := g.tavern.input(in, &g.prng); m != nil &&
-		len(g.roster)+len(g.companions) < rcRosterMax {
+	g.tavern.occupied = len(g.roster) + len(g.companions)
+	if m, _ := g.tavern.input(in, &g.prng); m != nil && g.tavern.contract != nil &&
+		len(g.roster)+len(g.companions) < g.tavern.contract.RosterCapacity {
 		g.roster = append(g.roster, m)
 	}
 }

@@ -1,17 +1,16 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-04現行閘門：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
-> 現行schema0.9.0／content0.1.81。母親帶路殘留事件已修正，首次Up自動警告後到21,15，後兩步21,14／21,13。
-> 原版有限來源41次正常輸入／82IRQ1、174份父PNG／bin保持；首次警告完整640×350 RGB差0。
-> 三張北行畫面仍差195／9039／22192，完整畫面V3未完成。既有Down文字窗RGB差0、完整13145／13340限制保持。
-> pending及已消費檢查點的同版本Save／Load、阻擋不消費、新事件覆蓋與壞存檔拒絕通過；原版存檔未知。
-> 甘達特對話觸發當步不再啟動隨機遭遇，固定邊界測試與原始四敵編隊通過。
-> 拉之鏡回歸曾因四名角色含裝備均滿八格受阻。正常丟棄備品後取得，遊戲容量與旗標規則保持。
-> 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
-> 14種協同壞來源拒絕；來源c38bcc09，canonical hash sha256:d6c7994ee7fa53d227a98263f12606a8f4109a87f4afea01cd6996ad7f269b5d。
-> quiescent-r2全路線202次正常輸入／404IRQ1取消來源0467c01b已接受；13種損壞拒絕通過，remake取消與出生仍DRAFT。
-> 取消0467c01b及正常單一出生de818064來源已接受；視窗consumer與typed registration已達有限READY，IDA匯出6064fa97、1649筆指令核對及六種損壞拒絕通過。下一切片直接實作正式問候、姓名、六職業、性別、能力接受及名冊／Load暫態；production仍0.1.81。原版音訊、NPC相位及完整campaign待驗。
-> 沒有新發行包。唯一現況表見[CONTEXT](CONTEXT.md)，證據與收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+> 2026-10-04目前現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
+> 現行schema0.10.0／content0.1.82。正式登錄已修正為問候、姓名、六職業、性別、能力等待、接受、再詢問及最終按鍵返回。
+> 姓名必填，接受後才寫名冊，不自動入隊。取消不新增角色；有效Load清除候選，壞存檔不改當前候選。
+> 原版取消0467c01b與單一戰士男性出生de818064的等價正式輸入逐包狀態通過；交談仍比原版多一次正式命令確認。
+> 正常出生後的同版本Save／Load及樓下招募通過，只屬remake驗收；原版樓下路線尚待延長。
+> 38張完整登錄PNG保留全部差異：姓名296、問候／詢問／職業／性別608、能力／接受263、返回677。
+> 能力頁原版HP11、remake HP13；兩側seed1357均於冷開機固定一次，長路線的亂數條件尚未對齊，不把差值當規則對拍通過。
+> 登錄狀態鏈為有限E2／E3，畫面V2；完整V3、其他職業／性別、滿額替換、原版存檔與音訊仍未完成。
+> 完整game430頂層清單覆蓋，382頂層／86子PASS、48選用SKIP；internal153頂層／281子PASS、4選用SKIP及11套件。
+> 正常新遊戲至THE END92.12秒，只屬重製可玩回歸；無素材缺失SKIP。desktop main.go建置為Linux x86_64 ELF。
+> 既有母親殘留事件與甘達特對話修正保持，不以舊待辦重開。唯一現況表見[CONTEXT](CONTEXT.md)，證據與私有收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下保存歷史檢查點，不能以舊待辦重新開啟已閉合功能。
 

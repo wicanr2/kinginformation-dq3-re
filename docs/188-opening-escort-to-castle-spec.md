@@ -2713,3 +2713,56 @@ Load取消未接受候選與UI暫態，不增加名冊、不消耗額外RNG；�
 本輪Issue文字為`work/issue4-registry-ui-ready-r1-issue-comment.txt`；
 工具、所有權與索引核對為`work/issue4-registry-ui-ready-r1-hygiene.json`，
 提交／推送、Issue及清理收尾為`work/issue4-registry-ui-ready-r1-post-push-receipt.json`。
+
+### 登錄實作檔案入口
+
+`dq3_remake_ebitan/internal/gamepack/registration_test.go` 比較原始 EXE 視窗、職業表、TXT 記錄與 CTY NPC，並拒絕缺欄位、null、未知欄位及不合法引用。
+
+`internal/gamepack/registration.go` 定義嚴格的登錄資料契約；`game/tavern.go` 執行具名登錄狀態；`game/indexed_window.go` 共用原版視窗 primitive。下列路徑均以 `dq3_remake_ebitan/` 為根。取消與正常出生驗證沿用上節 dosgolem 收據。
+
+`dq3_remake_ebitan/game/registration_test.go` 鎖定空名、接受邊界、取消、滿額 fail-closed，並以正式冷開機輸入比較 dosgolem 取消與出生收據。使用私有收據時明確設定 `DQ3_REGISTRY_ORACLE_DIR` 與 `DQ3_REGISTRY_RECEIPT_DIR`；原版素材與產物維持不入 Git。
+
+### 2026-10-04 正式登錄狀態鏈實作與驗收
+
+沿用上一節有限READY，schema0.10.0／content0.1.82；canonical hash為
+`sha256:140f2d39be09e8d092d40efb779b247f85222525e7ff5609285d90d1375644ea`。
+正式handler由pack binding提供，姓名在職業之前，六職業為raw1,2,3,4,6,7。
+空姓名不放行；性別選定後建立候選並顯示能力，下一個正常按鍵進接受詢問，接受後才加入名冊。
+取消使用558再詢問，成功使用559再詢問；再次No為560，最終正常按鍵返回field2,5。
+初次No551保持static strong。滿額替換尚未READY；滿額Yes不創建、刪除或重擲角色。
+
+文字同一caller開框時清空，後續record延續原始行計數與捲動。
+原始IDA9.4 linear10D9C `8d36b842`與10DA0 `e861e8`，分別取姓名窗DGROUP42B8與呼叫1F604撤窗。
+職業／性別頁不得重畫姓名盤；正常原版packet165／166直接確認此效果，限定confirmed。
+保留原始名稱、指令與位址；來源仍為6064fa97匯出，EXE身份與位址換算不變。
+renderer沿用共用視窗primitive、當前場景palette bank及pack的字模前景色；不能把整個世界palette或標題覆寫用在此窗。
+
+| 實際驗證 | 結果與限制 |
+|---|---|
+| 原版來源 | 取消0467c01b及出生de818064保持；dosgolem2f44a68，原版EXE5178fdc8，seed1357冷開機固定一次；沒有修改或注入原版 |
+| 正常取消 | 母親正常checkpoint後164個queued packet，前149個field狀態及150..164登錄狀態通過；不寫roster／companions；來源含202次正常輸入／404IRQ1 |
+| 正常單一出生 | 172個queued packet；165職業、166性別、167能力、168接受、169才roster1、172返回；姓名0、Warrior、male、Lv1、布衣及空槽一致；來源含210次／420IRQ1 |
+| 等價輸入 | 原版Enter交談在remake多一次正式命令確認Talk；不宣稱raw key parity。英雄、位置、金錢、旗標與正常場景入口未注入 |
+| Save／Load | 兩條正常路線返回後同版本往返通過；出生後正常樓下招募及再存讀通過。無效schema不改候選，有效Load清除候選並保留配置。原版Load仍unknown |
+| 完整PNG | 共38張，未裁切、遮罩、固定人物或重擲；姓名296、問候／選單／職業／性別608、能力／接受263、返回677個RGB差異，完整V3仍RED |
+| 能力亂數 | 原版HP11、remake13。初始seed相同仍未證明長路線亂數條件可比；目前不驗收完整向量或精確骰序，不把差值包裝成通過 |
+| 標準回歸 | r7完整game430頂層清單，382頂層／86子PASS、48選用SKIP；正常新遊戲至THE END92.12秒，只屬remake可玩。無素材缺失SKIP |
+| 資料與建置 | 全部11個internal套件，153頂層／281子PASS、4選用SKIP；新增17個損壞契約拒絕。desktop main.go建置為Linux x86_64 ELF，不是新發行包 |
+
+目前等級為登錄狀態鏈有限E2／E3及畫面V2，沒有宣稱全視覺CONFORMED。
+其他class／gender的動態證據、滿額替換、目的record bytes、原版樓下招募、原版Load、音訊與完整campaign仍未知。
+下一切片延長原版正常樓下招募，不重開本批已閉合的視窗consumer。
+
+可重播入口為`game/registration_test.go`的`TestRegistrationDosgolemNormalInputComparison`。
+設`DQ3_MOTHER_FINISH_ORIGINAL=work/dosgolem-opening/issue4-mother-finish-receipt.json`，
+`DQ3_REGISTRY_ORACLE_DIR=work/dosgolem-opening`及一個新的`DQ3_REGISTRY_RECEIPT_DIR`，均以容器的絕對路徑為準。
+先用`go test -c`編譯，再在有界Xvfb及正確assets_raw工作目錄執行；工具鏈為dq3-ebiten-test:20260822-r1。
+圖像、原版、database與執行封包留本機，不加入Git。
+
+本機證據：`work/issue4-registry-impl-r6/registration-birth-false.json`為3238bytes，SHA256
+`752619bd13f1a0ab54deee991114ff339a9d4a20620e0162afd155d72696f14a`；
+出生`registration-birth-true.json`為5566bytes，SHA256
+`615a519d1567262cd6818340e3eab181979e2b1468c3b57df3280b8c4f07643e`。
+完整game收據`work/issue4-registry-impl-r7-full/receipt.json`為24763bytes，SHA256
+`0d57da62b2ce8e7ab18d7a4e46a67751b4417895cce18ec56a3feb9201a82e81`。
+r1／r2環境設定失敗、r3／r4未畫窗、r5姓名窗殘留及campaign舊商人操作的輸出保留，詳見WORKLOG。

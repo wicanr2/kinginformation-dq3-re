@@ -13,13 +13,14 @@ import (
 // 索引色視窗只實作有限的原始字模／陰影／XOR primitive；所有版面與色號來自 pack。
 // 入口與 READY 證據：docs/113；欄位契約：docs/84。
 type indexedNewGameRenderer struct {
-	geo        gamepack.NewGameGeometry
-	style      *gamepack.NewGameRasterLayout
-	windows    map[string]gamepack.RawNewGameWindow
-	texts      map[string][]uint16
-	background []byte
-	palette    []dq3data.Color
-	pixels     []byte
+	geo               gamepack.NewGameGeometry
+	style             *gamepack.NewGameRasterLayout
+	windows           map[string]gamepack.RawNewGameWindow
+	texts             map[string][]uint16
+	background        []byte
+	palette           []dq3data.Color
+	backgroundPalette []dq3data.Color
+	pixels            []byte
 }
 
 func newIndexedNewGameRenderer(pack *gamepack.Pack, geo gamepack.NewGameGeometry, tx *dq3data.Text, background []byte, palette []dq3data.Color) (*indexedNewGameRenderer, error) {
@@ -178,6 +179,11 @@ func (r *indexedNewGameRenderer) cursor(x, y int) {
 
 func (r *indexedNewGameRenderer) draw(rgba []byte, tx *dq3data.Text, nf *NewGameFlow) {
 	copy(r.pixels, r.background)
+	r.drawContent(tx, nf)
+	drawIndexedPCX(rgba, r.pixels, r.palette)
+}
+
+func (r *indexedNewGameRenderer) drawContent(tx *dq3data.Text, nf *NewGameFlow) {
 	s := r.style
 	if nf.stage == ngMenu {
 		r.window(tx, s.Menu)
@@ -233,7 +239,6 @@ func (r *indexedNewGameRenderer) draw(rgba []byte, tx *dq3data.Text, nf *NewGame
 			ni.hits.add(h.X, h.Y+row*s.FunctionCursor.StepY, h.Width, h.Height, niTapFunction(row))
 		}
 	}
-	drawIndexedPCX(rgba, r.pixels, r.palette)
 }
 
 func (r *indexedNewGameRenderer) number(tx *dq3data.Text, field gamepack.NumberField, value int) {
@@ -285,4 +290,50 @@ func (r *indexedNewGameRenderer) ability(tx *dq3data.Text, nf *NewGameFlow) {
 		a := geo.StatsChoiceCursor
 		r.opaqueGlyph(tx, a.X, a.Y+nf.confirmCursor*a.StepY, nf.labels.ChoiceCursor[0])
 	}
+}
+
+// 世界視窗沿用目前場景的實際索引色，不能套用標題的調色盤覆寫。
+func (r *indexedNewGameRenderer) captureBackground(rgba []byte) bool {
+	lookup := map[[3]byte]byte{}
+	for i := len(r.backgroundPalette) - 1; i >= 0; i-- {
+		c := r.backgroundPalette[i]
+		lookup[[3]byte{c.R, c.G, c.B}] = byte(i)
+	}
+	for i := len(r.palette) - 1; i >= 0; i-- {
+		c := r.palette[i]
+		lookup[[3]byte{c.R, c.G, c.B}] = byte(i)
+	}
+	for i := range r.pixels {
+		o := i * 4
+		v, ok := lookup[[3]byte{rgba[o], rgba[o+1], rgba[o+2]}]
+		if !ok {
+			return false
+		}
+		r.pixels[i] = v
+	}
+	return true
+}
+func (tv *Tavern) installRaster(base *indexedNewGameRenderer, palette []dq3data.Color) error {
+	if tv.contract == nil || base == nil || len(palette) < 16 {
+		return fmt.Errorf("registration raster missing")
+	}
+	r := *base
+	r.pixels = make([]byte, ScreenW*ScreenH)
+	r.palette = append([]dq3data.Color(nil), palette...)
+	r.backgroundPalette = append([]dq3data.Color(nil), palette...)
+	f := tv.dialogue.prelude.ForegroundRGB
+	r.palette[*r.style.FontIndex] = dq3data.Color{R: f[0], G: f[1], B: f[2]}
+	r.windows = map[string]gamepack.RawNewGameWindow{}
+	for id, w := range base.windows {
+		r.windows[id] = w
+	}
+	r.texts = map[string][]uint16{}
+	for id, c := range base.texts {
+		r.texts[id] = c
+	}
+	m := tv.contract.ClassMenu
+	r.windows[m.RawWindow.ID] = m.RawWindow
+	r.texts[m.WindowTextID] = tv.texts[m.WindowTextID]
+	tv.raster = &r
+	return nil
 }

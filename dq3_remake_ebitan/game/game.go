@@ -623,15 +623,19 @@ func (g *Game) facingNPC() int {
 // b4=3 file0x649f→file0x1a4c（冒險者登錄所 rec550）；
 // b4=4 file0x64a3→file0x7c50（預存所 rec561，尚待獨立實作）。
 func (g *Game) openAliahanSpecialNPC(n *npcInst) bool {
+	if c := g.tavern.contract; c != nil && g.cur != nil && g.curCty == c.Binding.CTYRaw && g.cur.sec == c.Binding.Section && n.b4 == c.Binding.NPCHandlerRaw {
+		if err := g.tavern.installRaster(g.newGame.raster, g.cur.pal); err != nil {
+			return true
+		}
+		g.tavern.open()
+		return true
+	}
 	if g.curCty != 0 || g.cur == nil {
 		return false
 	}
 	switch {
 	case g.cur.sec == 0 && n.b4 == 1:
 		g.recruit.open()
-		return true
-	case g.cur.sec == 2 && n.b4 == 3:
-		g.tavern.open()
 		return true
 	case g.cur.sec == 0 && n.b4 == 4:
 		g.dlg.OpenFrom(g.shop.nameText, 561) // 全域 D3TXT00 rec561「預存所」。
@@ -3470,8 +3474,11 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.endSeq = -1                                                   // 結局未進行
 	g.openingIdx = -1                                               // 開場旁白未進行
 	g.battle.nameText = g.shop.nameText                             // 咒文名同名表
-	g.tavern.tx = g.dlg.tx                                          // 酒館 glyph
-	g.recruit.tx = g.dlg.tx                                         // 酒場招募 glyph
+	if err := g.tavern.configure(pack, g.dlg.tx); err != nil {
+		return nil, err
+	}
+	g.tavern.tx = g.dlg.tx  // 酒館 glyph
+	g.recruit.tx = g.dlg.tx // 酒場招募 glyph
 	g.hero = dq3data.LoadCharSprite(mstBLS, heroSpriteEntry)
 	g.phoenix = dq3data.LoadCharSprite(manBLS, 176) // CTY70 egg b2=48 → (48-4)*4；原版拉米亞 8-frame sprite
 
@@ -3684,6 +3691,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if err != nil {
 		return nil, fmt.Errorf("new-game raster: %w", err)
 	}
+	if err := g.tavern.installRaster(g.newGame.raster, g.worldPal); err != nil {
+		return nil, err
+	}
+	g.tavern.items = g.shop.items
 	g.frame = ebiten.NewImage(ScreenW, ScreenH)
 	// 注意:不再於此自動續玩——存檔改由標題主選單「載入進度」明確觸發(newgame.go newGameInput
 	// ngOptLoad 分支),對齊 docs/36 開場流程(遊戲開始 = 全新主角,不會被舊存檔悄悄蓋掉)。

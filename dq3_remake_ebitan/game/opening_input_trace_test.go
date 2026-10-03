@@ -1092,10 +1092,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		if !g.tavern.active {
 			t.Fatalf("第%d次對冒險者登錄所 NPC 應開 tavern modal", i+1)
 		}
-		for j := 0; j < class; j++ {
-			send(InputState{DirHeld: -1, DirEdge: 0})
-		}
-		press(InputState{Confirm: true}) // 職業
+		traceRegistrationText(t, g)
+		press(InputState{Confirm: true}) // 初次詢問 Yes
+		traceRegistrationText(t, g)
 		send(InputState{DirHeld: -1, DirEdge: 1})
 		send(InputState{DirHeld: -1, DirEdge: 2})
 		press(InputState{Confirm: true}) // raw35 功能格
@@ -1117,7 +1116,28 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			send(InputState{DirHeld: -1, DirEdge: 0})
 		}
 		press(InputState{Confirm: true}) // 功能列「完成」
-		press(InputState{Confirm: true}) // 男性→完成
+		// 原版職業六項使用 pack 的 raw class 映射。
+		selected := -1
+		for row, c := range g.tavern.contract.ClassOptions {
+			if c.ClassRaw == class {
+				selected = row
+			}
+		}
+		if selected < 0 {
+			t.Fatal("registration class missing")
+		}
+		for row := 0; row < selected; row++ {
+			send(InputState{DirHeld: -1, DirEdge: 0})
+		}
+		press(InputState{Confirm: true}) // 職業
+		press(InputState{Confirm: true}) // 男性 → 能力預覽
+		press(InputState{Confirm: true}) // 能力 → 接受詢問
+		press(InputState{Confirm: true}) // 接受後才登錄
+		traceRegistrationText(t, g)
+		send(InputState{DirHeld: -1, DirEdge: 3})
+		press(InputState{Confirm: true}) // 再登錄 No
+		traceRegistrationText(t, g)
+		press(InputState{Confirm: true}) // caller 最終等待
 	}
 	if len(g.roster) != 3 || len(g.companions) != 0 {
 		t.Fatalf("登錄三人後應 roster=3/companions=0，得 %d/%d", len(g.roster), len(g.companions))
@@ -3466,10 +3486,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 
 	traceWalkThroughPortal(t, g, 8, 14, 0, 2)
 	traceTalkNPC(t, g, 2, 3)
-	for i := 0; i < 6; i++ { // class raw 6：商人
-		send(InputState{DirHeld: -1, DirEdge: 0})
-	}
-	press(InputState{Confirm: true})
+	traceRegistrationText(t, g)
+	press(InputState{Confirm: true}) // 初次詢問 Yes
+	traceRegistrationText(t, g)
 	press(InputState{Toggle: true})
 	press(InputState{Confirm: true}) // 名稱「0」
 	for i := 0; i < 3; i++ {
@@ -3483,7 +3502,27 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		send(InputState{DirHeld: -1, DirEdge: 0})
 	}
 	press(InputState{Confirm: true}) // 功能列「完成」
+	merchantRow := -1
+	for row, c := range g.tavern.contract.ClassOptions {
+		if c.ClassRaw == 6 {
+			merchantRow = row
+		}
+	}
+	if merchantRow < 0 {
+		t.Fatal("pack missing merchant option")
+	}
+	for row := 0; row < merchantRow; row++ {
+		send(InputState{DirHeld: -1, DirEdge: 0})
+	}
+	press(InputState{Confirm: true}) // 職業
 	press(InputState{Confirm: true}) // 男性
+	press(InputState{Confirm: true}) // 能力等待
+	press(InputState{Confirm: true}) // 接受
+	traceRegistrationText(t, g)
+	send(InputState{DirHeld: -1, DirEdge: 3})
+	press(InputState{Confirm: true}) // 再登錄 No
+	traceRegistrationText(t, g)
+	press(InputState{Confirm: true}) // 最終返回
 	if len(g.roster) != 2 || g.roster[1].Class != 6 {
 		t.Fatalf("正式登錄商人失敗：roster=%d lastClass=%d",
 			len(g.roster), g.roster[len(g.roster)-1].Class)
