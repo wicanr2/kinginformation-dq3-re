@@ -13,56 +13,57 @@ import (
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
 type saveState struct {
-	OpeningHomeAwait        bool                     `json:"opening_home_await,omitempty"`
-	PackID                  string                   `json:"pack_id,omitempty"`
-	PackSchema              string                   `json:"pack_schema,omitempty"`
-	PackContentHash         string                   `json:"pack_content_hash,omitempty"`
-	HeroExp                 uint32                   `json:"exp"`
-	HeroHP                  int                      `json:"hp"`
-	HeroMP                  int                      `json:"mp"`
-	HeroConditions          conditionSet             `json:"conditions,omitempty"`
-	ParalysisSteps          int                      `json:"paralysis_steps,omitempty"`
-	HeroStat                stats.Values             `json:"stats,omitempty"`
-	HeroGold                int                      `json:"gold"`
-	HeroName                []int                    `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
-	HeroGender              int                      `json:"herogender"`         // 0=男 1=女
-	Inventory               []int                    `json:"inv"`
-	Equip                   [4]int                   `json:"eq"`
-	EquipmentV2             bool                     `json:"equipment_v2,omitempty"` // true:-1=空；舊檔以 0=空
-	Comps                   []compSav                `json:"comps"`
-	SoloChallengeActive     bool                     `json:"solo_challenge_active,omitempty"`
-	SoloChallengeEventID    string                   `json:"solo_challenge_event_id,omitempty"`
-	SoloChallengeCompanions []compSav                `json:"solo_challenge_companions,omitempty"`
-	Roster                  []compSav                `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
-	SharedStorage           []int                    `json:"shared_storage,omitempty"`
-	SettlementFounder       *compSav                 `json:"settlement_founder,omitempty"`
-	Flags                   []int                    `json:"flags"`
-	ShipOwned               bool                     `json:"shipowned"`
-	PhoenixOwned            bool                     `json:"phoenixowned,omitempty"`
-	PhoenixAboard           bool                     `json:"phoenixaboard,omitempty"`
-	PhoenixX                int                      `json:"phoenixx,omitempty"`
-	PhoenixY                int                      `json:"phoenixy,omitempty"`
-	PhoenixMapCellWritten   bool                     `json:"phoenix_map_cell_written,omitempty"`
-	ShipX                   int                      `json:"shipx"`
-	ShipY                   int                      `json:"shipy"`
-	EncounterStep           int                      `json:"encounter_step,omitempty"`
-	PX                      int                      `json:"px"`
-	PY                      int                      `json:"py"`
-	OverPX                  int                      `json:"over_px,omitempty"`
-	OverPY                  int                      `json:"over_py,omitempty"`
-	OverworldPosV2          bool                     `json:"overworld_position_v2,omitempty"`
-	InTown                  bool                     `json:"town"`
-	StoryBits               []byte                   `json:"storybits,omitempty"`
-	WorldState              uint16                   `json:"worldstate,omitempty"`
-	TrackedWorldObjects     []trackedWorldObjectSave `json:"tracked_world_objects,omitempty"`
-	DNPhase                 int                      `json:"dnphase,omitempty"`
-	DNStep                  int                      `json:"dnstep,omitempty"`
-	Cty                     int                      `json:"cty,omitempty"`
-	Section                 int                      `json:"section,omitempty"`
-	Layer                   int                      `json:"layer,omitempty"`
-	VisitedTowns            []townVisit              `json:"visited_towns,omitempty"`
-	Respawn                 *respawnSave             `json:"respawn,omitempty"`
-	PartyLeader             int                      `json:"party_leader,omitempty"`
+	DeferredRegionDialogueReturnID string                   `json:"deferred_region_dialogue_return_id,omitempty"`
+	OpeningHomeAwait               bool                     `json:"opening_home_await,omitempty"`
+	PackID                         string                   `json:"pack_id,omitempty"`
+	PackSchema                     string                   `json:"pack_schema,omitempty"`
+	PackContentHash                string                   `json:"pack_content_hash,omitempty"`
+	HeroExp                        uint32                   `json:"exp"`
+	HeroHP                         int                      `json:"hp"`
+	HeroMP                         int                      `json:"mp"`
+	HeroConditions                 conditionSet             `json:"conditions,omitempty"`
+	ParalysisSteps                 int                      `json:"paralysis_steps,omitempty"`
+	HeroStat                       stats.Values             `json:"stats,omitempty"`
+	HeroGold                       int                      `json:"gold"`
+	HeroName                       []int                    `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
+	HeroGender                     int                      `json:"herogender"`         // 0=男 1=女
+	Inventory                      []int                    `json:"inv"`
+	Equip                          [4]int                   `json:"eq"`
+	EquipmentV2                    bool                     `json:"equipment_v2,omitempty"` // true:-1=空；舊檔以 0=空
+	Comps                          []compSav                `json:"comps"`
+	SoloChallengeActive            bool                     `json:"solo_challenge_active,omitempty"`
+	SoloChallengeEventID           string                   `json:"solo_challenge_event_id,omitempty"`
+	SoloChallengeCompanions        []compSav                `json:"solo_challenge_companions,omitempty"`
+	Roster                         []compSav                `json:"roster,omitempty"` // 酒場名冊(未必在隊伍中的角色;見 recruit.go)
+	SharedStorage                  []int                    `json:"shared_storage,omitempty"`
+	SettlementFounder              *compSav                 `json:"settlement_founder,omitempty"`
+	Flags                          []int                    `json:"flags"`
+	ShipOwned                      bool                     `json:"shipowned"`
+	PhoenixOwned                   bool                     `json:"phoenixowned,omitempty"`
+	PhoenixAboard                  bool                     `json:"phoenixaboard,omitempty"`
+	PhoenixX                       int                      `json:"phoenixx,omitempty"`
+	PhoenixY                       int                      `json:"phoenixy,omitempty"`
+	PhoenixMapCellWritten          bool                     `json:"phoenix_map_cell_written,omitempty"`
+	ShipX                          int                      `json:"shipx"`
+	ShipY                          int                      `json:"shipy"`
+	EncounterStep                  int                      `json:"encounter_step,omitempty"`
+	PX                             int                      `json:"px"`
+	PY                             int                      `json:"py"`
+	OverPX                         int                      `json:"over_px,omitempty"`
+	OverPY                         int                      `json:"over_py,omitempty"`
+	OverworldPosV2                 bool                     `json:"overworld_position_v2,omitempty"`
+	InTown                         bool                     `json:"town"`
+	StoryBits                      []byte                   `json:"storybits,omitempty"`
+	WorldState                     uint16                   `json:"worldstate,omitempty"`
+	TrackedWorldObjects            []trackedWorldObjectSave `json:"tracked_world_objects,omitempty"`
+	DNPhase                        int                      `json:"dnphase,omitempty"`
+	DNStep                         int                      `json:"dnstep,omitempty"`
+	Cty                            int                      `json:"cty,omitempty"`
+	Section                        int                      `json:"section,omitempty"`
+	Layer                          int                      `json:"layer,omitempty"`
+	VisitedTowns                   []townVisit              `json:"visited_towns,omitempty"`
+	Respawn                        *respawnSave             `json:"respawn,omitempty"`
+	PartyLeader                    int                      `json:"party_leader,omitempty"`
 }
 
 type respawnSave struct {
@@ -135,7 +136,8 @@ func (g *Game) snapshot() saveState {
 		founder = &saved
 	}
 	s := saveState{
-		PackID: packID, PackSchema: packSchema, PackContentHash: packHash, OpeningHomeAwait: g.homeAwait,
+		DeferredRegionDialogueReturnID: g.deferredRegionDialogueReturnID,
+		PackID:                         packID, PackSchema: packSchema, PackContentHash: packHash, OpeningHomeAwait: g.homeAwait,
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroConditions: g.heroConditions,
 		ParalysisSteps: g.paralysisSteps,
 		HeroStat:       g.heroStat, HeroGold: g.heroGold,
@@ -203,6 +205,7 @@ func compsToSav(ms []*Member) []compSav {
 }
 
 func (g *Game) restore(s saveState) {
+	g.deferredRegionDialogueReturnID = s.DeferredRegionDialogueReturnID
 	if g.regionDialogueReturn != nil {
 		g.regionDialogueReturn = nil
 		g.dlg.open = false
@@ -559,9 +562,15 @@ func (g *Game) Load() error {
 			return fmt.Errorf("opening home save actor missing")
 		}
 	}
+	if err := g.validateDeferredRegionDialogueReturnSave(s); err != nil {
+		return err
+	}
 	returnActor, err := g.loadRegionDialogueReturnActor(s)
 	if err != nil {
 		return err
+	}
+	if s.DeferredRegionDialogueReturnID != "" && returnActor == nil {
+		return fmt.Errorf("deferred region return save lacks its completed escort actor")
 	}
 	g.restore(s)
 	if returnActor != nil && g.cur != nil {

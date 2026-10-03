@@ -63,33 +63,83 @@ func validateRegionDialogueReturnSources(assets fs.FS, pack *gamepack.Pack) erro
 	return nil
 }
 
+func (g *Game) regionDialogueReturnAtPlayer() *gamepack.RegionDialogueReturnEvent {
+	if g.pack == nil || !g.inTown || g.cur == nil {
+		return nil
+	}
+	index := g.py*g.cur.w + g.px
+	if index < 0 || index >= len(g.cur.hiMap) {
+		return nil
+	}
+	subid := int(g.cur.hiMap[index] & 31)
+	if subid == 0 || subid > len(g.cur.specialHandlers) {
+		return nil
+	}
+	for i := range g.pack.Events.RegionDialogueReturnEvents {
+		e := &g.pack.Events.RegionDialogueReturnEvents[i]
+		if g.curCty == e.CTYRaw && g.cur.sec == e.Section && g.cur.specialHandlers[subid-1] == e.HandlerRaw {
+			return e
+		}
+	}
+	return nil
+}
+
+// Forced escort movement selects a reviewed event without dispatching it.
+// Ordinary tiles preserve the selection until a successful normal input step.
+func (g *Game) deferRegionDialogueReturnAtPlayer() {
+	if e := g.regionDialogueReturnAtPlayer(); e != nil {
+		g.deferredRegionDialogueReturnID = e.ID
+	}
+}
+
 func (g *Game) tryRegionDialogueReturn() (bool, error) {
 	if g.pack == nil || !g.inTown || g.cur == nil || g.dlg.open || g.regionDialogueReturn != nil {
 		return false, nil
 	}
+	selected := g.regionDialogueReturnAtPlayer()
 	index := g.py*g.cur.w + g.px
-	if index < 0 || index >= len(g.cur.hiMap) {
-		return false, nil
-	}
-	subid := int(g.cur.hiMap[index] & 31)
-	if subid == 0 || subid > len(g.cur.specialHandlers) {
-		return false, nil
-	}
-	for i := range g.pack.Events.RegionDialogueReturnEvents {
-		e := &g.pack.Events.RegionDialogueReturnEvents[i]
-		if g.curCty != e.CTYRaw || g.cur.sec != e.Section || g.cur.specialHandlers[subid-1] != e.HandlerRaw || !g.storyFlag(e.RequiredFlagRaw) {
-			continue
-		}
-		for j := range g.cur.npcs {
-			if g.cur.npcs[j].recordIndex == e.ActorRecordRaw {
-				g.cur.npcs[j].facing = e.ActorFacing
-				g.regionDialogueReturn = &regionDialogueReturnState{event: e}
-				return true, nil
+	if selected == nil && index >= 0 && index < len(g.cur.hiMap) && g.cur.hiMap[index]&31 == 0 {
+		for i := range g.pack.Events.RegionDialogueReturnEvents {
+			e := &g.pack.Events.RegionDialogueReturnEvents[i]
+			if e.ID == g.deferredRegionDialogueReturnID && g.curCty == e.CTYRaw && g.cur.sec == e.Section {
+				selected = e
+				break
 			}
 		}
-		return false, fmt.Errorf("region dialogue return actor absent")
 	}
-	return false, nil
+	// Native dispatch clears the selection before the handler checks its gate.
+	g.deferredRegionDialogueReturnID = ""
+	if selected == nil || !g.storyFlag(selected.RequiredFlagRaw) {
+		return false, nil
+	}
+	for j := range g.cur.npcs {
+		if g.cur.npcs[j].recordIndex == selected.ActorRecordRaw {
+			g.cur.npcs[j].facing = selected.ActorFacing
+			g.regionDialogueReturn = &regionDialogueReturnState{event: selected}
+			return true, nil
+		}
+	}
+	return false, fmt.Errorf("region dialogue return actor absent")
+}
+
+func (g *Game) validateDeferredRegionDialogueReturnSave(s saveState) error {
+	if s.DeferredRegionDialogueReturnID == "" {
+		return nil
+	}
+	if g.pack == nil || s.PackID == "" || !s.InTown || s.OpeningHomeAwait {
+		return fmt.Errorf("deferred region return save checkpoint invalid")
+	}
+	for _, e := range g.pack.Events.RegionDialogueReturnEvents {
+		if e.ID != s.DeferredRegionDialogueReturnID {
+			continue
+		}
+		flag := e.RequiredFlagRaw
+		if s.Cty != e.CTYRaw || s.Section != e.Section || flag/8 >= len(s.StoryBits) || s.StoryBits[flag/8]&(128>>uint(flag%8)) == 0 {
+			return fmt.Errorf("deferred region return save scene or gate differs")
+		}
+		return nil
+	}
+	return fmt.Errorf("deferred region return save event unknown")
 }
 
 // Pending return events own input until the native caller's final move. The

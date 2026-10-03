@@ -1671,6 +1671,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("rec86 後未清除甘達特：flag=%v stage=%d",
 			g.storyFlag(kandarEvent.ClearFlagRaw), g.bossSurrenderStage)
 	}
+	ensurePartyInventorySpace("取得金皇冠前", 1)
 
 	// 先走到寶箱下方第二格，再正常向上走到 (4,5)，使角色自然面向 (4,4) 寶箱。
 	traceWalkTo(t, g, 4, 6)
@@ -3648,6 +3649,11 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 	traceTownSectionTo(t, g, mirrorTreasure.Treasure.CTYRaw,
 		mirrorTreasure.Treasure.Section)
+	// 沿途戰利品可能填滿含裝備的隊伍容量。用正式丟棄選單騰出一格，
+	// 保留已裝備物品及 pack 中有場景用途的道具。
+	if free := dropSpareEquipmentForPartyInventorySlots(1); free < 1 {
+		t.Fatal("取得拉之鏡前沒有空位，也沒有可丟棄的備用裝備")
+	}
 	traceExaminePackTreasure(t, g, mirrorTreasure.Treasure)
 	if !g.hasPartyItem(mirrorTreasure.Treasure.ItemRawID) ||
 		g.storyFlag(mirrorTreasure.Treasure.PresentFlag) {
@@ -4403,7 +4409,16 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 	traceExitTownBoundary(t, g, true)
 	traceWalkToWorldCoordinate(t, g, phoenixParkX, phoenixParkY+1)
-	for g.cd > 0 {
+	// 最後一步也可能開啟遭遇。戰鬥 modal 不遞減移動冷卻，須先以
+	// 正式戰鬥輸入完成遭遇，才能等待並搭乘拉米亞。
+	for waits := 0; g.cd > 0 || g.battle.active; waits++ {
+		if waits >= 8192 {
+			t.Fatalf("搭乘拉米亞前未收斂：cd=%d battle=%v", g.cd, g.battle.active)
+		}
+		if g.battle.active {
+			traceResolveBattle(t, g)
+			continue
+		}
 		send(InputState{DirHeld: -1, DirEdge: -1})
 	}
 	if err := g.step(InputState{DirHeld: 1, DirEdge: -1}); err != nil {
@@ -8087,7 +8102,7 @@ func traceWalkThroughPortalWithRepelPolicy(t *testing.T, g *Game, x, y, wantCty,
 		if traceCureHeroPoison(t, g) {
 			continue
 		}
-		if g.encounterEnabled() && g.repel <= 8 && g.countItem(itemuse.ItemHolyWater) > 1 {
+		if g.encounterEnabled() && g.repel <= 8 && g.countPartyItem(itemuse.ItemHolyWater) > 1 {
 			traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
 			continue
 		}

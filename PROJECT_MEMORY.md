@@ -1,20 +1,17 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-03現行閘門：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
-> 現行schema0.9.0／content0.1.80。母親帶路後尚未謁見國王的勸告與強制返回有限切片已修正。
-> 原版由dosgolem2f44a68冷啟動39次正常輸入／78IRQ1；174份父PNG／bin保持，十個原生事件邊界通過。
-> 正式正常Down顯示record79，自動關窗並由21,18返回21,17，故事旗標、金錢及背包保持。
-> 可重複觸發；同一實例Load清除pending、標題讀檔及下一次Up通過。
-> 勸告視窗與陰影RGB差0；完整提示13145、返回13340，完整畫面V3未完成。
-> 既有謁見、回程與登錄所入口的有限完成範圍保持。
-> 完整game422頂層清單覆蓋，376頂層／77子PASS、46選用SKIP；本批原版正常勸告另嚴格PASS。
-> internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。
-> 正常新遊戲InputState至THE END266.49秒，只屬重製回歸；無素材缺失SKIP。
-> 18種壞來源拒絕，14種契約損壞及七種壞資產拒絕；九份JSON從乾淨562208a重建語意相同。
-> 轉向／文字／返回由共用有限狀態機處理，版本數值與文字存於pack；兩段等待為硬體規格近似。
-> 下一切片仍為正常登錄所交談與登錄。R8只核對首次問候13狀態，完整取消與出生維持DRAFT。
-> 原版音訊、存讀檔、NPC可見性及完整campaign未完成；沒有新發行包。
-> 唯一現況表見[CONTEXT](CONTEXT.md)，規格與私有收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+> 2026-10-04現行閘門：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
+> 現行schema0.9.0／content0.1.81。母親帶路殘留事件已修正，首次Up自動警告後到21,15，後兩步21,14／21,13。
+> 原版有限來源41次正常輸入／82IRQ1、174份父PNG／bin保持；首次警告完整640×350 RGB差0。
+> 三張北行畫面仍差195／9039／22192，完整畫面V3未完成。既有Down文字窗RGB差0、完整13145／13340限制保持。
+> pending及已消費檢查點的同版本Save／Load、阻擋不消費、新事件覆蓋與壞存檔拒絕通過；原版存檔未知。
+> 甘達特對話觸發當步不再啟動隨機遭遇，固定邊界測試與原始四敵編隊通過。
+> 拉之鏡回歸曾因四名角色含裝備均滿八格受阻。正常丟棄備品後取得，遊戲容量與旗標規則保持。
+> 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
+> 14種協同壞來源拒絕；來源c38bcc09，canonical hash sha256:d6c7994ee7fa53d227a98263f12606a8f4109a87f4afea01cd6996ad7f269b5d。
+> quiescent-r2全路線202次正常輸入／404IRQ1自然完成取消；全路線仍DRAFT，有限來源只接受首次三個Up。
+> 下一切片仍從正常登錄所入口續行，獨立審查完整取消與出生。原版音訊、NPC相位及完整campaign待驗。
+> 沒有新發行包。唯一現況表見[CONTEXT](CONTEXT.md)，證據與收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下保存歷史檢查點，不能以舊待辦重新開啟已閉合功能。
 

@@ -290,108 +290,109 @@ func (sc *Scene) npcAt(x, y int) int {
 }
 
 type Game struct {
-	regionDialogueReward      *gamepack.RegionDialogueRewardEvent
-	regionDialogueReturn      *regionDialogueReturnState
-	fieldIdle                 fieldIdleState
-	fieldIdleFont             *dq3data.Text
-	over, town                *Scene // 地表 / 目前城鎮
-	under                     *Scene // 下層地表(DQ3UND.MAP,懶載;共用地表 BLK/attr/pal)
-	layer                     int    // 目前地表層:0=地面 1=下層(城鎮進出以此決定回哪層)
-	cur                       *Scene
-	inTown                    bool
-	curCty                    int // 目前所在 CTY 號(-1=地表)
-	dnPhase                   int // pack clock 的四個持久化區段；實際夜間邊界由 DayNightCycle 決定
-	dnStep                    int // 地表步數計數器(每 dnPhaseSteps 步推進一相位)
-	dayNightCycle             gamepack.DayNightCycle
-	assets                    fs.FS // 素材(懶載其他城鎮)
-	encounters                *dq3data.EncounterTables
-	worldPal                  []dq3data.Color
-	manBLS                    []byte         // NPC sprite 來源
-	towns                     map[int]*Scene // 已載入城鎮快取(cty→Scene)
-	overPx, overPy            int            // 記住進城前的地表座標(Esc 回來用)
-	respawn                   respawnPoint   // 最後一次成功記錄點；敗北只回位置、不回捲進度
-	partyLeader               int            // 0=勇者，1..=companions；死亡時依原版 pointer order 推進
-	defeatDialogueStage       int            // record361→362 的正式 modal transaction
-	worldEntranceGrace        bool           // 城鎮→地表後第一個成功步伐不重新觸發同列兩格入口（strong；見 docs/103）
-	hero                      *dq3data.CharSprite
-	heroRole                  *dq3data.CharSprite // 由 game-pack temporary_role active flag 推導；不另存檔
-	mstBLS                    []byte              // party sprite 來源(DQ3MST.BLS；由 pack asset 指定)
-	partySpriteCache          map[[2]int]*dq3data.CharSprite
-	partyTrail                [8]partyTrailEntry
-	partyTrailLen             int
-	px, py                    int // 主角在 cur 內的 tile 座標
-	facing                    int // 0..3
-	walk                      int // 0/1 走路動畫相位
-	cd, anim                  int
-	dlg                       Dialogue       // 對話視窗
-	cmd                       CmdMenu        // 野外命令窗
-	battle                    Battle         // 戰鬥場景
-	shop                      Shop           // 商店(武防/道具店)
-	church                    Church         // 教會服務
-	tavern                    Tavern         // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
-	recruit                   Recruit        // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
-	panel                     panelKind      // 資訊面板(狀況/道具/裝備)
-	panelCursor               int            // 裝備面板游標
-	panelActor                int            // 裝備對象：-1=先選隊員、0=主角、1..=companions
-	panelHits                 hitList        // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
-	itemActionStage           int            // 0=道具清單、1=使用/給予/丟掉、2=給予對象
-	itemActionCursor          int            // 動作或給予對象游標
-	itemSelected              int            // 已選 g.inventory index
-	reclassEventID            string         // game-pack reclass event；空字串=無進行中的轉職
-	reclassStage              int            // 達瑪轉職對話／選擇狀態機
-	reclassCursor             int            // Yes/No、隊員或職業選單游標
-	reclassMember             int            // 0=主角、1..=companions；只有非勇者可交易
-	reclassTarget             int            // pack raw class；未選=-1
-	settlementFounderStage    int            // game-pack 建城者交付事件階段
-	settlementFounderCursor   int            // 兩次 Yes/No 游標
-	settlementFounderEventID  string         // active settlement_founder event
-	settlementFounderMember   int            // companions index；未選=-1
-	settlementFounderOverflow int            // 預存所滿時原版逐道具訊息的剩餘次數
-	settlementFounder         *Member        // 已離隊、不可由酒館重新招募的建城者
-	settlementFounderFollowup []string       // 後續 NPC 對話尚待顯示的 game-pack text ID
-	sharedStorage             []int          // 原版共用預存所；包含建城者交出的裝備與道具
-	fieldSpell                FieldSpellMenu // 野外咒文／魯拉目的地 modal
-	visitedTowns              []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
-	inventory                 []int          // 持有道具 id
-	music                     gameAudio
-	input                     *Input // 抽象輸入(鍵盤 + 觸控)
-	showTitle                 bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
-	titlePix                  []uint8
-	titlePal                  []dq3data.Color
-	newGameConfirmPix         []uint8
-	newGameConfirmPal         []dq3data.Color
-	openingPix                [][]uint8
-	openingPal                [][]dq3data.Color
-	openingSprites            [][]dq3data.PlanarSprite
-	openingComposite          []uint8
-	openingSeq                *gamepack.OpeningSequence
-	openingEscort             *gamepack.OpeningEscort
-	openingEscortIndex        int
-	openingEscortTick         int
-	openingEscortNPC          int
-	openingEscortPhase        int
-	openingEscortDialogue     int
-	homeSelection             homePictureSelection
-	homeAwait                 bool
-	openingFrame              int
-	openingIndex              int
-	openingActive             bool
-	attractPix                [][]uint8
-	attractPal                [][]dq3data.Color
-	attractSeq                *gamepack.AttractSequence
-	attractFrame              int
-	attractIndex              int
-	attractActive             bool
-	titleIdleFrames           int
-	endingPix                 []uint8 // pack asset ending_image(TIT3.P)
-	endingPal                 []dq3data.Color
-	cfg                       config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
-	pack                      *gamepack.Pack // versioned 精訊版 game pack；遊戲設定不得再散落為 Go table
-	settings                  Settings       // 系統設定 modal（標題或一般地表按 S／F2 開）
-	help                      HelpOverlay    // F1 HELP；內容與幾何由 game pack 提供
-	newGame                   NewGameFlow    // 標題主選單 + 主角命名/性別創建 modal（正式流程已閉合；幾何仍待 V3）
-	heroName                  []int          // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
-	heroGender                int            // 主角性別(0=男 1=女)
+	regionDialogueReward           *gamepack.RegionDialogueRewardEvent
+	regionDialogueReturn           *regionDialogueReturnState
+	deferredRegionDialogueReturnID string
+	fieldIdle                      fieldIdleState
+	fieldIdleFont                  *dq3data.Text
+	over, town                     *Scene // 地表 / 目前城鎮
+	under                          *Scene // 下層地表(DQ3UND.MAP,懶載;共用地表 BLK/attr/pal)
+	layer                          int    // 目前地表層:0=地面 1=下層(城鎮進出以此決定回哪層)
+	cur                            *Scene
+	inTown                         bool
+	curCty                         int // 目前所在 CTY 號(-1=地表)
+	dnPhase                        int // pack clock 的四個持久化區段；實際夜間邊界由 DayNightCycle 決定
+	dnStep                         int // 地表步數計數器(每 dnPhaseSteps 步推進一相位)
+	dayNightCycle                  gamepack.DayNightCycle
+	assets                         fs.FS // 素材(懶載其他城鎮)
+	encounters                     *dq3data.EncounterTables
+	worldPal                       []dq3data.Color
+	manBLS                         []byte         // NPC sprite 來源
+	towns                          map[int]*Scene // 已載入城鎮快取(cty→Scene)
+	overPx, overPy                 int            // 記住進城前的地表座標(Esc 回來用)
+	respawn                        respawnPoint   // 最後一次成功記錄點；敗北只回位置、不回捲進度
+	partyLeader                    int            // 0=勇者，1..=companions；死亡時依原版 pointer order 推進
+	defeatDialogueStage            int            // record361→362 的正式 modal transaction
+	worldEntranceGrace             bool           // 城鎮→地表後第一個成功步伐不重新觸發同列兩格入口（strong；見 docs/103）
+	hero                           *dq3data.CharSprite
+	heroRole                       *dq3data.CharSprite // 由 game-pack temporary_role active flag 推導；不另存檔
+	mstBLS                         []byte              // party sprite 來源(DQ3MST.BLS；由 pack asset 指定)
+	partySpriteCache               map[[2]int]*dq3data.CharSprite
+	partyTrail                     [8]partyTrailEntry
+	partyTrailLen                  int
+	px, py                         int // 主角在 cur 內的 tile 座標
+	facing                         int // 0..3
+	walk                           int // 0/1 走路動畫相位
+	cd, anim                       int
+	dlg                            Dialogue       // 對話視窗
+	cmd                            CmdMenu        // 野外命令窗
+	battle                         Battle         // 戰鬥場景
+	shop                           Shop           // 商店(武防/道具店)
+	church                         Church         // 教會服務
+	tavern                         Tavern         // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
+	recruit                        Recruit        // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
+	panel                          panelKind      // 資訊面板(狀況/道具/裝備)
+	panelCursor                    int            // 裝備面板游標
+	panelActor                     int            // 裝備對象：-1=先選隊員、0=主角、1..=companions
+	panelHits                      hitList        // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
+	itemActionStage                int            // 0=道具清單、1=使用/給予/丟掉、2=給予對象
+	itemActionCursor               int            // 動作或給予對象游標
+	itemSelected                   int            // 已選 g.inventory index
+	reclassEventID                 string         // game-pack reclass event；空字串=無進行中的轉職
+	reclassStage                   int            // 達瑪轉職對話／選擇狀態機
+	reclassCursor                  int            // Yes/No、隊員或職業選單游標
+	reclassMember                  int            // 0=主角、1..=companions；只有非勇者可交易
+	reclassTarget                  int            // pack raw class；未選=-1
+	settlementFounderStage         int            // game-pack 建城者交付事件階段
+	settlementFounderCursor        int            // 兩次 Yes/No 游標
+	settlementFounderEventID       string         // active settlement_founder event
+	settlementFounderMember        int            // companions index；未選=-1
+	settlementFounderOverflow      int            // 預存所滿時原版逐道具訊息的剩餘次數
+	settlementFounder              *Member        // 已離隊、不可由酒館重新招募的建城者
+	settlementFounderFollowup      []string       // 後續 NPC 對話尚待顯示的 game-pack text ID
+	sharedStorage                  []int          // 原版共用預存所；包含建城者交出的裝備與道具
+	fieldSpell                     FieldSpellMenu // 野外咒文／魯拉目的地 modal
+	visitedTowns                   []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
+	inventory                      []int          // 持有道具 id
+	music                          gameAudio
+	input                          *Input // 抽象輸入(鍵盤 + 觸控)
+	showTitle                      bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
+	titlePix                       []uint8
+	titlePal                       []dq3data.Color
+	newGameConfirmPix              []uint8
+	newGameConfirmPal              []dq3data.Color
+	openingPix                     [][]uint8
+	openingPal                     [][]dq3data.Color
+	openingSprites                 [][]dq3data.PlanarSprite
+	openingComposite               []uint8
+	openingSeq                     *gamepack.OpeningSequence
+	openingEscort                  *gamepack.OpeningEscort
+	openingEscortIndex             int
+	openingEscortTick              int
+	openingEscortNPC               int
+	openingEscortPhase             int
+	openingEscortDialogue          int
+	homeSelection                  homePictureSelection
+	homeAwait                      bool
+	openingFrame                   int
+	openingIndex                   int
+	openingActive                  bool
+	attractPix                     [][]uint8
+	attractPal                     [][]dq3data.Color
+	attractSeq                     *gamepack.AttractSequence
+	attractFrame                   int
+	attractIndex                   int
+	attractActive                  bool
+	titleIdleFrames                int
+	endingPix                      []uint8 // pack asset ending_image(TIT3.P)
+	endingPal                      []dq3data.Color
+	cfg                            config.Config  // 可攜設定(RNG/音樂/音量/音源/戰鬥資訊/受傷特效);NewGame 用 config.Default() 初始化
+	pack                           *gamepack.Pack // versioned 精訊版 game pack；遊戲設定不得再散落為 Go table
+	settings                       Settings       // 系統設定 modal（標題或一般地表按 S／F2 開）
+	help                           HelpOverlay    // F1 HELP；內容與幾何由 game pack 提供
+	newGame                        NewGameFlow    // 標題主選單 + 主角命名/性別創建 modal（正式流程已閉合；幾何仍待 V3）
+	heroName                       []int          // 主角姓名(glyph index,注音/英數命名輸入結果;空=尚未創建/debug 略過)
+	heroGender                     int            // 主角性別(0=男 1=女)
 	// 主角進度(勇者 class0)。heroStat 是原版角色 record 的七個持久能力欄；
 	// 創角/升級時由 sub_ed3c 相同的 RNG transaction 修改，不再每幀由等級公式重算。
 	heroExp                 uint32
@@ -1621,7 +1622,10 @@ func (g *Game) step(in InputState) error {
 			g.renderFrame()
 			return err
 		}
-		g.tryBossSurrenderEvent()
+		if g.tryBossSurrenderEvent() {
+			g.renderFrame()
+			return nil
+		}
 		g.tryGuidedPassageTrigger()
 		g.tryHostageRescueTrigger()
 		g.tryBaramosReturnEvent()
@@ -2086,6 +2090,7 @@ const (
 // 但此流程與完整主線測試都不能把逐格畫面／音效 parity 升格為 V3。
 // 對齊 U1:原版開場是家室內 + 母親旁白,非地表中心。
 func (g *Game) startOpening() {
+	g.deferredRegionDialogueReturnID = ""
 	if g.assets == nil { // 無素材的裸 Game(單元測試純狀態驗證)→ 只走狀態轉移,不載場景
 		return
 	}

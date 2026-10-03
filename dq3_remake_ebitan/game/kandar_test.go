@@ -33,6 +33,10 @@ func kandarTestGame(t *testing.T) *Game {
 
 func TestKandarNaturalTileTriggerAndMixedFormation(t *testing.T) {
 	g := kandarTestGame(t)
+	// Fix the component's random condition before input. A native special
+	// handler returns before the ordinary encounter counter is consulted.
+	g.prng.Seed(0x1357)
+	g.encounterStep = 1
 	event := g.pack.BossSurrenderEvents()[0]
 	if !g.storyFlag(event.PresenceFlagRaw) {
 		t.Fatal("新遊戲原始 story flag0x2e 應為 set，四名盜賊在場")
@@ -44,6 +48,9 @@ func TestKandarNaturalTileTriggerAndMixedFormation(t *testing.T) {
 		!reflect.DeepEqual(g.dlg.buf, mustPackTextCodes(t, g, event.DialogueTextIDs.Intro)) {
 		t.Fatalf("踏入 (6,8) 未自然觸發 rec84：pos=(%d,%d) stage=%d dlg=%v",
 			g.px, g.py, g.bossSurrenderStage, g.dlg.open)
+	}
+	if g.battle.active || g.encounterStep != 1 {
+		t.Fatalf("scripted intro advanced random encounter: active=%v counter=%d", g.battle.active, g.encounterStep)
 	}
 	for i := 0; i < 16 && g.dlg.open; i++ {
 		if err := g.step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}); err != nil {

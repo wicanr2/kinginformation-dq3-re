@@ -153,6 +153,7 @@ func (g *Game) applyOpeningArrivalFrame(frame gamepack.OpeningArrivalFrame) {
 	g.px, g.py = frame.Player.X, frame.Player.Y
 	if moved {
 		g.walk ^= 1
+		g.deferRegionDialogueReturnAtPlayer()
 	}
 }
 

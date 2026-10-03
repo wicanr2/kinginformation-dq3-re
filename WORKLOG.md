@@ -1110,3 +1110,82 @@ internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 E
 新來源與輸出UID／GID1000，root候選3213及Markdown目錄0保持；本批一次性DQ3容器全部清除。
 Python／shell語法、Go格式及diff check通過；新增production Go無DQ3專屬raw ID／座標／record／flag。
 提交／推送與Issue結果保存在`work/issue4-mother-return-gate-post-push-receipt.json`，入口同掛docs/188。
+
+## 2026-10-03 Issue #4 原生輸入消費來源探針（DRAFT）
+
+接續1b96eb8，上一輪已改正式狀態並完成推送，屬實際進展。新輪主機auth與Issue #4重讀通過，
+既有未追蹤scratch及登錄DRAFT工具保留；正式schema0.9.0／content0.1.80維持。
+重查規格閘門、現況及dosgolem能力入口；R8完整來源仍未接受，沒有重啟已終止的原版程序。
+
+重用已存在的IDA9.4匯出，確認195D0低位元writer受4F46的0200、0004及52F8閘門限制。
+19810只清actor的38h bit10與4F46的0200，未有玩家可見動態閉環；不能推定為命令窗或戰鬥。
+原始符號、位址、bytes與strong等級保留，不追硬體driver或以CX／旗標patch解來源。
+舊探針每鍵另等11000000指令，目前只是假說此等待會推過原版計時門檻。
+1941C的AH方向碼、2113A及21155的正常讀鍵分支已由原始控制流定位，建立只讀消費候選。
+新的`work/issue4-registry-consumed-probe.py`在隔離tmp生成，凍結Go及binary。
+冷啟動前38鍵保持，之後仍走已記錄的謁見、回程、首次問候及正常姓名取消路線。
+IRQ排入、按下／放開、消費、自然poll與完整raw狀態均另行記錄，不修改時鐘或位置。
+來源前綴`issue4-registry-consumed-r1`，plan與工作登記同掛docs/188。
+遠端工作留言5969155742；完整取消來源、出生及正常remake對拍仍待驗。
+
+原生消費R1已拒絕並主動停止，192個觀測保留。首個Up捕捉21,15，起點21,17。
+packet61返回國王前field，packet62多送Enter重開record253二選一；後續方向都在選單內。
+這次來源沒有到登錄所，不能只看read-key及poll便接受路線。計時門檻假說仍未證實。
+前174份父PNG／bin逐檔大小及hash保持；Go／binary／producer凍結身份一致。
+拒絕稽核99,784bytes，SHA-256 62256651ad897270a7c076e3d4f192717493cb8d1b6dfae60d33d29bd7ccbe9c。
+原版容器因已確認不合格由agent停止，exit137屬主動清理，沒有把它寫成產品失敗。
+下一版觀測keyup後的正常空讀鍵，首三步不符即拒絕；按已證實的謁見交易恢復field後進回程。
+正式Go、pack與已推送1b96eb8保持；新的私有入口與限制同掛docs/188。
+
+追加勘誤：quiescent-r1完整keyup及空讀鍵後仍在首次Up播放record79，從21,16自動到21,15。
+首三次Up的單格期待沒有原版依據。北側21,16的CTY00 word0001、selector0，沒有特殊事件。
+「北側格觸發母親勸告」已收回，不把原生記錄出現文字直接當成地圖事件來源。
+既有IDA9.4顯示特殊格移動設4F46 bit0800及258C，強制帶路不作一般dispatch；
+殘留事件待新版原生觀測閉合，維持strong，不改正式規則。
+新版私有quiescent-r2另記錄上述raw狀態及handler入口，計畫與完整產物同掛docs/188。
+Issue工作與勘誤留言5969651364；前兩版失敗來源與拒絕收據保持。
+乾淨1b96eb8隔離副本的正常母親帶路最後RGB差0；首次Up完整等待2200更新後仍為21,16，
+沒有pending或文字，0金及兩個故事旗標保持。此為重製診斷，不稱原版parity。
+私有入口為work/issue4-first-up-baseline.py、同前綴test及log。
+診斷腳本首次生成因引號巢狀語法失敗，未產生檔案；修正後同容器命令乾淨重跑通過。
+
+## 2026-10-04 Issue #4 首次北行殘留事件與特殊遭遇分派
+
+quiescent-r2自然完成202次正常輸入／404IRQ1，首次北行前4F46=0800／258C=1。
+196D2先清事件位元再進handler55，record79後強制北行到21,15；後兩次Up到21,14／21,13。
+由有限READY實作deferred事件穩定ID，普通強制帶路保持、成功一般步進消費、阻擋不消費、新事件覆蓋。
+同版本存檔保存未消費ID並在Load前檢查pack／scene／gate及必要actor，已消費不重新生成。
+存檔為engine D2，原版未知；版本內容仍從pack取得，沒有新增Go raw ID或fallback。
+schema0.9.0／content0.1.81，hash `sha256:d6c7994ee7fa53d227a98263f12606a8f4109a87f4afea01cd6996ad7f269b5d`。
+
+有限來源c38bcc09嚴格通過41正常輸入／82IRQ1、174父PNG／bin保持與14種協同損壞拒絕。
+同一最終binary正式冷母親返回與首三次Up、前後Save／Load、既有Down／重複勸告通過。
+首次警告完整RGB差0，北行完整195／9039／22192、Down13145／13340仍RED；不宣稱完整V3。
+重製新存檔不等於原版存檔對拍，音訊與後段亂數內部骰序未知。
+
+完整回歸首輪CTY10對話確認64次失敗，三版只讀診斷定位bossIntro及battle.active同時成立。
+先前通用文字等待調整未解決阻塞，已收回；直接原因為隨機遭遇搶走確認鍵。
+verified程序在後段航行由agent主動停止以回復原測試helper，未通過整段主線；exit143不寫成產品失敗。
+IDA9.4既有19574→196D2後19577 RET跳過一般encounter尾段，有限READY後對boss事件當步return。
+既有自然觸發測試增加seed1357／counter1邊界，修正前active=true／counter17失敗，修正後無battle且counter1。
+原始handler14 file19D10 word5477→IDA linear15477→file67E7；舊file167E7基準錯置，docs/85追加勘誤。
+沒有改遭遇機率、編隊或正式seed；四敵編隊保持。
+
+後續拉之鏡寶箱未給物品、present flag仍true；r4背包列表不足以排除容量，r5確認全隊含裝備各8格、空位0。
+只調整測試玩家補給策略，經正式選單丟棄未裝備且無pack場景用途的備品；保留遊戲容量與交易規則。
+原始失敗、八版只讀診斷及原提交campaign PASS199.32秒均留本機，未覆寫來源。
+r6的180秒堆疊落在拉米亞停泊點cd空等，Game仍在battle.active分支；最後一步遇敵後測試未處理modal。
+沿用既有正式戰鬥選單處理遭遇，再等待冷卻並搭乘，設與登船helper相同8192有界檢查。
+clean-final舊程序也由agent主動停止，exit143屬工具清理；沒有把測試死等寫成產品缺陷。
+r5主線168.04秒在巴拉摩斯回程缺rec175法力；r7記錄預留角色Boss前MP27，CTY66 sec0、9,29存活施法者只剩1／0。
+曾試作全部MP預留，r6仍失敗，已收回；r8時間序列確認沿途逃跑時同伴先施法，每次仍消耗12MP。
+CTY66入場MP241、Boss前27、全部預留時Boss後仍27，但回程普通遭遇降到1，賢者57降到0。
+全域保留MP的r8與僅停用逃跑傷害咒文的r9均在前段mon44全滅，兩者已收回。
+路由原聖水檢查只計算主角背包，漏掉牧師三瓶；改用既有countPartyItem與正式道具持有者選單。
+原戰鬥與保留最後一瓶策略保持；不改速度、技能、MP、seed或戰鬥規則。
+r7新路線在金皇冠寶箱容量滿時未取得物品，取物前經正式選單丟棄藥草騰出一格，全隊持有權與存讀檔斷言保持。
+完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
+完整回歸入口work/issue4-first-move-regression-r10.py，正常對拍production-r10，證據與工具同掛docs/188。
+CONTEXT、PROJECT_MEMORY、docs/74、docs/84、docs/85與README同步；來源與私有產物不加入Git。
+Issue留言5970305881／5970492139／5970591714／5970708867登記容量、拉米亞及法力診斷，Issue保持OPEN，完整取消及出生來源仍DRAFT。
+收尾稽核、提交／推送與Docker清理另記同前綴final-receipt及post-push-receipt；沒有新image或發行包。

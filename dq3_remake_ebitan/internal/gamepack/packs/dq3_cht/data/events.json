@@ -34,7 +34,7 @@
         "source": "DQ3.EXE (115282 bytes; SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c) + CTY00.DAT + D3TXT01.TXT + dosgolem 2f44a68",
         "address_space": "linear",
         "address": "IDA 9.4 linear 0x1020B..0x1024C; 0x121EF..0x122CE; 0x194C3..0x19530; file=linear-0xEC90",
-        "consumer": "CTY00 section0 handler55; flag17h; NPC0 turn-only left; automatic record79; close then collision-checked north step; cold normal39 inputs / 78 IRQ1",
+        "consumer": "CTY00 section0 handler55; flag17h; NPC0 turn-only left; automatic record79; close then collision-checked north step; cold normal39 inputs / 78 IRQ1; forced escort preserves selector1 until successful normal move; native first three Up / 41 inputs / 82 IRQ1; issue4-registry-quiescent-r2-first-up-receipt",
         "doc": "docs/188-opening-escort-to-castle-spec.md"
       },
       "timing_evidence": {
@@ -393,8 +393,8 @@
         "source_kind": "exe",
         "source": "DQ3.EXE + CTY10.DAT",
         "address_space": "file",
-        "address": "0x167e7",
-        "consumer": "sub_15477: rec84, formation DS:0x4eb5, battle, rec85/87/86 loop, clear flag 0x2e; CTY10 sec5 subid1 selects handler14",
+        "address": "0x67e7",
+        "consumer": "sub_15477: rec84, formation DS:0x4eb5, battle, rec85/87/86 loop, clear flag 0x2e; CTY10 sec5 subid1 selects handler14; IDA9.4 linear15477/file67e7; native19574 special dispatch returns at19577 before regular encounters",
         "doc": "docs/85-shanpane-kandar-production-trace.md"
       }
     }

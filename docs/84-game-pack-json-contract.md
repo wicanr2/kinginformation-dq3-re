@@ -1,5 +1,17 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 帶路殘留事件（schema0.9.0／content0.1.81）
+
+資料包欄位形狀不變。強制帶路的既有`arrival_frames`與原始CTY特殊格選取已審查的
+`region_dialogue_return_events.id`，普通格保持，下一個成功正常步進消費。
+新落腳特殊格覆蓋選擇器，阻擋步行保持，消費後不重生；有限證據與READY見[docs/188](188-opening-escort-to-castle-spec.md)。
+
+重製存檔追加可省略的`deferred_region_dialogue_return_id`，保存穩定事件ID。
+Load先驗證pack、ID、場景、gate及完成帶路的必要actor，再改變Game。
+未知ID、場景不符、缺pack、城外、家中pending、gate未設及帶路交易未完成均拒絕，失敗不改狀態。
+空ID代表已消費或沒有待執行事件，不用旗標或位置重建pending。
+此為engine D2延續契約；原版Save／Load及其他handler尚未驗證，不設Go版本fallback。
+
 ## 2026-10-03 region 提示後退回（schema0.9.0／content0.1.80）
 
 `events.region_dialogue_return_events`為必填集合，可明確為空。每筆及巢狀欄位均必填，

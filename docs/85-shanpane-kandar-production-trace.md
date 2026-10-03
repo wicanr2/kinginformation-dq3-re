@@ -97,3 +97,28 @@ section 3 `(8,21)`，之後才可抵達 `(9,8)` 上樓。
 此切片已達 E3：新遊戲到金皇冠、存讀檔及返回羅馬利亞均由正式輸入閉合；戰鬥沒有削弱
 boss，也沒有注入等級、金錢、HP 或事件旗標。下一個玩家 blocker 是羅馬利亞王
 handler9 的持皇冠分支，見 `docs/82`。
+
+## 2026-10-03 特殊事件返回邊界（有限 READY）
+
+Issue #4首次北行修正後的正常campaign在此trigger重現對話與隨機戰鬥同時啟動。
+原樣候選、等待確認修正及只讀診斷保持固定seed1357；boss為Intro、對話open、battle.active為true。
+修改前1b96eb8的同工具鏈主線通過199.32秒；不把偶然未撞上遭遇門檻當作正確邊界。
+
+原始DQ3.EXE大小115282，SHA-256
+5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c。
+handler14表項為file19D10的原始word5477，對應IDA9.4 linear15477／file67E7。
+舊pack evidence所列file167E7是位址基準錯置，追加此勘誤並修正現行metadata，不改歷史定位。
+既有IDA9.4的19574呼叫196D2，19577直接RET；一般遭遇尾段1964A呼叫1BD97不在此分支。
+來源為work/issue4-registry-input-ida.json及本輪dosgolem正常特殊事件分派觀測，位址均IDA linear。
+此返回邊界的bytes為confirmed；handler14的完整原版動態V3仍未由本輪驗證。
+
+有限契約：正常步進已啟動boss_surrender對話時，該次處理立即返回。
+不遞減一般遭遇counter、不擲隨機遭遇、不另開戰鬥；原始intro後的固定四敵戰鬥保持。
+只閉合此既有具名primitive，不擴張成其他未驗handler的共同結論。
+用正式移動踏入trigger，受控fixture將遭遇counter固定為1並在執行前固定seed，
+斷言對話、counter保持及沒有並行battle，再驗intro後原始編隊與完整主線。
+fixture為引擎邊界驗證，不稱原版RND骰序parity。沒有新存檔欄位或編隊／機率變更。
+必要依賴工作與三版私有只讀診斷入口見[docs/188](188-opening-escort-to-castle-spec.md)。
+
+2026-10-04有限CONFORMED：固定counter1的正常觸發測試保留counter且不開隨機battle，
+intro後原始四敵編隊及新遊戲至THE END118.78秒通過。只閉合當步返回邊界；原版完整動態V3仍未知。

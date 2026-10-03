@@ -2352,3 +2352,196 @@ R1工具錯誤觸發舊生成器歸檔後，295份較短來源已逐檔恢復大
 同前綴`hygiene.json`保存擁有權檢查，`post-push-receipt.json`保存提交／遠端及Issue核對。
 Issue原文、更新全文及結果留言保存在同前綴`prior-body.txt`、`body.txt`與`result-comment.txt`。
 新檔UID／GID1000，既有root候選3213、Markdown目錄0保持；本批DQ3容器全部清除。
+
+### 登錄所來源的原生輸入消費探針（DRAFT）
+
+接續1b96eb8及Issue #4。正式pack維持0.1.80，原版EXE身份與IDA9.4位址基準沿用本文件。
+既有`work/issue4-registry-key-table-ida.json`、`issue4-registry-input-ida.json`已包含19530與19417。
+195D0的`or word ptr DS:13h,1`受4F46的0200及0004、counter52F8閘門限制，
+前面還會呼叫19810。19810只清除各actor的38h bit10及4F46的0200。
+此段目前為strong，沒有正常動態閉環；不能推定命令窗或戰鬥會設低位元。
+不為未證實語意加入正常路線外的事件，也不修改原版旗標、CX或計時器。
+
+舊回程探針每個方向鍵要求`Steps > queued+11000000`才接受返回。
+這是觀測器額外等待，IRQ送達與固定指令間隔都不能單獨證明輸入已消費。
+原生19417呼叫210CA；1941C讀AH方向掃描碼，接續碰撞、dispatch與1991D，最後1997C返回。
+文字21133完成初始化後才輪詢；2113A只在非零key flag成立後清除；
+21155只在21148看見非零flag時到達，2115D清除flag並返回。
+此靜態來源足以建立只讀消費觀測候選，仍須原生log與GUI狀態驗證，不能把試跑當正式收據。
+
+私有入口`work/issue4-registry-consumed-probe.py`，前綴
+`work/dosgolem-opening/issue4-registry-consumed-r1`。保持前38次母親正常輸入與174份父PNG／bin。
+後續方向及文字使用已記錄的謁見／回程／首次問候輸入序列；只在原生poll邊界排入IRQ1。
+每個packet記錄排入、按下／放開、讀鍵消費、下一個自然poll、人物與完整raw狀態。
+以實際消費及完整返回取代固定11000000指令等待；自然等待窗仍用明示正常Enter關閉。
+生成只使用隔離tmp，保留frozen Go、binary、metadata與完整PNG；不覆寫既有來源。
+旗標4000或來源狀態不符即拒絕；沒有成功取消或出生的完整證據前維持DRAFT。
+工作登記為`work/issue4-registry-consumed-progress.txt`；後續稽核與限制仍追加於本入口。
+宣告的完整掃描碼與產生器雜湊保存在`work/issue4-registry-consumed-plan.json`。
+本探針目前只到正常姓名取消與返回，出生另需獨立正常輸入來源；不把DONE當來源接受。
+R1已因路線不合格停止並保留全部產物。拒絕稽核入口為
+`work/issue4-registry-consumed-rejection-audit.py`與同前綴JSON；不重命名為合格收據。
+第一個Up捕捉到21,15，起點原為21,17。後段packet61在國王前返回field，
+packet62的額外Enter重新進入record253二選一；後續Down等方向鍵被選單消費。
+因此還不能由這批來源證實移除固定等待後的合法步行與登錄流程。
+下一版須另觀測keyup後的正常空讀鍵與場景輸入恢復，並以原版已確認的謁見交易完成
+判定轉入回程；不能照固定packet數多送確認。上述恢復條件目前為DRAFT。
+R1拒絕稽核99,784bytes，SHA-256
+`62256651ad897270a7c076e3d4f192717493cb8d1b6dfae60d33d29bd7ccbe9c`；174份父PNG／bin全部相同。
+新的隔離入口為`work/issue4-registry-quiescent-probe.py`，前綴
+`work/dosgolem-opening/issue4-registry-quiescent-r1`，計畫為`work/issue4-registry-quiescent-plan.json`。
+keydown消費後另要求keyup已送達、1941C的AH=0及下一個自然field poll，
+首三個Up逐項要求21,16、21,15、21,14；不符合即停止來源，不重設座標。
+謁見以原版record78等待及clear17h／set18h／50金交易完成點進入回程，
+不沿用前一固定100包中未必消費的確認鍵。是否形成合格同狀態來源仍待動態驗證。
+Issue拒絕及續行登記為`work/issue4-registry-consumed-rejected-progress.txt`。
+
+### 首次北行的殘留事件查證（DRAFT，追加勘誤）
+
+前述首三個Up的單格期待未有原版依據，不作驗收契約。quiescent-r1在完整keyup及空讀鍵後，
+仍自然從21,17移到21,16、播放DI0C07，再到21,15。它在錯誤期待處停止，未完成登錄所。
+北側CTY00 section0的21,16原始word為0001，file069E，selector為0，沒有handler55。
+因此「北側格觸發母親勸告」已收回；不能因record79出現就把北側地圖改成特殊格。
+CTY00大小7546與SHA-256 ac8427c5fafcad4e29246dd3c2796c476bb5ad93e53dd7c7127a6b2faa31a836保持。
+
+既有IDA9.4的11B0B在特殊格設DS:4F46 bit0800、11B11保存DS:258C選擇器。
+196D2先清0800，再讀258C並經1970B呼叫handler。
+11ADE..11B04的一般格移動未清此位元。帶路的194C3強制步進未呼叫19530分派。
+首次北行可能消費帶路殘留的handler55，現階段為strong，待原生前後狀態閉合。
+既有南行有限CONFORMED不擴張為北行或所有一般特殊格的parity。
+
+獨立新版入口為`work/issue4-registry-quiescent-r2-probe.py`，前綴
+`work/dosgolem-opening/issue4-registry-quiescent-r2`與同前綴計畫。
+觀察初次空讀鍵的4F46／258C、19530、196D2、1020B、10232及10245，保留PNG／bin。
+首三次北行以舊原生觀測21,15／21,14／21,13作來源一致性檢查，不稱已確認的remake規格。
+國王clear17h／set18h／50金完成後才回程，不再多送確認；取消與出生仍須來源獨立稽核。
+前兩版產生器、失敗log與拒絕收據保持，追加此勘誤，不重寫歷史證據。
+正式1b96eb8正常首次Up的隔離診斷入口為`work/issue4-first-up-baseline.py`，
+輸入為同前綴HEAD tar；僅記錄完整等待後的位置與事件，不把現行測試當原版oracle。
+
+### 帶路殘留勸告事件（有限 READY）
+
+quiescent-r2由原版冷啟動自然完成，202次正常輸入／404 IRQ1。
+首次空讀鍵在21,17保留4F46=0800／258C=0001；第一次Up在21,16到196D2，
+1020B入口已清0800，10232完成record79，10245到21,15。後兩次Up自然到21,14／21,13。
+本段結論為confirmed，推翻前版「單格期待」及「北側地圖特殊格」說法。
+固定dosgolem revision2f44a68與單次seed1357，無還原狀態、位置或計時器修改。
+frozen Go SHA-256 ecc9714025c26789ad7ed32e7645833a96528393a6fe9ea1bf72fe2271b49405。
+EXE身份及IDA9.4位址基準沿用上方；靜態writer為11B0B／11B11，consumer為19530／196D2／1970B。
+
+有限契約：既有pack帶路路線的強制移動若經過已審查的region dialogue return特殊格，
+保存該事件穩定ID，普通格不清除。下一個成功正常步進先由新落腳特殊格覆蓋選擇器，
+再消費待執行事件；required flag、actor轉向、record、自動關窗及強制返回沿用已審查契約。
+阻擋的步行不消費；事件分派先清pending，故下一次普通北行不重複勸告。
+場景不符的待執行事件失效；不把未閉合的其他原始handler加入production。
+版本raw值、文字與方向仍從CTY及game pack取得，不新增DQ3 Go常數或fallback。
+
+重製存檔追加可省略的deferred事件穩定ID，保存尚未消費的正常檢查點。
+Load在改Game前驗證ID、pack、scene與gate；已消費的存檔不重新生成事件。
+此存檔延續契約為engine D2，原版存檔parity未知；原版硬體等待維持既有近似。
+驗收為正式母親返回→首次Up→完整自動提示→21,15→第二次Up→21,14，
+故事旗標、金錢及背包保持；另抽測既有Down、重複觸發、阻擋不消費及前後存讀檔。
+完整640×350圖片逐項報告，不以視窗相同宣稱全圖V3；音訊及出生不在本切片完成範圍。
+
+可重生的DRAFT全路線產生器為`tools/dosgolem_registry_quiescent_probe.py`，
+有限首次北行獨立核對入口為`tools/verify_dosgolem_first_move.py`。
+本次全路線也自然完成謁見50金、85回程、登錄問候、姓名取消及選否返回field2,5，
+但完整取消、出生與remake接線仍待獨立審查，不由DRAFT的DONE直接宣稱CONFORMED。
+正式正常測試入口為`game/deferred_region_return_test.go`；資料包版號與事件證據更新，schema不變。
+本批回歸入口為`work/issue4-first-move-regression.py`，來源拒絕入口為
+`work/issue4-first-move-negatives.py`，收尾入口為`work/issue4-first-move-final-audit.py`。
+產物同前綴保存正常PNG、JSON、完整game清單及分批結果、internal與desktop。
+完整主線的CTY10對話失敗只讀診斷入口為`work/issue4-first-move-campaign-diagnostic.py`，
+使用HEAD tar加明確候選檔案的隔離副本，只追加失敗狀態，不在production加debug分支。
+
+同入口的`-r2`至`-r5`診斷保存文字、戰鬥及含裝備容量的觀測，不覆寫失敗來源。
+最終完整回歸入口為`work/issue4-first-move-regression-verified.py`，
+結果為`work/issue4-first-move-game-verified-summary.json`及同前綴batch JSONL。
+最終來源負面稽核為`work/issue4-first-move-negatives-final.py`與同前綴JSON。
+最終正常對拍為`work/issue4-first-move-production-verified`同前綴PNG／JSON／log。
+目前狀態同步入口為`work/issue4-first-move-update-docs.py`；
+獨立收尾收據為`work/issue4-first-move-final-receipt.json`，
+提交／推送與容器清理另記於`work/issue4-first-move-post-push-receipt.json`。
+
+收回通用文字等待改動後的乾淨回歸入口為`work/issue4-first-move-regression-clean-final.py`，
+結果為`work/issue4-first-move-game-clean-final-summary.json`及同前綴batch JSONL。
+`verified`程序在後段航行由agent主動停止，exit143屬工具清理，沒有完整主線PASS。
+最終正常對拍為`work/issue4-first-move-production-clean-final`同前綴PNG／JSON／log。
+
+拉米亞最後步進的遭遇診斷為`work/issue4-first-move-campaign-diagnostic-r6.py`與同前綴log／private-test.go。
+有界180秒堆疊證實測試在停泊點等待cd，正式Game仍在battle.active分支。
+最終回歸入口為`work/issue4-first-move-regression-r5.py`，
+結果`work/issue4-first-move-game-r5-summary.json`及同前綴batch JSONL；
+最終正常對拍為`work/issue4-first-move-production-r5`同前綴PNG／JSON／log。
+
+巴拉摩斯回程法力診斷為`work/issue4-first-move-campaign-diagnostic-r7.py`及同前綴產物。
+Boss前已學rec175的預留角色MP27；Boss後CTY66 section0、9,29，存活施法者MP1／0，不能再施法。
+測試改為保留該角色的全部當前MP，用正式攻擊／道具參戰，不猜固定回程施法次數或注入MP。
+本次完整回歸為`work/issue4-first-move-regression-r6.py`，
+結果`work/issue4-first-move-game-r6-summary.json`及同前綴batch JSONL；
+正常對拍為`work/issue4-first-move-production-r6`同前綴PNG／JSON／log。
+
+追加勘誤：全部MP預留未解除回程阻塞，已收回。r8時間序列入口為
+`work/issue4-first-move-campaign-diagnostic-r8.py`及同前綴log／private-test.go。
+進入CTY66時魔法使者MP241；沿途已選逃跑的遭遇仍在隊長逃跑結算前消耗同伴傷害咒文MP。
+Boss前剩27，全部預留使Boss結束仍27，但回程遭遇又降到1，賢者57降到0。
+因此測試修正逃跑時的同伴命令為普通攻擊，明示允許同伴施法的策略保持；原Boss預留契約保持。
+最終回歸入口為`work/issue4-first-move-regression-r7.py`，
+結果`work/issue4-first-move-game-r7-summary.json`及同前綴batch JSONL；
+正常對拍為`work/issue4-first-move-production-r7`同前綴PNG／JSON／log。
+
+r7在金皇冠寶箱容量滿時保留物品。測試取物前經正式選單丟棄藥草，騰出一格；
+全隊持有權、容量、事件旗標與存讀檔斷言保持。完整回歸入口為
+`work/issue4-first-move-regression-r8.py`，結果`work/issue4-first-move-game-r8-summary.json`及同前綴batch JSONL；
+正常對拍為`work/issue4-first-move-production-r8`同前綴PNG／JSON／log。
+
+追加勘誤：r8 全域保留 MP 停用了救治，r9 僅停用逃跑傷害咒文仍在前段 mon44 全滅。
+兩種全域策略均已收回，既有戰鬥策略保持。r9 失敗保存於
+`work/issue4-first-move-game-r9-batch-00.jsonl`，入口為 `work/issue4-first-move-regression-r9.py`。
+portal 路由原先只計算主角聖水，漏掉同伴持有的三瓶；正式道具選單支援全隊持有者。
+目前只將測試路由數量判斷改用既有 `countPartyItem`，保留最後一瓶策略與正常使用選單。
+本輪回歸入口為 `work/issue4-first-move-regression-r10.py`，實際結果為同前綴 batch JSONL／log。
+只有全部測試通過才產生 `work/issue4-first-move-game-r10-summary.json`；缺檔不能視為通過。
+Issue 更新文字入口為 `work/issue4-first-move-party-water-progress.txt`。
+同一 r10 binary 的正常對拍輸出為 `work/issue4-first-move-production-r10` 同前綴 JSON／PNG／log，
+嚴格來源核對為 `work/issue4-first-move-source-r10.log`。
+
+### 首次北行正式驗收（有限 CONFORMED）
+
+schema0.9.0／content0.1.81，canonical hash `sha256:d6c7994ee7fa53d227a98263f12606a8f4109a87f4afea01cd6996ad7f269b5d`。
+有限來源`work/dosgolem-opening/issue4-registry-quiescent-r2-first-up-receipt.json`，SHA-256
+`c38bcc0947c5569383b4c1b03b9d0039dd59e6fea3397ee2cd924a1e1071fe1d`。
+嚴格驗證41次正常輸入／82IRQ1、174份父PNG／bin、五個事件邊界及三個正常北行狀態；
+14種協同壞來源拒絕，包含producer、Go／metadata、binary、runtime、log、PNG／bin及父來源。
+正式冷母親返回後首次Up進21,16、自動警告後21,15，第二及第三Up到21,14／21,13。
+首次警告完整640×350 RGB差0，三張北行195／9039／22192仍RED，沒有裁切、遮罩或固定frame。
+pending Save／Load會重播一次，消費後Save／Load不重新生成；壞存檔拒絕不改Game。
+存檔契約為engine D2，原版Save／Load與音訊未知。既有Down、重複返回及下一步保持。
+
+完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
+完整回歸先暴露甘達特intro與隨機戰鬥同時active；主因為已處理特殊事件後仍進一般遭遇尾段。
+有限READY與原始地址訂正見docs/85，當步return保持encounter counter及原始四敵編隊。
+文字確認helper的通用等待改動沒有解決該失敗，已收回；保留原有retained region等待。
+之後拉之鏡受阻，r5明確記錄全隊各8格、空位0；失敗保留物品與present flag。
+測試玩家經正式丟棄選單移除未裝備且無場景用途的備品，取得一格後繼續；遊戲容量規則未改。
+r6只讀180秒堆疊另定位到拉米亞停泊點的cd等待，Game仍在battle.active分支。
+測試在最後一步抵達時遇敵卻只空等，現先用正式戰鬥選單完成遭遇，再等待與搭乘；不改遊戲規則。
+失敗、中止與所有診斷保留，不以更換seed或注入狀態取得通過。
+quiescent-r2完整取消來源維持DRAFT；本段CONFORMED僅涵蓋首次三個Up的狀態及警告畫面。
+完整背景、NPC相位、音訊、原版存讀檔、登錄所取消／出生及完整原版主線仍待驗。
+r5後續回歸的巴拉摩斯回程資源不足由r7定位，施法者存活但MP1／0。全部MP預留未解除，r6失敗後收回。
+r8時間序列閉合沿途逃跑時同伴先施放傷害咒文的消費端。全域保留MP的r8與停用傷害咒文的r9都在前段全滅，兩者已收回。
+portal路由只計算主角聖水，漏掉同伴持有者；測試改用既有全隊計數與正式持有者選單，原戰鬥策略保持。
+沒有補寫角色能力、改速度或戰鬥規則。
+金皇冠取物前也經正式丟棄選單騰出一格，隊伍持有權及存讀檔斷言保持。
+Issue #4保持OPEN；沒有新發行包。
+
+本輪收尾核對入口為 `work/issue4-first-move-final-audit.py`。
+首份收據 `work/issue4-first-move-final-receipt.json` 保存文件索引補齊前的檔案雜湊，
+最終索引補齊版本另存 `work/issue4-first-move-final-r2-receipt.json`，不覆寫首份。
+production 增行核對為 `work/issue4-first-move-production-diff.patch` 與
+`work/issue4-first-move-production-scan.json`；數字命中為既有格式解析／存檔驗證，
+其他中文與ID命中為 gofmt 重新對齊的既有欄位註解，沒有新增玩家文字或 DQ3 fallback。
+更新前遠端本文為 `work/issue4-first-move-pre-update-issue-body.txt`。
+本輪 Issue 本文及結果留言分別由 `work/issue4-first-move-final-issue-body.txt` 與
+`work/issue4-first-move-final-issue-comment.txt` 保存；推送核對見既有索引的 post-push 收據。

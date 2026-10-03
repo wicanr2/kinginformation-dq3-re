@@ -1,20 +1,14 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-03目前現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
-現行schema0.9.0／content0.1.80。母親帶路後尚未謁見國王的勸告與強制返回有限切片已修正。
-原版由dosgolem2f44a68冷啟動39次正常輸入／78IRQ1；174份父PNG／bin保持，十個原生事件邊界通過。
-正式正常Down顯示record79，自動關窗並由21,18返回21,17，故事旗標、金錢及背包保持。
-可重複觸發；同一實例Load清除pending、標題讀檔及下一次Up通過。
-勸告視窗與陰影RGB差0；完整提示13145、返回13340，完整畫面V3未完成。
-既有謁見、回程與登錄所入口的有限完成範圍保持。
-完整game422頂層清單覆蓋，376頂層／77子PASS、46選用SKIP；本批原版正常勸告另嚴格PASS。
-internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。
-正常新遊戲InputState至THE END266.49秒，只屬重製回歸；無素材缺失SKIP。
-18種壞來源拒絕，14種契約損壞及七種壞資產拒絕；九份JSON從乾淨562208a重建語意相同。
-轉向／文字／返回由共用有限狀態機處理，版本數值與文字存於pack；兩段等待為硬體規格近似。
-下一切片仍為正常登錄所交談與登錄。R8只核對首次問候13狀態，完整取消與出生維持DRAFT。
-原版音訊、存讀檔、NPC可見性及完整campaign未完成；沒有新發行包。
-唯一現況表見下，規格與私有收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+2026-10-04目前現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
+現行schema0.9.0／content0.1.81。母親帶路殘留事件在首次正常Up消費，警告後到21,15，後兩步到21,14／21,13。
+有限原版來源41正常輸入／82IRQ1，174份父PNG／bin保持；首次警告完整640×350 RGB差0。
+三張北行完整畫面仍差195／9039／22192，完整V3未完成。既有Down視窗零差異與完整13145／13340限制保持。
+未消費與已消費檢查點的同版本Save／Load、阻擋不消費、新事件覆蓋及壞存檔拒絕通過。
+甘達特對話當步結束特殊事件分派，避免同時開啟隨機遭遇；原始四敵編隊保持。
+完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
+原版存檔、音訊、NPC相位及完整主線仍未知。登錄所完整取消來源維持DRAFT，下一切片獨立審查。
+唯一現況表見下，證據與私有收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下段落保存歷史檢查點；目前狀態以上述說明及下方表格為準。
 
@@ -94,18 +88,18 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 正式路線回歸的收據與演進依 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)，
 詳見 [WORKLOG.md](WORKLOG.md)。下一步恢復原版創角後的 dosgolem 玩家路徑對拍。
 
-| 目前狀態（2026-10-03） | 最近驗收與界線 |
+| 目前狀態（2026-10-04） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；schema0.9.0／content0.1.80；canonical hash `sha256:d2ea836e3df3c1c39e02481e73d2efcb3eae41340aa0cfe89debf2e06162fc4e`；未發布新包 |
-| 最新remake已完成 | 母親勸告、自動關窗、碰撞檢查後強制北行、重複觸發；同版本Load取消pending與恢復必要actor、標題讀檔及下一步通過。既有謁見及回程交易保持 |
-| 最新原版oracle | 63ee434e冷啟動39次／78IRQ1，174份父PNG／bin保持；十個原生邊界，1020B的21,18經record79／關窗／194C3返回21,17；只有一個追加Down |
-| 最新畫面已驗 | 勸告視窗及陰影RGB差0；完整640×350畫布仍逐點比較並保留。既有零差異範圍保持 |
-| 最新畫面未通過 | 本批完整提示13145、返回13340。既有回程城鎮13983、酒館1403、登錄所118、國王893、王座2159／1772、城堡182／979／1960／304、家中124、房間261限制保持；完整V3未完成 |
-| 下一production切片 | 從正常登錄所入口續行交談與登錄；原版完整來源尚未接受，先閉合來源。NPC可見性另需consumer，不由圖塊規則猜補；入口docs/188 |
-| 本輪登錄所DRAFT | R8首次問候13狀態及前604份PNG／bin保持；完整取消與出生未接受。較短原版路線未進登錄所，首個Down分歧已由本批勸告返回切片修正。未知計時旗標用途不猜補 |
-| 原版oracle仍未知 | 登錄所交談後的動態路線、其他健康色／status、鍵盤自動重複、非零層轉換動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
-| 現行remake回歸 | 完整game422頂層清單覆蓋，376頂層／77子PASS、46選用SKIP；本批原版正常勸告另嚴格PASS。 internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。 正常新遊戲InputState至THE END266.49秒，只屬重製回歸；無素材缺失SKIP。 |
-| 額外驗證限制 | D3原版首次Down只證明已觀察流程；其他方向及原版Save／Load未做動態V3。重製actor恢復為engine D2，兩段5frame等待為hardware-spec approximation；不固定人物相位或RNG閒置呼叫次數 |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.9.0／content0.1.81；canonical hash `sha256:d6c7994ee7fa53d227a98263f12606a8f4109a87f4afea01cd6996ad7f269b5d`；未發布新包 |
+| 最新remake已完成 | 帶路殘留勸告事件由首個成功普通步進消費，首次Up自動返回21,15，後兩步21,14／21,13；同版本前後Save／Load、阻擋及覆蓋通過。甘達特對話當步不再啟動隨機遭遇，四敵編隊保持 |
+| 最新原版oracle | c38bcc09有限冷啟動來源41次／82IRQ1；174份父PNG／bin保持；4F46=0800／258C=1由196D2清事件後進1020B、record79與強制北行，後兩步不重複 |
+| 最新畫面已驗 | 首次Up警告完整640×350 RGB差0；既有Down勸告視窗及陰影RGB差0。既有零差異範圍保持 |
+| 最新畫面未通過 | 首三個Up完整差195／9039／22192；Down完整提示13145、返回13340。既有回程城鎮13983、酒館1403、登錄所118、國王893、王座2159／1772、城堡182／979／1960／304、家中124、房間261限制保持；完整V3未完成 |
+| 下一production切片 | 從正常登錄所入口續行交談與登錄；先獨立審查完整取消及出生來源。NPC可見性另需consumer，不由圖塊規則猜補；入口docs/188 |
+| 本輪登錄所DRAFT | quiescent-r2自然完成202次正常輸入／404IRQ1：謁見50金、85回程、問候、姓名取消及選否返回field2,5。完整路線尚未接受；來源c38bcc09只審查首次三個Up，不能宣稱取消或出生parity |
+| 原版oracle仍未知 | 登錄所完整取消及出生同狀態路線、其他健康色／status、鍵盤自動重複、非零層轉換動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
+| 現行remake回歸 | 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。 |
+| 額外驗證限制 | 重製pending ID與必要actor的存檔恢復為engine D2；原版Save／Load未知。等待為hardware-spec approximation，不固定人物相位或後段RNG骰序。拉之鏡失敗為測試玩家容量滿，已用正常選單丟棄備品，不改production交易 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，
