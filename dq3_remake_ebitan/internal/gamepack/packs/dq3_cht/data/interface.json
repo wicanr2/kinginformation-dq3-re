@@ -6,6 +6,10 @@
       {
         "cty": 25,
         "section": 0
+      },
+      {
+        "cty": 25,
+        "section": 1
       }
     ],
     "party_hud_id": "dq3:window.field_party_hud",
@@ -110,12 +114,12 @@
     "evidence": {
       "level": "D3",
       "source_kind": "exe",
-      "source": "DQ3.EXE + dosgolem正常49次輸入",
+      "source": "DQ3.EXE + dosgolem正常49次進城及90次王座接近輸入",
       "address_space": "linear",
       "address": "0x1991D..0x1997C;0x17DBB..0x17E11;0x18222..0x182E3",
-      "consumer": "正常三次開窗、兩次按鍵消耗與關窗；588..594靜態狀態reader",
+      "consumer": "城堡三次及王座正常單人等待／按鍵消耗／關窗；588..594靜態狀態reader",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
-      "note": "單人正常開關D3；其他隊伍、健康色及狀態字串靜態D2，動畫及原版存檔未驗。"
+      "note": "CTY25 section0及section1正常單人開關D3；其他隊伍、健康色及狀態字串靜態D2，動畫及原版存檔未驗。"
     },
     "timing_evidence": {
       "level": "D2",

@@ -1,14 +1,14 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-03：Issue #4新增王座層攝影機修正，正式schema0.7.0／content0.1.76。
-> 正常首次上樓的完整RGB差由86603降至2159；柱子圖層及人物仍未對齊，不稱整張V3。
-> 原版90次輸入／180IRQ1／386產物已驗，前輪214份PNG／bin不變；最後9,8，尚未觸發謁見。
-> 正常標題存讀檔恢復camera及旗標，後續上鍵可移動。原版存檔oracle未知。
-> gamepack86頂層／238子、受影響game六項、正常THE END81.38秒及desktop通過，只屬重製回歸。
-> 家中、城鎮及城堡前批已完成範圍保持，三張城堡等待圖仍182／979／1960差異。
-> 下一切片是王座圖層、section1等待窗與正常謁見；國王靜態先文字再獎勵尚缺自然交易樣本。
-> 不固定人物frame，不深入硬體ISR；原版音訊與完整campaign未完成，沒有新發行包。
-> 唯一目前狀態表在[CONTEXT](CONTEXT.md)，目前計畫在[docs/74](docs/74-ebiten-remake-completion-plan.md)，證據入口在[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+> 2026-10-03：Issue #4王座層自然等待窗已修正，schema0.7.0／content0.1.77。
+> 視窗與陰影RGB差0，完整等待／恢復1772差異；基準缺窗完整10143。
+> 上樓2159差異只在人物圖格，四柱及底圖一致，前輪「柱子圖層差異」撤回。
+> 正常開關、方向鍵消耗、凍結、同版本標題存讀檔及後續上鍵通過。
+> 原版90次／180IRQ1／386產物及214份前輪圖像不變；最後9,8，尚未謁見。
+> gamepack86頂層／238子、受影響game七項、desktop與正常THE END129.64秒通過，只屬重製回歸。
+> 十二種壞來源拒絕，九份JSON從乾淨61f60d3重建；本批未重跑全部game／internal。
+> 下一切片為正常國王文字與獎勵來源；人物動畫、原版存檔、音訊與完整campaign未完成。
+> 唯一現況表見[CONTEXT](CONTEXT.md)，計畫見[docs/74](docs/74-ebiten-remake-completion-plan.md)，證據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下保存歷史檢查點，不能以舊待辦重新開啟已閉合功能。
 

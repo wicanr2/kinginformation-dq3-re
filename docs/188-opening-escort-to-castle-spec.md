@@ -1623,6 +1623,74 @@ Save及正常標題Load恢復相同camera、座標、旗標、物品與金錢；
 `34085fc4334bee169597bbf026dfdcdeee65850b1c08709840759163bee69ec4`。
 本批只閉合camera；柱子圖層、王座閒置窗、國王文字／獎勵、動畫、原版讀檔及音訊保持未完成。
 
+#### 王座柱子與等待窗續行（DRAFT）
+
+接續61f60d3，依Issue #4續查2159個完整畫面差異及section1自然等待窗。
+入口`work/issue4-throne-layers-prototype.py`與同前綴輸出保存乾淨提交的正常玩家路徑診斷。
+先核對實際Scene圖號、palette及原版載入資料，不預設缺柱由圖層造成。
+前輪自然final.state只作記憶體觀察，執行步數維持3100000000，不注入或續行、不擷取畫面；
+原版圖像仍採當次冷啟動的完整PNG／bin。所有工作負載仍在一次性Docker，輸入唯讀。
+原始CTY25 section1及載入後308E:0B87／0C1F／0B9B／0C33的四個柱子word均為000E。
+此為dosgolem執行期seg:offset的memory-only核對；不與IDA linear或file offset混稱同一位址。
+原始DQ31.BLK index14與來源首次上樓x128..159/y0..23的768個色號全同，圖塊本身沒有解碼缺口。
+NPC表首項是byte count；先前以u16試讀得到1805的診斷已排除，依原生parser核對為13個7-byte record。
+正式schema0.7.0／content0.1.76維持，未以DRAFT修改production path。
+
+追加勘誤：前輪「柱子圖層差異」已推翻。獨立PNG解碼與原版bin逐色號差0，
+完整RGB差2159只在人物圖格(3,2)、(3,3)、(16,3)、(15,4)、(10,6)、(9,7)，
+各為474、474、428、406、206、171；四根柱子及其他底圖差0，不新增section1圖層來修假缺陷。
+私有獨立入口`work/issue4-throne-png-bin-audit.py`與同前綴JSON保留完整畫布比較。
+
+王座等待窗DRAFT沿用既有狀態機及資料契約，只新增CTY25 section1場景綁定。
+原版90次輸入收據的第7次waiting／第8次restore均在9,22；17DBB、17DE5、18222、18259
+使用與前層相同的動態header及58bytes角色資料。19940正常298／299／300邊界及19952入口閉合。
+原始定位與EXE身份沿上節已核對IDA9.4，新增動態來源僅擴大正常單人場景適用範圍。
+私有同提交試作入口`work/issue4-throne-idle-prototype.py`，產物同前綴baseline／candidate。
+不控制位置、旗標、人物frame或亂數重擲；188更新仍為hardware-spec approximation。
+審查與正常開關、完整PNG、後續新上鍵及標題存讀檔通過前，正式資料包維持。
+
+#### 王座等待窗證據審查（有限 READY）
+
+同提交試作只加入既有`field_idle_status.scenes`的section1綁定，自然等待窗與陰影區域差0，
+完整640×350仍1772差異。基準未開窗，兩張完整圖及差異數值均保留，沒有指定人物frame。
+原版第7次waiting、第8次restore保持位置9,22，動態header及actor與前層相同，
+PIT／計數298、299、300及19952入口已閉合。`tools/verify_dosgolem_king_audience.py`
+追加來源log一致性、同header／actor、門檻與正常關窗斷言；原始90次收據及產物不改。
+
+READY只增加已證實場景引用，schema0.7.0維持、content升0.1.77。
+不增加共用Go分支或版本常數；原有等待、模態凍結、方向鍵消耗、恢復與存檔暫態契約保持。
+formal驗收需正常新遊戲至首次上樓、188更新門檻、同一自然等待窗與陰影RGB零差異、
+完整等待及恢复PNG、關窗不移動、持續按住不移動、放開後新按鍵續行與正常標題存讀檔。
+整張畫面、動畫、國王交易、原版讀檔與音訊維持未知，不能由局部視窗零差異外推。
+正式入口為`game/throne_idle_status_test.go`，沿用`game/throne_camera_test.go`正常落點helper；
+資料重建及比例驗證入口為`work/issue4-make-throne-idle-pack.py`與`work/issue4-run-throne-idle-production.sh`。
+新增工具與稽核入口`work/issue4-throne-idle-final-audit.py`、同前綴收據均掛在本節。
+
+首輪七項共用程序以137終止，最後一項未有結果；保留`work/issue4-throne-idle-process-137-*.log`，
+改同一容器及binary逐項新程序。新測試首次把Save前／後respawn一起比較而失敗。
+`work/issue4-throne-idle-snapshot-diagnostic.log`證實僅Save既有checkpoint更新，未有UI進度改變。
+驗收分別比較自然開窗前後、明確Save後的關窗前後及標題Load完整快照，正式存檔規則不改。
+
+#### 王座等待窗正式驗收（有限 CONFORMED）
+
+schema0.7.0／content0.1.77，canonical hash
+`sha256:9d2f7a1aa24b999258e8645258ae9f7af8a8c5169088a9bc8c5d495d96fdc5c0`。
+正常新遊戲至9,22，自然188更新等待、開窗凍結、上鍵只關窗、持續按住不移動、放開後續行通過。
+等待及關窗不改完整進度快照；明確Save既有respawn更新另取快照，正常標題Load完整恢復。
+同一Game的Load清除暫態，重新等待可開窗；沒有修改存檔規則、人物frame、seed或正式輸入。
+正式等待PNG逐byte等於隔離試作，視窗與陰影RGB差0，完整等待及恢復均1772，整張V3未完成。
+同提交基準未開窗，完整差10143、視窗區域8458；首次上樓仍2159且只在人物圖格。
+
+比例驗證為全部gamepack86頂層／238子、七項受影響game與desktop Linux x86_64 ELF，無SKIP。
+正常InputState新遊戲至THE END129.64秒，只屬重製回歸；全部game及其他internal未重跑。
+十二種壞原版收據拒絕，新增三項同時修改暫存log／metadata及manifest，驗證同header、門檻與位置。
+九份JSON由乾淨61f60d3重建逐byte相同。原版386份產物與前輪214份PNG／bin保持，未重寫來源。
+完整正式產物、逐項乾淨log與來源核對使用`work/issue4-throne-idle-*`前綴；
+獨立收尾入口`work/issue4-throne-idle-final-audit.py`產生6041bytes收據，SHA-256
+`131aa62782373f3c6b6bcca7ecc2c7c4be9bc30b8f17fb3ee4c63ac023dc002b`。
+輸出UID/GID1000，既有root候選3213、Markdown目錄0保持；一次性容器皆已移除，沒有新image或發行包。
+下一切片延長正常國王路線，先由dosgolem取得自然文字及獎勵交易；動畫、原版讀檔、音訊及完整主線保持待驗。
+
 ## 2026-10-03 城鎮攝影機（有限 READY）
 
 依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。

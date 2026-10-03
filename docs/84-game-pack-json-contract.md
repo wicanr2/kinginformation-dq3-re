@@ -1837,3 +1837,7 @@ DQ3新增完整record407／557／434與真正能力選項raw window `0x28E50`；
 資料最低D2，正式狀態機與scene入口需D3，`timing_evidence`明示hardware-spec approximation。
 所有巢狀欄位必填，文字shape、record來源、字模、索引、scene及證據均驗證，沒有引擎fallback。
 存檔不序列化UI暫態；同版本讀檔清除等待、底圖及方向消耗後重新等待，遊戲進度保持。
+
+content0.1.77沿用schema0.7.0，在`field_idle_status.scenes`新增已有D3正常入口的CTY25 section1。
+等待與恢復、字型、文字、陰影及存檔暫態契約不變；場景引用與原版自然來源見[docs/188](188-opening-escort-to-castle-spec.md)。
+不同canonical hash的舊存檔仍拒絕，不自動遷移。

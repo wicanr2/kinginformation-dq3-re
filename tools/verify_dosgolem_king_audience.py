@@ -46,7 +46,8 @@ def validate(path):
     assert not any('找不到的檔（' in x for x in log)
     for label, key in [('DQ3_KEY_DELIVERED ', 'actual_irq1_events'),
                        ('DQ3_KING_AUDIENCE ', 'king_audience_events'),
-                       ('DQ3_IDLE_WINDOW ', 'idle_window_events')]:
+                       ('DQ3_IDLE_WINDOW ', 'idle_window_events'),
+                       ('DQ3_IDLE_STATUS ', 'idle_status_events')]:
         assert [x for x in log if x.startswith(label)] == d[key]
     assert d['idle_window_events'][:5] == old['idle_window_events']
     artifacts = d['artifacts']
@@ -80,10 +81,32 @@ def validate(path):
     assert all(int(x['pit_divisor']) == 12428 and x['dgroup'] == '15ed' for x in events)
     assert len({x['actor'] for x in events}) == len({x['flags'] for x in events}) == 1
     assert ready[20]['raw0b24'] == '08c7'
+    # Floor-one normal idle uses the same reviewed dynamic window and actor.
+    windows = [fields(x) for x in d['idle_window_events']]
+    assert len(windows) == 8
+    assert [(x['phase'], int(x['ordinal']), int(x['player_x']), int(x['player_y']))
+            for x in windows[6:]] == [('waiting', 7, 9, 22), ('restore', 8, 9, 22)]
+    status = [fields(x) for x in d['idle_status_events']]
+    floor = [x for x in status if x['player_x'] == '9' and x['player_y'] == '22']
+    boundary = [x for x in floor if x['ida_linear'] == '19940']
+    assert [int(x['delta']) for x in boundary] == [298, 299, 300]
+    for a, b in zip(boundary, boundary[1:]):
+        assert int(b['ticks']) == int(a['ticks']) + 1
+        assert int(b['counter0000']) == int(a['counter0000']) + 1
+    opening = [x for x in floor if x['ida_linear'] == '17de5']
+    prior_opening = next(x for x in status if x['ida_linear'] == '17de5')
+    assert len(opening) == 1 and opening[0]['window'] == prior_opening['window']
+    assert all(x['actor'] == prior_opening['actor'] and x['party_count'] == '1'
+               and x['pit_divisor'] == '12428' for x in floor)
+    assert any(x['ida_linear'] == '19952' and x['delta'] == '300' for x in floor)
+    assert [x['ida_linear'] for x in floor[-3:]] == ['17e00', '17e11', '19966']
     return {'source_receipt_sha256': digest(path), 'normal_inputs': 90, 'irq1_events': 180,
             'artifacts_verified': len(artifacts), 'prior_png_bin_unchanged': matched,
             'first_floor': {'input_ordinal_after_prior49':21, 'cty':25, 'section':1, 'x':9, 'y':22},
             'final_position': {'x':9,'y':8}, 'actor_flags_unchanged': True,
+            'floor_idle': {'waiting_ordinal': 7, 'restore_ordinal': 8,
+                           'x': 9, 'y': 22, 'boundary_deltas': [298, 299, 300],
+                           'same_dynamic_header_actor': True},
             'king_audience_completed':False, 'full_rgb_parity':False, 'audio_parity':False,
             'stack_contract':'1991D兩個堆疊欄位只保留raw words；不得推定為far return IP／CS'}
 

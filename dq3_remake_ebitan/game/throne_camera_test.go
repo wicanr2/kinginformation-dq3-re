@@ -10,7 +10,8 @@ import (
 	"testing"
 )
 
-func TestDosgolemThroneCameraNormalInput(t *testing.T) {
+func runDosgolemThroneLanding(t *testing.T) (*Game, string) {
+	t.Helper()
 	path := os.Getenv("DQ3_KING_AUDIENCE_ORIGINAL")
 	if path == "" {
 		t.Skip("set DQ3_KING_AUDIENCE_ORIGINAL to verified original approach receipt")
@@ -89,6 +90,13 @@ func TestDosgolemThroneCameraNormalInput(t *testing.T) {
 	if g.curCty != 25 || g.cur.sec != 1 || g.px != 9 || g.py != 22 || !g.storyFlag(0x17) || g.storyFlag(0x18) || g.heroGold != 0 || len(g.inventory) != 0 || g.dlg.open {
 		t.Fatal("normal throne landing or pre-audience state differs")
 	}
+	return g, path
+}
+
+func TestDosgolemThroneCameraNormalInput(t *testing.T) {
+	g, path := runDosgolemThroneLanding(t)
+	var err error
+	up := InputState{DirHeld: 1, DirEdge: 1, AnyKeyEdge: true}
 	c := g.activeSceneCamera()
 	if c == nil || c != g.pack.SceneCamera(25, 1) || g.px-c.AnchorX != 0 || g.py-c.AnchorY != 15 || c.ExteriorTile != 27 {
 		t.Fatal("reviewed throne camera missing")

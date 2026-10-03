@@ -951,3 +951,36 @@ gamepack86頂層／238子、六項受影響game、desktop Linux x86_64 ELF通過
 一次編輯命令缺Docker標準輸入選項，沒有執行修改；另存v2並核對source／差異欄位後重跑。
 新輸出UID/GID1000，既有root候選3213及Markdown目錄0維持，未建新image或發行包。
 下一切片閉合王座圖層與section1閒置窗，再以正常輸入觸發謁見；Issue #4保持OPEN。
+
+## 2026-10-03：Issue #4 王座自然等待窗與柱子判讀勘誤
+
+接續61f60d3，工作登記5963310715，證據勘誤及試作登記5963410940。
+命中dosgolem、GUI對拍、規格閘門及文件職責路由，更新README前另讀現況聲明規範。
+原始CTY25四個柱子word、載入後記憶體與DQ31.BLK index14一致，Scene圖號及palette亦正確。
+獨立PNG解碼與原版bin逐色號差0；2159完整RGB差異全部在六個人物圖格，四柱及底圖差0。
+撤回前輪「柱子圖層差異」，保留舊斷言及新反證；沒有新增圖層來修不存在的缺陷。
+前輪final.state只作零續行的記憶體讀取，不由缺CRTC的disk state重生畫面。
+
+原版90次／180IRQ1／386產物及前輪214份PNG／bin保持。第7次waiting與第8次restore在9,22。
+正常298／299／300邊界、19952入口、17DE5動態header及58bytes角色資料閉合且與前層相同。
+強化既有來源核對器，不重寫或注入原版收據。十二種壞來源拒絕，新增三項同步改暫存log／metadata／manifest。
+乾淨61f60d3同提交試作只加既有場景綁定，未改位置、旗標、frame或重擲seed。
+基準未開窗完整RGB差10143、視窗8458；試作正常開窗視窗及陰影差0、完整1772。
+
+有限READY後正式JSON新增王座scene，schema0.7.0／content0.1.77，無新增production Go分支或版本常數。
+canonical hash `sha256:9d2f7a1aa24b999258e8645258ae9f7af8a8c5169088a9bc8c5d495d96fdc5c0`。
+正常70次輸入至上樓，自然188更新等待、凍結、關窗方向鍵消耗、按住不移動、放開後續行通過。
+完整等待／恢復均1772，等待窗及陰影RGB差0，正式等待PNG逐byte等於試作；不宣稱整張V3。
+自然開關完整快照保持，明確Save既有respawn更新另取基準，正常標題Load完整恢復並清除UI暫態。
+
+首輪七項共用圖形程序137終止，最後一項未有結果；原log按hash保留，改同限制／工具鏈逐項新程序。
+新測試首次比較Save前後快照失敗，診斷只差Save既有respawn更新；訂正測試基準後乾淨重跑，未改產品存檔。
+一次唯讀搜尋遇到歷史`.go`目錄，改為只讀普通檔案；沒有修改該目錄。
+gamepack86頂層／238子、七項受影響game、desktop Linux x86_64 ELF PASS，沒有SKIP。
+正常新遊戲至THE END129.64秒，只屬重製回歸；未重跑全部game／其他internal，不挪用前批全套結果。
+九份JSON從乾淨61f60d3重建逐byte相同；新測試、工具與私有收據入口掛回docs/188。
+獨立收尾`work/issue4-throne-idle-final-audit.py`產生6041bytes收據，SHA-256
+`131aa62782373f3c6b6bcca7ecc2c7c4be9bc30b8f17fb3ee4c63ac023dc002b`。
+CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74、docs/84及README同步；原始素材與私有圖像不進Git。
+輸出UID/GID1000，既有root候選3213、Markdown目錄0保持。一次性Docker均清除，未建新image或發行包。
+下一切片為正常國王文字及獎勵交易來源，Issue #4保持OPEN；動畫、原版讀檔、音訊與完整原版主線待驗。
