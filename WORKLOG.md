@@ -1288,3 +1288,23 @@ prototype首輪收據缺共同canvas比較所需的頂層EXE身份，另存r2不
 一次容器自動核准審查逾時，依工具指示重試一次成功；不是憑證或產品阻塞。
 所有工作登記Issue #4；首次進度5972746542。提交、push、Issue及Docker清理記錄由本輪收尾收據保存。
 沒有新發行包；原版、圖片、database、binary與使用者scratch不入Git。下一切片為入隊後文字與4000旗標分類，不重開本批入口。
+
+
+## 2026-10-04 Issue #4 入隊後文字與播放等待診斷
+
+接續da720aa。命中原版對拍、spec gate及平台規格路由，載入dosgolem、IDA9.4與硬體停止線。
+r5由正常冷新遊戲沿既有路線到入隊；前198個packet與396份PNG／bin獨立審查，前196個逐項保持。
+packet197進record530清單；packet198名冊狀態1→2與536內嵌等待，目的97bytes保持。
+packet199已送達／消費並進537／538；counter20000時1FEFC寫4000，20000000指令後仍停208F3播放完成等待。
+因此4000為本次長等待後的writer結果；尚未證實播放未結束的根因，也沒有完整入隊來源。
+既有IDA資料庫有界匯出與公開重生工具確認BP20h進EBG事件曲長資料路線，不沿用VCX PCM解釋或分析driver／ISR。
+新增旁註保留原始定位、file／loaded bytes、xref與分級；完整後段仍DRAFT，正式schema／content／hash保持。
+
+正常remake可丟棄副本在197完整RGB差51535、198差56790；選人後缺536文字與等待且仍在舊清單。
+r1未設DQ3_ASSETS造成素材SKIP，正確設定後相同binary正常198輸入7.03秒通過診斷，這不是parity通過。
+公開IDA首份r1因far call relocation基準混用拒絕，修正原始file bytes及載入比較後r2重生成功。
+工具呼叫兩次JavaScript語法錯誤、唯讀Python查詢语法及不存在machine目錄均在查詢前拒絕；修正後用同容器重跑，未改產品。
+所有失敗與私有產物保持，來源工具維持正式r4 guard；未清旗標、改clock、重設seed或注入角色。
+工作與結果登記Issue #4，進度留言5973523662；現況、下一閘門与证據入口同步CONTEXT、PROJECT_MEMORY及docs/74、docs/188。
+沒有production修改，不重跑無改動的完整Go回歸，沒有新發行包。最終稽核、commit／push及容器清理記錄於本輪收據。
+下一步核對事件短曲的播放完成介面，取得正常返回來源後才完成READY及正式修正。Goal繼續，Issue保持OPEN。

@@ -2835,3 +2835,62 @@ internal155頂層／293子PASS、4選用SKIP及11套件；12種壞pack拒絕。d
 提交前檢查入口為`work/issue4-recruit-entry-final-audit.py`，末次收據為`work/issue4-recruit-entry-final-r2-receipt.json`。
 新增Go掃描為`work/issue4-recruit-entry-added-go-scan.json`；命中限於測試證據、共用格式上限、schema版本與註解，無新增版本專屬production fallback。
 提交、遠端與Issue核對收據保存於`work/issue4-recruit-entry-post-push-receipt.json`。
+
+
+### 2026-10-04 入隊後文字與播放等待 DRAFT
+
+正式程式保持da720aad49b1891dc2c32436706e4f034e7bb386，schema0.11.0／content0.1.83與1e30085e canonical不變。
+本段取得原版前198個正常packet的有限證據及正式remake反證。完整入隊尚未READY，不修改正式Go／pack。
+
+來源為原版assets_raw/DQ3.EXE，115282bytes，SHA2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c。
+IDA Pro9.4採linear；file=linear−EC90，DGROUP基底24DD0；原生dosgolem PC仍以CS×16+IP+EF00對應。
+dosgolem2f44a68、dq3-ebiten-test:20260822-r1、seed1357冷啟動固定一次；未還原state或注入座標、名冊、旗標或clock。
+新的r5只把診斷guard改成記錄首次旗標並有界觀察20000000指令。公開正式r4 producer及其拒絕規則保持。
+r5的DRAFT_TIMER_STOP不是完整入隊完成標記，不作正式來源接受。
+
+| 有限原版觀察 | 證據定位及等級 |
+|---|---|
+| packet197進一名角色的清單，record530、cursor1、count1 | 前196個queue／consume／capture／IRQ及392份PNG／bin逐項保持；有限confirmed |
+| packet198入隊，顯示record536內嵌等待 | slot1狀態1→2，目的97bytes保持；10415→10473、10491原operand[bx+4F64h]寫2及10422 record536；限定本次單一戰士男性confirmed |
+| packet199正常Enter送達且消費，依序537／538 | 1042D／1044C原始record載入；此packet未完成，不加入已接受狀態鏈 |
+| 4000第一個實際writer | step3776635393，previous_pc1FEFC、pc1FF02，DGROUP0013=4002、0007=4E20；對本次writer confirmed，旗標完整用途仍unknown |
+| 有界觀察末尾 | step3796635394、PC208F3、counter4EC5，仍packet199／record538／474IRQ1；confirmed停點，未證實根因 |
+| 音訊控制流 | 1043F呼叫2074E控制9，10444 BP20h經20770→20950，10454→208E2等待，10459呼叫20754控制10；pause／resume名稱只作strong，不當作已驗證平台API契約 |
+
+4000首次寫入已閉合原始counter比較及writer；本次沒有經另一候選16F3B。
+208E2先讀DS2898，再查22E10介面；清除完成狀態與返回條件保持原樣。
+這足以否定「只解除4000 guard即可閉合入隊」的做法：解除診斷拒絕後原版仍在等待，未交還控制。
+它尚不足以判定是dosgolem時基、完成回呼、音樂資料或原版本身的問題；不稱原版bug、防拷或PCM故障。
+
+2092B的檔名DS0120原始bytes為ebg.mcx；20938..20946讀到DS253C+36B的資料段。
+20975..2097E以BP−1E選四byte表，BP20h因此指向EBG.MCX第2號零基項。原始offset559，下一項6B4。
+這條路線是事件音樂資料，不能沿用BP<1E的VCX PCM音效解釋。具體曲名與時長仍待已知CMF資料契約核對。
+下一步只核對遊戲選曲參數、公開CMF／CT-MUSIC完成介面與dosgolem既有能力。
+不得深入原版硬體driver／ISR，不清4000、寫DS2898、改clock、跳過等待或以DOSBox圖像替換dosgolem來源。
+
+正式InputState的可丟棄診斷從母親合法checkpoint走完整198個packet。
+packet197完整RGB差51535，packet198差56790；現行recruit stage1、dialogue=false、roster0、companions1。
+交易數量吻合，但缺原版536文字及等待，仍留在舊清單。這是已觀察分歧，不把診斷PASS當入隊parity。
+原版完整返回、下一次操作、原版Load及聲音仍未知；後續同版本存讀必須在READY後實作一併驗收。
+
+公開重生入口為[tools/ida_dump_recruitment_join_wait_contract.py](../tools/ida_dump_recruitment_join_wait_contract.py)，
+自動合併[tools/ida_recruitment_join_wait_ledger.json](../tools/ida_recruitment_join_wait_ledger.json)。
+14筆旁註為13confirmed及1strong；已證實只限每筆列出的來源與範圍，未審查列仍unknown。
+ledger保存原始file bytes，匯出按MZ relocation核對載入bytes；10454原始9AB2035310、IDA載入9AB2035320不能混用。
+正式r1因far call的原始／載入bytes混用而拒絕；修正基準後r2完整重生，沒有改原版或放寬檢查。
+
+獨立稽核入口為[tools/verify_recruitment_join_wait_contract.py](../tools/verify_recruitment_join_wait_contract.py)。
+以既有image、repo及原版唯讀，work輸出UID1000，在容器內執行：
+
+    python3 /repo/tools/verify_recruitment_join_wait_contract.py /repo/work/dosgolem-opening /repo/work/issue4-recruit-join-reviewed-r2-ida.json /repo/work/issue4-recruit-join-remake-draft-r2-compare/join-draft-r1.json
+
+IDA重生沿用上節一次性DB及-S入口，輸出改用尚不存在的檔案；正式收據不覆寫。
+診斷產生器為work/issue4-recruit-join-r5-builder.py，組合既有r3 DRAFT探針；凍結Go、binary與meta皆保存。
+前198審查入口work/issue4-recruit-join-prefix-r1-review.py；有限收據424754bytes，SHA2568e49fb70b2b2a4428585a2391eac6cc56fef3dca30cc9206b93cd9741f0c2f0d。
+完整r5.log為831714bytes，SHA2563973569b328d810dc0f0d1da368da170716f41424f94062044c36cfe4bc52134。
+正式IDA收據712003bytes，SHA2561274a0628dfaf8f28465cbd064e16fe8d3de44ecf3173f2e9477bba589bb9658。
+重製可丟棄入口work/issue4-recruit-join-remake-draft-r1.py；r1因DQ3_ASSETS未設而素材SKIP，沒有當成驗收。
+相同binary加正確DQ3_ASSETS後r2正常輸入7.03秒，收據13327bytes、SHA2565563edb23e4860922013b9b238ad6dd01a479da07bec016043a7d5340c998132。
+隔離壞來源及所有權檢查保存於work/issue4-recruit-join-review-r1.py及同前綴收據；八種損壞皆拒絕，原始輸入保持。
+文件最後修訂後的八檔雜湊保存於work/issue4-recruit-join-review-r2-receipt.json；提交與Issue核對為work/issue4-recruit-join-post-push-receipt.json。
+本輪未改production，不重跑既有完整game／internal；最近正式回歸仍由前節收據仲裁。原版、PNG、database及binary留本機。

@@ -1,0 +1,148 @@
+{
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+  "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點",
+  "annotations": [
+    {
+      "ida_linear": "0x1036d",
+      "file_offset": "0x16dd",
+      "bytes": "e8924c",
+      "semantic": "首次招募caller建立共同文字框",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10370",
+      "file_offset": "0x16e0",
+      "bytes": "bf0f02",
+      "semantic": "首次問候record527",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10378",
+      "file_offset": "0x16e8",
+      "bytes": "bf1002",
+      "semantic": "問候EOF後record528，未新增確認",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10380",
+      "file_offset": "0x16f0",
+      "bytes": "8d36323e",
+      "semantic": "首次三項選單取原始DGROUP3E32",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10384",
+      "file_offset": "0x16f4",
+      "bytes": "e85cf1",
+      "semantic": "首次三項選單SI consumer1F4E3",
+      "inference_level": "confirmed",
+      "consumer": "normal packet195/196 -> main menu529",
+      "review_reference": "docs/188：首次招募選單有限READY，正常r4來源獨立接受",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r4-source-r2-receipt.json；首次527／528／三項選單，沒有入隊後驗收"
+    },
+    {
+      "ida_linear": "0x10415",
+      "file_offset": "0x1785",
+      "bytes": "e85b00",
+      "semantic": "call原始10473入隊交易；此來源限定單一戰士男性",
+      "inference_level": "confirmed",
+      "consumer": "packet198 slot1狀態1→2及record536",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    },
+    {
+      "ida_linear": "0x10422",
+      "file_offset": "0x1792",
+      "bytes": "bf1802",
+      "semantic": "入隊交易後開始record536",
+      "inference_level": "confirmed",
+      "consumer": "packet198 inline_wait，沒有完整後段驗收",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    },
+    {
+      "ida_linear": "0x1042d",
+      "file_offset": "0x179d",
+      "bytes": "bf1902",
+      "semantic": "record536完成後record537",
+      "inference_level": "confirmed",
+      "consumer": "packet199原生record537，該packet未完成",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    },
+    {
+      "ida_linear": "0x10444",
+      "file_offset": "0x17b4",
+      "bytes": "bd2000",
+      "semantic": "選擇原始BP20h cue；名稱及播放時長仍unknown",
+      "inference_level": "strong",
+      "consumer": "10447→20770→20950長資料路線，原版記錄538之前",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    },
+    {
+      "ida_linear": "0x1044c",
+      "file_offset": "0x17bc",
+      "bytes": "bf1a02",
+      "semantic": "cue呼叫後record538",
+      "inference_level": "confirmed",
+      "consumer": "packet199原生record538，該packet未完成",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    },
+    {
+      "ida_linear": "0x10454",
+      "file_offset": "0x17c4",
+      "bytes": "9ab2035310",
+      "semantic": "call原始208E2播放完成閘門",
+      "inference_level": "confirmed",
+      "consumer": "r5停點208F3仍屬此caller，未返回玩家操作",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    },
+    {
+      "ida_linear": "0x10491",
+      "file_offset": "0x1801",
+      "bytes": "c687644f02",
+      "semantic": "原始[bx+4F64h]寫2；保留間接operand，限定此次slot1",
+      "inference_level": "confirmed",
+      "consumer": "packet197為1，packet198為2，slot1原始97bytes保持",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    },
+    {
+      "ida_linear": "0x1fefc",
+      "file_offset": "0x1126c",
+      "bytes": "810e13000040",
+      "semantic": "本次首個4000 writer；counter=4E20且raw0013由0002→4002",
+      "inference_level": "confirmed",
+      "consumer": "r5 step3776635393，previous_pc1FEFC，pc1FF02；不命名旗標完整用途",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    },
+    {
+      "ida_linear": "0x208f3",
+      "file_offset": "0x11c63",
+      "bytes": "741d",
+      "semantic": "等待原始DS2898讀入AX的零值分支；此次停點，不代表根因",
+      "inference_level": "confirmed",
+      "consumer": "r5 step3796635394於208F3，packet199及record538未續行",
+      "review_reference": "docs/188：入隊後播放等待DRAFT；逐項有限定位，不是完整入隊READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-normal-r5-prefix198-draft-r1-receipt.json；r5.log的首次timer writer及208F3有界停點"
+    }
+  ]
+}
