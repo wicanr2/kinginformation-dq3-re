@@ -9,7 +9,7 @@
 > 拉之鏡回歸曾因四名角色含裝備均滿八格受阻。正常丟棄備品後取得，遊戲容量與旗標規則保持。
 > 完整game426頂層清單覆蓋，379頂層／86子PASS、47選用SKIP；原版首次北行與既有Down正常對拍另嚴格PASS。internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。正常新遊戲InputState至THE END118.78秒，只屬重製回歸；無素材缺失SKIP。
 > 14種協同壞來源拒絕；來源c38bcc09，canonical hash sha256:d6c7994ee7fa53d227a98263f12606a8f4109a87f4afea01cd6996ad7f269b5d。
-> quiescent-r2全路線202次正常輸入／404IRQ1自然完成取消；全路線仍DRAFT，有限來源只接受首次三個Up。
+> quiescent-r2全路線202次正常輸入／404IRQ1取消來源0467c01b已接受；13種損壞拒絕通過，remake取消與出生仍DRAFT。
 > 下一切片仍從正常登錄所入口續行，獨立審查完整取消與出生。原版音訊、NPC相位及完整campaign待驗。
 > 沒有新發行包。唯一現況表見[CONTEXT](CONTEXT.md)，證據與收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 

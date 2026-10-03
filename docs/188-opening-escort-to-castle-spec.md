@@ -2545,3 +2545,51 @@ production 增行核對為 `work/issue4-first-move-production-diff.patch` 與
 更新前遠端本文為 `work/issue4-first-move-pre-update-issue-body.txt`。
 本輪 Issue 本文及結果留言分別由 `work/issue4-first-move-final-issue-body.txt` 與
 `work/issue4-first-move-final-issue-comment.txt` 保存；推送核對見既有索引的 post-push 收據。
+
+### 2026-10-04 登錄所完整取消來源審查（DRAFT）
+
+接續07c01dd，現行production為content0.1.81。先審查quiescent-r2完整202次正常輸入／404IRQ1，
+再以正常新遊戲至登錄所入口的正式InputState重播。首次三個Up的既有有限CONFORMED保持。
+逐項核對queued、IRQ1按下／放開、原生消費、下一正常poll、record、畫面、人物與交易狀態。
+姓名取消及選否後返回field的完整來源尚未接受；出生仍需另一條正常原版來源。
+本輪登記文字為 `work/issue4-registry-cancel-review-progress.txt`。
+獨立來源審查入口為 `work/issue4-registry-cancel-source-review.py`，
+結果為 `work/dosgolem-opening/issue4-registry-quiescent-r2-cancel-source-r1-receipt.json`。
+審查328份完整packet PNG／bin、全部404 IRQ1與164組queued／consumed／capture；
+原版名冊完整不變性未觀測，保留unknown，不由單一hero record推定整個名冊。
+正常重製診斷的乾淨輸入為 `work/issue4-registry-cancel-head-07c01dd.tar`。
+可丟棄診斷測試為 `work/issue4-registry-cancel-baseline-private-test.go`，
+輸出為 `work/issue4-registry-cancel-baseline-r1` 同前綴 JSON／PNG／log。
+來源審查器初版把觀測階段當作輸入交易不變項；原生日誌顯示packet43播放record78後階段由0到1。
+修正審查器，逐項鎖定實際階段序列後以相同容器重跑；沒有更改原版。
+來源348622bytes，SHA-256 `0467c01bbf8218a0c21581cf200cc0b491284db53c72749ddb3631b79b2cf40e`。
+可重現驗證與不覆寫重生入口為 `tools/verify_dosgolem_registry_cancel.py`，
+在既有專用Docker內執行 `python3 /repo/tools/verify_dosgolem_registry_cancel.py <收據>`；
+要重生時加入 `--emit` 並提供尚不存在、同名稱的輸出收據及完整唯讀原版來源。
+驗證涵蓋正常取消、選否及返回行走，不含出生、完整名冊、存讀檔或音訊。
+r1正常重播前149個位置、section、旗標與金錢一致，packet150原版Enter進record550，
+remake只收到Enter欄位，沒有交談。鍵盤實際把Enter與Space的Confirm分開；這是目前操作綁定差異。
+等價交談的可丟棄診斷為 `work/issue4-registry-cancel-baseline-r2-private-test.go`，
+以現行正常命令窗送兩次Confirm，明示多一個確認，不宣稱raw-key一致。
+結果為 `work/issue4-registry-cancel-baseline-r2` 同前綴JSON／PNG／log。
+固定來源拒絕檢查入口為 `work/issue4-registry-cancel-negatives-r1.py`，
+輸出同前綴JSON／log；來源、metadata、IRQ、末尾狀態、PNG／bin及父來源損壞必須拒絕。
+正常出生DRAFT探針為 `work/issue4-registry-birth-r1-probe.py`，計畫為 `work/issue4-registry-birth-normal-r2-plan.json`，
+原版產物前綴 `work/dosgolem-opening/issue4-registry-birth-normal-r2`。
+沿用38次冷新遊戲與正常謁見／回程／問候，姓名鍵序取自已核對的原版命名流程。
+只在原生poll送出鍵盤IRQ，選第一職業、第一性別及接受能力，之後選否返回行走。
+在IDA linear10924／10A9F／10816／1081C唯讀觀察候選角色與名冊旗標，
+只作writer定位，不將候選buffer當成正式已登錄角色。未完成前維持DRAFT。
+初次builder因舊 `issue4-registry-birth-r1-probe-source.go` 已存在而拒絕，原版未啟動，舊檔保持。
+確認新前綴未使用後，以同一工具鏈重跑。builder日誌為 `work/issue4-registry-birth-r1-builder.log`。
+normal-r1因新增Go宣告在既有變數之前引用而編譯失敗，日誌另存builder-r2.log；原版未執行。
+修正宣告順序，保留normal-r1凍結Go，使用未占用normal-r2來源；日誌另存builder-r3.log。
+
+完整取消來源已獨立接受，驗證工具重建202次正常輸入／404IRQ1與328份packet產物一致；
+13種隔離損壞全部拒絕，原始來源未改。接受的是原版來源，remake流程仍DRAFT。
+r2等價交談在packet150進tavern.active、stage0，沒有原版record550問候；完整RGB差124152。
+r1原始Enter綁定差29540另保留。兩者不是對拍通過，不用修改測試期待替代正式修正。
+本輪結果與出生工作登記文字為 `work/issue4-registry-cancel-reviewed-progress.txt`。
+來源工具的語法、UID／GID及既有root候選檢查為 `work/issue4-registry-cancel-hygiene-r1.json`。
+本輪提交／推送、Issue與來源版本核對保存於 `work/issue4-registry-cancel-post-push-receipt.json`，
+出生工作若尚在執行則明示記錄live與外層逾時，不當作完成收據。
