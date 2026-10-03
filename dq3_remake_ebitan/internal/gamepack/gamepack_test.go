@@ -3617,7 +3617,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	    "push_puzzle_events":[],
 	    "two_step_floor_switch_gates":[],
 	  "staged_vehicle_exchange_events":[],"guided_passage_events":[],
-  "region_dialogue_reward_events":[],"hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
+  "region_dialogue_return_events":[],"region_dialogue_reward_events":[],"hostage_rescue_events":[],"reclass_events":[],"staged_boss_events":[],"story_flag_runtime_events":[]
 	}`
 	validCharacters := `{
 	  "schema_version":"0.3.0",

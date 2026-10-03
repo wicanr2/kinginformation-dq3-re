@@ -1068,3 +1068,45 @@ desktop建置完成後因缺file命令而失敗，另查ELF64 little endian／ma
 提交／推送及最後Docker清理結果保存至`work/issue4-return-ready-post-push-receipt.json`，入口同掛docs/188。
 原版重生工具移除外層只准執行一次的前綴限制，沿用共用產生器的逐檔hash歸檔契約；
 已接受來源及frozen Go保持，沒有因包裝修正再冷重跑原版。
+
+
+## 2026-10-03 Issue #4 母親勸告與強制返回
+
+接續562208a，沿已授權Issue／commit／push及active Goal續行。
+重查規格閘門路由，沿用CONTEXT唯一現況表；dosgolem為正式原版oracle。
+登錄所R8只接受首次問候13狀態；完整取消與出生受阻，沒有製造完整來源。
+較短正常路線第一個Down即分歧：原版21,17，原提交remake21,18。
+IDA9.4保留1020B原始定位及bytes，閉合CTY handler55、flag17h、NPC0轉左、
+record79、自動關窗與194C3碰撞檢查後北行；不追硬體逐週期。
+
+窄任務R1工具誤觸舊生成器的歸檔清理段，沒有執行原版；295份證據由先前hash歸檔完整恢復，
+逐檔大小及SHA-256相同。R2與追蹤中的正式R3改在獨立tmp生成，既有來源保持。
+R3冷啟動39次正常輸入／78IRQ1，174份父PNG／bin保持，十個原生邊界及單次seed1357通過。
+正式來源63ee434e；完整PNG、色號bin與R2逐byte一致。沒有狀態注入、重擲或人工挑frame。
+
+有限READY後新增共用轉向→文字→hold→返回狀態機，版本資料與字碼放入JSON。
+schema0.9.0／content0.1.80，hash d2ea836e3df3c1c39e02481e73d2efcb3eae41340aa0cfe89debf2e06162fc4e。
+正常Down、自動關窗、返回、重複觸發與旗標／金錢／背包保持通過。
+Load後原NPC0被初始visibility flag80過濾，依既有pack最後arrival frame與原始靜止actor作有限恢復。
+不新增存檔欄位或改旗標；此項是engine D2，沒有宣稱原版存檔或朝向parity。
+同一Game Load清除pending、標題讀檔與下一次Up通過。
+文字窗與陰影RGB差0；完整提示13145、返回13340保持RED。
+
+14種壞契約、七種壞資產、18種協同壞來源拒絕；原始來源不改。
+九份JSON從乾淨562208a重建語意相同，canonical hash與正常PNG收據一致。
+首次圖形DISPLAY未就緒及舊negative fixture缺新集合皆屬驗證工具問題，訂正後乾淨重跑。
+第一次整套程序中止未留下斷言，原因未知；第二次600秒逾時，仍在後段航行，沒有OOM事件。
+保留同一最終binary已完成的261項，再以獨立程序補完其餘清單與campaign。
+完整game422頂層清單覆蓋，376頂層／77子PASS、46選用SKIP；本批原版正常勸告另嚴格PASS。
+internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。
+正常新遊戲InputState至THE END266.49秒，只屬重製回歸；無素材缺失SKIP。
+最小充分收尾入口與私有產物均掛回docs/188，現況與欄位契約同步。
+原版素材、PNG、RE database與使用者scratch不加入Git；沒有新image或發行包。
+完整背景、NPC相位、原版音訊／存讀檔及登錄所取消／出生仍待驗，Issue #4保持OPEN。
+
+文件同步腳本首次有縮排錯誤，尚未執行任何寫入；修正語法後同命令重跑通過。
+獨立收尾收據24,724bytes，SHA-256
+`b837a0d89ae890a60086fef35b15440d7f017dd141a3dbdfec1eb47d85ab02cb`。
+新來源與輸出UID／GID1000，root候選3213及Markdown目錄0保持；本批一次性DQ3容器全部清除。
+Python／shell語法、Go格式及diff check通過；新增production Go無DQ3專屬raw ID／座標／record／flag。
+提交／推送與Issue結果保存在`work/issue4-mother-return-gate-post-push-receipt.json`，入口同掛docs/188。

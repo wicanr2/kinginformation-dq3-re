@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -3311,6 +3311,52 @@
         "address_space": "linear",
         "address": "IDA 9.4 linear 0x1024C..0x102C4; file=linear-0xEC90; text 0x21414; grant 0x16856; DGROUP actor+0x3A",
         "consumer": "normal step at CTY25 section1 (9,7), nine blocking waits, EOF, six ordered grants then gold and clear/set flags; source receipt b875807a2ae53cbdb9c02e43952e9e894e9230f76d64c469ffbea36c08b02f32",
+        "doc": "docs/188-opening-escort-to-castle-spec.md"
+      }
+    },
+    {
+      "id": "dq3:text.mother_return_warning",
+      "value": "＊「０啊，怎麼了？\n　　趕快去晉見國王吧。」",
+      "glyph_codes": [
+        59,
+        60,
+        65525,
+        509,
+        55,
+        935,
+        436,
+        423,
+        58,
+        65534,
+        12,
+        12,
+        1027,
+        969,
+        448,
+        1028,
+        953,
+        300,
+        186,
+        499,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT01.TXT",
+        "record": 79
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY00.DAT + D3TXT01.TXT + dosgolem normal39-input first Down",
+        "address_space": "linear",
+        "address": "IDA 9.4 linear0x1022A..0x10232; DI0C07 selector; D3TXT01 record79",
+        "consumer": "normal first Down after mother return; automatic warning then forced north step; docs/188",
         "doc": "docs/188-opening-escort-to-castle-spec.md"
       }
     }

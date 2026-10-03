@@ -203,6 +203,11 @@ func compsToSav(ms []*Member) []compSav {
 }
 
 func (g *Game) restore(s saveState) {
+	if g.regionDialogueReturn != nil {
+		g.regionDialogueReturn = nil
+		g.dlg.open = false
+		g.clearOpeningPresentation()
+	}
 	if g.regionDialogueReward != nil {
 		g.regionDialogueReward = nil
 		g.dlg.open = false
@@ -475,6 +480,9 @@ func savePath() string {
 
 // Save 寫存檔。
 func (g *Game) Save() error {
+	if g.regionDialogueReturn != nil {
+		return fmt.Errorf("region dialogue return is not at a save checkpoint")
+	}
 	if g.homeSelection.active || (g.homeAwait && g.openingEscortPhase == 5) {
 		return fmt.Errorf("opening home transaction is not at a save checkpoint")
 	}
@@ -551,6 +559,28 @@ func (g *Game) Load() error {
 			return fmt.Errorf("opening home save actor missing")
 		}
 	}
+	returnActor, err := g.loadRegionDialogueReturnActor(s)
+	if err != nil {
+		return err
+	}
 	g.restore(s)
+	if returnActor != nil && g.cur != nil {
+		found := false
+		for _, n := range g.cur.npcs {
+			if n.recordIndex == returnActor.recordIndex {
+				found = true
+				break
+			}
+		}
+		if !found {
+			index := 0
+			for index < len(g.cur.npcs) && g.cur.npcs[index].recordIndex < returnActor.recordIndex {
+				index++
+			}
+			g.cur.npcs = append(g.cur.npcs, npcInst{})
+			copy(g.cur.npcs[index+1:], g.cur.npcs[index:])
+			g.cur.npcs[index] = *returnActor
+		}
+	}
 	return nil
 }

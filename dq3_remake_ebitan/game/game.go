@@ -291,6 +291,7 @@ func (sc *Scene) npcAt(x, y int) int {
 
 type Game struct {
 	regionDialogueReward      *gamepack.RegionDialogueRewardEvent
+	regionDialogueReturn      *regionDialogueReturnState
 	fieldIdle                 fieldIdleState
 	fieldIdleFont             *dq3data.Text
 	over, town                *Scene // 地表 / 目前城鎮
@@ -1007,6 +1008,11 @@ func (g *Game) Update() error {
 // 拆出 InputState 注入點，讓玩家流程回歸可重播同一條正式狀態機；
 // 測試不得再用直接呼叫事件函式冒充完整 playthrough。
 func (g *Game) step(in InputState) error {
+	if active, err := g.stepRegionDialogueReturn(); active || err != nil {
+		g.fieldIdle.elapsed = 0
+		g.renderFrame()
+		return err
+	}
 	moved := false
 	g.dlg.Tick()
 	if g.completeRegionDialogueReward() {
@@ -1611,6 +1617,10 @@ func (g *Game) step(in InputState) error {
 			return nil
 		}
 		g.tryRegionDialogueReward()
+		if active, err := g.tryRegionDialogueReturn(); active || err != nil {
+			g.renderFrame()
+			return err
+		}
 		g.tryBossSurrenderEvent()
 		g.tryGuidedPassageTrigger()
 		g.tryHostageRescueTrigger()
@@ -3230,6 +3240,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		return nil, err
 	}
 	if err := validateRegionDialogueRewardSources(assets, pack); err != nil {
+		return nil, err
+	}
+	if err := validateRegionDialogueReturnSources(assets, pack); err != nil {
 		return nil, err
 	}
 	fieldIdleFont, err := loadFieldIdleSources(assets, pack)

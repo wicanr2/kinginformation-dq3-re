@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.8.0"
+	SchemaVersion       = "0.9.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -2043,6 +2043,7 @@ type SpecialShopEvent struct {
 }
 
 type Events struct {
+	RegionDialogueReturnEvents  []RegionDialogueReturnEvent      `json:"region_dialogue_return_events"`
 	RegionDialogueRewardEvents  []RegionDialogueRewardEvent      `json:"region_dialogue_reward_events"`
 	SchemaVersion               string                           `json:"schema_version"`
 	DayNightCycle               DayNightCycle                    `json:"day_night_cycle"`
@@ -2291,6 +2292,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
 	if err := p.validateRegionDialogueRewardRefs(); err != nil {
+		return nil, fmt.Errorf("%s: %w", eventsPath, err)
+	}
+	if err := p.validateRegionDialogueReturnRefs(); err != nil {
 		return nil, fmt.Errorf("%s: %w", eventsPath, err)
 	}
 	if err := p.validateFieldIdleStatusRefs(); err != nil {
@@ -3883,6 +3887,9 @@ func fixedBattleFormation(record BattleFixedFormationRecord) (BattleFormation, e
 }
 
 func (p *Pack) validateEvents() error {
+	if err := p.validateRegionDialogueReturns(); err != nil {
+		return err
+	}
 	if err := p.validateRegionDialogueRewards(); err != nil {
 		return err
 	}

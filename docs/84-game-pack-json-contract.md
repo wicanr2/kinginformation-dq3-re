@@ -1,5 +1,30 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 2026-10-03 region 提示後退回（schema0.9.0／content0.1.80）
+
+`events.region_dialogue_return_events`為必填集合，可明確為空。每筆及巢狀欄位均必填，
+缺失、null、未知欄位、重複入口及未知文字引用拒絕。原版證據与有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。
+
+| 欄位 | 契約 |
+|---|---|
+| `id`、`cty_raw`、`section`、`handler_raw` | 唯一場景／原始handler入口；直接消費CTY的subid與handler表，不另列猜測座標 |
+| `required_flag_raw` | 未設時不啟動；沒有额外完成里程碑，可重複觸發 |
+| `actor_record_raw`、`actor_facing` | 原始NPC記錄身分與共用方向0下／1上／2左／3右；只轉向，不改位置 |
+| `turn_hold_frames`、`return_hold_frames`、`timing_evidence` | 轉向後及完整文字末尾的等待；D2、明示硬體規格近似 |
+| `text_id`、`presentation_id`、`shadow` | 已審查文字及既有自動EOF演出；拒絕含FFFC按鍵等待的文字引用，完整文字hold結束後關窗 |
+| `return_direction` | 關窗後碰撞檢查的一步；不dispatch另一個圖格事件，不改旗標或給獎勵 |
+| `evidence` | 正常玩家入口、文字、關窗及退回的D3閉環 |
+
+DQ3綁定CTY00 section0 handler55、story flag17h、NPC0及原始record79。
+8／7個原版timer ticks各換算5個60TPS更新，僅hardware-spec approximation。
+事件持有輸入直到退回，進行中不能建立存檔；載入既有同版本存檔時清除暫態。
+必要靜止领路角色可由既有`opening_escort.arrival_leader_record`與最後`arrival_frames`恢復，
+限定目的場景、完成set／clear flags與仍有效的退回旗標；預先驗原始actor，不改visibility flag。
+此為重製存檔相容恢復，未增加存檔欄位，NPC動畫與原版讀檔畫面尚未對拍。
+舊schema與不同canonical hash的存檔仍明確拒絕，不自動遷移。原版存檔及音訊尚未對拍。
+實作入口為`game/region_dialogue_return.go`與`internal/gamepack/region_dialogue_return.go`，
+契約／原始資料測試與正常玩家測試為各目錄的`region_dialogue_return_test.go`。
+
 ## 2026-10-03 正常回程場景綁定（schema0.8.0／content0.1.79）
 
 此版沿用既有型別與原語，只更新`interface.json`的場景引用及manifest內容版本。

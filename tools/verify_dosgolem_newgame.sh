@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 主機僅做 Docker／Git 控制；探測、建置、測試與輸出全部在容器內。
-# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original|--mother-home-animation-original|--king-approach-original|--king-idle-original|--king-audience-original|--king-text-original|--king-return-original|--king-return-ready-original]
+# 用法：bash tools/verify_dosgolem_newgame.sh [dosgolem 來源目錄] [--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original|--mother-home-animation-original|--king-approach-original|--king-idle-original|--king-audience-original|--king-text-original|--king-return-original|--king-return-ready-original|--mother-return-original]
 # 預設重生主選單／初始命名並比較正式畫面；--prototype 僅驗證歷史 DRAFT。
 # --navigation 重生兩條命名收據，驗證六次方向與四次功能輸入的狀態及完整畫布。
 # --creation 重生固定種子創角，驗證命名／性別、能力交易與等待／確認完整畫面。
@@ -18,11 +18,12 @@
 # --king-text-original 保留前批90次輸入，再正常接近國王與確認文字，獨立核對交易來源。
 # --king-return-original 保留100次謁見輸入，追加85次正常步行；只核對來源，不預設回程完成。
 # --king-return-ready-original 冷啟動並依原版runner逐鍵送出回程，完整記錄自然等待窗的額外Enter。
+# --mother-return-original 保留正常38次母親返回，再以一次Down核對提示、自動關窗與強制北行；只驗原版來源。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-/home/anr2/cht/dosgolem}"
 MODE="${2:-production}"
-case "$MODE" in production|--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original|--mother-home-animation-original|--king-approach-original|--king-idle-original|--king-audience-original|--king-text-original|--king-return-original|--king-return-ready-original) ;; *) echo '未知驗證模式；請依檔首列出的模式選擇' >&2; exit 1;; esac
+case "$MODE" in production|--prototype|--navigation|--creation|--opening|--birthday-pages|--mother-entry-original|--mother-finish-original|--mother-home-original|--mother-home-contract-original|--mother-home-navigation-original|--mother-home-animation-original|--king-approach-original|--king-idle-original|--king-audience-original|--king-text-original|--king-return-original|--king-return-ready-original|--mother-return-original) ;; *) echo '未知驗證模式；請依檔首列出的模式選擇' >&2; exit 1;; esac
 for path in "$ROOT" "$SOURCE" "$ROOT/assets_raw" "$ROOT/work" "$ROOT/work/dosgolem-opening" "$ROOT/work/.gocache-test" "$ROOT/work/.gopath-test"; do
   test -d "$path" || { echo "目錄不存在：$path" >&2; exit 1; }
 done
@@ -49,6 +50,7 @@ test "$MODE" != --king-audience-original || LIMIT=1860
 test "$MODE" != --king-text-original || LIMIT=2040
 test "$MODE" != --king-return-original || LIMIT=3420
 test "$MODE" != --king-return-ready-original || LIMIT=2160
+test "$MODE" != --mother-return-original || LIMIT=1560
 timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
   --memory 4g --cpus 2 --pids-limit 192 -u "$(id -u):$(id -g)" \
   -v "$ROOT:/repo:ro" -v "$ROOT/work:/work" -v "$SOURCE:/dosgolem:ro" \
@@ -73,6 +75,10 @@ timeout "${LIMIT}s" docker run --rm --name "$NAME" --network none \
       DQ3_NEWGAME_PROBE_SCENARIO=opening_accept python3 /repo/tools/dosgolem_newgame_probe.py
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --birthday-pages; then
       DQ3_NEWGAME_PROBE_SCENARIO=birthday_continue python3 /repo/tools/dosgolem_newgame_probe.py
+    elif test "$DQ3_NEWGAME_VERIFY_MODE" = --mother-return-original; then
+      python3 /repo/tools/dosgolem_mother_return.py
+      python3 /repo/tools/verify_dosgolem_mother_return.py /work/dosgolem-opening/issue4-mother-return-gate-r3-receipt.json --write
+      exit 0
     elif test "$DQ3_NEWGAME_VERIFY_MODE" = --king-return-ready-original; then
       python3 /repo/tools/dosgolem_king_return_ready.py
       python3 /repo/tools/verify_dosgolem_return_ready.py --output /work/issue4-return-ready-source-audit.json

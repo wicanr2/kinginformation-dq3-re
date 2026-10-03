@@ -1,16 +1,20 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-03：Issue #4正常回程至登錄所入口已有限修正，schema0.8.0／content0.1.79。
-> 原版冷啟動186次輸入／372IRQ1／607產物，前432份PNG／bin保持；四次原生繪圖前camera。
-> 正式JSON加入城鎮等待窗、玩家格圖層與登錄所camera，沒有新增正式Go版本資料。
-> 正常186次InputState、85個狀態、單次Enter關窗、標題讀檔與下一步通過。
-> 等待窗正文及陰影RGB差0；酒館完整1403、登錄所118、城鎮入口13983，完整V3未完成。
-> 完整game419頂層覆蓋，374頂層／70子PASS、45選用SKIP；本批原版回程另嚴格PASS。
-> internal149頂層／250子PASS、4選用SKIP及11套件，desktop建置通過；THE END151.74秒僅remake回歸。
-> 導航測試以正常Enter關閉等待窗後讓NPC續行；保留正式凍結規則。無素材缺失跳過。
-> 十六種壞來源拒絕，九份JSON從乾淨0c47537重建，85張正式PNG與試作逐byte相同。
-> 下一切片為登錄所正常交談與登錄；NPC可見性、動畫、原版存讀檔、音訊及完整campaign仍待驗。
-> 唯一現況表見[CONTEXT](CONTEXT.md)，計畫見[docs/74](docs/74-ebiten-remake-completion-plan.md)，證據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+> 2026-10-03現行閘門：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
+> 現行schema0.9.0／content0.1.80。母親帶路後尚未謁見國王的勸告與強制返回有限切片已修正。
+> 原版由dosgolem2f44a68冷啟動39次正常輸入／78IRQ1；174份父PNG／bin保持，十個原生事件邊界通過。
+> 正式正常Down顯示record79，自動關窗並由21,18返回21,17，故事旗標、金錢及背包保持。
+> 可重複觸發；同一實例Load清除pending、標題讀檔及下一次Up通過。
+> 勸告視窗與陰影RGB差0；完整提示13145、返回13340，完整畫面V3未完成。
+> 既有謁見、回程與登錄所入口的有限完成範圍保持。
+> 完整game422頂層清單覆蓋，376頂層／77子PASS、46選用SKIP；本批原版正常勸告另嚴格PASS。
+> internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。
+> 正常新遊戲InputState至THE END266.49秒，只屬重製回歸；無素材缺失SKIP。
+> 18種壞來源拒絕，14種契約損壞及七種壞資產拒絕；九份JSON從乾淨562208a重建語意相同。
+> 轉向／文字／返回由共用有限狀態機處理，版本數值與文字存於pack；兩段等待為硬體規格近似。
+> 下一切片仍為正常登錄所交談與登錄。R8只核對首次問候13狀態，完整取消與出生維持DRAFT。
+> 原版音訊、存讀檔、NPC可見性及完整campaign未完成；沒有新發行包。
+> 唯一現況表見[CONTEXT](CONTEXT.md)，規格與私有收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下保存歷史檢查點，不能以舊待辦重新開啟已閉合功能。
 

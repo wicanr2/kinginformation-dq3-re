@@ -1958,6 +1958,295 @@ Issue主文更新入口為`work/issue4-return-ready-update-body.py`，提交後G
 外層移除一次性「前綴已存在」限制，沿用共用產生器逐檔SHA-256歸檔，再重生的既有契約；
 此修正不改本批已執行的frozen generation／Go，也沒有再次冷啟動原版。
 
+#### 登錄所正常交談（DRAFT）
+
+接續562208a及Issue #4，從CTY00 section2正常8,2接近原始NPC2,3。
+舊docs/36只提供定位；首次對話、輸入owner、選單、命名、性別與登錄交易尚缺dosgolem動態閉環。
+本切片不改正式引擎、pack或存檔。原版冷啟動保留先前186次正常輸入，額外方向及Enter均記錄。
+新原版入口為`work/issue4-registry-entry-wrapper-draft.py`，現行私有前綴為`work/dosgolem-opening/issue4-registry-entry-r2`。
+正常重製診斷入口為`work/issue4-registry-entry-remake-probe.py`，沿正式回程後正常InputState接近交談。
+原版首次等待與重製入口是否一致，需各自完整畫布與狀態核對，不從內部modal存在判定parity。
+生成器語法檢查入口為`work/issue4-registry-entry-generation-audit.py`，只展開來源、不執行原版。
+直線六Left只到5,2，直接選2,4亦因櫃台不可走而失敗；R1原版探針已停止，未產出有效oracle。
+前兩條重製診斷及初次Go換行生成錯誤均保留各自source／log，不列為產品缺陷。
+重查spec閘門後沿正式traceTalkNPC候選，含中間為阻擋櫃台的兩格交談位置，正常到2,5面向上。
+R3重製的13次正常輸入路線為Left×3、Down×4、Left×2、Up、Left、Up、Enter；
+最後Up只面向櫃台，不移位。單次Enter在remake沒有開command／dialogue／tavern，是否不同須原版證據仲裁。
+R2原版採此已定位路線冷啟動，保留原先186次輸入；source尚待核對，正式0.1.79保持。
+獨立來源稽核入口為`work/issue4-registry-entry-validator-draft.py`，核對先前186次輸入、372次IRQ1、
+604份PNG／bin及新增逐鍵事件，拒絕未對應事件的圖像；首次wait只記raw caller，不猜功能。
+R3重製JSON沿用直線版本的`+8`計數，誤報194；實際13筆新增InputState合計199。
+凍結Go及原始JSON保持，追加稽核記錄修正，不把元資料修正當成產品修改。
+原版收據scope文字亦沿用回程說明，新增接近範圍由registry事件與獨立稽核限定。
+原版鍵盤及登錄入口的有界IDA候選匯出為`work/issue4-registry-input-ida.py`及同前綴JSON，
+沿用唯讀原始EXE與一次性database；未動態閉合的候選維持unknown。
+鍵表、Enter／Space入口及後續consumer分別為`work/issue4-registry-key-table-ida.py`、
+`issue4-registry-talk-entry-ida.py`與`issue4-registry-interact-consumer-ida.py`，各有同前綴JSON。
+最小IDA探針為`work/issue4-registry-ida-minimal.py`，已核對9.4、原版hash及828個函式。
+可丟棄Enter／Talk診斷為`work/issue4-registry-entry-remake-r4-prototype.py`，
+只在乾淨副本讓Enter呼叫既有交談，沒有實作原版greeting，不作READY或正式修正。
+完整狀態／RGB比較入口為`work/issue4-registry-entry-compare.py`，R3計數勘誤為
+`work/issue4-registry-entry-remake-r3-count-audit.json`；完整PNG不裁切或遮罩。
+原版重生的Docker控制入口為
+`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --registry-entry-original`；
+獨立拒絕稽核為`work/issue4-registry-entry-source-negative.py`，在容器/tmp建立私有鏡像，
+協同修改待驗JSON、log與manifest，原版輸入保持唯讀。尚未有R2收據時不宣稱通過。
+有界IDA原始bytes彙總為`work/issue4-registry-entry-static-audit.json`；
+Enter是17C43、Space是17C83。17C43→18966→14D56→147BD使用原始1F7／726閘門，
+14E0E先試正前方、櫃台再試兩格。此靜態鏈目前strong，不擴成全場景Enter的已確認規格。
+R4正常199次InputState、13筆接近及Enter／Talk診斷PASS36.60秒，最後tavern_active=true／stage0。
+它略過原版首次greeting的可能性仍待R2完整畫面仲裁；沒有因原型能跑就改正式程式。
+
+##### 2026-10-03追加訂正及現行 R7 探針
+
+上節R2執行中及R4八職業取消假設已過期，原始輸出保留。現行原版前綴為
+`work/dosgolem-opening/issue4-registry-entry-r7`，由同一Docker控制入口重生。
+R2在回程ordinal62耗盡繼承1980秒限制；R3缺二選一輪詢，R4漏問候內嵌等待，
+R5漏姓名輸入owner，因此逐次停止。R6核對鍵盤ISR後確認Escape無法取消姓名，亦已停止。
+這些前綴沒有有效登錄收據，不列為產品缺陷或原版parity。
+R7只延長有界工具時限並修正觀測及正常按鍵，不改原版記憶體或前186次輸入。
+
+原版身份仍為DQ3.EXE 115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+有界IDA9.4匯出沿用原始名稱、file bytes及linear位址；file=linear−EC90，DGROUP基底linear24DD0。
+以下為strong靜態鏈，動態範圍由R7實際收據界定，不把取消路線當成創角交易驗收。
+
+| 原始定位 | 消費端與有限語意 |
+|---|---|
+| linear106DF..106E7 | record550問候後呼叫1F63C二選一；原始TXT含兩次FFFC |
+| linear10763..1076B | record554後呼叫10D17姓名輸入，先於職業 |
+| linear10789..107A5 | record555／DGROUP3DEC=6，六職業選單，非八職業 |
+| linear107BD..107C1 | 職業返回後才呼叫性別選單 |
+| linear11096..11170 | 姓名輪詢210CA；方向、Enter／Space及64h滑鼠取消，沒有01h Escape分支 |
+| linear2109F..210B9 | IRQ1 make原樣寫2856、break清零，沒有Escape轉64h |
+| linear10DC8..10E4F | 五項功能列，選第四項寫726=1，返回10D9C，再到1081F取消文字 |
+| linear10832..1083F | 登錄別人二選一只檢查722，選第二項後播560道別；Escape不等價於否定 |
+
+RE入口：`work/issue4-registry-choice-wait-ida.py`、`issue4-registry-name-poll-ida.py`、
+`issue4-registry-cancel-key-ida.py`、`issue4-registry-keyboard-irq-ida.py`，各有同前綴JSON／log。
+每份匯出包含輸入hash、IDA9.4與位址基準；未閉合候選仍標unknown，解釋以本表限定。
+歷史docs/36追加勘誤，舊「職業→姓名→性別」不作production規格。
+
+R7接受問候後用Up、Left、Enter由raw0進功能列，再Down×3及Enter取消姓名。
+取消文字後在二選一用Right明確選第二項，再Enter，最後關閉道別回到原生1991D。
+新增按鍵只在原生21133／1F7B7／11096輪詢送出，上限32次；未知owner立即停止。
+姓名觀測保留26FC mode、26FE cursor、270A長度及2710原始buffer，不把SI或stack猜為通用caller。
+來源verifier須核對完整返回、所有前604份PNG／bin與IRQ序列，未完成返回即拒絕。
+
+問候首頁可丟棄試作為`work/issue4-registry-entry-remake-r6-prototype.py`，
+正常199次InputState及末端問候等待PASS19.46秒。只借用已審查共享文字原語與視窗陰影，
+未實作二選一、姓名取消、後續職業、能力預覽與名冊交易，尚未原版RGB比較。
+試作及R4 Enter／Talk均只留私有副本，不進production，不以能跑代替READY。
+遠端續行記錄為[5966631605](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5966631605)，
+其R6啟動狀態以上述R7與後續Issue留言為準。正式schema0.8.0／content0.1.79維持。
+
+追加直接證據索引：`work/issue4-registry-window-reader-ida.py`及
+`work/issue4-registry-window-fields-ida.py`匯出連續record的cursor／EOF、SI4080二選一及姓名視窗，
+各有同前綴JSON／log。20770是既有音訊cue路徑，只保留入口定位，不深入硬體時序。
+原始bytes獨立查核入口為`work/issue4-registry-entry-static-audit-r7.py`及同前綴JSON，
+10份IDA9.4匯出、4680列有界指令、七筆strong附加語意，全部file bytes與原始EXE一致。
+這只查核靜態鏈，尚未宣稱登錄正常路徑動態通過。
+
+完整姓名取消的可丟棄試作入口為`work/issue4-registry-entry-remake-r8-prototype.py`。
+沿正常186次回程後再送27次方向／Enter，沒有玩家狀態注入。R8在二選一繪圖發現
+共享文字RGB243不在新遊戲專用lavender色盤，失敗source／Go／log保留。
+R9入口為`work/issue4-registry-entry-remake-r9-prototype.py`，用目前場景色盤及已確認font index，
+把文字前景由共享presentation提供，不用最近色號近似。此候選仍需原版完整畫布仲裁。
+R9正常213次InputState、27筆登錄觀測PASS11.18秒，末端2,5面向上，無modal、名冊0，
+金錢50、背包六件與裝備保持，取消過程RNG保持356D。此處只證明試作內部自洽。
+所有版本專屬record與NPC值只存在可丟棄副本，不加入production或commit。
+R7按鍵訂正另記於[5966709923](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5966709923)。
+R10正常標題讀檔抽樣入口為`work/issue4-registry-entry-remake-r10-prototype.py`，
+213次InputState取消、三次標題讀檔及正常下一步PASS60.08秒，名冊／背包／金錢／裝備與旗標保持。
+私有試作稽核為`work/issue4-registry-entry-prototype-audit.py`及同前綴JSON，
+綁定report、完整test／試作Go、binary、log與全部PNG。R9與R10的27張登錄PNG逐byte相同，
+前12張接近PNG與未修改562208a診斷保持。稽核首次漏計回程等待圖一張，訂正數量後重跑；
+沒有重生或改寫任何已執行試作。姓名完成、職業、性別、能力預覽及名冊交易仍未實作。
+
+##### R7等待訂正與現行 R8
+
+R8執行期間，登錄出生交易的有界靜態查核入口為
+`work/issue4-registry-birth-ida.py`、同前綴JSON及log。
+只追原始linear106DC..10D17的姓名、六職業、性別、能力預覽與登錄writer，
+並保存DGROUP3DEC、3DF6、4F54及相關暫存欄位的原始bytes與xref type。
+這項靜態匯出不能替代正常出生輸入或原版能力交易收據，推論等級保持strong或unknown。
+獨立查核入口為`work/issue4-registry-birth-static-audit.py`及同前綴JSON，
+對照全部539列原始file bytes、腳本與工具版本，再附加六職業索引及97-byte登錄交易的strong註記。
+職業選項1..6讀DGROUP4F54的位元組1..6，得到raw class 1、2、3、4、6、7。
+linear10924以DGROUP520B的暫存角色呼叫1D9CC及1DB5F；linear10A9F在確認後
+將97 bytes複製到DGROUP530D＋97×slot，linear10816再寫4F64＋slot為1。
+取消分支在1081F，沒有通過此writer。這些是靜態控制流證據，尚未宣稱出生畫面或能力亂數對拍。
+後續出生探針及預檢入口為`work/issue4-registry-birth-probe.py`與
+`work/issue4-registry-birth-generation-audit.py`。只在R8來源接受後啟動，
+延續正常取消返回再進櫃檯，以一個英數字、第一職業與第一性別走能力預覽及登錄。
+出生的測試seed1357在執行前固定，僅於自然1D9CC入口、SI520B及caller0960成立時設定一次。
+原版與remake各自記錄此條件，不由全段骰序一致宣稱所有亂數parity。
+`work/issue4-registry-birth-precompile.py`在容器/tmp使用獨立輸出目錄，
+只建置生成的Go並在執行原版前停止；保存同前綴Go、JSON及log，不更動R8產物。
+
+R7已正常抵達登錄所，十二次接近觀測後的Enter實際呼叫21414／record550，
+位置2,5／raw111D，make／break為397／398。未修改remake同一第199次Enter無modal，
+因此入口行為已有反證。R7未捕捉問候畫面或完成取消，不能當完整登錄收據。
+探針誤把FFFC等待當作最後關窗21133。重新查閱規格閘門路由及既有IDA9.4直接證據後，
+確認216C3自有輪詢：216D8→21148為可見箭頭，216FB→21148為隱藏箭頭，最後21133另屬一般等待。
+R7已停止，原始Go、生成器、log與部分PNG保留；沒有將缺少事件的圖像補登成dosgolem收據。
+
+現行前綴改為`work/dosgolem-opening/issue4-registry-entry-r8`，仍用上節同一Docker控制入口。
+只新增原生216D8可見等待觀測與送鍵，保留21133／1F7B7／11096三種owner，
+沒有將音訊或PIT driver重做為遊戲規格。既有原版語義來源為
+`work/issue4-king-audience-text-ida.json`，工具9.4，輸入與本節相同EXE hash；
+216C3..21710共31列file bytes已獨立對照原始檔一致。R8冷啟動已開始，仍待完整來源稽核。
+
+R8若走到既定90億指令停止點，`work/issue4-registry-r8-state-audit.go`直接解碼
+自行保存的final.state，輸出同前綴JSON，供CPU位置與原始記憶體診斷。
+不呼叫LoadState、不補CRTC、不重畫原版圖片，也不把狀態檔當完整取消或畫面收據。
+R8已自然跑滿90億指令，原生程式exit0，wrapper因沒有REGISTRY_DONE拒絕接受。
+末尾狀態200117 bytes，SHA-256為428a49775779d6f4328913bd14cfaab961f1efa5d66e73a331fc511215d4dd6b，
+直接解碼的CPU為CS:IP122B:08E4／IDA linear21A94、DS15ED、IF開、PIT12428、Ticks71310。
+沒有還原或補畫此狀態。重查規格閘門路由後，必要有界IDA定位入口為
+`work/issue4-registry-r8-blocker-ida.py`及同前綴JSON／log，範圍21A80..21AF0與直接xref。
+取消及出生維持DRAFT，待此位置與caller閉合後才重跑。
+21A94的原始指令為`7ef6`，讀DS:0005的有號比較未大於0時返回21A8C。
+`work/issue4-registry-r8-blocker-flow-ida.py`及同前綴JSON／log只補21A01..21AA7
+與現有INT1C向量所指1FE53..1FEB0的軟體counter writer，保留先前有界匯出。
+此處追GUI能否續頁所需的counter，不研究DAC／PIT逐週期或音訊driver。
+`work/issue4-registry-r8-counter-state-audit.go`及同前綴JSON以同一未還原狀態補出
+DGROUP0000..001F、word0005與機器IRQ欄位，全部保存raw值供定位。
+計時回呼旗標及舊向量的補充診斷入口為`work/issue4-registry-r8-callback-state-audit.go`及同前綴JSON。
+只讀診斷另以原R8 binary從此state續行50萬指令，入口log為
+`work/issue4-registry-r8-diagnostic-resume.log`，末尾state為同前綴final.state。
+不送鍵、不重設seed、不輸出PNG；僅觀測IRQ0／INT1C與counter。
+已知LoadState未保存CRTC且會重新計算IRQ0排程，這次續行只作執行器診斷，不能當同狀態正式對拍。
+相同起點的writer定位log為`work/issue4-registry-r8-diagnostic-writer.log`，
+只觀測1FE5F、1FE64、1FE87、1FE8B及1FEAC的暫存器，不改條件或產生畫面。
+診斷續行確認IRQ0與原INT1C writer均到達，DS15ED；1FE87／1FE8B的CX=1，
+1FEAC的CX=2。尚不能由一次snapshot的word0005=0宣稱計時器沒有更新。
+新增最小callee匯出入口`work/issue4-registry-r8-callback-ida.py`及同前綴JSON／log，
+只核對1FEBA..1FF10的暫存器保護與GUI callback，不延伸音訊硬體細節。
+回呼1FF02明確寫CL=2；尚待其返回及色盤更新條件閉合，不能因此宣稱原版bug。
+必要返回範圍與色盤呼叫的匯出入口為`work/issue4-registry-r8-callback-return-ida.py`及同前綴JSON／log。
+訂正：1FF02..1FF27是七個CS原始word的左移，尚未證實為色盤更新。
+保存的DGROUP0013為4002，1FED4的4000測試會直接進CL=2分支，counter是否循環不能解除此旗標。
+旗標初始化的最小xref及1FF4D caller匯出入口為`work/issue4-registry-r8-flags-ida.py`及同前綴JSON／log。
+原始word與未知語意保持，未使用改旗標、改CX或重設counter的方法製造正常收據。
+原xref只列出IDA已解析為DGROUP的直接引用。另以
+`work/issue4-registry-r8-flag-operands-ida.py`及同前綴JSON／log保留原始DS:13h的operand候選，
+附xtype及DS register，不把候選當完整writer清單或推測的欄位名稱。
+必要初始化writer匯出入口為`work/issue4-registry-r8-flag-writers-ida.py`及同前綴JSON／log，
+限定21EC1..21F60、2206E..220B0及16F29..16F80。來源旗標語意尚未知，不稱防拷或色盤欄位。
+初始化caller與實際輪詢邊界的追加匯出入口為`work/issue4-registry-r8-flag-entry-ida.py`
+及同前綴JSON／log，限定21DDC、192ED、1351F與1FF02的必要範圍。
+既有前段snapshot的零續行比較入口為`work/issue4-registry-r8-prefix-state-audit.go`。
+只解碼原始CPU與DGROUP0007／0013，不還原機器、不產生PNG。
+較短正常路線的隔離重製診斷入口為`work/issue4-registry-short-route-remake.py`
+及同前綴private-test.go／test／log。從正常母親返回續行40次步行至登錄所，
+原始CTY通路只用來定位候選，未取得原版動態收據前不宣稱此路線對拍通過。
+原版較短來源的生成入口為`work/issue4-registry-short-probe.py`，展開至
+`work/issue4-registry-short-checked-generation.py`，稽核為同前綴generation-audit.json。
+保留原版38次母親返回，再以40次正常方向輸入進登錄所，取消後重新登錄。
+旗標4000出現即拒絕來源；不改時鐘、CX或原版旗標，不外推先謁見路線已通過。
+較短來源的獨立預編譯入口為`work/issue4-registry-short-precompile.py`與同前綴Go／JSON／log，
+使用/tmp輸出，成功建置後即停止，正式原版尚未執行。
+相同較短路線的取消候選為`work/issue4-registry-short-cancel-prototype.py`及同前綴產物。
+隔離副本沿用R10私有原型，以正常輸入、完整PNG及標題存讀檔抽樣；尚未進正式Go或JSON。
+追加勘誤：1991D是閒置檢查，1997C是其返回；實際場景讀鍵為19417→210CA。
+先前ready標籤只表示探針的觀測邊界，不是GetKey函式名稱。既有IRQ與玩家位置證據保持。
+零續行前段snapshot確認：生日1440000000時word0013=0000；母親返回、城堡、王座與
+謁見末尾為0002；歷史回程5024000000及R8末尾為4002。各輸入狀態檔的SHA-256保留於
+prefix-state-audit.log。原始1FEDC在word0007≥20000時測試低位是否為3或0Ch，
+兩者均不符便於1FEFC設4000；1FF02寫CL=2，七個CS原始word再左移。
+此鏈足以定位捲動受阻，不足以命名旗標的完整用途或宣稱同硬體時鐘parity。
+較短路線的40次正常InputState診斷PASS2.30秒，經母親返回21,17，抵達登錄所8,2，
+金錢及背包保持0。預編譯PASS；首次錯掛/source造成來源缺失，改正為既有/dosgolem後
+同工具鏈重跑通過，原版未執行。現已啟動較短原版冷啟動，前綴為
+`work/dosgolem-opening/issue4-registry-short-r1`，僅以正式IRQ1及原生邊界續行。
+遠端工作登記見[5968196927](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5968196927)。
+較短路線原版已停止，40個觀測與13次後段輸入均有原生產物，但未進登錄所。
+第一個分歧為母親返回21,17後的正常下鍵：原版仍21,17，候選remake為21,18。
+沒有record550、取消或出生；producer的DONE只表示探針結束，不等於來源合格。
+不以較短路線宣稱先謁見gate，原因尚待writer／consumer閉合。
+重查規格閘門路由後，必要移動定位入口為`work/issue4-registry-short-route-blocker-ida.py`
+及同前綴JSON／log，限定1255B、11A6A與119B8的必要範圍。
+第一個南側格的CTY00 raw word為0101；1F低位subid=1經196D2選取section的handler byte55，
+DGROUP3BB4的第55個pointer為020B，原始定位為IDA linear1020B。
+必要gate匯出入口為`work/issue4-mother-return-movement-gate-ida.py`及同前綴JSON／log，
+限定1020B..1024C及196D2..1970E，尚未由handler名稱推定旗標規則。
+追加靜態證據：1020B讀story flag17h，為1時開3E6E文字窗，呼叫文字consumer，
+關窗後以4F1F=2呼叫194C3強制往北，最後清0B34。原始bytes及位址保持。
+文字來源、顯示時序與完整副作用仍待自然動態閉合，本段為DRAFT。
+窄任務入口為`work/issue4-mother-return-gate-probe.py`，產物前綴為
+`work/dosgolem-opening/issue4-mother-return-gate-r2`。保留38次正常母親返回輸入，
+只增加一次Down；觀察handler入口、文字完成、關窗、強制北行與返回，
+不載入snapshot，不改座標、旗標或時鐘。生成、執行及稽核保持分開。
+R1工具建置誤觸既有生成器的歸檔及清理段，沒有執行原版。
+舊較短路線全部內容已在清理前依SHA-256歸檔，恢復入口為
+`work/issue4-registry-short-r1-restore.py`及同前綴JSON；依原manifest逐檔驗大小與hash。
+R2生成器限定獨立/tmp輸出，不再使用既有情境的輸出目錄。
+必要文字上下文匯出入口為`work/issue4-mother-return-gate-context-ida.py`及同前綴JSON／log，
+限定167F6、15002、194C3與16F09。原始record79候選為
+`work/issue4-mother-return-gate-text-candidate.json`，需與原版consumer實際來源核對。
+NPC writer最小補充入口為`work/issue4-mother-return-gate-npc-ida.py`及同前綴JSON／log，
+僅121EF..122CE，不由167F6的名稱推定玩家可見效果。
+來源獨立稽核入口為`work/issue4-mother-return-gate-audit.py`及同前綴JSON／log，
+核對父收據、IRQ1順序、單次預設seed控制、10個自然事件邊界及完整PNG／bin。
+原版稽核PASS：39次正常輸入／78 IRQ1，174份父PNG／bin保持，10個事件邊界。
+1020B入口玩家21,18，10232文字完成；沒有額外Enter或文字等待，10245自然返回21,17。
+全段故事旗標保持。原始RND繼續自然運行，不要求與remake閒置呼叫次數相同。
+
+有限READY契約：原始CTY section的handler55格由共用`region_dialogue_return_events`選取，
+僅story flag17h為1時生效，可重複觸發，不設額外里程碑。
+DX=0／AX=1／CL=2經121EF只將原始NPC0轉向左方，不改位置或占位。
+167F6等待counter大於7，然後15002開3E6E文字窗；DI0C07依既有文字selector契約
+引用D3TXT01 record79，21個非EOF原始word，含獨立姓名插值與換行，沒有FFFC。
+21414自然返回，1683A等待counter等於7，1F604關窗，4F1F=2經194C3作一般碰撞檢查後北行。
+handler不設／清故事旗標、不給物品或金錢、不呼叫一般步進事件dispatch。
+以上流程為原始bytes、writer／consumer與正常首次Down閉合的confirmed；其他入口方向未做動態V3。
+以PIT除數12428及既有315000000／3280992 Hz契約，8／7ticks各向上取整為5個60TPS更新。
+轉向及末尾顯示等待採hardware-spec approximation，不稱原版逐週期wall-clock。
+資料包保存場景、handler、required flag、NPC record／朝向、退回方向、文字ID與兩段hold，
+共用Go只作有限轉向→文字→末尾hold→碰撞移動。缺資料失敗，不增添版本fallback。
+驗收須正常母親返回與一次Down、完整文字／關窗畫布、旗標及背包保持、重複觸發、
+同版本正常存讀檔及下一次Up；旗標已清分支由原始cmp／ret及元件測試鎖定。
+原版音訊、原版存讀檔及其他handler不在本次有限READY範圍。
+正式接線入口為`game/region_dialogue_return.go`、`internal/gamepack/region_dialogue_return.go`，
+資料由`work/issue4-mother-return-gate-pack.py`從原始TXT及既有視窗契約建立；
+此工具及原版收據留本機，JSON／正式原語與測試納入版本庫。
+正式正常測試先通過提示窗與退回，然後在同版本Load後發現必要NPC0被初始旗標80過濾。
+原始CTY00 NPC0的Ctrl=0，重製npcStep的move bit未設；帶路後位置由已確認的最後arrival frame提供。
+有限重製存檔恢復契約：當目的場景、帶路完成的set／clear flags與退回事件required flag均符合，
+Load預先驗證原始靜止actor與最後arrival frame，重建被過濾的必要角色，保留原始record順序。
+不新增存檔欄位、不猜補其他NPC；沒有改寫原始visibility flag。此項為engine D2相容恢復，
+不宣稱原版Load、NPC朝向／動畫相位或任意場景存檔畫面已對拍。
+正常玩家修正已通過文字窗及陰影RGB差0、退回、重複觸發、同版本標題Load與下一次Up。
+完整提示畫面仍差13145，退回畫面13340，背景圖格與人物差異保留，不稱整張V3。
+可重生入口為`tools/dosgolem_mother_return.py`，嚴格來源核對為
+`tools/verify_dosgolem_mother_return.py`；使用`tools/verify_dosgolem_newgame.sh`的
+`--mother-return-original`模式。正式正常測試以`DQ3_MOTHER_RETURN_ORIGINAL`指定合格收據。
+乾淨562208a基準入口為`work/issue4-mother-return-gate-baseline.py`及同前綴private-test.go／test／log，
+以相同正常母親返回加一次Down驗證原本走到21,18的分歧，預期精確斷言失敗才接受基準重現。
+來源壞檔拒絕入口為`work/issue4-mother-return-gate-negative.py`及同前綴JSON／log，
+只改/tmp副本，包含Go／metadata協同篡改；原版收據與PNG保持。
+成熟模擬器交叉來源：[DOSBox Staging的CB_IRQ0](https://github.com/dosbox-staging/dosbox-staging/blob/main/src/cpu/callback.cpp)。
+該stub也只保存DS／AX／DX，沒有保存CX；不據先前猜測修改dosgolem BIOS增加CX保存。
+已捕捉的13個狀態另由`work/issue4-registry-entry-r8-partial-audit.py`稽核，
+同前綴JSON與observed-log.txt固定截至IRQ400的實際log，避免引用仍變動的log雜湊。
+範圍只到首次問候等待，全640×350比較保留，不稱完整取消或成功登錄通過。
+有限稽核PASS：13個原生觀測、前604份PNG／bin逐檔相同、正常第199次Enter問候550，
+續頁為第200次輸入／IRQ399及400，觀測log固定至此。
+候選完整RGB差依序為127、462、335、623、367、509、7596、6988、6540、310、636、549、508。
+首次問候的完整文字視窗RGB差0，沒有以局部零差異提升完整V3。
+位置、raw section及原版旗標／背包／金錢保持；出生、原版存讀檔與音訊不在此稽核範圍。
+
+完整27狀態與RGB比較入口為`work/issue4-registry-entry-prototype-compare.py`，
+來源先驗完整收據與產物，試作先驗frozen Go／binary／PNG，再比較完整640×350。
+文字視窗統計只作有限定位，不遮罩完整差異，也不由取消路線宣稱出生交易或原版存讀檔通過。
+先前比較及協同壞來源拒絕工具亦已指向R8，未取得合格收據前不執行接受聲明。
+R7部分證據稽核入口為`work/issue4-registry-entry-r7-partial-audit.py`及同前綴JSON：
+199次正常輸入、398次IRQ1、十二次原生ready，前604份PNG／bin逐檔size／SHA-256相同，
+第199次Enter的make早於21414／record550呼叫，break晚於呼叫。沒有第13次問候PNG或DONE，
+因此只保留正常接近與Enter反證，不稱為合格取消收據。遠端訂正見
+[5966967383](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5966967383)。
+
 ## 2026-10-03 城鎮攝影機（有限 READY）
 
 依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。
@@ -2017,3 +2306,49 @@ log為`work/issue4-town-camera-enter.log`，沒有改產品規則或重新設定
 本切片新增工具、測試及私有稽核入口均在本文件索引，不建立另一份工作清單。
 遠端結果留言5958611871；Issue #4保持OPEN。下一段從原版城門返回後，以正常輸入續行謁見。
 房間261、家中124、動畫繪圖時序、原版音訊及完整campaign仍未完成，不深入ISR或硬體逐週期。
+
+
+### 母親勸告與強制返回正式驗收（有限 CONFORMED）
+
+schema0.9.0／content0.1.80，canonical hash `sha256:d2ea836e3df3c1c39e02481e73d2efcb3eae41340aa0cfe89debf2e06162fc4e`。
+正式來源為`work/dosgolem-opening/issue4-mother-return-gate-r3-receipt.json`，SHA-256
+`63ee434edb5f7c30d1046c6990bf6b69630cfd2311f9c9d329d31ceb3f6cfb25`。
+追蹤中的產生器獨立冷啟動，保留174份父PNG／bin；39次正常輸入／78IRQ1及十個邊界嚴格通過。
+R3的十份PNG／bin與先前獨立R2逐byte相同，沒有還原狀態或重設時鐘。
+固定seed1357一次；原版自然RNG照常續行，不要求後段閒置骰序相同。
+
+乾淨562208a以相同正常母親返回及首個Down精確重現21,18／21,17分歧。
+正式正常InputState通過勸告、自動關窗、返回、重複觸發、旗標／物品／金錢保持，
+同一實例Load取消pending、標題選單Load及後續Up至21,16。
+原版字碼、handler、NPC轉向參數及退回方向parity，14種壞契約與七種壞資產拒絕。
+18種協同損壞來源拒絕，包含被改Go／metadata、PNG／bin、父來源及注入狀態；原始產物不改。
+勸告文字窗與陰影RGB差0；完整提示13145、返回13340。完整畫面保持RED，沒有遮罩或固定frame。
+原版Load、音訊及其他方向動態對拍未知；兩段等待維持hardware-spec approximation。
+
+完整game422頂層清單覆蓋，376頂層／77子PASS、46選用SKIP；本批原版正常勸告另嚴格PASS。
+internal151頂層／264子PASS、4選用SKIP及11套件，desktop Linux x86_64 ELF建置通過。
+正常新遊戲InputState至THE END266.49秒，只屬重製回歸；無素材缺失SKIP。
+九份JSON從乾淨562208a重新建構，解碼資料與正式JSON一致；保留既有檔案格式。
+第一次完整程序在主線中途停止但無斷言；原因未知，不能稱已證實OOM。
+第二次有界程序因600秒上限停止，仍在後段航行，cgroup記錄max／oom／oom_kill均0。
+同一最終binary的已完成261項結果保持，其餘分批補驗，campaign以獨立程序通過。
+首次DISPLAY未就緒及舊negative fixture漏新必填集合，均訂正驗證工具後乾淨重跑。
+原始失敗log保留，不寫成產品缺陷。
+
+本輪完整回歸入口為`work/issue4-mother-return-gate-game-regression.py`，
+結果`work/issue4-mother-return-gate-game-summary.json`及同前綴clean-batch JSONL。
+文件同步入口為`work/issue4-mother-return-gate-update-docs.py`。
+最小充分收尾入口為`work/issue4-mother-return-gate-final-audit.py`，
+結果`work/issue4-mother-return-gate-final-receipt.json`；核對來源、正常輸入、損壞拒絕、
+乾淨JSON重建、完整回歸、桌面格式與輸出擁有權。
+正式正常PNG與結果為`work/issue4-mother-return-gate-production-r3`同前綴產物。
+R1工具錯誤觸發舊生成器歸檔後，295份較短來源已逐檔恢復大小及SHA-256；原版未執行。
+恢復收據`work/issue4-registry-short-r1-restore.json`保留，原始證據無損失。
+登錄所完整取消與出生維持DRAFT，Issue #4保持OPEN；本輪沒有新發行包。
+
+獨立收尾收據24,724bytes，SHA-256
+`b837a0d89ae890a60086fef35b15440d7f017dd141a3dbdfec1eb47d85ab02cb`。
+此收據固定本批來源、正常玩家結果、乾淨JSON重建及完整回歸；不把完整畫面RED改成通過。
+同前綴`hygiene.json`保存擁有權檢查，`post-push-receipt.json`保存提交／遠端及Issue核對。
+Issue原文、更新全文及結果留言保存在同前綴`prior-body.txt`、`body.txt`與`result-comment.txt`。
+新檔UID／GID1000，既有root候選3213、Markdown目錄0保持；本批DQ3容器全部清除。

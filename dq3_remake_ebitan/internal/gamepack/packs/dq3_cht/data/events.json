@@ -1,5 +1,55 @@
 {
-  "schema_version": "0.8.0",
+  "region_dialogue_return_events": [
+    {
+      "id": "dq3:event.mother_return_warning",
+      "cty_raw": 0,
+      "section": 0,
+      "handler_raw": 55,
+      "required_flag_raw": 23,
+      "actor_record_raw": 0,
+      "actor_facing": 2,
+      "turn_hold_frames": 5,
+      "return_direction": 1,
+      "return_hold_frames": 5,
+      "text_id": "dq3:text.mother_return_warning",
+      "presentation_id": "dq3:opening.birthday_prelude",
+      "shadow": {
+        "mode": "vga_word_latch_and",
+        "offset_x": 8,
+        "offset_y": 8,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + CTY00.DAT + D3TXT01.TXT + dosgolem自然第18次輸入",
+          "address_space": "linear",
+          "address": "0x1fc57..0x1fcc6",
+          "consumer": "raw byte x+1／y+8，逐行ROR AAAA，16位元AND寫入",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "固定dosgolem revision 2f44a68的字組鎖存呈現，非實機逐週期wall-clock。"
+        }
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE (115282 bytes; SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c) + CTY00.DAT + D3TXT01.TXT + dosgolem 2f44a68",
+        "address_space": "linear",
+        "address": "IDA 9.4 linear 0x1020B..0x1024C; 0x121EF..0x122CE; 0x194C3..0x19530; file=linear-0xEC90",
+        "consumer": "CTY00 section0 handler55; flag17h; NPC0 turn-only left; automatic record79; close then collision-checked north step; cold normal39 inputs / 78 IRQ1",
+        "doc": "docs/188-opening-escort-to-castle-spec.md"
+      },
+      "timing_evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + dosgolem natural PIT divisor12428; existing timer specification in docs/188",
+        "address_space": "linear",
+        "address": "0x16814..0x16822;0x1683A..0x1684C",
+        "consumer": "8/7 timer ticks at315000000/3280992 Hz, each ceil(ticks*60/rate)=5 updates",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "hardware-spec approximation; no cycle-exact or hardware wall-clock claim"
+      }
+    }
+  ],
+  "schema_version": "0.9.0",
   "region_dialogue_reward_events": [
     {
       "id": "dq3:event.first_audience",
