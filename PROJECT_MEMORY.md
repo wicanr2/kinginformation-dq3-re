@@ -1,14 +1,15 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-03：Issue #4正常謁見已修正，schema0.8.0／content0.1.78。
-> 原版冷啟動100次輸入／200IRQ1／435產物，前批384份PNG／bin保持。
-> 九次實際Enter可續行；文字結束後才給六件物品、50金，再clear17h／set18h。
-> 正式九頁視窗與陰影RGB差0，完整各893差異，只在兩個NPC圖格；不宣稱整張V3。
-> 一次性、正常後續步行、同版本標題讀檔及同一Game Load取消pending通過。
-> 完整game清單418頂層覆蓋，378頂層／70子PASS、40選用SKIP；internal149頂層／250子PASS、4選用SKIP及11套件通過。
-> desktop與正常InputState至THE END75.37秒PASS，只屬重製回歸，無素材缺失SKIP。
-> 十二種壞來源拒絕，九份JSON從乾淨e56a8e3重建；六項原始位址語意追加至既有索引。
-> 下一切片為謁見後正常離城與酒館入口；人物動畫、原版存檔、音訊與完整campaign未完成。
+> 2026-10-03：Issue #4正常回程至登錄所入口已有限修正，schema0.8.0／content0.1.79。
+> 原版冷啟動186次輸入／372IRQ1／607產物，前432份PNG／bin保持；四次原生繪圖前camera。
+> 正式JSON加入城鎮等待窗、玩家格圖層與登錄所camera，沒有新增正式Go版本資料。
+> 正常186次InputState、85個狀態、單次Enter關窗、標題讀檔與下一步通過。
+> 等待窗正文及陰影RGB差0；酒館完整1403、登錄所118、城鎮入口13983，完整V3未完成。
+> 完整game419頂層覆蓋，374頂層／70子PASS、45選用SKIP；本批原版回程另嚴格PASS。
+> internal149頂層／250子PASS、4選用SKIP及11套件，desktop建置通過；THE END151.74秒僅remake回歸。
+> 導航測試以正常Enter關閉等待窗後讓NPC續行；保留正式凍結規則。無素材缺失跳過。
+> 十六種壞來源拒絕，九份JSON從乾淨0c47537重建，85張正式PNG與試作逐byte相同。
+> 下一切片為登錄所正常交談與登錄；NPC可見性、動畫、原版存讀檔、音訊及完整campaign仍待驗。
 > 唯一現況表見[CONTEXT](CONTEXT.md)，計畫見[docs/74](docs/74-ebiten-remake-completion-plan.md)，證據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下保存歷史檢查點，不能以舊待辦重新開啟已閉合功能。

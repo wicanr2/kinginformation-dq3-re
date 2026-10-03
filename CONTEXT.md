@@ -1,15 +1,18 @@
 # CONTEXT — 術語表 + 知識庫索引
 
 2026-10-03目前現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
-現行schema0.8.0／content0.1.78。正常謁見九次Enter與文字結束後的獎勵交易已修正。
-九頁視窗及陰影RGB差0，完整各893差異，只在兩個NPC圖格，整張V3未完成。
-原版冷啟動100次輸入／200IRQ1／435唯一產物通過，前批384份PNG／bin不變。
-EOF後六件物品、50金、clear17h／set18h；共用有限原語由JSON提供入口、文字、旗標與獎勵。
-正常一次性、後續步行、標題存讀檔、同一Game Load取消pending通過，存檔格式維持。
-完整game418頂層清單覆蓋，378頂層／70子PASS、40選用SKIP；internal149頂層／250子PASS、4選用SKIP及11套件通過。
-desktop Linux x86_64 ELF、正常InputState至THE END75.37秒PASS，只屬重製回歸，無素材缺失SKIP。
-十二種壞來源拒絕，九份JSON從乾淨e56a8e3重建；六筆國王原始位址語意追加至既有索引。
-下一切片是正常謁見後離城與酒館原版路線；動畫、原版讀檔、音訊及完整campaign未完成。
+現行schema0.8.0／content0.1.79。正常謁見後離城、酒館內部與登錄所入口有限切片已修正。
+JSON加入城鎮等待窗、玩家格圖層及登錄所camera，正式引擎流程沿用既有原語。
+原版冷啟動186次輸入／372IRQ1／607產物、85次步行觀測通過，前批432份PNG／bin保持。
+正式186次InputState的位置、raw section、金錢、背包、旗標與四次原生camera一致。
+城鎮等待窗及陰影RGB差0，同版本標題讀檔與下一步通過。正式85張PNG逐byte等於已審查試作。
+完整酒館RGB差1403，登錄所118，城鎮入口13983；完整畫面V3未完成。
+完整game419頂層清單覆蓋，374頂層／70子PASS、45選用SKIP；本批原版回程測試另嚴格PASS。
+internal149頂層／250子PASS、4選用SKIP及11套件通過，desktop Linux x86_64 ELF建置通過。
+正常新遊戲InputState至THE END151.74秒，只屬重製回歸，無素材缺失SKIP。
+導航fixture已改正常Enter關閉凍結NPC的等待窗；前13批PASS保持，原始失敗log保留。
+十六種壞來源拒絕，九份JSON從乾淨0c47537重建；未發布新包。
+下一切片由正常登錄所入口續行；NPC可見性、動畫、原版讀檔、音訊及完整campaign未完成。
 唯一現況表見下，規格與私有收據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下段落保存歷史檢查點；目前狀態以上述說明及下方表格為準。
@@ -92,15 +95,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-03） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；schema0.8.0／content0.1.78；canonical hash `sha256:82ca3334826bc909a65636e75a46895d4ee99b832cad1cd2cb0f430fd6029f2f`；未發布新包 |
-| 最新remake已完成 | 已閉合家中、城鎮、城堡及王座等待窗保持；正常謁見九次Enter、EOF後六物品／50金／原版旗標、一次性、正常續行、標題讀檔及Load取消pending |
-| 最新原版oracle | b875807a冷啟動100次／200IRQ1／435唯一產物，前批384份PNG／bin不變；九次原生等待到文字返回才交易，正常runner恢復於9,7 |
-| 最新畫面已驗 | 既有城鎮及城堡前閒置完整RGB差0保持；正式國王九頁文字窗及陰影RGB差0，完整PNG逐byte等於隔離試作 |
-| 最新畫面未通過 | 國王九頁完整各893，只在NPC圖格15,3與2,9；王座上樓2159、等待／恢復1772；城堡等待182／979／1960、恢復182／979、讀檔304；家中124、房間261。完整開場V3未完成 |
-| 下一production切片 | 從正常謁見完成checkpoint延長原版離城與酒館入口，不以direct-entry代替；人物像素差異保留待驗 |
-| 原版oracle仍未知 | 謁見後離城與酒館續行、其他健康色／status、鍵盤自動重複、非零層轉換、NPC遮蔽與動畫繪圖時序、原版存讀檔、音訊及完整campaign |
-| 現行remake回歸 | 完整game418頂層清單覆蓋，378頂層／70子PASS、40選用SKIP；internal149頂層／250子PASS、4選用SKIP及11套件；desktop Linux x86_64 ELF；正常InputState至THE END75.37秒；無素材缺失SKIP |
-| 額外驗證限制 | 只有文字窗區域零差異；原版滿欄失敗提示、音訊、存讀檔及完整主線不宣稱通過。0x200只屬重製存檔相容里程碑，時序沿用平台規格近似 |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.8.0／content0.1.79；canonical hash `sha256:9757fa4135987cec259a1075e5ea12fe9270703c9bda471ff1fbca79bba81790`；未發布新包 |
+| 最新remake已完成 | 正常謁見交易保持；謁見後85次步行至登錄所、城鎮自然等待窗／正常Enter消耗、城鎮圖塊層、登錄所camera、同版本標題讀檔與下一步通過 |
+| 最新原版oracle | 347600d3冷啟動186次／372IRQ1／607產物，前432份PNG／bin不變；85次runner與四次11991繪圖前camera；末端CTY00 sec2的8,2／raw111D |
+| 最新畫面已驗 | 既有零差異範圍保持；本批等待窗及陰影RGB差0，85張完整正式PNG與已審查試作逐byte相同 |
+| 最新畫面未通過 | 回程城鎮入口13983、酒館1403、登錄所118；酒館有額外NPC，城鎮入口跨多格原因未知。既有國王893、王座2159／1772、城堡182／979／1960／304、家中124、房間261限制保持；完整V3未完成 |
+| 下一production切片 | 從正常登錄所入口續行交談與登錄；先取得原版正常輸入與狀態。酒館NPC可見性另需consumer閉合，不由圖塊規則猜補。入口見docs/188 |
+| 原版oracle仍未知 | 登錄所交談後的動態路線、其他健康色／status、鍵盤自動重複、非零層轉換動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
+| 現行remake回歸 | 完整game419頂層清單覆蓋，374頂層／70子PASS、45選用SKIP；原版回程另嚴格PASS；internal149頂層／250子PASS、4選用SKIP及11套件；desktop Linux x86_64 ELF；正常InputState至THE END151.74秒；無素材缺失SKIP |
+| 額外驗證限制 | 四次camera為原生量測，其餘只核對既有EXE anchor契約；完整RGB均保留，未遮罩／固定相位。原版滿欄提示、音訊、存讀檔及完整主線未驗；0x200僅重製里程碑，等待延遲仍為平台規格近似 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，

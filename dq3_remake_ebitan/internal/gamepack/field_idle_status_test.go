@@ -18,8 +18,8 @@ func TestFieldIdleStatusOriginalParity(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := p.Interface.FieldIdleStatus
-	if len(s.Scenes) != 2 || s.Scenes[0].CTY != 25 || s.Scenes[0].Section != 0 || s.Scenes[1].CTY != 25 || s.Scenes[1].Section != 1 {
-		t.Fatal("idle scene scope differs from reviewed normal castle and throne receipts")
+	if len(s.Scenes) != 3 || s.Scenes[0].CTY != 25 || s.Scenes[0].Section != 0 || s.Scenes[1].CTY != 25 || s.Scenes[1].Section != 1 || s.Scenes[2].CTY != 0 || s.Scenes[2].Section != 0 {
+		t.Fatal("idle scene scope differs from reviewed castle, throne and return receipts")
 	}
 	dir := os.Getenv("DQ3_ASSETS")
 	if dir == "" {

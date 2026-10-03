@@ -1018,3 +1018,53 @@ schema0.8.0／content0.1.78，hash82ca3334826bc909a65636e75a46895d4ee99b832cad1c
 本輪沒有新發行包；Issue #4保持OPEN，下一切片為正常謁見後離城與酒館來源。
 提交前掃描：新增production Go沒有版本raw ID；命中只在原始CTY格式遮罩與資料驗證範圍。
 game40與internal4個SKIP均已抽核理由，沒有素材缺失。一次性Docker容器均清除，未新增image。
+
+## 2026-10-03 Issue #4 正常回程、酒館圖塊層與登錄所攝影機
+
+接續0c47537，沿已授權Issue／commit／push及active Goal續行。重查規格閘門、dosgolem與文件職責路由，
+沿用CONTEXT唯一現況表。原版由固定dosgolem2f44a68冷啟動，正常186次輸入／372IRQ1，
+85次步行觀測、607產物，前批432份PNG／bin逐byte保持。來源SHA-256為
+347600d38f062e111a08a852a0cdf2a8937b959827c37ff984f3dca44a732a75。
+Lv1 seed1357只設定一次；後續等待及NPC骰序保持自然執行，沒有狀態或frame注入。
+
+固定20m指令間隔跨過27..41m城鎮繪圖，IRQ送達不等於步行已消費，不能據此修移動規則。
+舊1991D的origin_y實為繪圖後暫態raw4F27，追加勘誤，原收據保持。
+原生磁碟snapshot的PIT觀測器未完整恢復，診斷停在等待窗；沒有有效原版收據。
+R2在2111B入口送Enter被2112C..21132初始化清除；R3雖正常關窗，但計數條件阻擋步行。
+R4改在21133初始化後關窗、1997C原生返回後送步行，沒有改遊戲計數器。
+實際11991完整重繪只有15、36、74、85四次；最初verifier要求85次的條件已訂正，未冷重跑來源。
+相關原始Go／log／PNG保留，僅R4通過的來源347600d3作本批oracle。
+
+未修改0c47537正常回程在74的CTY00 section0、5,22缺自然等待窗。
+隔離idle、camera、both候選逐項比較，位置／section／背包／50金／旗標保持。
+登錄所camera令85完整差異由200467降至118；城鎮layers令74由146268降至1403，85張沒有惡化。
+36的13983在所有候選相同，撤回以它否定layers的初判，保留原因未知。
+有限READY後正式JSON加入城鎮等待窗、玩家格圖塊層、登錄所camera及validator所需場景引用。
+schema0.8.0／content0.1.79，hash9757fa4135987cec259a1075e5ea12fe9270703c9bda471ff1fbca79bba81790。
+正式引擎沿用既有原語，版本數值不新增為Go fallback。存檔格式維持，不同hash仍明確拒絕。
+
+正式186次InputState、85個玩家狀態與四次原生camera通過。
+單人等待窗正文及陰影RGB差0，正常Enter只關窗；標題存讀檔與後續下一步通過。
+88張runtime PNG中的85張步行與已審查both候選逐byte相同；完整酒館1403、登錄所118、城鎮13983、等待1095仍RED。
+酒館多畫NPC及人物相位、城鎮入口多格差異、原版音訊與存讀檔未閉合，不能稱整張V3。
+
+完整game第14批首輪卡在5,28等待NPC讓路。只加觀測的乾淨副本確認等待窗開啟，NPC被凍結。
+導航test helper以正常Enter關窗後等待，不改正式規則或注入位置。保留初次失敗hash0ca91015db05，
+同工具鏈重跑14及未執行15..21通過，前13批同一1.79 pack的PASS保持。
+完整清單419頂層，374頂層／70子PASS、45選用SKIP；本批原版回程來源測試另嚴格PASS。
+internal149頂層／250子PASS、4選用SKIP及11套件通過，全部SKIP理由已核對，沒有素材缺失。
+正常新遊戲InputState至THE END151.74秒，只屬remake可玩回歸。
+desktop建置完成後因缺file命令而失敗，另查ELF64 little endian／machine62通過，不誤記產品缺陷。
+
+16種協同損壞原版來源拒絕，原始收據未改。九份JSON從乾淨0c47537重建逐byte相同。
+只重寫受影響集合以保留其他JSON格式，解碼資料及canonical hash保持。
+一次收尾掃描遇執行環境.aws控制目錄消失，只對該控制目錄處理競態，再以同命令乾淨重跑。
+收尾收據112587bytes，SHA-256為3393c711ed6d9549b28613bf14ed97a205ba7681f74d0116cfb8a556ffc66c05。
+工具、測試、私有重建／診斷／稽核入口均掛回docs/188；CONTEXT、PROJECT_MEMORY、docs/74、docs/84及README同步。
+遠端結果留言5965833865，Issue #4保持OPEN；下一切片從正常登錄所入口續行交談與登錄。
+輸出UID／GID1000，既有root候選3213與Markdown目錄0保持，沒有新image或發行包。
+提交前diff check、Go格式、Python／shell語法及新增production Go版本raw ID檢查通過；
+本批Go變更全為測試與原始格式oracle，原版素材、私有PNG與使用者scratch不加入Git。
+提交／推送及最後Docker清理結果保存至`work/issue4-return-ready-post-push-receipt.json`，入口同掛docs/188。
+原版重生工具移除外層只准執行一次的前綴限制，沿用共用產生器的逐檔hash歸檔契約；
+已接受來源及frozen Go保持，沒有因包裝修正再冷重跑原版。

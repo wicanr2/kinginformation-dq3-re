@@ -96,7 +96,7 @@ func TestSceneTileLayersMatchOriginalHeaderAndConsumer(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := p.SceneTileLayers(25, 0)
-	if s == nil || len(p.Interface.SceneTileLayers) != 1 || s.Mode != "player_cell_layer" ||
+	if s == nil || len(p.Interface.SceneTileLayers) != 2 || s.Mode != "player_cell_layer" ||
 		s.BaseTile != int(town.BaseLayerTile) || s.OtherTile != int(town.OtherLayerTile) ||
 		s.BaseLayer != int(exe[0x11e0c-0xec90+4]) {
 		t.Fatal("layer declaration differs from original header/consumer")
@@ -105,7 +105,20 @@ func TestSceneTileLayersMatchOriginalHeaderAndConsumer(t *testing.T) {
 		dq3data.TownTileLayer(town.HiMap[30*town.W+15]) != s.BaseLayer {
 		t.Fatal("typed layer differs from original mask or normal entry")
 	}
-	if p.SceneTileLayers(25, 1) != nil || p.SceneTileLayers(0, 0) != nil {
+	townRaw := read("CTY00.DAT", "ac8427c5fafcad4e29246dd3c2796c476bb5ad93e53dd7c7127a6b2faa31a836")
+	field, err := dq3data.OpenTown(townRaw, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fieldLayers := p.SceneTileLayers(0, 0)
+	if fieldLayers == nil || fieldLayers.Mode != s.Mode || fieldLayers.BaseLayer != s.BaseLayer || fieldLayers.BaseTile != int(field.BaseLayerTile) || fieldLayers.OtherTile != int(field.OtherLayerTile) {
+		t.Fatal("field layers differ from original header/consumer")
+	}
+	if dq3data.TownTileLayer(field.HiMap[22*field.W+5]) == fieldLayers.BaseLayer {
+		t.Fatal("original normal tavern path did not sample non-base layer")
+	}
+	t.Logf("normal tavern layer=%d", dq3data.TownTileLayer(field.HiMap[22*field.W+5]))
+	if p.SceneTileLayers(25, 1) != nil || p.SceneTileLayers(0, 2) != nil {
 		t.Fatal("layer declaration leaked into another scene")
 	}
 	p.Interface.SceneTileLayers = []SceneTileLayers{}

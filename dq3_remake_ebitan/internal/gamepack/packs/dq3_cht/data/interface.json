@@ -10,6 +10,10 @@
       {
         "cty": 25,
         "section": 1
+      },
+      {
+        "cty": 0,
+        "section": 0
       }
     ],
     "party_hud_id": "dq3:window.field_party_hud",
@@ -114,12 +118,12 @@
     "evidence": {
       "level": "D3",
       "source_kind": "exe",
-      "source": "DQ3.EXE + dosgolem正常49次進城及90次王座接近輸入",
+      "source": "DQ3.EXE + CTY00.DAT + dosgolem冷啟動186次正常回程輸入",
       "address_space": "linear",
-      "address": "0x1991D..0x1997C;0x17DBB..0x17E11;0x18222..0x182E3",
-      "consumer": "城堡三次及王座正常單人等待／按鍵消耗／關窗；588..594靜態狀態reader",
+      "address": "0x1991D..0x1997C;0x17DBB..0x17E11;0x18222..0x182E3;0x21133",
+      "consumer": "城堡／王座既有正常單人開關及CTY00 section0的5,22自然等待；Enter消耗並返回",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
-      "note": "CTY25 section0及section1正常單人開關D3；其他隊伍、健康色及狀態字串靜態D2，動畫及原版存檔未驗。"
+      "note": "CTY25 section0/1及CTY00 section0正常單人開關D3；其他隊伍與健康分支維持原限制，時間域仍為硬體規格近似；source receipt sha256:347600d38f062e111a08a852a0cdf2a8937b959827c37ff984f3dca44a732a75"
     },
     "timing_evidence": {
       "level": "D2",
@@ -149,6 +153,24 @@
         "consumer": "section+15/+16→DGROUP0B56/0B57；玩家格上兩bit→2579→圖塊替代",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "零層正常進城四格consumer與完整前閒置畫面已驗；非零層tile70為原始header/consumer D2資料，轉換動畫、NPC遮蔽及閒置窗未驗。"
+      }
+    },
+    {
+      "cty": 0,
+      "section": 0,
+      "mode": "player_cell_layer",
+      "base_layer": 0,
+      "base_tile": 27,
+      "other_tile": 70,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + CTY00.DAT + dosgolem冷啟動186次正常回程輸入",
+        "address_space": "linear",
+        "address": "0x13162..0x1317D;0x11E07..0x11E4B;CTY00 file0x000C+0x15/+0x16",
+        "consumer": "section+15/+16→DGROUP0B56/0B57；玩家格上兩bit→2579→圖塊替代",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "限定正常回程base／酒館內非base圖塊；NPC圖層可見性及全域動畫未完成；source receipt sha256:347600d38f062e111a08a852a0cdf2a8937b959827c37ff984f3dca44a732a75"
       }
     }
   ],
@@ -190,6 +212,46 @@
           "consumer": "正常9,22落點：11971玩家減anchor→11D8A；130F4 section界外圖塊→11DD8",
           "doc": "docs/188-opening-escort-to-castle-spec.md",
           "note": "限定CTY25 section1攝影機；完整RGB仍2159差異，圖層、動畫、閒置窗與國王交易未完成。"
+        }
+      }
+    },
+    {
+      "cty": 0,
+      "section": 0,
+      "camera": {
+        "mode": "player_anchor",
+        "anchor_x": 9,
+        "anchor_y": 7,
+        "exterior_tile": 0,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + CTY00.DAT + dosgolem冷啟動186次正常回程輸入",
+          "address_space": "linear",
+          "address": "0x11971..0x11991;CTY00 file0x000C+0x12",
+          "consumer": "11971玩家減anchor→11991完整重繪；130F4 section界外圖塊→11DD8",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "限定本場景原生完整重繪與正常玩家路線；增量步行及NPC完整RGB另記；source receipt sha256:347600d38f062e111a08a852a0cdf2a8937b959827c37ff984f3dca44a732a75"
+        }
+      }
+    },
+    {
+      "cty": 0,
+      "section": 2,
+      "camera": {
+        "mode": "player_anchor",
+        "anchor_x": 9,
+        "anchor_y": 7,
+        "exterior_tile": 71,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + CTY00.DAT + dosgolem冷啟動186次正常回程輸入",
+          "address_space": "linear",
+          "address": "0x11971..0x11991;CTY00 file0x111D+0x12",
+          "consumer": "11971玩家減anchor→11991完整重繪；130F4 section界外圖塊→11DD8",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "限定本場景原生完整重繪與正常玩家路線；增量步行及NPC完整RGB另記；source receipt sha256:347600d38f062e111a08a852a0cdf2a8937b959827c37ff984f3dca44a732a75"
         }
       }
     }

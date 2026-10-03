@@ -79,7 +79,7 @@ func TestSceneCameraMatchesOriginalCastleHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Interface.SceneCameras) != 2 {
+	if len(p.Interface.SceneCameras) != 4 {
 		t.Fatal("unexpected reviewed scene count")
 	}
 	c := p.SceneCamera(25, 0)
@@ -103,7 +103,23 @@ func TestSceneCameraMatchesOriginalCastleHeader(t *testing.T) {
 		throne.ExteriorTile != int(raw[0x08c7+0x12]) {
 		t.Fatal("throne camera differs from original writer/header")
 	}
-	if p.SceneCamera(25, 2) != nil || p.SceneCamera(0, 0) != nil {
+	townRaw, err := os.ReadFile(filepath.Join(dir, "CTY00.DAT"))
+	if err != nil || len(townRaw) != 7546 || fmt.Sprintf("%x", sha256.Sum256(townRaw)) != "ac8427c5fafcad4e29246dd3c2796c476bb5ad93e53dd7c7127a6b2faa31a836" {
+		t.Fatal("original town identity differs", err)
+	}
+	for _, section := range []int{0, 2} {
+		camera := p.SceneCamera(0, section)
+		base := int(binary.LittleEndian.Uint16(townRaw[section*2:]))
+		if camera == nil || camera.Mode != "player_anchor" || camera.Evidence.Level != "D3" || camera.AnchorX != c.AnchorX || camera.AnchorY != c.AnchorY || camera.ExteriorTile != int(townRaw[base+0x12]) {
+			t.Fatal("return camera differs from original writer/header", section)
+		}
+	}
+	arrival := p.Interface.OpeningEscort.ArrivalCamera
+	town := p.SceneCamera(0, 0)
+	if arrival.Mode != town.Mode || arrival.AnchorX != town.AnchorX || arrival.AnchorY != town.AnchorY || arrival.ExteriorTile != town.ExteriorTile {
+		t.Fatal("explicit town camera differs from existing arrival camera")
+	}
+	if p.SceneCamera(25, 2) != nil || p.SceneCamera(0, 1) != nil {
 		t.Fatal("camera leaked into undeclared scenes")
 	}
 	p.Interface.SceneCameras = []SceneCameraBinding{}

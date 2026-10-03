@@ -1785,6 +1785,179 @@ schema升至0.8.0、content0.1.78；不同schema／hash存檔仍依現行契約�
 輸出UID/GID1000，既有root候選3213及Markdown目錄0保持；原版素材與圖像不加入Git。
 下一原版切片從正常謁見完成checkpoint走回城鎮及酒館；人物動畫及音畫差異保持待驗。
 
+#### 正常謁見後回程與登錄所入口（DRAFT）
+
+接續0c47537及原版b875807a，正式schema0.8.0／content0.1.78保持。
+本輪從正常100次謁見路線後追加步行，先核對王座9,22回程、城堡15,31出口及城鎮8,14登錄所入口。
+`work/issue4-king-return-route.py`在乾淨提交副本重播正常100次InputState，無位置／旗標／frame注入，
+取得離城及繞路方向；同前綴JSON／log只作原版輸入定位，不作原版oracle。
+原版新情境`king_return`由`tools/dosgolem_newgame_probe.py`自行冷啟動重生，
+前綴`work/dosgolem-opening/issue4-king-return-*`，保留前100次輸入及435份來源產物。
+新增觀測只記錄正常runner、位置、原始scene欄位、camera、actor、gold及flags，不寫入原版狀態。
+來源獨立核對入口為`tools/verify_dosgolem_king_return.py`及`work/issue4-king-return-source-audit.json`；
+正式同條輸入診斷入口為`work/issue4-king-return-remake-probe.py`及同前綴收據／PNG。
+獨立全畫布比較入口為`work/issue4-king-return-compare.py`；原始CTY幾何與圖層欄位保存在
+`work/issue4-king-return-cty-raw.json`，只保留檔案偏移，不由數值推定未知語意。
+既有IDA9.4匯出的原始camera／界外loader／consumer由
+`work/issue4-king-return-static-audit.py`逐指令核對EXE，結果為同前綴JSON。
+原有註記與限定範圍保持，新增場景在正常原版閉合前只列strong，不由共用renderer外推confirmed。
+乾淨0c47537副本的185次正常輸入、87份完整PNG及狀態收據已產出；標題讀檔保留
+位置、故事旗標、50金及六件物品。該結果不提升原版證據等級，原版回程仍在重播。
+同一可丟棄探針的`DQ3_KING_RETURN_PROTOTYPE=camera|layers|both`分支只在隔離Go副本
+測試原始欄位衍生的候選，不寫正式JSON，也不將DRAFT資料假標為已審查D3。
+各分支的同條輸入及全畫布比較使用不同前綴；原始CTY與已有IDA匯出保持唯讀。
+損壞收據核對入口為`work/issue4-king-return-source-negative.py`，只在容器tmp修改副本，
+同步重算日誌manifest後檢查語意拒絕；結果為同前綴JSON，不改原始來源。
+來源與畫面尚待閉合，不從路線規劃推定已抵達，也不據DRAFT修改正式資料或規則。
+
+固定20,000,000指令間隔在下層城堡及城鎮可能跨過未完成繪圖，IRQ1已送達不代表原版
+已處理該次步行。本批先保留固定時程結果，不將異步位置直接判成remake規則缺陷。
+`tools/dosgolem_king_return_ready.py`改由原版100次正常謁見的既有checkpoint續行，
+前綴`work/dosgolem-opening/issue4-return-ready-*`，先核對36次正常下鍵至離城。
+每次只在1991D原版runner返回、按下及放開均送達、鍵盤佇列清空後續送下一鍵。
+這是驗證fixture修正，正式引擎及pack仍保持。parent收據b875807a、checkpoint hash、
+實際初始記憶體與虛擬時鐘另存；不重新固定seed，也不宣稱前100次重新冷啟動。
+dosgolem原生磁碟snapshot v2保存CPU／memory／PIT／VGA／DOS，未保存鍵盤佇列及IRQ統計。
+本續行限定parent全部200個邊緣已送達且無後續pending鍵的checkpoint；新的IRQ debug count從0記錄。
+原生實作入口為dosgolem `internal/state/state.go`及`internal/machine/state.go`，不是記憶體patch。
+
+追加勘誤：上述磁碟snapshot續行未通過，初始PIT觀測變成65536，轉場後停在自然等待窗。
+失敗來源保存在`work/dosgolem-opening/issue4-return-ready-generation.py`、同前綴Go／log與PNG，
+不提升為正式oracle。`tools/dosgolem_king_return_ready.py`現改回冷啟動，使用獨立
+`work/dosgolem-opening/issue4-return-cold-ready-*`前綴；關閉逐指令文字trace，仍保留全部事件、
+先前100次輸入與既有畫面，85次步行另逐鍵觀測。原版自然等待窗由正常Enter關閉，額外輸入全部記錄。
+送步行鍵只在正常runner且等待計數自然重設後進行，不寫計數器、不強制影格、不重新設seed。
+
+另一勘誤：固定時程收據的`origin_y`標籤讀的是1991D時的DGROUP4F27。
+該欄位在11D8A繪圖consumer執行後已是暫態掃描座標，不能當攝影機原點。
+既有原始收據及凍結Go來源保持；新探針改存raw4F25／raw4F27，另在11991呼叫11D8A前
+記錄真正的origin與20×15幾何。新增camera結論只採該呼叫點，不從舊標籤推定。
+
+現行冷啟動逐鍵來源使用`issue4-return-cold-ready-r2`前綴。
+來源核對入口為`tools/verify_dosgolem_return_ready.py`，逐筆核對前100次輸入、200次IRQ1、
+432份既有PNG／bin、85次步行及自然等待窗的額外Enter，不將額外輸入省略為185次。
+攝影機只採11991呼叫前的觀測；1991D保留raw4F25／raw4F27。
+第一版冷啟動逐鍵探針因每指令多餘觀測耗時而停止，僅保留診斷，不作oracle。
+R2限制新欄位讀取在實際觀測點，並在既有100次謁見結束後停止舊觀測器。
+等價正常InputState入口為`work/issue4-return-ready-remake-probe.py`，按來源實際packet順序重播。
+每個原版等待窗在remake自然等待，缺窗即記第一個玩家blocker；不省略額外Enter。
+該工具的`DQ3_KING_RETURN_PROTOTYPE=both`另在可丟棄測試副本加入CTY00 section0等待窗範圍，
+連同既有camera／layers候選診斷完整路線；此分支的pack已變更，不將其hash稱為正式資料包hash。
+逐鍵來源的協同損壞拒絕入口為`work/issue4-return-ready-source-negative.py`，
+另核對繪圖前anchor、觀測階段及等待窗caller；原始檔案唯讀。
+完整640×350比較入口為`work/issue4-return-ready-compare.py`，比對來源11991的攝影機原點，
+不使用舊origin標籤；狀態、完整RGB與尚未閉合的人物時序分別保存。
+
+R2追加勘誤：等待鍵在linear2111B入口立即送出，make發生於入口後2步。
+既有IDA9.4原始匯出與EXE的file_bytes閉合2112C..21132：函式隨後以CLI清除DGROUP2856，
+才STI並在21133輪詢。因此入口送鍵會被初始化清除，R2未產出有效回程oracle。
+R3使用獨立`issue4-return-cold-ready-r3`前綴冷啟動，僅在21133、key_flag=0及
+SS:SP+6／+8保留7E00:0110的等待caller時送Enter。
+回程等待計數接受原生19955／19976清零後的start=0，或自然初始化後delta<=1，不寫計數器。
+另修正收據生成器對第100次後輸入的deadline：後段沒有固定擷取時程，以完整make／break
+在queued+11,000,000內送完核對；既有100次的deadline與畫面保持。
+目前來源與remake仍DRAFT，以上是探針修正，不提升正式產品完成度。
+remake探針把來源`return_events`與queued事件按原始step排序；觀測不計為玩家按鍵。
+若正常runner先返回、稍後才開等待窗，步行PNG在等待前保存，不把關窗後畫面換作該步收據。
+
+R3追加勘誤：21133送Enter可正常關閉等待窗，但start=0或delta<=1的探針條件過嚴，
+只反覆關窗，沒有送出步行；不能將這個條件當原版ready契約。
+現行R4以`issue4-return-cold-ready-r4`冷啟動，保留21133的初始化檢查，
+步行只在原生1997C的RETN前、佇列清空且前鍵make／break全送達後排入。
+1991D..1997C的既有IDA9.4匯出已與EXE file_bytes核對，包含300門檻、關窗與返回分支。
+由原版完成等待檢查後再送鍵，不以探針重設計數器或猜測重設時點。
+85次正常runner觀測仍在1991D；來源及產品仍須獨立核對才提升證據等級。
+正式正常輸入測試入口為`game/king_return_test.go`的`TestDosgolemKingReturnNormalInput`，
+需要`DQ3_KING_RETURN_ORIGINAL`及既有母親／王座收據環境；未提供時明示選用SKIP。
+測試按來源排序85次步行、額外Enter及觀測，核對位置、raw section、camera、背包、金錢與旗標。
+等待窗正文與完整畫布分別核對，另保存陰影差異；標題讀檔後再正常下一步，不宣稱原版存檔parity。
+
+R4原版執行完成：正常186次輸入、372次IRQ1、85次runner及607份產物，末端8,2／raw111D。
+收據首次核對因要求85次11991觀測而拒絕。原版一般步行走增量繪圖，11991完整重繪實際只有
+15、36、74、85四次。此為verifier條件錯誤，沒有重跑或改寫來源；未觀測的camera欄位改保留null。
+四次原生camera單獨核對，其他步只檢查既有EXE anchor契約，不稱原生camera量測。
+同條輸入的未修改0c47537在ordinal74、CTY00 section0的5,22缺少自然等待窗，診斷已保存。
+`both`候選186次正常輸入及標題讀檔PASS；`idle`候選只加入等待窗範圍，
+用來隔離camera／layers的完整畫面差異，兩者都保持可丟棄設定，不作正式hash聲明。
+`both`的85個位置／section／金錢／背包／旗標與四次camera均通過，但ordinal36仍13983完整RGB差異，
+多個圖格反覆149像素，不能稱只有NPC差異。`camera`候選保留等待窗修正，只改登錄所攝影機，
+用來與`idle`及`both`分開比較。城鎮layers候選未達READY，不進正式資料。
+
+#### 回程場景證據審查（有限 READY）
+
+來源收據SHA-256為`347600d38f062e111a08a852a0cdf2a8937b959827c37ff984f3dca44a732a75`。
+原版186次輸入／372次IRQ1、607產物、85次正常runner，前432份PNG／bin逐byte保持；
+16種協同損壞均拒絕。EXE、CTY00與位址基準沿上節的原始hash／file_bytes稽核。
+四次11991觀測在15、36、74、85，分別包含下樓、離城、等待恢復及登錄所完整重繪。
+其餘增量步行不假稱camera量測。兩側Lv1 seed1357只設定一次，後續NPC骰序不列精確一致閘門。
+
+| 正式資料修改 | 原版入口及consumer | 已證實的有限範圍 |
+|---|---|---|
+| CTY00 section0等待窗 | ordinal74的5,22／raw000C；19952→17DBB→21133，正常Enter關窗 | 既有單人正文、300 tick門檻及不移動／不消耗；188 updates仍為hardware-spec approximation |
+| CTY00 section0圖層 | 原始header file000C+15／+16為27／70；13162..1317D→0B56／0B57→11E07..11E4B | 既有player_cell_layer，base_layer0；正常回程包含非base的酒館內部視野 |
+| CTY00 section0camera引用 | 36與74原生11991、anchor9／7、header界外0 | 與既有arrival_camera同值，提供layers validator的明示引用；renderer優先序保持 |
+| CTY00 section2camera | 85的8,2／raw111D；11971..11991，CTY file111D+12為71 | 原生origin−1／−5、20×15；不clamp到11×15地圖邊界 |
+
+未修改0c47537在ordinal74缺等待窗。只改等待窗的`idle`原型全程狀態通過，
+ordinal74完整RGB差146268、ordinal85差200467。
+`camera`只另修登錄所，74維持146268、85降至118；`both`再加入城鎮layers，
+74降至1403、85保持118。85個原版位置／raw section／金錢／背包／旗標及四次原生camera均一致。
+85個畫面沒有任何一張因layers候選而惡化。先前36的13983在所有分支相同，不能用它否定layers修正。
+
+READY只修改既有JSON綁定，schema0.8.0維持、content升0.1.79，不新增共用Go版本資料或fallback。
+camera／layers原始EXE／CTY parity、缺失／未知引用拒絕、正式186次InputState、正常標題讀檔與下一步，
+以及完整game／internal／desktop需通過才列CONFORMED。乾淨0c47537重建入口為
+`work/issue4-make-return-ready-pack.py`，九份JSON逐byte核對；不加入原版素材或私有PNG。
+
+完整640×350仍不通過。目視74可見remake在黑色外層多畫三個NPC，另有NPC／主角相位差異；
+85剩118只在主角圖格。36的13983跨多個圖格，原因保留未知。
+本批限定圖塊、攝影機、等待窗與正常玩家狀態，NPC圖層可見性、動畫、原版音訊及原版存檔另追，
+不由局部改善宣稱完整畫面V3或整款遊戲完成。
+完整game回歸入口為`work/issue4-return-ready-game-regression.py`，以現行binary列出測試，
+分批隔離Ebitengine程序，核對全部頂層終態與SKIP理由；原版明示收據測試另行嚴格執行。
+導航診斷入口為`work/issue4-return-ready-navigation-diagnostic.py`；僅在乾淨副本追加失敗觀測，
+不修改玩家狀態。收尾入口為`work/issue4-return-ready-final-audit.py`，輸出同前綴`final-receipt.json`，
+核對來源、九份JSON乾淨重建、正式PNG、完整回歸、桌面ELF與UID／GID衛生。
+
+#### 回程正式驗收（有限 CONFORMED）
+
+schema0.8.0／content0.1.79，canonical hash為
+`sha256:9757fa4135987cec259a1075e5ea12fe9270703c9bda471ff1fbca79bba81790`。
+正常186次InputState、85個位置／raw section／金錢／背包／旗標及四次原生camera通過。
+CTY00 section0等待窗自然開啟，正文及陰影RGB差0，正常Enter只關窗。
+同版本Save、正常標題Load及後續下鍵移動通過；原版存檔及RNG持久化不由此宣稱parity。
+正式收據為`work/issue4-return-ready-production.json`，log同前綴；88張runtime PNG包含
+85次步行、等待、標題讀檔及後續一步。85張步行PNG與`both`試作逐byte相同，未遮罩或指定frame。
+完整RGB仍為36的13983、74的1403、85的118，等待完整1095；完整畫面V3未通過。
+酒館多畫的NPC、人物相位及城鎮入口多格差異保留未知，不能以圖塊規則自行補NPC filter。
+
+完整game419頂層清單由21批覆蓋，374頂層／70子PASS、45選用SKIP；
+本批原版回程明示來源測試另嚴格PASS。其餘選用來源或擷取未跑，沒有素材缺失SKIP。
+internal149頂層／250子及11套件PASS、4選用SKIP；desktop Linux x86_64 ELF建置通過。
+正常新遊戲InputState至THE END151.74秒，只屬remake回歸，無完整原版campaign聲明。
+
+第一次game第14批卡在5,28，NPC暫擋0,29。只加觀測的乾淨診斷副本確認
+`fieldIdle.open=true`，NPC停在相同動畫計數305；測試連續送空白輸入，無法關窗。
+共用導航test helper改用正式Enter關窗後等待，不改正式凍結規則、NPC位置或計數。
+原始失敗為`issue4-return-ready-game-batch-14-initial-0ca91015db05.jsonl`，診斷log同入口前綴。
+同工具鏈重跑14及尚未執行的15..21通過，前13批同一1.79資料包PASS保持；resume log單獨保存。
+桌面build後`file`指令缺件是檢查工具問題，改核對ELF header及machine62，沒有重建已成功binary。
+
+九份JSON從乾淨0c47537重建逐byte相同，只改manifest與interface三個集合。
+其他欄位排版保持，縮減diff前後的解碼JSON相同，canonical hash與既有PASS不變。
+最終收尾收據`work/issue4-return-ready-final-receipt.json`，112587bytes，SHA-256
+`3393c711ed6d9549b28613bf14ed97a205ba7681f74d0116cfb8a556ffc66c05`。
+純排版前收據按8ae2579ddd60前綴保留；一次收尾掃描遇執行環境`.aws`暫時目錄消失，
+只對該控制目錄容許消失，再以同命令乾淨重跑，原始輸入仍逐檔驗證，未忽略產品缺檔。
+所有本批輸出UID／GID1000，既有root候選3213與Markdown目錄0保持。
+遠端結果[5965833865](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5965833865)，
+Issue #4保持OPEN，下一切片從正常登錄所入口續行；沒有新image或發行包。
+Issue主文更新入口為`work/issue4-return-ready-update-body.py`，提交後Git與Docker清理核對
+另存`work/issue4-return-ready-post-push-receipt.json`。原始素材、私有PNG及使用者scratch不加入Git。
+正常原版重生入口為`bash tools/verify_dosgolem_newgame.sh /tmp/dq3-dosgolem-2f44a68 --king-return-ready-original`。
+外層移除一次性「前綴已存在」限制，沿用共用產生器逐檔SHA-256歸檔，再重生的既有契約；
+此修正不改本批已執行的frozen generation／Go，也沒有再次冷啟動原版。
+
 ## 2026-10-03 城鎮攝影機（有限 READY）
 
 依Issue #4接續上述動畫反證，先閉合城鎮視野。來源EXE、CTY00身份與IDA9.4位址基準沿用本文件。

@@ -8169,7 +8169,7 @@ func traceWalkThroughPortalWithRepelPolicy(t *testing.T, g *Game, x, y, wantCty,
 			// 遊走 NPC 可能暫時封住唯一通道；與 traceWalkOne 一樣送空白
 			// frame，讓 production NPC tick 後重新尋路。永久不連通仍會由
 			// 3000 次上限報錯。
-			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			if err := traceWaitForNPC(g); err != nil {
 				t.Fatalf("等待 portal 路徑 NPC: %v", err)
 			}
 			continue
@@ -8238,7 +8238,7 @@ func traceWalkToNoPortal(t *testing.T, g *Game, x, y int) {
 		if len(path) == 0 {
 			// 與一般步行一致：遊走 NPC 可在選好出口後暫時堵住通道。
 			// 送正式無方向輸入並重算；外層上限保留真正不可達的診斷。
-			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+			if err := traceWaitForNPC(g); err != nil {
 				t.Fatalf("等待無轉場路徑的 NPC：%v", err)
 			}
 			continue
@@ -8287,7 +8287,7 @@ func traceWalkOne(t *testing.T, g *Game, tx, ty int) {
 	path := tracePath(g.cur, g.px, g.py, tx, ty)
 	if len(path) == 0 {
 		// 遊走 NPC 暫時擋路；送一個空白 frame 等它移動後重算。
-		if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+		if err := traceWaitForNPC(g); err != nil {
 			t.Fatalf("等待 NPC: %v", err)
 		}
 		return
@@ -8297,6 +8297,16 @@ func traceWalkOne(t *testing.T, g *Game, tx, ty int) {
 	if err := g.step(InputState{DirHeld: path[0], DirEdge: -1}); err != nil {
 		t.Fatalf("移動 dir%d: %v", path[0], err)
 	}
+}
+
+// 等待讓路時，原版等待窗會凍結 NPC。以正常 Enter 關窗後繼續等待，
+// 不修改 NPC、座標、等待計數或正式凍結規則。
+func traceWaitForNPC(g *Game) error {
+	in := InputState{DirHeld: -1, DirEdge: -1}
+	if g.fieldIdle.open {
+		in.Enter = true
+	}
+	return g.step(in)
 }
 
 func traceTalkNPC(t *testing.T, g *Game, nx, ny int, avoidPortals ...bool) {

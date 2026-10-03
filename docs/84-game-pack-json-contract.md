@@ -1,5 +1,22 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 2026-10-03 正常回程場景綁定（schema0.8.0／content0.1.79）
+
+此版沿用既有型別與原語，只更新`interface.json`的場景引用及manifest內容版本。
+`scene_cameras`共四筆：CTY25 section0／1與CTY00 section0／2。
+CTY00 section0使用既有arrival_camera的相同anchor及界外圖塊；renderer優先序保持。
+section2由原始header提供界外圖塊71，anchor9／7，不clamp到11×15地圖。
+`scene_tile_layers`共兩筆：CTY25 section0與CTY00 section0，後者header提供base27／other70。
+正常酒館玩家格5,22的typed layer為2；圖塊選擇不替代NPC可見性規則。
+`field_idle_status.scenes`共三筆，新增CTY00 section0；等待門檻與健康欄位沿原契約。
+正常單人等待窗及Enter消耗有D3來源，其他隊伍與健康狀態尚缺動態抽樣。
+時間域仍為硬體規格近似，沒有新增硬體driver解析。
+
+缺失／未知引用拒絕、原始EXE／CTY parity及正常186次InputState已通過，
+原始來源、有限CONFORMED、重建與畫面限制見[docs/188](188-opening-escort-to-castle-spec.md)。
+canonical hash為`sha256:9757fa4135987cec259a1075e5ea12fe9270703c9bda471ff1fbca79bba81790`。
+存檔格式維持；不同pack hash的舊檔明確拒絕，不自動遷移。下方版本段落保存各欄位形成史。
+
 ## 2026-10-03 正常 region 文字後獎勵（schema0.8.0／content0.1.78）
 
 `events.json.region_dialogue_reward_events`是必填集合，可明確為空。

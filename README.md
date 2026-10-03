@@ -23,7 +23,7 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前開發版為 schema `0.8.0`／content `0.1.78`。dosgolem 已驗證六幕順序、
+目前開發版為 schema `0.8.0`／content `0.1.79`。dosgolem 已驗證六幕順序、
 前五幕色號及第六幕 129 個完整翻頁的色號／RGB，並修正漏卡與動態標誌；
 範圍與時間近似見 [docs/196](docs/196-dosgolem-opening-sequence-parity.md)。
 正常輸入的命名、性別、能力等待／確認及接受角色後生日首頁共22張完整畫布 RGB 零差異，
@@ -42,6 +42,8 @@
 正常謁見九次Enter、文字結束後獎勵與旗標順序已修正，九頁視窗與陰影RGB零差異，完整每頁仍差893個NPC像素。
 城堡及王座等待窗已接入正式流程，已驗正常單人視窗及陰影RGB零差異，關窗按鍵不移動玩家。
 完整等待畫面仍有動畫差異；原版讀檔朝向待驗，限定範圍見 [docs/188](docs/188-opening-escort-to-castle-spec.md)。
+正常謁見後回程至登錄所入口已驗證，城鎮等待窗、酒館圖塊層與登錄所視野已修正；
+同版本標題讀檔及下一步通過。完整酒館與登錄所畫面仍分別差1,403及118像素，人物可見性與相位待驗。
 動畫繪圖時序、完整原版玩家路線與音畫對拍尚未完成。
 此版要求新的pack契約，舊schema存檔會明確拒絕；目前沒有自動遷移。
 歷史 E3 與 90% 自評不能代替本輪收據。現況以 [CONTEXT.md](CONTEXT.md) 為準，
