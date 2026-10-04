@@ -84,7 +84,7 @@ metadata 不得由 Go 猜新規則。
 
 1. 多人隊伍開啟道具命令先進通用 party-member owner selector；單人可直接選主角。
 2. 清單、游標、使用、給予、丟棄都操作 owner 的 personal inventory；不得默認勇者。
-3. 取消階層為 action／item list → owner selector → 關閉，不能跳過 owner 層。
+3. 取消階層依下方2026-10-05勘誤。舊的 action／item list → owner selector → 關閉概括已推翻；單人正常取消直接回field，多人取消仍需動態證據，不用舊敘述指定正式規則。
 4. 給予目標包含全隊；不同 owner 受八格容量限制，同 owner 不複製道具。
 5. 使用型道具必須從選定 owner 的確切 slot 消耗；效果目標仍依各 item effect 另行選擇。
 6. 所有玩家可見標籤與訊息仍由 game-pack text ID；本切片不在 Go 加 DQ3 record 或中文。
@@ -94,7 +94,7 @@ metadata 不得由 Go 猜新規則。
 - EXE parity：鎖定 `0x1373A..0x13778`、`0x13829..0x13941`、
   `0x139AB..0x13A9F`、`0x13ABC..0x13B0F` 的代表 bytes。
 - component：選同伴→列其物品→丟藥草；選同伴物品使用時只消耗該 owner；給予的來源／
-  目標容量與同 owner 不複製。
+目標容量與同 owner 不複製。
 - production：羅馬利亞正式打開道具命令、選戰士、丟一株藥草，再由商店把青銅盾買給
   戰士並用正式裝備面板穿上。
 
@@ -118,3 +118,13 @@ metadata 不得由 Go 猜新規則。
 `hasPartyItem` 後形成永遠失敗的條件。現行 helper 依隊伍順序尋找實際 owner，必要時以
 正式丟棄藥草替目標角色騰格，再走 owner selector／rec421／全隊 target selector；物品
 原本就在轉職目標時不做無意義重排。驗收改為「全隊仍持有，且指定同伴持有」。
+
+## 2026-10-05 勘誤：單人取消與物品格順序
+
+舊第3點「action／item list → owner selector → 關閉，不能跳過 owner 層」已由正常dosgolem來源推翻。Issue #4從e94a4c7接續，固定dosgolem2f44a68／seed1357一次，218包／512IRQ1／256次正常輸入來源的SHA-256為`28995c8dd702f83d70c51f3f09212dc556356ed563d5b0b9d3977ff4b0d60eb4`。206穿戴衣服在七列第一列，207選取後開「如何」，208 Esc直接關閉全部窗口回field；重新打開後217在清單按Esc同樣直接回field，218正常右移。前206包及完整產物保持，持久區除最後座標外全部保持，Scratch空。
+
+此訂正為單人上層正常路線confirmed，不能外推多人owner selector的返回。正式remake仍需READY後修正，兩個UI零差異試作不是production驗收；完整來源、公開重生工具、原始視窗及consumer分級集中[docs/188](188-opening-escort-to-castle-spec.md)。
+
+IDA9.4非破壞原始138F8／13919證實按八格非空word順序列出及選取，穿戴word仍在其中。18197→181B1只重算能力，不整理八格。13A62同人給予保留所選word並把其後包括空格的七格左移、所選word放到最後；1885F單人直接回owner1。當時交易strong，後續由下方正常來源閉合。不能把現行裝備／背包分開保存或「裝備永遠在前」當原版順序規格。
+
+正常230包／536IRQ1／268次輸入來源`aad971bb8cbf08956384b6964b4a893251cb3b4ff316263953f7563a7e5b2fc4`已獨立接受，初始第一件穿戴物給予自己的交易升為限定confirmed。原始八格`[801E,0000,0001,0001,0003,001F,001F,00FF]`變為`[0000,0001,0001,0003,001F,001F,00FF,801E]`；四筆只讀IDA linear13A62／13A87／13A9F／18197觀察與DGROUP50B9..50C8持久bytes吻合。00FF仍在第七物理格，七件清單跳過它，布衣顯示在最後。除八格外完整2172bytes、能力／金錢／旗標及clock30保持，Enter自然回field，再正式重開清單。完整來源、失敗分類及再驗入口集中docs/188；不能外推其他物品／多人或remake交易完成。

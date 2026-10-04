@@ -4489,3 +4489,94 @@ schema0.19.0／content0.1.91，canonical `sha256:66224bc04ff5f7d412640c986c35e0a
 重生正式正常trace時，以`DQ3_COMMAND_ORACLE_DIR`指定已接受的原版目錄、`DQ3_COMMAND_RECEIPT_DIR`指定空輸出，於本節Docker／Xvfb工具鏈執行`TestFieldCommandDosgolemNormalInputComparison`，素材缺失失敗，不能以SKIP驗收。完整畫布使用上節公開CLI，只支援明示版本與來源。收據、原版PNG／bin、IDA sidecar及原版素材留本機，不加入Git。
 
 本次狀態E2／正常流程E3與指定十二張V3只適用單人上層指令窗；Enter原版動態未觀測，保留strong與remake等價測試。道具206仍全畫布RGB44816，原版七列含穿戴衣服且父指令窗保留，remake六列且父窗消失。穿戴／背包索引、action writer及交易副作用未閉合，下一切片仍DRAFT。觸控、其他隊伍、音畫時序、入隊返回及完整原版campaign沒有新增完成聲明。沒有新發行包。
+
+### 2026-10-05 正常道具七列與取消 DRAFT
+
+依Issue #4接續e94a4c7，首次阻塞為正常206道具清單，完整RGB差44816。[正常道具導覽探針](../tools/dosgolem_field_item_navigation_probe.py)從原版冷啟動重生已接受206包，seed1357一次；正常Space選第一件穿戴衣服，只開action後Esc，不執行使用／給予／丟棄。其後Down到背包、Up回穿戴列、上下繞回、Esc取消清單／父窗及正常右移，預計215包；實際節點或count不符即停止送鍵，不猜過渡。
+
+CLI為`python3 /repo/tools/dosgolem_field_item_navigation_probe.py --prefix issue4-field-item-navigation-r1`。沿dosgolem2f44a68與dq3-ebiten-test:20260822-r1、UID1000、有限資源及外層逾時，repo／原版唯讀，既有work可寫。新增只讀觀察DGROUP062D／062F／2591、3FD8／4050視窗、原生游標與完整持久區，保留原始欄位與bytes；不restore、狀態注入或調時鐘。缺完成收據不能稱接受來源。
+
+IDA9.4的r1因1372F沒有自動函式邊界而拒絕匯出，符合docs/158已有raw-window限制；不建立猜測function。r2改用原始1372F..13B18與1F779..1F8A5有界區間，456條目，SHA-256 `c52dda943d6935ed9127fa1a5e0131071a2cdb82d9604812dcaf160b7f93aef1`，私人`work/issue4-item-r2-ida.json`保留bytes／relocation／xref及unknown。現階段只可確認本EXE掃角色+3A的八個非空word；穿戴旗標、raw列與remake分離storage、完整窗口／action返回仍待正常來源和consumer審查。正式Go／pack不先改動。
+
+首輪正常207開「如何」三項選單，208 Esc自然回field。與最初DRAFT預期回七列清單不符，沒有送209鍵，停止該已知無後續路由的研究容器；208前全部產物留存，未產生完成／接受收據。首輪producer保存在`work/issue4-item-navigation-producer-r1.py`，SHA-256 `53ae76a6b10fb0d03f6e53effb0653cb2df3b9021fe412551321158e9a6418ea`，不冒稱原版runner缺陷。
+
+第二輪改成實際正常路線：208後Space重開父窗、Down／Right／Space進七列，再Down／Up／Up繞回第七列／Down繞回第一列，Esc取消清單後正常右移，預計218包。CLI使用新prefix `issue4-field-item-navigation-r2`，不覆寫r1。完整正常來源接受後，須訂正docs/158過度概括的取消階層；目前多人取消仍未知，單人動態結果不能外推。
+
+[獨立正常道具來源驗證器](../tools/verify_dosgolem_field_item_navigation.py)固定本輪producer、Go source與binary，先完整重驗206包父來源，再核對218包／512 IRQ1、256次正常輸入、原始八格七件、游標繞回、兩次Esc、下一步、2172bytes及實際Scratch。CLI依序指定原版目錄、producer及新接受收據；預期契約仍DRAFT，以實際來源審查，不放寬未知條件或略過父來源。正式Go／pack與e94a4c7保持。
+
+私人可丟棄render試作`work/issue4-item-render-draft-r2/`已由正常193路線重播至206，只重畫UI圖層，以該次原版固定七列與raw視窗核對完整640×350 RGB0。沒有產品storage／action聲明；初輪素材相對路徑錯誤保留，改用明示DQ3_ASSETS後沿相同image／命令／資源乾淨重跑。臨時Go test已移除。此結果只閉合目前206的render，不能用來假定所有狀態裝備永遠在前。
+
+第二個可丟棄render試作`work/issue4-item-render-draft-r3/`的206物品窗及207「如何」窗完整RGB均0，先撤銷前一活動frame，再依原始4050結構與record421畫新窗口；只閉合UI圖層，不稱正常production action。IDA r3／r4／r5分別271／127／40條目，私人收據SHA-256為`2c8332225704b94070cf2ba75bc24cf164726845b5dd70a1dcc8d92258a47e2d`、`54933f9a0c9c9a53f8d370ac6c1b628924b4ca28d3c0c791ba3a5c4d350a63a4`、`58db34dd94ab4aaecfe1876ad574c2d6cd7ebb4b3e5577167c46e5a94326ee24`。18197→181B1只重算狀態與能力，不整理八格；139AB→13A62同owner給予保留raw word並向八格末端移動，包含空格。1885F單人直接選owner1，不顯示目標selector。尚未正常動態閉合的交易保持strong。
+
+[正常同人給予順序探針](../tools/dosgolem_field_item_reorder_probe.py)沿218路線，再Space／Down／Right／Space進物品，正常選穿戴衣服→Down到給予→Space，單人自然跳過owner selector；若抵達真正等待點，再Enter返回並重新開物品清單，預計230包。CLI使用`--prefix issue4-field-item-reorder-r1`；新增只讀IDA linear13A62／13A87／13A9F／18197的原始八格及暫存器，不改raw word或裝備旗標。未取得接受來源前，不把「裝備永遠排前」或「無空格序列」寫入production。仍需證據審查與存檔表示契約，正式Go／pack保持。
+
+### 2026-10-05 正常七列導覽來源接受，storage仍 DRAFT
+
+正常218包／512IRQ1／256次輸入已由獨立checker完整接受，私人來源`work/dosgolem-opening/issue4-field-item-navigation-r2-source-r1-receipt.json` SHA-256 `28995c8dd702f83d70c51f3f09212dc556356ed563d5b0b9d3977ff4b0d60eb4`。462份產物包含436份完整PNG／bin及26份2172bytes持久區。前206包全部事件／PNG／bin／持久區與父來源5b2a78c1相同，174母親產物完整重驗。原版EXE、工具與位址基準沿上節；不restore、重擲、注入或調時鐘。
+
+| 正常包 | confirmed玩家結果 |
+| --- | --- |
+| 206／207 | 七列第一列穿戴衣服，Space開「如何」三項，初始游標1 |
+| 208 | 動作Esc關閉物品／父窗直接回field，不回物品清單 |
+| 209..212 | Space、Down、Right、Space正常重開七列，游標重設1 |
+| 213..216 | Down→2、Up→1、Up繞回7、Down繞回1 |
+| 217／218 | 清單Esc直接回field，Right正常到3,18 |
+
+193..217完整2172bytes保持，218只改座標word至3，clock全部30、raw526C1、Scratch空。3FD8動態width16bytes／height144px／count7，記錄418／419／420；4050動作窗width12bytes／height80px／record421／三項callback保持原始bytes。不能由此直接把七列序號當Go背包index。
+
+重驗CLI為`python3 /repo/tools/verify_dosgolem_field_item_navigation.py /repo/work/dosgolem-opening /repo/tools/dosgolem_field_item_navigation_probe.py <新收據>`。父checker沿既有repo/work相對EXE路由，所以原版目錄使用此容器路徑；首次誤傳/work別名導致/assets_raw找不到，保留工具呼叫失敗，修正參數後同image／命令／資源乾淨重跑，未改產品或放寬比較。多人取消未知，docs/158以追加勘誤保留被推翻的舊斷言。
+
+同人給予r1在220包被繼承的220包輸入guard拒絕，尚未送221，更未抵達交易writer；不是原版或dosgolem能力故障。實際計畫為230包，r2僅把這項guard改成明示230包，不調時鐘、指令上限或狀態，仍逐節點檢查再送鍵。r1冷啟動全部產物與原producer b69db537保留，r2使用新prefix `issue4-field-item-reorder-r2`。資料格式仍DRAFT，不能把未送出的交易算完成。
+
+[正常同人給予來源驗證器](../tools/verify_dosgolem_field_item_reorder.py)固定r2 producer／Go source／binary，完整重驗218包父來源後，核對230包／536IRQ1、268次正常輸入、四筆只讀writer、完整畫布及2172bytes持久區。CLI為`python3 /repo/tools/verify_dosgolem_field_item_reorder.py /repo/work/dosgolem-opening /repo/tools/dosgolem_field_item_reorder_probe.py <新收據>`。只接受本EXE、工具版本、單人初始穿戴物給予自己這條路線；原版接受不等於remake parity。
+
+### 2026-10-05 正常產品差異與資料方案待確認
+
+正式Go／pack保持e94a4c7。可丟棄診斷測試以正式InputState從新遊戲重播至206..208，沒有狀態注入或重畫UI。206清單差44816、207動作窗差45281、208取消差57417；實際選中背包code0，原版第一件為穿戴布衣raw801E，取消後remake仍停在清單，原版回field。私人`work/issue4-item-normal-red-r2/item-open/normal-red.txt`保存結果。診斷測試PASS只表示已知RED條件重現，不能當parity通過；臨時Go test已移除。
+
+七列／動作窗試作完整640×350 RGB均0，只有render閉合。正式資料仍把背包與裝備分開，沒有物理八格空格與順序，因此不能直接將試作接入產品。資料契約保持DRAFT，待使用者選擇「單一有序物品格，背包／裝備由它產生」或「保留背包／裝備，另加含空格的順序引用表」。兩者均保留原版物品格，需升級存檔契約；舊schema／hash維持明確拒絕，不自動遷移。未收到選擇前不實作相依的storage／save變更，原版證據驗證繼續。
+
+候選寫入調查`work/issue4-item-storage-writes-r1.json`找到八個Go檔的26筆直接賦值，另有指標、slice及helper寫入，這份候選清單不代表完整寫入台帳。實作前須核對取得／購買／消耗／丟棄／給予／裝備／戰鬥／存讀檔入口，將所有修改集中到所選契約的具名操作，再審READY。多人取消、不同人給予、全部物品使用／丟棄與第四動作列仍需各自證據，不因目前單人來源而宣稱原版campaign完成。
+
+來源checker首兩輪保留失敗：r1誤以為關閉清單會清raw count，原始3FD8+14h在219..222仍為7，開動作窗223才寫0；r2誤把沿用的文字觀察tag限定為父路線七筆，新交易自然新增packet225／DI0134的record308。重查spec閘門後，只依原始bytes及正常事件訂正兩項預期，父七筆與218包全部產物仍逐欄／逐byte核對，新增文字只接受這唯一一筆與writer前的時序。未改正式Go／pack、原版或dosgolem；沿同image／命令／資源完整乾淨重驗。
+
+### 2026-10-05 正常單人穿戴物重排來源接受
+
+本EXE115282bytes、SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`，dosgolem2f44a68、seed1357執行前固定一次。正常230包／536IRQ1／268次輸入來源獨立接受，SHA-256 `aad971bb8cbf08956384b6964b4a893251cb3b4ff316263953f7563a7e5b2fc4`。498份產物包含460份完整PNG／bin與38份2172bytes持久區；前218包全部事件／產物逐byte保持，祖先來源及174母親產物完整重驗，沒有restore、狀態注入或時鐘調參。
+
+| 正常包／定位 | confirmed輸入、狀態及副作用 |
+| --- | --- |
+| 219..224 | Space、Down、Right、Space打開七列，Space選第一件穿戴布衣，Down選給予 |
+| 225／IDA linear13A62、13A87、13A9F | 單人Space自然選自己。原始八格`[801E,0000,0001,0001,0003,001F,001F,00FF]`改為`[0000,0001,0001,0003,001F,001F,00FF,801E]`；原始word／空格保持，所選word移至第八格 |
+| 225／DI0134 | 自然顯示record308「要給誰」，交易writer已完成，停在正常等待點；既有文字七筆保持，新增只有這一筆 |
+| 226／IDA linear18197 | Enter解除等待，重算能力consumer自然返回field；能力／金錢／旗標保持，沒有重新排列八格 |
+| 227..230 | Space、Down、Right、Space正常重開物品，游標1；00FF空格跳過，布衣仍穿戴且顯示於最後 |
+
+四筆writer的IDA linear／原始暫存器與只讀槽bytes均留在來源；DGROUP50B9..50C8對應持久dump偏移400..415，位址基準不混用。219..224完整2172bytes與218相同；225..230只將上述16bytes旋轉，其他全部保持。世界clock30、raw526C1、玩家3,18、Scratch空且沒有存檔交易。此confirmed只涵蓋單人第一件穿戴物給予自己，不外推不同owner、其他物品或完整campaign。
+
+| 本機收據 | SHA-256／用途 |
+| --- | --- |
+| `work/dosgolem-opening/issue4-field-item-navigation-r2-source-r1-receipt.json` | `28995c8dd702f83d70c51f3f09212dc556356ed563d5b0b9d3977ff4b0d60eb4`，218包；r2重生逐byte一致 |
+| `work/dosgolem-opening/issue4-field-item-reorder-r2-source-r3-receipt.json` | `aad971bb8cbf08956384b6964b4a893251cb3b4ff316263953f7563a7e5b2fc4`，230包接受 |
+| `work/issue4-item-normal-red-r2/receipt.json` | `fde66d178f0aabbca9e4ab32dcb08cf1a343fdc18a5782f8cc56a069ec6da781`，正式正常輸入RED診斷 |
+| `work/issue4-item-render-draft-r3/receipt.json` | `5ae40fbeb03ed4028322119d40af8c36cb3f46150f0e7cb29be7739a8ecff64d`，兩張可丟棄render RGB0 |
+| `work/issue4-item-reorder-negative-r3/receipt.json` | `3b2b51f8bcf39f3c8141ebb6c407369523a84c40174f2ff7c655ec6ed0140185`，四種破損來源均在指定檢查點拒絕 |
+
+負例只破壞臨時副本：缺最後IRQ1、丟失穿戴flag、交易外持久byte、錯誤record308。最後公開checker SHA-256 `65c595dab8b5204baaab9d98b8ad598e8fce859d9060d57b0c2dbd41545b5917`與來源／負例收據一致；父來源快取只用於負例，正式接受完整重驗父鏈。r1負例沒有指定失敗點，不能取代r3；r2三例有指定失敗點，r3以最後版本再驗並加文字負例。原版產物、私人試作與IDA sidecar均不加入Git。
+
+資料方案仍待使用者選擇，storage／save尚未READY；原版交易接受與render試作不代表正式remake已修正。後續由所選契約閉合正常物品入口、取消／重開、交易與存讀檔，再核對完整畫布。舊docs/158取消概括已保留並追加勘誤；現況只查CONTEXT，Issue #4保持OPEN。
+
+負例後完整正對照r4再次接受，與r3收據逐byte一致，SHA-256仍aad971bb。導覽三種破損來源拒絕後的完整重驗收據r2亦與r1逐byte一致，SHA-256仍28995c8d。
+
+#### 原始定位回填台帳
+
+本台帳的不可變輸入為`DOS／assets_raw/DQ3.EXE`、115282bytes、SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`，位址空間為IDA linear。
+
+| 原始定位 | 限定結論／等級 | 舊規格與回填 |
+| --- | --- | --- |
+| 1372F caller／1F779..1F8A5 selector consumer | 正常單人action及清單Esc直接回field，confirmed | docs/158第3點已勘誤，保留舊斷言及來源28995c8d |
+| 13A62..13A9F writer／138F8、13919 reader／18197 consumer | 正常第一件穿戴物給自己，保留空格／word移至第八格，限定confirmed | docs/158追加230包來源aad971bb；禁止把compact inventory或裝備永遠在前當規格 |
+| 13919在docs/159的同伴補給引用 | ownership reader不受影響，沒有新增多人動態證據 | 既有+3A八格讀取仍有效，物品使用／消耗與正式storage另依READY閘門 |
+| 1885F在docs/78、docs/171及本檔舊改名段落 | 單人直接選owner1與既有靜態結論一致 | 咒文目標／取消、多人與改名流程不因本次給予來源而升級或重開 |
+
+[物品證據回填檢查器](../tools/verify_field_item_evidence_backlinks.py)以完整EXE hash、原始IDA定位及必需勘誤marker核對docs/188→docs/158，缺檔、缺位址、缺marker或缺來源hash立即失敗。容器內CLI為`python3 /repo/tools/verify_field_item_evidence_backlinks.py /repo`。它只檢查回填關係，不取代正常原版來源及production驗收。

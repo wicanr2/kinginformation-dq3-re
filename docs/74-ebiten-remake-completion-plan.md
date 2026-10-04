@@ -1,7 +1,7 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-05 正常指令窗有限CONFORMED：原版206包／488IRQ1，來源5b2a78c1。正常194..205十二張完整RGB0，修正22519點開窗差異、六指令導航與HUD；snapshot／RNG／clock保持，取消後F5／F6及新一步通過。
-> 完整game484覆蓋、433頂層／119子PASS、51選用SKIP；internal171／375、11套件PASS、4選用SKIP；正常THE END190.25秒及Linux desktop PASS，oom_kill0。1025張舊PNG與新57張保持。schema0.19.0／content0.1.91、canonical66224bc0，舊存檔不自動遷移。下一切片為道具206七列及父窗／action，完整RGB差44816、仍DRAFT。唯一現況表CONTEXT；有限驗收與重生入口docs/188。Issue #4與Goal進行中，不宣稱完整原版campaign完成。
+> 2026-10-05 正常物品原版來源已接受：導覽218包28995c8d、同人給予230包aad971bb。穿戴布衣保留word移至第八格，空格保持；完整持久區只改八格，前218包及174母親產物保持。
+> 正式Go／pack仍e94a4c7，正常物品206／207／208完整RGB差44816／45281／57417，render試作兩張RGB0未接入產品。資料方案待選單一有序物品格或順序引用表；DRAFT，收到選擇並審READY後才改storage／save。既有正常指令窗十二張RGB0與完整回歸保持，沒有新增完整campaign驗收或發行包。唯一現況表CONTEXT，證據／重生工具docs/188；Issue #4／Goal進行中。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 
