@@ -105,12 +105,6 @@ func drawStatusGlyphs(rgba []byte, tx *dq3data.Text, anchor gamepack.GeometryAnc
 	}
 }
 
-// drawCmdStatus:命令窗開啟時顯示 pack 定義的縱列隊伍 H/M/等級狀態窗。
-// 幾何與標籤 glyph 由 game pack 提供；沒有該資料時不畫猜測版 UI。
-func (g *Game) drawCmdStatus(rgba []byte, white dq3data.Color) {
-	g.drawPartyHUD(rgba, white)
-}
-
 // drawItems:持有者 selector 與角色局部道具清單（品名 = D3TXT00 rec=code+1）。
 func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)

@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 )
 
 func firstOpenOverworldTile(sc *Scene) (int, int, bool) {
@@ -110,15 +108,19 @@ func TestPartyHUDUsesOriginalPackColumnAnchors(t *testing.T) {
 	g.companions = nil
 	g.heroName = []int{15, 16, 17, 18, 19}
 	clear(g.rgba)
-	g.drawPartyHUD(g.rgba, dq3data.Color{R: 255, G: 255, B: 255})
+	g.drawFieldIdleStatus()
 
 	// 原版 sub_18222：label 在 base+2 bytes、姓名/數值在 base+4
 	// bytes；姓名最多四字。略過頂框列，只量 glyph ink。
 	if inkInRect(g.rgba, image.Rect(184, 240, 248, 254)) == 0 {
 		t.Fatal("原版姓名 anchor (184,238) 沒有 glyph ink")
 	}
-	if inkInRect(g.rgba, image.Rect(248, 240, 264, 254)) != 0 {
-		t.Fatal("第五個姓名 glyph 不應越入下一欄")
+	withFive := append([]byte(nil), g.rgba...)
+	g.heroName = g.heroName[:4]
+	clear(g.rgba)
+	g.drawFieldIdleStatus()
+	if !bytes.Equal(withFive, g.rgba) {
+		t.Fatal("第五個姓名 glyph 不應改變完整 HUD 畫面")
 	}
 	if inkInRect(g.rgba, image.Rect(168, 254, 184, 270)) == 0 ||
 		inkInRect(g.rgba, image.Rect(184, 254, 232, 270)) == 0 {

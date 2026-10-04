@@ -222,15 +222,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-05） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；正式F5/F6與獨立JSON槽。schema0.18.0／content0.1.90；canonical `sha256:9d6325addef6db4d6f4c049f44fe517e61d2a0550724c67d5ae7ec0f649a3917`；沒有新發行包 |
-| 最新remake已完成 | 正常F5／F6第二槽保存、讀回與左右行走；其他JSON槽、snapshot／RNG、世界時鐘、Save後Load及新一步通過。只新增驗證，正式Go／pack保持e939db2 |
-| 最新原版oracle | 正常204包／484IRQ1來源1a5a7c22，194前綴及174母親產物保持；422份產物核對，PLAYER只改第二筆、dragon1完整2172bytes保存／讀回一致，clock30→0 |
-| 最新畫面已驗 | 第二槽194..197、202、203完整RGB0；其餘五張全差411／356／123／123／229由原始完整人物圖塊解釋。兩條舊路線101張保持，新增55張含44前綴保持，補斷言前後55張相同 |
-| 最新畫面未通過 | 第二槽198／199／200／201／204仍完整RGB不等，動畫時鐘未知；其他既有槽完整世界未等價，不能宣稱原生DAT與JSON完整互通。前輪動畫限制保持 |
-| 下一production切片 | 正常Space命令窗開關、游標導覽與道具入口，先從合法checkpoint取得原版來源。入隊返回仍DRAFT，不加時鐘特例、清旗標或深入硬體driver／ISR |
-| 本輪有限READY | 上層單人第二槽正常保存／讀回與後續行走契約通過，狀態E2／流程E3、六張指定完整畫面V3，其餘V2。其他槽／world、空槽及動畫時鐘未READY |
-| 原版oracle仍未知 | 其他world／室內F6、複數隊伍與其他等級經驗、完整多槽世界狀態、其他取消、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
-| 現行remake回歸 | 第二槽6命令／7筆PASS，5不同頂層／1子，零SKIP/OOM；舊101張及新55張PNG保持。最近完整game478/11個internal/THE END201.00秒及desktop仍為e939db2；未冒稱本輪全套重跑 |
+| 現行程式 | `dq3_remake_ebitan/`；正常指令窗與HUD已修正。schema0.19.0／content0.1.91；canonical `sha256:66224bc04ff5f7d412640c986c35e0aa5f4eb7f49d4b1344b2df2a47d778a773`；沒有新發行包 |
+| 最新remake已完成 | Space開窗、原版六指令排列、上下線性繞回、左右切欄、Esc關窗／重開及既有HUD契約；正常道具入口可達，取消後F5保存／F6讀回與新一步通過，snapshot／RNG保持 |
+| 最新原版oracle | 正常206包／488IRQ1來源5b2a78c1；244次正常輸入，前194包與174母親產物保持。426份產物完整核對；193..206持久區2172bytes及clock30保持，Scratch空，seed1357一次 |
+| 最新畫面已驗 | 指令窗194..205十二張完整640×350 RGB0，Space194差異由22519降0。1025張舊PNG保持，新57張含44前綴在測試路線訂正前後保持；收據與公開重生入口見docs/188 |
+| 最新畫面未通過 | 道具206完整RGB差44816，原版七列含穿戴衣服並保留父窗，remake六列且父窗消失。前輪第二槽五張動畫差異及其他槽世界不可比限制保持 |
+| 下一production切片 | 正常道具206的穿戴／背包列、選取與action交易；先閉合writer／consumer及父窗契約，仍DRAFT，禁止直接把裝備塞入背包索引。入隊返回停止線保持 |
+| 本輪有限CONFORMED | 正常指令窗、導覽及HUD狀態E2／流程E3，指定十二張完整畫面V3。Enter確認只有靜態strong與remake等價測試，未新增原版Enter動態收據；道具交易未READY |
+| 原版oracle仍未知 | 道具穿戴列action、其他隊伍同狀態、原版Enter動態、其他world／室內F6、其他等級經驗、完整多槽世界、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
+| 現行remake回歸 | 完整game484頂層覆蓋，433不同頂層／119子PASS、51選用SKIP；internal171頂層／375子及11套件PASS、4選用SKIP。正常THE END190.25秒、Linux desktop PASS，oom／oom_kill0；必驗指令窗零SKIP |
 | 入隊返回原版限制 | r2在2,500,000,001指令上限仍為199包／474IRQ1，計時器前進3003；未觀察到自然caller返回。只核對18筆既有玩家層IDA bytes；2898 writer及22E10 callee語意unknown，未建立完成收據 |
 | 額外驗證限制 | F6依pack重設世界時鐘，engine／標題Load仍保留JSON時鐘；壞schema／hash／layer在restore前拒絕。舊存檔不自動遷移。綠色回歸不升格完整原版parity |
 

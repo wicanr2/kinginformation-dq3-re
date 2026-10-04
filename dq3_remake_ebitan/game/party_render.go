@@ -81,58 +81,6 @@ func (g *Game) partyHUDActors() []partyHUDActor {
 	return actors
 }
 
-// drawPartyHUD is the field command-window status panel. Geometry and label
-// glyphs come from the pack; no DQ3 coordinates or visible strings are in the
-// engine.
-func (g *Game) drawPartyHUD(rgba []byte, white dq3data.Color) {
-	if g.pack == nil || g.dlg.tx == nil {
-		return
-	}
-	layout, ok := g.pack.PartyHUDLayout()
-	if !ok || layout.Columns <= 0 || layout.LinesPerPage < 3 ||
-		layout.HPLabelGlyph == nil || layout.MPLabelGlyph == nil ||
-		layout.NameMaxGlyphs <= 0 || len(layout.ClassGlyphs) == 0 ||
-		layout.Frame == nil {
-		return
-	}
-	fillPackBox(rgba, layout.WindowLayout, layout.X, layout.Y, layout.Width, layout.Height)
-	actors := g.partyHUDActors()
-	if len(actors) > layout.Columns {
-		actors = actors[:layout.Columns]
-	}
-	innerWidth := layout.Width - layout.TextInsetX*2
-	columnWidth := innerWidth / layout.Columns
-	rowHeight := dq3data.GlyphPx
-	for i, actor := range actors {
-		labelX := layout.X + layout.TextInsetX + i*columnWidth
-		nameX := labelX + layout.NameInsetX
-		valueX := labelX + layout.ValueInsetX
-		y := layout.Y + layout.TextInsetY
-		maxName := layout.NameMaxGlyphs
-		if len(actor.name) > maxName {
-			actor.name = actor.name[:maxName]
-		}
-		for j, glyph := range actor.name {
-			drawGlyph(rgba, g.dlg.tx, nameX+j*dq3data.GlyphPx, y, glyph, white)
-		}
-		labelColor := white
-		if !actor.alive {
-			labelColor = dq3data.Color{R: 192, G: 192, B: 192}
-		}
-		drawGlyph(rgba, g.dlg.tx, labelX, y+rowHeight, *layout.HPLabelGlyph, labelColor)
-		drawNumber(rgba, g.dlg.tx, valueX, y+rowHeight, actor.hp, labelColor)
-		drawGlyph(rgba, g.dlg.tx, labelX, y+2*rowHeight, *layout.MPLabelGlyph, labelColor)
-		drawNumber(rgba, g.dlg.tx, valueX, y+2*rowHeight, actor.mp, labelColor)
-		if actor.class < 0 || actor.class >= len(layout.ClassGlyphs) {
-			continue
-		}
-		for j, glyph := range layout.ClassGlyphs[actor.class] {
-			drawGlyph(rgba, g.dlg.tx, labelX+j*dq3data.GlyphPx, y+3*rowHeight, glyph, labelColor)
-		}
-		drawNumber(rgba, g.dlg.tx, valueX, y+3*rowHeight, actor.level, labelColor)
-	}
-}
-
 func (g *Game) followerOrder() []int {
 	order := make([]int, 0, len(g.companions))
 	for _, alive := range []bool{true, false} {

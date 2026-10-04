@@ -70,49 +70,37 @@ func installBattleDrawPack(t *testing.T, b *Battle) {
 	b.setCommandLabels(labels)
 }
 
-// TestCmdMenuDrawHits:命令窗 draw 後應有 6 個 box;點第 3 格(index2「狀況」所在列)回 index2。
-// 幾何取自 cmdmenu.go draw():cx=x+c*cw、cy=y+rh+r*rh,cw=5*GlyphPx=80、rh=18,呼叫點 (x,y)=(48,32)。
+// Command touch regions follow the native anchors and retain semantic roles.
 func TestCmdMenuDrawHits(t *testing.T) {
-	m := &CmdMenu{tx: &dq3data.Text{}}
-	m.Open()
-	rgba := newHitTestRGBA()
-	white := dq3data.Color{R: 248, G: 248, B: 248}
-	yellow := dq3data.Color{R: 255, G: 224, B: 32}
-	m.draw(rgba, white, yellow, 48, 32)
-
-	if len(m.hits) != cmdCount {
-		t.Fatalf("draw 後 hits 應有 %d 筆,得 %d", cmdCount, len(m.hits))
+	g := fieldSaveLoadComponentGame(t)
+	if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+		t.Fatal(err)
 	}
-	// index2(狀況,r=1,c=0):cx=48,cy=32+18+18=68
-	if idx := m.hits.at(50, 70); idx != cmdStatus {
-		t.Errorf("點 (50,70) 應命中 index%d(狀況),得 %d", cmdStatus, idx)
+	m := &g.cmd
+	if !m.open || len(m.hits) != cmdCount {
+		t.Fatal("command hit regions missing")
 	}
-	// index5(調查,r=2,c=1):cx=48+80=128,cy=32+18+36=86
-	if idx := m.hits.at(130, 90); idx != cmdExamine {
-		t.Errorf("點 (130,90) 應命中 index%d(調查),得 %d", cmdExamine, idx)
+	if idx := m.hits.at(170, 64); idx != cmdStatus {
+		t.Fatal("native status anchor does not map to status", idx)
+	}
+	if idx := m.hits.at(250, 80); idx != cmdExamine {
+		t.Fatal("native examine anchor does not map to examine", idx)
+	}
+	if idx := m.hits.at(50, 70); idx != -1 {
+		t.Fatal("obsolete command rectangle remains active")
 	}
 }
 
-// TestCmdMenuTapSelectsAndConfirms:透過 Game.Update 的命令窗分支,點格應等同「游標移過去 + A 確定」——
-// 用「對話」格(index0,面前無 NPC)驗證選定後窗口關閉(selectCommand 一律關窗)。
 func TestCmdMenuTapSelectsAndConfirms(t *testing.T) {
-	m := &CmdMenu{tx: &dq3data.Text{}}
-	m.Open()
-	rgba := newHitTestRGBA()
-	white := dq3data.Color{R: 248, G: 248, B: 248}
-	yellow := dq3data.Color{R: 255, G: 224, B: 32}
-	m.draw(rgba, white, yellow, 48, 32)
-
-	if idx := m.hits.at(130, 90); idx != cmdExamine {
-		t.Fatalf("前置條件:點 (130,90) 應先命中 cmdExamine,得 %d", idx)
+	g := fieldSaveLoadComponentGame(t)
+	if err := g.step(InputState{Confirm: true, DirHeld: -1, DirEdge: -1}); err != nil {
+		t.Fatal(err)
 	}
-	m.cursor = 0 // 確認點選會覆蓋既有游標,而非只靠方向鍵累加
-	confirm := false
-	if idx := m.hits.at(130, 90); idx >= 0 {
-		m.cursor, confirm = idx, true
+	if err := g.step(InputState{Tapped: true, TapX: 250, TapY: 80, DirHeld: -1, DirEdge: -1}); err != nil {
+		t.Fatal(err)
 	}
-	if m.cursor != cmdExamine || !confirm {
-		t.Errorf("點格應移游標到 %d 並視同確定,得 cursor=%d confirm=%v", cmdExamine, m.cursor, confirm)
+	if g.cmd.open || g.cmd.cursor != cmdExamine {
+		t.Fatal("normal touch did not dispatch the mapped command")
 	}
 }
 

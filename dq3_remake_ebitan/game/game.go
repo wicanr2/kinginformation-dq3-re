@@ -1559,7 +1559,7 @@ func (g *Game) step(in InputState) error {
 
 	// 命令窗 modal:方向移游標、A 選定、B 關窗;點格(P2)= 游標移過去 + 等同 A 選定
 	if g.cmd.open {
-		confirm := in.Confirm
+		confirm := in.Confirm || in.Enter
 		if in.Tapped {
 			if idx := g.cmd.hits.at(in.TapX, in.TapY); idx >= 0 {
 				g.cmd.cursor, confirm = idx, true
@@ -3101,10 +3101,8 @@ func (g *Game) renderFrame() {
 	if len(sc.pal) > 15 {
 		white = sc.pal[15]
 	}
-	if g.cmd.open { // 命令窗(左上)+ 左下 HP/MP/等級小窗(oracle:verify_open_21_after_space.png)
-		yellow := dq3data.Color{R: 255, G: 224, B: 32}
-		g.cmd.draw(g.rgba, white, yellow, 48, 32)
-		g.drawCmdStatus(g.rgba, white)
+	if g.cmd.open {
+		g.drawFieldCommandMenu()
 	}
 	if g.dlg.open { // 對話框
 		g.dlg.draw(g.rgba, white)
@@ -3441,6 +3439,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.battle.setFormationPosition(formationPosition)
 	g.battle.setCommandLabels(battleCommandLabels)
 	g.cmd.setLabels(fieldCommandLabels)
+	if err := g.cmd.configure(pack.Interface.FieldCommandMenu); err != nil {
+		return nil, err
+	}
 	g.newGame.setLabels(newGameLabels)
 	g.newGame.setGeometry(newGameGeometry)
 	g.help.layout = helpOverlay
@@ -3485,7 +3486,10 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	// 對話 + 命令窗:字型 D3TXT00.FON(常駐)+ 阿里阿罕 bank 1(D3TXT01.TXT,section dlg_bank=1)
 	fon := ld.read("D3TXT00.FON")
 	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
-	g.cmd.tx = g.dlg.tx                                             // 命令窗標籤 glyph 也走同一字型
+	g.cmd.tx = g.dlg.tx // 命令窗標籤 glyph 也走同一字型
+	if err := validateFieldCommandSources(assets, pack, g.cmd.tx); err != nil {
+		return nil, err
+	}
 	g.settings.tx = g.dlg.tx                                        // 設定選單標籤 glyph 也走同一字型
 	g.help.tx = g.dlg.tx                                            // HELP glyph 也走同一字型
 	g.shop.nameText = dq3data.LoadText(fon, ld.read("D3TXT00.TXT")) // 品名 = D3TXT00 rec=code+1

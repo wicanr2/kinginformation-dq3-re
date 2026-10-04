@@ -1,23 +1,32 @@
 package game
 
-import "testing"
+import (
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+	"testing"
+)
 
-// 命令窗游標導覽:2 欄 × 3 列繞回(對拍 dq3_cmdmenu_input 的方向邏輯)。
+// 正常原版195..205的按欄順序，含左欄底部跨到右欄頂部。
 func TestCmdMenuCursor(t *testing.T) {
 	var m CmdMenu
+	p, err := gamepack.BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = m.configure(p.Interface.FieldCommandMenu); err != nil {
+		t.Fatal(err)
+	}
 	m.Open()
 	if m.cursor != 0 {
 		t.Fatalf("初始 cursor=%d,應 0", m.cursor)
 	}
-	// 下:0(對話)→2(狀況)→4(裝備)→0 繞回(3 列)
-	for _, want := range []int{2, 4, 0} {
+	// 下：對話、狀況、裝備、咒文、道具、調查、對話。
+	for _, want := range []int{2, 4, 1, 3, 5, 0} {
 		m.move(0)
 		if m.cursor != want {
 			t.Fatalf("下移後 cursor=%d,應 %d", m.cursor, want)
 		}
 	}
-	// 上:0→4→2→0(反向繞回)
-	for _, want := range []int{4, 2, 0} {
+	for _, want := range []int{5, 3, 1, 4, 2, 0} {
 		m.move(1)
 		if m.cursor != want {
 			t.Fatalf("上移後 cursor=%d,應 %d", m.cursor, want)

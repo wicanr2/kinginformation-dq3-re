@@ -1,5 +1,21 @@
 # DQ3 工作歷程
 
+## 2026-10-05：Issue #4 正常指令窗、導航與HUD
+
+接續6595dc5。原版正常Space194完整RGB差22519，現行指令窗幾何與導航沿用歷史C移植，不能當原版規格。dosgolem固定2f44a68、seed1357一次，正常206包／488IRQ1來源5b2a78c1，前194包與174母親產物保持，193..206完整2172bytes與clock30保持。IDA9.4只追玩家可見raw視窗、caller、游標consumer及HUD，五份非破壞sidecar保留bytes／位址／分級；未深入硬體driver／ISR。
+
+可丟棄原型完整194 RGB0後先審有限READY，才接入正式game-pack與共用primitive。修正原始record400框架／標籤、游標、線性六項上下繞回與半欄切換，HUD重用已閉合idle契約。schema0.19.0／content0.1.91、canonical66224bc0，九份JSON從乾淨6595dc5兩次重建逐byte相同。正常InputState194..205十二張完整640×350 RGB0；snapshot／RNG／世界clock保持，實際道具入口及取消後F5／F6與下一步通過。
+
+正常trace首輪存檔斷言用了Save前舊Respawn；改讀實際保存的snapshot，未改產品交易。完整R1三項舊測試使用Left→Up選Examine，在原版導航下實際選Equip；依證據改成Up繞回第六項，再用同一image、資源與命令乾淨跑完整R2。首輪失敗保留，不能寫成產品回歸或ALSA故障。
+
+完整R2 game484頂層覆蓋、488次呼叫，433不同頂層／119子PASS、51選用SKIP；internal171頂層／375子、11套件PASS、4選用SKIP。正常新遊戲到THE END190.25秒、Linux x86_64 desktop建置PASS；cgroup memory max374、oom0／oom_kill0，不能聲稱所有記憶體事件為零。1025張舊PNG逐byte保持，指令窗57張含44前綴在兩輪完整測試保持。必驗正常指令窗零SKIP。
+
+其後沿相同R2 binary補驗最近四條正常來源，F6取消、讀回後行走、可比十槽與第二槽共四頂層／兩子PASS、零SKIP／OOM，來源與正式產物均不覆寫。完整R2的選用SKIP數保留，補驗收據7fd7a750另存docs/188索引。
+
+原版來源三種負例與畫布收據三種負例全部拒絕，完整正對照前後一致。來源5b2a78c1、正式trace4293924f、畫布c02f1572均留本機；公開重生入口、原始定位及詳細hash集中docs/188。root-owned基線3213保持，沒有`.md`目錄，背景容器工作結束即移除。使用者未追蹤資料未加入提交，沒有新發行包。
+
+有限CONFORMED只涵蓋正常指令窗／導航／HUD及指定十二張畫面。Enter只經靜態strong與remake等價測試，未有本輪原版Enter動態收據。下一blocker道具206完整RGB44816：原版穿戴衣服加六件背包共七列並保留父窗，remake六列且父窗消失。action與storage對應未閉合，維持DRAFT，不把裝備直接加入背包。入隊返回、人物動畫及完整原版campaign未知，Issue與Goal保持進行中。
+
 ## 2026-10-05：Issue #4 正常第二槽存讀檔
 
 接續75b296d。dosgolem正常F5第二槽保存、告別、左移、F6第二槽讀回與左右行走204包／484IRQ1，來源1a5a7c22。194包全部事件／388份PNG／bin與174母親產物保持。PLAYER只改第二筆metadata，其他九筆不變；dragon1完整2172bytes保存與原生讀回一致，clock30→0。原版只跑一次，不重擲、不restore或注入狀態。

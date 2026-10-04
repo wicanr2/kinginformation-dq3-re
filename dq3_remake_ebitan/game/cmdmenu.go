@@ -1,12 +1,46 @@
 package game
 
 import (
+	"fmt"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+	"io/fs"
 )
 
-// 野外命令窗(命令):2 欄 × 3 列指令格。1:1 移植 C dq3_cmdmenu.c。
-// 標籤 glyph 取自 D3TXT00 rec400(官方字串,非猜)。
+func validateFieldCommandSources(assets fs.FS, p *gamepack.Pack, tx *dq3data.Text) error {
+	s := p.Interface.FieldCommandMenu
+	if s == nil || tx == nil {
+		return fmt.Errorf("command sources missing")
+	}
+	d, ok := p.TextDefinition(s.TextID)
+	if !ok || d.Source.Record == nil {
+		return fmt.Errorf("command text source missing")
+	}
+	raw, err := fs.ReadFile(assets, d.Source.File)
+	if err != nil {
+		return err
+	}
+	codes := dq3data.LoadText(nil, raw).Record(*d.Source.Record)
+	if len(codes) != len(d.GlyphCodes) {
+		return fmt.Errorf("command source shape differs")
+	}
+	for i, c := range codes {
+		if int(c) != d.GlyphCodes[i] {
+			return fmt.Errorf("command source text differs")
+		}
+		if c != dq3data.TxtNL {
+			if _, ok := tx.Glyph(int(c)); !ok {
+				return fmt.Errorf("command source glyph missing")
+			}
+		}
+	}
+	if _, ok := tx.Glyph(s.CursorGlyph); !ok {
+		return fmt.Errorf("command cursor glyph missing")
+	}
+	return nil
+}
+
+// Command roles are shared engine semantics; pack entries supply native order.
 const (
 	cmdTalk    = iota // 對話
 	cmdSpell          // 咒文
@@ -17,7 +51,7 @@ const (
 	cmdCount
 )
 
-// CmdMenu 是命令窗狀態:cursor 0..5(列優先 r*2+c)。
+// CmdMenu preserves a semantic cursor; native order comes from the pack.
 type CmdMenu struct {
 	tx          *dq3data.Text
 	cursor      int
@@ -26,6 +60,8 @@ type CmdMenu struct {
 	title       [2]int
 	labelsReady bool
 	hits        hitList // 6 格可點區塊,draw() 重建(P2 直接點選)
+	contract    *gamepack.FieldCommandMenu
+	order       []int
 }
 
 // setLabels 安裝 versioned game pack 的玩家可見字模。直接 CmdMenu fixture
@@ -43,46 +79,89 @@ func (m *CmdMenu) setLabels(labels gamepack.FieldCommandLabels) {
 	m.labelsReady = true
 }
 
-func (m *CmdMenu) Open() { m.cursor, m.open = 0, true }
-
-// move:方向鍵移游標(2 欄 × 3 列繞回)。dir 用 facing 碼(0下 1上 2左 3右)。移植 dq3_cmdmenu_input 的方向部分。
-func (m *CmdMenu) move(dir int) {
-	r, c := m.cursor>>1, m.cursor&1
-	switch dir {
-	case 1: // 上
-		r = (r + 2) % 3
-	case 0: // 下
-		r = (r + 1) % 3
-	case 2, 3: // 左 / 右(2 欄繞回)
-		c ^= 1
+func (m *CmdMenu) configure(s *gamepack.FieldCommandMenu) error {
+	if s == nil || len(s.Entries) != cmdCount {
+		return fmt.Errorf("command menu contract missing")
 	}
-	m.cursor = r*2 + c
+	roles := map[string]int{"talk": cmdTalk, "spell": cmdSpell, "status": cmdStatus, "item": cmdItem, "equip": cmdEquip, "examine": cmdExamine}
+	m.order = nil
+	for _, e := range s.Entries {
+		role, ok := roles[e.Command]
+		if !ok {
+			return fmt.Errorf("command role unknown")
+		}
+		m.order = append(m.order, role)
+	}
+	m.contract = s
+	return nil
 }
 
-// draw:在 (x,y) 繪命令窗(黑底白框 + 「命令」+ 6 格 + ► 游標)。移植 dq3_cmdmenu_render。
-func (m *CmdMenu) draw(rgba []byte, fg, curfg dq3data.Color, x, y int) {
-	if !m.open {
+func (m *CmdMenu) Open() {
+	if len(m.order) == 0 {
 		return
 	}
-	const gpx = dq3data.GlyphPx
-	const cw = 5 * gpx // 每欄寬(► + 2 字 + 間距)
-	const rh = 18
-	fillBox(rgba, x-gpx, y-gpx/2, 2*cw+gpx, rh*4+gpx, fg) // 視窗底 + 白框
-	if m.labelsReady {
-		drawGlyph(rgba, m.tx, x+gpx, y, m.title[0], fg)
-		drawGlyph(rgba, m.tx, x+2*gpx, y, m.title[1], fg)
+	m.cursor, m.open = m.order[0], true
+}
+
+func (m *CmdMenu) nativeCursor() int {
+	for i, role := range m.order {
+		if role == m.cursor {
+			return i
+		}
 	}
+	return -1
+}
+
+// move consumes the native linear two-column selector. Facing codes are shared.
+func (m *CmdMenu) move(dir int) {
+	i := m.nativeCursor()
+	n := len(m.order)
+	if i < 0 || n == 0 {
+		return
+	}
+	switch dir {
+	case 1: // 上
+		i = (i + n - 1) % n
+	case 0: // 下
+		i = (i + 1) % n
+	case 2, 3: // 左 / 右(2 欄繞回)
+		i = (i + n/2) % n
+	}
+	m.cursor = m.order[i]
+}
+
+// drawFieldCommandMenu uses the same indexed window and party HUD consumers
+// as the accepted native source. No state or animation phase is overridden.
+func (g *Game) drawFieldCommandMenu() {
+	m := &g.cmd
+	s := m.contract
+	if !m.open || s == nil || g.cur == nil || g.newGame.raster == nil {
+		return
+	}
+	g.drawFieldIdleStatus()
+	r := *g.newGame.raster
+	r.pixels = make([]byte, ScreenW*ScreenH)
+	r.palette = append([]dq3data.Color(nil), g.cur.pal...)
+	r.backgroundPalette = append([]dq3data.Color(nil), g.cur.pal...)
+	r.palette[s.FontIndex] = g.fieldIdleForeground()
+	r.windows = map[string]gamepack.RawNewGameWindow{s.RawWindow.ID: s.RawWindow}
+	codes, ok := g.pack.TextGlyphCodes(s.TextID)
+	if !ok {
+		return
+	}
+	r.texts = map[string][]uint16{s.TextID: codes}
+	if !r.captureBackground(g.rgba) {
+		return
+	}
+	r.window(m.tx, gamepack.RasterWindowRef{RawWindowID: s.RawWindow.ID, TextID: s.TextID})
 	m.hits.reset()
-	for i := 0; i < cmdCount; i++ {
-		r, c := i>>1, i&1
-		cx, cy := x+c*cw, y+rh+r*rh
-		if i == m.cursor {
-			drawGlyph(rgba, m.tx, cx, cy, 11, curfg) // glyph 11 = ►
+	half := len(s.Entries) / 2
+	hitWidth := s.Entries[half].X - s.Entries[0].X
+	for i, e := range s.Entries {
+		if m.order[i] == m.cursor {
+			r.opaqueGlyph(m.tx, e.X, e.Y, s.CursorGlyph)
 		}
-		if m.labelsReady {
-			drawGlyph(rgba, m.tx, cx+gpx, cy, m.labels[i][0], fg)
-			drawGlyph(rgba, m.tx, cx+2*gpx, cy, m.labels[i][1], fg)
-		}
-		m.hits.add(cx, cy, cw, rh, i)
+		m.hits.add(e.X, e.Y, hitWidth, dq3data.GlyphPx, m.order[i])
 	}
+	drawIndexedPCX(g.rgba, r.pixels, r.palette)
 }

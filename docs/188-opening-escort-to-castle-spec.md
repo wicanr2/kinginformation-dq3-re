@@ -4424,3 +4424,68 @@ Scratch只含`player.dat`與`dragon1.dat`。PLAYER第二筆file20..39由本次�
 三種損壞來源全部拒絕：其他槽metadata被改、讀回持久byte被改、最後一次IRQ1缺漏。每批完成後重新完整驗證未改動的正對照，接受來源仍為1a5a7c22。私人負例紀錄為`work/issue4-second-slot-negative-r1/receipt.json`及`work/issue4-second-slot-negative-r2/receipt.json`，逐byte相同，SHA-256為`d00995aa2e0d50e1f3f028edbf95752a4fe13be99e0884ddb54c51dbba980cf0`。
 
 r1成功收據寫完後程序結束碼137，停止原因未確認，不能宣稱OOM、逾時或產品缺陷。r2維持相同image、UID1000、768MiB／2CPU／64pids及network none，只將外層上限由300秒改600秒並使用新輸出目錄，乾淨重跑結束碼0。兩輪歷史保留，沒有快取代替完整正對照，也沒有重跑原版或調整遊戲時鐘。
+
+### 2026-10-05 正常 Space 命令窗 DRAFT
+
+依Issue #4接續6595dc5。[正常命令窗探針](../tools/dosgolem_command_menu_probe.py)沿已接受193包冷啟動路線，將下一個F5改為正常Space，停在194包實際返回的可觀測輸入節點。原始EXE115282bytes及5178fdc8完整雜湊、dosgolem2f44a68、seed1357一次、原生DOS.Scratch overlay均保持；只讀世界clock及2172bytes持久區，不restore、注入狀態或調整時鐘。
+
+CLI為`python3 /repo/tools/dosgolem_command_menu_probe.py --prefix issue4-command-menu-r1`，以既有dq3-ebiten-test:20260822-r1、UID1000、有限資源及外層逾時執行，原版與repo唯讀、既有work可寫。首先核對正常Space是否進命令窗、父193包事件／PNG／bin及持久區保持，獨立來源驗證後才進正常InputState比較。導覽、取消及道具入口尚待原版觀察，現行C移植註解、Go硬寫版面與元件測試不可當READY證據；有差異先補原版視窗consumer與資料契約，不猜改正式產品。
+
+[獨立命令窗來源驗證](../tools/verify_dosgolem_command_menu.py)完整重驗父193包及174母親產物，核對194包／464IRQ1、38個cold inputs加194次正常輸入、Space與六選項初始游標，以及全部388份packet PNG／bin與兩份持久區。CLI依序指定原版輸出目錄、producer、尚不存在的接受收據；來源接受只證明原版本次正常開窗，未證明remake畫面或完整版面READY。候選IDA9.4非破壞sidecar在`work/issue4-command-menu-r1-ida.json`，261條目，SHA-256 `d78d5ff616212a0a5c2391ac68c5e6d17bcd8b8dcccbc3836989f86ba95c1d22`；保留原始bytes、MZ relocation、函式名及xref type，所有新語意仍unknown。未定DS的直接資料xref缺項，不當作沒有reader／writer。
+
+原版開窗來源`work/dosgolem-opening/issue4-command-menu-r1-source-r1-receipt.json`已完整接受，SHA-256 `cdb0a4b69c83613681f6f3572665b1b1a8bc745fab5a8c959b23854c081af6fa`。193前綴全部事件／386份PNG／bin與174母親產物保持；194為正常Space、六選項、初始游標1，選單輪詢IDA linear1F7B7。2172bytes持久區與clock30保持，Scratch空。本次只允許用正式InputState.Confirm對照正常Space開窗，DRAFT可丟棄測試在`work/issue4-command-menu-test-draft.go`；完整Go版面、導覽與道具入口仍未READY。
+
+[正常導覽探針](../tools/dosgolem_command_menu_navigation_probe.py)沿同一冷啟動重生194包，再送Down三次、Up、Left、Right兩次、Esc；回field後重新Space、Down、Right，只在原生游標5時Space進道具。停在206實際可觀測節點，未完整抵達不接受。CLI為`python3 /repo/tools/dosgolem_command_menu_navigation_probe.py --prefix issue4-command-navigation-r1`，相同有界Docker契約；附加觀察只讀DGROUP3D6C的64bytes、3E9C的24bytes與原始色號／選單欄位，不改時鐘或狀態。游標跨列／跨欄規則尚待此正常來源與IDA consumer審查，不能沿用C移植的繞回假設。
+### 2026-10-05 正常指令窗有限 READY
+
+路由重查命中復古 remake 的 spec-gated workflow，依 RE → DRAFT → 審查 → READY 進行。來源由[獨立正常導覽驗證](../tools/verify_dosgolem_command_navigation.py)接受；CLI依序指定原版輸出目錄、producer與新收據路徑。接受收據 SHA-256 `5b2a78c152e77f1ddbfd850af0cc129837bf206cd9a15731529927d21b12978a`，原版206包、488 IRQ1、244次正常輸入，前194包事件與完整PNG／bin保持。193..206的2172bytes持久區完全相同，clock30與seed1357一次保持，Scratch空。此來源只接受原版，不宣稱remake parity。
+
+原始DQ3.EXE為115282bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。工具為IDA Pro9.4及固定dosgolem2f44a68。IDA linear轉file減EC90，DGROUP base為IDA linear24DD0／file16140。原始函式名、bytes、relocation與xref type留在私人sidecar；未知DS的空xref不表示沒有writer。新語意以下表為審查索引，不覆寫原始名稱。
+
+| 原始定位 | 附加語意與證據 | 等級 |
+| --- | --- | --- |
+| IDA linear17C83、17CCB..17D18 | 5077隊伍人數寫3E9C的count；寬度為4+10×人數EGA bytes，1F590畫HUD、18222寫內容；3D6C交給1F4E3 | confirmed，正常194 raw及完整畫面閉合 |
+| DGROUP3D6C／file19EAC／IDA linear28B3C | flags7、x19 bytes、y30、width24 bytes、height80、record400、count6、kind2；六筆x/y/callback為21/46/4E0E、21/62/8301、21/78/7E12、31/46/C9C1、31/62/372F、31/78/8966 | confirmed，原始64bytes與正常194..206 raw一致 |
+| IDA linear1F779..1F8A4 | 游標1起始；Up/Down線性減加並在六項邊界繞回；Left/Right以count/2切換兩欄；Enter1C與Space39確認、Esc01取消 | 導覽與Esc confirmed，正常195..205閉合；Enter等價strong，仍需正常remake輸入測試，未有新增原版Enter動態收據 |
+| IDA linear1F908、1F590、1F4E3 | kind2以(cursor−1)×6取游標座標；raw2784=FF時用glyph11；文字、shadow與flags2的checker XOR frame沿既有primitive | confirmed，正常raw258F=8／0727=5／2784=255及完整194畫面 |
+| DGROUP3E9C／file19FDC／IDA linear28C6C；IDA linear18222、219D2、219AA | record401/402/403構成HUD；姓名起點x+4 bytes；HP/MP/level三位數右對齊，前置零寫glyph12；共用idle HUD契約已有相同consumer | confirmed，正常單人width14 bytes與數值畫面；健康／多角色延續原證據範圍，不擴大V3 |
+
+私人IDA sidecar r1..r5條目數為261、397、102、63、43；SHA-256依序為`d78d5ff616212a0a5c2391ac68c5e6d17bcd8b8dcccbc3836989f86ba95c1d22`、`ac89ab26c36a09c97231addf2a8e67be62d9c3d1ecb7c2d020b64fb16dc378c3`、`3c6ec4f0d4219605ab21e4a78ae856e614569842334669ed5e713a950eacd3ea`、`6152b371ca8338b23cc234c339f8223c5537dd783073650769f7e1b6611087b5`、`30b15b79e12e3d358a13fb8eb8e10b8626aaaca952bbef1a4c33a6b654b868fa`。1C03F不再當作標籤writer；19842是另一個五選項handler，不混入本次六選項契約。
+
+可丟棄試作只在正常194後暫時撤除Go UI圖層，使用原始record與上述raw contract重畫，未改輸入／狀態／動畫時鐘。r4完整640×350 RGB差異0，私人收據`work/issue4-command-menu-prototype-r4/command-open/receipt.json` SHA-256 `f0c37b975d30901cac781fe68a393700465f77c4f4745f3fade9122985cb9da6`。r1漏讀全域文字、r2編譯失敗及r3的16點前置空格差異均保留；不當作正式產品驗收。
+
+READY範圍：正常Space開窗、按欄排列六指令、導航、Esc關窗／重開、同一HUD consumer與Enter/Space確認的引擎等價。`field_command_menu`保存raw window、文字引用、依原版順序的語意指令／游標／callback與色號，程式不新增DQ3座標、record、glyph fallback。引擎保留語意cursor供既有handler使用，原生序號由pack映射。觸控命中區依文字格與已證實錨點延伸，不聲稱原版滑鼠parity。HUD重用`field_idle_status`與`party_hud`已有的文字、動態寬度、健康色與狀態欄契約。
+
+驗收需正常InputState從193合法checkpoint重播194..205，逐張完整RGB、游標、snapshot／PRNG／clock保持，Esc後F5/F6正式存讀檔及下一步可玩；原始EXE／D3TXT00 parity與缺值／未知引用拒絕測試。Enter分支只作remake等價測試，來源未動態觀測，不稱新增原版V3。新的型別入口為`dq3_remake_ebitan/internal/gamepack/field_command_menu.go`及其原始資料測試，欄位職責見docs/84；正式正常trace入口為`dq3_remake_ebitan/game/field_command_menu_test.go`。
+
+道具206原版顯示穿戴衣服加六件背包，共七項，並保留inactive父指令窗；現行remake六項且父窗消失。選取與action writer尚未閉合，維持DRAFT與下一blocker，不把穿戴物直接塞入背包索引。新contract只承接已READY指令窗，不更改道具交易。音訊硬體時序、其他隊伍同狀態及完整campaign仍未驗收，原版素材與private sidecar不入Git。
+
+[完整畫布核對器](../tools/verify_dq3_command_menu_raster.py)唯讀核對接受來源、426份原版產物與正式runtime收據，對194..205各比較完整224000點RGB，206保留已觀察的44816差異。CLI為`python3 /repo/tools/verify_dq3_command_menu_raster.py --original /work/dosgolem-opening --source-receipt /work/dosgolem-opening/issue4-command-navigation-r1-source-r1-receipt.json --runtime <正式command-menu輸出> --output <新收據>`。來源與正式輸出不裁切、遮罩、補畫或調整人物影格；道具RED不升格為完成。資料重建入口為[正常指令窗遷移器](../tools/migrate_field_command_menu_pack.py)，參數及九份JSON職責見docs/84。
+
+### 2026-10-05 正常指令窗有限 CONFORMED
+
+正式產品已依上節READY完成本次有限切片。原版record400完整框架與標籤、游標字模／色號及六筆順序由typed pack提供；共用狀態機上下線性繞回、左右切半欄，原生序號映射回既有語意指令。HUD重用已閉合idle狀態欄，移除舊的重複HUD繪圖。版本專屬raw位址及callback只在JSON與oracle中，不在共用renderer新增fallback。
+
+從正常新遊戲路線抵達193後，以正式InputState重播Space、Down三次、Up、Left、Right兩次、Esc、Space、Down、Right、Space。正常194..205游標／模態與原版一致，十二張完整640×350 RGB差異全部0；開窗194由22519降0。兩側2172bytes／snapshot、PRNG與世界clock30保持，沒有restore、狀態／座標注入、時鐘調參、人物遮罩或替換PNG。206正常抵達道具入口後取消，再由正式F5保存、F6讀回及下一步行走通過。存讀檔比較以真正寫入snapshot為基準，包含Save更新Respawn。
+
+schema0.19.0／content0.1.91，canonical `sha256:66224bc04ff5f7d412640c986c35e0aa5f4eb7f49d4b1344b2df2a47d778a773`。遷移器從乾淨6595dc5的0.18.0 pack生成兩份獨立副本，九份JSON逐byte相同並等於正式檔。原始EXE／TXT parity、十二種缺值／未知引用／越界壞契約及正式引擎測試通過。舊schema／hash存檔沿既有策略拒絕，不自動遷移。
+
+完整R1保留三項舊策略失敗：Opening、Phoenix、Zoma測試用Left→Up尋找Examine，在原版順序下選到Equip。只訂正正常玩家測試為Up繞回第六項，再以同一image／命令／資源乾淨跑完整R2，產品程式不再改動。R2共484不同頂層覆蓋、488次呼叫，433不同頂層／119不同子PASS、51選用SKIP；internal171頂層／375子、11套件PASS、4選用SKIP。正常新遊戲至THE END190.25秒及Linux x86_64 desktop建置通過。cgroup memory max374、oom0／oom_kill0；必驗指令窗沒有SKIP。選用原版來源未啟用的SKIP不可當parity通過。
+
+其後沿相同R2 binary另啟用四條最近正常來源：F6取消、讀回後行走、可比十槽資料及第二槽保存／讀回，共四不同頂層與兩子PASS、零SKIP／OOM。私人收據`work/issue4-command-recent-r1/receipt.json`的SHA-256為`7fd7a750ceb701ba66e0d48690c3869825679d7810d0bd44feb5321fb2c86953`。不覆寫完整R2的51項SKIP歷史，只記錄這四項已補驗。
+
+前一完整存讀檔回歸目錄的1025張PNG在本次完整R2逐byte保持；本次57張含44既有前綴在R1／R2逐byte一致，正常trace收據也相同。完整畫布checker兩次報告逐byte一致。來源負例拒絕錯誤游標邊界、持久byte損壞、缺最後IRQ1；畫布負例拒絕runtime hash錯誤、缺195 PNG、損壞PNG。每組負例後完整正對照重驗成功，接受來源不變；負例的父來源快取只縮短破壞測試，未用於正對照驗收。
+
+| 本機收據或產物 | SHA-256 |
+| --- | --- |
+| `work/dosgolem-opening/issue4-command-navigation-r1-source-r1-receipt.json` | `5b2a78c152e77f1ddbfd850af0cc129837bf206cd9a15731529927d21b12978a` |
+| `work/issue4-command-full-r2/command-menu/command-menu/receipt.json` | `4293924f2b76a228dc80d91680ebcfcc989eefd765c589669e9fd07831276740` |
+| `work/issue4-command-raster-full-r2.json` | `c02f15724d544bcc38749e8fe90865fc43c7217542a99ffa309595e5d2096375` |
+| `work/issue4-command-full-r2/game-receipt.json` | `6dd3afdb43b61cf9134926dedbe27a9f9dc098e136f116439ca3a4a6961ae376` |
+| `work/issue4-command-full-r2/game.test` | `06b4de048bbc086aceba2fe0e8fc3e0e4e8343aa39c1a6a6162429354db0729a` |
+| `work/issue4-command-full-r2/internal.log` | `ec7a776a94079c50df22decf00749fa160a7f6b255a5dcca1943d5e5ae874899` |
+| `work/issue4-command-full-r2/dq3-linux-x86_64` | `0dd87ef2f7cea49d9a3a7a6ce7ce3da8920b02ae36c068deb8d3cbcac9f2d1e6` |
+
+重生正式正常trace時，以`DQ3_COMMAND_ORACLE_DIR`指定已接受的原版目錄、`DQ3_COMMAND_RECEIPT_DIR`指定空輸出，於本節Docker／Xvfb工具鏈執行`TestFieldCommandDosgolemNormalInputComparison`，素材缺失失敗，不能以SKIP驗收。完整畫布使用上節公開CLI，只支援明示版本與來源。收據、原版PNG／bin、IDA sidecar及原版素材留本機，不加入Git。
+
+本次狀態E2／正常流程E3與指定十二張V3只適用單人上層指令窗；Enter原版動態未觀測，保留strong與remake等價測試。道具206仍全畫布RGB44816，原版七列含穿戴衣服且父指令窗保留，remake六列且父窗消失。穿戴／背包索引、action writer及交易副作用未閉合，下一切片仍DRAFT。觸控、其他隊伍、音畫時序、入隊返回及完整原版campaign沒有新增完成聲明。沒有新發行包。

@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.18.0"
+	SchemaVersion       = "0.19.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -1078,6 +1078,7 @@ type RawScreenAsset struct {
 }
 
 type Interface struct {
+	FieldCommandMenu         *FieldCommandMenu         `json:"field_command_menu"`
 	FieldSaveLoad            *FieldSaveLoad            `json:"field_save_load"`
 	CharacterSpells          *CharacterSpells          `json:"character_spells"`
 	RecruitmentJoin          *RecruitmentJoin          `json:"recruitment_join"`
@@ -2304,6 +2305,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
 	if err := p.validateRecruitmentJoin(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
+	if err := p.validateFieldCommandMenu(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
 	if err := p.validateFieldSaveLoad(); err != nil {

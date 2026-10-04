@@ -4458,8 +4458,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	for i, xy := range phoenixAltarTop {
 		approachPhoenixAltar(xy)
 		press(InputState{Confirm: true})
-		send(InputState{DirHeld: -1, DirEdge: 2}) // 對話→咒文
-		send(InputState{DirHeld: -1, DirEdge: 1}) // 咒文→調查
+		send(InputState{DirHeld: -1, DirEdge: 1}) // 原版native1向上繞回native6「調查」。
+		if g.cmd.cursor != int(cmdExamine) {
+			t.Fatal("祭壇前正式指令未選到調查")
+		}
 		press(InputState{Confirm: true})
 		traceCloseDialogue(t, g)
 		if g.storyFlag(phoenixAltarFlagFirst+i) || g.hasPartyItem(itemGreenOrb+i) {

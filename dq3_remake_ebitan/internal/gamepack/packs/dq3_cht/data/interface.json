@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.18.0",
+  "schema_version": "0.19.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -4161,6 +4161,70 @@
       "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+    }
+  },
+  "field_command_menu": {
+    "id": "dq3:window.field_command_menu",
+    "raw_window": {
+      "id": "dq3:raw_window.field_command_menu",
+      "flags": 7,
+      "x": 19,
+      "y": 30,
+      "width": 24,
+      "height": 80,
+      "address": "0x3d6c"
+    },
+    "text_id": "dq3:text.field.command_frame",
+    "navigation": "linear_two_columns",
+    "cursor_glyph": 11,
+    "font_index": 8,
+    "entries": [
+      {
+        "command": "talk",
+        "x": 168,
+        "y": 46,
+        "callback_raw": 19982
+      },
+      {
+        "command": "status",
+        "x": 168,
+        "y": 62,
+        "callback_raw": 33537
+      },
+      {
+        "command": "equip",
+        "x": 168,
+        "y": 78,
+        "callback_raw": 32274
+      },
+      {
+        "command": "spell",
+        "x": 248,
+        "y": 46,
+        "callback_raw": 51649
+      },
+      {
+        "command": "item",
+        "x": 248,
+        "y": 62,
+        "callback_raw": 14127
+      },
+      {
+        "command": "examine",
+        "x": 248,
+        "y": 78,
+        "callback_raw": 35174
+      }
+    ],
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + dosgolem2f44a68正常194..205，source5b2a78c152e77f1ddbfd850af0cc129837bf206cd9a15731529927d21b12978a",
+      "address_space": "dgroup",
+      "address": "0x3d6c/file0x19eac/IDAlinear0x28b3c",
+      "consumer": "IDAlinear17C83 → 1F4E3 → 1F779/1F908；正常Space六指令窗",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "導航正常1→2→3→4→3→6→3→6；raw258F8，cursor glyph11；Enter靜態strong，Space與Esc正常閉合。"
     }
   }
 }

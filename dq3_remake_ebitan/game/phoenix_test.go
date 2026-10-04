@@ -37,8 +37,10 @@ func testStep(t *testing.T, g *Game, in InputState) {
 func chooseExamine(t *testing.T, g *Game) {
 	t.Helper()
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
-	testStep(t, g, InputState{DirHeld: -1, DirEdge: 2}) // talk(0) → spell(1)
-	testStep(t, g, InputState{DirHeld: -1, DirEdge: 1}) // spell(1) → examine(5)
+	testStep(t, g, InputState{DirHeld: -1, DirEdge: 1}) // 原版native1向上繞回native6「調查」。
+	if g.cmd.cursor != int(cmdExamine) {
+		t.Fatal("正式指令未選到調查")
+	}
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 }
 

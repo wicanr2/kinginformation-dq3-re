@@ -1,5 +1,10 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-05 正常指令窗已有限CONFORMED。dosgolem206包／488IRQ1來源5b2a78c1，前194包與174母親產物保持；正常194..205十二張完整RGB0，開窗差22519降0。已修正原始框架／標籤、游標、上下繞回／左右切欄及HUD，snapshot／RNG／clock30保持，取消後正常F5／F6及下一步通過。
+> schema0.19.0／content0.1.91，canonical66224bc0；九份JSON兩次獨立重建一致。完整game484覆蓋、433頂層／119子PASS、51選用SKIP，internal171／375與11套件PASS、4選用SKIP；正常THE END190.25秒與Linux desktop PASS，oom_kill0。1025張舊PNG及新57張保持。唯一現況表CONTEXT、收據與工具docs/188；下一blocker為道具206七列／父窗／action，完整RGB差44816、仍DRAFT。Enter原版動態、入隊返回及完整campaign未知，舊存檔不自動遷移，沒有新包。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 正常第二槽F5／F6及後續行走已有限驗收。原版204包／484IRQ1來源1a5a7c22，194前綴／174母親產物保持，PLAYER只改第二筆，dragon1完整2172bytes保存／讀回一致。正式InputState、其他槽、snapshot／RNG、clock30→0、Save後Load與新一步通過，正式Go／pack仍e939db2。
 > 6命令／7筆PASS，5不同頂層／1子、零SKIP／OOM。六張完整RGB0；其餘五張411／356／123／123／229由完整原始人物圖塊解釋，動畫時鐘未知。舊101張PNG及補斷言前後55張保持。唯一現況表CONTEXT、收據與限制docs/188；下一切片為正常Space命令窗導覽及道具入口。入隊返回與完整campaign未知，沒有新包。
 

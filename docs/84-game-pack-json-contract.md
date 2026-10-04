@@ -1,5 +1,24 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 正常指令窗（schema0.19.0／content0.1.91）
+
+`interface.field_command_menu`為必填唯讀物件。原始視窗、IDA9.4 consumer、正常dosgolem來源與有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。共用引擎保留語意指令，pack提供原版順序與版面。原始callback只供證據與parity核對，不執行原版位址或任意JSON程式碼。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `id`、`raw_window` | 唯一視窗及原始flags、EGA byte X／width、pixel Y／height、DGROUP位址 |
+| `text_id` | 原版record400完整框架與標籤的穩定文字引用；12欄5列逐行驗證 |
+| `navigation` | `linear_two_columns`具名primitive，垂直線性繞回全部項目，水平切換半列 |
+| `entries` | 原版排列的`command`語意、pixel `x`／`y`游標及`callback_raw`證據；六個既有engine角色各出現一次 |
+| `cursor_glyph`、`font_index` | 原版游標字模與索引色；不提供引擎fallback |
+| `evidence` | 正常194..205範圍與EXE原始定位、consumer、來源收據；Enter靜態strong與正常Space／Esc證據分列 |
+
+缺值、null、未知欄位／引用、重複角色、錯誤導覽、未審查證據、文字格數、游標／陰影越界均拒絕。啟動時再核對原始TXT record與font glyph。狀態欄重用`field_idle_status`和`party_hud`的動態欄數、框架、健康色、狀態及三位數右對齊；沒有新增HUD版本常數。觸控命中由同一游標錨點與字格構成，非原版滑鼠驗收。
+
+入口：[型別與validator](../dq3_remake_ebitan/internal/gamepack/field_command_menu.go)、[EXE／TXT oracle及壞契約](../dq3_remake_ebitan/internal/gamepack/field_command_menu_test.go)、[指令狀態與renderer](../dq3_remake_ebitan/game/cmdmenu.go)、[正式輸入與存讀檔驗證](../dq3_remake_ebitan/game/field_command_menu_test.go)。[資料遷移器](../tools/migrate_field_command_menu_pack.py)於Docker執行，三個參數依序為乾淨6595dc5的0.18.0 pack可寫副本、唯讀原版素材目錄及`docs/data/glyph_unicode_map.json`。先驗EXE／TXT身分、raw窗口與標籤，再保留排版重建九份JSON；兩份獨立重建已逐byte相同。原始Go decoder繼續保留為oracle。
+
+存檔格式未新增欄位。依既有schema／canonical hash策略，舊pack存檔拒絕，不自動遷移。道具206的穿戴物及父窗口保留仍DRAFT，不能用本物件宣稱道具交易或完整campaign完成。
+
 ## 正常 F5／F6 存讀檔（schema0.18.0／content0.1.90）
 
 `interface.field_save_load` 是必填的唯讀契約。原版輸入、IDA原始定位及有限 READY／CONFORMED 見 [docs/188](188-opening-escort-to-castle-spec.md)。共用引擎只處理具名狀態與 JSON 存檔，不包含版本專屬文字、槽數、幾何或時鐘值。
