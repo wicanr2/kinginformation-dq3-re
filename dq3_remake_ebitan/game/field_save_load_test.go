@@ -35,6 +35,20 @@ func settleFieldSaveLoad(t *testing.T, g *Game) {
 }
 
 func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
+	runFieldSaveLoadNormalInputComparison(t, false)
+}
+
+func TestFieldSaveLoadAfterLoadMoveDosgolemNormalInputComparison(t *testing.T) {
+	dir := os.Getenv("DQ3_AFTER_LOAD_MOVE_ORACLE_DIR")
+	if dir == "" {
+		t.Skip("optional private dosgolem normal movement after F6")
+	}
+	t.Setenv("DQ3_FIELD_SAVE_LOAD_ORACLE_DIR", dir)
+	runFieldSaveLoadNormalInputComparison(t, true)
+}
+
+func runFieldSaveLoadNormalInputComparison(t *testing.T, afterLoad bool) {
+	t.Helper()
 	dir, out := os.Getenv("DQ3_FIELD_SAVE_LOAD_ORACLE_DIR"), os.Getenv("DQ3_FIELD_SAVE_LOAD_RECEIPT_DIR")
 	if dir == "" {
 		t.Skip("optional private dosgolem F5/F6 oracle")
@@ -42,15 +56,21 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 	if out == "" {
 		t.Fatal("explicit output required")
 	}
-	for _, route := range []struct {
+	type routeSpec struct {
 		name, prefix, hash string
 		packets            int
-	}{
+	}
+	routes := []routeSpec{
 		{"decline", "issue4-save-f5-decline-r1", "08a3feadd29c2567a806d3bd0bda121214a5a57323bf993f969a0d2cbda963d2", 197},
 		{"cancel", "issue4-save-load-cancel-r1", "30a4f5471277bb040d4dfcf62958098ac412e11d5d641235f9cf378c2fcbd32c", 197},
 		{"roundtrip", "issue4-save-load-roundtrip-r1", "0a88466eab206d7a4b346b8229bbcebd10683044aa363cb346bb81e173e3d238", 200},
-	} {
+	}
+	if afterLoad {
+		routes = []routeSpec{{"after-load-move", "issue4-after-load-move-r1", "71a52768a26dabb174a3a96e53efe6aaebba78c7620b20cce39fe2f761548e10", 202}}
+	}
+	for _, route := range routes {
 		t.Run(route.name, func(t *testing.T) {
+			roundtrip := route.name == "roundtrip" || afterLoad
 			dest := filepath.Join(out, route.name)
 			if e := os.Mkdir(dest, 0755); e != nil {
 				t.Fatal(e)
@@ -63,6 +83,9 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 			t.Setenv("DQ3_RECRUIT_EMPTY_MENU_CANCEL_RECEIPT_DIR", prefixOut)
 			runRecruitmentEmptyNormalInputComparisonAtCheckpoint(t, "menu-cancel", "issue4-recruit-menu-esc-normal-r1-source-r1-receipt.json", "137411c711e81684943b4cc8aac2d952b8c47c8981f70a79f0d308e369204c4c", "issue4-recruit-menu-esc-normal-r1", 193, 189, 190, func(g *Game) {
 				path := filepath.Join(dir, route.prefix+"-source-r1-receipt.json")
+				if afterLoad {
+					path = filepath.Join(dir, route.prefix+"-source-r2-receipt.json")
+				}
 				raw, e := os.ReadFile(path)
 				if e != nil {
 					t.Fatal(e)
@@ -70,7 +93,7 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 				if fmt.Sprintf("%x", sha256.Sum256(raw)) != route.hash {
 					t.Fatal("source identity differs")
 				}
-				var src struct{ Queued, States []map[string]string }
+				var src struct{ Queued, States, Clocks []map[string]string }
 				if e = json.Unmarshal(raw, &src); e != nil || len(src.Queued) != route.packets {
 					t.Fatal(e, "source shape")
 				}
@@ -81,6 +104,7 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 				var samples []map[string]any
 				idle := InputState{DirHeld: -1, DirEdge: -1}
 				for i := 193; i < route.packets; i++ {
+					n := i + 1
 					q := src.Queued[i]
 					scan, e := strconv.ParseInt(q["scan"], 16, 64)
 					if e != nil {
@@ -109,27 +133,43 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 					if e = g.step(in); e != nil {
 						t.Fatal(e)
 					}
+					if afterLoad && n > 200 {
+						x, _ := strconv.Atoi(src.States[i]["player_x"])
+						y, _ := strconv.Atoi(src.States[i]["player_y"])
+						// The native packet ends after a whole move and release.
+						// Replay the held direction through the engine cooldown,
+						// then release at that same tile boundary. No state writes.
+						for updates := 0; g.px != x || g.py != y; updates++ {
+							if updates >= 60 {
+								t.Fatal("normal held direction did not complete source move")
+							}
+							held := idle
+							held.DirHeld = in.DirHeld
+							if e = g.step(held); e != nil {
+								t.Fatal(e)
+							}
+						}
+					}
 					if e = g.step(idle); e != nil {
 						t.Fatal(e)
 					}
 					settleFieldSaveLoad(t, g)
 					m := &g.fieldSaveLoad
-					n := i + 1
 					s := src.States[i]
 					x, _ := strconv.Atoi(s["player_x"])
 					y, _ := strconv.Atoi(s["player_y"])
 					if g.px != x || g.py != y || fmt.Sprintf("%x", g.storyBits) != s["flags"] || g.prng != rng {
-						t.Fatalf("normal state differs at %d", n)
+						t.Fatalf("normal state differs at %d: got position %d,%d cooldown %d; want %d,%d", n, g.px, g.py, g.cd, x, y)
 					}
 					if route.name == "decline" {
 						if n <= 195 && (!m.active || m.stage != fsQuestion || m.cursor != n-194) || n == 196 && (!m.active || m.stage != fsFinalWait) || n == 197 && m.active {
 							t.Fatalf("No phase differs at %d stage%d", n, m.stage)
 						}
-					} else if n == 194 && (!m.active || m.stage != fsQuestion || m.cursor != 0) || n == 195 && (!m.active || m.stage != fsSlots || m.cursor != 0) || n == 196 && (!m.active || m.stage != fsFinalWait) || n == 197 && m.active || route.name == "roundtrip" && n == 199 && (!m.active || !m.loading || m.stage != fsSlots) || n == 200 && m.active {
+					} else if n == 194 && (!m.active || m.stage != fsQuestion || m.cursor != 0) || n == 195 && (!m.active || m.stage != fsSlots || m.cursor != 0) || n == 196 && (!m.active || m.stage != fsFinalWait) || n == 197 && m.active || roundtrip && n == 199 && (!m.active || !m.loading || m.stage != fsSlots) || n >= 200 && m.active {
 						t.Fatalf("source phase differs at %d stage%d", n, m.stage)
 					}
 					current := g.snapshot()
-					if route.name != "roundtrip" {
+					if !roundtrip {
 						if !reflect.DeepEqual(before, current) {
 							t.Fatal("cancel changed persistent state")
 						}
@@ -137,7 +177,7 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 							t.Fatal("cancel wrote save")
 						}
 					}
-					if route.name == "roundtrip" && n == 196 {
+					if roundtrip && n == 196 {
 						b, e := os.ReadFile(savePath())
 						if e != nil {
 							t.Fatal(e)
@@ -147,8 +187,9 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 							t.Fatal("normal F5 write differs", e)
 						}
 					}
-					if route.name == "roundtrip" && n == 200 {
+					if roundtrip && (n == 200 || afterLoad && n > 200) {
 						want := saved
+						want.PX, want.PY = x, y
 						clock, ok := m.contract.LoadClock(saved.Layer)
 						if !ok {
 							t.Fatal("clock rule missing")
@@ -157,6 +198,11 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 						want.DNPhase, want.DNStep = clock/phaseTicks, clock%phaseTicks
 						if !equalFieldSave(want, current) || g.dayNightClock() != clock {
 							t.Fatal("normal F6 restore/clock differs")
+						}
+					}
+					if afterLoad {
+						if len(src.Clocks) != 10 || src.Clocks[n-193]["packet"] != strconv.Itoa(n) || src.Clocks[n-193]["clock"] != strconv.Itoa(g.dayNightClock()) {
+							t.Fatalf("normal source clock differs at %d", n)
 						}
 					}
 					g.renderFrame()
@@ -183,13 +229,22 @@ func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
 						t.Fatal(e)
 					}
 				}
+				if afterLoad {
+					beforeLoad := g.snapshot()
+					if e := g.Save(); e != nil {
+						t.Fatal(e)
+					}
+					if e := g.Load(); e != nil || !equalFieldSave(beforeLoad, g.snapshot()) || g.prng != rng {
+						t.Fatal("engine save/load after normal movement differs", e)
+					}
+				}
 				if e := g.step(InputState{DirHeld: 2, DirEdge: 2}); e != nil {
 					t.Fatal(e)
 				}
 				if g.px != 1 || g.py != 18 || g.fieldSaveLoad.active {
 					t.Fatal("normal next field step")
 				}
-				report := map[string]any{"source_sha256": route.hash, "pack_schema": g.pack.Schema(), "pack_hash": g.pack.ContentHash(), "normal_input_prefix": 193, "normal_final_packet": route.packets, "rng_unchanged": true, "native_f5_f6": route.name == "roundtrip", "samples": samples, "initial_storage_same_state": false, "limitation": "original PLAYER.DAT contains ten prior entries; remake starts with no JSON saves; whole RGB slot differences retained; no full V3 claim"}
+				report := map[string]any{"source_sha256": route.hash, "pack_schema": g.pack.Schema(), "pack_hash": g.pack.ContentHash(), "normal_input_prefix": 193, "normal_final_packet": route.packets, "rng_unchanged": true, "native_f5_f6": roundtrip, "normal_after_load_movement": afterLoad, "samples": samples, "initial_storage_same_state": false, "limitation": "original PLAYER.DAT contains ten prior entries; remake starts with no JSON saves; whole RGB slot differences retained; no full V3 claim"}
 				b, e := json.MarshalIndent(report, "", "  ")
 				if e != nil {
 					t.Fatal(e)

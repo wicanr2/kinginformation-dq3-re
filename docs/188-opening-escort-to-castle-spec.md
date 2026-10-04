@@ -4170,3 +4170,42 @@ IDA入口：[非破壞匯出](../tools/ida_dump_field_save_load_contract.py)、[
 環境紀錄：同程序多個大型正常路線OOM已改為同binary分程序重跑；失敗紀錄保留。初輪internal少掛/assets_raw是掛載問題，補正後相同image／命令重跑。IDA reviewed-r2誤掛主機.idapro覆蓋image設定，靜默exit1且無sidecar；依正式工具契約移除該掛載，reviewed-r3相同匯出493條目通過。未將這些環境失敗寫成產品缺陷。
 
 下一合法checkpoint是原版200包後正常行走，以及可比初始存檔資料的選槽UI。下層clock120只有D2；其他world／室內、複數隊伍／等級、完整槽資料、聲波、人物動畫、入隊播放後返回、非空分離及完整campaign仍未知。driver／ISR停止線維持，沒有新發行包。
+
+### 2026-10-04 F6 返回後正常行走 DRAFT
+
+依 Issue #4 從合法200包讀回場景續行。新入口 [正常行走探針](../tools/dosgolem_after_load_move_probe.py) 沿用已接受往返產生器，保留原版200包及所有輸入／IRQ1／PNG／bin，新增201左鍵與202右鍵，停在原生空讀鍵。另以唯讀觀察保存DGROUP251D時鐘與526C層狀態，不注入座標、朝向、動畫或時鐘。
+
+Docker沿用dq3-ebiten-test:20260822-r1、固定dosgolem2f44a68唯讀快照及原始assets_raw唯讀；以 `python3 /repo/tools/dosgolem_after_load_move_probe.py --prefix issue4-after-load-move-r1` 建立獨立Scratch及本機收據。seed1357執行前固定一次，無模擬器snapshot restore。先驗證200包前綴與原生檔案保持，再審查兩步的座標、持久狀態與完整RGB；此DRAFT不修改正式Go或pack，也不預設動畫差異的原因。
+
+獨立入口 [來源驗證器](../tools/verify_dosgolem_after_load_move.py) 先完整重驗已接受往返來源，再核對202包／480IRQ1、200包前綴、兩次按下／放開、2172bytes持久區、Scratch原生檔案及完整PNG／bin。參數依序為本機原版輸出目錄、producer路徑及尚不存在的收據輸出路徑；Go來源與binary雜湊固定於checker，來源未通過時不寫接受收據。
+
+#### 正常行走來源有限 READY
+
+`work/dosgolem-opening/issue4-after-load-move-r1-source-r2-receipt.json` SHA-256 `71a52768a26dabb174a3a96e53efe6aaebba78c7620b20cce39fe2f761548e10` 已接受。原版EXE、dosgolem版本與位址基準沿上節；新Go來源 `80dc4674639d14d390e8900c5775160500e675938054b0a43e6b69f872f3096a`、binary `b68bb2e0402b3e119e8d134149a4f236c517c2a994a109113034936e1c1b5e89`。新增240個正常輸入中的最後兩包，不改任何遊戲欄位；seed1357執行前固定一次。
+
+- confirmed有限：200包讀回後，201左鍵到1,18、202右鍵回2,18；每包均在原生IDA linear1997C空讀鍵，raw0013沒有帶路flag。兩次按下／放開各送達IRQ1，總480次。
+- confirmed有限：201完整2172bytes只改DGROUP4F33的低byte2→1；202整區與保存檔及200包逐byte相同。角色128bytes、旗標64bytes、金錢與場景保持；DGROUP251D時鐘兩步均0，526C低byte均1。
+- confirmed有限：200包前綴的输入、IRQ1、狀態、PNG／bin及persistent保持；PLAYER200bytes、DRAGON2172bytes與native FileOps保持。沒有新增文字或檔案交易。
+- 畫面線索：原版198與201同座標的完整224000色號逐byte相同，200與202的342個色號差異仍待remake逐點核對；不因此猜動畫規則。
+
+初輪來源r1已通過原版稽核與八個負例，但只在meta內保存EXE身分。共用remake畫面核對要求頂層`original_sha256`，因此首輪在194報身分缺失；同一原版輸出由checker補齊四個頂層欄位，完整重驗另寫r2，不覆寫r1、不改原版或production。正常remake驗收入口為[共用F5/F6測試](../dq3_remake_ebitan/game/field_save_load_test.go)中的`TestFieldSaveLoadAfterLoadMoveDosgolemNormalInputComparison`，必須同時提供原版目錄及明示本機輸出，禁止素材缺失SKIP冒充通過。
+
+#### 正常行走有限 CONFORMED 與畫面限制
+
+正式新遊戲重播到202包已通過。201左移、202右移的完整JSON snapshot只按原版位置變化，其他欄位、clock0及RNG保持；202後engine Save/Load及正常下一步通過。正式Go與九份pack JSON逐byte等於e939db2；本輪新增原版來源、獨立checker與正常測試，未猜改產品規則。
+
+原版packet在按鍵消費、整步完成及放開後停於空讀鍵。初輪一幀方向輸入在201仍有cooldown2，尚未完成整步。新測試只經正式DirHeld連續按住，到同一格界後放開，最多60更新，無坐標、動畫或clock寫入；當下輸入完成點可比，持續時長與CPU指令／TPS映射仍未知。這個有限狀態驗收不證明按鍵wall-clock或逐幀動畫完全一致，不以改cooldown讓測試通過。
+
+完整RGB：200為0；201為356，完整差異範圍x291..541／y131..263，跨多處人物區；202為122，範圍x289..315／y180..191。未裁切／遮罩、指定phase或把差異當作通過。畫面V2，完整V3未知；差異的renderer／人物consumer尚未READY，留下一窄切片，不在本輪猜修。
+
+10個命令、8不同頂層／4子PASS、零SKIP與OOM；147張既有F5/F6 PNG逐byte保持，新路線193..200與本輪roundtrip保持，兩個新步行PNG留本機。r2 checker的8種獨立壞來源全拒絕，完整父來源實驗正對照前後一致。最近完整game／internal／THE END／desktop仍為e939db2，未把本轮定向回歸升格全套。
+
+| 本機收據 | SHA-256 |
+|---|---|
+| `work/dosgolem-opening/issue4-after-load-move-r1-source-r2-receipt.json` | `71a52768a26dabb174a3a96e53efe6aaebba78c7620b20cce39fe2f761548e10` |
+| `work/issue4-after-load-move-validation-r3/test-receipt.json` | `776ae5245d91e76b06946ab489cfb18ca5cc1de39778d489f6f0fc3f83fbb0ca` |
+| `work/issue4-after-load-move-validation-r3/after-load-move/receipt.json` | `5a5dd70d540a90245cf698ed7836ab9249e34de56d129eb8200887662bd23405` |
+| `work/issue4-after-load-move-negative-r2/receipt.json` | `cb39e28857a70618e1a47092a42f568bf30030f0a37417ca140c51800c0d2428` |
+| `work/issue4-after-load-move-rgb-r1.json` | `e3b8ae6d338dfa986aa70a61098256ccaced7565325edd74a4486dc34cf7c71d` |
+
+重生入口為本節兩份已索引probe／checker；remake以`DQ3_AFTER_LOAD_MOVE_ORACLE_DIR`指定原版目錄，`DQ3_FIELD_SAVE_LOAD_RECEIPT_DIR`指定空輸出目錄，於Docker/Xvfb執行`TestFieldSaveLoadAfterLoadMoveDosgolemNormalInputComparison`，具備原版assets_raw才算驗收。seed原版1357執行前一次；remake PRNG於正常193checkpoint沿既有seed設定自然續行，兩步無亂數判定，不要求閒置過程的原版自然RND次數對齐。
