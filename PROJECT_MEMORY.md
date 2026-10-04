@@ -1,5 +1,14 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-04 觀看名單的清單與取消切片已修正。原版203包來源cf23fcf9已接受；正式輸入、持久狀態不變、存讀檔及下一步通過。
+> 清單完整RGB差由51477降295，取消／告別各295，返回411；剩餘全為既有人物差異，完整V3仍RED。
+> game445項覆蓋，398頂層／93子PASS、47選用SKIP；internal161頂層及11套件PASS、4選用SKIP，desktop通過。
+> 正常新遊戲至結局79.95秒；既有入隊／No／Yes的157張PNG及View前綴47張保持。
+> schema0.13.0／content0.1.85及canonical19f6124c保持，沒有新發行包。詳細狀況205包仍DRAFT，是下一個玩家阻塞點。
+> 目前唯一狀態表見CONTEXT；原始定位、有限READY、工具及完整收據入口見docs/188。
+
+以下保存前一checkpoint，最新狀態以上方及CONTEXT目前狀態表為準。
+
 > 2026-10-04正式入隊文字與單次短曲已修正。依Issue #4，schema0.13.0／content0.1.85，
 > canonical hash為`sha256:19f6124c5f03c9f14c2909b94be5ac48438df956ea8b59e82af58c8168c558f6`。
 > 正常536內文等待、537主角名字、538入隊角色名字及caller底圖接入typed pack與正式引擎。

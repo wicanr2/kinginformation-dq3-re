@@ -175,3 +175,57 @@ func TestRecruitmentSelectionAgainEscRetainsChoice(t *testing.T) {
 		})
 	}
 }
+
+func TestRecruitmentViewDosgolemNormalInputComparison(t *testing.T) {
+	dir := os.Getenv("DQ3_RECRUIT_VIEW_ORACLE_DIR")
+	if dir == "" {
+		t.Skip("optional private dosgolem view oracle")
+	}
+	out := os.Getenv("DQ3_RECRUIT_VIEW_RECEIPT_DIR")
+	if out == "" {
+		t.Fatal("explicit view receipt output directory required")
+	}
+	runRegistrationNormalComparisonRoute(t, dir, out, registrationComparisonRoute{birth: true, entry: true, selection: true, view: true})
+}
+
+func TestRecruitmentViewNavigationCancelDoesNotChangeMembers(t *testing.T) {
+	g := &Game{roster: []*Member{newMember([]int{0}, 1, 0, 0), newMember([]int{1}, 2, 0, 0)}, companions: []*Member{newMember([]int{2}, 1, 0, 0)}}
+	configureRecruitmentEntryFixture(t, &g.recruit)
+	rc := &g.recruit
+	rc.active, rc.stage = true, rcMenu
+	for i := 0; i < 2; i++ {
+		g.recruitInput(InputState{DirEdge: 0})
+	}
+	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	if rc.stage != rcView || rc.cursor != 0 || rc.dialogue.open {
+		t.Fatal("view must open roster without join prompt")
+	}
+	rng := g.prng
+	beforeRoster := append([]*Member(nil), g.roster...)
+	beforeParty := append([]*Member(nil), g.companions...)
+	for _, cursor := range []int{1, 0, 1} {
+		g.recruitInput(InputState{DirEdge: 0})
+		if rc.cursor != cursor {
+			t.Fatal("view navigation included party member")
+		}
+	}
+	g.recruitInput(InputState{DirEdge: 1})
+	if rc.cursor != 0 {
+		t.Fatal("view up navigation")
+	}
+	g.recruitInput(InputState{DirEdge: -1, Cancel: true})
+	drainRecruitmentSelectionText(t, rc)
+	if rc.stage != rcAgain || rc.cursor != 0 {
+		t.Fatal("view cancel must ask continue")
+	}
+	g.recruitInput(InputState{DirEdge: 3})
+	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	drainRecruitmentSelectionText(t, rc)
+	if rc.stage != rcFinalWait {
+		t.Fatal("view farewell wait missing")
+	}
+	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	if rc.active || g.prng != rng || !reflect.DeepEqual(beforeRoster, g.roster) || !reflect.DeepEqual(beforeParty, g.companions) {
+		t.Fatal("view cancel changed members or RNG")
+	}
+}

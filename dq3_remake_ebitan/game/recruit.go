@@ -12,7 +12,7 @@ const (
 	rcMenu  = 0 // 主選單:0 找同伴參加(→rcJoin)/1 與同伴分離(→rcLeave)/2 觀看名單(→rcView)
 	rcJoin  = 1 // 從 roster(未入隊)選一名 → 入隊(companions,滿則擋掉,不頂替)
 	rcLeave = 2 // 從 companions 選一名 → 移回 roster
-	rcView  = 3 // 觀看名單(roster+companions 唯讀,任意鍵/點擊回主選單)
+	rcView  = 3 // 觀看未入隊名冊；清單與取消依 docs/188 有限 READY。
 )
 
 const (
@@ -146,9 +146,14 @@ func (g *Game) recruitInput(in InputState) {
 			g.resetPartyTrail()
 		})
 	case rcView:
-		if in.Cancel || in.Confirm || tapIdx >= 0 {
-			rc.stage, rc.cursor = rcMenu, 0
+		if in.Cancel && rc.selection != nil {
+			rc.startSelectionText(rc.selection.AgainTextID, rcAgain)
+			return
 		}
+		g.recruitPick(in, tapIdx, len(g.roster), func(i int) {
+			// 詳細狀況尚未 READY，保留既有確認行為；此分支不列入對拍驗收。
+			rc.stage, rc.cursor = rcMenu, 0
+		})
 	}
 }
 
@@ -195,7 +200,7 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 		rc.drawEntry(rgba, white)
 		return
 	}
-	if rc.stage == rcJoin {
+	if rc.stage == rcJoin || rc.stage == rcView {
 		g.drawRecruitSelection(rgba, white)
 		return
 	}
@@ -206,9 +211,6 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 		g.drawRecruitList(rgba, white, yellow, g.roster)
 	case rcLeave:
 		g.drawRecruitList(rgba, white, yellow, g.companions)
-	case rcView:
-		all := append(append([]*Member{}, g.roster...), g.companions...)
-		g.drawRecruitList(rgba, white, yellow, all)
 	}
 }
 

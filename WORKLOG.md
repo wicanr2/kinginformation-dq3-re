@@ -1438,3 +1438,14 @@ Issue進度5976023866；提交、推送與遠端結果由final收據追加。本
 Docker檢查需主機權限，依既有隔離規則續做；一次性容器已清理，其他專案容器保持。
 本批正式Go、pack與存檔格式保持，最近全套回歸仍78d84b1；動畫時序DRAFT與完整V3未通過。
 依已授權commit + push保存工具與證據，提交及遠端結果追加Issue；原版素材、PNG、binary與使用者13項scratch不加入Git。
+
+## 2026-10-04 正常觀看名單清單與取消
+
+- 依Issue #4正常路線續驗。IDA9.4與dosgolem證實第三項列未入隊名冊；原版199包043b39b1及203包cf23fcf9接受，輸入／IRQ1／完整PNG與bin、97bytes、指標與旗標核對。
+- evidence先DRAFT；可丟棄原型清單51477→295，取消來源接受後有限READY，正式沿typed清單接入方向鍵與Esc→540→No→541→返回。不新增pack欄位、raw設定或存檔欄位；schema0.13.0、content0.1.85、canonical19f6124c保持。
+- 正式203包、snapshot與RNG不變、Save／Load及下一步PASS。七張全畫布差異逐點等於既有295／411人物差異；舊157張及前綴47張PNG保持。54張新PNG及原版素材留本機，不加入Git。
+- 六種壞來源全部拒絕，前後正對照通過。詳細狀況205包只保留DRAFT，兩個讀鍵等待待閉合；確認仍舊行為，不宣稱完整View或V3。
+- 全game445檢查，398頂層／93子PASS、47選用SKIP；internal161頂層、11套件PASS、4選用SKIP。正常結局79.95秒；desktop Linux x86_64 ELF PASS，無素材缺失SKIP。
+- 診斷腳本曾誤用sourceCanvasDifference參數及把目錄當收據；訂正後同工具鏈重播。desktop曾誤指定不存在的cmd/dq3，根套件又納入使用者tmp_dump.go；核對main.go後以明確入口建置，不改使用者資料。這些是驗證問題。
+- 路由入口與新公開producer／validator均掛入docs/188，欄位沿用說明在docs/84。私有工具、檢查、負例與核對收據使用issue4-view前綴，入口詳見docs/188。容器内沒有rg，改用grep檢查production新增值，沒有新增DQ3設定fallback。
+- Docker一次性容器全清理，root-owned基線3213、零.md目錄保持。保護13項資料；commit／push結果保存`work/issue4-view-r1-post-push.json`。下一步詳細狀況，維持driver／ISR停止線，沒有新發行包。

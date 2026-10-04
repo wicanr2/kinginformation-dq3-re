@@ -137,6 +137,19 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 	if join && (!selection || yes) {
 		t.Fatal("invalid join route")
 	}
+	runRegistrationNormalComparisonRoute(t, dir, out, registrationComparisonRoute{birth, entry, selection, yes, join, false})
+}
+
+type registrationComparisonRoute struct {
+	birth, entry, selection, yes, join, view bool
+}
+
+func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route registrationComparisonRoute) {
+	birth, entry, selection := route.birth, route.entry, route.selection
+	yes, join, view := route.yes, route.join, route.view
+	if view && (!birth || !entry || !selection || yes || join) {
+		t.Fatal("invalid view route")
+	}
 	t.Run(fmt.Sprintf("birth=%v", birth), func(t *testing.T) {
 		family := "issue4-registry-quiescent-r2"
 		suffix := "-cancel-source-r1-receipt.json"
@@ -160,6 +173,9 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 		if join {
 			family, suffix, want = "issue4-recruit-party-r2", "-source-r1-receipt.json", 199
 		}
+		if view {
+			family, suffix, want = "issue4-recruit-view-cancel-r1", "-source-r1-receipt.json", 203
+		}
 		stem := fmt.Sprintf("registration-birth-%v", birth)
 		if entry {
 			stem = "recruitment-entry"
@@ -173,6 +189,9 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 		if join {
 			stem = "recruitment-join"
 		}
+		if view {
+			stem = "recruitment-view-cancel"
+		}
 		path := filepath.Join(dir, family+suffix)
 		raw, e := os.ReadFile(path)
 		if e != nil {
@@ -184,6 +203,9 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 		}
 		if join {
 			oracleHash = "d0f6428dbc6f66b0887c3991c4bd17cb00be2825df4a53e1cf5bc049d806ed32"
+		}
+		if view {
+			oracleHash = "cf23fcf92bbd599feb8a2bf1a2b6d7092e2450d187cb36a570798e899eb355bd"
 		}
 		if selection && fmt.Sprintf("%x", sha256.Sum256(raw)) != oracleHash {
 			t.Fatal("selection oracle receipt identity differs")
@@ -218,6 +240,7 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 			t.Fatal("normal input did not settle")
 		}
 		var samples []map[string]any
+		var viewSnapshot []byte
 		for i, q := range src.Queued {
 			settle()
 			scan, e := strconv.ParseInt(q["scan"], 16, 64)
@@ -329,6 +352,12 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 					if i+1 == 196 && (!g.recruit.active || g.recruit.stage != rcMenu || g.recruit.cursor != 0 || g.recruit.dialogue.open) {
 						t.Fatal("first native recruitment menu differs")
 					}
+					if view && i+1 == 196 {
+						viewSnapshot, e = encodeSave(g.snapshot())
+						if e != nil {
+							t.Fatal(e)
+						}
+					}
 				}
 				if selection && i+1 >= 197 {
 					stages := map[int]int{197: rcJoin, 198: rcAgain, 199: rcAgain, 200: rcFinalWait}
@@ -340,6 +369,14 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 					if join {
 						stages = map[int]int{197: rcJoin, 198: rcJoinedText, 199: rcMusicWait}
 						cursors = map[int]int{197: 0}
+					}
+					if view {
+						stages = map[int]int{197: rcMenu, 198: rcMenu, 199: rcView, 200: rcAgain, 201: rcAgain, 202: rcFinalWait}
+						cursors = map[int]int{197: 1, 198: 2, 199: 0, 200: 0, 201: 1}
+						current, err := encodeSave(g.snapshot())
+						if err != nil || string(current) != string(viewSnapshot) {
+							t.Fatal("view changed persistent state or RNG")
+						}
 					}
 					if expected, ok := stages[i+1]; ok && (!g.recruit.active || g.recruit.stage != expected) {
 						t.Fatalf("packet%d recruitment stage%d want%d", i+1, g.recruit.stage, expected)

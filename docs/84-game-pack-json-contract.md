@@ -2,6 +2,11 @@
 
 ## 選人清單與取消（schema0.12.0／content0.1.84）
 
+後續觀看名單有限切片沿用本物件，不新增JSON欄位或改canonical hash。
+IDA linear10624及dosgolem正常203包證實同一raw window、欄位與取消文字consumer；入口見docs/188的觀看名單READY。
+View入口不消費`prompt_text_id`，只列未入隊名冊；取消仍使用`again_text_id`及`farewell_text_id`。
+詳細狀況窗與改名尚未READY，這個引用不代表完整View已接受。
+
 `interface.recruitment_selection`為必填物件。有限READY、原始定位與正常來源見
 [docs/188](188-opening-escort-to-castle-spec.md)。
 

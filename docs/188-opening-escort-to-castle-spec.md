@@ -3460,3 +3460,88 @@ SHA-256`70b2a267549d33f733eaf9042e66a859b4e576a6b7f8bb6ccfa697bad6ca7e54`。
 下一閘門仍是六次遊戲計數與逐consumer取圖的可比時序。先前總Ticks及整張一次latch原型已被反證，不能再用。
 正式Go、pack及存檔格式本輪保持。最近全套回歸仍為78d84b1，不因診斷工具新增而重跑未變產品全套。
 本輪不深挖PIT／ISR。其他人物、畫面、原版播放返回與存讀檔仍未接受。
+
+### 2026-10-04 觀看名單的清單與取消切片 DRAFT
+
+Issue #4 的下一個正常節點為選單第三項觀看名單。沿用新遊戲、登錄戰士男性與正常下樓的196包前綴。
+原版由[觀看名單探針](../tools/dosgolem_recruitment_view_probe.py)冷啟動重生，
+以[來源稽核](../tools/verify_dosgolem_recruitment_view.py)接受199包、474筆IRQ1與398份640×350完整PNG／bin。
+本機收據`work/dosgolem-opening/issue4-recruit-view-r1-source-r1-receipt.json`，SHA-256
+`043b39b187bfb869252923fbff103261099ce16748d24f1245c0754d7f1eef56`。
+EXE仍為115282 bytes、5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；
+dosgolem固定2f44a68，兩側seed1357在執行前固定一次，不挑選亂數結果。
+
+| 原始定位 | 附加語意與等級 | 證據 |
+|---|---|---|
+| IDA linear103A8 → 10624，file1718 → 1994 | confirmed：主選單第三項進入觀看名單 | 原始call、動態packet199的10624入口、DS15ed |
+| IDA linear10624 → 10974；10632／10635／1063F；DGROUP3E14 | confirmed：列出未入隊角色，使用既有選人視窗及動態列數 | 與入隊相同loader及consumer，packet199一列，raw slot1未變 |
+| IDA linear10646 → 1F4E3；10649..1064E；103AE → 540 | strong：Esc取消清單後接繼續詢問 | 既有選人鍵盤consumer與原始caller；獨立View取消動態收據尚待稽核 |
+| IDA linear10668..10692 → 1834E、210EC | DRAFT：選定角色後顯示詳細狀況，另有兩個正常讀鍵等待 | 原版205包探針已產生，尚未獨立接受與釐清全部消費順序 |
+
+IDA9.4 sidecar在`work/issue4-view-r1-ida.json`及`-r2-ida.json`。
+位址基準為IDA linear；MZ file=linear−EC90，DGROUP基底linear24DD0。
+r2腳本SHA為f32537fe1f5cbaf13a07d92707e0cad13c453d91145f2327387d6bd76b82e65a；
+393條指令的loaded bytes與MZ relocation預期逐條吻合。保留原始名稱、raw bytes與xref type，未rename。
+未分級sidecar候選保持unknown，本節只附加以上已審查定位。
+
+修正前正常InputState的197／198各差295，199清單差51477。
+可丟棄原型使用既有pack選人視窗、只讀roster、方向鍵移動、Esc接540；199完整RGB降為295。
+原型及修正前工具在`work/issue4-view-r1-baseline.py`與`-prototype.py`，PNG及收據各在同名前綴的`-receipts/`。
+沒有裁切、遮罩、調seed或覆寫動畫影格。295仍屬共用人物影格差異，V3未通過。
+
+取消原版生產器為[正常取消探針](../tools/dosgolem_recruitment_view_cancel_probe.py)，
+接受工具為[取消來源稽核](../tools/verify_dosgolem_recruitment_view_cancel.py)。
+兩者沿用完整199包，追加Esc、右、Enter與告別確認，要求角色、名冊、隊伍指標、金錢與旗標保持。
+[詳細狀況探針](../tools/dosgolem_recruitment_view_detail_probe.py)只保存DRAFT來源，不宣稱其205包已接受。
+本節不接受詳細狀況窗、K改名、空名冊訊息、所有職業／裝備、完整View或原版存讀檔。
+
+#### 清單與取消有限 READY
+
+獨立取消來源已接受：203個packet、482筆IRQ1、406份完整PNG／bin，normal_inputs241含前綴38次。
+收據`work/dosgolem-opening/issue4-recruit-view-cancel-r1-source-r1-receipt.json`，SHA-256
+`cf23fcf92bbd599feb8a2bf1a2b6d7092e2450d187cb36a570798e899eb355bd`。
+前199包的輸入、消費、狀態與398份畫布逐項保持；200取消接540、201右移No、202接541等待、203返回1997C。
+名冊狀態、slot1的97bytes、隊伍指標、主角128bytes、金錢與旗標全程不變。
+因此上表Esc到540及No告別返回分支升為confirmed。metadata參數只容許輸出前綴換名，其他引數、kernel及原始輸入核對。
+首次稽核把輸出檔名前綴也要求相同而拒絕；訂正為逐引數的明示前綴替換，未放寬其他來源驗證。
+
+有限規格：View入口直接顯示roster清單，不追加入隊530問題；列數、姓名、等級、職業、性別、游標及外框沿用typed `recruitment_selection`。
+方向鍵沿原始單欄選人consumer移動；Esc先恢復caller畫布，再追加既有540，No追加541並另等一次確認返回場景。
+不搬移或新增任何角色，不消耗RNG或金錢、不改旗標。存讀檔沿既有同版本UI清理契約。
+本有限分支READY，允許正式實作及正常203包驗收；選定角色後的詳細狀況仍DRAFT，不能宣稱完整View。
+
+#### 正式清單與取消驗收
+
+正式`game/recruit.go`直接用既有typed清單顯示roster，方向鍵以roster長度導覽，Esc接540。
+沒有新增DQ3 raw ID、座標、文字、數值fallback或JSON欄位；schema0.13.0／content0.1.85與canonical19f6124c保持。
+`TestRecruitmentViewDosgolemNormalInputComparison`從新遊戲以正式InputState重播203包。
+逐包位置、場景、游標、名冊、隊伍與持久狀態通過；197..203的完整存檔snapshot與196相同，包含RNG。
+同版本Save／Load後下一個正常移動通過。混合名冊／隊伍元件驗證方向鍵只在未入隊角色間循環，取消不交易角色。
+詳細狀況未READY，確認角色仍保留舊行為，不納入此有限驗收。
+
+| 正常樣本 | 完整RGB差異 | 結果 |
+|---|---:|---|
+| 197／198主選單 | 各295 | 與修正前保持 |
+| 199觀看名單 | 51477降為295 | 正式選人視窗、姓名／等級／職業／性別吻合；仍有動畫差異 |
+| 200取消／201 No游標／202告別 | 各295 | 完整畫布差異逐點等於既有招募人物差異 |
+| 203場景返回 | 411 | 完整畫布差異逐點等於既有無modal人物差異 |
+
+七張完整640×350的每一個不同像素與兩側RGB均比對；沒有新差異，也沒有裁切、遮罩或指定phase。
+54張正式PNG留在`work/issue4-view-production-r1-full/view/`。
+前196包對應47張runtime PNG逐byte保持；既有入隊50、取消52與Yes55張也全部保持。
+獨立核對入口`work/issue4-view-production-r1-audit.py`，收據同名前綴`.json`，SHA-256
+`cc7a6e46366bc5fd4019afdee7cd9c8724db12e52ec3508b47eb0223f70d7b02`。
+有限狀態E2／正常路徑E3、畫面V2；完整V3仍RED，完整View仍DRAFT。
+
+六種來源損壞全拒絕：錯scan、錯consumer、錯record、名冊改寫、缺PNG及bin損壞；前後正對照通過。
+入口`work/issue4-view-cancel-negatives-r1.py`，收據`work/issue4-view-cancel-negatives-r1-receipt.json`，SHA-256
+`d31162a2a9d7d1187b0acd44d6f94c6ff2c28598a9cae9e4acac54a0964a190f`。
+父來源先完整接受並唯讀固定；負例只修改新取消尾端的隔離副本，不改原版、kernel或seed。
+
+game445項覆蓋，398頂層／93子PASS、47選用SKIP；internal161頂層、11套件PASS、4選用SKIP。
+新View及既有招募正常路線沒有SKIP，沒有素材缺失SKIP。正常新遊戲至結局`TestOpeningProductionInputTrace`79.95秒PASS。
+desktop以`go build ... main.go`產生Linux x86_64 ELF；使用者`tmp_dump.go`保持，不能以根套件納入它。
+本批診斷腳本參數／收據路徑及桌面入口筆誤均為驗證問題，已訂正後重跑，未列產品缺陷。
+檢查入口`work/issue4-view-production-r1-checks.json`；容器全數清理，root-owned基線3213及零`.md`目錄保持。
+原版素材、PNG、binary、database與私有收據未加入Git，沒有新發行包。
+下一步獨立接受詳細狀況205包，釐清兩個讀鍵等待與窗口恢復；不深挖硬體driver／ISR，不重開已完成清單與取消。
