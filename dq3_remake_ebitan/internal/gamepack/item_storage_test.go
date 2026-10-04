@@ -1,0 +1,257 @@
+package gamepack
+
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+)
+
+func TestItemStorageAcceptedOriginalInitialWords(t *testing.T) {
+	directory := os.Getenv("DQ3_ITEM_ORACLE_DIR")
+	if directory == "" {
+		t.Skip("enable accepted original initial-word source with DQ3_ITEM_ORACLE_DIR")
+	}
+	raw, err := os.ReadFile(filepath.Join(directory, "issue4-field-item-reorder-r2-source-r3-receipt.json"))
+	if err != nil || fmt.Sprintf("%x", sha256.Sum256(raw)) != "aad971bb8cbf08956384b6964b4a893251cb3b4ff316263953f7563a7e5b2fc4" {
+		t.Fatal("accepted original source differs", err)
+	}
+	var source struct {
+		States []struct{ Packet, Actor string } `json:"states"`
+	}
+	if err := json.Unmarshal(raw, &source); err != nil {
+		t.Fatal(err)
+	}
+	if len(source.States) != 230 || source.States[0].Packet != "1" {
+		t.Fatal("normal original first packet missing")
+	}
+	actor, err := hex.DecodeString(source.States[0].Actor)
+	if err != nil || len(actor) != 128 {
+		t.Fatal("original actor shape differs", err)
+	}
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, ok := p.NewGamePlayerItems()
+	if !ok {
+		t.Fatal("missing explicit initial words")
+	}
+	words := store.Words()
+	for position, word := range words {
+		// Original actor record +3A: the first normal input follows creation,
+		// before the king's item reward. No compact/equipment inference.
+		if word != binary.LittleEndian.Uint16(actor[0x3a+position*2:]) {
+			t.Fatal("initial physical words differ", position)
+		}
+	}
+}
+
+func originalItemStorageInputs(t *testing.T) ([]byte, []byte, *dq3data.Items) {
+	t.Helper()
+	read := func(name, hash string) []byte {
+		t.Helper()
+		raw, err := os.ReadFile(filepath.Join("..", "..", "..", "assets_raw", name))
+		if err != nil || fmt.Sprintf("%x", sha256.Sum256(raw)) != hash {
+			t.Fatal("original item storage input identity differs", name, err)
+		}
+		return raw
+	}
+	exe := read("DQ3.EXE", "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c")
+	raw := read("ITEM.DAT", "7f3142de688ccca50fe888854b59ceb81b406b4c8eec038e719f10fda66e7f5d")
+	items, err := dq3data.OpenItems(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return exe, raw, items
+}
+
+func TestItemStorageOriginalEncodingInitialWordsAndMetadata(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	exe, raw, items := originalItemStorageInputs(t)
+	s := p.Characters.ItemStorage
+	word := func(file int) int { return int(binary.LittleEndian.Uint16(exe[file:])) }
+	// File offsets below correspond to the original IDA9.4 instructions in
+	// docs/188; compare identities/bytes before interpreting their immediates.
+	for _, check := range []struct {
+		offset   int
+		expected []byte
+	}{
+		{0x4c99, []byte{0x3d, 0xff, 0}}, {0x4cab, []byte{0x81, 0x26, 0x91, 0x25, 0xff, 0}},
+		{0x4d78, []byte{0xa9, 0, 0xe0}}, {0x9408, []byte{0xb8, 0, 0x80}},
+		{0x9416, []byte{0xb8, 0, 0x40}}, {0x1c19, []byte{0xb9, 8, 0, 0xc7, 4, 0xff, 0}},
+		{0x1c2d, []byte{0xb8, 0x1e, 0, 0x0d, 0, 0x80, 0x89, 0x44, 0x3a}},
+		{0x1cb0, []byte{0x0d, 0, 0x80}}, // Registered-member writer OR worn bit.
+	} {
+		if !bytes.Equal(exe[check.offset:check.offset+len(check.expected)], check.expected) {
+			t.Fatalf("original writer bytes differ at file%x", check.offset)
+		}
+	}
+	if *s.Encoding.Empty != word(0x4c9a) || *s.Encoding.CodeMask != word(0x4caf) ||
+		*s.Encoding.WornMask != word(0x9409) || *s.Encoding.CurseMask != word(0x9417) ||
+		*s.Encoding.TransferBlockedMask != word(0x4d79) || len(s.Items) != len(raw)/7 || items.Count() != len(s.Items) {
+		t.Fatal("word encoding or actual archive count differs")
+	}
+	if err := p.ValidateItemStorageAgainstItems(items); err != nil {
+		t.Fatal(err)
+	}
+	want := make([]uint16, word(0x1c1a))
+	for position := range want {
+		want[position] = uint16(word(0x1c1e))
+	}
+	want[0] = uint16(word(0x1c2e) | word(0x1c31))
+	for _, ref := range []string{p.Characters.DefaultRefs.NewGamePlayer, p.Characters.DefaultRefs.RegisteredPartyMember} {
+		store, ok := p.CharacterItems(ref)
+		if !ok || !reflect.DeepEqual(store.Words(), want) {
+			t.Fatalf("explicit initial words differ for %s", ref)
+		}
+		preview, ok := p.CharacterEquipment(ref)
+		if !ok || preview != [4]int{-1, 30, -1, -1} {
+			t.Fatalf("equipment must derive from original initial words: %v", preview)
+		}
+		if _, ok := store.Add(0); !ok {
+			t.Fatal("independent character words")
+		}
+		again, ok := p.CharacterItems(ref)
+		if !ok || !reflect.DeepEqual(again.Words(), want) {
+			t.Fatal("getter mutated immutable pack")
+		}
+	}
+	t.Logf("schema=%s content=%s canonical=%s", p.Schema(), p.ContentVersion(), p.ContentHash())
+}
+
+func TestItemStorageRejectsMissingMalformedAndAmbiguousDefaults(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		edit func(*Pack)
+	}{
+		{"missing_storage", func(p *Pack) { p.Characters.ItemStorage = nil }},
+		{"missing_empty", func(p *Pack) { p.Characters.ItemStorage.Encoding.Empty = nil }},
+		{"missing_code_mask", func(p *Pack) { p.Characters.ItemStorage.Encoding.CodeMask = nil }},
+		{"missing_worn_mask", func(p *Pack) { p.Characters.ItemStorage.Encoding.WornMask = nil }},
+		{"missing_curse_mask", func(p *Pack) { p.Characters.ItemStorage.Encoding.CurseMask = nil }},
+		{"missing_transfer_mask", func(p *Pack) { p.Characters.ItemStorage.Encoding.TransferBlockedMask = nil }},
+		{"empty_is_valid_item", func(p *Pack) { *p.Characters.ItemStorage.Encoding.Empty = 0 }},
+		{"out_of_word_range", func(p *Pack) { *p.Characters.ItemStorage.Encoding.Empty = 65536 }},
+		{"overlapping_masks", func(p *Pack) {
+			*p.Characters.ItemStorage.Encoding.CurseMask = *p.Characters.ItemStorage.Encoding.WornMask
+		}},
+		{"missing_parts", func(p *Pack) { p.Characters.ItemStorage.PartCount = nil }},
+		{"missing_metadata", func(p *Pack) { p.Characters.ItemStorage.Items = nil }},
+		{"missing_part", func(p *Pack) { p.Characters.ItemStorage.Items[0].EquipmentPart = nil }},
+		{"missing_false", func(p *Pack) { p.Characters.ItemStorage.Items[0].CursedWhenWorn = nil }},
+		{"invalid_part", func(p *Pack) { *p.Characters.ItemStorage.Items[0].EquipmentPart = 4 }},
+		{"unreviewed", func(p *Pack) { p.Characters.ItemStorage.Evidence.Level = "D1" }},
+		{"missing_words", func(p *Pack) { p.Characters.Defaults[0].ItemWords = nil }},
+		{"initial_unreviewed", func(p *Pack) { p.Characters.Defaults[0].Evidence.Level = "D1" }},
+		{"initial_not_dynamic", func(p *Pack) { p.Characters.Defaults[0].Evidence.Level = "D2" }},
+		{"short_words", func(p *Pack) { p.Characters.Defaults[0].ItemWords = p.Characters.Defaults[0].ItemWords[:7] }},
+		{"null_word", func(p *Pack) { p.Characters.Defaults[0].ItemWords[1] = nil }},
+		{"negative_word", func(p *Pack) { *p.Characters.Defaults[0].ItemWords[1] = -1 }},
+		{"invalid_archive_index", func(p *Pack) { *p.Characters.Defaults[0].ItemWords[1] = 128 }},
+		{"duplicate_equipment_part", func(p *Pack) { *p.Characters.Defaults[0].ItemWords[1] = *p.Characters.Defaults[0].ItemWords[0] }},
+		{"nongear_worn", func(p *Pack) {
+			for code, item := range p.Characters.ItemStorage.Items {
+				if *item.EquipmentPart < 0 {
+					*p.Characters.Defaults[0].ItemWords[0] = code | *p.Characters.ItemStorage.Encoding.WornMask
+					return
+				}
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			p, err := BuiltinDQ3()
+			if err != nil {
+				t.Fatal(err)
+			}
+			tc.edit(p)
+			if err := p.validateCharacters(); err == nil {
+				t.Fatal("broken item contract accepted")
+			}
+		})
+	}
+}
+
+func TestItemStorageBootRejectsActualArchiveMismatch(t *testing.T) {
+	_, raw, items := originalItemStorageInputs(t)
+	for _, name := range []string{"missing", "extra_record", "partial_record", "metadata_part", "metadata_curse"} {
+		t.Run(name, func(t *testing.T) {
+			p, err := BuiltinDQ3()
+			if err != nil {
+				t.Fatal(err)
+			}
+			candidate := items
+			switch name {
+			case "missing":
+				candidate = nil
+			case "extra_record":
+				candidate, err = dq3data.OpenItems(append(append([]byte(nil), raw...), make([]byte, 7)...))
+			case "partial_record":
+				candidate, err = dq3data.OpenItems(append(append([]byte(nil), raw...), 0))
+			case "metadata_part":
+				*p.Characters.ItemStorage.Items[0].EquipmentPart = 1
+			case "metadata_curse":
+				*p.Characters.ItemStorage.Items[0].CursedWhenWorn = !*p.Characters.ItemStorage.Items[0].CursedWhenWorn
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := p.ValidateItemStorageAgainstItems(candidate); err == nil {
+				t.Fatal("boot accepted archive mismatch")
+			}
+		})
+	}
+}
+
+func TestItemStorageStrictDecoderRejectsLegacyAndUnknownFields(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(p.Characters)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"equipment", "unknown_mask", "null_word", "float_word"} {
+		t.Run(name, func(t *testing.T) {
+			var fields map[string]any
+			if err := json.Unmarshal(raw, &fields); err != nil {
+				t.Fatal(err)
+			}
+			switch name {
+			case "equipment":
+				fields["defaults"].([]any)[0].(map[string]any)["equipment"] = map[string]any{"armor": 30}
+			case "unknown_mask":
+				fields["item_storage"].(map[string]any)["encoding"].(map[string]any)["guessed_mask"] = 1
+			case "null_word":
+				fields["defaults"].([]any)[0].(map[string]any)["item_words"].([]any)[1] = nil
+			case "float_word":
+				fields["defaults"].([]any)[0].(map[string]any)["item_words"].([]any)[1] = 0.5
+			}
+			candidate, err := json.Marshal(fields)
+			if err != nil {
+				t.Fatal(err)
+			}
+			decoder := json.NewDecoder(bytes.NewReader(candidate))
+			decoder.DisallowUnknownFields()
+			err = decoder.Decode(&p.Characters)
+			if err == nil {
+				err = p.validateCharacters()
+			}
+			if err == nil {
+				t.Fatal("strict item schema accepted legacy/ambiguous fields")
+			}
+		})
+	}
+}

@@ -1672,3 +1672,14 @@ F6 完整畫面差45109已降0。F5 的194、196、197及F6的200均完整RGB零
 - 核心r2為12頂層／4子PASS、零FAIL／SKIP，Go1.24.13、97.5% statement coverage，go vet通過。實際EXE／ITEM hash及原始指令核對；已接受dosgolem aad971bb收據與224／225／230持久區逐檔hash核對，再比較八格交易與核心round-trip。沒有新正式InputState、PNG或V3。
 - IDA9.4有界r1／r2匯出366／77條，來源保持。轉職10C42..10C5E的高byte清除受新職業條件限制，尚缺正常原版oracle，不在核心猜補全域解除裝備。sidecar與腳本留既有work，不加入Git。
 - 正式Game／Member、pack、戰鬥及全部save adapter仍DRAFT；schema0.19.0／content0.1.91、canonical66224bc0保持，存檔尚未升級。此前928c7db出售修正與完整回歸保持，206..208仍RED。提交／推送、使用者13項資料、原版素材、擁有權與Docker清理由收尾收據核對。
+
+## 2026-10-05 A 物品編碼與初始八格接入pack
+
+資料包升至schema0.20.0／content0.1.92，canonical0839ecc9。characters JSON保存完整編碼、128筆實際ITEM部位／詛咒metadata及兩個角色明示八格；舊equipment初值移除，既有裝備預覽由words導出。正式boot核對實際archive count、完整record shape及逐筆原始decoder，新的啟動拒絕測試通過。Game／Member的可寫bag／equipment與完整save仍待遷移。
+
+- READY／有限CONFORMED及原始bytes、等級、工具、CLI集中docs/188，欄位契約docs/84。初始words另與aad971bb接受收據第一個正常packet核對；原始IDA9.4創角primary十筆writer rows保持原始strong流程限制，不外推整個創角或campaign。
+- target r3為13頂層／40子PASS、零SKIP。首輪D1未拒絕是validator缺口，補D2/D3 gate；登錄OR指令定位及非裝備fixture為測試問題，依原始bytes與metadata訂正，不放寬資料。D3初值gate及正常初始八格另驗。
+- 從乾淨146b549的pack產生兩份獨立副本，九JSON逐byte一致並等於正式檔；重建器先驗EXE／ITEM完整hash及原始instruction bytes，原版資產維持唯讀。來源／產物hash留既有work收據。
+- 逐項完整game為486頂層覆蓋、490次執行，435不同頂層／121子PASS、51選用SKIP；internal188頂層／412子、12套件PASS及4選用SKIP。正常新遊戲至THE END141.62秒、Linux desktop建置通過，oom／oom_kill0；1087張既有PNG逐byte保持，現行來源重編game.test與完整binary一致。選用SKIP不作原版parity。
+- 206..208物品畫面仍RED，沒有新增物品UI／正常給予／完整word save的驗收，也沒有新發行包。下一主要切片接所有物品持有者，再閉合正常218／230及存讀檔；已完成核心與pack不重開。
+- root基線3213保持、零.md目錄，UID/GID1000抽查；使用者13項資料不stage，原版／database／PNG不加入Git。提交、推送、Issue精確讀回及Docker容器清理由最終收據核對。

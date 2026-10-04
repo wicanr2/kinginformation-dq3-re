@@ -1,10 +1,23 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
-## 有序物品格核心，正式 pack 遷移待驗
+## 有序物品格資料（schema0.20.0／content0.1.92）
+
+物品編碼及角色初始格的有限READY見docs/188「A 物品編碼及初始格 pack READY」。`characters.item_storage`明示全部word masks、部位數及依實際archive順序的metadata；容量沿`events.item_actions.personal_inventory_slots`，不重複保存。`defaults.item_words`取代equipment初值，每格整數必填，包含原始空格。入口為 [typed契約](../dq3_remake_ebitan/internal/gamepack/item_storage.go)、[原始parity／拒絕測試](../dq3_remake_ebitan/internal/gamepack/item_storage_test.go)與 [重建工具](../tools/migrate_item_storage_pack.py)。正式boot必須以原始ITEM decoder核對實際archive count、record shape與逐筆metadata。完整引擎／save接線仍另依整體READY，不把pack初值遷移當成可玩完成。
+
+| characters 欄位 | 必填契約 |
+| --- | --- |
+| `item_storage.encoding.empty` | 完整空word；只此值代表空格，code0合法 |
+| `encoding.code_mask`、`worn_mask`、`curse_mask`、`transfer_blocked_mask` | 明示物品ID、穿戴、詛咒與跨人給予禁止旗標；核心不供應預設或丟棄未知高bits |
+| `item_storage.part_count` | 共用裝備部位數，不大於共用四部位預覽容量；metadata不得引用未知部位 |
+| `item_storage.items` | 依實際archive順序；每筆`equipment_part`及`cursed_when_worn`都必填。`-1`為已知非裝備，false不能省略；boot count／record shape／逐筆decoder不符即拒絕 |
+| `item_storage.evidence` | D2或D3，包含原始檔、位址基準及reader／writer來源 |
+| `defaults.item_words` | 初始完整物理words，長度等於既有容量；null、越界、缺格及初始重複穿戴部位拒絕。初值需D3，旧equipment欄位由strict loader拒絕 |
+
+重建工具於Docker內接收兩個參數：乾淨146b549的schema0.19.0 pack可寫副本、唯讀原版素材目錄。先驗完整EXE／ITEM hash與原始instruction bytes，再生成原始編碼、全部metadata及初始格，保留其他資料。九份JSON的schema一起升級，manifest content同步；不能把來源資產或本機收據加入Git。初裝getter回傳Store複本，裝備預覽由它導出；正式引擎八格持有權仍待接線。
 
 使用者選定單一有序物品格。有限核心 READY 見 [docs/188](188-opening-escort-to-castle-spec.md#2026-10-05-a-共用格位核心-ready)，實作在 [internal/itemstore](../dq3_remake_ebitan/internal/itemstore/store.go)。核心要求明示容量、空值、ID／穿戴／詛咒／跨人給予禁止 mask、部位數及由實際 ITEM archive 建立的 metadata；沒有 DQ3 fallback。metadata 是不可變資料副本，背包／裝備由 words 導出。未知 high bits 保留，不新增玩法解釋。
 
-核心 JSON 快照為 `{"storage_version":1,"words":[...]}`；只保存有序原始 words。缺值、null、未知或舊欄位、重複 key、非法版本、word／archive 越界與長度錯誤全部拒絕。必須透過 `itemstore.Decode` 明示容量、encoding與metadata，普通 JSON 解碼不能供應預設。此格式尚未接入正式遊戲 save，正式 schema0.19.0／content0.1.91 保持。後續整體遷移須在 characters JSON 明示每格初始 word，並涵蓋主角、同伴、名冊、臨時單人隊伍與創始人；不得維持第二份可寫 bag／equipment。原始 decoder 與正常 218／230 包驗收保留。
+核心 JSON 快照為 `{"storage_version":1,"words":[...]}`；只保存有序原始 words。缺值、null、未知或舊欄位、重複 key、非法版本、word／archive 越界與長度錯誤全部拒絕。必須透過 `itemstore.Decode` 明示容量、encoding與metadata，普通 JSON 解碼不能供應預設。此格式尚未接入正式遊戲 save；資料包已明示初始格，後續整體遷移仍須涵蓋主角、同伴、名冊、臨時單人隊伍與創始人，不得維持第二份可寫 bag／equipment。舊帶版本存檔依schema／hash拒絕；無metadata舊save的拒絕仍待完整adapter，不能宣稱存檔已升級完成。原始 decoder 與正常218／230包驗收保留。
 
 ## 正常指令窗（schema0.19.0／content0.1.91）
 

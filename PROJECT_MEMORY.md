@@ -1,5 +1,10 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-05 A物品編碼、128筆ITEM metadata及兩個角色初始八格已接入pack，schema0.20.0／content0.1.92、canonical0839ecc9。初裝預覽由words導出，正式boot核對實際archive count／shape及逐筆metadata，兩份乾淨副本重建九JSON逐byte一致。target13頂層／40子PASS、零SKIP；完整game486頂層覆蓋／490次執行、435不同頂層／121子PASS、51選用SKIP，internal188頂層／412子、12套件PASS、4選用SKIP。正常THE END141.62秒與Linux建置通過，零OOM、1087張既有PNG保持。
+> 正式Game／Member、戰鬥及全部save持有者尚未遷移到唯一集合，存檔未升級，206..208仍RED。下一步接所有物品持有者與正常218／230InputState，容量／編碼／metadata已具備，不重做已完成核心或pack。唯一現況表CONTEXT，證據及執行入口docs/188、欄位docs/84；Issue／Goal保持進行中，沒有新包。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 同伴出售裝備清除副本的錯誤已修正。正常新遊戲、出售取消／確認、單次售款、防禦更新、存讀檔及下一步通過。schema0.19.0／content0.1.91與canonical66224bc0保持，沒有新包。
 > 完整game485頂層覆蓋、489次執行，434不同頂層／121子PASS、51選用SKIP；internal171頂層／375子、11套件PASS及4選用SKIP。正常THE END163.93秒、Linux desktop PASS；逐項重跑零OOM，1082張既有PNG及5張新出售PNG保持。
 > 使用者已選A單一有序物品格，不再等待架構選擇。共用 `internal/itemstore` 已由有限READY實作，12頂層／4子PASS、零SKIP及go vet通過；原始EXE／ITEM與dosgolem接受收據的八格交易核對通過。空格／完整旗標保持，檢視及Store複製不形成可寫別名，舊／null／重複欄位快照拒絕。核心尚未接入正式Game／Member、pack、戰鬥與完整save，整體adapter仍DRAFT。206..208畫面仍RED，商店確認／取消PNG空窗未驗。唯一現況表CONTEXT、出售docs/182、八格docs/188；Issue／Goal進行中。

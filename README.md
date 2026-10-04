@@ -23,7 +23,7 @@
 > D2/D3→E2 接線；詳見 [`docs/179`](docs/179-battle-item-selector-runtime-spec.md) 與
 > [`docs/180`](docs/180-monster-action-runtime-spec.md)。
 
-目前開發版為 schema `0.19.0`／content `0.1.91`。原野指令窗已接入原版順序與版面；物品格核心及尚待接線項目見 [`docs/188`](docs/188-opening-escort-to-castle-spec.md)。登錄、樓下招募清單、正常取消及Yes續行已接入原版資料。
+目前開發版為 schema `0.20.0`／content `0.1.92`。原野指令窗已接入原版順序與版面；物品格編碼與角色初始八格已由資料包提供，啟動時核對實際道具資料。引擎持有權與存檔遷移見 [`docs/188`](docs/188-opening-escort-to-castle-spec.md)。登錄、樓下招募清單、正常取消及Yes續行已接入原版資料。
 空名冊的加入、觀看與單人隊伍分離已接入原版訊息、等待、續問及告別返回。
 入隊後三段文字、逐段名字、內文等待及原畫面保留已修正；短曲單次播放後回到是否繼續選單。
 音訊等待採公開平台規格近似，沿玩家的FM或Roland音源；按鍵不能跳過。正常路線及同版本存讀檔通過。

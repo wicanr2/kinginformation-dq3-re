@@ -1,5 +1,10 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-10-05 A方案的pack編碼及初始八格已有限CONFORMED，schema0.20.0／content0.1.92、canonical0839ecc9。boot以實際ITEM核對count／shape／metadata，兩份乾淨副本重建九JSON一致。target13頂層／40子PASS、零SKIP；完整game486頂層覆蓋、490次執行，正常THE END141.62秒、internal與Linux建置通過，零OOM、1087張既有PNG保持。
+> 下一主要切片為Game／Member與戰鬥、全部save持有者的唯一有序集合，再接正常道具七列、父窗、取消、自給重排及218／230正式驗收。核心與pack不重開；整體adapter仍DRAFT，存檔尚未升級，206..208仍RED。唯一現況表CONTEXT、證據docs/188及欄位docs/84；Issue #4／Goal進行中，沒有新包。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 同伴出售裝備清除副本的錯誤已修正。正常新遊戲、出售取消／確認、單次售款、防禦更新、存讀檔及下一步通過。schema0.19.0／content0.1.91與canonical66224bc0保持，沒有新包。
 > 完整game485頂層覆蓋、489次執行，434不同頂層／121子PASS、51選用SKIP；internal171頂層／375子、11套件PASS及4選用SKIP。正常THE END163.93秒、Linux desktop PASS；逐項重跑零OOM，1082張既有PNG及5張新出售PNG保持。
 > 使用者已選A單一有序物品格，不再等待架構選擇。共用 `internal/itemstore` 已有限READY並實作，12頂層／4子PASS、零SKIP，原始EXE／ITEM及已接受dosgolem八格交易核對通過。正式Game／Member、pack、戰鬥與全部save持有者尚未接線，整體adapter仍DRAFT；存檔尚未升級。下一切片先閉合明示word編碼／初始格及持有者，再接正常218／230輸入與畫面。206..208畫面仍RED，商店確認／取消PNG空窗未驗。唯一現況表CONTEXT、出售docs/182、八格docs/188；Issue／Goal進行中。

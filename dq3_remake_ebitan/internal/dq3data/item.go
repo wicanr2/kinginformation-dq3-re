@@ -12,6 +12,15 @@ const (
 // Items 持有 ITEM.DAT 整檔。
 type Items struct{ raw []byte }
 
+// Count reports the actual complete records, not the game-version constant.
+// Malformed trailing bytes do not form a valid archive shape.
+func (it *Items) Count() int {
+	if it == nil || len(it.raw)%itemStride != 0 {
+		return 0
+	}
+	return len(it.raw) / itemStride
+}
+
 // OpenItems 解 ITEM.DAT。移植 dq3_items_load。
 func OpenItems(d []byte) (*Items, error) {
 	if len(d) < ItemCount*itemStride {

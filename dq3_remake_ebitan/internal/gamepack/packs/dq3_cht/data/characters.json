@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.19.0",
+  "schema_version": "0.20.0",
   "default_refs": {
     "new_game_player": "dq3:character.new_game_hero",
     "registered_party_member": "dq3:character.registered_member"
@@ -7,60 +7,812 @@
   "defaults": [
     {
       "id": "dq3:character.new_game_hero",
-      "equipment": {
-        "weapon": null,
-        "armor": 30,
-        "shield": null,
-        "head": null
-      },
       "evidence": {
         "level": "D3",
         "source_kind": "exe",
         "source": "DQ3.EXE",
         "address_space": "file",
-        "address": "0x1c2d..0x1c33",
+        "address": "0x1c19..0x1c36",
         "consumer": "new-game character record writer stores 0x801e in equipment word 0",
-        "doc": "docs/22-item-fix.md#商店--開場-re部分"
-      }
+        "doc": "docs/22-item-fix.md#商店--開場-re部分",
+        "note": "Canonical physical words; explicit empty slots retained; equipment is a derived view."
+      },
+      "item_words": [
+        32798,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
     },
     {
       "id": "dq3:character.registered_member",
-      "equipment": {
-        "weapon": null,
-        "armor": 30,
-        "shield": null,
-        "head": null
-      },
       "evidence": {
         "level": "D3",
         "source_kind": "exe",
         "source": "DQ3.EXE",
         "address_space": "file",
-        "address": "0x1c94..0x1cc4",
+        "address": "0x1c94..0x1cc7",
         "consumer": "registration writer clears eight equipment words to 0x00ff then stores 0x801e in word 0",
-        "doc": "docs/36-original-tavern-playthrough.md#露依達酒場冒險者登錄所從遊戲自身資料解出"
-      }
+        "doc": "docs/36-original-tavern-playthrough.md#露依達酒場冒險者登錄所從遊戲自身資料解出",
+        "note": "Canonical physical words; explicit empty slots retained; equipment is a derived view."
+      },
+      "item_words": [
+        32798,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
     }
   ],
   "party_sprite": {
     "asset": "DQ3MST.BLS",
     "entries": [
-      {"class_raw": 0, "gender_raw": 0, "entry_base": 0, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=0,entry_base=0", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 0, "gender_raw": 1, "entry_base": 4, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=1,entry_base=4", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 1, "gender_raw": 0, "entry_base": 8, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=2,entry_base=8", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 1, "gender_raw": 1, "entry_base": 12, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=3,entry_base=12", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 2, "gender_raw": 0, "entry_base": 16, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=4,entry_base=16", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 2, "gender_raw": 1, "entry_base": 20, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=5,entry_base=20", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 3, "gender_raw": 0, "entry_base": 24, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=6,entry_base=24", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 3, "gender_raw": 1, "entry_base": 28, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=7,entry_base=28", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 4, "gender_raw": 0, "entry_base": 32, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=8,entry_base=32", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 4, "gender_raw": 1, "entry_base": 36, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=9,entry_base=36", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 5, "gender_raw": 0, "entry_base": 40, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=10,entry_base=40", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 5, "gender_raw": 1, "entry_base": 44, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=11,entry_base=44", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 6, "gender_raw": 0, "entry_base": 48, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=12,entry_base=48", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 6, "gender_raw": 1, "entry_base": 52, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=13,entry_base=52", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 7, "gender_raw": 0, "entry_base": 56, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=14,entry_base=56", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}},
-      {"class_raw": 7, "gender_raw": 1, "entry_base": 60, "evidence": {"level": "D3", "source_kind": "data_file", "source": "DQ3MST.BLS", "address_space": "record", "address": "character=15,entry_base=60", "consumer": "field party sprite loader", "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"}}
+      {
+        "class_raw": 0,
+        "gender_raw": 0,
+        "entry_base": 0,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=0,entry_base=0",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 0,
+        "gender_raw": 1,
+        "entry_base": 4,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=1,entry_base=4",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 1,
+        "gender_raw": 0,
+        "entry_base": 8,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=2,entry_base=8",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 1,
+        "gender_raw": 1,
+        "entry_base": 12,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=3,entry_base=12",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 2,
+        "gender_raw": 0,
+        "entry_base": 16,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=4,entry_base=16",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 2,
+        "gender_raw": 1,
+        "entry_base": 20,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=5,entry_base=20",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 3,
+        "gender_raw": 0,
+        "entry_base": 24,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=6,entry_base=24",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 3,
+        "gender_raw": 1,
+        "entry_base": 28,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=7,entry_base=28",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 4,
+        "gender_raw": 0,
+        "entry_base": 32,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=8,entry_base=32",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 4,
+        "gender_raw": 1,
+        "entry_base": 36,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=9,entry_base=36",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 5,
+        "gender_raw": 0,
+        "entry_base": 40,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=10,entry_base=40",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 5,
+        "gender_raw": 1,
+        "entry_base": 44,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=11,entry_base=44",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 6,
+        "gender_raw": 0,
+        "entry_base": 48,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=12,entry_base=48",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 6,
+        "gender_raw": 1,
+        "entry_base": 52,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=13,entry_base=52",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 7,
+        "gender_raw": 0,
+        "entry_base": 56,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=14,entry_base=56",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      },
+      {
+        "class_raw": 7,
+        "gender_raw": 1,
+        "entry_base": 60,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "data_file",
+          "source": "DQ3MST.BLS",
+          "address_space": "record",
+          "address": "character=15,entry_base=60",
+          "consumer": "field party sprite loader",
+          "doc": "docs/27-bls-character-sprites.md#dq3mst-bls-職業-性別-entry-對映"
+        }
+      }
     ]
+  },
+  "item_storage": {
+    "encoding": {
+      "empty": 255,
+      "code_mask": 255,
+      "worn_mask": 32768,
+      "curse_mask": 16384,
+      "transfer_blocked_mask": 57344
+    },
+    "part_count": 4,
+    "items": [
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": true
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": true
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false
+      }
+    ],
+    "evidence": {
+      "level": "D2",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + ITEM.DAT",
+      "address_space": "file",
+      "address": "0x4c99/0x4cab/0x4d78/0x9408..0x9423",
+      "consumer": "IDA9.4 linear13929/1393B/13A08/18098..180B1; original item decoder; physical owner words",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; ITEM sha2567f3142de688ccca50fe888854b59ceb81b406b4c8eec038e719f10fda66e7f5d; count validated against actual archive."
+    }
   }
 }

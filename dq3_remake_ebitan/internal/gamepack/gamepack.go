@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.19.0"
+	SchemaVersion       = "0.20.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -2111,17 +2111,10 @@ type Texts struct {
 	Definitions   []TextDefinition `json:"definitions"`
 }
 
-type EquipmentSlots struct {
-	Weapon *int `json:"weapon"`
-	Armor  *int `json:"armor"`
-	Shield *int `json:"shield"`
-	Head   *int `json:"head"`
-}
-
 type CharacterDefault struct {
-	ID        string         `json:"id"`
-	Equipment EquipmentSlots `json:"equipment"`
-	Evidence  Evidence       `json:"evidence"`
+	ID        string   `json:"id"`
+	ItemWords []*int   `json:"item_words"`
+	Evidence  Evidence `json:"evidence"`
 }
 
 // CharacterDefaultRefs assigns engine-semantic roles to pack-owned defaults.
@@ -2148,10 +2141,11 @@ type PartySpriteDefinition struct {
 }
 
 type Characters struct {
-	SchemaVersion string                `json:"schema_version"`
-	DefaultRefs   CharacterDefaultRefs  `json:"default_refs"`
-	Defaults      []CharacterDefault    `json:"defaults"`
-	PartySprite   PartySpriteDefinition `json:"party_sprite,omitempty"`
+	SchemaVersion string                 `json:"schema_version"`
+	ItemStorage   *ItemStorageDefinition `json:"item_storage"`
+	DefaultRefs   CharacterDefaultRefs   `json:"default_refs"`
+	Defaults      []CharacterDefault     `json:"defaults"`
+	PartySprite   PartySpriteDefinition  `json:"party_sprite,omitempty"`
 }
 
 type Pack struct {
@@ -3327,6 +3321,9 @@ func (p *Pack) validateCharacters() error {
 	if p.Characters.Defaults == nil {
 		return errors.New("defaults must be present")
 	}
+	if err := p.validateItemStorage(); err != nil {
+		return err
+	}
 	p.charDefaults = make(map[string]*CharacterDefault, len(p.Characters.Defaults))
 	for i := range p.Characters.Defaults {
 		d := &p.Characters.Defaults[i]
@@ -3336,16 +3333,26 @@ func (p *Pack) validateCharacters() error {
 		if _, exists := p.charDefaults[d.ID]; exists {
 			return fmt.Errorf("duplicate character default id %q", d.ID)
 		}
-		for name, code := range map[string]*int{
-			"weapon": d.Equipment.Weapon, "armor": d.Equipment.Armor,
-			"shield": d.Equipment.Shield, "head": d.Equipment.Head,
-		} {
-			if code != nil && (*code < 0 || *code > 127) {
-				return fmt.Errorf("%s equipment.%s out of range", d.ID, name)
+		words, err := characterWords(d)
+		if err != nil {
+			return err
+		}
+		store, err := p.ItemStoreFromWords(words)
+		if err != nil {
+			return fmt.Errorf("%s item_words: %w", d.ID, err)
+		}
+		seenParts := make(map[int]bool)
+		for _, entry := range store.Worn() {
+			if entry.Part < 0 || seenParts[entry.Part] {
+				return fmt.Errorf("%s ambiguous initial equipment part", d.ID)
 			}
+			seenParts[entry.Part] = true
 		}
 		if err := validateEvidence(d.Evidence); err != nil {
 			return fmt.Errorf("%s evidence: %w", d.ID, err)
+		}
+		if d.Evidence.Level != "D3" {
+			return fmt.Errorf("%s initial item_words requires D3 evidence", d.ID)
 		}
 		p.charDefaults[d.ID] = d
 	}
@@ -6334,20 +6341,19 @@ func (p *Pack) StoryFlagRuntimeEventKind(kind string) (*StoryFlagRuntimeEvent, b
 	return nil, false
 }
 
-// CharacterEquipment resolves one pack character default into engine slots.
-// Missing JSON slots become the engine's explicit -1 empty sentinel.
+// CharacterEquipment is a read-only preview derived from canonical words.
+// It does not supply missing character words or infer their physical order.
 func (p *Pack) CharacterEquipment(id string) ([4]int, bool) {
-	d, ok := p.charDefaults[id]
+	store, ok := p.CharacterItems(id)
 	out := [4]int{-1, -1, -1, -1}
 	if !ok {
 		return out, false
 	}
-	for i, code := range []*int{
-		d.Equipment.Weapon, d.Equipment.Armor, d.Equipment.Shield, d.Equipment.Head,
-	} {
-		if code != nil {
-			out[i] = *code
+	for _, entry := range store.Worn() {
+		if entry.Part < 0 || entry.Part >= len(out) || out[entry.Part] >= 0 {
+			return out, false
 		}
+		out[entry.Part] = entry.Code
 	}
 	return out, true
 }

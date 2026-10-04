@@ -3548,6 +3548,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if ld.err != nil {
 		return nil, ld.err
 	}
+	if err := pack.ValidateItemStorageAgainstItems(items); err != nil {
+		return nil, fmt.Errorf("game pack item storage: %w", err)
+	}
 
 	g.cur = g.over
 	// DQ3.EXE file 0x13a0..0x13b2：新遊戲記住的阿里阿罕地表座標。

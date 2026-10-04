@@ -3624,7 +3624,7 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	  "default_refs":{"new_game_player":"test:character.player"},
 	  "defaults":[
 	    {"id":"test:character.player",
-	     "equipment":{"weapon":null,"armor":30,"shield":null,"head":null},
+	     "item_words":[32798,255,255,255,255,255,255,255],
 	     "evidence":{"level":"D3","source_kind":"exe","source":"DQ3.EXE",
 	       "address_space":"file","address":"0x1","consumer":"writer","doc":"docs/x.md"}}
 	  ]
@@ -3650,6 +3650,22 @@ func TestLoadRejectsUnknownAndInvalidData(t *testing.T) {
 	for _, fixture := range []*string{&validManifest, &validFacilities, &validEvents, &validCharacters, &validTexts, &validInterface, &validSpells} {
 		*fixture = strings.ReplaceAll(*fixture, `"schema_version":"0.3.0"`, currentSchema)
 	}
+	// This generic loader fixture must explicitly carry the required word
+	// contract; it cannot exercise a fallback to old equipment defaults.
+	builtin, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var characterFixture map[string]any
+	if err := json.Unmarshal([]byte(validCharacters), &characterFixture); err != nil {
+		t.Fatal(err)
+	}
+	characterFixture["item_storage"] = builtin.Characters.ItemStorage
+	characterJSON, err := json.Marshal(characterFixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	validCharacters = string(characterJSON)
 	tests := []struct {
 		name, manifest, facilities, events, characters, want string
 	}{

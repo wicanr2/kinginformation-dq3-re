@@ -4640,3 +4640,30 @@ r2補入戰鬥`.items`及工具hash，為69份輸入／208筆；出售setter修�
 測試逐檔核對已接受 `aad971bb` 收據及224／225／230持久區hash，以原始 ITEM decoder 建 metadata，再比較核心八格交易；存回／讀回的物理格與順序相同。這是資料核心核對，沒有產生新的正式玩家 InputState、runtime PNG 或 V3。核心 JSON 另拒絕大小寫變體、重複 key、null word 及一般 JSON 解碼繞過外部契約；普通 Marshal 不會把 private fields 靜默寫成空物件。r1的11頂層／4子 PASS保留，新增上述 JSON 防繞過後沿同一image乾淨跑r2。
 
 最終核心來源與擁有權收據為 `work/issue4-item-a-final-r1-receipt.json`；抽查本批檔案UID／GID1000、原始EXE／ITEM及此前出售來源保持，root基線3213逐路徑相同、零 `.md` 目錄。沒有新發行包，Issue #4及Goal保持進行中。
+
+### 2026-10-05 A 物品編碼及初始格 pack READY
+
+本節核准原始編碼及初始持有權資料的遷移，正式 Game／Member 可寫集合及完整 save adapter 仍另依整體 READY。使用者 A 決定已確認；資料包不另保留可寫或權威 equipment 初值。入口為 [pack 型別及驗證](../dq3_remake_ebitan/internal/gamepack/item_storage.go)、[EXE／ITEM parity及壞契約](../dq3_remake_ebitan/internal/gamepack/item_storage_test.go)、[重建工具](../tools/migrate_item_storage_pack.py)及 [JSON 契約](84-game-pack-json-contract.md)。
+
+| READY 項目 | 輸入、規則及界線 |
+| --- | --- |
+| 問題與範圍 | 共用核心不能硬寫DQ3編碼、類別與初始格。本切片將已知資料放入characters JSON，現行裝備預覽由初始words導出；不把它當成物品 UI 或完整八格 engine 遷移 |
+| 原始身分 | 同上節DQ3.EXE 115282bytes／5178fdc8與ITEM.DAT 896bytes／7f3142de完整hash。IDA Pro9.4，原始file與IDA linear分列；原版正常來源沿aad971bb，seed1357一次 |
+| 編碼，靜態confirmed | IDAlinear13929空word00FF、1393B低byte物品mask00FF；13A08跨人禁止E000；18098穿戴8000、180A6詛咒4000、180AE只清wear；8格容量沿events.item_actions及17254 reader。未知高bits保持，不新增語意 |
+| ITEM metadata，D2 | 每個實際7-byte record提供已用原始decoder的部位與裝備詛咒gate，原始category及E00 consumer沿docs/22與docs/147。JSON按實際archive順序列出全部128筆，部位及curse bool必填。boot逐筆與原始decoder核對，count／record shape不符即拒絕，不靠版本參數推定資產形狀 |
+| 初始words，D3 | 新主角file1C19..1C36的清空／801E writer及登錄file1C94..1CC7的八格清空／word0寫入；角色初始八格明示 `[801E,00FF,00FF,00FF,00FF,00FF,00FF,00FF]`。既有D3資料來源及正常初裝來源沿docs/22、docs/36及本檔創角／詳細狀況；aad971bb接受收據第一個正常packet的角色+3A八格亦相同。不從equipment順序推格位 |
+| typed input與失敗 | characters.item_storage的每項mask、part_count、items metadata及evidence必填；defaults.item_words必填、固定容量、每格整數非null且不越界。不接受旧equipment欄位；缺值／未審查證據／錯部位／archive不符拒絕。getter返回完整Store複本，預覽僅導出已穿戴部位 |
+| 垂直鏈與版本 | 原始bytes → 重建JSON → strict loader／validator → boot實際ITEM驗證 → 初裝預覽與新遊戲既有裝備初始化。schema0.20.0／content0.1.92及canonical hash重新計算；舊帶版本存檔依既有gate拒絕，無metadata舊save及完整word save仍待整體adapter處理，不能稱已升級完成 |
+| 驗收與停止線 | 原始EXE／ITEM parity、缺值／null／越界／錯archive負例，兩份乾淨146b549的0.19.0 pack獨立重建九JSON逐byte相同，受影響新遊戲／登錄／存讀檔及既有正常193路線保持。原版資產不提交、不新增包；完整218／230正式UI、多人及轉職oracle仍未完成 |
+
+有限pack切片CONFORMED：schema0.20.0／content0.1.92，canonical `sha256:0839ecc939188bb2193786c0dae571345145a92de65f4179a4bbd3903ebbc68b`。`characters.item_storage`保存五個word編碼mask、部位數及128筆實際metadata；兩個角色初值明示八格，舊equipment欄位移除。共用裝備預覽由words導出。正式boot以實際原始decoder核對count、完整record shape及逐筆部位／curse gate，新正常啟動拒絕測試通過。
+
+target r3為13頂層／40子 PASS，零FAIL／SKIP；包含原始EXE／ITEM、D2/D3證據gate、null word／false metadata、未知舊欄位、archive shape與重複初裝。接受來源aad971bb第一個正常packet的角色+3A八格與新主角初值一致。既有IDA9.4 primary `work/issue4-creation-ida-reviewed.json`的清空及801E writer十筆原始rows重新核對，原始strong創角流程語意保持，只有已核對的初始words使用限定D3。
+
+首輪target三項失敗保留：D1證據未拒絕是新validator缺口，已加D2/D3 gate；登錄OR指令定位及非裝備fixture選錯是測試問題，按原始bytes及實際metadata訂正。同一image／命令乾淨target r2通過，新增正常初始格與D3初值gate後r3再驗，沒有放寬來源或使用metadata fallback。
+
+重建收據 `work/issue4-item-pack-rebuild-receipt-r1.json`記錄兩份乾淨146b549副本，九JSON逐byte一致且等於正式檔，工具CLI見docs/84。完整 `work/issue4-item-pack-full-r1/` 用同一Docker image、UID1000、network none、3GiB／2CPU，逐項game以一worker執行、Xvfb有界清理：486頂層覆蓋、490次執行，435不同頂層／121子PASS、51選用SKIP；internal188頂層／412子、12套件PASS及4選用SKIP。正常新遊戲至THE END141.62秒，Linux desktop建置通過，oom／oom_kill0。必驗新資料及啟動拒絕沒有SKIP；選用SKIP不作原版parity。
+
+此前完整r2的1087張PNG逐byte保持，包含正常指令窗、存讀檔、登錄／觀看與出售；沒有新runtime畫面或物品206..208改善聲明。驗證後以現行來源重編game.test，與完整測試binary逐byte相同。最終來源／hash／擁有權收據 `work/issue4-item-pack-final-r1-receipt.json`；原版EXE／ITEM、使用者13項資料及root基線保持。沒有新發行包。
+
+Game／Member仍使用原有可寫bag及equipment，戰鬥及完整save adapter尚未遷移。舊帶schema／hash存檔依既有gate拒絕；無metadata舊save及新words save仍待接線，不把本切片稱為存檔格式完成。下一主要閘門是所有持有者的唯一集合與正式218／230InputState／全畫布核對，物品206..208仍RED。
