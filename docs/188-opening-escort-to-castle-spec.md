@@ -3545,3 +3545,94 @@ desktop以`go build ... main.go`產生Linux x86_64 ELF；使用者`tmp_dump.go`�
 檢查入口`work/issue4-view-production-r1-checks.json`；容器全數清理，root-owned基線3213及零`.md`目錄保持。
 原版素材、PNG、binary、database與私有收據未加入Git，沒有新發行包。
 下一步獨立接受詳細狀況205包，釐清兩個讀鍵等待與窗口恢復；不深挖硬體driver／ISR，不重開已完成清單與取消。
+
+### 2026-10-04 詳細狀況兩次等待勘誤與有限 READY
+
+原版來源由[詳細狀況探針](../tools/dosgolem_recruitment_view_detail_probe.py)正常冷啟動重生，
+由[詳細狀況來源稽核](../tools/verify_dosgolem_recruitment_view_detail.py)獨立接受。
+收據`work/dosgolem-opening/issue4-recruit-view-detail-r1-source-r1-receipt.json` SHA-256
+`e61060c7db7007c5a76e3790f4d55cc2c252619fd04c5cf572f615bc8fb69ee0`。
+205包、486筆IRQ1、410份完整PNG／bin與243次正常輸入，seed1357固定一次；前199包保持。
+原始EXE仍為assets_raw/DQ3.EXE、115282bytes、SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+dosgolem固定2f44a68，原版及上游唯讀，未注入角色或改CPU狀態。
+
+先前Issue留言5976684795與進度訊息將第201包判成黑色撤窗，已推翻。
+200與201的PNG逐byte相同，色號及640×350 RGB亦相同；PNG SHA-256
+`f100e33c9ce81e604c560bc820745c5f5c9d29bfb5eb0733f96f10a2c2258593`。
+唯讀控制流重播`work/issue4-view-detail-r2-flow-probe.py`與獨立核對`-r2-audit.py`證實：
+原205包、IRQ1、名冊、詳細觀察及410份完整產物都保持；不再調查未成立的像素或硬體缺陷。
+勘誤已追加至Issue留言5976740421，原錯誤形成史保留。
+
+| 原始定位（IDA linear） | 玩家狀態與等級 |
+|---|---|
+| 10668／10671／1067B → 1834E | confirmed：選取名冊角色的97bytes複製到DGROUP520B，4F1D指向此副本，722=5；第一能力窗使用DGROUP3DA8 |
+| 1834E → 18498 → 2111B，停21133 | confirmed：能力及裝備顯示後第一次讀鍵等待；第200包 |
+| 2113A → 1849D → 184A1 → 184BF → 184A0 | confirmed限定本角色：已學咒文計數四byte為零，沒有咒文窗；第201包 |
+| 10681 → 210EC，停21103 | confirmed：第二次讀鍵等待，能力窗完整保留；第201包 |
+| 2110B → 1068E → 1F604 | confirmed限定Esc：第二次讀鍵後恢復能力窗底圖；第202包 |
+| 103AE → 540；No → 541 → 1997C | confirmed：接繼續詢問、告別等待及場景返回；第202..205包 |
+
+IDA9.4原始bytes／xref sidecar沿`work/issue4-view-r2-ida.json`，補充`work/issue4-view-detail-r1-ida.json`。
+補充204條指令與MZ relocation預期逐byte相符，腳本SHA-256
+`1b76c99d3d6bf35bbc275a15a370e38a98197919b35e53c5d4dfb0af98f12ec7`。
+位址空間仍為IDA linear，file=linear−EC90，DGROUP基底linear24DD0。
+保留原始名稱、範圍、bytes與xref；未分級helper語意不作證據。
+
+有限規格READY：正常View確認後顯示所選未入隊角色，第一次新按鍵只前進到第二等待，畫面不變。
+第二次Esc撤窗，再接既有540／541狀態機。Enter／Confirm／方向鍵也由已證實的raw讀鍵與非K分支接續，
+只有未映射的AnyKeyEdge不在第二等待猜成關閉。K改名與非零咒文的詳細分支仍unknown，不實作猜測。
+實作只讀角色，姓名、職業、性別、等級、當前HP／MP、七能力、攻防與經驗沿既有typed能力幾何及原始1834E欄位。
+本輪限定沒有已學咒文、沒有異常狀態、裝備仍等於pack登錄初裝的角色；其他角色確認保持清單，不改持久狀態。
+初裝形狀與cloth文字沿已驗證的game-pack及原始裝備oracle，不新增Go版號專屬值或fallback。
+現行初裝沒有武器，攻擊值為力量；本輪不把此等式外推裝有武器的角色。
+pack及存檔schema保持，modal暫態不寫入存檔；拒絕Load保持畫面與等待，有效Load清除UI後可正常續行。
+
+可丟棄正常205包原型`work/issue4-view-detail-prototype-r1.py`已完成兩次等待及返回。
+第200／201完整RGB差從43708／40204降為各145，第202..204各295，第205返回411。
+兩側角色HP／MaxHP分別11與13，是既有未對齊的全域骰序輸入差異；不能改角色數字湊圖。
+正式驗收須保留此正常路徑差異，另以原始97bytes解出的相同角色元件fixture核對能力欄位與完整畫布。
+元件fixture只驗renderer，不替代正常205包與存讀檔。兩次等待間PNG須相同，持久snapshot含RNG全程不變。
+原始資料→typed pack／角色→只讀能力renderer→正常InputState→Save／Load→下一步均需通過。
+有限CONFORMED只涵蓋已驗分支；完整V3、改名、已學咒文、其他裝備與原版存讀檔仍未完成。
+原版資產、PNG、binary、database與收據留本機，不公開散布。
+
+來源稽核在既有`dq3-ebiten-test:20260822-r1`容器、唯讀repo及UID1000可寫work執行：
+`python3 /repo/tools/verify_dosgolem_recruitment_view_detail.py /repo/work/dosgolem-opening /repo/tools/dosgolem_recruitment_view_detail_probe.py /repo/tools/dosgolem_recruitment_view_probe.py /work/<新收據名>.json`。
+原版205包需由上述dosgolem探針本身重生；稽核拒絕覆寫與不同父來源，不把輔助執行器畫面登錄為dosgolem。
+
+#### 正式詳細狀況有限驗收
+
+正式入口`game/recruitment_view.go`重用受驗證的能力窗，顯示所選名冊角色的只讀副本。
+第一次新按鍵只進第二等待，兩次畫面逐byte相同；第二次Esc撤窗再接540、No、541與返回。
+不改角色、隊伍、金錢、旗標或RNG。未READY的角色保持原清單與游標，不猜裝備或咒文。
+`TestRecruitmentViewDetailDosgolemNormalInputComparison`正常205包、同版本存讀檔及下一步PASS。
+Save的snapshot本身沒有RNG欄位，現已另以`g.prng`逐包核對；較早「snapshot包含RNG」措辭在此訂正。
+有效／拒絕Load在兩個等待點抽測，held方向不消費新按鍵，未知AnyKeyEdge不猜成K改名或關閉。
+舊`TestRecruitViewReturnsToMenu`斷言已被原版推翻，改驗第二個名冊角色實際姓名及HP綁定與名冊保持。
+
+正常200／201完整640×350 RGB各差145；其中138位於HP／MaxHP兩欄，兩側實際輸入為11與13。
+另用原版97bytes解出的相同角色作renderer元件fixture，完整RGB差7，逐點等於既有露出的右下NPC差異。
+原版與正式正常角色資料不改，元件PNG另命名；未裁切、遮罩或指定動畫phase，完整V3仍RED。
+197..199及202..204各295，返回205為411；全部差異逐像素核對，沒有新增未解釋差異。
+新正常樣本56張PNG，加一張獨立同角色元件PNG；五條既有路線258張逐byte保持，新路線前綴50張保持。
+獨立全畫布入口`work/issue4-view-detail-production-r1-audit.py`，收據SHA-256 `208f0f0bf88c3e5aecfee546e4fdf9b243ec05246c156becd761610fe684cab5`。
+本有限狀態與正常返回CONFORMED；完整View、K改名、已學咒文、其他裝備與原版Load仍unknown。
+
+來源八種損壞全拒絕：錯第二consumer、缺第二等待、錯record、角色副本變動、名冊變動、缺PNG、bin損壞與第二能力畫面變動。
+入口`work/issue4-view-detail-negatives-r1.py`，前後正對照PASS；收據SHA-256
+`5990b54881cbfddfd411f4e76562196fa2ea55bcbe168a8bed3cad76d52057ab`。
+來源接受收據保持e61060c7；新增同畫布斷言後checker hash另存負例收據，未覆寫已接受來源。
+
+完整game449項由r7已過326項及r8其餘123項合併，402頂層／101子PASS、47選用SKIP。
+r7與r8正式產品相同，r8只訂正被原版推翻的舊測試；不重跑已通過且未變的正常結局121.16秒。
+全部11個internal套件、162頂層PASS、4選用SKIP及desktop Linux x86_64 ELF PASS，沒有素材缺失SKIP。
+九份JSON與乾淨9f81ddb archive逐byte相同，schema0.13.0／content0.1.85／canonical19f6124c保持。
+檢查入口`work/issue4-view-detail-r1-checks.json`，SHA-256 `a810fd7ead661b6aa8c6ee18e285793919345e2274dc916d34c924b0c3ce3d45`。
+新Go只有具名UI狀態及typed引用，沒有新增DQ3 raw ID、座標、record、旗標或玩家句子。
+
+建置型別與saveState欄位筆誤保留；元件fixture未安裝NPC交談繪圖器、標題未建角主角Load正規化屬驗證前提問題。
+收尾初版只找data八份JSON而漏manifest，改核對pack完整九份；不改資料或放寬語意檢查。
+可重生入口為`work/issue4-view-detail-production-r7-run.py`與`-r8-run.py`，日誌及PNG在各自`-full/`。
+Docker一次性容器清理、UID1000寫入、root-owned基線3213、零.md目錄與使用者13項資料保持。
+原版、PNG、binary、database及私有收據不加入Git；沒有新發行包。Issue #4與Goal保持進行中。

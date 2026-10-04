@@ -145,19 +145,24 @@ func TestRecruitLeaveMovesCompanionBackToRoster(t *testing.T) {
 	}
 }
 
-// TestRecruitViewReturnsToMenu:「觀看名單」任意鍵/確定應回主選單,且不改動 roster/companions(唯讀)。
-func TestRecruitViewReturnsToMenu(t *testing.T) {
-	g := &Game{
-		roster:     []*Member{newMember(classNames[3], 3, 0, 0)},
-		companions: []*Member{newMember(classNames[4], 4, 1, 0)},
-	}
-	g.recruit.stage, g.recruit.cursor = rcView, 0
+// 原版正常確認顯示所選未入隊角色；舊「直接回主選單」斷言已由docs/188推翻。
+func TestRecruitViewShowsSelectedRosterMember(t *testing.T) {
+	g := recruitmentViewGame(t)
+	first := g.roster[0]
+	second := *first
+	second.Name = []int{1}
+	second.CurHP--
+	g.roster = append(g.roster, &second)
+	g.companions = []*Member{newMember(classNames[4], 4, 1, 0)}
+	g.recruit.cursor = 1
 	g.recruitInput(InputState{DirEdge: -1, Confirm: true})
 
-	if g.recruit.stage != rcMenu {
-		t.Fatalf("觀看名單確定後應回主選單,得 stage=%d", g.recruit.stage)
+	if g.recruit.stage != rcViewAbility || g.recruit.viewFlow == nil ||
+		len(g.recruit.viewFlow.ni.nameBuf) != 1 || g.recruit.viewFlow.ni.nameBuf[0] != 1 ||
+		g.recruit.viewFlow.previewHP != second.CurHP {
+		t.Fatal("觀看名單沒有顯示所選未入隊角色")
 	}
-	if len(g.roster) != 1 || len(g.companions) != 1 {
+	if len(g.roster) != 2 || len(g.companions) != 1 || g.roster[0] != first || g.roster[1] != &second {
 		t.Fatalf("觀看名單是唯讀,不應改動 roster/companions,得 roster=%d companions=%d",
 			len(g.roster), len(g.companions))
 	}

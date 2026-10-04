@@ -137,16 +137,20 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 	if join && (!selection || yes) {
 		t.Fatal("invalid join route")
 	}
-	runRegistrationNormalComparisonRoute(t, dir, out, registrationComparisonRoute{birth, entry, selection, yes, join, false})
+	runRegistrationNormalComparisonRoute(t, dir, out, registrationComparisonRoute{birth: birth, entry: entry, selection: selection, yes: yes, join: join})
 }
 
 type registrationComparisonRoute struct {
-	birth, entry, selection, yes, join, view bool
+	birth, entry, selection, yes, join, view, detail bool
 }
 
 func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route registrationComparisonRoute) {
 	birth, entry, selection := route.birth, route.entry, route.selection
 	yes, join, view := route.yes, route.join, route.view
+	detail := route.detail
+	if detail && !view {
+		t.Fatal("detail requires view route")
+	}
 	if view && (!birth || !entry || !selection || yes || join) {
 		t.Fatal("invalid view route")
 	}
@@ -176,6 +180,9 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 		if view {
 			family, suffix, want = "issue4-recruit-view-cancel-r1", "-source-r1-receipt.json", 203
 		}
+		if detail {
+			family, suffix, want = "issue4-recruit-view-detail-r1", "-source-r1-receipt.json", 205
+		}
 		stem := fmt.Sprintf("registration-birth-%v", birth)
 		if entry {
 			stem = "recruitment-entry"
@@ -192,6 +199,9 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 		if view {
 			stem = "recruitment-view-cancel"
 		}
+		if detail {
+			stem = "recruitment-view-detail"
+		}
 		path := filepath.Join(dir, family+suffix)
 		raw, e := os.ReadFile(path)
 		if e != nil {
@@ -206,6 +216,9 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 		}
 		if view {
 			oracleHash = "cf23fcf92bbd599feb8a2bf1a2b6d7092e2450d187cb36a570798e899eb355bd"
+		}
+		if detail {
+			oracleHash = "e61060c7db7007c5a76e3790f4d55cc2c252619fd04c5cf572f615bc8fb69ee0"
 		}
 		if selection && fmt.Sprintf("%x", sha256.Sum256(raw)) != oracleHash {
 			t.Fatal("selection oracle receipt identity differs")
@@ -241,6 +254,8 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 		}
 		var samples []map[string]any
 		var viewSnapshot []byte
+		var viewRNG rng.RNG
+		var detailCanvas []byte
 		for i, q := range src.Queued {
 			settle()
 			scan, e := strconv.ParseInt(q["scan"], 16, 64)
@@ -353,6 +368,7 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 						t.Fatal("first native recruitment menu differs")
 					}
 					if view && i+1 == 196 {
+						viewRNG = g.prng
 						viewSnapshot, e = encodeSave(g.snapshot())
 						if e != nil {
 							t.Fatal(e)
@@ -373,8 +389,12 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 					if view {
 						stages = map[int]int{197: rcMenu, 198: rcMenu, 199: rcView, 200: rcAgain, 201: rcAgain, 202: rcFinalWait}
 						cursors = map[int]int{197: 1, 198: 2, 199: 0, 200: 0, 201: 1}
+						if detail {
+							stages = map[int]int{197: rcMenu, 198: rcMenu, 199: rcView, 200: rcViewAbility, 201: rcViewClose, 202: rcAgain, 203: rcAgain, 204: rcFinalWait}
+							cursors = map[int]int{197: 1, 198: 2, 199: 0, 200: 0, 201: 0, 202: 0, 203: 1}
+						}
 						current, err := encodeSave(g.snapshot())
-						if err != nil || string(current) != string(viewSnapshot) {
+						if err != nil || string(current) != string(viewSnapshot) || g.prng != viewRNG {
 							t.Fatal("view changed persistent state or RNG")
 						}
 					}
@@ -389,6 +409,13 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 					}
 				}
 				g.renderFrame()
+				if detail && i+1 == 200 {
+					compareRecruitmentViewActorFixture(t, g, path, out, fmt.Sprintf("%s-packet-%03d-%s.png", family, i+1, s["phase"]))
+					detailCanvas = append([]byte(nil), g.rgba...)
+				}
+				if detail && i+1 == 201 && string(g.rgba) != string(detailCanvas) {
+					t.Fatal("ability canvas changed between key waits")
+				}
 				f, e := os.Create(filepath.Join(out, fmt.Sprintf("%s-packet-%03d.png", stem, i+1)))
 				if e != nil {
 					t.Fatal(e)

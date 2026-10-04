@@ -5,7 +5,14 @@
 後續觀看名單有限切片沿用本物件，不新增JSON欄位或改canonical hash。
 IDA linear10624及dosgolem正常203包證實同一raw window、欄位與取消文字consumer；入口見docs/188的觀看名單READY。
 View入口不消費`prompt_text_id`，只列未入隊名冊；取消仍使用`again_text_id`及`farewell_text_id`。
-詳細狀況窗與改名尚未READY，這個引用不代表完整View已接受。
+詳細狀況的無咒文、初裝有限分支已READY，仍不代表完整View或改名已接受。
+205包來源證實其能力窗與創角共用`new_game_geometry.raster.ability`，由同一1834E consumer填數字。
+姓名／職業／性別沿用`recruitment_selection`及已驗證創角label，裝備形狀沿用pack登錄初裝。
+原始EXE呼叫與共用窗口引用測試在[recruitment_view_test.go](../dq3_remake_ebitan/internal/gamepack/recruitment_view_test.go)。
+正式兩次等待與只讀頁面入口在[recruitment_view.go](../dq3_remake_ebitan/game/recruitment_view.go)。
+正常205包、同角色renderer及存讀檔測試在[觀看詳細狀況測試](../dq3_remake_ebitan/game/recruitment_view_test.go)。
+本輪不新增欄位、schema或canonical hash。非初裝、已學咒文或異常狀態保持清單，不能用cloth label猜裝備。
+有限範圍、正常205包與同角色元件畫面區分見[docs/188](188-opening-escort-to-castle-spec.md)。
 
 `interface.recruitment_selection`為必填物件。有限READY、原始定位與正常來源見
 [docs/188](188-opening-escort-to-castle-spec.md)。

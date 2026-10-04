@@ -36,6 +36,7 @@ type Recruit struct {
 	dialogue                   Dialogue
 	greetingIndex, cursorGlyph int
 	raster                     *indexedNewGameRenderer
+	viewFlow                   *NewGameFlow
 	tx                         *dq3data.Text
 	active                     bool
 	stage                      int
@@ -69,6 +70,10 @@ func (g *Game) tavernCreate(in InputState) {
 // recruitInput:酒場招募 modal 的輸入處理(掛在 g.recruit 上)。
 func (g *Game) recruitInput(in InputState) {
 	rc := &g.recruit
+	if rc.stage == rcViewAbility || rc.stage == rcViewClose {
+		rc.viewInput(in)
+		return
+	}
 	if rc.stage >= rcJoinedText && rc.stage <= rcMusicWait {
 		g.recruitJoinInput(in)
 		return
@@ -151,8 +156,7 @@ func (g *Game) recruitInput(in InputState) {
 			return
 		}
 		g.recruitPick(in, tapIdx, len(g.roster), func(i int) {
-			// 詳細狀況尚未 READY，保留既有確認行為；此分支不列入對拍驗收。
-			rc.stage, rc.cursor = rcMenu, 0
+			g.startRecruitmentView(g.roster[i])
 		})
 	}
 }
@@ -172,8 +176,9 @@ func (g *Game) recruitPick(in InputState, tapIdx, n int, onConfirm func(i int)) 
 		if rc.cursor < 0 || rc.cursor >= n {
 			rc.cursor = 0
 		}
+		stage := rc.stage
 		onConfirm(rc.cursor)
-		if rc.cursor >= n-1 { // 搬移後清單少 1,游標夾回合法範圍
+		if stage != rcView && rc.cursor >= n-1 { // 搬移後清單少 1,游標夾回合法範圍
 			rc.cursor = max0(n - 2)
 		}
 	case in.DirEdge == 0 && n > 0:
@@ -202,6 +207,10 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 	}
 	if rc.stage == rcJoin || rc.stage == rcView {
 		g.drawRecruitSelection(rgba, white)
+		return
+	}
+	if rc.stage == rcViewAbility || rc.stage == rcViewClose {
+		rc.drawView(rgba, white)
 		return
 	}
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)

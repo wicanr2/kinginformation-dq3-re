@@ -1449,3 +1449,15 @@ Docker檢查需主機權限，依既有隔離規則續做；一次性容器已�
 - 診斷腳本曾誤用sourceCanvasDifference參數及把目錄當收據；訂正後同工具鏈重播。desktop曾誤指定不存在的cmd/dq3，根套件又納入使用者tmp_dump.go；核對main.go後以明確入口建置，不改使用者資料。這些是驗證問題。
 - 路由入口與新公開producer／validator均掛入docs/188，欄位沿用說明在docs/84。私有工具、檢查、負例與核對收據使用issue4-view前綴，入口詳見docs/188。容器内沒有rg，改用grep檢查production新增值，沒有新增DQ3設定fallback。
 - Docker一次性容器全清理，root-owned基線3213、零.md目錄保持。保護13項資料；commit／push結果保存`work/issue4-view-r1-post-push.json`。下一步詳細狀況，維持driver／ISR停止線，沒有新發行包。
+
+## 2026-10-04 詳細狀況兩次等待與正常返回
+
+- Issue #4來源205包／486IRQ1／410完整PNG及bin接受，e61060c7；唯讀控制流重播保持全部產物。200與201完全同圖，訂正先前黑色撤窗誤判，停止無根據的像素／硬體調查。
+- 先正常隔離原型，再docs/188有限READY，正式確認分支接只讀能力窗、兩次新按鍵與Esc→540→No→541→返回。無咒文、無異常及pack初裝是本輪邊界，其他角色與未映射鍵不猜補。
+- 正常205包、持久snapshot、另行RNG比較、Save／Load及下一步PASS；正常200／201完整差43708／40204降145。原始相同97bytes角色元件完整差7，138為正常HP11／13數字輸入差異；未改角色湊圖。
+- 八種壞來源全部拒絕。五路線258張舊PNG及新路線前綴50張保持，全畫布逐點核對，完整V3仍RED。
+- 完整game449項合併r7已過326及r8餘123，402頂層／101子PASS、47選用SKIP；internal162頂層、11套件PASS、4選用SKIP；正常THE END121.16秒與desktop Linux x86_64 PASS，無素材缺失SKIP。
+- r7舊「View確認回主選單」測試失敗，與原版衝突，r8改驗所選第二個名冊角色實際欄位。正式產品保持，已通過測試不重跑。型別／欄位筆誤、標題fixture繪圖器與Load正規化、收尾漏manifest均分類為驗證問題。
+- 九份JSON與乾淨9f81ddb archive相同，schema0.13.0／content0.1.85／canonical19f6124c保持。來源、驗收、負例與本機工具入口全部掛docs/188；typed能力引用見docs/84。
+- 收尾核對 `a810fd7ead661b6aa8c6ee18e285793919345e2274dc916d34c924b0c3ce3d45`，全畫布 `208f0f0bf88c3e5aecfee546e4fdf9b243ec05246c156becd761610fe684cab5`。根擁有權基線3213、零.md目錄與UID1000保持。提交推送與容器清理結果保存`work/issue4-view-detail-r1-post-push.json`，並追加Issue #4。
+- 原版素材、圖片、binary、database、使用者13項scratch未加入Git，沒有新發行包。下一步K改名與已學咒文頁、人物動畫及後續原版流程，Goal保持進行中。
