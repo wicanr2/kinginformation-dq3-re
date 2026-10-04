@@ -1,5 +1,10 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-10-05 正常F6十槽Esc取消與左右行走已有限驗收，197包／470IRQ1來源426c7623。193前綴、2172bytes取消前後、clock30及外部槽資料保持；正式InputState、snapshot／RNG、Save後Load及下一步通過。
+> 4項回歸共4頂層／1子PASS，零SKIP／OOM。194..196完整RGB0，197差122全部由英雄6／7原始圖塊解釋，動畫時鐘未知；舊53張PNG保持，新48張含44前綴保持。正式Go／pack仍e939db2；下一切片為正常F5／F6第二槽存讀檔，入隊音樂返回保留DRAFT。唯一現況表在CONTEXT，證據入口docs/188，Issue #4與Goal進行中。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 正常入隊短曲返回仍DRAFT。r1／r2各保持199包全部事件及398份產物；r2在2,500,000,001指令上限未自然返回，計時器前進3003且沒有後續按鍵。未建立完成收據，不將有限觀察當產品缺陷。
 > 2項remake回歸含1子PASS，50張PNG保持，正式Go／pack仍e939db2。停止硬體driver／ISR追查，下一切片為合法193checkpoint的F6 Esc取消及正常行走。唯一現況表在CONTEXT，收據及公開入口在docs/188，Issue #4與Goal保持進行中。
 

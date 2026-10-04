@@ -4330,3 +4330,45 @@ r2在2,500,000,001指令上限停止，原生程式仍在等待，未觀察到10
 | `work/issue4-recruit-return-wait-review-r1.json` | `d016bd6522d9867992cda59ff3bfedf113190a60689ec53474899bd48b6517f5` |
 
 正式Go／pack保持e939db2，不依逾時猜改播放等待。停止硬體driver、ISR、DAC、PIT細節追查，不重跑相同有界樣本或調IRQ參數。下一正常垂直切片為已接受137411c7的合法193checkpoint：F6選槽按Esc取消，確認返回及後續正常行走。入隊完成oracle、可比動畫時鐘、其他F6場景、複數隊伍、非空分離與完整原版campaign保留未知；沒有新發行包。
+
+### 2026-10-05 正常 F6 選槽取消與行走 DRAFT
+
+[正常取消探針](../tools/dosgolem_load_cancel_probe.py)從137411c7相同冷啟動、seed1357及193包正常路線續行。排定F6、十槽Esc、左移及右移，場景／選單條件不符便不送下一鍵；原生Scratch使用既有DOS.Scratch可寫overlay，原版素材唯讀。不讀回或注入checkpoint、不調CPU／時鐘；附加觀察只讀DGROUP251D、526C、0726與4F29..57A5持久區。
+
+CLI為`python3 /repo/tools/dosgolem_load_cancel_probe.py --prefix issue4-load-cancel-r1`；沿固定dosgolem2f44a68、dq3-ebiten-test:20260822-r1，明示UID1000、有限資源與外層逾時。prefix既有輸出不得覆寫。先重驗193包全部事件與386份PNG／bin、再判定Esc返回、FileOps無存檔交易、持久區與世界時鐘；原版未知時不改正式產品。完整畫面與正常InputState／存讀檔驗收待來源接受後進行。
+
+[獨立F6取消checker](../tools/verify_dosgolem_load_cancel.py)固定producer、生成Go及binary雜湊，沿父來源完整重驗，核對實際IRQ make／break、197包、394份完整PNG／bin及5份持久區。CLI依序為原版輸出目錄、producer、尚不存在的收據路徑；仍DRAFT，預期取消與行走條件需由本次原版實際來源審查，不以checker假設代替原版結果。
+
+### 2026-10-05 F6 十槽 Esc 取消有限 READY
+
+實際來源`work/dosgolem-opening/issue4-load-cancel-r1-source-r1-receipt.json`已接受，SHA-256 `e2c2e300b9c322389fa33992f1d61977ef9c16096ccfd3bea97e67bcabcee206`。正常197包／470IRQ1，38個冷啟動輸入加197包共235次正常輸入，seed1357執行前固定一次。前193包全部狀態、輸入／IRQ與386份完整PNG／bin保持，174份母親父產物亦保持；新來源全部394份packet PNG／bin及5份2172bytes持久區逐項核對。
+
+本次confirmed範圍：原版已存在十槽的上層城鎮場景2,18，F6進十槽選單、初始游標1；Esc直接返回正常field，未新增文字或告別等待。新的左鍵到1,18，再右鍵到2,18；全部正常資料節點均為clock30、raw526C=1。Esc的raw0726從0到1保留原始欄位，不推論其他用途。2172bytes取消前後保持；左移只改座標低byte，右移完全回復。Scratch仍空，FileOps沒有後續dragon存檔讀回或建立／刪除，不能把未記錄AH40的FileOps單獨当作無寫入證據。
+
+此有限READY允許驗證既有正式F6 Cancel是否立即關閉、不改存檔／snapshot／RNG／clock，以及新按鍵正常行走與存讀檔。輸入、位置和UI均不得注入；可比可見metadata沿上一輪合法外部JSON測試前置資料，不表示其他九槽世界狀態與原生DAT互通。下層場景、空槽、其他游標與動畫時鐘不在本次READY。[正常InputState驗收](../dq3_remake_ebitan/game/field_load_cancel_test.go)固定接受來源，完整畫面待本輪實測；不預設全RGB零差異或完整V3。
+
+收據契約勘誤：r1把原版身份只放在meta內，既有`sourceCanvasDifference`要求外層`original_sha256`，首輪正常測試因此停在畫面稽核的身份檢查。原始EXE、cold run、PNG、持久區與遊戲程式均未改。checker補齊外層身份後對同一產物完整重驗，另存`issue4-load-cancel-r1-source-r2-receipt.json`，SHA-256 `426c7623d239af6f83fa9715de861ca932a9fa6bbc2a223bb7eac2f49aa484a7`，由正式測試固定引用；r1及首輪log保留。這是收據欄位問題，未作產品缺陷修正。
+
+測試交易勘誤：r2正常F6取消與四張畫面均已產出，存讀檔斷言卻將Save之前的舊Respawn與Load後比較。單獨診斷證實只有Respawn從21,17變2,18，RNG保持；現行`saveTo`先寫當前復活checkpoint，再更新`g.respawn`。斷言移到Save成功後取得比較基準，驗證Load恢復真正已存狀態，不改存檔交易或忽略其他欄位。保留r2與單獨診斷log；這次修正驗證腳本的交易界線，不把預期Save副作用當產品缺陷。
+
+[完整取消畫布診斷](../tools/verify_dq3_load_cancel_raster.py)固定本節來源與runtime收據，重驗399份來源產物及log，逐點檢查194..197四張完整640×350 PNG。右移只核對既有右向英雄6/7的原始BLS圖塊、透明像素及CTY／BLK底圖，沒有讀取或設定動畫counter；圖塊match不證明可比時鐘。CLI明示`--assets`、`--original`、`--source-receipt`、`--runtime`與不存在的`--output`，支援範圍限本節固定來源與四張完整畫面。
+
+### 2026-10-05 F6 取消有限 CONFORMED
+
+現行正式Cancel行為符合有限READY，不需要產品修改。正常InputState重播F6、Esc、左移與右移；取消期間完整snapshot／RNG及十份外部JSON存檔逐byte保持，clock30不重設，左右移動只改正常位置。Save成功後Load恢復完整已存snapshot與RNG，新的左鍵仍可續行。schema0.18.0／content0.1.90／canonical9d6325ad與正式Go／pack保持e939db2。
+
+最終四命令全通過：`TestFieldLoadCancelDosgolemNormalInputComparison`、`TestFieldSaveLoadComparableSlotsDosgolemNormalInputComparison`、`TestFieldSaveLoadNoAndSlotCancelNeverWrite`、`TestFieldSaveLoadIndependentSlotsAndRejectedLoad`。4不同頂層／1子、5筆PASS、零SKIP／OOM。舊可比路線53張PNG逐byte保持，新取消路線48張包含44既有前綴保持。完整game／internal／THE END／desktop最近仍為e939db2，未冒稱本輪全套重跑。
+
+正常194選槽、195取消返回及196左移的完整224000像素RGB均零差異，目視文字、游標、底圖與場景一致；這三張限定V3。197右移完整RGB差122，全部落於英雄原始6／7圖塊，完整人物含透明像素與底圖核對，沒有人物外差異，保持V2。原版consumer phase未在這份來源觀察，可比動畫時鐘仍unknown，不因raw圖塊吻合推論控制流或全流程V3。兩側世界clock30已核對，與未確認的動畫時鐘分開記錄。
+
+獨立來源checker拒絕遺失最後IRQ1、取消後持久byte被改及最後PNG損壞三種來源，正對照前後一致。原版產物始終唯讀；沒有冷啟動重擲、模擬器restore、狀態注入、裁切、遮罩或替代PNG。r1來源、首輪log及交易診斷保留，不覆寫歷史收據。
+
+| 本機收據 | SHA-256 |
+|---|---|
+| `work/dosgolem-opening/issue4-load-cancel-r1-source-r2-receipt.json` | `426c7623d239af6f83fa9715de861ca932a9fa6bbc2a223bb7eac2f49aa484a7` |
+| `work/issue4-load-cancel-validation-r3/load-cancel/receipt.json` | `4ce86b0b73fae6a1439b315b98a4bda4f06ec71e5b3d3d79e00a12dd5b7c9bd9` |
+| `work/issue4-load-cancel-negative-r1/receipt.json` | `30c4718f2b4f2921ec4be3213cd6e85fbbb3df6268609ebd2b34046864141776` |
+
+重生正常測試使用`DQ3_LOAD_CANCEL_ORACLE_DIR`指定本節接受來源、`DQ3_LOAD_CANCEL_RECEIPT_DIR`指定空輸出，在相同有界Docker／Xvfb執行`TestFieldLoadCancelDosgolemNormalInputComparison`。素材或hash缺失失敗，不以SKIP驗收。完整畫布命令為`python3 /repo/tools/verify_dq3_load_cancel_raster.py --assets /repo/assets_raw --original /work/dosgolem-opening --source-receipt /work/dosgolem-opening/issue4-load-cancel-r1-source-r2-receipt.json --runtime /work/issue4-load-cancel-validation-r3/load-cancel --output /work/issue4-load-cancel-raster-r1.json`；既有收據不覆寫，重驗另用新輸出。
+
+此有限CONFORMED只涵蓋十槽初始游標的上層F6取消與正常後續。下一切片是正常F5／F6第二槽存讀檔，從冷啟動創造可比的新保存狀態，避免拿既有其他槽的未知世界初值作對拍。入隊音樂返回、其他游標／場景、非空分離、多角色與完整campaign仍未知。停止已解釋影格樣本的時鐘重試，沒有新發行包。
