@@ -1,5 +1,10 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-04 初始十槽可見資料已建立可比前置條件。原始PLAYER／CHINA.FON與現行字型逐byte核對；正常F5選槽195完整RGB為0，F6選槽199差123，全為窗外NPC15影格。這次消除的是測試初值差異，正式Go與pack保持e939db2。
+17命令、22筆PASS，9不同頂層／5子測試、零SKIP／OOM；200張舊PNG保持，新路線53張只有195／199因槽資料改變。完整存檔初值仍不等價，動畫時鐘與完整V3仍未知。來源、有限驗收及公開checker見docs/188；下一步正常入隊短曲播放完成後返回選單。
+
+以下保存前一checkpoint，現況以本檔唯一狀態表及docs/188為準。
+
 2026-10-04 F6後兩步的人物影格consumer已由正常202包／480IRQ1來源363f8f70核對。原版新舊全部事件、PNG／bin、2172bytes持久區及原生存檔逐byte保持；94次只讀觀測，不改時鐘或相位。
 原始BLS／CTY／BLK逐點解釋201的356像素：英雄127、NPC14為106、NPC15為123；202的122全為英雄步伐影格。兩張畫面沒有其他差異，完整RGB仍356／122，動畫時鐘對應未知，完整V3未通過。
 本輪10命令、8不同頂層／4子PASS、零SKIP／OOM；200張既有完整PNG逐byte保持。正式Go與九份JSON仍等於e939db2，schema0.18.0／content0.1.90、canonical9d6325ad保持。最近完整game／internal／THE END／desktop仍為e939db2。
@@ -203,14 +208,14 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 | 目前狀態（2026-10-04） | 最近驗收與界線 |
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；正式F5/F6與獨立JSON槽。schema0.18.0／content0.1.90；canonical `sha256:9d6325addef6db4d6f4c049f44fe517e61d2a0550724c67d5ae7ec0f649a3917`；沒有新發行包 |
-| 最新remake已完成 | 正常InputState201／202、snapshot／RNG／clock、同版本存讀檔及下一步保持；新增實際hero/NPC影格收據，正式Go不變 |
+| 最新remake已完成 | 可比初始十槽metadata的正常F5/F6至202包、snapshot／RNG、存讀檔與下一步；只新增測試與完整畫布checker，正式Go／pack保持e939db2 |
 | 最新原版oracle | 正常202包／480IRQ1來源363f8f70；94次1E307只讀consumer觀測，全部原有事件／PNG/bin/persistent/native存檔與71a52768保持 |
-| 最新畫面已驗 | 本輪200張完整PNG逐byte保持；原始BLS/CTY/BLK解釋201全部356及202全部122像素，沒有替代圖／遮罩／phase寫入 |
-| 最新畫面未通過 | 201英雄127、NPC14為106、NPC15為123；202英雄122。原版phase201=1/202=0，remakehero0/1、NPC0/0；完整RGB仍356/122，V3未知。195/199初始十槽資料仍不同 |
-| 下一production切片 | 可比初始十槽metadata的F5/F6選槽UI；人物影格素材與兩張consumer已閉合，可比動畫時鐘仍DRAFT，不重跑同一phase-only樣本或深入硬體driver |
-| 本輪有限READY | 上層單人讀檔後兩步及完整持久狀態有限CONFORMED，E2/E3與畫面V2。方向按住至原生完成點；按鍵時長/CPU與TPS映射未精確對拍，不稱時序V3 |
-| 原版oracle仍未知 | 其他world／室內F6、複數隊伍與其他等級經驗、多槽等價初值、其他取消、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
-| 現行remake回歸 | 本輪8不同頂層／4子PASS、10命令、零SKIP/OOM；200舊PNG保持。最近完整game478/11個internal/THE END201.00秒及desktop仍為e939db2 |
+| 最新畫面已驗 | F5選槽195完整RGB0；194／196／197／200仍0。F6選槽199全部123差異由原始NPC15完整圖塊／底圖解釋。200舊PNG保持，可比路線53張中的51張保持 |
+| 最新畫面未通過 | F6選槽199完整RGB123、201為356、202為122，均為人物影格；可比動畫時鐘未知。其餘九槽世界狀態未等價，不能宣稱原版完整存檔互通 |
+| 下一production切片 | 正常入隊短曲播放完成後返回選單；從已接受音樂等待入口續行，先證明完成與新按鍵。可比動畫時鐘仍DRAFT，不重跑同一phase-only樣本或深入硬體driver |
+| 本輪有限READY | 十槽可見姓名／level1／gender的有限契約與正常202包通過，F5選槽195限定V3。F6選槽與步行保持V2；其他九槽世界狀態與動畫時鐘未READY |
+| 原版oracle仍未知 | 其他world／室內F6、複數隊伍與其他等級經驗、完整多槽世界狀態、其他取消、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
+| 現行remake回歸 | 本輪17命令／22筆PASS，9不同頂層／5子測試，零SKIP/OOM；200舊PNG保持，4種壞raster來源拒絕。最近完整game478/11個internal/THE END201.00秒及desktop仍為e939db2 |
 | 額外驗證限制 | F6依pack重設世界時鐘，engine／標題Load仍保留JSON時鐘；壞schema／hash／layer在restore前拒絕。舊存檔不自動遷移。綠色回歸不升格完整原版parity |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

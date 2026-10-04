@@ -4253,3 +4253,49 @@ IDA入口為[非破壞人物匯出](../tools/ida_dump_field_pose_contract.py)及
 | `work/issue4-field-pose-reviewed-r1-ida.json` | `680aaf8f92517c4f11f83cf2ed5e179694b7fd01ebbaefa1529ea1404f176819` |
 
 環境紀錄：間接方向表11BA2沒有IDA自動函式邊界，r3停止且保留error sidecar；後續只匯出有界raw bytes並維持unknown。原始人物consumer的direct DS xref缺項，保留原運算元與動態DS15ED，不宣稱沒有reader。最初沿用147舊PNG計數，本輪實際含新兩步共200張，以實際清單核對全部相同。這些是分析／驗證限制，沒有為它們修改產品。
+
+### 2026-10-04 初始十槽metadata可比對拍 DRAFT
+
+依Issue #4下一切片，沿既有正常202包來源，準備等價的初始槽顯示資料。原始`PLAYER.DAT`200bytes，SHA-256 `a445a11f52a6711aba1433d9107d10284253e08d27aa6be2b82dc7aec91376dc`。每槽20bytes：姓名count word、四個32bit值、level byte18、gender byte19。原始姓名215EE限制四字，低wordFFFF時引用D3字模；其他值由21CD7→21CF0把CX:DX作CHINA.FON seek，再讀32bytes至DGROUP2734並交2121C。原版FileOps已保存正常195十槽讀取：22585、164596及101166三個位置、每次32bytes，成功且沒有缺檔。
+
+IDA9.4有界sidecar `work/issue4-slot-metadata-r1-ida.json`260條目，SHA-256 `24318794177dae910fa944f1ba567f8bae9888423ee5ee3fa4857d53c71f72ee`。原始EXE115282bytes／5178fdc8完整hash沿上節，IDA linear、file=linear−EC90；保留原始名稱、運算元及MZ relocation。116D0讀+12h判空；116FE畫姓名；11707讀level；11711..1171B以gender減1引用534／535。fixture採原版1／2映射JSON0／1，不混用raw值。
+
+`CHINA.FON`192200bytes，SHA-256 `42b769cc51857fc14f4e820f937c46a0d254c04374fe52870d59c6eb24f7bb49`；`D3TXT00.FON`47232bytes，SHA-256 `c19e1ca03c6c15916d934f3338ac4215290a5fc3d0d8e57c6976226241e40b02`。三個32bytes字模與既有D3字模106／144／303逐byte唯一匹配，不用Unicode近似或外加字型。
+
+測試入口：[槽metadata fixture](../dq3_remake_ebitan/game/field_save_slot_metadata_test.go)及[正常F5/F6測試](../dq3_remake_ebitan/game/field_save_load_test.go)的`TestFieldSaveLoadComparableSlotsDosgolemNormalInputComparison`。在合法193checkpoint前置十個現行JSON檔，只更動檔案中的可見姓名／性別，保留可表示的level1；不改執行中的遊戲、RNG、phase或座標。之後仍由正常F5保存、正常F6讀回剛寫入的第一槽。這是既有存檔資料前置條件，不是DOS binary import，也不表示其他九槽的世界狀態等價。
+
+先要求195十槽完整RGB零差異，再記錄199及其餘完整畫面；人物動畫差異照常保留。初始存檔metadata相同與完整存檔相同分開記錄，不能讓fixture製造完整V3或原版存檔互通聲明。若實際畫面推翻現行consumer設定，再回RE／READY修production。
+
+#### 十槽顯示資料有限 READY／CONFORMED
+
+原版正常195的FileOps、IDA原始116D0／116FE／11707／11711 consumer與三個逐byte唯一字模已閉合。confirmed範圍限十槽可見姓名、level1與raw gender1；其他九槽的完整世界狀態未知。測試在合法193checkpoint建立外部JSON前置資料，執行中的完整snapshot及RNG保持；之後以正式InputState完成F5保存、左移、F6讀回第一槽、兩步行走、同版本存讀檔及下一步。
+
+| 正常包 | 可比槽資料完整RGB差異 | 有限結論 |
+|---|---:|---|
+| 194 F5問題 | 0 | 舊畫面保持 |
+| 195 F5十槽 | 0 | 初始可見metadata可比，限定此完整畫面V3 |
+| 196 告別等待／197返回 | 0／0 | 保存、完成閘門及新確認保持 |
+| 198 左移 | 356 | 既有人物影格差異保持 |
+| 199 F6十槽 | 123 | 全為窗外NPC15，完整V3仍RED |
+| 200 讀回／201左移／202右移 | 0／356／122 | 正常持久狀態、clock與RNG保持，人物差異未消除 |
+
+原先195的4064、199的32847不能當作產品缺陷：當時原版十槽與remake空JSON前置資料不同。本輪建立可比metadata後，195為0、199為123；這是驗證前置條件修正，沒有改正式renderer或把十槽資料永久寫入產品。`initial_slot_metadata_same_state=true`、`initial_storage_same_state=false`分開保存，未宣稱DOS存檔匯入或其他九槽完整等價。
+
+[完整畫布checker](../tools/verify_dq3_slot_metadata_raster.py)固定接受來源363f8f70與本輪runtime58877b04，完整重驗416份來源產物及log。讀取兩張完整640×350 PNG；195逐點零差異。199核對原始CTY file8F..95的NPC15、DQ3MAN.BLS影格26／27、DQ31.BLK底圖及全部透明像素，再比較全224000像素，沒有任何人物範圍外差異。原版只讀邊界0004=1、remake實際walk=0；這個confirmed診斷不證明可比動畫時鐘。
+
+重生測試以`DQ3_AFTER_LOAD_MOVE_ORACLE_DIR`指定已接受原版目錄、`DQ3_FIELD_SAVE_LOAD_RECEIPT_DIR`指定空本機輸出目錄，在既有有界Docker／Xvfb執行`TestFieldSaveLoadComparableSlotsDosgolemNormalInputComparison`。原始PLAYER、CHINA.FON、D3TXT00.FON缺失或hash不符均失敗，不以SKIP驗收。完整畫布CLI為 `python3 /repo/tools/verify_dq3_slot_metadata_raster.py --assets /repo/assets_raw --original /work/dosgolem-opening --source-receipt /work/dosgolem-opening/issue4-field-pose-normal-r1-source-r1-receipt.json --runtime /work/issue4-slot-metadata-validation-r1/after-load-move --output /work/issue4-slot-metadata-raster-r1.json`。原始資料與runtime唯讀，僅明示work輸出可寫；支援範圍為本節固定來源與兩張選槽圖。
+
+兩批17命令／22筆PASS，涵蓋9不同頂層與5子測試，零SKIP／OOM。舊四條存讀檔路線200張完整PNG逐byte保持；可比路線53張中的51張與舊after-load-move相同，只有195／199因前置槽資料改變。四種損壞來源、runtime收據、runtime畫面及原始素材皆拒絕，正對照前後一致。正式Go與九份JSON保持e939db2，schema0.18.0／content0.1.90、canonical9d6325ad不變；最近完整game478、11個internal、THE END201.00秒及desktop仍為e939db2，不冒稱本輪全套重跑。
+
+| 本機收據 | SHA-256 |
+|---|---|
+| `work/issue4-slot-metadata-validation-r1/test-receipt.json` | `e5a8f50fb12f9abe707cf51392bd80b77c2d0f732a0f6900a966c3a22de60882` |
+| `work/issue4-slot-metadata-validation-r1/after-load-move/receipt.json` | `58877b0475c4618b650dc2e5ddc0099958912df146f7808d8c3659bcb6863ae6` |
+| `work/issue4-slot-regression-r1/test-receipt.json` | `a2ac73052ce24ae864f37df36a675c9cca3b027fab5d5aea325204f8199a8f03` |
+| `work/issue4-slot-regression-r1/preservation-receipt.json` | `6e4cd62929583968d923e62a5207a753e8942cbe8d6d7e5cc05320ea156d369b` |
+| `work/issue4-slot-metadata-raster-r1.json` | `dc262e20c19ed736ec9a229a8db6359e4981f7ff7e337e1f76e6c9e9523b0d2d` |
+| `work/issue4-slot-metadata-negative-r1/receipt.json` | `f2d17a1e8aed1a06805e3bf0ec0a16fa498cadddc2636e35ad52d002cb686181` |
+
+環境／腳本紀錄：初版checker將全部manifest當作單層路徑，後改相對路徑仍誤把Scratch掛在原版輸出目錄內。連續兩次失敗後重查dosgolem路由與既有source checker，原生Scratch實際位於輸出目錄的同層；依既有契約修正，同一命令乾淨重跑通過。PNG計數初輪只glob頂層，後改rglob確認53張；收據首寫誤用唯讀/repo掛載，改明示/work後通過。這些是驗證腳本問題，未修改產品或原版產物。
+
+下一合法垂直切片是正常入隊短曲播放完成後返回選單，從已接受的原生音樂等待入口續行，先證明完成與新按鍵再實作缺口。可比動畫時鐘、其他F6場景、複數隊伍、非空分離與完整campaign仍未知；不重跑已解釋的phase-only樣本，不深挖硬體driver／ISR，沒有新發行包。

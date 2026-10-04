@@ -1,5 +1,10 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-10-04 可比初始十槽metadata已驗：正常F5選槽195完整RGB0，F6選槽199差123，全為窗外NPC15原始影格。正式Go／pack保持e939db2；完整存檔初值與動畫時鐘仍未知。
+> 17命令／22筆PASS，9不同頂層／5子、零SKIP／OOM；200舊PNG保持，可比路線53張只改195／199。下一步正常入隊短曲播放完成後返回選單，不重開已解釋的phase-only樣本。唯一現況表在CONTEXT，驗收與工具入口在docs/188，Issue #4及Goal保持進行中。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-04 F6後兩步的人物影格consumer已由正常202包／480IRQ1來源363f8f70核對。原版新舊全部事件、PNG／bin、2172bytes持久區及原生存檔逐byte保持；94次只讀觀測，不改時鐘或相位。
 > 原始BLS／CTY／BLK逐點解釋201的356像素：英雄127、NPC14為106、NPC15為123；202的122全為英雄步伐影格。兩張畫面沒有其他差異，完整RGB仍356／122，動畫時鐘對應未知，完整V3未通過。
 > 本輪10命令、8不同頂層／4子PASS、零SKIP／OOM；200張既有完整PNG逐byte保持。正式Go與九份JSON仍等於e939db2，schema0.18.0／content0.1.90、canonical9d6325ad保持。最近完整game／internal／THE END／desktop仍為e939db2。

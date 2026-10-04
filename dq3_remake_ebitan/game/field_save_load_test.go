@@ -35,7 +35,7 @@ func settleFieldSaveLoad(t *testing.T, g *Game) {
 }
 
 func TestFieldSaveLoadDosgolemNormalInputComparison(t *testing.T) {
-	runFieldSaveLoadNormalInputComparison(t, false)
+	runFieldSaveLoadNormalInputComparison(t, false, false)
 }
 
 func TestFieldSaveLoadAfterLoadMoveDosgolemNormalInputComparison(t *testing.T) {
@@ -44,10 +44,19 @@ func TestFieldSaveLoadAfterLoadMoveDosgolemNormalInputComparison(t *testing.T) {
 		t.Skip("optional private dosgolem normal movement after F6")
 	}
 	t.Setenv("DQ3_FIELD_SAVE_LOAD_ORACLE_DIR", dir)
-	runFieldSaveLoadNormalInputComparison(t, true)
+	runFieldSaveLoadNormalInputComparison(t, true, false)
 }
 
-func runFieldSaveLoadNormalInputComparison(t *testing.T, afterLoad bool) {
+func TestFieldSaveLoadComparableSlotsDosgolemNormalInputComparison(t *testing.T) {
+	dir := os.Getenv("DQ3_AFTER_LOAD_MOVE_ORACLE_DIR")
+	if dir == "" {
+		t.Skip("optional private dosgolem comparable initial slot metadata")
+	}
+	t.Setenv("DQ3_FIELD_SAVE_LOAD_ORACLE_DIR", dir)
+	runFieldSaveLoadNormalInputComparison(t, true, true)
+}
+
+func runFieldSaveLoadNormalInputComparison(t *testing.T, afterLoad, comparableSlots bool) {
 	t.Helper()
 	dir, out := os.Getenv("DQ3_FIELD_SAVE_LOAD_ORACLE_DIR"), os.Getenv("DQ3_FIELD_SAVE_LOAD_RECEIPT_DIR")
 	if dir == "" {
@@ -100,6 +109,13 @@ func runFieldSaveLoadNormalInputComparison(t *testing.T, afterLoad bool) {
 				t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "field-save.json"))
 				before := g.snapshot()
 				rng := g.prng
+				var initialSlotMetadata []map[string]any
+				if comparableSlots {
+					initialSlotMetadata = prepareFieldSaveSlotMetadata(t, g, before)
+					if !equalFieldSave(before, g.snapshot()) || g.prng != rng {
+						t.Fatal("external slot fixture changed running game")
+					}
+				}
 				var saved saveState
 				var samples []map[string]any
 				idle := InputState{DirHeld: -1, DirEdge: -1}
@@ -217,7 +233,7 @@ func runFieldSaveLoadNormalInputComparison(t *testing.T, afterLoad bool) {
 						t.Fatal(e, ce)
 					}
 					diff := sourceCanvasDifference(t, g, path, fmt.Sprintf("%s-packet-%03d-%s.png", route.prefix, n, s["phase"]))
-					if n == 194 || n == 196 || n == 197 || n == 200 {
+					if n == 194 || n == 196 || n == 197 || n == 200 || comparableSlots && n == 195 {
 						if diff != 0 {
 							t.Fatalf("same-state whole RGB differs at %d: %d", n, diff)
 						}
@@ -248,7 +264,11 @@ func runFieldSaveLoadNormalInputComparison(t *testing.T, afterLoad bool) {
 				if g.px != 1 || g.py != 18 || g.fieldSaveLoad.active {
 					t.Fatal("normal next field step")
 				}
-				report := map[string]any{"source_sha256": route.hash, "pack_schema": g.pack.Schema(), "pack_hash": g.pack.ContentHash(), "normal_input_prefix": 193, "normal_final_packet": route.packets, "rng_unchanged": true, "native_f5_f6": roundtrip, "normal_after_load_movement": afterLoad, "samples": samples, "initial_storage_same_state": false, "limitation": "original PLAYER.DAT contains ten prior entries; remake starts with no JSON saves; whole RGB slot differences retained; no full V3 claim"}
+				limitation := "original PLAYER.DAT contains ten prior entries; remake starts with no JSON saves; whole RGB slot differences retained; no full V3 claim"
+				if comparableSlots {
+					limitation = "initial visible slot metadata matches PLAYER.DAT via exact CHINA.FON/FON bitmaps; other saved worlds are not equivalent; no DOS binary import or full animation timing parity"
+				}
+				report := map[string]any{"source_sha256": route.hash, "pack_schema": g.pack.Schema(), "pack_hash": g.pack.ContentHash(), "normal_input_prefix": 193, "normal_final_packet": route.packets, "rng_unchanged": true, "native_f5_f6": roundtrip, "normal_after_load_movement": afterLoad, "samples": samples, "initial_storage_same_state": false, "initial_slot_metadata_same_state": comparableSlots, "initial_slot_metadata": initialSlotMetadata, "limitation": limitation}
 				b, e := json.MarshalIndent(report, "", "  ")
 				if e != nil {
 					t.Fatal(e)
