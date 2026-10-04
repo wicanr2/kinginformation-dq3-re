@@ -308,6 +308,19 @@
       "consumer": "190 DGROUP5077為1→104CD→105BC；原生主角插值，EOF同包540",
       "review_reference": "docs/188：2026-10-04 空Join與單人Leave有限READY；不外推非空分離、滿隊或完整V3",
       "dynamic_evidence": "work/dosgolem-opening/issue4-empty-leave-normal-r1-source-r1-receipt.json SHA256 df05d0d4e61ff06c3ced99c9939c180ac9d8116305e31012f33c5350ba4d0ffb；193正常包／462IRQ1；IDA298條目a1f0f62a"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x103c0",
+      "file_offset": "0x1730",
+      "bytes": "ebb6",
+      "semantic": "空Join及單人Leave選Yes返回528父問題及初始選單",
+      "inference_level": "confirmed",
+      "consumer": "兩路191 DGROUP0722非2→103C0→10378 record528→10384選單；再選同動作→No→196field，角色與名冊保持",
+      "review_reference": "docs/188：2026-10-04 空清單Yes有限READY；不外推滿隊、非空分離、音訊或完整V3",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-empty-join-yes-normal-r1-source-r1-receipt.json SHA256 f56419c0113c6f895b71f9e287550c1c7d9e477e76172ddabc48038f3d3c3777；Leave d8c6c47d82a6adb67a08dd236f9b175c4f217521938f41838c78b619d23274ef；196正常包／468IRQ1；IDA298條目a4deee0a"
     }
   ]
 }

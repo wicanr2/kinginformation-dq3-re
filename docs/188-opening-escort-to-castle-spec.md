@@ -3974,3 +3974,41 @@ IDA Pro9.4窄查298條目，輸入assets_raw/DQ3.EXE115282bytes／SHA-256 `5178f
 驗證環境紀錄：首輪三個大型來源測試同時跑，3GiB容器的memory.events記錄oom_kill5，五項exit−9且無產品assertion。保留首輪log及收據，以同一binary、同一工具鏈逐一重跑五項全部PASS，重跑容器oom_kill0；其他已綠項目不重跑。首次編輯命令的換行escaping亦造成SyntaxError、尚未執行寫入；改檔案化容器腳本後完成，不記為產品缺陷。
 
 公開producer與checker即本次實際原版執行與接受工具，由本節DRAFT索引；遷移器由docs/84及READY索引。原版素材、PNG、EXE、database與私有work不加入Git。下一步空清單Yes正常續行；非空分離、滿隊、其他裝備、多角色改名、原版Save／Load、音畫及完整原版campaign仍未知。Issue與Goal保持進行中。
+
+# 2026-10-04 空Join與單人Leave的Yes續行：DRAFT
+
+從c572ab3依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5979001959)續行。正常新遊戲、姓名取消、下樓，選空Join或單人Leave，再選Yes、重選同一動作、No與告別確認；不注入角色、名冊或場景狀態。
+原版固定dosgolem2f44a68，seed1357在冷啟動前只固定一次。來源與正式測試分開接受；完整RGB不裁切、遮罩或指定人物相位。
+
+既有IDA9.4窄匯出 `work/issue4-empty-recruit-r2-ida.json` SHA-256 `a4deee0a4291fa5d00ff264e47aa4d78e951f91b711f85781dcfa31adf83ea11`，298條目、原始bytes／MZ relocation符合。輸入assets_raw/DQ3.EXE115282bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。linear位址；file=linear−EC90，DGROUP基底linear24DD0。
+
+- strong：103B9比較DGROUP0722與2，非No經103C0(file1730，bytesEBB6)回10378(file16E8，bytesBF1002)，重新選record528，1037B呼叫21414後10384進選單consumer1F4E3。空清單正常Yes動態尚待閉合。
+- confirmed於前一空No來源：Join的530／316及單人Leave的542至540，不包含本輪Yes或重複第二輪。26筆既有ledger保持，不因靜態相同就升格新分支。
+
+公開正常重生入口[dosgolem_recruitment_empty_yes_probe.py](../tools/dosgolem_recruitment_empty_yes_probe.py)，在本文件既有Docker與唯讀原始素材／固定dosgolem掛載下，以`--action join`或`leave`及全新`--prefix`執行。沿已接受producer的正常前綴，只增加可見按鍵與只讀觀察；來源接受前不改production。
+
+來源稽核入口[verify_dosgolem_recruitment_empty_yes.py](../tools/verify_dosgolem_recruitment_empty_yes.py)，依序傳原版產物目錄、`join`或`leave`、實際producer及全新receipt。固定本輪已執行的Go／binary身份，逐包核對實際IRQ、文字consumer、兩輪入口與返回、角色、PNG／bin及父來源；來源接受與正式parity分開記錄。
+
+## 空清單Yes：證據審查與有限 READY
+
+兩條正常196包／468 IRQ1來源已接受：Join `work/dosgolem-opening/issue4-empty-join-yes-normal-r1-source-r1-receipt.json` SHA-256 `f56419c0113c6f895b71f9e287550c1c7d9e477e76172ddabc48038f3d3c3777`；Leave `work/dosgolem-opening/issue4-empty-leave-yes-normal-r1-source-r1-receipt.json` SHA-256 `d8c6c47d82a6adb67a08dd236f9b175c4f217521938f41838c78b619d23274ef`。實際公開producer479f0829與兩側完整Go／binary身份固定；前190包、456 IRQ1及PNG／bin等於各自前一No來源，174份母親父來源保持。沒有重擲或状态注入。
+
+- confirmed：191確認Yes，103B9讀DGROUP0722非2，103C0→10378重新選528，10384再次進原始三項選單。原生D3TXT00 bank2826，初始游標回1；不重播527問候、不退出場景或重新建立角色。
+- confirmed：Join192再進103D7、先530，10974計數零，1046A再次316內文等待；193新確認後540。Leave192只移游標，193再次104C4讀隊伍數1、105BC選542主角姓名，EOF同包540。194選No、195選541獨立等待、196確認返回field1997C、2,18。
+- confirmed：兩輪與Yes返回入口，名冊12旗標020000000000000000000000、DGROUP5077為1、四個隊伍指標穩定；主角128bytes、金錢及旗標從150保持。兩條actor與caller證據不外推非空分離、滿隊、原版Save／Load、音訊或完整V3。
+- READY：沿既有ContinueTextID、具名rcAgain→文字→rcMenu，Yes只消費這次選擇；父問題EOF後停選單，游標重設0，不同一輸入再開Join或Leave。後續正常動作沿前一已CONFORMED空分支。共用文字保留既有已畫操作與捲動，不要求記憶體物件指標相同。正式輸入、全RGB、snapshot／RNG、同版本存讀檔與下一步分別驗收。
+- 本輪沒有新資料欄位或規則，先驗既有schema0.17.0／content0.1.89及canonical4b235d63。若正式重播不符，回到證據與READY修正，不猜補production值。
+
+新增元件測試首版以指標相等代替文字內容保留而RED。`appendRetainedRecord`明確建立新狀態物件，沿用原有ops；改成核對已畫操作前綴，保留 `work/issue4-empty-yes-baseline-r1/` 紅測試。三條既有空No正常測試保持GREEN。這是測試判準訂正，未動正式程式；正常Yes來源另行驗收。
+
+## 空清單Yes：有限 CONFORMED
+
+- 既有正式狀態機與pack符合兩條原版196包。191的Yes只重播528並重設父選單游標；Join192／193與Leave192／193分別等待或選擇，194 No、195告別獨立等待、196行走。持久snapshot／RNG、同版本Save／Load與下一步通過。正式Go與九份JSON不變，schema0.17.0／content0.1.89及canonical4b235d63保持；本輪未新增產品修正或發行包。
+- 34受影響頂層／25子PASS、零SKIP；沒有素材缺失SKIP。最近完整game466及全部11個internal、正常THE END253.74秒、desktop為c572ab3，按比例未重跑無關套件。收據 `work/issue4-empty-yes-retry-r1/game-receipt.json` SHA-256 `a99f0d9bd92ab6eb3992b9e5e52f2ce458f26fb09f925f7e8f884b23ad4079f8`。
+- 十一條重生舊路695張PNG逐byte保持，新兩路各47張，150..190等於各自No路線。兩路187..195完整RGB各295；196返回Join411、Leave0。全畫布未裁切、遮罩、重擲或指定phase；狀態E2／流程E3、畫面V2，完整V3仍RED。收據 `work/issue4-empty-yes-images-r1.json` SHA-256 `665b2b6ceab7ec806f8ac87c9d6213b5fc18864e18bd5776749fd12b664833a7`。
+- 兩條來源各八種壞樣本拒絕，正對照前後相同；收據 `work/issue4-empty-yes-audit-r1.json` SHA-256 `f069ba2d53d3339520104545dda1b9dbb636fa5656118a62e127e9cc32eda1e7`。來源checker固定本節Go／binary，冷啟動重生沿相同已接受前綴及全新可寫輸出、唯讀父來源；不只改metadata身份來接受新來源。
+- 原始定位ledger保留26筆，追加103C0有限confirmed；IDA9.4自動合併27筆、298條目bytes／MZ relocation全符合。匯出 `work/issue4-empty-yes-r1-ida.json` SHA-256 `7c2a987cc2a9e957dcd5cf1858cb25bcf886123fccc37abb34bac5f69712ea08`；輸入與linear／file／DGROUP基準沿本節READY，不改原始名稱與位址。
+
+驗證環境訂正：改名三條路線在同一程序累積記憶體，3GiB容器記錄oom_kill1、exit−9；按既有已驗證方式分成run2／4／5三個程序，以同一binary全部PASS。一般關頁鍵漏設共用角色咒文來源環境變數而SKIP，補齊後實際PASS；重跑容器oom_kill0。保留首輪log與收據，不把環境或測試判準錯誤當產品缺陷。
+
+下一步正常招募主選單Esc：既有IDA10387比較DGROUP0726取消flag，1038C跳103C2告別與獨立讀鍵；目前remake直接關閉。這仍為待正常來源的強推論，不先改production。原版Save／Load、非空分離、滿隊、其他裝備、多角色改名、音畫及完整原版campaign仍未知；Goal與Issue保持進行中。

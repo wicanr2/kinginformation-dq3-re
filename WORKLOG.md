@@ -1518,3 +1518,14 @@ Docker檢查需主機權限，依既有隔離規則續做；一次性容器已�
 - README穩定摘要補正過期schema／content，唯一現況表、docs/74、PROJECT_MEMORY與WORKLIST更新。新公開producer、checker、遷移器均有docs/188或docs/84入口；無新文件或交付目錄。下一步空清單Yes正常續行，非空分離、滿隊與音畫仍待來源，維持driver／ISR停止線。
 - 使用者13項scratch及本機資產保留。提交、推送、擁有權與Docker清理以本輪收尾收據及Issue最終留言為準；Goal與Issue不宣稱完成。
 - 收尾腳本首次將收據寫到唯讀`/repo/work`而失敗；檢查項目已跑完，未改產品檔案。輸出改為明確可寫掛載`/work`後，以同一容器工具鏈乾淨重跑收尾檢查。
+
+## 2026-10-04 空清單Yes正常續行
+
+- 從c572ab3依Issue #4續行。兩條正常冷啟動來源各196包／468 IRQ1，前190包及PNG/bin等於各自空No；seed1357在執行前固定一次，無狀態或名冊注入。Joinf56419c0、Leaved8c6c47d。
+- 191原生103C0→10378重播528及10384選單，游標歸首；再選同動作→194 No→195告別→196正常行走。名冊、隊伍指標、主角、金錢及旗標保持。有限READY後正式InputState、snapshot／RNG、同版本存讀檔與下一步通過；既有狀態機吻合，沒有產品規則或資料變更。
+- 34受影響頂層／25子PASS、零SKIP。十一條重生舊路695張PNG保持，新兩路各47張；187..195完整RGB各295，196 Join411、Leave0。完整V3仍RED。九份JSON與c572ab3逐byte相同，schema0.17.0／content0.1.89、canonical4b235d63保持；沒有新發行包或存檔遷移。
+- 兩條各八種壞來源拒絕，前後正對照相同；原始定位保留26筆並追加103C0有限confirmed，IDA9.4自動合併27筆、298條目bytes及MZ relocation核對，收據7c2a987c。完整來源、驗收、負例與圖片收據見docs/188本節CONFORMED。
+- 測試判準訂正：首版新增元件誤把文字保留等同物件指標相等；查明appendRetainedRecord新建狀態並沿用ops，改核對操作前綴，保留紅測試。三條既有空No保持；不為此改production。
+- 環境失敗：觀察尚空日誌誤取末行引發IndexError，後加空值guard；程式搜尋遇名稱以.go結尾的目錄，已有輸出的直接函式足以定位真因。改名三條同程序累積記憶體OOM1，改既有分程序方式，同一binary全PASS；A鍵漏設共用來源環境變數SKIP，補齊後實際PASS，重跑oom_kill0。沒有重新啟動活躍來源或調正式參數。
+- 本輪按比例只重跑受影響招募驗證，最近完整game466、全部11個internal、正常THE END253.74秒與desktop為c572ab3，不冒稱本輪全套重跑。唯一現況表、docs/74、PROJECT_MEMORY及WORKLIST更新；新producer／checker在docs/188索引。
+- 下一個具體玩家路徑為招募主選單Esc，原始取消flag分支與告別已定位但正常動態仍待驗；其他原版流程、音畫與完整V3未知，driver／ISR停止線維持。使用者13項資料、原版素材與私有work保留；提交、推送及Docker清理以收尾收據和Issue最終留言為準。

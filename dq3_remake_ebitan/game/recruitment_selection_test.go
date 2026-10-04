@@ -25,9 +25,21 @@ func TestRecruitmentEmptyLeaveDosgolemNormalInputComparison(t *testing.T) {
 	runRecruitmentEmptyNormalInputComparison(t, "leave", "issue4-empty-leave-normal-r1-source-r1-receipt.json", "df05d0d4e61ff06c3ced99c9939c180ac9d8116305e31012f33c5350ba4d0ffb", "issue4-empty-leave-normal-r1", 193, 190, 190)
 }
 
-func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, sourceHash, prefix string, packets, openPacket, againPacket int) {
+func TestRecruitmentEmptyJoinYesDosgolemNormalInputComparison(t *testing.T) {
+	runRecruitmentEmptyNormalInputComparison(t, "join", "issue4-empty-join-yes-normal-r1-source-r1-receipt.json", "f56419c0113c6f895b71f9e287550c1c7d9e477e76172ddabc48038f3d3c3777", "issue4-empty-join-yes-normal-r1", 196, 189, 190, true)
+}
+
+func TestRecruitmentEmptyLeaveYesDosgolemNormalInputComparison(t *testing.T) {
+	runRecruitmentEmptyNormalInputComparison(t, "leave", "issue4-empty-leave-yes-normal-r1-source-r1-receipt.json", "d8c6c47d82a6adb67a08dd236f9b175c4f217521938f41838c78b619d23274ef", "issue4-empty-leave-yes-normal-r1", 196, 190, 190, true)
+}
+
+func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, sourceHash, prefix string, packets, openPacket, againPacket int, yesLoop ...bool) {
 	t.Helper()
 	envAction := map[string]string{"view": "VIEW", "join": "JOIN", "leave": "LEAVE"}[action]
+	continuing := len(yesLoop) > 0 && yesLoop[0]
+	if continuing {
+		envAction += "_YES"
+	}
 	dir := os.Getenv("DQ3_RECRUIT_EMPTY_" + envAction + "_ORACLE_DIR")
 	if dir == "" {
 		t.Skip("optional private dosgolem empty-view oracle")
@@ -119,26 +131,60 @@ func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, 
 				t.Fatal("empty View changed persistent state or RNG")
 			}
 		}
-		switch n := i + 1; {
-		case n >= 188 && n < openPacket:
-			if !g.recruit.active || g.recruit.stage != rcMenu || g.recruit.cursor != i-187 {
-				t.Fatal("normal menu differs")
+		n := i + 1
+		if continuing && n >= againPacket {
+			switch {
+			case n == againPacket || n == againPacket+3 || n == againPacket+4:
+				cursor := 0
+				if n == againPacket+4 {
+					cursor = 1
+				}
+				if !g.recruit.active || g.recruit.stage != rcAgain || g.recruit.cursor != cursor {
+					t.Fatal("empty Yes loop must stop at distinct continue choice")
+				}
+			case n == againPacket+1:
+				if !g.recruit.active || g.recruit.stage != rcMenu || g.recruit.cursor != 0 {
+					t.Fatal("Yes must replay parent question and reset menu cursor")
+				}
+			case n == againPacket+2:
+				if action == "join" {
+					if g.recruit.stage != rcText || !g.recruit.dialogue.waitingForConfirm() {
+						t.Fatal("repeated Join must keep hint inline wait")
+					}
+				} else if g.recruit.stage != rcMenu || g.recruit.cursor != 1 {
+					t.Fatal("repeated Leave must remain in menu until separate confirmation")
+				}
+			case n == againPacket+5:
+				if !g.recruit.active || g.recruit.stage != rcFinalWait {
+					t.Fatal("repeated No requires independent farewell wait")
+				}
+			case n == againPacket+6:
+				if g.recruit.active {
+					t.Fatal("empty Yes loop did not return to field")
+				}
 			}
-		case n == openPacket && openPacket < againPacket:
-			if g.recruit.stage != rcText || !g.recruit.dialogue.waitingForConfirm() || g.recruit.viewFlow != nil {
-				t.Fatal("empty selection must display record with one inline wait")
-			}
-		case n == againPacket || n == againPacket+1:
-			if g.recruit.stage != rcAgain || g.recruit.cursor != n-againPacket {
-				t.Fatal("empty selection must finish hint and ask continue")
-			}
-		case n == againPacket+2:
-			if !g.recruit.active || g.recruit.stage != rcFinalWait {
-				t.Fatal("farewell separate wait missing")
-			}
-		case n == againPacket+3:
-			if g.recruit.active {
-				t.Fatal("empty View did not return to field")
+		} else {
+			switch {
+			case n >= 188 && n < openPacket:
+				if !g.recruit.active || g.recruit.stage != rcMenu || g.recruit.cursor != i-187 {
+					t.Fatal("normal menu differs")
+				}
+			case n == openPacket && openPacket < againPacket:
+				if g.recruit.stage != rcText || !g.recruit.dialogue.waitingForConfirm() || g.recruit.viewFlow != nil {
+					t.Fatal("empty selection must display record with one inline wait")
+				}
+			case n == againPacket || n == againPacket+1:
+				if g.recruit.stage != rcAgain || g.recruit.cursor != n-againPacket {
+					t.Fatal("empty selection must finish hint and ask continue")
+				}
+			case n == againPacket+2:
+				if !g.recruit.active || g.recruit.stage != rcFinalWait {
+					t.Fatal("farewell separate wait missing")
+				}
+			case n == againPacket+3:
+				if g.recruit.active {
+					t.Fatal("empty View did not return to field")
+				}
 			}
 		}
 		if i+1 >= 150 {
@@ -177,7 +223,7 @@ func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, 
 	if g.px != 1 || g.py != 18 || g.recruit.active {
 		t.Fatal("next step after Load")
 	}
-	report := map[string]any{"source_sha256": fmt.Sprintf("%x", sha256.Sum256(raw)), "pack_schema": g.pack.Manifest.SchemaVersion, "pack_hash": g.pack.ContentHash(), "original_packets": packets, "action": action, "scope": "normal empty selection finite state parity; full RGB differences retained", "save_load_next_step": true, "samples": samples}
+	report := map[string]any{"source_sha256": fmt.Sprintf("%x", sha256.Sum256(raw)), "pack_schema": g.pack.Manifest.SchemaVersion, "pack_hash": g.pack.ContentHash(), "original_packets": packets, "action": action, "yes_loop": continuing, "scope": "normal empty selection finite state parity; full RGB differences retained", "save_load_next_step": true, "samples": samples}
 	data, e := json.MarshalIndent(report, "", "  ")
 	if e != nil {
 		t.Fatal(e)
@@ -488,6 +534,53 @@ func TestRecruitmentEmptyJoinLeaveSequencePreservesState(t *testing.T) {
 			g.recruitInput(InputState{DirEdge: -1, Enter: true})
 			if rc.active || len(g.roster) != 0 || len(g.companions) != 0 || g.prng != rng || !reflect.DeepEqual(g.heroName, []int{0, 1}) {
 				t.Fatal("empty action changed persistent state")
+			}
+		})
+	}
+}
+
+func TestRecruitmentEmptyContinueYesRetainsTextAndState(t *testing.T) {
+	for _, action := range []string{"join", "leave"} {
+		t.Run(action, func(t *testing.T) {
+			g := &Game{heroName: []int{0, 1}}
+			configureRecruitmentEntryFixture(t, &g.recruit)
+			rc := &g.recruit
+			rc.active, rc.stage = true, rcMenu
+			if action == "leave" {
+				rc.cursor = 1
+			}
+			rng := g.prng
+			g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			drainRecruitmentSelectionText(t, rc)
+			if rc.stage != rcAgain || rc.cursor != 0 {
+				t.Fatal("first empty action did not ask continue")
+			}
+			canvas := append([]retainedTextOp(nil), rc.dialogue.retained.ops...)
+			g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			if rc.stage != rcText || rc.afterText != rcMenu || rc.dialogue.retained == nil || !reflect.DeepEqual(rc.dialogue.retained.ops, canvas) {
+				t.Fatal("Yes must retain current text and consume only this choice")
+			}
+			drainRecruitmentSelectionText(t, rc)
+			if rc.stage != rcMenu || rc.cursor != 0 || rc.dialogue.retained == nil || len(rc.dialogue.retained.ops) < len(canvas) || !reflect.DeepEqual(rc.dialogue.retained.ops[:len(canvas)], canvas) {
+				t.Fatal("Yes must reset menu without opening another action")
+			}
+			if action == "leave" {
+				g.recruitInput(InputState{DirEdge: 0})
+			}
+			g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			drainRecruitmentSelectionText(t, rc)
+			if rc.stage != rcAgain || rc.cursor != 0 || rc.dialogue.retained == nil || len(rc.dialogue.retained.ops) < len(canvas) || !reflect.DeepEqual(rc.dialogue.retained.ops[:len(canvas)], canvas) {
+				t.Fatal("second empty action must return to separate continue choice")
+			}
+			g.recruitInput(InputState{DirEdge: 3})
+			g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			drainRecruitmentSelectionText(t, rc)
+			if rc.stage != rcFinalWait || !rc.active {
+				t.Fatal("second No must keep farewell until another key")
+			}
+			g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			if rc.active || len(g.roster) != 0 || len(g.companions) != 0 || g.prng != rng || !reflect.DeepEqual(g.heroName, []int{0, 1}) {
+				t.Fatal("empty Yes loop changed persistent state")
 			}
 		})
 	}
