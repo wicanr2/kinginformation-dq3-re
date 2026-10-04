@@ -3403,3 +3403,60 @@ runtime及log在`work/issue4-recruit-join-production-r2-full/`與最終`-r4-focu
 全套結果統計一度預設SKIP47而拒絕，實際是48；只修統計腳本，不放寬任何產品斷言或重跑挑結果。
 原版素材、OGG、ROM、PNG、binary及database不加入Git；私有staging短曲入口見docs/84。
 下一步繼續共用人物動畫及後續正常節點，已閉合文字不重開；driver／ISR停止線維持。
+
+### 2026-10-04 人物差異的原始影格與底圖核對
+
+依Issue #4留言5976184810，續查正式78d84b1的共用295像素差異。
+公開入口為[人物差異驗證工具](../tools/verify_dq3_recruitment_sprite_raster.py)。
+工具只讀原始素材、既有dosgolem來源及正式完整PNG，不改影格、不產生替代畫面。
+本節證實差異來源，不把正式動畫規格升為READY，也不宣稱畫面V3。
+
+| 原始輸入 | 大小 | SHA-256 |
+|---|---:|---|
+| assets_raw/DQ3MST.BLS | 115206 | a1a48eaf6c13ae73472d5ff77769fa538c19e048c24496d20218a89f3230f244 |
+| assets_raw/DQ3MAN.BLS | 222726 | 823f57e0724e36ac8ed1aa472f59d2e8fb059f171e05e3aafc457e386f77158d |
+| assets_raw/CTY00.DAT | 7546 | ac8427c5fafcad4e29246dd3c2796c476bb5ad93e53dd7c7127a6b2faa31a836 |
+| assets_raw/DQ31.BLK | 65286 | 5996d95d743fb8e1fe8d3ad29c513f5241af2c3574cf9f652dce57ebd6ba3298 |
+
+原版使用已接受的cf0730f1來源，dosgolem2f44a68、原始EXE5178fdc8、seed1357固定一次。
+204個packet及其408份完整PNG／bin、原始log hash再次核對。收據normal_inputs=242包含前綴38次輸入，不能混作204個packet。
+260筆原始取圖觀察保持phase0004=1；原始IDA定位沿11ED0／11EE8與1E2FF／1E30B。
+只引用原始暫存器及先前已審查sidecar，不將BX或SI逕自改名為素材frame型別。
+本輪沒有重跑原版、調seed、重建database或改動dosgolem。
+
+| 玩家可見人物 | 原始素材frame索引 | 資料定位 | 無modal的差異 |
+|---|---|---|---:|
+| 主角 | DQ3MST.BLS 4與5 | 正常男性勇者、原始向上方向；取圖consumer為IDA linear1E2FF／1E30B | 182 |
+| 櫃台NPC | DQ3MAN.BLS 200與201 | CTY00.DAT(file)0x88的7bytes，sprite key29、raw direction0 | 106 |
+| 右下NPC | DQ3MAN.BLS 26與27 | CTY00.DAT(file)0x8F的7bytes，sprite key7、raw direction1 | 123 |
+
+上述frame索引屬於素材檔索引，不是IDA linear或原版DGROUP快取指標。
+每份BLS子影格480bytes，像素384bytes與遮罩96bytes；file範圍由工具逐份列入收據。
+每個人物的768個像素連同透明處，均與CTY原始tile4及DQ31.BLK底圖完整核對。
+色盤取原版bin與PNG的色號配對；沒有為未出現的色號補值。
+完整無modal194與204的三個人物區皆吻合原版影格1、remake影格0，差異合計411。
+櫃台外觀也能匹配素材432／433；CTY key29的載入契約限定200／201，不能靠外觀唯一性命名。
+
+正式樣本取自`work/issue4-recruit-join-production-r4-focused/yes/`，schema0.13.0及canonical19f6124c核對。
+完整640×350畫布逐點檢查194..204共11張。195..203的差異均為主角182、櫃台106、右下露出7，合計295。
+每個不同像素的兩側RGB都吻合原始兩影格與底圖。已知影格範圍外沒有差異，未解釋差異為0。
+這證實本次差異由人物取圖影格造成，排除本組圖像的色盤、遮罩及底圖問題。
+正式PNG仍差295／411，未裁切或遮罩驗收；逐點解釋不等於對拍通過。
+
+工具在dq3-ebiten-test:20260822-r1內以Python3.11、唯讀repo與UID1000可寫work執行。
+CLI依序傳入`--assets /repo/assets_raw`、`--original /repo/work/dosgolem-opening`、
+`--source-receipt /repo/work/dosgolem-opening/issue4-recruit-yes-r1-source-r1-receipt.json`、
+`--runtime /repo/work/issue4-recruit-join-production-r4-focused/yes`與不存在的`--output /work/<收據名>.json`。
+工具拒絕覆寫；既有來源、素材或pack身份不同須重新審查，不能放寬hash冒用來源。
+
+本機收據`work/issue4-sprite-raster-r2-receipt.json`，SHA-256
+`1ed19f6b9eefbd03ca02c2617a5c86c3d4ec1493160638c933d309f26d43b77e`。
+六種損壞隔離副本全部拒絕：人物範圍外差異、錯誤人物顏色、錯誤runtime相位、缺packet、錯誤差異數、損壞原始素材。
+前後正對照都通過。負例入口`work/issue4-sprite-raster-r1-negatives.py`，最終負例收據`-r2-negatives-receipt.json`，
+SHA-256`70b2a267549d33f733eaf9042e66a859b4e576a6b7f8bb6ccfa697bad6ca7e54`。
+初次探索誤用16px分組當24px人物原點及未出現色號7；改回正式TileH24與原始色號配對後重跑。
+首版工具把normal_inputs242誤當packet204而拒絕，只訂正欄位契約，不改原版輸入或證據。
+
+下一閘門仍是六次遊戲計數與逐consumer取圖的可比時序。先前總Ticks及整張一次latch原型已被反證，不能再用。
+正式Go、pack及存檔格式本輪保持。最近全套回歸仍為78d84b1，不因診斷工具新增而重跑未變產品全套。
+本輪不深挖PIT／ISR。其他人物、畫面、原版播放返回與存讀檔仍未接受。

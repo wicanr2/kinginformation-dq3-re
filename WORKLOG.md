@@ -1424,3 +1424,17 @@ game443覆蓋，395頂層／91子PASS、48選用SKIP；internal161頂層／11套
 九份JSON保留既有排版，前後語意及canonical相同。r5全套、r6最終嵌入排版與r7實際名字ops斷言的受影響測試由各自收據保存。
 Issue進度5976023866；提交、推送與遠端結果由final收據追加。本機音源與使用者scratch保持，不建立新發行包。
 現況見CONTEXT，原始定位與重生入口見docs/188，欄位及私有音源staging見docs/84；後續不重開已完成文字或深入driver／ISR。
+
+## 2026-10-04 正常招募人物差異的原始影格核對
+
+接續78d84b1與Issue #4留言5976184810。新增唯讀工具`tools/verify_dq3_recruitment_sprite_raster.py`，入口掛入docs/188。
+核對已接受cf0730f1來源的204包、408份PNG／bin及log身份，沿正式r4-focused的11張正常完整畫面診斷。
+原始BLS兩影格連同CTY／BLK底圖逐點吻合；主角182、櫃台106、右下123合計411，開窗後右下露出7，合計295。
+全部完整畫布差異都可由原始影格解釋，這組樣本的色盤、遮罩及底圖吻合。正式PNG差異保持，沒有替代圖片或遮罩驗收。
+六種損壞副本拒絕，前後正對照通過；輸出拒絕覆寫，工具hash、語法與UID/GID核對。
+初版工具把normal_inputs242誤當204包而拒絕，已依原始欄位訂正；原版、輸入與素材保持。
+本機收據`work/issue4-sprite-raster-r2-receipt.json`、`-r2-negatives-receipt.json`及`-r3-final-audit.json`。
+收尾首次把root-owned的.md檔列作.md目錄，改分開find查詢；既有root-owned3213保持，.md目錄為0。
+Docker檢查需主機權限，依既有隔離規則續做；一次性容器已清理，其他專案容器保持。
+本批正式Go、pack與存檔格式保持，最近全套回歸仍78d84b1；動畫時序DRAFT與完整V3未通過。
+依已授權commit + push保存工具與證據，提交及遠端結果追加Issue；原版素材、PNG、binary與使用者13項scratch不加入Git。

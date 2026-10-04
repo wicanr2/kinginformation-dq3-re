@@ -12,6 +12,10 @@ game443項覆蓋，395頂層及91子PASS，48選用SKIP；internal161頂層、11
 本批沒有新發行包。舊schema存檔維持拒絕、不自動遷移。下一步追共用人物動畫差異與後續正常玩家路徑，維持硬體driver／ISR停止線。
 唯一目前狀態表在CONTEXT；證據、READY、正常重播與私有音源入口見docs/188，欄位契約見docs/84。
 
+本輪已用原始BLS影格、CTY與BLK底圖逐點解釋11張正常招募完整畫面的全部295／411差異。
+差異來自人物影格，這組樣本的色盤、遮罩與底圖吻合。正式動畫取圖時序仍DRAFT，未改Go或pack。
+公開核對入口為`tools/verify_dq3_recruitment_sprite_raster.py`，來源、六種損壞拒絕及限制見docs/188最新節。
+
 以下日期化段落保存前一checkpoint，不取代本輪現況與CONTEXT的唯一狀態表。
 
 2026-10-04目前現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
@@ -150,7 +154,7 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 | 最新原版oracle | 正常No／Yes／文字來源保持；新d0f6428d的199包／474IRQ1／398完整PNG與bin逐項等於a6abd32b。97bytes完整copy與名冊索引覆寫已證實；536／538插名為新角色，537本路線為主角。只到208E2音樂等待入口，原版完整返回未接受 |
 | 最新畫面已驗 | 正式正常199，198及199完整各差295，由原先缺536的3028下降；入隊50、No52、Yes55完整PNG逐byte保持。不同名字實際文字消費PASS；OGG4.801837秒及FM完整樣本、非靜音PASS |
 | 最新畫面未通過 | 完整V3與人物動畫仍RED；原版199後返回與原版存讀檔未知。短曲時間採公開規格近似，FM／Roland合成音色未作原版波形或人耳驗收 |
-| 下一production切片 | 沿正常玩家入口繼續對拍共用人物取圖時序與後續節點；不重開已完成入隊文字、登錄或No／Yes，不調clock、指定phase或深入driver／ISR |
+| 下一production切片 | 11張正常招募完整差異已逐點閉合到原始人物影格；色盤、遮罩與底圖吻合。下一步建立六次遊戲計數與逐consumer取圖的可比時序，仍DRAFT；沿正常入口驗後續節點，不重開文字、不指定phase或深入driver／ISR |
 | 本輪登錄所有限READY | 536／537／538、底圖及單次音訊有限READY已正式接入；正常199有限E2／V2，remake等待完成及返回E3；原版動態返回與全幀V3未CONFORMED。540內Esc仍strong |
 | 原版oracle仍未知 | 入隊完整後續、播放未結束的根因及4000完整用途、分離、查看、其他登錄職業／性別、滿額替換、其他角色與完整名冊、可比亂數下的能力、健康色／status、鍵盤自動重複、圖層動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
 | 現行remake回歸 | game443覆蓋，395頂層／91子PASS、48選用SKIP；internal161頂層及11套件PASS、4選用SKIP；desktop；正常THE END107.13秒。本輪每項隔離程序，無素材缺失SKIP |
