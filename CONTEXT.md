@@ -1,5 +1,10 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-05 正常入隊短曲返回仍DRAFT。兩次dosgolem冷啟動均保持父來源199包全部事件及398份PNG／bin；r1被沿用的登錄guard停止，r2修正guard適用範圍後跑滿2,500,000,001指令，仍未觀察到自然返回。計時器由14472前進到17475，IRQ1保持474，沒有送出後續按鍵。這是有界觀察，不能判定產品或模擬器缺陷。
+兩項remake回歸含一子測試通過，50張runtime PNG逐byte保持。正式Go／pack仍為e939db2，未修改播放等待；完成checker正確拒絕不完整來源，沒有完成收據。既有IDA9.4的18筆玩家層等待bytes已核對，欄位writer與callee語意保留unknown。收據與停止線見docs/188；下一正常切片為合法193checkpoint的F6 Esc取消及後續行走。
+
+以下保存前一checkpoint，現況以本檔唯一狀態表及docs/188為準。
+
 2026-10-04 初始十槽可見資料已建立可比前置條件。原始PLAYER／CHINA.FON與現行字型逐byte核對；正常F5選槽195完整RGB為0，F6選槽199差123，全為窗外NPC15影格。這次消除的是測試初值差異，正式Go與pack保持e939db2。
 17命令、22筆PASS，9不同頂層／5子測試、零SKIP／OOM；200張舊PNG保持，新路線53張只有195／199因槽資料改變。完整存檔初值仍不等價，動畫時鐘與完整V3仍未知。來源、有限驗收及公開checker見docs/188；下一步正常入隊短曲播放完成後返回選單。
 
@@ -205,17 +210,18 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 正式路線回歸的收據與演進依 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)，
 詳見 [WORKLOG.md](WORKLOG.md)。下一步恢復原版創角後的 dosgolem 玩家路徑對拍。
 
-| 目前狀態（2026-10-04） | 最近驗收與界線 |
+| 目前狀態（2026-10-05） | 最近驗收與界線 |
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；正式F5/F6與獨立JSON槽。schema0.18.0／content0.1.90；canonical `sha256:9d6325addef6db4d6f4c049f44fe517e61d2a0550724c67d5ae7ec0f649a3917`；沒有新發行包 |
 | 最新remake已完成 | 可比初始十槽metadata的正常F5/F6至202包、snapshot／RNG、存讀檔與下一步；只新增測試與完整畫布checker，正式Go／pack保持e939db2 |
 | 最新原版oracle | 正常202包／480IRQ1來源363f8f70；94次1E307只讀consumer觀測，全部原有事件／PNG/bin/persistent/native存檔與71a52768保持 |
 | 最新畫面已驗 | F5選槽195完整RGB0；194／196／197／200仍0。F6選槽199全部123差異由原始NPC15完整圖塊／底圖解釋。200舊PNG保持，可比路線53張中的51張保持 |
 | 最新畫面未通過 | F6選槽199完整RGB123、201為356、202為122，均為人物影格；可比動畫時鐘未知。其餘九槽世界狀態未等價，不能宣稱原版完整存檔互通 |
-| 下一production切片 | 正常入隊短曲播放完成後返回選單；從已接受音樂等待入口續行，先證明完成與新按鍵。可比動畫時鐘仍DRAFT，不重跑同一phase-only樣本或深入硬體driver |
+| 下一production切片 | 合法193checkpoint的F6 Esc取消及後續正常行走，先取得原版來源。入隊音樂返回有界觀察未完成，保留DRAFT；不加時鐘特例、清旗標或深入硬體driver／ISR |
 | 本輪有限READY | 十槽可見姓名／level1／gender的有限契約與正常202包通過，F5選槽195限定V3。F6選槽與步行保持V2；其他九槽世界狀態與動畫時鐘未READY |
 | 原版oracle仍未知 | 其他world／室內F6、複數隊伍與其他等級經驗、完整多槽世界狀態、其他取消、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
-| 現行remake回歸 | 本輪17命令／22筆PASS，9不同頂層／5子測試，零SKIP/OOM；200舊PNG保持，4種壞raster來源拒絕。最近完整game478/11個internal/THE END201.00秒及desktop仍為e939db2 |
+| 現行remake回歸 | 本輪2命令、2不同頂層／1子PASS，零SKIP/OOM；50張招募PNG保持。原版r1／r2各398份前綴產物保持；不完整返回來源拒絕。最近完整game478/11個internal/THE END201.00秒及desktop仍為e939db2 |
+| 入隊返回原版限制 | r2在2,500,000,001指令上限仍為199包／474IRQ1，計時器前進3003；未觀察到自然caller返回。只核對18筆既有玩家層IDA bytes；2898 writer及22E10 callee語意unknown，未建立完成收據 |
 | 額外驗證限制 | F6依pack重設世界時鐘，engine／標題Load仍保留JSON時鐘；壞schema／hash／layer在restore前拒絕。舊存檔不自動遷移。綠色回歸不升格完整原版parity |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

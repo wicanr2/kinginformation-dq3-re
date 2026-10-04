@@ -4299,3 +4299,34 @@ IDA9.4有界sidecar `work/issue4-slot-metadata-r1-ida.json`260條目，SHA-256 `
 環境／腳本紀錄：初版checker將全部manifest當作單層路徑，後改相對路徑仍誤把Scratch掛在原版輸出目錄內。連續兩次失敗後重查dosgolem路由與既有source checker，原生Scratch實際位於輸出目錄的同層；依既有契約修正，同一命令乾淨重跑通過。PNG計數初輪只glob頂層，後改rglob確認53張；收據首寫誤用唯讀/repo掛載，改明示/work後通過。這些是驗證腳本問題，未修改產品或原版產物。
 
 下一合法垂直切片是正常入隊短曲播放完成後返回選單，從已接受的原生音樂等待入口續行，先證明完成與新按鍵再實作缺口。可比動畫時鐘、其他F6場景、複數隊伍、非空分離與完整campaign仍未知；不重跑已解釋的phase-only樣本，不深挖硬體driver／ISR，沒有新發行包。
+
+### 2026-10-04 入隊短曲完成後正常返回 DRAFT
+
+依Issue #4從正常199包、538返回與208E2音樂等待入口續行。[原版正常返回探針](../tools/dosgolem_recruitment_return_probe.py)沿已接受party來源d0f6428d的冷啟動、seed1357及輸入，保存199包完整畫面後繼續執行原始EXE。只在玩家層10459／1045E／10469／10398／103AE／103B6附加唯讀觀察；不改音樂完成旗標、CPU、phase、clock或等待。
+
+播放器返回後若正常到540選單，再用既有實際Right／Enter選No、541告別的新Enter返回場景。先完整核對199包前綴與角色副本保持，再接受自然完成及後續收據；未知分支不猜補。本輪不追driver／ISR，硬體時長與合成音色近似沿既有READY契約，不宣稱逐波形或wall-clock parity。
+
+沿固定dosgolem2f44a68、dq3-ebiten-test:20260822-r1，原版與repo唯讀，UID1000只寫既有work。執行入口為 `python3 /repo/tools/dosgolem_recruitment_return_probe.py`；輸出前綴issue4-recruit-return-r1，已有收據時拒絕覆寫。接受之前不改正式Go或pack。
+
+2026-10-05 r1在原版自然出現raw0013 bit4000時，被沿用的登錄所probe guard停止。這個停止點不能證明音樂完成或工具能力缺口；較早2812行的入隊線索亦記錄此旗標未知。前199包全部DQ3事件與398份PNG／bin逐byte等於d0f6428d；私人前綴收據`work/issue4-recruit-return-prefix-r1.json`保存這個有限結果。
+
+r2只把guard的適用範圍限制在原先前綴；199包後保留原生4000並唯讀記錄首次出現及有界進度，不清旗標。輸出改issue4-recruit-return-r2，r1 producer逐byte另存`work/issue4-recruit-return-r1-producer.py`。總指令上限2,500,000,001，沿原版工具相同時鐘，沒有調IRQ0參數；這是觀察界線，並非硬體wall-clock驗收。播放後控制流仍DRAFT，先取得自然返回或明確終態再判斷下一步。
+
+[獨立正常返回checker](../tools/verify_dosgolem_recruitment_return.py)固定r2 source／binary／producer雜湊，完整重驗父來源、全部199包DQ3事件與398份PNG／bin保持，並要求完整自然返回、後續正常按鍵、No與告別、202包／480IRQ1及404份產物。資料尚未到齊或控制流不符時失敗，不把前綴收據當作播放完成。CLI依序為原版目錄、producer、尚不存在的輸出收據，另明示`--assets`唯讀原版目錄；仍只能在相同有界Docker執行。此checker於DRAFT備妥，尚未通過實際來源驗收。
+
+### 2026-10-05 有界入隊返回觀察與停止線
+
+r2在2,500,000,001指令上限停止，原生程式仍在等待，未觀察到10459之後的caller返回。199包入口計時器14472，終態17475，前進3003；IRQ1仍474、record仍538，沒有送出後續Right／Enter。這只證明本次有界執行未自然返回，不證明產品或dosgolem缺陷，也不宣稱永遠不返回。終態IF=false不能單獨證明計時中斷遺失。
+
+兩次冷啟動的199包全部DQ3事件與各398份完整PNG／bin均等於父來源d0f6428d。r2 producer SHA-256為`a7eb2be1a4987af091fbb3ec52ef281cf385f8507df4d97181d6f753f1e3d092`，Go來源`aa3c7b92741325ccc69d7dd5c90f5a3ae2a36b5a4a557c9a56906a5a2a52b22f`，執行檔`0ec5657bb4473dc5d7d70dc7d57157822b89f038a7a1c292979cb50d038ab0ba`。目前公開producer輸出前綴為r2，上節r1是保留的歷史版本。兩側正常seed1357只固定一次；不宣稱跨流程骰序或角色隨機能力已等價。
+
+本輪只重驗既有IDA Pro9.4 sidecar的18筆原始bytes，輸入DQ3.EXE大小115282，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。範圍為IDA linear208E2至20911，file=linear−EC90；DGROUP基底linear24DD0。可逐byte回查`test word ptr ds:286Dh,3`、`mov ax,ds:2898h`、零判定與far call `sub_22E10`。原始欄位及callee語意保持unknown，20912分支不在本次核對範圍；不把2898改名為播放中，也不推論callee沒有讀鍵盤。未重新分析driver／ISR或改CPU／時鐘。
+
+公開checker對實際r2來源拒絕`normal return incomplete`，未建立`issue4-recruit-return-r2-source-r1-receipt.json`。目前只能驗證拒絕不完整來源，尚無自然完成來源的正對照，整段返回仍DRAFT。`TestRecruitmentJoinDosgolemNormalInputComparison`及`TestRecruitmentJoinLoadClearsAudioOnlyAfterValidation`通過，共2頂層／1子PASS、零SKIP／OOM，50張runtime PNG等於前輪。199之後的remake返回及存讀檔只屬內部回歸，不升格原版parity。
+
+| 私人收據 | SHA-256 |
+|---|---|
+| `work/issue4-recruit-return-review-r1.json` | `7d1f80cf0152702a219f86b4e9f580b69ff338e5b465460ca3ca13f484cf731b` |
+| `work/issue4-recruit-return-wait-review-r1.json` | `d016bd6522d9867992cda59ff3bfedf113190a60689ec53474899bd48b6517f5` |
+
+正式Go／pack保持e939db2，不依逾時猜改播放等待。停止硬體driver、ISR、DAC、PIT細節追查，不重跑相同有界樣本或調IRQ參數。下一正常垂直切片為已接受137411c7的合法193checkpoint：F6選槽按Esc取消，確認返回及後續正常行走。入隊完成oracle、可比動畫時鐘、其他F6場景、複數隊伍、非空分離與完整原版campaign保留未知；沒有新發行包。

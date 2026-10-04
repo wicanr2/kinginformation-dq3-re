@@ -1,5 +1,13 @@
 # DQ3 工作歷程
 
+## 2026-10-05：Issue #4 入隊返回有界觀察與停止線
+
+接續5559d72。正常入隊父來源199包、474IRQ1及398份PNG／bin在兩次冷啟動中逐byte保持。r1在原生raw0013 bit4000出現時被沿用的登錄guard停止，分類為probe適用範圍問題。r2只將guard限制在前199包，保留原生旗標，以同一工具時鐘跑滿2,500,000,001指令；計時器前進3003，仍未觀察到自然返回，沒有後續鍵盤輸入。
+
+核對既有IDA9.4的18筆玩家層等待bytes；原始運算元、位址與unknown分級保持，未追2898 writer或22E10 callee。遵守硬體driver／ISR停止線，不用清旗標、改時鐘或加等待特例補出結果。完成checker拒絕不完整來源，沒有完成收據；有限觀察不證明產品或模擬器缺陷。
+
+兩項remake回歸含一子測試通過，零SKIP／OOM，50張runtime PNG逐byte保持。正式Go／pack仍e939db2，最近完整game／internal／THE END／desktop不變。本輪工具、DRAFT與私人收據索引在docs/188；下一正常切片為合法193checkpoint的F6 Esc取消及行走，Issue與Goal保持進行中，沒有新發行包。
+
 ## 2026-10-04：Issue #4 可比十槽顯示資料與正常 F5/F6
 
 接續c01e44a。原始PLAYER的20bytes槽資料、CHINA.FON檔案位置與D3字模逐byte閉合，三個字模106／144／303唯一匹配。IDA9.4保留原始位址與260條目sidecar，raw gender1減1對應JSON0；沒有新增產品字型、資料格式或猜測設定。

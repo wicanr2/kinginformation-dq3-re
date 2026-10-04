@@ -1,11 +1,11 @@
 # DQ3 Go／Ebitengine 現行工作清單
 
-更新：2026-10-04。遠端 Issue 是本輪工作的權威；唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
+更新：2026-10-05。遠端 Issue 是本輪工作的權威；唯一詳細計畫仍是 [`docs/74`](docs/74-ebiten-remake-completion-plan.md)；
 本檔只保存可快速接手的目前順序，不收錄歷史 C/SDL 工作。
 
 | 本輪工作 | 狀態與驗證界線 | 權威入口 |
 |---|---|---|
-| 原版新遊戲／創角／母親開場 | 進行中：可比十槽metadata已驗，F5完整RGB0、F6差123全為NPC15影格。完整存檔初值與動畫時鐘未知。下一步正常入隊短曲播放完成後返回選單；現況只查CONTEXT | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/188](docs/188-opening-escort-to-castle-spec.md) |
+| 原版新遊戲／創角／母親開場 | 進行中：入隊短曲返回的有界原版觀察未完成，DRAFT，未改正式Go／pack。兩項回歸與50張PNG保持。下一步合法193checkpoint的F6 Esc取消及正常行走；現況只查CONTEXT | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/188](docs/188-opening-escort-to-castle-spec.md) |
 | 原版六幕開場 | 已完成本輪限定色號／RGB 對拍，其他相位與音訊未知 | [Issue #1（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)、[docs/196](docs/196-dosgolem-opening-sequence-parity.md) |
 | 正式玩家路線回歸 | 本輪完整game478覆蓋、431不同頂層／117子PASS、47選用SKIP；internal169／363及11套件PASS、4選用SKIP。正常THE END201.00秒、desktop PASS。原版完整動態對拍未知 | [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)、[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) |
 | 同伴持冠還冠持有權檢查 | 已由 fc78bb5 推送，原版局部靜態閉環、元件、正式還冠／辭位及存讀檔通過；原版動態路線待 dosgolem | [Issue #3（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)、[docs/82](docs/82-romaly-king-production-trace.md) |
