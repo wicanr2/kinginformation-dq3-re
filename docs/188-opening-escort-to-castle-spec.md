@@ -3797,3 +3797,39 @@ schema0.14.0／content0.1.86，canonical hash
 原版fixture缺頂層hash、raw格誤當字模、漏掛/assets_raw及檢查器誤將既有.md檔當目錄均屬驗證問題，保留歷史。
 原版、PNG、binary、資料庫及私有收據只留本機；UID1000、root-owned基線3213、零.md目錄及使用者13項資料保持。
 沒有新image或發行包，Issue #4與Goal保持進行中。
+# 2026-10-04 咒文詳細頁：證據審查與有限 READY
+
+本節承接 Issue #4。正式前版 `f823b61` 的第一個正常阻塞是第三職業男性登錄的第170包：原版停在咒文頁，remake 已進接受選單。以下規格只閉合初裝、無異常角色的咒文顯示與等待；多角色改名、其他裝備、全流程 V3 及原版存讀檔保持未知。
+
+| 證據 | 身分與範圍 |
+|---|---|
+| 原版輸入 | `assets_raw/DQ3.EXE`，115282 bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；`D3TXT00.TXT` 的完整 record 121–180、471–473 |
+| 主要分析 | IDA Pro 9.4，image `ida-pro-9.4-idapython:locked-v1`；`work/issue4-view-spells-r2-ida.json` SHA-256 `06f755d9a8d3209e48312591716670a695e3de90468ac43c3bb8d05e0a699b20`；166 指令 bytes 與 MZ relocation 核對。IDA linear；file=linear−EC90；DGROUP 基底 linear24DD0 |
+| 正常原版 | dosgolem `2f44a68ebfc54b28fb15dd4a34510b0b04a5415d`，冷啟動前固定 seed1357 一次。203包來源 SHA-256 `42ccf52f2b0e4a292059ede6f0c4cdcfde082db91aee446949fc5d0120c11caf`；209包來源 `3582f82a49c77ce8de770b8a64b7d0fbae78bc2c29e26a3464737ae848eae17f`，494 IRQ1、418 完整 PNG／bin |
+| 前綴與交易 | 前165包及330 PNG／bin保持前版來源，209來源前203包保持203來源；第172包才寫名冊。角色 raw+2E..31=`01000100`；兩類指向同一咒文 index40，union232D 僅一格，實際文字 record161。hero、金錢、旗標及名冊97bytes於觀看與返回保持 |
+| 原型審查 | `work/issue4-view-spells-prototype-r5/`，正式 InputState 走完209包與存讀檔續行。原版203與205完整能力圖相同。原型尚未接 production；其 raw ID／座標不得搬入共用 Go |
+
+原始定位與語意保持附加：`184A1` 計算四類已知咒文；`184C0` 清除60格集合；`184D1..18526` 透過指標表與 `185E4` 合併；`1853B..18566` 計算唯一數與列數。`18567→1F590` 建窗；`18573..185C1` 依 index 遞增、每列四欄顯示 record=index+79h；`185D7→2111B` 等待；`185DC→1F604` 還原能力窗；`10681` 接第二次 caller 讀鍵。上述非零咒文的有限玩家流程為 confirmed／D3；60項完整 catalog 與多列公式為原始資料及 consumer 的 D2，不宣稱其他角色的正常動態 V3。
+
+READY 契約：
+
+- typed `character_spells` 放在版本化 interface，含原始窗口、header／row／footer 的穩定 text ID、四欄 catalog 的 raw record→text ID、文字起點與步距、額外兩列及證據。引擎唯讀取 `LearnedSpells`，去重後依 catalog 順序排列。未知 record 拒絕進頁，不同步、猜補或改寫角色。
+- 原始窗口 DGROUP3F34 的24bytes為 `120313002e002c006000d7010100d801d901000000000000`。X=19字元、Y=46、width=44字元；header471／row472／footer473。每列16px，實際高度=(ceil(unique/4)+2)×16。非零角色必須顯示一頁；零咒文維持既有流程。文字首格168,62，欄距80、列距16。幾何與文字都放 JSON，共用 renderer 沿已驗證陰影／frame primitive。
+- 登錄：能力等待→咒文等待→接受選單→登錄交易。任何新按鍵或點擊各消費一次等待； held key 不前進。咒文等待的 Esc 只關閉本頁，不取消或登錄角色。
+- 觀看：名冊→能力等待→咒文等待→還原能力的獨立 caller 等待→540→No→541→場景。第一等待的 K 不改名；咒文等待的 K 只關頁；最後 caller 等待才沿既有單人改名契約處理 K。
+- bootstrap 檢查完整 JSON 欄位、引用、glyph、畫布與最大容量；缺少契約即啟動失敗。共用引擎不含 DQ3 raw record、座標、字串或 fallback。暫態頁面不新增存檔欄位；有效 Load 清理 UI，拒絕 Load 保持 UI、持久狀態與 RNG。
+- 驗收：原始 EXE／DAT parity、壞契約、去重／排序／多列／未知 record 元件測試；正常209包逐包位置／旗標、觀看 snapshot／RNG、同版 Save／Load 與下一步。完整640×350 RGB保留兩側正常能力差異，不裁切、遮罩、調 RNG 或指定動畫相位；只對新增咒文層與等待範圍判定 CONFORMED。
+
+正式有限切片已通過正常209包，狀態 E2／玩家路徑 E3、畫面 V2。第170包完整RGB差由16485降548；169／170的差分位置與雙側RGB相同。觀看203／204／205各430，三張的完整差分相同。原始203及205完整能力圖相同，正式圖也相同；新增咒文層沒有新差異。完整V3仍RED，不能把不同能力或既有動畫當成零差異。正式45張PNG逐byte等於已驗原型，165..169的五張保留診斷前綴；全畫布稽核 `work/issue4-view-spells-formal-audit-r1.json` SHA-256 `4e568b0948bb8bb2a1db00c091d17739ff1361a935c7a8bd372c019bde2923e2`。
+
+嚴格原版來源稽核收據 `work/dosgolem-opening/issue4-view-spells-class3-normal-r2-source-r2-receipt.json` SHA-256 `4dcb99c80e5cddc17940b09772c37169d5348cc40249996827029812365b8c08`。八種壞來源拒絕與前後正對照保持，稽核 `work/issue4-view-spells-audit-r6.json` SHA-256 `a309ff9a39e3743a05d28fe7a2f1eff93a161e834fad7f112a3b781e8d42d949`。來源接受不等於完整parity，receipt仍保留 `full_rgb_parity=false` 與原版Save／Load未驗。
+
+原始語意索引 [ida_recruitment_selection_ledger.json](../tools/ida_recruitment_selection_ledger.json) 保留17筆並追加4筆有限confirmed，保留各原始linear／file位址、file bytes、consumer與來源範圍。沿已驗證IDA匯出流程自動合併，`work/issue4-view-spells-r3-ida.json` SHA-256 `5273a602c9084dcf089d709676112fa9f7692d0fbba14ba512445b9ff5121e6a`；166指令及MZ relocation全符合，4筆語意同列顯示。其他未審查項仍unknown；六份64bytes指標目標擷取只表示有界prefix，不能稱table長度。
+
+正式typed契約、共用renderer、原始EXE／DAT parity及正式209包入口見 [docs/84](84-game-pack-json-contract.md) 的 `character_spells`；[公開資料遷移器](../tools/migrate_character_spells_pack.py)從乾淨 `f823b61` 的九份JSON重建schema0.15.0／content0.1.87，逐byte一致且保留排版。canonical `sha256:2d712e65f18ce7919ddccf970160d68d00b63a54a73088bcd473c38a9fa61d10`。資料重建收據 `work/issue4-view-spells-pack-rebuild-r2/receipt.json`；舊schema存檔仍拒絕，不自動遷移。
+
+原型首次誤用酒館的 D3TXT01 record，已查明咒文框與咒名來自 D3TXT00；正式版只能用 pack 的已核對 glyph text ID。兩側 seed 相同但全域 RNG 呼叫序列未對齊，正常能力數值保持各自結果，完整畫面仍非 V3。
+
+公開重生入口為 [dosgolem_character_spells_probe.py](../tools/dosgolem_character_spells_probe.py)，`--prefix` 必須為全新名稱，預設正常209包；`--first-ability` 停203包。原版工具鏈掛載與 seed 契約沿本文件既有 dosgolem 入口。來源稽核入口為 [verify_dosgolem_character_spells.py](../tools/verify_dosgolem_character_spells.py)，參數依序為原版產物目錄、前綴、實際 producer、全新 receipt；只有203包加 `--first-ability`。公開 producer 的完整 Go 與兩份已執行程式除輸出前綴外相同，證據 `work/issue4-view-spells-public-proof-r1.json`。原版素材、PNG、binary、database與私有收據保持本機。
+
+完整回歸以 `work/issue4-view-spells-full-r2/game-receipt.json` 為準：game459覆蓋，412頂層／107子PASS、47選用SKIP；全部11個internal套件167頂層／341子PASS、4選用SKIP。正常THE END97.88秒及desktop Linux x86_64通過，沒有素材缺失SKIP。r1唯一過期的campaign登錄輸入已補上咒文確認，再以r2正常重跑；其餘通過項的production相同，保留原始r1收據。不外推原版完整流程。舊九路線516張、新45張PNG逐byte保持，收據 `work/issue4-view-spells-regression-images-r1.json` SHA-256 `46a4e1588cdca69c46abc274b8f5bb402079ce3096a98f4c745219dd73be8581`。

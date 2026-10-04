@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.14.0",
+  "schema_version": "0.15.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -3147,6 +3147,880 @@
       "consumer": "normal199 packet join copy ->536 new member ->537 primary actor ->pause/cue32 ->538 new member ->wait; static continuation540",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "有限READY；正常199止208E2，音訊完成及返回採平台規格近似與既有caller控制流。未宣稱原版動態後續或完整V3。537限固定主角第一槽，未知重排保持strong。"
+    }
+  },
+  "character_spells": {
+    "raw_window": {
+      "id": "character_spells",
+      "flags": 3,
+      "x": 19,
+      "y": 46,
+      "width": 44,
+      "height": 96,
+      "address": "DGROUP:0x3F34;file:0x1A074"
+    },
+    "columns": 4,
+    "extra_rows": 2,
+    "names": {
+      "x": 168,
+      "y": 62,
+      "step_x": 80,
+      "step_y": 16
+    },
+    "header_text_id": "dq3:text.character_spells.header",
+    "row_text_id": "dq3:text.character_spells.row",
+    "footer_text_id": "dq3:text.character_spells.footer",
+    "catalog": [
+      {
+        "record_raw": 121,
+        "text_id": "dq3:text.character_spells.name.121",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 122,
+        "text_id": "dq3:text.character_spells.name.122",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 123,
+        "text_id": "dq3:text.character_spells.name.123",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 124,
+        "text_id": "dq3:text.character_spells.name.124",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 125,
+        "text_id": "dq3:text.character_spells.name.125",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 126,
+        "text_id": "dq3:text.character_spells.name.126",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 127,
+        "text_id": "dq3:text.character_spells.name.127",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 128,
+        "text_id": "dq3:text.character_spells.name.128",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 129,
+        "text_id": "dq3:text.character_spells.name.129",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 130,
+        "text_id": "dq3:text.character_spells.name.130",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 131,
+        "text_id": "dq3:text.character_spells.name.131",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 132,
+        "text_id": "dq3:text.character_spells.name.132",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 133,
+        "text_id": "dq3:text.character_spells.name.133",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 134,
+        "text_id": "dq3:text.character_spells.name.134",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 135,
+        "text_id": "dq3:text.character_spells.name.135",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 136,
+        "text_id": "dq3:text.character_spells.name.136",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 137,
+        "text_id": "dq3:text.character_spells.name.137",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 138,
+        "text_id": "dq3:text.character_spells.name.138",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 139,
+        "text_id": "dq3:text.character_spells.name.139",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 140,
+        "text_id": "dq3:text.character_spells.name.140",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 141,
+        "text_id": "dq3:text.character_spells.name.141",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 142,
+        "text_id": "dq3:text.character_spells.name.142",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 143,
+        "text_id": "dq3:text.character_spells.name.143",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 144,
+        "text_id": "dq3:text.character_spells.name.144",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 145,
+        "text_id": "dq3:text.character_spells.name.145",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 146,
+        "text_id": "dq3:text.character_spells.name.146",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 147,
+        "text_id": "dq3:text.character_spells.name.147",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 148,
+        "text_id": "dq3:text.character_spells.name.148",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 149,
+        "text_id": "dq3:text.character_spells.name.149",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 150,
+        "text_id": "dq3:text.character_spells.name.150",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 151,
+        "text_id": "dq3:text.character_spells.name.151",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 152,
+        "text_id": "dq3:text.character_spells.name.152",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 153,
+        "text_id": "dq3:text.character_spells.name.153",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 154,
+        "text_id": "dq3:text.character_spells.name.154",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 155,
+        "text_id": "dq3:text.character_spells.name.155",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 156,
+        "text_id": "dq3:text.character_spells.name.156",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 157,
+        "text_id": "dq3:text.character_spells.name.157",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 158,
+        "text_id": "dq3:text.character_spells.name.158",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 159,
+        "text_id": "dq3:text.character_spells.name.159",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 160,
+        "text_id": "dq3:text.character_spells.name.160",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 161,
+        "text_id": "dq3:text.character_spells.name.161",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 162,
+        "text_id": "dq3:text.character_spells.name.162",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 163,
+        "text_id": "dq3:text.character_spells.name.163",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 164,
+        "text_id": "dq3:text.character_spells.name.164",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 165,
+        "text_id": "dq3:text.character_spells.name.165",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 166,
+        "text_id": "dq3:text.character_spells.name.166",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 167,
+        "text_id": "dq3:text.character_spells.name.167",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 168,
+        "text_id": "dq3:text.character_spells.name.168",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 169,
+        "text_id": "dq3:text.character_spells.name.169",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 170,
+        "text_id": "dq3:text.character_spells.name.170",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 171,
+        "text_id": "dq3:text.character_spells.name.171",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 172,
+        "text_id": "dq3:text.character_spells.name.172",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 173,
+        "text_id": "dq3:text.character_spells.name.173",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 174,
+        "text_id": "dq3:text.character_spells.name.174",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 175,
+        "text_id": "dq3:text.character_spells.name.175",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 176,
+        "text_id": "dq3:text.character_spells.name.176",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 177,
+        "text_id": "dq3:text.character_spells.name.177",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 178,
+        "text_id": "dq3:text.character_spells.name.178",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 179,
+        "text_id": "dq3:text.character_spells.name.179",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      },
+      {
+        "record_raw": 180,
+        "text_id": "dq3:text.character_spells.name.180",
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+          "address_space": "linear",
+          "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+          "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+        }
+      }
+    ],
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+      "address_space": "linear",
+      "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+      "consumer": "registration ability -> spells -> accept; roster ability -> spells -> restored ability read-key ->540 No ->541 ->field",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
     }
   }
 }

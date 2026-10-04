@@ -1131,13 +1131,32 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		}
 		press(InputState{Confirm: true}) // 職業
 		press(InputState{Confirm: true}) // 男性 → 能力預覽
-		press(InputState{Confirm: true}) // 能力 → 接受詢問
+		if g.tavern.candidate == nil || g.tavern.stage != tavReview {
+			t.Fatal("registration ability wait missing")
+		}
+		hasSpells := len(g.tavern.candidate.LearnedSpells) > 0
+		press(InputState{Confirm: true}) // 能力 → 咒文等待或接受詢問
+		if hasSpells {
+			if g.tavern.stage != tavSpells {
+				t.Fatal("registration spell wait missing")
+			}
+			press(InputState{Confirm: true}) // 咒文 → 接受詢問
+		}
+		if g.tavern.stage != tavAccept {
+			t.Fatal("registration acceptance choice missing")
+		}
 		press(InputState{Confirm: true}) // 接受後才登錄
+		if len(g.roster) != i+1 {
+			t.Fatal("registration committed an unexpected roster count")
+		}
 		traceRegistrationText(t, g)
 		send(InputState{DirHeld: -1, DirEdge: 3})
 		press(InputState{Confirm: true}) // 再登錄 No
 		traceRegistrationText(t, g)
 		press(InputState{Confirm: true}) // caller 最終等待
+		if g.tavern.active {
+			t.Fatal("registration caller did not return before the next NPC conversation")
+		}
 	}
 	if len(g.roster) != 3 || len(g.companions) != 0 {
 		t.Fatalf("登錄三人後應 roster=3/companions=0，得 %d/%d", len(g.roster), len(g.companions))

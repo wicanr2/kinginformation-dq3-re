@@ -1472,3 +1472,15 @@ Docker檢查需主機權限，依既有隔離規則續做；一次性容器已�
 - 完整game454覆蓋，407頂層／107子PASS、47選用SKIP；internal164頂層、11套件PASS、4選用SKIP；正常THE END156.69秒與desktop Linux x86_64 PASS，沒有素材缺失SKIP。同binary的X11環境失敗以Xvfb -noreset重跑通過；三路改獨立程序，沒有OOM事件不推定原因。
 - IDA索引保留11筆追加6筆confirmed，r3匯出321指令與原始bytes／relocation全符合。來源、公開工具、負例、全畫布與本機重生入口掛docs/188，欄位掛docs/84；唯一狀態表更新CONTEXT。
 - root-owned3213及零.md目錄保持；最後檢查首版把既有root-owned.md檔誤當目錄，修正判斷後乾淨重跑。13項使用者資料、原版、PNG、binary、database及私有work不加入Git，Docker容器收尾清理。沒有新發行包，完整View、多角色改名、咒文與原版campaign未完成；Issue與Goal保持進行中。
+## 2026-10-04 登錄與觀看的咒文詳細頁
+
+- 依 Issue #4，正常第三職業男性203／209包原版來源接受。冷啟動dosgolem2f44a68、seed1357固定一次；209包494 IRQ1與418完整PNG／bin，前165及前203包保持。第172包才寫名冊；兩種已知咒文指向同一index40，union去重後顯示record161。來源4dcb99c8，八種壞來源拒絕且前後正對照保持。
+- 第一個正式玩家差異在登錄170：原版咒文等待，前版直接顯示接受選單。IDA9.4原始166指令bytes與xref、四類union／動態窗口／文字consumer／獨立等待與還原，加正常209包閉合後，docs/188審成有限READY。原型誤用酒館D3TXT01的record已查明並訂正；正式版只用pack的D3TXT00 glyph引用。
+- typed `character_spells`、共享renderer及正式登錄／觀看等待已接入。完整60項catalog與63份record逐項核對；去重排序不改LearnedSpells，未知record拒絕，pack副本只在renderer改動態高度。12種壞契約、held key、新按鍵／點擊、三次觀看等待、有效／拒絕Load及狀態保持通過。
+- 正式209包逐包位置／旗標、候選人在接受前不寫名冊、觀看持久snapshot／RNG、Save／Load及正常下一步通過。登錄170完整RGB差16485降548，169／170差分位置與雙側RGB相同；觀看203／204／205各430且完整差分相同。新增咒文層無新差異，能力數值與動畫保持各自結果，完整V3仍RED。正常45張PNG與原型逐byte相同，九條舊路線516張保持。
+- schema0.15.0／content0.1.87／canonical `2d712e65f18ce7919ddccf970160d68d00b63a54a73088bcd473c38a9fa61d10`。九份JSON由乾淨f823b61及公開遷移器重建逐byte一致，保留排版；三份框架可讀文字沿已有frame glyph語意修正，原始glyph_codes保持。舊schema存檔仍拒絕，不自動遷移。
+- game459完整覆蓋，412頂層／107子PASS、47選用SKIP；internal167頂層／341子PASS、11套件及4選用SKIP；正常THE END97.88秒與desktop Linux x86_64通過，沒有素材缺失SKIP。r1的唯一失敗是campaign仍只送兩次登錄確認，僧侶新咒文頁未關；查明後只改正式InputState測試操作，r2重跑該路線。其餘458項沿用同一production的r1證據，不重跑已通過項。
+- 首筆原始bytes測試把far call誤寫成near call，改依IDA的原始file bytes與MZ relocation。直接UI元件fixture缺出生能力與已訪城鎮，Load啟動舊存檔補遷移；逐欄診斷後用正式出生／起點紀錄建立有效fixture，正常209包不注入。一次Docker掛載遺漏、PNG診斷缺PIL、tar祖先目錄檢查、收尾誤要求成功log含THE END均分類為驗證工具問題，修正後乾淨重跑；不寫成產品缺陷。
+- IDA索引保留17筆並追加4筆有限confirmed；r3自動合併匯出166指令與原始bytes／relocation相符。公開producer完整Go除前綴外等於已執行來源；公開validator嚴格審查窗口／文字／等待／還原與返回。工具入口掛docs/188，typed欄位與遷移掛docs/84，唯一狀態表更新CONTEXT。
+- 關鍵本機收據：來源`4dcb99c8`；來源負例`a309ff9a`；完整畫面`4e568b09`；舊路線與新45張`46a4e158`；IDA匯出`5273a602`；完整回歸`work/issue4-view-spells-full-r2/game-receipt.json` SHA-256 `c49013df8954a2e36f66613cf866a072d019ce0a7273702a5ef8385349e53d88`；摘要`work/issue4-view-spells-final-summary-r1.json`。
+- 原版素材、圖片、binary、database與私有work維持本機；使用者13項資料保留。提交／推送、root擁有權基線與Docker清理在本輪收尾收據及Issue追加。沒有新發行包，其他裝備、多角色改名、其他角色咒文動態、人物動畫及原版完整流程仍待驗；Issue與Goal保持進行中。

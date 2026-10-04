@@ -191,6 +191,58 @@
       "consumer": "正常異名216，DI5082→5094；507F原始97bytes只有+7由0→5，219正常返回畫面消費；名冊不改",
       "review_reference": "docs/188：2026-10-04 單人隊伍改名有限READY及正常三路驗收；多角色選人未READY",
       "dynamic_evidence": "dosgolem2f44a68正常K入口fe3df116、同名成功7cf247fd、異名成功0d43e2bc及取消c139c899；完整路徑與收據入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x18567",
+      "file_offset": "0x98d7",
+      "bytes": "8d36343f",
+      "semantic": "以動態咒文窗口3F34建立一個已學咒文頁",
+      "inference_level": "confirmed",
+      "consumer": "正常204 union232D僅index40；窗口X19/Y46/width44/height48/rowcount1；18567→1F590",
+      "review_reference": "docs/188：2026-10-04 咒文詳細頁有限READY；只限Class3 level1初裝無異常正常209包",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-view-spells-class3-normal-r2-source-r2-receipt.json SHA256 4dcb99c80e5cddc17940b09772c37169d5348cc40249996827029812365b8c08；原始IDA166指令06f755d9；工具入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x185c1",
+      "file_offset": "0x9931",
+      "bytes": "9a14021b11",
+      "semantic": "顯示union已學咒文索引對應的文字record",
+      "inference_level": "confirmed",
+      "consumer": "正常204 DI00A1、文字X21字元/Y62，D3TXT00 record161；index40+79h",
+      "review_reference": "docs/188：2026-10-04 咒文詳細頁有限READY；只限Class3 level1初裝無異常正常209包",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-view-spells-class3-normal-r2-source-r2-receipt.json SHA256 4dcb99c80e5cddc17940b09772c37169d5348cc40249996827029812365b8c08；原始IDA166指令06f755d9；工具入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x185d7",
+      "file_offset": "0x9947",
+      "bytes": "9adb000411",
+      "semantic": "咒文頁的獨立讀鍵等待",
+      "inference_level": "confirmed",
+      "consumer": "正常204停21133；205新Enter才返回；不得同時消費caller第二等待",
+      "review_reference": "docs/188：2026-10-04 咒文詳細頁有限READY；只限Class3 level1初裝無異常正常209包",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-view-spells-class3-normal-r2-source-r2-receipt.json SHA256 4dcb99c80e5cddc17940b09772c37169d5348cc40249996827029812365b8c08；原始IDA166指令06f755d9；工具入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x185dc",
+      "file_offset": "0x994c",
+      "bytes": "8d36343f",
+      "semantic": "等待後還原原能力窗口並返回caller",
+      "inference_level": "confirmed",
+      "consumer": "正常205→10681→caller第二等待21103；原版203及205全畫布PNG/bin相同",
+      "review_reference": "docs/188：2026-10-04 咒文詳細頁有限READY；只限Class3 level1初裝無異常正常209包",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-view-spells-class3-normal-r2-source-r2-receipt.json SHA256 4dcb99c80e5cddc17940b09772c37169d5348cc40249996827029812365b8c08；原始IDA166指令06f755d9；工具入口docs/188"
     }
   ]
 }

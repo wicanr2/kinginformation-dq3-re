@@ -1,5 +1,21 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 咒文詳細頁（schema0.15.0／content0.1.87）
+
+`interface.character_spells` 是必填的唯讀頁面契約。有限 READY、原始 consumer 與正常209包來源見 [docs/188](188-opening-escort-to-castle-spec.md)。登錄與觀看共用原始咒文框，不從酒館的文字 bank 猜 record。
+
+| 欄位 | 契約 |
+|---|---|
+| `raw_window` | 原始窗口 ID、flags、字元X／width、像素Y／height與位址；動態高度只寫 renderer 副本 |
+| `columns`、`extra_rows`、`names` | 每列欄數、header／footer額外列數、文字起點與步距；高度為唯一咒文數的向上整除列數加額外列，再乘列距 |
+| `header_text_id`、`row_text_id`、`footer_text_id` | 三份完整框架 glyph 引用；原始D3TXT00 record471–473 |
+| `catalog` | 原始 record→穩定 text ID 與每項 D2 證據；按 catalog 順序顯示，唯讀去重，不補寫 LearnedSpells |
+| `evidence` | 正常Class3 level1初裝無異常流程的 D3；其他角色與多列公式只有靜態D2，不外推全畫面V3 |
+
+所有欄位與巢狀幾何必填。未知欄位、引用、咒文 record、未審查證據、框架字模形狀、控制碼及畫布越界均拒絕。renderer 啟動時驗證全部 catalog 字模；共用 Go 不包含版本專屬座標、record、字串或 fallback。有效 Load 清 UI，拒絕 Load 保持 UI 與持久狀態。舊schema存檔沿既有策略拒絕，不自動遷移。
+
+入口為 [typed契約與驗證](../dq3_remake_ebitan/internal/gamepack/character_spells.go)、[原始資料parity及壞契約](../dq3_remake_ebitan/internal/gamepack/character_spells_test.go)、[共用renderer](../dq3_remake_ebitan/game/character_spells.go)、[等待與Load元件測試](../dq3_remake_ebitan/game/character_spells_test.go)及[正式209包](../dq3_remake_ebitan/game/character_spells_normal_test.go)。[資料遷移工具](../tools/migrate_character_spells_pack.py)的參數為乾淨0.14.0 pack目錄、原版唯讀素材目錄與既有 `docs/data/glyph_unicode_map.json`；核對EXE身分、原始窗口、archive shape與63個完整record後才寫九份JSON，保留既有排版。
+
 ## 選人清單與取消（schema0.12.0／content0.1.84）
 
 後續觀看名單有限切片沿用本物件，不新增JSON欄位或改canonical hash。
@@ -12,7 +28,7 @@ View入口不消費`prompt_text_id`，只列未入隊名冊；取消仍使用`ag
 正式兩次等待與只讀頁面入口在[recruitment_view.go](../dq3_remake_ebitan/game/recruitment_view.go)。
 正常205包、同角色renderer及存讀檔測試在[觀看詳細狀況測試](../dq3_remake_ebitan/game/recruitment_view_test.go)。
 上述能力頁切片不新增欄位、schema或canonical hash；後續改名新增的`view_rename`見本文末節。
-非初裝、已學咒文或異常狀態保持清單，不能用cloth label猜裝備。
+本節原始無咒文切片保持。已學咒文另依上方 `character_spells` 契約處理；非初裝、未知咒文或異常狀態保持清單，不能用cloth label猜裝備。
 有限範圍、正常205包與同角色元件畫面區分見[docs/188](188-opening-escort-to-castle-spec.md)。
 
 `interface.recruitment_selection`為必填物件。有限READY、原始定位與正常來源見

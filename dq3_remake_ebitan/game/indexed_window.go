@@ -13,6 +13,7 @@ import (
 // 索引色視窗只實作有限的原始字模／陰影／XOR primitive；所有版面與色號來自 pack。
 // 入口與 READY 證據：docs/113；欄位契約：docs/84。
 type indexedNewGameRenderer struct {
+	spells            *gamepack.CharacterSpells
 	geo               gamepack.NewGameGeometry
 	style             *gamepack.NewGameRasterLayout
 	windows           map[string]gamepack.RawNewGameWindow
@@ -29,6 +30,10 @@ func newIndexedNewGameRenderer(pack *gamepack.Pack, geo gamepack.NewGameGeometry
 	}
 	r := &indexedNewGameRenderer{geo: geo, style: geo.Raster, windows: map[string]gamepack.RawNewGameWindow{}, texts: map[string][]uint16{},
 		background: append([]byte(nil), background...), palette: append([]dq3data.Color(nil), palette...), pixels: make([]byte, len(background))}
+	if pack == nil || pack.Interface.CharacterSpells == nil {
+		return nil, fmt.Errorf("character spell page missing")
+	}
+	r.spells = pack.Interface.CharacterSpells
 	for _, index := range background {
 		if int(index) >= len(palette) {
 			return nil, fmt.Errorf("background palette index outside palette")
@@ -56,6 +61,18 @@ func newIndexedNewGameRenderer(pack *gamepack.Pack, geo gamepack.NewGameGeometry
 		r.texts[id] = codes
 	}
 	labels, ok := pack.NewGameLabels()
+	for _, id := range r.spells.TextIDs() {
+		codes, found := pack.TextGlyphCodes(id)
+		if !found {
+			return nil, fmt.Errorf("character spell text %q missing", id)
+		}
+		for _, code := range codes {
+			if _, found := tx.Glyph(int(code)); !found {
+				return nil, fmt.Errorf("character spell glyph %d missing", code)
+			}
+		}
+		r.texts[id] = codes
+	}
 	if !ok || len(labels.ChoiceCursor) != 1 {
 		return nil, fmt.Errorf("missing selection cursor glyph")
 	}

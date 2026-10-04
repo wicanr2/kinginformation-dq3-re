@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.14.0",
+  "schema_version": "0.15.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -4765,6 +4765,1917 @@
         "consumer": "normal199 packet join copy ->536 new member ->537 primary actor ->pause/cue32 ->538 new member ->wait; static continuation540",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "有限READY；正常199止208E2，音訊完成及返回採平台規格近似與既有caller控制流。未宣稱原版動態後續或完整V3。537限固定主角第一槽，未知重排保持strong。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.header",
+      "value": "┌────────咒─文─────────┐",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        429,
+        48,
+        430,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        49
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 471
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "registration ability -> spells -> accept; roster ability -> spells -> restored ability read-key ->540 No ->541 ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.row",
+      "value": "│                    │",
+      "glyph_codes": [
+        54,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        54
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 472
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "registration ability -> spells -> accept; roster ability -> spells -> restored ability read-key ->540 No ->541 ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.footer",
+      "value": "└────────────────────┘",
+      "glyph_codes": [
+        50,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 473
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "registration ability -> spells -> accept; roster ability -> spells -> restored ability read-key ->540 No ->541 ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.121",
+      "value": "美拉",
+      "glyph_codes": [
+        246,
+        247
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 121
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.122",
+      "value": "美拉米",
+      "glyph_codes": [
+        246,
+        247,
+        347
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 122
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.123",
+      "value": "美拉宙瑪",
+      "glyph_codes": [
+        246,
+        247,
+        348,
+        349
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 123
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.124",
+      "value": "吉拉",
+      "glyph_codes": [
+        350,
+        247
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 124
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.125",
+      "value": "比吉拉瑪",
+      "glyph_codes": [
+        351,
+        350,
+        247,
+        349
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 125
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.126",
+      "value": "比吉拉肯",
+      "glyph_codes": [
+        351,
+        350,
+        247,
+        352
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 126
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.127",
+      "value": "伊歐",
+      "glyph_codes": [
+        353,
+        326
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 127
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.128",
+      "value": "伊歐拉",
+      "glyph_codes": [
+        353,
+        326,
+        247
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 128
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.129",
+      "value": "伊歐那順",
+      "glyph_codes": [
+        353,
+        326,
+        354,
+        355
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 129
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.130",
+      "value": "希亞多",
+      "glyph_codes": [
+        356,
+        166,
+        357
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 130
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.131",
+      "value": "希亞達可",
+      "glyph_codes": [
+        356,
+        166,
+        358,
+        229
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 131
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.132",
+      "value": "希亞達依恩",
+      "glyph_codes": [
+        356,
+        166,
+        358,
+        359,
+        360
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 132
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.133",
+      "value": "瑪希亞多",
+      "glyph_codes": [
+        349,
+        356,
+        166,
+        357
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 133
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.134",
+      "value": "巴基",
+      "glyph_codes": [
+        361,
+        362
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 134
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.135",
+      "value": "巴基瑪",
+      "glyph_codes": [
+        361,
+        362,
+        349
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 135
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.136",
+      "value": "巴基克洛斯",
+      "glyph_codes": [
+        361,
+        362,
+        363,
+        364,
+        365
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 136
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.137",
+      "value": "萊丁",
+      "glyph_codes": [
+        366,
+        367
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 137
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.138",
+      "value": "基加丁",
+      "glyph_codes": [
+        362,
+        368,
+        367
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 138
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.139",
+      "value": "沙基",
+      "glyph_codes": [
+        369,
+        362
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 139
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.140",
+      "value": "沙拉基",
+      "glyph_codes": [
+        369,
+        247,
+        362
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 140
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.141",
+      "value": "梅干得",
+      "glyph_codes": [
+        370,
+        371,
+        372
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 141
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.142",
+      "value": "多拉哥拉姆",
+      "glyph_codes": [
+        357,
+        247,
+        373,
+        247,
+        374
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 142
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.143",
+      "value": "尼夫拉姆",
+      "glyph_codes": [
+        375,
+        196,
+        247,
+        374
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 143
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.144",
+      "value": "拉里荷",
+      "glyph_codes": [
+        247,
+        327,
+        376
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 144
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.145",
+      "value": "皮歐里姆",
+      "glyph_codes": [
+        198,
+        326,
+        327,
+        374
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 145
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.146",
+      "value": "魯卡尼",
+      "glyph_codes": [
+        377,
+        378,
+        375
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 146
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.147",
+      "value": "魯加南",
+      "glyph_codes": [
+        377,
+        368,
+        379
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 147
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.148",
+      "value": "巴西魯拉",
+      "glyph_codes": [
+        361,
+        380,
+        377,
+        247
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 148
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.149",
+      "value": "伯米歐斯",
+      "glyph_codes": [
+        381,
+        347,
+        326,
+        365
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 149
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.150",
+      "value": "瑪荷多拉",
+      "glyph_codes": [
+        349,
+        376,
+        357,
+        247
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 150
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.151",
+      "value": "拜基魯多",
+      "glyph_codes": [
+        382,
+        362,
+        377,
+        357
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 151
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.152",
+      "value": "美達巴尼",
+      "glyph_codes": [
+        246,
+        358,
+        361,
+        375
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 152
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.153",
+      "value": "莫夏斯",
+      "glyph_codes": [
+        383,
+        384,
+        365
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 153
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.154",
+      "value": "史卡拉",
+      "glyph_codes": [
+        385,
+        378,
+        247
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 154
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.155",
+      "value": "史克魯多",
+      "glyph_codes": [
+        385,
+        363,
+        377,
+        357
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 155
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.156",
+      "value": "瑪荷頓",
+      "glyph_codes": [
+        349,
+        376,
+        386
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 156
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.157",
+      "value": "瑪荷甘達",
+      "glyph_codes": [
+        349,
+        376,
+        387,
+        358
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 157
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.158",
+      "value": "瑪努莎",
+      "glyph_codes": [
+        349,
+        388,
+        389
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 158
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.159",
+      "value": "夫巴哈",
+      "glyph_codes": [
+        196,
+        361,
+        390
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 159
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.160",
+      "value": "阿斯特龍",
+      "glyph_codes": [
+        391,
+        365,
+        392,
+        179
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 160
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.161",
+      "value": "荷依米",
+      "glyph_codes": [
+        376,
+        359,
+        347
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 161
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.162",
+      "value": "比荷依米",
+      "glyph_codes": [
+        351,
+        376,
+        359,
+        347
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 162
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.163",
+      "value": "比荷瑪",
+      "glyph_codes": [
+        351,
+        376,
+        349
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 163
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.164",
+      "value": "比荷瑪拉",
+      "glyph_codes": [
+        351,
+        376,
+        349,
+        247
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 164
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.165",
+      "value": "比荷瑪順",
+      "glyph_codes": [
+        351,
+        376,
+        349,
+        355
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 165
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.166",
+      "value": "基阿里",
+      "glyph_codes": [
+        362,
+        391,
+        327
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 166
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.167",
+      "value": "基阿里克",
+      "glyph_codes": [
+        362,
+        391,
+        327,
+        363
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 167
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.168",
+      "value": "薩梅哈",
+      "glyph_codes": [
+        393,
+        370,
+        390
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 168
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.169",
+      "value": "薩歐拉魯",
+      "glyph_codes": [
+        393,
+        326,
+        247,
+        377
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 169
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.170",
+      "value": "薩歐里克",
+      "glyph_codes": [
+        393,
+        326,
+        327,
+        363
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 170
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.171",
+      "value": "夏那克",
+      "glyph_codes": [
+        384,
+        354,
+        363
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 171
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.172",
+      "value": "魯拉",
+      "glyph_codes": [
+        377,
+        247
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 172
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.173",
+      "value": "烈米特",
+      "glyph_codes": [
+        394,
+        347,
+        392
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 173
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.174",
+      "value": "因帕斯",
+      "glyph_codes": [
+        395,
+        396,
+        365
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 174
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.175",
+      "value": "多拉瑪那",
+      "glyph_codes": [
+        357,
+        247,
+        349,
+        354
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 175
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.176",
+      "value": "特黑洛斯",
+      "glyph_codes": [
+        392,
+        302,
+        364,
+        365
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 176
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.177",
+      "value": "拉那魯達",
+      "glyph_codes": [
+        247,
+        354,
+        377,
+        358
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 177
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.178",
+      "value": "雷姆歐魯",
+      "glyph_codes": [
+        157,
+        374,
+        326,
+        377
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 178
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.179",
+      "value": "阿巴卡姆",
+      "glyph_codes": [
+        391,
+        361,
+        378,
+        374
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 179
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.character_spells.name.180",
+      "value": "巴魯朋特",
+      "glyph_codes": [
+        361,
+        377,
+        397,
+        392
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 22,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 180
+      },
+      "evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem209 source4dcb99c8",
+        "address_space": "linear",
+        "address": "IDA9.4 linear184A1..185EF;1F590..1F604;DGROUP3F34/232D",
+        "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
       }
     }
   ]

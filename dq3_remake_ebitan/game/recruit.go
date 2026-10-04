@@ -37,6 +37,7 @@ type Recruit struct {
 	greetingIndex, cursorGlyph int
 	raster                     *indexedNewGameRenderer
 	viewFlow                   *NewGameFlow
+	viewSpellNames             []string
 	renameFlow                 *NewGameFlow
 	tx                         *dq3data.Text
 	active                     bool
@@ -79,7 +80,7 @@ func (g *Game) recruitInput(in InputState) {
 		g.recruitmentRenameInput(in)
 		return
 	}
-	if rc.stage == rcViewAbility || rc.stage == rcViewClose {
+	if rc.stage == rcViewAbility || rc.stage == rcViewClose || rc.stage == rcViewSpells {
 		rc.viewInput(in)
 		return
 	}
@@ -218,7 +219,7 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 		g.drawRecruitSelection(rgba, white)
 		return
 	}
-	if rc.stage == rcViewAbility || rc.stage == rcViewClose || rc.stage == rcViewRename {
+	if rc.stage == rcViewAbility || rc.stage == rcViewClose || rc.stage == rcViewRename || rc.stage == rcViewSpells {
 		rc.drawView(rgba, white)
 		return
 	}

@@ -18,6 +18,7 @@ const (
 	tavAccept
 	tavAgain
 	tavFinalWait
+	tavSpells
 )
 
 type Tavern struct {
@@ -224,6 +225,21 @@ func (tv *Tavern) input(in InputState, rs ...*rng.RNG) (*Member, bool) {
 		}
 	case tavReview:
 		if confirm || in.AnyKeyEdge || in.Cancel || in.DirEdge >= 0 || in.Tapped {
+			if tv.candidate != nil && len(tv.candidate.LearnedSpells) > 0 {
+				if tv.raster == nil {
+					return nil, false
+				}
+				if _, ok := tv.raster.spells.OrderedTextIDs(tv.candidate.LearnedSpells); !ok {
+					return nil, false
+				}
+				tv.stage = tavSpells
+				return nil, false
+			}
+			tv.stage = tavAccept
+			tv.cursor = 0
+		}
+	case tavSpells:
+		if confirm || in.AnyKeyEdge || in.Cancel || in.DirEdge >= 0 || in.Tapped {
 			tv.stage = tavAccept
 			tv.cursor = 0
 		}
@@ -284,7 +300,7 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 		a := tv.geometry.StatsChoiceCursor
 		r.opaqueGlyph(tv.tx, a.X, a.Y+tv.cursor*a.StepY, tv.labels.ChoiceCursor[0])
 		tv.choiceHits()
-	case tavReview, tavAccept:
+	case tavReview, tavAccept, tavSpells:
 		if tv.candidate == nil {
 			return
 		}
@@ -313,6 +329,11 @@ func (tv *Tavern) draw(rgba []byte, white dq3data.Color) {
 			tv.choiceHits()
 		}
 		r.drawContent(tv.tx, &nf)
+		if tv.stage == tavSpells {
+			if ids, ok := r.spells.OrderedTextIDs(m.LearnedSpells); ok {
+				r.characterSpells(tv.tx, ids)
+			}
+		}
 	}
 	drawIndexedPCX(rgba, r.pixels, r.palette)
 }

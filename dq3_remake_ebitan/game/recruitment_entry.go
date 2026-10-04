@@ -39,6 +39,7 @@ func (rc *Recruit) reset() {
 	rc.backdrop = nil
 	rc.joinedName, rc.leaderName = nil, nil
 	rc.viewFlow = nil
+	rc.viewSpellNames = nil
 	rc.renameFlow = nil
 	rc.musicFrames = 0
 	rc.dialogue.varGlyph = nil
