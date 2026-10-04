@@ -1,5 +1,10 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-05 正常第二槽F5／F6及後續行走已有限驗收。原版204包／484IRQ1來源1a5a7c22，194前綴／174母親產物保持，PLAYER只改第二筆，dragon1完整2172bytes保存／讀回一致。正式InputState、其他槽、snapshot／RNG、clock30→0、Save後Load與新一步通過，正式Go／pack仍e939db2。
+> 6命令／7筆PASS，5不同頂層／1子、零SKIP／OOM。六張完整RGB0；其餘五張411／356／123／123／229由完整原始人物圖塊解釋，動畫時鐘未知。舊101張PNG及補斷言前後55張保持。唯一現況表CONTEXT、收據與限制docs/188；下一切片為正常Space命令窗導覽及道具入口。入隊返回與完整campaign未知，沒有新包。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 F6十槽Esc取消與左右行走已有限驗收。原版197包／470IRQ1來源426c7623，193前綴、174母親產物、完整2172bytes取消前後及clock30保持；沒有存檔交易。正式InputState、外部十槽資料、snapshot／RNG、Save後Load及下一步通過。
 > 4項回歸、4頂層／1子PASS，零SKIP／OOM；194..196完整RGB0，197差122由完整原始英雄6／7圖塊解釋，動畫時序仍未知。舊53張PNG保持，新48張含44既有前綴保持，正式Go／pack仍e939db2。收據與勘誤集中docs/188，現況只查CONTEXT；下一切片為正常F5／F6第二槽存讀檔。入隊返回與完整campaign仍未知。
 

@@ -4372,3 +4372,55 @@ CLI為`python3 /repo/tools/dosgolem_load_cancel_probe.py --prefix issue4-load-ca
 重生正常測試使用`DQ3_LOAD_CANCEL_ORACLE_DIR`指定本節接受來源、`DQ3_LOAD_CANCEL_RECEIPT_DIR`指定空輸出，在相同有界Docker／Xvfb執行`TestFieldLoadCancelDosgolemNormalInputComparison`。素材或hash缺失失敗，不以SKIP驗收。完整畫布命令為`python3 /repo/tools/verify_dq3_load_cancel_raster.py --assets /repo/assets_raw --original /work/dosgolem-opening --source-receipt /work/dosgolem-opening/issue4-load-cancel-r1-source-r2-receipt.json --runtime /work/issue4-load-cancel-validation-r3/load-cancel --output /work/issue4-load-cancel-raster-r1.json`；既有收據不覆寫，重驗另用新輸出。
 
 此有限CONFORMED只涵蓋十槽初始游標的上層F6取消與正常後續。下一切片是正常F5／F6第二槽存讀檔，從冷啟動創造可比的新保存狀態，避免拿既有其他槽的未知世界初值作對拍。入隊音樂返回、其他游標／場景、非空分離、多角色與完整campaign仍未知。停止已解釋影格樣本的時鐘重試，沒有新發行包。
+
+### 2026-10-05 正常 F5/F6 第二槽 DRAFT
+
+依Issue #4從75b296d續行。[正常第二槽探針](../tools/dosgolem_second_slot_probe.py)沿既有F5第一槽與後續行走builder，只改正常游標輸入：F5進十槽後按Down再Enter選第二槽，確認告別後左移，再F6按Down／Enter讀回第二槽，最後左右行走。選單／游標或場景條件不符就不排後續鍵。父194包、38個cold inputs與seed1357保留；clock／持久區／native caller只讀，不restore或注入狀態。
+
+CLI為`python3 /repo/tools/dosgolem_second_slot_probe.py --prefix issue4-second-slot-r1`。沿固定dosgolem2f44a68與dq3-ebiten-test:20260822-r1，以UID1000、有限資源與外層逾時執行；原版與repo唯讀，只有既有work可寫，Scratch使用原先已審DOS.Scratch overlay。先查真正PLAYER／dragon1.dat交易與完整2172bytes、其他槽保持、Load世界時鐘及完整畫面，再審有限READY。第二槽不預設等於第一槽oracle；正式Go／pack暫不修改。既有輸出不覆寫，所有原版素材與收據留本機。
+
+[第二槽獨立checker](../tools/verify_dosgolem_second_slot.py)固定本輪producer／Go／binary，完整重驗194包父來源與174母親產物，核對204包／484IRQ1、第二槽游標、真正dragon1.dat／PLAYER交易及完整2172bytes讀回。CLI依序為原版輸出目錄、producer、未存在的輸出收據，另以`--assets`明示唯讀原版目錄。checker預期條件仍DRAFT，需接受實際原版來源後審查READY；不把範本條件當已證實結果。
+
+### 2026-10-05 第二槽正常存讀檔有限 READY
+
+實際來源`work/dosgolem-opening/issue4-second-slot-r1-source-r1-receipt.json`已接受，SHA-256 `1a5a7c22c4599ce1bf4f6070d178a6d24ee49a8bbc4f374e84e39459a7a3f9d2`。正常204包／484IRQ1，38 cold inputs加204包共242次正常輸入，seed1357一次。前194包全部事件／388份完整PNG與bin及174母親產物保持；本次422份產物含408份packet PNG／bin、12份2172bytes持久區與2份原生存檔。
+
+confirmed限本次上層單人場景：195選槽游標1，正常Down令196游標2，Enter於197保存，完成告別後198新Enter返回field。199左移到1,18，200 F6進選槽游標1，201 Down令游標2，202 Enter真正讀回第二槽及2,18；203左移、204右移可續行。世界clock193..201保持30，202..204為0，raw526C均1。
+
+Scratch只含`player.dat`與`dragon1.dat`。PLAYER第二筆file20..39由本次主角metadata更新，file0..19及40..199逐byte等於原版，其他槽未被保存。dragon1.dat完整2172bytes的SHA-256為`9ef549b0ac969e8bb9a0138d4e339905c21f5abf8653ca718c09d4b4c5db5910`，與前一第一槽同狀態保存內容相同。原生202持久區完整等於保存檔；203只改座標低byte，204回復。FileOps真正create／read dragon1，沒有本輪dragon0交易；AH40另以原生caller及落地bytes核對，未單獨依FileOps推定寫入。
+
+原始EXE115282bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；dosgolem2f44a68固定，observer位址為IDA linear。既有玩家層Save／Load caller11484、114C8、114D3、114D9、1157D、1158B、11591、1165F本次全部自然到達，raw0722均2、raw0726均0；197寫入CX087C／DX4F29，202讀回相同長度與DGROUP持久區。沿原先已審契約，不重新分析硬體driver或解讀未知欄位。
+
+本次READY允許驗證第二槽正式InputState保存／讀回、其他JSON槽保持、snapshot／RNG及世界時鐘；可見初始metadata沿合法193checkpoint前外部資料條件，不注入執行中狀態。新保存後才比較第二槽恢復；其他既有槽完整世界不等價。[正式正常第二槽驗收](../dq3_remake_ebitan/game/field_save_second_slot_test.go)固定本次來源，完整畫面待實測，不以第一槽綠測試替代第二槽。音效duration保持既有hardware-spec approximation，沒有聲波或實機wall-clock聲明。
+
+[第二槽完整畫布診斷](../tools/verify_dq3_second_slot_raster.py)固定本節原版與remake收據，重驗422份原版產物及log，逐點核對194..204十一張完整PNG。差異只以原始BLS／CTY／BLK與實際runtime人物資料解釋；選槽窗遮住的人物不作圖塊判斷，但所有224000像素仍比較，沒有人物外差異才接受。原版動畫counter未觀察，不以固定raw圖塊match宣稱動畫時序。CLI明示`--assets`、`--original`、`--source-receipt`、`--runtime`與不存在的`--output`，只支援本節固定來源，不替換／裁切／遮罩PNG。
+
+### 2026-10-05 第二槽有限 CONFORMED
+
+現行產品第二槽行為符合本次READY，沒有需要修正的正式Go／pack差異。正常F5選第二槽、保存完成與告別、左移、F6第二槽讀回及左右行走全部通過。十份JSON只有第二槽在197被替換，其他九槽逐byte保持；202讀回已保存的完整snapshot，依pack重設世界clock0，RNG保持。路線後Save成功／Load及新左鍵可續行，只作remake回歸，不外推原版額外存檔流程。
+
+五項測試通過：`TestFieldSecondSlotDosgolemNormalInputComparison`、`TestFieldSaveLoadComparableSlotsDosgolemNormalInputComparison`、`TestFieldLoadCancelDosgolemNormalInputComparison`、`TestFieldSaveLoadIndependentSlotsAndRejectedLoad`、`TestFieldSaveLoadFailedWritePreservesModal`。補六張完整RGB0斷言後只重跑第一項，合計6命令／7筆PASS，涵蓋5不同頂層／1子，零SKIP／OOM。兩條舊路線48＋53張PNG逐byte保持；新第二槽55張含44既有前綴保持，補斷言前後全部55張相同。正式Go、九份pack及schema0.18.0／content0.1.90／canonical9d6325ad保持e939db2，沒有新包。
+
+| 第二槽正常包 | 完整RGB差異 | 本次像素核對 |
+|---|---:|---|
+| 194..197、202、203 | 0 | 六張完整640×350零差異，正式測試鎖定；有限V3 |
+| 198 | 411 | 英雄182、NPC14為106、NPC15為123 |
+| 199 | 356 | 英雄127、NPC14為106、NPC15為123 |
+| 200、201 | 各123 | 窗外NPC15完整圖塊；選槽窗與其他像素保持 |
+| 204 | 229 | NPC14為106、NPC15為123；英雄及其他像素保持 |
+
+完整BLS圖塊含透明像素、CTY／BLK底圖與原版色盤全部核對，差異外其餘224000像素一致；目視第二槽游標、保存後姓名「0」及讀回內容一致。這是各指定capture的confirmed raster explanation，不是原版動畫counter或週期的證明。世界clock30→0已證實，動畫時鐘未知；五張有差異畫面保持V2，不能宣稱全流程V3。
+
+| 本機收據 | SHA-256 |
+|---|---|
+| `work/dosgolem-opening/issue4-second-slot-r1-source-r1-receipt.json` | `1a5a7c22c4599ce1bf4f6070d178a6d24ee49a8bbc4f374e84e39459a7a3f9d2` |
+| `work/issue4-second-slot-validation-r2/second-slot/receipt.json` | `4578ab4aa889af13446c95e2a980fb9bdf28cceb33415e5bd12c54b71296dd1d` |
+| `work/issue4-second-slot-raster-r1.json` | `0a3a6a68601791d8bc81ff7cc177d4dd97fd97020b778753e5e3fb92fbcbd737` |
+
+重生正常測試以`DQ3_SECOND_SLOT_ORACLE_DIR`指定接受來源、`DQ3_SECOND_SLOT_RECEIPT_DIR`指定空輸出，在相同有界Docker／Xvfb執行`TestFieldSecondSlotDosgolemNormalInputComparison`。素材與來源hash缺失失敗，不以SKIP驗收。完整畫布CLI為`python3 /repo/tools/verify_dq3_second_slot_raster.py --assets /repo/assets_raw --original /work/dosgolem-opening --source-receipt /work/dosgolem-opening/issue4-second-slot-r1-source-r1-receipt.json --runtime /work/issue4-second-slot-validation-r2/second-slot --output /work/issue4-second-slot-raster-r2.json`；r1與r2 runtime收據逐byte相同，既有輸出不覆寫。
+
+本次限定E2／流程E3及六張完整V3，只涵蓋本次新保存的上層單人第二槽；其他槽完整世界、空槽、下層／多角色及動畫時鐘未知。下一正常切片是合法checkpoint的Space命令窗開關、游標導覽及道具入口。現行CmdMenu註解引用歷史C，不能代替原版oracle；先從原版正常操作取得證據，再判斷正式產品缺口。入隊返回保留DRAFT及硬體停止線，完整原版campaign尚未完成。
+
+三種損壞來源全部拒絕：其他槽metadata被改、讀回持久byte被改、最後一次IRQ1缺漏。每批完成後重新完整驗證未改動的正對照，接受來源仍為1a5a7c22。私人負例紀錄為`work/issue4-second-slot-negative-r1/receipt.json`及`work/issue4-second-slot-negative-r2/receipt.json`，逐byte相同，SHA-256為`d00995aa2e0d50e1f3f028edbf95752a4fe13be99e0884ddb54c51dbba980cf0`。
+
+r1成功收據寫完後程序結束碼137，停止原因未確認，不能宣稱OOM、逾時或產品缺陷。r2維持相同image、UID1000、768MiB／2CPU／64pids及network none，只將外層上限由300秒改600秒並使用新輸出目錄，乾淨重跑結束碼0。兩輪歷史保留，沒有快取代替完整正對照，也沒有重跑原版或調整遊戲時鐘。
