@@ -1,9 +1,9 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-04 空名冊觀看的空白卡住已修正。正常195包、內文等待、繼續詢問、告別及返回行走通過；snapshot／RNG、同版本存讀檔及下一步保持。
-完整game463覆蓋、416頂層／107子PASS、47選用SKIP；internal167頂層／344子PASS、11套件通過、4選用SKIP，沒有素材缺失SKIP。正常THE END130.07秒與desktop Linux x86_64通過。
-schema0.16.0／content0.1.88、canonical096fe3a7；九份JSON從乾淨af7d148重建逐byte一致。九條舊路線606張PNG保持，新46張留本機；187..194完整RGB各295，195為411，完整V3仍RED。
-唯一現況表在CONTEXT，有限READY、CONFORMED與公開重生入口見docs/188。Issue #4保持進行中；下一步空Join／Leave正常來源，其他裝備、多角色改名、音畫與原版完整流程仍未知。
+2026-10-04 空名冊加入與單人隊伍分離的卡住已修正。兩條正常193包、原版文字與續問、告別返回、snapshot／RNG、同版本存讀檔及下一步通過。
+完整game466覆蓋、419頂層／109子PASS、47選用SKIP；internal167頂層／350子PASS、11套件、4選用SKIP，無素材缺失SKIP。正常THE END253.74秒與desktop Linux x86_64通過。
+schema0.17.0／content0.1.89、canonical4b235d63；九份JSON由乾淨1217cbd重建逐byte一致。十條舊路652張PNG保持，新兩路各44張；187..192完整RGB各295，193返回零差異，完整V3仍RED。
+唯一現況表在CONTEXT，有限READY／CONFORMED與公開重生入口見docs/188。Issue #4保持進行中；下一步空清單Yes正常續行，非空分離、滿隊、其他裝備、多角色改名、音畫與完整原版流程仍未知。
 
 以下保存前一checkpoint，現況以上方與CONTEXT的唯一狀態表為準。
 
@@ -178,16 +178,16 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-04） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；schema0.16.0／content0.1.88；canonical `sha256:096fe3a764b72142fade8b8842cc6e9bc085c7a12f9242420120dafba7bd5c50`；九份JSON由乾淨af7d148逐byte重建；沒有新發行包 |
-| 最新remake已完成 | 空名冊View的空白卡住已修正；正常195包、316內文等待→540 No→541獨立等待→行走、snapshot／RNG、同版本存讀檔及下一步通過。非空View、A／Esc與K保持 |
-| 最新原版oracle | 空名冊正常195包來源ff7a8abd；466 IRQ1，前164包與PNG/bin等於已接受姓名取消來源。1062F→10696選D3TXT00 record316；名冊入口與返回只hero，角色、金錢及旗標不改 |
-| 最新畫面已驗 | 九條既有路線606張PNG逐byte保持；新46張，150..164等於正常取消。187..194完整RGB各295，195為411；無遮罩或相位指定 |
-| 最新畫面未通過 | 完整V3與人物動畫仍RED；正常能力數值及seed各自保持，全域骰序未對齊，不重擲、不遮罩或指定phase。原版存讀檔與音畫仍未知 |
-| 下一production切片 | 空Join／Leave的正常原版來源與有限READY；其他裝備、其他角色咒文、多角色K選人仍待正常來源。人物可比動畫DRAFT，driver／ISR停止線維持 |
-| 本輪有限READY | 姓名取消後正常空名冊View已CONFORMED；狀態E2／流程E3、畫面V2。原版後續正常行走閉合；不外推其他空清單與滿隊 |
-| 原版oracle仍未知 | 空Join／Leave、多角色改名、其他裝備詳細頁、其他角色與多列咒文動態、入隊完整後續、分離、其他職業／性別、滿額替換、完整名冊、可比亂數能力、健康色／status、NPC動畫、原版Save／Load、音訊及完整campaign |
-| 現行remake回歸 | game463覆蓋、416頂層／107子PASS、47選用SKIP；internal167頂層／344子PASS、11套件、4選用SKIP；無素材缺失SKIP。正常THE END130.07秒與desktop Linux x86_64通過 |
-| 額外驗證限制 | 有效Load清UI及拒絕Load保持是engine驗證；原版Save／Load未知。舊schema或hash不符存檔拒絕，不自動遷移。綠色回歸不升格完整原版parity |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.17.0／content0.1.89；canonical `sha256:4b235d635e29011f232b212b533e5de32c29c32a8d094c236eeba68198b9b988`；九份JSON由乾淨1217cbd逐byte重建；沒有新發行包 |
+| 最新remake已完成 | 空Join與單人Leave卡住已修正；兩條正常193包、530→316內文等待／542主角姓名→540 No→541獨立等待→行走；snapshot／RNG、同版本存讀檔與下一步通過。既有空View、非空選人、A／Esc及K保持 |
+| 最新原版oracle | 空Join來源47d1a115、單人Leave來源df05d0d4，各193包／462 IRQ1；前188包與空View逐項相同。DGROUP5060零名冊／5077隊伍數1、四個隊伍指標、主角、金錢及旗標保持；正常來源無注入 |
+| 最新畫面已驗 | 十條舊路線652張PNG逐byte保持，新兩路各44張，150..188等於既有空View。兩路187..192完整RGB各295；193返回零差異。無遮罩或相位指定 |
+| 最新畫面未通過 | 完整V3仍RED；能力數值及人物動畫另有既有差異。seed各自保持，全域骰序未對齊，不重擲或指定phase。原版存讀檔與音畫仍未知 |
+| 下一production切片 | 空清單Join／Leave的Yes正常續行來源；非空分離、滿隊、其他裝備、多角色K選人仍待正常來源。人物可比動畫DRAFT，driver／ISR停止線維持 |
+| 本輪有限READY | 空Join193包及單人Leave193包已CONFORMED；狀態E2／流程E3、畫面V2；只有返回畫布全RGB零差異。不外推非空分離、滿隊與完整V3 |
+| 原版oracle仍未知 | 空清單Yes續行、多角色改名、其他裝備詳細頁、其他角色與多列咒文動態、入隊完整後續、非空分離、其他職業／性別、滿額替換、完整名冊、可比亂數能力、健康色／status、NPC動畫、原版Save／Load、音訊及完整campaign |
+| 現行remake回歸 | game466覆蓋、419頂層／109子PASS、47選用SKIP；internal167頂層／350子PASS、11套件、4選用SKIP；無素材缺失SKIP。正常THE END253.74秒與desktop通過；5項OOM以同一binary逐一重跑PASS |
+| 額外驗證限制 | 有效Load清UI及拒絕Load保持為engine驗證；原版Save／Load未知。舊schema或hash不符存檔拒絕，不自動遷移。綠色回歸不升格完整原版parity |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，

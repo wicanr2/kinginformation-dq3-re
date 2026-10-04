@@ -2098,3 +2098,21 @@ View在空roster時播放該record，EOF以具名有限延續接既有`again_tex
 `python3 tools/migrate_recruitment_empty_view_pack.py <乾淨pack目錄> <唯讀原始素材目錄> docs/data/glyph_unicode_map.json`。
 所有執行在既有`dq3-ebiten-test:20260822-r1` Docker內，以UID1000核對輸入及輸出擁有權。
 工具只遷移schema、content、文字引用與原始record316；沒有交付或發行變更。
+
+## 空加入與單人分離契約增補
+
+schema0.17.0／content0.1.89新增必填`recruitment_selection.empty_join_text_id`及`empty_leave_text_id`。
+缺失、null、未知引用或未審查文字拒絕。前者引用既有原始316，後者引用原始542，
+逐word保留FFFC等待、FFFE換行與FFFB名字插值；沒有Go文字或record fallback。
+正常193包原版來源、原始計數、文字bank及有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。
+
+空roster加入先播放既有`prompt_text_id`，EOF後接`empty_join_text_id`，
+新的內文確認才前進`again_text_id`。單人分離播放`empty_leave_text_id`，
+以目前主角姓名插值，EOF直接接續問；不新增讀鍵或角色交易。
+具名有限延續共用既有文字引擎，JSON不承載任意程式。
+非空分離與滿隊未由空清單樣本驗收。同版本Load清UI；舊schema／canonical hash存檔維持拒絕。
+
+從乾淨1217cbd的九份JSON重建，用[遷移工具](../tools/migrate_recruitment_empty_pack.py)：
+`python3 tools/migrate_recruitment_empty_pack.py <乾淨pack目錄> <唯讀原始素材目錄> docs/data/glyph_unicode_map.json`。
+在既有`dq3-ebiten-test:20260822-r1` Docker內以UID1000執行，核對來源身份、原始consumer及輸出擁有權。
+工具保留原有JSON排版，只遷移schema、content、兩個文字引用、542文字及有限證據說明；沒有發行變更。

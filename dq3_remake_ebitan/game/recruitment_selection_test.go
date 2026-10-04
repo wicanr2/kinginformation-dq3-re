@@ -14,24 +14,38 @@ import (
 )
 
 func TestRecruitmentEmptyViewDosgolemNormalInputComparison(t *testing.T) {
-	dir := os.Getenv("DQ3_RECRUIT_EMPTY_VIEW_ORACLE_DIR")
+	runRecruitmentEmptyNormalInputComparison(t, "view", "issue4-empty-view-normal-r1-source-r2-receipt.json", "ff7a8abd5e93c867e5650f08a3af607feecf7013d7a781ff9a9ad2fd44eaeba7", "issue4-empty-view-normal-r1", 195, 191, 192)
+}
+
+func TestRecruitmentEmptyJoinDosgolemNormalInputComparison(t *testing.T) {
+	runRecruitmentEmptyNormalInputComparison(t, "join", "issue4-empty-join-normal-r1-source-r1-receipt.json", "47d1a11585d4d3a3d5b6a04fc8923a3ab7adc305b1d7272a5d5823b73e3733cd", "issue4-empty-join-normal-r1", 193, 189, 190)
+}
+
+func TestRecruitmentEmptyLeaveDosgolemNormalInputComparison(t *testing.T) {
+	runRecruitmentEmptyNormalInputComparison(t, "leave", "issue4-empty-leave-normal-r1-source-r1-receipt.json", "df05d0d4e61ff06c3ced99c9939c180ac9d8116305e31012f33c5350ba4d0ffb", "issue4-empty-leave-normal-r1", 193, 190, 190)
+}
+
+func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, sourceHash, prefix string, packets, openPacket, againPacket int) {
+	t.Helper()
+	envAction := map[string]string{"view": "VIEW", "join": "JOIN", "leave": "LEAVE"}[action]
+	dir := os.Getenv("DQ3_RECRUIT_EMPTY_" + envAction + "_ORACLE_DIR")
 	if dir == "" {
 		t.Skip("optional private dosgolem empty-view oracle")
 	}
-	out := os.Getenv("DQ3_RECRUIT_EMPTY_VIEW_RECEIPT_DIR")
+	out := os.Getenv("DQ3_RECRUIT_EMPTY_" + envAction + "_RECEIPT_DIR")
 	if out == "" {
 		t.Fatal("explicit output required")
 	}
-	path := filepath.Join(dir, "issue4-empty-view-normal-r1-source-r2-receipt.json")
+	path := filepath.Join(dir, sourceName)
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fmt.Sprintf("%x", sha256.Sum256(raw)) != "ff7a8abd5e93c867e5650f08a3af607feecf7013d7a781ff9a9ad2fd44eaeba7" {
+	if fmt.Sprintf("%x", sha256.Sum256(raw)) != sourceHash {
 		t.Fatal("original accepted source identity differs")
 	}
 	var src struct{ Queued, States []map[string]string }
-	if err = json.Unmarshal(raw, &src); err != nil || len(src.Queued) != 195 || len(src.States) != 195 {
+	if err = json.Unmarshal(raw, &src); err != nil || len(src.Queued) != packets || len(src.States) != packets {
 		t.Fatal(err, "source shape")
 	}
 	g := runDosgolemMotherArrivalStateComparison(t)
@@ -105,24 +119,24 @@ func TestRecruitmentEmptyViewDosgolemNormalInputComparison(t *testing.T) {
 				t.Fatal("empty View changed persistent state or RNG")
 			}
 		}
-		switch i + 1 {
-		case 188, 189, 190:
+		switch n := i + 1; {
+		case n >= 188 && n < openPacket:
 			if !g.recruit.active || g.recruit.stage != rcMenu || g.recruit.cursor != i-187 {
 				t.Fatal("normal menu differs")
 			}
-		case 191:
+		case n == openPacket && openPacket < againPacket:
 			if g.recruit.stage != rcText || !g.recruit.dialogue.waitingForConfirm() || g.recruit.viewFlow != nil {
-				t.Fatal("empty View must display record with one inline wait")
+				t.Fatal("empty selection must display record with one inline wait")
 			}
-		case 192, 193:
-			if g.recruit.stage != rcAgain || g.recruit.cursor != i-191 {
-				t.Fatal("empty View must finish hint and ask continue")
+		case n == againPacket || n == againPacket+1:
+			if g.recruit.stage != rcAgain || g.recruit.cursor != n-againPacket {
+				t.Fatal("empty selection must finish hint and ask continue")
 			}
-		case 194:
+		case n == againPacket+2:
 			if !g.recruit.active || g.recruit.stage != rcFinalWait {
 				t.Fatal("farewell separate wait missing")
 			}
-		case 195:
+		case n == againPacket+3:
 			if g.recruit.active {
 				t.Fatal("empty View did not return to field")
 			}
@@ -139,7 +153,7 @@ func TestRecruitmentEmptyViewDosgolemNormalInputComparison(t *testing.T) {
 			if e != nil || closeErr != nil {
 				t.Fatal(e, closeErr)
 			}
-			samples = append(samples, map[string]any{"packet": i + 1, "original_phase": s["phase"], "recruit_stage": g.recruit.stage, "full_rgb_difference": sourceCanvasDifference(t, g, path, fmt.Sprintf("issue4-empty-view-normal-r1-packet-%03d-%s.png", i+1, s["phase"]))})
+			samples = append(samples, map[string]any{"packet": i + 1, "original_phase": s["phase"], "recruit_stage": g.recruit.stage, "full_rgb_difference": sourceCanvasDifference(t, g, path, fmt.Sprintf("%s-packet-%03d-%s.png", prefix, i+1, s["phase"]))})
 		}
 	}
 	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "empty-view.json"))
@@ -163,7 +177,7 @@ func TestRecruitmentEmptyViewDosgolemNormalInputComparison(t *testing.T) {
 	if g.px != 1 || g.py != 18 || g.recruit.active {
 		t.Fatal("next step after Load")
 	}
-	report := map[string]any{"source_sha256": fmt.Sprintf("%x", sha256.Sum256(raw)), "pack_schema": g.pack.Manifest.SchemaVersion, "pack_hash": g.pack.ContentHash(), "original_packets": 195, "scope": "normal empty View finite state parity; full RGB differences retained", "save_load_next_step": true, "samples": samples}
+	report := map[string]any{"source_sha256": fmt.Sprintf("%x", sha256.Sum256(raw)), "pack_schema": g.pack.Manifest.SchemaVersion, "pack_hash": g.pack.ContentHash(), "original_packets": packets, "action": action, "scope": "normal empty selection finite state parity; full RGB differences retained", "save_load_next_step": true, "samples": samples}
 	data, e := json.MarshalIndent(report, "", "  ")
 	if e != nil {
 		t.Fatal(e)
@@ -403,7 +417,7 @@ func TestRecruitmentEmptyViewWaitAndNoPreserveState(t *testing.T) {
 	rc.active, rc.stage, rc.cursor = true, rcMenu, 2
 	rng := g.prng
 	g.recruitInput(InputState{DirEdge: -1, Enter: true})
-	if rc.stage != rcText || rc.afterText != rcEmptyViewReturn || rc.viewFlow != nil {
+	if rc.stage != rcText || rc.afterText != rcEmptySelectionReturn || rc.viewFlow != nil {
 		t.Fatal("empty View must use reviewed hint without opening a list")
 	}
 	for i := 0; i < 5000 && !rc.dialogue.waitingForConfirm(); i++ {
@@ -432,5 +446,49 @@ func TestRecruitmentEmptyViewWaitAndNoPreserveState(t *testing.T) {
 	g.recruitInput(InputState{DirEdge: -1, Enter: true})
 	if rc.active || len(g.roster) != 0 || len(g.companions) != 0 || g.prng != rng {
 		t.Fatal("empty View changed state")
+	}
+}
+
+func TestRecruitmentEmptyJoinLeaveSequencePreservesState(t *testing.T) {
+	for _, action := range []string{"join", "leave"} {
+		t.Run(action, func(t *testing.T) {
+			g := &Game{heroName: []int{0, 1}}
+			configureRecruitmentEntryFixture(t, &g.recruit)
+			rc := &g.recruit
+			rc.active, rc.stage = true, rcMenu
+			if action == "leave" {
+				rc.cursor = 1
+			}
+			rng := g.prng
+			g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			if rc.stage != rcText {
+				t.Fatal("empty action must show reviewed text")
+			}
+			if action == "join" {
+				for i := 0; i < 5000 && rc.stage == rcText && !rc.dialogue.waitingForConfirm(); i++ {
+					g.recruitInput(InputState{DirEdge: -1, DirHeld: -1})
+				}
+				if rc.stage != rcText || !rc.dialogue.waitingForConfirm() {
+					t.Fatal("Join must show prompt followed by hint inline wait")
+				}
+				g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			} else if !reflect.DeepEqual(rc.dialogue.varGlyphs(0xfffb), g.heroName) {
+				t.Fatal("single-party Leave must use current primary name")
+			}
+			drainRecruitmentSelectionText(t, rc)
+			if rc.stage != rcAgain || rc.cursor != 0 {
+				t.Fatal("empty action must stop at separate Yes/No")
+			}
+			g.recruitInput(InputState{DirEdge: 3})
+			g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			drainRecruitmentSelectionText(t, rc)
+			if rc.stage != rcFinalWait || !rc.active {
+				t.Fatal("farewell separate wait missing")
+			}
+			g.recruitInput(InputState{DirEdge: -1, Enter: true})
+			if rc.active || len(g.roster) != 0 || len(g.companions) != 0 || g.prng != rng || !reflect.DeepEqual(g.heroName, []int{0, 1}) {
+				t.Fatal("empty action changed persistent state")
+			}
+		})
 	}
 }

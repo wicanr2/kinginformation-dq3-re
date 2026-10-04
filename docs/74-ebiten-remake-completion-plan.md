@@ -1,9 +1,9 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-04 空名冊觀看的空白卡住已修正。正常195包、內文等待、繼續詢問、告別及返回行走通過；snapshot／RNG、同版本存讀檔及下一步保持。
-> 完整game463覆蓋、416頂層／107子PASS、47選用SKIP；internal167頂層／344子PASS、11套件通過、4選用SKIP，沒有素材缺失SKIP。正常THE END130.07秒與desktop Linux x86_64通過。
-> schema0.16.0／content0.1.88、canonical096fe3a7；九份JSON從乾淨af7d148重建逐byte一致。九條舊路線606張PNG保持，新46張留本機；187..194完整RGB各295，195為411，完整V3仍RED。
-> 唯一現況表在CONTEXT，有限READY、CONFORMED與公開重生入口見docs/188。Issue #4保持進行中；下一步空Join／Leave正常來源，其他裝備、多角色改名、音畫與原版完整流程仍未知。
+> 2026-10-04 空名冊加入與單人隊伍分離的卡住已修正。兩條正常193包、原版文字與續問、告別返回、snapshot／RNG、同版本存讀檔及下一步通過。
+> 完整game466覆蓋、419頂層／109子PASS、47選用SKIP；internal167頂層／350子PASS、11套件、4選用SKIP，無素材缺失SKIP。正常THE END253.74秒與desktop Linux x86_64通過。
+> schema0.17.0／content0.1.89、canonical4b235d63；九份JSON由乾淨1217cbd重建逐byte一致。十條舊路652張PNG保持，新兩路各44張；187..192完整RGB各295，193返回零差異，完整V3仍RED。
+> 唯一現況表在CONTEXT，有限READY／CONFORMED與公開重生入口見docs/188。Issue #4保持進行中；下一步空清單Yes正常續行，非空分離、滿隊、其他裝備、多角色改名、音畫與完整原版流程仍未知。
 
 以下保存前一checkpoint，現況以上方與CONTEXT的唯一狀態表為準。
 

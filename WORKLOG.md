@@ -1506,3 +1506,15 @@ Docker檢查需主機權限，依既有隔離規則續做；一次性容器已�
 - 環境／腳本失敗：容器socket需host權限；首次文件讀取誤用非現行檔名與.go目錄；checker將187誤標waiting，實際inline_wait；r1收據缺共用圖像checker的頂層原版身份。按相同原版來源修正，保留r1、r2收據及乾淨紅測試，不作產品缺陷。
 - 圖片稽核先漏改名子目錄，再誤用創角前綴代替取消前綴；查明157分岔後，以實際正常取消150..164重跑失敗部分，606張既有路線檢查保持。沒有為使圖片通過調整正式程式、輸入或相位。
 - 唯一現況表更新CONTEXT，現行計畫更新docs/74；新公開producer/checker/migration由docs/188及docs/84索引。所有原版素材、PNG、database與私有work留本機；使用者13項資料保留。提交、推送、擁有權及Docker清理以本輪收尾收據與Issue最終留言為準。
+
+## 2026-10-04 空加入與單人分離
+
+- 從1217cbd依Issue #4續行，既有空View已閉合。窄查IDA9.4 caller、名冊計數及consumer298條目；seed1357在冷啟動前固定一次，正常姓名取消、選No、下樓後選對應動作，沒有狀態或名冊注入。
+- 原版兩路各193包／462IRQ1，前188與空View逐項相同。Join530後零名冊選316內文等待；Leave單人直接542主角姓名、EOF同包540。No→541獨立讀鍵→field2,18；名冊、隊伍指標、主角、金錢及旗標保持。來源47d1a115與df05d0d4。
+- 修正前正常Join189／Leave190及元件RED；docs/188有限READY後實作兩個必填typed文字引用與具名EOF延續，保留原始record界線及控制碼。正常193包、snapshot／RNG、同版本存讀檔及下一步通過；schema0.17.0／content0.1.89，canonical4b235d63，舊schema存檔仍拒絕。
+- 完整game466覆蓋、419頂層／109子PASS、47選用SKIP；internal167頂層／350子PASS、11套件、4選用SKIP，無素材缺失SKIP。正常THE END253.74秒、desktop PASS。十條舊路652張PNG逐byte保持，新兩路各44張；187..192全RGB各295、193返回零差異，完整V3仍RED。
+- 各八種壞來源拒絕且正對照保持；乾淨1217cbd九份JSON由公開遷移器逐byte重建。保留24筆原始定位並追加1046A／105BC有限confirmed，IDA自動合併26筆及原始bytes／MZ relocation核對。完整收據與hash見docs/188最新CONFORMED。
+- 環境失敗：首次命令換行escaping在執行寫入前SyntaxError，改檔案化Docker腳本乾淨重跑。首輪三個大型來源測試共用3GiB發生5次OOM；memory.events、exit−9、日誌留存，使用同一binary逐一重跑受影響五項全PASS，重跑容器oom_kill0。不將這些記為產品缺陷，不改程式為了驗證通過。
+- README穩定摘要補正過期schema／content，唯一現況表、docs/74、PROJECT_MEMORY與WORKLIST更新。新公開producer、checker、遷移器均有docs/188或docs/84入口；無新文件或交付目錄。下一步空清單Yes正常續行，非空分離、滿隊與音畫仍待來源，維持driver／ISR停止線。
+- 使用者13項scratch及本機資產保留。提交、推送、擁有權與Docker清理以本輪收尾收據及Issue最終留言為準；Goal與Issue不宣稱完成。
+- 收尾腳本首次將收據寫到唯讀`/repo/work`而失敗；檢查項目已跑完，未改產品檔案。輸出改為明確可寫掛載`/work`後，以同一容器工具鏈乾淨重跑收尾檢查。

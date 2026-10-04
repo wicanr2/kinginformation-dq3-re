@@ -42,7 +42,7 @@ func TestRecruitmentSelectionOriginalDataParity(t *testing.T) {
 		t.Fatal("original text identity")
 	}
 	tx := dq3data.LoadText(nil, data)
-	records := []int{530, word(5), word(7), word(8), 540, 541, 457, 458, 459, 460, 461, 462, 463, 464, 534, 535, 528, 316}
+	records := []int{530, word(5), word(7), word(8), 540, 541, 457, 458, 459, 460, 461, 462, 463, 464, 534, 535, 528, 316, 316, 542}
 	for i, id := range s.TextIDs() {
 		d, _ := p.TextDefinition(id)
 		codes, _ := p.TextGlyphCodes(id)
@@ -54,6 +54,7 @@ func TestRecruitmentSelectionOriginalDataParity(t *testing.T) {
 		off   int
 		bytes string
 	}{
+		{0x17da, "bf3c01"}, {0x1838, "80fb01"}, {0x192c, "bf1e02"},
 		{0x199f, "eb65"}, {0x1a06, "bf3c01"},
 		{0x176d, "050300"}, {0x1770, "b104"}, {0x1772, "d3e0"}, {0x1774, "a31c3e"},
 		{0x1d55, "c70616071500"}, {0x1d5b, "c70618074e00"}, {0x1d86, "83c506"},
@@ -66,7 +67,7 @@ func TestRecruitmentSelectionOriginalDataParity(t *testing.T) {
 }
 
 func TestRecruitmentSelectionRejectsBrokenContract(t *testing.T) {
-	for _, name := range []string{"missing", "null_name", "missing_zero_step", "unknown", "unknown_window", "unknown_text", "unreviewed", "outside", "row_step", "header_rows", "unknown_class", "missing_class", "unknown_gender", "frame_control", "missing_empty_view", "null_empty_view", "unknown_empty_view"} {
+	for _, name := range []string{"missing", "null_name", "missing_zero_step", "unknown", "unknown_window", "unknown_text", "unreviewed", "outside", "row_step", "header_rows", "unknown_class", "missing_class", "unknown_gender", "frame_control", "missing_empty_view", "null_empty_view", "unknown_empty_view", "missing_empty_join", "null_empty_join", "unknown_empty_join", "missing_empty_leave", "null_empty_leave", "unknown_empty_leave"} {
 		t.Run(name, func(t *testing.T) {
 			p, e := BuiltinDQ3()
 			if e != nil {
@@ -104,6 +105,18 @@ func TestRecruitmentSelectionRejectsBrokenContract(t *testing.T) {
 				m["gender_text_ids"].([]any)[0] = "unknown"
 			case "frame_control":
 				m["row_text_id"] = m["prompt_text_id"]
+			case "missing_empty_join":
+				delete(m, "empty_join_text_id")
+			case "null_empty_join":
+				m["empty_join_text_id"] = nil
+			case "unknown_empty_join":
+				m["empty_join_text_id"] = "unknown"
+			case "missing_empty_leave":
+				delete(m, "empty_leave_text_id")
+			case "null_empty_leave":
+				m["empty_leave_text_id"] = nil
+			case "unknown_empty_leave":
+				m["empty_leave_text_id"] = "unknown"
 			case "missing_empty_view":
 				delete(m, "empty_view_text_id")
 			case "null_empty_view":

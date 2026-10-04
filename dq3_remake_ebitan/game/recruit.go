@@ -122,12 +122,21 @@ func (g *Game) recruitInput(in InputState) {
 				if rc.selection == nil {
 					return
 				}
-				rc.startSelectionText(rc.selection.PromptTextID, rcJoin)
+				next := rcJoin
+				if len(g.roster) == 0 {
+					next = rcEmptyJoinHint
+				}
+				rc.startSelectionText(rc.selection.PromptTextID, next)
 			case gamepack.RecruitLeave:
+				if len(g.companions) == 0 && rc.selection != nil {
+					rc.startSelectionText(rc.selection.EmptyLeaveTextID, rcEmptySelectionReturn)
+					rc.dialogue.heroName = append([]int(nil), g.heroName...)
+					return
+				}
 				rc.stage, rc.cursor = rcLeave, 0
 			case gamepack.RecruitView:
 				if len(g.roster) == 0 && rc.selection != nil {
-					rc.startSelectionText(rc.selection.EmptyViewTextID, rcEmptyViewReturn)
+					rc.startSelectionText(rc.selection.EmptyViewTextID, rcEmptySelectionReturn)
 					return
 				}
 				rc.stage, rc.cursor = rcView, 0

@@ -282,6 +282,32 @@
       "consumer": "191內文等待→192完成316、1069E返回caller540→No→541→195field；名冊保持空",
       "review_reference": "docs/188：2026-10-04 空名冊觀看有限READY；不外推其他空清單與完整V3",
       "dynamic_evidence": "work/dosgolem-opening/issue4-empty-view-normal-r1-source-r2-receipt.json SHA256 ff7a8abd5e93c867e5650f08a3af607feecf7013d7a781ff9a9ad2fd44eaeba7；191..195正常來源；IDA121指令7bdc4ca6"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x1046a",
+      "file_offset": "0x17da",
+      "bytes": "bf3c01",
+      "semantic": "空名冊Join選D3TXT00 record316",
+      "inference_level": "confirmed",
+      "consumer": "189先530→10974計數0→103F4→1046A；內文等待，190返回caller540",
+      "review_reference": "docs/188：2026-10-04 空Join與單人Leave有限READY；不外推非空分離、滿隊或完整V3",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-empty-join-normal-r1-source-r1-receipt.json SHA256 47d1a11585d4d3a3d5b6a04fc8923a3ab7adc305b1d7272a5d5823b73e3733cd；193正常包／462IRQ1；IDA298條目a1f0f62a"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x105bc",
+      "file_offset": "0x192c",
+      "bytes": "bf1e02",
+      "semantic": "單人Leave選D3TXT00 record542",
+      "inference_level": "confirmed",
+      "consumer": "190 DGROUP5077為1→104CD→105BC；原生主角插值，EOF同包540",
+      "review_reference": "docs/188：2026-10-04 空Join與單人Leave有限READY；不外推非空分離、滿隊或完整V3",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-empty-leave-normal-r1-source-r1-receipt.json SHA256 df05d0d4e61ff06c3ced99c9939c180ac9d8116305e31012f33c5350ba4d0ffb；193正常包／462IRQ1；IDA298條目a1f0f62a"
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.16.0",
+  "schema_version": "0.17.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -3008,6 +3008,8 @@
     "farewell_text_id": "dq3:text.recruitment_selection.farewell",
     "continue_text_id": "dq3:text.recruitment_entry.question",
     "empty_view_text_id": "dq3:text.recruitment_selection.empty_view",
+    "empty_join_text_id": "dq3:text.recruitment_selection.empty_view",
+    "empty_leave_text_id": "dq3:text.recruitment_selection.empty_leave",
     "name": {
       "x": 168,
       "y": 78,
@@ -3105,7 +3107,7 @@
       "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
       "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
-      "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。 空Join193包530／316及單人Leave193包542已有限D3；非空分離與滿隊仍未驗收。"
     }
   },
   "recruitment_join": {
