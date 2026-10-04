@@ -1360,3 +1360,18 @@ CONTEXT唯一表、PROJECT_MEMORY、docs/74、docs/84、docs/188及README同步�
 normal-run-r4以最終binary重播201包，52張PNG及收據逐byte等於r3；存讀檔／下一步通過。
 出生程序的兩次SIGKILL已由堆疊定位與等待條件修正收斂，沒有當成正式產品缺陷或刪除失敗輸出。
 收尾稽核首次把輸出指向唯讀repo掛載；所有檢查已通過但收據寫入拒絕，修正為可寫work後重跑。
+
+## 2026-10-04 Issue #4 共用人物差異與正常Yes續行
+
+上一輪e259412屬正式修正，已推送；本輪沿目前工作樹與遠端Issue #4續驗。
+完整差分將295定位為主角182、櫃台NPC106及右下NPC7；文字與框線未出現新差異。
+正常冷原版改走Esc後Yes、再Join、Esc、No、告別確認；204packet／484IRQ1／408PNG及bin，cf0730f1。
+前198packet與396份圖像保持，名冊、slot1的97bytes、金錢、旗標不變；未注入狀態或改clock。
+只讀130組人物取圖，87組NPC加共用phase1；主角43組保留原始BX4→000A，不推定型別。
+modal196..203不重新取圖；remake本次walk0。新返回204完整差411，前次No返回0不外推全部相位。
+新增正式204包驗收與來源固定hash；Yes→528正常分支confirmed，540內Esc仍strong，完整V3及時序DRAFT。
+正常InputState、同版本Save／Load與下一步PASS；四條既有正常路線、七個招募元件與137PNG保持。
+十種損壞來源拒絕；來源稽核新增profile及場景不變性，既有201包d59315c1輸出保持。
+公開正常Yes producer保存實際執行body；原版／PNG／binary留本機，工具與主題文件可重生入口同步。
+正式engine與pack不變，0.12.0／0.1.84及0bdb4ebf；最近完整回歸e259412保持，不重跑相同產品全套。
+Issue進度5975028362；結果、commit／push及Docker清理另由本輪收尾收據保存，Issue與Goal保持進行中。

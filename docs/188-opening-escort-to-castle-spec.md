@@ -3055,7 +3055,7 @@ SHA256`761367b3e3ad8aa2186801402d765a83a167e42fcf0aa018fd4cc672a6b29586`。
 | 1F4E3..1F58F；原始窗口words | 保存／陰影、531兩行header、532每人一行、533footer、109E5callback、活動框、原始cursor | confirmed，原始consumer及197 |
 | 109E5..10A7F；215EE..21651；21929..2197E | 姓名最多4字；rowY78、步16；姓名X168、等級五位右對齊起點216、職業X312、性別X408 | confirmed，原始byte單位及197 |
 | 1040E..10413→10469→103AE | Esc不搬移角色，接540及兩項選擇，初始Yes | confirmed，正常198 |
-| 103AE..103D6 | No接541、等正常確認、撤窗返回；Yes回10378重播528後主選單 | No confirmed正常199..201；Yes strong靜態閉合，未原版動態抽測 |
+| 103AE..103D6 | No接541、等正常確認、撤窗返回；Yes回10378重播528後主選單 | No confirmed正常199..201；Yes由後續cf0730f1正常204包確認，先前strong保留為形成史 |
 
 DGROUP3E14保留原始32bytes：
 `09030f002e002c0070001302050014021502e5090500030011004e0000000a03`。
@@ -3145,3 +3145,61 @@ IDA原始函式null的錯誤審查假設、負例修改到未比較的出生writ
 同版本存讀檔與正常下一步通過。測試等待條件修正未改pack、正式程式或畫面。
 本輪收尾與遠端核對入口為`work/issue4-selection-final-audit-r1.py`及`-post-push-r1.py`，
 收據與Issue正文／結果文字留在同前綴本機工作目錄。
+
+## 2026-10-04 共用人物差異與正常Yes續行 DRAFT
+
+本段保留來源執行前的DRAFT紀錄。正常Yes的後續接受結果見下方「正常Yes來源與有限狀態驗收」；人物時序仍DRAFT。
+
+從e259412正常201包來源重算完整RGB差異。195..200的295個位置完全相同，
+主角區182、櫃台NPC區106、右下NPC露出區7；194未開窗完整411，201關窗後0。
+這是完整畫布差異的定位分析，沒有裁切或遮罩驗收。人物相位不可指定或挑選結果。
+分析入口為`work/issue4-295-pixels-r1.py`及同前綴receipt；原版與runtime PNG都保持。
+
+正常新分支入口為`work/issue4-recruit-yes-r1-builder.py`。它在同一冷新遊戲與seed1357下，
+沿正常出生、下樓、Join、Esc、Yes、再Join、Esc、No、告別確認返回。
+只在既有11ED0／11EE8及1E2FF／1E30B的人物取圖consumer觀察原始暫存器、counter0002與phase0004。
+不改原版bytes、phase、時鐘、角色、名冊、旗標或亂數。前198個正常來源預期保持，須獨立稽核後接受。
+新產物在`work/dosgolem-opening/issue4-recruit-yes-r1-*`；正常Yes尚未動態接受，不改先前strong等級。
+稽核入口沿用`tools/verify_dosgolem_recruitment_selection.py --continue-yes`，
+204包、484IRQ1與完整408份PNG／bin的斷言須與實際正常來源核對。
+工具新增路線不可放寬既有201包來源；舊收據須逐byte保持，並另驗證損壞來源拒絕。
+工作登記Issue #4留言5975028362。圖像時序仍DRAFT；PIT／ISR停止線與199後音樂unknown保持。
+
+公開重生入口為`tools/dosgolem_recruitment_continue_probe.py`，完整body與本次執行的私有producer相同。
+在既有image、唯讀repo／frozen dosgolem、UID1000可寫work執行；預設前綴相同，須使用乾淨輸出overlay。
+接受入口為上述稽核器，傳入實際producer及新收據路徑；不覆寫既有來源。
+獨立核對入口`work/issue4-recruit-yes-source-r1.py`，正式正常重播`work/issue4-recruit-yes-normal-r1.py`。
+
+### 正常Yes來源與有限狀態驗收
+
+原版冷來源自然完成204個queued／consumed／capture、484IRQ1與408份完整640×350PNG／bin。
+原始EXE身份5178fdc8、dosgolem2f44a68及seed1357在執行前固定一次；前198個packet與396份圖像保持。
+來源收據`issue4-recruit-yes-r1-source-r1-receipt.json`，SHA256
+`cf0730f10e48673e2da6702c77a6e458269cfe0153216b8770b7d3889a08e829`。
+199選Yes後重播528及三項選單，200再Join、201 Esc、202選No、203告別等待、204確認回field。
+這只把Yes正常分支從strong提升為confirmed；540內Esc尚未動態抽測，仍strong。
+所有名冊狀態1、slot1的97bytes、金錢、故事旗標及原版角色資料保持；原版存讀檔未驗。
+
+原版人物取圖130組：87組NPC的base80／66加原始phase1為81／67，43組主角僅保留原始BX4→000A。
+不把主角的原始BX數值當成已審查的frame型別。195僅一次NPC取圖；196..203沒有新人物取圖。
+原始consumer與位址基準沿既有IDA9.4 sidecar，不修改原始名稱、bytes或database。
+同次remake主角與可見NPC的walk均0；兩側沒有同動畫時序契約，不能聲稱同相位。
+完整195..203各差295、返回204差411。舊No返回201差0只限那次phase，不是普遍的返回V3。
+共用295的位置分組為主角182、櫃台NPC106、右下NPC7；沒有遮罩或指定影格。
+人物時序保持DRAFT；六次原始遊戲計數與硬體Ticks不能直接互換，舊原型反證與停止線仍有效。
+
+正式正常204包入口`TestRecruitmentContinueDosgolemNormalInputComparison`，
+使用`DQ3_RECRUIT_YES_ORACLE_DIR`與`DQ3_RECRUIT_YES_RECEIPT_DIR`，母親來源與素材設定沿既有正常201包。
+測試固定原版收據hash，只讀取兩側人物資料；來源不在時標選用SKIP，不能當parity通過。
+runtime收據`work/issue4-recruit-yes-normal-r2/recruitment-continue.json`，SHA256
+`c3dab244f5dd4df5fefb36ab9138e8474f71364ea47291abc49b9ecceaed8958`。正常Save／Load與下一步PASS；全域骰序未對齊，Talk保留額外正式命令確認。
+原版與remake有限狀態E2／E3、畫面V2，完整V3仍RED；沒有修改正式Go、pack或存檔格式。
+
+受影響回歸入口`work/issue4-recruit-yes-regression-r1.py`，四條原版正常路線與七個招募元件案例PASS。
+137張既有PNG逐byte保持。新增唯讀人物metadata的r2重跑55張PNG與r1逐byte相同。
+最近完整engine回歸仍e259412的439項／11internal／desktop及THE END66.58秒；本批不重跑未變產品全套。
+十種隔離損壞拒絕，入口`work/issue4-recruit-yes-negatives-r1.py`，收據SHA256
+`0865a4acbfda5abe066a284482262bf4b6324f02713062f387f3689440fc5c25`。
+來源與公開producer逐byte相同，原版收據未覆寫；新路線不能替代先前No或完整入隊來源。
+本輪工作與結果追加Issue #4，收尾入口`work/issue4-recruit-yes-final-r1.py`及同前綴收據。
+下一閘門是人物取圖時序與536有限文字；不為295像素調clock、固定walk、重擲或深挖ISR。

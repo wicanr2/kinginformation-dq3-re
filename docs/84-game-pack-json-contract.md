@@ -2002,3 +2002,7 @@ schema0.11.0新增必填`interface.recruitment_entry`，content0.1.83；舊schem
 有效Load清除入口UI暫態並保留契約，拒絕Load保持原畫布。正常存讀檔只證明remake，原版Load未知。
 
 選人與正常取消最終canonical hash：`sha256:0bdb4ebfa99c9f36fb5e7f8dd3f6d5f2e1dc3892900bdadc174cf6be34e47fcc`。完整回歸與原版收據入口見[docs/188](188-opening-escort-to-castle-spec.md)最新驗收節。
+
+招募取消後Yes重播`continue_text_id`的正常分支已由204包來源cf0730f1核對，見[docs/188](188-opening-escort-to-castle-spec.md)最新節。
+本輪未改schema、content、pack hash或正式狀態機；540內Esc仍strong，人物相位與完整入隊仍待驗。
+新增正常驗收為`game/recruitment_selection_test.go`的`TestRecruitmentContinueDosgolemNormalInputComparison`。

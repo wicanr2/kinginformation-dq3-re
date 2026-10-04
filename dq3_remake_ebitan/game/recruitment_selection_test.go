@@ -82,6 +82,18 @@ func TestRecruitmentSelectionDosgolemNormalInputComparison(t *testing.T) {
 	runRegistrationNormalComparison(t, dir, out, true, true, true)
 }
 
+func TestRecruitmentContinueDosgolemNormalInputComparison(t *testing.T) {
+	dir := os.Getenv("DQ3_RECRUIT_YES_ORACLE_DIR")
+	if dir == "" {
+		t.Skip("optional private dosgolem continue-Yes oracle")
+	}
+	out := os.Getenv("DQ3_RECRUIT_YES_RECEIPT_DIR")
+	if out == "" {
+		t.Fatal("explicit continue-Yes receipt directory required")
+	}
+	runRegistrationNormalComparison(t, dir, out, true, true, true, true)
+}
+
 func drainRecruitmentSelectionText(t *testing.T, rc *Recruit) {
 	t.Helper()
 	for i := 0; i < 5000 && rc.stage == rcText; i++ {

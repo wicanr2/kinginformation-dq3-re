@@ -12,12 +12,23 @@ Esc取消接540繼續詢問；No接541告別等待，另一次確認返回場景
 完整game439頂層清單覆蓋，389頂層／88子PASS、50選用SKIP；internal157頂層／307子PASS、4選用SKIP及11套件。
 回歸合併r2已完成的前17批與r4最後5批；兩者產品相同，只訂正新Load元件fixture。
 正常新遊戲至THE END66.58秒，只屬remake可玩回歸；沒有素材缺失SKIP。desktop為Linux x86_64 ELF。
-Yes重播528及540內Esc保留當前游標為strong靜態閉合，尚無原版動態抽測；不升格已證實。
+Yes重播528已由本輪正常204包證實；540內Esc保留當前游標仍為strong靜態分支，未原版動態抽測。
 完整入隊仍DRAFT：536文字尚未接入；199後播放完成未知，不能清旗標、改clock或跳過等待。
 下一步追查共用295像素差異，再閉合536文字的有限規格；不重開已完成登錄與首次選單。
 有限狀態E2／E3、畫面V2；其他職業、空名冊、滿隊、分離／查看與音訊仍待驗。
 schema更新沿既有策略拒絕舊存檔，不自動遷移。沒有新發行包。
 唯一現況表見[CONTEXT](CONTEXT.md)，證據與重生入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
+
+2026-10-04本輪續驗：依Issue #4，正常取消選Yes、再進選人、再取消No的204包／484IRQ1與408份完整PNG／bin已接受。
+來源cf0730f1；前198包及396份PNG／bin保持，名冊、金錢、旗標及slot1的97bytes全程不變。
+正式InputState、同版本存讀檔及下一步通過；Yes→528→首次選單由strong升級為已證實的有限正常分支。
+195..203各差295，返回204差411；既有No路線返回201差0只成立於該次取圖相位，不能外推全部返回。
+差異位於主角182、櫃台NPC106與右下NPC7。原版130組取圖中87組NPC加共用phase1；modal沒有重新取圖。
+remake本次人物walk為0；兩側沒有同動畫時序契約，完整V3仍RED。不能指定walk、調clock或挑影格製造通過。
+十種損壞來源拒絕，既有201包收據d59315c1保持；受影響正常路線／元件通過，137張既有PNG保持。
+正式Go與pack不變，schema0.12.0／content0.1.84、canonical0bdb4ebf；沒有新發行包。
+下一步閉合人物取圖時序與536文字的有限規格；540內Esc仍strong，199後入隊播放完成仍unknown。
+證據、重生工具與目前限制見docs/188最新驗收節。
 
 以下段落保存歷史檢查點；目前狀態以上述說明及下方表格為準。
 
@@ -101,13 +112,13 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；schema0.12.0／content0.1.84；canonical hash `sha256:0bdb4ebfa99c9f36fb5e7f8dd3f6d5f2e1dc3892900bdadc174cf6be34e47fcc`；沒有新發行包 |
 | 最新remake已完成 | 登錄、首次招募入口保持；追加530問題、原始動態清單、Esc→540→No→541→獨立確認返回；壞Load保持UI、有效Load清暫態；正常存讀檔及下一步 |
-| 最新原版oracle | 正常取消d59315c1，201packet／478IRQ1／402PNG及bin；前196保持、197等於r5。名冊狀態1、slot1的97bytes、金錢與旗標保持；完整入隊來源仍未接受 |
-| 最新畫面已驗 | 最終52PNG等於r2；清單197由51535降295，取消198／199與告別200各295，返回201差0。完整640×350 RGB，不遮罩或挑選seed；既有零差異範圍保持 |
-| 最新畫面未通過 | 四張共用295像素差異，差分hash4261092c且bbox288,131..510,262；完整V3仍RED。入隊後536未接入，舊入隊路線198差56790不可混為新取消198；其他登錄及動畫限制保持 |
-| 下一production切片 | r6已確認EBG與22E10共享5C02查詢分支；核對FMDRV狀態位址介面及dosgolem支援，取得正常返回來源後才補入隊READY與正式修正。4000此次writer已定位1FEFC，counter20000才寫；不得清旗標、改clock、跳過等待或深入driver／ISR |
-| 本輪登錄所有限READY | 選人及正常取消有限READY已實作，正式201包、存讀檔與下一步通過；E2／E3、V2。Yes與540內Esc為strong靜態分支；完整入隊、分離／查看與完整RGB未CONFORMED |
+| 最新原版oracle | 正常No的d59315c1保持；Yes續行cf0730f1：204packet／484IRQ1／408PNG及bin，前198packet保持；名冊狀態1、slot1的97bytes、金錢與旗標不變。87組NPC reader加原始phase1，modal期間不重新取圖；完整入隊來源仍未接受 |
+| 最新畫面已驗 | 正常Yes→528主選單→再Join→Esc→No，以204包正式InputState通過；195..203完整RGB各295、返回204差411；137張既有PNG保持。前次No返回201差0只限當次相位，不外推全部返回 |
+| 最新畫面未通過 | 人物差異主角182、櫃台NPC106、右下NPC7；全幀295位置相同。原版取圖phase1，remake本次walk0；畫面／時序仍DRAFT，不能固定walk或改clock。536文字及入隊199後播放仍未知 |
+| 下一production切片 | 閉合人物取圖時序與536文字的有限規格；有READY證據後才修正式引擎或pack。199後正常播放完成保持unknown，不深入硬體driver／ISR，不固定walk、調clock或跳過等待 |
+| 本輪登錄所有限READY | 選人與No有限READY已實作；Yes重播528分支由204包原版與正式InputState、存讀檔及下一步證實。E2／E3、V2；540內Esc仍strong。人物時序、完整入隊、分離／查看與全幀V3未CONFORMED |
 | 原版oracle仍未知 | 入隊完整後續、播放未結束的根因及4000完整用途、分離、查看、其他登錄職業／性別、滿額替換、其他角色與完整名冊、可比亂數下的能力、健康色／status、鍵盤自動重複、圖層動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
-| 現行remake回歸 | 完整439頂層清單：r2前17批及同產品r4後5批，389頂層／88子PASS、50選用SKIP；internal157頂層／307子PASS、4選用SKIP、11套件。desktop ELF64 x86_64；正常THE END66.58秒，只屬remake回歸；沒有素材缺失SKIP |
+| 現行remake回歸 | 正式engine／pack保持e259412；最近完整439頂層／11internal／desktop與THE END66.58秒收據保持。本輪新增Yes正常204包、受影響四條原版正常路線及七個元件案例通過，137PNG保持。新的440項test清單未全套重跑，沒有素材缺失SKIP |
 | 額外驗證限制 | 候選角色與有效Load暫態屬engine D2；原版Save／Load未知。兩側seed固定一次但後段骰序未對齊，不重擲。完整RGB不因有限state PASS升格；滿額分支fail closed，不猜替換交易 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

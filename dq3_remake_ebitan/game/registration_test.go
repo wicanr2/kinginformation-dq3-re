@@ -128,7 +128,11 @@ func TestRegistrationDosgolemNormalInputComparison(t *testing.T) {
 	}
 }
 
-func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry, selection bool) {
+func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry, selection bool, continueYes ...bool) {
+	if len(continueYes) > 1 || len(continueYes) == 1 && continueYes[0] && !selection {
+		t.Fatal("invalid recruitment comparison route")
+	}
+	yes := len(continueYes) == 1 && continueYes[0]
 	t.Run(fmt.Sprintf("birth=%v", birth), func(t *testing.T) {
 		family := "issue4-registry-quiescent-r2"
 		suffix := "-cancel-source-r1-receipt.json"
@@ -146,6 +150,9 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 		if selection {
 			family, suffix, want = "issue4-recruit-selection-cancel-r1", "-source-r2-receipt.json", 201
 		}
+		if yes {
+			family, suffix, want = "issue4-recruit-yes-r1", "-source-r1-receipt.json", 204
+		}
 		stem := fmt.Sprintf("registration-birth-%v", birth)
 		if entry {
 			stem = "recruitment-entry"
@@ -153,12 +160,19 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 		if selection {
 			stem = "recruitment-selection"
 		}
+		if yes {
+			stem = "recruitment-continue"
+		}
 		path := filepath.Join(dir, family+suffix)
 		raw, e := os.ReadFile(path)
 		if e != nil {
 			t.Fatal(e)
 		}
-		if selection && fmt.Sprintf("%x", sha256.Sum256(raw)) != "d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682" {
+		oracleHash := "d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682"
+		if yes {
+			oracleHash = "cf0730f10e48673e2da6702c77a6e458269cfe0153216b8770b7d3889a08e829"
+		}
+		if selection && fmt.Sprintf("%x", sha256.Sum256(raw)) != oracleHash {
 			t.Fatal("selection oracle receipt identity differs")
 		}
 		var src struct {
@@ -300,13 +314,18 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 				}
 				if selection && i+1 >= 197 {
 					stages := map[int]int{197: rcJoin, 198: rcAgain, 199: rcAgain, 200: rcFinalWait}
+					cursors := map[int]int{197: 0, 198: 0, 199: 1}
+					if yes {
+						stages = map[int]int{197: rcJoin, 198: rcAgain, 199: rcMenu, 200: rcJoin, 201: rcAgain, 202: rcAgain, 203: rcFinalWait}
+						cursors = map[int]int{197: 0, 198: 0, 199: 0, 200: 0, 201: 0, 202: 1}
+					}
 					if expected, ok := stages[i+1]; ok && (!g.recruit.active || g.recruit.stage != expected) {
 						t.Fatalf("packet%d recruitment stage%d want%d", i+1, g.recruit.stage, expected)
 					}
-					if i+1 == 201 && g.recruit.active {
+					if i+1 == want && g.recruit.active {
 						t.Fatal("cancel did not return to field")
 					}
-					if i+1 == 197 && g.recruit.cursor != 0 || i+1 == 198 && g.recruit.cursor != 0 || i+1 == 199 && g.recruit.cursor != 1 {
+					if cursor, ok := cursors[i+1]; ok && g.recruit.cursor != cursor {
 						t.Fatal("native selection cursor differs")
 					}
 				}
@@ -320,7 +339,11 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 				if e != nil {
 					t.Fatal(e)
 				}
-				samples = append(samples, map[string]any{"packet": i + 1, "original_phase": s["phase"], "stage": g.tavern.stage, "active": g.tavern.active, "recruit_stage": g.recruit.stage, "recruit_active": g.recruit.active, "roster": len(g.roster), "candidate": g.tavern.candidate, "full_rgb_difference": sourceCanvasDifference(t, g, path, fmt.Sprintf("%s-packet-%03d-%s.png", family, i+1, s["phase"]))})
+				var npcVisuals []map[string]int
+				for _, npc := range g.cur.npcs {
+					npcVisuals = append(npcVisuals, map[string]int{"record": npc.recordIndex, "x": npc.x, "y": npc.y, "facing": npc.facing, "walk": npc.walk})
+				}
+				samples = append(samples, map[string]any{"packet": i + 1, "original_phase": s["phase"], "stage": g.tavern.stage, "active": g.tavern.active, "recruit_stage": g.recruit.stage, "recruit_active": g.recruit.active, "roster": len(g.roster), "candidate": g.tavern.candidate, "hero_facing": g.facing, "hero_walk": g.walk, "npc_visuals": npcVisuals, "full_rgb_difference": sourceCanvasDifference(t, g, path, fmt.Sprintf("%s-packet-%03d-%s.png", family, i+1, s["phase"]))})
 			}
 		}
 		if birth {
