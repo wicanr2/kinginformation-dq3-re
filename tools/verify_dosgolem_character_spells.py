@@ -5,7 +5,8 @@ from verify_dosgolem_first_move import RUNTIME_HASHES
 from verify_dosgolem_mother_return import digest, fields, png
 
 
-def validate(root, prefix, producer, full=False):
+def validate(root, prefix, producer, full=False, close_scan='01'):
+    assert close_scan in ('01', '1e') and (full or close_scan == '01')
     meta = json.loads((root / (prefix + '-meta.json')).read_text())
     exe = Path('/repo/assets_raw/DQ3.EXE')
     assert meta['original_size'] == exe.stat().st_size == 115282
@@ -93,7 +94,7 @@ def validate(root, prefix, producer, full=False):
     if full:
         assert [s['phase'] for s in states[202:]] == ['waiting','waiting','view_detail_wait','choice','choice','waiting','ready']
         assert [s['last_record'] for s in states[202:]] == ['528','528','528','540','540','541','541']
-        assert [s['scan'] for s in q[202:]] == ['1c','1c','1c','01','4d','1c','1c']
+        assert [s['scan'] for s in q[202:]] == ['1c','1c','1c',close_scan,'4d','1c','1c']
     windows = [fields(s) for s in lines if s.startswith('DQ3_VIEW_SPELL_WINDOW ')]
     if full:
         parent = json.loads((root / 'issue4-view-spells-class3-normal-r1-source-r1-receipt.json').read_text())

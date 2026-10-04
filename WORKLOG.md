@@ -1484,3 +1484,12 @@ Docker檢查需主機權限，依既有隔離規則續做；一次性容器已�
 - IDA索引保留17筆並追加4筆有限confirmed；r3自動合併匯出166指令與原始bytes／relocation相符。公開producer完整Go除前綴外等於已執行來源；公開validator嚴格審查窗口／文字／等待／還原與返回。工具入口掛docs/188，typed欄位與遷移掛docs/84，唯一狀態表更新CONTEXT。
 - 關鍵本機收據：來源`4dcb99c8`；來源負例`a309ff9a`；完整畫面`4e568b09`；舊路線與新45張`46a4e158`；IDA匯出`5273a602`；完整回歸`work/issue4-view-spells-full-r2/game-receipt.json` SHA-256 `c49013df8954a2e36f66613cf866a072d019ce0a7273702a5ef8385349e53d88`；摘要`work/issue4-view-spells-final-summary-r1.json`。
 - 原版素材、圖片、binary、database與私有work維持本機；使用者13項資料保留。提交／推送、root擁有權基線與Docker清理在本輪收尾收據及Issue追加。沒有新發行包，其他裝備、多角色改名、其他角色咒文動態、人物動畫及原版完整流程仍待驗；Issue與Goal保持進行中。
+
+## 2026-10-04 詳細頁一般字母鍵關頁
+
+- 依Issue #4從041caf9接手。先追其他裝備：IDA9.4的140＋350條目核對物品欄順序、bit8000、文字consumer與攻擊欄位。正常換裝後返回名冊仍缺原版來源，維持DRAFT與硬體driver／ISR停止線。
+- 同一入口發現第二次等待忽略一般字母鍵。正常A鍵209包原版來源c0a7bc08接受，前205包保持；元件與正常路線均先取得206卡住紅測試，再經docs/188有限READY接正式AnyKeyEdge。舊「未知鍵保持」assertion追加勘誤，保留既有Esc／K證據。
+- 正式A／Esc／三路K、37受影響頂層／21子測試、零SKIP；正常THE END112.88秒及desktop通過。九份JSON保持；八種壞來源拒絕，舊209來源重新接受。原始定位索引保留21筆，追加非K一筆confirmed並由IDA自動附註。
+- 舊561張與新45張PNG保持；原版A／Esc全209PNG/bin相同，203..209全畫布差依序430、430、430、7、7、7、411，完整V3仍RED。收據與公開重生入口見docs/188；本機收尾c103a2f8。
+- 圖片稽核首次命令引用錯誤、收尾稽核首次收據誤寫唯讀/repo，均分類為腳本／掛載環境問題。修正後在同一image、同一輸入乾淨重跑；正式產品未因這些失敗改動。Docker image inspect的sandbox socket拒絕亦屬環境，實際工作沿既有image非root容器執行。
+- 原版DQ3.EXE保持5178fdc8，root-owned基線3213、零.md目錄；使用者13項未追蹤資料保留，未納入提交。沒有新發行包，所有原版素材與私有產物留本機。提交、推送及容器清理的最終核對以Issue #4本批留言與本機post-push收據為準。

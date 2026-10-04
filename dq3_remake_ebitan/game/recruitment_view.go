@@ -72,8 +72,8 @@ func (rc *Recruit) viewInput(in InputState) {
 		}
 		return // 第一次輸入不能同時消費第二個讀鍵。
 	}
-	// 具名改名由 Game 分派；其他沒有映射的鍵不猜成關閉。
-	if knownKey || in.Tapped {
+	// 具名改名由 Game 優先分派；第二讀鍵的其他新按鍵關閉詳細頁。
+	if knownKey || in.AnyKeyEdge || in.Tapped {
 		rc.viewFlow = nil
 		rc.viewSpellNames = nil
 		rc.startSelectionText(rc.selection.AgainTextID, rcAgain)

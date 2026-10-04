@@ -13,16 +13,31 @@ import (
 )
 
 func TestCharacterSpellsDosgolemNormalInputComparison(t *testing.T) {
+	runCharacterSpellsNormalInputComparison(t,
+		"issue4-view-spells-class3-normal-r2-source-r2-receipt.json",
+		"4dcb99c80e5cddc17940b09772c37169d5348cc40249996827029812365b8c08",
+		"issue4-view-spells-class3-normal-r2", "DQ3_CHARACTER_SPELLS_RECEIPT_DIR")
+}
+
+func TestRecruitmentViewUnmappedKeyDosgolemNormalInputComparison(t *testing.T) {
+	runCharacterSpellsNormalInputComparison(t,
+		"issue4-view-close-key-normal-r1-source-r1-receipt.json",
+		"c0a7bc08fa22e5f144e5475b7aa5bb87c5599ea353ccea8c146bfa77008069fc",
+		"issue4-view-close-key-normal-r1", "DQ3_RECRUIT_VIEW_KEY_RECEIPT_DIR")
+}
+
+func runCharacterSpellsNormalInputComparison(t *testing.T, sourceName, sourceHash, sourcePrefix, outputEnv string) {
+	t.Helper()
 	dir := os.Getenv("DQ3_CHARACTER_SPELLS_ORACLE_DIR")
 	if dir == "" {
 		t.Skip("optional private dosgolem character-spell oracle")
 	}
-	path := filepath.Join(dir, "issue4-view-spells-class3-normal-r2-source-r2-receipt.json")
+	path := filepath.Join(dir, sourceName)
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fmt.Sprintf("%x", sha256.Sum256(raw)) != "4dcb99c80e5cddc17940b09772c37169d5348cc40249996827029812365b8c08" {
+	if fmt.Sprintf("%x", sha256.Sum256(raw)) != sourceHash {
 		t.Fatal("original accepted receipt identity differs")
 	}
 	var src struct{ Queued, States []map[string]string }
@@ -48,7 +63,7 @@ func TestCharacterSpellsDosgolemNormalInputComparison(t *testing.T) {
 		}
 		t.Fatal("normal input did not settle")
 	}
-	out := os.Getenv("DQ3_CHARACTER_SPELLS_RECEIPT_DIR")
+	out := os.Getenv(outputEnv)
 	if out == "" {
 		t.Fatal("explicit output required")
 	}
@@ -76,6 +91,10 @@ func TestCharacterSpellsDosgolemNormalInputComparison(t *testing.T) {
 			in.Confirm = true
 		case 1:
 			in.Cancel = true
+		case 0x1e:
+			if i+1 != 206 {
+				t.Fatal("unmapped key outside the reviewed second wait")
+			}
 		default:
 			d, ok := map[int64]int{0x50: 0, 0x48: 1, 0x4b: 2, 0x4d: 3}[scan]
 			if !ok {
@@ -120,6 +139,10 @@ func TestCharacterSpellsDosgolemNormalInputComparison(t *testing.T) {
 			if g.recruit.stage != expected || g.recruit.viewFlow == nil {
 				t.Fatal("view wait sequence differs")
 			}
+		case 206:
+			if g.recruit.stage != rcAgain || g.recruit.viewFlow != nil || g.recruit.renameFlow != nil {
+				t.Fatal("second wait must close the page and ask continue")
+			}
 		}
 		if i+1 >= 199 {
 			now, e := encodeSave(g.snapshot())
@@ -145,7 +168,7 @@ func TestCharacterSpellsDosgolemNormalInputComparison(t *testing.T) {
 			if e != nil || closeErr != nil {
 				t.Fatal(e)
 			}
-			sample := map[string]any{"packet": i + 1, "original_phase": s["phase"], "tavern_stage": g.tavern.stage, "recruit_stage": g.recruit.stage, "candidate": g.tavern.candidate, "full_rgb_difference": sourceCanvasDifference(t, g, path, fmt.Sprintf("issue4-view-spells-class3-normal-r2-packet-%03d-%s.png", i+1, s["phase"]))}
+			sample := map[string]any{"packet": i + 1, "original_phase": s["phase"], "tavern_stage": g.tavern.stage, "recruit_stage": g.recruit.stage, "candidate": g.tavern.candidate, "full_rgb_difference": sourceCanvasDifference(t, g, path, fmt.Sprintf("%s-packet-%03d-%s.png", sourcePrefix, i+1, s["phase"]))}
 			samples = append(samples, sample)
 		}
 	}

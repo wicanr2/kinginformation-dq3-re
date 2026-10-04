@@ -3833,3 +3833,51 @@ READY 契約：
 公開重生入口為 [dosgolem_character_spells_probe.py](../tools/dosgolem_character_spells_probe.py)，`--prefix` 必須為全新名稱，預設正常209包；`--first-ability` 停203包。原版工具鏈掛載與 seed 契約沿本文件既有 dosgolem 入口。來源稽核入口為 [verify_dosgolem_character_spells.py](../tools/verify_dosgolem_character_spells.py)，參數依序為原版產物目錄、前綴、實際 producer、全新 receipt；只有203包加 `--first-ability`。公開 producer 的完整 Go 與兩份已執行程式除輸出前綴外相同，證據 `work/issue4-view-spells-public-proof-r1.json`。原版素材、PNG、binary、database與私有收據保持本機。
 
 完整回歸以 `work/issue4-view-spells-full-r2/game-receipt.json` 為準：game459覆蓋，412頂層／107子PASS、47選用SKIP；全部11個internal套件167頂層／341子PASS、4選用SKIP。正常THE END97.88秒及desktop Linux x86_64通過，沒有素材缺失SKIP。r1唯一過期的campaign登錄輸入已補上咒文確認，再以r2正常重跑；其餘通過項的production相同，保留原始r1收據。不外推原版完整流程。舊九路線516張、新45張PNG逐byte保持，收據 `work/issue4-view-spells-regression-images-r1.json` SHA-256 `46a4e1588cdca69c46abc274b8f5bb402079ce3096a98f4c745219dd73be8581`。
+
+# 2026-10-04 其他裝備詳細頁與一般字母鍵：DRAFT
+
+本輪工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5978134553)。由041caf9接手，先保留現行production checkpoint。
+
+| 原始定位 | 推論等級與可查證結果 | 有界證據 |
+|---|---|---|
+| IDA linear1834E..1839D；file96BE..970D | strong：從所選角色+3A依序讀八個word，只顯示bit8000已裝備且低byte不是AF的項目；尚缺其他裝備正常動態樣本 | IDA9.4匯出140指令，原始bytes及MZ relocation逐項符合 |
+| IDA linear1838C..18392 → 213C4 | strong：遮掉旗標後以item+1作文字record，consumer完成後Y加16；不改成四槽排序 | 追加350指令；原始物品來源及文字consumer |
+| IDA linear18477 → 21929 | strong：畫面攻擊值讀角色+1C，不能一律以力量欄替代已武裝攻擊 | 原始指令與consumer；正式其他裝備renderer尚未READY |
+| IDA linear10681..10689；file19F1..19F9 | strong：第二讀鍵後比較AH=25h，K進改名，其他鍵走1068E還原視窗 | 原始call、cmp與分支；正常A鍵來源正在重生 |
+
+IDA輸入為assets_raw/DQ3.EXE，115282bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。工具IDA Pro9.4，位址空間linear；file=linear−EC90，DGROUP基底linear24DD0。
+匯出 `work/issue4-view-equipment-r1-ida.json` SHA-256 `78b5d5592674068638ec525c4cc6e3870c7f831cb427e2a2a92d508c651f9276`；追加 `work/issue4-view-equipment-r2-ida.json` SHA-256 `f4f7d33181af4b5333fa6d7f2305bf5c25c1304f33c97cd6efbdcb5a65e8db9f`。database僅一次性容器/tmp，原始檔唯讀，既有21筆ledger保留。
+
+裝備頁缺正常換裝、分離回名冊的原版來源。既有入隊原版199停短曲完成等待，維持硬體driver／ISR停止線；本輪不深入硬體、不解除裝備guard、不猜資料格式。
+
+一般字母鍵已由新增元件紅測試 `TestRecruitmentViewDetailUnmappedFreshKeyCloses` 重現正式第二等待卡住。舊測試把AnyKeyEdge判為保持等待，該斷言尚缺原版動態支持，現列待勘誤。正式InputState的鍵盤入口已會產生AnyKeyEdge，修正範圍只在具名第二等待。原版尚未接受前不改production。
+
+正常重生入口 [dosgolem_recruitment_view_key_probe.py](../tools/dosgolem_recruitment_view_key_probe.py) 沿用本文件的Docker與固定dosgolem2f44a68掛載，參數 `--prefix` 必須全新；正常209包只把206的Esc改A，冷啟動前seed1357固定一次，無狀態或裝備注入。
+來源稽核入口 [verify_dosgolem_recruitment_view_key.py](../tools/verify_dosgolem_recruitment_view_key.py)，依序傳原版產物目錄、前綴、實際producer及全新receipt。重用既有嚴格咒文來源核對，另驗前205包、全部PNG／bin、第二讀鍵AH與非K分支。來源接受、READY與正式同狀態驗證分開記錄。
+
+## 一般字母鍵：證據審查與有限 READY
+
+正常A鍵來源已接受：`work/dosgolem-opening/issue4-view-close-key-normal-r1-source-r1-receipt.json`，SHA-256 `c0a7bc08fa22e5f144e5475b7aa5bb87c5599ea353ccea8c146bfa77008069fc`。工具為固定dosgolem2f44a68、DQ3.EXE115282bytes／5178fdc8，seed1357在執行前只固定一次。209包、494 IRQ1、418份完整PNG／bin，前205包與4dcb99c8來源逐byte相同。無角色注入、狀態還原、重擲或相位指定。
+
+- confirmed：206的A掃描1Eh在2110B消費，10686、10689、1068E三點皆AX1E00；走非K關頁。之後540→No→541→原生field1997C。名冊97bytes、主角128bytes、隊伍、金錢、旗標保持。
+- confirmed：正式修正前以同一209包與InputState重播，第一個新blocker在206。`work/issue4-view-close-key-normal-red-r1/game.log` 明確停在「second wait must close」，元件紅測試亦重現。
+- READY引擎契約：rcViewClose消費新的AnyKeyEdge，清詳細頁並依pack既有text ID回到繼續詢問。K由既有具名改名分派優先處理；第一能力／咒文等待仍只消費一次輸入。held方向沒有新edge時保持等待。觸控既有契約保持。
+- 不改pack、schema、geometry、文字或持久存檔格式。同版本有效Load清UI、拒絕Load保持UI沿既有契約；正式正常209包另驗snapshot／RNG、存讀檔與下一步。
+- 範圍：初裝、無異常Class3男性正常A關頁與已有K／Esc分支回歸。其他裝備頁仍DRAFT；原版存讀檔、其他角色動態、全畫布V3與完整campaign未接受。正常動態證據限A，不冒稱逐鍵窮舉。
+
+勘誤：前批「未知鍵保持第二等待」的元件assertion已由正常206及原始非K分支推翻。它源於未取得一般字母鍵動態來源，不是原版規格。本節追加勘誤並保留前批正常Esc／K收據，不改寫歷史。
+
+公開新normal trace測試在 [character_spells_normal_test.go](../dq3_remake_ebitan/game/character_spells_normal_test.go) 的 `TestRecruitmentViewUnmappedKeyDosgolemNormalInputComparison`，與既有正常咒文測試共用整條production重播；原版收據hash與206角色等待閘門明確固定。
+
+## 一般字母鍵：有限 CONFORMED
+
+- 正式第二等待接AnyKeyEdge。第一等待仍分開消費，K維持具名分派優先，held方向保持。修正前正常209包的206紅測試，修正後同一來源通過；snapshot／RNG、同版本存讀檔及下一步保持。
+- 正式A與既有Esc、三路K改名及受影響測試：37頂層、21子PASS、零SKIP；正常新遊戲至THE END112.88秒。桌面Linux x86_64 SHA-256 `cda5b6c0d97e80dece9fc0552d6df853614c64d2a9e4cfe9ace19104d7ba1777`。本輪不重跑無關已綠套件；前次完整game459及全部11個internal為041caf9。
+- 新45張正式PNG逐byte等於前次Esc，八條舊路線561張保持。原版A／Esc的全209張PNG與bin相同；新正常203／204／205各430、206／207／208各7、209為411個完整RGB差異。能力與人物動畫差異保持，完整V3仍RED，不裁切、遮罩、重擲或指定phase。
+- 八種壞來源全拒絕，前後正對照相同；既有Esc209包由新checker預設參數重新接受且狀態／輸入保持。收據 `work/issue4-view-close-key-audit-r1.json` SHA-256 `e41025909f14c3e0308d564277b9263dfe52e4e47ec908eb437a17ab308b4605`。
+- 原始定位ledger保留21筆，追加10689非K分支一筆confirmed；不修改既有10686的K定位。IDA9.4重新匯出140條目並自動附註，SHA-256 `3516eec469517cf06b5f869f1d4d8b9d5ff00065b67a400dceb9e2437337d514`。其他裝備相關未閉合語意仍unknown／strong。
+- game收據 `work/issue4-view-close-key-validation-r1/game-receipt.json` SHA-256 `79bdb7c00a38afa52d23835cc2c862cd67b48b70bcea596dc3659541e986b24c`；畫面稽核 `work/issue4-view-close-key-images-r1.json` SHA-256 `3cd67c8bfc40dcd5532f644cd08d5d0f4c55b4b5886e2359cd7817e44e3f4f22`。收尾 `work/issue4-view-close-key-final-audit-r1.json` SHA-256 `c103a2f852218a8b75a6d1eef7b287cfc9cf5cb04f1207dc65a5da97be47080a`。
+
+九份JSON與041caf9逐byte相同，schema0.15.0／content0.1.87與canonical `sha256:2d712e65f18ce7919ddccf970160d68d00b63a54a73088bcd473c38a9fa61d10`保持。沒有存檔格式或交付變更。其他裝備頁未READY，原版Save／Load、音畫與完整原版campaign仍未知；正常THE END只證明remake可玩。
+
+公開producer即本次實際執行的 [dosgolem_recruitment_view_key_probe.py](../tools/dosgolem_recruitment_view_key_probe.py)；來源meta固定producer／generator／runtime／完整Go及binary hash，原版執行不使用私有額外patch。兩個公開新工具由本節索引。原版素材、PNG、binary、database與私有收據不加入Git。

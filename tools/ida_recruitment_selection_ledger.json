@@ -243,6 +243,19 @@
       "consumer": "正常205→10681→caller第二等待21103；原版203及205全畫布PNG/bin相同",
       "review_reference": "docs/188：2026-10-04 咒文詳細頁有限READY；只限Class3 level1初裝無異常正常209包",
       "dynamic_evidence": "work/dosgolem-opening/issue4-view-spells-class3-normal-r2-source-r2-receipt.json SHA256 4dcb99c80e5cddc17940b09772c37169d5348cc40249996827029812365b8c08；原始IDA166指令06f755d9；工具入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x10689",
+      "file_offset": "0x19f9",
+      "bytes": "7503",
+      "semantic": "第二次等待的非K鍵走詳細頁還原分支",
+      "inference_level": "confirmed",
+      "consumer": "正常Class3初裝206的A鍵：10686→10689→1068E→1F604，後接540／541及正常場景",
+      "review_reference": "docs/188：2026-10-04 一般字母鍵有限READY；正常A動態，不聲稱逐鍵窮舉",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-view-close-key-normal-r1-source-r1-receipt.json SHA256 c0a7bc08fa22e5f144e5475b7aa5bb87c5599ea353ccea8c146bfa77008069fc；206 AX1E00；IDA原始140條目78b5d559"
     }
   ]
 }

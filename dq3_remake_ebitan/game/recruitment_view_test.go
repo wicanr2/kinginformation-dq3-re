@@ -86,6 +86,37 @@ func recruitmentViewGame(t *testing.T) *Game {
 	return g
 }
 
+func TestRecruitmentViewDetailUnmappedFreshKeyCloses(t *testing.T) {
+	g := recruitmentViewGame(t)
+	rc := &g.recruit
+	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	before, e := encodeSave(g.snapshot())
+	if e != nil {
+		t.Fatal(e)
+	}
+	rng := g.prng
+	// 一般字母鍵沒有具名遊戲動作，仍是新的鍵盤按下事件。
+	g.recruitInput(InputState{DirEdge: -1, AnyKeyEdge: true})
+	if rc.stage != rcViewClose || rc.viewFlow == nil {
+		t.Fatal("first key must consume only the ability wait")
+	}
+	for i := 0; i < 10; i++ {
+		g.recruitInput(InputState{DirEdge: -1, DirHeld: 0})
+	}
+	if rc.stage != rcViewClose {
+		t.Fatal("held direction consumed the second fresh-key wait")
+	}
+	g.recruitInput(InputState{DirEdge: -1, AnyKeyEdge: true})
+	drainRecruitmentSelectionText(t, rc)
+	if rc.stage != rcAgain || rc.viewFlow != nil || rc.renameFlow != nil {
+		t.Fatal("unmapped fresh key must close the page and ask continue")
+	}
+	after, e := encodeSave(g.snapshot())
+	if e != nil || string(before) != string(after) || g.prng != rng {
+		t.Fatal("close changed persistent state or RNG")
+	}
+}
+
 func TestRecruitmentViewDetailTwoWaitsPreserveState(t *testing.T) {
 	g := recruitmentViewGame(t)
 	rc := &g.recruit
@@ -108,13 +139,9 @@ func TestRecruitmentViewDetailTwoWaitsPreserveState(t *testing.T) {
 		t.Fatal("first key skipped the separate close wait")
 	}
 	g.recruitInput(InputState{DirEdge: -1, AnyKeyEdge: true})
-	if rc.stage != rcViewClose {
-		t.Fatal("unknown key guessed the rename branch")
-	}
-	g.recruitInput(InputState{DirEdge: -1, Cancel: true})
 	drainRecruitmentSelectionText(t, rc)
-	if rc.stage != rcAgain || rc.viewFlow != nil {
-		t.Fatal("close must restore caller and ask continue")
+	if rc.stage != rcAgain || rc.viewFlow != nil || rc.renameFlow != nil {
+		t.Fatal("unmapped key must restore caller and ask continue")
 	}
 	g.recruitInput(InputState{DirEdge: 3})
 	g.recruitInput(InputState{DirEdge: -1, Enter: true})
