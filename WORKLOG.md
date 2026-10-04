@@ -1375,3 +1375,19 @@ modal196..203不重新取圖；remake本次walk0。新返回204完整差411，�
 公開正常Yes producer保存實際執行body；原版／PNG／binary留本機，工具與主題文件可重生入口同步。
 正式engine與pack不變，0.12.0／0.1.84及0bdb4ebf；最近完整回歸e259412保持，不重跑相同產品全套。
 Issue進度5975028362；結果、commit／push及Docker清理另由本輪收尾收據保存，Issue與Goal保持進行中。
+
+## 2026-10-04 Issue #4 入隊536／537／538有限正常文字
+
+依7f828e6及Issue #4續行，已查現行遠端Issue、工作樹與Docker狀態。
+停止重試已否定的總Ticks相位原型，正常冷來源分別停536 inline wait及538後音樂等待入口。
+198／199包、472／474IRQ1、396／398完整PNG及bin接受，917a24f6／a6abd32b；正常199保留前198包。
+名冊狀態1→2，原角色97bytes、金錢、旗標保持；party只有前29bytes動態觀察，完整副本及插名selector仍需審查。
+IDA9.4非破壞範圍與原始bytes核對；sidecar保存base script hash，實際composer另列，不誤稱同一腳本。
+正式產品正常198缺536及文字等待，完整差3028；全域bank536隔離原型594，caller底圖保持後198／199各295。
+正常Save／Load、Load後下一步僅屬remake診斷；原版199仍音樂等待，不宣稱完整入隊、音訊或V3。
+八種損壞來源拒絕，前後正對照PASS；三份最終runtime各48張舊PNG保持。
+失敗保留：r1 tarfile filter不支援、r3使用目前城鎮文字bank、r5多層字串逃脫、r7不唯一替換。
+r4的594定位為新同伴提前覆蓋主角；修正生成與底圖原型後r6／r8乾淨重跑，不調seed、clock或人物phase。
+公開198／199來源工具與docs/188索引保存。正式引擎／pack、schema及最近完整回歸保持，沒有新發行包。
+本輪Issue進度5975257608；結果、commit／push及容器清理由同前綴final收據追加。
+下一步補插名／party動態證據與音訊完成閘門，再將整段文字及底圖列READY後實作。

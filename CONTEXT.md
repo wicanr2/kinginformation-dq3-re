@@ -30,6 +30,19 @@ remake本次人物walk為0；兩側沒有同動畫時序契約，完整V3仍RED�
 下一步閉合人物取圖時序與536文字的有限規格；540內Esc仍strong，199後入隊播放完成仍unknown。
 證據、重生工具與目前限制見docs/188最新驗收節。
 
+2026-10-04入隊文字續驗：正常198包／472IRQ1及199包／474IRQ1的有限原版來源已接受。
+來源917a24f6停在536第一個inline wait；a6abd32b正常續文、537、538完成後停在208E2音樂等待入口。
+396／398份完整PNG與bin核對；前198包保持，slot1的97bytes、金錢、旗標保持，名冊狀態1→2。
+現行正式InputState到198已入隊，但沒有536與內文等待，完整差3028；正式產品未修改。
+隔離536原型差594，新同伴提前蓋住主角；保留caller底圖後198及199完整各差295。
+正常存讀檔及Load後下一步只屬remake診斷；原版尚在音樂等待，不認列原版返回或完整入隊。
+八種損壞來源拒絕，前後正對照通過；三份runtime各48張舊PNG保持。
+文字consumer由IDA9.4原始bytes／xref定位；插名selector及完整97bytes party副本仍需有限動態審查。
+下一步完成插名／party觀察與入隊音訊完成閘門契約，再將整段536／537／538與底圖保留寫成READY後正式實作。
+不把原型接入正式路徑，不跳過播放、指定phase、調clock或深入driver／ISR。
+schema0.12.0／content0.1.84及canonical0bdb4ebf保持；最近完整回歸e259412保持，本批未重跑未變產品全套。
+唯一現況表在CONTEXT，證據、公開來源重生與本機原型入口見docs/188最新節。
+
 以下段落保存歷史檢查點；目前狀態以上述說明及下方表格為準。
 
 2026-10-02本輪續行：Issue #4的家中原版收據已重新核對，37次正常輸入／74次IRQ1、170個唯一產物。
@@ -112,13 +125,13 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；schema0.12.0／content0.1.84；canonical hash `sha256:0bdb4ebfa99c9f36fb5e7f8dd3f6d5f2e1dc3892900bdadc174cf6be34e47fcc`；沒有新發行包 |
 | 最新remake已完成 | 登錄、首次招募入口保持；追加530問題、原始動態清單、Esc→540→No→541→獨立確認返回；壞Load保持UI、有效Load清暫態；正常存讀檔及下一步 |
-| 最新原版oracle | 正常No的d59315c1保持；Yes續行cf0730f1：204packet／484IRQ1／408PNG及bin，前198packet保持；名冊狀態1、slot1的97bytes、金錢與旗標不變。87組NPC reader加原始phase1，modal期間不重新取圖；完整入隊來源仍未接受 |
-| 最新畫面已驗 | 正常Yes→528主選單→再Join→Esc→No，以204包正式InputState通過；195..203完整RGB各295、返回204差411；137張既有PNG保持。前次No返回201差0只限當次相位，不外推全部返回 |
-| 最新畫面未通過 | 人物差異主角182、櫃台NPC106、右下NPC7；全幀295位置相同。原版取圖phase1，remake本次walk0；畫面／時序仍DRAFT，不能固定walk或改clock。536文字及入隊199後播放仍未知 |
-| 下一production切片 | 閉合人物取圖時序與536文字的有限規格；有READY證據後才修正式引擎或pack。199後正常播放完成保持unknown，不深入硬體driver／ISR，不固定walk、調clock或跳過等待 |
-| 本輪登錄所有限READY | 選人與No有限READY已實作；Yes重播528分支由204包原版與正式InputState、存讀檔及下一步證實。E2／E3、V2；540內Esc仍strong。人物時序、完整入隊、分離／查看與全幀V3未CONFORMED |
+| 最新原版oracle | 正常No與Yes來源保持；新198包917a24f6與199包a6abd32b接受，472／474IRQ1、396／398完整PNG及bin。名冊1→2，原97bytes角色、金錢、旗標不變；199只到208E2音樂等待入口，完整入隊來源未接受 |
+| 最新畫面已驗 | 正式Yes／No路線保持；新正常198包診斷缺536，完整差3028。隔離536／537／538與caller底圖保留原型，198及199各差295；三份runtime各48張舊PNG保持，不是正式產品修正 |
+| 最新畫面未通過 | 完整V3與人物動畫時序仍RED；正式536／537／538仍缺失。隔離原型不演播放完成；完整party副本與插名selector未動態閉合，199後原版返回未知 |
+| 下一production切片 | 先完成插名／party的有限觀察及入隊音訊完成閘門契約，再將536／537／538與caller底圖保留列READY後正式實作；不固定walk、調clock、跳過等待或深入driver／ISR |
+| 本輪登錄所有限READY | 既有選人／No／Yes保持E2／E3、V2；新入隊文字有限原版E1與隔離原型E2、V2，未READY、未接production。540內Esc仍strong；全幀V3及完整入隊未CONFORMED |
 | 原版oracle仍未知 | 入隊完整後續、播放未結束的根因及4000完整用途、分離、查看、其他登錄職業／性別、滿額替換、其他角色與完整名冊、可比亂數下的能力、健康色／status、鍵盤自動重複、圖層動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
-| 現行remake回歸 | 正式engine／pack保持e259412；最近完整439頂層／11internal／desktop與THE END66.58秒收據保持。本輪新增Yes正常204包、受影響四條原版正常路線及七個元件案例通過，137PNG保持。新的440項test清單未全套重跑，沒有素材缺失SKIP |
+| 現行remake回歸 | 正式engine／pack保持e259412，工具／測試基準7f828e6；最近完整439頂層／11internal／desktop與THE END66.58秒保持。本輪只跑正常198／199的隔離診斷及原型、八種壞來源，不重跑相同產品全套 |
 | 額外驗證限制 | 候選角色與有效Load暫態屬engine D2；原版Save／Load未知。兩側seed固定一次但後段骰序未對齊，不重擲。完整RGB不因有限state PASS升格；滿額分支fail closed，不猜替換交易 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

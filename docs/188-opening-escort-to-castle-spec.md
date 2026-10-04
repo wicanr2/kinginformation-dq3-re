@@ -3203,3 +3203,73 @@ runtime收據`work/issue4-recruit-yes-normal-r2/recruitment-continue.json`，SHA
 來源與公開producer逐byte相同，原版收據未覆寫；新路線不能替代先前No或完整入隊來源。
 本輪工作與結果追加Issue #4，收尾入口`work/issue4-recruit-yes-final-r1.py`及同前綴收據。
 下一閘門是人物取圖時序與536有限文字；不為295像素調clock、固定walk、重擲或深挖ISR。
+
+## 2026-10-04 入隊536第一個文字等待 DRAFT
+
+本段保留執行前範圍；下方續驗已接受正常198及199包，整段正式流程仍DRAFT。
+
+接續7f828e6及Issue #4。人物counter、共用phase及讀取位置已有有限證據，
+本輪不重試由總Ticks推導phase的已否定原型，也不深入PIT／ISR。
+正常待機時remake也會換影格，但主角與每個NPC各自計數；先前「只在移動時換影格」的進度說法不完整。
+本輪先閉合已列出的536文字阻塞。
+
+原版來源入口為`work/issue4-recruit-text-r1-builder.py`，
+沿公開選人探針的相同冷啟動、seed1357、正常出生及下樓輸入，改以Enter選人。
+第198包在record536第一個inline wait停止；不送199、不探查音樂完成、不注入遊戲狀態。
+來源稽核入口為`work/issue4-recruit-text-r1-review.py`，
+核對196包父來源、完整198包與396份PNG／bin、472IRQ1、名冊1→2及97bytes原角色不變。
+既有r5的198包有限來源保留；新產物以`work/dosgolem-opening/issue4-recruit-text-r1-*`另存。
+party副本、插名consumer及正式文字對拍尚待審查，本節不升格READY或完整入隊。
+正常重製診斷入口為`work/issue4-recruit-text-r1-remake.py`及同前綴runtime收據。
+診斷只從正式InputState重播，未修正式引擎或pack，不把缺少536的現況稱為parity通過。
+
+### 536續文、537與538的有限正常來源及原型
+
+原始EXE為115282bytes、5178fdc8；dosgolem2f44a68與seed1357執行前固定一次。
+198包來源SHA256`917a24f6ed74baec905cc11b18ac19461b965e0fdec7c461fb7b0f853ad39834`，472IRQ1與396份完整640×350PNG／bin。
+199包來源SHA256`a6abd32b4bb67830e0a7ea4bbfc8f571eb474932b41055e0539d8f085f4148be`，474IRQ1與398份完整PNG／bin。
+後者沿前者正常送一次Enter，前198包與396份圖像保持；沒有新狀態還原或內容注入。
+第198包536停216D8內文等待，名冊slot1狀態1→2；第199包續寫536尾文、537、538後自然到208E2。
+第199包標為`audio_wait`，不冒充鍵盤等待、播放完成或場景返回。
+slot1原97bytes、金錢及故事旗標保持。actor觀察只有128bytes，涵蓋第二party槽前29bytes，
+其中首byte改為slot index1，其餘已見28bytes相符；不能稱完整97bytes party副本已動態審查。
+
+| 原始IDA linear定位 | 有限證據與等級 |
+|---|---|
+| 10415→10473..104C3；10A80..10A9E | 未入隊slot搜尋、97bytes載入與copy、slot狀態2；名冊交易與正常198已證實。完整party副本強推論，仍缺全97bytes動態觀察 |
+| 10418..10425；DGROUP259C | byte5077轉CX後供536插名；正常記錄入口與畫面已證實，selector實際值尚待觀察，不因原型顯示正確就升格完整語意 |
+| 21651..216AF；215EE..21650 | 原始FFFb名字consumer，259C非0／7時以值減1、乘2查4F15，再加3讀名欄位；四字上限、四byte步進。強推論，本輪角色與主角都名0，尚未動態區分兩者 |
+| 1042A..10459 | 正常199依序537、暫停／cue32播放、538、208E2等待；只閉合到等待入口，不稱音訊或後續返回parity |
+
+有界IDA入口`work/issue4-recruit-text-r1-ida.py`；sidecar SHA256
+`e38e80f05c4dc7553205fbdd50b1a8dc31a90750aae7d7a021fdf5f4e4cd15d3`，157筆唯一rows的file原始bytes核對。
+工具IDA9.4、linear−EC90為file，DGROUP基底24DD0；原名、原始xref type與定位保持。
+sidecar的script hash指向共用base；實際composer SHA256`5480aa0c231b6ca129d52f1a9b079b14d4d5a080a86709c099d3eee9f0bcba12`，兩者由收尾收據分列，不混為同一腳本。
+本輪不改database、既有semantic ledger或正式pack。
+
+現行正式InputState診斷為`work/issue4-recruit-text-r2-remake.py`，以7f828e6未改引擎／pack走正常198包。
+交易已搬移一人，但仍停舊選人狀態，沒有536內文等待；完整RGB差3028。
+`r4-remake`只補536後差594。差異位置證明增加的299在人物區，文字沒有新增差異；
+`work/issue4-recruit-text-r4-pixels-receipt.json`保存全幀差分與位置分組，分組不是遮罩驗收。
+`r6-remake`保留caller完整底圖後198差295；`r8-remake`續到537／538及音樂等待，199也差295。
+正常來源、runtime與原型PNG已目視核對；三份最終runtime各48張150..197舊PNG逐byte保持。
+同版本Save／Load及Load後下一步PASS只屬remake診斷；不能代替原版音樂等待後返回。
+
+原型raw record、暫態stage與底圖buffer只存在一次性隔離副本。尚未接production，沒有新增正式schema或資料fallback。
+READY前須補完整party／插名動態審查與音訊完成閘門；正式內容將採typed pack與text ID，不能把原型數字帶入共用Go。
+音樂driver／ISR與逐週期研究停止線保持；本輪未追查或偽造播放完成。
+
+公開來源重生入口：`tools/dosgolem_recruitment_text_probe.py`為正常198包，完整body與實際r1 producer相同；
+`tools/dosgolem_recruitment_audio_wait_probe.py`為正常199包，只將r2 producer的私有父工具路徑改為前一公開工具。
+沿既有image、UID1000、唯讀repo／frozen dosgolem與可寫work，在乾淨輸出overlay執行Python工具。
+原始前綴與接受來源相同，拒絕覆寫；新producer身份不同須另存並由稽核接受，不能冒用舊收據。
+稽核入口為本機`work/issue4-recruit-text-r1-review.py`與`-r2-review.py`。
+八種損壞拒絕：seed、producer、末包scan、末record、末phase、roster、actor、PNG；
+`work/issue4-recruit-text-r2-negatives.py`先後跑有效隔離正對照，來源與已接受收據保持。
+更新checker只加199 actor保持斷言，checker hash變更由獨立稽核記錄，不覆寫原接受收據。
+
+收尾入口`work/issue4-recruit-text-final-r1.py`及同前綴收據；文件更新入口`-docs-r1.py`。
+r1 Python不支援tar filter、r3錯用城鎮bank、r5多層逃脫、r7不唯一替換的失敗均保留。
+r4的594與r6／r8的295是真實完整差分，沒有放寬到「容許594」或指定人物影格。
+本輪不重跑未變的正式產品全套，最近完整回歸e259412與7f828e6受影響測試保持。
+Issue #4與Goal保持進行中；原版、PNG、binary、IDA database及使用者scratch不加入Git。
