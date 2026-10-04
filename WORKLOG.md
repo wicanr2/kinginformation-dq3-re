@@ -1391,3 +1391,20 @@ r4的594定位為新同伴提前覆蓋主角；修正生成與底圖原型後r6�
 公開198／199來源工具與docs/188索引保存。正式引擎／pack、schema及最近完整回歸保持，沒有新發行包。
 本輪Issue進度5975257608；結果、commit／push及容器清理由同前綴final收據追加。
 下一步補插名／party動態證據與音訊完成閘門，再將整段文字及底圖列READY後實作。
+
+
+## 2026-10-04 Issue #4 入隊副本、不同名字與單次短曲
+
+依ab2f8a0與遠端Issue續行，199包／474IRQ1／398完整PNG及bin保持，新來源d0f6428d接受。
+24筆只讀觀察閉合97bytes copy與名冊index覆寫。536／538取新角色；537本路線取主角，推翻同名原型的錯誤綁定。
+新隔離原型正常199包、存讀檔、不同名元件PASS，50張runtime PNG保持，仍差295。正式產品與pack未修改。
+新條件八種損壞拒絕及有效對照通過；r1 producer hook引用錯誤、r2 checker同名假設被拒絕，保留失敗。
+IDA9.4最小sidecar及有限reader核對。前幾次缺輸出，原生log定位ASCII讀中文錯誤；指定UTF-8後乾淨重跑。
+10CEE讀[SI-2]選名字，1EBD8只讀該值作圖片cache索引；沒有猜成健康值或稱初始化writer已閉合。
+cue32原始81事件／461ticks；舊轉檔79／660且OGG11.054281秒。新公開單次MIDI逐事件相同，SMF時長4.801708771秒。
+Munt舊image缺失，修原Dockerfile固定原廠commit重建dq3-munt:2.8.2-r1；library2.8.3及smf2wav1.9.3實測。
+APT建置完成；獨立網路診斷HTTP／HTTPS200，另一次APT探針下載完成但外層60秒超時，不列產品或建置失敗。
+Munt起始靜音設定另存r2，211761frames／OGG4.801837秒，完整解碼與非靜音PASS。音色與時長屬近似，原版播放後返回仍未知。
+公開來源、MIDI工具與Dockerfile可重生，原版、ROM、音源及database未入Git；入口見docs/188。
+本輪Issue進度5975544582，結果、commit／push及容器清理由final收據追加；Goal與Issue保持進行中。
+下一步收斂有限READY並接typed pack與正式引擎，不再追硬體driver／ISR。正式產品未變，不重跑同一全套回歸。

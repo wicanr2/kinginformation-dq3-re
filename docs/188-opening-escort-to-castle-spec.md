@@ -3273,3 +3273,89 @@ r1 Python不支援tar filter、r3錯用城鎮bank、r5多層逃脫、r7不唯一
 r4的594與r6／r8的295是真實完整差分，沒有放寬到「容許594」或指定人物影格。
 本輪不重跑未變的正式產品全套，最近完整回歸e259412與7f828e6受影響測試保持。
 Issue #4與Goal保持進行中；原版、PNG、binary、IDA database及使用者scratch不加入Git。
+
+## 2026-10-04 入隊角色副本與插名有限觀察 DRAFT
+
+接續ab2f8a0及Issue #4，以`work/issue4-recruit-party-r1-builder.py`正常冷啟動至199包。
+只附加104B5／104B9／104BE／104C3角色副本及21651／21697／2169A名字consumer的唯讀觀察。
+輸入、seed1357與208E2停止點沿上一輪；接受收據前核對398份PNG／bin及199包不變。
+不改狀態、不演播放完成；插名及完整副本的結論等待實際收據，正式整段仍DRAFT。
+
+音訊資料診斷入口`work/issue4-recruit-party-audio-r1.py`與同前綴收據、MIDI。
+依既有cue32入口及公開MIDI／driver契約，先核對461個delta tick與單次事件完整性。
+Roland音色沿既有轉檔設定，屬合成近似；原始FM聲音、原版播放完成與完整返回仍未知。
+
+既有`munt-smf2wav`映像已不存在；沿[tools/Dockerfile.munt](../tools/Dockerfile.munt)重建，
+固定原廠`munt_2_8_2`的commit`3b05ec276f9e605af86b0eaef7f5eda43477a31f`。
+本輪映像為`dq3-munt:2.8.2-r1`，替代舊未鎖版建置；只用唯讀自有ROM與MIDI、UID1000寫work，
+不把ROM或render加入Git。建置與轉檔收據沿`work/issue4-recruit-party-munt-*`保存。
+
+
+### 本輪有限來源與同名假設勘誤
+
+正常冷源seed1357、dosgolem2f44a68、原EXE115282bytes／5178fdc8保持。
+接受收據`work/dosgolem-opening/issue4-recruit-party-r2-source-r1-receipt.json`，SHA256
+`d0f6428dbc6f66b0887c3991c4bd17cb00be2825df4a53e1cf5bc049d806ed32`。
+完整199包、474IRQ1、398PNG／bin逐項等於a6abd32b；只有唯讀log新增24筆觀察。
+來源r1因引用未組合的hook在執行前失敗；r2修正名稱空間後乾淨重生。原始、seed、clock及輸入不改。
+
+| 原始定位與資料流 | 等級與實際觀察 |
+|---|---|
+| 104B5；DS:520B→DS:50E2，CX61h；104B9；104BC／104BE | 正常copy的97bytes逐byte相同；再把首byte改為名冊slot index1，104C3後保持。主角及其他兩槽97bytes保持；限定正常單人入隊confirmed |
+| 1041E→DGROUP259C=2；21651→21697→2169A→215EE | 536兩處與538共三處FFFb，都取party指標50E2，加3到名字50E5；confirmed本路線 |
+| 1042A→10CEE；10CFB..10D0E→DGROUP259C；537同一consumer | 10CEE沿4F15指標表掃描原operand[SI-2]為0的槽，再寫其一基索引。本次selector1，指標507F、名字5082，為主角；有限consumer confirmed，未觀察的重排分支仍strong |
+| 1EBD8..1EC33 | 此helper讀[SI-2]作265D cache索引，依[SI+38]及角色欄位更新圖片cache。它沒有寫[SI-2]，不能把該欄猜成健康值或宣稱已閉合其初始化writer |
+
+先前r8隔離原型把537也用入隊角色名字，已推翻。當次兩人同名，295差分不能證明名字角色綁定正確。
+`work/issue4-recruit-party-remake-r1.py`補本路線主角綁定；兩人不同名元件PASS，正常199包及同版本存讀檔PASS。
+50張runtime PNG逐byte等於前一文字原型，198與199完整RGB各295；不同名元件不替代原版正常來源。
+本輪仍未接正式引擎或pack，不把有限原型列CONFORMED。
+
+稽核為`work/issue4-recruit-party-r3-review.py`；r2 checker的「三段皆入隊角色」斷言被真實537指標拒絕，保留失敗。
+`work/issue4-recruit-party-r3-negatives.py`對同一嚴格觀察斷言做前後有效對照及八種損壞拒絕。
+八種為copy第97byte、名冊index、截短97bytes、主角變動、537錯誤selector、536錯誤指標、名字payload及缺consumer。
+這是新增名字／copy條件的負測試，不冒稱重跑全部來源或PNG負測試。
+
+537補查IDA9.4 sidecar`work/issue4-recruit-party-ida-r5.json`，SHA256
+`017e8afdfa5cb233ed889a2fbcbd456fdc963fb7b2ac0fc42bed6c9bb59059f7`；
+cache reader sidecar`work/issue4-recruit-party-prefix-ida-r1.json`，SHA256
+`4dda020fcffa1723e52a0dbeab6be2655e85c4544910786c182fbb119afdd94d`。
+輸入為/tmp/guest.exe工作副本，原路徑assets_raw/DQ3.EXE保持唯讀；hash相同，linear−EC90=file，DGROUP基底24DD0。
+原始bytes／xref及名稱保持，sidecar仍記base script hash；實際composer為`work/issue4-recruit-party-ida-r1.py`／`-r2.py`，各hash由final收據分列。
+啟動缺sidecar不認列成功；最小ASCII probe確認工具可用，原生IDA log指出中文source的ASCII解碼錯誤。
+重跑使用HOME=/home/ubuntu、TVHEADLESS=1、LANG=C.UTF-8、LC_ALL=C.UTF-8、PYTHONUTF8=1、/tmp工作目錄及原生-L log。
+沒有TTY時的TVHEADLESS依[Hex-Rays批次契約](https://hex-rays.com/blog/igor-tip-of-the-week-08-batch-mode-under-the-hood)。
+無DB參數的最小已驗命令重生一次性DB；DB與原生log不加入Git。
+
+### 單次短曲資料與完成時長近似
+
+cue32原版callsite及EBG第2零基項沿既有證據。完整事件範圍(file)58B..6B3，81事件、461個delta tick，FF2F00結束。
+原版EBG3369bytes，SHA256ad4e139c5154b1271b2b6a6129a37684b019ea1e36ac6270ef24cc74127d5824保持。
+舊`tools/cmf_to_midi.py`用軌內word@2猜起點並讀尾隨單byte delta，本項得79事件／660ticks。
+既有第20軌OGG11.054281秒，不能當正常入隊單次音源。舊轉檔與其他場景本輪保持，不外推所有音樂皆錯。
+新公開工具[tools/convert_midi_event_stream.py](../tools/convert_midi_event_stream.py)明示範圍、來源hash、driver divisor、平台reference及program map。
+它讀事件前VLQ與running status，拒絕未知事件、越界、缺終止及覆寫，不猜軌檔頭。
+公開重生與獨立私有解析逐事件相同，SMF SHA256
+`fcfbecab3e603ae170d6254b31e0d2550874452dec78db210e3981a3a928b2c6`；PPQ48、tempo499961us，單次4.801708771秒。
+原版參數12428及[公開SBFM clock契約](https://files.mpoli.fi/unpacked/software/texts/computer/inter56d.zip/interrup.p)
+用461×12428÷1193180得4.801713069秒。VLQ與事件前delta依[AdPlug原始解析器](https://raw.githubusercontent.com/adplug/adplug/master/src/mid.cpp)。
+本推算是hardware-spec approximation；沒有深挖driver／ISR，不稱原版wall-clock或聲波confirmed。
+
+本機`work/issue4-recruit-party-audio-public-r1.mid`與同前綴receipt保存公開重生身份，不冒用私有producer。
+在容器內執行公開工具的參數：原始EBG.MCX、--start0x58b、--end0x6b3、固定上述hash、--clock-divisor12428、--reference-hz1193180。
+program map沿既有Roland合成設定48,32,19,49,73,46,71,11；它是音色近似，不是原版FM樂器證據。
+實際參數需以分開的CLI token傳入；--output及--receipt指定尚不存在的work檔案。
+
+Munt原廠tag為munt_2_8_2，實測smf2wav1.9.3、library2.8.3；tag與component版號分列。
+使用唯讀work/music/mt32rom、上述單次MIDI，UID1000及--network none寫work。
+參數-m/rom、-imt32、-p44100、-t；r2明示--record-max-start-silence=-1保留完整SMF起始靜音。
+r1預設會移除起始靜音，長4.795850秒，作診斷保留；沒有裁切或覆寫r1。
+r2為211761個立體聲PCM frame，OGG4.801837秒，與規格推算差0.124ms，保留工具量化近似。
+既有game-video映像完成Vorbis編碼、ffprobe及完整解碼；mean−19.7dB、max−9.9dB，沒有靜音產物。
+本輪沒有實機人耳或原版波形驗收。MIDI、WAV、OGG與ROM只留本機，不進Git或公開Issue。
+
+來源公開入口[tools/dosgolem_recruitment_party_probe.py](../tools/dosgolem_recruitment_party_probe.py)，body與r2私有producer逐byte相同。
+新公開身份重跑必須另存、重新接受，不能冒用d0f6428d。仍用既有DQ3容器、唯讀repo／frozen dosgolem、UID1000寫work。
+本輪收尾入口`work/issue4-recruit-party-final-r1.py`及同前綴receipt；docs更新入口`-docs.py`。
+下一步將有限文字、copy、逐段名字、底圖與單次音訊契約審成READY，再接typed pack及正式引擎。
+原版199後返回仍未知；完成閘門只能使用已明示的平台與音源契約近似，不重新展開driver／ISR。
