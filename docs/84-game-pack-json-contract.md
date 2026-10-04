@@ -2006,3 +2006,36 @@ schema0.11.0新增必填`interface.recruitment_entry`，content0.1.83；舊schem
 招募取消後Yes重播`continue_text_id`的正常分支已由204包來源cf0730f1核對，見[docs/188](188-opening-escort-to-castle-spec.md)最新節。
 本輪未改schema、content、pack hash或正式狀態機；540內Esc仍strong，人物相位與完整入隊仍待驗。
 新增正常驗收為`game/recruitment_selection_test.go`的`TestRecruitmentContinueDosgolemNormalInputComparison`。
+
+## 入隊文字與單次音訊契約（schema0.13.0／content0.1.85）
+
+`interface.recruitment_join`為必填。型別與驗證入口是
+[recruitment_join.go](../dq3_remake_ebitan/internal/gamepack/recruitment_join.go)，
+有限READY與近似界線見[docs/188](188-opening-escort-to-castle-spec.md)。
+九份JSON及引擎schema同步；舊schema或不同canonical hash的存檔拒絕，不自動遷移。
+
+| 欄位 | 契約 |
+|---|---|
+| `id`、`entry_id` | 穩定身分及已登記招募入口引用 |
+| `joined_text_id`、`leader_text_id`、`finish_text_id` | 三個不同的D3原始record文字引用；本版536、537、538。逐word保留，內文等待沿既有文字consumer |
+| `leader_name_role` | 具名`primary_actor`；本版正常路線537為固定第一槽主角。其他原版隊伍重排未動態證實 |
+| `name_control_code` | 既有名字插值原語的原始word；驗證文字實際含該控制碼，不能綁到任意控制碼 |
+| `retain_caller_backdrop` | 必填true；caller首次繪圖保存整張底圖，後續入隊角色不能提前出現在文字後方 |
+| `sound.source_asset`、`start/end` | manifest原始檔引用及半開事件範圍；本版EBG.MCX(file)58B..6B3。開機驗大小、hash、完整EOT及範圍 |
+| `sound.event_count/delta_ticks` | 開機以原始事件parser核對，不因JSON合法就接受不同事件流 |
+| `sound.clock_divisor/reference_hz` | 正有理時間來源；等待為`ceil(delta_ticks×clock_divisor×60/reference_hz)`更新。本版289，不可由按鍵縮短，靜音仍等待 |
+| `sound.render_file/render_size/render_sha256` | 音樂FS內單次Roland OGG身份；不使用既有循環track_20。缺檔或錯誤身份沿音訊靜音降級，不縮短規則等待 |
+| `sound.timing_evidence` | D2公開平台契約，明記hardware-spec approximation；音色沿既有FM或Roland合成近似 |
+| `evidence` | D3原始EXE、文字、正常199來源及caller；不把靜態返回提升為原版動態驗收 |
+
+引擎只有具名三段呈現與單次播放狀態，JSON不含任意程式。播放在537結束後、538開始前暫停場景音樂，
+完成後續播原場景，再接既有540 Yes／No。按鍵不能跳過音訊；不重複搬移角色或消耗RNG。
+FM事件解析及排程入口是[opl2/event_stream.go](../dq3_remake_ebitan/internal/opl2/event_stream.go)，
+採事件前VLQ、running status及累積有理時間；不修改其他MBG音軌的歷史parser。
+Roland本機重生依docs/188單次工具及固定Munt映像，輸出`work/mt32/recruitment_join.ogg`。
+私有完整版staging由[stage_full_mt32_audio.sh](../tools/stage_full_mt32_audio.sh)的`MT32_JOIN_DIR`指定來源，
+OGG及ROM不得加入Git或公開發行包。此批沒有建立新交付目錄或發行包。
+有效Load結束單次音訊並清caller底圖與文字暫態；角色、名冊、金錢及旗標由現有持久存檔保持。
+拒絕Load不改UI或音訊等待。原版Save／Load、播放後動態返回及完整V3仍未知。
+
+目前入隊切片canonical hash為`sha256:19f6124c5f03c9f14c2909b94be5ac48438df956ea8b59e82af58c8168c558f6`，不覆寫前一選人checkpoint的歷史hash。

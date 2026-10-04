@@ -3359,3 +3359,47 @@ r2為211761個立體聲PCM frame，OGG4.801837秒，與規格推算差0.124ms，
 本輪收尾入口`work/issue4-recruit-party-final-r1.py`及同前綴receipt；docs更新入口`-docs.py`。
 下一步將有限文字、copy、逐段名字、底圖與單次音訊契約審成READY，再接typed pack及正式引擎。
 原版199後返回仍未知；完成閘門只能使用已明示的平台與音源契約近似，不重新展開driver／ISR。
+
+### 入隊文字及單次短曲有限 READY 審查
+
+範圍是既有正常入隊交易後的536內文等待、537主角名字、538入隊角色名字、caller底圖保留及單次音訊。
+正常199包與完整97bytes來源d0f6428d已閉合。主角固定第一槽的現行引擎可用具名primary_actor綁定537；
+未觀察的原版隊伍重排與[SI-2]初始化語意不納入本規格，不將該欄命名為健康值。
+536／537／538字模逐word由D3TXT00原始record生成並保留Go decoder作oracle。
+短曲使用EBG.MCX已核對的(file)58B..6B3、81事件、461ticks；事件前VLQ及running status採公開AdPlug契約。
+時長461×12428÷1193180秒採hardware-spec approximation；靜音或無音訊裝置仍等待相同時長，按鍵不能提前結束。
+FM模式沿既有OPL2音色近似合成正確事件；Roland模式使用已驗單次OGG，兩者均不循環。
+暫停場景音樂在537結束後、538開始前；短曲完成後恢復原場景音樂。
+等待後的原始IDA linear10459→1045E→10469返回，再由10398→103AE追加540、103B6開Yes／No。
+這段控制流使用既有selection-reviewed sidecar的原始bytes及已驗正常取消分支；音訊後續尚無dosgolem動態來源。
+正式實作可接既有540 Yes／No狀態機，不能宣稱這段原版動態返回或全幀V3通過。
+底圖在caller首次繪圖保存，文字與選單延續，modal關閉或有效Load才清除；拒絕Load保留。
+資料包保存文字ID、名字角色、控制碼、原始音源範圍、clock及render身份，缺值／未知引用拒絕。
+加入角色只交易一次，後續按鍵與播放不重複搬移或消耗亂數；同版本Save／Load須保留角色資料並清UI暫態。
+此有限規格READY；完整原版播放後返回、聲音波形及動畫仍未CONFORMED。欄位入口為[docs/84](84-game-pack-json-contract.md)。
+
+
+### 正式入隊文字與單次短曲有限驗收
+
+schema0.13.0／content0.1.85，canonical hash19f6124c5f03c9f14c2909b94be5ac48438df956ea8b59e82af58c8168c558f6。
+正式入口為`game/recruitment_join.go`；typed pack、驗證與原始EXE／TXT／EBG parity在`internal/gamepack/recruitment_join.go`及其測試。
+名字元件驗證實際繪圖ops依序為入隊角色、入隊角色、主角、入隊角色，不僅檢查context；正常來源兩人同名不能取代此驗證。
+FM新有界event parser保留EOT、事件前VLQ及running status，以累積有理樣本時點渲染單次音源，不改其他MBG歷史parser。
+Roland讀取`recruitment_join.ogg`並核對size／SHA；兩種音源均不循環，原場景player暫停後續播，不從頭換軌。
+音源無裝置、關閉或降級仍保留289更新等待；輸入不能縮短。原版後續未接受，近似等級保持。
+有效Load結束播放並清暫態，拒絕Load保留等待及畫布；角色交易不重複，RNG／金錢／旗標保持。
+正常199包正式InputState、播放後540→No→告別確認、同版本存讀檔及下一步通過。後199步只屬remake正常路徑，沒有原版對拍收據。
+入隊50張、No52張、Yes55張PNG逐byte保持；正式198／199各差295，由原先3028下降，完整V3仍RED。
+game443項覆蓋，395頂層／91子PASS及48選用SKIP；internal161頂層、11套件PASS及4選用SKIP，沒有素材缺失SKIP。
+正常新遊戲至THE END107.13秒；desktop Linux x86_64 ELF通過。沒有新發行包或跨schema存檔遷移。
+
+本機入口：`work/issue4-recruit-join-production-r1-data.py`及`-tests.py`保存資料與正常輸入測試生成過程，不能重跑覆寫已存在輸出。
+排版保持入口`-format.py`證明9份JSON整理前後逐項語意相同；canonical hash保持。
+`-r2-run.py`以有界Xvfb、每項獨立程序完成全套443，避免連跑多份Game累積記憶體。
+最終嵌入排版r6正常路線保持；只新增不同名實際ops斷言後r7再跑受影響測試，正式Go及pack語意未再改動。
+runtime及log在`work/issue4-recruit-join-production-r2-full/`與最終`-r4-focused/`；統計入口`-r1-regression-summary.json`。
+收尾入口`work/issue4-recruit-join-production-final-r1.py`，保存文件、binary、資料包、來源及PNG稽核。
+初次建置型別錯誤、測試(file)103AE換算筆誤及素材相對掛載已修正；r1 focused第三個重型測試被記憶體限制終止，屬驗證環境。
+全套結果統計一度預設SKIP47而拒絕，實際是48；只修統計腳本，不放寬任何產品斷言或重跑挑結果。
+原版素材、OGG、ROM、PNG、binary及database不加入Git；私有staging短曲入口見docs/84。
+下一步繼續共用人物動畫及後續正常節點，已閉合文字不重開；driver／ISR停止線維持。

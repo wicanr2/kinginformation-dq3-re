@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.12.0"
+	SchemaVersion       = "0.13.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -1078,6 +1078,7 @@ type RawScreenAsset struct {
 }
 
 type Interface struct {
+	RecruitmentJoin          *RecruitmentJoin          `json:"recruitment_join"`
 	Registration             *Registration             `json:"registration"`
 	RecruitmentEntry         *RecruitmentEntry         `json:"recruitment_entry"`
 	RecruitmentSelection     *RecruitmentSelection     `json:"recruitment_selection"`
@@ -2298,6 +2299,9 @@ func Load(fsys fs.FS) (*Pack, error) {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
 	if err := p.validateRecruitmentSelection(); err != nil {
+		return nil, fmt.Errorf("%s: %w", interfacePath, err)
+	}
+	if err := p.validateRecruitmentJoin(); err != nil {
 		return nil, fmt.Errorf("%s: %w", interfacePath, err)
 	}
 	if err := p.validateOpeningPreludeRefs(); err != nil {

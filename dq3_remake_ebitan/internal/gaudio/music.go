@@ -5,6 +5,7 @@ package gaudio
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io/fs"
 
@@ -19,6 +20,7 @@ const sampleRate = 44100
 type Music struct {
 	ctx          *audio.Context
 	player       *audio.Player
+	oneShot      *audio.Player
 	cur          int
 	fsys         fs.FS // 放 track_NN.ogg 的檔案系統(桌面=os.DirFS、行動=embed.FS)
 	enabled      bool  // 音訊後端是否可用(初始化成功;非使用者開關)
@@ -118,8 +120,74 @@ func (m *Music) Play(track int) {
 
 // Stop 暫停當前軌。
 func (m *Music) Stop() {
+	if m == nil {
+		return
+	}
 	if m.player != nil {
 		m.player.Pause()
+	}
+	if m.oneShot != nil {
+		m.oneShot.Pause()
+	}
+}
+
+// PlayOneShot pauses the current background player without rewinding it.
+// FM uses the reviewed raw event range; Roland uses the checked render.
+// A missing/invalid asset remains silent, with scheduling owned by the caller.
+func (m *Music) PlayOneShot(stream []byte, divisor, reference int64, file string, size int64, hash string) {
+	if m == nil {
+		return
+	}
+	if m.oneShot != nil {
+		m.oneShot.Pause()
+		_ = m.oneShot.Close()
+		m.oneShot = nil
+	}
+	if m.player != nil {
+		m.player.Pause()
+	}
+	if !m.enabled || m.musicOff || m.ctx == nil {
+		return
+	}
+	defer func() { recover() }()
+	var p *audio.Player
+	var err error
+	if m.mbg != nil {
+		pcm, e := opl2.RenderEventStream(stream, sampleRate, divisor, reference)
+		if e != nil || len(pcm) == 0 {
+			return
+		}
+		p, err = m.ctx.NewPlayer(bytes.NewReader(monoToStereo(pcm)))
+	} else {
+		data, e := fs.ReadFile(m.fsys, file)
+		if e != nil || int64(len(data)) != size || fmt.Sprintf("%x", sha256.Sum256(data)) != hash {
+			return
+		}
+		s, e := vorbis.DecodeWithSampleRate(sampleRate, bytes.NewReader(data))
+		if e != nil {
+			return
+		}
+		p, err = m.ctx.NewPlayer(s)
+	}
+	if err != nil {
+		return
+	}
+	p.SetVolume(m.vol)
+	m.oneShot = p
+	p.Play()
+}
+
+func (m *Music) FinishOneShot() {
+	if m == nil {
+		return
+	}
+	if m.oneShot != nil {
+		m.oneShot.Pause()
+		_ = m.oneShot.Close()
+		m.oneShot = nil
+	}
+	if m.enabled && !m.musicOff && m.player != nil {
+		m.player.Play()
 	}
 }
 
@@ -214,6 +282,9 @@ func (m *Music) SetVolume(v int) {
 	m.vol = float64(v) / 100
 	if m.player != nil {
 		m.player.SetVolume(m.vol)
+	}
+	if m.oneShot != nil {
+		m.oneShot.SetVolume(m.vol)
 	}
 }
 

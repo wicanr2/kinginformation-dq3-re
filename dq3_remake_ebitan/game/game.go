@@ -3485,6 +3485,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	if err := g.recruit.configure(pack, g.dlg.tx); err != nil {
 		return nil, err
 	}
+	if err := g.recruit.configureJoinStream(readPackAsset(g.recruit.join.Sound.SourceAsset)); err != nil {
+		return nil, err
+	}
 	g.recruit.cursorGlyph = g.tavern.labels.ChoiceCursor[0]
 	g.hero = dq3data.LoadCharSprite(mstBLS, heroSpriteEntry)
 	g.phoenix = dq3data.LoadCharSprite(manBLS, 176) // CTY70 egg b2=48 → (48-4)*4；原版拉米亞 8-frame sprite

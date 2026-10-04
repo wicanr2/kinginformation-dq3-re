@@ -68,7 +68,7 @@ func traceRecruitmentGreeting(t *testing.T, g *Game) {
 func traceRecruitmentText(t *testing.T, g *Game) {
 	t.Helper()
 	for i := 0; i < 5000; i++ {
-		if !g.recruit.active || (g.recruit.stage != rcGreeting && g.recruit.stage != rcText) {
+		if !g.recruit.active || (g.recruit.stage != rcGreeting && g.recruit.stage != rcText && (g.recruit.stage < rcJoinedText || g.recruit.stage > rcMusicWait)) {
 			return
 		}
 		in := InputState{DirHeld: -1, DirEdge: -1}
@@ -93,8 +93,11 @@ func traceCloseRecruitmentSelection(t *testing.T, g *Game) {
 			t.Fatal(e)
 		}
 	}
-	press(InputState{DirHeld: -1, DirEdge: -1, Cancel: true})
 	traceRecruitmentText(t, g)
+	if g.recruit.stage != rcAgain {
+		press(InputState{DirHeld: -1, DirEdge: -1, Cancel: true})
+		traceRecruitmentText(t, g)
+	}
 	if g.recruit.stage != rcAgain || g.recruit.cursor != 0 {
 		t.Fatal("selection cancel must open native continue question")
 	}

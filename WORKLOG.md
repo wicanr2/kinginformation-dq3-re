@@ -1408,3 +1408,19 @@ Munt起始靜音設定另存r2，211761frames／OGG4.801837秒，完整解碼與
 公開來源、MIDI工具與Dockerfile可重生，原版、ROM、音源及database未入Git；入口見docs/188。
 本輪Issue進度5975544582，結果、commit／push及容器清理由final收據追加；Goal與Issue保持進行中。
 下一步收斂有限READY並接typed pack與正式引擎，不再追硬體driver／ISR。正式產品未變，不重跑同一全套回歸。
+
+
+## 2026-10-04 正式入隊文字與單次音訊
+
+接續1d7d899與Issue #4。有限READY將536兩處新角色、537主角及538新角色名字接入typed pack，保留caller底圖與內文等待。
+原版caller10459→10469返回、10398→103AE追加540；此段後續仍無動態來源，依靜態控制流與平台規格近似實作。
+schema0.13.0／content0.1.85，canonical19f6124c。81事件／461ticks在FM與Roland後端單次播放，等待289更新，不可按鍵縮短。
+播放後續播原場景並進540 Yes／No。正常角色交易只一次，播放期間有效／拒絕Load、存讀檔及下一步通過。
+15種壞pack契約拒絕，有界事件parser壞資料拒絕；EXE／TXT／EBG原始資料、FM單次樣本時長及非靜音核對。
+正式正常199、No201、Yes204通過；入隊50、No52、Yes55PNG保持，正式198／199差3028降295。
+game443覆蓋，395頂層／91子PASS、48選用SKIP；internal161頂層／11套件PASS、4選用SKIP；desktop Linux x86_64 ELF。
+正常THE END107.13秒只屬remake回歸，原版全流程與音畫V3未完成。
+型別比較與原始位址測試筆誤修正；素材相對掛載及第三個連續重型測試的記憶體限制改為每項隔離程序乾淨重跑。
+九份JSON保留既有排版，前後語意及canonical相同。r5全套、r6最終嵌入排版與r7實際名字ops斷言的受影響測試由各自收據保存。
+Issue進度5976023866；提交、推送與遠端結果由final收據追加。本機音源與使用者scratch保持，不建立新發行包。
+現況見CONTEXT，原始定位與重生入口見docs/188，欄位及私有音源staging見docs/84；後續不重開已完成文字或深入driver／ISR。

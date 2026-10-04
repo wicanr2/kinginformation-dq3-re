@@ -10,15 +10,17 @@ fi
 : "${FULL_ASSETS_DIR:?請指定完整版 staging 的 assets_raw 目錄}"
 TRACK_DIR="${MT32_TRACK_DIR:-/repo/work/music/export/mt32}"
 ROM_DIR="${MT32_ROM_DIR:-/repo/work/music/mt32rom}"
+JOIN_DIR="${MT32_JOIN_DIR:-/repo/work/mt32}"
 
 test -d "$FULL_ASSETS_DIR"
 test -s "$ROM_DIR/MT32_CONTROL.ROM"
 test -s "$ROM_DIR/MT32_PCM.ROM"
+test -s "$JOIN_DIR/recruitment_join.ogg"
 for track in $(seq -w 0 17); do
   test -s "$TRACK_DIR/track_${track}.ogg"
 done
-
 install -d "$FULL_ASSETS_DIR/mt32" "$FULL_ASSETS_DIR/mt32-rom"
+install -m 0644 "$JOIN_DIR/recruitment_join.ogg" "$FULL_ASSETS_DIR/mt32/recruitment_join.ogg"
 for track in $(seq -w 0 17); do
   install -m 0644 "$TRACK_DIR/track_${track}.ogg" "$FULL_ASSETS_DIR/mt32/track_${track}.ogg"
 done
@@ -27,7 +29,7 @@ install -m 0644 "$ROM_DIR/MT32_PCM.ROM" "$FULL_ASSETS_DIR/mt32-rom/MT32_PCM.ROM"
 
 (
   cd "$FULL_ASSETS_DIR"
-  sha256sum mt32/track_*.ogg mt32-rom/MT32_CONTROL.ROM mt32-rom/MT32_PCM.ROM
+  sha256sum mt32/track_*.ogg mt32/recruitment_join.ogg mt32-rom/MT32_CONTROL.ROM mt32-rom/MT32_PCM.ROM
 ) > "$FULL_ASSETS_DIR/MT32-PRIVATE-ASSETS.sha256"
 
 echo "完成：已加入 MT-32 音軌與 ROM（僅限本機完整版）。"

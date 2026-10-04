@@ -1152,8 +1152,16 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 	press(InputState{Confirm: true}) // 找同伴參加
 	traceRecruitmentText(t, g)
+
 	for i := 0; i < 3; i++ {
 		press(InputState{Confirm: true})
+		traceRecruitmentText(t, g)
+		if i < 2 {
+			press(InputState{Confirm: true}) // native Yes -> parent menu
+			traceRecruitmentText(t, g)
+			press(InputState{Confirm: true}) // join -> list
+			traceRecruitmentText(t, g)
+		}
 	}
 	if len(g.companions) != 3 || len(g.roster) != 0 {
 		t.Fatalf("招募後應成為主角+3 四人隊，得 companions=%d roster=%d",

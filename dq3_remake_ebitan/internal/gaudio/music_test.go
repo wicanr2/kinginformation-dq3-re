@@ -39,12 +39,16 @@ func TestSetEnabledSetVolumeNilSafe(t *testing.T) {
 	nilM.SetVolume(50)
 	nilM.Play(0)
 	nilM.PlaySFX(0)
+	nilM.PlayOneShot(nil, 1, 1, "", 0, "")
+	nilM.FinishOneShot()
 
 	m := NewMusic(nil) // 無檔案系統 → enabled=false(既有靜音降級路徑)
 	m.SetEnabled(false)
 	m.SetVolume(30)
 	m.Play(0)
 	m.PlaySFX(0)
+	m.PlayOneShot(nil, 1, 1, "", 0, "")
+	m.FinishOneShot()
 
 	m.SetEnabled(true) // 重開後仍應不 panic(enabled 仍 false,因無 fsys)
 	m.Play(0)

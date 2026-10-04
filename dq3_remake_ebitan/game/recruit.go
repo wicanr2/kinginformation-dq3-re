@@ -25,6 +25,11 @@ const (
 // drawStatus/equipSelected 模式——選單需要同時讀寫兩份 Game 層清單,不適合像 Tavern
 // 那樣做成不持有 *Game 的純 UI struct。
 type Recruit struct {
+	join                       *gamepack.RecruitmentJoin
+	backdrop                   []byte
+	joinedName, leaderName     []int
+	musicFrames                int
+	musicStream                []byte
 	contract                   *gamepack.RecruitmentEntry
 	selection                  *gamepack.RecruitmentSelection
 	texts                      map[string][]uint16
@@ -64,6 +69,10 @@ func (g *Game) tavernCreate(in InputState) {
 // recruitInput:酒場招募 modal 的輸入處理(掛在 g.recruit 上)。
 func (g *Game) recruitInput(in InputState) {
 	rc := &g.recruit
+	if rc.stage >= rcJoinedText && rc.stage <= rcMusicWait {
+		g.recruitJoinInput(in)
+		return
+	}
 	if rc.stage == rcGreeting {
 		rc.greetingInput(in)
 		return
@@ -120,13 +129,14 @@ func (g *Game) recruitInput(in InputState) {
 			return
 		}
 		g.recruitPick(in, tapIdx, len(g.roster), func(i int) {
-			if len(g.companions) >= rcPartyMax-1 { // 隊伍已滿(主角+3)→ 擋掉,不頂替、不丟隊友
+			if rc.join == nil || len(g.companions) >= rcPartyMax-1 { // 未有契約或已滿時保持名冊。
 				return
 			}
 			m := g.roster[i]
 			g.roster = append(g.roster[:i], g.roster[i+1:]...)
 			g.companions = append(g.companions, m)
 			g.resetPartyTrail()
+			g.startRecruitmentJoin(m.Name)
 		})
 	case rcLeave:
 		g.recruitPick(in, tapIdx, len(g.companions), func(i int) {
@@ -174,7 +184,14 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 	if !rc.active {
 		return
 	}
-	if rc.stage == rcGreeting || rc.stage == rcMenu || rc.stage == rcText || rc.stage == rcAgain || rc.stage == rcFinalWait {
+	if rc.join != nil && rc.join.RetainCallerBackdrop {
+		if len(rc.backdrop) == 0 {
+			rc.backdrop = append([]byte(nil), rgba...)
+		} else {
+			copy(rgba, rc.backdrop)
+		}
+	}
+	if rc.stage == rcGreeting || rc.stage == rcMenu || rc.stage == rcText || rc.stage == rcAgain || rc.stage == rcFinalWait || rc.stage >= rcJoinedText && rc.stage <= rcMusicWait {
 		rc.drawEntry(rgba, white)
 		return
 	}

@@ -9,14 +9,16 @@ import (
 const rcGreeting = rcView + 1
 
 func (rc *Recruit) configure(pack *gamepack.Pack, tx *dq3data.Text) error {
-	if pack == nil || pack.Interface.Registration == nil || pack.Interface.RecruitmentEntry == nil || pack.Interface.RecruitmentSelection == nil || pack.Interface.OpeningPrelude == nil {
+	if pack == nil || pack.Interface.Registration == nil || pack.Interface.RecruitmentEntry == nil || pack.Interface.RecruitmentSelection == nil || pack.Interface.RecruitmentJoin == nil || pack.Interface.OpeningPrelude == nil {
 		return fmt.Errorf("recruitment entry missing")
 	}
 	rc.contract = pack.Interface.RecruitmentEntry
 	rc.selection = pack.Interface.RecruitmentSelection
+	rc.join = pack.Interface.RecruitmentJoin
 	rc.rosterCapacity = pack.Interface.Registration.RosterCapacity
 	rc.texts = map[string][]uint16{}
-	for _, id := range append(rc.contract.TextIDs(), rc.selection.TextIDs()...) {
+	ids := append(rc.contract.TextIDs(), rc.selection.TextIDs()...)
+	for _, id := range append(ids, rc.join.TextIDs()...) {
 		codes, ok := pack.TextGlyphCodes(id)
 		if !ok {
 			return fmt.Errorf("recruitment entry text missing: %q", id)
@@ -34,6 +36,10 @@ func (rc *Recruit) configure(pack *gamepack.Pack, tx *dq3data.Text) error {
 }
 func (rc *Recruit) reset() {
 	rc.active = false
+	rc.backdrop = nil
+	rc.joinedName, rc.leaderName = nil, nil
+	rc.musicFrames = 0
+	rc.dialogue.varGlyph = nil
 	rc.dialogue.open = false
 	rc.dialogue.retained = nil
 	rc.menuHits.reset()

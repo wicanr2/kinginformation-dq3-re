@@ -206,6 +206,9 @@ func compsToSav(ms []*Member) []compSav {
 
 func (g *Game) restore(s saveState) {
 	g.tavern.reset()
+	if g.recruit.active && (g.recruit.stage == rcFinishText || g.recruit.stage == rcMusicWait) {
+		g.finishRecruitmentMusic()
+	}
 	g.recruit.reset()
 	g.deferredRegionDialogueReturnID = s.DeferredRegionDialogueReturnID
 	if g.regionDialogueReturn != nil {

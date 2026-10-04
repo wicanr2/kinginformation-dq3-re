@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.12.0",
+  "schema_version": "0.13.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -4647,6 +4647,124 @@
         "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_join.joined",
+      "value": "*「要{角色名字}加入成為\n  同伴嗎?知道了嗨。\n{內文等待}\n*「{角色名字}啊!",
+      "glyph_codes": [
+        59,
+        60,
+        504,
+        65531,
+        368,
+        519,
+        610,
+        611,
+        65534,
+        12,
+        12,
+        601,
+        602,
+        534,
+        58,
+        510,
+        402,
+        423,
+        527,
+        56,
+        65532,
+        59,
+        60,
+        65531,
+        509,
+        57
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 536
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; dosgolem 2f44a68 seed1357 source d0f6428dbc6f66b0887c3991c4bd17cb00be2825df4a53e1cf5bc049d806ed32; D3TXT00.TXT; EBG.MCX",
+        "address_space": "linear",
+        "address": "IDA9.4 linear10415..10469;10395..103C0;21651..216AF;DGROUP259C",
+        "consumer": "normal199 packet join copy ->536 new member ->537 primary actor ->pause/cue32 ->538 new member ->wait; static continuation540",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常199止208E2，音訊完成及返回採平台規格近似與既有caller控制流。未宣稱原版動態後續或完整V3。537限固定主角第一槽，未知重排保持strong。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_join.leader",
+      "value": "  {角色名字}找你喔!",
+      "glyph_codes": [
+        12,
+        12,
+        65531,
+        769,
+        528,
+        776,
+        57
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 537
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; dosgolem 2f44a68 seed1357 source d0f6428dbc6f66b0887c3991c4bd17cb00be2825df4a53e1cf5bc049d806ed32; D3TXT00.TXT; EBG.MCX",
+        "address_space": "linear",
+        "address": "IDA9.4 linear10415..10469;10395..103C0;21651..216AF;DGROUP259C",
+        "consumer": "normal199 packet join copy ->536 new member ->537 primary actor ->pause/cue32 ->538 new member ->wait; static continuation540",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常199止208E2，音訊完成及返回採平台規格近似與既有caller控制流。未宣稱原版動態後續或完整V3。537限固定主角第一槽，未知重排保持strong。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_join.finish",
+      "value": "{角色名字}成為同伴了。",
+      "glyph_codes": [
+        65531,
+        610,
+        611,
+        601,
+        602,
+        423,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 538
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; dosgolem 2f44a68 seed1357 source d0f6428dbc6f66b0887c3991c4bd17cb00be2825df4a53e1cf5bc049d806ed32; D3TXT00.TXT; EBG.MCX",
+        "address_space": "linear",
+        "address": "IDA9.4 linear10415..10469;10395..103C0;21651..216AF;DGROUP259C",
+        "consumer": "normal199 packet join copy ->536 new member ->537 primary actor ->pause/cue32 ->538 new member ->wait; static continuation540",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常199止208E2，音訊完成及返回採平台規格近似與既有caller控制流。未宣稱原版動態後續或完整V3。537限固定主角第一槽，未知重排保持strong。"
       }
     }
   ]

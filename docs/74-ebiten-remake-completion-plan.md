@@ -1,5 +1,19 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-10-04正式入隊文字與單次短曲已修正。依Issue #4，schema0.13.0／content0.1.85，
+> canonical hash為`sha256:19f6124c5f03c9f14c2909b94be5ac48438df956ea8b59e82af58c8168c558f6`。
+> 正常536內文等待、537主角名字、538入隊角色名字及caller底圖接入typed pack與正式引擎。
+> 正確81事件／461ticks的單次短曲在537後開始；按鍵不能縮短289更新等待，完成後續播場景音樂並接540 Yes／No。
+> 時間與音色保留hardware-spec／既有合成近似；原版199後動態返回、聲波與全幀V3仍未知。
+> 正式正常199包、不同名字的實際文字消費、播放期間有效／拒絕Load及交易不重複通過。
+> 入隊50張、取消52張、Yes55張完整PNG保持；198及199的正式全幀差由3028降295，未遮罩或指定動畫相位。
+> game443項覆蓋，395頂層及91子PASS，48選用SKIP；internal161頂層、11套件PASS，4選用SKIP。
+> 正常新遊戲至THE END107.13秒、同版本存讀檔及desktop Linux x86_64通過；原版完整campaign仍未CONFORMED。
+> 本批沒有新發行包。舊schema存檔維持拒絕、不自動遷移。下一步追共用人物動畫差異與後續正常玩家路徑，維持硬體driver／ISR停止線。
+> 唯一目前狀態表在CONTEXT；證據、READY、正常重播與私有音源入口見docs/188，欄位契約見docs/84。
+
+以下日期化段落保存前一checkpoint，不取代本輪現況與CONTEXT的唯一狀態表。
+
 > 2026-10-04目前現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
 > 現行schema0.12.0／content0.1.84，canonical hash為`sha256:0bdb4ebfa99c9f36fb5e7f8dd3f6d5f2e1dc3892900bdadc174cf6be34e47fcc`。
 > 正常選入隊會先追加530問題，清單使用原始DGROUP3E14窗口及姓名／等級／職業／性別資料。

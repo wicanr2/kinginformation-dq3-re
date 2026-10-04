@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.12.0",
+  "schema_version": "0.13.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -3090,6 +3090,48 @@
       "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+    }
+  },
+  "recruitment_join": {
+    "id": "dq3:recruitment_join",
+    "entry_id": "dq3:recruitment_entry",
+    "joined_text_id": "dq3:text.recruitment_join.joined",
+    "leader_text_id": "dq3:text.recruitment_join.leader",
+    "finish_text_id": "dq3:text.recruitment_join.finish",
+    "leader_name_role": "primary_actor",
+    "name_control_code": 65531,
+    "retain_caller_backdrop": true,
+    "sound": {
+      "source_asset": "recruitment_music",
+      "start": 1419,
+      "end": 1715,
+      "event_count": 81,
+      "delta_ticks": 461,
+      "clock_divisor": 12428,
+      "reference_hz": 1193180,
+      "render_file": "recruitment_join.ogg",
+      "render_size": 100665,
+      "render_sha256": "715e014415135ed24612e22c9655f8cc4f21b57cd90bc5449f1631e8e362d8a0",
+      "timing_evidence": {
+        "level": "D2",
+        "source_kind": "manual",
+        "source": "SBFM BX4 1193180/frequency; AdPlug MIDI delta VLQ; EBG.MCX SHA256 ad4e139c5154b1271b2b6a6129a37684b019ea1e36ac6270ef24cc74127d5824",
+        "address_space": "file",
+        "address": "EBG.MCX 58B..6B3",
+        "consumer": "461 delta ticks at divisor12428/reference1193180 -> ceil duration at60TPS",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "hardware-spec approximation；未聲稱原版wall-clock/聲波一致。FM沿既有OPL2 patch近似；Roland沿既有program map近似。"
+      }
+    },
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; dosgolem 2f44a68 seed1357 source d0f6428dbc6f66b0887c3991c4bd17cb00be2825df4a53e1cf5bc049d806ed32; D3TXT00.TXT; EBG.MCX",
+      "address_space": "linear",
+      "address": "IDA9.4 linear10415..10469;10395..103C0;21651..216AF;DGROUP259C",
+      "consumer": "normal199 packet join copy ->536 new member ->537 primary actor ->pause/cue32 ->538 new member ->wait; static continuation540",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "有限READY；正常199止208E2，音訊完成及返回採平台規格近似與既有caller控制流。未宣稱原版動態後續或完整V3。537限固定主角第一槽，未知重排保持strong。"
     }
   }
 }
