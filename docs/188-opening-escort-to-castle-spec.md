@@ -4614,3 +4614,29 @@ r2補入戰鬥`.items`及工具hash，為69份輸入／208筆；出售setter修�
 後續完整word試作在`work/issue4-item-store-draft-r2/words.go`及`words_test.go`，前版保留作已被取代的設計紀錄。新集合只保存有序`uint16`原始words，容量、空值、物品mask、穿戴mask及實際archive count必須明示傳入，不設引擎預設。背包／穿戴檢視只回傳複本與原始物理位置；裝備類別仍需由ITEM consumer導出。未知high bits保持原值，不由核心指定玩法語意。
 
 5項試作PASS：正常八格重排／round-trip、第一空格與滿格失敗、4000詛咒及未解釋高bits保持、檢視／載入複本不能寫持有者、缺codec／越界物品／壞序列化word／非法位置拒絕。私有收據`work/issue4-item-store-draft-r2/receipt.json`逐檔hash，words.go SHA-256 `cec017687c71816d5f1ec6357ec89fb14b71fb555d8af37061952c82ee759650`。仍未接入正式引擎；consumer、JSON欄位、save拒絕gate及正常物品UI須整體審READY，不能把這5項稱為production完成。
+
+### 2026-10-05 A 共用格位核心 READY
+
+本節只核准共用格位模組，整體引擎、pack、存檔及正常物品 UI 遷移仍為 DRAFT。使用者選定 A 的紀錄沿上節，不重新提問。入口為 [itemstore 核心](../dq3_remake_ebitan/internal/itemstore/store.go)、[交易及拒絕測試](../dq3_remake_ebitan/internal/itemstore/store_test.go)、[原始資料核對](../dq3_remake_ebitan/internal/itemstore/oracle_test.go)及 [JSON 欄位入口](84-game-pack-json-contract.md)。模組不自帶 DQ3 容量、ID、mask、初始物品或文字。後續接入時必須從 READY pack 契約及實際 ITEM archive 導入，不能用測試 fixture 初始化正式玩家。
+
+| READY 項目 | 契約及證據 |
+| --- | --- |
+| 問題與範圍 | 原版物理格同時保存穿戴物與空格；目前分離 bag／equipment 無法重現 230 包。核心保存完整 words，只提供複本檢視，不改正式玩家流程 |
+| 不可變輸入 | `assets_raw/DQ3.EXE`，115282 bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；`ITEM.DAT`，896 bytes，SHA-256 `7f3142de688ccca50fe888854b59ceb81b406b4c8eec038e719f10fda66e7f5d`。IDA Pro 9.4，IDA linear／file 分列 |
+| 有序格與檢視 | 138F8／13919 reader；原版來源 `aad971bb`。只跳過明示空值，code 0 有效。所有檢視附物理位置；輸入、檢視、快照及複製 Store 不得形成可寫別名 |
+| 取得與清除 | 第一空格寫入，滿格不寫；只清所選格，不壓縮。docs/156 的 17752..1776C、docs/157 的 16856..16895及 docs/179 的 14CF9。付款、獎勵、使用 gate 留給正式 consumer |
+| 自給與跨人給予 | 同一 Store 旋轉包括空格的後續所有格，保留完整 word，13A62..13A9F及正常來源限定 confirmed。跨人先找目的空格，再驗來源 word 與明示禁止旗標 mask；139DF..13A16 的 E000 gate 為靜態 confirmed，正常多人路線尚未知。失敗兩側不寫；核心不處理 record 或狀態旗標 |
+| 換裝 | 18098..180A9 設穿戴及必要詛咒 bit，180AE..180B1只清其他同類候選穿戴 bit；保留物理順序、詛咒與未知 bits。類別及詛咒來源由原始 ITEM decoder 導入。17F22／18003..18010 的舊詛咒裝備禁止替換。職業、性別及玩家選擇 gate 留在 consumer，不由核心猜測 |
+| 解咒 | 17254..17266 清所有命中詛咒 bit 的 word，包括未穿戴物；費用、確認及單次付款留在教會 consumer。原始證據與等級沿 docs/147 |
+| 序列化與失敗 | 核心快照只寫 `storage_version` 與 `words`。版本為通用格式版本 1；缺值、null、舊欄位、未知欄位、重複欄位、多個 JSON 值、越界 word／ID、錯誤容量均拒絕。不遷移舊 bag／equipment。完整遊戲仍必須另驗 pack 版本、hash 與所有持有者後才 restore |
+| 驗收與停止線 | 核心交易／壞契約測試及原始 EXE／ITEM bytes 核對。原版八格來源可比核心結果；核心 PASS 不升格 UI、campaign 或正式 save。戰鬥、轉職、名冊及創始人 adapter 尚未 READY，不在本節猜補 |
+
+新增有界 IDA 核對留於既有 `work/`：`issue4-item-a-r1-ida.json` 的 SHA-256 為 `34f110da1725bad17c1bc14dd5a783094e9208b8c0edac3b9ce5ee688f520cf7`，366 條；r2 為 `38e69e248fb23d429989ed0d3735e322ab711c809f0c7c453dfe46d4c141ff8f`，77 條。兩次均使用 `ida-pro-9.4-idapython:locked-v1`、UID1000、原始 EXE 唯讀、一次性 database，保留 bytes、原始名稱、xref type 及位址基準。來源保持，輸出非空且身分驗證成功。原始資料及 sidecar 不加入 Git。
+
+轉職 writer 另保留未閉合線索：IDA linear10C42..10C5E只在新職業為5時清每格高 byte，並清除低 byte 4A 的 word。尚未取得正常原版轉職同狀態 oracle，本輪不把「所有轉職均清全部裝備」寫進新核心，也不改正式轉職流程。舊 docs/92 結論不能代替這項未知 gate。
+
+有限核心驗收：`work/issue4-item-a-core-r2-tests.jsonl` 記錄12頂層／4子 PASS、零 FAIL／SKIP；Go1.24.13，97.5% statement coverage，`go vet ./internal/itemstore` 通過。沿既有 `dq3-ebiten-test:20260822-r1`、UID1000、network none、1GiB／2CPU及180秒逾時。於 `dq3_remake_ebitan/` 設定 `DQ3_ASSETS=/repo/assets_raw`、`DQ3_ITEM_ORACLE_DIR=/repo/work/dosgolem-opening` 後執行 `go test -count=1 -json ./internal/itemstore`，缺必要原始素材即失敗；未設定原版收據目錄的選用 SKIP 不能當本項驗收。
+
+測試逐檔核對已接受 `aad971bb` 收據及224／225／230持久區hash，以原始 ITEM decoder 建 metadata，再比較核心八格交易；存回／讀回的物理格與順序相同。這是資料核心核對，沒有產生新的正式玩家 InputState、runtime PNG 或 V3。核心 JSON 另拒絕大小寫變體、重複 key、null word 及一般 JSON 解碼繞過外部契約；普通 Marshal 不會把 private fields 靜默寫成空物件。r1的11頂層／4子 PASS保留，新增上述 JSON 防繞過後沿同一image乾淨跑r2。
+
+最終核心來源與擁有權收據為 `work/issue4-item-a-final-r1-receipt.json`；抽查本批檔案UID／GID1000、原始EXE／ITEM及此前出售來源保持，root基線3213逐路徑相同、零 `.md` 目錄。沒有新發行包，Issue #4及Goal保持進行中。

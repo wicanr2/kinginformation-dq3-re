@@ -1662,3 +1662,13 @@ F6 完整畫面差45109已降0。F5 的194、196、197及F6的200均完整RGB零
 - 首輪完整並行OOM分類為環境失敗，逐項同資源重跑通過。驗證旗標集合排序、Load標題狀態、撞櫃台cooldown及截圖啟用時機均保留勘誤，不當產品缺陷。
 - 語法樹稽核69份輸入／207候選，不代表完整型別或別名證明。使用者A決定已登記Issue #4；私有完整word試作5項PASS，原版詛咒4000及未知高bits保留，尚未production接線。來源與下一READY gate見docs/188。
 - 使用者13項資料保留，原版EXE hash5178fdc8保持；root基線3213、零.md目錄，最終提交／推送／Issue與容器清理以收尾收據為準。
+
+## 2026-10-05 A 共用物理格核心
+
+依使用者選定的 A 實作 `internal/itemstore`。唯一集合保存有序完整 words；背包／裝備檢視附物理位置且是複本。寫入採複製後提交，避免 Store 值複製後透過共用 slice 改到另一持有者。取得寫第一空格、移除留下空格、自給旋轉包含空格的全部後續格；跨人交易先驗雙方與旗標 gate，失敗不寫。
+
+- 有限READY、原始位址、邊界、工具及執行入口集中docs/188，JSON入口docs/84。容量／mask／metadata完全外供，沒有DQ3 production fallback。換裝只改格內flags；舊詛咒裝備阻止替換，教會primitive移除所有詛咒words，玩家資格與費用留在consumer。
+- 核心快照版本1只保存words。缺契約、越界、null、舊欄位、重複key、大小寫變體與trailing JSON拒絕。一般Marshal不會靜默丟失private fields，普通Unmarshal不能繞過archive／pack契約。
+- 核心r2為12頂層／4子PASS、零FAIL／SKIP，Go1.24.13、97.5% statement coverage，go vet通過。實際EXE／ITEM hash及原始指令核對；已接受dosgolem aad971bb收據與224／225／230持久區逐檔hash核對，再比較八格交易與核心round-trip。沒有新正式InputState、PNG或V3。
+- IDA9.4有界r1／r2匯出366／77條，來源保持。轉職10C42..10C5E的高byte清除受新職業條件限制，尚缺正常原版oracle，不在核心猜補全域解除裝備。sidecar與腳本留既有work，不加入Git。
+- 正式Game／Member、pack、戰鬥及全部save adapter仍DRAFT；schema0.19.0／content0.1.91、canonical66224bc0保持，存檔尚未升級。此前928c7db出售修正與完整回歸保持，206..208仍RED。提交／推送、使用者13項資料、原版素材、擁有權與Docker清理由收尾收據核對。

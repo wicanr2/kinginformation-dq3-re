@@ -2,7 +2,7 @@
 
 > 2026-10-05 同伴出售裝備清除副本的錯誤已修正。正常新遊戲、出售取消／確認、單次售款、防禦更新、存讀檔及下一步通過。schema0.19.0／content0.1.91與canonical66224bc0保持，沒有新包。
 > 完整game485頂層覆蓋、489次執行，434不同頂層／121子PASS、51選用SKIP；internal171頂層／375子、11套件PASS及4選用SKIP。正常THE END163.93秒、Linux desktop PASS；逐項重跑零OOM，1082張既有PNG及5張新出售PNG保持。
-> 使用者已選A單一有序物品格，不再等待架構選擇。完整word試作5項PASS，保留空格、穿戴／詛咒及未知高位元；尚未READY或接入production，存檔尚未升級。206..208畫面仍RED，商店確認／取消PNG空窗未驗。唯一現況表CONTEXT、出售docs/182、八格docs/188；Issue／Goal進行中。
+> 使用者已選A單一有序物品格，不再等待架構選擇。共用 `internal/itemstore` 已由有限READY實作，12頂層／4子PASS、零SKIP及go vet通過；原始EXE／ITEM與dosgolem接受收據的八格交易核對通過。空格／完整旗標保持，檢視及Store複製不形成可寫別名，舊／null／重複欄位快照拒絕。核心尚未接入正式Game／Member、pack、戰鬥與完整save，整體adapter仍DRAFT。206..208畫面仍RED，商店確認／取消PNG空窗未驗。唯一現況表CONTEXT、出售docs/182、八格docs/188；Issue／Goal進行中。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

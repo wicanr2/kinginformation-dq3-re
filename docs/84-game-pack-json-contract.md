@@ -1,5 +1,11 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 有序物品格核心，正式 pack 遷移待驗
+
+使用者選定單一有序物品格。有限核心 READY 見 [docs/188](188-opening-escort-to-castle-spec.md#2026-10-05-a-共用格位核心-ready)，實作在 [internal/itemstore](../dq3_remake_ebitan/internal/itemstore/store.go)。核心要求明示容量、空值、ID／穿戴／詛咒／跨人給予禁止 mask、部位數及由實際 ITEM archive 建立的 metadata；沒有 DQ3 fallback。metadata 是不可變資料副本，背包／裝備由 words 導出。未知 high bits 保留，不新增玩法解釋。
+
+核心 JSON 快照為 `{"storage_version":1,"words":[...]}`；只保存有序原始 words。缺值、null、未知或舊欄位、重複 key、非法版本、word／archive 越界與長度錯誤全部拒絕。必須透過 `itemstore.Decode` 明示容量、encoding與metadata，普通 JSON 解碼不能供應預設。此格式尚未接入正式遊戲 save，正式 schema0.19.0／content0.1.91 保持。後續整體遷移須在 characters JSON 明示每格初始 word，並涵蓋主角、同伴、名冊、臨時單人隊伍與創始人；不得維持第二份可寫 bag／equipment。原始 decoder 與正常 218／230 包驗收保留。
+
 ## 正常指令窗（schema0.19.0／content0.1.91）
 
 `interface.field_command_menu`為必填唯讀物件。原始視窗、IDA9.4 consumer、正常dosgolem來源與有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。共用引擎保留語意指令，pack提供原版順序與版面。原始callback只供證據與parity核對，不執行原版位址或任意JSON程式碼。
