@@ -35,9 +35,10 @@ func TestRecruitmentEmptyLeaveYesDosgolemNormalInputComparison(t *testing.T) {
 
 func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, sourceHash, prefix string, packets, openPacket, againPacket int, yesLoop ...bool) {
 	t.Helper()
-	envAction := map[string]string{"view": "VIEW", "join": "JOIN", "leave": "LEAVE"}[action]
+	cancelMenu := action == "menu-cancel"
+	envAction := map[string]string{"view": "VIEW", "join": "JOIN", "leave": "LEAVE", "menu-cancel": "MENU_CANCEL"}[action]
 	continuing := len(yesLoop) > 0 && yesLoop[0]
-	if continuing {
+	if continuing && !cancelMenu {
 		envAction += "_YES"
 	}
 	dir := os.Getenv("DQ3_RECRUIT_EMPTY_" + envAction + "_ORACLE_DIR")
@@ -100,6 +101,8 @@ func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, 
 		if scan == 0x1c {
 			in.Enter = true
 			in.Confirm = true
+		} else if scan == 0x01 {
+			in.Cancel = true
 		} else {
 			d, ok := map[int64]int{0x50: 0, 0x48: 1, 0x4b: 2, 0x4d: 3}[scan]
 			if !ok {
@@ -132,7 +135,26 @@ func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, 
 			}
 		}
 		n := i + 1
-		if continuing && n >= againPacket {
+		if cancelMenu && n >= againPacket {
+			switch n {
+			case againPacket:
+				if !g.recruit.active || g.recruit.stage != rcAgain || g.recruit.cursor != 0 {
+					t.Fatal("first empty action must ask continue")
+				}
+			case againPacket + 1:
+				if !g.recruit.active || g.recruit.stage != rcMenu || g.recruit.cursor != 0 {
+					t.Fatal("Yes must stop at parent menu")
+				}
+			case againPacket + 2:
+				if !g.recruit.active || g.recruit.stage != rcFinalWait {
+					t.Fatal("normal menu Esc must show farewell and wait for another key")
+				}
+			case againPacket + 3:
+				if g.recruit.active {
+					t.Fatal("farewell confirmation must return to field")
+				}
+			}
+		} else if continuing && n >= againPacket {
 			switch {
 			case n == againPacket || n == againPacket+3 || n == againPacket+4:
 				cursor := 0
@@ -581,6 +603,37 @@ func TestRecruitmentEmptyContinueYesRetainsTextAndState(t *testing.T) {
 			g.recruitInput(InputState{DirEdge: -1, Enter: true})
 			if rc.active || len(g.roster) != 0 || len(g.companions) != 0 || g.prng != rng || !reflect.DeepEqual(g.heroName, []int{0, 1}) {
 				t.Fatal("empty Yes loop changed persistent state")
+			}
+		})
+	}
+}
+
+func TestRecruitmentMenuCancelDosgolemNormalInputComparison(t *testing.T) {
+	runRecruitmentEmptyNormalInputComparison(t, "menu-cancel", "issue4-recruit-menu-esc-normal-r1-source-r1-receipt.json", "137411c711e81684943b4cc8aac2d952b8c47c8981f70a79f0d308e369204c4c", "issue4-recruit-menu-esc-normal-r1", 193, 189, 190, true)
+}
+
+func TestRecruitmentMenuCancelFarewellRetainsState(t *testing.T) {
+	for _, cursor := range []int{0, 1, 2} {
+		t.Run(strconv.Itoa(cursor), func(t *testing.T) {
+			g := &Game{roster: []*Member{newMember([]int{0}, 1, 0, 0)}}
+			configureRecruitmentEntryFixture(t, &g.recruit)
+			rc := &g.recruit
+			rc.active, rc.stage, rc.cursor = true, rcMenu, cursor
+			roster, rng := append([]*Member(nil), g.roster...), g.prng
+			g.recruitInput(InputState{DirEdge: -1, DirHeld: -1, Cancel: true, AnyKeyEdge: true})
+			if !rc.active || rc.stage != rcText || rc.afterText != rcFinalWait {
+				t.Fatal("menu Esc must append typed farewell before closing")
+			}
+			drainRecruitmentSelectionText(t, rc)
+			for i := 0; i < 20; i++ {
+				g.recruitInput(InputState{DirEdge: -1, DirHeld: 0})
+			}
+			if !rc.active || rc.stage != rcFinalWait {
+				t.Fatal("held key must not dismiss separate farewell wait")
+			}
+			g.recruitInput(InputState{DirEdge: -1, AnyKeyEdge: true})
+			if rc.active || !reflect.DeepEqual(g.roster, roster) || len(g.companions) != 0 || g.prng != rng {
+				t.Fatal("menu cancel changed members or RNG")
 			}
 		})
 	}

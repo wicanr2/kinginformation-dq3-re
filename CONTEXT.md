@@ -1,5 +1,12 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-04 招募主選單Esc已修正：正常193包／462 IRQ1來源137411c7證實先顯示541告別、獨立等待，再以新按鍵返回。修正前192包RED，有限READY後正式InputState、snapshot／RNG、同版本存讀檔及下一步通過。
+本輪41招募頂層／28子PASS、零SKIP，正常新遊戲至THE END95.45秒與desktop PASS；42個不同頂層含主線。789張既有PNG逐byte保持，新Esc44張；187..192全RGB各295，193返回零差異，完整V3仍RED。
+主線舊測試將主選單Esc視為立即關閉，已補上正常告別文字及獨立確認輸入；保留首輪失敗，正式產品只修改rcMenu Cancel。九份JSON保持，schema0.17.0／content0.1.89、canonical4b235d63。最近完整game466與11個internal仍為c572ab3，未冒稱本輪全套重跑。
+唯一現況表在CONTEXT，來源、READY／CONFORMED與公開工具在docs/188，Issue #4進行中。下一步原版正常F5／F6存讀檔：先建立明確可寫overlay，不改原始素材，再驗證存檔、移動、讀檔及恢復。非空分離、入隊播放後返回、音畫與完整原版campaign仍未知；driver／ISR停止線維持。沒有新發行包。
+
+以下保存前一checkpoint，現況以上方與CONTEXT的唯一狀態表為準。
+
 2026-10-04 空名冊加入與單人分離選Yes後的重選流程已由原版接受。兩路各196包／468 IRQ1，正常父問題重播、游標重設、重選、No告別與行走，snapshot／RNG、同版本存讀檔及下一步通過。
 本輪34受影響頂層／25子PASS、零SKIP，十一條重生舊路695張PNG保持，新Yes兩路各47張；兩路187..195全RGB各295，196返回Join411、Leave0，完整V3仍RED。
 正式程式與九份JSON和c572ab3逐byte相同，schema0.17.0／content0.1.89、canonical4b235d63保持。最近完整game466、11個internal、正常THE END253.74秒及desktop為c572ab3，未將本輪有限回歸冒稱全套重跑。
@@ -178,15 +185,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-04） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；正式Go及九份JSON與c572ab3逐byte相同。schema0.17.0／content0.1.89；canonical `sha256:4b235d635e29011f232b212b533e5de32c29c32a8d094c236eeba68198b9b988`；沒有新發行包 |
-| 最新remake已完成 | 空Join／單人Leave選Yes的既有狀態機已核對正常196包；重播528父問題、游標歸首、重選同動作、No→541獨立等待→行走。snapshot／RNG、同版本存讀檔與下一步通過 |
-| 最新原版oracle | Join來源f56419c0、Leave來源d8c6c47d，各196包／468 IRQ1；前190包、456 IRQ1及PNG/bin等於各自No來源。191原生103C0→10378→10384，兩輪名冊只hero、隊伍數1與指標、角色、金錢及旗標保持，無狀態注入 |
-| 最新畫面已驗 | 十一條重生舊路695 PNG逐byte保持，新Yes兩路各47張，150..190等於各自No。187..195全RGB各295，196 Join411／Leave0；無遮罩、重擲或相位指定 |
+| 現行程式 | `dq3_remake_ebitan/`；rcMenu Cancel改為typed告別與獨立等待，九份JSON保持。schema0.17.0／content0.1.89；canonical `sha256:4b235d635e29011f232b212b533e5de32c29c32a8d094c236eeba68198b9b988`；沒有新發行包 |
+| 最新remake已完成 | 正常主選單Esc193包、541獨立等待與返回已修正；snapshot／RNG、同版本存讀檔及下一步通過。主線寄放後另行確認告別，正常新遊戲至THE END95.45秒 |
+| 最新原版oracle | 主選單Esc來源137411c7，193包／462 IRQ1；前191包、458 IRQ1及PNG/bin等於已接受Join Yes。192原生0726取消flag=1→103C2選541、21133等待，193到field2,18；角色、名冊、指標、金錢及旗標保持 |
+| 最新畫面已驗 | 十三條重生舊路789 PNG逐byte保持，新Esc44張，150..191等於Join Yes。187..192全RGB各295，193返回0；新告別295個差異位置及兩側RGB等於父選單191，文字區相同；無遮罩、重擲或相位指定 |
 | 最新畫面未通過 | 完整V3仍RED；人物動畫與其他能力數值差異保留。不同返回時刻的零差異不能外推其他來源；相同seed不能證明全域骰序對齊 |
-| 下一production切片 | 招募主選單Esc正常取消來源；原始10387取消flag分支到103C2告別，remake目前直接關閉，動態閉合待驗。非空分離、滿隊、其他裝備及多角色K仍待來源；driver／ISR停止線維持 |
-| 本輪有限READY | 空Join／單人Leave的Yes→重選→No已CONFORMED；狀態E2／流程E3、畫面V2。既有production吻合，未新增規則、資料欄位或存檔遷移；不外推Esc或其他隊伍 |
-| 原版oracle仍未知 | 招募主選單Esc、多角色改名、其他裝備詳細頁、其他角色與多列咒文動態、入隊完整後續、非空分離、其他職業／性別、滿額替換、完整名冊、可比亂數能力、健康色／status、NPC動畫、原版Save／Load、音訊及完整campaign |
-| 現行remake回歸 | 本輪34頂層／25子PASS、零SKIP；改名三路分程序與A鍵補來源設定後同一binary PASS，重跑oom_kill0。最近完整game466覆蓋、419頂層／109子PASS、47選用SKIP及11個internal、正常THE END253.74秒與desktop為c572ab3 |
+| 下一production切片 | 原版正常F5／F6存讀檔。先驗可寫資料overlay，原始檔唯讀；正常存檔→移動→讀檔，對拍UI及持久狀態，READY前不改格式。入隊播放後返回與非空分離仍待原版來源，driver／ISR停止線維持 |
+| 本輪有限READY | 主選單Esc→541獨立等待→場景已CONFORMED，狀態E2／流程E3、畫面V2。既有typed引用無新欄位，不外推所有取消情境、非空分離、原版存讀檔或完整V3 |
+| 原版oracle仍未知 | 原版F5／F6 Save／Load、其他取消情境、多角色改名、其他裝備詳細頁、其他角色與多列咒文、入隊完整後續、非空分離、其他職業／性別、滿額替換、完整名冊、可比亂數能力、健康色／status、NPC動畫、音訊及完整campaign |
+| 現行remake回歸 | 41招募頂層／28子及正常主線PASS，共42不同頂層、零SKIP；正常THE END95.45秒、desktop PASS，oom_kill0。首輪主線測試舊立即關閉假設保留，補正常確認後重跑。最近完整game466及11個internal為c572ab3 |
 | 額外驗證限制 | 有效Load清UI及拒絕Load保持為engine驗證；原版Save／Load未知。舊schema或hash不符存檔拒絕，不自動遷移。來源稽核與有限綠色回歸不升格完整原版parity |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

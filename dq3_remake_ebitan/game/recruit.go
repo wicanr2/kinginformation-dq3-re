@@ -112,7 +112,9 @@ func (g *Game) recruitInput(in InputState) {
 		}
 		switch {
 		case in.Cancel:
-			rc.active = false
+			if rc.selection != nil {
+				rc.startSelectionText(rc.selection.FarewellTextID, rcFinalWait)
+			}
 		case confirm:
 			if rc.contract == nil || rc.cursor < 0 || rc.cursor >= len(rc.contract.OptionActions) {
 				return

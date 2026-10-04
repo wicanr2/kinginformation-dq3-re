@@ -3504,7 +3504,15 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 	press(InputState{Confirm: true}) // 由正式清單寄放第一名未持珠同伴
 	press(InputState{Cancel: true})  // 清單→主選單
-	press(InputState{Cancel: true})  // 關閉酒場
+	press(InputState{Cancel: true})  // 主選單→告別文字
+	traceRecruitmentText(t, g)
+	if !g.recruit.active || g.recruit.stage != rcFinalWait {
+		t.Fatal("寄放隊員後的主選單 Esc 應停在告別等待")
+	}
+	press(InputState{Confirm: true}) // 新輸入確認告別，返回場景
+	if g.recruit.active {
+		t.Fatal("告別確認後酒場仍未關閉")
+	}
 	if len(g.companions) != 2 || len(g.roster) != 1 {
 		t.Fatalf("正式寄放隊員後清單錯：companions=%d roster=%d",
 			len(g.companions), len(g.roster))

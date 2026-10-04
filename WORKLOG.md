@@ -1529,3 +1529,14 @@ Docker檢查需主機權限，依既有隔離規則續做；一次性容器已�
 - 環境失敗：觀察尚空日誌誤取末行引發IndexError，後加空值guard；程式搜尋遇名稱以.go結尾的目錄，已有輸出的直接函式足以定位真因。改名三條同程序累積記憶體OOM1，改既有分程序方式，同一binary全PASS；A鍵漏設共用來源環境變數SKIP，補齊後實際PASS，重跑oom_kill0。沒有重新啟動活躍來源或調正式參數。
 - 本輪按比例只重跑受影響招募驗證，最近完整game466、全部11個internal、正常THE END253.74秒與desktop為c572ab3，不冒稱本輪全套重跑。唯一現況表、docs/74、PROJECT_MEMORY及WORKLIST更新；新producer／checker在docs/188索引。
 - 下一個具體玩家路徑為招募主選單Esc，原始取消flag分支與告別已定位但正常動態仍待驗；其他原版流程、音畫與完整V3未知，driver／ISR停止線維持。使用者13項資料、原版素材與私有work保留；提交、推送及Docker清理以收尾收據和Issue最終留言為準。
+
+## 2026-10-04 招募主選單Esc告別等待
+
+2026-10-04 招募主選單Esc已修正：正常193包／462 IRQ1來源137411c7證實先顯示541告別、獨立等待，再以新按鍵返回。修正前192包RED，有限READY後正式InputState、snapshot／RNG、同版本存讀檔及下一步通過。
+本輪41招募頂層／28子PASS、零SKIP，正常新遊戲至THE END95.45秒與desktop PASS；42個不同頂層含主線。789張既有PNG逐byte保持，新Esc44張；187..192全RGB各295，193返回零差異，完整V3仍RED。
+主線舊測試將主選單Esc視為立即關閉，已補上正常告別文字及獨立確認輸入；保留首輪失敗，正式產品只修改rcMenu Cancel。九份JSON保持，schema0.17.0／content0.1.89、canonical4b235d63。最近完整game466與11個internal仍為c572ab3，未冒稱本輪全套重跑。
+唯一現況表在CONTEXT，來源、READY／CONFORMED與公開工具在docs/188，Issue #4進行中。下一步原版正常F5／F6存讀檔：先建立明確可寫overlay，不改原始素材，再驗證存檔、移動、讀檔及恢復。非空分離、入隊播放後返回、音畫與完整原版campaign仍未知；driver／ISR停止線維持。沒有新發行包。
+
+- 原版正常來源137411c7、193包／462 IRQ1，192 Esc後541獨立等待、193確認返回。修正前正常192與三個游標元件RED；先寫READY，正式Go只改rcMenu Cancel引用既有typed告別。新公開producer／checker由docs/188索引，原版收據與PNG留本機。
+- 41招募／28子PASS、零SKIP；主線舊導航假設失敗保留，補正式告別確認後THE END95.45秒、desktop通過。八種壞來源拒絕，789張舊PNG與九份JSON保持。31筆IDA分級、478條目原始bytes／MZ relocation核對。完整hash及環境失敗分類見docs/188，不把有限綠色測試升格原版全流程完成。
+- 使用者13項資料保留；容器均已清除，無新映像或發行包。提交、推送與擁有權核對以本輪收尾收據及Issue最終留言為準。下一步正常F5／F6原版存讀檔，維持音訊硬體停止線。

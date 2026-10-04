@@ -1,5 +1,12 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-10-04 招募主選單Esc已修正：正常193包／462 IRQ1來源137411c7證實先顯示541告別、獨立等待，再以新按鍵返回。修正前192包RED，有限READY後正式InputState、snapshot／RNG、同版本存讀檔及下一步通過。
+> 本輪41招募頂層／28子PASS、零SKIP，正常新遊戲至THE END95.45秒與desktop PASS；42個不同頂層含主線。789張既有PNG逐byte保持，新Esc44張；187..192全RGB各295，193返回零差異，完整V3仍RED。
+> 主線舊測試將主選單Esc視為立即關閉，已補上正常告別文字及獨立確認輸入；保留首輪失敗，正式產品只修改rcMenu Cancel。九份JSON保持，schema0.17.0／content0.1.89、canonical4b235d63。最近完整game466與11個internal仍為c572ab3，未冒稱本輪全套重跑。
+> 唯一現況表在CONTEXT，來源、READY／CONFORMED與公開工具在docs/188，Issue #4進行中。下一步原版正常F5／F6存讀檔：先建立明確可寫overlay，不改原始素材，再驗證存檔、移動、讀檔及恢復。非空分離、入隊播放後返回、音畫與完整原版campaign仍未知；driver／ISR停止線維持。沒有新發行包。
+
+以下保存前一checkpoint，現況以上方與CONTEXT的唯一狀態表為準。
+
 > 2026-10-04 空名冊加入與單人分離選Yes後的重選流程已由原版接受。兩路各196包／468 IRQ1，正常父問題重播、游標重設、重選、No告別與行走，snapshot／RNG、同版本存讀檔及下一步通過。
 > 本輪34受影響頂層／25子PASS、零SKIP，十一條重生舊路695張PNG保持，新Yes兩路各47張；兩路187..195全RGB各295，196返回Join411、Leave0，完整V3仍RED。
 > 正式程式與九份JSON和c572ab3逐byte相同，schema0.17.0／content0.1.89、canonical4b235d63保持。最近完整game466、11個internal、正常THE END253.74秒及desktop為c572ab3，未將本輪有限回歸冒稱全套重跑。

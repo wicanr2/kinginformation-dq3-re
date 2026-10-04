@@ -321,6 +321,62 @@
       "consumer": "兩路191 DGROUP0722非2→103C0→10378 record528→10384選單；再選同動作→No→196field，角色與名冊保持",
       "review_reference": "docs/188：2026-10-04 空清單Yes有限READY；不外推滿隊、非空分離、音訊或完整V3",
       "dynamic_evidence": "work/dosgolem-opening/issue4-empty-join-yes-normal-r1-source-r1-receipt.json SHA256 f56419c0113c6f895b71f9e287550c1c7d9e477e76172ddabc48038f3d3c3777；Leave d8c6c47d82a6adb67a08dd236f9b175c4f217521938f41838c78b619d23274ef；196正常包／468IRQ1；IDA298條目a4deee0a"
+    },
+    {
+      "ida_linear": "0x10387",
+      "file_offset": "0x16f7",
+      "bytes": "803e260701",
+      "semantic": "主選單Esc讀取消byte0726",
+      "inference_level": "confirmed",
+      "consumer": "192讀1；189讀0",
+      "review_reference": "docs/188：2026-10-04 招募主選單Esc有限READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-menu-esc-normal-r1-source-r1-receipt.json SHA256 137411c711e81684943b4cc8aac2d952b8c47c8981f70a79f0d308e369204c4c；正常192／193",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x1038c",
+      "file_offset": "0x16fc",
+      "bytes": "7434",
+      "semantic": "主選單Esc至541告別等待",
+      "inference_level": "confirmed",
+      "consumer": "192到103C2／21414／21133；193返回",
+      "review_reference": "docs/188：2026-10-04 招募主選單Esc有限READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-menu-esc-normal-r1-source-r1-receipt.json SHA256 137411c711e81684943b4cc8aac2d952b8c47c8981f70a79f0d308e369204c4c；正常192／193",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x1f8e1",
+      "file_offset": "0x10c51",
+      "bytes": "c606260700",
+      "semantic": "原始選單非取消寫DS:726h零",
+      "inference_level": "strong",
+      "consumer": "1F779選單consumer；DS靜態未知，caller動態15ed",
+      "review_reference": "docs/188：2026-10-04 招募主選單Esc有限READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-menu-esc-normal-r1-source-r1-receipt.json SHA256 137411c711e81684943b4cc8aac2d952b8c47c8981f70a79f0d308e369204c4c；正常192／193",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x1f8f6",
+      "file_offset": "0x10c66",
+      "bytes": "c606260701",
+      "semantic": "原始選單取消寫DS:726h一",
+      "inference_level": "strong",
+      "consumer": "1F779選單consumer；writer PC未動態觀測，正常192的10387讀1",
+      "review_reference": "docs/188：2026-10-04 招募主選單Esc有限READY",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-menu-esc-normal-r1-source-r1-receipt.json SHA256 137411c711e81684943b4cc8aac2d952b8c47c8981f70a79f0d308e369204c4c；正常192／193",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
     }
   ]
 }

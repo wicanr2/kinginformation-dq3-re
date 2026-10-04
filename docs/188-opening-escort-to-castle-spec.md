@@ -4012,3 +4012,55 @@ IDA Pro9.4窄查298條目，輸入assets_raw/DQ3.EXE115282bytes／SHA-256 `5178f
 驗證環境訂正：改名三條路線在同一程序累積記憶體，3GiB容器記錄oom_kill1、exit−9；按既有已驗證方式分成run2／4／5三個程序，以同一binary全部PASS。一般關頁鍵漏設共用角色咒文來源環境變數而SKIP，補齊後實際PASS；重跑容器oom_kill0。保留首輪log與收據，不把環境或測試判準錯誤當產品缺陷。
 
 下一步正常招募主選單Esc：既有IDA10387比較DGROUP0726取消flag，1038C跳103C2告別與獨立讀鍵；目前remake直接關閉。這仍為待正常來源的強推論，不先改production。原版Save／Load、非空分離、滿隊、其他裝備、多角色改名、音畫及完整原版campaign仍未知；Goal與Issue保持進行中。
+
+# 2026-10-04 招募主選單 Esc：DRAFT
+
+依 Issue #4 從 67f6ff8 續行。正常新遊戲、姓名取消、下樓、空 Join 後選 Yes，再在三項主選單按 Esc。前 191 包沿已接受空 Join Yes 來源；seed1357 在冷啟動前固定一次，不注入名冊、角色或時鐘。
+
+公開來源入口 [dosgolem_recruitment_menu_cancel_probe.py](../tools/dosgolem_recruitment_menu_cancel_probe.py)，沿本文件既有 Docker 與 dosgolem2f44a68 唯讀掛載，以 `--prefix issue4-recruit-menu-esc-normal-r1` 在全新可寫來源輸出執行。只增加可見 Esc 與唯讀取消 flag 觀察，保留既有 producer／checker。
+
+既有 IDA9.4 匯出 `work/issue4-empty-yes-r1-ida.json` SHA-256 `7c2a987cc2a9e957dcd5cf1858cb25bcf886123fccc37abb34bac5f69712ea08` 的 298 條目、bytes 與 MZ relocation 已核對。輸入 assets_raw/DQ3.EXE115282bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。linear 位址，file=linear−EC90，DGROUP 基底 linear24DD0。10387(file16F7,803E260701) 讀取消 byte0726；1038C(file16FC,7434) 指向103C2、541及獨立讀鍵。這是待本輪正常來源的 strong，不能只憑靜態分支升為 confirmed。
+
+現行 rcMenu Cancel 直接 active=false。來源接受、正常紅測試與 READY 審查前不改正式程式。可能沿既有 FarewellTextID／rcFinalWait，不先猜補資料欄位。範圍僅上述正常空名冊返回；非空分離、滿隊、原版 Save／Load、音樂與完整 campaign 不外推。
+
+## 招募主選單 Esc：證據審查與有限 READY
+
+正常原版193包／462 IRQ1來源已接受，`work/dosgolem-opening/issue4-recruit-menu-esc-normal-r1-source-r1-receipt.json` SHA-256 `137411c711e81684943b4cc8aac2d952b8c47c8981f70a79f0d308e369204c4c`。前191包、458 IRQ1及完整PNG／bin與空Join Yes父來源逐項相同，174份母親父來源保持。實際公開producer、完整Go、binary及runtime身份固定；沒有狀態注入或重擲。來源核對入口 [verify_dosgolem_recruitment_menu_cancel.py](../tools/verify_dosgolem_recruitment_menu_cancel.py)，依序傳原版產物目錄、實際producer與全新receipt。
+
+- confirmed：191選Yes回528主選單，192按Esc。10387／1038C讀取消byte0726為1，經103C2選541、原生文字bank2826、停21133獨立讀鍵。193新確認後103D6返回field1997C、座標2,18。之前189選Join時同欄為0；名冊、四個隊伍指標、主角128bytes、金錢及旗標保持。
+- IDA9.4有界匯出478條目，原始bytes／MZ relocation核對，`work/issue4-recruit-menu-esc-r3-ida.json` SHA-256 `4d8f65947c016edc53cb21156ee3bf8a43cc621c20295010f4831cd1cd300ff6`。1F779..1F908是原始選單讀鍵consumer；1F8E1(file10C51,C606260700)與1F8F6(file10C66,C606260701)分別寫DS:726h零與一。IDA該段DS未知，直接xref不能列到DGROUP；以實際caller的DS15ed和上述動態值閉合，不因xref缺項稱沒有writer。writer的精確PC尚未動態觀測，該項仍strong。
+- 修正前正常InputState的第一個新blocker在192，明確缺告別等待；元件三個游標均RED。保留 `work/issue4-recruit-menu-esc-red-r1/`。沒有產品assertion以外的失敗，oom_kill0。
+- READY：rcMenu Cancel在typed selection存在時，追加其既有FarewellTextID，再以rcFinalWait獨立等待；本次Esc只啟動告別，不能同包關閉。下一個新按鍵才還原caller返回場景，held key不消費。無名冊交易、RNG呼叫、新文字、幾何或schema欄位。缺selection契約保持原狀，不猜fallback。
+- 垂直鏈：原始541→現行pack文字引用／validator→共用文字consumer→正式InputState／完整RGB→snapshot／同版本Save／Load及下一步。原版Save／Load、非空分離、滿隊、音畫與全campaign保持未知；有限狀態與全RGB分開驗收。
+
+## 招募主選單 Esc：有限 CONFORMED
+
+- 正式主選單Cancel追加既有FarewellTextID，以rcFinalWait保留告別，不在本次Esc關閉。正常193包、逐包snapshot／RNG、同版本Save／Load與下一步通過，三個游標元件及held key邊界通過。有限E2／E3、畫面V2；原版完整流程未CONFORMED。
+- 41個不同招募頂層、28子PASS，零SKIP；正常新遊戲至THE END95.45秒，合計42不同頂層，desktop Linux x86_64通過。最近完整game466及11個internal保持c572ab3，本輪按比例不重跑無關套件。
+- 十三條既有路線789 PNG逐byte保持，新44 PNG留本機，150..191等於已接受Join Yes。187..192完整RGB各295，193返回0；目視192告別文字及底圖相同，295個差異位置與兩側RGB逐項等於父選單191的已知人物差異。沒有裁切、遮罩或指定人物相位；完整V3仍RED。
+- 八種壞來源均拒絕，正對照前後相同，oom_kill0。保留27筆原始定位，新增10387／1038C的有限confirmed與1F8E1／1F8F6的strong。IDA9.4自動合併31筆，478條目原始bytes／MZ relocation核對；writer精確PC未知的警示保留。
+- 九份JSON與67f6ff8逐byte相同，schema0.17.0／content0.1.89、canonical `sha256:4b235d635e29011f232b212b533e5de32c29c32a8d094c236eeba68198b9b988`保持。沒有新資料契約、存檔遷移或發行包。原版素材、PNG、EXE、database與私有work不加入Git。
+
+主線驗證訂正：首輪全部41招募測試已綠，主線在正式寄放隊員後仍按舊假設連按Esc、立即導航。修正後第二次Esc正確進告別，因此導航鍵被告別等待消費。只在opening_input_trace_test.go補正常文字完成與獨立Confirm並確認UI關閉，保留首輪log，以正式新遊戲乾淨重跑THE END通過；正式產品不再修改。這證明remake主線可玩，不驗收原版非空分離。
+
+工具環境紀錄：第一次READY命令有多餘加號，Python在寫入前拒絕；改為檔案化腳本完成。PNG稽核容器無Pillow，改用既有Go標準PNG解碼；首輪缺Go平行度限制造成fork失敗，補GOMAXPROCS2與-p2後乾淨重跑，原版／產品及圖片不變。沒有用環境假失敗調正式參數。
+
+完整本機收據：
+
+- 修正前RED：`work/issue4-recruit-menu-esc-red-r1/receipt.json`，SHA-256 `f4963c33cab6687995d6d563b949b35d034824f62d06860ea6f0198772ed8776`。
+
+- 正常remake：`work/issue4-recruit-menu-esc-validation-r1/empty-menu-cancel/receipt.json`，SHA-256 `2622635de582e2035bd717b1a2086c02ff694c37b40cbdab0ead9fbec3b36e32`。
+
+- 招募與主線：`work/issue4-recruit-menu-esc-retry-r1/game-receipt.json`，SHA-256 `2b9a97e767fbf0cd530b539d15ce447d65de5bd52aaadf39eb3b6119b767bb23`。
+
+- desktop：`work/issue4-recruit-menu-esc-retry-r1/desktop-receipt.json`，SHA-256 `4a8baacc2f529c9c7fa064d2ea8fce02fd7afb5b50a7160dfd04ea5d5ab99411`。
+
+- 來源負例：`work/issue4-recruit-menu-esc-audit-r1.json`，SHA-256 `638d6f7de1cf4539c7a20dcda7821a726794ec275ab4152d7aa4a48769232c39`。
+
+- 畫面保持：`work/issue4-recruit-menu-esc-images-r1.json`，SHA-256 `f182c0d289288c5e402214e9985462979cb3908708bc7c73611f49c7f7fc78ba`。
+
+- 全部RGB差異：`work/issue4-recruit-menu-esc-difference-r1.json`，SHA-256 `e6ea0ad6011540b3e89d4ba29d6e758e7520cc03d1e6babdc0f006ac3575859b`。
+
+- IDA31筆：`work/issue4-recruit-menu-esc-r4-ida.json`，SHA-256 `ff1fd4972b334667d0545c060c6a45d29cb1069915102ec252fc5553e0da7f32`。
+
+下一個正常玩家節點為原版F5／F6存讀檔；先驗可寫overlay及素材保護，再取得正常UI／恢復狀態來源。入隊播放後返回、非空分離、滿隊、音畫及完整原版campaign仍未知，硬體driver／ISR停止線維持。Goal與Issue保持進行中。
