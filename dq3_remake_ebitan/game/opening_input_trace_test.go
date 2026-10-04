@@ -793,6 +793,12 @@ func prototypeOriginalNewGameWindow(t *testing.T, g *Game, stage string) {
 // 路徑搜尋只負責選下一個方向鍵，不直接修改 Game 狀態；每一步仍經 Game.step、
 // 碰撞、NPC、轉場與 runner region。這是第一條真正的玩家可達 E3 開場 trace。
 func TestOpeningProductionInputTrace(t *testing.T) {
+	traceOpeningProductionInputRoute(t, nil)
+}
+
+// 狹窄驗證沿同一正式新遊戲前綴抵達羅馬利亞換裝後，再執行 callback。
+// nil 保留完整 THE END 路線；callback 不注入人物、座標或物品。
+func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*Game)) {
 	dir := spineAssetsDir(t)
 	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "opening-input-trace.json"))
 
@@ -1530,6 +1536,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	}
 	if g.equip[1] != tortoiseArmor {
 		t.Fatalf("勇者未經正式裝備面板換上龜殼甲胄：%#x", g.equip[1])
+	}
+	if afterRomalyEquipment != nil {
+		afterRomalyEquipment(g)
+		return
 	}
 	// 換裝會把舊甲胄退回個人物品欄；若全隊再次滿格，正式丟掉一株
 	// 藥草，確保下一間店仍可購入北行所需的聖水。

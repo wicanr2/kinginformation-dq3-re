@@ -84,12 +84,25 @@ func TestShopSellRejectsZeroPriceAndKeepsItem(t *testing.T) {
 }
 
 func TestShopSellEquippedItemClearsSlotAndRecalculatesThroughNormalStats(t *testing.T) {
-	g := &Game{pack: loadTestPack(t), heroGold: 0, equip: [4]int{1, -1, -1, -1}}
-	g.shop.items = loadTestItems(t)
-	g.shop.kind = "weapon"
-	price, ok := g.shopSellPrice(1)
-	if !ok || !g.sellShopItem(0, 0) || g.equip[0] != -1 || g.heroGold != price {
-		t.Fatalf("裝備賣出交易錯誤: price=%d/%v equip=%v gold=%d", price, ok, g.equip, g.heroGold)
+	for _, test := range []struct {
+		name  string
+		actor int
+	}{{"hero", 0}, {"companion", 1}} {
+		t.Run(test.name, func(t *testing.T) {
+			member := newMember([]int{1}, 1, 0, 0)
+			member.Weapon = 1
+			g := &Game{pack: loadTestPack(t), equip: [4]int{1, -1, -1, -1}, companions: []*Member{member}}
+			g.shop.items = loadTestItems(t)
+			g.shop.kind = "weapon"
+			price, ok := g.shopSellPrice(1)
+			if !ok || !g.sellShopItem(test.actor, 0) || g.equipActorSlots(test.actor)[0] != -1 || g.heroGold != price {
+				t.Fatalf("裝備賣出交易錯誤: actor=%d price=%d/%v hero=%v companion=%d gold=%d",
+					test.actor, price, ok, g.equip, member.Weapon, g.heroGold)
+			}
+			if g.equipActorSlots(1 - test.actor)[0] != 1 {
+				t.Fatal("出售不可清除另一持有者的裝備")
+			}
+		})
 	}
 }
 

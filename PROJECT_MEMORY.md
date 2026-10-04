@@ -1,5 +1,11 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-05 同伴出售裝備清除副本的錯誤已修正。正常新遊戲、出售取消／確認、單次售款、防禦更新、存讀檔及下一步通過。schema0.19.0／content0.1.91與canonical66224bc0保持，沒有新包。
+> 完整game485頂層覆蓋、489次執行，434不同頂層／121子PASS、51選用SKIP；internal171頂層／375子、11套件PASS及4選用SKIP。正常THE END163.93秒、Linux desktop PASS；逐項重跑零OOM，1082張既有PNG及5張新出售PNG保持。
+> 使用者已選A單一有序物品格，不再等待架構選擇。完整word試作5項PASS，保留空格、穿戴／詛咒及未知高位元；尚未READY或接入production，存檔尚未升級。206..208畫面仍RED，商店確認／取消PNG空窗未驗。唯一現況表CONTEXT、出售docs/182、八格docs/188；Issue／Goal進行中。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 原版正常物品導覽218包來源28995c8d、同人給予230包來源aad971bb已獨立接受。原版穿戴布衣給自己後移至第八格，空格／穿戴word保留；498份產物與完整持久區核對，前218包及174母親產物保持，seed1357一次，沒有restore／注入。
 > 正式Go／pack保持e94a4c7、schema0.19.0／content0.1.91／canonical66224bc0。正常206清單差44816、207動作差45281、208取消差57417，RED診斷重現；兩張render試作RGB0尚未接入產品。資料方案待使用者選單一有序物品格或順序引用表，DRAFT未實作相依storage／save。唯一現況表CONTEXT、收據與工具docs/188；最近完整回歸仍為e94a4c7，正常指令窗十二張RGB0已完成。Issue／Goal進行中，沒有新包。
 

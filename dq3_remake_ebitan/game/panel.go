@@ -297,8 +297,7 @@ func (g *Game) sellShopItem(actor, index int) bool {
 		items := g.equipActorInventory(actor)
 		*items = append((*items)[:entry.inventoryIndex], (*items)[entry.inventoryIndex+1:]...)
 	} else {
-		equipment := g.equipActorSlots(actor)
-		(*equipment)[entry.equipmentSlot] = -1
+		g.setEquipActorSlot(actor, entry.equipmentSlot, -1)
 	}
 	g.heroGold += price
 	g.completeSpecialShopSale(entry.code)

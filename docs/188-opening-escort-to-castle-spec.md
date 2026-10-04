@@ -4580,3 +4580,37 @@ IDA9.4的r1因1372F沒有自動函式邊界而拒絕匯出，符合docs/158已�
 | 1885F在docs/78、docs/171及本檔舊改名段落 | 單人直接選owner1與既有靜態結論一致 | 咒文目標／取消、多人與改名流程不因本次給予來源而升級或重開 |
 
 [物品證據回填檢查器](../tools/verify_field_item_evidence_backlinks.py)以完整EXE hash、原始IDA定位及必需勘誤marker核對docs/188→docs/158，缺檔、缺位址、缺marker或缺來源hash立即失敗。容器內CLI為`python3 /repo/tools/verify_field_item_evidence_backlinks.py /repo`。它只檢查回填關係，不取代正常原版來源及production驗收。
+
+### 2026-10-05 物品寫入影響稽核 DRAFT
+
+資料方案尚未收到選擇，八格storage／save仍未實作。[物品儲存候選稽核器](../tools/audit_item_storage_writes.go)使用容器內Go標準庫語法樹，搜尋`game/`的普通非測試Go檔，保留直接賦值、可能別名、所有解參照賦值、建構／snapshot及裝備setter入口。CLI為`go run -p 2 /repo/tools/audit_item_storage_writes.go /repo <新收據>`；沿dq3-ebiten-test:20260822-r1、UID1000、network none及work可寫，輸出拒絕覆寫。
+
+首份`work/issue4-item-storage-ast-r1.json`記錄69份輸入hash與187筆語法候選。它不是完整型別或別名證明，複製值及唯讀入口也會入選；必須逐筆分類，不能拿候選數當已閉合寫入數。前一輪26筆直接賦值清單亦保留，不聲稱完整。
+
+r2補入戰鬥`.items`及工具hash，為69份輸入／208筆；出售setter修正後r3為69份／207筆，Go1.24.13，工具SHA-256 `aa24aa8029bfcadf124f75d5d1c6df026a3b74b30b8458e5d7e759849f36f50d`。r3收據為`work/issue4-item-storage-ast-r3.json`，每份來源各記hash；候選減少是清除副本改成setter，不是少了一條持有權交易。
+
+| 影響入口 | 語意審查／八格契約後續依賴 |
+| --- | --- |
+| `itemuse.go`、`panel.go` | 取得／購買、消耗、賣出、同人／跨人給予、丟棄、穿戴與退回舊裝；slice及指標別名不可漏掉 |
+| `fieldspell.go`、`reclass.go` | 解參照清裝備、移除道具及多重賦值；直接欄位搜尋不足 |
+| `battle.go` | `heroItems`、`actorItems`、同伴`.items`與戰後寫回；目前bag及穿戴物由不同集合重組，尚未保留物理空格順序 |
+| `newgame.go`、`recruit.go`、`save.go`及角色建構入口 | 主角、入隊／名冊、臨時單人隊伍與村莊創始人的保存／還原；新契約必須涵蓋這些持有者 |
+| 商店／酒館`.items` | 商品資料表引用，沒有持有權；不能把相同欄位名都當庫存寫入 |
+
+稽核另外找到已由既有原版契約支持的獨立缺陷：同伴裝備出售清掉的是`equipActorSlots`回傳的array副本。正常新遊戲至羅馬利亞的正式輸入重現售款增加而盾仍穿戴。有限修正與驗收集中在[商店出售規格](182-shop-sell-runtime-spec.md)，不藉此決定八格資料格式，也不升格物品206..208或商店原版動態V3。
+
+### 2026-10-05 使用者選定A，八格實作契約仍待READY審查
+
+使用者已明確選「單一有序物品格，背包與裝備由它產生」，排除另加順序引用表。存檔升級，舊格式明確拒絕且不自動遷移。選擇紀錄已登記[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5984959363)，這是既有待確認決策的答案，不需要再次請求相同授權。
+
+唯一可寫持有權集合為固定容量、有序的物理格；讀出的背包／裝備只是複本。空格保留，code0是合法物品；可見清單用非空格的物理位置，穿戴物仍在清單。取消不交易。自給先保留原始所選格，再將後續包括空格的全部物理格左移，所選格放到最後；依230包來源aad971bb。新增物品寫第一個空格，移除只清所選格，依docs/157的16856..16895與docs/158的writer，不做compact slice。
+
+私有可丟棄核心試作在`work/issue4-item-store-draft-r1/slots.go`及`slots_test.go`，用Go標準庫表示`code`／`equipped_as`，不含文字、座標、record或DQ3容量常數。試作驗證來源八格重排、第一空格、移除不壓縮、滿格不寫、複本不能修改持有者及嚴格欄位解碼；尚未接入production。裝備切換、跨人穿戴物、戰鬥slot映射與完整save adapter仍需各自證據審查，不能因核心測試綠而宣稱八格遷移完成。
+
+初始角色資料已有D3定位：`characters.json`新主角file1C2D..1C33將801E寫物理格0，登錄角色file1C94..1CC4先清八格00FF再寫801E至格0。新契約必須在JSON明示每個初始格，不從四件裝備順序推導；引擎沿ITEM metadata判讀類別，原始decoder保留作oracle。完整存檔需涵蓋主角、同伴、名冊、臨時單人隊伍及村莊創始人；snapshot／restore不能另保存可寫的bag或equipment真值。
+
+審查已找到試作的缺口：[docs/147](147-cursed-equipment-church-service-spec.md)以同一EXE及ITEM hash閉合IDA linear18098..180A9的8000穿戴／4000詛咒writer、17F22鎖定consumer及17254..17266移除所有命中word的教會交易。僅保存code／equipped_as不足以保留原始狀態bits；試作必須修訂為完整保留每格原始狀態，再由pack契約及ITEM類別形成裝備檢視，不能把未知high bits丟掉或依名字重建。現階段四個試作測試通過只證明已知八格操作，不證明canonical表示已READY。
+
+後續完整word試作在`work/issue4-item-store-draft-r2/words.go`及`words_test.go`，前版保留作已被取代的設計紀錄。新集合只保存有序`uint16`原始words，容量、空值、物品mask、穿戴mask及實際archive count必須明示傳入，不設引擎預設。背包／穿戴檢視只回傳複本與原始物理位置；裝備類別仍需由ITEM consumer導出。未知high bits保持原值，不由核心指定玩法語意。
+
+5項試作PASS：正常八格重排／round-trip、第一空格與滿格失敗、4000詛咒及未解釋高bits保持、檢視／載入複本不能寫持有者、缺codec／越界物品／壞序列化word／非法位置拒絕。私有收據`work/issue4-item-store-draft-r2/receipt.json`逐檔hash，words.go SHA-256 `cec017687c71816d5f1ec6357ec89fb14b71fb555d8af37061952c82ee759650`。仍未接入正式引擎；consumer、JSON欄位、save拒絕gate及正常物品UI須整體審READY，不能把這5項稱為production完成。
