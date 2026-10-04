@@ -63,9 +63,12 @@ func TestRecruitmentEntryLoadClearsTransientOnlyAfterValidation(t *testing.T) {
 }
 
 func traceRecruitmentGreeting(t *testing.T, g *Game) {
+	traceRecruitmentText(t, g)
+}
+func traceRecruitmentText(t *testing.T, g *Game) {
 	t.Helper()
 	for i := 0; i < 5000; i++ {
-		if !g.recruit.active || g.recruit.stage != rcGreeting {
+		if !g.recruit.active || (g.recruit.stage != rcGreeting && g.recruit.stage != rcText) {
 			return
 		}
 		in := InputState{DirHeld: -1, DirEdge: -1}
@@ -77,6 +80,34 @@ func traceRecruitmentGreeting(t *testing.T, g *Game) {
 		}
 	}
 	t.Fatal("normal recruitment greeting did not return")
+}
+
+func traceCloseRecruitmentSelection(t *testing.T, g *Game) {
+	t.Helper()
+	press := func(in InputState) {
+		t.Helper()
+		if e := g.step(in); e != nil {
+			t.Fatal(e)
+		}
+		if e := g.step(InputState{DirHeld: -1, DirEdge: -1}); e != nil {
+			t.Fatal(e)
+		}
+	}
+	press(InputState{DirHeld: -1, DirEdge: -1, Cancel: true})
+	traceRecruitmentText(t, g)
+	if g.recruit.stage != rcAgain || g.recruit.cursor != 0 {
+		t.Fatal("selection cancel must open native continue question")
+	}
+	press(InputState{DirHeld: 3, DirEdge: 3})
+	press(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
+	traceRecruitmentText(t, g)
+	if g.recruit.stage != rcFinalWait {
+		t.Fatal("No must wait after farewell")
+	}
+	press(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
+	if g.recruit.active {
+		t.Fatal("normal selection cancel did not close")
+	}
 }
 
 func TestRecruitmentEntryWaitAndMenuDoNotWriteRoster(t *testing.T) {
@@ -104,6 +135,7 @@ func TestRecruitmentEntryWaitAndMenuDoNotWriteRoster(t *testing.T) {
 		t.Fatal("menu right wrap")
 	}
 	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	drainRecruitmentSelectionText(t, &g.recruit)
 	if g.recruit.stage != rcJoin || len(g.roster) != 1 || len(g.companions) != 0 {
 		t.Fatal("enter selected menu must not move member")
 	}
@@ -126,5 +158,5 @@ func TestRecruitmentEntryDosgolemNormalInputComparison(t *testing.T) {
 	if out == "" {
 		t.Fatal("explicit receipt directory required")
 	}
-	runRegistrationNormalComparison(t, dir, out, true, true)
+	runRegistrationNormalComparison(t, dir, out, true, true, false)
 }

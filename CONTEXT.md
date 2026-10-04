@@ -1,24 +1,23 @@
 # CONTEXT — 術語表 + 知識庫索引
 
 2026-10-04目前現況：依[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，
-現行schema0.11.0／content0.1.83，canonical hash為`sha256:1e30085e7a81e37446f20699051048b5e254ec30978d124ae5a96921ac75dc10`。
-正常出生後下樓、問候527一次內嵌確認、問題528及原始三項招募選單已修正；binding、文字與幾何皆由pack提供。
-原版a85cad67有限來源為234次正常輸入／468IRQ1、196個packet、392份完整PNG／bin；174父產物及出生前172個packet逐byte保持。
-本次直接觀察的目的槽97bytes等於出生writer，首次選單前已登錄狀態1保持，僅限這名Warrior male。
-正常InputState逐包位置、場景、金錢、旗標及問候／選單狀態通過；Talk比原版多一次正式命令確認。
-同版本Load清除UI、壞Load保留問候與正常下一步通過，原版Load未知。schema更新沿既有策略拒絕舊存檔，不自動遷移。
-85張完整PNG保持：47張入口等於隔離試作，38張取消／出生等於先前正式輸出。首次問候及選單各差295個RGB像素，完整V3仍RED。
-完整game434頂層清單覆蓋，385頂層／86子PASS、49選用SKIP；internal155頂層／293子PASS、4選用SKIP及11套件。
-正常新遊戲至THE END66.12秒，只屬remake可玩回歸；無素材缺失SKIP。desktop main.go為Linux x86_64 ELF。
-原版取消、出生及首次招募另以獨立程序嚴格PASS；八種壞來源拒絕，五筆IDA9.4已分級旁註保持原始位址與bytes。
-入隊後續仍DRAFT：正常前198個packet與396份PNG／bin已審查，前196個保持；197選人及198文字完整RGB差51535／56790。
-4000的本次writer已定位1FEFC，counter20000才寫；r5其後仍停208F3播放完成等待，完整入隊來源未接受。
-r6只讀正常重播確認BP20h進EBG consumer，等待時286D=1、2898=1、2871=0；22E10查詢共享byte5C02。
-r8／r9已核對狀態位址、播放AX0返回及1Ch入口；前198個packet與396份產物保持。r13長觀察仍無OPL寫入進度，音樂完成來源未知。
-PIC契約缺口已重現，有限副本三項測試通過，但r12長觀察仍未返回；此prototype不套入正式工具或remake。
-下一步閉合已觀察的record530選人窗口與正常取消，完成有限READY後修正畫面；完整入隊音樂仍DRAFT。不能清旗標、改clock或跳過等待。
-不重開登錄、首次選單或其他已閉合項目。有限狀態E2／E3、畫面V2；完整V3、其他職業、滿額、分離、查看、原版存檔及音訊仍待驗。
-唯一現況表與證據入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。沒有新發行包。
+現行schema0.12.0／content0.1.84，canonical hash為`sha256:0bdb4ebfa99c9f36fb5e7f8dd3f6d5f2e1dc3892900bdadc174cf6be34e47fcc`。
+正常選入隊會先追加530問題，清單使用原始DGROUP3E14窗口及姓名／等級／職業／性別資料。
+Esc取消接540繼續詢問；No接541告別等待，另一次確認返回場景。所有文字與幾何由pack提供。
+原版正常來源d59315c1核對201個packet、478IRQ1及402份完整PNG／bin，前196個保持，197等於既有入隊來源。
+正式InputState逐包位置、場景、金錢、旗標與選擇狀態通過；取消不搬移名冊、不改RNG。
+同版本存讀檔及正常下一步通過；壞Load保持選人UI，有效Load只清暫態。原版存讀檔仍未知。
+清單197完整RGB差由51535降為295，取消198／199及告別200各295；返回201零差異。
+52張最終PNG保持；四張差分位置及hash相同，完整V3仍RED，不能視為全流程原版parity。
+完整game439頂層清單覆蓋，389頂層／88子PASS、50選用SKIP；internal157頂層／307子PASS、4選用SKIP及11套件。
+回歸合併r2已完成的前17批與r4最後5批；兩者產品相同，只訂正新Load元件fixture。
+正常新遊戲至THE END66.58秒，只屬remake可玩回歸；沒有素材缺失SKIP。desktop為Linux x86_64 ELF。
+Yes重播528及540內Esc保留當前游標為strong靜態閉合，尚無原版動態抽測；不升格已證實。
+完整入隊仍DRAFT：536文字尚未接入；199後播放完成未知，不能清旗標、改clock或跳過等待。
+下一步追查共用295像素差異，再閉合536文字的有限規格；不重開已完成登錄與首次選單。
+有限狀態E2／E3、畫面V2；其他職業、空名冊、滿隊、分離／查看與音訊仍待驗。
+schema更新沿既有策略拒絕舊存檔，不自動遷移。沒有新發行包。
+唯一現況表見[CONTEXT](CONTEXT.md)，證據與重生入口見[docs/188](docs/188-opening-escort-to-castle-spec.md)。
 
 以下段落保存歷史檢查點；目前狀態以上述說明及下方表格為準。
 
@@ -100,15 +99,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-04） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；schema0.11.0／content0.1.83；canonical hash `sha256:1e30085e7a81e37446f20699051048b5e254ec30978d124ae5a96921ac75dc10`；沒有新發行包 |
-| 最新remake已完成 | 正式登錄及接受後名冊交易保持；正常下樓、問候527／528與首次原始三項選單；有效Load清UI、壞Load不改當前問候與正常下一步 |
-| 最新原版oracle | 首次招募a85cad67正式來源保持。r5有限DRAFT前198個packet及396份PNG／bin審查通過，前196個逐項保持；slot1狀態1→2及97bytes保持。packet199進537／538後未返回，完整入隊來源未接受 |
-| 最新畫面已驗 | 85張完整PNG保持：47張首次入口等於隔離試作，38張登錄等於前次正式輸出。全量RGB比較，沒有裁切、遮罩、固定人物或重擲；既有零差異範圍保持 |
-| 最新畫面未通過 | 入隊清單197差51535，文字198差56790；現行remake缺536文字並留在舊清單。首次入口各295及登錄296／608／263／677保持。能力HP原版11／remake13，長路線亂數條件未對齊；完整V3仍RED |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.12.0／content0.1.84；canonical hash `sha256:0bdb4ebfa99c9f36fb5e7f8dd3f6d5f2e1dc3892900bdadc174cf6be34e47fcc`；沒有新發行包 |
+| 最新remake已完成 | 登錄、首次招募入口保持；追加530問題、原始動態清單、Esc→540→No→541→獨立確認返回；壞Load保持UI、有效Load清暫態；正常存讀檔及下一步 |
+| 最新原版oracle | 正常取消d59315c1，201packet／478IRQ1／402PNG及bin；前196保持、197等於r5。名冊狀態1、slot1的97bytes、金錢與旗標保持；完整入隊來源仍未接受 |
+| 最新畫面已驗 | 最終52PNG等於r2；清單197由51535降295，取消198／199與告別200各295，返回201差0。完整640×350 RGB，不遮罩或挑選seed；既有零差異範圍保持 |
+| 最新畫面未通過 | 四張共用295像素差異，差分hash4261092c且bbox288,131..510,262；完整V3仍RED。入隊後536未接入，舊入隊路線198差56790不可混為新取消198；其他登錄及動畫限制保持 |
 | 下一production切片 | r6已確認EBG與22E10共享5C02查詢分支；核對FMDRV狀態位址介面及dosgolem支援，取得正常返回來源後才補入隊READY與正式修正。4000此次writer已定位1FEFC，counter20000才寫；不得清旗標、改clock、跳過等待或深入driver／ISR |
-| 本輪登錄所有限READY | 登錄有限READY保持；首次招募入口有限READY已實作並以正常InputState、Load及下一步驗證，有限狀態E2／E3、畫面V2。後段入隊、分離、查看及完整RGB未升格 |
+| 本輪登錄所有限READY | 選人及正常取消有限READY已實作，正式201包、存讀檔與下一步通過；E2／E3、V2。Yes與540內Esc為strong靜態分支；完整入隊、分離／查看與完整RGB未CONFORMED |
 | 原版oracle仍未知 | 入隊完整後續、播放未結束的根因及4000完整用途、分離、查看、其他登錄職業／性別、滿額替換、其他角色與完整名冊、可比亂數下的能力、健康色／status、鍵盤自動重複、圖層動畫、NPC遮蔽與相位、原版存讀檔、音訊及完整campaign |
-| 現行remake回歸 | 完整game434頂層清單，385頂層／86子PASS、49選用SKIP；internal155頂層／293子PASS、4選用SKIP、11套件；desktop main.go為Linux x86_64 ELF。正常THE END66.12秒，只屬remake回歸；無素材缺失SKIP。取消／出生／首次招募獨立程序嚴格PASS，85PNG保持 |
+| 現行remake回歸 | 完整439頂層清單：r2前17批及同產品r4後5批，389頂層／88子PASS、50選用SKIP；internal157頂層／307子PASS、4選用SKIP、11套件。desktop ELF64 x86_64；正常THE END66.58秒，只屬remake回歸；沒有素材缺失SKIP |
 | 額外驗證限制 | 候選角色與有效Load暫態屬engine D2；原版Save／Load未知。兩側seed固定一次但後段骰序未對齊，不重擲。完整RGB不因有限state PASS升格；滿額分支fail closed，不猜替換交易 |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

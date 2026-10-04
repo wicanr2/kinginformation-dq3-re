@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.11.0",
+  "schema_version": "0.12.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -2985,6 +2985,111 @@
       "consumer": "normal lower-floor greeting527/528 -> main menu529; first entry only",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "有限READY；原版r4首次招募來源a85cad67獨立接受。234正常輸入／468IRQ1。入隊之後、分離、查看、音訊及原版Load不在本切片。"
+    }
+  },
+  "recruitment_selection": {
+    "id": "dq3:recruitment_selection",
+    "entry_id": "dq3:recruitment_entry",
+    "raw_window": {
+      "id": "recruitment_selection",
+      "flags": 3,
+      "x": 15,
+      "y": 46,
+      "width": 44,
+      "height": 112,
+      "address": "linear:0x28be4"
+    },
+    "extra_rows": 3,
+    "prompt_text_id": "dq3:text.recruitment_selection.prompt",
+    "header_text_id": "dq3:text.recruitment_selection.header",
+    "row_text_id": "dq3:text.recruitment_selection.row",
+    "footer_text_id": "dq3:text.recruitment_selection.footer",
+    "again_text_id": "dq3:text.recruitment_selection.again",
+    "farewell_text_id": "dq3:text.recruitment_selection.farewell",
+    "continue_text_id": "dq3:text.recruitment_entry.question",
+    "name": {
+      "x": 168,
+      "y": 78,
+      "step_x": 16,
+      "step_y": 16
+    },
+    "name_capacity": 4,
+    "level": {
+      "x": 216,
+      "y": 78,
+      "digits": 5
+    },
+    "class": {
+      "x": 312,
+      "y": 78,
+      "step_x": 16,
+      "step_y": 16
+    },
+    "gender": {
+      "x": 408,
+      "y": 78,
+      "step_x": 16,
+      "step_y": 16
+    },
+    "cursor": {
+      "x": 136,
+      "y": 78,
+      "step_x": 0,
+      "step_y": 16
+    },
+    "hit_rect": {
+      "x": 136,
+      "y": 78,
+      "width": 320,
+      "height": 16
+    },
+    "class_options": [
+      {
+        "class_raw": 0,
+        "text_id": "dq3:text.recruitment_selection.class.0"
+      },
+      {
+        "class_raw": 1,
+        "text_id": "dq3:text.recruitment_selection.class.1"
+      },
+      {
+        "class_raw": 2,
+        "text_id": "dq3:text.recruitment_selection.class.2"
+      },
+      {
+        "class_raw": 3,
+        "text_id": "dq3:text.recruitment_selection.class.3"
+      },
+      {
+        "class_raw": 4,
+        "text_id": "dq3:text.recruitment_selection.class.4"
+      },
+      {
+        "class_raw": 5,
+        "text_id": "dq3:text.recruitment_selection.class.5"
+      },
+      {
+        "class_raw": 6,
+        "text_id": "dq3:text.recruitment_selection.class.6"
+      },
+      {
+        "class_raw": 7,
+        "text_id": "dq3:text.recruitment_selection.class.7"
+      }
+    ],
+    "gender_text_ids": [
+      "dq3:text.recruitment_selection.gender.0",
+      "dq3:text.recruitment_selection.gender.1"
+    ],
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+      "address_space": "linear",
+      "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+      "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
     }
   }
 }

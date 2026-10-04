@@ -86,6 +86,7 @@ func TestRecruitJoinMovesRosterMemberIntoParty(t *testing.T) {
 		g.recruitInput(in)
 	}
 	g.recruitInput(InputState{DirEdge: -1, Confirm: true}) // 主選單 cursor0「找同伴參加」→ rcJoin
+	drainRecruitmentSelectionText(t, &g.recruit)
 	if g.recruit.stage != rcJoin {
 		t.Fatalf("選主選單第 0 項應進 rcJoin,得 stage=%d", g.recruit.stage)
 	}

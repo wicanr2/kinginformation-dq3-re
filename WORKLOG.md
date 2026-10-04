@@ -1333,3 +1333,30 @@ r13回到未修改工具鏈，396份產物保持，十次觀察OPL寫入1235及�
 所有來源、腳本、私有SDK參考、收據與分級索引追加docs/188；工作登記Issue #4，進度5974169729、5974288002與5974433783。
 正式schema／content／hash及Go保持。下一批從原版record530選人窗口與正常取消閉合有限READY，音樂長等待保持DRAFT。
 本輪無production改動，不重跑相同完整Go回歸。提交、push、Issue核對與容器清理由r13收尾收據保存；沒有新發行包。
+
+## 2026-10-04 Issue #4 選人清單與正常取消修正
+
+接續9a13fb5，沿dosgolem正常冷路線在197選人之後改送Esc、Right選No、Enter及告別確認。
+原版201個packet／478IRQ1／402PNG及bin完整稽核，前196保持，197等於既有入隊來源。
+IDA9.4同image有限窗口與文字consumer匯出825筆指令，11筆分級旁註自動合併，原始名字及位址保留。
+有限READY後實作typed selection、追加530、原始動態清單、540繼續詢問、541告別及獨立確認回場。
+schema0.12.0／content0.1.84，canonical0bdb4ebf；所有資料與文字在pack，沒有新增Go DQ3 fallback。
+201個正式InputState、Save／Load與下一步通過；清單51535降295，取消與告別各295，返回0。
+52張runtime PNG保持，四張差分相同；完整V3仍RED，536後文字／音訊仍DRAFT。
+14種壞pack與七種損壞來源拒絕，825筆file／loaded bytes及原始定位核對。
+完整game以r2前17批及同產品r4後5批合併439頂層，389頂層／88子PASS、50選用SKIP。
+internal157頂層／307子PASS、4選用SKIP及11套件；desktop ELF64 x86_64。正常THE END66.58秒，只屬remake回歸。
+
+失敗形成史見docs/188最新驗收節，私有log保持。兩次出生回歸SIGKILL及20秒堆疊定位到測試誤等modal暫停的場景cooldown。
+修正測試等待條件，不改正式規則；最終正常舊路線以old-oracles-r3另跑。
+原版r1收據缺共用runtime身份，另存r2 d59315c1；r1保持ee4e519a。首份差分缺Pillow改用既有stdlib decoder。
+Load元件fixture標題未消費、全文snapshot正規化、IDA null函式假設及負例改錯紀錄均修正後重跑。
+正常輸入的來源與完整畫面未換seed或挑結果；硬體driver／ISR及完整音樂等待不在本批。
+CONTEXT唯一表、PROJECT_MEMORY、docs/74、docs/84、docs/188及README同步。Issue保持OPEN，Goal繼續，沒有新發行包。
+收尾檢查root-owned仍3213、無.md目錄，新增檔與文件UID1000；原版、PNG、database及使用者scratch不入Git。
+提交／推送、遠端Issue及最終Docker清理結果由本輪收尾收據另存。
+
+最終old-oracles-r3的四個獨立程序PASS，85張PNG等於前次正式入口版本。
+normal-run-r4以最終binary重播201包，52張PNG及收據逐byte等於r3；存讀檔／下一步通過。
+出生程序的兩次SIGKILL已由堆疊定位與等待條件修正收斂，沒有當成正式產品缺陷或刪除失敗輸出。
+收尾稽核首次把輸出指向唯讀repo掛載；所有檢查已通過但收據寫入拒絕，修正為可寫work後重跑。

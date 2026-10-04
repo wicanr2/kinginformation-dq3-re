@@ -1,6 +1,7 @@
 package game
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -123,11 +124,11 @@ func TestRegistrationDosgolemNormalInputComparison(t *testing.T) {
 		t.Fatal("explicit receipt output directory required")
 	}
 	for _, birth := range []bool{false, true} {
-		runRegistrationNormalComparison(t, dir, out, birth, false)
+		runRegistrationNormalComparison(t, dir, out, birth, false, false)
 	}
 }
 
-func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry bool) {
+func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry, selection bool) {
 	t.Run(fmt.Sprintf("birth=%v", birth), func(t *testing.T) {
 		family := "issue4-registry-quiescent-r2"
 		suffix := "-cancel-source-r1-receipt.json"
@@ -142,14 +143,23 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 			suffix = "-source-r2-receipt.json"
 			want = 196
 		}
+		if selection {
+			family, suffix, want = "issue4-recruit-selection-cancel-r1", "-source-r2-receipt.json", 201
+		}
 		stem := fmt.Sprintf("registration-birth-%v", birth)
 		if entry {
 			stem = "recruitment-entry"
+		}
+		if selection {
+			stem = "recruitment-selection"
 		}
 		path := filepath.Join(dir, family+suffix)
 		raw, e := os.ReadFile(path)
 		if e != nil {
 			t.Fatal(e)
+		}
+		if selection && fmt.Sprintf("%x", sha256.Sum256(raw)) != "d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682" {
+			t.Fatal("selection oracle receipt identity differs")
 		}
 		var src struct {
 			Queued []map[string]string `json:"queued"`
@@ -172,7 +182,7 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 		settle := func() {
 			t.Helper()
 			for i := 0; i < 5000; i++ {
-				if g.recruit.active && g.recruit.stage == rcGreeting && !g.recruit.dialogue.waitingForConfirm() || g.tavern.active && g.tavern.stage == tavText && !g.tavern.dialogue.waitingForConfirm() || g.regionDialogueReturn != nil || !g.dlg.open && !g.tavern.active && g.cd > 0 || g.dlg.open && !g.dlg.waitingForConfirm() {
+				if g.recruit.active && (g.recruit.stage == rcGreeting || g.recruit.stage == rcText) && !g.recruit.dialogue.waitingForConfirm() || g.tavern.active && g.tavern.stage == tavText && !g.tavern.dialogue.waitingForConfirm() || g.regionDialogueReturn != nil || !g.dlg.open && !g.tavern.active && !g.recruit.active && g.cd > 0 || g.dlg.open && !g.dlg.waitingForConfirm() {
 					step(idle)
 					continue
 				}
@@ -192,6 +202,8 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 			if scan == 0x1c {
 				in.Enter = true
 				in.Confirm = true
+			} else if scan == 0x01 {
+				in.Cancel = true
 			} else {
 				d, ok := map[int64]int{0x50: 0, 0x48: 1, 0x4b: 2, 0x4d: 3}[scan]
 				if !ok {
@@ -286,6 +298,18 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 						t.Fatal("first native recruitment menu differs")
 					}
 				}
+				if selection && i+1 >= 197 {
+					stages := map[int]int{197: rcJoin, 198: rcAgain, 199: rcAgain, 200: rcFinalWait}
+					if expected, ok := stages[i+1]; ok && (!g.recruit.active || g.recruit.stage != expected) {
+						t.Fatalf("packet%d recruitment stage%d want%d", i+1, g.recruit.stage, expected)
+					}
+					if i+1 == 201 && g.recruit.active {
+						t.Fatal("cancel did not return to field")
+					}
+					if i+1 == 197 && g.recruit.cursor != 0 || i+1 == 198 && g.recruit.cursor != 0 || i+1 == 199 && g.recruit.cursor != 1 {
+						t.Fatal("native selection cursor differs")
+					}
+				}
 				g.renderFrame()
 				f, e := os.Create(filepath.Join(out, fmt.Sprintf("%s-packet-%03d.png", stem, i+1)))
 				if e != nil {
@@ -335,6 +359,7 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 			}
 			step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
 			step(idle)
+			settle()
 			step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true})
 			step(idle)
 			if len(g.roster) != 0 || len(g.companions) != 1 || g.companions[0].Class != 1 {

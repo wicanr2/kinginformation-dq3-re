@@ -26,6 +26,7 @@ const (
 // 那樣做成不持有 *Game 的純 UI struct。
 type Recruit struct {
 	contract                   *gamepack.RecruitmentEntry
+	selection                  *gamepack.RecruitmentSelection
 	texts                      map[string][]uint16
 	dialogue                   Dialogue
 	greetingIndex, cursorGlyph int
@@ -33,6 +34,8 @@ type Recruit struct {
 	tx                         *dq3data.Text
 	active                     bool
 	stage                      int
+	afterText                  int
+	rosterCapacity             int
 	cursor                     int
 	menuHits                   hitList
 	listHits                   hitList
@@ -65,6 +68,10 @@ func (g *Game) recruitInput(in InputState) {
 		rc.greetingInput(in)
 		return
 	}
+	if rc.stage == rcText || rc.stage == rcAgain || rc.stage == rcFinalWait {
+		rc.selectionInput(in)
+		return
+	}
 	tapIdx := -1
 	if in.Tapped {
 		if rc.stage == rcMenu {
@@ -88,7 +95,10 @@ func (g *Game) recruitInput(in InputState) {
 			}
 			switch rc.contract.OptionActions[rc.cursor] {
 			case gamepack.RecruitJoin:
-				rc.stage, rc.cursor = rcJoin, 0
+				if rc.selection == nil {
+					return
+				}
+				rc.startSelectionText(rc.selection.PromptTextID, rcJoin)
 			case gamepack.RecruitLeave:
 				rc.stage, rc.cursor = rcLeave, 0
 			case gamepack.RecruitView:
@@ -105,6 +115,10 @@ func (g *Game) recruitInput(in InputState) {
 			}
 		}
 	case rcJoin:
+		if in.Cancel && rc.selection != nil {
+			rc.startSelectionText(rc.selection.AgainTextID, rcAgain)
+			return
+		}
 		g.recruitPick(in, tapIdx, len(g.roster), func(i int) {
 			if len(g.companions) >= rcPartyMax-1 { // 隊伍已滿(主角+3)→ 擋掉,不頂替、不丟隊友
 				return
@@ -160,8 +174,12 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 	if !rc.active {
 		return
 	}
-	if rc.stage == rcGreeting || rc.stage == rcMenu {
+	if rc.stage == rcGreeting || rc.stage == rcMenu || rc.stage == rcText || rc.stage == rcAgain || rc.stage == rcFinalWait {
 		rc.drawEntry(rgba, white)
+		return
+	}
+	if rc.stage == rcJoin {
+		g.drawRecruitSelection(rgba, white)
 		return
 	}
 	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)

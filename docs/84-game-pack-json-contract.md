@@ -1,5 +1,32 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 選人清單與取消（schema0.12.0／content0.1.84）
+
+`interface.recruitment_selection`為必填物件。有限READY、原始定位與正常來源見
+[docs/188](188-opening-escort-to-castle-spec.md)。
+
+| 欄位 | 契約 |
+|---|---|
+| `id`、`entry_id` | 唯一契約及既有招募入口引用 |
+| `raw_window`、`extra_rows` | 保留原始窗口；實際高為人數加額外框架行數，再乘行高 |
+| `prompt_text_id`、`header_text_id`、`row_text_id`、`footer_text_id` | 選人問題、兩行header、每人一行及footer；原始字碼引用 |
+| `again_text_id`、`farewell_text_id`、`continue_text_id` | 取消後繼續詢問、告別及Yes重播的問題；不將EOF與選擇合併 |
+| `name`、`name_capacity`、`level`、`class`、`gender` | 姓名容量、各欄origin／row step與數字右對齊容量 |
+| `cursor`、`hit_rect` | 原始游標及同一列的觸控範圍 |
+| `class_options`、`gender_text_ids` | 共用角色值至已審查text ID的映射 |
+| `evidence` | 原始EXE／TXT、IDA9.4 consumer及dosgolem正常來源的D3範圍與限制 |
+
+所有巢狀欄位必填，包含為零的`step_x`；缺漏、null、未知欄位、未知引用、重複職業、
+未審查證據、窗口／列越界與frame文字形狀不符均拒絕。資料包不能嵌入任意程式碼。
+清單的窗口／文字／欄位來自pack，原始Go decoder仍是oracle。
+同版本Save／Load沿既有規則清除UI暫態；不同schema／hash存檔明確拒絕，不自動遷移。
+本版不新增存檔欄位。完整入隊音樂與原版Load保持未知。
+
+實作入口為`internal/gamepack/recruitment_selection.go`及`game/recruitment_selection.go`；
+原始資料／壞pack測試為前者同名`_test.go`，正常InputState／取消測試為後者同名`_test.go`。
+原版重生與獨立來源驗證使用`tools/dosgolem_recruitment_selection_probe.py`及
+`tools/verify_dosgolem_recruitment_selection.py`，容器與來源參數見docs/188。
+
 ## 帶路殘留事件（schema0.9.0／content0.1.81）
 
 資料包欄位形狀不變。強制帶路的既有`arrival_frames`與原始CTY特殊格選取已審查的
@@ -1973,3 +2000,5 @@ schema0.11.0新增必填`interface.recruitment_entry`，content0.1.83；舊schem
 
 加入或分離角色仍由既有狀態機處理；本契約沒有任意JSON程式碼。
 有效Load清除入口UI暫態並保留契約，拒絕Load保持原畫布。正常存讀檔只證明remake，原版Load未知。
+
+選人與正常取消最終canonical hash：`sha256:0bdb4ebfa99c9f36fb5e7f8dd3f6d5f2e1dc3892900bdadc174cf6be34e47fcc`。完整回歸與原版收據入口見[docs/188](188-opening-escort-to-castle-spec.md)最新驗收節。

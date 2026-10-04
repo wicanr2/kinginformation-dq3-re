@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.11.0",
+  "schema_version": "0.12.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -4087,6 +4087,566 @@
         "consumer": "normal lower-floor greeting527/528 -> main menu529; first entry only",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "有限READY；原版r4首次招募來源a85cad67獨立接受。234正常輸入／468IRQ1。入隊之後、分離、查看、音訊及原版Load不在本切片。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.prompt",
+      "value": "*「要誰加入成為同伴呢?",
+      "glyph_codes": [
+        59,
+        60,
+        504,
+        505,
+        368,
+        519,
+        610,
+        611,
+        601,
+        602,
+        592,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 530
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.header",
+      "value": "┌┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐└\n│  姓  名 等 級 職  業  性別 │",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        49,
+        65534,
+        54,
+        12,
+        12,
+        691,
+        12,
+        12,
+        692,
+        12,
+        419,
+        12,
+        420,
+        12,
+        773,
+        12,
+        12,
+        774,
+        12,
+        12,
+        674,
+        417,
+        12,
+        54
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 531
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.row",
+      "value": "│       L            │",
+      "glyph_codes": [
+        54,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        26,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        54
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 532
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.footer",
+      "value": "┘┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐├",
+      "glyph_codes": [
+        50,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 533
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.again",
+      "value": "*「還有其他的事嗎?",
+      "glyph_codes": [
+        59,
+        60,
+        524,
+        147,
+        779,
+        757,
+        149,
+        492,
+        534,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 540
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.farewell",
+      "value": "*「那麼有空再來。",
+      "glyph_codes": [
+        59,
+        60,
+        354,
+        436,
+        147,
+        328,
+        573,
+        461,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 541
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.class.0",
+      "value": "勇者",
+      "glyph_codes": [
+        106,
+        187
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 457
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.class.1",
+      "value": "戰士",
+      "glyph_codes": [
+        107,
+        144
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 458
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.class.2",
+      "value": "武鬥家",
+      "glyph_codes": [
+        108,
+        207,
+        657
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 459
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.class.3",
+      "value": "僧侶",
+      "glyph_codes": [
+        109,
+        704
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 460
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.class.4",
+      "value": "魔法使者",
+      "glyph_codes": [
+        110,
+        208,
+        210,
+        187
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 461
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.class.5",
+      "value": "賢者",
+      "glyph_codes": [
+        111,
+        187
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 462
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.class.6",
+      "value": "商人",
+      "glyph_codes": [
+        112,
+        194
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 463
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.class.7",
+      "value": "遊玩者",
+      "glyph_codes": [
+        113,
+        705,
+        187
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 464
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.gender.0",
+      "value": "男性",
+      "glyph_codes": [
+        775,
+        674
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 534
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.gender.1",
+      "value": "女性",
+      "glyph_codes": [
+        234,
+        674
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 535
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + CTY00.DAT + D3TXT00.TXT + dosgolem cancel0467/birthde818",
+        "address_space": "linear",
+        "address": "IDA9.4 linear103D7..10473;109E5..10A7F;1F4E3..1F58F;211B6;213C4;215EE;21929;DGROUP3E14",
+        "consumer": "record530 one-member selection -> normal Esc -> record540 No ->541 wait ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY docs/188；201正常packet、478IRQ1、402完整PNG/bin；來源ee4e519a。選人與No取消已證實；Yes重回528為strong靜態分支。完整入隊、空名冊、滿隊、其他角色、聲音及原版Load未動態驗收。"
       }
     }
   ]

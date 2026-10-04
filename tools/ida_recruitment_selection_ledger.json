@@ -1,0 +1,118 @@
+{
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+  "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201",
+  "annotations": [
+    {
+      "ida_linear": "0x103e1",
+      "file_offset": "0x1751",
+      "bytes": "bf1202",
+      "semantic": "record530選人問題",
+      "inference_level": "confirmed",
+      "consumer": "正常197；後接計數與選人窗口",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x103fd",
+      "file_offset": "0x176d",
+      "bytes": "050300",
+      "semantic": "窗口高用未入隊數加三行框架",
+      "inference_level": "confirmed",
+      "consumer": "10404寫DGROUP3E1C；1F4E3窗口consumer；正常一名角色197",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x1040e",
+      "file_offset": "0x177e",
+      "bytes": "803e260701",
+      "semantic": "選人Esc檢查0726取消byte",
+      "inference_level": "confirmed",
+      "consumer": "10413到10469返回103AE；正常198沒有搬移角色",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x109e5",
+      "file_offset": "0x1d55",
+      "bytes": "c70616071500",
+      "semantic": "選人姓名起點的VGA byte X為15h",
+      "inference_level": "confirmed",
+      "consumer": "215EE姓名consumer；正常197",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x109eb",
+      "file_offset": "0x1d5b",
+      "bytes": "c70618074e00",
+      "semantic": "選人首列Y為4Eh",
+      "inference_level": "confirmed",
+      "consumer": "姓名、等級、職業、性別共用Y；正常197",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x10a1d",
+      "file_offset": "0x1d8d",
+      "bytes": "8a4415",
+      "semantic": "原始角色+15h等級讀取",
+      "inference_level": "confirmed",
+      "consumer": "21929五位十進位consumer；本次正常197為Lv1",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x10a34",
+      "file_offset": "0x1da4",
+      "bytes": "bfc901",
+      "semantic": "職業文字record base1C9h加原始+1 byte",
+      "inference_level": "confirmed",
+      "consumer": "213C4文字consumer；正常197戰士，其他職業只有靜態映射",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x10a58",
+      "file_offset": "0x1dc8",
+      "bytes": "bf1602",
+      "semantic": "性別文字record base216h加原始+2 byte減一",
+      "inference_level": "confirmed",
+      "consumer": "213C4文字consumer；正常197男性，女性只有靜態映射",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x103ae",
+      "file_offset": "0x171e",
+      "bytes": "bf1c02",
+      "semantic": "取消後接record540繼續詢問",
+      "inference_level": "confirmed",
+      "consumer": "1F63C兩項選擇；正常198、199",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x103c2",
+      "file_offset": "0x1732",
+      "bytes": "bf1d02",
+      "semantic": "No後接record541及獨立確認等待",
+      "inference_level": "confirmed",
+      "consumer": "2111B等待，3E6E撤窗；正常200、201",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "ida_linear": "0x103b9",
+      "file_offset": "0x1729",
+      "bytes": "833e220702",
+      "semantic": "繼續詢問只依0722游標2判斷No",
+      "inference_level": "strong",
+      "consumer": "Esc沒有覆寫游標；Yes跳10378；未抽測原版此詢問Esc",
+      "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    }
+  ]
+}

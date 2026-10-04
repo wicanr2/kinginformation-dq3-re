@@ -1151,6 +1151,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatal("對露依達 NPC 應開 recruit modal")
 	}
 	press(InputState{Confirm: true}) // 找同伴參加
+	traceRecruitmentText(t, g)
 	for i := 0; i < 3; i++ {
 		press(InputState{Confirm: true})
 	}
@@ -1158,8 +1159,7 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		t.Fatalf("招募後應成為主角+3 四人隊，得 companions=%d roster=%d",
 			len(g.companions), len(g.roster))
 	}
-	press(InputState{Cancel: true}) // 清單→主選單
-	press(InputState{Cancel: true}) // 關酒場
+	traceCloseRecruitmentSelection(t, g)
 
 	// 四人旅店每次 8G；國王的 50G 全數保留作練級住宿。先買藥草會在前段練級耗盡
 	// 住宿費，因此這條 deterministic 正式路線以逃離強敵、旅店補滿為前段補給策略。
@@ -3534,10 +3534,10 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 	traceTalkNPC(t, g, 2, 16)
 	traceRecruitmentGreeting(t, g)
 	press(InputState{Confirm: true}) // 找同伴參加
+	traceRecruitmentText(t, g)
 	send(InputState{DirHeld: -1, DirEdge: 0})
 	press(InputState{Confirm: true}) // roster[1] 商人
-	press(InputState{Cancel: true})
-	press(InputState{Cancel: true})
+	traceCloseRecruitmentSelection(t, g)
 	if len(g.companions) != 3 || g.companions[2].Class != 6 || len(g.roster) != 1 {
 		t.Fatalf("正式招募商人後隊伍錯：companions=%d lastClass=%d roster=%d",
 			len(g.companions), g.companions[len(g.companions)-1].Class, len(g.roster))
@@ -3643,9 +3643,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 			g.recruit.active, g.recruit.stage)
 	}
 	press(InputState{Confirm: true}) // 找同伴參加
+	traceRecruitmentText(t, g)
 	press(InputState{Confirm: true}) // 唯一的 roster[0]
-	press(InputState{Cancel: true})  // 清單→主選單
-	press(InputState{Cancel: true})  // 關閉酒場
+	traceCloseRecruitmentSelection(t, g)
 	if len(g.companions) != 3 || len(g.roster) != 0 ||
 		!g.hasPartyItem(darkLampEffect.ItemRawID) {
 		t.Fatalf("建城後立即正式復隊錯：companions=%d roster=%d darkLamp=%v",
@@ -4362,12 +4362,12 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 		traceTalkNPC(t, g, 2, 16)
 		traceRecruitmentGreeting(t, g)
 		press(InputState{Confirm: true}) // 找同伴參加
+		traceRecruitmentText(t, g)
 		for i := 0; i < rosterIndex; i++ {
 			send(InputState{DirHeld: -1, DirEdge: 0})
 		}
 		press(InputState{Confirm: true})
-		press(InputState{Cancel: true})
-		press(InputState{Cancel: true})
+		traceCloseRecruitmentSelection(t, g)
 		if !partyHasOrb(missingOrb) {
 			t.Fatalf("正式酒場重新招募珠子持有者後仍缺 %#x：companions=%v roster=%v",
 				missingOrb, compsToSav(g.companions), compsToSav(g.roster))
@@ -4610,9 +4610,9 @@ func TestOpeningProductionInputTrace(t *testing.T) {
 				g.recruit.active, g.recruit.stage)
 		}
 		press(InputState{Confirm: true}) // 找同伴參加
+		traceRecruitmentText(t, g)
 		press(InputState{Confirm: true}) // roster[0]
-		press(InputState{Cancel: true})  // 清單→主選單
-		press(InputState{Cancel: true})  // 關閉酒場
+		traceCloseRecruitmentSelection(t, g)
 		if len(g.companions) != rcPartyMax-1 || len(g.roster) != 0 {
 			t.Fatalf("終盤正式酒場復隊錯：companions=%d roster=%d",
 				len(g.companions), len(g.roster))

@@ -3032,3 +3032,116 @@ SHA256`761367b3e3ad8aa2186801402d765a83a167e42fcf0aa018fd4cc672a6b29586`。
 不把尚缺正常播放完成來源的199後入隊流程混入此READY，後段音樂完成介面保持unknown並登記Issue。
 本輪只保存有限證據，正式Go／pack及最近完整Go回歸保持，不新增發行包。
 收尾入口為`work/issue4-recruit-join-r13-final-audit.py`及同前綴收據；遠端結果與核對另存同前綴result／post-push產物。
+
+## 2026-10-04 選人清單與正常取消有限 READY
+
+範圍為正常出生一名戰士男性後，從首次招募選單選入隊、顯示清單、Esc取消、
+繼續詢問選No、告別等待及返回場景。完整入隊的536文字及199後播放完成保持DRAFT。
+空名冊、滿隊、其他職業、多人成員及分離／查看沒有正常原版驗收，本節不宣稱它們完成。
+
+輸入為`assets_raw/DQ3.EXE`，115282bytes，SHA256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+工具為dosgolem2f44a68及IDA Pro9.4。IDA位址為linear，file=linear−EC90，DGROUP基底24DD0。
+新增來源`work/dosgolem-opening/issue4-recruit-selection-cancel-r1-*`。
+獨立稽核`tools/verify_dosgolem_recruitment_selection.py`核對201個queued／consumed／capture、
+478IRQ1及402份完整640×350PNG／bin；前196個packet保持，197畫面與r5逐byte相同。
+收據`issue4-recruit-selection-cancel-r1-source-r1-receipt.json`的SHA256為
+`ee4e519a5d61ccd05dcf82c6372a40257770182d733e7641632ad2accbe88e2d`。
+原版seed1357在冷啟動前固定一次；沒有狀態還原或角色、旗標、完成狀態注入。
+
+| 原始定位 | 已審查契約 | 等級 |
+|---|---|---|
+| 103E1..10413；DGROUP3E14，file19F54 | 530追加選人問題；10974計數未入隊slot；窗口高=(人數+3)×16 | confirmed，正常197 |
+| 1F4E3..1F58F；原始窗口words | 保存／陰影、531兩行header、532每人一行、533footer、109E5callback、活動框、原始cursor | confirmed，原始consumer及197 |
+| 109E5..10A7F；215EE..21651；21929..2197E | 姓名最多4字；rowY78、步16；姓名X168、等級五位右對齊起點216、職業X312、性別X408 | confirmed，原始byte單位及197 |
+| 1040E..10413→10469→103AE | Esc不搬移角色，接540及兩項選擇，初始Yes | confirmed，正常198 |
+| 103AE..103D6 | No接541、等正常確認、撤窗返回；Yes回10378重播528後主選單 | No confirmed正常199..201；Yes strong靜態閉合，未原版動態抽測 |
+
+DGROUP3E14保留原始32bytes：
+`09030f002e002c0070001302050014021502e5090500030011004e0000000a03`。
+531／532／533的終止由213C4使Y再加16；x為VGA byte單位×8。
+109E5讀slot內+1職業、+2性別、+15等級；原始姓名consumer保留raw位置與字模流程。
+原始窗口cursor為136,78；flags3、x15、y46、width44。這些值由bytes／consumer導出，不由截圖猜測。
+IDA sidecar為`work/issue4-selection-r2-ida.json`，producer為同前綴`.py`；原始bytes與MZ重定位分別保存。
+既有14筆入隊等待旁註只沿用其原有推論等級，新selection語意列於本表，不覆蓋原始名稱。
+
+READY實作契約：必填typed `recruitment_selection`提供窗口、frame文字、row anchors、number field、
+職業／性別text映射、cursor及點選範圍。缺欄位、未知引用、未審查evidence與越界均拒絕。
+共用Go只執行選人文字、動態清單與取消具名狀態；不加入DQ3 raw record或座標常數。
+取消、540、541及最後確認不改名冊、隊伍、金錢、旗標或RNG；文字EOF與下一選擇不共用輸入。
+清單及取消需正常InputState重播、全幀PNG、不遮罩比較、同版本存讀檔及正常下一步。
+完整V3若仍有背景相位差異則保持RED；內部測試不能升格整款parity。
+
+READY補充：540後Esc沿1F8EA..1F907只設0726取消byte，沒有改0722游標；103B9只讀0722。
+因此依當前Yes／No游標返回，不能直接把Esc映射No。此分支為strong靜態閉合，原版動態未抽測。
+Yes後528使用明示`continue_text_id`，不從問候陣列猜選最後一筆。
+
+重生入口：在既有測試image內，以唯讀repo、唯讀frozen dosgolem、UID1000可寫work執行
+`python3 /repo/tools/dosgolem_recruitment_selection_probe.py`。
+它的預設前綴與原始來源相同，先在乾淨輸出overlay重生，不能覆寫上述歷史檔。
+再執行稽核器，傳入source root、實際producer及新收據路徑；原始producer為本機cancel-r1-builder。
+
+### 正式實作與有限驗收
+
+schema0.12.0／content0.1.84，canonical hash為
+`sha256:0bdb4ebfa99c9f36fb5e7f8dd3f6d5f2e1dc3892900bdadc174cf6be34e47fcc`。
+`game/recruitment_selection.go`執行typed pack窗口、文字、欄位與正常取消狀態機；
+`internal/gamepack/recruitment_selection.go`驗證必填欄位、文字來源與窗口／行數邊界。
+原始EXE／D3TXT parity與14種壞契約拒絕通過。正常取消不消耗RNG或改名冊、金錢、旗標。
+既有入隊交易保留；536後文字與音訊未接入本批，不稱完整招募完成。
+
+來源r1已通過獨立稽核，但缺少共用runtime比較器所需的頂層EXE身份。
+另存`issue4-recruit-selection-cancel-r1-source-r2-receipt.json`，不覆寫r1。
+runtime採用r2，其SHA256為
+`d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682`。
+只增加三個頂層身份欄位，原版log、meta、201個packet及402份PNG／bin保持。
+原版工具body已由公開`tools/dosgolem_recruitment_selection_probe.py`獨立保存，與實際私有producer逐byte核對。
+重生來源因producer身份不同須另行審查，不能直接替換已固定的runtime oracle。
+
+IDA公開重生入口為`tools/ida_dump_recruitment_selection_contract.py`，
+自動合併`tools/ida_recruitment_selection_ledger.json`的11筆附加語意，10confirmed、1strong。
+審查sidecar為`work/issue4-selection-reviewed-r1-ida.json`，SHA256
+`11906b346f8a8271b3fb68a63da264ec1c11d2d978d29974c1baa39ed7ebbbcb`。
+825筆唯一指令的file bytes、MZ重定位、loaded bytes及原始名稱／函式邊界均核對。
+間接callback未被IDA自動定義為函式時保留null原始身分，不虛構函式名。
+七種來源損壞拒絕：seed、狀態注入、producer、輸入scan、名冊觀察、PNG、bin。
+獨立收據`work/issue4-selection-evidence-review-r3-receipt.json`，SHA256
+`2de4e29044e41006d7856f65e941603e783db264781b14a655f61f280a167d3d`。
+
+正常InputState依201個packet重播；兩側seed1357都在執行前固定一次，長路線骰序不作逐次一致聲明。
+位置、section、金錢、旗標、名冊與選單游標通過；Talk保留現行正式命令窗額外一次確認。
+最終runtime入口`work/issue4-selection-normal-run-r3.py`，產物在`work/issue4-selection-normal-r3/`。
+完整RGB差異為197清單295、198取消詢問295、199 No游標295、200告別295、201返回0。
+清單舊差51535已降低；舊入隊路線198的56790不同於本次取消198，不能混用。
+52張PNG保持；197..200差分皆SHA256
+`4261092cd10bde7005a010c8b4a03246f89e759033185adfaaa9c31f888a9d70`，bbox為288,131至510,262。
+差分入口`work/issue4-selection-diff-r2.py`及同前綴receipt，差分PNG留本機。
+正常Save／Load、下一步及壞Load／有效Load元件驗證通過；原版存讀檔未驗。
+有限狀態E2／E3、畫面V2。完整V3仍RED，本節不升格整款CONFORMED。
+
+完整回歸入口`work/issue4-selection-full-r1.py`；r2前17批與同產品r4最後5批合併439唯一頂層測試。
+389頂層／88子PASS、50選用SKIP；internal157頂層／307子PASS、4選用SKIP、11套件，沒有素材缺失SKIP。
+正常新遊戲至THE END66.58秒，只屬remake可玩回歸。desktop為Linux x86_64 ELF。
+合併入口`work/issue4-selection-combine-r1.py`，收據`work/issue4-selection-combined-regression-r1-receipt.json`。
+最終舊原版路線入口`work/issue4-selection-old-oracles-r3.py`，另有取消、出生、首次招募及Load獨立程序。
+
+收尾失敗均保留：缺asset掛載／固定依賴快取、runtime r1缺頂層身份、首份差分工具缺Pillow、
+完整主線舊Join操作未等新問題、新Load元件fixture處於標題而未消費modal、標題存檔正規化的錯誤全文比較、
+IDA原始函式null的錯誤審查假設、負例修改到未比較的出生writer欄位。
+負例已改為修改真正的名冊狀態觀察，且斷言輸入確有改動。
+出生回歸兩次SIGKILL；20秒堆疊診斷定位到選人畫面仍等待場景cooldown。
+招募modal暫停場景cooldown，測試等待條件補上recruit未啟用，再乾淨重跑。
+這些驗證腳本問題沒有以調seed、原版完成byte或正式規則製造通過。
+
+本輪腳本索引：`work/issue4-selection-docs-r1.py`、`-docs-results-r1.py`、
+`-evidence-review-r1.py`／r2／r3、`-full-r1.py`／r3／r4、`-old-oracles-r1.py`／r2／r3、
+`-birth-diagnostic-r1.py`。原版、IDA database、PNG、binary及使用者scratch均不加入Git。
+下一閘門為共用295像素差異與536文字的有限規格；199後正常播放完成仍unknown，不重開硬體driver／ISR。
+
+最後乾淨重跑：`work/issue4-selection-old-oracles-r3/`四個獨立程序全部PASS，
+取消／出生／首次招募的85張PNG與前一正式入口版本逐byte相同。
+`work/issue4-selection-normal-run-r4.py`使用最終binary重跑201包；收據及52張PNG與r3逐byte相同。
+最終正常驗收收據`work/issue4-selection-final-normal-r1-receipt.json`，
+同版本存讀檔與正常下一步通過。測試等待條件修正未改pack、正式程式或畫面。
+本輪收尾與遠端核對入口為`work/issue4-selection-final-audit-r1.py`及`-post-push-r1.py`，
+收據與Issue正文／結果文字留在同前綴本機工作目錄。
