@@ -1,10 +1,10 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-04 原版F6後正常行走來源已延長到202包／480IRQ1，接受收據71a52768。200包前綴、完整PNG／bin、native FileOps及原生存檔保持；201左移只改2172bytes中的座標低byte，202右移回復保存區，時鐘均0。
-正式InputState持續按住方向直到整步完成，再放開；逐包完整snapshot、RNG、時鐘、engine同版本存讀檔及下一步通過。輸入完成點可比，按鍵時長與CPU／TPS映射未精確對拍，不能稱為完整時序parity。
-本輪8個不同頂層／4子PASS、10命令、零SKIP／OOM；147張既有F5/F6 PNG逐byte保持，新路線200前保持。200完整RGB0，201差356、202差122，完整V3仍未通過。
-正式Go與九份JSON和e939db2保持，schema0.18.0／content0.1.90、canonical9d6325ad不變。最近完整game478與11個internal、THE END201.00秒及desktop仍為e939db2；本輪沒有冒稱全套重跑，也沒有新發行包。
-下一步可比初始十槽資料的選槽對拍，以及201／202人物畫面差異的consumer證據。下層／室內F6、複數隊伍／其他等級、入隊後返回、非空分離、音畫及完整原版campaign仍未知。
+2026-10-04 F6後兩步的人物影格consumer已由正常202包／480IRQ1來源363f8f70核對。原版新舊全部事件、PNG／bin、2172bytes持久區及原生存檔逐byte保持；94次只讀觀測，不改時鐘或相位。
+原始BLS／CTY／BLK逐點解釋201的356像素：英雄127、NPC14為106、NPC15為123；202的122全為英雄步伐影格。兩張畫面沒有其他差異，完整RGB仍356／122，動畫時鐘對應未知，完整V3未通過。
+本輪10命令、8不同頂層／4子PASS、零SKIP／OOM；200張既有完整PNG逐byte保持。正式Go與九份JSON仍等於e939db2，schema0.18.0／content0.1.90、canonical9d6325ad保持。最近完整game／internal／THE END／desktop仍為e939db2。
+新producer、來源checker、完整畫布診斷及兩筆原始位址ledger均由docs/188索引，IDA9.4自動附註723條目。未改產品動畫或打包。
+下一個正常切片是可比初始十槽metadata的F5/F6選槽UI；人物動畫的可比時鐘仍DRAFT。其他F6場景、複數隊伍、入隊後返回、非空分離、音畫及完整原版campaign仍未知。
 
 以下保存前一checkpoint，現況以本檔唯一狀態表及docs/188為準。
 
@@ -203,14 +203,14 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 | 目前狀態（2026-10-04） | 最近驗收與界線 |
 |---|---|
 | 現行程式 | `dq3_remake_ebitan/`；正式F5/F6與獨立JSON槽。schema0.18.0／content0.1.90；canonical `sha256:9d6325addef6db4d6f4c049f44fe517e61d2a0550724c67d5ae7ec0f649a3917`；沒有新發行包 |
-| 最新remake已完成 | F5/F6後201左移及202右移的正常InputState通過；每包完整snapshot／RNG／clock、同版本engine存讀檔及下一步保持。只有測試／probe新增，正式Go不變 |
-| 最新原版oracle | 正常202包／480IRQ1來源71a52768；200包前綴與PNG/bin/native FileOps/原生SAV保持。201只改DGROUP4F33低byte2→1，202完整2172bytes回復保存區，clock均0 |
-| 最新畫面已驗 | 本輪重生147張F5/F6舊PNG逐byte保持；新路線200前同父路線，200全RGB0。原版198與201同座標224000色號相同，未遮罩或指定phase |
-| 最新畫面未通過 | 201完整RGB差356，範圍x291..541/y131..263；202差122，範圍x289..315/y180..191。195選槽4064、199選槽32847的初始存檔資料差異保持；完整V3未知 |
-| 下一production切片 | 可比初始十槽metadata的F5/F6選槽UI；201/202畫面差異另追consumer。沿合法202正常checkpoint，不猜動畫相位、不調硬體driver |
+| 最新remake已完成 | 正常InputState201／202、snapshot／RNG／clock、同版本存讀檔及下一步保持；新增實際hero/NPC影格收據，正式Go不變 |
+| 最新原版oracle | 正常202包／480IRQ1來源363f8f70；94次1E307只讀consumer觀測，全部原有事件／PNG/bin/persistent/native存檔與71a52768保持 |
+| 最新畫面已驗 | 本輪200張完整PNG逐byte保持；原始BLS/CTY/BLK解釋201全部356及202全部122像素，沒有替代圖／遮罩／phase寫入 |
+| 最新畫面未通過 | 201英雄127、NPC14為106、NPC15為123；202英雄122。原版phase201=1/202=0，remakehero0/1、NPC0/0；完整RGB仍356/122，V3未知。195/199初始十槽資料仍不同 |
+| 下一production切片 | 可比初始十槽metadata的F5/F6選槽UI；人物影格素材與兩張consumer已閉合，可比動畫時鐘仍DRAFT，不重跑同一phase-only樣本或深入硬體driver |
 | 本輪有限READY | 上層單人讀檔後兩步及完整持久狀態有限CONFORMED，E2/E3與畫面V2。方向按住至原生完成點；按鍵時長/CPU與TPS映射未精確對拍，不稱時序V3 |
 | 原版oracle仍未知 | 其他world／室內F6、複數隊伍與其他等級經驗、多槽等價初值、其他取消、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
-| 現行remake回歸 | 本輪8不同頂層／4子PASS、10命令、零SKIP/OOM；147舊PNG保持。最近完整game478/11個internal/THE END201.00秒及desktop為e939db2，未冒稱本輪全套重跑 |
+| 現行remake回歸 | 本輪8不同頂層／4子PASS、10命令、零SKIP/OOM；200舊PNG保持。最近完整game478/11個internal/THE END201.00秒及desktop仍為e939db2 |
 | 額外驗證限制 | F6依pack重設世界時鐘，engine／標題Load仍保留JSON時鐘；壞schema／hash／layer在restore前拒絕。舊存檔不自動遷移。綠色回歸不升格完整原版parity |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於

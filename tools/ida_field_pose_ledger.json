@@ -1,0 +1,40 @@
+{
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "review_reference": "docs/188：2026-10-04 正常移動人物影格有限consumer補證",
+  "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-field-pose-normal-r1-source-r1-receipt.json SHA256363f8f7002fb97254fe6bd8fcac8d4725aad07401dccfb39e667be0576d5dad3",
+  "annotations": [
+    {
+      "ida_linear": "0x1e2ff",
+      "file_offset": "0xf66f",
+      "bytes": "021e0400",
+      "original_name": "",
+      "original_function": "sub_1E2EF",
+      "semantic": "本次單人正常路線：將DGROUP0004步伐位元加入影格索引；不證明動畫時鐘同期",
+      "inference_level": "confirmed",
+      "consumer": "1E2EF→1E336／1E43D→1E4B7；兩張正常完整PNG以原始BLS/BLK/CTY閉合",
+      "review_reference": "docs/188：2026-10-04 正常移動人物影格有限consumer補證",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-field-pose-normal-r1-source-r1-receipt.json SHA256363f8f7002fb97254fe6bd8fcac8d4725aad07401dccfb39e667be0576d5dad3",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0"
+    },
+    {
+      "ida_linear": "0x1e307",
+      "file_offset": "0xf677",
+      "bytes": "8bb77a2b",
+      "original_name": "",
+      "original_function": "sub_1E2EF",
+      "semantic": "原始BX為DGROUP2B7A影格表的byte偏移；94次只讀consumer觀測，201末尾0006、202末尾000C",
+      "inference_level": "confirmed",
+      "consumer": "1E2EF→1E336／1E43D→1E4B7；兩張正常完整PNG以原始BLS/BLK/CTY閉合",
+      "review_reference": "docs/188：2026-10-04 正常移動人物影格有限consumer補證",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-field-pose-normal-r1-source-r1-receipt.json SHA256363f8f7002fb97254fe6bd8fcac8d4725aad07401dccfb39e667be0576d5dad3",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0"
+    }
+  ]
+}

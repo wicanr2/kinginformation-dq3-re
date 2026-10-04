@@ -222,7 +222,11 @@ func runFieldSaveLoadNormalInputComparison(t *testing.T, afterLoad bool) {
 							t.Fatalf("same-state whole RGB differs at %d: %d", n, diff)
 						}
 					}
-					samples = append(samples, map[string]any{"packet": n, "original_phase": s["phase"], "stage": m.stage, "active": m.active, "clock": g.dayNightClock(), "full_rgb_difference": diff})
+					var npcVisuals []map[string]int
+					for _, npc := range g.cur.npcs {
+						npcVisuals = append(npcVisuals, map[string]int{"record": npc.recordIndex, "x": npc.x, "y": npc.y, "facing": npc.facing, "walk": npc.walk})
+					}
+					samples = append(samples, map[string]any{"packet": n, "original_phase": s["phase"], "stage": m.stage, "active": m.active, "clock": g.dayNightClock(), "full_rgb_difference": diff, "hero_walk": g.walk, "hero_facing": g.facing, "animation_updates": g.anim, "movement_cooldown": g.cd, "npc_visuals": npcVisuals})
 				}
 				for g.cd > 0 {
 					if e := g.step(idle); e != nil {

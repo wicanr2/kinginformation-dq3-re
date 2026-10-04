@@ -4209,3 +4209,47 @@ Docker沿用dq3-ebiten-test:20260822-r1、固定dosgolem2f44a68唯讀快照及�
 | `work/issue4-after-load-move-rgb-r1.json` | `e3b8ae6d338dfa986aa70a61098256ccaced7565325edd74a4486dc34cf7c71d` |
 
 重生入口為本節兩份已索引probe／checker；remake以`DQ3_AFTER_LOAD_MOVE_ORACLE_DIR`指定原版目錄，`DQ3_FIELD_SAVE_LOAD_RECEIPT_DIR`指定空輸出目錄，於Docker/Xvfb執行`TestFieldSaveLoadAfterLoadMoveDosgolemNormalInputComparison`，具備原版assets_raw才算驗收。seed原版1357執行前一次；remake PRNG於正常193checkpoint沿既有seed設定自然續行，兩步無亂數判定，不要求閒置過程的原版自然RND次數對齐。
+
+### 2026-10-04 正常移動人物影格 DRAFT
+
+沿 Issue #4 的合法202包來源，新增[人物影格唯讀探針](../tools/dosgolem_field_pose_probe.py)。在原版 IDA linear1E307 觀察原始 BX 影格表偏移、SI／DI、DGROUP0004與26F0；原生空讀鍵另保存0004、26AD、26B0、26D0／26D1。用法為同一有界 Docker 工具鏈執行 `python3 /repo/tools/dosgolem_field_pose_probe.py --prefix issue4-field-pose-normal-r1`，固定dosgolem2f44a68、原始EXE唯讀及新Scratch。只讀觀測，不改相位、CPU、時鐘或等待。
+
+IDA9.4 非破壞匯出沿相同115282bytes EXE與5178fdc8完整雜湊。位址基準為IDA linear，file=linear−EC90，DGROUP基底24DD0。`work/issue4-field-pose-r5-ida.json`723條目、原始bytes與MZ relocation核對，SHA-256 `4fb6caf1682b9f9e9cff4304eedcc589bc5c1bb5100aa75af474cf3934813be2`。
+
+- strong：119B8→1DC93的正常移動繪圖，1E057保存方向，1E1A4→1E2EF於1E2F1..1E307以角色、方向與DGROUP0004選取2B7A影格表。仍待正常動態consumer閉合。
+- 訂正候選：主迴圈194BC→1EE23處理日夜時鐘及色盤，未當作人物renderer。r1匯出保留，沒有推測性改名。
+- 未知：原版與remake的可比動畫時鐘與各consumer取圖時刻；本節不讓自然時鐘差異偽裝成V3通過，也不延伸ISR／PIT硬體研究。
+- remake正常測試只新增實際hero walk／facing、更新數、cooldown及NPC影格收據，不修改正式Go、pack或測試狀態。原始PNG仍逐點核對，舊畫面必須保持。
+
+[獨立人物來源checker](../tools/verify_dosgolem_field_pose.py)先完整重驗已接受202包父來源，再核對新probe／binary固定雜湊、全部原有DQ3事件、202包PNG／bin／persistent及原生存檔逐byte保持。三個CLI參數依序為原版輸出目錄、producer及尚不存在的接受收據；另核對1E307的原始BX偶數表偏移及0004低位。未完整通過不寫接受收據。
+
+#### 人物影格 consumer 與完整差異已證實，動畫時鐘仍 DRAFT
+
+新正常來源363f8f70已接受：202包／480IRQ1、94次1E307唯讀consumer觀測；全部原有DQ3事件、202包PNG／bin／persistent、native FileOps與原生SAV均和71a52768逐byte保持。沒有重新載入snapshot、遊戲狀態注入或時鐘寫入。原始步伐位元0004在201完成為1、202為0；最後consumer的BX分別0006／000C，原始BLS影格為3／6。原版方向為下、左、上、右，Go decoder重排為下、上、左、右，不混用方向碼。
+
+[完整畫布診斷](../tools/verify_dq3_after_load_sprite_raster.py)唯讀核對原始BLS／CTY／BLK、完整PNG與remake實際影格收據。沒有產生替代圖、裁切、遮罩或修改phase；逐一檢查全部224000像素的差異，另核對三個完整人物含透明像素與底圖。
+
+| 正常包 | 原版／remake hero步伐 | 英雄差異 | NPC14差異 | NPC15差異 | 未解釋差異 |
+|---|---|---:|---:|---:|---:|
+| 201 左移 | 1／0 | 127 | 106 | 123 | 0 |
+| 202 右移 | 0／1 | 122 | 0 | 0 | 0 |
+
+本節confirmed限於兩張自然取得的畫面及原始consumer。完整RGB仍356／122，完整V3未通過；原版與remake的可比動畫時鐘、取圖瞬間仍未知。畫面全部由實際原始影格解釋，不能據此決定正式動畫的週期、初相位或更新規則。本輪正式Go及九份JSON與e939db2保持，不新增猜測的production設定，不為phase-only樣本開硬體driver／ISR切片。下一個正常切片回到可比初始十槽metadata的F5/F6選槽UI。
+
+10個命令、14筆PASS紀錄，涵蓋8不同頂層與4個子測試，零SKIP／OOM；200張既有完整PNG逐byte保持。本輪按比例重跑F5/F6與正常兩步，不冒稱全套；最近完整game478、11個internal、THE END201.00秒與desktop仍為e939db2。新source checker的9種損壞及raster的4種損壞均拒絕，兩者正對照前後一致；source完整父來源前後重驗，中間負例只快取已完整驗證的父資料，沒有拿快取代替父來源驗收。
+
+IDA入口為[非破壞人物匯出](../tools/ida_dump_field_pose_contract.py)及[兩筆原始位址ledger](../tools/ida_field_pose_ledger.json)。同一locked-v1 image、UID1000／HOME=/home/ubuntu，原始EXE唯讀、工作副本與database置/tmp。`idat -A -o/tmp/view.i64 -S"/repo/tools/ida_dump_field_pose_contract.py /work/output.json" /tmp/view.exe`，723條目、2筆confirmed consumer自動附註、原始bytes與MZ relocation逐項核對；不改原始symbol，其他候選保留unknown警示。這個sidecar只證明已列consumer，不構成動畫時鐘READY。
+
+完整畫布診斷CLI為 `python3 /repo/tools/verify_dq3_after_load_sprite_raster.py --assets /repo/assets_raw --original /work/dosgolem-opening --source-receipt /work/dosgolem-opening/issue4-field-pose-normal-r1-source-r1-receipt.json --runtime /work/issue4-field-pose-validation-r1/after-load-move --output /work/issue4-field-pose-raster-r2.json`。只能在既有有界Docker執行，原版與runtime輸入唯讀、輸出明示且不存在。支援範圍為本節固定來源與兩張正常完整畫面，其他角色／場景需新來源。
+
+| 本機收據 | SHA-256 |
+|---|---|
+| `work/dosgolem-opening/issue4-field-pose-normal-r1-source-r1-receipt.json` | `363f8f7002fb97254fe6bd8fcac8d4725aad07401dccfb39e667be0576d5dad3` |
+| `work/issue4-field-pose-validation-r1/test-receipt.json` | `8a8f1806ad2aa9303fae38831f364e1c4e9fa3720c7af53b7b53f0de07ac0a89` |
+| `work/issue4-field-pose-validation-r1/after-load-move/receipt.json` | `f289c066b424a7886beb4d523a8adf815ea79df7d74bb1a52053f7c92b461d71` |
+| `work/issue4-field-pose-validation-r1/preservation-receipt.json` | `1a6b40103ee08735182f4801a182b4f1aedabdb28207f757bf65bcb515b11ba4` |
+| `work/issue4-field-pose-raster-r2.json` | `9c8a9a38eb6f24e2099f1bbf43105fa2a11d4a2b65c28377aabc25407a54b78c` |
+| `work/issue4-field-pose-negative-r1/receipt.json` | `d6ed8912b0763b3cc76feded4c10117c743adb422ee9fa585b64d09199b4d128` |
+| `work/issue4-field-pose-reviewed-r1-ida.json` | `680aaf8f92517c4f11f83cf2ed5e179694b7fd01ebbaefa1529ea1404f176819` |
+
+環境紀錄：間接方向表11BA2沒有IDA自動函式邊界，r3停止且保留error sidecar；後續只匯出有界raw bytes並維持unknown。原始人物consumer的direct DS xref缺項，保留原運算元與動態DS15ED，不宣稱沒有reader。最初沿用147舊PNG計數，本輪實際含新兩步共200張，以實際清單核對全部相同。這些是分析／驗證限制，沒有為它們修改產品。

@@ -1,5 +1,13 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-04 F6後兩步的人物影格consumer已由正常202包／480IRQ1來源363f8f70核對。原版新舊全部事件、PNG／bin、2172bytes持久區及原生存檔逐byte保持；94次只讀觀測，不改時鐘或相位。
+> 原始BLS／CTY／BLK逐點解釋201的356像素：英雄127、NPC14為106、NPC15為123；202的122全為英雄步伐影格。兩張畫面沒有其他差異，完整RGB仍356／122，動畫時鐘對應未知，完整V3未通過。
+> 本輪10命令、8不同頂層／4子PASS、零SKIP／OOM；200張既有完整PNG逐byte保持。正式Go與九份JSON仍等於e939db2，schema0.18.0／content0.1.90、canonical9d6325ad保持。最近完整game／internal／THE END／desktop仍為e939db2。
+> 新producer、來源checker、完整畫布診斷及兩筆原始位址ledger均由docs/188索引，IDA9.4自動附註723條目。未改產品動畫或打包。
+> 下一個正常切片是可比初始十槽metadata的F5/F6選槽UI；人物動畫的可比時鐘仍DRAFT。其他F6場景、複數隊伍、入隊後返回、非空分離、音畫及完整原版campaign仍未知。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-04 原版F6後正常行走來源已延長到202包／480IRQ1，接受收據71a52768。200包前綴、完整PNG／bin、native FileOps及原生存檔保持；201左移只改2172bytes中的座標低byte，202右移回復保存區，時鐘均0。
 > 本輪只新增正常驗收，正式Go／pack與e939db2保持；201/202仍差356/122像素。8頂層／4子PASS、147舊PNG保持；完整原版V3未完成。現況與下一步見CONTEXT唯一狀態表、docs/188及Issue #4。
 
