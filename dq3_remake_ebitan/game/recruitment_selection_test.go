@@ -1,11 +1,177 @@
 package game
 
 import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"testing"
 )
+
+func TestRecruitmentEmptyViewDosgolemNormalInputComparison(t *testing.T) {
+	dir := os.Getenv("DQ3_RECRUIT_EMPTY_VIEW_ORACLE_DIR")
+	if dir == "" {
+		t.Skip("optional private dosgolem empty-view oracle")
+	}
+	out := os.Getenv("DQ3_RECRUIT_EMPTY_VIEW_RECEIPT_DIR")
+	if out == "" {
+		t.Fatal("explicit output required")
+	}
+	path := filepath.Join(dir, "issue4-empty-view-normal-r1-source-r2-receipt.json")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fmt.Sprintf("%x", sha256.Sum256(raw)) != "ff7a8abd5e93c867e5650f08a3af607feecf7013d7a781ff9a9ad2fd44eaeba7" {
+		t.Fatal("original accepted source identity differs")
+	}
+	var src struct{ Queued, States []map[string]string }
+	if err = json.Unmarshal(raw, &src); err != nil || len(src.Queued) != 195 || len(src.States) != 195 {
+		t.Fatal(err, "source shape")
+	}
+	g := runDosgolemMotherArrivalStateComparison(t)
+	idle := InputState{DirHeld: -1, DirEdge: -1}
+	step := func(in InputState) {
+		t.Helper()
+		if e := g.step(in); e != nil {
+			t.Fatal(e)
+		}
+	}
+	settle := func() {
+		t.Helper()
+		for n := 0; n < 5000; n++ {
+			if g.recruit.active && (g.recruit.stage == rcGreeting || g.recruit.stage == rcText) && !g.recruit.dialogue.waitingForConfirm() || g.tavern.active && g.tavern.stage == tavText && !g.tavern.dialogue.waitingForConfirm() || g.regionDialogueReturn != nil || !g.dlg.open && !g.tavern.active && !g.recruit.active && g.cd > 0 || g.dlg.open && !g.dlg.waitingForConfirm() {
+				step(idle)
+				continue
+			}
+			return
+		}
+		t.Fatal("normal empty-view input did not settle")
+	}
+	var persistent []byte
+	var holdRNG = g.prng
+	var samples []map[string]any
+	for i, q := range src.Queued {
+		settle()
+		if i == 188 {
+			persistent, err = encodeSave(g.snapshot())
+			if err != nil {
+				t.Fatal(err)
+			}
+			holdRNG = g.prng
+		}
+		scan, e := strconv.ParseInt(q["scan"], 16, 64)
+		if e != nil {
+			t.Fatal(e)
+		}
+		in := idle
+		in.AnyKeyEdge = true
+		if scan == 0x1c {
+			in.Enter = true
+			in.Confirm = true
+		} else {
+			d, ok := map[int64]int{0x50: 0, 0x48: 1, 0x4b: 2, 0x4d: 3}[scan]
+			if !ok {
+				t.Fatal("scan")
+			}
+			in.DirEdge = d
+			in.DirHeld = d
+		}
+		step(in)
+		step(idle)
+		settle()
+		if (q["kind"] == "registry_approach" || q["kind"] == "recruit_approach") && scan == 0x1c {
+			step(InputState{DirHeld: -1, DirEdge: -1, Confirm: true, AnyKeyEdge: true})
+			step(idle)
+			settle()
+		}
+		s := src.States[i]
+		x, _ := strconv.Atoi(s["player_x"])
+		y, _ := strconv.Atoi(s["player_y"])
+		if g.px != x || g.py != y || fmt.Sprintf("%x", g.storyBits) != s["flags"] {
+			t.Fatalf("normal field differs at %d", i+1)
+		}
+		if i+1 >= 150 && (len(g.roster) != 0 || len(g.companions) != 0) {
+			t.Fatal("cancel or empty View changed roster")
+		}
+		if i+1 >= 189 {
+			now, e := encodeSave(g.snapshot())
+			if e != nil || string(now) != string(persistent) || g.prng != holdRNG {
+				t.Fatal("empty View changed persistent state or RNG")
+			}
+		}
+		switch i + 1 {
+		case 188, 189, 190:
+			if !g.recruit.active || g.recruit.stage != rcMenu || g.recruit.cursor != i-187 {
+				t.Fatal("normal menu differs")
+			}
+		case 191:
+			if g.recruit.stage != rcText || !g.recruit.dialogue.waitingForConfirm() || g.recruit.viewFlow != nil {
+				t.Fatal("empty View must display record with one inline wait")
+			}
+		case 192, 193:
+			if g.recruit.stage != rcAgain || g.recruit.cursor != i-191 {
+				t.Fatal("empty View must finish hint and ask continue")
+			}
+		case 194:
+			if !g.recruit.active || g.recruit.stage != rcFinalWait {
+				t.Fatal("farewell separate wait missing")
+			}
+		case 195:
+			if g.recruit.active {
+				t.Fatal("empty View did not return to field")
+			}
+		}
+		if i+1 >= 150 {
+			g.renderFrame()
+			name := fmt.Sprintf("packet-%03d.png", i+1)
+			f, e := os.Create(filepath.Join(out, name))
+			if e != nil {
+				t.Fatal(e)
+			}
+			e = png.Encode(f, &image.RGBA{Pix: g.rgba, Stride: ScreenW * 4, Rect: image.Rect(0, 0, ScreenW, ScreenH)})
+			closeErr := f.Close()
+			if e != nil || closeErr != nil {
+				t.Fatal(e, closeErr)
+			}
+			samples = append(samples, map[string]any{"packet": i + 1, "original_phase": s["phase"], "recruit_stage": g.recruit.stage, "full_rgb_difference": sourceCanvasDifference(t, g, path, fmt.Sprintf("issue4-empty-view-normal-r1-packet-%03d-%s.png", i+1, s["phase"]))})
+		}
+	}
+	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "empty-view.json"))
+	if e := g.Save(); e != nil {
+		t.Fatal(e)
+	}
+	saved, e := encodeSave(g.snapshot())
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = g.Load(); e != nil {
+		t.Fatal(e)
+	}
+	loaded, e := encodeSave(g.snapshot())
+	if e != nil || string(saved) != string(loaded) || g.recruit.active || g.tavern.active {
+		t.Fatal("normal Save/Load")
+	}
+	step(InputState{DirHeld: 2, DirEdge: 2})
+	step(idle)
+	settle()
+	if g.px != 1 || g.py != 18 || g.recruit.active {
+		t.Fatal("next step after Load")
+	}
+	report := map[string]any{"source_sha256": fmt.Sprintf("%x", sha256.Sum256(raw)), "pack_schema": g.pack.Manifest.SchemaVersion, "pack_hash": g.pack.ContentHash(), "original_packets": 195, "scope": "normal empty View finite state parity; full RGB differences retained", "save_load_next_step": true, "samples": samples}
+	data, e := json.MarshalIndent(report, "", "  ")
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = os.WriteFile(filepath.Join(out, "receipt.json"), append(data, '\n'), 0644); e != nil {
+		t.Fatal(e)
+	}
+}
 
 func TestRecruitmentSelectionLoadPreservesRejectedAndClearsAcceptedUI(t *testing.T) {
 	g, e := newProductionTraceGame(os.DirFS(spineAssetsDir(t)))
@@ -227,5 +393,44 @@ func TestRecruitmentViewNavigationCancelDoesNotChangeMembers(t *testing.T) {
 	g.recruitInput(InputState{DirEdge: -1, Enter: true})
 	if rc.active || g.prng != rng || !reflect.DeepEqual(beforeRoster, g.roster) || !reflect.DeepEqual(beforeParty, g.companions) {
 		t.Fatal("view cancel changed members or RNG")
+	}
+}
+
+func TestRecruitmentEmptyViewWaitAndNoPreserveState(t *testing.T) {
+	g := &Game{}
+	configureRecruitmentEntryFixture(t, &g.recruit)
+	rc := &g.recruit
+	rc.active, rc.stage, rc.cursor = true, rcMenu, 2
+	rng := g.prng
+	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	if rc.stage != rcText || rc.afterText != rcEmptyViewReturn || rc.viewFlow != nil {
+		t.Fatal("empty View must use reviewed hint without opening a list")
+	}
+	for i := 0; i < 5000 && !rc.dialogue.waitingForConfirm(); i++ {
+		g.recruitInput(InputState{DirEdge: -1, DirHeld: -1})
+	}
+	if !rc.dialogue.waitingForConfirm() {
+		t.Fatal("hint inline wait missing")
+	}
+	for i := 0; i < 20; i++ {
+		g.recruitInput(InputState{DirEdge: -1, DirHeld: 0})
+	}
+	if !rc.dialogue.waitingForConfirm() || rc.stage != rcText {
+		t.Fatal("held key consumed inline wait")
+	}
+	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	drainRecruitmentSelectionText(t, rc)
+	if rc.stage != rcAgain || rc.cursor != 0 {
+		t.Fatal("hint confirmation must stop at separate Yes/No")
+	}
+	g.recruitInput(InputState{DirEdge: 3})
+	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	drainRecruitmentSelectionText(t, rc)
+	if rc.stage != rcFinalWait || !rc.active {
+		t.Fatal("farewell requires separate key")
+	}
+	g.recruitInput(InputState{DirEdge: -1, Enter: true})
+	if rc.active || len(g.roster) != 0 || len(g.companions) != 0 || g.prng != rng {
+		t.Fatal("empty View changed state")
 	}
 }

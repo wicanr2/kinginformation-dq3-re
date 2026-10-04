@@ -3881,3 +3881,49 @@ IDA輸入為assets_raw/DQ3.EXE，115282bytes，SHA-256 `5178fdc85021513392f60614
 九份JSON與041caf9逐byte相同，schema0.15.0／content0.1.87與canonical `sha256:2d712e65f18ce7919ddccf970160d68d00b63a54a73088bcd473c38a9fa61d10`保持。沒有存檔格式或交付變更。其他裝備頁未READY，原版Save／Load、音畫與完整原版campaign仍未知；正常THE END只證明remake可玩。
 
 公開producer即本次實際執行的 [dosgolem_recruitment_view_key_probe.py](../tools/dosgolem_recruitment_view_key_probe.py)；來源meta固定producer／generator／runtime／完整Go及binary hash，原版執行不使用私有額外patch。兩個公開新工具由本節索引。原版素材、PNG、binary、database與私有收據不加入Git。
+
+# 2026-10-04 空名冊觀看：DRAFT
+
+工作依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5978311832)，從af7d148接手。正常姓名取消後選否、下樓、選觀看；不建立角色，不注入名冊或遊戲狀態。原版冷啟動前seed1357固定一次。
+
+公開重生入口 [dosgolem_recruitment_empty_view_probe.py](../tools/dosgolem_recruitment_empty_view_probe.py)，沿本文件既有Docker、固定dosgolem2f44a68與唯讀原始資料掛載，參數 `--prefix` 必須全新。前164包沿已接受正常姓名取消來源，後接正式移動及觀看輸入。只附加唯讀入口、計數與文字觀察，不改原始程式。
+
+IDA9.4原始bytes與MZ relocation核對121指令，匯出 `work/issue4-empty-view-r1-ida.json` SHA-256 `7bdc4ca6dbeba0fb8affe46c708126cd975f98e3ca65190046ad5206aeadc216`。輸入assets_raw/DQ3.EXE115282bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；linear位址，file=linear−EC90，DGROUP基底linear24DD0。既有22筆語意索引保持。
+
+| 原始定位 | 推論等級 | 有界結論 |
+|---|---|---|
+| linear10624→10974→10627..1062F | strong | 計數後讀DGROUP5060；零時跳10696，不開名冊 |
+| linear10974..109A9 | strong | 掃角色槽1..11，旗標1計入CH，低byte寫DGROUP5060；高byte不作推測 |
+| linear10696..1069E→21414 | strong | 零名冊選record316並返回caller；文字bank與等待尚待正常動態來源 |
+| linear103A8..103D6 | strong | View返回後選record540；No選541、獨立讀鍵，再還原caller |
+
+目前remake空名冊仍進rcView，renderer沒有列表而Confirm沒有作用。原版來源接受前不改production；正常D3、紅測試、READY、資料契約與CONFORMED分開記錄。音樂完成仍遵守硬體時序停止線，不重新研究ISR。
+
+## 空名冊觀看：證據審查與有限 READY
+
+原版正常195包、466 IRQ1來源接受，`work/dosgolem-opening/issue4-empty-view-normal-r1-source-r2-receipt.json` SHA-256 `ff7a8abd5e93c867e5650f08a3af607feecf7013d7a781ff9a9ad2fd44eaeba7`。前164包與正常姓名取消來源0467c01b逐項相同，完整PNG／bin與174份母親父來源保持。實際producer即公開腳本，metadata固定generator／runtime／Go source及binary身份。
+
+- confirmed：191經10624→10974→10627，DGROUP5060為零；名冊12槽旗標為020000000000000000000000，只保留hero。經1062F→10696→10699選record316，原生D3TXT00文字bank2826，停內文等待216D8。
+- confirmed：192確認後完成316剩餘文字，1069E返回caller；103AE選540並開Yes／No。193選No，194選541並停獨立讀鍵21133，195返回field1997C、座標2,18。主角128bytes、金錢及旗標從150保持；View入口與返回名冊仍空。
+- 原始record316保留完整glyph codes及FFFC內文等待，兩個FFFE換行。文字為「要先到冒險者的登錄所」及後續登錄指引；不將等待嵌入可讀字串。
+- 修正前正式InputState正常195包第一次新blocker為191，`work/issue4-empty-view-red-r2/game.log` 明確重現空名冊缺內文等待；前188包仍沿正式新遊戲與正常姓名取消。
+- READY：pack必填`empty_view_text_id`引用D3原始316。rcMenu的View在空roster時播放該record，EOF後以具名有限延續接既有AgainTextID；一次新輸入只消費內文等待，不能同時選Yes／No。無需新geometry、名冊交易或RNG呼叫。非空View沿原有路線。
+- 新欄位使用schema0.16.0／content0.1.88；九份JSON同步，缺失、null、未知引用及非D3文字拒絕。舊schema或不同canonical hash存檔依既有策略拒絕，不自動遷移。
+- 來源限定空名冊View；不外推空Join、空Leave、滿隊、原版存讀檔、音訊或完整campaign。完整RGB另記，不以state通過聲稱V3。
+
+來源稽核入口 [verify_dosgolem_recruitment_empty_view.py](../tools/verify_dosgolem_recruitment_empty_view.py)，參數依序為產物目錄、前綴、實際producer與全新receipt。工具核對完整輸入IRQ、原生計數與文字、父來源、PNG／bin及field返回；原版產物留本機。
+
+環境勘誤：初版checker把187問候誤標waiting，實際為inline_wait；按原版log修正後乾淨重跑。首版收據缺共用畫面checker要求的頂層original_sha256，導致驗證腳本形狀錯誤；保留r1，r2補齊身份且原版執行、輸入與PNG不變。這兩項不記為產品缺陷。
+
+## 空名冊觀看：有限 CONFORMED
+
+- 正式空View播放pack的316完整字碼，再接540。正常195包、逐包位置與旗標、空名冊、持久snapshot／RNG、同版本Save／Load及下一步全部通過。一次確認只結束內文等待；元件另驗held key不消費及告別獨立等待。非空View、A／Esc及三路K正常回歸保持。
+- game463項完整覆蓋，416頂層／107子PASS、47選用SKIP；internal167頂層／344子PASS、11套件通過、4選用SKIP。沒有素材缺失SKIP。正常THE END130.07秒，desktop Linux x86_64 SHA-256 `f074a88692ea5d027bccc6f2a61e88c749fe7c6418af2c1a10e5a0b9d8635b1e`。game收據 `work/issue4-empty-view-full-r1/game-receipt.json` SHA-256 `0d46c863e2f5baff2e67be83bdb3df0b91c8a3335f7a18e77e87e57315329cd1`。
+- 原有九路線606張PNG逐byte保持；新正常46張留本機，其中150..164等於既有正常取消。原版前164包與其PNG／bin同樣保持。新187..194完整RGB各295，195為411；有限狀態E2／流程E3、畫面V2，完整V3仍RED。取圖未遮罩或指定人物相位，不將前批人物歸因外推本批全部差異。
+- 八種壞來源拒絕，正對照前後一致；收據 `work/issue4-empty-view-audit-r1.json` SHA-256 `467c47663e2c70e3feeadebdea14c9aacbef1726f4ee7a52b3aef89d66215188`。畫面收據 `work/issue4-empty-view-images-r1.json` SHA-256 `22b3fbca24dc58325c60b09c38971ebcb1d608a8e0d054a0d66fe58512391084`。
+- 九份JSON從乾淨af7d148由[公開遷移器](../tools/migrate_recruitment_empty_view_pack.py)重建逐byte一致，保留排版；schema0.16.0／content0.1.88，canonical `sha256:096fe3a764b72142fade8b8842cc6e9bc085c7a12f9242420120dafba7bd5c50`。重建收據 `work/issue4-empty-view-pack-rebuild-r1/receipt.json` SHA-256 `d3089b8f85553a6b2c6575f73790678049d5e5cbf70a56419fecf196c8f55f4c`。舊schema存檔拒絕，不自動遷移。
+- 原始定位索引保留22筆並追加1062F／10696兩筆有限confirmed；IDA9.4自動合併匯出121指令、bytes及MZ relocation核對，`work/issue4-empty-view-r2-ida.json` SHA-256 `21c8699354c3b548c15569157a6d6d84aa7dc9ddbf566cc78d9d4616b4f690cc`。計數高byte與其他空清單不外推。
+
+此來源checker固定本段195包的Go及binary hash，只接受已審查checkpoint；完整重生採相同`issue4-empty-view-normal-r1`前綴及全新可寫輸出掛載，原有父來源以唯讀輸入提供。更改prefix、producer或工具鏈要另行接受，不能只自行改metadata hash。
+圖片稽核兩次假失敗已查明：改名圖片位於子目錄，取消與創角路線又在157分岔。修正腳本後以真正正常取消150..164核對，保留完整606張非空路線檢查；不把分岔圖片當產品不一致。
+沒有新發行包，原版Save／Load、空Join／Leave、滿隊、其他裝備、多角色改名、音畫與完整原版campaign仍未知。Issue及Goal保持進行中。

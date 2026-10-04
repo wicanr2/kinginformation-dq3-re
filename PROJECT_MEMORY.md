@@ -1,9 +1,9 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-04 詳細頁第二次等待忽略一般字母鍵的卡住點已修正。正常A鍵209包、返回、snapshot／RNG、同版本存讀檔及下一步通過；Esc與三路K改名回歸保持。
-> 本輪37項受影響頂層與21項子測試通過、零SKIP；正常新遊戲至THE END112.88秒，desktop Linux x86_64通過。既有561張完整PNG與新45張保持。
-> schema0.15.0／content0.1.87及canonical2d712e65保持，九份JSON未變。完整RGB仍RED；其他裝備頁只有靜態strong證據，正常換裝後返回名冊的原版來源仍未知。
-> 唯一現況表在CONTEXT；有限READY、勘誤、收據與公開重生入口見docs/188，遠端工作依Issue #4。
+> 2026-10-04 空名冊觀看的空白卡住已修正。正常195包、內文等待、繼續詢問、告別及返回行走通過；snapshot／RNG、同版本存讀檔及下一步保持。
+> 完整game463覆蓋、416頂層／107子PASS、47選用SKIP；internal167頂層／344子PASS、11套件通過、4選用SKIP，沒有素材缺失SKIP。正常THE END130.07秒與desktop Linux x86_64通過。
+> schema0.16.0／content0.1.88、canonical096fe3a7；九份JSON從乾淨af7d148重建逐byte一致。九條舊路線606張PNG保持，新46張留本機；187..194完整RGB各295，195為411，完整V3仍RED。
+> 唯一現況表在CONTEXT，有限READY、CONFORMED與公開重生入口見docs/188。Issue #4保持進行中；下一步空Join／Leave正常來源，其他裝備、多角色改名、音畫與原版完整流程仍未知。
 
 以下保存前一checkpoint，現況以上方與CONTEXT的唯一狀態表為準。
 

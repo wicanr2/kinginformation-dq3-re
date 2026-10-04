@@ -126,6 +126,10 @@ func (g *Game) recruitInput(in InputState) {
 			case gamepack.RecruitLeave:
 				rc.stage, rc.cursor = rcLeave, 0
 			case gamepack.RecruitView:
+				if len(g.roster) == 0 && rc.selection != nil {
+					rc.startSelectionText(rc.selection.EmptyViewTextID, rcEmptyViewReturn)
+					return
+				}
 				rc.stage, rc.cursor = rcView, 0
 			}
 		case in.DirEdge == 0 || in.DirEdge == 3:

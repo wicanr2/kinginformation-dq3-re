@@ -12,6 +12,9 @@ const (
 	rcFinalWait
 )
 
+// 僅作文字EOF後的具名延續，不保存額外UI或資料交易。
+const rcEmptyViewReturn = rcViewSpells + 1
+
 func (rc *Recruit) startSelectionText(id string, next int) {
 	codes, ok := rc.texts[id]
 	if !ok {
@@ -29,6 +32,10 @@ func (rc *Recruit) selectionInput(in InputState) {
 	case rcText:
 		rc.dialogue.Tick()
 		if !rc.dialogue.open {
+			if rc.afterText == rcEmptyViewReturn {
+				rc.startSelectionText(rc.selection.AgainTextID, rcAgain)
+				return
+			}
 			rc.stage = rc.afterText
 			return
 		}

@@ -1493,3 +1493,16 @@ Docker檢查需主機權限，依既有隔離規則續做；一次性容器已�
 - 舊561張與新45張PNG保持；原版A／Esc全209PNG/bin相同，203..209全畫布差依序430、430、430、7、7、7、411，完整V3仍RED。收據與公開重生入口見docs/188；本機收尾c103a2f8。
 - 圖片稽核首次命令引用錯誤、收尾稽核首次收據誤寫唯讀/repo，均分類為腳本／掛載環境問題。修正後在同一image、同一輸入乾淨重跑；正式產品未因這些失敗改動。Docker image inspect的sandbox socket拒絕亦屬環境，實際工作沿既有image非root容器執行。
 - 原版DQ3.EXE保持5178fdc8，root-owned基線3213、零.md目錄；使用者13項未追蹤資料保留，未納入提交。沒有新發行包，所有原版素材與私有產物留本機。提交、推送及容器清理的最終核對以Issue #4本批留言與本機post-push收據為準。
+
+## 2026-10-04 空名冊觀看
+
+- 從af7d148依Issue #4續行，原版dosgolem仍2f44a68。入隊播放後等待沒有新執行器能力，維持硬體driver／ISR停止線。本輪選已列工作中的空名冊View，不重開已完成開場或改音樂時計。
+- 正常新遊戲、姓名取消、選No、下樓觀看共195包／466 IRQ1。前164包及完整PNG/bin保持；191原生零名冊分支選D3TXT00 record316，192內文確認後540、No→541獨立等待→195field。來源ff7a8abd，冷啟動前seed1357固定一次，無狀態／名冊注入。
+- 正式InputState修正前第一新blocker191，正常紅測試明確重現。docs/188有限READY後接具名EOF延續與pack文字引用；空名冊不開空白清單，不改RNG或持久角色。正常195包、存讀檔及下一步通過，非空View與A／Esc／三路K保持。
+- schema0.16.0／content0.1.88，canonical096fe3a7。九份JSON由乾淨af7d148與公開遷移器重建逐byte一致，保留排版；原始EXE／DAT parity與schema/reference負例通過。舊schema存檔仍拒絕，沒有自動遷移或新發行包。
+- 完整game463覆蓋、416頂層／107子PASS、47選用SKIP；internal167頂層／344子PASS、11套件通過、4選用SKIP，沒有素材缺失SKIP。正常THE END130.07秒與desktop Linux x86_64通過。收據work/issue4-empty-view-full-r1/game-receipt.json為0d46c863。
+- 九條舊路線606張完整PNG保持，新46張留本機；正常取消150..164保持。187..194完整RGB各295、195為411，沒有遮罩、裁切或指定相位；完整V3仍RED。八種壞來源拒絕且正對照前後一致；收據467c4766。圖片22b3fbca，乾淨pack重建d3089b8f。
+- IDA9.4以原始115282bytes／5178fdc8輸入，保留22筆原始定位語意，追加1062F／10696兩筆有限confirmed；r2自動合併匯出121條目，bytes及MZ relocation全符合，收據21c86993。計數高byte、其他空清單與完整流程不外推。
+- 環境／腳本失敗：容器socket需host權限；首次文件讀取誤用非現行檔名與.go目錄；checker將187誤標waiting，實際inline_wait；r1收據缺共用圖像checker的頂層原版身份。按相同原版來源修正，保留r1、r2收據及乾淨紅測試，不作產品缺陷。
+- 圖片稽核先漏改名子目錄，再誤用創角前綴代替取消前綴；查明157分岔後，以實際正常取消150..164重跑失敗部分，606張既有路線檢查保持。沒有為使圖片通過調整正式程式、輸入或相位。
+- 唯一現況表更新CONTEXT，現行計畫更新docs/74；新公開producer/checker/migration由docs/188及docs/84索引。所有原版素材、PNG、database與私有work留本機；使用者13項資料保留。提交、推送、擁有權及Docker清理以本輪收尾收據與Issue最終留言為準。

@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.15.0"
+	SchemaVersion       = "0.16.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"

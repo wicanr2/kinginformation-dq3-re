@@ -2081,3 +2081,20 @@ schema `0.14.0`／content `0.1.86` 在 `recruitment_selection.view_rename` 新�
 [遷移工具](../tools/migrate_recruitment_rename_pack.py)重建：
 `python3 tools/migrate_recruitment_rename_pack.py <乾淨pack目錄>`。
 工具在 Docker 內以 UID1000執行，核對輸入schema0.13.0／content0.1.85與九份檔案；不修改原版資料。
+
+## 空名冊觀看契約增補
+
+schema0.16.0／content0.1.88在`recruitment_selection`新增必填`empty_view_text_id`。
+欄位引用D3原始文字定義；缺失、null、未知引用或未審查文字拒絕，沒有Go文字fallback。
+本版引用D3TXT00 record316，逐word保留FFFC內文等待及FFFE換行；可讀`value`只保存文字與換行。
+原始計數、零名冊分支、文字bank、正常195包與有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。
+
+View在空roster時播放該record，EOF以具名有限延續接既有`again_text_id`。
+一次新輸入只消費內文等待，後續Yes／No與告別獨立等待沿既有契約；不改角色、名冊、金錢、旗標或RNG。
+這不是任意JSON程式，非空View路線保持。空Join、空Leave與滿隊未由此驗收。
+同版本Load清UI；舊schema及不同canonical hash存檔維持拒絕，不自動遷移。
+
+從乾淨af7d148九份JSON重建，用[遷移工具](../tools/migrate_recruitment_empty_view_pack.py)：
+`python3 tools/migrate_recruitment_empty_view_pack.py <乾淨pack目錄> <唯讀原始素材目錄> docs/data/glyph_unicode_map.json`。
+所有執行在既有`dq3-ebiten-test:20260822-r1` Docker內，以UID1000核對輸入及輸出擁有權。
+工具只遷移schema、content、文字引用與原始record316；沒有交付或發行變更。

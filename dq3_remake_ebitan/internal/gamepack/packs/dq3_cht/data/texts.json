@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.15.0",
+  "schema_version": "0.16.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -6676,6 +6676,73 @@
         "consumer": "18573..185C1 sorted union index +79h selects D3TXT00 record121..180; four columns, ceil rows",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+      }
+    },
+    {
+      "id": "dq3:text.recruitment_selection.empty_view",
+      "value": "*「要先到冒險者的登錄所\n*「去把想成為同伴的人\n  登錄起來,\n  再到這裡來!",
+      "glyph_codes": [
+        59,
+        60,
+        504,
+        606,
+        453,
+        533,
+        218,
+        187,
+        149,
+        607,
+        532,
+        608,
+        65532,
+        59,
+        60,
+        448,
+        530,
+        609,
+        610,
+        611,
+        601,
+        602,
+        149,
+        194,
+        65534,
+        12,
+        12,
+        607,
+        532,
+        583,
+        461,
+        55,
+        65534,
+        12,
+        12,
+        573,
+        453,
+        398,
+        512,
+        461,
+        57
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 316
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem195 sourceff7a8abd",
+        "address_space": "linear",
+        "address": "IDA9.4 linear10624..1069E;10974..109A9;103A8..103D6;DGROUP5060",
+        "consumer": "empty roster View -> record316 inline wait -> caller540 No ->541 read-key ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常姓名取消、名冊空的有限D3；不外推其他空清單、滿隊、原版存讀檔或完整V3。"
       }
     }
   ]

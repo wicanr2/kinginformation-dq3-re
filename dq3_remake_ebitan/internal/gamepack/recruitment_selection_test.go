@@ -42,7 +42,7 @@ func TestRecruitmentSelectionOriginalDataParity(t *testing.T) {
 		t.Fatal("original text identity")
 	}
 	tx := dq3data.LoadText(nil, data)
-	records := []int{530, word(5), word(7), word(8), 540, 541, 457, 458, 459, 460, 461, 462, 463, 464, 534, 535, 528}
+	records := []int{530, word(5), word(7), word(8), 540, 541, 457, 458, 459, 460, 461, 462, 463, 464, 534, 535, 528, 316}
 	for i, id := range s.TextIDs() {
 		d, _ := p.TextDefinition(id)
 		codes, _ := p.TextGlyphCodes(id)
@@ -54,6 +54,7 @@ func TestRecruitmentSelectionOriginalDataParity(t *testing.T) {
 		off   int
 		bytes string
 	}{
+		{0x199f, "eb65"}, {0x1a06, "bf3c01"},
 		{0x176d, "050300"}, {0x1770, "b104"}, {0x1772, "d3e0"}, {0x1774, "a31c3e"},
 		{0x1d55, "c70616071500"}, {0x1d5b, "c70618074e00"}, {0x1d86, "83c506"},
 		{0x1da9, "8306160712"}, {0x1dce, "830616071e"}, {0x177e, "803e260701"},
@@ -65,7 +66,7 @@ func TestRecruitmentSelectionOriginalDataParity(t *testing.T) {
 }
 
 func TestRecruitmentSelectionRejectsBrokenContract(t *testing.T) {
-	for _, name := range []string{"missing", "null_name", "missing_zero_step", "unknown", "unknown_window", "unknown_text", "unreviewed", "outside", "row_step", "header_rows", "unknown_class", "missing_class", "unknown_gender", "frame_control"} {
+	for _, name := range []string{"missing", "null_name", "missing_zero_step", "unknown", "unknown_window", "unknown_text", "unreviewed", "outside", "row_step", "header_rows", "unknown_class", "missing_class", "unknown_gender", "frame_control", "missing_empty_view", "null_empty_view", "unknown_empty_view"} {
 		t.Run(name, func(t *testing.T) {
 			p, e := BuiltinDQ3()
 			if e != nil {
@@ -103,6 +104,12 @@ func TestRecruitmentSelectionRejectsBrokenContract(t *testing.T) {
 				m["gender_text_ids"].([]any)[0] = "unknown"
 			case "frame_control":
 				m["row_text_id"] = m["prompt_text_id"]
+			case "missing_empty_view":
+				delete(m, "empty_view_text_id")
+			case "null_empty_view":
+				m["empty_view_text_id"] = nil
+			case "unknown_empty_view":
+				m["empty_view_text_id"] = "unknown"
 			}
 			if name != "missing" {
 				raw, _ = json.Marshal(m)

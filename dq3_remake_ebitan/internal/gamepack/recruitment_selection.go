@@ -7,30 +7,31 @@ import (
 )
 
 // RecruitmentSelection 保存 docs/188 有限 READY 的清單與取消契約。
-// 完整入隊、空名冊與滿隊的正常原版來源另待閉合。
+// 空名冊View依195包正常來源閉合；其他空清單及滿隊另待驗。
 type RecruitmentSelection struct {
-	ID             string              `json:"id"`
-	EntryID        string              `json:"entry_id"`
-	RawWindow      RawNewGameWindow    `json:"raw_window"`
-	ExtraRows      int                 `json:"extra_rows"`
-	PromptTextID   string              `json:"prompt_text_id"`
-	HeaderTextID   string              `json:"header_text_id"`
-	RowTextID      string              `json:"row_text_id"`
-	FooterTextID   string              `json:"footer_text_id"`
-	AgainTextID    string              `json:"again_text_id"`
-	FarewellTextID string              `json:"farewell_text_id"`
-	ContinueTextID string              `json:"continue_text_id"`
-	Name           GeometryAnchor      `json:"name"`
-	NameCapacity   int                 `json:"name_capacity"`
-	Level          NumberField         `json:"level"`
-	Class          GeometryAnchor      `json:"class"`
-	Gender         GeometryAnchor      `json:"gender"`
-	Cursor         GeometryAnchor      `json:"cursor"`
-	HitRect        GeometryRect        `json:"hit_rect"`
-	ClassOptions   []RegistrationClass `json:"class_options"`
-	GenderTextIDs  []string            `json:"gender_text_ids"`
-	ViewRename     *RecruitmentRename  `json:"view_rename"`
-	Evidence       Evidence            `json:"evidence"`
+	ID              string              `json:"id"`
+	EntryID         string              `json:"entry_id"`
+	RawWindow       RawNewGameWindow    `json:"raw_window"`
+	ExtraRows       int                 `json:"extra_rows"`
+	PromptTextID    string              `json:"prompt_text_id"`
+	HeaderTextID    string              `json:"header_text_id"`
+	RowTextID       string              `json:"row_text_id"`
+	FooterTextID    string              `json:"footer_text_id"`
+	AgainTextID     string              `json:"again_text_id"`
+	FarewellTextID  string              `json:"farewell_text_id"`
+	ContinueTextID  string              `json:"continue_text_id"`
+	EmptyViewTextID string              `json:"empty_view_text_id"`
+	Name            GeometryAnchor      `json:"name"`
+	NameCapacity    int                 `json:"name_capacity"`
+	Level           NumberField         `json:"level"`
+	Class           GeometryAnchor      `json:"class"`
+	Gender          GeometryAnchor      `json:"gender"`
+	Cursor          GeometryAnchor      `json:"cursor"`
+	HitRect         GeometryRect        `json:"hit_rect"`
+	ClassOptions    []RegistrationClass `json:"class_options"`
+	GenderTextIDs   []string            `json:"gender_text_ids"`
+	ViewRename      *RecruitmentRename  `json:"view_rename"`
+	Evidence        Evidence            `json:"evidence"`
 }
 
 // RecruitmentRename selects a reviewed finite rename primitive. The name
@@ -81,7 +82,7 @@ func (s RecruitmentSelection) TextIDs() []string {
 	for _, option := range s.ClassOptions {
 		ids = append(ids, option.TextID)
 	}
-	return append(append(ids, s.GenderTextIDs...), s.ContinueTextID)
+	return append(append(ids, s.GenderTextIDs...), s.ContinueTextID, s.EmptyViewTextID)
 }
 
 func (p *Pack) validateRecruitmentSelection() error {

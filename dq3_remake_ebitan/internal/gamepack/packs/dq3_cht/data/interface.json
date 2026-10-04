@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.15.0",
+  "schema_version": "0.16.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -3007,6 +3007,7 @@
     "again_text_id": "dq3:text.recruitment_selection.again",
     "farewell_text_id": "dq3:text.recruitment_selection.farewell",
     "continue_text_id": "dq3:text.recruitment_entry.question",
+    "empty_view_text_id": "dq3:text.recruitment_selection.empty_view",
     "name": {
       "x": 168,
       "y": 78,

@@ -256,6 +256,32 @@
       "consumer": "正常Class3初裝206的A鍵：10686→10689→1068E→1F604，後接540／541及正常場景",
       "review_reference": "docs/188：2026-10-04 一般字母鍵有限READY；正常A動態，不聲稱逐鍵窮舉",
       "dynamic_evidence": "work/dosgolem-opening/issue4-view-close-key-normal-r1-source-r1-receipt.json SHA256 c0a7bc08fa22e5f144e5475b7aa5bb87c5599ea353ccea8c146bfa77008069fc；206 AX1E00；IDA原始140條目78b5d559"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x1062f",
+      "file_offset": "0x199f",
+      "bytes": "eb65",
+      "semantic": "零名冊View不開清單，直接進登錄指引",
+      "inference_level": "confirmed",
+      "consumer": "10624→10974計數；191 DGROUP5060為零、12槽只hero；1062F→10696",
+      "review_reference": "docs/188：2026-10-04 空名冊觀看有限READY；不外推其他空清單與完整V3",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-empty-view-normal-r1-source-r2-receipt.json SHA256 ff7a8abd5e93c867e5650f08a3af607feecf7013d7a781ff9a9ad2fd44eaeba7；191..195正常來源；IDA121指令7bdc4ca6"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x10696",
+      "file_offset": "0x1a06",
+      "bytes": "bf3c01",
+      "semantic": "空名冊View選D3TXT00 record316",
+      "inference_level": "confirmed",
+      "consumer": "191內文等待→192完成316、1069E返回caller540→No→541→195field；名冊保持空",
+      "review_reference": "docs/188：2026-10-04 空名冊觀看有限READY；不外推其他空清單與完整V3",
+      "dynamic_evidence": "work/dosgolem-opening/issue4-empty-view-normal-r1-source-r2-receipt.json SHA256 ff7a8abd5e93c867e5650f08a3af607feecf7013d7a781ff9a9ad2fd44eaeba7；191..195正常來源；IDA121指令7bdc4ca6"
     }
   ]
 }
