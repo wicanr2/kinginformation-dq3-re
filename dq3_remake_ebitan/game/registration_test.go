@@ -142,12 +142,18 @@ func runRegistrationNormalComparison(t *testing.T, dir, out string, birth, entry
 
 type registrationComparisonRoute struct {
 	birth, entry, selection, yes, join, view, detail bool
+	rename                                           int // 2=相同姓名、4=取消、5=不同姓名；只選私有原版收據。
 }
 
 func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route registrationComparisonRoute) {
 	birth, entry, selection := route.birth, route.entry, route.selection
 	yes, join, view := route.yes, route.join, route.view
 	detail := route.detail
+	rename := route.rename
+	nameCount := map[int]int{2: 12, 4: 7, 5: 14}[rename]
+	if rename != 0 && (!detail || nameCount == 0) {
+		t.Fatal("invalid rename comparison route")
+	}
 	if detail && !view {
 		t.Fatal("detail requires view route")
 	}
@@ -183,6 +189,9 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 		if detail {
 			family, suffix, want = "issue4-recruit-view-detail-r1", "-source-r1-receipt.json", 205
 		}
+		if rename != 0 {
+			family, suffix, want = fmt.Sprintf("issue4-view-rename-normal-r%d", rename), "-source-r2-receipt.json", 202+nameCount+3
+		}
 		stem := fmt.Sprintf("registration-birth-%v", birth)
 		if entry {
 			stem = "recruitment-entry"
@@ -202,6 +211,9 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 		if detail {
 			stem = "recruitment-view-detail"
 		}
+		if rename != 0 {
+			stem = fmt.Sprintf("recruitment-rename-%d", rename)
+		}
 		path := filepath.Join(dir, family+suffix)
 		raw, e := os.ReadFile(path)
 		if e != nil {
@@ -219,6 +231,9 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 		}
 		if detail {
 			oracleHash = "e61060c7db7007c5a76e3790f4d55cc2c252619fd04c5cf572f615bc8fb69ee0"
+		}
+		if rename != 0 {
+			oracleHash = recruitmentRenameOracleHash(t, rename)
 		}
 		if selection && fmt.Sprintf("%x", sha256.Sum256(raw)) != oracleHash {
 			t.Fatal("selection oracle receipt identity differs")
@@ -267,6 +282,8 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 			if scan == 0x1c {
 				in.Enter = true
 				in.Confirm = true
+			} else if scan == 0x25 {
+				in.Rename = true
 			} else if scan == 0x01 {
 				in.Cancel = true
 			} else {
@@ -393,8 +410,35 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 							stages = map[int]int{197: rcMenu, 198: rcMenu, 199: rcView, 200: rcViewAbility, 201: rcViewClose, 202: rcAgain, 203: rcAgain, 204: rcFinalWait}
 							cursors = map[int]int{197: 1, 198: 2, 199: 0, 200: 0, 201: 0, 202: 0, 203: 1}
 						}
+						if rename != 0 {
+							stages = map[int]int{197: rcMenu, 198: rcMenu, 199: rcView, 200: rcViewAbility, 201: rcViewClose}
+							cursors = map[int]int{197: 1, 198: 2, 199: 0, 200: 0, 201: 0}
+							for packet := 202; packet < 202+nameCount; packet++ {
+								stages[packet] = rcViewRename
+							}
+							stages[202+nameCount], stages[203+nameCount], stages[204+nameCount] = rcAgain, rcAgain, rcFinalWait
+							cursors[202+nameCount], cursors[203+nameCount] = 0, 1
+							if g.recruit.stage == rcViewRename {
+								compareRecruitmentRenameWidget(t, g, s)
+							}
+						}
+						expectedSnapshot := viewSnapshot
+						if rename == 5 && i+1 >= 202+nameCount {
+							expectedSave, err := decodeSave(viewSnapshot)
+							if err != nil {
+								t.Fatal(err)
+							}
+							expectedSave.HeroName = []int{5}
+							expectedSnapshot, err = encodeSave(expectedSave)
+							if err != nil {
+								t.Fatal(err)
+							}
+							if !reflect.DeepEqual(g.dlg.heroName, g.heroName) {
+								t.Fatal("rename dialogue name is stale")
+							}
+						}
 						current, err := encodeSave(g.snapshot())
-						if err != nil || string(current) != string(viewSnapshot) || g.prng != viewRNG {
+						if err != nil || string(current) != string(expectedSnapshot) || g.prng != viewRNG {
 							t.Fatal("view changed persistent state or RNG")
 						}
 					}
@@ -410,7 +454,9 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 				}
 				g.renderFrame()
 				if detail && i+1 == 200 {
-					compareRecruitmentViewActorFixture(t, g, path, out, fmt.Sprintf("%s-packet-%03d-%s.png", family, i+1, s["phase"]))
+					if rename == 0 {
+						compareRecruitmentViewActorFixture(t, g, path, out, fmt.Sprintf("%s-packet-%03d-%s.png", family, i+1, s["phase"]))
+					}
 					detailCanvas = append([]byte(nil), g.rgba...)
 				}
 				if detail && i+1 == 201 && string(g.rgba) != string(detailCanvas) {

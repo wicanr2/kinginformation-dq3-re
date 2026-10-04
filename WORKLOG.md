@@ -1461,3 +1461,14 @@ Docker檢查需主機權限，依既有隔離規則續做；一次性容器已�
 - 九份JSON與乾淨9f81ddb archive相同，schema0.13.0／content0.1.85／canonical19f6124c保持。來源、驗收、負例與本機工具入口全部掛docs/188；typed能力引用見docs/84。
 - 收尾核對 `a810fd7ead661b6aa8c6ee18e285793919345e2274dc916d34c924b0c3ce3d45`，全畫布 `208f0f0bf88c3e5aecfee546e4fdf9b243ec05246c156becd761610fe684cab5`。根擁有權基線3213、零.md目錄與UID1000保持。提交推送與容器清理結果保存`work/issue4-view-detail-r1-post-push.json`，並追加Issue #4。
 - 原版素材、圖片、binary、database、使用者13項scratch未加入Git，沒有新發行包。下一步K改名與已學咒文頁、人物動畫及後續原版流程，Goal保持進行中。
+
+## 2026-10-04 觀看詳細狀況的單人隊伍K改名
+
+- Issue #4正常K入口202包、同名217包、取消212包、異名219包已接受。重新依隊伍選主角507F，能力副本與未入隊名冊不變。全部來源沿dosgolem2f44a68、一次seed1357與正常IRQ1，不注入角色。
+- IDA9.4原始bytes及正常writer／consumer閉合後，docs/188有限READY接typed pack與正式InputState；第一等待K不跨讀鍵，第二等待開空姓名窗。空名拒絕、取消不寫入，成功只修改主角姓名並同步對話；接540／No／541正常返回。
+- 三路正常重播、持久snapshot、另行RNG、UI欄位、存讀檔與下一步通過。姓名窗完整RGB11926降76，69為既有HP數字、7為既有NPC影格；差分位置與雙側RGB落在既有145差分。完整V3仍RED，沒有改角色、裁切、遮罩或指定phase。
+- 六路線315張PNG與三新路線前綴156張保持，新正常201張留本機；取消及異名本次返回零差異，同名返回411不變。公開producer完整Go除前綴外等於已執行來源，公開validator重新接受；八種壞來源全拒絕。
+- schema0.14.0／content0.1.86／canonical e274124c；九份JSON由乾淨28690cc與公開遷移器重建且逐byte相同。首版排版擴展已修正，typed資料保持；末版原始EXE parity、壞契約及desktop再次通過。舊schema存檔仍拒絕，不自動遷移。
+- 完整game454覆蓋，407頂層／107子PASS、47選用SKIP；internal164頂層、11套件PASS、4選用SKIP；正常THE END156.69秒與desktop Linux x86_64 PASS，沒有素材缺失SKIP。同binary的X11環境失敗以Xvfb -noreset重跑通過；三路改獨立程序，沒有OOM事件不推定原因。
+- IDA索引保留11筆追加6筆confirmed，r3匯出321指令與原始bytes／relocation全符合。來源、公開工具、負例、全畫布與本機重生入口掛docs/188，欄位掛docs/84；唯一狀態表更新CONTEXT。
+- root-owned3213及零.md目錄保持；最後檢查首版把既有root-owned.md檔誤當目錄，修正判斷後乾淨重跑。13項使用者資料、原版、PNG、binary、database及私有work不加入Git，Docker容器收尾清理。沒有新發行包，完整View、多角色改名、咒文與原版campaign未完成；Issue與Goal保持進行中。

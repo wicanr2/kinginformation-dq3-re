@@ -11,7 +11,8 @@ View入口不消費`prompt_text_id`，只列未入隊名冊；取消仍使用`ag
 原始EXE呼叫與共用窗口引用測試在[recruitment_view_test.go](../dq3_remake_ebitan/internal/gamepack/recruitment_view_test.go)。
 正式兩次等待與只讀頁面入口在[recruitment_view.go](../dq3_remake_ebitan/game/recruitment_view.go)。
 正常205包、同角色renderer及存讀檔測試在[觀看詳細狀況測試](../dq3_remake_ebitan/game/recruitment_view_test.go)。
-本輪不新增欄位、schema或canonical hash。非初裝、已學咒文或異常狀態保持清單，不能用cloth label猜裝備。
+上述能力頁切片不新增欄位、schema或canonical hash；後續改名新增的`view_rename`見本文末節。
+非初裝、已學咒文或異常狀態保持清單，不能用cloth label猜裝備。
 有限範圍、正常205包與同角色元件畫面區分見[docs/188](188-opening-escort-to-castle-spec.md)。
 
 `interface.recruitment_selection`為必填物件。有限READY、原始定位與正常來源見
@@ -2051,3 +2052,16 @@ OGG及ROM不得加入Git或公開發行包。此批沒有建立新交付目錄�
 拒絕Load不改UI或音訊等待。原版Save／Load、播放後動態返回及完整V3仍未知。
 
 目前入隊切片canonical hash為`sha256:19f6124c5f03c9f14c2909b94be5ac48438df956ea8b59e82af58c8168c558f6`，不覆寫前一選人checkpoint的歷史hash。
+## 單人隊伍改名契約增補
+
+schema `0.14.0`／content `0.1.86` 在 `recruitment_selection.view_rename` 新增必填契約。
+`input_action` 為具名 `rename`，`target_scope` 為受驗證的 `singleton_party_leader`，
+`require_nonempty_name` 必須明示為 `true`，證據至少 D3。未知動作、目標、缺欄位、null 或未審查證據均拒絕。
+引擎在詳細狀況第二等待消費 Rename，單人隊伍重新選主角，沿既有姓名幾何與文字輸入。
+成功只改主角姓名並同步對話引用；取消與空名完成不改角色。多角色隊伍保持第二等待。
+改名窗暫態不存入 Save；舊 schema／不同 canonical hash 存檔維持拒絕，不自動遷移。
+原始 caller、writer、正常來源與 READY 範圍見[docs/188](188-opening-escort-to-castle-spec.md)。
+九份 JSON 可由前一乾淨 `28690cc` 的資料包，使用
+[遷移工具](../tools/migrate_recruitment_rename_pack.py)重建：
+`python3 tools/migrate_recruitment_rename_pack.py <乾淨pack目錄>`。
+工具在 Docker 內以 UID1000執行，核對輸入schema0.13.0／content0.1.85與九份檔案；不修改原版資料。

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.13.0",
+  "schema_version": "0.14.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -3081,6 +3081,21 @@
       "dq3:text.recruitment_selection.gender.0",
       "dq3:text.recruitment_selection.gender.1"
     ],
+    "view_rename": {
+      "input_action": "rename",
+      "target_scope": "singleton_party_leader",
+      "require_nonempty_name": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c + dosgolem rename entry fe3df116, success631414a8, cancelc139c899",
+        "address_space": "linear",
+        "address": "IDA9.4 linear10686..106DB;1885F..1886F;10D17..10DA3;DGROUP5077/722/726/4F15",
+        "consumer": "second read-key K -> singleton party leader -> shared nonempty name input -> 18-byte name copy or cancel ->540 No ->541 ->field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限單人隊伍READY；觀看名冊與520B副本不改。多角色隊伍選人未READY，缺資料拒絕；不宣稱原版存讀檔或完整V3。"
+      }
+    },
     "evidence": {
       "level": "D3",
       "source_kind": "exe",

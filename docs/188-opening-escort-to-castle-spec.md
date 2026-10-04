@@ -3636,3 +3636,164 @@ r7與r8正式產品相同，r8只訂正被原版推翻的舊測試；不重跑�
 可重生入口為`work/issue4-view-detail-production-r7-run.py`與`-r8-run.py`，日誌及PNG在各自`-full/`。
 Docker一次性容器清理、UID1000寫入、root-owned基線3213、零.md目錄與使用者13項資料保持。
 原版、PNG、binary、database及私有收據不加入Git；沒有新發行包。Issue #4與Goal保持進行中。
+
+### 2026-10-04 K 改名入口 DRAFT
+
+本切片接在已接受的詳細狀況第二等待。正式程式仍為 `28690cc`，
+schema0.13.0／content0.1.85 保持。以下靜態結論尚未當作完整玩家路徑證實。
+
+IDA Pro 9.4 的非破壞匯出在 `work/issue4-view-rename-r2-ida.json`，
+SHA-256 `ad8fee33b365c1ebd6174387ba36fd1e9c554a08247b53384b5b34825ee3576c`。
+321 筆原始指令與 MZ relocation 後的 bytes 全部符合；腳本 SHA-256
+`7449809f01391a4faadaf9850c94ab36694f9916cf1d3f4358f63ac066d1c981`。
+輸入為 `assets_raw/DQ3.EXE`，115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+位址空間為 IDA linear，file = linear − 0xEC90，DGROUP 基底 linear 0x24DD0。
+原始名稱、bytes、xref 與範圍保留，database 及原版資料不加入 Git。
+
+| 原始定位（IDA linear） | 分級與候選語意 |
+|---|---|
+| 10686 `80fc25`，1068B `e81100` | strong：第二等待收到 K 掃描碼 25h 時呼叫 1069F |
+| 106A8 → 1885F；1885F..1886F | strong：重新依 DGROUP 5077 隊伍人數選人，單人隊伍將 DGROUP 722 設為 1 後直接返回 |
+| 106B3..106BF | strong：依選擇索引取 `[bx+4F15h]` 角色指標，再呼叫 10D17 共用姓名輸入；不能以名冊的 520B 副本代替目標 |
+| 10D17..10D45 | strong：清空新姓名狀態，開共用姓名窗及輸入器 |
+| 10D84..10D99 | strong：完成要求非空姓名，重算並寫入 DGROUP 270E 字串長度 |
+| 106C2..106DB | strong：取消則返回；成功將 DGROUP 270E 的 18 bytes 複製到選中角色指標 + 3 |
+| 1068E..10695 | strong：改名返回後恢復能力窗底圖，再回到既有 caller |
+
+尚待正常動態閉合：實際改名目標、成功與取消交易、返回畫面與後續存讀檔。
+多角色隊伍的選人窗尚未 READY。不得因觀看的是未入隊角色，就推定改名也修改該角色。
+
+兩份 DRAFT 正常來源分別由 `work/issue4-view-rename-r1-producer.py` 與
+`work/issue4-view-rename-r2-producer.py` 在既有 `dq3-ebiten-test:20260822-r1` 容器執行。
+沿用唯讀 dosgolem `2f44a68`、原版冷啟動及一次固定 seed1357，不注入角色或更改時鐘。
+第一份停在 K 後的姓名輸入；第二份沿已驗證的出生姓名鍵序完成，再選 No 返回。
+入口稽核為 `work/issue4-view-rename-r1-validator.py`；接受前須核對原先 201 包、
+IRQ1、完整 640×350 PNG／bin 與角色資料。工作及來源索引見
+[Issue #4 留言](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5977022721)。
+原始圖像、執行檔與收據留本機；本節狀態為 DRAFT，尚未宣稱 remake parity。
+
+#### 單人隊伍改名有限 READY
+
+原版入口202包、480 IRQ1與404完整PNG／bin已接受，前201包保持。
+入口收據 `work/dosgolem-opening/issue4-view-rename-normal-r1-source-r2-receipt.json`
+SHA-256 `fe3df1165b4d7e27c1f5f2701ec59bfe3d078f9b20ea0f8ab9c4b2556d805f9c`。
+相同姓名完成及正常No返回217包已接受，434完整PNG／bin、510 IRQ1；
+首版交易收據 SHA-256 `631414a8c988b465f1c5768fd20c9fea6dee8cf04a1ebfa471da7295296ace9d`。
+姓名功能列取消及No返回212包已接受，424完整PNG／bin、500 IRQ1；
+收據 `work/dosgolem-opening/issue4-view-rename-normal-r4-source-r2-receipt.json`
+SHA-256 `c139c899b83f915e19c6b395845f6d42adb207142ba77c699f70e1c49ae1d6dc`。
+兩者前202包、名冊97bytes、旗標、金錢、位置、場景及全部角色指標保持。
+稽核入口為 `work/issue4-view-rename-r1-validator.py` 與
+`work/issue4-view-rename-tail-validator.py`，保留先前收據，不覆寫歷史。
+
+上述10686至106DB的有限單人分支升為 confirmed：
+入口游標5，1885F後改為1，106BE的DI為DGROUP507F，重新選中主角。
+成功依序經106C2、106CB、106D8、106DA、1068E；18bytes目標從507F+3至507F+3+18。
+取消在106C2觀察到DGROUP726=1，未經106CB／106D8／106DA，直接回1068E。
+眼前能力頁的520B副本及未入隊535E角色不變。之後均接540、No、541及1997C。
+姓名非空閘門沿同一10D17輸入器及既有已驗證的姓名契約，不新增文字或視窗猜值。
+
+READY範圍為單人隊伍，在第二等待以具名Rename輸入開空姓名窗。
+第一等待的K只消費第一次讀鍵，不同時開改名。姓名完成只修改主角姓名並同步對話姓名引用，
+取消與空姓名完成不得寫角色；兩者返回既有540流程。
+姓名窗保留正在觀看的能力頁與caller底圖，沿既有game-pack姓名幾何、文字與點陣renderer。
+多角色隊伍尚未READY，保持第二等待，不猜選人窗。pack缺引用或設定一律拒絕。
+暫態不存檔；有效Load清除改名UI，拒絕Load保持輸入，成功姓名需同版本存讀檔與下一步驗證。
+有限交易還需不同姓名的正常來源、正式InputState路徑與全畫布驗收後才宣稱CONFORMED。
+
+隔離入口診斷 `work/issue4-view-rename-prototype-r2.py` 保留兩側原本角色，
+正式未修正入口差11926，共用姓名窗prototype差76；沒有角色注入、裁切、遮罩或調動畫相位。
+原版與remake的HP輸入差異保持。驗證首版收據缺頂層原版身分欄位，另存補齊欄位的r2，
+未放寬畫面驗證；該失敗屬收據格式問題。
+不同姓名首版r3停在姓名輸入，原因是相鄰字格回功能列少一次左鍵；不列成完成來源。
+修正r5以同一初始seed與明示鍵序重跑，未重擲或挑結果。取消來源不受此腳本問題影響。
+
+#### 公開改名重生與驗證入口
+
+[正常改名探針](../tools/dosgolem_recruitment_view_rename_probe.py)支援三條受驗證的正常輸入：
+`--route 2`為相同姓名成功，`--route 4`為功能列取消，`--route 5`為不同姓名成功。
+英數格 raw1 的字模為5，來自既有rec453欄優先語意表；不能把 raw index 1 當字模1。
+不同姓名來源 `work/dosgolem-opening/issue4-view-rename-normal-r5-source-r2-receipt.json`
+SHA-256 `0d43e2bc421854b87dc0dd2c2fd177c9eca4bdfaa2a1609bfa5e4099ef437cef`，
+219包、514 IRQ1、438完整PNG／bin，前202包保持。主角只有原始97bytes的+7從0改5，
+完整128bytes其他欄位、名冊、角色指標、旗標、金錢、位置及場景保持。
+相同姓名新版來源SHA-256 `7cf247fd19a34022a4507fb404eee6325d4654281ba507cb60baeffe409c512d`，
+補齊頂層原版身分欄位，既有631414a8首版保留。
+
+在既有Docker image、UID1000、唯讀repo及dosgolem2f44a68、可寫work執行：
+`python3 /repo/tools/dosgolem_recruitment_view_rename_probe.py --route 5 --prefix <新來源前綴>`。
+`work/dosgolem-opening`沿用母親完成的已接受父收據9358ce6e，工具拒絕既有前綴，
+seed1357在執行前固定一次。每個正常按鍵只在原生等待排入IRQ1；角色觀察唯讀。
+不同姓名已由原版正常完整流程證實，不能以未完成的r3來源取代。
+
+[正常改名來源稽核](../tools/verify_dosgolem_recruitment_view_rename.py)核對父來源、
+producer及frozen Go／binary身分、完整按鍵序、IRQ1、每包等待點、全PNG／bin及角色交易：
+`python3 /repo/tools/verify_dosgolem_recruitment_view_rename.py /work/dosgolem-opening <來源前綴> 5 <實際producer路徑> <新收據路徑>`。
+原版收據由dosgolem自行重生；稽核本身不執行或修改遊戲，拒絕部分來源與覆寫。
+公開契約在[docs/84](84-game-pack-json-contract.md)；原版素材、圖片、binary與收據不公開。
+
+#### 2026-10-04 單人隊伍改名正式驗收
+
+依上述原版三路證據，有限READY已接入正式typed pack及InputState，
+schema0.14.0／content0.1.86，canonical hash
+`sha256:e274124c2eebdb03a36a6da5e4a1110e1ea82a182699619e336bba2aeea25ec7`。
+第二等待的Rename開既有空姓名輸入器，第一等待的K只消費第一次讀鍵。
+非空成功只改主角姓名並同步對話引用；取消、空名與未READY多角色不寫入角色。
+成功與取消接540、No、541及正常場景返回。設定、幾何、文字全由pack引用，沒有新增Go原版raw ID或玩家句子。
+本節CONFORMED僅限單人、無已學咒文、無異常、pack初裝角色及受驗證的三條正常路線；狀態E2、流程E3、畫面V2。
+多角色選人、已學咒文、其他裝備、原版Save／Load及完整View仍未知，完整V3仍RED。
+
+正式三路217／212／219包均從新遊戲及正常玩家輸入重播，
+逐包持久snapshot與另行RNG比較、名字窗游標／模式／長度、成功與取消交易、
+同版本存讀檔及Load後下一步通過。有效Load清姓名暫態，拒絕Load保留；空名與容量閘門元件通過。
+不同姓名正式字模為5，原版97bytes只有+7由0改5，未入隊角色保持。
+正常測試每路分開程序，沒有座標注入、直接事件函式或debug入口。
+
+新正常PNG同名68、取消63、異名70，共201張；各自前52張逐byte等於詳細狀況舊樣本。
+六條既有路線315張PNG保持。全部640×350 RGB核對，未裁切、遮罩、指定phase或替換角色。
+姓名窗完整差11926降76；69為HP數字、7為既有NPC影格，
+差分位置及雙側RGB逐點屬於先前能力窗145差分，沒有新增未解釋差異。
+能力200／201仍145，caller各295，同名返回217為411；取消212與異名219本次返回完整RGB零差異。
+返回零差異僅對本次樣本成立，不外推動畫或完整流程。兩側正常HP11／13不改值湊圖。
+全畫布入口 `work/issue4-view-rename-production-r1-audit.py`，收據
+`work/issue4-view-rename-production-r1-audit.json` SHA-256
+`3a2c2d6f7e146249c51d05fb73a510f19f4fd213ee1f27af5a6a3336c5d52e13`。
+
+公開producer產生的完整Go與已執行的frozen Go，除輸出前綴外逐byte相同，
+涵蓋bootstrap、正常按鍵、虛擬時間及唯讀observer；此核對沒有再次執行或注入原版。
+入口 `work/issue4-view-rename-public-proof-r1.py`，收據SHA-256
+`4523dbb9a3197c0b352926e018c0d303bf913fe851cd9463437bff941453f15a`。
+公開validator再次接受異名來源，另存
+`work/issue4-view-rename-public-r5-receipt.json` SHA-256
+`f3830912c5da369f79a7abe41bd50f8df1d2d162db94e906e84cc0677c9aeb27`；不覆寫正式測試固定的0d43e2bc來源收據。
+八種損壞全部拒絕：錯seed、原版身分、缺consumer、提前寫姓名、錯目標、缺PNG、錯bin及缺正常返回。
+前後正對照相同；入口 `work/issue4-view-rename-negative-r1.py`，收據SHA-256
+`1d0afca79213d0427ffd75314303d6e10ee702f283bc3214422d7265c47653ee`。
+
+[IDA語意索引](../tools/ida_recruitment_selection_ledger.json)保留舊11筆，追加6筆confirmed，
+逐筆保留輸入身分、IDA linear、file offset、bytes、consumer、有限範圍與動態證據。
+匯出器自動合併到原指令，未改名覆蓋原始定位。
+新匯出 `work/issue4-view-rename-r3-ida.json` SHA-256
+`5d3c0c1dd0305243afd1f3b9da3f97a97498ebe76a23d1e30730cdd4d919964c`，
+321筆relocation後bytes全符合，6筆新語意自動附註且confirmed；其餘未知保持警示。
+輸入與位址基準同上，database只在容器/tmp，不加入Git。
+
+九份JSON由乾淨28690cc archive及[遷移器](../tools/migrate_recruitment_rename_pack.py)重建，
+逐byte等於現行pack，保留原有排版。首版json.dump擴展排版已訂正，typed資料與canonical hash保持。
+重建收據 `work/issue4-view-rename-pack-rebuild-r2.json` SHA-256
+`2743ba2ac9ab2ef3b1a3e5864443b371893d8d356cb60c44980983b42a08b2d3`。
+最後排版版本的原始EXE parity、7種壞契約、pack hash與desktop建置再次通過，
+入口 `work/issue4-view-rename-final-checks-r1.py`，收據在同名前綴目錄，SHA-256
+`2271e06821f8ac65ea0e193cedff76871b8ceb4642cdc7b33a61bcb577c24132`。
+
+完整game454項清單覆蓋，407頂層／107子PASS、47選用SKIP；
+全部11個internal套件、164頂層PASS、4選用SKIP，沒有素材缺失SKIP。
+正常新遊戲至THE END156.69秒及desktop Linux x86_64 ELF通過，只屬remake回歸。
+完整結果在 `work/issue4-view-rename-production-r5-full/`；各正常PNG及日誌在r4-full，
+可重播入口 `work/issue4-view-rename-production-r4-run.py`、`-r5-run.py`。
+三路首次單程序連跑被終止，改分路程序；未有OOM事件證據，不稱確定記憶體溢位。
+全套唯一X11初始化失敗以同一binary及新Xvfb -noreset重跑通過，正式產品未改。
+原版fixture缺頂層hash、raw格誤當字模、漏掛/assets_raw及檢查器誤將既有.md檔當目錄均屬驗證問題，保留歷史。
+原版、PNG、binary、資料庫及私有收據只留本機；UID1000、root-owned基線3213、零.md目錄及使用者13項資料保持。
+沒有新image或發行包，Issue #4與Goal保持進行中。

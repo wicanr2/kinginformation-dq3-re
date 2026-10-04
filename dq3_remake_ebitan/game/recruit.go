@@ -37,6 +37,7 @@ type Recruit struct {
 	greetingIndex, cursorGlyph int
 	raster                     *indexedNewGameRenderer
 	viewFlow                   *NewGameFlow
+	renameFlow                 *NewGameFlow
 	tx                         *dq3data.Text
 	active                     bool
 	stage                      int
@@ -70,6 +71,14 @@ func (g *Game) tavernCreate(in InputState) {
 // recruitInput:酒場招募 modal 的輸入處理(掛在 g.recruit 上)。
 func (g *Game) recruitInput(in InputState) {
 	rc := &g.recruit
+	if rc.stage == rcViewClose && in.Rename {
+		g.startRecruitmentRename()
+		return
+	}
+	if rc.stage == rcViewRename {
+		g.recruitmentRenameInput(in)
+		return
+	}
 	if rc.stage == rcViewAbility || rc.stage == rcViewClose {
 		rc.viewInput(in)
 		return
@@ -209,7 +218,7 @@ func (g *Game) drawRecruit(rgba []byte, white dq3data.Color) {
 		g.drawRecruitSelection(rgba, white)
 		return
 	}
-	if rc.stage == rcViewAbility || rc.stage == rcViewClose {
+	if rc.stage == rcViewAbility || rc.stage == rcViewClose || rc.stage == rcViewRename {
 		rc.drawView(rgba, white)
 		return
 	}

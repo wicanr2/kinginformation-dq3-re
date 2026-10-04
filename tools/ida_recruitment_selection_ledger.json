@@ -113,6 +113,84 @@
       "consumer": "Esc沒有覆寫游標；Yes跳10378；未抽測原版此詢問Esc",
       "review_reference": "docs/188：2026-10-04 選人清單與正常取消有限READY；完整入隊音樂不在範圍",
       "dynamic_evidence": "work/dosgolem-opening/issue4-recruit-selection-cancel-r1-source-r2-receipt.json SHA256 d59315c19fc5de86cd900b7becdb8c0d3487c18bd3ed72177f4a788a21be2682；正常packet197..201"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x10686",
+      "file_offset": "0x19f6",
+      "bytes": "80fc25",
+      "semantic": "第二次讀鍵的K掃描碼比較",
+      "inference_level": "confirmed",
+      "consumer": "1068B→1069F；正常packet202，第一次K不跨兩次讀鍵",
+      "review_reference": "docs/188：2026-10-04 單人隊伍改名有限READY及正常三路驗收；多角色選人未READY",
+      "dynamic_evidence": "dosgolem2f44a68正常K入口fe3df116、同名成功7cf247fd、異名成功0d43e2bc及取消c139c899；完整路徑與收據入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x18869",
+      "file_offset": "0x9bd9",
+      "bytes": "c70622070100",
+      "semantic": "單人隊伍選人設DGROUP722游標1",
+      "inference_level": "confirmed",
+      "consumer": "1885F依5077人數；正常106AB觀察5→1，僅單人分支",
+      "review_reference": "docs/188：2026-10-04 單人隊伍改名有限READY及正常三路驗收；多角色選人未READY",
+      "dynamic_evidence": "dosgolem2f44a68正常K入口fe3df116、同名成功7cf247fd、異名成功0d43e2bc及取消c139c899；完整路徑與收據入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x106ba",
+      "file_offset": "0x1a2a",
+      "bytes": "8bbf154f",
+      "semantic": "[bx+4F15h]取重新選中的隊伍角色指標",
+      "inference_level": "confirmed",
+      "consumer": "正常106BE DI=507F主角；能力副本520B與未入隊535E保持",
+      "review_reference": "docs/188：2026-10-04 單人隊伍改名有限READY及正常三路驗收；多角色選人未READY",
+      "dynamic_evidence": "dosgolem2f44a68正常K入口fe3df116、同名成功7cf247fd、異名成功0d43e2bc及取消c139c899；完整路徑與收據入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x106c3",
+      "file_offset": "0x1a33",
+      "bytes": "803e260701",
+      "semantic": "姓名輸入後檢查DGROUP726取消byte",
+      "inference_level": "confirmed",
+      "consumer": "取消正常106C2值1，未經106CB／106D8；成功值0",
+      "review_reference": "docs/188：2026-10-04 單人隊伍改名有限READY及正常三路驗收；多角色選人未READY",
+      "dynamic_evidence": "dosgolem2f44a68正常K入口fe3df116、同名成功7cf247fd、異名成功0d43e2bc及取消c139c899；完整路徑與收據入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x106d5",
+      "file_offset": "0x1a45",
+      "bytes": "b91200",
+      "semantic": "姓名複製長度18bytes",
+      "inference_level": "confirmed",
+      "consumer": "106D8 REP MOVSB；src DGROUP270E，dest角色指標+3",
+      "review_reference": "docs/188：2026-10-04 單人隊伍改名有限READY及正常三路驗收；多角色選人未READY",
+      "dynamic_evidence": "dosgolem2f44a68正常K入口fe3df116、同名成功7cf247fd、異名成功0d43e2bc及取消c139c899；完整路徑與收據入口docs/188"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "ida_linear": "0x106d8",
+      "file_offset": "0x1a48",
+      "bytes": "f3a4",
+      "semantic": "18bytes姓名寫入選中隊伍角色",
+      "inference_level": "confirmed",
+      "consumer": "正常異名216，DI5082→5094；507F原始97bytes只有+7由0→5，219正常返回畫面消費；名冊不改",
+      "review_reference": "docs/188：2026-10-04 單人隊伍改名有限READY及正常三路驗收；多角色選人未READY",
+      "dynamic_evidence": "dosgolem2f44a68正常K入口fe3df116、同名成功7cf247fd、異名成功0d43e2bc及取消c139c899；完整路徑與收據入口docs/188"
     }
   ]
 }

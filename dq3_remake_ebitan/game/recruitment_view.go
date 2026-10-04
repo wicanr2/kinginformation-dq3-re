@@ -8,6 +8,7 @@ import (
 const (
 	rcViewAbility = rcMusicWait + 1 + iota
 	rcViewClose
+	rcViewRename
 )
 
 // docs/188 的有限 READY。未解出的咒文、異常與其他裝備保持清單，
@@ -49,14 +50,14 @@ func (rc *Recruit) viewInput(in InputState) {
 	if rc.viewFlow == nil || rc.selection == nil {
 		return
 	}
-	knownKey := in.Confirm || in.Enter || in.Cancel || in.DirEdge >= 0
+	knownKey := in.Confirm || in.Enter || in.Cancel || in.DirEdge >= 0 || in.Rename
 	if rc.stage == rcViewAbility {
 		if knownKey || in.AnyKeyEdge || in.Tapped {
 			rc.stage = rcViewClose
 		}
 		return // 第一次輸入不能同時消費第二個讀鍵。
 	}
-	// K 改名尚未 READY。沒有具名映射的鍵不猜成關閉。
+	// 具名改名由 Game 分派；其他沒有映射的鍵不猜成關閉。
 	if knownKey || in.Tapped {
 		rc.viewFlow = nil
 		rc.startSelectionText(rc.selection.AgainTextID, rcAgain)
@@ -73,5 +74,8 @@ func (rc *Recruit) drawView(rgba []byte, white dq3data.Color) {
 		return
 	}
 	r.ability(rc.tx, rc.viewFlow)
+	if rc.stage == rcViewRename && rc.renameFlow != nil {
+		r.drawContent(rc.tx, rc.renameFlow)
+	}
 	drawIndexedPCX(rgba, r.pixels, r.palette)
 }

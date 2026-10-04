@@ -29,7 +29,22 @@ type RecruitmentSelection struct {
 	HitRect        GeometryRect        `json:"hit_rect"`
 	ClassOptions   []RegistrationClass `json:"class_options"`
 	GenderTextIDs  []string            `json:"gender_text_ids"`
+	ViewRename     *RecruitmentRename  `json:"view_rename"`
 	Evidence       Evidence            `json:"evidence"`
+}
+
+// RecruitmentRename selects a reviewed finite rename primitive. The name
+// widget uses the pack's existing new-game geometry and glyph definitions.
+type RecruitmentRename struct {
+	InputAction         string   `json:"input_action"`
+	TargetScope         string   `json:"target_scope"`
+	RequireNonemptyName *bool    `json:"require_nonempty_name"`
+	Evidence            Evidence `json:"evidence"`
+}
+
+func (r *RecruitmentRename) UnmarshalJSON(b []byte) error {
+	type plain RecruitmentRename
+	return requiredHome(b, (*plain)(r))
 }
 
 func (s *RecruitmentSelection) UnmarshalJSON(b []byte) error {
@@ -75,6 +90,14 @@ func (p *Pack) validateRecruitmentSelection() error {
 		return fmt.Errorf("recruitment selection contract is missing or unreviewed")
 	}
 	if err := validateEvidence(s.Evidence); err != nil {
+		return err
+	}
+	rename := s.ViewRename
+	if rename == nil || rename.InputAction != "rename" || rename.TargetScope != "singleton_party_leader" ||
+		rename.RequireNonemptyName == nil || !*rename.RequireNonemptyName || rename.Evidence.Level != "D3" {
+		return fmt.Errorf("recruitment rename contract is missing or unreviewed")
+	}
+	if err := validateEvidence(rename.Evidence); err != nil {
 		return err
 	}
 	w, row := s.RawWindow, s.Name
