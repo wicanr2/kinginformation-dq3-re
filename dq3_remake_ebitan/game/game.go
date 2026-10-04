@@ -324,13 +324,14 @@ type Game struct {
 	facing                         int // 0..3
 	walk                           int // 0/1 走路動畫相位
 	cd, anim                       int
-	dlg                            Dialogue       // 對話視窗
-	cmd                            CmdMenu        // 野外命令窗
-	battle                         Battle         // 戰鬥場景
-	shop                           Shop           // 商店(武防/道具店)
-	church                         Church         // 教會服務
-	tavern                         Tavern         // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
-	recruit                        Recruit        // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
+	dlg                            Dialogue // 對話視窗
+	cmd                            CmdMenu  // 野外命令窗
+	battle                         Battle   // 戰鬥場景
+	shop                           Shop     // 商店(武防/道具店)
+	church                         Church   // 教會服務
+	tavern                         Tavern   // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
+	recruit                        Recruit  // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
+	fieldSaveLoad                  FieldSaveLoad
 	panel                          panelKind      // 資訊面板(狀況/道具/裝備)
 	panelCursor                    int            // 裝備面板游標
 	panelActor                     int            // 裝備對象：-1=先選隊員、0=主角、1..=companions
@@ -1035,6 +1036,11 @@ func (g *Game) step(in InputState) error {
 			g.fieldIdle.elapsed = 0
 		}
 	}()
+	if g.fieldSaveLoad.active {
+		err := g.fieldSaveLoadInput(in)
+		g.renderFrame()
+		return err
+	}
 	if g.fieldIdle.open {
 		g.stepFieldIdle(in)
 		g.renderFrame()
@@ -1537,6 +1543,11 @@ func (g *Game) step(in InputState) error {
 	}
 	// HELP／系統設定只在一般地表狀態開啟，不蓋過戰鬥、對話或其他既有 modal。
 	fieldStage = true
+	if !g.cmd.open && !g.help.open && !g.settings.open && (in.SaveMenu || in.LoadMenu) {
+		err := g.openFieldSaveLoad(in.LoadMenu)
+		g.renderFrame()
+		return err
+	}
 	if g.stepFieldIdle(in) {
 		g.renderFrame()
 		return nil
@@ -2926,6 +2937,12 @@ func (g *Game) renderFrame() {
 	if g.frame == nil { // 尚未初始化(如 NewGame 中途 debug 呼叫)→ 略過
 		return
 	}
+	if g.fieldSaveLoad.active && len(g.fieldSaveLoad.background) == len(g.rgba) {
+		copy(g.rgba, g.fieldSaveLoad.background)
+		g.drawFieldSaveLoad()
+		g.frame.WritePixels(g.rgba)
+		return
+	}
 	if (g.fieldIdle.open || g.fieldIdle.restoring) && len(g.fieldIdle.background) == len(g.rgba) {
 		copy(g.rgba, g.fieldIdle.background)
 		if g.fieldIdle.open {
@@ -3489,6 +3506,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 		return nil, err
 	}
 	g.recruit.cursorGlyph = g.tavern.labels.ChoiceCursor[0]
+	if err := g.fieldSaveLoad.configure(pack, g.dlg.tx); err != nil {
+		return nil, err
+	}
 	g.hero = dq3data.LoadCharSprite(mstBLS, heroSpriteEntry)
 	g.phoenix = dq3data.LoadCharSprite(manBLS, 176) // CTY70 egg b2=48 → (48-4)*4；原版拉米亞 8-frame sprite
 

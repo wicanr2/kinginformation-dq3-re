@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.17.0",
+  "schema_version": "0.18.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -6798,6 +6798,365 @@
         "consumer": "empty Join530 ->316 inline wait ->540; singleton Leave542 primary actor name ->540; No ->541 read-key ->field",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "正常姓名取消、空名冊加入及單人分離的有限D3；不外推滿隊、非空分離、原版存讀檔或完整V3。"
+      }
+    },
+    {
+      "id": "dq3:text.field_save_load.prompt",
+      "value": "*「選擇一組記憶吧。",
+      "glyph_codes": [
+        59,
+        60,
+        520,
+        521,
+        401,
+        522,
+        523,
+        320,
+        499,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 250
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+      }
+    },
+    {
+      "id": "dq3:text.field_save_load.experience",
+      "value": "*「{名字}要升級還\n  {數值}點的經驗。",
+      "glyph_codes": [
+        59,
+        60,
+        65531,
+        504,
+        422,
+        420,
+        524,
+        65534,
+        12,
+        12,
+        65530,
+        425,
+        149,
+        525,
+        526,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 251
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+      }
+    },
+    {
+      "id": "dq3:text.field_save_load.farewell",
+      "value": "*「那麼,去吧!\n  {名字}嗨!",
+      "glyph_codes": [
+        59,
+        60,
+        354,
+        436,
+        55,
+        448,
+        499,
+        57,
+        65534,
+        12,
+        12,
+        65525,
+        527,
+        57
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 252
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+      }
+    },
+    {
+      "id": "dq3:text.field_save_load.question",
+      "value": "*「你們要把旅行的經驗\n  記錄在冒險書中嗎?",
+      "glyph_codes": [
+        59,
+        60,
+        528,
+        529,
+        504,
+        530,
+        193,
+        531,
+        149,
+        525,
+        526,
+        65534,
+        12,
+        12,
+        523,
+        532,
+        411,
+        533,
+        218,
+        268,
+        407,
+        534,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 253
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+      }
+    },
+    {
+      "id": "dq3:text.field_save_load.header",
+      "value": "┌┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐└\n│ NO 姓  名  等 級  性 別 │",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        49,
+        65534,
+        54,
+        12,
+        28,
+        29,
+        12,
+        691,
+        12,
+        12,
+        692,
+        12,
+        12,
+        419,
+        12,
+        420,
+        12,
+        12,
+        674,
+        12,
+        417,
+        12,
+        54
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 21,
+        "lines_per_page": 2
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 465
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+      }
+    },
+    {
+      "id": "dq3:text.field_save_load.row",
+      "value": "│     □□            │",
+      "glyph_codes": [
+        54,
+        12,
+        12,
+        12,
+        12,
+        12,
+        706,
+        706,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        54
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 21,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 466
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+      }
+    },
+    {
+      "id": "dq3:text.field_save_load.footer",
+      "value": "┘┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐┐├",
+      "glyph_codes": [
+        50,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 21,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 467
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+      }
+    },
+    {
+      "id": "dq3:text.field_save_load.empty",
+      "value": "未使用",
+      "glyph_codes": [
+        707,
+        210,
+        412
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 3,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 468
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
       }
     }
   ]

@@ -8,6 +8,8 @@ import (
 // InputState 是「一幀的抽象動作」——遊戲邏輯只依賴這個,不知也不管來源(鍵盤 / 觸控)。
 // 對齊 docs/63:先抽象再綁定,讓桌面/WASM/手機共用同一套邏輯。
 type InputState struct {
+	SaveMenu   bool // F5：一般場景存檔選單，按下邊緣。
+	LoadMenu   bool // F6：一般場景讀檔選單，按下邊緣。
 	Rename     bool // K：具名改名動作；只由支援此動作的 modal 消費。
 	AnyKeyEdge bool // 任意鍵盤按下邊緣；供原版等待鍵盤的具名階段使用。
 	DirHeld    int  // 按住的方向(走動),-1 無;0下 1上 2左 3右
@@ -37,6 +39,8 @@ func (ip *Input) Poll() InputState {
 	s := InputState{DirHeld: -1, DirEdge: -1}
 	s.AnyKeyEdge = len(inpututil.AppendJustPressedKeys(nil)) != 0
 	s.Rename = inpututil.IsKeyJustPressed(ebiten.KeyK)
+	s.SaveMenu = inpututil.IsKeyJustPressed(ebiten.KeyF5)
+	s.LoadMenu = inpututil.IsKeyJustPressed(ebiten.KeyF6)
 	// 鍵盤
 	if d := keyDirHeld(); d >= 0 {
 		s.DirHeld = d

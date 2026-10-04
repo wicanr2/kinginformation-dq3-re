@@ -1,5 +1,14 @@
 # CONTEXT — 術語表 + 知識庫索引
 
+2026-10-04 正常 F5／F6 存讀檔已接入正式玩家入口。F5 經驗提示、確認、十槽選擇、VOC 完成等待及告別返回，F6 選槽、讀回及上層時鐘重設已通過有限對拍。空名冊讀回殘留現有角色的問題已修正。
+dosgolem 四份正常來源接受，固定 seed1357 一次，193 包前綴保持；存檔→左移→F6 共200包／476 IRQ1，原生讀回完整2172bytes。兩側 RNG 保持，沒有模擬器 restore 或遊戲狀態注入。
+F6 完整畫面差45109已降0。F5 的194、196、197及F6的200均完整RGB零差異；選槽195差4064、行走198差356、選槽199差32847。原版既有十槽資料與remake初始空JSON不等價，選槽畫面不宣稱V3。
+現行schema0.18.0／content0.1.90，canonical `sha256:9d6325addef6db4d6f4c049f44fe517e61d2a0550724c67d5ae7ec0f649a3917`。九份JSON從乾淨1bef3d7重建逐byte相同。舊schema或不同hash存檔拒絕，不自動遷移。
+完整game478頂層覆蓋：431個不同頂層及117子PASS、47選用SKIP；internal169頂層／363子、11套件PASS、4選用SKIP，無素材缺失跳過。正常新遊戲至THE END201.00秒、desktop Linux x86_64通過，oom_kill0。
+十四條舊路線833張完整PNG逐byte保持。有限狀態E2／流程E3、指定畫面V3；全流程V3與完整原版campaign仍未知。下一步原版F6返回後正常行走及可比初始槽資料；下層F6、複數隊伍／其他等級、人物動畫、入隊播放後返回及非空分離保留未知。沒有新發行包。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表及docs/188最新有限驗收為準。
+
 2026-10-04 招募主選單Esc已修正：正常193包／462 IRQ1來源137411c7證實先顯示541告別、獨立等待，再以新按鍵返回。修正前192包RED，有限READY後正式InputState、snapshot／RNG、同版本存讀檔及下一步通過。
 本輪41招募頂層／28子PASS、零SKIP，正常新遊戲至THE END95.45秒與desktop PASS；42個不同頂層含主線。789張既有PNG逐byte保持，新Esc44張；187..192全RGB各295，193返回零差異，完整V3仍RED。
 主線舊測試將主選單Esc視為立即關閉，已補上正常告別文字及獨立確認輸入；保留首輪失敗，正式產品只修改rcMenu Cancel。九份JSON保持，schema0.17.0／content0.1.89、canonical4b235d63。最近完整game466與11個internal仍為c572ab3，未冒稱本輪全套重跑。
@@ -185,16 +194,16 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-04） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；rcMenu Cancel改為typed告別與獨立等待，九份JSON保持。schema0.17.0／content0.1.89；canonical `sha256:4b235d635e29011f232b212b533e5de32c29c32a8d094c236eeba68198b9b988`；沒有新發行包 |
-| 最新remake已完成 | 正常主選單Esc193包、541獨立等待與返回已修正；snapshot／RNG、同版本存讀檔及下一步通過。主線寄放後另行確認告別，正常新遊戲至THE END95.45秒 |
-| 最新原版oracle | 主選單Esc來源137411c7，193包／462 IRQ1；前191包、458 IRQ1及PNG/bin等於已接受Join Yes。192原生0726取消flag=1→103C2選541、21133等待，193到field2,18；角色、名冊、指標、金錢及旗標保持 |
-| 最新畫面已驗 | 十三條重生舊路789 PNG逐byte保持，新Esc44張，150..191等於Join Yes。187..192全RGB各295，193返回0；新告別295個差異位置及兩側RGB等於父選單191，文字區相同；無遮罩、重擲或相位指定 |
-| 最新畫面未通過 | 完整V3仍RED；人物動畫與其他能力數值差異保留。不同返回時刻的零差異不能外推其他來源；相同seed不能證明全域骰序對齊 |
-| 下一production切片 | 原版正常F5／F6存讀檔。先驗可寫資料overlay，原始檔唯讀；正常存檔→移動→讀檔，對拍UI及持久狀態，READY前不改格式。入隊播放後返回與非空分離仍待原版來源，driver／ISR停止線維持 |
-| 本輪有限READY | 主選單Esc→541獨立等待→場景已CONFORMED，狀態E2／流程E3、畫面V2。既有typed引用無新欄位，不外推所有取消情境、非空分離、原版存讀檔或完整V3 |
-| 原版oracle仍未知 | 原版F5／F6 Save／Load、其他取消情境、多角色改名、其他裝備詳細頁、其他角色與多列咒文、入隊完整後續、非空分離、其他職業／性別、滿額替換、完整名冊、可比亂數能力、健康色／status、NPC動畫、音訊及完整campaign |
-| 現行remake回歸 | 41招募頂層／28子及正常主線PASS，共42不同頂層、零SKIP；正常THE END95.45秒、desktop PASS，oom_kill0。首輪主線測試舊立即關閉假設保留，補正常確認後重跑。最近完整game466及11個internal為c572ab3 |
-| 額外驗證限制 | 有效Load清UI及拒絕Load保持為engine驗證；原版Save／Load未知。舊schema或hash不符存檔拒絕，不自動遷移。來源稽核與有限綠色回歸不升格完整原版parity |
+| 現行程式 | `dq3_remake_ebitan/`；正式F5/F6與獨立JSON槽。schema0.18.0／content0.1.90；canonical `sha256:9d6325addef6db4d6f4c049f44fe517e61d2a0550724c67d5ae7ec0f649a3917`；沒有新發行包 |
+| 最新remake已完成 | F5經驗／確認／選槽／VOC完成／告別等待；F6選槽讀回與上層clock0重畫；空名冊恢復清除殘留角色。三條冷啟動InputState、snapshot／RNG、正常下一步通過 |
+| 最新原版oracle | F5入口194包來源3350c30f、No197包08a3fead、往返200包0a88466e、YesEsc及選槽Esc197包30a4f547；共用193正常前綴與seed1357一次，原生2172bytes Save／Load，沒有模擬器restore |
+| 最新畫面已驗 | 舊十四路833 PNG保持；F5 194/196/197及F6 200全RGB零差異。上層F6 clock30→0選bank1，45109差異降0；未裁切、遮罩或指定動畫相位 |
+| 最新畫面未通過 | 195選槽4064、198步行356、199 F6選槽32847。原版初始PLAYER十槽、remake空JSON不等價；完整V3未知，保留人物動畫差異 |
+| 下一production切片 | 從200合法checkpoint延長原版F6後正常步行；以可追溯、可比初始槽資料驗證選槽畫面。先RE／DRAFT／READY，未知不猜補 |
+| 本輪有限READY | 上層單人F5存檔／No／Yes游標Esc與選槽Esc／F6往返有限CONFORMED，E2／E3及指定畫面V3；下層clock120只有D2，未正常驗收 |
+| 原版oracle仍未知 | 其他world／室內F6、複數隊伍與其他等級經驗、多槽等價初值、其他取消、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
+| 現行remake回歸 | game478覆蓋：431不同頂層／117子PASS、47選用SKIP；internal169／363、11套件PASS、4選用SKIP，無素材缺失；正常THE END201.00秒、desktop PASS、oom_kill0 |
+| 額外驗證限制 | F6依pack重設世界時鐘，engine／標題Load仍保留JSON時鐘；壞schema／hash／layer在restore前拒絕。舊存檔不自動遷移。綠色回歸不升格完整原版parity |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，

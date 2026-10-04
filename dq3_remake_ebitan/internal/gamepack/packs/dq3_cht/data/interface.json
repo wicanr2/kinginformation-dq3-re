@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.17.0",
+  "schema_version": "0.18.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -4024,6 +4024,143 @@
       "consumer": "registration ability -> spells -> accept; roster ability -> spells -> restored ability read-key ->540 No ->541 ->field",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "正常Class3 level1初裝無異常D3；全catalog與多列static D2；不宣稱全幀V3或原版Save/Load。"
+    }
+  },
+  "field_save_load": {
+    "load_clock_rules": [
+      {
+        "layer": 0,
+        "clock": 0,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+          "address_space": "linear",
+          "address": "IDA9.4 linear1160B..1162B;DGROUP251D/526C/4F31",
+          "consumer": "upper-world native F6 ->clock0 ->palette bank1",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "正常200包2172bytes讀回後色盤bank1，D3有限上層。"
+        }
+      },
+      {
+        "layer": 1,
+        "clock": 120,
+        "evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+          "address_space": "linear",
+          "address": "IDA9.4 linear1160B..1161D;DGROUP251D/526C/4F31",
+          "consumer": "lower-world static F6 ->clock120 ->night",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "原始writer及world層號契約；缺下層正常F6來源，不能宣稱正常parity。"
+        }
+      }
+    ],
+    "shadow": {
+      "mode": "vga_word_latch_and",
+      "offset_x": 8,
+      "offset_y": 8,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+        "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
+      }
+    },
+    "id": "dq3:field_save_load",
+    "slot_count": 10,
+    "extra_rows": 3,
+    "primary_class_raw": 0,
+    "experience_max_level": 44,
+    "experience_text_id": "dq3:text.field_save_load.experience",
+    "question_text_id": "dq3:text.field_save_load.question",
+    "prompt_text_id": "dq3:text.field_save_load.prompt",
+    "farewell_text_id": "dq3:text.field_save_load.farewell",
+    "header_text_id": "dq3:text.field_save_load.header",
+    "row_text_id": "dq3:text.field_save_load.row",
+    "footer_text_id": "dq3:text.field_save_load.footer",
+    "empty_text_id": "dq3:text.field_save_load.empty",
+    "name_control_codes": [
+      65531,
+      65525
+    ],
+    "experience_control_code": 65530,
+    "raw_window": {
+      "id": "field_save_load",
+      "flags": 3,
+      "x": 19,
+      "y": 30,
+      "width": 42,
+      "height": 208,
+      "address": "linear:0x28d8a"
+    },
+    "number": {
+      "x": 136,
+      "y": 62,
+      "digits": 5
+    },
+    "name": {
+      "x": 232,
+      "y": 62,
+      "step_x": 16,
+      "step_y": 16
+    },
+    "name_capacity": 4,
+    "level": {
+      "x": 296,
+      "y": 62,
+      "digits": 5
+    },
+    "gender": {
+      "x": 424,
+      "y": 62,
+      "step_x": 16,
+      "step_y": 16
+    },
+    "cursor": {
+      "x": 168,
+      "y": 62,
+      "step_x": 0,
+      "step_y": 16
+    },
+    "hit_rect": {
+      "x": 168,
+      "y": 62,
+      "width": 304,
+      "height": 16
+    },
+    "gender_text_ids": [
+      "dq3:text.recruitment_selection.gender.0",
+      "dq3:text.recruitment_selection.gender.1"
+    ],
+    "sound": {
+      "cue_raw": 18,
+      "wait_for_completion": true,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+        "address_space": "linear",
+        "address": "IDA9.4 linear1143A..1147E;20770..207CC; DGROUP253E",
+        "consumer": "cue18 VOC -> write PLAYER200/DRAGON2172 ->208E2 completion wait",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "VOC已知sample duration契約；ceil(source_duration_nanos*60/1e9)，hardware-spec approximation；不深挖DAC/PIT/DMA。"
+      }
+    },
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem source3350c30f/08a3fead/0a88466e/30a4f547",
+      "address_space": "linear",
+      "address": "IDA9.4 linear113A9..11890;1D8E9..1D94C;DGROUP3FBA; file1A0FA",
+      "consumer": "normal F5 ->251/253 ->Yes slots250 or No ->252 read-key; slot cancel ->252; native save2172 ->left ->F6 restore",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "有限READY；正常單人第1槽、No、YesEsc與選槽Esc；JSON存檔與DOS格式不同。既有十槽初始內容差異保留；不宣稱全campaign/V3。"
     }
   }
 }

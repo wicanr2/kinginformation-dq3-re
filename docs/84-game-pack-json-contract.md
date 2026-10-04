@@ -1,5 +1,26 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 正常 F5／F6 存讀檔（schema0.18.0／content0.1.90）
+
+`interface.field_save_load` 是必填的唯讀契約。原版輸入、IDA原始定位及有限 READY／CONFORMED 見 [docs/188](188-opening-escort-to-castle-spec.md)。共用引擎只處理具名狀態與 JSON 存檔，不包含版本專屬文字、槽數、幾何或時鐘值。
+
+| 欄位 | 契約 |
+|---|---|
+| `slot_count`、`extra_rows`、`raw_window` | 原始十槽視窗與額外框架列；F6只列已有存檔，動態高度寫renderer副本 |
+| `experience_text_id`、`question_text_id`、`prompt_text_id`、`farewell_text_id` | 原始251／253／250／252的穩定文字引用；經驗、確認、選槽及獨立告別等待 |
+| `header_text_id`、`row_text_id`、`footer_text_id`、`empty_text_id` | 原始465..468完整框架與空槽文字 |
+| `name_control_codes`、`experience_control_code` | 原始姓名與剩餘經驗插值控制碼，保留glyph資料 |
+| `primary_class_raw`、`experience_max_level` | 主角經驗表引用與原始顯示上限；其他等級及複數隊伍尚缺正常oracle |
+| `number`、`name`、`name_capacity`、`level`、`gender`、`cursor`、`hit_rect`、`shadow` | 原始窗口與consumer閉合的欄位、四glyph姓名、游標及陰影；不以剩餘畫布推導 |
+| `gender_text_ids` | 既有性別文字引用，未知引用拒絕 |
+| `sound` | 原始cue18為VOC；存檔寫入後等待已知sample duration完成，使用公開硬體規格近似 |
+| `load_clock_rules` | 每項必填`layer`、`clock`、`evidence`；F6原生讀回後重設世界時鐘。上層0為D3，下層120僅D2，未宣稱下層正常parity |
+| `evidence` | 明示正常單人有限範圍、原始EXE／TXT身分、位址基準及來源；不外推完整V3 |
+
+缺失、null、未知欄位／引用、越界幾何、壞框架、重複層、超出cycle或未審查證據均拒絕。F6未知layer在restore前拒絕並保留UI；有效讀回清除暫態及還原空名冊。既有engine／標題Load繼續保留JSON時鐘。第1槽沿用既有savePath，第2..10槽為同格式的獨立檔案；不加入DOS binary import或自動存檔遷移。
+
+入口：[typed契約與驗證](../dq3_remake_ebitan/internal/gamepack/field_save_load.go)、[原始parity及壞契約](../dq3_remake_ebitan/internal/gamepack/field_save_load_test.go)、[正式狀態機](../dq3_remake_ebitan/game/field_save_load.go)、[正常路線及元件測試](../dq3_remake_ebitan/game/field_save_load_test.go)。[九份JSON遷移器](../tools/migrate_field_save_load_pack.py)於Docker執行，三個參數依序為乾淨1bef3d7的0.17.0 pack目錄、唯讀原版素材目錄及`docs/data/glyph_unicode_map.json`。工具先核對EXE／TXT雜湊、原始窗口、cue及clock bytes，再保留排版寫入0.18.0／0.1.90；重建結果必須與正式九份JSON逐byte相同。
+
 ## 咒文詳細頁（schema0.15.0／content0.1.87）
 
 `interface.character_spells` 是必填的唯讀頁面契約。有限 READY、原始 consumer 與正常209包來源見 [docs/188](188-opening-escort-to-castle-spec.md)。登錄與觀看共用原始咒文框，不從酒館的文字 bank 猜 record。

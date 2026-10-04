@@ -34,6 +34,10 @@ func TestRecruitmentEmptyLeaveYesDosgolemNormalInputComparison(t *testing.T) {
 }
 
 func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, sourceHash, prefix string, packets, openPacket, againPacket int, yesLoop ...bool) {
+	runRecruitmentEmptyNormalInputComparisonAtCheckpoint(t, action, sourceName, sourceHash, prefix, packets, openPacket, againPacket, nil, yesLoop...)
+}
+
+func runRecruitmentEmptyNormalInputComparisonAtCheckpoint(t *testing.T, action, sourceName, sourceHash, prefix string, packets, openPacket, againPacket int, checkpoint func(*Game), yesLoop ...bool) {
 	t.Helper()
 	cancelMenu := action == "menu-cancel"
 	envAction := map[string]string{"view": "VIEW", "join": "JOIN", "leave": "LEAVE", "menu-cancel": "MENU_CANCEL"}[action]
@@ -223,6 +227,17 @@ func runRecruitmentEmptyNormalInputComparison(t *testing.T, action, sourceName, 
 			}
 			samples = append(samples, map[string]any{"packet": i + 1, "original_phase": s["phase"], "recruit_stage": g.recruit.stage, "full_rgb_difference": sourceCanvasDifference(t, g, path, fmt.Sprintf("%s-packet-%03d-%s.png", prefix, i+1, s["phase"]))})
 		}
+	}
+	if checkpoint != nil {
+		b, err := json.MarshalIndent(map[string]any{"source_sha256": sourceHash, "pack_schema": g.pack.Schema(), "pack_hash": g.pack.ContentHash(), "original_packets": packets, "scope": "normal prefix before reviewed continuation", "samples": samples}, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = os.WriteFile(filepath.Join(out, "receipt.json"), append(b, 10), 0644); err != nil {
+			t.Fatal(err)
+		}
+		checkpoint(g)
+		return
 	}
 	t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "empty-view.json"))
 	if e := g.Save(); e != nil {

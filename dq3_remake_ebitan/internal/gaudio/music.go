@@ -131,6 +131,20 @@ func (m *Music) Stop() {
 	}
 }
 
+// PauseBackground/ResumeBackground preserve the current stream position.
+// They do not change the user's music setting or rewind the track.
+func (m *Music) PauseBackground() {
+	if m != nil && m.player != nil {
+		m.player.Pause()
+	}
+}
+
+func (m *Music) ResumeBackground() {
+	if m != nil && m.enabled && !m.musicOff && m.player != nil {
+		m.player.Play()
+	}
+}
+
 // PlayOneShot pauses the current background player without rewinding it.
 // FM uses the reviewed raw event range; Roland uses the checked render.
 // A missing/invalid asset remains silent, with scheduling owned by the caller.

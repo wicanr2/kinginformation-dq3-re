@@ -1,5 +1,7 @@
 # DQ3.EXE 主迴圈狀態機:鍵碼跳表與指令 handler(RE → C)
 
+2026-10-04 追加勘誤：本文歷史上將F5視為唯讀資訊的語意已推翻。正常dosgolem194..200包與IDA9.4 caller／consumer證實F5為251經驗提示→253確認→250十槽→原生200bytes索引及2172bytes存檔，F6為選槽後原生讀回與場景重畫。原始位址及舊斷言保留，下方歷史不可代替現行oracle。輸入SHA-256、推論等級、READY／CONFORMED與完整收據見[docs/188](188-opening-escort-to-castle-spec.md)。
+
 主迴圈 `sub_93e3`(seg0:0x93e3,file 0xa753)讀鍵盤 scancode 後,方向鍵直接改玩家座標,
 其餘鍵走一張 **scancode → near 函式指標** 的跳表派發到各遊戲狀態 / 動作。本文件記錄這張
 跳表的實際內容、各 handler 的位址與語意,以及對應的 C 反編譯(`re/states.c` / `re/states.h`)。

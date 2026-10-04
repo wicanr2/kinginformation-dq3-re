@@ -4064,3 +4064,109 @@ IDA Pro9.4窄查298條目，輸入assets_raw/DQ3.EXE115282bytes／SHA-256 `5178f
 - IDA31筆：`work/issue4-recruit-menu-esc-r4-ida.json`，SHA-256 `ff1fd4972b334667d0545c060c6a45d29cb1069915102ec252fc5553e0da7f32`。
 
 下一個正常玩家節點為原版F5／F6存讀檔；先驗可寫overlay及素材保護，再取得正常UI／恢復狀態來源。入隊播放後返回、非空分離、滿隊、音畫及完整原版campaign仍未知，硬體driver／ISR停止線維持。Goal與Issue保持進行中。
+
+
+## 2026-10-04 正常 F5／F6 存讀檔 DRAFT
+
+從已接受的招募主選單 Esc 正常193包來源續行。公開入口 `tools/dosgolem_save_load_probe.py` 使用固定2f44a68快照的既有 `DOS.Scratch`，原始assets_raw唯讀，暫存層位於本機work。先送194包F5，停在第一個原生完成或等待點，保存原生FileOps及完整PNG／bin。
+
+- 已知：現行正式InputState沒有F5／F6；既有Save／Load與標題讀檔不能代替快捷鍵正常路徑。
+- 未知：原版存檔選單、確認、檔名／格式、讀檔入口及恢復朝向。未達READY不更改正式行為或資料格式。
+- 初始seed1357執行前固定一次；193包之前須與已接受來源逐項核對。沒有狀態注入、跳過等待或改時鐘。
+- 存檔→移動→F6讀檔及完整狀態恢復尚未驗收。原始產物及SAV留本機，不加入Git。
+
+續行探針 `tools/dosgolem_save_load_continue_probe.py` 依IDA9.4原始bytes建立DRAFT：253確認→No→252等待→field，或Yes→250選10槽→寫入。只送正常鍵，音樂等待有界觀察，未完成不跳過。IDA sidecar `work/issue4-save-f5-r1-ida.json` SHA256027cf5e7e453748fc933cbf02040e8aab5a28651432ecd9fdd24b6b828492bba，528條目，原始MZ bytes核對，語意尚待動態閉合。
+
+完整往返DRAFT入口 `tools/dosgolem_save_load_roundtrip_probe.py`：F5 Yes→第一槽→252另按確認→正常左移→F6→第一槽讀取。193..200保存完整DGROUP4F29..57A5的2172bytes與原生caller／FileOps，沒有模擬器snapshot restore或記憶體注入。先前save探針錯把196的252等待預設為field；實際已寫player.dat200bytes與dragon0.dat2172bytes並到原生等待，該探針會以有界診斷退出。這是DRAFT終點設計缺口，不能誤稱產品或dosgolem失敗。
+
+取消邊界DRAFT入口 `tools/dosgolem_save_load_cancel_probe.py`：原版113CF只檢查原始0722選中序號，不檢查0726取消byte。假說為Yes游標按Esc仍開選槽，再於選槽Esc取消並接252等待；以正常195／196兩次Esc查證，不將假說放入production。
+
+
+### 正常存讀檔有限 READY
+
+原版來源已接受：F5開窗194包／464IRQ1 `3350c30f`；No197包／470IRQ1 `08a3fead`；Yes存檔、行走與F6讀檔200包／476IRQ1 `0a88466e`；Yes游標Esc後選槽Esc197包／470IRQ1 `30a4f547`。獨立工具 `tools/verify_dosgolem_save_load.py` 與 `tools/verify_dosgolem_save_load_flow.py`。所有來源固定seed1357一次，沒有CPU記憶體注入或模擬器snapshot restore；F6是遊戲自身Load。前194包與完整PNG／bin一致。
+
+輸入 `assets_raw/DQ3.EXE`115282bytes，SHA2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c。dosgolem2f44a68；IDA9.4 linear、file=linear−EC90，DGROUP基底24DD0。
+
+| 原始定位 | 語意及推論等級 | 消費與驗收 |
+|---|---|---|
+| 113A9..113FB／file2719..276B | confirmed：F5先逐隊員顯示251，再253詢問；Yes或停在Yes的Esc進選槽；No接252獨立等待 | 正常194..197，未寫檔No與兩次Esc均返回2,18 |
+| 1D8E9..1D94B／fileEC59..ECBB | strong：class→DGROUP43D6門檻指標、level*4讀門檻，減角色+32/+34累積經驗；251顯示剩餘經驗，不發放經驗 | 正常本例顯示29，128bytes主角保持；其他角色／等級尚未動態抽樣 |
+| 11423..114D9／file2793..2849 | confirmed：模式0、選槽、更新200bytes索引，再保存2172bytes持久區；原生cue18呼叫及208E2等待 | 真正player.dat／dragon0.dat落地，196顯示252，197確認返回；不改硬體時鐘或跳過播放 |
+| 114DA..1165F／file284A..29CF | confirmed有限：模式1只列已存槽，選第一槽native2172bytes讀取及場景重生 | 正常198左移至1,18，199 F6選槽，200返回2,18；200完整持久區與保存檔逐byte相同 |
+| DGROUP3FBA／linear28D8A／file1A0FA；11660..11777 | strong幾何／confirmed十槽：x19byte、y30、寬42byte、height208；465兩行header、466每列、467footer；slot數10、rowY62／step16 | 正常195及199完整選槽；F6少量槽、空槽與其他槽仍需抽樣 |
+
+正式實作契約：新增跨版本SaveMenu／LoadMenu抽象輸入並綁F5／F6，只有一般field開啟；已有modal先消費鍵。F5顯示每位成員剩餘經驗及確認，Yes游標Esc仍開選槽，No游標Esc視同No。存檔及選槽取消均追加252，再等新鍵返回。F6讀取成功直接返回，拒絕或不相容Load保留選槽且不消耗持久狀態。十槽、文字、視窗與原始控制碼均由typed pack提供。沿用現行JSON snapshot，第一槽保持既有savePath，其他槽使用獨立檔案；不換成原版binary、不新增自動遷移。
+
+原版玩家既有PLAYER.DAT有十個非空槽。remake先前只有一個JSON存檔，初始存檔資料不等價；正式正常驗收須明示先前存檔fixture或保留這項比較限制，不以不同初始槽資料宣稱整張V3。原版2172bytes保存196／197與Load200完全相同；198／199僅4F33由2變1，Save前193..195只有三個先前備份欄位不同。朝向、日夜、其他槽、複數隊伍與完整聲波仍未知，不外推此單人白天來源。
+
+驗收包括正常InputState整段、No／Esc不寫檔、不改RNG及snapshot、真正寫入與Load恢復、失敗保留UI、held edge、正常下一步、schema／引用拒絕、原始EXE／DAT parity及完整PNG差分。音訊時長採既有hardware-spec approximation，未聲稱原版wall-clock／波形。READY只允許已列契約，完整V3與campaign仍未CONFORMED。
+
+
+### 2026-10-04 存檔音效與選槽 consumer 補核對 READY
+
+IDA9.4 匯出 `work/issue4-save-sound-r1-ida.json` SHA25666e1431716b0cf2143d68973093628bdc5b80a246d1df41634111150791dd21e。原版linear1143F BP12h，20770比較BP<1Eh後走DGROUP253E的VOC表及22CF5；207CD才轉EBG。cue18因此使用既有VOC音效與來源sample duration完成閘門，沿docs/123、149公開規格契約，標為hardware-spec approximation，不稱為原版逐週期wall-clock。
+
+姓名consumer linear215EE..21650匯出SHA256067899446fb91b2842df9271261ef5bab1da7ac111ae9bf2c2a5fdb38f375579，保留BP/DX/SI，限定四glyph，沒有更新DGROUP716；因此性別anchor為原始BP21+8+24 bytes，即X424。號碼以BP-4、五digit右對齊，X136是數字欄虛擬起點，實際1..10畫在X200及X184/200；不能誤把X136當作越界實畫。
+
+本批實作入口為 `game/field_save_load.go`，typed契約與raw parity為 `internal/gamepack/field_save_load.go`／`field_save_load_test.go`；重建九份JSON使用 `tools/migrate_field_save_load_pack.py`。正式SaveMenu/LoadMenu只在一般field接收鍵盤邊緣，既有modal優先；第1槽沿用現行savePath，第2..10槽使用同一JSON格式的獨立檔名，無DOS binary import或資料格式變更。
+
+
+### 2026-10-04 F6讀回色盤 DRAFT→有限READY 補證
+
+正常200包讀回位置、角色、旗標、2172bytes持久區與remake JSON皆吻合，但完整畫面差45109像素。`work/issue4-field-save-load-rgb-r1.go`逐點統計只有12組顏色對應，沒有幾何或人物位置差異。原版紅235/52/0對remake255/73/0、灰186/195/195對207/215/215，逐項吻合DQ3.PAL bank1對bank0。沿docs/136既有已證實bank selector回查，不能調RGB百分比。
+
+原版linear1160B寫DGROUP251D=120，11617比較已載入remembered-world Y DGROUP4F31與300；upper-world分支1161F寫526C=1、11625寫251D=0，1162B呼叫1EE9B重新選bank。日夜時鐘在4F29..57A5以外，原版DRAGON0.DAT不存它。正常上層F6因此必須重設clock0選bank1；本輪單人200包與palette observer閉合為confirmed／D3。下層world層號映射沿既有共用world parser，clock120與night分支僅原始bytes已證實／D2，沒有下層正常F6畫面來源；不宣稱其正常parity。
+
+READY：`field_save_load.load_clock_rules`以具名world layer引用clock值及逐項證據。上層layer0→0；下層layer1→120保存已知静態值，後者列驗證限制。數值鎖在pack JSON，超過cycle、重複layer、缺失、null或未知layer拒絕，不提供Go數值fallback。F6才套用這個原版重畫契約；既有engine Save/Load及標題Load仍保留JSON時鐘，格式與舊schema拒絕策略保持。正常F6驗收比較2172bytes對應持久狀態，另核對clock0、palette bank1及完整PNG；不能要求原版未保存的clock等於remake JSON原始值。
+
+元件測試另有兩個非產品原因：空集合的Go表示與JSON省略需以存檔bytes比較；不完整overworld fixture的curCty0在restore正規化為-1，改成合法metadata。原版200包後Go移動仍有既有cooldown，正常閒置至0後下一步才抽驗，不以座標注入驗收。
+
+
+### 2026-10-04 空名冊讀回 READY 與元件RED
+
+正常原版F6以AH3F直接覆寫完整4F29..57A5的2172bytes，名冊與所有角色slots亦在此區；不能只還原非空集合。remake JSON的Roster欄位同樣表示存檔當時名冊，空集合有明確意義。元件測試保存空名冊／空同伴後，建立讀檔前非空名冊／同伴；壞schema必須全部保持，有效F6必須還原空集合。r7於`work/issue4-field-save-load-validation-r6`捕捉RED：Load成功、UI已清、RNG保持，但存檔bytes不符。既有restore對companions先清nil，對roster只有len>0時賦值，因而保留讀檔前名冊。
+
+有限READY：restore無條件清roster後再依已驗證snapshot重建；不改JSON格式、角色交易或RNG。此為engine完整還原驗證，正常來源仍限單人存檔→移動→F6；不把元件狀態注入稱為原版正常玩家流程。
+
+### 2026-10-04 正常 F5／F6 有限 CONFORMED
+
+正式冷啟動三條路線與六個元件測試均通過。原版來源四份保持，固定 seed1357 執行前設定一次；原版及remake逐包持久狀態、RNG、No／Esc不寫檔、native Save／Load恢復及正常下一步通過。empty roster元件RED修正後通過，該元件不是原版正常路線。
+
+| 正常包 | 完整RGB差異 | 驗收界線 |
+|---|---:|---|
+| 194 F5經驗及確認 | 0 | 指定完整畫面V3 |
+| 195 十槽 | 4064 | 原版十筆既有索引、remake空JSON，初始槽資料不同 |
+| 196 存檔後252等待 | 0 | VOC duration完成後才接受確認，硬體規格近似 |
+| 197 確認返回 | 0 | 不更動角色、旗標或RNG |
+| 198 正常左移 | 356 | 人物動畫差異保持 |
+| 199 F6選槽 | 32847 | 原版十筆、remake一筆，初始槽資料不同 |
+| 200 native Load返回 | 0 | clock重設0、bank1；45109色盤差異已修正 |
+
+No路線194..197全RGB均0；取消路線195差4064，其餘194／196／197均0。沒有遮罩、裁切、指定phase或重擲。完整RGB原圖與差分留在本機，未加入Git。有限E2／E3及指定畫面V3，不宣稱全流程V3或完整原版campaign。
+
+schema0.18.0／content0.1.90，canonical `sha256:9d6325addef6db4d6f4c049f44fe517e61d2a0550724c67d5ae7ec0f649a3917`。九份JSON從乾淨1bef3d73556f9af9043825c28f32042982971ce6重建逐byte相同；schema／引用／raw EXE／DAT parity通過。完整game478覆蓋、431不同頂層／117子PASS、47選用SKIP；internal169頂層／363子、11套件PASS、4選用SKIP，沒有素材缺失跳過。正常新遊戲至THE END201.00秒、desktop Linux x86_64通過，oom_kill0。十四條舊路833張PNG逐byte相同。
+
+| 本機收據 | SHA-256 |
+|---|---|
+| `work/dosgolem-opening/issue4-save-f5-normal-r1-source-r1-receipt.json` | `3350c30fa5c48fc690b144a6860cac155a4e02efb498649b7120a9bbd5f0973d` |
+| `work/dosgolem-opening/issue4-save-f5-decline-r1-source-r1-receipt.json` | `08a3feadd29c2567a806d3bd0bda121214a5a57323bf993f969a0d2cbda963d2` |
+| `work/dosgolem-opening/issue4-save-load-roundtrip-r1-source-r1-receipt.json` | `0a88466eab206d7a4b346b8229bbcebd10683044aa363cb346bb81e173e3d238` |
+| `work/dosgolem-opening/issue4-save-load-cancel-r1-source-r1-receipt.json` | `30a4f5471277bb040d4dfcf62958098ac412e11d5d641235f9cf378c2fcbd32c` |
+| `work/issue4-field-save-load-validation-r7/test-receipt.json` | `30cc21e32af3d12074634a2eeb96d99049c24991345e94f9d476874164de7275` |
+| `work/issue4-field-save-load-full-r1/game-receipt.json` | `0a577a525ddf2575389dffffd73d3b081727af4c6d449bfda6f6ba596823c264` |
+| `work/issue4-field-save-load-full-r1/internal.log` | `9b1c08c21c425c2869e4864c468281d167cebc8bf74b69ed91ff67a2bbed61c6` |
+| `work/issue4-field-save-load-full-r1/desktop-receipt.json` | `74f5e43c622fbcffdb971b0465fbf6fa604ba8de234bcf1364b565d7378c95fc` |
+| `work/issue4-save-load-source-negative-r2/receipt.json` | `2bf00c0b2bf3435a5b2d9c505c67855364a9842201bc13aabf37e59ca145f9d9` |
+| `work/issue4-save-load-reviewed-r3-ida.json` | `79a9be3eed4814132970eda34dd41181fec8506f7618c9a28b487563d47d3435` |
+| `work/issue4-field-save-load-pack-rebuild-r2/rebuild-receipt.json` | `a2471ac9cc46ae5492a86d47731ce42110bc12f4893ad3c040b124e9e8982fa6` |
+
+公開原版產生器：[入口](../tools/dosgolem_save_load_probe.py)、[No／存檔續行](../tools/dosgolem_save_load_continue_probe.py)、[往返](../tools/dosgolem_save_load_roundtrip_probe.py)、[兩次Esc](../tools/dosgolem_save_load_cancel_probe.py)。獨立驗證：[入口checker](../tools/verify_dosgolem_save_load.py)、[流程checker](../tools/verify_dosgolem_save_load_flow.py)。用法沿各檔CLI，只能在Docker以固定dosgolem2f44a68快照執行，原始assets_raw唯讀、明示Scratch輸出；支援範圍為本節列出的正常單人路線。
+
+公開實作：[共用狀態機](../dq3_remake_ebitan/game/field_save_load.go)、[正常路線與元件測試](../dq3_remake_ebitan/game/field_save_load_test.go)、[typed契約](../dq3_remake_ebitan/internal/gamepack/field_save_load.go)、[原始parity／壞契約](../dq3_remake_ebitan/internal/gamepack/field_save_load_test.go)。[九份JSON重建器](../tools/migrate_field_save_load_pack.py)的三個參數為乾淨1bef3d7 pack、原版素材目錄及既有glyph_unicode_map；詳細欄位見[docs/84](84-game-pack-json-contract.md)。
+
+IDA入口：[非破壞匯出](../tools/ida_dump_field_save_load_contract.py)、[12筆原始位址ledger](../tools/ida_field_save_load_ledger.json)。以既有IDA9.4 locked-v1、UID1000、HOME=/home/ubuntu與image內建私有設定，唯讀原始EXE，工作副本及database置/tmp；`idat -A -o/tmp/view.i64 -S"/repo/tools/ida_dump_field_save_load_contract.py /work/output.json" /tmp/view.exe`，有界一次性Docker輸出必須非空、493條目、12筆分級註記且原始bytes／MZ relocation一致。不rename原始symbol，未審查定位保持unknown警示。授權與database不加入Git。
+
+環境紀錄：同程序多個大型正常路線OOM已改為同binary分程序重跑；失敗紀錄保留。初輪internal少掛/assets_raw是掛載問題，補正後相同image／命令重跑。IDA reviewed-r2誤掛主機.idapro覆蓋image設定，靜默exit1且無sidecar；依正式工具契約移除該掛載，reviewed-r3相同匯出493條目通過。未將這些環境失敗寫成產品缺陷。
+
+下一合法checkpoint是原版200包後正常行走，以及可比初始存檔資料的選槽UI。下層clock120只有D2；其他world／室內、複數隊伍／等級、完整槽資料、聲波、人物動畫、入隊播放後返回、非空分離及完整campaign仍未知。driver／ISR停止線維持，沒有新發行包。

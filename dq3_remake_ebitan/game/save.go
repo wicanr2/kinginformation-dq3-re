@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 	"os"
 	"path/filepath"
 	"sort"
@@ -210,6 +211,12 @@ func (g *Game) restore(s saveState) {
 		g.finishRecruitmentMusic()
 	}
 	g.recruit.reset()
+	if g.fieldSaveLoad.active && g.fieldSaveLoad.stage == fsSoundWait {
+		if a, ok := g.music.(backgroundAudio); ok {
+			a.ResumeBackground()
+		}
+	}
+	g.fieldSaveLoad.reset()
 	g.deferredRegionDialogueReturnID = s.DeferredRegionDialogueReturnID
 	if g.regionDialogueReturn != nil {
 		g.regionDialogueReturn = nil
@@ -295,6 +302,7 @@ func (g *Game) restore(s saveState) {
 			g.soloChallengeActive, g.soloChallengeEventID, g.soloChallengeCompanions = false, "", nil
 		}
 	}
+	g.roster = nil
 	if len(s.Roster) > 0 { // 還原名冊(未入隊角色)
 		g.roster = make([]*Member, len(s.Roster))
 		for i, c := range s.Roster {
@@ -488,6 +496,10 @@ func savePath() string {
 
 // Save 寫存檔。
 func (g *Game) Save() error {
+	return g.saveTo(savePath())
+}
+
+func (g *Game) saveTo(path string) error {
 	if g.regionDialogueReturn != nil {
 		return fmt.Errorf("region dialogue return is not at a save checkpoint")
 	}
@@ -501,8 +513,10 @@ func (g *Game) Save() error {
 	if err != nil {
 		return err
 	}
-	_ = os.MkdirAll(filepath.Dir(savePath()), 0o755)
-	if err := os.WriteFile(savePath(), b, 0o644); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(path, b, 0o644); err != nil {
 		return err
 	}
 	g.respawn = point
@@ -511,9 +525,17 @@ func (g *Game) Save() error {
 
 // Load 讀存檔(不存在 → 靜默略過,回 nil)。
 func (g *Game) Load() error {
-	b, err := os.ReadFile(savePath())
+	return g.loadFrom(savePath(), true)
+}
+
+func (g *Game) loadFrom(path string, ignoreMissing bool) error {
+	return g.loadSnapshotFile(path, ignoreMissing, nil)
+}
+
+func (g *Game) loadSnapshotFile(path string, ignoreMissing bool, fieldClock *gamepack.FieldSaveLoad) error {
+	b, err := os.ReadFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if ignoreMissing && os.IsNotExist(err) {
 			return nil
 		}
 		return err
@@ -566,6 +588,14 @@ func (g *Game) Load() error {
 		if !found {
 			return fmt.Errorf("opening home save actor missing")
 		}
+	}
+	if fieldClock != nil {
+		clock, ok := fieldClock.LoadClock(s.Layer)
+		phaseTicks := g.dayNightCycle.ClockTicks / 4
+		if !ok || phaseTicks <= 0 || clock < 0 || clock >= g.dayNightCycle.ClockTicks {
+			return fmt.Errorf("field load clock rule unavailable for layer %d", s.Layer)
+		}
+		s.DNPhase, s.DNStep = clock/phaseTicks, clock%phaseTicks
 	}
 	if err := g.validateDeferredRegionDialogueReturnSave(s); err != nil {
 		return err
