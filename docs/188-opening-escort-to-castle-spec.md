@@ -5600,3 +5600,38 @@ READY限定原本已審健康單人、無詛咒且符合資格範圍內，選第
 | work/issue4-equip-armor-replace-ownership-r1.json | 9c7e7f43723bb0ab4629a7b84e498e05109410724578e442fede6ae25209a9fd |
 
 最終稽核入口work/issue4-equip-armor-replace-final-audit-r1.py及同名.json；逐項核對來源、完整畫布、PNG保持、原報告、正式程式／JSON及所有者。原版素材、影像、database與binary留本機，唯一現況表CONTEXT，下一來源：從正常381開道具清單，核對第四動作列的第一個結果與返回；先dosgolem來源，再依證據審READY，不預設效果。Issue／Goal進行中。
+
+### 2026-10-06 正常381後道具動作列數 DRAFT
+
+前輪待辦寫成「第四動作列」，但既有正常207收據明示單人4050動作窗只有三項。這是尚未證實的計畫，不能據此新增第四功能。先從相同正常新遊戲路線抵達381，再Space、四次Down、Space開清單，選第一件後三次Down核對實際列數與繞回，Esc返回並左右行走。五件物品與三項動作只是待驗條件；來源不符即停止，不猜補第四項效果。
+
+私有DRAFT入口work/issue4-item-action-count-probe-r1.py，固定dosgolem2f44a68、seed1357執行前一次、dq3-ebiten-test:20260822-r1。原版與工具唯讀，有界Docker、UID1000只寫既有work。前381事件與953產物必須保持，新13節點逐包核對原始2172bytes、完整畫布與實際IRQ。來源接受後才審有限READY並比對正常remake；多人、其他物品操作及動畫時鐘不在本輪契約。
+
+### 2026-10-06 道具三動作繞回有限 READY 與待辦勘誤
+
+原版來源已接受：work/dosgolem-opening/issue4-item-action-count-normal-r1-source-r1-receipt.json，SHA-256 c48788435ba495f97cc6626d4b83b6e657ea8c012de55d0b44c409ba74ec2e78。394包／432鍵／864IRQ1／992產物，父381全部事件與953產物逐欄／逐byte保持。EXE大小115282、SHA-256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；dosgolem2f44a68、seed1357執行前一次，無restore、遊戲狀態注入或相位調整。新13節點的2172bytes只有393左移改座標低byte，其餘包含物理八格與原生兩個保存檔保持，世界clock0。
+
+| 正常包 | 已證實結果 |
+| --- | --- |
+| 382..386 | 開指令，Down依序選中2、3、4、5 |
+| 387 | 開五件物品清單，游標1；實際物理格2、3、4、5、7，格4保持穿戴 |
+| 388..391 | 選第一件進三項動作，三次Down為1→2→3→1 |
+| 392..394 | Esc關閉道具與父窗；左移2,18、右移3,18 |
+
+動作窗口DGROUP4050的64bytes與EXE file1A190原始bytes相同，count3由原版choice consumer回報；正常欄位、鍵盤make／break及完整畫布均由來源核對。位址基準沿既有IDA9.4：linear−EC90=file，DGROUP base linear24DD0。此結論閉合本條正常健康單人路線，沒有新增靜態函式語意。
+
+前輪「第四動作列」對此狀態不成立，現行待辦據此訂正；上節原計畫及較早多人unknown保持歷史，不能外推其他隊伍。本有限READY允許對拍現行三項導覽、physical八格／snapshot／RNG、正式F5／F6與後續行走，不允許新增第四功能、改存檔或猜多人行為。原版本輪未保存394後狀態，remake追加存讀檔只列內部驗證。完整RGB、動畫時鐘及多人仍由實測決定。
+
+公開重生入口：[原版正常探針](../tools/dosgolem_field_item_action_count_probe.py)、[獨立來源checker](../tools/verify_dosgolem_field_item_action_count.py)。在固定有界Docker以UID1000、原版／frozen dosgolem唯讀、work可寫執行python3 /repo/tools/dosgolem_field_item_action_count_probe.py，再執行python3 /repo/tools/verify_dosgolem_field_item_action_count.py。固定r1前綴已有產物時拒絕覆寫，重生使用乾淨work輸出overlay，不刪既有收據。源checker首輪因草稿預設公開producer尚不存在失敗；補齊同byte公開入口後同image／命令乾淨重驗，原版產物不變，未當作產品缺陷。
+
+### 2026-10-06 正常394有限 CONFORMED 與測試環境訂正
+
+[正常玩家驗收](../dq3_remake_ebitan/game/field_item_action_count_test.go)從新遊戲、固定1357一次，透過共用正常381前綴執行全部13步InputState。實際五物品／三動作游標、完整八格、snapshot／RNG／世界clock0、Esc返回、左右行走與原版一致；全部十JSON槽在導覽期間保持。另以正式F5／F6驗證同版本保存、讀回與下一步，原版本輪沒有394後保存樣本，不外推native存檔parity。
+
+382..393十二張完整640×350 RGB均0；394仍差122。已目視核對原版390三列及第三列游標，沒有第四項。全畫布、未解釋動畫時鐘及其他人物／物品條件保持界線，不以相位、遮罩或裁切讓驗收通過。本條健康單人「第四列」待辦已訂正，前輪計畫與較早多人unknown保留歷史，未增加第四功能。
+
+最初3GB草稿r1／r2均由oom_kill終止，保留run.log及receipt.json，不能稱產品失敗或parity通過。r2把大型manifest讀取拆成每段一次，仍在381前終止，這個試作沒有升格。r3為6GB有界診斷，before381 GC後heapAlloc2,983,406,752bytes；heap profile的99.56%屬buffered.Image.WritePixels／Game.renderFrame，包含約2,874.32MiB保留畫素資料。loaded394 RSS3,132,480KiB，已超過原3GB上限。正式採相稱4GB上限、原始畫布helper及相同InputState，三項獨立程序PASS、零SKIP／OOM；沒有改產品圖形流程、狀態、seed或原版。檢視收據曾用256MB容器遭終止，同命令1GB重讀通過，屬大型研究收據資源限制。
+
+work/issue4-item-action-count-runtime-r1/receipt.json及正常item-action-count-receipt.json保存正式結果；source-audit-r1.json保存完整正例及PNG CRC／缺IRQ／變producer三負例拒絕。vet-r1.json通過。final-audit-r1.py／.json逐項核對正式與診斷新13張相同、每路232張既有PNG與原381報告保持、138份正式Go／JSON保持、UID/GID1000、既有root-owned3213及零markdown目錄。原始arrival_camera_test.go未修改，heap profiling／manifest試作只留work。
+
+有限E2／E3及上述十二張V3成立；正式產品Go／pack與485f3c2相同，schema0.30.0／content0.1.102、canonical14b0c168及使用者A的save2/storage1保持。最近完整game／internal／THE END／desktop沿485f3c2，本輪只做受影響回歸，沒有新包。下一來源從正常394開指令選「調查」，核對首個結果與返回，再依READY修正。Issue／Goal保持進行中。

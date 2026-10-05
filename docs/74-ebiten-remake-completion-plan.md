@@ -1,9 +1,9 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-06 正常381的同部位甲胄physical5→4換穿已有限驗收，舊格清旗標、新格設旗標，完整八格／snapshot／RNG、攻8守8、詳細頁與新Enter返回及左右下一步一致。原生存檔與全部既有JSON槽在換穿期間保持；381後remake正常F5／F6及下一步通過，未外推原版換穿後保存parity。
-> 原版419鍵／838IRQ／953產物，父366的908份保持，source d13ac425，seed1357一次，無注入／restore。367..378共12張完整640×350 RGB0，379..381差351／229／122保持；完整V3及動畫時鐘unknown。
-> 三項受影響回歸以獨立程序PASS，零SKIP／OOM，vet及來源正例／三負例PASS。兩條路線各217張舊PNG保持，原366報告與新15張診斷逐byte保持。共用366測試前綴，正式產品Go／pack仍485f3c2，schema0.30.0/content0.1.102，A八格及save2/storage1保持；最近完整game511／internal210／THE END107.10秒／desktop沿485f3c2，本輪未重跑全套，沒有新包。
-> 從正常381開道具清單，核對第四動作列的第一個結果與返回；先dosgolem來源，再依證據審READY，不預設效果。Issue／Goal進行中；現況CONTEXT、計畫docs/74、證據docs/188。
+> 2026-10-06 正常394的健康單人道具清單已有限對拍。五件物品、三項動作及Down的1→2→3→1繞回、Esc返回、左右行走與原版一致；八格／snapshot／clock核對通過，remake RNG及十JSON槽保持，追加正式F5／F6及下一步通過。
+> 原版432鍵／864IRQ1／992產物，父381的953份與所有事件保持，來源c4878843，seed1357一次，無注入／restore。382..393十二張完整640×350 RGB0，394差122保持，完整V3及動畫時鐘仍未知。
+> 三項獨立程序回歸、vet與來源正例／三負例PASS，正式4GB容器零SKIP／OOM；每路232張舊PNG及原381報告保持。3GB草稿的兩次OOM保留；heap診斷顯示約99.6%保留配置屬圖形WritePixels，收據讀取試作未升格。正式產品Go／pack仍485f3c2，A八格、schema0.30.0/content0.1.102及save2/storage1保持，最近完整回歸沿485f3c2，沒有新包。
+> 勘誤：本健康單人路線只有三動作，前輪「第四列」待辦不成立。下一切片從正常394開指令選「調查」，核對首個結果與返回；先dosgolem來源，再審READY。Issue／Goal進行中；現況CONTEXT、計畫docs/74、證據docs/188。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

@@ -1891,3 +1891,13 @@ DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-on
 - 381後remake正常F5／F6及下一步通過，沒有原版換穿後存檔樣本；最近完整game／internal／THE END／desktop仍485f3c2，本輪未重跑全套。
 - UID/GID1000、root-owned3213與零.md目錄保持，原版資料／影像／database留本機，十三項使用者資料未提交；沒有新image或包。Docker／遠端收尾與提交SHA由Issue結果留言及handshake記錄。
 - 下一來源：從正常381開道具清單，核對第四動作列的第一個結果與返回；先dosgolem來源，再依證據審READY，不預設效果。Issue／Goal保持進行中。
+
+### 2026-10-06 Issue #4 正常394道具三動作與第四列待辦勘誤
+
+接續0e41f5a，沿使用者已確認A單一八格。Issue開始留言6002178566先登記本輪DRAFT；既有207來源是三項，故先查證而不預設第四項。原版新冷啟動394包／432鍵／864IRQ1／992產物，source c4878843；父381全部事件及953產物保持，seed1357一次、無注入／restore。三Down確認1→2→3→1，Esc返回，左右行走；2172bytes除393位置低byte保持，原生保存檔不改。公開producer／checker及正式測試由docs/188索引。
+
+來源checker首輪草稿預設公開producer尚未建立，補同byte入口後同image乾淨重驗；正例完全重現，PNG CRC、缺IRQ、變producer三負例拒絕。讀大型收據256MB容器曾終止，1GB同命令重讀通過。remake草稿r1／r2的3GB程序OOM保留；manifest單次讀取試作未解決主因，未進正式測試。6GB r3 heap診斷找到約99.56%配置在WritePixels，before381存活heap近2.98GB，loaded394 RSS超過3GB。依量測採有界4GB容器及原始畫布helper，394、共用381、裝備範圍三項獨立程序PASS，零SKIP／OOM，vet通過。
+
+正式394八格／snapshot／RNG／clock、全部十JSON槽保持、F5／F6與Load後下一步通過；新增13張全畫布中382..393十二張RGB0，394差122保持。每路232張舊PNG及原381報告不變，新13張與診斷逐byte同。138份正式Go／JSON保持485f3c2，A八格及save2/storage1不變；最近完整回歸沿485f3c2，未聲稱本輪全套或campaign完成。final-audit-r1保存所有者、畫面與收據核對，root-owned基線3213、零markdown目錄。
+
+修正目前計畫：健康單人此路線無第四項，下一正常394選「調查」首個結果與返回。歷史計畫與多人未知留存。原版資產、影像、binary、profiling及研究收據只在本機work，無新發行包；使用者十三項未追蹤資料保持。驗收後commit＋push及Issue結果的實際ID由work/issue4-item-action-count-handshake-r1.json記錄。全部一次性容器完成後清除，其他專案容器不動。Issue／Goal繼續。
