@@ -1,7 +1,7 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-05 A物品編碼、128筆ITEM metadata及兩個角色初始八格已接入pack，schema0.20.0／content0.1.92、canonical0839ecc9。初裝預覽由words導出，正式boot核對實際archive count／shape及逐筆metadata，兩份乾淨副本重建九JSON逐byte一致。target13頂層／40子PASS、零SKIP；完整game486頂層覆蓋／490次執行、435不同頂層／121子PASS、51選用SKIP，internal188頂層／412子、12套件PASS、4選用SKIP。正常THE END141.62秒與Linux建置通過，零OOM、1087張既有PNG保持。
-> 正式Game／Member、戰鬥及全部save持有者尚未遷移到唯一集合，存檔未升級，206..208仍RED。下一步接所有物品持有者與正常218／230InputState，容量／編碼／metadata已具備，不重做已完成核心或pack。唯一現況表CONTEXT，證據及執行入口docs/188、欄位docs/84；Issue／Goal保持進行中，沒有新包。
+> 2026-10-05 單人道具action Esc已修正為直接回場景。正常194..218重播、取消零交易、重開、正式F5／F6與下一步通過；本輪23不同頂層／4子PASS、零SKIP／OOM及go vet通過。208／217完整RGB仍411，原始主角及NPC完整圖塊解釋全部差異，動畫時序仍未知、未V3；57張既有指令窗PNG與44張新路線前綴保持。schema0.20.0／content0.1.92及canonical0839ecc9保持，沒有新包。
+> A核心及pack資料已完成；正式Game／Member、戰鬥及全部save持有者尚未遷移，存檔未升級，206／207清單與選取仍RED。下一步接唯一有序集合及正常230重排，不重做核心、pack或本次取消。最近完整game／internal／THE END141.62秒／Linux建置仍為3be415f，本輪只做受影響回歸。唯一現況表CONTEXT、證據／重生入口docs/188、欄位docs/84；Issue／Goal進行中。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

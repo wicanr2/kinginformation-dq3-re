@@ -226,15 +226,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-05） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；在146b549之上接入pack word編碼／全部metadata／初始八格及boot archive驗證，正式Game／Member集合仍待遷移。schema0.20.0／content0.1.92，canonical `sha256:0839ecc939188bb2193786c0dae571345145a92de65f4179a4bbd3903ebbc68b`；沒有新發行包 |
-| 最新remake已完成 | pack初值只保存完整words，裝備預覽由它導出；實際archive count／shape／metadata不符啟動拒絕。此前主角／同伴出售真正持有者、取消不交易、售款135只加一次、防85→78、Save／Load及下一步保持；既有Space指令窗／HUD／F5F6正常驗收保持 |
+| 現行程式 | `dq3_remake_ebitan/`；在3be415f之上修正單人道具action Esc直接回場景，正式Game／Member集合仍待遷移。schema0.20.0／content0.1.92，canonical `sha256:0839ecc939188bb2193786c0dae571345145a92de65f4179a4bbd3903ebbc68b`保持；沒有新發行包 |
+| 最新remake已完成 | 單人道具action取消直接回場景、零交易，重開、正式F5／F6及下一步通過。此前pack編碼／初裝預覽／boot實際archive驗證、主角／同伴出售真正持有者、Space指令窗／HUD／F5F6保持 |
 | 最新原版oracle | 正常導覽218包來源28995c8d；正常同人給予230包／536IRQ1／268次輸入來源aad971bb。前218包與174母親產物保持；498份產物完整核對。穿戴布衣給自己後移至第八格，空格保留；完整2172bytes只改八格，clock30／Scratch空／seed1357一次 |
-| 最新畫面已驗 | 指令窗194..205十二張完整640×350 RGB0，Space194差異由22519降0。1025張舊PNG保持，新57張含44前綴在測試路線訂正前後保持；收據與公開重生入口見docs/188 |
-| 最新畫面未通過 | 正常正式輸入206清單差44816、207動作差45281、208取消差57417；原版七列含穿戴衣服、保留父窗且Esc回field，remake六列、父窗消失且Esc回清單。兩個可丟棄render完整RGB0只證明試作；前輪動畫限制保持 |
-| 下一production切片 | 使用者已選A單一有序物品格，排除順序引用表。核心及pack資料已閉合；下一步是Game／Member、戰鬥及全部save持有者的唯一集合，adapter整體仍DRAFT。正常道具七列、父窗、取消、自給重排與存讀檔待接線；升級後舊格式拒絕、不自動遷移。轉職旗標清除有職業條件，原版動態未知，不猜補 |
-| 本輪有限CONFORMED | pack編碼／初始格／boot驗證及正常既有入口回歸通過；沒有新增物品206..208的InputState／PNG／V3。核心交易、此前同伴出售E2／正常交易E3、指令窗十二張V3保持；商店原版動態V3與確認／取消空窗仍未驗。完整引擎及save遷移未READY |
+| 最新畫面已驗 | 指令窗194..205十二張完整640×350 RGB0保持。208／217完整411點由原始主角frame4→5的182、NPC14 frame200→201的106、NPC15 frame26→27的123全部解釋，未解釋0；沒有改圖或調相位，動畫時序未知、未V3。57張既有指令窗PNG及新路線44張前綴逐byte保持；入口docs/188 |
+| 最新畫面未通過 | 正常206清單差44816、207動作差45281；原版七列含穿戴衣服、保留父窗，remake六列且父窗消失。208取消已回field，完整RGB由57417降411，217亦411，218行走229；穿戴物選取及完整動畫V3仍未通過。兩個可丟棄render RGB0只證明試作 |
+| 下一production切片 | 使用者已選A單一有序物品格，排除順序引用表。核心及pack已閉合；下一步是Game／Member、戰鬥及全部save持有者的唯一集合，adapter整體仍DRAFT。七列、父窗、自給重排及word存讀檔待接線；升級後舊格式拒絕、不遷移。已完成單人action取消不重開；轉職旗標清除有職業條件，原版動態未知，不猜補 |
+| 本輪有限CONFORMED | 單人action Esc的輸入與返回、取消零交易、重開、正式F5／F6及下一步E2／E3。208／217僅V2診斷，兩側取消前選取物品不同，不稱完整物品same-state parity。此前核心、pack及出售保持；商店動態V3／確認空窗、完整引擎與save遷移仍待驗 |
 | 原版oracle仍未知 | 多人物品取消／給予、全部使用／丟棄、副作用及第四動作列；其他隊伍同狀態、原版指令Enter動態、其他world／室內F6、完整多槽世界、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
-| 現行remake回歸 | 本輪pack target13頂層／40子PASS、零SKIP。完整game486頂層覆蓋、490次執行，435不同頂層／121子PASS、51選用SKIP；internal188頂層／412子、12套件PASS及4選用SKIP。正常THE END141.62秒、Linux desktop PASS，oom／oom_kill0；1087張既有PNG逐byte保持。現行game.test重編與完整測試binary逐byte一致；不把回歸升格原版完整campaign |
+| 現行remake回歸 | 本輪正常取消1頂層及受影響22頂層／4子PASS，共23不同頂層／4子、零SKIP／OOM，go vet ./game通過。原版462份產物核對，兩種損壞輸入拒絕後正對照逐byte保持。最近完整game486頂層覆蓋／490次執行、internal12套件、THE END141.62秒及Linux desktop仍為3be415f，本輪未重跑全套；不升格完整原版campaign |
 | 入隊返回原版限制 | r2在2,500,000,001指令上限仍為199包／474IRQ1，計時器前進3003；未觀察到自然caller返回。只核對18筆既有玩家層IDA bytes；2898 writer及22E10 callee語意unknown，未建立完成收據 |
 | 額外驗證限制 | F6依pack重設世界時鐘，engine／標題Load保留JSON時鐘；帶schema／hash的錯版與壞layer在restore前拒絕。無pack metadata的歷史migration仍在舊save路徑，A升級後須一併拒絕，尚未實作。綠色回歸不升格完整原版parity |
 

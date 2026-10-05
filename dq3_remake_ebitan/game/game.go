@@ -1192,6 +1192,11 @@ func (g *Game) step(in InputState) error {
 		switch {
 		case in.Cancel && g.panel == panelEquip && g.panelActor >= 0:
 			g.panelActor, g.panelCursor = -1, 0
+		case in.Cancel && g.panel == panelItem && g.panelActor == 0 && len(g.companions) == 0 && g.itemActionStage == itemActionMenu:
+			// docs/188: normal single-owner action Esc returns to the field.
+			g.panel, g.panelActor, g.panelCursor = panelNone, -1, 0
+			g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
+			g.cmd.open = false
 		case in.Cancel && g.panel == panelItem && g.itemActionStage == itemActionTarget:
 			g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
 		case in.Cancel && g.panel == panelItem && g.itemActionStage == itemActionUseTarget:

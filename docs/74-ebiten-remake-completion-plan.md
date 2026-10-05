@@ -1,7 +1,7 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-05 A方案的pack編碼及初始八格已有限CONFORMED，schema0.20.0／content0.1.92、canonical0839ecc9。boot以實際ITEM核對count／shape／metadata，兩份乾淨副本重建九JSON一致。target13頂層／40子PASS、零SKIP；完整game486頂層覆蓋、490次執行，正常THE END141.62秒、internal與Linux建置通過，零OOM、1087張既有PNG保持。
-> 下一主要切片為Game／Member與戰鬥、全部save持有者的唯一有序集合，再接正常道具七列、父窗、取消、自給重排及218／230正式驗收。核心與pack不重開；整體adapter仍DRAFT，存檔尚未升級，206..208仍RED。唯一現況表CONTEXT、證據docs/188及欄位docs/84；Issue #4／Goal進行中，沒有新包。
+> 2026-10-05 單人道具action Esc直接返回場景已有限CONFORMED。正常取消、重開、F5／F6與下一步通過；本輪23不同頂層／4子PASS、零SKIP／OOM及go vet通過。208／217完整RGB仍411，全由原始人物圖塊解釋，動畫時序未知、未V3。57張既有指令窗PNG及44張前綴保持，schema0.20.0／content0.1.92／canonical0839ecc9保持；最近完整game／internal／THE END及Linux建置仍為3be415f。
+> 下一主要切片為Game／Member、戰鬥及全部save持有者的唯一有序集合，再接道具七列、父窗與230自給重排。A已獲使用者確認，核心、pack及本次取消不重開；整體adapter仍DRAFT，存檔尚未升級，206／207仍RED。唯一現況表CONTEXT、證據docs/188及欄位docs/84；Issue #4／Goal進行中，沒有新包。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

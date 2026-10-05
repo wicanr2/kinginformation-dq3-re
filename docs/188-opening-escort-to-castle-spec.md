@@ -4667,3 +4667,43 @@ target r3為13頂層／40子 PASS，零FAIL／SKIP；包含原始EXE／ITEM、D2
 此前完整r2的1087張PNG逐byte保持，包含正常指令窗、存讀檔、登錄／觀看與出售；沒有新runtime畫面或物品206..208改善聲明。驗證後以現行來源重編game.test，與完整測試binary逐byte相同。最終來源／hash／擁有權收據 `work/issue4-item-pack-final-r1-receipt.json`；原版EXE／ITEM、使用者13項資料及root基線保持。沒有新發行包。
 
 Game／Member仍使用原有可寫bag及equipment，戰鬥及完整save adapter尚未遷移。舊帶schema／hash存檔依既有gate拒絕；無metadata舊save及新words save仍待接線，不把本切片稱為存檔格式完成。下一主要閘門是所有持有者的唯一集合與正式218／230InputState／全畫布核對，物品206..208仍RED。
+
+### 2026-10-05 單人道具取消有限 READY
+
+本切片先修正已閉合的取消分支，A 的完整持有權／save 遷移仍待整體 READY。入口沿本檔正常七列來源、[原版來源驗證器](../tools/verify_dosgolem_field_item_navigation.py)、[正式輸入測試](../dq3_remake_ebitan/game/field_command_menu_test.go)及 `game.go` 的 panel modal。使用者已授權繼續對拍修正，不新增產品或資料格式決策。
+
+| READY 項目 | 契約與證據 |
+| --- | --- |
+| 玩家問題 | 單人 Item 操作窗 Esc 應結束整條指令鏈。現行分支退回物品清單，正常208完整RGB差57417 |
+| 輸入身分 | 同上節 DQ3.EXE 115282 bytes／5178fdc8完整hash，dosgolem2f44a68、seed1357執行前固定一次。接受來源28995c8d的218包正常路線，不restore、注入或改時鐘 |
+| 原始定位及等級 | IDA linear1372F caller／1F779..1F8A5 selector；接受來源207為action、208 Esc後ready／1997C，217清單Esc後亦ready。單人取消回field為限定confirmed；多人及目標選擇取消未知 |
+| 輸入與轉移 | 僅單人、已選owner、itemActionMenu收到Cancel：關閉panel及父command，清除暫存選取，交還場景。已知單人清單取消沿既有分支；不把目標選擇或多人取消改成同一規則 |
+| 交易與失敗 | 取消不觸發use／give／drop，物品、裝備、HP／MP、金錢、旗標、PRNG與世界clock保持。方向與取消同幀不移動；無合法owner不套用此分支 |
+| 垂直鏈 | 原版正常來源 → typed InputState → panel取消 → 場景重畫 → 重開指令及Item → 正式F5／F6 → 下一步。不更改pack、物品儲存或存檔格式 |
+| 驗收 | 先以未修正程式重現208錯誤；同一容器命令修正後重播194..218，核對208／217完整畫布及snapshot／PRNG／clock，正常重開、存讀檔與行走通過。原版來源與每份產物hash必驗，不接受必驗SKIP |
+| 限制與停止線 | 206／207的清單、穿戴物選取與版面仍有差異。兩側取消前選取的物品不同，因此本切片只驗取消無交易與返回場景，不稱八格或所選物品same-state parity。多角色、目標取消、音訊與完整原版campaign未新增驗收；原版產物保持本機 |
+
+READY畫面閘門勘誤：正常原版208已更換場景人物影格，而remake取消後的完整畫布與正常193／202逐點相同。首輪修正後功能已返回field且snapshot保持，但測試將208 RGB0誤當必要條件，仍以411差異失敗。原始CTY00的NPC14／15兩個完整32×24圖塊已逐點核對，runtime 200／26、原版201／27，解釋106／123；其餘182尚待主角圖塊核對。此證據足以否定「所有既有動畫都保持同相位」的假定，不能以改動畫、裁切或替換PNG讓取消修正通過。
+
+修訂驗收：功能gate為取消回場景、零交易、重開、F5／F6及下一步；已CONFORMED的194..205完整RGB0仍必驗。208／217全畫布差異保存為V2診斷，以原始CTY／BLS／BLK另作完整人物raster核對。無法解釋的像素照實列unknown；完整RGB非零仍未V3。首輪功能RED及修正後畫面RED均保留，不覆寫收據。
+
+[完整取消畫布核對器](../tools/verify_dq3_item_cancel_raster.py)沿接受來源28995c8d，重驗462份原版產物、明示的runtime收據hash及每張runtime PNG。194..218逐張完整RGB核對；208／217的主角及NPC14／15另用原始CTY座標、方向、BLS兩影格與BLK背景核對每個完整32×24圖塊，不修改畫面。CLI為 `python3 /repo/tools/verify_dq3_item_cancel_raster.py --assets /repo/assets_raw --original /work/dosgolem-opening --source-receipt /work/dosgolem-opening/issue4-field-item-navigation-r2-source-r1-receipt.json --runtime <item-cancel目錄> --runtime-receipt-sha256 <正式收據SHA-256> --output <尚不存在的診斷收據>`，沿本節一次性Docker、UID1000及有限資源執行。支援範圍只限本節的單人上層checkpoint及schema0.20.0；完整RGB非零仍列V3未通過。
+
+### 2026-10-05 單人道具取消有限 CONFORMED
+
+正式分支僅改單人已選主角的action Cancel：panel及父指令關閉，清暫存選取，直接回場景。未改多人或目標取消。未修正程式的正常新測試在208重現留於物品清單；修正後同一路線取消零交易、重開指令／物品窗、217清單取消及218右移通過。正式F5／F6讀回實際保存snapshot後，以自然閒置輸入完成行走冷卻，再左移通過，沒有狀態注入或時鐘調整。
+
+- 正常新測試r3為1頂層PASS；受影響回歸22頂層／4子PASS，合計23不同頂層／4子、零FAIL／SKIP。`go vet ./game`通過，兩個驗收容器oom／oom_kill均0。沿dq3-ebiten-test:20260822-r1、UID1000、network none、3GiB／2CPU，一次性容器及有界Xvfb清理。最近完整game／internal／THE END141.62秒／Linux建置仍為3be415f，本輪未重跑全套。
+- 完整194..205仍RGB0；208及217各411，218為229。兩張取消圖的全部411由主角BLS4→5的182、NPC14 BLS200→201的106、NPC15 BLS26→27的123解釋，三個完整32×24圖塊均逐點吻合原始CTY／BLS／BLK，其他畫布無差異。只證實本次raster來源，原版動畫時鐘與remake對應仍未知；不裁切、遮罩、換圖或改相位，不稱V3。
+- 57張既有正式指令窗PNG與新物品路線44張前綴逐byte保持。新路線共25張194..218完整PNG，選取仍未same-state：206／212..216清單差44816、207動作差45281。八格、父窗與230自給尚未接入，A整體adapter仍DRAFT，存檔未升級。
+- r1修正後RGB0測試假定失敗、r2後續行走過早失敗均保留。前者依完整原始圖塊診斷修訂驗收分級；後者依game.go行走cooldown與既有field save測試補正常閒置輸入。正式產品在這兩次訂正均不再改動，沒有以改遊戲規則掩蓋失敗。
+- checker拒絕runtime PNG hash損壞與虛假的取消無交易聲明；負例後完整正對照r2與r1逐byte相同。原版462份產物及接受來源保持。schema0.20.0／content0.1.92／canonical0839ecc9保持，沒有新包。
+
+重生入口：於`dq3_remake_ebitan/`以Docker內`go test -c ./game`建測試binary，Xvfb下執行`TestFieldItemSingleOwnerCancelDosgolemNormalInputComparison`。`DQ3_ASSETS=/repo/assets_raw`、`DQ3_MT32=/repo/work/mt32`、`DQ3_MOTHER_FINISH_ORIGINAL=/work/dosgolem-opening/issue4-mother-finish-receipt.json`、`DQ3_ITEM_CANCEL_ORACLE_DIR=/work/dosgolem-opening`及`DQ3_ITEM_CANCEL_RECEIPT_DIR=<空輸出目錄>`必填。正式新來源、素材或hash缺失失敗，不以選用SKIP驗收。畫布核對沿上節CLI，正式runtime目錄為`work/issue4-item-cancel-green-r3/item-cancel/`。
+
+| 本機收據 | SHA-256 |
+| --- | --- |
+| `work/issue4-item-cancel-green-r3/item-cancel/receipt.json` | `829166eb68ee503c62af13607ca2b96daf7e6fbb42e95eaa0f4dd41485102630` |
+| `work/issue4-item-cancel-raster-r1.json`及r2 | `0ca9d2dad1714454791f5e6562633841a61210e719f08a27919820fdab650031` |
+
+有限功能E2／正常取消E3與畫面V2只適用上述單人取消；所選物品、完整動畫、多人及整體A遷移不升格。下一切片沿CONTEXT唯一狀態表，完成核心、pack與本次取消不重開；Issue #4及Goal保持進行中。
