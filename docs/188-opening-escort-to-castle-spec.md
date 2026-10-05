@@ -2,6 +2,53 @@
 
 目前家中正式流程以「2026-10-03 正式家中驗收」為準，城鎮及城堡攝影機見文末對應驗收節；下列較早DRAFT保留研究歷史。
 
+正常木棒使用的來源入口：[原版重播工具](../tools/dosgolem_field_item_use_probe.py)、
+[來源核對工具](../tools/verify_dosgolem_field_item_use.py)。兩者僅在 Docker 內執行。
+[正式使用畫布核對工具](../tools/verify_dq3_item_use_raster.py)核對完整640×350畫面、原始人物影格與背景，保留所有差異。
+本輪由已接受的正常第230步延伸至第233步；木棒使用的有限READY與正式CONFORMED見下方，其他分支保持未驗限制。
+
+## 2026-10-05 木棒使用的有限 READY
+
+依 Issue #4，正式基準為 `1549181`，schema0.22.0／content0.1.94。
+原版正常233包來源 `work/dosgolem-opening/issue4-item-use-normal-r2-source-r1-receipt.json`，
+SHA-256 `c11efcbdb9ff928af1d3a9c8d31c7703b5a0b4c9ded3cc55cc0949b9cf2173ee`。
+271次含創角輸入、542次IRQ1與507份產物核對；父230包、498份產物保持。
+seed1357執行前固定一次；沒有遊戲狀態注入或模擬器restore。
+231選第一件木棒，232選使用，233以新的Enter關閉全部窗口並返回場景。
+231..233完整2172bytes持久區、128bytes角色、八格words、金錢、旗標與clock30保持。
+
+| 原始定位、caller及consumer | 已知結果 | 分級與限制 |
+|---|---|---|
+| IDA9.4 linear1372F→13829→1F4E3；DGROUP4050 callback3942→linear13942 | 正常指令、物品及三項操作窗第一項進入使用 | confirmed，僅此次正常單人路線 |
+| linear13969..139A7、13C6D..13C7B；ITEM載入DGROUP1F9，record步距7 | 物品低byte識別、class mask與性別限制通過，ITEM byte4的bit8為零，走無效果分支 | 此木棒動態分支confirmed；完整128項資料核對不等於各物品玩家路線驗收 |
+| linear13D2A..13D42→15002→21414→2111B→1F604 | 原生消息窗依序顯示record273、341，等待新按鍵，再撤窗 | confirmed；不套用到有特殊效果的物品 |
+| DGROUP3E6E，file19FAE，linear21414..21501 | 外框152,238,352,96；文字首行168,254、次行168,270，字距24 | confirmed；使用既有已審窗口契約，不目測補尺寸 |
+| D3TXT00 record273：FFFB,210,412,FFF9,56；record341：508,399,435,436,494,410,147,431,273,56 | 首行實際持有者姓名與木棒名；次行「但是什麼也沒有發生。」；兩個插值各消費一word | 此次原版PNG及文字consumer confirmed；控制碼的歷史命名不代替語意 |
+
+IDA sidecar `work/issue4-item-use-r1-ida.json` 的627筆原始及重定位bytes均核對。
+SHA-256 `2aa728baa78a8e00e82ea331a704d223018f209f582fca6ef80fb9cf4c54ee89`。
+EXE115282bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA linear−EC90=file；DGROUP linear基底24DD0。保留原始符號、bytes及xref，不改database名稱。
+ITEM896bytes，SHA-256 `7f3142de688ccca50fe888854b59ceb81b406b4c8eec038e719f10fda66e7f5d`。
+TXT SHA-256 `38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b`。
+
+來源正例重跑通過，錯誤IRQ1、角色word及缺失273皆拒絕。
+remake隔離診斷仍沿正常新遊戲至230；231整張畫布差229，232差18419，兩次持久snapshot及RNG保持。
+先前診斷錯綁230來源而拒絕新PNG，屬驗證腳本問題；登錄新233來源後以同容器命令重跑。
+
+READY限定健康單人主角、ITEM無特殊效果且通過原版class／性別gate的分支。
+pack新增明示的主角無效果metadata及273／341引用、姓名／物品控制碼綁定；共用Go不寫原始ID或mask。
+沿既有原生消息窗保留操作前完整底圖，兩行自然顯示後等待新的確認，返回場景。
+不消耗物品、不更動穿戴、不抽RNG；正常重開、F5／F6、下一步及受影響PNG為驗收閘門。
+非健康、多持有者、拒絕gate與特殊效果維持未驗限制；動畫時鐘、全流程V3與完整原版campaign仍未知。
+字模hold沿用hardware-spec approximation，不重開PIT／DAC逐週期研究。
+
+勘誤：第一列檜木棒是physical0的word0000，ITEM record0；原始ITEM七bytes為
+`020005002000df`。姓名資料用record `code+1`，不要把文字record1當成物品code1。
+linear13919..13941跳過空格00FF但保留0000，13977再把code加一，故使用期間DGROUP2591為1。
+兩次測試將第一列誤判為code1而失敗，依這條原始reader與自然actor bytes訂正測試。
+正式單一Store與無效果metadata沒有改動；保留原失敗收據，不把它寫成產品缺陷。
+
 ## 2026-10-02：家中序列與圖像選擇的來源核對及現行試作（DRAFT）
 
 依 [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) 接續 `c4d2a3c`。
@@ -4861,3 +4908,49 @@ r3補上`DQ3_ITEM_ORACLE_DIR`後完整重跑，僅四項選用診斷SKIP。第�
 
 唯一現況表在CONTEXT。下一正常切片為七列道具清單的使用入口，先取得dosgolem原版證據；
 已完成的八格持有權與225原生提示不重開。所有原版素材、PNG與binary留在本機，工作登記Issue #4。
+
+## 2026-10-05 正式木棒使用限定CONFORMED
+
+上述READY接入typed pack與正式玩家操作，不呼叫debug入口或注入狀態。
+第一列code0檜木棒的兩行消息、姓名／物品插值及父畫面均由原版正常233包閉合。
+正式232全640×350 RGB由18419降106，完整原始NPC14 BLS201／200與BLK tile4唯一解釋全部差異。
+未解釋差異0；沒有遮罩、裁切、替圖或調動畫。兩側完整232 PNG已目視核對。
+231差229、233差122仍保留；窗口與消息只稱V2，動畫時鐘與完整V3未通過。
+
+八格words、穿戴、持久snapshot與remake RNG逐步保持，233的新Enter返回場景；正式F5／F6及新一步通過。
+單一Store、storage_version1與save_version2保持；舊schema／不同canonical存檔拒絕，暫態底圖不序列化。
+三路舊207張PNG與新路81張正常前綴逐byte保持。九JSON由兩份乾淨1549181重建一致。
+schema0.23.0／content0.1.95，canonical `sha256:d28a7781fca4f13a99e65c32d59a55b4b71648a927d340681bffd0a91930b515`。
+
+game495頂層清單完整覆蓋，444不同頂層／141子PASS、51選用診斷SKIP；internal196頂層／426子、12套件PASS、4選用診斷SKIP。七項必驗含正常路線與新讀鍵元件零SKIP；正常THE END118.69秒、go vet、Linux desktop PASS，OOM0。
+完整game與正常測試同一binary SHA256 `2b81e8edf9447acb4402459aafe8093e25be4a03b16a44f5eb590550ec5b3e36`。
+Linux desktop SHA256 `bc3161ff48db37d1fa8260ffa5d4b5f751ff5645ec55c71fdfedb9bd0823778d`。
+來源checker三負例及畫布checker壞PNG、錯動畫聲明、NPC外額外像素三負例正確拒絕；重複正對照一致。
+
+新增13919、13D2D、215AE三筆已審語意到既有原始位址索引
+[tools/ida_field_pose_ledger.json](../tools/ida_field_pose_ledger.json)。原五筆保留，IDA9.4匯出自動合併八筆。
+627筆原始bytes、名稱及xref逐項保持；新增sidecar SHA256
+`904fbcc058c1e276997f76d50806267cf049e7a5f60f1974e53312ae29ca331f`，原始EXE保持。
+
+先前綁錯來源、把code+1誤當物品碼及重複輸出目錄皆為驗證腳本問題。
+已依原始reader及來源清單訂正，保留失敗收據；中止含錯誤測試的兩個容器後，正式套件乾淨重跑。
+初次重建改動過多JSON排版，修正遷移工具保持既有排版，再由兩份乾淨輸入重建相同資料。
+正式產品未因測試失敗改物品規則，未放寬來源或畫面斷言。
+
+| 本機正式收據 | SHA-256 |
+| --- | --- |
+| `work/dosgolem-opening/issue4-item-use-normal-r2-source-r1-receipt.json` | `c11efcbdb9ff928af1d3a9c8d31c7703b5a0b4c9ded3cc55cc0949b9cf2173ee` |
+| `work/issue4-use-runtime-r3/game-receipt.json` | `7db4bcbf7693c5dcbb93e3bdc3d4311b1193a4120bb8abeea7f915d6ed9b8dba` |
+| `work/issue4-use-full-r2/game-receipt.json` | `b99f0bf63cad8ebc61849ee5b9b93f419a888652d6ad5b73c3cd3232eed7c086` |
+| `work/issue4-use-internal-r1.json` | `3292bd88016c0bfd79b08a600028e0313c68fed86207550dda5c14e1b8d0fa4f` |
+| `work/issue4-use-runtime-r3/desktop-receipt.json` | `4236b1c652fc8476e98a0782dd15cace4966e38f4c4f7bf399b9d1655000f3a2` |
+| `work/issue4-use-runtime-r3/ITEM_USE/use-receipt.json` | `c6bd31bc596521b3f9ba26cf17ced22151685c709c54b3f0f3d48987d225dfe0` |
+| `work/issue4-use-runtime-raster-r1.json` | `89cd23a52b016625aa17eea112fd9ddb3259531def13b1395eda7a228ef19d36` |
+| `work/issue4-use-raster-checker-tests-r1.json` | `34dc1f66412b169755312055f8cbfb8a133c1df123399ce5692f88c73ea2b5e3` |
+| `work/issue4-item-use-source-negative-r1.json` | `c48f37c5a946f31d1ed5af03a5f62435746cc11286b8015da4f2757575d5bd2e` |
+| `work/issue4-use-png-pack-audit-r1.json` | `48f8385288f2f460a612649134ff03ab335a5e26c528d2e50e8b339842dc2b98` |
+| `work/issue4-use-vet-r1.json` | `a70c8c9152a697ffca5968dfd33523ca79c64ac884e26082803c62cd0f6e6e65` |
+| `work/issue4-item-use-annotation-audit-r1.json` | `d8ce06a63319d8a5d9b7838228bdbb3d992fcf208e2f97e3568b79855035297e` |
+
+正常233返回場景後重開物品清單，觀察「丟掉」的問題、物品交易與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225與木棒使用不重開。 完整原版campaign、音畫、非健康、多持有者與特殊效果保持未知。
+Issue #4與Goal保持進行中；沒有新發行包。全部原版素材、PNG、binary與IDA database只留本機。

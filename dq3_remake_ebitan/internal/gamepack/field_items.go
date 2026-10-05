@@ -19,17 +19,31 @@ type FieldItems struct {
 		Actions    string `json:"actions"`
 		GivePrompt string `json:"give_prompt"`
 	} `json:"text_ids"`
-	FrameRows        int              `json:"frame_rows"`
-	RowStep          int              `json:"row_step"`
-	Name             GeometryAnchor   `json:"name"`
-	Cursor           GeometryAnchor   `json:"cursor"`
-	Worn             GeometryAnchor   `json:"worn"`
-	ActionCursor     GeometryAnchor   `json:"action_cursor"`
-	CursorGlyph      int              `json:"cursor_glyph"`
-	WornGlyph        int              `json:"worn_glyph"`
-	MarkerMask       *int             `json:"marker_mask"`
-	GivePresentation *FieldItemPrompt `json:"give_presentation"`
-	Evidence         Evidence         `json:"evidence"`
+	FrameRows        int                   `json:"frame_rows"`
+	RowStep          int                   `json:"row_step"`
+	Name             GeometryAnchor        `json:"name"`
+	Cursor           GeometryAnchor        `json:"cursor"`
+	Worn             GeometryAnchor        `json:"worn"`
+	ActionCursor     GeometryAnchor        `json:"action_cursor"`
+	CursorGlyph      int                   `json:"cursor_glyph"`
+	WornGlyph        int                   `json:"worn_glyph"`
+	MarkerMask       *int                  `json:"marker_mask"`
+	GivePresentation *FieldItemPrompt      `json:"give_presentation"`
+	UseNoEffect      *FieldItemUseNoEffect `json:"use_no_effect"`
+	Evidence         Evidence              `json:"evidence"`
+}
+
+type FieldItemUseNoEffect struct {
+	IntroTextID       string   `json:"intro_text_id"`
+	ResultTextID      string   `json:"result_text_id"`
+	ActorVariableCode *int     `json:"actor_variable_code"`
+	ItemVariableCode  *int     `json:"item_variable_code"`
+	Evidence          Evidence `json:"evidence"`
+}
+
+func (s *FieldItemUseNoEffect) UnmarshalJSON(b []byte) error {
+	type plain FieldItemUseNoEffect
+	return requiredHome(b, (*plain)(s))
 }
 
 // FieldItemPrompt presents a short native message over the previous UI frame.
@@ -123,7 +137,58 @@ func (p *Pack) validateFieldItems() error {
 	if d.Layout.Columns*dq3data.GlyphPx != s.ActionWindow.Width*8 || d.Layout.LinesPerPage*dq3data.GlyphPx != s.ActionWindow.Height || len(d.GlyphCodes) != d.Layout.Columns*d.Layout.LinesPerPage+d.Layout.LinesPerPage-1 {
 		return fmt.Errorf("item action record shape invalid")
 	}
-	return p.validateFieldItemPrompt()
+	if err := p.validateFieldItemPrompt(); err != nil {
+		return err
+	}
+	return p.validateFieldItemUseNoEffect()
+}
+
+func (p *Pack) validateFieldItemUseNoEffect() error {
+	s := p.Interface.FieldItems.UseNoEffect
+	if s == nil || s.Evidence.Level != "D3" || s.ActorVariableCode == nil || s.ItemVariableCode == nil || *s.ActorVariableCode == *s.ItemVariableCode {
+		return fmt.Errorf("item no-effect presentation missing or unreviewed")
+	}
+	if err := validateEvidence(s.Evidence); err != nil {
+		return err
+	}
+	for _, code := range []*int{s.ActorVariableCode, s.ItemVariableCode} {
+		if *code < dq3data.GlyphMax || *code > 65535 || !dq3data.IsVarInsert(uint16(*code)) {
+			return fmt.Errorf("invalid item prompt variable binding")
+		}
+	}
+	intro, a := p.TextDefinition(s.IntroTextID)
+	result, b := p.TextDefinition(s.ResultTextID)
+	if !a || !b {
+		return fmt.Errorf("item use text reference missing")
+	}
+	for _, d := range []*TextDefinition{intro, result} {
+		if d.Source.Kind != "legacy_record" || d.Source.Record == nil || d.Evidence.Level != "D3" || len(d.GlyphCodes) == 0 {
+			return fmt.Errorf("item use text unreviewed")
+		}
+	}
+	counts := map[int]int{}
+	for _, code := range intro.GlyphCodes {
+		if code == *s.ActorVariableCode || code == *s.ItemVariableCode {
+			counts[code]++
+			continue
+		}
+		if code < 0 || code >= dq3data.GlyphMax {
+			return fmt.Errorf("item introduction control unsupported")
+		}
+	}
+	if counts[*s.ActorVariableCode] != 1 || counts[*s.ItemVariableCode] != 1 {
+		return fmt.Errorf("item introduction binding missing or repeated")
+	}
+	w := p.Interface.FieldItems.GivePresentation
+	if w.Window.LinesPerPage < 2 || w.Window.TextInsetY+2*dq3data.GlyphPx > w.Window.Height || w.Window.TextInsetX+(len(result.GlyphCodes)-1)*w.GlyphStepX+dq3data.GlyphPx > w.Window.Width {
+		return fmt.Errorf("item result outside prompt")
+	}
+	for _, code := range result.GlyphCodes {
+		if code < 0 || code >= dq3data.GlyphMax {
+			return fmt.Errorf("item result control unsupported")
+		}
+	}
+	return nil
 }
 
 func (p *Pack) validateFieldItemPrompt() error {

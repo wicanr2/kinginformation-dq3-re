@@ -92,3 +92,11 @@ func (it *Items) CanEquip(code, cls int) bool {
 
 // DropForbidden is the original ITEM +5 bit2 reader at IDA linear13AEB.
 func (it *Items) DropForbidden(code int) bool { return it.b(code, 5)&2 != 0 }
+
+// SingleHeroNoEffect is the raw-format oracle for IDA9.4 1397C..139A7
+// and 13C77..13C7B. The hero class bit must be allowed, neither a female-only
+// restriction nor a special field-use handler may be present. Runtime reads
+// the reviewed pack metadata and separately requires a healthy sole hero.
+func (it *Items) SingleHeroNoEffect(code int) bool {
+	return code >= 0 && code < it.Count() && it.b(code, 4)&8 == 0 && it.b(code, 5)&1 == 0 && it.b(code, 6)&0x80 != 0
+}

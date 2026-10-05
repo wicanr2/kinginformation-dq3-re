@@ -13,6 +13,9 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 )
 
 func TestFieldCommandConfirmKeys(t *testing.T) {
@@ -68,6 +71,37 @@ func TestFieldItemPromptRequiresFreshConfirmation(t *testing.T) {
 	}
 	if !equalFieldSave(before, g.snapshot()) || rng != g.prng {
 		t.Fatal("read-key changed persistence")
+	}
+}
+
+func TestFieldItemUsePromptRequiresFreshConfirmation(t *testing.T) {
+	g := fieldSaveLoadComponentGame(t)
+	u, p := g.pack.Interface.FieldItems.UseNoEffect, g.pack.Interface.FieldItems.GivePresentation
+	intro, _ := g.pack.TextGlyphCodes(u.IntroTextID)
+	result, _ := g.pack.TextGlyphCodes(u.ResultTextID)
+	d := Dialogue{layout: p.Window}
+	d.openRecord(append(append(append([]uint16(nil), intro...), dq3data.TxtNL), result...))
+	d.prelude = &gamepack.OpeningPrelude{VariableCodeWords: p.VariableCodeWords, ReturnMode: "confirm"}
+	d.varGlyph = map[uint16][]int{uint16(*u.ActorVariableCode): {0}, uint16(*u.ItemVariableCode): {210, 210, 210}}
+	g.itemGivePrompt = &fieldItemPromptState{dialogue: d}
+	before, rng := g.snapshot(), g.prng
+	count := d.pageCellCount() * p.Window.GlyphHoldFrames
+	for i := 0; i < count; i++ {
+		g.stepItemGivePrompt(InputState{Enter: true, Confirm: true, SaveMenu: true, LoadMenu: true, Cancel: true})
+		if g.itemGivePrompt == nil || !equalFieldSave(before, g.snapshot()) || rng != g.prng {
+			t.Fatal("use reveal consumed a fresh key or changed persistence")
+		}
+	}
+	if !g.itemGivePrompt.dialogue.waitingForConfirm() {
+		t.Fatal("two-line use reveal incomplete")
+	}
+	g.stepItemGivePrompt(InputState{SaveMenu: true, LoadMenu: true, Cancel: true})
+	if g.itemGivePrompt == nil {
+		t.Fatal("unrelated input dismissed use message")
+	}
+	g.stepItemGivePrompt(InputState{Enter: true})
+	if g.itemGivePrompt != nil || !equalFieldSave(before, g.snapshot()) || rng != g.prng {
+		t.Fatal("use read-key transaction differs")
 	}
 }
 
@@ -456,6 +490,101 @@ func TestFieldItemSingleOwnerCancelDosgolemNormalInputComparison(t *testing.T) {
 }
 
 func TestFieldItemOrderedWordsDosgolemNormalInputComparison(t *testing.T) {
+	runFieldItemOrderedNormalAt230(t, nil)
+}
+
+func TestFieldItemUseNoEffectDosgolemNormalInputComparison(t *testing.T) {
+	runFieldItemOrderedNormalAt230(t, func(g *Game) {
+		dest := os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
+		source := filepath.Join(os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), "issue4-item-use-normal-r2-source-r1-receipt.json")
+		raw, err := os.ReadFile(source)
+		if err != nil || fmt.Sprintf("%x", sha256.Sum256(raw)) != "c11efcbdb9ff928af1d3a9c8d31c7703b5a0b4c9ded3cc55cc0949b9cf2173ee" {
+			t.Fatal("native use source identity differs", err)
+		}
+		before, rng := g.snapshot(), g.prng
+		var samples []map[string]any
+		for n := 231; n <= 233; n++ {
+			in := InputState{DirHeld: -1, DirEdge: -1, Confirm: true, AnyKeyEdge: true}
+			phase := "choice"
+			if n == 232 {
+				phase = "waiting"
+			}
+			if n == 233 {
+				in.Confirm, in.Enter, phase = false, true, "ready"
+			}
+			if err := g.step(in); err != nil {
+				t.Fatal(err)
+			}
+			if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+				t.Fatal(err)
+			}
+			if n == 231 {
+				entry, valid := g.selectedItemEntry()
+				if !valid || entry.Position != 0 || entry.Code != 0 || g.itemActionStage != itemActionMenu {
+					t.Fatal("physical first wooden stick not selected", entry, valid)
+				}
+			}
+			if n == 232 {
+				if g.itemGivePrompt == nil {
+					t.Fatal("normal use did not open native message")
+				}
+				for updates := 0; !g.itemGivePrompt.dialogue.waitingForConfirm(); updates++ {
+					if updates >= 100 {
+						t.Fatal("native use did not reach fresh-key wait")
+					}
+					if err := g.step(InputState{DirHeld: -1, DirEdge: -1}); err != nil {
+						t.Fatal(err)
+					}
+				}
+				u := g.pack.Interface.FieldItems.UseNoEffect
+				intro, _ := g.pack.TextGlyphCodes(u.IntroTextID)
+				result, _ := g.pack.TextGlyphCodes(u.ResultTextID)
+				want := append(append(append([]uint16(nil), intro...), dq3data.TxtNL), result...)
+				d := &g.itemGivePrompt.dialogue
+				if !reflect.DeepEqual(d.buf, want) || !reflect.DeepEqual(d.varGlyphs(uint16(*u.ActorVariableCode)), g.equipActorName(0)) || !reflect.DeepEqual(d.varGlyphs(uint16(*u.ItemVariableCode)), itemNameGlyphs(g.shop.nameText, 0)) {
+					t.Fatal("native records or actor/item bindings differ")
+				}
+			}
+			if n == 233 && (g.itemGivePrompt != nil || g.dlg.open || g.panel != panelNone || g.cmd.open) {
+				t.Fatal("fresh Enter did not return to field")
+			}
+			if !equalFieldSave(before, g.snapshot()) || rng != g.prng {
+				t.Fatal("no-effect use changed persistence or RNG")
+			}
+			g.renderFrame()
+			path := filepath.Join(dest, fmt.Sprintf("use-packet-%03d.png", n))
+			f, err := os.Create(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = png.Encode(f, &image.RGBA{Pix: g.rgba, Stride: ScreenW * 4, Rect: image.Rect(0, 0, ScreenW, ScreenH)})
+			ce := f.Close()
+			if err != nil || ce != nil {
+				t.Fatal(err, ce)
+			}
+			diff := sourceCanvasDifference(t, g, source, fmt.Sprintf("issue4-item-use-normal-r2-packet-%03d-%s.png", n, phase))
+			encoded, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var npcs []map[string]int
+			for _, npc := range g.cur.npcs {
+				npcs = append(npcs, map[string]int{"record": npc.recordIndex, "x": npc.x, "y": npc.y, "facing": npc.facing, "walk": npc.walk})
+			}
+			samples = append(samples, map[string]any{"packet": n, "full_rgb_difference": diff, "words": g.items.Words(), "png_sha256": fmt.Sprintf("%x", sha256.Sum256(encoded)), "png_size": len(encoded), "npc_visuals": npcs})
+			t.Logf("normal item use packet%d complete640x350 RGB difference=%d", n, diff)
+		}
+		b, err := json.MarshalIndent(map[string]any{"scope": "normal new-game to233 sole healthy hero wooden-stick no-effect use", "source_sha256": fmt.Sprintf("%x", sha256.Sum256(raw)), "samples": samples, "game_state_injection": false, "no_effect_persistence_unchanged": true, "rng_unchanged": true, "fresh_enter_returns_to_field": true, "save_version": saveFormatVersion, "pack_schema": g.pack.Schema(), "pack_content_version": g.pack.ContentVersion(), "pack_hash": g.pack.ContentHash(), "animation_timing_parity": false}, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dest, "use-receipt.json"), append(b, '\n'), 0644); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func runFieldItemOrderedNormalAt230(t *testing.T, after func(*Game)) {
 	dir, out := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
 	if dir == "" {
 		t.Skip("optional private dosgolem single-owner item cancel oracle")
@@ -632,6 +761,9 @@ func TestFieldItemOrderedWordsDosgolemNormalInputComparison(t *testing.T) {
 				"hero_facing": g.facing, "hero_walk": g.walk, "npc_visuals": npcs,
 			})
 			t.Logf("normal item packet%d complete640x350 RGB difference=%d", n, diff)
+		}
+		if after != nil {
+			after(g)
 		}
 		step(InputState{DirHeld: -1, DirEdge: -1, Cancel: true})
 		// Formal F5/F6 validates the actual post-cancel game, not a restore

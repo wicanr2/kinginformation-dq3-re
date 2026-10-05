@@ -12,7 +12,7 @@ func validateFieldItemSources(assets fs.FS, p *gamepack.Pack, tx *dq3data.Text) 
 	if s == nil || tx == nil {
 		return fmt.Errorf("field item sources missing")
 	}
-	for _, id := range []string{s.TextIDs.Header, s.TextIDs.Row, s.TextIDs.Footer, s.TextIDs.Actions, s.TextIDs.GivePrompt, s.GivePresentation.FrameTextID} {
+	for _, id := range []string{s.TextIDs.Header, s.TextIDs.Row, s.TextIDs.Footer, s.TextIDs.Actions, s.TextIDs.GivePrompt, s.GivePresentation.FrameTextID, s.UseNoEffect.IntroTextID, s.UseNoEffect.ResultTextID} {
 		d, ok := p.TextDefinition(id)
 		if !ok || d.Source.Record == nil {
 			return fmt.Errorf("item text reference missing")
@@ -158,6 +158,42 @@ func (g *Game) beginSingleOwnerGift() bool {
 type fieldItemPromptState struct {
 	background []byte
 	dialogue   Dialogue
+}
+
+func (g *Game) beginSingleHeroNoEffect() bool {
+	entry, valid := g.selectedItemEntry()
+	if !valid || g.pack == nil || g.panelActor != 0 || len(g.companions) != 0 || g.heroHP <= 0 || g.heroConditions != 0 || !g.pack.SingleHeroNoEffect(entry.Code) {
+		return false
+	}
+	s := g.pack.Interface.FieldItems
+	if s == nil || s.UseNoEffect == nil || s.GivePresentation == nil || len(g.rgba) != ScreenW*ScreenH*4 {
+		return false
+	}
+	u, p := s.UseNoEffect, s.GivePresentation
+	intro, a := g.pack.TextGlyphCodes(u.IntroTextID)
+	result, b := g.pack.TextGlyphCodes(u.ResultTextID)
+	frame, c := g.pack.TextGlyphCodes(p.FrameTextID)
+	actor, item := g.equipActorName(g.panelActor), itemNameGlyphs(g.shop.nameText, entry.Code)
+	if !a || !b || !c || len(actor) == 0 || len(item) == 0 {
+		return false
+	}
+	cells := len(intro) - 2 + len(actor) + len(item)
+	if p.Window.TextInsetX+(cells-1)*p.GlyphStepX+dq3data.GlyphPx > p.Window.Width {
+		return false
+	}
+	codes := append(append(append([]uint16(nil), intro...), dq3data.TxtNL), result...)
+	d := Dialogue{tx: g.cmd.tx, layout: p.Window}
+	if !d.openRecord(codes) {
+		return false
+	}
+	d.varGlyph = map[uint16][]int{uint16(*u.ActorVariableCode): append([]int(nil), actor...), uint16(*u.ItemVariableCode): append([]int(nil), item...)}
+	d.prelude = &gamepack.OpeningPrelude{Window: p.Window, GlyphStepX: p.GlyphStepX, VariableCodeWords: p.VariableCodeWords, ReturnMode: "confirm", ForegroundRGB: p.ForegroundRGB, BackdropRGB: p.BackdropRGB}
+	d.preludeFrame, d.shadow = frame, &p.Shadow
+	// The normal action frame remains visible below both original records.
+	g.itemGivePrompt = &fieldItemPromptState{background: append([]byte(nil), g.rgba...), dialogue: d}
+	g.panel, g.cmd.open = panelNone, false
+	g.itemActionStage = itemActionGiveWait
+	return true
 }
 
 func (g *Game) stepItemGivePrompt(in InputState) {

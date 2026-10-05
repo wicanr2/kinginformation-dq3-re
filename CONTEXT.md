@@ -1,6 +1,6 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-05 第225步單人原生給予提示已接入正式程式，保留交易前指令窗、物品清單、操作窗及完整底圖。窗口、frame、字距、陰影與顯示時間由資料包提供；自然顯示後等待新確認鍵，暫態底圖不寫入存檔。A八格核心與save_version2保持。schema0.22.0／content0.1.94，canonical9ac94eed。 正常194..230逐步八格words、226返回、230重開、F5／F6及下一步通過；194..207完整RGB0。225完整畫布30140→106，全部由NPC14完整原始BLS201／200與BLK背景解釋，未解釋差異0。完整225 V3與動畫時序仍未知，沒有改相位或遮罩。207張正式路線PNG只有225改變，其餘206張逐byte保持。 game493頂層清單完整覆蓋，442不同頂層／141子PASS、51選用診斷SKIP；internal194頂層／425子、12套件PASS、4選用診斷SKIP。正常THE END94.65秒、必驗三路及新確認鍵元件零SKIP、go vet與Linux desktop通過。九JSON由兩份乾淨6923b29輸入重建一致；沒有新發行包。現況以CONTEXT唯一狀態表、docs/188及Issue #4為準，下一正常切片為道具使用入口的原版證據與首個可重播差異；未知規則不猜補。 唯一現況表在下方，證據docs/188與docs/84；Issue／Goal進行中。
+2026-10-05 正常木棒使用已修正：保留指令、清單、操作窗與實際底圖，依原始273／341顯示姓名、物品名及無效果消息，等待新Enter後返回場景。八格、穿戴與持久snapshot保持，remake RNG不變；正常F5／F6與下一步通過。schema0.23.0／content0.1.95，canonicald28a7781，save_version2保持。 dosgolem正常233包、542IRQ1、507份產物核對，父230包／498份產物保持；第一列word0000是code0檜木棒，文字record用code+1。232全640×350差18419→106，全部由NPC14完整BLS201／200及BLK背景解釋，未解釋差異0。231差229、233差122，動畫時鐘與完整V3仍未知。三條舊路線207張PNG及新路線81張前綴逐byte保持。 game495頂層清單完整覆蓋，444不同頂層／141子PASS、51選用診斷SKIP；internal196頂層／426子、12套件PASS、4選用診斷SKIP。七項必驗含正常路線與新按鍵元件零SKIP，正常THE END118.69秒、go vet與Linux desktop PASS，OOM0。九JSON由兩份乾淨1549181重建一致；來源及畫布checker各三負例拒絕。沒有新包，完整原版campaign、多持有者與音畫仍未知。正常233返回場景後重開物品清單，觀察「丟掉」的問題、物品交易與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225與木棒使用不重開。 Issue／Goal保持進行中，唯一現況表在CONTEXT。
 
 以下保存前一checkpoint，現況以本檔唯一狀態表為準。
 
@@ -226,15 +226,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-05） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；A單一有序Store與save_version2保持。schema0.22.0／content0.1.94，canonical `sha256:9ac94eed4cdd791a5e188dddfce074c832e50c4e41b86959cc4cea82547a7081`；沒有新發行包 |
-| 最新remake已完成 | A完整八格與嚴格存檔保持；單人原生給予提示保留交易前完整底圖，pack提供窗口／frame／字距／陰影／顯示hold，自然顯示後新Enter返回。暫態底圖不序列化 |
-| 最新原版oracle | dosgolem2f44a68正常導覽218來源28995c8d及自給230來源aad971bb，seed1357執行前一次固定；498份產物核對。原始2172bytes只改八格，穿戴布衣保留word移到第八格，空格與clock30保持；轉職七種target的有界常式收據只證實conditional writer |
-| 最新畫面已驗 | 正常194..207完整640×350 RGB0；194..230八格逐步一致，225原生窗口與保留父窗已正式接線，226返回、230重開、F5／F6及下一步通過。207張PNG只有225改變，206張逐byte保持；docs/188限定CONFORMED |
-| 最新畫面未通過 | 225完整RGB仍106，全由NPC14完整32×24 BLS201／200及BLK背景tile4解釋，未解釋差異0。208..217各411及218..224、226..230各229；動畫時鐘未知，不改相位、遮罩或稱完整V3。出售圖仍缺原版動態同狀態驗收 |
-| 下一production切片 | 正常七列道具清單的使用入口，先以dosgolem確定原版輸入、狀態及第一個玩家可重播差異，再依RE→READY實作。A、206／207及225已閉合範圍不重開；多人、空物品提示與未知規則不猜補 |
-| 本輪有限CONFORMED | 正常194..230物品words／選取／取消／自給重排／重開／存讀檔與下一步E2／E3；225原生消息／保留父窗及新確認鍵限定CONFORMED，完整畫面V2；194..207限定V3。原始EXE／TXT parity、pack負例與完整原始NPC14raster通過 |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.23.0／content0.1.95，canonical `sha256:d28a7781fca4f13a99e65c32d59a55b4b71648a927d340681bffd0a91930b515`；A唯一八格與save_version2保持，沒有新發行包 |
+| 最新remake已完成 | 正常健康單人木棒使用顯示原始273／341，持有者姓名及物品名各綁一word；共用原生消息窗保留實際父畫面，自然顯示後等待新Enter並返回field。八格／穿戴／持久snapshot及remake RNG保持，暫態畫面不寫入存檔 |
+| 最新原版oracle | dosgolem2f44a68正常233包來源c11efcbd、542IRQ1、507份產物；seed1357執行前固定一次，無注入／restore。父230包與498產物保持；231..233完整2172bytes持久區及clock30保持。第一列物品code0、word0000、文字record1，不是空格00FF |
+| 最新畫面已驗 | 194..207完整RGB0；正常231..233實體words與正式InputState、原始兩行／控制碼綁定、新Enter返回、F5／F6與下一步通過。232全640×350 RGB18419→106，其他畫布一致；三路207張舊PNG與新路81張前綴逐byte保持 |
+| 最新畫面未通過 | 232完整RGB仍106，全部由NPC14完整32×24 BLS201／200及BLK背景tile4解釋，未解釋差異0；231差229、233差122。動畫時鐘及完整V3仍未知，不改相位或遮罩。非健康、多持有者、拒絕gate及特殊效果未由本切片驗收 |
+| 下一production切片 | 正常233返回場景後重開物品清單，觀察「丟掉」的問題、物品交易與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225與木棒使用不重開。 |
+| 本輪有限CONFORMED | 健康單人第一列code0木棒使用：原始metadata→typed pack→正常使用→原生兩行／新鍵返回→F5／F6／下一步，E2／E3，窗口及文字V2。232全畫布完整原始raster核對、未解釋差異0；完整V3與其他物品／玩家路線未知 |
 | 原版oracle仍未知 | 多人物品取消／給予、全部使用／丟棄與第四動作列、空物品消息、其他隊伍同狀態、原版指令Enter動態、其他world／室內F6、完整多槽世界、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
-| 現行remake回歸 | game493頂層清單完整覆蓋，442不同頂層／141子PASS、51選用診斷SKIP；internal194頂層／425子、12套件PASS、4選用診斷SKIP。正常THE END94.65秒、必驗三路與新確認鍵元件零SKIP、go vet及Linux desktop PASS。兩份乾淨pack重建九JSON一致，完整畫布checker三負例拒絕；正式收據oom／oom_kill0 |
+| 現行remake回歸 | game495頂層清單完整覆蓋，444不同頂層／141子PASS、51選用診斷SKIP；internal196頂層／426子、12套件PASS、4選用診斷SKIP。七項必驗零SKIP；正常THE END118.69秒、go vet、Linux desktop PASS；同一game binary2b81e8ed。九JSON兩份乾淨1549181重建相同，兩類checker各三負例拒絕，OOM／oom_kill0 |
 | 入隊返回原版限制 | r2在2,500,000,001指令上限仍為199包／474IRQ1，計時器前進3003；未觀察到自然caller返回。只核對18筆既有玩家層IDA bytes；2898 writer及22E10 callee語意unknown，未建立完成收據 |
 | 額外驗證限制 | save_version2及完整pack身分必填，所有owner在restore前驗證；無metadata歷史migration已移除。F6依pack重設世界clock，標題Load保留JSON時鐘。綠色回歸不升格完整原版parity |
 

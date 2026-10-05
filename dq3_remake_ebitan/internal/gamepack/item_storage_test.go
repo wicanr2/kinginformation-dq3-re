@@ -145,6 +145,7 @@ func TestItemStorageRejectsMissingMalformedAndAmbiguousDefaults(t *testing.T) {
 		{"missing_drop_mask", func(p *Pack) { p.Characters.ItemStorage.DropBlockedMask = nil }},
 		{"drop_identity_overlap", func(p *Pack) { *p.Characters.ItemStorage.DropBlockedMask |= 1 }},
 		{"missing_drop_metadata", func(p *Pack) { p.Characters.ItemStorage.Items[0].DropForbidden = nil }},
+		{"missing_no_effect_metadata", func(p *Pack) { p.Characters.ItemStorage.Items[0].SingleHeroNoEffect = nil }},
 		{"empty_is_valid_item", func(p *Pack) { *p.Characters.ItemStorage.Encoding.Empty = 0 }},
 		{"out_of_word_range", func(p *Pack) { *p.Characters.ItemStorage.Encoding.Empty = 65536 }},
 		{"overlapping_masks", func(p *Pack) {
@@ -312,6 +313,96 @@ func TestFieldItemPromptOriginalDataParity(t *testing.T) {
 		}
 	}
 	t.Logf("schema=%s content=%s hash=%s", p.Schema(), p.ContentVersion(), p.ContentHash())
+}
+
+func TestFieldItemUseNoEffectOriginalDataParity(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	exe, raw, items := originalItemStorageInputs(t)
+	for _, check := range []struct {
+		linear int
+		bytes  []byte
+	}{
+		{0x13989, []byte{0xb0, 0x80}}, {0x1399a, []byte{0xf6, 0x87, 0xfe, 1, 1}},
+		{0x13c7b, []byte{0xf6, 0xc4, 8}}, {0x13d2d, []byte{0xbf, 0x11, 1}},
+		{0x13d35, []byte{0xbf, 0x55, 1}},
+	} {
+		off := check.linear - 0xec90
+		if !bytes.Equal(exe[off:off+len(check.bytes)], check.bytes) {
+			t.Fatalf("no-effect instruction differs IDAlinear%x", check.linear)
+		}
+	}
+	for code, m := range p.Characters.ItemStorage.Items {
+		r := raw[code*7 : code*7+7]
+		want := r[4]&exe[0x13c7d-0xec90] == 0 && r[5]&exe[0x1399e-0xec90] == 0 && r[6]&exe[0x1398a-0xec90] != 0
+		if m.SingleHeroNoEffect == nil || *m.SingleHeroNoEffect != want || p.SingleHeroNoEffect(code) != want || items.SingleHeroNoEffect(code) != want {
+			t.Fatal("no-effect archive metadata differs", code)
+		}
+	}
+	u := p.Interface.FieldItems.UseNoEffect
+	for _, check := range []struct {
+		id     string
+		record int
+	}{{u.IntroTextID, 273}, {u.ResultTextID, 341}} {
+		d, ok := p.TextDefinition(check.id)
+		if !ok || d.Source.Record == nil || *d.Source.Record != check.record {
+			t.Fatal("native use record reference differs")
+		}
+		raw, err := os.ReadFile(filepath.Join("..", "..", "..", "assets_raw", d.Source.File))
+		if err != nil {
+			t.Fatal(err)
+		}
+		codes := dq3data.LoadText(nil, raw).Record(check.record)
+		if len(codes) != len(d.GlyphCodes) {
+			t.Fatal("native use record length differs")
+		}
+		for i, c := range codes {
+			if int(c) != d.GlyphCodes[i] {
+				t.Fatal("native use record differs")
+			}
+		}
+	}
+	if *u.ActorVariableCode != 0xfffb || *u.ItemVariableCode != 0xfff9 {
+		t.Fatal("native actor/item binding differs")
+	}
+	if err := p.ValidateItemStorageAgainstItems(items); err != nil {
+		t.Fatal(err)
+	}
+	*p.Characters.ItemStorage.Items[1].SingleHeroNoEffect = !*p.Characters.ItemStorage.Items[1].SingleHeroNoEffect
+	if p.ValidateItemStorageAgainstItems(items) == nil {
+		t.Fatal("incorrect no-effect archive metadata accepted")
+	}
+	t.Logf("schema=%s content=%s hash=%s", p.Schema(), p.ContentVersion(), p.ContentHash())
+}
+
+func TestFieldItemUseNoEffectRejectsBrokenContract(t *testing.T) {
+	for _, edit := range []func(*Pack){
+		func(p *Pack) { p.Interface.FieldItems.UseNoEffect = nil },
+		func(p *Pack) { p.Interface.FieldItems.UseNoEffect.IntroTextID = "unknown" },
+		func(p *Pack) { p.Interface.FieldItems.UseNoEffect.ResultTextID = "unknown" },
+		func(p *Pack) { p.Interface.FieldItems.UseNoEffect.ActorVariableCode = nil },
+		func(p *Pack) { p.Interface.FieldItems.UseNoEffect.ItemVariableCode = nil },
+		func(p *Pack) {
+			*p.Interface.FieldItems.UseNoEffect.ActorVariableCode = *p.Interface.FieldItems.UseNoEffect.ItemVariableCode
+		},
+		func(p *Pack) { *p.Interface.FieldItems.UseNoEffect.ItemVariableCode = 0 },
+		func(p *Pack) { p.Interface.FieldItems.UseNoEffect.Evidence.Level = "D2" },
+		func(p *Pack) {
+			d, _ := p.TextDefinition(p.Interface.FieldItems.UseNoEffect.IntroTextID)
+			d.GlyphCodes = append(d.GlyphCodes, *p.Interface.FieldItems.UseNoEffect.ActorVariableCode)
+		},
+	} {
+		p, err := BuiltinDQ3()
+		if err != nil {
+			t.Fatal(err)
+		}
+		edit(p)
+		if p.validateFieldItems() == nil {
+			t.Fatal("broken native use presentation accepted")
+		}
+	}
 }
 
 func TestFieldItemPromptRejectsBrokenContract(t *testing.T) {

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.22.0",
+  "schema_version": "0.23.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -1324,7 +1324,7 @@
     },
     {
       "id": "dq3:text.item_use.no_effect",
-      "value": "什麼事也沒有發生。",
+      "value": "但是什麼也沒有發生。",
       "glyph_codes": [508,399,435,436,494,410,147,431,273,56],
       "layout": {"kind": "dialogue", "columns": 20, "lines_per_page": 4},
       "source": {"kind": "legacy_record", "file": "D3TXT00.TXT", "record": 341},
@@ -7441,6 +7441,37 @@
         "consumer": "IDAlinear1372F→137F9/13887→1F779/1F908；13919 physical item reader",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "完整EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；正常來源與glyph/frame試作限定confirmed。"
+      }
+    },
+    {
+      "id": "dq3:text.field.items.use_intro",
+      "value": "{actor}使用{item}。",
+      "glyph_codes": [
+        65531,
+        210,
+        412,
+        65529,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 273
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; ITEM.DAT; dosgolem2f44a68 normal233 source c11efcbd",
+        "address_space": "linear",
+        "address": "IDA9.4 13942..139AA;13C6D..13D42;21414..215AE",
+        "consumer": "healthy sole primary hero: native use introduction -> no-effect result -> fresh key -> field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常木棒使用動態confirmed；全128項metadata逐record核對不等於每件玩家路線。非健康、多持有者、特殊效果與拒絕gate未由本切片驗收。"
       }
     }
   ]

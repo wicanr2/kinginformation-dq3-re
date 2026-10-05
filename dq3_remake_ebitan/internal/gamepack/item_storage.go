@@ -18,9 +18,10 @@ type ItemWordEncoding struct {
 }
 
 type ItemWordMetadata struct {
-	EquipmentPart  *int  `json:"equipment_part"`
-	CursedWhenWorn *bool `json:"cursed_when_worn"`
-	DropForbidden  *bool `json:"drop_forbidden"`
+	EquipmentPart      *int  `json:"equipment_part"`
+	CursedWhenWorn     *bool `json:"cursed_when_worn"`
+	DropForbidden      *bool `json:"drop_forbidden"`
+	SingleHeroNoEffect *bool `json:"single_hero_no_effect"`
 }
 
 type ItemStorageDefinition struct {
@@ -59,7 +60,7 @@ func (p *Pack) itemWordContract() (itemstore.Encoding, []itemstore.Metadata, err
 	}
 	metadata := make([]itemstore.Metadata, len(s.Items))
 	for code, item := range s.Items {
-		if item.EquipmentPart == nil || item.CursedWhenWorn == nil || item.DropForbidden == nil {
+		if item.EquipmentPart == nil || item.CursedWhenWorn == nil || item.DropForbidden == nil || item.SingleHeroNoEffect == nil {
 			return itemstore.Encoding{}, nil, fmt.Errorf("item_storage.items[%d] requires all metadata fields", code)
 		}
 		metadata[code] = itemstore.Metadata{Part: *item.EquipmentPart, CursedWhenWorn: *item.CursedWhenWorn}
@@ -101,7 +102,7 @@ func (p *Pack) ValidateItemStorageAgainstItems(items *dq3data.Items) error {
 		return fmt.Errorf("item_storage metadata does not match actual item archive shape/count")
 	}
 	for code, item := range metadata {
-		if item.Part != items.EquipSlot(code) || item.CursedWhenWorn != items.CursedWhenEquipped(code) || *p.Characters.ItemStorage.Items[code].DropForbidden != items.DropForbidden(code) {
+		if item.Part != items.EquipSlot(code) || item.CursedWhenWorn != items.CursedWhenEquipped(code) || *p.Characters.ItemStorage.Items[code].DropForbidden != items.DropForbidden(code) || *p.Characters.ItemStorage.Items[code].SingleHeroNoEffect != items.SingleHeroNoEffect(code) {
 			return fmt.Errorf("item_storage metadata differs from original item record %d", code)
 		}
 	}
@@ -111,6 +112,16 @@ func (p *Pack) ValidateItemStorageAgainstItems(items *dq3data.Items) error {
 		return err
 	}
 	return nil
+}
+
+// SingleHeroNoEffect is explicit archive-derived metadata for the reviewed
+// healthy, sole primary hero route. It supplies no missing-data default.
+func (p *Pack) SingleHeroNoEffect(code int) bool {
+	if p == nil || p.Characters.ItemStorage == nil || code < 0 || code >= len(p.Characters.ItemStorage.Items) {
+		return false
+	}
+	v := p.Characters.ItemStorage.Items[code].SingleHeroNoEffect
+	return v != nil && *v
 }
 
 func (p *Pack) ItemStoreFromWords(words []uint16) (itemstore.Store, error) {

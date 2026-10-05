@@ -1278,7 +1278,9 @@ func (g *Game) step(in InputState) error {
 			case itemActionMenu:
 				switch {
 				case confirm && g.itemActionCursor == 0:
-					if g.selectedItemRequiresTarget() {
+					if g.beginSingleHeroNoEffect() {
+						// Native no-effect use waits for a new key over the parent UI.
+					} else if g.selectedItemRequiresTarget() {
 						g.itemActionStage, g.itemActionCursor = itemActionUseTarget, 0
 					} else {
 						g.itemActionStage = itemActionList

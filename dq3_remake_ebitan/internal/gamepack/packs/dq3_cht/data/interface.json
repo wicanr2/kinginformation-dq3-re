@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.22.0",
+  "schema_version": "0.23.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -4364,6 +4364,22 @@
         "consumer": "field item self-give: preserved parent windows -> DGROUP3E6E / record308 -> physical-word rotation -> fresh read-key",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "限定單持有者正常225/226；geometry/glyph/preserved UI confirmed。PIT字模hold另為hardware-spec approximation；不外推動畫時鐘或多人。"
+      }
+    },
+    "use_no_effect": {
+      "intro_text_id": "dq3:text.field.items.use_intro",
+      "result_text_id": "dq3:text.item_use.no_effect",
+      "actor_variable_code": 65531,
+      "item_variable_code": 65529,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; ITEM.DAT; dosgolem2f44a68 normal233 source c11efcbd",
+        "address_space": "linear",
+        "address": "IDA9.4 13942..139AA;13C6D..13D42;21414..215AE",
+        "consumer": "healthy sole primary hero: native use introduction -> no-effect result -> fresh key -> field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常木棒使用動態confirmed；全128項metadata逐record核對不等於每件玩家路線。非健康、多持有者、特殊效果與拒絕gate未由本切片驗收。"
       }
     }
   }

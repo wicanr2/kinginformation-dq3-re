@@ -83,6 +83,54 @@
       "input_size": 115282,
       "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
       "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0",
+      "ida_linear": "0x13919",
+      "file_offset": "0x4c89",
+      "bytes": "4b",
+      "original_name": "sub_13919",
+      "original_function": "sub_13919",
+      "semantic": "正常232所選第一列讀取完整word0000，跳過00FF而保留code0；13977加一後raw2591=1，不能誤當ITEM code1",
+      "inference_level": "confirmed",
+      "consumer": "1372F→13829→1F4E3→13942→13C6D→13D2A..13D42→21414→2111B→1F604；限正常231..233",
+      "review_reference": "docs/188：2026-10-05 木棒使用的有限READY與code0勘誤",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-item-use-normal-r2-source-r1-receipt.json SHA256c11efcbdb9ff928af1d3a9c8d31c7703b5a0b4c9ded3cc55cc0949b9cf2173ee"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0",
+      "ida_linear": "0x13d2d",
+      "file_offset": "0x509d",
+      "bytes": "bf1101",
+      "original_name": "",
+      "original_function": "sub_13C6D",
+      "semantic": "正常健康單人木棒無效果分支：原生窗口依序印273與341，持久區及RNG不交易，2111B等新按鍵後返回field",
+      "inference_level": "confirmed",
+      "consumer": "1372F→13829→1F4E3→13942→13C6D→13D2A..13D42→21414→2111B→1F604；限正常231..233",
+      "review_reference": "docs/188：2026-10-05 木棒使用的有限READY與code0勘誤",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-item-use-normal-r2-source-r1-receipt.json SHA256c11efcbdb9ff928af1d3a9c8d31c7703b5a0b4c9ded3cc55cc0949b9cf2173ee"
+    },
+    {
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0",
+      "ida_linear": "0x215ae",
+      "file_offset": "0x1291e",
+      "bytes": "e87601",
+      "original_name": "loc_215AE",
+      "original_function": "sub_21414",
+      "semantic": "正常273的FFF9插入所選木棒名，call21727後SI加2，只消費一word；不把歷史VAR_NUM名稱當成已證實數值語意",
+      "inference_level": "confirmed",
+      "consumer": "1372F→13829→1F4E3→13942→13C6D→13D2A..13D42→21414→2111B→1F604；限正常231..233",
+      "review_reference": "docs/188：2026-10-05 木棒使用的有限READY與code0勘誤",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-item-use-normal-r2-source-r1-receipt.json SHA256c11efcbdb9ff928af1d3a9c8d31c7703b5a0b4c9ded3cc55cc0949b9cf2173ee"
     }
   ]
 }

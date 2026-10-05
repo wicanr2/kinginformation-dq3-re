@@ -2198,6 +2198,20 @@ D3 evidence。數值均明示；缺欄位、錯誤引用、越界與遮罩重疊
 
 ### 單人給予的原生消息窗口
 
+canonical `sha256:d28a7781fca4f13a99e65c32d59a55b4b71648a927d340681bffd0a91930b515`。
+schema0.23.0／content0.1.95另加入
+`characters.item_storage.items[].single_hero_no_effect` 必填 bool，及
+`interface.field_items.use_no_effect` 的 `intro_text_id`、`result_text_id`、
+`actor_variable_code`、`item_variable_code`、D3 `evidence`。
+前者由實際 ITEM 原始 decoder逐record核對；後者引用原始273／341與各一word的插值控制碼。
+只在健康、單一主角及該metadata為true時使用，沿既有 `give_presentation` 同一原生窗口。
+缺欄位、null、未知引用、重複或未綁控制碼、未審證據與越界拒絕。
+READY與正常233包的範圍見 [docs/188](188-opening-escort-to-castle-spec.md)。
+重建入口 [tools/migrate_field_item_use_pack.py](../tools/migrate_field_item_use_pack.py)，
+在既有Docker工具鏈以UID1000執行
+`python3 tools/migrate_field_item_use_pack.py <乾淨0.22.0資料包> <唯讀原始素材> docs/data/glyph_unicode_map.json`。
+核對 EXE／ITEM／TXT 完整hash，從乾淨1549181重建九份JSON，不替未知分支填預設值。
+
 canonical `sha256:9ac94eed4cdd791a5e188dddfce074c832e50c4e41b86959cc4cea82547a7081`。
 schema `0.22.0`／content `0.1.94` 的 `interface.field_items.give_presentation` 必填。
 它包含 `raw_window`、`window`、`frame_text_id`、`glyph_step_x`、`variable_code_words`、

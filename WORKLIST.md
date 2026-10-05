@@ -5,9 +5,9 @@
 
 | 本輪工作 | 狀態與驗證界線 | 權威入口 |
 |---|---|---|
-| 原版新遊戲／創角／母親開場 | 進行中：A八格及225原生給予提示已有限驗收。正式225剩106，全由NPC14原始raster解釋，完整V3與動畫未知；下一正常切片為道具使用入口，證據先行 | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/188](docs/188-opening-escort-to-castle-spec.md) |
+| 原版新遊戲／創角／母親開場 | 進行中：健康單人木棒使用273／341及新鍵返回已修正。232完整RGB18419→106，全部由完整原始NPC14影格解釋；下一正常233後丟掉入口，證據先行 | [Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)、[docs/188](docs/188-opening-escort-to-castle-spec.md) |
 | 原版六幕開場 | 已完成本輪限定色號／RGB 對拍，其他相位與音訊未知 | [Issue #1（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/1)、[docs/196](docs/196-dosgolem-opening-sequence-parity.md) |
-| 正式玩家路線回歸 | game493頂層清單完整覆蓋，442不同頂層／141子PASS、51選用診斷SKIP；internal194頂層／425子、12套件PASS、4選用診斷SKIP。正常THE END94.65秒、三路正常對拍與新確認鍵元件零SKIP、go vet及Linux desktop PASS；原版完整campaign未知 | [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)、[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) |
+| 正式玩家路線回歸 | game495頂層清單完整覆蓋，444不同頂層／141子PASS、51選用診斷SKIP；internal196頂層／426子、12套件PASS、4選用診斷SKIP。七項必驗零SKIP，正常THE END118.69秒、go vet與Linux desktop PASS；原版完整campaign未知 | [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)、[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4) |
 | 同伴持冠還冠持有權檢查 | 已由 fc78bb5 推送，原版局部靜態閉環、元件、正式還冠／辭位及存讀檔通過；原版動態路線待 dosgolem | [Issue #3（已關閉）](https://github.com/wicanr2/kinginformation-dq3-re/issues/3)、[docs/82](docs/82-romaly-king-production-trace.md) |
 
 下方為 2026-08-26 功能與交付歷史，不能覆蓋上表的現行驗收，也不限制本輪使用者授權的對拍目標。
