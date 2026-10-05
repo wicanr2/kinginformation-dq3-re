@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.31.0",
+  "schema_version": "0.32.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -8365,6 +8365,43 @@
         "consumer": "command sixth entry -> 18966/18986 -> 18C75 -> DI0108 then0109/21414 -> retained message -> fresh21133 -> close1F604 -> field1997C",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "confirmed限定正常395..404健康單人空結果調查、原命令背景、兩record、新按鍵返回與下一步；其他事件分支未驗收。字模hold為沿用hardware-spec approximation。"
+      }
+    },
+    {
+      "id": "dq3:text.field.talk.empty",
+      "value": "這個方向一個人也沒有。",
+      "glyph_codes": [
+        398,
+        546,
+        547,
+        548,
+        401,
+        546,
+        194,
+        494,
+        410,
+        147,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 260
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal409 source 753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb",
+        "address_space": "linear",
+        "address": "IDA9.4 14E0E..14E8C;15002..15037;2111B..21148;DGROUP3E6E/file19FAE",
+        "consumer": "command first entry -> no NPC/counter -> raw01F7=0 -> DI0104/15023 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常405..409健康單人城鎮徒步無對象對話、原命令背景、新鍵返回及下一步；raw01F7=1與未取樣分支unknown。字模hold沿用hardware-spec approximation。"
       }
     }
   ]

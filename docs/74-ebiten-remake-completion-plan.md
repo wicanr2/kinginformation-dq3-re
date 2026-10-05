@@ -1,5 +1,12 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-10-06 健康單人徒步城鎮無對象「對話」已修正。原始260、實際命令畫布、原生訊息窗、新鍵返回及下一步均接正式玩家入口；406完整差25799降228，全部由原始英雄122／NPC14為106解釋。407新Enter返回完整RGB0；405／408／409仍差351／229／122，未解釋像素0，動畫時鐘及這些完整V3未知。
+> dosgolem正常409來源753da910，447鍵／894IRQ1／1037產物；406全部前綴保持，seed1357一次，無注入／restore。八格／能力／flags／clock／原生保存檔保持，remake十槽、正式F5／F6與Load後行走通過。255張舊404 PNG及新409前綴保持；九JSON乾淨重建相同。
+> 最終完整game518頂層覆蓋、467不同頂層／145子PASS、51既有選用SKIP；internal214頂層／531子、12套件及4選用SKIP PASS。正常THE END72.52s、Go vet與Linux desktop PASS，正式驗證OOM0。4GB容器有memory.max壓力事件，full5189/runtime4897，沒有OOM或kill；另512MB摘要誤讀大收據退出137，按3GB契約重跑。schema0.32.0/content0.1.104、canonicalc4285a9e，A唯一八格/save2/storage1保持，沒有新包。
+> 下一批原版正常410 Enter首結果已接受，來源62e40319，448鍵／896IRQ1／1040產物；409全前綴保持，場景仍ready、3,18，不開命令窗，持久區不變。只屬source-only，尚未驗remake；下一步從合法409以正式Enter核對首個結果及後續操作。Issue／Goal進行中，唯一現況表CONTEXT、計畫docs/74、證據docs/188。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-06 健康單人徒步空結果「調查」已修正。原始264／265、姓名、保留命令畫布、新鍵返回及下一步均接入正式玩家入口；正常395..402八張完整640×350 RGB0。403／404仍差356／351，動畫時鐘及這兩張完整V3未知；船上潛水分支未驗，正式入口排除shipAboard。
 > dosgolem正常404來源3af2954a，442鍵／884IRQ1／1022產物；394及401完整前綴保持，seed1357一次，無注入／restore。八格／能力／flags／clock／原生保存檔保持；remake十JSON槽、正式F5／F6及Load後行走通過。245張舊394 PNG保持，舊報告僅pack身分變更。
 > 最終完整game516頂層覆蓋，465不同頂層／141子PASS、51既有選用SKIP；internal212頂層／520子、12套件及4選用SKIP PASS。正常THE END65.16秒、Go vet與Linux desktop PASS，最終收據OOM0；foot guard前r1亦PASS，保留為舊程式驗證。schema0.31.0/content0.1.103、canonical0612be3e，A八格/save2/storage1保持；沒有新包。

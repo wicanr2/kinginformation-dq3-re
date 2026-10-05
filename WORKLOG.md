@@ -1913,3 +1913,17 @@ DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-on
 下一批無對象對話原版406首個260來源接受，SHA7406970c、444鍵／888IRQ1／1028產物，404前綴保持；只屬source-only，正式對話未修。r1草稿不存在的變數造成編譯失敗，r2來源與獨立checker通過。下一步延續406取得返回／行走，補caller與READY；原版完整campaign、動畫與音畫仍未知。
 
 Issue #4持續更新；本次以「fix: restore native empty examine response and fresh-key return」提交並推送origin/main，實際提交身分由git log與Issue最終留言回查。僅提交程式、JSON、工具與既有文件，不加入原版／database／影像／binary／私有探針及13項使用者scratch。一次性--rm容器已自然清除，無殘留專案容器。驗收與重生入口統一見docs/188及CONTEXT；沒有新發行包，Goal保持進行中。
+
+## 2026-10-06 Issue #4：無對象對話260、新鍵返回與正常409
+
+原版406及409來源接受，固定seed1357一次、447鍵／894IRQ1／1037產物，406全前綴保持。IDA9.4以命令首callback14E0E、無NPC與櫃台、14E7F/14E82 DI0104→15023共同訊息窗→2111B新鍵等待→14E85返回閉合。原始EXE／TXT及24bytes窗口固定hash；原22筆annotation保持，兩筆confirmed新增；重新有界399條原始定位／bytes／xref保持。依docs/188 RE→DRAFT→review→READY後新增typed field_talk、record260及原生presentation，正式selectCommand無對象else走共用訊息primitive，有NPC／櫃台／故事分支不改。A唯一八格/save2/storage1保持，schema0.32.0/content0.1.104、canonicalc4285a9e，未打包。
+
+正常409、十槽保持、RNG／snapshot、正式F5／F6 roundtrip及Load後行走PASS。406全RGB25799→228，全為英雄122及NPC14為106；405／407／408／409差351／0／229／122，原始BLS／BLK完整診斷未解釋像素0。NPC15在406被原生訊息窗全遮擋，完整768 overlay像素相同，未猜hidden frame。255張舊404 PNG及新409前綴保持；全套normal409再生同PNG。九JSON由c452046乾淨重建相同；producer／IRQ1／native DI三負例拒絕。
+
+過強405完整V3斷言、診斷PLTE未用色／NPC15遮擋、負例scratch路徑與下一DRAFT checker語法均已訂正，原版與正式renderer未因腳本問題修改。512MB摘要誤讀大來源退出137，按既有3GB稽核契約重跑；正式4GB正常與full有memory.max壓力4897／5189，但OOM與kill均0，保留實際限制。
+
+最終完整game518頂層覆蓋、522命令、467不同頂層／145子PASS、51既有選用SKIP；internal214頂層／531子、12套件及4既有選用SKIP PASS。正常THE END72.52s、Go vet與Linux desktop PASS。最終收據與完整重生入口見docs/188；root-owned3213／Markdown目錄0基線保持，修改及輸出UID/GID1000。所有本批--rm容器自然清除，未動其他專案容器。
+
+下一批原版410 Enter首結果來源62e40319接受，448鍵／896IRQ1／1040產物；409全前綴保持，ready/1997C、3,18、不開命令窗、持久區及clock0保持。仍source-only，下一步從合法409以正式Enter驗remake及後續操作，未審行為不進production。原版完整campaign、動畫時鐘及音畫仍未知。Issue #4各階段已更新。
+
+本批提交標題為「fix: restore native no-target talk response and fresh-key return」；提交與推送完成身分以git log及Issue最終回讀為準，尚未核對前不作已推送聲明。僅納入本批程式／JSON／工具／既有文件，13项使用者scratch及原版素材、database、binary與影像不入Git。Goal保持進行中。

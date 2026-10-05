@@ -585,6 +585,8 @@ func (g *Game) selectCommand(cmd int) {
 			case sub >= 3: // 設施(店/宿/教會)
 				g.openFacility(n.b4)
 			}
+		} else {
+			g.beginEmptyTalk()
 		}
 	case cmdStatus: // 狀況
 		if len(g.companions) == 0 && g.heroHP > 0 && g.heroConditions == 0 {

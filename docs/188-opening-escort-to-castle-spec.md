@@ -5694,3 +5694,58 @@ runtime-r2正常404與scope兩項零SKIP／OOM；normal404報告與r1逐byte相�
 此項已登記Issue #4留言6003547589。私有探針work/issue4-talk-empty-first-probe-r2.py以同一正常新遊戲及404前綴，再送Space開六列命令、Space選首項。405原生count6／cursor1；406等待原始260，PC21133，主角3,18。完整444輸入／888IRQ1、1028產物、404所有事件及1022產物保持；八格、2172bytes、原生保存檔及clock0保持，seed1357一次，無注入／restore。
 
 獨立來源checker work/issue4-talk-empty-first-check-r2.py已接受source-only收據work/dosgolem-opening/issue4-talk-empty-first-normal-r2-source-r1-receipt.json，SHA-256 `7406970c11519a0ccde27e94ed55492901bcd804972b94123b39b6cb34db8f29`。r1編譯因不存在的choiceCount／choiceCursor變數失敗，保留生成Go；r2使用實際phase／packet條件，405 count／cursor另由checker驗證。未改原版或正式Go／pack，不能稱對話remake parity。下一步以新Enter延續406核對返回及行走，補最小caller證據，審READY後才進正式修正。這是下一批來源準備，不增加本次production切片。
+
+
+## 2026-10-06 無對象對話406與新鍵返回409：RE、DRAFT、審查、READY
+
+本批由正常404 checkpoint延伸，Issue #4留言6004040440及6004248599。既有切片不重開。原始DQ3.EXE 115282bytes SHA256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`、D3TXT00.TXT SHA256 `38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b`均唯讀。IDA9.4 linear−EC90為file offset；DGROUP linear24DD0/file16140。
+
+| 狀態 | 可回查證據與結論 |
+|---|---|
+| RE confirmed | dosgolem2f44a68正常406來源7406970c、返回409來源`753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb`；固定seed1357一次、447鍵/894 IRQ1、1037產物。406全前綴保持，無restore、遊戲狀態注入或重擲。405命令第一列，406等待record260，407新Enter返回，408左至2,18，409右回3,18。完整2172bytes僅408的player X改變，角色八word、flags、clock0、最後359原生保存檔保持。 |
+| RE confirmed | IDA9.4有界399條匯出`work/issue4-talk-r1-ida.json` SHA256 `4f990ebe3537667bc2ac9f9dc3313043066c8e3451253636673ceed2b78f58d5`。命令表首callback raw4E0E→linear14E0E，native14E4D的BX8004無NPC位，14E5D的AX0000無櫃台位，14E6B raw01F7=0走14E7F，DI0104→14E82 call15023→15002開DGROUP3E6E原生訊息窗→21414消費D3TXT00 record260→2111B清鍵等待→407的1F604關窗→14E85/14E8B返回。16筆唯讀native觀測閉合。raw01F7=1的其他返回分支語意unknown，不映射成角色狀態。 |
+| DRAFT與RED | c452046正常新遊戲正式InputState至404再兩次Space，第406筆缺訊息，完整640×350 RGB差25799。`work/issue4-talk-red-r1/receipt.json`、`TestFieldTalkNoTargetNormalRed/run.log`及armor/talk-empty-red-406.png保留。私有Go測試模組未進production。 |
+| 證據審查 | record260的11字模為398,546,547,548,401,546,194,494,410,147,56，原文「這個方向一個人也沒有。」；無變數、換行或換頁。訊息窗原始24bytes `0b011300ee002c0060009401000000000000000000000c09`，同既有15002 consumer的外框、inset、容量、文字流程、等待指示；不由截圖目測設定。 |
+| READY | 只在健康、單人、徒步、城鎮cur存在且facingNPC找不到物件時呈現pack指定單record訊息。保留實際命令畫布，既有共同訊息primitive等待新鍵後返回，該鍵不透傳為移動或存檔。物品、RNG與持久狀態不交易。保留既有有NPC、隔櫃台NPC、故事及設施分支。無新架構決策；A唯一八格/save2/storage1沿用已授權契約。 |
+| 未知 | 世界地圖、複數角色、异常狀態、raw01F7=1、船上與其他未取樣分支；本批不補猜測。動畫時鐘、逐週期音畫與完整原版campaign未驗。文字hold沿用hardware-spec approximation。remake runtime parity與CONFORMED仍待實作驗收。 |
+
+本批可重生入口：[首結果producer](../tools/dosgolem_field_talk_first_probe.py)、[返回producer](../tools/dosgolem_field_talk_return_probe.py)、[首結果checker](../tools/verify_dosgolem_field_talk_first.py)、[返回checker](../tools/verify_dosgolem_field_talk.py)、[IDA有界匯出](../tools/ida_field_talk_export.py)。資料遷移由[migrate_field_talk_pack.py](../tools/migrate_field_talk_pack.py)從schema0.31.0/content0.1.103乾淨輸入重建；正式入口及正常玩家驗收為game/field_talk.go、game/field_talk_test.go，契約為internal/gamepack/field_talk.go及docs/84。
+
+完整画布診斷入口：[verify_dq3_field_talk_raster.py](../tools/verify_dq3_field_talk_raster.py)。逐點辨識原始BLS兩影格的完整32×24人物與BLK背景，再要求它們的差異聯集等於全部640×350差異；不改畫面、phase或刪去窗口外差異。相位辨識只解釋像素，不證明原版時鐘。
+
+
+### 2026-10-06 無對象對話有限CONFORMED與驗證限制
+
+- 正常409 `work/issue4-talk-runtime-r2/TestFieldTalkDosgolemNormalInputComparison/armor/talk-empty-receipt.json` SHA256 `faefee60d9f8efae556fa726010e1a35fc010c872be3cdd2ee50d0b7e4cb5115` PASS；正式新遊戲、seed1357前置、405..409輸入與位置、持久snapshot、RNG、十JSON槽保持、正式F5／F6 roundtrip及Load後左移均核對。406顯示260，新鍵只關窗，暫態不保存。原版保存樣本仍截至359，不將remake F5／F6冒稱409後原版存檔parity。
+- 原始素材完整畫布診斷`work/issue4-talk-raster-r1.json` SHA256 `f267dc0de0a5e9eeb77fde97680f5ed084b8fb17b53861c53470d921da5c4e6b` PASS。405／406／407／408／409全640×350差351／228／0／229／122，未解釋像素各0；406的英雄122及NPC14為106，NPC15整個32×24被原生窗口遮住，完整768個遮擋像素核對相同，不宣稱辨識被遮住影格。文字／外框V2，407完整V3，其餘完整V3及動畫時鐘unknown。兩張406未縮放PNG已目視核對。
+- 本輪r1過強地要求405完整RGB0，因既有351人物影格差而失敗；修正測試預期並保留原始完整差異，未調phase或改正式render。診斷器首輪只由畫面已用色號建立色盤，漏掉原始PLTE未用色；次輪誤把被訊息窗完整遮住的NPC15當可見人物。已改讀來源完整PLTE，並從EXE／pack驗證原生窗口完整遮擋；同一工具鏈重跑PASS。這些是驗證脚本問題。
+- 首／返回producer均保留已執行bytes，public409來源checker重生PASS，hash28ab0894；producer／IRQ1／native DI0104三負例均拒絕，r1負例scratch相對路徑錯誤保留，r2修正環境後PASS。新pack原始資料及11種破損契約測試PASS；九JSON從c452046乾淨重建逐byte相同，收據f58bfcce。Go內沒有260、raw座標或玩家文字fallback。
+- IDA重新有界匯出399條SHA256 `c832f0716a00e415047c2f02b8f7b5155e35f0d8a832ecd2bf391e12d98af432`；原始定位／bytes／xref保持，新14E7F與14E82 confirmed annotation自動附加，原22筆ledger保持。原始名稱不改。工具版本9.4，位址基準同上。
+- 本輪有限鏈為EXE／TXT→typed field_talk→正式無對象入口→共同保留訊息窗→新鍵返回／左右移動→正式存讀檔，狀態E2／流程E3與上述指定畫面等級。完整game／THE END／desktop仍在本輪最终回歸中；完整原版campaign、音畫及未取樣分支不宣稱完成。
+
+
+無對象對話工具的重生契約：沿用本文件前節正常404來源與`dq3-ebiten-test:20260822-r1`、唯讀凍結runtime `/tmp/dq3-dosgolem-2f44a68`。Docker以UID/GID1000、memory3g/cpus2/pids128、外層timeout2400、network none執行，repo／assets／runtime唯讀，明確work overlay可寫。先核對所有掛載存在。首結果與返回producer都有固定輸出prefix，重生用独立work overlay，不覆寫已接受的來源。
+
+- 依本文件search return既有入口準備正常404 parent收據、persistent-404與fileops。`/work/issue4-search-first-probe-r1.py`必須是`tools/dosgolem_field_search_first_probe.py`的逐byte副本；SHA c4ceafce不變。
+- `/work/issue4-talk-empty-first-probe-r2.py`必須是`tools/dosgolem_field_talk_first_probe.py`的逐byte副本，SHA569dbc50不變。這是保留既有已執行producer路徑的別名，不是另一份規格。
+- 在容器內執行`python3 /repo/tools/dosgolem_field_talk_first_probe.py`，再執行`python3 /repo/tools/verify_dosgolem_field_talk_first.py`接受406；執行`python3 /repo/tools/dosgolem_field_talk_return_probe.py`，再執行`python3 /repo/tools/verify_dosgolem_field_talk.py`核對409。原始406、409已接受收據不可被更名工具冒充；public409 checker只另寫public-check-r1.json。所有probe仍由dosgolem自身冷啟動原版重生。
+- 原始資產診斷用`python3 /repo/tools/verify_dq3_field_talk_raster.py <409來源收據> <原版輸出根> <正常409 runtime armor目錄> <唯讀assets_raw> <新診斷收據> <runtime收據SHA256>`。script輸出包含每張全画布差、原始影格與未解釋像素，不輸出替代圖。其他prefix／內容版本／未取樣場景不支援，應另開窄來源驗證。
+- IDA用本文件既有一次性副本runner與`tools/ida_field_talk_export.py`，固定IDA9.4、原始EXE hash與24筆reviewed ledger，输出399條；輸出不能只以exit code判定，核對原始定位、bytes、xref與source hash。database僅在容器tmp，完成即清除。
+
+
+### 2026-10-06 下一批正常場景Enter410：僅source-only
+
+依Issue留言6004679010登記，私有`work/issue4-command-enter-first-probe-r1.py`由已接受409冷啟動延伸一個Enter，不預設行為、不改production。來源`work/dosgolem-opening/issue4-command-enter-first-normal-r1-source-r1-receipt.json` SHA256 `62e403190b4787e33b96d28ab81891f249ac0815900859eb706a411722f299e6`接受。410包、448鍵／896IRQ1／1040產物，409全部事件、PNG／bin與2172bytes前綴保持。seed1357執行前固定一次，無注入、restore或重擲。
+
+首個結果為ready、IDA linear1997C，3,18、clock0、八格／能力／flags及原生保存檔保持，沒有開命令窗。last_record260為前次紀錄，不宣稱重顯260；choice_count6/cursor1是原有狀態，不代表choice視窗開啟。原始EXE／工具／位址基準同本批409。
+
+私有checker r1生成的comprehension語法錯誤已修正，未執行失敗的來源檢查；同一容器成功接受。512MB摘要容器讀取大型來源JSON因記憶體不足退出137，依既有3GB來源稽核契約重跑成功；不列產品缺陷。生產程式與新409pack不因本結果更改。下一步從合法409以正式Enter核對remake，同狀態畫面與後續操作；返回caller、READY與remake parity尚未由本輪驗收。這份來源不等於完整campaign完成。
+
+
+### 2026-10-06 無對象對話最終回歸
+
+完整game518頂層清單覆蓋，522個獨立命令、467不同頂層／145子PASS，51既有選用診斷SKIP；四個新舊必驗normal/scope/THE END均零SKIP。正常新遊戲至THE END72.52s只證明remake可玩回歸，不升格原版完整campaign。完整internal214頂層／531子、12套件PASS，4既有選用SKIP；Go vet PASS。Linux desktop ELF64 AMD64 14794728bytes SHA256 `b4878004a54d88507580a3835c816ae8b99e73e5ec7af8c585b75ed610a1b5b8`，只作建置回歸，不是新發行包。
+
+最終收據：`work/issue4-talk-full-r1/game-receipt.json`、`desktop-receipt.json`；`work/issue4-talk-runtime-r2/receipt.json` SHAe489e235，四命令、四頂層／四子PASS，零SKIP；`work/issue4-talk-internal-r1.json`、`issue4-talk-vet-r1.json`及`issue4-talk-final-audit-r1.json`。最終全套normal409的全部PNG與單獨r2重播逐byte相同。原版410仍獨立source-only，不併入本批remake完成聲明。
+
+4GB正常／全套容器有memory.max壓力事件4897／5189，oom與oom_kill及oom_group_kill均0；不能寫成max0。另一個512MB摘要讀大來源退出137，已按3GB契約重跑，不列正式game失敗。root-owned3213及零Markdown目錄基線保持，修改／輸出UID/GID1000；全部本批--rm容器已自然清除。13項既有使用者scratch保持。提交與推送由git log、WORKLOG及Issue最終回讀確認。

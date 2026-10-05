@@ -1,5 +1,21 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 單人城鎮無對象對話（schema0.32.0／content0.1.104）
+
+`interface.field_talk`必填。有限READY及原版正常409來源見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:c4285a9e4eb81750d4dff5c247c8142be2324083028ccfed86d507045e6504cd`；A唯一八格、save2/storage1保持，舊schema與不同pack hash存檔拒絕。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `scope`、`return_mode` | `healthy_single_member_town_no_target`、`fresh_key_to_field`。限定健康單人徒步、城鎮cur存在且正式facingNPC無對象。NPC、隔櫃台NPC、故事與設施沿既有分支。其他取樣外分支不呈現本契約。 |
+| `empty_text_id` | 引用D3原始record260。字模另存，無變數；不接受未知控制碼、未審pagination或超過原生容量。共用Go不含文字或record常數。 |
+| `presentation`、`text_flow`、`wait_indicator` | DGROUP3E6E原生raw window、frame、inset、字距、陰影、retained rows與新鍵等待，沿15002/15023既有consumer。缺欄位及未知引用拒絕。 |
+| `evidence` | D3，固定EXE／TXT身分、IDA9.4地址基準及dosgolem正常409來源。raw01F7=1語意unknown，不作角色條件映射。 |
+
+入口：[typed契約](../dq3_remake_ebitan/internal/gamepack/field_talk.go)、[原始資料與拒絕測試](../dq3_remake_ebitan/internal/gamepack/field_talk_test.go)、[正式訊息入口](../dq3_remake_ebitan/game/field_talk.go)、[正常409及新鍵／NPC測試](../dq3_remake_ebitan/game/field_talk_test.go)。共用訊息primitive保留實際命令畫布，新按鍵只關窗，八格、RNG與十槽不交易；暫態訊息不保存，Load清除。
+
+重建使用[tools/migrate_field_talk_pack.py](../tools/migrate_field_talk_pack.py)，在既有`dq3-ebiten-test:20260822-r1`一次性有界、UID1000 Docker中執行`python3 /repo/tools/migrate_field_talk_pack.py <可寫乾淨0.31.0 pack> <唯讀原版素材目錄>`。乾淨來源為c452046九JSON；腳本檢查EXE／TXT雜湊、原始file bytes及window。先前版本的下列契約保留歷史，現行schema以本節為準。
+
+
 ## 單人空結果調查（schema0.31.0／content0.1.103）
 
 `interface.field_examine`必填。有限READY與原版正常404來源見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為 `sha256:0612be3e805263dfabc2e1cd4e15f4f97e0343fd75be28d985c1c1f1dea5e4a5`；A單一八格、save2/storage1保持，舊schema及不同pack hash存檔拒絕。

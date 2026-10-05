@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.31.0",
+  "schema_version": "0.32.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -5883,6 +5883,148 @@
       "consumer": "command fourth entry -> automatic single actor -> zero learned counts -> DI0106/15023 -> retained message -> fresh21133 -> field1997C",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "confirmed限定正常299..304健康單人未學咒文入口、原命令背景、新按鍵返回與下一步；其他施法分支未驗收。字模hold為沿用hardware-spec approximation。"
+    }
+  },
+  "field_talk": {
+    "empty_text_id": "dq3:text.field.talk.empty",
+    "presentation": {
+      "raw_window": {
+        "id": "dq3:raw_window.field_talk_empty",
+        "flags": 1,
+        "x": 19,
+        "y": 238,
+        "width": 44,
+        "height": 96,
+        "address": "DGROUP:0x3e6e"
+      },
+      "window": {
+        "id": "dq3:window.field_talk_empty",
+        "x": 152,
+        "y": 238,
+        "width": 352,
+        "height": 96,
+        "text_inset_x": 16,
+        "text_inset_y": 16,
+        "columns": 20,
+        "lines_per_page": 4,
+        "glyph_hold_frames": 1,
+        "glyph_timing_evidence": {
+          "level": "D2",
+          "source_kind": "exe",
+          "source": "DQ3.EXE + dosgolem自然生日／房間PITDivisor + DOSBox Staging timer契約",
+          "address_space": "linear",
+          "address": "0x214b9..0x214f8",
+          "consumer": "sub_21414 draws one glyph then waits for DS:0x0005 >= 1 unless fast mode is active",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "原版觀測除數12428，315000000／3280992 Hz；1tick向上取整為1個60TPS更新。hardware-spec approximation，非原版逐週期wall-clock。"
+        },
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal409 source 753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb",
+          "address_space": "linear",
+          "address": "IDA9.4 14E0E..14E8C;15002..15037;2111B..21148;DGROUP3E6E/file19FAE",
+          "consumer": "command first entry -> no NPC/counter -> raw01F7=0 -> DI0104/15023 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "confirmed限定正常405..409健康單人城鎮徒步無對象對話、原命令背景、新鍵返回及下一步；raw01F7=1與未取樣分支unknown。字模hold沿用hardware-spec approximation。"
+        }
+      },
+      "frame_text_id": "dq3:text.opening.dialogue_frame",
+      "glyph_step_x": 24,
+      "variable_code_words": 1,
+      "foreground_rgb": [
+        243,
+        243,
+        243
+      ],
+      "backdrop_rgb": [
+        0,
+        0,
+        0
+      ],
+      "shadow": {
+        "mode": "vga_word_latch_and",
+        "offset_x": 8,
+        "offset_y": 8,
+        "evidence": {
+          "level": "D3",
+          "source_kind": "exe",
+          "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal409 source 753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb",
+          "address_space": "linear",
+          "address": "IDA9.4 14E0E..14E8C;15002..15037;2111B..21148;DGROUP3E6E/file19FAE",
+          "consumer": "command first entry -> no NPC/counter -> raw01F7=0 -> DI0104/15023 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+          "doc": "docs/188-opening-escort-to-castle-spec.md",
+          "note": "confirmed限定正常405..409健康單人城鎮徒步無對象對話、原命令背景、新鍵返回及下一步；raw01F7=1與未取樣分支unknown。字模hold沿用hardware-spec approximation。"
+        }
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal409 source 753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb",
+        "address_space": "linear",
+        "address": "IDA9.4 14E0E..14E8C;15002..15037;2111B..21148;DGROUP3E6E/file19FAE",
+        "consumer": "command first entry -> no NPC/counter -> raw01F7=0 -> DI0104/15023 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常405..409健康單人城鎮徒步無對象對話、原命令背景、新鍵返回及下一步；raw01F7=1與未取樣分支unknown。字模hold沿用hardware-spec approximation。"
+      }
+    },
+    "text_flow": {
+      "mode": "retained_rows",
+      "scroll_step_pixels": 4,
+      "scroll_steps": 4,
+      "scroll_hold_frames": 1,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal409 source 753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb",
+        "address_space": "linear",
+        "address": "IDA9.4 14E0E..14E8C;15002..15037;2111B..21148;DGROUP3E6E/file19FAE",
+        "consumer": "command first entry -> no NPC/counter -> raw01F7=0 -> DI0104/15023 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常405..409健康單人城鎮徒步無對象對話、原命令背景、新鍵返回及下一步；raw01F7=1與未取樣分支unknown。字模hold沿用hardware-spec approximation。"
+      }
+    },
+    "wait_indicator": {
+      "mode": "cursor_row_blink",
+      "x": 336,
+      "visible_glyph": 13,
+      "hidden_glyph": 12,
+      "visible_ticks": 8,
+      "hidden_ticks": 5,
+      "rate_numerator": 315000000,
+      "rate_denominator": 3280992,
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal409 source 753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb",
+        "address_space": "linear",
+        "address": "IDA9.4 14E0E..14E8C;15002..15037;2111B..21148;DGROUP3E6E/file19FAE",
+        "consumer": "command first entry -> no NPC/counter -> raw01F7=0 -> DI0104/15023 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常405..409健康單人城鎮徒步無對象對話、原命令背景、新鍵返回及下一步；raw01F7=1與未取樣分支unknown。字模hold沿用hardware-spec approximation。"
+      },
+      "timing_evidence": {
+        "level": "D2",
+        "source_kind": "exe",
+        "source": "DQ3.EXE + dosgolem自然生日／房間PITDivisor + DOSBox Staging src/hardware/timer.cpp",
+        "address_space": "linear",
+        "address": "0x216E6;0x21709",
+        "consumer": "8／5 timer ticks換算固定60TPS更新，向上取整",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "原版觀測除數12428，315000000／3280992 Hz；5／4 updates屬hardware-spec approximation，非原版逐週期wall-clock。"
+      }
+    },
+    "scope": "healthy_single_member_town_no_target",
+    "return_mode": "fresh_key_to_field",
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal409 source 753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb",
+      "address_space": "linear",
+      "address": "IDA9.4 14E0E..14E8C;15002..15037;2111B..21148;DGROUP3E6E/file19FAE",
+      "consumer": "command first entry -> no NPC/counter -> raw01F7=0 -> DI0104/15023 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "confirmed限定正常405..409健康單人城鎮徒步無對象對話、原命令背景、新鍵返回及下一步；raw01F7=1與未取樣分支unknown。字模hold沿用hardware-spec approximation。"
     }
   },
   "field_examine": {

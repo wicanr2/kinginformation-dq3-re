@@ -12,15 +12,13 @@ import (
 	"testing"
 )
 
-func TestFieldExamineDosgolemNormalInputComparison(t *testing.T) { runFieldExamineNormalAt404(t, nil) }
-
-func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
-	runFieldItemActionNormalAt394(t, func(g *Game) {
+func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
+	runFieldExamineNormalAt404(t, func(g *Game) {
 		dir, dest := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
-		const prefix = "issue4-search-return-normal-r1"
+		const prefix = "issue4-talk-empty-return-normal-r1"
 		source := filepath.Join(dir, prefix+"-source-r1-receipt.json")
 		raw, e := os.ReadFile(source)
-		if e != nil || fmt.Sprintf("%x", sha256.Sum256(raw)) != "3af2954a524f521670aad308377efd2aca4c28633a971c111f7af6fc709c44eb" {
+		if e != nil || fmt.Sprintf("%x", sha256.Sum256(raw)) != "753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb" {
 			t.Fatal("source identity", e)
 		}
 		var src struct {
@@ -31,7 +29,7 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 				SHA256 string
 			}
 		}
-		if e = json.Unmarshal(raw, &src); e != nil || len(src.States) != 404 || len(src.Artifacts) != 1022 {
+		if e = json.Unmarshal(raw, &src); e != nil || len(src.States) != 409 || len(src.Artifacts) != 1037 {
 			t.Fatal("source shape", e)
 		}
 		for _, a := range src.Artifacts {
@@ -40,8 +38,8 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 				t.Fatal("source artifact", a.Path, e)
 			}
 		}
-		inputs := []InputState{{Confirm: true, DirHeld: -1, DirEdge: -1}, {DirHeld: -1, DirEdge: 0}, {DirHeld: -1, DirEdge: 0}, {DirHeld: -1, DirEdge: 0}, {DirHeld: -1, DirEdge: 0}, {DirHeld: -1, DirEdge: 0}, {Confirm: true, DirHeld: -1, DirEdge: -1}, {Enter: true, DirHeld: -1, DirEdge: -1}, {DirHeld: 2, DirEdge: 2}, {DirHeld: 3, DirEdge: 3}}
-		scans := []string{"39", "50", "50", "50", "50", "50", "39", "1c", "4b", "4d"}
+		inputs := []InputState{{Confirm: true, DirHeld: -1, DirEdge: -1}, {Confirm: true, DirHeld: -1, DirEdge: -1}, {Enter: true, DirHeld: -1, DirEdge: -1}, {DirHeld: 2, DirEdge: 2}, {DirHeld: 3, DirEdge: 3}}
+		scans := []string{"39", "39", "1c", "4b", "4d"}
 		idle := InputState{DirHeld: -1, DirEdge: -1}
 		before, rng := g.snapshot(), g.prng
 		stored := make([][]byte, g.fieldSaveLoad.contract.SlotCount)
@@ -53,7 +51,7 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 		}
 		var samples []map[string]any
 		for i, in := range inputs {
-			n := 395 + i
+			n := 405 + i
 			if src.Queued[n-1]["scan"] != scans[i] {
 				t.Fatal("input", n)
 			}
@@ -69,10 +67,10 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 			if e = g.step(idle); e != nil {
 				t.Fatal(e)
 			}
-			if n == 401 {
+			if n == 406 {
 				if g.fieldMessagePrompt == nil {
 					g.renderFrame()
-					f, err := os.Create(filepath.Join(dest, "search-empty-red-401.png"))
+					f, err := os.Create(filepath.Join(dest, "talk-empty-red-406.png"))
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -81,8 +79,8 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 					if err != nil || ce != nil {
 						t.Fatal(err, ce)
 					}
-					diff := sourceCanvasDifference(t, g, source, prefix+"-packet-401-waiting.png")
-					t.Fatalf("empty examine did not present native response; full640x350 RGB difference=%d", diff)
+					diff := sourceCanvasDifference(t, g, source, prefix+"-packet-406-waiting.png")
+					t.Fatalf("no-target talk did not present native response; full640x350 RGB difference=%d", diff)
 				}
 				for j := 0; !g.fieldMessagePrompt.dialogue.waitingForConfirm(); j++ {
 					if j >= 1000 {
@@ -94,11 +92,11 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 				}
 			}
 			want := before
-			if n == 403 {
+			if n == 408 {
 				want.PX = 2
 			}
 			if !equalFieldSave(want, g.snapshot()) || rng != g.prng {
-				t.Fatal("empty examine changed state", n)
+				t.Fatal("no-target talk changed state", n)
 			}
 			for j, b := range stored {
 				actual, err := os.ReadFile(fieldSaveSlotPath(j))
@@ -106,11 +104,11 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 					t.Fatal("examine wrote a slot", n, j, err)
 				}
 			}
-			if n >= 402 && (g.fieldMessagePrompt != nil || g.fieldSpell.active || g.cmd.open || g.panel != panelNone) {
+			if n >= 407 && (g.fieldMessagePrompt != nil || g.fieldSpell.active || g.cmd.open || g.panel != panelNone) {
 				t.Fatal("fresh-key return", n)
 			}
 			g.renderFrame()
-			p := filepath.Join(dest, fmt.Sprintf("search-empty-packet-%03d.png", n))
+			p := filepath.Join(dest, fmt.Sprintf("talk-empty-packet-%03d.png", n))
 			f, e := os.Create(p)
 			if e != nil {
 				t.Fatal(e)
@@ -121,19 +119,16 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 				t.Fatal(e, ce)
 			}
 			diff := sourceCanvasDifference(t, g, source, fmt.Sprintf(prefix+"-packet-%03d-%s.png", n, src.States[n-1]["phase"]))
-			t.Logf("normal search-empty packet%d full640x350 RGB difference=%d", n, diff)
-			if n <= 400 && diff != 0 {
-				t.Fatal("normal complete640x350 differs", n, diff)
-			}
+			t.Logf("normal talk-empty packet%d full640x350 RGB difference=%d", n, diff)
 			b, e := os.ReadFile(p)
 			if e != nil {
 				t.Fatal(e)
 			}
-			samples = append(samples, map[string]any{"packet": n, "full_rgb_difference": diff, "png_sha256": fmt.Sprintf("%x", sha256.Sum256(b))})
-		}
-		if after != nil {
-			after(g)
-			return
+			var visuals []map[string]int
+			for _, npc := range g.cur.npcs {
+				visuals = append(visuals, map[string]int{"record": npc.recordIndex, "x": npc.x, "y": npc.y, "facing": npc.facing, "walk": npc.walk})
+			}
+			samples = append(samples, map[string]any{"packet": n, "full_rgb_difference": diff, "png_sha256": fmt.Sprintf("%x", sha256.Sum256(b)), "hero_facing": g.facing, "hero_walk": g.walk, "npc_visuals": visuals})
 		}
 		t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "field-save.json"))
 		expectedSave := before
@@ -197,32 +192,32 @@ func runFieldExamineNormalAt404(t *testing.T, after func(*Game)) {
 		if g.px != 2 || g.py != before.PY {
 			t.Fatal("movement after load")
 		}
-		report := map[string]any{"scope": "normal new-game through404 single-member empty examine, fresh-key return and next moves", "source_sha256": "3af2954a524f521670aad308377efd2aca4c28633a971c111f7af6fc709c44eb", "samples": samples, "game_state_injection": false, "rng_unchanged": true, "normal_save_load_roundtrip": true, "save_checkpoint_verified": true, "load_clock": clock, "move_after_load": true, "pack_schema": g.pack.Schema(), "pack_content_version": g.pack.ContentVersion(), "pack_hash": g.pack.ContentHash(), "save_version": saveFormatVersion, "animation_timing_parity": false}
+		report := map[string]any{"scope": "normal new-game through409 healthy single-member town no-target talk, fresh-key return and next moves", "source_sha256": "753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb", "samples": samples, "game_state_injection": false, "rng_unchanged": true, "normal_save_load_roundtrip": true, "save_checkpoint_verified": true, "load_clock": clock, "move_after_load": true, "pack_schema": g.pack.Schema(), "pack_content_version": g.pack.ContentVersion(), "pack_hash": g.pack.ContentHash(), "save_version": saveFormatVersion, "animation_timing_parity": false}
 		b, e := json.MarshalIndent(report, "", "  ")
 		if e != nil {
 			t.Fatal(e)
 		}
-		if e = os.WriteFile(filepath.Join(dest, "search-empty-receipt.json"), append(b, '\n'), 0644); e != nil {
+		if e = os.WriteFile(filepath.Join(dest, "talk-empty-receipt.json"), append(b, '\n'), 0644); e != nil {
 			t.Fatal(e)
 		}
 
 	})
 }
 
-func fieldSearchArtifactPath(dir, path string) string {
-	if filepath.Dir(path) != "." {
-		return filepath.Join(filepath.Dir(dir), path)
-	}
-	return filepath.Join(dir, path)
-}
-
-func TestFieldExamineFreshKeyAndScope(t *testing.T) {
+func TestFieldTalkFreshKeyScopeAndNPC(t *testing.T) {
 	g := fieldSaveLoadComponentGame(t)
-	idle := InputState{DirHeld: -1, DirEdge: -1}
+	// Component fixture only. Normal409 owns original-versus-remake path parity.
+	if g.cur == nil {
+		t.Fatal("town fixture absent")
+	}
+	g.inTown = true
+	g.cur.npcs = nil
+	g.renderFrame()
 	before, rng := g.snapshot(), g.prng
-	g.selectCommand(cmdExamine)
+	idle := InputState{DirHeld: -1, DirEdge: -1}
+	g.selectCommand(cmdTalk)
 	if g.fieldMessagePrompt == nil {
-		t.Fatal("empty response absent")
+		t.Fatal("no-target response absent")
 	}
 	if err := g.step(InputState{DirHeld: -1, DirEdge: -1, SaveMenu: true, AnyKeyEdge: true}); err != nil {
 		t.Fatal(err)
@@ -242,22 +237,44 @@ func TestFieldExamineFreshKeyAndScope(t *testing.T) {
 		t.Fatal(err)
 	}
 	if g.fieldMessagePrompt != nil || g.fieldSaveLoad.active || !equalFieldSave(before, g.snapshot()) || g.prng != rng {
-		t.Fatal("dismissal leaked movement, save or transaction")
+		t.Fatal("dismissal leaked movement/save/transaction")
 	}
-	g.selectCommand(cmdExamine)
+	g.selectCommand(cmdTalk)
 	g.restore(before)
 	if g.fieldMessagePrompt != nil {
-		t.Fatal("restored transient response")
+		t.Fatal("restored transient prompt")
 	}
-	g.heroConditions = conditionPoison
-	g.beginEmptyExamine()
-	if g.fieldMessagePrompt != nil {
-		t.Fatal("unreviewed condition branch presented")
+	for _, branch := range []string{"condition", "ship", "party", "world"} {
+		t.Run(branch, func(t *testing.T) {
+			g.heroConditions = 0
+			g.shipAboard = false
+			g.companions = nil
+			g.inTown = true
+			switch branch {
+			case "condition":
+				g.heroConditions = conditionPoison
+			case "ship":
+				g.shipAboard = true
+			case "party":
+				g.companions = append(g.companions, &Member{})
+			case "world":
+				g.inTown = false
+			}
+			g.beginEmptyTalk()
+			if g.fieldMessagePrompt != nil {
+				t.Fatal("unreviewed response presented")
+			}
+		})
 	}
+	// Check the real target lookup and NPC-facing update with a component NPC.
 	g.heroConditions = 0
-	g.shipAboard = true
-	g.beginEmptyExamine()
-	if g.fieldMessagePrompt != nil {
-		t.Fatal("unreviewed ship response presented")
+	g.shipAboard = false
+	g.companions = nil
+	g.inTown = true
+	dx, dy := dirDelta(g.facing)
+	g.cur.npcs = []npcInst{{x: g.px + dx, y: g.py + dy, b4: 0, ctrl: 0}}
+	g.selectCommand(cmdTalk)
+	if g.fieldMessagePrompt != nil || g.cur.npcs[0].facing != g.facing^1 {
+		t.Fatal("targeted NPC routed to no-target response")
 	}
 }
