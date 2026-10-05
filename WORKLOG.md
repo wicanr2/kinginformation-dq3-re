@@ -1,5 +1,28 @@
 # DQ3 工作歷程
 
+## 2026-10-05：Issue #4 正式225原生給予提示
+
+接續6923b29，依docs/188 READY修正單人自給消息。正式程式保留交易前完整底圖，窗口、frame、
+字距、陰影及顯示hold由pack提供；自然顯示後等待新Enter。A八格與save_version2保持，
+暫態底圖不序列化。schema0.22.0／content0.1.94，canonical9ac94eed，九JSON兩份乾淨重建一致。
+
+正常194..230逐包八格與原版相同，226返回、230重開、F5／F6與下一步通過。
+194..207完整RGB0，225由30140降106，全部由NPC14完整原始BLS201／200及BLK背景解釋；
+未解釋差異0，完整225 V3與動畫時钟仍unknown。207張正式路線PNG只有225改變，其餘206保持。
+正式兩側完整225 PNG已目視核對，沒有裁切、遮罩、替圖或修改動畫相位。
+
+game493頂層清單完整覆蓋，442不同頂層／141子PASS、51選用診斷SKIP；internal194頂層／425子、12套件PASS、4選用診斷SKIP。正常THE END94.65秒，必驗三路與新確認鍵元件零SKIP，go vet及desktop PASS。
+checker兩次正對照一致，壞PNG、錯動畫parity宣稱及NPC外新增像素三負例正確拒絕。
+完整收據、canonical與重生工具集中docs/188／84；現況表CONTEXT，下一原版切片為道具使用入口。
+
+首輪21414測試預期bytes誤填，依既有IDA原始sidecar訂正；internal r2漏帶兩項oracle變數，
+r3補齊後乾淨完整重跑。公開checker首patch文件anchor缺失而無寫入，訂正實際anchor後完成。
+保留失敗收據，沒有因此改原版、產品規則或放寬驗收。
+
+所有工作依既有授權登記Issue #4並commit＋push。原版素材、PNG、binary及IDA資料庫不提交，
+十三項使用者未追蹤資料及.claude保持；一次性Docker容器批次後清理。沒有新發行包，
+原版完整campaign／音畫／多人保持unknown，Issue與Goal繼續進行。
+
 ## 2026-10-05：Issue #4 第225步原生提示RE與READY
 
 接續3832de2，依Issue下一項調查給予提示。原版保留指令窗、舊物品清單與操作窗，再開DGROUP3E6E消息窗口印record308；remake先清父窗再開一般對話。IDA9.4已閉合15002／21414／139C2／13A62..13A9F／2111B順序，547筆指令sidecar保持原始定位與bytes。正常新冷啟動230包、536 IRQ1及498份產物逐byte等於既有接受來源，新增13筆只讀窗口／字模觀測沒有改遊戲狀態或時鐘。

@@ -4810,3 +4810,54 @@ IDA9.4 r3匯出547筆指令，輸入為115282bytes的DQ3.EXE，SHA-256 `5178fdc8
 公開checker兩次正對照逐byte保持，壞PNG、壞probe source與錯字模座標三個負例均由指定斷言拒絕，沒有失敗收據。首輪負例fixture的跨filesystem硬連結及次輪缺IDA sidecar問題保留為驗證環境錯誤；補齊後同一checker乾淨重跑通過。新增15008、21414及21133的限定confirmed語意附加至既有[位址索引](../tools/ida_field_pose_ledger.json)，自動匯出保持原名與bytes，不取代原始定位。
 
 試作初輪因容器沒有PIL未執行，後續沿既有PNG decoder及原始FON完成，不安裝主機套件。全部新原版產物及IDA database保持私有；本輪只提交可重現工具與READY證據，沒有產品修正或新發行包。
+
+### READY 正式接線與重生入口
+
+資料包的原生消息契約與重建入口為 [docs/84](84-game-pack-json-contract.md#單人給予的原生消息窗口)
+及 [tools/migrate_field_item_prompt_pack.py](../tools/migrate_field_item_prompt_pack.py)。
+正式全畫布 checker 為 [tools/verify_dq3_item_give_raster.py](../tools/verify_dq3_item_give_raster.py)。
+在既有 `dq3-ebiten-test:20260822-r1` Docker 內，以 UID1000、唯讀原始素材與收據執行：
+`python3 tools/verify_dq3_item_give_raster.py --assets <原始素材目錄> --original <dosgolem產物目錄> --source-receipt <aad971bb來源JSON> --runtime <item-ordered收據目錄> --runtime-receipt-sha256 <正式收據SHA256> --output <尚不存在的JSON>`。
+它核對全部498份原版產物、正式37張PNG、資料包身分，再核對225完整畫布與NPC14整張32×24原始BLS／BLK背景。
+只支援本節單人正常225來源；非零差異仍不宣稱完整V3。
+
+### 2026-10-05 正式225原生提示限定CONFORMED
+
+READY 已接入正式 `beginSingleOwnerGift` 與 modal input／renderer，A 的交易及唯一Store保持。
+實際完整runtime224底圖先複製，再重排words；提示自然顯示後等待新Enter，226返回、230重開，
+正式F5／F6及下一步通過。沒有直接設定 revealCells、動畫相位、clock或遊戲狀態。
+窗口、字距、frame與VGA字組陰影由必填pack契約提供，舊schema／不同hash存檔仍拒絕。
+顯示hold沿既有PIT契約的hardware-spec approximation，不聲稱原版逐週期wall-clock。
+
+194..230逐包完整八格與原版相同。194..207完整RGB0；225全640×350 RGB由30140降106。
+checker核對37張正式PNG、全部498份原版產物及NPC14完整32×24原始BLS／BLK背景，
+runtime201、原版200唯一匹配，差異集合完全相同，未解釋差異0。
+保留非零全畫布差異，225僅V2，動畫時鐘與完整V3仍未知；沒有遮罩、裁切、替圖或改相位。
+207張三路正常runtime PNG只有225改變，其餘206張逐byte保持。
+checker兩次正對照一致，壞PNG、錯誤動畫parity宣稱、人物區域外新增像素三負例由指定檢查拒絕。
+
+game493頂層清單完整覆蓋，442不同頂層／141子PASS、51選用診斷SKIP；internal194頂層／425子、12套件PASS、4選用診斷SKIP。正常新遊戲到THE END94.65秒，必驗三路與新確認鍵元件零SKIP；go vet及Linux desktop PASS。
+九JSON由兩份乾淨6923b29輸入獨立重建逐byte一致，schema0.22.0／content0.1.94，canonical9ac94eed。
+Linux desktop SHA256 `2dba982720815100874d86ba665de6ab9ba5309dd05d891016b7533757ffeb89`。
+沒有新發行包；完整原版campaign、音畫、多人及空物品消息保持unknown。
+
+首輪新原始指令測試將21414誤填為間接載入，既有IDA sidecar顯示原bytes為`a1703e`，
+已訂正測試預期並乾淨重跑；沒有改EXE或產品規則。internal r2漏帶兩項必要來源環境變數，
+r3補上`DQ3_ITEM_ORACLE_DIR`後完整重跑，僅四項選用診斷SKIP。第一次加入公開checker的patch
+因文件anchor不存在而整批未寫入，改用實際文件段落後成功，不列產品失敗。
+
+| 本機正式收據 | SHA-256 |
+| --- | --- |
+| `work/issue4-give-runtime-r1/game-receipt.json` | `e29f557ee7d028af1175d80adac9ba125a86ed4dc7cb169a1ef7260cf78186e9` |
+| `work/issue4-give-full-r1/game-receipt.json` | `28d660f9e81a460601669a11a2b9fd425938430eab506cbd5840812c19953eb1` |
+| `work/issue4-give-internal-r3.json` | `3073f590dbbe9fb1f0d0870f7cc91a8185fad4dc33f0303641b28cd78b5ed948` |
+| `work/issue4-give-runtime-r1/desktop-receipt.json` | `d8bb6922ba617b4b1eadb13cad43623cb09cef0241362983378928598b87c768` |
+| `work/issue4-give-runtime-r1/ITEM_ORDERED/item-ordered/receipt.json` | `2336c0b0f5e4f881d2c4b6fd00bf178cb4ad0e970289ed826c42b0cae45a4748` |
+| `work/issue4-give-runtime-raster-r1.json` | `40f02b6fa26eca2e3a53b2a6bdb11345e36726a4f83795d2a39b322e823a0835` |
+| `work/issue4-give-raster-checker-tests-r1.json` | `98a86f8e1eb79cffe4e94c7a10b6079ab5da1a9f1a27fe30d4197f5c1ea0d154` |
+| `work/issue4-give-prompt-reproduce-r1/receipt.json` | `53b4d91156c5cf9228069ac78b1f2854bbd90dce14e8d89b8fa1a55437fc32cf` |
+| `work/issue4-give-png-audit-r1.json` | `52a316a1d0b2d3426342ef04f6d9096457168df8d55fb7842826e5c099c930f7` |
+| `work/issue4-give-vet-r1.json` | `1df15010fb677cd1358962cfb2e7384c8eaeba6b97f30ba8ca9ead1f78fb96aa` |
+
+唯一現況表在CONTEXT。下一正常切片為七列道具清單的使用入口，先取得dosgolem原版證據；
+已完成的八格持有權與225原生提示不重開。所有原版素材、PNG與binary留在本機，工作登記Issue #4。

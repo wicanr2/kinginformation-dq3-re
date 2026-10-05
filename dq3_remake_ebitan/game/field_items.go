@@ -12,7 +12,7 @@ func validateFieldItemSources(assets fs.FS, p *gamepack.Pack, tx *dq3data.Text) 
 	if s == nil || tx == nil {
 		return fmt.Errorf("field item sources missing")
 	}
-	for _, id := range []string{s.TextIDs.Header, s.TextIDs.Row, s.TextIDs.Footer, s.TextIDs.Actions, s.TextIDs.GivePrompt} {
+	for _, id := range []string{s.TextIDs.Header, s.TextIDs.Row, s.TextIDs.Footer, s.TextIDs.Actions, s.TextIDs.GivePrompt, s.GivePresentation.FrameTextID} {
 		d, ok := p.TextDefinition(id)
 		if !ok || d.Source.Record == nil {
 			return fmt.Errorf("item text reference missing")
@@ -125,17 +125,49 @@ func (g *Game) beginSingleOwnerGift() bool {
 		return false
 	}
 	s := g.pack.Interface.FieldItems
-	if s == nil {
+	if s == nil || s.GivePresentation == nil || len(g.rgba) != ScreenW*ScreenH*4 {
 		return false
 	}
-	if _, ok := g.pack.TextGlyphCodes(s.TextIDs.GivePrompt); !ok {
+	codes, ok := g.pack.TextGlyphCodes(s.TextIDs.GivePrompt)
+	if !ok {
 		return false
 	}
+	p := s.GivePresentation
+	frame, ok := g.pack.TextGlyphCodes(p.FrameTextID)
+	if !ok {
+		return false
+	}
+	d := Dialogue{tx: g.cmd.tx, layout: p.Window}
+	if !d.openRecord(codes) {
+		return false
+	}
+	d.prelude = &gamepack.OpeningPrelude{Window: p.Window, GlyphStepX: p.GlyphStepX, VariableCodeWords: p.VariableCodeWords, ReturnMode: "confirm", ForegroundRGB: p.ForegroundRGB, BackdropRGB: p.BackdropRGB}
+	d.preludeFrame, d.shadow = frame, &p.Shadow
+	// Preserve the actual pre-transaction UI, including its current sprites.
+	background := append([]byte(nil), g.rgba...)
 	if !g.giveSelectedItem(0) {
 		return false
 	}
 	g.panel = panelNone
 	g.itemActionStage = itemActionGiveWait
 	g.cmd.open = false
-	return g.openPackText(s.TextIDs.GivePrompt)
+	g.itemGivePrompt = &fieldItemPromptState{background: background, dialogue: d}
+	return true
+}
+
+type fieldItemPromptState struct {
+	background []byte
+	dialogue   Dialogue
+}
+
+func (g *Game) stepItemGivePrompt(in InputState) {
+	s := g.itemGivePrompt
+	// An input received during reveal cannot also dismiss the fresh read-key.
+	waiting := s.dialogue.waitingForConfirm()
+	s.dialogue.Tick()
+	if waiting && (in.Confirm || in.Enter) {
+		g.itemGivePrompt = nil
+		g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
+		g.panelActor, g.panelCursor = -1, 0
+	}
 }

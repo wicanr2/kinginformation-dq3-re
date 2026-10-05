@@ -19,16 +19,45 @@ type FieldItems struct {
 		Actions    string `json:"actions"`
 		GivePrompt string `json:"give_prompt"`
 	} `json:"text_ids"`
-	FrameRows    int            `json:"frame_rows"`
-	RowStep      int            `json:"row_step"`
-	Name         GeometryAnchor `json:"name"`
-	Cursor       GeometryAnchor `json:"cursor"`
-	Worn         GeometryAnchor `json:"worn"`
-	ActionCursor GeometryAnchor `json:"action_cursor"`
-	CursorGlyph  int            `json:"cursor_glyph"`
-	WornGlyph    int            `json:"worn_glyph"`
-	MarkerMask   *int           `json:"marker_mask"`
-	Evidence     Evidence       `json:"evidence"`
+	FrameRows        int              `json:"frame_rows"`
+	RowStep          int              `json:"row_step"`
+	Name             GeometryAnchor   `json:"name"`
+	Cursor           GeometryAnchor   `json:"cursor"`
+	Worn             GeometryAnchor   `json:"worn"`
+	ActionCursor     GeometryAnchor   `json:"action_cursor"`
+	CursorGlyph      int              `json:"cursor_glyph"`
+	WornGlyph        int              `json:"worn_glyph"`
+	MarkerMask       *int             `json:"marker_mask"`
+	GivePresentation *FieldItemPrompt `json:"give_presentation"`
+	Evidence         Evidence         `json:"evidence"`
+}
+
+// FieldItemPrompt presents a short native message over the previous UI frame.
+type FieldItemPrompt struct {
+	RawWindow         RawNewGameWindow `json:"raw_window"`
+	Window            WindowLayout     `json:"window"`
+	FrameTextID       string           `json:"frame_text_id"`
+	GlyphStepX        int              `json:"glyph_step_x"`
+	VariableCodeWords int              `json:"variable_code_words"`
+	ForegroundRGB     []uint8          `json:"foreground_rgb"`
+	BackdropRGB       []uint8          `json:"backdrop_rgb"`
+	Shadow            WindowShadow     `json:"shadow"`
+	Evidence          Evidence         `json:"evidence"`
+}
+
+func (s *FieldItemPrompt) UnmarshalJSON(b []byte) error {
+	type plain FieldItemPrompt
+	if err := requiredHome(b, (*plain)(s)); err != nil {
+		return err
+	}
+	var f map[string]json.RawMessage
+	if err := json.Unmarshal(b, &f); err != nil {
+		return err
+	}
+	if err := decodeOpeningObject(f["raw_window"], &s.RawWindow, []string{"id", "flags", "x", "y", "width", "height", "address"}); err != nil {
+		return err
+	}
+	return decodeOpeningObject(f["window"], &s.Window, []string{"id", "x", "y", "width", "height", "text_inset_x", "text_inset_y", "columns", "lines_per_page", "glyph_hold_frames", "glyph_timing_evidence", "evidence"})
 }
 
 func (s *FieldItems) UnmarshalJSON(b []byte) error {
@@ -93,6 +122,66 @@ func (p *Pack) validateFieldItems() error {
 	d, _ := p.TextDefinition(s.TextIDs.Actions)
 	if d.Layout.Columns*dq3data.GlyphPx != s.ActionWindow.Width*8 || d.Layout.LinesPerPage*dq3data.GlyphPx != s.ActionWindow.Height || len(d.GlyphCodes) != d.Layout.Columns*d.Layout.LinesPerPage+d.Layout.LinesPerPage-1 {
 		return fmt.Errorf("item action record shape invalid")
+	}
+	return p.validateFieldItemPrompt()
+}
+
+func (p *Pack) validateFieldItemPrompt() error {
+	s := p.Interface.FieldItems.GivePresentation
+	if s == nil || s.Evidence.Level != "D3" {
+		return fmt.Errorf("item give presentation missing or unreviewed")
+	}
+	for _, e := range []Evidence{s.Evidence, s.Window.Evidence, s.Shadow.Evidence} {
+		if e.Level != "D3" {
+			return fmt.Errorf("item prompt evidence unreviewed")
+		}
+		if err := validateEvidence(e); err != nil {
+			return err
+		}
+	}
+	w, r := s.Window, s.RawWindow
+	if r.ID == "" || r.Address == "" || r.Flags != 1 || w.ID == "" || w.X != r.X*8 || w.Y != r.Y || w.Width != r.Width*8 || w.Height != r.Height || w.X < 0 || w.Y < 0 || w.Width <= 0 || w.Width%16 != 0 || w.Height <= 0 || w.Height%16 != 0 || w.TextInsetX < 0 || w.TextInsetY < 0 || w.Columns < 1 || w.LinesPerPage < 1 || w.TextInsetX+w.Columns*dq3data.GlyphPx > w.Width || w.TextInsetY+w.LinesPerPage*dq3data.GlyphPx > w.Height || w.GlyphHoldFrames < 1 || w.GlyphTiming == nil || s.GlyphStepX < dq3data.GlyphPx || s.VariableCodeWords != 1 || len(s.ForegroundRGB) != 3 || len(s.BackdropRGB) != 3 {
+		return fmt.Errorf("invalid item prompt geometry or timing")
+	}
+	if err := validateEvidence(*w.GlyphTiming); err != nil {
+		return err
+	}
+	if w.GlyphTiming.Level != "D2" && w.GlyphTiming.Level != "D3" {
+		return fmt.Errorf("item prompt timing unreviewed")
+	}
+	sh := s.Shadow
+	if sh.Mode != "vga_word_latch_and" || sh.OffsetX < 0 || sh.OffsetX%8 != 0 || sh.OffsetY < 0 || w.X+w.Width+sh.OffsetX > 640 || w.Y+w.Height+sh.OffsetY > 350 {
+		return fmt.Errorf("item prompt shadow outside canvas")
+	}
+	frame, ok := p.TextDefinition(s.FrameTextID)
+	if !ok || frame.Source.Kind != "legacy_record" || frame.Source.Record == nil || frame.Evidence.Level != "D3" || frame.Layout.Columns*dq3data.GlyphPx != w.Width || frame.Layout.LinesPerPage*dq3data.GlyphPx != w.Height {
+		return fmt.Errorf("item prompt frame invalid")
+	}
+	col, row := 0, 0
+	for _, c := range frame.GlyphCodes {
+		if c == int(dq3data.TxtNL) {
+			if col != frame.Layout.Columns {
+				return fmt.Errorf("item prompt frame row invalid")
+			}
+			col, row = 0, row+1
+			continue
+		}
+		if c < 0 || c >= dq3data.GlyphMax {
+			return fmt.Errorf("item prompt frame control unsupported")
+		}
+		col++
+	}
+	if col != frame.Layout.Columns || row+1 != frame.Layout.LinesPerPage {
+		return fmt.Errorf("item prompt frame shape invalid")
+	}
+	text, _ := p.TextDefinition(p.Interface.FieldItems.TextIDs.GivePrompt)
+	if len(text.GlyphCodes) > w.Columns || w.TextInsetX+(len(text.GlyphCodes)-1)*s.GlyphStepX+dq3data.GlyphPx > w.Width || w.TextInsetY+dq3data.GlyphPx > w.Height {
+		return fmt.Errorf("item prompt text outside canvas")
+	}
+	for _, c := range text.GlyphCodes {
+		if c < 0 || c >= dq3data.GlyphMax {
+			return fmt.Errorf("item prompt control unsupported")
+		}
 	}
 	return nil
 }

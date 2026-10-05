@@ -2195,3 +2195,20 @@ D3 evidence。數值均明示；缺欄位、錯誤引用、越界與遮罩重疊
 `python3 tools/migrate_field_item_pack.py <乾淨0.20.0資料包目錄> <唯讀原始素材目錄> docs/data/glyph_unicode_map.json`。
 支援從 `0.20.0`／`0.1.92` 重建上述九份 JSON，核對 EXE／ITEM／TXT 的完整 hash，保留
 原有排版。證據與 READY 審查見 [docs/188](188-opening-escort-to-castle-spec.md)。
+
+### 單人給予的原生消息窗口
+
+canonical `sha256:9ac94eed4cdd791a5e188dddfce074c832e50c4e41b86959cc4cea82547a7081`。
+schema `0.22.0`／content `0.1.94` 的 `interface.field_items.give_presentation` 必填。
+它包含 `raw_window`、`window`、`frame_text_id`、`glyph_step_x`、`variable_code_words`、
+`foreground_rgb`、`backdrop_rgb`、`shadow` 與 D3 `evidence`。
+`window` 明示幾何、文字 inset、容量、`glyph_hold_frames` 及其硬體規格近似證據。
+原始窗口與像素窗口必須一致，框線引用必須符合完整字模畫布；本文限定單行普通字模，
+拒絕控制碼、缺欄位、空值、未知引用及窗口或陰影越界。正式 renderer 保留交易前完整底圖，
+自然顯示本文後等待新確認鍵；底圖與文字顯示進度不寫入存檔。
+
+重建入口為 [tools/migrate_field_item_prompt_pack.py](../tools/migrate_field_item_prompt_pack.py)，
+在 `dq3-ebiten-test:20260822-r1` Docker 內以 UID1000 執行：
+`python3 tools/migrate_field_item_prompt_pack.py <乾淨0.21.0資料包目錄> <唯讀原始素材目錄>`。
+它核對完整 EXE／TXT hash、30 bytes 原始窗口及 frame／prompt record。
+READY 的原版 caller、只讀觀測與限定驗收見 [docs/188](188-opening-escort-to-castle-spec.md)。

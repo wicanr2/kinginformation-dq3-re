@@ -1,5 +1,11 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-05 第225步單人原生給予提示已接入正式程式，保留交易前指令窗、物品清單、操作窗及完整底圖。窗口、frame、字距、陰影與顯示時間由資料包提供；自然顯示後等待新確認鍵，暫態底圖不寫入存檔。A八格核心與save_version2保持。schema0.22.0／content0.1.94，canonical9ac94eed。
+> 正常194..230逐步八格words、226返回、230重開、F5／F6及下一步通過；194..207完整RGB0。225完整畫布30140→106，全部由NPC14完整原始BLS201／200與BLK背景解釋，未解釋差異0。完整225 V3與動畫時序仍未知，沒有改相位或遮罩。207張正式路線PNG只有225改變，其餘206張逐byte保持。
+> game493頂層清單完整覆蓋，442不同頂層／141子PASS、51選用診斷SKIP；internal194頂層／425子、12套件PASS、4選用診斷SKIP。正常THE END94.65秒、必驗三路及新確認鍵元件零SKIP、go vet與Linux desktop通過。九JSON由兩份乾淨6923b29輸入重建一致；沒有新發行包。現況以CONTEXT唯一狀態表、docs/188及Issue #4為準，下一正常切片為道具使用入口的原版證據與首個可重播差異；未知規則不猜補。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 A單一有序物品格已接入Game、Member、戰鬥與全部存檔持有者。背包及裝備由完整八格導出，物理順序、空格、code0及旗標保持；save_version2拒絕所有舊格式與無pack身分存檔。schema0.21.0／content0.1.93，canonical e2cf0b0e。
 > 正常194..230逐步words與dosgolem相同，穿戴布衣給自己後移至第八格，正式重開、F5／F6與下一步通過；194..207完整RGB0。正式225仍差30140；其原生提示RE已READY，新冷啟動230包與498份產物保持，試作只剩NPC14原始影格201／200的106差異。下一切片依docs/188接入正式renderer，不能把試作當runtime驗收；動畫／多人及完整原版campaign未知。
 > game492頂層清單完整覆蓋，首輪fixture與主線策略失敗保留並訂正；補驗後440不同頂層／141子PASS、51選用SKIP。internal192頂層／415子、12套件PASS、4選用SKIP；正常THE END 79.71秒、三條必驗正常路線零SKIP、go vet及Linux desktop通過。正式驗收收據oom／oom_kill0；沒有新發行包。現況以CONTEXT唯一狀態表、docs/188及Issue #4為準。

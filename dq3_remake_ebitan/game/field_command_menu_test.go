@@ -37,6 +37,40 @@ func TestFieldCommandConfirmKeys(t *testing.T) {
 	}
 }
 
+func TestFieldItemPromptRequiresFreshConfirmation(t *testing.T) {
+	g := fieldSaveLoadComponentGame(t)
+	p := g.pack.Interface.FieldItems.GivePresentation
+	codes, ok := g.pack.TextGlyphCodes(g.pack.Interface.FieldItems.TextIDs.GivePrompt)
+	if !ok {
+		t.Fatal("missing prompt")
+	}
+	d := Dialogue{layout: p.Window}
+	d.openRecord(codes)
+	g.itemGivePrompt = &fieldItemPromptState{dialogue: d}
+	before, rng := g.snapshot(), g.prng
+	// Early confirmations and unrelated field inputs cannot dismiss or transact.
+	for i := 0; i < len(codes)*p.Window.GlyphHoldFrames; i++ {
+		g.stepItemGivePrompt(InputState{Enter: true, Confirm: true, SaveMenu: true, LoadMenu: true, DirEdge: 3, Cancel: true})
+		if g.itemGivePrompt == nil || !equalFieldSave(before, g.snapshot()) || rng != g.prng {
+			t.Fatal("reveal consumed the fresh read-key or changed persistence")
+		}
+	}
+	if !g.itemGivePrompt.dialogue.waitingForConfirm() {
+		t.Fatal("prompt did not finish naturally")
+	}
+	g.stepItemGivePrompt(InputState{SaveMenu: true, LoadMenu: true, DirEdge: 3, Cancel: true})
+	if g.itemGivePrompt == nil {
+		t.Fatal("unrelated input dismissed prompt")
+	}
+	g.stepItemGivePrompt(InputState{Enter: true})
+	if g.itemGivePrompt != nil || g.itemSelected != -1 || g.panelActor != -1 {
+		t.Fatal("fresh Enter did not release transient prompt")
+	}
+	if !equalFieldSave(before, g.snapshot()) || rng != g.prng {
+		t.Fatal("read-key changed persistence")
+	}
+}
+
 // Optional raw source is an independently accepted cold run, never a restored
 // executable snapshot. Missing assets/source is fatal when this route is enabled.
 func TestFieldCommandDosgolemNormalInputComparison(t *testing.T) {
@@ -546,10 +580,20 @@ func TestFieldItemOrderedWordsDosgolemNormalInputComparison(t *testing.T) {
 			if (n == 207 || n == 223) && g.itemSelected != 0 {
 				t.Fatal("first displayed worn physical slot was not selected")
 			}
-			if n == 225 && (!g.dlg.open || g.itemActionStage != itemActionGiveWait || g.items.Worn()[0].Position != 7) {
+			if n == 225 {
+				for updates := 0; g.itemGivePrompt != nil && !g.itemGivePrompt.dialogue.waitingForConfirm(); updates++ {
+					if updates >= 100 {
+						t.Fatal("native gift prompt did not reach fresh-key wait")
+					}
+					if e := g.step(idle); e != nil {
+						t.Fatal(e)
+					}
+				}
+			}
+			if n == 225 && (g.itemGivePrompt == nil || !g.itemGivePrompt.dialogue.waitingForConfirm() || g.itemActionStage != itemActionGiveWait || g.items.Worn()[0].Position != 7) {
 				t.Fatal("self gift did not enter original wait with wear at final physical slot")
 			}
-			if n == 226 && (g.dlg.open || g.panel != panelNone || g.cmd.open) {
+			if n == 226 && (g.itemGivePrompt != nil || g.dlg.open || g.panel != panelNone || g.cmd.open) {
 				t.Fatal("Enter did not finish single-owner gift")
 			}
 			if n == 230 && (g.panel != panelItem || g.itemActionStage != itemActionList || len(g.actorItemEntries(0)) != 7 || g.actorItemEntries(0)[6].Position != 7) {

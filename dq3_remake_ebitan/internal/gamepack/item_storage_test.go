@@ -263,6 +263,104 @@ func TestFieldItemsRejectsMissingGeometryAndTextShape(t *testing.T) {
 	}
 }
 
+func TestFieldItemPromptOriginalDataParity(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	exe, _, _ := originalItemStorageInputs(t)
+	s := p.Interface.FieldItems.GivePresentation
+	raw := exe[0x19fae : 0x19fae+30]
+	word := func(i int) int { return int(binary.LittleEndian.Uint16(raw[i*2:])) }
+	r, w := s.RawWindow, s.Window
+	if r.Flags != word(0)>>8 || r.X != word(1) || r.Y != word(2) || r.Width != word(3) || r.Height != word(4) || w.X != r.X*8 || w.Y != r.Y || w.Width != r.Width*8 || w.Height != r.Height || w.TextInsetX != 16 || w.TextInsetY != 16 || s.GlyphStepX != 24 || s.VariableCodeWords != 1 {
+		t.Fatal("native give window/consumer differs")
+	}
+	for _, check := range []struct {
+		linear int
+		bytes  []byte
+	}{
+		{0x139ae, []byte{0xbf, 0x34, 0x01}},
+		{0x21414, []byte{0xa1, 0x70, 0x3e}},
+		{0x214fb, []byte{0x83, 0xc5, 0x03}},
+	} {
+		off := check.linear - 0xec90
+		if !bytes.Equal(exe[off:off+len(check.bytes)], check.bytes) {
+			t.Fatalf("native prompt instruction differs at IDAlinear%x", check.linear)
+		}
+	}
+	for _, check := range []struct {
+		id     string
+		record int
+	}{{s.FrameTextID, word(5)}, {p.Interface.FieldItems.TextIDs.GivePrompt, 308}} {
+		d, ok := p.TextDefinition(check.id)
+		if !ok || d.Source.Record == nil || *d.Source.Record != check.record {
+			t.Fatal("native prompt record reference differs")
+		}
+		raw, err := os.ReadFile(filepath.Join("..", "..", "..", "assets_raw", d.Source.File))
+		if err != nil {
+			t.Fatal(err)
+		}
+		codes := dq3data.LoadText(nil, raw).Record(check.record)
+		if len(codes) != len(d.GlyphCodes) {
+			t.Fatal("prompt record shape differs")
+		}
+		for i, c := range codes {
+			if int(c) != d.GlyphCodes[i] {
+				t.Fatal("prompt source differs")
+			}
+		}
+	}
+	t.Logf("schema=%s content=%s hash=%s", p.Schema(), p.ContentVersion(), p.ContentHash())
+}
+
+func TestFieldItemPromptRejectsBrokenContract(t *testing.T) {
+	for _, name := range []string{"missing", "null_window", "missing_zero", "unknown_field", "raw_mismatch", "bad_shadow", "bad_text", "bad_frame", "unreviewed", "missing_timing"} {
+		t.Run(name, func(t *testing.T) {
+			p, err := BuiltinDQ3()
+			if err != nil {
+				t.Fatal(err)
+			}
+			b, _ := json.Marshal(p.Interface.FieldItems.GivePresentation)
+			var m map[string]any
+			json.Unmarshal(b, &m)
+			switch name {
+			case "missing":
+				p.Interface.FieldItems.GivePresentation = nil
+			case "null_window":
+				m["window"] = nil
+			case "missing_zero":
+				delete(m["raw_window"].(map[string]any), "flags")
+			case "unknown_field":
+				m["guess"] = 1
+			case "raw_mismatch":
+				m["raw_window"].(map[string]any)["x"] = 0
+			case "bad_shadow":
+				m["shadow"].(map[string]any)["offset_x"] = 640
+			case "bad_text":
+				m["glyph_step_x"] = 100
+			case "bad_frame":
+				m["frame_text_id"] = p.Interface.FieldItems.TextIDs.Header
+			case "unreviewed":
+				m["evidence"].(map[string]any)["level"] = "D2"
+			case "missing_timing":
+				delete(m["window"].(map[string]any), "glyph_timing_evidence")
+			}
+			if name != "missing" {
+				b, _ = json.Marshal(m)
+				var s FieldItemPrompt
+				if json.Unmarshal(b, &s) != nil {
+					return
+				}
+				p.Interface.FieldItems.GivePresentation = &s
+			}
+			if p.validateFieldItems() == nil {
+				t.Fatal("broken prompt accepted")
+			}
+		})
+	}
+}
+
 func TestItemStorageBootRejectsActualArchiveMismatch(t *testing.T) {
 	_, raw, items := originalItemStorageInputs(t)
 	for _, name := range []string{"missing", "extra_record", "partial_record", "metadata_part", "metadata_curse"} {
