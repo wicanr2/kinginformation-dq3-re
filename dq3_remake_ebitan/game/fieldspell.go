@@ -66,6 +66,9 @@ func (g *Game) heroStatsLevel() int {
 }
 
 func (g *Game) openFieldSpellMenu() {
+	if g.beginSingleMemberEmptySpellEntry() {
+		return
+	}
 	m := &g.fieldSpell
 	*m = FieldSpellMenu{active: true, selectingCaster: true}
 }

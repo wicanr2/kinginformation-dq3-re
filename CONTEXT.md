@@ -1,6 +1,6 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-05：正常單人重新排序兩頁與返回已限定驗收。現行程式、最近測試與下一步以本檔「目前狀態」表為準；原版完整campaign及動畫時鐘仍未知。
+2026-10-06：正常單人未學咒文入口與新按鍵返回已限定驗收。現行程式、最近測試與下一步以本檔「目前狀態」表為準；原版完整campaign及動畫時鐘仍未知。
 
 以下保存前一checkpoint，現況以本檔唯一狀態表為準。
 
@@ -224,17 +224,17 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 正式路線回歸的收據與演進依 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)，
 詳見 [WORKLOG.md](WORKLOG.md)。下一步恢復原版創角後的 dosgolem 玩家路徑對拍。
 
-| 目前狀態（2026-10-05） | 最近驗收與界線 |
+| 目前狀態（2026-10-06） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；schema0.28.0／content0.1.100，canonical `sha256:757ef211c1d8179019c53c97f2b02bcdc3d7c823353491f608494d852acd02d1`；A唯一八格、storage_version1及save_version2保持，沒有新發行包 |
-| 最新remake已完成 | 正常單人狀況第三列顯示原版TXT00/522兩頁信件；保留父窗與文字行，兩次新Enter分別換頁及關閉全部窗口。後續行走、正式F5/F6及Load後下一步通過。八格、snapshot與RNG保持 |
-| 最新原版oracle | dosgolem2f44a68正常298來源e06a5e41，336輸入／672IRQ／702產物；seed1357一次，無注入／restore。父288前綴672份保持；完整2172bytes僅297行走X低byte3→2，其他保持。暫存last_record由294成522，原版引用此信件的原因unknown |
-| 最新畫面已驗 | 289..298完整640×350 RGB0，包括兩頁完整底圖、父窗、消息、返回及下一步，沒有裁切、遮罩、替圖或改相位。上一完整game的1827張PNG逐byte保持 |
-| 最新畫面未通過 | 本輪十張均RGB0；既有286返回差122、278／279差351／356及264..270差142保持未知。不由局部零差異推升動畫時鐘、多人或完整campaign的V3 |
-| 下一production切片 | 從正常298返回場景後重開命令，核對未學咒文單人的咒文入口、第一個結果與返回。先dosgolem來源→READY→實作，不重開已閉合的物品與單人狀況切片 |
-| 本輪有限CONFORMED | 正常單人重新排序：EXE／TXT→typed pack→正式InputState→保留行兩頁及兩次fresh-key等待→完整PNG→F5/F6及下一步，E2／E3及294／295完整V3。多人排序尚無正常來源，不做猜測的pointer交易 |
+| 現行程式 | `dq3_remake_ebitan/`；schema0.29.0／content0.1.101，canonical `sha256:0e9d617d81a32cd6569003110301a54354cae910d000b56c6a3cf26371023934`；A唯一八格、storage_version1及save_version2保持，沒有新發行包 |
+| 最新remake已完成 | 健康、正常狀態、單人未學咒文直接顯示原版TXT00/262人物名及訊息，保留實際命令窗；新按鍵關閉所有窗口，該鍵不再次派發場景動作。八格、MP、旗標及RNG保持，正式F5／F6及讀檔後行走通過 |
+| 最新原版oracle | dosgolem2f44a68正常304來源c0967028，342輸入／684IRQ／720產物，父298前綴702份保持，seed1357一次、無注入／restore／重擲。單人選取writer18869、零數量SI507F／1CB39、訊息DI0106／15023及fresh21133→field1997C閉合。完整2172bytes僅303行走X改變；探針固定基址誤名診斷欄位已明示勘誤 |
+| 最新畫面已驗 | 299..304六張完整640×350 RGB0，包括命令導航、空咒文訊息、原底圖、返回及下一步；301首次52013差異降0。前輪1976張完整game PNG逐byte保持，沒有裁切、遮罩、替圖或改相位 |
+| 最新畫面未通過 | 本輪六張均RGB0；既有286返回差122、278／279差351／356及264..270差142保持未知。局部零差異不外推動畫時鐘、其他角色／施法分支或完整原版campaign的V3 |
+| 下一production切片 | 從正常304返回場景後重開命令，核對單人裝備入口、第一頁及取消返回。先dosgolem來源→READY→實作，不重開已閉合的物品、單人狀況與空咒文切片 |
+| 本輪有限CONFORMED | 正常單人空咒文：EXE／TXT→typed pack→正式InputState→原命令背景、人物名訊息及fresh-key等待→六張完整PNG→F5存檔點／F6時鐘交易→讀檔後下一步，E2／E3及指定畫面V3。其他施法、多人及前置旗標分支未驗收 |
 | 原版oracle仍未知 | 多人全體／排序完整結果、其他角色狀況、多人物品取消／給予、其他使用／丟棄、第四動作列、空物品訊息、原版指令Enter動態、其他world／室內F6、完整多槽世界、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
-| 現行remake回歸 | 完整game507頂層覆蓋、456不同頂層／141子PASS、51原有選用診斷SKIP，511次執行／601 PASS記錄；internal204頂層／476子、12套件PASS、4原有選用診斷SKIP。七項指定路線零SKIP，正常THE END123.74秒、vet與Linux desktop PASS，同一game binarybbcca34a、OOM0。九JSON乾淨bdc955f重建一致，來源正對照／三負例通過；727列IDA原始定位及16筆annotation保持，新增18694限定confirmed自動合併 |
+| 現行remake回歸 | 完整game509頂層覆蓋、458不同頂層／141子PASS、51原有選用診斷SKIP，513次執行／603 PASS記錄；internal206頂層／489子、12套件PASS、4原有選用診斷SKIP。五項指定路線零SKIP，正式THE END65.99秒、vet與Linux desktop PASS，OOM0。前輪1976張PNG、510列IDA原始定位及17筆註記保持，追加18869與1C9E7限定confirmed；九JSON乾淨317014c重建一致，公開checker正例／三負例通過。正式binary6cfb960c，無新包 |
 | 入隊返回原版限制 | r2在2,500,000,001指令上限仍為199包／474IRQ1，計時器前進3003；未觀察到自然caller返回。只核對18筆既有玩家層IDA bytes；2898 writer及22E10 callee語意unknown，未建立完成收據 |
 | 額外驗證限制 | save_version2及完整pack身分必填，所有owner在restore前驗證；無metadata歷史migration已移除。F6依pack重設世界clock，標題Load保留JSON時鐘。綠色回歸不升格完整原版parity |
 

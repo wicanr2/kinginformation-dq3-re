@@ -1845,3 +1845,13 @@ DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-on
 完整game507頂層覆蓋、456不同頂層／141子PASS、51原有選用診斷SKIP，511次執行／601 PASS記錄。internal204頂層／476子、12套件PASS、4原有選用診斷SKIP；七項指定路線零SKIP，正常THE END123.74秒、Go vet與最終Linux desktop PASS，正式收據OOM0，同一game binarybbcca34a。1827張前輪完整PNG、727列IDA原始定位及16筆舊註記保持，新18694限定confirmed自動合併；九JSON乾淨bdc955f重建一致，公開checker正對照與三負例通過。
 
 首輪未使用import、r2未註冊文字版型、收尾誤用前前輪PNG數與Go gate包含JSON均保留訂正，回查規格與同一產物後乾淨重跑；未放寬產品驗收或修改原版。證據與重生工具入口docs/188，資料契約docs/84，唯一現況表CONTEXT。下一切片正常298後未學咒文單人咒文入口。多人排序、動畫、音畫及完整原版campaign保持未知，Issue／Goal進行中，沒有新包。使用者十三項資料保持；本批UID/GID1000、root-owned3213及零.md目錄保持，測試與IDA一次性容器已清理。
+
+## 2026-10-06 單人空咒文入口與新按鍵返回
+
+依Issue #4從正常298續行。dosgolem一次固定1357冷啟動至304，342鍵／684 IRQ／720產物，父來源702份保持；單人自選索引1，人物原始+30／+31均0，DI0106顯示TXT00/262，保留命令背景，fresh21133後返回field1997C並可行走。探針固定基址診斷誤名保留勘誤，以人物指標快照及AX分支驗證，無重擲、注入或restore。
+
+可丟棄正常重播首次301差52013，READY後資料進field_spell_entry JSON，共用訊息primitive保留背景及新鍵消費。正式299..304六張完整RGB0，snapshot／八格／MP／旗標／RNG保持，正常F5／F6及讀檔後下一步通過。schema0.29.0／content0.1.101、canonical0e9d617d，save2／storage1保持。
+
+完整game509頂層覆蓋、458不同頂層／141子PASS、51原有選用診斷SKIP，513次執行／603 PASS記錄；internal206頂層／489子、12套件PASS、4原有選用診斷SKIP。五項指定路線零SKIP，正式THE END65.99秒、vet與Linux desktop PASS，OOM0。前輪1976張PNG保持；510列IDA原始定位及17筆舊註記保持，兩筆有限confirmed追加且自動匯出。九JSON乾淨317014c重建一致，公開checker正例與三負例通過。存讀檔測試最初未計既有存檔點／Load時鐘交易，vet沿用輸出名稱及PNG負例改到長度均屬驗證工具問題，保留失敗後按實際契約乾淨重跑，沒有修改產品規則或原版。
+
+本批UID/GID1000，root-owned3213及零.md目錄保持；原版、圖像、database與binary留本機，不新增image或交付包。來源／READY／CONFORMED與工具入口docs/188，JSON契約docs/84，唯一現況表CONTEXT。下一正常切片為304後單人裝備入口與取消；其他施法、多人、動畫與完整原版campaign仍未知，Issue／Goal進行中。

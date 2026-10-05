@@ -1,9 +1,9 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-05 正常單人「重新排序」已依原版顯示TXT00/522兩頁信件，保留父窗與文字行；兩次新Enter分別換頁及返回。289..298完整640×350 RGB0，八格、snapshot／RNG、正式F5/F6與Load後下一步通過。schema0.28.0／content0.1.100，canonical757ef211；storage_version1及save_version2保持。
-> dosgolem正常298來源e06a5e41，336鍵／672IRQ／702產物接受；父288前綴672份保持，seed1357一次，無注入／restore。原版引用信件的原因unknown，多人排序未驗收；不自行替換提示或猜交易。
-> 完整game507頂層覆蓋、456不同頂層／141子PASS、51選用診斷SKIP，511次執行／601 PASS記錄。internal204頂層／476子、12套件PASS、4選用診斷SKIP；七項指定路線零SKIP，正常THE END123.74秒、vet及Linux desktop PASS，同一game binarybbcca34a、OOM0。上一完整game1827張PNG、727列IDA原始定位與16筆舊annotation保持，新18694限定confirmed自動合併。九JSON由bdc955f乾淨重建相同，來源正對照與三負例通過。
-> 下一切片從正常298重開命令，核對未學咒文單人的咒文入口及返回。先取得dosgolem原版來源，再審READY；已閉合切片不重開，完整原版campaign與音畫仍未知。Issue／Goal進行中，唯一目前狀態表在CONTEXT。
+> 2026-10-06 健康單人未學咒文入口已依原版修正：直接顯示TXT00/262人物名稱與訊息，保留命令窗，等新按鍵後返回場景。299..304六張完整640×350 RGB0，八格、MP、旗標及RNG保持；正式F5／F6依已審存檔點與Load時鐘交易，讀檔後下一步通過。
+> dosgolem正常304來源c0967028，342鍵／684IRQ／720產物；父298前綴702產物保持，seed1357一次、無注入／restore／重擲。schema0.29.0／content0.1.101，canonical0e9d617d，save_version2／storage_version1保持。
+> 完整game509頂層覆蓋、458不同頂層／141子PASS、51原有選用診斷SKIP，513次執行／603 PASS記錄；internal206頂層／489子、12套件PASS、4原有選用診斷SKIP。五項指定路線零SKIP，正式THE END65.99秒、vet與Linux desktop PASS，OOM0。前輪1976張PNG、510列IDA原始定位與17筆舊annotation保持，追加18869及1C9E7有限confirmed；九JSON由317014c乾淨重建一致，公開來源checker正例與三負例通過。
+> 下一切片從正常304重開命令，核對單人「裝備」入口、第一頁及取消返回。先dosgolem原版來源→READY→實作，不重開已閉合切片；其他施法、多人、動畫時鐘與完整原版campaign仍未知。Issue／Goal進行中，唯一目前狀態表在CONTEXT。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

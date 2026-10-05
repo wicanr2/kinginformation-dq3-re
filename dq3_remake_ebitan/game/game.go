@@ -341,7 +341,7 @@ type Game struct {
 	itemActionCursor               int       // 動作或給予對象游標
 	itemSelected                   int       // 已選持有者物理格位置
 	itemGivePrompt                 *fieldItemPromptState
-	statusReorderPrompt            *fieldItemPromptState
+	fieldMessagePrompt             *fieldItemPromptState
 	reclassEventID                 string          // game-pack reclass event；空字串=無進行中的轉職
 	reclassStage                   int             // 達瑪轉職對話／選擇狀態機
 	reclassCursor                  int             // Yes/No、隊員或職業選單游標
@@ -1049,8 +1049,8 @@ func (g *Game) step(in InputState) error {
 		g.renderFrame()
 		return err
 	}
-	if g.statusReorderPrompt != nil {
-		g.stepStatusReorderPrompt(in)
+	if g.fieldMessagePrompt != nil {
+		g.stepFieldMessagePrompt(in)
 		g.renderFrame()
 		return nil
 	}
@@ -2910,7 +2910,7 @@ func (g *Game) renderFrame() {
 	if g.frame == nil { // 尚未初始化(如 NewGame 中途 debug 呼叫)→ 略過
 		return
 	}
-	if s := g.statusReorderPrompt; s != nil {
+	if s := g.fieldMessagePrompt; s != nil {
 		copy(g.rgba, s.background)
 		s.dialogue.draw(g.rgba, g.fieldIdleForeground())
 		g.frame.WritePixels(g.rgba)

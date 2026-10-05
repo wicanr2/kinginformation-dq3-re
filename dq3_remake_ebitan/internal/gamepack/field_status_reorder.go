@@ -28,13 +28,17 @@ func (p *Pack) validateFieldStatusReorder() error {
 	if s == nil || s.Scope != "single_member" || s.ReturnMode != "fresh_key_to_field" || s.Evidence.Level != "D3" {
 		return fmt.Errorf("status reorder response missing or unreviewed")
 	}
-	if err := validateEvidence(s.Evidence); err != nil {
+	return p.validateFieldMessageResponse(s.SingleMemberTextID, s.Presentation, s.TextFlow, s.WaitIndicator, s.Evidence, nil)
+}
+
+func (p *Pack) validateFieldMessageResponse(textID string, presentation *FieldItemPrompt, flow RetainedTextFlow, indicator OpeningWaitIndicator, evidence Evidence, variables map[int]bool) error {
+	if err := validateEvidence(evidence); err != nil {
 		return err
 	}
-	if err := p.validateNativeFieldPrompt(s.Presentation); err != nil {
+	if err := p.validateNativeFieldPrompt(presentation); err != nil {
 		return err
 	}
-	f, w := s.TextFlow, s.Presentation.Window
+	f, w := flow, presentation.Window
 	if f.Mode != "retained_rows" || f.Evidence.Level != "D3" ||
 		f.ScrollStepPixels <= 0 || f.ScrollStepPixels > dq3data.GlyphPx ||
 		f.ScrollSteps <= 0 || f.ScrollSteps > dq3data.GlyphPx ||
@@ -46,10 +50,10 @@ func (p *Pack) validateFieldStatusReorder() error {
 	if err := validateEvidence(f.Evidence); err != nil {
 		return err
 	}
-	if err := validateOpeningWaitIndicator(s.WaitIndicator, w); err != nil {
+	if err := validateOpeningWaitIndicator(indicator, w); err != nil {
 		return err
 	}
-	d, ok := p.TextDefinition(s.SingleMemberTextID)
+	d, ok := p.TextDefinition(textID)
 	if !ok || d.Source.Kind != "legacy_record" || d.Source.Record == nil || d.Evidence.Level != "D3" || len(d.GlyphCodes) == 0 {
 		return fmt.Errorf("status reorder text reference missing or unreviewed")
 	}
@@ -62,8 +66,12 @@ func (p *Pack) validateFieldStatusReorder() error {
 			column = 0
 			continue
 		}
+		if variables[c] {
+			column++
+			continue
+		}
 		if c < 0 || c >= dq3data.GlyphMax || column >= w.Columns ||
-			w.TextInsetX+column*s.Presentation.GlyphStepX+dq3data.GlyphPx > w.Width-w.TextInsetX {
+			w.TextInsetX+column*presentation.GlyphStepX+dq3data.GlyphPx > w.Width-w.TextInsetX {
 			return fmt.Errorf("status reorder text control or row invalid")
 		}
 		column++

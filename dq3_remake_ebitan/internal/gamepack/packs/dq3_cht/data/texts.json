@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.28.0",
+  "schema_version": "0.29.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -7943,6 +7943,40 @@
         "consumer": "status third entry -> single-member DI020A -> 15023 -> text table/21414 -> inline216D8 -> final21133 -> field1997C",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "confirmed限定正常294..298單人信件兩頁、返回與下一步；原版引用此文字的原因unknown，多人排序未驗收。字模／捲動hold與等待閃爍時間沿既有hardware-spec approximation。"
+      }
+    },
+    {
+      "id": "dq3:text.field.spell.empty",
+      "value": "{actor}不會使用咒文。",
+      "glyph_codes": [
+        65531,
+        228,
+        415,
+        210,
+        412,
+        429,
+        430,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 262
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal304 source c096702865ce694706ba2aac2f9333408b895bf45d856bae4a14334d1275cfcf",
+        "address_space": "linear",
+        "address": "IDA9.4 1C9C1..1C9EE;1885F..18870;1C9EE..1CB3C;15002..15037;DGROUP3E6E/file19FAE",
+        "consumer": "command fourth entry -> automatic single actor -> zero learned counts -> DI0106/15023 -> retained message -> fresh21133 -> field1997C",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常299..304健康單人未學咒文入口、原命令背景、新按鍵返回與下一步；其他施法分支未驗收。字模hold為沿用hardware-spec approximation。"
       }
     }
   ]

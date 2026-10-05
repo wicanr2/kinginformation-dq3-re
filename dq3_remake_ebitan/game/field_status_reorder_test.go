@@ -17,7 +17,7 @@ func TestFieldStatusReorderFreshWaitAndState(t *testing.T) {
 	before, rng := g.snapshot(), g.prng
 	g.panel, g.panelCursor, g.cmd.open = panelStatusMenu, 2, false
 	g.stepStatusMenu(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}, -1)
-	if g.statusReorderPrompt == nil {
+	if g.fieldMessagePrompt == nil {
 		t.Fatal("single-member response absent")
 	}
 	// Selection and an early Enter cannot consume the later wait.
@@ -26,7 +26,7 @@ func TestFieldStatusReorderFreshWaitAndState(t *testing.T) {
 	}
 	wait := func() {
 		t.Helper()
-		for n := 0; !g.statusReorderPrompt.dialogue.waitingForConfirm(); n++ {
+		for n := 0; !g.fieldMessagePrompt.dialogue.waitingForConfirm(); n++ {
 			if n >= 1000 {
 				t.Fatal("message did not reach fresh wait")
 			}
@@ -36,14 +36,14 @@ func TestFieldStatusReorderFreshWaitAndState(t *testing.T) {
 		}
 	}
 	wait()
-	if g.statusReorderPrompt.dialogue.retained.finished {
+	if g.fieldMessagePrompt.dialogue.retained.finished {
 		t.Fatal("inline wait skipped")
 	}
 	if e := g.step(InputState{DirHeld: 2, DirEdge: 2, AnyKeyEdge: true}); e != nil {
 		t.Fatal(e)
 	}
 	wait()
-	if !g.statusReorderPrompt.dialogue.retained.finished {
+	if !g.fieldMessagePrompt.dialogue.retained.finished {
 		t.Fatal("terminal fresh wait absent")
 	}
 	for n := 0; n < 20; n++ {
@@ -54,19 +54,23 @@ func TestFieldStatusReorderFreshWaitAndState(t *testing.T) {
 	if e := g.step(InputState{DirHeld: -1, DirEdge: -1, SaveMenu: true, AnyKeyEdge: true}); e != nil {
 		t.Fatal(e)
 	}
-	if g.statusReorderPrompt != nil || g.panel != panelNone || g.cmd.open || g.fieldSaveLoad.active ||
+	if g.fieldMessagePrompt != nil || g.panel != panelNone || g.cmd.open || g.fieldSaveLoad.active ||
 		!equalFieldSave(before, g.snapshot()) || rng != g.prng {
 		t.Fatal("dismissal leaked action or transacted state")
 	}
 	g.panel, g.panelCursor = panelStatusMenu, 2
 	g.stepStatusMenu(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}, -1)
 	g.restore(before)
-	if g.statusReorderPrompt != nil {
+	if g.fieldMessagePrompt != nil {
 		t.Fatal("restore retained transient prompt")
 	}
 }
 
 func TestFieldStatusReorderDosgolemNormalInputComparison(t *testing.T) {
+	runFieldStatusReorderNormalAt298(t, nil)
+}
+
+func runFieldStatusReorderNormalAt298(t *testing.T, after func(*Game)) {
 	runFieldPartySummaryNormalAt288(t, func(g *Game) {
 		dir, dest := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
 		const prefix = "issue4-field-reorder-normal-r2"
@@ -126,10 +130,10 @@ func TestFieldStatusReorderDosgolemNormalInputComparison(t *testing.T) {
 				t.Fatal(e)
 			}
 			if n == 294 || n == 295 {
-				if g.statusReorderPrompt == nil {
+				if g.fieldMessagePrompt == nil {
 					t.Fatal("normal reorder message absent", n)
 				}
-				for updates := 0; !g.statusReorderPrompt.dialogue.waitingForConfirm(); updates++ {
+				for updates := 0; !g.fieldMessagePrompt.dialogue.waitingForConfirm(); updates++ {
 					if updates >= 1000 {
 						t.Fatal("normal message wait timeout", n)
 					}
@@ -137,7 +141,7 @@ func TestFieldStatusReorderDosgolemNormalInputComparison(t *testing.T) {
 						t.Fatal(e)
 					}
 				}
-				if g.statusReorderPrompt.dialogue.retained.finished != (n == 295) {
+				if g.fieldMessagePrompt.dialogue.retained.finished != (n == 295) {
 					t.Fatal("normal wait phase", n)
 				}
 			}
@@ -148,7 +152,7 @@ func TestFieldStatusReorderDosgolemNormalInputComparison(t *testing.T) {
 			if !equalFieldSave(want, g.snapshot()) || rng != g.prng {
 				t.Fatal("normal persistent state changed", n)
 			}
-			if n >= 296 && (g.statusReorderPrompt != nil || g.panel != panelNone || g.cmd.open) {
+			if n >= 296 && (g.fieldMessagePrompt != nil || g.panel != panelNone || g.cmd.open) {
 				t.Fatal("fresh-key return", n)
 			}
 			g.renderFrame()
@@ -179,6 +183,9 @@ func TestFieldStatusReorderDosgolemNormalInputComparison(t *testing.T) {
 		}
 		if e = os.WriteFile(filepath.Join(dest, "reorder-receipt.json"), append(b, '\n'), 0644); e != nil {
 			t.Fatal(e)
+		}
+		if after != nil {
+			after(g)
 		}
 	})
 }

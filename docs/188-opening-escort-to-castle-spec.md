@@ -5322,3 +5322,79 @@ IDA r1確認18685比較DGROUP5077是否為1，單人分支18694以DI20A／record
 | `work/issue4-reorder-source-audit-r1.json` | `41b252a964474559ccf17f9af8b64f63f9927e91bba53925501a46d398e6a30f` |
 | `work/issue4-reorder-r5-ida.json` | `5e1cc3d0288c605cddbab41ed2cf035876a946326054da15a1322d8d20cb8b28` |
 | `work/issue4-reorder-final-audit-r3.json` | `75b15b209422201f0e4cf2a8bb6f229ad45fb14c9d2cef12e4b8b592b000d2bf` |
+
+### 2026-10-06 空咒文正常續行 DRAFT
+
+接續已推送317014c與正常298來源e06a5e41。遠端Issue下一切片為未學咒文單人的「咒文」入口；命令窗右上列原始callbackC9C1，IDA linear1C9C1／fileDD31。先核對callback、單人選取、空咒文分支、消息與返回，不把Go現有咒文選單當原版規格。未達READY不改正式Go或pack。
+
+私人`work/issue4-spell-empty-start-remote-r1.json`保存Issue現況，`work/issue4-spell-empty-start-comment-r1.md`登記工作。`work/issue4-spell-empty-prepare-r1.py`準備`work/issue4-spell-empty-ida-export-r1.py`與`work/issue4-spell-empty-ida-run-r1.py`，以既有IDA9.4窄匯出1C9C1候選及直接原生消息／輸入consumer，保留17筆原始位址索引。原始EXE／TXT、位址換算及Docker掛載契約沿上一節；IDA2GiB／2CPU／128PID／320秒上限，database只在一次性/tmp，原始素材唯讀。
+
+IDA r1匯出360列；callback先呼叫17D5A，再1885F選人，1C9EE依人物的+30／+31欄位分支，候選失敗訊息為106h。`work/issue4-spell-empty-prepare-r2.py`追加直接consumer的完整函式範圍，產生`work/issue4-spell-empty-ida-export-r2.py`／`work/issue4-spell-empty-ida-run-r2.py`與`work/issue4-spell-empty-r2-ida.json`。此時語意仍unknown，尚未取得正常動態結果。
+
+IDA r2為510列，原始檔不變。18869對單人直接寫選取索引1；1CA99及1CAAA的零數量分支返回AL=1，再1C9E7呼叫15023顯示106h。`work/issue4-spell-empty-probe-r1.py`由正常298來源cold續行：299Space、300Right、301Space、302新Enter、303Left、304Right。僅在實際原生choice／wait／field到位才輸入，固定1357一次，無注入或restore；重生`work/dosgolem-opening/issue4-spell-empty-normal-r1-*`，全保留前298輸入。此項預期仍待動態核對，不作完成聲明。
+
+`work/issue4-spell-empty-check-r1.py`獨立檢查固定種子、輸入IRQ、父來源702產物、完整persistent bytes、原版訊息與native返回。若預期欄位不符先保留失敗，按實際來源核對，不重擲seed或替換圖像。
+
+來源通過後，由`work/issue4-spell-empty-draft-prepare-r1.py`建立正常298測試接點`work/issue4-spell-empty-reorder-helper-r1.go`及隔離執行器`work/issue4-spell-empty-draft-run-r1.py`，加入`work/issue4-spell-empty-draft-test-r1.go`，使用正式InputState延伸六步。此測試只在/tmp的可丟棄副本執行，輸出`work/issue4-spell-empty-draft-red-r1/`，不改production。
+
+原版一次重播已正常304。來源checker r1拒絕探針`spell30`／`spell31`診斷值：探針誤從4F17固定基址讀取，實際人物指標是507F。保留r1及同一次來源；`work/issue4-spell-empty-check-prepare-r2.py`產生r2 checker，明確將兩個欄位視為DGROUP4F47／4F48原始診斷值0／153，不當人物數量證據。人物快照由原生4F15指標讀取，+30／+31實際均0；動態1CA00的SI507F、1CB39的AX0000及1C9E7的AX0001閉合零數量分支。未修改來源、重播或重擲。
+
+### 2026-10-06 空咒文 READY
+
+來源`work/dosgolem-opening/issue4-spell-empty-normal-r1-source-r1-receipt.json` SHA `c096702865ce694706ba2aac2f9333408b895bf45d856bae4a14334d1275cfcf`通過720產物／342按鍵／684 IRQ；父來源702產物保持，新增六步2172 persistent bytes除303的X=2外保持。301在21133等待，302返回1997C，303／304可正常行走；無檔案writer或未實作服務。IDA9.4 r2來源SHA `744ac013b733ea4dca75b8cdc860274f1bf76a61819676a4a64a6f60b75ebf34`，EXE及TXT identity沿上節。
+
+| 鏈節 | 原始定位與confirmed限定結果 |
+| --- | --- |
+| 命令入口 | DGROUP3D6C第四項callbackC9C1；正常300Right選中4，301Space進IDA linear1C9C1／fileDD31 |
+| 單人選取 | 18869／file9BD9寫DGROUP0722=1；不顯示施法者視窗 |
+| 空列表 | 1C9F9經DGROUP4F15取得SI507F，角色+30／+31均0；1CA99→1CB39返回AL1 |
+| 訊息 | 1C9E7／fileDD57 `bf0601`，1C9EA呼叫15023；TXT00 record262為FFFB人物名加「不會使用咒文。」 |
+| 版面與背景 | 15002共用DGROUP3E6E／file19FAE，152,238,352×96，inset16,16，glyph步距24，單word插值；命令窗與選中游標仍在背景 |
+| 返回 | 15010最終fresh21133，不顯示inline指示；新按鍵關閉所有選單返回field1997C，該鍵不再派發場景操作 |
+
+可丟棄正常重播`work/issue4-spell-empty-draft-red-r1/receipt.json`：299／300完整RGB0，301首次52013像素差異，remake為caster_selector=true。READY只涵蓋健康、正常狀態、單人且未學任何咒文的入口，無MP、物品、旗標或RNG交易。新增`field_spell_entry` pack契約保存empty_text_id、presentation、text_flow、wait_indicator、actor_variable_code、scope、return_mode及D3 evidence；schema0.29.0／content0.1.101，存檔格式不變。人物控制碼與frame由原始TXT／EXE導出，不在Go猜文字或record。共用field message primitive保存實際背景及fresh等待，原狀況重新排序也使用同一primitive。多人、已學咒文、異常角色及其他施法分支未升級parity聲明。
+
+實作入口為`tools/migrate_field_spell_entry_pack.py`、`internal/gamepack/field_spell_entry.go`、`game/field_spell_entry.go`，測試及欄位入口同批掛入docs/84及本節。兩個Go路徑均相對於`dq3_remake_ebitan/`。
+
+`work/issue4-spell-empty-engine-prepare-r1.py`將已審查的狀況訊息狀態改為共用fieldMessagePrompt，保留正常298正式重播接點及原欄位契約，不改存檔；Go新訊息顯示只讀pack及人物名稱。原版301的背景保留命令窗，狀況分支在顯示前保留自身原畫面，兩者均不覆蓋像素。
+
+正式測試入口`internal/gamepack/field_spell_entry_test.go`核對原始單人writer、空數量分支、record、名稱控制碼與frame，拒絕缺欄位及未知引用。`work/issue4-spell-empty-formal-prepare-r1.py`產生`game/field_spell_entry_test.go`，正式InputState從新遊戲到304後做F5存檔、F6讀檔及下一步，保留所有六張完整640×350畫面與狀態收據。新增Go測試路徑均相對`dq3_remake_ebitan/`。
+
+`work/issue4-spell-empty-runs-prepare-r1.py`沿既有有界測試器準備runtime／internal／full執行器，輸出各自同名工作目錄與JSON收據。runtime先驗新訊息、正常304、原狀況兩頁及已學咒文；通過後執行完整game／internal、vet與desktop建置，Xvfb在finally終止。
+
+runtime r1的六張新畫面均RGB0，原狀況及已學咒文回歸通過；附加存讀檔測試在F6選槽後多送一次Enter。原生F6入口直接fsSlots，一次Enter已Load並返回，第二次會繼續dispatch場景輸入。測試移除多餘輸入，以相同正式流程乾淨重跑。完整internal r1已完成；vet執行器沿用舊輸出檔名而FileExistsError，屬工具命名問題。`work/issue4-spell-empty-runs-prepare-r2.py`產生獨立runtime r2與vet r2執行器，保留r1產物，不覆寫歷史收據。
+
+公開重生入口由`work/issue4-spell-empty-publish-tools-r1.py`保存：`tools/dosgolem_field_spell_empty_probe.py`與接受來源的私人producer逐byte相同，固定diagnostic誤名的意義依本節勘誤，不以該值宣稱人物欄位；`tools/verify_dosgolem_field_spell_empty.py`以人物指標快照及native分支核對。執行在既有test image，唯讀dosgolem2f44a68 snapshot及repo，只有work可寫，3GiB／2CPU／128PID／900秒上限；產生正常304來源且拒絕覆寫既有前綴。checker使用3GiB／120秒有界容器。`tools/ida_field_spell_entry_export.py`以同一510列原始範圍匯出，19筆索引自動附註，僅追加18869及1C9E7有限confirmed語意。`work/issue4-spell-empty-ida-run-r3.py`及`work/issue4-spell-empty-pack-reproduce-r1.py`分別驗證原始定位保持與從317014c乾淨九JSON重建。
+
+存讀檔勘誤：r2仍因state_equal=false拒絕，證明多餘Enter不足以解釋r1失敗。重查規格路由與saveTo／loadSnapshotFile，F5按已審currentRespawnPoint更新Respawn，F6按FieldSaveLoad.LoadClock重設DNPhase／DNStep。正式測試改為逐byte驗證寫出的存檔及這兩項已存在的交易，角色、八格Store、金錢、旗標及RNG保持；不改production規則。`work/issue4-spell-empty-runs-prepare-r3.py`產生runtime r3乾淨重跑，保留前兩輪完整失敗收據。
+
+`work/issue4-spell-empty-source-audit-r1.py`驗證公開checker，正例另寫來源工作收據且逐欄與原接受收據比對，僅checker hash不同；三個/tmp副本分別破壞PNG CRC、移除一次IRQ、修改probe-source bytes，均必須拒絕，不改接受來源。
+
+source audit r1正例通過；負例誤修改PNG的IEND長度，parser以struct.error拒絕，超出測試預期的CRC assertion。`work/issue4-spell-empty-source-audit-prepare-r2.py`生成r2測試，僅翻轉IEND CRC的最後一byte，以同一公開checker核對指定的CRC負例；正例沿原收據，不重覆產生來源。
+
+收尾入口`work/issue4-spell-empty-final-audit-r1.py`核對完整game／internal與指定路線、六張完整RGB、已審存檔點及Load時鐘交易、前輪1976張PNG、510列原始IDA定位、17筆舊註記、九JSON、公開checker正負例及擁有權。最後測試排版記錄`work/issue4-spell-empty-gofmt-r1.json`只改test whitespace；production來源保持。
+
+`work/issue4-spell-empty-doc-finalize-r1.py`只依已接受最終收據更新CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74、README穩定摘要及WORKLOG；最終current-source vet保存`work/issue4-spell-empty-final-vet-r1.json`。遠端更新以`work/issue4-spell-empty-final-remote-before-r1.json`為完整正文與226則留言的核對基線，後續結果與具體commit登記Issue，保留全部既有歷史留言。
+
+Issue追蹤補充入口：`work/issue4-spell-empty-ready-comment-r1.md`為READY與勘誤留言；`work/issue4-spell-empty-issue-finalize-r1.py`生成具體commit結果`work/issue4-spell-empty-final-comment-r1.md`及精簡目前狀態`work/issue4-spell-empty-final-body-r1.md`。更新前後完整遠端現況保存`work/issue4-spell-empty-final-remote-mid-r1.json`／`work/issue4-spell-empty-final-remote-after-r1.json`；`work/issue4-spell-empty-final-handshake-r1.py`核對remote head、Issue正文／所有歷史留言、十三項使用者資料路徑及Docker清理，收據同名.json。全部遠端操作依已明確授權的主機gh例外；公開內容不包含原版圖像或binary。
+
+### 2026-10-06 正常單人空咒文 CONFORMED
+
+正式新遊戲正常輸入續行304，299..304六張完整640×350 RGB0，301差52013降0。原版與remake的301已目視核對，命令窗、選中游標、人物名及本文一致。新鍵消費、持久snapshot／八格／MP／旗標／RNG保持，F5依已審存檔點寫入、F6依pack契約clock0讀回及下一步通過。schema0.29.0／content0.1.101，canonical `sha256:0e9d617d81a32cd6569003110301a54354cae910d000b56c6a3cf26371023934`，save2／storage1保持。
+
+完整game509頂層覆蓋、458不同頂層／141子PASS、51原有選用診斷SKIP，513次執行／603 PASS記錄；internal206頂層／489子、12套件PASS、4原有選用診斷SKIP。五項指定路線零SKIP，正式THE END65.99秒、vet與Linux desktop PASS，OOM0。本輪完整game輸出2131張PNG，前輪1976張全部保持；原生IDA9.4同510列raw定位／bytes／原名／xref保持，17筆舊索引保持，僅追加18869及1C9E7限定confirmed，不rename、patch或反推其他EXE。九JSON由乾淨317014c重建逐byte相同，公開checker正例欄位保持且CRC／IRQ／probe三負例拒絕。完整game binary SHA `6cfb960cc27a1369322b4e29dc64028d4655743d00d66b51ac5633b6c3d8b564`；Linux desktop 14683536bytes，SHA `31a7cebe795a4757c2de0fabaf3f219357636fd483250e5159b0143bc9cc1491`。
+
+原版2172byte來源、圖像、音訊、私人工作副本與IDA database不入Git。本批文件、Go、pack與工作產物UID/GID1000，root-owned3213及零.md目錄基線保持。沒有新image或交付包；有界Xvfb及一次性容器終了後清除，其他專案資源保持。
+
+下一切片從正常304開裝備入口並核對第一頁及取消返回。多人、已學咒文與前置旗標的原版分支、動畫時鐘、音畫及完整原版campaign保持未知；Issue／Goal進行中。唯一現況表在CONTEXT，歷史工作不單獨重開。
+
+| 私人收據 | SHA-256 |
+| --- | --- |
+| `work/issue4-spell-empty-full-r1/game-receipt.json` | `7cc2987375916c9d14a503312deb43329a2e1435e1c4ecd703e6bc0eba781823` |
+| `work/issue4-spell-empty-full-r1/item-spell-empty/spell-empty-receipt.json` | `240714081160106665517a2d1dc83c0abaeae0dfdef83564bf9c1cf0c286b5b0` |
+| `work/issue4-spell-empty-internal-r1.json` | `de7fc58d59805f76d065264520735cc90be6b8cc4c86c61073e5914c15ff6499` |
+| `work/issue4-spell-empty-vet-r2.json` | `1df15010fb677cd1358962cfb2e7384c8eaeba6b97f30ba8ca9ead1f78fb96aa` |
+| `work/issue4-spell-empty-pack-reproduce-r1.json` | `8ffe1a3ad71a877ee77020b67c371047cdb036367abdd57b1a8a7b2dee7dd03e` |
+| `work/issue4-spell-empty-source-audit-r2.json` | `47aba9b79d645ea87449d7ab4efc0ec3b809183ec763c3d38f53ff7aac8c1baf` |
+| `work/issue4-spell-empty-r3-ida.json` | `082a3586d626b7b4a87be5e7130d26447fcb1e6b859ec6fa4ff6e87b0b4a2acd` |
+| `work/issue4-spell-empty-final-audit-r1.json` | `992959eada7501ec0f29ebb530b3949b3f08fba716bb1fc111a0d1d9b24703b4` |

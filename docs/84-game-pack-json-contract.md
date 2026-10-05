@@ -1,5 +1,22 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 單人空咒文入口（schema0.29.0／content0.1.101）
+
+`interface.field_spell_entry`必填。限定READY與正常304來源見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:0e9d617d81a32cd6569003110301a54354cae910d000b56c6a3cf26371023934`；save_version2與storage_version1保持，舊schema及不同pack hash存檔依既有規則拒絕。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `empty_text_id` | D3 legacy_record引用，保留TXT00/262的原始字模與人物名稱控制碼。Go不含文字或record fallback。 |
+| `presentation` | 共用FieldItemPrompt的原生窗口、TXT404外框、字距、控制碼長度、色彩、陰影及字模hold。幾何由原始DGROUP3E6E導出。 |
+| `text_flow`、`wait_indicator` | 共用retained_rows及原生等待契約；終末fresh-key等待不顯示inline指示。 |
+| `actor_variable_code` | 必填且非null，文字須恰含一次該名稱插值控制碼；其他未綁控制碼拒絕。人物名稱取當前主角，顯示前核對展開容量。 |
+| `scope`、`return_mode` | `single_member_no_spells`與`fresh_key_to_field`。本批僅接健康、正常狀態、單人未學咒文分支，按鍵不重複派發場景動作。 |
+| `evidence` | D3，包含EXE／TXT identity、正常304來源與單人writer、空數量consumer、訊息及返回鏈。 |
+
+訊息保存當時的命令窗背景，暫態底圖與等待狀態不入存檔，Load清除。其他施法分支未由此樣本驗收。
+入口為[typed契約](../dq3_remake_ebitan/internal/gamepack/field_spell_entry.go)、[原始資料與拒絕測試](../dq3_remake_ebitan/internal/gamepack/field_spell_entry_test.go)、[正式入口](../dq3_remake_ebitan/game/field_spell_entry.go)、[正常玩家對拍](../dq3_remake_ebitan/game/field_spell_entry_test.go)及[遷移器](../tools/migrate_field_spell_entry_pack.py)。
+在既有`dq3-ebiten-test:20260822-r1`一次性Docker內以UID1000執行`python3 tools/migrate_field_spell_entry_pack.py <乾淨0.28.0資料包> <唯讀原始素材目錄>`，由317014c重建九份JSON。下方保留歷史契約，現況以本節與CONTEXT狀態表為準。
+
 ## 單人重新排序（schema0.28.0／content0.1.100）
 
 `interface.field_status_menu.reorder`必填。原版正常298及有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:757ef211c1d8179019c53c97f2b02bcdc3d7c823353491f608494d852acd02d1`；save_version2、storage_version1保持。舊pack hash存檔依既有規則拒絕。
