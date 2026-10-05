@@ -3,7 +3,7 @@
 > 2026-10-06 健康單人未學咒文入口已依原版修正：直接顯示TXT00/262人物名稱與訊息，保留命令窗，等新按鍵後返回場景。299..304六張完整640×350 RGB0，八格、MP、旗標及RNG保持；正式F5／F6依已審存檔點與Load時鐘交易，讀檔後下一步通過。
 > dosgolem正常304來源c0967028，342鍵／684IRQ／720產物；父298前綴702產物保持，seed1357一次、無注入／restore／重擲。schema0.29.0／content0.1.101，canonical0e9d617d，save_version2／storage_version1保持。
 > 完整game509頂層覆蓋、458不同頂層／141子PASS、51原有選用診斷SKIP，513次執行／603 PASS記錄；internal206頂層／489子、12套件PASS、4原有選用診斷SKIP。五項指定路線零SKIP，正式THE END65.99秒、vet與Linux desktop PASS，OOM0。前輪1976張PNG、510列IDA原始定位與17筆舊annotation保持，追加18869及1C9E7有限confirmed；九JSON由317014c乾淨重建一致，公開來源checker正例與三負例通過。
-> 下一切片從正常304重開命令，核對單人「裝備」入口、第一頁及取消返回。先dosgolem原版來源→READY→實作，不重開已閉合切片；其他施法、多人、動畫時鐘與完整原版campaign仍未知。Issue／Goal進行中，唯一目前狀態表在CONTEXT。
+> 下一切片為正常單人裝備，仍DRAFT：314原版來源234fc67e、352鍵／704IRQ／750產物接受，父304的720產物保持。單人直接進武器窗，四次Esc依次跳槽後返回，持久資料除313左移保持；remake308仍錯開選人窗，完整差39570。正式Go與pack保持cc33808。先閉合列表篩選、版面與穿戴交易再審READY；其他施法、多人、動畫時鐘與完整原版campaign仍未知。唯一目前狀態表CONTEXT，證據docs/188，Issue／Goal進行中。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

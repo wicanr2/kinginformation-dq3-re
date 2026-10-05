@@ -1855,3 +1855,13 @@ DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-on
 完整game509頂層覆蓋、458不同頂層／141子PASS、51原有選用診斷SKIP，513次執行／603 PASS記錄；internal206頂層／489子、12套件PASS、4原有選用診斷SKIP。五項指定路線零SKIP，正式THE END65.99秒、vet與Linux desktop PASS，OOM0。前輪1976張PNG保持；510列IDA原始定位及17筆舊註記保持，兩筆有限confirmed追加且自動匯出。九JSON乾淨317014c重建一致，公開checker正例與三負例通過。存讀檔測試最初未計既有存檔點／Load時鐘交易，vet沿用輸出名稱及PNG負例改到長度均屬驗證工具問題，保留失敗後按實際契約乾淨重跑，沒有修改產品規則或原版。
 
 本批UID/GID1000，root-owned3213及零.md目錄保持；原版、圖像、database與binary留本機，不新增image或交付包。來源／READY／CONFORMED與工具入口docs/188，JSON契約docs/84，唯一現況表CONTEXT。下一正常切片為304後單人裝備入口與取消；其他施法、多人、動畫與完整原版campaign仍未知，Issue／Goal進行中。
+
+
+## 2026-10-06 正常裝備入口原版314與首次RED
+
+- Issue #4由正常304接續，固定seed1357一次冷啟動到314；352按鍵／704IRQ／750產物與父720前綴核對。四次Esc逐槽跳過，312返回、313／314行走；完整2172bytes只改左移座標。来源234fc67e，沒有注入、restore、檔案writer或未實作服務。
+- 可丟棄正常InputState診斷305..307完整RGB0，308差39570，remake仍顯示選人窗；snapshot／RNG與前空咒文六張保持。診斷35.78秒PASS、零SKIP／OOM，不能稱裝備parity。
+- 官方IDA9.4 sidecar697b06e3保留335函式指令／468唯讀decode及原始null函式身分。callback未自動成函式、MZ relocation比較、builder空scratch與INPUT缺kind、checker1GiB137、audit副本scratch均保留勘誤；同原版來源與公開checker正例／三負例後續通過，OOM0。
+- 新增三個公開重生工具，更新CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74與docs/188；正式Go、schema0.29.0/content0.1.101、save2/storage1保持，沒有新image或交付包。
+- final audit efd326f4：來源、首個RED、公開正負例、IDA、所有者及root-owned3213／零.md目錄核對。十三項使用者檔案保留；本輪一次性Docker與Xvfb已終了，提交與推送的具體SHA由Issue結果留言記錄。
+- 下一閘門仍DRAFT：列表篩選／physical slot、窗口dynamic consumer、攻擊／防禦及穿戴writer先閉合，再審READY並修正正式裝備流程；Issue／Goal保持進行中。

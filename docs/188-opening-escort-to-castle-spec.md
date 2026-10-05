@@ -5398,3 +5398,47 @@ Issue追蹤補充入口：`work/issue4-spell-empty-ready-comment-r1.md`為READY�
 | `work/issue4-spell-empty-source-audit-r2.json` | `47aba9b79d645ea87449d7ab4efc0ec3b809183ec763c3d38f53ff7aac8c1baf` |
 | `work/issue4-spell-empty-r3-ida.json` | `082a3586d626b7b4a87be5e7130d26447fcb1e6b859ec6fa4ff6e87b0b4a2acd` |
 | `work/issue4-spell-empty-final-audit-r1.json` | `992959eada7501ec0f29ebb530b3949b3f08fba716bb1fc111a0d1d9b24703b4` |
+
+### 2026-10-06 正常裝備入口 DRAFT
+
+接續cc33808與正常304來源c0967028。Issue #4登記入口為[本輪開始留言](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5999076297)。先依正常Space、Down、Down、Space選原生第三列裝備，核對首頁、Esc及返回；單一八格與存檔格式保持，未知流程不直接進production。
+
+原始DQ3.EXE為115282bytes、SHA `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；dosgolem快照2f44a68與Go工具鏈沿前節，seed1357於執行前固定一次。IDA9.4 linear與file相差EC90，DGROUP base linear24DD0／file16140。間接callback原始表為DGROUP3D6C第三列raw7E12，即linear17E12／file9182。
+
+工具勘誤保留：`work/issue4-equip-entry-probe-r1.py`的builder檢查已建立空scratch，但未執行原版，正式啟動被禁止覆寫守衛拒絕。r2採新前綴；不是以重擲挑選結果。第一次自動核准將未掛載進檢查容器的/tmp路徑判成主機不存在，主機test及ls確認真實來源存在、為1000所有者後，同一有界命令通過。沒有由Docker建立替代目錄。
+
+`work/issue4-equip-entry-probe-r2.py`取得正常309觀測。308原版直接顯示武器列表「木棒、銅劍、什麼都沒有」，命令窗與底圖保留，下方有攻擊力7／防禦力0；沒有單人選人窗。309的Esc進下一裝備清單count4，沒有返回場景。305..309完整2172bytes與父304保持。探針只定義場景後續輸入，因此停在309後跑至原定指令上限，完成守衛拒絕；無完成返回收據，不列CONFORMED。`work/issue4-equip-entry-diagnostic-r1.py`獨立核對父720產物、正常按鍵及新增畫面，輸出`work/dosgolem-opening/issue4-equip-entry-normal-r2-diagnostic-r1-receipt.json`，明示return_verified=false。
+
+IDA工具勘誤：`work/issue4-equip-entry-ida-export-r1.py`／`work/issue4-equip-entry-ida-run-r1.py`拒絕get_func(17E12)，因間接callback沒有自動函式，不代表位址錯誤。r2由`work/issue4-equip-entry-ida-prepare-r2.py`生成唯讀decode候選，但其直接bytes比較未處理MZ relocation，17FAB被拒絕。r3沿既有row的relocation契約逐指令核對，不create_insn、add_func、rename或patch。成功sidecar `work/issue4-equip-entry-r3-ida.json` SHA `697b06e3ef19dc4c00e298d4e56e0089ea7dcc1790f1bd7b9e95fa4bd271b158`，工具9.4、335既有函式指令及17E12..18301唯讀decode候選，所有原始定位與null函式身分保留。
+
+靜態強推論：17E26寫DGROUP0722=1為單人自選；17E52／17E57／17E5F／17E64依AL1、2、3、4依序呼叫17ED9。17FF2檢查取消旗標DGROUP0726，取消分支跳180DD返回當前槽；外層繼續下一槽，因此不能將第一次Esc實作為直接回場景。靜態指令與正常308／309支持首頁及第一次跳槽；完整四槽、清單篩選、穿戴writer及返回恢復仍待動態閉合。
+
+`work/issue4-equip-entry-probe-r3.py`以新前綴從新遊戲重播父304，再四次Esc跳過四槽及左右行走，限定314停止；只追加正式輸入與唯讀觀測，不修改seed、時鐘、狀態或原始資料。此來源尚未經獨立checker接受，不預先宣稱取消無交易或返回成功。
+
+remake的RED量測入口為`work/issue4-equip-entry-draft-prepare-r1.py`、`work/issue4-equip-entry-draft-helper-r1.go`、`work/issue4-equip-entry-draft-test-r1.go`及`work/issue4-equip-entry-draft-run-r1.py`，輸出`work/issue4-equip-entry-draft-red-r1/`。沿正式InputState由新遊戲至304，保留已接受空咒文六張完整RGB檢查，再比較305..308；只在/tmp副本執行。測試PASS只證明診斷可重播，首頁差異及return_verified=false不得被誤讀為remake通過。
+
+所有工作仍在既有work研究區，原始EXE／DAT、dosgolem快照與repo輸入唯讀，輸出1000:1000。DRAFT未授權改production、pack或發行聲明；來源收據、bytes、影像與私人binary不加入Git。唯一目前狀態表CONTEXT、現行計畫docs/74、進度以Issue #4為準。
+
+### 2026-10-06 正常裝備314原版來源已接受，remake仍RED
+
+原版來源`work/dosgolem-opening/issue4-equip-entry-normal-r3-source-r1-receipt.json` SHA `234fc67e75ac7a4ca87fb07c5221e4c6726c44cb40f1f72e2db3be6f868bbeb7`。352按鍵、704 IRQ、750產物，父304的720產物逐byte保持；seed1357一次，無restore、狀態注入、未實作DOS服務或後段檔案writer。308..311清單count依次3、4、1、1；四次新Esc逐槽返回，312回原生field1997C，313左移、314右移。305..314完整2172bytes只在313的X低byte10由3改2，其餘人物、八格、HP／MP、金錢與旗標保持。這些是限定原版正常玩家路徑結果，不能升格remake或所有裝備狀態parity。
+
+checker由`work/issue4-equip-entry-check-prepare-r1.py`生成。r1誤要求INPUT log的kind欄位，實際該紀錄只有scan，故KeyError；r2核對queued／state的kind與三側scan。首次r2沿用1GiB限制，完整103MB日誌與分組造成137，來源未改、無收據。依既有3GiB驗證契約乾淨重跑同一r2，`work/issue4-equip-entry-source-check-run-r3.json`保存PASS與OOM0，沒有重生或重擲原版。
+
+正常remake診斷`work/issue4-equip-entry-draft-red-r1/equip-entry-draft-receipt.json` SHA `d4cc2f724b48479272bf049ba629d0d40375aa18cd77cc9433a125c77728dc9d`：305／306／307完整640×350 RGB0；308完整差39570，remake的panel_actor=-1，仍顯示選人窗。snapshot／RNG保持，原空咒文299..304六張仍RGB0。隔離測試執行收據`work/issue4-equip-entry-draft-red-r1/receipt.json` SHA `7cbe9a7e9a5250d88aea1852a5d0d0c3eb82be5cb08e587841924705acb939fd`，一項診斷PASS、零SKIP／OOM，35.78秒。此PASS只代表差異能重播；首頁仍RED，裝備正式行為未修正。
+
+公開重生入口：
+
+- `tools/dosgolem_field_equipment_probe.py`與接受的r3 producer逐byte相同，SHA `e5c41766697535e96a2ecbfa026df62562adf29c6bd8a062167727394ebe05d3`。在`dq3-ebiten-test:20260822-r1`以唯讀repo、`/tmp/dq3-dosgolem-2f44a68`掛`/dosgolem`、只有既有work掛`/work`可寫，UID/GID1000、3GiB／2CPU／128PID、外層900秒執行。Go caches在work，GOTOOLCHAIN=local、GOPROXY=off、GOSUMDB=off；拒絕覆寫`issue4-equip-entry-normal-r3`既有前綴。
+- `tools/verify_dosgolem_field_equipment.py`在同一image、repo唯讀、work可寫、3GiB／1CPU／64PID、120秒執行，核對輸入、原始程式、seed、全部750產物、父來源、完整2172bytes、原生返回及fileops。已有完成收據時拒絕覆寫。
+- `tools/ida_field_equipment_export.py`與成功r3 exporter逐byte相同。使用`work/issue4-equip-entry-ida-run-r3.py`的同一官方9.4／1000:1000一次性database契約，以`idat -A -S`传入明確輸出JSON，原始EXE唯讀、輸出work、2GiB／2CPU／128PID、300秒上限。468個候選decode保留unknown及null原名／函式，335個既有函式指令使用原版xref；不擅自建立函式或patch。
+
+`work/issue4-equip-entry-publish-r1.py`只新增上述工具及更新目前狀態入口，不改Go／pack。`work/issue4-equip-entry-public-audit-r1.py`在/tmp副本核對公開checker正例與接受收據逐欄一致，只允許checker自身hash不同；壞PNG CRC、缺一次IRQ與改probe三負例均須拒絕，輸出同名.json。所有工具及私人收據均由本節提供索引。
+
+下一閘門仍DRAFT：先閉合17ED9清單篩選／physical slot對應、40DC等原生窗口的dynamic consumer、攻擊／防禦顯示及實際穿戴writer，再審READY及修正正式單人入口。不得只移除選人窗、照圖猜版面或把第一次Esc改成回場景。現行Go、pack與最近完整回歸仍cc33808，沒有新發行包；Issue／Goal保持進行中。
+
+公開audit的r1副本未建立空scratch，正例因此FileNotFoundError；保留失敗，以`work/issue4-equip-entry-public-audit-r2.py`修正/tmp子目錄布局。公開checker及原版來源保持，r2正例逐欄一致、三負例拒絕、OOM0。原版308與remake308已目視核對，前者原生武器／能力窗，後者大型選人窗；不只依測試摘要判讀。
+
+`work/issue4-equip-entry-final-audit-r1.py`及同名.json核對750產物來源、首次39570 RED、公開正負例、IDA335函式指令與468候選decode、原始EXE、工具所有者與root-owned3213／零.md目錄基線；收據SHA `efd326f4ddc7ca5759721041a907969db68a7666e389bd3cb6506ea845e62757`。正式Go與九JSON未修改，本輪只提交三個重生／驗證／IDA工具及五個既有進度文件；目前HEAD的工具證據與現行產品checkpoint分開記錄。
+
+遠端核對入口為`work/issue4-equip-entry-remote-before-r1.json`、`work/issue4-equip-entry-issue-finalize-r1.py`、同名前綴result-comment-r1.md／body-r1.md、`work/issue4-equip-entry-remote-after-r1.json`及`work/issue4-equip-entry-handshake-r1.json`。更新前後保留全部既有留言與歷史正文，公開Issue不含原版影像或素材。收尾容器與遠端head核對後，下一輪仍接上述DRAFT閘門。
