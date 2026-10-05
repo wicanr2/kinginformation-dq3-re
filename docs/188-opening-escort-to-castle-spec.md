@@ -5558,3 +5558,45 @@ READY限定原本已審健康單人、無詛咒且符合資格範圍內，選第
 | work/issue4-equip-armor-ownership-r1.json | f0ba94e4c315c4718fa657ba5276f3c7de7d4bb6b862c713426fe0f7fc7c3062 |
 
 最終稽核入口為work/issue4-equip-armor-final-audit-r1.py及同名.json，逐項核對來源、完整畫布、舊PNG、producer身份、原始檔、正式程式／JSON與所有者；文件更新入口為work/issue4-equip-armor-doc-finalize-r1.py。原版素材、影像、database與binary不入Git，沒有新image或發行包。唯一現況表CONTEXT，Issue #4與Goal進行中；下一切片為正常366後把已穿戴physical5甲胄換到另一物理格，確認舊格清穿戴旗標、新格設旗標與狀況及返回；先dosgolem來源，再審有限READY。
+
+### 2026-10-06 正常366後同部位甲胄換穿DRAFT
+
+接續dab9374與正常366來源377d6d30，使用work/issue4-equip-armor-replace-probe-r1.py，前綴issue4-equip-armor-replace-normal-r1。正常367..381開裝備、Esc跳武器、確認第一件甲胄physical4、跳空槽、查看詳細狀況、新Enter返回及左右行走。預定核對原本physical5的穿戴旗標是否清除，以及選中physical4的交易與能力；未知結果不預先寫production。
+
+固定1357一次冷啟動，父908產物與完整事件需保持；419鍵／838IRQ、完整2172bytes、八格、原生writer／consumer、原生存檔與全畫布需由獨立checker核對。沿已審900秒／3GiB／2CPU／128PID、1000:1000、--init、唯讀原版／repo／dosgolem2f44a68，只有work可寫的容器契約。無注入、restore、重擲或改相位；來源接受後才審有限READY。
+
+正常381來源已由work/issue4-equip-armor-replace-check-r1.py接受，收據work/dosgolem-opening/issue4-equip-armor-replace-normal-r1-source-r1-receipt.json SHA d13ac42535c7f8b0bf4844ef8820f1f8d9e3b25b08095478fe4237ebdd43771f；Issue[來源結果](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-6001598413)、[開始留言](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-6001496375)。419鍵／838IRQ／953產物，父908份與完整事件保持，固定1357一次，無注入／restore。372的persistent byte409由00→80、411由80→00，其餘持久區保持；380僅X低byte改2。374回算仍攻8／守8，378詳細consumer、379新Enter返回、380／381左右行走閉合。原先dragon1.dat／PLAYER逐byte保持，換裝沒有新增存檔writer。
+
+沿既有IDA9.4 sidecar0cafc3d4、原始EXE 115282bytes／5178fdc8、linear-file=EC90、DGROUP base24DD0／16140，372觀測1807B→18098→180AE→180AE，374為18197→1821D，378為18313／18338／1834E；保留原始定位及bytes，不新增rename或database。觀測clock001F的unknown沿前節，世界時鐘只用251D，367..381均0。
+
+可丟棄remake入口為work/issue4-equip-armor-replace-draft-helper-r1.go、draft-test-r1.go及draft-run-r1.py，由正常冷啟動366前綴延伸到381，驗收來源checksum、完整words／snapshot／RNG、所有既有JSON槽保持及完整畫布。381後另外走remake正常F5／F6與下一步，此段沒有相同原版換穿後保存樣本，不外推其原版parity。
+
+可公開來源重生入口：[dosgolem_field_equipment_armor_replace_probe.py](../tools/dosgolem_field_equipment_armor_replace_probe.py)為接受producer原樣副本；[verify_dosgolem_field_equipment_armor_replace.py](../tools/verify_dosgolem_field_equipment_armor_replace.py)沿同image的120秒／3GiB／1CPU／64PID、唯讀repo及work可寫、UID/GID1000與--init契約核對953產物，已有收據時拒絕覆寫。producer沿本節900秒／3GiB／2CPU／128PID的dosgolem2f44a68唯讀契約，正式Go／JSON尚未改。
+
+### 2026-10-06 正常381同部位換穿有限READY
+
+原版兩格交易、四槽取消、詳細consumer、fresh Enter返回及左右下一步已達最小充分證據。READY沿健康單人、未詛咒、符合資格及已有兩份code31的範圍：physical5→4換穿只清／設同部位旗標，八格位置、其他word、角色、旗標、金錢與原有存檔保持，攻8／守8不變。其他條件或裝備副作用仍unknown；不新增規則／資料格式，正式Go／pack保持485f3c2。
+
+可丟棄正常比較99.09秒通過，15步words／snapshot／RNG、所有原JSON槽保持、詳細等待與返回一致。367..378共12張完整640×350 RGB0，379／380／381為351／229／122，全部保留，不遮罩、裁切或調相位；完整381畫布V3及動畫時鐘unknown。381後remake正常F5／F6及下一步通過，此段沒有原版換穿後保存樣本，僅列remake存檔驗證。
+
+驗收新增正式正常InputState路線，以helper回呼共用366前綴，避免複製整段27步測試。舊366測試傳nil保留原路線及原報告；新回呼停在366正常狀態後延伸381。兩條路線各用獨立程序與輸出目錄，檢查完整來源、原檔parity及全部既有PNG保持。
+
+### 2026-10-06 正常381同部位甲胄換穿有限CONFORMED
+
+正式正常測試為[field_equipment_armor_replace_test.go](../dq3_remake_ebitan/game/field_equipment_armor_replace_test.go)，366共用前綴回呼在[field_equipment_armor_test.go](../dq3_remake_ebitan/game/field_equipment_armor_test.go)。原366測試傳nil，保留原樣路線與報告；新回呼從366延伸381。work/issue4-equip-armor-replace-runtime-run-r1.py使用三項獨立程序，全部PASS、零SKIP／OOM；原366報告與兩條路線各217張PNG逐byte保持，新15張與診斷相同。正式Go／pack仍485f3c2，schema0.30.0/content0.1.102、A八格與save2/storage1保持。
+
+15步八格與原版actor+3A逐word相同，snapshot除了明示的兩格旗標與座標交易保持，RNG不消耗；374攻8守8、378詳細consumer、新Enter返回及下一步一致。換穿期間所有既有JSON槽與原生PLAYER／dragon1保持。381後remake正式F5／F6與讀後下一步通過，原版本輪沒有換穿後保存樣本，不將這段稱原版same-state。
+
+367..378共12張完整640×350 RGB0；379／380／381為351／229／122，全部保留。E2狀態／E3玩家流程及指定12張完整V3，完整381畫布V3與動畫時鐘仍unknown；沒有遮罩、裁切或調相位。其他條件、詛咒、特殊裝備及多人未外推。
+
+公開checker正例與接受收據逐欄一致，僅checker自身hash不同；CRC／IRQ／probe三負例拒絕。Go vet與Python語法通過，原始EXE、producer原樣副本、138個正式Go／JSON、UID/GID1000、root-owned3213及零.md目錄保持。最近完整game／internal／THE END／desktop沿485f3c2，本輪不冒稱全套重跑，沒有新image／包。
+
+| 收據 | SHA-256 |
+| --- | --- |
+| work/issue4-equip-armor-replace-runtime-r1/receipt.json | 9646b2106422551f8f9e5f08e041d5e74f7ac0c5fac88a56e92de6caca76ef01 |
+| work/issue4-equip-armor-replace-runtime-r1/TestFieldEquipmentArmorReplaceDosgolemNormalInputComparison/armor/armor-replace-receipt.json | f1f4a7ceb29fba84df3108ea2d12f59e13affe430f481a04aabf2726a65a5642 |
+| work/issue4-equip-armor-replace-source-audit-r1.json | 603d1866ad2f1a8df7b039e823f119a5ba3f8c0947bc1d86f2035a6c5f42b5f4 |
+| work/issue4-equip-armor-replace-vet-r1.json | 267b07c78b1b4924bee70bb26a3753a9e3d936a77150e820da869864304bae07 |
+| work/issue4-equip-armor-replace-ownership-r1.json | 9c7e7f43723bb0ab4629a7b84e498e05109410724578e442fede6ae25209a9fd |
+
+最終稽核入口work/issue4-equip-armor-replace-final-audit-r1.py及同名.json；逐項核對來源、完整畫布、PNG保持、原報告、正式程式／JSON及所有者。原版素材、影像、database與binary留本機，唯一現況表CONTEXT，下一來源：從正常381開道具清單，核對第四動作列的第一個結果與返回；先dosgolem來源，再依證據審READY，不預設效果。Issue／Goal進行中。

@@ -1883,3 +1883,11 @@ DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-on
 - 驗證準備型別／檔案形態與runpy搜尋路徑錯誤保留；正式整批r1共用目錄失敗、r2舊路線OOM，均不列產品缺陷。r3沿既有獨立程序契約，三項PASS／零SKIP／OOM。來源正例及三負例、vet與所有者檢查通過。最近完整game／internal／THE END／desktop沿前checkpoint，沒有冒稱全套重跑。
 - root-owned3213及零.md目錄保持，十三項使用者資料未提交；原始素材、影像、database與binary留本機，沒有新image／包。Docker清理及提交／推送SHA由Issue #4結果留言與handshake記錄。
 - 下一正常切片：正常366後把已穿戴physical5甲胄換到另一物理格，確認舊格清穿戴旗標、新格設旗標與狀況及返回；先dosgolem來源，再審有限READY。Issue／Goal保持進行中。
+
+### 2026-10-06 正常381同部位甲胄換穿
+
+- 原版419鍵／838IRQ／953產物與父908保持，來源d13ac425。372清physical5旗標、設physical4旗標，其餘持久區保持；374攻8守8、詳細consumer與返回閉合，無注入／restore或新存檔writer。
+- 新增來源工具與正常回歸，共用366前綴，不改正式產品Go／JSON。三項獨立程序PASS、零SKIP／OOM；vet與來源正例／三負例通過，各217張舊PNG、原366報告與新15張診斷保持。12張完整RGB0，3張仍差351／229／122，不稱全畫布V3。
+- 381後remake正常F5／F6及下一步通過，沒有原版換穿後存檔樣本；最近完整game／internal／THE END／desktop仍485f3c2，本輪未重跑全套。
+- UID/GID1000、root-owned3213與零.md目錄保持，原版資料／影像／database留本機，十三項使用者資料未提交；沒有新image或包。Docker／遠端收尾與提交SHA由Issue結果留言及handshake記錄。
+- 下一來源：從正常381開道具清單，核對第四動作列的第一個結果與返回；先dosgolem來源，再依證據審READY，不預設效果。Issue／Goal保持進行中。

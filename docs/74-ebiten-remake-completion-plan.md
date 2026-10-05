@@ -1,9 +1,9 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-06 正常366的第二件甲胄、詳細狀況與穿戴後第二槽F5／F6已有限驗收。完整物理格、snapshot／RNG、防禦力8、保存與讀回、其他九槽保持及下一步通過。本輪沒有新增產品修法，正式Go／pack保持485f3c2；新增正常回歸與公開來源工具。
-> 原版404鍵／808IRQ／908產物，父339的825份保持，來源377d6d30，seed1357一次，無注入／restore。完整27張畫布保留，357／358／362／363／366五張RGB0，其餘22張差106..356；完整V3與動畫時鐘未知。
-> 三項受影響正式測試以獨立程序通過，零SKIP／OOM，Go vet與來源正例／三負例通過。兩條回歸各保持190張舊PNG，新27張與診斷逐byte相同。最近完整game511／internal210／THE END107.10秒與desktop仍為485f3c2，本輪未重跑全套。schema0.30.0/content0.1.102，canonical14b0c168，A八格與save2/storage1保持，沒有新包。
-> 正常366後把已穿戴physical5甲胄換到另一物理格，確認舊格清穿戴旗標、新格設旗標與狀況及返回；先dosgolem來源，再審有限READY。Issue／Goal進行中。唯一現況表CONTEXT、證據docs/188、契約docs/84。
+> 2026-10-06 正常381的同部位甲胄physical5→4換穿已有限驗收，舊格清旗標、新格設旗標，完整八格／snapshot／RNG、攻8守8、詳細頁與新Enter返回及左右下一步一致。原生存檔與全部既有JSON槽在換穿期間保持；381後remake正常F5／F6及下一步通過，未外推原版換穿後保存parity。
+> 原版419鍵／838IRQ／953產物，父366的908份保持，source d13ac425，seed1357一次，無注入／restore。367..378共12張完整640×350 RGB0，379..381差351／229／122保持；完整V3及動畫時鐘unknown。
+> 三項受影響回歸以獨立程序PASS，零SKIP／OOM，vet及來源正例／三負例PASS。兩條路線各217張舊PNG保持，原366報告與新15張診斷逐byte保持。共用366測試前綴，正式產品Go／pack仍485f3c2，schema0.30.0/content0.1.102，A八格及save2/storage1保持；最近完整game511／internal210／THE END107.10秒／desktop沿485f3c2，本輪未重跑全套，沒有新包。
+> 從正常381開道具清單，核對第四動作列的第一個結果與返回；先dosgolem來源，再依證據審READY，不預設效果。Issue／Goal進行中；現況CONTEXT、計畫docs/74、證據docs/188。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

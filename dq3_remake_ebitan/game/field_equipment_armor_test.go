@@ -17,6 +17,11 @@ import (
 )
 
 func TestFieldEquipmentArmorDosgolemNormalInputComparison(t *testing.T) {
+	runFieldEquipmentNormalAt366(t, nil)
+}
+
+func runFieldEquipmentNormalAt366(t *testing.T, after func(*Game)) {
+	t.Helper()
 	if root := os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR"); root != "" {
 		dest := filepath.Join(root, "armor")
 		if err := os.Mkdir(dest, 0755); err != nil {
@@ -240,6 +245,11 @@ func TestFieldEquipmentArmorDosgolemNormalInputComparison(t *testing.T) {
 			b, _ := os.ReadFile(p)
 			samples = append(samples, map[string]any{"packet": n, "full_rgb_difference": diff, "png_sha256": fmt.Sprintf("%x", sha256.Sum256(b)), "physical_words": words, "clock": g.dayNightClock()})
 		}
+		if after != nil {
+			after(g)
+			return
+		}
+
 		for g.cd > 0 {
 			if e = g.step(idle); e != nil {
 				t.Fatal(e)
