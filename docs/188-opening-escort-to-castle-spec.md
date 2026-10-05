@@ -5205,3 +5205,61 @@ schema0.26.0／content0.1.98，canonical `sha256:ef053cb8a96a9965f12412228508c71
 | `work/issue4-detail-pack-reproduce-r1.json` | `29f52f75802507c119376a4382b540f6a7e7766f3a150158f196ae06105f597f` |
 | `work/issue4-detail-r3-ida.json` | `49d86914afe145a0bdaf36737dcacd082737f0b35d3707b30aab0497a9c24e38` |
 | `work/issue4-detail-final-audit-r1.json` | `2d3a1ad01b6a31a9c2b8e3ee650542b905a4ea61cb35c8f2125148f79dc4de7b` |
+
+### 2026-10-05 全體狀況正常續行 DRAFT
+
+接續已推送9a19513與正常280來源edfad334。當前正式程式選`party_summary`仍保留首選單，原版入口為DGROUP3EB4第二列callback85EF／IDA linear185EF。先以正常Space、Down、Space、Down、Space觀察全體頁，再核對新Enter返回與左右行走，不注入、restore或重擲；未達READY不改正式Go與pack。
+
+私有入口`work/issue4-summary-probe-r1.py`沿既有公開detail producer冷啟動至預定288，輸出前綴`issue4-field-summary-normal-r1`；追加只讀185EF／1F4E3／1F590／2111B及原始SI窗口觀察。`work/issue4-summary-prepare-ida-r1.py`準備`work/issue4-summary-ida-export-r1.py`／`work/issue4-summary-ida-run-r1.py`，以既有IDA9.4非破壞有界匯出185EF..18685及直接原生窗口／文字／數字consumer，保留13筆既有annotation。原始EXE與位址契約沿上一節；新語意保持unknown或strong，正常來源接受後再審查。
+
+容器契約沿上一節：producer用既有dq3-ebiten-test:20260822-r1、UID1000、network none、3GiB／2CPU／256PID與900秒外層逾時；唯讀工作樹`/repo`、dosgolem2f44a68 `/dosgolem`，僅`/work`可寫。IDA用ida-pro-9.4-idapython:locked-v1、UID1000、network none、2GiB／2CPU／128PID及320秒逾時，原始EXE唯讀，database只在一次性/tmp。來源與返回實際狀態尚未驗收，Issue／Goal進行中。
+
+追加環境訂正與來源審查：r1 在編譯前遇到唯讀 Go cache，尚未執行原版。`work/issue4-summary-probe-r2.py` 使用明確的 `/work/.gocache-test`、`/work/.gomodcache-selection` 與離線 Go 設定，完成同一 seed1357 的正常288。獨立稽核 r1 對既有只讀 detail observer 的後續命中作了過窄限制；r2 保留前五筆與父收據完全一致，並另核對新增觀察的 packet 大於280。768MiB 稽核容器被終止，2GiB 核對同一份收據成功，沒有重跑或重擲原版。
+
+- `work/issue4-summary-prepare-r3.py`、`work/issue4-summary-prepare-r4.py` 準備獨立稽核與窄範圍 IDA 查詢。`work/issue4-summary-check-r2.py` 產出的 `work/dosgolem-opening/issue4-field-summary-normal-r2-source-r1-receipt.json` SHA-256 為 `fac03247817ebd9ac9f6aa80c8bba97bc5d9d9ff0f59aba7385575a370a731e2`。父280的648項圖像與狀態保持，新增281..288共24項，合計672項；326鍵、652次IRQ、seed僅設定一次，沒有狀態注入或restore。
+- 281Space、282Down、283Space、284Down、285Space開啟全體狀況；286新Enter返回field1997C，287Left到2,18，288Right回3,18。持久狀態僅287的X byte改變，其餘與280相同。原版沒有新增檔案寫入，未實作服務0。
+- `work/issue4-summary-ida-export-r2.py`／`work/issue4-summary-ida-run-r2.py` 匯出原生金錢、姓名、數字與視窗 consumer。`work/issue4-summary-r2-ida.json` SHA-256 `cfd1910cc115f9dbfaf6eff02a05321828361a909415c53e0726bf1d8c01bb21`。新頁原生入口185EF，金錢窗DGROUP3E84／file19FC4，主窗DGROUP3EFC／file1A03C。原始主窗width44，在正常285觀察為14、repeat count1。
+- `work/issue4-summary-ida-export-r3.py`／`work/issue4-summary-ida-run-r3.py` 的直接xref沒有主窗width writer，不能據此宣稱沒有寫入。`work/issue4-summary-ida-export-r4.py`／`work/issue4-summary-ida-run-r4.py` 在IDA database查窄操作元候選及函式／caller，找到17C83入口內17CCD讀DGROUP5077、17CDF..17CE3算`4+10*count`、17CE9寫DGROUP3F02。來源285的count1與width14吻合。此處仍保留原始位址／bytes與unknown匯出，待prototype結果審查後附加語意。
+- `work/issue4-summary-draft-prepare-r1.py`、`work/issue4-summary-draft-test-r1.go`、`work/issue4-summary-detail-helper-r1.go`、`work/issue4-summary-draft-draw-r1.go`、`work/issue4-summary-draft-run-r1.py` 僅在一次性工作副本做正常280後的RED與prototype。輸出入口為 `work/issue4-summary-draft-red-r1/` 與 `work/issue4-summary-draft-prototype-r1/`。沿producer容器契約；Xvfb由有界runner持有並在finally終止。尚未修改正式Go／pack，不把prototype當正式完成。
+
+### 2026-10-05 全體狀況 READY
+
+重新核對路由的RE→READY入口後，以下證據足以實作正常280後的全體狀況垂直切片。原始EXE115282 bytes／SHA5178fdc8、TXT00 SHA38d7f9b8、dosgolem2f44a68與IDA9.4的位址基準沿本節來源。`work/issue4-summary-r5-ida.json` SHA-256 `536bcd779ca09e9e47be5e9b18aa294586aaa21df75fd4dc1987ca48aff0916d` 保留605列原始定位及13筆既有annotation。
+
+| 契約 | 證據與等級 |
+| --- | --- |
+| 正式選單第二列開全體頁，新按鍵關閉全部視窗 | confirmed：正常281..288；IDA185EF入口、1867F `9adb000411`到2111B，主窗與金錢窗依序restore後返回場景。按鍵由頁面消耗，不滲透成行走或F5。 |
+| 金錢窗 | confirmed：DGROUP3E84／file19FC4，高位flags9，X54個VGA byte、Y14、寬24byte、高48，TXT406。18847從窗原點加4byte／16pixel，21822輸出8位右靠齊金錢。 |
+| 金錢窗不畫陰影 | confirmed：1FC57..1FC5E raw `8a4401a8087401c3`，高位flags bit3時直接返回。prototype r3剩餘342差異皆在金錢窗陰影；r4使用此consumer後全圖差異0。 |
+| 主窗與文字 | confirmed於正常單人：DGROUP3EFC／file1A03C，X19byte、Y62、高144、高位flags3。17CE9寫`4+10*party_count` byte寬；185FE寫repeat count，1F4E3以sentinel FE橫向重複TXT409，先TXT408再TXT410。單人寬14byte，欄距80pixel。 |
+| 姓名及四個數值 | confirmed於正常單人：18610..1867D loop從原始party pointer讀name+3、currentHP+16、maxHP+2A、currentMP+18、maxMP+2C；姓名原點168,78，215EE上限4字；5位數原點X152，Y94／126／142／174，21929右靠齊。多人同一loop與欄距有strong靜態證據，尚無正常多人V3。 |
+| 持久狀態與存檔 | 原版來源僅287的X移動，其餘不變。prototype r4正常新遊戲一路至288，不注入或restore；外層正式F5/F6與下一步通過。schema0.27.0/content0.1.99新增typed summary，save_version2/storage_version1不改。舊pack hash存檔依既有規則拒絕。 |
+
+`work/issue4-summary-draft-run-r2.py`／`r3.py`與`work/issue4-summary-draft-draw-r2.go`保留訂正歷程。r1引用不存在的金錢欄位而未編譯；r2發現FON-only來源不能直接取TXT record及錯誤的prototype stats索引；由原始TXT與目前stats型別訂正。r3的342像素剩餘差異促成上述陰影consumer切片。r4完整正常281..285、287..288 RGB0，286 RGB122保留為動畫中間畫面未對齊，不遮罩或強設動畫。這些都是DRAFT結果，正式實作仍需獨立驗收。
+
+正式資料鏈：EXE／TXT → `tools/migrate_field_party_summary_pack.py` → typed `FieldPartySummary`、schema／reference驗證 →正式`InputState`第二列→具名只讀頁→完整runtime PNG→ F5/F6及下一步。引擎只實作橫向文字欄、索引色視窗與數值primitive，所有raw window、文字、欄距、容量與數值原點由pack提供；缺欄位／未知引用拒絕載入，無Go fallback。驗收包含原始EXE／TXT parity、負面契約、fresh-key不消耗狀態／亂數、正常288整圖比較及受影響共用renderer回歸。多人、異常狀態、排序與未受控動畫保持證據限制，不宣稱整款完成。私人原版圖片與資料不加入Git。
+
+### 2026-10-05 正常單人全體狀況 CONFORMED
+
+正式第二列接入`panelPartySummary`，資料由typed `FieldPartySummary`提供。版面副本按人數展開，原始TXT406／408／409／410逐glyph與Go decoder相同。金錢窗略過陰影的共用primitive沿1FC57；數值取目前角色與持久max值，不產生第二份可寫資料。缺欄位、錯引用、零欄距、未審查證據及姓名／數值最後欄越界均拒絕。schema0.27.0/content0.1.99，canonical `sha256:7891ab6a09dc44b03f935bc7c19ad77a56be012e980782b360cf93eb56b61b61`，save_version2/storage_version1保持。
+
+正式正常新遊戲一路至288，沒有debug shortcut、狀態注入或restore。281..285、287..288完整640×350 RGB0；286返回中間畫面差122保持，沒有強設動畫、遮罩或裁切。新Enter只關閉頁面，沒有穿透成移動／F5；snapshot、完整八格與RNG保持，外層正式F5/F6及Load後下一步通過。原版285及最終runtime285已目視核對。原版圖片`work/dosgolem-opening/issue4-field-summary-normal-r2-packet-285-waiting.png`與正式圖片`work/issue4-summary-full-r1/item-summary/summary-packet-285.png`留本機，正式PNG SHA `76cf8232a21bfa49213104655ed0333a05ecd27b01fea4650c82b8dde3c7c6cb`。
+
+完整game505頂層清單全部覆蓋，454不同頂層／141子PASS、51原有選用診斷SKIP，509次執行／599 PASS記錄。七項本批指定正常／受影響路線零SKIP。正常`TestOpeningProductionInputTrace`至THE END為92.23秒；首輪彙總以字面THE END搜尋log沒有命中，r2改核對既有正式測試名及PASS，不重跑或放寬驗收。internal202頂層／462子、12套件PASS、4原有選用診斷SKIP，最終Go vet與Linux desktop PASS。所有本輪正式驗收收據OOM0。同一完整game binary SHA `f4e518b7158ad5cf8789d2218f74f4fe56299bbfb1963da09118f87b1d0f1446`；desktop14641920bytes、SHA `b71d8858f4797e77b5cd47c094d181db3692ba228d9cc53cc99ebf80ac016d3c`。
+
+上一完整game的1688張PNG逐byte保持。九JSON由9a19513乾淨輸入重建相同。公用checker正對照除了checker自身身分外全部資料與接受來源相同，壞PNG、缺IRQ、壞probe source正確拒絕；最終公開標題訂正後再驗正對照。IDA r6自動合併16筆索引，605列原始名稱、位址、bytes、relocation及13筆舊annotation保持；新增17CE9、1FC5A、1867F語意僅限定本節confirmed。沒有新增硬體driver／ISR研究或發行包。
+
+私人可重現入口：`work/issue4-summary-runtime-run-r1.py`初驗正常頁與desktop；`work/issue4-summary-full-run-r1.py`完整game及最終desktop，輸出`work/issue4-summary-full-r1/`；`work/issue4-summary-internal-run-r2.py`完整internal／vet；`work/issue4-summary-evidence-final-r1.py`附加索引；`work/issue4-summary-ida-run-r6.py`／`work/issue4-summary-ida-export-r6.py`重生IDA；`work/issue4-summary-pack-reproduce-r1.py`乾淨九JSON重建；`work/issue4-summary-source-audit-r1.py`／`r2.py`正對照與負例；`work/issue4-summary-final-audit-r1.py`及`work/issue4-summary-finalize-r2.py`最終稽核。沿本節Docker掛載、UID1000與network none契約；完整game2400秒／3GiB／2CPU／256PID，IDA320秒／2GiB，來源稽核3GiB，收尾350秒／1GiB。Xvfb由runner持有並在finally終止；所有一次性容器均退出，其他專案容器不處理。root-owned3213基線、零.md目錄及本批UID/GID1000保持，使用者十三項資料不提交。
+
+| 私人最終收據 | SHA-256 |
+| --- | --- |
+| `work/issue4-summary-full-r1/game-receipt.json` | `305a715b44fbcb4d143718840df3ec27e5d4d7116b584ce29f9268a0eda61e40` |
+| `work/issue4-summary-full-r1/item-summary/summary-receipt.json` | `ce910a87c95e7b8c3e60baa5b8df45fef4703bc7ac920c89617a195295e1ba8f` |
+| `work/issue4-summary-internal-r2.json` | `e97f80e8318c37c2066aec0dc8cbcb33ba17c94c495ec5c5501e29cd01f46871` |
+| `work/issue4-summary-pack-reproduce-r1.json` | `085c41e06c04ae59bf610ec1af40adca14b0e882caa6e7008e04adb2b34b5354` |
+| `work/issue4-summary-source-audit-r1.json` | `b3121a31f3c7ee7f7b7d5dd34c15a2d5dfe18a22f5a99c1fa58ac3a1e07bdad2` |
+| `work/issue4-summary-source-audit-r2.json` | `295e25f7c356dfbe0d2d6da42ba79c233d5de2935365956295fe6b800996a597` |
+| `work/issue4-summary-r6-ida.json` | `b709e39e926df8b953a462a588d7d793ecb4c5bd04fa9ffea55d8645d8e5c45b` |
+| `work/issue4-summary-final-audit-r2.json` | `46635e00314c30a98dcbfbaa9e2198a34fd5871054af677b63f2bbfcd2b29e21` |
+
+下一production切片從正常288返回場景後重開狀況，核對重新排序第一個結果與返回；先取得dosgolem來源再審READY，不重開本節已閉合項目。多人全體V3、人物動畫、聲波及完整原版campaign仍未知，Issue／Goal保持進行中。

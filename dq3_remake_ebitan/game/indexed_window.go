@@ -168,11 +168,20 @@ func (r *indexedNewGameRenderer) xor(rect image.Rectangle, mask byte, checker bo
 
 func (r *indexedNewGameRenderer) window(tx *dq3data.Text, ref gamepack.RasterWindowRef) {
 	w := r.windows[ref.RawWindowID]
+	r.windowShadow(ref)
+	r.text(tx, ref.TextID, image.Pt(w.X*8, w.Y))
+	r.frame(ref)
+}
+
+func (r *indexedNewGameRenderer) windowShadow(ref gamepack.RasterWindowRef) {
+	w := r.windows[ref.RawWindowID]
+	// Original high-byte bit 3 suppresses shadow (IDA 1FC57; docs/188).
+	if w.Flags&8 != 0 {
+		return
+	}
 	x, y, width, height := w.X*8, w.Y, w.Width*8, w.Height
 	offset := r.style.ShadowOffset
 	r.shadow(image.Rect(x+offset.X, y+offset.Y, x+offset.X+width, y+offset.Y+height))
-	r.text(tx, ref.TextID, image.Pt(x, y))
-	r.frame(ref)
 }
 
 // 活動外框的高亮是可逆 XOR；新視窗先撤銷前一個外框，姓名等後畫字模也一併切換。

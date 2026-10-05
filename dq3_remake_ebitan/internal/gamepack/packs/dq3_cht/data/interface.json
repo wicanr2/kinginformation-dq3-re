@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.26.0",
+  "schema_version": "0.27.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -4461,6 +4461,82 @@
         "consumer": "IDA9.4 linear1834E -> 2111B -> 184A1 -> 1F4E3 restore -> normal278 field1997C",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "confirmed限定正常健康未學咒文主角277詳細頁、278新Enter返回與279..280左右行走；其他角色、裝備及咒文頁另驗。列距213C4 text consumer；原生能力幾何重用已驗契約。"
+      }
+    },
+    "summary": {
+      "money_window": {
+        "id": "dq3:raw_window.party_summary_money",
+        "flags": 9,
+        "x": 54,
+        "y": 14,
+        "width": 24,
+        "height": 48,
+        "address": "0x3e84"
+      },
+      "money_text_id": "dq3:text.field.party_summary.money",
+      "money_value": {
+        "x": 464,
+        "y": 30,
+        "digits": 8
+      },
+      "raw_window": {
+        "id": "dq3:raw_window.party_summary",
+        "flags": 3,
+        "x": 19,
+        "y": 62,
+        "width": 44,
+        "height": 144,
+        "address": "0x3efc"
+      },
+      "left_text_id": "dq3:text.field.party_summary.left",
+      "column_text_id": "dq3:text.field.party_summary.column",
+      "right_text_id": "dq3:text.field.party_summary.right",
+      "width_base": 4,
+      "column_step": 80,
+      "max_columns": 4,
+      "column_origin": {
+        "x": 168,
+        "y": 62,
+        "step_x": 80,
+        "step_y": 0
+      },
+      "name": {
+        "x": 168,
+        "y": 78,
+        "step_x": 16,
+        "step_y": 0
+      },
+      "name_limit": 4,
+      "hp": {
+        "x": 152,
+        "y": 94,
+        "digits": 5
+      },
+      "max_hp": {
+        "x": 152,
+        "y": 126,
+        "digits": 5
+      },
+      "mp": {
+        "x": 152,
+        "y": 142,
+        "digits": 5
+      },
+      "max_mp": {
+        "x": 152,
+        "y": 174,
+        "digits": 5
+      },
+      "return_mode": "fresh_key_to_field",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT; dosgolem2f44a68 normal288 source fac03247",
+        "address_space": "dgroup",
+        "address": "0x3e84/file0x19fc4 and 0x3efc/file0x1a03c",
+        "consumer": "IDA9.4 linear17C83 -> 17CE9 width; 185EF -> 1F590/18847 -> 1F4E3 -> 18610 -> 2111B; normal285..288",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常單人285全體狀況、286新Enter與287..288行走。多人物欄位有原始loop與width writer證據，尚無正常多人同狀態畫面收據。"
       }
     }
   }

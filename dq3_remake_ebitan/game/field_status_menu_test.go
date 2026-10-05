@@ -27,7 +27,7 @@ func TestFieldStatusMenuNavigationAndUnknownResults(t *testing.T) {
 			t.Fatal("cyclic selector differs")
 		}
 	}
-	for _, i := range []int{1, 2} {
+	for _, i := range []int{2} {
 		g.panelCursor = i
 		g.stepStatusMenu(InputState{DirEdge: -1, Confirm: true}, -1)
 		if g.panel != panelStatusMenu || g.panelCursor != i || !equalFieldSave(before, g.snapshot()) || g.prng != rng {

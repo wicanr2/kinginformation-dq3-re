@@ -1823,3 +1823,15 @@ internal-r2已通過，後續vet沿用既有輸出檔名被排他建立保護拒
 正常280來源edfad334接受，seed1357一次，318輸入／636IRQ1／648產物，273前綴保持。詳細頁23054→0，274..277與280完整RGB0；278／279仍差351／356，保留未驗畫面。原生窗口、數字幾何、Store Worn及fresh-key返回接正式路徑，八格／snapshot／RNG及正常F5／F6後下一步通過。無狀態注入、restore、裁切或動畫覆寫。
 
 完整證據、工具入口、失敗分類與收據集中docs/188，資料契約docs/84，唯一目前狀態表CONTEXT。比較助手的meta身份、far call bytes及跨掛載fixture問題均訂正後在同一工具鏈重跑，未放寬原版比較。舊runtime527張PNG、395筆IDA原始定位與原12筆annotation保持。原版素材與使用者十三項未追蹤資料保留，不加入Git。Issue #4保持OPEN，下一切片為正常280後「看全體的情形」首個結果與返回。
+
+## 2026-10-05：Issue #4 正常單人全體狀況頁
+
+接續9a19513，依Issue指定全體狀況切片，dosgolem冷啟動正常288、seed1357一次，父280及648項產物保持。326鍵／652 IRQ1／672項產物核對，來源fac03247；無狀態注入或restore。IDA9.4閉合窗寬writer、原生橫向文字、姓名與HP/MP／金錢consumer、新鍵返回及bit3略過陰影。
+
+DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-only來源與stats欄位訂正後，剩餘342像素全部位於金錢窗陰影；原版1FC57分支補證後r4完整RGB0，再審READY。正式typed summary及共用有限renderer接入，所有版本文字、raw window、欄距、容量與數值原點保存在JSON。schema0.27.0/content0.1.99、canonical7891ab6a；save_version2/storage_version1保持。
+
+正式正常281..285、287..288完整640×350 RGB0，286返回中間畫面差122保留，不強設動畫、遮罩或裁切。新Enter消耗後返回field，snapshot、八格與RNG保持，正式F5/F6及Load後下一步通過。完整game505頂層覆蓋、454不同頂層／141子PASS、51選用診斷SKIP；509次執行／599 PASS記錄。internal202頂層／462子、12套件PASS、4選用診斷SKIP。七項指定正常／受影響路線零SKIP，正常THE END92.23秒、Go vet及最終Linux desktop PASS，同一game binaryf4e518b7、OOM0。
+
+上一完整game的1688張PNG逐byte保持，九JSON由9a19513乾淨重建一致。公用來源checker正對照全部資料保持，壞PNG、缺IRQ與壞probe source均拒絕；只訂正公開標題後再核對最終checker身分。IDA605列原名、位址、bytes及relocation保持，13筆舊annotation保持，新增三筆限定confirmed自動合併。原版r1未執行便遇到Go cache唯讀；r2補明確cache掛載後一次完成。稽核768MiB被終止後在2GiB核對同一來源，沒有重擲。這些均保留為工具／環境紀錄。
+
+證據、READY、CONFORMED與私人收據索引集中docs/188；JSON契約docs/84，唯一狀態表CONTEXT。下一切片正常288後的重新排序入口。多人全體V3、動畫時鐘、聲波與完整原版campaign保持未知；沒有新發行包。工作依授權登記Issue #4、commit＋push。使用者十三項未追蹤資料及.claude保持，原始素材、圖像、binary、私人收據與IDA database不加入Git；root-owned基線3213、零.md目錄及本輪Docker清理核對。

@@ -16,6 +16,7 @@ const (
 	panelEquip
 	panelStatusMenu
 	panelStatusDetail
+	panelPartySummary
 )
 
 const (

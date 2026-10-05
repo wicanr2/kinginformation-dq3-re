@@ -211,6 +211,54 @@
       "input_size": 115282,
       "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
       "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x17ce9",
+      "file_offset": "0x9059",
+      "bytes": "a3023f",
+      "original_name": "",
+      "original_function": "sub_17C83",
+      "semantic": "從party count算4+10*count個VGA byte，寫入全體狀況窗DGROUP3F02寬度；confirmed限定正常單人285的14byte窗",
+      "inference_level": "confirmed",
+      "consumer": "17C83 -> 17CCD party count -> 17CDF..17CE3 formula -> 17CE9 -> 185EF -> DGROUP3EFC/1F4E3",
+      "review_reference": "docs/188：2026-10-05 全體狀況 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal285..288; source fac03247817ebd9ac9f6aa80c8bba97bc5d9d9ff0f59aba7385575a370a731e2; DRAFT r4/正式全體285 RGB0",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x1fc5a",
+      "file_offset": "0x10fca",
+      "bytes": "a808",
+      "original_name": "",
+      "original_function": "sub_1FC57",
+      "semantic": "原生高位window flags bit3使陰影consumer直接返回；confirmed限定正常285金錢窗flags9及完整畫面",
+      "inference_level": "confirmed",
+      "consumer": "1F590/1F4E3 -> 1FC57讀[SI+1] -> 1FC5A test8 -> 1FC5E ret；DGROUP3E84",
+      "review_reference": "docs/188：2026-10-05 全體狀況 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal285..288; source fac03247817ebd9ac9f6aa80c8bba97bc5d9d9ff0f59aba7385575a370a731e2; DRAFT r4/正式全體285 RGB0",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x1867f",
+      "file_offset": "0x99ef",
+      "bytes": "9adb000411",
+      "original_name": "",
+      "original_function": null,
+      "semantic": "全體狀況callback繪完姓名與HP/MP後讀新鍵；confirmed限定正常285等待及286新Enter返回場景",
+      "inference_level": "confirmed",
+      "consumer": "185EF -> 1F4E3 -> 18610..1867D -> 1867F/2111B -> 1F4E3 restore -> 1860C/1F604 -> 1997C",
+      "review_reference": "docs/188：2026-10-05 全體狀況 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal285..288; source fac03247817ebd9ac9f6aa80c8bba97bc5d9d9ff0f59aba7385575a370a731e2; DRAFT r4/正式全體285 RGB0",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
     }
   ]
 }

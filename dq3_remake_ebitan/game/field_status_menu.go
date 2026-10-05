@@ -20,6 +20,9 @@ func (g *Game) stepStatusMenu(in InputState, tapIdx int) {
 	}
 	switch {
 	case confirm:
+		if s.Entries[g.panelCursor].Role == "party_summary" && s.Summary != nil {
+			g.panel = panelPartySummary
+		}
 		if s.Entries[g.panelCursor].Role == "detail" {
 			g.panel = panelStatus
 			if g.nativeStatusDetailEligible() {

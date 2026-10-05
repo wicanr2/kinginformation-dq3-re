@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.26.0",
+  "schema_version": "0.27.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -7620,6 +7620,235 @@
         "consumer": "IDA9.4 linear18301 -> 1830B -> 1F4E3 -> 1F779/1F908; normal sole healthy hero first status selector",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "正常264..270三列游標與上下繞回、271 Esc、272..273下一步confirmed；選取詳細內容／全體／排序與其他角色分支未驗。原始callbacks只作證據，不執行。"
+      }
+    },
+    {
+      "id": "dq3:text.field.party_summary.money",
+      "value": "┌──────────┐\n│G         │\n└──────────┘",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        49,
+        65534,
+        54,
+        21,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        54,
+        65534,
+        50,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 12,
+        "lines_per_page": 3
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 406
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT; dosgolem2f44a68 normal288 source fac03247",
+        "address_space": "dgroup",
+        "address": "0x3e84/file0x19fc4 and 0x3efc/file0x1a03c",
+        "consumer": "IDA9.4 linear17C83 -> 17CE9 width; 185EF -> 1F590/18847 -> 1F4E3 -> 18610 -> 2111B; normal285..288",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常單人285全體狀況、286新Enter與287..288行走。多人物欄位有原始loop與width writer證據，尚無正常多人同狀態畫面收據。"
+      }
+    },
+    {
+      "id": "dq3:text.field.party_summary.left",
+      "value": "┌\n│\n│\n│\n│\n│\n│\n│\n└",
+      "glyph_codes": [
+        47,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        50
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 1,
+        "lines_per_page": 9
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 408
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT; dosgolem2f44a68 normal288 source fac03247",
+        "address_space": "dgroup",
+        "address": "0x3e84/file0x19fc4 and 0x3efc/file0x1a03c",
+        "consumer": "IDA9.4 linear17C83 -> 17CE9 width; 185EF -> 1F590/18847 -> 1F4E3 -> 18610 -> 2111B; normal285..288",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常單人285全體狀況、286新Enter與287..288行走。多人物欄位有原始loop與width writer證據，尚無正常多人同狀態畫面收據。"
+      }
+    },
+    {
+      "id": "dq3:text.field.party_summary.column",
+      "value": "─────\n     \nH    \n ─── \n     \nM    \n ─── \n     \n─────",
+      "glyph_codes": [
+        48,
+        48,
+        48,
+        48,
+        48,
+        65534,
+        12,
+        12,
+        12,
+        12,
+        12,
+        65534,
+        22,
+        12,
+        12,
+        12,
+        12,
+        65534,
+        12,
+        48,
+        48,
+        48,
+        12,
+        65534,
+        12,
+        12,
+        12,
+        12,
+        12,
+        65534,
+        27,
+        12,
+        12,
+        12,
+        12,
+        65534,
+        12,
+        48,
+        48,
+        48,
+        12,
+        65534,
+        12,
+        12,
+        12,
+        12,
+        12,
+        65534,
+        48,
+        48,
+        48,
+        48,
+        48
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 5,
+        "lines_per_page": 9
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 409
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT; dosgolem2f44a68 normal288 source fac03247",
+        "address_space": "dgroup",
+        "address": "0x3e84/file0x19fc4 and 0x3efc/file0x1a03c",
+        "consumer": "IDA9.4 linear17C83 -> 17CE9 width; 185EF -> 1F590/18847 -> 1F4E3 -> 18610 -> 2111B; normal285..288",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常單人285全體狀況、286新Enter與287..288行走。多人物欄位有原始loop與width writer證據，尚無正常多人同狀態畫面收據。"
+      }
+    },
+    {
+      "id": "dq3:text.field.party_summary.right",
+      "value": "┐\n│\n│\n│\n│\n│\n│\n│\n┘",
+      "glyph_codes": [
+        49,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        54,
+        65534,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 1,
+        "lines_per_page": 9
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 410
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT; dosgolem2f44a68 normal288 source fac03247",
+        "address_space": "dgroup",
+        "address": "0x3e84/file0x19fc4 and 0x3efc/file0x1a03c",
+        "consumer": "IDA9.4 linear17C83 -> 17CE9 width; 185EF -> 1F590/18847 -> 1F4E3 -> 18610 -> 2111B; normal285..288",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常單人285全體狀況、286新Enter與287..288行走。多人物欄位有原始loop與width writer證據，尚無正常多人同狀態畫面收據。"
       }
     }
   ]

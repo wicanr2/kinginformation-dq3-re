@@ -12,58 +12,43 @@ import (
 	"testing"
 )
 
-func TestFieldStatusDetailFreshKeyAndBranchScope(t *testing.T) {
+func TestFieldPartySummaryFreshKeyConsumesAction(t *testing.T) {
 	g := fieldSaveLoadComponentGame(t)
-	g.heroHP = 15
-	if !g.nativeStatusDetailEligible() {
-		t.Fatal("healthy unlearned branch rejected")
-	}
-	g.heroConditions = 1
-	if g.nativeStatusDetailEligible() {
-		t.Fatal("condition branch claimed as native")
-	}
-	g.heroConditions = 0
-	g.heroHP = 0
-	if g.nativeStatusDetailEligible() {
-		t.Fatal("dead branch claimed as native")
-	}
-	g.heroHP = 15
 	for _, in := range []InputState{
 		{DirHeld: 2, DirEdge: 2, AnyKeyEdge: true},
 		{DirHeld: -1, DirEdge: -1, Enter: true, AnyKeyEdge: true},
 		{DirHeld: -1, DirEdge: -1, SaveMenu: true, AnyKeyEdge: true},
 	} {
-		g.panel, g.cmd.open = panelStatusDetail, false
+		g.panel, g.panelCursor, g.cmd.open = panelStatusMenu, 1, false
 		before, rng := g.snapshot(), g.prng
-		idle := InputState{DirHeld: -1, DirEdge: -1}
-		if e := g.step(idle); e != nil {
+		g.stepStatusMenu(InputState{DirHeld: -1, DirEdge: -1, Confirm: true}, -1)
+		if g.panel != panelPartySummary {
+			t.Fatal("summary entry did not open")
+		}
+		if e := g.step(InputState{DirHeld: -1, DirEdge: -1}); e != nil {
 			t.Fatal(e)
 		}
-		if g.panel != panelStatusDetail {
-			t.Fatal("idle closed waiting page")
+		if g.panel != panelPartySummary {
+			t.Fatal("idle closed summary")
 		}
 		if e := g.step(in); e != nil {
 			t.Fatal(e)
 		}
-		if g.panel != panelNone || g.cmd.open || g.fieldSaveLoad.active || !equalFieldSave(before, g.snapshot()) || rng != g.prng {
-			t.Fatal("close key leaked into field action")
+		if g.panel != panelNone || g.cmd.open || g.fieldSaveLoad.active || !equalFieldSave(before, g.snapshot()) || g.prng != rng {
+			t.Fatal("summary dismissal leaked action or transacted state")
 		}
 	}
 }
 
-func TestFieldStatusDetailDosgolemNormalInputComparison(t *testing.T) {
-	runFieldStatusDetailNormalAt280(t, nil)
-}
-
-func runFieldStatusDetailNormalAt280(t *testing.T, after func(*Game)) {
-	runFieldStatusMenuNormalAt273(t, func(g *Game) {
+func TestFieldPartySummaryDosgolemNormalInputComparison(t *testing.T) {
+	runFieldStatusDetailNormalAt280(t, func(g *Game) {
 		dir, dest := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
-		const sourceHash = "edfad33432fb8b0dc6ee5bd59536e826af9b27e4c3b91ad4eb861365983469ff"
-		const prefix = "issue4-field-detail-normal-r5"
+		const sourceHash = "fac03247817ebd9ac9f6aa80c8bba97bc5d9d9ff0f59aba7385575a370a731e2"
+		const prefix = "issue4-field-summary-normal-r2"
 		source := filepath.Join(dir, prefix+"-source-r1-receipt.json")
 		raw, e := os.ReadFile(source)
 		if e != nil || fmt.Sprintf("%x", sha256.Sum256(raw)) != sourceHash {
-			t.Fatal("normal detail source identity", e)
+			t.Fatal("normal party summary source identity", e)
 		}
 		var src struct {
 			Queued, States []map[string]string
@@ -73,8 +58,8 @@ func runFieldStatusDetailNormalAt280(t *testing.T, after func(*Game)) {
 				SHA256 string
 			}
 		}
-		if e = json.Unmarshal(raw, &src); e != nil || len(src.States) != 280 || len(src.Queued) != 280 || len(src.Artifacts) != 648 {
-			t.Fatal("detail source shape", e)
+		if e = json.Unmarshal(raw, &src); e != nil || len(src.States) != 288 || len(src.Queued) != 288 || len(src.Artifacts) != 672 {
+			t.Fatal("summary source shape", e)
 		}
 		for _, a := range src.Artifacts {
 			b, err := os.ReadFile(filepath.Join(dir, a.Path))
@@ -85,7 +70,7 @@ func runFieldStatusDetailNormalAt280(t *testing.T, after func(*Game)) {
 		before, rng := g.snapshot(), g.prng
 		idle := InputState{DirHeld: -1, DirEdge: -1}
 		var samples []map[string]any
-		for n := 274; n <= 280; n++ {
+		for n := 281; n <= 288; n++ {
 			in := idle
 			in.AnyKeyEdge = true
 			scan, err := strconv.ParseInt(src.Queued[n-1]["scan"], 16, 64)
@@ -123,20 +108,20 @@ func runFieldStatusDetailNormalAt280(t *testing.T, after func(*Game)) {
 				t.Fatal(e)
 			}
 			want := before
-			if n == 279 {
+			if n == 287 {
 				want.PX = 2
 			}
 			if !equalFieldSave(want, g.snapshot()) || rng != g.prng {
 				t.Fatal("detail persistent state differs", n)
 			}
-			if n == 277 && (g.panel != panelStatusDetail || g.cmd.open) {
-				t.Fatal("detail first page did not wait")
+			if n == 285 && (g.panel != panelPartySummary || g.cmd.open) {
+				t.Fatal("summary page did not wait")
 			}
-			if n >= 278 && (g.panel != panelNone || g.cmd.open || g.dlg.open) {
+			if n >= 286 && (g.panel != panelNone || g.cmd.open || g.dlg.open) {
 				t.Fatal("fresh Enter did not return field", n)
 			}
 			g.renderFrame()
-			path := filepath.Join(dest, fmt.Sprintf("detail-packet-%03d.png", n))
+			path := filepath.Join(dest, fmt.Sprintf("summary-packet-%03d.png", n))
 			f, err := os.Create(path)
 			if err != nil {
 				t.Fatal(err)
@@ -147,27 +132,24 @@ func runFieldStatusDetailNormalAt280(t *testing.T, after func(*Game)) {
 				t.Fatal(err, ce)
 			}
 			diff := sourceCanvasDifference(t, g, source, fmt.Sprintf(prefix+"-packet-%03d-%s.png", n, src.States[n-1]["phase"]))
-			if n == 277 && diff != 0 {
-				t.Fatal("native detail full640x350 differs", diff)
+			if n == 285 && diff != 0 {
+				t.Fatal("native party summary full640x350 differs", diff)
 			}
 			b, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatal(err)
 			}
 			samples = append(samples, map[string]any{"packet": n, "full_rgb_difference": diff, "words": g.items.Words(), "png_sha256": fmt.Sprintf("%x", sha256.Sum256(b))})
-			t.Logf("normal detail packet%d complete640x350 RGB difference=%d", n, diff)
+			t.Logf("normal party summary packet%d complete640x350 RGB difference=%d", n, diff)
 		}
 		// The enclosing normal route performs F5/F6 and the next field move after
 		// this callback. Keep its save comparison aligned with the accepted state.
-		b, e := json.MarshalIndent(map[string]any{"scope": "normal new-game through280 sole healthy unlearned hero native detail, fresh Enter and next moves", "source_sha256": sourceHash, "samples": samples, "game_state_injection": false, "rng_unchanged": true, "pack_schema": g.pack.Schema(), "pack_content_version": g.pack.ContentVersion(), "pack_hash": g.pack.ContentHash(), "save_version": saveFormatVersion, "animation_timing_parity": false}, "", "  ")
+		b, e := json.MarshalIndent(map[string]any{"scope": "normal new-game through288 sole healthy unlearned hero native party summary, fresh Enter and next moves", "source_sha256": sourceHash, "samples": samples, "game_state_injection": false, "rng_unchanged": true, "pack_schema": g.pack.Schema(), "pack_content_version": g.pack.ContentVersion(), "pack_hash": g.pack.ContentHash(), "save_version": saveFormatVersion, "animation_timing_parity": false}, "", "  ")
 		if e != nil {
 			t.Fatal(e)
 		}
-		if e = os.WriteFile(filepath.Join(dest, "detail-receipt.json"), append(b, '\n'), 0644); e != nil {
+		if e = os.WriteFile(filepath.Join(dest, "summary-receipt.json"), append(b, '\n'), 0644); e != nil {
 			t.Fatal(e)
-		}
-		if after != nil {
-			after(g)
 		}
 	})
 }

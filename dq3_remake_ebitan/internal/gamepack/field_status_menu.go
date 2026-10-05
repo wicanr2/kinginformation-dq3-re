@@ -18,6 +18,7 @@ type FieldStatusMenu struct {
 	FontIndex   int                `json:"font_index"`
 	Entries     []FieldStatusEntry `json:"entries"`
 	Detail      *FieldStatusDetail `json:"detail"`
+	Summary     *FieldPartySummary `json:"summary"`
 	Evidence    Evidence           `json:"evidence"`
 }
 
@@ -86,6 +87,9 @@ func (p *Pack) validateFieldStatusMenu() error {
 		return fmt.Errorf("field status detail missing or unreviewed")
 	}
 	if err := validateEvidence(s.Detail.Evidence); err != nil {
+		return err
+	}
+	if err := p.validateFieldPartySummary(); err != nil {
 		return err
 	}
 	w := s.RawWindow

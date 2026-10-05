@@ -1,5 +1,22 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 全體狀況（schema0.27.0／content0.1.99）
+
+`interface.field_status_menu.summary`必填。限定READY、正常288來源與完整畫面驗收見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:7891ab6a09dc44b03f935bc7c19ad77a56be012e980782b360cf93eb56b61b61`；save_version2、storage_version1保持，舊pack hash存檔依既有規則拒絕。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `money_window`、`raw_window` | 原始窗ID、flags、X、Y、寬、高、DGROUP位址全必填。X及寬以VGA byte為單位；高位flags bit3略過陰影，bit1切換活動外框。原始backup槽只留證據。 |
+| `money_text_id`、`left_text_id`、`column_text_id`、`right_text_id` | 引用原始TXT406／408／409／410，逐glyph parity保留Go decoder。原始column record橫向重複，left與right是邊框；Unicode值不藏控制碼或布局邏輯。 |
+| `width_base`、`column_step`、`max_columns` | 由原版writer、loop及原始寬度導出。runtime僅修改窗的副本，寬度為base加人數乘欄距；不修改pack。型別驗證拒絕零值、越界與超出窗容量。 |
+| `column_origin`、`name`、`name_limit` | 欄原點、姓名原點、字距與上限來自consumer；X、Y、step_x、step_y含零值全必填。多欄最後字格也需在窗內。 |
+| `money_value`、`hp`、`max_hp`、`mp`、`max_mp` | 全為具名NumberField，X／Y／digits全必填；金錢8位、角色數值5位右靠齊。資料取目前實際角色，max值取持久能力，未建立第二份可寫副本。 |
+| `return_mode`、`evidence` | 具名`fresh_key_to_field`，新鍵只關頁、不穿透成移動或F5；D3證據限正常單人已驗狀態，多人loop有靜態證據，尚無正常多人V3。 |
+
+入口：[typed契約](../dq3_remake_ebitan/internal/gamepack/field_party_summary.go)、[原始parity與負面契約](../dq3_remake_ebitan/internal/gamepack/field_party_summary_test.go)、[正式繪圖](../dq3_remake_ebitan/game/field_party_summary.go)、[正常輸入測試](../dq3_remake_ebitan/game/field_party_summary_test.go)、[乾淨九JSON重建](../tools/migrate_field_party_summary_pack.py)、[dosgolem冷啟動producer](../tools/dosgolem_field_party_summary_probe.py)、[獨立來源稽核](../tools/verify_dosgolem_field_party_summary.py)。重建從schema0.26.0/content0.1.98及唯讀EXE／TXT開始；執行、掛載、資源與私人收據契約見docs/188，不在host執行。
+
+下方契約保留各次遷移時的原始範圍，現行載入同時要求已接入的detail與summary。
+
 ## 狀況首選單（schema0.25.0／content0.1.97）
 
 選項必須非空，數量由資料包提供；DQ3資料包保存原版三項，引擎不鎖定三項。
