@@ -585,7 +585,13 @@ func (g *Game) selectCommand(cmd int) {
 			}
 		}
 	case cmdStatus: // 狀況
-		g.panel = panelStatus
+		if len(g.companions) == 0 && g.heroHP > 0 && g.heroConditions == 0 {
+			if g.pack != nil && g.pack.Interface.FieldStatusMenu != nil {
+				g.panel, g.panelCursor = panelStatusMenu, 0
+			}
+		} else {
+			g.panel = panelStatus
+		}
 	case cmdSpell:
 		g.openFieldSpellMenu()
 	case cmdItem: // 道具
@@ -1198,6 +1204,8 @@ func (g *Game) step(in InputState) error {
 		switch {
 		case in.Cancel && g.panel == panelEquip && g.panelActor >= 0:
 			g.panelActor, g.panelCursor = -1, 0
+		case in.Cancel && g.panel == panelStatusMenu:
+			g.panel, g.panelCursor, g.cmd.open = panelNone, 0, false
 		case in.Cancel && g.panel == panelItem && g.panelActor == 0 && len(g.companions) == 0 && g.itemActionStage == itemActionMenu:
 			// docs/188: normal single-owner action Esc returns to the field.
 			g.panel, g.panelActor, g.panelCursor = panelNone, -1, 0
@@ -1217,6 +1225,8 @@ func (g *Game) step(in InputState) error {
 			}
 		case in.Cancel:
 			g.panel = panelNone
+		case g.panel == panelStatusMenu:
+			g.stepStatusMenu(in, tapIdx)
 		case g.panel == panelEquip:
 			confirm := in.Confirm
 			n := g.equipCandidateCount(g.panelActor)
@@ -3099,6 +3109,8 @@ func (g *Game) renderFrame() {
 	switch g.panel { // 資訊面板
 	case panelStatus:
 		g.drawStatus(g.rgba, white)
+	case panelStatusMenu:
+		g.drawNativeStatusMenu()
 	case panelItem:
 		g.drawItems(g.rgba, white)
 	case panelEquip:

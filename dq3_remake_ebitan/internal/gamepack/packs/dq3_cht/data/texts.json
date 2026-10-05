@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.24.0",
+  "schema_version": "0.25.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -7540,6 +7540,86 @@
         "consumer": "healthy sole hero: drop physical item -> native result or worn rejection -> fresh key -> field",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "正常兩次成功及穿戴拒絕confirmed；空格不壓縮。其他metadata及零價gate為原始資料D2／strong，不外推所有物品玩家流程。"
+      }
+    },
+    {
+      "id": "dq3:text.field.status_menu",
+      "value": "┌┐┐┐狀┐況┐┐└\n│ 看各人的狀況 │\n│ 看全體的情形 │\n│ 重 新 排 序│\n┘┐┐┐┐┐┐┐┐├",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        665,
+        48,
+        666,
+        48,
+        48,
+        49,
+        65534,
+        54,
+        12,
+        668,
+        669,
+        194,
+        149,
+        665,
+        666,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        668,
+        594,
+        486,
+        149,
+        670,
+        663,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        605,
+        12,
+        671,
+        12,
+        672,
+        12,
+        673,
+        54,
+        65534,
+        50,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 10,
+        "lines_per_page": 5
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 405
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT; dosgolem2f44a68 normal273 sourcea30e50ed",
+        "address_space": "dgroup",
+        "address": "0x3eb4/file0x19ff4/IDAlinear0x28c84",
+        "consumer": "IDA9.4 linear18301 -> 1830B -> 1F4E3 -> 1F779/1F908; normal sole healthy hero first status selector",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常264..270三列游標與上下繞回、271 Esc、272..273下一步confirmed；選取詳細內容／全體／排序與其他角色分支未驗。原始callbacks只作證據，不執行。"
       }
     }
   ]

@@ -97,6 +97,10 @@ func TestFieldItemDropCapacityFailurePreservesWords(t *testing.T) {
 }
 
 func TestFieldItemDropDosgolemNormalInputComparison(t *testing.T) {
+	runFieldItemDropNormalAt261(t, nil)
+}
+
+func runFieldItemDropNormalAt261(t *testing.T, after func(*Game)) {
 	runFieldItemOrderedNormalAt230(t, func(g *Game) {
 		dir, dest := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
 		const sourceHash = "5ca9fce6caff5bd1c1f27b489fba1ef9f687a808374d7fd544e94728d45f1971"
@@ -249,6 +253,9 @@ func TestFieldItemDropDosgolemNormalInputComparison(t *testing.T) {
 		}
 		if e := os.WriteFile(filepath.Join(dest, "drop-receipt.json"), append(b, '\n'), 0644); e != nil {
 			t.Fatal(e)
+		}
+		if after != nil {
+			after(g)
 		}
 	})
 }

@@ -1,5 +1,12 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-05 正常健康單人狀況入口已修正，先顯示原始三列選單，保留命令窗與底圖；上下單欄繞回、Esc返回及左右下一步通過。首列保留既有詳細窗E2入口，全體及排序缺證據時不交易狀態；詳細內容及其他角色未由本輪驗收。A單一八格、storage_version1及save_version2保持，schema0.25.0／content0.1.97，canonical694b740c。
+> dosgolem正常273包、311輸入／622IRQ1／627產物接受，261前綴591份保持；seed1357執行前固定一次，無注入／restore。262..271完整2172bytes保持，272只變player X，273完整返回baseline，clock30保持。正式262..273、snapshot／RNG、F5／F6及下一步通過；264..270首選單文字／外框／游標RGB0，完整640×350仍差142，剩餘影格與陰影差異未新增raw phase驗收。273完整RGB0，不外推其他畫面或動畫時鐘。
+> 完整game501頂層覆蓋、450不同頂層／141子PASS、51選用診斷SKIP；internal200頂層／439子、12套件PASS、4選用診斷SKIP。13項必驗零SKIP，正常THE END136.94秒、go vet及Linux desktop PASS，同一game binary23afdb03，OOM0。403張舊PNG保持，九JSON兩份乾淨771ec63重建相同；兩類checker各三負例拒絕，正對照重複相同。IDA241筆原始指令保持，原11筆annotation保持，新取址語意strong自動合併。沒有新包，完整原版campaign與音畫仍未知。
+> 從正常273返回場景後重開指令，選狀況首列，核對詳細窗的第一個玩家可見結果與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、給予、木棒使用、丟掉及首選單不重開。 Issue／Goal保持進行中，唯一現況表在CONTEXT。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 正常單人物品丟掉已限定驗收：成功只清所選物理word、保留空格及其他順序；顯示原始277姓名／物品與兩行結果。穿戴801E拒絕並顯示272，不消耗。兩者保留實際操作底圖，等新Enter返回場景。ITEM零價拒絕gate已補齊；A單一Store、storage_version1與save_version2保持。schema0.24.0／content0.1.96，canonical44ce09cb。
 > dosgolem正常261包、299輸入、598IRQ1、591產物接受，233前綴507份保持；seed1357執行前固定一次，無注入／restore。完整2172bytes只交易物理格0／1。正常231..261、正式F5／F6及下一步通過，RNG保持。241／260全640×350差122由英雄完整MST6／7解釋；250差106由NPC14完整MAN201／200解釋。未解釋差異0，沒有遮罩、裁切或改相位，窗口／文字V2；動畫時鐘及完整V3仍未知。291張舊runtime PNG、新路81張前綴及231..233保持。
 > 完整game499頂層清單覆蓋，448不同頂層／141子PASS、51選用診斷SKIP；internal198頂層／427子、12套件PASS、4選用診斷SKIP。11項必驗零SKIP；正常THE END105.14秒、go vet及Linux desktop PASS，正式收據OOM0。九JSON兩份乾淨3dc5b47重建一致，兩類checker各三負例拒絕。沒有新包，完整原版campaign、音畫與未測分支保持未知。正常261返回場景後開啟狀況命令，核對第一個玩家可見結果與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225、木棒使用與本輪丟掉不重開。 Issue／Goal保持進行中，唯一現況表在CONTEXT。

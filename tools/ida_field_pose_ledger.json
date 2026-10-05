@@ -179,6 +179,22 @@
       "input_size": 115282,
       "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
       "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x1830b",
+      "file_offset": "0x967b",
+      "bytes": "8d36b43e",
+      "original_name": "",
+      "original_function": null,
+      "semantic": "原始lea si,ds:3EB4h；狀況callback的三列首選單窗口取址",
+      "inference_level": "strong",
+      "consumer": "18301→1830B→1830F→1F4E3→1F779／1F908",
+      "review_reference": "docs/188：2026-10-05 正常273狀況首選單有限READY；取址指令未單獨動態hook，語意為strong",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal264..270 SI3EB4／42bytes／count3; work/dosgolem-opening/issue4-field-status-normal-r3-source-r1-receipt.json SHA256a30e50edd8ab3a3f8f8f95532b84aff4773d5a19879385ab31158e4d57b9b9aa",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
     }
   ]
 }

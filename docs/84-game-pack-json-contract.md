@@ -1,5 +1,24 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 狀況首選單（schema0.25.0／content0.1.97）
+
+選項必須非空，數量由資料包提供；DQ3資料包保存原版三項，引擎不鎖定三項。
+
+限定READY與正常273來源見docs/188。`interface.field_status_menu`必填，缺欄位、未知引用、錯誤字格或未審查evidence拒絕。`field_status`仍是既有詳細內容E2契約，不能由首選單驗收升格。A八格已完整接入，storage_version1與save_version2保持。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `id`、`raw_window` | 保留原始window ID、renderer flags、高byte／低byte的原始定位；pixel X與W由raw byte單位乘8，原始備份槽只在證據保存 |
+| `text_id` | 引用完整原始menu record，boot以保留的Go decoder逐glyph與所選字型核對；不把排版偷塞入Unicode值 |
+| `navigation` | 具名`cyclic_single_column`；初始第一列，上下繞回，Esc回field |
+| `cursor_glyph`、`font_index` | 與已審查的field command契約一致，沒有Go fallback |
+| `entries[]` | 有序`role`、X、Y、`callback_raw`全必填；role為detail／party_summary／reorder，原始callback只作證據，不執行JSON程式碼 |
+| `evidence` | D3：正常首選單、導航、Esc及下一步；不外推三列結果、多人或非健康角色 |
+
+[typed契約](../dq3_remake_ebitan/internal/gamepack/field_status_menu.go)、[原始parity與拒絕測試](../dq3_remake_ebitan/internal/gamepack/field_status_menu_test.go)、[正式入口](../dq3_remake_ebitan/game/field_status_menu.go)與[乾淨重建工具](../tools/migrate_field_status_menu_pack.py)。重建工具從乾淨0.24.0／0.1.96及唯讀EXE／TXT開始，產生九JSON；不改寫原始素材。共用引擎只消費selector與窗口，版本專屬文字、record與座標保存在pack。首列維持既有詳細E2入口，另外兩列在缺證據時不交易；正常來源未選取這三列，完成聲明僅限首選單。
+
+下方章節保留各次schema契約形成史，現行狀態以CONTEXT及本節為準。
+
 ## 有序物品格資料（schema0.20.0／content0.1.92）
 
 物品編碼及角色初始格的有限READY見docs/188「A 物品編碼及初始格 pack READY」。`characters.item_storage`明示全部word masks、部位數及依實際archive順序的metadata；容量沿`events.item_actions.personal_inventory_slots`，不重複保存。`defaults.item_words`取代equipment初值，每格整數必填，包含原始空格。入口為 [typed契約](../dq3_remake_ebitan/internal/gamepack/item_storage.go)、[原始parity／拒絕測試](../dq3_remake_ebitan/internal/gamepack/item_storage_test.go)與 [重建工具](../tools/migrate_item_storage_pack.py)。正式boot必須以原始ITEM decoder核對實際archive count、record shape與逐筆metadata。完整引擎／save接線仍另依整體READY，不把pack初值遷移當成可玩完成。

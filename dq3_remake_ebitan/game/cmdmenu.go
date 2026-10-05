@@ -9,10 +9,18 @@ import (
 
 func validateFieldCommandSources(assets fs.FS, p *gamepack.Pack, tx *dq3data.Text) error {
 	s := p.Interface.FieldCommandMenu
-	if s == nil || tx == nil {
+	status := p.Interface.FieldStatusMenu
+	if s == nil || status == nil || tx == nil {
 		return fmt.Errorf("command sources missing")
 	}
-	d, ok := p.TextDefinition(s.TextID)
+	if err := validateFieldSelectorSource(assets, p, tx, s.TextID, s.CursorGlyph); err != nil {
+		return err
+	}
+	return validateFieldSelectorSource(assets, p, tx, status.TextID, status.CursorGlyph)
+}
+
+func validateFieldSelectorSource(assets fs.FS, p *gamepack.Pack, tx *dq3data.Text, textID string, cursorGlyph int) error {
+	d, ok := p.TextDefinition(textID)
 	if !ok || d.Source.Record == nil {
 		return fmt.Errorf("command text source missing")
 	}
@@ -34,7 +42,7 @@ func validateFieldCommandSources(assets fs.FS, p *gamepack.Pack, tx *dq3data.Tex
 			}
 		}
 	}
-	if _, ok := tx.Glyph(s.CursorGlyph); !ok {
+	if _, ok := tx.Glyph(cursorGlyph); !ok {
 		return fmt.Errorf("command cursor glyph missing")
 	}
 	return nil

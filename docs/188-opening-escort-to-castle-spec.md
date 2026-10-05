@@ -5049,3 +5049,80 @@ go vet及Linux desktop PASS，正式收據oom／oom_kill0。兩份乾淨3dc5b47�
 正常261返回場景後開啟狀況命令，核對第一個玩家可見結果與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225、木棒使用與本輪丟掉不重開。
 完整原版campaign、音畫、非健康、多持有者、空物品清單及零價物品正常拒絕路線保持未知。
 Issue #4與Goal仍進行中，沒有新發行包。所有原始素材、PNG、binary及IDA database只留本機。
+
+
+### 2026-10-05 正常狀況命令入口 DRAFT
+
+原版正常261後Space、Down、Space的第264步，停於IDA linear1F7B7的三選項、游標1；畫面為看各人的狀況、看全體的情形、重新排序。隔離remake同正常輸入直接顯示詳細窗，入口為RED，持久snapshot與RNG保持。來源r2尚未獨立接受，不能冒稱parity。
+
+[正常狀況探針](../tools/dosgolem_field_status_probe.py)沿用唯讀原版、dosgolem2f44a68、固定seed1357一次與正常冷啟動261包，追加上下導覽、Esc及左右行走，限定停於273。CLI為 `python3 /repo/tools/dosgolem_field_status_probe.py`，使用既有dq3-ebiten-test:20260822-r1、UID1000、3GiB、2CPU、256PID與外層900秒逾時；repo與dosgolem唯讀，既有work可寫。輸出前綴issue4-field-status-normal-r3不可覆寫。新增觀察只讀DGROUP3EB4的42bytes與窗口欄位，不改遊戲資料或時鐘。
+
+IDA9.4非破壞sidecar `work/issue4-status-r4-ida.json` SHA-256 `4d3225a5b94df6362d55e1f8e242d3714a3fae990b5097e179e5c6e2d32ead63` 保留241條原始指令、bytes及xref。原始EXE115282bytes／SHA-2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；linear18301狀況callback，1830B取址DGROUP3EB4，1830F調用1F4E3。DGROUP3EB4／IDAlinear28C84／file19FF4含raw flags030E、X15、Y62、W20、H80、record405、count3及單欄欄位1；三列原始callback8313、85EF、8685。raw低byte備份槽與高byteflags分開保存，不能把030E當renderer flags。靜態入口為strong；正常導航、取消、背景恢復與首選項詳細內容仍待閉合，不將raw callback解成任意JSON程式碼。
+
+本輪只處理首個狀況選單入口、已觀察導航、取消及下一步。詳細狀況內容、全體情形、排序、多人與非健康角色另立後續證據切片；不拿舊docs/116的E2 renderer代替正常原版驗證。未達READY前不修改正式入口。
+
+
+### 2026-10-05 正常狀況首選單有限 READY
+
+[獨立來源驗證](../tools/verify_dosgolem_field_status.py)接受正常273包／311次輸入／622IRQ1與627份產物，收據 `work/dosgolem-opening/issue4-field-status-normal-r3-source-r1-receipt.json` SHA-256 `a30e50edd8ab3a3f8f8f95532b84aff4773d5a19879385ab31158e4d57b9b9aa`。父261全部事件及591份產物保持；seed1357執行前固定一次，沒有注入／restore。262..271完整2172bytes與261相同；272僅DGROUP4F33低byte由3變2，273回復完整baseline。角色128bytes、八格、flags、金額與clock30保持，Scratch空。
+
+限定健康單人主角：Space開六指令、Down至游標2、Space開三列狀況選單。初始游標1；Down三次為2、3、1，Up三次為3、2、1；Esc關閉兩層窗口返回field，接著左、右一步正常。狀況窗口來自DGROUP3EB4／file19FF4：X120、Y62、W160、H80，renderer flags3，raw備份槽0E另保留為證據。record405完整10欄5行54個glyph/control words，三列cursor為136,78／94／110，原始callback8313／85EF／8685僅作證據。Font index8與cursor glyph11沿用已核對共用1F779／1F908 consumer。子窗開啟先撤銷命令活動外框，原始record400與底圖保留；自帶record405框、陰影及三列文字，不能畫新造框。
+
+正式實作由pack提供具名field_status_menu、raw窗口、文字ID、逐列座標、選項role、導航與原始callback。新schema0.25.0／content0.1.97保持storage_version1／save_version2；既有pack身分鎖定與不同hash存檔拒絕照常。共用Go只執行窗口及單欄selector，不嵌入DQ3 record／座標／flag。三列選擇的完整結果仍unknown：首列保留既有詳細窗E2入口，全體與排序缺證據時不交易狀態。這不把既有詳細窗提升為READY或CONFORMED，後續必須從正式新選單補其正常來源。非健康與多人本輪維持原有入口，不新增猜測gate。
+
+驗收為正式InputState冷啟動至273、八格與snapshot／RNG、導航游標、取消與下一步、正式F5／F6、同版本Save後Load、受影響完整640×350 PNG及必要回歸。對拍逐點保留全部差異，不裁切／遮罩／替圖／改動畫相位；動畫時鐘未知仍不宣稱完整V3。首個入口DRAFT RED為46356 RGB像素，詳細內容與其他分支不納入本次完成聲明。
+
+
+### 2026-10-05 正常狀況首選單有限 CONFORMED
+
+正式入口已由pack提供三列窗口／record405與座標，取代健康單人命令直接開詳細窗。正常262..273游標、Esc與下一步、八格／snapshot／RNG及正式F5／F6通過；既有詳細窗仍E2，其他兩列缺證據時不交易。這一限定切片不接受三列完整結果、多人或非健康角色。
+
+[完整畫布checker](../tools/verify_dq3_field_status_raster.py)核對全部627來源產物及12張runtime PNG，完整640×350差異為229、229、142、142、142、142、142、142、142、122、229、0。264..270窗口內文字／外框／游標RGB0，273完整RGB0；142剩餘差異落在人物與子窗陰影交界。沒有裁切、遮罩、替圖或改相位，也沒有新增raw phase接受，不宣稱未解釋差異0、完整V3或動畫已完成。第264步入口RED46356→142，首選單V2／正常流程E3限定通過。
+
+完整game501頂層覆蓋、450不同頂層／141子PASS、51選用診斷SKIP；internal200頂層／438子、12套件PASS、4選用診斷SKIP。13項必驗零SKIP；正常THE END107.22秒、go vet及Linux desktop PASS，完整與正常同binaryec80bdec，正式OOM0。403張既有PNG保持，九JSON兩份乾淨771ec63重建逐byte一致。來源及畫布checker各三負例拒絕，正對照相同。Linux建置不代替其他平台實機或完整原版campaign。
+
+IDA最新sidecar `work/issue4-status-r6-ida.json` SHA-256 `135458368e6cacaf1e7a628c982d10f1d9c7e382d189ceb419e1bdb5883b6c0d` 自動合併[原始位址索引](../tools/ida_field_pose_ledger.json)。241條原始bytes、relocation、函式名與xref保留；原11筆annotation保持。新增linear1830B取址語意為strong，正常SI3EB4及窗口／count3是獨立結果，沒有宣稱取址指令已單獨動態hook。最初18338未有IDA函式邊界已保留失敗收據，以有界原始指令匯出，不建立猜測邊界；匯出模板的歷史候選標籤已校正，沒有改原版bytes或名稱。
+
+首次及診斷重跑的272失敗是測試僅送DirEdge、未送DirHeld，PX保持3，clock30與RNG保持。依既有正式InputState映射補按住方向，等待引擎既有冷卻自然完成，再以同image、同命令乾淨重跑。沒有修改產品行走規則或注入狀態。首次--inspect建立scratch後再用同prefix被正確拒絕，證據保留，後續全用新prefix；不把工具／測試失敗列為產品缺陷。
+
+收據均留本機，不提交原版PNG、binary或database。
+
+| 本機收據 | SHA-256 |
+| --- | --- |
+| `work/dosgolem-opening/issue4-field-status-normal-r3-source-r1-receipt.json` | `a30e50edd8ab3a3f8f8f95532b84aff4773d5a19879385ab31158e4d57b9b9aa` |
+| `work/issue4-status-runtime-r2/game-receipt.json` | `34e5d8069548e267e54ac49b4040109dc04bef795f409a7a0ac628941e5cdad8` |
+| `work/issue4-status-full-r1/game-receipt.json` | `88e04845b3f7fe348ccdfb856ddec28f819d534ac610cafc65e6d3a464bd49ca` |
+| `work/issue4-status-internal-r1.json` | `aec511174ceb0cd8c2b549d2cf8e726c7941bbaa08a44bd3232be023d6649d35` |
+| `work/issue4-status-runtime-r2/ITEM_STATUS/status-receipt.json` | `6cc603ded9c0815562397c50bb453cc89dbf8a3a46427d30500df244d7e9b02e` |
+| `work/issue4-status-runtime-r2/desktop-receipt.json` | `4fa6bfbd4505c1fd042a744eada784d12fcd602bad94ba37f22dee28a38818d3` |
+| `work/issue4-status-raster-r1.json` | `18e11e0b15e06f9ecea7961db5280e4fe77278db0d76b0c7fa3318b48ab81307` |
+| `work/issue4-status-aux-r1.json` | `86777b9d30f97c4de06035f69fae479ed96f30cd6ab28fd0ab9015497d7418e6` |
+| `work/issue4-status-vet-r1.json` | `1df15010fb677cd1358962cfb2e7384c8eaeba6b97f30ba8ca9ead1f78fb96aa` |
+
+從正常273返回場景後重開指令，選狀況首列，核對詳細窗的第一個玩家可見結果與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、給予、木棒使用、丟掉及首選單不重開。 完整原版campaign及音畫未知，沒有新包，Issue／Goal仍進行中。
+
+
+### 2026-10-05 最終資料契約審查與驗證
+
+提交前將選項數量改由資料包提供，拒絕空選單；DQ3原版三項保持。這是共用引擎契約修正，沒有新增版本專屬常數。前述runtime-r2、full-r1及internal-r1為修正前實際收據，保留歷史。最終使用同一game binary `23afdb032c958cfa8baaa04bbf599736b0a7be9654a33259b2a5d65c0b78e058`，正常13項必驗零SKIP，完整501頂層覆蓋、450不同頂層／141子PASS、51選用診斷SKIP；internal200頂層／439子、12套件PASS、4選用診斷SKIP。正常THE END136.94秒、go vet及Linux desktop PASS，OOM／oom_kill0。desktop為`39d985152d516cde6fd89297247cfa5167a0e8f5721947d15e9145ac9fd782b4`，14603000 bytes。
+
+最終runtime-r3與r2的527張PNG及狀況收據逐byte相同；403張上一丟掉切片PNG保持的證據仍成立。公開畫布checker再核對r3，首選單文字／外框／游標RGB0，完整畫布142餘差保留。其中20像素位於NPC14與子窗陰影交界，其餘122像素位於NPC15區域；未新增raw phase驗收。取消後左右下一步與存讀檔通過，不宣稱詳細窗、全體、排序或動畫時鐘完成。
+
+internal-r2已通過，後續vet沿用既有輸出檔名被排他建立保護拒絕，屬驗證腳本問題。獨立vet-r2在同一工具鏈乾淨重跑通過，舊收據未覆寫。原11筆annotation、241條IDA原始定位與bytes保持；新增1830B取址語意仍為strong。31個變更檔擁有權1000:1000，新增production Go沒有版本專屬raw ID／座標／玩家文字，root-owned基線3213與零.md目錄保持。
+
+| 最終本機收據 | SHA-256 |
+| --- | --- |
+| `work/dosgolem-opening/issue4-field-status-normal-r3-source-r1-receipt.json` | `a30e50edd8ab3a3f8f8f95532b84aff4773d5a19879385ab31158e4d57b9b9aa` |
+| `work/issue4-status-runtime-r3/game-receipt.json` | `4084759689a1a7398a3cee7f80472b97b407a7db17974fdd763759e694b78255` |
+| `work/issue4-status-full-r2/game-receipt.json` | `7a12e9e4efe7d518f50f4b85e0b09ad9bbc328ed02544cbc4966743f742c3ea1` |
+| `work/issue4-status-internal-r2.json` | `adad6bc837987b78df702555e33c7de0f288105fea72bb48f7d2ff4b0757f43b` |
+| `work/issue4-status-vet-r2.json` | `eb467c08af06cbb26d4cd884bf992cefeb996d3a2f3cd4c503bd8668ebdd67c3` |
+| `work/issue4-status-runtime-r3/desktop-receipt.json` | `f878e8c60d214cded32875e4908d8fe8c7053acd8802bfda4418d8ede7ab66f8` |
+| `work/issue4-status-runtime-r3/ITEM_STATUS/status-receipt.json` | `6cc603ded9c0815562397c50bb453cc89dbf8a3a46427d30500df244d7e9b02e` |
+| `work/issue4-status-raster-r2.json` | `18e11e0b15e06f9ecea7961db5280e4fe77278db0d76b0c7fa3318b48ab81307` |
+| `work/issue4-status-final-test-counts-r2.json` | `4dd07723398a74895e6960214a59f65682a579e78c7da31f70bd3af27eadc428` |
+| `work/issue4-status-aux-r1.json` | `86777b9d30f97c4de06035f69fae479ed96f30cd6ab28fd0ab9015497d7418e6` |
+| `work/issue4-status-r6-ida.json` | `135458368e6cacaf1e7a628c982d10f1d9c7e382d189ceb419e1bdb5883b6c0d` |
+| `work/issue4-status-precommit-hygiene-r1.json` | `fc2fe5a836fdde296764eee4a2ded94719bcc80fb27d3c9c9a62fab7876cecea` |
+
+工具入口與執行契約沿本節既有索引，唯一目前狀態表在CONTEXT。Issue #4保持OPEN，下一切片為正常273後狀況首列的詳細窗與返回；完整原版campaign仍未知。沒有新發行包。
