@@ -5504,3 +5504,57 @@ runtime r1如實記錄15張非零完整畫布，測試以全畫布全零要求�
 | `work/issue4-equip-wear-final-audit-r4.json` | `32a09191304667b27bce9edba0d2527cda85b9b4970aae72bf68432a1faf95d1` |
 
 遠端與提交核對入口為work/issue4-equip-wear-precommit-r1.json、issue4-equip-wear-remote-before-r1.json、issue4-equip-wear-issue-finalize-r1.py、issue4-equip-wear-result-comment-r1.md、issue4-equip-wear-body-r1.md、issue4-equip-wear-remote-after-r1.json及issue4-equip-wear-handshake-r1.json。更新保留全部遠端歷史；本輪無新image、交付包或公開原版素材。
+
+### 2026-10-06 正常339後替換甲胄與穿戴存讀檔 DRAFT
+
+接續485f3c2與已接受原版339來源721d93f6，Issue起點為[本輪留言](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-6000907125)。work/issue4-equip-armor-probe-r1.py使用新前綴issue4-equip-armor-normal-r1，正常重播339，再選第二件甲胄、詳細狀況、返回行走、F5第二槽保存、移動、F6第二槽讀回及下一步，限定366。seed1357一次，原版及dosgolem2f44a68唯讀；只增加正式輸入與唯讀observer，原生DOS.Scratch保存檔案。
+
+驗收需核對父825產物及完整事件前綴、404鍵／808IRQ、八格物理word、完整2172bytes、PLAYER其他槽、dragon1.dat的原生writer／consumer及讀回；全部完整PNG保留差異。來源接受前不升格parity，新出現的差異回RE／spec，不在Go猜補。現行Go／pack及A八格保持，來源與checkpoint以CONTEXT唯一狀態表為準。
+
+工具定位勘誤：嘗試在已接受339前綴建立讀取namespace時被assert拒絕，沒有啟動原版；改讀已接受probe-source.go的展開Go核對輸入及捕捉點。新獨立前綴的原版執行已啟動，原始producer及接受來源保持。
+
+### 2026-10-06 正常366來源與有限READY
+
+來源 `work/dosgolem-opening/issue4-equip-armor-normal-r1-source-r1-receipt.json` SHA `377d6d3088cd1d1a71eb789ef67579b05656428bbd92bf4130cfdfeb2ea457d9`，404鍵／808IRQ／908產物，父339的825份及所有事件前綴保持。輸入仍DQ3.EXE 115282bytes／5178fdc8、ITEM 896bytes／7f3142de、PLAYER 200bytes／a445a11f，完整hash沿前節；dosgolem2f44a68、固定1357一次、無restore／注入。原版未實作DOS服務0種。
+
+原始位址仍IDA9.4 linear，file=linear-EC90，DGROUP base linear24DD0／file16140。沿既有裝備390指令sidecar及F5／F6已審writer-consumer，本輪新增正常readonly觀測，沒有新反組譯或修改database。
+
+| 輸入與狀態 | 限定confirmed原版結果 |
+| --- | --- |
+| 340..345 | Space／Down／Down／Space開裝備，Esc跳武器，甲胄Down選第二列；候選為physical4／5／7，兩份code31保持各自物理格 |
+| 346..348 | Space只把physical5 word001F改801F，persistent byte411 OR80；Esc兩次跳空頭盔／盾牌。1807B／18098／180AE穿戴writer與18197→1821D回算閉合，返回攻8／守8，其他八格保持 |
+| 349..355 | 正式狀況首列，18313／18338／1834E consumer讀回同一actor。詳細頁等待新Enter，返回及左右行走；人物、旗標、金錢與物品保持 |
+| 356..360 | F5確認、選第二槽、獨立完成等待及新Enter返回。11484／114C8／114D3／114D9與原生AH40共同核對，2172bytes落地dragon1.dat；重生點header依既有F5契約複製目前座標 |
+| 361..366 | 左移後F6選第二槽，1157D／1158B／11591／1165F與AH3F讀回完整2172bytes，與359保存區逐byte一致；左右下一步通過。PLAYER僅第二筆姓名／等級／性別更新，其餘九筆保持 |
+
+觀測欄位勘誤：新增DQ3_ARMOR_NATIVE的`clock`標籤實際讀DGROUP001F，語意unknown，不作世界時鐘證據；原工具保持以便重生。世界時鐘只用既有DQ3_COMMAND_CLOCK的DGROUP251D，340..363為30，364..366為0。
+
+READY限定原本已審健康單人、無詛咒且符合資格範圍內，選第二份甲胄、狀況、穿戴後第二槽F5／F6及下一步。A單一八格、save2／storage1與schema0.30.0/content0.1.102保持；沒有新資料格式或遊戲規則。驗收從正常新遊戲冷啟動重播339，逐步words／snapshot／RNG與來源一致，其他九個JSON槽保持，保存重生點及LoadClock照已審契約。原生binary存檔與remake JSON的格式不同，驗收以等價狀態與實際讀回為準。既有PLAYER可見metadata用已審外部槽fixture建立，不注入執行中的角色或世界。
+
+27張完整640×350畫布全部比較並保留；357／358／362／363／366的零差異可列V3，其餘差異保留V2及動畫時鐘unknown，不遮罩、裁切或調相位。詳細352已目視核對旅人的衣服穿戴標記與守備力8，完整仍差123。新未知或交易差異需回RE／spec，不猜補production。
+
+公開來源入口：[dosgolem_field_equipment_armor_probe.py](../tools/dosgolem_field_equipment_armor_probe.py)為私人producer逐byte副本；[verify_dosgolem_field_equipment_armor.py](../tools/verify_dosgolem_field_equipment_armor.py)核對父收據、完整產物、IRQ、八格、持久區、原生writer／consumer與其他槽。producer沿前節900秒／3GiB／2CPU／128PID的唯讀repo、唯讀dosgolem快照與work可寫容器契約，拒絕覆寫新前綴；checker同image以120秒／3GiB／1CPU／64PID直接執行。UID/GID1000、--init、預設無網路。
+
+私人診斷入口為work/issue4-equip-armor-draft-helper-r1.go、draft-test-r1.go、draft-run-r1.py／r2.py及issue4-equip-armor-rgb-diagnostic-r1.py。首次checker用runpy沒有加tools搜尋路徑，import失敗；改用直接腳本入口後同來源通過。準備腳本把既有scene_events.go目錄當檔案讀取失敗；加is_file後重跑。draft首次引用不存在的Respawn.X／Y與fieldStatus，屬測試型別錯誤；依現行PX／PY與panel修正後正常路線75.95秒通過，零SKIP／OOM。沒有重跑原版或挑選seed。
+
+正式回歸r1的新366路線84.64秒通過，後續舊339路線因共用輸出目錄已存在失敗；新測試改用獨立armor子目錄。r2的新366路線100.99秒通過，舊339在210後被容器OOM終止，memory.events記錄oom_kill1，整批不算通過。重新核對規格路由後，r3沿既有完整回歸的每項獨立程序方式，保留3GiB／2CPU及同一正式程式／原版來源，乾淨重跑三項受影響測試。這些是驗證環境問題，不列產品缺陷。
+
+### 2026-10-06 正常366穿戴存讀檔有限CONFORMED
+
+正式入口測試為[field_equipment_armor_test.go](../dq3_remake_ebitan/game/field_equipment_armor_test.go)，正常新遊戲339前綴為[field_equipment_armor_prefix_test.go](../dq3_remake_ebitan/game/field_equipment_armor_prefix_test.go)。現行產品Go與JSON逐byte等於485f3c2，A單一八格、save2／storage1與schema0.30.0/content0.1.102保持。這次補驗正常穿戴中保存，沒有新增產品修法。
+
+三項受影響回歸使用work/issue4-equip-armor-runtime-run-r3.py的獨立程序契約，全部PASS、零SKIP／OOM；新366、舊339及scope／restore各一項。27步完整八格與原版actor+3A一致，返回攻8守8，詳細頁等待及新Enter返回；F5只改第二JSON槽，F6讀回穿戴physical5，重生點、LoadClock及其他九槽保持。新遊戲seed於執行前固定1357一次，snapshot／RNG、正常讀回與下一步通過，沒有狀態注入。
+
+全部27張完整640×350畫布保留。357／358／362／363／366五張RGB0；340..350各229，351為142、352為123、353為229、354為356、355為351、356／359各106、360為122、361為123、364為229、365為127。完整逐點位置見work/issue4-equip-armor-rgb-diagnostic-r1.json，未遮罩、裁切或調相位，不外推完整V3或動畫時鐘已解。狀態E2／玩家流程E3，只有指定五張完整V3。
+
+兩條正式回歸各保持190張舊PNG，新27張與隔離診斷逐byte一致。公開來源checker正例與接受收據完全相同，CRC／IRQ／probe三負例拒絕；Go vet及Python語法通過。原始EXE／ITEM／PLAYER、producer原樣副本、UID/GID1000、root-owned3213及零.md目錄保持。正式Go與JSON未改，最近完整game／internal／THE END／desktop仍沿485f3c2，不把本輪三項測試稱作全套。
+
+| 收據 | SHA-256 |
+| --- | --- |
+| work/issue4-equip-armor-runtime-r3/receipt.json | b06f4b106ad4e629ff2fd0d19739f4abfe27d15aae621d6f5450c1da2bf54f12 |
+| work/issue4-equip-armor-runtime-r3/TestFieldEquipmentArmorDosgolemNormalInputComparison/armor/armor-receipt.json | cd9885516a72b5c6fac5c42d911a3b0f8a4eef1b0a1644245b69a48dd9cdbb4f |
+| work/issue4-equip-armor-source-audit-r1.json | ff81c9c437d4bd0678c3ba56b5cc780aded3738b311009ead82f3ce2b07d6356 |
+| work/issue4-equip-armor-vet-r1.json | b9a6f074c246be7add2fdc05f3eab3b37c93dfdb163e55d2f8e530eaedc0bbbf |
+| work/issue4-equip-armor-ownership-r1.json | f0ba94e4c315c4718fa657ba5276f3c7de7d4bb6b862c713426fe0f7fc7c3062 |
+
+最終稽核入口為work/issue4-equip-armor-final-audit-r1.py及同名.json，逐項核對來源、完整畫布、舊PNG、producer身份、原始檔、正式程式／JSON與所有者；文件更新入口為work/issue4-equip-armor-doc-finalize-r1.py。原版素材、影像、database與binary不入Git，沒有新image或發行包。唯一現況表CONTEXT，Issue #4與Goal進行中；下一切片為正常366後把已穿戴physical5甲胄換到另一物理格，確認舊格清穿戴旗標、新格設旗標與狀況及返回；先dosgolem來源，再審有限READY。
