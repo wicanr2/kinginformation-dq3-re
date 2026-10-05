@@ -14,6 +14,9 @@ import (
 
 func TestFieldStatusMenuNavigationAndUnknownResults(t *testing.T) {
 	g := fieldSaveLoadComponentGame(t)
+	// The accepted response is single-member only. The multiplayer result
+	// remains unreviewed and cannot transact a speculative order change.
+	g.companions = []*Member{newMember([]int{1}, 1, 0, 0)}
 	g.panel, g.panelCursor = panelStatusMenu, 0
 	before, rng := g.snapshot(), g.prng
 	for _, dir := range []int{0, 0, 0, 1, 1, 1} {

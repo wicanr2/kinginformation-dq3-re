@@ -41,6 +41,10 @@ func TestFieldPartySummaryFreshKeyConsumesAction(t *testing.T) {
 }
 
 func TestFieldPartySummaryDosgolemNormalInputComparison(t *testing.T) {
+	runFieldPartySummaryNormalAt288(t, nil)
+}
+
+func runFieldPartySummaryNormalAt288(t *testing.T, after func(*Game)) {
 	runFieldStatusDetailNormalAt280(t, func(g *Game) {
 		dir, dest := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
 		const sourceHash = "fac03247817ebd9ac9f6aa80c8bba97bc5d9d9ff0f59aba7385575a370a731e2"
@@ -150,6 +154,9 @@ func TestFieldPartySummaryDosgolemNormalInputComparison(t *testing.T) {
 		}
 		if e = os.WriteFile(filepath.Join(dest, "summary-receipt.json"), append(b, '\n'), 0644); e != nil {
 			t.Fatal(e)
+		}
+		if after != nil {
+			after(g)
 		}
 	})
 }

@@ -5263,3 +5263,62 @@ schema0.26.0／content0.1.98，canonical `sha256:ef053cb8a96a9965f12412228508c71
 | `work/issue4-summary-final-audit-r2.json` | `46635e00314c30a98dcbfbaa9e2198a34fd5871054af677b63f2bbfcd2b29e21` |
 
 下一production切片從正常288返回場景後重開狀況，核對重新排序第一個結果與返回；先取得dosgolem來源再審READY，不重開本節已閉合項目。多人全體V3、人物動畫、聲波及完整原版campaign仍未知，Issue／Goal保持進行中。
+
+### 2026-10-05 重新排序正常續行 DRAFT
+
+接續已推送bdc955f與正常288來源fac03247。正式`reorder`選項尚無結果，原始status第三列callback8685／IDA linear18685。先讀原版callback與caller，再從正常288以Space、Down、Space、Down、Down、Space選第三列，觀察第一個玩家可見結果、等待、返回與持久交易；未達READY不改正式Go或pack。前輪完整驗收不重開。
+
+私人入口`work/issue4-reorder-prepare-r1.py`準備`work/issue4-reorder-ida-export-r1.py`／`work/issue4-reorder-ida-run-r1.py`，在既有IDA9.4非破壞匯出18685..18847與直接窗口／輸入consumer，保留16筆索引。`work/issue4-reorder-start-remote-r1.json`保存Issue現況，`work/issue4-reorder-start-comment-r1.md`登記本輪工作。沿前節Docker掛載、UID1000、network none、IDA2GiB／2CPU／128PID與320秒上限；原始EXE唯讀，database只在一次性/tmp，未知語意保留unknown。
+
+IDA r1確認18685比較DGROUP5077是否為1，單人分支18694以DI20A／record522呼叫15023。多人分支開DGROUP3F14，後續選人及pointer重排尚未正常對拍。`work/issue4-reorder-ida-export-r2.py`／`work/issue4-reorder-ida-run-r2.py`另核對15023／21414消息consumer；`work/issue4-reorder-probe-r1.py`只沿公開summary producer正常冷啟動至297，294選第三列、295新Enter、296..297左右行走，追加只讀原始窗口與caller觀察。原版producer沿前節3GiB／2CPU／256PID／900秒上限，Go cache明確使用/work既有cache，dosgolem2f44a68唯讀，不重擲或restore。輸出前綴`issue4-field-reorder-normal-r1`，尚未接受來源。
+
+追加訂正：r1實際停在294的216D8換頁等待，沒有終末21133；預定輸入未涵蓋這個狀態，故正常返回未完成，不列產品缺陷。原版此分支顯示TXT00第522筆波魯多加王的信，並非推測的單人提示。r3匯出15002／15010與原始消息窗口，r4核對21286按DI直接查文字表；兩者入口為`work/issue4-reorder-ida-export-r3.py`／`r4.py`及相應runner。r4 sidecar `work/issue4-reorder-r4-ida.json` SHA-256 `84f289056710d192160447376ae933f969671c81789a962f7480deee3c690aba`保留727列原始定位及16筆索引。
+
+`work/issue4-reorder-probe-r2.py`維持相同冷啟動與seed，正常294後以295 Enter換頁、296新Enter返回，再297 Left及298 Right。`work/issue4-reorder-check-prepare-r1.py`產生獨立`work/issue4-reorder-check-r1.py`，接受702份產物、336鍵／672 IRQ及288父前綴保持。來源`work/dosgolem-opening/issue4-field-reorder-normal-r2-source-r1-receipt.json` SHA-256 `e06a5e419d255303140c1516af0aa09021bbb967e94b0db1e0db89d1aca90370`。完整2172bytes持久區僅297的X由3改2，其他不變；暫存last_record自294成522。沒有新增原生檔案寫入、未知服務、狀態注入或restore。
+
+`work/issue4-reorder-draft-prepare-r1.py`、`work/issue4-reorder-summary-helper-r1.go`、`work/issue4-reorder-draft-test-r1.go`、`work/issue4-reorder-draft-prompt-r1.go`、`work/issue4-reorder-draft-run-r1.py`僅在一次性副本驗證。正常新遊戲至298，289..298全部完整640×350 RGB0，兩頁等待、fresh Enter、持久snapshot／RNG、外層正式F5/F6及Load後下一步通過。輸出`work/issue4-reorder-draft-prototype-r1/`；正式Go／pack尚未修改。
+
+### 2026-10-05 單人重新排序 READY
+
+重新核對RE→READY入口後，限定正常288後單人第三列的以下契約足以實作。原始EXE、TXT00、dosgolem2f44a68、IDA9.4與位址基準沿本節；不把此異常文字替換成自行撰寫的提示。
+
+| 契約 | 證據與等級 |
+| --- | --- |
+| 單人選第三列顯示TXT00/522 | confirmed：18685讀DGROUP5077、18694 `bf0a02`、18697 call15023；正常294只讀caller、DI020A及實際信件首頁。原版為何引用此信件仍unknown，不擴張為其他場景或多人行為。 |
+| 消息窗口與保留父窗 | confirmed：DGROUP3E6E／file19FAE，raw `0b011300ee002c0060009401000000000000000000000c09`；高flags1，像素152,238,352×96，TXT404。15002建立、21414輸出、15010終末讀新鍵與restore。正常294及295父status／command窗口保持。 |
+| 兩頁與保留行 | confirmed限定正常294／295：FFFC走21558及216C3／216D8；滿四行時219F4捲動後等待。295新Enter續寫，EOF後2111B／21133獨立等待；第二頁保留末尾三行，沒有換成清空式分頁。既有4×4px捲動／PIT hold契約沿生日consumer，時間仍hardware-spec approximation。 |
+| 返回與持久交易 | confirmed：296新Enter關閉全部窗口，1997C返回；297 Left、298 Right。完整持久區僅行走X改變。隔離prototype十張全圖RGB0，正常save/load及下一步通過。多人排序未驗收，不據此猜補。 |
+
+正式鏈為EXE／TXT → `tools/migrate_field_status_reorder_pack.py` → typed `FieldStatusReorder`與reference／schema驗證 → 正常InputState第三列 → 原生保留行訊息及兩次fresh-key等待 → PNG → F5/F6及下一步。新文字、窗口、捲動與指示資料由pack提供；共用Go只接既有primitive及confirm型保留行終末等待，不含522／座標／玩家文字。schema0.28.0/content0.1.100，save_version2/storage_version1保持。完成聲明限正常單人切片；正式實作仍需獨立回歸。
+
+公開原版重生入口：[正常298 producer](../tools/dosgolem_field_status_reorder_probe.py)、[來源checker](../tools/verify_dosgolem_field_status_reorder.py)、[IDA9.4 exporter](../tools/ida_status_reorder_export.py)及[原始位址索引](../tools/ida_field_pose_ledger.json)。依本節Docker掛載、cache、UID1000、network none及有界資源契約執行；producer只從正常冷啟動重播，不採用DOSBox換名產物。私人`work/issue4-reorder-ida-run-r5.py`以公開exporter重生727列與17筆索引，自動附加18694的限定confirmed語意；其他原始定位與16筆註記保持。
+
+正式實作使用獨立暫態statusReorderPrompt，保留實際parent canvas；共用保留行解析器新增confirm終末等待，automatic caller沿原契約返回。restore清除暫態訊息，兩個新鍵不滲透成行走／F5。`work/issue4-reorder-runtime-run-r3.py`正常298整圖、snapshot／RNG、正式F5/F6與下一步通過，七項指定測試零SKIP，THE END70.88秒及desktop PASS。`work/issue4-reorder-internal-run-r3.py`完整internal204頂層／476子、12套件PASS、4原有選用診斷SKIP，vet PASS。
+
+首輪runtime／internal因新檔未使用json import未編譯；r2抓到遷移器使用未註冊dialogue_record。回查RE→READY入口與既有文字schema後，改回dialogue；新原始資料及拒絕測試先通過，再於相同容器、命令乾淨重跑r3。失敗收據保留，不放寬檢查、不新增版型特例。`work/issue4-reorder-pack-reproduce-r1.py`從bdc955f乾淨九JSON重建逐byte相同；`work/issue4-reorder-source-audit-r1.py`公開checker正對照所有欄位除自身身分外相同，壞PNG、缺IRQ、壞probe source均拒絕，原版不重跑。
+
+本輪新檔入口由本節及docs/84索引。正式參數、文字及幾何均在pack，Go只保留跨版本狀態機；完整game最終收據及交接稽核另追加，未完成前不宣稱切片全套驗收。
+
+### 2026-10-05 正常單人重新排序 CONFORMED
+
+正式新遊戲一路至298，289..298十張完整640×350 RGB0。新Enter先續頁、另一新Enter關閉全部窗口，左右下一步、持久snapshot／八格／RNG及外層正式F5/F6通過。第二頁原版與正式PNG已目視核對，原版294／295仍留本機，不公開素材。canonical `sha256:757ef211c1d8179019c53c97f2b02bcdc3d7c823353491f608494d852acd02d1`，schema0.28.0/content0.1.100，save_version2/storage_version1保持。
+
+`work/issue4-reorder-full-run-r1.py`逐項覆蓋507頂層，456不同頂層／141子PASS、51原有選用診斷SKIP，511次執行／601 PASS記錄。七項本批指定路線零SKIP；完整game內正常THE END123.74秒。internal204頂層／476子、12套件PASS與4原有選用診斷SKIP，vet及最終Linux desktop PASS，正式收據OOM0。同一game binary SHA `bbcca34a172767af184190ff7a4c5a4f1da8b13243d448675709132fd91befa7`；desktop14664864bytes，SHA `deefdd8ed2f3b7262f7ba206cc20a65e90601a634f7fe40d607b0751d54d8c63`。
+
+`work/issue4-reorder-final-audit-r1.py`／`r2.py`／`r3.py`保存收尾訂正。r1誤把前前輪detail的1688張計數套到上一summary完整輸出；實際上一輪為1827張。r2的Go raw檢查包含JSON，r3按既定Go gate限定.go。沒有重跑原版、修改PNG或放寬逐byte／原始資料比對；1827張舊PNG全部保持。727列IDA原名、位址、bytes、relocation及16筆原註記保持，新18694限定語意自動合併，無rename或patch。
+
+本批Go raw命中全為測試證據，正式Go沒有版本專屬record／座標／文字fallback。本批檔案UID/GID1000，root-owned3213及零.md目錄基線保持。一次性測試／IDA容器及有界Xvfb均結束，其他專案資源保持；未打包、未新增image，原版、私有圖像、binary與IDA database不入Git。
+
+下一切片從正常298重開命令，核對未學咒文單人的咒文入口與返回。原版此信件引用原因、多人排序、其他狀況分支、動畫時鐘、聲波及完整原版campaign仍未知，Issue／Goal進行中。唯一目前狀態表CONTEXT，不據歷史清單重開完成切片。
+
+文件收尾入口為`work/issue4-reorder-doc-finalize-r1.py`，只依已通過的最終收據更新現況與追加歷程。Issue更新前後全文保存為`work/issue4-reorder-final-remote-before-r1.json`／`work/issue4-reorder-final-remote-after-r1.json`，具體結果與精簡目前狀態由`work/issue4-reorder-final-comment-r1.md`／`work/issue4-reorder-final-body-r1.md`提供，最終commit／remote／工作樹核對保存`work/issue4-reorder-final-handshake-r1.json`。遠端Issue已獲使用者授權，依主機gh例外執行；原始正文及全部既有留言保持。
+
+| 私人最終收據 | SHA-256 |
+| --- | --- |
+| `work/issue4-reorder-full-r1/game-receipt.json` | `3399ff8e1bbae52ecc4127cb732ec152a536aa0dcee1b8afea861e49fc91c469` |
+| `work/issue4-reorder-full-r1/item-reorder/reorder-receipt.json` | `d2f9da5ba6a44baf2941db5b1cf67c5b63e6a71c2edcd48551eb39e5126a5a7d` |
+| `work/issue4-reorder-internal-r3.json` | `4574d0e1e385c27f091e69631dc38c22c3c40d60df87769c1486d833cccd71bb` |
+| `work/issue4-reorder-pack-reproduce-r1.json` | `4efeadaf411145bbc0c470e9f5cc68ae0c73057743fdfc6c72811321bf100623` |
+| `work/issue4-reorder-source-audit-r1.json` | `41b252a964474559ccf17f9af8b64f63f9927e91bba53925501a46d398e6a30f` |
+| `work/issue4-reorder-r5-ida.json` | `5e1cc3d0288c605cddbab41ed2cf035876a946326054da15a1322d8d20cb8b28` |
+| `work/issue4-reorder-final-audit-r3.json` | `75b15b209422201f0e4cf2a8bb6f229ad45fb14c9d2cef12e4b8b592b000d2bf` |

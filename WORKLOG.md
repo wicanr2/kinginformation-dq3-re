@@ -1835,3 +1835,13 @@ DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-on
 上一完整game的1688張PNG逐byte保持，九JSON由9a19513乾淨重建一致。公用來源checker正對照全部資料保持，壞PNG、缺IRQ與壞probe source均拒絕；只訂正公開標題後再核對最終checker身分。IDA605列原名、位址、bytes及relocation保持，13筆舊annotation保持，新增三筆限定confirmed自動合併。原版r1未執行便遇到Go cache唯讀；r2補明確cache掛載後一次完成。稽核768MiB被終止後在2GiB核對同一來源，沒有重擲。這些均保留為工具／環境紀錄。
 
 證據、READY、CONFORMED與私人收據索引集中docs/188；JSON契約docs/84，唯一狀態表CONTEXT。下一切片正常288後的重新排序入口。多人全體V3、動畫時鐘、聲波與完整原版campaign保持未知；沒有新發行包。工作依授權登記Issue #4、commit＋push。使用者十三項未追蹤資料及.claude保持，原始素材、圖像、binary、私人收據與IDA database不加入Git；root-owned基線3213、零.md目錄及本輪Docker清理核對。
+
+## 2026-10-05 單人重新排序兩頁與fresh-key返回
+
+依Issue #4續行正常288，原版單人第三列以DI020A顯示TXT00/522波魯多加王的信。r1只預定終末等待而停在294的inline216D8；r2按實際狀態以295新Enter續頁、296另一新Enter返回，297／298左右行走。固定seed1357一次、無注入／restore或重擲，正常298、336鍵／672 IRQ與702產物接受，父288保持。持久2172bytes僅行走X改變；引用信件原因unknown，不另寫合理提示。
+
+一次性prototype十張全RGB0，READY後正式接入typed FieldStatusReorder與confirm型保留行EOF等待；窗口、文字、捲動與指示資料在pack。schema0.28.0／content0.1.100、canonical757ef211，save2/storage1及A八格保持。正式正常289..298完整640×350 RGB0，fresh-key不滲透，snapshot／RNG、F5/F6與Load後下一步通過。
+
+完整game507頂層覆蓋、456不同頂層／141子PASS、51原有選用診斷SKIP，511次執行／601 PASS記錄。internal204頂層／476子、12套件PASS、4原有選用診斷SKIP；七項指定路線零SKIP，正常THE END123.74秒、Go vet與最終Linux desktop PASS，正式收據OOM0，同一game binarybbcca34a。1827張前輪完整PNG、727列IDA原始定位及16筆舊註記保持，新18694限定confirmed自動合併；九JSON乾淨bdc955f重建一致，公開checker正對照與三負例通過。
+
+首輪未使用import、r2未註冊文字版型、收尾誤用前前輪PNG數與Go gate包含JSON均保留訂正，回查規格與同一產物後乾淨重跑；未放寬產品驗收或修改原版。證據與重生工具入口docs/188，資料契約docs/84，唯一現況表CONTEXT。下一切片正常298後未學咒文單人咒文入口。多人排序、動畫、音畫及完整原版campaign保持未知，Issue／Goal進行中，沒有新包。使用者十三項資料保持；本批UID/GID1000、root-owned3213及零.md目錄保持，測試與IDA一次性容器已清理。

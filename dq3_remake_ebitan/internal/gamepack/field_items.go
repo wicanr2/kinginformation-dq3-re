@@ -261,6 +261,23 @@ func (p *Pack) validateFieldItemUseNoEffect() error {
 
 func (p *Pack) validateFieldItemPrompt() error {
 	s := p.Interface.FieldItems.GivePresentation
+	if err := p.validateNativeFieldPrompt(s); err != nil {
+		return err
+	}
+	w := s.Window
+	text, _ := p.TextDefinition(p.Interface.FieldItems.TextIDs.GivePrompt)
+	if len(text.GlyphCodes) > w.Columns || w.TextInsetX+(len(text.GlyphCodes)-1)*s.GlyphStepX+dq3data.GlyphPx > w.Width || w.TextInsetY+dq3data.GlyphPx > w.Height {
+		return fmt.Errorf("item prompt text outside canvas")
+	}
+	for _, c := range text.GlyphCodes {
+		if c < 0 || c >= dq3data.GlyphMax {
+			return fmt.Errorf("item prompt control unsupported")
+		}
+	}
+	return nil
+}
+
+func (p *Pack) validateNativeFieldPrompt(s *FieldItemPrompt) error {
 	if s == nil || s.Evidence.Level != "D3" {
 		return fmt.Errorf("item give presentation missing or unreviewed")
 	}
@@ -306,15 +323,6 @@ func (p *Pack) validateFieldItemPrompt() error {
 	}
 	if col != frame.Layout.Columns || row+1 != frame.Layout.LinesPerPage {
 		return fmt.Errorf("item prompt frame shape invalid")
-	}
-	text, _ := p.TextDefinition(p.Interface.FieldItems.TextIDs.GivePrompt)
-	if len(text.GlyphCodes) > w.Columns || w.TextInsetX+(len(text.GlyphCodes)-1)*s.GlyphStepX+dq3data.GlyphPx > w.Width || w.TextInsetY+dq3data.GlyphPx > w.Height {
-		return fmt.Errorf("item prompt text outside canvas")
-	}
-	for _, c := range text.GlyphCodes {
-		if c < 0 || c >= dq3data.GlyphMax {
-			return fmt.Errorf("item prompt control unsupported")
-		}
 	}
 	return nil
 }

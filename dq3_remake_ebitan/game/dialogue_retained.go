@@ -8,6 +8,7 @@ type retainedTextFlow struct {
 	word, x, row    int
 	glyphs          []int
 	waiting         bool
+	finished        bool
 	waitFrames      int
 	scrolling       bool
 	scrollRemaining int
@@ -38,6 +39,9 @@ func (d *Dialogue) tickRetainedRows() {
 	}
 	f := d.retained
 	if f.waiting {
+		if f.finished {
+			return
+		}
 		w := d.prelude.WaitIndicator
 		f.waitFrames = (f.waitFrames + 1) % (w.HoldFrames(w.VisibleTicks) + w.HoldFrames(w.HiddenTicks))
 		return
@@ -67,7 +71,7 @@ func (d *Dialogue) tickRetainedRows() {
 				return
 			}
 			if action == retainedReturn {
-				d.open = false
+				d.finishRetainedRows()
 				return
 			}
 		}
@@ -85,7 +89,7 @@ func (d *Dialogue) tickRetainedRows() {
 				f.afterScroll = retainedReturn
 				continue
 			}
-			d.open = false
+			d.finishRetainedRows()
 			return
 		}
 		v := d.buf[f.word]
@@ -117,7 +121,7 @@ func (d *Dialogue) tickRetainedRows() {
 }
 
 func (d *Dialogue) drawWaitIndicator(rgba []byte, fg dq3data.Color) {
-	if d.retained == nil || !d.retained.waiting {
+	if d.retained == nil || !d.retained.waiting || d.retained.finished {
 		return
 	}
 	w := d.prelude.WaitIndicator
@@ -140,6 +144,17 @@ func (d *Dialogue) drawWaitIndicator(rgba []byte, fg dq3data.Color) {
 			putPx(rgba, w.X+c, y+r, color)
 		}
 	}
+}
+
+// A confirmed retained message keeps its final text until a fresh key.
+// Inline pauses alone display the blinking indicator. Automatic callers keep
+// their existing EOF return, including the last completed scroll operation.
+func (d *Dialogue) finishRetainedRows() {
+	if d.prelude.ReturnMode == "confirm" {
+		d.retained.waiting, d.retained.finished = true, true
+		return
+	}
+	d.open = false
 }
 
 func (d *Dialogue) drawRetainedRows(rgba []byte, fg dq3data.Color) {

@@ -20,6 +20,9 @@ func (g *Game) stepStatusMenu(in InputState, tapIdx int) {
 	}
 	switch {
 	case confirm:
+		if s.Entries[g.panelCursor].Role == "reorder" && len(g.companions) == 0 {
+			g.beginSingleMemberReorderPrompt()
+		}
 		if s.Entries[g.panelCursor].Role == "party_summary" && s.Summary != nil {
 			g.panel = panelPartySummary
 		}

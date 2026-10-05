@@ -1,9 +1,9 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-05 正常單人「看全體的情形」已接入正式版，顯示姓名、目前／最大HP及MP、金錢。窗寬由原版writer導出，金錢窗依原始旗標略過陰影；新Enter返回、左右下一步及正式F5/F6通過。schema0.27.0／content0.1.99，canonical7891ab6a；A八格、storage_version1與save_version2保持。
-> dosgolem正常288來源fac03247、326鍵／652IRQ1／672產物接受；父280及648項前綴保持，seed1357一次，無注入／restore。正式281..285、287..288完整640×350 RGB0，286差122及動畫時鐘保持未知。上一完整game的1688張PNG保持。
-> 完整game505頂層覆蓋、454不同頂層／141子PASS、51選用診斷SKIP；internal202頂層／462子、12套件PASS、4選用診斷SKIP。七項指定路線零SKIP，正常THE END92.23秒、vet及Linux desktop PASS，同一game binaryf4e518b7、OOM0。九JSON由9a19513乾淨重建一致；三壞來源拒絕與最終正對照保持。IDA605列原始定位及13筆舊annotation保持，三筆限定confirmed附加後自動合併。
-> 下一切片從正常288重開狀況，核對「重新排序」結果與返回。先取得dosgolem原版證據，再依RE→READY修正；本輪不宣稱多人全體頁、動畫、聲波或完整原版campaign。Issue／Goal進行中，唯一目前狀態表在CONTEXT。
+> 2026-10-05 正常單人「重新排序」已依原版顯示TXT00/522兩頁信件，保留父窗與文字行；兩次新Enter分別換頁及返回。289..298完整640×350 RGB0，八格、snapshot／RNG、正式F5/F6與Load後下一步通過。schema0.28.0／content0.1.100，canonical757ef211；storage_version1及save_version2保持。
+> dosgolem正常298來源e06a5e41，336鍵／672IRQ／702產物接受；父288前綴672份保持，seed1357一次，無注入／restore。原版引用信件的原因unknown，多人排序未驗收；不自行替換提示或猜交易。
+> 完整game507頂層覆蓋、456不同頂層／141子PASS、51選用診斷SKIP，511次執行／601 PASS記錄。internal204頂層／476子、12套件PASS、4選用診斷SKIP；七項指定路線零SKIP，正常THE END123.74秒、vet及Linux desktop PASS，同一game binarybbcca34a、OOM0。上一完整game1827張PNG、727列IDA原始定位與16筆舊annotation保持，新18694限定confirmed自動合併。九JSON由bdc955f乾淨重建相同，來源正對照與三負例通過。
+> 下一切片從正常298重開命令，核對未學咒文單人的咒文入口及返回。先取得dosgolem原版來源，再審READY；已閉合切片不重開，完整原版campaign與音畫仍未知。Issue／Goal進行中，唯一目前狀態表在CONTEXT。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

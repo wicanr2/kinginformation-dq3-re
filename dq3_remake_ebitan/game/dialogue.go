@@ -237,6 +237,10 @@ func (d *Dialogue) Advance() {
 	}
 	if d.usesRetainedRows() {
 		if d.retained != nil && d.retained.waiting {
+			if d.retained.finished {
+				d.open = false
+				return
+			}
 			d.retained.waiting = false
 			d.pos = d.retained.word
 			d.revealCells, d.revealTick = 0, 0

@@ -259,6 +259,22 @@
       "input_size": 115282,
       "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
       "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x18694",
+      "file_offset": "0x9a04",
+      "bytes": "bf0a02",
+      "original_name": "loc_18694",
+      "original_function": null,
+      "semantic": "原始mov di,020Ah：status重新排序單人分支選文字522；confirmed限定正常294實際TXT00信件，不推測原版為何引用此文字",
+      "inference_level": "confirmed",
+      "consumer": "18685 party count1 -> 18694 -> 18697/15023 -> 21286 -> 21414 -> inline216D8 -> final21133 -> field1997C",
+      "review_reference": "docs/188：2026-10-05 單人重新排序 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal294 read-onlyDI020A and two pages, 295 Enter/296 freshEnter/297..298 moves; source e06a5e419d255303140c1516af0aa09021bbb967e94b0db1e0db89d1aca90370; DRAFT normal289..298 RGB0",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
     }
   ]
 }

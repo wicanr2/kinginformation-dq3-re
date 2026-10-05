@@ -1,5 +1,22 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 單人重新排序（schema0.28.0／content0.1.100）
+
+`interface.field_status_menu.reorder`必填。原版正常298及有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:757ef211c1d8179019c53c97f2b02bcdc3d7c823353491f608494d852acd02d1`；save_version2、storage_version1保持。舊pack hash存檔依既有規則拒絕。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `single_member_text_id` | 已審查D3的legacy_record文字引用。DQ3取原版DI020A指向的TXT00/522，保留實際信件內容；不由Go猜補提示。 |
+| `presentation` | 原生消息窗口、raw定位、TXT404外框、字距、控制碼長度、色彩、陰影及平台字模hold。沿共用FieldItemPrompt型別驗證幾何與reference，不新增Go座標或文字fallback。 |
+| `text_flow` | 具名`retained_rows`。捲動步長乘次數須等於一行字模高度；D3原生consumer及時間近似界線必填。保留四行，FFFC捲動後等待，續頁不清掉前文。 |
+| `wait_indicator` | 已驗原生inline等待指示及平台tick換算。終末fresh-key等待不顯示此inline指示。 |
+| `scope`／`return_mode` | `single_member`／`fresh_key_to_field`。多人排序未取得正常來源，不執行猜測的順序交易。 |
+| `evidence` | D3，限定正常294..298兩頁、返回及行走。原版引用信件的原因仍unknown。 |
+
+文字layout沿既有`dialogue`契約，glyph_codes顯式保存換行及換頁控制；實際字串只供可讀內容。缺欄位、未知引用、未審查證據、不完整等待指示、非法控制碼、行字距越界或錯捲動契約均拒絕。原生窗口暫態底圖不寫入存檔，restore清除訊息狀態。
+
+[typed契約](../dq3_remake_ebitan/internal/gamepack/field_status_reorder.go)、[原始資料與拒絕測試](../dq3_remake_ebitan/internal/gamepack/field_status_reorder_test.go)、[正式入口](../dq3_remake_ebitan/game/field_status_reorder.go)、[正常玩家對拍](../dq3_remake_ebitan/game/field_status_reorder_test.go)及[乾淨九JSON遷移器](../tools/migrate_field_status_reorder_pack.py)。遷移器從乾淨schema0.27.0/content0.1.99及唯讀EXE／TXT建立新pack，不改原版素材。下方保留各次契約形成史，現況以本節及CONTEXT唯一狀態表為準。
+
 ## 全體狀況（schema0.27.0／content0.1.99）
 
 `interface.field_status_menu.summary`必填。限定READY、正常288來源與完整畫面驗收見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:7891ab6a09dc44b03f935bc7c19ad77a56be012e980782b360cf93eb56b61b61`；save_version2、storage_version1保持，舊pack hash存檔依既有規則拒絕。

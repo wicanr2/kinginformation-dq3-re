@@ -10,16 +10,17 @@ import (
 // FieldStatusMenu describes the reviewed first status selector. CallbackRaw
 // retains original evidence and is never executed. READY scope: docs/188.
 type FieldStatusMenu struct {
-	ID          string             `json:"id"`
-	RawWindow   RawNewGameWindow   `json:"raw_window"`
-	TextID      string             `json:"text_id"`
-	Navigation  string             `json:"navigation"`
-	CursorGlyph int                `json:"cursor_glyph"`
-	FontIndex   int                `json:"font_index"`
-	Entries     []FieldStatusEntry `json:"entries"`
-	Detail      *FieldStatusDetail `json:"detail"`
-	Summary     *FieldPartySummary `json:"summary"`
-	Evidence    Evidence           `json:"evidence"`
+	ID          string              `json:"id"`
+	RawWindow   RawNewGameWindow    `json:"raw_window"`
+	TextID      string              `json:"text_id"`
+	Navigation  string              `json:"navigation"`
+	CursorGlyph int                 `json:"cursor_glyph"`
+	FontIndex   int                 `json:"font_index"`
+	Entries     []FieldStatusEntry  `json:"entries"`
+	Detail      *FieldStatusDetail  `json:"detail"`
+	Summary     *FieldPartySummary  `json:"summary"`
+	Reorder     *FieldStatusReorder `json:"reorder"`
+	Evidence    Evidence            `json:"evidence"`
 }
 
 // FieldStatusDetail reuses the reviewed ability primitives and limits the
@@ -90,6 +91,9 @@ func (p *Pack) validateFieldStatusMenu() error {
 		return err
 	}
 	if err := p.validateFieldPartySummary(); err != nil {
+		return err
+	}
+	if err := p.validateFieldStatusReorder(); err != nil {
 		return err
 	}
 	w := s.RawWindow
