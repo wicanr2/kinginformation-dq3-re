@@ -297,7 +297,7 @@ func (g *Game) giveSelectedItem(target int) bool {
 func (g *Game) dropSelectedItem() bool {
 	s := g.actorItemStore(g.panelActor)
 	entry, valid := g.selectedItemEntry()
-	if s == nil || g.pack == nil || !valid || !g.fieldActorAlive(g.panelActor) || !g.pack.ItemDropAllowed(entry) || !s.Remove(g.itemSelected) {
+	if s == nil || g.pack == nil || !valid || !g.fieldActorAlive(g.panelActor) || !g.pack.ItemDropAllowed(entry) || !s.Remove(entry.Position) {
 		return false
 	}
 	g.clampPanelCursor()

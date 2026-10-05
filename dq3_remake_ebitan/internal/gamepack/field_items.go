@@ -30,6 +30,7 @@ type FieldItems struct {
 	MarkerMask       *int                  `json:"marker_mask"`
 	GivePresentation *FieldItemPrompt      `json:"give_presentation"`
 	UseNoEffect      *FieldItemUseNoEffect `json:"use_no_effect"`
+	Drop             *FieldItemDrop        `json:"drop"`
 	Evidence         Evidence              `json:"evidence"`
 }
 
@@ -39,6 +40,19 @@ type FieldItemUseNoEffect struct {
 	ActorVariableCode *int     `json:"actor_variable_code"`
 	ItemVariableCode  *int     `json:"item_variable_code"`
 	Evidence          Evidence `json:"evidence"`
+}
+
+type FieldItemDrop struct {
+	SuccessTextID     string   `json:"success_text_id"`
+	BlockedTextID     string   `json:"blocked_text_id"`
+	ActorVariableCode *int     `json:"actor_variable_code"`
+	ItemVariableCode  *int     `json:"item_variable_code"`
+	Evidence          Evidence `json:"evidence"`
+}
+
+func (s *FieldItemDrop) UnmarshalJSON(b []byte) error {
+	type plain FieldItemDrop
+	return requiredHome(b, (*plain)(s))
 }
 
 func (s *FieldItemUseNoEffect) UnmarshalJSON(b []byte) error {
@@ -140,7 +154,61 @@ func (p *Pack) validateFieldItems() error {
 	if err := p.validateFieldItemPrompt(); err != nil {
 		return err
 	}
-	return p.validateFieldItemUseNoEffect()
+	if err := p.validateFieldItemUseNoEffect(); err != nil {
+		return err
+	}
+	return p.validateFieldItemDrop()
+}
+
+func (p *Pack) validateFieldItemDrop() error {
+	s := p.Interface.FieldItems.Drop
+	if s == nil || s.Evidence.Level != "D3" || s.SuccessTextID == s.BlockedTextID || s.ActorVariableCode == nil || s.ItemVariableCode == nil || *s.ActorVariableCode == *s.ItemVariableCode {
+		return fmt.Errorf("item drop presentation missing or unreviewed")
+	}
+	if err := validateEvidence(s.Evidence); err != nil {
+		return err
+	}
+	for _, code := range []*int{s.ActorVariableCode, s.ItemVariableCode} {
+		if *code < dq3data.GlyphMax || *code > 65535 || !dq3data.IsVarInsert(uint16(*code)) {
+			return fmt.Errorf("invalid drop variable binding")
+		}
+	}
+	for _, id := range []string{s.SuccessTextID, s.BlockedTextID} {
+		d, ok := p.TextDefinition(id)
+		if !ok || d.Source.Kind != "legacy_record" || d.Source.Record == nil || d.Evidence.Level != "D3" || len(d.GlyphCodes) == 0 {
+			return fmt.Errorf("drop text missing or unreviewed")
+		}
+		counts := map[int]int{}
+		line, rows := 0, 1
+		w := p.Interface.FieldItems.GivePresentation
+		for _, code := range d.GlyphCodes {
+			switch {
+			case code == *s.ActorVariableCode || code == *s.ItemVariableCode:
+				if id != s.SuccessTextID {
+					return fmt.Errorf("blocked drop binding unsupported")
+				}
+				counts[code]++
+				line++
+			case code == int(dq3data.TxtNL):
+				if id != s.SuccessTextID || line == 0 {
+					return fmt.Errorf("drop newline unsupported")
+				}
+				line = 0
+				rows++
+			case code >= 0 && code < dq3data.GlyphMax:
+				line++
+			default:
+				return fmt.Errorf("drop control unsupported")
+			}
+			if rows > w.Window.LinesPerPage || w.Window.TextInsetY+rows*dq3data.GlyphPx > w.Window.Height || (line > 0 && w.Window.TextInsetX+(line-1)*w.GlyphStepX+dq3data.GlyphPx > w.Window.Width) {
+				return fmt.Errorf("drop text outside prompt")
+			}
+		}
+		if id == s.SuccessTextID && (counts[*s.ActorVariableCode] != 1 || counts[*s.ItemVariableCode] != 1) {
+			return fmt.Errorf("drop binding missing or repeated")
+		}
+	}
+	return nil
 }
 
 func (p *Pack) validateFieldItemUseNoEffect() error {
@@ -255,8 +323,8 @@ func (p *Pack) ItemDropAllowed(entry itemstore.Entry) bool {
 		return false
 	}
 	s := p.Characters.ItemStorage
-	if s.DropBlockedMask == nil || entry.Code < 0 || entry.Code >= len(s.Items) || s.Items[entry.Code].DropForbidden == nil {
+	if s.DropBlockedMask == nil || entry.Code < 0 || entry.Code >= len(s.Items) || s.Items[entry.Code].DropForbidden == nil || s.Items[entry.Code].DropHasValue == nil {
 		return false
 	}
-	return entry.Word&uint16(*s.DropBlockedMask) == 0 && !*s.Items[entry.Code].DropForbidden
+	return entry.Word&uint16(*s.DropBlockedMask) == 0 && !*s.Items[entry.Code].DropForbidden && *s.Items[entry.Code].DropHasValue
 }

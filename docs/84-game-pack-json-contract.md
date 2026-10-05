@@ -2226,3 +2226,24 @@ schema `0.22.0`／content `0.1.94` 的 `interface.field_items.give_presentation`
 `python3 tools/migrate_field_item_prompt_pack.py <乾淨0.21.0資料包目錄> <唯讀原始素材目錄>`。
 它核對完整 EXE／TXT hash、30 bytes 原始窗口及 frame／prompt record。
 READY 的原版 caller、只讀觀測與限定驗收見 [docs/188](188-opening-escort-to-castle-spec.md)。
+
+### 正常丟掉的原生訊息與價值 gate
+
+schema0.24.0／content0.1.96，canonical
+`sha256:44ce09cbf64b97a4f40b797a10bcadf739347c3106298149c6b5409d5fc407c6`。
+`characters.item_storage.items[].drop_has_value` 為必填bool，由實際ITEM price word非零取得，
+獨立於`drop_forbidden`。boot按實際archive count及逐record原始decoder驗證，缺欄位、null及不符拒絕。
+`interface.field_items.drop` 必填成功／拒絕`success_text_id`、`blocked_text_id`、
+`actor_variable_code`、`item_variable_code`及D3`evidence`。成功綁各一word姓名／物品，
+保留原始277的換行；拒絕引用普通字模272。未知引用、重複binding、其他控制碼及容量越界拒絕。
+沿既有`give_presentation`原生框，不加入Go座標、raw ID或玩家文字。
+正式單人丟掉先驗證訊息／插值／底圖，再清entry.Position；保留空格、不壓縮。
+穿戴拒絕不交易；兩者等新按鍵返回field，暫態訊息不序列化。
+單一Store、storage_version1及save_version2保持。舊schema及不同canonical存檔依既有授權拒絕。
+其他物品的D2 metadata不代表各件正常路線驗收，READY與限定CONFORMED見
+[docs/188](188-opening-escort-to-castle-spec.md)。
+
+重建入口：[tools/migrate_field_item_drop_pack.py](../tools/migrate_field_item_drop_pack.py)。
+在`dq3-ebiten-test:20260822-r1` Docker以UID1000執行：
+`python3 tools/migrate_field_item_drop_pack.py <乾淨0.23.0資料包> <唯讀原始素材目錄>`。
+支援從乾淨3dc5b47九份JSON重建，核對EXE／ITEM／TXT完整hash及原始gate／record，保留既有排版。

@@ -4911,7 +4911,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	traceAdventureWalkToCty(t, g, 82, true)
 	slots := g.pack.ItemActions().PersonalInventorySlots
 	// 先用仍持有的魔法鑰匙開啟魯比斯之塔目前連通區門；
-	// 門的執行期覆蓋完成後才正式丟棄鑰匙，後續退出不再依賴它。
+	// 零價鑰匙不可丟棄；容量清理只選 pack 證實可丟的未穿戴物品。
 	traceOpenReachableDoor(t, g)
 	keepP6 := map[int]bool{
 		sunStone.ItemRawID:    true,
@@ -4953,9 +4953,9 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 			break
 		}
 		candidate := -1
-		for _, code := range testInventory(g.items) {
-			if !keepP6[code] {
-				candidate = code
+		for _, entry := range g.actorItemEntries(0) {
+			if !keepP6[entry.Code] && g.pack.ItemDropAllowed(entry) {
+				candidate = entry.Code
 				break
 			}
 		}
@@ -6109,6 +6109,18 @@ func traceDropActorInventoryItem(t *testing.T, g *Game, actor, code int) {
 	items = g.equipActorInventory(actor)
 	if len(*items) != before-1 || countOccurrences(*items, code) != beforeCount-1 {
 		t.Fatalf("正式丟棄未移除 actor%d 道具 0x%02x：alive=%v owner=%d selected=%d stage=%d before=%d after=%d inv=%v", actor, code, g.fieldActorAlive(actor), g.panelActor, g.itemSelected, g.itemActionStage, before, len(*items), *items)
+	}
+	if g.itemGivePrompt != nil {
+		for updates := 0; !g.itemGivePrompt.dialogue.waitingForConfirm(); updates++ {
+			if updates >= 100 {
+				t.Fatal("正式丟棄訊息未到新按鍵等待")
+			}
+			step(InputState{DirHeld: -1, DirEdge: -1})
+		}
+		step(InputState{DirHeld: -1, DirEdge: -1, Enter: true})
+		if g.itemGivePrompt != nil {
+			t.Fatal("正式丟棄新按鍵未返回場景")
+		}
 	}
 	if g.panel != panelNone {
 		step(InputState{Cancel: true})

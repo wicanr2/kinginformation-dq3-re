@@ -4954,3 +4954,98 @@ Linux desktop SHA256 `bc3161ff48db37d1fa8260ffa5d4b5f751ff5645ec55c71fdfedb9bd08
 
 正常233返回場景後重開物品清單，觀察「丟掉」的問題、物品交易與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225與木棒使用不重開。 完整原版campaign、音畫、非健康、多持有者與特殊效果保持未知。
 Issue #4與Goal保持進行中；沒有新發行包。全部原版素材、PNG、binary與IDA database只留本機。
+
+## 2026-10-05 正常物品丟掉 DRAFT
+
+Issue #4已登記續行。工具入口 [dosgolem_field_item_drop_probe.py](../tools/dosgolem_field_item_drop_probe.py)；沿用固定dosgolem2f44a68、唯讀原始EXE與單次seed1357，從新遊戲以正常按鍵重播233前綴，再丟第一件、丟空格後下一件、嘗試丟穿戴物品。來源須由獨立checker接受才進READY。原版record277含姓名／物品插值及換行，record272為拒絕訊息；目前保留為待審分支。IDA9.4原始定位13ABC..13B0F與15023、18197保留，不改名。第一次241探針已觀察清空物理格0並等待277；完整後續及來源完整性尚待驗證。
+
+### 證據審查與限定 READY
+
+2026-10-05，獨立 [來源 checker](../tools/verify_dosgolem_field_item_drop.py) 接受
+`issue4-item-drop-normal-r3-source-r1-receipt.json`，SHA-256
+`5ca9fce6caff5bd1c1f27b489fba1ef9f687a808374d7fd544e94728d45f1971`。
+新遊戲261包、299次按鍵、598個IRQ1、591份PNG／indexed／持久資料均核對，233前綴507份保持。
+兩側比較固定seed1357；原版執行前設定一次，不重擲，沒有注入或快照恢復。
+原始EXE115282 bytes SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`，
+ITEM896 bytes SHA-256 `7f3142de688ccca50fe888854b59ceb81b406b4c8eec038e719f10fda66e7f5d`，
+D3TXT00 SHA-256 `38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b`。
+IDA9.4主證據 `work/issue4-item-drop-r1-ida.json` SHA-256
+`4b0dd4fd00ea742b47afb8aaa8a51aada748e4158aa76cea1b9d45c54f8412cc`，647筆原始指令，
+IDA linear減EC90為file，DGROUP linear24DD0／file16140。名稱及xref保持。
+
+| 原始定位 | 規則與證據等級 |
+| --- | --- |
+| IDA linear13919、13AD5，`a900e0` | confirmed：正常顯示ordinal跳過00FF空格，reader的SI指向實際word；穿戴801E被E000擋下。0000為有效code0。 |
+| IDA linear13AEB，`a802`；13AF3，`3d0000` | strong：ITEM byte5 bit2或price word為0拒絕；128個record由原始資料核對。正常code0、1通過。其他物品與零價物品的正常路線未驗收。 |
+| IDA linear13AF8，`c704ff00` | confirmed：241清物理格0，250跳過空格後清物理格1；不壓縮。2172-byte持久區只有相應word改成00FF。 |
+| IDA linear13AFF／15023／21414 | confirmed：成功record277一次，FFFB姓名、FFF9物品、FFFE換行；第二行「丟掉了。」。不附加新換行。保留操作前的清單／動作底圖。 |
+| IDA linear13B09／15023／21414 | confirmed：260拒絕穿戴物品，record272「這個東西不能丟。」；八格、旗標、金錢、位置不變。 |
+| IDA linear2111B／21133、15033、18197 | confirmed：241／250／260等新Enter，242／251／261返回field；成功返回後18197 consumer刷新，實際持久值保持。 |
+
+typed契約：`field_items.drop`提供成功／拒絕text ID與具名姓名／物品變數；共用原生訊息框的
+DGROUP3E6E、record404、陰影及文字步距，不增Go座標或raw ID。
+`item_storage.items[].drop_has_value`為必填bool，從ITEM price word非零取得；與既有drop_forbidden分開，開機核對實際archive。
+正式入口按下丟掉後先驗證文本、插值容量、原生框及底圖；成功只清entry.Position，拒絕不交易，
+兩者進新按鍵等待，再關閉面板返回field。單一有序Store與save_version2保持。
+驗收必須走新遊戲到261、逐包比較八格和其餘持久snapshot、完整畫布、正常F5／F6及下一步；
+另驗證提前按鍵不消失訊息、失敗不消耗、缺metadata／非法控制碼拒絕，原始EXE／ITEM／TXT parity。
+原版健康單人三個分支已達READY；死亡、非健康、多持有者、音訊與動畫時鐘保持unknown，
+不以此宣稱完整campaign、V3或全128物品E3。素材及私有收據不入Git。
+
+驗證工具入口：[verify_dq3_item_drop_raster.py](../tools/verify_dq3_item_drop_raster.py) 檢查正式241／250／260完整640×350畫布、源PNG／indexed、remake PNG hash、正常261及F5／F6收據，並以原始MST／MAN BLS、BLK及CTY逐像素核對英雄與NPC14完整區域。任何區域外差異都拒絕；不裁切、不遮罩、不調相位，完整V3與動畫時鐘仍未知。
+
+## 2026-10-05 正常丟掉限定 CONFORMED
+
+上述READY已接正式玩家入口。正常新遊戲到261，兩件成功丟掉、空格後下一件選取、穿戴拒絕、
+原始277／272、姓名／物品插值及新Enter返回均通過。2172bytes只有兩個物理word清空，
+其餘snapshot及remake RNG保持；正式F5／F6及下一步通過。訊息底圖來自實際前一操作畫布，不序列化。
+schema0.24.0／content0.1.96，canonical44ce09cb；原版code0、完整word與A存檔契約保持。
+
+| 正式結果畫面 | 全640×350 RGB差 | 原始完整圖塊核對 |
+| --- | ---: | --- |
+| 241成功第一件 | 122 | 英雄MST6／7，BLK tile4；NPC14 MAN201／201相同 |
+| 250空格後第二件 | 106 | NPC14 MAN201／200，BLK tile4；英雄MST6／6相同 |
+| 260穿戴拒絕 | 122 | 英雄MST6／7，BLK tile4；NPC14 MAN201／201相同 |
+
+三張完整PNG已目視核對；逐像素比對包含透明像素及完整32×24底圖。
+其餘畫布一致，未解釋差異0。沒有裁切、遮罩、替圖或改相位；窗口與文字V2，完整V3及動畫時鐘未知。
+初版畫布checker沿用232的NPC14-only診斷，241即正確拒絕。
+依實際差異座標及既有英雄consumer證據，加入完整英雄圖塊核對；雙側候選影格均須768像素唯一符合，沒有調產品動畫。
+壞PNG、錯誤動畫聲明及人物區域外加像素三負例均拒絕，重複正對照一致。
+291張舊runtime PNG、新路81張前綴及231..233逐byte保持。
+
+499項game頂層完整覆蓋，448不同頂層／141子PASS、51選用診斷SKIP；
+internal198頂層／427子、12套件PASS、4選用診斷SKIP。11項必驗零SKIP，正常THE END105.14秒、
+go vet及Linux desktop PASS，正式收據oom／oom_kill0。兩份乾淨3dc5b47重建九JSON一致。
+完整game與正常路線同一binary SHA-256 `9fc8bf356f38781e226c2dc57f19225270a47134a296e7ff6844dda9c9941de2`；Linux desktop SHA-256 `22561e266e21285ce891ac685775b1a868389aa360bdceeec25ac0b8db00adfa`。
+原版來源三負例拒絕。原始位址索引新增13AF8／13AFF／13B09三筆confirmed，
+原八筆保持，IDA9.4自動合併11筆，647筆原始bytes／名稱／xref保持。
+`work/issue4-item-drop-r2-ida.json` SHA-256 `12544ad8a1ffe67f6c29afc0dfb2f13b75b8c6032b761fc7bb23359ac5d746a7`。
+
+勘誤：正式selectedItem本已是物理位置，未重現刪錯格，Remove(entry.Position)只明示既有契約。
+元件fixture誤把顯示ordinal當physical index，已改由正式selectPanelItem選取，沒有修改A的語意。
+完整THE END腳本原先將零價鑰匙0x55列為丟掉候選，已依原始13AF3 gate改選允許丟的非關鍵未穿戴物品。
+腳本走自然訊息及新Enter，沒有放寬產品規則或注入state。
+2GiB首輪OOM為資源限制，3GiB乾淨重跑；另兩個含舊腳本的容器中止後清除。失敗收據保留。
+第一次續行probe的Go變數拼錯，在編譯階段失敗，沒有執行原版；正式r3由新遊戲冷啟動一次取得來源。
+來源checker的舊last_record期望及唯讀mount入口錯誤已依資料訂正，沒有放寬來源或重擲seed。
+
+| 本機正式收據 | SHA-256 |
+| --- | --- |
+| `work/dosgolem-opening/issue4-item-drop-normal-r3-source-r1-receipt.json` | `5ca9fce6caff5bd1c1f27b489fba1ef9f687a808374d7fd544e94728d45f1971` |
+| `work/issue4-drop-runtime-r3/game-receipt.json` | `937dc4fe7ab50e4e30840cfa611aeafabcef5464c0c543215a86fe5dd8a6e96e` |
+| `work/issue4-drop-full-r2/game-receipt.json` | `da5ea684321c3cc8901cdbbbbc90961384c3403ff1ea6e92bf71f5b2d391adb0` |
+| `work/issue4-drop-internal-r1.json` | `11b94ee0a9511b56d77dcb565b123a9b95c0f2cbf66eaafbac165a35db1f526a` |
+| `work/issue4-drop-runtime-r3/desktop-receipt.json` | `1ba2be5f51f1e1dba83d496b49fb11715c34a87267f9b3deb81d32b5fce89945` |
+| `work/issue4-drop-runtime-r3/ITEM_DROP/drop-receipt.json` | `89d63cd50cc91cf583eb603922a53020d300f2959b53ac2eb1b0ffa2174d29f3` |
+| `work/issue4-drop-runtime-raster-r1.json` | `714fb6b088bc19239f55b9110d2646be7ee58a6c62655872f7bf7a4ce2d98916` |
+| `work/issue4-drop-raster-checker-tests-r1.json` | `dd0eea3ae0f662c9131b895294487781e1f0dfd1508dd60d4002e568b326d6c6` |
+| `work/issue4-drop-source-negative-r1.json` | `8fd62d9dc4197e82c6a6d7875569a767b1008a632324cccc80f53cc86a007afe` |
+| `work/issue4-drop-png-annotation-audit-r1.json` | `3043b69cfa3f0d4c97c8e6f05dabf6b1f231880c63757c380616cfd450fe9891` |
+| `work/issue4-drop-vet-r1.json` | `1df15010fb677cd1358962cfb2e7384c8eaeba6b97f30ba8ca9ead1f78fb96aa` |
+| `work/issue4-drop-reproduce-r1/receipt.json` | `cbe39858213aafece54a1d7ec034aec5702120ae67367ce01ab8500ba9a5ce25` |
+| `work/issue4-drop-reproduce-r2/receipt.json` | `cbe39858213aafece54a1d7ec034aec5702120ae67367ce01ab8500ba9a5ce25` |
+
+正常261返回場景後開啟狀況命令，核對第一個玩家可見結果與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225、木棒使用與本輪丟掉不重開。
+完整原版campaign、音畫、非健康、多持有者、空物品清單及零價物品正常拒絕路線保持未知。
+Issue #4與Goal仍進行中，沒有新發行包。所有原始素材、PNG、binary及IDA database只留本機。

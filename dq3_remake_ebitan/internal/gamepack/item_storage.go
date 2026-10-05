@@ -21,6 +21,7 @@ type ItemWordMetadata struct {
 	EquipmentPart      *int  `json:"equipment_part"`
 	CursedWhenWorn     *bool `json:"cursed_when_worn"`
 	DropForbidden      *bool `json:"drop_forbidden"`
+	DropHasValue       *bool `json:"drop_has_value"`
 	SingleHeroNoEffect *bool `json:"single_hero_no_effect"`
 }
 
@@ -60,7 +61,7 @@ func (p *Pack) itemWordContract() (itemstore.Encoding, []itemstore.Metadata, err
 	}
 	metadata := make([]itemstore.Metadata, len(s.Items))
 	for code, item := range s.Items {
-		if item.EquipmentPart == nil || item.CursedWhenWorn == nil || item.DropForbidden == nil || item.SingleHeroNoEffect == nil {
+		if item.EquipmentPart == nil || item.CursedWhenWorn == nil || item.DropForbidden == nil || item.DropHasValue == nil || item.SingleHeroNoEffect == nil {
 			return itemstore.Encoding{}, nil, fmt.Errorf("item_storage.items[%d] requires all metadata fields", code)
 		}
 		metadata[code] = itemstore.Metadata{Part: *item.EquipmentPart, CursedWhenWorn: *item.CursedWhenWorn}
@@ -102,7 +103,7 @@ func (p *Pack) ValidateItemStorageAgainstItems(items *dq3data.Items) error {
 		return fmt.Errorf("item_storage metadata does not match actual item archive shape/count")
 	}
 	for code, item := range metadata {
-		if item.Part != items.EquipSlot(code) || item.CursedWhenWorn != items.CursedWhenEquipped(code) || *p.Characters.ItemStorage.Items[code].DropForbidden != items.DropForbidden(code) || *p.Characters.ItemStorage.Items[code].SingleHeroNoEffect != items.SingleHeroNoEffect(code) {
+		if item.Part != items.EquipSlot(code) || item.CursedWhenWorn != items.CursedWhenEquipped(code) || *p.Characters.ItemStorage.Items[code].DropForbidden != items.DropForbidden(code) || *p.Characters.ItemStorage.Items[code].DropHasValue != (items.Price(code) != 0) || *p.Characters.ItemStorage.Items[code].SingleHeroNoEffect != items.SingleHeroNoEffect(code) {
 			return fmt.Errorf("item_storage metadata differs from original item record %d", code)
 		}
 	}

@@ -12,7 +12,7 @@ func validateFieldItemSources(assets fs.FS, p *gamepack.Pack, tx *dq3data.Text) 
 	if s == nil || tx == nil {
 		return fmt.Errorf("field item sources missing")
 	}
-	for _, id := range []string{s.TextIDs.Header, s.TextIDs.Row, s.TextIDs.Footer, s.TextIDs.Actions, s.TextIDs.GivePrompt, s.GivePresentation.FrameTextID, s.UseNoEffect.IntroTextID, s.UseNoEffect.ResultTextID} {
+	for _, id := range []string{s.TextIDs.Header, s.TextIDs.Row, s.TextIDs.Footer, s.TextIDs.Actions, s.TextIDs.GivePrompt, s.GivePresentation.FrameTextID, s.UseNoEffect.IntroTextID, s.UseNoEffect.ResultTextID, s.Drop.SuccessTextID, s.Drop.BlockedTextID} {
 		d, ok := p.TextDefinition(id)
 		if !ok || d.Source.Record == nil {
 			return fmt.Errorf("item text reference missing")
@@ -191,6 +191,64 @@ func (g *Game) beginSingleHeroNoEffect() bool {
 	d.preludeFrame, d.shadow = frame, &p.Shadow
 	// The normal action frame remains visible below both original records.
 	g.itemGivePrompt = &fieldItemPromptState{background: append([]byte(nil), g.rgba...), dialogue: d}
+	g.panel, g.cmd.open = panelNone, false
+	g.itemActionStage = itemActionGiveWait
+	return true
+}
+
+func (g *Game) beginSingleHeroDrop() bool {
+	entry, valid := g.selectedItemEntry()
+	if !valid || g.pack == nil || g.panelActor != 0 || len(g.companions) != 0 || g.heroHP <= 0 || g.heroConditions != 0 {
+		return false
+	}
+	s := g.pack.Interface.FieldItems
+	if s == nil || s.Drop == nil || s.GivePresentation == nil || len(g.rgba) != ScreenW*ScreenH*4 {
+		return false
+	}
+	u, p := s.Drop, s.GivePresentation
+	allowed := g.pack.ItemDropAllowed(entry)
+	id := u.BlockedTextID
+	if allowed {
+		id = u.SuccessTextID
+	}
+	codes, a := g.pack.TextGlyphCodes(id)
+	frame, b := g.pack.TextGlyphCodes(p.FrameTextID)
+	if !a || !b {
+		return false
+	}
+	d := Dialogue{tx: g.cmd.tx, layout: p.Window}
+	if !d.openRecord(codes) {
+		return false
+	}
+	if allowed {
+		actor, item := g.equipActorName(g.panelActor), itemNameGlyphs(g.shop.nameText, entry.Code)
+		if len(actor) == 0 || len(item) == 0 {
+			return false
+		}
+		d.varGlyph = map[uint16][]int{uint16(*u.ActorVariableCode): append([]int(nil), actor...), uint16(*u.ItemVariableCode): append([]int(nil), item...)}
+	}
+	// Validate expansion before the transaction; original newlines are retained.
+	line, rows := 0, 1
+	for _, code := range codes {
+		if code == dq3data.TxtNL {
+			line = 0
+			rows++
+		} else if dq3data.IsVarInsert(code) {
+			line += len(d.varGlyphs(code))
+		} else {
+			line++
+		}
+		if rows > p.Window.LinesPerPage || p.Window.TextInsetY+rows*dq3data.GlyphPx > p.Window.Height || (line > 0 && p.Window.TextInsetX+(line-1)*p.GlyphStepX+dq3data.GlyphPx > p.Window.Width) {
+			return false
+		}
+	}
+	d.prelude = &gamepack.OpeningPrelude{Window: p.Window, GlyphStepX: p.GlyphStepX, VariableCodeWords: p.VariableCodeWords, ReturnMode: "confirm", ForegroundRGB: p.ForegroundRGB, BackdropRGB: p.BackdropRGB}
+	d.preludeFrame, d.shadow = frame, &p.Shadow
+	background := append([]byte(nil), g.rgba...)
+	if allowed && !g.dropSelectedItem() {
+		return false
+	}
+	g.itemGivePrompt = &fieldItemPromptState{background: background, dialogue: d}
 	g.panel, g.cmd.open = panelNone, false
 	g.itemActionStage = itemActionGiveWait
 	return true

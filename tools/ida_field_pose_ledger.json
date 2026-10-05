@@ -131,6 +131,54 @@
       "consumer": "1372F→13829→1F4E3→13942→13C6D→13D2A..13D42→21414→2111B→1F604；限正常231..233",
       "review_reference": "docs/188：2026-10-05 木棒使用的有限READY與code0勘誤",
       "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-item-use-normal-r2-source-r1-receipt.json SHA256c11efcbdb9ff928af1d3a9c8d31c7703b5a0b4c9ded3cc55cc0949b9cf2173ee"
+    },
+    {
+      "ida_linear": "0x13af8",
+      "file_offset": "0x4e68",
+      "bytes": "c704ff00",
+      "original_name": "",
+      "original_function": null,
+      "semantic": "正常241／250只將實際SI所指物理格0／1清為00FF，不壓縮",
+      "inference_level": "confirmed",
+      "consumer": "13ABC→13919→13AF8→13AFF／15023→21414／21133→13B02／18197",
+      "review_reference": "docs/188：2026-10-05 正常261物品丟掉限定READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-item-drop-normal-r3-source-r1-receipt.json SHA2565ca9fce6caff5bd1c1f27b489fba1ef9f687a808374d7fd544e94728d45f1971",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x13aff",
+      "file_offset": "0x4e6f",
+      "bytes": "e82115",
+      "original_name": "",
+      "original_function": null,
+      "semantic": "正常成功丟掉呼叫15023，record277保留父畫面並等新按鍵",
+      "inference_level": "confirmed",
+      "consumer": "13AFC DI0115→15023→21414→21133；241／250及242／251field",
+      "review_reference": "docs/188：2026-10-05 正常261物品丟掉限定READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-item-drop-normal-r3-source-r1-receipt.json SHA2565ca9fce6caff5bd1c1f27b489fba1ef9f687a808374d7fd544e94728d45f1971",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x13b09",
+      "file_offset": "0x4e79",
+      "bytes": "bf1001",
+      "original_name": "loc_13B09",
+      "original_function": null,
+      "semantic": "正常穿戴801E以E000 gate拒絕，DI0110原生record272；不交易",
+      "inference_level": "confirmed",
+      "consumer": "13AD5→13B09／15023→21414／21133；260→261field",
+      "review_reference": "docs/188：2026-10-05 正常261物品丟掉限定READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/dosgolem-opening/issue4-item-drop-normal-r3-source-r1-receipt.json SHA2565ca9fce6caff5bd1c1f27b489fba1ef9f687a808374d7fd544e94728d45f1971",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
     }
   ]
 }

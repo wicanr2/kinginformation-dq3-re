@@ -145,6 +145,7 @@ func TestItemStorageRejectsMissingMalformedAndAmbiguousDefaults(t *testing.T) {
 		{"missing_drop_mask", func(p *Pack) { p.Characters.ItemStorage.DropBlockedMask = nil }},
 		{"drop_identity_overlap", func(p *Pack) { *p.Characters.ItemStorage.DropBlockedMask |= 1 }},
 		{"missing_drop_metadata", func(p *Pack) { p.Characters.ItemStorage.Items[0].DropForbidden = nil }},
+		{"missing_drop_value", func(p *Pack) { p.Characters.ItemStorage.Items[0].DropHasValue = nil }},
 		{"missing_no_effect_metadata", func(p *Pack) { p.Characters.ItemStorage.Items[0].SingleHeroNoEffect = nil }},
 		{"empty_is_valid_item", func(p *Pack) { *p.Characters.ItemStorage.Encoding.Empty = 0 }},
 		{"out_of_word_range", func(p *Pack) { *p.Characters.ItemStorage.Encoding.Empty = 65536 }},

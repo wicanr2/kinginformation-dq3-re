@@ -1761,3 +1761,17 @@ F6 完整畫面差45109已降0。F5 的194、196、197及F6的200均完整RGB零
 - 新25張完整PNG與44張前綴留本機；57張既有指令窗PNG及44張新路線前綴逐byte保持。公開核對器由docs/188索引，重驗原版462份產物、runtime收據與PNG hashes，核對全畫布及原始CTY／BLS／BLK。兩種損壞輸入在指定檢查點拒絕，之後完整正對照逐byte相同。
 - 首輪修正後將RGB0當功能gate的測試假定已依原始圖塊診斷分級勘誤；r2讀檔後行走過早失敗，依既有cooldown與field save測試補自然閒置輸入。正式產品兩次訂正均保持，歷史收據不覆寫。
 - schema0.20.0／content0.1.92／canonical0839ecc9保持，沒有新包。使用者13項資料、原始素材及root基線由最終收據核對；提交／推送、Issue讀回與Docker清理記錄於收尾收據。
+
+## 2026-10-05 正常物品丟掉：原生結果、穿戴拒絕與零價gate
+
+2026-10-05 正常單人物品丟掉已限定驗收：成功只清所選物理word、保留空格及其他順序；顯示原始277姓名／物品與兩行結果。穿戴801E拒絕並顯示272，不消耗。兩者保留實際操作底圖，等新Enter返回場景。ITEM零價拒絕gate已補齊；A單一Store、storage_version1與save_version2保持。schema0.24.0／content0.1.96，canonical44ce09cb。
+
+dosgolem正常261包、299輸入、598IRQ1、591產物接受，233前綴507份保持；seed1357執行前固定一次，無注入／restore。完整2172bytes只交易物理格0／1。正常231..261、正式F5／F6及下一步通過，RNG保持。241／260全640×350差122由英雄完整MST6／7解釋；250差106由NPC14完整MAN201／200解釋。未解釋差異0，沒有遮罩、裁切或改相位，窗口／文字V2；動畫時鐘及完整V3仍未知。291張舊runtime PNG、新路81張前綴及231..233保持。
+
+完整game499頂層清單覆蓋，448不同頂層／141子PASS、51選用診斷SKIP；internal198頂層／427子、12套件PASS、4選用診斷SKIP。11項必驗零SKIP；正常THE END105.14秒、go vet及Linux desktop PASS，正式收據OOM0。九JSON兩份乾淨3dc5b47重建一致，兩類checker各三負例拒絕。沒有新包，完整原版campaign、音畫與未測分支保持未知。正常261返回場景後開啟狀況命令，核對第一個玩家可見結果與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225、木棒使用與本輪丟掉不重開。 Issue／Goal保持進行中，唯一現況表在CONTEXT。
+
+Issue #4登記本輪與中途結果，原版來源／限定READY／CONFORMED及完整收據集中docs/188。失敗與訂正：2GiB測試OOM、Go觀察工具變數拼錯、checker的last_record及mount錯誤、元件physical index夾具與THE END零價鑰匙舊策略，均保留私有收據；沒有重擲或改原版。原先刪錯格假說未重現，正式A選取已是物理位置。两個受舊腳本影響的測試容器明确中止後清除，最終正常／完整回歸同binary，無OOM。
+
+game binary `9fc8bf356f38781e226c2dc57f19225270a47134a296e7ff6844dda9c9941de2`；desktop `22561e266e21285ce891ac685775b1a868389aa360bdceeec25ac0b8db00adfa`。來源三負例及畫布三負例拒絕；291舊PNG、81新前綴及231..233保持，九JSON兩次重建一致。IDA647指令及原八筆annotation保持，新三筆自動合併。
+
+正常261返回場景後開啟狀況命令，核對第一個玩家可見結果與返回。先取得dosgolem原版證據，再依RE→READY修正；已閉合的A、225、木棒使用與本輪丟掉不重開。完整原版campaign與動畫時鐘未知，不宣稱整款完成。依既有授權commit並push，確切SHA與遠端結果由Issue #4結果留言及git log核對；本輪沒有發行包。Docker／root-owned及保護檔案收尾見本批衛生收據，未清理其他專案。

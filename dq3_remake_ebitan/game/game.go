@@ -1294,7 +1294,11 @@ func (g *Game) step(in InputState) error {
 						g.itemActionStage, g.itemActionCursor = itemActionTarget, 0
 					}
 				case confirm && g.itemActionCursor == 2:
-					g.dropSelectedItem()
+					if g.panelActor == 0 && len(g.companions) == 0 && g.heroHP > 0 && g.heroConditions == 0 {
+						g.beginSingleHeroDrop()
+					} else {
+						g.dropSelectedItem()
+					}
 				case in.DirEdge == 0:
 					g.itemActionCursor = (g.itemActionCursor + 1) % 3
 				case in.DirEdge == 1:

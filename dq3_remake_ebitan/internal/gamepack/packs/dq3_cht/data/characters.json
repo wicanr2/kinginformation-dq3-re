@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.23.0",
+  "schema_version": "0.24.0",
   "default_refs": {
     "new_game_player": "dq3:character.new_game_hero",
     "registered_party_member": "dq3:character.registered_member"
@@ -294,642 +294,642 @@
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 0,
-        "cursed_when_worn": true,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 0,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": true,
-        "drop_forbidden": true, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 3,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 3,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 3,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 3,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 3,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 3,
-        "cursed_when_worn": true,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 3,
-        "cursed_when_worn": true,
-        "drop_forbidden": true, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 2,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 2,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 2,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 2,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 2,
-        "cursed_when_worn": true,
-        "drop_forbidden": true, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 2,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": 2,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
-      },
-      {
-        "equipment_part": 3,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
-      },
-      {
-        "equipment_part": -1,
-        "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": 0,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": true,
+        "drop_forbidden": true, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": true,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": true,
+        "drop_forbidden": true, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": true,
+        "drop_forbidden": true, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 2,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": true
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
       },
       {
         "equipment_part": -1,
         "cursed_when_worn": false,
-        "drop_forbidden": false, "single_hero_no_effect": false
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": 3,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": 0,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": true, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": true
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
+      },
+      {
+        "equipment_part": -1,
+        "cursed_when_worn": false,
+        "drop_forbidden": false, "drop_has_value": false, "single_hero_no_effect": false
       }
     ],
     "evidence": {

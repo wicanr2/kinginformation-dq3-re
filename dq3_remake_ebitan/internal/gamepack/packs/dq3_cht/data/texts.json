@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.23.0",
+  "schema_version": "0.24.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -7472,6 +7472,74 @@
         "consumer": "healthy sole primary hero: native use introduction -> no-effect result -> fresh key -> field",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "正常木棒使用動態confirmed；全128項metadata逐record核對不等於每件玩家路線。非健康、多持有者、特殊效果與拒絕gate未由本切片驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.field.items.drop_success",
+      "value": "{actor}把{item}丟掉了。",
+      "glyph_codes": [
+        65531,
+        530,
+        65529,
+        65534,
+        557,
+        560,
+        423,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 277
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; ITEM.DAT; dosgolem2f44a68 normal261 source5ca9fce6",
+        "address_space": "linear",
+        "address": "IDA9.4 13ABC..13B0F;13919;15023;21414;21133;18197",
+        "consumer": "healthy sole hero: drop physical item -> native result or worn rejection -> fresh key -> field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常兩次成功及穿戴拒絕confirmed；空格不壓縮。其他metadata及零價gate為原始資料D2／strong，不外推所有物品玩家流程。"
+      }
+    },
+    {
+      "id": "dq3:text.field.items.drop_blocked",
+      "value": "這個東西不能丟。",
+      "glyph_codes": [
+        398,
+        546,
+        539,
+        380,
+        228,
+        408,
+        557,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 272
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; ITEM.DAT; dosgolem2f44a68 normal261 source5ca9fce6",
+        "address_space": "linear",
+        "address": "IDA9.4 13ABC..13B0F;13919;15023;21414;21133;18197",
+        "consumer": "healthy sole hero: drop physical item -> native result or worn rejection -> fresh key -> field",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "正常兩次成功及穿戴拒絕confirmed；空格不壓縮。其他metadata及零價gate為原始資料D2／strong，不外推所有物品玩家流程。"
       }
     }
   ]
