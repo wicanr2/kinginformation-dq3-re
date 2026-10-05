@@ -1865,3 +1865,13 @@ DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-on
 - 新增三個公開重生工具，更新CONTEXT唯一狀態表、PROJECT_MEMORY、docs/74與docs/188；正式Go、schema0.29.0/content0.1.101、save2/storage1保持，沒有新image或交付包。
 - final audit efd326f4：來源、首個RED、公開正負例、IDA、所有者及root-owned3213／零.md目錄核對。十三項使用者檔案保留；本輪一次性Docker與Xvfb已終了，提交與推送的具體SHA由Issue結果留言記錄。
 - 下一閘門仍DRAFT：列表篩選／physical slot、窗口dynamic consumer、攻擊／防禦及穿戴writer先閉合，再審READY並修正正式裝備流程；Issue／Goal保持進行中。
+
+### 2026-10-06 正常339單人裝備穿戴／卸下限定修正
+
+- 原版固定1357一次正常339，377鍵／754IRQ／825產物，父314保持；IDA9.4原始單人入口、物理候選、四槽窗口及writer-consumer達有限READY。
+- 正式入口直接選主角，完整候選保留物理格、重複及已穿戴，末列卸下只清旗標。原生順序與版面、文字、資格進pack；schema0.30.0/content0.1.102，A八格、save2/storage1保持。
+- 35步完整word、snapshot、RNG與返回能力通過，卸下後F5／F6及下一步通過；20張完整RGB0，15張仍有動畫餘差。原版完整campaign與所有動畫未知，沒有新包。
+- 完整game511頂層覆蓋、460不同頂層／141子PASS、51原有選用診斷SKIP，515次執行／605 PASS記錄；internal210頂層／504子、12套件PASS、4原有選用診斷SKIP。七項指定路線零SKIP，正式THE END107.10秒、vet與Linux desktop PASS，OOM0。2131張舊PNG逐byte保持，2321張本輪PNG；九JSON從乾淨d830251重建一致，公開checker正例／三負例通過。IDA390列原始定位，335舊列及468候選保持；沒有新包。
+- 元件編譯、文字控制碼解析及IDA稽核暫存路徑失敗已保留docs/188勘誤，後續同工具鏈重跑通過；沒有修改接受來源或挑選亂數。
+- 原始檔hash、UID/GID1000、root-owned3213與零.md目錄保持。先前逾時掃描容器已明確停止，完整回歸Xvfb及一次性容器終了；十三項使用者資料保持。提交／推送SHA與全部遠端結果由Issue #4記錄。
+- 下一正常來源從339穿戴另一件甲胄，再核對狀況與穿戴後存讀檔；Issue／Goal持續。

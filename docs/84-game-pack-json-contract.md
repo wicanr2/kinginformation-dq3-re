@@ -1,5 +1,27 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 單人裝備四槽（schema0.30.0／content0.1.102）
+
+`interface.field_equipment`必填。原版正常339來源與有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:14b0c168a118eeda60fad96201e0ff9374a47ffd604a7b8ed996b54ef73c3351`。A單一有序物品格、save_version2及storage_version1保持；舊schema或不同pack hash的存檔拒絕。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `scope` | `healthy_single_owner_eligible_uncursed`。限定健康單人、無詛咒且所有裝備候選符合資格。其他分支沿用既有流程，不由本切片驗收。 |
+| `parts` | 完整部位排列，順序由pack提供；每列含`part`及D3 `header_text_id`。本版依原始類別映射為武器、甲胄、頭盔、盾牌。重複、缺部位或未知引用拒絕。 |
+| `raw_window`、`preview_window` | 原始DGROUP40DC／40FA窗口，X及寬使用EGA byte座標，Y及高使用像素。清單高度依候選數、`frame_rows`、`row_step`產生；預覽緊接清單。 |
+| `row_text_id`、`footer_text_id`、`none_text_id`、`preview_text_id` | D3原始文字引用，保留字模及原始換行。末列「什麼都沒有」卸下當前部位。選末列或無候選時不顯示預覽。 |
+| `frame_rows`、`row_step`、`name`、`cursor`、`worn` | 原生consumer導出的外框行數、列距及三個像素錨點。容量、文字及錨點超出畫布時拒絕。 |
+| `cursor_glyph`、`worn_glyph` | 原始游標與已穿戴標記。候選由完整Store Entries產生，保留物理格、重複及已穿戴word。 |
+| `attack`、`defense` | 預覽數字欄。X為像素座標，Y相對預覽窗頂端，`digits`為右對齊容量。數字取所選ITEM攻／防，不加角色基礎能力。 |
+| `eligibility` | 與實際ITEM archive一一對應。`classes`取原始職業mask，`required_gender`為原始性別限制，-1表示不限。引用須存在於pack角色sprite契約。 |
+| `evidence` | D3，保存EXE／ITEM身分、原始地址基準、writer-consumer及正常339來源。 |
+
+確認穿戴沿用Store.Wear；卸下使用Store.UnwearPart，僅清當前部位的穿戴旗標，保留物品、空格及其他旗標。詛咒卸下拒絕整個交易。四槽Esc保留當前裝備並進下一槽，結束後返回場景。角色能力由基礎能力及Worn視圖產生，原版暫態cached能力不寫入基礎存檔。裝備面板不入存檔，Load清除。
+
+實作入口：[typed契約](../dq3_remake_ebitan/internal/gamepack/field_equipment.go)、[EXE／ITEM與壞契約測試](../dq3_remake_ebitan/internal/gamepack/field_equipment_test.go)、[正式玩家流程](../dq3_remake_ebitan/game/field_equipment.go)、[正常新遊戲對拍](../dq3_remake_ebitan/game/field_equipment_test.go)、[既有304步前綴](../dq3_remake_ebitan/game/field_equipment_prefix_test.go)、[通用卸下交易](../dq3_remake_ebitan/internal/itemstore/store.go)、[卸下原子性測試](../dq3_remake_ebitan/internal/itemstore/unwear_test.go)。
+
+重建使用[tools/migrate_field_equipment_pack.py](../tools/migrate_field_equipment_pack.py)，在既有`dq3-ebiten-test:20260822-r1`一次性容器內傳入可寫pack及唯讀原版素材目錄。輸入須為schema0.29.0／content0.1.101且九份JSON完整；EXE、TXT及ITEM雜湊不符即拒絕。
+
 ## 單人空咒文入口（schema0.29.0／content0.1.101）
 
 `interface.field_spell_entry`必填。限定READY與正常304來源見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:0e9d617d81a32cd6569003110301a54354cae910d000b56c6a3cf26371023934`；save_version2與storage_version1保持，舊schema及不同pack hash存檔依既有規則拒絕。

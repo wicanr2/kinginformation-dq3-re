@@ -227,6 +227,27 @@ func (s *Store) Wear(position int) bool {
 	return true
 }
 
+// UnwearPart clears only wear flags. Physical slots and opaque flags survive.
+// A cursed worn item rejects the entire transaction before any word changes.
+func (s *Store) UnwearPart(part int) bool {
+	if s == nil || !s.valid() || part < 0 || part >= s.encoding.PartCount {
+		return false
+	}
+	for _, entry := range s.Worn() {
+		if entry.Part == part && entry.Word&s.encoding.CurseMask != 0 {
+			return false
+		}
+	}
+	words := s.Words()
+	for _, entry := range s.Entries() {
+		if entry.Part == part {
+			words[entry.Position] &^= s.encoding.WornMask
+		}
+	}
+	s.words = words
+	return true
+}
+
 // RemoveCursed removes all matching words, including unworn words. Church
 // confirmation, fee and one-time payment remain an external transaction.
 func (s *Store) RemoveCursed() int {

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.29.0",
+  "schema_version": "0.30.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -4397,6 +4397,1349 @@
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "正常兩次成功及穿戴拒絕confirmed；空格不壓縮。其他metadata及零價gate為原始資料D2／strong，不外推所有物品玩家流程。"
       }
+    }
+  },
+  "field_equipment": {
+    "scope": "healthy_single_owner_eligible_uncursed",
+    "parts": [
+      {
+        "part": 0,
+        "header_text_id": "dq3:text.field.equipment.425"
+      },
+      {
+        "part": 1,
+        "header_text_id": "dq3:text.field.equipment.426"
+      },
+      {
+        "part": 3,
+        "header_text_id": "dq3:text.field.equipment.427"
+      },
+      {
+        "part": 2,
+        "header_text_id": "dq3:text.field.equipment.428"
+      }
+    ],
+    "raw_window": {
+      "id": "dq3:raw_window.field_equipment.list",
+      "flags": 3,
+      "x": 43,
+      "y": 30,
+      "width": 20,
+      "height": 160,
+      "address": "DGROUP40DC/file1A21C"
+    },
+    "preview_window": {
+      "id": "dq3:raw_window.field_equipment.preview",
+      "flags": 1,
+      "x": 43,
+      "y": 110,
+      "width": 20,
+      "height": 64,
+      "address": "DGROUP40FA/file1A23A"
+    },
+    "row_text_id": "dq3:text.field.equipment.430",
+    "footer_text_id": "dq3:text.field.equipment.431",
+    "none_text_id": "dq3:text.field.equipment.271",
+    "preview_text_id": "dq3:text.field.equipment.413",
+    "frame_rows": 3,
+    "row_step": 16,
+    "name": {
+      "x": 376,
+      "y": 46
+    },
+    "cursor": {
+      "x": 360,
+      "y": 46
+    },
+    "worn": {
+      "x": 344,
+      "y": 46
+    },
+    "cursor_glyph": 11,
+    "worn_glyph": 10,
+    "attack": {
+      "x": 408,
+      "y": 16,
+      "digits": 5
+    },
+    "defense": {
+      "x": 408,
+      "y": 32,
+      "digits": 5
+    },
+    "eligibility": [
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          3
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          3
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          5
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          3
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1,
+          2,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          4
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          6,
+          7
+        ],
+        "required_gender": 1
+      },
+      {
+        "classes": [
+          2,
+          3,
+          4
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          5
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          5
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          5
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          4
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          3,
+          4
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": 1
+      },
+      {
+        "classes": [
+          0
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1,
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          1,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          2,
+          4,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      },
+      {
+        "classes": [],
+        "required_gender": -1
+      }
+    ],
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; ITEM.DAT SHA256 7f3142de688ccca50fe888854b59ceb81b406b4c8eec038e719f10fda66e7f5d; dosgolem2f44a68 normal339 source 721d93f6de2123f03ad82ce991185f7329fa918898c1b1cfbf25d2870f3cf414",
+      "address_space": "linear",
+      "address": "IDA9.4 17E12..18301; DGROUP40DC/file1A21C;DGROUP40FA/file1A23A",
+      "consumer": "single actor -> four category lists -> physical word writer -> cached stats -> field1997C",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "confirmed限定健康單人、無詛咒且候選符合資格；其他分支未驗收。"
     }
   },
   "field_spell_entry": {

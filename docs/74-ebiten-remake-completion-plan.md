@@ -1,9 +1,9 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-06 健康單人未學咒文入口已依原版修正：直接顯示TXT00/262人物名稱與訊息，保留命令窗，等新按鍵後返回場景。299..304六張完整640×350 RGB0，八格、MP、旗標及RNG保持；正式F5／F6依已審存檔點與Load時鐘交易，讀檔後下一步通過。
-> dosgolem正常304來源c0967028，342鍵／684IRQ／720產物；父298前綴702產物保持，seed1357一次、無注入／restore／重擲。schema0.29.0／content0.1.101，canonical0e9d617d，save_version2／storage_version1保持。
-> 完整game509頂層覆蓋、458不同頂層／141子PASS、51原有選用診斷SKIP，513次執行／603 PASS記錄；internal206頂層／489子、12套件PASS、4原有選用診斷SKIP。五項指定路線零SKIP，正式THE END65.99秒、vet與Linux desktop PASS，OOM0。前輪1976張PNG、510列IDA原始定位與17筆舊annotation保持，追加18869及1C9E7有限confirmed；九JSON由317014c乾淨重建一致，公開來源checker正例與三負例通過。
-> 下一切片為正常單人裝備，仍DRAFT：314原版來源234fc67e、352鍵／704IRQ／750產物接受，父304的720產物保持。單人直接進武器窗，四次Esc依次跳槽後返回，持久資料除313左移保持；remake308仍錯開選人窗，完整差39570。正式Go與pack保持cc33808。先閉合列表篩選、版面與穿戴交易再審READY；其他施法、多人、動畫時鐘與完整原版campaign仍未知。唯一目前狀態表CONTEXT，證據docs/188，Issue／Goal進行中。
+> 2026-10-06 健康、無詛咒且候選符合資格的單人裝備已依正常339來源修正：自選主角、完整物理候選、已穿戴與重複列、四槽原生窗、ITEM攻／防預覽、穿戴及末列卸下、Esc逐槽保持。35步八格／snapshot／RNG及返回能力、卸下後F5／F6與下一步通過。
+> 305..312、315..325與338共20張完整640×350 RGB0，308差39570降0；其餘15張仍差122..356，完整動畫時鐘及全部畫布V3未知。schema0.30.0/content0.1.102，canonical14b0c168，A八格與save2/storage1保持。
+> 完整game511頂層覆蓋、460不同頂層／141子PASS、51原有選用診斷SKIP，515次執行／605 PASS記錄；internal210頂層／504子、12套件PASS、4原有選用診斷SKIP。七項指定路線零SKIP，正式THE END107.10秒、vet與Linux desktop PASS，OOM0。2131張舊PNG逐byte保持，2321張本輪PNG；九JSON從乾淨d830251重建一致，公開checker正例／三負例通過。IDA390列原始定位，335舊列及468候選保持；沒有新包。
+> 下一切片從正常339再穿戴另一件甲胄，核對物理格、狀況與穿戴後存讀檔。其他條件、詛咒、多人與完整原版campaign保持未知；Issue／Goal進行中。唯一現況表CONTEXT、證據docs/188、契約docs/84。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

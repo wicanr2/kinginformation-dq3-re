@@ -5442,3 +5442,65 @@ checker由`work/issue4-equip-entry-check-prepare-r1.py`生成。r1誤要求INPUT
 `work/issue4-equip-entry-final-audit-r1.py`及同名.json核對750產物來源、首次39570 RED、公開正負例、IDA335函式指令與468候選decode、原始EXE、工具所有者與root-owned3213／零.md目錄基線；收據SHA `efd326f4ddc7ca5759721041a907969db68a7666e389bd3cb6506ea845e62757`。正式Go與九JSON未修改，本輪只提交三個重生／驗證／IDA工具及五個既有進度文件；目前HEAD的工具證據與現行產品checkpoint分開記錄。
 
 遠端核對入口為`work/issue4-equip-entry-remote-before-r1.json`、`work/issue4-equip-entry-issue-finalize-r1.py`、同名前綴result-comment-r1.md／body-r1.md、`work/issue4-equip-entry-remote-after-r1.json`及`work/issue4-equip-entry-handshake-r1.json`。更新前後保留全部既有留言與歷史正文，公開Issue不含原版影像或素材。收尾容器與遠端head核對後，下一輪仍接上述DRAFT閘門。
+
+### 2026-10-06 正常穿戴／卸下339來源與有限READY
+
+Issue入口為[本輪裝備交易留言](https://github.com/wicanr2/kinginformation-dq3-re/issues/4#issuecomment-5999817229)。`work/issue4-equip-wear-probe-r1.py`由新遊戲正常314延伸至339，377鍵／754IRQ／825產物；`work/issue4-equip-wear-check-r1.py`接受來源`work/dosgolem-opening/issue4-equip-wear-normal-r1-source-r1-receipt.json` SHA `721d93f6de2123f03ad82ce991185f7329fa918898c1b1cfbf25d2870f3cf414`。父314的750產物及全部事件保持，seed1357一次，無restore／狀態注入／後段檔案writer，原版未實作服務0種。
+
+IDA9.4 `work/issue4-equip-wear-ida-export-r1.py`／`work/issue4-equip-wear-ida-run-r1.py`輸出`work/issue4-equip-wear-r1-ida.json` SHA `0cafc3d46f8ff68dc6e1169b186a5edfb81b0858861eefafb01be06697d74ebc`，390既有函式指令與468唯讀候選decode。原EXE身份仍115282bytes／5178fdc8，linear-file=EC90，DGROUP linear24DD0／file16140。原始定位、bytes、MZ relocation、xref與null函式身分保持，未rename、patch或新增函式。
+
+| 鏈節 | 原始定位與限定confirmed結果 |
+| --- | --- |
+| 單人與順序 | 17E26寫DGROUP0722=1；17E52／17E57／17E5F／17E64以AL1..4呼叫17ED9。原始ITEM類別映射到引擎parts0／1／3／2，TXT425／426／427／428依次武器／甲胄／頭盔／盾牌 |
+| 清單 | 17EF3..17F45掃完整八word，word&3FFF、空FF拒絕、ITEM+4的高三bit依AL篩選；每列保留原始word與物理格CL，不排除已穿戴。339來源武器physical2／3、甲胄physical4／5／7，含重複31及穿戴801E |
+| 原生窗口 | DGROUP40DC／file1A21C原始20byte寬、X43／Y30、flags3；17F57把count改為候選數+1，17F66高度改為候選數+3行，每行16。header=425..428、row430、footer431。cursorX45／Y46，nameX47／Y46，worn glyph10位於X43 |
+| 能力預覽 | 180F3..18196讀所選ITEM的攻／防欄，不加角色能力。DGROUP40FA／file1A23A為X43、20byte寬、64高、flags1、frame413；Y=30+(候選數+3)*16。數字X=51byte、Y+16／Y+32，沿既有219D2五位數consumer。選末列或無候選時沒有預覽窗 |
+| 穿戴 | 1807B..180B8遍歷同部位候選；所選physical word OR8000，其他同部位清8000，位置、空格與其他word保持。320只有persistent byte407從00→80，銅劍ITEM code3攻10；323確認已穿戴布衣不另改word |
+| 卸下 | 最後「什麼都沒有」TXT271；180CC..180D9對已穿戴指標清8000。333清physical3的8000，335清physical7的8000，不刪物品、不壓縮物理格 |
+| 取消與能力回算 | Esc每槽保持word後續下一槽；四槽結束18197→181B1→18215／1821D回算攻=base8+10=18、守=base4+2=6。325才更新cached attack；337卸完才更新攻8／守4。此cached欄位時點不等同remake即時derived能力的存檔欄位 |
+| 正常返回 | 325、337返回field1997C；326／338左移X2，327／339右移X3，旗標、HP／MP、金錢、其他角色／道具及其餘完整2172bytes保持 |
+
+READY範圍為健康、單一主角、未詛咒且目前裝備候選均符合職業／性別的正常裝備流程：自選主角、完整物理候選、重複列、已穿戴標記、末列卸下、上下繞回、即時ITEM攻／防預覽、四槽Esc／確認、返回及正式存讀檔。相同角色的其他物品、多人、異常、不能裝備、詛咒與特殊裝備副作用仍待獨立玩家路徑oracle，不由此升格parity。既有正式入口保留其可玩能力；新有限狀態機不猜補上述未知分支。
+
+實作契約：新增必填`field_equipment` JSON保存角色範圍、四槽資料、header／row／footer／none／preview文字ID、兩原生窗口、候選行容量、字距、三個錨點、標記字模、preview數字欄及原始ITEM職業／性別資格。schema0.30.0／content0.1.102，A單一八格、save2／storage1保持。Go不新增DQ3 raw ID、坐標、record或文字；`internal/itemstore`新增具名UnwearPart只清所選part的穿戴旗標且詛咒拒絕。pack缺欄位／未知引用失敗即關閉。普通主角路徑及新Store交易都須原始EXE／ITEM parity測試，且讀檔清除暫態裝備選單。
+
+驗收先重播完整正常304→314的取消路線，再315→339穿戴及卸下；逐步核對物理words、snapshot／RNG、完整640×350 PNG、原生返回、F5／F6及Load後下一步。原版cached攻／守只在四槽完成後回算；remake保存基礎能力與word，場景可見derived結果須相同，不能把原始cached欄位誤寫入基礎能力。若畫布仍有動畫差異，保留完整差異且分級，不遮罩、裁切或改相位。
+
+### 2026-10-06 正式裝備實作與完整畫布分級
+
+正式玩家入口使用[game/field_equipment.go](../dq3_remake_ebitan/game/field_equipment.go)及[正常InputState測試](../dq3_remake_ebitan/game/field_equipment_test.go)，完整新遊戲前綴位於[field_equipment_prefix_test.go](../dq3_remake_ebitan/game/field_equipment_prefix_test.go)。[typed契約與嚴格解碼](../dq3_remake_ebitan/internal/gamepack/field_equipment.go)、[EXE／TXT／ITEM parity及15類壞契約](../dq3_remake_ebitan/internal/gamepack/field_equipment_test.go)、[UnwearPart測試](../dq3_remake_ebitan/internal/itemstore/unwear_test.go)及欄位入口[docs/84](84-game-pack-json-contract.md)提供垂直鏈。
+
+首次internal測試的GeometryAnchor位置初始化漏掉既有optional欄位，屬測試編譯問題；改用具名X／Y後同一容器乾淨重跑通過。migration首次以錯誤字模上限540及NL65533拒絕，尚未寫JSON；核對原始TXT271／413及既有parser後改為GlyphMax1476／TxtNL65534，九JSON乾淨重建通過。兩次編輯工具未匹配既有schema宣告的空白，未修改檔案。保留失敗紀錄，不列產品缺陷。
+
+runtime r1如實記錄15張非零完整畫布，測試以全畫布全零要求拒絕；r2依READY已記載的動畫界線及既有正常對拍契約分級，正式畫面與輸入不變。305..312、315..325與338共20張完整640×350 RGB0；308首次39570降0。313／326差356，314／337差229，327..336各122，339差351。這些差異全保留，不能將正常339的35張畫面稱為完整V3。328..336的差異位置均在289..315／180..191的人物區域，窗口一致。沒有裁切、遮罩或調相位。
+
+35步每個完整物理word與原版actor+3A一致，snapshot除原版物品旗標及位置交易保持，RNG不消耗。325返回攻18守6，337卸完攻8守4。F5在339後依已審存檔點交易，F6依LoadClock重設時鐘，卸下後存讀檔及下一步通過。其他條件、詛咒、多角色及完整動畫時鐘保持未知；正常存讀檔樣本位於卸下後，不外推穿戴中的原版存檔。
+
+可公開重生入口：[dosgolem_field_equipment_wear_probe.py](../tools/dosgolem_field_equipment_wear_probe.py)及[verify_dosgolem_field_equipment_wear.py](../tools/verify_dosgolem_field_equipment_wear.py)。producer與已接受私人r1逐byte相同，沿前節readonly快照2f44a68、固定1357一次、3GiB／2CPU／128PID／900秒契約執行，拒絕覆寫issue4-equip-wear-normal-r1。checker在同image、3GiB／1CPU／64PID／120秒核對825產物、754IRQ及完整2172bytes。公開checker正例與已接受來源逐欄一致，只有checker自身hash不同；壞PNG CRC、缺IRQ及改probe三負例拒絕。
+
+[ida_field_equipment_wear_export.py](../tools/ida_field_equipment_wear_export.py)與已接受私人exporter逐byte相同，沿work/issue4-equip-wear-ida-run-r1.py的官方9.4、唯讀原版、一次性database及300秒契約；390原始指令與468候選保持。輸出不包含破壞性rename／patch或新函式。公開producer檔頭的DRAFT保留原接受工具身份，規格狀態以本節及CONTEXT為準。
+
+私人驗證入口：work/issue4-equip-wear-runtime-run-r1.py及-r2.py、issue4-equip-wear-rgb-diagnostic-r1.py、issue4-equip-wear-internal-run-r1.py／-r2.py／-r3.py、issue4-equip-wear-full-run-r1.py、issue4-equip-wear-public-audit-r1.py及issue4-equip-wear-pack-reproduce-r1.py。pack從乾淨d830251重建九JSON逐byte相同。正式Go無版本專屬record／座標／文字fallback，所有者及原始素材完整性於收尾核對。
+
+### 2026-10-06 單人裝備有限CONFORMED
+
+正常穿戴、確認原甲胄、四槽取消、卸下、返回及下一步已閉合E2／E3；指定20張完整畫布V3。其餘15張保留122..356人物餘差，未稱完整339畫布parity。此前progress留言將壞契約數量寫成16，本輪實際15類；使用者訊息曾寫21張零差異，已更正為20。
+
+完整game511頂層覆蓋、460不同頂層／141子PASS、51原有選用診斷SKIP，515次執行／605 PASS記錄；internal210頂層／504子、12套件PASS、4原有選用診斷SKIP。七項指定路線零SKIP，正式THE END107.10秒、vet與Linux desktop PASS，OOM0。2131張舊PNG逐byte保持，2321張本輪PNG；九JSON從乾淨d830251重建一致，公開checker正例／三負例通過。IDA390列原始定位，335舊列及468候選保持；沒有新包。
+
+最終稽核r1因一次性IDA副本路徑不同拒絕，r2另發現candidate沒有source_path，r3的xref內層仍含副本路徑。r4逐層核對source_size／SHA及實際副本路徑後，只正規化暫存路徑再比較全部原始欄位，335舊指令與468候選保持。這些是稽核工具格式問題，沒有改IDA bytes、命名、xref或接受來源。路由已重新核對規格閘門，未放寬證據。
+
+收尾入口為work/issue4-equip-wear-final-audit-r1.py至-r4.py及最後同名.json、issue4-equip-wear-end-proof-r1.json、issue4-equip-wear-doc-finalize-r1.py、issue4-equip-wear-vet-run-r1.py、issue4-equip-wear-ownership-r2.json及issue4-equip-wear-hygiene-note-r1.json。初次Python逐檔掃描逾時後確認自身容器87160944e072並明確停止；容器find重跑通過，root-owned3213與零.md目錄保持。後續一次性工作加--init，結束時核對容器。原版素材及所有私人binary／影像／database不入Git。
+
+| 收據 | SHA-256 |
+| --- | --- |
+| `work/issue4-equip-wear-full-r1/game-receipt.json` | `2aeeb18136f362954b6e1ec19744524c0dde1ce7a7c5ef4e875ebf233ccd02f1` |
+| `work/issue4-equip-wear-internal-r3.json` | `e669503091c5a2fdc4174174b0b64245d3ab284c1013b7254b32c079acca8667` |
+| `work/issue4-equip-wear-vet-r1.json` | `1df15010fb677cd1358962cfb2e7384c8eaeba6b97f30ba8ca9ead1f78fb96aa` |
+| `work/issue4-equip-wear-pack-reproduce-r1.json` | `c1725f2561b31bc5ff31062108bb39f1ac4ccde1538fe80ae40494b4d913862e` |
+| `work/issue4-equip-wear-public-audit-r1.json` | `768c2307c26b88e1c7a189d4f6a7acf7da6b7dfba9605b53c102b5b1a3f01a0b` |
+| `work/issue4-equip-wear-full-r1/item-equipment/equipment-receipt.json` | `dcbb253e91cc4924000c9eaa902f91a01c9377ae9f97c6a482796031ebce291a` |
+| `work/issue4-equip-wear-r1-ida.json` | `0cafc3d46f8ff68dc6e1169b186a5edfb81b0858861eefafb01be06697d74ebc` |
+| `work/issue4-equip-wear-final-audit-r4.json` | `32a09191304667b27bce9edba0d2527cda85b9b4970aae72bf68432a1faf95d1` |
+
+遠端與提交核對入口為work/issue4-equip-wear-precommit-r1.json、issue4-equip-wear-remote-before-r1.json、issue4-equip-wear-issue-finalize-r1.py、issue4-equip-wear-result-comment-r1.md、issue4-equip-wear-body-r1.md、issue4-equip-wear-remote-after-r1.json及issue4-equip-wear-handshake-r1.json。更新保留全部遠端歷史；本輪無新image、交付包或公開原版素材。

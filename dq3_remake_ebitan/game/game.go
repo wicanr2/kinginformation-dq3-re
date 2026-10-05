@@ -342,6 +342,7 @@ type Game struct {
 	itemSelected                   int       // 已選持有者物理格位置
 	itemGivePrompt                 *fieldItemPromptState
 	fieldMessagePrompt             *fieldItemPromptState
+	fieldEquipment                 fieldEquipmentState
 	reclassEventID                 string          // game-pack reclass event；空字串=無進行中的轉職
 	reclassStage                   int             // 達瑪轉職對話／選擇狀態機
 	reclassCursor                  int             // Yes/No、隊員或職業選單游標
@@ -603,6 +604,8 @@ func (g *Game) selectCommand(cmd int) {
 		g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
 	case cmdEquip: // 裝備
 		g.panel, g.panelCursor, g.panelActor = panelEquip, 0, -1
+		g.fieldEquipment = fieldEquipmentState{}
+		g.beginNativeEquipment()
 	case cmdExamine: // 調査:檢查面向格 → 寶箱/隱藏物(一次性旗標)
 		g.examine()
 	}
@@ -1208,6 +1211,8 @@ func (g *Game) step(in InputState) error {
 			tapIdx = g.panelHits.at(in.TapX, in.TapY)
 		}
 		switch {
+		case g.panel == panelEquip && g.fieldEquipment.active:
+			g.stepNativeEquipment(in, tapIdx)
 		case g.panel == panelStatusDetail || g.panel == panelPartySummary:
 			g.stepStatusDetail(in)
 		case in.Cancel && g.panel == panelEquip && g.panelActor >= 0:
@@ -3132,7 +3137,11 @@ func (g *Game) renderFrame() {
 	case panelItem:
 		g.drawItems(g.rgba, white)
 	case panelEquip:
-		g.drawEquip(g.rgba, white)
+		if g.fieldEquipment.active {
+			g.drawNativeEquipment(g.rgba)
+		} else {
+			g.drawEquip(g.rgba, white)
+		}
 	}
 	if g.tavern.active { // 酒館 2F 登錄所(創角)
 		g.tavern.draw(g.rgba, white)
@@ -3479,6 +3488,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
 	g.cmd.tx = g.dlg.tx // 命令窗標籤 glyph 也走同一字型
 	if err := validateFieldItemSources(assets, pack, g.cmd.tx); err != nil {
+		return nil, err
+	}
+	if err := validateFieldEquipmentSources(assets, pack, g.cmd.tx); err != nil {
 		return nil, err
 	}
 	if err := validateFieldCommandSources(assets, pack, g.cmd.tx); err != nil {
