@@ -1,7 +1,7 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
 > 2026-10-05 A單一有序物品格已接入Game、Member、戰鬥與全部存檔持有者。背包及裝備由完整八格導出，物理順序、空格、code0及旗標保持；save_version2拒絕所有舊格式與無pack身分存檔。schema0.21.0／content0.1.93，canonical e2cf0b0e。
-> 正常194..230逐步words與dosgolem相同，穿戴布衣給自己後移至第八格，正式重開、F5／F6與下一步通過；194..207完整RGB0。225給予提示仍差30140，動畫／多人及完整原版campaign未知，下一切片先補225原生畫面證據。
+> 正常194..230逐步words與dosgolem相同，穿戴布衣給自己後移至第八格，正式重開、F5／F6與下一步通過；194..207完整RGB0。正式225仍差30140；其原生提示RE已READY，新冷啟動230包與498份產物保持，試作只剩NPC14原始影格201／200的106差異。下一切片依docs/188接入正式renderer，不能把試作當runtime驗收；動畫／多人及完整原版campaign未知。
 > game492頂層清單完整覆蓋，首輪fixture與主線策略失敗保留並訂正；補驗後440不同頂層／141子PASS、51選用SKIP。internal192頂層／415子、12套件PASS、4選用SKIP；正常THE END 79.71秒、三條必驗正常路線零SKIP、go vet及Linux desktop通過。正式驗收收據oom／oom_kill0；沒有新發行包。現況以CONTEXT唯一狀態表、docs/188及Issue #4為準。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。

@@ -35,6 +35,54 @@
       "input_size": 115282,
       "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
       "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0"
+    },
+    {
+      "ida_linear": "0x15008",
+      "file_offset": "0x6378",
+      "bytes": "8d366e3e",
+      "original_name": "",
+      "original_function": "sub_15002",
+      "semantic": "正常packet225消息入口：SI取DGROUP3E6E，再由1F590開record404原生窗口；只限已驗單人自給",
+      "inference_level": "confirmed",
+      "consumer": "139AB→15002→15008→1F590；正常225原始30bytes與EXE一致",
+      "review_reference": "docs/188：2026-10-05 第225步原生給予提示 RE 與 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/issue4-give-prompt-source-r2.json SHA2563312cc33f49ccde2778096605007a07296163195b23e909ad8f63fdfae3f4acf",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0"
+    },
+    {
+      "ida_linear": "0x21414",
+      "file_offset": "0x12784",
+      "bytes": "a1703e",
+      "original_name": "sub_21414",
+      "original_function": "sub_21414",
+      "semantic": "正常packet225 record308正文起點為raw消息X+2 VGA bytes、Y+16；六字於168..288、Y254，字距24",
+      "inference_level": "confirmed",
+      "consumer": "139B1→21414..21423→214B9／214F8..214FE；正常六字BX及BP／DX核對",
+      "review_reference": "docs/188：2026-10-05 第225步原生給予提示 RE 與 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/issue4-give-prompt-source-r2.json SHA2563312cc33f49ccde2778096605007a07296163195b23e909ad8f63fdfae3f4acf",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0"
+    },
+    {
+      "ida_linear": "0x21133",
+      "file_offset": "0x124a3",
+      "bytes": "a05628",
+      "original_name": "loc_21133",
+      "original_function": "sub_2111B",
+      "semantic": "正常packet225自給重排完成後等待DGROUP2856新按鍵；packet226正常Enter交還field",
+      "inference_level": "confirmed",
+      "consumer": "139C2→13A62..13A9F→2111B→21133；225waiting與226ready",
+      "review_reference": "docs/188：2026-10-05 第225步原生給予提示 RE 與 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; work/issue4-give-prompt-source-r2.json SHA2563312cc33f49ccde2778096605007a07296163195b23e909ad8f63fdfae3f4acf",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base24DD0"
     }
   ]
 }

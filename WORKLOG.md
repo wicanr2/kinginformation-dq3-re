@@ -1,5 +1,17 @@
 # DQ3 工作歷程
 
+## 2026-10-05：Issue #4 第225步原生提示RE與READY
+
+接續3832de2，依Issue下一項調查給予提示。原版保留指令窗、舊物品清單與操作窗，再開DGROUP3E6E消息窗口印record308；remake先清父窗再開一般對話。IDA9.4已閉合15002／21414／139C2／13A62..13A9F／2111B順序，547筆指令sidecar保持原始定位與bytes。正常新冷啟動230包、536 IRQ1及498份產物逐byte等於既有接受來源，新增13筆只讀窗口／字模觀測沒有改遊戲狀態或時鐘。
+
+原生renderer試作沿runtime224完整底圖、原始FON、frame404／正文308與既有VGA字組陰影。全畫布30140差異降為106，全部由NPC14完整32×24原始圖塊解釋，runtime BLS201、原版200，其他畫布一致。動畫時鐘保持未知，不裁切、遮罩或改相位；試作尚未接入正式產品。限定READY、完整來源收據及工具入口集中docs/188，下一切片正式接入後驗收194..230、226返回、230重開、F5／F6及新一步。
+
+IDA首兩輪要求自動function而失敗，沿既有明示callback範圍乾淨重跑後成功；沒有推測性rename或function boundary。producer import初輪少掛/work，補上既有輸出掛載後正常執行；原版只冷重播一次。首次遞迴核對所有祖先來源超過60秒外層逾時而無收據，改固定已接受父收據hash並核對兩側全部498份產物後0.81秒通過。試作缺PIL時沿既有PNG decoder完成；首輪猜相位方向失敗，完整原始雙影格唯一匹配後訂正。
+
+公開checker兩次正對照逐byte保持，壞PNG、壞probe source及錯字模座標三負例均由指定斷言拒絕。負例fixture先因跨filesystem硬連結、後因缺IDA sidecar而失敗；補齊同一checker重跑通過，不列產品錯誤。三筆限定confirmed原始位址語意追加既有索引，r4自動匯出547筆並保持原名、位址及bytes。
+
+本輪只提交公開producer／checker、READY與目前狀態。正式Go／九JSON、schema0.21.0／content0.1.93與最近THE END／desktop仍為3832de2；不重跑未變更的產品測試，不宣稱runtime或全流程原版驗收。全部工作依授權登記Issue，私有PNG、EXE、Go原版執行器binary與IDA database不提交。一次性Docker容器批次後核對清理，使用者十三項未追蹤資料及.claude保持。
+
 ## 2026-10-05：Issue #4 A正式持有權、存檔與230步重排
 
 接續7f01143，依使用者A決定及docs/188兩份READY，所有角色與戰鬥改用唯一有序Store，移除可寫背包／裝備副本。物理八格、空格、code0及完整旗標保持；商店、原野、裝備、NPC、教會、轉職、創始人與戰鬥交易接入實際持有者。所有五類save owner保存完整words，save_version2拒絕全部舊存檔與無pack身分資料，壞owner在任何restore前失敗。schema0.21.0／content0.1.93、canonical e2cf0b0e；兩份乾淨pack獨立重建九JSON相同，沒有新發行包。

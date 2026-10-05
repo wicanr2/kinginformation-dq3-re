@@ -4766,3 +4766,47 @@ game r2完整492頂層清單、496次呼叫覆蓋，439不同頂層／141子PASS
 | `work/issue4-item-owner-final-audit-r1.json` | `5bdd27bda7ab5d511be7cedc51e7113bf1a8d60aab441530ba7f989eb7e1d1ce` |
 
 有限CONFORMED只涵蓋上述持有權、正常230word交易及指定畫面。完整原版campaign、音畫、其他隊伍與動態轉職仍未知；下一blocker225提示先補證據，Issue #4及Goal保持進行中。
+
+### 2026-10-05 第225步原生給予提示 RE 與 READY
+
+本節只閉合單人給自己後的提示窗口、保留底圖與讀鍵。正式產品仍為3832de2；以下 renderer 是可丟棄試作，尚未接入 production。入口為[原版只讀 producer](../tools/dosgolem_field_item_give_prompt_probe.py)、[獨立來源 checker](../tools/verify_dosgolem_field_item_give_prompt.py)及上節正常230包來源。工具不寫遊戲記憶體、不restore、不改時鐘或重擲seed。
+
+新來源從冷啟動固定dosgolem2f44a68及seed1357一次，正常230包、536次IRQ1，全部498份PNG／bin／持久區逐byte等於已接受aad971bb來源；230份queued、consumer及state，37份command raster、25份item raster、4筆writer及8筆text亦逐欄保持。checker固定父收據完整hash並核對兩側全部498份產物，不重新遞迴解碼祖先來源。首次祖先遞迴檢查超過60秒外層逾時，沒有接受收據；窄化為固定父來源後0.81秒通過，原版沒有重跑或改輸入。
+
+IDA9.4 r3匯出547筆指令，輸入為115282bytes的DQ3.EXE，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。位址為IDA linear，file=linear-EC90，DGROUP base24DD0；保留原始bytes、xref type與未知function邊界。r1／r2因IDA未自動識別callback為function而失敗，改沿既有r2證據的明示1372F..13B18範圍，不新增推測性function名稱或邊界。
+
+| 定位 | 已閉合語意與等級 |
+| --- | --- |
+| IDA linear139AB→15002／15008→1F590 | 先開DGROUP3E6E消息窗口，再印record308；正常packet225只讀觀測閉合，限定confirmed |
+| DGROUP3E6E，IDA linear28C3E，file19FAE | 正常225全部13筆觀測的30bytes均等於EXE；raw flags1、X19、Y238、width44、height96、frame record404，限定confirmed |
+| IDA linear21414..21423、214B9、214F8..214FE | 起點(168,254)，每字X加24；正常六筆BX為59／60／504／559／505／58，位置168、192、216、240、264、288，Y254，限定confirmed |
+| IDA linear139C2→13A62..13A9F→2111B／21133 | 文字完成後自給word重排，再等待新按鍵；原版225在21133，226正常Enter返回。限定confirmed，不外推其他按鍵或多人目標 |
+| IDA linear1FC57..1FCC6 | 消息窗口偏移(+8,+8)的VGA字組陰影沿本檔既有consumer；只採dosgolem契約，不宣稱實機逐週期一致 |
+
+可丟棄renderer保留正式runtime224的完整畫布，用原始FON、404框字模、308正文及既有字組陰影重生225。全畫布差30140→106；106全部由NPC14完整32×24圖塊解釋：CTY00 raw0x88、背景tile4、畫面(256,120)，runtime DQ3MAN.BLS201，原版200。兩個影格逐點比較只得到一組完整匹配，畫布其餘部分無差異。未裁切、遮罩、換圖或改動畫；整張仍V2，動畫時鐘未知。先前沿取消路線猜相位方向的試算失敗已保留，225的影格方向由本次原始raster核對，不能套用另一狀態。
+
+| READY項目 | 實作及驗收契約 |
+| --- | --- |
+| 範圍 | 單人已選物品給自己，保留交易前指令窗／物品清單／操作窗，疊原生消息窗口。多人、空清單、其他動作與動畫時鐘不新增規則 |
+| 資料 | field_items新增具名給予提示presentation，保存原始window、404文字引用、字距24、控制碼長度1及既有陰影；geometry及文字只由pack供給。新增欄位必填、引用及bounds驗證，缺資料失敗，不以Go數值fallback |
+| 轉移 | 收到給予確認時保存當時完整runtime畫布，再沿既有Store交易移至末格；提示渲染只使用保存畫布，不以重排後words重畫舊清單。正文自然顯示完成後讀新確認鍵，清除暫存畫布及modal，交還field |
+| 時序 | glyph duration沿既有公開PIT契約導出的hardware-spec approximation。原版比較點為21133讀鍵，remake測試送自然idle直到顯示完成，不注入revealCells、時鐘、seed或遊戲狀態 |
+| 存檔 | 暫存畫布不序列化；八格及save_version2交易保持。pack schema／content升級後拒絕舊pack身分存檔，沿既有使用者A決定 |
+| 驗收 | 正式InputState重播194..230，225完整畫布差異逐點由上述原始raster閉合，226返回、230重開、F5／F6與下一步。194..207既有RGB0保持；必驗零SKIP，受影響component／internal及desktop建置通過 |
+| 停止線 | 不為消除NPC14的106差異調相位或改動畫。runtime接入及本節驗收前不得標CONFORMED；完整原版campaign、音畫與其他角色仍未知 |
+
+重生原版：在既有一次性`dq3-ebiten-test:20260822-r1`容器內，以UID1000、network none、3GiB／2CPU、PID256及外層4300秒執行`python3 /repo/tools/dosgolem_field_item_give_prompt_probe.py`。`/repo`及固定2f44a68 source `/dosgolem`唯讀，既有工作輸出掛`/work`可寫；沿上節工具鏈的離線Go cache。只支援固定`issue4-give-prompt-observer-r1`名稱，已存在輸出拒絕覆寫。接受來源用`python3 /repo/tools/verify_dosgolem_field_item_give_prompt.py --output <尚不存在的本機JSON>`，核對父來源、原始EXE、producer及全部產物。
+
+| 本機證據 | SHA-256 |
+| --- | --- |
+| `work/issue4-give-prompt-r3-ida.json` | `46068e4fee40ec2f3aff4933269cf5d41a48adf17004f6c091683ba1dd3c8dcf` |
+| `work/issue4-give-prompt-r4-ida.json`，自動附註新索引 | `1b6c1f87dd613456cf83d3e33243f9d76b7ad81c8a145fd1bf41f8d5546e4825` |
+| `work/issue4-give-prompt-source-r2.json` | `3312cc33f49ccde2778096605007a07296163195b23e909ad8f63fdfae3f4acf` |
+| `work/issue4-give-prompt-preview-r3.png` | `cf8d568544b33338d5efb1e2f2558f3aaa9b356f8083b7d8aea4edb11ab0e624` |
+| `work/issue4-give-prompt-preview-r3-proof-r2.json` | `7047d27093c57e7685fee929c7cc0e8d05f85e15dc5c630fc6627b79d01e3064` |
+| `work/issue4-give-prompt-checker-tests-r3.json` | `4842fece54fc3b5cb8b61a766c8cf594d926812dd681d4a788c45d9ead45bc7d` |
+| `work/issue4-give-prompt-final-audit-r1.json` | `1886897aec6415225b9ef0b28a9c5d6bc93fe46cbdbab2ddeabec539b263b530` |
+
+公開checker兩次正對照逐byte保持，壞PNG、壞probe source與錯字模座標三個負例均由指定斷言拒絕，沒有失敗收據。首輪負例fixture的跨filesystem硬連結及次輪缺IDA sidecar問題保留為驗證環境錯誤；補齊後同一checker乾淨重跑通過。新增15008、21414及21133的限定confirmed語意附加至既有[位址索引](../tools/ida_field_pose_ledger.json)，自動匯出保持原名與bytes，不取代原始定位。
+
+試作初輪因容器沒有PIL未執行，後續沿既有PNG decoder及原始FON完成，不安裝主機套件。全部新原版產物及IDA database保持私有；本輪只提交可重現工具與READY證據，沒有產品修正或新發行包。
