@@ -195,6 +195,22 @@
       "input_size": 115282,
       "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
       "address_space": "IDA linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x18498",
+      "file_offset": "0x9808",
+      "bytes": "9adb000411",
+      "original_name": "",
+      "original_function": "sub_1834E",
+      "semantic": "正常277詳細狀況完成後以原始far call讀新鍵；健康未學咒文主角的新Enter於278關閉全部父窗返回場景",
+      "inference_level": "confirmed",
+      "consumer": "1834E→18498 far call2111B→21133 waiting→1849D／184A1零咒文返回→1F4E3 restore→1997C；限定正常277..280",
+      "review_reference": "docs/188：2026-10-05 詳細狀況 READY 證據審查",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal277 read-only1834E／2111B及完整窗口，278 Enter field、279..280左右；work/dosgolem-opening/issue4-field-detail-normal-r5-source-r1-receipt.json SHA256edfad33432fb8b0dc6ee5bd59536e826af9b27e4c3b91ad4eb861365983469ff",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
     }
   ]
 }

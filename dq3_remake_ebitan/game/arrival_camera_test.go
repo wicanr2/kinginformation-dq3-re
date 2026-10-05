@@ -31,7 +31,10 @@ func sourceCanvasDifference(t *testing.T, g *Game, receiptPath, name string) int
 	}
 	var receipt struct {
 		OriginalHash string `json:"original_sha256"`
-		Artifacts    []struct {
+		Meta         struct {
+			OriginalHash string `json:"original_sha256"`
+		} `json:"meta"`
+		Artifacts []struct {
 			Path   string `json:"path"`
 			Size   int    `json:"size"`
 			SHA256 string `json:"sha256"`
@@ -40,7 +43,11 @@ func sourceCanvasDifference(t *testing.T, g *Game, receiptPath, name string) int
 	if err = json.Unmarshal(raw, &receipt); err != nil {
 		t.Fatal(err)
 	}
-	if receipt.OriginalHash != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" {
+	if receipt.OriginalHash == "" {
+		receipt.OriginalHash = receipt.Meta.OriginalHash
+	}
+	if receipt.OriginalHash != "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c" ||
+		(receipt.Meta.OriginalHash != "" && receipt.Meta.OriginalHash != receipt.OriginalHash) {
 		t.Fatal("original executable identity differs")
 	}
 	content, err := os.ReadFile(filepath.Join(filepath.Dir(receiptPath), name))

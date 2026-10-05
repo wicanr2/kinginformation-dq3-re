@@ -1815,3 +1815,11 @@ internal-r2已通過，後續vet沿用既有輸出檔名被排他建立保護拒
 | `work/issue4-status-precommit-hygiene-r1.json` | `fc2fe5a836fdde296764eee4a2ded94719bcc80fb27d3c9c9a62fab7876cecea` |
 
 工具入口與執行契約沿本節既有索引，唯一目前狀態表在CONTEXT。Issue #4保持OPEN，下一切片為正常273後狀況首列的詳細窗與返回；完整原版campaign仍未知。沒有新發行包。
+
+## 2026-10-05 Issue #4 正常詳細狀況頁與新鍵返回
+
+完整game503頂層覆蓋、452不同頂層／141子PASS、51選用診斷SKIP；internal200頂層／448子、12套件PASS、4選用診斷SKIP。14項新舊必驗零SKIP，正常THE END174.26秒、最終Go vet與Linux desktop PASS，同一game binary01d19989、OOM0。九JSON由94e1276乾淨重建相同，三種壞來源拒絕且正對照重生相同；IDA395筆原始定位／bytes與原12筆annotation保持，新18498新讀鍵限定confirmed自動合併。沒有新發行包。
+
+正常280來源edfad334接受，seed1357一次，318輸入／636IRQ1／648產物，273前綴保持。詳細頁23054→0，274..277與280完整RGB0；278／279仍差351／356，保留未驗畫面。原生窗口、數字幾何、Store Worn及fresh-key返回接正式路徑，八格／snapshot／RNG及正常F5／F6後下一步通過。無狀態注入、restore、裁切或動畫覆寫。
+
+完整證據、工具入口、失敗分類與收據集中docs/188，資料契約docs/84，唯一目前狀態表CONTEXT。比較助手的meta身份、far call bytes及跨掛載fixture問題均訂正後在同一工具鏈重跑，未放寬原版比較。舊runtime527張PNG、395筆IDA原始定位與原12筆annotation保持。原版素材與使用者十三項未追蹤資料保留，不加入Git。Issue #4保持OPEN，下一切片為正常280後「看全體的情形」首個結果與返回。

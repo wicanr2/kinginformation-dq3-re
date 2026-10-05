@@ -269,6 +269,10 @@ func (r *indexedNewGameRenderer) number(tx *dq3data.Text, field gamepack.NumberF
 }
 
 func (r *indexedNewGameRenderer) ability(tx *dq3data.Text, nf *NewGameFlow) {
+	r.abilityContent(tx, nf, int(nf.preview[stats.STR]), [][]int{nf.labels.Cloth}, 0)
+}
+
+func (r *indexedNewGameRenderer) abilityContent(tx *dq3data.Text, nf *NewGameFlow, attack int, equipment [][]int, rowStep int) {
 	s, geo := r.style, r.geo
 	r.window(tx, s.Ability)
 	glyphs := func(anchor gamepack.GeometryAnchor, codes []int) {
@@ -276,8 +280,12 @@ func (r *indexedNewGameRenderer) ability(tx *dq3data.Text, nf *NewGameFlow) {
 			r.opaqueGlyph(tx, anchor.X+i*dq3data.GlyphPx, anchor.Y, code)
 		}
 	}
-	r.opaqueGlyph(tx, s.EquipmentMarker.X, s.EquipmentMarker.Y, *s.EquipmentMarkerGlyph)
-	glyphs(geo.StatsCloth, nf.labels.Cloth)
+	for i, codes := range equipment {
+		r.opaqueGlyph(tx, s.EquipmentMarker.X, s.EquipmentMarker.Y+i*rowStep, *s.EquipmentMarkerGlyph)
+		a := geo.StatsCloth
+		a.Y += i * rowStep
+		glyphs(a, codes)
+	}
 	glyphs(geo.StatsHero, nf.labels.Hero)
 	sex := nf.labels.Male
 	if nf.previewGender != 0 {
@@ -294,7 +302,7 @@ func (r *indexedNewGameRenderer) ability(tx *dq3data.Text, nf *NewGameFlow) {
 		{l.Strength.Value, int(nf.preview[stats.STR])}, {l.Agility.Value, int(nf.preview[stats.AGI])},
 		{l.Vitality.Value, int(nf.preview[stats.VIT])}, {l.Intelligence.Value, int(nf.preview[stats.INT])},
 		{l.Luck.Value, int(nf.preview[stats.LUCK])}, {l.MaxHP.Value, int(nf.preview[stats.HP])},
-		{l.MaxMP.Value, int(nf.preview[stats.MP])}, {l.Attack.Value, int(nf.preview[stats.STR])},
+		{l.MaxMP.Value, int(nf.preview[stats.MP])}, {l.Attack.Value, attack},
 		{l.Defense.Value, nf.previewDef}, {l.Experience.Value, nf.previewExp},
 	} {
 		r.number(tx, v.field, v.value)

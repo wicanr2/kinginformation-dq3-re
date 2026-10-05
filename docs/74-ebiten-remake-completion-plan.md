@@ -1,5 +1,12 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-10-05 正常健康未學咒文單人詳細狀況已修正，原生能力窗、五／八位數字與目前Worn裝備一致；新Enter關閉全部父窗返回場景，左右下一步、正式F5／F6與Load後行走通過。A唯一八格、storage_version1及save_version2保持，schema0.26.0／content0.1.98，canonicalef053cb8。
+> dosgolem正常280包、318輸入／636IRQ1／648產物接受，273前綴627份保持；seed1357只設定一次，無注入／restore。角色、八格、金錢與旗標保持，279只改位置。正式274..277及280完整640×350 RGB0，278／279仍差351／356，動畫時鐘與所有畫布V3未知；舊runtime527張PNG保持。
+> 完整game503頂層覆蓋、452不同頂層／141子PASS、51選用診斷SKIP；internal200頂層／448子、12套件PASS、4選用診斷SKIP。14項新舊必驗零SKIP，正常THE END174.26秒、最終Go vet與Linux desktop PASS，同一game binary01d19989、OOM0。九JSON由94e1276乾淨重建相同，三種壞來源拒絕且正對照重生相同；IDA395筆原始定位／bytes與原12筆annotation保持，新18498新讀鍵限定confirmed自動合併。沒有新發行包。
+> 下一切片從正常280重開狀況，核對「看全體的情形」首個結果與返回；先取得dosgolem證據，再依RE→READY修正。既有切片不重開，完整原版campaign與音畫仍未知。Issue／Goal進行中，唯一現況表在CONTEXT。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-05 正常健康單人狀況入口已修正，先顯示原始三列選單，保留命令窗與底圖；上下單欄繞回、Esc返回及左右下一步通過。首列保留既有詳細窗E2入口，全體及排序缺證據時不交易狀態；詳細內容及其他角色未由本輪驗收。A單一八格、storage_version1及save_version2保持，schema0.25.0／content0.1.97，canonical694b740c。
 > dosgolem正常273包、311輸入／622IRQ1／627產物接受，261前綴591份保持；seed1357執行前固定一次，無注入／restore。262..271完整2172bytes保持，272只變player X，273完整返回baseline，clock30保持。正式262..273、snapshot／RNG、F5／F6及下一步通過；264..270首選單文字／外框／游標RGB0，完整640×350仍差142，剩餘影格與陰影差異未新增raw phase驗收。273完整RGB0，不外推其他畫面或動畫時鐘。
 > 完整game501頂層覆蓋、450不同頂層／141子PASS、51選用診斷SKIP；internal200頂層／439子、12套件PASS、4選用診斷SKIP。13項必驗零SKIP，正常THE END136.94秒、go vet及Linux desktop PASS，同一game binary23afdb03，OOM0。403張舊PNG保持，九JSON兩份乾淨771ec63重建相同；兩類checker各三負例拒絕，正對照重複相同。IDA241筆原始指令保持，原11筆annotation保持，新取址語意strong自動合併。沒有新包，完整原版campaign與音畫仍未知。

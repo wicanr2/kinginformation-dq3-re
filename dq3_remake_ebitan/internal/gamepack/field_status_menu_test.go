@@ -49,10 +49,21 @@ func TestFieldStatusMenuOriginalDataParity(t *testing.T) {
 	if fmt.Sprintf("%x", exe[0x1830b-0xec90:0x18313-0xec90]) != "8d36b43ee8d171c3" {
 		t.Fatal("status caller/window bytes differ")
 	}
+	detail := s.Detail
+	if detail.Window != p.Interface.NewGameGeometry.Raster.Ability || detail.EquipmentRowStep != 16 ||
+		fmt.Sprintf("%x", exe[0x19ee8:0x19ee8+28]) != "010313002e002c00c00097010000000000004e830000000000000203" ||
+		fmt.Sprintf("%x", exe[0x18498-0xec90:0x184a1-0xec90]) != "9adb000411e80100c3" {
+		t.Fatal("detail raw window or fresh-key consumer differs")
+	}
+	d, _ = p.TextDefinition(detail.Window.TextID)
+	codes, _ = p.TextGlyphCodes(detail.Window.TextID)
+	if *d.Source.Record != 407 || !reflect.DeepEqual(codes, tx.Record(407)) {
+		t.Fatal("detail original record differs")
+	}
 }
 
 func TestFieldStatusMenuRejectsBrokenContract(t *testing.T) {
-	for _, name := range []string{"missing", "empty_entries", "missing_zero", "unknown_field", "unknown_text", "unknown_role", "duplicate_role", "bad_window", "bad_rows", "bad_font", "bad_navigation", "unreviewed"} {
+	for _, name := range []string{"missing", "empty_entries", "missing_zero", "unknown_field", "unknown_text", "unknown_role", "duplicate_role", "bad_window", "bad_rows", "bad_font", "bad_navigation", "unreviewed", "missing_detail", "detail_null", "detail_ref", "detail_row", "detail_scope", "detail_return", "detail_evidence", "detail_missing_zero", "detail_unknown"} {
 		t.Run(name, func(t *testing.T) {
 			p, e := BuiltinDQ3()
 			if e != nil {
@@ -86,6 +97,24 @@ func TestFieldStatusMenuRejectsBrokenContract(t *testing.T) {
 				m["navigation"] = "guess"
 			case "unreviewed":
 				m["evidence"].(map[string]any)["level"] = "D1"
+			case "missing_detail":
+				delete(m, "detail")
+			case "detail_null":
+				m["detail"] = nil
+			case "detail_ref":
+				m["detail"].(map[string]any)["window"].(map[string]any)["raw_window_id"] = "unknown"
+			case "detail_row":
+				m["detail"].(map[string]any)["equipment_row_step"] = 0
+			case "detail_scope":
+				m["detail"].(map[string]any)["scope"] = "unknown"
+			case "detail_return":
+				m["detail"].(map[string]any)["return_mode"] = "unknown"
+			case "detail_evidence":
+				m["detail"].(map[string]any)["evidence"].(map[string]any)["level"] = "D1"
+			case "detail_missing_zero":
+				delete(m["detail"].(map[string]any), "equipment_row_step")
+			case "detail_unknown":
+				m["detail"].(map[string]any)["guess"] = true
 			}
 			if name != "missing" {
 				b, _ = json.Marshal(m)

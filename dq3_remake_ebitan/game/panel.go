@@ -15,6 +15,7 @@ const (
 	panelItem
 	panelEquip
 	panelStatusMenu
+	panelStatusDetail
 )
 
 const (

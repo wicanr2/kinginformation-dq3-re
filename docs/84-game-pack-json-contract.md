@@ -2195,6 +2195,23 @@ schema0.17.0／content0.1.89新增必填`recruitment_selection.empty_join_text_i
 在既有`dq3-ebiten-test:20260822-r1` Docker內以UID1000執行，核對來源身份、原始consumer及輸出擁有權。
 工具保留原有JSON排版，只遷移schema、content、兩個文字引用、542文字及有限證據說明；沒有發行變更。
 
+### 正常詳細狀況頁契約
+
+schema0.26.0／content0.1.98將`interface.field_status_menu.detail`設為必填。
+包含`window`的`raw_window_id`／`text_id`、`equipment_row_step`、`scope`、
+`return_mode`與D3`evidence`。窗口引用須與已驗原生能力窗相同；缺失、null、未知欄位、
+未知引用、錯誤列距、未審範圍或返回模式均拒絕，不設Go fallback。
+目前具名範圍為`single_healthy_hero_without_spells`，返回為`fresh_key_to_field`。
+引擎共用能力窗primitive，裝備清單只從單一Store的Worn視圖產生，名字與幾何由pack提供。
+正式新鍵關閉全部父視窗並消費該輸入；其他分支保持現行路徑。
+存檔仍是save_version2／storage_version1，不增加暫態UI；既有不同schema／hash拒絕規則保持。
+READY來源、IDA定位與限定對拍見[docs/188](188-opening-escort-to-castle-spec.md)。
+
+重建入口：[tools/migrate_field_status_detail_pack.py](../tools/migrate_field_status_detail_pack.py)。
+在`dq3-ebiten-test:20260822-r1`一次性Docker中以UID1000執行：
+`python3 tools/migrate_field_status_detail_pack.py <乾淨0.25.0資料包> <唯讀原版素材目錄>`。
+支援由94e1276九份JSON重建，核對EXE／TXT完整hash、原始窗口、far call file bytes及文字列距。
+
 
 ### A 正式持有者與原野物品窗口
 

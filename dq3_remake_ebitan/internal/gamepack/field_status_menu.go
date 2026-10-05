@@ -17,7 +17,30 @@ type FieldStatusMenu struct {
 	CursorGlyph int                `json:"cursor_glyph"`
 	FontIndex   int                `json:"font_index"`
 	Entries     []FieldStatusEntry `json:"entries"`
+	Detail      *FieldStatusDetail `json:"detail"`
 	Evidence    Evidence           `json:"evidence"`
+}
+
+// FieldStatusDetail reuses the reviewed ability primitives and limits the
+// native return behavior to the branch with an accepted original receipt.
+type FieldStatusDetail struct {
+	Window           RasterWindowRef `json:"window"`
+	EquipmentRowStep int             `json:"equipment_row_step"`
+	Scope            string          `json:"scope"`
+	ReturnMode       string          `json:"return_mode"`
+	Evidence         Evidence        `json:"evidence"`
+}
+
+func (s *FieldStatusDetail) UnmarshalJSON(b []byte) error {
+	type plain FieldStatusDetail
+	if err := requiredHome(b, (*plain)(s)); err != nil {
+		return err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(b, &fields); err != nil {
+		return err
+	}
+	return decodeOpeningObject(fields["window"], &s.Window, []string{"raw_window_id", "text_id"})
 }
 
 type FieldStatusEntry struct {
@@ -53,6 +76,16 @@ func (p *Pack) validateFieldStatusMenu() error {
 		return fmt.Errorf("field status menu missing or unreviewed")
 	}
 	if err := validateEvidence(s.Evidence); err != nil {
+		return err
+	}
+	if s.Detail == nil || p.Interface.NewGameGeometry == nil || p.Interface.NewGameGeometry.Raster == nil ||
+		s.Detail.Window != p.Interface.NewGameGeometry.Raster.Ability ||
+		s.Detail.EquipmentRowStep != dq3data.GlyphPx ||
+		s.Detail.Scope != "single_healthy_hero_without_spells" ||
+		s.Detail.ReturnMode != "fresh_key_to_field" || s.Detail.Evidence.Level != "D3" {
+		return fmt.Errorf("field status detail missing or unreviewed")
+	}
+	if err := validateEvidence(s.Detail.Evidence); err != nil {
 		return err
 	}
 	w := s.RawWindow

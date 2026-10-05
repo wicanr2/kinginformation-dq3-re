@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.25.0",
+  "schema_version": "0.26.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -4443,6 +4443,25 @@
       "consumer": "IDA9.4 linear18301 -> 1830B -> 1F4E3 -> 1F779/1F908; normal sole healthy hero first status selector",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "正常264..270三列游標與上下繞回、271 Esc、272..273下一步confirmed；選取詳細內容／全體／排序與其他角色分支未驗。原始callbacks只作證據，不執行。"
+    },
+    "detail": {
+      "window": {
+        "raw_window_id": "creation_panel",
+        "text_id": "dq3:text.new_game.ability_window"
+      },
+      "equipment_row_step": 16,
+      "scope": "single_healthy_hero_without_spells",
+      "return_mode": "fresh_key_to_field",
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT; dosgolem2f44a68 normal280 source edfad334",
+        "address_space": "dgroup",
+        "address": "0x3da8/file0x19ee8/IDAlinear0x28b78",
+        "consumer": "IDA9.4 linear1834E -> 2111B -> 184A1 -> 1F4E3 restore -> normal278 field1997C",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常健康未學咒文主角277詳細頁、278新Enter返回與279..280左右行走；其他角色、裝備及咒文頁另驗。列距213C4 text consumer；原生能力幾何重用已驗契約。"
+      }
     }
   }
 }

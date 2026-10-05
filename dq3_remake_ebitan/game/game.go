@@ -1202,6 +1202,8 @@ func (g *Game) step(in InputState) error {
 			tapIdx = g.panelHits.at(in.TapX, in.TapY)
 		}
 		switch {
+		case g.panel == panelStatusDetail:
+			g.stepStatusDetail(in)
 		case in.Cancel && g.panel == panelEquip && g.panelActor >= 0:
 			g.panelActor, g.panelCursor = -1, 0
 		case in.Cancel && g.panel == panelStatusMenu:
@@ -3111,6 +3113,8 @@ func (g *Game) renderFrame() {
 		g.drawStatus(g.rgba, white)
 	case panelStatusMenu:
 		g.drawNativeStatusMenu()
+	case panelStatusDetail:
+		g.drawNativeStatusDetail()
 	case panelItem:
 		g.drawItems(g.rgba, white)
 	case panelEquip:

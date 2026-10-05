@@ -5126,3 +5126,82 @@ internal-r2已通過，後續vet沿用既有輸出檔名被排他建立保護拒
 | `work/issue4-status-precommit-hygiene-r1.json` | `fc2fe5a836fdde296764eee4a2ded94719bcc80fb27d3c9c9a62fab7876cecea` |
 
 工具入口與執行契約沿本節既有索引，唯一目前狀態表在CONTEXT。Issue #4保持OPEN，下一切片為正常273後狀況首列的詳細窗與返回；完整原版campaign仍未知。沒有新發行包。
+
+### 2026-10-05 正常詳細狀況窗 DRAFT
+
+Issue #4已登記正常273後續行。私有探針入口為`work/issue4-detail-probe-r1.py`，從新遊戲重播273前綴，再以Space、Down、Space、Space確認狀況首列，暫停於第277包的第一個原生輸入等待點。沿用dosgolem2f44a68、唯讀原版EXE／TXT、單次seed1357；原始DGROUP3DA8及18313／18338／1834E只讀觀察。不使用狀態注入或模擬器restore，未達READY前不修改正式renderer。既有docs/116只作定位，詳細畫面與返回仍待正常來源審查。
+
+### 2026-10-05 詳細狀況第一頁來源與隔離試作
+
+獨立來源檢查`work/issue4-detail-source-check-r1.py`已接受`work/dosgolem-opening/issue4-field-detail-normal-r2-source-r1-receipt.json`，SHA-256 `856816e03870e1098f0ca84ba6f691c72e74d777c5af3a5f30d9ecd88ccd9706`。正常277包、315次輸入、630個IRQ1與639份產物核對；正常273全部事件與627份產物保持。274..277完整2172-byte持久區、八格、角色、金錢及旗標不變。277為原生21133等待；只讀觀察18313→18338→1F4E3的SI3DA8→1834E→2111B，raw5077為1。種子1357執行前固定一次，不注入或restore。
+
+原始EXE115282 bytes SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；D3TXT00.TXT SHA-256 `38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b`。IDA9.4 sidecar `work/issue4-detail-r1-ida.json`（242條，SHA-256 `8d2e68ecba3cd58c0e1bb3150d0671d5b18c7f7d5ee9f5d075e9876f7f461d69`）與`work/issue4-detail-r2-ida.json`（395條，SHA-256 `918979c2c7d90bb791a33b766b27eefade305473e591e098de69163f8f614ff4`）保留原始名稱、bytes、MZ relocation、xref type與函式邊界。位址為IDA linear，file=linear−EC90，DGROUP base為linear24DD0／file16140；不同口徑不混列。
+
+| 原始定位 | 語意與證據等級 |
+| --- | --- |
+| DGROUP3DA8，IDA linear28B78，file19EE8 | confirmed：原始window 0301、X19h、Y2Eh、W2Ch、HC0h、record407；低byte背景槽1，高byte flags3。正常277原版完整窗口與只讀原始bytes閉合。 |
+| IDA linear1834E..1839D | strong：由722h選原始party pointer，再按八個完整words的8000穿戴位元與原始碼AF排除分支，逐筆繪marker10及物品record；原版277只驗收cloth 801E，其他穿戴種類未作正常驗收。 |
+| IDA linear183AD／183B3、183DF、1841B、1848A | confirmed，限定277：職業216,62；性別248,78；左數值216,94起、右數值408,62起；每列16px，經驗360,206。五位及八位數字右對齊，由21929／21822及既有pack能力窗幾何共同核對。 |
+| IDA linear183FD..18415、18421..18493 | confirmed，限定277：目前HP15／MP9、力量8、速度4、耐力4、聰明度7、運氣7、最大HP15／MP9、攻擊8、守備6、經驗0；姓名原始0、勇者、男性及cloth一致。能力零值fallback與其他角色語意不在本次證據中。 |
+| IDA linear18498／1849D、184A1..185E3 | strong：新讀鍵後檢查四個咒文bytes，非空才開咒文頁。目前原版角色四bytes全0；返回與咒文頁尚未由完成的280來源接受。 |
+
+正式94e1276程式同輸入277完整640×350差23054。隔離試作先重用既有原生能力窗、字型與數字primitive，差降896；再撤銷父選單活動框後完整RGB0。兩側完整圖已目視核對。最後收據`work/issue4-detail-prototype-r2.json`，沒有裁切、遮罩、替圖或動畫覆寫；這是DRAFT，不是production或整體V3完成。
+
+試作入口為`work/issue4-detail-draft_test.go`與`work/issue4-detail-draft-run-r1.py`、`r2.py`、`r3.py`，均在臨時module副本走正常新遊戲至277，正式Go與九JSON保持94e1276。試作只驗目前cloth，不把新遊戲衣服label硬接正式各種裝備。預定共用原生能力內容primitive，正式穿戴名稱由有序Store的Worn視圖及既有物品decoder提供，攻擊／守備取現行規則值；版本專屬窗口、數字幾何、文字與列距仍由pack提供。
+
+失敗分類：r1未指定可寫Go cache，編譯前停止；r2補既有cache後完成。r3將新Enter後的278誤預期為父選單，實際278已回field，遂停止容器並保留未完成log。大量21133記錄曾被誤判為咒文頁，四咒文bytes全0及278原生field capture否定此假說。r4移除選單判斷後留下未用count，Go編譯拒絕，未執行原版；r5移除該變數，以新prefix正常重跑至280。全量讀取r3大log造成診斷容器OOM，改逐行有界讀取。均未改原版、重擲或注入；正式返回仍待獨立收據。
+
+本切片尚未READY或接正式路徑。最新正常返回探針為`work/issue4-detail-probe-r5.py`，輸出前綴`issue4-field-detail-normal-r5`，唯讀dosgolem2f44a68、UID1000、3GiB、2CPU、256PID、network none與900秒外層逾時。正常277後送新Enter，278場景再左、右一步；完整來源接受後才將呈現及返回規格一併定為READY。Issue #4保持OPEN。
+
+續行檢查：r5擁有程序已返回exit 0；這只證明探針程序結束，完整來源收據仍待獨立稽核。隔離唯讀檢查兩次未執行，原因是自動核准審查的模型容量不足，並非操作被判定不安全。原版產物與DRAFT保持，未接正式程式、未宣稱返回對拍通過。
+
+正常詳細狀況工具入口：`tools/dosgolem_field_status_detail_probe.py`從正常新遊戲冷啟動至280；`tools/verify_dosgolem_field_status_detail.py`獨立核對273父收據、318次輸入、636個IRQ1、648份產物、277原生詳細窗、新Enter返回與兩步行走。兩者使用既有`dq3-ebiten-test:20260822-r1`一次性容器、UID1000、network none；工作樹掛`/repo`，工作目錄掛`/work`，dosgolem2f44a68唯讀掛`/dosgolem`。產生器至少3GiB／2CPU／256PID及900秒外層逾時，稽核器768MiB／2CPU／128PID及30秒逾時。容器內分別執行`python3 /repo/tools/dosgolem_field_status_detail_probe.py`與`python3 /repo/tools/verify_dosgolem_field_status_detail.py`。原版素材、圖與binary保持本機，不入Git。
+
+### 2026-10-05 詳細狀況 READY 證據審查
+
+獨立稽核接受280來源`work/dosgolem-opening/issue4-field-detail-normal-r5-source-r1-receipt.json`，SHA-256 `edfad33432fb8b0dc6ee5bd59536e826af9b27e4c3b91ad4eb861365983469ff`。產生器`996a21ed8ba678301c7d2184be0564419b784f66c74a4df0359446a84e5c968f`、Go probe source `093832495d79badff3adfdf2d51c4dc3fcf482d21ffa09e5898b62bc14687d2d`、binary `fdac745e1277177cbcb5775d9e50f10d414e96497fe8f908244fc0471f56b987`。318次輸入的make／break完整核對636 IRQ1；648份產物含273原始627份不變。沒有額外存檔交易、注入、restore或重擲。
+
+confirmed限定正常單一健康、未學咒文主角：277完整原生詳細頁，278新Enter後返回1997C場景，279向左至2,18，280向右至3,18。274..278與280完整2172-byte持久區不變；279只有DGROUP4F33低byte從3變2。角色128bytes、八格、金錢、旗標與受控亂數條件不變。277與278原版完整圖已目視核對。18498→2111B新讀鍵、1849D→184A1零咒文返回與正常278閉合；非空咒文分支仍strong／未驗。
+
+READY契約：以pack的原生能力窗與數字幾何繪詳細頁，撤銷父狀況選單活動框，穿戴清單從單一Store的Worn視圖按物理格次序產生，品名沿既有原版文字decoder。數值取目前角色能力與裝備衍生值。裝備列距沿213C4 consumer的16px終行advance。等待新的鍵盤邊緣後關閉全部父視窗，該輸入不得流入場景移動、指令或存檔。無咒文範圍以既有完整learned-spell規則判斷；其他分支保留現行路徑且不宣稱parity。新增mandatory typed契約、schema/reference驗證、原始EXE／TXT parity、正常274..280、返回後存讀檔及下一步後，才可標CONFORMED。
+
+### 2026-10-05 正常詳細狀況有限 CONFORMED
+
+正式程式沿共用原生能力內容primitive繪製健康未學咒文主角的詳細頁。五位及八位數字依pack幾何右對齊，職業／完整性別文字取pack labels；穿戴標記與名字由單一Store的Worn按物理格次序產生，攻擊／守備取目前裝備衍生值。父狀況選單活動框撤銷，底圖、原命令窗與閒置HUD保持。新鍵只關閉全部父窗並消費，不流入場景移動或F5。其他角色／異常／已學咒文原野詳細入口保持現行路徑，不外推正常樣本。
+
+schema0.26.0／content0.1.98，canonical `sha256:ef053cb8a96a9965f12412228508c71ca62980476deae467fe04ca72029a0256`；save_version2／storage_version1保持。mandatory field_status_menu.detail及scope／return enum經嚴格解碼、引用與D3驗證；缺失、null、未知欄位／引用、錯誤列距及未審資料拒絕。原始EXE／TXT parity通過。遷移入口`tools/migrate_field_status_detail_pack.py`及執行契約見docs/84，由94e1276九份乾淨輸入重建逐byte一致。
+
+正常新遊戲、創角、母親／謁見／酒館前綴至273後，以正式InputState重播274..280；兩側固定seed1357一次。逐包snapshot、Store八格與RNG不變，279只改位置，277等待新鍵，278新Enter返回場景，279／280左右下一步通過。外層正常路徑在280後以F5／F6保存／讀回同一八格，再向左新一步，未用checkpoint注入或模擬器restore。新頁元件確認idle不關，方向／Enter／F5新鍵關頁但不移動或開存檔。有限E2／E3閉合。
+
+| 正常包 | 完整640×350 RGB差異 |
+| --- | --- |
+| 274命令、275向下、276首狀況選單 | 各0 |
+| 277詳細頁 | 23054→0 |
+| 278新Enter返回場景 | 351，未通過完整畫面對拍 |
+| 279向左 | 356，未通過完整畫面對拍 |
+| 280向右 | 0 |
+
+沒有裁切、遮罩、替圖或改動畫相位。277為限定同狀態完整V3；返回與行走狀態已通過，278／279人物畫面及動畫counter仍待原版可比驗收。舊runtime527張PNG逐byte保持，原先264..270完整142差異未重開。正式277完整圖與原版已目視核對，完成聲明不包含所有畫布或整段動畫。
+
+完整game503頂層覆蓋、452不同頂層／141子PASS、51選用診斷SKIP；internal200頂層／448子、12套件PASS、4選用診斷SKIP。14項新舊必驗零SKIP，正常THE END174.26秒、最終Go vet與Linux desktop PASS，同一game binary01d19989、OOM0。九JSON由94e1276乾淨重建相同，三種壞來源拒絕且正對照重生相同；IDA395筆原始定位／bytes與原12筆annotation保持，新18498新讀鍵限定confirmed自動合併。沒有新發行包。
+
+來源checker重複正對照重生相同edfad334收據；壞PNG CRC、缺IRQ1及probe source身份變更三負例均拒絕。IDA9.4重新匯出395條原始bytes／位置／名稱／MZ relocation保持，原12筆annotation保持，18498的原始far call新讀鍵語意限定confirmed，自動合併到sidecar。沒有rename、patch原版或更動function boundary。
+
+驗證腳本訂正：新正常比較助手初輪只讀頂層original_sha256而拒絕meta格式；助手增加一致性驗證後，在相同容器與正常輸入乾淨重跑通過，接受的原版收據未修改。r1其餘12項與THE END已完成，r2只補新兩項及desktop，不把其靜態訊息當campaign重跑。負例fixture跨掛載硬連結失敗後，以新目錄完整複製重跑；原始資料保持，失敗fixture不刪。Go遷移器曾用near call bytes，IDA原始far call與relocation核對後更正，失敗前未寫JSON。此前DRAFT、r3錯等父窗、r4未用變數與自動審查容量故障均保留歷史，不列產品缺陷。
+
+正式Go新增內容沒有版本專屬raw ID／座標／record／玩家文字。29項當時變更與新檔UID／GID1000；全專案root-owned3213與零Markdown目錄基線保持。公開只保存程式、pack、工具與文字證據；原版、私有PNG、binary及IDA database不入Git。一次性Docker及有界Xvfb均結束，沒有新image或發行包。提交前diff check及遠端Issue核對另存交接收據。
+
+唯一目前狀態表在CONTEXT；Issue #4及Goal保持進行中。下一切片從正常280重開狀況，對拍「看全體的情形」首個結果與返回；先取dosgolem來源再依RE→READY修正，不重開已完成的詳細頁。
+
+本輪私有入口：`work/issue4-detail-runtime-run-r1.py`及`r2.py`執行上述正常／受影響路線與desktop；`work/issue4-detail-full-run-r1.py`逐項完整game；`work/issue4-detail-internal-run-r1.py`完整internal；`work/issue4-detail-final-audit-r1.py`彙總最終驗收、PNG／IDA保持、raw ID／擁有權及最終vet；`work/issue4-detail-pack-reproduce-r1.py`乾淨九JSON重建；`work/issue4-detail-source-negatives-prepare-r1.py`建立三負例與正對照；`work/issue4-detail-ida-run-r3.py`沿既有IDA9.4自動合併ledger匯出。沿本節Docker資源及掛載契約，完整game外層上限2400秒，其他受影響路線900秒，IDA／收尾320秒；不在host執行。
+
+| 私有交接收據 | SHA-256 |
+| --- | --- |
+| `work/dosgolem-opening/issue4-field-detail-normal-r5-source-r1-receipt.json` | `edfad33432fb8b0dc6ee5bd59536e826af9b27e4c3b91ad4eb861365983469ff` |
+| `work/issue4-detail-runtime-r2/ITEM_DETAIL/detail-receipt.json` | `9067fd3cc3a5655f26f5f603e5686a9e69627d4591ca6e67d7e21dcaee3c0dbc` |
+| `work/issue4-detail-runtime-r2/game-receipt.json` | `66d247d74ac4181d5da3baf8478f62b1c0d1f78a397660a9277313f3959c3d20` |
+| `work/issue4-detail-full-r1/game-receipt.json` | `ed4b831c07215c978b2a76ec7782d3484860c9d01ecde7f41e5cb33d827126c6` |
+| `work/issue4-detail-internal-r1.json` | `fc00e1f249c94c63b6bb5eabc9f15f2e4ca964d63b699899df7ad229f7433822` |
+| `work/issue4-detail-pack-reproduce-r1.json` | `29f52f75802507c119376a4382b540f6a7e7766f3a150158f196ae06105f597f` |
+| `work/issue4-detail-r3-ida.json` | `49d86914afe145a0bdaf36737dcacd082737f0b35d3707b30aab0497a9c24e38` |
+| `work/issue4-detail-final-audit-r1.json` | `2d3a1ad01b6a31a9c2b8e3ee650542b905a4ea61cb35c8f2125148f79dc4de7b` |

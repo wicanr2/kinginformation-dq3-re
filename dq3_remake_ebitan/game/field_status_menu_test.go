@@ -42,6 +42,10 @@ func TestFieldStatusMenuNavigationAndUnknownResults(t *testing.T) {
 }
 
 func TestFieldStatusMenuDosgolemNormalInputComparison(t *testing.T) {
+	runFieldStatusMenuNormalAt273(t, nil)
+}
+
+func runFieldStatusMenuNormalAt273(t *testing.T, after func(*Game)) {
 	runFieldItemDropNormalAt261(t, func(g *Game) {
 		dir, dest := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
 		const sourceHash = "a30e50edd8ab3a3f8f8f95532b84aff4773d5a19879385ab31158e4d57b9b9aa"
@@ -158,6 +162,9 @@ func TestFieldStatusMenuDosgolemNormalInputComparison(t *testing.T) {
 		}
 		if e = os.WriteFile(filepath.Join(dest, "status-receipt.json"), append(b, '\n'), 0644); e != nil {
 			t.Fatal(e)
+		}
+		if after != nil {
+			after(g)
 		}
 	})
 }

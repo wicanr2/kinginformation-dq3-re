@@ -20,16 +20,66 @@ func (g *Game) stepStatusMenu(in InputState, tapIdx int) {
 	}
 	switch {
 	case confirm:
-		// Keep the existing detailed renderer reachable. Its content and the
-		// other results remain outside this first-selector parity receipt.
 		if s.Entries[g.panelCursor].Role == "detail" {
 			g.panel = panelStatus
+			if g.nativeStatusDetailEligible() {
+				g.panel = panelStatusDetail
+			}
 		}
 	case in.DirEdge == 0:
 		g.panelCursor = (g.panelCursor + 1) % n
 	case in.DirEdge == 1:
 		g.panelCursor = (g.panelCursor + n - 1) % n
 	}
+}
+
+func (g *Game) nativeStatusDetailEligible() bool {
+	return g.pack != nil && g.pack.Interface.FieldStatusMenu != nil &&
+		g.pack.Interface.FieldStatusMenu.Detail != nil && len(g.companions) == 0 &&
+		g.heroHP > 0 && g.heroConditions == 0 && len(g.fieldActorSpells(0)) == 0
+}
+
+func (g *Game) stepStatusDetail(in InputState) {
+	if in.AnyKeyEdge || in.Confirm || in.Cancel || in.Enter || in.DirEdge >= 0 || in.Tapped {
+		g.panel, g.panelCursor, g.cmd.open = panelNone, 0, false
+	}
+}
+
+func (g *Game) drawNativeStatusDetail() {
+	if !g.nativeStatusDetailEligible() || g.cur == nil || g.newGame.raster == nil || g.cmd.contract == nil {
+		return
+	}
+	s := g.pack.Interface.FieldStatusMenu
+	g.drawNativeStatusMenu()
+	r := *g.newGame.raster
+	r.pixels = make([]byte, ScreenW*ScreenH)
+	r.palette = append([]dq3data.Color(nil), g.cur.pal...)
+	r.backgroundPalette = append([]dq3data.Color(nil), g.cur.pal...)
+	r.palette[s.FontIndex] = g.fieldIdleForeground()
+	r.windows = make(map[string]gamepack.RawNewGameWindow, len(g.newGame.raster.windows)+1)
+	for id, w := range g.newGame.raster.windows {
+		r.windows[id] = w
+	}
+	r.windows[s.RawWindow.ID] = s.RawWindow
+	if !r.captureBackground(g.rgba) {
+		return
+	}
+	r.frame(gamepack.RasterWindowRef{RawWindowID: s.RawWindow.ID})
+	level, _, attack, defense, _ := g.heroStats()
+	nf := NewGameFlow{stage: ngReview, labels: g.newGame.labels, ni: NameInput{nameBuf: g.heroName},
+		preview: g.heroStat, previewGender: g.heroGender, previewLevel: level, previewHP: g.heroHP,
+		previewMP: g.heroMP, previewDef: defense, previewExp: int(g.heroExp)}
+	var equipment [][]int
+	for _, e := range g.items.Worn() {
+		codes := itemNameGlyphs(g.shop.nameText, e.Code)
+		if len(codes) == 0 {
+			return
+		}
+		equipment = append(equipment, codes)
+	}
+	r.abilityContent(g.cmd.tx, &nf, attack, equipment, s.Detail.EquipmentRowStep)
+	g.panelHits.reset()
+	drawIndexedPCX(g.rgba, r.pixels, r.palette)
 }
 
 func (g *Game) drawNativeStatusMenu() {
