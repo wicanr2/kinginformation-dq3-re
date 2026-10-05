@@ -901,8 +901,8 @@ func (g *Game) examine() {
 	if checkBoss(fx, fy) || checkBoss(g.px, g.py) { // 座標 boss 觸發點優先於一般寶箱/warp
 		return
 	}
-	if !check(fx, fy) {
-		check(g.px, g.py) // 也試腳下
+	if !check(fx, fy) && !check(g.px, g.py) {
+		g.beginEmptyExamine()
 	}
 }
 

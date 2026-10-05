@@ -5635,3 +5635,62 @@ READY限定原本已審健康單人、無詛咒且符合資格範圍內，選第
 work/issue4-item-action-count-runtime-r1/receipt.json及正常item-action-count-receipt.json保存正式結果；source-audit-r1.json保存完整正例及PNG CRC／缺IRQ／變producer三負例拒絕。vet-r1.json通過。final-audit-r1.py／.json逐項核對正式與診斷新13張相同、每路232張既有PNG與原381報告保持、138份正式Go／JSON保持、UID/GID1000、既有root-owned3213及零markdown目錄。原始arrival_camera_test.go未修改，heap profiling／manifest試作只留work。
 
 有限E2／E3及上述十二張V3成立；正式產品Go／pack與485f3c2相同，schema0.30.0／content0.1.102、canonical14b0c168及使用者A的save2/storage1保持。最近完整game／internal／THE END／desktop沿485f3c2，本輪只做受影響回歸，沒有新包。下一來源從正常394開指令選「調查」，核對首個結果與返回，再依READY修正。Issue／Goal保持進行中。
+
+### 2026-10-06 正常394後空結果調查：DRAFT → 有限 READY
+
+本切片依 Issue #4，從新遊戲完整重播至正常394，再以Space、五次Down、Space選調查。原版401顯示兩行「{actor}在自己的腳邊調查‥」「但是什麼也沒有發現。」；新Enter402關閉訊息及父窗，403／404左右行走。這是空結果訊息的有限契約。既有寶箱、特殊事件、多人、異常狀態及其他地圖分支未由本切片驗收，不改其選取或交易規則。
+
+原版EXE115282bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`；TXT SHA-256 `38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b`。IDA Pro9.4，linear−EC90=file，DGROUP base linear24DD0。非破壞匯出 `work/issue4-search-r2-ida.json` SHA-256 `246f1a9342bb119c167f2e56c38e42fcf21094f2d922ceb3ca16aa8024605a52`，保留259列原始定位、bytes與xref；不改名稱、資料或函式邊界。
+
+| 原始定位 | 證據與等級 |
+| --- | --- |
+| DGROUP3D6C／file19EAC，六列末尾callback8966 | 已證實：正常395..400六項游標，401進IDA linear18966／file9CD6。 |
+| IDA18977、18986、18C75 | 已證實本次：raw4F2D=1、raw0B5D=0，因此直接走空結果；此次沒有讀取腳下tile。這些raw欄位的完整語意未知，不能據此外推其他map。 |
+| IDA18C83..18CA3／file9FF3..A018 | 已證實本次：15002開DGROUP3E6E窗；raw4F3B=0選DI0108，再DI0109，兩次21414消費原始264／265。264的FFFB以實際主角姓名插值。 |
+| DGROUP3E6E／file19FAE | 已證實原始24bytes `0b011300ee002c0060009401000000000000000000000c09`；共用原生frame404、x19 EGA bytes、y238、寬44 EGA bytes、高96pixels。文字inset與flow沿已審核同窗consumer，不以截圖估值。 |
+| IDA2111B..21148，等待點21133 | 已證實本次：兩段文字完成後新Enter；原版402沿18CA8取SI3E6E、18CAC呼叫1F604並返回場景。其他新鍵靜態分支沿既有共用read-key證據。 |
+| IDA18990..189CF腳下tile分支、18C0F世界特殊分支 | strong靜態定位，未在此次執行，不改正式選取流程，不宣稱本次閉合。 |
+
+原版來源：`work/dosgolem-opening/issue4-search-first-normal-r1-source-r1-receipt.json` SHA-256 `f9d863430db543d28cb2cf8eeb4971689aca28728842c1a6efa552140db114e3`，401包／439鍵／878IRQ1／1013產物；返回來源 `issue4-search-return-normal-r1-source-r1-receipt.json` SHA-256 `3af2954a524f521670aad308377efd2aca4c28633a971c111f7af6fc709c44eb`，404包／442鍵／884IRQ1／1022產物。父394全部事件與992產物保持，返回來源再核對全部401前綴，只有新增唯讀search觀察；2172bytes只有403座標X改2，其餘保持，clock0、角色八格／能力／gold／flags及原生保存檔保持。dosgolem固定2f44a68，seed1357在執行前一次，沒有restore、遊戲狀態注入或相位調整。
+
+READY typed契約：`interface.field_examine`必填，只描述健康單人既有handler未處理的空結果。`intro_text_id`／`result_text_id`分別引用原始264／265，`record_join=new_line`明示兩record換行；actor variable、window、frame、flow與等待指示均由pack提供。Game使用已驗證的既有事件路徑；只有所有處理分支均未處理才開始空結果訊息，保留調查前完整命令畫布、自然揭字、等待新鍵；揭字期間按鍵不關閉、不移動、不保存。返回清除暫態訊息，物品／RNG／持久狀態不交易，Load不恢復訊息。缺欄位、未審證據、無效text／variable／容量一律拒絕。不加入版本專屬Go文字、record或坐標。
+
+驗收入口：[正常404測試](../dq3_remake_ebitan/game/field_examine_test.go)、[原版首次探針](../tools/dosgolem_field_search_first_probe.py)、[原版返回探針](../tools/dosgolem_field_search_return_probe.py)、[獨立來源驗證](../tools/verify_dosgolem_field_search.py)。在既有dq3-ebiten-test:20260822-r1有界Docker、UID1000、原版與frozen dosgolem唯讀、work可寫執行首次探針。返回探針為保持已捕獲producer身分，要求先把公開首次探針逐byte複製至容器內 `/work/issue4-search-first-probe-r1.py`，已有同名檔須核對相同，不覆寫其他內容；再執行返回探針與來源驗證。固定前綴已有產物時拒絕覆寫，重生採乾淨work overlay。原版影像、保存檔、database及binary只留本機。
+
+此READY允許以上訊息修正及正常404、存讀檔與回歸；不修改A八格、save2/storage1，不猜新事件或未驗玩家分支。窗口／文字對拍與完整640×350差異分開記錄，動畫時鐘仍未知，逐字hold沿既有hardware-spec approximation。正式產品與CONFORMED仍待修正及驗證。
+
+### 2026-10-06 空結果調查有限 CONFORMED
+
+[正常404測試](../dq3_remake_ebitan/game/field_examine_test.go)從新遊戲及正常394前綴依序送Space、五次Down、Space、新Enter、Left、Right，沒有狀態注入。原始264／265字模、主角姓名、命令底圖與原生frame由pack提供；401自然揭字後等待新鍵，402關閉訊息及父窗返回。395..402八張完整640×350 RGB0；403／404仍差356／351，動畫時鐘及這兩張完整V3保持unknown，不遮罩或改相位。修正前401沒有訊息，完整差25761，RED run.log與PNG留本機。
+
+全部十JSON槽在調查期間保持，snapshot／八格／能力／RNG保持，左右只有正常座標交易。404後另以正式F5／F6驗證同版本保存、Load clock與下一步；本輪原版沒有新保存404狀態，此項只列remake內部回歸。新鍵元件證實揭字前按鍵不提前返回，等待時的方向／Save鍵只關閉訊息，不洩漏移動或保存；Load清除暫態。異常狀態的未審分支不開始此有限訊息。
+
+四項必驗以獨立程序PASS、零SKIP／OOM；work/issue4-search-runtime-r1/receipt.json及TestFieldExamineDosgolemNormalInputComparison/armor/search-empty-receipt.json保存結果，後者SHA-256 `54448f2909d43d0474ae0f099a5f43a7a852b2cc34308d91aecc915eb4e83cbd`。正常394的245張舊PNG逐byte相同，舊394報告僅pack schema／content／hash更新，RED前綴PNG亦保持；prefix-audit-r1.json保存稽核。
+
+兩項EXE／TXT與壞契約測試、16個拒絕分支通過；完整internal212頂層／520子、12套件PASS，4項既有選用診斷SKIP。來源IRQ、原生DI record與producer三種負例拒絕，正例兩收據保持；九JSON由3aff82a乾淨重建相同，Go vet通過。完整game／THE END／desktop結果仍由收尾收據補記，不能以此提前宣稱全套通過。
+
+source checker首輪使用不存在的record欄位，改用實際last_record後同image／命令重驗；首次負例使用錯IRQ tag，查出實際DQ3_KEY_DELIVERED後乾淨重驗。遷移首輪混用IDA loaded far-call segment與file bytes而拒絕，訂正file segment後重建。大型來源日誌一次性read_text曾在1GB遭終止，改為串流解析與相稱3GB驗證；原版影像、輸入、時鐘及持久區沒有修改。這些屬驗證腳本與資源問題，未當作產品缺陷。
+
+[位址ledger](../tools/ida_field_pose_ledger.json)保留原19筆annotation，追加18C93／18C9B／18CAC三筆confirmed限定語意。IDA9.4重新匯出 `work/issue4-search-r3-ida.json` SHA-256 `0d527085f92c256344a4266136ec6aecc1981ecdcd43892508e7fa619948a6e8`，259筆原始定位／bytes／xref保持，自動合併三筆新語意，未知分支保留警示；不修改database名稱。ownership-ida-audit-r1.json確認UID/GID1000、既有root-owned3213及零markdown目錄保持。
+
+本輪schema0.31.0／content0.1.103、canonical0612be3e；使用者A的八格與save2/storage1保持，新版依既有策略拒絕舊schema與不同pack hash。此有限E2／E3及八張V3不外推其他地圖／事件／多人／音訊或完整原版campaign。沒有新包，下一切片由正常404開對話核對無對象結果；先原版來源，再審READY。Issue／Goal進行中。
+
+### 2026-10-06 範圍審查補記：徒步與乘船
+
+18C86的raw4F3B=1分支選record249，原始TXT為「{actor}從船上跳下來,{NL}潛入水中。」；不能用264腳邊訊息代替。既有[docs/98](98-thirsty-pitcher-final-key-production-trace.md)以同hash EXE的DGROUP4F3B=1船舶gate閉合乘船狀態。本次正常原版唯讀觀察raw4F3B=0，READY／CONFORMED範圍限徒步；正式common狀態g.shipAboard為true時不開始本有限訊息，船上回應留unknown，未猜補249流程。這是範圍guard訂正，不改事件或交通規則。
+
+完整game r1在範圍審查完成前已自然PASS並建立desktop，已有日誌、game-receipt.json及pre-guard.json保留；它驗證的是加foot guard前程式，不能稱最終程式全套PASS。最終foot guard由runtime-r2正常404及scope測試重驗；完整game／THE END／desktop改由full-r2重跑。九JSON、canonical與原版收據保持。
+
+### 2026-10-06 最終徒步 guard 完整收尾
+
+runtime-r2正常404與scope兩項零SKIP／OOM；normal404報告與r1逐byte相同，指定八張RGB0及十槽／正式存讀檔保持。full-r2以最終Go及同一九JSON重新編譯，516頂層完整覆蓋、520個獨立命令、465不同頂層／141子PASS，51既有選用診斷SKIP；必驗正常調查、394前綴、裝備及各原版路線無素材缺失SKIP。正常TestOpeningProductionInputTrace至THE END65.16秒。最終binary SHA-256 `6abc960b1ab288fdb6cea067d1ef9aa36693e03936dbae6f2c9bca8dfed983d8`，memory.events oom／oom_kill／max皆0。
+
+完整internal212頂層／520子、12套件PASS及4選用SKIP，Go vet與最終game vet PASS。Linux desktop為ELF64／x86_64，14,781,136bytes，SHA-256 `f7447c5103cba1909f378993945c12cf81fcb39e2f13dd4f8ad50d8f73e389df`，只放work，沒有新發行包。full-r1在加foot guard前亦自然PASS，保留舊結果；企圖停止時容器已被--rm清除，沒有留下背景程序，未當作產品缺陷。
+
+收據入口：work/issue4-search-full-r2/game-receipt.json、desktop-receipt.json，work/issue4-search-runtime-r2/receipt.json，work/issue4-search-internal-r1.json、source-audit-r1.json、rebuild-r1.json、prefix-audit-r1.json及ownership-ida-audit-r1.json。最終current表與工作歷程由CONTEXT及WORKLOG維護；本有限修正不外推完整原版campaign。
+
+### 下一批：無對象對話首個406來源接受，正式spec仍 DRAFT
+
+此項已登記Issue #4留言6003547589。私有探針work/issue4-talk-empty-first-probe-r2.py以同一正常新遊戲及404前綴，再送Space開六列命令、Space選首項。405原生count6／cursor1；406等待原始260，PC21133，主角3,18。完整444輸入／888IRQ1、1028產物、404所有事件及1022產物保持；八格、2172bytes、原生保存檔及clock0保持，seed1357一次，無注入／restore。
+
+獨立來源checker work/issue4-talk-empty-first-check-r2.py已接受source-only收據work/dosgolem-opening/issue4-talk-empty-first-normal-r2-source-r1-receipt.json，SHA-256 `7406970c11519a0ccde27e94ed55492901bcd804972b94123b39b6cb34db8f29`。r1編譯因不存在的choiceCount／choiceCursor變數失敗，保留生成Go；r2使用實際phase／packet條件，405 count／cursor另由checker驗證。未改原版或正式Go／pack，不能稱對話remake parity。下一步以新Enter延續406核對返回及行走，補最小caller證據，審READY後才進正式修正。這是下一批來源準備，不增加本次production切片。

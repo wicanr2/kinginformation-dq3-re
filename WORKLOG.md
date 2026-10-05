@@ -1901,3 +1901,15 @@ DRAFT先重現正式第二列沒有結果。prototype取錯金錢欄位、FON-on
 正式394八格／snapshot／RNG／clock、全部十JSON槽保持、F5／F6與Load後下一步通過；新增13張全畫布中382..393十二張RGB0，394差122保持。每路232張舊PNG及原381報告不變，新13張與診斷逐byte同。138份正式Go／JSON保持485f3c2，A八格及save2/storage1不變；最近完整回歸沿485f3c2，未聲稱本輪全套或campaign完成。final-audit-r1保存所有者、畫面與收據核對，root-owned基線3213、零markdown目錄。
 
 修正目前計畫：健康單人此路線無第四項，下一正常394選「調查」首個結果與返回。歷史計畫與多人未知留存。原版資產、影像、binary、profiling及研究收據只在本機work，無新發行包；使用者十三項未追蹤資料保持。驗收後commit＋push及Issue結果的實際ID由work/issue4-item-action-count-handshake-r1.json記錄。全部一次性容器完成後清除，其他專案容器不動。Issue／Goal繼續。
+
+## 2026-10-06 Issue #4：徒步空結果調查與新鍵返回
+
+原版正常401／404來源接受，394及401全部前綴保持；修正前缺原始訊息，401完整差25761。依docs/188有限READY，新增typed field_examine與原始264／265、共享3E6E窗口和新鍵返回；所有版本資料留九JSON，schema0.31.0/content0.1.103、canonical0612be3e，A八格/save2/storage1保持。共用訊息helper可按原始兩record換行，正常394延續helper保留原nil分支。乘船249潛水分支未審，不套徒步264；scope測試鎖定排除shipAboard。
+
+最終runtime-r2正常404與scope兩項零SKIP／OOM；395..402八張完整RGB0，403／404仍差356／351。十JSON槽保持、正式F5／F6及Load後行走通過。原版本輪沒有保存404的新樣本，此保存驗證只屬remake內部。245張舊394 PNG保持；九JSON由3aff82a乾淨重建相同，來源IRQ／DI／producer三負例拒絕。IDA259列定位／bytes／xref與19舊annotation保持，新18C93／18C9B／18CAC三筆confirmed由sidecar自動附註；root-owned3213與零markdown目錄基線保持，輸出UID/GID1000。
+
+最終完整game516頂層覆蓋、465不同頂層／141子PASS、51既有選用診斷SKIP；internal212頂層／520子、12套件及4選用SKIP PASS。正常新遊戲至THE END65.16秒，vet及Linux desktop PASS，OOM0。full-r2與runtime-r2為最終foot guard；full-r1已自然PASS後發現乘船範圍缺口，保留舊收據並重新跑最終版本。source欄位、IRQ負例tag、far-call file／loaded bytes及大日誌讀取的草稿問題均已分類和訂正，沒有當作產品缺陷。
+
+下一批無對象對話原版406首個260來源接受，SHA7406970c、444鍵／888IRQ1／1028產物，404前綴保持；只屬source-only，正式對話未修。r1草稿不存在的變數造成編譯失敗，r2來源與獨立checker通過。下一步延續406取得返回／行走，補caller與READY；原版完整campaign、動畫與音畫仍未知。
+
+Issue #4持續更新；本次以「fix: restore native empty examine response and fresh-key return」提交並推送origin/main，實際提交身分由git log與Issue最終留言回查。僅提交程式、JSON、工具與既有文件，不加入原版／database／影像／binary／私有探針及13項使用者scratch。一次性--rm容器已自然清除，無殘留專案容器。驗收與重生入口統一見docs/188及CONTEXT；沒有新發行包，Goal保持進行中。

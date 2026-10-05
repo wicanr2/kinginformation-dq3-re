@@ -1,5 +1,21 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## 單人空結果調查（schema0.31.0／content0.1.103）
+
+`interface.field_examine`必填。有限READY與原版正常404來源見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為 `sha256:0612be3e805263dfabc2e1cd4e15f4f97e0343fd75be28d985c1c1f1dea5e4a5`；A單一八格、save2/storage1保持，舊schema及不同pack hash存檔拒絕。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `scope`、`return_mode` | `healthy_single_member_no_result`、`fresh_key_to_field`。只處理健康單人徒步時既有事件handler未處理的空結果，不新增事件選取或交易規則。 |
+| `intro_text_id`、`result_text_id`、`record_join` | 分別引用原始264／265，join固定`new_line`。字模與record分開保存；兩段合計不得超過原生窗口行數。 |
+| `actor_variable_code` | 必填原始variable word。intro恰一次綁定實際主角姓名，result不得含actor或未綁控制碼。 |
+| `presentation`、`text_flow`、`wait_indicator` | 完整共用原生訊息窗契約，包含DGROUP3E6E raw window、frame文字、inset、字距、陰影、保留列與新鍵等待。沿原始consumer取值，缺資料拒絕。 |
+| `evidence` | D3，EXE／TXT身分、原始地址基準與正常404來源。其他事件、多人與異常狀態未由本契約驗收。 |
+
+實作入口：[typed契約](../dq3_remake_ebitan/internal/gamepack/field_examine.go)、[原始資料與拒絕測試](../dq3_remake_ebitan/internal/gamepack/field_examine_test.go)、[正式訊息入口](../dq3_remake_ebitan/game/field_examine.go)、[正常404及新鍵測試](../dq3_remake_ebitan/game/field_examine_test.go)。訊息保留實際調查前畫布，等待新鍵後返回；八格、能力、RNG及十JSON槽保持。暫態訊息不入存檔，Load清除。
+
+乾淨重建使用[tools/migrate_field_examine_pack.py](../tools/migrate_field_examine_pack.py)，在既有 `dq3-ebiten-test:20260822-r1` 一次性有界Docker中以UID1000執行 `python3 /repo/tools/migrate_field_examine_pack.py <可寫乾淨0.30.0 pack> <唯讀原版素材目錄>`。支援由3aff82a九份JSON重建；檢查原始EXE／TXT雜湊及file bytes，far-call的原始segment不與IDA重定位bytes混用。先前版本的下列契約保留歷史，現行schema以本節為準。
+
 ## 單人裝備四槽（schema0.30.0／content0.1.102）
 
 `interface.field_equipment`必填。原版正常339來源與有限READY見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:14b0c168a118eeda60fad96201e0ff9374a47ffd604a7b8ed996b54ef73c3351`。A單一有序物品格、save_version2及storage_version1保持；舊schema或不同pack hash的存檔拒絕。

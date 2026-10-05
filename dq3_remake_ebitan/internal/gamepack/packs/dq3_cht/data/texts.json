@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.30.0",
+  "schema_version": "0.31.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -8293,6 +8293,78 @@
         "consumer": "single actor -> four category lists -> physical word writer -> cached stats -> field1997C",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "confirmed限定健康單人、無詛咒且候選符合資格；其他分支未驗收。"
+      }
+    },
+    {
+      "id": "dq3:text.field.examine.intro",
+      "value": "{actor}在自己的腳邊調查‥",
+      "glyph_codes": [
+        65531,
+        411,
+        541,
+        542,
+        149,
+        543,
+        551,
+        544,
+        545,
+        123
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 264
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal404 source 3af2954a524f521670aad308377efd2aca4c28633a971c111f7af6fc709c44eb",
+        "address_space": "linear",
+        "address": "IDA9.4 18966..18986;18C75..18CB0;2111B..21148;15002..15037;DGROUP3E6E/file19FAE",
+        "consumer": "command sixth entry -> 18966/18986 -> 18C75 -> DI0108 then0109/21414 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常395..404健康單人空結果調查、原命令背景、兩record、新按鍵返回與下一步；其他事件分支未驗收。字模hold為沿用hardware-spec approximation。"
+      }
+    },
+    {
+      "id": "dq3:text.field.examine.empty",
+      "value": "但是什麼也沒有發現。",
+      "glyph_codes": [
+        508,
+        399,
+        435,
+        436,
+        494,
+        410,
+        147,
+        431,
+        432,
+        56
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 265
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "exe",
+        "source": "DQ3.EXE SHA256 5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; D3TXT00.TXT SHA256 38d7f9b8d79b5c7fed9dc9692c9f477bb828a2b8707b1e0cfb29a6e5e70c8a2b; dosgolem2f44a68 normal404 source 3af2954a524f521670aad308377efd2aca4c28633a971c111f7af6fc709c44eb",
+        "address_space": "linear",
+        "address": "IDA9.4 18966..18986;18C75..18CB0;2111B..21148;15002..15037;DGROUP3E6E/file19FAE",
+        "consumer": "command sixth entry -> 18966/18986 -> 18C75 -> DI0108 then0109/21414 -> retained message -> fresh21133 -> close1F604 -> field1997C",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "confirmed限定正常395..404健康單人空結果調查、原命令背景、兩record、新按鍵返回與下一步；其他事件分支未驗收。字模hold為沿用hardware-spec approximation。"
       }
     }
   ]

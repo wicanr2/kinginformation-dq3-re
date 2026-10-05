@@ -20,12 +20,24 @@ func (g *Game) beginSingleMemberReorderPrompt() {
 }
 
 func (g *Game) beginFieldMessagePrompt(textID string, p *gamepack.FieldItemPrompt, flow gamepack.RetainedTextFlow, indicator gamepack.OpeningWaitIndicator, variables map[uint16][]int) bool {
-	if g.pack == nil || p == nil {
+	return g.beginFieldMessageRecords([]string{textID}, p, flow, indicator, variables)
+}
+
+// Each reviewed record starts on a new line, as in the native text consumer.
+func (g *Game) beginFieldMessageRecords(textIDs []string, p *gamepack.FieldItemPrompt, flow gamepack.RetainedTextFlow, indicator gamepack.OpeningWaitIndicator, variables map[uint16][]int) bool {
+	if g.pack == nil || p == nil || len(textIDs) == 0 {
 		return false
 	}
-	codes, ok := g.pack.TextGlyphCodes(textID)
-	if !ok {
-		return false
+	var codes []uint16
+	for i, id := range textIDs {
+		record, ok := g.pack.TextGlyphCodes(id)
+		if !ok || len(record) == 0 {
+			return false
+		}
+		if i > 0 {
+			codes = append(codes, dq3data.TxtNL)
+		}
+		codes = append(codes, record...)
 	}
 	frame, ok := g.pack.TextGlyphCodes(p.FrameTextID)
 	if !ok {

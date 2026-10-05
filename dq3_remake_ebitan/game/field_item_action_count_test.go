@@ -17,6 +17,11 @@ import (
 )
 
 func TestFieldItemActionCountDosgolemNormalInputComparison(t *testing.T) {
+	runFieldItemActionNormalAt394(t, nil)
+}
+
+func runFieldItemActionNormalAt394(t *testing.T, after func(*Game)) {
+	t.Helper()
 	runFieldEquipmentNormalAt381(t, func(g *Game) {
 		dir, dest := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
 		const prefix = "issue4-item-action-count-normal-r1"
@@ -182,6 +187,10 @@ func TestFieldItemActionCountDosgolemNormalInputComparison(t *testing.T) {
 			}
 			b, _ := os.ReadFile(path)
 			samples = append(samples, map[string]any{"packet": n, "full_rgb_difference": diff, "physical_words": words, "clock": g.dayNightClock(), "png_sha256": fmt.Sprintf("%x", sha256.Sum256(b))})
+		}
+		if after != nil {
+			after(g)
+			return
 		}
 		t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "field-save.json"))
 		expectedSave := g.snapshot()

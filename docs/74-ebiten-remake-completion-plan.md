@@ -1,9 +1,9 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-06 正常394的健康單人道具清單已有限對拍。五件物品、三項動作及Down的1→2→3→1繞回、Esc返回、左右行走與原版一致；八格／snapshot／clock核對通過，remake RNG及十JSON槽保持，追加正式F5／F6及下一步通過。
-> 原版432鍵／864IRQ1／992產物，父381的953份與所有事件保持，來源c4878843，seed1357一次，無注入／restore。382..393十二張完整640×350 RGB0，394差122保持，完整V3及動畫時鐘仍未知。
-> 三項獨立程序回歸、vet與來源正例／三負例PASS，正式4GB容器零SKIP／OOM；每路232張舊PNG及原381報告保持。3GB草稿的兩次OOM保留；heap診斷顯示約99.6%保留配置屬圖形WritePixels，收據讀取試作未升格。正式產品Go／pack仍485f3c2，A八格、schema0.30.0/content0.1.102及save2/storage1保持，最近完整回歸沿485f3c2，沒有新包。
-> 勘誤：本健康單人路線只有三動作，前輪「第四列」待辦不成立。下一切片從正常394開指令選「調查」，核對首個結果與返回；先dosgolem來源，再審READY。Issue／Goal進行中；現況CONTEXT、計畫docs/74、證據docs/188。
+> 2026-10-06 健康單人徒步空結果「調查」已修正。原始264／265、姓名、保留命令畫布、新鍵返回及下一步均接入正式玩家入口；正常395..402八張完整640×350 RGB0。403／404仍差356／351，動畫時鐘及這兩張完整V3未知；船上潛水分支未驗，正式入口排除shipAboard。
+> dosgolem正常404來源3af2954a，442鍵／884IRQ1／1022產物；394及401完整前綴保持，seed1357一次，無注入／restore。八格／能力／flags／clock／原生保存檔保持；remake十JSON槽、正式F5／F6及Load後行走通過。245張舊394 PNG保持，舊報告僅pack身分變更。
+> 最終完整game516頂層覆蓋，465不同頂層／141子PASS、51既有選用SKIP；internal212頂層／520子、12套件及4選用SKIP PASS。正常THE END65.16秒、Go vet與Linux desktop PASS，最終收據OOM0；foot guard前r1亦PASS，保留為舊程式驗證。schema0.31.0/content0.1.103、canonical0612be3e，A八格/save2/storage1保持；沒有新包。
+> 下一批原版首個無對象對話406已接受，來源7406970c，444鍵／888IRQ1／1028產物，404前綴保持，等待原始260；僅source-only，沒有remake parity。下一步延續406以新Enter核對返回與行走，補caller證據，再審READY及修正式對話。Issue／Goal進行中；唯一現況表CONTEXT、計畫docs/74、證據docs/188。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

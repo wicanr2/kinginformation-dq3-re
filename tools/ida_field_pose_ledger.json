@@ -307,6 +307,54 @@
       "input_size": 115282,
       "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
       "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x18c93",
+      "file_offset": "0xa003",
+      "bytes": "bf0801",
+      "original_name": "loc_18C93",
+      "original_function": "sub_18C0F",
+      "semantic": "原始mov di,0108h：本次空結果調查選原始TXT00/264，插入實際主角姓名並描述腳邊調查",
+      "inference_level": "confirmed",
+      "consumer": "command6 -> 18966 -> 18986 rawB5D0 -> 18C75 raw1F7=0 -> 15002 -> 18C93/21414 -> 18C9B/21414 -> 21133 fresh key -> 18CAC/1F604 -> field1997C",
+      "review_reference": "docs/188：2026-10-06 空結果調查有限 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal401 read-only DI0108/0109,402 newEnter and closeSI3E6E,403..404 movement; source3af2954a524f521670aad308377efd2aca4c28633a971c111f7af6fc709c44eb; normal395..402 full640x350 RGB0",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x18c9b",
+      "file_offset": "0xa00b",
+      "bytes": "bf0901",
+      "original_name": "",
+      "original_function": "sub_18C0F",
+      "semantic": "原始mov di,0109h：本次調查第二筆TXT00/265顯示無發現結果，不交易持久狀態",
+      "inference_level": "confirmed",
+      "consumer": "command6 -> 18966 -> 18986 rawB5D0 -> 18C75 raw1F7=0 -> 15002 -> 18C93/21414 -> 18C9B/21414 -> 21133 fresh key -> 18CAC/1F604 -> field1997C",
+      "review_reference": "docs/188：2026-10-06 空結果調查有限 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal401 read-only DI0108/0109,402 newEnter and closeSI3E6E,403..404 movement; source3af2954a524f521670aad308377efd2aca4c28633a971c111f7af6fc709c44eb; normal395..402 full640x350 RGB0",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
+    },
+    {
+      "ida_linear": "0x18cac",
+      "file_offset": "0xa01c",
+      "bytes": "e85569",
+      "original_name": "",
+      "original_function": "sub_18C0F",
+      "semantic": "原始call sub_1F604：新Enter後使用SI3E6E關閉調查訊息，然後關閉父命令窗返回場景",
+      "inference_level": "confirmed",
+      "consumer": "command6 -> 18966 -> 18986 rawB5D0 -> 18C75 raw1F7=0 -> 15002 -> 18C93/21414 -> 18C9B/21414 -> 21133 fresh key -> 18CAC/1F604 -> field1997C",
+      "review_reference": "docs/188：2026-10-06 空結果調查有限 READY",
+      "dynamic_evidence": "dosgolem2f44a68 seed1357 once; normal401 read-only DI0108/0109,402 newEnter and closeSI3E6E,403..404 movement; source3af2954a524f521670aad308377efd2aca4c28633a971c111f7af6fc709c44eb; normal395..402 full640x350 RGB0",
+      "input_path": "assets_raw/DQ3.EXE",
+      "input_size": 115282,
+      "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+      "address_space": "IDA9.4 linear; MZ file=linear-EC90; DGROUP base linear24DD0"
     }
   ]
 }
