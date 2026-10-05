@@ -136,16 +136,16 @@ func TestKandarTowerProductionRouteOpensThiefKeyDoor(t *testing.T) {
 	// 用合法個人背包容量裝備聖水，再以正式道具面板消耗。
 	// 五瓶不足以覆蓋路由及 helper 保留最後一瓶的策略；不能把
 	// Lv1 單人 fixture 的遭遇全滅當成開門失敗或 campaign 證據。
-	g.inventory = []int{0x55}
-	waters := g.pack.ItemActions().PersonalInventorySlots - len(g.inventory)
+	g.items = testItemStore([]int{0x55}, [4]int{-1, -1, -1, -1})
+	waters := g.pack.ItemActions().PersonalInventorySlots - g.actorItemCount(0)
 	for i := 0; i < waters; i++ {
-		g.inventory = append(g.inventory, itemuse.ItemHolyWater)
+		setTestInventory(&g.items, append(testInventory(g.items), itemuse.ItemHolyWater))
 	}
 	g.enterTownCty(event.Trigger.CTYRaw)
 	traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
 	if g.repel != itemuse.HolySteps || g.countItem(itemuse.ItemHolyWater) != waters-1 {
 		t.Fatalf("甘達特塔 route fixture 的正式聖水 transaction 錯：repel=%d inventory=%v",
-			g.repel, g.inventory)
+			g.repel, testInventory(g.items))
 	}
 	traceTownSectionTo(t, g, event.Trigger.CTYRaw, event.Trigger.Section)
 	if sceneSection(g.cur) != event.Trigger.Section {

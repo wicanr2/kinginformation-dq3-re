@@ -89,3 +89,6 @@ func (it *Items) CanEquip(code, cls int) bool {
 	}
 	return it.raw[code*itemStride+6]&(0x80>>uint(cls)) != 0
 }
+
+// DropForbidden is the original ITEM +5 bit2 reader at IDA linear13AEB.
+func (it *Items) DropForbidden(code int) bool { return it.b(code, 5)&2 != 0 }

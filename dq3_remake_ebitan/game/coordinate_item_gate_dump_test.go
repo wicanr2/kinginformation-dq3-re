@@ -42,7 +42,7 @@ func TestDumpOliviaCapeAndGaiaSword(t *testing.T) {
 
 	g := oliviaCapeTestGame(t)
 	g.showTitle = false
-	g.inventory = []int{0x64}
+	setTestInventory(&g.items, []int{0x64})
 	if !g.tryCoordinateItemGateEvent() {
 		t.Fatal("無法開啟奧莉薇亞海岬事件")
 	}

@@ -24,11 +24,14 @@ func testSettlementFounder(t *testing.T) (*gamepack.Pack, *gamepack.SettlementFo
 func TestSettlementFounderOriginalTwoConfirmTransaction(t *testing.T) {
 	pack, event := testSettlementFounder(t)
 	merchant := newMember([]int{700, 701}, event.RequiredClassRaw, 1, 0)
-	merchant.Weapon, merchant.Armor, merchant.Shield, merchant.Head = 1, 30, -1, -1
-	merchant.Inventory = []int{64, 65}
+	setTestGear(&merchant.Items, 0, 1)
+	setTestGear(&merchant.Items, 1, 30)
+	setTestGear(&merchant.Items, 2, -1)
+	setTestGear(&merchant.Items, 3, -1)
+	setTestInventory(&merchant.Items, []int{64, 65})
 	other := newMember([]int{702}, 1, 0, 0)
 	g := &Game{
-		pack: pack, curCty: event.NPC.CTYRaw,
+		pack: pack, items: testItemStore(nil, [4]int{-1, -1, -1, -1}), curCty: event.NPC.CTYRaw,
 		cur:           &Scene{sec: event.NPC.Section},
 		companions:    []*Member{merchant, other},
 		sharedStorage: []int{9}, settlementFounderMember: -1,
@@ -64,7 +67,7 @@ func TestSettlementFounderOriginalTwoConfirmTransaction(t *testing.T) {
 		t.Fatalf("建城者／隊伍／旗標交易錯誤：companions=%d founder=%v flag=%v",
 			len(g.companions), g.settlementFounder, g.storyFlag(event.CompletionFlagRaw))
 	}
-	if !reflect.DeepEqual(g.sharedStorage, []int{9, 1, 30, 64, 65}) {
+	if !reflect.DeepEqual(g.sharedStorage, []int{9, 64, 65, 1, 30}) {
 		t.Fatalf("裝備與個人物品未依序移入共用預存所：%v", g.sharedStorage)
 	}
 	if len(g.roster) != 0 {
@@ -77,7 +80,7 @@ func TestSettlementFounderStopsAtFirstDeadMerchant(t *testing.T) {
 	dead := newMember([]int{700}, event.RequiredClassRaw, 0, 0)
 	dead.CurHP = 0
 	alive := newMember([]int{701}, event.RequiredClassRaw, 0, 0)
-	g := &Game{pack: pack, curCty: event.NPC.CTYRaw, cur: &Scene{sec: event.NPC.Section},
+	g := &Game{pack: pack, items: testItemStore(nil, [4]int{-1, -1, -1, -1}), curCty: event.NPC.CTYRaw, cur: &Scene{sec: event.NPC.Section},
 		companions: []*Member{dead, alive}, settlementFounderMember: -1}
 	n := &npcInst{x: event.NPC.Tile.X, y: event.NPC.Tile.Y, b4: event.NPC.HandlerRaw}
 	if !g.talkSettlementFounder(n) {
@@ -94,8 +97,8 @@ func TestSettlementFounderStopsAtFirstDeadMerchant(t *testing.T) {
 func TestSettlementFounderFullStorageRepeatsOriginalNoticeBeforeRemoval(t *testing.T) {
 	pack, event := testSettlementFounder(t)
 	merchant := newMember([]int{700}, event.RequiredClassRaw, 0, 0)
-	merchant.Inventory = []int{64, 65}
-	g := &Game{pack: pack, companions: []*Member{merchant},
+	setTestInventory(&merchant.Items, []int{64, 65})
+	g := &Game{pack: pack, items: testItemStore(nil, [4]int{-1, -1, -1, -1}), companions: []*Member{merchant},
 		settlementFounderEventID: event.ID, settlementFounderMember: 0,
 		settlementFounderStage: settlementFounderAccepted,
 		sharedStorage:          make([]int, event.SharedStorageCapacity)}
@@ -125,12 +128,13 @@ func TestSettlementFounderFullStorageRepeatsOriginalNoticeBeforeRemoval(t *testi
 
 func TestSettlementFounderSaveRoundTrip(t *testing.T) {
 	founder := newMember([]int{700, 701}, 6, 1, 123)
-	founder.Inventory = nil
-	g := &Game{settlementFounder: founder, sharedStorage: []int{1, 30, 64},
-		equip: [4]int{-1, -1, -1, -1}}
+	setTestInventory(&founder.Items, nil)
+	g := &Game{pack: loadTestPack(t), settlementFounder: founder, sharedStorage: []int{1, 30, 64}, items: testItemStore(nil, [4]int{-1, -1, -1, -1})}
 	s := g.snapshot()
-	var restored Game
-	restored.restore(s)
+	restored := Game{pack: loadTestPack(t)}
+	if err := restored.restore(s); err != nil {
+		t.Fatal(err)
+	}
 	if restored.settlementFounder == nil ||
 		!reflect.DeepEqual(restored.settlementFounder.Name, founder.Name) ||
 		!reflect.DeepEqual(restored.sharedStorage, g.sharedStorage) {
@@ -147,7 +151,7 @@ func TestSettlementFounderImprisonedDialogueTracksYellowOrb(t *testing.T) {
 	}
 	founder := newMember([]int{700, 701}, 6, 1, 0)
 	g := &Game{
-		pack: pack, inTown: true, curCty: 83, cur: &Scene{sec: 0}, flags: map[int]bool{},
+		pack: pack, items: testItemStore(nil, [4]int{-1, -1, -1, -1}), inTown: true, curCty: 83, cur: &Scene{sec: 0}, flags: map[int]bool{},
 		settlementFounder: founder,
 	}
 	g.setStoryFlag(orb.Treasure.PresentFlag, true)
@@ -173,7 +177,7 @@ func TestSettlementFounderImprisonedDialogueTracksYellowOrb(t *testing.T) {
 	g.dlg.open = false
 	if !g.collectQuestTreasure(orb.Treasure.CTYRaw, orb.Treasure.Section,
 		orb.Treasure.TileSubID) || !g.hasItem(0x6a) || g.storyFlag(0x4a) {
-		t.Fatalf("黃寶珠 transaction 錯：inv=%v flag=%v", g.inventory, g.storyFlag(0x4a))
+		t.Fatalf("黃寶珠 transaction 錯：inv=%v flag=%v", testInventory(g.items), g.storyFlag(0x4a))
 	}
 	if !g.talkSettlementFounderFollowup(n) || len(g.settlementFounderFollowup) != 0 {
 		t.Fatal("黃寶珠取得後 handler48 仍不得排入 record43")
@@ -184,11 +188,13 @@ func TestSettlementFounderImprisonedDialogueTracksYellowOrb(t *testing.T) {
 	}
 	saved := g.snapshot()
 	restored := &Game{pack: pack}
-	restored.restore(saved)
+	if err := restored.restore(saved); err != nil {
+		t.Fatal(err)
+	}
 	if restored.settlementFounder == nil ||
 		!reflect.DeepEqual(restored.settlementFounder.Name, founder.Name) ||
 		!restored.hasItem(0x6a) || restored.storyFlag(0x4a) {
 		t.Fatalf("革命／黃寶珠 save-load 錯：founder=%v inv=%v flag=%v",
-			restored.settlementFounder, restored.inventory, restored.storyFlag(0x4a))
+			restored.settlementFounder, testInventory(restored.items), restored.storyFlag(0x4a))
 	}
 }

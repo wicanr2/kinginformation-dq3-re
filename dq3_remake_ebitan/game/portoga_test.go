@@ -44,7 +44,7 @@ func portogaTestGame(t *testing.T) (*Game, gamepack.StagedVehicleExchangeEvent, 
 		ctrl: 2 << 3, b4: event.NPC.HandlerRaw,
 	}
 	g := &Game{
-		pack: pack, flags: map[int]bool{}, curCty: event.NPC.CTYRaw,
+		pack: pack, items: testItemStore(nil, [4]int{-1, -1, -1, -1}), flags: map[int]bool{}, curCty: event.NPC.CTYRaw,
 		cur:    &Scene{sec: event.NPC.Section, npcs: []npcInst{*n}},
 		inTown: true, noticeCode: -1,
 	}
@@ -97,14 +97,14 @@ func TestPortogaRoyalMissionTransaction(t *testing.T) {
 		t.Fatal("給信對話結束後 transient event state 應清空")
 	}
 
-	g.inventory = []int{event.GrantedItemRawID}
+	setTestInventory(&g.items, []int{event.GrantedItemRawID})
 	g.talkStagedVehicleExchange(king)
 	if g.shipOwned || !reflect.DeepEqual(g.dlg.buf,
 		packText(t, g, event.DialogueTextIDs.NeedItem)) {
 		t.Fatal("無交換道具時不授船，應顯示原版 record26")
 	}
 
-	g.inventory = append(g.inventory, event.RequiredItemRawID)
+	setTestInventory(&g.items, append(testInventory(g.items), event.RequiredItemRawID))
 	g.setStoryFlag(event.Vehicle.ClearFlagsRaw[0], true)
 	g.talkStagedVehicleExchange(king)
 	if !g.shipOwned || g.shipAboard || g.hasItem(event.RequiredItemRawID) {
@@ -157,7 +157,7 @@ func TestScriptedTalkPepperGate(t *testing.T) {
 	n := npcInst{x: event.RewardNPC.Tile.X, y: event.RewardNPC.Tile.Y,
 		ctrl: 2 << 3, b4: event.RewardNPC.HandlerRaw}
 	newPepperGame := func() *Game {
-		g := &Game{pack: pack, flags: map[int]bool{}, curCty: event.RewardNPC.CTYRaw,
+		g := &Game{pack: pack, items: testItemStore(nil, [4]int{-1, -1, -1, -1}), flags: map[int]bool{}, curCty: event.RewardNPC.CTYRaw,
 			cur: &Scene{sec: event.RewardNPC.Section, npcs: []npcInst{n}}, inTown: true,
 			noticeCode: -1}
 		g.setStoryFlag(event.CompletionSetFlagsRaw[0], true)
@@ -181,6 +181,6 @@ func TestScriptedTalkPepperGate(t *testing.T) {
 	if !g.hasItem(event.RewardItemRawID) ||
 		g.storyFlag(event.RewardAvailableFlagRaw) {
 		t.Errorf("accepting handler25 offer must grant item0x5c and clear flag0x36: stage=%d inventory=%v flag=%v",
-			g.hostageRescueStage, g.inventory, g.storyFlag(event.RewardAvailableFlagRaw))
+			g.hostageRescueStage, testInventory(g.items), g.storyFlag(event.RewardAvailableFlagRaw))
 	}
 }

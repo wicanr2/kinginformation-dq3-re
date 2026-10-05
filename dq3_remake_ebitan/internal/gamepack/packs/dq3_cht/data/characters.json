@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.20.0",
+  "schema_version": "0.21.0",
   "default_refs": {
     "new_game_player": "dq3:character.new_game_hero",
     "registered_party_member": "dq3:character.registered_member"
@@ -293,515 +293,643 @@
     "items": [
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": true
+        "cursed_when_worn": true,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": true
+        "cursed_when_worn": true,
+        "drop_forbidden": true
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 3,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 3,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 3,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 3,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 3,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 3,
-        "cursed_when_worn": true
+        "cursed_when_worn": true,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 3,
-        "cursed_when_worn": true
+        "cursed_when_worn": true,
+        "drop_forbidden": true
       },
       {
         "equipment_part": 2,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 2,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 2,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 2,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 2,
-        "cursed_when_worn": true
+        "cursed_when_worn": true,
+        "drop_forbidden": true
       },
       {
         "equipment_part": 2,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 2,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 3,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": 0,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       },
       {
         "equipment_part": -1,
-        "cursed_when_worn": false
+        "cursed_when_worn": false,
+        "drop_forbidden": false
       }
     ],
     "evidence": {
@@ -813,6 +941,7 @@
       "consumer": "IDA9.4 linear13929/1393B/13A08/18098..180B1; original item decoder; physical owner words",
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; ITEM sha2567f3142de688ccca50fe888854b59ceb81b406b4c8eec038e719f10fda66e7f5d; count validated against actual archive."
-    }
+    },
+    "drop_blocked_mask": 57344
   }
 }

@@ -21,6 +21,7 @@ const (
 	itemActionMenu
 	itemActionTarget
 	itemActionUseTarget
+	itemActionGiveWait
 )
 
 // drawStatus:依原版 D3TXT00 record407 的 22×12 格狀況窗，將主角角色 record
@@ -107,10 +108,10 @@ func drawStatusGlyphs(rgba []byte, tx *dq3data.Text, anchor gamepack.GeometryAnc
 
 // drawItems:持有者 selector 與角色局部道具清單（品名 = D3TXT00 rec=code+1）。
 func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
-	fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
 	yellow := dq3data.Color{R: 255, G: 224, B: 32}
 	g.panelHits.reset()
 	if g.panelActor < 0 {
+		fillBox(rgba, 40, 40, ScreenW-80, ScreenH-120, white)
 		for actor := 0; actor <= len(g.companions); actor++ {
 			y := 56 + actor*24
 			if actor == g.panelCursor {
@@ -123,29 +124,7 @@ func (g *Game) drawItems(rgba []byte, white dq3data.Color) {
 		}
 		return
 	}
-	items := g.equipActorInventory(g.panelActor)
-	if items == nil {
-		return
-	}
-	for i, code := range *items {
-		if i >= 10 {
-			break
-		}
-		y := 56 + i*22
-		if i == g.panelCursor {
-			drawGlyph(rgba, g.dlg.tx, 44, y, 11, yellow) // ► 游標
-		}
-		g.shop.drawItemName(rgba, 64, y, code, white)
-		g.panelHits.add(44, y-3, ScreenW-80-8, 20, i)
-	}
-	switch g.itemActionStage {
-	case itemActionMenu:
-		g.drawItemActionMenu(rgba, white)
-	case itemActionTarget:
-		g.drawItemGiveTargets(rgba, white)
-	case itemActionUseTarget:
-		g.drawItemUseTargets(rgba, white)
-	}
+	g.drawNativeItems(rgba)
 }
 
 func (g *Game) drawItemActionMenu(rgba []byte, white dq3data.Color) {
@@ -222,56 +201,33 @@ func (g *Game) drawShopTargets(rgba []byte, white dq3data.Color) {
 }
 
 func (g *Game) purchaseShopItem(actor int) bool {
-	if g.pack == nil || !g.shop.targeting || g.shop.pendingCode < 0 ||
-		actor < 0 || actor > len(g.companions) || g.shop.items == nil {
+	if g.pack == nil || !g.shop.targeting || g.shop.pendingCode < 0 || g.shop.items == nil {
 		return false
 	}
-	purchasedCode := g.shop.pendingCode
-	price := g.shop.items.Price(purchasedCode)
+	s := g.actorItemStore(actor)
+	if s == nil {
+		return false
+	}
+	code := g.shop.pendingCode
+	price := g.shop.items.Price(code)
 	if price < 0 || g.heroGold < price {
 		return false
 	}
-	items := g.equipActorInventory(actor)
-	equipped := g.equipActorSlots(actor)
-	if items == nil || equipped == nil {
+	if _, ok := s.Add(code); !ok {
 		return false
 	}
-	used := len(*items)
-	for _, code := range equipped {
-		if code >= 0 {
-			used++
-		}
-	}
-	if slots := g.pack.ItemActions().PersonalInventorySlots; slots <= 0 || used >= slots {
-		return false
-	}
-	*items = append(*items, purchasedCode)
 	g.heroGold -= price
 	g.shop.targeting, g.shop.pendingCode = false, -1
-	g.completeSpecialShopPurchase(purchasedCode)
+	g.completeSpecialShopPurchase(code)
 	return true
 }
 
-type shopSellEntry struct {
-	code           int
-	inventoryIndex int
-	equipmentSlot  int
-}
+type shopSellEntry struct{ code, position int }
 
 func (g *Game) shopSellEntries(actor int) []shopSellEntry {
-	items := g.equipActorInventory(actor)
-	equipment := g.equipActorSlots(actor)
-	if items == nil || equipment == nil {
-		return nil
-	}
-	out := make([]shopSellEntry, 0, len(*items)+len(equipment))
-	for index, code := range *items {
-		out = append(out, shopSellEntry{code: code, inventoryIndex: index, equipmentSlot: -1})
-	}
-	for slot, code := range equipment {
-		if code >= 0 {
-			out = append(out, shopSellEntry{code: code, inventoryIndex: -1, equipmentSlot: slot})
-		}
+	var out []shopSellEntry
+	for _, e := range g.actorItemEntries(actor) {
+		out = append(out, shopSellEntry{e.Code, e.Position})
 	}
 	return out
 }
@@ -293,11 +249,9 @@ func (g *Game) sellShopItem(actor, index int) bool {
 	if !ok {
 		return false
 	}
-	if entry.inventoryIndex >= 0 {
-		items := g.equipActorInventory(actor)
-		*items = append((*items)[:entry.inventoryIndex], (*items)[entry.inventoryIndex+1:]...)
-	} else {
-		g.setEquipActorSlot(actor, entry.equipmentSlot, -1)
+	s := g.actorItemStore(actor)
+	if s == nil || !s.Remove(entry.position) {
+		return false
 	}
 	g.heroGold += price
 	g.completeSpecialShopSale(entry.code)
@@ -326,29 +280,14 @@ func (g *Game) drawShopSellItems(rgba []byte, white dq3data.Color) {
 }
 
 func (g *Game) giveSelectedItem(target int) bool {
-	source := g.equipActorInventory(g.panelActor)
-	dest := g.equipActorInventory(target)
-	if g.pack == nil || source == nil || dest == nil || g.itemSelected < 0 ||
-		g.itemSelected >= len(*source) || target < 0 || target > len(g.companions) {
+	source, dest := g.actorItemStore(g.panelActor), g.actorItemStore(target)
+	if g.pack == nil || source == nil || dest == nil || !source.Give(dest, g.itemSelected) {
 		return false
 	}
-	code := (*source)[g.itemSelected]
-	if target == g.panelActor {
-		*source = append(append((*source)[:g.itemSelected:g.itemSelected], (*source)[g.itemSelected+1:]...), code)
-		g.panelCursor = len(*source) - 1
-		return true
-	}
-	if g.actorItemCount(target) >= g.pack.ItemActions().PersonalInventorySlots {
-		return false
-	}
-	*source = append((*source)[:g.itemSelected], (*source)[g.itemSelected+1:]...)
-	*dest = append(*dest, code)
-	if len(*source) == 0 {
-		g.panelCursor = 0
-	} else if g.itemSelected >= len(*source) {
-		g.panelCursor = len(*source) - 1
+	if source == dest {
+		g.panelCursor = len(source.Entries()) - 1
 	} else {
-		g.panelCursor = g.itemSelected
+		g.clampPanelCursor()
 	}
 	return true
 }
@@ -356,18 +295,12 @@ func (g *Game) giveSelectedItem(target int) bool {
 // dropSelectedItem:原版 rec421「丟掉」動作。丟棄只改目前持有者的選定
 // personal inventory slot，不觸發任何道具效果、旗標或消耗動畫。
 func (g *Game) dropSelectedItem() bool {
-	items := g.equipActorInventory(g.panelActor)
-	if items == nil || g.itemSelected < 0 || g.itemSelected >= len(*items) {
+	s := g.actorItemStore(g.panelActor)
+	entry, valid := g.selectedItemEntry()
+	if s == nil || g.pack == nil || !valid || !g.fieldActorAlive(g.panelActor) || !g.pack.ItemDropAllowed(entry) || !s.Remove(g.itemSelected) {
 		return false
 	}
-	*items = append((*items)[:g.itemSelected], (*items)[g.itemSelected+1:]...)
-	if len(*items) == 0 {
-		g.panelCursor = 0
-	} else if g.itemSelected >= len(*items) {
-		g.panelCursor = len(*items) - 1
-	} else {
-		g.panelCursor = g.itemSelected
-	}
+	g.clampPanelCursor()
 	g.itemSelected = -1
 	g.itemActionCursor = 0
 	g.itemActionStage = itemActionList
@@ -395,68 +328,6 @@ func (g *Game) equipActorClass(actor int) int {
 		return g.companions[actor-1].Class
 	}
 	return -1
-}
-
-func (g *Game) equipActorSlots(actor int) *[4]int {
-	if actor == 0 {
-		return &g.equip
-	}
-	if actor <= 0 || actor > len(g.companions) {
-		return nil
-	}
-	m := g.companions[actor-1]
-	return &[4]int{m.Weapon, m.Armor, m.Shield, m.Head}
-}
-
-func (g *Game) setEquipActorSlot(actor, slot, code int) {
-	if actor == 0 {
-		g.equip[slot] = code
-		return
-	}
-	m := g.companions[actor-1]
-	switch slot {
-	case 0:
-		m.Weapon = code
-	case 1:
-		m.Armor = code
-	case 2:
-		m.Shield = code
-	case 3:
-		m.Head = code
-	}
-}
-
-func (g *Game) equipActorInventory(actor int) *[]int {
-	if actor == 0 {
-		return &g.inventory
-	}
-	if actor <= 0 || actor > len(g.companions) {
-		return nil
-	}
-	return &g.companions[actor-1].Inventory
-}
-
-func (g *Game) actorItemCount(actor int) int {
-	items := g.equipActorInventory(actor)
-	slots := g.equipActorSlots(actor)
-	if items == nil || slots == nil {
-		return 0
-	}
-	n := len(*items)
-	for _, code := range slots {
-		if code >= 0 {
-			n++
-		}
-	}
-	return n
-}
-
-func (g *Game) equipCandidateCount(actor int) int {
-	items := g.equipActorInventory(actor)
-	if items == nil {
-		return 0
-	}
-	return len(*items)
 }
 
 // drawEquip:先選隊員，再顯示其四個裝備槽與該角色自己的未裝備物品。
@@ -492,11 +363,12 @@ func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 			}
 		}
 	}
-	items := g.equipActorInventory(g.panelActor)
-	if items == nil {
+	store := g.actorItemStore(g.panelActor)
+	if store == nil {
 		return
 	}
-	for i, code := range *items {
+	for i, entry := range store.Inventory() {
+		code := entry.Code
 		if i >= 8 {
 			break
 		}
@@ -509,40 +381,25 @@ func (g *Game) drawEquip(rgba []byte, white dq3data.Color) {
 	}
 }
 
-// equipSelected:把所選角色自己的未裝備物品穿上；舊裝備回到同一角色物品欄。
+// equipSelected changes flags in place; candidates retain their physical identity.
 func (g *Game) equipSelected() {
-	items := g.equipActorInventory(g.panelActor)
-	if g.panelActor < 0 || items == nil ||
-		g.panelCursor < 0 || g.panelCursor >= len(*items) {
+	s := g.actorItemStore(g.panelActor)
+	if s == nil || g.shop.items == nil {
 		return
 	}
-	code := (*items)[g.panelCursor]
-	if g.shop.items == nil {
+	entries := s.Inventory()
+	if g.panelCursor < 0 || g.panelCursor >= len(entries) {
 		return
 	}
-	slot := g.shop.items.EquipSlot(code)
-	cls := g.equipActorClass(g.panelActor)
-	if slot < 0 || slot >= 4 || !g.shop.items.CanEquip(code, cls) {
+	entry := entries[g.panelCursor]
+	if !g.shop.items.CanEquip(entry.Code, g.equipActorClass(g.panelActor)) {
 		return
 	}
-	slots := g.equipActorSlots(g.panelActor)
-	if slots == nil {
-		return
+	s.Wear(entry.Position)
+	if g.panelCursor >= len(s.Inventory()) {
+		g.panelCursor = len(s.Inventory()) - 1
 	}
-	old := slots[slot]
-	// 原版 sub_17ED9 在同部位目前裝備帶 bit0x4000 時顯示 rec0xf2
-	// 並中止交易；該 bit 的 ITEM metadata writer 已於 docs/147 閉合。
-	if old >= 0 && g.pack.IsCursedEquipment(old) {
-		return
-	}
-	*items = append((*items)[:g.panelCursor], (*items)[g.panelCursor+1:]...)
-	g.setEquipActorSlot(g.panelActor, slot, code)
-	if old >= 0 {
-		*items = append(*items, old)
-	}
-	if len(*items) == 0 {
+	if g.panelCursor < 0 {
 		g.panelCursor = 0
-	} else if g.panelCursor >= len(*items) {
-		g.panelCursor = len(*items) - 1
 	}
 }

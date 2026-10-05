@@ -11,17 +11,10 @@ import (
 
 // 存檔 round-trip:encode → decode 應完全一致。
 func TestSaveRoundTrip(t *testing.T) {
-	s := saveState{
-		HeroExp: 4364, HeroHP: 42, HeroGold: 250,
-		HeroConditions: conditionPoison | conditionParalysis, ParalysisSteps: 17,
-		Inventory: []int{3, 0x21, 0x1e},
-		Comps:     []compSav{{Name: []int{1}, CurHP: 12, Conditions: conditionPoison}},
-		PX:        12, PY: 28, InTown: true,
-		StoryBits: []byte{0x80, 0x40}, DNPhase: 2, DNStep: 17,
-		Cty: 44, Section: 1, Layer: 0,
-		Respawn:     &respawnSave{PX: 14, PY: 7, OverPX: 190, OverPY: 123, InTown: true, Cty: 44, Section: 1},
-		PartyLeader: 2,
-	}
+	g := &Game{pack: loadTestPack(t), items: testItemStore([]int{3, 0x21, 0x1e}, [4]int{-1, -1, -1, -1}), heroExp: 4364, heroHP: 42, heroGold: 250, heroConditions: conditionPoison | conditionParalysis, paralysisSteps: 17, px: 12, py: 28}
+	g.companions = []*Member{newMember([]int{1}, 1, 0, 0)}
+	g.companions[0].Conditions = conditionPoison
+	s := g.snapshot()
 	b, err := encodeSave(s)
 	if err != nil {
 		t.Fatalf("encode: %v", err)
@@ -30,11 +23,16 @@ func TestSaveRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if !reflect.DeepEqual(s, got) {
+	if err := g.validateSavedItemStores(&got); err != nil {
+		t.Fatal(err)
+	}
+	a, _ := encodeSave(s)
+	z, _ := encodeSave(got)
+	if string(a) != string(z) || !reflect.DeepEqual(s.itemStore.Words(), got.itemStore.Words()) {
 		t.Fatalf("round-trip 不一致:\n 存 %+v\n 讀 %+v", s, got)
 	}
 	t.Logf("存檔 round-trip 一致 ✓(exp%d hp%d gold%d inv%v @%d,%d town%v)",
-		got.HeroExp, got.HeroHP, got.HeroGold, got.Inventory, got.PX, got.PY, got.InTown)
+		got.HeroExp, got.HeroHP, got.HeroGold, testInventory(got.itemStore), got.PX, got.PY, got.InTown)
 }
 
 func TestSaveRecordsAndChecksGamePackIdentity(t *testing.T) {
@@ -65,32 +63,21 @@ func TestSaveRecordsAndChecksGamePackIdentity(t *testing.T) {
 }
 
 func TestSavePreservesRememberedOverworldPosition(t *testing.T) {
-	g := &Game{
-		overPx: 47, overPy: 66,
-		px: 7, py: 3, inTown: true, curCty: 2,
-		equip: [4]int{-1, -1, -1, -1},
-	}
+	g := &Game{pack: loadTestPack(t), overPx: 47, overPy: 66, px: 7, py: 3, inTown: true, curCty: 2, items: testItemStore(nil, [4]int{-1, -1, -1, -1})}
 	s := g.snapshot()
 	if !s.OverworldPosV2 || s.OverPX != 47 || s.OverPY != 66 {
 		t.Fatalf("城內 snapshot 未保存 remembered-world：%+v", s)
 	}
-	var restored Game
-	restored.restore(s)
+	restored := Game{pack: loadTestPack(t)}
+	if err := restored.restore(s); err != nil {
+		t.Fatal(err)
+	}
 	if restored.overPx != 47 || restored.overPy != 66 {
 		t.Fatalf("城內 round-trip 遺失 remembered-world：(%d,%d)",
 			restored.overPx, restored.overPy)
 	}
 
-	// 舊 Go 存檔沒有欄位時，依已保存 CTY/layer 的原版 cty_loc 遷移，
-	// 不可保留 NewGame 的阿里阿罕座標。
-	legacy := saveState{
-		PX: 7, PY: 3, InTown: true, Cty: 4, Layer: 0,
-		EquipmentV2: true, Equip: [4]int{-1, -1, -1, -1},
-	}
-	restored.overPx, restored.overPy = 153, 174
-	restored.restore(legacy)
-	if restored.overPx != ctyLoc[4][0] || restored.overPy != ctyLoc[4][1] {
-		t.Fatalf("舊城內存檔未由 CTY04 遷移 remembered-world：(%d,%d)",
-			restored.overPx, restored.overPy)
+	if _, err := decodeSave([]byte(`{"px":7,"py":3,"town":true,"cty":4}`)); err == nil {
+		t.Fatal("unversioned save accepted")
 	}
 }

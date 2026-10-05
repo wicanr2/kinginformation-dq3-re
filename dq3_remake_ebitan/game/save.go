@@ -1,19 +1,29 @@
 package game
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/itemstore"
+	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/stats"
 )
 
 // 存檔(冒險之書):持久化主角進度 + 位置。Go port 自有格式(非 C 存檔二進位相容),
 // 因 remake 是重表達;只求本機讀寫一致(round-trip)。教會/記錄點觸發存檔。
+const saveFormatVersion = 2
+
 type saveState struct {
+	FormatVersion                  int             `json:"save_version"`
+	Items                          json.RawMessage `json:"items"`
+	itemStore                      itemstore.Store
 	DeferredRegionDialogueReturnID string                   `json:"deferred_region_dialogue_return_id,omitempty"`
 	OpeningHomeAwait               bool                     `json:"opening_home_await,omitempty"`
 	PackID                         string                   `json:"pack_id,omitempty"`
@@ -28,9 +38,6 @@ type saveState struct {
 	HeroGold                       int                      `json:"gold"`
 	HeroName                       []int                    `json:"heroname,omitempty"` // 主角姓名(glyph index;newgame.go 命名創建)
 	HeroGender                     int                      `json:"herogender"`         // 0=男 1=女
-	Inventory                      []int                    `json:"inv"`
-	Equip                          [4]int                   `json:"eq"`
-	EquipmentV2                    bool                     `json:"equipment_v2,omitempty"` // true:-1=空；舊檔以 0=空
 	Comps                          []compSav                `json:"comps"`
 	SoloChallengeActive            bool                     `json:"solo_challenge_active,omitempty"`
 	SoloChallengeEventID           string                   `json:"solo_challenge_event_id,omitempty"`
@@ -107,23 +114,143 @@ type trackedWorldObjectSave struct {
 
 // compSav 是一名同伴的存檔資料。
 type compSav struct {
-	Name                        []int `json:"name,omitempty"`
-	Class, Gender               int
-	Exp                         uint32
-	Stats                       stats.Values `json:"stats,omitempty"`
-	CurHP, CurMP                int
-	Weapon, Armor, Shield, Head int
-	Inventory                   []int        `json:"inventory,omitempty"`
-	LearnedSpells               []int        `json:"learned_spells,omitempty"`
-	Conditions                  conditionSet `json:"conditions,omitempty"`
+	Items         json.RawMessage `json:"items"`
+	itemStore     itemstore.Store
+	Name          []int `json:"name,omitempty"`
+	Class, Gender int
+	Exp           uint32
+	Stats         stats.Values `json:"stats,omitempty"`
+	CurHP, CurMP  int
+	LearnedSpells []int        `json:"learned_spells,omitempty"`
+	Conditions    conditionSet `json:"conditions,omitempty"`
 }
 
 func encodeSave(s saveState) ([]byte, error) { return json.Marshal(s) }
 
+// strictSaveJSON validates exact struct keys, duplicates and every nested owner.
+func strictSaveJSON(raw []byte, t reflect.Type) error {
+	for t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	if t == reflect.TypeOf(json.RawMessage{}) {
+		return nil
+	}
+	if t.Kind() == reflect.Struct {
+		dec := json.NewDecoder(bytes.NewReader(raw))
+		token, err := dec.Token()
+		if err != nil || token != json.Delim('{') {
+			return fmt.Errorf("save object required")
+		}
+		fields := map[string]reflect.Type{}
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			if f.PkgPath != "" {
+				continue
+			}
+			name := strings.Split(f.Tag.Get("json"), ",")[0]
+			if name == "-" {
+				continue
+			}
+			if name == "" {
+				name = f.Name
+			}
+			fields[name] = f.Type
+		}
+		seen := map[string]bool{}
+		for dec.More() {
+			token, err := dec.Token()
+			if err != nil {
+				return err
+			}
+			key, ok := token.(string)
+			ft, exists := fields[key]
+			if !ok || !exists || seen[key] {
+				return fmt.Errorf("unknown or duplicate save field %q", key)
+			}
+			seen[key] = true
+			var value json.RawMessage
+			if err := dec.Decode(&value); err != nil {
+				return err
+			}
+			if bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+				if ft.Kind() != reflect.Pointer && ft.Kind() != reflect.Slice {
+					return fmt.Errorf("null save field %q", key)
+				}
+				continue
+			}
+			if err := strictSaveJSON(value, ft); err != nil {
+				return fmt.Errorf("%s: %w", key, err)
+			}
+		}
+		if token, err := dec.Token(); err != nil || token != json.Delim('}') {
+			return fmt.Errorf("unfinished save object")
+		}
+		var trailing any
+		if dec.Decode(&trailing) != io.EOF {
+			return fmt.Errorf("trailing save data")
+		}
+	} else if (t.Kind() == reflect.Slice || t.Kind() == reflect.Array) && t.Elem().Kind() == reflect.Struct {
+		var rows []json.RawMessage
+		if err := json.Unmarshal(raw, &rows); err != nil {
+			return err
+		}
+		for _, row := range rows {
+			if err := strictSaveJSON(row, t.Elem()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 func decodeSave(b []byte) (saveState, error) {
 	var s saveState
-	err := json.Unmarshal(b, &s)
-	return s, err
+	if err := strictSaveJSON(b, reflect.TypeOf(s)); err != nil {
+		return s, err
+	}
+	if err := json.Unmarshal(b, &s); err != nil {
+		return s, err
+	}
+	if s.FormatVersion != saveFormatVersion || s.PackID == "" || s.PackSchema == "" || s.PackContentHash == "" {
+		return s, fmt.Errorf("unsupported save format or missing pack identity")
+	}
+	return s, nil
+}
+func encodedItemStore(store itemstore.Store) json.RawMessage { raw, _ := store.Encode(); return raw }
+func (g *Game) validateSavedItemStores(s *saveState) error {
+	if g.pack == nil {
+		return fmt.Errorf("save requires a validated game pack")
+	}
+	decode := func(raw json.RawMessage, destination *itemstore.Store) error {
+		v, err := g.pack.DecodeItemStore(raw)
+		if err != nil {
+			return err
+		}
+		eq := map[int]bool{}
+		for _, e := range v.Worn() {
+			if e.Part < 0 || eq[e.Part] {
+				return fmt.Errorf("invalid saved equipment reference")
+			}
+			eq[e.Part] = true
+		}
+		*destination = v
+		return nil
+	}
+	if err := decode(s.Items, &s.itemStore); err != nil {
+		return fmt.Errorf("hero items: %w", err)
+	}
+	for _, group := range [][]compSav{s.Comps, s.Roster, s.SoloChallengeCompanions} {
+		for i := range group {
+			if err := decode(group[i].Items, &group[i].itemStore); err != nil {
+				return fmt.Errorf("member %d items: %w", i, err)
+			}
+		}
+	}
+	if s.SettlementFounder != nil {
+		if err := decode(s.SettlementFounder.Items, &s.SettlementFounder.itemStore); err != nil {
+			return fmt.Errorf("founder items: %w", err)
+		}
+	}
+	return nil
 }
 
 func (g *Game) snapshot() saveState {
@@ -137,15 +264,13 @@ func (g *Game) snapshot() saveState {
 		founder = &saved
 	}
 	s := saveState{
+		FormatVersion: saveFormatVersion, Items: encodedItemStore(g.items), itemStore: g.items.Clone(),
 		DeferredRegionDialogueReturnID: g.deferredRegionDialogueReturnID,
 		PackID:                         packID, PackSchema: packSchema, PackContentHash: packHash, OpeningHomeAwait: g.homeAwait,
 		HeroExp: g.heroExp, HeroHP: g.heroHP, HeroMP: g.heroMP, HeroConditions: g.heroConditions,
 		ParalysisSteps: g.paralysisSteps,
 		HeroStat:       g.heroStat, HeroGold: g.heroGold,
 		HeroName: append([]int(nil), g.heroName...), HeroGender: g.heroGender,
-		Inventory:               append([]int(nil), g.inventory...),
-		Equip:                   g.equip,
-		EquipmentV2:             true,
 		Comps:                   compsToSav(g.companions),
 		SoloChallengeActive:     g.soloChallengeActive,
 		SoloChallengeEventID:    g.soloChallengeEventID,
@@ -198,14 +323,20 @@ func compsToSav(ms []*Member) []compSav {
 		m.ensureStats()
 		out[i] = compSav{Name: append([]int(nil), m.Name...), Class: m.Class, Gender: m.Gender,
 			Exp: m.Exp, Stats: m.Stats, CurHP: m.CurHP, CurMP: m.CurMP,
-			Weapon: m.Weapon, Armor: m.Armor, Shield: m.Shield, Head: m.Head,
-			Inventory:     append([]int(nil), m.Inventory...),
+			Items: encodedItemStore(m.Items), itemStore: m.Items.Clone(),
 			LearnedSpells: append([]int(nil), m.LearnedSpells...), Conditions: m.Conditions}
 	}
 	return out
 }
 
-func (g *Game) restore(s saveState) {
+func (g *Game) restore(s saveState) error {
+	if s.FormatVersion != saveFormatVersion || g.pack == nil || s.PackID != g.pack.ID() || s.PackSchema != g.pack.Schema() || s.PackContentHash != g.pack.ContentHash() {
+		return fmt.Errorf("unsupported save format or game pack mismatch")
+	}
+	if err := g.validateSavedItemStores(&s); err != nil {
+		return err
+	}
+
 	g.tavern.reset()
 	if g.recruit.active && (g.recruit.stage == rcFinishText || g.recruit.stage == rcMusicWait) {
 		g.finishRecruitmentMusic()
@@ -246,11 +377,7 @@ func (g *Game) restore(s saveState) {
 	if g.heroMP > int(g.heroStat[stats.MP]) {
 		g.heroMP = int(g.heroStat[stats.MP])
 	}
-	g.inventory = append([]int(nil), s.Inventory...)
-	g.equip = s.Equip
-	if !s.EquipmentV2 {
-		migrateLegacyEmptyEquipment(&g.equip)
-	}
+	g.items = s.itemStore.Clone()
 	g.flags = map[int]bool{}
 	for _, k := range s.Flags {
 		g.flags[k] = true
@@ -261,12 +388,8 @@ func (g *Game) restore(s saveState) {
 		for i, c := range s.Comps {
 			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
-				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
-				Inventory:     append([]int(nil), c.Inventory...),
+				Items:         c.itemStore.Clone(),
 				LearnedSpells: append([]int(nil), c.LearnedSpells...), Conditions: c.Conditions}
-			if !s.EquipmentV2 {
-				migrateLegacyMemberEquipment(m)
-			}
 			if len(m.Name) == 0 && c.Class >= 0 && c.Class < 8 {
 				m.Name = classNames[c.Class]
 			}
@@ -283,12 +406,8 @@ func (g *Game) restore(s saveState) {
 		for i, c := range s.SoloChallengeCompanions {
 			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
-				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
-				Inventory: append([]int(nil), c.Inventory...), LearnedSpells: append([]int(nil), c.LearnedSpells...),
+				Items: c.itemStore.Clone(), LearnedSpells: append([]int(nil), c.LearnedSpells...),
 				Conditions: c.Conditions}
-			if !s.EquipmentV2 {
-				migrateLegacyMemberEquipment(m)
-			}
 			m.ensureStats()
 			m.syncLearnedSpells()
 			g.soloChallengeCompanions[i] = m
@@ -308,12 +427,8 @@ func (g *Game) restore(s saveState) {
 		for i, c := range s.Roster {
 			m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 				Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
-				Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
-				Inventory:     append([]int(nil), c.Inventory...),
+				Items:         c.itemStore.Clone(),
 				LearnedSpells: append([]int(nil), c.LearnedSpells...), Conditions: c.Conditions}
-			if !s.EquipmentV2 {
-				migrateLegacyMemberEquipment(m)
-			}
 			if len(m.Name) == 0 && c.Class >= 0 && c.Class < 8 {
 				m.Name = classNames[c.Class]
 			}
@@ -327,12 +442,8 @@ func (g *Game) restore(s saveState) {
 	if c := s.SettlementFounder; c != nil {
 		m := &Member{Name: append([]int(nil), c.Name...), Class: c.Class, Gender: c.Gender,
 			Exp: c.Exp, Stats: c.Stats, CurHP: c.CurHP, CurMP: c.CurMP,
-			Weapon: c.Weapon, Armor: c.Armor, Shield: c.Shield, Head: c.Head,
-			Inventory: append([]int(nil), c.Inventory...), LearnedSpells: append([]int(nil), c.LearnedSpells...),
+			Items: c.itemStore.Clone(), LearnedSpells: append([]int(nil), c.LearnedSpells...),
 			Conditions: c.Conditions}
-		if !s.EquipmentV2 {
-			migrateLegacyMemberEquipment(m)
-		}
 		m.ensureStats()
 		m.syncLearnedSpells()
 		g.settlementFounder = m
@@ -443,20 +554,7 @@ func (g *Game) restore(s saveState) {
 	}
 	g.selectLivingPartyLeader()
 	g.dlg.heroName = append([]int(nil), g.heroName...)
-}
-
-func migrateLegacyEmptyEquipment(eq *[4]int) {
-	for i, code := range eq {
-		if code == 0 {
-			eq[i] = -1
-		}
-	}
-}
-
-func migrateLegacyMemberEquipment(m *Member) {
-	eq := [4]int{m.Weapon, m.Armor, m.Shield, m.Head}
-	migrateLegacyEmptyEquipment(&eq)
-	m.Weapon, m.Armor, m.Shield, m.Head = eq[0], eq[1], eq[2], eq[3]
+	return nil
 }
 
 // restoreTownScene 以存檔的 CTY/section/daynight 重建 NPC 狀態；舊存檔的零值自然落在
@@ -509,6 +607,12 @@ func (g *Game) saveTo(path string) error {
 	point := g.currentRespawnPoint()
 	s := g.snapshot()
 	s.Respawn = respawnToSave(point)
+	if s.FormatVersion != saveFormatVersion || s.PackID == "" {
+		return fmt.Errorf("save requires current format and pack identity")
+	}
+	if err := g.validateSavedItemStores(&s); err != nil {
+		return err
+	}
 	b, err := encodeSave(s)
 	if err != nil {
 		return err
@@ -544,10 +648,9 @@ func (g *Game) loadSnapshotFile(path string, ignoreMissing bool, fieldClock *gam
 	if err != nil {
 		return err
 	}
-	// 舊存檔沒有 pack metadata，沿既有 migration 路徑接受；新格式則不得把 DQ1/DQ2、
-	// modified override 或不同 schema 的狀態套進目前 DQ3 pack。
-	if s.PackID != "" && (g.pack == nil || s.PackID != g.pack.ID() || s.PackSchema != g.pack.Schema() ||
-		s.PackContentHash != g.pack.ContentHash()) {
+	// The format gate rejects every old save, including absent pack metadata.
+	if g.pack == nil || s.PackID != g.pack.ID() || s.PackSchema != g.pack.Schema() ||
+		s.PackContentHash != g.pack.ContentHash() {
 		if g.pack == nil {
 			return fmt.Errorf("save requires game pack %s/%s/%s but current Game has none",
 				s.PackID, s.PackSchema, s.PackContentHash)
@@ -555,6 +658,9 @@ func (g *Game) loadSnapshotFile(path string, ignoreMissing bool, fieldClock *gam
 		return fmt.Errorf("save game pack mismatch: save=%s/%s/%s current=%s/%s/%s",
 			s.PackID, s.PackSchema, s.PackContentHash,
 			g.pack.ID(), g.pack.Schema(), g.pack.ContentHash())
+	}
+	if err := g.validateSavedItemStores(&s); err != nil {
+		return err
 	}
 	if s.OpeningHomeAwait {
 		e := g.openingEscort
@@ -607,7 +713,9 @@ func (g *Game) loadSnapshotFile(path string, ignoreMissing bool, fieldClock *gam
 	if s.DeferredRegionDialogueReturnID != "" && returnActor == nil {
 		return fmt.Errorf("deferred region return save lacks its completed escort actor")
 	}
-	g.restore(s)
+	if err := g.restore(s); err != nil {
+		return err
+	}
 	if returnActor != nil && g.cur != nil {
 		found := false
 		for _, n := range g.cur.npcs {

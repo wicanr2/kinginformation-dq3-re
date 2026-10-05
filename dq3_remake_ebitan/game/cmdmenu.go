@@ -133,9 +133,14 @@ func (m *CmdMenu) move(dir int) {
 // drawFieldCommandMenu uses the same indexed window and party HUD consumers
 // as the accepted native source. No state or animation phase is overridden.
 func (g *Game) drawFieldCommandMenu() {
+	if g.cmd.open {
+		g.drawNativeFieldCommandMenu()
+	}
+}
+func (g *Game) drawNativeFieldCommandMenu() {
 	m := &g.cmd
 	s := m.contract
-	if !m.open || s == nil || g.cur == nil || g.newGame.raster == nil {
+	if s == nil || g.cur == nil || g.newGame.raster == nil {
 		return
 	}
 	g.drawFieldIdleStatus()

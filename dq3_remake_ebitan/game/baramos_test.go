@@ -107,7 +107,9 @@ func TestBaramosReturnAndNaturalDescentInputTrace(t *testing.T) {
 	}
 	saved := g.snapshot()
 	restored := r4Game(t)
-	restored.restore(saved)
+	if err := restored.restore(saved); err != nil {
+		t.Fatal(err)
+	}
 	g = restored
 	if !g.flags[0x213] || g.storyFlag(0x29) || g.storyFlag(0x4d) {
 		t.Fatalf("R-4 save round-trip 錯:f213=%v f29=%v f4d=%v",

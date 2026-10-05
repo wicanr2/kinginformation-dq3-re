@@ -15,10 +15,10 @@ import (
 
 func TestCompanionEquippedSaleProductionInputTrace(t *testing.T) {
 	traceOpeningProductionInputRoute(t, func(g *Game) {
-		if len(g.companions) == 0 || g.companions[0].Shield < 0 {
+		if len(g.companions) == 0 || g.companions[0].Items.Equipment()[2] < 0 {
 			t.Fatal("正常換裝 checkpoint 缺少同伴穿戴盾牌")
 		}
-		code := g.companions[0].Shield
+		code := g.companions[0].Items.Equipment()[2]
 		defense := g.companions[0].Def(g.shop.items)
 		// 圖片收據在開店前啟用持續繪圖，讓對話底圖取自當前場景。
 		if os.Getenv("DQ3_SALE_RECEIPT_DIR") != "" && g.frame == nil {
@@ -52,7 +52,7 @@ func TestCompanionEquippedSaleProductionInputTrace(t *testing.T) {
 		entries := g.shopSellEntries(1)
 		target := -1
 		for index, entry := range entries {
-			if entry.code == code && entry.equipmentSlot >= 0 {
+			if entry.code == code && g.companions[0].Items.IsWorn(g.companions[0].Items.Entries()[index]) {
 				target = index
 				break
 			}
@@ -84,11 +84,12 @@ func TestCompanionEquippedSaleProductionInputTrace(t *testing.T) {
 		send(InputState{Confirm: true})
 		send(InputState{Confirm: true})
 		want := before
-		want.Comps[0].Shield = -1
+		want.Comps[0].itemStore.Remove(entries[target].position)
+		want.Comps[0].Items = encodedItemStore(want.Comps[0].itemStore)
 		want.HeroGold += price
 		if !reflect.DeepEqual(shopSaleSnapshot(g), want) || g.prng.State() != seed {
 			t.Fatalf("確認後只能清除同伴所選裝備並加一次錢：shield=%d gold=%d want=%d",
-				g.companions[0].Shield, g.heroGold, want.HeroGold)
+				g.companions[0].Items.Equipment()[2], g.heroGold, want.HeroGold)
 		}
 		if g.companions[0].Def(g.shop.items) != defense-g.shop.items.Defense(code) {
 			t.Fatal("出售後仍保留盾牌防禦加成")

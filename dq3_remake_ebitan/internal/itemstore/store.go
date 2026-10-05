@@ -247,6 +247,106 @@ func (s *Store) RemoveCursed() int {
 	return removed
 }
 
+// Equipment returns a derived part-indexed copy; absent parts use -1.
+func (s Store) Equipment() [4]int {
+	out := [4]int{-1, -1, -1, -1}
+	for _, entry := range s.Worn() {
+		if entry.Part >= 0 && entry.Part < len(out) {
+			out[entry.Part] = entry.Code
+		}
+	}
+	return out
+}
+
+func (s Store) Codes() []int {
+	var out []int
+	for _, entry := range s.Entries() {
+		out = append(out, entry.Code)
+	}
+	return out
+}
+
+func (s Store) Count(code int) int {
+	n := 0
+	for _, entry := range s.Entries() {
+		if entry.Code == code {
+			n++
+		}
+	}
+	return n
+}
+
+func (s *Store) RemoveCode(code, n int) int {
+	if s == nil || !s.valid() || n <= 0 {
+		return 0
+	}
+	removed := 0
+	for _, entry := range s.Entries() {
+		if removed < n && entry.Code == code && s.Remove(entry.Position) {
+			removed++
+		}
+	}
+	return removed
+}
+
+// Replace writes a plain identity at the selected occupied physical position.
+func (s *Store) Replace(position, code int) bool {
+	if s == nil || code < 0 || code >= len(s.metadata) {
+		return false
+	}
+	if _, ok := s.At(position); !ok {
+		return false
+	}
+	words := s.Words()
+	words[position] = uint16(code)
+	s.words = words
+	return true
+}
+
+func (s Store) HasCursed() bool {
+	for _, entry := range s.Entries() {
+		if entry.Word&s.encoding.CurseMask != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// ClearFirstCursedState retains the first cursed item, clearing all high bits.
+func (s *Store) ClearFirstCursedState() bool {
+	if s == nil {
+		return false
+	}
+	for _, entry := range s.Entries() {
+		if entry.Word&s.encoding.CurseMask != 0 {
+			return s.Replace(entry.Position, entry.Code)
+		}
+	}
+	return false
+}
+
+// ClearStatesAndRemove applies the reviewed class-transition word transaction.
+func (s *Store) ClearStatesAndRemove(code int) bool {
+	if s == nil || !s.valid() || code < 0 || code >= len(s.metadata) {
+		return false
+	}
+	words := s.Words()
+	for i, word := range words {
+		if word == s.encoding.Empty {
+			continue
+		}
+		if int(word&s.encoding.CodeMask) == code {
+			words[i] = s.encoding.Empty
+		} else {
+			words[i] = word & s.encoding.CodeMask
+		}
+	}
+	s.words = words
+	return true
+}
+
+func (s Store) IsWorn(entry Entry) bool { return s.valid() && entry.Word&s.encoding.WornMask != 0 }
+
 const storageVersion = 1 // Generic serialization version, not game data.
 
 // MarshalJSON prevents accidental serialization as an empty object merely

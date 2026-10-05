@@ -2175,3 +2175,23 @@ schema0.17.0／content0.1.89新增必填`recruitment_selection.empty_join_text_i
 `python3 tools/migrate_recruitment_empty_pack.py <乾淨pack目錄> <唯讀原始素材目錄> docs/data/glyph_unicode_map.json`。
 在既有`dq3-ebiten-test:20260822-r1` Docker內以UID1000執行，核對來源身份、原始consumer及輸出擁有權。
 工具保留原有JSON排版，只遷移schema、content、兩個文字引用、542文字及有限證據說明；沒有發行變更。
+
+
+### A 正式持有者與原野物品窗口
+
+schema `0.21.0`／content `0.1.93`，canonical
+`sha256:e2cf0b0e919611bea95573a91df520866df6076d2d048b9d731a884f503b5927`。
+每個持有者只保存 `storage_version=1` 與完整 `words`；完整 `save_version=2` 拒絕所有舊
+存檔與缺少 pack 身分的資料。`characters.item_storage.drop_blocked_mask` 為必填 word，
+`items[].drop_forbidden` 為必填 bool，與實際 ITEM 原始 decoder 核對。
+`interface.field_items` 包含原始 `raw_window`、`action_window`、`text_ids` 的
+header／row／footer／actions／give_prompt、`frame_rows`、`row_step`、
+name／cursor／worn／action_cursor 座標、`cursor_glyph`、`worn_glyph`、`marker_mask` 及
+D3 evidence。數值均明示；缺欄位、錯誤引用、越界與遮罩重疊物品碼均拒絕。
+原始動態高度為 `(rows+frame_rows)*row_step`，標記遮罩只用於繪圖。
+
+重建入口為 [tools/migrate_field_item_pack.py](../tools/migrate_field_item_pack.py)，在
+`dq3-ebiten-test:20260822-r1` Docker 內以 UID1000 執行：
+`python3 tools/migrate_field_item_pack.py <乾淨0.20.0資料包目錄> <唯讀原始素材目錄> docs/data/glyph_unicode_map.json`。
+支援從 `0.20.0`／`0.1.92` 重建上述九份 JSON，核對 EXE／ITEM／TXT 的完整 hash，保留
+原有排版。證據與 READY 審查見 [docs/188](188-opening-escort-to-castle-spec.md)。

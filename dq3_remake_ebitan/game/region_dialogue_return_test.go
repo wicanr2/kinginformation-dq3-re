@@ -96,7 +96,7 @@ func TestDosgolemRegionDialogueReturnNormalInput(t *testing.T) {
 	for i := 0; i < 100 && g.regionDialogueReturn != nil; i++ {
 		step(idle)
 	}
-	if g.regionDialogueReturn != nil || g.dlg.open || g.dlg.prelude != nil || g.px != 21 || g.py != 17 || !g.storyFlag(23) || g.storyFlag(24) || g.heroGold != 0 || len(g.inventory) != 0 {
+	if g.regionDialogueReturn != nil || g.dlg.open || g.dlg.prelude != nil || g.px != 21 || g.py != 17 || !g.storyFlag(23) || g.storyFlag(24) || g.heroGold != 0 || len(testInventory(g.items)) != 0 {
 		t.Fatal("native automatic return transaction differs")
 	}
 	g.renderFrame()

@@ -29,7 +29,7 @@ func configureRegistrationFixture(t *testing.T, tv *Tavern) {
 	if e = tv.configure(p, nil); e != nil {
 		t.Fatal(e)
 	}
-	tv.equipment = [4]int{-1, 0x1e, -1, -1}
+	tv.initialItems, _ = p.RegisteredPartyMemberItems()
 }
 func drainRegistrationText(t *testing.T, tv *Tavern, r *rng.RNG) {
 	t.Helper()
@@ -485,7 +485,7 @@ func runRegistrationNormalComparisonRoute(t *testing.T, dir, out string, route r
 			} else {
 				m = g.roster[0]
 			}
-			if !reflect.DeepEqual(m.Name, []int{0}) || m.Class != 1 || m.Gender != 0 || m.Level() != 1 || m.Armor != 0x1e || m.Weapon != -1 || m.Shield != -1 || m.Head != -1 {
+			if !reflect.DeepEqual(m.Name, []int{0}) || m.Class != 1 || m.Gender != 0 || m.Level() != 1 || m.Items.Equipment()[1] != 0x1e || m.Items.Equipment()[0] != -1 || m.Items.Equipment()[2] != -1 || m.Items.Equipment()[3] != -1 {
 				t.Fatalf("accepted record differs: %+v", m)
 			}
 		}

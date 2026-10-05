@@ -180,7 +180,7 @@ func TestDosgolemKingReturnNormalInput(t *testing.T) {
 			if number(row, "scan", 16) != 0x1c || ordinal != completed {
 				t.Fatal("native idle input/order differs")
 			}
-			before, _ := json.Marshal([]any{g.px, g.py, g.curCty, g.cur.sec, g.heroGold, g.inventory, g.equip, g.storyBits})
+			before, _ := json.Marshal([]any{g.px, g.py, g.curCty, g.cur.sec, g.heroGold, testInventory(g.items), g.items.Equipment(), g.storyBits})
 			naturalIdle()
 			g.renderFrame()
 			name := fmt.Sprintf("%s-idle-%02d.png", prefix, number(row, "packet", 10))
@@ -221,7 +221,7 @@ func TestDosgolemKingReturnNormalInput(t *testing.T) {
 			samples = append(samples, map[string]any{"label": label, "ordinal": ordinal, "cty": g.curCty, "section": g.cur.sec, "full_rgb_difference": full, "window_rgb_difference": windowDiff, "window_shadow_rgb_difference": shadowDiff})
 			press(enter)
 			idleInputs++
-			after, _ := json.Marshal([]any{g.px, g.py, g.curCty, g.cur.sec, g.heroGold, g.inventory, g.equip, g.storyBits})
+			after, _ := json.Marshal([]any{g.px, g.py, g.curCty, g.cur.sec, g.heroGold, testInventory(g.items), g.items.Equipment(), g.storyBits})
 			if string(before) != string(after) {
 				t.Fatal("idle wait/dismiss changed gameplay state")
 			}
@@ -258,7 +258,7 @@ func TestDosgolemKingReturnNormalInput(t *testing.T) {
 					inventory = append(inventory, int(item))
 				}
 			}
-			if !reflect.DeepEqual(g.inventory, inventory) || g.heroGold != number(row, "gold_lo", 16)+(number(row, "gold_hi", 16)<<16) || fmt.Sprintf("%x", g.storyBits) != row["flags"] {
+			if !reflect.DeepEqual(testInventory(g.items), inventory) || g.heroGold != number(row, "gold_lo", 16)+(number(row, "gold_hi", 16)<<16) || fmt.Sprintf("%x", g.storyBits) != row["flags"] {
 				t.Fatal("native inventory/gold/story differs")
 			}
 			g.renderFrame()
@@ -286,7 +286,7 @@ func TestDosgolemKingReturnNormalInput(t *testing.T) {
 			t.Fatal(e)
 		}
 	}
-	if loaded.showTitle || loaded.curCty != g.curCty || loaded.cur.sec != g.cur.sec || loaded.px != g.px || loaded.py != g.py || loaded.heroGold != g.heroGold || !reflect.DeepEqual(loaded.inventory, g.inventory) || !reflect.DeepEqual(loaded.equip, g.equip) || !reflect.DeepEqual(loaded.storyBits, g.storyBits) {
+	if loaded.showTitle || loaded.curCty != g.curCty || loaded.cur.sec != g.cur.sec || loaded.px != g.px || loaded.py != g.py || loaded.heroGold != g.heroGold || !reflect.DeepEqual(testInventory(loaded.items), testInventory(g.items)) || !reflect.DeepEqual(loaded.items.Equipment(), g.items.Equipment()) || !reflect.DeepEqual(loaded.storyBits, g.storyBits) {
 		t.Fatal("title load lost return state")
 	}
 	camera := g.activeSceneCamera()

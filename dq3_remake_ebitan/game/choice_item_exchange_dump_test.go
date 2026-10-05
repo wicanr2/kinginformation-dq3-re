@@ -26,7 +26,7 @@ func TestDumpChoiceItemExchange(t *testing.T) {
 	g.town, g.cur, g.dlg.tx = sc, sc, sc.dlgText
 	g.showTitle = false
 	g.px, g.py, g.facing = event.NPC.Tile.X, event.NPC.Tile.Y+1, 1
-	g.inventory = append(g.inventory, event.RequiredItemRawID)
+	setTestInventory(&g.items, append(testInventory(g.items), event.RequiredItemRawID))
 	g.setStoryFlag(event.AvailableFlagRaw, true)
 	n := &g.cur.npcs[g.cur.npcAt(event.NPC.Tile.X, event.NPC.Tile.Y)]
 	if !g.talkChoiceItemExchange(n) {

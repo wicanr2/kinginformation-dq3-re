@@ -81,7 +81,7 @@ func recruitmentViewGame(t *testing.T) *Game {
 	if err = g.recruit.installRaster(g.newGame.raster, g.worldPal); err != nil {
 		t.Fatal(err)
 	}
-	g.roster = []*Member{newLevelOneMember([]int{0}, g.tavern.contract.ClassOptions[0].ClassRaw, 0, &g.prng, g.tavern.equipment)}
+	g.roster = []*Member{newLevelOneMember([]int{0}, g.tavern.contract.ClassOptions[0].ClassRaw, 0, &g.prng, g.tavern.initialItems)}
 	g.recruit.active, g.recruit.stage = true, rcView
 	return g
 }
@@ -126,7 +126,7 @@ func TestRecruitmentViewDetailTwoWaitsPreserveState(t *testing.T) {
 	}
 	g.recruitInput(InputState{DirEdge: -1, Enter: true})
 	if rc.stage != rcViewAbility || rc.viewFlow == nil {
-		t.Fatalf("selection failed to open ability wait: member=%+v initial=%v stage=%d raster=%v items=%v", g.roster[0], g.tavern.equipment, rc.stage, rc.raster != nil, g.shop.items != nil)
+		t.Fatalf("selection failed to open ability wait: member=%+v initial=%v stage=%d raster=%v items=%v", g.roster[0], g.tavern.initialItems, rc.stage, rc.raster != nil, g.shop.items != nil)
 	}
 	for i := 0; i < 100; i++ {
 		g.recruitInput(InputState{DirEdge: -1, DirHeld: 0})
@@ -156,7 +156,7 @@ func TestRecruitmentViewDetailTwoWaitsPreserveState(t *testing.T) {
 func TestRecruitmentViewDetailUnknownStateStaysInList(t *testing.T) {
 	for name, change := range map[string]func(*Member){
 		"spells":    func(m *Member) { m.LearnedSpells = []int{1} },
-		"equipment": func(m *Member) { m.Weapon = 0 },
+		"equipment": func(m *Member) { setTestGear(&m.Items, 0, 0) },
 		"condition": func(m *Member) { m.Conditions = conditionPoison },
 		"class":     func(m *Member) { m.Class = -1 },
 		"gender":    func(m *Member) { m.Gender = -1 },
@@ -218,6 +218,9 @@ func TestRecruitmentViewDetailLoadClearsOnlyValidatedUI(t *testing.T) {
 			}
 			expected, e := decodeSave(valid)
 			if e != nil {
+				t.Fatal(e)
+			}
+			if e = g.validateSavedItemStores(&expected); e != nil {
 				t.Fatal(e)
 			}
 			loaded := g.snapshot()

@@ -85,11 +85,11 @@ func TestFieldSupportCureAndReviveTransactions(t *testing.T) {
 func TestFieldRemoveCurseUnequipsButKeepsItem(t *testing.T) {
 	g := fieldSpellGame(t, 1)
 	caster := addSageFieldCaster(g)
-	g.equip = [4]int{27, -1, -1, -1}
+	setTestEquipment(&g.items, [4]int{27, -1, -1, -1})
 	mp0 := caster.CurMP
 	castTargetedFieldSpell(t, g, fieldShanaku, 0)
-	if g.equip[0] != -1 || len(g.inventory) != 1 || g.inventory[0] != 27 || caster.CurMP != mp0-18 {
-		t.Fatalf("rec171 解除詛咒交易錯誤: equip=%v inventory=%v mp=%d", g.equip, g.inventory, caster.CurMP)
+	if g.items.Equipment()[0] != -1 || len(testInventory(g.items)) != 1 || testInventory(g.items)[0] != 27 || caster.CurMP != mp0-18 {
+		t.Fatalf("rec171 解除詛咒交易錯誤: equip=%v inventory=%v mp=%d", g.items.Equipment(), testInventory(g.items), caster.CurMP)
 	}
 }
 
@@ -231,7 +231,8 @@ func TestRemittoProductionInputDungeonOnly(t *testing.T) {
 
 func TestVisitedTownsSaveRoundTrip(t *testing.T) {
 	want := []townVisit{{Cty: 0, Section: 0, X: 0, Y: 28}, {Cty: 37, Section: 0, X: 4, Y: 19}}
-	s := saveState{VisitedTowns: want}
+	g := &Game{pack: loadTestPack(t), items: testItemStore(nil, [4]int{-1, -1, -1, -1}), visitedTowns: want}
+	s := g.snapshot()
 	b, err := encodeSave(s)
 	if err != nil {
 		t.Fatal(err)
@@ -661,7 +662,9 @@ func TestRemoaruIsTransientAcrossRestore(t *testing.T) {
 	g := fieldSpellGame(t, 1)
 	s := g.snapshot()
 	g.remoaru = 25
-	g.restore(s)
+	if err := g.restore(s); err != nil {
+		t.Fatal(err)
+	}
 	if g.remoaru != 0 {
 		t.Fatalf("冒險之書讀檔不可保留 runtime 透明 timer：%d", g.remoaru)
 	}

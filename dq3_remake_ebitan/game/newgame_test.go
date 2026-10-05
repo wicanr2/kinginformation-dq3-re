@@ -16,6 +16,8 @@ func newGameTestGame() *Game {
 	if err != nil {
 		panic(err)
 	}
+	g.pack = p
+	g.items, _ = p.NewGamePlayerItems()
 	g.newGame.setGeometry(*p.Interface.NewGameGeometry)
 	return g
 }
@@ -325,7 +327,7 @@ func TestNewGameFlowLoadOption(t *testing.T) {
 	savePath := filepath.Join(dir, "ng-save.json")
 	t.Setenv("DQ3_SAVE", savePath)
 
-	src := &Game{heroExp: 999, heroGold: 42, heroName: []int{15, 16, 17}, heroGender: 1}
+	src := &Game{pack: loadTestPack(t), items: testItemStore(nil, [4]int{-1, -1, -1, -1}), heroExp: 999, heroGold: 42, heroName: []int{15, 16, 17}, heroGender: 1}
 	if err := src.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
@@ -351,7 +353,7 @@ func TestNewGameFlowLoadOption(t *testing.T) {
 func TestNewGameFlowStartOptionIgnoresStaleSave(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("DQ3_SAVE", filepath.Join(dir, "stale.json"))
-	stale := &Game{heroExp: 12345, heroName: []int{1, 2, 3}}
+	stale := &Game{pack: loadTestPack(t), items: testItemStore(nil, [4]int{-1, -1, -1, -1}), heroExp: 12345, heroName: []int{1, 2, 3}}
 	if err := stale.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
@@ -375,12 +377,12 @@ func TestSaveRoundTripHeroNameGender(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("DQ3_SAVE", filepath.Join(dir, "rt.json"))
 
-	src := &Game{heroName: []int{113, 689, 488, 711}, heroGender: 1, heroGold: 7,
+	src := &Game{pack: loadTestPack(t), items: testItemStore(nil, [4]int{-1, -1, -1, -1}), heroName: []int{113, 689, 488, 711}, heroGender: 1, heroGold: 7,
 		heroStat: stats.Values{8, 4, 4, 12, 9, 7, 7}, heroHP: 5, heroMP: 3}
 	if err := src.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	dst := &Game{}
+	dst := &Game{pack: loadTestPack(t)}
 	if err := dst.Load(); err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -403,15 +405,9 @@ func TestSaveRoundTripHeroNameGender(t *testing.T) {
 }
 
 func TestSaveRoundTripPreservesMemberNameAndStats(t *testing.T) {
-	src := &Game{
-		companions: []*Member{{
-			Name: []int{101, 202}, Class: 3, Gender: 1, Exp: 42,
-			Stats: stats.Values{8, 7, 6, 20, 17, 9, 10}, CurHP: 13, CurMP: 11, Armor: 0x25,
-		}},
-		roster: []*Member{{
-			Name: []int{303, 404}, Class: 4, Gender: 0,
-			Stats: stats.Values{5, 4, 7, 12, 18, 10, 9}, CurHP: 12, CurMP: 18, Armor: 0x25,
-		}},
+	src := &Game{pack: loadTestPack(t), items: testItemStore(nil, [4]int{-1, -1, -1, -1}),
+		companions: []*Member{{Name: []int{101, 202}, Class: 3, Gender: 1, Exp: 42, Stats: stats.Values{8, 7, 6, 20, 17, 9, 10}, CurHP: 13, CurMP: 11, Items: testItemStore(nil, [4]int{-1, 0x25, -1, -1})}},
+		roster:     []*Member{{Name: []int{303, 404}, Class: 4, Gender: 0, Stats: stats.Values{5, 4, 7, 12, 18, 10, 9}, CurHP: 12, CurMP: 18, Items: testItemStore(nil, [4]int{-1, 0x25, -1, -1})}},
 	}
 	b, err := encodeSave(src.snapshot())
 	if err != nil {
@@ -421,8 +417,10 @@ func TestSaveRoundTripPreservesMemberNameAndStats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decodeSave: %v", err)
 	}
-	dst := &Game{}
-	dst.restore(s)
+	dst := &Game{pack: loadTestPack(t)}
+	if err := dst.restore(s); err != nil {
+		t.Fatal(err)
+	}
 	if !reflect.DeepEqual(dst.companions[0].Name, src.companions[0].Name) ||
 		dst.companions[0].Stats != src.companions[0].Stats ||
 		!reflect.DeepEqual(dst.roster[0].Name, src.roster[0].Name) ||

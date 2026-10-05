@@ -108,7 +108,7 @@ func TestTedonGreenOrbOriginalNightNPC(t *testing.T) {
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if !g.hasItem(reward.GrantedItemRaw) || g.storyFlag(reward.PresentFlagRaw) || !g.dlg.open {
 		t.Fatalf("production 對話未依 handler35 給綠寶珠: inv=%v flag3e=%v dlg=%v",
-			g.inventory, g.storyFlag(reward.PresentFlagRaw), g.dlg.open)
+			testInventory(g.items), g.storyFlag(reward.PresentFlagRaw), g.dlg.open)
 	}
 }
 
@@ -135,14 +135,14 @@ func TestTedonGreenOrbFullPartyInventoryDoesNotConsumeFlag(t *testing.T) {
 	}
 	g.showTitle, g.openingIdx = false, -1
 	g.cur, g.town, g.inTown, g.curCty, g.dlg.tx = sc, sc, true, s.CTYRaw, sc.dlgText
-	g.inventory = []int{1, 2, 3, 4, 5, 6, 7, 8}
+	g.items = testItemStore([]int{1, 2, 3, 4, 5, 6, 7, 8}, [4]int{-1, -1, -1, -1})
 	g.companions = nil
 	g.px, g.py, g.facing = s.Tile.X, s.Tile.Y+1, 1
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	if g.hasItem(reward.GrantedItemRaw) || !g.storyFlag(reward.PresentFlagRaw) {
 		t.Fatalf("物品欄滿不得給珠或清 present flag：inv=%v flag=%v",
-			g.inventory, g.storyFlag(reward.PresentFlagRaw))
+			testInventory(g.items), g.storyFlag(reward.PresentFlagRaw))
 	}
 }
 
@@ -152,22 +152,22 @@ func TestGrantPartyItemCountsEquipmentSentinelAndRawZero(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.companions = nil
-	g.equip = [4]int{-1, -1, -1, -1}
-	g.inventory = []int{1, 2, 3, 4, 5, 6, 7}
+	setTestEquipment(&g.items, [4]int{-1, -1, -1, -1})
+	setTestInventory(&g.items, []int{1, 2, 3, 4, 5, 6, 7})
 	if !g.grantPartyItem(0x66) || !g.hasItem(0x66) {
-		t.Fatalf("空裝備哨兵 -1 不得佔八格：equip=%v inv=%v", g.equip, g.inventory)
+		t.Fatalf("空裝備哨兵 -1 不得佔八格：equip=%v inv=%v", g.items.Equipment(), testInventory(g.items))
 	}
-	g.inventory = []int{1, 2, 3, 4, 5, 6, 7}
-	g.equip = [4]int{0, -1, -1, -1}
+	setTestInventory(&g.items, []int{1, 2, 3, 4, 5, 6, 7})
+	setTestEquipment(&g.items, [4]int{0, -1, -1, -1})
 	if g.grantPartyItem(0x66) {
 		t.Fatalf("raw item 0 是合法已裝備道具，總數八格時應拒絕：equip=%v inv=%v",
-			g.equip, g.inventory)
+			g.items.Equipment(), testInventory(g.items))
 	}
 }
 
 func TestPhoenixProductionInputTrace(t *testing.T) {
 	g := phoenixEventGame(t)
-	g.inventory = []int{0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b}
+	setTestInventory(&g.items, []int{0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b})
 
 	// 第一座祭壇完整走 production 命令窗→調查；其餘祭壇呼叫同一 examine dispatch，
 	// checkpoint 只省略祭壇之間的無關步行。
@@ -175,7 +175,7 @@ func TestPhoenixProductionInputTrace(t *testing.T) {
 	chooseExamine(t, g)
 	if g.hasItem(0x66) || g.storyFlag(0x8f) || g.storyFlag(0x12c) || !g.dlg.open {
 		t.Fatalf("第一祭壇 transaction 錯: inv=%v f8f=%v f12c=%v dlg=%v",
-			g.inventory, g.storyFlag(0x8f), g.storyFlag(0x12c), g.dlg.open)
+			testInventory(g.items), g.storyFlag(0x8f), g.storyFlag(0x12c), g.dlg.open)
 	}
 	closeCurrentDialogue(t, g)
 	for i := 1; i < 6; i++ {
@@ -187,8 +187,8 @@ func TestPhoenixProductionInputTrace(t *testing.T) {
 		}
 		closeCurrentDialogue(t, g)
 	}
-	if len(g.inventory) != 0 {
-		t.Fatalf("六顆寶珠應全消耗，剩 %v", g.inventory)
+	if len(testInventory(g.items)) != 0 {
+		t.Fatalf("六顆寶珠應全消耗，剩 %v", testInventory(g.items))
 	}
 
 	// 和原版影片相同：對守護神談話才復活，並非放下最後一顆立即復活。
@@ -294,7 +294,9 @@ func TestPhoenixLandAndSaveCompatibility(t *testing.T) {
 	copy(old[:], s.StoryBits[:32])
 	s.StoryBits = old[:]
 	r := phoenixEventGame(t)
-	r.restore(s)
+	if err := r.restore(s); err != nil {
+		t.Fatal(err)
+	}
 	if !r.phoenixOwned || r.phoenixAboard || r.phoenixX != g.phoenixX || r.phoenixY != g.phoenixY {
 		t.Fatalf("拉米亞存檔 roundtrip 錯: owned=%v aboard=%v park=%d,%d",
 			r.phoenixOwned, r.phoenixAboard, r.phoenixX, r.phoenixY)

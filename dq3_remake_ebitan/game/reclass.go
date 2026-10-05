@@ -125,7 +125,7 @@ func (g *Game) reclassTargets(event *gamepack.ReclassEvent, m *Member) []int {
 	}
 	targets := append([]int(nil), event.BasicTargetClasses...)
 	if m.Class == event.AdvancedFreeSourceClass ||
-		containsInt(m.Inventory, event.AdvancedRequiredItemRaw) {
+		m.Items.Count(event.AdvancedRequiredItemRaw) > 0 {
 		targets = append(targets, event.AdvancedTargetClass)
 	}
 	return targets
@@ -309,16 +309,12 @@ func (g *Game) applyReclass(event *gamepack.ReclassEvent) bool {
 		return false
 	}
 	m.syncLearnedSpells()
-	if g.reclassTarget == event.AdvancedTargetClass &&
-		m.Class != event.AdvancedFreeSourceClass {
-		var consumed bool
-		m.Inventory, consumed = removeOne(m.Inventory, event.AdvancedRequiredItemRaw)
-		if !consumed {
+	if g.reclassTarget == event.AdvancedTargetClass {
+		if !m.Items.ClearStatesAndRemove(event.AdvancedRequiredItemRaw) {
 			return false
 		}
 	}
-	m.Inventory = append(m.Inventory, m.equippedItems()...)
-	m.Weapon, m.Armor, m.Shield, m.Head = -1, -1, -1, -1
+
 	m.Class, m.Exp = g.reclassTarget, 0
 	m.CurHP >>= 1
 	m.CurMP >>= 1

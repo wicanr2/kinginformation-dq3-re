@@ -5,7 +5,7 @@ import "testing"
 // 彩虹合成:太陽之石+雲雨之杖 → 消耗太陽之石、雲雨之杖格變彩虹水滴、設 RAINBOW 里程碑。
 func TestSynthRainbow(t *testing.T) {
 	g := &Game{flags: map[int]bool{}, noticeCode: -1}
-	g.inventory = []int{itemSunStone, itemRaincloudRod, 0x41}
+	setTestInventory(&g.items, []int{itemSunStone, itemRaincloudRod, 0x41})
 	if !g.synthRainbowAtShrine() {
 		t.Fatal("有齊材料應合成成功")
 	}
@@ -19,7 +19,7 @@ func TestSynthRainbow(t *testing.T) {
 		t.Error("合成後應設 RAINBOW 里程碑(flag 0x139)")
 	}
 	// 再合成一次 → 已設旗標 → false(不重複)
-	g.inventory = append(g.inventory, itemSunStone, itemRaincloudRod)
+	setTestInventory(&g.items, append(testInventory(g.items), itemSunStone, itemRaincloudRod))
 	if g.synthRainbowAtShrine() {
 		t.Error("已合成過不應重複")
 	}
@@ -28,7 +28,7 @@ func TestSynthRainbow(t *testing.T) {
 // 材料不足不合成、不設旗標。
 func TestSynthRainbowNoMaterials(t *testing.T) {
 	g := &Game{flags: map[int]bool{}, noticeCode: -1}
-	g.inventory = []int{itemSunStone} // 缺雲雨之杖
+	setTestInventory(&g.items, []int{itemSunStone}) // 缺雲雨之杖
 	if g.synthRainbowAtShrine() {
 		t.Error("缺材料不應合成")
 	}

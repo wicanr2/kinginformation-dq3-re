@@ -191,7 +191,7 @@ func TestDumpTeidonFinalKeyGreenOrb(t *testing.T) {
 
 	g.px, g.py, g.facing = 17, 5, 1
 	dump("teidon_final_key_door_closed")
-	g.inventory = []int{0x57}
+	setTestInventory(&g.items, []int{0x57})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 	if tier := g.cur.doorTier(17, 4); tier != 0 || !g.hasItem(0x57) {

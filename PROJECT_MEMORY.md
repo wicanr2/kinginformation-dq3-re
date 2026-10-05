@@ -1,7 +1,8 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-05 單人道具action Esc已修正為直接回場景。正常194..218重播、取消零交易、重開、正式F5／F6與下一步通過；本輪23不同頂層／4子PASS、零SKIP／OOM及go vet通過。208／217完整RGB仍411，原始主角及NPC完整圖塊解釋全部差異，動畫時序仍未知、未V3；57張既有指令窗PNG與44張新路線前綴保持。schema0.20.0／content0.1.92及canonical0839ecc9保持，沒有新包。
-> A核心及pack資料已完成；正式Game／Member、戰鬥及全部save持有者尚未遷移，存檔未升級，206／207清單與選取仍RED。下一步接唯一有序集合及正常230重排，不重做核心、pack或本次取消。最近完整game／internal／THE END141.62秒／Linux建置仍為3be415f，本輪只做受影響回歸。唯一現況表CONTEXT、證據／重生入口docs/188、欄位docs/84；Issue／Goal進行中。
+> 2026-10-05 A單一有序物品格已接入Game、Member、戰鬥與全部存檔持有者。背包及裝備由完整八格導出，物理順序、空格、code0及旗標保持；save_version2拒絕所有舊格式與無pack身分存檔。schema0.21.0／content0.1.93，canonical e2cf0b0e。
+> 正常194..230逐步words與dosgolem相同，穿戴布衣給自己後移至第八格，正式重開、F5／F6與下一步通過；194..207完整RGB0。225給予提示仍差30140，動畫／多人及完整原版campaign未知，下一切片先補225原生畫面證據。
+> game492頂層清單完整覆蓋，首輪fixture與主線策略失敗保留並訂正；補驗後440不同頂層／141子PASS、51選用SKIP。internal192頂層／415子、12套件PASS、4選用SKIP；正常THE END 79.71秒、三條必驗正常路線零SKIP、go vet及Linux desktop通過。正式驗收收據oom／oom_kill0；沒有新發行包。現況以CONTEXT唯一狀態表、docs/188及Issue #4為準。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

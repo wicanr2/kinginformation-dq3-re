@@ -24,7 +24,7 @@ func TestDumpNorudGuidedPassage(t *testing.T) {
 		t.Fatal(err)
 	}
 	g, event, guide := norudTestGame(t)
-	g.inventory = append(g.inventory, event.RequiredItemRawID)
+	setTestInventory(&g.items, append(testInventory(g.items), event.RequiredItemRawID))
 
 	dump := func(name string) {
 		t.Helper()

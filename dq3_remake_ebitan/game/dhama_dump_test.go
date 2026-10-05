@@ -44,7 +44,7 @@ func TestDumpDhamaReclass(t *testing.T) {
 		g.dlg.tx = sc.dlgText
 	}
 	m := newMember([]int{110, 208, 210, 187}, 4, 0, stats.ExpForLevel(4, 20))
-	m.Inventory = []int{0x4a}
+	setTestInventory(&m.Items, []int{0x4a})
 	g.companions = []*Member{m}
 
 	var priest *npcInst

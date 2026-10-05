@@ -40,7 +40,7 @@ func TestDumpMerchantSettlement(t *testing.T) {
 	g.town, g.cur = sc, sc
 	g.dlg.tx = sc.dlgText
 	g.companions = []*Member{newLevelOneMember([]int{0}, event.RequiredClassRaw, 0,
-		&g.prng, g.tavern.equipment)}
+		&g.prng, g.tavern.initialItems)}
 	g.px, g.py, g.facing = event.NPC.Tile.X, event.NPC.Tile.Y+1, 1
 
 	dump := func(name string) {

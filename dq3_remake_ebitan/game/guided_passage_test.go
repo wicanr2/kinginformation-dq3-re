@@ -79,7 +79,7 @@ func TestNorudGuidedPassageTransaction(t *testing.T) {
 		t.Fatal("無國王信時 rec87 關閉後必須 fail closed，不能移動或改旗標")
 	}
 
-	g.inventory = append(g.inventory, event.RequiredItemRawID)
+	setTestInventory(&g.items, append(testInventory(g.items), event.RequiredItemRawID))
 	if !g.talkGuidedPassage(guide) {
 		t.Fatal("持信時 guide selector 未接手")
 	}
@@ -134,7 +134,9 @@ func TestNorudGuidedPassageTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 	g2, _, _ := norudTestGame(t)
-	g2.restore(saved)
+	if err := g2.restore(saved); err != nil {
+		t.Fatal(err)
+	}
 	if !g2.hasItem(event.RequiredItemRawID) ||
 		g2.storyFlag(event.GuidePresentFlagRaw) ||
 		!g2.storyFlag(event.CompletedFlagRaw) ||

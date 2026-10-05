@@ -20,13 +20,15 @@ type ItemWordEncoding struct {
 type ItemWordMetadata struct {
 	EquipmentPart  *int  `json:"equipment_part"`
 	CursedWhenWorn *bool `json:"cursed_when_worn"`
+	DropForbidden  *bool `json:"drop_forbidden"`
 }
 
 type ItemStorageDefinition struct {
-	Encoding  ItemWordEncoding   `json:"encoding"`
-	PartCount *int               `json:"part_count"`
-	Items     []ItemWordMetadata `json:"items"`
-	Evidence  Evidence           `json:"evidence"`
+	DropBlockedMask *int               `json:"drop_blocked_mask"`
+	Encoding        ItemWordEncoding   `json:"encoding"`
+	PartCount       *int               `json:"part_count"`
+	Items           []ItemWordMetadata `json:"items"`
+	Evidence        Evidence           `json:"evidence"`
 }
 
 func (p *Pack) itemWordContract() (itemstore.Encoding, []itemstore.Metadata, error) {
@@ -34,12 +36,18 @@ func (p *Pack) itemWordContract() (itemstore.Encoding, []itemstore.Metadata, err
 		return itemstore.Encoding{}, nil, fmt.Errorf("characters.item_storage is required")
 	}
 	s := p.Characters.ItemStorage
+	if s.DropBlockedMask == nil || *s.DropBlockedMask <= 0 || *s.DropBlockedMask > 65535 {
+		return itemstore.Encoding{}, nil, fmt.Errorf("item_storage requires drop word mask")
+	}
 	fields := []*int{s.Encoding.Empty, s.Encoding.CodeMask, s.Encoding.WornMask,
 		s.Encoding.CurseMask, s.Encoding.TransferBlockedMask}
 	for _, value := range fields {
 		if value == nil || *value < 0 || *value > 65535 {
 			return itemstore.Encoding{}, nil, fmt.Errorf("item_storage requires explicit word encoding")
 		}
+	}
+	if *s.DropBlockedMask&*s.Encoding.CodeMask != 0 {
+		return itemstore.Encoding{}, nil, fmt.Errorf("drop word mask overlaps item identity")
 	}
 	if s.PartCount == nil || *s.PartCount < 1 || *s.PartCount > len([4]int{}) || len(s.Items) == 0 {
 		return itemstore.Encoding{}, nil, fmt.Errorf("item_storage requires equipment parts and archive metadata")
@@ -51,7 +59,7 @@ func (p *Pack) itemWordContract() (itemstore.Encoding, []itemstore.Metadata, err
 	}
 	metadata := make([]itemstore.Metadata, len(s.Items))
 	for code, item := range s.Items {
-		if item.EquipmentPart == nil || item.CursedWhenWorn == nil {
+		if item.EquipmentPart == nil || item.CursedWhenWorn == nil || item.DropForbidden == nil {
 			return itemstore.Encoding{}, nil, fmt.Errorf("item_storage.items[%d] requires all metadata fields", code)
 		}
 		metadata[code] = itemstore.Metadata{Part: *item.EquipmentPart, CursedWhenWorn: *item.CursedWhenWorn}
@@ -93,7 +101,7 @@ func (p *Pack) ValidateItemStorageAgainstItems(items *dq3data.Items) error {
 		return fmt.Errorf("item_storage metadata does not match actual item archive shape/count")
 	}
 	for code, item := range metadata {
-		if item.Part != items.EquipSlot(code) || item.CursedWhenWorn != items.CursedWhenEquipped(code) {
+		if item.Part != items.EquipSlot(code) || item.CursedWhenWorn != items.CursedWhenEquipped(code) || *p.Characters.ItemStorage.Items[code].DropForbidden != items.DropForbidden(code) {
 			return fmt.Errorf("item_storage metadata differs from original item record %d", code)
 		}
 	}
@@ -149,4 +157,13 @@ func (p *Pack) NewGamePlayerItems() (itemstore.Store, bool) {
 
 func (p *Pack) RegisteredPartyMemberItems() (itemstore.Store, bool) {
 	return p.CharacterItems(p.Characters.DefaultRefs.RegisteredPartyMember)
+}
+
+// DecodeItemStore requires the already reviewed pack/archive contract.
+func (p *Pack) DecodeItemStore(raw []byte) (itemstore.Store, error) {
+	e, metadata, err := p.itemWordContract()
+	if err != nil {
+		return itemstore.Store{}, err
+	}
+	return itemstore.Decode(p.Events.ItemActions.PersonalInventorySlots, e, metadata, raw)
 }

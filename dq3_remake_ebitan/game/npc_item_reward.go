@@ -57,17 +57,11 @@ func (g *Game) talkNPCItemReward(n *npcInst) bool {
 // transforming one quest item into another. It never removes an item before
 // confirming the replacement owner, so a full/invalid party fails closed.
 func (g *Game) replacePartyItem(required, granted int) bool {
-	for i, item := range g.inventory {
-		if item == required {
-			g.inventory[i] = granted
-			return true
-		}
-	}
-	for i := range g.companions {
-		for j, item := range g.companions[i].Inventory {
-			if item == required {
-				g.companions[i].Inventory[j] = granted
-				return true
+	for actor := 0; actor <= len(g.companions); actor++ {
+		s := g.actorItemStore(actor)
+		for _, entry := range s.Entries() {
+			if entry.Code == required {
+				return s.Replace(entry.Position, granted)
 			}
 		}
 	}
@@ -80,21 +74,8 @@ func (g *Game) grantPartyItem(code int) bool {
 	if g.pack == nil {
 		return false
 	}
-	slots := g.pack.ItemActions().PersonalInventorySlots
-	heroCount := len(g.inventory)
-	for _, equipped := range g.equip {
-		// 現行裝備空值是 -1；raw item 0 是合法武器，不可當空槽。
-		if equipped >= 0 {
-			heroCount++
-		}
-	}
-	if heroCount < slots {
-		g.inventory = append(g.inventory, code)
-		return true
-	}
-	for _, member := range g.companions {
-		if member.itemCount() < slots {
-			member.Inventory = append(member.Inventory, code)
+	for actor := 0; actor <= len(g.companions); actor++ {
+		if _, ok := g.actorItemStore(actor).Add(code); ok {
 			return true
 		}
 	}

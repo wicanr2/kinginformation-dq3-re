@@ -237,31 +237,8 @@ func (g *Game) applyFieldSupport(choice fieldSpellChoice, target int) {
 }
 
 func (g *Game) unequipFirstCursedItem(actor int) bool {
-	if g.pack == nil || actor < 0 || actor > len(g.companions) {
-		return false
-	}
-	if actor == 0 {
-		for slot, rawID := range g.equip {
-			if rawID < 0 || !g.pack.IsCursedEquipment(rawID) {
-				continue
-			}
-			g.equip[slot] = -1
-			g.inventory = append(g.inventory, rawID)
-			return true
-		}
-		return false
-	}
-	member := g.companions[actor-1]
-	equipment := []*int{&member.Weapon, &member.Armor, &member.Shield, &member.Head}
-	for _, slot := range equipment {
-		if *slot < 0 || !g.pack.IsCursedEquipment(*slot) {
-			continue
-		}
-		member.Inventory = append(member.Inventory, *slot)
-		*slot = -1
-		return true
-	}
-	return false
+	s := g.actorItemStore(actor)
+	return s != nil && s.ClearFirstCursedState()
 }
 
 func (g *Game) fieldSpellInput(in InputState) {

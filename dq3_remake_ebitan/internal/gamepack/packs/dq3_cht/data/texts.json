@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.20.0",
+  "schema_version": "0.21.0",
   "definitions": [
     {
       "id": "dq3:text.field.status_detail",
@@ -7247,6 +7247,200 @@
         "consumer": "IDAlinear17C83 → 1F4E3 → 1F779/1F908；正常Space六指令窗",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
         "note": "導航正常1→2→3→4→3→6→3→6；raw258F8，cursor glyph11；Enter靜態strong，Space與Esc正常閉合。"
+      }
+    },
+    {
+      "id": "dq3:text.field.items.header",
+      "value": "┌┐┐┐┐┐┐└",
+      "glyph_codes": [
+        47,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        49
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 8,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 418
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "DQ3.EXE + D3TXT00.TXT + dosgolem2f44a68正常218/230包來源28995c8d/aad971bb",
+        "address_space": "record",
+        "address": "418",
+        "consumer": "IDAlinear1372F→137F9/13887→1F779/1F908；13919 physical item reader",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "完整EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；正常來源與glyph/frame試作限定confirmed。"
+      }
+    },
+    {
+      "id": "dq3:text.field.items.row",
+      "value": "│      │",
+      "glyph_codes": [
+        54,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        54
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 8,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 419
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "DQ3.EXE + D3TXT00.TXT + dosgolem2f44a68正常218/230包來源28995c8d/aad971bb",
+        "address_space": "record",
+        "address": "419",
+        "consumer": "IDAlinear1372F→137F9/13887→1F779/1F908；13919 physical item reader",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "完整EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；正常來源與glyph/frame試作限定confirmed。"
+      }
+    },
+    {
+      "id": "dq3:text.field.items.footer",
+      "value": "┘┐┐┐┐┐┐├",
+      "glyph_codes": [
+        50,
+        48,
+        48,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 8,
+        "lines_per_page": 1
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 420
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "DQ3.EXE + D3TXT00.TXT + dosgolem2f44a68正常218/230包來源28995c8d/aad971bb",
+        "address_space": "record",
+        "address": "420",
+        "consumer": "IDAlinear1372F→137F9/13887→1F779/1F908；13919 physical item reader",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "完整EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；正常來源與glyph/frame試作限定confirmed。"
+      }
+    },
+    {
+      "id": "dq3:text.field.items.actions",
+      "value": "┌┐如何┐└\n│ 使用 │\n│ 給予 │\n│ 丟掉 │\n┘┐┐┐┐├",
+      "glyph_codes": [
+        47,
+        48,
+        675,
+        676,
+        48,
+        49,
+        65534,
+        54,
+        12,
+        210,
+        412,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        559,
+        677,
+        12,
+        54,
+        65534,
+        54,
+        12,
+        557,
+        560,
+        12,
+        54,
+        65534,
+        50,
+        48,
+        48,
+        48,
+        48,
+        51
+      ],
+      "layout": {
+        "kind": "menu_record",
+        "columns": 6,
+        "lines_per_page": 5
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 421
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "DQ3.EXE + D3TXT00.TXT + dosgolem2f44a68正常218/230包來源28995c8d/aad971bb",
+        "address_space": "record",
+        "address": "421",
+        "consumer": "IDAlinear1372F→137F9/13887→1F779/1F908；13919 physical item reader",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "完整EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；正常來源與glyph/frame試作限定confirmed。"
+      }
+    },
+    {
+      "id": "dq3:text.field.items.give_prompt",
+      "value": "*「要給誰?",
+      "glyph_codes": [
+        59,
+        60,
+        504,
+        559,
+        505,
+        58
+      ],
+      "layout": {
+        "kind": "dialogue",
+        "columns": 20,
+        "lines_per_page": 4
+      },
+      "source": {
+        "kind": "legacy_record",
+        "file": "D3TXT00.TXT",
+        "record": 308
+      },
+      "evidence": {
+        "level": "D3",
+        "source_kind": "data_file",
+        "source": "DQ3.EXE + D3TXT00.TXT + dosgolem2f44a68正常218/230包來源28995c8d/aad971bb",
+        "address_space": "record",
+        "address": "308",
+        "consumer": "IDAlinear1372F→137F9/13887→1F779/1F908；13919 physical item reader",
+        "doc": "docs/188-opening-escort-to-castle-spec.md",
+        "note": "完整EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；正常來源與glyph/frame試作限定confirmed。"
       }
     }
   ]

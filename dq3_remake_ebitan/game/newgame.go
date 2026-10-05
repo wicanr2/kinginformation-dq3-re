@@ -139,7 +139,7 @@ func (g *Game) newGameInput(in InputState) {
 			nf.previewGender = gender
 			nf.previewLevel, nf.previewHP, nf.previewMP, nf.previewExp = g.heroStatsLevel(), g.heroHP, g.heroMP, int(g.heroExp)
 			if g.shop.items != nil {
-				nf.previewDef += g.shop.items.Defense(g.equip[1])
+				nf.previewDef += g.shop.items.Defense(g.items.Equipment()[1])
 			}
 			nf.stage, nf.confirmCursor = ngConfirm, 0
 			if *nf.geometry.Raster.ReviewBeforeConfirmation {

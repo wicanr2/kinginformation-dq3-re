@@ -87,7 +87,7 @@ func runDosgolemThroneLanding(t *testing.T) (*Game, string) {
 		}
 		press()
 	}
-	if g.curCty != 25 || g.cur.sec != 1 || g.px != 9 || g.py != 22 || !g.storyFlag(0x17) || g.storyFlag(0x18) || g.heroGold != 0 || len(g.inventory) != 0 || g.dlg.open {
+	if g.curCty != 25 || g.cur.sec != 1 || g.px != 9 || g.py != 22 || !g.storyFlag(0x17) || g.storyFlag(0x18) || g.heroGold != 0 || len(testInventory(g.items)) != 0 || g.dlg.open {
 		t.Fatal("normal throne landing or pre-audience state differs")
 	}
 	return g, path
@@ -128,7 +128,7 @@ func TestDosgolemThroneCameraNormalInput(t *testing.T) {
 		}
 	}
 	lc := loaded.activeSceneCamera()
-	if loaded.showTitle || loaded.curCty != g.curCty || loaded.cur.sec != g.cur.sec || loaded.px != g.px || loaded.py != g.py || lc == nil || *lc != *c || loaded.storyFlag(0x17) != g.storyFlag(0x17) || loaded.storyFlag(0x18) != g.storyFlag(0x18) || loaded.heroGold != g.heroGold || len(loaded.inventory) != len(g.inventory) {
+	if loaded.showTitle || loaded.curCty != g.curCty || loaded.cur.sec != g.cur.sec || loaded.px != g.px || loaded.py != g.py || lc == nil || *lc != *c || loaded.storyFlag(0x17) != g.storyFlag(0x17) || loaded.storyFlag(0x18) != g.storyFlag(0x18) || loaded.heroGold != g.heroGold || len(testInventory(loaded.items)) != len(testInventory(g.items)) {
 		t.Fatal("normal title load lost throne camera or state")
 	}
 	if err = loaded.step(up); err != nil || loaded.px != 9 || loaded.py != 21 {

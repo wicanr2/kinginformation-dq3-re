@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.20.0",
+  "schema_version": "0.21.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [
@@ -4226,5 +4226,64 @@
       "doc": "docs/188-opening-escort-to-castle-spec.md",
       "note": "導航正常1→2→3→4→3→6→3→6；raw258F8，cursor glyph11；Enter靜態strong，Space與Esc正常閉合。"
     }
+  },
+  "field_items": {
+    "id": "dq3:window.field_items",
+    "raw_window": {
+      "id": "dq3:raw_window.field_items",
+      "flags": 3,
+      "x": 43,
+      "y": 46,
+      "width": 16,
+      "height": 160,
+      "address": "0x3fd8"
+    },
+    "action_window": {
+      "id": "dq3:raw_window.field_item_actions",
+      "flags": 3,
+      "x": 11,
+      "y": 116,
+      "width": 12,
+      "height": 80,
+      "address": "0x4050"
+    },
+    "text_ids": {
+      "header": "dq3:text.field.items.header",
+      "row": "dq3:text.field.items.row",
+      "footer": "dq3:text.field.items.footer",
+      "actions": "dq3:text.field.items.actions",
+      "give_prompt": "dq3:text.field.items.give_prompt"
+    },
+    "frame_rows": 2,
+    "row_step": 16,
+    "name": {
+      "x": 376,
+      "y": 62
+    },
+    "cursor": {
+      "x": 360,
+      "y": 62
+    },
+    "worn": {
+      "x": 344,
+      "y": 62
+    },
+    "action_cursor": {
+      "x": 104,
+      "y": 132
+    },
+    "cursor_glyph": 11,
+    "worn_glyph": 10,
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE + D3TXT00.TXT + dosgolem2f44a68正常218/230包來源28995c8d/aad971bb",
+      "address_space": "dgroup",
+      "address": "0x3fd8/0x4050",
+      "consumer": "IDAlinear1372F→137F9/13887→1F779/1F908；13919 physical item reader",
+      "doc": "docs/188-opening-escort-to-castle-spec.md",
+      "note": "完整EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；正常來源與glyph/frame試作限定confirmed。"
+    },
+    "marker_mask": 40960
   }
 }

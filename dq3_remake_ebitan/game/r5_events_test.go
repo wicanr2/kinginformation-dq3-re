@@ -20,7 +20,9 @@ func TestDragonQueenOriginalFlags(t *testing.T) {
 		t.Fatalf("sub_15E02 flags 不符：flag4e=%v flag19=%v", g.storyFlag(0x4e), g.storyFlag(0x19))
 	}
 	h := r4Game(t)
-	h.restore(g.snapshot())
+	if err := h.restore(g.snapshot()); err != nil {
+		t.Fatal(err)
+	}
 	if h.storyFlag(0x4e) || !h.storyFlag(0x19) || !h.hasItem(itemLightOrb) {
 		t.Fatal("光之珠與龍女王原版 flags 存檔 round-trip 失敗")
 	}
@@ -178,12 +180,14 @@ func TestRainbowBridgeSaveRoundTrip(t *testing.T) {
 	g := r4Game(t)
 	g.layer, g.inTown, g.cur = 1, false, g.loadUnder()
 	g.px, g.py = rainbowUseX, rainbowUseY
-	g.inventory = []int{itemRainbowDrop}
+	setTestInventory(&g.items, []int{itemRainbowDrop})
 	g.panelCursor = 0
 	g.useSelectedItem()
 
 	h := r4Game(t)
-	h.restore(g.snapshot())
+	if err := h.restore(g.snapshot()); err != nil {
+		t.Fatal(err)
+	}
 	if h.worldState&worldStateRainbowBridge == 0 ||
 		h.loadUnder().tileIdx(rainbowBridgeX, rainbowBridgeY) != rainbowBridgeTile {
 		t.Fatal("彩虹橋 world state / tile override 存檔 round-trip 失敗")
@@ -212,7 +216,7 @@ func TestStaffOfRainNaturalExchange(t *testing.T) {
 	}
 	g.cur, g.town, g.inTown, g.curCty = sc, sc, true, event.NPC.CTYRaw
 	g.dlg.tx = sc.dlgText
-	g.inventory = []int{*event.RequiredItemRawID}
+	setTestInventory(&g.items, []int{*event.RequiredItemRawID})
 	g.setStoryFlag(event.PresentFlagRaw, true)
 	g.px, g.py, g.facing = event.NPC.Tile.X, event.NPC.Tile.Y+1, 1
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
@@ -224,13 +228,13 @@ func TestStaffOfRainNaturalExchange(t *testing.T) {
 	if !g.hasItem(event.GrantedItemRaw) || g.hasItem(*event.RequiredItemRawID) ||
 		g.storyFlag(event.PresentFlagRaw) {
 		t.Fatalf("雲雨之杖交換 transaction 錯：inv=%v present=%v",
-			g.inventory, g.storyFlag(event.PresentFlagRaw))
+			testInventory(g.items), g.storyFlag(event.PresentFlagRaw))
 	}
 	// 重複交談只顯示 after，不得再次消耗或新增道具。
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	testStep(t, g, InputState{Confirm: true, DirHeld: -1, DirEdge: -1})
 	closeDialogueByInput(t, g)
-	if len(g.inventory) != 1 || !g.hasItem(event.GrantedItemRaw) {
-		t.Fatalf("雲雨之杖重複對話改變 inventory：%v", g.inventory)
+	if len(testInventory(g.items)) != 1 || !g.hasItem(event.GrantedItemRaw) {
+		t.Fatalf("雲雨之杖重複對話改變 inventory：%v", testInventory(g.items))
 	}
 }

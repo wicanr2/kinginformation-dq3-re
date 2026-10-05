@@ -86,7 +86,7 @@ func TestRunFinale(t *testing.T) {
 func TestZomaAftermathRadatomeRoute(t *testing.T) {
 	g := r4Game(t)
 	g.runFinale()
-	g.inventory = []int{0x43} // 蓋美拉翅膀；影片同樣由索瑪城外傳送回拉達多姆
+	setTestInventory(&g.items, []int{0x43}) // 蓋美拉翅膀；影片同樣由索瑪城外傳送回拉達多姆
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 	if !g.inTown || g.layer != 1 || g.curCty != 79 {

@@ -79,7 +79,7 @@ func TestTalkStagedOrochiFirstBattle(t *testing.T) {
 		t.Error("NPC slot0 原版移動後應 clear flag0x44 並 set flag0x20")
 	}
 	if !g.hasItem(0x14) || g.hasItem(0x69) {
-		t.Errorf("第一戰只應取得草薙大劍0x14，不得提前取得紫寶珠0x69：%v", g.inventory)
+		t.Errorf("第一戰只應取得草薙大劍0x14，不得提前取得紫寶珠0x69：%v", testInventory(g.items))
 	}
 	if g.stagedBossStage != stagedBossFirstMoving {
 		t.Fatalf("第一戰後應進入原版兩步移動／轉場階段，stage=%d", g.stagedBossStage)

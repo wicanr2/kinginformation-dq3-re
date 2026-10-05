@@ -123,7 +123,7 @@ func TestDosgolemRegionDialogueRewardNormalInput(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		press(enter)
 	}
-	if g.px != 9 || g.py != 8 || g.dlg.open || g.heroGold != 0 || len(g.inventory) != 0 {
+	if g.px != 9 || g.py != 8 || g.dlg.open || g.heroGold != 0 || len(testInventory(g.items)) != 0 {
 		t.Fatal("normal ninety-input checkpoint differs")
 	}
 	if err := g.Save(); err != nil {
@@ -136,7 +136,7 @@ func TestDosgolemRegionDialogueRewardNormalInput(t *testing.T) {
 	e := g.pack.Events.RegionDialogueRewardEvents[0]
 	unchanged := func() {
 		t.Helper()
-		if g.heroGold != 0 || len(g.inventory) != 0 || !g.storyFlag(e.RequiredFlagRaw) || g.storyFlag(e.SetFlagRaw) || g.progressDone(e.ProgressFlagRaw) {
+		if g.heroGold != 0 || len(testInventory(g.items)) != 0 || !g.storyFlag(e.RequiredFlagRaw) || g.storyFlag(e.SetFlagRaw) || g.progressDone(e.ProgressFlagRaw) {
 			t.Fatal("reward transaction occurred before native text return")
 		}
 	}
@@ -180,7 +180,7 @@ func TestDosgolemRegionDialogueRewardNormalInput(t *testing.T) {
 				t.Fatal(err, ce)
 			}
 		}
-		samples = append(samples, map[string]any{"wait": ordinal, "full_rgb_difference": full, "window_and_shadow_rgb_difference": panel, "gold": g.heroGold, "inventory": append([]int{}, g.inventory...), "flag17": g.storyFlag(e.RequiredFlagRaw), "flag18": g.storyFlag(e.SetFlagRaw), "seed": g.prng.State()})
+		samples = append(samples, map[string]any{"wait": ordinal, "full_rgb_difference": full, "window_and_shadow_rgb_difference": panel, "gold": g.heroGold, "inventory": append([]int{}, testInventory(g.items)...), "flag17": g.storyFlag(e.RequiredFlagRaw), "flag18": g.storyFlag(e.SetFlagRaw), "seed": g.prng.State()})
 	}
 	press(up)
 	wait()
@@ -196,14 +196,14 @@ func TestDosgolemRegionDialogueRewardNormalInput(t *testing.T) {
 			t.Fatal("Enter did not reach next native wait", i)
 		}
 	}
-	if g.dlg.open || g.regionDialogueReward != nil || g.dlg.prelude != nil || g.dlg.shadow != nil || g.heroGold != e.Gold || !reflect.DeepEqual(g.inventory, e.ItemRawIDs) || g.storyFlag(e.ClearFlagRaw) || !g.storyFlag(e.SetFlagRaw) || !g.progressDone(e.ProgressFlagRaw) {
+	if g.dlg.open || g.regionDialogueReward != nil || g.dlg.prelude != nil || g.dlg.shadow != nil || g.heroGold != e.Gold || !reflect.DeepEqual(testInventory(g.items), e.ItemRawIDs) || g.storyFlag(e.ClearFlagRaw) || !g.storyFlag(e.SetFlagRaw) || !g.progressDone(e.ProgressFlagRaw) {
 		t.Fatal("native EOF reward or modal restore differs")
 	}
 	// Further inputs cannot grant again, and normal movement can leave the tile.
 	for i := 0; i < 3; i++ {
 		press(enter)
 	}
-	if g.heroGold != e.Gold || !reflect.DeepEqual(g.inventory, e.ItemRawIDs) {
+	if g.heroGold != e.Gold || !reflect.DeepEqual(testInventory(g.items), e.ItemRawIDs) {
 		t.Fatal("audience reward duplicated")
 	}
 	press(InputState{DirHeld: 0, DirEdge: 0, AnyKeyEdge: true})

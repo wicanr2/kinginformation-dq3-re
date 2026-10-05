@@ -128,8 +128,8 @@ func TestDosgolemDeferredRegionReturnNormalInput(t *testing.T) {
 		if g.heroGold != before.HeroGold || !bytes.Equal(g.storyBits[:], before.StoryBits) {
 			t.Fatal("warning changed story or gold")
 		}
-		inv, _ := json.Marshal(g.inventory)
-		oldInv, _ := json.Marshal(before.Inventory)
+		inv, _ := json.Marshal(testInventory(g.items))
+		oldInv, _ := json.Marshal(testInventory(before.itemStore))
 		if !bytes.Equal(inv, oldInv) {
 			t.Fatal("warning changed inventory")
 		}

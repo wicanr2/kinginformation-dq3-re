@@ -66,7 +66,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.heroName = append([]int(nil), g.newGame.ni.nameBuf...)
 	g.rollHeroLevelOne()
 	g.newGame.preview = g.heroStat
-	g.newGame.previewDef = int(g.heroStat[stats.VIT]) + g.shop.items.Defense(g.equip[1])
+	g.newGame.previewDef = int(g.heroStat[stats.VIT]) + g.shop.items.Defense(g.items.Equipment()[1])
 	g.newGame.stage = ngConfirm
 	dump("ng_confirm")
 
@@ -109,7 +109,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	}
 	dump("opening_king_rec78")
 	t.Logf("開場:謁見後 cty=%d sec=%d @(%d,%d), gold=%d items=%v",
-		g.curCty, g.cur.sec, g.px, g.py, g.heroGold, g.inventory)
+		g.curCty, g.cur.sec, g.px, g.py, g.heroGold, testInventory(g.items))
 	if os.Getenv("DQ3_DUMP_OPENING_ONLY") != "" {
 		return
 	}
@@ -139,13 +139,13 @@ func TestDumpNewGameScreens(t *testing.T) {
 
 	// 四人隊共用裝備入口：先選角色，再顯示該角色四槽與背包候選。
 	g.heroName = []int{15}
-	g.equip = [4]int{0x03, 0x1e, -1, -1}
+	setTestEquipment(&g.items, [4]int{0x03, 0x1e, -1, -1})
 	g.companions = []*Member{
-		newLevelOneMember(classNames[1], 1, 0, &g.prng, g.tavern.equipment),
-		newLevelOneMember(classNames[3], 3, 0, &g.prng, g.tavern.equipment),
-		newLevelOneMember(classNames[4], 4, 0, &g.prng, g.tavern.equipment),
+		newLevelOneMember(classNames[1], 1, 0, &g.prng, g.tavern.initialItems),
+		newLevelOneMember(classNames[3], 3, 0, &g.prng, g.tavern.initialItems),
+		newLevelOneMember(classNames[4], 4, 0, &g.prng, g.tavern.initialItems),
 	}
-	g.inventory = []int{0x01, 0x1f, 0x3a, 0x22}
+	setTestInventory(&g.items, []int{0x01, 0x1f, 0x3a, 0x22})
 	g.panel, g.panelActor, g.panelCursor = panelEquip, -1, 0
 	dump("equipment_actor_select")
 	g.panelActor, g.panelCursor = 1, 0
@@ -190,7 +190,9 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.cur, g.town, g.curCty, g.inTown = samanosa, samanosa, ctySamanosa, true
-	g.px, g.py, g.inventory = mirrorX, mirrorY, []int{0x61}
+	g.px = mirrorX
+	g.py = mirrorY
+	setTestInventory(&g.items, []int{0x61})
 	g.dlg.tx = samanosa.dlgText
 	g.useMirror()
 	dump("samanosa_mirror_reveal")
@@ -305,8 +307,8 @@ func TestDumpNewGameScreens(t *testing.T) {
 		delete(g.cur.override, rainbowBridgeY*g.cur.w+rainbowBridgeX)
 	}
 	dump("rainbow_bridge_before")
-	g.inventory = append(g.inventory, itemRainbowDrop)
-	g.panelCursor = len(g.inventory) - 1
+	setTestInventory(&g.items, append(testInventory(g.items), itemRainbowDrop))
+	g.panelCursor = len(testInventory(g.items)) - 1
 	g.useSelectedItem()
 	dump("rainbow_bridge_after")
 
@@ -376,8 +378,8 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.battle.active = false
 	g.runFinale()
 	dump("zoma_aftermath_overworld")
-	g.inventory = append(g.inventory, 0x43)
-	g.panel, g.panelCursor = panelItem, len(g.inventory)-1
+	setTestInventory(&g.items, append(testInventory(g.items), 0x43))
+	g.panel, g.panelCursor = panelItem, len(testInventory(g.items))-1
 	g.useSelectedItem()
 	dump("radatome_return")
 
@@ -466,7 +468,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	}
 	g.battle.active, g.inTown, g.curCty = false, true, 8
 	g.town, g.cur, g.dlg.tx = najimi, najimi, najimi.dlgText
-	g.inventory = nil
+	setTestInventory(&g.items, nil)
 	delete(g.flags, msThiefKey)
 	g.dlg.open, g.cmd.open = false, false
 	positioned := false
@@ -500,7 +502,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.curCty, g.town, g.cur, g.dlg.tx = 1, leve, leve, leve.dlgText
-	g.inventory = []int{0x55}
+	setTestInventory(&g.items, []int{0x55})
 	delete(g.flags, msMagicBal)
 	g.dlg.open, g.cmd.open = false, false
 	positioned = false
@@ -537,7 +539,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.curCty, g.town, g.cur, g.dlg.tx = ctyTemptationCave, cave, cave, cave.dlgText
-	g.inventory = []int{itemuse.ItemMagicBall}
+	setTestInventory(&g.items, []int{itemuse.ItemMagicBall})
 	g.px, g.py = magicBallLeftX, magicBallUseY
 	g.dlg.open, g.cmd.open = false, false
 	g.useMagicBall()
@@ -586,7 +588,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	// 派生的國王角色圖。對白、選項與角色圖 entry 均來自 game pack。
 	g.dlg.open = false
 	g.finishTemporaryRoleEvent()
-	g.inventory = append(g.inventory, roleEvent.RequiredItemRawID)
+	setTestInventory(&g.items, append(testInventory(g.items), roleEvent.RequiredItemRawID))
 	if !g.talkTemporaryRole(romalyKing) || !g.dlg.open {
 		t.Fatal("羅馬利亞還冠 runtime 圖未觸發")
 	}
@@ -673,7 +675,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.curCty, g.town, g.cur = exchange.NPC.CTYRaw, fairyVillage, fairyVillage
 	g.dlg.tx, g.dlg.open = fairyVillage.dlgText, false
 	g.px, g.py, g.facing = exchange.NPC.Tile.X, exchange.NPC.Tile.Y+1, 1
-	g.inventory = append(g.inventory, exchange.RequiredItemRawID)
+	setTestInventory(&g.items, append(testInventory(g.items), exchange.RequiredItemRawID))
 	var fairyQueen *npcInst
 	for i := range fairyVillage.npcs {
 		if g.scriptedNPCMatches(&fairyVillage.npcs[i], exchange.NPC) {
@@ -696,7 +698,7 @@ func TestDumpNewGameScreens(t *testing.T) {
 	g.dlg.tx, g.dlg.open = sleeping.dlgText, false
 	g.px, g.py, g.facing = 15, 20, 1
 	g.panel, g.panelCursor = panelItem, 0
-	g.inventory = []int{noaniel.Use.ItemRawID}
+	setTestInventory(&g.items, []int{noaniel.Use.ItemRawID})
 	g.useSelectedItem()
 	if !g.storyFlag(noaniel.Use.SetFlagsRaw[0]) ||
 		g.storyFlag(noaniel.Use.ClearFlagsRaw[0]) || !g.dlg.open {

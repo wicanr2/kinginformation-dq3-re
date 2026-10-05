@@ -69,33 +69,19 @@ func (g *Game) churchCurePoison(i int) {
 }
 
 func (g *Game) churchMemberEquipment(i int) [4]int {
-	if i == 0 {
-		return g.equip
+	s := g.actorItemStore(i)
+	if s == nil {
+		return [4]int{-1, -1, -1, -1}
 	}
-	if i > 0 && i <= len(g.companions) {
-		m := g.companions[i-1]
-		return [4]int{m.Weapon, m.Armor, m.Shield, m.Head}
-	}
-	return [4]int{-1, -1, -1, -1}
+	return s.Equipment()
 }
-
 func (g *Game) churchMemberCursed(i int) bool {
-	for _, rawID := range g.churchMemberEquipment(i) {
-		if rawID >= 0 && g.pack.IsCursedEquipment(rawID) {
-			return true
-		}
-	}
-	return false
+	s := g.actorItemStore(i)
+	return s != nil && s.HasCursed()
 }
-
-// churchRemoveCurse mirrors sub_171CC: one successful transaction destroys
-// every equipped item whose original item word carried bit0x4000. It does not
-// return those items to inventory.
 func (g *Game) churchRemoveCurse(i int) {
-	for slot, rawID := range g.churchMemberEquipment(i) {
-		if rawID >= 0 && g.pack.IsCursedEquipment(rawID) {
-			g.setEquipActorSlot(i, slot, -1)
-		}
+	if s := g.actorItemStore(i); s != nil {
+		s.RemoveCursed()
 	}
 }
 

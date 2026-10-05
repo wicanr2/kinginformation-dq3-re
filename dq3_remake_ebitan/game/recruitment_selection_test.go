@@ -324,6 +324,9 @@ func TestRecruitmentSelectionLoadPreservesRejectedAndClearsAcceptedUI(t *testing
 	if e != nil {
 		t.Fatal(e)
 	}
+	if e = g.validateSavedItemStores(&expected); e != nil {
+		t.Fatal(e)
+	}
 	loaded := g.snapshot()
 	if !reflect.DeepEqual(expected.Roster, loaded.Roster) {
 		t.Fatalf("valid Load changed roster: before=%+v after=%+v", expected.Roster, loaded.Roster)

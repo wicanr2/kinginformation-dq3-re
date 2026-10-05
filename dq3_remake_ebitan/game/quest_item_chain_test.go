@@ -59,16 +59,16 @@ func TestStandaloneTreasureUsesPackAndOriginalPresentFlag(t *testing.T) {
 			t.Fatalf("pack-owned treasure must not remain in Go table: %+v", legacy)
 		}
 	}
-	g := &Game{pack: pack, flags: map[int]bool{}}
+	g := &Game{pack: pack, items: testItemStore(nil, [4]int{-1, -1, -1, -1}), flags: map[int]bool{}}
 	g.setStoryFlag(tr.PresentFlag, true)
 	if !g.collectQuestTreasure(tr.CTYRaw, tr.Section, tr.TileSubID) ||
 		!g.hasItem(tr.ItemRawID) || g.storyFlag(tr.PresentFlag) {
 		t.Fatalf("standalone pack treasure transaction failed: inv=%v flag=%v",
-			g.inventory, g.storyFlag(tr.PresentFlag))
+			testInventory(g.items), g.storyFlag(tr.PresentFlag))
 	}
 	if !g.collectQuestTreasure(tr.CTYRaw, tr.Section, tr.TileSubID) ||
 		g.countItem(tr.ItemRawID) != 1 {
-		t.Fatalf("collected treasure must stay handled without duplicate item: %v", g.inventory)
+		t.Fatalf("collected treasure must stay handled without duplicate item: %v", testInventory(g.items))
 	}
 }
 
@@ -101,14 +101,14 @@ func TestQuestItemChainExchangeReplacesInventorySlot(t *testing.T) {
 	}
 	g.dlg.open = false
 
-	g.inventory = []int{0x41, x.RequiredItemRawID, 0x44}
+	setTestInventory(&g.items, []int{0x41, x.RequiredItemRawID, 0x44})
 	if !g.talkQuestItemChain(queen) {
 		t.Fatal("持前置道具時 exchange 未處理")
 	}
 	success, _ := g.pack.TextGlyphCodes(x.SuccessTextID)
-	if !reflect.DeepEqual(g.inventory, []int{0x41, x.GrantedItemRawID, 0x44}) ||
+	if !reflect.DeepEqual(testInventory(g.items), []int{0x41, x.GrantedItemRawID, 0x44}) ||
 		!g.dlg.open || !reflect.DeepEqual(g.dlg.buf, success) {
-		t.Fatalf("原地換物／成功文字錯：inventory=%v dialogue=%v", g.inventory, g.dlg.open)
+		t.Fatalf("原地換物／成功文字錯：inventory=%v dialogue=%v", testInventory(g.items), g.dlg.open)
 	}
 }
 
@@ -132,16 +132,16 @@ func TestQuestItemChainExchangeReplacesCompanionInventorySlot(t *testing.T) {
 		t.Fatal("找不到 game-pack exchange NPC")
 	}
 
-	g.inventory = []int{0x41, 0x44}
-	g.companions = []*Member{{Inventory: []int{0x31, x.RequiredItemRawID, 0x32}}}
+	setTestInventory(&g.items, []int{0x41, 0x44})
+	g.companions = []*Member{{Items: testItemStore([]int{0x31, x.RequiredItemRawID, 0x32}, [4]int{-1, -1, -1, -1})}}
 	if !g.talkQuestItemChain(queen) {
 		t.Fatal("隊友持有前置道具時 exchange 未處理")
 	}
 	want := []int{0x31, x.GrantedItemRawID, 0x32}
-	if !reflect.DeepEqual(g.inventory, []int{0x41, 0x44}) ||
-		!reflect.DeepEqual(g.companions[0].Inventory, want) ||
+	if !reflect.DeepEqual(testInventory(g.items), []int{0x41, 0x44}) ||
+		!reflect.DeepEqual(testInventory(g.companions[0].Items), want) ||
 		g.hasPartyItem(x.RequiredItemRawID) || !g.hasPartyItem(x.GrantedItemRawID) {
-		t.Fatalf("隊友原格換物錯：hero=%v companion=%v", g.inventory, g.companions[0].Inventory)
+		t.Fatalf("隊友原格換物錯：hero=%v companion=%v", testInventory(g.items), testInventory(g.companions[0].Items))
 	}
 }
 
@@ -160,7 +160,7 @@ func TestQuestItemChainLocationUseSwitchesSceneFlagsAndReloads(t *testing.T) {
 			g.storyFlag(u.SetFlagsRaw[0]), g.storyFlag(u.ClearFlagsRaw[0]))
 	}
 	sleeping := len(sc.npcs)
-	g.inventory = []int{u.ItemRawID}
+	setTestInventory(&g.items, []int{u.ItemRawID})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 
@@ -182,7 +182,7 @@ func TestQuestItemChainWrongLocationDoesNotConsume(t *testing.T) {
 	g, event := questItemChainTestGame(t)
 	u := event.Use
 	g.inTown, g.curCty = true, u.CTYRaw+1
-	g.inventory = []int{u.ItemRawID}
+	setTestInventory(&g.items, []int{u.ItemRawID})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 	if !g.hasItem(u.ItemRawID) || g.storyFlag(u.SetFlagsRaw[0]) ||

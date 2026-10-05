@@ -131,24 +131,24 @@ func TestChurchCurePoisonRejectsUnaffectedTargetWithoutCharge(t *testing.T) {
 func TestChurchRemoveCurseChargesLevelOnceAndDestroysAllCursedEquipment(t *testing.T) {
 	g := churchTestGame(t)
 	g.heroGold = 500
-	g.equip = [4]int{0x1b, 0x1e, 0x3d, -1}
-	g.inventory = []int{0x03}
+	setTestEquipment(&g.items, [4]int{0x1b, 0x1e, 0x3d, -1})
+	setTestInventory(&g.items, []int{0x03})
 	chooseRemoveCurse(t, g, 0)
 	if g.church.stage != churchConfirm || g.church.pendingCost != 100 {
 		t.Fatalf("curse confirmation stage=%d cost=%d", g.church.stage, g.church.pendingCost)
 	}
 	g.churchInput(InputState{Confirm: true})
-	if g.heroGold != 400 || g.equip != [4]int{-1, 0x1e, -1, -1} {
-		t.Fatalf("curse transaction gold=%d equip=%v", g.heroGold, g.equip)
+	if g.heroGold != 400 || g.items.Equipment() != [4]int{-1, 0x1e, -1, -1} {
+		t.Fatalf("curse transaction gold=%d equip=%v", g.heroGold, g.items.Equipment())
 	}
-	if len(g.inventory) != 1 || g.inventory[0] != 0x03 || g.church.msg != churchMsgCurseRemoved {
-		t.Fatalf("removed equipment must not enter inventory: inv=%v msg=%q", g.inventory, g.church.msg)
+	if len(testInventory(g.items)) != 1 || testInventory(g.items)[0] != 0x03 || g.church.msg != churchMsgCurseRemoved {
+		t.Fatalf("removed equipment must not enter inventory: inv=%v msg=%q", testInventory(g.items), g.church.msg)
 	}
 }
 
 func TestChurchRemoveCurseRejectsUnaffectedTargetWithoutCharge(t *testing.T) {
 	g := churchTestGame(t)
-	g.equip = [4]int{0x03, 0x1e, -1, -1}
+	setTestEquipment(&g.items, [4]int{0x03, 0x1e, -1, -1})
 	chooseRemoveCurse(t, g, 0)
 	if g.church.stage != churchTarget || g.church.msg != churchMsgNotCursed || g.heroGold != 100 {
 		t.Fatalf("unaffected curse target stage=%d msg=%q gold=%d",
@@ -159,18 +159,18 @@ func TestChurchRemoveCurseRejectsUnaffectedTargetWithoutCharge(t *testing.T) {
 func TestChurchRemoveCurseInsufficientGoldHasNoSideEffect(t *testing.T) {
 	g := churchTestGame(t)
 	g.heroGold = 99
-	g.equip = [4]int{0x1d, 0x1e, -1, -1}
+	setTestEquipment(&g.items, [4]int{0x1d, 0x1e, -1, -1})
 	chooseRemoveCurse(t, g, 0)
 	g.churchInput(InputState{Confirm: true})
-	if g.heroGold != 99 || g.equip[0] != 0x1d || g.church.msg != churchMsgGoldShort {
+	if g.heroGold != 99 || g.items.Equipment()[0] != 0x1d || g.church.msg != churchMsgGoldShort {
 		t.Fatalf("insufficient curse transaction gold=%d equip=%v msg=%q",
-			g.heroGold, g.equip, g.church.msg)
+			g.heroGold, g.items.Equipment(), g.church.msg)
 	}
 }
 
 func TestCursedEquipmentSaveRoundTripRetainsChurchConsumer(t *testing.T) {
 	g := churchTestGame(t)
-	g.equip = [4]int{0x1d, 0x1e, -1, -1}
+	setTestEquipment(&g.items, [4]int{0x1d, 0x1e, -1, -1})
 	raw, err := encodeSave(g.snapshot())
 	if err != nil {
 		t.Fatalf("encodeSave: %v", err)
@@ -180,9 +180,11 @@ func TestCursedEquipmentSaveRoundTripRetainsChurchConsumer(t *testing.T) {
 		t.Fatalf("decodeSave: %v", err)
 	}
 	restored := churchTestGame(t)
-	restored.restore(saved)
-	if restored.equip[0] != 0x1d || !restored.churchMemberCursed(0) {
-		t.Fatalf("cursed equipment round trip lost consumer: equip=%v", restored.equip)
+	if err := restored.restore(saved); err != nil {
+		t.Fatal(err)
+	}
+	if restored.items.Equipment()[0] != 0x1d || !restored.churchMemberCursed(0) {
+		t.Fatalf("cursed equipment round trip lost consumer: equip=%v", restored.items.Equipment())
 	}
 }
 

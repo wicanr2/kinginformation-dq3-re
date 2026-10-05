@@ -29,7 +29,10 @@ func reclassMember(class, level int) *Member {
 		stats.HP: 101, stats.MP: 81, stats.INT: 27, stats.LUCK: 29,
 	}
 	m.CurHP, m.CurMP = 99, 79
-	m.Weapon, m.Armor, m.Shield, m.Head = 1, 30, 31, 32
+	setTestGear(&m.Items, 0, 1)
+	setTestGear(&m.Items, 1, 30)
+	setTestGear(&m.Items, 2, 0x39)
+	setTestGear(&m.Items, 3, 0x32)
 	m.syncLearnedSpells()
 	return m
 }
@@ -44,11 +47,11 @@ func TestReclassOriginalGatesAreMemberLocal(t *testing.T) {
 	if containsInt(g.reclassTargets(event, mage), event.AdvancedTargetClass) {
 		t.Fatal("魔法使未親自持有領悟之書時，不得選賢者")
 	}
-	g.inventory = []int{event.AdvancedRequiredItemRaw}
+	setTestInventory(&g.items, []int{event.AdvancedRequiredItemRaw})
 	if containsInt(g.reclassTargets(event, mage), event.AdvancedTargetClass) {
 		t.Fatal("全隊／主角背包中的領悟之書不得替同伴開啟賢者")
 	}
-	mage.Inventory = []int{event.AdvancedRequiredItemRaw}
+	setTestInventory(&mage.Items, []int{event.AdvancedRequiredItemRaw})
 	if !containsInt(g.reclassTargets(event, mage), event.AdvancedTargetClass) {
 		t.Fatal("該隊員親自持有領悟之書時應開啟賢者")
 	}
@@ -80,7 +83,7 @@ func TestReclassOriginalTransactionPreservesVITAndSpells(t *testing.T) {
 	if !containsInt(oldKnown, 131) {
 		t.Fatal("fixture 魔法使 Lv20 應已學會 rec131")
 	}
-	m.Inventory = []int{event.AdvancedRequiredItemRaw, 9}
+	setTestInventory(&m.Items, []int{event.AdvancedRequiredItemRaw, 9})
 	g := &Game{
 		pack: pack, companions: []*Member{m},
 		reclassMember: 1, reclassTarget: event.AdvancedTargetClass,
@@ -101,12 +104,12 @@ func TestReclassOriginalTransactionPreservesVITAndSpells(t *testing.T) {
 	if m.Stats[stats.VIT] != 23 {
 		t.Fatalf("原版不減半 VIT，got %d", m.Stats[stats.VIT])
 	}
-	if m.Weapon != -1 || m.Armor != -1 || m.Shield != -1 || m.Head != -1 {
+	if m.Items.Equipment()[0] != -1 || m.Items.Equipment()[1] != -1 || m.Items.Equipment()[2] != -1 || m.Items.Equipment()[3] != -1 {
 		t.Fatalf("轉賢者後必須全卸裝：%d/%d/%d/%d",
-			m.Weapon, m.Armor, m.Shield, m.Head)
+			m.Items.Equipment()[0], m.Items.Equipment()[1], m.Items.Equipment()[2], m.Items.Equipment()[3])
 	}
-	if !reflect.DeepEqual(m.Inventory, []int{9, 1, 30, 31, 32}) {
-		t.Fatalf("只消耗領悟之書並保留卸下裝備，got %v", m.Inventory)
+	if !reflect.DeepEqual(testInventory(m.Items), []int{9, 1, 30, 0x39, 0x32}) {
+		t.Fatalf("只消耗領悟之書並保留卸下裝備，got %v", testInventory(m.Items))
 	}
 	for _, rec := range []int{131, 161} {
 		if !containsInt(m.AllSpells(), rec) {
@@ -120,17 +123,18 @@ func TestReclassOriginalTransactionPreservesVITAndSpells(t *testing.T) {
 	g.shop.items = loadTestItems(t)
 	g.panelActor, g.panelCursor = 1, 2 // 卸回個人物品欄的布衣 0x1e
 	g.equipSelected()
-	if m.Armor != 30 || containsInt(m.Inventory, 30) {
+	if m.Items.Equipment()[1] != 30 || containsInt(testInventory(m.Items), 30) {
 		t.Fatalf("轉職卸裝後應能由同伴個人物品重新裝備：armor=%d inv=%v",
-			m.Armor, m.Inventory)
+			m.Items.Equipment()[1], testInventory(m.Items))
 	}
 }
 
 func TestReclassPersonalStateSaveRoundTrip(t *testing.T) {
 	m := reclassMember(5, 1)
-	m.Inventory = []int{9, 30, 31}
+	setTestInventory(&m.Items, []int{9, 30, 31})
 	m.LearnedSpells = []int{121, 131, 161}
-	s := saveState{EquipmentV2: true, Equip: [4]int{-1, -1, -1, -1}, Comps: compsToSav([]*Member{m})}
+	g := &Game{pack: loadTestPack(t), items: testItemStore(nil, [4]int{-1, -1, -1, -1}), companions: []*Member{m}}
+	s := g.snapshot()
 	raw, err := encodeSave(s)
 	if err != nil {
 		t.Fatal(err)
@@ -139,8 +143,11 @@ func TestReclassPersonalStateSaveRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := g.validateSavedItemStores(&got); err != nil {
+		t.Fatal(err)
+	}
 	if len(got.Comps) != 1 ||
-		!reflect.DeepEqual(got.Comps[0].Inventory, m.Inventory) ||
+		!reflect.DeepEqual(testInventory(got.Comps[0].itemStore), testInventory(m.Items)) ||
 		!reflect.DeepEqual(got.Comps[0].LearnedSpells, m.LearnedSpells) {
 		t.Fatalf("個人物品／永久咒文存檔 round-trip 失敗：%+v", got.Comps)
 	}
@@ -149,23 +156,23 @@ func TestReclassPersonalStateSaveRoundTrip(t *testing.T) {
 func TestGiveItemUsesOriginalPersonalEightSlotCapacity(t *testing.T) {
 	pack, _ := testReclassEvent(t)
 	m := reclassMember(4, 20)
-	m.Weapon, m.Armor, m.Shield, m.Head = 1, 30, -1, -1
-	m.Inventory = []int{2, 3, 4, 5, 6, 7}
-	g := &Game{
-		pack: pack, companions: []*Member{m},
-		inventory: []int{0x4a}, itemSelected: 0, panelActor: 0,
-	}
+	setTestGear(&m.Items, 0, 1)
+	setTestGear(&m.Items, 1, 30)
+	setTestGear(&m.Items, 2, -1)
+	setTestGear(&m.Items, 3, -1)
+	setTestInventory(&m.Items, []int{2, 3, 4, 5, 6, 7})
+	g := &Game{pack: pack, companions: []*Member{m}, itemSelected: 0, panelActor: 0, items: testItemStore([]int{0x4a}, [4]int{-1, -1, -1, -1})}
 	if g.giveSelectedItem(1) {
 		t.Fatal("個人物品八格已滿時，給予必須失敗")
 	}
-	if !reflect.DeepEqual(g.inventory, []int{0x4a}) || len(m.Inventory) != 6 {
+	if !reflect.DeepEqual(testInventory(g.items), []int{0x4a}) || len(testInventory(m.Items)) != 6 {
 		t.Fatal("給予失敗不得消耗或複製道具")
 	}
-	m.Inventory = m.Inventory[:5]
+	setTestInventory(&m.Items, testInventory(m.Items)[:5])
 	if !g.giveSelectedItem(1) {
 		t.Fatal("個人物品有一格空位時，給予應成功")
 	}
-	if len(g.inventory) != 0 || !containsInt(m.Inventory, 0x4a) {
-		t.Fatalf("給予交易錯誤：hero=%v member=%v", g.inventory, m.Inventory)
+	if len(testInventory(g.items)) != 0 || !containsInt(testInventory(m.Items), 0x4a) {
+		t.Fatalf("給予交易錯誤：hero=%v member=%v", testInventory(g.items), testInventory(m.Items))
 	}
 }

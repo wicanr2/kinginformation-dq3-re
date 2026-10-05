@@ -119,16 +119,16 @@ func TestDumpPortogaShipChain(t *testing.T) {
 	g.advanceStagedVehicleExchangeDialogue()
 
 	// 舊文件引用的 wait 圖改成原版 first-visit 交易完成後、尚無黑胡椒的 rec26。
-	for i, item := range g.inventory {
+	for i, item := range testInventory(g.items) {
 		if item == event.RequiredItemRawID {
-			g.inventory = append(g.inventory[:i], g.inventory[i+1:]...)
+			setTestInventory(&g.items, append(testInventory(g.items)[:i], testInventory(g.items)[i+1:]...))
 			break
 		}
 	}
 	g.selectCommand(cmdTalk)
 	dump("portoga_king_wait")
 	g.dlg.open = false
-	g.inventory = append(g.inventory, event.RequiredItemRawID)
+	setTestInventory(&g.items, append(testInventory(g.items), event.RequiredItemRawID))
 	g.selectCommand(cmdTalk)
 	dump("portoga_king_ship")
 	dump("portoga_getship")

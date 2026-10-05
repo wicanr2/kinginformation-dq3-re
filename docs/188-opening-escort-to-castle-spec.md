@@ -4707,3 +4707,62 @@ READY畫面閘門勘誤：正常原版208已更換場景人物影格，而remake
 | `work/issue4-item-cancel-raster-r1.json`及r2 | `0ca9d2dad1714454791f5e6562633841a61210e719f08a27919820fdab650031` |
 
 有限功能E2／正常取消E3與畫面V2只適用上述單人取消；所選物品、完整動畫、多人及整體A遷移不升格。下一切片沿CONTEXT唯一狀態表，完成核心、pack與本次取消不重開；Issue #4及Goal保持進行中。
+
+
+### 2026-10-05 A 正式持有者與存檔 adapter READY
+
+使用者已選A及拒絕舊存檔。本節核准Game、Member、戰鬥鏡像及所有save持有者改用唯一的Store；新物品視窗geometry仍依另一個READY，不能以owner驗收宣稱畫面V3。入口為[正式持有者adapter](../dq3_remake_ebitan/game/item_ownership.go)、[嚴格存檔](../dq3_remake_ebitan/game/save.go)及[核心](../dq3_remake_ebitan/internal/itemstore/store.go)。
+
+| 審查項目 | READY契約與證據 |
+| --- | --- |
+| 所有權與入口 | 原始+3A八格為唯一真值；Game主角、Member、名冊、臨時單人同伴、創始人與Battle各保存完整Store。Inventory／equipment／可見列為只讀複本，交易以物理位置識別，禁止第二份可寫collection。69份AST候選逐入口核對，商店及酒館商品archive不屬持有權 |
+| 商店、獎勵與消耗 | 購入17752..1776C及取得16856..16895寫第一空格，成功才付款／旗標交易；13AF8及14CF9清確切所選格。替換quest物品保留原有位置並寫新plain code；滿格與非法引用不猜補。sharedStorage沿既有外部契約，創始人物品按物理格順序轉交，交出後所有格清空 |
+| 原野與戰鬥 | 原野所有非空格依13919順序顯示，wear也可見；選擇保存physical position。戰鬥開始複製Store，命令保存physical position，結束複製完整words，不從bag／gear重組。Give／Wear／church沿核心READY及既有正常路線；多人原版動態oracle未知不阻塞已證實writer接入 |
+| 轉職 | 10C42..10C5E只在pack的AdvancedTargetClass時清全部word高byte，所有低byte等於AdvancedRequiredItemRaw的格清空，free source若持書亦相同；其他target保持word。初始gate、兩次確認及能力交易沿docs/92。原始10C60..10C73→1DB5F→1DBA4、18197→181B1、1EBD8→1EC53consumer已閉合：learn counter+2E/+30、派生能力及far spritebuffer，不重排物品 |
+| rec171勘誤 | 既有field-support-ida.json同一EXE／IDA9.4，1CD34 test4000選第一詛咒word，1CD5D bytes8124ff00只保留低byte。舊docs/181「equipped cursed」與只清wear說法過窄；不要求wear，清所有高bits且原位置保留。特殊condition副作用沿既有pack契約，未閉合部分不新增猜測 |
+| 存檔 | 通用save格式版本2必填；每owner只序列化storage_version1及words。先核對完整JSON、pack id／schema／hash及每個owner的codec、容量、物品與裝備引用，再restore。舊版本、無metadata、legacy欄位、null、duplicate／casevariant key與trailing data明確拒絕；不存在的optional owner不補空角色 |
+| 驗收與停止線 | 遷移後跑受影響交易、所有owner存讀檔及正常玩家trace，重大收尾game、internal及desktop build。正常230包是正式格位與同人重排oracle；下方常式對拍只補轉職writer，不取代正常玩家路線，PNG須另記V2／V3限制 |
+
+不可變輸入沿上節完整DQ3.EXE／ITEM hash。新增IDA9.4 sidecar work/issue4-item-a-r3-ida.json，76條，SHA-256 93dd293ceeaf12d30a2fe7d660c7e81251c00193d358c404c0df42fb6e1b1f18；位址為IDA linear，file=linear-EC90，DGROUP base24DD0。原始名稱、bytes、xref保留，不以未知annotation代替證據。1DBA4在26FE=1不進文字callee；1EC53的DOS read目的segment來自2534，為遠端spritebuffer，沒有character item writer。
+
+有界dosgolem2f44a68 CPU常式對拍從IDA linear10BE9到10C6C，七種合法target全部PASS。控制fixture明示direct-entry及狀態注入，使用aad971bb正常來源的128byte actor複本，再放入wear／curse／未解釋highbits、合法code0、空格與重複書；無RND呼叫，不宣稱原版正常轉職V3。work/issue4-item-reclass-probe-r1.json SHA-256 5b360c6644266cef59f3dfe912cff0d3c7829774db568d7dd59429c1e598941f。conditional word交易為限定confirmed；完整原版轉職oracle仍未知。先前「所有轉職清裝備且只消耗一本」由原始conditional bytes與七種執行反證推翻，歷史敘述保留。
+
+
+### 2026-10-05 正式物品原生窗口與丟棄 gate READY
+
+入口為 [field item pack](../dq3_remake_ebitan/internal/gamepack/field_items.go)、[重建工具](../tools/migrate_field_item_pack.py)、[JSON契約](84-game-pack-json-contract.md)與本檔正常218／230來源。原始身份及IDA9.4 sidecar沿本檔，不引入目測幾何。DGROUP3FD8原始flags3、X43、Y46、width16、template height160，137F9/13887將高度改為(非空數+2)<<4，保留418header、419每列、420footer；name X+4 EGA bytes、Y+16，cursor raw+18/+1A，wear glyph10在name-4 EGA bytes。4050原始X11、Y116、width12、height80、record421與三項callback；selector cursor按原始+18/+1A，glyph11。所有座標、文字引用、行距、frame rows及wear glyph由JSON供給，Go只執行通用原生renderer。
+
+138C4/138C9以8000或2000顯示marker，未知2000的其他玩法語意保持未知；marker使用明示pack mask。正常畫面206／207的完整RGB0試作支持render接入，正式所有列必須來自Store.Entries，不固定七列內容。單人給予225 writer後顯示record308等待，Enter226回field，再正常重開230；消息畫面與完整時序仍須正式同狀態驗收，不以核心PASS稱V3。
+
+丟棄13AD5 bytesa900e0拒絕E000 word，13AEB bytesa802拒絕ITEM b5 bit2；死亡owner拒絕，成功13AF8只清來源格。drop_blocked_mask及每筆drop_forbidden為characters必填資料，由原始EXE／實際128筆ITEM重建；原始decoder保留oracle。不猜未知物品。schema0.21.0／content0.1.93升級，舊存檔依使用者A選擇拒絕。正常原版多人第四動作列仍未知且切片外。
+
+
+### 2026-10-05 A 正式持有權與正常230重排有限 CONFORMED
+
+上方兩份READY已接入正式玩家入口。Game、Member與Battle只保存完整Store，名冊、臨時單人同伴及創始人使用同一格式；交易保存物理位置，view返回複本。存檔`save_version=2`逐owner保存`storage_version=1`及八格words，舊版本、無pack身分、壞容量／引用、duplicate／casevariant／null／legacy欄位在restore前拒絕。所有owner的round-trip與無別名驗收見[持有權測試](../dq3_remake_ebitan/game/item_ownership_test.go)。
+
+正常193 checkpoint繼續194..230，每一步與aad971bb正常dosgolem角色+3A八格逐word相同。初始`[801E,0000,0001,0001,0003,001F,001F,00FF]`經225自給為`[0000,0001,0001,0003,001F,001F,00FF,801E]`；穿戴物、空格及其他flags保持。207／223選中的確為physical0穿戴布衣，226 Enter交還場景，230重開最後列physical7。正式F5／F6實際JSON讀回及新一步通過，不注入遊戲狀態。
+
+原版dosgolem固定2f44a68及seed1357，remake新遊戲固定同seed；選圖原版自然BIOS值151b，remake在選圖前明示受控151b。這只建立該比較點的前置條件，沒有要求整段RND內部呼叫序列相同。收據記錄工具、EXE完整hash、兩側seed設定、193初始狀態、pack版本與逐包結果。
+
+正式194..207十四張完整640×350 RGB0；206與207清單／父窗／動作由原始窗口及pack資料繪製，已限定V3。208..217各411，218..224及226..230各229；225給予提示30140。完整PNG與差值保留，不遮罩或改相位。動畫時序、225原生消息畫面、空物品提示及多人第四動作列未知，未宣稱整段V3。
+
+game r2完整492頂層清單、496次呼叫覆蓋，439不同頂層／141子PASS、51選用SKIP，唯一主線失敗為仍持有舊view。補驗時後段丟棄策略又嘗試操作死亡角色；改由存活角色走正式選單，保留已證實death gate。r7正常THE END 79.71秒通過，合計440不同頂層／141子PASS。首輪fixture錯部位、超過八格、重複計算穿戴物及舊view失敗全部保留；沒有改HP、PRNG、原版 gate 或事件資料讓測試通過。只有已合法的正式InputState路徑改適配新契約。r3減員全滅、r5錯用日表及r6在城內使用黑暗燈的失敗均保留；依原始夜表、地表限定gate及section轉場訂正策略。可丟棄component r7閉合鑰匙、教會及旅店可達性，直接fixture不列正常玩家證據。早期component的ALSA／不完整初始角色／圖形fixture問題依既有trace環境修正，不外推未記錄的記憶體事件。
+
+最後正式實作另重編r4三條必驗正常指令窗／物品取消／有序重排，三頂層PASS、零SKIP；最後版面validator新增完整八列邊界負例後，全部internal192頂層／415子、12套件PASS、4選用診斷SKIP，go vet及Linux x86_64 desktop PASS。有memory-events收據的正式驗收容器oom／oom_kill0，Xvfb有界清理。這是完整清單覆蓋加受影響補驗，沒有宣稱最後同一binary重新執行所有492項。
+
+兩份乾淨7f01143 pack由[遷移工具](../tools/migrate_field_item_pack.py)獨立重建，九JSON逐byte等於正式檔。schema0.21.0／content0.1.93，canonical `sha256:e2cf0b0e919611bea95573a91df520866df6076d2d048b9d731a884f503b5927`。既有1087張PNG中1083張保持；206物品入口改善為RGB0，三張出售PNG反映物理格順序，缺原版同狀態動態驗收。私有PNG、原版素材、IDA database與完整包不提交，沒有新發行包。
+
+重生入口：[正式正常輸入測試](../dq3_remake_ebitan/game/field_command_menu_test.go)的`TestFieldItemOrderedWordsDosgolemNormalInputComparison`。沿既有`dq3-ebiten-test:20260822-r1`、UID1000、network none、3GiB／2CPU一次性Docker及有界Xvfb；先在`dq3_remake_ebitan/`以`go test -c ./game`建binary，再於`game/`執行指定test。`DQ3_ASSETS=/repo/assets_raw`、`DQ3_MT32=/repo/work/mt32`、`DQ3_MOTHER_FINISH_ORIGINAL=/work/dosgolem-opening/issue4-mother-finish-receipt.json`、`DQ3_ITEM_ORDERED_ORACLE_DIR=/work/dosgolem-opening`及`DQ3_ITEM_ORDERED_RECEIPT_DIR=<空輸出目錄>`必填，素材與接受來源沿本檔既有公開producer／checker重生。必驗來源不以SKIP代替。
+
+| 本機收據 | SHA-256 |
+| --- | --- |
+| `work/issue4-item-owner-full-r2/game-receipt.json` | `1acead82299e5f138ca4c086be68f5a1c29715a7ddba9b31318d2003e46d1793` |
+| `work/issue4-item-owner-final-r7/game-receipt.json` | `634e379b315b730566030c5b4aa8a58c6ad6951c6c3219208007bbddac88df2f` |
+| `work/issue4-item-owner-final-r4/ITEM_ORDERED/item-ordered/receipt.json` | `d37658406dea0385abf590e3872b273bd8d6645384889c2e274852218b049d2c` |
+| `work/issue4-item-owner-final-r4/desktop-receipt.json` | `ae28dd9ce26d09727b23972fde373d5170a946e2099cbb11599f270724afefe9` |
+| `work/issue4-item-owner-reproduce-r1/receipt.json` | `e006199b24d82f485538925362af6a9f6a9b9868414ed77aa62ec32a9687fbec` |
+| `work/issue4-item-owner-png-audit-r1.json` | `8014d81397faf9c3071493321568e2131227f206fab941433b5c235891224eff` |
+| `work/issue4-item-owner-final-audit-r1.json` | `5bdd27bda7ab5d511be7cedc51e7113bf1a8d60aab441530ba7f989eb7e1d1ce` |
+
+有限CONFORMED只涵蓋上述持有權、正常230word交易及指定畫面。完整原版campaign、音畫、其他隊伍與動態轉職仍未知；下一blocker225提示先補證據，Issue #4及Goal保持進行中。

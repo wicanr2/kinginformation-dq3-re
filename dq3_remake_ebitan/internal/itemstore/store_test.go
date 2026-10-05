@@ -302,3 +302,45 @@ func TestMalformedLegacyAndAmbiguousSnapshotsReject(t *testing.T) {
 		}
 	}
 }
+
+func TestDerivedViewsAndExactPhysicalReplacement(t *testing.T) {
+	s := fixture(t, []uint16{0x801e, 0xff, 0x2000, 0, 3, 0xff})
+	if s.Equipment() != [4]int{-1, 30, -1, -1} || s.Count(0) != 2 {
+		t.Fatal("derived equipment or code-zero count differs")
+	}
+	copyOwner := s
+	if !s.Replace(2, 27) || s.Replace(1, 3) || s.Replace(3, 128) {
+		t.Fatal("replacement must select an occupied slot and valid identity")
+	}
+	if s.RemoveCode(0, 2) != 1 || s.RemoveCode(30, 0) != 0 {
+		t.Fatal("removal must count actual physical matches")
+	}
+	requireWords(t, s, []uint16{0x801e, 0xff, 27, 0xff, 3, 0xff})
+	requireWords(t, copyOwner, []uint16{0x801e, 0xff, 0x2000, 0, 3, 0xff})
+	if !reflect.DeepEqual(s.Codes(), []int{30, 27, 3}) {
+		t.Fatal("code view omitted worn word or changed physical order")
+	}
+	var absent *Store
+	if absent.RemoveCode(0, 1) != 0 || absent.Replace(0, 0) || absent.ClearFirstCursedState() || absent.ClearStatesAndRemove(0) {
+		t.Fatal("absent owner mutated")
+	}
+}
+
+func TestFirstCurseClearsAllStateAndAdvancedRemovesEveryBook(t *testing.T) {
+	s := fixture(t, []uint16{0x601f, 0xc01b, 0xff, 0xa003, 0x404a, 0, 0x204a, 0xff})
+	copyOwner := s
+	if !s.HasCursed() || !s.ClearFirstCursedState() {
+		t.Fatal("unworn curse was ignored")
+	}
+	requireWords(t, s, []uint16{31, 0xc01b, 0xff, 0xa003, 0x404a, 0, 0x204a, 0xff})
+	if !s.ClearStatesAndRemove(74) {
+		t.Fatal("reviewed advanced transition rejected")
+	}
+	requireWords(t, s, []uint16{31, 27, 0xff, 3, 0xff, 0, 0xff, 0xff})
+	requireWords(t, copyOwner, []uint16{0x601f, 0xc01b, 0xff, 0xa003, 0x404a, 0, 0x204a, 0xff})
+	before := s.Words()
+	if s.HasCursed() || s.ClearFirstCursedState() || s.ClearStatesAndRemove(128) {
+		t.Fatal("absent curse or invalid book accepted")
+	}
+	requireWords(t, s, before)
+}

@@ -47,7 +47,7 @@ func TestOliviaCapeMissingMemoryForcesFiveSteps(t *testing.T) {
 
 func TestOliviaCapeMemoryClearsCurseWithoutConsumption(t *testing.T) {
 	g := oliviaCapeTestGame(t)
-	g.inventory = []int{0x64}
+	setTestInventory(&g.items, []int{0x64})
 	event, _ := g.pack.CoordinateItemGateAt(76, 54, 0)
 	if !g.tryCoordinateItemGateEvent() {
 		t.Fatal("持愛的回憶應觸發海岬事件")

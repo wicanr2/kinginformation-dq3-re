@@ -38,3 +38,15 @@
 
 這批不宣稱逐 frame／PCM wall-clock V3。音訊硬體時序依 wiki／平台規格近似，不再深挖
 DAC／PIT。完成條件是正常 field spell 選單、MP 交易、目標 gate 與狀態副作用的 D3／E2。
+
+## 2026-10-05 rec171 物品 word 勘誤
+
+上表「第一件 equipped cursed item」及分離背包的接線敘述已推翻，原文保留。
+同一輸入 EXE 的 IDA Pro 9.4 linear `0x1cd34` 原始 bytes `a90040` 只判斷詛咒位，
+沒有要求穿戴位。linear `0x1cd5d` 的 `8124ff00` 保留低位物品碼，清除全部高位狀態，
+不是只清穿戴標記。物品仍留在原物理格，不搬到另一份集合。
+
+此兩項 writer 語意為限定 `confirmed`，沿用 `work/field-support-ida.json` 的完整
+輸入 hash 與 linear 位址基準。原始證據、A READY 及實作入口見
+[docs/188](188-opening-escort-to-castle-spec.md)。特殊狀態副作用沿既有契約，本勘誤不擴大
+正常原版施法路線或動畫 V3 的驗收聲明。

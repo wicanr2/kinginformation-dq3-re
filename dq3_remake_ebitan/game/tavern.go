@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/dq3data"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/itemstore"
 	"github.com/wicanr2/dq3_remake_ebitan/internal/rng"
 )
 
@@ -30,7 +31,7 @@ type Tavern struct {
 	labels                 *gamepack.NewGameLabels
 	geometry               *gamepack.NewGameGeometry
 	classHits              hitList
-	equipment              [4]int
+	initialItems           itemstore.Store
 	contract               *gamepack.Registration
 	texts                  map[string][]uint16
 	dialogue               Dialogue
@@ -219,7 +220,7 @@ func (tv *Tavern) input(in InputState, rs ...*rng.RNG) (*Member, bool) {
 		}
 		gender, done := tv.gs.input(in, tap)
 		if done {
-			tv.candidate = newLevelOneMember(tv.ni.nameBuf, tv.pendCls, gender, r, tv.equipment)
+			tv.candidate = newLevelOneMember(tv.ni.nameBuf, tv.pendCls, gender, r, tv.initialItems)
 			tv.stage = tavReview
 			tv.cursor = 0
 		}

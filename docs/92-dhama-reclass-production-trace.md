@@ -80,3 +80,17 @@ Go 只實作 `common:effect.reclass_original` 的有限狀態機與交易，不�
 下一個連續 audit 由達瑪轉職讀檔 checkpoint 前往攻略步驟 22 提頓村，先閉合白天
 CTY20 sec1《黑暗之燈》寶箱、地表使用變夜與其後仍可前往八頭大蛇洞窟；不可改用後段
 事件 checkpoint 取代。
+
+## 2026-10-05 物品 writer 勘誤
+
+以上「全部轉職卸裝」及「只消耗一本書」已推翻，保留原文作歷史索引。相同
+`DQ3.EXE` 115282 bytes、SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c` 的
+IDA Pro 9.4 linear `0x10c42..0x10c5e` 顯示：僅目標職業為賢者時，才清八格高位狀態，
+並移除所有低位物品碼符合領悟之書的格。其他職業保留完整物品 word；空格與位置不重排。
+遊玩者若持書，轉賢者也走相同移除交易。
+
+此條件交易為限定 `confirmed`。七種合法目標另以 dosgolem 的有界 CPU 常式驗證，
+明示直接入口與測試狀態注入，不能當正常原版轉職路線。原始 bytes、caller／consumer、
+sidecar 身分及收據 hash 見 [docs/188 的 A READY](188-opening-escort-to-castle-spec.md)。
+正式引擎以 pack 提供的目標職業與書引用操作唯一物品格，沒有新增職業或物品碼常數。

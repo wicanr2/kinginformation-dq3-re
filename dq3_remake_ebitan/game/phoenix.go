@@ -56,7 +56,7 @@ func (g *Game) tryPhoenixAltar(x, y int) bool {
 			break
 		}
 		for i, member := range g.companions {
-			if containsInt(member.Inventory, code) {
+			if member.Items.Count(code) > 0 {
 				item, owner = code, i+1
 				break
 			}
@@ -72,12 +72,8 @@ func (g *Game) tryPhoenixAltar(x, y int) bool {
 		g.removePartyItems(item, 1)
 	} else {
 		member := g.companions[owner-1]
-		for i, code := range member.Inventory {
-			if code == item {
-				member.Inventory = append(member.Inventory[:i], member.Inventory[i+1:]...)
-				break
-			}
-		}
+		member.Items.RemoveCode(item, 1)
+
 	}
 	g.setStoryFlag(e.PhoenixVisualFlagBaseRaw+item-e.PhoenixOrbItemFirstRaw, false)
 	g.setStoryFlag(flag, false)

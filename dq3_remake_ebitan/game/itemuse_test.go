@@ -19,7 +19,7 @@ func TestUseHerbHeals(t *testing.T) {
 	g := &Game{pack: pack}
 	_, maxHP, _, _, _ := g.heroStats() // level1 勇者 maxHP
 	g.heroHP = 1
-	g.inventory = []int{itemuse.ItemHerb, itemuse.ItemHerb}
+	setTestInventory(&g.items, []int{itemuse.ItemHerb, itemuse.ItemHerb})
 	g.panel, g.panelCursor, g.itemSelected = panelItem, 0, 0
 	if !g.useSelectedPackItemOnTarget(0) {
 		t.Fatal("藥草應走 pack 選人 handler")
@@ -28,8 +28,8 @@ func TestUseHerbHeals(t *testing.T) {
 	if g.heroHP < min(maxHP, 31) || g.heroHP > min(maxHP, 40) {
 		t.Errorf("藥草後 HP=%d，不在原版 30..39 回復封頂範圍", g.heroHP)
 	}
-	if len(g.inventory) != 1 {
-		t.Errorf("藥草應消耗 1 個,剩 %d", len(g.inventory))
+	if len(testInventory(g.items)) != 1 {
+		t.Errorf("藥草應消耗 1 個,剩 %d", len(testInventory(g.items)))
 	}
 }
 
@@ -42,11 +42,11 @@ func TestUseHerbFullStillConsumesSelectedOwnerSlot(t *testing.T) {
 	g := &Game{pack: pack}
 	_, maxHP, _, _, _ := g.heroStats()
 	g.heroHP = maxHP
-	g.inventory = []int{itemuse.ItemHerb}
+	setTestInventory(&g.items, []int{itemuse.ItemHerb})
 	g.panel, g.panelCursor, g.itemSelected = panelItem, 0, 0
 	g.useSelectedPackItemOnTarget(0)
-	if len(g.inventory) != 0 {
-		t.Errorf("滿血目標仍應先消耗藥草，剩 %d", len(g.inventory))
+	if len(testInventory(g.items)) != 0 {
+		t.Errorf("滿血目標仍應先消耗藥草，剩 %d", len(testInventory(g.items)))
 	}
 }
 
@@ -57,14 +57,14 @@ func TestUseHolyWaterRepel(t *testing.T) {
 		t.Fatal(err)
 	}
 	g := &Game{pack: pack}
-	g.inventory = []int{itemuse.ItemHolyWater}
+	setTestInventory(&g.items, []int{itemuse.ItemHolyWater})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 	if g.repel != itemuse.HolySteps {
 		t.Errorf("聖水後 repel=%d, want %d", g.repel, itemuse.HolySteps)
 	}
-	if len(g.inventory) != 0 {
-		t.Errorf("聖水應消耗,剩 %d", len(g.inventory))
+	if len(testInventory(g.items)) != 0 {
+		t.Errorf("聖水應消耗,剩 %d", len(testInventory(g.items)))
 	}
 }
 
@@ -84,13 +84,12 @@ func TestFullMoonHerbConsumesBeforeParalysisCheck(t *testing.T) {
 		{"死亡仍消耗", 0, conditionParalysis, conditionParalysis},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			g := &Game{pack: pack, heroHP: tc.hp, heroConditions: tc.conditions,
-				paralysisSteps: 23, inventory: []int{0x45}, itemSelected: 0}
+			g := &Game{pack: pack, heroHP: tc.hp, heroConditions: tc.conditions, paralysisSteps: 23, itemSelected: 0, items: testItemStore([]int{0x45}, [4]int{-1, -1, -1, -1})}
 			if !g.useSelectedPackItemOnTarget(0) {
 				t.Fatal("滿月草正式 pack handler 未接管")
 			}
-			if len(g.inventory) != 0 {
-				t.Fatalf("原版先消耗契約失敗，inventory=%v", g.inventory)
+			if len(testInventory(g.items)) != 0 {
+				t.Fatalf("原版先消耗契約失敗，inventory=%v", testInventory(g.items))
 			}
 			if g.heroConditions != tc.wantConditions {
 				t.Fatalf("conditions=%#x，預期 %#x", g.heroConditions, tc.wantConditions)
@@ -113,7 +112,7 @@ func TestPackDarkLampOriginalGateAndTransaction(t *testing.T) {
 	}
 	use := func(g *Game) {
 		t.Helper()
-		g.inventory = []int{effect.ItemRawID}
+		setTestInventory(&g.items, []int{effect.ItemRawID})
 		g.panel, g.panelCursor = panelItem, 0
 		g.useSelectedItem()
 	}
@@ -155,8 +154,7 @@ func TestPackInvisibilityGrassConsumesAndSharesRemoaruTimer(t *testing.T) {
 		t.Fatal("隱身草 pack effect missing")
 	}
 	for _, inTown := range []bool{false, true} {
-		g := &Game{pack: pack, inTown: inTown, inventory: []int{0x5d},
-			panel: panelItem, panelCursor: 0}
+		g := &Game{pack: pack, inTown: inTown, panel: panelItem, panelCursor: 0, items: testItemStore([]int{0x5d}, [4]int{-1, -1, -1, -1})}
 		g.useSelectedItem()
 		if g.remoaru != 0x19 || g.hasItem(0x5d) || g.noticeCode != 0x5d {
 			t.Fatalf("inTown=%v 隱身草 transaction 錯：timer=%d item=%v notice=%d",
@@ -183,7 +181,7 @@ func TestUsePrayerRingMP(t *testing.T) {
 	if max == 0 {
 		t.Skip("此等級勇者無 MP")
 	}
-	g.inventory = []int{itemuse.ItemPrayerRing}
+	setTestInventory(&g.items, []int{itemuse.ItemPrayerRing})
 	g.panel, g.panelCursor, g.itemSelected = panelItem, 0, 0
 	if !g.useSelectedPackItemOnTarget(0) {
 		t.Fatal("祈禱之戒應走 pack 選人 handler")
@@ -217,7 +215,7 @@ func TestUseMagicBallBreaksTemptationCaveWall(t *testing.T) {
 	}
 	g := &Game{cur: sc, inTown: true, curCty: ctyTemptationCave, px: 8, py: magicBallUseY}
 	g.initStoryBits()
-	g.inventory = []int{itemuse.ItemMagicBall}
+	setTestInventory(&g.items, []int{itemuse.ItemMagicBall})
 	g.panel = panelItem
 	g.useSelectedItem()
 
@@ -234,7 +232,7 @@ func TestUseMagicBallBreaksTemptationCaveWall(t *testing.T) {
 func TestUseMagicBallWrongPositionDoesNotConsume(t *testing.T) {
 	g := &Game{cur: &Scene{sec: magicBallSection}, inTown: true, curCty: ctyTemptationCave, px: 8, py: 12}
 	g.initStoryBits()
-	g.inventory = []int{itemuse.ItemMagicBall}
+	setTestInventory(&g.items, []int{itemuse.ItemMagicBall})
 	g.panel = panelItem
 	g.useSelectedItem()
 	if !g.hasItem(itemuse.ItemMagicBall) || !g.storyFlag(magicBallIntactFlag) {
@@ -292,7 +290,7 @@ func gaiaSwordGame(t *testing.T) (*Game, *gamepack.ItemUseEffect) {
 	g.inTown, g.layer = false, effect.RequiredLayer
 	g.cur, g.px, g.py = g.overworldScene(), effect.UseTile.X, effect.UseTile.Y
 	g.shipAboard = false // 原版 handler 只有世界座標 gate，不要求載具。
-	g.inventory = []int{effect.ItemRawID}
+	setTestInventory(&g.items, []int{effect.ItemRawID})
 	g.panel, g.panelCursor = panelItem, 0
 	return g, effect
 }
@@ -376,7 +374,7 @@ func thirstyPitcherGame(t *testing.T) (*Game, *gamepack.ItemUseEffect) {
 	g.inTown, g.cur, g.layer = false, g.over, effect.RequiredLayer
 	g.px, g.py = effect.UseTile.X, effect.UseTile.Y
 	g.shipOwned, g.shipAboard = true, true
-	g.inventory = []int{effect.ItemRawID}
+	setTestInventory(&g.items, []int{effect.ItemRawID})
 	g.panel, g.panelCursor = panelItem, 0
 	return g, effect
 }
@@ -387,8 +385,8 @@ func TestUseThirstyPitcherRequiresOriginalShipTileAndRevealsPatch(t *testing.T) 
 	if g.worldState&uint16(effect.SetWorldStateMask) == 0 || g.panel != panelNone {
 		t.Fatalf("乾渴壺成功後 state/panel 錯：state=%#x panel=%d", g.worldState, g.panel)
 	}
-	if len(g.inventory) != 1 || g.inventory[0] != effect.ItemRawID {
-		t.Fatalf("原版乾渴壺不消耗：inventory=%v", g.inventory)
+	if len(testInventory(g.items)) != 1 || testInventory(g.items)[0] != effect.ItemRawID {
+		t.Fatalf("原版乾渴壺不消耗：inventory=%v", testInventory(g.items))
 	}
 	patch := effect.MapPatch
 	for y := 0; y < patch.Height; y++ {
@@ -415,8 +413,8 @@ func TestUseThirstyPitcherFailsClosedOffTileOrOffShip(t *testing.T) {
 			g, effect := thirstyPitcherGame(t)
 			tc.edit(g)
 			g.useSelectedItem()
-			if g.worldState&uint16(effect.SetWorldStateMask) != 0 || len(g.inventory) != 1 {
-				t.Fatalf("錯誤 gate 不得改狀態：state=%#x inventory=%v", g.worldState, g.inventory)
+			if g.worldState&uint16(effect.SetWorldStateMask) != 0 || len(testInventory(g.items)) != 1 {
+				t.Fatalf("錯誤 gate 不得改狀態：state=%#x inventory=%v", g.worldState, testInventory(g.items))
 			}
 		})
 	}
@@ -426,14 +424,14 @@ func TestUseThirstyPitcherFailsClosedOffTileOrOffShip(t *testing.T) {
 func TestUseFairyFluteInRubissTower(t *testing.T) {
 	g := r4Game(t)
 	g.inTown, g.curCty = true, 82
-	g.inventory = []int{0x77}
+	setTestInventory(&g.items, []int{0x77})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 	if !g.hasItem(0x74) {
 		t.Errorf("妖精之笛應給精靈的守護 0x74")
 	}
-	if len(g.inventory) != 2 { // 原道具 + 新給的 0x74
-		t.Errorf("妖精之笛不應消耗,應共 2 個道具,剩 %d", len(g.inventory))
+	if len(testInventory(g.items)) != 2 { // 原道具 + 新給的 0x74
+		t.Errorf("妖精之笛不應消耗,應共 2 個道具,剩 %d", len(testInventory(g.items)))
 	}
 }
 
@@ -441,11 +439,11 @@ func TestUseFairyFluteInRubissTower(t *testing.T) {
 func TestUseFairyFluteAlreadyHasSpiritGuard(t *testing.T) {
 	g := r4Game(t)
 	g.inTown, g.curCty = true, 82
-	g.inventory = []int{0x77, 0x74}
+	setTestInventory(&g.items, []int{0x77, 0x74})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
-	if len(g.inventory) != 2 {
-		t.Errorf("已持有 0x74 不應重複給,應仍 2 個道具,剩 %d", len(g.inventory))
+	if len(testInventory(g.items)) != 2 {
+		t.Errorf("已持有 0x74 不應重複給,應仍 2 個道具,剩 %d", len(testInventory(g.items)))
 	}
 }
 
@@ -457,14 +455,14 @@ func TestUseFairyFluteChecksPartyInventory(t *testing.T) {
 	if !ok {
 		t.Fatal("缺少妖精之笛 pack effect")
 	}
-	g.inventory = []int{effect.ItemRawID}
-	g.companions = []*Member{{Inventory: []int{effect.GrantItemRawID}}}
+	setTestInventory(&g.items, []int{effect.ItemRawID})
+	g.companions = []*Member{{Items: testItemStore([]int{effect.GrantItemRawID}, [4]int{-1, -1, -1, -1})}}
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
-	if len(g.inventory) != 1 || len(g.companions[0].Inventory) != 1 ||
-		g.companions[0].Inventory[0] != effect.GrantItemRawID {
+	if len(testInventory(g.items)) != 1 || len(testInventory(g.companions[0].Items)) != 1 ||
+		testInventory(g.companions[0].Items)[0] != effect.GrantItemRawID {
 		t.Fatalf("同伴持有精靈的守護時不應重複給：hero=%v companion=%v",
-			g.inventory, g.companions[0].Inventory)
+			testInventory(g.items), testInventory(g.companions[0].Items))
 	}
 }
 
@@ -472,11 +470,11 @@ func TestUseFairyFluteChecksPartyInventory(t *testing.T) {
 func TestUseFairyFluteWrongPlaceNoEffect(t *testing.T) {
 	g := r4Game(t)
 	g.inTown, g.curCty = true, 4
-	g.inventory = []int{0x77}
+	setTestInventory(&g.items, []int{0x77})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
-	if len(g.inventory) != 1 {
-		t.Errorf("妖精之笛位置不符不應給道具,剩 %d", len(g.inventory))
+	if len(testInventory(g.items)) != 1 {
+		t.Errorf("妖精之笛位置不符不應給道具,剩 %d", len(testInventory(g.items)))
 	}
 }
 
@@ -485,7 +483,7 @@ func TestUseRainbowAtOriginalCoordinate(t *testing.T) {
 	g := r4Game(t)
 	g.inTown, g.layer, g.px, g.py = false, 1, rainbowUseX, rainbowUseY
 	g.cur = g.loadUnder()
-	g.inventory = []int{0x75}
+	setTestInventory(&g.items, []int{0x75})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 	if g.worldState&worldStateRainbowBridge == 0 {
@@ -494,8 +492,8 @@ func TestUseRainbowAtOriginalCoordinate(t *testing.T) {
 	if got := g.cur.tileIdx(rainbowBridgeX, rainbowBridgeY); got != rainbowBridgeTile {
 		t.Errorf("橋 tile=%02x, want %02x", got, rainbowBridgeTile)
 	}
-	if len(g.inventory) != 0 {
-		t.Errorf("正確位置應消耗彩虹水滴,剩 %d", len(g.inventory))
+	if len(testInventory(g.items)) != 0 {
+		t.Errorf("正確位置應消耗彩虹水滴,剩 %d", len(testInventory(g.items)))
 	}
 }
 
@@ -503,14 +501,14 @@ func TestUseRainbowAtOriginalCoordinate(t *testing.T) {
 func TestUseRainbowWrongCoordinateNoConsume(t *testing.T) {
 	g := &Game{flags: map[int]bool{}}
 	g.inTown, g.layer, g.px, g.py = false, 1, rainbowUseX-1, rainbowUseY
-	g.inventory = []int{0x75}
+	setTestInventory(&g.items, []int{0x75})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 	if g.worldState != 0 {
 		t.Errorf("錯誤位置不應改 world state: %04x", g.worldState)
 	}
-	if len(g.inventory) != 1 {
-		t.Errorf("錯誤位置不應消耗,剩 %d", len(g.inventory))
+	if len(testInventory(g.items)) != 1 {
+		t.Errorf("錯誤位置不應消耗,剩 %d", len(testInventory(g.items)))
 	}
 }
 
@@ -539,7 +537,7 @@ func TestPackDoorKeyRequiresFormalItemUse(t *testing.T) {
 	if !ok || finalKey.EffectID != "open_facing_locked_door" || finalKey.DoorKeyTier != 3 {
 		t.Fatalf("final-key pack effect mismatch: %+v", finalKey)
 	}
-	g.inventory = []int{finalKey.ItemRawID}
+	setTestInventory(&g.items, []int{finalKey.ItemRawID})
 	g.examine()
 	if tier := g.cur.doorTier(17, 4); tier != 3 {
 		t.Fatalf("調查不得取代原版鑰匙使用，door tier=%d", tier)
@@ -558,7 +556,7 @@ func TestPackDoorKeyFailsClosedBelowRequiredTier(t *testing.T) {
 	if !ok || magicKey.DoorKeyTier != 2 {
 		t.Fatalf("magic-key pack effect mismatch: %+v", magicKey)
 	}
-	g.inventory = []int{magicKey.ItemRawID}
+	setTestInventory(&g.items, []int{magicKey.ItemRawID})
 	g.panel, g.panelCursor = panelItem, 0
 	g.useSelectedItem()
 	if tier := g.cur.doorTier(17, 4); tier != 3 || !g.hasItem(magicKey.ItemRawID) {
@@ -575,17 +573,17 @@ func TestPackAntidoteConsumesThenClearsOnlySelectedPoison(t *testing.T) {
 		{Name: []int{114}, CurHP: 10, Conditions: conditionPoison},
 		{Name: []int{115}, CurHP: 10, Conditions: conditionPoison},
 	}
-	g.inventory = []int{0x42, 0x41}
+	setTestInventory(&g.items, []int{0x42, 0x41})
 	g.itemSelected, g.panel = 0, panelItem
 	if !g.selectedItemRequiresTarget() || !g.useSelectedPackItemOnTarget(1) {
 		t.Fatal("antidote target transaction did not execute")
 	}
-	if len(g.inventory) != 1 || g.inventory[0] != 0x41 ||
+	if len(testInventory(g.items)) != 1 || testInventory(g.items)[0] != 0x41 ||
 		g.heroConditions&conditionPoison == 0 ||
 		g.companions[0].Conditions&conditionPoison != 0 ||
 		g.companions[1].Conditions&conditionPoison == 0 {
 		t.Fatalf("selected antidote transaction inventory=%v hero=%#x companions=%#x/%#x",
-			g.inventory, g.heroConditions, g.companions[0].Conditions, g.companions[1].Conditions)
+			testInventory(g.items), g.heroConditions, g.companions[0].Conditions, g.companions[1].Conditions)
 	}
 	effect, _ := g.pack.ItemUseEffectByRawID(0x42)
 	want, _ := g.pack.TextGlyphCodes(effect.SuccessTextID)
@@ -608,13 +606,15 @@ func TestPackAntidoteConsumesOnDeadOrUnaffectedTarget(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			g := r4Game(t)
 			g.heroHP, g.heroConditions = tc.hp, tc.conditions
-			g.inventory, g.itemSelected, g.panel = []int{0x42}, 0, panelItem
+			setTestInventory(&g.items, []int{0x42})
+			g.itemSelected = 0
+			g.panel = panelItem
 			if !g.useSelectedPackItemOnTarget(0) {
 				t.Fatal("antidote no-effect transaction did not execute")
 			}
-			if len(g.inventory) != 0 || g.heroConditions != tc.conditions {
+			if len(testInventory(g.items)) != 0 || g.heroConditions != tc.conditions {
 				t.Fatalf("no-effect must consume without status mutation inventory=%v conditions=%#x",
-					g.inventory, g.heroConditions)
+					testInventory(g.items), g.heroConditions)
 			}
 			effect, _ := g.pack.ItemUseEffectByRawID(0x42)
 			want, _ := g.pack.TextGlyphCodes(effect.NoEffectTextID)
@@ -629,7 +629,7 @@ func TestPackAntidoteProductionInputSelectsPartyMember(t *testing.T) {
 	g := r4Game(t)
 	g.heroHP, g.heroConditions = 10, conditionPoison
 	g.companions = []*Member{{Name: []int{114}, CurHP: 10, Conditions: conditionPoison}}
-	g.inventory = []int{0x42}
+	setTestInventory(&g.items, []int{0x42})
 	g.panel, g.panelCursor, g.itemSelected = panelItem, 0, 0
 	g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
 	step := func(in InputState) {
@@ -642,14 +642,14 @@ func TestPackAntidoteProductionInputSelectsPartyMember(t *testing.T) {
 		}
 	}
 	step(InputState{Confirm: true})
-	if g.itemActionStage != itemActionUseTarget || len(g.inventory) != 1 {
-		t.Fatalf("使用後應先進選人且未消耗：stage=%d inventory=%v", g.itemActionStage, g.inventory)
+	if g.itemActionStage != itemActionUseTarget || len(testInventory(g.items)) != 1 {
+		t.Fatalf("使用後應先進選人且未消耗：stage=%d inventory=%v", g.itemActionStage, testInventory(g.items))
 	}
 	step(InputState{DirEdge: 0})
 	step(InputState{Confirm: true})
-	if len(g.inventory) != 0 || g.companions[0].Conditions&conditionPoison != 0 ||
+	if len(testInventory(g.items)) != 0 || g.companions[0].Conditions&conditionPoison != 0 ||
 		g.heroConditions&conditionPoison == 0 || !g.dlg.open {
 		t.Fatalf("正式選同伴 transaction 錯：inventory=%v hero=%#x companion=%#x dialogue=%v",
-			g.inventory, g.heroConditions, g.companions[0].Conditions, g.dlg.open)
+			testInventory(g.items), g.heroConditions, g.companions[0].Conditions, g.dlg.open)
 	}
 }

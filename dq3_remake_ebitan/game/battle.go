@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/itemstore"
 	"sort"
 
 	"github.com/wicanr2/dq3_remake_ebitan/internal/battle"
@@ -190,7 +191,7 @@ type Battle struct {
 	spells                 []int // 已學可施放咒文 rec
 	spellCursor            int
 	itemCursor             int
-	heroItems              []battleItemSlot
+	heroItems              itemstore.Store
 	itemsReady             bool
 	returnTown             bool
 	companions             []*battleActor // 同伴(狀態列顯示 + 可各自下令及被鎖定)
@@ -505,12 +506,13 @@ type battleActor struct {
 	defending      bool
 	atkPct, defPct int
 	status         int // 戰鬥鏡像狀態(statusPoison/statusParalysis 等；持久 condition 另存於 Game/Member)
-	items          []battleItemSlot
+	items          itemstore.Store
 	banished       bool // action0x1b：戰後由 active party 搬回酒館 roster
 }
 
 type battleItemSlot struct {
 	rawID    int
+	position int
 	equipped bool
 }
 
@@ -567,7 +569,7 @@ type heroParams struct {
 	mp, maxMP                          int   // 目前/最大 MP
 	spells                             []int // 已學可施放咒文 rec
 	conditions                         conditionSet
-	items                              []battleItemSlot
+	items                              itemstore.Store
 }
 
 // start 開一場單敵戰鬥(monID + 主角數值 + 同伴)。等同 startGroup(monID, 1, …)。
@@ -686,7 +688,7 @@ func (b *Battle) startFormationWithBackground(groups []enemyGroup, seed int64, h
 	b.heroAtk, b.heroDef, b.heroAgi, b.heroLevel = hp.atk, hp.def, hp.agi, hp.level
 	b.heroHerbs, b.usedHerbs, b.defending = hp.herbs, 0, false
 	b.heroMP, b.heroMaxMP, b.spells = hp.mp, hp.maxMP, hp.spells
-	b.heroItems = append([]battleItemSlot(nil), hp.items...)
+	b.heroItems = hp.items.Clone()
 	b.itemsReady = true
 	b.returnTown = false
 	b.companions = comps
@@ -737,28 +739,29 @@ func (b *Battle) actorSpells(i int) []int {
 	return b.companions[i-1].spells
 }
 
-func (b *Battle) actorItems(i int) []battleItemSlot {
+func (b *Battle) actorItemStore(i int) *itemstore.Store {
 	if i == 0 {
-		return b.heroItems
+		return &b.heroItems
 	}
 	if i < 1 || i > len(b.companions) {
 		return nil
 	}
-	return b.companions[i-1].items
+	return &b.companions[i-1].items
 }
-
+func (b *Battle) actorItems(i int) []battleItemSlot {
+	store := b.actorItemStore(i)
+	if store == nil {
+		return nil
+	}
+	var out []battleItemSlot
+	for _, e := range store.Entries() {
+		out = append(out, battleItemSlot{rawID: e.Code, position: e.Position, equipped: store.IsWorn(e)})
+	}
+	return out
+}
 func (b *Battle) removeActorItemSlot(actor, slot int) bool {
-	items := b.actorItems(actor)
-	if slot < 0 || slot >= len(items) || items[slot].equipped {
-		return false
-	}
-	items = append(items[:slot], items[slot+1:]...)
-	if actor == 0 {
-		b.heroItems = items
-	} else {
-		b.companions[actor-1].items = items
-	}
-	return true
+	store := b.actorItemStore(actor)
+	return store != nil && store.Remove(slot)
 }
 
 func (b *Battle) actorMP(i int) int {
@@ -1240,7 +1243,7 @@ func (b *Battle) input(in InputState) (closed bool) {
 		case confirm:
 			slot := items[b.itemCursor]
 			b.beginTarget(battleCommand{kind: bcItem, itemRaw: slot.rawID,
-				itemSlot: b.itemCursor, target: -1}, phItem)
+				itemSlot: items[b.itemCursor].position, target: -1}, phItem)
 		case in.DirEdge == 0:
 			b.itemCursor = (b.itemCursor + 1) % len(items)
 		case in.DirEdge == 1:

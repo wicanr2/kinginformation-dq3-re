@@ -7,23 +7,23 @@ import (
 )
 
 func (g *Game) selectedItemRequiresTarget() bool {
-	items := g.equipActorInventory(g.panelActor)
-	if g.pack == nil || items == nil || g.itemSelected < 0 || g.itemSelected >= len(*items) {
+	entry, valid := g.selectedItemEntry()
+	if g.pack == nil || !valid {
 		return false
 	}
-	effect, ok := g.pack.ItemUseEffectByRawID((*items)[g.itemSelected])
+	effect, ok := g.pack.ItemUseEffectByRawID(entry.Code)
 	return ok && effect.TargetScope == "party_member"
 }
 
 // useSelectedPackItemOnTarget 執行已確認的 pack-owned 選人道具交易。原版驅毒草與
 // 滿月草都先消耗 item，再檢查死亡／condition；因此無效果也不退還。
 func (g *Game) useSelectedPackItemOnTarget(actor int) bool {
-	items := g.equipActorInventory(g.panelActor)
-	if g.pack == nil || items == nil || g.itemSelected < 0 || g.itemSelected >= len(*items) ||
+	entry, valid := g.selectedItemEntry()
+	if g.pack == nil || !valid ||
 		actor < 0 || actor > len(g.companions) {
 		return false
 	}
-	code := (*items)[g.itemSelected]
+	code := entry.Code
 	effect, ok := g.pack.ItemUseEffectByRawID(code)
 	if !ok || effect.TargetScope != "party_member" {
 		return false
@@ -33,7 +33,6 @@ func (g *Game) useSelectedPackItemOnTarget(actor int) bool {
 		if effect.AmountMax > effect.AmountMin {
 			amount += g.prng.Next(effect.AmountMax - effect.AmountMin + 1)
 		}
-		g.panelCursor = g.itemSelected
 		g.consumeSelectedItem(code) // 原版 handler 先移除 owner slot，再檢查目標。
 		if actor == 0 {
 			_, maxHP, _, _, _ := g.heroStats()
@@ -75,7 +74,6 @@ func (g *Game) useSelectedPackItemOnTarget(actor int) bool {
 			}
 			g.noticeCode, g.noticeTimer = code, 90
 			if g.prng.Next(256) <= effect.BreakRollMax {
-				g.panelCursor = g.itemSelected
 				g.consumeSelectedItem(code)
 				g.clampPanelCursor()
 			}
@@ -90,7 +88,6 @@ func (g *Game) useSelectedPackItemOnTarget(actor int) bool {
 	if !ok {
 		return false
 	}
-	g.panelCursor = g.itemSelected
 	g.consumeSelectedItem(code)
 	g.clampPanelCursor()
 	alive, affected := g.heroHP > 0, g.heroConditions&condition != 0
@@ -128,11 +125,14 @@ func (g *Game) useSelectedPackItemOnTarget(actor int) bool {
 // 拉那魯達/黑暗之燈(切晝夜,不消耗)、驅毒草與滿月草(選人、先消耗再判定狀態)已接；
 // 未由 pack 閉合的效果維持失敗即關閉且不消耗。
 func (g *Game) useSelectedItem() {
-	items := g.equipActorInventory(g.panelActor)
-	if items == nil || g.panelCursor < 0 || g.panelCursor >= len(*items) {
+	if !g.selectPanelItem() {
 		return
 	}
-	code := (*items)[g.panelCursor]
+	entry, valid := g.selectedItemEntry()
+	if !valid {
+		return
+	}
+	code := entry.Code
 	if g.usePackItemEffect(code) {
 		return
 	}
@@ -531,18 +531,14 @@ func (g *Game) clampPanelCursor() {
 	}
 }
 
-// consumeSelectedItem 移除目前道具持有者的確切 panelCursor 欄位；進入選人
-// modal 前會先把 itemSelected 複製回 panelCursor，因此不需按 item id 掃描。
+// consumeSelectedItem removes exactly the selected physical word.
 func (g *Game) consumeSelectedItem(code int) bool {
-	items := g.equipActorInventory(g.panelActor)
-	if items == nil {
+	if g.itemSelected < 0 && !g.selectPanelItem() {
 		return false
 	}
-	idx := g.panelCursor
-	if idx < 0 || idx >= len(*items) || (*items)[idx] != code {
+	entry, valid := g.selectedItemEntry()
+	if !valid || entry.Code != code {
 		return false
 	}
-	*items = append((*items)[:idx], (*items)[idx+1:]...)
-	g.panelCursor = idx
-	return true
+	return g.actorItemStore(g.panelActor).Remove(entry.Position)
 }

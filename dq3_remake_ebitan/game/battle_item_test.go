@@ -17,9 +17,9 @@ func battleItemTestDefinitions(t *testing.T) []gamepack.BattleItemDefinition {
 func TestBattleItemUsesSelectedOwnerSlotAndTarget(t *testing.T) {
 	b := &Battle{
 		heroHP: 10, heroMax: 100, rng: dosrng.New(1),
-		heroItems: []battleItemSlot{{rawID: 0x55}, {rawID: 0x41}},
+		heroItems: testBattleItems([]battleItemSlot{{rawID: 0x55}, {rawID: 0x41}}),
 		companions: []*battleActor{{hp: 5, maxHP: 80,
-			items: []battleItemSlot{{rawID: 0x42}}}},
+			items: testBattleItems([]battleItemSlot{{rawID: 0x42}})}},
 	}
 	b.setBattleItems(battleItemTestDefinitions(t))
 	b.execBattleItem(0, battleCommand{kind: bcItem, itemRaw: 0x41, itemSlot: 1, target: 1})
@@ -38,7 +38,7 @@ func TestBattleItemMenuPreservesPerActorEightSlotSource(t *testing.T) {
 	b := &Battle{
 		phase: phCommand, commandActor: 1,
 		companions: []*battleActor{{hp: 10, maxHP: 10,
-			items: []battleItemSlot{{rawID: 0x42}, {rawID: 0x45}}}},
+			items: testBattleItems([]battleItemSlot{{rawID: 0x42}, {rawID: 0x45}})}},
 	}
 	b.setBattleItems(battleItemTestDefinitions(t))
 	for i, kind := range b.commandMenu(1) {
@@ -60,38 +60,38 @@ func TestBattleItemMenuPreservesPerActorEightSlotSource(t *testing.T) {
 func TestOnBattleEndPersistsEachActorsRemainingPersonalItems(t *testing.T) {
 	g := bossTestGame(t)
 	g.companions = []*Member{newMember([]int{1}, 1, 0, 0)}
-	g.inventory = []int{0x41, 0x55}
-	g.companions[0].Inventory = []int{0x42, 0x45}
+	setTestInventory(&g.items, []int{0x41, 0x55})
+	setTestInventory(&g.companions[0].Items, []int{0x42, 0x45})
 	g.battle.itemsReady = true
-	g.battle.heroItems = []battleItemSlot{{rawID: 0x55}, {rawID: g.equip[0], equipped: true}}
-	g.battle.companions = []*battleActor{{items: []battleItemSlot{{rawID: 0x45}}, hp: 1}}
+	g.battle.heroItems = testBattleItems([]battleItemSlot{{rawID: 0x55}, {rawID: g.items.Equipment()[1], equipped: true}})
+	g.battle.companions = []*battleActor{{items: testBattleItems([]battleItemSlot{{rawID: 0x45}}), hp: 1}}
 	g.battle.result, g.battle.gotDrop = 0, -1
 	g.onBattleEnd()
-	if !reflect.DeepEqual(g.inventory, []int{0x55}) ||
-		!reflect.DeepEqual(g.companions[0].Inventory, []int{0x45}) {
-		t.Fatalf("戰後須逐 owner 寫回：hero=%v companion=%v", g.inventory, g.companions[0].Inventory)
+	if !reflect.DeepEqual(testInventory(g.items), []int{0x55}) ||
+		!reflect.DeepEqual(testInventory(g.companions[0].Items), []int{0x45}) {
+		t.Fatalf("戰後須逐 owner 寫回：hero=%v companion=%v", testInventory(g.items), testInventory(g.companions[0].Items))
 	}
 }
 
 func TestBattlePrayerRingUsesExactRangeAndConditionalBreak(t *testing.T) {
 	b := &Battle{heroMP: 0, heroMaxMP: 100, rng: dosrng.New(1),
-		heroItems: []battleItemSlot{{rawID: 0x48}}}
+		heroItems: testBattleItems([]battleItemSlot{{rawID: 0x48}})}
 	b.setBattleItems(battleItemTestDefinitions(t))
 	b.execBattleItem(0, battleCommand{kind: bcItem, itemRaw: 0x48, itemSlot: 0, target: 0})
 	if b.heroMP < 22 || b.heroMP > 31 {
 		t.Fatalf("祈禱之戒 MP 應落在原版 22..31：%d", b.heroMP)
 	}
-	if len(b.heroItems) > 1 {
+	if len(b.heroItems.Entries()) > 1 {
 		t.Fatalf("條件損壞不可複製道具：%v", b.heroItems)
 	}
 }
 
 func TestBattleChimeraWingSetsReturnTransaction(t *testing.T) {
 	b := &Battle{heroHP: 1, heroMax: 1, rng: dosrng.New(1),
-		heroItems: []battleItemSlot{{rawID: 0x43}}}
+		heroItems: testBattleItems([]battleItemSlot{{rawID: 0x43}})}
 	b.setBattleItems(battleItemTestDefinitions(t))
 	b.execBattleItem(0, battleCommand{kind: bcItem, itemRaw: 0x43, itemSlot: 0, target: 0})
-	if b.result != 3 || !b.returnTown || len(b.heroItems) != 0 {
+	if b.result != 3 || !b.returnTown || len(b.heroItems.Entries()) != 0 {
 		t.Fatalf("蓋美拉翅膀應先消耗並交付戰後回城交易：result=%d return=%v items=%v",
 			b.result, b.returnTown, b.heroItems)
 	}

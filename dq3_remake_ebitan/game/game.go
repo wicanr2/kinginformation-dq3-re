@@ -6,6 +6,7 @@ package game
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/wicanr2/dq3_remake_ebitan/internal/itemstore"
 	"io/fs"
 	"log"
 	"os"
@@ -332,29 +333,29 @@ type Game struct {
 	tavern                         Tavern   // 露易達酒館 2F 冒險者登錄所(創角→僅登錄名冊 roster,不自動入隊)
 	recruit                        Recruit  // 露易達酒館 1F 酒場(找同伴參加/與同伴分離/觀看名單;roster↔companions)
 	fieldSaveLoad                  FieldSaveLoad
-	panel                          panelKind      // 資訊面板(狀況/道具/裝備)
-	panelCursor                    int            // 裝備面板游標
-	panelActor                     int            // 裝備對象：-1=先選隊員、0=主角、1..=companions
-	panelHits                      hitList        // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
-	itemActionStage                int            // 0=道具清單、1=使用/給予/丟掉、2=給予對象
-	itemActionCursor               int            // 動作或給予對象游標
-	itemSelected                   int            // 已選 g.inventory index
-	reclassEventID                 string         // game-pack reclass event；空字串=無進行中的轉職
-	reclassStage                   int            // 達瑪轉職對話／選擇狀態機
-	reclassCursor                  int            // Yes/No、隊員或職業選單游標
-	reclassMember                  int            // 0=主角、1..=companions；只有非勇者可交易
-	reclassTarget                  int            // pack raw class；未選=-1
-	settlementFounderStage         int            // game-pack 建城者交付事件階段
-	settlementFounderCursor        int            // 兩次 Yes/No 游標
-	settlementFounderEventID       string         // active settlement_founder event
-	settlementFounderMember        int            // companions index；未選=-1
-	settlementFounderOverflow      int            // 預存所滿時原版逐道具訊息的剩餘次數
-	settlementFounder              *Member        // 已離隊、不可由酒館重新招募的建城者
-	settlementFounderFollowup      []string       // 後續 NPC 對話尚待顯示的 game-pack text ID
-	sharedStorage                  []int          // 原版共用預存所；包含建城者交出的裝備與道具
-	fieldSpell                     FieldSpellMenu // 野外咒文／魯拉目的地 modal
-	visitedTowns                   []townVisit    // 魯拉可選的已造訪城鎮（存檔持久化）
-	inventory                      []int          // 持有道具 id
+	panel                          panelKind       // 資訊面板(狀況/道具/裝備)
+	panelCursor                    int             // 裝備面板游標
+	panelActor                     int             // 裝備對象：-1=先選隊員、0=主角、1..=companions
+	panelHits                      hitList         // 道具/裝備清單可點區塊(drawItems/drawEquip 重建;panelStatus 無列表不使用)
+	itemActionStage                int             // 0=道具清單、1=使用/給予/丟掉、2=給予對象
+	itemActionCursor               int             // 動作或給予對象游標
+	itemSelected                   int             // 已選持有者物理格位置
+	reclassEventID                 string          // game-pack reclass event；空字串=無進行中的轉職
+	reclassStage                   int             // 達瑪轉職對話／選擇狀態機
+	reclassCursor                  int             // Yes/No、隊員或職業選單游標
+	reclassMember                  int             // 0=主角、1..=companions；只有非勇者可交易
+	reclassTarget                  int             // pack raw class；未選=-1
+	settlementFounderStage         int             // game-pack 建城者交付事件階段
+	settlementFounderCursor        int             // 兩次 Yes/No 游標
+	settlementFounderEventID       string          // active settlement_founder event
+	settlementFounderMember        int             // companions index；未選=-1
+	settlementFounderOverflow      int             // 預存所滿時原版逐道具訊息的剩餘次數
+	settlementFounder              *Member         // 已離隊、不可由酒館重新招募的建城者
+	settlementFounderFollowup      []string        // 後續 NPC 對話尚待顯示的 game-pack text ID
+	sharedStorage                  []int           // 原版共用預存所；包含建城者交出的裝備與道具
+	fieldSpell                     FieldSpellMenu  // 野外咒文／魯拉目的地 modal
+	visitedTowns                   []townVisit     // 魯拉可選的已造訪城鎮（存檔持久化）
+	items                          itemstore.Store // 唯一主角物品格
 	music                          gameAudio
 	input                          *Input // 抽象輸入(鍵盤 + 觸控)
 	showTitle                      bool   // 標題畫面(含主選單/主角創建流程進行中;false=已進入一般遊戲)
@@ -404,7 +405,6 @@ type Game struct {
 	paralysisSteps          int // pack-owned shared field-step countdown; original uses one 0x28 counter for the party
 	heroStat                stats.Values
 	heroInit                bool
-	equip                   [4]int                          // 裝備槽:0 武器 1 鎧 2 盾 3 兜(item code;0=空)
 	companions              []*Member                       // 現役隊伍同伴(隊長=hero*,最多 3;經 recruit.go「找同伴參加」從 roster 拉入)
 	roster                  []*Member                       // 冒險者名冊(酒場 2F 登錄所創角→僅入此;未必在隊伍中,見 docs/36 rec527-550)
 	flags                   map[int]bool                    // remake 暫存旗標；原版劇情旗標一律使用 storyBits
@@ -658,7 +658,7 @@ func (g *Game) hasPartyItem(code int) bool {
 		return true
 	}
 	for _, member := range g.companions {
-		if containsInt(member.Inventory, code) {
+		if member.Items.Count(code) > 0 {
 			return true
 		}
 	}
@@ -1260,7 +1260,9 @@ func (g *Game) step(in InputState) error {
 			case itemActionList:
 				switch {
 				case confirm && len(*items) > 0:
-					g.itemSelected = g.panelCursor
+					if !g.selectPanelItem() {
+						break
+					}
 					g.itemActionStage, g.itemActionCursor = itemActionMenu, 0
 				case in.DirEdge == 0 && len(*items) > 0:
 					g.panelCursor = (g.panelCursor + 1) % len(*items)
@@ -1273,13 +1275,16 @@ func (g *Game) step(in InputState) error {
 					if g.selectedItemRequiresTarget() {
 						g.itemActionStage, g.itemActionCursor = itemActionUseTarget, 0
 					} else {
-						g.panelCursor = g.itemSelected
 						g.itemActionStage = itemActionList
 						g.useSelectedItem()
 						g.itemSelected = -1
 					}
 				case confirm && g.itemActionCursor == 1:
-					g.itemActionStage, g.itemActionCursor = itemActionTarget, 0
+					if len(g.companions) == 0 {
+						g.beginSingleOwnerGift()
+					} else {
+						g.itemActionStage, g.itemActionCursor = itemActionTarget, 0
+					}
 				case confirm && g.itemActionCursor == 2:
 					g.dropSelectedItem()
 				case in.DirEdge == 0:
@@ -1409,9 +1414,13 @@ func (g *Game) step(in InputState) error {
 	}
 	// 開場對話也接受鍵盤 Enter；對話期間不移動。
 	if g.dlg.open {
-		if in.Confirm || (in.Enter && g.dlg.prelude != nil) {
+		if in.Confirm || (in.Enter && (g.dlg.prelude != nil || g.itemActionStage == itemActionGiveWait)) {
 			g.dlg.Advance()
 			if !g.dlg.open {
+				if g.itemActionStage == itemActionGiveWait {
+					g.itemActionStage, g.itemActionCursor, g.itemSelected = itemActionList, 0, -1
+					g.panelActor, g.panelCursor = -1, 0
+				}
 				g.completeRegionDialogueReward()
 				g.advanceDefeatDialogue()
 				g.advanceBossDialogue()
@@ -2273,9 +2282,9 @@ func (g *Game) heroStats() (level, maxHP, atk, def, agi int) {
 	def = int(g.heroStat[stats.VIT])
 	agi = int(g.heroStat[stats.AGI])
 	if g.shop.items != nil { // 加裝備加成
-		atk += g.shop.items.Attack(g.equip[0])
+		atk += g.shop.items.Attack(g.items.Equipment()[0])
 		for s := 1; s < 4; s++ {
-			def += g.shop.items.Defense(g.equip[s])
+			def += g.shop.items.Defense(g.items.Equipment()[s])
 		}
 	}
 	return
@@ -2679,70 +2688,18 @@ func (g *Game) playSceneMusic(cty int) {
 }
 
 // countItem:背包內某 item id 的數量。
-func (g *Game) countItem(code int) int {
-	n := 0
-	for _, c := range g.inventory {
-		if c == code {
-			n++
-		}
-	}
-	return n
-}
-
-// countPartyItem:戰鬥與原野 owner selector 都可見整隊個人物品；本 helper
-// 只計數，不取代原野清單所保存的持有者與欄位索引。
+func (g *Game) countItem(code int) int { return g.items.Count(code) }
 func (g *Game) countPartyItem(code int) int {
-	n := g.countItem(code)
+	n := g.items.Count(code)
 	for _, m := range g.companions {
-		for _, c := range m.Inventory {
-			if c == code {
-				n++
-			}
-		}
+		n += m.Items.Count(code)
 	}
 	return n
 }
-
-// removeItems:從背包移除最多 n 個某 item id。
-func (g *Game) removeItems(code, n int) {
-	out := g.inventory[:0]
-	for _, c := range g.inventory {
-		if c == code && n > 0 {
-			n--
-			continue
-		}
-		out = append(out, c)
-	}
-	g.inventory = out
-}
-
-// removePartyItems:依主角→同伴順序消耗隊伍共享的戰鬥消耗品。
+func (g *Game) removeItems(code, n int) { g.items.RemoveCode(code, n) }
 func (g *Game) removePartyItems(code, n int) {
-	if n <= 0 {
-		return
-	}
-	out := g.inventory[:0]
-	for _, c := range g.inventory {
-		if c == code && n > 0 {
-			n--
-			continue
-		}
-		out = append(out, c)
-	}
-	g.inventory = out
-	for _, m := range g.companions {
-		if n <= 0 {
-			break
-		}
-		out := m.Inventory[:0]
-		for _, c := range m.Inventory {
-			if c == code && n > 0 {
-				n--
-				continue
-			}
-			out = append(out, c)
-		}
-		m.Inventory = out
+	for actor := 0; actor <= len(g.companions) && n > 0; actor++ {
+		n -= g.actorItemStore(actor).RemoveCode(code, n)
 	}
 }
 
@@ -2771,38 +2728,19 @@ func (g *Game) buildCompanionActors() []*battleActor {
 	return out
 }
 
-func (g *Game) battleItemSlots(actor int) []battleItemSlot {
-	var out []battleItemSlot
-	if items := g.equipActorInventory(actor); items != nil {
-		for _, rawID := range *items {
-			out = append(out, battleItemSlot{rawID: rawID})
-		}
+func (g *Game) battleItemSlots(actor int) itemstore.Store {
+	s := g.actorItemStore(actor)
+	if s == nil {
+		return itemstore.Store{}
 	}
-	if equipped := g.equipActorSlots(actor); equipped != nil {
-		for _, rawID := range equipped {
-			if rawID >= 0 {
-				out = append(out, battleItemSlot{rawID: rawID, equipped: true})
-			}
-		}
-	}
-	return out
-}
-
-func unequippedBattleItemIDs(items []battleItemSlot) []int {
-	out := make([]int, 0, len(items))
-	for _, item := range items {
-		if !item.equipped {
-			out = append(out, item.rawID)
-		}
-	}
-	return out
+	return s.Clone()
 }
 
 // onBattleEnd:戰鬥結束後把結果寫回全隊(HP/MP 持久、藥草扣除、勝利全隊加 exp/gold、升級全補、敗北回城復活)。
 func (g *Game) onBattleEnd() {
 	g.heroHP, g.heroMP = g.battle.heroHP, g.battle.heroMP
 	if g.battle.itemsReady {
-		g.inventory = unequippedBattleItemIDs(g.battle.heroItems)
+		g.items = g.battle.heroItems.Clone()
 	}
 	returnTown := g.battle.returnTown
 	if g.battle.heroStatus&statusPoison != 0 {
@@ -2819,7 +2757,7 @@ func (g *Game) onBattleEnd() {
 		if i < len(g.companions) {
 			g.companions[i].CurHP, g.companions[i].CurMP = c.hp, c.mp
 			if g.battle.itemsReady {
-				g.companions[i].Inventory = unequippedBattleItemIDs(c.items)
+				g.companions[i].Items = c.items.Clone()
 			}
 			if c.status&statusPoison != 0 {
 				g.companions[i].Conditions |= conditionPoison
@@ -3379,11 +3317,11 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 			columns: def.Layout.Columns, lines: def.Layout.LinesPerPage,
 		}
 	}
-	heroEquipment, ok := pack.NewGamePlayerEquipment()
+	heroItems, ok := pack.NewGamePlayerItems()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing new-game hero equipment")
 	}
-	memberEquipment, ok := pack.RegisteredPartyMemberEquipment()
+	memberItems, ok := pack.RegisteredPartyMemberItems()
 	if !ok {
 		return nil, fmt.Errorf("game pack missing registered-member equipment")
 	}
@@ -3452,7 +3390,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.help.layout = helpOverlay
 	g.tavern.setLabels(newGameLabels)
 	g.tavern.setGeometry(newGameGeometry)
-	g.tavern.equipment = memberEquipment
+	g.tavern.initialItems = memberItems.Clone()
 	g.initStoryBits() // [0x4f70] NPC 可見性旗標初值(必須在預載 town0 前;零值=全清=全隱藏)
 
 	// 地表 scene
@@ -3492,6 +3430,9 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	fon := ld.read("D3TXT00.FON")
 	g.dlg.tx = dq3data.LoadText(fon, ld.read("D3TXT01.TXT"))
 	g.cmd.tx = g.dlg.tx // 命令窗標籤 glyph 也走同一字型
+	if err := validateFieldItemSources(assets, pack, g.cmd.tx); err != nil {
+		return nil, err
+	}
 	if err := validateFieldCommandSources(assets, pack, g.cmd.tx); err != nil {
 		return nil, err
 	}
@@ -3564,7 +3505,7 @@ func NewGameWithPack(assets fs.FS, music fs.FS, pack *gamepack.Pack) (*Game, err
 	g.overPx, g.overPy = aliahanWorldX, aliahanWorldY
 	g.respawn = g.currentRespawnPoint()
 	g.heroGold = 0 // 國王的 50G 屬後續謁見 transaction，不在出生時預給
-	g.equip = heroEquipment
+	g.items = heroItems.Clone()
 	g.companions = nil // file 0x1c4e：[0x722]=1，開局只有主角
 	g.flags = map[int]bool{}
 	g.initStoryBits() // 新遊戲重置 [0x4f70] NPC 可見性旗標

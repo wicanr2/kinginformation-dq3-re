@@ -57,7 +57,7 @@ func closeTemporaryRoleDialogue(g *Game) {
 
 func TestTemporaryRoleQuestAndForcedItemReturn(t *testing.T) {
 	g, event := temporaryRoleTestGame(t)
-	g.inventory = []int{0x55}
+	setTestInventory(&g.items, []int{0x55})
 	g.setStoryFlag(event.PendingFlagRaw, true)
 	king := loadTemporaryRoleScene(t, g, event.OfferNPC)
 
@@ -76,7 +76,7 @@ func TestTemporaryRoleQuestAndForcedItemReturn(t *testing.T) {
 	}
 	closeTemporaryRoleDialogue(g)
 
-	g.inventory = append(g.inventory, event.RequiredItemRawID)
+	setTestInventory(&g.items, append(testInventory(g.items), event.RequiredItemRawID))
 	if !g.talkTemporaryRole(king) || !g.dlg.open ||
 		!reflect.DeepEqual(g.dlg.buf, mustPackTextCodes(t, g, event.DialogueTextIDs.ReturnPraise)) {
 		t.Fatal("持必要道具時未進入 return_praise")
@@ -124,11 +124,11 @@ func TestTemporaryRoleQuestAndForcedItemReturn(t *testing.T) {
 
 func TestTemporaryRoleCompanionCrownReturnConsumesOneItem(t *testing.T) {
 	g, event := temporaryRoleTestGame(t)
-	g.inventory = []int{0x55}
+	setTestInventory(&g.items, []int{0x55})
 	first := newMember([]int{1}, 1, 0, 0)
-	first.Inventory = []int{0x41}
+	setTestInventory(&first.Items, []int{0x41})
 	owner := newMember([]int{2}, 3, 0, 0)
-	owner.Inventory = []int{0x42, event.RequiredItemRawID, event.RequiredItemRawID}
+	setTestInventory(&owner.Items, []int{0x42, event.RequiredItemRawID, event.RequiredItemRawID})
 	g.companions = []*Member{first, owner}
 	g.setStoryFlag(event.PendingFlagRaw, true)
 	king := loadTemporaryRoleScene(t, g, event.OfferNPC)
@@ -138,11 +138,11 @@ func TestTemporaryRoleCompanionCrownReturnConsumesOneItem(t *testing.T) {
 		t.Fatal("同伴持有必要道具時應直接進入還冠對話")
 	}
 	if g.storyFlag(event.PendingFlagRaw) ||
-		!reflect.DeepEqual(g.inventory, []int{0x55}) ||
-		!reflect.DeepEqual(first.Inventory, []int{0x41}) ||
-		!reflect.DeepEqual(owner.Inventory, []int{0x42, event.RequiredItemRawID}) {
-			t.Fatalf("還冠應只消耗命中同伴的一件道具：hero=%v first=%v owner=%v pending=%v",
-			g.inventory, first.Inventory, owner.Inventory, g.storyFlag(event.PendingFlagRaw))
+		!reflect.DeepEqual(testInventory(g.items), []int{0x55}) ||
+		!reflect.DeepEqual(testInventory(first.Items), []int{0x41}) ||
+		!reflect.DeepEqual(testInventory(owner.Items), []int{0x42, event.RequiredItemRawID}) {
+		t.Fatalf("還冠應只消耗命中同伴的一件道具：hero=%v first=%v owner=%v pending=%v",
+			testInventory(g.items), testInventory(first.Items), testInventory(owner.Items), g.storyFlag(event.PendingFlagRaw))
 	}
 	if out := os.Getenv("DQ3_DUMP_COMPANION_CROWN"); out != "" {
 		// 只作元件畫面擷取；正式玩家可達性由主線輸入重播另外驗證。
@@ -220,11 +220,15 @@ func TestTemporaryRoleRestoreTwoStageChoiceAndSaveDerivation(t *testing.T) {
 	g.setStoryFlag(event.NormalRoleFlagRaw, false)
 	g.syncTemporaryRoleVisual()
 	active := g.snapshot()
-	g.restore(active)
+	if err := g.restore(active); err != nil {
+		t.Fatal(err)
+	}
 	if g.heroRole == nil {
 		t.Fatal("save/load 後應由 active role flag 重建角色圖")
 	}
-	g.restore(s)
+	if err := g.restore(s); err != nil {
+		t.Fatal(err)
+	}
 	if g.heroRole != nil {
 		t.Fatal("save/load 後應由清除的 active role flag 恢復一般角色圖")
 	}

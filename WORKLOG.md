@@ -1,5 +1,19 @@
 # DQ3 工作歷程
 
+## 2026-10-05：Issue #4 A正式持有權、存檔與230步重排
+
+接續7f01143，依使用者A決定及docs/188兩份READY，所有角色與戰鬥改用唯一有序Store，移除可寫背包／裝備副本。物理八格、空格、code0及完整旗標保持；商店、原野、裝備、NPC、教會、轉職、創始人與戰鬥交易接入實際持有者。所有五類save owner保存完整words，save_version2拒絕全部舊存檔與無pack身分資料，壞owner在任何restore前失敗。schema0.21.0／content0.1.93、canonical e2cf0b0e；兩份乾淨pack獨立重建九JSON相同，沒有新發行包。
+
+IDA9.4及dosgolem七target有界常式證實只在advanced class清高bits且移除所有書；其他轉職保留words，free source持書亦清除。rec171第一個詛咒word不要求wear，AND00FF清所有高bits。docs/92、181追加勘誤保留舊證據，有限confirmed writer不外推原版正常轉職或音畫。
+
+正常dosgolem230來源aad971bb逐包完整words及正式InputState194..230通過，第一列穿戴布衣自給後physical7，空格保持；226 Enter返回、230重開、正式F5／F6與下一步通過。194..207完整RGB0，225提示仍30140，其他411／229動畫差異不升格V3。完整收據與重生入口集中docs/188；下一切片是225原生窗口／底圖證據，不重開已完成的A核心、pack、save與206／207。
+
+完整game r2覆蓋492頂層清單、496次呼叫，唯一主線失敗是測試持有舊view。此前target及完整r1的錯部位／九格fixture、穿戴重複計數及選中穿戴物等失敗均保留，按實際ITEM／Store契約訂正。補驗r2後段選死亡角色丟棄失敗，r3核對死亡角色限制，後段減員全滅保留；r5因CTY79白天表無設施而停下；r6在城內使用黑暗燈遭既有地表限定gate拒絕；r7改在進城前使用，經鑰匙與section轉場，再經教會／旅店兩次恢復全隊，正常THE END 79.71秒。合計440不同頂層／141子PASS、51選用SKIP；沒有改產品gate、HP或PRNG讓測試通過。
+
+最後正式實作r4另重編三條必驗正常路線，三頂層PASS、零SKIP；新增八列版面邊界負例後internal192頂層／415子、12套件PASS及4選用診斷SKIP，go vet及Linux desktop通過。這是完整覆蓋與受影響補驗，不把補驗說成同一binary完整重跑。1083／1087舊PNG保持，206物品入口及三張出售順序圖受本批影響；出售V3仍未知。正式驗收收據oom／oom_kill0，root-owned基線3213及零.md目錄保持，使用者13項未追蹤資料不加入提交。
+
+全部工作登記Issue #4，依既有commit＋push授權提交；實際commit與遠端核對由Issue末次留言記錄。Docker使用既有image、UID1000及有界--rm容器，批次結束檢查並清理，不上傳私有PNG／素材／IDA資料庫。既有十三項未追蹤資料及本輪另出現的`.claude/`均保留，未納入提交。最終稽核收據由docs/188索引；Issue與Goal保持進行中。
+
 ## 2026-10-05：Issue #4 正常物品導覽、八格重排與資料決策閘門
 
 接續e94a4c7。以dosgolem2f44a68、seed1357執行前固定一次，正常七列導覽218包／512IRQ1／256次輸入來源28995c8d接受；單人第一件穿戴布衣給自己230包／536IRQ1／268次輸入來源aad971bb接受。前218包全部事件及產物逐byte保持，174母親祖先來源完整重驗。交易前後只有DGROUP50B9..50C8八格變更，空格與801E穿戴word保持，clock30／能力／金錢／旗標不變；Enter自然返回，再正式重開清單，布衣列在最後。完整證據、分級及五份公開工具入口集中docs/188。

@@ -13,40 +13,40 @@ import (
 func TestFieldItemCompanionDropUsesSelectedOwnerSlot(t *testing.T) {
 	g := bossTestGame(t)
 	m := newMember([]int{1}, 1, 0, 0)
-	m.Inventory = []int{0x41, itemuse.ItemHerb, 0x42}
+	setTestInventory(&m.Items, []int{0x41, itemuse.ItemHerb, 0x42})
 	g.companions = []*Member{m}
-	g.inventory = []int{itemuse.ItemHerb}
+	setTestInventory(&g.items, []int{itemuse.ItemHerb})
 	g.panelActor, g.itemSelected, g.panelCursor = 1, 1, 1
 
 	if !g.dropSelectedItem() {
 		t.Fatal("同伴選定欄位應可丟棄")
 	}
-	if !reflect.DeepEqual(m.Inventory, []int{0x41, 0x42}) ||
-		!reflect.DeepEqual(g.inventory, []int{itemuse.ItemHerb}) {
-		t.Fatalf("丟棄必須只改選定 owner：hero=%v member=%v", g.inventory, m.Inventory)
+	if !reflect.DeepEqual(testInventory(m.Items), []int{0x41, 0x42}) ||
+		!reflect.DeepEqual(testInventory(g.items), []int{itemuse.ItemHerb}) {
+		t.Fatalf("丟棄必須只改選定 owner：hero=%v member=%v", testInventory(g.items), testInventory(m.Items))
 	}
 }
 
 func TestFieldItemCompanionUseConsumesExactOwnerSlot(t *testing.T) {
 	g := bossTestGame(t)
 	m := newMember([]int{1}, 1, 0, 0)
-	m.Inventory = []int{0x41, itemuse.ItemHolyWater, 0x42}
+	setTestInventory(&m.Items, []int{0x41, itemuse.ItemHolyWater, 0x42})
 	g.companions = []*Member{m}
-	g.inventory = []int{itemuse.ItemHolyWater}
+	setTestInventory(&g.items, []int{itemuse.ItemHolyWater})
 	g.panel, g.panelActor, g.panelCursor = panelItem, 1, 1
 
 	g.useSelectedItem()
-	if g.repel != itemuse.HolySteps || !reflect.DeepEqual(m.Inventory, []int{0x41, 0x42}) ||
-		!reflect.DeepEqual(g.inventory, []int{itemuse.ItemHolyWater}) {
+	if g.repel != itemuse.HolySteps || !reflect.DeepEqual(testInventory(m.Items), []int{0x41, 0x42}) ||
+		!reflect.DeepEqual(testInventory(g.items), []int{itemuse.ItemHolyWater}) {
 		t.Fatalf("同伴道具使用 ownership 錯：repel=%d hero=%v member=%v",
-			g.repel, g.inventory, m.Inventory)
+			g.repel, testInventory(g.items), testInventory(m.Items))
 	}
 }
 
 func TestFieldHerbSeparatesCompanionOwnerFromSelectedHeroTarget(t *testing.T) {
 	g := bossTestGame(t)
 	m := newMember([]int{1}, 1, 0, 0)
-	m.Inventory = []int{0x42, itemuse.ItemHerb}
+	setTestInventory(&m.Items, []int{0x42, itemuse.ItemHerb})
 	g.companions = []*Member{m}
 	g.heroHP = 1
 	g.panel, g.panelActor, g.panelCursor, g.itemSelected = panelItem, 1, 1, 1
@@ -54,45 +54,45 @@ func TestFieldHerbSeparatesCompanionOwnerFromSelectedHeroTarget(t *testing.T) {
 	if !g.selectedItemRequiresTarget() || !g.useSelectedPackItemOnTarget(0) {
 		t.Fatal("藥草應先選目標，再由同伴 owner 的確切格位消耗")
 	}
-	if g.heroHP <= 1 || !reflect.DeepEqual(m.Inventory, []int{0x42}) {
-		t.Fatalf("藥草 owner／target 交易錯：heroHP=%d member=%v", g.heroHP, m.Inventory)
+	if g.heroHP <= 1 || !reflect.DeepEqual(testInventory(m.Items), []int{0x42}) {
+		t.Fatalf("藥草 owner／target 交易錯：heroHP=%d member=%v", g.heroHP, testInventory(m.Items))
 	}
 }
 
 func TestFieldSupplyTraceUsesCompanionOwnedHolyWater(t *testing.T) {
 	g := bossTestGame(t)
 	m := newMember([]int{1}, 1, 0, 0)
-	m.Inventory = []int{itemuse.ItemHolyWater}
+	setTestInventory(&m.Items, []int{itemuse.ItemHolyWater})
 	g.companions = []*Member{m}
-	g.inventory = []int{0x55}
+	setTestInventory(&g.items, []int{0x55})
 
 	traceUseInventoryItem(t, g, itemuse.ItemHolyWater)
-	if g.repel != itemuse.HolySteps || len(m.Inventory) != 0 ||
-		!reflect.DeepEqual(g.inventory, []int{0x55}) || g.panel != panelNone {
+	if g.repel != itemuse.HolySteps || len(testInventory(m.Items)) != 0 ||
+		!reflect.DeepEqual(testInventory(g.items), []int{0x55}) || g.panel != panelNone {
 		t.Fatalf("正式 owner selector 未使用同伴聖水：repel=%d hero=%v member=%v panel=%d",
-			g.repel, g.inventory, m.Inventory, g.panel)
+			g.repel, testInventory(g.items), testInventory(m.Items), g.panel)
 	}
 }
 
 func TestFieldItemGiveSupportsWholePartyAndSameOwnerReorder(t *testing.T) {
 	g := bossTestGame(t)
 	m := newMember([]int{1}, 1, 0, 0)
-	m.Inventory = []int{0x41, 0x42}
+	setTestInventory(&m.Items, []int{0x41, 0x42})
 	g.companions = []*Member{m}
-	g.inventory = []int{0x43}
+	setTestInventory(&g.items, []int{0x43})
 	g.panelActor, g.itemSelected = 1, 0
 
 	if !g.giveSelectedItem(0) {
 		t.Fatal("同伴應可把物品交給勇者")
 	}
-	if !reflect.DeepEqual(m.Inventory, []int{0x42}) || !reflect.DeepEqual(g.inventory, []int{0x43, 0x41}) {
-		t.Fatalf("跨 owner 給予錯：hero=%v member=%v", g.inventory, m.Inventory)
+	if !reflect.DeepEqual(testInventory(m.Items), []int{0x42}) || !reflect.DeepEqual(testInventory(g.items), []int{0x43, 0x41}) {
+		t.Fatalf("跨 owner 給予錯：hero=%v member=%v", testInventory(g.items), testInventory(m.Items))
 	}
 
-	m.Inventory = []int{0x44, 0x45, 0x46}
+	setTestInventory(&m.Items, []int{0x44, 0x45, 0x46})
 	g.panelActor, g.itemSelected = 1, 0
-	if !g.giveSelectedItem(1) || !reflect.DeepEqual(m.Inventory, []int{0x45, 0x46, 0x44}) {
-		t.Fatalf("同 owner 應只重排、不複製：%v", m.Inventory)
+	if !g.giveSelectedItem(1) || !reflect.DeepEqual(testInventory(m.Items), []int{0x45, 0x46, 0x44}) {
+		t.Fatalf("同 owner 應只重排、不複製：%v", testInventory(m.Items))
 	}
 }
 

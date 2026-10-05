@@ -48,7 +48,7 @@ func mairaSpecialShopTestGame(t *testing.T) (*Game, int, int) {
 	g.showTitle, g.inTown, g.curCty = false, true, event.NPC.CTYRaw
 	g.town, g.cur, g.dlg.tx = sc, sc, sc.dlgText
 	g.px, g.py, g.facing = event.NPC.Tile.X, event.NPC.Tile.Y+1, 1
-	g.inventory = []int{event.UnlockSellItemRawID}
+	setTestInventory(&g.items, []int{event.UnlockSellItemRawID})
 	g.heroGold = 20000
 	return g, event.UnlockFlagRaw, event.ConditionalItemFlagRaw
 }
@@ -82,9 +82,9 @@ func TestMairaSpecialShopFormalInputSellUnlockBuyAndSaveRoundTrip(t *testing.T) 
 			t.Fatal(err)
 		}
 	}
-	if g.storyFlag(unlockFlag) || len(g.inventory) != 0 || g.heroGold != 42500 {
+	if g.storyFlag(unlockFlag) || len(testInventory(g.items)) != 0 || g.heroGold != 42500 {
 		t.Fatalf("Orichalcum sale transaction mismatch: flag=%v inv=%v gold=%d",
-			g.storyFlag(unlockFlag), g.inventory, g.heroGold)
+			g.storyFlag(unlockFlag), testInventory(g.items), g.heroGold)
 	}
 	// B 由物品清單回到選人，再按 B 關店；勇者仍可能有已裝備項目，不能把
 	// 賣掉背包中的金屬誤判成整份可售清單已空。
@@ -117,10 +117,10 @@ func TestMairaSpecialShopFormalInputSellUnlockBuyAndSaveRoundTrip(t *testing.T) 
 	if err := g.step(InputState{Confirm: true}); err != nil {
 		t.Fatal(err)
 	}
-	if g.storyFlag(stockFlag) || g.heroGold != 7500 || len(g.inventory) != 1 ||
-		g.inventory[0] != event.ConditionalItemRawID {
+	if g.storyFlag(stockFlag) || g.heroGold != 7500 || len(testInventory(g.items)) != 1 ||
+		testInventory(g.items)[0] != event.ConditionalItemRawID {
 		t.Fatalf("King's Sword purchase mismatch: flag=%v inv=%v gold=%d",
-			g.storyFlag(stockFlag), g.inventory, g.heroGold)
+			g.storyFlag(stockFlag), testInventory(g.items), g.heroGold)
 	}
 	for _, code := range g.shop.codes {
 		if code == event.ConditionalItemRawID {
@@ -130,7 +130,9 @@ func TestMairaSpecialShopFormalInputSellUnlockBuyAndSaveRoundTrip(t *testing.T) 
 
 	saved := g.snapshot()
 	g2, _, _ := mairaSpecialShopTestGame(t)
-	g2.restore(saved)
+	if err := g2.restore(saved); err != nil {
+		t.Fatal(err)
+	}
 	if g2.storyFlag(unlockFlag) || g2.storyFlag(stockFlag) {
 		t.Fatalf("special-shop flags did not survive save round-trip: unlock=%v stock=%v",
 			g2.storyFlag(unlockFlag), g2.storyFlag(stockFlag))

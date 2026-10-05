@@ -27,8 +27,8 @@ func TestOriginalNewGameInitialState(t *testing.T) {
 		t.Errorf("返回地表座標應=(%#x,%#x),得=(%#x,%#x)",
 			aliahanWorldX, aliahanWorldY, g.overPx, g.overPy)
 	}
-	if g.equip != [4]int{-1, 0x1e, -1, -1} {
-		t.Errorf("開局應只裝備布衣 0x1e,得 %#v", g.equip)
+	if g.items.Equipment() != [4]int{-1, 0x1e, -1, -1} {
+		t.Errorf("開局應只裝備布衣 0x1e,得 %#v", g.items.Equipment())
 	}
 	if len(g.companions) != 0 {
 		t.Errorf("原版開局 party size=1，不應預塞同伴：%d", len(g.companions))
@@ -105,7 +105,7 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 	if !g.tryRegionDialogueReward() { // production runner 路徑：踏入國王正前方 region
 		t.Fatal("國王正前方應命中 opening runner handler56")
 	}
-	if g.heroGold != 0 || len(g.inventory) != 0 {
+	if g.heroGold != 0 || len(testInventory(g.items)) != 0 {
 		t.Fatal("audience granted before text returned")
 	}
 	traceCloseDialogue(t, g)
@@ -115,12 +115,12 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 	if g.heroGold != 50 {
 		t.Errorf("首次謁見應得 50G，得 %d", g.heroGold)
 	}
-	if len(g.inventory) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) {
-		t.Fatalf("首次謁見應得 %d 件，得 %v", len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs), g.inventory)
+	if len(testInventory(g.items)) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) {
+		t.Fatalf("首次謁見應得 %d 件，得 %v", len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs), testInventory(g.items))
 	}
 	for i, want := range g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs {
-		if g.inventory[i] != want {
-			t.Errorf("國王獎勵[%d]=%#x，應為 %#x", i, g.inventory[i], want)
+		if testInventory(g.items)[i] != want {
+			t.Errorf("國王獎勵[%d]=%#x，應為 %#x", i, testInventory(g.items)[i], want)
 		}
 	}
 	if g.storyFlag(0x17) || !g.storyFlag(0x18) || !g.progressDone(msStart) {
@@ -130,8 +130,8 @@ func TestOriginalOpeningEventTransactions(t *testing.T) {
 
 	// 再呼叫不可重複領取。
 	g.tryRegionDialogueReward()
-	if g.heroGold != 50 || len(g.inventory) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) {
-		t.Errorf("國王獎勵必須一次性：gold=%d inventory=%v", g.heroGold, g.inventory)
+	if g.heroGold != 50 || len(testInventory(g.items)) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) {
+		t.Errorf("國王獎勵必須一次性：gold=%d inventory=%v", g.heroGold, testInventory(g.items))
 	}
 }
 

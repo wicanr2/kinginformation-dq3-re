@@ -378,10 +378,10 @@ func TestPanelItemsDrawHits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	g := &Game{}
-	g.dlg.tx = &dq3data.Text{}
+	g := bossTestGame(t)
 	g.shop.items = items
-	g.inventory = []int{5, 8, 13}
+	g.items = testItemStore([]int{5, 8, 13}, [4]int{-1, -1, -1, -1})
+	g.panelActor = 0
 	rgba := newHitTestRGBA()
 	white := dq3data.Color{R: 248, G: 248, B: 248}
 	g.drawItems(rgba, white)
@@ -389,8 +389,8 @@ func TestPanelItemsDrawHits(t *testing.T) {
 	if len(g.panelHits) != 3 {
 		t.Fatalf("3 品道具清單 draw 後 hits 應有 3 筆,得 %d", len(g.panelHits))
 	}
-	// index2:y=56+2*22=100
-	if idx := g.panelHits.at(50, 102); idx != 2 {
-		t.Fatalf("點 (50,102) 應命中 index2,得 %d", idx)
+	s := g.pack.Interface.FieldItems
+	if idx := g.panelHits.at(s.Cursor.X+1, s.Cursor.Y+2*s.RowStep+1); idx != 2 {
+		t.Fatalf("點原生清單第三列應命中 index2,得 %d", idx)
 	}
 }

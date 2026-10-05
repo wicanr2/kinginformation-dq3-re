@@ -144,7 +144,7 @@ func (g *Game) beginSettlementFounder(event *gamepack.SettlementFounderEvent) bo
 	if member.Class != event.RequiredClassRaw || event.RequireAlive && !member.Alive() {
 		return false
 	}
-	items := append(member.equippedItems(), member.Inventory...)
+	items := member.Items.Codes()
 	available := event.SharedStorageCapacity - len(g.sharedStorage)
 	if available > len(items) {
 		available = len(items)
@@ -174,9 +174,11 @@ func (g *Game) finishSettlementFounder(event *gamepack.SettlementFounderEvent) {
 	member := g.companions[i]
 	founder := *member
 	founder.Name = append([]int(nil), member.Name...)
-	founder.Inventory = nil
+	founder.Items = member.Items.Clone()
+	for _, entry := range founder.Items.Entries() {
+		founder.Items.Remove(entry.Position)
+	}
 	founder.LearnedSpells = append([]int(nil), member.LearnedSpells...)
-	founder.Weapon, founder.Armor, founder.Shield, founder.Head = -1, -1, -1, -1
 	g.settlementFounder = &founder
 	if member.Gender >= 0 && member.Gender < len(event.FounderVisibilityFlagsRaw) {
 		g.setStoryFlag(event.FounderVisibilityFlagsRaw[member.Gender], true)

@@ -60,7 +60,7 @@ func TestComponentSpine(t *testing.T) {
 	lv, mhp, atk, def, agi := g.heroStats()
 	g.heroHP, g.heroMP, g.heroInit = mhp, g.heroMaxMP(), true
 	hp := heroParams{level: lv, curHP: g.heroHP, maxHP: mhp, atk: atk, def: def, agi: agi,
-		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: g.heroMaxMP(), spells: g.heroSpells()}
+		herbs: g.countItem(herbCode), mp: g.heroMP, maxMP: g.heroMaxMP(), spells: g.heroSpells(), items: g.battleItemSlots(0)}
 	if !g.battle.start(5, 1, hp, g.buildCompanionActors()) {
 		t.Fatal("對史萊姆開戰失敗(sprite 缺失?)")
 	}
@@ -144,7 +144,7 @@ func TestComponentSpine(t *testing.T) {
 
 	// ---- 6. 彩虹水滴合成(合成祠堂 CTY93):走 g.examine() 真實 dispatch(對齊 cmdExamine 入口),
 	// 不直接呼叫 synthRainbowAtShrine——多驗一層「調查指令 → 祠堂分支」的真實路由。
-	g.inventory = append(g.inventory, itemSunStone, itemRaincloudRod)
+	setTestInventory(&g.items, append(testInventory(g.items), itemSunStone, itemRaincloudRod))
 	g.inTown, g.curCty = true, shrineCty
 	g.examine()
 	if !g.hasItem(itemRainbowDrop) {
@@ -170,7 +170,7 @@ func TestComponentSpine(t *testing.T) {
 	// ---- 8. 彩虹水滴原版座標閘：(127,117) 使用，(126,117) 改成 tile0x53。
 	// 驗「劇情道具」端到端:合成(步驟6)產出的道具,真的能在正確位置被 useSelectedItem 消費。
 	idx := -1
-	for i, c := range g.inventory {
+	for i, c := range testInventory(g.items) {
 		if c == itemRainbowDrop {
 			idx = i
 		}

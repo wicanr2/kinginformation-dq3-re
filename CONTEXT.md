@@ -1,6 +1,6 @@
 # CONTEXT — 術語表 + 知識庫索引
 
-2026-10-05 A 物品編碼及初始八格已接入pack，schema0.20.0／content0.1.92，canonical0839ecc9。裝備預覽由words導出，正式boot核對實際ITEM count／record shape與metadata；兩份乾淨副本重建九JSON逐byte一致。完整game、internal、正常THE END與Linux建置通過，1087張既有PNG保持。正式Game／Member、戰鬥及全部save持有者仍待唯一集合遷移，存檔尚未升級；206..208仍RED，商店確認／取消PNG空窗未驗。唯一現況表在下方，證據docs/188與docs/182；Issue／Goal進行中，沒有新包。
+2026-10-05 A 單一有序物品格已接入 Game、Member、戰鬥及全部存檔持有者。八格原始 words 保存物理順序、空格、code0 與旗標；背包與裝備由它導出。save_version2 拒絕全部舊格式及無 pack 身分存檔。schema0.21.0／content0.1.93，canonical e2cf0b0e，九份 JSON 由兩份乾淨輸入重建一致。正常194..230逐步 words 與 dosgolem 相同，194..207完整RGB0；225給予提示仍差30140，動畫、多人及完整原版campaign未知。正式新遊戲到THE END、三條必驗正常路線、受影響補驗、internal、go vet及Linux建置通過。唯一現況表在下方，證據docs/188與docs/84；下一切片先補225提示原生畫面證據，Issue／Goal進行中，沒有新包。
 
 以下保存前一checkpoint，現況以本檔唯一狀態表為準。
 
@@ -226,17 +226,17 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-05） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | `dq3_remake_ebitan/`；在3be415f之上修正單人道具action Esc直接回場景，正式Game／Member集合仍待遷移。schema0.20.0／content0.1.92，canonical `sha256:0839ecc939188bb2193786c0dae571345145a92de65f4179a4bbd3903ebbc68b`保持；沒有新發行包 |
-| 最新remake已完成 | 單人道具action取消直接回場景、零交易，重開、正式F5／F6及下一步通過。此前pack編碼／初裝預覽／boot實際archive驗證、主角／同伴出售真正持有者、Space指令窗／HUD／F5F6保持 |
-| 最新原版oracle | 正常導覽218包來源28995c8d；正常同人給予230包／536IRQ1／268次輸入來源aad971bb。前218包與174母親產物保持；498份產物完整核對。穿戴布衣給自己後移至第八格，空格保留；完整2172bytes只改八格，clock30／Scratch空／seed1357一次 |
-| 最新畫面已驗 | 指令窗194..205十二張完整640×350 RGB0保持。208／217完整411點由原始主角frame4→5的182、NPC14 frame200→201的106、NPC15 frame26→27的123全部解釋，未解釋0；沒有改圖或調相位，動畫時序未知、未V3。57張既有指令窗PNG及新路線44張前綴逐byte保持；入口docs/188 |
-| 最新畫面未通過 | 正常206清單差44816、207動作差45281；原版七列含穿戴衣服、保留父窗，remake六列且父窗消失。208取消已回field，完整RGB由57417降411，217亦411，218行走229；穿戴物選取及完整動畫V3仍未通過。兩個可丟棄render RGB0只證明試作 |
-| 下一production切片 | 使用者已選A單一有序物品格，排除順序引用表。核心及pack已閉合；下一步是Game／Member、戰鬥及全部save持有者的唯一集合，adapter整體仍DRAFT。七列、父窗、自給重排及word存讀檔待接線；升級後舊格式拒絕、不遷移。已完成單人action取消不重開；轉職旗標清除有職業條件，原版動態未知，不猜補 |
-| 本輪有限CONFORMED | 單人action Esc的輸入與返回、取消零交易、重開、正式F5／F6及下一步E2／E3。208／217僅V2診斷，兩側取消前選取物品不同，不稱完整物品same-state parity。此前核心、pack及出售保持；商店動態V3／確認空窗、完整引擎與save遷移仍待驗 |
-| 原版oracle仍未知 | 多人物品取消／給予、全部使用／丟棄、副作用及第四動作列；其他隊伍同狀態、原版指令Enter動態、其他world／室內F6、完整多槽世界、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
-| 現行remake回歸 | 本輪正常取消1頂層及受影響22頂層／4子PASS，共23不同頂層／4子、零SKIP／OOM，go vet ./game通過。原版462份產物核對，兩種損壞輸入拒絕後正對照逐byte保持。最近完整game486頂層覆蓋／490次執行、internal12套件、THE END141.62秒及Linux desktop仍為3be415f，本輪未重跑全套；不升格完整原版campaign |
+| 現行程式 | `dq3_remake_ebitan/`；A單一有序Store已接入所有持有者及戰鬥。schema0.21.0／content0.1.93，canonical `sha256:e2cf0b0e919611bea95573a91df520866df6076d2d048b9d731a884f503b5927`；save_version2，沒有新發行包 |
+| 最新remake已完成 | 物理八格、空格、完整word、code0與順序保持。商店、裝備、使用／丟棄、NPC交易、教會、轉職、名冊／臨時單人隊伍／創始人、戰鬥及存讀檔共用唯一持有權；背包與裝備只讀導出。舊格式與無pack身分存檔在restore前拒絕 |
+| 最新原版oracle | dosgolem2f44a68正常導覽218來源28995c8d及自給230來源aad971bb，seed1357執行前一次固定；498份產物核對。原始2172bytes只改八格，穿戴布衣保留word移到第八格，空格與clock30保持；轉職七種target的有界常式收據只證實conditional writer |
+| 最新畫面已驗 | 正式正常194..207完整640×350 RGB0，206七列清單與207穿戴物操作均由Store與原始窗口生成，保留父窗。37步八格逐步一致；230重開的格位、F5／F6及下一步通過。入口docs/188 |
+| 最新畫面未通過 | 225給予提示完整RGB差30140，原生底圖與消息呈現仍待閉合。208..217各411及218..224、226..230各229；動畫時序未知，不遮罩、不改相位，不稱完整V3。出售三張PNG因物理格順序改變，缺原版動態同狀態驗收 |
+| 下一production切片 | 先查225 writer後record308的原生窗口與底圖consumer，補DRAFT／READY再修畫面。A持有權、八格重排、206／207與嚴格save不重開；空物品提示、多人第四動作列仍未知，不猜補 |
+| 本輪有限CONFORMED | 正常194..230物品words／選取／取消／自給重排／重開／存讀檔與下一步E2／E3；194..207限定V3。五類save owner、戰鬥、交易及原始EXE／ITEM／TXT、pack負例通過。轉職conditional word writer及rec171勘誤見docs/92、181、188；有界常式不升格正常轉職V3 |
+| 原版oracle仍未知 | 多人物品取消／給予、全部使用／丟棄與第四動作列、空物品消息、其他隊伍同狀態、原版指令Enter動態、其他world／室內F6、完整多槽世界、入隊播放後返回、非空分離／滿隊、多角色改名、其他裝備／咒文、人物動畫、聲波及完整campaign |
+| 現行remake回歸 | game492頂層清單完整覆蓋，r2僅主線測試持有舊view失敗；補驗訂正舊view及存活角色丟棄策略後，440不同頂層／141子PASS、51選用SKIP。internal192頂層／415子、12套件PASS、4選用SKIP；正常THE END 79.71秒、最後正式實作三條必驗正常路線零SKIP、go vet及Linux desktop PASS。兩份乾淨pack重建九JSON一致；1083／1087舊PNG保持，4張受本輪修正影響。oom／oom_kill0 |
 | 入隊返回原版限制 | r2在2,500,000,001指令上限仍為199包／474IRQ1，計時器前進3003；未觀察到自然caller返回。只核對18筆既有玩家層IDA bytes；2898 writer及22E10 callee語意unknown，未建立完成收據 |
-| 額外驗證限制 | F6依pack重設世界時鐘，engine／標題Load保留JSON時鐘；帶schema／hash的錯版與壞layer在restore前拒絕。無pack metadata的歷史migration仍在舊save路徑，A升級後須一併拒絕，尚未實作。綠色回歸不升格完整原版parity |
+| 額外驗證限制 | save_version2及完整pack身分必填，所有owner在restore前驗證；無metadata歷史migration已移除。F6依pack重設世界clock，標題Load保留JSON時鐘。綠色回歸不升格完整原版parity |
 
 2026-08-12：checkpoint `9d639d0` 的 v0.1.34 已正式發布；本機三平台包與推廣片集中於
 `dist-all/v0.1.34/`；公開 patch 不含原版素材，

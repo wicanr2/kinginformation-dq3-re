@@ -14,7 +14,7 @@ func characterSpellsViewGame(t *testing.T) *Game {
 	g.rollHeroLevelOne()
 	g.addVisitedTown(g.openingEscort.CTY)
 	// 元件fixture，正常209包另驗；使用pack第三職業與既有出生規則。
-	g.roster[0] = newLevelOneMember([]int{0}, g.tavern.contract.ClassOptions[2].ClassRaw, 0, &g.prng, g.tavern.equipment)
+	g.roster[0] = newLevelOneMember([]int{0}, g.tavern.contract.ClassOptions[2].ClassRaw, 0, &g.prng, g.tavern.initialItems)
 	g.recruitInput(InputState{DirEdge: -1, Enter: true})
 	if g.recruit.stage != rcViewAbility || g.recruit.viewFlow == nil {
 		t.Fatal("spell-bearing member did not open ability")

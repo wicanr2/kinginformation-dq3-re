@@ -847,18 +847,11 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		send(in)
 	}
 	shopActorUsedSlots := func(actor int) int {
-		items := g.equipActorInventory(actor)
-		equipped := g.equipActorSlots(actor)
-		if items == nil || equipped == nil {
+		store := g.actorItemStore(actor)
+		if store == nil {
 			return 1 << 30
 		}
-		used := len(*items)
-		for _, code := range equipped {
-			if code >= 0 {
-				used++
-			}
-		}
-		return used
+		return len(store.Entries())
 	}
 	shopActorHasSpace := func(actor int) bool {
 		return shopActorUsedSlots(actor) < g.pack.ItemActions().PersonalInventorySlots
@@ -877,6 +870,10 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		for partyInventoryFreeSlots() < want {
 			discarded := false
 			for actor := 0; actor <= len(g.companions); actor++ {
+				if !g.fieldActorAlive(actor) {
+					t.Logf("正式丟棄預留空格跳過死亡角色：actor=%d", actor)
+					continue
+				}
 				items := g.equipActorInventory(actor)
 				if items != nil && containsInt(*items, herbCode) {
 					traceDropActorInventoryItem(t, g, actor, herbCode)
@@ -896,15 +893,19 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		for partyInventoryFreeSlots() < want {
 			dropped := false
 			for actor := 0; actor <= len(g.companions); actor++ {
+				if !g.fieldActorAlive(actor) {
+					continue
+				}
 				items := g.equipActorInventory(actor)
 				if items == nil {
 					continue
 				}
-				for _, code := range *items {
-					// equipActorInventory 不含目前 equipped slots。裝備也可能
+				for _, entry := range g.actorItemEntries(actor) {
+					code := entry.Code
+					// 保留穿戴或禁止丟棄的格位。裝備也可能
 					// 有必要場景用途；保留 pack 中有道具使用效果的物品，
 					// 避免把尚待使用的蓋亞之劍當成可丟備品。
-					if g.shop.items.EquipSlot(code) < 0 {
+					if !g.pack.ItemDropAllowed(entry) || g.shop.items.EquipSlot(code) < 0 {
 						continue
 					}
 					if _, usedByFieldEffect := g.pack.ItemUseEffectByRawID(code); usedByFieldEffect {
@@ -1075,15 +1076,15 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	traceWalkThroughPortal(t, g, 15, 10, ctyAliahanCastle, aliahanThroneSection)
 	traceWalkTo(t, g, aliahanKingX, aliahanKingY+1)
 
-	if g.heroGold != 0 || len(g.inventory) != 0 || g.progressDone(msStart) {
+	if g.heroGold != 0 || len(testInventory(g.items)) != 0 || g.progressDone(msStart) {
 		t.Fatal("normal audience rewarded before EOF")
 	}
 	traceCloseDialogue(t, g)
 	send(InputState{DirHeld: -1, DirEdge: -1})
 	if !g.progressDone(msStart) || g.heroGold != 50 ||
-		len(g.inventory) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) || g.dlg.open {
+		len(testInventory(g.items)) != len(g.pack.Events.RegionDialogueRewardEvents[0].ItemRawIDs) || g.dlg.open {
 		t.Fatalf("正式步行到王座後未完成謁見：ms=%v gold=%d items=%v dlg=%v",
-			g.progressDone(msStart), g.heroGold, g.inventory, g.dlg.open)
+			g.progressDone(msStart), g.heroGold, testInventory(g.items), g.dlg.open)
 	}
 
 	// 謁見後正常步行回城鎮，從西側樓梯進 2F 冒險者登錄所。
@@ -1200,14 +1201,14 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	// 國王給的裝備不會自動穿上；依正式命令窗逐人分配。
 	equipItem := func(actor, code int) {
 		t.Helper()
-		if actor > 0 && !containsInt(g.companions[actor-1].Inventory, code) {
+		if actor > 0 && !containsInt(testInventory(g.companions[actor-1].Items), code) {
 			traceGiveInventoryItem(t, g, code, actor-1)
 		}
 		var items []int
 		if actor == 0 {
-			items = g.inventory
+			items = testInventory(g.items)
 		} else {
-			items = g.companions[actor-1].Inventory
+			items = testInventory(g.companions[actor-1].Items)
 		}
 		idx := -1
 		for i, item := range items {
@@ -1241,13 +1242,13 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	equipItem(2, 0x01) // 僧侶：木棒
 	equipItem(2, 0x1f) // 僧侶：旅人的衣服
 	equipItem(3, 0x00) // 魔法使者：檜木棒
-	if g.equip[0] != 0x03 {
-		t.Fatalf("正式裝備輸入未穿上國王給的銅劍：equip=%v", g.equip)
+	if g.items.Equipment()[0] != 0x03 {
+		t.Fatalf("正式裝備輸入未穿上國王給的銅劍：equip=%v", g.items.Equipment())
 	}
 	if got := [3][2]int{
-		{g.companions[0].Weapon, g.companions[0].Armor},
-		{g.companions[1].Weapon, g.companions[1].Armor},
-		{g.companions[2].Weapon, g.companions[2].Armor},
+		{g.companions[0].Items.Equipment()[0], g.companions[0].Items.Equipment()[1]},
+		{g.companions[1].Items.Equipment()[0], g.companions[1].Items.Equipment()[1]},
+		{g.companions[2].Items.Equipment()[0], g.companions[2].Items.Equipment()[1]},
 	}; got != [3][2]int{{0x01, 0x1f}, {0x01, 0x1f}, {0x00, 0x1e}} {
 		t.Fatalf("正式分配國王裝備錯：%v", got)
 	}
@@ -1531,11 +1532,11 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	traceCloseShop(t, g)
 	equipItem(1, bronzeShield) // 戰士正式換上青銅盾
 	equipItem(0, tortoiseArmor)
-	if g.companions[0].Shield != bronzeShield {
-		t.Fatalf("戰士未經正式裝備面板換上青銅盾：%#x", g.companions[0].Shield)
+	if g.companions[0].Items.Equipment()[2] != bronzeShield {
+		t.Fatalf("戰士未經正式裝備面板換上青銅盾：%#x", g.companions[0].Items.Equipment()[2])
 	}
-	if g.equip[1] != tortoiseArmor {
-		t.Fatalf("勇者未經正式裝備面板換上龜殼甲胄：%#x", g.equip[1])
+	if g.items.Equipment()[1] != tortoiseArmor {
+		t.Fatalf("勇者未經正式裝備面板換上龜殼甲胄：%#x", g.items.Equipment()[1])
 	}
 	if afterRomalyEquipment != nil {
 		afterRomalyEquipment(g)
@@ -1601,7 +1602,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		if bought := buyFromOpenShop(itemuse.ItemHolyWater, need); bought != need ||
 			g.countPartyItem(itemuse.ItemHolyWater) != before+need {
 			t.Fatalf("正式補給聖水失敗：need=%d bought=%d before=%d after=%d gold=%d inventory=%v",
-				need, bought, before, g.countPartyItem(itemuse.ItemHolyWater), g.heroGold, g.inventory)
+				need, bought, before, g.countPartyItem(itemuse.ItemHolyWater), g.heroGold, testInventory(g.items))
 		}
 	}
 	topUpAntidote := func(want int) {
@@ -1614,7 +1615,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		if bought := buyFromOpenShop(itemuse.ItemAntidote, need); bought != need ||
 			g.countPartyItem(itemuse.ItemAntidote) != want {
 			t.Fatalf("正式補給驅毒草失敗：need=%d bought=%d before=%d after=%d gold=%d inventory=%v",
-				need, bought, before, g.countPartyItem(itemuse.ItemAntidote), g.heroGold, g.inventory)
+				need, bought, before, g.countPartyItem(itemuse.ItemAntidote), g.heroGold, testInventory(g.items))
 		}
 	}
 	topUpHerb := func(want int) {
@@ -1632,7 +1633,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		if bought := buyFromOpenShop(itemuse.ItemHerb, need); bought != need ||
 			g.countPartyItem(itemuse.ItemHerb) != before+need {
 			t.Fatalf("正式補給藥草失敗：need=%d bought=%d before=%d after=%d gold=%d inventory=%v",
-				need, bought, before, g.countPartyItem(itemuse.ItemHerb), g.heroGold, g.inventory)
+				need, bought, before, g.countPartyItem(itemuse.ItemHerb), g.heroGold, testInventory(g.items))
 		}
 	}
 	buyBestFromOpenShop := func(slot, class int) int {
@@ -1665,7 +1666,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 			t.Fatalf("正式購買裝備 %#x 時勇者個人物品欄已滿", bestCode)
 		}
 		if !g.hasItem(bestCode) {
-			t.Fatalf("正式購買裝備 %#x 後未進勇者物品欄：inventory=%v", bestCode, g.inventory)
+			t.Fatalf("正式購買裝備 %#x 後未進勇者物品欄：inventory=%v", bestCode, testInventory(g.items))
 		}
 		return bestCode
 	}
@@ -1760,12 +1761,12 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	}
 	press(InputState{Confirm: true})
 	if !g.hasPartyItem(roleEvent.RequiredItemRawID) {
-		t.Fatalf("正式調查甘達特事件寶箱未取得金皇冠：inventory=%v", g.inventory)
+		t.Fatalf("正式調查甘達特事件寶箱未取得金皇冠：inventory=%v", testInventory(g.items))
 	}
 
 	// 金皇冠與甘達特清除旗標必須跨存讀檔；讀檔後再以正式轉場離塔、返回羅馬利亞，
 	// 證明事件不是只能在當前記憶體中成立的孤立 handler。
-	crownInventory := append([]int(nil), g.inventory...)
+	crownInventory := append([]int(nil), testInventory(g.items)...)
 	crownParty := compsToSav(g.companions)
 	if err := g.Save(); err != nil {
 		t.Fatalf("保存金皇冠 checkpoint：%v", err)
@@ -1780,7 +1781,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	send(InputState{DirHeld: -1, DirEdge: 0}) // 遊戲開始 → 載入進度
 	press(InputState{Confirm: true})          // 正式載入冒險之書
 	if !restored.hasPartyItem(roleEvent.RequiredItemRawID) ||
-		!reflect.DeepEqual(restored.inventory, crownInventory) ||
+		!reflect.DeepEqual(testInventory(restored.items), crownInventory) ||
 		!reflect.DeepEqual(compsToSav(restored.companions), crownParty) ||
 		restored.storyFlag(kandarEvent.ClearFlagRaw) ||
 		restored.showTitle ||
@@ -1946,7 +1947,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	}
 	press(InputState{Confirm: true})
 	if !g.hasPartyItem(treasure.ItemRawID) || g.storyFlag(treasure.PresentFlag) {
-		t.Fatalf("正式調查 CTY11 sec3 (21,20) 未取得夢幻紅寶石：%v", g.inventory)
+		t.Fatalf("正式調查 CTY11 sec3 (21,20) 未取得夢幻紅寶石：%v", testInventory(g.items))
 	}
 	traceTownSectionTo(t, g, -1, -1)
 	traceAdventureWalkToCty(t, g, exchange.NPC.CTYRaw)
@@ -2022,7 +2023,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	// 可裝職業欄決定；正式買下並從裝備面板穿上，不把特定裝備 ID 寫成測試捷徑。
 	for g.pack.ItemActions().PersonalInventorySlots-shopActorUsedSlots(0) < 2 {
 		discard := -1
-		for _, code := range g.inventory {
+		for _, code := range testInventory(g.items) {
 			if code == herbCode || g.shop.items.EquipSlot(code) >= 0 {
 				discard = code
 				break
@@ -2030,7 +2031,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		}
 		if discard < 0 {
 			t.Fatalf("依席斯購買兩件裝備前無可正式丟棄的藥草／舊裝備：equip=%v inv=%v",
-				g.equip, g.inventory)
+				g.items.Equipment(), testInventory(g.items))
 		}
 		traceDropActorInventoryItem(t, g, 0, discard)
 	}
@@ -2111,12 +2112,12 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	press(InputState{Confirm: true})
 	magicKey := pyramidGate.UnlockedTreasure
 	if !g.hasPartyItem(magicKey.ItemRawID) || g.storyFlag(magicKey.PresentFlag) {
-		partyInventory := [][]int{append([]int(nil), g.inventory...)}
-		partyEquipment := [][]int{append([]int(nil), g.equip[:]...)}
+		partyInventory := [][]int{append([]int(nil), testInventory(g.items)...)}
+		partyEquipment := [][]int{append([]int(nil), testEquipmentCodes(g.items)...)}
 		for _, member := range g.companions {
-			partyInventory = append(partyInventory, append([]int(nil), member.Inventory...))
+			partyInventory = append(partyInventory, append([]int(nil), testInventory(member.Items)...))
 			partyEquipment = append(partyEquipment,
-				[]int{member.Weapon, member.Armor, member.Shield, member.Head})
+				[]int{member.Items.Equipment()[0], member.Items.Equipment()[1], member.Items.Equipment()[2], member.Items.Equipment()[3]})
 		}
 		t.Fatalf("正式調查未取得魔法鑰匙：item=%v flag=%v inventories=%v equipment=%v companions=%v",
 			g.hasPartyItem(magicKey.ItemRawID), g.storyFlag(magicKey.PresentFlag),
@@ -2557,6 +2558,9 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	for partyFreeSlots() < neededHolyWaterSlots {
 		discardActor := -1
 		for actor := 0; actor <= len(g.companions); actor++ {
+			if !g.fieldActorAlive(actor) {
+				continue
+			}
 			items := g.equipActorInventory(actor)
 			if items != nil && containsInt(*items, herbCode) {
 				discardActor = actor
@@ -2565,7 +2569,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		}
 		if discardActor < 0 {
 			t.Fatalf("巴哈拉塔補給前無法以正式丟棄清出缺少聖水所需空格：free=%d need=%d hero=%v",
-				partyFreeSlots(), neededHolyWaterSlots, g.inventory)
+				partyFreeSlots(), neededHolyWaterSlots, testInventory(g.items))
 		}
 		traceDropActorInventoryItem(t, g, discardActor, herbCode)
 	}
@@ -2645,7 +2649,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	traceExaminePackTreasure(t, g, satori)
 	if !g.hasPartyItem(satori.ItemRawID) || g.storyFlag(satori.PresentFlag) {
 		t.Fatalf("正式調查未取得領悟之書：item=%v flag=%v inventory=%v",
-			g.hasPartyItem(satori.ItemRawID), g.storyFlag(satori.PresentFlag), g.inventory)
+			g.hasPartyItem(satori.ItemRawID), g.storyFlag(satori.PresentFlag), testInventory(g.items))
 	}
 	if err := g.Save(); err != nil {
 		t.Fatalf("保存領悟之書 checkpoint：%v", err)
@@ -2685,9 +2689,9 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	// 經正式 rec421 道具動作選單，把領悟之書給第一名同伴。
 	traceGiveInventoryItem(t, g, satori.ItemRawID, 0)
 	if !g.hasPartyItem(satori.ItemRawID) ||
-		!containsInt(g.companions[0].Inventory, satori.ItemRawID) {
+		!containsInt(testInventory(g.companions[0].Items), satori.ItemRawID) {
 		t.Fatalf("正式給予領悟之書失敗：hero=%v companion=%v",
-			g.inventory, g.companions[0].Inventory)
+			testInventory(g.items), testInventory(g.companions[0].Items))
 	}
 
 	// CTY17 sec0 handler39：(介紹→隊員→賢者→兩次確認→Lv1 transaction)。
@@ -2710,10 +2714,10 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	traceCloseDialogue(t, g)         // success → transaction → farewell
 	if g.reclassStage != reclassIdle || g.companions[0].Class != 5 ||
 		g.companions[0].Level() != 1 ||
-		containsInt(g.companions[0].Inventory, satori.ItemRawID) {
+		containsInt(testInventory(g.companions[0].Items), satori.ItemRawID) {
 		t.Fatalf("正式達瑪轉賢者未閉合：stage=%d class=%d level=%d items=%v",
 			g.reclassStage, g.companions[0].Class, g.companions[0].Level(),
-			g.companions[0].Inventory)
+			testInventory(g.companions[0].Items))
 	}
 	if err := g.Save(); err != nil {
 		t.Fatalf("保存達瑪轉職 checkpoint：%v", err)
@@ -2729,7 +2733,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	press(InputState{Confirm: true})
 	if len(g.companions) == 0 || g.companions[0].Class != 5 ||
 		g.companions[0].Level() != 1 ||
-		containsInt(g.companions[0].Inventory, satori.ItemRawID) {
+		containsInt(testInventory(g.companions[0].Items), satori.ItemRawID) {
 		t.Fatalf("達瑪轉職 save/load round-trip 錯：companions=%+v", g.companions)
 	}
 
@@ -2737,7 +2741,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	// 重新穿上新職業可使用的既有物品，不把卸裝後的數值當成戰鬥缺陷。
 	for slot := 0; slot < 4; slot++ {
 		bestCode, bestValue := -1, -1
-		for _, code := range g.companions[0].Inventory {
+		for _, code := range testInventory(g.companions[0].Items) {
 			if g.shop.items.EquipSlot(code) != slot ||
 				!g.shop.items.CanEquip(code, g.companions[0].Class) ||
 				g.shop.items.CursedWhenEquipped(code) {
@@ -3018,7 +3022,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	}
 	if bought := buyFromOpenShop(0x5d, 1); bought != 1 || !g.hasPartyItem(0x5d) {
 		t.Fatalf("CTY38 正式購買隱身草失敗：bought=%d gold=%d inventory=%v",
-			bought, g.heroGold, g.inventory)
+			bought, g.heroGold, testInventory(g.items))
 	}
 	// CTY38 的原始貨架同時販售聖水；以正式商店交易補到八瓶，後續再在
 	// 正常抵達的港口補足，而不是把高階海域的逃跑機率當成規格。
@@ -3211,7 +3215,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 			return true
 		}
 		for _, member := range game.companions {
-			if containsInt(member.Inventory, greenOrb.GrantedItemRaw) {
+			if containsInt(testInventory(member.Items), greenOrb.GrantedItemRaw) {
 				return true
 			}
 		}
@@ -3302,8 +3306,9 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		heroItems := g.equipActorInventory(0)
 		moveIdx := -1
 		if heroItems != nil {
-			for i, code := range *heroItems {
-				if code != 0x55 && code != 0x56 && code != 0x57 {
+			for i, entry := range g.actorItemEntries(0) {
+				code := entry.Code
+				if entry.Word&uint16(*g.pack.Characters.ItemStorage.Encoding.TransferBlockedMask) == 0 && code != 0x55 && code != 0x56 && code != 0x57 {
 					moveIdx = i
 					break
 				}
@@ -4129,7 +4134,10 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	// 經正式丟棄清單騰出用剩的驅毒草及備品容量，再買聖水，
 	// 不把整段高危路線交給已耗盡避敵資源的逃跑策略。
 	for actor := 0; actor <= len(g.companions); actor++ {
-		for items := g.equipActorInventory(actor); items != nil && containsInt(*items, itemuse.ItemAntidote); {
+		if !g.fieldActorAlive(actor) {
+			continue
+		}
+		for g.actorItemStore(actor).Count(itemuse.ItemAntidote) > 0 {
 			traceDropActorInventoryItem(t, g, actor, itemuse.ItemAntidote)
 		}
 	}
@@ -4219,7 +4227,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 			return true
 		}
 		for _, member := range game.companions {
-			if containsInt(member.Inventory, silver.GrantedItemRaw) {
+			if containsInt(testInventory(member.Items), silver.GrantedItemRaw) {
 				return true
 			}
 		}
@@ -4360,7 +4368,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 			return true
 		}
 		for _, member := range g.companions {
-			if containsInt(member.Inventory, code) {
+			if containsInt(testInventory(member.Items), code) {
 				return true
 			}
 		}
@@ -4375,21 +4383,21 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	}
 	if missingOrb >= 0 {
 		t.Logf("黃寶珠 checkpoint 缺少祭壇珠子 %#x：hero=%v companions=%v roster=%v founder=%+v storage=%v",
-			missingOrb, g.inventory, compsToSav(g.companions), compsToSav(g.roster),
+			missingOrb, testInventory(g.items), compsToSav(g.companions), compsToSav(g.roster),
 			g.settlementFounder, g.sharedStorage)
 		// 先前的正式離隊流程可能讓持珠同伴留在名冊；玩家可由正式酒場
 		// 重新入隊，不能讓測試把名冊資料直接搬到背包。精確來源由本段
 		// runtime ledger 記錄後再追其 transaction，不歸因於建城 founder。
 		rosterIndex := -1
 		for i, member := range g.roster {
-			if containsInt(member.Inventory, missingOrb) {
+			if containsInt(testInventory(member.Items), missingOrb) {
 				rosterIndex = i
 				break
 			}
 		}
 		if rosterIndex < 0 {
 			t.Fatalf("黃寶珠 checkpoint 後目前隊伍／名冊缺少祭壇珠子 %#x：hero=%v companions=%v roster=%v",
-				missingOrb, g.inventory, compsToSav(g.companions), compsToSav(g.roster))
+				missingOrb, testInventory(g.items), compsToSav(g.companions), compsToSav(g.roster))
 		}
 		traceExitTownBoundary(t, g, true)
 		// 商人城長途航行可能已耗盡魯拉 MP；這不是產品事件 gate。
@@ -4476,7 +4484,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		traceCloseDialogue(t, g)
 		if g.storyFlag(phoenixAltarFlagFirst+i) || g.hasPartyItem(itemGreenOrb+i) {
 			t.Fatalf("祭壇%d transaction 錯：flag=%v item=%v inv=%v",
-				i, g.storyFlag(phoenixAltarFlagFirst+i), g.hasPartyItem(itemGreenOrb+i), g.inventory)
+				i, g.storyFlag(phoenixAltarFlagFirst+i), g.hasPartyItem(itemGreenOrb+i), testInventory(g.items))
 		}
 	}
 	if len(g.placedPhoenixOrbs()) != 6 {
@@ -4485,7 +4493,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	// inventory 可有其他物品；這裡要求六顆珠子都已從隊伍欄位移除。
 	for code := itemGreenOrb; code <= itemSilverOrb; code++ {
 		if g.hasPartyItem(code) {
-			t.Fatalf("六座祭壇後仍有珠子 %#x：inv=%v", code, g.inventory)
+			t.Fatalf("六座祭壇後仍有珠子 %#x：inv=%v", code, testInventory(g.items))
 		}
 	}
 	traceTalkNPC(t, g, 7, 10)
@@ -4826,7 +4834,21 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	boardPhoenix()
 	flyPhoenixTo(ctyLoc[79][0], ctyLoc[79][1]-1)
 	press(InputState{Confirm: true})
+	// 黑暗燈的原版 gate 限地表，必須在進城前使用。
+	if !g.isNight() {
+		traceUseInventoryItem(t, g, darkLampEffect.ItemRawID)
+	}
+	if !g.isNight() {
+		t.Fatal("CTY79 恢復隊伍前未由正式黑暗燈進入夜間")
+	}
 	traceAdventureWalkToCty(t, g, 79, true)
+	// 下層長途探索前，經 CTY79 現有教會與旅店恢復全隊。
+	// 死亡角色不能操作道具，也不能帶著減員隊伍進入終盤連戰。
+	// CTY79 設施在夜間 NPC 表，教會房間經原始 section 轉場到達。
+	traceTownSectionTo(t, g, 79, 0, 24, 3)
+	traceReviveDeadAtChurch(t, g)
+	traceCurePartyPoisonAtChurch(t, g)
+	traceTalkFacility(t, g, facInn)
 	traceTownSectionTo(t, g, 80, 2)
 	sunStone := gamepack.QuestTreasureSelector{
 		CTYRaw: 80, Section: 2, TileSubID: 0, EventTypeRaw: 1,
@@ -4921,8 +4943,8 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		traceGiveInventoryItem(t, g, herbCode, target)
 	}
 	for {
-		heroCount := len(g.inventory)
-		for _, equipped := range g.equip {
+		heroCount := len(testInventory(g.items))
+		for _, equipped := range g.items.Equipment() {
 			if equipped >= 0 {
 				heroCount++
 			}
@@ -4931,7 +4953,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 			break
 		}
 		candidate := -1
-		for _, code := range g.inventory {
+		for _, code := range testInventory(g.items) {
 			if !keepP6[code] {
 				candidate = code
 				break
@@ -4939,7 +4961,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		}
 		if candidate < 0 {
 			t.Fatalf("魯比斯前主角物品欄無法以正式丟棄清出容量：slots=%d equip=%v inv=%v",
-				slots, g.equip, g.inventory)
+				slots, g.items.Equipment(), testInventory(g.items))
 		}
 		traceDropInventoryItem(t, g, candidate)
 	}
@@ -4966,7 +4988,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	if !g.hasPartyItem(staffEvent.GrantedItemRaw) || g.hasPartyItem(*staffEvent.RequiredItemRawID) ||
 		g.storyFlag(staffEvent.PresentFlagRaw) {
 		t.Fatalf("正式取得雲雨之杖錯：inv=%v present=%v",
-			g.inventory, g.storyFlag(staffEvent.PresentFlagRaw))
+			testInventory(g.items), g.storyFlag(staffEvent.PresentFlagRaw))
 	}
 	if err := g.Save(); err != nil {
 		t.Fatalf("保存雲雨之杖 checkpoint：%v", err)
@@ -4988,15 +5010,32 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	}
 	traceTalkNPC(t, g, staffEvent.NPC.Tile.X, staffEvent.NPC.Tile.Y)
 	traceCloseDialogue(t, g)
-	if len(g.inventory) == 0 || !g.hasPartyItem(staffEvent.GrantedItemRaw) ||
+	if len(testInventory(g.items)) == 0 || !g.hasPartyItem(staffEvent.GrantedItemRaw) ||
 		g.hasPartyItem(*staffEvent.RequiredItemRawID) {
-		t.Fatalf("雲雨之杖重複對話改變道具：%v", g.inventory)
+		t.Fatalf("雲雨之杖重複對話改變道具：%v", testInventory(g.items))
 	}
 	traceTownSectionTo(t, g, -1, 0)
 	boardPhoenix()
 	// 先造訪有原始下層船表的 CTY85，再以正式魯拉寫入其
 	// layer1 停泊座標；CTY79 的船格與彩虹水滴海域不相連，不能
 	// 把另一筆目的地近似成同一港口。
+	// 精靈交換後先飛回已造訪的 CTY79，完成教會／旅店交易，
+	// 再沿下方原定港口路線前進；不注入 HP／MP 或復活狀態。
+	flyPhoenixTo(ctyLoc[79][0], ctyLoc[79][1]-1)
+	press(InputState{Confirm: true})
+	if !g.isNight() {
+		traceUseInventoryItem(t, g, darkLampEffect.ItemRawID)
+	}
+	if !g.isNight() {
+		t.Fatal("最終戰前未由正式黑暗燈進入 CTY79 夜間")
+	}
+	traceAdventureWalkToCty(t, g, 79, true)
+	traceTownSectionTo(t, g, 79, 0, 24, 3)
+	traceReviveDeadAtChurch(t, g)
+	traceCurePartyPoisonAtChurch(t, g)
+	traceTalkFacility(t, g, facInn)
+	traceExitTownBoundary(t, g)
+	boardPhoenix()
 	flyPhoenixTo(ctyLoc[85][0], ctyLoc[85][1]-1)
 	press(InputState{Confirm: true})
 	traceAdventureWalkToCty(t, g, 85, true)
@@ -5015,7 +5054,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	if !g.hasPartyItem(itemRainbowDrop) || g.hasPartyItem(itemSunStone) || g.hasPartyItem(itemRaincloudRod) ||
 		!g.progressDone(msRainbow) {
 		t.Fatalf("神聖祠堂彩虹合成錯：inv=%v rainbow=%v progress=%v",
-			g.inventory, g.hasPartyItem(itemRainbowDrop), g.progressDone(msRainbow))
+			testInventory(g.items), g.hasPartyItem(itemRainbowDrop), g.progressDone(msRainbow))
 	}
 	traceTownSectionTo(t, g, -1, 0)
 
@@ -5451,15 +5490,21 @@ func traceCloseShop(t *testing.T, g *Game) {
 // 找到後仍由 traceTalkNPC 逐步走到櫃台並送正式交談輸入。
 func traceTalkFacility(t *testing.T, g *Game, typ int) {
 	t.Helper()
-	for i := range g.cur.npcs {
-		n := &g.cur.npcs[i]
-		f := facilityForCty(g.curCty, g.cur.sec, n.b4)
-		if f == nil || f.typ != typ || (n.ctrl>>3)&7 < 3 {
-			continue
-		}
-		if traceNPCReachable(g, g.curCty, sceneSection(g.cur), g.px, g.py, n.x, n.y) {
-			traceTalkNPC(t, g, n.x, n.y)
-			return
+	for _, openDoors := range []bool{false, true} {
+		for i := range g.cur.npcs {
+			n := &g.cur.npcs[i]
+			f := facilityForCty(g.curCty, g.cur.sec, n.b4)
+			if f == nil || f.typ != typ || (n.ctrl>>3)&7 < 3 {
+				continue
+			}
+			if traceNPCReachable(g, g.curCty, sceneSection(g.cur), g.px, g.py, n.x, n.y, openDoors) {
+				if openDoors {
+					traceTalkNPC(t, g, n.x, n.y, true)
+				} else {
+					traceTalkNPC(t, g, n.x, n.y)
+				}
+				return
+			}
 		}
 	}
 	t.Fatalf("CTY%d sec%d 找不到可達 facility type%d NPC",
@@ -6021,8 +6066,8 @@ func traceDropActorInventoryItem(t *testing.T, g *Game, actor, code int) {
 		t.Fatalf("丟棄持有者不存在：actor=%d party=%d", actor, len(g.companions)+1)
 	}
 	idx := -1
-	for i, got := range *items {
-		if got == code {
+	for i, entry := range g.actorItemEntries(actor) {
+		if entry.Code == code && g.pack.ItemDropAllowed(entry) {
 			idx = i
 			break
 		}
@@ -6061,8 +6106,9 @@ func traceDropActorInventoryItem(t *testing.T, g *Game, actor, code int) {
 	step(InputState{DirEdge: 0})    // 使用→給予
 	step(InputState{DirEdge: 0})    // 給予→丟掉
 	step(InputState{Confirm: true})
+	items = g.equipActorInventory(actor)
 	if len(*items) != before-1 || countOccurrences(*items, code) != beforeCount-1 {
-		t.Fatalf("正式丟棄未移除 actor%d 道具 0x%02x：before=%d after=%d inv=%v", actor, code, before, len(*items), *items)
+		t.Fatalf("正式丟棄未移除 actor%d 道具 0x%02x：alive=%v owner=%d selected=%d stage=%d before=%d after=%d inv=%v", actor, code, g.fieldActorAlive(actor), g.panelActor, g.itemSelected, g.itemActionStage, before, len(*items), *items)
 	}
 	if g.panel != panelNone {
 		step(InputState{Cancel: true})
@@ -6194,7 +6240,17 @@ func traceGiveInventoryItem(t *testing.T, g *Game, code, target int) {
 			t.Fatalf("給予目標 actor%d 已滿，無法以已證實的藥草丟棄重分配：%v",
 				targetActor, targetItems)
 		}
-		traceGiveActorInventoryItem(t, g, targetActor, 0, freeActor)
+		transferIndex := -1
+		for i, entry := range g.actorItemEntries(targetActor) {
+			if entry.Word&uint16(*g.pack.Characters.ItemStorage.Encoding.TransferBlockedMask) == 0 {
+				transferIndex = i
+				break
+			}
+		}
+		if transferIndex < 0 {
+			t.Fatal("滿格目標沒有可移交的物品")
+		}
+		traceGiveActorInventoryItem(t, g, targetActor, transferIndex, freeActor)
 		owner, idx = findOwner()
 		if owner < 0 || owner == targetActor {
 			t.Fatalf("重分配後找不到待給予道具 %#x：owner=%d idx=%d", code, owner, idx)
@@ -6381,7 +6437,7 @@ func traceMemberHasPhoenixOrb(member *Member) bool {
 		return false
 	}
 	for code := itemGreenOrb; code <= itemSilverOrb; code++ {
-		if containsInt(member.Inventory, code) {
+		if containsInt(testInventory(member.Items), code) {
 			return true
 		}
 	}
@@ -6402,14 +6458,14 @@ func traceCompanionWithoutPhoenixOrb(g *Game) int {
 
 func TestTraceCompanionWithoutPhoenixOrb(t *testing.T) {
 	g := &Game{companions: []*Member{
-		{Inventory: []int{0x1e, itemGreenOrb}},
-		{Inventory: []int{0x1f}},
-		{Inventory: []int{itemGreenOrb + 2}},
+		{Items: testItemStore([]int{0x1e, itemGreenOrb}, [4]int{-1, -1, -1, -1})},
+		{Items: testItemStore([]int{0x1f}, [4]int{-1, -1, -1, -1})},
+		{Items: testItemStore([]int{itemGreenOrb + 2}, [4]int{-1, -1, -1, -1})},
 	}}
 	if got := traceCompanionWithoutPhoenixOrb(g); got != 1 {
 		t.Fatalf("應跳過持綠／紅寶珠同伴並選 index1，got %d", got)
 	}
-	g.companions[1].Inventory = []int{itemGreenOrb + 1}
+	setTestInventory(&g.companions[1].Items, []int{itemGreenOrb + 1})
 	if got := traceCompanionWithoutPhoenixOrb(g); got != -1 {
 		t.Fatalf("全員持珠時必須失敗即關閉，got %d", got)
 	}
@@ -7684,7 +7740,7 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 			}
 			t.Fatalf("正常前段路線發生全滅：mon=%d enemies=%v heroLv=%d hero=%d/%d MP=%d conditions=%#x battleStatus=%#x inventory=%v repel=%d holyWater=%d atk=%d def=%d companions(lv,hp,max,status)=%v town=%v cty=%d sec=%d pos=(%d,%d)",
 				g.battle.monID, g.battle.enemies, heroLv, g.battle.heroHP,
-				g.battle.heroMax, g.heroMP, g.heroConditions, g.battle.heroStatus, g.inventory, g.repel,
+				g.battle.heroMax, g.heroMP, g.heroConditions, g.battle.heroStatus, testInventory(g.items), g.repel,
 				g.countPartyItem(itemuse.ItemHolyWater), g.battle.heroAtk, g.battle.heroDef, comp,
 				g.inTown, g.curCty, sceneSection(g.cur), g.px, g.py)
 		}
@@ -7916,7 +7972,7 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 		}
 		t.Fatalf("正式戰鬥最後輸入造成全滅：mon=%d hero=%d/%d MP=%d conditions=%#x inventory=%v companions(lv,hp,max,status)=%v usedHerbs=%d",
 			g.battle.monID, g.battle.heroHP, g.battle.heroMax, g.heroMP,
-			g.heroConditions, g.inventory, comp, g.battle.usedHerbs)
+			g.heroConditions, testInventory(g.items), comp, g.battle.usedHerbs)
 	}
 	// 導航與練級都可能在戰後遇到全隊背包滿的場景提示。
 	// 僅確認這個 pack 文字 ID；甘達特求饒等劇情對話由 caller 驗收。
@@ -8105,7 +8161,7 @@ func traceTownSectionToWithRepelPolicy(t *testing.T, g *Game, wantCty, wantSec i
 	}
 }
 
-func traceNPCReachable(g *Game, cty, sec, sx, sy, nx, ny int) bool {
+func traceNPCReachable(g *Game, cty, sec, sx, sy, nx, ny int, openDoors ...bool) bool {
 	sc, err := loadTownSceneSec(g.assets, g.worldPal, g.manBLS,
 		cty, mapBlkNum[cty], sec, g.dnPhase, g.storyFlag)
 	if err != nil {
@@ -8121,7 +8177,11 @@ func traceNPCReachable(g *Game, cty, sec, sx, sy, nx, ny int) bool {
 			if dist == 2 && !sc.attr.Blocked(sc.tileIdx(nx-dx, ny-dy)) {
 				continue
 			}
-			if x == sx && y == sy || len(tracePath(sc, sx, sy, x, y)) > 0 {
+			path := tracePath(sc, sx, sy, x, y)
+			if len(openDoors) > 0 && openDoors[0] {
+				path = tracePortalPath(sc, sx, sy, x, y, g.keyTier())
+			}
+			if x == sx && y == sy || len(path) > 0 {
 				return true
 			}
 		}

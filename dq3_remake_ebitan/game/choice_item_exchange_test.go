@@ -36,7 +36,7 @@ func assertChoiceExchangeText(t *testing.T, g *Game, id string) {
 func TestChoiceItemExchangeNoItemKnowledgeBranchesDoNotMutateState(t *testing.T) {
 	g, event, npc := choiceItemExchangeTestGame(t)
 	g.setStoryFlag(event.AvailableFlagRaw, true)
-	g.inventory = []int{7, 8}
+	setTestInventory(&g.items, []int{7, 8})
 	beforeState, beforeX, beforeY := g.worldState, g.overPx, g.overPy
 
 	if !g.talkChoiceItemExchange(npc) || g.choiceItemExchangeStage != choiceItemExchangeIntroduction {
@@ -53,7 +53,7 @@ func TestChoiceItemExchangeNoItemKnowledgeBranchesDoNotMutateState(t *testing.T)
 	g.dlg.open = false
 	g.advanceChoiceItemExchangeDialogue()
 	if g.choiceItemExchangeStage != choiceItemExchangeIdle ||
-		!reflect.DeepEqual(g.inventory, []int{7, 8}) || g.worldState != beforeState ||
+		!reflect.DeepEqual(testInventory(g.items), []int{7, 8}) || g.worldState != beforeState ||
 		g.overPx != beforeX || g.overPy != beforeY || !g.storyFlag(event.AvailableFlagRaw) {
 		t.Fatal("缺道具詢問分支不得修改持久狀態")
 	}
@@ -73,7 +73,7 @@ func TestChoiceItemExchangeRejectThenSuccessMatchesOriginalTransaction(t *testin
 	g.overPx, g.overPy, g.layer = 22, 33, 0
 	beforeX, beforeY, beforeLayer := g.overPx, g.overPy, g.layer
 	g.setStoryFlag(event.AvailableFlagRaw, true)
-	g.inventory = []int{7, event.RequiredItemRawID, 8}
+	setTestInventory(&g.items, []int{7, event.RequiredItemRawID, 8})
 
 	if !g.talkChoiceItemExchange(npc) || g.choiceItemExchangeStage != choiceItemExchangeOffer {
 		t.Fatal("持有變身杖時未進交換提議")
@@ -100,14 +100,14 @@ func TestChoiceItemExchangeRejectThenSuccessMatchesOriginalTransaction(t *testin
 	assertChoiceExchangeText(t, g, event.DialogueTextIDs.Success)
 	wantInventory := []int{7, event.GrantedItemRawID, 8}
 	objectPos, objectActive := g.trackedWorldPositions[event.ActivateWorldObject.ObjectID]
-	if !reflect.DeepEqual(g.inventory, wantInventory) ||
+	if !reflect.DeepEqual(testInventory(g.items), wantInventory) ||
 		g.overPx != beforeX || g.overPy != beforeY || g.layer != beforeLayer || !objectActive ||
 		objectPos != (trackedWorldPosition{X: event.ActivateWorldObject.Position.X,
 			Y: event.ActivateWorldObject.Position.Y, Layer: event.ActivateWorldObject.Position.Layer}) ||
 		g.worldState&uint16(event.SetWorldStateMaskRaw) == 0 ||
 		g.storyFlag(event.AvailableFlagRaw) {
 		t.Fatalf("成功交易不符原版：inventory=%v player=(%d,%d,%d) object=%+v world=%#x flag=%v",
-			g.inventory, g.overPx, g.overPy, g.layer, objectPos,
+			testInventory(g.items), g.overPx, g.overPy, g.layer, objectPos,
 			g.worldState, g.storyFlag(event.AvailableFlagRaw))
 	}
 	g.dlg.open = false
@@ -127,9 +127,9 @@ func TestChoiceItemExchangeRejectThenSuccessMatchesOriginalTransaction(t *testin
 func TestChoiceItemExchangeReplacesCompanionOwnerSlot(t *testing.T) {
 	g, event, npc := choiceItemExchangeTestGame(t)
 	g.setStoryFlag(event.AvailableFlagRaw, true)
-	g.inventory = []int{7}
+	setTestInventory(&g.items, []int{7})
 	member := newMember([]int{1}, 1, 0, 0)
-	member.Inventory = []int{8, event.RequiredItemRawID, 9}
+	setTestInventory(&member.Items, []int{8, event.RequiredItemRawID, 9})
 	g.companions = []*Member{member}
 
 	if !g.talkChoiceItemExchange(npc) || g.choiceItemExchangeStage != choiceItemExchangeOffer {
@@ -140,10 +140,10 @@ func TestChoiceItemExchangeReplacesCompanionOwnerSlot(t *testing.T) {
 	g.choiceItemExchangeChoiceInput(InputState{Confirm: true, DirEdge: -1})
 	wantMember := []int{8, event.GrantedItemRawID, 9}
 	if g.choiceItemExchangeStage != choiceItemExchangeSuccess ||
-		!reflect.DeepEqual(g.inventory, []int{7}) ||
-		!reflect.DeepEqual(member.Inventory, wantMember) ||
+		!reflect.DeepEqual(testInventory(g.items), []int{7}) ||
+		!reflect.DeepEqual(testInventory(member.Items), wantMember) ||
 		g.hasPartyItem(event.RequiredItemRawID) || !g.hasPartyItem(event.GrantedItemRawID) {
 		t.Fatalf("同伴 owner 原格交換錯：stage=%d hero=%v member=%v",
-			g.choiceItemExchangeStage, g.inventory, member.Inventory)
+			g.choiceItemExchangeStage, testInventory(g.items), testInventory(member.Items))
 	}
 }

@@ -11,26 +11,20 @@ import (
 
 func TestShopPurchaseUsesSelectedPersonalEightSlotInventory(t *testing.T) {
 	companion := newMember([]int{1}, 1, 0, 0)
-	g := &Game{
-		pack:       loadTestPack(t),
-		heroGold:   1000,
-		inventory:  []int{1, 2, 3, 4},
-		equip:      [4]int{5, 6, 7, 8},
-		companions: []*Member{companion},
-	}
+	g := &Game{pack: loadTestPack(t), heroGold: 1000, companions: []*Member{companion}, items: testItemStore([]int{1, 2, 3, 4}, [4]int{5, 30, 57, 50})}
 	g.shop.items = loadTestItems(t)
 	g.shop.active, g.shop.targeting, g.shop.pendingCode = true, true, itemuse.ItemHerb
 	beforeGold := g.heroGold
-	if g.purchaseShopItem(0) || g.heroGold != beforeGold || len(g.inventory) != 4 ||
+	if g.purchaseShopItem(0) || g.heroGold != beforeGold || len(testInventory(g.items)) != 4 ||
 		!g.shop.targeting {
 		t.Fatalf("勇者八格已滿不得購買或扣款：gold=%d inv=%v targeting=%v",
-			g.heroGold, g.inventory, g.shop.targeting)
+			g.heroGold, testInventory(g.items), g.shop.targeting)
 	}
 	if !g.purchaseShopItem(1) || g.heroGold != beforeGold-g.shop.items.Price(itemuse.ItemHerb) ||
-		len(companion.Inventory) != 1 || companion.Inventory[0] != itemuse.ItemHerb ||
+		len(testInventory(companion.Items)) != 1 || testInventory(companion.Items)[0] != itemuse.ItemHerb ||
 		g.shop.targeting {
 		t.Fatalf("改選同伴後交易錯：gold=%d companion=%v targeting=%v",
-			g.heroGold, companion.Inventory, g.shop.targeting)
+			g.heroGold, testInventory(companion.Items), g.shop.targeting)
 	}
 }
 
@@ -53,7 +47,7 @@ func TestShopEightSlotWriterMatchesOriginal(t *testing.T) {
 }
 
 func TestShopSellUsesPackPriceAndRemovesOnlyAfterConfirm(t *testing.T) {
-	g := &Game{pack: loadTestPack(t), heroGold: 100, inventory: []int{0, 109}}
+	g := &Game{pack: loadTestPack(t), heroGold: 100, items: testItemStore([]int{0, 109}, [4]int{-1, -1, -1, -1})}
 	g.shop.items = loadTestItems(t)
 	g.shop.active, g.shop.kind, g.shop.stage = true, "weapon", shopSellItem
 	g.shop.sellActor, g.shop.sellCursor = 0, 0
@@ -61,9 +55,9 @@ func TestShopSellUsesPackPriceAndRemovesOnlyAfterConfirm(t *testing.T) {
 	if !ok || price != g.shop.items.Price(0)*3/4 {
 		t.Fatalf("一般售價=%d/%v，want ITEM price 的 3/4", price, ok)
 	}
-	before := append([]int(nil), g.inventory...)
-	if !g.sellShopItem(0, 0) || g.heroGold != 100+price || len(g.inventory) != 1 || g.inventory[0] != before[1] {
-		t.Fatalf("一般賣出交易錯誤: gold=%d inventory=%v", g.heroGold, g.inventory)
+	before := append([]int(nil), testInventory(g.items)...)
+	if !g.sellShopItem(0, 0) || g.heroGold != 100+price || len(testInventory(g.items)) != 1 || testInventory(g.items)[0] != before[1] {
+		t.Fatalf("一般賣出交易錯誤: gold=%d inventory=%v", g.heroGold, testInventory(g.items))
 	}
 	g.shop.kind = "special"
 	if special, ok := g.shopSellPrice(109); !ok || special != 22500 {
@@ -72,14 +66,14 @@ func TestShopSellUsesPackPriceAndRemovesOnlyAfterConfirm(t *testing.T) {
 }
 
 func TestShopSellRejectsZeroPriceAndKeepsItem(t *testing.T) {
-	g := &Game{pack: loadTestPack(t), heroGold: 100, inventory: []int{127}}
+	g := &Game{pack: loadTestPack(t), heroGold: 100, items: testItemStore([]int{127}, [4]int{-1, -1, -1, -1})}
 	g.shop.items = loadTestItems(t)
 	g.shop.kind = "item"
 	if g.shop.items.Price(127) != 0 {
 		t.Skip("ITEM fixture raw127 is not a zero-price record")
 	}
-	if g.sellShopItem(0, 0) || g.heroGold != 100 || len(g.inventory) != 1 {
-		t.Fatalf("零價物品不得出售: gold=%d inventory=%v", g.heroGold, g.inventory)
+	if g.sellShopItem(0, 0) || g.heroGold != 100 || len(testInventory(g.items)) != 1 {
+		t.Fatalf("零價物品不得出售: gold=%d inventory=%v", g.heroGold, testInventory(g.items))
 	}
 }
 
@@ -90,14 +84,14 @@ func TestShopSellEquippedItemClearsSlotAndRecalculatesThroughNormalStats(t *test
 	}{{"hero", 0}, {"companion", 1}} {
 		t.Run(test.name, func(t *testing.T) {
 			member := newMember([]int{1}, 1, 0, 0)
-			member.Weapon = 1
-			g := &Game{pack: loadTestPack(t), equip: [4]int{1, -1, -1, -1}, companions: []*Member{member}}
+			setTestGear(&member.Items, 0, 1)
+			g := &Game{pack: loadTestPack(t), companions: []*Member{member}, items: testItemStore(nil, [4]int{1, -1, -1, -1})}
 			g.shop.items = loadTestItems(t)
 			g.shop.kind = "weapon"
 			price, ok := g.shopSellPrice(1)
 			if !ok || !g.sellShopItem(test.actor, 0) || g.equipActorSlots(test.actor)[0] != -1 || g.heroGold != price {
 				t.Fatalf("裝備賣出交易錯誤: actor=%d price=%d/%v hero=%v companion=%d gold=%d",
-					test.actor, price, ok, g.equip, member.Weapon, g.heroGold)
+					test.actor, price, ok, g.items.Equipment(), member.Items.Equipment()[0], g.heroGold)
 			}
 			if g.equipActorSlots(1 - test.actor)[0] != 1 {
 				t.Fatal("出售不可清除另一持有者的裝備")

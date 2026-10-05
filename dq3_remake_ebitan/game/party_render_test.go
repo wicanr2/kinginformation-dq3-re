@@ -48,9 +48,9 @@ func partyRenderFixture(t *testing.T) *Game {
 	}
 	g.heroName = []int{15}
 	g.companions = []*Member{
-		newLevelOneMember([]int{16}, 1, 0, &g.prng, g.tavern.equipment),
-		newLevelOneMember([]int{17}, 3, 0, &g.prng, g.tavern.equipment),
-		newLevelOneMember([]int{18}, 4, 1, &g.prng, g.tavern.equipment),
+		newLevelOneMember([]int{16}, 1, 0, &g.prng, g.tavern.initialItems),
+		newLevelOneMember([]int{17}, 3, 0, &g.prng, g.tavern.initialItems),
+		newLevelOneMember([]int{18}, 4, 1, &g.prng, g.tavern.initialItems),
 	}
 	for _, member := range g.companions {
 		member.CurHP = member.MaxHP()

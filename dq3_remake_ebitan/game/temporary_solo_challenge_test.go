@@ -25,9 +25,9 @@ func TestTemporarySoloChallengeRejectAcceptSaveAndRestore(t *testing.T) {
 	g, _ := temporaryRoleTestGame(t)
 	event := mustSoloChallengeEvent(t, g)
 	g.companions = []*Member{
-		{Name: []int{101}, Class: 1, CurHP: 11, Inventory: []int{0x20}},
-		{Name: []int{102}, Class: 2, CurHP: 12, Inventory: []int{0x21}},
-		{Name: []int{103}, Class: 3, CurHP: 13, Inventory: []int{0x22}},
+		{Name: []int{101}, Class: 1, CurHP: 11, Items: testItemStore([]int{0x20}, [4]int{-1, -1, -1, -1})},
+		{Name: []int{102}, Class: 2, CurHP: 12, Items: testItemStore([]int{0x21}, [4]int{-1, -1, -1, -1})},
+		{Name: []int{103}, Class: 3, CurHP: 13, Items: testItemStore([]int{0x22}, [4]int{-1, -1, -1, -1})},
 	}
 	for _, member := range g.companions {
 		member.ensureStats()
@@ -78,7 +78,9 @@ func TestTemporarySoloChallengeRejectAcceptSaveAndRestore(t *testing.T) {
 	g.soloChallengeActive, g.soloChallengeEventID = false, ""
 	g.soloChallengeCompanions = nil
 	g.companions = []*Member{{Name: []int{999}}}
-	g.restore(saved)
+	if err := g.restore(saved); err != nil {
+		t.Fatal(err)
+	}
 	if !g.soloChallengeActive || len(g.companions) != 0 ||
 		!reflect.DeepEqual(compsToSav(g.soloChallengeCompanions), wantCompanions) {
 		t.Fatal("試煉途中 save/load 未保留離隊同伴")

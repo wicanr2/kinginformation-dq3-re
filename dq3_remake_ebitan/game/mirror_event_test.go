@@ -29,7 +29,7 @@ func mirrorEventGame(t *testing.T) *Game {
 	g.town, g.cur, g.inTown, g.curCty = sc, sc, true, ctySamanosa
 	g.px, g.py = mirrorX, mirrorY
 	g.dlg.tx = sc.dlgText
-	g.inventory = []int{0x61}
+	setTestInventory(&g.items, []int{0x61})
 	return g
 }
 
@@ -63,7 +63,7 @@ func TestMirrorProductionInputTrace(t *testing.T) {
 	if g.panel != panelNone || g.mirrorStage != 1 || !g.dlg.open ||
 		g.storyFlag(0x42) || !g.storyFlag(0x10) || !g.hasItem(0x61) {
 		t.Fatalf("揭露交易錯: panel=%d stage=%d dlg=%v f42=%v f10=%v inv=%v",
-			g.panel, g.mirrorStage, g.dlg.open, g.storyFlag(0x42), g.storyFlag(0x10), g.inventory)
+			g.panel, g.mirrorStage, g.dlg.open, g.storyFlag(0x42), g.storyFlag(0x10), testInventory(g.items))
 	}
 	closeCurrentDialogue(t, g)
 	if g.mirrorStage != 2 || !g.dlg.open {
@@ -84,7 +84,7 @@ func TestMirrorProductionInputTrace(t *testing.T) {
 	if g.battle.active || g.mirrorStage != 0 || !g.hasPartyItem(itemModChangeStaff) ||
 		g.storyFlag(0x42) || !g.storyFlag(0x22) || g.dnPhase != 0 || !g.dlg.open {
 		t.Fatalf("正式戰鬥輸入後勝利交易錯: active=%v stage=%d inv=%v f42=%v f22=%v phase=%d dlg=%v",
-			g.battle.active, g.mirrorStage, g.inventory, g.storyFlag(0x42),
+			g.battle.active, g.mirrorStage, testInventory(g.items), g.storyFlag(0x42),
 			g.storyFlag(0x22), g.dnPhase, g.dlg.open)
 	}
 }
@@ -151,6 +151,6 @@ func TestMirrorWinSaveRestore(t *testing.T) {
 		!restored.hasPartyItem(itemModChangeStaff) {
 		t.Fatalf("讀檔未保留事件世界狀態: town=%v cty=%d sec=%d @%d,%d phase=%d f42=%v f22=%v inv=%v",
 			restored.inTown, restored.curCty, sceneSection(restored.cur), restored.px, restored.py,
-			restored.dnPhase, restored.storyFlag(0x42), restored.storyFlag(0x22), restored.inventory)
+			restored.dnPhase, restored.storyFlag(0x42), restored.storyFlag(0x22), testInventory(restored.items))
 	}
 }

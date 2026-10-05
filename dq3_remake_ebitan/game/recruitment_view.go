@@ -19,7 +19,7 @@ func (g *Game) startRecruitmentView(m *Member) {
 	if m == nil || rc.selection == nil || tv.labels == nil || rc.raster == nil || g.shop.items == nil ||
 		len(m.Name) == 0 || m.Gender < 0 || m.Gender >= len(rc.selection.GenderTextIDs) ||
 		m.Conditions != 0 || m.Stats == (stats.Values{}) ||
-		m.Weapon >= 0 || [4]int{m.Weapon, m.Armor, m.Shield, m.Head} != tv.equipment {
+		m.Items.Equipment()[0] >= 0 || m.Items.Equipment() != tv.initialItems.Equipment() {
 		return
 	}
 	spellNames, ok := rc.raster.spells.OrderedTextIDs(m.LearnedSpells)

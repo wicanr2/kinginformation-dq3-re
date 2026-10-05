@@ -142,6 +142,9 @@ func TestItemStorageRejectsMissingMalformedAndAmbiguousDefaults(t *testing.T) {
 		{"missing_worn_mask", func(p *Pack) { p.Characters.ItemStorage.Encoding.WornMask = nil }},
 		{"missing_curse_mask", func(p *Pack) { p.Characters.ItemStorage.Encoding.CurseMask = nil }},
 		{"missing_transfer_mask", func(p *Pack) { p.Characters.ItemStorage.Encoding.TransferBlockedMask = nil }},
+		{"missing_drop_mask", func(p *Pack) { p.Characters.ItemStorage.DropBlockedMask = nil }},
+		{"drop_identity_overlap", func(p *Pack) { *p.Characters.ItemStorage.DropBlockedMask |= 1 }},
+		{"missing_drop_metadata", func(p *Pack) { p.Characters.ItemStorage.Items[0].DropForbidden = nil }},
 		{"empty_is_valid_item", func(p *Pack) { *p.Characters.ItemStorage.Encoding.Empty = 0 }},
 		{"out_of_word_range", func(p *Pack) { *p.Characters.ItemStorage.Encoding.Empty = 65536 }},
 		{"overlapping_masks", func(p *Pack) {
@@ -180,6 +183,83 @@ func TestItemStorageRejectsMissingMalformedAndAmbiguousDefaults(t *testing.T) {
 				t.Fatal("broken item contract accepted")
 			}
 		})
+	}
+}
+
+func TestFieldItemsOriginalWindowsDropGateAndMarkers(t *testing.T) {
+	p, err := BuiltinDQ3()
+	if err != nil {
+		t.Fatal(err)
+	}
+	exe, raw, _ := originalItemStorageInputs(t)
+	s := p.Interface.FieldItems
+	word := func(file int) int { return int(binary.LittleEndian.Uint16(exe[file:])) }
+	for _, check := range []struct {
+		linear int
+		bytes  []byte
+	}{
+		{0x13801, []byte{5, 2, 0}}, {0x1380d, []byte{5, 16, 0}},
+		{0x1381c, []byte{5, 2, 0, 0xb1, 4, 0xd3, 0xe0}},
+		{0x13ad5, []byte{0xa9, 0, 0xe0}}, {0x13aeb, []byte{0xa8, 2}},
+	} {
+		offset := check.linear - 0xec90
+		if !bytes.Equal(exe[offset:offset+len(check.bytes)], check.bytes) {
+			t.Fatalf("original instruction differs: IDAlinear%x", check.linear)
+		}
+	}
+	for _, check := range []struct {
+		address int
+		window  RawNewGameWindow
+	}{{0x3fd8, s.RawWindow}, {0x4050, s.ActionWindow}} {
+		base := 0x16140 + check.address
+		w := check.window
+		if w.Flags != word(base)>>8 || w.X != word(base+2) || w.Y != word(base+4) || w.Width != word(base+6) || w.Height != word(base+8) {
+			t.Fatal("original window differs", check.address)
+		}
+	}
+	base := 0x16140 + 0x3fd8
+	action := 0x16140 + 0x4050
+	if s.FrameRows != word(0x13802-0xec90) || s.RowStep != word(0x1380e-0xec90) || s.Name != (GeometryAnchor{X: (word(base+2) + 4) * 8, Y: word(base+4) + 16}) || s.Cursor != (GeometryAnchor{X: word(base+24) * 8, Y: word(base + 26)}) || s.Worn != (GeometryAnchor{X: word(base+2) * 8, Y: word(base+4) + 16}) || s.ActionCursor != (GeometryAnchor{X: word(action+24) * 8, Y: word(action + 26)}) {
+		t.Fatal("original dynamic geometry differs")
+	}
+	if *s.MarkerMask != word(0x138c5-0xec90)|word(0x138ca-0xec90) || s.WornGlyph != word(0x138d0-0xec90) || *p.Characters.ItemStorage.DropBlockedMask != word(0x13ad6-0xec90) {
+		t.Fatal("original marker/drop mask differs")
+	}
+	for code, item := range p.Characters.ItemStorage.Items {
+		if *item.DropForbidden != (raw[code*7+5]&exe[0x13aec-0xec90] != 0) {
+			t.Fatal("original drop metadata differs", code)
+		}
+	}
+}
+
+func TestFieldItemsRejectsMissingGeometryAndTextShape(t *testing.T) {
+	for _, edit := range []func(*Pack){
+		func(p *Pack) { p.Interface.FieldItems = nil },
+		func(p *Pack) { p.Interface.FieldItems.MarkerMask = nil },
+		func(p *Pack) { *p.Interface.FieldItems.MarkerMask |= 1 },
+		func(p *Pack) { p.Interface.FieldItems.Name = GeometryAnchor{} },
+		func(p *Pack) {
+			p.Interface.FieldItems.Name.Y = p.Interface.FieldItems.RawWindow.Y + p.Interface.FieldItems.RawWindow.Height - dq3data.GlyphPx
+		},
+		func(p *Pack) {
+			p.Interface.FieldItems.Cursor.Y = p.Interface.FieldItems.RawWindow.Y + p.Interface.FieldItems.RawWindow.Height - dq3data.GlyphPx
+		},
+		func(p *Pack) {
+			p.Interface.FieldItems.Worn.Y = p.Interface.FieldItems.RawWindow.Y + p.Interface.FieldItems.RawWindow.Height - dq3data.GlyphPx
+		},
+		func(p *Pack) { p.Interface.FieldItems.RawWindow.Width = 15 },
+		func(p *Pack) { p.Interface.FieldItems.ActionWindow.Height = 64 },
+		func(p *Pack) { p.Interface.FieldItems.TextIDs.Row = "unknown" },
+		func(p *Pack) { p.Interface.FieldItems.Evidence.Level = "D2" },
+	} {
+		p, err := BuiltinDQ3()
+		if err != nil {
+			t.Fatal(err)
+		}
+		edit(p)
+		if p.validateFieldItems() == nil {
+			t.Fatal("invalid item UI accepted")
+		}
 	}
 }
 

@@ -185,10 +185,10 @@ func TestRecruitCancelFromSubmenuReturnsToMenuWithoutMoving(t *testing.T) {
 
 func TestRegisteredMemberUsesOriginalLevelOneTransaction(t *testing.T) {
 	r := rng.New(0x1357)
-	m := newLevelOneMember([]int{1, 2, 3}, 3, 1, r, [4]int{-1, 0x1e, -1, -1})
-	if m.Armor != 0x1e || m.Weapon != -1 || m.Shield != -1 || m.Head != -1 {
+	m := newLevelOneMember([]int{1, 2, 3}, 3, 1, r, testItemStore(nil, [4]int{-1, 0x1e, -1, -1}))
+	if m.Items.Equipment()[1] != 0x1e || m.Items.Equipment()[0] != -1 || m.Items.Equipment()[2] != -1 || m.Items.Equipment()[3] != -1 {
 		t.Fatalf("原版 sub_1c94 新登錄角色應只穿布衣 0x1e，得 W/A/S/H=%#x/%#x/%#x/%#x",
-			m.Weapon, m.Armor, m.Shield, m.Head)
+			m.Items.Equipment()[0], m.Items.Equipment()[1], m.Items.Equipment()[2], m.Items.Equipment()[3])
 	}
 	if m.Stats == (stats.Values{}) || m.CurHP != int(m.Stats[stats.HP]) ||
 		m.CurMP != int(m.Stats[stats.MP]) {

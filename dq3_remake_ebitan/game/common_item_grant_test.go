@@ -20,10 +20,10 @@ func TestPackTreasureGrantUsesFirstPartyInventoryWithSpace(t *testing.T) {
 	if !g.collectPackTreasure(treasure) {
 		t.Fatal("pack treasure 應由共用 writer 接管")
 	}
-	if len(m.Inventory) != 1 || m.Inventory[0] != treasure.ItemRawID ||
+	if len(testInventory(m.Items)) != 1 || testInventory(m.Items)[0] != treasure.ItemRawID ||
 		g.storyFlag(treasure.PresentFlag) {
 		t.Fatalf("寶箱未寫入第一個有空位的同伴：member=%v present=%v",
-			m.Inventory, g.storyFlag(treasure.PresentFlag))
+			testInventory(m.Items), g.storyFlag(treasure.PresentFlag))
 	}
 }
 
@@ -46,18 +46,15 @@ func TestPackTreasureGrantAllPartyFullFailsWithoutClearingFlag(t *testing.T) {
 }
 
 func TestRemovePartyItemsConsumesOnlyOneMatchingOwnerSlot(t *testing.T) {
-	g := &Game{
-		inventory: []int{0x55},
-		companions: []*Member{{Inventory: []int{0x55, 0x41}}},
-	}
+	g := &Game{companions: []*Member{{Items: testItemStore([]int{0x55, 0x41}, [4]int{-1, -1, -1, -1})}}, items: testItemStore([]int{0x55}, [4]int{-1, -1, -1, -1})}
 	g.removePartyItems(0x55, 1)
-	if len(g.inventory) != 0 || len(g.companions[0].Inventory) != 2 {
+	if len(testInventory(g.items)) != 0 || len(testInventory(g.companions[0].Items)) != 2 {
 		t.Fatalf("一次消耗不得再刪同伴同 id：hero=%v member=%v",
-			g.inventory, g.companions[0].Inventory)
+			testInventory(g.items), testInventory(g.companions[0].Items))
 	}
 	g.removePartyItems(0x55, 1)
-	if len(g.companions[0].Inventory) != 1 || g.companions[0].Inventory[0] != 0x41 {
-		t.Fatalf("勇者沒有時才應消耗同伴：%v", g.companions[0].Inventory)
+	if len(testInventory(g.companions[0].Items)) != 1 || testInventory(g.companions[0].Items)[0] != 0x41 {
+		t.Fatalf("勇者沒有時才應消耗同伴：%v", testInventory(g.companions[0].Items))
 	}
 }
 

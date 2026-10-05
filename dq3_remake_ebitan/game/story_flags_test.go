@@ -93,7 +93,9 @@ func TestPhoenixRuntimeMapMutationAndSaveRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	restored := phoenixEventGame(t)
-	restored.restore(decoded)
+	if err := restored.restore(decoded); err != nil {
+		t.Fatal(err)
+	}
 	re, ok := restored.phoenixRuntimeEvent()
 	if !ok || !restored.phoenixMapCellWritten || restored.cur.tileIdx(re.MapCell.Tile.X, re.MapCell.Tile.Y) != re.MapCell.ValueRaw {
 		t.Fatalf("save/load 未重放 CTY70 map patch: written=%v tile=%#x", restored.phoenixMapCellWritten, restored.cur.tileIdx(re.MapCell.Tile.X, re.MapCell.Tile.Y))
