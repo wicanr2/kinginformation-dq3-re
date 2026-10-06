@@ -1,5 +1,13 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-06 正常新遊戲對拍至458。原版56ef662a、496鍵／992IRQ1／1184產物，唯讀NPC狀態來源b2fdf781全部前綴保持，seed1357一次，無注入／restore。四圖層轉向另有fe39794a局部受控收據，各案預先固定seed1e2c，明示狀態注入與CPU重入，不冒稱正常高圖層路線。
+> NPC自動移動已依原始視野、同圖層、逐格順序、RND閘門、商值轉向與地形低byte修正。1672原版入口返回、499完整掃描及四圖層常式通過；正常409／422／458、持久snapshot、十槽、F5／F6及下一步通過。458完整RGB仍差1751，NPC全局骰序與動畫時鐘未知，完整V3未通過。
+> 現行game清單523頂層由526命令基準及10項最終補驗覆蓋，51既有選用SKIP。首輪主線失敗及測試策略試作保留；正式新遊戲THE END82.48秒、最終Go vet與Linux desktop通過。internal216頂層／546子、12套件PASS，4既有選用SKIP；新必驗零SKIP，最終OOM／kill0。不是同一binary全量重跑，也不升格原版campaign parity。
+> schema0.33.0／content0.1.106／canonical67af5bb5，A唯一有序八格/storage1/save2保持；既有玩法資料保持，九JSON由乾淨97b5c9e重建相同。三條正常路線842張PNG與NPC實作基準保持；436筆IDA原始定位／bytes／xref及原19註記保持，新增註記逐筆連正確來源。沒有新包。
+> Issue／Goal進行中。唯一現況表CONTEXT、計畫docs/74、證據docs/188。下一步從合法458追加原版右移一鍵，核對既有remake下一步與首個差異；不重開已閉合規則，完整原版campaign仍未知。
+
+以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
+
 > 2026-10-06 正常新遊戲對拍至422。原版b7d0b153、460鍵／920IRQ1／1076產物，唯讀native來源8d01dbfd的全部422事件與產物保持，八筆圖層分支閉合。seed1357一次，無注入／restore或重擲。
 > 屋內NPC畫到屋頂的問題已修正：正式renderer依既有scene_tile_layers只畫同層人物。正常409／422、持久snapshot、game PRNG、十JSON槽、正式F5／F6及Load後下一步通過。422兩個室內NPC完整32×24背景共1536pixels零差異；全畫布差3390→2517，其中2357像素仍未解釋，戶外NPC位置與動畫未知，完整V3未通過。
 > 完整game519頂層覆蓋、523命令、468不同頂層／145子PASS，51既有選用SKIP；internal214頂層／531子、12套件PASS，4既有選用SKIP。正常THE END72.10秒、Go vet與Linux desktop PASS，必驗零SKIP，OOM／kill0。

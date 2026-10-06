@@ -5811,3 +5811,80 @@ RED以尚未修正engine由正常新遊戲重播：`work/issue4-room-npc-red-r1/
 content0.1.105的九JSON由乾淨HEAD原pack重建逐byte相同，重建收據cbaf9189；只改interface證據與manifest版號，七玩法JSON保持。schema0.32.0、A八格/storage1/save2保持，舊hash存檔依既有授權拒絕。修正及測試失敗歷程保留，不將checker假設錯誤、環境失敗或完整V3未過隱藏為PASS。
 
 主機衛生收據：work/issue4-room-npc-ownership-r1.json。3213個既有root-owned項目保持，.md目錄0，新工具及輸出UID1000；13項使用者scratch不提交。本批容器使用既有image、network none及相稱資源上限，均已清除；未重建或清理其他專案image。
+
+
+#### 戶外NPC移動：DRAFT與可比條件
+
+接續97b5c9e，正常422完整RGB仍2517，扣除hero原始影格160後2357未解釋。正式NPC使用場景獨立亂數，section0固定seed1；原版正常來源seed1357一次，使用原生DGROUP0B5A。兩側NPC亂數條件不相同，不能從不同位置直接判定哪次骰值錯誤，也不要求跨全流程骰序一致。正式Go／pack暫時保持，schema0.32.0/content0.1.105，A八格/storage1/save2保持。
+
+IDA9.4以原始EXE115282bytes／SHA2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c建立一次性DB。linear減EC90為file，DGROUP base為linear24DD0。work/issue4-npc-move-r2-ida.json SHA1834e868，276筆原始定位／bytes及typed xref保留。唯一直接mover caller為linear11FEA/file335A，所屬11F4E掃描原生20×15視野，先做圖層與AH20 NPC gate。12025/file3395取得runtime槽，12040的RND4與12048/1204E控制gate後，12062的方向骰、12071的RND20與12098轉向writer閉合；轉向後走1209B重畫，不呼叫落步。僅方向骰等於原朝向時120A3呼叫120AA，120AA..120B3另有RND10==1 gate，Go現行未實作。120E1／12111分軸距離gate、1217E占格、1218D整個地形低byte非零拒絕、121AD／121B2座標writer及舊格復原均保留原始定位。這些新移動語意目前strong，不以歷史docs/35的「靜態全解」稱為D3。
+
+相同正常422增加唯讀觀察的來源work/dosgolem-opening/issue4-npc-move-normal-r1-source-r1-receipt.json SHAe77e9214902670625ec6bf5291c4c4c785f6b8c254546f4f0847d171a52d3533已接受。固定seed一次，460鍵／920IRQ1；全部422事件及1076產物與b7d0b153逐byte相同。1045次11FEA、1045次12043與1045次120A6返回，全部caller格子符合原生視野與同圖層；沒有進入方向／轉向或落步分支。來源摘要的「no active MOVE-bit actor sample」只表示没有通過第一道RND4的可動人物，原始末尾仍有ctrl05等可動人物記錄，不能解讀成沒有可動NPC。
+
+動態移動gate仍DRAFT。續行輸入在執行前固定為13右、5下、13左、5上，從合法422冷啟動前綴接續，首個非field或非原場景結果即停。只觀察，不改state、clock或RND，不因未命中而重擲或挑seed。位置精確對拍需明示等價RND輸入；局部同條件規則驗證與正常玩家路徑分開保存，不把其替代為全畫布V3。NPC更新的viewport、圖層、RND10、轉向及地形低byte差異待審READY，未知值不進production。
+
+<a id="npc-motion-ready"></a>
+
+#### NPC自動移動：原始入口閉合與READY
+
+Issue留言6007436089。固定458來源SHA25656ef662ad02931486a60bbfd0820a518887e699320ec1c3ff131070734ba95be接受；496鍵／992IRQ1／1184產物，原422全部前綴保持。最終3,28，原場景、clock及持久狀態只改X／Y；右側與左側阻擋使固定輸入不形成矩形，不改輸入挑結果。自然19次轉向、110次RND10及5次座標寫入。
+
+同一458新增唯讀完整NPC表與seed的來源SHA256b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6，全部458事件、1184產物及native mover事件與56ef662a相同。1672組入口／返回案例另存component-r1 SHA2566586abb198648dc27859901813f2c40cad156579b511c101db820eb7023b69b4，供局部同狀態測試；不是正常玩家流程替代。每次RND的加法、rotate、餘數、商及返回seed均核對。r1稽核假設沒有重複返回hit而失敗；455兩筆120A6相隔27steps，除step外欄位完全一致，r2明示保留重複觀測，不多算案例。失敗收據保留incomplete-check-r1，不列產品缺陷。
+
+原始輸入與位址基準同上。IDA9.4 r4有界436筆SHA25649e79600391f13fdf50a45130353113b7a5e45522ec233c07e12e1e7469ad661，保留bytes、原名、xref及DS未知限制。131E6從原始表單byte載入count，131EC寫DGROUP0B32；131F7..13279依story flag壓緊，13282以BP回寫數量，最大255。14筆native writer保留DS15ED、CX、BP及先前B32；戶外最終14由mover讀者證實。IDA DS未知造成直接xref缺漏，不能解讀為沒有writer。
+
+訂正：1207F的DI是原始packed map word，並非NPC index；12074之AX是RND20後商值，12085／1208C的AL以該商加減1。室外layer0／1的occupied word為正且至少0x2000，大於最多127的half-count，因此減1；layer2／3的word為負，因此加1。這個化簡來自原始count byte、cell C0／20位與signed比較；戶外19例為confirmed／D3，高圖層未命中分支仍為static strong／D2。不得以Go舊idx/half或舊朝向替代。12098只改ctrl低兩位、1209B重画，無落步。19例均驗證座標不變。
+
+審查READY，僅閉合自動NPC移動primitive：
+
+- 11F4E以玩家−9,−7掃20欄15行，依序先Y後X。只評估界內、與玩家同cell layer、當下有NPC的格子。成功向右／下移後，後續格子可再次評估同一NPC，不預先固定NPC清單。
+- 每次評估先RND4==1，再檢查ctrl80凍結與04移動位。第二次RND4等於ctrl低兩位才進落步。不同時須RND20==1，取商低byte加該圖層delta、mask3，更新朝向後返回。
+- 120AA／120B0落步先RND10==1，方向表為DGROUP0B35..0B44原始16bytes，整數步長與方向序由pack保存。界內、分軸目標距離至少3、NPC未占格、地形attribute整個低byte為0才提交X／Y。原始121AD／121B2五次寫入與返回狀態閉合。
+- 原版map占格會更新；remake以即時NPC座標查詢保留同樣占格交易。圖層與地形仍來自原始typed資料。無map、缺attribute或pack缺規則即停止移動，不猜補。
+
+全部版本數值放characters.npc_motion，具名引擎只執行以上有限primitive，不加入CTY／record分支。主證據限定戶外D3，layer turn化簡另存D2證據，不擴張室內動態聲明。正式場景獨立seed及18幀動畫近似保持，未以測試seed永久鎖正式遊戲。component案例在每次呼叫前用原版已記錄seed與NPC狀態，屬明示受控局部驗證；另從正式新遊戲至458、十槽保持、F5／F6與下一步重播。全640×350差異逐包保存，完整位置／動畫／全局亂數V3仍未知。
+
+schema升0.33.0、content0.1.106，A八格/storage1/save2保持；依已確認策略拒絕舊hash存檔。實作與CONFORMED收據尚待下節。
+
+可重生入口：[422唯讀producer](../tools/dosgolem_npc_motion_probe.py)、[固定458續行producer](../tools/dosgolem_npc_motion_continue_probe.py)、[完整狀態producer](../tools/dosgolem_npc_motion_state_probe.py)、[458來源checker](../tools/verify_dosgolem_npc_motion_continue.py)、[完整狀態checker](../tools/verify_dosgolem_npc_motion_state.py)、[IDA有界匯出](../tools/ida_npc_motion_export.py)、[pack升版](../tools/migrate_npc_motion_pack.py)及[勘誤backlink檢查](../tools/verify_npc_motion_evidence_backlinks.py)。producer均逐byte保留已執行內容。重生沿本文件既有Docker契約與唯讀原始素材、凍結runtime、明示Go快取；全新work overlay逐次執行、接受parent與fileops，不覆寫原始收據。
+
+新增相容別名為/work/issue4-npc-move-probe-r1.py＝dosgolem_npc_motion_probe.py、/work/issue4-npc-move-continue-probe-r1.py＝dosgolem_npc_motion_continue_probe.py，以及/work/issue4-npc-move-state-probe-r1.py＝dosgolem_npc_motion_state_probe.py。各parent沿本文件422別名依賴鏈。公開checker另寫public-check-r1，核對已接受b2fdf781與6586abb1，不重寫source-r1或component-r1。IDA使用一次性原始副本與idat -A -S匯出JSON；從原始19筆sidecar註記追加10筆，原定位與未命中分支等級保留。
+
+pack升版命令：python3 tools/migrate_npc_motion_pack.py <可寫0.32.0/0.1.105 pack> <唯讀assets_raw>。九份JSON只升schema，manifest升content，characters新增有限npc_motion；其他玩法物件保持。原始EXE hash與各立即值、16bytes方向表鎖定。缺欄位拒絕；資料沒有任意程式碼。source_kind與address_space曾使用未登錄名稱造成r1 validator拒絕，已改成既有exe／linear契約，不列引擎行為失敗。
+
+
+#### 四圖層轉向：補證、審查與READY
+
+先前高圖層僅D2靜態推導，不能單獨通過流程值D3閘門。因此返回RE，在原正常424的12025入口暖機後做四案局部原版常式。每案執行前固定seed1e2c，明示改寫cell layer、selector及NPC layer；後三案重入保存的CPU暫存器。沒有完整模擬器snapshot restore，不能稱正常玩家路線。正常458來源b2fdf781與全部1184產物保持。
+
+原始DQ3.EXE大小115282，SHA2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；dosgolem2f44a68、既有test image與patched runtime雜湊保持。IDA9.4 linear12025、12043、12065、12074、1207F、12098、120A6，file=linear−EC90。受控來源收據fe39794adbe6c4c3a64fcaf320e7bec75984ff913afdc1906f8fc423d66358b1、fixture e7ba85ee6c4645229d38c46a859808c36d55dc38a57751cca2b24f84866d5498；原版log、metadata、producer、生成Go、binary及checker雜湊由收據綁定。
+
+四案word依序2650、6650、A650、E650，ctrl初值05，NPC5,29及hero5,23。三次RND的seed依序7225、11e8、1005，餘數1、0、1，RND20商AL=CD。1207F的CX為7。前兩案signed DI≥7，ctrl寫04；後兩案signed DI<7，ctrl寫06。四案座標保持，未進120B0；case0返回與原正常424 donor逐欄符合。固定四案皆接受，沒有重擲或挑seed。
+
+審查READY：typed layer的[-1,-1,+1,+1]保留byte-count上界與signed packed-word靜態推導，再以四案執行閉合限定confirmed／D3。turn_layer_evidence只接受D3；局部常式結果不外推高圖層正常玩家V3、全局骰序或動畫時鐘。主線全滅另外追測試玩家策略，不能據此猜改NPC或戰鬥數值。
+
+重生入口：[四圖層原版producer](../tools/dosgolem_npc_turn_layers_component_probe.py)及[獨立checker](../tools/verify_dosgolem_npc_turn_layers_component.py)。沿本節Docker契約與凍結runtime；producer依賴已接受state-normal-r1生成Go，不覆寫正常458來源。全新work overlay依序生成原版局部source、執行checker，再提供fixture給game component test。checker固定形狀、四案seed、六個PC、商與signed分支、返回／無座標交易，輸出非normal-player-path的獨立收據。
+
+
+<a id="npc-motion-conformance"></a>
+
+#### NPC自動移動：有限CONFORMED與回歸收尾
+
+正式共用Go依characters.npc_motion進行可見同層的Y後X逐格掃描，使用即時占格。評估骰先於ctrl可動／凍結位；同方向須再經RND10，異方向轉向使用RND20的商低byte與layer delta，轉向不落步。分軸距離、界內、占格及整個地形低byte一併驗證，缺資料拒絕。DQ3參數均來自JSON與原始byte parity，沒有新增版本專屬Go table或fallback。原版非零地形拒絕仍只有靜態strong，本批負例測試為remake內部驗證，不冒稱原版動態hit。
+
+- 原版1672組入口／返回的NPC工作槽ctrl／X／Y及seed相同；499完整掃描、3次同scan移到後續格再評估相同。自然19轉向／110落步骰／5移動保持。四圖層受控fixture e7ba85ee通過，限定局部同狀態，沒有用它替代正常路線。
+- 正常409、422、458正式InputState、持久snapshot、game PRNG、十槽、F5／F6與Load後下一步通過。458最終3,28，Load後正式右移4,28。最終收據96a37ce2；完整畫布1751差異保留，NPC全局亂數與動畫未知，不宣稱完整V3。
+- schema0.33.0/content0.1.106/canonical67af5bb57edf02461fa0e6d3ab3860c0a5279a151c763a08efd9830ba1d308e4。A八格/storage1/save2保持，不同hash存檔拒絕；乾淨97b5c9e九JSON重建逐byte相同，既有玩法物件保持。重建收據01d13b2e。
+- 最終三路842張PNG與本批NPC實作基準逐byte相同。436筆IDA9.4原始定位／bytes／名稱／函式邊界／typed xref保持，原19註記保持；新10註記各附正確來源。公開匯出r6曾誤取舊動畫review_reference，已保留失敗稽核，修正逐筆evidence與dynamic_evidence後r7 SHA e586666257046ded0448ad96a33f1a516d69803e61c17470e2605457bd64028f通過。
+
+完整game基準526命令有525通過；唯一主線失敗另外追查。最終現行523頂層清單由基準與10項受影響補驗閉合，51既有選用SKIP，不稱同binary全量重跑。internal216頂層／546子、12套件PASS、4既有選用SKIP。正式新遊戲THE END82.48秒、最終Go vet及Linux desktop通過，新必驗零SKIP。desktop14808480bytes，SHA2560bd12a20406f9ec5ef93e050e0afe601015b2d1f24f92f22dfe03714c18bf0b0，只作本機驗證，無新交付包。
+
+主線測試修正限玩家策略與斷言，產品戰鬥、地圖與物品規則沒有改動。用既有戰力／狀態風險判斷取代怪物ID強度假設，高危先逃跑並保留持久麻痺救治優先序；撤回過度消耗MP的全面旅行治療試作。既有旅店前先正式教會復活／解毒。剛轉職同伴以正式魯拉返回已造訪低危補給點，練級後續驗航路；建城後長航路先進港復活、解毒、買聖水與住宿。鑰匙／魔法球讀檔斷言核對全隊，藥草明送目標角色，寶物前清實際容量，單人試煉前正式移交必要鑰匙，終盤保留物以給予整理，不擴八格、不丟必要物、不注入HP／MP／等級／金錢／座標／flags或挑seed。r1..r15全部失敗／試作保留，r16固定初始seed通過；不要求不同合法玩家路線維持整段骰序。
+
+圖形final-r2在3GiB上限有oom9／oom_kill3；同工具鏈、同命令、同種子以4GiB乾淨final-r3重跑，九項PASS與OOM／kill0。這是環境失敗，不能列產品缺陷。Go vet r2混用package與檔名、r3碰到受保護tmp_dump.go，分類runner錯誤；r4後分開game/internal與正式main.go驗證，沒有刪改使用者檔案。
+
+三種壞局部來源為錯稱正常玩家路線、改動seed及signed layer，全部拒絕；乾淨正對照重生fe39794a相同。證據稽核a130bc54、最終稽核3e0fd436，root-owned3213／Markdown目錄0基線保持，新工具及輸出UID/GID1000。13項使用者scratch、原版素材、database、binary與影像不入Git。容器均一次性--rm；清理與提交身分以WORKLOG及Issue最終核對為準。
+
+本機收據入口：work/issue4-npc-motion-final-audit-r1.json SHA3e0fd43698b396f72262010811e4dd10f51dc62b7c445082f313adbb24173fc8；work/issue4-npc-motion-final-r3/game-receipt.json SHA287e8414190b1c8397a904bfcba6f134eb7d679589e0658c9a7240042ace8231；work/issue4-npc-motion-campaign-r16/game-receipt.json SHA493894bb9f88a9901646de6ec85ae64f26ba26e8889f0be5f842ea07dfe89ed1；work/issue4-npc-motion-internal-r2.json SHA6720a7c5。完整來源、產物與失敗證據只留本機，不加入Git。
+
+下一原版切片從合法458追加右移一鍵，固定輸入於執行前，核對現有remake下一步及首個差異；完整原版campaign與音畫保持未知。已閉合的mover規則不因歷史未知再重開，動畫與全局亂數依停止線分開處理。

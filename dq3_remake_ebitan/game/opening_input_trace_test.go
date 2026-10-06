@@ -1325,10 +1325,10 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	if err := restored.Load(); err != nil {
 		t.Fatalf("讀取盜賊鑰匙 checkpoint: %v", err)
 	}
-	if !restored.hasItem(0x55) || !restored.progressDone(msThiefKey) ||
+	if !restored.hasPartyItem(0x55) || !restored.progressDone(msThiefKey) ||
 		!restored.inTown || restored.curCty != 8 || sceneSection(restored.cur) != 3 {
 		t.Fatalf("盜賊鑰匙 checkpoint round-trip 錯：item=%v milestone=%v cty=%d sec=%d",
-			restored.hasItem(0x55), restored.progressDone(msThiefKey),
+			restored.hasPartyItem(0x55), restored.progressDone(msThiefKey),
 			restored.curCty, sceneSection(restored.cur))
 	}
 
@@ -1350,10 +1350,10 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	if err := restored.Load(); err != nil {
 		t.Fatalf("讀取魔法球 checkpoint: %v", err)
 	}
-	if !restored.hasItem(0x58) || !restored.hasItem(0x55) ||
+	if !restored.hasPartyItem(0x58) || !restored.hasPartyItem(0x55) ||
 		!restored.progressDone(msMagicBal) || restored.curCty != 1 || sceneSection(restored.cur) != 1 {
 		t.Fatalf("魔法球 checkpoint round-trip 錯：ball=%v key=%v milestone=%v cty=%d sec=%d",
-			restored.hasItem(0x58), restored.hasItem(0x55), restored.progressDone(msMagicBal),
+			restored.hasPartyItem(0x58), restored.hasPartyItem(0x55), restored.progressDone(msMagicBal),
 			restored.curCty, sceneSection(restored.cur))
 	}
 
@@ -1450,12 +1450,12 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	if err := restored.Load(); err != nil {
 		t.Fatalf("讀取羅馬利亞 checkpoint: %v", err)
 	}
-	if restored.hasItem(itemuse.ItemMagicBall) || restored.storyFlag(magicBallIntactFlag) ||
+	if restored.hasPartyItem(itemuse.ItemMagicBall) || restored.storyFlag(magicBallIntactFlag) ||
 		!restored.inTown || restored.curCty != roleEvent.OfferNPC.CTYRaw ||
 		sceneSection(restored.cur) != roleEvent.OfferNPC.Section ||
 		!restored.storyFlag(roleEvent.PendingFlagRaw) {
 		t.Fatalf("羅馬利亞 checkpoint round-trip 錯：ball=%v flag51=%v town=%v cty=%d sec=%d",
-			restored.hasItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
+			restored.hasPartyItem(itemuse.ItemMagicBall), restored.storyFlag(magicBallIntactFlag),
 			restored.inTown, restored.curCty, sceneSection(restored.cur))
 	}
 	// save/load 已驗證；釋放重建出的第二套大型圖形快取，後半沿原本玩家狀態繼續。
@@ -2154,6 +2154,8 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	// 依席斯王宮 → 羅馬利亞祠堂 → 波魯多加，全部使用正式地表與
 	// transition table；祠堂紅門由背包中的魔法鑰匙開啟。
 	traceTownSectionTo(t, g, 12, 1, 10, 34)
+	traceReviveDeadAtChurch(t, g)
+	traceCurePartyPoisonAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
 	traceTownSectionTo(t, g, 12, 0)
 	traceExitTownBoundary(t, g)
@@ -2161,6 +2163,8 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	traceTownSectionTo(t, g, 35, 0)
 	traceExitTownBoundary(t, g, true)
 	traceAdventureWalkToCty(t, g, 16)
+	traceReviveDeadAtChurch(t, g)
+	traceCurePartyPoisonAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
 	if g.dnPhase != 0 || g.dnStep != 0 {
 		t.Fatalf("波魯多加住宿後未回到白天：phase=%d step=%d", g.dnPhase, g.dnStep)
@@ -2768,23 +2772,15 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	traceTownSectionTo(t, g, 17, 0)
 	traceOpenReachableDoor(t, g) // save/load 後原版魔法門回到關閉 tile
 	traceExitTownBoundary(t, g)
-	// 轉職賢者降回 Lv1；先徒步回具備旅店與教會的巴哈拉達，在該段
-	// 正式海路遇敵時選逃跑，再於城外低危區練回 Lv20。這條船路可抽到
-	// monster 48 的四體編隊，不能把它誤當成可讓剛轉職隊伍硬戰的低危區；
-	// 逃跑仍完全經由正式戰鬥選單與原版成功判定。
-	traceAdventureTravelToCty(t, g, 15, true, true)
-	// 剛轉職的賢者仍是 Lv1。先在實際抵達的城鎮完成正常補給與住宿，
-	// 再到入口附近練功；不可把耗盡的航路補給或主角的高等級誤當成全隊戰力。
-	traceTalkFacility(t, g, facItem)
-	topUpHolyWater(8)
-	traceCloseShop(t, g)
+	// 轉職後先用已習得的正式魯拉回已造訪的低危補給點。
+	// 海路會遇到持久麻痺敵人，不能讓Lv1同伴以連續逃跑承擔整段旅程。
+	// 航行與靠岸在回復戰力後續驗；此處不寫座標、等級、資源或RNG。
+	traceRuraToCty(t, g, 0)
+	traceAdventureWalkToCty(t, g, 0)
+	traceReviveDeadAtChurch(t, g)
+	traceCurePartyPoisonAtChurch(t, g)
 	traceTalkFacility(t, g, facInn)
 	traceExitTownBoundary(t, g)
-	// 巴哈拉達入口 region 包含 monster 48 的多體 formation；即使主角
-	// 已高等，剛轉職的賢者也不該靠逃跑成功率賭過這段。已造訪的
-	// 阿里阿罕入口是此前完整驗證過的低危區，因此以正式魯拉返回、
-	// 正式練功，並在完成後再返回達瑪的船路。
-	traceRuraToCty(t, g, 0)
 	for heroTarget := stats.LevelForExp(0, g.heroExp); g.companions[0].Level() < 20; heroTarget++ {
 		if heroTarget >= stats.MaxLevel {
 			t.Fatalf("正式練級到 hero cap 仍未讓轉職賢者達 Lv20：hero%d sage%d",
@@ -2819,6 +2815,7 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 		t.Fatal("缺黑暗之燈原版 day_night_clock")
 	}
 	traceTownSectionTo(t, g, darkLamp.CTYRaw, darkLamp.Section)
+	ensurePartyInventorySpace("黑暗之燈前整理背包", 1)
 	traceExaminePackTreasure(t, g, darkLamp)
 	if !g.hasPartyItem(darkLamp.ItemRawID) || g.storyFlag(darkLamp.PresentFlag) {
 		t.Fatalf("正式取得黑暗燈 transaction 錯：item=%v flag=%v",
@@ -3276,7 +3273,10 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	if len(wantParty) != 3 {
 		t.Fatalf("勇氣試煉前隊伍同伴=%d, want 3", len(wantParty))
 	}
-	if !shopActorHasSpace(0) {
+	reserveHeroInventorySlot := func(reason string) {
+		if shopActorHasSpace(0) {
+			return
+		}
 		targetActor := -1
 		for actor := 1; actor <= len(g.companions); actor++ {
 			if shopActorHasSpace(actor) {
@@ -3315,11 +3315,30 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 			}
 		}
 		if targetActor < 0 || heroItems == nil || moveIdx < 0 {
-			t.Fatalf("勇氣試煉前無法以正式給予替勇者保留空格：hero=%v companions=%v",
-				heroItems, g.companions)
+			t.Fatalf("%s無法以正式給予替勇者保留空格：hero=%v companions=%v",
+				reason, heroItems, g.companions)
 		}
 		traceGiveActorInventoryItem(t, g, 0, moveIdx, targetActor)
 	}
+	reserveHeroInventorySlot("勇氣試煉前")
+	// 同伴會留在城內，鑰匙必須由實際進洞的勇者攜帶。
+	// 正式給予後再保留寶珠容量，不依賴先前掉落剛好留下特定owner。
+	if !g.hasItem(finalKey.Treasure.ItemRawID) {
+		given := false
+		for actor := 1; actor <= len(g.companions) && !given; actor++ {
+			for index, entry := range g.actorItemEntries(actor) {
+				if entry.Code == finalKey.Treasure.ItemRawID {
+					traceGiveActorInventoryItem(t, g, actor, index, 0)
+					given = true
+					break
+				}
+			}
+		}
+		if !g.hasItem(finalKey.Treasure.ItemRawID) {
+			t.Fatal("單人試煉前未經正式給予取得最後鑰匙")
+		}
+	}
+	reserveHeroInventorySlot("勇氣試煉前")
 	if !shopActorHasSpace(0) {
 		t.Fatal("勇氣試煉前正式重分配後勇者仍無空格")
 	}
@@ -3706,8 +3725,19 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 	// 抵達 CTY42，再由 transition record 的原始世界座標徒步前往沙曼歐莎。
 	traceExitTownBoundary(t, g, true)
 	traceRuraToCty(t, g, 38)
+	// 魯拉只轉移位置。建城後的長航路先正常進港復活、解毒與補給，
+	// 不把傳送落點當成全隊HP／MP及聖水已恢復。
+	traceAdventureWalkToCty(t, g, 38, false)
+	traceReviveDeadAtChurch(t, g)
+	traceCurePartyPoisonAtChurch(t, g)
+	dropSpareEquipmentForPartyInventorySlots(4)
+	traceTalkFacility(t, g, facItem)
+	topUpHolyWater(8)
+	traceCloseShop(t, g)
+	traceTalkFacility(t, g, facInn)
+	traceExitTownBoundary(t, g, true)
 	traceBoardAndSailShip(t, g)
-	traceAdventureTravelToCty(t, g, 41, true)
+	traceAdventureTravelToCty(t, g, 41, true, true)
 	traceTownSectionTo(t, g, 42, 0)
 	traceTownSectionTo(t, g, -1, -1)
 	if g.px != 213 || g.py != 123 {
@@ -4960,8 +4990,10 @@ func traceOpeningProductionInputRoute(t *testing.T, afterRomalyEquipment func(*G
 			}
 		}
 		if candidate < 0 {
-			t.Fatalf("魯比斯前主角物品欄無法以正式丟棄清出容量：slots=%d equip=%v inv=%v",
-				slots, g.items.Equipment(), testInventory(g.items))
+			// 必要物品仍由隊伍持有。全是保留物時以正式給予
+			// 移交一件，不能把「無法丟棄」當成「無法整理」。
+			reserveHeroInventorySlot("魯比斯前")
+			continue
 		}
 		traceDropInventoryItem(t, g, candidate)
 	}
@@ -5945,7 +5977,12 @@ func traceHealLivingParty(t *testing.T, g *Game) {
 			continue
 		}
 		if g.hasPartyItem(itemuse.ItemHerb) {
-			traceUseInventoryItem(t, g, itemuse.ItemHerb)
+			for actor := 0; actor <= len(g.companions); actor++ {
+				if tracePartyActorNeedsHealing(g, actor) {
+					traceUseInventoryItem(t, g, itemuse.ItemHerb, actor)
+					break
+				}
+			}
 			continue
 		}
 		break
@@ -7669,6 +7706,7 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 	blindAttempted := false
 	defenseCasts := 0
 	strategyBossID := g.battle.monID
+	diagnosticCommands := 0
 	// 巴拉摩斯戰後必須經 CTY65→66 的原始 transition 與邊界出口；兩個
 	// section 的烈米特 gate 都關閉。該路由含多個獨立傷害地板區段，因此
 	// 為多拉瑪那施法者保留兩次成本，避免在最後一段才因少 1 MP 失敗。
@@ -7804,7 +7842,7 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 			}
 			needHeal := healTarget >= 0
 			needFlee := g.battle.commandActor == g.battle.firstCommandActor() &&
-				shouldFleeStrong && g.battle.monID >= 10
+				shouldFleeStrong && !traceCanSafelyFinishEncounter(g)
 			wantCommand := bcWar
 			switch {
 			case persistentTarget >= 0 &&
@@ -7814,6 +7852,10 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 				healTarget = persistentTarget
 				wantedSpell = bestSpell(g.battle.commandActor, spell.CureStatus)
 				wantCommand = bcSpell
+			case needFlee:
+				// 保留持久麻痺救治的優先序。其他高危遭遇先逃跑，
+				// 避免低量補血持續搶先，讓敵人逐輪耗盡隊伍。
+				wantCommand = bcFlee
 			case needHeal && (!preserveMP || spendCompanionMP && g.battle.commandActor != 0) &&
 				battleHealSpell(g.battle.commandActor) >= 0:
 				// 逃跑可失敗；練級戰若每回合都不救治就重試，
@@ -7824,10 +7866,6 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 			case needHeal && (!preserveMP || spendCompanionMP && g.battle.commandActor != 0) &&
 				herbSlot(g.battle.commandActor) >= 0:
 				wantCommand = bcItem
-			case needFlee:
-				// 高危遭遇的正式玩家策略是先嘗試逃跑；若先治療，
-				// 敵方會在逃跑結算前取得一輪傷害，可能把整隊打光。
-				wantCommand = bcFlee
 			case g.battle.monID == 0x79 && g.battle.commandActor == reservedHazardCaster:
 				// 巴拉摩斯戰後的原始出口有多段高傷害地板；這位唯一
 				// 多拉瑪那施法者採正式普通攻擊而不施咒，保留 MP 給
@@ -7877,6 +7915,11 @@ func traceResolveBattle(t *testing.T, g *Game, fleeStrong ...bool) bool {
 			if menu[g.battle.cursor] != wantCommand {
 				in.DirEdge = 0
 			} else {
+				if needFlee && diagnosticCommands < 12 {
+					hp, maxHP := g.battle.actorHP(g.battle.commandActor)
+					t.Logf("逃跑策略診斷：mon%d actor%d HP%d/%d needHeal=%v healTarget%d command%d", g.battle.monID, g.battle.commandActor, hp, maxHP, needHeal, healTarget, wantCommand)
+					diagnosticCommands++
+				}
 				in.Confirm = true
 			}
 		case phSpell:

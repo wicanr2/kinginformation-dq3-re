@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.32.0",
+  "schema_version": "0.33.0",
   "field_idle_status": {
     "id": "dq3:window.field_idle_status",
     "scenes": [

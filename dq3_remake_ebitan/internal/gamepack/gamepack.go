@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "0.32.0"
+	SchemaVersion       = "0.33.0"
 	EngineAPI           = ">=0.1.0 <0.2.0"
 	ReviveService       = "common:service.revive"
 	CurePoisonService   = "common:service.cure_poison"
@@ -2148,6 +2148,7 @@ type PartySpriteDefinition struct {
 
 type Characters struct {
 	SchemaVersion string                 `json:"schema_version"`
+	NPCMotion     *NPCMotionDefinition   `json:"npc_motion"`
 	ItemStorage   *ItemStorageDefinition `json:"item_storage"`
 	DefaultRefs   CharacterDefaultRefs   `json:"default_refs"`
 	Defaults      []CharacterDefault     `json:"defaults"`
@@ -3344,6 +3345,9 @@ func (p *Pack) validateCharacters() error {
 	}
 	if p.Characters.Defaults == nil {
 		return errors.New("defaults must be present")
+	}
+	if err := p.validateNPCMotion(); err != nil {
+		return err
 	}
 	if err := p.validateItemStorage(); err != nil {
 		return err

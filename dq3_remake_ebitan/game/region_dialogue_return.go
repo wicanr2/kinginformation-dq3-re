@@ -236,7 +236,8 @@ func (g *Game) loadRegionDialogueReturnActor(s saveState) (*npcInst, error) {
 	last := escort.ArrivalFrames[len(escort.ArrivalFrames)-1]
 	for _, n := range scene.npcs {
 		if n.recordIndex == *escort.ArrivalLeaderRecord {
-			if n.ctrl&npcMoveBit != 0 || last.Leader.X < 0 || last.Leader.Y < 0 || last.Leader.X >= scene.w || last.Leader.Y >= scene.h {
+			motion := g.npcMotion()
+			if motion == nil || n.ctrl&motion.MoveMask != 0 || last.Leader.X < 0 || last.Leader.Y < 0 || last.Leader.X >= scene.w || last.Leader.Y >= scene.h {
 				return nil, fmt.Errorf("saved return actor lacks a stationary checkpoint")
 			}
 			n.x, n.y, n.facing = last.Leader.X, last.Leader.Y, last.LeaderFacing

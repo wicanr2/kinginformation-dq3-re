@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.32.0",
+  "schema_version": "0.33.0",
   "default_refs": {
     "new_game_player": "dq3:character.new_game_hero",
     "registered_party_member": "dq3:character.registered_member"
@@ -943,5 +943,76 @@
       "note": "EXE sha2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; ITEM sha2567f3142de688ccca50fe888854b59ceb81b406b4c8eec038e719f10fda66e7f5d; count validated against actual archive.; single_hero_no_effect: IDA9.4 1397C..139A7/13C77..13C7B，正常木棒233來源c11efcbd；docs/188。"
     },
     "drop_blocked_mask": 57344
+  },
+  "npc_motion": {
+    "viewport_anchor": {
+      "x": 9,
+      "y": 7
+    },
+    "viewport_columns": 20,
+    "viewport_rows": 15,
+    "evaluation": {
+      "bound": 4,
+      "accepted": 1
+    },
+    "direction_bound": 4,
+    "direction_mask": 3,
+    "turn": {
+      "bound": 20,
+      "accepted": 1
+    },
+    "step": {
+      "bound": 10,
+      "accepted": 1
+    },
+    "move_mask": 4,
+    "frozen_mask": 128,
+    "quotient_mask": 255,
+    "turn_delta_by_layer": [
+      -1,
+      -1,
+      1,
+      1
+    ],
+    "directions": [
+      {
+        "x": 0,
+        "y": 1
+      },
+      {
+        "x": -1,
+        "y": 0
+      },
+      {
+        "x": 0,
+        "y": -1
+      },
+      {
+        "x": 1,
+        "y": 0
+      }
+    ],
+    "minimum_axis_distance": 3,
+    "blocked_attribute_mask": 255,
+    "evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; dosgolem2f44a68 readonly458 b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "address_space": "linear",
+      "address": "IDA9.4 linear0x11F4E..0x12024;0x12025..0x121EE; DGROUP0x0B35..0x0B44 base linear0x24DD0; file=linear-0xEC90",
+      "consumer": "automatic NPC visible-cell scan, random qualification, turn and step transaction",
+      "doc": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready",
+      "note": "1672 native entry/return cases, 19 outdoor turns, 110 step rolls and 5 coordinate writes; full global RNG and animation phase parity unknown"
+    },
+    "turn_layer_evidence": {
+      "level": "D3",
+      "source_kind": "exe",
+      "source": "DQ3.EXE sha256:5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c; dosgolem2f44a68 readonly458 b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6; controlled four-layer component fe39794adbe6c4c3a64fcaf320e7bec75984ff913afdc1906f8fc423d66358b1",
+      "address_space": "linear",
+      "address": "0x131E6..0x13282;0x12079..0x12098;0x11FB0..0x11FEA",
+      "consumer": "signed packed cell word compared with half byte-count; quotient AL delta by typed layer",
+      "doc": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready",
+      "note": "byte count<=255; occupied layer0/1 -> decrement; signed layer2/3 -> increment. Four native component cases seed1e2c, explicit layer injection and CPU reentry; normal upper-layer player parity unknown"
+    }
   }
 }

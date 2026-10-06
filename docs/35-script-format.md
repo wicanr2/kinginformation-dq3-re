@@ -262,3 +262,16 @@ try_step(dir):                              ; 落步前 5 道閘(任一不過 �
 - scripted-event 祠堂觸發**座標已解**(CTY93 (8,8) 祭司,見 §六);剩 NPC dlg id → event 83 派發微鏈。
 - ~~NPC 移動~~ **已解(見上 §九)**;~~鑰匙門~~ **已解(§八)**。
 - ~~鑰匙門~~ **已解(見上 §八)**。
+
+### 2026-10-06 NPC自動移動勘誤
+
+§九的「已靜態全解」及其步進偽碼已由原始bytes、IDA9.4與dosgolem正常458推翻。保留原文供追溯；現行規格見[docs/188 NPC自動移動READY](188-opening-escort-to-castle-spec.md#npc-motion-ready)。
+
+原始key為DQ3.EXE／115282bytes／SHA2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c。IDA linear12025/file3395、1207F/file33EF、120B0/file3420、1218D/file34FD，linear減EC90換算file；DGROUP base linear24DD0。唯讀來源b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6與1672入口／返回案例閉合戶外移動：
+
+- caller只掃玩家−9,−7的20×15同cell layer格子，順序為Y後X，向右／下移後可再次評估同一NPC。
+- 1207F比較signed packed map word與half loaded count。轉向以RND20後的AL商加減1，無落步。舊cur±1、npc_index比較及轉向後try_step均錯。
+- 120AA／120B0另有RND10==1。舊偽碼漏掉此gate。
+- 1218D比較整個attribute低byte為0，舊「attr bit0」錯。非零拒絕分支為static strong，未冒稱動態命中。
+
+戶外19轉向、110落步骰及5座標交易為限定confirmed；layer2／3的signed分支只列strong。完整原版全局亂數序列、動畫與campaign仍未知。§四「flags低3bit就是旗標ID」及「byte6覆寫」也不能作production規格；本批131F8..1323E保留完整旗標byte查表，原record6存工作槽7，工作槽6另存舊格高byte。這兩項保留原始bytes與索引，不擴張動態驗收範圍。

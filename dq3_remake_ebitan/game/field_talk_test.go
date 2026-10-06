@@ -53,6 +53,25 @@ func TestFieldRoomDoorDosgolemNormalInputComparison(t *testing.T) {
 	})
 }
 
+func TestNPCMotionDosgolemNormalInputComparison(t *testing.T) {
+	inputs := append(fieldTalkNormalInputs(), InputState{Enter: true, DirHeld: -1, DirEdge: -1})
+	scans := []string{"39", "39", "1c", "4b", "4d", "1c"}
+	for _, leg := range []struct {
+		dir, count int
+		scan       string
+	}{{2, 4, "4b"}, {3, 3, "4d"}, {0, 5, "50"}, {3, 13, "4d"}, {0, 5, "50"}, {2, 13, "4b"}, {1, 5, "48"}} {
+		for j := 0; j < leg.count; j++ {
+			inputs = append(inputs, InputState{DirHeld: leg.dir, DirEdge: leg.dir})
+			scans = append(scans, leg.scan)
+		}
+	}
+	runFieldTalkNormalComparison(t, fieldTalkNormalCase{
+		prefix: "issue4-npc-move-continue-normal-r1", sourceHash: "56ef662ad02931486a60bbfd0820a518887e699320ec1c3ff131070734ba95be",
+		output: "npc-motion", scope: "normal new-game through458 fixed field movement; ten slots unchanged; F5/F6 and next right movement; NPC/global RNG and full RGB parity unknown",
+		count: 458, artifacts: 1184, inputs: inputs, scans: scans, nextDir: 3, nextX: 4, nextY: 28,
+	})
+}
+
 func runFieldTalkNormalComparison(t *testing.T, scenario fieldTalkNormalCase) {
 	t.Helper()
 	if len(scenario.inputs) != scenario.count-404 || len(scenario.scans) != len(scenario.inputs) {

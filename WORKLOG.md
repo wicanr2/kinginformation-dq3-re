@@ -1937,3 +1937,16 @@ Issue #4持續更新；本次以「fix: restore native empty examine response an
 下一批原版410 Enter首結果來源62e40319接受，448鍵／896IRQ1／1040產物；409全前綴保持，ready/1997C、3,18、不開命令窗、持久區及clock0保持。仍source-only，下一步從合法409以正式Enter驗remake及後續操作，未審行為不進production。原版完整campaign、動畫時鐘及音畫仍未知。Issue #4各階段已更新。
 
 本批提交標題為「fix: restore native no-target talk response and fresh-key return」；提交與推送完成身分以git log及Issue最終回讀為準，尚未核對前不作已推送聲明。僅納入本批程式／JSON／工具／既有文件，13项使用者scratch及原版素材、database、binary與影像不入Git。Goal保持進行中。
+
+
+### 2026-10-06 NPC自動移動、四圖層常式與正常458收尾
+
+接續97b5c9e屋內NPC圖層切片。Issue #4已登記原版續行、局部證據、主線失敗查證與測試路線修正。唯一現況表已更新CONTEXT；詳細原始輸入、地址基準、推論等級、READY與有限CONFORMED集中docs/188，舊docs/35錯誤按追加勘誤回填，docs/84保存schema0.33.0契約。README僅更新穩定現況。
+
+修正NPC viewport／同圖層／逐格順序、RND10、商值轉向與地形低byte，所有參數從pack提供。原版正常458與1184產物接受；1672入口返回、499scan及四圖層component相同。正式409／422／458與存讀檔通過，842 PNG與NPC實作基準保持。458全畫布1751差異仍保留，完整NPC骰序／動畫與原版campaign未知。九JSON乾淨重建一致，A八格/storage1/save2保持，沒有新包。
+
+完整清單523頂層由526命令基準及10受影響補驗覆蓋，51既有選用SKIP；internal216／546、12套件及4選用SKIP通過。正式新遊戲THE END82.48秒、Go vet與desktop通過，最終必驗零SKIP／OOM0。基準唯一主線失敗已追到測試玩家策略及持有者／容量假設；全面旅行治療試作撤回，正式補給、復活、給予與魯拉後r16通過。沒有改產品戰鬥數值、物品規則或種子。r1..r15全部失敗保留，不挑重擲結果。
+
+圖形3GiB補驗OOM三次，保留final-r2；同工具鏈與命令調4GiB乾淨final-r3通過。vet混用參數、tmp_dump.go及IDA匯出引用舊動畫來源均為工具／runner錯誤，修正後重生，不歸產品缺陷。436筆IDA原始定位／bytes／xref與原19註記保持，新註記逐筆來源正確；三類壞來源拒絕，正對照同fe39794a。最終稽核3e0fd436、證據稽核a130bc54，詳細本機收據入口見docs/188。
+
+root-owned3213與Markdown目錄0基線保持，新工具與輸出UID/GID1000；13項使用者scratch及所有原版素材／影像／database／binary不提交。一次性容器收尾清理，未重建image、未動其他專案資源。本批提交標題「fix: match native NPC automatic movement rules」；提交／推送身分以git log及Issue最終回讀為準。Goal維持進行中，下一切片由合法458追加原版右移一鍵。

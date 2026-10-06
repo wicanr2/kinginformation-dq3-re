@@ -11,27 +11,99 @@
     "scope": "37次正常輸入；12180次遊戲計數、2030次翻轉、18532個NPC取圖配對；不證明重製相位或全畫面"
   },
   "annotations": [
-    {"ida_linear": "0x1fe87", "file_offset": "0x111f7", "bytes": "ff060200", "inference_level": "confirmed", "semantic": "遊戲接受一次更新後遞增DGROUP0002", "consumer": "IDA linear0x1FE97；此計數不等於dosgolem虛擬Ticks"},
-    {"ida_linear": "0x1fe97", "file_offset": "0x11207", "bytes": "833e020006", "inference_level": "confirmed", "semantic": "DGROUP0002與遊戲選定的六次更新比較", "consumer": "IDA linear0x1FE9E／0x1FEA4"},
-    {"ida_linear": "0x1fe9e", "file_offset": "0x1120e", "bytes": "c70602000000", "inference_level": "confirmed", "semantic": "第六次遊戲計數歸零", "consumer": "IDA linear0x1FEA4"},
-    {"ida_linear": "0x1fea4", "file_offset": "0x11214", "bytes": "8036040001", "inference_level": "confirmed", "semantic": "翻轉DGROUP0004的共用相位低位", "consumer": "IDA linear0x11EDA；2030次自然翻轉，不外推逐週期硬體時序"},
-    {"ida_linear": "0x11ed5", "file_offset": "0x3245", "bytes": "f6c280", "inference_level": "strong", "semantic": "檢查原始ctrl80h以略過共用相位", "consumer": "IDA linear0x11ED8／0x11EDE；本次凍結人物動態樣本為零"},
-    {"ida_linear": "0x11ed8", "file_offset": "0x3248", "bytes": "7504", "inference_level": "strong", "semantic": "ctrl80h分支跳過linear0x11EDA的相位加法", "consumer": "IDA linear0x11EDE；尚無凍結人物動態閉合"},
-    {"ida_linear": "0x11eda", "file_offset": "0x324a", "bytes": "021e0400", "inference_level": "confirmed", "semantic": "非凍結NPC的base frame加DGROUP0004共用相位", "consumer": "IDA linear0x11EE4；18532個自然取圖配對，不證明重製clock原點"},
-    {"ida_linear": "0x11ee4", "file_offset": "0x3254", "bytes": "8bb77a2b", "inference_level": "confirmed", "semantic": "以實際frame乘二的BX讀取runtime圖像偏移表", "consumer": "IDA linear0x11EE8觀測點；限已核對的NPC取圖路徑"},
     {
-      "ida_linear": "0x11974", "file_offset": "0x2ce4", "bytes": "2d0900", "inference_level": "confirmed",
+      "ida_linear": "0x1fe87",
+      "file_offset": "0x111f7",
+      "bytes": "ff060200",
+      "inference_level": "confirmed",
+      "semantic": "遊戲接受一次更新後遞增DGROUP0002",
+      "consumer": "IDA linear0x1FE97；此計數不等於dosgolem虛擬Ticks"
+    },
+    {
+      "ida_linear": "0x1fe97",
+      "file_offset": "0x11207",
+      "bytes": "833e020006",
+      "inference_level": "confirmed",
+      "semantic": "DGROUP0002與遊戲選定的六次更新比較",
+      "consumer": "IDA linear0x1FE9E／0x1FEA4"
+    },
+    {
+      "ida_linear": "0x1fe9e",
+      "file_offset": "0x1120e",
+      "bytes": "c70602000000",
+      "inference_level": "confirmed",
+      "semantic": "第六次遊戲計數歸零",
+      "consumer": "IDA linear0x1FEA4"
+    },
+    {
+      "ida_linear": "0x1fea4",
+      "file_offset": "0x11214",
+      "bytes": "8036040001",
+      "inference_level": "confirmed",
+      "semantic": "翻轉DGROUP0004的共用相位低位",
+      "consumer": "IDA linear0x11EDA；2030次自然翻轉，不外推逐週期硬體時序"
+    },
+    {
+      "ida_linear": "0x11ed5",
+      "file_offset": "0x3245",
+      "bytes": "f6c280",
+      "inference_level": "strong",
+      "semantic": "檢查原始ctrl80h以略過共用相位",
+      "consumer": "IDA linear0x11ED8／0x11EDE；本次凍結人物動態樣本為零"
+    },
+    {
+      "ida_linear": "0x11ed8",
+      "file_offset": "0x3248",
+      "bytes": "7504",
+      "inference_level": "strong",
+      "semantic": "ctrl80h分支跳過linear0x11EDA的相位加法",
+      "consumer": "IDA linear0x11EDE；尚無凍結人物動態閉合"
+    },
+    {
+      "ida_linear": "0x11eda",
+      "file_offset": "0x324a",
+      "bytes": "021e0400",
+      "inference_level": "confirmed",
+      "semantic": "非凍結NPC的base frame加DGROUP0004共用相位",
+      "consumer": "IDA linear0x11EE4；18532個自然取圖配對，不證明重製clock原點"
+    },
+    {
+      "ida_linear": "0x11ee4",
+      "file_offset": "0x3254",
+      "bytes": "8bb77a2b",
+      "inference_level": "confirmed",
+      "semantic": "以實際frame乘二的BX讀取runtime圖像偏移表",
+      "consumer": "IDA linear0x11EE8觀測點；限已核對的NPC取圖路徑"
+    },
+    {
+      "ida_linear": "0x11974",
+      "file_offset": "0x2ce4",
+      "bytes": "2d0900",
+      "inference_level": "confirmed",
       "semantic": "目的城鎮視野原點X為玩家X減9；不夾地圖邊界",
       "consumer": "IDA linear0x11977→0x11991→0x11D8A；限定CTY00 section0的42狀態及1020A完整畫布",
       "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-03 城鎮攝影機有限READY",
-      "dynamic_evidence": {"path": "work/dosgolem-opening/issue4-mother-finish-receipt.json", "sha256": "9358ce6e7a8e5c4547555daeccf74a2339f003ab106ebe4d57b32111602c0f3f", "tool": "dosgolem 2f44a68", "scope": "原始座標及最後1020A畫布；固定b7516c5正常InputState攝影機原型完整RGB差0，不證明其他CTY"}
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-mother-finish-receipt.json",
+        "sha256": "9358ce6e7a8e5c4547555daeccf74a2339f003ab106ebe4d57b32111602c0f3f",
+        "tool": "dosgolem 2f44a68",
+        "scope": "原始座標及最後1020A畫布；固定b7516c5正常InputState攝影機原型完整RGB差0，不證明其他CTY"
+      }
     },
     {
-      "ida_linear": "0x1197e", "file_offset": "0x2cee", "bytes": "83eb07", "inference_level": "confirmed",
+      "ida_linear": "0x1197e",
+      "file_offset": "0x2cee",
+      "bytes": "83eb07",
+      "inference_level": "confirmed",
       "semantic": "目的城鎮視野原點Y為玩家Y減7；不夾地圖邊界",
       "consumer": "IDA linear0x11981→0x11991→0x11D8A；限定CTY00 section0的42狀態及1020A完整畫布",
       "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-03 城鎮攝影機有限READY",
-      "dynamic_evidence": {"path": "work/dosgolem-opening/issue4-mother-finish-receipt.json", "sha256": "9358ce6e7a8e5c4547555daeccf74a2339f003ab106ebe4d57b32111602c0f3f", "tool": "dosgolem 2f44a68", "scope": "原始座標及最後1020A畫布；固定b7516c5正常InputState攝影機原型完整RGB差0，不證明其他CTY"}
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-mother-finish-receipt.json",
+        "sha256": "9358ce6e7a8e5c4547555daeccf74a2339f003ab106ebe4d57b32111602c0f3f",
+        "tool": "dosgolem 2f44a68",
+        "scope": "原始座標及最後1020A畫布；固定b7516c5正常InputState攝影機原型完整RGB差0，不證明其他CTY"
+      }
     },
     {
       "ida_linear": "0x1024c",
@@ -123,50 +195,214 @@
         "scope": "100次正常輸入、九次文字等待、物品及金錢writer返回、旗標交易與正常runner；不證明滿欄提示、音訊或硬體逐週期"
       }
     },
-      {
-        "ida_linear": "0x11e19",
-        "file_offset": "0x3189",
-        "bytes": "8a1e570b",
-        "inference_level": "confirmed",
-        "semantic": "非零selector與NPC cell C0層不符時取other tile並略過NPC consumer；限定正常418/420/421",
-        "consumer": "IDA11E1D→11E4B",
-        "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
-        "dynamic_evidence": {
-          "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
-          "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
-          "tool": "dosgolem 2f44a68",
-          "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
-        }
-      },
-      {
-        "ida_linear": "0x11e25",
-        "file_offset": "0x3195",
-        "bytes": "8a1e560b",
-        "inference_level": "confirmed",
-        "semantic": "零selector與NPC cell非零層時取base tile並略過NPC consumer；限定正常422的2,16及8,21",
-        "consumer": "IDA11E29→11E4B",
-        "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
-        "dynamic_evidence": {
-          "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
-          "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
-          "tool": "dosgolem 2f44a68",
-          "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
-        }
-      },
-      {
-        "ida_linear": "0x11e33",
-        "file_offset": "0x31a3",
-        "bytes": "e87100",
-        "inference_level": "confirmed",
-        "semantic": "同層cell的AH20 NPC分支呼叫原始adapter；限定正常422 selector00/cell layer0三位置",
-        "consumer": "IDA11EA7→11ECC→11ED0",
-        "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
-        "dynamic_evidence": {
-          "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
-          "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
-          "tool": "dosgolem 2f44a68",
-          "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
-        }
+    {
+      "ida_linear": "0x11e19",
+      "file_offset": "0x3189",
+      "bytes": "8a1e570b",
+      "inference_level": "confirmed",
+      "semantic": "非零selector與NPC cell C0層不符時取other tile並略過NPC consumer；限定正常418/420/421",
+      "consumer": "IDA11E1D→11E4B",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
+        "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
+        "tool": "dosgolem 2f44a68",
+        "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
       }
-  ]
+    },
+    {
+      "ida_linear": "0x11e25",
+      "file_offset": "0x3195",
+      "bytes": "8a1e560b",
+      "inference_level": "confirmed",
+      "semantic": "零selector與NPC cell非零層時取base tile並略過NPC consumer；限定正常422的2,16及8,21",
+      "consumer": "IDA11E29→11E4B",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
+        "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
+        "tool": "dosgolem 2f44a68",
+        "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
+      }
+    },
+    {
+      "ida_linear": "0x11e33",
+      "file_offset": "0x31a3",
+      "bytes": "e87100",
+      "inference_level": "confirmed",
+      "semantic": "同層cell的AH20 NPC分支呼叫原始adapter；限定正常422 selector00/cell layer0三位置",
+      "consumer": "IDA11EA7→11ECC→11ED0",
+      "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
+        "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
+        "tool": "dosgolem 2f44a68",
+        "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
+      }
+    },
+    {
+      "ida_linear": "0x11fea",
+      "file_offset": "0x335a",
+      "bytes": "e83800",
+      "inference_level": "confirmed",
+      "semantic": "同cell layer及visible 20×15掃描中的NPC mover caller",
+      "consumer": "0x12025;1672 entry/return及499完整掃描",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    },
+    {
+      "ida_linear": "0x12043",
+      "file_offset": "0x33b3",
+      "bytes": "83fa01",
+      "inference_level": "confirmed",
+      "semantic": "先判定RND4餘數1，拒絕時不進可動人物分支",
+      "consumer": "0x12048;1672 native cases",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    },
+    {
+      "ida_linear": "0x1207f",
+      "file_offset": "0x33ef",
+      "bytes": "3bf9",
+      "inference_level": "confirmed",
+      "semantic": "DI是signed packed map word，與half loaded count比較；戶外大於half故減AL商",
+      "consumer": "0x12085/0x1208C/0x12098; native four-layer controlled component ctrl04/04/06/06, explicit injection; normal high-layer unknown",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6; four-layer component fe39794adbe6c4c3a64fcaf320e7bec75984ff913afdc1906f8fc423d66358b1",
+      "previous_scope": {
+        "consumer": "0x1208C/0x12098;19戶外轉向，高圖層分支static strong",
+        "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6"
+      },
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown",
+        "controlled_turn_layers_sha256": "fe39794adbe6c4c3a64fcaf320e7bec75984ff913afdc1906f8fc423d66358b1",
+        "controlled_state_injection": true
+      }
+    },
+    {
+      "ida_linear": "0x12098",
+      "file_offset": "0x3408",
+      "bytes": "884403",
+      "inference_level": "confirmed",
+      "semantic": "轉向以RND20商AL加delta後只改ctrl低兩位，不落步",
+      "consumer": "0x1209B/0x120A6;19自然例座標不變",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    },
+    {
+      "ida_linear": "0x120b0",
+      "file_offset": "0x3420",
+      "bytes": "83fa01",
+      "inference_level": "confirmed",
+      "semantic": "自動落步另需RND10餘數1",
+      "consumer": "0x12161;110自然骰值、5座標寫入",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    },
+    {
+      "ida_linear": "0x1218d",
+      "file_offset": "0x34fd",
+      "bytes": "3c00",
+      "inference_level": "strong",
+      "semantic": "NPC地形gate比较AL為0，整個attribute低byte非零拒絕",
+      "consumer": "0x12199;成功例低byte0，非零拒絕分支無動態命中",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    },
+    {
+      "ida_linear": "0x121ad",
+      "file_offset": "0x351d",
+      "bytes": "887401",
+      "inference_level": "confirmed",
+      "semantic": "通過自動落步gate後寫NPC工作槽Y",
+      "consumer": "0x121B2;5自然座標交易",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    },
+    {
+      "ida_linear": "0x121b2",
+      "file_offset": "0x3522",
+      "bytes": "8814",
+      "inference_level": "confirmed",
+      "semantic": "通過自動落步gate後寫NPC工作槽X",
+      "consumer": "0x121D5;5自然座標交易",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    },
+    {
+      "ida_linear": "0x131ec",
+      "file_offset": "0x455c",
+      "bytes": "890e320b",
+      "inference_level": "confirmed",
+      "semantic": "從原始NPC表byte count寫DGROUP0B32初始數量",
+      "consumer": "0x131F7/0x13282;14 native table writer observations",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    },
+    {
+      "ida_linear": "0x13282",
+      "file_offset": "0x45f2",
+      "bytes": "892e320b",
+      "inference_level": "confirmed",
+      "semantic": "story flag篩選及壓緊後，以BP寫DGROUP0B32工作槽count",
+      "consumer": "0x12079;戶外最終14；writer前觀測及後續consumer闭合",
+      "evidence": "docs/188-opening-escort-to-castle-spec.md#npc-motion-ready; native source b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+      "dynamic_evidence": {
+        "path": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+        "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+        "tool": "dosgolem 2f44a68",
+        "scope": "automatic mover; original global RNG and animation unknown"
+      }
+    }
+  ],
+  "npc_motion_review": {
+    "source": "work/dosgolem-opening/issue4-npc-move-state-normal-r1-source-r1-receipt.json",
+    "sha256": "b2fdf7818b4d8ca07d97d5796db6ac241490a6899f8352ab2396cabb3b96c9c6",
+    "scope": "automatic mover only; original global RNG and NPC animation clock not closed",
+    "old_annotations_preserved": 19,
+    "controlled_turn_layer_source": "work/dosgolem-opening/issue4-npc-turn-layers-component-r1-receipt-r1.json",
+    "controlled_turn_layer_sha256": "fe39794adbe6c4c3a64fcaf320e7bec75984ff913afdc1906f8fc423d66358b1"
+  }
 }

@@ -1,5 +1,22 @@
 # 84 — 精訊版 DQ 共用 game pack：JSON 欄位契約
 
+## NPC自動移動（schema0.33.0／content0.1.106）
+
+`characters.npc_motion`必填。原始入口與有限READY見[docs/188](188-opening-escort-to-castle-spec.md#npc-motion-ready)。canonical為`sha256:67af5bb57edf02461fa0e6d3ab3860c0a5279a151c763a08efd9830ba1d308e4`。A唯一有序八格、save2/storage1保持；不同pack hash或舊schema存檔拒絕。
+
+| 欄位 | 契約 |
+| --- | --- |
+| `viewport_anchor`、`viewport_columns`、`viewport_rows` | 相對玩家的起點與有限掃描範圍，原版−9,−7及20×15。只掃界內同cell layer，順序Y後X。占格查詢使用當下座標，向右／下移後可再次評估同一NPC。缺map停止移動。 |
+| `evaluation`、`direction_bound`、`turn`、`step` | 有界亂數契約，各roll含必填且非null的`bound`／`accepted`。依序評估骰、可動位、方向骰，再走轉向或落步骰。RND10 gate不得省略。 |
+| `direction_mask`、`move_mask`、`frozen_mask`、`directions` | 原始ctrl位與16bytes整數方向表。位域不能重疊；方向須完整、唯一且為單格水平或垂直步。共用Go沒有DQ3的位mask或方向位移fallback。 |
+| `quotient_mask`、`turn_delta_by_layer` | 轉向來源為該次亂數運算的商低byte，依typed cell layer取delta，再合併ctrl方向。轉向後返回，不試走。layer0／1為−1、2／3為+1，化簡依據為signed occupied cell word與最多127的half byte-count比較。 |
+| `minimum_axis_distance`、`blocked_attribute_mask` | 分軸目標距離至少3；目標須界內、未被NPC占格，attribute整個低byte為0。缺attribute或越界索引拒絕整個座標交易，不把缺資料當通行。 |
+| `evidence`、`turn_layer_evidence` | 兩者均須D3。正常來源有19次戶外轉向；四圖層局部常式另以預設seed1e2c及明示狀態注入、CPU重入閉合signed分支。未宣稱高圖層正常玩家V3。 |
+
+契約沒有任意程式碼。正式場景獨立seed與18幀動畫近似沿用，完整NPC亂數序列及動畫時鐘仍未知；測試seed不改正式遊戲。1672個受控原版元件及499完整cell scans用已記錄的原版初始狀態，另外以正式新遊戲輸入至458、十槽保持、F5／F6與下一步驗證玩家路徑。元件通過不等於全局RND或全畫布V3。
+
+入口：[typed契約與validator](../dq3_remake_ebitan/internal/gamepack/npc_motion.go)、[EXE／方向表parity與缺欄位拒絕](../dq3_remake_ebitan/internal/gamepack/npc_motion_test.go)、[正式NPC更新](../dq3_remake_ebitan/game/npc.go)、[原版entry／return及完整scan元件](../dq3_remake_ebitan/game/npc_motion_oracle_test.go)、[正式458輸入與存讀檔](../dq3_remake_ebitan/game/field_talk_test.go)。乾淨重建使用[tools/migrate_npc_motion_pack.py](../tools/migrate_npc_motion_pack.py)，Docker契約與原版producer／checker沿docs/188。先前章節保留各版歷史，現行schema以本節為準。
+
 ## 單人城鎮無對象對話（schema0.32.0／content0.1.104）
 
 `interface.field_talk`必填。有限READY及原版正常409來源見[docs/188](188-opening-escort-to-castle-spec.md)。canonical為`sha256:c4285a9e4eb81750d4dff5c247c8142be2324083028ccfed86d507045e6504cd`；A唯一八格、save2/storage1保持，舊schema與不同pack hash存檔拒絕。

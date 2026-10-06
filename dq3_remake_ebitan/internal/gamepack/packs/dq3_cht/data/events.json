@@ -49,7 +49,7 @@
       }
     }
   ],
-  "schema_version": "0.32.0",
+  "schema_version": "0.33.0",
   "region_dialogue_reward_events": [
     {
       "id": "dq3:event.first_audience",

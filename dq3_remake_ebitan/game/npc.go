@@ -1,102 +1,114 @@
 package game
 
-// NPC 隨機走動步進器(移植 dq3_npc.c / dq3_scene_npc_tick,鏡射 EXE mover L02025)。
-// Go 版用 npcInst 位置 + Scene.npcAt/Blocked 取代 C 的 hi_map OCCUPIED stamp(語意等價)。
+import "github.com/wicanr2/dq3_remake_ebitan/internal/gamepack"
 
-var npcDDX = [4]int{0, -1, 0, 1} // 0下 1左 2上 3右(EXE [0xb35] 表)
-var npcDDY = [4]int{1, 0, -1, 0}
+func (g *Game) npcMotion() *gamepack.NPCMotionDefinition {
+	if g.pack == nil {
+		return nil
+	}
+	return g.pack.Characters.NPCMotion
+}
 
-const (
-	npcMoveBit   = 0x04 // ctrl bit2:可移動(清 = 靜止 NPC)
-	npcFrozenBit = 0x80 // ctrl bit7:凍結
-)
-
-// npcTick:每幀步進當前城鎮所有 NPC(移植 dq3_scene_npc_tick)。地表/戰鬥/對話中不呼叫。
+// Automatic movement visits live cells in row-major order. An actor moving
+// right or down can therefore be visited again later in the same scan.
 func (g *Game) npcTick() {
-	sc := g.cur
-	if sc == nil || !g.inTown {
+	sc, rule := g.cur, g.npcMotion()
+	if sc == nil || !g.inTown || rule == nil {
 		return
 	}
-	half := len(sc.npcs) / 2
+	// Keep the existing animation approximation separate from movement order.
 	for i := range sc.npcs {
 		n := &sc.npcs[i]
-		if n.ctrl&npcFrozenBit == 0 {
+		if n.ctrl&rule.FrozenMask == 0 {
 			n.anim++
 			if n.anim%18 == 0 {
 				n.walk ^= 1
 			}
 		}
-		g.npcStep(i, half)
 	}
-}
-
-// CTY NPC ctrl 的方向序是下、左、上、右；renderer／玩家方向序是下、上、左、右。
-// 兩者不能直接共用 raw 0..3，否則 NPC 往右移動時仍可能沿交談後的舊面向滑動。
-func npcCtrlFacing(dir int) int {
-	return [...]int{0, 2, 1, 3}[dir&3]
-}
-
-// npcStep:單一 NPC 步進判定(移植 dq3_npc_step)。
-func (g *Game) npcStep(idx, half int) {
-	sc := g.cur
-	n := &sc.npcs[idx]
-	if sc.npcRng.Next(4) != 1 { // 節流:每幀 1/4 才評估(L02040)
+	if len(sc.hiMap) != sc.w*sc.h || g.px < 0 || g.py < 0 || g.px >= sc.w || g.py >= sc.h {
 		return
 	}
-	if n.ctrl&npcFrozenBit != 0 { // 凍結(L02048)
-		return
-	}
-	if n.ctrl&npcMoveBit == 0 { // bit2 清 = 靜止 NPC(L0204e)
-		return
-	}
-	cur := n.ctrl & 3
-	rdir := sc.npcRng.Next(4) // 隨機方向(L02062)
-	if rdir == cur {          // 同朝向 → 直接走(L02057)
-		n.facing = npcCtrlFacing(cur)
-		g.npcTryStep(idx)
-		return
-	}
-	if sc.npcRng.Next(20) == 1 { // 1/20 才轉向(L02071)
-		nd := (cur + 3) & 3 // ±1 by index(L0207f):前半 +1、後半 -1
-		if idx < half {
-			nd = (cur + 1) & 3
+	layer := sc.tileLayer(g.px, g.py)
+	left, top := g.px-rule.ViewportAnchor.X, g.py-rule.ViewportAnchor.Y
+	for y := top; y < top+rule.ViewportRows; y++ {
+		for x := left; x < left+rule.ViewportColumns; x++ {
+			if x < 0 || y < 0 || x >= sc.w || y >= sc.h || sc.tileLayer(x, y) != layer {
+				continue
+			}
+			if idx := sc.npcAt(x, y); idx >= 0 {
+				g.npcStep(idx)
+			}
 		}
-		n.ctrl = (n.ctrl &^ 3) | nd
-		n.facing = npcCtrlFacing(nd)
-		g.npcTryStep(idx)
 	}
 }
 
-// npcTryStep:沿當前朝向試走一步(移植 try_step)。成功回 true。
-func (g *Game) npcTryStep(idx int) bool {
-	sc := g.cur
+// Raw town direction order and renderer direction order are distinct formats.
+func npcCtrlFacing(dir int) int { return [...]int{0, 2, 1, 3}[dir&3] }
+
+func (g *Game) npcStep(idx int) {
+	sc, rule := g.cur, g.npcMotion()
+	if sc == nil || rule == nil || idx < 0 || idx >= len(sc.npcs) || len(sc.hiMap) != sc.w*sc.h {
+		return
+	}
 	n := &sc.npcs[idx]
-	dir := n.ctrl & 3
+	if n.x < 0 || n.y < 0 || n.x >= sc.w || n.y >= sc.h {
+		return
+	}
+	if sc.npcRng.Next(rule.Evaluation.Bound) != *rule.Evaluation.Accepted || n.ctrl&rule.FrozenMask != 0 || n.ctrl&rule.MoveMask == 0 {
+		return
+	}
+	dir := n.ctrl & rule.DirectionMask
+	if sc.npcRng.Next(rule.DirectionBound) == dir {
+		if sc.npcRng.Next(rule.Step.Bound) == *rule.Step.Accepted {
+			g.npcTryStep(idx)
+		}
+		return
+	}
+	if sc.npcRng.Next(rule.Turn.Bound) != *rule.Turn.Accepted {
+		return
+	}
+	layer := sc.tileLayer(n.x, n.y)
+	if layer < 0 || layer >= len(rule.TurnDeltaByLayer) {
+		return
+	}
+	quotient := (int(sc.npcRng.State()) / rule.Turn.Bound) & rule.QuotientMask
+	dir = (quotient + rule.TurnDeltaByLayer[layer]) & rule.DirectionMask
+	n.ctrl = (n.ctrl &^ rule.DirectionMask) | dir
 	n.facing = npcCtrlFacing(dir)
-	tx, ty := n.x+npcDDX[dir], n.y+npcDDY[dir]
-	if tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h { // 界外
+}
+
+// Random qualification belongs to npcStep. This transaction checks bounds,
+// proximity, occupancy and the complete pack-owned terrain mask.
+func (g *Game) npcTryStep(idx int) bool {
+	sc, rule := g.cur, g.npcMotion()
+	if sc == nil || rule == nil || idx < 0 || idx >= len(sc.npcs) || sc.attr == nil {
 		return false
 	}
-	// 近玩家閘(L020e1/L02111,分軸):左右看 X、上下看 Y;距離 <3 不走(留空間讓玩家靠近對話)。
-	if dir&1 != 0 {
-		if d := g.px - tx; d < 3 && d > -3 {
-			return false
-		}
-	} else {
-		if d := g.py - ty; d < 3 && d > -3 {
-			return false
-		}
-	}
-	if tx == g.px && ty == g.py { // 踏到玩家格 → 反向、不走(L02146)
-		n.ctrl = (n.ctrl &^ 3) | ((dir + 2) & 3)
+	n := &sc.npcs[idx]
+	dir := n.ctrl & rule.DirectionMask
+	if dir >= len(rule.Directions) {
 		return false
 	}
-	if sc.npcAt(tx, ty) >= 0 { // 已有 NPC(L0217e)
+	d := rule.Directions[dir]
+	tx, ty := n.x+d.X, n.y+d.Y
+	if tx < 0 || ty < 0 || tx >= sc.w || ty >= sc.h {
 		return false
 	}
-	if sc.attr.Blocked(sc.tileIdx(tx, ty)) { // 牆(attr bit0,L0218c)
+	distance := g.py - ty
+	if d.X != 0 {
+		distance = g.px - tx
+	}
+	if distance < rule.MinimumAxisDistance && distance > -rule.MinimumAxisDistance {
 		return false
 	}
-	n.x, n.y = tx, ty
+	if sc.npcAt(tx, ty) >= 0 {
+		return false
+	}
+	tile := sc.tileIdx(tx, ty)
+	if tile < 0 || tile >= len(sc.attr.A) || int(sc.attr.A[tile])&rule.BlockedAttributeMask != 0 {
+		return false
+	}
+	n.x, n.y, n.facing = tx, ty, npcCtrlFacing(dir)
 	return true
 }

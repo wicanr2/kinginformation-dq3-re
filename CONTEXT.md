@@ -226,15 +226,15 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-06） | 最近驗收與界線 |
 |---|---|
-| 現行程式 | dq3_remake_ebitan/；renderer尊重既有scene_tile_layers的NPC圖層；schema0.32.0/content0.1.105，canonical sha256:a56f924086b32892dabf20d7812116096ef205518790d90e002a613498007385；A有序八格/storage1/save2保持，沒有新包 |
-| 最新remake已完成 | 屋內NPC遮蔽已有限CONFORMED；正常Enter／左牆／房門外422、snapshot／game PRNG、十JSON槽、正式F5／F6及Load後下一步通過 |
-| 最新原版oracle | dosgolem2f44a68正常422來源b7d0b153、460鍵／920IRQ1／1076產物，414前綴保持。八筆唯讀native來源8d01dbfd，全部422事件與產物逐byte相同；418/420/421略過室外NPC，422略過兩個室內NPC及顯示三個室外NPC。seed1357一次，無注入／restore |
-| 最新畫面已驗 | 407／411／416完整RGB0；405..421原始BLS／BLK診斷未解釋像素0。422兩個異層NPC完整背景共1536pixels零差異；較早178..182也因同一異層洩漏修正而減少差異 |
-| 最新畫面未通過 | 422完整RGB3390→2517，hero兩原始影格解釋160，2357仍未解釋；戶外NPC位置與動畫時鐘未知，完整V3未通過。所有完整差異保留，不裁切、遮罩、調相位或改圖片 |
-| 下一production切片 | 從合法422核對戶外NPC位置與後續正常玩家路徑；先取原版證據、界定可比狀態並審READY，首個差異才開窄切片 |
-| 本輪有限CONFORMED | 正常410 Enter不開窗、414左牆及422屋內NPC異層遮蔽限定CONFORMED；不宣稱完整422 V3。原版保存仍截至359，remake新F5/F6列內部回歸 |
-| 原版oracle仍未知 | 422屋門的完整畫面V3、戶外NPC亂數位置、動畫時鐘、其他Enter分支、其他圖層／場景NPC動態、多人／异常無對象對話、其他調查事件與道具分支、其他world／室內F6、多槽世界、入隊返回、非空分離／滿隊、多角色改名、音畫及完整campaign |
-| 現行remake回歸 | 完整game519頂層覆蓋、523命令、468不同頂層／145子PASS，51既有選用SKIP；internal214頂層／531子、12套件PASS，4既有選用SKIP。正常THE END72.10秒、Go vet與Linux desktop PASS，必驗零SKIP，OOM／kill0；七玩法JSON保持，九JSON乾淨重建相同；兩路最終533 PNG與GREEN一致，修正前RED保留 |
+| 現行程式 | dq3_remake_ebitan/；NPC視野逐格掃描、同圖層、亂數閘門、商值轉向與地形交易由pack提供；schema0.33.0/content0.1.106，canonical sha256:67af5bb57edf02461fa0e6d3ab3860c0a5279a151c763a08efd9830ba1d308e4；A八格/storage1/save2保持，無新包 |
+| 最新remake已完成 | NPC自動移動規則有限CONFORMED；1672入口返回、499完整scan、3次向後續格重複評估、四圖層常式通過。正常409／422／458、持久snapshot／game PRNG、十JSON槽、正式F5／F6及Load後下一步通過 |
+| 最新原版oracle | dosgolem2f44a68正常458來源56ef662a、496鍵／992IRQ1／1184產物，原422前綴保持。唯讀完整NPC來源b2fdf781接受，19自然轉向／110落步骰／5移動；seed1357一次，無注入／restore。四圖層fe39794a另列局部受控證據，seed1e2c各案固定、明示注入／CPU重入 |
+| 最新畫面已驗 | 三條正常409／422／458完整畫布保留，842張PNG與本批NPC實作基準逐byte相同；既有屋內NPC遮蔽條件仍通過。控制規則同狀態元件不外推全部人物位置 |
+| 最新畫面未通過 | 正常458完整640×350 RGB差1751；原版／remake NPC全局亂數條件及動畫時鐘不相同，完整V3未知。保留全部差異，不裁切、遮罩、調相位或改圖片 |
+| 下一production切片 | 從合法458以預先固定右移一鍵取得原版459收據，核對既有remake Load後右移4,28與首個玩家差異；先RE再審READY，不猜補NPC全局時序 |
+| 本輪有限CONFORMED | 原始NPC自動mover規則E2與正常458接續／存讀檔E3。四圖層轉向限定局部D3，非正常高圖層V3；全畫布及原版完整campaign未通過。原版保存仍截至359，remake F5/F6列內部回歸 |
+| 原版oracle仍未知 | NPC全局骰序、動畫時鐘、正常高圖層自動移動與其他場景、非零地形拒絕的動態分支、其他Enter／調查／道具及多人操作、其他world／室內F6、多槽世界、入隊返回、非空分離／滿隊、多角色改名、音畫及完整campaign |
+| 現行remake回歸 | 現行523頂層清單由526命令基準＋10最終補驗閉合，51既有選用SKIP；不是同binary全量重跑。internal216頂層／546子、12套件PASS、4既有選用SKIP。正式新遊戲THE END82.48秒、Go vet、Linux desktop PASS，必驗零SKIP、最終OOM／kill0；九JSON乾淨重建、842 PNG保持、三壞來源拒絕及正對照相同；失敗／試作全部保留 |
 | 入隊返回原版限制 | r2在2,500,000,001指令上限仍為199包／474IRQ1，計時器前進3003；未觀察到自然caller返回。只核對18筆既有玩家層IDA bytes；2898 writer及22E10 callee語意unknown，未建立完成收據 |
 | 額外驗證限制 | save_version2及完整pack身分必填，所有owner在restore前驗證；無metadata歷史migration已移除。F6依pack重設世界clock，標題Load保留JSON時鐘。綠色回歸不升格完整原版parity |
 
