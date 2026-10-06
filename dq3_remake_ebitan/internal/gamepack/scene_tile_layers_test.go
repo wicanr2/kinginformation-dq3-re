@@ -1,6 +1,7 @@
 package gamepack
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -116,6 +117,36 @@ func TestSceneTileLayersMatchOriginalHeaderAndConsumer(t *testing.T) {
 	}
 	if dq3data.TownTileLayer(field.HiMap[22*field.W+5]) == fieldLayers.BaseLayer {
 		t.Fatal("original normal tavern path did not sample non-base layer")
+	}
+	// Native layer branches precede the NPC flag test and sprite adapter. These
+	// original bytes explain both hidden exterior actors while inside and hidden
+	// interior actors after the normal room-door step.
+	for _, original := range []struct {
+		start int
+		data  []byte
+	}{
+		{0x11e09, []byte{0x80, 0xe7, 0xc0}},
+		{0x11e13, []byte{0x3a, 0x3e, 0x79, 0x25}},
+		{0x11e19, []byte{0x8a, 0x1e, 0x57, 0x0b}},
+		{0x11e20, []byte{0xf6, 0xc7, 0xc0}},
+		{0x11e25, []byte{0x8a, 0x1e, 0x56, 0x0b}},
+		{0x11e2c, []byte{0xf6, 0xc4, 0x20}},
+		{0x11e33, []byte{0xe8, 0x71, 0x00}},
+		{0x11ecc, []byte{0xe8, 0x01, 0x00}},
+	} {
+		off := original.start - 0xec90
+		if !bytes.Equal(exe[off:off+len(original.data)], original.data) {
+			t.Fatalf("native NPC layer consumer differs at IDA linear%X", original.start)
+		}
+	}
+	if dq3data.TownTileLayer(field.HiMap[22*field.W+4]) != 2 || dq3data.TownTileLayer(field.HiMap[23*field.W+4]) != fieldLayers.BaseLayer {
+		t.Fatal("normal421/422 player layer transition differs from source")
+	}
+	for _, record := range []int{14, 15} {
+		npc := field.NPCs[record]
+		if dq3data.TownTileLayer(field.HiMap[npc.Y*field.W+npc.X]) != 2 {
+			t.Fatal("native hidden NPC cell layer differs", record)
+		}
 	}
 	t.Logf("normal tavern layer=%d", dq3data.TownTileLayer(field.HiMap[22*field.W+5]))
 	if p.SceneTileLayers(25, 1) != nil || p.SceneTileLayers(0, 2) != nil {

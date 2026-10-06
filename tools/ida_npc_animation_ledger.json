@@ -122,6 +122,51 @@
         "tool": "dosgolem 2f44a68",
         "scope": "100次正常輸入、九次文字等待、物品及金錢writer返回、旗標交易與正常runner；不證明滿欄提示、音訊或硬體逐週期"
       }
-    }
+    },
+      {
+        "ida_linear": "0x11e19",
+        "file_offset": "0x3189",
+        "bytes": "8a1e570b",
+        "inference_level": "confirmed",
+        "semantic": "非零selector與NPC cell C0層不符時取other tile並略過NPC consumer；限定正常418/420/421",
+        "consumer": "IDA11E1D→11E4B",
+        "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
+        "dynamic_evidence": {
+          "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
+          "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
+          "tool": "dosgolem 2f44a68",
+          "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
+        }
+      },
+      {
+        "ida_linear": "0x11e25",
+        "file_offset": "0x3195",
+        "bytes": "8a1e560b",
+        "inference_level": "confirmed",
+        "semantic": "零selector與NPC cell非零層時取base tile並略過NPC consumer；限定正常422的2,16及8,21",
+        "consumer": "IDA11E29→11E4B",
+        "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
+        "dynamic_evidence": {
+          "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
+          "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
+          "tool": "dosgolem 2f44a68",
+          "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
+        }
+      },
+      {
+        "ida_linear": "0x11e33",
+        "file_offset": "0x31a3",
+        "bytes": "e87100",
+        "inference_level": "confirmed",
+        "semantic": "同層cell的AH20 NPC分支呼叫原始adapter；限定正常422 selector00/cell layer0三位置",
+        "consumer": "IDA11EA7→11ECC→11ED0",
+        "review_reference": "docs/188-opening-escort-to-castle-spec.md：2026-10-06 屋內NPC遮蔽READY",
+        "dynamic_evidence": {
+          "path": "work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json",
+          "sha256": "8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
+          "tool": "dosgolem 2f44a68",
+          "scope": "相同422事件及1076產物保持；八筆唯讀NPC圖層分支，seed1357一次；不宣稱動畫時鐘"
+        }
+      }
   ]
 }

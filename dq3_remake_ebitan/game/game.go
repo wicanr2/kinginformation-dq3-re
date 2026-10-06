@@ -3049,9 +3049,14 @@ func (g *Game) renderFrame() {
 	}
 	g.drawPhoenixAltars(camX, camY)
 	g.drawTrackedWorldObjects(camX, camY)
-	for i := range sc.npcs { // NPC(在視窗內才畫;靜態朝下 frame)
+	for i := range sc.npcs { // NPC 先驗視野，再套用已宣告的圖層可見條件。
 		n := &sc.npcs[i]
 		if n.spr == nil || n.x < camX || n.x >= camX+ViewCols || n.y < camY || n.y >= camY+ViewRows {
+			continue
+		}
+		// Declared cell layers also gate native NPC drawing, before the sprite
+		// consumer. Preserve the NPC state when its cell is covered by another layer.
+		if layers != nil && (n.x < 0 || n.y < 0 || n.x >= sc.w || n.y >= sc.h || sc.tileLayer(n.x, n.y) != playerLayer) {
 			continue
 		}
 		frame := n.facing*dq3data.CharWalk + n.walk

@@ -9,16 +9,62 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 )
 
+type fieldTalkNormalCase struct {
+	prefix, sourceHash, output, scope string
+	count, artifacts                  int
+	inputs                            []InputState
+	scans                             []string
+	nextDir, nextX, nextY             int
+	hiddenRecords                     []int
+}
+
+func fieldTalkNormalInputs() []InputState {
+	return []InputState{{Confirm: true, DirHeld: -1, DirEdge: -1}, {Confirm: true, DirHeld: -1, DirEdge: -1}, {Enter: true, DirHeld: -1, DirEdge: -1}, {DirHeld: 2, DirEdge: 2}, {DirHeld: 3, DirEdge: 3}}
+}
+
 func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
+	runFieldTalkNormalComparison(t, fieldTalkNormalCase{
+		prefix: "issue4-talk-empty-return-normal-r1", sourceHash: "753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb",
+		output: "talk-empty", scope: "normal new-game through409 healthy single-member town no-target talk, fresh-key return and next moves",
+		count: 409, artifacts: 1037, inputs: fieldTalkNormalInputs(), scans: []string{"39", "39", "1c", "4b", "4d"}, nextDir: 2, nextX: 2, nextY: 18,
+	})
+}
+
+func TestFieldRoomDoorDosgolemNormalInputComparison(t *testing.T) {
+	inputs := append(fieldTalkNormalInputs(), InputState{Enter: true, DirHeld: -1, DirEdge: -1})
+	for i := 0; i < 4; i++ {
+		inputs = append(inputs, InputState{DirHeld: 2, DirEdge: 2})
+	}
+	for i := 0; i < 3; i++ {
+		inputs = append(inputs, InputState{DirHeld: 3, DirEdge: 3})
+	}
+	for i := 0; i < 5; i++ {
+		inputs = append(inputs, InputState{DirHeld: 0, DirEdge: 0})
+	}
+	runFieldTalkNormalComparison(t, fieldTalkNormalCase{
+		prefix: "issue4-field-room-door-normal-r1", sourceHash: "b7d0b1534a8b1055b57d78de8c343d12b736f355cf17584211b24dc2b84bcf3e",
+		output: "room-door", scope: "normal new-game through422 field Enter, left wall, room door, normal save/load and next right move",
+		count: 422, artifacts: 1076, inputs: inputs, scans: []string{"39", "39", "1c", "4b", "4d", "1c", "4b", "4b", "4b", "4b", "4d", "4d", "4d", "50", "50", "50", "50", "50"}, nextDir: 3, nextX: 5, nextY: 23,
+		hiddenRecords: []int{14, 15},
+	})
+}
+
+func runFieldTalkNormalComparison(t *testing.T, scenario fieldTalkNormalCase) {
+	t.Helper()
+	if len(scenario.inputs) != scenario.count-404 || len(scenario.scans) != len(scenario.inputs) {
+		t.Fatal("normal trace contract shape")
+	}
+
 	runFieldExamineNormalAt404(t, func(g *Game) {
 		dir, dest := os.Getenv("DQ3_ITEM_ORDERED_ORACLE_DIR"), os.Getenv("DQ3_ITEM_ORDERED_RECEIPT_DIR")
-		const prefix = "issue4-talk-empty-return-normal-r1"
+		prefix := scenario.prefix
 		source := filepath.Join(dir, prefix+"-source-r1-receipt.json")
 		raw, e := os.ReadFile(source)
-		if e != nil || fmt.Sprintf("%x", sha256.Sum256(raw)) != "753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb" {
+		if e != nil || fmt.Sprintf("%x", sha256.Sum256(raw)) != scenario.sourceHash {
 			t.Fatal("source identity", e)
 		}
 		var src struct {
@@ -29,7 +75,7 @@ func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
 				SHA256 string
 			}
 		}
-		if e = json.Unmarshal(raw, &src); e != nil || len(src.States) != 409 || len(src.Artifacts) != 1037 {
+		if e = json.Unmarshal(raw, &src); e != nil || len(src.States) != scenario.count || len(src.Artifacts) != scenario.artifacts {
 			t.Fatal("source shape", e)
 		}
 		for _, a := range src.Artifacts {
@@ -38,8 +84,7 @@ func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
 				t.Fatal("source artifact", a.Path, e)
 			}
 		}
-		inputs := []InputState{{Confirm: true, DirHeld: -1, DirEdge: -1}, {Confirm: true, DirHeld: -1, DirEdge: -1}, {Enter: true, DirHeld: -1, DirEdge: -1}, {DirHeld: 2, DirEdge: 2}, {DirHeld: 3, DirEdge: 3}}
-		scans := []string{"39", "39", "1c", "4b", "4d"}
+		inputs, scans := scenario.inputs, scenario.scans
 		idle := InputState{DirHeld: -1, DirEdge: -1}
 		before, rng := g.snapshot(), g.prng
 		stored := make([][]byte, g.fieldSaveLoad.contract.SlotCount)
@@ -70,7 +115,7 @@ func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
 			if n == 406 {
 				if g.fieldMessagePrompt == nil {
 					g.renderFrame()
-					f, err := os.Create(filepath.Join(dest, "talk-empty-red-406.png"))
+					f, err := os.Create(filepath.Join(dest, scenario.output+"-red-406.png"))
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -92,23 +137,28 @@ func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
 				}
 			}
 			want := before
-			if n == 408 {
-				want.PX = 2
+			want.PX, e = strconv.Atoi(src.States[n-1]["player_x"])
+			if e != nil {
+				t.Fatal(e)
+			}
+			want.PY, e = strconv.Atoi(src.States[n-1]["player_y"])
+			if e != nil {
+				t.Fatal(e)
 			}
 			if !equalFieldSave(want, g.snapshot()) || rng != g.prng {
-				t.Fatal("no-target talk changed state", n)
+				t.Fatal("field input changed state", n)
 			}
 			for j, b := range stored {
 				actual, err := os.ReadFile(fieldSaveSlotPath(j))
 				if err != nil || !bytes.Equal(b, actual) {
-					t.Fatal("examine wrote a slot", n, j, err)
+					t.Fatal("field input wrote a slot", n, j, err)
 				}
 			}
 			if n >= 407 && (g.fieldMessagePrompt != nil || g.fieldSpell.active || g.cmd.open || g.panel != panelNone) {
 				t.Fatal("fresh-key return", n)
 			}
 			g.renderFrame()
-			p := filepath.Join(dest, fmt.Sprintf("talk-empty-packet-%03d.png", n))
+			p := filepath.Join(dest, fmt.Sprintf(scenario.output+"-packet-%03d.png", n))
 			f, e := os.Create(p)
 			if e != nil {
 				t.Fatal(e)
@@ -120,6 +170,9 @@ func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
 			}
 			diff := sourceCanvasDifference(t, g, source, fmt.Sprintf(prefix+"-packet-%03d-%s.png", n, src.States[n-1]["phase"]))
 			t.Logf("normal talk-empty packet%d full640x350 RGB difference=%d", n, diff)
+			if n == scenario.count && len(scenario.hiddenRecords) != 0 {
+				assertNormalNPCBackground(t, g, filepath.Join(dir, fmt.Sprintf(prefix+"-packet-%03d-%s.png", n, src.States[n-1]["phase"])), scenario.hiddenRecords)
+			}
 			b, e := os.ReadFile(p)
 			if e != nil {
 				t.Fatal(e)
@@ -131,7 +184,7 @@ func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
 			samples = append(samples, map[string]any{"packet": n, "full_rgb_difference": diff, "png_sha256": fmt.Sprintf("%x", sha256.Sum256(b)), "hero_facing": g.facing, "hero_walk": g.walk, "npc_visuals": visuals})
 		}
 		t.Setenv("DQ3_SAVE", filepath.Join(t.TempDir(), "field-save.json"))
-		expectedSave := before
+		expectedSave := g.snapshot()
 		expectedSave.Respawn = respawnToSave(g.currentRespawnPoint())
 		step := func(in InputState) {
 			t.Helper()
@@ -186,22 +239,67 @@ func TestFieldTalkDosgolemNormalInputComparison(t *testing.T) {
 				t.Fatal(e)
 			}
 		}
-		if e = g.step(InputState{DirHeld: 2, DirEdge: 2, AnyKeyEdge: true}); e != nil {
+		if e = g.step(InputState{DirHeld: scenario.nextDir, DirEdge: scenario.nextDir, AnyKeyEdge: true}); e != nil {
 			t.Fatal(e)
 		}
-		if g.px != 2 || g.py != before.PY {
+		if g.px != scenario.nextX || g.py != scenario.nextY {
 			t.Fatal("movement after load")
 		}
-		report := map[string]any{"scope": "normal new-game through409 healthy single-member town no-target talk, fresh-key return and next moves", "source_sha256": "753da910efcb614851eb707a8e35bd22dfc1e978a9347ba078a067208ff197eb", "samples": samples, "game_state_injection": false, "rng_unchanged": true, "normal_save_load_roundtrip": true, "save_checkpoint_verified": true, "load_clock": clock, "move_after_load": true, "pack_schema": g.pack.Schema(), "pack_content_version": g.pack.ContentVersion(), "pack_hash": g.pack.ContentHash(), "save_version": saveFormatVersion, "animation_timing_parity": false}
+		report := map[string]any{"scope": scenario.scope, "source_sha256": scenario.sourceHash, "samples": samples, "game_state_injection": false, "rng_unchanged": true, "normal_save_load_roundtrip": true, "save_checkpoint_verified": true, "load_clock": clock, "move_after_load": true, "pack_schema": g.pack.Schema(), "pack_content_version": g.pack.ContentVersion(), "pack_hash": g.pack.ContentHash(), "save_version": saveFormatVersion, "animation_timing_parity": false}
 		b, e := json.MarshalIndent(report, "", "  ")
 		if e != nil {
 			t.Fatal(e)
 		}
-		if e = os.WriteFile(filepath.Join(dest, "talk-empty-receipt.json"), append(b, '\n'), 0644); e != nil {
+		if e = os.WriteFile(filepath.Join(dest, scenario.output+"-receipt.json"), append(b, '\n'), 0644); e != nil {
 			t.Fatal(e)
 		}
 
 	})
+}
+
+// This checks every pixel in the two complete native NPC cells. The full canvas
+// difference is recorded separately; no image is cropped, masked or replaced.
+func assertNormalNPCBackground(t *testing.T, g *Game, original string, records []int) {
+	t.Helper()
+	f, err := os.Open(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	im, err := png.Decode(f)
+	closeErr := f.Close()
+	if err != nil || closeErr != nil || im.Bounds() != image.Rect(0, 0, ScreenW, ScreenH) {
+		t.Fatal("native canvas", err, closeErr)
+	}
+	camera := g.activeSceneCamera()
+	if camera == nil {
+		t.Fatal("normal scene camera absent")
+	}
+	camX, camY := g.px-camera.AnchorX, g.py-camera.AnchorY
+	for _, record := range records {
+		found := false
+		for _, npc := range g.cur.npcs {
+			if npc.recordIndex != record {
+				continue
+			}
+			found = true
+			x, y := (npc.x-camX)*TileW, (npc.y-camY)*TileH
+			if x < 0 || y < 0 || x+TileW > ScreenW || y+TileH > ScreenH {
+				t.Fatal("native NPC cell outside sample", record)
+			}
+			for row := y; row < y+TileH; row++ {
+				for col := x; col < x+TileW; col++ {
+					r, gr, b, _ := im.At(col, row).RGBA()
+					o := (row*ScreenW + col) * 4
+					if g.rgba[o] != byte(r>>8) || g.rgba[o+1] != byte(gr>>8) || g.rgba[o+2] != byte(b>>8) {
+						t.Fatalf("hidden NPC record%d differs from native background at %d,%d", record, col, row)
+					}
+				}
+			}
+		}
+		if !found {
+			t.Fatal("native NPC record absent", record)
+		}
+	}
 }
 
 func TestFieldTalkFreshKeyScopeAndNPC(t *testing.T) {

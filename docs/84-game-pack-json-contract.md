@@ -2388,3 +2388,8 @@ schema0.24.0／content0.1.96，canonical
 在`dq3-ebiten-test:20260822-r1` Docker以UID1000執行：
 `python3 tools/migrate_field_item_drop_pack.py <乾淨0.23.0資料包> <唯讀原始素材目錄>`。
 支援從乾淨3dc5b47九份JSON重建，核對EXE／ITEM／TXT完整hash及原始gate／record，保留既有排版。
+
+
+### 2026-10-06 scene_tile_layers的NPC consumer補正
+
+既有player_cell_layer資料亦供NPC繪製使用。原始11943..11965 selector writer與11E07..11E37圖層分支先於11EA7／11ED0 NPC及BLS consumer，異層人物只留下替代背景。正式引擎僅對已宣告scene_tile_layers的場景套用，使用目前格的typed TownTileLayer；沒有新增CTY／NPC／座標Go常數。只改render，位置、碰撞、對話、RNG及存檔結構保持。CTY00正常418..422的八筆分支為限定D3，CTY25共享consumer只列D2靜態來源，其他動態NPC分支未驗。資料欄位與schema0.32.0保持；content0.1.105更新CTY00證據出處。完整READY、來源identity與停止線見[docs/188](188-opening-escort-to-castle-spec.md)。

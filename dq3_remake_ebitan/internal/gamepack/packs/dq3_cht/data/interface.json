@@ -165,12 +165,12 @@
       "evidence": {
         "level": "D3",
         "source_kind": "exe",
-        "source": "DQ3.EXE + CTY00.DAT + dosgolem冷啟動186次正常回程輸入",
+        "source": "DQ3.EXE + CTY00.DAT + dosgolem冷啟動186次正常回程輸入; dosgolem2f44a68 normal422 source b7d0b1534a8b1055b57d78de8c343d12b736f355cf17584211b24dc2b84bcf3e; readonly native layer source 8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec",
         "address_space": "linear",
-        "address": "0x13162..0x1317D;0x11E07..0x11E4B;CTY00 file0x000C+0x15/+0x16",
-        "consumer": "section+15/+16→DGROUP0B56/0B57；玩家格上兩bit→2579→圖塊替代",
+        "address": "0x13162..0x1317D;0x11E07..0x11E4B;CTY00 file0x000C+0x15/+0x16;0x11943..0x11965;0x11E07..0x11E37;0x11EA7..0x11ECF",
+        "consumer": "section+15/+16→DGROUP0B56/0B57；玩家格上兩bit→2579→圖塊替代;同一cell layer比較先於NPC adapter／BLS consumer，異層人物只畫替代背景",
         "doc": "docs/188-opening-escort-to-castle-spec.md",
-        "note": "限定正常回程base／酒館內非base圖塊；NPC圖層可見性及全域動畫未完成；source receipt sha256:347600d38f062e111a08a852a0cdf2a8937b959827c37ff984f3dca44a732a75"
+        "note": "原正常回程186來源347600d38f062e111a08a852a0cdf2a8937b959827c37ff984f3dca44a732a75保留；新增正常418..422的八筆native分支限定確認內外圖層NPC遮蔽。正常422屋內兩NPC略過，完整動畫與戶外NPC位置仍未知。11943..11965 writer為static strong；不冒稱每次移動均經此入口。"
       }
     }
   ],

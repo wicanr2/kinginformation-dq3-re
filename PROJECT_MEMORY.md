@@ -1,9 +1,10 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-06 健康單人徒步城鎮無對象「對話」已修正。原始260、實際命令畫布、原生訊息窗、新鍵返回及下一步均接正式玩家入口；406完整差25799降228，全部由原始英雄122／NPC14為106解釋。407新Enter返回完整RGB0；405／408／409仍差351／229／122，未解釋像素0，動畫時鐘及這些完整V3未知。
-> dosgolem正常409來源753da910，447鍵／894IRQ1／1037產物；406全部前綴保持，seed1357一次，無注入／restore。八格／能力／flags／clock／原生保存檔保持，remake十槽、正式F5／F6與Load後行走通過。255張舊404 PNG及新409前綴保持；九JSON乾淨重建相同。
-> 最終完整game518頂層覆蓋、467不同頂層／145子PASS、51既有選用SKIP；internal214頂層／531子、12套件及4選用SKIP PASS。正常THE END72.52s、Go vet與Linux desktop PASS，正式驗證OOM0。4GB容器有memory.max壓力事件，full5189/runtime4897，沒有OOM或kill；另512MB摘要誤讀大收據退出137，按3GB契約重跑。schema0.32.0/content0.1.104、canonicalc4285a9e，A唯一八格/save2/storage1保持，沒有新包。
-> 下一批原版正常410 Enter首結果已接受，來源62e40319，448鍵／896IRQ1／1040產物；409全前綴保持，場景仍ready、3,18，不開命令窗，持久區不變。只屬source-only，尚未驗remake；下一步從合法409以正式Enter核對首個結果及後續操作。Issue／Goal進行中，唯一現況表CONTEXT、計畫docs/74、證據docs/188。
+> 2026-10-06 正常新遊戲對拍至422。原版b7d0b153、460鍵／920IRQ1／1076產物，唯讀native來源8d01dbfd的全部422事件與產物保持，八筆圖層分支閉合。seed1357一次，無注入／restore或重擲。
+> 屋內NPC畫到屋頂的問題已修正：正式renderer依既有scene_tile_layers只畫同層人物。正常409／422、持久snapshot、game PRNG、十JSON槽、正式F5／F6及Load後下一步通過。422兩個室內NPC完整32×24背景共1536pixels零差異；全畫布差3390→2517，其中2357像素仍未解釋，戶外NPC位置與動畫未知，完整V3未通過。
+> 完整game519頂層覆蓋、523命令、468不同頂層／145子PASS，51既有選用SKIP；internal214頂層／531子、12套件PASS，4既有選用SKIP。正常THE END72.10秒、Go vet與Linux desktop PASS，必驗零SKIP，OOM／kill0。
+> schema0.32.0／content0.1.105／canonicala56f9240，A唯一有序八格/storage1/save2保持；七玩法JSON保持、九JSON乾淨重建一致。舊409共260 PNG只有五張異層人物畫面修正，255保持；新422共273張只有十張修正，263保持。最終兩路533張與GREEN一致，323筆IDA原始定位／bytes／xref及舊16註記保持。沒有新包。
+> Issue／Goal進行中。唯一現況表CONTEXT、計畫docs/74、證據docs/188。下一步從合法422核對戶外NPC位置與後續正常路線，未證實行為不進production；完整原版campaign仍未知。
 
 以下保存前一checkpoint，現況以CONTEXT唯一狀態表為準。
 

@@ -1,5 +1,15 @@
 # DQ3 工作歷程
 
+## 2026-10-06：Issue #4 正常屋內NPC圖層遮蔽
+
+原版新遊戲正常422與八筆唯讀分支閉合後，修正renderer依既有scene_tile_layers只畫同層NPC。離開酒館後，兩個室內NPC不再畫到屋頂；位置、對話、碰撞與亂數沒有交易。schema0.32.0／content0.1.105，A八格/storage1/save2保持。
+
+完整game519頂層覆蓋、523命令、468不同頂層／145子PASS，51既有選用SKIP；internal214頂層／531子、12套件PASS，4既有選用SKIP。正常THE END72.10秒、Go vet與Linux desktop PASS，必驗零SKIP，OOM／kill0。正常409／422的F5／F6、Load後下一步與兩路533張最終PNG一致。
+
+422兩個完整人物格1536pixels與原版背景相同，整張RGB3390→2517，仍有2357未解釋的戶外人物差異。較早178..182也修正同一異層洩漏，原先全PNG保持假設已訂正；動畫時鐘、戶外NPC位置與完整原版campaign仍未知。323筆IDA raw定位及舊16註記保持，新增三筆限定confirmed；九JSON乾淨重建一致，七玩法JSON保持。
+
+三種壞來源全拒絕，正對照相同。native／raster checker的未證實假設失敗已保留並縮回實際證據範圍，未調seed或圖片。證據與READY／有限CONFORMED在docs/188，唯一現況表CONTEXT。依授權commit＋push並更新[Issue #4](https://github.com/wicanr2/kinginformation-dq3-re/issues/4)，Issue／Goal維持進行中；下一步正常422的戶外NPC及後續玩家路徑。沒有新包，使用者十三項scratch保持。收尾擁有權稽核維持3213個既有root-owned項目，沒有新增root-owned輸出或.md目錄；本批一次性Docker容器已全部清除。
+
 ## 2026-10-05：Issue #4 正式木棒使用與新鍵返回
 
 依docs/188有限READY，修正健康單人主角使用第一列code0檜木棒的兩行原生消息與返回。

@@ -1360,6 +1360,8 @@ base_layer時，其他層的格子改畫base_tile；非base_layer時，非玩家
 保留原生移動／事件圖號，繪製選擇不改碰撞、事件、角色、亂數或圖塊資料。
 只在宣告場景套用；不宣稱其他layer的轉換動畫、NPC遮蔽或整個城堡已V3。
 
+2026-10-06追加勘誤：共享consumer的NPC圖層分支已由IDA9.4與正常CTY00的418..422閉合，見[屋內NPC遮蔽驗收](#room-npc-layer-conformance)及[原始位址索引](../tools/ida_npc_animation_ledger.json)。CTY25的NPC動態與其他層轉換動畫仍未驗，不能將CTY00的動態證據外推為整個城堡V3。上段保留當時的驗收範圍。
+
 資料欄位最低D2；此次玩家可見零層分支及base_tile達D3，其他tile70依原始header／consumer為D2，
 只改繪製，不增加正式流程gate。缺失值不猜補，不把static strong寫成全分支動態confirmed。
 schema0.6.0／content0.1.74；同版Save及正常標題Load須恢復目前格、hiMap與相同繪製規則。
@@ -5749,3 +5751,63 @@ runtime-r2正常404與scope兩項零SKIP／OOM；normal404報告與r1逐byte相�
 最終收據：`work/issue4-talk-full-r1/game-receipt.json`、`desktop-receipt.json`；`work/issue4-talk-runtime-r2/receipt.json` SHAe489e235，四命令、四頂層／四子PASS，零SKIP；`work/issue4-talk-internal-r1.json`、`issue4-talk-vet-r1.json`及`issue4-talk-final-audit-r1.json`。最終全套normal409的全部PNG與單獨r2重播逐byte相同。原版410仍獨立source-only，不併入本批remake完成聲明。
 
 4GB正常／全套容器有memory.max壓力事件4897／5189，oom與oom_kill及oom_group_kill均0；不能寫成max0。另一個512MB摘要讀大來源退出137，已按3GB契約重跑，不列正式game失敗。root-owned3213及零Markdown目錄基線保持，修改／輸出UID/GID1000；全部本批--rm容器已自然清除。13項既有使用者scratch保持。提交與推送由git log、WORKLOG及Issue最終回讀確認。
+
+
+### 2026-10-06 正常410、左牆414與房門422：來源與屋內NPC差異 DRAFT
+
+Issue #4 留言6005170192、6005273842、6005817239。原始DQ3.EXE大小115282、SHA2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c；CTY00.DAT SHA256ac8427c5fafcad4e29246dd3c2796c476bb5ad93e53dd7c7127a6b2faa31a836。dosgolem凍結2f44a68，seed1357在首次輸入前設定一次；沒有restore、狀態注入、重擲或相位调整。
+
+- 410來源62e40319與完整1040產物保持；正式Enter無命令窗，3,18、持久狀態保持。私有正常410與十槽／F5／F6／下一步PASS；完整RGB351由原始BLS兩影格解釋，動畫時鐘未知。
+- 左移414來源`664d718104f70a548ba09ae73883557b6f64230586be8c911f0a2f2a8ed16836`，452鍵／904IRQ1／1052產物。410全部前綴保持。411到2,18，412到1,18，413及414撞牆保持1,18；2172bytes只改X低byte，clock0、角色／flags及原生保存檔保持。私有正常414、正式存讀檔與下一步PASS；411完整RGB0，其餘動畫限制保持。
+- 房門422來源`b7d0b1534a8b1055b57d78de8c343d12b736f355cf17584211b24dc2b84bcf3e`，460鍵／920IRQ1／1076產物。414全部前綴保持。右三步至4,18，下五步至4,23；原始持久區只改X／Y低byte，clock0及原生保存檔保持。正式正常422資料／存讀檔PASS，完整RGB3390，不能當V3。
+- 已目視確認RED：422主角離開原始cell layer2至0後，原版隱藏NPC14／15，remake將兩人畫在屋頂。戶外NPC位置與動畫差異另列unknown。本批先以IDA9.4追原始11910..1195D玩家cell reader／DGROUP2579 writer、11D8A圖層分支、11EA7 NPC adapter與11ED0 BLS consumer；有界323條sidecar `work/issue4-layer-npc-r2-ida.json` SHA256aec4e08866953c6eef0fbffc526636991a22f537d1835522e3f2082b34da2114。IDA linear−EC90=file，DGROUP base24DD0；原始定位、bytes及xref type保留。新增語意待唯讀native witness閉合，暫DRAFT，未改production。
+
+本批已執行工具的公開入口，producer保持原始執行bytes：
+[410 producer](../tools/dosgolem_field_enter_probe.py)、[410 checker](../tools/verify_dosgolem_field_enter.py)、[414 producer](../tools/dosgolem_field_left_block_probe.py)、[414 checker](../tools/verify_dosgolem_field_left_block.py)、[422 producer](../tools/dosgolem_field_room_door_probe.py)、[422 checker](../tools/verify_dosgolem_field_room_door.py)。公開checker鎖原始EXE／凍結runtime／producer／生成Go／binary雜湊，另寫public-check-r1，不覆寫原source-r1。三者公開重生PASS，結果687036c9／c584433f／cf837016。
+
+完整畫布診斷為[410 raster checker](../tools/verify_dq3_field_enter_raster.py)與[414 raster checker](../tools/verify_dq3_field_left_block_raster.py)。兩者限定schema0.32.0/content0.1.104/canonicalc4285a9e及正常405起的指定來源，保留全部640×350比較，原始BLS／BLK差異聯集必須等於完整差異，不調phase或替換圖片。使用方式同本文件409 raster，runtime收據分別command-enter-receipt.json、field-left-receipt.json。410私有收據9907b00c，414私有收據bfad0861，未解釋像素均0。
+
+重生沿用本文件404／409工具鏈與Docker契約。增加的逐byte別名為 `/work/issue4-command-enter-first-probe-r1.py`＝tools/dosgolem_field_enter_probe.py，以及 `/work/issue4-field-left-transition-probe-r1.py`＝tools/dosgolem_field_left_block_probe.py；兩者SHA為e7916f12、c1564d7c。既有search-first／talk-first別名仍必要。每個producer的固定prefix必須用全新work overlay，先以來源驗證器接受parent與所有scratch／fileops／PNG／bin，再在容器內執行对应producer與checker。repo、assets、凍結runtime唯讀，work可寫，UID/GID1000；Go快取明示GOCACHE=/work/.gocache-test、GOMODCACHE=/work/.gomodcache-selection、GOTOOLCHAIN=local、GOPROXY=off、GOSUMDB=off。左移r1未明示Go快取而在遊戲啟動前權限失敗，保留scratch，改r2前綴於同image修正後成功；未挑選遊戲結果。
+
+
+#### 屋內NPC遮蔽：RE、審查與READY
+
+原版相同422冷啟動新增唯讀觀測，獨立來源 `work/dosgolem-opening/issue4-room-npc-layer-normal-r1-source-r1-receipt.json` SHA256 `8d01dbfd57b81e5a077678d42dc9fff2fb49d8b25aad4c26aa455c6736def8ec` 接受；460鍵／920IRQ1、所有422事件及1076產物與b7d0b153逐byte相同，沒有新增輸入或狀態寫入。八筆native witness：418／420／421的11E19在selector80略過cell layer0的NPC；422的11E25在selector00略過2,16及8,21的cell layer80；422的11E33呈現11,26、2,28與5,29的cell layer0人物。原始AX保留，例如AC04／AD04的C0 mask為80、20位表示NPC；不把runtime壓緊索引當原始CTY record號。
+
+IDA9.4有界323條aec4e088保留原始定位與bytes。11910..1192F從玩家X／Y與原始map取得word，11943清2579，11955..1195D以高byte C0 mask寫selector；此writer本次沒有獨立動態hit，靜態writer閉環為strong／D2，不冒稱每次移動都經此入口。11E07保留原始word於AX，11E09屏蔽BH的C0位，11E13／11E20比較selector；不符時11E19或11E25選header替代背景並跳11E4B，沒有進NPC分支。符合後11E2C的AH20測試，11E33→11EA7→11ECC→11ED0才讀NPC圖及BLS。上述八筆native與完整來源畫面將兩方向的NPC顯示／略過分支限定confirmed／D3；其他移動writer與動畫保持unknown或strong。
+
+審查結果READY：沿用已宣告scene_tile_layers的player_cell_layer模式與typed TownTileLayer資料，NPC與背景使用同一圖層可見條件。只有NPC目前格的圖層等於玩家格圖層才繪圖，先做原有視窗／sprite及map邊界檢查。未宣告場景不新增猜測設定。只改render，不更改NPC位置、移動、碰撞、對話、亂數、hero狀態、存檔結構或圖層資料。跨版本引擎沒有CTY／record／座標常數；CTY00／25引用仍來自既有pack。CTY00正常418..422為動態限定D3；CTY25相同共享consumer有D2靜態來源，但這批不宣稱其NPC動態V3。
+
+證據註記更新pack的CTY00來源範圍，content0.1.104→0.1.105；schema0.32.0與A八格/storage1/save2保持，不新增資料格式。其餘既有玩法資料保持，舊hash存檔依已授權策略拒絕。正常422必須對NPC14與15完整32×24背景各768pixels核對原版；完整640×350差另存，不裁切或遮罩。保存全部早期PNG及正式F5／F6／下一步，完整game／internal／desktop收尾。其他戶外NPC的亂數位置與動畫仍分開列unknown，不能靠相位或seed重擲補成V3。
+
+RED以尚未修正engine由正常新遊戲重播：`work/issue4-room-npc-red-r1/TestFieldRoomDoorDosgolemNormalInputComparison/run.log` SHA258f396a，157.36s，422完整RGB3390，NPC14在233,0不符背景。PNG保留，其他player state已由較早正常422診斷通過。native checker r1錯誤預設每步重繪所有NPC且必經11955，因此在421缺hit失敗；沒有換原版結果。r2核對實際八筆分支及全部前綴，同一容器契約PASS，限制明示在本節。
+
+
+本切片可重生入口：[唯讀native producer](../tools/dosgolem_room_npc_layers_probe.py)、[native checker](../tools/verify_dosgolem_room_npc_layers.py)、[IDA有界匯出](../tools/ida_room_npc_layers_export.py)、[content升版工具](../tools/migrate_scene_npc_layers_pack.py)。native producer逐byte保留已執行內容；其parent別名/work/issue4-field-room-door-probe-r1.py為tools/dosgolem_field_room_door_probe.py逐byte副本。公開checker另寫public-check-r1，鎖定producer／生成Go／binary及原版422全前綴。IDA export沿本文件一次性副本runner，使用追加的ida_npc_animation_ledger.json三筆confirmed註記，原有註記內容與順序保持。pack升版命令為python3 tools/migrate_scene_npc_layers_pack.py <schema0.32.0/content0.1.104的可寫pack> <唯讀assets_raw>，只改manifest版號與CTY00圖層證據，七個其他JSON逐byte保持；不得將其當作新的遊戲資料格式。
+
+
+修正後完整畫布診斷入口：[verify_dq3_room_npc_layers_raster.py](../tools/verify_dq3_room_npc_layers_raster.py)。用法同409 checker，輸入422來源b7d0b153、原版輸出根、正常422的armor runtime、assets_raw、新輸出及room-door-receipt.json SHA。限定schema0.32.0/content0.1.105/canonicala56f9240；405..421要求完整原始BLS／BLK差異聯集等於全畫布差異。422另外核對兩個異層NPC整格的原始header替代背景共1536pixels，並辨識hero的兩個原始影格。未解釋像素另列完整數量，不將戶外NPC位置或其動畫升格V3。所有畫面原封保留，沒有裁切、遮罩、phase覆寫或影像替換。
+
+
+診斷勘誤：新raster r1誤把NPC8的原始5,29當作固定位置，實際remake422為4,29，native422為5,29。該actor不具可比較的位置狀態，不能套用固定NPC兩影格模型。已移除此未證實的actor匹配要求，保留完整畫布未解釋差異；原版／remake圖片、seed、phase與production均未更動。原版完整NPC狀態不相同，這批同狀態聲明只限hero持久狀態與兩個屋內NPC圖層案例，remake RNG保持指game PRNG，不把NPC獨立RNG或兩側全局RND稱為相同。
+
+
+<a id="room-npc-layer-conformance"></a>
+
+#### 屋內NPC遮蔽：有限CONFORMED與舊結論回填
+
+正常新遊戲409與422正式InputState、持久snapshot、game PRNG保持、十槽不誤寫、F5／F6及Load後右移5,23均通過。最終正常422收據沿用GREEN的78fe6320，兩路共533張PNG與GREEN逐byte相同；沒有用direct-entry取代正式路線。
+
+422兩個室內NPC完整32×24背景各768pixels均與原版相同。完整RGB3390降2517；hero原始BLS兩影格解釋160，剩2357保留未解釋。405..421完整差異全部由原始BLS／BLK解釋，但動畫時鐘未閉合，不能把診斷零未解釋當作完整RGB零差異。修正範圍為CTY00指定屋內／屋外圖層遮蔽E2及正常路線E3，兩個背景格限定像素相同；完整422 V3、戶外NPC位置及其亂數條件unknown。
+
+追加勘誤：舊409的260張PNG並非全部保持，255保持，178..182五張改變；新422的273張263保持，五張早期畫面與418..422改變。178..182完整RGB分別194→0、577→229、706→356、579→229、704→356；原版冷啟動同前綴不變，改善來自相同異層NPC洩漏修正。舊圖層段落中的CTY25動態未知仍有效；共享consumer的靜態NPC分支與CTY00動態案例已由原始位址索引回填，不以歷史未知再次開同一RE。
+
+原始索引key為DQ3.EXE／115282bytes／SHA2565178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c／IDA9.4 linear11E19、11E25、11E33，file分別3189、3195、31A3；線性位址減EC90換算file。公開IDA匯出r3 SHA2f4425a5，323筆raw定位／bytes／原始名稱／xref保持，舊16註記內容及順序保持，三筆限定confirmed自動合併。selector writer仍strong，未觀察動態hit。
+
+完整game519頂層覆蓋、523命令、468不同頂層／145子PASS，51既有選用SKIP；internal214頂層／531子、12套件PASS，4既有選用SKIP。正常THE END72.10秒、Go vet與Linux desktop PASS，必驗零SKIP，OOM／kill0。desktop僅本機驗證產物，無新交付包。
+
+本機收據索引：`work/issue4-room-npc-full-r1/game-receipt.json` SHA 01cdecdf94a13151bd6169a175871f5b290311284d9d9ec898586c9dd46d3a38；`desktop-receipt.json`記錄binary SHA d981cf47cb84a44b60ed09a15e4a11c5a5c1dae7aa3942d6ad5908631f31fc2a。`work/issue4-room-npc-internal-r1.json` SHA bd60d4a6；`work/issue4-room-npc-vet-r1.json` SHA1df15010；`work/issue4-room-npc-raster-r2.json` SHAbae31fc5；`work/issue4-room-npc-early-png-audit-r1.json` SHAe0df6149；`work/issue4-room-npc-prefix-audit-r2.json` SHA8c498a3f；`work/issue4-room-npc-negative-r1.json` SHA5fa88e49。三類私有壞來源為執行後設seed、producer身分不符及native selector改動，全拒絕，原始正對照重跑仍38da6acb。原始證據、圖片及程式沒有改寫。
+
+content0.1.105的九JSON由乾淨HEAD原pack重建逐byte相同，重建收據cbaf9189；只改interface證據與manifest版號，七玩法JSON保持。schema0.32.0、A八格/storage1/save2保持，舊hash存檔依既有授權拒絕。修正及測試失敗歷程保留，不將checker假設錯誤、環境失敗或完整V3未過隱藏為PASS。
+
+主機衛生收據：work/issue4-room-npc-ownership-r1.json。3213個既有root-owned項目保持，.md目錄0，新工具及輸出UID1000；13項使用者scratch不提交。本批容器使用既有image、network none及相稱資源上限，均已清除；未重建或清理其他專案image。
