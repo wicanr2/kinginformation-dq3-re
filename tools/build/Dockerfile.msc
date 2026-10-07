@@ -8,16 +8,23 @@
 #   3) docker build -f tools/build/Dockerfile.msc -t dq3-msc tools/build
 #
 # 用法見 tools/build/msc_compile.sh。
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends dosbox && \
+RUN rm -f /etc/apt/sources.list.d/debian.sources && \
+    printf '%s\n' \
+      'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20261001T000000Z/ bookworm main' \
+      'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20261001T000000Z/ bookworm-security main' \
+      > /etc/apt/sources.list && \
+    apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 update && \
+    apt-get install -y --no-install-recommends dosbox nasm python3 && \
+    mkdir -p /opt/matching && \
+    dpkg-query -W > /opt/matching/package-manifest.txt && \
     rm -rf /var/lib/apt/lists/*
 
-# MSC 安裝樹:C:\MSC\BIN(編譯器), C:\MSC\LIB(SLIBCR/MLIBCR/LLIBCR), C:\MSC\INCLUDE
-COPY msc/BIN     /msc/BIN
-COPY msc/LIB     /msc/LIB
-COPY msc/INCLUDE/INCLUDE /msc/INCLUDE
+# Compiler binaries remain local read-only runtime inputs at /msc.
+# Mount tools/build/msc:/msc:ro; the probe sets INCLUDE=C:\INCLUDE\INCLUDE.
+# This revision replaces the historical unversioned dq3-msc image; see docs/25.
 
-ENV SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy
+ENV SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYTHONDONTWRITEBYTECODE=1
+USER 1000:1000
 CMD ["bash"]

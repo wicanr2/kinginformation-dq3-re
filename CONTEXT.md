@@ -224,8 +224,9 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 正式路線回歸的收據與演進依 [Issue #2](https://github.com/wicanr2/kinginformation-dq3-re/issues/2)，
 詳見 [WORKLOG.md](WORKLOG.md)。下一步恢復原版創角後的 dosgolem 玩家路徑對拍。
 
-| 目前狀態（2026-10-06） | 最近驗收與界線 |
+| 目前狀態（2026-10-08；正式程式基準2026-10-06） | 最近驗收與界線 |
 |---|---|
+| 本輪研究 | [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)首批matching工具與實驗完成，證據 [docs/25](docs/25-match-progress.md)。IDA9.4重生NPC六範圍436指令及入口／RNG／BX有界RNG；動畫計數缺自動函式邊界，保留unknown。新編七C候選四DIFF／三REFUSED，C exact0；一次批次0.92秒，五負例拒絕。具語意ASM一個16-byte函式exact；其餘115266bytes保留，不稱完整原碼。Inertia三案中間C全部validation failed，原版compiler及整體加速仍unknown。正式Go／pack不改，Issue #4保持暫停；下一步限縮RNG ABI與compiler辨識 |
 | 現行程式 | dq3_remake_ebitan/；NPC視野逐格掃描、同圖層、亂數閘門、商值轉向與地形交易由pack提供；schema0.33.0/content0.1.106，canonical sha256:67af5bb57edf02461fa0e6d3ab3860c0a5279a151c763a08efd9830ba1d308e4；A八格/storage1/save2保持，無新包 |
 | 最新remake已完成 | NPC自動移動規則有限CONFORMED；1672入口返回、499完整scan、3次向後續格重複評估、四圖層常式通過。正常409／422／458、持久snapshot／game PRNG、十JSON槽、正式F5／F6及Load後下一步通過 |
 | 最新原版oracle | dosgolem2f44a68正常458來源56ef662a、496鍵／992IRQ1／1184產物，原422前綴保持。唯讀完整NPC來源b2fdf781接受，19自然轉向／110落步骰／5移動；seed1357一次，無注入／restore。四圖層fe39794a另列局部受控證據，seed1e2c各案固定、明示注入／CPU重入 |

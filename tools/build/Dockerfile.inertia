@@ -1,0 +1,19 @@
+# DQ3 Issue #5: isolated experimental DOS decompiler, not a production engine.
+# Build context is the local, immutable Inertia checkout identified below.
+# No DQ3 executable, assets, credentials or IDA database belongs in this image.
+FROM python:3.14.7-bookworm@sha256:bfb689a7986adc6d5f16722e06c78e755efe4062e56276715fef450cbad09436
+
+RUN python -m pip install --no-cache-dir uv==0.8.22
+COPY . /opt/inertia
+WORKDIR /opt/inertia
+RUN test "$(git rev-parse HEAD)" = c555363b810d3a6df786e5d6511d1bb28fa82333
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_PYTHON_DOWNLOADS=never PYTHONDONTWRITEBYTECODE=1
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-install-project --no-dev
+# Source imports cython even in its Python reference backend; upstream uv.lock
+# at this commit omits that declared runtime dependency. Pin an ABI-matched wheel.
+RUN uv pip install --python /opt/venv/bin/python --no-deps --require-hashes \
+    'cython @ https://files.pythonhosted.org/packages/9b/fc/9faedfcc2de807f77115d97a4910c260dd4693f4fa9e0e3be0d9ae89e260/cython-3.2.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl#sha256=df15af08c21c18a2e848df5954d6fd3310735089b60405132fa4111e2cf7482a'
+RUN useradd --uid 1000 --create-home matching
+ENV PATH="/opt/venv/bin:${PATH}" XDG_CACHE_HOME=/tmp/inertia-cache
+USER 1000:1000
+CMD ["python", "decompile.py", "--help"]

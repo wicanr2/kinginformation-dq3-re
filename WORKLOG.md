@@ -1950,3 +1950,31 @@ Issue #4持續更新；本次以「fix: restore native empty examine response an
 圖形3GiB補驗OOM三次，保留final-r2；同工具鏈與命令調4GiB乾淨final-r3通過。vet混用參數、tmp_dump.go及IDA匯出引用舊動畫來源均為工具／runner錯誤，修正後重生，不歸產品缺陷。436筆IDA原始定位／bytes／xref與原19註記保持，新註記逐筆來源正確；三類壞來源拒絕，正對照同fe39794a。最終稽核3e0fd436、證據稽核a130bc54，詳細本機收據入口見docs/188。
 
 root-owned3213與Markdown目錄0基線保持，新工具與輸出UID/GID1000；13項使用者scratch及所有原版素材／影像／database／binary不提交。一次性容器收尾清理，未重建image、未動其他專案資源。本批提交標題「fix: match native NPC automatic movement rules」；提交／推送身分以git log及Issue最終回讀為準。Goal維持進行中，下一切片由合法458追加原版右移一鍵。
+
+## 2026-10-08 Issue #5：局部 matching 的首批工具與實測
+
+使用者要求先登記GitHub工作項目再開工，已建立
+[Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)。本輪驗證局部matching
+能否減少對拍定位工作，正式Go／game-pack與正常458基準保持，Issue #4仍暫停。
+唯一目前狀態表為CONTEXT，研究入口docs/25；舊C exact及compiler鎖定的反證追加於
+docs/17、docs/19、docs/135，不重寫歷史證據。
+
+- 原版`assets_raw/DQ3.EXE`115282bytes、SHA256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`前後相同。沒有原地解殼、patch或修改database。
+- IDA9.4重生既有NPC六範圍436指令；新探針另匯出入口／RNG／兩個NPC函式216指令與828自動函式導覽清冊，BX有界RNG另存原始範圍。動畫計數缺自動邊界保持unknown；四個target的Hex-Rays都拒絕16-bit。
+- 新OMF有限reader按PUBDEF／SEGDEF定位並解析FIXUPP；RNG兩個外部符號DS offset由原始operand明示供給。缺placement、未知PUBDEF、far fixup、checksum與修改ASM常數五負例全部拒絕。
+- 五個既有C樣本加兩個RNG候選全部新編。最終`msc-r3/receipt.json`SHA256 `43c62d234021022cd87070079b4a464113c86ed6b341eacbcbb9df724ade0180`：四DIFF、三REFUSED、C exact0；同一次DOSBox批次0.920594秒，未宣稱舊流程或整體對拍加速倍數。
+- NASM2.16.01從`re/match/sub_e6b9.asm`七條指令重新組譯16bytes，與IDA及原版完全相同。scaffold雜湊相同，但其餘115266bytes保留原始輸入，C重編bytes0，沒有完整原碼完成聲明。
+- MSC工具映像以固定Debian digest／snapshot重建，compiler只在runtime唯讀掛載。Inertia固定commit c555363b、Python3.14.7、uv.lock，另以官方wheel hash補上游漏列的Cython3.2.0；r2取代r1，使用明示Python reference lifter。
+- 環境與腳本失敗均保留：首次360／600秒建置逾時；Inertia r1缺native lifter、r2缺Cython、r3快取權限。只掛特定可寫快取，保持source唯讀及非root。r4探針誤套底層base1000，CLI實為10000；r5 loader smoke缺註冊。修正後r6才作反編譯能力證據，不將這些失敗寫成產品缺陷。
+- `inertia-r6/receipt.json`SHA256 `68e85d15426941097e0556d7b420aee43ebf388d00fe8758d4e1fa41abb88c6a`：RNG／有界RNG／NPC mover三案各54.87／55.53／54.22秒，16份中間C層，全部exit4、validation failed、merge gate hold。RNG可見未初始化DS及缺回傳值；未採用、未編譯中間C，也未修改上游語意來製造通過。
+- 最終`msc-final-audit.json`、`inertia-final-audit.json`及`final-audit.json`核對來源新鮮度、正確位址、原版hash、四工具語法與索引正對照、16份中間artifact hash；新輸出root-owned0／Markdown目錄0，UID/GID1000。
+
+完整命令、限制與重生入口見docs/25及tools/build/README。README只保存現行工具契約，
+移除過期C／SDL目標；工作歷程保存在本節。下一步限縮RNG／BX有界RNG的caller、
+暫存器ABI與compiler候選辨識，原版compiler及整體加速仍unknown，Issue #5保持開啟。
+
+本批只提交研究工具、具語意ASM與文件，標題為
+`research: establish DQ3 matching probes and semantic RNG assembly baseline`；提交／推送身分
+以Git log及Issue最終回讀為準。所有--rm研究容器已清除，只保留MSC與Inertia r2現行映像；
+被取代r1已刪，所需IDA私有image保留，未動其他專案資源。使用者13項未追蹤資料與
+原版／database／OBJ／binary／中間C均不提交，沒有新發行包。

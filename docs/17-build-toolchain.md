@@ -1,5 +1,10 @@
 # DQ3.EXE bytes 保真驗證：byte-identical 重組
 
+> 2026-10-08追加勘誤：本篇MSC5.x指紋結論保持hypothesis，原版compiler與精確旗標
+> 尚未證實。新編七C候選沒有exact；一個16-byte函式已用具語意ASM重編匹配。
+> 整檔重組bytes相同仍不代表完整原碼恢復，最新輸入／位址／工具收據見
+> [docs/25](25-match-progress.md)。以下保留歷史bytes保真實驗與原始定位。
+
 > **2026-08-22 勘誤：**本篇證明的是 MZ 區段、原始 bytes 與已列出的 seg0
 > 指令切分可重生，不是「每個 byte 的遊戲語意都已理解」。以 `db` 原樣輸出
 > 再得到相同 SHA-256，不能證明資料欄位、caller／consumer、狀態副作用或玩家

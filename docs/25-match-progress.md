@@ -1,5 +1,103 @@
 # 逐函式 byte-match 進度 (matching decompilation)
 
+> 2026-10-08：依 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)
+> 啟動局部 matching 的對拍加速實驗。下方 MSC 5.x「已鎖定」與固定 codegen 成因均為
+> 歷史判讀，尚未由精確 compiler／linker 版本及完整重定位閉合。五個既有 OMF 產物
+> 先以唯讀方式核對為 raw exact 0／5；本輪再新編七個 C 候選，沒有 exact。
+> 具語意 ASM 已重編一個16-byte函式並完全匹配。原版是否有殼仍未知。
+> 新探針入口為 [`tools/ida_matching_probe.py`](../tools/ida_matching_probe.py)，
+> 以 IDA Pro 9.4 匯出原始定位、bytes、typed xref 與既有分級語意。
+> 研究輸出位於 gitignored `work/matching-decomp-20261008-r1/`。
+> prototype 不改正式 Go／game-pack；完整 EXE 原碼重建不因本實驗成為 remake 完成閘門。
+> [`re/match/sub_e6b9.asm`](../re/match/sub_e6b9.asm) 保存 IDA 核對的七條指令，
+> 供 NASM 重新組譯實驗。它不含 `db`，ASM 與 C 覆蓋率分開計算。
+> [`tools/omf_matching_probe.py`](../tools/omf_matching_probe.py) 依
+> [TIS OMF 1.1](https://openwatcom.org/ftp/devel/docs/omf.pdf) 解析真實 PUBDEF／SEGDEF／FIXUPP。
+> 它只支援本實驗的單函式 USE16 code 與明示外部符號 DS offset，其他 fixup 拒絕解析；
+> 不使用位元組遮罩或「最大段」猜選函式。
+> [`tools/run_matching_probe.py`](../tools/run_matching_probe.py) 在 MSC 研究容器內執行
+> 單次 DOSBox 批次編譯、真實 OMF 檢查、具語意 ASM 組譯與壞來源拒絕，輸出本機收據。
+> [`tools/run_inertia_matching_probe.py`](../tools/run_inertia_matching_probe.py) 明示核對
+> Inertia 的 MZ 載入基準，對 RNG／有界 RNG／NPC mover 做限時實測；生成 C 不自動升格為 match。
+
+## 2026-10-08 首批實測
+
+本輪目標是驗證局部 matching 能否減少對拍的人工定位成本。正式 Go／game-pack、
+正常458 checkpoint、schema0.33.0/content0.1.106均保持，Issue #4仍暫停。
+下方2026-06歷史嘗試的原版 compiler 身分及單函式 C exact 聲明，以本節勘誤為準。
+
+| 範圍 | 結果與推論等級 |
+|---|---|
+| 原始輸入 | `assets_raw/DQ3.EXE`，115,282 bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c` |
+| 入口與殼 | IDA9.4入口linear `0x19299`、logical `0x9299`、file `0xa609`，22筆原始指令可回查。常見packer標記零命中；殼的存在仍unknown，本切片沒有另做解殼 |
+| IDA證據 | `ida-probe-r3.json`：入口、RNG與兩個NPC函式共216筆指令；828筆自動函式清冊僅供導航。`ida-npc.json`另重生既有六範圍436筆指令及分級註記 |
+| Hex-Rays限制 | 四個明確target都回報 `16-bit functions cannot be decompiled`。這是IDA反編譯能力限制，沒有取消其bytes／xref主要證據地位 |
+| 真實OMF | 按PUBDEF／SEGDEF選段，解析FIXUPP。RNG兩筆外部 `_g_rng` 引用以明示DS offset `0x0b5a`還原；此名稱是候選C的符號，不是原版符號 |
+| 新編C | 七候選全部產生OBJ；四組完成重定位後比較，全部DIFF。另三組因未知符號placement或未寫入段尾拒絕。C exact為0；缺資料沒有猜補 |
+| C迭代耗時 | 最終`msc-r3/receipt.json`保存單次DOSBox批次；七檔約0.92秒，cycles固定100000。這是本輪工具耗時，沒有等價的舊流程實測，不宣稱整體對拍加速倍數 |
+| 具語意ASM | `sub_1E6B9`七條指令，linear `0x1e6b9..0x1e6c9`、logical `0xe6b9..0xe6c9`、file `0xfa29..0xfa39`。NASM2.16.01重新組譯16bytes與原版完全相同，instruction reproduction為confirmed；不含`db` |
+| 拒絕案例 | 最終MSC探針核對缺placement、未知PUBDEF、不支援far fixup、壞OMF checksum及修改ASM常數五案，全部拒絕 |
+| 整檔scaffold | SHA-256相同，但只有16bytes由具語意ASM重編；C重編bytes為0，其餘115,266bytes保留原始輸入。完整原碼重建仍unknown |
+| Inertia | commit `c555363b810d3a6df786e5d6511d1bb28fa82333`、Python3.14.7及uv.lock固定，另以hash固定Cython3.2.0。CLI實際MZ base為`0x10000`，RNGlinear為`0x1e6b9`；原始file bytes核對後才做生成C及語意審查 |
+| Inertia實測 | 修復環境及探針後的`inertia-r6/receipt.json`，三案都抵達反編譯並產出中間C；各約54.87／55.53／54.22秒，全部exit4、validation failed、merge gate hold。可採用C函式為0，中間C沒有送入重編或production |
+
+舊文件的「Microsoft C 5.x已鎖定」保持為hypothesis。候選OBJ的`MS C`浮水印屬於
+候選工具產物，不能反推原版compiler。RNG原版的三次`rol ax,1`與候選C的
+`mov cl,3; rol ax,cl`不同；nested `_rotl(...,1)`及shift候選分別為18與28bytes，
+原版為16bytes。這些差異已在明示fixup後核對，沒有把未知位址遮罩成exact。
+
+Inertia環境與位址勘誤：r1缺native Cython lifter，r2的Python reference模式仍缺
+上游uv.lock漏列的Cython runtime；r3修復依賴後遇到source內固定快取路徑的權限問題。
+只對`.inertia_decomp_cache`掛明確可寫輸出，source維持唯讀，沒有改成root執行。
+r4另暴露探針錯誤：底層DOSMZ default為linear`0x1000`，CLI會將paragraph選項轉成
+linear`0x10000`。r4的三個目標因此錯移，屬驗證腳本問題，不是反編譯能力證據。
+修正後smoke與實驗都使用CLI自己的`_build_project`，不再套用底層default。
+所有失敗與各自收據保留，沒有覆寫成成功樣本。
+
+r5的CLI loader smoke另缺必要backend／DOS SimOS註冊；補齊初始化後的r6才是
+實際反編譯能力樣本。r6在RNG與有界RNG的postprocess發現未初始化的DS carrier，
+並回報stack facts已分類卻沒有materialize；中間C亦可見unsigned-return函式缺回傳值。
+NPC mover同樣由語意驗證拒絕。保留這些工具限制，不修改中間C掩蓋失敗，
+也不把它們當成原版D2／D3資料來源。
+
+本輪已證實有限工具迭代可重跑，但沒有證明整體對拍加速。下一步限縮為已匯出的
+RNG／BX有界RNG之caller、暫存器輸入／輸出與compiler候選辨識；先解開原碼／ABI契約，
+再增加C候選。完整EXE原碼重建仍不作本輪完成聲明，Inertia的三個中間C只供診斷。
+
+本機收據位於`work/matching-decomp-20261008-r1/`：`ida-probe-r3.json`、
+`ida-npc.json`、`ida-rng-wrapper.json`、`omf-parser-receipt-r2.json`、
+`semantic-asm-r1/receipt.json`、`msc-r3/receipt.json`、`msc-final-audit.json`、
+`inertia-r6/receipt.json`及`inertia-final-audit.json`。原版、database、OBJ、binary與
+生成C均不加入Git。工具來源與入口保存於上述受版控腳本及`tools/build/README.md`。
+
+最終MSC實驗可在相同容器中重跑。輸出目錄必須是新路徑；原始輸入與MSC目錄唯讀，
+研究輸出才可寫，先確認每個host來源存在及UID/GID：
+
+```bash
+timeout 190s docker run --rm --network none --memory 1g --cpus 2 --pids-limit 128 \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD":/repo:ro -v "$PWD/tools/build/msc":/msc:ro \
+  -v "$PWD/work/matching-decomp-20261008-r1":/out \
+  --workdir /out --entrypoint python3 dq3-msc:bookworm-20261008-r1 \
+  /repo/tools/run_matching_probe.py --output /out/msc-new \
+  --ida-evidence /out/ida-probe-r3.json --msc-root /msc
+```
+
+Inertia實驗必須把特定快取目錄掛成可寫輸出，其他source唯讀。先建立並核對
+`work/matching-decomp-20261008-r1/inertia-cache-r4/`的UID/GID；新輸出例如`inertia-new`：
+
+```bash
+timeout 260s docker run --rm --network none --memory 3g --cpus 2 --pids-limit 128 \
+  --user "$(id -u):$(id -g)" -e PYTHON_JIT=1 -e PYTHONHASHSEED=0 \
+  -e PYTHONDONTWRITEBYTECODE=1 -v "$PWD":/repo:ro \
+  -v "$PWD/work/matching-decomp-20261008-r1":/out \
+  -v "$PWD/work/matching-decomp-20261008-r1/inertia-cache-r4":/opt/inertia/.inertia_decomp_cache \
+  --workdir /tmp --entrypoint /usr/bin/nice dq3-inertia:py3147-c555363b-r2 \
+  -n 10 /opt/venv/bin/python /repo/tools/run_inertia_matching_probe.py --output /out/inertia-new
+```
+
+## 2026-06 歷史嘗試
+
 正路 (b):把 seg0 函式逐一寫成「用 **MSC 5.1** 編出 byte-identical 原版機器碼」的 C。
 本篇記錄第一批 leaf 函式的 byte-match 嘗試、可重複的 workflow、各函式 match% 與殘差成因,
 以及下一批的建議。

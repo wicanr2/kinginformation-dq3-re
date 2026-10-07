@@ -1,5 +1,11 @@
 # 我們怎麼知道反組譯是「對的」?——RE 正確性的確認
 
+> 2026-10-08追加勘誤：本篇「1函式C byte-match」沒有完整逐位元組相等的證據。
+> 本輪新編七個C候選，四組完成明示fixup比較全部DIFF，另三組拒絕；C exact為0。
+> NASM具語意ASM已重編RNG的16bytes並完全相等，另列ASM成果。
+> Microsoft C 5.x的原版身分保持hypothesis，精確版本未知。原始定位、歷史嘗試與
+> 反證均保留；現行matching證據見 [docs/25](25-match-progress.md) 與Issue #5。
+
 > **2026-08-22 勘誤：**逐函式 byte-match 是機器碼保真與反編譯品質的強證據，
 > 但即使全 EXE byte-match，也不能數學上證明每個資料欄位與玩家可見語意均已理解。
 > 本篇的全覆蓋目標從未完成；現況以 [`docs/135`](135-re-assertion-audit-20260822.md)
