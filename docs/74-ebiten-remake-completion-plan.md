@@ -12,7 +12,9 @@
 > Watcom16 revision由完整官方hash建置，instruction-free BX／SI／AX控制可重編；AX store4bytes
 > 已入正式來源清單且兩次重編一致。主程式填表17／搜尋24bytes仍不匹配；RNG候選亦DIFF。
 > WLINK synthetic控制核對symbol-2，六重定位負例拒絕；原版compilerunknown。
-> 完整Goal六gate仍未證實，active。下一步追LOOP／LODSB及多entry的C codegen與layout。
+> 主程式codegen134組為130 DIFF／4 group-frame REFUSED；Watcom C long-shift正對照實際發LOOP。
+> 兩套compiler完整OBJ重編一致，TC實際生成C mtime固定，無mask。沒有新增C覆蓋。
+> 完整Goal六gate仍未證實，active。下一步回原版compiler／ABI與source-unit歸屬，不重跑已排除組合。
 > 唯一目前狀態在CONTEXT，
 > 證據與重生入口[docs/25](25-match-progress.md)，驗收契約tools/matching_goal_contract.json。
 

@@ -46,10 +46,68 @@
 > [`tools/verify_watcom_signed_fixup.py`](../tools/verify_watcom_signed_fixup.py)以vendor WLINK與
 > synthetic DATA正對照核對symbol-minus-two，並拒絕unsigned overflow、signed underflow、
 > 越界placement、缺placement與未知frame。此控制不提供原版EXE的module layout。
+> [`tools/probe_watcom_primary_codegen.py`](../tools/probe_watcom_primary_codegen.py)固定兩個主程式
+> 原始範圍，比較C迴圈寫法及compiler的重排／loop選項。每個source／OBJ／fixup均保留，
+> 不patch code，不把實驗候選自動加進正式coverage。
+> [`tools/probe_turboc_primary_codegen.py`](../tools/probe_turboc_primary_codegen.py)沿用既有
+> TC2.01 archive與DOSBox image，固定hash比較一般register locals及C暫存器偽變數；
+> 未支援OMF group frame仍拒絕。它不證明原版compiler身分。
+
+## 主程式迴圈 codegen 控制
+
+本節為最新結果，正式C覆蓋仍四個19 bytes。原始 `assets_raw/DQ3.EXE` 為115282 bytes，
+SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+原版證據使用IDA9.4 inventory，linear基準0x10000，file=`linear-0x10000+0x1370`。
+兩個候選範圍為sub_132A3的linear132A3..132B4／logical32A3..32B4／file4613..4624，
+以及sub_16FCF的linear16FCF..16FDE／logical6FCF..6FDE／file833F..834E。
+
+| 控制 | 實際結果 | 界線 |
+|---|---|---|
+| Watcom填表，8種C寫法×9組正式flags | 72案均DIFF，16種resolved code，最短17 bytes | 關閉重排及先宣告count可還原初始化與store順序；-ot可發原版ADD BX,2，但仍以DEC／JNE計數，完整18 bytes不等於原版17 bytes |
+| Watcom搜尋，6種C寫法×9組flags | 54案均DIFF，24種resolved code，最短20 bytes | register配置、LODSB及LOOP均未完整匹配；短於原候選24 bytes不等於exact |
+| Watcom可讀C的long-shift正對照 | 整個15-byte module包含JCXZ、SHL／RCL與LOOP | confirmed compiler emission；沒有原版unit身分，不計C覆蓋，也不證明任意C迴圈可用LOOP |
+| TC2.01一般register locals，4組flags | 四案REFUSED，實際fixup為frame method1／target2 | group-frame語意尚未支持，不假裝resolved或用raw operand當匹配 |
+| TC2.01 `_CX`／`_BX`偽變數，4組flags | 四案均DIFF，完整19 bytes相同 | 原生C extension認得這些名稱；仍生成兩次INC、DEC、OR及JNE，不是原版ADD／LOOP |
+
+全部來源為C或instruction-free register pragma，沒有inline instruction或machine-code array。
+Watcom的`-ol`是loop最佳化選項；本輪126案沒有因這個名稱產生原版LOOP。
+這些結果只排除列出的source／flags／compiler組合，不證明所有C compiler均無法匹配。
+原版編譯器、原始型別、主程式與底層unit歸屬仍unknown。
+
+官方Watcom release `2026-10-01-Build` 指向固定commit
+`e28568669775a7119f381f3b37d21745d8afcfb6`。54份i86及共用Intel C codegen來源共935938 bytes，
+逐檔Git blob SHA1與SHA256核對，保存在 `watcom-codegen-source-r1/`。
+其中[Do4CXShift](https://github.com/open-watcom/open-watcom-v2/blob/e28568669775a7119f381f3b37d21745d8afcfb6/bld/cg/intel/i86/c/i86enc.c#L177)
+在lines244／252發出M_LOOP；可讀C long-shift控制亦實際產生該指令。
+來源snapshot不是完整compiler，不能從54份檔案的搜尋缺項宣稱整個compiler沒有其他emitter。
+第一次猜8086路徑404後依官方目錄改為i86，保留既有tag收據，沒有重抓成功輸入。
+
+TC2.01沿用本機 `tools/build/tc201.zip`，SHA256
+`2c87f988605ae9ed70e5fef35b9854de87e36ccdb021caec35ab2424ca4b5553`，
+compiler `Disk2/TCC.EXE` 的SHA256為
+`19650666dcaa03e3f68efd9beeb57821ba4ed4d84c88a52b0e989bbfc97e07ba`，
+並與archive內原檔逐byte核對。沿用dq3-msc image中的DOSBox，未另建image或使用舊host wrapper。
+初次batch少CALL，compile及DONE已完成但留在DOS prompt，90秒逾時；新runner使用
+`call go.bat`後正常退出。此失敗屬shell腳本，不列compiler或產品缺陷。
+其後兩份object的COMENT classE9只有生成C的DOS file time不同，code相同但OBJ不相同。
+固定實際生成C的mtime為2026-10-01 UTC後，兩次完整OBJ相同；不strip、mask或patch object。
+
+本機收據位於 `work/matching-decomp-20261008-r1/full-goal-r1/`：
+
+- `primary-codegen-r3/receipt.json`、`primary-codegen-r4/receipt.json`：126案及long-shift正對照，完整source／OBJ／code／fixup重編一致。
+- `turboc-primary-r4/receipt.json`、`turboc-primary-r5/receipt.json`：八案的完整source／OBJ／code／拒絕結果一致。
+- `watcom-codegen-source-r1/manifest.json`：官方固定commit與54份source hash。
+- `turboc-metadata-C000-r1.json`、`turboc-metadata-C004-r1.json`：舊object的原始差異record。
+- `primary-codegen-verification-r1.json`：兩套compiler逐案重新讀object核對，原版hash、source snapshot及UID通過。
+- `turboc-source-time-control-r1.json`：16份OBJ的實際非空E9 time／date為0000／5D41；短E9 record另保留，不當成時間欄位。
+- `goal-audit-r7.json`：正式來源與原始範圍重核，仍四個19 bytes，完整Goal未完成。
+
+正式C覆蓋沒有增加，完整Goal六gate仍未證實。下一步回到原版主程式的compiler／ABI與
+source-unit歸屬證據；不重跑這134個已排除組合，也不由局部compiler控制猜原版語言。
 
 ## 暫存器 C 來源與重定位核對
 
-本節為最新結果；下方各節保留先前檢查點。輸入為 `assets_raw/DQ3.EXE`，115282 bytes，
+本節保存上一檢查點；最新結果見上節。輸入為 `assets_raw/DQ3.EXE`，115282 bytes，
 SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
 IDA9.4 linear基準為0x10000，file=`linear-0x10000+0x1370`。
 

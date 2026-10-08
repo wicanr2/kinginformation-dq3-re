@@ -25,6 +25,8 @@
 | [Watcom16 register控制](../run_watcom16_abi.py) | 六個instruction-free C pragma控制；固定source path及-zld確保真實OBJ重現。實驗exact不自動加入正式coverage |
 | [Watcom原始範圍來源](../watcom_matching_manifest.json) | 配合run_watcom16_abi.py的candidate模式，核對完整IDA範圍、source hash及原始bytes；AX store exact，主程式fill／search仍DIFF |
 | [WCC有號位移控制](../verify_watcom_signed_fixup.py) | vendor WLINK連結實際C object與synthetic DATA，保留map的frame bias；六無效位移拒絕，不當原版layout |
+| [Watcom主程式codegen](../probe_watcom_primary_codegen.py) | 填表／搜尋126組C與loop／reorder flags，完整artifact保留；long-shift正對照實際發LOOP，原版候選全DIFF |
+| [TC2.01主程式codegen](../probe_turboc_primary_codegen.py) | 固定本機archive／compiler hash，用既有DOSBox比較八組C；四DIFF／四group-frame REFUSED。生成C mtime固定以重現整個OBJ |
 
 ## 映像與輸入
 
@@ -68,6 +70,12 @@ repository唯讀掛到/repo，既有matching輸出掛到/out；每次output須�
 加 `--candidate-obj /out/<候選目錄>/sub_132a3.obj --output /out/<新控制目錄>`。
 總審核加 `--watcom-receipt` 與 `--repeat-watcom-receipt`；RESOLVED只表示可重定位，
 僅原始全範圍byte_exact才能計入C覆蓋。入口與現況見docs/25。
+
+主程式codegen以 `python3 /repo/tools/probe_watcom_primary_codegen.py`
+或 `python3 /repo/tools/probe_turboc_primary_codegen.py`，加上
+`--output /out/<新目錄> --ida-inventory /out/inventory-ida-r2.json`。
+前者使用dq3-watcom16 image，後者沿用dq3-msc image並從repo唯讀TC輸入啟動；
+兩者均使用上方一次性容器限制。它們比較完整範圍，不提供production build或source-unit批准。
 
 從專案根目錄建置MSC映像，stdin context不含原版或compiler：
 

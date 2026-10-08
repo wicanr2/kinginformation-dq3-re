@@ -13,7 +13,9 @@
 > 固定官方archive與wcc16 revision已實測instruction-free BX／SI／AX ABI；六控制重編OBJ／code相同。
 > AX store4 bytes已納入正式來源清單與兩次重編；主程式填表17／搜尋24bytes仍DIFF。
 > WLINK synthetic控制證實FFFE為symbol-2，六重定位負例拒絕，未知DS layout不補猜。
-> 最新跨compiler審核goal-audit-r6；下一步追LOOP／LODSB及多entry codegen。原版compilerunknown。
+> 最新跨compiler審核goal-audit-r7。主程式codegen134組控制為130 DIFF／4 REFUSED，無新增C覆蓋。
+> Watcom long-shift C正對照有LOOP；兩套compiler完整OBJ重編相同，TC生成C mtime固定且不遮罩。
+> 下一步回原版compiler／ABI及source-unit歸屬，不重跑已排除的134組。原版compilerunknown。
 > 保留entry／stack／side effects；Go／pack及Issue #4保持。
 
 以下保存完整Goal啟動前的局部研究，現況以CONTEXT唯一狀態表及上方Goal為準。

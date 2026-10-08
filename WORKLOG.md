@@ -2213,3 +2213,46 @@ MSC六listing負例亦保持。具體範圍、工具入口與收據索引在docs
 原版115282 bytes與SHA2565178fdc8保持，正式Go／pack、Issue #4暫停及私有資產保持。
 本批只提交C來源、研究工具、清單與現況文件。研究輸出root-owned及Markdown目錄均0，
 一次性容器已清除，沒有新image或發行包。下一步追主程式LOOP／LODSB與多entry的C codegen。
+
+## 2026-10-08：主程式 loop codegen 與現成 compiler 邊界
+
+前輪d8fa757為實際進展，依CONTEXT及docs/74接續。路由命中compiler/runtime分流，
+載入compiler-runtime-helper-triage及文件職責。原版、既有TC套件與repo唯讀掛載，
+所有搜尋、下載、compiler、解析與驗證在有界UID1000 Docker容器。
+
+新增兩個C codegen probe並立即掛到docs/25與tools/build/README。
+Watcom八種填表寫法乘九組正式flags為72案，六種搜尋寫法乘九組flags為54案，全部DIFF。
+關閉重排恢復store順序，count先宣告恢復CX／BX初始化順序，-ot可發ADD BX,2，仍以
+DEC／JNE而非LOOP計數；搜尋最短20 bytes仍未匹配原版15 bytes。
+保留每份原始C、OBJ、compiler command、code與真實fixup，不採prefix或masked match。
+
+為避免將loop最佳化選項誤讀成LOOP指令，核對官方固定release的commit e2856866。
+原猜8086目錄404，依官方listing改i86；54份codegen C source共935938 bytes逐檔
+Git blob SHA1及SHA256通過，快照留work，不加入Git。Do4CXShift有兩個M_LOOP emitter。
+新可讀C long-shift正對照實際產生15-byte module與LOOP，證明工具能發該指令；
+不從有限source snapshot推定整個backend不支持C迴圈，也不把控制樣本計入C覆蓋。
+
+沿用本機TC2.01 archive及compiler固定hash，以既有dq3-msc image的DOSBox交叉控制。
+四個一般register-locals候選因實際frame1／target2 fixup尚未支持而REFUSED；
+四個_CX／_BX原生C偽變數候選皆19-byte DIFF，含INC兩次、DEC、OR與JNE。
+原版compiler保持unknown，TC2.01身分僅對本機控制工具成立。
+
+初次batch未用CALL，compiler及DONE已完成但停DOS prompt，90秒timeout收據保留。
+沿既有已驗runner改call go.bat後同image乾淨退出。之後兩次OBJ不相同，code相同；
+逐OMF record定位唯一COMENT classE9 source file time差異。固定實際生成C的mtime至
+2026-10-01 UTC後完整OBJ相同，沒有strip、mask或patch object。
+
+最終Watcom primary-codegen-r3／r4的126案加long-shift控制，以及Turbo C
+turboc-primary-r4／r5八案，完整source／OBJ／code／fixup或拒絕結果相同。
+verification逐案重讀object解析、核對原版hash及54份官方source，語法與輸出UID通過。
+正式C仍四個19 bytes，完整Goal六gate仍未證實、active。下一步回原版compiler／ABI
+及source-unit歸屬，不重跑這134個已排除組合，不由零match推定所有C compiler皆不可能。
+
+正常Go／game pack及十三項使用者未追蹤資料保持，沒有新image、遊戲包或Release。
+本批只提交兩個公開probe、索引與現況，原版與compiler binaries、source快照及OBJ不提交。
+research根root-owned及Markdown目錄0，一次性容器全部清除；git diff --check通過。
+
+額外直接核對16份最終TC object的非空E9 payload，時間／日期為0000／5D41，
+與固定source mtime相符；不依兩個容器碰巧同時執行推定可重現。首個檢查器未區分短E9
+record而unpack失敗，修正為另存短record、不解讀time後乾淨通過。
+最新goal-audit-r7再次重核四個19 bytes與六個未完成gates；所有私有收據由docs/25索引。
