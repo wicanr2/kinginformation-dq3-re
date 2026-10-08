@@ -2095,3 +2095,47 @@ private EXE及protected scratch不提交。提交標題為
 `84592c1f36706c1033050e5afd0b6fd7b9cd7773548473141d57c02af6bf0652`，
 C receipt SHA256 `9fc31e9f71c52f72885f14ce303eceee451b0989b37fc69ab0f4d60ca5da5e01`，
 goal-audit-r2 SHA256 `daecf4458e37b4782aada753a88dccc89c5b3028be98db8b6b1f944be04b97e4`。
+
+### 2026-10-08完整matching續行：邊界分級、間接callback與15-byte C
+
+上一Goal輪有實際進展，0702882已推送；本輪接續使用者已選的完整C／已確認底層ASM標準。
+Goal維持active，沒有縮小成局部compatible adapter。先核對工作樹、目前記憶／CONTEXT／
+README／docs/74與docs/25；原版115282 bytes／5178fdc8、正式Go／pack與protected scratch保持。
+路由命中retro remake、IDA9.4及平台規格優先，沿用既有研究根和工具image。
+
+新增fresh `ida_matching_boundaries.py`與offline `review_matching_boundaries.py`：
+
+- 22候選末端逐項核對原始bytes及typed xref。17個有實際fl_F type21到physical next，不能以自動owner截斷；2個有相鄰MOV AH4C／INT21的DOS service末端；3個因直接callee的FUNC_NORET抑制post-call flow，保持strong。實際flag常數由IDA工具輸出，FUNC_NORET為1，未從數字或名稱猜。
+- sub_192F0的callee193E3以194BF→19405形成原始事件循環。16346→1E713→1E7F3→192BC連到DOS清理與退出。保留callee-based限制，不由flag單獨推無返回，亦不把unreachable RET或多entry自動併成C單位。
+- 舊182BB在182B8的far-call operand內、1A660在1A65D的MOV內、1A753在1A751 near-call operand內；偏移3／3／2 bytes，fresh查詢皆無incoming xref。排除這三個舊source-function入口；若有獨立重疊入口證據再重開。
+- DOS AH4C契約引用RBIL61的標準service，不為平台語意另開RE。核對的是本案實際writer、callsite及轉跳，不深入hardware timer／ISR。
+- 首個C的table word在IDA289E2／file19D52為495D。實際取址是14FF2的DS:3BB4，不是鄰近命令表的DS:3BAA。startup192AB／192AE carrier支持DGROUP linear24DD0；在此DS條件下，[DI+4]=47經BL、清BH、SHL BX、SI加BX及零word gate到14FFF CALL[SI]，選中logical5D49。
+- DI來源、欄位+4產品意義、table完整合法範圍與runtime DS未驗，保留strong conditional static mapping。沒有猜成NPC handler字段、flag名稱或正常玩家證據。export另保留全部33個indirect call原始operand與typed屬性，未修改database名稱／邊界。
+
+新增C sub_136f5／sub_14a8d，各為DS-relative word0033／000C→AX及near return。
+原始定位分別為IDA236F5..236F9／24A8D..24A91，load-image logical136F5／14A8D，
+file14A65／15DFD。source使用已驗16-bit unsigned表示，但不宣稱原版C型別、signedness、
+DS來源或模組用途；兩個C單位仍屬次級segment未分類的局部資料操作。
+
+C-batch-r9／r10以相同最終producer與fresh boundary-ida-r2來源重編：三個PROC共15 bytes
+匹配，兩個新4-byte module亦完整相同；首個7-byte module仍有ENDP後1-byte NOP未配置。
+兩份OBJ、實際fixup後的body／module及listing逐byte相同。既有goal audit改為每source unit
+分別驗missing-ENDP及post-ENDP／PROC-byte mutation，共六個負例全部拒絕，正對照通過。
+沒有為了增加C數量採用raw bytes、inline ASM、mask或未閉合callee prototype。
+
+新來源與原始指令索引由docs/25及tools/build/README收錄；CURRENT表、PROJECT_MEMORY、
+docs/74、docs/24及goal contract更新為C3／15 bytes與17／2／3邊界結果。
+完整Goal的所有六gate仍未證實，source-unit範圍尚未批准，不用C15 bytes或partial hash冒稱完成。
+下一切片從17個實際flow edge建立保留多entry的CFG候選，逐一閉合shared tail及函式外code。
+
+本輪只提交C、query／review工具與文件，private EXE／OBJ／COD／database及13項scratch
+不提交。提交標題為`research: resolve boundary evidence and match three C procedures`，
+commit／push以Git log為準；Docker清理與最後驗證另列收尾收據。
+
+收尾：C／boundary tools語法、git diff --check及正式Go／assets／dist-all空diff通過。
+removed-flow、偽造legacy incoming xref及錯table index三個獨立反例均拒絕；所有新輸出
+UID/GID1000，研究根root-owned／Markdown目錄皆0。本批IDA／MSC容器已清除。
+fresh boundary SHA256 `b7f6a4d00bfbb959d3e04b856c4025368147f6a3e5c4363c34dce9278f03f7d1`，
+boundary review SHA256 `2cd054c149e746f5ac4a3477cfd1ab56c014f1d96966ee2615e037461c62afc2`，
+C receipt SHA256 `2d89337301487276e5d6ea268973782f98294f90ccf88674f149e48d3ddbbb4d`，
+goal audit SHA256 `00016d5ae21fc300160e9d0595573d3f58dea720b91b73ba2474c574841ef9ee`。

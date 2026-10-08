@@ -22,7 +22,7 @@
     {
       "id": "primary-C-exact",
       "requirement": "Every primary source unit compiles from readable C and matches its entire original function/code range after actual relocations",
-      "verify": {"kind": "manual", "note": "Current C manifest contains one matched 7-byte PROC; the complete primary-unit denominator remains under review"}
+      "verify": {"kind": "manual", "note": "Current C manifest contains three matched PROC units/15 bytes, including two secondary-segment word readers; the complete primary-unit denominator remains under review"}
     },
     {
       "id": "low-level-ASM-evidence",

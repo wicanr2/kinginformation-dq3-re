@@ -6,6 +6,7 @@
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
+> 現行C本體3個／15 bytes，另兩個是次級segment word reader，模組用途與DS脈絡unknown。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -19,10 +20,52 @@
 > 尚無完整source-unit及build receipts的gate保持manual／未完成；不由既有測試名稱推定完成。
 > [`tools/matching_goal_audit.py`](../tools/matching_goal_audit.py)核對原始bytes、清單與C
 > 重編的新鮮度、兩份獨立artifact及listing正反對照，並明列仍未證實的完整Goal gates。
+> [`tools/ida_matching_boundaries.py`](../tools/ida_matching_boundaries.py)在新database核對22個
+> 末端、三個舊entry、實際IDA旗標及間接call operands；不改database邊界或原始名稱。
+> 同一份新IDA查詢亦核對兩個次級code segment的word讀取常式；C候選
+> [`sub_136f5.c`](../re/match/sub_136f5.c)與[`sub_14a8d.c`](../re/match/sub_14a8d.c)
+> 保留未知DS脈絡與欄位用途，不由名稱宣稱模組分類或原版C型別。
+> [`tools/review_matching_boundaries.py`](../tools/review_matching_boundaries.py)以fresh typed xref
+> 及實際DOS service writer分級22個末端，另核對三個舊entry與首個C的SI table consumer。
+> 分級不自動批准C source-unit範圍；table mapping保留DS條件與未知DI／欄位來源。
 
-## 完整Goal目前基準
+## 邊界與間接入口續行
 
-本節取代歷史清單的完成度分母；不改寫下方局部實驗。
+原始輸入、IDA9.4及linear／logical／file基準保持上節規則。
+fresh database的 `boundary-ida-r2.json` 與 `boundary-review-r1.json` 已核對：
+
+| 原候選 | 審查結果 | 等級與限制 |
+|---|---|---|
+| 17個跨邊界末端 | 實際IDA `fl_F` type21連到physical next instruction，跨出原自動函式範圍 | confirmed scoped static flow；需閉合完整CFG與所有外部entry，不直接合併成C函式 |
+| `sub_102C4`／`start`末端 | 原始相鄰`MOV AH,4Ch; INT21h`選擇DOS terminate service，局部末端有效 | confirmed service selection；不由最後一個terminal block宣稱整個函式永不返回，亦不自動歸屬後方RET |
+| 3個抑制post-call flow | callee實際`FUNC_NORET`為1。`sub_192F0`末端call `sub_193E3`，後者以原始`0x194bf→0x19405`形成事件循環；`sub_16346→sub_1E713→sub_1E7F3→0x192bc`連到DOS清理／退出區塊 | strong scoped callee interpretation；flag自身不是證據，indirect／nonlocal transfer與source-unit範圍仍待審 |
+| 三個舊entry | IDA linear182BB落在182B8 far call的第3 byte；1A660落在1A65D MOV的第3 byte；1A753落在1A751 near call的第2 byte。fresh查詢皆無incoming xref | confirmed current-input boundary；排除舊函式入口，若有獨立入口證據再開，不宣稱全程式沒有重疊指令 |
+
+DOS AH4C的標準行為依[RBIL Release61](https://fd.lod.bz/rbil/interrup/dos_kernel/214c.html)，
+不為標準API語意另開遊戲RE切片。本案只核對實際AH writer、callsite與原始轉跳。
+其他17個跨邊界流程是已確認關係，完整source-unit本體仍未批准。
+
+首個C的間接入口現在有條件式靜態閉合：startup原始carrier
+`0x192ab`的`B8DD14`經MZ relocation成IDA segment24DD，`0x192ae`將其寫DS。
+在DS為此DGROUP的條件下，`0x14feb`讀`[di+4]`至BL，清BH、SHL BX一次，
+`0x14ff2`取DS:3BB4到SI，`0x14ff6`加BX，讀word並以零值gate決定是否`CALL [SI]`。
+table base為IDA linear28984，entry289E2是第47個word，file19D52的495D指向logical5D49。
+DI物件來源、欄位`+4`產品意義、table完整合法範圍與實際runtime DS均未驗，
+故只標strong conditional static mapping，不把`+4`命名為NPC handler或故事旗標。
+
+新增C來源 `sub_236F5`／`sub_24A8D` 分別讀DS-relative word0033／000C至AX後near return。
+對應source為上方已索引的 `sub_136f5.c`／`sub_14a8d.c`，各4 bytes；
+field與DS／module脈絡保持unknown，C的unsigned只是已驗16-bit表示，不宣稱原版型別。
+完整C本體目前3個／15 bytes；第一個7-byte module仍多1-byte NOP，兩個新4-byte module
+則完整匹配。這不升格完整主程式、底層分類或全EXE重建。
+
+最新C批次為 `full-goal-r1/c-batch-r9`／`c-batch-r10`，三份OBJ、重定位body／module
+及listing逐byte相同。fresh exporter亦保留全部33個原始indirect calls及typed operands。
+後續從17個實際flow edge建立跨entry CFG候選，不靠助記符或auto owner猜C函式範圍。
+
+## 完整Goal起始基準
+
+本節保存完整Goal啟動時的基準；最新續行結果見上節，唯一目前狀態在CONTEXT。
 輸入為 `assets_raw/DQ3.EXE`，115282 bytes，SHA-256
 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
 IDA9.4 linear基準 `0x10000`，file=`linear-0x10000+0x1370`。
@@ -43,7 +86,7 @@ compiler自身listing的`ENDP`位於NOP之前，提供了新的獨立函式範�
 因此後續依PROC／ENDP核對整個函式，並保留完整module的DIFF及未解padding，
 沒有以RET、NOP內容、原版長度或遮罩猜切點。
 
-最終兩份乾淨重編為 `full-goal-r1/c-batch-r6`／`c-batch-r7`，OBJ、實際重定位的函式／
+首個C當時兩份乾淨重編為 `full-goal-r1/c-batch-r6`／`c-batch-r7`，OBJ、實際重定位的函式／
 module bytes及listing相同。compiler版本身分仍只適用掛載候選，原版compiler保持unknown。
 新full-inventory首輪因IDA環境使用ASCII寫出而失敗，空sidecar與log保留；
 明示UTF-8後同一工具與唯讀原版乾淨重跑，`inventory-ida-r2.json`才是有效來源。
@@ -51,7 +94,7 @@ module bytes及listing相同。compiler版本身分仍只適用掛載候選，�
 本機收據根 `work/matching-decomp-20261008-r1/full-goal-r1/`：
 `first-c-ida.json`、`inventory-ida-r2.json`、`c-batch-r7/receipt.json`及`goal-audit-r1.json`。
 完整Goal六個gate保持未證實，evidence audit PASS不代表Goal完成。
-下一步先審22個非terminal邊界與三個舊entry，建立主程式source-unit及間接入口對照，
+當時下一步先審22個非terminal邊界與三個舊entry，建立主程式source-unit及間接入口對照，
 再依原始資料流還原下一批C；不能把自動函式碎片直接編成獨立C函式。
 
 已有唯讀原版、MSC工具與上述research根時，使用新輸出名稱重跑C批次：

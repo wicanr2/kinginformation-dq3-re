@@ -19,6 +19,38 @@
       },
       "semantic": "Store word 1 at DS:0B60, then near return; field purpose remains unknown",
       "inference_level": "confirmed instruction-level operation; product meaning unknown"
+    },
+    {
+      "id": "sub_236F5",
+      "original_name": "sub_236F5",
+      "ida_linear_start": "0x236f5",
+      "logical_start": "0x136f5",
+      "file_start": "0x14a65",
+      "size": 4,
+      "source": "re/match/sub_136f5.c",
+      "public_symbol": "_sub_136f5",
+      "compiler_flags": "/c /AS /Os /Gs /Fc",
+      "external_DS_offsets": {
+        "_unknown_DS_0033": "0x0033"
+      },
+      "semantic": "Load DS-relative word 0033 into AX, then near return; DS context and field meaning unknown",
+      "inference_level": "confirmed instruction-level operation; product/module meaning unknown"
+    },
+    {
+      "id": "sub_24A8D",
+      "original_name": "sub_24A8D",
+      "ida_linear_start": "0x24a8d",
+      "logical_start": "0x14a8d",
+      "file_start": "0x15dfd",
+      "size": 4,
+      "source": "re/match/sub_14a8d.c",
+      "public_symbol": "_sub_14a8d",
+      "compiler_flags": "/c /AS /Os /Gs /Fc",
+      "external_DS_offsets": {
+        "_unknown_DS_000c": "0x000c"
+      },
+      "semantic": "Load DS-relative word 000C into AX, then near return; DS context and field meaning unknown",
+      "inference_level": "confirmed instruction-level operation; product/module meaning unknown"
     }
   ]
 }

@@ -129,8 +129,15 @@ def main():
         # Real listing is the positive control; mutations must fail independently
         # of comparison against original bytes.
         text = listing.read_text(encoding="ascii")
-        mutations = {"missing-ENDP": text.replace(case["public_symbol"] + "\tENDP", ""),
-                     "changed-post-ENDP-byte": text.replace("000007\t90", "000007\t91")}
+        mutations = {"missing-ENDP": text.replace(case["public_symbol"] + "\tENDP", "")}
+        if provenance["post_ENDP_bytes"]:
+            outside = provenance["post_ENDP_bytes"][0]
+            needle = format(outside["offset"], "06x") + "\t" + outside["bytes"][:2]
+            mutations["changed-post-ENDP-byte"] = text.replace(needle, format(outside["offset"], "06x") + "\t" + format(int(outside["bytes"][:2], 16) ^ 1, "02x"))
+        else:
+            import re
+            mutations["changed-PROC-byte"] = re.sub(r"(\*\*\*\s+000000\s+)[0-9a-fA-F]{2}",
+                                                    lambda match: match.group(1) + format(raw_code[0] ^ 1, "02x"), text, count=1)
         with tempfile.TemporaryDirectory(prefix="dq3-listing-negative-") as temporary:
             for name, content in mutations.items():
                 if content == text:
@@ -140,7 +147,7 @@ def main():
                 try:
                     msc_listing_function(raw_code, path, case["public_symbol"])
                 except (ValueError, UnsupportedOMF):
-                    parser_negatives.append({"case": name, "rejected": True})
+                    parser_negatives.append({"source_unit": case["id"], "case": name, "rejected": True})
                 else:
                     raise ValueError("Malformed compiler listing accepted")
     if exact_bytes != receipt["C_exact_bytes"] or len(exact_units) != receipt["C_exact_functions"]:

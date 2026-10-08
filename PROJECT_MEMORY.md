@@ -2,12 +2,14 @@
 
 > 2026-10-08現行Goal：「完成 dq3 matching decompliation」。使用者已選主程式C精確匹配，
 > ASM僅用已確認底層，全EXE由原碼乾淨重建並逐byte一致，raw code／db拼接不算完成。
-> 首個C sub_15D49完整PROC7 bytes匹配，compiler ENDP後1-byte NOP的module配置未解。
+> 三個C完整PROC15 bytes匹配，含兩個次級segment word readers；module／DS用途unknown。
+> 首個C sub_15D49的compiler ENDP後1-byte NOP配置未解，兩份OBJ／code／listing相同，六負例拒絕。
 > IDA9.4新導航828函式／29979 code heads／81854 code bytes，無未映射或重疊code bytes；
-> 22個非terminal末端、4455個函式外指令與原版模組分類仍待審。舊280與新IDA共有277 entry。
-> 兩份C OBJ／code／listing重編一致，正反listing驗證通過；完整Goal六gate仍未證實，active。
+> 22候選已分17實際跨界flow、2 DOS service末端及3 strong suppressed-call；三個舊entry指令內且無xref。
+> 首個C條件式table入口47已由SI取址／零gate／CALL[SI]核對，runtime DS與DI／欄位來源unknown。
+> 4455函式外指令與原版source-unit分類仍未閉合；完整Goal六gate仍未證實，active。
 > 現況CONTEXT、計畫docs/74、證據docs/25與tools/matching_goal_contract.json；下一步先審
-> 邊界／三個舊entry，再還原下一批C及layout。正式Go／pack與Issue #4暫停保持，scratch保留。
+> 從17個實際flow建立多entry CFG候選，再還原主程式C與layout。正式Go／pack及Issue #4暫停保持。
 
 以下保存完整Goal啟動前的局部研究，現況以CONTEXT唯一狀態表及上方Goal為準。
 

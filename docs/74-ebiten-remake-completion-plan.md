@@ -3,10 +3,13 @@
 > 2026-10-08現行Goal：使用者指定「完成 dq3 matching decompliation」，並確認主程式C
 > 精確匹配，ASM僅用於已確認底層常式。最終需由原碼乾淨重建全EXE且逐byte一致，
 > raw code／db拼接不算完成。完整matching是獨立Goal，不改正式Go／pack或Issue #4暫停。
-> 目前首個C完整PROC7 bytes已匹配，module末端1-byte NOP配置未解。新IDA導航為828
+> 目前三個C完整PROC15 bytes已匹配，含兩個次級segment word readers，module／DS用途unknown。
+> 首個C的module末端1-byte NOP配置未解；兩份重編相同，六listing負例拒絕。新IDA導航為828
 > 函式／29979 code heads／81854 code bytes；22個非terminal末端、4455個函式外指令
-> 及主程式／底層source-unit分類仍未閉合。完整Goal六個gate都未證實，Goal保持active。
-> 下一步先審22個邊界與三個舊entry，再還原下一批C及完整layout。唯一目前狀態在CONTEXT，
+> 及主程式／底層source-unit分類仍未閉合。22候選已分17跨界flow、2 DOS service末端及3 strong
+> suppressed-call；三個舊entry在指令內且無xref，舊入口排除。首個C條件式table index47已核對。
+> 完整Goal六gate仍未證實，active。下一步從17 flow建立多entry CFG候選，再還原主程式C與layout。
+> 唯一目前狀態在CONTEXT，
 > 證據與重生入口[docs/25](25-match-progress.md)，驗收契約tools/matching_goal_contract.json。
 
 > 2026-10-08：依使用者授權啟動 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)

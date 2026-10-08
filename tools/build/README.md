@@ -19,6 +19,8 @@
 | [完整IDA清單](../ida_matching_inventory.py) | 所有code heads／function chunks、原始與loaded bytes、typed xref及舊清單差異；自動邊界仍需審查 |
 | [完整Goal C批次](../run_matching_c_batch.py) | [候選清單](../matching_c_manifest.json)保存原始定位與DS placement；用compiler PROC／ENDP及實際OMF核對整個C函式，module padding分開記錄 |
 | [完整Goal證據核對](../matching_goal_audit.py) | [契約](../matching_goal_contract.json)保存使用者選定的標準；核對完整清單、兩份C artifact及listing正反對照，manual gate保持未完成 |
+| [邊界與間接入口](../ida_matching_boundaries.py) | fresh IDA讀出原始flag常數、22末端、三個舊entry與33個indirect call operands；不修database邊界 |
+| [邊界分級](../review_matching_boundaries.py) | typed flow／實際DOS service writer與SI取址consumer分級，保留DS條件、未知DI／field與未批准source-unit範圍 |
 
 ## 映像與輸入
 
