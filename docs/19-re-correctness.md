@@ -1,5 +1,11 @@
 # 我們怎麼知道反組譯是「對的」?——RE 正確性的確認
 
+> 2026-10-08追加證據：原版SBCM.LIB的CTVMEM／CMFDRV兩個`.ASM` module由官方WLINK
+> 重連後，完整7789 bytes等於EXE相應區段。三個已匹配C小函式共12 bytes在這兩段SDK內，
+> 不能當作主程式已match的證據，也不證明原版使用C。Press X字串已由IDA定位至另一段DOS
+> 訊息consumer，尚無MSC版本或runtime map證據。下方MSC5.x「定案」與指令形狀／字串論據
+> 保留為歷史斷言，現行compiler仍unknown；完整來源與分級見[docs/25](25-match-progress.md)。
+
 > 2026-10-08追加勘誤：本篇「1函式C byte-match」沒有完整逐位元組相等的證據。
 > 本輪新編七個C候選，四組完成明示fixup比較全部DIFF，另三組拒絕；C exact為0。
 > NASM具語意ASM已重編RNG的16bytes並完全相等，另列ASM成果。

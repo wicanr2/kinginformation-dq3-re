@@ -2,7 +2,7 @@
 
 > 2026-10-08現行Goal：「完成 dq3 matching decompliation」。使用者已選主程式C精確匹配，
 > ASM僅用已確認底層，全EXE由原碼乾淨重建並逐byte一致，raw code／db拼接不算完成。
-> 四個C來源19 bytes匹配，含兩個次級segment word readers及AX入參word store；module／DS用途unknown。
+> 四個C來源19 bytes匹配；三個12 bytes已定位於原版CTVMEM／CMFDRV SDK，欄位／DS／原始型別unknown。
 > 首個C sub_15D49的compiler ENDP後1-byte NOP配置未解，兩份OBJ／code／listing相同，六負例拒絕。
 > IDA9.4新導航828函式／29979 code heads／81854 code bytes，無未映射或重疊code bytes；
 > 22候選已分17實際跨界flow、2 DOS service末端及3 strong suppressed-call；三個舊entry指令內且無xref。
@@ -13,9 +13,12 @@
 > 固定官方archive與wcc16 revision已實測instruction-free BX／SI／AX ABI；六控制重編OBJ／code相同。
 > AX store4 bytes已納入正式來源清單與兩次重編；主程式填表17／搜尋24bytes仍DIFF。
 > WLINK synthetic控制證實FFFE為symbol-2，六重定位負例拒絕，未知DS layout不補猜。
-> 最新跨compiler審核goal-audit-r7。主程式codegen134組控制為130 DIFF／4 REFUSED，無新增C覆蓋。
+> 最新跨compiler審核goal-audit-r8。主程式codegen134組控制為130 DIFF／4 REFUSED，無新增C覆蓋。
 > Watcom long-shift C正對照有LOOP；兩套compiler完整OBJ重編相同，TC生成C mtime固定且不遮罩。
-> 下一步回原版compiler／ABI及source-unit歸屬，不重跑已排除的134組。原版compilerunknown。
+> 原版SBCM.LIB26個OMF modules已解析，官方WLINK兩次重連CTVMEM2493／CMFDRV5296 bytes完整等於EXE。
+> 兩段7789 bytes含data，尚無可讀原碼新增；fresh IDA80函式／2175 heads與原始names／bytes／chunks保持。
+> 剩餘7-byte C在MZ入口code segment，產品角色未確認。下一步SDK ASM／data source spec與code／data分類。
+> 其他八個SDK導航候選仍未解外部frame，不重跑134組；主程式compiler與完整來源仍unknown。
 > 保留entry／stack／side effects；Go／pack及Issue #4保持。
 
 以下保存完整Goal啟動前的局部研究，現況以CONTEXT唯一狀態表及上方Goal為準。

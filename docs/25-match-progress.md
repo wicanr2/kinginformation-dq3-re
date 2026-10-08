@@ -1,5 +1,8 @@
 # 逐函式 byte-match 進度 (matching decompilation)
 
+已提交GitHub的匹配來源與各自驗證範圍見[re/match來源清單](../re/match/README.md)。
+研究候選、原始object重連與完整source build分開記錄；尚未匹配的來源不計完成。
+
 > 2026-10-08新增完整Goal：使用者指定「完成 dq3 matching decompliation」，並選定
 > 主程式以C精確匹配，組語僅用於已確認的底層常式。最終由原碼乾淨重建整個EXE並
 > 逐byte一致；`db`／原始機器碼拼接不算完成。這是本Goal的驗收標準，先前局部研究
@@ -7,7 +10,8 @@
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
 > 現行C本體4個／19 bytes，含兩個次級segment word reader及一個AX入參word store。
-> 次級segment的模組用途與DS脈絡unknown。主程式填表與搜尋C候選仍不匹配。
+> 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
+> 其餘7-byte C來源位於MZ入口code segment，產品角色仍未確認。主程式填表與搜尋C候選仍不匹配。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -52,10 +56,78 @@
 > [`tools/probe_turboc_primary_codegen.py`](../tools/probe_turboc_primary_codegen.py)沿用既有
 > TC2.01 archive與DOSBox image，固定hash比較一般register locals及C暫存器偽變數；
 > 未支援OMF group frame仍拒絕。它不證明原版compiler身分。
+> [`tools/probe_sbcm_modules.py`](../tools/probe_sbcm_modules.py)以原版SBCM.LIB的OMF module／
+> PUBLIC metadata建立導航候選，保留IDA原名及兩份binary hash。排除relocation的搜尋僅作線索，
+> 不當作source match、完整重定位或低層ASM資格證據。
+> [`tools/ida_matching_module_refs.py`](../tools/ida_matching_module_refs.py)從全段vendor link證據
+> 匯出原版SDK module的原始functions／bytes／typed xrefs及啟動碼，別名僅作metadata，
+> 不rename或修改database邊界，不由字串推定全程式compiler。
+> [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
+> 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 原版 SDK module 身分與 C 來源歸屬
+
+本節為最新結果。原版 `assets_raw/DQ3.EXE` 為115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+附帶 `assets_raw/SBCM.LIB` 為35840 bytes，SHA-256
+`01b242cb99193d006e23b73babe122887e59713410f88798283a9120df1d0683`。
+原版查詢使用IDA9.4；linear基準0x10000，file=`linear-0x10000+0x1370`。
+
+SBCM是實際OMF library，page16、dictionary起點file8200、五個512-byte dictionary blocks，
+26個module均有`.ASM` THEADR名稱。這是原始metadata，不等於主程式編譯器或全部來源語言。
+兩個原先未支援module使用LIDATA；bounded USE16 decoder保留原始OBJ，再建立LEDATA parser view。
+重複資料後若有FIXUPP仍拒絕，encoded／decoded大小、hash與原始record位置分開記錄。
+CMFDRV還有226個未寫入bytes，導航不得自行補0聲稱原碼匹配。
+
+| module metadata | 原版完整範圍 | 完整身分證據 | IDA導航 |
+|---|---|---|---|
+| CTVMEM.ASM／CTVM_VOICE_DRV | linear22F60..2391D；logical12F60..1391D；file142D0..14C8D，2493 bytes | 原始OMF全段沒有FIXUPP；官方WLINK重連的完整code／data等於原版 | 34自動函式、959指令位置，入口有17個typed far-call refs，包含SDK wrapper及原版20577／20582／205A0 |
+| CMFDRV.ASM／SBFM_CMF_DRV | linear23920..24DD0；logical13920..14DD0；file14C90..16140，5296 bytes | 官方WLINK從原始OMF重連，包含兩個LIDATA及未寫入區域的完整段等於原版 | 46自動函式、1216指令位置，入口有19個typed far-call refs |
+
+兩段合計7789 bytes，SDK原始object重連的兩次完整MZ亦相同。
+推論等級為confirmed scoped original-module identity；它們是Creative音效支援module，
+原始PUBLIC metadata、DSP／timer／PIC I/O及caller證據一致。
+這些數字包含module內data，不當作已還原ASM code或source coverage。
+可讀原碼、code／data分類及全部driver ABI仍待還原；不以原版OBJ作最終source build輸入。
+硬體wall-clock與DAC／PIT逐週期時序不在這次module身分查詢內。
+
+兩段均沒有原版MZ relocation。CTVMEM之後的三個alignment bytes不在2493-byte module證據內，
+最終layout仍須獨立核對。另八個有排除fixup搜尋命中的SDK module保持hypothesis，
+它們的外部symbol／group frame未閉合，不能由導航候選升格whole-segment parity。
+沒有命中也不證明module未被使用，ctvdsk包含未寫入區域，仍未批准來源／歸屬。
+
+三個已匹配C函式的原始bytes及IDA names／chunks保持：
+
+- sub_236F5位於CTVMEM.ASM，C完整4 bytes。
+- sub_24A8D與sub_24AE6位於CMFDRV.ASM，各完整4 bytes。
+
+正式C仍四個19 bytes，這三個12 bytes屬於SDK driver，不當作主程式產品邏輯已完成。
+剩餘sub_15D49的7 bytes位於MZ入口code segment；table47條件式入口保持，但產品角色未知。
+兩份更新manifest重編保持原code，欄位語意、原始型別與runtime DS不因module歸屬而升格。
+
+舊「Press X」字串的compiler論據亦須限縮：fresh IDA在linear20288有data offset xref，
+LEA DX至linear200AB後CALL2030A，屬另一段原版DOS錯誤訊息consumer。
+沒有直接MSC版本／runtime map證據；這段consumer與Creative driver身分均不能證明主程式用MSC5.x。
+舊近RET、LOOP與C小函式匹配也不足以決定整個程式的語言或memory model，歷史論述見docs/19勘誤。
+
+本機收據在 `work/matching-decomp-20261008-r1/full-goal-r1/`：
+
+- `sbcm-modules-r3/receipt.json`與原始26個OBJ：metadata、LIDATA parser view及九個導航候選。
+- `sdk-linker-control-r3/receipt.json`、`sdk-linker-control-r4/receipt.json`：原版objects的官方重連，不是原碼重建。
+- `sdk-module-refs-r4.json`：fresh IDA原名、80函式、2175指令位置、typed xref、startup及字串consumer。
+- `sdk-module-verification-r1.json`：五負例、兩次完整vendor MZ及原版輸入身分。
+- `sdk-ownership-verification-r1.json`：IDA與原inventory的names／bytes／chunks保持及三C歸屬。
+- `source-publish-verification-r1.json`：GitHub來源入口、四C19 bytes、兩ASM46 bytes新編、索引及連結核對。
+- `c-batch-r15/receipt.json`、`c-batch-r16/receipt.json`、`watcom-source-r10/receipt.json`、`watcom-source-r11/receipt.json`及`goal-audit-r8.json`：更新SDK歸屬後的正式C重編與四個19 bytes核對。
+
+第一次IDA匯出因BADADDR常數所在module不同而留下error sidecar，改用idc.BADADDR後由原工作庫
+新副本重跑；原始EXE、library、正式database、names與function boundaries均未修改。
+下一步為兩個已證實音效module建立可讀ASM／data source spec與code／data分類，再做source rebuild。
+主程式C、其他SDK frame及完整layout／EXE六gate繼續保持未完成，不重跑前輪134組。
 
 ## 主程式迴圈 codegen 控制
 
-本節為最新結果，正式C覆蓋仍四個19 bytes。原始 `assets_raw/DQ3.EXE` 為115282 bytes，
+本節保存上一檢查點，正式C覆蓋仍四個19 bytes。原始 `assets_raw/DQ3.EXE` 為115282 bytes，
 SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
 原版證據使用IDA9.4 inventory，linear基準0x10000，file=`linear-0x10000+0x1370`。
 兩個候選範圍為sub_132A3的linear132A3..132B4／logical32A3..32B4／file4613..4624，

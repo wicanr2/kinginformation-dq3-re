@@ -34,7 +34,7 @@
         "_unknown_DS_0033": "0x0033"
       },
       "semantic": "Load DS-relative word 0033 into AX, then near return; DS context and field meaning unknown",
-      "inference_level": "confirmed instruction-level operation; product/module meaning unknown"
+      "inference_level": "confirmed instruction-level operation and CTVMEM.ASM module membership; field/runtime DS/type meaning unknown"
     },
     {
       "id": "sub_24A8D",
@@ -50,7 +50,7 @@
         "_unknown_DS_000c": "0x000c"
       },
       "semantic": "Load DS-relative word 000C into AX, then near return; DS context and field meaning unknown",
-      "inference_level": "confirmed instruction-level operation; product/module meaning unknown"
+      "inference_level": "confirmed instruction-level operation and CMFDRV.ASM module membership; field/runtime DS/type meaning unknown"
     }
   ]
 }

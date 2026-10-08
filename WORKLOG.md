@@ -2256,3 +2256,45 @@ research根root-owned及Markdown目錄0，一次性容器全部清除；git diff
 與固定source mtime相符；不依兩個容器碰巧同時執行推定可重現。首個檢查器未區分短E9
 record而unpack失敗，修正為另存短record、不解讀time後乾淨通過。
 最新goal-audit-r7再次重核四個19 bytes與六個未完成gates；所有私有收據由docs/25索引。
+
+## 2026-10-08：原版 Creative SDK module 與來源歸屬
+
+上一輪4842c6e已完成codegen控制，屬實際進展。本輪依新現況回到原版工具鏈分流，
+載入retro-toolchain-runtime-fingerprinting與技能reference，沿用IDA9.4優先契約。
+原版EXE115282 bytes／5178fdc8、SBCM.LIB35840 bytes／01b242cb保持；全部工作在有界UID1000 Docker。
+
+原版SBCM.LIB確為page16 OMF，26個`.ASM` module metadata完整校驗。
+新probe保留原始module、PUBLIC、external與fixup，九個排除重定位的導航候選不計source match。
+LIDATA最初REFUSED，獨立USE16 decoder保留原始OBJ並建立parser view；重複資料的fixup仍拒絕。
+CMFDRV有226個未寫入bytes，沒有用parser預填零冒充完整match。
+
+官方WLINK從原始OMF重連CTVMEM2493及CMFDRV5296 bytes，完整code／data／gap均等於EXE。
+兩次完整vendor MZ相同，合計7789 bytes只算module身分，source coverage增量0。
+本輪commentary曾將合計誤寫7779，已按2493＋5296更正，不改個別長度或原始bytes。
+source、data語意、code／data分類與ABI仍需還原，原始OBJ不作最終source build輸入。
+
+fresh IDA保留兩段80自動函式、2175 code heads、原始names／bytes／chunks，無MZ relocation。
+driver入口17／19 typed far-call refs及DSP／timer／PIC I/O與PUBLIC身分一致。
+第一次腳本的ida_bytes.BADADDR不適用，error sidecar保留；改idc.BADADDR後新DB副本重跑。
+所有原始定位保持，SDK名稱只作外部metadata，不改正式database或名稱。
+
+三個已match C helpers的歸屬閉合：sub_236F5在CTVMEM，sub_24A8D／sub_24AE6在CMFDRV，
+共12 bytes。更新manifest推論範圍，runtime DS／欄位／原始型別仍unknown。
+兩份MSC及兩個新Watcom容器重編source／OBJ／code／fixup一致，C仍四個19 bytes。
+其餘7-byte C在MZ入口code segment，產品角色仍未知。goal-audit-r8六gate仍未證實。
+原版Press X已找到另一段DOS consumer，無MSC版本／runtime map證據；docs/19追加勘誤保留歷史。
+
+library截斷、checksum、LIDATA expansion、repeated-data fixup及self-fixup越界五負例拒絕。
+source與producer新鮮度、原始names／chunks／bytes及完整vendor MZ核對通過；收據在docs/25。
+原版compiler與其他八個SDK候選仍未閉合；下一步兩個已識別driver的可讀ASM／data source spec，
+不重跑134組，不把linked object當原碼完成。正常Go／pack、原版、十三項scratch及Issue #4暫停保持。
+
+使用者要求matching產生的正確程式碼存GitHub。已核對四C與兩ASM來源在origin/main；
+新增re/match/README列驗證範圍、重建工具與DIFF候選限制，掛入docs/25與CONTEXT索引。
+本批只提交公開source／工具／manifest／文件，原版binary、OBJ、SDK及IDA資料庫不提交。
+Docker一次性容器清除，研究root-owned與Markdown目錄0，git diff --check通過。
+
+發布入口核對另以NASM重新組譯兩個既有語意ASM來源，完整16／30 bytes仍等於原版；
+四個C19 bytes以新manifest的兩次收據重核。README所有source及重建連結存在，新增三工具
+語法、索引及UID/GID通過，收據source-publish-verification-r1由docs/25索引。
+第一次README patch同檔重複operation而全批未寫入，合併operation後完成，不屬產品問題。

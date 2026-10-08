@@ -27,6 +27,9 @@
 | [WCC有號位移控制](../verify_watcom_signed_fixup.py) | vendor WLINK連結實際C object與synthetic DATA，保留map的frame bias；六無效位移拒絕，不當原版layout |
 | [Watcom主程式codegen](../probe_watcom_primary_codegen.py) | 填表／搜尋126組C與loop／reorder flags，完整artifact保留；long-shift正對照實際發LOOP，原版候選全DIFF |
 | [TC2.01主程式codegen](../probe_turboc_primary_codegen.py) | 固定本機archive／compiler hash，用既有DOSBox比較八組C；四DIFF／四group-frame REFUSED。生成C mtime固定以重現整個OBJ |
+| [SBCM原始module](../probe_sbcm_modules.py) | 固定原版LIB hash，26個OMF metadata／LIDATA parser view與原始xref導航；排除fixup的候選不算match |
+| [SDK完整身分控制](../link_sbcm_module_controls.py) | 官方WLINK重連原版CTVMEM／CMFDRV objects，7789 bytes與EXE一致；source coverage增量0，objects不作最終原碼 |
+| [SDK原版IDA refs](../ida_matching_module_refs.py) | 固定whole-module proof後匯出原名、bytes、functions、typed refs及startup；保留library metadata與原始IDA定位 |
 
 ## 映像與輸入
 
@@ -76,6 +79,14 @@ repository唯讀掛到/repo，既有matching輸出掛到/out；每次output須�
 `--output /out/<新目錄> --ida-inventory /out/inventory-ida-r2.json`。
 前者使用dq3-watcom16 image，後者沿用dq3-msc image並從repo唯讀TC輸入啟動；
 兩者均使用上方一次性容器限制。它們比較完整範圍，不提供production build或source-unit批准。
+
+SDK metadata用 `python3 /repo/tools/probe_sbcm_modules.py`
+加 `--output /out/<新目錄> --ida-inventory /out/inventory-ida-r2.json`。
+身分控制用 `python3 /repo/tools/link_sbcm_module_controls.py`
+加 `--module-inventory /input/receipt.json --output /out/<新控制目錄>`，原始module目錄唯讀掛到/input。
+兩者用既有dq3-watcom16 image。IDA查詢在既有IDA9.4 image對新database副本執行
+`-S"/repo/tools/ida_matching_module_refs.py /out/<新sidecar>.json /out/<控制目錄>/receipt.json"`。
+完整scope、hash與位址基準見docs/25；原版library／OBJ／database僅留本機。
 
 從專案根目錄建置MSC映像，stdin context不含原版或compiler：
 

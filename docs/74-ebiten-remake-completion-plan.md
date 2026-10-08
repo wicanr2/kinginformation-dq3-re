@@ -3,7 +3,7 @@
 > 2026-10-08現行Goal：使用者指定「完成 dq3 matching decompliation」，並確認主程式C
 > 精確匹配，ASM僅用於已確認底層常式。最終需由原碼乾淨重建全EXE且逐byte一致，
 > raw code／db拼接不算完成。完整matching是獨立Goal，不改正式Go／pack或Issue #4暫停。
-> 目前四個C來源19 bytes已匹配，含兩個次級segment word readers及AX入參word store，module／DS用途unknown。
+> 目前四個C來源19 bytes已匹配；三個12 bytes屬已定位CTVMEM／CMFDRV SDK，欄位／DS／型別unknown。
 > 首個C的module末端1-byte NOP配置未解；兩份重編相同，六listing負例拒絕。新IDA導航為828
 > 函式／29979 code heads／81854 code bytes；22個非terminal末端、4455個函式外指令
 > 及主程式／底層source-unit分類仍未閉合。22候選已分17跨界flow、2 DOS service末端及3 strong
@@ -14,7 +14,9 @@
 > WLINK synthetic控制核對symbol-2，六重定位負例拒絕；原版compilerunknown。
 > 主程式codegen134組為130 DIFF／4 group-frame REFUSED；Watcom C long-shift正對照實際發LOOP。
 > 兩套compiler完整OBJ重編一致，TC實際生成C mtime固定，無mask。沒有新增C覆蓋。
-> 完整Goal六gate仍未證實，active。下一步回原版compiler／ABI與source-unit歸屬，不重跑已排除組合。
+> 原版SBCM.LIB26 modules已解析，兩個Creative driver完整7789 bytes由官方WLINK重連等於EXE。
+> fresh IDA80函式／2175 heads與原始定位保持；object重連不算原碼，ASM／data source仍待還原。
+> 完整Goal六gate仍未證實，active。下一步SDK source spec與code／data分類，不重跑已排除組合。
 > 唯一目前狀態在CONTEXT，
 > 證據與重生入口[docs/25](25-match-progress.md)，驗收契約tools/matching_goal_contract.json。
 
