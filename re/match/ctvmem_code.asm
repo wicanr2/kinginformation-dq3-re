@@ -45,7 +45,7 @@ L_00EE: ; original 0x2304e; IDA unnamed; logical 0x1304e; file 0x143be
     loop L_00E9
 ; Original operand: stc
 L_00F0: ; original 0x23050; IDA unnamed; logical 0x13050; file 0x143c0
-    stc 
+    stc
 ; Original operand: jmp     short loc_23057
 L_00F1: ; original 0x23051; IDA unnamed; logical 0x13051; file 0x143c1
     jmp SHORT L_00F7
@@ -57,13 +57,13 @@ L_00F5: ; original 0x23055; IDA unnamed; logical 0x13055; file 0x143c5
     out dx, al
 ; Original operand: clc
 L_00F6: ; original 0x23056; IDA unnamed; logical 0x13056; file 0x143c6
-    clc 
+    clc
 ; Original operand: pop     cx
 L_00F7: ; original 0x23057; IDA loc_23057; logical 0x13057; file 0x143c7
     pop cx
 ; Original operand: retn
 L_00F8: ; original 0x23058; IDA unnamed; logical 0x13058; file 0x143c8
-    ret 
+    ret
 ; Original operand: push    cx
 L_00F9: ; original 0x23059; IDA sub_23059; logical 0x13059; file 0x143c9
     push cx
@@ -93,7 +93,7 @@ L_010A: ; original 0x2306a; IDA unnamed; logical 0x1306a; file 0x143da
     loop L_0105
 ; Original operand: stc
 L_010C: ; original 0x2306c; IDA unnamed; logical 0x1306c; file 0x143dc
-    stc 
+    stc
 ; Original operand: jmp     short loc_23074
 L_010D: ; original 0x2306d; IDA unnamed; logical 0x1306d; file 0x143dd
     jmp SHORT L_0114
@@ -105,7 +105,7 @@ L_0112: ; original 0x23072; IDA unnamed; logical 0x13072; file 0x143e2
     in al, dx
 ; Original operand: clc
 L_0113: ; original 0x23073; IDA unnamed; logical 0x13073; file 0x143e3
-    clc 
+    clc
 ; Original operand: pop     dx
 L_0114: ; original 0x23074; IDA loc_23074; logical 0x13074; file 0x143e4
     pop dx
@@ -114,7 +114,7 @@ L_0115: ; original 0x23075; IDA unnamed; logical 0x13075; file 0x143e5
     pop cx
 ; Original operand: retn
 L_0116: ; original 0x23076; IDA unnamed; logical 0x13076; file 0x143e6
-    ret 
+    ret
 ; Original operand: mov     ah, al
 L_0117: ; original 0x23077; IDA sub_23077; logical 0x13077; file 0x143e7
     mov ah, al
@@ -138,7 +138,7 @@ L_0122: ; original 0x23082; IDA unnamed; logical 0x13082; file 0x143f2
     out dx, al
 ; Original operand: retn
 L_0123: ; original 0x23083; IDA unnamed; logical 0x13083; file 0x143f3
-    ret 
+    ret
 ; Original operand: push    dx
 L_0124: ; original 0x23084; IDA sub_23084; logical 0x13084; file 0x143f4
     push dx
@@ -171,7 +171,7 @@ L_0137: ; original 0x23097; IDA unnamed; logical 0x13097; file 0x14407
     pop dx
 ; Original operand: retn
 L_0138: ; original 0x23098; IDA unnamed; logical 0x13098; file 0x14408
-    ret 
+    ret
 ; Original operand: mov     dx, ds:30h
 L_0139: ; original 0x23099; IDA sub_23099; logical 0x13099; file 0x14409
     mov dx, WORD PTR ds:[030h]
@@ -225,7 +225,7 @@ L_0157: ; original 0x230b7; IDA unnamed; logical 0x130b7; file 0x14427
     mov ax, 02h
 ; Original operand: stc
 L_015A: ; original 0x230ba; IDA unnamed; logical 0x130ba; file 0x1442a
-    stc 
+    stc
 ; Original operand: jmp     short loc_230BF
 L_015B: ; original 0x230bb; IDA unnamed; logical 0x130bb; file 0x1442b
     jmp SHORT L_015F
@@ -237,7 +237,7 @@ L_015F: ; original 0x230bf; IDA loc_230BF; logical 0x130bf; file 0x1442f
     or ax, ax
 ; Original operand: retn
 L_0161: ; original 0x230c1; IDA unnamed; logical 0x130c1; file 0x14431
-    ret 
+    ret
 ; Original operand: mov     bx, 2
 L_0162: ; original 0x230c2; IDA sub_230C2; logical 0x130c2; file 0x14432
     mov bx, 02h
@@ -288,7 +288,7 @@ L_0187: ; original 0x230e7; IDA unnamed; logical 0x130e7; file 0x14457
     or ax, ax
 ; Original operand: retn
 L_0189: ; original 0x230e9; IDA unnamed; logical 0x130e9; file 0x14459
-    ret 
+    ret
 ; Original operand: mov     byte ptr ds:0B1h, 0
 L_018A: ; original 0x230ea; IDA sub_230EA; logical 0x130ea; file 0x1445a
     mov BYTE PTR ds:[0B1h], 00h
@@ -477,7 +477,7 @@ L_022D: ; original 0x2318d; IDA unnamed; logical 0x1318d; file 0x144fd
     or ax, ax
 ; Original operand: retn
 L_022F: ; original 0x2318f; IDA unnamed; logical 0x1318f; file 0x144ff
-    ret 
+    ret
 ; Original operand: mov     al, 0E1h
 L_0230: ; original 0x23190; IDA sub_23190; logical 0x13190; file 0x14500
     mov al, 0E1h
@@ -513,10 +513,10 @@ L_024A: ; original 0x231aa; IDA unnamed; logical 0x131aa; file 0x1451a
     or ax, ax
 ; Original operand: retn
 L_024C: ; original 0x231ac; IDA unnamed; logical 0x131ac; file 0x1451c
-    ret 
+    ret
 ; Original operand: pushf
 L_024D: ; original 0x231ad; IDA sub_231AD; logical 0x131ad; file 0x1451d
-    pushf 
+    pushf
 ; Original operand: push    si
 L_024E: ; original 0x231ae; IDA unnamed; logical 0x131ae; file 0x1451e
     push si
@@ -540,7 +540,7 @@ L_025D: ; original 0x231bd; IDA unnamed; logical 0x131bd; file 0x1452d
     mov si, 0FFFFh
 ; Original operand: sti
 L_0260: ; original 0x231c0; IDA loc_231C0; logical 0x131c0; file 0x14530
-    sti 
+    sti
 ; Original operand: cmp     cl, [bx]
 L_0261: ; original 0x231c1; IDA unnamed; logical 0x131c1; file 0x14531
     cmp cl, BYTE PTR [bx]
@@ -549,7 +549,7 @@ L_0263: ; original 0x231c3; IDA unnamed; logical 0x131c3; file 0x14533
     jz SHORT L_0278
 ; Original operand: cli
 L_0265: ; original 0x231c5; IDA unnamed; logical 0x131c5; file 0x14535
-    cli 
+    cli
 ; Original operand: in      al, dx
 L_0266: ; original 0x231c6; IDA unnamed; logical 0x131c6; file 0x14536
     in al, dx
@@ -588,10 +588,10 @@ L_0278: ; original 0x231d8; IDA loc_231D8; logical 0x131d8; file 0x14548
     pop si
 ; Original operand: popf
 L_0279: ; original 0x231d9; IDA unnamed; logical 0x131d9; file 0x14549
-    popf 
+    popf
 ; Original operand: retn
 L_027A: ; original 0x231da; IDA unnamed; logical 0x131da; file 0x1454a
-    ret 
+    ret
 ; Original operand: push    bx
 L_027B: ; original 0x231db; IDA sub_231DB; logical 0x131db; file 0x1454b
     push bx
@@ -657,7 +657,7 @@ L_02A2: ; original 0x23202; IDA unnamed; logical 0x13202; file 0x14572
     pop bx
 ; Original operand: retn
 L_02A3: ; original 0x23203; IDA unnamed; logical 0x13203; file 0x14573
-    ret 
+    ret
 ; Original operand: push    cx
 L_02A4: ; original 0x23204; IDA sub_23204; logical 0x13204; file 0x14574
     push cx
@@ -687,7 +687,7 @@ L_02B6: ; original 0x23216; IDA unnamed; logical 0x13216; file 0x14586
     pop cx
 ; Original operand: retn
 L_02B7: ; original 0x23217; IDA unnamed; logical 0x13217; file 0x14587
-    ret 
+    ret
 ; Original operand: mov     dx, ds:0CCh
 L_02B8: ; original 0x23218; IDA sub_23218; logical 0x13218; file 0x14588
     mov dx, WORD PTR ds:[0CCh]
@@ -702,7 +702,7 @@ L_02C2: ; original 0x23222; IDA unnamed; logical 0x13222; file 0x14592
     add dh, 010h
 ; Original operand: retn
 L_02C5: ; original 0x23225; IDA locret_23225; logical 0x13225; file 0x14595
-    ret 
+    ret
 ; Original operand: push    es
 L_02C6: ; original 0x23226; IDA sub_23226; logical 0x13226; file 0x14596
     push es
@@ -729,10 +729,10 @@ L_02D9: ; original 0x23239; IDA unnamed; logical 0x13239; file 0x145a9
     pop es
 ; Original operand: retn
 L_02DA: ; original 0x2323a; IDA unnamed; logical 0x1323a; file 0x145aa
-    ret 
+    ret
 ; Original operand: pushf
 L_02DB: ; original 0x2323b; IDA sub_2323B; logical 0x1323b; file 0x145ab
-    pushf 
+    pushf
 ; Original operand: push    bx
 L_02DC: ; original 0x2323c; IDA unnamed; logical 0x1323c; file 0x145ac
     push bx
@@ -744,7 +744,7 @@ L_02DE: ; original 0x2323e; IDA unnamed; logical 0x1323e; file 0x145ae
     push dx
 ; Original operand: cli
 L_02DF: ; original 0x2323f; IDA unnamed; logical 0x1323f; file 0x145af
-    cli 
+    cli
 ; Original operand: mov     dx, ax
 L_02E0: ; original 0x23240; IDA unnamed; logical 0x13240; file 0x145b0
     mov dx, ax
@@ -756,7 +756,7 @@ L_02E5: ; original 0x23245; IDA unnamed; logical 0x13245; file 0x145b5
     add al, 08h
 ; Original operand: cbw
 L_02E7: ; original 0x23247; IDA unnamed; logical 0x13247; file 0x145b7
-    cbw 
+    cbw
 ; Original operand: shl     al, 1
 L_02E8: ; original 0x23248; IDA unnamed; logical 0x13248; file 0x145b8
     shl al, 01h
@@ -828,16 +828,16 @@ L_031A: ; original 0x2327a; IDA unnamed; logical 0x1327a; file 0x145ea
     pop bx
 ; Original operand: popf
 L_031B: ; original 0x2327b; IDA unnamed; logical 0x1327b; file 0x145eb
-    popf 
+    popf
 ; Original operand: retn
 L_031C: ; original 0x2327c; IDA unnamed; logical 0x1327c; file 0x145ec
-    ret 
+    ret
 ; Original operand: pushf
 L_031D: ; original 0x2327d; IDA sub_2327D; logical 0x1327d; file 0x145ed
-    pushf 
+    pushf
 ; Original operand: cli
 L_031E: ; original 0x2327e; IDA unnamed; logical 0x1327e; file 0x145ee
-    cli 
+    cli
 ; Original operand: mov     al, ds:32h
 L_031F: ; original 0x2327f; IDA unnamed; logical 0x1327f; file 0x145ef
     mov al, BYTE PTR ds:[032h]
@@ -846,7 +846,7 @@ L_0322: ; original 0x23282; IDA unnamed; logical 0x13282; file 0x145f2
     add al, 08h
 ; Original operand: cbw
 L_0324: ; original 0x23284; IDA unnamed; logical 0x13284; file 0x145f4
-    cbw 
+    cbw
 ; Original operand: shl     al, 1
 L_0325: ; original 0x23285; IDA unnamed; logical 0x13285; file 0x145f5
     shl al, 01h
@@ -900,10 +900,10 @@ L_034A: ; original 0x232aa; IDA unnamed; logical 0x132aa; file 0x1461a
     out 021h, al
 ; Original operand: popf
 L_034C: ; original 0x232ac; IDA unnamed; logical 0x132ac; file 0x1461c
-    popf 
+    popf
 ; Original operand: retn
 L_034D: ; original 0x232ad; IDA unnamed; logical 0x132ad; file 0x1461d
-    ret 
+    ret
 ; Original operand: push    ds
 L_034E: ; original 0x232ae; IDA unnamed; logical 0x132ae; file 0x1461e
     push ds
@@ -948,7 +948,7 @@ L_0368: ; original 0x232c8; IDA unnamed; logical 0x132c8; file 0x14638
     pop ds
 ; Original operand: iret
 L_0369: ; original 0x232c9; IDA unnamed; logical 0x132c9; file 0x14639
-    iret 
+    iret
 ; Original operand: push    ds
 L_036A: ; original 0x232ca; IDA sub_232CA; logical 0x132ca; file 0x1463a
     push ds
@@ -969,7 +969,7 @@ L_0373: ; original 0x232d3; IDA unnamed; logical 0x132d3; file 0x14643
     pop ds
 ; Original operand: retn
 L_0374: ; original 0x232d4; IDA unnamed; logical 0x132d4; file 0x14644
-    ret 
+    ret
 ; Original operand: push    ds
 L_0375: ; original 0x232d5; IDA sub_232D5; logical 0x132d5; file 0x14645
     push ds
@@ -990,7 +990,7 @@ L_0380: ; original 0x232e0; IDA unnamed; logical 0x132e0; file 0x14650
     pop ds
 ; Original operand: retn
 L_0381: ; original 0x232e1; IDA unnamed; logical 0x132e1; file 0x14651
-    ret 
+    ret
 ; Original operand: mov     cx, ax
 L_0382: ; original 0x232e2; IDA sub_232E2; logical 0x132e2; file 0x14652
     mov cx, ax
@@ -1047,7 +1047,7 @@ L_03B8: ; original 0x23318; IDA unnamed; logical 0x13318; file 0x14688
     mov BYTE PTR ds:[0DBh], dl
 ; Original operand: retn
 L_03BC: ; original 0x2331c; IDA unnamed; logical 0x1331c; file 0x1468c
-    ret 
+    ret
 ; Original operand: call    sub_23204
 L_03BD: ; original 0x2331d; IDA sub_2331D; logical 0x1331d; file 0x1468d
     call L_02A4
@@ -1080,7 +1080,7 @@ L_03DC: ; original 0x2333c; IDA unnamed; logical 0x1333c; file 0x146ac
     mov BYTE PTR ds:[0DBh], dl
 ; Original operand: retn
 L_03E0: ; original 0x23340; IDA unnamed; logical 0x13340; file 0x146b0
-    ret 
+    ret
 ; Original operand: push    ds
 L_03E1: ; original 0x23341; IDA unnamed; logical 0x13341; file 0x146b1
     push ds
@@ -1110,7 +1110,7 @@ L_03E9: ; original 0x23349; IDA unnamed; logical 0x13349; file 0x146b9
     push bp
 ; Original operand: cld
 L_03EA: ; original 0x2334a; IDA unnamed; logical 0x1334a; file 0x146ba
-    cld 
+    cld
 ; Original operand: mov     ax, cs
 L_03EB: ; original 0x2334b; IDA unnamed; logical 0x1334b; file 0x146bb
     mov ax, cs
@@ -1137,7 +1137,7 @@ L_03FB: ; original 0x2335b; IDA unnamed; logical 0x1335b; file 0x146cb
     out 020h, al
 ; Original operand: sti
 L_03FD: ; original 0x2335d; IDA unnamed; logical 0x1335d; file 0x146cd
-    sti 
+    sti
 ; Original operand: mov     ax, word ptr byte_23012+2Ah
 L_03FE: ; original 0x2335e; IDA unnamed; logical 0x1335e; file 0x146ce
     mov ax, WORD PTR ds:[0DCh]
@@ -1197,7 +1197,7 @@ L_0424: ; original 0x23384; IDA unnamed; logical 0x13384; file 0x146f4
     pop ds
 ; Original operand: iret
 L_0425: ; original 0x23385; IDA unnamed; logical 0x13385; file 0x146f5
-    iret 
+    iret
 ; Original operand: mov     cx, 0FFFFh
 L_0426: ; original 0x23386; IDA sub_23386; logical 0x13386; file 0x146f6
     mov cx, 0FFFFh
@@ -1290,7 +1290,7 @@ L_0488: ; original 0x233e8; IDA unnamed; logical 0x133e8; file 0x14758
     call L_0117
 ; Original operand: retn
 L_048B: ; original 0x233eb; IDA unnamed; logical 0x133eb; file 0x1475b
-    ret 
+    ret
 ; Original operand: mov     al, 5
 L_048C: ; original 0x233ec; IDA sub_233EC; logical 0x133ec; file 0x1475c
     mov al, 05h
@@ -1410,7 +1410,7 @@ L_04F5: ; original 0x23455; IDA unnamed; logical 0x13455; file 0x147c5
     in al, dx
 ; Original operand: retn
 L_04F6: ; original 0x23456; IDA unnamed; logical 0x13456; file 0x147c6
-    ret 
+    ret
 ; Original operand: push    ds
 L_04F7: ; original 0x23457; IDA unnamed; logical 0x13457; file 0x147c7
     push ds
@@ -1440,10 +1440,10 @@ L_04FF: ; original 0x2345f; IDA unnamed; logical 0x1345f; file 0x147cf
     push bp
 ; Original operand: cld
 L_0500: ; original 0x23460; IDA unnamed; logical 0x13460; file 0x147d0
-    cld 
+    cld
 ; Original operand: sti
 L_0501: ; original 0x23461; IDA unnamed; logical 0x13461; file 0x147d1
-    sti 
+    sti
 ; Original operand: mov     ax, cs
 L_0502: ; original 0x23462; IDA unnamed; logical 0x13462; file 0x147d2
     mov ax, cs
@@ -1515,7 +1515,7 @@ L_052D: ; original 0x2348d; IDA unnamed; logical 0x1348d; file 0x147fd
     pop ds
 ; Original operand: iret
 L_052E: ; original 0x2348e; IDA unnamed; logical 0x1348e; file 0x147fe
-    iret 
+    iret
 ; Original operand: mov     cx, 0FFFFh
 L_052F: ; original 0x2348f; IDA sub_2348F; logical 0x1348f; file 0x147ff
     mov cx, 0FFFFh
@@ -1647,7 +1647,7 @@ L_05AD: ; original 0x2350d; IDA unnamed; logical 0x1350d; file 0x1487d
     call L_0117
 ; Original operand: retn
 L_05B0: ; original 0x23510; IDA unnamed; logical 0x13510; file 0x14880
-    ret 
+    ret
 ; Original operand: cmp     word ptr ds:0BCh, 0
 L_05B1: ; original 0x23511; IDA sub_23511; logical 0x13511; file 0x14881
     cmp WORD PTR ds:[0BCh], 00h
@@ -1680,7 +1680,7 @@ L_05CB: ; original 0x2352b; IDA loc_2352B; logical 0x1352b; file 0x1489b
     call L_0375
 ; Original operand: cbw
 L_05CE: ; original 0x2352e; IDA unnamed; logical 0x1352e; file 0x1489e
-    cbw 
+    cbw
 ; Original operand: cmp     ax, 8
 L_05CF: ; original 0x2352f; IDA unnamed; logical 0x1352f; file 0x1489f
     cmp ax, IMM_0008
@@ -1710,7 +1710,7 @@ L_05E3: ; original 0x23543; IDA unnamed; logical 0x13543; file 0x148b3
     jmp SHORT L_05B1
 ; Original operand: retn
 L_05E5: ; original 0x23545; IDA locret_23545; logical 0x13545; file 0x148b5
-    ret 
+    ret
 ; Original operand: push    es
 L_05E6: ; original 0x23546; IDA sub_23546; logical 0x13546; file 0x148b6
     push es
@@ -1803,7 +1803,7 @@ L_062A: ; original 0x2358a; IDA unnamed; logical 0x1358a; file 0x148fa
     pop es
 ; Original operand: retn
 L_062B: ; original 0x2358b; IDA unnamed; logical 0x1358b; file 0x148fb
-    ret 
+    ret
 ; Original operand: push    ax
 L_062C: ; original 0x2358c; IDA sub_2358C; logical 0x1358c; file 0x148fc
     push ax
@@ -1830,16 +1830,16 @@ L_0638: ; original 0x23598; IDA unnamed; logical 0x13598; file 0x14908
     and ax, IMM_000F
 ; Original operand: retn
 L_063B: ; original 0x2359b; IDA unnamed; logical 0x1359b; file 0x1490b
-    ret 
+    ret
 ; Original operand: mov     byte ptr ds:0E2h, 1
 L_063C: ; original 0x2359c; IDA unnamed; logical 0x1359c; file 0x1490c
     mov BYTE PTR ds:[0E2h], 01h
 ; Original operand: clc
 L_0641: ; original 0x235a1; IDA unnamed; logical 0x135a1; file 0x14911
-    clc 
+    clc
 ; Original operand: retn
 L_0642: ; original 0x235a2; IDA unnamed; logical 0x135a2; file 0x14912
-    ret 
+    ret
 ; Original operand: push    es
 L_0643: ; original 0x235a3; IDA unnamed; logical 0x135a3; file 0x14913
     push es
@@ -1920,10 +1920,10 @@ L_0686: ; original 0x235e6; IDA loc_235E6; logical 0x135e6; file 0x14956
     and BYTE PTR ds:[0B3h], 0FEh
 ; Original operand: clc
 L_068B: ; original 0x235eb; IDA loc_235EB; logical 0x135eb; file 0x1495b
-    clc 
+    clc
 ; Original operand: retn
 L_068C: ; original 0x235ec; IDA unnamed; logical 0x135ec; file 0x1495c
-    ret 
+    ret
 ; Original operand: mov     ax, 4
 L_068D: ; original 0x235ed; IDA unnamed; logical 0x135ed; file 0x1495d
     mov ax, 04h
@@ -1959,10 +1959,10 @@ L_06AA: ; original 0x2360a; IDA loc_2360A; logical 0x1360a; file 0x1497a
     call L_0426
 ; Original operand: clc
 L_06AD: ; original 0x2360d; IDA unnamed; logical 0x1360d; file 0x1497d
-    clc 
+    clc
 ; Original operand: retn
 L_06AE: ; original 0x2360e; IDA unnamed; logical 0x1360e; file 0x1497e
-    ret 
+    ret
 ; Original operand: mov     dx, ds:30h
 L_06AF: ; original 0x2360f; IDA unnamed; logical 0x1360f; file 0x1497f
     mov dx, WORD PTR ds:[030h]
@@ -2022,10 +2022,10 @@ L_06DC: ; original 0x2363c; IDA unnamed; logical 0x1363c; file 0x149ac
     call L_0117
 ; Original operand: clc
 L_06DF: ; original 0x2363f; IDA unnamed; logical 0x1363f; file 0x149af
-    clc 
+    clc
 ; Original operand: retn
 L_06E0: ; original 0x23640; IDA unnamed; logical 0x13640; file 0x149b0
-    ret 
+    ret
 ; Original operand: push    ds
 L_06E1: ; original 0x23641; IDA unnamed; logical 0x13641; file 0x149b1
     push ds
@@ -2052,19 +2052,19 @@ L_06EF: ; original 0x2364f; IDA unnamed; logical 0x1364f; file 0x149bf
     call L_05E6
 ; Original operand: stc
 L_06F2: ; original 0x23652; IDA unnamed; logical 0x13652; file 0x149c2
-    stc 
+    stc
 ; Original operand: retn
 L_06F3: ; original 0x23653; IDA unnamed; logical 0x13653; file 0x149c3
-    ret 
+    ret
 ; Original operand: call    sub_23546
 L_06F4: ; original 0x23654; IDA unnamed; logical 0x13654; file 0x149c4
     call L_05E6
 ; Original operand: stc
 L_06F7: ; original 0x23657; IDA unnamed; logical 0x13657; file 0x149c7
-    stc 
+    stc
 ; Original operand: retn
 L_06F8: ; original 0x23658; IDA unnamed; logical 0x13658; file 0x149c8
-    ret 
+    ret
 ; Original operand: push    ds
 L_06F9: ; original 0x23659; IDA unnamed; logical 0x13659; file 0x149c9
     push ds
@@ -2106,10 +2106,10 @@ L_0716: ; original 0x23676; IDA unnamed; logical 0x13676; file 0x149e6
     mov WORD PTR ds:[0D4h], 01h
 ; Original operand: stc
 L_071C: ; original 0x2367c; IDA unnamed; logical 0x1367c; file 0x149ec
-    stc 
+    stc
 ; Original operand: retn
 L_071D: ; original 0x2367d; IDA unnamed; logical 0x1367d; file 0x149ed
-    ret 
+    ret
 ; Original operand: cmp     word ptr ds:0D2h, 0
 L_071E: ; original 0x2367e; IDA unnamed; logical 0x1367e; file 0x149ee
     cmp WORD PTR ds:[0D2h], 00h
@@ -2148,15 +2148,15 @@ L_0744: ; original 0x236a4; IDA unnamed; logical 0x136a4; file 0x14a14
     call L_05E6
 ; Original operand: stc
 L_0747: ; original 0x236a7; IDA loc_236A7; logical 0x136a7; file 0x14a17
-    stc 
+    stc
 ; Original operand: retn
 L_0748: ; original 0x236a8; IDA unnamed; logical 0x136a8; file 0x14a18
-    ret 
+    ret
 ; Unknown data skipped: 0x236a9..0x236b4
 ORG 0754h
 ; Original operand: pushf
 L_0754: ; original 0x236b4; IDA sub_236B4; logical 0x136b4; file 0x14a24
-    pushf 
+    pushf
 ; Original operand: push    ds
 L_0755: ; original 0x236b5; IDA unnamed; logical 0x136b5; file 0x14a25
     push ds
@@ -2204,7 +2204,7 @@ L_0767: ; original 0x236c7; IDA unnamed; logical 0x136c7; file 0x14a37
     pop ax
 ; Original operand: cld
 L_0768: ; original 0x236c8; IDA unnamed; logical 0x136c8; file 0x14a38
-    cld 
+    cld
 ; Original operand: cmp     bx, 0Eh
 L_0769: ; original 0x236c9; IDA unnamed; logical 0x136c9; file 0x14a39
     cmp bx, 0Eh
@@ -2267,16 +2267,16 @@ L_0792: ; original 0x236f2; IDA unnamed; logical 0x136f2; file 0x14a62
     pop ds
 ; Original operand: popf
 L_0793: ; original 0x236f3; IDA unnamed; logical 0x136f3; file 0x14a63
-    popf 
+    popf
 ; Original operand: retf
 L_0794: ; original 0x236f4; IDA unnamed; logical 0x136f4; file 0x14a64
-    retf 
+    retf
 ; Original operand: mov     ax, ds:33h
 L_0795: ; original 0x236f5; IDA sub_236F5; logical 0x136f5; file 0x14a65
     mov ax, WORD PTR ds:[033h]
 ; Original operand: retn
 L_0798: ; original 0x236f8; IDA unnamed; logical 0x136f8; file 0x14a68
-    ret 
+    ret
 ; Original operand: mov     bx, ax
 L_0799: ; original 0x236f9; IDA sub_236F9; logical 0x136f9; file 0x14a69
     mov bx, ax
@@ -2312,7 +2312,7 @@ L_07B1: ; original 0x23711; IDA loc_23711; logical 0x13711; file 0x14a81
     mov ax, 0FFFFh
 ; Original operand: retn
 L_07B4: ; original 0x23714; IDA locret_23714; logical 0x13714; file 0x14a84
-    ret 
+    ret
 ; Original operand: cmp     al, 7
 L_07B5: ; original 0x23715; IDA sub_23715; logical 0x13715; file 0x14a85
     cmp al, 07h
@@ -2351,7 +2351,7 @@ L_07CC: ; original 0x2372c; IDA loc_2372C; logical 0x1372c; file 0x14a9c
     mov ax, 0FFFFh
 ; Original operand: retn
 L_07CF: ; original 0x2372f; IDA locret_2372F; logical 0x1372f; file 0x14a9f
-    ret 
+    ret
 ; Original operand: mov     word ptr ds:0C4h, cs
 L_07D0: ; original 0x23730; IDA sub_23730; logical 0x13730; file 0x14aa0
     mov WORD PTR ds:[0C4h], cs
@@ -2420,7 +2420,7 @@ L_080D: ; original 0x2376d; IDA unnamed; logical 0x1376d; file 0x14add
     sub ax, ax
 ; Original operand: retn
 L_080F: ; original 0x2376f; IDA locret_2376F; logical 0x1376f; file 0x14adf
-    ret 
+    ret
 ; Original operand: mov     dx, ds:30h
 L_0810: ; original 0x23770; IDA sub_23770; logical 0x13770; file 0x14ae0
     mov dx, WORD PTR ds:[030h]
@@ -2450,7 +2450,7 @@ L_0824: ; original 0x23784; IDA unnamed; logical 0x13784; file 0x14af4
     sub ax, ax
 ; Original operand: retn
 L_0826: ; original 0x23786; IDA unnamed; logical 0x13786; file 0x14af6
-    ret 
+    ret
 ; Original operand: sub     ax, ax
 L_0827: ; original 0x23787; IDA sub_23787; logical 0x13787; file 0x14af7
     sub ax, ax
@@ -2474,7 +2474,7 @@ L_0838: ; original 0x23798; IDA unnamed; logical 0x13798; file 0x14b08
     pop es
 ; Original operand: retn
 L_0839: ; original 0x23799; IDA unnamed; logical 0x13799; file 0x14b09
-    ret 
+    ret
 ; Original operand: cmp     byte ptr ds:0B2h, 0
 L_083A: ; original 0x2379a; IDA unnamed; logical 0x1379a; file 0x14b0a
     cmp BYTE PTR ds:[0B2h], 00h
@@ -2558,7 +2558,7 @@ L_0889: ; original 0x237e9; IDA loc_237E9; logical 0x137e9; file 0x14b59
     sub ax, ax
 ; Original operand: retn
 L_088B: ; original 0x237eb; IDA locret_237EB; logical 0x137eb; file 0x14b5b
-    ret 
+    ret
 ; Original operand: mov     ax, 1
 L_088C: ; original 0x237ec; IDA sub_237EC; logical 0x137ec; file 0x14b5c
     mov ax, 01h
@@ -2579,7 +2579,7 @@ L_089C: ; original 0x237fc; IDA unnamed; logical 0x137fc; file 0x14b6c
     sub ax, ax
 ; Original operand: retn
 L_089E: ; original 0x237fe; IDA locret_237FE; logical 0x137fe; file 0x14b6e
-    ret 
+    ret
 ; Original operand: cmp     byte ptr ds:0B2h, 0
 L_089F: ; original 0x237ff; IDA unnamed; logical 0x137ff; file 0x14b6f
     cmp BYTE PTR ds:[0B2h], 00h
@@ -2750,7 +2750,7 @@ L_093C: ; original 0x2389c; IDA unnamed; logical 0x1389c; file 0x14c0c
     sub ax, ax
 ; Original operand: retn
 L_093E: ; original 0x2389e; IDA locret_2389E; logical 0x1389e; file 0x14c0e
-    ret 
+    ret
 ; Original operand: mov     ax, 1
 L_093F: ; original 0x2389f; IDA unnamed; logical 0x1389f; file 0x14c0f
     mov ax, 01h
@@ -2768,7 +2768,7 @@ L_094C: ; original 0x238ac; IDA unnamed; logical 0x138ac; file 0x14c1c
     sub ax, ax
 ; Original operand: retn
 L_094E: ; original 0x238ae; IDA locret_238AE; logical 0x138ae; file 0x14c1e
-    ret 
+    ret
 ; Original operand: mov     ax, 1
 L_094F: ; original 0x238af; IDA unnamed; logical 0x138af; file 0x14c1f
     mov ax, 01h
@@ -2795,7 +2795,7 @@ L_0965: ; original 0x238c5; IDA unnamed; logical 0x138c5; file 0x14c35
     sub ax, ax
 ; Original operand: retn
 L_0967: ; original 0x238c7; IDA locret_238C7; logical 0x138c7; file 0x14c37
-    ret 
+    ret
 ; Original operand: call    sub_237EC
 L_0968: ; original 0x238c8; IDA unnamed; logical 0x138c8; file 0x14c38
     call L_088C
@@ -2810,7 +2810,7 @@ L_0970: ; original 0x238d0; IDA unnamed; logical 0x138d0; file 0x14c40
     sub ax, ax
 ; Original operand: retn
 L_0972: ; original 0x238d2; IDA unnamed; logical 0x138d2; file 0x14c42
-    ret 
+    ret
 ; Original operand: mov     bx, ax
 L_0973: ; original 0x238d3; IDA unnamed; logical 0x138d3; file 0x14c43
     mov bx, ax
@@ -2819,10 +2819,10 @@ L_0975: ; original 0x238d5; IDA unnamed; logical 0x138d5; file 0x14c45
     mov ax, 01h
 ; Original operand: pushf
 L_0978: ; original 0x238d8; IDA unnamed; logical 0x138d8; file 0x14c48
-    pushf 
+    pushf
 ; Original operand: cli
 L_0979: ; original 0x238d9; IDA unnamed; logical 0x138d9; file 0x14c49
-    cli 
+    cli
 ; Original operand: cmp     word ptr ds:0D4h, 0
 L_097A: ; original 0x238da; IDA unnamed; logical 0x138da; file 0x14c4a
     cmp WORD PTR ds:[0D4h], 00h
@@ -2876,16 +2876,16 @@ L_09AE: ; original 0x2390e; IDA loc_2390E; logical 0x1390e; file 0x14c7e
     sub ax, ax
 ; Original operand: popf
 L_09B0: ; original 0x23910; IDA loc_23910; logical 0x13910; file 0x14c80
-    popf 
+    popf
 ; Original operand: retn
 L_09B1: ; original 0x23911; IDA unnamed; logical 0x13911; file 0x14c81
-    ret 
+    ret
 ; Original operand: pushf
 L_09B2: ; original 0x23912; IDA unnamed; logical 0x13912; file 0x14c82
-    pushf 
+    pushf
 ; Original operand: cli
 L_09B3: ; original 0x23913; IDA unnamed; logical 0x13913; file 0x14c83
-    cli 
+    cli
 ; Original operand: mov     ds:0BCh, dx
 L_09B4: ; original 0x23914; IDA unnamed; logical 0x13914; file 0x14c84
     mov WORD PTR ds:[0BCh], dx
@@ -2894,9 +2894,9 @@ L_09B8: ; original 0x23918; IDA unnamed; logical 0x13918; file 0x14c88
     mov WORD PTR ds:[0BAh], ax
 ; Original operand: popf
 L_09BB: ; original 0x2391b; IDA unnamed; logical 0x1391b; file 0x14c8b
-    popf 
+    popf
 ; Original operand: retn
 L_09BC: ; original 0x2391c; IDA unnamed; logical 0x1391c; file 0x14c8c
-    ret 
+    ret
 _TEXT ENDS
 END module_entry

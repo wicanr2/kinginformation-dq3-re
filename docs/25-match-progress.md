@@ -127,6 +127,7 @@ reproduction統計，不是完整source-unit、原版semantic或完整Goal完成
 - `sdk-source-build-r3/receipt.json`、`sdk-source-build-r4/receipt.json`：最終公開source的兩次乾淨重編。
 - `sdk-source-guard-verification-r1.json`、`sdk-instruction-source-verification-r1.json`：七負例與12-byte重疊核對。
 - `sdk-source-publish-verification-r1.json`及`goal-audit-r9.json`：最終source／manifest／producer、連結、UID及完整Goal未完成核對。
+- `sdk-source-build-r5/receipt.json`、`sdk-source-build-r6/receipt.json`及`sdk-source-publish-verification-r2.json`：行尾空白修正後的現行source hash與兩次完整重編，instruction bytes保持5148。
 - `watcom16-asm-source-r1/payload/source-manifest.json`：Wasm r2的完整固定payload。
 
 下一步審四個data gaps的dispatcher／table／buffer證據，建立typed data及完整module spec。

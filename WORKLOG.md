@@ -2343,3 +2343,8 @@ README／索引連結、全source UID/GID及研究0 root-owned／0 Markdown目�
 Docker批次容器全部清除；懸空image只有其他專案私有IDA來源4ac62de83339，保留。
 新Wasm r2沒有被取代的本專案image，r1仍供已鎖定C控制使用。沒有新遊戲包。
 正確partial instruction source與其明示限制提交GitHub，原版data及prototype不提交。
+
+首個725522b提交前cached diff檢查抓到新ASM行尾空白，orchestration未在exit2後停止，
+後續仍提交及push，已向使用者說明。只修本輪四source的行尾空白，sdk-source-build-r5／r6
+新容器重編source／OBJ／MZ／fixup一致，5148 bytes保持；新source hash由publish-verification-r2核對。
+補提交前明示檢查exit code後才提交，不amend、不覆寫已推送歷史。
