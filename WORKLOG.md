@@ -2139,3 +2139,49 @@ fresh boundary SHA256 `b7f6a4d00bfbb959d3e04b856c4025368147f6a3e5c4363c34dce9278
 boundary review SHA256 `2cd054c149e746f5ac4a3477cfd1ab56c014f1d96966ee2615e037461c62afc2`，
 C receipt SHA256 `2d89337301487276e5d6ea268973782f98294f90ccf88674f149e48d3ddbbb4d`，
 goal audit SHA256 `00016d5ae21fc300160e9d0595573d3f58dea720b91b73ba2474c574841ef9ee`。
+
+### 2026-10-08完整matching續行：多entry CFG與Watcom16 register ABI
+
+上一Goal輪有實際進展，7cd8ccd已推送；本輪接續使用者已選的完整C精確匹配標準。
+先核對worktree與現況入口，知識路由沿用retro remake／IDA9.4，再依compiler實際缺件
+載入官方Watcom16 ABI／object dependency契約。所有程序在Docker，原始EXE與repo輸入唯讀。
+
+新matching_cfg_candidates工具跟IDA真實flow／jump，不把call targets當local edge，不補造
+被抑制return，也不依auto owner截斷。17 entry共991唯一head，31 shared，候選皆未批准。
+第一組10000..10030為14指令／48 bytes，保留10000／1000A／10014／1001E四外部entry；
+11900與1196B亦共用suffix。正對照與10007 mid-instruction edge拒絕通過，避免對錯範圍寫C。
+
+主機已有fd2-watcom-matching image僅含wcc386，確認沒有16-bit backend，未因啟動失敗猜缺件。
+為16-bit支援建立明確revision，保留其他專案32-bit image。fetch工具下載固定官方
+2026-10-01-Build archive129081693 bytes，全檔SHA256a961f3e0通過，762個payload逐檔核對。
+外層timeout124發生於完整成功輸出後收尾；獨立hash、size及per-file payload皆通過，原下載
+container已停止，沒有以timeout重啟成功下載或宣稱compiler壞掉。
+
+dq3-watcom16:2.0-20261001-r1由固定python3.13-slim OCI digest及已驗payload建置。
+支援wcc16／wcc386／wdis／wlink／wlib與h，source／命令入口tools/build/README及docs/25。
+compiler實測Version2.0 beta Oct1 2026 64-bit host／16-bit target，正式原版compiler仍unknown。
+private compiler、原版、OBJ、source archive、database均不提交，image未發布。
+
+六個C控制只使用instruction-free pragma parm／value／modify exact，不用`=` assembly body：
+
+- BX／SI echo分別編89D8C3／89F0C3，證明可直接指定原版常見register參數，非stack adapter。
+- AX store編A33200C3，與原版sub_24AE6完整4 bytes相同；仍是compiler控制，沒有source-unit ledger批准，正式coverage不增加。
+- _rotl core24 bytes、有界BX／DX:AX51 bytes、local shift-or core40 bytes，全與原版16／30 bytes不同。保存register、CL旋轉、volatile重讀與雙DIV均保留，不以數值／ABI等價稱exact。
+- 首輪無-oi生成真正_rotl call，未知code fixupREFUSED；依官方inline契約加-oi後才解析成功，沒有硬patch原碼或放寬unknown relocation。
+- OBJ重現核對兩次失敗均保留：第一次absolute command source path不同，改relative path仍因THEADR的absolute path及dependency timestamp不同。逐record定位後，固定container內/tmp/watcom16-compile並使用官方-zld移除dependency metadata；不mask、strip或canonicalize OBJ。
+- 最終watcom16-abi-r7／r8六份完整OBJ、source、resolved code及actual fixup相同，compile每批約0.03秒；不將此當全流程加速倍數。
+
+正式C仍3／15 bytes，既有46 ASM只是局部證據，全部六Goal gate保持未證實、Goal active。
+下一批以已驗register-ABI C介面，為多entry主程式資料流寫C候選；source-unit／callee未閉合
+時先補證據，不用新的selector、stack bridge或重排entry填洞。正常Go／pack與Issue #4暫停保持。
+本批新增source／工具／Dockerfile與穩定索引，沒有新遊戲包、Release或公開原版資料。
+提交標題`research: preserve multi-entry CFG and establish 16-bit register ABI compiler`，commit／push以Git log為準。
+
+收尾：CFG四entry正對照／mid-instruction反例、六compiler控制、整OBJ／code／fixup重現、
+工具語法及git diff --check通過，正式Go／assets／dist-all diff仍空白。
+research根root-owned／Markdown目錄0，payload與輸出UID/GID1000。新Watcom16 --rm容器
+全部清除。重建後檢查懸空image，僅見其他專案IDA私有來源4ac62de83339，未刪；
+新revision無被取代image，原wcc386-only與其他專案資源保持。
+Watcom16最終receipt SHA256
+`c5dd97f7e7bf0c0f6ac73074e11f7e185cf0bfc170598f473b6b35758f3dca4d`，
+本機驗證收據為full-goal-r1/watcom16-verification-r1.json，CFG收據為cfg-candidates-r1.json。

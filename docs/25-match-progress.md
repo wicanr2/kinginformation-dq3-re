@@ -28,6 +28,56 @@
 > [`tools/review_matching_boundaries.py`](../tools/review_matching_boundaries.py)以fresh typed xref
 > 及實際DOS service writer分級22個末端，另核對三個舊entry與首個C的SI table consumer。
 > 分級不自動批准C source-unit範圍；table mapping保留DS條件與未知DI／欄位來源。
+> [`tools/matching_cfg_candidates.py`](../tools/matching_cfg_candidates.py)沿原始typed flow／jump
+> 建立17個跨界CFG候選，保留全部外部entry與共享指令、未解call-return及indirect effects；
+> 不依auto owner截斷，也不補造被IDA抑制的返回邊。候選不自動當作可編譯C source unit。
+> [`tools/fetch_watcom16.py`](../tools/fetch_watcom16.py)以固定官方release及完整archive hash
+> 補足既有Watcom image缺少的16-bit wcc，供instruction-free register-ABI pragma對照。
+> 原版compiler仍unknown，不以新工具能編C就反推原版工具鏈。
+> [`tools/run_watcom16_abi.py`](../tools/run_watcom16_abi.py)以官方instruction-free ABI pragma
+> 測BX／SI入參與AX存word、RNG core及BX／DX:AX控制；raw OMF／未知fixup保留並拒絕。
+
+## 多入口CFG與register-ABI工具鏈續行
+
+17個已審跨界entry以IDA原始flow／jump追到991個唯一指令位置，31位置由多entry共用。
+每個候選保留code／data外部xref、call dependency、原始owner與實際return，不補造被抑制
+的call-return。此範圍沒有未映射successor，不代表callee effects或source-unit歸屬已完成。
+所有候選的 `source_unit_extent_approved` 仍為false。
+
+第一組IDA linear10000..10030共14個指令／48 bytes，保留入口10000、1000A、10014及1001E；
+不能把四個原始entry合成一個有新selector參數的C函式。另一組11900／1196B亦共用suffix。
+正對照核對四入口與14指令，偽造跳到10007的edge在原始指令中被拒絕。
+候選及測試收據為 `full-goal-r1/cfg-candidates-r1.json`／`cfg-verification-r1.json`。
+
+原版SI／BX暫存器參數不能由一般MSC stack介面近似。本輪先核對既有
+`fd2-watcom-matching:2.0-20261001-r1`，確認它只有wcc386，沒有16-bit wcc。
+沿用官方同release，完整下載129081693-byte archive並核對SHA256
+`a961f3e02ce27bcd88428345dc57483457a623b6e718b6cee52c48d24ab8065f`，再逐檔核對762項
+compiler／header payload。外層下載程序收尾觸及timeout124，但獨立完整hash與payload清冊
+均通過，沒有重啟成功下載或把timeout當compiler缺陷。
+
+新revision `dq3-watcom16:2.0-20261001-r1` 提供官方wcc16／wcc386／wdis／wlink／wlib及h。
+來源與建置契約見上方fetch script及tools/build/README；原版compiler仍unknown。
+暫存器宣告依[官方Open Watcom guide](https://open-watcom.github.io/open-watcom-1.9/cguide.html)
+的16-bit parm／value／modify exact規則，只指定介面，沒有`=` inline instruction或machine-code array。
+
+| C控制 | 原始編譯結果 | 限制 |
+|---|---|---|
+| BX／SI word echo | compiler分別發`89D8C3`／`89F0C3`，register→AX後near return | compiler控制樣本，不登記成原版function |
+| AX word store | `A33200C3`，與原版sub_24AE6完整4 bytes相同 | 仍是實驗控制，沒有approved source-unit ledger，不新增正式C覆蓋 |
+| 三次_rotl core | -oi後24 bytes，包含CX保存、CL rotate與volatile重讀 | 與原版16 bytes不匹配 |
+| BX／DX:AX bounded RNG | -oi後51 bytes，包含保存暫存器與兩次DIV | 與原版30 bytes不匹配，C不進production |
+| local／shift-or core | 數學等價C40 bytes | 與原版16 bytes不匹配，不用數值等價充作exact |
+
+最終六控制使用flags `-bt=dos -ms -0 -os -oi -s -ofr -ecc -zld`。
+最初未加-oi，標準_rotl為真正library call，未知code fixup仍REFUSED；依官方inline契約加-oi後
+再乾淨重跑。兩次OBJ核對亦揭露compiler THEADR的absolute source path及dependency timestamp；
+實際OMF差異保留。以固定 `/tmp/watcom16-compile` 及官方-zld修正建置環境，沒有遮罩、
+刪除或canonical化OBJ bytes。最終 `watcom16-abi-r7`／`r8` 六份OBJ、code與fixup完全相同。
+
+正式C覆蓋仍3個／15 bytes，低階ASM仍只保留既有局部證據，完整Goal六gate未完成。
+下一步以已驗instruction-free register ABI，為保留多entry的主程式資料流建立C候選；
+若source-unit或callee語意未閉合，先補證據，不用新呼叫介面改動原版entry／stack／side effects。
 
 ## 邊界與間接入口續行
 

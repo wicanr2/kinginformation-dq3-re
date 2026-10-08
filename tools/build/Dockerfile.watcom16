@@ -1,0 +1,12 @@
+# 16-bit compiler revision, separate from the existing wcc386-only image.
+# The payload is produced by tools/fetch_watcom16.py from the complete pinned
+# official 2026-10-01 archive. No original games or private compiler inputs.
+# Build context: verified watcom16-source-r1/payload (see docs/25).
+FROM python:3.13-slim@sha256:bf44cdfcb76cd3b41e879bc058fc37ec5872002ccfde7fcb765e218cde0cd79c
+COPY . /opt/watcom/
+ENV WATCOM=/opt/watcom
+ENV INCLUDE=/opt/watcom/h
+ENV PATH=/opt/watcom/binl64:$PATH
+ENV PYTHONDONTWRITEBYTECODE=1
+USER 1000:1000
+CMD ["python3"]

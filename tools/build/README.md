@@ -21,6 +21,8 @@
 | [完整Goal證據核對](../matching_goal_audit.py) | [契約](../matching_goal_contract.json)保存使用者選定的標準；核對完整清單、兩份C artifact及listing正反對照，manual gate保持未完成 |
 | [邊界與間接入口](../ida_matching_boundaries.py) | fresh IDA讀出原始flag常數、22末端、三個舊entry與33個indirect call operands；不修database邊界 |
 | [邊界分級](../review_matching_boundaries.py) | typed flow／實際DOS service writer與SI取址consumer分級，保留DS條件、未知DI／field與未批准source-unit範圍 |
+| [多入口CFG](../matching_cfg_candidates.py) | 沿原始typed edges追到return／未解successor，保留外部entry與共用code，不自動併成C source unit |
+| [Watcom16 register控制](../run_watcom16_abi.py) | 六個instruction-free C pragma控制；固定source path及-zld確保真實OBJ重現。實驗exact不自動加入正式coverage |
 
 ## 映像與輸入
 
@@ -28,6 +30,7 @@
 |---|---|
 | `dq3-msc:bookworm-20261008-r1` | [Dockerfile.msc](Dockerfile.msc)：Debian基底digest與2026-10-01 snapshot固定；DOSBox0.74-3、NASM2.16.01、Python3.11。MSC binaries不寫入image |
 | `dq3-inertia:py3147-c555363b-r2` | [Dockerfile.inertia](Dockerfile.inertia)：Python3.14.7、Inertia commit `c555363b810d3a6df786e5d6511d1bb28fa82333`及uv.lock固定；另補上游鎖檔缺少的Cython3.2.0，Linux x86_64 wheel URL及SHA-256固定。r2取代r1 |
+| `dq3-watcom16:2.0-20261001-r1` | [Dockerfile.watcom16](Dockerfile.watcom16)以既有Python固定digest及[完整官方archive verifier](../fetch_watcom16.py)產生的payload建置；補足既有wcc386-only image。16-bit wcc／wdis／wlink／wlib與headers固定，instruction-free register ABI實測入口[run_watcom16_abi.py](../run_watcom16_abi.py)。不取代原版compiler身分證據 |
 
 原始遊戲放在`assets_raw/`。既有MSC候選工具位於gitignored的
 `tools/build/msc/BIN/`、`LIB/`及`INCLUDE/INCLUDE/`；探針驗證CL／C1／C2／C3的固定雜湊。
@@ -39,6 +42,21 @@ Cython wheel以`--require-hashes`驗證。研究runner明示使用上游
 `INERTIA_VEX_BACKEND=python` reference模式，未建置native Cython lifter。
 
 ## 建置與執行
+
+Watcom16由[fetch_watcom16.py](../fetch_watcom16.py)在有network的受限Docker容器下載固定
+release，完整archive hash通過後才建立payload。掛載前核對來源存在、形態及UID/GID。
+在專案根目錄從已驗證payload建置revision：
+
+```bash
+timeout 120s docker build --network none -f tools/build/Dockerfile.watcom16 \
+  -t dq3-watcom16:2.0-20261001-r1 \
+  work/matching-decomp-20261008-r1/full-goal-r1/watcom16-source-r1/payload
+```
+
+控制可在一次性、network none、UID/GID、1GiB／1CPU／128 pids的容器執行
+`python3 /repo/tools/run_watcom16_abi.py --output /out/watcom16-abi-new`。
+repository唯讀掛到/repo，既有matching輸出掛到/out；每次output須是新名稱。
+此image補16-bit支援，保留其他專案既有wcc386 image，沒有全域清理。
 
 從專案根目錄建置MSC映像，stdin context不含原版或compiler：
 

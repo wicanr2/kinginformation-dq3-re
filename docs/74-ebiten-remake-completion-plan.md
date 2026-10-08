@@ -8,7 +8,10 @@
 > 函式／29979 code heads／81854 code bytes；22個非terminal末端、4455個函式外指令
 > 及主程式／底層source-unit分類仍未閉合。22候選已分17跨界flow、2 DOS service末端及3 strong
 > suppressed-call；三個舊entry在指令內且無xref，舊入口排除。首個C條件式table index47已核對。
-> 完整Goal六gate仍未證實，active。下一步從17 flow建立多entry CFG候選，再還原主程式C與layout。
+> 17 flow已建立CFG候選／991 heads／31 shared，第一組48bytes保留四入口；source-unit仍未批准。
+> Watcom16 revision由完整官方hash建置，instruction-free BX／SI／AX控制可重編；AX store4bytes
+> 實驗exact未入正式coverage，RNG三C候選仍不匹配，原版compilerunknown。
+> 完整Goal六gate仍未證實，active。下一步用已驗register ABI還原多entry主程式C與layout。
 > 唯一目前狀態在CONTEXT，
 > 證據與重生入口[docs/25](25-match-progress.md)，驗收契約tools/matching_goal_contract.json。
 

@@ -9,7 +9,10 @@
 > 首個C條件式table入口47已由SI取址／零gate／CALL[SI]核對，runtime DS與DI／欄位來源unknown。
 > 4455函式外指令與原版source-unit分類仍未閉合；完整Goal六gate仍未證實，active。
 > 現況CONTEXT、計畫docs/74、證據docs/25與tools/matching_goal_contract.json；下一步先審
-> 從17個實際flow建立多entry CFG候選，再還原主程式C與layout。正式Go／pack及Issue #4暫停保持。
+> 已建立17 CFG候選／991 heads／31 shared，第一組48bytes保留四入口，source-unit未批准。
+> 固定官方archive與wcc16 revision已實測instruction-free BX／SI／AX ABI；六控制重編OBJ／code相同。
+> AX store4 bytes實驗exact但未加正式coverage，RNG24／51／40bytes仍DIFF，原版compilerunknown。
+> 下一步用已驗register ABI還原多entry主程式C，保留entry／stack／side effects。Go／pack及Issue #4保持。
 
 以下保存完整Goal啟動前的局部研究，現況以CONTEXT唯一狀態表及上方Goal為準。
 
