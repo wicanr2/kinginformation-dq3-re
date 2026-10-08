@@ -15,12 +15,14 @@ import subprocess
 import time
 
 from omf_matching_probe import UnsupportedOMF, read_object, resolve_ds_offsets, select_function
+from omf_call_fixups import resolve_candidate_fixups, validate_original_caller
 
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPILER_PROFILES = {
     "cdecl-size-reorder": ["-bt=dos", "-ms", "-0", "-os", "-oi", "-s", "-ofr", "-ecc", "-zld"],
     "watcall-speed-no-reorder": ["-bt=dos", "-ms", "-0", "-ot", "-oi", "-s", "-of", "-ecw", "-zld"],
+    "cdecl-size-calls": ["-bt=dos", "-ms", "-0", "-os", "-oi", "-s", "-ofr", "-ecc", "-zld", "-oc"],
 }
 
 
@@ -78,6 +80,7 @@ def main():
         original_ranges = {}
         for case in selected["cases"]:
             compiler_flags_for(case)
+            validate_original_caller(case, inventory)
             name = case["id"].lower()
             if not re.fullmatch(r"[a-z0-9_]{1,32}", name):
                 raise ValueError("Unsafe candidate filename")
@@ -132,12 +135,17 @@ def main():
             mode = candidate_records.get(name, {}).get("encoded_addend_mode", "unsigned16")
             if mode not in ("unsigned16", "signed16"):
                 raise ValueError("Unknown encoded addend contract")
-            linked, fixes = resolve_ds_offsets(obj, symbol, placements, signed_addends=mode == "signed16")
+            if name in candidate_records:
+                linked, fixes, mz_segment_offsets = resolve_candidate_fixups(obj, candidate_records[name])
+            else:
+                linked, fixes = resolve_ds_offsets(obj, symbol, placements, signed_addends=mode == "signed16")
+                mz_segment_offsets = []
         except (UnsupportedOMF, ValueError) as error:
             result.update(status="REFUSED", reason=str(error))
         else:
             (args.output / (name + "-code.bin")).write_bytes(linked)
             result.update(status="RESOLVED", code_hex=linked.hex(), code_size=len(linked), applied_fixups=fixes,
+                          MZ_segment_word_offsets=mz_segment_offsets,
                           code_sha256=hashlib.sha256(linked).hexdigest())
             if name in original_ranges:
                 offset, size = original_ranges[name]
@@ -146,6 +154,7 @@ def main():
                                               "original_hex": original.hex(), "byte_exact": linked == original}
         results.append(result)
     receipt = {"schema_version": 1, "producer_sha256": sha(Path(__file__)),
+               "call_resolver_sha256": sha(ROOT / "tools/omf_call_fixups.py"),
                "OMF_parser_sha256": sha(ROOT / "tools/omf_matching_probe.py"),
                "compiler_payload_manifest_sha256": sha(Path("/opt/watcom/source-manifest.json")),
                "compiler_release": manifest["release"], "results": results, "wall_seconds": time.monotonic() - started,

@@ -2485,3 +2485,49 @@ primary-record-source-publish-r1另核對新source hash、兩份48-byte完整mod
 README／build連結與新增Python語法；既有來源的完整OBJ／code／fixup及compiler command均未變。
 研究root-owned與Markdown目錄均0，UID/GID1000及git diff --check通過。
 本輪一次性容器全部清除，其他專案container保持；沒有新image或發行包。
+
+## 2026-10-09：主程式近／遠呼叫 C 與MZ relocation
+
+上一輪e7160e7新增48-byte視窗記錄writer並已推送，屬實際進展。本輪依唯一現況追帶呼叫C，
+路由命中compiler-runtime-helper-triage；原版compiler與完整source-unit分類仍unknown。
+全部分析／C／ASM／WLINK／IDA在bounded UID1000 Docker；原binary及正式DB唯讀，副本只放ignored work。
+
+先以可讀C的near／far CALL及三次word store作合成control，沒有DQ3輸入，source增量0。
+TIS OMF 1.1與actual WCC確認F5／T2，near為self-relative location1，far為segment-relative location3。
+第一個WLINK prototype的AUTO grouping把far CALL改成push CS／near CALL等長序列，
+依官方FARCALLS契約改用explicit FARGROUP及NOFARCALLS，不patch輸出或當成原版compiler證據。
+兩種object order提供forward／backward near displacement，addresses由actual map取得，保留DS frame bias。
+最初兩ASM object的dependency mtime不同；沿既有Wasm -zld禁用該記錄，完整OBJ重新比較，沒有mask。
+
+新增omf_call_fixups及verify_watcom_call_fixups。DS／near／far symbol互斥，地址MZ-relative，
+caller不跨64KiB，near target同frame，call只准已審zero addend，另外回報far segment word的MZ位置。
+15非法frame／target／mode／location／placement／addend／overlap／opcode反例全部拒絕。
+最終call-fixup-control-r7／r8兩個新容器的C／ASM source、完整OBJ、兩完整MZ與relocations相同。
+原版caller整合只准已審初始CODE frame0；不由其他IDA segment範圍猜其CS frame，擴充須另匯ledger。
+
+純C sub_3016以四個近call及return重建原sub_13016全部13 bytes；-oc保留CALL／RET，不內嵌指令。
+純C sub_ee19把DS:25D1 word傳DX，far CALL109C:007A後near return，共10 bytes相同。
+原farcalleeIDA20A3A的ES=DS／AX1012／BX0／CX16／INT10及RETF保留，硬體語意不由自動註解升格。
+較早98B9條件式C candidate仍DIFF，未加入正式source manifest或coverage。
+private診斷曾誤取far wrapper的file offset，立即改以MZ header+logical重算10189..10193；
+正式source／manifest／IDA與原始bytes均使用重核範圍，不把誤取資料作證據。
+
+fresh IDA9.4七函式匯出保留原始names／bytes／chunks／typed xrefs；1300D是JZ entry、135AF是near CALL，
+不能都稱caller。caller寫DS:256A，首callee寫DS:0B24，後三callee讀其state；callee source仍未還原。
+1C026原near caller與DX入參及BIOS register consumer已核對，原始C prototype／完整ABI仍unknown。
+來源用保守clobber宣告，不由C簽名假定原callee保存暫存器。
+
+新增cdecl-size-calls固定profile、typed call_placements及共用resolver整合；原兩profile與DS parser不改。
+原caller位置、CS0 frame、原typed near／far xref及原MZ segment relocation table均由audit核對。
+最終watcom-source-r18／r19兩新容器source／完整OBJ／整個module／FIXUPP一致，far module+7亦match MZ。
+goal-audit-r15為八C104 bytes，主程式五個92、SDK三個12；六個完整Goal gate仍未證實，active。
+五audit反例拒絕，其中協同位移與CS alias即使bytes相同仍失敗，不以byte偶合取代original定位。
+SDK7789＋主程式92＋RNG46=7927已知unique source bytes，僅局部統計，不報完成比例。
+
+正確兩C與重建／驗證工具、原定位／hash／限制按使用者要求提交GitHub。原EXE／vendor objects／
+OBJ／MZ／DB／原素材與十三scratch不提交，Go／pack、Issue #4保持，沒有新發行包。
+
+primary-call-source-publish-r1重核final r18／r19及control r7／r8的source／producer新鮮度、
+完整OBJ／MZ一致、15＋5負例、原source objects保持、MZ positions、索引／連結與Python語法。
+研究root-owned及Markdown目錄0，全部source UID/GID1000；git diff --check通過。
+本輪一次性container全清，其他專案container保持；沒有新image或發行包。

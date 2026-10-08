@@ -2,9 +2,10 @@
 
 > 2026-10-08現行Goal：「完成 dq3 matching decompliation」。使用者已選主程式C精確匹配，
 > ASM僅用已確認底層，全EXE由原碼乾淨重建並逐byte一致，raw code／db拼接不算完成。
-> 六個C來源81 bytes匹配；最新sub_137F9視窗記錄writer48 bytes，SI／BX入參，AX／CX保存，兩次完整重編一致。
+> 八個C來源104 bytes匹配；最新sub_13016四段near CALL13 bytes及sub_1EE19的DX入參far CALL10 bytes。
+> actual FIXUPP、原始caller frame／typed call xref與MZ segment relocation均核對，兩次完整重編一致。
 > 七個word的caller／writer／renderer及選人consumer已核對，原始struct未知；沒有新增正常campaign收據。
-> 主程式C共69 bytes；SDK三個12 bytes已定位於CTVMEM／CMFDRV，欄位／DS／原始型別unknown。
+> 主程式C共92 bytes；SDK三個12 bytes已定位於CTVMEM／CMFDRV，欄位／DS／原始型別unknown。
 > 首個C sub_15D49的compiler ENDP後1-byte NOP配置未解，兩份OBJ／code／listing相同，六負例拒絕。
 > IDA9.4新導航828函式／29979 code heads／81854 code bytes，無未映射或重疊code bytes；
 > 22候選已分17實際跨界flow、2 DOS service末端及3 strong suppressed-call；三個舊entry指令內且無xref。
@@ -15,7 +16,8 @@
 > 固定官方archive與wcc16 revision已實測instruction-free BX／SI／AX ABI；六控制重編OBJ／code相同。
 > AX store4 bytes已納入正式來源清單與兩次重編；主程式填表17／搜尋24bytes仍DIFF。
 > WLINK synthetic控制證實FFFE為symbol-2，六重定位負例拒絕，未知DS layout不補猜。
-> 最新跨compiler審核goal-audit-r13。Watcom固定兩種profile與實際command核對，未知profile拒絕。
+> 最新跨compiler審核goal-audit-r15。Watcom固定三種profile與實際command核對，未知profile拒絕。
+> 合成WLINK正反near與16:16 far CALL／MZ控制一致，15個不合法重定位拒絕；不計來源覆蓋。
 > 先前主程式codegen134組控制為130 DIFF／4 REFUSED，不重跑。
 > Watcom long-shift C正對照有LOOP；兩套compiler完整OBJ重編相同，TC生成C mtime固定且不遮罩。
 > 原版SBCM.LIB26個OMF modules已解析，官方WLINK兩次重連CTVMEM2493／CMFDRV5296 bytes完整等於EXE。

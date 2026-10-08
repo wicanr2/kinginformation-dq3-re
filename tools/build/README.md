@@ -25,6 +25,7 @@
 | [Watcom16 register控制](../run_watcom16_abi.py) | 六個instruction-free C pragma控制；固定source path及-zld確保真實OBJ重現。實驗exact不自動加入正式coverage |
 | [Watcom原始範圍來源](../watcom_matching_manifest.json) | 配合run_watcom16_abi.py的candidate模式，核對完整IDA範圍、source hash及原始bytes；主程式角色指標查詢／48-byte記錄writer及SDK AX store exact，fill／search仍DIFF |
 | [WCC有號位移控制](../verify_watcom_signed_fixup.py) | vendor WLINK連結實際C object與synthetic DATA，保留map的frame bias；六無效位移拒絕，不當原版layout |
+| [WCC呼叫重定位](../omf_call_fixups.py)與[vendor控制](../verify_watcom_call_fixups.py) | 明列DS／near／far symbol及MZ-relative地址，實測forward／backward與16:16 CALL／MZ segment relocation；合成fixture不計來源覆蓋 |
 | [Watcom主程式codegen](../probe_watcom_primary_codegen.py) | 填表／搜尋126組C與loop／reorder flags，完整artifact保留；long-shift正對照實際發LOOP，原版候選全DIFF |
 | [TC2.01主程式codegen](../probe_turboc_primary_codegen.py) | 固定本機archive／compiler hash，用既有DOSBox比較八組C；四DIFF／四group-frame REFUSED。生成C mtime固定以重現整個OBJ |
 | [SBCM原始module](../probe_sbcm_modules.py) | 固定原版LIB hash，26個OMF metadata／LIDATA parser view與原始xref導航；排除fixup的候選不算match |
@@ -76,8 +77,13 @@ repository唯讀掛到/repo，既有matching輸出掛到/out；每次output須�
 與 `--ida-inventory /repo/work/matching-decomp-20261008-r1/full-goal-r1/inventory-ida-r2.json`。
 每次重編使用全新容器，固定compile目錄不供同容器連續啟動兩次。
 候選的compiler_profile只可選runner明列的固定旗標組合：預設cdecl-size-reorder、
-記錄writer使用watcall-speed-no-reorder。manifest不接受任意shell或compiler命令，
+記錄writer使用watcall-speed-no-reorder，帶呼叫來源使用cdecl-size-calls加-oc保留CALL／RET。
+manifest不接受任意shell或compiler命令，
 audit會核對實際command；不同profile不表示已辨識原版compiler。
+call_placements只使用MZ-relative segment／offset整數，DS／near／far symbol集合互斥。
+compiler候選的實際caller frame、typed IDA call xref與MZ segment word位置亦核對；
+合成連結控制為 `python3 /repo/tools/verify_watcom_call_fixups.py --output /out/<新名稱>`，
+使用同一r2 image、唯讀repo及明確輸出；每次用新容器，explicit FARGROUP及NOFARCALLS保持。
 有號位移控制執行 `python3 /repo/tools/verify_watcom_signed_fixup.py`
 加 `--candidate-obj /out/<候選目錄>/sub_132a3.obj --output /out/<新控制目錄>`。
 總審核加 `--watcom-receipt` 與 `--repeat-watcom-receipt`；RESOLVED只表示可重定位，

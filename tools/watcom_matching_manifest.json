@@ -6,6 +6,45 @@
   "compiler": "dq3-watcom16:2.0-20261001-r1",
   "cases": [
     {
+      "id": "sub_13016",
+      "source": "re/match/sub_3016.c",
+      "public_symbol": "_sub_3016",
+      "ida_linear_start": "0x13016",
+      "logical_start": "0x3016",
+      "file_start": "0x4386",
+      "size": 13,
+      "external_DS_offsets": {},
+      "compiler_profile": "cdecl-size-calls",
+      "call_placements": {
+        "caller": {"segment": 0, "offset": 12310},
+        "near": {
+          "_sub_3023": {"segment": 0, "offset": 12323},
+          "_sub_30cf": {"segment": 0, "offset": 12495},
+          "_sub_31bd": {"segment": 0, "offset": 12733},
+          "_sub_333c": {"segment": 0, "offset": 13116}
+        },
+        "far": {}
+      },
+      "scope": "Primary-code four-near-call sequence; conservative clobber declarations, original prototypes unknown"
+    },
+    {
+      "id": "sub_1EE19",
+      "source": "re/match/sub_ee19.c",
+      "public_symbol": "_sub_ee19",
+      "ida_linear_start": "0x1ee19",
+      "logical_start": "0xee19",
+      "file_start": "0x10189",
+      "size": 10,
+      "external_DS_offsets": {"_unknown_DS_25d1": "0x25d1"},
+      "compiler_profile": "cdecl-size-calls",
+      "call_placements": {
+        "caller": {"segment": 0, "offset": 60953},
+        "near": {},
+        "far": {"_sub_20a3a": {"segment": 4252, "offset": 122}}
+      },
+      "scope": "Primary-code DS:25D1 word to DX then far 109C:007A; original input type/prototype unknown"
+    },
+    {
       "id": "sub_137F9",
       "source": "re/match/sub_37f9.c",
       "public_symbol": "_sub_37f9",

@@ -15,6 +15,7 @@ import tempfile
 from omf_matching_probe import UnsupportedOMF, read_object, resolve_ds_offsets
 from run_matching_c_batch import msc_listing_function
 from run_watcom16_abi import compiler_flags_for
+from omf_call_fixups import resolve_candidate_fixups, validate_original_caller
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -168,6 +169,8 @@ def main():
                 raise ValueError("Watcom candidate manifest/inventory freshness differs")
             if record["producer_sha256"] != sha(ROOT / "tools/run_watcom16_abi.py") or record["OMF_parser_sha256"] != sha(ROOT / "tools/omf_matching_probe.py"):
                 raise ValueError("Watcom source producer/parser freshness differs")
+            if record["call_resolver_sha256"] != sha(ROOT / "tools/omf_call_fixups.py"):
+                raise ValueError("Watcom call resolver freshness differs")
             if sorted(result["source_unit"]["id"] for result in record["results"]) != sorted(unit["id"] for unit in declared_units):
                 raise ValueError("Watcom source-unit membership differs")
         for case in native["results"]:
@@ -180,7 +183,7 @@ def main():
             if sha(ROOT / unit["source"]) != case["source_sha256"]:
                 raise ValueError("Watcom source freshness differs")
             prior = next(result for result in repeated["results"] if result["case"] == case["case"])
-            for key in ("source_sha256", "object_sha256", "code_hex", "applied_fixups", "original_compare", "compiler_command"):
+            for key in ("source_sha256", "object_sha256", "code_hex", "applied_fixups", "original_compare", "compiler_command", "MZ_segment_word_offsets"):
                 if case.get(key) != prior.get(key):
                     raise ValueError("Watcom independent source rebuild differs: " + key)
             code = (args.watcom_receipt.parent / (case["case"] + "-code.bin")).read_bytes()
@@ -193,10 +196,35 @@ def main():
             if sha(obj_path) != case["object_sha256"]:
                 raise ValueError("Watcom source object differs")
             obj = read_object(obj_path)
-            resolved, fixes = resolve_ds_offsets(obj, unit["public_symbol"], {name: int(value, 16) for name, value in unit["external_DS_offsets"].items()},
-                                                signed_addends=unit.get("encoded_addend_mode") == "signed16")
+            resolved, fixes, mz_offsets = resolve_candidate_fixups(obj, unit)
             if resolved != code or fixes != case["applied_fixups"]:
                 raise ValueError("Watcom actual relocation differs")
+            if mz_offsets != case["MZ_segment_word_offsets"]:
+                raise ValueError("Watcom MZ segment relocation receipt differs")
+            if unit.get("call_placements"):
+                validate_original_caller(unit, inventory)
+                header = int.from_bytes(raw[8:10], "little") * 16
+                count = int.from_bytes(raw[6:8], "little")
+                table = int.from_bytes(raw[24:26], "little")
+                original_relocations = []
+                for n in range(count):
+                    off = int.from_bytes(raw[table + 4 * n:table + 4 * n + 2], "little")
+                    seg = int.from_bytes(raw[table + 4 * n + 2:table + 4 * n + 4], "little")
+                    file_offset = header + seg * 16 + off
+                    if start <= file_offset < start + unit["size"]:
+                        original_relocations.append(file_offset - start)
+                if sorted(original_relocations) != mz_offsets:
+                    raise ValueError("Original MZ segment relocations differ from C module")
+                if exact:
+                    for fix in fixes:
+                        if fix.get("placement_kind") not in ("near", "far"):
+                            continue
+                        call = inventory["instructions"][hex(int(unit["ida_linear_start"], 16) + fix["offset"] - 1)]
+                        target = fix["target_address"]
+                        linear = int(inventory["address_space"]["load_base"], 16) + target["segment"] * 16 + target["offset"]
+                        expected_type = 17 if fix["placement_kind"] == "near" else 16
+                        if call["mnemonic"] != "call" or not any(r["iscode"] and r["type"] == expected_type and int(r["to"], 16) == linear for r in call["refs_from"]):
+                            raise ValueError("C call binding differs from original typed IDA xref")
             function = function_ranges[unit["ida_linear_start"]]
             if b"".join(bytes.fromhex(inventory["instructions"][address]["file_bytes"]) for address in function["instructions"]) != original:
                 raise ValueError("Watcom original source-unit boundary differs")
@@ -217,7 +245,7 @@ def main():
     index = (ROOT / "docs/25-match-progress.md").read_text()
     if "ida_matching_probe.py" not in index:
         raise ValueError("Known indexed positive control missing")
-    for name in ("ida_matching_inventory.py", "run_matching_c_batch.py", "matching_goal_contract.json", "matching_c_manifest.json", "matching_goal_audit.py", "sub_5d49.c", "sub_9834.c", "sub_37f9.c", "watcom_matching_manifest.json", "sub_14ae6.c", "sub_32a3_watcom.c", "sub_6fcf_watcom.c", "verify_watcom_signed_fixup.py"):
+    for name in ("ida_matching_inventory.py", "run_matching_c_batch.py", "matching_goal_contract.json", "matching_c_manifest.json", "matching_goal_audit.py", "sub_5d49.c", "sub_9834.c", "sub_37f9.c", "sub_3016.c", "sub_ee19.c", "watcom_matching_manifest.json", "sub_14ae6.c", "sub_32a3_watcom.c", "sub_6fcf_watcom.c", "verify_watcom_signed_fixup.py", "omf_call_fixups.py", "verify_watcom_call_fixups.py"):
         if name not in index:
             raise ValueError("New file lacks a documentation entry: " + name)
     result = {"schema_version": 1, "input": contract["input"], "producer_sha256": sha(Path(__file__)),

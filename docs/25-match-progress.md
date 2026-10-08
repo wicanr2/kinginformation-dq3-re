@@ -28,9 +28,9 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
-> 現行C本體6個／81 bytes，含主程式角色指標表查詢與視窗記錄寫入、兩個次級word reader及一個AX入參word store。
+> 現行C本體8個／104 bytes，新增四段近呼叫13 bytes與DX入參遠呼叫10 bytes，原始MZ relocation亦核對。
 > 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
-> 主程式C共69 bytes；7-byte來源產品角色仍未確認，14-byte角色指標查詢與48-byte視窗記錄writer完整匹配。填表與搜尋C候選仍不匹配。
+> 主程式C共92 bytes；7-byte來源產品角色仍未確認，其他四個query／writer／call來源完整匹配。填表與搜尋C候選仍不匹配。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -64,6 +64,8 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 定位，來源為[`sub_37f9.c`](../re/match/sub_37f9.c)、[`sub_9834.c`](../re/match/sub_9834.c)、[`sub_14ae6.c`](../re/match/sub_14ae6.c)、
 > [`sub_32a3_watcom.c`](../re/match/sub_32a3_watcom.c)與
 > [`sub_6fcf_watcom.c`](../re/match/sub_6fcf_watcom.c)。原始register side effects不由C簽名省略。
+> 帶呼叫來源為[`sub_3016.c`](../re/match/sub_3016.c)與[`sub_ee19.c`](../re/match/sub_ee19.c)，
+> caller frame、typed call target與MZ segment words由共同call resolver及audit核對。
 > OMF的signed16 implicit addend僅由明示producer contract啟用；保留raw word與signed值，
 > 最終offset仍需0..FFFF。既有unsigned模式與未知placement／frame拒絕保持，不用自動wrap猜語意。
 > [`tools/verify_watcom_signed_fixup.py`](../tools/verify_watcom_signed_fixup.py)以vendor WLINK與
@@ -83,6 +85,77 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 呼叫重定位契約與控制
+
+[omf_call_fixups.py](../tools/omf_call_fixups.py)保存固定定位的WCC呼叫契約；
+[verify_watcom_call_fixups.py](../tools/verify_watcom_call_fixups.py)從可讀C與合成ASM fixture
+用真正WCC／Wasm／WLINK核對。fixture不讀原DQ3 binary，source coverage增量為0。
+這是帶呼叫主程式C所需的連結驗證，原版完整layout與C來源仍須逐unit閉合。
+
+[TIS OMF 1.1規格](https://openwatcom.org/ftp/devel/docs/omf.pdf)的FIXUPP section定義
+self-relative mode、16-bit offset及16:16 pointer。固定WCC payload實測F5／T2：
+近呼叫為location1／self-relative，遠呼叫為location3／segment-relative。
+符號分為DS data、near code與far code三個互斥集合，caller及code targets採MZ-relative segment:offset。
+不把IDA linear或DS offset當成CALL地址，不用symbol搜尋替代actual FIXUPP。
+只接受已審zero-addend direct CALL，其他frame／location／opcode／addend均拒絕。
+data重定位沿既有嚴格DS resolver，不擴張原支援範圍。
+
+近呼叫位移為target offset減掉caller offset及下一指令位置，依8086 rel16契約編碼。
+caller／near target必須同frame；module不得跨64KiB。遠呼叫保持原16:16順序，另回報segment word
+相對function的MZ relocation位置；不能只比對CALL bytes而省略載入時segment修正。
+
+合成fixture先後擺放object建立forward／backward近呼叫，遠端函式放explicit FARGROUP。
+所有actual symbol地址從vendor map讀出，保留DGROUP frame bias；不由fixture ORG猜最終offset。
+WLINK默認會把同physical segment的far CALL改成push CS／near CALL的等長序列；
+[官方NOFARCALLS契約](https://open-watcom.github.io/open-watcom-v2-wikidocs/lguide.html)及explicit group
+用於控制來源重定位，不能把默認改寫後的碼當成單純16:16固定重定位。
+首次prototype無group時已看到這個差異；保留原prototype，不patch linker輸出。
+最終 `call-fixup-control-r7`／`r8` 在新容器重建，C／ASM source、完整OBJ、兩個完整MZ、
+FIXUPP與MZ relocation table一致，15種非法placement／mode／frame／location／addend／opcode拒絕。
+最初ASM object含source mtime的dependency record而兩份hash不同；沿既有Wasm -zld禁用該記錄後
+重跑完整artifact，沒有遮罩或忽略差異，也不把link結果相同當作OBJ已一致。
+
+## 主程式近呼叫／遠呼叫 C：完整函式匹配
+
+原始輸入為 `assets_raw/DQ3.EXE`，115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA Pro 9.4的MZ linear載入基準為0x10000，file=`linear-0x10000+0x1370`；
+下表MZ-relative地址是原始CALL operands，不能與IDA linear混用。
+
+| 等級 | 原始IDA定位／來源 | 完整原始行為與範圍 |
+|---|---|---|
+| confirmed | sub_13016，[sub_3016.c](../re/match/sub_3016.c) | linear13016..13023、logical3016..3023、file4386..4393，共13 bytes；依序近呼叫sub_13023、sub_130CF、sub_131BD、sub_1333C，再near return。 |
+| confirmed | sub_1EE19，[sub_ee19.c](../re/match/sub_ee19.c) | linear1EE19..1EE23、logicalEE19..EE23、file10189..10193，共10 bytes；DS:25D1載入DX，far CALL109C:007A，再near return。MZ segment word在module+7／file10190。 |
+| confirmed | 1300D、135AF | 前者為JZ entry，後者為near CALL；不能把兩筆incoming code xref都稱為caller。條件jump沒有修改stack，仍從root的near RET返回原先call chain。 |
+| confirmed | 135A6..135B2、13023..13035 | caller先寫DS:256A，第一callee讀它，轉DS:2536所指segment，再寫DS:0B24。後續三callee讀此state；各callee的完整source尚未還原。 |
+| confirmed | 1C026、20A3A..20A4D | 主程式caller near CALL1EE19，callee用ES=DS、AX1012、BX0、CX16及INT10，保存ES後far return。這是原始operand及register setup證據，硬體語意不由IDA自動註解升格。 |
+| unknown | source C prototypes／clobbers | 原始prototype與完整callee ABI未知；來源用保守clobber宣告，不據此宣稱已找回原始工具鏈或完整runtime API。 |
+
+原始bytes分別為 `e80a00e8b300e89e01e81a03c3` 與 `8b16d1259a7a009c10c3`。
+非破壞IDA匯出 `work/matching-decomp-20261008-r1/full-goal-r1/primary-call-ida-r1/evidence.json`，
+SHA-256 `7f30d21129c9c416b9ceb6d9f0c410c3d89ef2ecfe39a4c795d61dfaec8ba20f`，
+由已索引ida_matching_probe.py重生，原名／bytes／chunks／typed xref及caller窗口保留。
+
+新profile `cdecl-size-calls`在原有固定旗標加-oc，停用CALL／RET改成JMP的最佳化；
+來源沒有內嵌組語。code symbols保留C logical identity，manifest明列MZ-relative target：
+near3023／30CF／31BD／333C均在caller CS0，far109C:007A對應IDA20A3A。
+caller位置同時核對原IDA segment的frame與實際linear位置，不允許協同位移caller／target來假匹配。
+目前original-caller整合只准已審初始CODE frame0；其他segment的範圍不能單獨證明CS frame，
+擴充前須從IDA另匯出frame ledger。固定比較器的合成control不受此原版caller分類替代。
+source／OBJ／actual FIXUPP／整個C module bytes與原版對照，far segment word另與原MZ relocation table比較。
+匹配後的每筆近／遠call symbol亦核對原IDA typed call xref；原版EXE只作verification比較。
+正式 `watcom-source-r18`／`r19` 在兩個新容器重編，兩個新unit及既有unit的完整OBJ／code／FIXUPP一致。
+source SHA-256分別為 `5c65ca43016e214523e7b40222cf8701d4b4dc281904291907b5dd9445700126`、
+`abf360881da2ef90a61db2a4c08ad9c713e5834b090a21a40c71041adc12fad7`；
+OBJ SHA-256分別為 `cb0c4c2572f4ab94ef26ee7d96efff13ef31737bf4247c6f674421b9919b645c`、
+`027db8378e6b3b5617e1a57cf1b6583d2729cb28dda9c905baab15b0ceaa868b`。
+`goal-audit-r15.json`核對八個C104 bytes、原版bytes、完整範圍與兩份重編；六個完整gate仍未證實。
+`primary-call-audit-negatives-r2.json`另拒絕五反例：協同位移、另CS alias、未審原caller frame、
+MZ segment word收據及typed call xref竄改。前兩例的bytes會相同，不能只靠byte比較取代原位置證據。
+目前已知unique source bytes為7927，僅局部重建統計；完整EXE仍未完成。
+
+## 主程式物品視窗記錄 C：完整函式匹配
 
 ## 主程式物品視窗記錄 C：完整函式匹配
 
@@ -135,8 +208,8 @@ pragma指定SI／BX入參與exact保存集合；void函式用非AX value registe
 source SHA-256 `1fade5fdee09f6c95a232564e390350e8f02a1b17bc60dd5c3211bed1b2fd6b6`，
 OBJ SHA-256 `7ae6d79151d311b74979d3196800826eeafbebc8b2137c74cb9488dbe1458e83`，
 code SHA-256 `e3f54ab55b530e29caa81debc530958d622bc2140ae790226e9975e81350988f`。
-正式C六個81 bytes，主程式三個69 bytes；完整EXE／所有source-unit／layout仍未完成。
-已知unique source bytes為7904，僅局部重建統計，不是完整Goal比例。
+該批正式C六個81 bytes，主程式三個69 bytes；完整EXE／所有source-unit／layout仍未完成。
+該批已知unique source bytes為7904，僅局部重建統計，不是完整Goal比例。
 `goal-audit-r13.json` 重核六個C81 bytes，六個完整gate仍未證實。
 `primary-record-profile-negatives-r1.json` 的三個反例均拒絕：主收據與重編收據的旗標竄改、
 manifest未審profile。接續處理帶呼叫的主程式C與near／far symbol定位，不重跑已排除的134組。
