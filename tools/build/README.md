@@ -34,6 +34,7 @@
 | [SDK指令source重建](../verify_sdk_instruction_sources.py) | [範圍manifest](../sdk_instruction_source_manifest.json)核對repo ASM／EQU、實際written mask與FIXUPP；5148 bytes exact，ORG data不計source |
 | [SDK data審查](../review_sdk_data_regions.py) | 七個handler tables及IRQ stack閉合；CTV slot6原始6B06保留，E2結果由固定成熟模擬器source契約推導 |
 | [完整CMF source/data](../verify_cmf_source_module.py) | code／EQU與[typed data](../../re/match/cmfdrv_data.json)重建5296 bytes，code/data範圍分離；field semantics仍unknown，不用原始objects |
+| [完整SDK source/data](../verify_sdk_source_module.py) | common verifier選CTVMEM／CMFDRV，各重建2493／5296 bytes；CTV [typed data](../../re/match/ctvmem_data.json)保留E2 seed與unknown payload，舊CMF CLI相容 |
 
 ## 映像與輸入
 
@@ -106,6 +107,11 @@ SDK source在r2 image跑 `python3 /repo/tools/verify_sdk_instruction_sources.py`
 它只從repo code／EQU／typed JSON編譯，驗證全5296 bytes；原EXE僅作比較，原SDK objects不作build inputs。
 data schema拒絕missing／overlap／落入code／錯handler與value range。這是module byte-layout，
 不代表全EXE完成或可獨立啟動的遊戲封包，後續仍按完整Goal recipe與正常oracle驗收。
+
+完整CTV recipe用同r2 image執行 `python3 /repo/tools/verify_sdk_source_module.py`
+加 `--module CTVMEM.ASM --layout /out/sdk-module-layout-r1.json --output /out/<新CTV來源重建目錄>`。
+CMF可選 `--module CMFDRV.ASM` 或保留舊CLI。data gate包含strict seed literal、合法handler head、
+字符串及code/data範圍，完整byte比較不接受machine-code拼接。
 
 從專案根目錄建置MSC映像，stdin context不含原版或compiler：
 

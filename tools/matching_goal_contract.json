@@ -27,12 +27,12 @@
     {
       "id": "low-level-ASM-evidence",
       "requirement": "Each ASM unit has independently confirmed low-level ownership, original identity and semantic instruction source",
-      "verify": {"kind": "manual", "note": "Existing 46 RNG ASM bytes remain local evidence with eligibility under review. Creative SDK instruction source is identified; complete CMF byte-layout rebuilds 5296 bytes from ASM/EQU/typed data, while CTV still lacks 235 data bytes. Full eligibility/ABI and other source units remain incomplete; 12 SDK instruction bytes already covered by C"}
+      "verify": {"kind": "manual", "note": "Existing 46 RNG ASM bytes remain local evidence with eligibility under review. Creative SDK ownership is identified; complete CTV/CMF byte-layout rebuilds 2493/5296 bytes from ASM/EQU/typed data. Full semantics/ABI and other source units remain incomplete; 12 SDK instruction bytes already covered by C"}
     },
     {
       "id": "data-and-layout",
       "requirement": "All data, MZ fields, relocations and padding have reviewed reconstruction contracts; compiler module padding is placed explicitly",
-      "verify": {"kind": "manual", "note": "The first C PROC emits one post-ENDP NOP whose final placement is unresolved. CMF data 2406 bytes now rebuild from typed source, but CTV omits 235 data bytes via ORG; zero holes do not count as recovery, and full original layout remains open"}
+      "verify": {"kind": "manual", "note": "The first C PROC emits one post-ENDP NOP whose final placement is unresolved. CTV/CMF data 235/2406 bytes now rebuild from typed source. Instruction-only ORG profiles are separate and zero holes do not count as recovery; all other data and complete original layout remain open"}
     },
     {
       "id": "clean-whole-EXE",

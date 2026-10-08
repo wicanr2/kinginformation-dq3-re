@@ -1,0 +1,234 @@
+{
+  "phase": "READY",
+  "module": "CTVMEM.ASM",
+  "input_EXE_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "data_regions": [
+    [
+      "0x3",
+      "0xe3"
+    ],
+    [
+      "0x749",
+      "0x754"
+    ]
+  ],
+  "fields": [
+    {
+      "offset": 3,
+      "name": "driver_signature",
+      "kind": "ascii_z",
+      "value": "CT-VOICE",
+      "evidence": "Original IDA aCtVoice/header, confirmed bytes"
+    },
+    {
+      "offset": 12,
+      "name": "device_description",
+      "kind": "ascii_z",
+      "value": "Creative Sound Blaster Card",
+      "evidence": "Original header ASCII data item, confirmed bytes"
+    },
+    {
+      "offset": 40,
+      "name": "unknown_header_zero_0028",
+      "kind": "u8_array",
+      "values": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "evidence": "Original header initial bytes"
+    },
+    {
+      "offset": 48,
+      "name": "unknown_header_fields_0030",
+      "kind": "u8_array",
+      "values": [
+        32,
+        2,
+        7,
+        15,
+        1,
+        3,
+        1,
+        145,
+        0
+      ],
+      "evidence": "DS-relative field consumers; meanings/types scoped unknown"
+    },
+    {
+      "offset": 57,
+      "name": "copyright_header_text",
+      "kind": "ascii_fixed",
+      "value": "Copyright (c) Creative Technology Pte Ltd., 1989-1990.  All rights reserved.",
+      "evidence": "Original fixed header text; no invented terminator"
+    },
+    {
+      "offset": 133,
+      "name": "api_dispatch",
+      "kind": "near_handler_table",
+      "entries": [
+        {
+          "instruction_label": "L_0795"
+        },
+        {
+          "instruction_label": "L_0799"
+        },
+        {
+          "instruction_label": "L_07B5"
+        },
+        {
+          "instruction_label": "L_07D0"
+        },
+        {
+          "instruction_label": "L_0810"
+        },
+        {
+          "instruction_label": "L_0827"
+        },
+        {
+          "initial_u16": 27398,
+          "role": "mutable E2 DMA initialization seed/dispatch slot; derived target not substituted"
+        },
+        {
+          "instruction_label": "L_089F"
+        },
+        {
+          "instruction_label": "L_088C"
+        },
+        {
+          "instruction_label": "L_0968"
+        },
+        {
+          "instruction_label": "L_093F"
+        },
+        {
+          "instruction_label": "L_094F"
+        },
+        {
+          "instruction_label": "L_0973"
+        },
+        {
+          "instruction_label": "L_09B2"
+        }
+      ],
+      "evidence": "0x236dc"
+    },
+    {
+      "offset": 161,
+      "name": "stream_dispatch",
+      "kind": "near_handler_table",
+      "entries": [
+        {
+          "instruction_label": "L_063C"
+        },
+        {
+          "instruction_label": "L_0643"
+        },
+        {
+          "instruction_label": "L_068D"
+        },
+        {
+          "instruction_label": "L_06AF"
+        },
+        {
+          "instruction_label": "L_06E1"
+        },
+        {
+          "instruction_label": "L_06F4"
+        },
+        {
+          "instruction_label": "L_06F9"
+        },
+        {
+          "instruction_label": "L_071E"
+        }
+      ],
+      "evidence": "0x23538"
+    },
+    {
+      "offset": 177,
+      "name": "unknown_state_initializers_00B1",
+      "kind": "u8_array",
+      "values": [
+        0,
+        0,
+        20,
+        131,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "evidence": "Mutable byte/word state consumers; original values exact, field meanings unknown"
+    },
+    {
+      "offset": 1865,
+      "name": "unknown_initialized_payload_0749",
+      "kind": "u8_array",
+      "values": [
+        20,
+        117,
+        119,
+        23,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103
+      ],
+      "evidence": "IDA data byte item size11, flags1300; strong static non-code layout; purpose unknown"
+    }
+  ],
+  "scope": "CTV byte-layout only; unreferenced payload purpose and hardware runtime unknown",
+  "source_spec": "docs/25 CTV byte-layout source spec",
+  "whole_goal_complete": false
+}

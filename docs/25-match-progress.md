@@ -17,6 +17,10 @@ CTV DMA seed與CMF IRQ stack的原始初值／consumer，保留未知payload及�
 CMF完整byte-layout的typed來源為[cmfdrv_data.json](../re/match/cmfdrv_data.json)，
 [verify_cmf_source_module.py](../tools/verify_cmf_source_module.py)從ASM／EQU／JSON完整重建；
 data只能落在兩個已審non-code區域，fields含未知語意，沒有機器指令data array。
+CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unknown payload及DMA seed
+原樣保留；完整source recipe仍按本頁CTV byte-layout spec驗證，不能由保存值推定字段語意。
+[verify_sdk_source_module.py](../tools/verify_sdk_source_module.py)共用嚴格type／range／written-mask
+及全段byte比較，選CTVMEM或CMFDRV；原CMF CLI保留相容入口，不改原source或資料初值。
 
 > 2026-10-08新增完整Goal：使用者指定「完成 dq3 matching decompliation」，並選定
 > 主程式以C精確匹配，組語僅用於已確認的底層常式。最終由原碼乾淨重建整個EXE並
@@ -79,6 +83,48 @@ data只能落在兩個已審non-code區域，fields含未知語意，沒有機�
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## CTV byte-layout source spec：CONFORMED
+
+READY審查後，ctv-source-module-r4／r5兩個新容器從repo ASM／EQU／typed JSON重建全部
+2493 bytes，source／generated ASM／OBJ／MZ一致。CMF舊CLI亦在r7／r8回歸全部5296 bytes；
+兩個已識別SDK module source合計7789 bytes，不用原始objects重連代替source。
+
+原版CTVMEM.ASM已由固定SBCM.LIB whole-module與IDA9.4關係閉合。範圍linear22F60..2391D、
+logical12F60..1391D、file142D0..14C8D，共2493 bytes，原EXE115282 bytes／SHA5178fdc8。
+2258個instruction bytes維持既有source；data只准offset0003..00E3及0749..0754共235 bytes。
+
+初值契約為兩個zero-ended header字串、eight zero bytes、原device/header初值、fixed ASCII版權文字、
+14-entry API表、8-entry stream表、mutable state初值及11-byte unknown initialized payload。
+API slot6必須保持6B06 literal，不能換成083A label；後者是E2平台契約衍生的初始化後target。
+其他table entries以原instruction labels表達。各index gate與data references沿既有SDK data review。
+
+11-byte區域經新IDA最小查詢確認為byte data item、size11、非code／非unknown／非alignment，
+原始flags1300。前方RET、後方exported dispatcher與normal known table targets分離，沒有直接
+recorded code entry或xref。data角色採strong scoped static layout，purpose保持unknown；
+不命名為signature，不用xref缺項證明全程式永不引用，也不猜額外runtime效果。
+source只保留其原始u8初值，沒有從此data區域匯入機器指令作為原碼。
+
+build輸入僅repo語意ASM／EQU／typed JSON，literal data只落兩個approved non-code ranges。
+範圍、field kind、值域、gap／overlap、handler label與slot6初值違反即拒絕；全2493 bytes
+與定hash original比較、兩個新容器source／OBJ／MZ相同後才CONFORMED。
+READY只對此固定byte-layout source成立，不批准unknown字段語意、原始type／完整ABI、hardware
+wall-clock或normal campaign。Go／pack／UI／save均無修改，原始binaries不作build inputs。
+
+copyright起點為offset0039／file14309h，前方NUL屬header word；原始235 data bytes保持。
+九個CTV負例及七個CMF負例通過。slot6若替換083A label原本只能在全段比較時拒絕，
+現已在schema層要求literal6B06，禁止用推導target替代初值。未命名payload只保留原值，purpose未知。
+完整byte-layout不升格fields／全部API／原硬體runtime或全EXE。instruction5148與data2641
+保持，C overlap12不重算。下一步回主程式C、其他source-unit與完整layout。
+
+本機收據在既有full-goal-r1下：
+
+- `ctv-data-class-probe-r1.py`、`ctv-data-class-r1.json`：IDA minimal query、原始flags／xref及script hash。
+- `ctv-source-module-r4/receipt.json`、`ctv-source-module-r5/receipt.json`：最終完整CTV source重建。
+- `cmf-source-module-r7/receipt.json`、`cmf-source-module-r8/receipt.json`：common builder與CMF相容CLI。
+- `ctv-source-verification-draft-r1.json`：seed-to-label的舊schema缺口，失敗記錄保留。
+- `sdk-full-source-verification-r1.json`：兩個module各兩份同值及16負例拒絕。
+- `sdk-full-source-publish-verification-r1.json`及`goal-audit-r11.json`：現行source／producer／schema、連結、UID核對，完整Goal仍未完成。
 
 ## CMF byte-layout source spec：CONFORMED
 

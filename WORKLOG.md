@@ -2385,3 +2385,39 @@ UID/GID通過，research root-owned及Markdown目錄0；goal-audit-r10維持四C
 source group和原data區段完全分離，未使用原始objects；CMF data2406 bytes不重算instructions。
 route再查仍命中spec gate及platform-spec-first，snapshot hash與派生等級保留。一次性container清除，
 其他專案新增的wizardry／wolong執行container保持，沒有新image或發行包。
+
+## 2026-10-09：CTV 完整 source/data 與 SDK builder 合併
+
+上一輪efacf96完整CMF byte-layout source5296 bytes已通過，屬實際進展。本輪接CTV235 data，
+路由仍命中RE→spec，讀取當前真相及直接證據，全部bounded UID1000 Docker。
+新IDA minimal query確認236A9的11-byte區域為data、byte array、非code／unknown／align；
+前RET與後exported dispatcher分離、known table不指向此區。purpose仍unknown，僅strong static layout。
+typed初值不猜修、不把缺xref當永不使用，原始fields/type及runtime硬體parity不升格。
+
+先於docs/25審CTV layout READY，新增ctvmem_data.json：兩個header字串、初值、固定copyright、
+API14／stream8表、mutable state及unknown11-byte payload，data範圍只准0003..00E3及0749..0754。
+第一次copyright起點錯放0038，strict string guard拒絕；依原file14309／module0039調整field分段，
+全部235原始bytes不變。E2 slot6仍literal6B06，不替換成推導target083A。
+
+既有CMF builder抽到common verify_sdk_source_module，profiles鎖CTVMEM／CMFDRV範圍與source。
+舊verify_cmf_source_module保留CLI及render_data相容，不重複兩個流程。共同written mask、
+全段byte compare及data schema保持，ASM／EQU／typed JSON是唯一build input，原EXE只comparison。
+初次common patch同檔Delete/Add重複operation被工具拒絕，未套入；拆為單次file edit後完成。
+後一次文件patch漏context prefix全批拒絕，修正後完成，未修改原source語意或原始binary。
+
+CTV完整2493 bytes重建成功，兩份最終r4／r5 source／generated ASM／OBJ／MZ相同；
+CMF舊CLI最終r7／r8回歸5296 bytes相同，合計兩SDK7789 bytes已由完整source恢復。
+九CTV與七CMF共16負例通過。seed-to-label原schema先未拒絕而whole-byte compare才會拒絕，
+保留draft收據後加strict literal slot guard，現在schema即拒絕，不改初值。
+CTV spec轉CONFORMED，scope限byte-layout；purpose／原types／完整ABI／原硬體runtime仍unknown。
+
+source已依使用者要求保存repo，README／docs/25／build入口同步；原SDKobjects、EXE、probe DB、
+產物與私有data snapshots不提交。原C19／RNG46／SDK instruction5148及C重疊12保持；
+unique所有known source bytes為7789＋7＋46=7842，不能當全EXE完成或已審source-unit比例。
+下一步主程式C、其他frame/source-unit與完整layout，六Goal gates仍未證實、active。
+正常Go／pack、Issue #4暫停與十三項scratch保持，沒有新image或發行包。
+
+收尾sdk-full-source-publish-verification-r1核對兩份CTV及CMF最終source／producer hash、schema
+與README／build連結、UID/GID，語法通過，research root-owned／Markdown目錄均0。
+goal-audit-r11維持四C19 bytes及六個未完成gates，不由module完成聲稱原版campaign或全EXE。
+一次性source／IDA容器清除，其他專案pto2／supabase等container保持。
