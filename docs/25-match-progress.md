@@ -28,9 +28,9 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
-> 現行C本體4個／19 bytes，含兩個次級segment word reader及一個AX入參word store。
+> 現行C本體5個／33 bytes，含主程式角色指標表查詢、兩個次級word reader及一個AX入參word store。
 > 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
-> 其餘7-byte C來源位於MZ入口code segment，產品角色仍未確認。主程式填表與搜尋C候選仍不匹配。
+> 主程式C共21 bytes；7-byte來源產品角色仍未確認，14-byte角色指標查詢已完整匹配。填表與搜尋C候選仍不匹配。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -61,7 +61,7 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > [`tools/run_watcom16_abi.py`](../tools/run_watcom16_abi.py)以官方instruction-free ABI pragma
 > 測BX／SI入參與AX存word、RNG core及BX／DX:AX控制；raw OMF／未知fixup保留並拒絕。
 > Watcom source candidates由[`tools/watcom_matching_manifest.json`](../tools/watcom_matching_manifest.json)
-> 定位，來源為[`sub_14ae6.c`](../re/match/sub_14ae6.c)、
+> 定位，來源為[`sub_9834.c`](../re/match/sub_9834.c)、[`sub_14ae6.c`](../re/match/sub_14ae6.c)、
 > [`sub_32a3_watcom.c`](../re/match/sub_32a3_watcom.c)與
 > [`sub_6fcf_watcom.c`](../re/match/sub_6fcf_watcom.c)。原始register side effects不由C簽名省略。
 > OMF的signed16 implicit addend僅由明示producer contract啟用；保留raw word與signed值，
@@ -83,6 +83,43 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 主程式角色指標查詢 C：完整函式匹配
+
+來源為[re/match/sub_9834.c](../re/match/sub_9834.c)。輸入 `assets_raw/DQ3.EXE`，
+115282 bytes，SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA Pro 9.4 原名 `sub_19834`，linear `0x19834..0x19842`、logical `0x9834..0x9842`、
+file `0xABA4..0xABB2`，末端不含。原始完整 bytes 為 `538b1e9c254bd1e38bb7154f5bc3`。
+
+| 等級 | IDA linear 原始定位 | 證據與限制 |
+|---|---|---|
+| confirmed | `0x19834..0x19842` | 保存 BX；讀 `DS:259C`、減一、乘二，再讀 `[bx+4F15h]` 到 SI；恢復 BX、near return。完整單一 chunk，56 個近呼叫 xref。 |
+| confirmed | `0x139CE..0x139E8` | BX 從 `DS:0722` 載入，`0x139D2` 寫 `DS:259C`，`0x139D6` 呼叫，SI 加 `0x3A` 後掃八個 word，比對 `0xFF`。 |
+| confirmed | `0x10B15..0x10B28` | BX 從原名 `word_254F2` 載入，寫 `word_2736C` 後呼叫；SI 保存於 `word_27275`，再讀 `[si+1]`。資料來源用途不由此命名。 |
+| confirmed | `0x13E5A..0x13E64` | 第三個抽樣 caller 返回後直接讀／寫 `[si+22h]` bit4。前方 `sub_14D15` 的副作用不由此宣稱已閉合。 |
+| confirmed | `0x115B1..0x115C8` | 經 `[bx+5078h]`、`[si+613h]` 取得 word，`0x115C2` 寫 `[bx+4F15h]`。另有 `0x105F9` 與 `0x10613` 的間接表格寫入，不能由缺直接 xref 宣稱沒有 writer。 |
+| strong | 以上 caller、writer、consumer | 角色指標表用途與 [docs/171](171-field-healing-spell-production-spec.md) 的原版欄位鏈一致；本輪不新增正常玩家路徑收據。 |
+| unknown | `DS:259C`、`DS:4F15` | 原始 C 宣告、完整表格範圍、所有 caller 的合法索引與原版 compiler 未確定。C 來源限有效表格索引，不外推非法索引的 C 行為。 |
+
+非破壞 IDA 匯出為 `work/matching-decomp-20261008-r1/full-goal-r1/primary-table-ida-r1/evidence.json`，
+由 [ida_matching_probe.py](../tools/ida_matching_probe.py) 重生，輸入 hash、版本、原始 bytes、
+typed xref 與所有 caller 窗口均保留。匯出 SHA-256
+`e925a99525b665f0495532d4457da71af617c91b712e94fbbfc4e744ec2704a9`，database 不提交。
+載入基準 `0x10000`，file=`linear-0x10000+0x1370`；`DS:259C` 對應本 DB 的 `word_2736C`。
+索引式 `[bx+4F15h]` 沒有直接 data xref，寫入證據來自原始指令與實際資料流。
+
+Watcom16 固定官方 payload、8086 small model，旗標為
+`-bt=dos -ms -0 -os -oi -s -ofr -ecc -zld`。pragma 僅指定 SI 返回與保留暫存器，沒有指令。
+`watcom-source-r12` 與 `watcom-source-r13` 在兩個新容器獨立重編，source、OBJ、完整 module
+與實際 OMF FIXUPP 結果一致；兩個外部 symbol 分別定位 `DS:259C`、`DS:4F15`。
+source SHA-256 `7b720a8fc5783ee1be15ecba133ab566aef53fdd4ba816b7949718222d02e501`，
+OBJ SHA-256 `bc1bb2e3ce2b1ae0fdc3c8b46ec5f22a92c94d907871f081cf9cd9828d4f203f`，
+code SHA-256 `f8198a7cee36b73121208712fdab9e3ffb05e40b9725e8cd3d52b00b57533b3b`。
+沒有遮罩、patch、原始 code array 或尾端截取。可重生入口是 Watcom manifest 與 runner。
+新增主程式 C 14 bytes，正式 C 五個33 bytes；已知唯一 source bytes 為7856，僅局部統計。
+六個完整 Goal gate 仍未證實，完整 EXE 未完成。
+跨 compiler 的 `goal-audit-r12.json` 核對五個正式 C 本體、兩次獨立收據、source 新鮮度與完整範圍；
+它只證明本輪局部來源，不把 IDA 自動函式清單當完成分母。
 
 ## CTV byte-layout source spec：CONFORMED
 

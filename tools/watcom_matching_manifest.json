@@ -6,6 +6,17 @@
   "compiler": "dq3-watcom16:2.0-20261001-r1",
   "cases": [
     {
+      "id": "sub_19834",
+      "source": "re/match/sub_9834.c",
+      "public_symbol": "_sub_9834",
+      "ida_linear_start": "0x19834",
+      "logical_start": "0x9834",
+      "file_start": "0xaba4",
+      "size": 14,
+      "external_DS_offsets": {"_unknown_DS_259c": "0x259c", "_unknown_DS_4f15": "0x4f15"},
+      "scope": "Primary-code one-based near-pointer table lookup; SI result, BX preserved; original table extent/type/compiler unknown"
+    },
+    {
       "id": "sub_24AE6",
       "source": "re/match/sub_14ae6.c",
       "public_symbol": "_sub_14ae6",

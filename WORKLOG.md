@@ -2421,3 +2421,32 @@ unique所有known source bytes為7789＋7＋46=7842，不能當全EXE完成或�
 與README／build連結、UID/GID，語法通過，research root-owned／Markdown目錄均0。
 goal-audit-r11維持四C19 bytes及六個未完成gates，不由module完成聲稱原版campaign或全EXE。
 一次性source／IDA容器清除，其他專案pto2／supabase等container保持。
+
+## 2026-10-09：主程式角色指標查詢 C 精確匹配
+
+依目前狀態從 SDK source 返回主程式 C。路由命中 compiler-runtime-helper-triage，
+保留原版 compiler unknown；使用 use-ida-pro-9-4 技能，沿用已驗證 py312 image並核對新sidecar。
+原始 EXE／database 唯讀，DB 工作副本與產物只放 ignored work，所有分析與重編在有界 UID1000 Docker。
+
+選原始 sub_19834，linear19834..19842、logical9834..9842、fileABA4..ABB2，共14 bytes。
+純 C 宣告 volatile index與word table；instruction-free pragma指定SI返回及保存暫存器。
+初次私有prototype用-of已匹配；正式既有-ofr runner同樣完整匹配，沒有改producer或加codegen特例。
+新source sub_9834.c納入Watcom manifest，不使用ASM指令、code array、raw bytes或code patch。
+
+fresh IDA9.4完整chunk及56近caller保留；抽樣10B1D、139D6、13E5A的返回SI consumer。
+139D2索引writer與139D9加3A／掃八word閉合；115C2、105F9及10613為間接table writers。
+不由table直接xref零命中宣稱沒有writer；186A5取址指令沒有IDA function boundary，
+仍列unresolved target，未將它當完整初始化函式。原始C型別、table完整範圍與所有索引合法性unknown。
+角色指標語意與docs/171一致，本輪沒有新增正常campaign或遊戲畫面收據。
+
+正式watcom-source-r12／r13在兩個新容器重編，完整14-byte module、source、OBJ與兩個OMF fixup同值。
+goal-audit-r12核對來源新鮮度、完整IDA範圍、實際OBJ及兩份重編，五個C共33 bytes，
+其中主程式21、SDK12；既有fill17／search24仍DIFF，六Goal gate仍未證實，Goal active。
+SDK7789、主程式21及RNG46的unique已知source bytes為7856，只屬局部重建統計。
+
+正確C與manifest、原始定位／hash／限制寫入來源索引與docs/25，依使用者要求提交GitHub。
+原版EXE／SDK／OBJ／code.bin／IDA資料庫及全部使用者scratch不提交；Go／pack與Issue #4保持。
+
+primary-table-source-publish-r1核對完整來源／OBJ／code hash、兩份重編、來源索引與連結、
+UID/GID及五C33 bytes。研究root-owned與Markdown目錄均0，git diff --check通過。
+本輪一次性容器全部清除，其他專案container保持；沒有新image或發行包。

@@ -6,6 +6,7 @@
 | 來源 | 原版IDA9.4定位 | 已驗證範圍 | 限制 |
 |---|---|---|---|
 | [sub_5d49.c](sub_5d49.c) | sub_15D49，linear15D49..15D50 | 完整C PROC，7 bytes | MZ入口code segment；產品角色未知，compiler ENDP後NOP配置未解 |
+| [sub_9834.c](sub_9834.c) | sub_19834，linear19834..19842 | 完整C module，14 bytes | 主程式角色指標表查詢；SI返回、BX保存，原始型別與完整表格範圍未知 |
 | [sub_136f5.c](sub_136f5.c) | sub_236F5，linear236F5..236F9 | 完整C PROC，4 bytes | 原版CTVMEM.ASM driver；欄位、型別與DS脈絡未知 |
 | [sub_14a8d.c](sub_14a8d.c) | sub_24A8D，linear24A8D..24A91 | 完整C PROC，4 bytes | 原版CMFDRV.ASM driver；欄位、型別與DS脈絡未知 |
 | [sub_14ae6.c](sub_14ae6.c) | sub_24AE6，linear24AE6..24AEA | 完整C module，4 bytes | 原版CMFDRV.ASM driver；AX入參word store，欄位、型別與DS脈絡未知 |
@@ -16,6 +17,9 @@
 
 其他C檔與rng_adapter.asm是研究候選。它們有DIFF、REFUSED或僅register/state等價的結果，
 不計精確匹配。原版OBJ、EXE、SDK、IDA database與生成封包不提交。
+
+五個完整C函式共33 bytes，其中主程式兩個21 bytes，SDK三個12 bytes。
+sub_9834的pragma只指定呼叫慣例，不嵌入組語指令；兩次獨立編譯及實際OMF重定位一致。
 
 兩個driver的ASM只保存語意指令與EQU常數，沒有原版code array或DB拼接。
 ORG所保留的空間沒有還原資料，不能直接當成可執行的完整driver。
