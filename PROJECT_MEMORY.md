@@ -17,7 +17,10 @@
 > Watcom long-shift C正對照有LOOP；兩套compiler完整OBJ重編相同，TC生成C mtime固定且不遮罩。
 > 原版SBCM.LIB26個OMF modules已解析，官方WLINK兩次重連CTVMEM2493／CMFDRV5296 bytes完整等於EXE。
 > 兩段7789 bytes含data，尚無可讀原碼新增；fresh IDA80函式／2175 heads與原始names／bytes／chunks保持。
-> 剩餘7-byte C在MZ入口code segment，產品角色未確認。下一步SDK ASM／data source spec與code／data分類。
+> 剩餘7-byte C在MZ入口code segment，產品角色未確認。
+> SDK正確ASM指令來源已保存，Wasm r2只從文字ASM／EQU重建5148 bytes，兩份source／OBJ／MZ／fixup相同。
+> 12 bytes與三C helper重疊，新唯一指令來源5136；總5201只屬局部source-instruction reproduction。
+> ORG省略2641 data bytes，written mask嚴格排除，兩個完整driver仍未完成。下一步四data gaps與完整module spec。
 > 其他八個SDK導航候選仍未解外部frame，不重跑134組；主程式compiler與完整來源仍unknown。
 > 保留entry／stack／side effects；Go／pack及Issue #4保持。
 

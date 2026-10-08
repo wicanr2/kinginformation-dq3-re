@@ -60,7 +60,8 @@ def export():
                 "loaded_bytes": ida_bytes.get_bytes(ea, insn.size).hex(), "mnemonic": idc.print_insn_mnem(ea),
                 "disassembly": ida_lines.tag_remove(idc.generate_disasm_line(ea, 0)),
                 "operands": [{"n": op.n, "type": op.type, "dtype": op.dtype, "reg": op.reg,
-                              "addr": hex(op.addr), "value": hex(op.value), "offb": op.offb}
+                              "addr": hex(op.addr), "value": hex(op.value), "offb": op.offb,
+                              "text": idc.print_operand(ea, op.n)}
                              for op in insn.ops if op.type], **refs(ea)}
 
     modules = []
@@ -89,6 +90,25 @@ def export():
                         "original_MZ_relocations": [hex(x) for x in relocations if offset <= x < offset + module["size"]],
                         "instructions": heads, "functions": functions,
                         "inference_level": "confirmed complete original bytes/SDK metadata mapping; function meaning remains scoped"})
+        covered = {int(row["ida_linear"], 16) + n for row in heads for n in range(len(bytes.fromhex(row["file_bytes"])))}
+        gaps = []
+        gap_start = None
+        for ea in range(start, end + 1):
+            if ea < end and ea not in covered:
+                if gap_start is None:
+                    gap_start = ea
+            elif gap_start is not None:
+                file_start = ida_loader.get_fileregion_offset(gap_start)
+                gap_refs = [{"ida_linear": hex(x), **refs(x)} for x in range(gap_start, ea)
+                            if list(idautils.XrefsTo(x))]
+                gaps.append({"ida_linear_start": hex(gap_start), "ida_linear_end_exclusive": hex(ea),
+                             "file_start": hex(file_start), "raw_bytes": raw[file_start:file_start + ea - gap_start].hex(),
+                             "original_IDA_items": [{"ida_linear": hex(x), "size": ida_bytes.get_item_size(x),
+                                                     "original_name": idc.get_name(x), "raw_flags": ida_bytes.get_full_flags(x)}
+                                                    for x in idautils.Heads(gap_start, ea)],
+                             "references": gap_refs, "inference_level": "unknown code/data role until consumer review"})
+                gap_start = None
+        modules[-1]["uncovered_regions"] = gaps
     entry = base + struct.unpack_from("<H", raw, 22)[0] * 16 + struct.unpack_from("<H", raw, 20)[0]
     startup = [instruction(ea) for ea in idautils.Heads(entry, entry + 0x54) if ida_bytes.is_code(ida_bytes.get_full_flags(ea))]
     strings = []

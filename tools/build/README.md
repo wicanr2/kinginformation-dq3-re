@@ -30,6 +30,8 @@
 | [SBCM原始module](../probe_sbcm_modules.py) | 固定原版LIB hash，26個OMF metadata／LIDATA parser view與原始xref導航；排除fixup的候選不算match |
 | [SDK完整身分控制](../link_sbcm_module_controls.py) | 官方WLINK重連原版CTVMEM／CMFDRV objects，7789 bytes與EXE一致；source coverage增量0，objects不作最終原碼 |
 | [SDK原版IDA refs](../ida_matching_module_refs.py) | 固定whole-module proof後匯出原名、bytes、functions、typed refs及startup；保留library metadata與原始IDA定位 |
+| [Wasm revision準備](../prepare_watcom16_asm.py) | 從已驗證完整archive clone r1 payload、加入官方Wasm，763檔；r1 inputs不修改 |
+| [SDK指令source重建](../verify_sdk_instruction_sources.py) | [範圍manifest](../sdk_instruction_source_manifest.json)核對repo ASM／EQU、實際written mask與FIXUPP；5148 bytes exact，ORG data不計source |
 
 ## 映像與輸入
 
@@ -38,6 +40,7 @@
 | `dq3-msc:bookworm-20261008-r1` | [Dockerfile.msc](Dockerfile.msc)：Debian基底digest與2026-10-01 snapshot固定；DOSBox0.74-3、NASM2.16.01、Python3.11。MSC binaries不寫入image |
 | `dq3-inertia:py3147-c555363b-r2` | [Dockerfile.inertia](Dockerfile.inertia)：Python3.14.7、Inertia commit `c555363b810d3a6df786e5d6511d1bb28fa82333`及uv.lock固定；另補上游鎖檔缺少的Cython3.2.0，Linux x86_64 wheel URL及SHA-256固定。r2取代r1 |
 | `dq3-watcom16:2.0-20261001-r1` | [Dockerfile.watcom16](Dockerfile.watcom16)以既有Python固定digest及[完整官方archive verifier](../fetch_watcom16.py)產生的payload建置；補足既有wcc386-only image。16-bit wcc／wdis／wlink／wlib與headers固定，instruction-free register ABI實測入口[run_watcom16_abi.py](../run_watcom16_abi.py)。不取代原版compiler身分證據 |
+| `dq3-watcom16:2.0-20261001-r2` | 同Dockerfile／runtime加入固定官方Wasm，供MASM相容SDK source；[prepare_watcom16_asm.py](../prepare_watcom16_asm.py)保存revision來源，保留r1 C控制image |
 
 原始遊戲放在`assets_raw/`。既有MSC候選工具位於gitignored的
 `tools/build/msc/BIN/`、`LIB/`及`INCLUDE/INCLUDE/`；探針驗證CL／C1／C2／C3的固定雜湊。
@@ -87,6 +90,14 @@ SDK metadata用 `python3 /repo/tools/probe_sbcm_modules.py`
 兩者用既有dq3-watcom16 image。IDA查詢在既有IDA9.4 image對新database副本執行
 `-S"/repo/tools/ida_matching_module_refs.py /out/<新sidecar>.json /out/<控制目錄>/receipt.json"`。
 完整scope、hash與位址基準見docs/25；原版library／OBJ／database僅留本機。
+
+Wasm r2準備使用r1 image在Docker跑 `python3 /repo/tools/prepare_watcom16_asm.py`
+加 `--original-source /repo/work/matching-decomp-20261008-r1/full-goal-r1/watcom16-source-r1`
+及 `--output /out/<新r2來源目錄>`。再以相同Dockerfile、network none建置r2，context為新payload。
+SDK source在r2 image跑 `python3 /repo/tools/verify_sdk_instruction_sources.py`
+加 `--layout /out/sdk-module-layout-r1.json --output /out/<新build目錄>`。
+每次獨立容器、repository唯讀、明確output可寫；verifier不允許DB／data／include／macro代替指令。
+產出的MZ只有指令區段可用作局部oracle；原版data仍缺，不能作完整driver或交付包執行。
 
 從專案根目錄建置MSC映像，stdin context不含原版或compiler：
 

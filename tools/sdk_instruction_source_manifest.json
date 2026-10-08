@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "input_path": "assets_raw/DQ3.EXE",
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "SDK_library_sha256": "01b242cb99193d006e23b73babe122887e59713410f88798283a9120df1d0683",
+  "assembler_image": "dq3-watcom16:2.0-20261001-r2",
+  "scope": "Verified semantic instruction sources only; ORG gaps omit unknown original data, never count as source bytes or whole-module completion",
+  "cases": [
+    {
+      "SDK_metadata_name": "CTVMEM.ASM",
+      "source": "re/match/ctvmem_code.asm",
+      "constants_source": "re/match/ctvmem_constants.asm",
+      "module_IDA_linear_start": "0x22f60",
+      "module_size": 2493,
+      "instruction_ranges_IDA_linear": [["0x22f60", "0x22f63"], ["0x23043", "0x236a9"], ["0x236b4", "0x2391d"]],
+      "verified_instruction_bytes": 2258,
+      "unknown_data_bytes_excluded": 235,
+      "inference_level": "confirmed original SDK ownership and instruction-byte match; data meaning/code-data closure incomplete",
+      "whole_module_source_complete": false
+    },
+    {
+      "SDK_metadata_name": "CMFDRV.ASM",
+      "source": "re/match/cmfdrv_code.asm",
+      "constants_source": "re/match/cmfdrv_constants.asm",
+      "module_IDA_linear_start": "0x23920",
+      "module_size": 5296,
+      "instruction_ranges_IDA_linear": [["0x23920", "0x23923"], ["0x24225", "0x24bf3"], ["0x24c57", "0x24dd0"]],
+      "verified_instruction_bytes": 2890,
+      "unknown_data_bytes_excluded": 2406,
+      "inference_level": "confirmed original SDK ownership and instruction-byte match; data meaning/code-data closure incomplete",
+      "whole_module_source_complete": false
+    }
+  ]
+}

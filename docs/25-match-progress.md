@@ -2,6 +2,16 @@
 
 已提交GitHub的匹配來源與各自驗證範圍見[re/match來源清單](../re/match/README.md)。
 研究候選、原始object重連與完整source build分開記錄；尚未匹配的來源不計完成。
+新增SDK指令來源：[ctvmem_code.asm](../re/match/ctvmem_code.asm)及
+[cmfdrv_code.asm](../re/match/cmfdrv_code.asm)，encoding常數來源為
+[ctvmem_constants.asm](../re/match/ctvmem_constants.asm)與
+[cmfdrv_constants.asm](../re/match/cmfdrv_constants.asm)。它們只還原已驗證instruction bytes，
+ORG省略的資料缺口不計source coverage，完整driver source仍未完成。
+[`tools/prepare_watcom16_asm.py`](../tools/prepare_watcom16_asm.py)從已驗證完整官方archive
+建立r2 payload，新增Wasm，保留r1 inputs不變；沿用同一Dockerfile與固定runtime。
+[`tools/sdk_instruction_source_manifest.json`](../tools/sdk_instruction_source_manifest.json)列已驗證
+instruction範圍與省略data；[`tools/verify_sdk_instruction_sources.py`](../tools/verify_sdk_instruction_sources.py)
+從提交的ASM／EQU source重建，核對實際OMF written mask、FIXUPP與每個原始instruction byte。
 
 > 2026-10-08新增完整Goal：使用者指定「完成 dq3 matching decompliation」，並選定
 > 主程式以C精確匹配，組語僅用於已確認的底層常式。最終由原碼乾淨重建整個EXE並
@@ -65,9 +75,66 @@
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
 
+## SDK 語意指令來源重建
+
+本節為最新結果，完整EXE與兩個driver的資料source仍未完成。原始EXE、library、IDA9.4
+與linear／logical／file基準保持下節原版SDK身分契約。
+
+新來源只保存已驗證語意指令。其code區段如下，ORG跨過的235／2406 data bytes不寫入OMF：
+
+| SDK source | IDA linear指令範圍 | 原始指令bytes | 資料尚未還原 |
+|---|---|---|---|
+| ctvmem_code.asm | 22F60..22F63、23043..236A9、236B4..2391D | 959個指令、2258 bytes | 22F63..23043及236A9..236B4共235 bytes |
+| cmfdrv_code.asm | 23920..23923、24225..24BF3、24C57..24DD0 | 1216個指令、2890 bytes | 23923..24225及24BF3..24C57共2406 bytes |
+
+每個instruction label保存原始IDA名稱、linear／logical／file定位及原operand註解。
+SDK library已由完整re-link與PUB／I/O／caller閉合身分，屬低層音效支援；這次ASM範圍
+不含主程式game code。欄位用途、data角色、driver完整ABI仍未升格。
+source內沒有DB／DW／DD／INCBIN／macro注入，原始objects不作source build輸入。
+verifier核對實際OMF written mask恰等於declared instruction ranges，再用完整真正linker fixups
+核對每個原始byte；linker為ORG holes產生的zeros從未算進source coverage。
+
+NASM2.16控制樣本的MOV／SUB／ADD暫存器encoding為89／29／01，與原版8B／2B／03不同。
+不能用新版manual或不存在的`{load}` decorator猜修。完整固定官方archive實際含Wasm，
+其MASM模式控制樣本8BC3／2BC0／03C3與原版shape一致；來源clone加入已驗證Wasm形成
+`dq3-watcom16:2.0-20261001-r2`，原r1 compiler image及payload保留。
+Wasm binary SHA256為 `7e216ab56214fe36f80fa60cc757d05f4508683ef28e992969556945fe28f2cd`。
+同一固定runtime／Dockerfile，763 payload files逐檔核對，沒有host runtime或新未鎖版依賴。
+
+編碼契約的幾個必要控制已實測：
+
+- 原始16-bit displacement即使值為0／1／3，仍需保留寬度。數值、forward EQU與WORD PTR cast會縮短；外部absolute EQU symbol經WLINK正常重定位，保留原來16-bit欄位。
+- AX accumulator的ADD／SUB／CMP／AND與83 sign-extended形式同長但opcode不同；同樣以正常absolute EQU qualifier保留原encoding，不寫opcode bytes。
+- XCHG兩個register的語意對稱，Wasm canonical encoding需交換來源operand次序；原operand保留註解，兩邊的machine bytes核對相同。
+- IDA列出的LOOP／MUL／DIV／string隱含operands不直接輸出，明示operand及REP／segment prefix完整保存。
+
+最初兩份prototype語法錯誤，後兩份長度／encoding DIFF均保留。完整prototype-r6的語意指令
+加未審查data literals可重建兩段7789 bytes，但phase保持DRAFT、正式source增量0。
+公開來源移除全部未審查data，只保留已match instructions；source-build-r3／r4兩份
+完整source／OBJ／MZ／FIXUPP receipts相同。七種byte/data/include/macro注入負例拒絕。
+完整driver的code／data spec仍DRAFT；指令來源重建通過不升格driver功能、正常campaign或全EXE。
+
+source指令共5148 bytes，其中12 bytes已由三個C helper覆蓋，新增唯一指令來源5136 bytes。
+原四C19 bytes與兩RNG ASM46 bytes保持；全部已驗證的唯一指令來源5201 bytes只是局部
+reproduction統計，不是完整source-unit、原版semantic或完整Goal完成比例。
+
+本機收據在 `work/matching-decomp-20261008-r1/full-goal-r1/`：
+
+- `sdk-module-layout-r1.json`：新IDA operand text及四個缺口的原bytes／items／xref。
+- `asm-encoding-controls-r1/`、`wasm-controls-r1/`、`wasm-width-control-r1/`、`wasm-absolute-control-r1/`：具體assembler正反控制。
+- `sdk-asm-prototype-r1`至`r6`：可丟棄DRAFT的語法／encoding差異與最後全段prototype。
+- `sdk-instruction-source-r1/receipt.json`：移除全部data後逐指令匹配。
+- `sdk-source-build-r3/receipt.json`、`sdk-source-build-r4/receipt.json`：最終公開source的兩次乾淨重編。
+- `sdk-source-guard-verification-r1.json`、`sdk-instruction-source-verification-r1.json`：七負例與12-byte重疊核對。
+- `sdk-source-publish-verification-r1.json`及`goal-audit-r9.json`：最終source／manifest／producer、連結、UID及完整Goal未完成核對。
+- `watcom16-asm-source-r1/payload/source-manifest.json`：Wasm r2的完整固定payload。
+
+下一步審四個data gaps的dispatcher／table／buffer證據，建立typed data及完整module spec。
+主程式C與其餘source-unit／layout／完整EXE仍未完成；正確指令來源按使用者要求提交GitHub。
+
 ## 原版 SDK module 身分與 C 來源歸屬
 
-本節為最新結果。原版 `assets_raw/DQ3.EXE` 為115282 bytes，SHA-256
+本節保存上一檢查點。原版 `assets_raw/DQ3.EXE` 為115282 bytes，SHA-256
 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
 附帶 `assets_raw/SBCM.LIB` 為35840 bytes，SHA-256
 `01b242cb99193d006e23b73babe122887e59713410f88798283a9120df1d0683`。

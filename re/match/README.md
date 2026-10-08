@@ -1,7 +1,7 @@
 # Matching decompilation 來源
 
-這裡保存提交到GitHub的C與組語來源。下表只列完整函式bytes已精確匹配的來源，
-完整EXE還原仍未完成。主程式須用C；組語的完整Goal資格另依已確認底層用途審查。
+這裡保存提交到GitHub的C與組語來源。下表分開標示完整函式與已驗證的指令區段，
+完整EXE還原仍未完成。主程式須用C；組語只用於已確認底層用途。
 
 | 來源 | 原版IDA9.4定位 | 已驗證範圍 | 限制 |
 |---|---|---|---|
@@ -11,9 +11,16 @@
 | [sub_14ae6.c](sub_14ae6.c) | sub_24AE6，linear24AE6..24AEA | 完整C module，4 bytes | 原版CMFDRV.ASM driver；AX入參word store，欄位、型別與DS脈絡未知 |
 | [sub_e6b9.asm](sub_e6b9.asm) | sub_1E6B9，linear1E6B9..1E6C9 | 七條語意指令，16 bytes | 局部RNG核心；不證明原版來源語言或完整campaign |
 | [sub_e6c9.asm](sub_e6c9.asm) | sub_1E6C9，linear1E6C9..1E6E7 | 完整有界RNG，30 bytes | BX入參及AX／DX結果已局部驗證；完整Goal底層資格仍需分類 |
+| [ctvmem_code.asm](ctvmem_code.asm)與[encoding常數](ctvmem_constants.asm) | CTVMEM driver，linear22F60..2391D | 959個語意指令，2258 bytes | 235 bytes資料以ORG省略，完整driver尚未還原 |
+| [cmfdrv_code.asm](cmfdrv_code.asm)與[encoding常數](cmfdrv_constants.asm) | CMFDRV driver，linear23920..24DD0 | 1216個語意指令，2890 bytes | 2406 bytes資料以ORG省略，完整driver尚未還原 |
 
 其他C檔與rng_adapter.asm是研究候選。它們有DIFF、REFUSED或僅register/state等價的結果，
 不計精確匹配。原版OBJ、EXE、SDK、IDA database與生成封包不提交。
+
+兩個driver的ASM只保存語意指令與EQU常數，沒有原版code array或DB拼接。
+ORG所保留的空間沒有還原資料，不能直接當成可執行的完整driver。
+兩次source／OBJ／MZ／FIXUPP重編一致，逐原始指令位置匹配5148 bytes。
+其中12 bytes與上表三個C helper重疊；新增唯一指令來源為5136 bytes，不能重複計數。
 
 原始輸入為 `assets_raw/DQ3.EXE`，115282 bytes，SHA-256
 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
@@ -21,6 +28,8 @@
 
 C來源清單與真正FIXUPP重定位由[MSC manifest](../../tools/matching_c_manifest.json)、
 [Watcom manifest](../../tools/watcom_matching_manifest.json)及其runner核對。
+SDK instruction來源以[範圍manifest](../../tools/sdk_instruction_source_manifest.json)及
+[source verifier](../../tools/verify_sdk_instruction_sources.py)核對實際OMF written mask，拒絕資料／code array匯入。
 重建一律使用[隔離工具鏈入口](../../tools/build/README.md)；可用MSC、Watcom16及NASM，
 不以原版machine-code拼接代替來源。
 原版SDK只用於[module身分證據](../../docs/25-match-progress.md)，不作最終原碼重建輸入。

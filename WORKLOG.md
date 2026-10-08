@@ -2298,3 +2298,48 @@ Docker一次性容器清除，研究root-owned與Markdown目錄0，git diff --ch
 四個C19 bytes以新manifest的兩次收據重核。README所有source及重建連結存在，新增三工具
 語法、索引及UID/GID通過，收據source-publish-verification-r1由docs/25索引。
 第一次README patch同檔重複operation而全批未寫入，合併operation後完成，不屬產品問題。
+
+## 2026-10-08：SDK 語意指令來源與原版資料省略
+
+前輪9c8d1ee已識別SDK及發布source入口，屬實際進展。依唯一現況表回到兩driver source，
+路由命中RE→spec並載入retro-remake-spec-gated-workflow；原版及repo分析輸入唯讀，全部Docker。
+fresh IDA匯出operand text與四個未覆蓋區域，未改原始names／bytes／function boundaries。
+CTVMEM2258及CMFDRV2890 bytes為原始instructions，其餘235／2406 bytes仍待data／code role審查。
+
+先做可丟棄DRAFT ASM prototype。NASM2.16不能用猜測的load decorator且register encoding不同；
+沿已驗證完整官方archive取Wasm，控制樣本符合原版MASM shape。
+前兩prototype因implicit operands與absolute memory語法失敗，後兩因displacement及accumulator
+encoding DIFF，全部保留。語意source沒有opcode byte emission；normal external absolute EQU
+經真正WLINK fixup保留原來16-bit width，XCHG對稱operand次序保留原operand註解。
+REP與segment prefix、LOOP／MUL／DIV／string隱含operands依IDA及compiler實測訂正。
+
+prototype-r6整段7789 bytes相同，但含未審data literals，DRAFT及source增量0保持。
+正式新增的四份SDK instruction／EQU source移除所有data literals，以ORG省略未知區域。
+原始objects不作build輸入，source無DB／DW／DD／INCBIN／include／macro，原始IDA位置及operands保留。
+verifier從repo文字source組譯、真正link，actual OMF written mask恰等於declared指令區段；
+逐每個原始byte核對5148 bytes。driver資料2641 bytes、完整ABI與全source未完成，產生MZ不能作完整driver。
+
+新prepare_watcom16_asm從immutable r1 clone官方payload加入Wasm，763檔逐hash通過，
+同固定runtime及Dockerfile形成dq3-watcom16:2.0-20261001-r2，沒有host runtime或原版inputs。
+r1 C控制image保留，不重抓成功archive或改其他專案image。Wasm binary hash7e216ab5固定。
+最終sdk-source-build-r3／r4在新容器重編，完整source／OBJ／MZ／FIXUPP receipts相同。
+七種raw data／label後data／TIMES／include／INCBIN／macro／word emission負例拒絕。
+
+12 bytes與三個C helper重疊，新唯一instruction source為5136 bytes。既有C19及RNG ASM46保持，
+局部所有唯一source-instruction reproduction為5201 bytes，不升格完整module、source-unit gate或campaign。
+使用者要求正確source存GitHub，新增四ASM／EQU、manifest及verifier，README與docs/25立即掛索引。
+完整driver spec仍DRAFT；下一步四個data gaps、typed data與dispatcher／buffer證據，主程式C仍未完成。
+
+原版SDK／EXE、prototype內data、OBJ／MZ／IDA database／vendor payload均不提交。
+正常Go／game pack、十三項scratch及Issue #4暫停保持；語法、連結、source／written-mask
+驗證與git diff --check通過。一次性container清除，研究root-owned及Markdown目錄0。
+
+## 2026-10-09：SDK 指令 source 發布收尾
+
+工作跨日後依新的environment日期更新唯一現況表，不改原Goal選擇日期。
+最終兩份source receipts相同，5148 instruction bytes與12-byte C重疊已核對；
+goal-audit-r9維持四C19 bytes及六個未完成gates。source-publish收據核對新script語法、
+README／索引連結、全source UID/GID及研究0 root-owned／0 Markdown目錄。
+Docker批次容器全部清除；懸空image只有其他專案私有IDA來源4ac62de83339，保留。
+新Wasm r2沒有被取代的本專案image，r1仍供已鎖定C控制使用。沒有新遊戲包。
+正確partial instruction source與其明示限制提交GitHub，原版data及prototype不提交。

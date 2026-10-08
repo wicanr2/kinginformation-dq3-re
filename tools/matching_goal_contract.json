@@ -27,12 +27,12 @@
     {
       "id": "low-level-ASM-evidence",
       "requirement": "Each ASM unit has independently confirmed low-level ownership, original identity and semantic instruction source",
-      "verify": {"kind": "manual", "note": "Existing 46 exact ASM bytes are local instruction evidence; full-Goal eligibility still requires unit classification"}
+      "verify": {"kind": "manual", "note": "Existing 46 RNG ASM bytes remain local evidence with eligibility under review. Original Creative SDK ownership is identified and 5148 semantic instruction bytes rebuild from ASM/EQU; module data/ABI and complete source units remain incomplete, with 12 bytes already covered by C"}
     },
     {
       "id": "data-and-layout",
       "requirement": "All data, MZ fields, relocations and padding have reviewed reconstruction contracts; compiler module padding is placed explicitly",
-      "verify": {"kind": "manual", "note": "The first C PROC emits one post-ENDP NOP whose final original layout placement is unresolved"}
+      "verify": {"kind": "manual", "note": "The first C PROC emits one post-ENDP NOP whose final placement is unresolved. SDK instruction sources omit 2641 original data bytes via ORG; linker zero holes do not count as recovered data"}
     },
     {
       "id": "clean-whole-EXE",
