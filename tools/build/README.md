@@ -23,7 +23,7 @@
 | [邊界分級](../review_matching_boundaries.py) | typed flow／實際DOS service writer與SI取址consumer分級，保留DS條件、未知DI／field與未批准source-unit範圍 |
 | [多入口CFG](../matching_cfg_candidates.py) | 沿原始typed edges追到return／未解successor，保留外部entry與共用code，不自動併成C source unit |
 | [Watcom16 register控制](../run_watcom16_abi.py) | 六個instruction-free C pragma控制；固定source path及-zld確保真實OBJ重現。實驗exact不自動加入正式coverage |
-| [Watcom原始範圍來源](../watcom_matching_manifest.json) | 配合run_watcom16_abi.py的candidate模式，核對完整IDA範圍、source hash及原始bytes；主程式角色指標查詢及SDK AX store exact，fill／search仍DIFF |
+| [Watcom原始範圍來源](../watcom_matching_manifest.json) | 配合run_watcom16_abi.py的candidate模式，核對完整IDA範圍、source hash及原始bytes；主程式角色指標查詢／48-byte記錄writer及SDK AX store exact，fill／search仍DIFF |
 | [WCC有號位移控制](../verify_watcom_signed_fixup.py) | vendor WLINK連結實際C object與synthetic DATA，保留map的frame bias；六無效位移拒絕，不當原版layout |
 | [Watcom主程式codegen](../probe_watcom_primary_codegen.py) | 填表／搜尋126組C與loop／reorder flags，完整artifact保留；long-shift正對照實際發LOOP，原版候選全DIFF |
 | [TC2.01主程式codegen](../probe_turboc_primary_codegen.py) | 固定本機archive／compiler hash，用既有DOSBox比較八組C；四DIFF／四group-frame REFUSED。生成C mtime固定以重現整個OBJ |
@@ -75,6 +75,9 @@ repository唯讀掛到/repo，既有matching輸出掛到/out；每次output須�
 `--candidate-manifest /repo/tools/watcom_matching_manifest.json`
 與 `--ida-inventory /repo/work/matching-decomp-20261008-r1/full-goal-r1/inventory-ida-r2.json`。
 每次重編使用全新容器，固定compile目錄不供同容器連續啟動兩次。
+候選的compiler_profile只可選runner明列的固定旗標組合：預設cdecl-size-reorder、
+記錄writer使用watcall-speed-no-reorder。manifest不接受任意shell或compiler命令，
+audit會核對實際command；不同profile不表示已辨識原版compiler。
 有號位移控制執行 `python3 /repo/tools/verify_watcom_signed_fixup.py`
 加 `--candidate-obj /out/<候選目錄>/sub_132a3.obj --output /out/<新控制目錄>`。
 總審核加 `--watcom-receipt` 與 `--repeat-watcom-receipt`；RESOLVED只表示可重定位，

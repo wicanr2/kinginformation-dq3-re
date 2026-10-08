@@ -28,9 +28,9 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
-> 現行C本體5個／33 bytes，含主程式角色指標表查詢、兩個次級word reader及一個AX入參word store。
+> 現行C本體6個／81 bytes，含主程式角色指標表查詢與視窗記錄寫入、兩個次級word reader及一個AX入參word store。
 > 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
-> 主程式C共21 bytes；7-byte來源產品角色仍未確認，14-byte角色指標查詢已完整匹配。填表與搜尋C候選仍不匹配。
+> 主程式C共69 bytes；7-byte來源產品角色仍未確認，14-byte角色指標查詢與48-byte視窗記錄writer完整匹配。填表與搜尋C候選仍不匹配。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -61,7 +61,7 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > [`tools/run_watcom16_abi.py`](../tools/run_watcom16_abi.py)以官方instruction-free ABI pragma
 > 測BX／SI入參與AX存word、RNG core及BX／DX:AX控制；raw OMF／未知fixup保留並拒絕。
 > Watcom source candidates由[`tools/watcom_matching_manifest.json`](../tools/watcom_matching_manifest.json)
-> 定位，來源為[`sub_9834.c`](../re/match/sub_9834.c)、[`sub_14ae6.c`](../re/match/sub_14ae6.c)、
+> 定位，來源為[`sub_37f9.c`](../re/match/sub_37f9.c)、[`sub_9834.c`](../re/match/sub_9834.c)、[`sub_14ae6.c`](../re/match/sub_14ae6.c)、
 > [`sub_32a3_watcom.c`](../re/match/sub_32a3_watcom.c)與
 > [`sub_6fcf_watcom.c`](../re/match/sub_6fcf_watcom.c)。原始register side effects不由C簽名省略。
 > OMF的signed16 implicit addend僅由明示producer contract啟用；保留raw word與signed值，
@@ -83,6 +83,63 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 主程式物品視窗記錄 C：完整函式匹配
+
+來源為[re/match/sub_37f9.c](../re/match/sub_37f9.c)。輸入 `assets_raw/DQ3.EXE`，115282 bytes，
+SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA Pro 9.4 原名 `sub_137F9`，linear `0x137F9..0x13829`、logical `0x37F9..0x3829`、
+file `0x4B69..0x4B99`，末端不含；完整單一 chunk 的48 bytes均由可讀C重建。
+
+| 等級 | IDA linear 原始定位 | 原始資料流與限制 |
+|---|---|---|
+| confirmed | `0x137F9..0x13829` | SI 指向記錄、BX 為word入參；AX／CX保存，返回時SI／BX保持。讀DS:072F／0731／0733，寫七個word，無其他函式呼叫。 |
+| confirmed | `0x13783..0x13797`、`0x177DC..0x177F0` | 兩個caller均寫DS:072F=43、0731=46、0733=BX，SI取DS:3FD8後呼叫。自動IDA沒有caller owner，保留此限制，不把caller窗口當完整C函式。 |
+| confirmed | `0x177FA..0x177FE` | writer返回後重新取DS:3FD8並呼叫sub_1F590，沒有用推測改名替代原始位址。 |
+| confirmed | `0x1F59F..0x1F5BB`、`0x1FC65..0x1FC92` | fresh consumer 分別讀 `[si+2]`、`[si+4]`、`[si+0Ch]`、`[si+14h]`；視窗繪製另讀 `[si+8]`、原有 `[si+6]`，寬度值不由本writer產生。 |
+| confirmed | `0x1F6F3..0x1F715` | 選人consumer讀 `[si+18h]`、`[si+1Ah]` 後減去輸入座標，作邊界判定；再把垂直距離除16、加一，比對 `[si+14h]`。七個word均有原始consumer，完整UI仍沿docs/188的限定證據。 |
+| strong | DS:3FD8 | 已有[docs/188的正常物品窗口證據](188-opening-escort-to-castle-spec.md)支持視窗記錄用途；本輪只驗證原碼重建，不新增玩家路徑或畫面parity。 |
+| unknown | 原始C宣告 | 來源以word array保留已證實offset；原始struct、compiler及其完整source-unit布局未知。 |
+
+七個word交易如下，數值運算保留8086的16-bit結果：
+
+| 原始運算元 | 寫入值 |
+|---|---|
+| `[si+2]` | DS:072F |
+| `[si+18h]` | DS:072F + 2 |
+| `[si+4]` | DS:0731 |
+| `[si+1Ah]` | DS:0731 + 16 |
+| `[si+0Ch]`、`[si+14h]` | BX |
+| `[si+8]` | (DS:0733 + 2) << 4 |
+
+匯出為 `work/matching-decomp-20261008-r1/full-goal-r1/primary-record-ida-r1/evidence.json`，
+由[ida_matching_probe.py](../tools/ida_matching_probe.py)從DB工作副本重生，保留原名／bytes／typed xref。
+輸入hash及IDA9.4版本已核對，匯出SHA-256
+`5c64caeb3ee7e36bb490c2503b1a73eb418dcbc645dad5359f89d836e45e86c0`。
+consumer匯出 `primary-record-consumer-ida-r1/evidence.json` 同用IDA9.4及原始輸入，SHA-256
+`329aed91100a8d06f118cba22ffdf9303ed72854071747b1b1e9ba6031ae45c5`，保留67個視窗入口xref。
+選人consumer匯出 `primary-record-cursor-ida-r1/evidence.json`，原名sub_1F690，SHA-256
+`fffc2c8930782b69fe5aa45fa6135b6f562c939806f40620c6d5a134412583f6`；未修改原始名稱或函式邊界。
+linear基準 `0x10000`，file=`linear-0x10000+0x1370`；原始binary／正式DB不改動。
+
+compiler profile `watcall-speed-no-reorder` 使用
+`-bt=dos -ms -0 -ot -oi -s -of -ecw -zld`。原來的 `cdecl-size-reorder` profile與既有來源保持。
+所有profile只准runner明列的固定旗標，未知profile拒絕；audit另核對實際compiler command。
+pragma指定SI／BX入參與exact保存集合；void函式用非AX value register避免預設AX破壞，
+這個編譯契約以實際push AX／CX及pop CX／AX驗證，沒有內嵌指令。
+[Watcom官方呼叫慣例說明](https://open-watcom.github.io/open-watcom-v2-wikidocs/cguide.html)是語法參考，
+固定compiler實際輸出才是本函式的codegen證據，不由pragma文字單獨宣稱保存成功。
+
+私有size prototype輸出INC兩次且預設AX會破壞；速度profile改為ADD AX,2，停用重排保持原始讀寫次序。
+正式 `watcom-source-r14`／`r15` 在兩個新容器重編，source／完整OBJ／48-byte module／三個FIXUPP一致。
+source SHA-256 `1fade5fdee09f6c95a232564e390350e8f02a1b17bc60dd5c3211bed1b2fd6b6`，
+OBJ SHA-256 `7ae6d79151d311b74979d3196800826eeafbebc8b2137c74cb9488dbe1458e83`，
+code SHA-256 `e3f54ab55b530e29caa81debc530958d622bc2140ae790226e9975e81350988f`。
+正式C六個81 bytes，主程式三個69 bytes；完整EXE／所有source-unit／layout仍未完成。
+已知unique source bytes為7904，僅局部重建統計，不是完整Goal比例。
+`goal-audit-r13.json` 重核六個C81 bytes，六個完整gate仍未證實。
+`primary-record-profile-negatives-r1.json` 的三個反例均拒絕：主收據與重編收據的旗標竄改、
+manifest未審profile。接續處理帶呼叫的主程式C與near／far symbol定位，不重跑已排除的134組。
 
 ## 主程式角色指標查詢 C：完整函式匹配
 
@@ -116,7 +173,7 @@ source SHA-256 `7b720a8fc5783ee1be15ecba133ab566aef53fdd4ba816b7949718222d02e501
 OBJ SHA-256 `bc1bb2e3ce2b1ae0fdc3c8b46ec5f22a92c94d907871f081cf9cd9828d4f203f`，
 code SHA-256 `f8198a7cee36b73121208712fdab9e3ffb05e40b9725e8cd3d52b00b57533b3b`。
 沒有遮罩、patch、原始 code array 或尾端截取。可重生入口是 Watcom manifest 與 runner。
-新增主程式 C 14 bytes，正式 C 五個33 bytes；已知唯一 source bytes 為7856，僅局部統計。
+該批新增主程式 C 14 bytes，當時正式 C 五個33 bytes；當時唯一 source bytes 為7856，僅局部統計。
 六個完整 Goal gate 仍未證實，完整 EXE 未完成。
 跨 compiler 的 `goal-audit-r12.json` 核對五個正式 C 本體、兩次獨立收據、source 新鮮度與完整範圍；
 它只證明本輪局部來源，不把 IDA 自動函式清單當完成分母。

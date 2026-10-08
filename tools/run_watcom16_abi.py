@@ -18,6 +18,19 @@ from omf_matching_probe import UnsupportedOMF, read_object, resolve_ds_offsets, 
 
 
 ROOT = Path(__file__).resolve().parents[1]
+COMPILER_PROFILES = {
+    "cdecl-size-reorder": ["-bt=dos", "-ms", "-0", "-os", "-oi", "-s", "-ofr", "-ecc", "-zld"],
+    "watcall-speed-no-reorder": ["-bt=dos", "-ms", "-0", "-ot", "-oi", "-s", "-of", "-ecw", "-zld"],
+}
+
+
+def compiler_flags_for(case):
+    profile = case.get("compiler_profile", "cdecl-size-reorder")
+    if profile not in COMPILER_PROFILES:
+        raise ValueError("Unknown reviewed compiler profile: " + str(profile))
+    return list(COMPILER_PROFILES[profile])
+
+
 CONTROLS = {
     "bxecho": ("unsigned bxecho(unsigned value);\n#pragma aux bxecho \"_*\" parm [bx] value [ax] modify exact [ax];\nunsigned bxecho(unsigned value) { return value; }\n", "_bxecho", {}),
     "siecho": ("unsigned siecho(unsigned value);\n#pragma aux siecho \"_*\" parm [si] value [ax] modify exact [ax];\nunsigned siecho(unsigned value) { return value; }\n", "_siecho", {}),
@@ -64,6 +77,7 @@ def main():
         controls = {}
         original_ranges = {}
         for case in selected["cases"]:
+            compiler_flags_for(case)
             name = case["id"].lower()
             if not re.fullmatch(r"[a-z0-9_]{1,32}", name):
                 raise ValueError("Unsafe candidate filename")
@@ -92,7 +106,7 @@ def main():
         source.write_text(content, encoding="ascii")
         shutil.copyfile(source, compile_root / source.name)
         obj_path = args.output / (name + ".obj")
-        command = ["wcc", "-bt=dos", "-ms", "-0", "-os", "-oi", "-s", "-ofr", "-ecc", "-zld", "-fo=" + obj_path.name, source.name]
+        command = ["wcc"] + compiler_flags_for(candidate_records.get(name, {})) + ["-fo=" + obj_path.name, source.name]
         with (args.output / (name + ".log")).open("wb") as stream:
             process = subprocess.run(command, cwd=compile_root, stdout=stream, stderr=subprocess.STDOUT, timeout=30, check=False)
         if (compile_root / obj_path.name).is_file():

@@ -6,6 +6,18 @@
   "compiler": "dq3-watcom16:2.0-20261001-r1",
   "cases": [
     {
+      "id": "sub_137F9",
+      "source": "re/match/sub_37f9.c",
+      "public_symbol": "_sub_37f9",
+      "ida_linear_start": "0x137f9",
+      "logical_start": "0x37f9",
+      "file_start": "0x4b69",
+      "size": 48,
+      "external_DS_offsets": {"_unknown_DS_072f": "0x072f", "_unknown_DS_0731": "0x0731", "_unknown_DS_0733": "0x0733"},
+      "compiler_profile": "watcall-speed-no-reorder",
+      "scope": "Primary-code SI-addressed record stores with BX input; AX/CX and SI/BX preserved; original field/type semantics scoped"
+    },
+    {
       "id": "sub_19834",
       "source": "re/match/sub_9834.c",
       "public_symbol": "_sub_9834",

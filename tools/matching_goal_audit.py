@@ -14,6 +14,7 @@ import tempfile
 
 from omf_matching_probe import UnsupportedOMF, read_object, resolve_ds_offsets
 from run_matching_c_batch import msc_listing_function
+from run_watcom16_abi import compiler_flags_for
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -173,10 +174,13 @@ def main():
             unit = case["source_unit"]
             if unit != next(declared for declared in declared_units if declared["id"] == unit["id"]):
                 raise ValueError("Watcom receipt source unit differs from manifest")
+            expected_command = ["wcc"] + compiler_flags_for(unit) + ["-fo=" + case["case"] + ".obj", case["case"] + ".c"]
+            if case["compiler_command"] != expected_command:
+                raise ValueError("Watcom receipt compiler profile differs")
             if sha(ROOT / unit["source"]) != case["source_sha256"]:
                 raise ValueError("Watcom source freshness differs")
             prior = next(result for result in repeated["results"] if result["case"] == case["case"])
-            for key in ("source_sha256", "object_sha256", "code_hex", "applied_fixups", "original_compare"):
+            for key in ("source_sha256", "object_sha256", "code_hex", "applied_fixups", "original_compare", "compiler_command"):
                 if case.get(key) != prior.get(key):
                     raise ValueError("Watcom independent source rebuild differs: " + key)
             code = (args.watcom_receipt.parent / (case["case"] + "-code.bin")).read_bytes()
@@ -213,7 +217,7 @@ def main():
     index = (ROOT / "docs/25-match-progress.md").read_text()
     if "ida_matching_probe.py" not in index:
         raise ValueError("Known indexed positive control missing")
-    for name in ("ida_matching_inventory.py", "run_matching_c_batch.py", "matching_goal_contract.json", "matching_c_manifest.json", "matching_goal_audit.py", "sub_5d49.c", "sub_9834.c", "watcom_matching_manifest.json", "sub_14ae6.c", "sub_32a3_watcom.c", "sub_6fcf_watcom.c", "verify_watcom_signed_fixup.py"):
+    for name in ("ida_matching_inventory.py", "run_matching_c_batch.py", "matching_goal_contract.json", "matching_c_manifest.json", "matching_goal_audit.py", "sub_5d49.c", "sub_9834.c", "sub_37f9.c", "watcom_matching_manifest.json", "sub_14ae6.c", "sub_32a3_watcom.c", "sub_6fcf_watcom.c", "verify_watcom_signed_fixup.py"):
         if name not in index:
             raise ValueError("New file lacks a documentation entry: " + name)
     result = {"schema_version": 1, "input": contract["input"], "producer_sha256": sha(Path(__file__)),

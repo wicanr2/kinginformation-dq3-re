@@ -2450,3 +2450,38 @@ SDK7789、主程式21及RNG46的unique已知source bytes為7856，只屬局部�
 primary-table-source-publish-r1核對完整來源／OBJ／code hash、兩份重編、來源索引與連結、
 UID/GID及五C33 bytes。研究root-owned與Markdown目錄均0，git diff --check通過。
 本輪一次性容器全部清除，其他專案container保持；沒有新image或發行包。
+
+## 2026-10-09：主程式物品視窗記錄 writer 的48-byte C
+
+上一輪a4749bf新增14-byte角色指標查詢並已推送，屬實際進展。本輪沿主程式C，
+路由仍命中compiler-runtime-helper-triage，保留原版compiler unknown，不改既有產品或驗收標準。
+全部分析／compiler／IDA在bounded UID1000 Docker；原EXE及正式DB唯讀，副本放ignored work。
+
+sub_137F9為完整單一chunk48 bytes，SI記錄pointer、BX word入參。最初C prototype42 bytes，
+缺AX/CX保存，ADD AX,2被size最佳化成兩次INC；未計source match，也未拿等價結果冒充exact。
+官方Watcom pragma語法與實際callee對照顯示default convention影響保存集合：watcall保存CX，
+void指定非AX value register後亦保存AX；速度最佳化發ADD，停用重排保留原始讀寫順序。
+新的純C prototype完整48 bytes匹配，沒有內嵌組語、code array、raw bytes或opcode patch。
+
+fresh IDA9.4保留兩個近caller、原始chunk／bytes／operand／typed xref。兩caller均寫DS:072F=43、
+0731=46、0733=BX，SI取DS:3FD8後呼叫；caller auto owner缺失保持，不改函式邊界。
+177FE呼叫視窗consumer1F590，再由1FC57讀幾何。新1F690取座標與row count判定選人，
+七個writer word均有原始consumer。用途與docs/188正常物品窗口證據一致，原始struct未知。
+靜態consumer閉合不新增正常玩家路徑或畫面V3聲明。
+
+新增sub_37f9.c及manifest compile_profile。runner固定兩組明列旗標，舊profile不改，
+新watcall-speed-no-reorder使用-ot/-of/-ecw，其餘DOS／small／8086旗標維持。
+未知profile拒絕，audit核對實際compiler_command及兩份獨立收據的command一致性。
+正式watcom-source-r14／r15兩個新容器重編，source／完整OBJ／48-byte module／三FIXUPP相同；
+其餘既有source不變，fill17與search24仍DIFF。goal-audit-r13核對六C81 bytes，主程式69／SDK12。
+兩種command竄改及未審profile三負例拒絕；六完整Goal gate仍未證實，Goal active。
+
+使用者要求正確原碼放GitHub，本輪C／profile／重建工具與證據索引一起提交。
+SDK7789＋主程式69＋RNG46=7904已知unique source bytes，僅局部來源統計，不報全程式完成比例。
+原binary、vendor工具、OBJ、code.bin、DB與十三項scratch不提交，Go／pack、Issue #4保持。
+下一步帶呼叫的主程式C與near／far symbol及frame定位，再回完整data／MZ／layout。
+
+primary-record-source-publish-r1另核對新source hash、兩份48-byte完整module、三profile負例、
+README／build連結與新增Python語法；既有來源的完整OBJ／code／fixup及compiler command均未變。
+研究root-owned與Markdown目錄均0，UID/GID1000及git diff --check通過。
+本輪一次性容器全部清除，其他專案container保持；沒有新image或發行包。
