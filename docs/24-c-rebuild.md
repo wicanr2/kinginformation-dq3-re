@@ -1,7 +1,7 @@
 # C 重編(matching decompilation):splice 框架與 byte-match 覆蓋率
 
 > 2026-10-08追加勘誤：使用者已指定完整matching Goal，採主程式C精確匹配、已確認
-> 底層可用ASM及整檔由原碼乾淨重建。最新C函式本體3個／15 bytes，含兩個次級word reader；
+> 底層可用ASM及整檔由原碼乾淨重建。最新C來源4個／19 bytes，含兩個次級word reader及AX入參word store；
 > 原版compiler與module用途仍unknown，首個C的post-ENDP module padding尚未配置。
 > 本篇的280個分母、最大段選函式與以db保留剩餘程式碼的方式是歷史框架，不足以證明完整Goal。
 > 新IDA清單828函式包含22個非terminal末端，另有4455個函式外指令；source-unit須另審。

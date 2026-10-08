@@ -3,15 +3,16 @@
 > 2026-10-08現行Goal：使用者指定「完成 dq3 matching decompliation」，並確認主程式C
 > 精確匹配，ASM僅用於已確認底層常式。最終需由原碼乾淨重建全EXE且逐byte一致，
 > raw code／db拼接不算完成。完整matching是獨立Goal，不改正式Go／pack或Issue #4暫停。
-> 目前三個C完整PROC15 bytes已匹配，含兩個次級segment word readers，module／DS用途unknown。
+> 目前四個C來源19 bytes已匹配，含兩個次級segment word readers及AX入參word store，module／DS用途unknown。
 > 首個C的module末端1-byte NOP配置未解；兩份重編相同，六listing負例拒絕。新IDA導航為828
 > 函式／29979 code heads／81854 code bytes；22個非terminal末端、4455個函式外指令
 > 及主程式／底層source-unit分類仍未閉合。22候選已分17跨界flow、2 DOS service末端及3 strong
 > suppressed-call；三個舊entry在指令內且無xref，舊入口排除。首個C條件式table index47已核對。
 > 17 flow已建立CFG候選／991 heads／31 shared，第一組48bytes保留四入口；source-unit仍未批准。
 > Watcom16 revision由完整官方hash建置，instruction-free BX／SI／AX控制可重編；AX store4bytes
-> 實驗exact未入正式coverage，RNG三C候選仍不匹配，原版compilerunknown。
-> 完整Goal六gate仍未證實，active。下一步用已驗register ABI還原多entry主程式C與layout。
+> 已入正式來源清單且兩次重編一致。主程式填表17／搜尋24bytes仍不匹配；RNG候選亦DIFF。
+> WLINK synthetic控制核對symbol-2，六重定位負例拒絕；原版compilerunknown。
+> 完整Goal六gate仍未證實，active。下一步追LOOP／LODSB及多entry的C codegen與layout。
 > 唯一目前狀態在CONTEXT，
 > 證據與重生入口[docs/25](25-match-progress.md)，驗收契約tools/matching_goal_contract.json。
 

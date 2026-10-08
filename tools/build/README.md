@@ -23,6 +23,8 @@
 | [邊界分級](../review_matching_boundaries.py) | typed flow／實際DOS service writer與SI取址consumer分級，保留DS條件、未知DI／field與未批准source-unit範圍 |
 | [多入口CFG](../matching_cfg_candidates.py) | 沿原始typed edges追到return／未解successor，保留外部entry與共用code，不自動併成C source unit |
 | [Watcom16 register控制](../run_watcom16_abi.py) | 六個instruction-free C pragma控制；固定source path及-zld確保真實OBJ重現。實驗exact不自動加入正式coverage |
+| [Watcom原始範圍來源](../watcom_matching_manifest.json) | 配合run_watcom16_abi.py的candidate模式，核對完整IDA範圍、source hash及原始bytes；AX store exact，主程式fill／search仍DIFF |
+| [WCC有號位移控制](../verify_watcom_signed_fixup.py) | vendor WLINK連結實際C object與synthetic DATA，保留map的frame bias；六無效位移拒絕，不當原版layout |
 
 ## 映像與輸入
 
@@ -57,6 +59,15 @@ timeout 120s docker build --network none -f tools/build/Dockerfile.watcom16 \
 `python3 /repo/tools/run_watcom16_abi.py --output /out/watcom16-abi-new`。
 repository唯讀掛到/repo，既有matching輸出掛到/out；每次output須是新名稱。
 此image補16-bit支援，保留其他專案既有wcc386 image，沒有全域清理。
+
+正式來源候選以同一runner加上
+`--candidate-manifest /repo/tools/watcom_matching_manifest.json`
+與 `--ida-inventory /repo/work/matching-decomp-20261008-r1/full-goal-r1/inventory-ida-r2.json`。
+每次重編使用全新容器，固定compile目錄不供同容器連續啟動兩次。
+有號位移控制執行 `python3 /repo/tools/verify_watcom_signed_fixup.py`
+加 `--candidate-obj /out/<候選目錄>/sub_132a3.obj --output /out/<新控制目錄>`。
+總審核加 `--watcom-receipt` 與 `--repeat-watcom-receipt`；RESOLVED只表示可重定位，
+僅原始全範圍byte_exact才能計入C覆蓋。入口與現況見docs/25。
 
 從專案根目錄建置MSC映像，stdin context不含原版或compiler：
 

@@ -29,6 +29,8 @@ def main():
     parser.add_argument("--c-receipt", type=Path, required=True)
     parser.add_argument("--repeat-c-receipt", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--watcom-receipt", type=Path)
+    parser.add_argument("--repeat-watcom-receipt", type=Path)
     args = parser.parse_args()
     if os.getuid() == 0:
         raise ValueError("Run as host UID/GID")
@@ -152,6 +154,56 @@ def main():
                     raise ValueError("Malformed compiler listing accepted")
     if exact_bytes != receipt["C_exact_bytes"] or len(exact_units) != receipt["C_exact_functions"]:
         raise ValueError("C source-unit coverage totals differ")
+    watcom_candidates = []
+    if args.watcom_receipt is not None:
+        if args.repeat_watcom_receipt is None:
+            raise ValueError("Watcom source units require an independent rebuild")
+        native = json.loads(args.watcom_receipt.read_text())
+        repeated = json.loads(args.repeat_watcom_receipt.read_text())
+        native_manifest = ROOT / "tools/watcom_matching_manifest.json"
+        declared_units = json.loads(native_manifest.read_text())["cases"]
+        for record in (native, repeated):
+            if record["candidate_manifest_sha256"] != sha(native_manifest) or record["IDA_inventory_sha256"] != sha(args.inventory):
+                raise ValueError("Watcom candidate manifest/inventory freshness differs")
+            if record["producer_sha256"] != sha(ROOT / "tools/run_watcom16_abi.py") or record["OMF_parser_sha256"] != sha(ROOT / "tools/omf_matching_probe.py"):
+                raise ValueError("Watcom source producer/parser freshness differs")
+            if sorted(result["source_unit"]["id"] for result in record["results"]) != sorted(unit["id"] for unit in declared_units):
+                raise ValueError("Watcom source-unit membership differs")
+        for case in native["results"]:
+            unit = case["source_unit"]
+            if unit != next(declared for declared in declared_units if declared["id"] == unit["id"]):
+                raise ValueError("Watcom receipt source unit differs from manifest")
+            if sha(ROOT / unit["source"]) != case["source_sha256"]:
+                raise ValueError("Watcom source freshness differs")
+            prior = next(result for result in repeated["results"] if result["case"] == case["case"])
+            for key in ("source_sha256", "object_sha256", "code_hex", "applied_fixups", "original_compare"):
+                if case.get(key) != prior.get(key):
+                    raise ValueError("Watcom independent source rebuild differs: " + key)
+            code = (args.watcom_receipt.parent / (case["case"] + "-code.bin")).read_bytes()
+            start = int(unit["file_start"], 16)
+            original = raw[start:start + unit["size"]]
+            exact = code == original
+            if code.hex() != case["code_hex"] or exact != case["original_compare"]["byte_exact"]:
+                raise ValueError("Watcom original comparison differs")
+            obj_path = args.watcom_receipt.parent / (case["case"] + ".obj")
+            if sha(obj_path) != case["object_sha256"]:
+                raise ValueError("Watcom source object differs")
+            obj = read_object(obj_path)
+            resolved, fixes = resolve_ds_offsets(obj, unit["public_symbol"], {name: int(value, 16) for name, value in unit["external_DS_offsets"].items()},
+                                                signed_addends=unit.get("encoded_addend_mode") == "signed16")
+            if resolved != code or fixes != case["applied_fixups"]:
+                raise ValueError("Watcom actual relocation differs")
+            function = function_ranges[unit["ida_linear_start"]]
+            if b"".join(bytes.fromhex(inventory["instructions"][address]["file_bytes"]) for address in function["instructions"]) != original:
+                raise ValueError("Watcom original source-unit boundary differs")
+            watcom_candidates.append({"original_name": unit["id"], "source": unit["source"], "compiled_bytes": len(code), "original_bytes": len(original), "exact": exact})
+            if exact:
+                if any(existing["ida_linear_start"] == unit["ida_linear_start"] for existing in exact_units):
+                    raise ValueError("C coverage double-counted across compilers")
+                exact_bytes += len(code)
+                exact_units.append({"original_name": unit["id"], "ida_linear_start": unit["ida_linear_start"], "source": unit["source"],
+                                    "bytes": len(code), "inference_level": "confirmed complete Watcom C module byte match; product/type meaning scoped",
+                                    "module_padding_placement": "not present"})
     # Manual gates stay unproven. A passing local evidence audit cannot close
     # the whole Goal or replace a missing source-unit/layout/build contract.
     gates = [{"id": gate["id"], "completion_proven": False, "verify_kind": gate["verify"]["kind"],
@@ -161,17 +213,20 @@ def main():
     index = (ROOT / "docs/25-match-progress.md").read_text()
     if "ida_matching_probe.py" not in index:
         raise ValueError("Known indexed positive control missing")
-    for name in ("ida_matching_inventory.py", "run_matching_c_batch.py", "matching_goal_contract.json", "matching_c_manifest.json", "matching_goal_audit.py", "sub_5d49.c"):
+    for name in ("ida_matching_inventory.py", "run_matching_c_batch.py", "matching_goal_contract.json", "matching_c_manifest.json", "matching_goal_audit.py", "sub_5d49.c", "watcom_matching_manifest.json", "sub_14ae6.c", "sub_32a3_watcom.c", "sub_6fcf_watcom.c", "verify_watcom_signed_fixup.py"):
         if name not in index:
             raise ValueError("New file lacks a documentation entry: " + name)
     result = {"schema_version": 1, "input": contract["input"], "producer_sha256": sha(Path(__file__)),
               "contract_sha256": sha(contract_path), "IDA_inventory_sha256": sha(args.inventory),
               "C_receipt_sha256": sha(args.c_receipt), "repeat_C_receipt_sha256": sha(args.repeat_c_receipt),
+              "Watcom_receipt_sha256": sha(args.watcom_receipt) if args.watcom_receipt else None,
+              "repeat_Watcom_receipt_sha256": sha(args.repeat_watcom_receipt) if args.repeat_watcom_receipt else None,
               "automatic_IDA_functions": len(inventory["functions"]), "verified_instruction_heads": len(inventory["instructions"]),
               "verified_code_bytes": len(unique_bytes), "code_outside_functions": len(inventory["code_outside_functions"]),
               "automatic_nonterminal_function_ends": nonterminal,
               "legacy_comparison": inventory["legacy_comparison"], "exact_C_source_units": exact_units,
               "exact_C_bytes": exact_bytes, "independent_C_rebuild_equal": True, "listing_parser_negative_cases": parser_negatives,
+              "watcom_source_candidates": watcom_candidates,
               "completion_gates": gates, "whole_goal_complete": False,
               "scope": "Authoritative current evidence only; whole source recovery, classifications and final layout remain incomplete"}
     with args.output.open("x", encoding="utf-8") as stream:

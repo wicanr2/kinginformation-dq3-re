@@ -2,7 +2,7 @@
 
 > 2026-10-08現行Goal：「完成 dq3 matching decompliation」。使用者已選主程式C精確匹配，
 > ASM僅用已確認底層，全EXE由原碼乾淨重建並逐byte一致，raw code／db拼接不算完成。
-> 三個C完整PROC15 bytes匹配，含兩個次級segment word readers；module／DS用途unknown。
+> 四個C來源19 bytes匹配，含兩個次級segment word readers及AX入參word store；module／DS用途unknown。
 > 首個C sub_15D49的compiler ENDP後1-byte NOP配置未解，兩份OBJ／code／listing相同，六負例拒絕。
 > IDA9.4新導航828函式／29979 code heads／81854 code bytes，無未映射或重疊code bytes；
 > 22候選已分17實際跨界flow、2 DOS service末端及3 strong suppressed-call；三個舊entry指令內且無xref。
@@ -11,8 +11,10 @@
 > 現況CONTEXT、計畫docs/74、證據docs/25與tools/matching_goal_contract.json；下一步先審
 > 已建立17 CFG候選／991 heads／31 shared，第一組48bytes保留四入口，source-unit未批准。
 > 固定官方archive與wcc16 revision已實測instruction-free BX／SI／AX ABI；六控制重編OBJ／code相同。
-> AX store4 bytes實驗exact但未加正式coverage，RNG24／51／40bytes仍DIFF，原版compilerunknown。
-> 下一步用已驗register ABI還原多entry主程式C，保留entry／stack／side effects。Go／pack及Issue #4保持。
+> AX store4 bytes已納入正式來源清單與兩次重編；主程式填表17／搜尋24bytes仍DIFF。
+> WLINK synthetic控制證實FFFE為symbol-2，六重定位負例拒絕，未知DS layout不補猜。
+> 最新跨compiler審核goal-audit-r6；下一步追LOOP／LODSB及多entry codegen。原版compilerunknown。
+> 保留entry／stack／side effects；Go／pack及Issue #4保持。
 
 以下保存完整Goal啟動前的局部研究，現況以CONTEXT唯一狀態表及上方Goal為準。
 

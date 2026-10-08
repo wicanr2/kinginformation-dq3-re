@@ -6,7 +6,8 @@
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
-> 現行C本體3個／15 bytes，另兩個是次級segment word reader，模組用途與DS脈絡unknown。
+> 現行C本體4個／19 bytes，含兩個次級segment word reader及一個AX入參word store。
+> 次級segment的模組用途與DS脈絡unknown。主程式填表與搜尋C候選仍不匹配。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -36,8 +37,61 @@
 > 原版compiler仍unknown，不以新工具能編C就反推原版工具鏈。
 > [`tools/run_watcom16_abi.py`](../tools/run_watcom16_abi.py)以官方instruction-free ABI pragma
 > 測BX／SI入參與AX存word、RNG core及BX／DX:AX控制；raw OMF／未知fixup保留並拒絕。
+> Watcom source candidates由[`tools/watcom_matching_manifest.json`](../tools/watcom_matching_manifest.json)
+> 定位，來源為[`sub_14ae6.c`](../re/match/sub_14ae6.c)、
+> [`sub_32a3_watcom.c`](../re/match/sub_32a3_watcom.c)與
+> [`sub_6fcf_watcom.c`](../re/match/sub_6fcf_watcom.c)。原始register side effects不由C簽名省略。
+> OMF的signed16 implicit addend僅由明示producer contract啟用；保留raw word與signed值，
+> 最終offset仍需0..FFFF。既有unsigned模式與未知placement／frame拒絕保持，不用自動wrap猜語意。
+> [`tools/verify_watcom_signed_fixup.py`](../tools/verify_watcom_signed_fixup.py)以vendor WLINK與
+> synthetic DATA正對照核對symbol-minus-two，並拒絕unsigned overflow、signed underflow、
+> 越界placement、缺placement與未知frame。此控制不提供原版EXE的module layout。
+
+## 暫存器 C 來源與重定位核對
+
+本節為最新結果；下方各節保留先前檢查點。輸入為 `assets_raw/DQ3.EXE`，115282 bytes，
+SHA-256 `5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA9.4 linear基準為0x10000，file=`linear-0x10000+0x1370`。
+
+| 原始範圍 | 可讀 C 結果 | 證據等級與界線 |
+|---|---|---|
+| sub_24AE6，IDA linear24AE6..24AEA，logical14AE6..14AEA，file15E56..15E5A | AX寫DS-relative word0032後near return，整個4-byte module為`A33200C3`，精確匹配 | confirmed scoped instruction及compiler bytes；DS、欄位用途、原始型別與module分類unknown |
+| sub_132A3，IDA linear132A3..132B4，logical32A3..32B4，file4613..4624 | stride-two填13 bytes；C亦17 bytes，但先INC BX兩次，再以symbol-2寫入，以DEC／JNE計數 | DIFF。原版先寫入、ADD BX,2，再LOOP；指令順序、encoding及flags不同，不計入coverage |
+| sub_16FCF，IDA linear16FCF..16FDE，logical6FCF..6FDE，file833F..834E | 六byte搜尋C為24 bytes，原版15 bytes | DIFF。C保存DX並重新分配target／index／counter；原始AH、AL、BL、SI、CX效果尚未完整匹配 |
+
+pragma僅宣告暫存器介面，沒有inline instruction、`db`或原始code array。
+來源清單核對full IDA inventory、原始bytes及完整function chunk；其C型別只代表已驗16-bit
+compiler表示，不推定原版語言或產品語意。填表／搜尋來源保持研究候選，不作已完成source unit。
+
+WCC在填表object的F5/T2 fixup留下raw word `FFFE`。wdis列為symbol-2。
+unsigned parser依舊拒絕overflow；只對明示producer contract啟用signed16，不自動猜sign或wrap。
+正對照以vendor WLINK連結實際C object與synthetic DATA：PUBDEF為265D，vendor map中的frame
+offset為265F，實際operand為265D，證實265F-2。此frame bias不是原版DS layout證據。
+指定原版DS offset265D時，候選operand為265B；與vendor fixture的配置分開記錄。
+六負例包含unsigned overflow、signed underflow、缺placement、負placement、越界但結果仍在
+16-bit範圍的placement及未知frame，全部拒絕。TIS格式來源為
+[OMF1.1規格](https://openwatcom.org/ftp/devel/docs/omf.pdf)；signed解釋限於這次WCC／WLINK控制。
+
+兩份獨立MSC重編 `c-batch-r13`／`r14` 及兩個全新容器的Watcom重編
+`watcom-source-r7`／`r9` 核對實際OBJ、code與fixup一致。
+同容器第二次使用固定compile目錄的 `watcom-source-r8` 失敗收據保留；新容器重跑不改來源或flags。
+正式C覆蓋為MSC三個15 bytes加Watcom一個4 bytes，共四個19 bytes。
+第一個MSC module的ENDP後NOP配置仍未解，六個完整Goal gates均未完成。
+
+本機收據在 `work/matching-decomp-20261008-r1/full-goal-r1/`：
+
+- `signed-reloc-r3/receipt.json`及vendor MZ／map／log：producer-scoped正反控制。
+- `watcom-source-r7/receipt.json`、`watcom-source-r9/receipt.json`：三個完整C來源的兩次重編。
+- `c-batch-r13/receipt.json`、`c-batch-r14/receipt.json`：parser更新後MSC重編。
+- `goal-audit-r6.json`：兩套compiler的實際bytes、來源與重定位總核對。
+- `c-source-verification-r1.json`：偽造exact、過期repeat manifest與重複unit三負例、語法與UID核對。
+
+下一步追主程式LOOP／LODSB及多入口的compiler codegen與source-unit歸屬。
+原版compiler保持unknown；不以數學等價或register宣告代替精確原碼重建。
 
 ## 多入口CFG與register-ABI工具鏈續行
+
+本節保存前一檢查點，最新結果見上節。
 
 17個已審跨界entry以IDA原始flow／jump追到991個唯一指令位置，31位置由多entry共用。
 每個候選保留code／data外部xref、call dependency、原始owner與實際return，不補造被抑制

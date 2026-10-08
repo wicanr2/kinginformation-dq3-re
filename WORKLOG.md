@@ -2185,3 +2185,31 @@ research根root-owned／Markdown目錄0，payload與輸出UID/GID1000。新Watco
 Watcom16最終receipt SHA256
 `c5dd97f7e7bf0c0f6ac73074e11f7e185cf0bfc170598f473b6b35758f3dca4d`，
 本機驗證收據為full-goal-r1/watcom16-verification-r1.json，CFG收據為cfg-candidates-r1.json。
+
+## 2026-10-08：暫存器 C 來源與 WCC 位移控制
+
+沿用retro remake／IDA9.4知識路由與完整matching契約，將AX入參word store移入明確C來源
+及Watcom manifest。原始sub_24AE6的IDA linear24AE6..24AEA、logical14AE6..14AEA、
+file15E56..15E5A保持；compiler整個module為A33200C3，沒有inline machine instruction。
+DS／module、欄位用途及原版型別仍unknown。正式C由三個15 bytes增為四個19 bytes。
+
+主程式sub_132A3填表及sub_16FCF搜尋也有完整來源與原始範圍清單，仍為DIFF。
+填表C17 bytes先INC BX再以symbol-2寫，DEC／JNE與原版ADD／LOOP不同；搜尋C24 bytes
+重新分配AH／BL／CX並保存DX，未匹配原版15-byte LODSB loop與隱含register效果。
+不把RESOLVED、數學等價或pragma介面當作原碼匹配，不新增正式C覆蓋。
+
+實際WCC OMF raw FFFE由wdis的symbol-2及vendor WLINK synthetic DATA獨立核對。
+vendor map frame265F減2產生operand265D；指定原版DS265D則候選operand265B。
+兩種配置分開記錄，不由synthetic frame bias推定原版layout。新控制工具保留raw addend與
+producer-scoped signed16，預設unsigned及未知frame拒絕維持。六無效位移全部拒絕，
+包含越界placement但相加後落回16-bit範圍的反例。
+
+兩次MSC c-batch-r13／r14與全新容器的Watcom watcom-source-r7／r9重編OBJ、code及fixup
+一致。r8在同容器固定compile目錄已存在時失敗，保留收據後以新容器重跑；未改來源或flags。
+總審核goal-audit-r6核對四個19 bytes、完整IDA輸入、source與producer hash及實際重定位，
+六完整Goal gates保持未證實。偽造exact、過期repeat manifest與重複unit三負例皆拒絕；
+MSC六listing負例亦保持。具體範圍、工具入口與收據索引在docs/25及tools/build/README。
+
+原版115282 bytes與SHA2565178fdc8保持，正式Go／pack、Issue #4暫停及私有資產保持。
+本批只提交C來源、研究工具、清單與現況文件。研究輸出root-owned及Markdown目錄均0，
+一次性容器已清除，沒有新image或發行包。下一步追主程式LOOP／LODSB與多entry的C codegen。

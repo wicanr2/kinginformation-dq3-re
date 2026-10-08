@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "input_path": "assets_raw/DQ3.EXE",
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "compiler": "dq3-watcom16:2.0-20261001-r1",
+  "cases": [
+    {
+      "id": "sub_24AE6",
+      "source": "re/match/sub_14ae6.c",
+      "public_symbol": "_sub_14ae6",
+      "ida_linear_start": "0x24ae6",
+      "logical_start": "0x14ae6",
+      "file_start": "0x15e56",
+      "size": 4,
+      "external_DS_offsets": {"_unknown_DS_0032": "0x0032"},
+      "scope": "Secondary segment AX-input word store; DS/module meaning unknown"
+    },
+    {
+      "id": "sub_132A3",
+      "source": "re/match/sub_32a3_watcom.c",
+      "public_symbol": "_sub_32a3",
+      "ida_linear_start": "0x132a3",
+      "logical_start": "0x32a3",
+      "file_start": "0x4613",
+      "size": 17,
+      "external_DS_offsets": {"_unknown_DS_265d": "0x265d"},
+      "encoded_addend_mode": "signed16",
+      "encoded_addend_reference": "Vendor wdis shows symbol-2; synthetic WLINK fixture independently resolves raw FFFE as symbol frame offset minus 2",
+      "scope": "Primary-code stride-two byte fill; implicit BX/CX outputs require exact code"
+    },
+    {
+      "id": "sub_16FCF",
+      "source": "re/match/sub_6fcf_watcom.c",
+      "public_symbol": "_sub_6fcf",
+      "ida_linear_start": "0x16fcf",
+      "logical_start": "0x6fcf",
+      "file_start": "0x833f",
+      "size": 15,
+      "external_DS_offsets": {},
+      "scope": "Primary-code six-byte search; AH/SI inputs and implicit AL/SI/CX effects require exact code"
+    }
+  ]
+}

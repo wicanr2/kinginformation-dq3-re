@@ -196,7 +196,7 @@ def select_function(obj, symbol):
     return bytes(segment["bytes"]), selected
 
 
-def resolve_ds_offsets(obj, symbol, placements):
+def resolve_ds_offsets(obj, symbol, placements, *, signed_addends=False):
     """Apply actual FIXUPP references using independently supplied DS-relative offsets."""
     code, selected = select_function(obj, symbol)
     linked = bytearray(code)
@@ -211,15 +211,21 @@ def resolve_ds_offsets(obj, symbol, placements):
         name = obj["externals"][fixup["target"]["datum"]]["name"]
         if name not in placements:
             raise UnsupportedOMF("Missing explicit symbol placement: " + name)
+        if not 0 <= placements[name] <= 65535:
+            raise ValueError("Explicit symbol placement is not a 16-bit offset")
         offset = fixup["offset"]
         if offset + 2 > len(linked) or occupied.intersection((offset, offset + 1)):
             raise ValueError("FIXUP overlaps or crosses selected function")
         occupied.update((offset, offset + 1))
         addend = struct.unpack_from("<H", linked, offset)[0]
-        value = placements[name] + fixup["displacement"] + addend
+        arithmetic_addend = addend - 65536 if signed_addends and addend & 0x8000 else addend
+        value = placements[name] + fixup["displacement"] + arithmetic_addend
         if not 0 <= value <= 65535:
             raise ValueError("Explicit symbol placement overflows a 16-bit offset")
         struct.pack_into("<H", linked, offset, value)
         resolved.append({**fixup, "symbol": name, "original_addend": addend,
                          "supplied_ds_offset": placements[name], "resolved_operand": value})
+        if signed_addends:
+            resolved[-1]["addend_interpretation"] = "explicit signed16 producer contract"
+            resolved[-1]["arithmetic_addend"] = arithmetic_addend
     return bytes(linked), resolved
