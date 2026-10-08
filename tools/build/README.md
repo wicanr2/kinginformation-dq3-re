@@ -28,6 +28,7 @@
 | [WCC呼叫重定位](../omf_call_fixups.py)與[vendor控制](../verify_watcom_call_fixups.py) | 明列DS／near／far symbol及MZ-relative地址，實測forward／backward與16:16 CALL／MZ segment relocation；合成fixture不計來源覆蓋 |
 | [IDA frame映射](../ida_matching_frames.py) | 從原EXE fresh database匯出selector base、segment extents及原far CALL／MZ／typed xref；不由靜態frame推定runtime CS／DS或批准source-unit |
 | [MZ metadata來源](../../re/match/mz_layout.json)與[重建](../verify_mz_layout_source.py) | typed fields及1232位置生成4976-byte header／2-byte file-end；原EXE只比較，code／body不生成 |
+| [顯示底層region來源](../../re/match/video_bios_code.asm)與[重建](../verify_video_source.py) | 由semantic ASM／一個typed alignment byte重建402-byte region；對照fresh [IDA exporter](../ida_matching_video.py)，不宣稱original object／完整runtime |
 | [Watcom主程式codegen](../probe_watcom_primary_codegen.py) | 填表／搜尋126組C與loop／reorder flags，完整artifact保留；long-shift正對照實際發LOOP，原版候選全DIFF |
 | [TC2.01主程式codegen](../probe_turboc_primary_codegen.py) | 固定本機archive／compiler hash，用既有DOSBox比較八組C；四DIFF／四group-frame REFUSED。生成C mtime固定以重現整個OBJ |
 | [SBCM原始module](../probe_sbcm_modules.py) | 固定原版LIB hash，26個OMF metadata／LIDATA parser view與原始xref導航；排除fixup的候選不算match |

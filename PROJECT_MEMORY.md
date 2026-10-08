@@ -16,11 +16,13 @@
 > 固定官方archive與wcc16 revision已實測instruction-free BX／SI／AX ABI；六控制重編OBJ／code相同。
 > AX store4 bytes已納入正式來源清單與兩次重編；主程式填表17／搜尋24bytes仍DIFF。
 > WLINK synthetic控制證實FFFE為symbol-2，六重定位負例拒絕，未知DS layout不補猜。
-> 最新跨compiler審核goal-audit-r16。Watcom固定三種profile與實際command核對，未知profile拒絕。
+> 最新跨compiler審核goal-audit-r17。Watcom固定三種profile與實際command核對，未知profile拒絕。
 > 合成WLINK正反near與16:16 far CALL／MZ控制一致，15個不合法重定位拒絕；不計來源覆蓋。
 > fresh IDA frame ledger兩份同值：19 segment、1199 far CALL，original operand／MZ／typed xref／selector base一致。
 > typed MZ header4976及file-end2 bytes從source重建同值，12負例拒絕；declared115280與actual115282差異保留。
-> 已知unique source bytes12905僅局部byte-layout統計，完整EXE仍未完成。C仍八個104 bytes。
+> 低層video region209CE..20B60由semantic ASM／typed alignment重建完整402 bytes，兩份source／OBJ／MZ同值，11負例拒絕。
+> eligibility confirmed為BIOS／video-port／memory services；object identity／完整ABI／hardware runtime仍unknown。
+> 已知unique source bytes13307僅局部byte-layout統計，完整EXE仍未完成。C仍八個104 bytes。
 > counted-loop自訂symbolic compiler-stage prototype17 bytes匹配，未正式採用；使用者工具鏈分支待回答。
 > 先前主程式codegen134組控制為130 DIFF／4 REFUSED，不重跑。
 > Watcom long-shift C正對照有LOOP；兩套compiler完整OBJ重編相同，TC生成C mtime固定且不遮罩。

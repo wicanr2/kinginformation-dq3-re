@@ -88,6 +88,41 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 
 ## 呼叫重定位契約與控制
 
+[ida_matching_video.py](../tools/ida_matching_video.py)從原EXE fresh database匯出原seg005
+linear209CE..20B60的全部heads／typed xrefs／原functions與非code bytes。來源module名稱仍unknown；
+這是原始定位入口，低層資格與hardware用途另由原operands及公開契約審查，不改原名或邊界。
+
+## 顯示底層 region source spec：CONFORMED
+
+來源為[video_bios_code.asm](../re/match/video_bios_code.asm)與[typed alignment](../re/match/video_bios_data.json)，
+[verify_video_source.py](../tools/verify_video_source.py)從兩份來源組譯、真實link並核對完整range及written mask。
+
+原seg005 linear209CE..20B60、logical109CE..10B60、file11D3E..11ED0，共402 bytes。
+IDA selector base209C0、MZ frame109C，第一entry offset000E；segment extent不等於原object邊界。
+fresh IDA匯出209 heads／401 instruction bytes、16 auto functions及未入function的page1／single-DAC／RET entries。
+保留20B4A→20B0A的共享尾段，不刪20B4C的獨立RET。source以整個region覆蓋，不能逐function重複計數。
+
+低層資格為confirmed：INT10的mode／page／palette／DAC／refresh服務、VGA ports3CE／3C4／3C0、
+BIOS data area與incoming ES記憶體填寫；沒有遊戲規則或DS gameplay-state writer。
+DS:25B4、DS:25F1只是原始輸入offset，原field型別／purpose與完整caller ABIunknown，不改名。
+[DOSBox-X的INT10 implementation](https://github.com/joncampbell123/dosbox-x/blob/master/src/ints/int10.cpp)
+支持AX1012的BX／CX／ES:DX、AX1013的BL／BH及AH12／BL36的介面契約。
+名稱僅作附加語意；來源保留原raw operands及IDA定位。原物件／library身分unknown，不標Creative SDK。
+
+source recipe限語意instruction ASM與唯一alignment-u8初值。IDA20B5F／file11ECF為data、align、非unknown，
+原u8=0、沒有xref；僅批准保留byte-layout，padding用途與runtime使用unknown。
+code source拒絕DB／DW／DD／INCBIN／include／macro。生成data只准region+401，不跨instruction。
+DRAFT prototype的401 instruction bytes已完全匹配；READY後正式recipe以兩次source／OBJ／MZ及完整402比較閉合。
+不研究retrace wall-clock或hardware cycle timing，不由源碼相同宣稱完整畫面／硬體runtime parity。
+
+READY審查後，`video-source-build-r1`／`r2`兩個新容器從repo語意ASM／typed alignment生成完整402 bytes。
+source／generated ASM／完整OBJ／MZ及兩份receipt相同，actual CODE segment全written，沒有EXE code或objects進build。
+source SHA-256 `55aeec58447bb18b7bcf62be8c8e50f3c31966bde4cd952f0810eccce3125c3f`，
+OBJ SHA-256 `180960def7a557069d255c594a0b3605dd3952a545a1b40d3265d56a16b31961`。
+`video-source-negatives-r1.json`拒絕11個code-data/import／macro／未READY／alignment位置／初值／型別／region反例。
+scope為confirmed低層資格及byte-layout；original object identity、完整ABI及runtime畫面／時序仍unknown。
+新增402 unique source bytes，合計13307僅局部byte-layout統計；C104及未採用compiler prototype保持。
+
 MZ表頭及宣告長度之後的file-end來源為[mz_layout.json](../re/match/mz_layout.json)，
 [verify_mz_layout_source.py](../tools/verify_mz_layout_source.py)只由typed fields／relocation positions
 重建這兩個metadata區域。原版EXE只在生成後作比較，沒有生成code或loaded-image data。

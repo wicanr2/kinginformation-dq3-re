@@ -18,6 +18,7 @@
 | [ctvmem_code.asm](ctvmem_code.asm)、[encoding常數](ctvmem_constants.asm)與[typed data](ctvmem_data.json) | CTVMEM driver，linear22F60..2391D | 完整byte-layout，2493 bytes | literal6B06、11-byte unknown payload保持，原始semantics／hardware runtime未知 |
 | [cmfdrv_code.asm](cmfdrv_code.asm)、[encoding常數](cmfdrv_constants.asm)與[typed data](cmfdrv_data.json) | CMFDRV driver，linear23920..24DD0 | 完整byte-layout，5296 bytes | code與2406 data從來源重建相同；原始field semantics及完整runtime硬體parity未知 |
 | [mz_layout.json](mz_layout.json) | 原file0..1370及1C250..1C252 | typed MZ表頭4976 bytes與file-end2 bytes | 初值與1232位置保留；file-end用途與DOS實際讀入行為未知，沒有code／body資料 |
+| [video_bios_code.asm](video_bios_code.asm)與[typed alignment](video_bios_data.json) | seg005 region，linear209CE..20B60 | 完整402-byte region，401指令＋1 alignment | confirmed底層BIOS／video-port／memory服務；original object及完整ABI／hardware runtime unknown |
 
 其他C檔與rng_adapter.asm是研究候選。它們有DIFF、REFUSED或僅register/state等價的結果，
 不計精確匹配。原版OBJ、EXE、SDK、IDA database與生成封包不提交。

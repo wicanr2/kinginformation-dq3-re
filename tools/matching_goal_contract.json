@@ -27,7 +27,7 @@
     {
       "id": "low-level-ASM-evidence",
       "requirement": "Each ASM unit has independently confirmed low-level ownership, original identity and semantic instruction source",
-      "verify": {"kind": "manual", "note": "Existing 46 RNG ASM bytes remain local evidence with eligibility under review. Creative SDK ownership is identified; complete CTV/CMF byte-layout rebuilds 2493/5296 bytes from ASM/EQU/typed data. Full semantics/ABI and other source units remain incomplete; 12 SDK instruction bytes already covered by C"}
+      "verify": {"kind": "manual", "note": "Existing 46 RNG ASM bytes remain local evidence with eligibility under review. Creative SDK ownership is identified; CTV/CMF byte-layout rebuilds 2493/5296 bytes from ASM/EQU/typed data. The 402-byte video region has confirmed low-level BIOS/port/memory ownership and semantic ASM plus typed alignment; original object identity and full runtime ABI remain unknown. Other units/classifications remain incomplete; 12 SDK instruction bytes already covered by C"}
     },
     {
       "id": "data-and-layout",

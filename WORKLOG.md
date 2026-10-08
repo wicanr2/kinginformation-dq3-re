@@ -2561,3 +2561,35 @@ frame-and-mz-source-publish-r1核對兩份完整frame exports、MZ typed source�
 goal-audit-r16仍為八C104與六未完成gates；symbolic compiler prototype未採用、不計正式coverage。
 研究root-owned及Markdown目錄0；本輪一次性container清除，其他專案container保持。
 提交前git diff --check通過，source／metadata／重建script存GitHub，原EXE／DB／artifact不提交。
+
+## 2026-10-09：底層顯示region語意ASM來源
+
+上輪744cb2b的frame／MZ來源已推送，屬實際進展。自訂compiler階段仍待使用者回答，
+未採用prototype，不改C104。獨立處理已允許的底層服務，路由命中compiler/runtime分流。
+原binary與repo輸入唯讀，fresh IDA／組譯／link／比較均bounded UID1000 Docker。
+
+新ida_matching_video匯出原seg005 linear209CE..20B60全部209 heads／401指令bytes、16 auto functions，
+與未入function的page1／single-DAC／RET entry。20B4A共用20B0A尾段，所有entry及原names保留。
+原CS frame109C、entry offsetE；source region不是已確認original object邊界。MZ relocations0。
+唯一byte20B5F為IDA data／align、非unknown、value0、無xref，layout保存，不由缺xref稱永不使用。
+
+每個unit為BIOS INT10、VGA port I/O、BDA或incoming ES memory service，低層資格confirmed。
+DOSBox-X官方INT10 code作palette／DAC／page／refresh介面來源；原operand／register setup才是原版證據。
+DS25B4與25F1保留raw offset及unknown field，不替換成推測用途；沒有game-state writer或遊戲規則。
+不開retrace cycle／wall-clock研究，不稱完整原版顯示或timing parity。
+
+DRAFT semantic ASM prototype401 bytes完全match，Wasm方向編碼符合原instruction；沒有code byte arrays。
+先於docs/25審READY，再保存video_bios_code.asm／typed alignment JSON與verify_video_source。
+ASM禁止DB／DW／DD／INCBIN／import／macro；唯一DB0只由reviewed JSON生成在最後的non-code item。
+actual OMF code segment全written402，source／generated ASM／完整OBJ／MZ兩份同值，11非法source／layout負例拒絕。
+region spec轉CONFORMED，scope限低層資格與完整byte-layout，object identity／完整ABI／hardware runtime仍unknown。
+原始EXE只comparison，original objects不進build，不把產生的MZ當可正常啟動的完整driver／遊戲。
+
+已知unique source bytes12905＋402=13307，C仍8／104；完整Goal六gate未證實，active。
+按使用者要求保存正確source、typed data、tools與證據索引到GitHub；原EXE／DB／artifact不提交。
+正常Go／pack、Issue #4及十三scratch保持，沒有新image或發行包。
+
+video-source-publish-r1重核兩份source／generated ASM／OBJ／MZ、401＋1 range與11負例、
+fresh IDA input／producer hash、Python syntax、source索引／連結／UID/GID；研究root-owned及Markdown目錄0。
+goal-audit-r17保持八C104及六未完成gates。一次性容器清除，未動其他專案containers。
+提交前git diff --check通過，僅source／typed data／tools與證據記錄提交GitHub，原binary／DB／artifact不提交。

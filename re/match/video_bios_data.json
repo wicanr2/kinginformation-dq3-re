@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "phase": "READY",
+  "input_path": "assets_raw/DQ3.EXE",
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "ida_linear_start": "0x209ce",
+  "file_start": "0x11d3e",
+  "region_bytes": 402,
+  "original_object_identity": "unknown",
+  "alignment": {
+    "offset": 401,
+    "kind": "u8",
+    "value": 0,
+    "inference_level": "confirmed",
+    "scope": "Original initialized align item; purpose/runtime use unknown",
+    "original_ida_linear": "0x20b5f",
+    "original_file_offset": "0x11ecf"
+  },
+  "scope": "Full static region byte-layout only; no runtime/cycle parity"
+}
