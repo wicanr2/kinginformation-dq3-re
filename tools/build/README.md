@@ -13,6 +13,9 @@
 | [MSC 探針](../run_matching_probe.py) | 單次DOSBox批次編譯、真實OMF檢查、NASM組譯與拒絕案例；C／ASM／保留原始bytes分開計算 |
 | [OMF reader](../omf_matching_probe.py) | TIS OMF1.1的有限PUBDEF／SEGDEF／FIXUPP子集；未知placement、缺失段bytes及不支援的fixup拒絕，不設遮罩fallback |
 | [Inertia 探針](../run_inertia_matching_probe.py) | 先核對MZ base及原始code，再對明確函式限時生成C。保留tail validation，生成C不代表byte-match |
+| [RNG ABI 探針](../run_matching_rng_abi.py) | [Go局部probe](../dosgolem_matching_rng_abi.go)核對固定seed全集、暫存器、near return及memory delta；只讀dosgolem internal來源，不使用上游cmd/probe scratch |
+| [MSC ABI 控制](../run_msc_abi_controls.py) | 編譯已知16／32-bit回傳與fastcall候選，與原版BX／DX契約分開記錄；原版compiler不由此定案 |
+| [C／ASM adapter](../run_matching_rng_adapter.py) | [局部CPU探針](../dosgolem_matching_rng_adapter.go)與[轉接組語](../../re/match/rng_adapter.asm)核對固定輸入、暫存器／持久狀態及額外堆疊／旗標差異；數值通過不升格byte-match |
 
 ## 映像與輸入
 

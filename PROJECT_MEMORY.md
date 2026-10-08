@@ -5,7 +5,13 @@
 > 原版 hash5178fdc8 與正式 schema0.33.0/content0.1.106 保持；Issue #4 原暫停狀態保持。
 > 首批工具與實驗已完成：七C候選四DIFF／三REFUSED、C exact0，批次0.92秒；
 > 具語意ASM一函式16bytes exact，五負例拒絕。Inertia三案有中間C但全部語意驗證失敗。
-> 原版compiler與整體加速仍unknown，下一步限縮RNG／BX有界RNG的ABI與compiler辨識。
+> 續行已閉合局部RNG ABI：BX上限、DX餘數、AX商值，BX0不更新狀態；196692固定
+> 局部案例／每側約0.568秒通過。ASM兩函式46bytes exact、C exact0；33／49 caller窗口
+> 及五註記自動合併。候選MSC標準C使用stack／AX或DX:AX，不據此推原版compiler。
+> C／ASM adapter已以131152固定輸入通過register/state，四負例拒絕；C56bytes加轉接31bytes。
+> 65616次非零呼叫的完整scratch stack及raw flags不同，full memory未通過，C exact仍0。
+> 最終CPU0.711280秒／乾淨建置9.127850秒，獨立OBJ／code重編相同，來源與五註記收據核對通過。
+> 掛載compiler含C5.10標記，原版compiler與整體加速仍unknown；下一步限於既有NPC雙結果consumer。
 
 > 2026-10-06 正常新遊戲對拍至458。原版56ef662a、496鍵／992IRQ1／1184產物，唯讀NPC狀態來源b2fdf781全部前綴保持，seed1357一次，無注入／restore。四圖層轉向另有fe39794a局部受控收據，各案預先固定seed1e2c，明示狀態注入與CPU重入，不冒稱正常高圖層路線。
 > NPC自動移動已依原始視野、同圖層、逐格順序、RND閘門、商值轉向與地形低byte修正。1672原版入口返回、499完整掃描及四圖層常式通過；正常409／422／458、持久snapshot、十槽、F5／F6及下一步通過。458完整RGB仍差1751，NPC全局骰序與動畫時鐘未知，完整V3未通過。

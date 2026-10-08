@@ -1,0 +1,60 @@
+{
+  "input_path": "assets_raw/DQ3.EXE",
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "address_space": "IDA Pro 9.4 linear; file=linear-0xEC90; logical=linear-0x10000",
+  "review_reference": "docs/25-match-progress.md: RNG register ABI continuation",
+  "dynamic_evidence": {
+    "path": "work/matching-decomp-20261008-r1/rng-abi-r1/cpu-r3/receipt.json",
+    "sha256": "042238a26df44e313b98279ea96da1157bd106542d14602f6d6cdf165889e47d",
+    "tool": "dosgolem a9714ebd; selected internal source canonical hash 334a21511c2603ef606b889c960d17ff5099bad7e3b11ba67aa5ca703eddf2b0",
+    "scope": "196608 fixed exhaustive local calls plus 84 boundary calls on each side; explicit state injection and CPU reentry, no normal-player-path claim"
+  },
+  "annotations": [
+    {
+      "ida_linear": "0x1e6b9",
+      "file_offset": "0xfa29",
+      "bytes": "a15a0b",
+      "inference_level": "confirmed",
+      "semantic": "Local RNG core reads DS:0B5A; the seven-instruction routine adds 9018h modulo 16 bits, rotates left three times by one bit, stores and leaves the result in AX",
+      "consumer": "IDA linear0x1E6C5 store and0x1E6C8 near return; caller windows exported separately",
+      "scope": "Confirmed local ABI, not original C signature, compiler identity or campaign RNG order"
+    },
+    {
+      "ida_linear": "0x1e6c9",
+      "file_offset": "0xfa39",
+      "bytes": "83fb00",
+      "inference_level": "confirmed",
+      "semantic": "BX is the unsigned bound/divisor input; zero branches to DX=0 and near return without reading or advancing DS:0B5A",
+      "consumer": "IDA linear0x1E6CC/0x1E6CE/0x1E6D1; NPC callers0x1203D/0x1205F/0x1206E/0x120AA supply BX directly",
+      "scope": "Zero-bound branch checked for all65536 state-word inputs; direct entry, no normal-player-path claim"
+    },
+    {
+      "ida_linear": "0x1e6d1",
+      "file_offset": "0xfa41",
+      "bytes": "c3",
+      "inference_level": "confirmed",
+      "semantic": "BX=0 branch returns DX=0, preserves incoming AX and state word; near return consumes exactly the two-byte return address",
+      "consumer": "Caller CS:IP and SP measured in controlled dosgolem local receipt",
+      "scope": "Register/stack ABI only; no C function return-type inference"
+    },
+    {
+      "ida_linear": "0x1e6e4",
+      "file_offset": "0xfa54",
+      "bytes": "f7f3",
+      "inference_level": "confirmed",
+      "semantic": "Unsigned DIV BX leaves updated-state quotient in AX and remainder in DX; the preceding MOV DX,0 ensures the 16-bit state is the dividend",
+      "consumer": "IDA linear0x1E6E6 return; NPC0x12043/0x12074/0x120B0 consume DX,0x1206A consumes DL,0x12083 reads AL quotient",
+      "scope": "Nonzero branch checked with all65536 seeds for BX=10 plus boundary divisors; DIV arithmetic flags not assigned guessed hardware expectations"
+    },
+    {
+      "ida_linear": "0x1e6e6",
+      "file_offset": "0xfa56",
+      "bytes": "c3",
+      "inference_level": "confirmed",
+      "semantic": "Nonzero-bound routine preserves BX,CX,SI,DI,BP and segment registers, returns AX quotient/DX remainder, advances SP by two bytes; DS:0B5A is its only changed memory field",
+      "consumer": "Full original/source-assembled register arrays, high halves, segments and modified-byte observer checked in controlled local receipt",
+      "scope": "Local instruction ABI only; input state is explicit, no global randomness or timing parity claim"
+    }
+  ]
+}

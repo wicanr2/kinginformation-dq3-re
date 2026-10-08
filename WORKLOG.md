@@ -1978,3 +1978,82 @@ docs/17、docs/19、docs/135，不重寫歷史證據。
 以Git log及Issue最終回讀為準。所有--rm研究容器已清除，只保留MSC與Inertia r2現行映像；
 被取代r1已刪，所需IDA私有image保留，未動其他專案資源。使用者13項未追蹤資料與
 原版／database／OBJ／binary／中間C均不提交，沒有新發行包。
+
+### 2026-10-08 Issue #5續行：RNG寄存器ABI與46-byte source重編
+
+使用者再次授權開工，沿docs/25已呈現的RNG／BX有界RNG與compiler控制分支。
+正式Go／game-pack、schema0.33.0/content0.1.106及Issue #4暫停狀態保持。
+遠端主機gh auth首輪自動核准審查逾時未執行，按工具指示重試一次成功，沒有憑證阻塞。
+
+IDA9.4從唯讀5178fdc8原版建立一次性database，重生核心33及有界49個direct caller窗口。
+四NPC呼叫點直接MOV BX為4／4／20／10，consumer使用DX／DL與後續AL商值。
+確認核心16bytes與有界30bytes的全部原始指令；新增`sub_e6c9.asm`不含db，兩函式46bytes
+由NASM重編exact，全scaffold仍同hash，但其餘115236bytes原樣保留，C exact0。
+
+新增dosgolem局部Go probe與Docker-only runner，只複製上游internal非測試來源與go.mod，
+不使用dirty的cmd/probe/main.go，也沒有回寫上游。來源revision a9714ebd、selected source
+canonical hash334a21511c2603ef606b889c960d17ff5099bad7e3b11ba67aa5ca703eddf2b0；
+Go1.26.7，2GiB／2CPU，原版與來源唯讀，輸出UID/GID1000。
+
+最終cpu-r3固定控制輸入：核心、BX10、BX0各65536seed與84邊界，每側196692次局部呼叫。
+共2885416 CPU指令、0.568192秒；乾淨建置18.708801秒。原版與46-byte source scaffold
+完整暫存器／高半部／segments／IP／SP／狀態word及memory delta相同。
+核心已定義旗標另用opcode模型驗證，DIV未定義旗標沒有猜期望值。
+seed1357／BX10為AX02bf、DX0007、state1b7d，錯把AX當餘數的預定負對照拒絕。
+這是明示direct-entry、注入與CPU重入的局部證據，不取代正常玩家路徑或全局骰序。
+
+已知C控制樣本實測：candidate MSC從stack argument BEEF取值，16-bit返回AXBEEF／DX2468，
+32-bit返回DXBEEF／AX5f77，BX10保持。`_fastcall`候選報C2054／C2061，沒有OBJ。
+只限制這顆候選及本組flag，不由此排除原版語言或其他compiler／pragma。
+原先一般C介面無法單靠BP frame omission閉合BX／DX與商值consumer，相關勘誤在docs/25。
+
+初次probe誤把WatchWrites視為每次寫入，seed00e4的低byte未變因而失敗；核對observer實作
+後改驗memory delta，沒有改引擎。DOSBox先建空ERR檔亦曾被誤判compiler failure，改讀FAIL
+內容後相同來源／compiler乾淨重跑；兩次失敗與輸出保留。單檔gofmt父目錄不可寫，改由
+容器stdout格式化寫回同檔，未擴大掛載或chown。
+
+cpu-r3收據SHA256042238a26df44e313b98279ea96da1157bd106542d14602f6d6cdf165889e47d。
+五筆ABI語意由受版控`ida_rng_abi_ledger.json`保存原始位址／bytes／consumer／分級來源；
+IDA重新建database自動合併五筆，舊NPC註記保持。根目錄、現況表與工具入口沿用既有職責，
+詳細重生命令與本機收據在docs/25，下一步以這兩個exact fixture核對ABI-aware adapter／指紋。
+
+本批只提交診斷Go／Python、語意ASM、reviewed ledger與文件；提交標題為
+`research: close RNG register ABI and source-assemble bounded helper`，提交／推送身分以Git log
+及Issue最終回讀為準。新Go raw IDs／位置均屬原版診斷與控制測試，不進production fallback。
+使用者13項scratch、所有EXE／OBJ／database／生成binary與上游來源不提交，沒有新發行包。
+
+### 2026-10-08 Issue #5續行：C／ASM adapter 與副作用界線
+
+使用者以「繼續囉／go」接續已展示的RNG局部ABI、adapter與候選compiler研究。
+先核對主機git狀態、唯一現況表與遠端Issue #5。Issue保持OPEN，現行遠端紀錄仍為722e778；
+本輪不改Issue #4暫停狀態。知識路由命中retro remake、IDA9.4、compiler分流與文件職責，
+沿用docs/25及既有matching研究根，沒有新增同義研究目錄。
+
+新增Docker-only `run_matching_rng_adapter.py`、局部dosgolem Go probe與具名adapter組語。
+診斷C從明示stack參數取上限，以DX:AX回傳餘數／商值；adapter保存其他暫存器，BX0直接返回。
+OMF沿用實際PUBDEF／SEGDEF／FIXUPP，只接受已證實的DS:0B5A外部配置，沒有遮罩比較。
+原版／compiler／dosgolem唯讀，只有既有研究輸出可寫；全部容器為目前UID/GID、network none
+及有資源限制的--rm程序。
+
+- 原版115282 bytes、SHA2565178fdc8保持，正式Go與pack沒有差異。既有IDA producer及兩份semantic ledger hash、新五註記原始bytes與196692案例收據核對通過；核心33及有界49 caller全部為xref type17。
+- 原始兩個RNG常式由NASM重新組譯46 bytes exact；C候選56 bytes，adapter31 bytes。原版有界常式30 bytes，C raw比較DIFF，C exact仍0，其餘115236原始bytes不宣稱原碼重建。
+- 最終固定輸入為BX10／BX0各65536 seed及80邊界。原版、exact ASM與C adapter共131152組，全部暫存器、高半部、段暫存器、返回位置與持久state相同；exact ASM全部觀測結果相同。
+- 65616次非零呼叫都有額外stack modified-byte事件。第二輪另加入返回後完整128-byte scratch stack比較，這些呼叫的最終stack均不同；raw flags亦均不同。DIV算術旗標不猜硬體期望值，BX0的完整stack／state及旗標保持。
+- 預定seed1357的交換AX／DX、誤傳CX、移除BX0 gate及DS offset0B5B四案全部拒絕。篡改編譯artifact亦在建置前拒絕，沒有改Inertia被拒絕的中間C。
+- 三次DOSBox單候選compile為0.715865／0.766146／0.715652秒；r2／r3的OBJ、重定位C code及全部ASM artifact逐byte相同。最終CPU0.711280秒、乾淨Go建置9.127850秒；原版983920指令、exact ASM983920、C adapter3149248。
+- 工具自動回報四類錯誤的register/state mismatch或division exception，取代人工逐項核對。但沒有同工作人工工時或完整玩家路線成本基準，整體加速仍unknown，沒有加速倍數。
+- 候選CL／C2／C3含C5.10標記，位置分別為component file0x745d／0x2ccbe／0x1d6a9。CL亦含FORTRAN與Quick C字串，不能由全部banner推執行路徑或原版compiler。只修正Dockerfile未閉合的歷史斷言註解，建置指令不變，沒有重建重複image。
+- 最終audit核對producer／parser／Go／ASM／IDA新鮮度、dosgolem選定source canonical334a2151、原版ledger與收據、索引正對照、UID/GID1000。Python語法、Go vet、gofmt、git diff --check通過；研究根root-owned與Markdown目錄皆0。
+- 新Go原始定位全部位於tools局部probe，沒有production fallback。容器未安裝rg，依共用搜尋規則改以grep核對；正式game與pack的git diff保持空白。
+
+新收據在`work/matching-decomp-20261008-r1/rng-adapter-compile-r3/`與`rng-adapter-cpu-r3/`。
+CPU receipt SHA256 `9d702555c10aeccef610832acf2cf76d9cda8b660c161a886444707e1233246a`，
+compile receipt SHA256 `b5c4f94f0f25409f127cdae35e5cd3f6a201bb57683085c19df641fbf6feede4`。
+原版、compiler、OBJ、database、生成binary與先前protected scratch保持本機，不加入Git。
+沒有正式遊戲修改或新包，因此本輪只驗研究工具，不將既有THE END與PNG描述為新回歸。
+
+前段RNG ABI研究的預定獨立提交尚未執行，本輪將其未提交工具／ledger與已閉合adapter一併
+提交，標題為`research: verify RNG register ABI and C assembly adapter limits`。提交／推送身分
+以Git log為準。全部本批容器已清除，其他專案容器保留；現況與下一步已更新CONTEXT、
+PROJECT_MEMORY與docs/74。下一步限於既有NPC caller的AX／DX雙結果consumer局部比較，
+不擴大成完整EXE原碼重建，也不變更remake完成閘門。

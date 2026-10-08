@@ -1,6 +1,7 @@
-# Microsoft C 5.1 (1988) 在 DOSBox 內跑 — byte-match PoC 用。
-# 指紋分析(LOOP/rol/ror/cdq/NOP-padding/AX-centric codegen)指向 MSC,非 Borland;
-# DQ3.EXE(精訊,~1991)entry 鏈進 MSC CRT0 startup。此 image 提供 CL/C1/C2/C3/LINK。
+# Microsoft C 候選工具在 DOSBox 內跑，供局部 byte-match 研究。
+# 掛載的 CL/C2/C3 含 C 5.10 版本字串，固定 component hash 見
+# tools/run_matching_probe.py。原版 compiler 仍 unknown，證據入口 docs/25。
+# CL/C1/C2/C3/LINK 只在 runtime 唯讀掛載，不寫入此 image。
 #
 # 建置:
 #   1) 先把 MSC 5.1 floppy .img 解到 tools/build/msc51_img/(archive.org,不入 git)

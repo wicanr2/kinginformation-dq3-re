@@ -4,7 +4,7 @@
 > 啟動局部 matching 的對拍加速實驗。下方 MSC 5.x「已鎖定」與固定 codegen 成因均為
 > 歷史判讀，尚未由精確 compiler／linker 版本及完整重定位閉合。五個既有 OMF 產物
 > 先以唯讀方式核對為 raw exact 0／5；本輪再新編七個 C 候選，沒有 exact。
-> 具語意 ASM 已重編一個16-byte函式並完全匹配。原版是否有殼仍未知。
+> 具語意 ASM 已重編兩個函式共46 bytes並完全匹配。原版是否有殼仍未知。
 > 新探針入口為 [`tools/ida_matching_probe.py`](../tools/ida_matching_probe.py)，
 > 以 IDA Pro 9.4 匯出原始定位、bytes、typed xref 與既有分級語意。
 > 研究輸出位於 gitignored `work/matching-decomp-20261008-r1/`。
@@ -19,8 +19,156 @@
 > 單次 DOSBox 批次編譯、真實 OMF 檢查、具語意 ASM 組譯與壞來源拒絕，輸出本機收據。
 > [`tools/run_inertia_matching_probe.py`](../tools/run_inertia_matching_probe.py) 明示核對
 > Inertia 的 MZ 載入基準，對 RNG／有界 RNG／NPC mover 做限時實測；生成 C 不自動升格為 match。
+> 續行ABI研究沿用本入口；[`re/match/sub_e6c9.asm`](../re/match/sub_e6c9.asm)
+> 保存BX有界RNG的原始13條指令。`ida_matching_probe.py`同時匯出直接caller的原始
+> bytes／typed xref與前後窗口，caller語意在審查前仍保持unknown。
+> [`tools/dosgolem_matching_rng_abi.go`](../tools/dosgolem_matching_rng_abi.go) 是Docker內的
+> 明示局部測試，固定列舉seed與邊界輸入；核對原版／source-assembled ABI、寫入端與保留
+> 暫存器，不取代正常玩家路徑，也不深追全流程亂數呼叫序列。
+> [`tools/run_matching_rng_abi.py`](../tools/run_matching_rng_abi.py) 只複製唯讀dosgolem的
+> internal非測試Go來源與go.mod，在Docker暫存module建置；不讀取上游cmd/probe scratch，
+> 來源清冊／hash與控制輸入收據另存明確研究輸出。
+> [`tools/run_msc_abi_controls.py`](../tools/run_msc_abi_controls.py) 編譯已知的16／32-bit
+> 回傳C控制樣本與`_fastcall`關鍵字候選；只核對掛載MSC候選的ABI，不反推原版語言。
+> 已審查的局部ABI註記保存於[`tools/ida_rng_abi_ledger.json`](../tools/ida_rng_abi_ledger.json)，
+> 以原始IDA位址、file offset與bytes為key；IDA探針自動合併其推論等級、consumer與局部收據來源。
 
 ## 2026-10-08 首批實測
+
+### 續行：C／ASM adapter 實測
+
+[`tools/run_matching_rng_adapter.py`](../tools/run_matching_rng_adapter.py) 分兩個 Docker
+階段執行：`compile` 使用既有 MSC 映像，`cpu` 使用既有 Go 映像及唯讀 dosgolem。
+[`re/match/rng_adapter.asm`](../re/match/rng_adapter.asm) 是本專案撰寫的診斷轉接，
+將 BX 放到 C 堆疊參數，保存其餘暫存器，零上限直接返回。
+[`tools/dosgolem_matching_rng_adapter.go`](../tools/dosgolem_matching_rng_adapter.go)
+核對固定 seed 全集、邊界、四種錯誤轉接，以及暫存器、持久狀態、旗標與額外堆疊寫入。
+prototype 不進正式程式；數值通過與原始 bytes exact 分開記錄。
+
+原版仍是 `assets_raw/DQ3.EXE`，115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+原始定位與 bytes 取自 IDA9.4 的 `rng-abi-r1/ida-rng-abi-reviewed.json`，
+核心為 IDA linear `0x1e6b9..0x1e6c9`，有界常式為 `0x1e6c9..0x1e6e7`。
+file 與 logical 的換算保持下節規則；diagnostic adapter 位於 dosgolem logical `0x0400`，
+C code 位於 logical `0x0500`，不將這兩個測試位址登記成原版函式。
+
+| 比較層 | 實測結果 | 證據界線 |
+|---|---|---|
+| 原版／source ASM | 兩函式重新組譯46 bytes exact；有界常式131152組同狀態呼叫的全部觀測結果一致 | confirmed local instruction reproduction；其餘115236原始bytes沒有原碼重建聲明 |
+| C／ASM adapter | 56-byte C加31-byte adapter；原版有界常式30 bytes。65536個seed各測BX10與BX0，加80個邊界，全部暫存器、高半部、段暫存器、返回位置及持久state相同 | confirmed scoped register/state equivalence；明示direct-entry、注入與CPU重入，非正常玩家流程 |
+| 記憶體／旗標 | 65616次非零上限呼叫留下額外堆疊內容；返回後完整128-byte scratch stack均與原版不同。同批raw flags也全部不同，BX0不交易state或stack，旗標相同 | full memory equivalence未通過；DIV算術旗標不指定猜測的硬體期望值，不由raw差異宣稱C數值規則錯誤 |
+| 失敗定位 | 交換AX／DX、誤傳CX、移除零上限gate及DS offset改成0B5B四案全部拒絕；零上限負例觸發除零 | 明示預定固定seed1357，無重擲或挑選結果；工具直接回報register/state mismatch或division exception |
+| C exact | 新候選raw bytes為DIFF，C exact仍0 | 沒有以數值成功、暫存器轉接或忽略stack宣稱byte-match |
+
+候選compiler的固定CL／C2／C3分別在 `(file)0x745d`、`0x2ccbe`、`0x1d6a9`
+含 `C 5.10` 字串。CL同時含FORTRAN及Quick C的banner，所以這些是已核對component的
+版本標記，不能將所有可列印字串當作實際編譯路徑，也不能由此定案DQ3的compiler。
+完整字串、file offset與component hash保存在compile收據，原版compiler仍unknown。
+修正Dockerfile的舊指紋斷言只涉及註解，映像執行契約與建置指令保持。
+
+局部成本現在可重測：三次單候選DOSBox編譯各約0.716／0.766／0.716秒，
+兩份獨立編譯的OBJ、重定位C code與全部ASM artifact相同。
+這個工具可自動辨識上表四類錯誤，省去人工逐暫存器及state核對。
+沒有相同工作的人工工時或完整玩家路線成本基準，故不給加速倍數，也不宣稱整體對拍加速。
+setup包含撰寫adapter、追查ABI與乾淨Go建置，不能只拿不到一秒的CPU時間當端到端成本。
+最終CPU三方比較0.711280秒，乾淨Go建置9.127850秒；局部CPU步數為原版983920、
+exact ASM983920及C／ASM adapter3149248，不能把匹配原碼等同更快的執行。
+首輪只觀測modified-byte事件，第二輪另補返回後完整stack bytes；兩輪舊收據均保留。
+
+最終輸出沿用 `work/matching-decomp-20261008-r1/`：
+`rng-adapter-compile-r3/compile-receipt.json`、`rng-adapter-cpu-r3/receipt.json`、
+`producer-meta.json`與`final-audit.json`。後兩份位於CPU輸出目錄。
+CPU收據SHA-256 `9d702555c10aeccef610832acf2cf76d9cda8b660c161a886444707e1233246a`；
+compile收據SHA-256 `b5c4f94f0f25409f127cdae35e5cd3f6a201bb57683085c19df641fbf6feede4`。
+producer與OMF parser的新鮮度、唯讀dosgolem選定來源、原版ABI ledger、既有收據hash、
+獨立重編、工具索引正對照及UID/GID均由`audit`階段核對。
+
+重跑前先確認每個host掛載存在、形態及UID/GID；沿用既有研究根，輸出使用全新名稱：
+
+```bash
+timeout 120s docker run --rm --network none --memory 1g --cpus 1 --pids-limit 128 \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD":/repo:ro -v "$PWD/tools/build/msc":/msc:ro \
+  -v "$PWD/work/matching-decomp-20261008-r1":/out \
+  --workdir /tmp --entrypoint python3 dq3-msc:bookworm-20261008-r1 \
+  /repo/tools/run_matching_rng_adapter.py compile --output /out/rng-adapter-compile-new \
+  --ida-evidence /repo/work/matching-decomp-20261008-r1/rng-abi-r1/ida-rng-abi-reviewed.json
+
+timeout 330s docker run --rm --network none --memory 2g --cpus 2 --pids-limit 128 \
+  --user "$(id -u):$(id -g)" -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD":/repo:ro -v /home/anr2/cht/dosgolem:/dosgolem:ro \
+  -v "$PWD/work/matching-decomp-20261008-r1":/out \
+  --workdir /tmp --entrypoint python3 hr-go-ebiten:1.26.7-2.9.9-r1 \
+  /repo/tools/run_matching_rng_adapter.py cpu --output /out/rng-adapter-cpu-new \
+  --compiled /repo/work/matching-decomp-20261008-r1/rng-adapter-compile-new
+```
+
+同一Go容器可執行 `audit --compiled /repo/work/matching-decomp-20261008-r1/rng-adapter-compile-new`
+`--repeat-compiled /repo/work/matching-decomp-20261008-r1/rng-adapter-compile-r3`
+`--cpu /out/rng-adapter-cpu-new`。重編來源及producer須保持相同，不能覆寫final-audit。
+下一步限於既有NPC caller的AX／DX雙結果consumer局部比較，原版全局骰序、compiler與
+完整EXE原碼重建仍unknown；不擴大remake完成閘門。
+
+### 續行：BX／DX局部ABI閉合
+
+目前具語意ASM覆蓋兩個已知函式、46bytes；C exact保持0。原版整體compiler與
+全流程對拍加速仍未知。正式Go／game-pack及Issue #4暫停狀態保持。
+
+| 原始定位 | 已閉合的局部契約 | 等級與來源 |
+|---|---|---|
+| `sub_1E6B9`，IDA linear`0x1e6b9..0x1e6c9`，file`0xfa29..0xfa39` | DS:0B5A加9018h後做三次一位左旋，更新word並留在AX；保留其餘通用／段暫存器，near return令SP增加2 | confirmed local ABI；IDA原始bytes、全部65536seed、定義明確的旗標模型及原版／ASM同狀態比較 |
+| `sub_1E6C9`，IDA linear`0x1e6c9..0x1e6e7`，file`0xfa39..0xfa57` | BX為unsigned上限；BX非零時先更新狀態，再以DIV BX把商留AX、餘數留DX。BX=0返回DX=0並保留AX／狀態，不消耗亂數 | confirmed local ABI；BX10／BX0各65536seed、84邊界與保留暫存器比較。DIV未定義旗標不補硬體期望值 |
+| NPC callers，IDA linear`0x12040/0x12062/0x12071/0x120ad` | 前置直接MOV BX為4／4／20／10，caller消費DX或DL；`0x12083`另消費AL商值。沒有把上限當成stack argument | confirmed scoped static caller-consumer；四個窗口與完整NPC函式原始bytes／typed xref。既有商值轉向不重開 |
+
+新IDA匯出包含RNG核心33及有界RNG49個直接caller窗口；128窗口的診斷上限沒有截斷。
+所有原始名稱、位址、bytes保留，不由名稱猜測型別。
+五筆審查註記在`ida_rng_abi_ledger.json`記錄輸入hash、原operand／bytes、consumer、
+推論等級與動態收據；重新建database後自動合併五筆，舊NPC註記保持。
+
+`rng-abi-r1/cpu-r3/receipt.json`共196692個固定局部呼叫／每側，原版與source-assembled
+執行共2885416指令，約0.568秒；乾淨建置約18.71秒。沒有新遊戲暖機，故這是明示的
+direct-entry、記憶體／暫存器注入與CPU重入，不能稱正常玩家驗收，也不控制production RNG。
+使用dosgolem `a9714ebdab2ad6b529f81225472680f2b11f2842`的internal非測試來源；
+來源canonical SHA256 `334a21511c2603ef606b889c960d17ff5099bad7e3b11ba67aa5ca703eddf2b0`。
+上游`cmd/probe/main.go`的使用者修改未複製、未改動。
+
+固定seed1357、BX10的實際結果為狀態／核心AX=`1b7d`，有界AX=`02bf`、DX=`0007`。
+預先定義的「把AX當餘數」負對照被拒絕。原版／重編46bytes scaffold的全檔hash相同，
+但其餘115236bytes仍保留原始輸入，沒有完整原碼聲明。
+
+候選MSC的已知C控制樣本，BX10與stack argument BEEF故意不同：
+
+| 控制樣本 | 實際執行結果 | 證據界線 |
+|---|---|---|
+| `unsigned abiword(unsigned limit)` | 從stack取得BEEF，AX=BEEF、DX保持2468；8-byte code，5指令 | 該掛載候選的標準C ABI，不代表原版compiler |
+| `unsigned long abipair(unsigned limit)` | 從stack取得BEEF，DX=BEEF、AX=5F77；14-byte code，8指令 | 該候選的DX:AX長值回傳；不能由原版DX餘數反推原版C return type |
+| `_fastcall`單參數候選 | compiler報C2054／C2061，未產生OBJ | 此關鍵字／旗標組合不支援；未排除其他pragma、compiler或手寫ASM |
+
+這項證據推翻「只調BP frame omission即可讓原先一般C介面匹配有界RNG」的充分性。
+目前確定的是局部寄存器契約不同，沒有證明原版全程用哪個語言。
+當時下一步以這兩個精確fixture作ABI-aware C／ASM adapter與compiler指紋的控制基準，
+不修改被Inertia語意驗證拒絕的C來製造成功。
+此局部adapter實驗現已由上節閉合；它通過register/state比較，但不是完整memory或byte-match。
+
+原版／研究輸出均維持現行位置。新收據根為
+`work/matching-decomp-20261008-r1/rng-abi-r1/`：`ida-rng-abi-reviewed.json`、
+`assembly-receipt.json`、`cpu-r3/receipt.json`、`cpu-r3/producer-meta.json`、
+`msc-abi-controls-r2/receipt.json`及`final-audit.json`。
+首輪observer與compiler marker失敗保留：WatchWrites只報值變動，不計相同值重寫；
+DOSBox IF重導向會先建立空ERR檔，應讀FAIL內容。修正的是探針契約，沒有修改引擎或遊戲。
+
+已有唯讀輸入與新輸出目錄時，局部CPU實驗可按下列命令重跑。Go容器沿用既有
+`hr-go-ebiten:1.26.7-2.9.9-r1`；先核對dosgolem來源及全部host掛載存在，輸出不得覆寫：
+
+```bash
+timeout 330s docker run --rm --network none --memory 2g --cpus 2 --pids-limit 128 \
+  --user "$(id -u):$(id -g)" -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD":/repo:ro -v /home/anr2/cht/dosgolem:/dosgolem:ro \
+  -v "$PWD/work/matching-decomp-20261008-r1/rng-abi-r1":/out \
+  --workdir /tmp --entrypoint python3 hr-go-ebiten:1.26.7-2.9.9-r1 \
+  /repo/tools/run_matching_rng_abi.py --output /out/cpu-new --assembly-root /out \
+  --dosgolem-root /dosgolem --compiler-controls /out/msc-abi-controls-r2
+```
 
 本輪目標是驗證局部 matching 能否減少對拍的人工定位成本。正式 Go／game-pack、
 正常458 checkpoint、schema0.33.0/content0.1.106均保持，Issue #4仍暫停。

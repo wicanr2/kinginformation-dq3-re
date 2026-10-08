@@ -226,7 +226,7 @@ schema/content為0.1.58／0.1.64；`opening_prelude`提供版面、文字引用�
 
 | 目前狀態（2026-10-08；正式程式基準2026-10-06） | 最近驗收與界線 |
 |---|---|
-| 本輪研究 | [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)首批matching工具與實驗完成，證據 [docs/25](docs/25-match-progress.md)。IDA9.4重生NPC六範圍436指令及入口／RNG／BX有界RNG；動畫計數缺自動函式邊界，保留unknown。新編七C候選四DIFF／三REFUSED，C exact0；一次批次0.92秒，五負例拒絕。具語意ASM一個16-byte函式exact；其餘115266bytes保留，不稱完整原碼。Inertia三案中間C全部validation failed，原版compiler及整體加速仍unknown。正式Go／pack不改，Issue #4保持暫停；下一步限縮RNG ABI與compiler辨識 |
+| 本輪研究 | [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)RNG局部ABI與C／ASM adapter實驗閉合，證據 [docs/25](docs/25-match-progress.md)。IDA核心33／有界49 caller窗口及五註記自動合併。BX傳上限、DX餘數、AX商值，零BX不更新狀態；原版／ASM196692局部案例保持。新56-byte C＋31-byte轉接以131152固定輸入通過register/state，四負例拒絕；65616非零呼叫的完整scratch stack及raw flags不同，full memory未通過。最終CPU0.711280秒、乾淨建置9.127850秒、compile0.715652秒，獨立OBJ／code重編相同。ASM兩函式46bytes exact，C exact0，其餘115236bytes保留；掛載compiler含C5.10標記，原版compiler及整體加速unknown。Inertia三案仍拒絕，正式Go／pack不改，Issue #4保持暫停；下一步限於既有NPC caller的AX／DX雙結果consumer局部比較 |
 | 現行程式 | dq3_remake_ebitan/；NPC視野逐格掃描、同圖層、亂數閘門、商值轉向與地形交易由pack提供；schema0.33.0/content0.1.106，canonical sha256:67af5bb57edf02461fa0e6d3ab3860c0a5279a151c763a08efd9830ba1d308e4；A八格/storage1/save2保持，無新包 |
 | 最新remake已完成 | NPC自動移動規則有限CONFORMED；1672入口返回、499完整scan、3次向後續格重複評估、四圖層常式通過。正常409／422／458、持久snapshot／game PRNG、十JSON槽、正式F5／F6及Load後下一步通過 |
 | 最新原版oracle | dosgolem2f44a68正常458來源56ef662a、496鍵／992IRQ1／1184產物，原422前綴保持。唯讀完整NPC來源b2fdf781接受，19自然轉向／110落步骰／5移動；seed1357一次，無注入／restore。四圖層fe39794a另列局部受控證據，seed1e2c各案固定、明示注入／CPU重入 |

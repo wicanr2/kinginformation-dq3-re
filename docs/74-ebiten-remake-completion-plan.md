@@ -3,7 +3,11 @@
 > 2026-10-08：依使用者授權啟動 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)
 > 局部 matching decompilation 對拍加速研究，範圍與工具見 [docs/25](25-match-progress.md)。
 > 首批七C候選四DIFF／三REFUSED、C exact0，批次0.92秒；具語意ASM一函式16bytes exact。
-> Inertia三案全部語意驗證失敗，整體對拍加速未知；下一步限縮RNG ABI與compiler辨識。
+> 續行RNG局部ABI已閉合，196692固定局部案例／每側約0.568秒通過；ASM兩函式46bytes exact。
+> C56bytes＋ASM轉接31bytes已以131152固定輸入通過register/state，四負例拒絕；65616次
+> 非零呼叫的完整scratch stack及raw flags不同，full memory未通過，C exact仍0。
+> 獨立OBJ／code重編相同，最終CPU0.711280秒／乾淨建置9.127850秒；掛載compiler含C5.10標記。
+> Inertia三案全部語意驗證失敗，原版compiler與整體加速未知；下一步限於既有NPC雙結果consumer。
 > 正式 schema0.33.0/content0.1.106
 > 與下方正常458基準保持；Issue #4 維持暫停。研究不新增完整 EXE 重建的 remake 完成閘門。
 

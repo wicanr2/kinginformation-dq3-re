@@ -51,6 +51,20 @@ def export():
     if ledger["input_sha256"] != digest or ledger["input_size"] != len(raw):
         raise ValueError("Reviewed semantic ledger input differs")
     annotations = {int(a["ida_linear"], 16): a for a in ledger["annotations"]}
+    semantic_ledgers = [{"path": str(ledger_path), "sha256": hashlib.sha256(ledger_raw).hexdigest()}]
+    abi_ledger_path = Path(__file__).with_name("ida_rng_abi_ledger.json")
+    if abi_ledger_path.exists():
+        abi_raw = abi_ledger_path.read_bytes()
+        abi_ledger = json.loads(abi_raw)
+        if abi_ledger["input_sha256"] != digest or abi_ledger["input_size"] != len(raw):
+            raise ValueError("Reviewed RNG ABI ledger input differs")
+        for annotation in abi_ledger["annotations"]:
+            ea = int(annotation["ida_linear"], 16)
+            if ea in annotations:
+                raise ValueError("Duplicate reviewed semantic address")
+            annotations[ea] = {**annotation, "review_reference": abi_ledger["review_reference"],
+                               "dynamic_evidence": abi_ledger["dynamic_evidence"]}
+        semantic_ledgers.append({"path": str(abi_ledger_path), "sha256": hashlib.sha256(abi_raw).hexdigest()})
 
     def row(ea):
         insn = ida_ua.insn_t()
@@ -99,6 +113,33 @@ def export():
     targets = [int(arg, 0) for arg in idc.ARGV[2:]]
     if not targets:
         raise ValueError("Explicit IDA linear targets are required")
+
+    def caller_window(reference):
+        owner = ida_funcs.get_func(reference.frm)
+        addresses = [reference.frm]
+        previous = reference.frm
+        following = reference.frm
+        for _ in range(8):
+            previous = idc.prev_head(previous, owner.start_ea if owner else 0)
+            if previous == idc.BADADDR:
+                break
+            if ida_bytes.is_code(ida_bytes.get_full_flags(previous)):
+                addresses.append(previous)
+        for _ in range(8):
+            following = idc.next_head(following, owner.end_ea if owner else reference.frm + 64)
+            if following == idc.BADADDR:
+                break
+            if ida_bytes.is_code(ida_bytes.get_full_flags(following)):
+                addresses.append(following)
+        return {
+            "xref_from": hex(reference.frm), "xref_type": reference.type,
+            "original_owner": ida_funcs.get_func_name(owner.start_ea) if owner else None,
+            "owner_start": hex(owner.start_ea) if owner else None,
+            "owner_end_exclusive": hex(owner.end_ea) if owner else None,
+            "instructions": [row(ea) for ea in sorted(set(addresses))],
+            "inference_level": "unknown",
+            "warning": "Caller window is navigation evidence; register provenance needs review",
+        }
     functions = []
     unresolved_targets = []
     seen = set()
@@ -117,11 +158,15 @@ def export():
         seen.add(fn.start_ea)
         items = [ea for ea in idautils.FuncItems(fn.start_ea)
                  if ida_bytes.is_code(ida_bytes.get_full_flags(ea))]
+        direct_callers = [reference for reference in idautils.XrefsTo(fn.start_ea) if reference.iscode]
+        if len(direct_callers) > 128:
+            raise ValueError("Caller export exceeds the explicit 128-window diagnostic budget")
         functions.append({
             "requested_ida_linear": hex(target), "original_name": ida_funcs.get_func_name(fn.start_ea),
             "ida_linear_start": hex(fn.start_ea), "ida_linear_end_exclusive": hex(fn.end_ea),
             "chunks": [[hex(a), hex(b)] for a, b in idautils.Chunks(fn.start_ea)],
             "instructions": [row(ea) for ea in items], "inference_level": "unknown",
+            "direct_caller_windows": [caller_window(reference) for reference in direct_callers],
         })
     if not functions:
         raise ValueError("None of the requested targets has an IDA function boundary")
@@ -167,6 +212,7 @@ def export():
         "packer_marker_offsets": {p.decode(): raw.find(p) for p in (b"PKLITE", b"LZEXE", b"UPX!")},
         "packer_inference_level": "unknown",
         "semantic_ledger": {"path": str(ledger_path), "sha256": hashlib.sha256(ledger_raw).hexdigest()},
+        "semantic_ledgers": semantic_ledgers,
         "functions": functions, "unresolved_targets": unresolved_targets,
         "inventory": inventory, "decompiler": decompiler,
         "limitations": ["IDA automatic boundaries are navigation evidence, not source-level declarations",
