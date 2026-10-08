@@ -5,6 +5,9 @@
 > raw code／db拼接不算完成。完整matching是獨立Goal，不改正式Go／pack或Issue #4暫停。
 > 目前八個C來源104 bytes已匹配；最新sub_13016四段near CALL13 bytes及sub_1EE19的DX入參far CALL10 bytes。
 > 兩次source／OBJ／fixup一致，原caller frame／typed call xref及MZ segment word位置亦核對。
+> fresh frame ledger兩份同值，19 segment／1199 direct far CALL原始定位一致；runtime CS／DS未升格。
+> typed MZ header4976／file-end2 bytes重建一致，12負例拒絕，宣告長度少2bytes的原始差異保留。
+> counted-loop compiler-stage prototype17bytes匹配但未採用，不計正式C104；工具鏈分支待使用者回答。
 > 七個word的caller／writer／consumer已核對；原始struct未知，實際compiler profile由audit核對。
 > 主程式C共92 bytes；SDK三個12 bytes已定位於CTVMEM／CMFDRV，欄位／DS／型別unknown。
 > 首個C的module末端1-byte NOP配置未解；兩份重編相同，六listing負例拒絕。新IDA導航為828

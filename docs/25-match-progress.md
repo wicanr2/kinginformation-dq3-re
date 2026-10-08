@@ -88,6 +88,22 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 
 ## 呼叫重定位契約與控制
 
+MZ表頭及宣告長度之後的file-end來源為[mz_layout.json](../re/match/mz_layout.json)，
+[verify_mz_layout_source.py](../tools/verify_mz_layout_source.py)只由typed fields／relocation positions
+重建這兩個metadata區域。原版EXE只在生成後作比較，沒有生成code或loaded-image data。
+MZ位置編碼採已核對的64KiB location windows，與函式CS frame區分；1232個relocation word位置保留原序。
+
+[ida_matching_frames.py](../tools/ida_matching_frames.py)從原版EXE的fresh IDA9.4 database匯出
+segment extent、selector base與direct far CALL／MZ relocation／typed target三方映射。
+它保留原始名稱與位址，不修改database annotation，不由segment範圍猜CS base。
+runtime CS／DS、indirect calls及原source-unit邊界不由此升格；呼叫比較器的初始CODE限制仍維持。
+
+`call-frame-ida-r1`／`r2`從原版EXE各建fresh IDA9.4 database，完整JSON同值；19個segment與
+1199個direct far CALL均由原始bytes／MZ relocation／typed xref及實際selector base核對，alias0。
+匯出SHA-256 `4a1872750991d46fa3f58899a085ba5ea0dc3b75c9da66c924b00df44091e4e6`。
+先前DB工作副本在目前image讀不到input identity，未輸出有效收據；改走fresh EXE loader後才採納。
+原始DB不改寫，也不由image tag或exit code單獨宣稱有效。
+
 [omf_call_fixups.py](../tools/omf_call_fixups.py)保存固定定位的WCC呼叫契約；
 [verify_watcom_call_fixups.py](../tools/verify_watcom_call_fixups.py)從可讀C與合成ASM fixture
 用真正WCC／Wasm／WLINK核對。fixture不讀原DQ3 binary，source coverage增量為0。
@@ -115,6 +131,38 @@ WLINK默認會把同physical segment的far CALL改成push CS／near CALL的等�
 FIXUPP與MZ relocation table一致，15種非法placement／mode／frame／location／addend／opcode拒絕。
 最初ASM object含source mtime的dependency record而兩份hash不同；沿既有Wasm -zld禁用該記錄後
 重跑完整artifact，沒有遮罩或忽略差異，也不把link結果相同當作OBJ已一致。
+
+## MZ metadata byte-layout：CONFORMED
+
+[mz_layout.json](../re/match/mz_layout.json)及其encoder重建file `0x0000..0x1370` 的4976 bytes，
+另生成file `0x1C250..0x1C252` 的2-byte file-end；末端不含。沒有生成任何program code或body data。
+輸入為本頁固定DQ3.EXE／115282 bytes／SHA5178fdc8，source contract只表示metadata byte-layout。
+
+[Microsoft MS-DOS EXE.INC](https://github.com/microsoft/MS-DOS/blob/main/v4.0/src/INC/EXE.INC)
+提供前14個word的格式依據。三個額外word初值0保留unknown，header padding14個zero bytes；
+1232個location依原序嚴格遞增，各指向image內的完整word。位置以64KiB windows重編為原offset／segment pairs，
+這些location segments不能當成CALL target CS frames。MZ relocation用途與欄位目的未由metadata批次命名。
+
+`pages=0xE2`、`last_page_bytes=0x50` 宣告115280 bytes，檔案實長115282。最後u16為0，
+用途及不同DOS loader的實際讀入行為unknown，不把last_page_bytes改成0x52，也不刪file-end。
+SS=0x1A9E、SP=0x0400，CS=0、IP=0x9299，原始欄位值完整保存。
+
+`mz-layout-source-r1`／`r2`兩個新容器從typed JSON重建，完整header／file-end及收據一致。
+source SHA-256 `335683bd247da77c067f6d842a37ce62f3c666a7a839b7b131401933d37ea6b5`，
+header SHA-256 `4bed92fc4e4da7186f50220906a4413fb7fe8e443a2996815504dcd4fc5f784f`。
+`mz-layout-source-negatives-r1.json`拒絕缺field／未知field／錯count／重複／順序／越界位置／
+page range／boolean word／entry range／padding extent／u8及u16 range等12個反例。
+render在原input path不存在時仍生成相同結果，證明原EXE是CLI比較輸入，沒有用作build scaffold。
+新增4978個non-code source bytes，已知unique source bytes為12905；C仍八個104 bytes，完整EXE未完成。
+
+## Counted-loop compiler prototype：未採用
+
+既有[sub_32a3_watcom.c](../re/match/sub_32a3_watcom.c)在新ABI對照仍DIFF。
+可丟棄的symbolic compiler-stage prototype重排獨立constant loads、把兩INC改為unsigned ADD、
+把count decrement／branch改為LOOP，並保留WCC原F5 symbol frame語意。
+`c-loop-semantic-profile-prototype-r4`完整17 bytes匹配，build只讀compiler生成的中間組語，
+不讀原DQ3.EXE；沒有original code array。原型只驗證這個unit，不保證完整program或其他flags ABI。
+這個自訂compiler階段尚未獲選，不進正式build或C coverage；C104 bytes保持。
 
 ## 主程式近呼叫／遠呼叫 C：完整函式匹配
 

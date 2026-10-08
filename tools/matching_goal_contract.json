@@ -32,7 +32,7 @@
     {
       "id": "data-and-layout",
       "requirement": "All data, MZ fields, relocations and padding have reviewed reconstruction contracts; compiler module padding is placed explicitly",
-      "verify": {"kind": "manual", "note": "The first C PROC emits one post-ENDP NOP whose final placement is unresolved. CTV/CMF data 235/2406 bytes now rebuild from typed source. Instruction-only ORG profiles are separate and zero holes do not count as recovery; all other data and complete original layout remain open"}
+      "verify": {"kind": "manual", "note": "The first C PROC emits one post-ENDP NOP whose final placement is unresolved. CTV/CMF data 235/2406 bytes and MZ header/file-end 4976/2 bytes rebuild from typed source. Fresh IDA maps 19 segments and 1199 direct far CALLs. Metadata values preserve the original two-byte declared/actual length difference; body data, complete unit layout and final linker reconstruction remain open"}
     },
     {
       "id": "clean-whole-EXE",

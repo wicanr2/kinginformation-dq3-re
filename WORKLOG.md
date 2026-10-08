@@ -2531,3 +2531,33 @@ primary-call-source-publish-r1重核final r18／r19及control r7／r8的source�
 完整OBJ／MZ一致、15＋5負例、原source objects保持、MZ positions、索引／連結與Python語法。
 研究root-owned及Markdown目錄0，全部source UID/GID1000；git diff --check通過。
 本輪一次性container全清，其他專案container保持；沒有新image或發行包。
+
+## 2026-10-09：frame ledger與typed MZ metadata
+
+上批4768928的near／far C來源已提交並推送，remote main已核對。C仍八個104 bytes，屬實際進展。
+本輪新ABI loop controls均DIFF；既有C source與compiler-generated ASM的symbolic prototype以三種語意變換
+生成17-byte counted loop相同。build不讀原EXE、沒有raw code arrays；最初linker group frame bias差16，
+保留WCC F5 relocation政策後重建匹配。不把prototype當正式C coverage。
+依共同決策規則使用grilling，已展示具體prototype及保留主程式C／全EXE exact的兩個工具鏈選項；
+自訂編譯階段分支待使用者回答，沒有採用或寫入正式build。不是再次詢問已選C／ASM標準。
+
+獨立進行original frame證據。原DB工作副本在目前py312 image的input identity為None，輸出不成立；
+原DB hash保持，未推定遊戲問題。fresh原EXE loader輸入hash／IDA9.4／bytes重新核對後有效。
+新增ida_matching_frames：保留原始names、linear／file／MZ-relative與selector base，兩份完整JSON相同。
+19 segment、1199 original direct far CALL均有MZ segment word及typed xref；target frame aliases0。
+runtime CS／DS、indirect targets及source-unit邊界仍unknown，不放寬原caller初始CODE限制。
+
+原MZ header4976 bytes、1232 relocation targets全部排序且唯一，raw pairs均採64KiB location windows。
+表頭宣告115280、實檔115282，最後u16=0；purpose及DOS實際讀入行為unknown，不猜修page欄位或刪尾字。
+新增mz_layout typed JSON及verify_mz_layout_source，header／file-end只由metadata fields產生，
+原EXE在生成後作comparison。兩個新容器完整4976＋2 bytes同值，12結構／range／位置負例拒絕；
+render在original input path無效時結果保持。原program code／body沒有生成或拼接。
+source byte-layout metadata符合Microsoft EXE.INC的前14-word格式，額外3word維持unknown。
+已知unique source bytes7927＋4978=12905，只屬局部source reproduction，完整Goal仍active、六gate未證實。
+C104與SDK7789保持，正常Go／pack、Issue #4與十三scratch不改，沒有新image或發行包。
+
+frame-and-mz-source-publish-r1核對兩份完整frame exports、MZ typed source／encoder新鮮度、
+兩份header／file-end及12負例，source renderer無original path依賴，syntax／索引／連結／UID通過。
+goal-audit-r16仍為八C104與六未完成gates；symbolic compiler prototype未採用、不計正式coverage。
+研究root-owned及Markdown目錄0；本輪一次性container清除，其他專案container保持。
+提交前git diff --check通過，source／metadata／重建script存GitHub，原EXE／DB／artifact不提交。
