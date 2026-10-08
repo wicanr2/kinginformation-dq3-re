@@ -1,5 +1,77 @@
 # 逐函式 byte-match 進度 (matching decompilation)
 
+> 2026-10-08新增完整Goal：使用者指定「完成 dq3 matching decompliation」，並選定
+> 主程式以C精確匹配，組語僅用於已確認的底層常式。最終由原碼乾淨重建整個EXE並
+> 逐byte一致；`db`／原始機器碼拼接不算完成。這是本Goal的驗收標準，先前局部研究
+> 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
+> 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
+> 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
+> C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
+> [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
+> 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
+> 完整導航清單由[`tools/ida_matching_inventory.py`](../tools/ida_matching_inventory.py)
+> 匯出所有IDA code heads、函式chunks、typed xref、MZ relocation與舊清單差異。
+> 自動函式邊界與資料／程式分類仍需審查，不由自動清單宣稱全程式已解讀。
+> 首個C候選的compiler listing已證實NOP在`ENDP`之外；C批次現在以實際`PROC／ENDP`
+> 核對函式本體，並另列完整module比較及post-ENDP bytes。模組padding配置尚未解決，
+> 不由函式本體匹配宣稱模組或整檔原碼重建完成。
+> 本Goal的驗收條件保存於[`tools/matching_goal_contract.json`](../tools/matching_goal_contract.json)，
+> 尚無完整source-unit及build receipts的gate保持manual／未完成；不由既有測試名稱推定完成。
+> [`tools/matching_goal_audit.py`](../tools/matching_goal_audit.py)核對原始bytes、清單與C
+> 重編的新鮮度、兩份獨立artifact及listing正反對照，並明列仍未證實的完整Goal gates。
+
+## 完整Goal目前基準
+
+本節取代歷史清單的完成度分母；不改寫下方局部實驗。
+輸入為 `assets_raw/DQ3.EXE`，115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA9.4 linear基準 `0x10000`，file=`linear-0x10000+0x1370`。
+
+| 層次 | 已核對的目前狀態 | 尚未完成 |
+|---|---|---|
+| 完整原始導航 | 新IDA database匯出828個自動函式、29979個code heads、81854個唯一原始code bytes；無未映射／重疊的code bytes | 自動邊界不是source unit；22個末端可能切斷活躍控制流，4455個指令位置在函式外，程式／資料與模組歸屬仍需審查 |
+| 舊清單對照 | 舊280個entry與IDA共有277；三個舊entry不在新函式入口，新清單另有551個entry | 不用280或828直接宣稱完整主程式分母；先閉合source-unit範圍與底層分類 |
+| 主程式C | `sub_15D49`，IDA linear`0x15d49..0x15d50`、logical`0x5d49..0x5d50`、file`0x70b9..0x70c0`；讀得懂的C word assignment與near return，完整7 bytes匹配 | DS:0B60產品用途未知；入口目前只有table data xref `0x289e2`，不從名稱猜旗標用途；其他主程式C尚未完成 |
+| compiler範圍 | 固定MSC候選 `/c /AS /Os /Gs /Fc` listing的`PROC..ENDP`為offset0..7，真實OMF fixup將外部word配置到DS:0B60；函式本體7 bytes相同 | 完整module有offset7的NOP，raw module8 bytes不等於原版7-byte函式；final module padding placement未知 |
+| 組語 | 既有46 bytes的原始指令精確匹配與局部ABI收據保持 | 在完整Goal計算前仍須核對每個ASM unit是否屬於使用者允許的已確認底層常式 |
+| 整檔 | 7-byte C partial scaffold與原版hash相同，其餘115275 bytes原樣保留 | 保留區域不算source recovery；完整source/data/layout、真正乾淨整檔重建與runtime收據均不存在 |
+
+`/Ox`第一輪的7個函式bytes相同，整段多NOP，保留為DIFF。
+`/Os`兩輪都額外呼叫compiler的`__chkstk`，因未支持該code fixup而REFUSED。
+回查compiler／runtime分流入口後，`/Gs`控制樣本移除了這條額外呼叫，但仍有模組NOP。
+compiler自身listing的`ENDP`位於NOP之前，提供了新的獨立函式範圍證據；
+因此後續依PROC／ENDP核對整個函式，並保留完整module的DIFF及未解padding，
+沒有以RET、NOP內容、原版長度或遮罩猜切點。
+
+最終兩份乾淨重編為 `full-goal-r1/c-batch-r6`／`c-batch-r7`，OBJ、實際重定位的函式／
+module bytes及listing相同。compiler版本身分仍只適用掛載候選，原版compiler保持unknown。
+新full-inventory首輪因IDA環境使用ASCII寫出而失敗，空sidecar與log保留；
+明示UTF-8後同一工具與唯讀原版乾淨重跑，`inventory-ida-r2.json`才是有效來源。
+
+本機收據根 `work/matching-decomp-20261008-r1/full-goal-r1/`：
+`first-c-ida.json`、`inventory-ida-r2.json`、`c-batch-r7/receipt.json`及`goal-audit-r1.json`。
+完整Goal六個gate保持未證實，evidence audit PASS不代表Goal完成。
+下一步先審22個非terminal邊界與三個舊entry，建立主程式source-unit及間接入口對照，
+再依原始資料流還原下一批C；不能把自動函式碎片直接編成獨立C函式。
+
+已有唯讀原版、MSC工具與上述research根時，使用新輸出名稱重跑C批次：
+
+```bash
+timeout 160s docker run --rm --network none --memory 1g --cpus 1 --pids-limit 128 \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD":/repo:ro -v "$PWD/tools/build/msc":/msc:ro \
+  -v "$PWD/work/matching-decomp-20261008-r1/full-goal-r1":/out \
+  --workdir /tmp --entrypoint python3 dq3-msc:bookworm-20261008-r1 \
+  /repo/tools/run_matching_c_batch.py --output /out/c-batch-new \
+  --ida-evidence /repo/work/matching-decomp-20261008-r1/full-goal-r1/first-c-ida.json
+```
+
+掛載前先核對host路徑存在、檔案／目錄形態及UID/GID。
+同一容器可執行 `matching_goal_audit.py --inventory /repo/work/matching-decomp-20261008-r1/full-goal-r1/inventory-ida-r2.json`
+`--c-receipt /repo/work/matching-decomp-20261008-r1/full-goal-r1/c-batch-new/receipt.json`
+`--repeat-c-receipt /repo/work/matching-decomp-20261008-r1/full-goal-r1/c-batch-r7/receipt.json`
+`--output /out/goal-audit-new.json`；要求兩份來源與producer相同，輸出不得覆寫。
+
 > 2026-10-08：依 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)
 > 啟動局部 matching 的對拍加速實驗。下方 MSC 5.x「已鎖定」與固定 codegen 成因均為
 > 歷史判讀，尚未由精確 compiler／linker 版本及完整重定位閉合。五個既有 OMF 產物

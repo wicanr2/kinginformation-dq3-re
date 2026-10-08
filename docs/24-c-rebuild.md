@@ -1,5 +1,12 @@
 # C 重編(matching decompilation):splice 框架與 byte-match 覆蓋率
 
+> 2026-10-08追加勘誤：使用者已指定完整matching Goal，採主程式C精確匹配、已確認
+> 底層可用ASM及整檔由原碼乾淨重建。最新C函式本體為1個／7 bytes，原版compiler仍unknown。
+> 本篇的280個分母、最大段選函式與以db保留剩餘程式碼的方式是歷史框架，不足以證明完整Goal。
+> 新IDA清單828函式包含22個非terminal末端，另有4455個函式外指令；source-unit須另審。
+> 新C範圍以compiler PROC／ENDP與實際OMF定位核對，module padding另列。
+> 原碼與現行驗收入口見[docs/25](25-match-progress.md)，不改寫下方歷史收據。
+
 [`docs/17`](17-build-toolchain.md) 已證明:我們的反組譯能用獨立組譯器(nasm)100%
 還原原版 `DQ3.EXE`(sha256 相同)。那是「ASM 重組」層級——seg0 主碼以 `db` 固定 bytes
 表示。本篇處理下一步「正路 (b)」:**把 seg0 的函式逐一反編譯成 C,用原版編譯器

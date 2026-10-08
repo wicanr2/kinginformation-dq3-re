@@ -2057,3 +2057,41 @@ compile receipt SHA256 `b5c4f94f0f25409f127cdae35e5cd3f6a201bb57683085c19df641fb
 以Git log為準。全部本批容器已清除，其他專案容器保留；現況與下一步已更新CONTEXT、
 PROJECT_MEMORY與docs/74。下一步限於既有NPC caller的AX／DX雙結果consumer局部比較，
 不擴大成完整EXE原碼重建，也不變更remake完成閘門。
+
+### 2026-10-08完整matching Goal：範圍確認、完整導航與首個C PROC
+
+使用者新增持續Goal「完成 dq3 matching decompliation」，並回答採主程式C精確匹配，
+ASM僅限已確認底層常式；全EXE須由原碼乾淨重建且逐byte相同，db／raw code拼接不算完成。
+這是使用者明示的新範圍，取代上節局部研究的停止線。原版／素材權利邊界、Docker-only、
+正式Go／game-pack與Issue #4暫停保持。原版compiler與source-unit分類仍未知。
+上一Goal前工作已推送c9e65ef，本輪屬實際進展，Goal保持active而未宣稱完成。
+
+知識路由命中retro remake、IDA9.4、compiler／runtime分流、worklist資料與文件職責。
+套用grilling核對使用者驗收標準，先讀現行狀態／docs/74與docs/24／25，再查主機Issue #5。
+Issue仍OPEN，遠端內容仍為722e778首批紀錄；本Goal未授權改寫Issue，未送遠端留言。
+
+- 新`ida_matching_inventory.py`以IDA9.4從原版5178fdc8建立一次性database，核對MZ relocation後的loaded bytes及全部file bytes。最終inventory-ida-r2匯出828自動函式、29979個指令位置、81854唯一code bytes；未映射與重疊code bytes皆0。自動邊界只是導航，不能直接當C source units。
+- 舊280 entry與新IDA共有277，三個舊entry不在新入口，新清單另有551。另有22個非terminal末端及4455個函式外指令位置。已將這些列入完整Goal，而非只沿用最容易通過的280分母。
+- 首個C為`re/match/sub_5d49.c`，原始sub_15D49，IDA linear15D49..15D50、logical5D49..5D50、file70B9..70C0。完整操作為DS:0B60寫word1及near return；欄位產品用途unknown，原始table xref289E2保留，沒有命名成未證實旗標。
+- 新C批次從唯讀source、固定MSC candidate與IDA明確範圍編譯；單一PUBDEF／SEGDEF及真實FIXUPP把外部word配置到DS:0B60，來源C沒有inline ASM、db或machine-code array。
+- `/Ox`第一輪7指令bytes相同，但整個CODE segment多90 NOP，判DIFF。`/Os`兩輪額外生成`xor ax,ax; call __chkstk`，未支持code fixup而REFUSED。回查compiler分流與實際listing後，`/Gs`控制移除該helper，整個module仍8 bytes而原版函式7 bytes。
+- compiler `/Fc` listing明確標示PROC offset0..7，ENDP之後才是offset7的NOP。以compiler提供的獨立範圍逐行核對完整原始OMF bytes，包括ENDP外的NOP，再將實際fixup套在同一函式。沒有用RET、NOP內容、原版長度或遮罩猜切點。
+- 最終C-batch-r6／r7：完整C PROC1個、7 bytes精確匹配；兩份OBJ、重定位函式／module bytes及listing相同。完整module比較仍DIFF，post-ENDP padding配置unresolved。partial scaffold其餘115275 bytes仍保留原始輸入，不能當整檔完成。
+- `matching_goal_contract.json`保存使用者選定的六個驗收gate。完整source-unit覆蓋、全部主程式C、ASM底層分類、data/layout、乾淨整檔重建及兩次重建／runtime都尚未證實。manual gate明列將來所需證據，不用測試名稱、0錯誤或partial hash相同取代。
+- 新evidence audit核對所有原始指令、source／producer／semantic ledger新鮮度、compiler PROC及兩次重編；listing的正對照與missing-ENDP／修改post-ENDP byte兩負例均通過。自動清單、source C與完整module的界線分開記錄。
+- 全清單第一輪資料已解碼，但IDA環境的ASCII write_text在輸出中文annotation時失敗，空sidecar／log保留。修正為明示UTF-8，用同一image與唯讀原版建立新database乾淨重跑。這是匯出器環境契約問題，沒有更動原版bytes或game語意。
+
+工具與收據沿用gitignored `work/matching-decomp-20261008-r1/full-goal-r1/`，沒有建立新的
+同義研究根。新來源與契約均由docs/25及tools/build/README索引；docs/24追加舊分母與
+module選段勘誤，保留歷史收據；CONTEXT、PROJECT_MEMORY及唯一plan docs/74更新為完整Goal。
+本輪只提交C source、IDA／compiler／audit工具、JSON契約及文件；原版、database、OBJ、COD、
+private EXE及protected scratch不提交。提交標題為
+`research: establish full matching scope and first exact C procedure`，commit／push以Git log為準。
+下一切片先審22個邊界與三個舊entry，再從已閉合資料流還原下一批C及完整layout。
+
+最終verification核對原版hash保持，Python語法與git diff --check通過，正式Go／pack的diff
+仍空白；研究根root-owned與Markdown目錄皆0，來源與輸出UID/GID1000。本批IDA／MSC
+一次性容器已清除，未動其他專案資源。完整inventory SHA256
+`84592c1f36706c1033050e5afd0b6fd7b9cd7773548473141d57c02af6bf0652`，
+C receipt SHA256 `9fc31e9f71c52f72885f14ce303eceee451b0989b37fc69ab0f4d60ca5da5e01`，
+goal-audit-r2 SHA256 `daecf4458e37b4782aada753a88dccc89c5b3028be98db8b6b1f944be04b97e4`。

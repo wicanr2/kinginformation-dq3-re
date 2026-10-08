@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "input_path": "assets_raw/DQ3.EXE",
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "cases": [
+    {
+      "id": "sub_15D49",
+      "original_name": "sub_15D49",
+      "ida_linear_start": "0x15d49",
+      "logical_start": "0x5d49",
+      "file_start": "0x70b9",
+      "size": 7,
+      "source": "re/match/sub_5d49.c",
+      "public_symbol": "_sub_5d49",
+      "compiler_flags": "/c /AS /Os /Gs /Fc",
+      "external_DS_offsets": {
+        "_unknown_DGROUP_0b60": "0x0b60"
+      },
+      "semantic": "Store word 1 at DS:0B60, then near return; field purpose remains unknown",
+      "inference_level": "confirmed instruction-level operation; product meaning unknown"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "objective": "完成 dq3 matching decompliation",
+  "user_decision": {
+    "date": "2026-10-08",
+    "primary_code": "C exact matching",
+    "assembly": "Only independently confirmed low-level routines",
+    "binary": "Clean source rebuild of the entire original EXE; every byte equal",
+    "forbidden_substitute": "Raw instruction bytes, db, incbin or original-code splicing cannot establish full completion"
+  },
+  "input": {
+    "path": "assets_raw/DQ3.EXE",
+    "size": 115282,
+    "sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c"
+  },
+  "completion_gates": [
+    {
+      "id": "source-unit-coverage",
+      "requirement": "Every original code byte is assigned to a reviewed source unit; automatic IDA functions and code outside them must both be covered",
+      "verify": {"kind": "manual", "note": "Requires approved C/low-level-ASM unit ledger and zero unresolved code ranges; automatic IDA inventory is navigation only"}
+    },
+    {
+      "id": "primary-C-exact",
+      "requirement": "Every primary source unit compiles from readable C and matches its entire original function/code range after actual relocations",
+      "verify": {"kind": "manual", "note": "Current C manifest contains one matched 7-byte PROC; the complete primary-unit denominator remains under review"}
+    },
+    {
+      "id": "low-level-ASM-evidence",
+      "requirement": "Each ASM unit has independently confirmed low-level ownership, original identity and semantic instruction source",
+      "verify": {"kind": "manual", "note": "Existing 46 exact ASM bytes are local instruction evidence; full-Goal eligibility still requires unit classification"}
+    },
+    {
+      "id": "data-and-layout",
+      "requirement": "All data, MZ fields, relocations and padding have reviewed reconstruction contracts; compiler module padding is placed explicitly",
+      "verify": {"kind": "manual", "note": "The first C PROC emits one post-ENDP NOP whose final original layout placement is unresolved"}
+    },
+    {
+      "id": "clean-whole-EXE",
+      "requirement": "A clean build consumes only approved source and data inputs, rebuilds every EXE region and produces the complete original SHA-256",
+      "verify": {"kind": "manual", "note": "Partial original-byte scaffolds are excluded; requires input manifest proving no copied original code"}
+    },
+    {
+      "id": "independent-rebuild-and-runtime",
+      "requirement": "Two clean builds agree; execute the rebuilt EXE with the original data in dosgolem and retain authoritative receipts",
+      "verify": {"kind": "manual", "note": "Whole-source EXE does not yet exist; local routine receipts cannot establish this gate"}
+    }
+  ]
+}

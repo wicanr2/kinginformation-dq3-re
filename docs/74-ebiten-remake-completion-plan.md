@@ -1,5 +1,14 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
+> 2026-10-08現行Goal：使用者指定「完成 dq3 matching decompliation」，並確認主程式C
+> 精確匹配，ASM僅用於已確認底層常式。最終需由原碼乾淨重建全EXE且逐byte一致，
+> raw code／db拼接不算完成。完整matching是獨立Goal，不改正式Go／pack或Issue #4暫停。
+> 目前首個C完整PROC7 bytes已匹配，module末端1-byte NOP配置未解。新IDA導航為828
+> 函式／29979 code heads／81854 code bytes；22個非terminal末端、4455個函式外指令
+> 及主程式／底層source-unit分類仍未閉合。完整Goal六個gate都未證實，Goal保持active。
+> 下一步先審22個邊界與三個舊entry，再還原下一批C及完整layout。唯一目前狀態在CONTEXT，
+> 證據與重生入口[docs/25](25-match-progress.md)，驗收契約tools/matching_goal_contract.json。
+
 > 2026-10-08：依使用者授權啟動 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)
 > 局部 matching decompilation 對拍加速研究，範圍與工具見 [docs/25](25-match-progress.md)。
 > 首批七C候選四DIFF／三REFUSED、C exact0，批次0.92秒；具語意ASM一函式16bytes exact。

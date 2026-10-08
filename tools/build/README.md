@@ -16,6 +16,9 @@
 | [RNG ABI 探針](../run_matching_rng_abi.py) | [Go局部probe](../dosgolem_matching_rng_abi.go)核對固定seed全集、暫存器、near return及memory delta；只讀dosgolem internal來源，不使用上游cmd/probe scratch |
 | [MSC ABI 控制](../run_msc_abi_controls.py) | 編譯已知16／32-bit回傳與fastcall候選，與原版BX／DX契約分開記錄；原版compiler不由此定案 |
 | [C／ASM adapter](../run_matching_rng_adapter.py) | [局部CPU探針](../dosgolem_matching_rng_adapter.go)與[轉接組語](../../re/match/rng_adapter.asm)核對固定輸入、暫存器／持久狀態及額外堆疊／旗標差異；數值通過不升格byte-match |
+| [完整IDA清單](../ida_matching_inventory.py) | 所有code heads／function chunks、原始與loaded bytes、typed xref及舊清單差異；自動邊界仍需審查 |
+| [完整Goal C批次](../run_matching_c_batch.py) | [候選清單](../matching_c_manifest.json)保存原始定位與DS placement；用compiler PROC／ENDP及實際OMF核對整個C函式，module padding分開記錄 |
+| [完整Goal證據核對](../matching_goal_audit.py) | [契約](../matching_goal_contract.json)保存使用者選定的標準；核對完整清單、兩份C artifact及listing正反對照，manual gate保持未完成 |
 
 ## 映像與輸入
 
