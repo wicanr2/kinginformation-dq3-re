@@ -2348,3 +2348,40 @@ Docker批次容器全部清除；懸空image只有其他專案私有IDA來源4ac
 後續仍提交及push，已向使用者說明。只修本輪四source的行尾空白，sdk-source-build-r5／r6
 新容器重編source／OBJ／MZ／fixup一致，5148 bytes保持；新source hash由publish-verification-r2核對。
 補提交前明示檢查exit code後才提交，不amend、不覆寫已推送歷史。
+
+## 2026-10-09：CMF 完整 source/data byte-layout 與 CTV DMA seed
+
+前輪0d5fe58新增5136唯一instruction source，屬實際進展。本輪依CONTEXT／docs/74追四data gaps，
+載入RE→spec閘門；DMA／DSP writer需求再命中retro-platform-spec-first，依成熟契約停止硬體時序RE。
+原版SDK／EXE與repository分析輸入唯讀，UID1000、bounded Docker、明確source／output寫入。
+
+seven table consumer閉合：CTV API14／stream8，CMF status8／controller4／channel16／API15／negative3。
+資料值、consumer位置與handler原始IDA頭一致。CTV API slot6初值6B06超界，未將它改成合理pointer。
+原始init把CS:91轉實體DMA目的地，連續送E2＋06及E2＋6B；直接xref不足以看到DMA writer。
+固定DOSBox Staging commit d8271efb、整個soundblaster.cpp snapshot SHA314dfb06保存本機，
+從實際source解析reset AA／count0與E2 table得到DMA3A／08、word083A，與原2373A比較值一致。
+記為platform-contract derivation，不稱原版實機、DAC waveform或wall-clock parity，不開新timer slice。
+
+CMF資料角色最小充分：signature、原始header/state初值、五個near handler tables、
+parameter/index bytes及IRQ reserve。SS=CS／SP1337的writer與原100 zero bytes確定50-word stack幾何。
+字段用途與原始型別未知者保留unknown，初值只取定hash的原始bytes，不猜0或C remake。
+typed-data DRAFT prototype完整5296 bytes等於原版；docs/25先完成layout-only READY審查，再正式source。
+
+新增cmfdrv_data.json及verifier。build輸入僅repo ASM／EQU／typed JSON，不用原始OBJ或EXE code，
+EXE只在verification比較；data只能寫入兩個approved non-code範圍，不能跨code、overlap或缺值。
+normal WAsm／WLink重建全部5296 bytes，actual segment written mask完全填滿，含真實symbol relocations。
+最終cmf-source-module-r3／r4兩個新容器source／generated ASM／OBJ／MZ receipts一致，2406 data bytes新還原。
+缺field、overlap、value越界、落code、錯handler、未READY及字串注入七負例拒絕，scope限完整byte-layout。
+SDK data reviewer也重新從pinned platform source解析，沒有只信receipt推導欄位。
+
+CMF spec轉CONFORMED，但原data semantics／完整driver ABI／hardware runtime仍unknown。
+CTV235 bytes仍待審，11-byte未命名payload不自動當已完成source；主程式C與全EXE六gate仍未完成。
+既有C19／RNG46／SDK instruction5148及12-byte重疊保持，新增2406是data不是額外instructions。
+正確source按使用者要求提交GitHub，原版assets、vendor source snapshot、OBJ／MZ／IDA資料庫不提交。
+正常Go／game pack、Issue #4暫停及十三項scratch保持；本輪source／schema與最終diff核對後commit＋push。
+
+收尾cmf-source-publish-verification-r1重核最終r3／r4 source hashes及七負例，README／索引／語法／
+UID/GID通過，research root-owned及Markdown目錄0；goal-audit-r10維持四C19 bytes及六個未完成gates。
+source group和原data區段完全分離，未使用原始objects；CMF data2406 bytes不重算instructions。
+route再查仍命中spec gate及platform-spec-first，snapshot hash與派生等級保留。一次性container清除，
+其他專案新增的wizardry／wolong執行container保持，沒有新image或發行包。

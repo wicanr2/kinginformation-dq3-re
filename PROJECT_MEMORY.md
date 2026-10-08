@@ -20,7 +20,11 @@
 > 剩餘7-byte C在MZ入口code segment，產品角色未確認。
 > SDK正確ASM指令來源已保存，Wasm r2只從文字ASM／EQU重建5148 bytes，兩份source／OBJ／MZ／fixup相同。
 > 12 bytes與三C helper重疊，新唯一指令來源5136；總5201只屬局部source-instruction reproduction。
-> ORG省略2641 data bytes，written mask嚴格排除，兩個完整driver仍未完成。下一步四data gaps與完整module spec。
+> CMF byte-layout已由ASM／EQU／typed JSON完整重建5296 bytes，data2406 bytes恢復，兩次OBJ／MZ相同。
+> CTV仍省略235 data bytes，含未知11-byte payload；其完整source及主程式C仍未完成。
+> 七個handler tables及100-byte IRQ stack已核對，CTV DMA seed6B06依固定成熟模擬器E2契約推導083A。
+> E2屬platform-contract derivation，非原版硬體runtime／wall-clock parity，原始初值不改。
+> 下一步CTV typed data／未知payload及其完整module spec，CMF原始fields／完整runtime ABI仍unknown。
 > 其他八個SDK導航候選仍未解外部frame，不重跑134組；主程式compiler與完整來源仍unknown。
 > 保留entry／stack／side effects；Go／pack及Issue #4保持。
 

@@ -12,6 +12,11 @@ ORG省略的資料缺口不計source coverage，完整driver source仍未完成�
 [`tools/sdk_instruction_source_manifest.json`](../tools/sdk_instruction_source_manifest.json)列已驗證
 instruction範圍與省略data；[`tools/verify_sdk_instruction_sources.py`](../tools/verify_sdk_instruction_sources.py)
 從提交的ASM／EQU source重建，核對實際OMF written mask、FIXUPP與每個原始instruction byte。
+[`tools/review_sdk_data_regions.py`](../tools/review_sdk_data_regions.py)核對七個handler tables、
+CTV DMA seed與CMF IRQ stack的原始初值／consumer，保留未知payload及平台契約推導等級。
+CMF完整byte-layout的typed來源為[cmfdrv_data.json](../re/match/cmfdrv_data.json)，
+[verify_cmf_source_module.py](../tools/verify_cmf_source_module.py)從ASM／EQU／JSON完整重建；
+data只能落在兩個已審non-code區域，fields含未知語意，沒有機器指令data array。
 
 > 2026-10-08新增完整Goal：使用者指定「完成 dq3 matching decompliation」，並選定
 > 主程式以C精確匹配，組語僅用於已確認的底層常式。最終由原碼乾淨重建整個EXE並
@@ -74,6 +79,63 @@ instruction範圍與省略data；[`tools/verify_sdk_instruction_sources.py`](../
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## CMF byte-layout source spec：CONFORMED
+
+此spec先完成READY審查，再由cmf-source-module-r3／r4兩個新容器從repo ASM／EQU／typed JSON
+完整重建5296 bytes；source／generated ASM／OBJ／MZ相同，全段materialization與bytes通過。
+七個缺值／overlap／越界／落code／錯handler／未READY／字串注入負例拒絕，scope限byte-layout。
+
+本spec只批准原版CMFDRV.ASM的byte-layout重建。原始EXE115282 bytes／SHA2565178fdc8，
+SDK module整段來源與完整hash沿用下節7789-byte原版身分證據。IDA9.4 linear23920..24DD0，
+logical13920..14DD0，file14C90..16140，整段5296 bytes。
+
+code source2890 bytes保持既有逐指令驗證；另外2406 bytes只按已審data區段還原：
+
+- offset0003..0009：FMDRV零結尾signature，原始字串／module metadata確認。
+- offset0009..0229：header與mutable state的原始byte初值。字段用途未知，不補猜原始C型別或合理初值。
+- offset0229..0285：五個near handler表，8／4／16／15／3 entries，由原始index writer、gate、CALL consumer與instruction head閉合。
+- offset0285..0905：原始parameter/index data，含DI+285／305等consumer；個別字段用途未知，保留為typed byte初值。
+- offset12D3..1337：50-word IRQ stack reserve，原始zero初值。IRQ writer把SS設CS並SP設1337，exclusive end及100-byte範圍閉合。
+
+data來源只描述ASCII、u8／u16值及符號handler references；禁止跨入任何已批准instruction range。
+build輸入僅repo ASM、EQU與typed JSON，不用原始EXE／OBJ／SDK bytes作build input。
+原始EXE只由verifier讀取作比較。輸出CODE與data覆蓋整段，含symbol實際relocations，
+逐全部5296 bytes比較，兩個新容器獨立source／OBJ／MZ一致後才能CONFORMED。
+
+失敗模式為缺field、錯kind／值範圍、offset gap／overlap、錯handler label、落入code、
+原始input hash不同或任一byte DIFF，一律拒絕。字段semantics、source language／compiler、
+硬體wall-clock、driver所有API與正常campaign仍unknown，這些不由本layout spec升格。
+此工作不改Go／pack、玩家路徑、UI或save。完整原版硬體行為另依成熟平台契約，不為data初值深挖timer。
+
+evidence review：CMF header及arrays位於原入口JMP跨越的data區域，原data xrefs／indexed
+consumers與five dispatch tables一致；兩個ASM code區段及100-byte stack獨立，沒有機器指令混入data。
+typed-data DRAFT prototype已在cmf-data-prototype-r1從source重建完整5296 bytes相同。
+READY只對此固定module與byte-layout生效，原始data含未命名字段，沒有宣稱全部產品語意已解。
+
+目前Source bytes：CMF整段5296包含2890 instructions及2406 data；不重複新增既有2890 code。
+CTV仍省略235 data bytes，含未命名11-byte payload，不能由CMF完成宣稱兩driver皆完成。
+whole driver byte-layout重建通過不等於全EXE、原版正常campaign或全部data semantics已完成。
+
+CTV表slot6的6B06初值已保留。原版初始化把CS:0091地址換算為DMA目的地，
+輸入06／6B至DSP E2；依[固定DOSBox Staging來源](https://github.com/dosbox-staging/dosbox-staging/blob/d8271efbccc7d0d6c0db60fb897ca937a80c7c6d/src/hardware/audio/soundblaster.cpp#L2069)
+的reset state及E2 table，推導DMA輸出3A／08，即083A。它與原版2373A的比較值一致；
+此結果屬mature-emulator platform-contract derivation，不冒稱原版實機或wall-clock parity。
+因此slot6不是應改成有效code pointer的壞資料，原始literal及可變slot角色仍照實保存。
+地址取用及DMA間接writer解釋了CPU直接xref沒有對應完整writer的現象。
+CMF timer／IRQ的標準行為也依平台契約，這輪不深入逐週期硬體RE。
+
+本機收據在既有full-goal-r1下：
+
+- `dsp-e2-platform-r1/receipt.json`與完整source快照：固定commit、SHA256及source解析出的E2結果。
+- `sdk-data-review-r2.json`：七handler tables、CTV mutable seed、IRQ stack及推論等級。
+- `cmf-data-prototype-r1/receipt.json`：READY之前的可丟棄typed-data prototype。
+- `cmf-source-module-r3/receipt.json`、`cmf-source-module-r4/receipt.json`：最終完整CMF source／data／fixup重建。
+- `cmf-source-module-verification-r1.json`：七data-layout負例與原始objects未作build輸入。
+- `cmf-source-publish-verification-r1.json`及`goal-audit-r10.json`：最終source hash／producer／schema、七負例、source入口與UID核對，完整Goal未完成。
+
+build與驗證入口見上方[CMF source verifier](../tools/verify_cmf_source_module.py)。初值來自
+已定hash的原始SDK／EXE bytes，未命名字段保留unknown，不以0或C remake猜補。
 
 ## SDK 語意指令來源重建
 

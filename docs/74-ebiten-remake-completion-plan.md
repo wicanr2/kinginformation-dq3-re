@@ -18,7 +18,9 @@
 > fresh IDA80函式／2175 heads與原始定位保持；object重連不算原碼，ASM／data source仍待還原。
 > 新SDK ASM／EQU來源從文字重建5148 instruction bytes，兩次完整OBJ／MZ／fixup相同；2641 data bytes未還原。
 > 12 bytes與三C重疊，新唯一指令5136；完整module／正常campaign未驗，不能宣稱完成。
-> 完整Goal六gate仍未證實，active。下一步四data gaps及完整module spec，不重跑已排除組合。
+> CMF完整ASM／EQU／typed-data recipe現可重建5296 bytes，兩次source／OBJ／MZ同值；data2406 bytes還原。
+> CTV仍缺235 data bytes，E2 mutable seed保留原值、平台契約推導083A，不宣稱原硬體parity。
+> 完整Goal六gate仍未證實，active。下一步CTV typed data／未知payload，不重跑已排除組合。
 > 唯一目前狀態在CONTEXT，
 > 證據與重生入口[docs/25](25-match-progress.md)，驗收契約tools/matching_goal_contract.json。
 

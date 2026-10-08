@@ -32,6 +32,8 @@
 | [SDK原版IDA refs](../ida_matching_module_refs.py) | 固定whole-module proof後匯出原名、bytes、functions、typed refs及startup；保留library metadata與原始IDA定位 |
 | [Wasm revision準備](../prepare_watcom16_asm.py) | 從已驗證完整archive clone r1 payload、加入官方Wasm，763檔；r1 inputs不修改 |
 | [SDK指令source重建](../verify_sdk_instruction_sources.py) | [範圍manifest](../sdk_instruction_source_manifest.json)核對repo ASM／EQU、實際written mask與FIXUPP；5148 bytes exact，ORG data不計source |
+| [SDK data審查](../review_sdk_data_regions.py) | 七個handler tables及IRQ stack閉合；CTV slot6原始6B06保留，E2結果由固定成熟模擬器source契約推導 |
+| [完整CMF source/data](../verify_cmf_source_module.py) | code／EQU與[typed data](../../re/match/cmfdrv_data.json)重建5296 bytes，code/data範圍分離；field semantics仍unknown，不用原始objects |
 
 ## 映像與輸入
 
@@ -98,6 +100,12 @@ SDK source在r2 image跑 `python3 /repo/tools/verify_sdk_instruction_sources.py`
 加 `--layout /out/sdk-module-layout-r1.json --output /out/<新build目錄>`。
 每次獨立容器、repository唯讀、明確output可寫；verifier不允許DB／data／include／macro代替指令。
 產出的MZ只有指令區段可用作局部oracle；原版data仍缺，不能作完整driver或交付包執行。
+
+完整CMF recipe用r2 image執行 `python3 /repo/tools/verify_cmf_source_module.py`
+加 `--layout /out/sdk-module-layout-r1.json --output /out/<新CMF來源重建目錄>`。
+它只從repo code／EQU／typed JSON編譯，驗證全5296 bytes；原EXE僅作比較，原SDK objects不作build inputs。
+data schema拒絕missing／overlap／落入code／錯handler與value range。這是module byte-layout，
+不代表全EXE完成或可獨立啟動的遊戲封包，後續仍按完整Goal recipe與正常oracle驗收。
 
 從專案根目錄建置MSC映像，stdin context不含原版或compiler：
 

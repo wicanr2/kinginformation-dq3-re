@@ -12,13 +12,15 @@
 | [sub_e6b9.asm](sub_e6b9.asm) | sub_1E6B9，linear1E6B9..1E6C9 | 七條語意指令，16 bytes | 局部RNG核心；不證明原版來源語言或完整campaign |
 | [sub_e6c9.asm](sub_e6c9.asm) | sub_1E6C9，linear1E6C9..1E6E7 | 完整有界RNG，30 bytes | BX入參及AX／DX結果已局部驗證；完整Goal底層資格仍需分類 |
 | [ctvmem_code.asm](ctvmem_code.asm)與[encoding常數](ctvmem_constants.asm) | CTVMEM driver，linear22F60..2391D | 959個語意指令，2258 bytes | 235 bytes資料以ORG省略，完整driver尚未還原 |
-| [cmfdrv_code.asm](cmfdrv_code.asm)與[encoding常數](cmfdrv_constants.asm) | CMFDRV driver，linear23920..24DD0 | 1216個語意指令，2890 bytes | 2406 bytes資料以ORG省略，完整driver尚未還原 |
+| [cmfdrv_code.asm](cmfdrv_code.asm)、[encoding常數](cmfdrv_constants.asm)與[typed data](cmfdrv_data.json) | CMFDRV driver，linear23920..24DD0 | 完整byte-layout，5296 bytes | code與2406 data從來源重建相同；原始field semantics及完整runtime硬體parity未知 |
 
 其他C檔與rng_adapter.asm是研究候選。它們有DIFF、REFUSED或僅register/state等價的結果，
 不計精確匹配。原版OBJ、EXE、SDK、IDA database與生成封包不提交。
 
 兩個driver的ASM只保存語意指令與EQU常數，沒有原版code array或DB拼接。
 ORG所保留的空間沒有還原資料，不能直接當成可執行的完整driver。
+CMF完整recipe以[verifier](../../tools/verify_cmf_source_module.py)把已審typed data放回兩個data區段，
+從source完整重建5296 bytes；不使用原版objects。CTV仍缺235 data bytes，維持partial instruction source。
 兩次source／OBJ／MZ／FIXUPP重編一致，逐原始指令位置匹配5148 bytes。
 其中12 bytes與上表三個C helper重疊；新增唯一指令來源為5136 bytes，不能重複計數。
 
