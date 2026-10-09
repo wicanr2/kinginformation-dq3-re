@@ -2655,3 +2655,18 @@ goal-audit-r17保持八C104及六未完成gates。一次性容器清除，未動
 - 最終goal-audit-r24核對23份C／277 bytes，主程式265、SDK12，六個完整Goal gate未證實。unique source byte-layout13480只作局部去重統計。輸出在work/matching-decomp-20261008-r1/full-goal-r1/：writer-source-r3／r4、writer-abi-oracle-r1、writer-verification-final.json、inventory-ida-r7.json及goal-audit-r24.json；重生沿tools/build/README。
 - --rm／network none／資源限制／UID1000:1000保持，沒有建新image；root-owned3121完整路徑hash與零.md目錄保持，source／OBJ／JSON／tar抽查皆1000:1000。新Go只作tools下原版局部oracle，無production Go raw-ID新增。提交前diff與DQ3容器清理核對；原版、database、binary、engine snapshot與使用者資料不入Git。
 - 下一步暫存狀態的保存／恢復與caller ABI；已閉合AX保留不重開，完整EXE與原版compiler／全ABI仍未完成。commit／push結果保存本機full-goal-r1/writer-post-push.json，無新發行包。
+
+## 2026-10-09：保存／恢復 ABI 的可撤回 compiler prototype
+
+- 依復古逆向／IDA9.4路由續行，沿用文件職責契約；使用grilling釐清compiler分支。使用者明確選擇「先做可撤回的 compiler 擴充 prototype」。C主程式與全EXE逐byte一致的完成標準維持，正式採用未獲批准。本輪不改Go／pack、Issue #4或存檔範圍。
+- fresh state-restore-ida-r1及register-preserve-ida-r1保存原始sub_15037的23-byte word交易與sub_1E8A9的20-byte七暫存器保存。輸入EXE路徑、大小115282、SHA-256 5178fdc8及IDA linear10000基準保持；原名、bytes與typed xrefs不改。DS:259C產品用途、原始C型別與完整callee ABI未知。
+- 新probe_matching_call_preservation.py固定既有WCC／cdecl-size-calls-unframed做三控制，void交易33、AX結果交易34、暫存器外層16 bytes均DIFF。原callee明確改BP，不能移除真實clobber迎合local frame。固定官方source commit e2856866的x86reg.c與x86proc.c另證實void預設return register及BP排除規則，全文／hash留watcom-codegen-source-r1。
+- 新prototype_c_abi_stage.py是限界C前端與獨立產碼stage，未修改官方wcc。純API只收C文字與opt-in profile，從typed IR產生symbolic ASM，沒有原版地址、EXE、code array或object輸入。scoped-word-restore-v1及exact-gpr-envelope-v1只支援docs/25列出的u16／void子集與ABI前提；未知語法、型別與契約拒絕。
+- 新run_c_abi_stage_prototype.py串接固定Wasm及vendor WLINK，嚴格檢查OMF written mask、actual FIXUPP、typed far-call target與MZ相對位置。synthetic callee／DATA不讀原EXE；原版只在主控制產物全部建立後作比較，不匹配立即失敗。
+- c-abi-stage-prototype-r6／r7三控制23／23／20 bytes全部exact，去重兩原版單元43 bytes。四個source／ABI變更DIFF、八個前端拒絕、符號改名通過；正式coverage增量0，兩profile未加入正式manifest，先前17-byte loop prototype未採用。
+- --repeat-reference核對完整receipt及24份C／IR／ASM／完整OBJ／CODE／fixture ASM／fixture OBJ／MZ逐byte相同。r2／r3早期OBJ差異由THEADR絕對來源路徑造成，改固定容器內/tmp/dq3-c-abi-stage-v1/<case>/後重生，不patch或遮罩OBJ。原始WLINK map只差建立時間與耗時，其他行及定位同值，兩份原始map與hash保留。
+- OBJ損壞一byte、map symbol改動、receipt欄位改動三負例均REFUSED，收據c-abi-repeat-negative-r1.json。最終prototype receipt SHA-256 5f1b9c437b1a1b8855515a014f2fa1dc1e8ab672540133fff6b0d83ca95bab62；完整二次重編收據c-abi-stage-prototype-r7/repeat-comparison.json。r4／r5及手動比較保留為加入repeat CLI前的歷史artifact。
+- abi-stage-baseline-r1／r2以未改WCC在兩新容器重編正式22候選，20案262 bytes exact、兩個舊DIFF保持；source／OBJ／code／fixup／dispatch證據與writer-source-r3相同。加未改MSC三案15 bytes，goal-audit-r25核對正式23份C／277 bytes，主程式265、SDK12，四種正式profile不變。audit SHA-256 7a91c5fe5983c305c64249e23c904565a8d24ec1e7363b0cf873c7ee956e2726；六個完整Goal gate未證實。
+- docs/25新增DRAFT規格及證據表，三份工具同時掛入tools/build/README，re/match來源入口明列prototype與正式來源分開。CONTEXT唯一狀態表、PROJECT_MEMORY及docs/74同步；matching C索引45筆與IDA r7不變，unique source byte-layout13480只作局部統計。原callee動態驗證、DS／stack alias、完整C語法及全layout仍未閉合，沒有新玩家路線或發行包。
+- 全部使用既有image、--rm、network none、資源限制與UID1000:1000；root-owned3121的完整路徑hash f67aca2720f9299b8b3301b0d788969e167ceba200d8e3e5e338eaa48351cb8e保持，零.md目錄。新source／OBJ／MZ／JSON抽查1000:1000，c-abi-stage-hygiene-final.json保存結果；提交前diff與DQ3容器清理核對，13項使用者未追蹤資料保留。
+- 本機收據均在work/matching-decomp-20261008-r1/full-goal-r1/；重生沿tools/build/README保存／恢復prototype段落。原版、database、生成OBJ／MZ與私有work不入Git。下一步審兩profile的ABI前提與原callee動態驗證，再決定正式採用；commit／push結果保存本機c-abi-stage-post-push.json。

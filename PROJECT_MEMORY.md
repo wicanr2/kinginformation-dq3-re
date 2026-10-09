@@ -1,16 +1,18 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-09：最新AX-live writer10 bytes與partial-byte consumer40 bytes有限CONFORMED；完整兩C來源鏈50 bytes。
-> writer-source-r3／r4完整source／OBJ／listing／CODE、actual FIXUPP與dispatch metadata一致。
-> goal-audit-r24核對23份C／277 bytes，主程式265、SDK12；十二個source／backlink負例DIFF或REFUSED。
-> dosgolem局部65536 AX＋384邊界向量、256完整memory抽樣通過；丟棄AX控制65568個返回AX差異。
-> 正式caller／callee code hash等於局部runtime所用兩段；只覆蓋mask0，其他action分支僅靜態，不當正常玩家路線。
-> AX-LIVE-CFE8回填舊9-byte DIFF並自動驗證；新union是AX表示法，原始struct／C型別／完整ABI未知。
-> scalar callee52 bytes DIFF，union40 bytes exact。四種profile未改，原版compiler仍unknown。
-> fresh IDA r7保留828函式／29979 heads／81854 code bytes與原始names／chunks／bytes／typed xrefs。
-> 新十一筆註記，matching C索引45筆；source byte-layout13480僅局部統計，六個Goal gates未完成。
-> 精確dosgolem engine inputs61份已存私有tar；Go／pack與Issue #4範圍保持，沒有新campaign或發行包。
-> 下一步暫存狀態保存／恢復與caller ABI，不重開AX保留、舊134組或未支援BP／LEA；自訂compiler未採用。
+> 2026-10-09：使用者選擇可撤回的compiler擴充prototype，正式採用尚待審查。
+> 限界C stage從C／ABI產生typed IR及symbolic ASM，串接固定Wasm／WLINK；不讀原EXE產碼、不修改官方wcc。
+> word保存／恢復與七暫存器保存兩profile，三份控制23／23／20 bytes全部exact，去重兩單元43 bytes。
+> c-abi-stage-prototype-r6／r7完整receipt與24份來源／IR／ASM／OBJ／CODE／fixture／MZ同值。
+> 四個變更DIFF、八個拒絕及符號改名通過；map只差建立時間／耗時，原始紀錄與hash保留。
+> 早期OBJ差異來自THEADR來源路徑，已改固定容器內路徑，未遮罩或patch OBJ。
+> abi-stage-baseline-r1／r2重編正式22個WCC候選，與先前source／OBJ／code／fixup相同。
+> goal-audit-r25維持正式23份C／277 bytes，主程式265、SDK12；prototype增量0，四種正式profile不變。
+> AX-live writer／consumer及mask0局部dosgolem65920向量、256完整memory抽樣成果保持，不升格正常玩家路線。
+> IDA r7的828函式／29979 heads／81854 code bytes與matching C索引45筆保持；source byte-layout13480只作局部統計。
+> 下一步審兩profile的DS／stack／完整callee ABI前提及動態驗證，再決定是否正式採用。
+> 完整C語法、原始C型別／compiler、source-unit／全layout及六個Goal gates未完成，17-byte loop prototype未採用。
+> Go／pack、存檔及Issue #4範圍保持，沒有新campaign或發行包；舊134組及已閉合切片不重開。
 > 現況以CONTEXT唯一狀態表、docs/74與docs/25為準。
 
 以下保存2026-10-08的研究快照，不取代CONTEXT唯一目前狀態表。

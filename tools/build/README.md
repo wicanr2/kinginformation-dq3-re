@@ -23,6 +23,8 @@
 | [邊界分級](../review_matching_boundaries.py) | typed flow／實際DOS service writer與SI取址consumer分級，保留DS條件、未知DI／field與未批准source-unit範圍 |
 | [多入口CFG](../matching_cfg_candidates.py) | 沿原始typed edges追到return／未解successor，保留外部entry與共用code，不自動併成C source unit |
 | [Watcom16 register控制](../run_watcom16_abi.py) | 六個instruction-free C pragma控制；固定source path及-zld確保真實OBJ重現。實驗exact不自動加入正式coverage |
+| [保存／恢復C控制](../probe_matching_call_preservation.py) | 固定WCC的word狀態交易、AX結果與七暫存器保存三控制；來源及DIFF結果保留，不計正式覆蓋 |
+| [限界C ABI stage](../prototype_c_abi_stage.py)與[驗證driver](../run_c_abi_stage_prototype.py) | 使用者批准的可撤回prototype；C→typed IR→symbolic ASM→固定Wasm／WLINK，原EXE只作比較。兩profile均未正式採用 |
 | [Watcom原始範圍來源](../watcom_matching_manifest.json) | 配合run_watcom16_abi.py的candidate模式，核對完整IDA範圍、source hash及原始bytes；主程式角色指標查詢／48-byte記錄writer及SDK AX store exact，fill／search仍DIFF |
 | [WCC有號位移控制](../verify_watcom_signed_fixup.py) | vendor WLINK連結實際C object與synthetic DATA，保留map的frame bias；六無效位移拒絕，不當原版layout |
 | [WCC呼叫重定位](../omf_call_fixups.py)與[vendor控制](../verify_watcom_call_fixups.py) | 明列DS／near／far symbol及MZ-relative地址，實測forward／backward與16:16 CALL／MZ segment relocation；合成fixture不計來源覆蓋 |
@@ -156,6 +158,36 @@ docker build -f tools/build/Dockerfile.inertia \
 執行前確認每個host掛載來源存在且型態正確，檢查輸出UID/GID；輸出參數必須指向新目錄。
 所有執行使用`--rm --network none`、資源限制及目前UID/GID。原版與compiler唯讀掛載，
 只有指定研究輸出可寫。完整指令與位址換算見docs/25；收尾核對本輪容器及輸出擁有權。
+
+### 保存／恢復 compiler prototype
+
+規格、原始地址與限制見[docs/25的DRAFT](../../docs/25-match-progress.md)。
+沿用r2 image；原版及repository唯讀，只有明確研究輸出可寫。
+先在相同容器設定執行`python3 /repo/tools/probe_matching_call_preservation.py`
+加`--output /out/<新控制目錄> --ida-inventory /out/inventory-ida-r7.json`，產生固定WCC控制。
+接著在全新容器執行限界stage：
+
+```bash
+test -d /home/anr2/dq3 && \
+test -d /home/anr2/dq3/work/matching-decomp-20261008-r1/full-goal-r1 && \
+timeout 180s docker run --rm --network none --memory 1g --cpus 1 --pids-limit 128 \
+  --user "$(id -u):$(id -g)" \
+  --mount type=bind,src=/home/anr2/dq3,dst=/repo,readonly \
+  --mount type=bind,src=/home/anr2/dq3/work/matching-decomp-20261008-r1/full-goal-r1,dst=/out \
+  -w /out dq3-watcom16:2.0-20261001-r2 \
+  python3 /repo/tools/run_c_abi_stage_prototype.py \
+  --controls /out/<新控制目錄> --ida-inventory /out/inventory-ida-r7.json \
+  --output /out/<第一份prototype>
+```
+
+第二次用相同命令與新output，另加`--repeat-reference /out/<第一份prototype>`。
+每次必須使用新容器；固定容器內組譯路徑保留完整THEADR，不patch OBJ。
+driver核對三個正控制、十二個變更／拒絕控制及符號改名；原版不匹配立即失敗。
+`repeat-comparison.json`核對完整receipt與24份來源／IR／ASM／OBJ／CODE／fixture／MZ。
+WLINK map允許的差異只有建立時間與耗時，原始map與兩份hash保留。
+兩個profile只支援docs/25列出的u16／void子集及ABI前提；不自動遷入正式manifest或coverage。
+正式回歸另沿既有`run_watcom16_abi.py`與`matching_goal_audit.py`入口，不以prototype取代。
+輸出前後核對UID/GID，收尾檢查容器清理及工作樹，原版、OBJ、MZ與database只留本機。
 
 ## 歷史工具
 

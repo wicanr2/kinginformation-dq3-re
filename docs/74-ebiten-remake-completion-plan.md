@@ -2,20 +2,18 @@
 
 > 2026-10-09現行Goal：完成 dq3 matching decompliation。使用者已選主程式C精確匹配，
 > ASM僅用於已確認底層。全EXE由可讀來源乾淨重建且逐byte一致，raw code／db拼接不算完成。
-> 最新兩份C／50 bytes有限CONFORMED：1CFE8的AX-live零值writer與1D2AB的partial-byte consumer。
-> union表達AX整字／AL，保留AH；是新C表示法，不推定原始struct或原始C型別。
-> writer-source-r3／r4從正式22候選重編，完整source／OBJ／listing／CODE、actual FIXUPP及dispatch metadata一致。
-> goal-audit-r24核對23份C／277 bytes，主程式20份265、SDK3份12；十二個source／回鏈負例DIFF或REFUSED。
-> 局部dosgolem65920向量、256完整memory抽樣通過；丟棄AX控制65568個返回AX差異。
-> 正式caller／consumer code hash等於已執行的兩段；只驗mask0，其他action分支僅靜態，不升格正常玩家可達性。
-> AX-LIVE-CFE8自動回填舊9-byte DIFF；scalar consumer52 bytes仍DIFF，union完整40 bytes exact。
-> fresh IDA r7保留828函式／29979 heads／81854 code bytes及原名／chunks／segment／bytes／typed xrefs。
-> 新十一筆靜態註記自動合併，matching C索引45筆；4455函式外heads與完整source-unit分母未閉合。
-> callback targets／table extent／有效index／runtime DS、完整ABI與data/layout未知；原版compiler仍unknown。
-> 四種profile保持，17-byte自訂compiler未採用；舊134組、未支援BP、LEA與其他已排除控制不重跑。
-> 首個C PROC的ENDP後NOP、17跨界CFG候選與全EXE來源重建未完成；六個完整Goal gate仍未證實。
-> video／SDK／MZ byte-layout與literal6B06等原值保持，unique source byte-layout13480不作全EXE比例。
-> 下一步暫存狀態的保存／恢復與caller ABI。本輪不改Go／pack、存檔或Issue #4範圍，沒有新campaign或發行包。
+> 使用者已選可撤回的compiler擴充prototype，正式採用尚待審查。
+> 限界C前端／產碼stage串接固定Wasm／WLINK；兩profile驗證word保存／恢復與七暫存器保存。
+> 三份C控制23／23／20 bytes全部exact，去重兩單元43 bytes，正式coverage增量0。
+> c-abi-stage-prototype-r6／r7完整receipt與24份來源／IR／ASM／OBJ／CODE／fixture／MZ同值。
+> 四個變更DIFF、八個拒絕及符號改名通過；原始map只差建立時間與耗時，未遮罩OBJ。
+> abi-stage-baseline-r1／r2以未改WCC重編正式22候選；完整source／OBJ／code／fixup與先前保持。
+> goal-audit-r25維持正式23份C／277 bytes，主程式20份265、SDK3份12；四種正式profile不變。
+> AX-live writer／consumer及mask0局部dosgolem65920向量、256完整memory抽樣成果保持，正常玩家可達性不升格。
+> IDA r7的828函式／29979 heads／81854 code bytes、matching C索引45筆與unique source byte-layout13480保持。
+> 完整callee ABI、runtime DS／stack alias、原始C型別／compiler、4455函式外heads及全source-unit／layout未知。
+> 六個完整Goal gate未證實，17-byte loop prototype未採用；舊134組、LEA及已閉合切片不重開。
+> 下一步先審兩profile的ABI前提及原callee動態驗證，再決定正式採用。Go／pack、存檔與Issue #4範圍保持，沒有新包。
 > 唯一現況表在CONTEXT；證據與重生入口[docs/25](25-match-progress.md)，契約tools/matching_goal_contract.json。
 
 > 2026-10-08：依使用者授權啟動 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)

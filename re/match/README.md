@@ -39,6 +39,10 @@
 不計精確匹配。原版OBJ、EXE、SDK、IDA database與生成封包不提交。
 
 二十三個完整C函式共277 bytes，其中主程式二十個265 bytes，SDK三個12 bytes。
+保存／恢復的[限界C ABI stage](../../tools/prototype_c_abi_stage.py)及
+[驗證driver](../../tools/run_c_abi_stage_prototype.py)另作可撤回prototype，未正式採用。
+三份控制匹配兩個原版單元43 bytes，覆蓋率增量0；規格與限制見[研究記錄](../../docs/25-match-progress.md)，
+重生用[隔離工具鏈入口](../../tools/build/README.md)的保存／恢復prototype段落。
 sub_9834的pragma只指定呼叫慣例，不嵌入組語指令；兩次獨立編譯及實際OMF重定位一致。
 sub_37f9使用manifest明列的速度最佳化／停用重排profile，完整48 bytes及三個fixup均相同。
 兩個呼叫來源以原始CS frame及typed IDA xref核對code symbol；遠呼叫另核對MZ segment word位置。

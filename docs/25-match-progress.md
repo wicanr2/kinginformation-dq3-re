@@ -29,6 +29,8 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
 > 現行C本體23個／277 bytes；最新AX保留的零值writer10 bytes與partial-byte consumer40 bytes。
+> 使用者另批准可撤回的compiler擴充prototype。兩個ABI profile的三份C控制匹配兩個單元43 bytes，
+> 尚未正式採用，覆蓋率增量0；證據、限制與重生入口見下節。
 > 先前暫存器入參、word writer、有號累加、近／遠呼叫及MZ relocation成果保持；最新驗收見2026-10-09切片。
 > 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
 > 主程式C共265 bytes；7-byte來源產品角色仍未確認，其他query／writer／call來源只按已審靜態範圍計數。1CFE8舊零store的AX liveness已解；填表、搜尋、bitmask與LEA地址參數仍不匹配，BP整數參數受固定compiler ABI限制。
@@ -86,6 +88,106 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 2026-10-09：保存／恢復 ABI compiler prototype，DRAFT
+
+使用者明確選擇「先做可撤回的 compiler 擴充 prototype」。本次只驗證兩類ABI與既有23個匹配常式，
+主程式C、底層ASM資格及完整EXE逐byte一致的完成標準維持。正式採用仍需審查；
+這兩個profile沒有加入正式manifest，也沒有與先前17-byte counted-loop prototype合併。
+
+### 原版證據與固定compiler控制
+
+輸入為`assets_raw/DQ3.EXE`，115282 bytes，SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA Pro9.4的`state-restore-ida-r1.json`、`register-preserve-ida-r1.json`保存原名、bytes、
+caller windows與typed xrefs；完整導航沿用`inventory-ida-r7.json`。以下範圍右端不含，
+IDA linear基準10000，logical=`linear-10000`，file=`logical+1370`。
+
+| 原始身分 | IDA linear | logical | file | confirmed靜態契約 |
+|---|---|---|---|---|
+| sub_15037 | 15037..1504E | 5037..504E | 63A7..63BE | 保存DS:259C word，寫1，DI=013A後far CALL111B:0264，再恢復原word及near RET；23 bytes |
+| sub_1E8A9 | 1E8A9..1E8BD | E8A9..E8BD | FC19..FC2D | 依AX、BX、CX、DX、SI、DI、BP順序保存，far CALL111B:07CF，反序恢復及near RET；20 bytes |
+
+原始bytes分別為`ff369c25c7069c250100bf3a019a64021b118f069c25c3`與
+`505351525657559acf071b115d5f5e5a595b58c3`，MZ segment word相對位置分別16與10。
+原始入口、暫存保存、狀態writer、callee及恢復consumer的指令鏈已閉合。
+DS:259C的產品用途、原始C型別與完整callee副作用仍為unknown；兩份C簽名只是待審表示法。
+sub_21414在IDA linear21433明確寫BP。不能刪除真實BP clobber來遷就compiler的local frame。
+
+[固定compiler控制](../tools/probe_matching_call_preservation.py)使用既有WCC與
+`cdecl-size-calls-unframed`，輸出`call-preservation-controls-r1/receipt.json`：
+
+| C控制 | 固定WCC | 原版 | 結果 |
+|---|---|---|---|
+| void狀態交易 | 33 bytes | 23 bytes | DIFF；使用BP local frame，恢復時覆寫AX |
+| 捕捉AX結果後恢復 | 34 bytes | 23 bytes | DIFF；仍使用BP local frame |
+| 七暫存器保存外層 | 16 bytes | 20 bytes | DIFF；只保存BX、CX、DX、SI、DI，缺AX與BP |
+
+官方codegen固定commit為`e28568669775a7119f381f3b37d21745d8afcfb6`，
+本機全文與hash保存在`watcom-codegen-source-r1/manifest.json`。
+[x86reg.c的MustSaveRegs](https://github.com/open-watcom/open-watcom-v2/blob/e28568669775a7119f381f3b37d21745d8afcfb6/bld/cg/intel/c/x86reg.c#L278-L315)
+在空return set時排除預設word return register；
+[x86proc.c的序言](https://github.com/open-watcom/open-watcom-v2/blob/e28568669775a7119f381f3b37d21745d8afcfb6/bld/cg/intel/c/x86proc.c#L998-L1003)
+在無SP frame或有SP alignment時排除BP保存。這兩項排除為confirmed上游原碼事實，
+不據此推定原版使用Watcom。兩檔SHA-256依次為
+`7a11345590091e7ab5d1d02415e2648168847f7c538d6a5d9d26e62057795140`、
+`04eb46923430b49214436778d6bc050a4084de019ed6fd7cabe4fa7341d02e65`。
+
+### 限界C stage與驗證結果
+
+[prototype_c_abi_stage.py](../tools/prototype_c_abi_stage.py)是獨立的限界C前端與產碼stage，
+串接固定官方Wasm及WLINK，未修改官方wcc binary。純API只接收C文字與profile，
+不接收EXE、原始地址、bytes或compiler object。解析後建立typed IR，再生成symbolic ASM。
+輸入ABI宣告不含指令；輸出禁止DB／DW／DD／INCBIN／ORG／INCLUDE／MACRO。
+原版EXE只由[驗證driver](../tools/run_c_abi_stage_prototype.py)在主控制全部組譯及連結後讀取作比較。
+真正的OMF FIXUPP由既有嚴格resolver處理，另外以synthetic callee／DATA經vendor WLINK獨立核對。
+
+| opt-in profile | 支援契約 | 目前限制 |
+|---|---|---|
+| scoped-word-restore-v1 | 一個volatile u16的snapshot→常數寫入→far CALL→恢復；可捕捉並返回AX | near無參入口、零或一個常數暫存器參數；DS／SS保持、callee平衡stack及資料不與保存stack別名是ABI前提 |
+| exact-gpr-envelope-v1 | 一個far CALL，依明示callee clobber與caller保存契約產生保存集合 | opt-in政策把void AX與BP也納入保存；只支持列出的16-bit暫存器，不代表完整FLAGS／segment／interrupt ABI |
+
+前端只支援`unsigned`的16-bit目標型別與`void`、明示global、有限scalar statements及
+instruction-free aux宣告。未知語法／profile、shadowing、未宣告使用、型別衝突與超界常數拒絕。
+它不是完整C compiler；未驗證的C語法與ABI不得經這兩個profile進正式build。
+
+`c-abi-stage-prototype-r6`／`r7`在兩個全新r2容器通過：
+
+- 三份原C控制全部byte exact，輸出依次23、23、20 bytes，MZ位置及原始typed far-call target一致。
+  前兩份對應同一個原版單元，去重後是兩單元43 bytes。正式C覆蓋增量0。
+- 四個source／ABI變更控制均DIFF：改狀態值、DI參數、允許AX clobber、宣告callee保存BX。
+- 八個拒絕控制通過：指令pragma、缺原值恢復、u16超界、global shadowing、未知profile、
+  function／object衝突、先用後宣告、未明列AX clobber的AX結果。
+- 來源符號改名並同步binding後code相同，產碼不靠DQ3函式名選擇。
+- 三案共24份C／IR／ASM／完整OBJ／CODE／fixture ASM／fixture OBJ／MZ逐byte相同，完整receipt相同。
+  WLINK map只差`Created on`與`Link time`，其他行一致；原始map及各自hash完整保留。
+
+早期r2／r3的完整OBJ因Wasm THEADR記錄不同絕對來源路徑而不同，code與MZ已相同。
+修正方式是在每個新容器固定`/tmp/dq3-c-abi-stage-v1/<case>/`組譯，沒有遮罩或patch OBJ。
+map的建立時間與耗時另列為診斷metadata差異。兩者都是重生驗證條件，沒有回寫成遊戲缺陷。
+最終driver加入`--repeat-reference`，獨立重編明細在`c-abi-stage-prototype-r7/repeat-comparison.json`。
+另以OBJ一byte損壞、map symbol改動、receipt欄位改動三個負例確認拒絕，
+收據為`c-abi-repeat-negative-r1.json`。prototype receipt SHA-256
+`5f1b9c437b1a1b8855515a014f2fa1dc1e8ab672540133fff6b0d83ca95bab62`。
+
+### 正式基準與下一閘門
+
+`abi-stage-baseline-r1`／`r2`另以未改動WCC重編全部22個正式候選，20案262 bytes exact，
+兩個舊DIFF保持。source／完整OBJ／code／實際fixup及dispatch證據與先前正式收據相同。
+加既有MSC三案15 bytes，`goal-audit-r25.json`再次核對23份C／277 bytes，
+主程式265、SDK12；audit SHA-256
+`7a91c5fe5983c305c64249e23c904565a8d24ec1e7363b0cf873c7ee956e2726`。
+matching C索引45筆、IDA導航及unique source byte-layout13480保持。
+
+這次confirmed範圍是三份受限C的靜態產碼、OMF／MZ與獨立vendor link比較。
+沒有新增原callee動態執行或正常玩家路線收據；AX回傳型別、完整DS／stack alias契約、
+其他C語法、原版compiler與整檔layout仍未知。六個完整Goal gate未完成。
+下一步先審兩類ABI前提及原callee動態驗證，再決定是否正式採用；本輪只交付可撤回prototype。
+Go／pack、Issue #4範圍及既有counted-loop未改，沒有新發行包。
+
+本節收據均位於gitignored的`work/matching-decomp-20261008-r1/full-goal-r1/`。
+重生指令與Docker限制見[隔離工具鏈入口](../tools/build/README.md)的保存／恢復prototype段落。
+原版、database、OBJ與MZ只留本機；可提交的入口是上述三份Python工具與本節規格。
 
 ## 2026-10-09：AX 保留與零值 writer，CONFORMED
 
