@@ -489,6 +489,69 @@
         "index_symbol": "_unknown_DS_0743",
         "table_symbol": "_unknown_DS_38f4"
       }
+    },
+    {
+      "id": "sub_1CFE8",
+      "source": "re/match/sub_cfe8.c",
+      "public_symbol": "_sub_cfe8",
+      "ida_linear_start": "0x1cfe8",
+      "logical_start": "0xcfe8",
+      "file_start": "0xe358",
+      "size": 10,
+      "external_DS_offsets": {
+        "_unknown_DS_0743": "0x0743"
+      },
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 53224
+        },
+        "near": {
+          "_sub_d2ab": {
+            "segment": 0,
+            "offset": 53931
+          }
+        },
+        "far": {}
+      },
+      "scope": "Incoming AX preserved until original near callee; raw zero word store; original field type/full callee ABI unknown"
+    },
+    {
+      "id": "sub_1D2AB",
+      "source": "re/match/sub_d2ab.c",
+      "public_symbol": "_sub_d2ab",
+      "ida_linear_start": "0x1d2ab",
+      "logical_start": "0xd2ab",
+      "file_start": "0xe61b",
+      "size": 40,
+      "external_DS_offsets": {
+        "_unknown_DS_24b5": "0x24b5",
+        "_unknown_DS_37c5": "0x37c5"
+      },
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 53931
+        },
+        "near": {
+          "_sub_d2d3": {
+            "segment": 0,
+            "offset": 53971
+          },
+          "_sub_d338": {
+            "segment": 0,
+            "offset": 54072
+          },
+          "_sub_d3b7": {
+            "segment": 0,
+            "offset": 54199
+          }
+        },
+        "far": {}
+      },
+      "scope": "Readable AX partial-byte union representation; original C/record types, extent, valid indices and full callee ABI unknown"
     }
   ]
 }

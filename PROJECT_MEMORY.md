@@ -1,16 +1,17 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-09：最新三份C／52 bytes有限CONFORMED：兩個byte狀態閘門與零值檢查near table CALL。
-> conditional-source-r1／r2的完整C／OBJ／listing／CODE、actual FIXUPP與dispatch證據一致。
-> goal-audit-r23核對21份C／227 bytes，主程式215、SDK12；十五個編譯／契約／repeat證據負例拒絕或DIFF。
-> 新indirect_dispatch契約明示原始18-byte模式、typed zero edge、兩次table讀取與三個DS fixups。
-> 移除volatile控制仍生成兩讀且exact，保留為等價控制；真正單次快取另被拒絕，未改正式volatile來源。
-> fresh IDA r5保留828函式／29979 heads／81854 code bytes與原始names／chunks／segment／bytes／typed xrefs。
-> 十五個新分級註記自動合併，matching C索引34筆；unique source byte-layout13430僅局部統計。
-> callback targets／table extent／有效index／runtime DS／完整ABI、全EXE與六個Goal gates仍未完成。
-> BP／LEA／零store／填表／搜尋及bitmask限制保持，未改compiler／四種profile，不重跑舊134組。
-> 17-byte自訂compiler prototype未採用。Go／pack與Issue #4範圍保持，沒有新runtime或發行包。
-> 現況以CONTEXT唯一狀態表、docs/74與docs/25為準；下一步原始狀態writer與呼叫前暫存器保留契約。
+> 2026-10-09：最新AX-live writer10 bytes與partial-byte consumer40 bytes有限CONFORMED；完整兩C來源鏈50 bytes。
+> writer-source-r3／r4完整source／OBJ／listing／CODE、actual FIXUPP與dispatch metadata一致。
+> goal-audit-r24核對23份C／277 bytes，主程式265、SDK12；十二個source／backlink負例DIFF或REFUSED。
+> dosgolem局部65536 AX＋384邊界向量、256完整memory抽樣通過；丟棄AX控制65568個返回AX差異。
+> 正式caller／callee code hash等於局部runtime所用兩段；只覆蓋mask0，其他action分支僅靜態，不當正常玩家路線。
+> AX-LIVE-CFE8回填舊9-byte DIFF並自動驗證；新union是AX表示法，原始struct／C型別／完整ABI未知。
+> scalar callee52 bytes DIFF，union40 bytes exact。四種profile未改，原版compiler仍unknown。
+> fresh IDA r7保留828函式／29979 heads／81854 code bytes與原始names／chunks／bytes／typed xrefs。
+> 新十一筆註記，matching C索引45筆；source byte-layout13480僅局部統計，六個Goal gates未完成。
+> 精確dosgolem engine inputs61份已存私有tar；Go／pack與Issue #4範圍保持，沒有新campaign或發行包。
+> 下一步暫存狀態保存／恢復與caller ABI，不重開AX保留、舊134組或未支援BP／LEA；自訂compiler未採用。
+> 現況以CONTEXT唯一狀態表、docs/74與docs/25為準。
 
 以下保存2026-10-08的研究快照，不取代CONTEXT唯一目前狀態表。
 

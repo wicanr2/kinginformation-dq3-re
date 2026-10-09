@@ -2638,3 +2638,20 @@ goal-audit-r17保持八C104及六未完成gates。一次性容器清除，未動
 - 本機收據在work/matching-decomp-20261008-r1/full-goal-r1/：conditional-ida-r1.json、conditional-c-r1/receipt.json、conditional-source-r1／r2/receipt.json、conditional-negative-build-r1/receipt.json、conditional-cached-build-r2/receipt.json、inventory-ida-r5.json、conditional-verification-final.json及goal-audit-r23.json。重生沿tools/build/README既有runner／audit入口，每次新容器及新輸出。
 - 原EXE與分析輸入唯讀，來源編輯容器另把assets_raw覆蓋為readonly；只寫工作樹與明確輸出。全部--rm、network none、資源限制及UID1000:1000，沒有建新image。root-owned3121完整路徑hash保持，零.md目錄；source／OBJ／JSON抽查皆1000:1000。提交前檢查diff與容器清理，不加入原版、database、OBJ、私有work或使用者資料。
 - 下一步原始狀態writer與呼叫前暫存器保留契約；不猜callback targets或重跑舊134組／未支援BP與LEA。commit／push結果保存本機full-goal-r1/conditional-post-push.json。
+
+## 2026-10-09：AX-live 零值 writer 與 partial-byte consumer
+
+- 依復古逆向／IDA9.4／dosgolem與re-resolution-backlinks路由續行。保留13項使用者未追蹤資料、固定compiler／四種profile與Go／pack範圍，不重跑舊134組。
+- fresh writer-abi-ida-r1核對原始1CFE8、1D2AB、三個action callee與原caller。零值store原版保留AX；callee只寫AL，mask0直接返回時AH仍由caller輸入。舊9-byte C的XOR AX會抹去AH，原先缺少AX liveness約束。
+- AX入參／傳遞明列後，1CFE8完整10 bytes匹配。同profile丟棄AX控制仍9 bytes。兩份consumer表示法中scalar52 bytes DIFF，union完整40 bytes exact；union是新AX表示法，原始struct及C型別未知。
+- docs/25從DRAFT經受控量測到READY，批准caller／consumer兩份C共50 bytes；兩者AX入參／回傳接口一致。writer-source-r3／r4從正式22候選清單完整重編，source／OBJ／listing／CODE／actual FIXUPP／dispatch metadata相同。早期r1／r2只含caller，保留為歷史artifact。
+- 新Go probe與Python wrapper在Docker複製dosgolem的61份非test internal Go／go.mod到/tmp，不消費cmd scratch。原EXE／engine source唯讀；C只patch VM memory，明示寄存器、DS資料、flags與near-return stack，禁止action CALL，沒有RNG、重擲或正常玩家路線聲明。
+- writer-abi-oracle-r1通過全部65536 AX＋384預先宣告邊界向量；原版與正確C的callee入口AX、register／high register／segments／flags、word writer、所有觀測memory changes及scratch stack相同，256完整VM memory抽樣相同。丟棄AX控制65568個返回AX差異；AX=A55A案例原版A500、控制0000。
+- CPU probe0.726465秒，receipt SHA-256 d71555b14f3419e83791c2a3cf598adbabb6ef29142b99bbd612f9e8731cc5a3。實際Go1.26.7及engine source canonical hash已保存；engine-inputs.tar SHA-256 9a8dfd81833309fe26e9922e246de6e5bcb75dabbc4a7b94d2e39898964d84e6只含已用source，沒有原版game data。
+- 正式caller10 bytes與runtime prototype code hash相同，正式consumer40 bytes等於runtime保留的原版callee，沿用同一instruction path的局部收據，不重跑未改變的指令，也不把action分支升格動態或正常campaign。
+- 八個實際source負例覆蓋錯store值／寬度／AH／順序、少一次volatile index讀取／錯mask／target，以及四個backlink負例，共十二個DIFF或REFUSED。另有同profile AX-discard runtime反例，不納入source覆蓋。
+- AX-LIVE-CFE8在較早9-byte DIFF段落追加勘誤，原失敗不重寫。matching C ledger用輸入path／size／hash＋原名＋位址建立resolution backlink，audit檢查matched source、原始identity、evidence與舊spec correction；正反對照通過。
+- fresh inventory-ida-r7保留828函式／29979 heads／81854唯一code bytes、原names／chunks／segments／raw及loaded bytes／typed xrefs。新十一筆註記共45筆，原retained-callee來源另附matched_C_source，保留歷史證據。4455函式外heads未閉合。
+- 最終goal-audit-r24核對23份C／277 bytes，主程式265、SDK12，六個完整Goal gate未證實。unique source byte-layout13480只作局部去重統計。輸出在work/matching-decomp-20261008-r1/full-goal-r1/：writer-source-r3／r4、writer-abi-oracle-r1、writer-verification-final.json、inventory-ida-r7.json及goal-audit-r24.json；重生沿tools/build/README。
+- --rm／network none／資源限制／UID1000:1000保持，沒有建新image；root-owned3121完整路徑hash與零.md目錄保持，source／OBJ／JSON／tar抽查皆1000:1000。新Go只作tools下原版局部oracle，無production Go raw-ID新增。提交前diff與DQ3容器清理核對；原版、database、binary、engine snapshot與使用者資料不入Git。
+- 下一步暫存狀態的保存／恢復與caller ABI；已閉合AX保留不重開，完整EXE與原版compiler／全ABI仍未完成。commit／push結果保存本機full-goal-r1/writer-post-push.json，無新發行包。

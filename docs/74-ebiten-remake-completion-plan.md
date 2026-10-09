@@ -2,20 +2,20 @@
 
 > 2026-10-09現行Goal：完成 dq3 matching decompliation。使用者已選主程式C精確匹配，
 > ASM僅用於已確認底層。全EXE由可讀來源乾淨重建且逐byte一致，raw code／db拼接不算完成。
-> 最新三份C／52 bytes有限CONFORMED：兩個DS:0726 byte閘門與零值檢查near table CALL。
-> 兩個新容器從正式20候選manifest重編，完整C／OBJ／listing／CODE、actual FIXUPP與dispatch證據一致。
-> goal-audit-r23核對21份C／227 bytes，主程式18份215、SDK3份12；十五個負例DIFF、REFUSED或COMPILE_FAILED。
-> indirect_dispatch契約核對原始18-byte模式、typed JZ→RET、一次index載入、兩次table讀取與三個DS fixups。
-> 移除volatile控制仍兩讀且exact，保留為等價控制；明示一次快取另被拒絕。正式來源保留volatile。
-> fresh IDA r5保留828函式／29979 heads／81854 code bytes與原始names／chunks／segment／bytes／typed xrefs。
-> 十五筆新confirmed靜態註記自動合併，matching C索引34筆；4455函式外heads與完整source-unit分母未閉合。
-> callback targets／table extent／有效index／runtime DS／完整ABI仍unknown；完整data/layout未閉合。
-> 四種固定profile保持。BP整數參數、LEA、零store、填表／搜尋及bitmask限制不以patch bytes補齊。
-> 首個C PROC的ENDP後NOP、17跨界CFG候選與全EXE重建未完成；舊134組控制不重跑。
-> 17-byte自訂compiler-stage prototype未採用，原版compiler身分未知；未改主程式C要求。
-> 原video402／CTV2493／CMF5296／MZ4976及file-end2 byte-layout、literal6B06與未知payload保持。
-> unique source byte-layout13430不作完整EXE比例，六個完整Goal gate仍未證實。
-> 下一步原始狀態writer與呼叫前暫存器保留契約。本輪不改Go／pack、存檔或Issue #4範圍，無新runtime或發行包。
+> 最新兩份C／50 bytes有限CONFORMED：1CFE8的AX-live零值writer與1D2AB的partial-byte consumer。
+> union表達AX整字／AL，保留AH；是新C表示法，不推定原始struct或原始C型別。
+> writer-source-r3／r4從正式22候選重編，完整source／OBJ／listing／CODE、actual FIXUPP及dispatch metadata一致。
+> goal-audit-r24核對23份C／277 bytes，主程式20份265、SDK3份12；十二個source／回鏈負例DIFF或REFUSED。
+> 局部dosgolem65920向量、256完整memory抽樣通過；丟棄AX控制65568個返回AX差異。
+> 正式caller／consumer code hash等於已執行的兩段；只驗mask0，其他action分支僅靜態，不升格正常玩家可達性。
+> AX-LIVE-CFE8自動回填舊9-byte DIFF；scalar consumer52 bytes仍DIFF，union完整40 bytes exact。
+> fresh IDA r7保留828函式／29979 heads／81854 code bytes及原名／chunks／segment／bytes／typed xrefs。
+> 新十一筆靜態註記自動合併，matching C索引45筆；4455函式外heads與完整source-unit分母未閉合。
+> callback targets／table extent／有效index／runtime DS、完整ABI與data/layout未知；原版compiler仍unknown。
+> 四種profile保持，17-byte自訂compiler未採用；舊134組、未支援BP、LEA與其他已排除控制不重跑。
+> 首個C PROC的ENDP後NOP、17跨界CFG候選與全EXE來源重建未完成；六個完整Goal gate仍未證實。
+> video／SDK／MZ byte-layout與literal6B06等原值保持，unique source byte-layout13480不作全EXE比例。
+> 下一步暫存狀態的保存／恢復與caller ABI。本輪不改Go／pack、存檔或Issue #4範圍，沒有新campaign或發行包。
 > 唯一現況表在CONTEXT；證據與重生入口[docs/25](25-match-progress.md)，契約tools/matching_goal_contract.json。
 
 > 2026-10-08：依使用者授權啟動 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)

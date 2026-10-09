@@ -387,6 +387,170 @@
       "source": "re/match/sub_d421.c",
       "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
       "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1cfe8",
+      "file_offset": "0xe358",
+      "bytes": "c70643070000",
+      "inference_level": "confirmed",
+      "semantic": "DS:0743 word寫0，AX保留至下一個near CALL",
+      "consumer": "原始sub_1CFE8→sub_1D2AB的mask0局部返回；其他action分支與正常玩家可達性未升格",
+      "source": "re/match/sub_cfe8.c",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json",
+      "dynamic_evidence": {
+        "path": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-oracle-r1/receipt.json",
+        "sha256": "d71555b14f3419e83791c2a3cf598adbabb6ef29142b99bbd612f9e8731cc5a3",
+        "scope": "controlled direct-entry; injected no-action state; not normal player path"
+      }
+    },
+    {
+      "ida_linear": "0x1cfee",
+      "file_offset": "0xe35e",
+      "bytes": "e8ba02",
+      "inference_level": "confirmed",
+      "semantic": "near CALL sub_1D2AB時完整AX仍為caller輸入",
+      "consumer": "原始sub_1CFE8→sub_1D2AB的mask0局部返回；其他action分支與正常玩家可達性未升格",
+      "source": "re/match/sub_cfe8.c",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json",
+      "dynamic_evidence": {
+        "path": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-oracle-r1/receipt.json",
+        "sha256": "d71555b14f3419e83791c2a3cf598adbabb6ef29142b99bbd612f9e8731cc5a3",
+        "scope": "controlled direct-entry; injected no-action state; not normal player path"
+      }
+    },
+    {
+      "ida_linear": "0x1d2b5",
+      "file_offset": "0xe625",
+      "bytes": "8a87c537",
+      "inference_level": "confirmed",
+      "semantic": "只寫AL，保留AH；讀取DS:[BX+37C5]",
+      "consumer": "原始sub_1CFE8→sub_1D2AB的mask0局部返回；其他action分支與正常玩家可達性未升格",
+      "source": "retained original sub_1D2AB; not new C coverage",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json",
+      "dynamic_evidence": {
+        "path": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-oracle-r1/receipt.json",
+        "sha256": "d71555b14f3419e83791c2a3cf598adbabb6ef29142b99bbd612f9e8731cc5a3",
+        "scope": "controlled direct-entry; injected no-action state; not normal player path"
+      },
+      "matched_C_source": "re/match/sub_d2ab.c"
+    },
+    {
+      "ida_linear": "0x1d2b9",
+      "file_offset": "0xe629",
+      "bytes": "2418",
+      "inference_level": "confirmed",
+      "semantic": "只以AL執行AND18；AH保留",
+      "consumer": "原始sub_1CFE8→sub_1D2AB的mask0局部返回；其他action分支與正常玩家可達性未升格",
+      "source": "retained original sub_1D2AB; not new C coverage",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json",
+      "dynamic_evidence": {
+        "path": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-oracle-r1/receipt.json",
+        "sha256": "d71555b14f3419e83791c2a3cf598adbabb6ef29142b99bbd612f9e8731cc5a3",
+        "scope": "controlled direct-entry; injected no-action state; not normal player path"
+      },
+      "matched_C_source": "re/match/sub_d2ab.c"
+    },
+    {
+      "ida_linear": "0x1d2d2",
+      "file_offset": "0xe642",
+      "bytes": "c3",
+      "inference_level": "confirmed",
+      "semantic": "mask0路徑near RET，AX高byte仍是caller輸入",
+      "consumer": "原始sub_1CFE8→sub_1D2AB的mask0局部返回；其他action分支與正常玩家可達性未升格",
+      "source": "retained original sub_1D2AB; not new C coverage",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json",
+      "dynamic_evidence": {
+        "path": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-oracle-r1/receipt.json",
+        "sha256": "d71555b14f3419e83791c2a3cf598adbabb6ef29142b99bbd612f9e8731cc5a3",
+        "scope": "controlled direct-entry; injected no-action state; not normal player path"
+      },
+      "matched_C_source": "re/match/sub_d2ab.c"
+    },
+    {
+      "ida_linear": "0x1d2ab",
+      "file_offset": "0xe61b",
+      "bytes": "8b1eb524",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：mov     bx, ds:24B5h",
+      "consumer": "sub_1D2AB完整40-byte selector；action分支只做靜態匹配，未升格動態或玩家可達性",
+      "source": "re/match/sub_d2ab.c",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d2b1",
+      "file_offset": "0xe621",
+      "bytes": "031eb524",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：add     bx, ds:24B5h",
+      "consumer": "sub_1D2AB完整40-byte selector；action分支只做靜態匹配，未升格動態或玩家可達性",
+      "source": "re/match/sub_d2ab.c",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d2bb",
+      "file_offset": "0xe62b",
+      "bytes": "3c08",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：cmp     al, 8",
+      "consumer": "sub_1D2AB完整40-byte selector；action分支只做靜態匹配，未升格動態或玩家可達性",
+      "source": "re/match/sub_d2ab.c",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d2bf",
+      "file_offset": "0xe62f",
+      "bytes": "e81100",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_1D2D3",
+      "consumer": "sub_1D2AB完整40-byte selector；action分支只做靜態匹配，未升格動態或玩家可達性",
+      "source": "re/match/sub_d2ab.c",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d2c7",
+      "file_offset": "0xe637",
+      "bytes": "e86e00",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_1D338",
+      "consumer": "sub_1D2AB完整40-byte selector；action分支只做靜態匹配，未升格動態或玩家可達性",
+      "source": "re/match/sub_d2ab.c",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d2cf",
+      "file_offset": "0xe63f",
+      "bytes": "e8e500",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_1D3B7",
+      "consumer": "sub_1D2AB完整40-byte selector；action分支只做靜態匹配，未升格動態或玩家可達性",
+      "source": "re/match/sub_d2ab.c",
+      "review_reference": "docs/25-match-progress.md：AX 保留與零值 writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/writer-abi-ida-r1.json"
+    }
+  ],
+  "resolution_backlinks": [
+    {
+      "input": {
+        "path": "assets_raw/DQ3.EXE",
+        "size": 115282,
+        "sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c"
+      },
+      "ida_linear": "0x1cfe8",
+      "original_name": "sub_1CFE8",
+      "document": "docs/25-match-progress.md",
+      "evidence_title": "## 2026-10-09：AX 保留與零值 writer",
+      "older_title": "## 2026-10-09：有號累加與近呼叫返回切片",
+      "required_correction": "AX-LIVE-CFE8"
     }
   ]
 }

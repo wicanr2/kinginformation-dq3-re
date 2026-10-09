@@ -25,6 +25,32 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def resolution_backlinks(ledger, original_input, exact_units):
+    checks = []
+    for link in ledger.get("resolution_backlinks", []):
+        if link["input"] != original_input:
+            raise ValueError("Resolution backlink input differs")
+        start = int(link["ida_linear"], 16)
+        matches = [unit for unit in exact_units if int(unit["ida_linear_start"], 16) == start]
+        if not matches:
+            raise ValueError("Resolution backlink has no matched source unit")
+        if len(matches) != 1 or matches[0]["original_name"] != link["original_name"]:
+            raise ValueError("Resolution backlink original identity differs")
+        text = (ROOT / link["document"]).read_text()
+        def section(title):
+            begin = text.index(title)
+            end = text.find("\n## ", begin + len(title))
+            return text[begin:] if end == -1 else text[begin:end]
+        if link["original_name"] not in section(link["evidence_title"]):
+            raise ValueError("Resolution evidence lacks original identity")
+        if link["required_correction"] not in section(link["older_title"]):
+            raise ValueError("Earlier spec lacks resolution correction")
+        checks.append({"original_name": link["original_name"], "ida_linear": link["ida_linear"],
+                       "document": link["document"], "required_correction": link["required_correction"],
+                       "passed": True})
+    return checks
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inventory", type=Path, required=True)
@@ -245,6 +271,8 @@ def main():
               "reason": gate["verify"]["note"]} for gate in contract["completion_gates"]]
     if any(gate["verify_kind"] != "manual" for gate in gates):
         raise ValueError("New completion verifier needs explicit implementation/review")
+    backlink_checks = resolution_backlinks(
+        json.loads((ROOT / "tools/ida_matching_c_ledger.json").read_text()), contract["input"], exact_units)
     index = (ROOT / "docs/25-match-progress.md").read_text()
     if "ida_matching_probe.py" not in index:
         raise ValueError("Known indexed positive control missing")
@@ -265,7 +293,7 @@ def main():
               "legacy_comparison": inventory["legacy_comparison"], "exact_C_source_units": exact_units,
               "exact_C_bytes": exact_bytes, "independent_C_rebuild_equal": True, "listing_parser_negative_cases": parser_negatives,
               "watcom_source_candidates": watcom_candidates,
-              "completion_gates": gates, "whole_goal_complete": False,
+              "completion_gates": gates, "resolution_backlink_checks": backlink_checks, "whole_goal_complete": False,
               "scope": "Authoritative current evidence only; whole source recovery, classifications and final layout remain incomplete"}
     with args.output.open("x", encoding="utf-8") as stream:
         stream.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")

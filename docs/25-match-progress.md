@@ -28,10 +28,10 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
-> 現行C本體21個／227 bytes；最新兩個byte狀態閘門與零值檢查間接呼叫三個完整常式52 bytes。
+> 現行C本體23個／277 bytes；最新AX保留的零值writer10 bytes與partial-byte consumer40 bytes。
 > 先前暫存器入參、word writer、有號累加、近／遠呼叫及MZ relocation成果保持；最新驗收見2026-10-09切片。
 > 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
-> 主程式C共215 bytes；7-byte來源產品角色仍未確認，其他query／writer／call來源只按已審靜態範圍計數。填表、搜尋、bitmask與LEA地址參數候選仍不匹配，BP整數參數受固定compiler ABI限制。
+> 主程式C共265 bytes；7-byte來源產品角色仍未確認，其他query／writer／call來源只按已審靜態範圍計數。1CFE8舊零store的AX liveness已解；填表、搜尋、bitmask與LEA地址參數仍不匹配，BP整數參數受固定compiler ABI限制。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -86,6 +86,72 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 2026-10-09：AX 保留與零值 writer，CONFORMED
+
+固定輸入 DQ3.EXE／115282 bytes／SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+fresh `writer-abi-ida-r1.json`核對原名sub_1CFE8、sub_1D2AB、三個分支callee與原始caller。
+1CFE8的linear `1CFE8..1CFF2`、logical `CFE8..CFF2`、file `E358..E362`完整10 bytes：
+DS:0743寫word0，AX保留至near CALL1D2AB，再near RET。MZ relocation集合為空。
+
+1D2AB先用BX讀DS:24B5並乘3，再以MOV AL／AND AL讀DS:[BX+37C5]低byte；AH未寫入。
+mask為0的分支直接返回，AX高byte仍是caller輸入。舊9-byte C先XOR AX，會把AH清零。
+這訂正較早「零值writer仍DIFF」的適用範圍：缺AX liveness的舊prototype確實DIFF；
+新C明示AX傳遞後完整10 bytes匹配，compiler與profile未改。原始C型別與完整callee ABI仍unknown。
+
+將以[dosgolem局部探針](../tools/dosgolem_matching_writer_abi.go)及
+[Docker包裝器](../tools/run_matching_writer_abi.py)核對原版、正確C與同profile未傳遞AX的負例。
+測試預先枚舉全部65536個AX及384個邊界向量，明示注入DS:24B5、table byte、writer初值、
+暫存器、flags與near-return stack，只走mask0、不呼叫三個action分支，不執行RNG。
+驗證callee入口AX、返回AX／其他register／flags、word writer、全部觀測寫入與scratch stack；
+每個AH的首個向量另比對完整VM memory。這是受控direct-entry ABI證據，並非正常玩家路線或全EXE重建。
+原版EXE及dosgolem source唯讀；該probe只把caller的C code patch到VM memory，callee當時保留原始bytes。
+入口與能力讀 `/home/anr2/cht/dosgolem/README.md`、`CLAUDE.md`；輸出連同實際engine source hashes保存。
+
+`writer-abi-oracle-r1`已通過65536個AX與384個邊界向量。原版與正確C的callee入口AX、
+返回register／high register／segment／flags、word writer、全部觀測memory changes及scratch stack一致，
+256個完整VM memory抽樣也一致。同profile丟棄AX控制有65568個返回AX差異；
+原版AX=A55A的受控案例返回A500，錯誤C返回0000。CPU probe為0.726465秒，
+收據SHA-256 `d71555b14f3419e83791c2a3cf598adbabb6ef29142b99bbd612f9e8731cc5a3`。
+這證實的是預先宣告的mask0局部ABI，不推定其正常玩家可達性或其他action分支。
+
+READY批准[正式C來源](../re/match/sub_cfe8.c)與明示AX入參／傳遞契約；原始C prototype仍unknown。
+正式驗收仍需兩個新容器從manifest重編完整10 bytes、actual DS／CALL fixups及typed caller。
+runtime測的是prototype；正式來源只在code hash相同時沿用該局部收據，保留原版bytes本身不計source覆蓋。
+勘誤鍵 `AX-LIVE-CFE8`由matching C ledger的resolution_backlinks與總審核自動檢查，
+保留舊無AX約束prototype及其9-byte DIFF，不重寫失敗歷史。
+
+同一垂直切片的consumer另以兩份C表示法核對：scalar生成52 bytes而原版40 bytes，DIFF；
+union表示法完整40 bytes匹配，沒有stack frame或指令pragma。READY因此擴充到
+[sub_d2ab.c](../re/match/sub_d2ab.c)：linear `1D2AB..1D2D3`、logical `D2AB..D2D3`、
+file `E61B..E643`，保留兩次volatile DS:24B5讀取、DS:37C5 indexed byte、AH、
+mask0x08／0x18／0x10的三個direct CALL與三個RET。union只表示AX的整字／低byte，不推定原始struct。
+caller與callee使用一致的AX入參／回傳宣告；原始C型別、record extent、有效index、完整ABI仍unknown。
+正式驗收合計兩份C／50 bytes；局部runtime只在caller及retained callee兩段code hash均與正式C相同時沿用。
+其他action分支只具有完整靜態byte／xref匹配，不升格動態或正常玩家流程。
+
+正式`writer-source-r3`／`r4`在兩個新容器由22個Watcom候選重編，完整source／OBJ／listing／CODE、
+actual FIXUPP及dispatch metadata一致。新增caller10／consumer40 bytes全部匹配，沒有函式外padding。
+`goal-audit-r24.json` SHA-256 `e08344e3c7bb0ba99216e9b30081fb37368d4fe237b50f745f07aa4f74f129f6`
+核對23份C／277 bytes，主程式20份265 bytes、SDK3份12 bytes；六個完整Goal gate仍未證實。
+
+`writer-verification-final.json`核對十二個source／回鏈負例，包含錯值、寬度、AH、寫入順序、
+index讀取次數、mask／target，以及輸入hash／原名／舊勘誤／匹配位址缺失；全數DIFF或REFUSED。
+正式caller code hash等於runtime prototype；正式consumer code hash等於runtime使用的retained原版40 bytes，
+因此沿用同一mask0局部收據，不重跑未改變的instruction path。總審核自動接受AX-LIVE-CFE8回鏈。
+
+fresh `inventory-ida-r7.json`保留828函式／29979 heads／81854唯一code bytes與全部原名、chunks、
+segment、raw／loaded bytes及typed xrefs。新增十一筆靜態註記，matching C索引共45筆；
+原先retained-callee註記以附加matched_C_source連到新來源，保留原證據出處。4455函式外heads未閉合。
+局部unique source byte-layout13480不作整檔比例。原版compiler、全source-unit／data-layout與完整runtime仍未知。
+
+可重播工具source已掛本頁與tools/build/README；局部oracle保存Go1.26.7、61份engine inputs、
+source canonical hash與engine-inputs.tar，後者SHA-256
+`9a8dfd81833309fe26e9922e246de6e5bcb75dabbc4a7b94d2e39898964d84e6`。
+這些binary／source snapshot與原版EXE只留本機；新工具及C來源可提交，沒有新發行包。
+下一步追暫存狀態的保存／恢復與其caller ABI，不重開已閉合的AX保留或未支援compiler控制。
+
 
 ## 2026-10-09：byte 閘門與零值檢查間接呼叫，CONFORMED
 
@@ -219,6 +285,7 @@ unsigned long，負值轉換後以 unsigned 累加，保留進位與溢位；實
 證明 `-ofr` 包含 traceable-frame 與 reorder。新固定 profile `cdecl-size-calls-unframed`
 只把 `-ofr` 換成 `-or`，保留 `-oc`；五個 far-return prototype 隨即完整4 bytes匹配。
 `sub_1CFE8` 在 size 與 speed 控制均為9 bytes，原版10 bytes，因此排除正式來源。
+勘誤 `AX-LIVE-CFE8`：此處只適用舊無AX約束prototype；新AX保留證據與完整10-byte來源見本頁「AX 保留與零值 writer」。
 所有失敗保留在 `primary-bridges-c-r1`／`r2`，不 patch compiler output 或接受局部相似。
 
 驗收需兩次新容器從正式 manifest 重編，source／完整 OBJ／完整 CODE／actual FIXUPP 相同，

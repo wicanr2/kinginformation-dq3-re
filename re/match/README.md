@@ -23,6 +23,8 @@
 | [sub_4ae5.c](sub_4ae5.c) | sub_14AE5，linear14AE5..14AF6 | 完整C module，17 bytes | 首次CALL後以DS:0726 byte !=1控制兩個near CALL |
 | [sub_cf18.c](sub_cf18.c) | sub_1CF18，linear1CF18..1CF29 | 完整C module，17 bytes | 同一byte閘門，保留獨立入口與原始callee順序 |
 | [sub_d421.c](sub_d421.c) | sub_1D421，linear1D421..1D433 | 完整C module，18 bytes | DS:0743索引、零值檢查、兩次near pointer表格讀取；table extent及targets未知 |
+| [sub_cfe8.c](sub_cfe8.c) | sub_1CFE8，linear1CFE8..1CFF2 | 完整C module，10 bytes | 寫DS:0743 word0並保留AX至near callee；舊9-byte prototype已勘誤 |
+| [sub_d2ab.c](sub_d2ab.c) | sub_1D2AB，linear1D2AB..1D2D3 | 完整C module，40 bytes | union表示AX整字／AL，保留AH與兩次index讀取，按0x18 mask分派；原始型別未知 |
 | [sub_136f5.c](sub_136f5.c) | sub_236F5，linear236F5..236F9 | 完整C PROC，4 bytes | 原版CTVMEM.ASM driver；欄位、型別與DS脈絡未知 |
 | [sub_14a8d.c](sub_14a8d.c) | sub_24A8D，linear24A8D..24A91 | 完整C PROC，4 bytes | 原版CMFDRV.ASM driver；欄位、型別與DS脈絡未知 |
 | [sub_14ae6.c](sub_14ae6.c) | sub_24AE6，linear24AE6..24AEA | 完整C module，4 bytes | 原版CMFDRV.ASM driver；AX入參word store，欄位、型別與DS脈絡未知 |
@@ -36,7 +38,7 @@
 其他C檔與rng_adapter.asm是研究候選。它們有DIFF、REFUSED或僅register/state等價的結果，
 不計精確匹配。原版OBJ、EXE、SDK、IDA database與生成封包不提交。
 
-二十一個完整C函式共227 bytes，其中主程式十八個215 bytes，SDK三個12 bytes。
+二十三個完整C函式共277 bytes，其中主程式二十個265 bytes，SDK三個12 bytes。
 sub_9834的pragma只指定呼叫慣例，不嵌入組語指令；兩次獨立編譯及實際OMF重定位一致。
 sub_37f9使用manifest明列的速度最佳化／停用重排profile，完整48 bytes及三個fixup均相同。
 兩個呼叫來源以原始CS frame及typed IDA xref核對code symbol；遠呼叫另核對MZ segment word位置。
@@ -48,6 +50,8 @@ CX／BX／DI入參與原始word writer使用同一固定profile重編；BP整數
 保留為工具限制或DIFF，範圍與停止線見[研究記錄](../../docs/25-match-progress.md)。
 間接呼叫來源使用明列的indirect_dispatch契約，共同驗證原始zero gate、兩次table讀取與三個DS fixups；
 不從索引推定callback targets、有效index範圍或runtime DS。
+AX-live writer與consumer的受控dosgolem收據只覆蓋mask0，包含全部AX與邊界向量；
+其他action分支只具有完整靜態byte／xref匹配，不宣稱正常玩家路線或原始struct已恢復。
 
 兩個driver的ASM只保存語意指令與EQU常數，沒有原版code array或DB拼接。
 ORG所保留的空間沒有還原資料，不能直接當成可執行的完整driver。

@@ -91,6 +91,12 @@ call_placements只使用MZ-relative segment／offset整數，DS／near／far sym
 原始indirect CALL另需明示indirect_dispatch契約；目前只支援zero-gated-near-ds-table-bx-v1，
 由omf_call_fixups核對原始18-byte模式、typed zero-branch與三個actual DS fixups。
 callback targets、table extent與runtime DS保留unknown；新模式需獨立證據審查，不能當direct CALL猜綁。
+AX-live writer的局部oracle使用既有golang:1.26.7-bookworm，在Docker執行
+`python3 /repo/tools/run_matching_writer_abi.py --positive <C receipt> --negative <discarded-AX receipt> --output <新目錄>`。
+repository與`/home/anr2/cht/dosgolem`唯讀掛到/repo與/dosgolem，明確研究輸出才可寫；
+同樣使用--rm、network none、資源限制與UID/GID。只複製非test internal Go及go.mod，不消費cmd scratch。
+正負receipt由同一固定WCC profile的source產生；支援範圍限docs/25的mask0 direct-entry，不執行RNG。
+私有oracle目錄的engine-inputs.tar保存實際輸入source snapshot，重播可將其解開後唯讀掛到/dosgolem。
 compiler候選的實際caller frame、typed IDA call xref與MZ segment word位置亦核對；
 合成連結控制為 `python3 /repo/tools/verify_watcom_call_fixups.py --output /out/<新名稱>`，
 使用同一r2 image、唯讀repo及明確輸出；每次用新容器，explicit FARGROUP及NOFARCALLS保持。
