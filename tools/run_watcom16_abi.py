@@ -23,6 +23,9 @@ COMPILER_PROFILES = {
     "cdecl-size-reorder": ["-bt=dos", "-ms", "-0", "-os", "-oi", "-s", "-ofr", "-ecc", "-zld"],
     "watcall-speed-no-reorder": ["-bt=dos", "-ms", "-0", "-ot", "-oi", "-s", "-of", "-ecw", "-zld"],
     "cdecl-size-calls": ["-bt=dos", "-ms", "-0", "-os", "-oi", "-s", "-ofr", "-ecc", "-zld", "-oc"],
+    # Official -of enables traceable frames for far functions. Retain -or and
+    # -oc independently when the original complete function has no BP frame.
+    "cdecl-size-calls-unframed": ["-bt=dos", "-ms", "-0", "-os", "-oi", "-s", "-or", "-ecc", "-zld", "-oc"],
 }
 
 

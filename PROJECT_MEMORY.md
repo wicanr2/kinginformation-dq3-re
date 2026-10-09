@@ -1,5 +1,15 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
+> 2026-10-09：matching新七份主程式C共34 bytes已有限CONFORMED，兩份source／OBJ／listing／CODE與actual FIXUPP相同。
+> goal-audit-r20核對15個C／138 bytes，主程式126、SDK12；十個負例拒絕或DIFF。
+> 新四種固定profile不代表原版compiler；新九個靜態分級註記由probe與完整清冊自動合併。
+> fresh IDA r3保留828函式／29979heads／81854 code bytes及全部原始names／bytes／typed xrefs。
+> source byte-layout去重13341僅局部統計；完整EXE、六個Goal gates及runtime仍未完成。
+> Go／pack與Issue #4範圍保持。現況以CONTEXT唯一狀態表、docs/74與docs/25為準。
+> 下一步既有CODE frame的暫存器入參呼叫來源與完整source-unit／layout，不重跑已排除134組。
+
+以下保存2026-10-08的研究快照，不取代CONTEXT唯一目前狀態表。
+
 > 2026-10-08現行Goal：「完成 dq3 matching decompliation」。使用者已選主程式C精確匹配，
 > ASM僅用已確認底層，全EXE由原碼乾淨重建並逐byte一致，raw code／db拼接不算完成。
 > 八個C來源104 bytes匹配；最新sub_13016四段near CALL13 bytes及sub_1EE19的DX入參far CALL10 bytes。

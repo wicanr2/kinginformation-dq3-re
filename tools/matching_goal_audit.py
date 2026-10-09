@@ -245,7 +245,10 @@ def main():
     index = (ROOT / "docs/25-match-progress.md").read_text()
     if "ida_matching_probe.py" not in index:
         raise ValueError("Known indexed positive control missing")
-    for name in ("ida_matching_inventory.py", "run_matching_c_batch.py", "matching_goal_contract.json", "matching_c_manifest.json", "matching_goal_audit.py", "sub_5d49.c", "sub_9834.c", "sub_37f9.c", "sub_3016.c", "sub_ee19.c", "watcom_matching_manifest.json", "sub_14ae6.c", "sub_32a3_watcom.c", "sub_6fcf_watcom.c", "verify_watcom_signed_fixup.py", "omf_call_fixups.py", "verify_watcom_call_fixups.py"):
+    source_entries = [Path(unit["source"]).name for unit in manifest["cases"]]
+    if args.watcom_receipt:
+        source_entries.extend(Path(unit["source"]).name for unit in declared_units)
+    for name in ("ida_matching_inventory.py", "run_matching_c_batch.py", "matching_goal_contract.json", "matching_c_manifest.json", "matching_goal_audit.py", "watcom_matching_manifest.json", "ida_matching_c_ledger.json", "verify_watcom_signed_fixup.py", "omf_call_fixups.py", "verify_watcom_call_fixups.py", *source_entries):
         if name not in index:
             raise ValueError("New file lacks a documentation entry: " + name)
     result = {"schema_version": 1, "input": contract["input"], "producer_sha256": sha(Path(__file__)),

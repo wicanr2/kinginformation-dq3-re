@@ -66,6 +66,18 @@ def export():
                                "dynamic_evidence": abi_ledger["dynamic_evidence"]}
         semantic_ledgers.append({"path": str(abi_ledger_path), "sha256": hashlib.sha256(abi_raw).hexdigest()})
 
+    matching_path = Path(__file__).with_name("ida_matching_c_ledger.json")
+    matching_raw = matching_path.read_bytes()
+    matching_ledger = json.loads(matching_raw)
+    if matching_ledger["input_sha256"] != digest or matching_ledger["input_size"] != len(raw):
+        raise ValueError("Reviewed matching C ledger input differs")
+    for annotation in matching_ledger["annotations"]:
+        ea = int(annotation["ida_linear"], 16)
+        if ea in annotations:
+            raise ValueError("Duplicate reviewed semantic address")
+        annotations[ea] = {**annotation, "ledger_path": str(matching_path)}
+    semantic_ledgers.append({"path": str(matching_path), "sha256": hashlib.sha256(matching_raw).hexdigest()})
+
     def row(ea):
         insn = ida_ua.insn_t()
         if not ida_ua.decode_insn(insn, ea):

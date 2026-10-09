@@ -83,6 +83,10 @@ repository唯讀掛到/repo，既有matching輸出掛到/out；每次output須�
 記錄writer使用watcall-speed-no-reorder，帶呼叫來源使用cdecl-size-calls加-oc保留CALL／RET。
 manifest不接受任意shell或compiler命令，
 audit會核對實際command；不同profile不表示已辨識原版compiler。
+far-return來源使用第四種固定profile `cdecl-size-calls-unframed`，只將 `-ofr` 換成 `-or`，
+保留 `-oc`。原始function沒有BP frame時才按docs/25的READY契約選用，不能自行補frame。
+`-of`的traceable-frame、`-or`的reorder與`-oc`的CALL／RET契約見
+[Watcom官方手冊](https://open-watcom.github.io/open-watcom-v2-wikidocs/cguide.html)。
 call_placements只使用MZ-relative segment／offset整數，DS／near／far symbol集合互斥。
 compiler候選的實際caller frame、typed IDA call xref與MZ segment word位置亦核對；
 合成連結控制為 `python3 /repo/tools/verify_watcom_call_fixups.py --output /out/<新名稱>`，

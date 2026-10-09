@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "input_path": "assets_raw/DQ3.EXE",
+  "input_size": 115282,
+  "input_sha256": "5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c",
+  "tool": "IDA Pro 9.4",
+  "address_space": {
+    "kind": "IDA linear",
+    "load_base": "0x10000",
+    "header_bytes": 4976,
+    "file_formula": "file = linear - 0x10000 + 0x1370"
+  },
+  "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+  "evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json",
+  "scope": "Confirmed static instruction semantics only; original types/compiler/full DS and callee ABI remain unknown",
+  "annotations": [
+    {
+      "ida_linear": "0x1895c",
+      "file_offset": "0x9ccc",
+      "bytes": "99",
+      "inference_level": "confirmed",
+      "semantic": "AX sign-extension into DX:AX; preserves AX",
+      "consumer": "IDA linear1895D and 18961 lower-word ADD and upper-word ADC",
+      "source": "re/match/sub_895c.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1895d",
+      "file_offset": "0x9ccd",
+      "bytes": "0106374f",
+      "inference_level": "confirmed",
+      "semantic": "ADD AX to raw DS:4F37 word; carry flows to the next instruction",
+      "consumer": "IDA linear18961 ADC DS:4F39,DX",
+      "source": "re/match/sub_895c.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x18961",
+      "file_offset": "0x9cd1",
+      "bytes": "1116394f",
+      "inference_level": "confirmed",
+      "semantic": "ADC DX plus incoming carry into raw DS:4F39 word; modulo-32 signed-AX accumulation",
+      "consumer": "IDA linear18965 near RET; six direct original callers, detailed in evidence",
+      "source": "re/match/sub_895c.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1ee15",
+      "file_offset": "0x10185",
+      "bytes": "e85e00",
+      "inference_level": "confirmed",
+      "semantic": "Direct near CALL with original typed xref17, followed by near return; no added BP frame",
+      "consumer": "IDA linear0x1ee18 raw c3 retn; original target [{'to': '0x1ee18', 'type': 21, 'iscode': True}, {'to': '0x1ee76', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_ee15.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1e829",
+      "file_offset": "0xfb99",
+      "bytes": "e80100",
+      "inference_level": "confirmed",
+      "semantic": "Direct near CALL with original typed xref17, followed by far return; no added BP frame",
+      "consumer": "IDA linear0x1e82c raw cb retf; original target [{'to': '0x1e82c', 'type': 21, 'iscode': True}, {'to': '0x1e82d', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_e829.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1e916",
+      "file_offset": "0xfc86",
+      "bytes": "e87301",
+      "inference_level": "confirmed",
+      "semantic": "Direct near CALL with original typed xref17, followed by far return; no added BP frame",
+      "consumer": "IDA linear0x1e919 raw cb retf; original target [{'to': '0x1e919', 'type': 21, 'iscode': True}, {'to': '0x1ea8c', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_e916.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1e91a",
+      "file_offset": "0xfc8a",
+      "bytes": "e83603",
+      "inference_level": "confirmed",
+      "semantic": "Direct near CALL with original typed xref17, followed by far return; no added BP frame",
+      "consumer": "IDA linear0x1e91d raw cb retf; original target [{'to': '0x1e91d', 'type': 21, 'iscode': True}, {'to': '0x1ec53', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_e91a.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1ee72",
+      "file_offset": "0x101e2",
+      "bytes": "e80100",
+      "inference_level": "confirmed",
+      "semantic": "Direct near CALL with original typed xref17, followed by far return; no added BP frame",
+      "consumer": "IDA linear0x1ee75 raw cb retf; original target [{'to': '0x1ee75', 'type': 21, 'iscode': True}, {'to': '0x1ee76', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_ee72.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1eeff",
+      "file_offset": "0x1026f",
+      "bytes": "e80100",
+      "inference_level": "confirmed",
+      "semantic": "Direct near CALL with original typed xref17, followed by far return; no added BP frame",
+      "consumer": "IDA linear0x1ef02 raw cb retf; original target [{'to': '0x1ef02', 'type': 21, 'iscode': True}, {'to': '0x1ef03', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_eeff.c",
+      "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    }
+  ]
+}

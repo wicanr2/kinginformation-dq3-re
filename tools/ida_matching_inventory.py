@@ -42,7 +42,7 @@ def export():
                    (struct.unpack_from("<HH", raw, table + n * 4) for n in range(count))]
     ledgers = []
     annotations = {}
-    for name in ("ida_npc_animation_ledger.json", "ida_rng_abi_ledger.json"):
+    for name in ("ida_npc_animation_ledger.json", "ida_rng_abi_ledger.json", "ida_matching_c_ledger.json"):
         path = Path(__file__).with_name(name)
         content = path.read_bytes()
         ledger = json.loads(content)

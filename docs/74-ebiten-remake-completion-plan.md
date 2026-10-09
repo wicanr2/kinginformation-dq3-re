@@ -1,37 +1,20 @@
 # 74 — Go/Ebiten remake 完成計畫：原版實機畫面盤點 → 玩家流程閉合
 
-> 2026-10-08現行Goal：使用者指定「完成 dq3 matching decompliation」，並確認主程式C
-> 精確匹配，ASM僅用於已確認底層常式。最終需由原碼乾淨重建全EXE且逐byte一致，
-> raw code／db拼接不算完成。完整matching是獨立Goal，不改正式Go／pack或Issue #4暫停。
-> 目前八個C來源104 bytes已匹配；最新sub_13016四段near CALL13 bytes及sub_1EE19的DX入參far CALL10 bytes。
-> 兩次source／OBJ／fixup一致，原caller frame／typed call xref及MZ segment word位置亦核對。
-> fresh frame ledger兩份同值，19 segment／1199 direct far CALL原始定位一致；runtime CS／DS未升格。
-> typed MZ header4976／file-end2 bytes重建一致，12負例拒絕，宣告長度少2bytes的原始差異保留。
-> counted-loop compiler-stage prototype17bytes匹配但未採用，不計正式C104；工具鏈分支待使用者回答。
-> 低層video region402 bytes已從語意ASM／typed alignment重建，兩份source／OBJ／MZ同值、11負例拒絕。
-> BIOS／video-port／memory服務資格confirmed，object identity／完整ABI／hardware runtime未升格；不改主程式C標準。
-> 七個word的caller／writer／consumer已核對；原始struct未知，實際compiler profile由audit核對。
-> 主程式C共92 bytes；SDK三個12 bytes已定位於CTVMEM／CMFDRV，欄位／DS／型別unknown。
-> 首個C的module末端1-byte NOP配置未解；兩份重編相同，六listing負例拒絕。新IDA導航為828
-> 函式／29979 code heads／81854 code bytes；22個非terminal末端、4455個函式外指令
-> 及主程式／底層source-unit分類仍未閉合。22候選已分17跨界flow、2 DOS service末端及3 strong
-> suppressed-call；三個舊entry在指令內且無xref，舊入口排除。首個C條件式table index47已核對。
-> 17 flow已建立CFG候選／991 heads／31 shared，第一組48bytes保留四入口；source-unit仍未批准。
-> Watcom16 revision由完整官方hash建置，instruction-free BX／SI／AX控制可重編；AX store4bytes
-> 已入正式來源清單且兩次重編一致。主程式填表17／搜尋24bytes仍不匹配；RNG候選亦DIFF。
-> WLINK synthetic控制核對symbol-2，六重定位負例拒絕；原版compilerunknown。
-> 主程式codegen134組為130 DIFF／4 group-frame REFUSED；Watcom C long-shift正對照實際發LOOP。
-> 兩套compiler完整OBJ重編一致，TC實際生成C mtime固定，無mask。沒有新增C覆蓋。
-> 原版SBCM.LIB26 modules已解析，兩個Creative driver完整7789 bytes由官方WLINK重連等於EXE。
-> fresh IDA80函式／2175 heads與原始定位保持；object重連不算原碼，ASM／data source仍待還原。
-> 新SDK ASM／EQU來源從文字重建5148 instruction bytes，兩次完整OBJ／MZ／fixup相同；2641 data bytes未還原。
-> 12 bytes與三C重疊，新唯一指令5136；完整module／正常campaign未驗，不能宣稱完成。
-> CMF完整ASM／EQU／typed-data recipe現可重建5296 bytes，兩次source／OBJ／MZ同值；data2406 bytes還原。
-> CTV完整ASM／EQU／typed-data recipe現已重建2493 bytes，E2 seed與11-byte unknown payload原值保持。
-> common verifier兩module各兩份source／OBJ／MZ一致，7789 byte-layout完成，16負例拒絕；原fields／runtime ABI未升格。
-> 完整Goal六gate仍未證實，active。下一步主程式C／其他source-unit／完整layout，不重跑已排除組合。
-> 唯一目前狀態在CONTEXT，
-> 證據與重生入口[docs/25](25-match-progress.md)，驗收契約tools/matching_goal_contract.json。
+> 2026-10-09現行Goal：完成 dq3 matching decompliation。使用者已選主程式C精確匹配，
+> ASM僅用於已確認底層。全EXE由可讀來源乾淨重建且逐byte一致，raw code／db拼接不算完成。
+> 新七份C／34 bytes有限CONFORMED：有號AX／word pair累加、一個near返回與五個far返回。
+> 兩個新容器的完整source／OBJ／listing／CODE與actual FIXUPP相同；十個負例拒絕或DIFF。
+> goal-audit-r20核對15個C／138 bytes，主程式12個126、SDK3個12；四種固定profile明列。
+> 新unframed profile只移除-of，保留-or／-oc；原版compiler與callee完整ABI仍未知。
+> fresh IDA r3保留828函式／29979 heads／81854 code bytes及原始names／chunks／bytes／typed xrefs。
+> 九個新靜態分級註記自動合併，4455函式外heads、17跨界CFG候選與完整source-unit分母尚未閉合。
+> 第一個C PROC的ENDP後1-byte NOP配置未解。填表／搜尋、sub_1CFE8零值store仍DIFF。
+> 已排除的134組主程式codegen控制不重跑，17-byte自訂compiler-stage prototype未採用，該分支未定。
+> 原video402、CTV2493、CMF5296、MZ header4976／file-end2 byte-layout保持，literal6B06與未知payload不改。
+> 原field semantics／runtime與硬體parity未升格；unique source byte-layout13341不作完整EXE比例。
+> 完整六個Goal gate仍未證實。下一步已審CODE frame的暫存器入參呼叫來源與完整source-unit／layout。
+> 本工作不改正式Go／pack、存檔或Issue #4暫停範圍，沒有新玩家campaign或發行包。
+> 唯一現況表在CONTEXT；證據與重生入口[docs/25](25-match-progress.md)，契約tools/matching_goal_contract.json。
 
 > 2026-10-08：依使用者授權啟動 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)
 > 局部 matching decompilation 對拍加速研究，範圍與工具見 [docs/25](25-match-progress.md)。

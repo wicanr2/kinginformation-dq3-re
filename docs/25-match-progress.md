@@ -28,9 +28,10 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
-> 現行C本體8個／104 bytes，新增四段近呼叫13 bytes與DX入參遠呼叫10 bytes，原始MZ relocation亦核對。
+> 現行C本體15個／138 bytes；最新有號累加10 bytes、near-return4 bytes與五個far-return共20 bytes。
+> 先前四段近呼叫13 bytes與DX入參遠呼叫10 bytes及原始MZ relocation保持；最新驗收見2026-10-09切片。
 > 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
-> 主程式C共92 bytes；7-byte來源產品角色仍未確認，其他四個query／writer／call來源完整匹配。填表與搜尋C候選仍不匹配。
+> 主程式C共126 bytes；7-byte來源產品角色仍未確認，其他query／writer／call來源只按已審靜態範圍計數。填表與搜尋C候選仍不匹配。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -85,6 +86,64 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 2026-10-09：有號累加與近呼叫返回切片，CONFORMED
+
+沿用本頁固定 DQ3.EXE／115282 bytes／SHA-256 `5178fdc8` 與 IDA9.4 linear 基準 `0x10000`。
+新證據 `full-goal-r1/primary-accumulator-ida-r1.json` 由原 EXE 建 fresh database，
+保留八個候選的原始名稱、完整 chunks、bytes 與 typed caller windows；沒有改名或修邊界。
+
+| 批准來源 | IDA linear，末端不含 | file，末端不含 | confirmed 靜態契約 |
+|---|---|---|---|
+| [sub_895c.c](../re/match/sub_895c.c) | `1895C..18966` | `9CCC..9CD6` | AX 符號延伸至 DX:AX，累加 DS:4F37／4F39，near return，共10 bytes |
+| [sub_ee15.c](../re/match/sub_ee15.c) | `1EE15..1EE19` | `10185..10189` | near CALL `1EE76` 後 near return，共4 bytes |
+| [sub_e829.c](../re/match/sub_e829.c) | `1E829..1E82D` | `FB99..FB9D` | near CALL `1E82D` 後 far return，共4 bytes |
+| [sub_e916.c](../re/match/sub_e916.c) | `1E916..1E91A` | `FC86..FC8A` | near CALL `1EA8C` 後 far return，共4 bytes |
+| [sub_e91a.c](../re/match/sub_e91a.c) | `1E91A..1E91E` | `FC8A..FC8E` | near CALL `1EC53` 後 far return，共4 bytes |
+| [sub_ee72.c](../re/match/sub_ee72.c) | `1EE72..1EE76` | `101E2..101E6` | near CALL `1EE76` 後 far return，共4 bytes |
+| [sub_eeff.c](../re/match/sub_eeff.c) | `1EEFF..1EF03` | `1026F..10273` | near CALL `1EF03` 後 far return，共4 bytes |
+
+logical 為 linear 減 `0x10000`，file 為 logical 加 `0x1370`。六個 CALL 的 caller／target
+均在已審原始 CODE frame0；近呼叫採 typed xref17，五個 far-return entry 的原始 caller 為 xref16。
+1895C 有六個直接 caller；102AE 的50金 caller 已由既有 docs/188 正常國王收據支持。
+本切片只批准有號擴展與 modulo-32 累加，不外推其他 caller、原始 C 型別、完整 DS／callee ABI。
+
+可讀 C 不含指令 pragma、code array 或原始 object。累加使用 WCC16 的16-bit int／32-bit
+unsigned long，負值轉換後以 unsigned 累加，保留進位與溢位；實際指令與原版全範圍相同。
+呼叫宣告只保留位址身分、near／far 返回與保守 clobber，不宣稱原始 prototype 已恢復。
+
+首份 wrapper prototype 在 `cdecl-size-calls` 多出 `INC BP／PUSH BP／MOV BP,SP` 及對應尾段。
+[Watcom 官方 `of`、`or`、`oc` 契約](https://open-watcom.github.io/open-watcom-v2-wikidocs/cguide.html)
+證明 `-ofr` 包含 traceable-frame 與 reorder。新固定 profile `cdecl-size-calls-unframed`
+只把 `-ofr` 換成 `-or`，保留 `-oc`；五個 far-return prototype 隨即完整4 bytes匹配。
+`sub_1CFE8` 在 size 與 speed 控制均為9 bytes，原版10 bytes，因此排除正式來源。
+所有失敗保留在 `primary-bridges-c-r1`／`r2`，不 patch compiler output 或接受局部相似。
+
+驗收需兩次新容器從正式 manifest 重編，source／完整 OBJ／完整 CODE／actual FIXUPP 相同，
+全部原始 bytes、typed call targets、MZ relocation 集合與返回種類吻合；未知 profile／placement
+與錯返回須拒絕。新增靜態語意由 [ida_matching_c_ledger.json](../tools/ida_matching_c_ledger.json)
+自動合併至 [probe](../tools/ida_matching_probe.py) 與 [完整清冊](../tools/ida_matching_inventory.py)。
+本頁 READY 只批准此34-byte來源切片；完整 source-unit 分母、全 EXE layout／runtime 仍未知。
+Go／pack、存檔與正常 campaign 不受本切片影響；本輪沒有新的玩家或封包完成聲明。
+
+READY 審查後，`primary-source-r1`／`r2` 由兩個全新容器重編正式 manifest 全部14個候選。
+兩份完整 C／OBJ／listing／CODE 逐 byte 相同，actual FIXUPP 與完整原版比較一致。
+原填表／搜尋候選仍 DIFF，新增七個完整常式34 bytes全部匹配，沒有函式外 padding。
+總審核 `goal-audit-r20.json` SHA-256
+`1a38874f1b22ed8ae94c7abea59a90b1077a33822929b1ed140257fc12f1fb3a`
+核對15個 C／138 bytes，其中主程式12個126 bytes、SDK3個12 bytes；完整六 gate 仍未證實。
+
+`inventory-ida-r3.json` 由 fresh IDA9.4 合併九個新分級註記。828函式、29979 heads、81854
+唯一 code bytes及4455函式外heads保持；逐筆原名、chunks、原始bytes與typed xrefs等於r2。
+`primary-accumulator-ida-r2.json` 同樣自動附註九筆，沒有修改正式database。
+`primary-c-slice-final-verification-r2.json` 核對十個負例：無號輸入、near替代far返回、錯原始
+call xref、缺／錯DS placement、錯caller／target frame、錯target offset、未知profile及壞索引bytes。
+它們全部 REFUSED 或 DIFF；第一份驗證腳本誤比拒絕訊息的字串，按實際訊息訂正後同環境重跑。
+
+局部 unique source byte-layout 由13307增加為13341，只用來追蹤非重複來源，不作完整EXE比例。
+此切片 CONFORMED 的範圍是靜態 C 重編、原始指令與重定位。完整 EXE、原版 compiler、
+全 source-unit／data-layout、callee ABI及新 runtime 收據仍未完成；17-byte自訂compiler prototype未採用。
+下一步沿已審 CODE frame追含暫存器參數的呼叫來源與其完整source unit，不重跑已排除134組控制。
 
 ## 呼叫重定位契約與控制
 

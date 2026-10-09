@@ -2593,3 +2593,18 @@ video-source-publish-r1重核兩份source／generated ASM／OBJ／MZ、401＋1 r
 fresh IDA input／producer hash、Python syntax、source索引／連結／UID/GID；研究root-owned及Markdown目錄0。
 goal-audit-r17保持八C104及六未完成gates。一次性容器清除，未動其他專案containers。
 提交前git diff --check通過，僅source／typed data／tools與證據記錄提交GitHub，原binary／DB／artifact不提交。
+
+## 2026-10-09：有號累加與近呼叫返回的 C 精確匹配
+
+- 依復古逆向／IDA9.4／文件職責路由與現行 matching 契約續行。保留13項使用者未追蹤資料，Go／pack及 Issue #4 範圍保持。
+- fresh IDA9.4 匯出 sub_1895C 及七個 wrapper 候選的完整 chunks、原始 bytes、typed xrefs 與 caller windows。有號 AX／DS:4F37與4F39 modulo-32 累加10 bytes匹配；一個 near return及五個 far return共24 bytes匹配。
+- 第一份 far-return 試作多出追蹤用 BP frame。按固定 Watcom 官方 of／or／oc 契約，只把-ofr換成-or，保留-oc，五份完整4-byte來源匹配。sub_1CFE8零值store在size／speed控制均為9 bytes，原版10 bytes，保留DIFF並排除正式來源。沒有patch code、指令pragma或原始object進build。
+- docs/25完成DRAFT證據→READY審查→正式來源→CONFORMED；re/match新增七份可讀C與穩定入口。四種compiler profile由實際command核對；新九筆分級靜態語意索引自動合併probe與完整inventory，原始型別、compiler及完整callee／DS ABI未升格。
+- primary-source-r1／r2在兩個全新、network none、UID1000:1000的容器從正式manifest重編14個Watcom候選。兩份完整C／OBJ／listing／CODE與actual FIXUPP逐byte同值；原填表／搜尋仍DIFF。MS C的三份未變來源沿用c-batch-r15／r16完整artifact，未重跑已完成對照。
+- fresh inventory-ida-r3保留828函式／29979 heads／81854唯一code bytes、4455函式外heads及全部原始names／chunks／bytes／typed xrefs。primary-accumulator-ida-r2自動附註九筆；沒有rename、修邊界或改正式database。
+- 十個負例REFUSED或DIFF，包括unsigned輸入、near替代far返回、錯原始typed xref、DS／CODE placement、未知profile與壞ledger bytes。首次總驗證誤比拒絕訊息的字串，按實際Reviewed semantic ledger original bytes differ訂正後同容器環境乾淨重跑；分類為驗證腳本問題。
+- 最終goal-audit-r20核對15份C／138 bytes，主程式12份126 bytes、SDK3份12 bytes；source byte-layout去重13341只是局部統計。六個完整Goal gate仍未證實，整個EXE與新runtime收據尚未完成，17-byte自訂compiler prototype未採用。
+- 本機收據位於work/matching-decomp-20261008-r1/full-goal-r1/：primary-accumulator-ida-r1／r2.json、primary-source-r1／r2/receipt.json、inventory-ida-r3.json、primary-c-slice-final-verification-r2.json、goal-audit-r20.json。正驗收命令沿tools/build/README的run_watcom16_abi與matching_goal_audit入口，輸出皆用全新目錄。
+- 契約排版收尾保留原中文objective與compact verify；r18／r19是排版前snapshot，r20使用最終contract hash。最終審核SHA-256 1a38874f1b22ed8ae94c7abea59a90b1077a33822929b1ed140257fc12f1fb3a。
+- Docker一次性容器全移除；沒有建新image。root-owned3121的完整路徑hash保持，零.md目錄；抽查12份source／OBJ／JSON皆1000:1000。git diff --check通過。原版素材、database、OBJ、私有work及使用者資料不加入Git。
+- 下一步沿已審CODE frame追暫存器入參呼叫與完整source-unit／layout；不重跑134組已排除控制，不改主程式C標準。commit／push結果由本機work/matching-decomp-20261008-r1/full-goal-r1/primary-c-slice-post-push.json保存。

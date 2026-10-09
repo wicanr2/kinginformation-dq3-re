@@ -22,7 +22,7 @@
     {
       "id": "primary-C-exact",
       "requirement": "Every primary source unit compiles from readable C and matches its entire original function/code range after actual relocations",
-      "verify": {"kind": "manual", "note": "Current MSC/Watcom manifests contain eight matched C units/104 bytes; three/12 bytes lie inside identified CTVMEM/CMFDRV SDK modules. Five primary-segment units cover 92 bytes, including four-near-call and DX-input far-call sequences. Original types, full primary-unit denominator and layout remain under review; primary fill/search candidates remain different"}
+      "verify": {"kind": "manual", "note": "Current MSC/Watcom manifests contain fifteen matched C units/138 bytes; three/12 bytes lie inside identified CTVMEM/CMFDRV SDK modules. Twelve primary-segment units cover 126 bytes, including signed-AX modulo-32 accumulation and six direct near-call wrappers with one near and five far returns. Original types, full primary-unit denominator and layout remain under review; primary fill/search and sub_1CFE8 zero-store candidates remain different"}
     },
     {
       "id": "low-level-ASM-evidence",

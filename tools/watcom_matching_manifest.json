@@ -6,6 +6,19 @@
   "compiler": "dq3-watcom16:2.0-20261001-r1",
   "cases": [
     {
+      "id": "sub_1895C",
+      "source": "re/match/sub_895c.c",
+      "public_symbol": "_sub_895c",
+      "ida_linear_start": "0x1895c",
+      "logical_start": "0x895c",
+      "file_start": "0x9ccc",
+      "size": 10,
+      "external_DS_offsets": {
+        "_unknown_DS_4f37": "0x4f37"
+      },
+      "scope": "Static signed AX extension and modulo-32 word-pair accumulation; field meaning unknown"
+    },
+    {
       "id": "sub_13016",
       "source": "re/match/sub_3016.c",
       "public_symbol": "_sub_3016",
@@ -16,12 +29,27 @@
       "external_DS_offsets": {},
       "compiler_profile": "cdecl-size-calls",
       "call_placements": {
-        "caller": {"segment": 0, "offset": 12310},
+        "caller": {
+          "segment": 0,
+          "offset": 12310
+        },
         "near": {
-          "_sub_3023": {"segment": 0, "offset": 12323},
-          "_sub_30cf": {"segment": 0, "offset": 12495},
-          "_sub_31bd": {"segment": 0, "offset": 12733},
-          "_sub_333c": {"segment": 0, "offset": 13116}
+          "_sub_3023": {
+            "segment": 0,
+            "offset": 12323
+          },
+          "_sub_30cf": {
+            "segment": 0,
+            "offset": 12495
+          },
+          "_sub_31bd": {
+            "segment": 0,
+            "offset": 12733
+          },
+          "_sub_333c": {
+            "segment": 0,
+            "offset": 13116
+          }
         },
         "far": {}
       },
@@ -35,12 +63,22 @@
       "logical_start": "0xee19",
       "file_start": "0x10189",
       "size": 10,
-      "external_DS_offsets": {"_unknown_DS_25d1": "0x25d1"},
+      "external_DS_offsets": {
+        "_unknown_DS_25d1": "0x25d1"
+      },
       "compiler_profile": "cdecl-size-calls",
       "call_placements": {
-        "caller": {"segment": 0, "offset": 60953},
+        "caller": {
+          "segment": 0,
+          "offset": 60953
+        },
         "near": {},
-        "far": {"_sub_20a3a": {"segment": 4252, "offset": 122}}
+        "far": {
+          "_sub_20a3a": {
+            "segment": 4252,
+            "offset": 122
+          }
+        }
       },
       "scope": "Primary-code DS:25D1 word to DX then far 109C:007A; original input type/prototype unknown"
     },
@@ -52,7 +90,11 @@
       "logical_start": "0x37f9",
       "file_start": "0x4b69",
       "size": 48,
-      "external_DS_offsets": {"_unknown_DS_072f": "0x072f", "_unknown_DS_0731": "0x0731", "_unknown_DS_0733": "0x0733"},
+      "external_DS_offsets": {
+        "_unknown_DS_072f": "0x072f",
+        "_unknown_DS_0731": "0x0731",
+        "_unknown_DS_0733": "0x0733"
+      },
       "compiler_profile": "watcall-speed-no-reorder",
       "scope": "Primary-code SI-addressed record stores with BX input; AX/CX and SI/BX preserved; original field/type semantics scoped"
     },
@@ -64,7 +106,10 @@
       "logical_start": "0x9834",
       "file_start": "0xaba4",
       "size": 14,
-      "external_DS_offsets": {"_unknown_DS_259c": "0x259c", "_unknown_DS_4f15": "0x4f15"},
+      "external_DS_offsets": {
+        "_unknown_DS_259c": "0x259c",
+        "_unknown_DS_4f15": "0x4f15"
+      },
       "scope": "Primary-code one-based near-pointer table lookup; SI result, BX preserved; original table extent/type/compiler unknown"
     },
     {
@@ -75,7 +120,9 @@
       "logical_start": "0x14ae6",
       "file_start": "0x15e56",
       "size": 4,
-      "external_DS_offsets": {"_unknown_DS_0032": "0x0032"},
+      "external_DS_offsets": {
+        "_unknown_DS_0032": "0x0032"
+      },
       "scope": "CMFDRV.ASM SDK module AX-input word store; runtime DS/field/type meaning unknown"
     },
     {
@@ -86,7 +133,9 @@
       "logical_start": "0x32a3",
       "file_start": "0x4613",
       "size": 17,
-      "external_DS_offsets": {"_unknown_DS_265d": "0x265d"},
+      "external_DS_offsets": {
+        "_unknown_DS_265d": "0x265d"
+      },
       "encoded_addend_mode": "signed16",
       "encoded_addend_reference": "Vendor wdis shows symbol-2; synthetic WLINK fixture independently resolves raw FFFE as symbol frame offset minus 2",
       "scope": "Primary-code stride-two byte fill; implicit BX/CX outputs require exact code"
@@ -101,6 +150,156 @@
       "size": 15,
       "external_DS_offsets": {},
       "scope": "Primary-code six-byte search; AH/SI inputs and implicit AL/SI/CX effects require exact code"
+    },
+    {
+      "id": "sub_1EE15",
+      "source": "re/match/sub_ee15.c",
+      "public_symbol": "_sub_ee15",
+      "ida_linear_start": "0x1ee15",
+      "logical_start": "0xee15",
+      "file_start": "0x10185",
+      "size": 4,
+      "external_DS_offsets": {},
+      "compiler_profile": "cdecl-size-calls",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 60949
+        },
+        "near": {
+          "_sub_ee76": {
+            "segment": 0,
+            "offset": 61046
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original direct near CALL followed by near return; conservative callee clobber declaration, original prototype unknown"
+    },
+    {
+      "id": "sub_1E829",
+      "source": "re/match/sub_e829.c",
+      "public_symbol": "_sub_e829",
+      "ida_linear_start": "0x1e829",
+      "logical_start": "0xe829",
+      "file_start": "0xfb99",
+      "size": 4,
+      "external_DS_offsets": {},
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 59433
+        },
+        "near": {
+          "_sub_e82d": {
+            "segment": 0,
+            "offset": 59437
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original direct near CALL followed by far return; conservative callee clobber declaration, original prototype unknown"
+    },
+    {
+      "id": "sub_1E916",
+      "source": "re/match/sub_e916.c",
+      "public_symbol": "_sub_e916",
+      "ida_linear_start": "0x1e916",
+      "logical_start": "0xe916",
+      "file_start": "0xfc86",
+      "size": 4,
+      "external_DS_offsets": {},
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 59670
+        },
+        "near": {
+          "_sub_ea8c": {
+            "segment": 0,
+            "offset": 60044
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original direct near CALL followed by far return; conservative callee clobber declaration, original prototype unknown"
+    },
+    {
+      "id": "sub_1E91A",
+      "source": "re/match/sub_e91a.c",
+      "public_symbol": "_sub_e91a",
+      "ida_linear_start": "0x1e91a",
+      "logical_start": "0xe91a",
+      "file_start": "0xfc8a",
+      "size": 4,
+      "external_DS_offsets": {},
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 59674
+        },
+        "near": {
+          "_sub_ec53": {
+            "segment": 0,
+            "offset": 60499
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original direct near CALL followed by far return; conservative callee clobber declaration, original prototype unknown"
+    },
+    {
+      "id": "sub_1EE72",
+      "source": "re/match/sub_ee72.c",
+      "public_symbol": "_sub_ee72",
+      "ida_linear_start": "0x1ee72",
+      "logical_start": "0xee72",
+      "file_start": "0x101e2",
+      "size": 4,
+      "external_DS_offsets": {},
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 61042
+        },
+        "near": {
+          "_sub_ee76": {
+            "segment": 0,
+            "offset": 61046
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original direct near CALL followed by far return; conservative callee clobber declaration, original prototype unknown"
+    },
+    {
+      "id": "sub_1EEFF",
+      "source": "re/match/sub_eeff.c",
+      "public_symbol": "_sub_eeff",
+      "ida_linear_start": "0x1eeff",
+      "logical_start": "0xeeff",
+      "file_start": "0x1026f",
+      "size": 4,
+      "external_DS_offsets": {},
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 61183
+        },
+        "near": {
+          "_sub_ef03": {
+            "segment": 0,
+            "offset": 61187
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original direct near CALL followed by far return; conservative callee clobber declaration, original prototype unknown"
     }
   ]
 }
