@@ -28,10 +28,10 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
-> 現行C本體18個／175 bytes；最新CX／BX／DI入參與word writer三個完整常式37 bytes。
-> 先前有號累加、近／遠返回、四段近呼叫與DX入參遠呼叫及MZ relocation成果保持；最新驗收見2026-10-09切片。
+> 現行C本體21個／227 bytes；最新兩個byte狀態閘門與零值檢查間接呼叫三個完整常式52 bytes。
+> 先前暫存器入參、word writer、有號累加、近／遠呼叫及MZ relocation成果保持；最新驗收見2026-10-09切片。
 > 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
-> 主程式C共163 bytes；7-byte來源產品角色仍未確認，其他query／writer／call來源只按已審靜態範圍計數。填表、搜尋與LEA地址參數候選仍不匹配，BP整數參數受固定compiler ABI限制。
+> 主程式C共215 bytes；7-byte來源產品角色仍未確認，其他query／writer／call來源只按已審靜態範圍計數。填表、搜尋、bitmask與LEA地址參數候選仍不匹配，BP整數參數受固定compiler ABI限制。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -86,6 +86,60 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 2026-10-09：byte 閘門與零值檢查間接呼叫，CONFORMED
+
+輸入仍為 DQ3.EXE／115282 bytes／SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+fresh `conditional-ida-r1.json` 保存九個caller／callee的原始名稱、完整chunks、bytes及typed xrefs。
+IDA9.4 linear基準 `0x10000`；logical為linear減此值，file為logical加 `0x1370`。
+
+| 批准來源 | IDA linear，末端不含 | file，末端不含 | confirmed 靜態契約 |
+|---|---|---|---|
+| [sub_4ae5.c](../re/match/sub_4ae5.c) | `14AE5..14AF6` | `5E55..5E66` | CALL14AF6後讀DS:0726 byte，值不為1才依序CALL14AB5、CALL14C2B，共17 bytes |
+| [sub_cf18.c](../re/match/sub_cf18.c) | `1CF18..1CF29` | `E288..E299` | 同一byte閘門，guarded calls為1CEF6、14C2B，共17 bytes |
+| [sub_d421.c](../re/match/sub_d421.c) | `1D421..1D433` | `E791..E7A3` | DS:0743 word載入BX、乘2、檢查DS:[BX+38F4] word；非零才從同位置near CALL，共18 bytes |
+
+前兩個入口各有一個直接caller，全部六個direct CALL均保留xref17與CODE frame0。
+1D421有三個直接caller1D331／1D3A2／1D409；它的indexed CALL只有flow xref，沒有已解直接target。
+索引只載入一次，表格word在CMP與CALL各讀一次。C保存volatile近指標表與16-bit unsigned索引，
+不快取第一次表格讀取；near pointer寬度由編譯期檢查限制為2 bytes。
+這只批准靜態指令與原始read／branch／call鏈，不命名狀態用途，不推定表格extent、runtime DS、
+有效index範圍、callback原始prototype或完整callee ABI。這些仍unknown，完整data/layout gate保持未完成。
+
+正式manifest為1D421新增 `indirect_dispatch` 契約，kind固定為
+`zero-gated-near-ds-table-bx-v1`，只引用index及table兩個DS symbol。
+[omf_call_fixups.py](../tools/omf_call_fixups.py)須同時核對完整18-byte原始模式、JZ到RET的typed edge、
+indexed CALL沒有直接target及三個actual DS fixups：index offset2、table offset8與15。
+缺契約、未知kind、錯symbol／placement或不同指標寬度拒絕；不猜callback target或添加code relocation。
+此契約由既有[runner](../tools/run_watcom16_abi.py)與[總審核](../tools/matching_goal_audit.py)共同驗證。
+
+四份prototype中這三份完整52 bytes匹配。bitmask候選12FDF生成11 bytes，原版14 bytes；
+原版BX／word TEST被候選AX／AL TEST取代，保留DIFF，不納入正式來源。未改compiler或四種固定profile。
+READY驗收需兩個新容器的完整C／OBJ／listing／CODE與actual FIXUPP同值，原始bytes、gate、
+direct／indirect call契約及MZ集合一致；錯predicate、寬度、volatile讀取、初值、index或CALL順序不得計exact。
+範圍限三個完整常式的靜態匹配；Go／pack、存檔、正常玩家流程及全EXE gate保持。
+
+READY審查後，`conditional-source-r1`／`r2`兩個全新容器從正式20候選manifest重編。
+完整C／OBJ／listing／CODE、actual FIXUPP與indirect_dispatch_evidence逐byte或逐欄同值。
+新增三份52 bytes全部匹配；既有填表／搜尋仍DIFF，沒有函式外padding進入新來源。
+`goal-audit-r23.json` SHA-256 `71dfcd0d987724c1926dd9ada57d8119108ec886b9eae423b88fa40a194567a6`
+核對21份C／227 bytes，主程式18份215 bytes、SDK3份12 bytes；六個完整Goal gate仍未證實。
+
+fresh `inventory-ida-r5.json`保留828函式／29979 heads／81854唯一code bytes、全部原名／chunks／
+segment／raw及loaded bytes／typed xrefs，與r4一致。新增十五筆confirmed靜態註記自動合併，
+matching C索引共34筆；4455函式外heads仍未閉合。局部unique source byte-layout13430不作全EXE比例。
+`conditional-verification-final.json`核對十五個負例：八個實際編譯變異、六個indirect契約變異，
+以及第二份重編的dispatch證據被修改。全數DIFF、REFUSED或COMPILE_FAILED；原始objects與bytes未patch。
+
+原「移除volatile」試驗仍生成兩次table讀取且完整匹配，不能當拒絕負例。該控制保留在
+`conditional-negative-build-r1`，不加入coverage；改以明示C local快取一次的
+`conditional-cached-build-r2`，驗證真正少一次table讀取會REFUSED。首次驗證將兩者混同的斷言已訂正，
+沒有修改production來源或把等價結果改寫成失敗。正式C仍以volatile表達原始兩次memory讀取。
+
+本輪無新runtime／campaign收據。下一步追原始狀態writer與呼叫前的暫存器保留契約；
+callback表格extent、有效index、runtime DS與完整callee ABI仍unknown，不猜資料或重跑已排除compiler控制。
+
 
 ## 2026-10-09：CX／BX／DI 入參與 word writer，CONFORMED
 

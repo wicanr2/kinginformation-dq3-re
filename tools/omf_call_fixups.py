@@ -58,6 +58,57 @@ def validate_original_caller(case, inventory):
         raise ValueError("Source unit crosses the original IDA segment")
 
 
+def validate_indirect_dispatch(case, inventory, code, fixes):
+    """Reviewed zero-gated near DS table call; no inferred callback targets.
+
+    This narrow contract proves the original raw read/branch/call pattern and
+    actual data fixups. Table extent, valid indices and runtime DS stay unknown.
+    """
+    start = int(case["ida_linear_start"], 16)
+    function = next(f for f in inventory["functions"] if int(f["ida_linear_start"], 16) == start)
+    rows = [inventory["instructions"][ea] for ea in function["instructions"]]
+    indirect = [row for row in rows if row["mnemonic"] == "call" and not any(
+        ref["iscode"] and ref["type"] in (16, 17) for ref in row["refs_from"])]
+    contract = case.get("indirect_dispatch")
+    if contract is None:
+        if indirect:
+            raise UnsupportedOMF("Original indirect call needs a reviewed dispatch contract")
+        return None
+    if (not isinstance(contract, dict) or set(contract) != {"kind", "index_symbol", "table_symbol"}
+            or contract["kind"] != "zero-gated-near-ds-table-bx-v1"):
+        raise UnsupportedOMF("Unknown indirect dispatch contract")
+    index_symbol, table_symbol = contract["index_symbol"], contract["table_symbol"]
+    offsets = case["external_DS_offsets"]
+    if (not isinstance(index_symbol, str) or not isinstance(table_symbol, str)
+            or index_symbol == table_symbol or set(offsets) != {index_symbol, table_symbol}):
+        raise ValueError("Indirect dispatch requires distinct reviewed DS symbols")
+    index, table = int(offsets[index_symbol], 16), int(offsets[table_symbol], 16)
+    if not 0 <= index <= 65534 or not 0 <= table <= 65534:
+        raise ValueError("Indirect dispatch DS word crosses its 16-bit frame")
+    expected = (b"\x8b\x1e" + struct.pack("<H", index) + b"\xd1\xe3\x83\xbf"
+                + struct.pack("<H", table) + b"\x00\x74\x04\xff\x97"
+                + struct.pack("<H", table) + b"\xc3")
+    if (case["size"] != 18 or function["chunks"] != [[hex(start), hex(start + 18)]]
+            or [int(row["ida_linear"], 16) - start for row in rows] != [0, 4, 6, 11, 13, 17]
+            or b"".join(bytes.fromhex(row["file_bytes"]) for row in rows) != expected):
+        raise ValueError("Original indirect dispatch differs from reviewed pattern")
+    if (len(indirect) != 1 or int(indirect[0]["ida_linear"], 16) != start + 13
+            or not any(ref["iscode"] and ref["type"] == 19 and int(ref["to"], 16) == start + 17
+                       for ref in rows[3]["refs_from"])):
+        raise ValueError("Original zero-gate or indirect call xref differs")
+    if code != expected:
+        raise ValueError("Compiled indirect dispatch differs from reviewed pattern")
+    expected_fixes = [(2, index_symbol, index), (8, table_symbol, table), (15, table_symbol, table)]
+    actual = sorted((fix["offset"], fix["symbol"], fix["resolved_operand"]) for fix in fixes)
+    if actual != expected_fixes or any(fix["original_addend"] != 0 for fix in fixes):
+        raise ValueError("Indirect dispatch actual DS fixups differ")
+    return {"kind": contract["kind"], "gate_ida_linear": hex(start + 6),
+            "call_ida_linear": hex(start + 13), "zero_branch_target": hex(start + 17),
+            "pointer_bytes": 2, "index_loads": 1, "table_reads": 2,
+            "inference_level": "confirmed static raw dispatch pattern",
+            "callback_targets": "unknown", "table_extent": "unknown", "runtime_DS": "unknown"}
+
+
 def resolve_function_fixups(obj, symbol, ds_offsets, caller_address, *,
                             near_symbols=None, far_symbols=None, signed_addends=False):
     near_symbols = {} if near_symbols is None else near_symbols

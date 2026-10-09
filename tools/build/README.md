@@ -88,6 +88,9 @@ far-return來源使用第四種固定profile `cdecl-size-calls-unframed`，只�
 `-of`的traceable-frame、`-or`的reorder與`-oc`的CALL／RET契約見
 [Watcom官方手冊](https://open-watcom.github.io/open-watcom-v2-wikidocs/cguide.html)。
 call_placements只使用MZ-relative segment／offset整數，DS／near／far symbol集合互斥。
+原始indirect CALL另需明示indirect_dispatch契約；目前只支援zero-gated-near-ds-table-bx-v1，
+由omf_call_fixups核對原始18-byte模式、typed zero-branch與三個actual DS fixups。
+callback targets、table extent與runtime DS保留unknown；新模式需獨立證據審查，不能當direct CALL猜綁。
 compiler候選的實際caller frame、typed IDA call xref與MZ segment word位置亦核對；
 合成連結控制為 `python3 /repo/tools/verify_watcom_call_fixups.py --output /out/<新名稱>`，
 使用同一r2 image、唯讀repo及明確輸出；每次用新容器，explicit FARGROUP及NOFARCALLS保持。

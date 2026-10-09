@@ -222,6 +222,171 @@
       "source": "re/match/sub_9074.c",
       "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
       "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r2.json"
+    },
+    {
+      "ida_linear": "0x14ae5",
+      "file_offset": "0x5e55",
+      "bytes": "e80e00",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_14AF6",
+      "consumer": "原始sub_14AE5範圍[['0x14ae5', '0x14af6']]；typed refs [{'to': '0x14ae8', 'type': 21, 'iscode': True}, {'to': '0x14af6', 'type': 17, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_4ae5.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x14ae8",
+      "file_offset": "0x5e58",
+      "bytes": "803e260701",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：cmp     byte ptr ds:726h, 1",
+      "consumer": "原始sub_14AE5範圍[['0x14ae5', '0x14af6']]；typed refs [{'to': '0x14aed', 'type': 21, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_4ae5.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x14aed",
+      "file_offset": "0x5e5d",
+      "bytes": "7406",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：jz      short locret_14AF5",
+      "consumer": "原始sub_14AE5範圍[['0x14ae5', '0x14af6']]；typed refs [{'to': '0x14aef', 'type': 21, 'iscode': True}, {'to': '0x14af5', 'type': 19, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_4ae5.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x14aef",
+      "file_offset": "0x5e5f",
+      "bytes": "e8c3ff",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_14AB5",
+      "consumer": "原始sub_14AE5範圍[['0x14ae5', '0x14af6']]；typed refs [{'to': '0x14af2', 'type': 21, 'iscode': True}, {'to': '0x14ab5', 'type': 17, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_4ae5.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x14af2",
+      "file_offset": "0x5e62",
+      "bytes": "e83601",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_14C2B",
+      "consumer": "原始sub_14AE5範圍[['0x14ae5', '0x14af6']]；typed refs [{'to': '0x14af5', 'type': 21, 'iscode': True}, {'to': '0x14c2b', 'type': 17, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_4ae5.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1cf18",
+      "file_offset": "0xe288",
+      "bytes": "e8db7b",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_14AF6",
+      "consumer": "原始sub_1CF18範圍[['0x1cf18', '0x1cf29']]；typed refs [{'to': '0x1cf1b', 'type': 21, 'iscode': True}, {'to': '0x14af6', 'type': 17, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_cf18.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1cf1b",
+      "file_offset": "0xe28b",
+      "bytes": "803e260701",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：cmp     byte ptr ds:726h, 1",
+      "consumer": "原始sub_1CF18範圍[['0x1cf18', '0x1cf29']]；typed refs [{'to': '0x1cf20', 'type': 21, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_cf18.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1cf20",
+      "file_offset": "0xe290",
+      "bytes": "7406",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：jz      short locret_1CF28",
+      "consumer": "原始sub_1CF18範圍[['0x1cf18', '0x1cf29']]；typed refs [{'to': '0x1cf22', 'type': 21, 'iscode': True}, {'to': '0x1cf28', 'type': 19, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_cf18.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1cf22",
+      "file_offset": "0xe292",
+      "bytes": "e8d1ff",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_1CEF6",
+      "consumer": "原始sub_1CF18範圍[['0x1cf18', '0x1cf29']]；typed refs [{'to': '0x1cf25', 'type': 21, 'iscode': True}, {'to': '0x1cef6', 'type': 17, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_cf18.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1cf25",
+      "file_offset": "0xe295",
+      "bytes": "e8037d",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_14C2B",
+      "consumer": "原始sub_1CF18範圍[['0x1cf18', '0x1cf29']]；typed refs [{'to': '0x1cf28', 'type': 21, 'iscode': True}, {'to': '0x14c2b', 'type': 17, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_cf18.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d421",
+      "file_offset": "0xe791",
+      "bytes": "8b1e4307",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：mov     bx, ds:743h",
+      "consumer": "原始sub_1D421範圍[['0x1d421', '0x1d433']]；typed refs [{'to': '0x1d425', 'type': 21, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_d421.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d425",
+      "file_offset": "0xe795",
+      "bytes": "d1e3",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：shl     bx, 1",
+      "consumer": "原始sub_1D421範圍[['0x1d421', '0x1d433']]；typed refs [{'to': '0x1d427', 'type': 21, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_d421.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d427",
+      "file_offset": "0xe797",
+      "bytes": "83bff43800",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：cmp     word ptr [bx+38F4h], 0",
+      "consumer": "原始sub_1D421範圍[['0x1d421', '0x1d433']]；typed refs [{'to': '0x1d42c', 'type': 21, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_d421.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d42c",
+      "file_offset": "0xe79c",
+      "bytes": "7404",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：jz      short locret_1D432",
+      "consumer": "原始sub_1D421範圍[['0x1d421', '0x1d433']]；typed refs [{'to': '0x1d42e', 'type': 21, 'iscode': True}, {'to': '0x1d432', 'type': 19, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_d421.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x1d42e",
+      "file_offset": "0xe79e",
+      "bytes": "ff97f438",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    word ptr [bx+38F4h]",
+      "consumer": "原始sub_1D421範圍[['0x1d421', '0x1d433']]；typed refs [{'to': '0x1d432', 'type': 21, 'iscode': True}]；不推定runtime DS或動態callback target",
+      "source": "re/match/sub_d421.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 byte 閘門與零值檢查間接呼叫",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/conditional-ida-r1.json"
     }
   ]
 }

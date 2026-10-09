@@ -391,6 +391,104 @@
         "far": {}
       },
       "scope": "Original DS input/address/store plus direct call order; original field types and callee ABI unknown"
+    },
+    {
+      "id": "sub_14AE5",
+      "source": "re/match/sub_4ae5.c",
+      "public_symbol": "_sub_4ae5",
+      "ida_linear_start": "0x14ae5",
+      "logical_start": "0x4ae5",
+      "file_start": "0x5e55",
+      "size": 17,
+      "external_DS_offsets": {
+        "_unknown_DS_0726": "0x0726"
+      },
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 19173
+        },
+        "near": {
+          "_sub_4af6": {
+            "segment": 0,
+            "offset": 19190
+          },
+          "_sub_4ab5": {
+            "segment": 0,
+            "offset": 19125
+          },
+          "_sub_4c2b": {
+            "segment": 0,
+            "offset": 19499
+          }
+        },
+        "far": {}
+      },
+      "scope": "Static conditional DS read and near call; original field meaning/prototypes/full ABI unknown"
+    },
+    {
+      "id": "sub_1CF18",
+      "source": "re/match/sub_cf18.c",
+      "public_symbol": "_sub_cf18",
+      "ida_linear_start": "0x1cf18",
+      "logical_start": "0xcf18",
+      "file_start": "0xe288",
+      "size": 17,
+      "external_DS_offsets": {
+        "_unknown_DS_0726": "0x0726"
+      },
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 53016
+        },
+        "near": {
+          "_sub_4af6": {
+            "segment": 0,
+            "offset": 19190
+          },
+          "_sub_cef6": {
+            "segment": 0,
+            "offset": 52982
+          },
+          "_sub_4c2b": {
+            "segment": 0,
+            "offset": 19499
+          }
+        },
+        "far": {}
+      },
+      "scope": "Static conditional DS read and near call; original field meaning/prototypes/full ABI unknown"
+    },
+    {
+      "id": "sub_1D421",
+      "source": "re/match/sub_d421.c",
+      "public_symbol": "_sub_d421",
+      "ida_linear_start": "0x1d421",
+      "logical_start": "0xd421",
+      "file_start": "0xe791",
+      "size": 18,
+      "external_DS_offsets": {
+        "_unknown_DS_0743": "0x0743",
+        "_unknown_DS_38f4": "0x38f4"
+      },
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 54305
+        },
+        "near": {},
+        "far": {}
+      },
+      "scope": "Static conditional DS read and near call; original field meaning/prototypes/full ABI unknown",
+      "indirect_dispatch": {
+        "kind": "zero-gated-near-ds-table-bx-v1",
+        "index_symbol": "_unknown_DS_0743",
+        "table_symbol": "_unknown_DS_38f4"
+      }
     }
   ]
 }

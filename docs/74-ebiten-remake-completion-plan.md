@@ -2,19 +2,20 @@
 
 > 2026-10-09現行Goal：完成 dq3 matching decompliation。使用者已選主程式C精確匹配，
 > ASM僅用於已確認底層。全EXE由可讀來源乾淨重建且逐byte一致，raw code／db拼接不算完成。
-> 最新三份C／37 bytes有限CONFORMED：CX／BX／DI入參、near CALL順序與DS:26FE word writer。
-> 兩個新容器從正式17候選manifest重編，完整source／OBJ／listing／CODE與actual FIXUPP相同。
-> goal-audit-r21核對18份C／175 bytes，主程式15份163、SDK3份12；十個負例DIFF或REFUSED。
-> 四種固定profile保持。BP三候選COMPILE_FAILED／E1122，官方WCC16不支援BP整數參數，未改工具鏈前不重試。
-> LEA地址參數候選、填表／搜尋及sub_1CFE8零值store仍DIFF，不patch bytes或降低主程式C要求。
-> fresh IDA r4保留828函式／29979 heads／81854 code bytes及原始names／chunks／segment／bytes／typed xrefs。
-> 十個新靜態分級註記自動合併，matching C索引共19筆；4455函式外heads與完整source-unit分母仍未閉合。
-> 首個C PROC的ENDP後1-byte NOP配置未解；17跨界CFG候選未批准。舊134組控制不重跑。
-> 17-byte自訂compiler-stage prototype未採用，該工具鏈分支未定；原版compiler與完整callee ABI仍未知。
-> 原video402、CTV2493、CMF5296、MZ4976／file-end2 byte-layout保持，literal6B06與未知payload不改。
-> 原field semantics／runtime與硬體parity未升格；unique source byte-layout13378不作完整EXE比例。
-> 六個完整Goal gate仍未證實。下一步已審CODE frame的條件式呼叫與原始狀態consumer。
-> 本工作不改正式Go／pack、存檔或Issue #4暫停範圍，沒有新玩家campaign或發行包。
+> 最新三份C／52 bytes有限CONFORMED：兩個DS:0726 byte閘門與零值檢查near table CALL。
+> 兩個新容器從正式20候選manifest重編，完整C／OBJ／listing／CODE、actual FIXUPP與dispatch證據一致。
+> goal-audit-r23核對21份C／227 bytes，主程式18份215、SDK3份12；十五個負例DIFF、REFUSED或COMPILE_FAILED。
+> indirect_dispatch契約核對原始18-byte模式、typed JZ→RET、一次index載入、兩次table讀取與三個DS fixups。
+> 移除volatile控制仍兩讀且exact，保留為等價控制；明示一次快取另被拒絕。正式來源保留volatile。
+> fresh IDA r5保留828函式／29979 heads／81854 code bytes與原始names／chunks／segment／bytes／typed xrefs。
+> 十五筆新confirmed靜態註記自動合併，matching C索引34筆；4455函式外heads與完整source-unit分母未閉合。
+> callback targets／table extent／有效index／runtime DS／完整ABI仍unknown；完整data/layout未閉合。
+> 四種固定profile保持。BP整數參數、LEA、零store、填表／搜尋及bitmask限制不以patch bytes補齊。
+> 首個C PROC的ENDP後NOP、17跨界CFG候選與全EXE重建未完成；舊134組控制不重跑。
+> 17-byte自訂compiler-stage prototype未採用，原版compiler身分未知；未改主程式C要求。
+> 原video402／CTV2493／CMF5296／MZ4976及file-end2 byte-layout、literal6B06與未知payload保持。
+> unique source byte-layout13430不作完整EXE比例，六個完整Goal gate仍未證實。
+> 下一步原始狀態writer與呼叫前暫存器保留契約。本輪不改Go／pack、存檔或Issue #4範圍，無新runtime或發行包。
 > 唯一現況表在CONTEXT；證據與重生入口[docs/25](25-match-progress.md)，契約tools/matching_goal_contract.json。
 
 > 2026-10-08：依使用者授權啟動 [Issue #5](https://github.com/wicanr2/kinginformation-dq3-re/issues/5)

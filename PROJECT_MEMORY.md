@@ -1,14 +1,16 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-09：最新三份主程式C／37 bytes有限CONFORMED：CX／BX／DI入參、原始word writer與near CALL順序。
-> register-source-r1／r2的完整source／OBJ／listing／CODE與actual FIXUPP相同；goal-audit-r21核對18份C／175 bytes。
-> 主程式163、SDK12；十個錯輸入／順序／重定位負例DIFF或REFUSED。BP三候選E1122，官方WCC16 ABI不支援BP整數入參。
-> 未改工具鏈前不重試BP；LEA地址參數候選仍DIFF。四種固定profile保持，17-byte自訂compiler prototype未採用。
-> fresh IDA r4保留828函式／29979 heads／81854 code bytes與原始names／chunks／bytes／typed xrefs。
-> 十個新靜態分級註記自動合併，matching C索引共19筆；source byte-layout去重13378僅局部統計。
-> 完整EXE、六個Goal gates、原版compiler／完整callee ABI與新runtime收據仍未完成。
-> Go／pack與Issue #4範圍保持。現況以CONTEXT唯一狀態表、docs/74與docs/25為準。
-> 下一步已審CODE frame的條件式呼叫與原始狀態consumer，不重跑已排除134組。
+> 2026-10-09：最新三份C／52 bytes有限CONFORMED：兩個byte狀態閘門與零值檢查near table CALL。
+> conditional-source-r1／r2的完整C／OBJ／listing／CODE、actual FIXUPP與dispatch證據一致。
+> goal-audit-r23核對21份C／227 bytes，主程式215、SDK12；十五個編譯／契約／repeat證據負例拒絕或DIFF。
+> 新indirect_dispatch契約明示原始18-byte模式、typed zero edge、兩次table讀取與三個DS fixups。
+> 移除volatile控制仍生成兩讀且exact，保留為等價控制；真正單次快取另被拒絕，未改正式volatile來源。
+> fresh IDA r5保留828函式／29979 heads／81854 code bytes與原始names／chunks／segment／bytes／typed xrefs。
+> 十五個新分級註記自動合併，matching C索引34筆；unique source byte-layout13430僅局部統計。
+> callback targets／table extent／有效index／runtime DS／完整ABI、全EXE與六個Goal gates仍未完成。
+> BP／LEA／零store／填表／搜尋及bitmask限制保持，未改compiler／四種profile，不重跑舊134組。
+> 17-byte自訂compiler prototype未採用。Go／pack與Issue #4範圍保持，沒有新runtime或發行包。
+> 現況以CONTEXT唯一狀態表、docs/74與docs/25為準；下一步原始狀態writer與呼叫前暫存器保留契約。
 
 以下保存2026-10-08的研究快照，不取代CONTEXT唯一目前狀態表。
 

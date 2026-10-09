@@ -2623,3 +2623,18 @@ goal-audit-r17保持八C104及六未完成gates。一次性容器清除，未動
 - 本機收據在work/matching-decomp-20261008-r1/full-goal-r1/：register-calls-ida-r1／r2.json、register-calls-c-r1／r2/receipt.json、register-source-r1／r2/receipt.json、inventory-ida-r4.json、register-negative-build-r1/receipt.json、register-calls-verification-final.json及goal-audit-r21.json。重生沿tools/build/README既有run_watcom16_abi與matching_goal_audit入口，每次新容器與新輸出。
 - 容器全部使用--rm、network none、資源限制與UID1000:1000；沿用既有image。root-owned3121的完整路徑hash保持，零.md目錄；新source／OBJ／JSON抽查皆1000:1000。提交前git diff --check及DQ3容器清理核對；原版、database、OBJ、私有work與使用者資料不進Git。
 - 下一步已審CODE frame的條件式呼叫與原始狀態consumer。不重試未支援BP、LEA與舊134組控制，不採用未定的自訂compiler。commit／push結果保存本機full-goal-r1/register-calls-post-push.json。
+
+## 2026-10-09：byte 閘門與零值檢查間接呼叫的 C 匹配
+
+- 依復古逆向／IDA9.4路由與唯一計畫續行，保留13項使用者未追蹤資料，沿用固定compiler／四種profile，Go／pack及Issue #4範圍保持。
+- fresh conditional-ida-r1保存四個條件式候選與五個callee的原始名稱、chunks、bytes、typed xrefs及caller windows。14AE5／1CF18各17 bytes、1D421完整18 bytes匹配。12FDF生成AX／AL TEST共11 bytes，原版BX／word TEST共14 bytes，保留DIFF。
+- docs/25完成RE／DRAFT→READY→正式C→CONFORMED。三份來源共52 bytes無指令pragma或machine-code array；near callback指標以編譯期檢查限定2 bytes。狀態語意、原始型別、callback targets／extent／有效index／runtime DS與完整ABI仍unknown。
+- 原始間接CALL只有flow xref，未假造target。新增indirect_dispatch的zero-gated-near-ds-table-bx-v1契約，由omf_call_fixups共同核對18-byte原始模式、typed JZ→RET及index／table三個actual DS fixups。runner與audit共用驗證，缺契約／未知kind／錯symbol／模式拒絕，兩份dispatch證據也須同值。
+- conditional-source-r1／r2在兩個新容器從正式20候選manifest重編；完整C／OBJ／listing／CODE、actual FIXUPP及dispatch證據同值。18份Watcom匹配212 bytes，加未變MSC三份15 bytes，總21份227 bytes；主程式215、SDK12。舊填表／搜尋仍DIFF。
+- 八個編譯負例涵蓋反predicate／錯初值／word替byte／錯CALL順序／無zero gate／實際單次快取／錯slot／far pointer寬度；六個契約負例涵蓋缺契約、未知kind、錯symbol、錯typed zero edge與兩個fixup破壞。第二份dispatch證據被改另遭audit拒絕，共十五個負例通過。
+- 原移除volatile控制仍生成兩次table讀取且byte exact。首次斷言把它當作cache負例而失敗，屬驗證設計問題；保留原結果為等價compiler控制，不加coverage。只重編明示C local快取一次的conditional-cached-build-r2，真正單次讀取被REFUSED；正式來源仍保留volatile，沒有把等價結果改寫成失敗。
+- fresh inventory-ida-r5與r4的828函式／29979 heads／81854唯一code bytes、segments、原名、chunks、raw／loaded bytes及typed xrefs一致。十五筆新confirmed靜態註記自動合併，matching C索引34筆；4455函式外heads未閉合。
+- 最終goal-audit-r23核對全部來源新鮮度、獨立重編、direct／indirect bindings及MZ集合；SHA-256 71dfcd0d987724c1926dd9ada57d8119108ec886b9eae423b88fa40a194567a6。r22保存加入repeat metadata檢查前的audit。六個完整Goal gate未證實；unique source byte-layout13430只作局部統計，無新runtime、campaign或發行包。
+- 本機收據在work/matching-decomp-20261008-r1/full-goal-r1/：conditional-ida-r1.json、conditional-c-r1/receipt.json、conditional-source-r1／r2/receipt.json、conditional-negative-build-r1/receipt.json、conditional-cached-build-r2/receipt.json、inventory-ida-r5.json、conditional-verification-final.json及goal-audit-r23.json。重生沿tools/build/README既有runner／audit入口，每次新容器及新輸出。
+- 原EXE與分析輸入唯讀，來源編輯容器另把assets_raw覆蓋為readonly；只寫工作樹與明確輸出。全部--rm、network none、資源限制及UID1000:1000，沒有建新image。root-owned3121完整路徑hash保持，零.md目錄；source／OBJ／JSON抽查皆1000:1000。提交前檢查diff與容器清理，不加入原版、database、OBJ、私有work或使用者資料。
+- 下一步原始狀態writer與呼叫前暫存器保留契約；不猜callback targets或重跑舊134組／未支援BP與LEA。commit／push結果保存本機full-goal-r1/conditional-post-push.json。

@@ -15,7 +15,7 @@ import tempfile
 from omf_matching_probe import UnsupportedOMF, read_object, resolve_ds_offsets
 from run_matching_c_batch import msc_listing_function
 from run_watcom16_abi import compiler_flags_for
-from omf_call_fixups import resolve_candidate_fixups, validate_original_caller
+from omf_call_fixups import resolve_candidate_fixups, validate_original_caller, validate_indirect_dispatch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -183,7 +183,7 @@ def main():
             if sha(ROOT / unit["source"]) != case["source_sha256"]:
                 raise ValueError("Watcom source freshness differs")
             prior = next(result for result in repeated["results"] if result["case"] == case["case"])
-            for key in ("source_sha256", "object_sha256", "code_hex", "applied_fixups", "original_compare", "compiler_command", "MZ_segment_word_offsets"):
+            for key in ("source_sha256", "object_sha256", "code_hex", "applied_fixups", "original_compare", "compiler_command", "MZ_segment_word_offsets", "indirect_dispatch_evidence"):
                 if case.get(key) != prior.get(key):
                     raise ValueError("Watcom independent source rebuild differs: " + key)
             code = (args.watcom_receipt.parent / (case["case"] + "-code.bin")).read_bytes()
@@ -197,6 +197,9 @@ def main():
                 raise ValueError("Watcom source object differs")
             obj = read_object(obj_path)
             resolved, fixes, mz_offsets = resolve_candidate_fixups(obj, unit)
+            dispatch = validate_indirect_dispatch(unit, inventory, resolved, fixes)
+            if dispatch != case.get("indirect_dispatch_evidence"):
+                raise ValueError("Indirect dispatch evidence differs from actual source/object")
             if resolved != code or fixes != case["applied_fixups"]:
                 raise ValueError("Watcom actual relocation differs")
             if mz_offsets != case["MZ_segment_word_offsets"]:

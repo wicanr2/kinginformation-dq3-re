@@ -22,7 +22,7 @@
     {
       "id": "primary-C-exact",
       "requirement": "Every primary source unit compiles from readable C and matches its entire original function/code range after actual relocations",
-      "verify": {"kind": "manual", "note": "Current MSC/Watcom manifests contain eighteen matched C units/175 bytes; three/12 bytes lie inside identified CTVMEM/CMFDRV SDK modules. Fifteen primary-segment units cover 163 bytes, including CX/BX/DI-input call sequences and the raw DS:26FE word writer. Original types, full primary-unit denominator and layout remain under review. Primary fill/search, zero-store and LEA address candidates remain different; BP integer-argument candidates are not supported by the fixed WCC ABI"}
+      "verify": {"kind": "manual", "note": "Current MSC/Watcom manifests contain twenty-one matched C units/227 bytes; three/12 bytes lie inside identified CTVMEM/CMFDRV SDK modules. Eighteen primary-segment units cover 215 bytes, including two byte-state conditional wrappers and one zero-gated near table dispatch with reviewed actual DS fixups. Original types, callback targets/table extent/runtime DS, full primary-unit denominator and layout remain under review. Fill/search, zero-store, bitmask and LEA address candidates remain different; the fixed WCC ABI does not support BP integer arguments"}
     },
     {
       "id": "low-level-ASM-evidence",

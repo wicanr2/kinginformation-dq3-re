@@ -15,7 +15,7 @@ import subprocess
 import time
 
 from omf_matching_probe import UnsupportedOMF, read_object, resolve_ds_offsets, select_function
-from omf_call_fixups import resolve_candidate_fixups, validate_original_caller
+from omf_call_fixups import resolve_candidate_fixups, validate_original_caller, validate_indirect_dispatch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -140,6 +140,8 @@ def main():
                 raise ValueError("Unknown encoded addend contract")
             if name in candidate_records:
                 linked, fixes, mz_segment_offsets = resolve_candidate_fixups(obj, candidate_records[name])
+                result["indirect_dispatch_evidence"] = validate_indirect_dispatch(
+                    candidate_records[name], inventory, linked, fixes)
             else:
                 linked, fixes = resolve_ds_offsets(obj, symbol, placements, signed_addends=mode == "signed16")
                 mz_segment_offsets = []
