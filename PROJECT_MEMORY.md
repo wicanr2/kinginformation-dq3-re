@@ -1,12 +1,14 @@
 # DQ3 Go/Ebiten remake 接手記憶
 
-> 2026-10-09：matching新七份主程式C共34 bytes已有限CONFORMED，兩份source／OBJ／listing／CODE與actual FIXUPP相同。
-> goal-audit-r20核對15個C／138 bytes，主程式126、SDK12；十個負例拒絕或DIFF。
-> 新四種固定profile不代表原版compiler；新九個靜態分級註記由probe與完整清冊自動合併。
-> fresh IDA r3保留828函式／29979heads／81854 code bytes及全部原始names／bytes／typed xrefs。
-> source byte-layout去重13341僅局部統計；完整EXE、六個Goal gates及runtime仍未完成。
+> 2026-10-09：最新三份主程式C／37 bytes有限CONFORMED：CX／BX／DI入參、原始word writer與near CALL順序。
+> register-source-r1／r2的完整source／OBJ／listing／CODE與actual FIXUPP相同；goal-audit-r21核對18份C／175 bytes。
+> 主程式163、SDK12；十個錯輸入／順序／重定位負例DIFF或REFUSED。BP三候選E1122，官方WCC16 ABI不支援BP整數入參。
+> 未改工具鏈前不重試BP；LEA地址參數候選仍DIFF。四種固定profile保持，17-byte自訂compiler prototype未採用。
+> fresh IDA r4保留828函式／29979 heads／81854 code bytes與原始names／chunks／bytes／typed xrefs。
+> 十個新靜態分級註記自動合併，matching C索引共19筆；source byte-layout去重13378僅局部統計。
+> 完整EXE、六個Goal gates、原版compiler／完整callee ABI與新runtime收據仍未完成。
 > Go／pack與Issue #4範圍保持。現況以CONTEXT唯一狀態表、docs/74與docs/25為準。
-> 下一步既有CODE frame的暫存器入參呼叫來源與完整source-unit／layout，不重跑已排除134組。
+> 下一步已審CODE frame的條件式呼叫與原始狀態consumer，不重跑已排除134組。
 
 以下保存2026-10-08的研究快照，不取代CONTEXT唯一目前狀態表。
 

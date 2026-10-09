@@ -2608,3 +2608,18 @@ goal-audit-r17保持八C104及六未完成gates。一次性容器清除，未動
 - 契約排版收尾保留原中文objective與compact verify；r18／r19是排版前snapshot，r20使用最終contract hash。最終審核SHA-256 1a38874f1b22ed8ae94c7abea59a90b1077a33822929b1ed140257fc12f1fb3a。
 - Docker一次性容器全移除；沒有建新image。root-owned3121的完整路徑hash保持，零.md目錄；抽查12份source／OBJ／JSON皆1000:1000。git diff --check通過。原版素材、database、OBJ、私有work及使用者資料不加入Git。
 - 下一步沿已審CODE frame追暫存器入參呼叫與完整source-unit／layout；不重跑134組已排除控制，不改主程式C標準。commit／push結果由本機work/matching-decomp-20261008-r1/full-goal-r1/primary-c-slice-post-push.json保存。
+
+## 2026-10-09：暫存器入參與 word writer 的 C 匹配
+
+- 依復古逆向／IDA9.4路由、目前計畫與固定compiler續行。工作樹只有13項使用者未追蹤資料；不改Go／pack與Issue #4範圍。
+- fresh register-calls-ida-r1／r2保存caller／callee、原名、完整chunks、原始bytes與typed xrefs。sub_18CF2完整10 bytes、sub_18C01完整14 bytes、sub_19074完整13 bytes匹配，涵蓋CX／BX／DI入參、DS load／word writer與六個near CALL。
+- BP三候選188A9／1D86D／1D881由固定WCC回報COMPILE_FAILED／E1122。查官方契約確認16-bit整數參數只支援AX／BX／CX／DX／SI／DI，parm [bp]會改走stack。原始BP consumer存在，不以移除clobber或ASM假裝C匹配；未改工具鏈前停止同型重試。
+- 地址參數候選sub_14FCF生成19 bytes，原版22 bytes。WCC使用MOV SI,imm，原版為LEA；保留DIFF，不patch結果、不納入正式來源。首批四候選與第二批三候選均保存原始source、log及receipt。
+- docs/25完成RE／DRAFT→READY→正式三份C→CONFORMED。來源掛入re/match/README與正式manifest；新十筆confirmed靜態註記追加到既有matching C索引，共19筆，不改原始定位或升格原始C型別／完整callee ABI。
+- register-source-r1／r2在兩個全新容器重編正式17個Watcom候選；完整C／OBJ／listing／CODE及actual FIXUPP逐byte相同。15份Watcom匹配160 bytes，加未變MSC三份15 bytes，總18份175 bytes；主程式163、SDK12。舊填表／搜尋仍DIFF。
+- 六個實際編譯負例覆蓋CX改AX、word改byte、錯DI／store初值、反轉呼叫與提前store；四個重定位控制覆蓋缺／錯DS、錯CODE frame及near target。全數DIFF或REFUSED，收據register-calls-verification-final.json。
+- fresh inventory-ida-r4保持828函式／29979 heads／81854唯一code bytes與4455函式外heads；逐筆原名、chunks、segment、raw／loaded bytes與typed xrefs等於r3。十個新註記自動合併，不rename、不修database邊界。
+- goal-audit-r21核對完整來源新鮮度、兩次重編、actual FIXUPP、原始near CALL xrefs及MZ集合；SHA-256 323941f2994707ff07f53fc5e3075fd3afce7dce978fe0ff1d585eda5a89f1f3。六個完整Goal gate仍未證實；unique source byte-layout13378只作局部去重統計，沒有新runtime、campaign或發行包。
+- 本機收據在work/matching-decomp-20261008-r1/full-goal-r1/：register-calls-ida-r1／r2.json、register-calls-c-r1／r2/receipt.json、register-source-r1／r2/receipt.json、inventory-ida-r4.json、register-negative-build-r1/receipt.json、register-calls-verification-final.json及goal-audit-r21.json。重生沿tools/build/README既有run_watcom16_abi與matching_goal_audit入口，每次新容器與新輸出。
+- 容器全部使用--rm、network none、資源限制與UID1000:1000；沿用既有image。root-owned3121的完整路徑hash保持，零.md目錄；新source／OBJ／JSON抽查皆1000:1000。提交前git diff --check及DQ3容器清理核對；原版、database、OBJ、私有work與使用者資料不進Git。
+- 下一步已審CODE frame的條件式呼叫與原始狀態consumer。不重試未支援BP、LEA與舊134組控制，不採用未定的自訂compiler。commit／push結果保存本機full-goal-r1/register-calls-post-push.json。

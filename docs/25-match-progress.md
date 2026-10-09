@@ -28,10 +28,10 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 與adapter僅是基礎證據。舊280函式清單須與IDA9.4完整清單重核，不能當作完整分母。
 > 首個新C函式[`re/match/sub_5d49.c`](../re/match/sub_5d49.c)的完整7-byte PROC已匹配；
 > 模組末端1-byte NOP位於compiler `ENDP`之外，配置仍未解。完整Goal保持未完成。
-> 現行C本體15個／138 bytes；最新有號累加10 bytes、near-return4 bytes與五個far-return共20 bytes。
-> 先前四段近呼叫13 bytes與DX入參遠呼叫10 bytes及原始MZ relocation保持；最新驗收見2026-10-09切片。
+> 現行C本體18個／175 bytes；最新CX／BX／DI入參與word writer三個完整常式37 bytes。
+> 先前有號累加、近／遠返回、四段近呼叫與DX入參遠呼叫及MZ relocation成果保持；最新驗收見2026-10-09切片。
 > 三個次級C來源共12 bytes已定位在原版CTVMEM／CMFDRV音效SDK；欄位、原始型別與DS脈絡unknown。
-> 主程式C共126 bytes；7-byte來源產品角色仍未確認，其他query／writer／call來源只按已審靜態範圍計數。填表與搜尋C候選仍不匹配。
+> 主程式C共163 bytes；7-byte來源產品角色仍未確認，其他query／writer／call來源只按已審靜態範圍計數。填表、搜尋與LEA地址參數候選仍不匹配，BP整數參數受固定compiler ABI限制。
 > C候選清單為[`tools/matching_c_manifest.json`](../tools/matching_c_manifest.json)，
 > [`tools/run_matching_c_batch.py`](../tools/run_matching_c_batch.py)核對完整IDA函式邊界、
 > 原始bytes與實際OMF重定位，再以新編artifact計算C覆蓋率。保留原始bytes另列，不能算完成。
@@ -86,6 +86,54 @@ CTV typed初值來源為[ctvmem_data.json](../re/match/ctvmem_data.json)，unkno
 > 不rename或修改database邊界，不由字串推定全程式compiler。
 > [`tools/link_sbcm_module_controls.py`](../tools/link_sbcm_module_controls.py)以固定官方WLINK
 > 重連原版OMF objects，核對整段code／data／gap bytes。這是module身分控制，source覆蓋增量為0。
+
+## 2026-10-09：CX／BX／DI 入參與 word writer，CONFORMED
+
+沿用固定 DQ3.EXE／115282 bytes／SHA-256
+`5178fdc85021513392f6061451178121330a2a0282987c7cf4844187d9d7530c`。
+IDA9.4 linear 基準 `0x10000`，logical 為 linear 減此值，file 為 logical 加 `0x1370`。
+fresh `register-calls-ida-r1.json`／`r2.json` 保留候選、直接callee、原始bytes、chunks及typed caller windows。
+
+| 批准來源 | IDA linear，末端不含 | file，末端不含 | confirmed 靜態契約 |
+|---|---|---|---|
+| [sub_8cf2.c](../re/match/sub_8cf2.c) | `18CF2..18CFC` | `A062..A06C` | CX=4，near CALL1EF95、near CALL1EF03、near RET，共10 bytes |
+| [sub_8c01.c](../re/match/sub_8c01.c) | `18C01..18C0F` | `9F71..9F7F` | DS:24FC word傳BX呼叫16EF4，再以DI=1E4呼叫15023，near RET，共14 bytes |
+| [sub_9074.c](../re/match/sub_9074.c) | `19074..19081` | `A3E4..A3F1` | near CALL1BF35、DS:26FE寫word00FF、near CALL19090、near RET，共13 bytes |
+
+三個原入口分別有4／1／1個直接caller，範圍完整且沒有跨界flow。全部near CALL保留xref17、
+原始CODE frame0與明示MZ-relative symbol placement；各常式的原始MZ relocation集合為空。
+六個直接call bindings、DS load／store與常數初值只按原始bytes批准，不推定原欄位名稱或C型別。
+函式prototype只描述本切片觀察到的BX／CX／DI值與保守clobber，完整callee ABI仍unknown。
+
+`register-calls-c-r1`／`r2` 中三份C prototype完整匹配37 bytes，未使用指令pragma或code array。
+`sub_14FCF`的地址參數prototype生成19 bytes，原版22 bytes：WCC以MOV SI,imm取代三個LEA，
+所以排除正式來源。原始三份BP參數候選188A9／1D86D／1D881均為COMPILE_FAILED／E1122。
+[Watcom官方參數契約](https://open-watcom.github.io/open-watcom-v2-wikidocs/cguide.html)
+明列16-bit整數參數只用AX／BX／CX／DX／SI／DI；`parm [bp]`會改走stack。
+這是固定compiler的ABI限制，不改clobber猜補、不改backend或以ASM繞過主程式C要求。
+BP候選與地址參數候選保留原始證據，不計來源覆蓋，也不重跑已排除134組控制。
+
+READY驗收：從正式manifest在兩個全新容器重編，完整source／OBJ／listing／CODE／actual FIXUPP一致；
+核對原始全範圍、全部typed call targets、DS初值與MZ集合。錯暫存器、初值、呼叫順序、
+DS placement或原始xref不得計為exact；新分級註記自動合併既有matching C索引及IDA匯出。
+範圍限此37-byte靜態來源；Go／pack、存檔、正常玩家流程與完整EXE gate保持原狀。
+
+READY審查後，正式manifest的17個Watcom候選在`register-source-r1`／`r2`兩個全新容器重編。
+兩份完整C／OBJ／listing／CODE及actual FIXUPP逐byte相同；三份新增來源全部37 bytes匹配，
+沒有函式外padding。既有填表／搜尋仍DIFF；不因已RESOLVED就計為exact。
+總審核`goal-audit-r21.json` SHA-256 `323941f2994707ff07f53fc5e3075fd3afce7dce978fe0ff1d585eda5a89f1f3`
+核對18份C／175 bytes，主程式15份163 bytes、SDK3份12 bytes；六個完整Goal gate仍未證實。
+
+fresh `inventory-ida-r4.json`完整828函式／29979 heads／81854唯一code bytes與r3相同。
+逐筆原始名稱、chunks、segment、bytes、loaded bytes與typed xrefs保持；新十筆分級註記自動合併，
+matching C索引共19筆。4455函式外heads與完整source-unit分母仍未閉合。
+`register-calls-verification-final.json`核對十個負例：CX改AX、word改byte、錯DI初值、錯store初值、
+反轉呼叫、提前store，以及缺／錯DS placement、錯CODE frame與錯near target。全數DIFF或REFUSED。
+局部unique source byte-layout為13378，仍不作完整EXE比例；本輪沒有新的runtime或campaign收據。
+
+下一步追已審CODE frame內的條件式呼叫及其原始狀態consumer。BP整數參數限制已有官方契約與實測，
+後續未改工具鏈前不重試同型候選；LEA地址編碼與舊134組控制亦不以改寫bytes補齊。
+
 
 ## 2026-10-09：有號累加與近呼叫返回切片，CONFORMED
 

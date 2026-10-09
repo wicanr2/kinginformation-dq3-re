@@ -17,6 +17,9 @@
 | [sub_e91a.c](sub_e91a.c) | sub_1E91A，linear1E91A..1E91E | 完整C module，4 bytes | near CALL1EC53後far return；callee完整ABI未知 |
 | [sub_ee72.c](sub_ee72.c) | sub_1EE72，linear1EE72..1EE76 | 完整C module，4 bytes | near CALL1EE76後far return；保留獨立原入口 |
 | [sub_eeff.c](sub_eeff.c) | sub_1EEFF，linear1EEFF..1EF03 | 完整C module，4 bytes | near CALL1EF03後far return；callee完整ABI未知 |
+| [sub_8cf2.c](sub_8cf2.c) | sub_18CF2，linear18CF2..18CFC | 完整C module，10 bytes | CX=4後兩個near CALL及near return；原始prototype未知 |
+| [sub_8c01.c](sub_8c01.c) | sub_18C01，linear18C01..18C0F | 完整C module，14 bytes | DS:24FC傳BX、DI=1E4與兩個near CALL；原始欄位型別未知 |
+| [sub_9074.c](sub_9074.c) | sub_19074，linear19074..19081 | 完整C module，13 bytes | 兩個near CALL之間寫DS:26FE word00FF；完整callee ABI未知 |
 | [sub_136f5.c](sub_136f5.c) | sub_236F5，linear236F5..236F9 | 完整C PROC，4 bytes | 原版CTVMEM.ASM driver；欄位、型別與DS脈絡未知 |
 | [sub_14a8d.c](sub_14a8d.c) | sub_24A8D，linear24A8D..24A91 | 完整C PROC，4 bytes | 原版CMFDRV.ASM driver；欄位、型別與DS脈絡未知 |
 | [sub_14ae6.c](sub_14ae6.c) | sub_24AE6，linear24AE6..24AEA | 完整C module，4 bytes | 原版CMFDRV.ASM driver；AX入參word store，欄位、型別與DS脈絡未知 |
@@ -30,7 +33,7 @@
 其他C檔與rng_adapter.asm是研究候選。它們有DIFF、REFUSED或僅register/state等價的結果，
 不計精確匹配。原版OBJ、EXE、SDK、IDA database與生成封包不提交。
 
-十五個完整C函式共138 bytes，其中主程式十二個126 bytes，SDK三個12 bytes。
+十八個完整C函式共175 bytes，其中主程式十五個163 bytes，SDK三個12 bytes。
 sub_9834的pragma只指定呼叫慣例，不嵌入組語指令；兩次獨立編譯及實際OMF重定位一致。
 sub_37f9使用manifest明列的速度最佳化／停用重排profile，完整48 bytes及三個fixup均相同。
 兩個呼叫來源以原始CS frame及typed IDA xref核對code symbol；遠呼叫另核對MZ segment word位置。
@@ -38,6 +41,8 @@ profile的-oc保留CALL／RET，固定重定位不代替完整EXE的source-unit�
 五個far-return來源使用明列的cdecl-size-calls-unframed profile，保留-or／-oc並移除-of。
 原始指令與typed call targets由[matching C分級索引](../../tools/ida_matching_c_ledger.json)自動附註，
 索引只保存confirmed靜態契約；原始C型別、compiler身分與完整runtime ABI仍未知。
+CX／BX／DI入參與原始word writer使用同一固定profile重編；BP整數參數候選及LEA地址參數候選
+保留為工具限制或DIFF，範圍與停止線見[研究記錄](../../docs/25-match-progress.md)。
 
 兩個driver的ASM只保存語意指令與EQU常數，沒有原版code array或DB拼接。
 ORG所保留的空間沒有還原資料，不能直接當成可執行的完整driver。

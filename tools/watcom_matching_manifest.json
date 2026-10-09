@@ -300,6 +300,97 @@
         "far": {}
       },
       "scope": "Original direct near CALL followed by far return; conservative callee clobber declaration, original prototype unknown"
+    },
+    {
+      "id": "sub_18CF2",
+      "source": "re/match/sub_8cf2.c",
+      "public_symbol": "_sub_8cf2",
+      "ida_linear_start": "0x18cf2",
+      "logical_start": "0x8cf2",
+      "file_start": "0xa062",
+      "size": 10,
+      "external_DS_offsets": {},
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 36082
+        },
+        "near": {
+          "_sub_ef95": {
+            "segment": 0,
+            "offset": 61333
+          },
+          "_sub_ef03": {
+            "segment": 0,
+            "offset": 61187
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original register constant inputs and direct near/far call sequence; original callee prototypes and full ABI unknown"
+    },
+    {
+      "id": "sub_18C01",
+      "source": "re/match/sub_8c01.c",
+      "public_symbol": "_sub_8c01",
+      "ida_linear_start": "0x18c01",
+      "logical_start": "0x8c01",
+      "file_start": "0x9f71",
+      "size": 14,
+      "external_DS_offsets": {
+        "_unknown_DS_24fc": "0x24fc"
+      },
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 35841
+        },
+        "near": {
+          "_sub_6ef4": {
+            "segment": 0,
+            "offset": 28404
+          },
+          "_sub_5023": {
+            "segment": 0,
+            "offset": 20515
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original DS input/address/store plus direct call order; original field types and callee ABI unknown"
+    },
+    {
+      "id": "sub_19074",
+      "source": "re/match/sub_9074.c",
+      "public_symbol": "_sub_9074",
+      "ida_linear_start": "0x19074",
+      "logical_start": "0x9074",
+      "file_start": "0xa3e4",
+      "size": 13,
+      "external_DS_offsets": {
+        "_unknown_DS_26fe": "0x26fe"
+      },
+      "compiler_profile": "cdecl-size-calls-unframed",
+      "call_placements": {
+        "caller": {
+          "segment": 0,
+          "offset": 36980
+        },
+        "near": {
+          "_sub_bf35": {
+            "segment": 0,
+            "offset": 48949
+          },
+          "_sub_9090": {
+            "segment": 0,
+            "offset": 37008
+          }
+        },
+        "far": {}
+      },
+      "scope": "Original DS input/address/store plus direct call order; original field types and callee ABI unknown"
     }
   ]
 }

@@ -112,6 +112,116 @@
       "source": "re/match/sub_eeff.c",
       "review_reference": "docs/25-match-progress.md: 2026-10-09 signed accumulation and direct-call return slice",
       "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/primary-accumulator-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x18cf2",
+      "file_offset": "0xa062",
+      "bytes": "b90400",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：mov     cx, 4",
+      "consumer": "原始sub_18CF2完整範圍[['0x18cf2', '0x18cfc']]；typed refs [{'to': '0x18cf5', 'type': 21, 'iscode': True}]",
+      "source": "re/match/sub_8cf2.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x18cf5",
+      "file_offset": "0xa065",
+      "bytes": "e89d62",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_1EF95",
+      "consumer": "原始sub_18CF2完整範圍[['0x18cf2', '0x18cfc']]；typed refs [{'to': '0x18cf8', 'type': 21, 'iscode': True}, {'to': '0x1ef95', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_8cf2.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x18cf8",
+      "file_offset": "0xa068",
+      "bytes": "e80862",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_1EF03",
+      "consumer": "原始sub_18CF2完整範圍[['0x18cf2', '0x18cfc']]；typed refs [{'to': '0x18cfb', 'type': 21, 'iscode': True}, {'to': '0x1ef03', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_8cf2.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r1.json"
+    },
+    {
+      "ida_linear": "0x18c01",
+      "file_offset": "0x9f71",
+      "bytes": "8b1efc24",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：mov     bx, ds:24FCh",
+      "consumer": "原始sub_18C01完整範圍[['0x18c01', '0x18c0f']]；typed refs [{'to': '0x18c05', 'type': 21, 'iscode': True}]",
+      "source": "re/match/sub_8c01.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r2.json"
+    },
+    {
+      "ida_linear": "0x18c05",
+      "file_offset": "0x9f75",
+      "bytes": "e8ece2",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_16EF4",
+      "consumer": "原始sub_18C01完整範圍[['0x18c01', '0x18c0f']]；typed refs [{'to': '0x18c08', 'type': 21, 'iscode': True}, {'to': '0x16ef4', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_8c01.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r2.json"
+    },
+    {
+      "ida_linear": "0x18c08",
+      "file_offset": "0x9f78",
+      "bytes": "bfe401",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：mov     di, 1E4h",
+      "consumer": "原始sub_18C01完整範圍[['0x18c01', '0x18c0f']]；typed refs [{'to': '0x18c0b', 'type': 21, 'iscode': True}]",
+      "source": "re/match/sub_8c01.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r2.json"
+    },
+    {
+      "ida_linear": "0x18c0b",
+      "file_offset": "0x9f7b",
+      "bytes": "e815c4",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_15023",
+      "consumer": "原始sub_18C01完整範圍[['0x18c01', '0x18c0f']]；typed refs [{'to': '0x18c0e', 'type': 21, 'iscode': True}, {'to': '0x15023', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_8c01.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r2.json"
+    },
+    {
+      "ida_linear": "0x19074",
+      "file_offset": "0xa3e4",
+      "bytes": "e8be2e",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_1BF35",
+      "consumer": "原始sub_19074完整範圍[['0x19074', '0x19081']]；typed refs [{'to': '0x19077', 'type': 21, 'iscode': True}, {'to': '0x1bf35', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_9074.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r2.json"
+    },
+    {
+      "ida_linear": "0x19077",
+      "file_offset": "0xa3e7",
+      "bytes": "c706fe26ff00",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：mov     word ptr ds:26FEh, 0FFh",
+      "consumer": "原始sub_19074完整範圍[['0x19074', '0x19081']]；typed refs [{'to': '0x1907d', 'type': 21, 'iscode': True}]",
+      "source": "re/match/sub_9074.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r2.json"
+    },
+    {
+      "ida_linear": "0x1907d",
+      "file_offset": "0xa3ed",
+      "bytes": "e81000",
+      "inference_level": "confirmed",
+      "semantic": "原始靜態操作：call    sub_19090",
+      "consumer": "原始sub_19074完整範圍[['0x19074', '0x19081']]；typed refs [{'to': '0x19080', 'type': 21, 'iscode': True}, {'to': '0x19090', 'type': 17, 'iscode': True}]",
+      "source": "re/match/sub_9074.c",
+      "review_reference": "docs/25-match-progress.md：2026-10-09 CX／BX／DI 入參與 word writer",
+      "static_evidence": "work/matching-decomp-20261008-r1/full-goal-r1/register-calls-ida-r2.json"
     }
   ]
 }
